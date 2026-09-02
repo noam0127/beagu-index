@@ -4,12 +4,108 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>배구지수</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                   "Noto Sans KR", sans-serif;
+      background: #f7f8fa;
+      color: #111;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: #2563eb;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 42px;
+      line-height: 1.2;
+      margin: 0 0 20px;
+      letter-spacing: -2px;
+    }
+
+    .description {
+      font-size: 18px;
+      line-height: 1.7;
+      color: #555;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 28px 22px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .card h2 {
+      font-size: 22px;
+      margin: 0 0 10px;
+    }
+
+    .card p {
+      margin: 0 0 24px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 16px;
+      background: #2563eb;
+      color: white;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
-  <h1>배구지수</h1>
-  <p>학교의 교직문화를 데이터로 살펴봅니다.</p>
 
-  <button>배구지수 열람하기</button>
+  <main class="container">
+
+    <div class="logo">VOLLEYBALL INDEX</div>
+
+    <h1>
+      학교의 문화를<br>
+      데이터로 봅니다.
+    </h1>
+
+    <p class="description">
+      배구지수는 전국 학교의 교직문화를
+      데이터로 살펴보는 프로젝트입니다.
+    </p>
+
+    <section class="card">
+      <h2>학교 배구지수 찾기</h2>
+
+      <p>
+        학교를 검색하여 공개된 배구지수 정보를 확인하세요.
+      </p>
+
+      <button type="button">
+        배구지수 열람하기
+      </button>
+    </section>
+
+  </main>
+
 </body>
 </html>
