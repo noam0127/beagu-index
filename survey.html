@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026 배구지수 조사</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                   "Noto Sans KR", sans-serif;
+      background: #f7f8fa;
+      color: #111;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .back {
+      border: 0;
+      background: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+
+    h1 {
+      font-size: 30px;
+      line-height: 1.3;
+      margin: 0 0 10px;
+      letter-spacing: -1.3px;
+    }
+
+    .description {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .school-card {
+      background: #eef2ff;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 28px;
+    }
+
+    .school-label {
+      font-size: 13px;
+      color: #2563eb;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .school-name {
+      font-size: 19px;
+      font-weight: 700;
+    }
+
+    .school-meta {
+      margin-top: 6px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .question-card {
+      background: white;
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.05);
+    }
+
+    .question-number {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2563eb;
+      margin-bottom: 8px;
+    }
+
+    .question-title {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 0;
+      cursor: pointer;
+    }
+
+    .option input {
+      width: 18px;
+      height: 18px;
+    }
+
+    .submit-button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 17px;
+      margin-top: 10px;
+      background: #2563eb;
+      color: white;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .notice {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #888;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .error,
+    .complete {
+      background: white;
+      border-radius: 18px;
+      padding: 32px 22px;
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .complete h2 {
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    .button {
+      display: block;
+      width: 100%;
+      text-decoration: none;
+      text-align: center;
+      border-radius: 12px;
+      padding: 15px;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+
+    .primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .secondary {
+      background: #eef2ff;
+      color: #2563eb;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <div class="topbar">
+      <button class="back" onclick="history.back()">←</button>
+      <div class="logo">VOLLEYBALL INDEX</div>
+    </div>
+
+    <div id="content">
+      학교 정보를 불러오는 중입니다.
+    </div>
+
+  </main>
+
+  <script>
+    const content = document.getElementById("content");
+
+    let selectedSchool = null;
+
+    async function loadSurvey() {
+
+      const params = new URLSearchParams(window.location.search);
+      const schoolId = params.get("school");
+
+      if (!schoolId) {
+        showError("학교가 선택되지 않았습니다.");
+        return;
+      }
+
+      try {
+
+        const response = await fetch("data/schools.json");
+
+        if (!response.ok) {
+          throw new Error("학교 데이터를 불러오지 못했습니다.");
+        }
+
+        const schools = await response.json();
+
+        selectedSchool = schools.find(
+          school => school.school_id === schoolId
+        );
+
+        if (!selectedSchool) {
+          showError("해당 학교를 찾을 수 없습니다.");
+          return;
+        }
+
+        renderSurvey();
+
+      } catch (error) {
+
+        console.error(error);
+
+        showError(
+          "학교 정보를 불러오는 중 오류가 발생했습니다."
+        );
+
+      }
+    }
+
+    function renderSurvey() {
+
+      content.innerHTML = `
+
+        <h1>2026 배구지수 조사</h1>
+
+        <p class="description">
+          아래 문항은 현재 기능 확인을 위한 테스트 문항입니다.
+          실제 2026 배구지수 문항은 이후 별도로 연결합니다.
+        </p>
+
+        <div class="school-card">
+
+          <div class="school-label">
+            응답 학교
+          </div>
+
+          <div class="school-name">
+            ${selectedSchool.school_name}
+          </div>
+
+          <div class="school-meta">
+            ${selectedSchool.sido} ·
+            ${selectedSchool.support_office}
+          </div>
+
+        </div>
+
+        <form id="surveyForm">
+
+          <section class="question-card">
+
+            <div class="question-number">
+              TEST 1
+            </div>
+
+            <div class="question-title">
+              현재 학교의 전반적인 근무 만족도는 어떻습니까?
+            </div>
+
+            ${makeScaleOptions("q1")}
+
+          </section>
+
+          <section class="question-card">
+
+            <div class="question-number">
+              TEST 2
+            </div>
+
+            <div class="question-title">
+              현재 학교의 업무 부담은 어느 정도라고 느끼십니까?
+            </div>
+
+            ${makeScaleOptions("q2")}
+
+          </section>
+
+          <section class="question-card">
+
+            <div class="question-number">
+              TEST 3
+            </div>
+
+            <div class="question-title">
+              학교의 업무 분장 기준이 예측 가능하다고 느끼십니까?
+            </div>
+
+            ${makeScaleOptions("q3")}
+
+          </section>
+
+          <button
+            type="submit"
+            class="submit-button"
+          >
+            테스트 응답 제출
+          </button>
+
+          <div class="notice">
+            현재 테스트 단계이므로 응답은 서버나 데이터베이스에 저장되지 않습니다.
+          </div>
+
+        </form>
+
+      `;
+
+      document
+        .getElementById("surveyForm")
+        .addEventListener("submit", submitSurvey);
+    }
+
+    function makeScaleOptions(name) {
+
+      const options = [
+        [1, "전혀 그렇지 않다"],
+        [2, "그렇지 않다"],
+        [3, "보통이다"],
+        [4, "그렇다"],
+        [5, "매우 그렇다"]
+      ];
+
+      return options.map(option => `
+
+        <label class="option">
+
+          <input
+            type="radio"
+            name="${name}"
+            value="${option[0]}"
+            required
+          >
+
+          <span>
+            ${option[0]}. ${option[1]}
+          </span>
+
+        </label>
+
+      `).join("");
+    }
+
+    function submitSurvey(event) {
+
+      event.preventDefault();
+
+      const formData =
+        new FormData(event.target);
+
+      const testResponse = {
+        school_id: selectedSchool.school_id,
+        q1: formData.get("q1"),
+        q2: formData.get("q2"),
+        q3: formData.get("q3")
+      };
+
+      console.log(
+        "테스트 응답:",
+        testResponse
+      );
+
+      showComplete();
+    }
+
+    function showComplete() {
+
+      content.innerHTML = `
+
+        <div class="complete">
+
+          <h2>제출되었습니다</h2>
+
+          <p>
+            ${selectedSchool.school_name}의
+            테스트 응답 흐름이 정상적으로 완료되었습니다.
+          </p>
+
+          <p>
+            현재 단계에서는 실제 데이터베이스에 저장하지 않습니다.
+          </p>
+
+          <a
+            class="button primary"
+            href="result.html?school=${selectedSchool.school_id}"
+          >
+            학교 결과로 돌아가기
+          </a>
+
+          <a
+            class="button secondary"
+            href="search.html"
+          >
+            다른 학교 검색하기
+          </a>
+
+        </div>
+
+      `;
+    }
+
+    function showError(message) {
+
+      content.innerHTML = `
+
+        <div class="error">
+
+          ${message}
+
+          <br><br>
+
+          <a href="search.html">
+            학교 검색으로 돌아가기
+          </a>
+
+        </div>
+
+      `;
+    }
+
+    loadSurvey();
+
+  </script>
+
+</body>
+</html>
