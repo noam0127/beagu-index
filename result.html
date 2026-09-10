@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>학교 결과 | 배구지수</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                   "Noto Sans KR", sans-serif;
+      background: #f7f8fa;
+      color: #111;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 36px;
+    }
+
+    .back {
+      border: 0;
+      background: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+
+    .school-name {
+      font-size: 32px;
+      line-height: 1.3;
+      letter-spacing: -1.5px;
+      margin: 0 0 8px;
+    }
+
+    .school-location {
+      color: #666;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.05);
+    }
+
+    .card h2 {
+      font-size: 18px;
+      margin: 0 0 16px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 12px 0;
+      font-size: 15px;
+    }
+
+    .label {
+      color: #777;
+      flex-shrink: 0;
+    }
+
+    .value {
+      text-align: right;
+    }
+
+    .locked {
+      color: #777;
+      line-height: 1.7;
+    }
+
+    .button {
+      display: block;
+      width: 100%;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      margin-top: 14px;
+    }
+
+    .primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .secondary {
+      background: #eef2ff;
+      color: #2563eb;
+    }
+
+    .error {
+      background: white;
+      border-radius: 18px;
+      padding: 30px 20px;
+      text-align: center;
+      color: #777;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <div class="topbar">
+      <button class="back" onclick="history.back()">←</button>
+      <div class="logo">VOLLEYBALL INDEX</div>
+    </div>
+
+    <div id="content">
+      학교 정보를 불러오는 중입니다.
+    </div>
+
+  </main>
+
+  <script>
+    const content = document.getElementById("content");
+
+    async function loadSchool() {
+
+      const params = new URLSearchParams(window.location.search);
+      const schoolId = params.get("school");
+
+      if (!schoolId) {
+        showError("학교가 선택되지 않았습니다.");
+        return;
+      }
+
+      try {
+
+        const response = await fetch("data/schools.json");
+
+        if (!response.ok) {
+          throw new Error("학교 데이터를 불러올 수 없습니다.");
+        }
+
+        const schools = await response.json();
+
+        const school = schools.find(
+          item => item.school_id === schoolId
+        );
+
+        if (!school) {
+          showError("해당 학교를 찾을 수 없습니다.");
+          return;
+        }
+
+        renderSchool(school);
+
+      } catch (error) {
+        console.error(error);
+        showError("학교 정보를 불러오는 중 오류가 발생했습니다.");
+      }
+    }
+
+    function renderSchool(school) {
+
+      content.innerHTML = `
+
+        <h1 class="school-name">
+          ${school.school_name}
+        </h1>
+
+        <div class="school-location">
+          ${school.sido} · ${school.support_office}
+        </div>
+
+        <section class="card">
+
+          <h2>학교 기본정보</h2>
+
+          <div class="info-row">
+            <span class="label">설립구분</span>
+            <span class="value">${school.establishment}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="label">주소</span>
+            <span class="value">${school.address}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="label">운영상태</span>
+            <span class="value">${school.status}</span>
+          </div>
+
+        </section>
+
+        <section class="card">
+
+          <h2>2026 배구지수</h2>
+
+          <div class="locked">
+            아직 이 학교의 2026 배구지수 결과가 연결되지 않았습니다.
+            이후 조사 데이터와 자동으로 연결됩니다.
+          </div>
+
+          <a
+            class="button primary"
+            href="survey.html?school=${school.school_id}"
+          >
+            2026 조사 참여하기
+          </a>
+
+        </section>
+
+        <section class="card">
+
+          <h2>과거 배구지수</h2>
+
+          <div class="locked">
+            🔒 2023 · 2024 · 2025 배구지수<br>
+            향후 회원 등급에 따라 열람 범위가 달라집니다.
+          </div>
+
+        </section>
+
+        <a
+          class="button secondary"
+          href="search.html"
+        >
+          다른 학교 검색하기
+        </a>
+
+      `;
+    }
+
+    function showError(message) {
+
+      content.innerHTML = `
+        <div class="error">
+          ${message}
+          <br><br>
+          <a href="search.html">
+            학교 검색으로 돌아가기
+          </a>
+        </div>
+      `;
+    }
+
+    loadSchool();
+  </script>
+
+</body>
+</html>
