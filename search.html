@@ -1,1 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>학교 검색 | 배구지수</title>
 
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+                   "Noto Sans KR", sans-serif;
+      background: #f7f8fa;
+      color: #111;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+
+    .back {
+      border: 0;
+      background: none;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .logo {
+      font-size: 15px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin: 0 0 10px;
+      letter-spacing: -1.5px;
+    }
+
+    .description {
+      margin: 0 0 28px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 17px 18px;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      font-size: 16px;
+      outline: none;
+      background: white;
+    }
+
+    .search-box:focus {
+      border-color: #2563eb;
+    }
+
+    .result-count {
+      font-size: 14px;
+      color: #777;
+      margin: 18px 2px 12px;
+    }
+
+    .results {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .school-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    .school-card:active {
+      transform: scale(0.98);
+    }
+
+    .school-name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .school-meta {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #888;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="container">
+
+    <div class="topbar">
+      <button class="back" onclick="history.back()">←</button>
+      <div class="logo">VOLLEYBALL INDEX</div>
+    </div>
+
+    <h1>학교를 찾아보세요</h1>
+
+    <p class="description">
+      학교명을 입력하면 배구지수 학교 마스터에서 검색합니다.
+    </p>
+
+    <input
+      id="searchInput"
+      class="search-box"
+      type="search"
+      placeholder="예: 개원초, 서울개원초등학교"
+      autocomplete="off"
+    >
+
+    <div id="resultCount" class="result-count"></div>
+
+    <div id="results" class="results"></div>
+
+  </main>
+
+  <script>
+    let schools = [];
+
+    const searchInput = document.getElementById("searchInput");
+    const results = document.getElementById("results");
+    const resultCount = document.getElementById("resultCount");
+
+    async function loadSchools() {
+      try {
+        const response = await fetch("data/schools.json");
+
+        if (!response.ok) {
+          throw new Error("학교 데이터를 불러오지 못했습니다.");
+        }
+
+        schools = await response.json();
+
+      } catch (error) {
+        console.error(error);
+
+        results.innerHTML = `
+          <div class="empty">
+            학교 데이터를 불러오지 못했습니다.
+          </div>
+        `;
+      }
+    }
+
+    function renderSchools(filteredSchools) {
+
+      results.innerHTML = "";
+
+      if (searchInput.value.trim() === "") {
+        resultCount.textContent = "";
+        return;
+      }
+
+      resultCount.textContent =
+        `검색 결과 ${filteredSchools.length}개`;
+
+      if (filteredSchools.length === 0) {
+
+        results.innerHTML = `
+          <div class="empty">
+            검색 결과가 없습니다.
+          </div>
+        `;
+
+        return;
+      }
+
+      filteredSchools.forEach(school => {
+
+        const card = document.createElement("div");
+
+        card.className = "school-card";
+
+        card.innerHTML = `
+          <div class="school-name">
+            ${school.school_name}
+          </div>
+
+          <div class="school-meta">
+            ${school.sido} · ${school.support_office}<br>
+            ${school.address}
+          </div>
+        `;
+
+        card.addEventListener("click", () => {
+          alert(
+            `${school.school_name}\n학교 ID: ${school.school_id}`
+          );
+        });
+
+        results.appendChild(card);
+
+      });
+
+    }
+
+    searchInput.addEventListener("input", () => {
+
+      const keyword =
+        searchInput.value.trim().toLowerCase();
+
+      if (keyword === "") {
+        renderSchools([]);
+        return;
+      }
+
+      const filtered = schools.filter(school => {
+
+        return (
+          school.school_name.toLowerCase().includes(keyword) ||
+          school.sido.toLowerCase().includes(keyword) ||
+          school.support_office.toLowerCase().includes(keyword)
+        );
+
+      });
+
+      renderSchools(filtered);
+
+    });
+
+    loadSchools();
+  </script>
+
+</body>
+</html>
