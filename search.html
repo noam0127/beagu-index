@@ -102,12 +102,38 @@
       margin-bottom: 8px;
     }
 
-    .school-meta {
-      font-size: 14px;
-      color: #666;
-      line-height: 1.6;
-    }
+   .school-meta {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
 
+.school-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.school-button {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 10px;
+  padding: 13px 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.view-button {
+  background: #2563eb;
+  color: white;
+}
+
+.survey-button {
+  background: #eef2ff;
+  color: #2563eb;
+}
     .empty {
       padding: 40px 20px;
       text-align: center;
@@ -203,22 +229,33 @@
         card.className = "school-card";
 
         card.innerHTML = `
-          <div class="school-name">
-            ${school.school_name}
-          </div>
+  <div class="school-name">
+    ${school.school_name}
+  </div>
 
-          <div class="school-meta">
-            ${school.sido} · ${school.support_office}<br>
-            ${school.address}
-          </div>
-        `;
+  <div class="school-meta">
+    ${school.sido} · ${school.support_office}<br>
+    ${school.address}
+  </div>
 
-        card.addEventListener("click", () => {
-          alert(
-            `${school.school_name}\n학교 ID: ${school.school_id}`
-          );
-        });
+  <div class="school-actions">
 
+    <a
+      class="school-button view-button"
+      href="result.html?school=${school.school_id}"
+    >
+      배구지수 열람
+    </a>
+
+    <a
+      class="school-button survey-button"
+      href="survey.html?school=${school.school_id}"
+    >
+      2026 조사 참여
+    </a>
+
+  </div>
+`;
         results.appendChild(card);
 
       });
