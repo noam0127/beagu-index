@@ -371,7 +371,7 @@ async function loadSurvey() {
       `).join("");
     }
 
-    async function submitSurvey(event) {
+async function submitSurvey(event) {
 
   event.preventDefault();
 
@@ -383,58 +383,40 @@ async function loadSurvey() {
 
   const formData = new FormData(form);
 
-  const submissionId = crypto.randomUUID();
-
-  const answers = [
-    {
-      submission_id: submissionId,
-      question_key: "q1",
-      answer_value: Number(formData.get("q1"))
-    },
-    {
-      submission_id: submissionId,
-      question_key: "q2",
-      answer_value: Number(formData.get("q2"))
-    },
-    {
-      submission_id: submissionId,
-      question_key: "q3",
-      answer_value: Number(formData.get("q3"))
-    }
-  ];
+  const answers = {
+    q1: Number(formData.get("q1")),
+    q2: Number(formData.get("q2")),
+    q3: Number(formData.get("q3"))
+  };
 
   try {
 
-    // 1. 설문 제출 1건 저장
-    const { error: submissionError } = await supabaseClient
-      .from("survey_submissions")
-      .insert({
-        id: submissionId,
-        school_id: selectedSchool.school_id,
-        survey_year: 2026,
-        source: "web"
-      });
+    const { data: submissionId, error } =
+      await supabaseClient.rpc(
+        "submit_survey",
+        {
+          p_school_id: selectedSchool.school_id,
+          p_answers: answers
+        }
+      );
 
-    if (submissionError) {
-      throw submissionError;
+    if (error) {
+      throw error;
     }
 
-    // 2. 문항별 답변 저장
-    const { error: answersError } = await supabaseClient
-      .from("survey_answers")
-      .insert(answers);
-
-    if (answersError) {
-      throw answersError;
-    }
-
-    console.log("Supabase 저장 성공:", submissionId);
+    console.log(
+      "RPC 저장 성공:",
+      submissionId
+    );
 
     showComplete();
 
   } catch (error) {
 
-    console.error("설문 저장 오류:", error);
+    console.error(
+      "설문 저장 오류:",
+      error
+    );
 
     alert(
       "응답 저장 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요."
