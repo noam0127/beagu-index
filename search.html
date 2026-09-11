@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>학교 검색 | 배구지수</title>
 
   <style>
@@ -12,8 +13,13 @@
 
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
-                   "Noto Sans KR", sans-serif;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Apple SD Gothic Neo",
+        "Noto Sans KR",
+        sans-serif;
+
       background: #f7f8fa;
       color: #111;
     }
@@ -57,18 +63,34 @@
       line-height: 1.6;
     }
 
-    .search-box {
+    .search-box,
+    .region-select {
       width: 100%;
       padding: 17px 18px;
+
       border: 1px solid #ddd;
       border-radius: 14px;
+
       font-size: 16px;
       outline: none;
+
       background: white;
+      color: #111;
     }
 
-    .search-box:focus {
+    .search-box:focus,
+    .region-select:focus {
       border-color: #2563eb;
+    }
+
+    .filters {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .region-select {
+      cursor: pointer;
     }
 
     .result-count {
@@ -87,8 +109,10 @@
       background: white;
       border-radius: 16px;
       padding: 20px;
-      box-shadow: 0 3px 14px rgba(0,0,0,0.05);
-      cursor: pointer;
+
+      box-shadow:
+        0 3px 14px rgba(0, 0, 0, 0.05);
+
       transition: transform 0.15s ease;
     }
 
@@ -102,41 +126,64 @@
       margin-bottom: 8px;
     }
 
-   .school-meta {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.6;
-}
+    .school-meta {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+    }
 
-.school-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 16px;
-}
+    .region-badge {
+      display: inline-block;
 
-.school-button {
-  display: block;
-  text-align: center;
-  text-decoration: none;
-  border-radius: 10px;
-  padding: 13px 10px;
-  font-size: 14px;
-  font-weight: 700;
-}
+      margin-bottom: 10px;
+      padding: 5px 9px;
 
-.view-button {
-  background: #2563eb;
-  color: white;
-}
+      border-radius: 999px;
 
-.survey-button {
-  background: #eef2ff;
-  color: #2563eb;
-}
+      background: #eef2ff;
+      color: #2563eb;
+
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .school-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .school-button {
+      display: block;
+
+      text-align: center;
+      text-decoration: none;
+
+      border-radius: 10px;
+
+      padding: 13px 10px;
+
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .view-button {
+      background: #2563eb;
+      color: white;
+    }
+
+    .survey-button {
+      background: #eef2ff;
+      color: #2563eb;
+    }
+
     .empty {
       padding: 40px 20px;
+
       text-align: center;
+
       color: #888;
     }
   </style>
@@ -147,192 +194,387 @@
   <main class="container">
 
     <div class="topbar">
-      <button class="back" onclick="history.back()">←</button>
-      <div class="logo">VOLLEYBALL INDEX</div>
+
+      <button
+        class="back"
+        onclick="history.back()"
+        aria-label="뒤로가기"
+      >
+        ←
+      </button>
+
+      <div class="logo">
+        VOLLEYBALL INDEX
+      </div>
+
     </div>
 
-    <h1>학교를 찾아보세요</h1>
+    <h1>
+      학교를 찾아보세요
+    </h1>
 
     <p class="description">
-      학교명을 입력하면 배구지수 학교 마스터에서 검색합니다.
+      전국 초등학교를 학교명과 지역으로 검색할 수 있습니다.
     </p>
 
-    <input
-      id="searchInput"
-      class="search-box"
-      type="search"
-      placeholder="예: 개원초, 서울개원초등학교"
-      autocomplete="off"
-    >
+    <div class="filters">
 
-    <div id="resultCount" class="result-count"></div>
+      <input
+        id="searchInput"
+        class="search-box"
+        type="search"
+        placeholder="예: 개원초, 서울개원초등학교"
+        autocomplete="off"
+      >
 
-    <div id="results" class="results"></div>
+      <select
+        id="regionSelect"
+        class="region-select"
+        aria-label="지역 선택"
+      >
+        <option value="">
+          전체 지역
+        </option>
+
+        <option value="서울">서울</option>
+        <option value="부산">부산</option>
+        <option value="대구">대구</option>
+        <option value="인천">인천</option>
+        <option value="광주">광주</option>
+        <option value="대전">대전</option>
+        <option value="울산">울산</option>
+        <option value="세종">세종</option>
+        <option value="경기">경기</option>
+        <option value="강원">강원</option>
+        <option value="충북">충북</option>
+        <option value="충남">충남</option>
+        <option value="전북">전북</option>
+        <option value="전남">전남</option>
+        <option value="경북">경북</option>
+        <option value="경남">경남</option>
+        <option value="제주">제주</option>
+
+      </select>
+
+    </div>
+
+    <div
+      id="resultCount"
+      class="result-count"
+    ></div>
+
+    <div
+      id="results"
+      class="results"
+    ></div>
 
   </main>
 
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
+  <script src="js/supabase-config.js"></script>
 
-<script>
-  const searchInput = document.getElementById("searchInput");
-  const results = document.getElementById("results");
-  const resultCount = document.getElementById("resultCount");
 
-  let searchTimer = null;
-  let latestSearchNumber = 0;
+  <script>
 
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
+    const searchInput =
+      document.getElementById("searchInput");
 
-  function renderSchools(schools) {
+    const regionSelect =
+      document.getElementById("regionSelect");
 
-    results.innerHTML = "";
+    const results =
+      document.getElementById("results");
 
-    resultCount.textContent =
-      `검색 결과 ${schools.length}개`;
+    const resultCount =
+      document.getElementById("resultCount");
 
-    if (schools.length === 0) {
 
-      results.innerHTML = `
-        <div class="empty">
-          검색 결과가 없습니다.
-        </div>
-      `;
+    let searchTimer = null;
 
-      return;
+    let latestSearchNumber = 0;
+
+
+    function escapeHtml(value) {
+
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
     }
 
-    schools.forEach(school => {
 
-      const card = document.createElement("div");
+    function renderSchools(
+      schools,
+      totalCount
+    ) {
 
-      card.className = "school-card";
-
-      const schoolId =
-        encodeURIComponent(school.school_id);
-
-      card.innerHTML = `
-        <div class="school-name">
-          ${escapeHtml(school.school_name)}
-        </div>
-
-        <div class="school-meta">
-          ${escapeHtml(school.sido)}
-          ·
-          ${escapeHtml(school.support_office || "")}
-          <br>
-          ${escapeHtml(school.address || "")}
-        </div>
-
-        <div class="school-actions">
-
-          <a
-            class="school-button view-button"
-            href="result.html?school=${schoolId}"
-          >
-            배구지수 열람
-          </a>
-
-          <a
-            class="school-button survey-button"
-            href="survey.html?school=${schoolId}"
-          >
-            2026 조사 참여
-          </a>
-
-        </div>
-      `;
-
-      results.appendChild(card);
-    });
-  }
-
-  async function searchSchools() {
-
-    const keyword =
-      searchInput.value.trim();
-
-    if (keyword === "") {
-      resultCount.textContent = "";
       results.innerHTML = "";
-      return;
-    }
 
-    const currentSearchNumber =
-      ++latestSearchNumber;
+      if (totalCount > 20) {
 
-    resultCount.textContent =
-      "검색 중...";
+        resultCount.textContent =
+          `검색 결과 ${totalCount.toLocaleString()}개 · 최대 20개 표시`;
 
-    try {
+      } else {
 
-      const { data: schools, error } =
-        await supabaseClient
-          .from("schools")
-          .select(`
-            school_id,
-            school_name,
-            sido,
-            support_office,
-            address,
-            establishment,
-            status
-          `)
-          .eq("status", "운영")
-          .ilike(
-            "school_name",
-            `%${keyword}%`
-          )
-          .order("school_name")
-          .limit(20);
+        resultCount.textContent =
+          `검색 결과 ${totalCount.toLocaleString()}개`;
+      }
 
-      if (currentSearchNumber !== latestSearchNumber) {
+
+      if (schools.length === 0) {
+
+        results.innerHTML = `
+          <div class="empty">
+            검색 결과가 없습니다.
+          </div>
+        `;
+
         return;
       }
 
-      if (error) {
-        throw error;
+
+      schools.forEach(
+        school => {
+
+          const card =
+            document.createElement("div");
+
+          card.className =
+            "school-card";
+
+
+          const schoolId =
+            encodeURIComponent(
+              school.school_id
+            );
+
+
+          const region =
+            school.sido_standard ||
+            school.sido ||
+            "";
+
+
+          card.innerHTML = `
+
+            <div class="region-badge">
+              ${escapeHtml(region)}
+            </div>
+
+            <div class="school-name">
+              ${escapeHtml(
+                school.school_name
+              )}
+            </div>
+
+            <div class="school-meta">
+
+              ${escapeHtml(
+                school.support_office || ""
+              )}
+
+              <br>
+
+              ${escapeHtml(
+                school.address || ""
+              )}
+
+            </div>
+
+
+            <div class="school-actions">
+
+              <a
+                class="
+                  school-button
+                  view-button
+                "
+                href="
+                  result.html?school=${schoolId}
+                "
+              >
+                배구지수 열람
+              </a>
+
+
+              <a
+                class="
+                  school-button
+                  survey-button
+                "
+                href="
+                  survey.html?school=${schoolId}
+                "
+              >
+                2026 조사 참여
+              </a>
+
+            </div>
+          `;
+
+
+          results.appendChild(card);
+        }
+      );
+    }
+
+
+    async function searchSchools() {
+
+      const keyword =
+        searchInput.value.trim();
+
+      const region =
+        regionSelect.value;
+
+
+      if (
+        keyword === "" &&
+        region === ""
+      ) {
+
+        resultCount.textContent = "";
+
+        results.innerHTML = "";
+
+        return;
       }
 
-      renderSchools(schools || []);
 
-    } catch (error) {
+      const currentSearchNumber =
+        ++latestSearchNumber;
 
-      console.error(
-        "학교 검색 오류:",
-        error
-      );
 
-      resultCount.textContent = "";
+      resultCount.textContent =
+        "검색 중...";
 
-      results.innerHTML = `
-        <div class="empty">
-          학교 검색 중 오류가 발생했습니다.
-        </div>
-      `;
+
+      try {
+
+        let query =
+          supabaseClient
+            .from("schools")
+            .select(
+              `
+                school_id,
+                school_name,
+                sido,
+                sido_standard,
+                support_office,
+                address,
+                establishment,
+                status
+              `,
+              {
+                count: "exact"
+              }
+            )
+            .eq(
+              "status",
+              "운영"
+            );
+
+
+        if (keyword !== "") {
+
+          query =
+            query.ilike(
+              "school_name",
+              `%${keyword}%`
+            );
+        }
+
+
+        if (region !== "") {
+
+          query =
+            query.eq(
+              "sido_standard",
+              region
+            );
+        }
+
+
+        const {
+          data: schools,
+          count,
+          error
+        } =
+          await query
+            .order(
+              "school_name"
+            )
+            .limit(20);
+
+
+        if (
+          currentSearchNumber !==
+          latestSearchNumber
+        ) {
+
+          return;
+        }
+
+
+        if (error) {
+
+          throw error;
+        }
+
+
+        renderSchools(
+          schools || [],
+          count || 0
+        );
+
+      } catch (error) {
+
+        console.error(
+          "학교 검색 오류:",
+          error
+        );
+
+
+        resultCount.textContent = "";
+
+
+        results.innerHTML = `
+          <div class="empty">
+            학교 검색 중 오류가 발생했습니다.
+          </div>
+        `;
+      }
     }
-  }
 
-  searchInput.addEventListener(
-    "input",
-    () => {
 
-      clearTimeout(searchTimer);
+    searchInput.addEventListener(
+      "input",
+      () => {
 
-      searchTimer = setTimeout(
-        searchSchools,
-        250
-      );
-    }
-  );
-</script>
+        clearTimeout(
+          searchTimer
+        );
+
+
+        searchTimer =
+          setTimeout(
+            searchSchools,
+            250
+          );
+      }
+    );
+
+
+    regionSelect.addEventListener(
+      "change",
+      searchSchools
+    );
+
+  </script>
 
 </body>
 </html>
