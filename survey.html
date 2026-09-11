@@ -190,53 +190,64 @@
     </div>
 
   </main>
-
+  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+  
   <script>
     const content = document.getElementById("content");
 
     let selectedSchool = null;
 
-    async function loadSurvey() {
+async function loadSurvey() {
 
-      const params = new URLSearchParams(window.location.search);
-      const schoolId = params.get("school");
+  const params = new URLSearchParams(window.location.search);
+  const schoolId = params.get("school");
 
-      if (!schoolId) {
-        showError("학교가 선택되지 않았습니다.");
-        return;
-      }
+  if (!schoolId) {
+    showError("학교가 선택되지 않았습니다.");
+    return;
+  }
 
-      try {
+  try {
 
-        const response = await fetch("data/schools.json");
+    const { data: school, error } = await supabaseClient
+      .from("schools")
+      .select(`
+        school_id,
+        school_name,
+        sido,
+        support_office,
+        establishment,
+        address,
+        status
+      `)
+      .eq("school_id", schoolId)
+      .single();
 
-        if (!response.ok) {
-          throw new Error("학교 데이터를 불러오지 못했습니다.");
-        }
-
-        const schools = await response.json();
-
-        selectedSchool = schools.find(
-          school => school.school_id === schoolId
-        );
-
-        if (!selectedSchool) {
-          showError("해당 학교를 찾을 수 없습니다.");
-          return;
-        }
-
-        renderSurvey();
-
-      } catch (error) {
-
-        console.error(error);
-
-        showError(
-          "학교 정보를 불러오는 중 오류가 발생했습니다."
-        );
-
-      }
+    if (error) {
+      throw error;
     }
+
+    if (!school) {
+      showError("해당 학교를 찾을 수 없습니다.");
+      return;
+    }
+
+    selectedSchool = school;
+
+    renderSurvey();
+
+  } catch (error) {
+
+    console.error("Supabase 학교 조회 오류:", error);
+
+    showError(
+      "학교 정보를 불러오는 중 오류가 발생했습니다."
+    );
+
+  }
+}
 
     function renderSurvey() {
 
