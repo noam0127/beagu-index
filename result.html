@@ -170,15 +170,17 @@
         await supabaseClient
           .from("schools")
           .select(`
-            school_id,
-school_name,
-sido,
-sido_standard,
-support_office,
-${escapeHtml(school.sido_standard || school.sido)}
-            address,
-            homepage,
-            status
+.select(`
+  school_id,
+  school_name,
+  sido,
+  sido_standard,
+  support_office,
+  establishment,
+  address,
+  homepage,
+  status
+`)
           `)
           .eq("school_id", schoolId)
           .single();
@@ -219,7 +221,7 @@ ${escapeHtml(school.sido_standard || school.sido)}
       </h1>
 
       <div class="school-location">
-        ${escapeHtml(school.sido)}
+${escapeHtml(school.sido_standard || school.sido)}
         ·
         ${escapeHtml(school.support_office || "")}
       </div>
