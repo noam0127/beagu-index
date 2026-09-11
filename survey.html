@@ -328,9 +328,9 @@ async function loadSurvey() {
             테스트 응답 제출
           </button>
 
-          <div class="notice">
-            현재 테스트 단계이므로 응답은 서버나 데이터베이스에 저장되지 않습니다.
-          </div>
+        <div class="notice">
+  현재 테스트 단계입니다. 제출한 응답은 테스트 데이터로 데이터베이스에 저장됩니다.
+</div>
 
         </form>
 
@@ -371,27 +371,79 @@ async function loadSurvey() {
       `).join("");
     }
 
-    function submitSurvey(event) {
+    async function submitSurvey(event) {
 
-      event.preventDefault();
+  event.preventDefault();
 
-      const formData =
-        new FormData(event.target);
+  const form = event.target;
+  const submitButton = form.querySelector(".submit-button");
 
-      const testResponse = {
-        school_id: selectedSchool.school_id,
-        q1: formData.get("q1"),
-        q2: formData.get("q2"),
-        q3: formData.get("q3")
-      };
+  submitButton.disabled = true;
+  submitButton.textContent = "저장 중...";
 
-      console.log(
-        "테스트 응답:",
-        testResponse
-      );
+  const formData = new FormData(form);
 
-      showComplete();
+  const submissionId = crypto.randomUUID();
+
+  const answers = [
+    {
+      submission_id: submissionId,
+      question_key: "q1",
+      answer_value: Number(formData.get("q1"))
+    },
+    {
+      submission_id: submissionId,
+      question_key: "q2",
+      answer_value: Number(formData.get("q2"))
+    },
+    {
+      submission_id: submissionId,
+      question_key: "q3",
+      answer_value: Number(formData.get("q3"))
     }
+  ];
+
+  try {
+
+    // 1. 설문 제출 1건 저장
+    const { error: submissionError } = await supabaseClient
+      .from("survey_submissions")
+      .insert({
+        id: submissionId,
+        school_id: selectedSchool.school_id,
+        survey_year: 2026,
+        source: "web"
+      });
+
+    if (submissionError) {
+      throw submissionError;
+    }
+
+    // 2. 문항별 답변 저장
+    const { error: answersError } = await supabaseClient
+      .from("survey_answers")
+      .insert(answers);
+
+    if (answersError) {
+      throw answersError;
+    }
+
+    console.log("Supabase 저장 성공:", submissionId);
+
+    showComplete();
+
+  } catch (error) {
+
+    console.error("설문 저장 오류:", error);
+
+    alert(
+      "응답 저장 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요."
+    );
+
+    submitButton.disabled = false;
+    submitButton.textContent = "테스트 응답 제출";
+  }
+}
 
     function showComplete() {
 
@@ -407,7 +459,7 @@ async function loadSurvey() {
           </p>
 
           <p>
-            현재 단계에서는 실제 데이터베이스에 저장하지 않습니다.
+  테스트 응답이 데이터베이스에 정상적으로 저장되었습니다.
           </p>
 
           <a
