@@ -166,24 +166,22 @@
 
     try {
 
-      const { data: school, error } =
-        await supabaseClient
-          .from("schools")
-          .select(`
-.select(`
-  school_id,
-  school_name,
-  sido,
-  sido_standard,
-  support_office,
-  establishment,
-  address,
-  homepage,
-  status
-`)
-          `)
-          .eq("school_id", schoolId)
-          .single();
+    const { data: school, error } =
+  await supabaseClient
+    .from("schools")
+    .select(`
+      school_id,
+      school_name,
+      sido,
+      sido_standard,
+      support_office,
+      establishment,
+      address,
+      homepage,
+      status
+    `)
+    .eq("school_id", schoolId)
+    .single();
 
       if (error) {
         throw error;
