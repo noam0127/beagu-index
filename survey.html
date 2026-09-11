@@ -215,9 +215,10 @@ async function loadSurvey() {
       .from("schools")
       .select(`
         school_id,
-        school_name,
-        sido,
-        support_office,
+school_name,
+sido,
+sido_standard,
+support_office,
         establishment,
         address,
         status
@@ -271,8 +272,8 @@ async function loadSurvey() {
           </div>
 
           <div class="school-meta">
-            ${selectedSchool.sido} ·
-            ${selectedSchool.support_office}
+${selectedSchool.sido_standard || selectedSchool.sido} ·
+${selectedSchool.support_office}
           </div>
 
         </div>
