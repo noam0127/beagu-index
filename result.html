@@ -171,10 +171,11 @@
           .from("schools")
           .select(`
             school_id,
-            school_name,
-            sido,
-            support_office,
-            establishment,
+school_name,
+sido,
+sido_standard,
+support_office,
+${escapeHtml(school.sido_standard || school.sido)}
             address,
             homepage,
             status
