@@ -249,7 +249,10 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       if (region) query=query.eq('sido_standard',region);
       if (office) query=query.eq('support_office',office);
       const from=page*PAGE_SIZE;
-      const {data,count,error}=await query.order('school_name').range(from,from+PAGE_SIZE-1);
+      const {data,count,error}=await query
+  .order('address', {ascending:true, nullsFirst:false})
+  .order('school_name', {ascending:true})
+  .range(from, from+PAGE_SIZE-1);
       if (token!==searchSerial) return;
       if (error) throw error;
       await percentileReady;
