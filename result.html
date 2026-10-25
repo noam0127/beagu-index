@@ -121,10 +121,44 @@
       text-align: center;
       color: #777;
     }
+  
+    .participation-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      padding: 12px 16px;
+      background: #f7f8fa;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .participation-link {
+      display: block;
+      max-width: 552px;
+      margin: 0 auto;
+      padding: 14px 12px;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #fff;
+      text-align: center;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.5;
+      word-break: keep-all;
+    }
+    .participation-link:hover { background: #1d4ed8; }
+    .participation-link:focus-visible {
+      outline: 3px solid #111;
+      outline-offset: 3px;
+    }
   </style>
 </head>
 
 <body>
+
+  <header class="participation-bar">
+    <a class="participation-link" href="https://indischool.com/boards/together/37612156" target="_blank" rel="noopener noreferrer">배구지수 조사하고 참여코드 획득</a>
+  </header>
+
 
   <main class="container">
 
@@ -262,9 +296,9 @@ ${escapeHtml(school.sido_standard || school.sido)}
 
         <a
           class="button primary"
-          href="survey.html?school=${schoolId}"
+          href="https://open.kakao.com/o/gJyJ14Si" target="_blank" rel="noopener noreferrer"
         >
-          2026 조사 참여하기
+          실시간 정보교류
         </a>
 
       </section>
@@ -306,5 +340,7 @@ ${escapeHtml(school.sido_standard || school.sido)}
   loadSchool();
 </script>
 
+<script src="js/visit-stats.js"></script>
 </body>
 </html>
+
