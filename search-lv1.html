@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lv1 학교 검색 | 배구지수</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f7f8fa;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+[hidden]{display:none!important}
+.gate{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px}
+.card{width:100%;max-width:420px;padding:32px 24px;border-radius:22px;background:white;box-shadow:0 8px 32px #1720330d}
+.badge{display:inline-block;background:#eef2ff;color:#2563eb;border-radius:100px;padding:6px 12px;font-weight:700}
+h1{font-size:26px;margin:18px 0 10px}p{line-height:1.65;color:#64748b}label{display:block;font-weight:600;margin:24px 0 8px}
+input,button{width:100%;font:inherit;border-radius:12px;padding:15px}
+input{border:1px solid #cbd5e1;font-size:16px}button{margin-top:14px;border:0;background:#2563eb;color:white;font-weight:700;cursor:pointer}
+input:focus-visible,button:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+.error{color:#b91c1c;min-height:1.6em;font-size:14px;margin-bottom:0}
+.home{display:block;text-align:center;margin-top:18px;color:#475569}
+iframe{display:block;border:0;width:100%;height:100vh;height:100dvh;background:#f7f8fa}
+</style>
+</head>
+<body>
+<main class="gate" id="gate">
+<section class="card" aria-labelledby="heading">
+<span class="badge">Lv1</span>
+<h1 id="heading">배구지수 학교 검색</h1>
+<p>안내받은 Lv1 비밀번호를 입력해주세요.</p>
+<form id="access-form">
+<label for="password">진입 비밀번호</label>
+<input id="password" name="password" type="password" inputmode="numeric" autocomplete="off" required aria-describedby="error">
+<button type="submit">학교 검색 시작하기</button>
+<p id="error" class="error" role="alert" aria-live="polite"></p>
+</form>
+<a class="home" href="index.html">배구지수 대문으로</a>
+<noscript><p>검색화면을 열려면 브라우저에서 자바스크립트를 허용해주세요.</p></noscript>
+</section>
+</main>
+<iframe id="search-screen" title="Lv1 배구지수 학교 검색" hidden></iframe>
+<script>
+"use strict";
+// 공통 비밀번호를 이용한 화면 진입 안내입니다.
+// 서버 인증이나 원본 search.html 및 공개 데이터에 대한 접근제어가 아닙니다.
+const form=document.getElementById("access-form");
+const input=document.getElementById("password");
+form.addEventListener("submit",function(event){
+ event.preventDefault();
+ if(input.value.trim()!=="0904"){
+  document.getElementById("error").textContent="비밀번호가 일치하지 않습니다. 다시 입력해주세요.";
+  input.setAttribute("aria-invalid","true");input.focus();input.select();return;
+ }
+ input.value="";input.removeAttribute("aria-invalid");
+ const screen=document.getElementById("search-screen");
+ screen.src="search.html";
+ document.getElementById("gate").hidden=true;
+ screen.hidden=false;screen.focus();
+});
+</script>
+</body>
+</html>
+
