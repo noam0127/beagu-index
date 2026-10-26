@@ -103,6 +103,19 @@
       outline: 3px solid #111;
       outline-offset: 3px;
     }
+
+    .reading-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .reading-card { border: 1px solid #e5e7eb; min-width: 0; }
+    .reading-card-basic { background: #eff6ff; border: 2px solid #2563eb; padding: 27px 21px; }
+    .reading-card h2 { display: flex; align-items: center; gap: 10px; font-size: 21px; line-height: 1.4; }
+    .level-icon { width: 25px; height: 25px; flex: 0 0 25px; color: #2563eb; }
+    .reading-card .level-description { font-size: 14px; margin: 0 0 18px; overflow-wrap: anywhere; }
+    .level-description a { color: #1d4ed8; text-decoration: underline; text-underline-offset: 3px; }
+    .reading-button { display: block; width: 100%; padding: 16px; border-radius: 12px; background: #eef2ff; color: #1d4ed8; font-size: 17px; font-weight: 700; line-height: 1.5; text-align: center; text-decoration: none; }
+    .reading-card-basic .reading-button { background: #2563eb; color: #fff; }
+    .reading-button:hover { background: #dbeafe; }
+    .reading-card-basic .reading-button:hover { background: #1d4ed8; }
+    .reading-button:focus-visible, .level-description a:focus-visible { outline: 3px solid #111; outline-offset: 3px; }
   </style>
 </head>
 
@@ -125,17 +138,23 @@
       전국 초등교사 학교정보 공동조사<br>선생님의 경험이 다른 선생님의 선택을 돕습니다.
     </p>
 
-    <section class="card">
-      <h2>학교 배구지수 찾기</h2>
-
-      <p>
-        학교를 검색하여 공개된 배구지수 정보를 확인하세요.
-      </p>
-
-      <button type="button" onclick="window.location.href='search.html'">
-        배구지수 열람하기
-      </button>
-    </section>
+    <div class="reading-cards" aria-label="레벨별 배구지수 열람">
+      <section class="card reading-card reading-card-basic" aria-labelledby="level-0-title">
+        <h2 id="level-0-title"><svg class="level-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 11V7a5 5 0 0 1 9.6-2"/><rect x="4" y="11" width="16" height="11" rx="2"/><path d="M12 15v3"/></svg><span>Lv.0 기본 열람</span></h2>
+        <p class="level-description">누구나 이용 가능 · 참여코드 불필요</p>
+        <a class="reading-button" href="search.html">바로 열람하기</a>
+      </section>
+      <section class="card reading-card" aria-labelledby="level-1-title">
+        <h2 id="level-1-title"><svg class="level-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="11" width="16" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4M12 15v3"/></svg><span>Lv.1 참여자 열람</span></h2>
+        <p class="level-description"><a href="https://indischool.com/boards/together/37612156" target="_blank" rel="noopener noreferrer">조사참여시</a> 참여코드 발급</p>
+        <a class="reading-button" href="search-lv1.html">Lv.1 열람하기</a>
+      </section>
+      <section class="card reading-card" aria-labelledby="level-2-title">
+        <h2 id="level-2-title"><svg class="level-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 2 3 6v6c0 5 9 10 9 10s9-5 9-10V6Z"/><path d="m8 12 3 3 5-6"/></svg><span>Lv.2 교사 인증 열람</span></h2>
+        <p class="level-description"><a href="https://cafe.naver.com/bluey9t7i" target="_blank" rel="noopener noreferrer">네이버카페</a>에서 참여코드 발급</p>
+        <a class="reading-button" href="search-lv2.html">Lv.2 열람하기</a>
+      </section>
+    </div>
 
     <section class="card" style="margin-top:20px" aria-label="방문 통계">
       <h2>함께 찾아온 선생님들</h2>
@@ -152,4 +171,5 @@
 <script src="js/visit-stats.js"></script>
 </body>
 </html>
+
 
