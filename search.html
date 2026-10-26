@@ -36,7 +36,8 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 .percentile-cell{padding:12px 4px;background:#f1f5f9;border-radius:10px;text-align:center}
 .percentile-year{display:block;font-size:12px;color:#64748b;margin-bottom:6px}
 .percentile-value{font-size:16px;font-weight:700;color:#1e40af}
-.percentile-note{font-size:12px;color:#64748b;line-height:1.6;margin:6px 0}
+.percentile-notes{padding-left:20px}
+    .percentile-note{font-size:12px;color:#64748b;line-height:1.6;margin:6px 0}
 .pager{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:20px 0 30px}
 .pager button{background:#fff;color:#1d4ed8;border:1px solid #cbd5e1;border-radius:10px;padding:10px 14px;font-size:14px;cursor:pointer}
 .pager button:disabled{opacity:.35;cursor:default}.pager span{font-size:13px;color:#64748b;white-space:nowrap}
@@ -197,7 +198,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     }).join('');
     const line=row && row.percentiles.some(v=>typeof v==='number') && typeof percentileChart==='function'
       ? percentileChart(row.percentiles) : '';
-    return `<section aria-label="연도별 배구지수 백분위"><div class="percentile-note">연도별 배구지수 백분위</div><div class="percentile-grid">${cells}</div>${line}<p class="percentile-note">출처: 2025 배구지수 편집본 · 연도별 문항과 참여 학교가 달라 단순 증감 비교에 유의하세요.</p></section>`;
+    return `<section aria-label="연도별 배구지수 백분위"><div class="percentile-note">연도별 배구지수 백분위</div><div class="percentile-grid">${cells}</div>${line}<p class="percentile-note"><ul class="percentile-note percentile-notes"><li>연도별 문항 및 참여인원이 달라 자료 분석에 참고해주세요.</li><li>백분위 90%은 전국 학교의 약 90%보다 높은 위치라는 뜻입니다.</li></ul></p></section>`;
   }
 
   function renderSchools(schools,total) {
@@ -277,3 +278,4 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 <script src="js/visit-stats.js"></script>
 </body>
 </html>
+
