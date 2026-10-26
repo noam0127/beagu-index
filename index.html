@@ -116,6 +116,28 @@
     .reading-button:hover { background: #dbeafe; }
     .reading-card-basic .reading-button:hover { background: #1d4ed8; }
     .reading-button:focus-visible, .level-description a:focus-visible { outline: 3px solid #111; outline-offset: 3px; }
+
+    .survey-totals {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 0 0 20px;
+      padding: 16px 12px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      text-align: center;
+    }
+    .survey-totals > div { min-width: 0; }
+    .survey-totals dt { font-size: 13px; color: #666; margin-bottom: 6px; }
+    .survey-totals dd { margin: 0; color: #2563eb; font-weight: 700; line-height: 1.3; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .survey-total-number { font-size: clamp(22px, 6vw, 28px); }
+    .survey-total-unit { font-size: 13px; margin-left: 3px; }
+    @media (max-width: 600px) {
+      .container { padding-top: 28px; }
+      .logo { margin-bottom: 22px; }
+      .description { margin-bottom: 22px; }
+    }
   </style>
 </head>
 
@@ -137,6 +159,18 @@
     <p class="description">
       전국 초등교사 학교정보 공동조사<br>선생님의 경험이 다른 선생님의 선택을 돕습니다.
     </p>
+
+    <!-- 고정 누적 조사 통계: 수치 변경 시 아래 숫자만 수정합니다. 방문 통계와 별개입니다. -->
+    <dl class="survey-totals" aria-label="누적 조사 통계">
+      <div>
+        <dt>누적 참여자</dt>
+        <dd><span class="survey-total-number">18,797</span><span class="survey-total-unit">명</span></dd>
+      </div>
+      <div>
+        <dt>누적 참여교</dt>
+        <dd><span class="survey-total-number">4,177</span><span class="survey-total-unit">개교</span></dd>
+      </div>
+    </dl>
 
     <div class="reading-cards" aria-label="레벨별 배구지수 열람">
       <section class="card reading-card reading-card-basic" aria-labelledby="level-0-title">
@@ -171,5 +205,6 @@
 <script src="js/visit-stats.js"></script>
 </body>
 </html>
+
 
 
