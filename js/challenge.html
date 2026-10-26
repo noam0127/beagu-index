@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f8fa">
+<title>참여 인증 | 2026 배구지수 챌린지</title>
+<style>
+  :root {
+    --blue: #2563eb;
+    --blue-dark: #1d4ed8;
+    --blue-light: #eff6ff;
+    --ink: #14233e;
+    --muted: #52627c;
+    --line: #dce4ef;
+    --background: #f7f8fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+  main { max-width: 620px; margin: 0 auto; padding: 22px 18px 64px; }
+  a, button { -webkit-tap-highlight-color: transparent; }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  [hidden] { display: none !important; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .brand { color: var(--blue); font-weight: 800; font-size: 12px; letter-spacing: .06em; }
+  .backlink { color: var(--muted); text-decoration: none; font-size: 13px; }
+  .backlink:hover { color: var(--blue-dark); }
+
+  .certificate {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 28px 22px 25px;
+    text-align: center;
+    box-shadow: 0 6px 24px rgba(16, 41, 75, .05);
+  }
+  .trophy { font-size: 43px; line-height: 1.3; }
+  .certificate h1 { font-size: 26px; line-height: 1.3; letter-spacing: -1px; margin: 10px 0 5px; }
+  .subtitle { color: #63728b; font-size: 14px; }
+  .thanks { font-size: 14px; color: var(--muted); margin: 16px 0 0; }
+  .rank { background: #eef4ff; border-radius: 16px; padding: 18px 12px; margin: 20px 0; }
+  .rank-label { color: var(--muted); font-size: 13px; display: block; }
+  .rank strong { display: block; color: var(--blue-dark); font-size: clamp(31px, 8.5vw, 40px); letter-spacing: -1.4px; line-height: 1.35; margin: 4px 0; }
+  .rank-foot { color: var(--muted); font-size: 12px; }
+  .message { font-weight: 750; font-size: 18px; line-height: 1.55; margin: 12px 0 7px; }
+  .body-copy { font-size: 13px; color: var(--muted); margin: 0 auto 12px; max-width: 420px; }
+  .site-link { color: var(--blue-dark); font-weight: 650; font-size: 13px; text-decoration: none; }
+
+  .steps { margin-top: 28px; }
+  .section-title { margin: 0 0 3px; font-size: 21px; letter-spacing: -.5px; }
+  .section-subtitle { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+  .step-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 12px;
+  }
+  .step-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .step-number { display: grid; place-items: center; flex: 0 0 28px; height: 28px; background: var(--blue-light); color: var(--blue-dark); border-radius: 50%; font-size: 14px; font-weight: 800; }
+  .step-heading h3 { margin: 0; font-size: 16px; letter-spacing: -.2px; }
+  .step-card p { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+  .action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 16px;
+    border-radius: 11px;
+    text-align: center;
+    text-decoration: none;
+    font: inherit;
+    font-weight: 750;
+    font-size: 15px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    background: var(--blue);
+    color: #fff;
+  }
+  .action:hover { background: var(--blue-dark); }
+  .action:disabled { opacity: .55; cursor: wait; }
+  .action.secondary { color: var(--blue-dark); border-color: #bfcef1; background: #fff; }
+  .action.secondary:hover { background: var(--blue-light); }
+  .action.soft { background: #eef4ff; color: var(--blue-dark); border-color: #dae7ff; }
+  .action.soft:hover { background: #e1edff; }
+  #status { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+  #retry { margin-top: 10px; }
+  .small-note { color: #64748b; font-size: 12px; margin-top: 10px !important; margin-bottom: 0 !important; }
+  .copy-fallback { font-size: 12px; color: var(--muted); margin: 8px 0 0 !important; }
+  .copy-fallback a { color: var(--blue-dark); }
+
+  .footer-links { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 22px; }
+  .footer-links h2 { font-size: 16px; margin: 0 0 11px; }
+  .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .footer-link { color: var(--muted); text-align: center; font-size: 13px; border: 1px solid var(--line); background: #fff; padding: 13px 10px; text-decoration: none; border-radius: 11px; font-weight: 650; }
+  .footer-link:hover { color: var(--blue-dark); border-color: #a8bfef; }
+  @media (max-width: 370px) {
+    main { padding: 18px 14px 54px; }
+    .certificate { padding: 24px 15px; }
+    .certificate h1 { font-size: 23px; }
+    .step-card { padding: 16px 14px; }
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <nav class="topbar" aria-label="페이지 탐색">
+    <span class="brand">VOLLEYBALL INDEX</span>
+    <a class="backlink" href="index.html">배구지수 홈으로 →</a>
+  </nav>
+
+  <!-- 인증서 저장 범위: 이 section 안의 내용만 이미지로 생성됩니다. -->
+  <section class="certificate" id="certificate" aria-label="2026 배구지수 참여 인증서">
+    <div class="trophy" aria-hidden="true">🏆</div>
+    <h1>2026 배구지수 챌린지</h1>
+    <div class="subtitle">전국 초등교사 학교정보 공동조사</div>
+    <p class="thanks">선생님, 참여해 주셔서 감사합니다.</p>
+    <div class="rank">
+      <span class="rank-label">2026년 챌린지 참여 순번</span>
+      <strong id="participantNo" aria-live="polite">순번 확인 중</strong>
+      <span class="rank-foot">선생님의 참여가 학교 정보망을 만듭니다.</span>
+    </div>
+    <p class="message">선생님의 경험이<br>다른 선생님의 선택을 돕습니다.</p>
+    <p class="body-copy">전국 선생님들의 경험을 모아 학교별 근무환경과 교직문화를 기록합니다.</p>
+    <a class="site-link" href="https://baeguindex.com/">baeguindex.com</a>
+  </section>
+
+  <section class="steps" aria-labelledby="steps-title">
+    <h2 class="section-title" id="steps-title">참여 인증, 이렇게 진행하세요</h2>
+    <p class="section-subtitle">아래 순서에 따라 인증하고 Lv.2 참여코드를 확인해 주세요.</p>
+
+    <section class="step-card" aria-labelledby="step-1">
+      <div class="step-heading"><span class="step-number" aria-hidden="true">1</span><h3 id="step-1">인증 이미지 저장</h3></div>
+      <p>위의 참여 인증서를 이미지로 저장합니다.</p>
+      <button class="action" id="capture" type="button" disabled>↓ 인증 이미지 저장하기</button>
+      <p id="status" role="status" aria-live="polite">참여 순번을 확인하고 있습니다.</p>
+      <button class="action secondary" id="retry" type="button" hidden>다시 시도하기</button>
+      <a class="action secondary" id="imageFallback" href="#" target="_blank" rel="noopener noreferrer" hidden>이미지 새 탭에서 보기</a>
+    </section>
+
+    <section class="step-card" aria-labelledby="step-2">
+      <div class="step-heading"><span class="step-number" aria-hidden="true">2</span><h3 id="step-2">쫑알쫑알에 참여 인증</h3></div>
+      <p>저장한 인증 이미지를 첨부하고 참여 사실을 공유합니다.</p>
+      <a class="action secondary" id="loungeLink" href="https://indischool.com/tweets/channels/lounge" target="_blank" rel="noopener noreferrer">쫑알쫑알에 인증하기 ↗</a>
+      <p class="small-note">이동 시 배구지수 홈페이지 주소 복사를 시도합니다. 인증 게시글은 직접 작성해야 합니다.</p>
+      <p class="copy-fallback" id="copyFallback" hidden>주소 복사가 차단되었습니다. <a href="https://baeguindex.com/">baeguindex.com</a>을 복사해 주세요.</p>
+    </section>
+
+    <section class="step-card" aria-labelledby="step-3">
+      <div class="step-heading"><span class="step-number" aria-hidden="true">3</span><h3 id="step-3">Lv.2 참여코드 확인</h3></div>
+      <p>네이버카페에서 레벨업을 요청하고 참여코드 확인합니다.</p>
+      <a class="action soft" href="https://cafe.naver.com/bluey9t7i" target="_blank" rel="noopener noreferrer">Lv.2 참여코드 받기 ↗</a>
+      <p class="small-note">네이버카페의 레벨업 게시판에서 요청 및 안내를 확인해 주세요.</p>
+    </section>
+  </section>
+
+  <section class="footer-links" aria-labelledby="more-title">
+    <h2 id="more-title">배구지수 정보망 더 알아보기</h2>
+    <div class="footer-grid">
+      <a class="footer-link" href="https://open.kakao.com/o/gJyJ14Si" target="_blank" rel="noopener noreferrer">학교 정보 실시간 질문 ↗</a>
+      <a class="footer-link" href="index.html">배구지수 홈으로 →</a>
+    </div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/visit-stats.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="js/challenge.js"></script>
+</body>
+</html>
