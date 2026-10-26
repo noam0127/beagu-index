@@ -1,96 +1,97 @@
 (() => {
-  const status = document.getElementById('status');
-  const capture = document.getElementById('capture');
-  const loungeFallback = document.getElementById('loungeFallback');
-  const copyFallback = document.getElementById('copyFallback');
+  'use strict';
+  const byId = id => document.getElementById(id);
+  const status = byId('status'), capture = byId('capture'), retry = byId('retry');
+  const imageFallback = byId('imageFallback'), loungeLink = byId('loungeLink');
+  const copyFallback = byId('copyFallback');
   const home = 'https://baeguindex.com/';
-  const lounge = 'https://indischool.com/tweets/channels/lounge';
-  let imageUrl = null;
+  let imageUrl = null, participant = null, busy = false;
+  const deadline = (promise, ms, message) => {
+    let timer;
+    return Promise.race([Promise.resolve(promise), new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    })]).finally(() => clearTimeout(timer));
+  };
 
-  // The image is prepared before the button is enabled so download,
-  // clipboard, and new tab can all start within the same user gesture.
-  async function prepareImage() {
-    if (typeof html2canvas !== 'function') {
-      throw new Error('이미지 생성 기능을 불러오지 못했습니다.');
-    }
-    await document.fonts.ready;
-    const canvas = await html2canvas(document.getElementById('certificate'), {
-      scale: 2,
-      backgroundColor: '#ffffff',
-      logging: false
-    });
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-    if (!blob) throw new Error('인증 이미지를 생성하지 못했습니다.');
-    if (imageUrl) URL.revokeObjectURL(imageUrl);
-    imageUrl = URL.createObjectURL(blob);
-    capture.disabled = false;
-    status.textContent = '인증 이미지가 준비됐습니다. 버튼을 누르면 저장·링크 복사·라운지 열기를 진행합니다.';
-  }
-
-  async function join() {
+  async function prepare() {
+    if (busy) return;
+    busy = true;
+    capture.disabled = true;
+    retry.hidden = true;
+    retry.disabled = true;
     try {
-      if (!window.beaguVisitor) {
-        throw new Error('브라우저 저장 공간을 허용한 뒤 다시 접속해 주세요.');
+      if (!window.beaguVisitor) throw new Error('STORAGE_UNAVAILABLE');
+      if (participant === null) {
+        status.textContent = '참여 순번을 확인하고 있습니다.';
+        const {data, error} = await deadline(supabaseClient.rpc('beagu_join_challenge', {
+          p_visitor: window.beaguVisitor
+        }), 15000, '연결이 지연되고 있습니다. 다시 시도해주세요.');
+        const n = Number(data);
+        if (error || !Number.isSafeInteger(n) || n < 1) throw new Error('참여 순번을 확인하지 못했습니다. 다시 시도해주세요.');
+        participant = n;
+        byId('participantNo').textContent = n.toLocaleString('ko-KR') + '번째';
       }
-      const { data, error } = await supabaseClient.rpc('beagu_join_challenge', {
-        p_visitor: window.beaguVisitor
-      });
-      const n = Number(data);
-      if (error || !Number.isSafeInteger(n) || n < 1) {
-        throw new Error('참여 기록 연결을 확인하지 못했습니다. 다시 접속해 주세요.');
-      }
-      document.getElementById('participantNo').textContent = n.toLocaleString('ko-KR') + '번째';
-      status.textContent = '인증 이미지를 준비하는 중입니다.';
-      await prepareImage();
-    } catch (e) {
-      capture.disabled = true;
-      status.textContent = e.message;
+      status.textContent = '인증 이미지를 준비하고 있습니다.';
+      if (typeof html2canvas !== 'function') throw new Error('이미지 기능을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
+      if (document.fonts) await deadline(document.fonts.ready, 10000, '글꼴 로딩이 지연되고 있습니다. 다시 시도해주세요.');
+      const canvas = await deadline(html2canvas(byId('certificate'), {
+        scale: 2, backgroundColor: '#ffffff', logging: false
+      }), 20000, '이미지 생성이 지연되고 있습니다. 다시 시도해주세요.');
+      const blob = await deadline(new Promise(resolve => canvas.toBlob(resolve, 'image/png')), 10000, '이미지 변환에 실패했습니다. 다시 시도해주세요.');
+      if (!blob) throw new Error('이미지를 생성하지 못했습니다. 다시 시도해주세요.');
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+      imageUrl = URL.createObjectURL(blob);
+      imageFallback.href = imageUrl;
+      imageFallback.hidden = false;
+      capture.disabled = false;
+      status.textContent = '인증 이미지가 준비되었습니다. 저장한 뒤 2단계에서 참여 인증을 진행해주세요.';
+    } catch (error) {
+      status.textContent = error.message === 'STORAGE_UNAVAILABLE'
+        ? '브라우저 저장 공간을 허용한 뒤 페이지를 새로고침해주세요.'
+        : error.message || '처리하지 못했습니다. 다시 시도해주세요.';
+      retry.hidden = false;
+    } finally {
+      busy = false;
+      retry.disabled = false;
     }
   }
 
   capture.addEventListener('click', () => {
-    if (!imageUrl) {
-      status.textContent = '아직 인증 이미지가 준비되지 않았습니다.';
-      return;
-    }
-
-    // Avoid awaits here: mobile browsers frequently block downloads/popups
-    // when the original user activation has already expired.
-    const downloadLink = document.createElement('a');
-    downloadLink.href = imageUrl;
-    downloadLink.download = '2026-배구지수-챌린지.png';
-    downloadLink.style.display = 'none';
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-
-    let copied;
+    if (!imageUrl) return;
     try {
-      copied = navigator.clipboard?.writeText
-        ? navigator.clipboard.writeText(home).then(() => true, () => false)
-        : Promise.resolve(false);
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = '2026-배구지수-챌린지.png';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      status.textContent = '이미지 저장을 요청했습니다. 저장되지 않으면 아래에서 이미지를 새 탭으로 열어 저장해주세요.';
     } catch (_) {
-      copied = Promise.resolve(false);
+      status.textContent = '아래의 이미지 새 탭에서 보기를 눌러 직접 저장해주세요.';
     }
-
-    let tab = null;
-    try {
-      tab = window.open(lounge, '_blank');
-      if (tab) tab.opener = null;
-    } catch (_) { /* Show the fallback instead. */ }
-    loungeFallback.hidden = Boolean(tab);
-    status.textContent = '인증 이미지 다운로드를 요청했습니다. 다운로드 폴더를 확인하세요.';
-
-    copied.then(ok => {
-      copyFallback.hidden = ok;
-      status.textContent = ok
-        ? '인증 이미지 저장을 요청했고 대문 링크를 복사했습니다. 라운지에서 인증해 주세요.'
-        : '이미지 저장을 요청했습니다. 대문 링크 자동 복사가 차단되어 직접 복사해 주세요.';
-    });
+    imageFallback.hidden = false;
   });
 
-  window.addEventListener('pagehide', () => {
-    if (imageUrl) URL.revokeObjectURL(imageUrl);
-  }, { once: true });
-  join();
+  loungeLink.addEventListener('click', () => {
+    // 링크의 기본 새 탭 이동은 유지하며, 같은 클릭 안에서 복사를 요청합니다.
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) {
+        copyFallback.hidden = false;
+        return;
+      }
+      deadline(navigator.clipboard.writeText(home), 5000, '복사 시간 초과')
+        .then(() => {
+          copyFallback.hidden = true;
+          status.textContent = '홈페이지 주소를 복사했습니다. 쫑알쫑알 글에 이미지와 함께 붙여넣어주세요.';
+        }).catch(() => { copyFallback.hidden = false; });
+    } catch (_) { copyFallback.hidden = false; }
+  });
+  retry.addEventListener('click', prepare);
+  // 뒤로가기로 복원되는 페이지에서는 이미지 URL을 유지합니다.
+  window.addEventListener('pagehide', event => {
+    if (!event.persisted && imageUrl) URL.revokeObjectURL(imageUrl);
+  });
+  prepare();
 })();
+
