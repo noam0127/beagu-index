@@ -1,74 +1,26 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-beagu-level="1">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lv1 학교 검색 | 배구지수</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#f7f8fa;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
-[hidden]{display:none!important}
-.gate{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px}
-.card{width:100%;max-width:420px;padding:32px 24px;border-radius:22px;background:white;box-shadow:0 8px 32px #1720330d}
-.badge{display:inline-block;background:#eef2ff;color:#2563eb;border-radius:100px;padding:6px 12px;font-weight:700}
-h1{font-size:26px;margin:18px 0 10px}p{line-height:1.65;color:#64748b}label{display:block;font-weight:600;margin:24px 0 8px}
-input,button{width:100%;font:inherit;border-radius:12px;padding:15px}
-input{border:1px solid #cbd5e1;font-size:16px}button{margin-top:14px;border:0;background:#2563eb;color:white;font-weight:700;cursor:pointer}
-input:focus-visible,button:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
-.error{color:#b91c1c;min-height:1.6em;font-size:14px;margin-bottom:0}
-.home{display:block;text-align:center;margin-top:18px;color:#475569}
-iframe{display:block;border:0;width:100%;height:100vh;height:100dvh;background:#f7f8fa}
-</style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light"><title>Lv.1 참여자 학교 검색 | 배구지수</title>
+<link rel="stylesheet" href="css/level-search.css">
 </head>
 <body>
-<main class="gate" id="gate">
-<section class="card" aria-labelledby="heading">
-<span class="badge">Lv1</span>
-<h1 id="heading">배구지수 학교 검색</h1>
-<p>안내받은 Lv1 비밀번호를 입력해주세요.</p>
-<form id="access-form">
-<label for="password">진입 비밀번호</label>
-<input id="password" name="password" type="password" inputmode="numeric" autocomplete="off" required aria-describedby="error">
-<button type="submit">학교 검색 시작하기</button>
-<p id="error" class="error" role="alert" aria-live="polite"></p>
-</form>
-<a class="home" href="index.html">배구지수 대문으로</a>
-<noscript><p>검색화면을 열려면 브라우저에서 자바스크립트를 허용해주세요.</p></noscript>
+<header class="participation-bar"><a class="participation-link" href="https://cafe.naver.com/bluey9t7i" target="_blank" rel="noopener noreferrer">Lv.2 교사 인증 신청 · 네이버카페</a></header>
+<main class="container">
+<nav class="topbar"><a class="back" href="index.html" aria-label="대문으로 돌아가기">←</a><a class="logo" href="index.html">VOLLEYBALL INDEX</a><span class="current-level">Lv.1</span></nav>
+<section class="auth-card" id="loginPanel" aria-labelledby="loginTitle"><div class="tier-label">PARTICIPANT ACCESS · LEVEL 1</div><h1 id="loginTitle">참여자 열람</h1><p class="muted">조사 참여 후 안내받은 참여코드를 입력하세요. 서버 인증 후 학교 검색이 열립니다.</p>
+<form id="loginForm"><label class="field-label" for="levelCode">참여코드</label><input class="field" id="levelCode" type="password" autocomplete="off" minlength="8" maxlength="120" required placeholder="발급받은 코드를 입력하세요"><button class="primary-button" id="loginButton" type="submit">Lv.1 학교 검색 시작</button><p id="loginMessage" class="feedback" role="alert" aria-live="polite"></p></form>
+<p class="hint">참여코드는 브라우저에 저장되지 않으며, 승인된 열람자료만 제공됩니다.</p></section>
+<section id="searchPanel" hidden aria-labelledby="searchTitle">
+  <div class="section-kicker">LEVEL 1 · 참여자 전용</div><h1 id="searchTitle">학교를 찾아보세요</h1><p class="muted">기본정보와 과거 공개기록에 더해, 검수·승인된 Lv.1 통계를 열람합니다.</p>
+  <div class="status-row"><span class="tier-pill">Lv.1 인증됨</span><button class="text-button" type="button" id="logoutButton">로그아웃</button></div>
+  <div class="tabs" role="tablist" aria-label="학교 찾기 방법"><button type="button" class="tab" id="schoolTab" role="tab" aria-selected="true" aria-controls="schoolPanel">학교별 찾기</button><button type="button" class="tab" id="regionTab" role="tab" aria-selected="false" aria-controls="regionPanel">지역 찾기</button></div>
+  <section id="schoolPanel" role="tabpanel" aria-labelledby="schoolTab"><label for="searchInput" class="field-label">학교명</label><input class="field" type="search" id="searchInput" placeholder="예: 서울개원초등학교, 개원초" autocomplete="off"></section>
+  <section id="regionPanel" role="tabpanel" aria-labelledby="regionTab" hidden><div class="field-group"><label for="regionSelect" class="field-label">1. 시도</label><select id="regionSelect" class="field"><option value="">17개 시도 선택</option><option>서울</option><option>부산</option><option>대구</option><option>인천</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>경기</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option></select></div><div class="field-group"><label for="officeSelect" class="field-label">2. 교육지원청</label><select id="officeSelect" class="field" disabled><option value="">시도를 먼저 선택하세요</option></select></div></section>
+  <div id="resultCount" class="result-count" aria-live="polite"></div><div id="results" class="results"></div><div class="pager" id="pager" hidden><button type="button" id="prevPage">이전</button><span id="pageInfo"></span><button type="button" id="nextPage">다음</button></div>
+  <p class="legal-note">학교별 응답 수가 적거나 검수되지 않은 자료는 공개하지 않습니다. 서로 다른 연도는 문항과 산정 방식이 달라 직접 비교에 주의해야 합니다.</p>
 </section>
 </main>
-<iframe id="search-screen" title="Lv1 배구지수 학교 검색" hidden></iframe>
-<script>
-"use strict";
-// 공통 비밀번호를 이용한 화면 진입 안내입니다.
-// 서버 인증이나 원본 search.html 및 공개 데이터에 대한 접근제어가 아닙니다.
-const form=document.getElementById("access-form");
-const input=document.getElementById("password");
-const searchFrame=document.getElementById("search-screen");
-searchFrame.addEventListener("load",function(){
- const doc=searchFrame.contentDocument;
- if(!doc) return;
- const link=doc.querySelector(".participation-link");
- if(link){
-  link.textContent='레벨2로 레벨업하기';
-  link.href='https://cafe.naver.com/bluey9t7i';
-  link.target="_blank";
-  link.rel="noopener noreferrer";
- }
- searchFrame.style.visibility="visible";
-});
-form.addEventListener("submit",function(event){
- event.preventDefault();
- if(input.value.trim()!=="0904"){
-  document.getElementById("error").textContent="비밀번호가 일치하지 않습니다. 다시 입력해주세요.";
-  input.setAttribute("aria-invalid","true");input.focus();input.select();return;
- }
- input.value="";input.removeAttribute("aria-invalid");
- const screen=document.getElementById("search-screen");
- screen.style.visibility="hidden";
- screen.src="search.html";
- document.getElementById("gate").hidden=true;
- screen.hidden=false;screen.focus();
-});
-</script>
-</body>
-</html>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/supabase-config.js"></script><script src="js/master-percentiles-v1.2.js"></script><script src="js/level-search.js"></script><script src="js/visit-stats.js"></script>
+</body></html>
