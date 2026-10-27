@@ -4,16 +4,192 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>Lv.2 학교별 상세정보 | 배구지수</title>
-  <link rel="stylesheet" href="css/level-search.css">
+  <meta name="theme-color" content="#f7f8fa">
+  <title>Lv.2 교사 인증 열람 · 학교 검색 | 배구지수</title>
+  <style>
+/* 배구지수 Lv.1/Lv.2 검색 UI: 기존 Lv.0 search.html의 시각 규칙을 따른 공용 스타일.
+   데이터/인증 로직에는 영향을 주지 않습니다. */
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  background: #f7f8fa;
+  color: #111;
+  line-height: 1.6;
+}
+button, input, select { font: inherit; }
+a, button { -webkit-tap-highlight-color: transparent; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+/* Lv.0의 상단 조사 참여 배너 */
+.participation-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 12px 16px;
+  background: #f7f8fa;
+  border-bottom: 1px solid #e5e7eb;
+}
+.participation-link {
+  display: block;
+  max-width: 552px;
+  margin: 0 auto;
+  padding: 14px 12px;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #fff;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+.participation-link:hover { background: #1d4ed8; }
+.container { max-width: 600px; margin: 0 auto; padding: 24px; }
+.topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 40px; }
+.back { color: #111; background: none; text-decoration: none; border: 0; font-size: 24px; line-height: 1; padding: 0; }
+.logo { color: #2563eb; text-decoration: none; font-size: 15px; font-weight: 700; }
+.current-level { margin-left: auto; color: #2563eb; background: #eef2ff; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 700; }
+h1 { font-size: 32px; line-height: 1.3; letter-spacing: -1.5px; margin: 0 0 10px; }
+.description { margin: 0 0 28px; color: #666; line-height: 1.6; font-size: 16px; word-break: keep-all; }
+/* 코드 입력: Lv.0 카드와 같은 배경/곡률 */
+.auth-card { background: #fff; border-radius: 20px; padding: 28px 22px; box-shadow: 0 4px 20px rgba(0,0,0,.06); }
+.auth-card h1 { margin-bottom: 10px; }
+.tier-label { color: #2563eb; font-size: 12px; font-weight: 700; letter-spacing: .04em; margin-bottom: 10px; }
+.auth-card .description { font-size: 15px; margin-bottom: 24px; }
+.field-label { display: block; font-size: 14px; color: #475569; font-weight: 700; margin: 0 0 8px; }
+.field-group { margin-bottom: 14px; }
+.search-box, .region-select, .code-box {
+  width: 100%; min-width: 0; padding: 17px 18px; border: 1px solid #ddd;
+  border-radius: 14px; font-size: 16px; outline: none; background: #fff; color: #111;
+}
+.search-box:focus, .region-select:focus, .code-box:focus {
+  border-color: #2563eb; outline: 2px solid #bfdbfe; outline-offset: 0;
+}
+.region-select:disabled { color: #94a3b8; background-color: #f8fafc; }
+.field-hint { font-size: 13px; color: #64748b; line-height: 1.5; margin: 12px 0 0; }
+.primary-button {
+  width: 100%; margin-top: 14px; padding: 16px; background: #2563eb; border: 0;
+  border-radius: 12px; color: #fff; font-size: 17px; font-weight: 700; cursor: pointer;
+}
+.primary-button:hover { background: #1d4ed8; }
+.primary-button:disabled { opacity: .55; cursor: wait; }
+.feedback { min-height: 0; font-size: 13px; color: #b91c1c; margin: 10px 0 0; }
+.feedback:empty { display: none; }
+/* 인증된 Lv.1·Lv.2 화면: Lv.0의 탭, 검색창, 결과 디자인 */
+.auth-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -8px 0 18px; }
+.tier-pill { display: inline-block; color: #1d4ed8; background: #eef2ff; border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 700; }
+.text-button { padding: 7px 9px; border: 0; background: transparent; color: #475569; font-size: 13px; cursor: pointer; }
+.text-button:hover { color: #1d4ed8; }
+.search-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.search-tab { padding: 14px 8px; border: 1px solid #d7e0ee; background: #fff; color: #475569; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; }
+.search-tab[aria-selected="true"] { background: #2563eb; border-color: #2563eb; color: #fff; }
+.search-tab:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.result-count { font-size: 14px; color: #777; margin: 18px 2px 12px; }
+.results { display: flex; flex-direction: column; gap: 12px; }
+.school-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 3px 14px rgba(0,0,0,.05); min-width: 0; }
+.school-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; overflow-wrap: anywhere; }
+.school-meta { font-size: 14px; color: #666; line-height: 1.6; overflow-wrap: anywhere; }
+.region-badge, .region-pill { display: inline-block; margin-bottom: 10px; padding: 5px 9px; border-radius: 999px; background: #eef2ff; color: #2563eb; font-size: 12px; font-weight: 700; }
+.school-actions, .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.view-button, .exchange-button {
+  display: block; min-width: 0; width: 100%; text-align: center; text-decoration: none;
+  border-radius: 10px; padding: 13px 10px; font-size: 14px; line-height: 1.45;
+  font-weight: 700; border: 0; cursor: pointer;
+}
+.view-button { background: #2563eb; color: #fff; }
+.view-button:hover { background: #1d4ed8; }
+.exchange-button { background: #eef2ff; color: #2563eb; }
+.exchange-button:hover { background: #dbeafe; }
+.empty, .pending { padding: 40px 20px; text-align: center; color: #888; }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 20px 0 30px; }
+.pager button { background: #fff; color: #1d4ed8; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; font-size: 14px; cursor: pointer; }
+.pager button:disabled { opacity: .35; cursor: default; }
+.pager span { font-size: 13px; color: #64748b; white-space: nowrap; }
+.legal-note { color: #64748b; font-size: 12px; line-height: 1.7; margin-top: 22px; }
+/* Lv.1 승인 통계 상세: 같은 카드 톤 */
+.detail, .school-detail { margin-top: 18px; border-top: 1px solid #e5e7eb; padding-top: 18px; min-width: 0; }
+.detail h3, .school-detail h3 { margin: 18px 0 10px; font-size: 17px; }
+.detail h3:first-child { margin-top: 0; }
+.percentile-grid, .percentiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0 8px; }
+.percentile-cell, .percentiles > div { padding: 12px 4px; background: #f1f5f9; border-radius: 10px; text-align: center; min-width: 0; }
+.percentile-year, .percentiles > div > span { display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; }
+.percentile-value, .percentiles > div > b { display: block; color: #1e40af; font-size: 16px; font-weight: 700; }
+.detail-note, .year-note { font-size: 12px; color: #64748b; line-height: 1.7; margin: 10px 0; }
+.data-section { border-top: 1px solid #e5e7eb; padding-top: 14px; margin: 14px 0; }
+.data-section h4 { margin: 0 0 10px; font-size: 15px; }
+.data-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+.data-row span { color: #475569; flex: 1 1 54%; }
+.data-row strong { font-weight: 700; flex: 0 1 46%; text-align: right; overflow-wrap: anywhere; }
+/* Lv.2 원본 편집항목 상세: 연도 탭과 섹션 */
+.overview { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.overview h3 { margin: 0 0 8px; }
+.overview small { font-size: 12px; color: #64748b; }
+.year-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0; }
+.year-tabs button { background: #fff; color: #475569; border: 1px solid #d7e0ee; border-radius: 10px; font-size: 14px; padding: 11px 6px; font-weight: 700; cursor: pointer; }
+.year-tabs button[aria-selected="true"] { background: #2563eb; color: #fff; border-color: #2563eb; }
+.section-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 14px; margin: 12px 0; background: #fff; }
+.section-card h4 { font-size: 16px; margin: 0 0 10px; }
+.subheading { font-size: 13px; font-weight: 700; color: #1d4ed8; margin-top: 16px; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 11px 0; border-top: 1px solid #f1f5f9; font-size: 13px; }
+.item .name { color: #475569; overflow-wrap: anywhere; }
+.item .val { color: #111; font-weight: 700; overflow-wrap: anywhere; }
+.item .empty-value { color: #94a3b8; font-weight: 400; }
+.source-col { font-size: 11px; display: block; color: #94a3b8; margin-bottom: 3px; }
+@media (max-width: 420px) {
+  .container { padding: 24px 18px 48px; }
+  .topbar { margin-bottom: 28px; }
+  h1 { font-size: 30px; }
+  .auth-card { padding: 24px 18px; }
+  .item { grid-template-columns: 1fr; gap: 4px; }
+}
+@media (max-width: 350px) {
+  .participation-bar { padding: 10px 12px; }
+  .participation-link { font-size: 14px; }
+  .school-actions, .actions { gap: 7px; }
+  .school-card { padding: 16px; }
+  .view-button, .exchange-button { padding: 12px 6px; font-size: 13px; }
+}
+
+/* UI 개선 v20261027: 자체 포함 스타일, 모바일 안전, 코드 토글 */
+:root { --beagu-blue: #2563eb; --beagu-muted: #64748b; }
+html { color-scheme: light; }
+body { min-width: 0; }
+.container { padding-bottom: 54px; }
+.topbar { margin-bottom: 28px; }
+.auth-card { border: 1px solid #e5e7eb; }
+.auth-card h1 { font-size: 30px; }
+.auth-card .description { line-height: 1.65; }
+.access-help { margin-top: 14px; border-top: 1px solid #e5e7eb; padding-top: 14px; font-size: 13px; color: #64748b; line-height: 1.65; word-break: keep-all; }
+.access-help a { font-weight: 700; color: #1d4ed8; text-decoration: underline; text-underline-offset: 3px; }
+.access-code-wrap { position: relative; }
+.access-code-wrap .code-box { padding-right: 84px; }
+.code-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 1px solid #d7e0ee; background: #fff; border-radius: 9px; color: #475569; padding: 7px 11px; font-size: 13px; font-weight: 700; cursor: pointer; min-height: 36px; }
+.code-toggle:hover { background: #f1f5f9; }
+.level-hint { color: #64748b; font-size: 13px; margin: 0 0 16px; }
+.auth-status { margin: 0 0 18px; }
+.section-title-level { position: relative; }
+.step-foot { font-size: 12px; color: #64748b; margin-top: 12px; line-height: 1.65; }
+.school-card button { font-family: inherit; }
+.school-card .view-button, .school-card .exchange-button { display: flex; align-items: center; justify-content: center; }
+@media (max-width: 420px) { .topbar { margin-bottom: 25px; } .auth-card h1 { font-size: 29px; } }
+
+  </style>
 </head>
 <body>
   <header class="participation-bar">
     <a class="participation-link" href="https://indischool.com/boards/together/37612156" target="_blank" rel="noopener noreferrer">배구지수 조사하고 참여코드 획득</a>
   </header>
+
   <main class="container">
     <nav class="topbar" aria-label="페이지 탐색">
-      <a class="back" href="index.html" aria-label="대문으로 돌아가기">←</a>
+      <a class="back" href="index.html" aria-label="배구지수 대문으로 돌아가기">←</a>
       <a class="logo" href="index.html">VOLLEYBALL INDEX</a>
       <span class="current-level">Lv.2</span>
     </nav>
@@ -21,14 +197,17 @@
     <section class="auth-card" id="loginPanel" aria-labelledby="loginTitle">
       <div class="tier-label">LEVEL 2 · 교사 인증 열람</div>
       <h1 id="loginTitle">학교를 찾아보세요</h1>
-      <p class="description">Lv.2 참여코드를 입력하면 승인된 학교별 상세정보를 열람할 수 있습니다.</p>
+      <p class="description">네이버카페에서 발급받은 Lv.2 참여코드로 승인된 학교별 상세정보를 확인할 수 있습니다.</p>
       <form id="loginForm">
         <label class="field-label" for="levelCode">참여코드</label>
-        <input class="code-box" id="levelCode" type="password" autocomplete="off" minlength="8" maxlength="120" required placeholder="발급받은 코드를 입력하세요">
-        <button class="primary-button" id="loginButton" type="submit">Lv.2 학교 검색 시작</button>
+        <div class="access-code-wrap">
+          <input class="code-box" id="levelCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" required placeholder="발급받은 참여코드를 입력하세요">
+          <button class="code-toggle" id="toggleCode" type="button" aria-label="참여코드 표시" aria-pressed="false">표시</button>
+        </div>
+        <button class="primary-button" id="loginButton" type="submit">Lv.2 인증하고 검색하기</button>
         <p id="loginMessage" class="feedback" role="alert" aria-live="polite"></p>
       </form>
-      <p class="field-hint"><a href="https://cafe.naver.com/bluey9t7i" target="_blank" rel="noopener noreferrer">네이버카페</a>에서 레벨업을 요청하고 참여코드를 확인해 주세요.</p>
+      <div class="access-help">네이버카페에서 레벨업을 요청하고 참여코드를 확인합니다.<div><a href="https://cafe.naver.com/bluey9t7i" target="_blank" rel="noopener noreferrer">Lv.2 참여코드 받기 ↗</a></div></div>
     </section>
 
     <section id="searchPanel" hidden aria-labelledby="searchTitle">
@@ -47,15 +226,10 @@
         <input id="searchInput" class="search-box" type="search" placeholder="예: 개원초, 서울개원초등학교" autocomplete="off">
       </section>
       <section id="regionPanel" role="tabpanel" aria-labelledby="regionTab" hidden>
-        <div class="field-group">
-          <label class="field-label" for="regionSelect">1. 시도 선택</label>
-          <select id="regionSelect" class="region-select">
-            <option value="">17개 시도 중 선택</option>
-            <option>서울</option><option>부산</option><option>대구</option><option>인천</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>경기</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option>
-          </select>
+        <div class="field-group"><label class="field-label" for="regionSelect">1. 시도 선택</label>
+          <select id="regionSelect" class="region-select"><option value="">17개 시도 중 선택</option><option>서울</option><option>부산</option><option>대구</option><option>인천</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>경기</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option></select>
         </div>
-        <div class="field-group">
-          <label class="field-label" for="officeSelect">2. 교육지원청 선택</label>
+        <div class="field-group"><label class="field-label" for="officeSelect">2. 교육지원청 선택</label>
           <select id="officeSelect" class="region-select" disabled><option value="">시도를 먼저 선택하세요</option></select>
         </div>
         <p class="field-hint">시도를 선택하면 해당 지역 학교를, 교육지원청을 선택하면 관할 학교를 볼 수 있습니다.</p>
@@ -63,17 +237,30 @@
       <div id="resultCount" class="result-count" aria-live="polite"></div>
       <div id="results" class="results"></div>
       <div id="pager" class="pager" hidden>
-        <button id="prevPage" type="button">이전</button>
-        <span id="pageInfo" aria-live="polite"></span>
-        <button id="nextPage" type="button">다음</button>
+        <button id="prevPage" type="button">이전</button><span id="pageInfo" aria-live="polite"></span><button id="nextPage" type="button">다음</button>
       </div>
-      <p class="legal-note">Lv.2 승인된 학교별 편집본 자료만 열람할 수 있습니다. 연도별 문항과 산정 방식이 달라 단순 비교에 주의해 주세요.</p>
+      <p class="legal-note">Lv.2에는 검수·공개 승인된 학교별 편집본 세부항목이 제공됩니다. 응답이 적거나 검수되지 않은 항목은 제공되지 않습니다. 2023~2025년은 조사 문항·산식이 달라 단순 비교에 주의해 주세요.</p>
     </section>
   </main>
+  <!-- 코드 검증 및 상세자료 조회는 기존 서버 측 기능을 그대로 사용합니다. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/master-percentiles-v1.2.js"></script>
   <script src="js/lv2-edited-search.js"></script>
   <script src="js/visit-stats.js"></script>
+  <script>
+  (() => {
+    const button=document.getElementById('toggleCode');
+    const input=document.getElementById('levelCode');
+    button.addEventListener('click',()=>{
+      const reveal=input.type==='password';
+      input.type=reveal?'text':'password';
+      button.textContent=reveal?'숨김':'표시';
+      button.setAttribute('aria-label', reveal?'참여코드 숨김':'참여코드 표시');
+      button.setAttribute('aria-pressed',String(reveal));
+      input.focus();
+    });
+  })();
+  </script>
 </body>
 </html>
