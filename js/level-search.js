@@ -1,24 +1,314 @@
-(()=>{'use strict';
-const level=Number(document.documentElement.dataset.beaguLevel);
-const base=`${SUPABASE_URL}/functions/v1/beagu-level-api`;
-const $=id=>document.getElementById(id); const key='beagu-level-session-v1';
-let session=sessionStorage.getItem(key)||'',mode='school',page=0,timer,serial=0;const LIMIT=20;
-const offices={'서울':'강남서초 강동송파 강서양천 남부 동부 동작관악 북부 서부 성동광진 성북강북 중부','부산':'남부 동래 북부 서부 해운대','대구':'군위 남부 달성 동부 서부','인천':'강화 남부 동부 북부 서부','광주':'동부 서부','대전':'동부 서부','울산':'강남 강북','세종':'세종','경기':'가평 고양 광명 광주하남 구리남양주 군포의왕 김포 동두천양주 부천 성남 수원 시흥 안산 안성 안양과천 양평 여주 연천 용인 의정부 이천 파주 평택 포천 화성오산','강원':'강릉 고성 동해 삼척 속초양양 양구 영월 원주 인제 정선 철원 춘천 태백 평창 홍천 화천 횡성','충북':'괴산증평 단양 보은 영동 옥천 음성 제천 진천 청주 충주','충남':'공주 금산 논산계룡 당진 보령 부여 서산 서천 아산 예산 천안 청양 태안 홍성','전북':'고창 군산 김제 남원 무주 부안 순창 완주 익산 임실 장수 전주 정읍 진안','전남':'강진 고흥 곡성 광양 구례 나주 담양 목포 무안 보성 순천 신안 여수 영광 영암 완도 장성 장흥 진도 함평 해남 화순','경북':'경산 경주 고령 구미 김천 문경 봉화 상주 성주 안동 영덕 영양 영주 영천 예천 울릉 울진 의성 청도 청송 칠곡 포항','경남':'거제 거창 고성 김해 남해 밀양 사천 산청 양산 의령 진주 창녕 창원 통영 하동 함안 함양 합천','제주':'서귀포시 제주시'};
-const prefixes={'서울':'서울특별시','부산':'부산광역시','대구':'대구광역시','인천':'인천광역시','광주':'전남광주통합특별시광주','대전':'대전광역시','울산':'울산광역시','경기':'경기도','강원':'강원특별자치도','충북':'충청북도','충남':'충청남도','전북':'전북특별자치도','전남':'전남광주통합특별시','경북':'경상북도','경남':'','제주':''};
-const escape=v=>String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
-let publicIndex=new Map();const loaded=fetch('data/public-lv0-percentiles-v1.2.json').then(r=>r.json()).then(j=>{publicIndex=BeaguPublic.buildIndex(j)}).catch(()=>{});
-function loggedOut(message=''){session='';sessionStorage.removeItem(key);$('loginPanel').hidden=false;$('searchPanel').hidden=true;$('loginMessage').textContent=message}
-function loggedIn(){$('loginPanel').hidden=true;$('searchPanel').hidden=false}
-async function api(action,payload={}){const r=await fetch(base,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Beagu-Session':session},body:JSON.stringify({action,...payload})});const json=await r.json().catch(()=>({}));if(r.status===401||r.status===403){const e=new Error('인증 만료');e.unauthorized=true;throw e}if(!r.ok)throw Error(json.error||'서버 오류');return json}
-$('loginForm').addEventListener('submit',async e=>{e.preventDefault();const code=$('levelCode').value.trim();$('loginButton').disabled=true;$('loginMessage').textContent='인증 중...';try{const data=await api('login',{code});if(data.level<level){$('loginMessage').textContent='이 등급에서 사용할 수 없는 참여코드입니다.';return}session=data.token;sessionStorage.setItem(key,session);$('levelCode').value='';loggedIn();$('searchInput').focus()}catch(err){$('loginMessage').textContent='참여코드를 확인해주세요.'}finally{$('loginButton').disabled=false}});
-$('logoutButton').addEventListener('click',()=>loggedOut());
-function selectMode(m){mode=m;$('schoolPanel').hidden=m!=='school';$('regionPanel').hidden=m!=='region';$('schoolTab').setAttribute('aria-selected',String(m==='school'));$('regionTab').setAttribute('aria-selected',String(m==='region'));search(true)}
-$('schoolTab').addEventListener('click',()=>selectMode('school'));$('regionTab').addEventListener('click',()=>selectMode('region'));
-$('regionSelect').addEventListener('change',()=>{const region=$('regionSelect').value;const el=$('officeSelect');el.replaceChildren(new Option(region?'전체 교육지원청':'시도를 먼저 선택하세요',''));el.disabled=!region;if(region==='세종')el.add(new Option('세종시교육청','세종특별자치시교육청'));else if(region){for(const name of offices[region].split(' '))el.add(new Option(name,(prefixes[region]||'')+name+'교육지원청'));if(region==='경남')for(const [label,value] of [['마산 (과거 분류)','마산교육청(폐지)'],['진해 (과거 분류)','진해교육청(폐지)'],['창원 (과거 분류)','창원교육청(폐지)']])el.add(new Option(label,value))}search(true)});
-$('officeSelect').addEventListener('change',()=>search(true));$('searchInput').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>search(true),250)});$('prevPage').addEventListener('click',()=>{page--;search(false)});$('nextPage').addEventListener('click',()=>{page++;search(false)});
-function addRow(host,label,value){const d=document.createElement('div');d.className='data-row';const a=document.createElement('span');a.textContent=label;const b=document.createElement('strong');b.textContent=String(value);d.append(a,b);host.append(d)}
-function showDetails(host,rows,school){host.replaceChildren();const section=document.createElement('section');section.className='detail';const vals=BeaguPublic.values(publicIndex.get(String(school.school_id)));section.innerHTML=`<h3>기존 공개 백분위</h3><div class="percentile-grid">${[2023,2024,2025].map((y,i)=>`<div class="percentile-cell"><span class="percentile-year">${y}</span><span class="percentile-value">${vals[i]==null?'자료 없음':vals[i].toFixed(1)+'%'}</span></div>`).join('')}</div><p class="detail-note">과거 백분위는 연도별 척도·표본이 달라 직접 비교에 주의하세요.</p><h3>Lv.${level} 추가 공개자료</h3>`;if(!rows?.length){const p=document.createElement('p');p.className='detail-note';p.textContent='이 학교에 승인된 추가 통계가 아직 없습니다.';section.append(p)}else for(const row of rows){const d=document.createElement('div');d.className='data-section';const h=document.createElement('h4');h.textContent=`${row.year}년 · Lv.${row.access_level}`;d.append(h);if(row.respondents!=null)addRow(d,'응답자 수',row.respondents+'명');if(row.insufficient){const p=document.createElement('p');p.textContent='응답자 수 부족으로 세부통계를 비공개합니다.';d.append(p)}else{const s=row.summary||{};if(s.score!=null)addRow(d,'배구지수',s.score);if(s.percentile!=null)addRow(d,'백분위',s.percentile+'%');if(s.satisfaction!=null)addRow(d,'만족도',s.satisfaction);for(const m of s.metrics||[])addRow(d,m.label+(m.n?' (n='+m.n+')':''),m.value)}section.append(d)}host.append(section)}
-function render(list,total){const host=$('results');host.replaceChildren();const pages=Math.ceil(total/LIMIT);$('resultCount').textContent=`검색 결과 ${total.toLocaleString()}개${pages>1?` · ${page*LIMIT+1}~${page*LIMIT+list.length}번째`:''}`;$('pager').hidden=pages<=1;$('pageInfo').textContent=`${page+1} / ${pages}`;$('prevPage').disabled=page===0;$('nextPage').disabled=page+1>=pages;if(!list.length){host.innerHTML='<div class="empty">검색 결과가 없습니다.</div>';return}for(const s of list){const card=document.createElement('article');card.className='school-card';card.innerHTML=`<span class="region-badge">${escape(s.sido_standard||s.sido)}</span><div class="school-name">${escape(s.school_name)}</div><div class="school-meta">${escape(s.support_office)}<br>${escape(s.address)}</div><div class="school-actions"><button class="view-button" type="button">승인 통계 열람</button><a class="exchange-button" target="_blank" rel="noopener noreferrer" href="https://open.kakao.com/o/gJyJ14Si">실시간 정보교류</a></div>`;const detail=document.createElement('div');detail.hidden=true;const button=card.querySelector('button');button.setAttribute('aria-expanded','false');button.addEventListener('click',async()=>{if(!detail.hidden){detail.hidden=true;button.textContent='승인 통계 열람';button.setAttribute('aria-expanded','false');return}detail.hidden=false;button.textContent='접기';button.setAttribute('aria-expanded','true');if(detail.dataset.loaded)return;detail.textContent='불러오는 중...';try{const data=await api('school',{schoolId:s.school_id});await loaded;showDetails(detail,data.rows,s);detail.dataset.loaded='1'}catch(e){if(e.unauthorized){loggedOut('인증이 만료되었습니다. 다시 입력하세요.');return}detail.textContent='자료를 불러오지 못했습니다.'}});card.append(detail);host.append(card)}}
-async function search(reset){if(reset)page=0;const q=mode==='school'?$('searchInput').value.trim():'';const region=mode==='region'?$('regionSelect').value:'';const office=mode==='region'?$('officeSelect').value:'';const t=++serial;if(mode==='school'&&!q||mode==='region'&&!region){$('results').replaceChildren();$('resultCount').textContent='';$('pager').hidden=true;return}$('resultCount').textContent='검색 중...';try{let query=supabaseClient.from('schools').select('school_id,school_name,sido,sido_standard,support_office,address,status',{count:'exact'}).eq('status','운영');if(q)query=query.ilike('school_name',`%${q.replaceAll('%','\\%').replaceAll('_','\\_')}%`);if(region)query=query.eq('sido_standard',region);if(office)query=query.eq('support_office',office);const start=page*LIMIT;const {data,count,error}=await query.order('address',{ascending:true,nullsFirst:false}).order('school_name',{ascending:true}).range(start,start+LIMIT-1);if(t!==serial)return;if(error)throw error;render(data||[],count||0)}catch(e){if(t!==serial)return;console.error(e);$('resultCount').textContent='';$('results').innerHTML='<div class="empty">검색에 실패했습니다.</div>'}}
-(async()=>{if(!session){loggedOut();return}try{const s=await api('verify');if(s.level>=level)loggedIn();else loggedOut('현재 코드가 이 등급에 미달합니다.')}catch(e){loggedOut('인증을 다시 진행해주세요.')}})();
+/* Beagu Lv.1 approved statistics, 2023-2025. Replaces js/level-search.js.
+ * The public legacy percentiles remain public; the protected metrics are
+ * fetched exclusively through beagu-level-api after server-side validation.
+ * Release: step 4-2, 2026-10-27. No backend or data-table modifications.
+ */
+(() => {
+  'use strict';
+  const level = Number(document.documentElement.dataset.beaguLevel);
+  const base = `${SUPABASE_URL}/functions/v1/beagu-level-api`;
+  const $ = id => document.getElementById(id);
+  const key = 'beagu-level-session-v1';
+  let session = sessionStorage.getItem(key) || '';
+  let mode = 'school', page = 0, timer, serial = 0;
+  const LIMIT = 20;
+  const YEARS = [2025, 2024, 2023];
+  const offices = {
+    '서울':'강남서초 강동송파 강서양천 남부 동부 동작관악 북부 서부 성동광진 성북강북 중부',
+    '부산':'남부 동래 북부 서부 해운대',
+    '대구':'군위 남부 달성 동부 서부',
+    '인천':'강화 남부 동부 북부 서부',
+    '광주':'동부 서부', '대전':'동부 서부', '울산':'강남 강북', '세종':'세종',
+    '경기':'가평 고양 광명 광주하남 구리남양주 군포의왕 김포 동두천양주 부천 성남 수원 시흥 안산 안성 안양과천 양평 여주 연천 용인 의정부 이천 파주 평택 포천 화성오산',
+    '강원':'강릉 고성 동해 삼척 속초양양 양구 영월 원주 인제 정선 철원 춘천 태백 평창 홍천 화천 횡성',
+    '충북':'괴산증평 단양 보은 영동 옥천 음성 제천 진천 청주 충주',
+    '충남':'공주 금산 논산계룡 당진 보령 부여 서산 서천 아산 예산 천안 청양 태안 홍성',
+    '전북':'고창 군산 김제 남원 무주 부안 순창 완주 익산 임실 장수 전주 정읍 진안',
+    '전남':'강진 고흥 곡성 광양 구례 나주 담양 목포 무안 보성 순천 신안 여수 영광 영암 완도 장성 장흥 진도 함평 해남 화순',
+    '경북':'경산 경주 고령 구미 김천 문경 봉화 상주 성주 안동 영덕 영양 영주 영천 예천 울릉 울진 의성 청도 청송 칠곡 포항',
+    '경남':'거제 거창 고성 김해 남해 밀양 사천 산청 양산 의령 진주 창녕 창원 통영 하동 함안 함양 합천',
+    '제주':'서귀포시 제주시'
+  };
+  const prefixes = {
+    '서울':'서울특별시', '부산':'부산광역시', '대구':'대구광역시', '인천':'인천광역시',
+    '광주':'전남광주통합특별시광주', '대전':'대전광역시', '울산':'울산광역시',
+    '경기':'경기도', '강원':'강원특별자치도', '충북':'충청북도', '충남':'충청남도',
+    '전북':'전북특별자치도', '전남':'전남광주통합특별시', '경북':'경상북도',
+    '경남':'', '제주':''
+  };
+  const escape = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;')
+    .replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+  const make = (tag, className, value) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (value !== undefined) node.textContent = String(value);
+    return node;
+  };
+  let publicIndex = new Map();
+  const loaded = fetch('data/public-lv0-percentiles-v1.2.json', {cache:'force-cache'})
+    .then(r => { if (!r.ok) throw new Error('PUBLIC_DATA_UNAVAILABLE'); return r.json(); })
+    .then(data => { publicIndex = BeaguPublic.buildIndex(data); })
+    .catch(() => { /* Verified public display is optional; never fabricate a value. */ });
+
+  function loggedOut(message = '') {
+    session = '';
+    sessionStorage.removeItem(key);
+    $('loginPanel').hidden = false;
+    $('searchPanel').hidden = true;
+    $('loginMessage').textContent = message;
+  }
+  function loggedIn() {
+    $('loginPanel').hidden = true;
+    $('searchPanel').hidden = false;
+  }
+  async function api(action, payload = {}) {
+    const response = await fetch(base, {
+      method: 'POST', cache: 'no-store',
+      headers: {'Content-Type':'application/json', 'X-Beagu-Session':session},
+      body: JSON.stringify({action, ...payload})
+    });
+    const data = await response.json().catch(() => ({}));
+    if (response.status === 401 || response.status === 403) {
+      const error = new Error('인증 만료'); error.unauthorized = true; throw error;
+    }
+    if (!response.ok) throw new Error(data.error || '서버 오류');
+    return data;
+  }
+
+  $('loginForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    const code = $('levelCode').value.trim();
+    $('loginButton').disabled = true;
+    $('loginMessage').textContent = '인증 중...';
+    try {
+      const data = await api('login', {code});
+      if (data.level < level) {
+        $('loginMessage').textContent = '이 등급에서 사용할 수 없는 참여코드입니다.';
+        return;
+      }
+      session = data.token;
+      sessionStorage.setItem(key, session);
+      $('levelCode').value = '';
+      loggedIn();
+      $('searchInput').focus();
+    } catch (_) {
+      $('loginMessage').textContent = '참여코드를 확인해주세요.';
+    } finally {
+      $('loginButton').disabled = false;
+    }
+  });
+  $('logoutButton').addEventListener('click', () => loggedOut());
+  function selectMode(nextMode) {
+    mode = nextMode;
+    $('schoolPanel').hidden = mode !== 'school';
+    $('regionPanel').hidden = mode !== 'region';
+    $('schoolTab').setAttribute('aria-selected', String(mode === 'school'));
+    $('regionTab').setAttribute('aria-selected', String(mode === 'region'));
+    search(true);
+  }
+  $('schoolTab').addEventListener('click', () => selectMode('school'));
+  $('regionTab').addEventListener('click', () => selectMode('region'));
+  $('regionSelect').addEventListener('change', () => {
+    const region = $('regionSelect').value;
+    const select = $('officeSelect');
+    select.replaceChildren(new Option(region ? '전체 교육지원청' : '시도를 먼저 선택하세요', ''));
+    select.disabled = !region;
+    if (region === '세종') {
+      select.add(new Option('세종시교육청', '세종특별자치시교육청'));
+    } else if (region) {
+      for (const name of offices[region].split(' ')) {
+        select.add(new Option(name, (prefixes[region] || '') + name + '교육지원청'));
+      }
+      if (region === '경남') {
+        for (const [label, value] of [
+          ['마산 (과거 분류)', '마산교육청(폐지)'],
+          ['진해 (과거 분류)', '진해교육청(폐지)'],
+          ['창원 (과거 분류)', '창원교육청(폐지)']
+        ]) select.add(new Option(label, value));
+      }
+    }
+    search(true);
+  });
+  $('officeSelect').addEventListener('change', () => search(true));
+  $('searchInput').addEventListener('input', () => {
+    clearTimeout(timer); timer = setTimeout(() => search(true), 250);
+  });
+  $('prevPage').addEventListener('click', () => { page = Math.max(0, page - 1); search(false); });
+  $('nextPage').addEventListener('click', () => { page++; search(false); });
+
+  function addRow(host, label, value) {
+    const div = make('div', 'data-row');
+    div.append(make('span', '', label), make('strong', '', value));
+    host.append(div);
+  }
+  function asPublicPercentiles(school) {
+    try { return BeaguPublic.values(publicIndex.get(String(school.school_id))); }
+    catch (_) { return [null, null, null]; }
+  }
+  function isDuplicatePublicPercentile(metric, year, value) {
+    if (value === null || typeof metric?.label !== 'string' || typeof metric?.value !== 'string') return false;
+    if (!metric.label.includes(String(year)) || !metric.label.includes('백분위')) return false;
+    const match = metric.value.trim().match(/^(\d{1,3}(?:\.\d+)?)\s*%$/);
+    return !!match && Math.abs(Number(match[1]) - value) < 0.005;
+  }
+  function renderYear(host, year, rows, publicValue) {
+    host.replaceChildren();
+    host.append(make('h3', '', `${year}년 조사 결과`));
+    const yearRows = (Array.isArray(rows) ? rows : []).filter(row =>
+      Number(row.year) === year && Number(row.access_level) === level
+    );
+    // Public value is loaded from the separately vetted Lv.0 dataset.
+    const legacy = make('div', 'data-section');
+    legacy.append(make('h4', '', '기존 공개 백분위'));
+    addRow(legacy, `${year}년 전국 백분위`, publicValue === null ? '자료 없음' : publicValue.toFixed(1) + '%');
+    host.append(legacy);
+    const section = make('div', 'data-section');
+    section.append(make('h4', '', 'Lv.1 승인 통계'));
+    if (!yearRows.length) {
+      section.append(make('p', 'detail-note', '해당 연도에 추가로 공개 승인된 학교 통계가 없습니다.'));
+      host.append(section);
+      return;
+    }
+    let count = 0, hadRestricted = false, hadMismatch = false;
+    for (const row of yearRows) {
+      if (row.insufficient) { hadRestricted = true; continue; }
+      // The edge function only emits a curated summary.metrics array.
+      // NEVER use the underlying database's historical_values, survey_summary,
+      // raw school rows, rankings, or unsanitized source keys.
+      for (const metric of Array.isArray(row.summary?.metrics) ? row.summary.metrics : []) {
+        if (typeof metric?.label !== 'string' || typeof metric?.value !== 'string') continue;
+        if (isDuplicatePublicPercentile(metric, year, publicValue)) continue;
+        if (metric.label.includes(String(year)) && metric.label.includes('백분위') && publicValue !== null)
+          hadMismatch = true;
+        addRow(section, metric.label, metric.value);
+        count++;
+      }
+    }
+    if (hadMismatch) section.append(make('p', 'detail-note', '백분위 출처별 값이 달라 원본 검수가 필요합니다. 임의로 합치지 않았습니다.'));
+    if (hadRestricted) section.append(make('p', 'detail-note', '응답 또는 검수 기준에 따라 일부 세부 항목은 공개하지 않습니다.'));
+    if (!count && !hadRestricted) section.append(make('p', 'detail-note', '추가 승인 통계가 없습니다. 위의 기존 공개 백분위를 참고하세요.'));
+    if (year === 2025) section.append(make('p', 'detail-note', '영역별 점수는 해당 연도 조사 방식에 따른 참고자료입니다. 관측 기록 건수는 중복 응답 검증이 완료된 고유 응답자 수가 아닙니다.'));
+    else section.append(make('p', 'detail-note', '과거 응답자 수는 검증되지 않았습니다. 총점·순위·개별 문항은 제공하지 않습니다.'));
+    host.append(section);
+  }
+  function showDetails(host, rows, school) {
+    host.replaceChildren();
+    const section = make('section', 'detail');
+    section.append(make('h3', '', '2023~2025년 학교별 공개자료'));
+    section.append(make('p', 'detail-note', '연도별 문항과 산식이 다르므로 백분위·영역별 점수를 연속적인 동일 척도로 비교할 수 없습니다.'));
+    const vals = asPublicPercentiles(school);
+    const grid = make('div', 'percentile-grid');
+    [2023, 2024, 2025].forEach((year, index) => {
+      const cell = make('div', 'percentile-cell');
+      cell.append(make('span', 'percentile-year', year),
+        make('b', 'percentile-value', vals[index] === null ? '자료 없음' : vals[index].toFixed(1) + '%'));
+      grid.append(cell);
+    });
+    section.append(grid);
+    const tabs = make('div', 'year-tabs');
+    tabs.setAttribute('role', 'tablist');
+    tabs.setAttribute('aria-label', '조사 연도 선택');
+    const content = make('div', 'school-year-details');
+    content.setAttribute('role', 'tabpanel');
+    function choose(year) {
+      for (const button of tabs.children) button.setAttribute('aria-selected', String(Number(button.dataset.year) === year));
+      renderYear(content, year, rows, vals[year - 2023]);
+    }
+    for (const year of YEARS) {
+      const button = make('button', '', `${year}년`);
+      button.type = 'button';
+      button.dataset.year = String(year);
+      button.setAttribute('role', 'tab');
+      button.setAttribute('aria-selected', 'false');
+      button.addEventListener('click', () => choose(year));
+      tabs.append(button);
+    }
+    section.append(tabs, content);
+    host.append(section);
+    choose(2025);
+  }
+
+  function render(list, total) {
+    const host = $('results'); host.replaceChildren();
+    const pages = Math.ceil(total / LIMIT);
+    $('resultCount').textContent = `검색 결과 ${total.toLocaleString()}개${pages > 1 ? ` · ${page * LIMIT + 1}~${page * LIMIT + list.length}번째` : ''}`;
+    $('pager').hidden = pages <= 1;
+    $('pageInfo').textContent = `${page + 1} / ${pages || 1}`;
+    $('prevPage').disabled = page === 0;
+    $('nextPage').disabled = page + 1 >= pages;
+    if (!list.length) { host.append(make('div','empty','검색 결과가 없습니다.')); return; }
+    for (const school of list) {
+      const card = make('article', 'school-card');
+      card.innerHTML = `<span class="region-badge">${escape(school.sido_standard || school.sido)}</span>` +
+        `<div class="school-name">${escape(school.school_name)}</div>` +
+        `<div class="school-meta">${escape(school.support_office)}<br>${escape(school.address)}</div>` +
+        '<div class="school-actions"><button class="view-button" type="button">승인 통계 열람</button>' +
+        '<a class="exchange-button" target="_blank" rel="noopener noreferrer" href="https://open.kakao.com/o/gJyJ14Si">실시간 정보교류</a></div>';
+      const detail = make('div'); detail.hidden = true;
+      const button = card.querySelector('button');
+      button.setAttribute('aria-expanded', 'false');
+      button.addEventListener('click', async () => {
+        if (!detail.hidden) {
+          detail.hidden = true;
+          button.textContent = '승인 통계 열람';
+          button.setAttribute('aria-expanded', 'false');
+          return;
+        }
+        detail.hidden = false;
+        button.textContent = '접기';
+        button.setAttribute('aria-expanded', 'true');
+        if (detail.dataset.loaded) return;
+        detail.textContent = '불러오는 중...';
+        try {
+          const data = await api('school', {schoolId:school.school_id});
+          await loaded;
+          // The server enforces the session's authorization and release_status.
+          showDetails(detail, data.rows, school);
+          detail.dataset.loaded = '1';
+        } catch (error) {
+          if (error.unauthorized) { loggedOut('인증이 만료되었습니다. 다시 입력하세요.'); return; }
+          detail.textContent = '자료를 불러오지 못했습니다. 다시 열람해 주세요.';
+        }
+      });
+      card.append(detail); host.append(card);
+    }
+  }
+  async function search(reset) {
+    if (reset) page = 0;
+    const q = mode === 'school' ? $('searchInput').value.trim() : '';
+    const region = mode === 'region' ? $('regionSelect').value : '';
+    const office = mode === 'region' ? $('officeSelect').value : '';
+    const request = ++serial;
+    if ((mode === 'school' && !q) || (mode === 'region' && !region)) {
+      $('results').replaceChildren(); $('resultCount').textContent = ''; $('pager').hidden = true; return;
+    }
+    $('resultCount').textContent = '검색 중...';
+    try {
+      let query = supabaseClient.from('schools')
+        .select('school_id,school_name,sido,sido_standard,support_office,address,status', {count:'exact'})
+        .eq('status','운영');
+      if (q) query = query.ilike('school_name', `%${q.replaceAll('%','\\%').replaceAll('_','\\_')}%`);
+      if (region) query = query.eq('sido_standard', region);
+      if (office) query = query.eq('support_office', office);
+      const start = page * LIMIT;
+      const {data, count, error} = await query.order('address', {ascending:true,nullsFirst:false})
+        .order('school_name', {ascending:true}).range(start,start + LIMIT - 1);
+      if (request !== serial) return;
+      if (error) throw error;
+      render(data || [], count || 0);
+    } catch (error) {
+      if (request !== serial) return;
+      console.error(error);
+      $('resultCount').textContent = '';
+      $('results').replaceChildren(make('div', 'empty', '검색에 실패했습니다.'));
+    }
+  }
+  (async () => {
+    if (!session) { loggedOut(); return; }
+    try {
+      const state = await api('verify');
+      if (state.level >= level) loggedIn();
+      else loggedOut('현재 코드가 이 등급에 미달합니다.');
+    } catch (_) { loggedOut('인증을 다시 진행해주세요.'); }
+  })();
 })();
