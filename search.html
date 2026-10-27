@@ -80,6 +80,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/percentile-chart.js"></script>
+<script src="js/master-percentiles-v1.2.js"></script>
 <script>
   const searchInput = document.getElementById('searchInput');
   const regionSelect = document.getElementById('regionSelect');
@@ -170,35 +171,23 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     return name.replace(/특별자치도|특별자치시|특별시|광역시/g,'');
   };
 
-  let percentileIndex = null;
+  let percentileIndex = new Map();
   let percentileLoadError = false;
-  const percentileReady = fetch('data/percentiles-2023-2025.json')
+  const percentileReady = fetch('data/public-lv0-percentiles-v1.2.json', {cache:'no-cache'})
     .then(r => { if (!r.ok) throw new Error('백분위 자료 로딩 실패'); return r.json(); })
-    .then(data => {
-      percentileIndex = new Map();
-      (data.rows || []).forEach(row => {
-        const key=normalizeRegion(row.region) + '|' + normalize(row.name);
-        if (!percentileIndex.has(key)) percentileIndex.set(key, []);
-        percentileIndex.get(key).push(row);
-      });
-    }).catch(() => { percentileLoadError=true; });
+    .then(data => { percentileIndex = BeaguPublic.buildIndex(data); })
+    .catch(() => { percentileLoadError=true; });
 
   function renderPercentiles(school) {
-    const region=normalizeRegion(school.sido_standard || school.sido);
-    let candidates=percentileIndex?.get(region + '|' + normalize(school.school_name)) || [];
-    const office=normalizeOffice(school.support_office,region);
-    if (candidates.length>1 && office) candidates=candidates.filter(row => normalizeOffice(row.office,region)===office);
-    if (candidates.length>1 && school.address) candidates=candidates.filter(row => normalize(row.address)===normalize(school.address));
-    const row=candidates.length===1 ? candidates[0] : null;
-    const fallback=percentileLoadError ? '불러오기 실패' : candidates.length>1 ? '학교 확인 필요' : '자료 없음';
+    const row=percentileIndex.get(String(school.school_id));
+    const values=BeaguPublic.values(row);
     const cells=[2023,2024,2025].map((year,i) => {
-      const value=row?.percentiles?.[i];
-      const label=typeof value==='number' && Number.isFinite(value) ? value.toFixed(1)+'%' : fallback;
+      const value=values[i];
+      const label=value!==null ? value.toFixed(1)+'%' : percentileLoadError ? '불러오기 실패' : !row || row.statuses[i]==='REVIEW_PENDING' ? '검수 중' : '자료 없음';
       return `<div class="percentile-cell"><span class="percentile-year">${year}</span><span class="percentile-value">${escapeHtml(label)}</span></div>`;
     }).join('');
-    const line=row && row.percentiles.some(v=>typeof v==='number') && typeof percentileChart==='function'
-      ? percentileChart(row.percentiles) : '';
-    return `<section aria-label="연도별 배구지수 백분위"><div class="percentile-note">연도별 배구지수 백분위</div><div class="percentile-grid">${cells}</div>${line}<p class="percentile-note"><ul class="percentile-note percentile-notes"><li>연도별 문항 및 참여인원이 달라 자료 분석에 참고해주세요.</li><li>백분위 90%은 전국 학교의 약 90%보다 높은 위치라는 뜻입니다.</li></ul></p></section>`;
+    const line=values.some(v=>v!==null) && typeof percentileChart==='function' ? percentileChart(values) : '';
+    return `<section aria-label="연도별 배구지수 백분위"><div class="percentile-note">연도별 배구지수 백분위</div><div class="percentile-grid">${cells}</div>${line}<ul class="percentile-note percentile-notes"><li>연도별 문항·참여 학교와 산정 방식이 달라 단순 비교에 주의해주세요.</li><li>검수 중인 값은 확인 후 제공됩니다.</li></ul><p class="percentile-note">자료 갱신: 2026.10.27 · 공개자료 v1.2</p></section>`;
   }
 
   function renderSchools(schools,total) {
@@ -278,4 +267,5 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 <script src="js/visit-stats.js"></script>
 </body>
 </html>
+
 
