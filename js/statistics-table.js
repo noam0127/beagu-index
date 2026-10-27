@@ -1,4 +1,4 @@
-/* 배구지수 공개 통계표: Step 1-3 (PC)
+/* 배구지수 공개 통계표: Step 1-4 (mobile adaptive)
  * 신규 공개/등급 지표를 생성하지 않는다.
  * 학교목록: Supabase public.schools 공개 필드만.
  * 연도별 백분위: 기존 검증된 Lv.0 data/public-lv0-percentiles-v1.2.json만.
@@ -13,9 +13,14 @@
   const office = $('officeSelect');
   const year = $('yearSelect');
   const size = $('pageSize');
+  const mobileCards = $('mobileCards');
+  const viewCardsButton = $('viewCards');
+  const viewTableButton = $('viewTable');
+  const clearSearch = $('clearSearch');
+  const tableSwipeHint = $('tableSwipeHint');
   const state = { schools: [], filtered: [], snapshot: new Map(), snapshotReady: false,
     snapshotError: null, loading: true, page: 0, pageSize: 25,
-    sortBy: 'school_name', ascending: true, selectedYear: '2025', directoryTotal: 0 };
+    sortBy: 'school_name', ascending: true, selectedYear: '2025', directoryTotal: 0, mobileView:'cards' };
   const collator = new Intl.Collator('ko-KR', {numeric: true, sensitivity: 'base'});
   const regions = ['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
   let debounceTimer;
@@ -116,12 +121,83 @@
     }
     tr.append(td);
   }
+
+  /* On phones cards are the default; users can switch to the same scrollable data table.
+     Both renderers use the exact same vetted public snapshot, filtered rows and paging. */
+  function setMobileView(mode) {
+    if (mode !== 'table' && mode !== 'cards') return;
+    state.mobileView=mode;
+    document.body.classList.toggle('page-view-table', mode==='table');
+    viewCardsButton.setAttribute('aria-pressed', String(mode==='cards'));
+    viewTableButton.setAttribute('aria-pressed', String(mode==='table'));
+    tableSwipeHint.hidden = mode!=='table';
+  }
+  function updateClearButton() {
+    clearSearch.hidden = !search.value;
+  }
+  function cardYear(record, yearNumber) {
+    const d=statusDatum(record, yearNumber);
+    const tile=text('div','','mobile-year-tile');
+    tile.append(text('span',`${yearNumber}년`,'mobile-year-label'));
+    tile.append(text('strong',d.value!==null?`${d.value.toFixed(1)}%`:d.label,`mobile-year-number ${d.value!==null?'available':'unavailable'}`));
+    tile.setAttribute('aria-label',`${yearNumber}년: ${d.value!==null?`${d.value.toFixed(1)}%`:d.label}`);
+    return tile;
+  }
+  function renderCards(list, start) {
+    mobileCards.replaceChildren();
+    if (state.loading) {
+      mobileCards.append(text('p','학교정보를 불러오는 중입니다…','mobile-empty'));
+      return;
+    }
+    if (!list.length) {
+      mobileCards.append(text('p','검색 조건에 해당하는 학교가 없습니다.','mobile-empty'));
+      return;
+    }
+    const frag=document.createDocumentFragment();
+    for (let i=0;i<list.length;i++) {
+      const s=list[i];
+      const record=document.createElement('article');record.className='mobile-school-card';
+      const kicker=document.createElement('div');kicker.className='mobile-card-kicker';
+      kicker.append(text('span',`${start+i+1}번째 학교`,'mobile-card-index'),text('span',displayRegion(s),'mobile-card-region'));
+      const name=text('h3',s.school_name,'mobile-school-name');
+      const detail=text('p',`${displayOffice(s)} · ${trim(s.establishment)||'설립구분 미확인'}`,'mobile-card-meta');
+      const records=document.createElement('div');records.className='mobile-year-grid';
+      const yr=yearsForView();
+      for (const y of yr) records.append(cardYear(s,y));
+      if (yr.length===3) records.classList.add('three-years');
+      const statusBox=document.createElement('div');statusBox.className='mobile-card-bottom';
+      const vals=yr.map(y=>statusDatum(s,y));
+      let stateOfRecords=vals[0];
+      if(yr.length>1){
+        const visible=vals.filter(d=>d.kind==='yes').length;
+        stateOfRecords=visible?{kind:'yes',label:`${visible}개년 공개`}:vals.some(d=>d.kind==='failure')?
+          {kind:'failure',label:'연결 오류'}:vals.some(d=>d.kind==='pending')?
+          {kind:'pending',label:'검수 중'}:{kind:'empty',label:'자료 없음'};
+      }
+      const show=text('button','학교 기본정보 보기','mobile-info-button');show.type='button';
+      show.setAttribute('aria-label',`${s.school_name} 기본정보 보기`);
+      show.addEventListener('click',()=>openInfo(s,show));
+      statusBox.append(statusPill(stateOfRecords),show);
+      record.append(kicker,name,detail,records,statusBox);
+      frag.append(record);
+    }
+    mobileCards.append(frag);
+  }
+  function restoreResultsPosition() {
+    const target = $('resultHeading');
+    if (target && typeof target.scrollIntoView === 'function') {
+      const reduce=typeof window.matchMedia==='function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+    }
+  }
+
   function emptyRow(message) {
     schoolRows.replaceChildren();
     const tr=document.createElement('tr');
     const td=cell(tr,message,'loading-cell');
     td.colSpan = state.selectedYear === 'all' ? 10 : 8;
     schoolRows.append(tr);
+    renderCards([],0);
   }
   function summaryAndPagination(total,pages) {
     const start = total ? state.page * state.pageSize+1 : 0;
@@ -178,6 +254,7 @@
       fragment.append(tr);
     }
     schoolRows.append(fragment);
+    renderCards(list,begin);
   }
   function setOffices() {
     const r=region.value;
@@ -290,17 +367,31 @@
     else {state.sortBy=key;state.ascending=true;}
     state.page=0;render();
   }));
-  search.addEventListener('input',()=>{clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>{state.page=0;render();},180)});
+  search.addEventListener('input',()=>{updateClearButton();clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>{state.page=0;render();},180)});
+  clearSearch.addEventListener('click',()=>{search.value='';updateClearButton();clearTimeout(debounceTimer);state.page=0;render();search.focus();});
+  viewCardsButton.addEventListener('click',()=>setMobileView('cards'));
+  viewTableButton.addEventListener('click',()=>setMobileView('table'));
   region.addEventListener('change',()=>{setOffices();state.page=0;render()});
   office.addEventListener('change',()=>{state.page=0;render()});
   year.addEventListener('change',()=>{state.selectedYear=year.value;state.page=0;render()});
   size.addEventListener('change',()=>{state.pageSize=Number(size.value)||25;state.page=0;render()});
-  $('resetFilters').addEventListener('click',()=>{search.value='';region.value='';setOffices();year.value='2025';size.value='25';state.selectedYear='2025';state.pageSize=25;state.sortBy='school_name';state.ascending=true;state.page=0;render()});
-  $('prevPage').addEventListener('click',()=>{if(state.page>0){state.page--;render();}});
-  $('nextPage').addEventListener('click',()=>{if((state.page+1)*state.pageSize<state.filtered.length){state.page++;render();}});
+  $('resetFilters').addEventListener('click',()=>{search.value='';updateClearButton();region.value='';setOffices();year.value='2025';size.value='25';state.selectedYear='2025';state.pageSize=25;state.sortBy='school_name';state.ascending=true;state.page=0;render()});
+  $('prevPage').addEventListener('click',()=>{if(state.page>0){state.page--;render();restoreResultsPosition();}});
+  $('nextPage').addEventListener('click',()=>{if((state.page+1)*state.pageSize<state.filtered.length){state.page++;render();restoreResultsPosition();}});
   $('dialogClose').addEventListener('click',closeInfo);
   $('dialogDismiss').addEventListener('click',closeInfo);
   $('infoDialog').addEventListener('click',event=>{if(event.target===$('infoDialog'))closeInfo()});
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('infoDialog').hidden)closeInfo()});
+  document.addEventListener('keydown',event=>{
+    if ($('infoDialog').hidden) return;
+    if (event.key==='Escape') {closeInfo();return;}
+    if (event.key!=='Tab') return;
+    const controls=[$('dialogClose'),$('dialogDismiss')].filter(e=>!e.disabled);
+    if(!controls.length)return;
+    const first=controls[0], last=controls[controls.length-1];
+    if (event.shiftKey && document.activeElement===first) {event.preventDefault();last.focus();}
+    else if (!event.shiftKey && document.activeElement===last) {event.preventDefault();first.focus();}
+  });
+  setMobileView('cards');
+  updateClearButton();
   init();
 })();
