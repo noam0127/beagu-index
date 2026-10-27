@@ -1,26 +1,38 @@
 <!doctype html>
 <html lang="ko" data-beagu-level="2">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light"><title>Lv.2 교사 인증 학교 검색 | 배구지수</title>
-<link rel="stylesheet" href="css/level-search.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Lv.2 학교별 상세정보 | 배구지수</title>
+  <link rel="stylesheet" href="css/lv2-edited.css">
 </head>
 <body>
-<header class="participation-bar"><a class="participation-link" href="https://open.kakao.com/o/gJyJ14Si" target="_blank" rel="noopener noreferrer">실시간 학교정보 교류 · 오픈채팅</a></header>
-<main class="container">
-<nav class="topbar"><a class="back" href="index.html" aria-label="대문으로 돌아가기">←</a><a class="logo" href="index.html">VOLLEYBALL INDEX</a><span class="current-level">Lv.1</span></nav>
-<section class="auth-card" id="loginPanel" aria-labelledby="loginTitle"><div class="tier-label">TEACHER ACCESS · LEVEL 2</div><h1 id="loginTitle">교사 인증 열람</h1><p class="muted">네이버카페에서 교사 인증 후 발급받은 참여코드를 입력하세요. 서버 인증 후 학교 검색이 열립니다.</p>
-<form id="loginForm"><label class="field-label" for="levelCode">참여코드</label><input class="field" id="levelCode" type="password" autocomplete="off" minlength="8" maxlength="120" required placeholder="발급받은 코드를 입력하세요"><button class="primary-button" id="loginButton" type="submit">Lv.2 학교 검색 시작</button><p id="loginMessage" class="feedback" role="alert" aria-live="polite"></p></form>
-<p class="hint">참여코드는 브라우저에 저장되지 않으며, 승인된 열람자료만 제공됩니다.</p></section>
-<section id="searchPanel" hidden aria-labelledby="searchTitle">
-  <div class="section-kicker">LEVEL 2 · 교사 인증</div><h1 id="searchTitle">학교를 찾아보세요</h1><p class="muted">기본정보와 과거 공개기록에 더해, 검수·승인된 Lv.1 및 Lv.2 통계를 열람합니다.</p>
-  <div class="status-row"><span class="tier-pill">Lv.2 인증됨</span><button class="text-button" type="button" id="logoutButton">로그아웃</button></div>
-  <div class="tabs" role="tablist" aria-label="학교 찾기 방법"><button type="button" class="tab" id="schoolTab" role="tab" aria-selected="true" aria-controls="schoolPanel">학교별 찾기</button><button type="button" class="tab" id="regionTab" role="tab" aria-selected="false" aria-controls="regionPanel">지역 찾기</button></div>
-  <section id="schoolPanel" role="tabpanel" aria-labelledby="schoolTab"><label for="searchInput" class="field-label">학교명</label><input class="field" type="search" id="searchInput" placeholder="예: 서울개원초등학교, 개원초" autocomplete="off"></section>
-  <section id="regionPanel" role="tabpanel" aria-labelledby="regionTab" hidden><div class="field-group"><label for="regionSelect" class="field-label">1. 시도</label><select id="regionSelect" class="field"><option value="">17개 시도 선택</option><option>서울</option><option>부산</option><option>대구</option><option>인천</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>경기</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option></select></div><div class="field-group"><label for="officeSelect" class="field-label">2. 교육지원청</label><select id="officeSelect" class="field" disabled><option value="">시도를 먼저 선택하세요</option></select></div></section>
-  <div id="resultCount" class="result-count" aria-live="polite"></div><div id="results" class="results"></div><div class="pager" id="pager" hidden><button type="button" id="prevPage">이전</button><span id="pageInfo"></span><button type="button" id="nextPage">다음</button></div>
-  <p class="legal-note">학교별 응답 수가 적거나 검수되지 않은 자료는 공개하지 않습니다. 서로 다른 연도는 문항과 산정 방식이 달라 직접 비교에 주의해야 합니다.</p>
-</section>
+<header class="notice-bar"><a href="https://cafe.naver.com/bluey9t7i" target="_blank" rel="noopener noreferrer">Lv.2 참여코드 발급 · 네이버카페</a></header>
+<main class="wrap">
+  <nav class="top"><a href="index.html" class="back" aria-label="홈으로">←</a><a href="index.html" class="brand">VOLLEYBALL INDEX</a><span class="level">Lv.2</span></nav>
+  <section class="signin card" id="loginPanel" aria-labelledby="loginTitle">
+    <span class="eyebrow">TEACHER ACCESS · LEVEL 2</span>
+    <h1 id="loginTitle">학교별 상세정보</h1>
+    <p class="muted">교사 인증 참여코드로 열람하세요. 2023~2025년 배구지수 편집본의 학교별 항목을 원래 순서대로 제공합니다.</p>
+    <form id="loginForm"><label for="levelCode">참여코드</label><input id="levelCode" type="password" autocomplete="off" minlength="8" maxlength="120" required placeholder="참여코드 입력"><button type="submit" id="loginButton" class="primary">Lv.2 열람하기</button><p id="loginMessage" class="feedback" role="alert" aria-live="polite"></p></form>
+    <p class="fine">참여코드는 서버에서 검사합니다. 학교별 세부자료는 인증된 요청에만 응답합니다.</p>
+  </section>
+  <section id="searchPanel" hidden>
+    <div class="headline"><span class="eyebrow">LEVEL 2 · 학교별 원본 편집항목</span><h1>학교를 찾아보세요</h1><p class="muted">학교를 선택한 뒤 <b>학교별 상세보기</b>를 누르면 연도별로 편집본의 모든 열 제목과 보존된 셀 값을 확인할 수 있습니다.</p></div>
+    <div class="signed"><span class="signed-label">● Lv.2 열람 중</span><button id="logoutButton" class="small-button" type="button">로그아웃</button></div>
+    <div class="tabs" role="tablist" aria-label="검색 방법"><button id="schoolTab" type="button" role="tab" aria-selected="true" aria-controls="schoolPanel">학교별 찾기</button><button id="regionTab" type="button" role="tab" aria-selected="false" aria-controls="regionPanel">지역별 찾기</button></div>
+    <section id="schoolPanel" role="tabpanel" aria-labelledby="schoolTab"><label for="searchInput">학교명</label><input id="searchInput" type="search" autocomplete="off" placeholder="학교명 검색 · 예: 개원초등학교"></section>
+    <section id="regionPanel" role="tabpanel" aria-labelledby="regionTab" hidden><label for="regionSelect">시도 선택</label><select id="regionSelect"><option value="">시도 선택</option><option>서울</option><option>부산</option><option>대구</option><option>인천</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>경기</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option></select><label for="officeSelect">교육지원청</label><select id="officeSelect" disabled><option value="">시도를 먼저 선택하세요</option></select></section>
+    <div class="result-count" id="resultCount" aria-live="polite"></div><div class="results" id="results"></div>
+    <nav class="pager" id="pager" hidden><button id="prevPage" type="button">이전</button><span id="pageInfo"></span><button id="nextPage" type="button">다음</button></nav>
+    <p class="fine guidance">※ 원자료의 문항, 수치, 표시값을 재계산하지 않습니다. 2023·2024·2025 조사 문항과 산식은 서로 다릅니다. 소표본, 검수 미완료, 식별 위험 자료는 서버 승인이 있을 때만 표시합니다.</p>
+  </section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/supabase-config.js"></script><script src="js/master-percentiles-v1.2.js"></script><script src="js/level-search.js"></script><script src="js/visit-stats.js"></script>
-</body></html>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/master-percentiles-v1.2.js"></script>
+<script src="js/lv2-edited-search.js"></script>
+<script src="js/visit-stats.js"></script>
+</body>
+</html>
