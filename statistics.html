@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f6f8fc">
+  <meta name="description" content="전국 초등학교의 배구지수 2023~2025 공개 기록을 검색하는 학교정보 통계표">
+  <title>학교정보 통계표 | 배구지수</title>
+  <link rel="stylesheet" href="css/statistics.css?v=1-3-20261028">
+</head>
+<body>
+  <a class="skip-link" href="#dataTable">통계표로 건너뛰기</a>
+  <header class="site-top">
+    <div class="shell top-inner">
+      <a href="index.html" class="brand" aria-label="배구지수 홈으로">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 42 42" fill="none"><circle cx="21" cy="21" r="16.5" stroke="currentColor" stroke-width="1.7"/><path d="M17 5c8 5 12 12 12 20 0 7-3 10-6 12M6 17c10-3 22 1 31 10M10 32c2-10 12-17 25-16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        <span><strong>배구지수</strong><small>VOLLEYBALL INDEX</small></span>
+      </a>
+      <nav class="topnav" aria-label="페이지 이동"><a href="index.html">홈</a><span class="nav-current">학교정보 통계표</span><a href="search.html">기존 학교검색</a></nav>
+    </div>
+  </header>
+  <main class="shell">
+    <section class="intro" aria-labelledby="headingTitle">
+      <div class="intro-content">
+        <p class="overline"><span class="live-dot" aria-hidden="true"></span> PUBLIC DATA EXPLORER <span class="overline-sep">/</span> 2023—2025</p>
+        <h1 id="headingTitle">학교정보를 <span>한눈에</span></h1>
+        <p class="subtitle">전국 초등학교를 검색하고, 지역별로 찾아보고, 연도별 배구지수의 <strong>기존 공개 기록</strong>을 확인하세요.</p>
+        <div class="intro-tags"><span>학교 이름으로 찾기</span><span>17개 시도</span><span>연도별 기록</span><span>Lv.0 공개 자료</span></div>
+      </div>
+      <div class="intro-graphic" aria-hidden="true"><div class="graphic-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="graphic-line"></div><div class="graphic-label">SCHOOL INDEX <b>01—03</b></div></div>
+    </section>
+
+    <section class="content-card controls" aria-label="학교 찾기 및 필터">
+      <div class="section-head"><div><p class="section-overline">SEARCH &amp; FILTER</p><h2>원하는 학교 찾기</h2></div><button id="resetFilters" class="quiet-button" type="button"><span aria-hidden="true">↺</span> 초기화</button></div>
+      <div class="filters">
+        <div class="control control-search"><label for="searchInput">학교명 검색</label><div class="search-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6"/><path d="M16 16l5 5"/></svg><input id="searchInput" type="search" placeholder="학교명을 입력하세요 · 예: 강릉초등학교" autocomplete="off"></div></div>
+        <div class="control"><label for="regionSelect">시도</label><select id="regionSelect"><option value="">전국</option></select></div>
+        <div class="control"><label for="officeSelect">교육지원청</label><select id="officeSelect" disabled><option value="">시도를 먼저 선택</option></select></div>
+        <div class="control control-year"><label for="yearSelect">공개 기록</label><select id="yearSelect"><option value="2025">2025년</option><option value="2024">2024년</option><option value="2023">2023년</option><option value="all">3개년 각각 보기</option></select></div>
+      </div>
+      <div class="filter-foot"><span class="tiny-circle" aria-hidden="true"></span><span>학교명과 지역은 공개 학교목록 기준이며, 설문 결과가 없는 학교도 검색됩니다.</span></div>
+    </section>
+
+    <section class="data-section" aria-labelledby="resultHeading">
+      <div class="data-top"><div><p class="section-overline">DATA TABLE</p><h2 id="resultHeading">전국 학교정보 통계표</h2><p id="resultSummary" class="data-subtitle" role="status" aria-live="polite">학교 목록을 불러오는 중입니다.</p></div><div class="table-tools"><label class="small-select">한 페이지 <select id="pageSize"><option value="25">25행</option><option value="50">50행</option><option value="100">100행</option></select></label><span class="public-stamp">LV.0 / 공개 자료</span></div></div>
+      <div id="loadProgress" class="load-progress" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span id="progressText">학교 디렉터리 확인 중…</span></div>
+      <div class="table-frame" id="dataTable" tabindex="0" role="region" aria-label="학교정보 표, 좌우 스크롤 가능">
+        <table id="schoolTable">
+          <thead><tr>
+            <th class="col-number" scope="col">번호</th>
+            <th class="col-school" scope="col" id="colSchool"><button class="sort-button" data-sort="school_name" type="button" aria-label="학교명으로 정렬">학교명 <span class="sort-glyph" aria-hidden="true">↕</span></button></th>
+            <th scope="col" id="colRegion"><button class="sort-button" data-sort="sido_standard" type="button" aria-label="시도로 정렬">시도 <span class="sort-glyph" aria-hidden="true">↕</span></button></th>
+            <th scope="col" id="colOffice"><button class="sort-button" data-sort="support_office" type="button" aria-label="교육지원청으로 정렬">교육지원청 <span class="sort-glyph" aria-hidden="true">↕</span></button></th>
+            <th scope="col" id="colEstablishment"><button class="sort-button" data-sort="establishment" type="button" aria-label="설립구분으로 정렬">설립구분 <span class="sort-glyph" aria-hidden="true">↕</span></button></th>
+            <th id="percentileHeader" scope="col" class="col-percentile">2025년 공개 백분위</th>
+            <th id="statusHeader" scope="col" class="col-status">자료 상태</th>
+            <th class="col-action" scope="col">학교정보</th>
+          </tr></thead>
+          <tbody id="schoolRows"><tr><td colspan="8" class="loading-cell">학교정보를 불러오고 있습니다…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="below-table"><div class="legend"><span><i class="legend-dot published"></i> 공개 기록</span><span><i class="legend-dot pending"></i> 검수 중</span><span><i class="legend-dot none"></i> 자료 없음</span></div><div class="pager"><button id="prevPage" class="page-button" type="button" disabled aria-label="이전 페이지">이전</button><span id="pageLabel" aria-live="polite">— / —</span><button id="nextPage" class="page-button" type="button" disabled aria-label="다음 페이지">다음</button></div></div>
+    </section>
+
+    <aside class="notice" aria-labelledby="noticeHeading"><div class="notice-icon" aria-hidden="true">i</div><div><h3 id="noticeHeading">통계표를 읽기 전에</h3><p>여기의 백분위는 <strong>기존 Lv.0 공개본에 있는 과거 기록</strong>입니다. 연도별 문항·산식·참여 집단이 달라 연도 사이의 점수 상승·하락을 뜻하지 않습니다. 전국순위나 학교 우열을 생성하지 않으며, 백분위 순 정렬도 제공하지 않습니다.</p><p class="notice-small">`자료 없음`은 0점이 아니며, `검수 중`은 아직 표시할 수 없는 값입니다. Lv.1·Lv.2 상세지표는 이 공개 페이지에 포함하지 않았습니다.</p></div></aside>
+    <footer class="footer"><p>© 배구지수 · 학교정보 공개 통계표 <span id="snapshotLabel">2023—2025</span></p><p>학교목록: 배구지수 기존 공개 DB · 백분위: 기존 검증 Lv.0 스냅샷</p></footer>
+  </main>
+
+  <div id="infoDialog" class="dialog-backdrop" hidden>
+    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <div class="dialog-top"><div><p class="section-overline">SCHOOL RECORD</p><h2 id="dialogTitle">학교정보</h2><p id="dialogMeta" class="data-subtitle"></p></div><button class="dialog-close" id="dialogClose" type="button" aria-label="학교정보 닫기">×</button></div>
+      <div class="dialog-body" id="dialogBody"></div>
+      <div class="dialog-bottom"><span>상세 권한 연결은 2-3단계에서 진행합니다.</span><button class="page-button" id="dialogDismiss" type="button">닫기</button></div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/master-percentiles-v1.2.js"></script>
+  <script src="js/statistics-table.js?v=1-3-20261028"></script>
+  <script src="js/visit-stats.js"></script>
+</body>
+</html>
