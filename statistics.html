@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#f6f8fc">
   <meta name="description" content="전국 초등학교의 배구지수 2023~2025 공개 기록을 검색하는 학교정보 통계표">
   <title>학교정보 통계표 | 배구지수</title>
-  <link rel="stylesheet" href="css/statistics.css?v=1-3-20261028">
+  <link rel="stylesheet" href="css/statistics.css?v=1-4-20261028">
 </head>
 <body>
-  <a class="skip-link" href="#dataTable">통계표로 건너뛰기</a>
+  <a class="skip-link" href="#resultHeading">학교 목록으로 건너뛰기</a>
   <header class="site-top">
     <div class="shell top-inner">
       <a href="index.html" class="brand" aria-label="배구지수 홈으로">
@@ -33,7 +33,7 @@
     <section class="content-card controls" aria-label="학교 찾기 및 필터">
       <div class="section-head"><div><p class="section-overline">SEARCH &amp; FILTER</p><h2>원하는 학교 찾기</h2></div><button id="resetFilters" class="quiet-button" type="button"><span aria-hidden="true">↺</span> 초기화</button></div>
       <div class="filters">
-        <div class="control control-search"><label for="searchInput">학교명 검색</label><div class="search-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6"/><path d="M16 16l5 5"/></svg><input id="searchInput" type="search" placeholder="학교명을 입력하세요 · 예: 강릉초등학교" autocomplete="off"></div></div>
+        <div class="control control-search"><label for="searchInput">학교명 검색</label><div class="search-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6"/><path d="M16 16l5 5"/></svg><input id="searchInput" type="search" placeholder="학교명을 입력하세요 · 예: 강릉초등학교" autocomplete="off" enterkeyhint="search" autocapitalize="off"><button id="clearSearch" type="button" class="search-clear" aria-label="검색어 지우기" hidden>지우기 ×</button></div></div>
         <div class="control"><label for="regionSelect">시도</label><select id="regionSelect"><option value="">전국</option></select></div>
         <div class="control"><label for="officeSelect">교육지원청</label><select id="officeSelect" disabled><option value="">시도를 먼저 선택</option></select></div>
         <div class="control control-year"><label for="yearSelect">공개 기록</label><select id="yearSelect"><option value="2025">2025년</option><option value="2024">2024년</option><option value="2023">2023년</option><option value="all">3개년 각각 보기</option></select></div>
@@ -43,6 +43,14 @@
 
     <section class="data-section" aria-labelledby="resultHeading">
       <div class="data-top"><div><p class="section-overline">DATA TABLE</p><h2 id="resultHeading">전국 학교정보 통계표</h2><p id="resultSummary" class="data-subtitle" role="status" aria-live="polite">학교 목록을 불러오는 중입니다.</p></div><div class="table-tools"><label class="small-select">한 페이지 <select id="pageSize"><option value="25">25행</option><option value="50">50행</option><option value="100">100행</option></select></label><span class="public-stamp">LV.0 / 공개 자료</span></div></div>
+      <div class="mobile-viewbar" aria-label="모바일 보기 방식 선택">
+        <span class="mobile-viewtitle">보기 방식</span>
+        <div class="mobile-viewoptions" role="group" aria-label="학교 목록 표시 방식">
+          <button type="button" id="viewCards" class="mobile-viewbtn" aria-pressed="true">카드로 보기</button>
+          <button type="button" id="viewTable" class="mobile-viewbtn" aria-pressed="false">표로 보기</button>
+        </div>
+      </div>
+      <p id="tableSwipeHint" class="mobile-swipe-hint" hidden>표를 좌우로 밀어 다른 항목을 확인할 수 있습니다. 학교명은 왼쪽에 고정됩니다.</p>
       <div id="loadProgress" class="load-progress" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span id="progressText">학교 디렉터리 확인 중…</span></div>
       <div class="table-frame" id="dataTable" tabindex="0" role="region" aria-label="학교정보 표, 좌우 스크롤 가능">
         <table id="schoolTable">
@@ -59,6 +67,7 @@
           <tbody id="schoolRows"><tr><td colspan="8" class="loading-cell">학교정보를 불러오고 있습니다…</td></tr></tbody>
         </table>
       </div>
+      <div id="mobileCards" class="mobile-card-list" aria-label="학교정보 카드 목록"></div>
       <div class="below-table"><div class="legend"><span><i class="legend-dot published"></i> 공개 기록</span><span><i class="legend-dot pending"></i> 검수 중</span><span><i class="legend-dot none"></i> 자료 없음</span></div><div class="pager"><button id="prevPage" class="page-button" type="button" disabled aria-label="이전 페이지">이전</button><span id="pageLabel" aria-live="polite">— / —</span><button id="nextPage" class="page-button" type="button" disabled aria-label="다음 페이지">다음</button></div></div>
     </section>
 
@@ -77,7 +86,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/master-percentiles-v1.2.js"></script>
-  <script src="js/statistics-table.js?v=1-3-20261028"></script>
+  <script src="js/statistics-table.js?v=1-4-20261028"></script>
   <script src="js/visit-stats.js"></script>
 </body>
 </html>
