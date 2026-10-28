@@ -1,4 +1,4 @@
-/* 배구지수 공개 통계표: Step 1-4 (mobile adaptive)
+/* 배구지수 공개 통계표: Step 1-5 (public-record validation)
  * 신규 공개/등급 지표를 생성하지 않는다.
  * 학교목록: Supabase public.schools 공개 필드만.
  * 연도별 백분위: 기존 검증된 Lv.0 data/public-lv0-percentiles-v1.2.json만.
@@ -143,14 +143,14 @@
     tile.setAttribute('aria-label',`${yearNumber}년: ${d.value!==null?`${d.value.toFixed(1)}%`:d.label}`);
     return tile;
   }
-  function renderCards(list, start) {
+  function renderCards(list, start, emptyMessage = null) {
     mobileCards.replaceChildren();
     if (state.loading) {
       mobileCards.append(text('p','학교정보를 불러오는 중입니다…','mobile-empty'));
       return;
     }
     if (!list.length) {
-      mobileCards.append(text('p','검색 조건에 해당하는 학교가 없습니다.','mobile-empty'));
+      mobileCards.append(text('p',emptyMessage || '검색 조건에 해당하는 학교가 없습니다.','mobile-empty'));
       return;
     }
     const frag=document.createDocumentFragment();
@@ -197,7 +197,7 @@
     const td=cell(tr,message,'loading-cell');
     td.colSpan = state.selectedYear === 'all' ? 10 : 8;
     schoolRows.append(tr);
-    renderCards([],0);
+    renderCards([],0,message);
   }
   function summaryAndPagination(total,pages) {
     const start = total ? state.page * state.pageSize+1 : 0;
