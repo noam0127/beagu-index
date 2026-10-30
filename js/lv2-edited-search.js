@@ -195,8 +195,6 @@ function renderRecords(root,records,metadata,year){
   }
   if(record.release_note&&typeof record.release_note==='string')
    root.append(note(record.release_note));
-  if(year===2025&&Number.isInteger(record.observation_count)&&record.observation_count===1)
-   root.append(note('참고: 이 학교의 요약은 관측 응답 기록 1건에 기반합니다. 학교 전체를 대표하는 결과가 아닙니다.'));
  });
 }
 async function showDetail(container,school){
