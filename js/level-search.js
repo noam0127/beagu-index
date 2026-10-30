@@ -197,12 +197,12 @@
       .filter(r => Number(r.year) === 2026 && Number(r.access_level) === 1)
       .flatMap(r => Array.isArray(r.summary?.metrics) ? r.summary.metrics : [])
       .filter(m => typeof m?.label === 'string' && typeof m?.value === 'string'
-        && !/응답|관측|표본|횟수|회수|참여자\\s*수|참여\\s*인원/i.test(m.label));
+        && !/응답|관측|표본|횟수|회수|참여자\s*수|참여\s*인원/i.test(m.label));
   }
   function percentile2026(rows) {
     for (const metric of metrics2026(rows)) {
       if (!metric.label.includes('백분위')) continue;
-      const result = metric.value.trim().match(/^(\\d{1,3}(?:\\.\\d{1,2})?)\\s*%?$/);
+      const result = metric.value.trim().match(/^(\d{1,3}(?:\.\d{1,2})?)\s*%?$/);
       const n = result ? Number(result[1]) : NaN;
       if (Number.isFinite(n) && n >= 0 && n <= 100) return n;
     }
