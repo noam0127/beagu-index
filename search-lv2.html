@@ -194,6 +194,13 @@ body { min-width: 0; }
   .percentile-grid, .percentiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .percentile-value, .percentiles > div > b { font-size: 15px; }
 }
+
+/* 백분위와 추이 그래프: 상세보기 버튼 바깥에 상시 표시 */
+.percentile-panel { margin: 16px 0 18px; border: 1px solid #e5e7eb; border-radius: 14px; padding: 12px; background: #fff; }
+.percentile-panel .percentile-heading { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+.percentile-panel .percentile-graph { margin: 10px 0 4px; max-width: 100%; }
+.percentile-panel .percentile-grid, .percentile-panel .percentiles { margin: 12px 0 8px; }
+.percentile-panel .percentile-graph svg { max-width: 100%; height: auto; }
 </style>
 </head>
 <body>
@@ -260,6 +267,7 @@ body { min-width: 0; }
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/master-percentiles-v1.2.js"></script>
+  <script src="js/percentile-chart.js"></script>
   <script src="js/lv2-edited-search.js"></script>
   <script src="js/visit-stats.js"></script>
   <script>
