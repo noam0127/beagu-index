@@ -226,9 +226,7 @@ function render(results,total){
    el('div','school-meta',[s.support_office,s.address].filter(Boolean).join(' · ')));
   const actions=el('div','actions'),open=el('button','view-button','학교별 상세보기');
   open.type='button';open.setAttribute('aria-expanded','false');
-  const exchange=el('a','exchange-button','실시간 정보교류');
-  exchange.href='https://open.kakao.com/o/gJyJ14Si';exchange.target='_blank';
-  exchange.rel='noopener noreferrer';actions.append(open,exchange);card.append(actions);
+  actions.append(open);card.append(actions);
   const detail=el('section','school-detail');detail.hidden=true;
   detail.setAttribute('aria-label','학교별 상세정보');card.append(detail);
   let loaded=false,loading=false;
