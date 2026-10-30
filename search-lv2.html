@@ -97,16 +97,14 @@ h1 { font-size: 32px; line-height: 1.3; letter-spacing: -1.5px; margin: 0 0 10px
 .school-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; overflow-wrap: anywhere; }
 .school-meta { font-size: 14px; color: #666; line-height: 1.6; overflow-wrap: anywhere; }
 .region-badge, .region-pill { display: inline-block; margin-bottom: 10px; padding: 5px 9px; border-radius: 999px; background: #eef2ff; color: #2563eb; font-size: 12px; font-weight: 700; }
-.school-actions, .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-.view-button, .exchange-button {
+.school-actions, .actions { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
+.view-button {
   display: block; min-width: 0; width: 100%; text-align: center; text-decoration: none;
   border-radius: 10px; padding: 13px 10px; font-size: 14px; line-height: 1.45;
   font-weight: 700; border: 0; cursor: pointer;
 }
 .view-button { background: #2563eb; color: #fff; }
 .view-button:hover { background: #1d4ed8; }
-.exchange-button { background: #eef2ff; color: #2563eb; }
-.exchange-button:hover { background: #dbeafe; }
 .empty, .pending { padding: 40px 20px; text-align: center; color: #888; }
 .pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 20px 0 30px; }
 .pager button { background: #fff; color: #1d4ed8; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; font-size: 14px; cursor: pointer; }
@@ -154,7 +152,7 @@ h1 { font-size: 32px; line-height: 1.3; letter-spacing: -1.5px; margin: 0 0 10px
   .participation-link { font-size: 14px; }
   .school-actions, .actions { gap: 7px; }
   .school-card { padding: 16px; }
-  .view-button, .exchange-button { padding: 12px 6px; font-size: 13px; }
+  .view-button { padding: 12px 6px; font-size: 13px; }
 }
 
 /* UI 개선 v20261027: 자체 포함 스타일, 모바일 안전, 코드 토글 */
@@ -177,7 +175,7 @@ body { min-width: 0; }
 .section-title-level { position: relative; }
 .step-foot { font-size: 12px; color: #64748b; margin-top: 12px; line-height: 1.65; }
 .school-card button { font-family: inherit; }
-.school-card .view-button, .school-card .exchange-button { display: flex; align-items: center; justify-content: center; }
+.school-card .view-button { display: flex; align-items: center; justify-content: center; }
 @media (max-width: 420px) { .topbar { margin-bottom: 25px; } .auth-card h1 { font-size: 29px; } }
 
   </style>
