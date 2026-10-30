@@ -2,7 +2,6 @@
   'use strict';
   const byId = id => document.getElementById(id);
   const status = byId('status'), capture = byId('capture'), retry = byId('retry');
-  const imageFallback = byId('imageFallback');
   let imageUrl = null, participant = null, busy = false;
   const deadline = (promise, ms, message) => {
     let timer;
@@ -39,8 +38,6 @@
       if (!blob) throw new Error('이미지를 생성하지 못했습니다. 다시 시도해주세요.');
       if (imageUrl) URL.revokeObjectURL(imageUrl);
       imageUrl = URL.createObjectURL(blob);
-      imageFallback.href = imageUrl;
-      imageFallback.hidden = false;
       capture.disabled = false;
       status.textContent = '인증 이미지가 준비되었습니다. 저장한 뒤 2단계에서 참여 인증을 진행해주세요.';
     } catch (error) {
@@ -64,11 +61,10 @@
       document.body.appendChild(link);
       link.click();
       link.remove();
-      status.textContent = '이미지 저장을 요청했습니다. 저장되지 않으면 아래에서 이미지를 새 탭으로 열어 저장해주세요.';
+      status.textContent = '이미지 저장을 요청했습니다. 브라우저의 다운로드 목록에서 확인해 주세요.';
     } catch (_) {
-      status.textContent = '아래의 이미지 새 탭에서 보기를 눌러 직접 저장해주세요.';
+      status.textContent = '이미지 저장에 실패했습니다. 다시 시도해주세요.';
     }
-    imageFallback.hidden = false;
   });
 
   retry.addEventListener('click', prepare);
