@@ -202,25 +202,46 @@ function renderRecords(root,records,metadata,year){
 async function showDetail(container,school){
  container.replaceChildren();
  const head=el('div','overview');
- head.append(el('h3','','연도별 상세자료'),el('small','','공개 승인 자료만 표시'));
+ head.append(el('h3','','연도별 배구지수 백분위'),el('small','','공개 승인 자료만 표시'));
  container.append(head);
- await publicPromise;addPercentiles(container,school);
- const tabbar=el('div','year-tabs');tabbar.setAttribute('role','tablist');
- const body=el('div');container.append(tabbar,body);
- let response,metadata;
+ let response,metadata,levelData;
  try{
-  [response,metadata]=await Promise.all([
-   api('beagu-edited-api-v1','school',{schoolId:school.school_id}),schemaPromise
+  [response,metadata,levelData]=await Promise.all([
+   api('beagu-edited-api-v1','school',{schoolId:school.school_id}),
+   schemaPromise,
+   api('beagu-level-api','school',{schoolId:school.school_id})
   ]);
+  await publicPromise;
  }catch(e){
   if(e.unauthorized){logout('인증이 만료되었습니다. 다시 로그인하세요.');return false;}
-  body.append(el('div','pending','상세자료 또는 항목설명을 불러오지 못했습니다. 다시 시도해주세요.'));
+  container.append(el('div','pending','상세자료를 불러오지 못했습니다. 다시 시도해주세요.'));
   return false;
  }
- const years=[2025,2024,2023];
+ addPercentiles(container,school,levelData.rows);
+ container.append(note('2026년 백분위는 공개 승인된 자료가 등록되면 표시됩니다.'));
+ addSchoolProfile(container,school);
+ const big=el('button','year-2026-button','2026년 상세보기');
+ big.type='button';big.setAttribute('aria-expanded','false');
+ const newer=el('div','year-2026-content');newer.hidden=true;
+ newer.append(el('h3','','2026년 배구지수'));
+ const stats=metrics2026(levelData.rows);
+ if(!stats.length)newer.append(note('2026년 승인된 학교별 자료가 아직 준비되지 않았습니다.'));
+ else stats.forEach(m=>{
+  const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',m.value));newer.append(row);
+ });
+ big.addEventListener('click',()=>{
+  newer.hidden=!newer.hidden;
+  big.setAttribute('aria-expanded',String(!newer.hidden));
+ });
+ container.append(big,newer);
+ container.append(el('h3','school-history-heading','과거 상세자료'));
+ const tabbar=el('div','year-tabs');tabbar.setAttribute('role','tablist');
+ tabbar.setAttribute('aria-label','과거 조사 연도 선택');
+ const body=el('div','school-year-details');body.setAttribute('role','tabpanel');
+ container.append(tabbar,body);
+ const years=[2023,2024,2025];
  function choose(year){
-  [...tabbar.children].forEach(b=>
-   b.setAttribute('aria-selected',String(Number(b.dataset.year)===year)));
+  [...tabbar.children].forEach(b=>b.setAttribute('aria-selected',String(Number(b.dataset.year)===year)));
   renderRecords(body,response.rows,metadata,year);
  }
  years.forEach(y=>{
