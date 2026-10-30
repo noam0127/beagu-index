@@ -141,7 +141,7 @@ function metrics2026(rows){
  .filter(m=>typeof m?.label==='string'&&typeof m?.value==='string'&&!/응답|관측|표본|횟수|회수/i.test(m.label));
 }
 function percentile2026(rows){
- for(const m of metrics2026(rows).filter(x=>x.label.includes('백분위'))){
+ for(const m of metrics2026((Array.isArray(rows)?rows:[]).filter(r=>Number(r.access_level)===1)).filter(x=>x.label.includes('백분위'))){
   const l=m.value.trim().match(/^(\d{1,3}(?:\.\d{1,2})?)\s*%?$/),n=l?Number(l[1]):NaN;
   if(Number.isFinite(n)&&n>=0&&n<=100)return n;
  }return null;
