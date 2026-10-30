@@ -12,7 +12,7 @@
   let session = sessionStorage.getItem(key) || '';
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
-  const YEARS = [2025, 2024, 2023];
+  const YEARS = [2023, 2024, 2025];
   const offices = {
     '서울':'강남서초 강동송파 강서양천 남부 동부 동작관악 북부 서부 성동광진 성북강북 중부',
     '부산':'남부 동래 북부 서부 해운대',
@@ -185,37 +185,93 @@
       }
     }
     if (hadMismatch) section.append(make('p', 'detail-note', '백분위 출처별 값이 달라 원본 검수가 필요합니다. 임의로 합치지 않았습니다.'));
-    if (hadRestricted) section.append(make('p', 'detail-note', '응답 또는 검수 기준에 따라 일부 세부 항목은 공개하지 않습니다.'));
+    if (hadRestricted) section.append(make('p', 'detail-note', '승인 범위에 따라 일부 세부 항목은 공개하지 않습니다.'));
     if (!count && !hadRestricted) section.append(make('p', 'detail-note', '추가 승인 통계가 없습니다. 위의 기존 공개 백분위를 참고하세요.'));
-    if (year === 2025) section.append(make('p', 'detail-note', '영역별 점수는 해당 연도 조사 방식에 따른 참고자료입니다. 관측 기록 건수는 중복 응답 검증이 완료된 고유 응답자 수가 아닙니다.'));
-    else section.append(make('p', 'detail-note', '과거 응답자 수는 검증되지 않았습니다. 총점·순위·개별 문항은 제공하지 않습니다.'));
+    if (year === 2025) section.append(make('p', 'detail-note', '영역별 점수는 해당 연도 조사 방식에 따른 참고자료입니다.'));
+    else section.append(make('p', 'detail-note', '총점·순위·개별 문항은 제공하지 않습니다.'));
     host.append(section);
+  }
+
+  function metrics2026(rows) {
+    return (Array.isArray(rows) ? rows : [])
+      .filter(r => Number(r.year) === 2026 && Number(r.access_level) === 1)
+      .flatMap(r => Array.isArray(r.summary?.metrics) ? r.summary.metrics : [])
+      .filter(m => typeof m?.label === 'string' && typeof m?.value === 'string'
+        && !/응답|관측|표본|횟수|회수|참여자\\s*수|참여\\s*인원/i.test(m.label));
+  }
+  function percentile2026(rows) {
+    for (const metric of metrics2026(rows)) {
+      if (!metric.label.includes('백분위')) continue;
+      const result = metric.value.trim().match(/^(\\d{1,3}(?:\\.\\d{1,2})?)\\s*%?$/);
+      const n = result ? Number(result[1]) : NaN;
+      if (Number.isFinite(n) && n >= 0 && n <= 100) return n;
+    }
+    return null;
   }
   function showDetails(host, rows, school) {
     host.replaceChildren();
     const section = make('section', 'detail');
-    section.append(make('h3', '', '2023~2025년 학교별 공개자료'));
-    section.append(make('p', 'detail-note', '연도별 문항과 산식이 다르므로 백분위·영역별 점수를 연속적인 동일 척도로 비교할 수 없습니다.'));
+    section.append(make('h3', '', '연도별 배구지수 백분위'));
     const vals = asPublicPercentiles(school);
+    const current = percentile2026(rows);
     const grid = make('div', 'percentile-grid');
-    [2023, 2024, 2025].forEach((year, index) => {
+    [2023, 2024, 2025, 2026].forEach((year, index) => {
       const cell = make('div', 'percentile-cell');
+      const value = year === 2026 ? current : vals[index];
       cell.append(make('span', 'percentile-year', year),
-        make('b', 'percentile-value', vals[index] === null ? '자료 없음' : vals[index].toFixed(1) + '%'));
+        make('b', 'percentile-value', value === null ? '자료 준비 중' : value.toFixed(1) + '%'));
       grid.append(cell);
     });
     section.append(grid);
+    section.append(make('p', 'detail-note', '2026년은 승인된 학교별 백분위가 등록되면 표시됩니다. 연도별 산식이 다를 수 있습니다.'));
+    const profile = make('section', 'school-profile');
+    profile.append(make('h3', '', '학교 기본정보'));
+    for (const [label, value] of [
+      ['학교명', school.school_name],
+      ['시도', school.sido_standard || school.sido],
+      ['교육지원청', school.support_office],
+      ['주소', school.address],
+      ['설립유형', school.establishment],
+      ['학교급', school.school_kind]
+    ]) addRow(profile, label, value || '자료 없음');
+    section.append(profile);
+
+    const newer = make('button', 'year-2026-button', '2026년 상세보기');
+    newer.type = 'button';
+    newer.setAttribute('aria-expanded', 'false');
+    const currentContent = make('div', 'year-2026-content');
+    currentContent.hidden = true;
+    function render2026() {
+      currentContent.replaceChildren();
+      currentContent.append(make('h3', '', '2026년 배구지수'));
+      const metrics = metrics2026(rows);
+      if (!metrics.length) {
+        currentContent.append(make('p', 'detail-note', '2026년 공개 승인 통계가 아직 준비되지 않았습니다.'));
+      } else {
+        for (const metric of metrics) addRow(currentContent, metric.label, metric.value);
+      }
+    }
+    render2026();
+    newer.addEventListener('click', () => {
+      currentContent.hidden = !currentContent.hidden;
+      newer.setAttribute('aria-expanded', String(!currentContent.hidden));
+    });
+    section.append(newer, currentContent);
+
+    section.append(make('h3', 'school-history-heading', '과거 상세자료'));
     const tabs = make('div', 'year-tabs');
     tabs.setAttribute('role', 'tablist');
-    tabs.setAttribute('aria-label', '조사 연도 선택');
+    tabs.setAttribute('aria-label', '과거 조사 연도 선택');
     const content = make('div', 'school-year-details');
     content.setAttribute('role', 'tabpanel');
     function choose(year) {
-      for (const button of tabs.children) button.setAttribute('aria-selected', String(Number(button.dataset.year) === year));
+      for (const button of tabs.children) {
+        button.setAttribute('aria-selected', String(Number(button.dataset.year) === year));
+      }
       renderYear(content, year, rows, vals[year - 2023]);
     }
     for (const year of YEARS) {
-      const button = make('button', '', `${year}년`);
+      const button = make('button', '', year + '년');
       button.type = 'button';
       button.dataset.year = String(year);
       button.setAttribute('role', 'tab');
@@ -224,6 +280,8 @@
       tabs.append(button);
     }
     section.append(tabs, content);
+    section.append(make('p', 'detail-note',
+      '2023·2024·2025년은 문항과 산식이 다르므로 수치를 동일한 척도로 직접 비교하지 마세요.'));
     host.append(section);
     choose(2025);
   }
@@ -285,7 +343,7 @@
     $('resultCount').textContent = '검색 중...';
     try {
       let query = supabaseClient.from('schools')
-        .select('school_id,school_name,sido,sido_standard,support_office,address,status', {count:'exact'})
+        .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status', {count:'exact'})
         .eq('status','운영');
       if (q) query = query.ilike('school_name', `%${q.replaceAll('%','\\%').replaceAll('_','\\_')}%`);
       if (region) query = query.eq('sido_standard', region);
