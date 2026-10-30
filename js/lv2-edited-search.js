@@ -44,7 +44,7 @@ const own=(obj,key)=>Object.prototype.hasOwnProperty.call(obj,key);
 const RELEASED_KEYS=Object.freeze({
  2023:new Set(['A','B','C','F']),
  2024:new Set(['A','B','C','E','G','N','AI','BN']),
- 2025:new Set(['A','B','C','D','F','G','H','I','J','K','L','M','N','O','P','R','S','T','AC','AE','AI','AM','AQ','AU','AY','BC','BG'])
+ 2025:new Set(['A','B','C','D','F','G','H','I','J','K','L','M','N','O','P','R','S','T','U','V','AC','AE','AI','AM','AQ','AU','AY','BC','BG'])
 });
 const APPROVED_LABELS=Object.freeze({
  2023:{F:'전국 백분위'},
@@ -182,15 +182,6 @@ function renderPagePercentiles(results,requestId){
   }
  }).catch(e=>{if(e.unauthorized&&serial===requestId)logout('인증이 만료되었습니다. 다시 로그인하세요.');});
 }
-function addSchoolProfile(root,school){
- const profile=el('section','school-profile');profile.append(el('h3','','학교 기본정보'));
- for(const [label,value] of [
-  ['학교명',school.school_name],['시도',school.sido_standard||school.sido],
-  ['교육지원청',school.support_office],['주소',school.address],
-  ['설립유형',school.establishment],['학교급',school.school_kind]
- ]){const line=el('div','data-row');line.append(el('span','',label),el('strong','',value||'자료 없음'));profile.append(line);}
- root.append(profile);
-}
 function renderRecords(root,records,metadata,year){
  root.replaceChildren();
  const rows=Array.isArray(records)?records.filter(r=>Number(r.year)===year):[];
@@ -200,17 +191,38 @@ function renderRecords(root,records,metadata,year){
  rows.forEach((record,i)=>{
   const values=record.values&&typeof record.values==='object'&&!Array.isArray(record.values)?record.values:{};
   const fields=releasedFields(metadata,year,values);
-  if(!fields.length){
+  // 2025: replace duplicate identity and fixed-indicator sections with a
+  // short approved basic-info block. Historical years remain unchanged.
+  const visibleFields=year===2025
+   ? fields.filter(f=>f.section!=='1. 기본정보'&&!String(f.section||'').startsWith('2. 고정지표'))
+   : fields;
+  if(!fields.length&&year!==2025){
    root.append(el('div','pending',`${year}년에는 표시 가능한 승인 항목이 없습니다.`));return;
   }
   const suffix=rows.length>1?` · 기록 ${i+1}/${rows.length}`:'';
-  root.append(note(`${year}년 · 공개 승인 항목 ${fields.length}개 (편집본 열 순서)${suffix}`));
+  root.append(note(`${year}년 · 공개 승인 자료${suffix}`));
+  if(year===2025){
+   const basic=el('section','section-card');basic.append(el('h4','','1. 기본정보'));
+   const items=[
+    ['P','학생 수','명'],['T','교사 수','명'],
+    ['V','남교사 비율',''],['U','2급 정교사 비율',''],
+    ['W','9·4 참여율','']
+   ];
+   for(const [key,label,unit] of items){
+    const item=el('div','item');item.append(el('div','name',label));
+    const found=own(values,key)&&values[key]!==null&&values[key]!==undefined&&values[key]!=='';
+    item.append(el('div','val',found?String(values[key])+unit:(key==='W'?'자료 미연동':'자료 없음')));
+    basic.append(item);
+   }
+   basic.append(note('2025 편집본에 수록된 학교 현황은 2024년 기준입니다. 9·4 참여율은 2023년 9월 4일 기준이며 현재 승인 데이터에 연결되지 않았습니다.'));
+   root.append(basic);
+  }
   let sectionName='',currentSection=null,subName='';
-  for(const field of fields){
+  for(const field of visibleFields){
    const group=field.section||'기타';
    if(group!==sectionName){
     currentSection=el('section','section-card');
-    currentSection.append(el('h4','',group));root.append(currentSection);
+    currentSection.append(el('h4','',year===2025&&group==='4. 2025 배구지수 요약'?'2. 2025 배구지수 요약':group));root.append(currentSection);
     sectionName=group;subName='';
    }
    const sub=field.subsection||'';
@@ -240,7 +252,6 @@ async function showDetail(container,school){
   container.append(el('div','pending','상세자료를 불러오지 못했습니다. 다시 시도해주세요.'));
   return false;
  }
- addSchoolProfile(container,school);
  container.append(el('h3','school-history-heading','2026년 배구지수'));
  const newer=el('div','year-2026-content');newer.hidden=false;
  const stats=metrics2026(levelData.rows);
