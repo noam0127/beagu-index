@@ -243,7 +243,7 @@
         `<div class="school-name">${escape(school.school_name)}</div>` +
         `<div class="school-meta">${escape(school.support_office)}<br>${escape(school.address)}</div>` +
         '<div class="school-actions"><button class="view-button" type="button">승인 통계 열람</button>' +
-        '<a class="exchange-button" target="_blank" rel="noopener noreferrer" href="https://open.kakao.com/o/gJyJ14Si">실시간 정보교류</a></div>';
+        '</div>';
       const detail = make('div'); detail.hidden = true;
       const button = card.querySelector('button');
       button.setAttribute('aria-expanded', 'false');
