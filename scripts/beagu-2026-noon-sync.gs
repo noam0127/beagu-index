@@ -146,7 +146,8 @@ function refreshBeagu2026Stats() {
     if(!source)throw Error("원본 응답 시트 이름이 변경되었습니다.");
     const rCount=source.getLastRow();
     if(rCount>BEAGU26.maxResponses+1)throw Error("응답 행수 안전 한도 초과");
-    const values=source.getRange(1,1,Math.max(1,rCount),source.getLastColumn()).getDisplayValues();
+    // B01/B02/B03 and Q01~Q13 are in the leading columns; avoid loading free-text answers.
+    const values=source.getRange(1,1,Math.max(1,rCount),Math.min(50,source.getLastColumn())).getDisplayValues();
     const columns=questionColumns(values[0]);
     const schools=fetchSchools(); // 학교 MASTER가 없으면 기존 결과 보존
     const groups=new Map(),holds=[];
