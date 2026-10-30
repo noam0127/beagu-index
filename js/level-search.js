@@ -323,7 +323,7 @@
       card.innerHTML = `<span class="region-badge">${escape(school.sido_standard || school.sido)}</span>` +
         `<div class="school-name">${escape(school.school_name)}</div>` +
         `<div class="school-meta">${escape(school.support_office)}<br>${escape(school.address)}</div>` +
-        '<div class="school-actions"><button class="view-button" type="button">승인 통계 열람</button>' +
+        '<div class="school-actions"><button class="view-button" type="button">🔍 자세히 보기</button>' +
         '</div>';
       card.dataset.schoolId=String(school.school_id);
       card.querySelector('.school-actions').before(percentilePanel(school));
@@ -333,7 +333,7 @@
       button.addEventListener('click', async () => {
         if (!detail.hidden) {
           detail.hidden = true;
-          button.textContent = '승인 통계 열람';
+          button.textContent = '🔍 자세히 보기';
           button.setAttribute('aria-expanded', 'false');
           return;
         }
