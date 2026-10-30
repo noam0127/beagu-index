@@ -137,22 +137,50 @@ function note(t){return el('p','year-note',t);}
 
 function metrics2026(rows){
  return (Array.isArray(rows)?rows:[]).filter(r=>Number(r.year)===2026&&[1,2].includes(Number(r.access_level)))
- .flatMap(r=>Array.isArray(r.summary?.metrics)?r.summary.metrics:[])
- .filter(m=>typeof m?.label==='string'&&typeof m?.value==='string'&&!/응답|관측|표본|횟수|회수/i.test(m.label));
+  .flatMap(r=>Array.isArray(r.summary?.metrics)?r.summary.metrics:[])
+  .filter(m=>typeof m?.label==='string'&&(typeof m.value==='number'||typeof m.value==='string')&&!/응답|관측|표본|횟수|회수/i.test(m.label));
 }
 function percentile2026(rows){
- for(const m of metrics2026((Array.isArray(rows)?rows:[]).filter(r=>Number(r.access_level)===1)).filter(x=>x.label.includes('백분위'))){
-  const l=m.value.trim().match(/^(\d{1,3}(?:\.\d{1,2})?)\s*%?$/),n=l?Number(l[1]):NaN;
-  if(Number.isFinite(n)&&n>=0&&n<=100)return n;
+ for(const m of metrics2026((Array.isArray(rows)?rows:[]).filter(r=>Number(r.access_level)===1))){
+  if(m.key!=='percentile')continue;
+  const n=Number(m.value);if(Number.isFinite(n)&&n>=0&&n<=100)return n;
  }return null;
 }
-function addPercentiles(root,school,levelRows){
- const box=el('div','percentiles');
- const values=window.BeaguPublic?BeaguPublic.values(percentIndex.get(String(school.school_id))):[null,null,null];
+function percentilePanel(school,v26=null){
+ const section=el('section','percentile-panel');
+ section.setAttribute('aria-label','연도별 배구지수 백분위 변화');
+ section.append(el('h3','percentile-heading','연도별 배구지수 백분위'));
+ const values=window.BeaguPublic?BeaguPublic.values(percentIndex.get(String(school.school_id))).concat(v26):[null,null,null,v26];
+ const grid=el('div','percentiles');
  [2023,2024,2025,2026].forEach((year,i)=>{
-  const value=year===2026?percentile2026((levelRows||[]).filter(r=>Number(r.access_level)===1)):values[i];
-  const cell=el('div');cell.append(el('span','',String(year)),el('b','',value==null?'자료 준비 중':Number(value).toFixed(1)+'%'));box.append(cell);
- });root.append(box);
+  const cell=el('div');cell.append(el('span','',String(year)),
+   el('b','',values[i]==null?'자료 준비 중':Number(values[i]).toFixed(1)+'%'));grid.append(cell);
+ });section.append(grid);
+ if(typeof percentileChart==='function'){
+  const graph=el('div','percentile-graph');graph.innerHTML=percentileChart(values);section.append(graph);
+ }
+ section.append(note('연도별 조사 문항과 산정 기준이 달라 직접 비교에 주의하세요.'));
+ return section;
+}
+function renderPagePercentiles(results,requestId){
+ const ids=[...new Set(results.map(s=>String(s.school_id)).filter(id=>/^\d{7}$/.test(id)))];
+ if(!ids.length)return;
+ const replace=(school,value)=>{
+  if(serial!==requestId)return;
+  for(const card of $('results').querySelectorAll('.school-card')){
+   if(card.dataset.schoolId!==String(school.school_id))continue;
+   const pane=card.querySelector('.percentile-panel');
+   if(pane)pane.replaceWith(percentilePanel(school,value));break;
+  }
+ };
+ publicPromise.then(()=>{if(serial===requestId)results.forEach(s=>replace(s,null));}).catch(()=>{});
+ api('beagu-level-api','percentiles',{schoolIds:ids}).then(async response=>{
+  await publicPromise;if(serial!==requestId)return;
+  for(const school of results){
+   const n=response.values?.[String(school.school_id)];
+   if(typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)replace(school,n);
+  }
+ }).catch(e=>{if(e.unauthorized&&serial===requestId)logout('인증이 만료되었습니다. 다시 로그인하세요.');});
 }
 function addSchoolProfile(root,school){
  const profile=el('section','school-profile');profile.append(el('h3','','학교 기본정보'));
