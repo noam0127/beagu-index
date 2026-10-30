@@ -1,5 +1,5 @@
 /* Shared public percentile line chart. Lv.0: 2023-2025; authenticated: 2023-2026. */
-function percentileChart(input) {
+function percentileChart(input, options = {}) {
   const values = Array.isArray(input) ? input.slice(0, 4) : [];
   const isFour = values.length === 4;
   const years = isFour ? [2023, 2024, 2025, 2026] : [2023, 2024, 2025];
@@ -28,7 +28,7 @@ function percentileChart(input) {
         (y(values[i]) - 10) +
         '" text-anchor="middle" font-size="11" fill="#1e40af">' +
         values[i].toFixed(1) + '%</text>';
-    } else {
+    } else if (!(options.blank2026 && years[i] === 2026)) {
       svg += '<text x="' + x[i] + '" y="92" text-anchor="middle" font-size="10" fill="#64748b">준비 중</text>';
     }
     svg += '<text x="' + x[i] + '" y="165" text-anchor="middle" font-size="12" fill="#475569">' +
