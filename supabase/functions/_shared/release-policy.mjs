@@ -5,6 +5,7 @@ export function releaseMetrics(rows,catalog,level){
   if(![1,2].includes(level))return [];
   const definitions=new Map(catalog.filter(c=>c.verified===true).map(c=>[`${c.survey_year}:${c.question_id}`,c]));
   const candidates=rows.flatMap(r=>{
+    if(r.survey_year===2026&&/^Q51(?:$|[._-])/.test(r.question_id))return [];
     const d=definitions.get(`${r.survey_year}:${r.question_id}`);
     if(!d||r.approval_status!=='APPROVED'||r.privacy_status!=='PASSED'||!r.identity_reviewed||!r.question_reviewed||!r.small_cell_reviewed||!r.differencing_reviewed||!r.approved_at||!r.approved_by||!r.approval_evidence)return [];
     const min=r.survey_year===2026&&(r.question_id==='percentile'||isVI(r.question_id))?1:2;

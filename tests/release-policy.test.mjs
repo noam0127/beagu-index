@@ -25,6 +25,9 @@ test('other aggregate metrics require Lv2',()=>{
  assert.deepEqual(releaseMetrics([r],[c],1),[]);assert.equal(releaseMetrics([r],[c],2).length,1);
  assert.deepEqual(legacyRows([{survey_year:2025,release_status:'approved',summary:{}}],1),[]);
 });
+test('Q51 free-text cannot be released even under a mistaken numeric catalog',()=>{
+ assert.deepEqual(releaseMetrics([{...rows[0],question_id:'Q51',access_level:2}],[{...catalog[0],question_id:'Q51',access_level:2}],2),[]);
+});
 const book=JSON.parse(readFileSync(new URL('../admin/codebooks/2026.json',import.meta.url)));
 const school={school_id:'1234567',school_name:'검증용학교',sido_standard:'전남',support_office:'전남교육청가상교육지원청',status:'운영'};
 const headers=['B01. 지역','B02. 교육지원청','B03. 학교',...book.verticality.map(q=>`${q.question_id}. ${q.label}`)];

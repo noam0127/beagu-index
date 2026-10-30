@@ -11,6 +11,10 @@
 비공개 작업자에 GOOGLE_ACCESS_TOKEN과 SUPABASE_SERVICE_ROLE_KEY를 주입한 뒤 `node admin/sync-2026.mjs`를 실행한다. 현재 Google 토큰은 단기 토큰이므로 주기 실행 전 토큰 갱신 설정이 필요하다. 자동 스케줄이 설정되었다고 간주하면 안 된다. 원본 행 번호와 응답을 보존하고 내용 SHA256으로 동일 배치를 재수입하지 않는다. 공개 승인은 수행하지 않는다.
 
 ## migration 복구
+자동화 준비: GitHub `private-master` environment에 SUPABASE_SERVICE_ROLE_KEY, GOOGLE_SERVICE_ACCOUNT_JSON을 비밀정보로 설정하고 서비스계정에 실제 응답 시트 읽기 권한을 부여한다. worker는 각 실행에서 단기 Google 토큰을 발급받는다. `.github/workflows/private-master-sync.yml`은 main 병합 후 매시간 실행한다. 현재 비밀정보 설정·서비스계정 권한 부여·예약 실행은 검증하지 않았으므로 자동화 완료가 아니다. 비밀정보는 채팅에 붙여넣지 않는다.
+
+운영 적용: MASTER migration 성공, Edge level-api v7 및 edited-api v6 배포. 참여코드는 비공개 DB에서 해시로 교체했고 이전 코드는 beagu_master.auth_codes_before_20261030에 백업했다. 이전 코드 복구가 필요하면 해당 백업의 active와 access_level을 code_sha256 기준으로 복원하고 모든 기존 세션을 만료시킨다. 새로운 코드 해시를 공개 migration에 기록하지 않는다.
+
 추가 테이블을 삭제하면 새 원자료가 손실될 수 있으므로 DROP SCHEMA CASCADE를 사용하지 않는다. 장애 시 동기화 작업자를 중단하고 보존된 원본 Edge를 재배포한다. 신규 카탈로그는 서비스 전용이며 기존 프런트와 직접 연결되지 않는다.
 
 변경 전 n_valid 제약:

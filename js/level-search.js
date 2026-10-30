@@ -51,6 +51,7 @@
     .catch(() => { /* Verified public display is optional; never fabricate a value. */ });
 
   function loggedOut(message = '') {
+    serial++; $('results').replaceChildren();
     session = '';
     sessionStorage.removeItem(key);
     $('loginPanel').hidden = false;
@@ -162,10 +163,11 @@
     legacy.append(make('h4', '', '기존 공개 백분위'));
     addRow(legacy, `${year}년 전국 백분위`, publicValue === null ? '자료 없음' : publicValue.toFixed(1) + '%');
     host.append(legacy);
-    host.append(BeaguReleaseUI.locked(1));
+    host.append(BeaguReleaseUI.locked(1,year));
   }
   function showDetails(host, rows, school) {
     host.replaceChildren();
+    BeaguReleaseUI.latest(host, rows, 1);
     const section = make('section', 'detail');
     section.append(make('h3', '', '2023~2025년 학교별 공개자료'));
     section.append(make('p', 'detail-note', '연도별 문항과 산식이 다르므로 백분위·영역별 점수를 연속적인 동일 척도로 비교할 수 없습니다.'));
@@ -237,6 +239,7 @@
           const data = await api('school', {schoolId:school.school_id});
           if(!session || session!==requestSession)return;
           await loaded;
+          if(!session || session!==requestSession)return;
           // The server enforces the session's authorization and release_status.
           showDetails(detail, data.rows, school);
           detail.dataset.loaded = '1';

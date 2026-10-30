@@ -44,6 +44,7 @@ async function main() {
   const assets = [
     'index.html', 'search-lv1.html', 'search-lv2.html',
     'js/level-search.js', 'js/lv2-edited-search.js',
+    'js/release-ui.js', 'js/site-config.js', 'css/release.css',
     'lv2-edited-column-schema.json', 'data/public-lv0-percentiles-v1.2.json'
   ];
   const responses = new Map();
@@ -79,7 +80,7 @@ async function main() {
   const level2 = responses.get('js/lv2-edited-search.js')||'';
   check('홈에서 Lv.1·Lv.2로 연결', home.includes('search-lv1.html') && home.includes('search-lv2.html'));
   check('두 HTML의 JS 연결', html1.includes('js/level-search.js') && html2.includes('js/lv2-edited-search.js'));
-  check('Lv.1 승인 통계 전용 코드', level1.includes('beagu-level-api') && level1.includes('summary?.metrics') && level1.includes('2025'));
+  check('Lv.1 최신 승인 통계 렌더러 연결', level1.includes('beagu-level-api') && level1.includes('BeaguReleaseUI.latest(host, rows, 1)') && level1.includes('2025'));
   check('Lv.2 schema 경로 및 공개 필드 제한', level2.includes("fetch('lv2-edited-column-schema.json'") && !level2.includes("fetch('data/lv2-edited-column-schema.json'") && level2.includes('RELEASED_KEYS') && level2.includes('releasedFields'));
 
   try {
@@ -122,7 +123,7 @@ async function main() {
       } catch(e) { check(name,false,e.message); }
     }
 
-    for(const table of ['beagu_level_data','beagu_edited_school_rows','beagu_level_codes','beagu_level_sessions','beagu_release_metrics_v2']) {
+    for(const table of ['beagu_level_data','beagu_edited_school_rows','beagu_level_codes','beagu_level_sessions','beagu_release_metrics_v2','beagu_metric_catalog','beagu_login_budget']) {
       try {
         const url=`${SUPABASE}/rest/v1/${table}?select=*&limit=1`;
         const response=await request(url,{headers:{apikey:publishable,Origin:ORIGIN}});

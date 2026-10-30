@@ -1,8 +1,8 @@
 (() => {
   const node=(tag,text,cls)=>{const n=document.createElement(tag);n.textContent=text||'';if(cls)n.className=cls;return n;};
-  function locked(level) {
+  function locked(level,year=2026) {
     const box=node('section','','release-lock');
-    box.append(node('div','▧ ▧ ▧ ▧ ▧','mosaic'),node('strong','🔒 '+(level===0?'2026년 배구지수는 Lv.1에서 공개됩니다.':'나머지 2026년 상세정보는 Lv.2에서 공개됩니다.')));
+    box.append(node('div','▧ ▧ ▧ ▧ ▧','mosaic'),node('strong','🔒 '+(level===0?'2026년 배구지수는 Lv.1에서 공개됩니다.':`${year}년 추가 승인 상세정보는 Lv.2에서 공개됩니다.`)));
     const a=node('a',level===0?'Lv.1 열람하기':'Lv.2 열람하기');a.href=level===0?'search-lv1.html':'search-lv2.html';box.append(a);return box;
   }
   function latest(host,rows,level){
@@ -18,6 +18,11 @@
     else box.append(node('p','조사자료 준비 중 · 문항 확인 및 학교별 공개 승인 후 제공합니다.'));
     if(level===1)box.append(locked(1));
     else {box.append(node('h4','그 밖의 승인 상세정보'));const extra=metrics.filter(m=>m.key!=='percentile'&&!/^Q(0[1-9]|1[0-3])$/.test(m.key||''));for(const m of extra)box.append(node('p',`${m.label}: ${m.value}${m.unit||''} · ${m.year}년 · ${m.scope||''}`));if(!extra.length)box.append(node('p','공개 승인 자료 준비 중'));}
+    if(level===2){
+      const sources=node('section','','supplemental-status');sources.append(node('h4','0904 · 지역 주택 공시가격'));
+      sources.append(node('p','0904: 차수별 참여 자료의 최종값과 공개 승인 검수 중'),node('p','주택 공시가격: 2026 동래교육지원청 시범자료의 학교별 값 미산출. 공시지가와는 다른 지표입니다.'));
+      box.append(sources);
+    }
     host.append(box);
   }
   function facilities(host,rows){
