@@ -227,9 +227,6 @@ function renderRecords(root,records,metadata,year){
 }
 async function showDetail(container,school){
  container.replaceChildren();
- const head=el('div','overview');
- head.append(el('h3','','연도별 배구지수 백분위'),el('small','','공개 승인 자료만 표시'));
- container.append(head);
  let response,metadata,levelData;
  try{
   [response,metadata,levelData]=await Promise.all([
@@ -243,23 +240,15 @@ async function showDetail(container,school){
   container.append(el('div','pending','상세자료를 불러오지 못했습니다. 다시 시도해주세요.'));
   return false;
  }
- addPercentiles(container,school,levelData.rows);
- container.append(note('2026년 백분위는 공개 승인된 자료가 등록되면 표시됩니다.'));
  addSchoolProfile(container,school);
- const big=el('button','year-2026-button','2026년 상세보기');
- big.type='button';big.setAttribute('aria-expanded','false');
- const newer=el('div','year-2026-content');newer.hidden=true;
- newer.append(el('h3','','2026년 배구지수'));
+ container.append(el('h3','school-history-heading','2026년 배구지수'));
+ const newer=el('div','year-2026-content');newer.hidden=false;
  const stats=metrics2026(levelData.rows);
  if(!stats.length)newer.append(note('2026년 승인된 학교별 자료가 아직 준비되지 않았습니다.'));
  else stats.forEach(m=>{
-  const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',m.value));newer.append(row);
+  const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',String(m.value)+(m.unit||'')));newer.append(row);
  });
- big.addEventListener('click',()=>{
-  newer.hidden=!newer.hidden;
-  big.setAttribute('aria-expanded',String(!newer.hidden));
- });
- container.append(big,newer);
+ container.append(newer);
  container.append(el('h3','school-history-heading','과거 상세자료'));
  const tabbar=el('div','year-tabs');tabbar.setAttribute('role','tablist');
  tabbar.setAttribute('aria-label','과거 조사 연도 선택');
@@ -289,6 +278,8 @@ function render(results,total){
   card.append(el('span','region-pill',s.sido_standard||s.sido),
    el('div','school-name',s.school_name),
    el('div','school-meta',[s.support_office,s.address].filter(Boolean).join(' · ')));
+  card.dataset.schoolId=String(s.school_id);
+  card.append(percentilePanel(s));
   const actions=el('div','actions'),open=el('button','view-button','학교별 상세보기');
   open.type='button';open.setAttribute('aria-expanded','false');
   actions.append(open);card.append(actions);
@@ -308,6 +299,7 @@ function render(results,total){
   });
   host.append(card);
  });
+ renderPagePercentiles(results,serial);
 }
 async function search(reset){
  if(reset)page=0;
