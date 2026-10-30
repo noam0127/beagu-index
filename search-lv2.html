@@ -178,7 +178,23 @@ body { min-width: 0; }
 .school-card .view-button { display: flex; align-items: center; justify-content: center; }
 @media (max-width: 420px) { .topbar { margin-bottom: 25px; } .auth-card h1 { font-size: 29px; } }
 
-  </style>
+  
+/* 2026 + 2023~2025 detailed school layout (2026-10-30). */
+.percentile-grid, .percentiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.percentile-cell, .percentiles > div { padding: 12px 3px; }
+.percentile-value, .percentiles > div > b { overflow-wrap: anywhere; font-size: clamp(12px, 2.1vw, 16px); }
+.school-profile { border: 1px solid #e5e7eb; border-radius: 13px; background: #f8fafc; padding: 14px 16px; margin: 20px 0; }
+.school-profile h3 { margin: 0 0 8px !important; font-size: 16px; }
+.year-2026-button { display: block; width: 100%; margin: 14px 0 10px; padding: 19px 12px; border: 1px solid #2563eb; border-radius: 12px; background: #2563eb; color: white; font: inherit; font-size: 20px; font-weight: 750; cursor: pointer; text-align: center; }
+.year-2026-button[aria-expanded="true"] { background: #1d4ed8; }
+.year-2026-button:hover, .year-2026-button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.year-2026-content { border: 1px solid #dbeafe; border-radius: 12px; background: #f8fbff; padding: 14px; margin-bottom: 20px; }
+.school-history-heading { font-size: 15px; margin: 23px 0 6px; }
+@media (max-width: 480px) {
+  .percentile-grid, .percentiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .percentile-value, .percentiles > div > b { font-size: 15px; }
+}
+</style>
 </head>
 <body>
   <header class="participation-bar">
