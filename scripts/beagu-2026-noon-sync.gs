@@ -32,7 +32,7 @@ function setupDailyNoonTrigger() {
   Logger.log("매일 한국시간 정오 부근(±15분) 집계 트리거를 설치했습니다.");
 }
 function normalize(s) {
-  return String(s||"").normalize("NFKC").replace(/[\s,.'"“”\[\]()/\\\-]/g,"").trim();
+  return String(s||"").replace(/[①-⑳]/g,"").normalize("NFKC").replace(/[\s,.'"“”\[\]()/\\\-]/g,"").trim();
 }
 function regionOf(s) {
   const v=normalize(s).replace(/[①②③④⑤⑥⑦⑧⑨⑩]/g,"");
