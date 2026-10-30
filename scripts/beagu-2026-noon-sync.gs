@@ -129,6 +129,8 @@ function resolveSchool(row,c,schools) {
   return {school:same[0],region,office};
 }
 function replaceBody(sheet,rows,columns) {
+  const necessary=rows.length+1;
+  if(sheet.getMaxRows()<necessary)sheet.insertRowsAfter(sheet.getMaxRows(),necessary-sheet.getMaxRows());
   const old=Math.max(0,sheet.getLastRow()-1);
   const clearRows=Math.max(old,rows.length);
   if(clearRows)sheet.getRange(2,1,clearRows,columns).clearContent();
