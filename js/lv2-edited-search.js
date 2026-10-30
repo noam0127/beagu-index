@@ -134,16 +134,34 @@ $('officeSelect').addEventListener('change',()=>search(true));
 $('prevPage').addEventListener('click',()=>{page=Math.max(0,page-1);search(false);});
 $('nextPage').addEventListener('click',()=>{page++;search(false);});
 function note(t){return el('p','year-note',t);}
-function addPercentiles(root,school){
+
+function metrics2026(rows){
+ return (Array.isArray(rows)?rows:[]).filter(r=>Number(r.year)===2026&&[1,2].includes(Number(r.access_level)))
+ .flatMap(r=>Array.isArray(r.summary?.metrics)?r.summary.metrics:[])
+ .filter(m=>typeof m?.label==='string'&&typeof m?.value==='string'&&!/응답|관측|표본|횟수|회수/i.test(m.label));
+}
+function percentile2026(rows){
+ for(const m of metrics2026(rows).filter(x=>x.label.includes('백분위'))){
+  const l=m.value.trim().match(/^(\d{1,3}(?:\.\d{1,2})?)\s*%?$/),n=l?Number(l[1]):NaN;
+  if(Number.isFinite(n)&&n>=0&&n<=100)return n;
+ }return null;
+}
+function addPercentiles(root,school,levelRows){
  const box=el('div','percentiles');
- const values=window.BeaguPublic?
-  BeaguPublic.values(percentIndex.get(String(school.school_id))):[null,null,null];
- [2023,2024,2025].forEach((year,i)=>{
-  const cell=el('div');cell.append(el('span','',String(year)),
-   el('b','',values[i]==null?'자료 없음':Number(values[i]).toFixed(1)+'%'));
-  box.append(cell);
- });
- root.append(box);
+ const values=window.BeaguPublic?BeaguPublic.values(percentIndex.get(String(school.school_id))):[null,null,null];
+ [2023,2024,2025,2026].forEach((year,i)=>{
+  const value=year===2026?percentile2026((levelRows||[]).filter(r=>Number(r.access_level)===1)):values[i];
+  const cell=el('div');cell.append(el('span','',String(year)),el('b','',value==null?'자료 준비 중':Number(value).toFixed(1)+'%'));box.append(cell);
+ });root.append(box);
+}
+function addSchoolProfile(root,school){
+ const profile=el('section','school-profile');profile.append(el('h3','','학교 기본정보'));
+ for(const [label,value] of [
+  ['학교명',school.school_name],['시도',school.sido_standard||school.sido],
+  ['교육지원청',school.support_office],['주소',school.address],
+  ['설립유형',school.establishment],['학교급',school.school_kind]
+ ]){const line=el('div','data-row');line.append(el('span','',label),el('strong','',value||'자료 없음'));profile.append(line);}
+ root.append(profile);
 }
 function renderRecords(root,records,metadata,year){
  root.replaceChildren();
@@ -257,7 +275,7 @@ async function search(reset){
  $('resultCount').textContent='검색 중…';
  try{
   let query=supabaseClient.from('schools')
-   .select('school_id,school_name,sido,sido_standard,support_office,address,status',{count:'exact'})
+   .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status',{count:'exact'})
    .eq('status','운영');
   if(q)query=query.ilike('school_name',`%${q.replaceAll('%','\\%').replaceAll('_','\\_')}%`);
   if(region)query=query.eq('sido_standard',region);
