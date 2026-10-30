@@ -2,9 +2,7 @@
   'use strict';
   const byId = id => document.getElementById(id);
   const status = byId('status'), capture = byId('capture'), retry = byId('retry');
-  const imageFallback = byId('imageFallback'), loungeLink = byId('loungeLink');
-  const copyFallback = byId('copyFallback');
-  const home = 'https://baeguindex.com/';
+  const imageFallback = byId('imageFallback');
   let imageUrl = null, participant = null, busy = false;
   const deadline = (promise, ms, message) => {
     let timer;
@@ -73,20 +71,6 @@
     imageFallback.hidden = false;
   });
 
-  loungeLink.addEventListener('click', () => {
-    // 링크의 기본 새 탭 이동은 유지하며, 같은 클릭 안에서 복사를 요청합니다.
-    try {
-      if (!navigator.clipboard || !navigator.clipboard.writeText) {
-        copyFallback.hidden = false;
-        return;
-      }
-      deadline(navigator.clipboard.writeText(home), 5000, '복사 시간 초과')
-        .then(() => {
-          copyFallback.hidden = true;
-          status.textContent = '홈페이지 주소를 복사했습니다. 쫑알쫑알 글에 이미지와 함께 붙여넣어주세요.';
-        }).catch(() => { copyFallback.hidden = false; });
-    } catch (_) { copyFallback.hidden = false; }
-  });
   retry.addEventListener('click', prepare);
   // 뒤로가기로 복원되는 페이지에서는 이미지 URL을 유지합니다.
   window.addEventListener('pagehide', event => {
