@@ -25,9 +25,9 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 .school-name{font-size:18px;font-weight:700;margin-bottom:8px}
 .school-meta{font-size:14px;color:#666;line-height:1.6}
 .region-badge{display:inline-block;margin-bottom:10px;padding:5px 9px;border-radius:999px;background:#eef2ff;color:#2563eb;font-size:12px;font-weight:700}
-.school-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.school-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:16px}
 .school-button{display:block;text-align:center;text-decoration:none;border-radius:10px;padding:13px 10px;font-size:14px;font-weight:700}
-.view-button{background:#2563eb;color:white}.exchange-button{background:#eef2ff;color:#2563eb}
+.view-button{background:#2563eb;color:white}
 .empty{padding:40px 20px;text-align:center;color:#888}
 .participation-bar{position:sticky;top:0;z-index:1000;padding:12px 16px;background:#f7f8fa;border-bottom:1px solid #e5e7eb}
 .participation-link{display:block;max-width:552px;margin:0 auto;padding:14px 12px;border-radius:12px;background:#2563eb;color:#fff;text-align:center;text-decoration:none;font-size:16px;font-weight:700;line-height:1.5;word-break:keep-all}
@@ -215,7 +215,6 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
         ${renderPercentiles(school)}
         <div class="school-actions">
           <a class="school-button view-button" href="https://cafe.naver.com/bluey9t7i" target="_blank" rel="noopener noreferrer">상세열람</a>
-          <a class="school-button exchange-button" href="https://open.kakao.com/o/gJyJ14Si" target="_blank" rel="noopener noreferrer">실시간 정보교류</a>
         </div>`;
       results.appendChild(card);
     });
