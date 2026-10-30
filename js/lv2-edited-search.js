@@ -280,7 +280,7 @@ function render(results,total){
    el('div','school-meta',[s.support_office,s.address].filter(Boolean).join(' · ')));
   card.dataset.schoolId=String(s.school_id);
   card.append(percentilePanel(s));
-  const actions=el('div','actions'),open=el('button','view-button','학교별 상세보기');
+  const actions=el('div','actions'),open=el('button','view-button','🔍 자세히 보기');
   open.type='button';open.setAttribute('aria-expanded','false');
   actions.append(open);card.append(actions);
   const detail=el('section','school-detail');detail.hidden=true;
@@ -288,7 +288,7 @@ function render(results,total){
   let loaded=false,loading=false;
   open.addEventListener('click',async()=>{
    if(!detail.hidden){
-    detail.hidden=true;open.textContent='학교별 상세보기';
+    detail.hidden=true;open.textContent='🔍 자세히 보기';
     open.setAttribute('aria-expanded','false');return;
    }
    detail.hidden=false;open.textContent='상세보기 접기';
