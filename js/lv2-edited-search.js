@@ -88,6 +88,7 @@ async function api(path,action,payload={}){
  return data;
 }
 function logout(message=''){
+ serial++;$('results').replaceChildren();
  token='';sessionStorage.removeItem(sessKey);
  $('searchPanel').hidden=true;$('loginPanel').hidden=false;
  $('loginMessage').textContent=message;
@@ -103,7 +104,7 @@ $('loginForm').addEventListener('submit',async e=>{
  }catch(e){$('loginMessage').textContent='참여코드를 확인해주세요.';}
  finally{$('loginButton').disabled=false;}
 });
-$('logoutButton').addEventListener('click',()=>logout());
+$('logoutButton').addEventListener('click',async()=>{try{await api('beagu-level-api','logout');logout();}catch(e){alert('서버 로그아웃에 실패했습니다. 다시 시도해 주세요.');}});
 function modeTo(m){
  mode=m;$('schoolPanel').hidden=m!=='school';$('regionPanel').hidden=m!=='region';
  $('schoolTab').setAttribute('aria-selected',String(m==='school'));
@@ -177,8 +178,6 @@ function renderRecords(root,records,metadata,year){
   }
   if(record.release_note&&typeof record.release_note==='string')
    root.append(note(record.release_note));
-  if(year===2025&&Number.isInteger(record.observation_count)&&record.observation_count===1)
-   root.append(note('참고: 이 학교의 요약은 관측 응답 기록 1건에 기반합니다. 학교 전체를 대표하는 결과가 아닙니다.'));
  });
 }
 async function showDetail(container,school){
@@ -186,6 +185,9 @@ async function showDetail(container,school){
  const head=el('div','overview');
  head.append(el('h3','','연도별 상세자료'),el('small','','공개 승인 자료만 표시'));
  container.append(head);
+ const latest=el('div');container.prepend(latest);
+ const requestToken=token;
+ try{const r=await api('beagu-level-api','school',{schoolId:school.school_id});if(!token||token!==requestToken)return false;BeaguReleaseUI.latest(latest,r.rows,2);}catch(e){if(e.unauthorized){logout('인증이 만료되었습니다.');return false;}latest.append(note('최신 자료를 불러오지 못했습니다.'));}
  await publicPromise;addPercentiles(container,school);
  const tabbar=el('div','year-tabs');tabbar.setAttribute('role','tablist');
  const body=el('div');container.append(tabbar,body);
@@ -199,7 +201,9 @@ async function showDetail(container,school){
   body.append(el('div','pending','상세자료 또는 항목설명을 불러오지 못했습니다. 다시 시도해주세요.'));
   return false;
  }
- const years=[2025,2024,2023];
+ if(!token||token!==requestToken)return false;
+ BeaguReleaseUI.facilities(container,response.rows);
+ const years=[2023,2024,2025];
  function choose(year){
   [...tabbar.children].forEach(b=>
    b.setAttribute('aria-selected',String(Number(b.dataset.year)===year)));
@@ -226,9 +230,7 @@ function render(results,total){
    el('div','school-meta',[s.support_office,s.address].filter(Boolean).join(' · ')));
   const actions=el('div','actions'),open=el('button','view-button','학교별 상세보기');
   open.type='button';open.setAttribute('aria-expanded','false');
-  const exchange=el('a','exchange-button','실시간 정보교류');
-  exchange.href='https://open.kakao.com/o/gJyJ14Si';exchange.target='_blank';
-  exchange.rel='noopener noreferrer';actions.append(open,exchange);card.append(actions);
+  actions.append(open);card.append(actions);
   const detail=el('section','school-detail');detail.hidden=true;
   detail.setAttribute('aria-label','학교별 상세정보');card.append(detail);
   let loaded=false,loading=false;

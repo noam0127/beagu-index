@@ -1,0 +1,945 @@
+{
+  "year": 2025,
+  "source": "Existing lv2-edited-column-schema.json; original variable system preserved",
+  "fields": [
+    {
+      "key": "A",
+      "title": "지역",
+      "section": "1. 기본정보",
+      "subsection": "학교명",
+      "classification": "identity"
+    },
+    {
+      "key": "B",
+      "title": "지원청",
+      "section": "1. 기본정보",
+      "subsection": "학교명",
+      "classification": "identity"
+    },
+    {
+      "key": "C",
+      "title": "학교",
+      "section": "1. 기본정보",
+      "subsection": "학교명",
+      "classification": "identity"
+    },
+    {
+      "key": "D",
+      "title": "설립 구분",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "학교정보",
+      "classification": "official"
+    },
+    {
+      "key": "E",
+      "title": "설립일",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "학교정보",
+      "classification": "official"
+    },
+    {
+      "key": "F",
+      "title": "도로명 주소",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "학교정보",
+      "classification": "official"
+    },
+    {
+      "key": "G",
+      "title": "교사대지(m²)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "시설",
+      "classification": "official"
+    },
+    {
+      "key": "H",
+      "title": "체육장(m²)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "시설",
+      "classification": "official"
+    },
+    {
+      "key": "I",
+      "title": "일반교실수(개)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "시설",
+      "classification": "official"
+    },
+    {
+      "key": "J",
+      "title": "체육집회공간수 (체육관,강당)(개)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "시설",
+      "classification": "official"
+    },
+    {
+      "key": "K",
+      "title": "학생식당(개)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "시설",
+      "classification": "official"
+    },
+    {
+      "key": "L",
+      "title": "교원지원공간(개)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "시설",
+      "classification": "official"
+    },
+    {
+      "key": "M",
+      "title": "교원지원 공간비율",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "시설",
+      "classification": "official"
+    },
+    {
+      "key": "N",
+      "title": "급식장소 (2024)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "시설",
+      "classification": "official"
+    },
+    {
+      "key": "O",
+      "title": "우유급식 (2024)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "시설",
+      "classification": "official"
+    },
+    {
+      "key": "P",
+      "title": "학생수(명)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "학생",
+      "classification": "official"
+    },
+    {
+      "key": "Q",
+      "title": "행정구역 공동주택 공시가격 평균(원)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "학생",
+      "classification": "official"
+    },
+    {
+      "key": "R",
+      "title": "교감수(명)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "교사",
+      "classification": "official"
+    },
+    {
+      "key": "S",
+      "title": "수석교사수",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "교사",
+      "classification": "official"
+    },
+    {
+      "key": "T",
+      "title": "교사수(명)",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "교사",
+      "classification": "official"
+    },
+    {
+      "key": "U",
+      "title": "2급정교사비율",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "교사",
+      "classification": "official"
+    },
+    {
+      "key": "V",
+      "title": "남교사비율",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "교사",
+      "classification": "official"
+    },
+    {
+      "key": "W",
+      "title": "20230904 참여율",
+      "section": "2. 고정지표 (2024기준)",
+      "subsection": "교사",
+      "classification": "official"
+    },
+    {
+      "key": "X",
+      "title": "2023",
+      "section": "3. 역대 배구지수",
+      "subsection": "배구지수 종합 백분위",
+      "classification": "restricted"
+    },
+    {
+      "key": "Y",
+      "title": "2024",
+      "section": "3. 역대 배구지수",
+      "subsection": "배구지수 종합 백분위",
+      "classification": "restricted"
+    },
+    {
+      "key": "Z",
+      "title": "2025.0",
+      "section": "3. 역대 배구지수",
+      "subsection": "배구지수 종합 백분위",
+      "classification": "restricted"
+    },
+    {
+      "key": "AA",
+      "title": "종합 백분위(%)",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "2025 배구지수",
+      "classification": "restricted"
+    },
+    {
+      "key": "AB",
+      "title": "종합등급",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "2025 배구지수",
+      "classification": "restricted"
+    },
+    {
+      "key": "AC",
+      "title": "학교만족도",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "2025 배구지수",
+      "classification": "survey"
+    },
+    {
+      "key": "AD",
+      "title": "17. 학교만족도",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "2025 배구지수",
+      "classification": "restricted"
+    },
+    {
+      "key": "AE",
+      "title": "원점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "1 학생·학부모 문화 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AF",
+      "title": "표점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "1 학생·학부모 문화 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AG",
+      "title": "백분위",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "1 학생·학부모 문화 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AH",
+      "title": "등급",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "1 학생·학부모 문화 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AI",
+      "title": "원점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "2 교직원 문화 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AJ",
+      "title": "표점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "2 교직원 문화 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AK",
+      "title": "백분위",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "2 교직원 문화 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AL",
+      "title": "등급",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "2 교직원 문화 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AM",
+      "title": "원점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "3 조직운영·시스템 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AN",
+      "title": "표점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "3 조직운영·시스템 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AO",
+      "title": "백분위",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "3 조직운영·시스템 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AP",
+      "title": "등급",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "3 조직운영·시스템 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AQ",
+      "title": "원점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "4 업무부하 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AR",
+      "title": "표점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "4 업무부하 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AS",
+      "title": "백분위",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "4 업무부하 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AT",
+      "title": "등급",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "4 업무부하 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AU",
+      "title": "원점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "5 교직관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AV",
+      "title": "표점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "5 교직관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AW",
+      "title": "백분위",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "5 교직관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AX",
+      "title": "등급",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "5 교직관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AY",
+      "title": "원점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "6 체험학습 관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "AZ",
+      "title": "표점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "6 체험학습 관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BA",
+      "title": "백분위",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "6 체험학습 관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BB",
+      "title": "등급",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "6 체험학습 관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BC",
+      "title": "원점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "7 복무관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BD",
+      "title": "표점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "7 복무관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BE",
+      "title": "백분위",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "7 복무관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BF",
+      "title": "등급",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "7 복무관행 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BG",
+      "title": "원점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "8 학교환경 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BH",
+      "title": "표점",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "8 학교환경 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BI",
+      "title": "백분위",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "8 학교환경 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BJ",
+      "title": "등급",
+      "section": "4. 2025 배구지수 요약",
+      "subsection": "8 학교환경 영역",
+      "classification": "survey"
+    },
+    {
+      "key": "BM",
+      "title": "ⓐ 학생문화지수",
+      "section": "1 학생 학부모 영역",
+      "subsection": "ⓐ 학생문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BN",
+      "title": "6. 교권침해 (병휴직)",
+      "section": "1 학생 학부모 영역",
+      "subsection": "ⓐ 학생문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BO",
+      "title": "27. 학생인사 태도",
+      "section": "1 학생 학부모 영역",
+      "subsection": "ⓐ 학생문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BP",
+      "title": "30. 기피학년 준비중",
+      "section": "1 학생 학부모 영역",
+      "subsection": "ⓐ 학생문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BQ",
+      "title": "ⓑ 학부모 압력지수",
+      "section": "1 학생 학부모 영역",
+      "subsection": "ⓑ 학부모압력지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BR",
+      "title": "6.교권침해로  인한 휴직",
+      "section": "1 학생 학부모 영역",
+      "subsection": "ⓑ 학부모압력지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BS",
+      "title": "9. 교권침해 (아동학대)",
+      "section": "1 학생 학부모 영역",
+      "subsection": "ⓑ 학부모압력지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BT",
+      "title": "② 교직원 영역 평균",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓑ 학부모압력지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BU",
+      "title": "ⓐ 동료교사지수",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓐ 동료 교사 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BV",
+      "title": "21. 회의 시  권익발언 분위기",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓐ 동료 교사 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BW",
+      "title": "24. 성별, 나이별  비공식 업무",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓐ 동료 교사 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BX",
+      "title": "26. 교직원  갈등",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓐ 동료 교사 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BY",
+      "title": "28. 교직원  인사태도",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓐ 동료 교사 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "BZ",
+      "title": "46. 저경력교사에게 교육과정 맡김",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓐ 동료 교사 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CA",
+      "title": "ⓑ 관리자 리더십지수",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓑ 관리자 리더십 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CB",
+      "title": "1.조퇴보고",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓑ 관리자 리더십 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CC",
+      "title": "11. 비합리적  업무분장",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓑ 관리자 리더십 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CD",
+      "title": "14. 문제학생 분리",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓑ 관리자 리더십 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CE",
+      "title": "48. 민원대응팀",
+      "section": "2 교직원 문화 영역",
+      "subsection": "ⓑ 관리자 리더십 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CF",
+      "title": "3 조직운영·시스템  영역 평균",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "ⓑ 관리자 리더십 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CG",
+      "title": "학교시스템지수",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "학교시스템지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CH",
+      "title": "16. 결재  소요시간",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "학교시스템지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CI",
+      "title": "19. 학기말 협의  적용 여부",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "학교시스템지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CJ",
+      "title": "32. 주간학습안내  결재 여부",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "학교시스템지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CK",
+      "title": "35. 공모사업  여부",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "학교시스템지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CL",
+      "title": "42. 조퇴결재  라인에 학년부장",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "학교시스템지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CM",
+      "title": "회의지수",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "회의지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CN",
+      "title": "22. 연간 전체회의  횟수",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "회의지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CO",
+      "title": "23. 월간 부장회의  횟수",
+      "section": "3 조직운영·시스템 영역",
+      "subsection": "회의지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CP",
+      "title": "업무부하영역 평균",
+      "section": "4 업무부하 영역",
+      "subsection": "회의지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CQ",
+      "title": "ⓑ학교업무",
+      "section": "4 업무부하 영역",
+      "subsection": "학교업무부하지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CR",
+      "title": "3.과다업무",
+      "section": "4 업무부하 영역",
+      "subsection": "학교업무부하지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CS",
+      "title": "4.학교행사",
+      "section": "4 업무부하 영역",
+      "subsection": "학교업무부하지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CT",
+      "title": "49. 업무전담팀",
+      "section": "4 업무부하 영역",
+      "subsection": "학교업무부하지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CU",
+      "title": "ⓒ담임업무",
+      "section": "4 업무부하 영역",
+      "subsection": "담임업무부하지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CV",
+      "title": "7. 주당 평균 시수",
+      "section": "4 업무부하 영역",
+      "subsection": "담임업무부하지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CW",
+      "title": "8. 통지표횟수",
+      "section": "4 업무부하 영역",
+      "subsection": "담임업무부하지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CX",
+      "title": "15. 담임교사 업무량",
+      "section": "4 업무부하 영역",
+      "subsection": "담임업무부하지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CY",
+      "title": "교직관행  영역 평균",
+      "section": "5 교직관행 영역",
+      "subsection": "담임업무부하지수",
+      "classification": "survey"
+    },
+    {
+      "key": "CZ",
+      "title": "ⓐ업무관행지수",
+      "section": "5 교직관행 영역",
+      "subsection": "ⓐ업무관행지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DA",
+      "title": "40. 상담주간",
+      "section": "5 교직관행 영역",
+      "subsection": "ⓐ업무관행지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DB",
+      "title": "41. 녹색학부모회",
+      "section": "5 교직관행 영역",
+      "subsection": "ⓐ업무관행지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DC",
+      "title": "50.학생 체육부",
+      "section": "5 교직관행 영역",
+      "subsection": "ⓐ업무관행지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DD",
+      "title": "비업무문화지수",
+      "section": "5 교직관행 영역",
+      "subsection": "비업무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DE",
+      "title": "13. 친목회  강제여부",
+      "section": "5 교직관행 영역",
+      "subsection": "비업무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DF",
+      "title": "25. 스포츠활동  강제성",
+      "section": "5 교직관행 영역",
+      "subsection": "비업무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DG",
+      "title": "33. 교원 정문 주차지도",
+      "section": "5 교직관행 영역",
+      "subsection": "비업무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DH",
+      "title": "34. 졸업앨범 교사사진등재",
+      "section": "5 교직관행 영역",
+      "subsection": "비업무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DI",
+      "title": "체험학습관행 영역 평균",
+      "section": "6 현장체험학습 관행 영역",
+      "subsection": "현장체험학습 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DJ",
+      "title": "2.체험학습",
+      "section": "6 현장체험학습 관행 영역",
+      "subsection": "현장체험학습 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DK",
+      "title": "31. 수학여행",
+      "section": "6 현장체험학습 관행 영역",
+      "subsection": "현장체험학습 지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DL",
+      "title": "7 복무관행  영역 평균",
+      "section": "7 복무관행 영역",
+      "subsection": "복무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DM",
+      "title": "5.방중근무",
+      "section": "7 복무관행 영역",
+      "subsection": "복무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DN",
+      "title": "12. 새학기  출근일수",
+      "section": "7 복무관행 영역",
+      "subsection": "복무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DO",
+      "title": "29. 교원병가보장",
+      "section": "7 복무관행 영역",
+      "subsection": "복무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DP",
+      "title": "46. 토요일 근무",
+      "section": "7 복무관행 영역",
+      "subsection": "복무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DQ",
+      "title": "8 학교환경 영역 평균",
+      "section": "8 학교환경 영역",
+      "subsection": "복무문화지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DR",
+      "title": "ⓐ행정환경지수",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓐ행정환경지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DS",
+      "title": "10. 교육행정·공무직 업무협조",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓐ행정환경지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DT",
+      "title": "18. 다과비예산",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓐ행정환경지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DU",
+      "title": "45. 늘봄실장",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓐ행정환경지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DV",
+      "title": "ⓑ물리환경지수",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓑ물리환경지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DW",
+      "title": "20. 교사휴식장소",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓑ물리환경지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DX",
+      "title": "36. 연구실  정수기",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓑ물리환경지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DY",
+      "title": "37. 교직원 화장실",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓑ물리환경지수",
+      "classification": "survey"
+    },
+    {
+      "key": "DZ",
+      "title": "43. 학습준비물실",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓑ물리환경지수",
+      "classification": "survey"
+    },
+    {
+      "key": "EA",
+      "title": "ⓒ급식지수",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓒ급식지수",
+      "classification": "survey"
+    },
+    {
+      "key": "EB",
+      "title": "38. 우유급식",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓒ급식지수",
+      "classification": "survey"
+    },
+    {
+      "key": "EC",
+      "title": "39. 교실급식",
+      "section": "8 학교환경 영역",
+      "subsection": "ⓒ급식지수",
+      "classification": "survey"
+    },
+    {
+      "key": "ED",
+      "title": "2023",
+      "section": "6. 주관식 정보(준비중)",
+      "subsection": "주관식 정보",
+      "classification": "legacy"
+    },
+    {
+      "key": "EE",
+      "title": "2024",
+      "section": "6. 주관식 정보(준비중)",
+      "subsection": "주관식 정보",
+      "classification": "legacy"
+    },
+    {
+      "key": "EF",
+      "title": "2025",
+      "section": "6. 주관식 정보(준비중)",
+      "subsection": "주관식 정보",
+      "classification": "legacy"
+    }
+  ],
+  "cross_year_equivalence": false
+}

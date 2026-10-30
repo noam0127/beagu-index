@@ -1,0 +1,539 @@
+{
+  "year": 2024,
+  "source": "Existing lv2-edited-column-schema.json; original variable system preserved",
+  "fields": [
+    {
+      "key": "A",
+      "title": "시도교육청",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "identity"
+    },
+    {
+      "key": "B",
+      "title": "교육지원청",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "identity"
+    },
+    {
+      "key": "C",
+      "title": "학교명",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "identity"
+    },
+    {
+      "key": "E",
+      "title": "설립 구분",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "F",
+      "title": "설립일",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "G",
+      "title": "도로명 주소",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "H",
+      "title": "전화번호",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "I",
+      "title": "홈페이지   주소",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "L",
+      "title": "교원만족도",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "N",
+      "title": "교사수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "O",
+      "title": "교장",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "P",
+      "title": "교감",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "Q",
+      "title": "수석교사",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "R",
+      "title": "보직교사",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "S",
+      "title": "일반교사",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "T",
+      "title": "휴직자",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "U",
+      "title": "0904참가자 (2023기준)",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "V",
+      "title": "2급정교사비율",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "W",
+      "title": "남녀교사비율(남)",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "X",
+      "title": "0904병가참여율",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "Y",
+      "title": "기간제",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "Z",
+      "title": "특수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AA",
+      "title": "보건",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AB",
+      "title": "영양",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AC",
+      "title": "사서",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AD",
+      "title": "상담",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AE",
+      "title": "강사",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AF",
+      "title": "행정직원수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AG",
+      "title": "공무직원수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AI",
+      "title": "학생수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AJ",
+      "title": "특수학생수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AK",
+      "title": "전입학생수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AL",
+      "title": "전출학생수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AM",
+      "title": "오후돌봄 참여학생수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AN",
+      "title": "저녁들봄 참여학생수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AO",
+      "title": "방과후학교 연계형돌봄 참여학생수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AP",
+      "title": "학급수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AQ",
+      "title": "학급수(특수)",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AR",
+      "title": "학급당학생수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AS",
+      "title": "1인당 보건실  방문횟수",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AT",
+      "title": "전입학생비율",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AU",
+      "title": "전출학생비율",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AV",
+      "title": "오후돌봄 참여학생비율",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AX",
+      "title": "급식장소",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "AY",
+      "title": "우유급식",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "BA",
+      "title": "교사대지",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "BB",
+      "title": "체육장(운동장)",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "BC",
+      "title": "일반교실",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "BD",
+      "title": "체육집회공간",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "BE",
+      "title": "학생식당",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "BF",
+      "title": "공동사용학교명",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "BG",
+      "title": "교원지원공간",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "BH",
+      "title": "교사수 대비 교원지원공간 비율",
+      "section": "학교·교원·시설 기본정보",
+      "subsection": "",
+      "classification": "official"
+    },
+    {
+      "key": "BJ",
+      "title": "2024배구지수",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "BK",
+      "title": "지수변화",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "BL",
+      "title": "2024랭킹",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "BM",
+      "title": "랭킹변화",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "BN",
+      "title": "2024백분위",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "BO",
+      "title": "백분위변화",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "BQ",
+      "title": "랭킹 및 백분위  변화율 분석",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "narrative"
+    },
+    {
+      "key": "BS",
+      "title": "1. 근무 중  교직원  스포츠활동",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "BT",
+      "title": "2. 방학 중  학교근무",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "BU",
+      "title": "3. 조퇴 구두보고",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "BV",
+      "title": "4.친목회",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "BW",
+      "title": "5.다과비",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "BX",
+      "title": "6.비공식업무 (성별,나이)",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "BY",
+      "title": "7.학교행사",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "BZ",
+      "title": "*수학여행 여부",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "CA",
+      "title": "8.과다업무",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "CB",
+      "title": "9.비합리적 업무분장",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "CC",
+      "title": "10.교권침해",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "CD",
+      "title": "11.교사 휴식여건",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "CE",
+      "title": "12.문제학생 분리",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "CF",
+      "title": "13.담임교사 업무량",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "CG",
+      "title": "14.담임교사 수업시수",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "CH",
+      "title": "(공식)주당평균 수업시수 (교사 1인당)",
+      "section": "2024 배구지수·설문",
+      "subsection": "",
+      "classification": "survey"
+    }
+  ],
+  "cross_year_equivalence": false
+}

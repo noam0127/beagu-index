@@ -12,7 +12,7 @@
   let session = sessionStorage.getItem(key) || '';
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
-  const YEARS = [2025, 2024, 2023];
+  const YEARS = [2023, 2024, 2025];
   const offices = {
     '서울':'강남서초 강동송파 강서양천 남부 동부 동작관악 북부 서부 성동광진 성북강북 중부',
     '부산':'남부 동래 북부 서부 해운대',
@@ -97,7 +97,7 @@
       $('loginButton').disabled = false;
     }
   });
-  $('logoutButton').addEventListener('click', () => loggedOut());
+  $('logoutButton').addEventListener('click', async () => { try { await api('logout'); loggedOut(); } catch (_) { $('loginMessage').textContent='서버 로그아웃에 실패했습니다. 다시 시도해 주세요.'; } });
   function selectMode(nextMode) {
     mode = nextMode;
     $('schoolPanel').hidden = mode !== 'school';
@@ -162,34 +162,7 @@
     legacy.append(make('h4', '', '기존 공개 백분위'));
     addRow(legacy, `${year}년 전국 백분위`, publicValue === null ? '자료 없음' : publicValue.toFixed(1) + '%');
     host.append(legacy);
-    const section = make('div', 'data-section');
-    section.append(make('h4', '', 'Lv.1 승인 통계'));
-    if (!yearRows.length) {
-      section.append(make('p', 'detail-note', '해당 연도에 추가로 공개 승인된 학교 통계가 없습니다.'));
-      host.append(section);
-      return;
-    }
-    let count = 0, hadRestricted = false, hadMismatch = false;
-    for (const row of yearRows) {
-      if (row.insufficient) { hadRestricted = true; continue; }
-      // The edge function only emits a curated summary.metrics array.
-      // NEVER use the underlying database's historical_values, survey_summary,
-      // raw school rows, rankings, or unsanitized source keys.
-      for (const metric of Array.isArray(row.summary?.metrics) ? row.summary.metrics : []) {
-        if (typeof metric?.label !== 'string' || typeof metric?.value !== 'string') continue;
-        if (isDuplicatePublicPercentile(metric, year, publicValue)) continue;
-        if (metric.label.includes(String(year)) && metric.label.includes('백분위') && publicValue !== null)
-          hadMismatch = true;
-        addRow(section, metric.label, metric.value);
-        count++;
-      }
-    }
-    if (hadMismatch) section.append(make('p', 'detail-note', '백분위 출처별 값이 달라 원본 검수가 필요합니다. 임의로 합치지 않았습니다.'));
-    if (hadRestricted) section.append(make('p', 'detail-note', '응답 또는 검수 기준에 따라 일부 세부 항목은 공개하지 않습니다.'));
-    if (!count && !hadRestricted) section.append(make('p', 'detail-note', '추가 승인 통계가 없습니다. 위의 기존 공개 백분위를 참고하세요.'));
-    if (year === 2025) section.append(make('p', 'detail-note', '영역별 점수는 해당 연도 조사 방식에 따른 참고자료입니다. 관측 기록 건수는 중복 응답 검증이 완료된 고유 응답자 수가 아닙니다.'));
-    else section.append(make('p', 'detail-note', '과거 응답자 수는 검증되지 않았습니다. 총점·순위·개별 문항은 제공하지 않습니다.'));
-    host.append(section);
+    host.append(BeaguReleaseUI.locked(1));
   }
   function showDetails(host, rows, school) {
     host.replaceChildren();
@@ -243,7 +216,7 @@
         `<div class="school-name">${escape(school.school_name)}</div>` +
         `<div class="school-meta">${escape(school.support_office)}<br>${escape(school.address)}</div>` +
         '<div class="school-actions"><button class="view-button" type="button">승인 통계 열람</button>' +
-        '<a class="exchange-button" target="_blank" rel="noopener noreferrer" href="https://open.kakao.com/o/gJyJ14Si">실시간 정보교류</a></div>';
+        '</div>';
       const detail = make('div'); detail.hidden = true;
       const button = card.querySelector('button');
       button.setAttribute('aria-expanded', 'false');
@@ -260,7 +233,9 @@
         if (detail.dataset.loaded) return;
         detail.textContent = '불러오는 중...';
         try {
+          const requestSession=session;
           const data = await api('school', {schoolId:school.school_id});
+          if(!session || session!==requestSession)return;
           await loaded;
           // The server enforces the session's authorization and release_status.
           showDetails(detail, data.rows, school);

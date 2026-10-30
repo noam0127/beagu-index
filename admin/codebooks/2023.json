@@ -1,0 +1,182 @@
+{
+  "year": 2023,
+  "source": "Existing lv2-edited-column-schema.json; original variable system preserved",
+  "fields": [
+    {
+      "key": "A",
+      "title": "지역",
+      "section": "학교·지역",
+      "subsection": "",
+      "classification": "identity"
+    },
+    {
+      "key": "B",
+      "title": "지원청",
+      "section": "학교·지역",
+      "subsection": "",
+      "classification": "identity"
+    },
+    {
+      "key": "C",
+      "title": "학교명",
+      "section": "학교·지역",
+      "subsection": "",
+      "classification": "identity"
+    },
+    {
+      "key": "D",
+      "title": "배구지수",
+      "section": "종합·백분위",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "E",
+      "title": "전국순위",
+      "section": "종합·백분위",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "F",
+      "title": "전국백분율",
+      "section": "종합·백분위",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "G",
+      "title": "지역순위",
+      "section": "종합·백분위",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "H",
+      "title": "지역백분율",
+      "section": "종합·백분위",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "I",
+      "title": "지원청순위",
+      "section": "종합·백분위",
+      "subsection": "",
+      "classification": "restricted"
+    },
+    {
+      "key": "J",
+      "title": "지원청백분율",
+      "section": "종합·백분위",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "K",
+      "title": "1.배구",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "L",
+      "title": "2.방학근무",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "M",
+      "title": "3.조퇴구두보고",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "N",
+      "title": "4.친목회",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "O",
+      "title": "5.간식비",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "P",
+      "title": "6.비공식업무",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "Q",
+      "title": "7.학교행사",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "R",
+      "title": "8.불필요업무",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "S",
+      "title": "9.비합리적업무분장",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "T",
+      "title": "10.학부모학생곤란도",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "U",
+      "title": "11.교사휴식여건도",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "V",
+      "title": "12.교직원갈등도",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "W",
+      "title": "13.업무량",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "X",
+      "title": "14.수업량",
+      "section": "2023 설문 세부",
+      "subsection": "",
+      "classification": "survey"
+    },
+    {
+      "key": "AA",
+      "title": "9.4 멈춤참여인원",
+      "section": "기타",
+      "subsection": "",
+      "classification": "survey"
+    }
+  ],
+  "cross_year_equivalence": false
+}
