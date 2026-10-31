@@ -51,8 +51,8 @@
   section.setAttribute('aria-label','연도별 배구지수 백분위');
   section.append(el('h3','percentile-heading','연도별 배구지수 백분위'));
   const grid=el('div','percentile-grid');
-  // Cards prioritize the newest school survey, while the graph stays chronological.
-  for(const i of [3,2,1,0]){
+  // All visible year labels are chronological: 2023, 2024, 2025, 2026.
+  for(const i of [0,1,2,3]){
    const year=2023+i;
    const cell=el('div','percentile-cell'+(year===2026&&locked?' percentile-locked':''));
    cell.dataset.year=String(year);
@@ -70,14 +70,21 @@
   if(values.some(valid)&&typeof percentileChart==='function'){
     const graph=el('div','percentile-graph');
     // percentileChart renders only validated numerical values in an internal fixed SVG.
-    graph.innerHTML=percentileChart(values,{blank2026:locked||values[3]===null});
+    const graphLabels=[0,1,2].map(i=>labelFor(publicState(statuses[i],publicError)));
+    graphLabels.push(locked?'승인 전':labelFor(
+      [STATES.ERROR,STATES.LOADING,STATES.REVIEW,STATES.UNPUBLISHED].includes(status2026)?status2026:STATES.UNPUBLISHED
+    ));
+    graph.innerHTML=percentileChart(values,{
+      blank2026:locked||values[3]===null,
+      labels:graphLabels
+    });
     section.append(graph);
   }
   const notes=el('ul','percentile-notes');
   [
-   '연도별 문항·참여 학교와 산정 방식이 달라 단순 비교에 주의해 주세요. 카드는 최신순, 그래프는 시간순으로 표시됩니다.',
-   '2025년 백분위는 8개 영역 종합값을 조사 비교집단 1,458개교와 비교해 재산출했습니다. 99%는 비교집단 상위 약 1%입니다.',
-   '자료 없음은 현재 공개 자료에 값이 없다는 뜻이며, 원자료의 부재를 확정하지 않습니다. 검수 중은 명시적 보류 상태, 미공개는 공개 승인 전 상태입니다.'
+   '표시 순서: 2023 → 2024 → 2025 → 2026. 각 점은 해당 연도의 독립적인 백분위이며, 연도 간 상승·하락을 의미하지 않습니다.',
+   '2023·2024: 해당 연도 문항과 당시 산정 기준의 공개값. 2025: 8개 영역 종합값을 비교집단 1,458개교에서 재산출(99%는 상위 약 1%).',
+   '2026: 수정5 신규 조사 기준의 공개 승인 결과만 표시. 자료 없음·검수 중·미공개·불러오기 실패는 서로 다른 상태입니다.'
   ].forEach(s=>notes.append(el('li','percentile-note',s)));
   section.append(notes);
   section.append(el('p','percentile-note','자료 기준: 2026.10.31 · 2025 전국백분위 재산출'));
