@@ -281,6 +281,26 @@
     ]) addRow(profile, label, value || '자료 없음');
     section.append(profile);
 
+    // Surface the already approved Lv.1 school-size facts before the history tabs.
+    // Values are received only from the session-validated Edge Function.
+    const facts = make('section', 'school-profile');
+    facts.append(make('h3', '', 'Lv.1 승인 학교 규모정보'));
+    const published = (Array.isArray(rows) ? rows : [])
+      .filter(r => [2024, 2025].includes(Number(r.year)) && Number(r.access_level) === 1)
+      .flatMap(r => (Array.isArray(r.summary?.metrics) ? r.summary.metrics : [])
+        .filter(m => m.group === '편집본 공식 학교정보' && typeof m.label === 'string' && typeof m.value === 'string')
+        .map(m => ({year: Number(r.year), label: m.label, value: m.value})));
+    let factsShown = 0;
+    for (const label of ['학생 수', '교원 수', '학급 수']) {
+      const found = [2025, 2024].map(year => published.find(m => m.year === year && m.label === label)).find(Boolean);
+      if (found) {
+        addRow(facts, label + ' (' + found.year + '년 편집본)', found.value);
+        factsShown++;
+      }
+    }
+    if (!factsShown) facts.append(make('p', 'detail-note', '이 학교의 추가 승인 규모정보는 아직 없습니다. 과거 백분위는 아래에서 확인할 수 있습니다.'));
+    section.append(facts);
+
     const newer = make('button', 'year-2026-button', '2026년 상세보기');
     newer.type = 'button';
     newer.setAttribute('aria-expanded', 'false');
@@ -328,7 +348,13 @@
     section.append(make('p', 'detail-note',
       '2023·2024·2025년 전국 백분위는 8개 영역 종합값을 1,458개교 간 재순위화했습니다. 99%는 조사 비교집단 상위 약 1%입니다. 2023·2024년과 직접 비교하지 마세요.'));
     host.append(section);
-    choose(2025);
+    const firstAvailable = [2025, 2024, 2023].find(year =>
+      (Array.isArray(rows) ? rows : []).some(row =>
+        Number(row.year) === year && Number(row.access_level) === level &&
+        (Array.isArray(row.summary?.metrics) ? row.summary.metrics : []).length > 0
+      )
+    );
+    choose(firstAvailable || 2025);
   }
 
   function render(list, total) {
@@ -346,7 +372,7 @@
         `<div class="school-name">${escape(school.school_name)}</div>` +
         `<div class="school-meta">${escape(school.support_office)}<br>${escape(school.address)}</div>` +
         (/^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:[/?#]|$)/i.test(String(school.homepage||'')) ? `<div class="school-meta"><a href="${escape(school.homepage)}" target="_blank" rel="noopener noreferrer">🌐 학교 홈페이지</a></div>` : '') +
-        '<div class="school-actions"><button class="view-button" type="button">🔍 자세히 보기</button>' +
+        '<div class="school-actions"><button class="view-button" type="button">🔍 Lv.1 학교정보 보기</button>' +
         '</div>';
       card.dataset.schoolId=String(school.school_id);
       card.querySelector('.school-actions').before(percentilePanel(school));
@@ -356,7 +382,7 @@
       button.addEventListener('click', async () => {
         if (!detail.hidden) {
           detail.hidden = true;
-          button.textContent = '🔍 자세히 보기';
+          button.textContent = '🔍 Lv.1 학교정보 보기';
           button.setAttribute('aria-expanded', 'false');
           return;
         }
@@ -377,6 +403,8 @@
         }
       });
       card.append(detail); host.append(card);
+      // A unique school search should show the approved tier data immediately.
+      if (list.length === 1 && total === 1) button.click();
     }
     loadPagePercentiles(list,serial);
   }
