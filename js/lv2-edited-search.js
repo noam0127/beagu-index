@@ -69,11 +69,30 @@ function releasedFields(metadata,year,values){
 const schemaPromise=fetch('lv2-edited-column-schema.json',{cache:'force-cache'})
  .then(r=>{if(!r.ok)throw Error('SCHEMA_MISSING');return r.json()})
  .then(j=>{if(!j||typeof j.years!=='object')throw Error('SCHEMA_INVALID');return j});
-let percentIndex=new Map();
+let percentIndex=new Map(),publicStaticAvailable=false;
 const publicPromise=fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025')
  .then(r=>{if(!r.ok)throw Error('PUBLIC_DATA_MISSING');return r.json()})
- .then(j=>{if(window.BeaguPublic)percentIndex=BeaguPublic.buildIndex(j)})
- .catch(()=>{});
+ .then(j=>{if(window.BeaguPublic){percentIndex=BeaguPublic.buildIndex(j);publicStaticAvailable=true;}})
+ .catch(e=>{console.warn('Lv.2 정적 백분위 파일 미응답, DB 조회 사용',e)});
+async function recoverPublicPercentiles(schools){
+ if(publicStaticAvailable||!schools.length)return;
+ const ids=[...new Set(schools.map(s=>String(s.school_id))
+  .filter(id=>id.length===7&&[...id].every(c=>c>='0'&&c<='9')))];
+ if(!ids.length)return;
+ const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
+  .select('school_id,survey_year,percentile').in('school_id',ids)
+  .eq('publication_status','PUBLISHED').in('survey_year',[2023,2024,2025]).limit(100);
+ if(error)throw error;
+ for(const id of ids){
+  const vals=[null,null,null];
+  for(const row of data||[]){
+   if(String(row.school_id)!==id||row.percentile===null)continue;
+   const i=[2023,2024,2025].indexOf(Number(row.survey_year)),v=Number(row.percentile);
+   if(i>=0&&Number.isFinite(v)&&v>=0&&v<=100)vals[i]=v;
+  }
+  percentIndex.set(id,{percentiles:vals});
+ }
+}
 async function api(path,action,payload={}){
  const response=await fetch(`${base}/${path}`,{
   method:'POST',cache:'no-store',
@@ -174,7 +193,13 @@ function renderPagePercentiles(results,requestId){
    if(pane)pane.replaceWith(percentilePanel(school,value));break;
   }
  };
- publicPromise.then(()=>{if(serial===requestId)results.forEach(s=>replace(s,null));}).catch(()=>{});
+ publicPromise.then(async()=>{
+  if(!publicStaticAvailable){
+   try{await recoverPublicPercentiles(results);}
+   catch(e){console.warn('Lv.2 공개 백분위 DB 재조회 실패',e)}
+  }
+  if(serial===requestId)results.forEach(s=>replace(s,null));
+ }).catch(()=>{});
  api('beagu-level-api','percentiles',{schoolIds:ids}).then(async response=>{
   await publicPromise;if(serial!==requestId)return;
   for(const school of results){
@@ -230,6 +255,10 @@ async function showDetail(container,school){
    api('beagu-level-api','school',{schoolId:school.school_id})
   ]);
   await publicPromise;
+  if(!publicStaticAvailable){
+   try{await recoverPublicPercentiles([school]);}
+   catch(e){console.warn('Lv.2 상세 화면 백분위 DB 조회 실패',e)}
+  }
  }catch(e){
   if(e.unauthorized){logout('인증이 만료되었습니다. 다시 로그인하세요.');return false;}
   container.append(el('div','pending','상세자료를 불러오지 못했습니다. 다시 시도해주세요.'));
