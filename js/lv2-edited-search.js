@@ -70,7 +70,7 @@ const schemaPromise=fetch('lv2-edited-column-schema.json',{cache:'force-cache'})
  .then(r=>{if(!r.ok)throw Error('SCHEMA_MISSING');return r.json()})
  .then(j=>{if(!j||typeof j.years!=='object')throw Error('SCHEMA_INVALID');return j});
 let percentIndex=new Map();
-const publicPromise=fetch('data/public-lv0-percentiles-v1.2.json')
+const publicPromise=fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025')
  .then(r=>{if(!r.ok)throw Error('PUBLIC_DATA_MISSING');return r.json()})
  .then(j=>{if(window.BeaguPublic)percentIndex=BeaguPublic.buildIndex(j)})
  .catch(()=>{});
