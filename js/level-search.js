@@ -246,7 +246,7 @@
     });
   }
   function loadPagePercentiles(list,requestId){
-    const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^\\d{7}$/.test(id)))];
+    const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^\d{7}$/.test(id)))];
     if(!ids.length)return;
     const refresh=()=>{
       if(serial!==requestId)return;
