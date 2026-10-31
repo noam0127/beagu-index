@@ -230,24 +230,14 @@
   }
   function metricValue(m) { return String(m.value)+(m.unit && !String(m.value).endsWith(m.unit) ? m.unit : ''); }
   function percentilePanel(school,v26=null) {
-    const pane=make('section','percentile-panel');
-    pane.setAttribute('aria-label','연도별 배구지수 백분위 변화');
-    pane.append(make('h3','percentile-heading','연도별 배구지수 백분위'));
-    const values=asPublicPercentiles(school).concat(v26);
-    const grid=make('div','percentile-grid');
-    [2023,2024,2025,2026].forEach((year,i)=>{
-      const cell=make('div','percentile-cell');
-      cell.append(make('span','percentile-year',year),
-        make('b','percentile-value',values[i]===null?'자료 준비 중':values[i].toFixed(1)+'%'));
-      grid.append(cell);
+    const index=publicIndex.get(String(school.school_id));
+    return BeaguSchoolSearchCard.percentiles({
+      publicValues:asPublicPercentiles(school),
+      statuses:index?.statuses || [],
+      publicError:!publicStaticAvailable && publicIndex.size===0,
+      value2026:v26,
+      locked:false
     });
-    pane.append(grid);
-    if(typeof percentileChart==='function'){
-      const chart=make('div','percentile-graph');
-      chart.innerHTML=percentileChart(values);pane.append(chart);
-    }
-    pane.append(make('p','detail-note','연도별 조사 문항과 산정 기준이 달라 직접 비교에 주의하세요.'));
-    return pane;
   }
   function loadPagePercentiles(list,requestId){
     const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^\d{7}$/.test(id)))];
@@ -347,7 +337,7 @@
     }
     section.append(tabs, content);
     section.append(make('p', 'detail-note',
-      '2023·2024·2025년 전국 백분위는 8개 영역 종합값을 1,458개교 간 재순위화했습니다. 99%는 조사 비교집단 상위 약 1%입니다. 2023·2024년과 직접 비교하지 마세요.'));
+      '연도별 조사 문항·산정 기준이 다릅니다. 2025년 백분위는 8개 영역 종합값을 조사 비교집단 1,458개교에서 재산출한 값으로, 이전 연도와 직접 비교하지 마세요.'));
     host.append(section);
     const firstAvailable = [2025, 2024, 2023].find(year =>
       (Array.isArray(rows) ? rows : []).some(row =>
@@ -369,21 +359,22 @@
     if (!list.length) { host.append(make('div','empty','검색 결과가 없습니다.')); return; }
     for (const school of list) {
       const card = make('article', 'school-card');
-      card.innerHTML = `<span class="region-badge">${escape(school.sido_standard || school.sido)}</span>` +
-        `<div class="school-name">${escape(school.school_name)}</div>` +
-        `<div class="school-meta">${escape(school.support_office)}<br>${escape(school.address)}</div>` +
-        (/^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:[/?#]|$)/i.test(String(school.homepage||'')) ? `<div class="school-meta"><a href="${escape(school.homepage)}" target="_blank" rel="noopener noreferrer">🌐 학교 홈페이지</a></div>` : '') +
-        '<div class="school-actions"><button class="view-button" type="button">🔍 Lv.1 학교정보 보기</button>' +
-        '</div>';
       card.dataset.schoolId=String(school.school_id);
-      card.querySelector('.school-actions').before(percentilePanel(school));
+      BeaguSchoolSearchCard.addHeader(card,school);
+      card.append(percentilePanel(school));
+      const actions=make('div','school-actions');
+      const open=make('button','view-button','🔍 연도별 상세 기록 보기');
+      open.type='button';
+      open.setAttribute('aria-label','Lv.1 연도별 상세 기록 보기');
+      actions.append(open);
+      card.append(actions);
       const detail = make('div'); detail.hidden = true;
       const button = card.querySelector('button');
       button.setAttribute('aria-expanded', 'false');
       button.addEventListener('click', async () => {
         if (!detail.hidden) {
           detail.hidden = true;
-          button.textContent = '🔍 Lv.1 학교정보 보기';
+          button.textContent = '🔍 연도별 상세 기록 보기';
           button.setAttribute('aria-expanded', 'false');
           return;
         }
@@ -422,7 +413,7 @@
     $('resultCount').textContent = '검색 중...';
     try {
       let query = supabaseClient.from('schools')
-        .select('school_id,school_name,sido,sido_standard,support_office,address,homepage,establishment,school_kind,status', {count:'exact'})
+        .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status', {count:'exact'})
         .eq('status','운영');
       if (q) query = query.ilike('school_name', `%${q.replaceAll('%','\\%').replaceAll('_','\\_')}%`);
       if (region) query = query.eq('sido_standard', region);
