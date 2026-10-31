@@ -8,6 +8,7 @@ on:
       - 'search-lv2.html'
       - 'school-report.html'
       - 'js/school-search-card-v1.js'
+      - 'js/percentile-chart.js'
       - 'js/level-search.js'
       - 'js/lv2-edited-search.js'
       - 'js/school-mbti-v1.js'
