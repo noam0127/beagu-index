@@ -12,7 +12,12 @@
   }
   window.beaguVisitor = visitor;
   const event = crypto.randomUUID();
-  const page = (location.pathname.split('/').pop() || 'index.html').replace('.html','');
+  const rawPage = (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/,'');
+  // The database accepts only these page categories. Unknown detail/list routes
+  // previously sent invalid p_page values, causing HTTP 400 on every page visit.
+  const page = ['index','search','result','survey','challenge'].includes(rawPage)
+    ? rawPage
+    : ['search-lv1','search-lv2','school-report','statistics'].includes(rawPage) ? 'search' : 'index';
   window.beaguVisitReady = (async () => {
     try {
       const {data,error} = await supabaseClient.rpc('beagu_record_visit', {p_visitor:visitor,p_event:event,p_page:page});
