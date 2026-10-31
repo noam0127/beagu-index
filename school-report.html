@@ -42,6 +42,8 @@
 
 .official-year-note{font-size:12px;color:#64748b;margin:0 0 13px;line-height:1.6}
 .official-metric strong{color:#133267;font-variant-numeric:tabular-nums}
+.approved-subheading{font-size:13px;font-weight:750;color:#475569;margin:15px 0 8px}
+.approved-summary .summary-metrics+.approved-subheading{margin-top:20px}
 </style>
 </head>
 <body>
@@ -1063,7 +1065,16 @@
       box.innerHTML='<h4>등급별 추가 통계 🔒</h4><div class="summary-metrics"><div class="summary-metric"><span>Lv.1 승인 집계</span><i class="mask-shape" aria-hidden="true"></i></div><div class="summary-metric"><span>Lv.2 승인 상세</span><i class="mask-shape" aria-hidden="true"></i></div></div><p class="tier-locked-note">모자이크는 디자인용이며 실제 수치는 전달되지 않았습니다.</p>';return;
     }
     if(!list.length){box.innerHTML='<h4>승인된 추가 통계 · Lv.'+state.tier+'</h4><p class="approved-empty">현재 학교·연도의 공개 승인된 추가 요약 통계가 없습니다.</p>';return}
-    box.innerHTML='<h4>승인된 추가 통계 · Lv.'+state.tier+'</h4><div class="summary-metrics">'+list.map(x=>'<div class="summary-metric"><span>'+escapeHTML(x.label)+'</span><strong>'+escapeHTML(x.value)+'</strong></div>').join('')+'</div>';
+    const unique=[...new Map(list.filter(x=>x&&typeof x.label==='string'&&x.label.length<=80&&typeof x.value==='string'&&x.value.length<=90)
+      .map(x=>[(x.group||'승인된 설문 영역 요약')+':'+x.label,x])).values()];
+    const groups=['편집본 공식 학교정보','승인된 설문 영역 요약'];
+    box.innerHTML='<h4>승인된 추가 통계 · Lv.'+state.tier+'</h4>'+
+      groups.map(g=>{
+        const rows=unique.filter(x=>(x.group||'승인된 설문 영역 요약')===g);
+        return rows.length?'<h5 class="approved-subheading">'+escapeHTML(g)+'</h5><div class="summary-metrics">'+
+          rows.map(x=>'<div class="summary-metric"><span>'+escapeHTML(x.label)+'</span><strong>'+escapeHTML(x.value)+'</strong></div>').join('')+'</div>':'';
+      }).join('')+
+      '<p class="tier-locked-note">편집본의 승인 항목만 표시하며, 교사 개별응답·주관식·순위는 제공하지 않습니다.</p>';
   }
   function clearTierItems(){
     if(!state.school||state.demo)return;
@@ -1178,7 +1189,15 @@
             if(serial!==state.reportSerial||state.tier!==2||String(state.school?.school_id)!==id)return;
             const allow={
               2024:{N:'교원 수(2024)',AI:'학생 수(2024)'},
-              2025:{G:'학교 부지 면적(㎡)',H:'운동장 면적(㎡)',I:'교실 수',J:'체육공간 수',L:'교사 지원공간 수',N:'급식 장소',P:'학생 수',R:'교감 수',T:'교원 수'}
+              2025:{
+                G:'교사대지(㎡)',H:'운동장 면적(㎡)',I:'일반교실 수',J:'체육집회공간 수',
+                K:'학생식당 수',L:'교원지원공간 수',M:'교원지원공간 비율',
+                N:'급식 장소',O:'우유급식',P:'학생 수',R:'교감 수',S:'수석교사 수',
+                T:'교원 수',U:'2급 정교사 비율',V:'남교사 비율',
+                AC:'학교 만족도',AE:'학생·학부모 문화',AI:'교직원 문화',
+                AM:'조직운영',AQ:'업무부하',AU:'교직관행',
+                AY:'현장체험학습 관행',BC:'복무관행',BG:'학교환경'
+              }
             };
             for(const record of Array.isArray(edited.rows)?edited.rows:[]){
               const year=Number(record.year),definitions=allow[year];
@@ -1188,7 +1207,8 @@
                 const v=record.values[key];
                 if((typeof v==='number'&&Number.isFinite(v))||
                    (typeof v==='string'&&v.length<=80&&!/[<>\r\n]/.test(v))){
-                  list.push({label,value:String(v)});
+                  const group=year===2025&&['AC','AE','AI','AM','AQ','AU','AY','BC','BG'].includes(key)?'승인된 설문 영역 요약':'편집본 공식 학교정보';
+                  list.push({label,value:String(v),group});
                 }
               }
             }
