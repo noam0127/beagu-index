@@ -291,7 +291,6 @@ async function showDetail(container,school){
    const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',String(m.value)+(m.unit||'')));newer.append(row);
   });
   container.append(newer);
-  container.append(el('h3','school-history-heading','과거 상세자료'));
  container.append(note('연도마다 문항과 집계 방식이 다릅니다. 백분위 및 영역별 수치를 동일 척도로 직접 비교하지 마세요.'));
  return true;
 }
@@ -314,7 +313,7 @@ function render(results,total){
    card.append(link);
   }
   card.append(percentilePanel(s));
-  const actions=el('div','actions'),open=el('button','view-button','🔍 자세히 보기');
+  const actions=el('div','actions'),open=el('button','view-button','🔍 Lv.2 승인자료 보기');
   open.type='button';open.setAttribute('aria-expanded','false');
   actions.append(open);card.append(actions);
   const detail=el('section','school-detail');detail.hidden=true;
@@ -322,7 +321,7 @@ function render(results,total){
   let loaded=false,loading=false;
   open.addEventListener('click',async()=>{
    if(!detail.hidden){
-    detail.hidden=true;open.textContent='🔍 자세히 보기';
+    detail.hidden=true;open.textContent='🔍 Lv.2 승인자료 보기';
     open.setAttribute('aria-expanded','false');return;
    }
    detail.hidden=false;open.textContent='상세보기 접기';
