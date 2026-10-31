@@ -7,6 +7,7 @@
  */
 import { readFile, access } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { runInNewContext } from 'node:vm';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const ORIGIN = (process.env.BEAGU_ORIGIN || 'https://baeguindex.com').replace(/\/$/, '');
@@ -95,6 +96,18 @@ async function main() {
   try {
     const publicData = JSON.parse(responses.get('data/public-lv0-percentiles-v1.2.json')||'null');
     check('공개 백분위 JSON 무결성', publicData?.publication_status==='LV0_EXISTING_PUBLIC_SCOPE' && Array.isArray(publicData.rows) && publicData.rows.length>0);
+    // Catch the exact 2026-10-31 production regression: the parser rejected
+    // a valid public v1.3 percentile export because it only accepted v1.2.
+    try {
+      const parser=await readFile('js/master-percentiles-v1.2.js','utf8');
+      const scope={};
+      runInNewContext(parser,scope,{timeout:1500});
+      const idx=scope.BeaguPublic.buildIndex(publicData);
+      const published2025=publicData.rows.filter(r=>r.percentiles?.[2]!==null).length;
+      check('웹 백분위 파서와 현재 데이터 버전 호환',
+        idx.size===publicData.rows.length && published2025===1294,
+        '학교 '+idx.size+'개, 2025 공개 '+published2025+'개교');
+    } catch(e) { check('웹 백분위 파서와 현재 데이터 버전 호환',false,String(e.message)); }
   } catch(e) { check('공개 백분위 JSON 무결성', false, e.message); }
 
   // 공개 사이트에서 쓰는 publishable key만 사용. service_role/secret은 읽지 않음.
@@ -108,6 +121,17 @@ async function main() {
   } catch (e) { check('공개 Supabase 설정 로드', false, e.message); }
 
   if (publishable) {
+    try {
+      const publicResponse=await request(
+        `${SUPABASE}/rest/v1/beagu_school_report_yearly?select=school_id,survey_year,percentile&publication_status=eq.PUBLISHED&limit=1`,
+        {headers:{apikey:publishable,Origin:ORIGIN}}
+      );
+      const publicRows=await publicResponse.json().catch(()=>null);
+      check('공개 백분위 REST 조회 가능 — 대용량 파일 실패 시 복구',
+        publicResponse.ok && Array.isArray(publicRows) && publicRows.length===1 &&
+        Number.isFinite(Number(publicRows[0].percentile)),
+        `HTTP ${publicResponse.status}`);
+    } catch(e) {check('공개 백분위 REST 조회 가능 — 대용량 파일 실패 시 복구',false,e.message)}
     const headers = {
       'Content-Type':'application/json',
       'Origin':ORIGIN,
