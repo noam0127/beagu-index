@@ -167,20 +167,14 @@ function percentile2026(rows){
  }return null;
 }
 function percentilePanel(school,v26=null){
- const section=el('section','percentile-panel');
- section.setAttribute('aria-label','연도별 배구지수 백분위 변화');
- section.append(el('h3','percentile-heading','연도별 배구지수 백분위'));
- const values=window.BeaguPublic?BeaguPublic.values(percentIndex.get(String(school.school_id))).concat(v26):[null,null,null,v26];
- const grid=el('div','percentiles');
- [2023,2024,2025,2026].forEach((year,i)=>{
-  const cell=el('div');cell.append(el('span','',String(year)),
-   el('b','',values[i]==null?'자료 준비 중':Number(values[i]).toFixed(1)+'%'));grid.append(cell);
- });section.append(grid);
- if(typeof percentileChart==='function'){
-  const graph=el('div','percentile-graph');graph.innerHTML=percentileChart(values);section.append(graph);
- }
- section.append(note('연도별 조사 문항과 산정 기준이 달라 직접 비교에 주의하세요.'));
- return section;
+ const info=percentIndex.get(String(school.school_id));
+ return BeaguSchoolSearchCard.percentiles({
+   publicValues:window.BeaguPublic?BeaguPublic.values(info):[null,null,null],
+   statuses:info?.statuses||[],
+   publicError:!publicStaticAvailable && percentIndex.size===0,
+   value2026:v26,
+   locked:false
+ });
 }
 function renderPagePercentiles(results,requestId){
  const ids=[...new Set(results.map(s=>String(s.school_id)).filter(id=>/^\d{7}$/.test(id)))];
@@ -269,7 +263,6 @@ async function showDetail(container,school){
  const tabbar=el('div','year-tabs');tabbar.setAttribute('role','tablist');
  tabbar.setAttribute('aria-label','과거 조사 연도 선택');
  const body=el('div','school-year-details');body.setAttribute('role','tabpanel');
- container.append(tabbar,body);
  const years=[2023,2024,2025];
  function choose(year){
   [...tabbar.children].forEach(b=>b.setAttribute('aria-selected',String(Number(b.dataset.year)===year)));
@@ -283,7 +276,6 @@ async function showDetail(container,school){
   (Array.isArray(response.rows)?response.rows:[]).some(record=>
    Number(record.year)===year&&releasedFields(metadata,year,record.values).length>0));
  choose(firstAvailable||2025);
- container.append(note('현재 학교의 공개 승인된 최근 연도를 먼저 보여줍니다. 다른 연도는 위의 탭에서 선택하세요.'));
  container.append(el('h3','school-history-heading','2026년 배구지수'));
   const newer=el('div','year-2026-content');newer.hidden=false;
   const stats=metrics2026(levelData.rows);
@@ -292,6 +284,8 @@ async function showDetail(container,school){
    const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',String(m.value)+(m.unit||'')));newer.append(row);
   });
   container.append(newer);
+  container.append(el('h3','school-history-heading','과거 상세자료'),tabbar,body);
+  container.append(note('현재 학교의 공개 승인된 최근 연도를 먼저 보여줍니다. 다른 연도는 위의 탭에서 선택하세요.'));
  container.append(note('연도마다 문항과 집계 방식이 다릅니다. 백분위 및 영역별 수치를 동일 척도로 직접 비교하지 마세요.'));
  return true;
 }
@@ -303,26 +297,20 @@ function render(results,total){
  if(!results.length){host.append(el('div','pending','검색 결과가 없습니다.'));return;}
  results.forEach(s=>{
   const card=el('article','school-card');
-  card.append(el('span','region-pill',s.sido_standard||s.sido),
-   el('div','school-name',s.school_name),
-   el('div','school-meta',[s.support_office,s.address].filter(Boolean).join(' · ')));
   card.dataset.schoolId=String(s.school_id);
-  const homepage=String(s.homepage||'');
-  if(/^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:[/?#]|$)/i.test(homepage)){
-   const link=el('a','school-homepage','🌐 학교 홈페이지');
-   link.href=homepage;link.target='_blank';link.rel='noopener noreferrer';
-   card.append(link);
-  }
+  BeaguSchoolSearchCard.addHeader(card,s);
   card.append(percentilePanel(s));
-  const actions=el('div','actions'),open=el('button','view-button','🔍 Lv.2 승인자료 보기');
+  const actions=el('div','school-actions');
+  const open=el('button','view-button','🔍 연도별 상세 기록 보기');
   open.type='button';open.setAttribute('aria-expanded','false');
+  open.setAttribute('aria-label','Lv.2 연도별 상세 기록 보기');
   actions.append(open);card.append(actions);
   const detail=el('section','school-detail');detail.hidden=true;
   detail.setAttribute('aria-label','학교별 상세정보');card.append(detail);
   let loaded=false,loading=false;
   open.addEventListener('click',async()=>{
    if(!detail.hidden){
-    detail.hidden=true;open.textContent='🔍 Lv.2 승인자료 보기';
+    detail.hidden=true;open.textContent='🔍 연도별 상세 기록 보기';
     open.setAttribute('aria-expanded','false');return;
    }
    detail.hidden=false;open.textContent='상세보기 접기';
@@ -351,7 +339,7 @@ async function search(reset){
  $('resultCount').textContent='검색 중…';
  try{
   let query=supabaseClient.from('schools')
-   .select('school_id,school_name,sido,sido_standard,support_office,address,homepage,establishment,school_kind,status',{count:'exact'})
+   .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status',{count:'exact'})
    .eq('status','운영');
   if(q)query=query.ilike('school_name',`%${q.replaceAll('%','\\%').replaceAll('_','\\_')}%`);
   if(region)query=query.eq('sido_standard',region);
