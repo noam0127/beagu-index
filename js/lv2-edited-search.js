@@ -265,6 +265,7 @@ async function showDetail(container,school){
   return false;
  }
  container.append(el('h3','school-history-heading','Lv.2 승인 학교 상세정보'));
+ if(window.BeaguSchoolMBTI)container.append(BeaguSchoolMBTI.createDetail(String(school.school_id),token));
  const tabbar=el('div','year-tabs');tabbar.setAttribute('role','tablist');
  tabbar.setAttribute('aria-label','과거 조사 연도 선택');
  const body=el('div','school-year-details');body.setAttribute('role','tabpanel');
@@ -335,6 +336,7 @@ function render(results,total){
   if(results.length===1&&total===1)open.click();
  });
  renderPagePercentiles(results,serial);
+ if(window.BeaguSchoolMBTI)void BeaguSchoolMBTI.decorateCards(host,token);
 }
 async function search(reset){
  if(reset)page=0;
