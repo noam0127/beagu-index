@@ -113,7 +113,9 @@
     const select = $('officeSelect');
     select.replaceChildren(new Option(region ? '전체 교육지원청' : '시도를 먼저 선택하세요', ''));
     select.disabled = !region;
-    if (region === '세종') {
+    if (region === '재외한국학교') {
+      ["일본","중국","대만","베트남","사우디아라비아","인도네시아","싱가포르","태국","필리핀","파라과이","아르헨티나","러시아","이란","이집트","말레이시아","캄보디아"].forEach(country => select.add(new Option(country, country)));
+    } else if (region === '세종') {
       select.add(new Option('세종시교육청', '세종특별자치시교육청'));
     } else if (region) {
       for (const name of offices[region].split(' ')) {
