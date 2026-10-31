@@ -45,7 +45,7 @@
     return node;
   };
   let publicIndex = new Map();
-  const loaded = fetch('data/public-lv0-percentiles-v1.2.json', {cache:'force-cache'})
+  const loaded = fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025', {cache:'force-cache'})
     .then(r => { if (!r.ok) throw new Error('PUBLIC_DATA_UNAVAILABLE'); return r.json(); })
     .then(data => { publicIndex = BeaguPublic.buildIndex(data); })
     .catch(() => { /* Verified public display is optional; never fabricate a value. */ });
