@@ -246,11 +246,15 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
         level:0,
         percentile:renderPercentiles(school)
       });
+      const link=card.querySelector('.view-button');
+      if(link)link.addEventListener('click',event=>{
+        window.BeaguSearchTelemetry?.selected(String(school.school_id),0,'search',event);
+      });
       results.appendChild(card);
     });
   }
 
-  async function loadSchools(resetPage=true) {
+  async function loadSchools(resetPage=true,explicitEnter=false) {
     if (resetPage) page=0;
     const keyword=mode==='school' ? searchInput.value.trim() : '';
     const region=mode==='region' ? regionSelect.value : '';
@@ -281,6 +285,8 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
         catch(e) { percentileLoadError=true; console.warn('공개 백분위 DB 조회 실패',e); }
       }
       if (token!==searchSerial) return;
+      if(explicitEnter&&keyword&&count===1&&Array.isArray(data)&&data.length===1)
+        window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),0,'search');
       renderSchools(data || [],count || 0);
     } catch (error) {
       if (token!==searchSerial) return;
@@ -295,6 +301,10 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
   regionSelect.addEventListener('change',()=>{populateOffices(regionSelect.value);loadSchools(true);});
   officeSelect.addEventListener('change',()=>loadSchools(true));
   searchInput.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>loadSchools(true),250);});
+  searchInput.addEventListener('keydown',event=>{
+    if(event.key!=='Enter'||event.isComposing||!searchInput.value.trim())return;
+    event.preventDefault();clearTimeout(searchTimer);void loadSchools(true,true);
+  });
   prevPage.addEventListener('click',()=>{if(page>0){page-=1;loadSchools(false);}});
   nextPage.addEventListener('click',()=>{page+=1;loadSchools(false);});
 </script>
