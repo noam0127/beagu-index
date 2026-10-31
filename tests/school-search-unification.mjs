@@ -134,11 +134,12 @@ for(const x of ['48','128','208','288']){
 }
 assert.doesNotMatch(svg,/백분위 변화|연도 간 변화|추세선/);
 const svgMissing=chartScope.percentileChart([10,null,30,null],{blank2026:true,labels:['자료 없음','검수 중','미공개','미공개']});
-assert.equal((svgMissing.match(/<circle /g)||[]).length,4);
+assert.equal((svgMissing.match(/<circle /g)||[]).length,2,'Never draw a marker for a missing year');
+assert.doesNotMatch(svgMissing,/fill="#cbd5e1"/,'No fake missing-value dot at zero');
 assert.match(svgMissing,/2024년 검수 중/);
 assert.match(svgMissing,/2026년 미공개/);
 assert.doesNotMatch(svgMissing,/>null%|>NaN%/);
-for(const page of pages)assert.match(read(page),/js\/percentile-chart\.js\?v=20261031-independent5/);
+for(const page of pages)assert.match(read(page),/js\/percentile-chart\.js\?v=20261031-independent5b/);
 assert.match(read('js/school-search-card-v1.js'),/for\(const i of \[0,1,2,3\]\)/);
 assert.match(read('js/school-search-card-v1.js'),/각 점은 해당 연도의 독립적인 백분위/);
 
