@@ -9,7 +9,7 @@ for(const path of pages){
  const html=read(path);
  assert.match(html,/styles\/school-search-card-v1\.css/,path+' missing shared CSS');
  assert.match(html,/js\/school-search-card-v1\.js/,path+' missing shared component');
- assert.match(html,/v=20261031-current3/,path+' stale shared script URL');
+ assert.match(html,/v=20261031-status4/,path+' stale shared script URL');
  assert.doesNotMatch(html,/학교 홈페이지 방문|🌐 학교 홈페이지/,path+' displays unnecessary homepage');
  const lines=html.match(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)||[];
  for(const block of lines){
