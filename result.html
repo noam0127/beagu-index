@@ -1,340 +1,52 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>학교 결과 | 배구지수</title>
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,follow">
+  <meta name="theme-color" content="#f7f8fa">
+  <title>학교 결과 새 주소 안내 | 배구지수</title>
+  <link rel="canonical" href="https://baeguindex.com/school-report.html">
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
-                   "Noto Sans KR", sans-serif;
-      background: #f7f8fa;
-      color: #111;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 24px;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 36px;
-    }
-
-    .back {
-      border: 0;
-      background: none;
-      font-size: 24px;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .logo {
-      font-size: 15px;
-      font-weight: 700;
-      color: #2563eb;
-    }
-
-    .school-name {
-      font-size: 32px;
-      line-height: 1.3;
-      letter-spacing: -1.5px;
-      margin: 0 0 8px;
-    }
-
-    .school-location {
-      color: #666;
-      margin-bottom: 28px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 18px;
-      padding: 22px;
-      margin-bottom: 16px;
-      box-shadow: 0 3px 14px rgba(0,0,0,0.05);
-    }
-
-    .card h2 {
-      font-size: 18px;
-      margin: 0 0 16px;
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      margin: 12px 0;
-      font-size: 15px;
-    }
-
-    .label {
-      color: #777;
-      flex-shrink: 0;
-    }
-
-    .value {
-      text-align: right;
-    }
-
-    .locked {
-      color: #777;
-      line-height: 1.7;
-    }
-
-    .button {
-      display: block;
-      width: 100%;
-      text-align: center;
-      text-decoration: none;
-      border-radius: 12px;
-      padding: 16px;
-      font-size: 16px;
-      font-weight: 700;
-      margin-top: 14px;
-    }
-
-    .primary {
-      background: #2563eb;
-      color: white;
-    }
-
-    .secondary {
-      background: #eef2ff;
-      color: #2563eb;
-    }
-
-    .error {
-      background: white;
-      border-radius: 18px;
-      padding: 30px 20px;
-      text-align: center;
-      color: #777;
-    }
-  
-    .participation-bar {
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      padding: 12px 16px;
-      background: #f7f8fa;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .participation-link {
-      display: block;
-      max-width: 552px;
-      margin: 0 auto;
-      padding: 14px 12px;
-      border-radius: 12px;
-      background: #2563eb;
-      color: #fff;
-      text-align: center;
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.5;
-      word-break: keep-all;
-    }
-    .participation-link:hover { background: #1d4ed8; }
-    .participation-link:focus-visible {
-      outline: 3px solid #111;
-      outline-offset: 3px;
-    }
+    :root{color-scheme:light;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+    *{box-sizing:border-box}
+    body{background:#f7f8fa;color:#17233a;display:grid;min-height:100dvh;place-items:center;margin:0;padding:24px}
+    main{width:min(100%,510px);background:white;border:1px solid #dfe6f0;border-radius:18px;padding:30px;box-shadow:0 8px 22px #1235650d}
+    h1{font-size:24px;margin:0 0 15px}
+    p{font-size:15px;line-height:1.75;color:#526079}
+    a{color:#1d4ed8;font-weight:700}
+    a:focus-visible{outline:3px solid #93c5fd;outline-offset:4px}
+    .button{display:block;margin-top:22px;padding:14px;border-radius:12px;background:#2563eb;color:white;text-align:center;text-decoration:none}
   </style>
 </head>
-
 <body>
-
-  <header class="participation-bar">
-    <a class="participation-link" href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 배구지수 조사 참여하기</a>
-  </header>
-
-
-  <main class="container">
-
-    <div class="topbar">
-      <button class="back" onclick="history.back()">←</button>
-      <div class="logo">VOLLEYBALL INDEX</div>
-    </div>
-
-    <div id="content">
-      학교 정보를 불러오는 중입니다.
-    </div>
-
+  <main>
+    <h1>학교 결과 화면이 통합되었습니다</h1>
+    <p>현재 학교별 조사 기록은 새로운 상세화면에서 제공합니다. 이전 주소로 접속하셨다면 동일한 학교의 최신 공개 화면으로 이동합니다.</p>
+    <p>Lv.1·Lv.2 자료는 기존처럼 해당 화면에서 별도 인증이 필요하며, 승인되지 않은 데이터는 공개하지 않습니다.</p>
+    <a id="continueLink" class="button" href="school-report.html">현재 학교 상세화면으로 이동</a>
+    <p><small>자동 이동하지 않는 경우 위 버튼을 눌러 주세요.</small></p>
   </main>
-
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-
-<script>
-  const content = document.getElementById("content");
-
-  function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  async function loadSchool() {
-
-    const params = new URLSearchParams(window.location.search);
-    const schoolId = params.get("school");
-
-    if (!schoolId) {
-      showError("학교가 선택되지 않았습니다.");
-      return;
-    }
-
-    try {
-
-    const { data: school, error } =
-  await supabaseClient
-    .from("schools")
-    .select(`
-      school_id,
-      school_name,
-      sido,
-      sido_standard,
-      support_office,
-      establishment,
-      address,
-      homepage,
-      status
-    `)
-    .eq("school_id", schoolId)
-    .single();
-
-      if (error) {
-        throw error;
-      }
-
-      if (!school) {
-        showError("해당 학교를 찾을 수 없습니다.");
-        return;
-      }
-
-      renderSchool(school);
-
-    } catch (error) {
-
-      console.error(
-        "학교 정보 조회 오류:",
-        error
-      );
-
-      showError(
-        "학교 정보를 불러오는 중 오류가 발생했습니다."
-      );
-    }
-  }
-
-  function renderSchool(school) {
-
-    const schoolId =
-      encodeURIComponent(school.school_id);
-
-    content.innerHTML = `
-
-      <h1 class="school-name">
-        ${escapeHtml(school.school_name)}
-      </h1>
-
-      <div class="school-location">
-${escapeHtml(school.sido_standard || school.sido)}
-        ·
-        ${escapeHtml(school.support_office || "")}
-      </div>
-
-      <section class="card">
-
-        <h2>학교 기본정보</h2>
-
-        <div class="info-row">
-          <span class="label">설립구분</span>
-          <span class="value">
-            ${escapeHtml(school.establishment || "")}
-          </span>
-        </div>
-
-        <div class="info-row">
-          <span class="label">주소</span>
-          <span class="value">
-            ${escapeHtml(school.address || "")}
-          </span>
-        </div>
-
-        <div class="info-row">
-          <span class="label">운영상태</span>
-          <span class="value">
-            ${escapeHtml(school.status || "")}
-          </span>
-        </div>
-
-      </section>
-
-      <section class="card">
-
-        <h2>2026 배구지수</h2>
-
-        <div class="locked">
-          아직 이 학교의 2026 배구지수 결과가 연결되지 않았습니다.
-          이후 조사 데이터와 자동으로 연결됩니다.
-        </div>
-
-
-      </section>
-
-      <section class="card">
-
-        <h2>과거 배구지수</h2>
-
-        <div class="locked">
-          🔒 2023 · 2024 · 2025 배구지수<br>
-          향후 회원 등급에 따라 열람 범위가 달라집니다.
-        </div>
-
-      </section>
-
-      <a
-        class="button secondary"
-        href="search.html"
-      >
-        다른 학교 검색하기
-      </a>
-
-    `;
-  }
-
-  function showError(message) {
-
-    content.innerHTML = `
-      <div class="error">
-        ${escapeHtml(message)}
-        <br><br>
-        <a href="search.html">
-          학교 검색으로 돌아가기
-        </a>
-      </div>
-    `;
-  }
-
-  loadSchool();
-</script>
-
-<script src="js/visit-stats.js?v=20261031-1350"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/visit-stats.js?v=20261031-1350"></script>
+  <script>
+  (()=>{
+    'use strict';
+    const params=new URLSearchParams(location.search);
+    const school=params.get('school_id')||params.get('school');
+    const destination=new URL('school-report.html',location.href);
+    if(school&&/^\d{7}$/.test(school))destination.searchParams.set('school_id',school);
+    const year=params.get('year');
+    if(year&&['2023','2024','2025','2026'].includes(year))destination.searchParams.set('year',year);
+    const target=destination.pathname+destination.search;
+    document.getElementById('continueLink').href=target;
+    // Keep legacy /result.html visit statistics before navigating if possible;
+    // never block visitors if the optional visit RPC is unavailable.
+    const tracked=window.beaguVisitReady||Promise.resolve();
+    Promise.race([tracked,new Promise(resolve=>setTimeout(resolve,650))])
+      .catch(()=>{}).then(()=>location.replace(target));
+  })();
+  </script>
 </body>
 </html>
-
