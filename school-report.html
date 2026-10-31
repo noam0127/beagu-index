@@ -1054,7 +1054,7 @@
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
       for(const row of result.data||[]){
         const y=Number(row.survey_year),p=num(row.percentile);
-        if([2023,2024,2025].includes(y)&&p!==null&&p>=0&&p<=100)state.years[String(y)].percentile=p;
+        if([2023,2024,2025,2026].includes(y)&&p!==null&&p>=0&&p<=100){state.years[String(y)].percentile=p;if(y===2026)state.years[String(y)].approved=true;}
       }
       renderYearGrid();
     }catch(e){console.warn('공개 DB 미응답, 기존 검증 백분위 유지')}
