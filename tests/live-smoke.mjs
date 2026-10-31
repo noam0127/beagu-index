@@ -43,7 +43,7 @@ async function main() {
 
   // 사이트의 실제 캐시/배포 파일이 GitHub 체크아웃 버전과 일치하는지 검사.
   const assets = [
-    'index.html', 'search.html', 'search-lv1.html', 'search-lv2.html', 'school-report.html',
+    'index.html', 'search.html', 'search-lv1.html', 'search-lv2.html', 'school-report.html', 'release-policy.html',
     'js/master-percentiles-v1.2.js', 'js/visit-stats.js', 'js/percentile-chart.js',
     'js/level-search.js', 'js/lv2-edited-search.js',
     'js/school-mbti-v1.js', 'styles/school-mbti-v1.css',
@@ -81,6 +81,11 @@ async function main() {
     } catch (e) { check(`배포 자산 일치: ${relative}`, false, e.message); }
   }
 
+  const releasePolicy=responses.get('release-policy.html')||'';
+  check('2026 공개·권한·비교 유의사항 안내 배포',
+    ['Lv.0','Lv.1','Lv.2','Q51','소표본','미공개'].every(v=>releasePolicy.includes(v)) &&
+    ['index.html','search.html','search-lv1.html','search-lv2.html','school-report.html','statistics.html']
+      .every(p=>(responses.get(p)||'').includes('release-policy.html')));
   const report = responses.get('school-report.html')||'';
   const html0 = responses.get('search.html')||'';
   const html1 = responses.get('search-lv1.html')||'';
