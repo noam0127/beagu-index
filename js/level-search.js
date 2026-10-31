@@ -159,6 +159,10 @@
   $('searchInput').addEventListener('input', () => {
     clearTimeout(timer); timer = setTimeout(() => search(true), 250);
   });
+  $('searchInput').addEventListener('keydown',event=>{
+    if(event.key!=='Enter'||event.isComposing||!$('searchInput').value.trim())return;
+    event.preventDefault();clearTimeout(timer);void search(true,true);
+  });
   $('prevPage').addEventListener('click', () => { page = Math.max(0, page - 1); search(false); });
   $('nextPage').addEventListener('click', () => { page++; search(false); });
 
@@ -391,13 +395,14 @@
         percentile:percentilePanel(school)
       });
       button.setAttribute('aria-expanded', 'false');
-      button.addEventListener('click', async () => {
+      button.addEventListener('click', async (event) => {
         if (!detail.hidden) {
           detail.hidden = true;
           button.textContent = '🔍 연도별 상세 기록 보기';
           button.setAttribute('aria-expanded', 'false');
           return;
         }
+        const action=window.BeaguSearchTelemetry?.selected(String(school.school_id),1,'search-lv1',event);
         detail.hidden = false;
         button.textContent = '상세보기 접기';
         button.setAttribute('aria-expanded', 'true');
@@ -409,6 +414,7 @@
           // The server enforces the session's authorization and release_status.
           showDetails(detail, data.rows, school);
           detail.dataset.loaded = '1';
+          if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         } catch (error) {
           if (error.unauthorized) { loggedOut('인증이 만료되었습니다. 다시 입력하세요.'); return; }
           detail.textContent = '자료를 불러오지 못했습니다. 다시 열람해 주세요.';
@@ -421,7 +427,7 @@
     loadPagePercentiles(list,serial);
     if (window.BeaguSchoolMBTI) void BeaguSchoolMBTI.decorateCards(host,session);
   }
-  async function search(reset) {
+  async function search(reset,explicitEnter=false) {
     if (reset) page = 0;
     const q = mode === 'school' ? $('searchInput').value.trim() : '';
     const region = mode === 'region' ? $('regionSelect').value : '';
@@ -450,6 +456,8 @@
         catch(e){ publicLoadError=true; console.warn('Lv.1 백분위 DB 재조회 실패',e); }
       }
       if (request !== serial) return;
+      if(explicitEnter&&q&&count===1&&Array.isArray(data)&&data.length===1)
+        window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),1,'search-lv1');
       render(data || [], count || 0);
     } catch (error) {
       if (request !== serial) return;
