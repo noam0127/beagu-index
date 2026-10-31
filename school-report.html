@@ -1357,7 +1357,7 @@
   }
   function renderYearGrid(){
     const el=$('yearGrid');el.replaceChildren();
-    for(const year of [2023,2024,2025,2026]){
+    for(const year of [2026,2025,2024,2023]){
       const obj=yearData(year),p=num(obj.percentile);
       const card=document.createElement('button');card.type='button';card.className='year-card'+(year===2026?' latest-year':'');card.setAttribute('role','tab');card.setAttribute('aria-selected',String(year===state.selected));
       let label=p!==null&&p>=0&&p<=100?`${p.toFixed(1)}%`:(year===2026?'집계 준비 중':'자료 없음');
