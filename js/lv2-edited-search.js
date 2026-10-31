@@ -259,11 +259,10 @@ async function showDetail(container,school){
   return false;
  }
  container.append(el('h3','school-history-heading','Lv.2 승인 학교 상세정보'));
- if(window.BeaguSchoolMBTI)container.append(BeaguSchoolMBTI.createDetail(String(school.school_id),token));
  const tabbar=el('div','year-tabs');tabbar.setAttribute('role','tablist');
  tabbar.setAttribute('aria-label','과거 조사 연도 선택');
  const body=el('div','school-year-details');body.setAttribute('role','tabpanel');
- const years=[2023,2024,2025];
+ const years=[2025,2024,2023];
  function choose(year){
   [...tabbar.children].forEach(b=>b.setAttribute('aria-selected',String(Number(b.dataset.year)===year)));
   renderRecords(body,response.rows,metadata,year);
@@ -276,7 +275,7 @@ async function showDetail(container,school){
   (Array.isArray(response.rows)?response.rows:[]).some(record=>
    Number(record.year)===year&&releasedFields(metadata,year,record.values).length>0));
  choose(firstAvailable||2025);
- container.append(el('h3','school-history-heading','2026년 배구지수'));
+ container.append(el('h3','school-history-heading','2026년 최신 조사 결과'));
   const newer=el('div','year-2026-content');newer.hidden=false;
   const stats=metrics2026(levelData.rows);
   if(!stats.length)newer.append(note('2026년 승인된 학교별 자료가 아직 준비되지 않았습니다.'));
@@ -284,6 +283,7 @@ async function showDetail(container,school){
    const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',String(m.value)+(m.unit||'')));newer.append(row);
   });
   container.append(newer);
+  if(window.BeaguSchoolMBTI)container.append(BeaguSchoolMBTI.createDetail(String(school.school_id),token));
   container.append(el('h3','school-history-heading','과거 상세자료'),tabbar,body);
   container.append(note('현재 학교의 공개 승인된 최근 연도를 먼저 보여줍니다. 다른 연도는 위의 탭에서 선택하세요.'));
  container.append(note('연도마다 문항과 집계 방식이 다릅니다. 백분위 및 영역별 수치를 동일 척도로 직접 비교하지 마세요.'));
