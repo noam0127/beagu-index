@@ -44,11 +44,31 @@
     if (value !== undefined) node.textContent = String(value);
     return node;
   };
-  let publicIndex = new Map();
+  let publicIndex = new Map(), publicStaticAvailable = false;
   const loaded = fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025', {cache:'force-cache'})
     .then(r => { if (!r.ok) throw new Error('PUBLIC_DATA_UNAVAILABLE'); return r.json(); })
-    .then(data => { publicIndex = BeaguPublic.buildIndex(data); })
-    .catch(() => { /* Verified public display is optional; never fabricate a value. */ });
+    .then(data => { publicIndex = BeaguPublic.buildIndex(data); publicStaticAvailable = true; })
+    .catch(error => { console.warn('공개 백분위 파일 미응답, 승인 DB를 사용합니다.', error); });
+
+  async function recoverPublicIndex(list) {
+    if(publicStaticAvailable || !list.length) return;
+    const ids=[...new Set(list.map(s=>String(s.school_id))
+      .filter(id=>id.length===7 && [...id].every(c=>c>='0'&&c<='9')))];
+    if(!ids.length) return;
+    const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
+      .select('school_id,survey_year,percentile').in('school_id',ids)
+      .eq('publication_status','PUBLISHED').in('survey_year',[2023,2024,2025]).limit(100);
+    if(error) throw error;
+    for(const id of ids) {
+      const values=[null,null,null];
+      for(const row of data||[]) {
+        if(String(row.school_id)!==id || row.percentile===null) continue;
+        const i=[2023,2024,2025].indexOf(Number(row.survey_year)),n=Number(row.percentile);
+        if(i>=0 && Number.isFinite(n) && n>=0 && n<=100) values[i]=n;
+      }
+      publicIndex.set(id,{percentiles:values});
+    }
+  }
 
   function loggedOut(message = '') {
     session = '';
@@ -382,6 +402,11 @@
       if (request !== serial) return;
       if (error) throw error;
       await loaded;
+      if (request !== serial) return;
+      if(!publicStaticAvailable) {
+        try { await recoverPublicIndex(data||[]); }
+        catch(e){ console.warn('Lv.1 백분위 DB 재조회 실패',e); }
+      }
       if (request !== serial) return;
       render(data || [], count || 0);
     } catch (error) {
