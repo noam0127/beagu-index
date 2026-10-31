@@ -260,10 +260,12 @@
     const section=make('section','detail');
     const vals=asPublicPercentiles(school);
     // Latest year is visible first; historical school facts follow below.
-    const newer = make('button', 'year-2026-button', '2026년 최신 조사 · 결과 보기');
+    const newer = make('button', 'year-2026-button', '2026년 최신 조사 · 접기');
     newer.type = 'button';
     newer.setAttribute('aria-expanded', 'true');
     const currentContent = make('div', 'year-2026-content');
+    currentContent.id='beagu-current-2026-'+String(school.school_id);
+    newer.setAttribute('aria-controls',currentContent.id);
     currentContent.hidden = false;
     function render2026() {
       currentContent.replaceChildren();
@@ -279,10 +281,10 @@
     newer.addEventListener('click', () => {
       currentContent.hidden = !currentContent.hidden;
       newer.setAttribute('aria-expanded', String(!currentContent.hidden));
+      newer.textContent=currentContent.hidden?'2026년 최신 조사 · 펼치기':'2026년 최신 조사 · 접기';
     });
     section.append(newer, currentContent);
     if (window.BeaguSchoolMBTI) section.append(BeaguSchoolMBTI.createDetail(String(school.school_id), session));
-    section.append(make('h3','school-history-heading','학교 기본정보 · 이전 연도 기준'));
     const profile = make('section', 'school-profile');
     profile.append(make('h3', '', '학교 기본정보'));
     for (const [label, value] of [
