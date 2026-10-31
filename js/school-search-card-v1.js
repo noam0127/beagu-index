@@ -22,7 +22,29 @@
   card.append(el('span','region-badge',region),el('div','school-name',name),meta);
   return card;
  }
- function percentiles({publicValues=[],statuses=[],publicError=false,value2026=null,locked=false}={}){
+ // Explicit display states must not imply a review process when none is recorded.
+ const STATES=Object.freeze({
+  PUBLISHED:'published',MISSING:'missing',REVIEW:'review',
+  UNPUBLISHED:'unpublished',ERROR:'error',LOCKED:'locked',LOADING:'loading'
+ });
+ function publicState(status,failed){
+  if(status==='REVIEW_PENDING')return STATES.REVIEW;
+  if(status==='NO_PUBLISHED_VALUE')return STATES.MISSING;
+  if(status==='VERIFIED_LEGACY_RESTORATION'||status==='EXISTING_PUBLIC_VALUE_PRESERVED')return STATES.MISSING;
+  return failed?STATES.ERROR:STATES.MISSING;
+ }
+ function labelFor(state){
+  return ({
+   [STATES.MISSING]:'자료 없음',
+   [STATES.REVIEW]:'검수 중',
+   [STATES.UNPUBLISHED]:'미공개',
+   [STATES.ERROR]:'불러오기 실패',
+   [STATES.LOCKED]:'🔒 Lv.1 이상',
+   [STATES.LOADING]:'확인 중'
+  })[state]||'자료 없음';
+ }
+ function percentiles({publicValues=[],statuses=[],publicError=false,value2026=null,
+   status2026='unpublished',locked=false}={}){
   const values=[0,1,2].map(i=>valid(publicValues[i])?publicValues[i]:null);
   values.push(!locked&&valid(value2026)?value2026:null);
   const section=el('section','percentile-panel');
@@ -34,12 +56,13 @@
    const year=2023+i;
    const cell=el('div','percentile-cell'+(year===2026&&locked?' percentile-locked':''));
    cell.dataset.year=String(year);
-   let label;
-   if(values[i]!==null)label=values[i].toFixed(1)+'%';
-   else if(year===2026)label=locked?'🔒 Lv.1 전용':'자료 준비 중';
-   else if(publicError)label='불러오기 실패';
-   else if(statuses[i]==='REVIEW_PENDING')label='검수 중';
-   else label='자료 없음';
+   const state=values[i]!==null?STATES.PUBLISHED:
+    year===2026?(locked?STATES.LOCKED:
+      [STATES.ERROR,STATES.LOADING,STATES.REVIEW,STATES.UNPUBLISHED].includes(status2026)
+       ?status2026:STATES.UNPUBLISHED):
+    publicState(statuses[i],publicError);
+   cell.dataset.state=state;
+   const label=state===STATES.PUBLISHED?values[i].toFixed(1)+'%':labelFor(state);
    cell.append(el('span','percentile-year',String(year)),el('strong','percentile-value',label));
    grid.append(cell);
   }
@@ -54,7 +77,7 @@
   [
    '연도별 문항·참여 학교와 산정 방식이 달라 단순 비교에 주의해 주세요. 카드는 최신순, 그래프는 시간순으로 표시됩니다.',
    '2025년 백분위는 8개 영역 종합값을 조사 비교집단 1,458개교와 비교해 재산출했습니다. 99%는 비교집단 상위 약 1%입니다.',
-   '검수 중인 자료는 공개 승인 이후 제공됩니다.'
+   '자료 없음은 현재 공개 자료에 값이 없다는 뜻이며, 원자료의 부재를 확정하지 않습니다. 검수 중은 명시적 보류 상태, 미공개는 공개 승인 전 상태입니다.'
   ].forEach(s=>notes.append(el('li','percentile-note',s)));
   section.append(notes);
   section.append(el('p','percentile-note','자료 기준: 2026.10.31 · 2025 전국백분위 재산출'));
@@ -93,5 +116,5 @@
   if(detail)card.append(detail);
   return {card,open,detail};
  }
- window.BeaguSchoolSearchCard=Object.freeze({addHeader,percentiles,createCard});
+ window.BeaguSchoolSearchCard=Object.freeze({addHeader,percentiles,createCard,STATES});
 })();
