@@ -25,6 +25,13 @@ CREATE TABLE IF NOT EXISTS public.school_search_events (
   searched_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT school_search_events_once_per_action UNIQUE(action_id,event_type)
 );
+-- Support a prior un-deployed 2026-10-28 schema that allowed 'result' but
+-- not today's canonical 'school-report' detail page.
+ALTER TABLE public.school_search_events
+  DROP CONSTRAINT IF EXISTS school_search_events_source_page_check;
+ALTER TABLE public.school_search_events
+  ADD CONSTRAINT school_search_events_source_page_check
+  CHECK(source_page IN ('search','search-lv1','search-lv2','school-report','result'));
 ALTER TABLE public.school_search_events ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.school_search_events FROM PUBLIC,anon,authenticated;
 CREATE INDEX IF NOT EXISTS school_search_events_school_time_idx
