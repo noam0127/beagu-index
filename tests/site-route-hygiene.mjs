@@ -61,6 +61,9 @@ for(const page of ['index.html','search.html','search-lv1.html','search-lv2.html
    assert.ok(existsSync(relative),page+' missing asset '+ref);
  }
  for(const match of html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)){
+   // Embedded application/json catalogs are data, not executable JS.
+   const openTag=match[0].slice(0,match[0].indexOf('>')+1);
+   if(/\btype=["'](?:application\/json|application\/ld\+json)["']/.test(openTag))continue;
    if(match[1].trim())assert.doesNotThrow(()=>new Script(match[1],{filename:page}),page+' invalid inline JS');
  }
 }
