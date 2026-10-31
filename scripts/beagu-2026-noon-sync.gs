@@ -20,6 +20,7 @@ const BEAGU26 = Object.freeze({
   holdTab: "학교매칭_보류",
   logTab: "정오_실행로그",
   timezone: "Asia/Seoul",
+  firstOfficialResponseDay: "2026-11-01",
   supabaseUrl: "https://snvzwrexuqavnfvzgxqj.supabase.co",
   maxResponses: 50000,
   maxSchools: 10000
@@ -37,7 +38,7 @@ function normalize(s) {
 function regionOf(s) {
   const v=normalize(s).replace(/[①②③④⑤⑥⑦⑧⑨⑩]/g,"");
   const mapping=[
-    ["서울","서울"],["부산","부산"],["대구","대구"],["인천","인천"],
+    ["재외한국학교","재외한국학교"],["서울","서울"],["부산","부산"],["대구","대구"],["인천","인천"],
     ["광주","광주"],["대전","대전"],["울산","울산"],["세종","세종"],
     ["경기","경기"],["강원","강원"],["충북","충북"],["충남","충남"],
     ["전북","전북"],["전남","전남"],["경북","경북"],["경남","경남"],["제주","제주"]
@@ -136,10 +137,19 @@ function replaceBody(sheet,rows,columns) {
   if(clearRows)sheet.getRange(2,1,clearRows,columns).clearContent();
   if(rows.length)sheet.getRange(2,1,rows.length,columns).setValues(rows);
 }
+function getSubmittedDay(value) {
+  // Google Sheets display values can use "2026. 11. 1. 오전 ..." or ISO dates.
+  const m=String(value||"").trim().match(/^(\d{4})\s*[.\/-]\s*(\d{1,2})\s*[.\/-]\s*(\d{1,2})/);
+  if(!m)return null;
+  const year=Number(m[1]),month=Number(m[2]),day=Number(m[3]);
+  const date=new Date(Date.UTC(year,month-1,day));
+  if(date.getUTCFullYear()!==year||date.getUTCMonth()!==month-1||date.getUTCDate()!==day)return null;
+  return [m[1],m[2].padStart(2,"0"),m[3].padStart(2,"0")].join("-");
+}
 function refreshBeagu2026Stats() {
   const lock=LockService.getScriptLock();
   if(!lock.tryLock(30000))throw Error("이미 다른 집계가 실행 중입니다.");
-  let scanned=0,matched=0,unmatched=0;
+  let scanned=0,matched=0,unmatched=0,prelaunch=0,undated=0;
   const destination=SpreadsheetApp.openById(BEAGU26.destinationId);
   try{
     const source=SpreadsheetApp.openById(BEAGU26.sourceId).getSheetByName(BEAGU26.sourceTab);
@@ -155,6 +165,10 @@ function refreshBeagu2026Stats() {
       const r=values[i];
       if(!r[0]&&!r[columns.school])continue;
       scanned++;
+      const submittedDay=getSubmittedDay(r[0]);
+      // Never mix pilot/prelaunch and official 2026 survey responses.
+      if(submittedDay && submittedDay<BEAGU26.firstOfficialResponseDay){prelaunch++;continue;}
+      if(!submittedDay){undated++;unmatched++;holds.push([i+1,"","","","응답 시각 확인 불가","NEEDS_REVIEW"]);continue;}
       const m=resolveSchool(r,columns,schools);
       if(!m.school){
         holds.push([i+1,String(r[columns.region]||""),columns.office.map(k=>r[k]).filter(Boolean).join("/"),String(r[columns.school]||""),m.error,"NEEDS_REVIEW"]);
@@ -181,11 +195,11 @@ function refreshBeagu2026Stats() {
     replaceBody(destination.getSheetByName(BEAGU26.summaryTab),output,23);
     replaceBody(destination.getSheetByName(BEAGU26.holdTab),holds,6);
     matched=output.length;
-    destination.getSheetByName(BEAGU26.logTab).appendRow([now,scanned,matched,unmatched,"SUCCESS","학교별 집계만 갱신; 공개 API/비공개 원자료 불변"]);
+    destination.getSheetByName(BEAGU26.logTab).appendRow([now,scanned,matched,unmatched,"SUCCESS","본조사 이전 "+prelaunch+"건 제외; 시각 불명 "+undated+"건 보류; 비공개 집계만 갱신"]);
     Logger.log("Updated internal school summary: "+matched+" schools");
   }catch(e){
     const stamp=Utilities.formatDate(new Date(),BEAGU26.timezone,"yyyy-MM-dd HH:mm:ss");
-    destination.getSheetByName(BEAGU26.logTab).appendRow([stamp,scanned,matched,unmatched,"ERROR",String(e.message||e).slice(0,300)]);
+    destination.getSheetByName(BEAGU26.logTab).appendRow([stamp,scanned,matched,unmatched,"ERROR",("사전응답 제외 "+prelaunch+"건; "+String(e.message||e)).slice(0,300)]);
     throw e;
   }finally{lock.releaseLock();}
 }
