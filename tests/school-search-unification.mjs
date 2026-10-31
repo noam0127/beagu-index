@@ -3,7 +3,7 @@ import {Script,runInNewContext} from 'node:vm';
 import assert from 'node:assert/strict';
 const read=name=>readFileSync(name,'utf8');
 const pages=['search.html','search-lv1.html','search-lv2.html'];
-const scripts=['js/school-search-card-v1.js','js/level-search.js','js/lv2-edited-search.js','js/school-mbti-v1.js'];
+const scripts=['js/school-search-card-v1.js','js/level-search.js','js/lv2-edited-search.js','js/school-mbti-v1.js','js/school-detail-groups-v1.js'];
 for(const file of scripts)assert.doesNotThrow(()=>new Script(read(file),{filename:file}),file+' invalid JS');
 for(const path of pages){
  const html=read(path);
@@ -46,6 +46,21 @@ for(const html of [read('search-lv1.html'),read('search-lv2.html')]){
  assert.match(html,/js\/school-mbti-v1\.js/);
 }
 assert.doesNotMatch(lv0,/school-mbti-v1\.js/);
+for(const page of ['search-lv1.html','search-lv2.html']){
+ const html=read(page);
+ assert.match(html,/styles\/school-detail-groups-v1\.css\?v=20261031-groups6/);
+ assert.match(html,/js\/school-detail-groups-v1\.js\?v=20261031-groups6/);
+ assert.ok(html.indexOf('school-detail-groups-v1.js')<html.indexOf(page.includes('lv1')?'js/level-search.js':'js/lv2-edited-search.js'),
+  'Group utility must load before tier-specific renderer');
+}
+assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(section,releasedMetrics/);
+assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(section,schoolScale/);
+assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(currentContent,metrics/);
+assert.match(lv2,/BeaguDetailGroups\.appendGrouped\(root,approvedItems/);
+assert.match(lv2,/BeaguDetailGroups\.appendGrouped\(newer,stats/);
+assert.match(lv2,/releasedFields\(metadata,year,values\)/,'Lv.2 server-reviewed field allowlist remains enforced');
+assert.doesNotMatch(lv0,/school-detail-groups-v1\.js/,'Lv.0 must not load protected detail controls');
+
 
 // The same canonical DOM card, not merely similar CSS. No external packages required.
 class FakeNode{
@@ -143,8 +158,39 @@ for(const page of pages)assert.match(read(page),/js\/percentile-chart\.js\?v=202
 assert.match(read('js/school-search-card-v1.js'),/for\(const i of \[0,1,2,3\]\)/);
 assert.match(read('js/school-search-card-v1.js'),/각 점은 해당 연도의 독립적인 백분위/);
 
+// User-visible grouping must be mobile-friendly and never drop unrecognized approved fields.
+runInNewContext(read('js/school-detail-groups-v1.js'),{window,document});
+const groupUI=window.BeaguDetailGroups;
+const examples=[
+ {label:'학생 수',value:'350명'},
+ {label:'교원지원공간',value:'3실'},
+ {label:'우유급식',value:'미실시'},
+ {label:'행정업무',value:'구분'},
+ {label:'2025년 전국 백분위',value:'35%'}
+];
+assert.equal(groupUI.classify(examples[0]),'scale');
+assert.equal(groupUI.classify(examples[1]),'facilities');
+assert.equal(groupUI.classify(examples[2]),'meals');
+assert.equal(groupUI.classify(examples[3]),'admin');
+assert.equal(groupUI.classify(examples[4]),'other');
+const groupHost=new FakeNode('div');
+const n=groupUI.appendGrouped(groupHost,examples,(body,item)=>{
+ const child=new FakeNode('div');child.textContent=item.label+' '+item.value;body.append(child);
+});
+assert.equal(n,5,'All approved rows remain visible after expanding');
+assert.deepEqual(groupHost.children.map(g=>g.dataset.topic),['scale','facilities','meals','admin','other']);
+for(const group of groupHost.children){
+ assert.equal(group.tagName,'details');
+ assert.equal(group.open,false,'Topic panels default collapsed to reduce mobile scrolling');
+ assert.equal(group.children[0].tagName,'summary');
+ assert.equal(group.children[1].children.length,1);
+ assert.match(group.children[0].children[1].textContent,/1개 승인항목/);
+}
+assert.equal(groupUI.appendGrouped(new FakeNode('div'),[],()=>{}),0,'Empty sets do not expose fake topics');
+assert.match(read('styles/school-detail-groups-v1.css'),/min-height:48px/,'Touch target must remain accessible');
+
 const sync=read('scripts/beagu-2026-mbti-review-sync.gs');
 assert.match(sync,/1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4/);
 assert.match(sync,/2026-11-01/);
 assert.doesNotMatch(sync,/\.from\('beagu_release_metrics_v2'\)/);
-console.log('PASS: 2023–2026 chronological UI, independent years graph, 4 status distinctions and privacy');
+console.log('PASS: 6th priority collapsible grouped approved fields, 2023–2026 order, chart, access gates');
