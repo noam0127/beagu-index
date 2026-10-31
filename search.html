@@ -183,7 +183,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 
   let percentileIndex = new Map();
   let percentileLoadError = false;
-  const percentileReady = fetch('data/public-lv0-percentiles-v1.2.json', {cache:'no-cache'})
+  const percentileReady = fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025', {cache:'no-cache'})
     .then(r => { if (!r.ok) throw new Error('백분위 자료 로딩 실패'); return r.json(); })
     .then(data => { percentileIndex = BeaguPublic.buildIndex(data); })
     .catch(() => { percentileLoadError=true; });
