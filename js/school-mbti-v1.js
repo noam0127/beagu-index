@@ -76,10 +76,11 @@
       let badge=card.querySelector('.beagu-mbti-badge');
       if (!badge) {
         badge=e('div','beagu-mbti-badge');
+        // The common Lv.0 order stays intact: school identity → year percentiles → (Lv.1+) MBTI → detail action.
+        const percentile=card.querySelector('.percentile-panel');
         const meta=card.querySelector('.school-meta');
-        const name=card.querySelector('.school-name');
-        if (meta) meta.insertAdjacentElement('afterend',badge);
-        else if (name) name.insertAdjacentElement('afterend',badge);
+        if (percentile) percentile.insertAdjacentElement('afterend',badge);
+        else if (meta) meta.insertAdjacentElement('afterend',badge);
         else card.prepend(badge);
       }
       badge.replaceChildren(e('span','beagu-mbti-label','2026 학교 MBTI'),e('strong','beagu-mbti-text','승인 결과 확인 중…'));
