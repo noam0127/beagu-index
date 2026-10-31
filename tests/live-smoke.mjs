@@ -44,7 +44,7 @@ async function main() {
   // 사이트의 실제 캐시/배포 파일이 GitHub 체크아웃 버전과 일치하는지 검사.
   const assets = [
     'index.html', 'search.html', 'search-lv1.html', 'search-lv2.html', 'school-report.html',
-    'js/master-percentiles-v1.2.js', 'js/visit-stats.js',
+    'js/master-percentiles-v1.2.js', 'js/visit-stats.js', 'js/percentile-chart.js',
     'js/level-search.js', 'js/lv2-edited-search.js',
     'js/school-mbti-v1.js', 'styles/school-mbti-v1.css',
     'js/school-search-card-v1.js', 'styles/school-search-card-v1.css',
@@ -85,6 +85,18 @@ async function main() {
   const level2 = responses.get('js/lv2-edited-search.js')||'';
   const visitStats = responses.get('js/visit-stats.js')||'';
   const mbtiJS = responses.get('js/school-mbti-v1.js')||'';
+  const chartJS=responses.get('js/percentile-chart.js')||'';
+  check('2023~2026 연도 UI 오름차순',
+    report.includes('for(const year of [2023,2024,2025,2026])') &&
+    level1.includes('const YEARS = [2023, 2024, 2025]') &&
+    level2.includes('const years=[2023,2024,2025]') &&
+    (responses.get('js/school-search-card-v1.js')||'').includes('for(const i of [0,1,2,3])'));
+  check('연도별 개별 백분위 · 연결선 없는 도표',
+    chartJS.includes('function percentileChart(') &&
+    chartJS.includes('No cross-year line') &&
+    !chartJS.includes('values[i - 1]') &&
+    !chartJS.includes('x[i - 1]'));
+
   check('Lv.1·Lv.2·학교상세 방문집계 페이지명 유효화',
     visitStats.includes("'search-lv1','search-lv2','school-report','statistics'") &&
     visitStats.includes("page = ['index','search','result','survey','challenge']"));
@@ -100,7 +112,7 @@ async function main() {
     [html1,html2].every(h=>h.includes('js/school-mbti-v1.js')&&h.includes('styles/school-mbti-v1.css')) &&
     level1.includes('BeaguSchoolMBTI.createDetail') && level2.includes('BeaguSchoolMBTI.createDetail') &&
     mbtiJS.includes('beagu-school-culture-v1'));
-  for (const file of ['js/school-search-card-v1.js','js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js']) {
+  for (const file of ['js/percentile-chart.js','js/school-search-card-v1.js','js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js']) {
     try { new Script(responses.get(file)||''); check('JS 문법 검증: '+file,true); }
     catch(e) { check('JS 문법 검증: '+file,false,e.message); }
   }
