@@ -1354,7 +1354,7 @@
     const data=yearData(state.selected).items?.[item.id];
     const isFreeText=(state.selected===2026&&item.id==='Q51');
     const locked=!state.demo&&!isFreeText&&state.tier<requiredTier(item);
-    const itemApproved=state.demo || ((data?.serverApproved===true && !locked) || (data?.publicApproved===true && Number(data?.n)>=5 && !locked));
+    const itemApproved=!isFreeText && (state.demo || ((data?.serverApproved===true && !locked) || (data?.publicApproved===true && Number(data?.n)>=5 && !locked)));
     const displayed=itemApproved&&data&&typeof data.display==='string'?data.display.trim():null;
     const status=isFreeText?'전 등급 비공개':locked?'Lv.'+requiredTier(item)+' 인증 후 열람':displayed||missing;
     const row=document.createElement('article');row.className='question-row';
