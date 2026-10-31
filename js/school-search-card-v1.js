@@ -32,11 +32,12 @@
   for(let i=0;i<4;i++){
    const year=2023+i;
    const cell=el('div','percentile-cell'+(year===2026&&locked?' percentile-locked':''));
+   cell.dataset.year=String(year);
    let label;
    if(values[i]!==null)label=values[i].toFixed(1)+'%';
    else if(year===2026)label=locked?'🔒 Lv.1 전용':'자료 준비 중';
    else if(publicError)label='불러오기 실패';
-   else if(!statuses[i]||statuses[i]==='REVIEW_PENDING')label='검수 중';
+   else if(statuses[i]==='REVIEW_PENDING')label='검수 중';
    else label='자료 없음';
    cell.append(el('span','percentile-year',String(year)),el('strong','percentile-value',label));
    grid.append(cell);
@@ -58,5 +59,38 @@
   section.append(el('p','percentile-note','자료 기준: 2026.10.31 · 2025 전국백분위 재산출'));
   return section;
  }
- window.BeaguSchoolSearchCard=Object.freeze({addHeader,percentiles});
+ // Canonical card tree. Lv.0 opens the public report; authenticated tiers
+ // toggle in-card details. All three tiers have identical visual structure.
+ function createCard(school,{level=0,percentile}={}){
+  if(!Number.isInteger(level)||level<0||level>2)throw Error('INVALID_CARD_LEVEL');
+  if(!school||!/^\\d{7}$/.test(String(school.school_id)))throw Error('INVALID_SCHOOL_ID');
+  const card=el('article','school-card');
+  card.dataset.schoolId=String(school.school_id);
+  card.dataset.accessLevel=String(level);
+  addHeader(card,school);
+  if(!percentile||!percentile.classList?.contains('percentile-panel'))throw Error('INVALID_PERCENTILE_PANEL');
+  card.append(percentile);
+  const actions=el('div','school-actions');
+  const open=el(level===0?'a':'button','view-button','🔍 연도별 상세 기록 보기');
+  let detail=null;
+  if(level===0){
+   open.classList.add('school-button');
+   open.href='school-report.html?school_id='+encodeURIComponent(String(school.school_id));
+   open.setAttribute('aria-label',String(school.school_name||'학교')+' 연도별 상세 기록 보기');
+  }else{
+   open.type='button';
+   open.setAttribute('aria-expanded','false');
+   open.setAttribute('aria-label','Lv.'+level+' 연도별 상세 기록 보기');
+   detail=el('section','school-detail');
+   detail.id='beagu-school-detail-'+level+'-'+String(school.school_id);
+   detail.hidden=true;
+   detail.setAttribute('aria-label',String(school.school_name||'학교')+' 상세정보');
+   open.setAttribute('aria-controls',detail.id);
+  }
+  actions.append(open);
+  card.append(actions);
+  if(detail)card.append(detail);
+  return {card,open,detail};
+ }
+ window.BeaguSchoolSearchCard=Object.freeze({addHeader,percentiles,createCard});
 })();
