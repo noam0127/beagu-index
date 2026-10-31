@@ -34,8 +34,9 @@ function percentileChart(input,options={}){
         '<text x="'+x+'" y="'+(yy(v)-11)+'" text-anchor="middle" font-size="10" font-weight="700" fill="#1e40af">'+
         v.toFixed(1)+'%</text>';
     }else{
-      svg+='<circle cx="'+x+'" cy="'+yy(0)+'" r="4" fill="#cbd5e1"/>';
-      svg+='<text x="'+x+'" y="96" text-anchor="middle" font-size="10" fill="#64748b">—</text>';
+      // A missing or unapproved year has NO marker, not even at zero.
+      // A dot on the zero baseline could be mistaken for a measured 0%.
+      svg+='<text x="'+x+'" y="94" text-anchor="middle" font-size="12" fill="#94a3b8">—</text>';
     }
     svg+='<text x="'+x+'" y="162" text-anchor="middle" font-size="11" fill="#475569">'+
       years[i]+'</text>';
