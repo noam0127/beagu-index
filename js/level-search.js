@@ -345,6 +345,7 @@
       card.innerHTML = `<span class="region-badge">${escape(school.sido_standard || school.sido)}</span>` +
         `<div class="school-name">${escape(school.school_name)}</div>` +
         `<div class="school-meta">${escape(school.support_office)}<br>${escape(school.address)}</div>` +
+        (/^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:[/?#]|$)/i.test(String(school.homepage||'')) ? `<div class="school-meta"><a href="${escape(school.homepage)}" target="_blank" rel="noopener noreferrer">🌐 학교 홈페이지</a></div>` : '') +
         '<div class="school-actions"><button class="view-button" type="button">🔍 자세히 보기</button>' +
         '</div>';
       card.dataset.schoolId=String(school.school_id);
@@ -391,7 +392,7 @@
     $('resultCount').textContent = '검색 중...';
     try {
       let query = supabaseClient.from('schools')
-        .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status', {count:'exact'})
+        .select('school_id,school_name,sido,sido_standard,support_office,address,homepage,establishment,school_kind,status', {count:'exact'})
         .eq('status','운영');
       if (q) query = query.ilike('school_name', `%${q.replaceAll('%','\\%').replaceAll('_','\\_')}%`);
       if (region) query = query.eq('sido_standard', region);
