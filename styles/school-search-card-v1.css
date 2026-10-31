@@ -11,6 +11,14 @@
 .school-card .percentile-value{display:block;font-size:clamp(12px,2.1vw,16px);font-weight:700;color:#1e40af;overflow-wrap:anywhere}
 .school-card .percentile-cell.percentile-locked{background:#eaf0fb;border:1px solid #d2def4}
 .school-card .percentile-cell.percentile-locked .percentile-value{color:#47658d;font-weight:700}
+.school-card .percentile-cell[data-state="missing"] .percentile-value,
+.school-card .percentile-cell[data-state="unpublished"] .percentile-value,
+.school-card .percentile-cell[data-state="loading"] .percentile-value{color:#64748b;font-weight:600}
+.school-card .percentile-cell[data-state="review"]{background:#f8fafc;border:1px dashed #cbd5e1}
+.school-card .percentile-cell[data-state="review"] .percentile-value{color:#475569}
+.school-card .percentile-cell[data-state="error"]{background:#fef2f2;border:1px solid #fecaca}
+.school-card .percentile-cell[data-state="error"] .percentile-value{color:#b91c1c}
+.school-card .percentile-cell[data-state="locked"] .percentile-value{color:#47658d}
 .school-card .percentile-graph{margin:10px 0 4px;max-width:100%}
 .school-card .percentile-graph svg{max-width:100%;height:auto}
 .school-card .percentile-notes{padding-left:20px;margin:10px 0}
