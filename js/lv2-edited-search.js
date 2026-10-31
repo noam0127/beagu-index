@@ -275,7 +275,7 @@ async function showDetail(container,school){
  const tabbar=el('div','year-tabs');tabbar.setAttribute('role','tablist');
  tabbar.setAttribute('aria-label','과거 조사 연도 선택');
  const body=el('div','school-year-details');body.setAttribute('role','tabpanel');
- const years=[2025,2024,2023];
+ const years=[2023,2024,2025];
  function choose(year){
   [...tabbar.children].forEach(b=>b.setAttribute('aria-selected',String(Number(b.dataset.year)===year)));
   renderRecords(body,response.rows,metadata,year);
