@@ -196,6 +196,7 @@
       return;
     }
     let count = 0, hadRestricted = false, hadMismatch = false;
+    const releasedMetrics=[];
     for (const row of yearRows) {
       if (row.insufficient) { hadRestricted = true; continue; }
       // The edge function only emits a curated summary.metrics array.
@@ -206,10 +207,11 @@
         if (isDuplicatePublicPercentile(metric, year, publicValue)) continue;
         if (metric.label.includes(String(year)) && metric.label.includes('백분위') && publicValue !== null)
           hadMismatch = true;
-        addRow(section, metric.label, metric.value);
+        releasedMetrics.push({label:metric.label,value:metric.value,group:metric.group});
         count++;
       }
     }
+    BeaguDetailGroups.appendGrouped(section,releasedMetrics,(body,m)=>addRow(body,m.label,m.value));
     if (hadMismatch) section.append(make('p', 'detail-note', '백분위 출처별 값이 달라 원본 검수가 필요합니다. 임의로 합치지 않았습니다.'));
     if (hadRestricted) section.append(make('p', 'detail-note', '승인 범위에 따라 일부 세부 항목은 공개하지 않습니다.'));
     if (!count && !hadRestricted) section.append(make('p', 'detail-note', '추가 승인 통계가 없습니다. 위의 기존 공개 백분위를 참고하세요.'));
@@ -293,23 +295,21 @@
 
     // Surface the already approved Lv.1 school-size facts before the history tabs.
     // Values are received only from the session-validated Edge Function.
-    const facts = make('section', 'school-profile');
-    facts.append(make('h3', '', 'Lv.1 승인 학교 규모정보'));
-    const published = (Array.isArray(rows) ? rows : [])
-      .filter(r => [2024, 2025].includes(Number(r.year)) && Number(r.access_level) === 1)
-      .flatMap(r => (Array.isArray(r.summary?.metrics) ? r.summary.metrics : [])
-        .filter(m => m.group === '편집본 공식 학교정보' && typeof m.label === 'string' && typeof m.value === 'string')
-        .map(m => ({year: Number(r.year), label: m.label, value: m.value})));
-    let factsShown = 0;
-    for (const label of ['학생 수', '교원 수', '학급 수']) {
-      const found = [2025, 2024].map(year => published.find(m => m.year === year && m.label === label)).find(Boolean);
-      if (found) {
-        addRow(facts, label + ' (' + found.year + '년 편집본)', found.value);
-        factsShown++;
-      }
+    const published=(Array.isArray(rows)?rows:[])
+      .filter(r=>[2024,2025].includes(Number(r.year))&&Number(r.access_level)===1)
+      .flatMap(r=>(Array.isArray(r.summary?.metrics)?r.summary.metrics:[])
+        .filter(m=>m.group==='편집본 공식 학교정보'&&typeof m.label==='string'&&typeof m.value==='string')
+        .map(m=>({year:Number(r.year),label:m.label,value:m.value})));
+    const schoolScale=[];
+    for(const label of ['학생 수','교원 수','학급 수']){
+      const found=[2025,2024].map(year=>published.find(m=>m.year===year&&m.label===label)).find(Boolean);
+      if(found)schoolScale.push({label:label+' ('+found.year+'년 편집본)',value:found.value,group:'학교 규모'});
     }
-    if (!factsShown) facts.append(make('p', 'detail-note', '이 학교의 추가 승인 규모정보는 아직 없습니다. 과거 백분위는 아래에서 확인할 수 있습니다.'));
-    section.append(facts);
+    if(schoolScale.length){
+      BeaguDetailGroups.appendGrouped(section,schoolScale,(body,m)=>addRow(body,m.label,m.value));
+    }else{
+      section.append(make('p','detail-note','이 학교의 추가 승인 규모정보는 아직 없습니다. 과거 백분위는 아래에서 확인할 수 있습니다.'));
+    }
 
 
 
@@ -351,7 +351,7 @@
       if (!metrics.length) {
         currentContent.append(make('p', 'detail-note', '미공개 · 2026년 승인된 학교별 통계가 없습니다.'));
       } else {
-        for (const metric of metrics) addRow(currentContent, metric.label, metricValue(metric));
+        BeaguDetailGroups.appendGrouped(currentContent,metrics,(body,m)=>addRow(body,m.label,metricValue(m)));
       }
     }
     render2026();
