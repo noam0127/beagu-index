@@ -1,0 +1,31 @@
+name: 2026 Release Policy & Tier Safeguards
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'release-policy.html'
+      - 'index.html'
+      - 'search.html'
+      - 'search-lv1.html'
+      - 'search-lv2.html'
+      - 'school-report.html'
+      - 'statistics.html'
+      - 'js/level-search.js'
+      - 'js/lv2-edited-search.js'
+      - 'supabase/08_xp_search_install.sql'
+      - 'tests/release-policy-v9.mjs'
+      - '.github/workflows/release-policy-v9.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  release-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/release-policy-v9.mjs
+      - run: node tests/challenge-search-telemetry.mjs
