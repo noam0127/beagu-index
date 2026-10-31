@@ -38,4 +38,13 @@ assert.equal(percentiles.rows.filter(r=>r.percentiles[2]!==null).length,1294,'Ve
 const syncScript=fs.readFileSync('scripts/beagu-2026-noon-sync.gs','utf8');
 assert.ok(syncScript.includes('firstOfficialResponseDay: "2026-11-01"'),'2026 prelaunch response exclusion missing');
 assert.ok(syncScript.includes('getSubmittedDay(r[0])'),'2026 timestamp must be checked before aggregation');
+assert.ok(html.includes("beagu_school_report_official_categories"),
+  'School report must read vetted official categorical metadata');
+assert.ok(html.includes("beagu_school_report_official_facts"),
+  'School report must read vetted numeric official metadata');
+assert.ok(src.includes("state.officialCategories"),
+  'Official categories must be scoped to school and selected survey year');
+assert.ok(src.includes("allowedCategory"),'Official category value whitelist missing');
+assert.ok(!src.includes("state.officialFacts=(result.data||[]).filter(x=>x.survey_year===2024"),
+  'Do not restrict official data to 2024 when 2025 is available');
 console.log('School report JS syntax, UI bindings and public/private separation: PASS');
