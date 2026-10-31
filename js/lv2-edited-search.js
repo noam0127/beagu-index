@@ -296,17 +296,10 @@ function render(results,total){
  $('prevPage').disabled=page===0;$('nextPage').disabled=page+1>=pages;
  if(!results.length){host.append(el('div','pending','검색 결과가 없습니다.'));return;}
  results.forEach(s=>{
-  const card=el('article','school-card');
-  card.dataset.schoolId=String(s.school_id);
-  BeaguSchoolSearchCard.addHeader(card,s);
-  card.append(percentilePanel(s));
-  const actions=el('div','school-actions');
-  const open=el('button','view-button','🔍 연도별 상세 기록 보기');
-  open.type='button';open.setAttribute('aria-expanded','false');
-  open.setAttribute('aria-label','Lv.2 연도별 상세 기록 보기');
-  actions.append(open);card.append(actions);
-  const detail=el('section','school-detail');detail.hidden=true;
-  detail.setAttribute('aria-label','학교별 상세정보');card.append(detail);
+  const {card,open,detail}=BeaguSchoolSearchCard.createCard(s,{
+   level:2,
+   percentile:percentilePanel(s)
+  });
   let loaded=false,loading=false;
   open.addEventListener('click',async()=>{
    if(!detail.hidden){
