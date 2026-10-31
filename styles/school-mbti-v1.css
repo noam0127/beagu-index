@@ -1,0 +1,23 @@
+/* Lv.1 / Lv.2 shared, compact school-culture UI. */
+.beagu-mbti-badge{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:13px 0 4px;padding:10px 12px;background:#f6f8fc;border:1px solid #e4eaf2;border-radius:11px;color:#64748b;font-size:13px;line-height:1.45}
+.beagu-mbti-badge .beagu-mbti-label{font-size:11px;font-weight:800;color:#64748b;letter-spacing:.01em}
+.beagu-mbti-badge .beagu-mbti-text{font-size:13px;font-weight:700;color:#475569}
+.beagu-mbti-badge.is-ready{background:#edf4ff;border-color:#c9defd}
+.beagu-mbti-badge.is-ready .beagu-mbti-text{color:#1d4ed8}
+.beagu-mbti-badge.is-mixed{background:#f9f8f5;border-color:#e5e2d9}
+.beagu-mbti-detail{margin:18px 0 22px;padding:19px 18px;border:1px solid #dbeafe;border-radius:16px;background:#f8fbff;min-width:0}
+.beagu-mbti-detail-eyebrow{font-size:11px;letter-spacing:.08em;color:#2563eb;font-weight:800;margin-bottom:4px}
+.beagu-mbti-detail-title{font-size:18px!important;margin:2px 0 14px!important;line-height:1.4}
+.beagu-mbti-hero{display:flex;align-items:baseline;gap:15px;flex-wrap:wrap;margin-bottom:17px}
+.beagu-mbti-type{font-size:32px;font-weight:850;color:#1d4ed8;letter-spacing:-1.5px;line-height:1.2}
+.beagu-mbti-name{font-size:15px;font-weight:750;color:#0f172a}
+.beagu-mbti-axes{display:grid;gap:16px}
+.beagu-mbti-axis-title{font-size:13px;font-weight:800;color:#334155;margin-bottom:3px}
+.beagu-mbti-ends{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#64748b;margin-bottom:9px}
+.beagu-mbti-ends span:last-child{text-align:right}
+.beagu-mbti-track{height:9px;margin:0 7px;border-radius:999px;background:linear-gradient(90deg,#94a3b8 0%,#d7dfef 50%,#60a5fa 100%);position:relative}
+.beagu-mbti-track:after{content:'';position:absolute;left:50%;top:-3px;width:1px;height:15px;background:#64748b;opacity:.5}
+.beagu-mbti-marker{position:absolute;display:block;top:-5px;width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #2563eb,0 2px 5px #64748b66;background:#2563eb;transform:translateX(-50%);z-index:1}
+.beagu-mbti-message{font-size:13px;line-height:1.7;color:#64748b;margin:4px 0 10px}
+.beagu-mbti-disclaimer{font-size:11px;line-height:1.7;color:#64748b;margin:18px 0 0;padding-top:12px;border-top:1px solid #dbeafe;word-break:keep-all}
+@media(max-width:390px){.beagu-mbti-detail{padding:16px 13px}.beagu-mbti-hero{gap:7px}.beagu-mbti-type{font-size:29px}.beagu-mbti-badge{font-size:12px}}
