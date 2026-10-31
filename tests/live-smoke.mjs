@@ -90,8 +90,8 @@ async function main() {
     visitStats.includes("page = ['index','search','result','survey','challenge']"));
   check('Lv.0·Lv.1·Lv.2 공통 학교검색 카드 연결',
     [html0,html1,html2].every(h=>h.includes('js/school-search-card-v1.js') && h.includes('styles/school-search-card-v1.css')) &&
-    (responses.get('js/level-search.js')||'').includes('BeaguSchoolSearchCard.addHeader') &&
-    (responses.get('js/lv2-edited-search.js')||'').includes('BeaguSchoolSearchCard.addHeader'));
+    [html0,level1,level2].every(h=>h.includes('BeaguSchoolSearchCard.createCard')) &&
+    (responses.get('js/school-search-card-v1.js')||'').includes('function createCard('));
   check('학교 홈페이지 링크가 검색 결과에서 제거됨',
     ![html0,html1,html2,level1,level2,report].some(h=>h.includes('🌐 학교 홈페이지')));
   check('홈에서 Lv.1·Lv.2로 연결', home.includes('search-lv1.html') && home.includes('search-lv2.html'));
@@ -100,7 +100,7 @@ async function main() {
     [html1,html2].every(h=>h.includes('js/school-mbti-v1.js')&&h.includes('styles/school-mbti-v1.css')) &&
     level1.includes('BeaguSchoolMBTI.createDetail') && level2.includes('BeaguSchoolMBTI.createDetail') &&
     mbtiJS.includes('beagu-school-culture-v1'));
-  for (const file of ['js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js']) {
+  for (const file of ['js/school-search-card-v1.js','js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js']) {
     try { new Script(responses.get(file)||''); check('JS 문법 검증: '+file,true); }
     catch(e) { check('JS 문법 검증: '+file,false,e.message); }
   }
