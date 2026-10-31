@@ -27,6 +27,7 @@
         if (error || !Number.isSafeInteger(n) || n < 1) throw new Error('참여 순번을 확인하지 못했습니다. 다시 시도해주세요.');
         participant = n;
         byId('participantNo').textContent = n.toLocaleString('ko-KR') + '번째';
+        if(window.BeaguChallengeProgress)void BeaguChallengeProgress.refresh();
       }
       status.textContent = '인증 이미지를 준비하고 있습니다.';
       if (typeof html2canvas !== 'function') throw new Error('이미지 기능을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
