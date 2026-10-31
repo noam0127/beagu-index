@@ -264,15 +264,7 @@ async function showDetail(container,school){
   container.append(el('div','pending','상세자료를 불러오지 못했습니다. 다시 시도해주세요.'));
   return false;
  }
- container.append(el('h3','school-history-heading','2026년 배구지수'));
- const newer=el('div','year-2026-content');newer.hidden=false;
- const stats=metrics2026(levelData.rows);
- if(!stats.length)newer.append(note('2026년 승인된 학교별 자료가 아직 준비되지 않았습니다.'));
- else stats.forEach(m=>{
-  const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',String(m.value)+(m.unit||'')));newer.append(row);
- });
- container.append(newer);
- container.append(el('h3','school-history-heading','과거 상세자료'));
+ container.append(el('h3','school-history-heading','Lv.2 승인 학교 상세정보'));
  const tabbar=el('div','year-tabs');tabbar.setAttribute('role','tablist');
  tabbar.setAttribute('aria-label','과거 조사 연도 선택');
  const body=el('div','school-year-details');body.setAttribute('role','tabpanel');
@@ -286,7 +278,20 @@ async function showDetail(container,school){
   const b=el('button','',String(y)+'년');b.type='button';b.dataset.year=String(y);
   b.setAttribute('role','tab');b.addEventListener('click',()=>choose(y));tabbar.append(b);
  });
- choose(2025);
+ const firstAvailable=[2025,2024,2023].find(year=>
+  (Array.isArray(response.rows)?response.rows:[]).some(record=>
+   Number(record.year)===year&&releasedFields(metadata,year,record.values).length>0));
+ choose(firstAvailable||2025);
+ container.append(note('현재 학교의 공개 승인된 최근 연도를 먼저 보여줍니다. 다른 연도는 위의 탭에서 선택하세요.'));
+ container.append(el('h3','school-history-heading','2026년 배구지수'));
+  const newer=el('div','year-2026-content');newer.hidden=false;
+  const stats=metrics2026(levelData.rows);
+  if(!stats.length)newer.append(note('2026년 승인된 학교별 자료가 아직 준비되지 않았습니다.'));
+  else stats.forEach(m=>{
+   const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',String(m.value)+(m.unit||'')));newer.append(row);
+  });
+  container.append(newer);
+  container.append(el('h3','school-history-heading','과거 상세자료'));
  container.append(note('연도마다 문항과 집계 방식이 다릅니다. 백분위 및 영역별 수치를 동일 척도로 직접 비교하지 마세요.'));
  return true;
 }
@@ -327,6 +332,8 @@ function render(results,total){
    try{loaded=await showDetail(detail,s);}finally{loading=false;}
   });
   host.append(card);
+  // A unique school search should show its approved details without an extra click.
+  if(results.length===1&&total===1)open.click();
  });
  renderPagePercentiles(results,serial);
 }
