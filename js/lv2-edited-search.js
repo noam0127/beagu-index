@@ -288,6 +288,7 @@ async function showDetail(container,school){
   (Array.isArray(response.rows)?response.rows:[]).some(record=>
    Number(record.year)===year&&releasedFields(metadata,year,record.values).length>0));
  choose(firstAvailable||2025);
+ container.append(el('h3','school-history-heading','과거 상세자료'),tabbar,body);
  container.append(el('h3','school-history-heading','2026년 최신 조사 결과'));
   const newer=el('div','year-2026-content');newer.hidden=false;
   const stats=metrics2026(levelData.rows);
@@ -297,8 +298,8 @@ async function showDetail(container,school){
   });
   container.append(newer);
   if(window.BeaguSchoolMBTI)container.append(BeaguSchoolMBTI.createDetail(String(school.school_id),token));
-  container.append(el('h3','school-history-heading','과거 상세자료'),tabbar,body);
-  container.append(note('현재 학교의 공개 승인된 최근 연도를 먼저 보여줍니다. 다른 연도는 위의 탭에서 선택하세요.'));
+
+  container.append(note('표시 순서는 2023 → 2024 → 2025 → 2026이며 각 연도는 별도의 조사 기준을 적용합니다.'));
  container.append(note('연도마다 문항과 집계 방식이 다릅니다. 백분위 및 영역별 수치를 동일 척도로 직접 비교하지 마세요.'));
  return true;
 }
