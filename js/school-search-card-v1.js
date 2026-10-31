@@ -63,7 +63,7 @@
  // toggle in-card details. All three tiers have identical visual structure.
  function createCard(school,{level=0,percentile}={}){
   if(!Number.isInteger(level)||level<0||level>2)throw Error('INVALID_CARD_LEVEL');
-  if(!school||!/^\\d{7}$/.test(String(school.school_id)))throw Error('INVALID_SCHOOL_ID');
+  if(!school||!/^\d{7}$/.test(String(school.school_id)))throw Error('INVALID_SCHOOL_ID');
   const card=el('article','school-card');
   card.dataset.schoolId=String(school.school_id);
   card.dataset.accessLevel=String(level);
