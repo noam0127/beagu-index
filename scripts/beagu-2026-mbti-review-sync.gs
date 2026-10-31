@@ -32,7 +32,7 @@ function setupBeagu26SchoolCultureTrigger(){
 }
 function mbti26_norm(value){
  return String(value==null?"":value).replace(/^[①-⑳]\s*/,"").normalize("NFKC")
-   .replace(/[\s,.'\\"“”\[\]()/\\\\\-]/g,"").trim();
+   .replace(/[^\p{L}\p{N}]/gu,"").trim();
 }
 function mbti26_region(value){
  const s=mbti26_norm(value);
