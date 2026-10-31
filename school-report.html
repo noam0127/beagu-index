@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f8fc">
+<meta name="description" content="배구지수 2023~2026 학교별 조사기록 통합 열람 화면">
+<title>학교별 조사 기록 | 배구지수</title>
+<style>
+:root{--ink:#14213b;--muted:#60718a;--blue:#2563eb;--light:#eff5ff;--border:#e2e9f2;--bg:#f7f8fc;--white:#fff;--shadow:0 12px 40px rgba(20,39,74,.048)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);font-family:Inter,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;color:var(--ink);letter-spacing:-.025em;line-height:1.55}button,input{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}[hidden]{display:none!important}:focus-visible{outline:3px solid #80aefd;outline-offset:3px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.site-header{background:#fff;border-bottom:1px solid var(--border)}.header-inner{max-width:1112px;margin:0 auto;min-height:76px;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{display:flex;gap:12px;align-items:center;font-weight:850;font-size:18px;letter-spacing:-.05em}.brand small{display:block;color:#71809c;font-size:9px;font-weight:800;letter-spacing:.13em}.brand-symbol{width:38px;height:38px;border-radius:13px;background:var(--blue);color:white;display:grid;place-items:center;font-style:italic;letter-spacing:-.14em;font-size:22px;position:relative}.symbol-dot{position:absolute;font-size:8px;color:#fff;top:6px;right:8px}.header-actions{display:flex;gap:18px;font-size:13px;font-weight:700;color:#52627e}.home-link{color:var(--blue)}
+.layout{max-width:1112px;margin:auto;padding:37px 24px 60px}.page-heading{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:25px}.eyebrow{color:var(--blue);text-transform:uppercase;letter-spacing:.13em;font-weight:850;font-size:11px;margin:0 0 8px}.page-heading h1{font-size:34px;letter-spacing:-.065em;margin:0 0 7px;line-height:1.2}.lead{font-size:15px;color:var(--muted);margin:0}.survey-link{background:#edf4ff;color:#1d4ed8;font-size:13px;font-weight:800;border-radius:11px;white-space:nowrap;padding:12px 16px}
+.search-surface{background:var(--white);border:1px solid var(--border);padding:18px 20px 13px;border-radius:19px;box-shadow:var(--shadow);margin-bottom:23px;position:relative;z-index:10}.search-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:11px}.search-heading label{font-weight:850;font-size:15px}.search-heading span{font-size:12px;color:var(--muted)}.input-wrap{position:relative}.input-wrap input{width:100%;border:1px solid #d4deed;padding:14px 45px 14px 16px;border-radius:12px;background:#fbfdff;outline:0;font-size:15px;color:var(--ink)}.input-wrap input:focus{border-color:var(--blue);box-shadow:0 0 0 3px #dceaff}.input-wrap button{position:absolute;right:9px;top:7px;border:0;background:transparent;color:#8894a7;font-size:24px;width:33px;height:36px}.search-help{font-size:12px;color:#8b97aa;margin-top:8px;min-height:17px}.suggestions{position:absolute;left:20px;right:20px;top:calc(100% - 8px);background:white;border:1px solid #dbe5f2;border-radius:12px;box-shadow:0 15px 30px rgba(37,63,111,.13);padding:6px;z-index:50;max-height:270px;overflow:auto}.suggestions button{width:100%;padding:10px 12px;background:white;border:0;text-align:left;display:flex;justify-content:space-between;gap:12px;border-radius:8px}.suggestions button:hover,.suggestions button:focus{background:#f1f5ff}.suggestions strong{font-size:14px}.suggestions small{color:var(--muted);font-size:12px}.suggestions .no-results{padding:17px;color:var(--muted);font-size:13px}
+.school-hero{background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:26px 30px;margin-bottom:23px}.hero-top{display:flex;align-items:start;justify-content:space-between;gap:20px}.region{margin:0 0 8px;font-size:12px;color:var(--blue);font-weight:800}.school-hero h2{font-size:30px;letter-spacing:-.065em;line-height:1.22;margin:0 0 9px}.address{margin:0;color:var(--muted);font-size:13px}.access-tag{padding:7px 12px;border-radius:10px;color:#2563eb;background:#eef5ff;border:1px solid #d8e6ff;white-space:nowrap;font-size:12px;font-weight:800}.hero-foot{border-top:1px solid #edf1f7;margin-top:25px;padding-top:17px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}.icon-fact{font-size:12px;color:#61708a}.change-school{font-size:12px;font-weight:700;color:var(--blue);margin-left:auto}
+.year-overview{background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:24px 26px;margin-bottom:23px}.section-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px}.section-top h3,.report-title h3{font-size:21px;letter-spacing:-.04em;margin:0 0 3px}.section-top p{font-size:12px;color:var(--muted);margin:0}.outline-btn{font-size:12px;color:var(--muted);font-weight:700;border:1px solid var(--border);background:#fff;border-radius:9px;padding:8px 10px}.year-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.year-card{border:1px solid #e5eaf2;background:#fafbfd;min-width:0;border-radius:16px;padding:17px;text-align:left;display:flex;flex-direction:column;min-height:136px;transition:transform .16s,border-color .16s,background .16s}.year-card:hover{transform:translateY(-2px);border-color:#a1bcfb}.year-card[aria-selected=true]{border:2px solid var(--blue);padding:16px;background:#eff5ff;box-shadow:0 3px 12px #2563eb15}.year-card .year-label{font-size:16px;font-weight:900;letter-spacing:-.045em;display:flex;justify-content:space-between;gap:5px}.year-card .year-arrow{color:var(--blue);font-weight:600}.year-card .metric-text{font-size:25px;letter-spacing:-.06em;line-height:1.15;font-weight:900;color:var(--ink);margin-top:18px;font-variant-numeric:tabular-nums}.year-card .metric-caption{color:var(--muted);font-size:11px;margin-top:3px}.year-card .metric-text.empty-metric{font-size:15px;color:#8894a7;letter-spacing:-.03em}.chart-disclaimer{font-size:11px;color:#8a96a9;margin:13px 1px 0}
+.report-body{background:#fff;border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:27px 29px}.report-title{display:flex;justify-content:space-between;align-items:start;gap:13px}.report-description{font-size:13px;color:var(--muted);margin:6px 0 0}.data-status{white-space:nowrap;font-size:11px;background:#f1f5f9;color:#64748b;padding:7px 9px;border-radius:8px;font-weight:800}.data-status.ready{background:#e8f5ed;color:#187643}.data-status.demo{background:#fff0d3;color:#92600f}.metric-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:22px 0 25px}.metric-box{border:1px solid #e8edf5;background:#fbfcff;border-radius:13px;padding:13px 15px}.metric-box dt{font-size:12px;color:#6b7890;margin-bottom:4px}.metric-box dd{font-size:20px;font-weight:850;margin:0;font-variant-numeric:tabular-nums;letter-spacing:-.035em}.metric-box dd small{font-size:11px;font-weight:600;color:#8997ac;margin-left:5px}
+.controls-bar{border-top:1px solid #ecf0f7;padding-top:20px;display:flex;justify-content:space-between;gap:15px;align-items:center}.filter-left{display:flex;gap:7px;background:#f2f5fa;padding:4px;border-radius:11px}.switch-btn{background:transparent;border:0;border-radius:8px;padding:10px 13px;font-size:13px;font-weight:800;color:#718097}.switch-btn.active{background:#fff;color:var(--blue);box-shadow:0 2px 8px #33415515}.filter-right input{max-width:190px;width:100%;border:1px solid #dee6f0;background:#fff;border-radius:10px;padding:10px 13px;font-size:13px}.category-nav{margin:21px 0 17px;display:flex;gap:8px;overflow:auto;padding-bottom:5px;scrollbar-width:thin}.category-nav button{white-space:nowrap;border-radius:99px;border:1px solid #e1e7f0;background:#fff;color:#64748b;padding:9px 12px;font-size:12px;font-weight:800}.category-nav button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.category-group{margin-top:16px;scroll-margin-top:100px}.group-title{display:flex;align-items:center;gap:9px;font-size:17px;margin:25px 0 12px;letter-spacing:-.035em}.group-title span{font-size:12px;font-weight:800;background:#f0f4fa;color:#75829a;border-radius:7px;padding:2px 7px}.question-list{border:1px solid #e7edf5;border-radius:15px;overflow:hidden}.question-row{padding:16px 18px;border-bottom:1px solid #edf1f6;background:#fff}.question-row:last-child{border-bottom:0}.question-line{display:flex;align-items:center;justify-content:space-between;gap:18px}.question-label{font-size:14px;font-weight:740;min-width:0;line-height:1.48}.question-code{font-size:10px;color:#8b9bb5;font-weight:800;letter-spacing:.03em;margin-right:9px}.question-value{font-size:13px;font-weight:850;color:#203658;text-align:right;flex:0 0 auto;max-width:46%}.question-value.missing{color:#9cabbc;font-weight:600}.question-meta{font-size:11px;color:#8e9aaf;margin:7px 0 0}.distribution{margin-top:13px}.dist-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(65px,1fr) 38px;gap:8px;align-items:center;margin-top:9px}.dist-label{font-size:12px;color:#54647f;overflow-wrap:anywhere}.dist-track{height:7px;border-radius:99px;background:#ecf1f7;overflow:hidden}.dist-bar{display:block;height:100%;border-radius:99px;background:#5c8cff;max-width:100%}.dist-pct{font-size:11px;font-weight:750;text-align:right;color:#64748b;font-variant-numeric:tabular-nums}.no-data-group{border:1px dashed #d7e2ee;border-radius:13px;padding:17px;color:#8190a6;font-size:13px}.more-group{display:block;width:100%;margin-top:10px;border:1px solid #e3eafa;background:#f8fbff;color:#2563eb;border-radius:11px;padding:10px;font-size:12px;font-weight:800}.empty-questions{padding:40px;text-align:center;color:var(--muted)}.data-guide{background:#f7f9fd;border:1px solid #e8edf6;border-radius:13px;margin-top:29px;padding:16px 18px}.data-guide strong{font-size:13px}.data-guide p{font-size:12px;color:#65758e;margin:6px 0 0;line-height:1.75}.report-footer{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#8f9bad;padding:18px 4px}
+.welcome{border:1px dashed #cddcf0;border-radius:20px;background:#fff;text-align:center;padding:65px 20px;color:var(--muted)}.welcome-icon{font-size:34px}.welcome h2{color:var(--ink);font-size:22px;margin:9px 0 9px}.welcome p{font-size:14px;margin:0;line-height:1.85}.demo-link{display:inline-block;border-radius:12px;background:var(--blue);color:white;padding:12px 20px;font-size:14px;font-weight:800;margin-top:22px}.welcome .demo-note{font-size:11px;color:#9aa7b8;margin-top:11px}
+.info-dialog{border:0;max-width:500px;width:calc(100% - 40px);border-radius:17px;padding:24px;color:var(--ink);box-shadow:0 30px 70px #11182730}.info-dialog::backdrop{background:#101e35a1}.dialog-header{display:flex;align-items:center;justify-content:space-between}.dialog-header h2{margin:0;font-size:20px}.dialog-header button{border:0;background:none;font-size:27px;color:var(--muted)}.info-dialog p{font-size:13px;line-height:1.85;color:#566783}.primary-btn{background:var(--blue);color:#fff;padding:12px 18px;border:0;border-radius:10px;font-weight:800;width:100%}
+@media(max-width:720px){.layout{padding:25px 15px 40px}.page-heading{align-items:start}.page-heading h1{font-size:28px}.lead{font-size:13px}.survey-link{font-size:11px;padding:10px 12px}.search-heading{display:block}.search-heading span{display:block;margin-top:3px}.search-surface{padding:15px}.suggestions{left:15px;right:15px}.school-hero{padding:22px 19px}.school-hero h2{font-size:25px}.hero-foot{gap:12px}.year-overview{padding:20px 16px}.section-top{align-items:center}.section-top h3{font-size:18px}.section-top p{max-width:240px}.outline-btn{font-size:11px;white-space:nowrap;padding:7px}.year-grid{gap:8px}.year-card{padding:12px;min-height:117px;border-radius:12px}.year-card[aria-selected=true]{padding:11px}.year-card .year-label{font-size:14px}.year-card .metric-text{font-size:20px;margin-top:12px}.year-card .metric-text.empty-metric{font-size:13px}.report-body{padding:21px 17px}.report-title h3{font-size:20px}.metric-box{padding:11px}.metric-box dt{font-size:10px}.metric-box dd{font-size:17px}.controls-bar{flex-wrap:wrap}.filter-right{flex:1;min-width:120px}.filter-right input{max-width:none}.question-row{padding:14px 13px}.question-label{font-size:13px}.question-code{font-size:10px}.question-value{font-size:12px}}
+@media(max-width:430px){.header-inner{padding:10px 15px;min-height:61px}.brand{font-size:16px}.brand-symbol{width:31px;height:31px;font-size:18px}.brand small{font-size:8px}.header-actions{gap:10px;font-size:11px}.page-heading{gap:8px}.page-heading h1{font-size:26px}.survey-link{padding:8px}.year-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.year-card{min-height:104px;padding:11px}.year-card[aria-selected=true]{padding:10px}.year-card .metric-text{margin-top:8px;font-size:21px}.hero-top{gap:7px}.access-tag{font-size:10px;padding:5px 7px}.hero-foot{font-size:11px}.metric-row{gap:7px}.metric-box{padding:9px}.metric-box dd{font-size:16px}.metric-box dd small{display:block;margin:0}.switch-btn{padding:9px;font-size:12px}.filter-left{gap:0}.question-value{max-width:40%}}
+
+</style>
+</head>
+<body>
+<header class="site-header"><div class="header-inner"><a class="brand" href="index.html"><span class="brand-symbol">V<span class="symbol-dot">●</span></span><span>배구지수 <small>VOLLEYBALL INDEX</small></span></a><nav class="header-actions"><a href="search.html">학교 찾기</a><a href="index.html" class="home-link">처음으로</a></nav></div></header>
+<main class="layout" id="app">
+  <section class="page-heading"><div><p class="eyebrow">SCHOOL REPORT · 2023—2026</p><h1>학교별 조사 기록</h1><p class="lead">학교의 조건부터 교직문화까지, 연도별로 살펴보세요.</p></div><a class="survey-link" href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 조사 참여 <span aria-hidden="true">↗</span></a></section>
+  <section class="search-surface" aria-label="학교 검색"><div class="search-heading"><label for="schoolInput">🔎 학교 검색</label><span>학교명을 검색하거나 기존 검색 결과에서 학교를 선택하세요.</span></div><div class="input-wrap"><input id="schoolInput" type="search" autocomplete="off" placeholder="예: 서울개원초등학교, 강릉초등학교" aria-autocomplete="list" aria-controls="suggestions"><button id="clearSearch" type="button" aria-label="검색어 지우기">×</button></div><div class="suggestions" id="suggestions" role="listbox" hidden></div><div class="search-help" id="searchHelp" aria-live="polite">학교명을 2글자 이상 입력하면 검색합니다.</div></section>
+  <div class="main-content" id="mainContent" hidden>
+    <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a href="search.html" class="change-school">다른 학교 찾기 ↗</a></div></section>
+    <section class="year-overview" aria-label="연도별 조사 기록"><div class="section-top"><div><h3>연도별 기록</h3><p>카드를 누르면 해당 연도의 조사 내용을 볼 수 있습니다.</p></div><button class="outline-btn" id="comparisonHelp" type="button">비교 시 유의사항 <span aria-hidden="true">ⓘ</span></button></div><div class="year-grid" id="yearGrid" role="tablist" aria-label="연도 선택"></div><p class="chart-disclaimer">연도별 문항·척도·참여 학교가 달라 숫자를 하나의 연속 점수처럼 비교하지 않습니다.</p></section>
+    <section class="report-body"><div class="report-title"><div><p class="eyebrow" id="reportSubtitle">2026 REPORT</p><h3 id="reportHeading">2026년 조사 결과</h3><p class="report-description" id="reportDescription"></p></div><span class="data-status" id="dataStatus">자료 확인 중</span></div>
+      <div class="metric-row" id="metricRow"></div>
+      <div class="controls-bar"><div class="filter-left"><button type="button" class="switch-btn active" id="essentialBtn" aria-pressed="true">핵심만 보기</button><button type="button" class="switch-btn" id="allBtn" aria-pressed="false">전체 문항</button></div><div class="filter-right"><label for="questionSearch" class="sr-only">조사 문항 검색</label><input id="questionSearch" type="search" placeholder="문항 찾기" autocomplete="off"></div></div>
+      <nav id="categoryNav" class="category-nav" aria-label="영역 바로가기"></nav>
+      <div id="sections" class="report-sections"></div>
+      <div id="emptyQuestions" class="empty-questions" hidden>입력한 검색어와 일치하는 문항이 없습니다.</div>
+      <div class="data-guide"><strong>자료를 읽을 때</strong><p>학교별 설문은 자발적 참여 응답을 바탕으로 합니다. 표본이 적거나 응답이 엇갈리면 학교 전체의 실태로 일반화할 수 없습니다. 공개승인되지 않은 수치와 주관식 원문은 표시하지 않습니다.</p></div>
+    </section>
+    <footer class="report-footer"><span>배구지수 · 학교별 조사 기록</span><span>2023–2026 · 연도별 조사 기준 유지</span></footer>
+  </div>
+  <section class="welcome" id="welcome"><div class="welcome-icon">🏫</div><h2>어떤 학교가 궁금하신가요?</h2><p>학교명을 입력하면 공개된 연도별 기록을 확인할 수 있습니다.<br>데이터가 없을 때는 ‘자료 없음’으로 분명하게 표시합니다.</p><a href="?demo=1" class="demo-link">가상 학교로 UI 미리보기 →</a><p class="demo-note">미리보기의 모든 숫자와 응답은 실제 학교자료가 아닙니다.</p></section>
+</main>
+<dialog id="infoDialog" class="info-dialog" aria-labelledby="dialogTitle"><div class="dialog-header"><h2 id="dialogTitle">자료 해석 안내</h2><button id="closeDialog" type="button" aria-label="닫기">×</button></div><p>2023년은 관행과 빈도를, 2024년은 자율과 강요를 보다 직접적으로 구분하고, 2025년은 여러 조직환경 지표를, 2026년은 수직성·문화유형·업무·시설 등을 조사했습니다. 동일한 이름처럼 보이는 문항도 선택지와 조사 의도가 다를 수 있습니다.</p><p>학교별 백분위는 각 연도 내부에서 계산된 값으로, 각 해의 응답 구성과 조사 문항이 달라 연도 간 점수 차이를 실제 개선·악화로 단정할 수 없습니다. 항목별 응답자 수와 분포를 우선 확인해 주세요.</p><button id="dialogOkay" class="primary-btn" type="button">확인했어요</button></dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/master-percentiles-v1.2.js"></script>
+<script type="application/json" id="embeddedCatalog">{
+  "sourceNote": "2023 편집본·2024/2025 편집본 및 각 연도 원자료, 2026 수정5 응답 시트의 실제 열 제목을 반영. 보기 목록은 원문으로 확인된 일부에만 제공함.",
+  "sourceVersions": {
+    "2023": "2023 편집본의 14개 수치 지표",
+    "2024": "2024 원자료 14개 객관식(편집본과 일부 명칭 불일치: 구분 표기 필요)",
+    "2025": "2025 원자료 객관식 50개·추가의견",
+    "2026": "2026 수정5(v1.2) Q01~Q51·행렬 하위문항 포함"
+  },
+  "years": {
+    "2023": {
+      "items": [
+        {
+          "id": "Q01",
+          "label": "교직원 배구 활동",
+          "group": "친목·조직문화"
+        },
+        {
+          "id": "Q04",
+          "label": "친목회 운영",
+          "group": "친목·조직문화"
+        },
+        {
+          "id": "Q06",
+          "label": "성별·나이별 비공식업무",
+          "group": "친목·조직문화"
+        },
+        {
+          "id": "Q12",
+          "label": "교직원 갈등",
+          "group": "친목·조직문화"
+        },
+        {
+          "id": "Q02",
+          "label": "방학 중 담임교사 근무",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q03",
+          "label": "조퇴 시 관리자 구두보고",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q05",
+          "label": "다과·간식비 교사 부담",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q07",
+          "label": "학교행사",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q08",
+          "label": "CCTV·예산 품의 등 업무",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q09",
+          "label": "저연차 교사 고강도 업무분장",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q13",
+          "label": "월평균 기안 공문량",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q14",
+          "label": "주당 수업시수",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q10",
+          "label": "학생·학부모로 인한 교권침해 및 병가",
+          "group": "교권·환경"
+        },
+        {
+          "id": "Q11",
+          "label": "교사의 휴식공간",
+          "group": "교권·환경"
+        }
+      ],
+      "groups": [
+        "친목·조직문화",
+        "복무·업무",
+        "교권·환경"
+      ],
+      "choices": {
+        "Q01": [
+          "안하는 게 당연하다",
+          "안한다",
+          "적게 한다",
+          "보통",
+          "많이 한다",
+          "하는 게 당연하다"
+        ],
+        "Q02": [
+          "안하는 게 당연하다",
+          "안한다",
+          "적게 한다",
+          "보통",
+          "많이 한다",
+          "하는 게 당연하다"
+        ],
+        "Q03": [
+          "안하는 게 당연하다",
+          "안한다",
+          "적게 한다",
+          "보통",
+          "많이 한다",
+          "하는 게 당연하다"
+        ],
+        "Q04": [
+          "안하는 게 당연하다",
+          "안한다",
+          "적게 한다",
+          "보통",
+          "많이 한다",
+          "하는 게 당연하다"
+        ],
+        "Q06": [
+          "안하는 게 당연하다",
+          "안한다",
+          "적게 한다",
+          "보통",
+          "많이 한다",
+          "하는 게 당연하다"
+        ],
+        "Q07": [
+          "안하는 게 당연하다",
+          "안한다",
+          "적게 한다",
+          "보통",
+          "많이 한다",
+          "하는 게 당연하다"
+        ],
+        "Q08": [
+          "안하는 게 당연하다",
+          "안한다",
+          "적게 한다",
+          "보통",
+          "많이 한다",
+          "하는 게 당연하다"
+        ],
+        "Q09": [
+          "안하는 게 당연하다",
+          "안한다",
+          "적게 한다",
+          "보통",
+          "많이 한다",
+          "하는 게 당연하다"
+        ],
+        "Q10": [
+          "안하는 게 당연하다",
+          "안한다",
+          "적게 한다",
+          "보통",
+          "많이 한다",
+          "하는 게 당연하다"
+        ]
+      }
+    },
+    "2024": {
+      "items": [
+        {
+          "id": "Q01",
+          "label": "스포츠활동 강제 참여",
+          "group": "복무·교직문화"
+        },
+        {
+          "id": "Q02",
+          "label": "조퇴 시 구두보고",
+          "group": "복무·교직문화"
+        },
+        {
+          "id": "Q03",
+          "label": "교사 개인 휴대전화번호 공개",
+          "group": "복무·교직문화"
+        },
+        {
+          "id": "Q04",
+          "label": "친목회 참여",
+          "group": "복무·교직문화"
+        },
+        {
+          "id": "Q05",
+          "label": "교원 다과비 예산",
+          "group": "복무·교직문화"
+        },
+        {
+          "id": "Q06",
+          "label": "성별·나이별 비공식 업무",
+          "group": "복무·교직문화"
+        },
+        {
+          "id": "Q07",
+          "label": "학교행사",
+          "group": "조직운영·업무"
+        },
+        {
+          "id": "Q08",
+          "label": "교사 행정업무",
+          "group": "조직운영·업무"
+        },
+        {
+          "id": "Q09",
+          "label": "저연차·전입교사 업무분장",
+          "group": "조직운영·업무"
+        },
+        {
+          "id": "Q13",
+          "label": "월평균 공문 기안량",
+          "group": "조직운영·업무"
+        },
+        {
+          "id": "Q14",
+          "label": "주간 수업시수",
+          "group": "조직운영·업무"
+        },
+        {
+          "id": "Q10",
+          "label": "교권침해 관련 병가·퇴직",
+          "group": "보호·휴식"
+        },
+        {
+          "id": "Q11",
+          "label": "교사 휴식 공간",
+          "group": "보호·휴식"
+        },
+        {
+          "id": "Q12",
+          "label": "학생 분리 장소와 실행",
+          "group": "보호·휴식"
+        }
+      ],
+      "groups": [
+        "복무·교직문화",
+        "조직운영·업무",
+        "보호·휴식"
+      ]
+    },
+    "2025": {
+      "items": [
+        {
+          "id": "Q01",
+          "label": "조퇴 구두보고 강제 여부",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q02",
+          "label": "교외체험학습 횟수",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q03",
+          "label": "교사 담당 행정업무(복수선택)",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q04",
+          "label": "학교행사(복수선택)",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q05",
+          "label": "방학 중 근무",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q07",
+          "label": "담임교사 주당 평균 수업시수",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q08",
+          "label": "연간 통지표 횟수",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q12",
+          "label": "새 학기 준비 출근일수",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q15",
+          "label": "월평균 공문 기안량",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q16",
+          "label": "관리자 결재 소요시간",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q22",
+          "label": "연간 전체회의 횟수",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q23",
+          "label": "월간 부장회의 횟수",
+          "group": "복무·업무"
+        },
+        {
+          "id": "Q10",
+          "label": "행정실·공무직 업무협조",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q11",
+          "label": "비합리적 업무분장",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q13",
+          "label": "친목회 강제 여부",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q17",
+          "label": "학교 만족도",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q19",
+          "label": "학기말 협의 결과 반영",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q21",
+          "label": "회의에서의 발언 분위기",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q24",
+          "label": "성별·나이에 따른 비공식 업무",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q25",
+          "label": "스포츠활동 강제성",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q26",
+          "label": "교직원 갈등",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q28",
+          "label": "교직원 인사 태도",
+          "group": "교직문화·조직운영"
+        },
+        {
+          "id": "Q06",
+          "label": "교권침해 관련 병가·퇴직",
+          "group": "교권·학생"
+        },
+        {
+          "id": "Q09",
+          "label": "아동학대 신고 횟수",
+          "group": "교권·학생"
+        },
+        {
+          "id": "Q14",
+          "label": "문제학생 분리",
+          "group": "교권·학생"
+        },
+        {
+          "id": "Q27",
+          "label": "학생 인사 태도",
+          "group": "교권·학생"
+        },
+        {
+          "id": "Q29",
+          "label": "교사 병가 사용 가능성",
+          "group": "교권·학생"
+        },
+        {
+          "id": "Q30",
+          "label": "다음 학년도 기피 학년",
+          "group": "교권·학생"
+        },
+        {
+          "id": "Q18",
+          "label": "교원 다과비 예산·부담",
+          "group": "시설·복지"
+        },
+        {
+          "id": "Q20",
+          "label": "교사 휴식여건",
+          "group": "시설·복지"
+        },
+        {
+          "id": "Q31",
+          "label": "수학여행·숙박형 체험학습",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q32",
+          "label": "주간학습안내 관리자 결재",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q33",
+          "label": "교통·주차 지도",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q34",
+          "label": "졸업앨범 교사 사진",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q35",
+          "label": "IB 등 공모사업",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q36",
+          "label": "연구실 정수기",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q37",
+          "label": "교직원 화장실",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q38",
+          "label": "우유급식",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q39",
+          "label": "교실급식",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q40",
+          "label": "상담주간",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q41",
+          "label": "녹색학부모회",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q42",
+          "label": "조퇴결재 학년부장 포함",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q43",
+          "label": "학습준비물실",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q44",
+          "label": "친목회",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q45",
+          "label": "늘봄실장",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q46",
+          "label": "토요일 방과후 근무",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q47",
+          "label": "저경력 교사의 학년교육과정 담당",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q48",
+          "label": "민원대응팀",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q49",
+          "label": "업무전담팀",
+          "group": "추가 현황: 있다·없다·모름"
+        },
+        {
+          "id": "Q50",
+          "label": "학생 체육부",
+          "group": "추가 현황: 있다·없다·모름"
+        }
+      ],
+      "groups": [
+        "복무·업무",
+        "교직문화·조직운영",
+        "교권·학생",
+        "시설·복지",
+        "추가 현황: 있다·없다·모름"
+      ],
+      "choices": {
+        "Q01": [
+          "그런 일이 존재한다는 게 믿을 수 없다",
+          "나는 하지 않는데 가끔 누가 한다(자율)",
+          "모두 하는 편이다(자율)",
+          "안 하면 누가 하라고 시킨다(강요)",
+          "구두보고 없이 조퇴할 수 없다(강요)"
+        ],
+        "Q05": [
+          "안 한다",
+          "나는 안 하지만 누군가 한다(자율)",
+          "자율적으로 하루 정도 근무한다",
+          "구성원들이 자율적으로 방학 근무조를 꾸려 근무한다",
+          "몇몇 교사 혹은 관리자들의 주도에 의해 근무조가 결정된다"
+        ],
+        "Q11": [
+          "원칙이 분명하고 지켜진다",
+          "원칙은 있으나 지켜지지 않는다",
+          "원칙이 없다",
+          "원칙이 없이 소수에 의해 정해진다",
+          "힘없는 신규·저연차가 기피 업무를 당연히 맡는다"
+        ],
+        "Q14": [
+          "수업중인 교사 외의 인력에 의해 여러 장소로 실제로 분리된다",
+          "실제로 분리된다",
+          "장소는 있으나 실제 분리는 안 된다",
+          "분리 장소가 없다",
+          "어떤 일이 있어도 담임 또는 수업중인 교사가 교실에서 모든 것을 해결한다"
+        ],
+        "Q25": [
+          "스포츠활동이 없다",
+          "자율적이다",
+          "가지 않으면 눈치 준다",
+          "가지 않으면 뒷담한다",
+          "가지 않으면 대놓고 욕한다"
+        ],
+        "Q29": [
+          "당장 오늘 아파도 쉴 수 있다",
+          "사전에 이야기한 경우만 쉴 수 있다",
+          "특별한 병이 있을 때만 쉴 수 있다",
+          "몸이 많이 아픈 게 아니면 참고 나와야 한다",
+          "무슨 일이 있어도 학교에 나와야한다"
+        ],
+        "Q31": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q32": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q33": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q34": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q35": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q36": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q37": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q38": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q39": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q40": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q41": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q42": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q43": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q44": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q45": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q46": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q47": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q48": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q49": [
+          "있다",
+          "없다",
+          "모름"
+        ],
+        "Q50": [
+          "있다",
+          "없다",
+          "모름"
+        ]
+      }
+    },
+    "2026": {
+      "items": [
+        {
+          "id": "Q01",
+          "label": "친목·체육·회식 불참이 받아들여지는가",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q02",
+          "label": "연가·조퇴 시 관리자 대면보고",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q03",
+          "label": "병가 사용을 위한 추가 허락·사용 자제 요구",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q04",
+          "label": "다른 의견을 말할 때 불이익·압박 우려",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q05",
+          "label": "수업·평가·학급 운영에서 기존 관행을 따르라는 요구",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q06",
+          "label": "업무·보직 배정 기준 공유",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q07",
+          "label": "업무·보직 배정 기준의 일관성",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q08",
+          "label": "신규·전입·저연차 교사에게 특정 업무 우선 배정",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q09",
+          "label": "업무·학교운영 결정에 대한 조정·재검토",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q10",
+          "label": "심각한 학부모 민원 시 학교 공동 대응",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q11",
+          "label": "교사 혼자 어려운 학생지도 문제 시 학교 공동 대응",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q12",
+          "label": "방학 중 근무조·당번 운영",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q13",
+          "label": "성별·나이별 비공식 업무",
+          "group": "수직성·조직의 선택권"
+        },
+        {
+          "id": "Q14",
+          "label": "구성원 관계의 범위",
+          "group": "학교문화 유형"
+        },
+        {
+          "id": "Q15",
+          "label": "의사결정 방식",
+          "group": "학교문화 유형"
+        },
+        {
+          "id": "Q16",
+          "label": "새로운 방식 도입 태도",
+          "group": "학교문화 유형"
+        },
+        {
+          "id": "Q17",
+          "label": "수업·학급 운영 방식",
+          "group": "학교문화 유형"
+        },
+        {
+          "id": "Q18",
+          "label": "새 학년 준비 지정 출근일수",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q19",
+          "label": "통상 출근시각",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q20",
+          "label": "통상 퇴근시각",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q21",
+          "label": "퇴근 후·휴일 업무연락일수",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q22",
+          "label": "장기재직휴가 사용·승인 분위기(3항목)",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q23",
+          "label": "담임 주당 정규 수업시수",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q24",
+          "label": "담임 월간 공문 수",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q25",
+          "label": "연간 정기 성적표 안내 횟수",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q26",
+          "label": "교사 담당 행정업무(복수선택)",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q27",
+          "label": "업무·복무 관행(5항목)",
+          "group": "근무·복무·행정"
+        },
+        {
+          "id": "Q28",
+          "label": "학부모 민원 최초 대응자",
+          "group": "교권·교육활동 지원"
+        },
+        {
+          "id": "Q29",
+          "label": "하이톡 사용 방식",
+          "group": "교권·교육활동 지원"
+        },
+        {
+          "id": "Q30",
+          "label": "수업 중 학생분리 대응",
+          "group": "교권·교육활동 지원"
+        },
+        {
+          "id": "Q31",
+          "label": "교권침해 관련 병가·퇴직",
+          "group": "교권·교육활동 지원"
+        },
+        {
+          "id": "Q32",
+          "label": "학교 조직·운영 체계(7항목)",
+          "group": "교권·교육활동 지원"
+        },
+        {
+          "id": "Q33",
+          "label": "학생 지원 조직·프로그램(3항목)",
+          "group": "교권·교육활동 지원"
+        },
+        {
+          "id": "Q34",
+          "label": "담임학급 교외체험학습 횟수",
+          "group": "학교행사·친목"
+        },
+        {
+          "id": "Q35",
+          "label": "학생·학부모 대상 행사(복수선택)",
+          "group": "학교행사·친목"
+        },
+        {
+          "id": "Q36",
+          "label": "교직원 행사·모임(복수선택)",
+          "group": "학교행사·친목"
+        },
+        {
+          "id": "Q37",
+          "label": "교직원 스포츠활동 종목(복수선택)",
+          "group": "학교행사·친목"
+        },
+        {
+          "id": "Q38",
+          "label": "업무 중 잠시 휴식 가능 여부",
+          "group": "휴식·시설·복지"
+        },
+        {
+          "id": "Q39",
+          "label": "출근 시 주차 여건",
+          "group": "휴식·시설·복지"
+        },
+        {
+          "id": "Q40",
+          "label": "급식·복지·관행(5항목)",
+          "group": "휴식·시설·복지"
+        },
+        {
+          "id": "Q41",
+          "label": "학교 제공 개인 업무물품(4항목)",
+          "group": "휴식·시설·복지"
+        },
+        {
+          "id": "Q42",
+          "label": "교직원 공간·복지시설(15항목)",
+          "group": "휴식·시설·복지"
+        },
+        {
+          "id": "Q43",
+          "label": "교실 배치 기기",
+          "group": "휴식·시설·복지"
+        },
+        {
+          "id": "Q44",
+          "label": "냉난방·화장실 온수",
+          "group": "휴식·시설·복지"
+        },
+        {
+          "id": "Q45",
+          "label": "비품·통신시설 이용 공간(13항목)",
+          "group": "휴식·시설·복지"
+        },
+        {
+          "id": "Q46",
+          "label": "다음 학년도 예정 변경(7항목)",
+          "group": "다음 학년도·만족도"
+        },
+        {
+          "id": "Q47",
+          "label": "다음 학년도 학교규모 변화(3항목)",
+          "group": "다음 학년도·만족도"
+        },
+        {
+          "id": "Q48",
+          "label": "다음 학년도 지정·운영 사업(4항목)",
+          "group": "다음 학년도·만족도"
+        },
+        {
+          "id": "Q49",
+          "label": "학교 만족도·근무 지속 의향(2항목)",
+          "group": "다음 학년도·만족도"
+        },
+        {
+          "id": "Q50",
+          "label": "학교 만족도·잔류 의향 결정 요인",
+          "group": "다음 학년도·만족도"
+        },
+        {
+          "id": "Q51",
+          "label": "추가 의견(자유서술·비공개)",
+          "group": "다음 학년도·만족도"
+        }
+      ],
+      "groups": [
+        "수직성·조직의 선택권",
+        "학교문화 유형",
+        "근무·복무·행정",
+        "교권·교육활동 지원",
+        "학교행사·친목",
+        "휴식·시설·복지",
+        "다음 학년도·만족도"
+      ]
+    }
+  }
+}</script>
+<script>
+/* 학교별 조사기록 UI v1.0. 공개 자료만 사용합니다.
+ * Lv.1/Lv.2의 실제 접근 권한은 기존 Supabase 서버 검증 로직에서 처리해야 합니다.
+ * 이 페이지는 Lv.0만 제공하며, ?demo=1은 '가상 데이터' 시연입니다.
+ */
+(() => {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const escapeHTML = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const state = {school:null, years:{}, selected:2026, catalog:null, publicRecords:null,
+    percentileIndex:new Map(), demo:false, mode:'essential', category:'전체 영역', q:'', searchSerial:0};
+  const titles={2023:'초기 교직문화',2024:'교직문화·복무',2025:'근무·교육활동',2026:'교직문화·환경'};
+  const descriptions={
+    2023:'교직원 배구, 방학근무, 조퇴보고, 친목, 행정업무 등 당시 지표를 보여줍니다.',
+    2024:'자율과 강제, 업무분장, 교권·휴식 등 해당 연도 조사 응답을 보여줍니다.',
+    2025:'업무·행사·교권·복무·시설 등 여러 영역을 분리해 확인합니다.',
+    2026:'VI 13문항과 문화유형, 업무·복무, 교육활동, 시설 및 종합평가를 구분합니다.'
+  };
+  const missing='자료 없음';
+  const params=new URLSearchParams(location.search);
+  const num=v=>(v===null||v===undefined||v===''||typeof v==='boolean')?null:(Number.isFinite(Number(v))?Number(v):null);
+  const nf=n=>Number(n).toLocaleString('ko-KR');
+  function yearData(year){return state.years[String(year)] || {}}
+  function client(){return typeof supabaseClient !== 'undefined'?supabaseClient:window.supabaseClient;}
+  function demoData(){
+    return {
+      school:{school_id:'DEMO',school_name:'미리보기 가상초등학교',sido_standard:'가상 지역',support_office:'가상교육지원청',address:'실제 학교가 아닌 화면 시연용 데이터',establishment:'시연용'},
+      years:{
+        '2023':{percentile:64.3,n:7,approved:true,items:{Q01:{display:'보통',n:7},Q03:{display:'적게 한다',n:7},Q04:{display:'안한다',n:7}}},
+        '2024':{percentile:48.1,n:8,approved:true,items:{Q01:{display:'자율 참여',n:8},Q02:{display:'구두보고 없음',n:8},Q09:{display:'업무분장 기준 있음',n:7}}},
+        '2025':{percentile:72.8,n:6,approved:true,items:{Q01:{display:'구두보고 없이 조퇴 가능',n:6,distribution:[{label:'구두보고 없이 조퇴 가능',count:4},{label:'구두보고 강요',count:2}]},Q17:{display:'★★★★☆',n:6},Q20:{display:'학년 연구실 있음',n:6},Q25:{display:'자율적인 참여',n:5}}},
+        '2026':{percentile:null,n:9,approved:true,items:{Q01:{display:'대체로 동의',n:9,distribution:[{label:'동의',count:6},{label:'보통',count:2},{label:'비동의',count:1}]},Q02:{display:'대체로 그렇지 않음',n:9},Q06:{display:'기준이 공유됨',n:8},Q10:{display:'함께 대응함',n:8},Q18:{display:'3일',n:9},Q23:{display:'22시간',n:8},Q26:{display:'5개 업무',n:8},Q30:{display:'학교 차원에서 분리 지원',n:8},Q38:{display:'휴식 가능',n:8},Q39:{display:'대체로 충분',n:9},Q49:{display:'만족 응답 다수',n:8}}}
+      }
+    };
+  }
+  async function loadJSON(url,optional=false){
+    try{const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error(r.status);return await r.json();}
+    catch(e){if(!optional)console.warn('자료 로드 실패',url,e);return null;}
+  }
+  async function initialize(){
+    state.catalog=JSON.parse(document.getElementById('embeddedCatalog').textContent);
+    state.publicRecords=await loadJSON('data/public-school-reports-v1.json',true);
+    const p=await loadJSON('data/public-lv0-percentiles-v1.2.json',true);
+    if(p && window.BeaguPublic?.buildIndex){try{state.percentileIndex=window.BeaguPublic.buildIndex(p)}catch(e){console.warn(e)}}
+    if(!state.catalog){$('searchHelp').textContent='문항정보 파일을 불러오지 못했습니다. GitHub에 data 폴더를 업로드했는지 확인하세요.';}
+    bind();
+    if(params.get('demo')==='1'){
+      state.demo=true;const d=demoData();showSchool(d.school,d.years);$('schoolInput').value=d.school.school_name;
+      $('searchHelp').textContent='현재 화면은 가상 데이터로 만든 기능 미리보기입니다.';
+    }else if(params.has('school_id')){
+      const id=params.get('school_id');if(id&&id.length<160)await selectSchoolById(id);
+    }
+    if(params.has('year')){const y=Number(params.get('year'));if([2023,2024,2025,2026].includes(y)){state.selected=y;render()}}
+  }
+  function bind(){
+    let timeout;
+    $('schoolInput').addEventListener('input',()=>{
+      clearTimeout(timeout);
+      const q=$('schoolInput').value.trim();
+      if(q.length<2){$('suggestions').hidden=true;$('searchHelp').textContent='학교명을 2글자 이상 입력하면 검색합니다.';return}
+      timeout=setTimeout(()=>searchSchools(q),260);
+    });
+    $('schoolInput').addEventListener('keydown',e=>{if(e.key==='Escape'){$('suggestions').hidden=true}});
+    $('clearSearch').addEventListener('click',()=>{$('schoolInput').value='';$('schoolInput').focus();$('suggestions').hidden=true});
+    $('essentialBtn').addEventListener('click',()=>{state.mode='essential';renderSections()});
+    $('allBtn').addEventListener('click',()=>{state.mode='all';renderSections()});
+    $('questionSearch').addEventListener('input',e=>{state.q=e.target.value.trim().toLocaleLowerCase('ko-KR');renderSections()});
+    $('comparisonHelp').addEventListener('click',()=>{$('infoDialog').showModal()});
+    $('closeDialog').addEventListener('click',()=>{$('infoDialog').close()});
+    $('dialogOkay').addEventListener('click',()=>{$('infoDialog').close()});
+    $('infoDialog').addEventListener('click',e=>{if(e.target===$('infoDialog'))$('infoDialog').close()});
+    document.addEventListener('click',e=>{if(!e.target.closest('.search-surface'))$('suggestions').hidden=true});
+    window.addEventListener('popstate',async()=>{
+      const u=new URL(location.href);
+      if(u.searchParams.get('demo')==='1'){state.demo=true;const d=demoData();showSchool(d.school,d.years);return}
+      state.demo=false;
+      const id=u.searchParams.get('school_id');
+      if(id)await selectSchoolById(id,false);
+      else{$('mainContent').hidden=true;$('welcome').hidden=false;state.school=null}
+    });
+  }
+  async function searchSchools(q){
+    const serial=++state.searchSerial;
+    // Supabase 패턴 와일드카드를 제거해 의도하지 않은 전역 검색을 방지합니다.
+    const safe=q.replace(/[%_\\,()]/g,'').slice(0,55);
+    if(safe.length<2)return;
+    if(!client()){$('searchHelp').textContent='학교 검색 설정을 찾지 못했습니다. js/supabase-config.js를 확인하세요.';return}
+    $('searchHelp').textContent='학교 찾는 중…';
+    try{
+      const {data,error}=await client().from('schools')
+        .select('school_id,school_name,sido_standard,sido,support_office,address,establishment,status')
+        .eq('status','운영').ilike('school_name',`%${safe}%`).order('school_name',{ascending:true}).limit(8);
+      if(serial!==state.searchSerial)return;
+      if(error)throw error;
+      $('suggestions').replaceChildren();
+      if(!data?.length){$('suggestions').innerHTML='<div class="no-results">일치하는 학교가 없습니다. 공식 학교명으로 다시 검색해 주세요.</div>'}
+      else data.forEach(school=>{
+        const b=document.createElement('button');b.type='button';b.setAttribute('role','option');
+        b.innerHTML=`<strong>${escapeHTML(school.school_name)}</strong><small>${escapeHTML(school.sido_standard ||school.sido||'')} · ${escapeHTML(school.support_office||'')}</small>`;
+        b.addEventListener('click',()=>{state.demo=false;const u=new URL(location.href);u.searchParams.delete('demo');u.searchParams.set('school_id',String(school.school_id));u.searchParams.delete('year');history.pushState({},'',u);showSchool(school,buildYears(school.school_id));$('schoolInput').value=school.school_name;$('suggestions').hidden=true;window.scrollTo({top:0,behavior:'smooth'})});
+        $('suggestions').append(b);
+      });
+      $('suggestions').hidden=false;$('searchHelp').textContent=`학교 ${data?.length||0}개 표시 · 검색은 공식 학교명 기준`;
+    }catch(e){if(serial!==state.searchSerial)return;console.warn('검색 오류',e);$('searchHelp').textContent='학교 검색 연결에 실패했습니다. 네트워크 또는 Supabase 연결을 확인하세요.'}
+  }
+  function buildYears(id){
+    const entry=state.percentileIndex.get(String(id));let values=[null,null,null];
+    if(entry&&window.BeaguPublic?.values){try{values=window.BeaguPublic.values(entry)}catch(e){console.warn(e)}}
+    const record=state.publicRecords?.schools?.[String(id)] || state.publicRecords?.[String(id)] || {};
+    const result={};
+    [2023,2024,2025,2026].forEach((year,i)=>{
+      const own=record.years?.[String(year)] || record[String(year)] || {};
+      const valid=own.approved===true?num(own.percentile):null;
+      const visible=i<3?num(values[i]):null;
+      result[String(year)]={...own,percentile:visible??valid};
+      // Lv.0 공개파일로부터 승인된 것만 표시. 미승인 표기 항목은 제거.
+      if(own.approved !== true){result[String(year)].items={};result[String(year)].n=null;result[String(year)].approved=false}
+      if(year===2026 && own.public2026Approved!==true){result[String(year)].items={};result[String(year)].percentile=null;result[String(year)].n=null;result[String(year)].approved=false}
+    });return result;
+  }
+  async function selectSchoolById(id,preserveURL=true){
+    if(!client()){$('searchHelp').textContent='학교검색 연결 설정을 찾지 못했습니다.';return}
+    try{
+      const {data,error}=await client().from('schools')
+        .select('school_id,school_name,sido_standard,sido,support_office,address,establishment,status')
+        .eq('school_id',id).eq('status','운영').maybeSingle();
+      if(error)throw error;
+      if(!data){$('searchHelp').textContent='해당 학교를 찾을 수 없습니다.';return}
+      showSchool(data,buildYears(id));$('schoolInput').value=data.school_name;
+    }catch(e){console.warn(e);$('searchHelp').textContent='학교 정보를 조회하지 못했습니다.'}
+  }
+  function showSchool(school,years){state.school=school;state.years=years;if(!state.demo)state.selected=years['2026']?.approved?2026:2025;state.mode='essential';state.q='';state.category='전체 영역';$('questionSearch').value='';$('welcome').hidden=true;$('mainContent').hidden=false;render()}
+  function render(){if(!state.school)return;
+    const s=state.school;
+    $('schoolName').textContent=s.school_name||'학교명 미확인';
+    $('regionText').textContent=(s.sido_standard||s.sido||'지역 정보 없음')+(state.demo?' · 가상 자료 미리보기':'');
+    $('schoolAddress').textContent=s.address||'주소 정보 없음';
+    $('schoolOffice').textContent=s.support_office||'지원청 정보 없음';
+    $('schoolType').textContent=s.establishment||'설립구분 정보 없음';
+    $('accessTag').textContent=state.demo?'가상 데이터 · 시연':'Lv.0 공개 정보';
+    renderYearGrid();renderYearBody();
+  }
+  function renderYearGrid(){
+    const el=$('yearGrid');el.replaceChildren();
+    for(const year of [2023,2024,2025,2026]){
+      const obj=yearData(year),p=num(obj.percentile);
+      const card=document.createElement('button');card.type='button';card.className='year-card';card.setAttribute('role','tab');card.setAttribute('aria-selected',String(year===state.selected));
+      let label=p!==null&&p>=0&&p<=100?`${p.toFixed(1)}%`:(year===2026?'집계 준비 중':'자료 없음');
+      card.innerHTML=`<span class="year-label">${year}<span class="year-arrow">${year===state.selected?'●':'↗'}</span></span><span class="metric-text ${p===null?'empty-metric':''}">${escapeHTML(label)}</span><span class="metric-caption">${p===null?'승인된 백분위 없음':'당시 공개 백분위'}</span>`;
+      card.addEventListener('click',()=>{state.selected=year;state.category='전체 영역';state.q='';$('questionSearch').value='';render();const u=new URL(location.href);u.searchParams.set('year',String(year));history.replaceState({},'',u)});
+      el.append(card);
+    }
+  }
+  function renderYearBody(){
+    const year=state.selected,entry=yearData(year),n=num(entry.n),catalog=state.catalog?.years?.[String(year)];
+    $('reportSubtitle').textContent=`${year} YEARLY REPORT`;
+    $('reportHeading').textContent=`${year}년 ${titles[year]}`;
+    $('reportDescription').textContent=descriptions[year];
+    const status=$('dataStatus');status.className='data-status'+(state.demo?' demo':entry.approved?' ready':'');
+    status.textContent=state.demo?'가상 자료 · 시연':entry.approved?'공개 승인 자료':'상세 자료 미공개';
+    const count=catalog?.items?.length ?? 0,approvedRows=Object.values(entry.items||{}).filter(o=>o&&typeof o==='object'&&o.display!=null).length;
+    const cards=[['학교별 응답자',n!==null&&n>=0?nf(n)+'명':'미확인','선택문항별 N은 다를 수 있음'],['조사 문항',count?nf(count)+'개':'—','행렬형 하위항목 별도'],['공개 상세항목',nf(approvedRows)+'개',entry.approved?'승인된 자료만':'승인 대기 · 비공개']];
+    $('metricRow').innerHTML=cards.map(([a,b,c])=>`<dl class="metric-box"><dt>${escapeHTML(a)}</dt><dd>${escapeHTML(b)}</dd><dt>${escapeHTML(c)}</dt></dl>`).join('');
+    renderSections();
+  }
+  function renderSections(){
+    $('essentialBtn').classList.toggle('active',state.mode==='essential');$('allBtn').classList.toggle('active',state.mode==='all');
+    $('essentialBtn').setAttribute('aria-pressed',String(state.mode==='essential'));$('allBtn').setAttribute('aria-pressed',String(state.mode==='all'));
+    const catalog=state.catalog?.years?.[String(state.selected)];if(!catalog)return;
+    const base=state.q?catalog.items.filter(x=>(x.label+' '+x.id+' '+x.group).toLocaleLowerCase('ko-KR').includes(state.q)):catalog.items;
+    const groups=['전체 영역',...catalog.groups];const nav=$('categoryNav');nav.replaceChildren();
+    groups.forEach(g=>{const b=document.createElement('button');b.type='button';b.className=state.category===g?'active':'';b.textContent=g;
+      b.addEventListener('click',()=>{state.category=g;renderSections()});nav.append(b)});
+    const items=state.category==='전체 영역'?base:base.filter(x=>x.group===state.category);
+    const byGroup=new Map();items.forEach(x=>{if(!byGroup.has(x.group))byGroup.set(x.group,[]);byGroup.get(x.group).push(x)});
+    const el=$('sections');el.replaceChildren();
+    $('emptyQuestions').hidden=items.length>0;
+    for(const [group,groupItems] of byGroup.entries()){
+      const section=document.createElement('section');section.className='category-group';
+      section.innerHTML=`<h4 class="group-title">${escapeHTML(group)} <span>${groupItems.length}</span></h4>`;
+      const wrap=document.createElement('div');wrap.className='question-list';
+      const limit=(state.mode==='essential'&&!state.q)?2:groupItems.length;
+      const shown=groupItems.slice(0,limit);
+      shown.forEach(item=>wrap.append(renderItem(item)));
+      section.append(wrap);
+      if(shown.length<groupItems.length){const more=document.createElement('button');more.className='more-group';more.type='button';more.textContent=`이 영역 ${groupItems.length-shown.length}개 문항 더 보기`;
+        more.addEventListener('click',()=>{state.mode='all';renderSections();section.scrollIntoView({behavior:'smooth',block:'start'})});section.append(more)}
+      el.append(section);
+    }
+  }
+  function renderItem(item){
+    const data=yearData(state.selected).items?.[item.id];
+    const itemApproved=state.demo || (data?.publicApproved===true && Number(data?.n)>=5);
+    const displayed=itemApproved && data && typeof data.display==='string' ? data.display.trim() : null;
+    const isFreeText=(state.selected===2026&&item.id==='Q51');
+    const status=isFreeText?'비공개':displayed||missing;
+    const row=document.createElement('article');row.className='question-row';
+    row.innerHTML=`<div class="question-line"><div class="question-label"><span class="question-code">${escapeHTML(item.id)}</span>${escapeHTML(item.label)}</div><div class="question-value ${!displayed?'missing':''}">${escapeHTML(status)}</div></div>`;
+    const n=data?.n;
+    const meta=document.createElement('div');meta.className='question-meta';
+    if(isFreeText)meta.textContent='개인 식별 및 비공개 위험으로 자유서술 원문은 표시하지 않습니다.';
+    else if(displayed)meta.textContent=`문항별 응답자 ${Number.isFinite(Number(n))?nf(n)+'명':'확인 필요'} · 가장 많은 응답 또는 집계 대표값`;
+    else meta.textContent=yearData(state.selected).approved?'이 문항은 공개된 통계가 없습니다.':'검수·공개 승인된 학교별 통계가 아직 없습니다.';
+    row.append(meta);
+    if(itemApproved && Array.isArray(data?.distribution)&&data.distribution.length&&state.demo){
+      const dist=document.createElement('div');dist.className='distribution';
+      const d=data.distribution.filter(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.count))&&Number(x.count)>=0);
+      const total=d.reduce((a,b)=>a+Number(b.count),0);
+      if(total){dist.innerHTML=d.map(x=>{const pct=100*Number(x.count)/total;
+        return `<div class="dist-row"><span class="dist-label">${escapeHTML(x.label)}</span><span class="dist-track"><span class="dist-bar" style="width:${Math.max(0,Math.min(100,pct)).toFixed(1)}%"></span></span><span class="dist-pct">${pct.toFixed(0)}%</span></div>`}).join('');row.append(dist)}
+    }else if(itemApproved && Array.isArray(data?.distribution)&&data.distribution.length){
+      // 공개파일 승인 + 소표본 방어 조건. 서버 심사를 대체하지 않습니다.
+      const dist=document.createElement('div');dist.className='distribution';
+      const d=data.distribution.filter(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.count))&&Number(x.count)>=0);
+      const total=d.reduce((a,b)=>a+Number(b.count),0);
+      if(total){dist.innerHTML=d.map(x=>{const pct=100*Number(x.count)/total;
+        return `<div class="dist-row"><span class="dist-label">${escapeHTML(x.label)}</span><span class="dist-track"><span class="dist-bar" style="width:${Math.max(0,Math.min(100,pct)).toFixed(1)}%"></span></span><span class="dist-pct">${pct.toFixed(0)}%</span></div>`}).join('');row.append(dist)}
+    }
+    return row;
+  }
+  initialize().catch(e=>{console.error(e);$('searchHelp').textContent='화면 초기화 중 오류가 발생했습니다.'});
+})();
+
+</script>
+</body>
+</html>
