@@ -167,6 +167,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     loadSchools(true);
   }
 
+  const validHomepage = value => /^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:[/?#]|$)/i.test(String(value || '')) ? String(value) : null;
   const escapeHtml = value => String(value ?? '')
     .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
     .replaceAll('"','&quot;').replaceAll("'",'&#039;');
@@ -218,7 +219,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     const values=BeaguPublic.values(row);
     const cells=[2023,2024,2025].map((year,i) => {
       const value=values[i];
-      const label=value!==null ? value.toFixed(1)+'%' : percentileLoadError ? '불러오기 실패' : !row || row.statuses[i]==='REVIEW_PENDING' ? '검수 중' : '자료 없음';
+      const label=value!==null ? value.toFixed(1)+'%' : (school.sido_standard==='재외한국학교' ? '자료 없음' : percentileLoadError ? '불러오기 실패' : !row || row.statuses[i]==='REVIEW_PENDING' ? '검수 중' : '자료 없음');
       return `<div class="percentile-cell"><span class="percentile-year">${year}</span><span class="percentile-value">${escapeHtml(label)}</span></div>`;
     }).join('') + '<div class="percentile-cell percentile-locked"><span class="percentile-year">2026</span><span class="percentile-value">🔒 Lv.1 공개</span></div>';
     const line=values.some(v=>v!==null) && typeof percentileChart==='function' ? percentileChart(values.concat(null), { blank2026: true }) : '';
@@ -242,11 +243,12 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       return;
     }
     schools.forEach(school => {
+      const website = validHomepage(school.homepage);
       const card=document.createElement('div');
       card.className='school-card';
       card.innerHTML=`<div class="region-badge">${escapeHtml(school.sido_standard || school.sido || '')}</div>
         <div class="school-name">${escapeHtml(school.school_name)}</div>
-        <div class="school-meta">${escapeHtml(school.support_office || '')}<br>${escapeHtml(school.address || '')}</div>
+        <div class="school-meta">${escapeHtml(school.support_office || '')}<br>${escapeHtml(school.address || '')}${website ? `<br><a href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer">🌐 학교 홈페이지</a>` : ''}</div>
         ${renderPercentiles(school)}
         <div class="school-actions">
           <a class="school-button view-button" href="school-report.html?school_id=${encodeURIComponent(String(school.school_id))}">🔍 연도별 상세 기록 보기</a>
@@ -267,7 +269,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     resultCount.textContent='검색 중...';pager.hidden=true;
     try {
       let query=supabaseClient.from('schools')
-        .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,status',{count:'exact'})
+        .select('school_id,school_name,sido,sido_standard,support_office,address,homepage,establishment,status',{count:'exact'})
         .eq('status','운영');
       if (keyword) query=query.ilike('school_name',`%${keyword}%`);
       if (region) query=query.eq('sido_standard',region);
