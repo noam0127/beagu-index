@@ -49,6 +49,8 @@ async function main() {
     'js/school-mbti-v1.js', 'styles/school-mbti-v1.css',
     'js/school-search-card-v1.js', 'styles/school-search-card-v1.css',
     'js/school-detail-groups-v1.js', 'styles/school-detail-groups-v1.css',
+    'statistics.html', 'styles/statistics.css', 'js/statistics-table.js',
+    'result.html', 'survey.html', 'js/challenge.html',
     'lv2-edited-column-schema.json', 'data/public-lv0-percentiles-v1.2.json'
   ];
   const responses = new Map();
@@ -113,6 +115,23 @@ async function main() {
     level1.includes('BeaguDetailGroups.appendGrouped') &&
     level2.includes('BeaguDetailGroups.appendGrouped') &&
     !html0.includes('js/school-detail-groups-v1.js'));
+  const statsHTML=responses.get('statistics.html')||'';
+  const statsCSS=responses.get('styles/statistics.css')||'';
+  const statsScript=responses.get('js/statistics-table.js')||'';
+  const legacyResult=responses.get('result.html')||'';
+  const legacyChallenge=responses.get('js/challenge.html')||'';
+  const legacySurvey=responses.get('survey.html')||'';
+  check('통계표 CSS 경로 정상 및 공개 데이터 유지',
+    statsHTML.includes('styles/statistics.css?v=20261031-canonical7') &&
+    !statsHTML.includes('href="css/statistics.css') &&
+    statsCSS.includes('.table-frame') &&
+    statsScript.includes('public-lv0-percentiles-v1.2.json') &&
+    statsHTML.includes('dialogReportLink'));
+  check('구형 결과 페이지 → 현재 학교 상세 연결',
+    legacyResult.includes("location.replace(target)") &&
+    legacyResult.includes("beaguVisitReady") &&
+    legacySurvey.includes('school-report.html?school_id=') &&
+    legacyChallenge.includes("../challenge.html"));
   check('학교 홈페이지 링크가 검색 결과에서 제거됨',
     ![html0,html1,html2,level1,level2,report].some(h=>h.includes('🌐 학교 홈페이지')));
   check('홈에서 Lv.1·Lv.2로 연결', home.includes('search-lv1.html') && home.includes('search-lv2.html'));
@@ -121,7 +140,7 @@ async function main() {
     [html1,html2].every(h=>h.includes('js/school-mbti-v1.js')&&h.includes('styles/school-mbti-v1.css')) &&
     level1.includes('BeaguSchoolMBTI.createDetail') && level2.includes('BeaguSchoolMBTI.createDetail') &&
     mbtiJS.includes('beagu-school-culture-v1'));
-  for (const file of ['js/percentile-chart.js','js/school-search-card-v1.js','js/school-detail-groups-v1.js','js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js']) {
+  for (const file of ['js/percentile-chart.js','js/school-search-card-v1.js','js/school-detail-groups-v1.js','js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js','js/statistics-table.js']) {
     try { new Script(responses.get(file)||''); check('JS 문법 검증: '+file,true); }
     catch(e) { check('JS 문법 검증: '+file,false,e.message); }
   }
