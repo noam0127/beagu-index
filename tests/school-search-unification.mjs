@@ -9,7 +9,7 @@ for(const path of pages){
  const html=read(path);
  assert.match(html,/styles\/school-search-card-v1\.css/,path+' missing shared CSS');
  assert.match(html,/js\/school-search-card-v1\.js/,path+' missing shared component');
- assert.match(html,/v=20261031-status4/,path+' stale shared script URL');
+ assert.match(html,/v=20261031-independent5/,path+' stale shared script URL');
  assert.doesNotMatch(html,/학교 홈페이지 방문|🌐 학교 홈페이지/,path+' displays unnecessary homepage');
  const lines=html.match(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)||[];
  for(const block of lines){
@@ -28,17 +28,18 @@ for(const [level,code] of [[0,lv0],[1,lv1],[2,lv2]]){
  assert.doesNotMatch(code,/🌐 학교 홈페이지|address,homepage/);
 }
 assert.match(mbti,/percentile\.insertAdjacentElement\('afterend',badge\)/);
-assert.ok(lv2.indexOf('container.append(newer)') < lv2.indexOf("container.append(el('h3','school-history-heading','과거 상세자료')"),'2026 must precede history');
+assert.ok(lv2.indexOf("container.append(el('h3','school-history-heading','과거 상세자료')") < lv2.indexOf('container.append(newer)'),'Historical years must precede 2026');
 assert.doesNotMatch(report,/schoolHomepage|학교 홈페이지 방문|,homepage,/);
 assert.match(report,/function renderYearGrid\(\)\s*\{[\s\S]*?for\(const year of \[2026,2025,2024,2023\]\)/,'Lv.0 detailed report year order');
 assert.match(report,/id="latestYearMessage"/,'Lv.0 latest year explanation');
 assert.match(report,/현재.*2026|2026년 학교별 통계/,'Lv.0 current release status');
-assert.match(lv1,/const YEARS = \[2025, 2024, 2023\]/,'Lv.1 history tab order');
+assert.match(lv1,/const YEARS = \[2023, 2024, 2025\]/,'Lv.1 history tab order');
 assert.match(lv1,/currentContent\.hidden = false/,'Lv.1 current report open by default');
 assert.match(lv1,/newer\.setAttribute\('aria-controls',currentContent\.id\)/,'Lv.1 2026 panel accessible');
-assert.ok(lv1.indexOf("const newer = make('button'") < lv1.indexOf("const profile = make('section'"),'Lv.1 2026 must precede old school facts');
+assert.ok(lv1.indexOf('section.append(tabs, content)') < lv1.indexOf("const newer = make('button'"),'Lv.1 2026 follows historical year tabs');
 assert.ok(lv1.indexOf('section.append(newer, currentContent)') < lv1.indexOf('BeaguSchoolMBTI.createDetail'),'Lv.1 2026 report before MBTI');
-assert.match(lv2,/const years=\[2025,2024,2023\]/,'Lv.2 history tab order');
+assert.match(lv2,/const years=\[2023,2024,2025\]/,'Lv.2 history tab order');
+assert.match(report,/function renderYearGrid\(\)\s*\{[\s\S]*?for\(const year of \[2023,2024,2025,2026\]\)/,'Lv.0 chronological selector');
 assert.ok(lv2.indexOf('container.append(newer)') < lv2.indexOf('BeaguSchoolMBTI.createDetail'),'Lv.2 current report before MBTI');
 
 for(const html of [read('search-lv1.html'),read('search-lv2.html')]){
@@ -75,50 +76,74 @@ for(const level of [0,1,2]){
  assert.ok(!JSON.stringify(card).includes('홈페이지'));
  const cells=percentile.children[1].children;
  assert.equal(cells.length,4);
- assert.deepEqual(cells.map(c=>c.dataset.year),['2026','2025','2024','2023']);
- assert.equal(cells[2].children[1].textContent,'자료 없음');
- assert.equal(cells[3].children[1].textContent,'38.3%');
- assert.equal(cells[1].children[1].textContent,'74.5%');
+ assert.deepEqual(cells.map(c=>c.dataset.year),['2023','2024','2025','2026']);
+ assert.equal(cells[1].children[1].textContent,'자료 없음');
+ assert.equal(cells[0].children[1].textContent,'38.3%');
+ assert.equal(cells[2].children[1].textContent,'74.5%');
  if(level===0){
   assert.equal(open.tagName,'a');
   assert.equal(open.href,'school-report.html?school_id=7832070');
   assert.equal(detail,null);
-  assert.equal(cells[0].children[1].textContent,'🔒 Lv.1+ 승인 시');
+  assert.equal(cells[3].children[1].textContent,'🔒 Lv.1+ 승인 시');
  }else{
   assert.equal(open.tagName,'button');
   assert.equal(open.attributes['aria-expanded'],'false');
   assert.equal(open.attributes['aria-controls'],detail.id);
   assert.equal(detail.hidden,true);
   assert.equal(card.children[5],detail);
-  assert.equal(cells[0].children[1].textContent,'미공개');
+  assert.equal(cells[3].children[1].textContent,'미공개');
  }
 }
 assert.equal(new Set(rendered.map(x=>x.replace(' | school-detail',''))).size,1,'All levels should have the same main card sections');
 const pending=ui.percentiles({publicValues:[null,null,null],statuses:['REVIEW_PENDING','NO_PUBLISHED_VALUE'],locked:false});
-assert.equal(pending.children[1].children[3].children[1].textContent,'검수 중');
-assert.equal(pending.children[1].children[2].children[1].textContent,'자료 없음');
+assert.equal(pending.children[1].children[0].children[1].textContent,'검수 중');
+assert.equal(pending.children[1].children[1].children[1].textContent,'자료 없음');
 assert.equal(pending.children[1].children[1].children[1].textContent,'자료 없음');
 
 // Missing, explicitly pending, unpublished, fetching, and failed are distinct.
 const cell=(opts,index)=>ui.percentiles(opts).children[1].children[index];
-assert.equal(cell({publicValues:[null,null,null]},3).dataset.state,'missing');
-assert.equal(cell({publicValues:[null,null,null],statuses:['REVIEW_PENDING']},3).dataset.state,'review');
-assert.equal(cell({publicValues:[null,null,null],publicError:true},3).dataset.state,'error');
-assert.equal(cell({publicValues:[32.4,null,null],publicError:true},3).dataset.state,'published');
-assert.equal(cell({publicValues:[null,null,null],status2026:'unpublished'},0).children[1].textContent,'미공개');
-assert.equal(cell({publicValues:[null,null,null],status2026:'error'},0).children[1].textContent,'불러오기 실패');
-assert.equal(cell({publicValues:[null,null,null],status2026:'review'},0).children[1].textContent,'검수 중');
-assert.equal(cell({publicValues:[null,null,null],status2026:'loading'},0).children[1].textContent,'확인 중');
-assert.equal(cell({publicValues:[null,null,null],locked:true,status2026:'error'},0).dataset.state,'locked');
-assert.equal(cell({publicValues:[null,null,null],value2026:0,status2026:'error'},0).children[1].textContent,'0.0%');
+assert.equal(cell({publicValues:[null,null,null]},0).dataset.state,'missing');
+assert.equal(cell({publicValues:[null,null,null],statuses:['REVIEW_PENDING']},0).dataset.state,'review');
+assert.equal(cell({publicValues:[null,null,null],publicError:true},0).dataset.state,'error');
+assert.equal(cell({publicValues:[32.4,null,null],publicError:true},0).dataset.state,'published');
+assert.equal(cell({publicValues:[null,null,null],status2026:'unpublished'},3).children[1].textContent,'미공개');
+assert.equal(cell({publicValues:[null,null,null],status2026:'error'},3).children[1].textContent,'불러오기 실패');
+assert.equal(cell({publicValues:[null,null,null],status2026:'review'},3).children[1].textContent,'검수 중');
+assert.equal(cell({publicValues:[null,null,null],status2026:'loading'},3).children[1].textContent,'확인 중');
+assert.equal(cell({publicValues:[null,null,null],locked:true,status2026:'error'},3).dataset.state,'locked');
+assert.equal(cell({publicValues:[null,null,null],value2026:0,status2026:'error'},3).children[1].textContent,'0.0%');
 assert.match(lv1,/current2026\.set\(id,\{status:'error'\}\)/,'Lv.1 network errors are not unpublished');
 assert.match(lv2,/current2026\.set\(id,\{status:'error'\}\)/,'Lv.2 network errors are not unpublished');
 assert.match(lv1,/publicLoadError=true/,'Lv.1 fallback errors must surface');
 assert.match(lv2,/publicLoadError=true/,'Lv.2 fallback errors must surface');
 assert.match(report,/yearLookupError/,'Detailed report must distinguish DB lookup failure');
 
+// A graph of differently constructed yearly percentiles must never connect years.
+const chartCode=read('js/percentile-chart.js');
+assert.doesNotThrow(()=>new Script(chartCode));
+const chartScope={};
+runInNewContext(chartCode,chartScope);
+const svg=chartScope.percentileChart([20,40,60,80]);
+assert.match(svg,/연도별 개별 백분위/);
+assert.match(svg,/직접 비교 불가/);
+assert.match(svg,/2023년 20.0백분위; 2024년 40.0백분위; 2025년 60.0백분위; 2026년 80.0백분위/);
+assert.equal((svg.match(/<circle /g)||[]).length,4);
+assert.equal((svg.match(/<line /g)||[]).length,7,'Only 3 axis lines + 4 independent vertical stems');
+for(const x of ['48','128','208','288']){
+  assert.match(svg,new RegExp('<line x1="'+x+'" x2="'+x+'"'), 'Each dot has its own stem');
+}
+assert.doesNotMatch(svg,/백분위 변화|연도 간 변화|추세선/);
+const svgMissing=chartScope.percentileChart([10,null,30,null],{blank2026:true,labels:['자료 없음','검수 중','미공개','미공개']});
+assert.equal((svgMissing.match(/<circle /g)||[]).length,4);
+assert.match(svgMissing,/2024년 검수 중/);
+assert.match(svgMissing,/2026년 미공개/);
+assert.doesNotMatch(svgMissing,/>null%|>NaN%/);
+for(const page of pages)assert.match(read(page),/js\/percentile-chart\.js\?v=20261031-independent5/);
+assert.match(read('js/school-search-card-v1.js'),/for\(const i of \[0,1,2,3\]\)/);
+assert.match(read('js/school-search-card-v1.js'),/각 점은 해당 연도의 독립적인 백분위/);
+
 const sync=read('scripts/beagu-2026-mbti-review-sync.gs');
 assert.match(sync,/1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4/);
 assert.match(sync,/2026-11-01/);
 assert.doesNotMatch(sync,/\.from\('beagu_release_metrics_v2'\)/);
-console.log('PASS: 4 status distinctions, three-level UI, 2026-first, safe publication and network failures');
+console.log('PASS: 2023–2026 chronological UI, independent years graph, 4 status distinctions and privacy');
