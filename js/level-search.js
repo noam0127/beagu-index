@@ -279,32 +279,6 @@
     host.replaceChildren();
     const section=make('section','detail');
     const vals=asPublicPercentiles(school);
-    // Latest year is visible first; historical school facts follow below.
-    const newer = make('button', 'year-2026-button', '2026년 최신 조사 · 접기');
-    newer.type = 'button';
-    newer.setAttribute('aria-expanded', 'true');
-    const currentContent = make('div', 'year-2026-content');
-    currentContent.id='beagu-current-2026-'+String(school.school_id);
-    newer.setAttribute('aria-controls',currentContent.id);
-    currentContent.hidden = false;
-    function render2026() {
-      currentContent.replaceChildren();
-      currentContent.append(make('h3', '', '2026년 배구지수'));
-      const metrics = metrics2026(rows);
-      if (!metrics.length) {
-        currentContent.append(make('p', 'detail-note', '미공개 · 2026년 승인된 학교별 통계가 없습니다.'));
-      } else {
-        for (const metric of metrics) addRow(currentContent, metric.label, metricValue(metric));
-      }
-    }
-    render2026();
-    newer.addEventListener('click', () => {
-      currentContent.hidden = !currentContent.hidden;
-      newer.setAttribute('aria-expanded', String(!currentContent.hidden));
-      newer.textContent=currentContent.hidden?'2026년 최신 조사 · 펼치기':'2026년 최신 조사 · 접기';
-    });
-    section.append(newer, currentContent);
-    if (window.BeaguSchoolMBTI) section.append(BeaguSchoolMBTI.createDetail(String(school.school_id), session));
     const profile = make('section', 'school-profile');
     profile.append(make('h3', '', '학교 기본정보'));
     for (const [label, value] of [
@@ -362,6 +336,33 @@
       tabs.append(button);
     }
     section.append(tabs, content);
+    // 2026 follows 2023–2025 in the visible chronological detail sequence.
+    const newer = make('button', 'year-2026-button', '2026년 최신 조사 · 접기');
+    newer.type = 'button';
+    newer.setAttribute('aria-expanded', 'true');
+    const currentContent = make('div', 'year-2026-content');
+    currentContent.id='beagu-current-2026-'+String(school.school_id);
+    newer.setAttribute('aria-controls',currentContent.id);
+    currentContent.hidden = false;
+    function render2026() {
+      currentContent.replaceChildren();
+      currentContent.append(make('h3', '', '2026년 배구지수'));
+      const metrics = metrics2026(rows);
+      if (!metrics.length) {
+        currentContent.append(make('p', 'detail-note', '미공개 · 2026년 승인된 학교별 통계가 없습니다.'));
+      } else {
+        for (const metric of metrics) addRow(currentContent, metric.label, metricValue(metric));
+      }
+    }
+    render2026();
+    newer.addEventListener('click', () => {
+      currentContent.hidden = !currentContent.hidden;
+      newer.setAttribute('aria-expanded', String(!currentContent.hidden));
+      newer.textContent=currentContent.hidden?'2026년 최신 조사 · 펼치기':'2026년 최신 조사 · 접기';
+    });
+    section.append(newer, currentContent);
+    if (window.BeaguSchoolMBTI) section.append(BeaguSchoolMBTI.createDetail(String(school.school_id), session));
+
     section.append(make('p', 'detail-note',
       '연도별 조사 문항·산정 기준이 다릅니다. 2025년 백분위는 8개 영역 종합값을 조사 비교집단 1,458개교에서 재산출한 값으로, 이전 연도와 직접 비교하지 마세요.'));
     host.append(section);
