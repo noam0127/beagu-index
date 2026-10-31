@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f7f9fc">
+  <meta name="description" content="배구지수 연도별 조사자료의 공개 승인·열람등급·백분위 해석·개인정보 보호 기준">
+  <title>자료 공개·열람 기준 | 배구지수</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#1a2b45;background:#f7f9fc;line-height:1.65}
+    *{box-sizing:border-box}body{margin:0;padding:0 18px 48px}
+    a{color:#1d4ed8;text-underline-offset:3px}a:focus-visible{outline:3px solid #60a5fa;outline-offset:4px}
+    .wrap{max-width:840px;margin:0 auto}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 0 12px;font-size:13px}
+    .brand{font-weight:800;letter-spacing:.06em;color:#1b365d}.hero{padding:22px 0 18px}.eyebrow{font-size:12px;font-weight:800;color:#2563eb;letter-spacing:.07em}
+    h1{font-size:clamp(26px,5vw,35px);letter-spacing:-.04em;line-height:1.35;margin:8px 0 14px}h2{font-size:19px;line-height:1.4;margin:0 0 14px;color:#19345a}
+    h3{font-size:15px;margin:18px 0 6px}.intro{color:#50647e;max-width:750px;margin:0}.block{background:white;border:1px solid #e2e8f0;border-radius:16px;padding:22px;margin:16px 0}
+    .rows{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+    .tier{padding:15px 16px;background:#f8faff;border:1px solid #e3ecf8;border-radius:12px}.tier strong{color:#204a7e}.tier p{margin:5px 0 0;font-size:13px;color:#53657c}
+    .notice{border-left:3px solid #2563eb;padding-left:14px;margin:10px 0;color:#4b5b71;font-size:14px}
+    ul{padding-left:20px;margin:10px 0}li{margin:7px 0}p{margin:7px 0}
+    .states{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .state{padding:12px;border:1px solid #e1e7ef;border-radius:9px;background:#f9fbff;font-size:13px}.state strong{display:block;color:#21476d;margin-bottom:4px}
+    .links{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}.links a{display:inline-flex;padding:11px 14px;border:1px solid #c5d7ef;border-radius:10px;background:#eff6ff;font-weight:700;font-size:13px;text-decoration:none}
+    footer{margin-top:24px;font-size:12px;color:#63748c}
+    @media(min-width:650px){.rows{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media(max-width:450px){.block{padding:17px}.states{grid-template-columns:1fr}.links a{width:100%;justify-content:center}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <nav class="top" aria-label="페이지 이동"><a href="index.html" class="brand">VOLLEYBALL INDEX</a><a href="search.html">학교 찾기</a></nav>
+  <header class="hero">
+    <div class="eyebrow">DATA ACCESS &amp; RELEASE</div>
+    <h1>배구지수 자료 공개·열람 기준</h1>
+    <p class="intro">학교정보가 ‘있다’는 것과 ‘공개할 수 있다’는 것은 다릅니다. 응답자료는 학교 식별·통계 검증·소표본 및 재식별 위험 심사·명시적인 공개 승인을 통과한 범위에서만 보여드립니다.</p>
+  </header>
+  <section class="block" aria-labelledby="tierTitle">
+    <h2 id="tierTitle">열람등급별 공개 범위</h2>
+    <div class="rows">
+      <div class="tier"><strong>Lv.0 · 기본 공개</strong><p>학교 기본정보와 기존에 공개 승인된 2023~2025년 백분위. 2026년 학교별 비공개 지표는 표시하지 않습니다.</p></div>
+      <div class="tier"><strong>Lv.1 · 참여자 열람</strong><p>Lv.0 공개정보, 승인된 학교 규모 및 2026년의 백분위·수직성(VI) 13문항 등 Lv.1로 승인된 지표만 제공.</p></div>
+      <div class="tier"><strong>Lv.2 · 교사 인증 열람</strong><p>Lv.1 승인정보와 시설·급식·행정 등 추가로 Lv.2 공개 승인된 상세지표만 제공.</p></div>
+    </div>
+    <p class="notice">참여코드의 확인과 데이터 공개 범위의 결정은 서버에서 처리합니다. 인증을 받더라도 아직 공개 승인되지 않은 학교·연도·항목의 자료를 자동으로 열람할 수 있는 것은 아닙니다.</p>
+  </section>
+  <section class="block" aria-labelledby="statusTitle">
+    <h2 id="statusTitle">표시 상태 구분</h2>
+    <div class="states">
+      <div class="state"><strong>자료 없음</strong>현재 공개 자료에 확인된 값이 없습니다. 원본 자체의 부재를 뜻하지 않습니다.</div>
+      <div class="state"><strong>검수 중</strong>검증·보류 상태가 명시적으로 확인된 자료입니다.</div>
+      <div class="state"><strong>미공개</strong>공개 승인된 결과가 아직 없는 상태입니다.</div>
+      <div class="state"><strong>불러오기 실패</strong>서버·통신 조회에 실패한 상태로, 자료가 없는 것으로 단정하지 않습니다.</div>
+    </div>
+  </section>
+  <section class="block" aria-labelledby="protectTitle">
+    <h2 id="protectTitle">공개하지 않는 정보</h2>
+    <ul>
+      <li>개인별 원응답, 자유서술 원문, 2026년 Q51 및 개인정보를 추정할 수 있는 항목</li>
+      <li>검수되지 않은 학교 식별·중복 응답·소표본 통계와 승인되지 않은 추정치</li>
+      <li>인증코드·비밀번호·관리자 자료와 학교별 교사 원자료</li>
+    </ul>
+    <p>응답자가 적은 학교의 값은 학교 전체 교직문화의 대표값이 될 수 없습니다. 응답자 수의 부족이나 재식별 위험이 있으면 통계 결과 공개를 보류합니다.</p>
+  </section>
+  <section class="block" aria-labelledby="yearsTitle">
+    <h2 id="yearsTitle">2023 → 2024 → 2025 → 2026</h2>
+    <p>연도는 오래된 순서대로 표시합니다. 그러나 조사문항, 산정방식과 비교집단이 다르므로 백분위 수치 사이에 선을 연결해 ‘개선’이나 ‘악화’의 연속적 추세로 해석하지 않습니다.</p>
+    <p>학교별 점수의 높고 낮음, 방문·검색 빈도 또는 교사 응답의 일부 결과만으로 학교의 우열이나 교직문화 전체를 단정해서는 안 됩니다.</p>
+    <div class="links">
+      <a href="search.html">Lv.0 학교검색</a>
+      <a href="search-lv1.html">Lv.1 승인자료 검색</a>
+      <a href="search-lv2.html">Lv.2 승인자료 검색</a>
+    </div>
+  </section>
+  <footer>배구지수 · 데이터의 공개 승인 상태는 개별 학교 열람 화면에서 확인할 수 있습니다. 이 페이지는 공개 원칙을 설명하며 원자료를 포함하지 않습니다.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/visit-stats.js?v=20261031-1350"></script>
+</body>
+</html>
