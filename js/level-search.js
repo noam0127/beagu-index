@@ -358,18 +358,10 @@
     $('nextPage').disabled = page + 1 >= pages;
     if (!list.length) { host.append(make('div','empty','검색 결과가 없습니다.')); return; }
     for (const school of list) {
-      const card = make('article', 'school-card');
-      card.dataset.schoolId=String(school.school_id);
-      BeaguSchoolSearchCard.addHeader(card,school);
-      card.append(percentilePanel(school));
-      const actions=make('div','school-actions');
-      const open=make('button','view-button','🔍 연도별 상세 기록 보기');
-      open.type='button';
-      open.setAttribute('aria-label','Lv.1 연도별 상세 기록 보기');
-      actions.append(open);
-      card.append(actions);
-      const detail = make('div'); detail.hidden = true;
-      const button = card.querySelector('button');
+      const {card,open:button,detail}=BeaguSchoolSearchCard.createCard(school,{
+        level:1,
+        percentile:percentilePanel(school)
+      });
       button.setAttribute('aria-expanded', 'false');
       button.addEventListener('click', async () => {
         if (!detail.hidden) {
@@ -379,7 +371,7 @@
           return;
         }
         detail.hidden = false;
-        button.textContent = '접기';
+        button.textContent = '상세보기 접기';
         button.setAttribute('aria-expanded', 'true');
         if (detail.dataset.loaded) return;
         detail.textContent = '불러오는 중...';
@@ -394,7 +386,7 @@
           detail.textContent = '자료를 불러오지 못했습니다. 다시 열람해 주세요.';
         }
       });
-      card.append(detail); host.append(card);
+      host.append(card);
       // A unique school search should show the approved tier data immediately.
       if (list.length === 1 && total === 1) button.click();
     }
