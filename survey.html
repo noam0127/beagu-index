@@ -481,7 +481,7 @@ async function submitSurvey(event) {
 
           <a
             class="button primary"
-            href="result.html?school=${selectedSchool.school_id}"
+            href="school-report.html?school_id=${encodeURIComponent(selectedSchool.school_id)}"
           >
             학교 결과로 돌아가기
           </a>
