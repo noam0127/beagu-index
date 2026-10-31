@@ -197,7 +197,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       return `<div class="percentile-cell"><span class="percentile-year">${year}</span><span class="percentile-value">${escapeHtml(label)}</span></div>`;
     }).join('') + '<div class="percentile-cell percentile-locked"><span class="percentile-year">2026</span><span class="percentile-value">🔒 Lv.1 공개</span></div>';
     const line=values.some(v=>v!==null) && typeof percentileChart==='function' ? percentileChart(values.concat(null), { blank2026: true }) : '';
-    return `<section aria-label="연도별 배구지수 백분위"><div class="percentile-note">연도별 배구지수 백분위</div><div class="percentile-grid">${cells}</div>${line}<ul class="percentile-note percentile-notes"><li>연도별 문항·참여 학교와 산정 방식이 달라 단순 비교에 주의해주세요.</li><li>검수 중인 값은 확인 후 제공됩니다.</li></ul><p class="percentile-note">자료 갱신: 2026.10.27 · 공개자료 v1.2</p></section>`;
+    return `<section aria-label="연도별 배구지수 백분위"><div class="percentile-note">연도별 배구지수 백분위</div><div class="percentile-grid">${cells}</div>${line}<ul class="percentile-note percentile-notes"><li>연도별 문항·참여 학교와 산정 방식이 달라 단순 비교에 주의해주세요.</li><li>2025년 백분위는 8개 영역 종합값으로 조사 참여 1,458개교를 재순위화한 값입니다. 99%는 비교집단의 상위 약 1%를 의미합니다.</li><li>검수 중인 값은 확인 후 제공됩니다.</li></ul><p class="percentile-note">자료 갱신: 2026.10.31 · 2025 전국백분위 재산출</p></section>`;
   }
 
   function renderSchools(schools,total) {
