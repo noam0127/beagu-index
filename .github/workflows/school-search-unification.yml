@@ -1,0 +1,29 @@
+name: Search Results Unified UI Validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'search.html'
+      - 'search-lv1.html'
+      - 'search-lv2.html'
+      - 'school-report.html'
+      - 'js/school-search-card-v1.js'
+      - 'js/level-search.js'
+      - 'js/lv2-edited-search.js'
+      - 'js/school-mbti-v1.js'
+      - 'styles/school-search-card-v1.css'
+      - 'scripts/beagu-2026-mbti-review-sync.gs'
+      - 'tests/school-search-unification.mjs'
+      - '.github/workflows/school-search-unification.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/school-search-unification.mjs
