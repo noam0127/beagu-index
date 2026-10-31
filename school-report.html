@@ -52,7 +52,7 @@
   <section class="page-heading"><div><p class="eyebrow">SCHOOL REPORT · 2023—2026</p><h1>학교별 조사 기록</h1><p class="lead">학교의 조건부터 교직문화까지, 연도별로 살펴보세요.</p></div><a class="survey-link" href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 조사 참여 <span aria-hidden="true">↗</span></a></section>
   <section class="search-surface" aria-label="학교 검색"><div class="search-heading"><label for="schoolInput">🔎 학교 검색</label><span>학교명을 검색하거나 기존 검색 결과에서 학교를 선택하세요.</span></div><div class="input-wrap"><input id="schoolInput" type="search" autocomplete="off" placeholder="예: 서울개원초등학교, 강릉초등학교" aria-autocomplete="list" aria-controls="suggestions"><button id="clearSearch" type="button" aria-label="검색어 지우기">×</button></div><div class="suggestions" id="suggestions" role="listbox" hidden></div><div class="search-help" id="searchHelp" aria-live="polite">학교명을 2글자 이상 입력하면 검색합니다.</div></section>
   <div class="main-content" id="mainContent" hidden>
-    <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p><p id="schoolHomepage" class="address" hidden></p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a href="search.html" class="change-school">다른 학교 찾기 ↗</a></div></section>
+    <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a href="search.html" class="change-school">다른 학교 찾기 ↗</a></div></section>
     <section class="tier-panel" id="tierPanel" aria-label="등급별 열람"><h3>열람 범위 선택</h3><p>공개 자료와 참여자·교사 승인 자료를 구분합니다. 잠긴 항목은 데이터 자체를 내려받지 않습니다.</p><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong><span>학교정보 · 연도별 백분위</span></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자 🔒</strong><span>인증된 승인 요약</span></button><button class="tier-button" id="tier2" type="button" aria-pressed="false"><strong>Lv.2 교사 🔒</strong><span>인증된 승인 상세</span></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">인증하기</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div><p class="tier-privacy-note">※ 일부 문항은 Lv.2라도 표본·개인정보 보호 심사를 통과하기 전까지 공개되지 않습니다. 2026년 Q51 자유서술은 전 등급 비공개입니다.</p></section>
     <section class="year-overview" aria-label="연도별 조사 기록"><div class="section-top"><div><h3>연도별 기록</h3><p>카드를 누르면 해당 연도의 조사 내용을 볼 수 있습니다.</p></div><button class="outline-btn" id="comparisonHelp" type="button">비교 시 유의사항 <span aria-hidden="true">ⓘ</span></button></div><div class="year-grid" id="yearGrid" role="tablist" aria-label="연도 선택"></div><p class="chart-disclaimer">연도별 문항·척도·참여 학교가 달라 숫자를 하나의 연속 점수처럼 비교하지 않습니다.</p></section>
     <section class="report-body"><div class="report-title"><div><p class="eyebrow" id="reportSubtitle">2026 REPORT</p><h3 id="reportHeading">2026년 조사 결과</h3><p class="report-description" id="reportDescription"></p></div><span class="data-status" id="dataStatus">자료 확인 중</span></div>
@@ -1286,7 +1286,7 @@
     $('searchHelp').textContent='학교 찾는 중…';
     try{
       const {data,error}=await client().from('schools')
-        .select('school_id,school_name,sido_standard,sido,support_office,address,homepage,establishment,status')
+        .select('school_id,school_name,sido_standard,sido,support_office,address,establishment,status')
         .eq('status','운영').ilike('school_name',`%${safe}%`).order('school_name',{ascending:true}).limit(8);
       if(serial!==state.searchSerial)return;
       if(error)throw error;
@@ -1320,7 +1320,7 @@
     if(!client()){$('searchHelp').textContent='학교검색 연결 설정을 찾지 못했습니다.';return}
     try{
       const {data,error}=await client().from('schools')
-        .select('school_id,school_name,sido_standard,sido,support_office,address,homepage,establishment,status')
+        .select('school_id,school_name,sido_standard,sido,support_office,address,establishment,status')
         .eq('school_id',id).eq('status','운영').maybeSingle();
       if(error)throw error;
       if(!data){$('searchHelp').textContent='해당 학교를 찾을 수 없습니다.';return}
@@ -1333,15 +1333,6 @@
     $('schoolName').textContent=s.school_name||'학교명 미확인';
     $('regionText').textContent=(s.sido_standard||s.sido||'지역 정보 없음')+(state.demo?' · 가상 자료 미리보기':'');
     $('schoolAddress').textContent=s.address||'주소 정보 없음';
-    const site=$('schoolHomepage');
-    site.replaceChildren();
-    const url=String(s.homepage||'');
-    if (/^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:[/?#]|$)/i.test(url)) {
-      const link=document.createElement('a');
-      link.textContent='🌐 학교 홈페이지 방문';
-      link.href=url;link.target='_blank';link.rel='noopener noreferrer';
-      site.append(link);site.hidden=false;
-    } else site.hidden=true;
     $('schoolOffice').textContent=s.support_office||'지원청 정보 없음';
     $('schoolType').textContent=s.establishment||'설립구분 정보 없음';
     tierUI();
