@@ -995,7 +995,7 @@
   const $ = id => document.getElementById(id);
   const escapeHTML = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const state = {school:null, years:{}, selected:2026, catalog:null, publicRecords:null,
-    percentileIndex:new Map(), demo:false, mode:'essential', category:'전체 영역', q:'', searchSerial:0, tier:0,authLevel:0,authToken:'',requestedTier:0,approvedSummary:{},reportSerial:0, officialFacts:[]};
+    percentileIndex:new Map(), demo:false, mode:'essential', category:'전체 영역', q:'', searchSerial:0, tier:0,authLevel:0,authToken:'',requestedTier:0,approvedSummary:{},reportSerial:0, officialFacts:[],officialCategories:[]};
   const titles={2023:'초기 교직문화',2024:'교직문화·복무',2025:'근무·교육활동',2026:'교직문화·환경'};
   const descriptions={
     2023:'교직원 배구, 방학근무, 조퇴보고, 친목, 행정업무 등 당시 지표를 보여줍니다.',
@@ -1031,31 +1031,61 @@
   }
 
   async function loadOfficial(id){
-    if(!client()||!/^\\d{7}$/.test(id)||state.demo)return;
+    if(!client()||!/^\d{7}$/.test(id)||state.demo)return;
     const serial=state.reportSerial;
     try{
-      const result=await client().from('beagu_school_report_official_facts')
-        .select('survey_year,fact_key,label,fact_value,unit,source_year')
-        .eq('school_id',id).eq('review_status','APPROVED').order('label').limit(60);
-      if(result.error)throw result.error;
+      const [numericResult,categoryResult]=await Promise.all([
+        client().from('beagu_school_report_official_facts')
+          .select('survey_year,fact_key,label,fact_value,unit,source_year')
+          .eq('school_id',id).eq('review_status','APPROVED').limit(80),
+        client().from('beagu_school_report_official_categories')
+          .select('survey_year,fact_key,label,fact_value,reference_year')
+          .eq('school_id',id).eq('review_status','APPROVED').limit(20)
+      ]);
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
-      state.officialFacts=(result.data||[]).filter(x=>x.survey_year===2024&&typeof x.label==='string'&&
-        Number.isFinite(Number(x.fact_value))&&Number(x.fact_value)>=0&&
-        ['teachers','students'].includes(x.fact_key));
+      const allowedNumeric=new Set([
+        'students','teachers','vice_principals','lead_teachers','classrooms',
+        'gym_spaces','cafeterias','teacher_support_spaces','land_area','playground_area'
+      ]);
+      const allowedCategory={
+        establishment_type:new Set(['국립','공립','사립']),
+        meal_place:new Set(['식당','교실','식당+교실']),
+        milk_lunch:new Set(['O','X'])
+      };
+      state.officialFacts=(numericResult.error?[]:numericResult.data||[])
+        .filter(x=>[2024,2025].includes(Number(x.survey_year))&&
+          allowedNumeric.has(x.fact_key)&&typeof x.label==='string'&&x.label.length<=60&&
+          Number.isFinite(Number(x.fact_value))&&Number(x.fact_value)>=0);
+      state.officialCategories=(categoryResult.error?[]:categoryResult.data||[])
+        .filter(x=>[2024,2025].includes(Number(x.survey_year))&&
+          allowedCategory[x.fact_key]?.has(x.fact_value)&&
+          typeof x.label==='string'&&x.label.length<=60);
       officialUI();
     }catch(e){console.warn('공식 학교정보 DB 로드 실패');officialUI()}
   }
   function officialUI(){
-    const box=$('officialSummary');if(!box||!state.school)return;
+    const panel=$('officialSummary');if(!panel||!state.school)return;
     const year=state.selected;
-    if(state.demo){box.hidden=true;return}
-    const fields=[2024,2025].includes(year)?state.officialFacts:[];
-    box.hidden=false;
-    if(!fields.length){box.innerHTML='<h4>공식 학교정보</h4><p class="approved-empty">이 학교의 해당 기준연도에 검증된 공식 통계가 등록되지 않았습니다.</p>';return}
-    const note=year===2025?'2025 조사와 별개로 2024년 편집본의 학교 현황을 참고용으로 표시합니다.':'2024 편집본에 수록된 학교 공식 현황입니다.';
-    box.innerHTML='<h4>학교 규모 · 공식정보</h4><p class="official-year-note">'+note+'</p><div class="summary-metrics">'+
-      fields.map(x=>'<div class="summary-metric official-metric"><span>'+escapeHTML(x.label)+'</span><strong>'+nf(Number(x.fact_value))+escapeHTML(x.unit||'')+'</strong></div>').join('')+
-      '</div><p class="tier-locked-note">공식 학교정보와 교사 설문 결과는 서로 다른 자료입니다.</p>';
+    if(state.demo){panel.hidden=true;return}
+    panel.hidden=false;
+    const numbers=[2024,2025].includes(year)?state.officialFacts.filter(x=>Number(x.survey_year)===year):[];
+    const categories=[2024,2025].includes(year)?(state.officialCategories||[]).filter(x=>Number(x.survey_year)===year):[];
+    if(!numbers.length&&!categories.length){
+      panel.innerHTML='<h4>공식 학교정보</h4><p class="approved-empty">이 학교의 해당 기준연도에 검증된 공식 통계가 등록되지 않았습니다.</p>';
+      return;
+    }
+    const note=year===2025
+      ?'2025년 편집본에 수록된 2024년 기준 학교 현황입니다. 교사 설문 응답과는 별개입니다.'
+      :'2024년 편집본에 수록된 학교 현황입니다. 교사 설문 응답과는 별개입니다.';
+    const items=numbers.map(x=>({
+      name:x.label,value:nf(Number(x.fact_value))+(x.unit||'')
+    })).concat(categories.map(x=>({
+      name:x.label,value:x.fact_key==='milk_lunch'?(x.fact_value==='O'?'운영':'미운영'):x.fact_value
+    })));
+    panel.innerHTML='<h4>학교 규모 · 시설 · 공식정보</h4><p class="official-year-note">'+note+'</p>'+
+      '<div class="summary-metrics">'+items.map(x=>'<div class="summary-metric official-metric"><span>'+
+      escapeHTML(x.name)+'</span><strong>'+escapeHTML(x.value)+'</strong></div>').join('')+'</div>'+
+      '<p class="tier-locked-note">공식 학교정보에 한하여 표시합니다. 교사 개별응답과 주관식 답변은 포함하지 않습니다.</p>';
   }
   function summaryUI(){
     const box=$('approvedSummary');if(!box)return;
@@ -1343,7 +1373,7 @@
       showSchool(data,buildYears(id));publicYearDB(String(id));loadOfficial(String(id));$('schoolInput').value=data.school_name;
     }catch(e){console.warn(e);$('searchHelp').textContent='학교 정보를 조회하지 못했습니다.'}
   }
-  function showSchool(school,years){state.school=school;state.years=years;state.tier=0;state.requestedTier=0;state.reportSerial++;state.approvedSummary={};state.officialFacts=[];if(!state.demo)state.selected=years['2026']?.approved?2026:2025;state.mode='essential';state.q='';state.category='전체 영역';$('questionSearch').value='';$('welcome').hidden=true;$('mainContent').hidden=false;tierUI();render()}
+  function showSchool(school,years){state.school=school;state.years=years;state.tier=0;state.requestedTier=0;state.reportSerial++;state.approvedSummary={};state.officialFacts=[];state.officialCategories=[];if(!state.demo)state.selected=years['2026']?.approved?2026:2025;state.mode='essential';state.q='';state.category='전체 영역';$('questionSearch').value='';$('welcome').hidden=true;$('mainContent').hidden=false;tierUI();render()}
   function render(){if(!state.school)return;
     const s=state.school;
     $('schoolName').textContent=s.school_name||'학교명 미확인';
