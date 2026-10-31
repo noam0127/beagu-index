@@ -169,7 +169,6 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     loadSchools(true);
   }
 
-  const validHomepage = value => /^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:[/?#]|$)/i.test(String(value || '')) ? String(value) : null;
   const escapeHtml = value => String(value ?? '')
     .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
     .replaceAll('"','&quot;').replaceAll("'",'&#039;');
@@ -243,19 +242,10 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       return;
     }
     schools.forEach(school => {
-      const card=document.createElement('article');
-      card.className='school-card';
-      card.dataset.schoolId=String(school.school_id);
-      BeaguSchoolSearchCard.addHeader(card,school);
-      card.append(renderPercentiles(school));
-      const actions=document.createElement('div');
-      actions.className='school-actions';
-      const open=document.createElement('a');
-      open.className='school-button view-button';
-      open.textContent='🔍 연도별 상세 기록 보기';
-      open.href='school-report.html?school_id='+encodeURIComponent(String(school.school_id));
-      actions.append(open);
-      card.append(actions);
+      const {card}=BeaguSchoolSearchCard.createCard(school,{
+        level:0,
+        percentile:renderPercentiles(school)
+      });
       results.appendChild(card);
     });
   }
