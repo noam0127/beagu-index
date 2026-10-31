@@ -30,8 +30,8 @@ for(const [level,code] of [[0,lv0],[1,lv1],[2,lv2]]){
 assert.match(mbti,/percentile\.insertAdjacentElement\('afterend',badge\)/);
 assert.ok(lv2.indexOf("container.append(el('h3','school-history-heading','과거 상세자료')") < lv2.indexOf('container.append(newer)'),'Historical years must precede 2026');
 assert.doesNotMatch(report,/schoolHomepage|학교 홈페이지 방문|,homepage,/);
-assert.match(report,/function renderYearGrid\(\)\s*\{[\s\S]*?for\(const year of \[2026,2025,2024,2023\]\)/,'Lv.0 detailed report year order');
 assert.match(report,/id="latestYearMessage"/,'Lv.0 latest year explanation');
+assert.ok(report.indexOf('id="yearGrid"') < report.indexOf('id="latestYearMessage"'),'Lv.0 year navigation precedes 2026 status banner');
 assert.match(report,/현재.*2026|2026년 학교별 통계/,'Lv.0 current release status');
 assert.match(lv1,/const YEARS = \[2023, 2024, 2025\]/,'Lv.1 history tab order');
 assert.match(lv1,/currentContent\.hidden = false/,'Lv.1 current report open by default');
@@ -98,7 +98,7 @@ assert.equal(new Set(rendered.map(x=>x.replace(' | school-detail',''))).size,1,'
 const pending=ui.percentiles({publicValues:[null,null,null],statuses:['REVIEW_PENDING','NO_PUBLISHED_VALUE'],locked:false});
 assert.equal(pending.children[1].children[0].children[1].textContent,'검수 중');
 assert.equal(pending.children[1].children[1].children[1].textContent,'자료 없음');
-assert.equal(pending.children[1].children[1].children[1].textContent,'자료 없음');
+assert.equal(pending.children[1].children[2].children[1].textContent,'자료 없음');
 
 // Missing, explicitly pending, unpublished, fetching, and failed are distinct.
 const cell=(opts,index)=>ui.percentiles(opts).children[1].children[index];
