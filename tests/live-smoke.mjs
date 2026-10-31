@@ -7,7 +7,7 @@
  */
 import { readFile, access } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { runInNewContext } from 'node:vm';
+import { runInNewContext, Script } from 'node:vm';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const ORIGIN = (process.env.BEAGU_ORIGIN || 'https://baeguindex.com').replace(/\/$/, '');
@@ -46,6 +46,7 @@ async function main() {
     'index.html', 'search-lv1.html', 'search-lv2.html', 'school-report.html',
     'js/master-percentiles-v1.2.js', 'js/visit-stats.js',
     'js/level-search.js', 'js/lv2-edited-search.js',
+    'js/school-mbti-v1.js', 'styles/school-mbti-v1.css',
     'lv2-edited-column-schema.json', 'data/public-lv0-percentiles-v1.2.json'
   ];
   const responses = new Map();
@@ -80,11 +81,20 @@ async function main() {
   const level1 = responses.get('js/level-search.js')||'';
   const level2 = responses.get('js/lv2-edited-search.js')||'';
   const visitStats = responses.get('js/visit-stats.js')||'';
+  const mbtiJS = responses.get('js/school-mbti-v1.js')||'';
   check('Lv.1·Lv.2·학교상세 방문집계 페이지명 유효화',
     visitStats.includes("'search-lv1','search-lv2','school-report','statistics'") &&
     visitStats.includes("page = ['index','search','result','survey','challenge']"));
   check('홈에서 Lv.1·Lv.2로 연결', home.includes('search-lv1.html') && home.includes('search-lv2.html'));
   check('두 HTML의 JS 연결', html1.includes('js/level-search.js') && html2.includes('js/lv2-edited-search.js'));
+  check('학교 MBTI Lv.1·Lv.2 공통 자산 연결',
+    [html1,html2].every(h=>h.includes('js/school-mbti-v1.js')&&h.includes('styles/school-mbti-v1.css')) &&
+    level1.includes('BeaguSchoolMBTI.createDetail') && level2.includes('BeaguSchoolMBTI.createDetail') &&
+    mbtiJS.includes('beagu-school-culture-v1'));
+  for (const file of ['js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js']) {
+    try { new Script(responses.get(file)||''); check('JS 문법 검증: '+file,true); }
+    catch(e) { check('JS 문법 검증: '+file,false,e.message); }
+  }
   check('Lv.1 승인 통계 전용 코드', level1.includes('beagu-level-api') && level1.includes('summary?.metrics') && level1.includes('2025'));
   const report = responses.get('school-report.html')||'';
   check('상세화면에 학교수치 직접 REST 조회 없음',
@@ -146,6 +156,7 @@ async function main() {
       ['Lv.1 verify 미인증 차단','beagu-level-api',{action:'verify'}],
       ['Lv.1 school 미인증 차단','beagu-level-api',{action:'school',schoolId:'0000000'}],
       ['Lv.2 school 미인증 차단','beagu-edited-api-v1',{action:'school',schoolId:'0000000'}],
+      ['Lv.1 이상 학교 MBTI 미인증 차단','beagu-school-culture-v1',{action:'batch',schoolIds:['0000000']}],
     ];
     for (const [name,fn,body] of unauthorized) {
       try {
