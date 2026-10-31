@@ -118,7 +118,7 @@ assert.match(sql,/max\(p\.participant_no\)/);
 assert.match(sql,/ALTER TABLE public\.school_search_events ENABLE ROW LEVEL SECURITY/);
 assert.match(sql,/REVOKE ALL ON public\.school_search_events FROM PUBLIC,anon,authenticated/);
 assert.match(sql,/UNIQUE\(action_id,event_type\)/);
-assert.match(sql,/SET search_path = ''/);
+assert.match(sql,/SET search_path (?:=|TO) ''/);
 assert.match(sql,/school_search_limits/);
 assert.match(sql,/school-report/);
 assert.doesNotMatch(sql,/GRANT\s+SELECT\s+ON\s+public\.school_search_events\s+TO\s+anon/i);
