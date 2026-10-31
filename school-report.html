@@ -1044,7 +1044,8 @@
       ]);
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
       const allowedNumeric=new Set([
-        'students','teachers','vice_principals','lead_teachers','classrooms',
+        'students','teachers','classes','students_per_class','admin_employees','school_employees',
+        'vice_principals','lead_teachers','classrooms',
         'gym_spaces','cafeterias','teacher_support_spaces','land_area','playground_area'
       ]);
       const allowedCategory={
