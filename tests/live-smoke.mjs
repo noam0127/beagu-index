@@ -43,10 +43,11 @@ async function main() {
 
   // 사이트의 실제 캐시/배포 파일이 GitHub 체크아웃 버전과 일치하는지 검사.
   const assets = [
-    'index.html', 'search-lv1.html', 'search-lv2.html', 'school-report.html',
+    'index.html', 'search.html', 'search-lv1.html', 'search-lv2.html', 'school-report.html',
     'js/master-percentiles-v1.2.js', 'js/visit-stats.js',
     'js/level-search.js', 'js/lv2-edited-search.js',
     'js/school-mbti-v1.js', 'styles/school-mbti-v1.css',
+    'js/school-search-card-v1.js', 'styles/school-search-card-v1.css',
     'lv2-edited-column-schema.json', 'data/public-lv0-percentiles-v1.2.json'
   ];
   const responses = new Map();
@@ -75,6 +76,8 @@ async function main() {
     } catch (e) { check(`배포 자산 일치: ${relative}`, false, e.message); }
   }
 
+  const report = responses.get('school-report.html')||'';
+  const html0 = responses.get('search.html')||'';
   const html1 = responses.get('search-lv1.html')||'';
   const html2 = responses.get('search-lv2.html')||'';
   const home = responses.get('index.html')||'';
@@ -85,6 +88,12 @@ async function main() {
   check('Lv.1·Lv.2·학교상세 방문집계 페이지명 유효화',
     visitStats.includes("'search-lv1','search-lv2','school-report','statistics'") &&
     visitStats.includes("page = ['index','search','result','survey','challenge']"));
+  check('Lv.0·Lv.1·Lv.2 공통 학교검색 카드 연결',
+    [html0,html1,html2].every(h=>h.includes('js/school-search-card-v1.js') && h.includes('styles/school-search-card-v1.css')) &&
+    (responses.get('js/level-search.js')||'').includes('BeaguSchoolSearchCard.addHeader') &&
+    (responses.get('js/lv2-edited-search.js')||'').includes('BeaguSchoolSearchCard.addHeader'));
+  check('학교 홈페이지 링크가 검색 결과에서 제거됨',
+    ![html0,html1,html2,level1,level2,report].some(h=>h.includes('🌐 학교 홈페이지')));
   check('홈에서 Lv.1·Lv.2로 연결', home.includes('search-lv1.html') && home.includes('search-lv2.html'));
   check('두 HTML의 JS 연결', html1.includes('js/level-search.js') && html2.includes('js/lv2-edited-search.js'));
   check('학교 MBTI Lv.1·Lv.2 공통 자산 연결',
@@ -96,7 +105,6 @@ async function main() {
     catch(e) { check('JS 문법 검증: '+file,false,e.message); }
   }
   check('Lv.1 승인 통계 전용 코드', level1.includes('beagu-level-api') && level1.includes('summary?.metrics') && level1.includes('2025'));
-  const report = responses.get('school-report.html')||'';
   check('상세화면에 학교수치 직접 REST 조회 없음',
     report.includes('beagu-level-api') &&
     !report.includes("from('beagu_school_report_official_facts')") &&
