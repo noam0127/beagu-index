@@ -135,6 +135,10 @@ $('regionTab').addEventListener('click',()=>modeTo('region'));
 $('searchInput').addEventListener('input',()=>{
  clearTimeout(debounce);debounce=setTimeout(()=>search(true),250);
 });
+$('searchInput').addEventListener('keydown',event=>{
+ if(event.key!=='Enter'||event.isComposing||!$('searchInput').value.trim())return;
+ event.preventDefault();clearTimeout(debounce);void search(true,true);
+});
 $('regionSelect').addEventListener('change',()=>{
  const region=$('regionSelect').value,o=$('officeSelect');
  o.replaceChildren(new Option(region?'전체 교육지원청':'시도를 먼저 선택하세요',''));
@@ -320,16 +324,20 @@ function render(results,total){
    percentile:percentilePanel(s)
   });
   let loaded=false,loading=false;
-  open.addEventListener('click',async()=>{
+  open.addEventListener('click',async event=>{
    if(!detail.hidden){
     detail.hidden=true;open.textContent='🔍 연도별 상세 기록 보기';
     open.setAttribute('aria-expanded','false');return;
    }
+   const action=window.BeaguSearchTelemetry?.selected(String(s.school_id),2,'search-lv2',event);
    detail.hidden=false;open.textContent='상세보기 접기';
    open.setAttribute('aria-expanded','true');
    if(loaded||loading)return;
    loading=true;detail.replaceChildren(el('div','pending','승인된 연도별 자료를 불러오는 중…'));
-   try{loaded=await showDetail(detail,s);}finally{loading=false;}
+   try{
+    loaded=await showDetail(detail,s);
+    if(loaded&&action)window.BeaguSearchTelemetry?.detailViewed(String(s.school_id),2,'search-lv2',action);
+   }finally{loading=false;}
   });
   host.append(card);
   // A unique school search should show its approved details without an extra click.
@@ -338,7 +346,7 @@ function render(results,total){
  renderPagePercentiles(results,serial);
  if(window.BeaguSchoolMBTI)void BeaguSchoolMBTI.decorateCards(host,token);
 }
-async function search(reset){
+async function search(reset,explicitEnter=false){
  if(reset)page=0;
  const q=mode==='school'?$('searchInput').value.trim():'';
  const region=mode==='region'?$('regionSelect').value:'';
@@ -359,7 +367,10 @@ async function search(reset){
   const start=page*LIMIT;
   const {data,count,error}=await query.order('address',{ascending:true,nullsFirst:false})
    .order('school_name',{ascending:true}).range(start,start+LIMIT-1);
-  if(t!==serial)return;if(error)throw error;render(data||[],count||0);
+  if(t!==serial)return;if(error)throw error;
+  if(explicitEnter&&q&&count===1&&Array.isArray(data)&&data.length===1)
+   window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),2,'search-lv2');
+  render(data||[],count||0);
  }catch(e){
   if(t!==serial)return;console.error(e);$('resultCount').textContent='';
   $('results').replaceChildren(el('div','pending','학교 검색에 실패했습니다.'));
