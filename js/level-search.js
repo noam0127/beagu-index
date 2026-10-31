@@ -44,7 +44,8 @@
     if (value !== undefined) node.textContent = String(value);
     return node;
   };
-  let publicIndex = new Map(), publicStaticAvailable = false;
+  let publicIndex = new Map(), publicStaticAvailable = false, publicLoadError = false;
+  let current2026 = new Map();
   const loaded = fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025', {cache:'force-cache'})
     .then(r => { if (!r.ok) throw new Error('PUBLIC_DATA_UNAVAILABLE'); return r.json(); })
     .then(data => { publicIndex = BeaguPublic.buildIndex(data); publicStaticAvailable = true; })
@@ -60,14 +61,17 @@
       .eq('publication_status','PUBLISHED').in('survey_year',[2023,2024,2025]).limit(100);
     if(error) throw error;
     for(const id of ids) {
-      const values=[null,null,null];
+      const values=[null,null,null],statuses=['NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE'];
       for(const row of data||[]) {
         if(String(row.school_id)!==id || row.percentile===null) continue;
         const i=[2023,2024,2025].indexOf(Number(row.survey_year)),n=Number(row.percentile);
-        if(i>=0 && Number.isFinite(n) && n>=0 && n<=100) values[i]=n;
+        if(i>=0 && Number.isFinite(n) && n>=0 && n<=100){
+          values[i]=n;statuses[i]='EXISTING_PUBLIC_VALUE_PRESERVED';
+        }
       }
-      publicIndex.set(id,{percentiles:values});
+      publicIndex.set(id,{percentiles:values,statuses});
     }
+    publicLoadError=false;
   }
 
   function loggedOut(message = '') {
@@ -229,31 +233,47 @@
     return null;
   }
   function metricValue(m) { return String(m.value)+(m.unit && !String(m.value).endsWith(m.unit) ? m.unit : ''); }
-  function percentilePanel(school,v26=null) {
-    const index=publicIndex.get(String(school.school_id));
+  function percentilePanel(school) {
+    const id=String(school.school_id);
+    const index=publicIndex.get(id),current=current2026.get(id);
     return BeaguSchoolSearchCard.percentiles({
       publicValues:asPublicPercentiles(school),
       statuses:index?.statuses || [],
-      publicError:!publicStaticAvailable && publicIndex.size===0,
-      value2026:v26,
+      publicError:publicLoadError,
+      value2026:current?.value ?? null,
+      status2026:current?.status || 'loading',
       locked:false
     });
   }
   function loadPagePercentiles(list,requestId){
-    const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^\d{7}$/.test(id)))];
+    const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^\\d{7}$/.test(id)))];
     if(!ids.length)return;
-    api('percentiles',{schoolIds:ids}).then(result=>{
+    const refresh=()=>{
       if(serial!==requestId)return;
       for(const school of list){
-        const id=String(school.school_id),n=result.values?.[id];
-        if(typeof n!=='number'||!Number.isFinite(n)||n<0||n>100)continue;
+        const id=String(school.school_id);
         for(const card of $('results').querySelectorAll('.school-card')){
           if(card.dataset.schoolId!==id)continue;
           const old=card.querySelector('.percentile-panel');
-          if(old)old.replaceWith(percentilePanel(school,n));break;
+          if(old)old.replaceWith(percentilePanel(school));
+          break;
         }
       }
-    }).catch(err=>{if(err.unauthorized&&serial===requestId)loggedOut('인증이 만료되었습니다. 다시 로그인하세요.');});
+    };
+    api('percentiles',{schoolIds:ids}).then(result=>{
+      if(serial!==requestId)return;
+      for(const id of ids){
+        const n=result.values?.[id];
+        current2026.set(id,typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100
+          ?{status:'published',value:n}:{status:'unpublished'});
+      }
+      refresh();
+    }).catch(err=>{
+      if(serial!==requestId)return;
+      if(err.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인하세요.');return;}
+      for(const id of ids)current2026.set(id,{status:'error'});
+      refresh();
+    });
   }
   function showDetails(host, rows, school) {
     host.replaceChildren();
@@ -272,7 +292,7 @@
       currentContent.append(make('h3', '', '2026년 배구지수'));
       const metrics = metrics2026(rows);
       if (!metrics.length) {
-        currentContent.append(make('p', 'detail-note', '2026년 공개 승인 통계가 아직 준비되지 않았습니다.'));
+        currentContent.append(make('p', 'detail-note', '미공개 · 2026년 승인된 학교별 통계가 없습니다.'));
       } else {
         for (const metric of metrics) addRow(currentContent, metric.label, metricValue(metric));
       }
@@ -355,6 +375,7 @@
   }
 
   function render(list, total) {
+    current2026=new Map();
     const host = $('results'); host.replaceChildren();
     const pages = Math.ceil(total / LIMIT);
     $('resultCount').textContent = `검색 결과 ${total.toLocaleString()}개${pages > 1 ? ` · ${page * LIMIT + 1}~${page * LIMIT + list.length}번째` : ''}`;
@@ -425,7 +446,7 @@
       if (request !== serial) return;
       if(!publicStaticAvailable) {
         try { await recoverPublicIndex(data||[]); }
-        catch(e){ console.warn('Lv.1 백분위 DB 재조회 실패',e); }
+        catch(e){ publicLoadError=true; console.warn('Lv.1 백분위 DB 재조회 실패',e); }
       }
       if (request !== serial) return;
       render(data || [], count || 0);
