@@ -12,7 +12,7 @@
   let session = sessionStorage.getItem(key) || '';
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
-  const YEARS = [2023, 2024, 2025];
+  const YEARS = [2025, 2024, 2023];
   const offices = {
     '서울':'강남서초 강동송파 강서양천 남부 동부 동작관악 북부 서부 성동광진 성북강북 중부',
     '부산':'남부 동래 북부 서부 해운대',
@@ -259,6 +259,30 @@
     host.replaceChildren();
     const section=make('section','detail');
     const vals=asPublicPercentiles(school);
+    // Latest year is visible first; historical school facts follow below.
+    const newer = make('button', 'year-2026-button', '2026년 최신 조사 · 결과 보기');
+    newer.type = 'button';
+    newer.setAttribute('aria-expanded', 'true');
+    const currentContent = make('div', 'year-2026-content');
+    currentContent.hidden = false;
+    function render2026() {
+      currentContent.replaceChildren();
+      currentContent.append(make('h3', '', '2026년 배구지수'));
+      const metrics = metrics2026(rows);
+      if (!metrics.length) {
+        currentContent.append(make('p', 'detail-note', '2026년 공개 승인 통계가 아직 준비되지 않았습니다.'));
+      } else {
+        for (const metric of metrics) addRow(currentContent, metric.label, metricValue(metric));
+      }
+    }
+    render2026();
+    newer.addEventListener('click', () => {
+      currentContent.hidden = !currentContent.hidden;
+      newer.setAttribute('aria-expanded', String(!currentContent.hidden));
+    });
+    section.append(newer, currentContent);
+    if (window.BeaguSchoolMBTI) section.append(BeaguSchoolMBTI.createDetail(String(school.school_id), session));
+    section.append(make('h3','school-history-heading','학교 기본정보 · 이전 연도 기준'));
     const profile = make('section', 'school-profile');
     profile.append(make('h3', '', '학교 기본정보'));
     for (const [label, value] of [
@@ -290,29 +314,9 @@
     }
     if (!factsShown) facts.append(make('p', 'detail-note', '이 학교의 추가 승인 규모정보는 아직 없습니다. 과거 백분위는 아래에서 확인할 수 있습니다.'));
     section.append(facts);
-    if (window.BeaguSchoolMBTI) section.append(BeaguSchoolMBTI.createDetail(String(school.school_id), session));
 
-    const newer = make('button', 'year-2026-button', '2026년 상세보기');
-    newer.type = 'button';
-    newer.setAttribute('aria-expanded', 'false');
-    const currentContent = make('div', 'year-2026-content');
-    currentContent.hidden = true;
-    function render2026() {
-      currentContent.replaceChildren();
-      currentContent.append(make('h3', '', '2026년 배구지수'));
-      const metrics = metrics2026(rows);
-      if (!metrics.length) {
-        currentContent.append(make('p', 'detail-note', '2026년 공개 승인 통계가 아직 준비되지 않았습니다.'));
-      } else {
-        for (const metric of metrics) addRow(currentContent, metric.label, metricValue(metric));
-      }
-    }
-    render2026();
-    newer.addEventListener('click', () => {
-      currentContent.hidden = !currentContent.hidden;
-      newer.setAttribute('aria-expanded', String(!currentContent.hidden));
-    });
-    section.append(newer, currentContent);
+
+
 
     section.append(make('h3', 'school-history-heading', '과거 상세자료'));
     const tabs = make('div', 'year-tabs');
