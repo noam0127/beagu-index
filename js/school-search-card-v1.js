@@ -39,7 +39,7 @@
    [STATES.REVIEW]:'검수 중',
    [STATES.UNPUBLISHED]:'미공개',
    [STATES.ERROR]:'불러오기 실패',
-   [STATES.LOCKED]:'🔒 Lv.1 이상',
+   [STATES.LOCKED]:'🔒 Lv.1+ 승인 시',
    [STATES.LOADING]:'확인 중'
   })[state]||'자료 없음';
  }
