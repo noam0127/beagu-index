@@ -29,7 +29,8 @@
   section.setAttribute('aria-label','연도별 배구지수 백분위');
   section.append(el('h3','percentile-heading','연도별 배구지수 백분위'));
   const grid=el('div','percentile-grid');
-  for(let i=0;i<4;i++){
+  // Cards prioritize the newest school survey, while the graph stays chronological.
+  for(const i of [3,2,1,0]){
    const year=2023+i;
    const cell=el('div','percentile-cell'+(year===2026&&locked?' percentile-locked':''));
    cell.dataset.year=String(year);
@@ -51,7 +52,7 @@
   }
   const notes=el('ul','percentile-notes');
   [
-   '연도별 문항·참여 학교와 산정 방식이 달라 단순 비교에 주의해 주세요.',
+   '연도별 문항·참여 학교와 산정 방식이 달라 단순 비교에 주의해 주세요. 카드는 최신순, 그래프는 시간순으로 표시됩니다.',
    '2025년 백분위는 8개 영역 종합값을 조사 비교집단 1,458개교와 비교해 재산출했습니다. 99%는 비교집단 상위 약 1%입니다.',
    '검수 중인 자료는 공개 승인 이후 제공됩니다.'
   ].forEach(s=>notes.append(el('li','percentile-note',s)));
