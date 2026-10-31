@@ -1,0 +1,22 @@
+/* Shared design for all three Beagu search-result levels, based on Lv.0. */
+.school-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 3px 14px rgba(0,0,0,.05);min-width:0}
+.school-card .region-badge{display:inline-block;margin-bottom:10px;padding:5px 9px;border-radius:999px;background:#eef2ff;color:#2563eb;font-size:12px;font-weight:700}
+.school-card .school-name{font-size:18px;font-weight:700;margin-bottom:8px;overflow-wrap:anywhere}
+.school-card .school-meta{font-size:14px;color:#666;line-height:1.6;overflow-wrap:anywhere;word-break:keep-all}
+.school-card .percentile-panel{margin:16px 0 18px;padding:0;border:0;background:transparent}
+.school-card .percentile-heading{font-size:12px!important;line-height:1.6!important;color:#64748b!important;font-weight:600!important;margin:0 0 8px!important}
+.school-card .percentile-grid,.school-card .percentiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0 8px}
+.school-card .percentile-cell{min-width:0;padding:12px 4px;background:#f1f5f9;border-radius:10px;text-align:center}
+.school-card .percentile-year{display:block;font-size:12px;color:#64748b;margin-bottom:6px}
+.school-card .percentile-value{display:block;font-size:clamp(12px,2.1vw,16px);font-weight:700;color:#1e40af;overflow-wrap:anywhere}
+.school-card .percentile-cell.percentile-locked{background:#eaf0fb;border:1px solid #d2def4}
+.school-card .percentile-cell.percentile-locked .percentile-value{color:#47658d;font-weight:700}
+.school-card .percentile-graph{margin:10px 0 4px;max-width:100%}
+.school-card .percentile-graph svg{max-width:100%;height:auto}
+.school-card .percentile-notes{padding-left:20px;margin:10px 0}
+.school-card .percentile-note{font-size:12px;color:#64748b;line-height:1.6;margin:6px 0}
+.school-card .school-actions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:16px}
+.school-card .view-button{display:flex;width:100%;min-height:45px;align-items:center;justify-content:center;border:0;border-radius:10px;padding:13px 10px;background:#2563eb;color:#fff;text-decoration:none;text-align:center;font:inherit;font-size:14px;font-weight:700;line-height:1.5;cursor:pointer}
+.school-card .view-button:hover{background:#1d4ed8}
+.school-card .view-button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+@media(max-width:480px){.school-card{padding:16px}.school-card .percentile-grid,.school-card .percentiles{grid-template-columns:repeat(2,minmax(0,1fr))}.school-card .percentile-value{font-size:15px}}
