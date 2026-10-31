@@ -44,6 +44,13 @@
 .official-metric strong{color:#133267;font-variant-numeric:tabular-nums}
 .approved-subheading{font-size:13px;font-weight:750;color:#475569;margin:15px 0 8px}
 .approved-summary .summary-metrics+.approved-subheading{margin-top:20px}
+/* Latest public 2026 status is shown before older-year navigation. No raw responses. */
+.latest-year-status{border:1px solid #dbeafe;background:#f6f9ff;border-radius:16px;padding:17px 20px;margin:0 0 18px;display:flex;align-items:flex-start;gap:15px;flex-wrap:wrap}
+.latest-year-status strong{font-size:15px;color:#1e3a8a}
+.latest-year-status p{margin:3px 0 0;font-size:13px;color:#52627e;line-height:1.65}
+.year-card.latest-year{background:#f2f7ff;border-color:#bcd1fb}
+.year-card.latest-year .year-label:after{content:'최신';font-size:10px;letter-spacing:0;color:#1d4ed8;background:#dbeafe;border-radius:6px;padding:2px 6px;margin-left:auto}
+@media(max-width:580px){.latest-year-status{padding:14px}.latest-year-status strong{font-size:14px}.year-card.latest-year .year-label:after{font-size:9px;padding:1px 4px}}
 </style>
 </head>
 <body>
@@ -54,6 +61,9 @@
   <div class="main-content" id="mainContent" hidden>
     <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a href="search.html" class="change-school">다른 학교 찾기 ↗</a></div></section>
     <section class="tier-panel" id="tierPanel" aria-label="등급별 열람"><h3>열람 범위 선택</h3><p>공개 자료와 참여자·교사 승인 자료를 구분합니다. 잠긴 항목은 데이터 자체를 내려받지 않습니다.</p><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong><span>학교정보 · 연도별 백분위</span></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자 🔒</strong><span>인증된 승인 요약</span></button><button class="tier-button" id="tier2" type="button" aria-pressed="false"><strong>Lv.2 교사 🔒</strong><span>인증된 승인 상세</span></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">인증하기</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div><p class="tier-privacy-note">※ 일부 문항은 Lv.2라도 표본·개인정보 보호 심사를 통과하기 전까지 공개되지 않습니다. 2026년 Q51 자유서술은 전 등급 비공개입니다.</p></section>
+    <section class="latest-year-status" aria-label="2026년 최신 조사 공개 상태">
+      <div><strong>2026년 최신 조사</strong><p id="latestYearMessage" aria-live="polite">2026년 학교별 공개 승인 상태를 확인 중입니다.</p></div>
+    </section>
     <section class="year-overview" aria-label="연도별 조사 기록"><div class="section-top"><div><h3>연도별 기록</h3><p>카드를 누르면 해당 연도의 조사 내용을 볼 수 있습니다.</p></div><button class="outline-btn" id="comparisonHelp" type="button">비교 시 유의사항 <span aria-hidden="true">ⓘ</span></button></div><div class="year-grid" id="yearGrid" role="tablist" aria-label="연도 선택"></div><p class="chart-disclaimer">연도별 문항·척도·참여 학교가 달라 숫자를 하나의 연속 점수처럼 비교하지 않습니다.</p></section>
     <section class="report-body"><div class="report-title"><div><p class="eyebrow" id="reportSubtitle">2026 REPORT</p><h3 id="reportHeading">2026년 조사 결과</h3><p class="report-description" id="reportDescription"></p></div><span class="data-status" id="dataStatus">자료 확인 중</span></div>
       <div class="metric-row" id="metricRow"></div>
@@ -1094,7 +1104,7 @@
         .select('survey_year,question_id,question_label,section_label,sort_order').eq('verified',true).order('sort_order').limit(200);
       if(r.error||!r.data||r.data.length!==128)return;
       const years={};
-      for(const year of [2023,2024,2025,2026]){
+      for(const year of [2026,2025,2024,2023]){
         const rows=r.data.filter(x=>Number(x.survey_year)===year);
         if(rows.length!==({2023:14,2024:14,2025:50,2026:50})[year])return;
         years[String(year)]={items:rows.map(x=>({id:x.question_id,label:x.question_label,group:x.section_label})),groups:[...new Set(rows.map(x=>x.section_label))]};
@@ -1327,7 +1337,7 @@
       showSchool(data,buildYears(id));publicYearDB(String(id));$('schoolInput').value=data.school_name;
     }catch(e){console.warn(e);$('searchHelp').textContent='학교 정보를 조회하지 못했습니다.'}
   }
-  function showSchool(school,years){state.school=school;state.years=years;state.tier=0;state.requestedTier=0;state.reportSerial++;state.approvedSummary={};state.officialFacts=[];state.officialCategories=[];if(!state.demo)state.selected=years['2026']?.approved?2026:2025;state.mode='essential';state.q='';state.category='전체 영역';$('questionSearch').value='';$('welcome').hidden=true;$('mainContent').hidden=false;tierUI();render()}
+  function showSchool(school,years){state.school=school;state.years=years;state.tier=0;state.requestedTier=0;state.reportSerial++;state.approvedSummary={};state.officialFacts=[];state.officialCategories=[];if(!state.demo)state.selected=[2026,2025,2024,2023].find(y=>years[String(y)]?.approved||num(years[String(y)]?.percentile)!==null)||2026;state.mode='essential';state.q='';state.category='전체 영역';$('questionSearch').value='';$('welcome').hidden=true;$('mainContent').hidden=false;tierUI();render()}
   function render(){if(!state.school)return;
     const s=state.school;
     $('schoolName').textContent=s.school_name||'학교명 미확인';
@@ -1336,13 +1346,20 @@
     $('schoolOffice').textContent=s.support_office||'지원청 정보 없음';
     $('schoolType').textContent=s.establishment||'설립구분 정보 없음';
     tierUI();
+    const current=yearData(2026);
+    const latestMessage=$('latestYearMessage');
+    latestMessage.textContent=state.demo
+      ? '가상 자료 미리보기이며, 실제 2026년 학교별 응답이나 승인 결과가 아닙니다.'
+      : current.approved
+        ? '2026년 공개 승인 자료를 확인할 수 있습니다. 아래 2026년 카드를 선택하세요.'
+        : '2026년 학교별 통계는 아직 공개 승인되지 않았습니다. 아래의 과거 승인 기록은 계속 열람할 수 있습니다.';
     renderYearGrid();renderYearBody();
   }
   function renderYearGrid(){
     const el=$('yearGrid');el.replaceChildren();
     for(const year of [2023,2024,2025,2026]){
       const obj=yearData(year),p=num(obj.percentile);
-      const card=document.createElement('button');card.type='button';card.className='year-card';card.setAttribute('role','tab');card.setAttribute('aria-selected',String(year===state.selected));
+      const card=document.createElement('button');card.type='button';card.className='year-card'+(year===2026?' latest-year':'');card.setAttribute('role','tab');card.setAttribute('aria-selected',String(year===state.selected));
       let label=p!==null&&p>=0&&p<=100?`${p.toFixed(1)}%`:(year===2026?'집계 준비 중':'자료 없음');
       card.innerHTML=`<span class="year-label">${year}<span class="year-arrow">${year===state.selected?'●':'↗'}</span></span><span class="metric-text ${p===null?'empty-metric':''}">${escapeHTML(label)}</span><span class="metric-caption">${p===null?'승인된 백분위 없음':year===2025?'2025 종합값의 전국 상대위치':'해당 연도 공개 백분위'}</span>`;
       card.addEventListener('click',()=>{state.selected=year;state.category='전체 영역';state.q='';$('questionSearch').value='';render();const u=new URL(location.href);u.searchParams.set('year',String(year));history.replaceState({},'',u)});
