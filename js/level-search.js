@@ -12,7 +12,7 @@
   let session = sessionStorage.getItem(key) || '';
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
-  const YEARS = [2025, 2024, 2023];
+  const YEARS = [2023, 2024, 2025];
   const offices = {
     '서울':'강남서초 강동송파 강서양천 남부 동부 동작관악 북부 서부 성동광진 성북강북 중부',
     '부산':'남부 동래 북부 서부 해운대',
