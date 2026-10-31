@@ -22,7 +22,7 @@
   const visitor=window.beaguVisitor;
   if(!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(String(visitor||'')))
     return false;
-  if(!window.supabaseClient||typeof supabaseClient.rpc!=='function')return false;
+  if(typeof supabaseClient==='undefined'||typeof supabaseClient.rpc!=='function')return false;
   try{
    void supabaseClient.rpc('beagu_log_school_search',{
     p_school_id:schoolId,p_event_type:type,p_viewer_level:level,
