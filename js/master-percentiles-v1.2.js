@@ -4,7 +4,7 @@
   const valid = v => typeof v==='number' && Number.isFinite(v) && v>=0 && v<=100;
   const allowed = new Set(['VERIFIED_LEGACY_RESTORATION','EXISTING_PUBLIC_VALUE_PRESERVED','NO_PUBLISHED_VALUE','REVIEW_PENDING']);
   function buildIndex(data){
-    if(data?.data_version!=='public-lv0-20261027-v1.2' || data.publication_status!=='LV0_EXISTING_PUBLIC_SCOPE' || !Array.isArray(data.rows)) throw new Error('Unsupported public data');
+    if(!['public-lv0-20261027-v1.2','public-lv0-20261031-v1.3-empirical-2025'].includes(data?.data_version) || data.publication_status!=='LV0_EXISTING_PUBLIC_SCOPE' || !Array.isArray(data.rows)) throw new Error('Unsupported public data');
     const index=new Map();
     for(const row of data.rows){
       if(typeof row.school_id!=='string' || !/^\d{7}$/.test(row.school_id) || index.has(row.school_id)) throw new Error('Invalid school identity');
