@@ -9,7 +9,7 @@ for(const path of pages){
  const html=read(path);
  assert.match(html,/styles\/school-search-card-v1\.css/,path+' missing shared CSS');
  assert.match(html,/js\/school-search-card-v1\.js/,path+' missing shared component');
- assert.match(html,/v=20261031-unify3/,path+' stale shared script URL');
+ assert.match(html,/v=20261031-current3/,path+' stale shared script URL');
  assert.doesNotMatch(html,/학교 홈페이지 방문|🌐 학교 홈페이지/,path+' displays unnecessary homepage');
  const lines=html.match(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)||[];
  for(const block of lines){
@@ -30,11 +30,12 @@ for(const [level,code] of [[0,lv0],[1,lv1],[2,lv2]]){
 assert.match(mbti,/percentile\.insertAdjacentElement\('afterend',badge\)/);
 assert.ok(lv2.indexOf('container.append(newer)') < lv2.indexOf("container.append(el('h3','school-history-heading','과거 상세자료')"),'2026 must precede history');
 assert.doesNotMatch(report,/schoolHomepage|학교 홈페이지 방문|,homepage,/);
-assert.match(report,/for\(const year of \[2026,2025,2024,2023\]\)/,'Lv.0 detailed report year order');
+assert.match(report,/function renderYearGrid\(\)\s*\{[\s\S]*?for\(const year of \[2026,2025,2024,2023\]\)/,'Lv.0 detailed report year order');
 assert.match(report,/id="latestYearMessage"/,'Lv.0 latest year explanation');
 assert.match(report,/현재.*2026|2026년 학교별 통계/,'Lv.0 current release status');
 assert.match(lv1,/const YEARS = \[2025, 2024, 2023\]/,'Lv.1 history tab order');
 assert.match(lv1,/currentContent\.hidden = false/,'Lv.1 current report open by default');
+assert.match(lv1,/newer\.setAttribute\('aria-controls',currentContent\.id\)/,'Lv.1 2026 panel accessible');
 assert.ok(lv1.indexOf("const newer = make('button'") < lv1.indexOf("const profile = make('section'"),'Lv.1 2026 must precede old school facts');
 assert.ok(lv1.indexOf('section.append(newer, currentContent)') < lv1.indexOf('BeaguSchoolMBTI.createDetail'),'Lv.1 2026 report before MBTI');
 assert.match(lv2,/const years=\[2025,2024,2023\]/,'Lv.2 history tab order');
@@ -102,4 +103,4 @@ const sync=read('scripts/beagu-2026-mbti-review-sync.gs');
 assert.match(sync,/1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4/);
 assert.match(sync,/2026-11-01/);
 assert.doesNotMatch(sync,/\.from\('beagu_release_metrics_v2'\)/);
-console.log('PASS: 3-tier canonical DOM, accessibility, states, no homepage, privacy gate, current 2026 source');
+console.log('PASS: 2026-first Lv.0/Lv.1/Lv.2 cards and details, reverse history, shared UI, privacy');
