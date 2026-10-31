@@ -44,6 +44,7 @@ async function main() {
   // 사이트의 실제 캐시/배포 파일이 GitHub 체크아웃 버전과 일치하는지 검사.
   const assets = [
     'index.html', 'search-lv1.html', 'search-lv2.html', 'school-report.html',
+    'js/master-percentiles-v1.2.js', 'js/visit-stats.js',
     'js/level-search.js', 'js/lv2-edited-search.js',
     'lv2-edited-column-schema.json', 'data/public-lv0-percentiles-v1.2.json'
   ];
@@ -78,6 +79,10 @@ async function main() {
   const home = responses.get('index.html')||'';
   const level1 = responses.get('js/level-search.js')||'';
   const level2 = responses.get('js/lv2-edited-search.js')||'';
+  const visitStats = responses.get('js/visit-stats.js')||'';
+  check('Lv.1·Lv.2·학교상세 방문집계 페이지명 유효화',
+    visitStats.includes("'search-lv1','search-lv2','school-report','statistics'") &&
+    visitStats.includes("page = ['index','search','result','survey','challenge']"));
   check('홈에서 Lv.1·Lv.2로 연결', home.includes('search-lv1.html') && home.includes('search-lv2.html'));
   check('두 HTML의 JS 연결', html1.includes('js/level-search.js') && html2.includes('js/lv2-edited-search.js'));
   check('Lv.1 승인 통계 전용 코드', level1.includes('beagu-level-api') && level1.includes('summary?.metrics') && level1.includes('2025'));
