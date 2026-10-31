@@ -69,7 +69,7 @@
   </div>
   <section class="welcome" id="welcome"><div class="welcome-icon">🏫</div><h2>어떤 학교가 궁금하신가요?</h2><p>학교명을 입력하면 공개된 연도별 기록을 확인할 수 있습니다.<br>데이터가 없을 때는 ‘자료 없음’으로 분명하게 표시합니다.</p><a href="?demo=1" class="demo-link">가상 학교로 UI 미리보기 →</a><p class="demo-note">미리보기의 모든 숫자와 응답은 실제 학교자료가 아닙니다.</p></section>
 </main>
-<dialog id="infoDialog" class="info-dialog" aria-labelledby="dialogTitle"><div class="dialog-header"><h2 id="dialogTitle">자료 해석 안내</h2><button id="closeDialog" type="button" aria-label="닫기">×</button></div><p>2023년은 관행과 빈도를, 2024년은 자율과 강요를 보다 직접적으로 구분하고, 2025년은 여러 조직환경 지표를, 2026년은 수직성·문화유형·업무·시설 등을 조사했습니다. 동일한 이름처럼 보이는 문항도 선택지와 조사 의도가 다를 수 있습니다.</p><p>학교별 백분위는 각 연도 내부에서 계산된 값으로, 각 해의 응답 구성과 조사 문항이 달라 연도 간 점수 차이를 실제 개선·악화로 단정할 수 없습니다. 항목별 응답자 수와 분포를 우선 확인해 주세요.</p><button id="dialogOkay" class="primary-btn" type="button">확인했어요</button></dialog>
+<dialog id="infoDialog" class="info-dialog" aria-labelledby="dialogTitle"><div class="dialog-header"><h2 id="dialogTitle">자료 해석 안내</h2><button id="closeDialog" type="button" aria-label="닫기">×</button></div><p>2023년은 관행과 빈도를, 2024년은 자율과 강요를 보다 직접적으로 구분하고, 2025년은 여러 조직환경 지표를, 2026년은 수직성·문화유형·업무·시설 등을 조사했습니다. 동일한 이름처럼 보이는 문항도 선택지와 조사 의도가 다를 수 있습니다.</p><p>2025년 전국 백분위는 편집본의 8개 영역 평균값을 1,458개교 안에서 재순위화(PERCENT_RANK)한 수치입니다. 99백분위는 상위 약 1% 수준입니다. 2023·2024년은 당시 검증 공개값이며 산식과 조사 문항이 달라 연도 간 직접 비교는 주의해야 합니다. 항목별 응답자 수와 분포를 우선 확인해 주세요.</p><button id="dialogOkay" class="primary-btn" type="button">확인했어요</button></dialog>
 <script>if(location.protocol==='http:' && /^(www\.)?baeguindex\.com$/.test(location.hostname)){location.replace('https:'+location.href.slice(5))}</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
@@ -1000,7 +1000,7 @@
   const descriptions={
     2023:'교직원 배구, 방학근무, 조퇴보고, 친목, 행정업무 등 당시 지표를 보여줍니다.',
     2024:'자율과 강제, 업무분장, 교권·휴식 등 해당 연도 조사 응답을 보여줍니다.',
-    2025:'업무·행사·교권·복무·시설 등 여러 영역을 분리해 확인합니다.',
+    2025:'업무·행사·교권·복무·시설 등 8개 영역 종합값을 기준으로, 전국 1,458개교 가운데 상대적 위치를 백분위로 재산출했습니다. 99백분위는 상위 약 1%를 의미합니다.',
     2026:'VI 13문항과 문화유형, 업무·복무, 교육활동, 시설 및 종합평가를 구분합니다.'
   };
   const missing='자료 없음';
@@ -1092,7 +1092,14 @@
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
       for(const row of result.data||[]){
         const y=Number(row.survey_year),p=num(row.percentile);
-        if([2023,2024,2025,2026].includes(y)&&p!==null&&p>=0&&p<=100){state.years[String(y)].percentile=p;if(y===2026)state.years[String(y)].approved=true;}
+        if([2023,2024,2026].includes(y)&&p!==null&&p>=0&&p<=100){state.years[String(y)].percentile=p;if(y===2026)state.years[String(y)].approved=true;}
+      }
+      const ranked=await client().from('beagu_2025_empirical_percentiles')
+        .select('national_percentile').eq('school_id',id).eq('publication_status','PUBLISHED').maybeSingle();
+      if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
+      if(!ranked.error&&ranked.data){
+        const p=num(ranked.data.national_percentile);
+        if(p!==null&&p>=0&&p<=100)state.years['2025'].percentile=p;
       }
       renderYearGrid();
     }catch(e){console.warn('공개 DB 미응답, 기존 검증 백분위 유지')}
@@ -1353,7 +1360,7 @@
       const obj=yearData(year),p=num(obj.percentile);
       const card=document.createElement('button');card.type='button';card.className='year-card';card.setAttribute('role','tab');card.setAttribute('aria-selected',String(year===state.selected));
       let label=p!==null&&p>=0&&p<=100?`${p.toFixed(1)}%`:(year===2026?'집계 준비 중':'자료 없음');
-      card.innerHTML=`<span class="year-label">${year}<span class="year-arrow">${year===state.selected?'●':'↗'}</span></span><span class="metric-text ${p===null?'empty-metric':''}">${escapeHTML(label)}</span><span class="metric-caption">${p===null?'승인된 백분위 없음':'당시 공개 백분위'}</span>`;
+      card.innerHTML=`<span class="year-label">${year}<span class="year-arrow">${year===state.selected?'●':'↗'}</span></span><span class="metric-text ${p===null?'empty-metric':''}">${escapeHTML(label)}</span><span class="metric-caption">${p===null?'승인된 백분위 없음':year===2025?'2025 종합값의 전국 상대위치':'해당 연도 공개 백분위'}</span>`;
       card.addEventListener('click',()=>{state.selected=year;state.category='전체 영역';state.q='';$('questionSearch').value='';render();const u=new URL(location.href);u.searchParams.set('year',String(year));history.replaceState({},'',u)});
       el.append(card);
     }
