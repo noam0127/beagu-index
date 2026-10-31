@@ -1136,6 +1136,36 @@
             state.approvedSummary[String(year)].push({label:metric.label,value:String(metric.value)});
           }
         }
+
+      }
+      if(requested===2){
+        try{
+          const editedResponse=await fetch(SUPABASE_URL+'/functions/v1/beagu-edited-api-v1',{
+            method:'POST',cache:'no-store',
+            headers:{'Content-Type':'application/json','X-Beagu-Session':state.authToken},
+            body:JSON.stringify({action:'school',schoolId:id})
+          });
+          if(editedResponse.ok){
+            const edited=await editedResponse.json();
+            if(serial!==state.reportSerial||state.tier!==2||String(state.school?.school_id)!==id)return;
+            const allow={
+              2024:{N:'교원 수(2024)',AI:'학생 수(2024)'},
+              2025:{G:'학교 부지 면적(㎡)',H:'운동장 면적(㎡)',I:'교실 수',J:'체육공간 수',L:'교사 지원공간 수',N:'급식 장소',P:'학생 수',R:'교감 수',T:'교원 수'}
+            };
+            for(const record of Array.isArray(edited.rows)?edited.rows:[]){
+              const year=Number(record.year),definitions=allow[year];
+              if(!definitions||!record.values||typeof record.values!=='object')continue;
+              const list=state.approvedSummary[String(year)]||(state.approvedSummary[String(year)]=[]);
+              for(const [key,label] of Object.entries(definitions)){
+                const v=record.values[key];
+                if((typeof v==='number'&&Number.isFinite(v))||
+                   (typeof v==='string'&&v.length<=80&&!/[<>\r\n]/.test(v))){
+                  list.push({label,value:String(v)});
+                }
+              }
+            }
+          }
+        }catch(e){console.warn('Lv.2 승인 학교정보 연동 실패')}
       }
       render();
     }catch(error){
@@ -1285,8 +1315,9 @@
     $('reportSubtitle').textContent=`${year} YEARLY REPORT`;
     $('reportHeading').textContent=`${year}년 ${titles[year]}`;
     $('reportDescription').textContent=descriptions[year];
-    const status=$('dataStatus');status.className='data-status'+(state.demo?' demo':entry.approved?' ready':'');
-    status.textContent=state.demo?'가상 자료 · 시연':entry.approved?'공개 승인 자료':'상세 자료 미공개';
+    const anyAuth=state.tier>0&&((state.approvedSummary[String(year)]||[]).length>0||Object.values(entry.items||{}).some(v=>v?.serverApproved===true));
+    const status=$('dataStatus');status.className='data-status'+(state.demo?' demo':entry.approved||anyAuth?' ready':'');
+    status.textContent=state.demo?'가상 자료 · 시연':anyAuth?'Lv.'+state.tier+' 승인 자료 일부 공개':entry.approved?'공개 승인 자료':'상세 자료 미공개';
     const count=catalog?.items?.length ?? 0,approvedRows=Object.entries(entry.items||{}).filter(([key,o])=>o&&typeof o==='object'&&o.display!=null&&!(year===2026&&key==='Q51')&&state.tier>=(year===2026&&viItem(key)?1:2)).length;
     const cards=[['학교별 응답자',n!==null&&n>=0?nf(n)+'명':'미확인','선택문항별 N은 다를 수 있음'],['조사 문항',count?nf(count)+'개':'—','행렬형 하위항목 별도'],['공개 상세항목',nf(approvedRows)+'개',entry.approved?'승인된 자료만':'승인 대기 · 비공개']];
     $('metricRow').innerHTML=cards.map(([a,b,c])=>`<dl class="metric-box"><dt>${escapeHTML(a)}</dt><dd>${escapeHTML(b)}</dd><dt>${escapeHTML(c)}</dt></dl>`).join('');
