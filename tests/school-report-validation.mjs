@@ -18,9 +18,12 @@ for(const item of ['id="tierSelector"','id="tierCodeForm"','id="approvedSummary"
 }
 assert.ok(html.includes('beagu-level-api'),'Protected report must use server-side token validation');
 assert.ok(!src.includes('SUPABASE_SERVICE_ROLE_KEY'),'Do not expose service role key');
-const embedded=html.match(/<script type="application\\/json" id="embeddedCatalog">([\\s\\S]*?)<\\/script>/);
-assert.ok(embedded,'Questionnaire metadata is required');
-const catalog=JSON.parse(embedded[1]);
+const marker='<script type="application/json" id="embeddedCatalog">';
+const markerAt=html.indexOf(marker);
+assert.ok(markerAt>=0,'Questionnaire metadata is required');
+const markerEnd=html.indexOf('</script>',markerAt);
+assert.ok(markerEnd>markerAt,'Unterminated questionnaire metadata');
+const catalog=JSON.parse(html.slice(markerAt+marker.length,markerEnd));
 assert.equal(catalog.years['2026'].items.length,50,'2026 Q51 must not appear in public list');
 assert.ok(!catalog.years['2026'].items.some(q=>q.id==='Q51'),'No free-text item in report UI');
 assert.ok(html.includes('beagu_2025_empirical_percentiles'),'2025 national percentile must come from ranked DB');
