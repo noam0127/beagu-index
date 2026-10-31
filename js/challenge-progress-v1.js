@@ -39,7 +39,7 @@
   if(underway)return underway;
   underway=(async()=>{
    try{
-    if(!window.supabaseClient||typeof supabaseClient.rpc!=='function')throw Error('RPC_UNAVAILABLE');
+    if(typeof supabaseClient==='undefined'||typeof supabaseClient.rpc!=='function')throw Error('RPC_UNAVAILABLE');
     const {data,error}=await supabaseClient.rpc('beagu_get_challenge_progress');
     if(error||data===null||data===undefined||data==='')throw Error('PROGRESS_UNAVAILABLE');
     const n=Number(data);
