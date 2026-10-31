@@ -182,11 +182,36 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
   };
 
   let percentileIndex = new Map();
-  let percentileLoadError = false;
+  let percentileLoadError = false, percentileStaticLoaded = false;
   const percentileReady = fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025', {cache:'no-cache'})
     .then(r => { if (!r.ok) throw new Error('백분위 자료 로딩 실패'); return r.json(); })
-    .then(data => { percentileIndex = BeaguPublic.buildIndex(data); })
-    .catch(() => { percentileLoadError=true; });
+    .then(data => { percentileIndex = BeaguPublic.buildIndex(data); percentileStaticLoaded = true; })
+    .catch(error => { percentileLoadError=true; console.warn('공개 백분위 파일 미응답, DB 재조회 사용',error); });
+  // If mobile Safari/CDN cannot load the 750 KB static index, recover from the
+  // separately approved public annual Supabase table, 20 visible schools at a time.
+  async function recoverPublishedPercentiles(schools) {
+    if (percentileStaticLoaded || !schools.length) return;
+    const ids=[...new Set(schools.map(s=>String(s.school_id)).filter(id=>/^\\d{7}$/.test(id)))];
+    if (!ids.length) return;
+    const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
+      .select('school_id,survey_year,percentile')
+      .in('school_id',ids).eq('publication_status','PUBLISHED').in('survey_year',[2023,2024,2025])
+      .limit(100);
+    if (error) throw error;
+    for (const id of ids) {
+      const p=[null,null,null], statuses=['NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE'];
+      for (const item of data||[]) {
+        if (String(item.school_id)!==id) continue;
+        const index=[2023,2024,2025].indexOf(Number(item.survey_year));
+        const value=Number(item.percentile);
+        if(index>=0&&Number.isFinite(value)&&value>=0&&value<=100){
+          p[index]=value; statuses[index]='EXISTING_PUBLIC_VALUE_PRESERVED';
+        }
+      }
+      percentileIndex.set(id,{school_id:id,percentiles:p,statuses});
+    }
+    percentileLoadError=false;
+  }
 
   function renderPercentiles(school) {
     const row=percentileIndex.get(String(school.school_id));
@@ -255,6 +280,11 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       if (token!==searchSerial) return;
       if (error) throw error;
       await percentileReady;
+      if (token!==searchSerial) return;
+      if (!percentileStaticLoaded) {
+        try { await recoverPublishedPercentiles(data||[]); }
+        catch(e) { percentileLoadError=true; console.warn('공개 백분위 DB 조회 실패',e); }
+      }
       if (token!==searchSerial) return;
       renderSchools(data || [],count || 0);
     } catch (error) {
