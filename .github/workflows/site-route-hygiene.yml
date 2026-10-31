@@ -1,0 +1,26 @@
+name: Statistics & Legacy Route Hygiene
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'statistics.html'
+      - 'result.html'
+      - 'survey.html'
+      - 'js/challenge.html'
+      - 'js/statistics-table.js'
+      - 'styles/statistics.css'
+      - 'tests/site-route-hygiene.mjs'
+      - '.github/workflows/site-route-hygiene.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/site-route-hygiene.mjs
