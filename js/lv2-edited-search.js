@@ -69,7 +69,8 @@ function releasedFields(metadata,year,values){
 const schemaPromise=fetch('lv2-edited-column-schema.json',{cache:'force-cache'})
  .then(r=>{if(!r.ok)throw Error('SCHEMA_MISSING');return r.json()})
  .then(j=>{if(!j||typeof j.years!=='object')throw Error('SCHEMA_INVALID');return j});
-let percentIndex=new Map(),publicStaticAvailable=false;
+let percentIndex=new Map(),publicStaticAvailable=false,publicLoadError=false;
+let current2026=new Map();
 const publicPromise=fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025')
  .then(r=>{if(!r.ok)throw Error('PUBLIC_DATA_MISSING');return r.json()})
  .then(j=>{if(window.BeaguPublic){percentIndex=BeaguPublic.buildIndex(j);publicStaticAvailable=true;}})
@@ -90,8 +91,9 @@ async function recoverPublicPercentiles(schools){
    const i=[2023,2024,2025].indexOf(Number(row.survey_year)),v=Number(row.percentile);
    if(i>=0&&Number.isFinite(v)&&v>=0&&v<=100)vals[i]=v;
   }
-  percentIndex.set(id,{percentiles:vals});
+  percentIndex.set(id,{percentiles:vals,statuses:vals.map(v=>v===null?'NO_PUBLISHED_VALUE':'EXISTING_PUBLIC_VALUE_PRESERVED')});
  }
+ publicLoadError=false;
 }
 async function api(path,action,payload={}){
  const response=await fetch(`${base}/${path}`,{
@@ -166,47 +168,58 @@ function percentile2026(rows){
   const n=Number(m.value);if(Number.isFinite(n)&&n>=0&&n<=100)return n;
  }return null;
 }
-function percentilePanel(school,v26=null){
- const info=percentIndex.get(String(school.school_id));
+function percentilePanel(school){
+ const id=String(school.school_id),info=percentIndex.get(id),current=current2026.get(id);
  return BeaguSchoolSearchCard.percentiles({
    publicValues:window.BeaguPublic?BeaguPublic.values(info):[null,null,null],
    statuses:info?.statuses||[],
-   publicError:!publicStaticAvailable && percentIndex.size===0,
-   value2026:v26,
+   publicError:publicLoadError,
+   value2026:current?.value??null,
+   status2026:current?.status||'loading',
    locked:false
  });
 }
 function renderPagePercentiles(results,requestId){
  const ids=[...new Set(results.map(s=>String(s.school_id)).filter(id=>/^\d{7}$/.test(id)))];
  if(!ids.length)return;
- const replace=(school,value)=>{
+ const refresh=()=>{
   if(serial!==requestId)return;
-  for(const card of $('results').querySelectorAll('.school-card')){
-   if(card.dataset.schoolId!==String(school.school_id))continue;
-   const pane=card.querySelector('.percentile-panel');
-   if(pane)pane.replaceWith(percentilePanel(school,value));break;
+  for(const school of results){
+   for(const card of $('results').querySelectorAll('.school-card')){
+    if(card.dataset.schoolId!==String(school.school_id))continue;
+    const pane=card.querySelector('.percentile-panel');
+    if(pane)pane.replaceWith(percentilePanel(school));
+    break;
+   }
   }
  };
  publicPromise.then(async()=>{
   if(!publicStaticAvailable){
    try{await recoverPublicPercentiles(results);}
-   catch(e){console.warn('Lv.2 공개 백분위 DB 재조회 실패',e)}
+   catch(e){publicLoadError=true;console.warn('Lv.2 공개 백분위 DB 재조회 실패',e)}
   }
-  if(serial===requestId)results.forEach(s=>replace(s,null));
- }).catch(()=>{});
- api('beagu-level-api','percentiles',{schoolIds:ids}).then(async response=>{
-  await publicPromise;if(serial!==requestId)return;
-  for(const school of results){
-   const n=response.values?.[String(school.school_id)];
-   if(typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)replace(school,n);
+  refresh();
+ }).catch(e=>{publicLoadError=true;console.warn('Lv.2 공개 백분위 로딩 실패',e);refresh();});
+ api('beagu-level-api','percentiles',{schoolIds:ids}).then(response=>{
+  if(serial!==requestId)return;
+  for(const id of ids){
+   const n=response.values?.[id];
+   current2026.set(id,typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100
+    ?{status:'published',value:n}:{status:'unpublished'});
   }
- }).catch(e=>{if(e.unauthorized&&serial===requestId)logout('인증이 만료되었습니다. 다시 로그인하세요.');});
+  refresh();
+ }).catch(e=>{
+  if(serial!==requestId)return;
+  if(e.unauthorized){logout('인증이 만료되었습니다. 다시 로그인하세요.');return;}
+  for(const id of ids)current2026.set(id,{status:'error'});
+  refresh();
+ });
 }
 function renderRecords(root,records,metadata,year){
  root.replaceChildren();
  const rows=Array.isArray(records)?records.filter(r=>Number(r.year)===year):[];
  if(!rows.length){
-  root.append(el('div','pending',`${year}년의 공개 승인된 상세자료가 없습니다.`));return;
+  root.append(el('div','pending',`${year}년 상세자료 미공개 · 현재 승인된 자료가 없습니다.`));return;
  }
  rows.forEach((record,i)=>{
   const values=record.values&&typeof record.values==='object'&&!Array.isArray(record.values)?record.values:{};
@@ -215,7 +228,7 @@ function renderRecords(root,records,metadata,year){
   // Show fixed-indicator data; the old filter hid almost every real numeric value.
   const visibleFields=fields;
   if(!fields.length){
-   root.append(el('div','pending',`${year}년에는 표시 가능한 승인 항목이 없습니다.`));return;
+   root.append(el('div','pending',`${year}년 상세항목 미공개 · 표시 가능한 승인값이 없습니다.`));return;
   }
   const suffix=rows.length>1?` · 기록 ${i+1}/${rows.length}`:'';
   root.append(note(`${year}년 · 공개 승인 자료${suffix}`));
@@ -278,7 +291,7 @@ async function showDetail(container,school){
  container.append(el('h3','school-history-heading','2026년 최신 조사 결과'));
   const newer=el('div','year-2026-content');newer.hidden=false;
   const stats=metrics2026(levelData.rows);
-  if(!stats.length)newer.append(note('2026년 승인된 학교별 자료가 아직 준비되지 않았습니다.'));
+  if(!stats.length)newer.append(note('미공개 · 2026년 승인된 학교별 통계가 없습니다.'));
   else stats.forEach(m=>{
    const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',String(m.value)+(m.unit||'')));newer.append(row);
   });
@@ -290,6 +303,7 @@ async function showDetail(container,school){
  return true;
 }
 function render(results,total){
+ current2026=new Map();
  const host=$('results');host.replaceChildren();const pages=Math.ceil(total/LIMIT);
  $('resultCount').textContent=`검색 결과 ${total.toLocaleString()}개`;
  $('pager').hidden=pages<=1;$('pageInfo').textContent=`${page+1} / ${Math.max(1,pages)}`;
