@@ -302,6 +302,12 @@ function render(results,total){
    el('div','school-name',s.school_name),
    el('div','school-meta',[s.support_office,s.address].filter(Boolean).join(' · ')));
   card.dataset.schoolId=String(s.school_id);
+  const homepage=String(s.homepage||'');
+  if(/^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:[/?#]|$)/i.test(homepage)){
+   const link=el('a','school-homepage','🌐 학교 홈페이지');
+   link.href=homepage;link.target='_blank';link.rel='noopener noreferrer';
+   card.append(link);
+  }
   card.append(percentilePanel(s));
   const actions=el('div','actions'),open=el('button','view-button','🔍 자세히 보기');
   open.type='button';open.setAttribute('aria-expanded','false');
@@ -337,7 +343,7 @@ async function search(reset){
  $('resultCount').textContent='검색 중…';
  try{
   let query=supabaseClient.from('schools')
-   .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status',{count:'exact'})
+   .select('school_id,school_name,sido,sido_standard,support_office,address,homepage,establishment,school_kind,status',{count:'exact'})
    .eq('status','운영');
   if(q)query=query.ilike('school_name',`%${q.replaceAll('%','\\%').replaceAll('_','\\_')}%`);
   if(region)query=query.eq('sido_standard',region);
