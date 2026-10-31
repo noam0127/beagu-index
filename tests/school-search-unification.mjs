@@ -83,14 +83,14 @@ for(const level of [0,1,2]){
   assert.equal(open.tagName,'a');
   assert.equal(open.href,'school-report.html?school_id=7832070');
   assert.equal(detail,null);
-  assert.equal(cells[0].children[1].textContent,'🔒 Lv.1 전용');
+  assert.equal(cells[0].children[1].textContent,'🔒 Lv.1+ 승인 시');
  }else{
   assert.equal(open.tagName,'button');
   assert.equal(open.attributes['aria-expanded'],'false');
   assert.equal(open.attributes['aria-controls'],detail.id);
   assert.equal(detail.hidden,true);
   assert.equal(card.children[5],detail);
-  assert.equal(cells[0].children[1].textContent,'자료 준비 중');
+  assert.equal(cells[0].children[1].textContent,'미공개');
  }
 }
 assert.equal(new Set(rendered.map(x=>x.replace(' | school-detail',''))).size,1,'All levels should have the same main card sections');
@@ -99,8 +99,26 @@ assert.equal(pending.children[1].children[3].children[1].textContent,'검수 중
 assert.equal(pending.children[1].children[2].children[1].textContent,'자료 없음');
 assert.equal(pending.children[1].children[1].children[1].textContent,'자료 없음');
 
+// Missing, explicitly pending, unpublished, fetching, and failed are distinct.
+const cell=(opts,index)=>ui.percentiles(opts).children[1].children[index];
+assert.equal(cell({publicValues:[null,null,null]},3).dataset.state,'missing');
+assert.equal(cell({publicValues:[null,null,null],statuses:['REVIEW_PENDING']},3).dataset.state,'review');
+assert.equal(cell({publicValues:[null,null,null],publicError:true},3).dataset.state,'error');
+assert.equal(cell({publicValues:[32.4,null,null],publicError:true},3).dataset.state,'published');
+assert.equal(cell({publicValues:[null,null,null],status2026:'unpublished'},0).children[1].textContent,'미공개');
+assert.equal(cell({publicValues:[null,null,null],status2026:'error'},0).children[1].textContent,'불러오기 실패');
+assert.equal(cell({publicValues:[null,null,null],status2026:'review'},0).children[1].textContent,'검수 중');
+assert.equal(cell({publicValues:[null,null,null],status2026:'loading'},0).children[1].textContent,'확인 중');
+assert.equal(cell({publicValues:[null,null,null],locked:true,status2026:'error'},0).dataset.state,'locked');
+assert.equal(cell({publicValues:[null,null,null],value2026:0,status2026:'error'},0).children[1].textContent,'0.0%');
+assert.match(lv1,/current2026\.set\(id,\{status:'error'\}\)/,'Lv.1 network errors are not unpublished');
+assert.match(lv2,/current2026\.set\(id,\{status:'error'\}\)/,'Lv.2 network errors are not unpublished');
+assert.match(lv1,/publicLoadError=true/,'Lv.1 fallback errors must surface');
+assert.match(lv2,/publicLoadError=true/,'Lv.2 fallback errors must surface');
+assert.match(report,/yearLookupError/,'Detailed report must distinguish DB lookup failure');
+
 const sync=read('scripts/beagu-2026-mbti-review-sync.gs');
 assert.match(sync,/1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4/);
 assert.match(sync,/2026-11-01/);
 assert.doesNotMatch(sync,/\.from\('beagu_release_metrics_v2'\)/);
-console.log('PASS: 2026-first Lv.0/Lv.1/Lv.2 cards and details, reverse history, shared UI, privacy');
+console.log('PASS: 4 status distinctions, three-level UI, 2026-first, safe publication and network failures');
