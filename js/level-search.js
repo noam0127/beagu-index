@@ -372,7 +372,7 @@
         `<div class="school-name">${escape(school.school_name)}</div>` +
         `<div class="school-meta">${escape(school.support_office)}<br>${escape(school.address)}</div>` +
         (/^https?:\/\/[a-z0-9.-]+(?::\d+)?(?:[/?#]|$)/i.test(String(school.homepage||'')) ? `<div class="school-meta"><a href="${escape(school.homepage)}" target="_blank" rel="noopener noreferrer">🌐 학교 홈페이지</a></div>` : '') +
-        '<div class="school-actions"><button class="view-button" type="button">🔍 자세히 보기</button>' +
+        '<div class="school-actions"><button class="view-button" type="button">🔍 Lv.1 학교정보 보기</button>' +
         '</div>';
       card.dataset.schoolId=String(school.school_id);
       card.querySelector('.school-actions').before(percentilePanel(school));
@@ -382,7 +382,7 @@
       button.addEventListener('click', async () => {
         if (!detail.hidden) {
           detail.hidden = true;
-          button.textContent = '🔍 자세히 보기';
+          button.textContent = '🔍 Lv.1 학교정보 보기';
           button.setAttribute('aria-expanded', 'false');
           return;
         }
