@@ -14,9 +14,17 @@
 - `viewer_level`은 페이지 표시값이지 서버에서 재검증된 참여코드 등급이 아님.
 - 학교 관심도 이벤트는 학교의 근무문화나 우수성을 평가하는 지표가 아님.
 
-## 반드시 수행할 운영 DB 설치
-현재 GitHub 정적 파일 외에 서버 DB 설치가 필요합니다. DB SQL은 이 실행 환경에서
-실행할 수 없으므로 **아직 운영 DB에 설치됐다고 보장하지 않습니다.**
+## 2026-10-31 실제 운영 DB 적용 기록
+
+- Supabase `snvzwrexuqavnfvzgxqj`에 `beagu_get_challenge_progress()`, `school_search_events`, `beagu_log_school_search()` 함수·테이블 적용됨.
+- 설치 시 기존 PL/pgSQL 원문의 구문분리 오류가 발생해, 동등한 조건 검사·중복제거·시간당 90회 제한을 유지한 SQL-language 함수로 설치했으며 저장소의 설치 원문을 운영 정의와 일치시킴.
+- 실제 챌린지 발급 순번 최댓값 **3**, 이벤트 로그 **0건**(점검 시점).
+- RLS 적용=true, anon 직접 SELECT=false, 직접 INSERT=false, 검증형 RPC EXECUTE=true.
+- 존재하지 않는 학교 ID 및 페이지 등급 불일치 호출은 모두 false 반환; 실제 로그 0건 유지.
+- **정상 실제 학교 클릭으로 이벤트가 기록되는 전체 흐름은 아직 브라우저에서 확인해야 함.** 승인 전 교사 설문 데이터와 Q51은 이 기능으로 공개되지 않음.
+
+## 최초 설치 시 절차(다른 프로젝트·재설치용)
+기존 운영 프로젝트에는 위 함수·테이블이 설치돼 있습니다. 아래 단계는 새로운 프로젝트 설치·재배포나 복구 시의 참고용입니다.
 
 1. Supabase 프로젝트 `snvzwrexuqavnfvzgxqj` SQL Editor에서
    `supabase/08_xp_search_install.sql` 원문을 검토한 뒤 실행.
