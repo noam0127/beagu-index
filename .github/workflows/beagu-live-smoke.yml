@@ -7,6 +7,9 @@ on:
     paths:
       - 'index.html'
       - 'search.html'
+      - 'statistics.html'
+      - 'result.html'
+      - 'survey.html'
       - 'styles/**'
       - 'search-lv1.html'
       - 'search-lv2.html'
