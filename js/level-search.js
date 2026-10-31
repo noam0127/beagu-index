@@ -300,6 +300,7 @@
     }
     if (!factsShown) facts.append(make('p', 'detail-note', '이 학교의 추가 승인 규모정보는 아직 없습니다. 과거 백분위는 아래에서 확인할 수 있습니다.'));
     section.append(facts);
+    if (window.BeaguSchoolMBTI) section.append(BeaguSchoolMBTI.createDetail(String(school.school_id), session));
 
     const newer = make('button', 'year-2026-button', '2026년 상세보기');
     newer.type = 'button';
@@ -407,6 +408,7 @@
       if (list.length === 1 && total === 1) button.click();
     }
     loadPagePercentiles(list,serial);
+    if (window.BeaguSchoolMBTI) void BeaguSchoolMBTI.decorateCards(host,session);
   }
   async function search(reset) {
     if (reset) page = 0;
