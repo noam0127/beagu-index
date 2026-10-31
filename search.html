@@ -191,7 +191,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
   // separately approved public annual Supabase table, 20 visible schools at a time.
   async function recoverPublishedPercentiles(schools) {
     if (percentileStaticLoaded || !schools.length) return;
-    const ids=[...new Set(schools.map(s=>String(s.school_id)).filter(id=>/^\\d{7}$/.test(id)))];
+    const ids=[...new Set(schools.map(s=>String(s.school_id)).filter(id=>/^\d{7}$/.test(id)))];
     if (!ids.length) return;
     const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
       .select('school_id,survey_year,percentile')
