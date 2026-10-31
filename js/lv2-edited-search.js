@@ -232,22 +232,24 @@ function renderRecords(root,records,metadata,year){
   }
   const suffix=rows.length>1?` · 기록 ${i+1}/${rows.length}`:'';
   root.append(note(`${year}년 · 공개 승인 자료${suffix}`));
-  let sectionName='',currentSection=null,subName='';
-  for(const field of visibleFields){
-   const group=field.section||'기타';
-   if(group!==sectionName){
-    currentSection=el('section','section-card');
-    currentSection.append(el('h4','',year===2025&&group==='4. 2025 배구지수 요약'?'2. 2025 배구지수 요약':group));root.append(currentSection);
-    sectionName=group;subName='';
-   }
-   const sub=field.subsection||'';
-   if(sub&&sub!==subName){currentSection.append(el('div','subheading',sub));subName=sub;}
+  // All fields are already vetted by releasedFields() + the server-side allowlist.
+  const approvedItems=visibleFields.map(field=>({
+   label:APPROVED_LABELS[year]?.[field.key]||field.title||field.key,
+   section:field.section||'기타',
+   subsection:field.subsection||'',
+   key:field.key,
+   value:String(values[field.key])
+  }));
+  BeaguDetailGroups.appendGrouped(root,approvedItems,(body,field)=>{
    const item=el('div','item'),label=el('div','name');
-   const title=APPROVED_LABELS[year]?.[field.key]||field.title||field.key;
-   label.append(el('span','source-col',field.key),document.createTextNode(title));
-   const value=el('div','val',String(values[field.key]));
-   item.append(label,value);currentSection.append(item);
-  }
+   label.append(el('span','source-col',field.key),document.createTextNode(field.label));
+   if(field.section||field.subsection){
+    label.append(el('small','beagu-detail-source',
+     [field.section,field.subsection].filter(Boolean).join(' · ')));
+   }
+   item.append(label,el('div','val',field.value));
+   body.append(item);
+  });
   if(record.release_note&&typeof record.release_note==='string')
    root.append(note(record.release_note));
  });
@@ -293,8 +295,10 @@ async function showDetail(container,school){
   const newer=el('div','year-2026-content');newer.hidden=false;
   const stats=metrics2026(levelData.rows);
   if(!stats.length)newer.append(note('미공개 · 2026년 승인된 학교별 통계가 없습니다.'));
-  else stats.forEach(m=>{
-   const row=el('div','data-row');row.append(el('span','',m.label),el('strong','',String(m.value)+(m.unit||'')));newer.append(row);
+  else BeaguDetailGroups.appendGrouped(newer,stats,(body,m)=>{
+   const row=el('div','data-row');
+   row.append(el('span','',m.label),el('strong','',String(m.value)+(m.unit||'')));
+   body.append(row);
   });
   container.append(newer);
   if(window.BeaguSchoolMBTI)container.append(BeaguSchoolMBTI.createDetail(String(school.school_id),token));
