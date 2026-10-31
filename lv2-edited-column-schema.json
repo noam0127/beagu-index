@@ -628,13 +628,6 @@
         "classification": "restricted"
       },
       {
-        "key": "BQ",
-        "title": "랭킹 및 백분위  변화율 분석",
-        "section": "2024 배구지수·설문",
-        "subsection": "",
-        "classification": "narrative"
-      },
-      {
         "key": "BS",
         "title": "1. 근무 중  교직원  스포츠활동",
         "section": "2024 배구지수·설문",
@@ -1664,29 +1657,8 @@
         "section": "8 학교환경 영역",
         "subsection": "ⓒ급식지수",
         "classification": "survey"
-      },
-      {
-        "key": "ED",
-        "title": "2023",
-        "section": "6. 주관식 정보(준비중)",
-        "subsection": "주관식 정보",
-        "classification": "legacy"
-      },
-      {
-        "key": "EE",
-        "title": "2024",
-        "section": "6. 주관식 정보(준비중)",
-        "subsection": "주관식 정보",
-        "classification": "legacy"
-      },
-      {
-        "key": "EF",
-        "title": "2025",
-        "section": "6. 주관식 정보(준비중)",
-        "subsection": "주관식 정보",
-        "classification": "legacy"
       }
     ]
   },
-  "notice": "항목명만 포함. 실제 학교별 응답값을 공개 GitHub에 저장하지 않습니다."
+  "notice": "항목명만 포함. 실제 학교별 응답값을 공개 GitHub에 저장하지 않습니다. 주관식·자유서술 및 narrative/legacy 텍스트 항목은 열람 목록에서 모두 제외합니다."
 }
