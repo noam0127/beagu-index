@@ -139,6 +139,7 @@
       .description { margin-bottom: 22px; }
     }
   </style>
+  <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261031-xp8">
 </head>
 
 <body>
@@ -172,6 +173,12 @@
       </div>
     </dl>
 
+    <section class="beagu-xp" data-beagu-xp data-xp-state="loading" aria-label="2026년 챌린지 목표 달성률">
+      <div class="beagu-xp-head"><h2>2026 챌린지 XP · 목표 500명</h2><strong class="beagu-xp-number" data-xp-number aria-live="polite">순번 확인 중</strong></div>
+      <div class="beagu-xp-track"><div class="beagu-xp-fill" data-xp-progress role="progressbar" aria-label="챌린지 진행률" aria-valuemin="0" aria-valuemax="500"></div></div>
+      <div class="beagu-xp-footer"><span data-xp-state>기존 챌린지 순번 기준</span><strong data-xp-remainder>확인 중</strong></div>
+      <p class="beagu-xp-help">챌린지 발급 순번의 최대값입니다. Google Forms 응답 수나 과거 조사 누적 참여자 수와 다릅니다.</p>
+    </section>
     <div class="reading-cards" aria-label="레벨별 배구지수 열람">
       <section class="card reading-card reading-card-basic" aria-labelledby="level-0-title">
         <h2 id="level-0-title"><svg class="level-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 11V7a5 5 0 0 1 9.6-2"/><rect x="4" y="11" width="16" height="11" rx="2"/><path d="M12 15v3"/></svg><span>Lv.0 기본 열람</span></h2>
@@ -203,6 +210,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/visit-stats.js?v=20261031-1350"></script>
+<script src="js/challenge-progress-v1.js?v=20261031-xp8"></script>
 </body>
 </html>
 
