@@ -1,0 +1,20 @@
+name: 2026 School MBTI Staging Validation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/beagu-2026-mbti-review-sync.gs'
+      - 'tests/school-mbti-staging.mjs'
+      - '.github/workflows/school-mbti-staging-validation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/school-mbti-staging.mjs
