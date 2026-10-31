@@ -273,6 +273,7 @@
   }
   function openInfo(s,trigger) {
     dialogInvokedBy=trigger;
+    $('dialogReportLink').href='school-report.html?school_id='+encodeURIComponent(String(s.school_id));
     $('dialogTitle').textContent=s.school_name;
     $('dialogMeta').textContent=`${displayRegion(s)} · ${displayOffice(s)}`;
     const root=$('dialogBody'); root.replaceChildren();
