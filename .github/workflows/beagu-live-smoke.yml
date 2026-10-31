@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'release-policy.html'
       - 'search.html'
       - 'statistics.html'
       - 'result.html'
