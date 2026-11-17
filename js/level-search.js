@@ -12,7 +12,7 @@
   let session = sessionStorage.getItem(key) || '';
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
-  const YEARS = [2023, 2024, 2025];
+  const YEARS = [2023, 2024, 2025, 2026];
   const offices = {
     '서울':'강남서초 강동송파 강서양천 남부 동부 동작관악 북부 서부 성동광진 성북강북 중부',
     '부산':'남부 동래 북부 서부 해운대',
@@ -181,9 +181,34 @@
     const match = metric.value.trim().match(/^(\d{1,3}(?:\.\d+)?)\s*%$/);
     return !!match && Math.abs(Number(match[1]) - value) < 0.005;
   }
-  function renderYear(host, year, rows, publicValue) {
+  function renderYear(host, year, rows, publicValue, schoolId) {
     host.replaceChildren();
     host.append(make('h3', '', `${year}년 조사 결과`));
+    if(year === 2026) {
+      const vetted = metrics2026(rows);
+      if(vetted.length) {
+        BeaguDetailGroups.appendGrouped(host,vetted,(body,m)=>addRow(body,m.label,metricValue(m)));
+      } else {
+        host.append(make('p','detail-note','2026년 학교별 문항 결과는 아직 공개 승인되지 않았습니다. 실시간 원응답은 공개하지 않습니다.'));
+      }
+      const reload = make('button','year-2026-button','2026년 승인 결과 새로고침');
+      reload.type='button';
+      reload.addEventListener('click',async()=>{
+        reload.disabled=true;
+        reload.textContent='승인 결과 확인 중...';
+        try {
+          const fresh=await api('school',{schoolId:String(schoolId)});
+          renderYear(host,2026,fresh.rows,null,schoolId);
+        } catch(e) {
+          if(e.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
+          reload.disabled=false;
+          reload.textContent='다시 조회하기';
+          host.append(make('p','detail-note','연결 오류로 최신 승인 결과를 확인하지 못했습니다.'));
+        }
+      });
+      host.append(reload);
+      return;
+    }
     const yearRows = (Array.isArray(rows) ? rows : []).filter(row =>
       Number(row.year) === year && Number(row.access_level) === level
     );
@@ -220,7 +245,7 @@
     if (hadRestricted) section.append(make('p', 'detail-note', '승인 범위에 따라 일부 세부 항목은 공개하지 않습니다.'));
     if (!count && !hadRestricted) section.append(make('p', 'detail-note', '추가 승인 통계가 없습니다. 위의 기존 공개 백분위를 참고하세요.'));
     if (year === 2025) section.append(make('p', 'detail-note', '영역별 점수는 해당 연도 조사 방식에 따른 참고자료입니다.'));
-    else section.append(make('p', 'detail-note', '총점·순위·개별 문항은 제공하지 않습니다.'));
+    else section.append(make('p', 'detail-note', '학교별 상세 문항 결과는 공개 승인된 집계만 표시합니다. 미검수 문항은 제공하지 않습니다.'));
     host.append(section);
   }
 
@@ -318,17 +343,17 @@
 
 
 
-    section.append(make('h3', 'school-history-heading', '과거 상세자료'));
+    section.append(make('h3', 'school-history-heading', '연도별 상세자료 · 2023~2026'));
     const tabs = make('div', 'year-tabs');
     tabs.setAttribute('role', 'tablist');
-    tabs.setAttribute('aria-label', '과거 조사 연도 선택');
+    tabs.setAttribute('aria-label', '2023년부터 2026년까지 결과 연도 선택');
     const content = make('div', 'school-year-details');
     content.setAttribute('role', 'tabpanel');
     function choose(year) {
       for (const button of tabs.children) {
         button.setAttribute('aria-selected', String(Number(button.dataset.year) === year));
       }
-      renderYear(content, year, rows, vals[year - 2023]);
+      renderYear(content, year, rows, vals[year - 2023] ?? null, school.school_id);
     }
     for (const year of YEARS) {
       const button = make('button', '', year + '년');
@@ -340,31 +365,6 @@
       tabs.append(button);
     }
     section.append(tabs, content);
-    // 2026 follows 2023–2025 in the visible chronological detail sequence.
-    const newer = make('button', 'year-2026-button', '2026년 최신 조사 · 접기');
-    newer.type = 'button';
-    newer.setAttribute('aria-expanded', 'true');
-    const currentContent = make('div', 'year-2026-content');
-    currentContent.id='beagu-current-2026-'+String(school.school_id);
-    newer.setAttribute('aria-controls',currentContent.id);
-    currentContent.hidden = false;
-    function render2026() {
-      currentContent.replaceChildren();
-      currentContent.append(make('h3', '', '2026년 배구지수'));
-      const metrics = metrics2026(rows);
-      if (!metrics.length) {
-        currentContent.append(make('p', 'detail-note', '미공개 · 2026년 승인된 학교별 통계가 없습니다.'));
-      } else {
-        BeaguDetailGroups.appendGrouped(currentContent,metrics,(body,m)=>addRow(body,m.label,metricValue(m)));
-      }
-    }
-    render2026();
-    newer.addEventListener('click', () => {
-      currentContent.hidden = !currentContent.hidden;
-      newer.setAttribute('aria-expanded', String(!currentContent.hidden));
-      newer.textContent=currentContent.hidden?'2026년 최신 조사 · 펼치기':'2026년 최신 조사 · 접기';
-    });
-    section.append(newer, currentContent);
     if (window.BeaguSchoolMBTI) section.append(BeaguSchoolMBTI.createDetail(String(school.school_id), session));
 
     section.append(make('p', 'detail-note',
