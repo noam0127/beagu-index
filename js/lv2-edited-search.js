@@ -184,7 +184,7 @@ function percentilePanel(school){
  });
 }
 function renderPagePercentiles(results,requestId){
- const ids=[...new Set(results.map(s=>String(s.school_id)).filter(id=>/^\d{7}$/.test(id)))];
+ const ids=[...new Set(results.map(s=>String(s.school_id)).filter(id=>/^[A-Z0-9]{7}$/.test(id)))];
  if(!ids.length)return;
  const refresh=()=>{
   if(serial!==requestId)return;
