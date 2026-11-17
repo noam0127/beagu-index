@@ -19,7 +19,9 @@ assert.equal(report.includes("['학교별 응답자'"),false,'School respondent 
 assert.equal(report.includes('meta.textContent=Number.isSafeInteger(Number(n))'),false,'No public school question N value');
 assert.ok(sync.includes('scanned-prelaunch-undated'),'Private sync excludes pre-launch and invalid dates');
 assert.ok(sync.includes('BEAGU_2026_INGEST_TOKEN'),'Token required for private sync');
-assert.ok(sync.includes('onBeagu2026FormSubmitted'),'Installed form-submit handler retained');
+assert.ok(sync.includes('onBeagu2026FormSubmitted'),'Form-submit handler retained');
+assert.ok(sync.includes('function installBeagu2026Sync()'),'One-click owner setup available');
+assert.ok(sync.includes('setupDailyNoonTrigger();'),'Daily recovery trigger retained');
 assert.ok(edge.includes('INGEST_NOT_CONFIGURED'),'Missing secret fails closed');
 assert.ok(edge.includes('UNAUTHORIZED'),'Invalid secret denied');
 assert.ok(edge.includes('body.source_spreadsheet_id!==sourceId'),'Source sheet validated');
