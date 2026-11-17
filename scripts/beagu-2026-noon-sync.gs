@@ -149,8 +149,8 @@ function normalizeOffice(s) {
   // Form may say '마산교육청'/'진해교육청' while the master stores
   // '창원교육지원청(마산센터)' or '(진해센터)'. Match the surveyed area,
   // never collapse all three areas into the single parent office.
-  if(/^창원교육지원청\(마산센터\)$/.test(value)||/^마산(?:교육지원청|교육청|센터)(?:\(폐지\))?$/.test(value))return "마산";
-  if(/^창원교육지원청\(진해센터\)$/.test(value)||/^진해(?:교육지원청|교육청|센터)(?:\(폐지\))?$/.test(value))return "진해";
+  if(/^창원교육지원청\(마산센터\)$/.test(value)||/^마산(?:교육지원청|교육청|센터)?(?:\(폐지\))?$/.test(value))return "마산";
+  if(/^창원교육지원청\(진해센터\)$/.test(value)||/^진해(?:교육지원청|교육청|센터)?(?:\(폐지\))?$/.test(value))return "진해";
   if(/^창원(?:교육지원청|교육청)?(?:\(본청\)|\(폐지\))?$/.test(value))return "창원";
   return value.replace(/교육지원청|교육청/g,"");
 }
