@@ -8,6 +8,7 @@ on:
       - 'index.html'
       - 'release-policy.html'
       - 'search.html'
+      - 'school-report.html'
       - 'statistics.html'
       - 'result.html'
       - 'survey.html'
