@@ -242,11 +242,35 @@ Deno.serve(async(req:Request)=>{
     if(!vettedCategories[key]?.has(value))continue;
     addFact(Number(fact.survey_year),key,String(fact.label),key==='milk_lunch'?(value==='O'?'운영':'미운영'):value,Number(fact.reference_year),'',true);
   }
+  // Return only conservatively reviewed, rounded survey distributions after
+  // the existing Lv.1 server-side session check. Never expose the internal N,
+  // full source frequencies, respondent IDs or unreleased school observations.
+  const {data:verifiedSchoolDistributions,error:distError}=await admin
+    .from('beagu_verified_school_question_distributions_v1')
+    .select('survey_year,question_id,mode_option,rounded_distribution,review_policy')
+    .eq('school_id',id).eq('release_status','APPROVED_AGGREGATE_ONLY')
+    .in('survey_year',[2023,2024]).limit(100);
+  if(distError)return send({error:'SCHOOL_DISTRIBUTIONS_UNAVAILABLE'},503,origin);
+  const schoolDistributions:(Record<string,unknown>)[]=[];
+  for(const item of verifiedSchoolDistributions||[]){
+    const y=Number(item.survey_year),qid=String(item.question_id||'');
+    if(![2023,2024].includes(y)||!/^Q\\d{2}$/.test(qid)||
+       typeof item.mode_option!=='string'||item.mode_option.length>180||
+       item.review_policy!=='N10_CELL3_PATTERNS5_STRICT_MATCH'||
+       !Array.isArray(item.rounded_distribution))continue;
+    const rounded=item.rounded_distribution;
+    if(rounded.length<2||rounded.length>10)continue;
+    if(!rounded.every((x:any)=>x&&typeof x.label==='string'&&x.label.length<=180&&
+       Number.isInteger(x.pct)&&x.pct>=0&&x.pct<=100&&x.pct%10===0))continue;
+    schoolDistributions.push({year:y,questionId:qid,modeOption:item.mode_option,
+      roundedDistribution:rounded.map((x:any)=>({label:x.label,pct:x.pct}))});
+  }
+
   rows.push(...facts);
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
-  return send({school_id:id,level,rows},200,origin);
+  return send({school_id:id,level,rows,schoolDistributions},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
 
