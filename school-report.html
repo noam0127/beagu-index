@@ -20,6 +20,26 @@
 .question-comparisons span{display:block;font-size:12px;color:#63738b}
 .question-comparisons strong{display:block;font-size:13px;margin-top:3px}
 
+
+/* 전국 평균을 중앙에 고정한 인증 수치 비교. 항목별 편차에 따라 눈금 폭을 조정합니다. */
+.summary-metric.compare-metric{display:block;padding:15px 14px}
+.summary-metric.compare-metric>.compare-label{display:block;font-weight:800;color:#253754;margin-bottom:5px}
+.benchmark-figure{margin:7px 0 0;max-width:100%;color:#334155}
+.benchmark-plot{position:relative;width:150px;max-width:100%;height:136px;margin:10px auto 11px}
+.benchmark-plot:before{content:"";position:absolute;left:50%;top:8%;bottom:8%;width:4px;border-radius:4px;background:#bed1f6;transform:translateX(-50%)}
+.benchmark-plot:after{content:"";position:absolute;left:15%;right:15%;top:50%;border-top:1px dashed #bfd1f4}
+.benchmark-dot{position:absolute;left:50%;border-radius:50%;background:#fff;transform:translate(-50%,-50%);box-sizing:border-box}
+.benchmark-dot.nation{width:10px;height:10px;background:#2563eb;border:2px solid #fff;box-shadow:0 0 0 2px #2563eb;z-index:3}
+.benchmark-dot.region{width:17px;height:17px;border:3px solid #16a34a;z-index:2}
+.benchmark-dot.school{width:24px;height:24px;border:4px solid #7c3aed;box-shadow:0 0 0 1px #fff;z-index:1}
+.benchmark-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;border-top:1px solid #e2e8f0;padding-top:10px}
+.benchmark-values span{display:flex;flex-direction:column;gap:3px;align-items:center;min-width:0;text-align:center;font-size:11px;line-height:1.35;font-weight:700}
+.benchmark-values small{font-size:10px;font-weight:600;color:#64748b}
+.benchmark-values strong{font-size:12px;white-space:normal;overflow-wrap:anywhere}
+.benchmark-values .nation strong{color:#2563eb}.benchmark-values .region strong{color:#15803d}.benchmark-values .school strong{color:#7c3aed}
+.benchmark-note{display:block;font-size:10px;line-height:1.5;color:#64748b;margin-top:10px;font-weight:500}
+@media(max-width:430px){.summary-metric.compare-metric{padding:12px 10px}.benchmark-values small{font-size:10px}.benchmark-plot{height:118px}}
+
 :root{--ink:#14213b;--muted:#60718a;--blue:#2563eb;--light:#eff5ff;--border:#e2e9f2;--bg:#f7f8fc;--white:#fff;--shadow:0 12px 40px rgba(20,39,74,.048)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);font-family:Inter,-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;color:var(--ink);letter-spacing:-.025em;line-height:1.55}button,input{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}[hidden]{display:none!important}:focus-visible{outline:3px solid #80aefd;outline-offset:3px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .site-header{background:#fff;border-bottom:1px solid var(--border)}.header-inner{max-width:1112px;margin:0 auto;min-height:76px;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{display:flex;gap:12px;align-items:center;font-weight:850;font-size:18px;letter-spacing:-.05em}.brand small{display:block;color:#71809c;font-size:9px;font-weight:800;letter-spacing:.13em}.brand-symbol{width:38px;height:38px;border-radius:13px;background:var(--blue);color:white;display:grid;place-items:center;font-style:italic;letter-spacing:-.14em;font-size:22px;position:relative}.symbol-dot{position:absolute;font-size:8px;color:#fff;top:6px;right:8px}.header-actions{display:flex;gap:18px;font-size:13px;font-weight:700;color:#52627e}.home-link{color:var(--blue)}
@@ -69,7 +89,7 @@
 <body>
 <header class="site-header"><div class="header-inner"><a class="brand" href="index.html"><span class="brand-symbol">V<span class="symbol-dot">●</span></span><span>배구지수 <small>VOLLEYBALL INDEX</small></span></a><nav class="header-actions"><a href="index.html" class="home-link">처음으로</a></nav></div></header>
 <main class="layout" id="app">
-  <section class="page-heading"><div><p class="eyebrow">SCHOOL REPORT · 2023—2026</p><h1>학교별 조사 기록</h1><p class="lead">학교의 조건부터 교직문화까지, 연도별로 살펴보세요.</p></div><a class="survey-link" href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 조사 참여 <span aria-hidden="true">↗</span></a></section>
+  <section class="page-heading"><div><p class="eyebrow">학교별 조사 기록 · 2023~2026</p><h1>학교별 조사 기록</h1><p class="lead">학교의 조건부터 교직문화까지, 연도별로 살펴보세요.</p></div><a class="survey-link" href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 조사 참여 <span aria-hidden="true">↗</span></a></section>
   <section class="search-surface" aria-label="학교 검색"><div class="search-heading"><label for="schoolInput">🔎 학교 검색</label><span>학교명을 검색하거나 기존 검색 결과에서 학교를 선택하세요.</span></div><div class="input-wrap"><input id="schoolInput" type="search" autocomplete="off" placeholder="예: 서울개원초등학교, 강릉초등학교" aria-autocomplete="list" aria-controls="suggestions"><button id="clearSearch" type="button" aria-label="검색어 지우기">×</button></div><div class="suggestions" id="suggestions" role="listbox" hidden></div><div class="search-help" id="searchHelp" aria-live="polite">학교명을 2글자 이상 입력하면 검색합니다.</div></section>
   <div class="main-content" id="mainContent" hidden>
     <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a href="index.html" class="change-school">홈으로 ↗</a></div></section>
@@ -1090,37 +1110,87 @@
       '<p class="approved-empty">전국 백분위는 바로 위에 공개되어 있습니다. '+
       '학교 규모·교원·시설·행정 등 검수된 학교정보는 Lv.1 인증 후 확인할 수 있습니다.</p>';
   }
+  // 학교명·주소·관할·설립유형 등 학교 개요는 상단에 한 번만 표시합니다.
+  // 학생 수나 교원 수처럼 연도에 따라 바뀌는 지표는 연도별 자료로 유지합니다.
+  const schoolOverviewLabels=new Set([
+    '학교명','학교이름','학교주소','주소','시도','지역','관할교육청',
+    '교육지원청','설립유형','학교급','학교유형','학교코드','학교id'
+  ]);
+  const normalizedOverviewLabel=v=>String(v||'').toLowerCase().replace(/[\s()（）·_:\-]/g,'');
+  const isSchoolOverviewRepeat=x=>x.group==='편집본 공식 학교정보' &&
+    schoolOverviewLabels.has(normalizedOverviewLabel(x.label));
+
+  // 범주형 '최빈 보기'는 위치를 임의로 숫자로 해석하지 않습니다.
+  // 비교값 3개와 단위가 모두 확인되는 수치형 평균만 수직선으로 만듭니다.
+  function numericCompare(v){
+    if(typeof v!=='string'||v.length>90)return null;
+    const match=/^(-?[\d,]+(?:\.\d+)?)\s*(%|명|개교|개|원|㎡|학급|점|년|㎢|명\/학급)?$/.exec(v.trim());
+    if(!match)return null;
+    const n=Number(match[1].replaceAll(',',''));
+    return Number.isFinite(n)?{n,unit:match[2]||''}:null;
+  }
+  function schoolBenchmark(x){
+    if(x.comparisonKind!=='average')return '';
+    const school=numericCompare(x.value),national=numericCompare(x.nationalAverage),region=numericCompare(x.regionalAverage);
+    if(!school||!national||!region||school.unit!==national.unit||region.unit!==national.unit)return '';
+    const extent=Math.max(Math.abs(school.n-national.n),Math.abs(region.n-national.n),1e-9);
+    // The national mean stays at 50%; two other positions move relative to it.
+    const y=v=>(Math.max(15,Math.min(85,50-35*(v-national.n)/extent))).toFixed(1);
+    const safe=v=>escapeHTML(v);
+    const aria='전국 평균 '+x.nationalAverage+', 지역 평균 '+x.regionalAverage+', 우리 학교 '+x.value;
+    return '<figure class="benchmark-figure" role="img" aria-label="'+safe(aria)+'">'+
+      '<div class="benchmark-plot" aria-hidden="true">'+
+      '<span class="benchmark-dot school" style="top:'+y(school)+'%"></span>'+
+      '<span class="benchmark-dot region" style="top:'+y(region)+'%"></span>'+
+      '<span class="benchmark-dot nation" style="top:50%"></span></div>'+
+      '<div class="benchmark-values">'+
+      '<span class="nation"><small>전국 평균</small><strong>'+safe(x.nationalAverage)+'</strong></span>'+
+      '<span class="region"><small>지역 평균</small><strong>'+safe(x.regionalAverage)+'</strong></span>'+
+      '<span class="school"><small>우리 학교</small><strong>'+safe(x.value)+'</strong></span></div>'+
+      '<figcaption class="benchmark-note">전국 평균이 중앙입니다. 위치 간격은 지표별 차이에 따라 조정됩니다.</figcaption>'+
+      '</figure>';
+  }
   function summaryUI(){
     const box=$('approvedSummary');if(!box)return;
     const list=state.approvedSummary[String(state.selected)]||[];
     if(state.demo){box.innerHTML='<h4>미리보기 안내</h4><p class="approved-empty">실제 학교의 보호 통계는 포함되지 않습니다.</p>';return}
     if(state.tier===0){
-      box.innerHTML='<h4>등급별 추가 통계 🔒</h4><div class="summary-metrics"><div class="summary-metric"><span>Lv.1 승인 집계</span><i class="mask-shape" aria-hidden="true"></i></div></div><p class="tier-locked-note">모자이크는 디자인용이며 실제 수치는 전달되지 않았습니다.</p>';return;
+      box.innerHTML='<h4>Lv.1에서 더 볼 수 있는 자료 🔒</h4>'+
+        '<p class="approved-empty">Lv.0에서는 학교 개요와 공개 백분위를 볼 수 있습니다. '+
+        'Lv.1 인증 후에는 검증된 학교별 수치와 전국·지역 비교, 승인된 설문 응답 분포를 추가로 확인할 수 있습니다.</p>';return;
     }
-    if(!list.length){box.innerHTML='<h4>승인된 추가 통계 · Lv.'+state.tier+'</h4><p class="approved-empty">현재 학교·연도의 공개 승인된 추가 요약 통계가 없습니다.</p>';return}
-    const unique=[...new Map(list.filter(x=>x&&typeof x.label==='string'&&x.label.length<=80&&typeof x.value==='string'&&x.value.length<=90)
+    const unique=[...new Map(list.filter(x=>x&&typeof x.label==='string'&&x.label.length<=80&&
+        typeof x.value==='string'&&x.value.length<=90&&!isSchoolOverviewRepeat(x))
       .map(x=>[(x.group||'승인된 설문 영역 요약')+':'+x.label,x])).values()];
+    if(!unique.length){
+      box.innerHTML='<h4>Lv.1 추가 분석</h4>'+
+        '<p class="approved-empty">이 학교·연도에는 추가로 승인된 학교별 수치가 없습니다. '+
+        '아래에서 문항별 보기와 공개가 승인된 전국·지역 비교를 확인할 수 있습니다.</p>';return;
+    }
     const groups=['편집본 공식 학교정보','승인된 설문 영역 요약'];
-    box.innerHTML='<h4>승인된 추가 통계 · Lv.'+state.tier+'</h4>'+
+    box.innerHTML='<h4>Lv.1 추가 분석</h4>'+
       groups.map(g=>{
         const rows=unique.filter(x=>(x.group||'승인된 설문 영역 요약')===g);
-        return rows.length?'<h5 class="approved-subheading">'+escapeHTML(g)+'</h5><div class="summary-metrics">'+
+        return rows.length?'<h5 class="approved-subheading">'+escapeHTML(g==='편집본 공식 학교정보'?'연도별 학교 지표':g)+'</h5><div class="summary-metrics">'+
           rows.map(x=>{
             const official=x.group==='편집본 공식 학교정보';
             const compared=official&&x.comparisonKind;
-            const kind=x.comparisonKind==='mode'?'최빈 보기':'평균';
+            const kind=x.comparisonKind==='mode'?'최다 선택 보기':'평균';
             const safe=v=>typeof v==='string'&&v.length<90?escapeHTML(v):'비교 자료 없음';
-            return '<div class="summary-metric"><span>'+escapeHTML(x.label)+'</span>'+
-              (compared?
+            const benchmark=compared?schoolBenchmark(x):'';
+            return '<div class="summary-metric'+(benchmark?' compare-metric':'')+'"><span class="'+(benchmark?'compare-label':'')+'">'+escapeHTML(x.label)+'</span>'+
+              (benchmark|| (compared?
                 '<div class="school-compare-grid">'+
                 '<div class="school-compare-cell"><span class="compare-caption">우리 학교</span><strong>'+escapeHTML(x.value)+'</strong></div>'+
                 '<div class="school-compare-cell"><span class="compare-caption">전국 '+kind+'</span><strong>'+safe(x.nationalAverage)+'</strong></div>'+
                 '<div class="school-compare-cell"><span class="compare-caption">지역 '+kind+'</span><strong>'+safe(x.regionalAverage)+'</strong></div>'+
-                '</div><small>'+(Number.isInteger(x.referenceYear)?x.referenceYear+'년 기준 · ':'')+'검수된 학교의 동일 기준연도 값 비교</small>':
-                '<strong>'+escapeHTML(x.value)+'</strong>')+'</div>';
+                '</div>':
+                '<strong>'+escapeHTML(x.value)+'</strong>'))+
+              (compared?'<small class="benchmark-note">'+(Number.isInteger(x.referenceYear)?x.referenceYear+'년 기준 · ':'')+
+                '검증된 같은 기준연도 값 비교</small>':'')+'</div>';
           }).join('')+'</div>':'';
       }).join('')+
-      '<p class="tier-locked-note">편집본의 승인 항목만 표시하며, 교사 개별응답·주관식·순위는 제공하지 않습니다.</p>';
+      '<p class="tier-locked-note">검증·승인된 집계만 표시합니다. 교사별 응답과 주관식 원문은 공개하지 않습니다.</p>';
   }
   function clearTierItems(){
     if(!state.school||state.demo)return;
@@ -1472,7 +1542,7 @@
   }
   function renderYearBody(){
     const year=state.selected,entry=yearData(year),n=num(entry.n),catalog=state.catalog?.years?.[String(year)];
-    $('reportSubtitle').textContent=`${year} YEARLY REPORT`;
+    $('reportSubtitle').textContent=`${year}년 조사`;
     $('reportHeading').textContent=`${year}년 ${titles[year]}`;
     $('reportDescription').textContent=descriptions[year];
     const anyAuth=state.tier>0&&((state.approvedSummary[String(year)]||[]).length>0||Object.values(entry.items||{}).some(v=>v?.serverApproved===true));
