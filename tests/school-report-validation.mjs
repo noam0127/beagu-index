@@ -49,4 +49,18 @@ assert.ok(lv2.includes('const visibleFields=fields;'), 'Do not hide real reviewe
 assert.ok(lv2.includes("'AF','AG','AP','AR','AX','AY'"), 'Restore vetted 2024 details');
 assert.ok(!lv2.includes("'AC','AE','AI','AM','AQ','AU','AY','BC','BG'"),
  'Unverified 2025 survey domain columns must not be enabled');
+// Lv.1 comparison UI: the nationwide mean is the midpoint of the horizontal scale.
+// Never turn categorical modes or unverified/missing numeric values into a chart.
+assert.ok(src.includes("if(x.comparisonKind!=='average')return ''"),'Only approved numeric means may use a horizontal benchmark');
+assert.ok(src.includes('school.unit!==national.unit'),'Units must match before positioning markers');
+assert.ok(src.includes('50+35*(v.n-national.n)/extent'),'National mean must sit at the 50% horizontal midpoint');
+assert.ok(html.includes('benchmark-dot nation') && html.includes('benchmark-dot region') && html.includes('benchmark-dot school'));
+assert.ok(src.includes('left:50%') && src.includes("left:'+position(school)"),'Markers must move left and right on the line');
+assert.ok(html.includes('benchmark-plot:before{content:"";position:absolute;left:8%;right:8%;top:50%'),'Comparison line must be horizontal');
+assert.ok(html.includes('benchmark-values'),'Actual approved comparison values must remain visible at the bottom');
+assert.ok(src.includes('!isSchoolOverviewRepeat(x)'),'Repeated school identity fields must be omitted from historical details');
+assert.ok(src.includes("학교별 수치가 없습니다"),'Unavailable approved fields must not be fabricated');
+assert.ok(src.includes('Lv.1 인증 후에는 검증된 학교별 수치'),'Level 1 scope must exceed public Level 0');
+assert.ok(!html.includes('SCHOOL REPORT · 2023—2026'),'Redundant English UI labels should be removed');
+
 console.log('School report JS syntax, UI bindings and public/private separation: PASS');
