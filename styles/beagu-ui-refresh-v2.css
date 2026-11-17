@@ -486,3 +486,56 @@ body.beagu-page-survey .survey-actions a:not(.secondary){background:var(--ui-blu
   body.beagu-ui-page :is(a,button,input,select,textarea,.school-card,.year-card){transition:none!important;animation:none!important}
   body.beagu-ui-page:not(.beagu-page-game) .school-card:hover{transform:none}
 }
+
+
+/* Context-sensitive status remains legible after the unified card treatment. */
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="missing"],
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="unpublished"],
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="loading"]{
+  background:#f6f8fb;border-color:#e4eaf2;
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="review"]{
+  background:#fafbfe;border-style:dashed;border-color:#bfcde0;
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="error"]{
+  background:#fff4f4;border-color:#f3cbce;
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="locked"]{
+  background:#eef3fd;border-color:#d2dff1;
+}
+/* Report hero uses a deep background; all ordinary text must contrast clearly. */
+body.beagu-page-report .school-hero :is(h2,.region,.address,.icon-fact){color:#fff}
+body.beagu-page-report .school-hero .region{color:#c8ddff}
+body.beagu-page-report .school-hero .address{color:#e2ecfa}
+body.beagu-page-report .school-hero .hero-foot{border-top:1px solid rgba(255,255,255,.25)}
+body.beagu-page-report .school-hero .icon-fact{color:#e1ecfc}
+body.beagu-page-report .school-hero .change-school{color:#d6ebff;text-decoration:underline;text-underline-offset:3px}
+body.beagu-page-report .school-hero .access-tag{
+  background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.32);color:#fff;
+}
+/* Dynamic five-school selection is flex-based in the existing comparison module. */
+body.beagu-page-compare .comparison-picker .compare-selections{display:flex;flex-wrap:wrap;gap:12px}
+body.beagu-page-compare .comparison-picker .compare-selection{flex:1 1 190px;max-width:calc(50% - 6px)}
+body.beagu-page-compare .comparison-picker .compare-placeholder{flex:1 1 190px;max-width:calc(50% - 6px)}
+body.beagu-page-compare .compare-selection :is(select,button){max-width:100%}
+/* Keyboard users can jump straight to the content without navigating every tab. */
+body.beagu-ui-page .beagu-skip-link{
+  position:fixed;top:-70px;left:14px;z-index:2147483600;
+  display:inline-block;padding:12px 17px;background:#102b50;color:white;
+  border-radius:12px;text-decoration:none;font-size:14px;font-weight:800;
+  box-shadow:0 8px 24px rgba(15,43,79,.15);
+}
+body.beagu-ui-page .beagu-skip-link:focus{top:14px}
+@media(min-width:1210px){
+ body.beagu-page-compare .comparison-picker .compare-selection,
+ body.beagu-page-compare .comparison-picker .compare-placeholder{flex:1 1 185px;max-width:calc(20% - 10px)}
+}
+@media(max-width:760px){
+ body.beagu-page-compare .comparison-picker .compare-selection,
+ body.beagu-page-compare .comparison-picker .compare-placeholder{flex:1 1 180px;max-width:calc(50% - 6px)}
+ body.beagu-page-lv1 .results{grid-template-columns:1fr}
+}
+@media(max-width:450px){
+ body.beagu-page-compare .comparison-picker .compare-selection,
+ body.beagu-page-compare .comparison-picker .compare-placeholder{flex:1 1 100%;max-width:100%}
+}
