@@ -15,7 +15,7 @@ assert.equal(css,original,'Canonical statistics CSS must preserve existing desig
 assert.match(stats,/href="styles\/statistics\.css\?v=20261031-canonical7"/);
 assert.doesNotMatch(stats,/href="css\//,'Broken statistics CSS link must not reappear');
 assert.match(stats,/src="js\/statistics-table\.js\?v=20261031-routes7"/);
-assert.match(stats,/id="dialogReportLink" href="search\.html"/);
+assert.match(stats,/id="dialogReportLink" href="school-report\.html"/);
 assert.match(tableJS,/dialogReportLink'\)\.href='school-report\.html\?school_id='/);
 assert.ok(stats.indexOf('value="2023"')<stats.indexOf('value="2024"'));
 assert.ok(stats.indexOf('value="2024"')<stats.indexOf('value="2025"'));
