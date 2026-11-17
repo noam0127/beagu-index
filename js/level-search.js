@@ -184,6 +184,15 @@
   function renderYear(host, year, rows, publicValue, schoolId) {
     host.replaceChildren();
     host.append(make('h3', '', `${year}년 조사 결과`));
+    // The unified school report contains the verified original question titles
+    // and clearly labels unavailable or privacy-restricted answer aggregates.
+    // This link does not grant access or expose any private response records.
+    if(/^\\d{7}$/.test(String(schoolId))){
+      const allQuestions=make('a','question-catalog-link','${year}년 전체 조사 문항·공개 상태 보기');
+      allQuestions.href='school-report.html?school_id='+encodeURIComponent(String(schoolId))+'&year='+year;
+      allQuestions.style.cssText='display:block;margin:12px 0 18px;padding:12px 14px;border:1px solid #b9cbea;border-radius:10px;color:#1d4ed8;text-decoration:none;font-weight:700;background:#f8fbff';
+      host.append(allQuestions);
+    }
     if(year === 2026) {
       const vetted = metrics2026(rows);
       if(vetted.length) {
