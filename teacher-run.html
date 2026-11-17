@@ -137,7 +137,7 @@ const upgrades=[
 ];
 let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1,dash:0};
-let player={x:300,y:360,r:22,inv:0,dashTime:0,cool:0},pointerId=null,pointerX=null,pressed=new Set();
+let player={x:300,y:360,r:22,inv:0,dashTime:0,cool:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
 let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,difficulty=1;
 try{best=Number(localStorage.getItem("teacherRunBestV2"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
 $("bestLabel").textContent=best.toLocaleString("ko-KR");
@@ -156,13 +156,14 @@ function playTone(freq,duration=.1,type="sine",volume=.055){
  }catch(e){}
 }
 function resize(){
- const oldW=W;W=Math.max(220,canvas.clientWidth);H=canvas.clientHeight;
+ const oldW=W,oldH=H;W=Math.max(220,canvas.clientWidth);H=canvas.clientHeight;
  dpr=Math.min(2,window.devicePixelRatio||1);
  canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
  ctx.setTransform(dpr,0,0,dpr,0,0);
  if(oldW>0){player.x=player.x/oldW*W;items.forEach(a=>a.x=a.x/oldW*W);}
+ if(oldH>0&&pointerId!==null)player.y=player.y/oldH*H;
  player.x=Math.max(player.r,Math.min(W-player.r,player.x));
- player.y=H-52;
+ player.y=pointerId===null?H-52:Math.max(76,Math.min(H-52,player.y));
 }
 if(typeof ResizeObserver!=="undefined"){new ResizeObserver(resize).observe(canvas);}else{window.addEventListener("resize",resize);}
 function message(title,desc,choices,symbol="🎒"){
@@ -176,8 +177,8 @@ function start(mult=1){
  difficulty=mult;state="playing";day=0;dayTime=0;clock=0;score=0;life=100;maxLife=100;
  ranking?.start();
  combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1,dash:0};
- items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.inv=1.5;player.cool=0;player.dashTime=0;
- pressed.clear();pointerX=null;updateLabels();setNotice("월요일 시작!",2);closeMessage();playTone(500,.13);
+ items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=1.5;player.cool=0;player.dashTime=0;pointerId=null;pointerY=null;
+ pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice("월요일 시작!",2);closeMessage();playTone(500,.13);
 }
 function intro(){
  state="ready";message("험난한 교직생활","📄 피하고   ☕ 획득\n월 → 금 생존!",[{label:"🌱 보통 · 시작",action:()=>start(1)},{label:"🔥 어려움 · 시작",action:()=>start(1.3)}],"🏫");
@@ -217,7 +218,7 @@ function spawn(){
 }
 function nextDay(){
  if(day===4){finish(true);return;}
- state="between";pressed.clear();pointerX=null;playTone(900,.3);
+ state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;playTone(900,.3);
  let picks=upgrades.filter(u=>!(u.id==="dash"&&skill.dash>=1.4));
  picks.sort(()=>Math.random()-.5);picks=picks.slice(0,3);
  message(days[day]+" 퇴근!","능력 선택",picks.map(u=>({label:u.title,detail:u.detail,action:()=>choose(u)})),"🌙");
@@ -229,10 +230,10 @@ function choose(u){
  if(u.id==="heal")skill.heal*=1.5;
  if(u.id==="dash")skill.dash+=.7;
  day++;dayTime=0;items=[];spawnClock=.65;life=Math.min(maxLife,life+10);
- player.inv=1.2;state="playing";updateLabels();setNotice(days[day]+" 시작!",2);closeMessage();playTone(610,.16);
+ player.inv=1.2;pointerId=null;pointerX=null;pointerY=null;state="playing";updateLabels();setNotice(days[day]+" 시작!",2);closeMessage();playTone(610,.16);
 }
 function finish(win){
- state="over";pressed.clear();pointerX=null;
+ state="over";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  let bonus=win?1500+Math.round(life*5):0;score+=bonus;
  if(score>best){best=Math.floor(score);persist();}
  updateLabels();$("bestLabel").textContent=best.toLocaleString("ko-KR");
@@ -248,14 +249,14 @@ function finish(win){
  playTone(win?950:280,.32);
 }
 function pause(){
- if(state==="playing"){state="paused";pressed.clear();pointerX=null;message("일시정지","",[{label:"▶ 계속",action:resume},{label:"↩ 처음으로",action:intro}],"⏸");}
+ if(state==="playing"){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;message("일시정지","",[{label:"▶ 계속",action:resume},{label:"↩ 처음으로",action:intro}],"⏸");}
  else if(state==="paused")resume();
 }
 function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing";
- if(wasPlaying){state="paused";pressed.clear();}
- message("게임 방법","📄 공문 · 📞 전화 · 📅 회의 등 장애물을 피하세요.\n☕ 커피 · 💌 응원 · 🤝 동료 아이템을 받으면 체력이 회복됩니다.\n스치듯 피하면 콤보 점수! ⚡ 긴급 회피 중에는 무적입니다.\n\nPC: ← → / A D, 스페이스\n모바일: 화면 드래그 또는 아래 이동 버튼",[
+ if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
+ message("게임 방법","📄 공문 · 📞 전화 · 📅 회의 등 장애물을 피하세요.\n☕ 커피 · 💌 응원 · 🤝 동료 아이템을 받으면 체력이 회복됩니다.\n스치듯 피하면 콤보 점수! ⚡ 긴급 회피 중에는 무적입니다.\n\nPC: ← → / A D, 스페이스\n모바일: 터치·드래그로 비행, 버튼으로 좌우 이동",[
  {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else intro();}}],"❔");
 }
 function update(dt){
@@ -263,10 +264,20 @@ function update(dt){
  player.cool=Math.max(0,player.cool-dt);player.dashTime=Math.max(0,player.dashTime-dt);
  shake=Math.max(0,shake-dt);noticeTime=Math.max(0,noticeTime-dt);
  const dir=(pressed.has("right")?1:0)-(pressed.has("left")?1:0);
- let speed=285*skill.speed*(player.dashTime>0?2.1:1);
- if(pointerX!==null){let delta=pointerX-player.x;player.x+=Math.sign(delta)*Math.min(Math.abs(delta),speed*dt);}
- else player.x+=dir*speed*dt;
- player.x=Math.max(25,Math.min(W-25,player.x));
+ const speed=285*skill.speed*(player.dashTime>0?2.1:1);
+ if(pointerId!==null&&pointerX!==null&&pointerY!==null){
+  // Finger/mouse targets both axes while actively touching the canvas.
+  const flyingSpeed=1300*skill.speed*(player.dashTime>0?1.5:1);
+  const dx=pointerX-player.x,dy=pointerY-player.y;
+  player.x+=Math.sign(dx)*Math.min(Math.abs(dx),flyingSpeed*dt);
+  player.y+=Math.sign(dy)*Math.min(Math.abs(dy),flyingSpeed*dt);
+ }else{
+  player.x+=dir*speed*dt;
+  // Landing: release restores altitude smoothly.
+  player.y=Math.min(H-52,player.y+520*dt);
+ }
+ player.x=Math.max(27,Math.min(W-27,player.x));
+ player.y=Math.max(76,Math.min(H-52,player.y));
  spawnClock-=dt;
  if(spawnClock<=0){spawn();spawnClock=Math.max(.3,(.86-day*.085-(dayTime>13&&day===4?.2:0))/difficulty)*(0.8+Math.random()*.45);}
  for(let i=items.length-1;i>=0;i--){
@@ -319,6 +330,11 @@ function background(){
 }
 function playerDraw(){
  ctx.save();ctx.translate(Math.round(player.x),Math.round(player.y));
+ if(pointerId!==null&&state==="playing"){
+  const blink=Math.floor(clock*18)%2;
+  ctx.fillStyle="#ffe078";ctx.fillRect(-16,31,11,blink?15:23);ctx.fillRect(6,31,11,blink?23:15);
+  ctx.fillStyle="#fa8f69";ctx.fillRect(-11,50,7,blink?10:6);ctx.fillRect(10,50,7,blink?6:10);
+ }
  if(player.inv>0&&Math.floor(clock*12)%2===0)ctx.globalAlpha=.45;
  if(player.dashTime>0){
   ctx.fillStyle="rgba(255,236,119,.22)";ctx.fillRect(-39,-50,78,80);
@@ -397,21 +413,40 @@ window.addEventListener("keydown",e=>{
  if(key==="escape"&&(state==="playing"||state==="paused"))pause();
 });
 window.addEventListener("keyup",e=>{let key=e.key.toLowerCase();if(key==="arrowleft"||key==="a")pressed.delete("left");if(key==="arrowright"||key==="d")pressed.delete("right");});
-window.addEventListener("blur",()=>{pressed.clear();pointerX=null;if(state==="playing")pause();});
+window.addEventListener("blur",()=>{pressed.clear();pointerId=null;pointerX=null;pointerY=null;if(state==="playing")pause();});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state==="playing")pause();});
 for(let dir of ["left","right"]){
  const el=$(dir);
- el.addEventListener("pointerdown",e=>{e.preventDefault();el.setPointerCapture(e.pointerId);pressed.add(dir);pointerX=null;el.classList.add("down");});
+ el.addEventListener("pointerdown",e=>{e.preventDefault();el.setPointerCapture(e.pointerId);pressed.add(dir);pointerId=null;pointerX=null;pointerY=null;el.classList.add("down");});
  const off=()=>{pressed.delete(dir);el.classList.remove("down");};
  el.addEventListener("pointerup",off);el.addEventListener("pointercancel",off);el.addEventListener("lostpointercapture",off);
 }
 $("dash").addEventListener("pointerdown",e=>{e.preventDefault();activateDash();$("dash").classList.add("down");});
 ["pointerup","pointercancel","pointerleave"].forEach(k=>$("dash").addEventListener(k,()=>$("dash").classList.remove("down")));
-function dragPosition(e){const r=canvas.getBoundingClientRect();return Math.max(25,Math.min(W-25,(e.clientX-r.left)/r.width*W));}
-canvas.addEventListener("pointerdown",e=>{if(state!=="playing")return;pointerId=e.pointerId;canvas.setPointerCapture(e.pointerId);pointerX=dragPosition(e);});
-canvas.addEventListener("pointermove",e=>{if(pointerId===e.pointerId&&state==="playing")pointerX=dragPosition(e);});
-const endDrag=e=>{if(pointerId===e.pointerId){pointerId=null;pointerX=null;}};
+function dragPosition(e){
+ const r=canvas.getBoundingClientRect();
+ if(!r.width||!r.height)return null;
+ return {
+  x:Math.max(27,Math.min(W-27,(e.clientX-r.left)/r.width*W)),
+  y:Math.max(76,Math.min(H-52,(e.clientY-r.top)/r.height*H))
+ };
+}
+function setFlightTarget(e){
+ const target=dragPosition(e);if(!target)return;
+ pointerX=target.x;pointerY=target.y;
+}
+canvas.addEventListener("pointerdown",e=>{
+ if(state!=="playing"||pointerId!==null)return;
+ e.preventDefault();pointerId=e.pointerId;
+ if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);
+ setFlightTarget(e);
+});
+canvas.addEventListener("pointermove",e=>{
+ if(pointerId===e.pointerId&&state==="playing"){e.preventDefault();setFlightTarget(e);}
+});
+const endDrag=e=>{if(pointerId===e.pointerId){pointerId=null;pointerX=null;pointerY=null;}};
 canvas.addEventListener("pointerup",endDrag);canvas.addEventListener("pointercancel",endDrag);
+canvas.addEventListener("lostpointercapture",endDrag);
 $("pause").addEventListener("click",pause);
 $("how").addEventListener("click",help);
 $("sound").addEventListener("click",()=>{soundOn=!soundOn;$("sound").textContent=soundOn?"🔊":"🔇";$("sound").setAttribute("aria-pressed",String(soundOn));$("sound").setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");try{localStorage.setItem("teacherRunSoundV2",soundOn?"1":"0");}catch(e){}playTone(800,.12);});
