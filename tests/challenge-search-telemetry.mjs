@@ -106,19 +106,20 @@ assert.match(read('index.html'),/방문한 선생님/);
 assert.doesNotMatch(read('index.html'),/자료 공개 기준/);
 assert.doesNotMatch(read('index.html'),/href="challenge\.html"/,'No home challenge link');
 
-for(const page of ['search.html','search-lv1.html','search-lv2.html','school-report.html']){
+for(const page of ['search-lv1.html','search-lv2.html','school-report.html']){
  const html=read(page);
  assert.match(html,/js\/search-telemetry-v1\.js\?v=20261031-xp8/);
 }
 const publicSearch=read('search.html');
 const lv1=read('js/level-search.js'),lv2=read('js/lv2-edited-search.js');
-for(const source of [publicSearch,lv1,lv2]){
+for(const source of [lv1,lv2]){
  assert.match(source,/explicitEnter/);
  assert.match(source,/searchConfirmed/);
  assert.match(source,/addEventListener\('keydown'/);
  assert.match(source,/\.selected\(/);
 }
-assert.match(publicSearch,/count===1&&Array\.isArray\(data\)&&data\.length===1/);
+assert.match(publicSearch,/http-equiv="refresh"/,'Lv.0 route retired');
+assert.doesNotMatch(publicSearch,/id="searchInput"/,'Lv.0 UI absent');
 assert.match(lv1,/if\(action\)window\.BeaguSearchTelemetry\?\.detailViewed/);
 assert.match(lv2,/if\(loaded&&action\)window\.BeaguSearchTelemetry\?\.detailViewed/);
 assert.match(lv1,/showDetails\(detail,\s*data\.rows,\s*school\)/);
