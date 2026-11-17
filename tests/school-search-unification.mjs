@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import {Script,runInNewContext} from 'node:vm';
 import assert from 'node:assert/strict';
 const read=name=>readFileSync(name,'utf8');
-const pages=['search-lv1.html','search-lv2.html'];
+const pages=['search.html','search-lv1.html'];
 const scripts=['js/school-search-card-v1.js','js/level-search.js','js/lv2-edited-search.js','js/school-mbti-v1.js','js/school-detail-groups-v1.js'];
 for(const file of scripts)assert.doesNotThrow(()=>new Script(read(file),{filename:file}),file+' invalid JS');
 for(const path of pages){
@@ -18,13 +18,14 @@ for(const path of pages){
  }
 }
 const lv0=read('search.html');
-assert.match(lv0,/http-equiv="refresh" content="0;url=\.\/index\.html"/,'Lv.0 viewing page retired');
-assert.doesNotMatch(lv0,/BeaguSchoolSearchCard/,'No Lv.0 browsing UI');
+assert.match(lv0,/id="searchInput"/,'Lv.0 browsing restored');
+assert.match(lv0,/href="search-lv1\.html"/,'Lv.1 accessible from public level');
+assert.match(read('search-lv2.html'),/search-lv1\.html/,'Lv.2 URL forwarded to Lv.1');
 const lv1=read('js/level-search.js');
 const lv2=read('js/lv2-edited-search.js');
 const mbti=read('js/school-mbti-v1.js');
 const report=read('school-report.html');
-for(const [level,code] of [[1,lv1],[2,lv2]]){
+for(const [level,code] of [[0,lv0],[1,lv1],[2,lv2]]){
  assert.match(code,/BeaguSchoolSearchCard\.createCard\(/,'Lv.'+level+' not using canonical card');
  assert.match(code,new RegExp('level:\\s*'+level),'Lv.'+level+' incorrect card privilege');
  assert.doesNotMatch(code,/🌐 학교 홈페이지|address,homepage/);
@@ -35,20 +36,18 @@ assert.doesNotMatch(report,/schoolHomepage|학교 홈페이지 방문|,homepage,
 assert.match(report,/id="latestYearMessage"/,'Lv.0 latest year explanation');
 assert.ok(report.indexOf('id="yearGrid"') < report.indexOf('id="latestYearMessage"'),'Lv.0 year navigation precedes 2026 status banner');
 assert.match(report,/현재.*2026|2026년 학교별 통계/,'Lv.0 current release status');
-assert.match(lv1,/const YEARS = \[2023, 2024, 2025\]/,'Lv.1 history tab order');
-assert.match(lv1,/currentContent\.hidden = false/,'Lv.1 current report open by default');
-assert.match(lv1,/newer\.setAttribute\('aria-controls',currentContent\.id\)/,'Lv.1 2026 panel accessible');
-assert.ok(lv1.indexOf('section.append(tabs, content)') < lv1.indexOf("const newer = make('button'"),'Lv.1 2026 follows historical year tabs');
-assert.ok(lv1.indexOf('section.append(newer, currentContent)') < lv1.indexOf('BeaguSchoolMBTI.createDetail'),'Lv.1 2026 report before MBTI');
+assert.match(lv1,/const YEARS = \[2023, 2024, 2025, 2026\]/,'Lv.1 has four-year timeline');
+assert.match(lv1,/2026년 승인 결과 새로고침/,'Lv.1 supports fresh verified 2026 results');
+assert.doesNotMatch(lv1,/section\.append\(newer, currentContent\)/,'Do not duplicate 2026 in UI');
 assert.match(lv2,/const years=\[2023,2024,2025\]/,'Lv.2 history tab order');
 assert.match(report,/function renderYearGrid\(\)\s*\{[\s\S]*?for\(const year of \[2023,2024,2025,2026\]\)/,'Lv.0 chronological selector');
 assert.ok(lv2.indexOf('container.append(newer)') < lv2.indexOf('BeaguSchoolMBTI.createDetail'),'Lv.2 current report before MBTI');
 
-for(const html of [read('search-lv1.html'),read('search-lv2.html')]){
+for(const html of [read('search-lv1.html')]){
  assert.match(html,/js\/school-mbti-v1\.js/);
 }
 assert.doesNotMatch(lv0,/school-mbti-v1\.js/);
-for(const page of ['search-lv1.html','search-lv2.html']){
+for(const page of ['search-lv1.html']){
  const html=read(page);
  assert.match(html,/styles\/school-detail-groups-v1\.css\?v=20261031-groups6/);
  assert.match(html,/js\/school-detail-groups-v1\.js\?v=20261031-groups6/);
@@ -57,7 +56,7 @@ for(const page of ['search-lv1.html','search-lv2.html']){
 }
 assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(section,releasedMetrics/);
 assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(section,schoolScale/);
-assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(currentContent,metrics/);
+assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(host,vetted/);
 assert.match(lv2,/BeaguDetailGroups\.appendGrouped\(root,approvedItems/);
 assert.match(lv2,/BeaguDetailGroups\.appendGrouped\(newer,stats/);
 assert.match(lv2,/releasedFields\(metadata,year,values\)/,'Lv.2 server-reviewed field allowlist remains enforced');
