@@ -20,6 +20,40 @@
 .question-comparisons span{display:block;font-size:12px;color:#63738b}
 .question-comparisons strong{display:block;font-size:13px;margin-top:3px}
 
+/* 2023~2026 문항 상세: 비교부터 읽고, 문항과 보기는 작게 확인합니다. */
+.question-row{padding:16px 18px}
+.question-visual{background:#fff;border:1px solid #dce5f3;border-radius:14px;padding:15px 14px;margin:0 0 14px}
+.question-visual-heading{font-size:15px;font-weight:850;color:#203152;margin:0 0 10px;letter-spacing:-.03em}
+.question-visual-heading small{font-size:11px;color:#64748b;font-weight:550;margin-left:6px}
+.question-visual-directions{display:flex;justify-content:space-between;gap:8px;color:#718096;font-size:10px;font-weight:650}
+.question-visual-axis{position:relative;height:54px;margin:4px 5px 6px}
+.question-visual-axis:before{content:"";position:absolute;left:5%;right:5%;top:50%;height:4px;border-radius:5px;background:#cbd5e1;transform:translateY(-50%)}
+.question-visual-axis:after{content:"";position:absolute;left:50%;top:10%;bottom:10%;border-left:1px dashed #7aa2e4}
+.question-visual-dot{position:absolute;top:50%;transform:translate(-50%,-50%);border-radius:99px;background:#fff;box-sizing:border-box}
+.question-visual-dot.nation{width:12px;height:12px;border:3px solid #2563eb;z-index:3}
+.question-visual-dot.region{width:19px;height:19px;border:4px solid #16a34a;z-index:2}
+.question-visual-dot.school{width:27px;height:27px;border:5px solid #7c3aed;z-index:1}
+.question-visual-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;border-top:1px solid #e5ebf5;padding-top:10px}
+.question-visual-value{min-width:0;text-align:center;font-size:11px;overflow-wrap:anywhere}
+.question-visual-value span{display:block;font-size:11px;font-weight:750;color:#64748b;margin-bottom:4px}
+.question-visual-value strong{display:block;font-size:12px;line-height:1.45;color:#1e293b;overflow-wrap:anywhere;font-weight:750}
+.question-visual-value.nation span:before{content:"● ";color:#2563eb}
+.question-visual-value.region span:before{content:"● ";color:#16a34a}
+.question-visual-value.school span:before{content:"● ";color:#7c3aed}
+.question-visual-notice{font-size:11px;color:#68788f;line-height:1.55;margin:10px 0 0}
+.question-visual-empty{background:#f3f6fb;color:#64748b;text-align:center;padding:8px 10px;border-radius:9px;font-size:12px;margin:10px 0}
+.question-row .question-line{gap:9px;align-items:flex-start}
+.question-row .question-label{font-size:12px;font-weight:650;color:#40506b;line-height:1.6}
+.question-row .question-value{font-size:11px;color:#697891;font-weight:650;max-width:40%}
+.question-row .question-meta{font-size:10px;line-height:1.5;margin:6px 0}
+.question-row .question-choices{margin:9px 0;padding:10px 11px;background:#f8fafc;border-color:#eef2f7}
+.question-row .question-choices h5{font-size:11px;color:#64748b;margin-bottom:5px}
+.question-row .question-choices li{font-size:11px;line-height:1.6;color:#53627a}
+.question-row .question-choices p{font-size:11px!important}
+.question-visual+ .question-line{margin-top:0}
+@media(max-width:430px){.question-row{padding:12px 11px}.question-visual{padding:11px 9px}.question-visual-values{gap:3px}.question-visual-value strong{font-size:11px}.question-visual-directions{font-size:9px}}
+
+
 
 /* 검증된 수치형 평균만 가로선에 표시합니다. 전국 평균은 언제나 중앙입니다. */
 .summary-metric.compare-metric{display:block;padding:15px 14px;min-width:0}
@@ -91,7 +125,7 @@
 <header class="site-header"><div class="header-inner"><a class="brand" href="index.html"><span class="brand-symbol">V<span class="symbol-dot">●</span></span><span>배구지수 <small>VOLLEYBALL INDEX</small></span></a><nav class="header-actions"><a href="index.html" class="home-link">처음으로</a></nav></div></header>
 <main class="layout" id="app">
   <section class="page-heading"><div><p class="eyebrow">학교별 조사 기록 · 2023~2026</p><h1>학교별 조사 기록</h1><p class="lead">학교의 조건부터 교직문화까지, 연도별로 살펴보세요.</p></div><a class="survey-link" href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 조사 참여 <span aria-hidden="true">↗</span></a></section>
-  <section class="search-surface" aria-label="학교 검색"><div class="search-heading"><label for="schoolInput">🔎 학교 검색</label><span>학교명을 검색하거나 기존 검색 결과에서 학교를 선택하세요.</span></div><div class="input-wrap"><input id="schoolInput" type="search" autocomplete="off" placeholder="예: 서울개원초등학교, 강릉초등학교" aria-autocomplete="list" aria-controls="suggestions"><button id="clearSearch" type="button" aria-label="검색어 지우기">×</button></div><div class="suggestions" id="suggestions" role="listbox" hidden></div><div class="search-help" id="searchHelp" aria-live="polite">학교명을 2글자 이상 입력하면 검색합니다.</div></section>
+  <section class="search-surface" aria-label="학교 검색"><div class="search-heading"><label for="schoolInput">🔎 학교 검색</label><span>학교를 선택하면 전국·시도·학교의 승인 자료를 비교할 수 있습니다.</span></div><div class="input-wrap"><input id="schoolInput" type="search" autocomplete="off" placeholder="예: 서울개원초등학교, 강릉초등학교" aria-autocomplete="list" aria-controls="suggestions"><button id="clearSearch" type="button" aria-label="검색어 지우기">×</button></div><div class="suggestions" id="suggestions" role="listbox" hidden></div><div class="search-help" id="searchHelp" aria-live="polite">학교명을 2글자 이상 입력하면 검색합니다.</div></section>
   <div class="main-content" id="mainContent" hidden>
     <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a href="index.html" class="change-school">홈으로 ↗</a></div></section>
     <section class="tier-panel" id="tierPanel" aria-label="등급별 열람"><h3>열람 범위 선택</h3><p>공개 자료와 참여자·교사 승인 자료를 구분합니다. 잠긴 항목은 데이터 자체를 내려받지 않습니다.</p><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong><span>학교정보 · 연도별 백분위</span></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자 🔒</strong><span>인증된 승인 요약</span></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">인증하기</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div><p class="tier-privacy-note">※ Lv.1에서도 표본·개인정보 보호 심사를 통과한 문항만 표시합니다. 2026년 Q51 자유서술은 전 등급 비공개입니다.</p></section>
@@ -1079,7 +1113,7 @@
 
   async function fetchHistoricalGeography(){
     if(state.tier<1||!state.school||state.demo)return;
-    const region=String(state.school.sido_standard||state.school.sido||'').trim();
+    const region=canonicalRegion(state.school.sido_standard||state.school.sido);
     if(!region||region.length>24)return;
     const request=state.reportSerial;
     const years=[2023,2024,2025];
@@ -1616,6 +1650,83 @@
     const leaders=data.filter(x=>Number(x.count)===top).map(x=>x.label);
     return leaders.length===1?leaders[0]:'공동 최다: '+leaders.join(', ');
   }
+  // DB 지역명과 화면용 시도 표기를 동일한 검색 키로 정규화합니다.
+  function canonicalRegion(value){
+    const v=String(value||'').trim();
+    if(/전남광주통합특별시.*광주|^광주(?:광역시)?$/.test(v))return '광주';
+    if(/전남광주통합특별시.*전남|^전남$|^전라남도$/.test(v))return '전남';
+    return v.replace(/광역시$|특별시$|특별자치시$|특별자치도$/,'').replace(/도$/,'');
+  }
+  // 원본의 '2점: ...'과 일치하는 검증된 순서형 보기만 위치로 변환합니다.
+  // 최다 선택 보기 등 범주형 값은 평균 숫자로 가장하지 않습니다.
+  function ordinalChoicePosition(value, options){
+    if(typeof value!=='string'||!value.trim())return null;
+    const raw=value.trim();
+    const match=raw.match(/^([1-9])\s*점\s*[:：]/);
+    if(match)return Number(match[1]);
+    const circled='①②③④⑤⑥⑦⑧⑨';
+    const first=circled.indexOf(raw[0]);
+    if(first>=0)return first+1;
+    if(!Array.isArray(options)||!options.length)return null;
+    const normalized=v=>String(v).replace(/^\s*(?:[①②③④⑤⑥⑦⑧⑨]|\d+\s*점[:：]?)\s*/,'').replace(/\s+/g,'').trim();
+    const needle=normalized(raw);
+    if(!needle)return null;
+    const index=options.findIndex(v=>normalized(v)===needle);
+    return index>=0?index+1:null;
+  }
+  function questionComparisonVisual({nation,regional,school,kindNation,kindRegion,options,year,area}){
+    const root=document.createElement('section');
+    root.className='question-visual';
+    const title=document.createElement('h5');title.className='question-visual-heading';
+    title.textContent='전국 · '+(area||'지역')+' · 우리 학교';
+    root.append(title);
+    const isOrdinal=kindNation==='ordinal_mean'&&kindRegion==='ordinal_mean'&&
+      typeof nation==='string'&&typeof regional==='string';
+    const n=isOrdinal?ordinalChoicePosition(nation,options):null;
+    const r=isOrdinal?ordinalChoicePosition(regional,options):null;
+    const k=isOrdinal?ordinalChoicePosition(school,options):null;
+    if(Number.isInteger(n)&&Number.isInteger(r)&&n>=1&&r>=1&&n<=9&&r<=9){
+      const extent=Math.max(Math.abs(r-n),Number.isInteger(k)?Math.abs(k-n):0,1);
+      const position=v=>Math.max(12,Math.min(88,50+36*(v-n)/extent)).toFixed(1)+'%';
+      const dir=document.createElement('div');dir.className='question-visual-directions';
+      dir.innerHTML='<span>← 평균 보기보다 낮은 응답 번호</span><span>높은 응답 번호 →</span>';
+      root.append(dir);
+      const plot=document.createElement('div');plot.className='question-visual-axis';
+      plot.setAttribute('role','img');
+      plot.setAttribute('aria-label','전국 평균에 가까운 보기 '+nation+', '+(area||'지역')+' 평균에 가까운 보기 '+regional+(school?', 학교 최다 선택 보기 '+school:''));
+      for(const [name,pos] of [['nation',50],['region',r],['school',k]]){
+        if(name==='school'&&!Number.isInteger(k))continue;
+        const dot=document.createElement('span');dot.className='question-visual-dot '+name;
+        dot.style.left=name==='nation'?'50%':position(pos);
+        plot.append(dot);
+      }
+      root.append(plot);
+    }else{
+      const empty=document.createElement('div');empty.className='question-visual-empty';
+      empty.textContent=!nation&&!regional?'전국·지역 비교값이 아직 공개 승인되지 않았습니다.':
+        '확인된 보기 비교입니다. 선택형 문항은 순서가 없어 위치를 매기지 않습니다.';
+      root.append(empty);
+    }
+    const values=document.createElement('div');values.className='question-visual-values';
+    for(const [role,label,value] of [
+      ['nation','전국 '+(kindNation==='most_frequent'?'최다 선택':'평균 가까운 보기'),nation],
+      ['region',(area||'지역')+' '+(kindRegion==='most_frequent'?'최다 선택':'평균 가까운 보기'),regional],
+      ['school','우리 학교 최다 선택',school]
+    ]){
+      const cell=document.createElement('div');cell.className='question-visual-value '+role;
+      const cap=document.createElement('span');cap.textContent=label;
+      const val=document.createElement('strong');val.textContent=value||'검증된 자료 없음';
+      cell.append(cap,val);values.append(cell);
+    }
+    root.append(values);
+    const note=document.createElement('p');note.className='question-visual-notice';
+    note.textContent=isOrdinal&&Number.isInteger(n)&&Number.isInteger(r)
+      ?'원본 응답의 평균에 가장 가까운 선택지와 학교의 최다 선택 보기를 비교합니다. 실제 평균 점수나 학교 전체의 대표값은 아닙니다.'
+      :year===2026?'2026년 전국·지역 문항별 비교 집계가 공개 승인되면 표시됩니다.':
+       '검증된 원본 참고값만 사용합니다. 학교별 미승인 응답은 표시하지 않습니다.';
+    root.append(note);
+    return root;
+  }
   function renderItem(item){
     const data=yearData(state.selected).items?.[item.id];
     const isFreeText=(state.selected===2026&&item.id==='Q51');
@@ -1675,7 +1786,7 @@
     }
     row.append(choices);
     const majority=itemApproved?(typeof data?.modeOption==='string'?data.modeOption:verifiedModalOption(data?.distribution)):null;
-    const area=String(state.school?.sido_standard||state.school?.sido||'');
+    const area=canonicalRegion(state.school?.sido_standard||state.school?.sido);
     const historical=geographyComparisonCache[area+'|'+state.selected]?.items?.[item.id]||{};
     const sourceNation=historical.national||null,sourceRegion=historical.regional||null;
     const optionValue=metric=>metric&&typeof metric==='object'
@@ -1685,23 +1796,22 @@
       ?data.nationalMeanOption:null);
     const regional=optionValue(sourceRegion)||(itemApproved&&typeof data?.regionalMeanOption==='string'
       ?data.regionalMeanOption:null);
-    const nationLabel=sourceNation?.kind==='most_frequent'?'전국 최다 선택 보기':'전국평균 보기';
-    const regionLabel=sourceRegion?.kind==='most_frequent'?'시도 최다 선택 보기':'시도평균 보기';
-    const comparison=document.createElement('div');comparison.className='question-comparisons';
-    for(const [name,val] of [
-      ['학교별 최다 선택 보기',majority||'검수된 학교별 분포 자료 없음'],
-      [nationLabel,national||'원본 집계 검증 대기'],
-      [regionLabel,regional||'지역별 집계 검증 대기']
-    ]){const cell=document.createElement('div');const cap=document.createElement('span');
-      const value=document.createElement('strong');cap.textContent=name;value.textContent=val;
-      cell.append(cap,value);comparison.append(cell);}
-    if(!isFreeText&&state.tier>=1){
-      row.append(comparison);
-      if(historical.national||historical.regional){
-        const note=document.createElement('p');note.className='question-meta';
-        note.textContent='확인된 과거 원본 응답의 전국·시도 참고값입니다. 원본 범위가 전체 모집단을 대표한다고 보장하지 않으며, 공개 응답 건수는 표시하지 않습니다.';
-        row.append(note);
+    // 반드시 문항과 선택지보다 앞에 비교표가 나타납니다.
+    if(!isFreeText){
+      const chart=questionComparisonVisual({
+        nation:state.tier>=1?national:null,regional:state.tier>=1?regional:null,
+        school:itemApproved?majority:null,
+        kindNation:sourceNation?.kind,kindRegion:sourceRegion?.kind,
+        options,year:state.selected,area
+      });
+      if(state.tier<1){
+        chart.replaceChildren();
+        const title=document.createElement('strong');title.textContent='전국·지역·우리 학교 비교 🔒';
+        const notice=document.createElement('p');notice.className='question-visual-notice';
+        notice.textContent='Lv.1 인증 후 검증된 전국·지역 참고값과 학교별 승인 집계를 볼 수 있습니다.';
+        chart.append(title,notice);
       }
+      row.prepend(chart);
     }
     if(itemApproved&&Array.isArray(data?.roundedDistribution)&&data.roundedDistribution.length){
       const dist=document.createElement('div');dist.className='distribution';
