@@ -49,7 +49,7 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261118-flying-ball2x")&&
+  if(site.body.includes("teacher-volleyball.html?v=20261118-autospike1")&&
      site.body.includes("teacher-run.html?v=20261118-flying"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
