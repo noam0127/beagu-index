@@ -112,7 +112,7 @@
     .footer-grid { grid-template-columns: 1fr; }
   }
 </style>
-  <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-goal1000">
+  <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
 </head>
 <body>
 <main>
@@ -125,60 +125,36 @@
   <section class="certificate" id="certificate" aria-label="2026 배구지수 참여 인증서">
     <div class="trophy" aria-hidden="true">🏆</div>
     <h1>2026 배구지수 챌린지</h1>
-    <div class="subtitle">전국 초등교사 학교정보 공동조사</div>
-    <p class="thanks">선생님, 참여해 주셔서 감사합니다.</p>
     <div class="rank">
       <span class="rank-label">2026년 챌린지 참여 순번</span>
       <strong id="participantNo" aria-live="polite">순번 확인 중</strong>
-      <span class="rank-foot">선생님의 참여가 학교 정보망을 만듭니다.</span>
-      <p class="small-note">챌린지 최초 방문 브라우저 기준 순번입니다. 실제 설문 응답자 수와 다를 수 있습니다.</p>
     </div>
-    <p class="message">선생님의 경험이<br>다른 선생님의 선택을 돕습니다.</p>
-    <p class="body-copy">전국 선생님들의 경험을 모아 학교별 근무환경과 교직문화를 기록합니다.</p>
     <a class="site-link" href="https://baeguindex.com/">baeguindex.com</a>
   </section>
 
     <section class="beagu-xp" data-beagu-xp data-xp-state="loading" aria-label="2026년 챌린지 목표 달성률">
       <div class="beagu-xp-head"><h2>2026 챌린지 XP · 목표 1,000명</h2><strong class="beagu-xp-number" data-xp-number aria-live="polite">순번 확인 중</strong></div>
       <div class="beagu-xp-track"><div class="beagu-xp-fill" data-xp-progress role="progressbar" aria-label="챌린지 진행률" aria-valuemin="0" aria-valuemax="1000"></div></div>
-      <div class="beagu-xp-footer"><span data-xp-state>기존 챌린지 순번 기준</span><strong data-xp-remainder>확인 중</strong></div>
-      <p class="beagu-xp-promise"><strong>1,000명 달성 시 2026 배구지수 자료를 공개합니다.</strong><span>전국 선생님들의 참여로 함께 만드는 학교정보 공동조사</span></p>
-      <p class="beagu-xp-help">진행률은 챌린지 발급 순번 기준입니다. 실제 설문 응답자 수나 과거 조사 누적 참여자 수와 다를 수 있습니다. 자료는 목표 달성 후 공개 예정입니다.</p>
+      <div class="beagu-xp-footer"><span class="beagu-sr-only" data-xp-state>챌린지 집계 확인 중</span><strong data-xp-remainder>확인 중</strong></div>
+      <p class="beagu-xp-promise"><strong>1,000명 달성 시 2026 배구지수 자료를 공개합니다.</strong></p>
     </section>
   <section class="steps" aria-labelledby="steps-title">
-    <h2 class="section-title" id="steps-title">참여 인증, 이렇게 진행하세요</h2>
-    <p class="section-subtitle">아래 순서에 따라 인증하고 Lv.2 참여코드를 확인해 주세요.</p>
+    <h2 class="section-title" id="steps-title">참여 인증</h2>
 
     <section class="step-card" aria-labelledby="step-1">
       <div class="step-heading"><span class="step-number" aria-hidden="true">1</span><h3 id="step-1">인증 이미지 저장</h3></div>
-      <p>위의 참여 인증서를 이미지로 저장합니다.</p>
       <button class="action" id="capture" type="button" disabled>↓ 인증 이미지 저장하기</button>
       <p id="status" role="status" aria-live="polite">참여 순번을 확인하고 있습니다.</p>
       <button class="action secondary" id="retry" type="button" hidden>다시 시도하기</button>
     </section>
 
     <section class="step-card" aria-labelledby="step-2">
-      <div class="step-heading"><span class="step-number" aria-hidden="true">2</span><h3 id="step-2">쫑알쫑알에서 인증하기</h3></div>
-      <p>저장한 인증 이미지를 인디스쿨 쫑알쫑알에 게시해 주세요.</p>
+      <div class="step-heading"><span class="step-number" aria-hidden="true">2</span><h3 id="step-2">쫑알쫑알 인증</h3></div>
       <a class="action secondary" id="loungeLink" href="https://indischool.com/tweets/channels/lounge" target="_blank" rel="noopener noreferrer">인디스쿨 쫑알쫑알에서 인증하기 ↗</a>
-      <p class="small-note">네이버카페에서 인디스쿨 쫑알쫑알을 인증하고 Lv.2 참여코드를 획득할 수 있습니다.</p>
-      
     </section>
 
-    <section class="step-card" aria-labelledby="step-3">
-      <div class="step-heading"><span class="step-number" aria-hidden="true">3</span><h3 id="step-3">Lv.2 참여코드 확인</h3></div>
-      <p>네이버카페에서 레벨업을 요청하고 참여코드 확인합니다.</p>
-      <a class="action soft" href="https://cafe.naver.com/bluey9t7i" target="_blank" rel="noopener noreferrer">Lv.2 참여코드 받기 ↗</a>
-      <p class="small-note">네이버카페의 레벨업 게시판에서 요청 및 안내를 확인해 주세요.</p>
-    </section>
   </section>
 
-  <section class="footer-links" aria-labelledby="more-title">
-    <h2 id="more-title">배구지수 정보망 더 알아보기</h2>
-    <div class="footer-grid">
-      <a class="footer-link" href="index.html">배구지수 홈으로 →</a>
-    </div>
-  </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
