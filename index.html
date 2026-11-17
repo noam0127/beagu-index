@@ -152,6 +152,22 @@
     .teacher-run-feature .teacher-game-footer a { color: #a1fae7; }
     .teacher-run-feature .game-tag { font-size: 11px; padding: 3px 7px; margin-left: 5px; vertical-align: middle; background: #78e2c4; color: #193e4c; border-radius: 6px; font-weight: 850; white-space: nowrap; }
 
+
+    /* 게임 전용: 메인 설문·통계 레이아웃과 완전히 분리 */
+    .teacher-game-feature{position:relative;isolation:isolate;border:1px solid #314f73;
+      background:linear-gradient(145deg,#193d63 0%,#10263f 65%,#0d1d32 100%);
+      box-shadow:0 14px 35px rgba(14,36,64,.16);border-radius:22px}
+    .teacher-game-header{display:flex;justify-content:space-between;align-items:center;min-width:0;padding:17px 19px 13px}
+    .teacher-game-header h2{margin:0;font-size:clamp(18px,4.6vw,22px);line-height:1.3;letter-spacing:-.04em;overflow-wrap:anywhere;color:#f7fcff}
+    .teacher-game-frame{display:block;width:100%;min-height:440px;border:0;background:#10223d}
+    .teacher-run-feature{background:linear-gradient(145deg,#1e5260,#10263f 68%)}
+    .teacher-run-feature .teacher-game-frame{min-height:625px}
+    .teacher-game-footer{display:flex;align-items:center;justify-content:flex-end;padding:8px 18px 14px}
+    .teacher-game-footer a{color:#b4f7e8;font-size:12px;font-weight:800;text-decoration:none;
+      border:1px solid rgba(168,226,225,.24);background:rgba(39,79,104,.5);border-radius:999px;
+      padding:8px 11px;line-height:1.25}
+    .teacher-game-footer a:hover{background:#244f6f}
+    @media(max-width:380px){.teacher-game-feature{border-radius:16px}.teacher-game-header{padding:13px 13px 10px}.teacher-game-header h2{font-size:18px}.teacher-game-footer{padding:7px 12px 12px}}
   </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
@@ -195,36 +211,35 @@
     <a class="data-access-link" href="search.html">자료 열람</a>
 
 
-    <section class="teacher-game-feature teacher-run-feature" aria-labelledby="teacher-run-title">
-      <div class="teacher-game-header">
-        <h2 id="teacher-run-title">🎒 험난한 교직생활 2.0 <span class="game-tag">NEW</span></h2>
-        <p>2023년 원작을 새롭게 만든 5일 생존 아케이드! 공문과 회의를 피하고 커피와 응원을 모아 금요일 퇴근에 도전하세요. PC·모바일에서 바로 플레이할 수 있습니다.</p>
-      </div>
-      <iframe
-        class="teacher-game-frame"
-        id="teacher-run-frame"
-        src="teacher-run.html?v=20261118-v2"
-        title="험난한 교직생활 2.0 — 월요일부터 금요일까지 살아남는 교사 생존 게임"
-        loading="lazy"
-        allowfullscreen></iframe>
-      <div class="teacher-game-footer"><a href="teacher-run.html" target="_blank" rel="noopener noreferrer">큰 화면에서 게임하기 ↗</a></div>
-    </section>
-
     <section class="teacher-game-feature" aria-labelledby="teacher-game-title">
       <div class="teacher-game-header">
         <h2 id="teacher-game-title">🏐 선생님배구</h2>
-        <p>쉬는 시간, 선생님의 배구 한 판! 레트로 2D 배구를 홈에서 바로 즐겨보세요.</p>
       </div>
       <iframe
         class="teacher-game-frame"
         id="teacher-game-frame"
-        src="teacher-volleyball.html?v=20261118-touch"
+        src="teacher-volleyball.html?v=20261118-polish1"
         title="선생님배구 — 직접 조작하는 1대1 배구 미니게임"
         loading="lazy"
         allowfullscreen></iframe>
-      <div class="teacher-game-footer"><a href="teacher-volleyball.html" target="_blank" rel="noopener noreferrer">큰 화면에서 게임하기 ↗</a></div>
+      <div class="teacher-game-footer"><a href="teacher-volleyball.html" target="_blank" rel="noopener noreferrer">↗ 크게 보기</a></div>
     </section>
 
+
+
+    <section class="teacher-game-feature teacher-run-feature" aria-labelledby="teacher-run-title">
+      <div class="teacher-game-header">
+        <h2 id="teacher-run-title">🎒 험난한 교직생활 2.0</h2>
+      </div>
+      <iframe
+        class="teacher-game-frame"
+        id="teacher-run-frame"
+        src="teacher-run.html?v=20261118-polish1"
+        title="험난한 교직생활 2.0 — 월요일부터 금요일까지 살아남는 교사 생존 게임"
+        loading="lazy"
+        allowfullscreen></iframe>
+      <div class="teacher-game-footer"><a href="teacher-run.html" target="_blank" rel="noopener noreferrer">↗ 크게 보기</a></div>
+    </section>
 
     <section class="card" style="margin-top:20px" aria-label="방문 통계">
       <h2>방문한 선생님</h2>
