@@ -55,7 +55,7 @@ Deno.serve(async(req:Request)=>{
    // Batch only a vetted 2026 percentile, never raw survey rows, counts or metadata.
    const ids=body.schoolIds;
    if(!Array.isArray(ids)||ids.length<1||ids.length>20||
-     ids.some(id=>typeof id!=='string'||!/^\d{7}$/.test(id))||
+     ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||
      new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
    const [metrics,catalog]=await Promise.all([
     admin.from('beagu_release_metrics_v2')
@@ -145,7 +145,7 @@ Deno.serve(async(req:Request)=>{
   }
 
   const id=String(body.schoolId||'');
-  if(!/^\d{7}$/.test(id))return send({error:'INVALID_SCHOOL'},400,origin);
+  if(!/^[A-Z0-9]{7}$/.test(id))return send({error:'INVALID_SCHOOL'},400,origin);
   const level=Number(session.access_level);
   const [legacy,metrics,catalog]=await Promise.all([
    level===2?admin.from('beagu_level_data').select('survey_year,access_level,summary,release_status').eq('school_id',id).eq('release_status','approved').lt('survey_year',2026).order('survey_year').limit(20):Promise.resolve({data:[],error:null}),
