@@ -7,13 +7,19 @@
   const collator = new Intl.Collator('ko-KR', { numeric:true, sensitivity:'base' });
   const state = { directory:new Map(), schools:[], snapshot:new Map(), snapshotReady:false,
     ready:false, selected:[], restored:false, questionCatalog:null,
-    approvedBySchool:new Map(), approvedLoading:new Set(), sessionToken:'' };
+    approvedBySchool:new Map(), approvedLoading:new Set(), sessionToken:'',
+    authLevel:0, authEpoch:0 };
   const elements = {
     search:$('searchInput'), suggestions:$('compareSuggestions'),
     selections:$('compareSelections'), table:$('compareTable'),
     panel:$('compareScroll'), results:$('compareResults'),
     empty:$('compareEmpty'), count:$('compareCounter'),
-    feedback:$('compareFeedback'), clear:$('clearCompare'), copy:$('copyCompareLink')
+    feedback:$('compareFeedback'), clear:$('clearCompare'), copy:$('copyCompareLink'),
+    authForm:$('compareLv1Form'), authCode:$('compareLv1Code'),
+    authSubmit:$('compareLv1Submit'), authBadge:$('compareLv1Badge'),
+    authSignedIn:$('compareLv1SignedIn'), authStatus:$('compareLv1Status'),
+    authMessage:$('compareLv1Message'), authToggle:$('compareLv1Toggle'),
+    authLogout:$('compareLv1Logout')
   };
   const normalize = value => String(value ?? '').normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
   function make(tag, value, className) {
@@ -34,6 +40,83 @@
     return [s.sido_standard, s.support_office].filter(Boolean).join(' · ') || '지역 미확인';
   }
   function notice(message) { elements.feedback.textContent=message; }
+  const SESSION_KEY='beagu-level-session-v1';
+  const AUTH_URL=()=>SUPABASE_URL+'/functions/v1/beagu-level-api';
+  function authMessage(message) { elements.authMessage.textContent=message; }
+  function updateAuthUI() {
+    const authenticated=state.authLevel>=1 && !!state.sessionToken;
+    elements.authForm.hidden=authenticated;
+    elements.authSignedIn.hidden=!authenticated;
+    elements.authBadge.textContent=authenticated ? 'Lv.'+state.authLevel+' 인증됨' : '미인증';
+    elements.authBadge.classList.toggle('is-authenticated',authenticated);
+    elements.authStatus.textContent=authenticated ?
+      'Lv.'+state.authLevel+' 인증 완료 · 승인된 상세자료를 비교표에서 확인할 수 있습니다.' : '';
+  }
+  function clearAuth(message='',removeStored=true) {
+    state.authEpoch++;
+    state.sessionToken='';
+    state.authLevel=0;
+    state.approvedBySchool.clear();
+    state.approvedLoading.clear();
+    if(removeStored){try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}}
+    updateAuthUI();
+    authMessage(message);
+    renderTable();
+  }
+  async function authRequest(action,payload={},token='') {
+    const response=await fetch(AUTH_URL(),{
+      method:'POST',cache:'no-store',
+      headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+      body:JSON.stringify({action,...payload})
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok){
+      const error=new Error('AUTH_REQUEST_FAILED');
+      error.status=response.status;
+      throw error;
+    }
+    return data;
+  }
+  function refreshApprovedSelections(){
+    if(!state.sessionToken||state.authLevel<1)return;
+    for(const id of new Set(state.selected.map(x=>x.id)))loadApprovedSchool(id);
+  }
+  function activateAuth(token,level) {
+    state.sessionToken=token;
+    state.authLevel=level;
+    state.approvedBySchool.clear();
+    state.approvedLoading.clear();
+    try{sessionStorage.setItem(SESSION_KEY,token)}catch(_){}
+    updateAuthUI();
+    authMessage('인증이 완료되었습니다. 선택한 학교의 승인 통계를 불러옵니다.');
+    renderTable();
+    refreshApprovedSelections();
+  }
+  async function verifyStoredSession() {
+    let token='';
+    try{token=sessionStorage.getItem(SESSION_KEY)||''}catch(_){}
+    if(!token){updateAuthUI();return}
+    const epoch=++state.authEpoch;
+    elements.authBadge.textContent='인증 확인 중';
+    try{
+      const result=await authRequest('verify',{},token);
+      if(epoch!==state.authEpoch)return;
+      const level=Number(result?.level);
+      if(!Number.isInteger(level)||level<1) {
+        clearAuth('기존 인증이 유효하지 않습니다. 참여코드를 다시 입력해 주세요.');
+        return;
+      }
+      activateAuth(token,level);
+    }catch(error){
+      if(epoch!==state.authEpoch)return;
+      if(error.status===401||error.status===403){
+        clearAuth('인증 유효기간이 끝났습니다. 참여코드를 다시 입력해 주세요.');
+      }else{
+        updateAuthUI();
+        authMessage('기존 인증을 확인하지 못했습니다. 연결을 확인하거나 참여코드를 다시 입력해 주세요.');
+      }
+    }
+  }
   function selectedPair(id, year) {
     return state.selected.some(x=>x.id===String(id) && x.year===Number(year));
   }
@@ -269,26 +352,21 @@
       String(value).length<=max && !/[\u0000-\u0008]/.test(String(value));
   }
   async function loadApprovedSchool(id) {
-    if(!state.sessionToken || !/^[A-Z0-9]{7}$/.test(String(id)) ||
+    if(!state.sessionToken || state.authLevel<1 ||
+        !/^[A-Z0-9]{7}$/.test(String(id)) ||
         state.approvedLoading.has(id) || state.approvedBySchool.has(id) ||
         typeof SUPABASE_URL!=='string') return;
+    const epoch=state.authEpoch;
+    const token=state.sessionToken;
     state.approvedLoading.add(id);
     renderTable();
     try{
-      const response=await fetch(SUPABASE_URL+'/functions/v1/beagu-level-api',{
-        method:'POST',cache:'no-store',
-        headers:{'Content-Type':'application/json','X-Beagu-Session':state.sessionToken},
-        body:JSON.stringify({action:'school',schoolId:id})
-      });
-      if(!response.ok) {
-        if(response.status===401||response.status===403)state.sessionToken='';
-        throw Error('인증된 자료 조회 실패');
-      }
-      const data=await response.json();
+      const data=await authRequest('school',{schoolId:id},token);
+      if(epoch!==state.authEpoch || token!==state.sessionToken) return;
       const approved={items:{2023:{},2024:{},2025:{}},summaries:{2023:[],2024:[],2025:[]}};
       for(const row of Array.isArray(data?.rows)?data.rows:[]){
         const year=Number(row?.year);
-        if(!YEARS.includes(year) || ![1,2].includes(Number(row?.access_level)))continue;
+        if(!YEARS.includes(year) || ![1,2].includes(Number(row?.access_level)) || Number(row.access_level)>state.authLevel)continue;
         for(const metric of Array.isArray(row?.summary?.metrics)?row.summary.metrics:[]){
           if(!metric||typeof metric!=='object')continue;
           if(/^Q\d{2}$/.test(metric.key||'') &&
@@ -309,12 +387,18 @@
            !validServerText(record.modeOption,180))continue;
         approved.items[year][qid]=String(record.modeOption);
       }
-      state.approvedBySchool.set(id,approved);
+      if(epoch===state.authEpoch && token===state.sessionToken)
+        state.approvedBySchool.set(id,approved);
     }catch(error){
-      console.warn('승인된 학교별 상세자료 확인 실패:',error);
+      if(epoch!==state.authEpoch)return;
+      if(error.status===401||error.status===403)
+        clearAuth('인증이 만료되었습니다. 참여코드를 다시 입력해 주세요.');
+      else console.warn('승인된 학교별 상세자료 확인 실패:',error);
     }finally{
-      state.approvedLoading.delete(id);
-      renderTable();
+      if(epoch===state.authEpoch){
+        state.approvedLoading.delete(id);
+        renderTable();
+      }
     }
   }
   function renderSuggestions() {
@@ -362,9 +446,7 @@
     restoreUrl();
     renderSelections();renderTable();renderSuggestions();
     if (!state.snapshotReady && state.ready) notice('공개 백분위를 확인할 수 없어 문항 목록만 표시됩니다.');
-    try { state.sessionToken=sessionStorage.getItem('beagu-level-session-v1')||''; }
-    catch (_) { state.sessionToken=''; }
-    for(const entry of state.selected)loadApprovedSchool(entry.id);
+    refreshApprovedSelections();
   });
   loadPublicQuestions();
   elements.search.addEventListener('input',renderSuggestions);
@@ -397,5 +479,44 @@
       notice('비교 링크를 표시했습니다.');
     }
   });
+  elements.authForm.addEventListener('submit',async event=>{
+    event.preventDefault();
+    const code=elements.authCode.value.trim();
+    if(!code)return;
+    const epoch=++state.authEpoch;
+    elements.authSubmit.disabled=true;
+    authMessage('서버에서 참여코드를 확인하는 중…');
+    const loading=window.BeaguLoading?.start('Lv.1 참여코드를 확인하는 중…');
+    try{
+      const result=await authRequest('login',{code});
+      if(epoch!==state.authEpoch)return;
+      const level=Number(result?.level);
+      if(!Number.isInteger(level)||level<1||typeof result.token!=='string'||!result.token)
+        throw Error('INVALID_LEVEL_OR_TOKEN');
+      elements.authCode.value='';
+      elements.authCode.type='password';
+      elements.authToggle.textContent='표시';
+      elements.authToggle.setAttribute('aria-pressed','false');
+      elements.authToggle.setAttribute('aria-label','참여코드 표시');
+      activateAuth(result.token,level);
+    }catch(_){
+      if(epoch===state.authEpoch)authMessage('인증할 수 없습니다. 참여코드와 인터넷 연결을 확인해 주세요.');
+    }finally{
+      elements.authSubmit.disabled=false;
+      window.BeaguLoading?.finish(loading);
+    }
+  });
+  elements.authLogout.addEventListener('click',()=>{
+    clearAuth('로그아웃했습니다. 학교별 상세자료는 다시 인증해야 볼 수 있습니다.');
+  });
+  elements.authToggle.addEventListener('click',()=>{
+    const show=elements.authCode.type==='password';
+    elements.authCode.type=show?'text':'password';
+    elements.authToggle.textContent=show?'숨기기':'표시';
+    elements.authToggle.setAttribute('aria-pressed',String(show));
+    elements.authToggle.setAttribute('aria-label',show?'참여코드 숨기기':'참여코드 표시');
+  });
+  updateAuthUI();
+  verifyStoredSession();
   renderSelections();
 })();

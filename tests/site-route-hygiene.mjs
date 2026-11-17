@@ -16,8 +16,8 @@ assert.equal(css,original,'Canonical statistics CSS must preserve existing desig
 assert.match(stats,/href="styles\/statistics\.css\?v=20261031-canonical7"/);
 assert.doesNotMatch(stats,/href="css\//,'Broken statistics CSS link must not reappear');
 assert.match(stats,/src="js\/statistics-directory-v2\.js\?v=20261118-v2"/);
-assert.match(stats,/src="js\/statistics-compare\.js\?v=20261118-c3"/);
-assert.match(stats,/href="styles\/statistics-compare\.css\?v=20261118-c3"/);
+assert.match(stats,/src="js\/statistics-compare\.js\?v=20261118-c4"/);
+assert.match(stats,/href="styles\/statistics-compare\.css\?v=20261118-c4"/);
 assert.match(stats,/id="compareScroll"/);
 assert.match(stats,/id="compareSuggestions"/);
 assert.match(stats,/id="compareSelections"/);
@@ -33,6 +33,18 @@ assert.match(loaderJS,/public-lv0-percentiles-v1\.2\.json/,'No private summary a
 assert.match(compareJS,/public-statistics-question-catalog-v1\.json/);
 assert.match(compareJS,/loadApprovedSchool/,'Authenticated approved data loading must be available');
 assert.match(compareJS,/beagu-level-api/,'Detailed approved values must remain authenticated');
+assert.match(stats,/id="compareLv1AuthPanel"/,'Lv.1 comparison form must be present');
+assert.match(stats,/id="compareLv1Form"/);
+assert.match(stats,/id="compareLv1Code" type="password"/);
+assert.match(stats,/id="compareLv1SignedIn"/);
+assert.match(stats,/id="compareLv1Logout"/);
+assert.match(compareJS,/authRequest\('login'/,'Authentication must use existing server');
+assert.match(compareJS,/authRequest\('verify'/,'Saved sessions must be verified before use');
+assert.match(compareJS,/sessionStorage\.setItem\(SESSION_KEY,token\)/);
+assert.match(compareJS,/sessionStorage\.removeItem\(SESSION_KEY\)/);
+assert.match(compareJS,/state\.approvedBySchool\.clear\(\)/,'Protected cached values must clear on logout');
+assert.match(compareJS,/epoch===state\.authEpoch && token===state\.sessionToken/,'Stale fetches must not repopulate cached results');
+
 assert.match(stats,/기존 Lv\.0 공개본/,'Keep public scope reminder');
 
 assert.match(oldResult,/location\.replace\(target\)/,'Legacy URLs must forward');

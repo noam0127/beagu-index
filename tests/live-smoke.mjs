@@ -141,7 +141,13 @@ async function main() {
     statsScript.includes('public-lv0-percentiles-v1.2.json') &&
     statsHTML.includes('id="compareScroll"') &&
     !statsHTML.includes('id="dataTable"') &&
-    compareScript.includes('public-statistics-question-catalog-v1.json'));
+    compareScript.includes('public-statistics-question-catalog-v1.json') &&
+    statsHTML.includes('id="compareLv1Form"') &&
+    statsHTML.includes('id="compareLv1Code" type="password"') &&
+    statsHTML.includes('id="compareLv1Logout"') &&
+    compareScript.includes("authRequest('login'") &&
+    compareScript.includes("authRequest('verify'") &&
+    compareScript.includes('state.approvedBySchool.clear()'));
   check('구형 결과 페이지 → 현재 학교 상세 연결',
     legacyResult.includes("location.replace(target)") &&
     legacyResult.includes("beaguVisitReady") &&
