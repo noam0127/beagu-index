@@ -34,7 +34,7 @@
   }
   const norm = v => String(v ?? '').normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
   const trim = v => String(v ?? '').trim();
-  const verifiedSchool = s => s && /^[0-9]{7}$/.test(String(s.school_id)) &&
+  const verifiedSchool = s => s && /^[A-Z0-9]{7}$/.test(String(s.school_id)) &&
     typeof s.school_name === 'string' && trim(s.school_name).length > 0;
   function displayRegion(s) { return trim(s.sido_standard) || '미분류'; }
   function displayOffice(s) { return trim(s.support_office) || '미분류'; }
