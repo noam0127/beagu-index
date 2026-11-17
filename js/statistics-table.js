@@ -344,7 +344,9 @@
     console.error('배구지수 통계표 로딩 오류:',error);
   }
   async function init() {
-    render();
+    const beaguLoadingTask=window.BeaguLoading?.start('전국 학교 목록을 불러오는 중…');
+    try {
+      render();
     // 두 자원 모두 공개 자료다. 승인되지 않은 Supabase 내부 결과 테이블은 조회하지 않는다.
     const [directory,snapshot]=await Promise.allSettled([loadDirectory(),loadPublicSnapshot()]);
     if (directory.status==='rejected') { showFatal(directory.reason); return; }
@@ -360,6 +362,9 @@
       $('dataTable').before(notice);
     }
     render();
+    } finally {
+      window.BeaguLoading?.finish(beaguLoadingTask);
+    }
   }
   document.querySelectorAll('[data-sort]').forEach(button=>button.addEventListener('click',()=>{
     const key=button.dataset.sort;
