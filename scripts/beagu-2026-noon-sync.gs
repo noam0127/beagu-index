@@ -146,12 +146,12 @@ function regionOf(s) {
 function normalizeOffice(s) {
   const value=normalize(s).replace(/^[①-⑳]/,"")
     .replace(/서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|강원도|충청북도|충청남도|전북특별자치도|전라북도|전라남도|경상북도|경상남도|제주특별자치도/g,"");
-  // Form may say '마산교육청'/'진해교육청' while the master stores
+  // normalize() removes parentheses before matching. Form may say '마산교육청'/'진해교육청' while the master stores
   // '창원교육지원청(마산센터)' or '(진해센터)'. Match the surveyed area,
   // never collapse all three areas into the single parent office.
-  if(/^창원교육지원청\(마산센터\)$/.test(value)||/^마산(?:교육지원청|교육청|센터)?(?:\(폐지\))?$/.test(value))return "마산";
-  if(/^창원교육지원청\(진해센터\)$/.test(value)||/^진해(?:교육지원청|교육청|센터)?(?:\(폐지\))?$/.test(value))return "진해";
-  if(/^창원(?:교육지원청|교육청)?(?:\(본청\)|\(폐지\))?$/.test(value))return "창원";
+  if(/^창원교육지원청마산센터$/.test(value)||/^마산(?:교육지원청|교육청|센터)?(?:폐지)?$/.test(value))return "마산";
+  if(/^창원교육지원청진해센터$/.test(value)||/^진해(?:교육지원청|교육청|센터)?(?:폐지)?$/.test(value))return "진해";
+  if(/^창원(?:교육지원청|교육청)?(?:본청|폐지)?$/.test(value))return "창원";
   return value.replace(/교육지원청|교육청/g,"");
 }
 function fetchSchools() {
