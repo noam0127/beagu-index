@@ -8,8 +8,8 @@ const VALID_GAMES = new Set(["volleyball","teacher_run"]);
 const encoder = new TextEncoder();
 const CACHE = "no-store";
 type Game = "volleyball" | "teacher_run";
-type Entry = { nickname: string; score: number; created_at: string };
-type Session = { id: string; game: Game; ip_hash: string; started_at: string; submitted_at: string | null };
+type Entry = { nickname: string; score: number; created_at: string; school_name?: string | null; difficulty?: string | null };
+type Session = { id: string; game: Game; ip_hash: string; started_at: string; submitted_at: string | null; school_id?:string; school_name?:string; difficulty?:string };
 
 function json(data: unknown, status = 200, origin = "https://baeguindex.com"): Response {
   return new Response(JSON.stringify(data), { status, headers: {
@@ -41,10 +41,33 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
   const raw=await response.text();return raw?JSON.parse(raw):null;
 }
 async function top(game: Game): Promise<Entry[]> {
-  const q = new URLSearchParams({select:"nickname,score,created_at",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
+  const q = new URLSearchParams({select:"nickname,score,created_at,school_name,difficulty",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
   const list = await db("arcade_game_scores?" + q);
-  return list.map((e:Entry)=>({nickname:e.nickname,score:e.score,created_at:e.created_at}));
+  return list.map((e:Entry)=>({nickname:e.nickname,score:e.score,created_at:e.created_at,school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
+
+type School = { school_id:string; school_name:string; sido_standard:string };
+type SchoolChoice = { school_id:string; school_name:string; region:string; difficulty:"easy"|"normal"|"hard"; source_year:number|null; has_index:boolean };
+async function searchSchools(raw:string):Promise<School[]>{
+ const keyword=raw.trim().replace(/[^\p{L}\p{N}\s]/gu,"").slice(0,30);
+ if(keyword.length<2)return [];
+ const q=new URLSearchParams({select:"school_id,school_name,sido_standard",school_kind:"eq.초등학교",status:"eq.운영",school_name:"ilike.*"+keyword+"*",order:"school_name.asc",limit:"12"});
+ return await db("schools?"+q);
+}
+async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
+ if(typeof rawId!=="string"||!/^[0-9A-Za-z_-]{4,32}$/.test(rawId))return null;
+ const q=new URLSearchParams({select:"school_id,school_name,sido_standard",school_id:"eq."+rawId,school_kind:"eq.초등학교",status:"eq.운영",limit:"1"});
+ const rows=await db("schools?"+q) as School[];
+ const school=rows[0];if(!school)return null;
+ // Use only the existing vetted 2025 release, and never expose numerical percentile or survey counts.
+ const p=new URLSearchParams({select:"national_percentile",school_id:"eq."+school.school_id,survey_year:"eq.2025",publication_status:"eq.PUBLISHED",source_status:"eq.VETTED_LEGACY_2025",limit:"1"});
+ const percentiles=await db("beagu_2025_empirical_percentiles?"+p);
+ const percentile=percentiles.length?Number(percentiles[0].national_percentile):NaN;
+ const available=Number.isFinite(percentile)&&percentile>=0&&percentile<=100;
+ const difficulty=available?(percentile>=66.6667?"easy":percentile<=33.3333?"hard":"normal"):"normal";
+ return {school_id:school.school_id,school_name:school.school_name,region:school.sido_standard||"",difficulty,source_year:available?2025:null,has_index:available};
+}
+
 async function ipHash(req: Request): Promise<string> {
   const address = (req.headers.get("cf-connecting-ip")
     || req.headers.get("x-real-ip")
@@ -76,7 +99,10 @@ Deno.serve(async (req:Request)=>{
   if(!SERVICE_KEY||!SUPA_URL) return error("not_configured",503,origin);
   try{
     if(req.method==="GET"){
-      const game=new URL(req.url).searchParams.get("game");
+      const params=new URL(req.url).searchParams;
+      if(params.has("schools"))return json({schools:await searchSchools(params.get("schools")||"")},200,origin);
+      if(params.has("school_id")){const school=await resolveSchool(params.get("school_id"));return school?json({school},200,origin):error("school_not_found",404,origin);}
+      const game=params.get("game");
       if(!isGame(game))return error("invalid_game",400,origin);
       return json({game,top10:await top(game)},200,origin);
     }
@@ -88,21 +114,24 @@ Deno.serve(async (req:Request)=>{
     if(!isGame(game))return error("invalid_game",400,origin);
     const hash=await ipHash(req);
     if(payload.action==="start"){
+      const selected=await resolveSchool(payload.school_id);
+      if(!selected)return error("select_school",400,origin);
       const since=new Date(Date.now()-15*60*1000).toISOString();
       const q=new URLSearchParams({select:"id",ip_hash:"eq."+hash,started_at:"gte."+since,limit:"40"});
       const recent=await db("arcade_game_sessions?"+q);
       if(recent.length>=40)return error("too_many_plays",429,origin);
-      const rows=await db("arcade_game_sessions","POST",{game,ip_hash:hash},"return=representation");
-      return json({session:rows[0].id},200,origin);
+      const rows=await db("arcade_game_sessions","POST",{game,ip_hash:hash,school_id:selected.school_id,school_name:selected.school_name,difficulty:selected.difficulty,percentile_source_year:selected.source_year},"return=representation");
+      return json({session:rows[0].id,school:selected},200,origin);
     }
     if(payload.action!=="submit")return error("unknown_action",400,origin);
     const sessionId=payload.session, nickname=payload.nickname;
     if(typeof sessionId!=="string"||!/^[0-9a-f-]{36}$/i.test(sessionId))return error("invalid_session",400,origin);
     if(typeof nickname!=="string"||!/^[A-Z]{2,8}$/.test(nickname))return error("invalid_name",400,origin);
-    const qs=new URLSearchParams({select:"id,game,ip_hash,started_at,submitted_at",id:"eq."+sessionId,limit:"1"});
+    const qs=new URLSearchParams({select:"id,game,ip_hash,started_at,submitted_at,school_id,school_name,difficulty",id:"eq."+sessionId,limit:"1"});
     const rows=await db("arcade_game_sessions?"+qs) as Session[];
     const session=rows[0];
     if(!session || session.game!==game || session.ip_hash!==hash || session.submitted_at)return error("session_expired",409,origin);
+    if(!session.school_id||!session.school_name||!session.difficulty)return error("school_required",409,origin);
     const elapsed=(Date.now()-Date.parse(session.started_at))/1000;
     if(elapsed<4||elapsed>3600)return error("invalid_duration",400,origin);
     let score:number;
@@ -116,7 +145,7 @@ Deno.serve(async (req:Request)=>{
     const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null",select:"id"});
     const marked=await db("arcade_game_sessions?"+patchQ,"PATCH",{submitted_at:new Date().toISOString()},"return=representation");
     if(!marked?.length)return error("session_expired",409,origin);
-    await db("arcade_game_scores","POST",{session_id:session.id,game,nickname,score},"return=minimal");
+    await db("arcade_game_scores","POST",{session_id:session.id,game,nickname,score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},"return=minimal");
     const board=await top(game);
     const rank=board.findIndex(e=>e.nickname===nickname&&e.score===score)+1;
     return json({ranked:rank>0,rank,score,top10:board},200,origin);
