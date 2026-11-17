@@ -51,11 +51,47 @@ function onBeagu2026FormSubmitted(event) {
 // Send ONLY a national total of official submission rows. No school IDs,
 // teacher responses, answer content, timestamps, or per-school counts leave
 // the private aggregation workflow. This is NOT a distinct-teacher count.
-function publishBeagu2026NationalCount(officialRows) {
+function fetchBeaguHistoricalSurveyedSchools() {
+  // Protected by the existing 32+-character server-to-server ingest token.
+  // Only historical IDs are downloaded to this private script. No 2026
+  // school ID/name is ever transmitted to the public-count backend.
+  const secret=PropertiesService.getScriptProperties().getProperty("BEAGU_2026_INGEST_TOKEN")||"";
+  if(secret.length<32)throw Error("배구지수 서버 인증 토큰이 설정되지 않았습니다.");
+  const endpoint=BEAGU26.supabaseUrl+"/functions/v1/beagu-2026-public-count-ingest";
+  const response=UrlFetchApp.fetch(endpoint,{
+    method:"get",
+    headers:{"X-Beagu-Ingest-Token":secret},
+    muteHttpExceptions:true
+  });
+  if(response.getResponseCode()!==200)throw Error("과거 참여학교 대조 조회 실패: HTTP "+response.getResponseCode());
+  const history=JSON.parse(response.getContentText());
+  if(!Array.isArray(history.school_ids)||history.school_ids.length<3000||
+    !Array.isArray(history.unresolved))throw Error("과거 참여학교 목록이 불완전합니다.");
+  return history;
+}
+function countBeagu2026FirstTimeSchools(groups) {
+  const history=fetchBeaguHistoricalSurveyedSchools();
+  const historicalIds=new Set(history.school_ids.map(id=>String(id).trim()));
+  // For 2023–2025 rows lacking an official school ID, conservatively match
+  // by normalized school name AND region so they cannot be counted as new.
+  const unresolvedRegionNames=new Set(history.unresolved.map(r=>
+    regionOf(r.sido)+"|"+normalize(r.school_name)));
+  let count=0;
+  groups.forEach(g=>{
+    const school=g.school;
+    const id=String(school.school_id||"").trim();
+    const fallbackKey=regionOf(school.sido_standard)+"|"+normalize(school.school_name);
+    if(!historicalIds.has(id)&&!unresolvedRegionNames.has(fallbackKey))count++;
+  });
+  return count;
+}
+function publishBeagu2026NationalCount(officialRows,newUniqueSchools) {
   const secret=PropertiesService.getScriptProperties().getProperty("BEAGU_2026_INGEST_TOKEN")||"";
   if(secret.length<32)return "SKIPPED_NOT_CONFIGURED";
   if(!Number.isSafeInteger(officialRows)||officialRows<0||officialRows>50000)
     throw Error("Official response-row count is invalid");
+  if(!Number.isSafeInteger(newUniqueSchools)||newUniqueSchools<0||newUniqueSchools>officialRows)
+    throw Error("First-time-school count is invalid");
   const endpoint=BEAGU26.supabaseUrl+"/functions/v1/beagu-2026-public-count-ingest";
   const response=UrlFetchApp.fetch(endpoint,{
     method:"post",contentType:"application/json",
@@ -63,7 +99,8 @@ function publishBeagu2026NationalCount(officialRows) {
     payload:JSON.stringify({
       source_spreadsheet_id:BEAGU26.sourceId,
       first_official_day:BEAGU26.firstOfficialResponseDay,
-      official_submission_rows:officialRows
+      official_submission_rows:officialRows,
+      new_unique_schools:newUniqueSchools
     }),
     muteHttpExceptions:true
   });
@@ -265,7 +302,10 @@ function refreshBeagu2026Stats() {
     // backend. Public counter UI and table SELECT permissions are disabled.
     // Never transmit single-school or individual teacher answers.
     let publishStatus="SKIPPED";
-    try{publishStatus=publishBeagu2026NationalCount(scanned-prelaunch-undated)}
+    try{
+      const newUniqueSchools=countBeagu2026FirstTimeSchools(groups);
+      publishStatus=publishBeagu2026NationalCount(scanned-prelaunch-undated,newUniqueSchools);
+    }
     catch(e){publishStatus="PUBLIC_ERROR";Logger.log("National count publish: "+String(e.message||e).slice(0,100))}
     destination.getSheetByName(BEAGU26.logTab).appendRow([now,scanned,matched,unmatched,"SUCCESS",
       "본조사 이전 "+prelaunch+"건 제외; 시각 불명 "+undated+"건 보류; 전국 응답건수 "+publishStatus+" · 학교별 통계 비공개 검수"]);
