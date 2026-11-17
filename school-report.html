@@ -1286,7 +1286,7 @@
     state.approvedSummary={};state.participationYears=[];state.selected=year;state.reportSerial++;
   }
   async function publicYearDB(id){
-    if(!client()||!/^\d{7}$/.test(id))return;
+    if(!client()||!/^[A-Z0-9]{7}$/.test(id))return;
     const serial=state.reportSerial;
     try{
       const result=await client().from('beagu_school_report_yearly')
@@ -1369,7 +1369,7 @@
     finally{button.disabled=false}
   }
   async function protectedReport(id){
-    if(!/^\d{7}$/.test(id)||state.tier===0||!state.authToken)return;
+    if(!/^[A-Z0-9]{7}$/.test(id)||state.tier===0||!state.authToken)return;
     const serial=state.reportSerial,requested=state.tier;
     try{
       const r=await tierCall('school',{schoolId:id});
@@ -1487,7 +1487,7 @@
     state.publicRecords=await loadJSON('data/public-school-reports-v1.json',true);
     const participation=await loadJSON('data/public-2025-participation-v1.json?v=20261118',true);
     if(participation?.year===2025&&Array.isArray(participation.schoolIds)&&
-       participation.schoolIds.every(id=>typeof id==='string'&&/^\d{7}$/.test(id))){
+       participation.schoolIds.every(id=>typeof id==='string'&&/^[A-Z0-9]{7}$/.test(id))){
       state.publicParticipationIndex=new Set(participation.schoolIds);
     }
     const p=await loadJSON('data/public-lv0-percentiles-v1.2.json',true);
