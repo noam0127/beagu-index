@@ -39,8 +39,19 @@ async function requestWithRetry(url,expected=200,options={},times=3){
   await new Promise(resolve=>setTimeout(resolve,2500));
  }
 }
+// Pages deployment and the smoke workflow run in parallel: poll until the
+// published home matches this commit instead of failing on the previous build.
+async function waitForPublishedHome() {
+ for(let attempt=0;attempt<20;attempt++){
+  const site=await requestWithRetry(base+"/",200,{},3);
+  if(site.body.includes("teacher-volleyball.html?v=20261118-flying-ball2x")&&
+     site.body.includes("teacher-run.html?v=20261118-flying"))return site;
+  await new Promise(resolve=>setTimeout(resolve,8000));
+ }
+ throw new Error("Published game iframe versions did not update");
+}
 const [site,topVolley,topRun]=await Promise.all([
- requestWithRetry(base+"/",200,{},5),
+ waitForPublishedHome(),
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
