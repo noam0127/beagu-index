@@ -55,7 +55,7 @@ assert.ok(src.includes("if(x.comparisonKind!=='average')return ''"),'Only approv
 assert.ok(src.includes('school.unit!==national.unit'),'Units must match before positioning markers');
 assert.ok(src.includes('50+35*(v.n-national.n)/extent'),'National mean must sit at the 50% horizontal midpoint');
 assert.ok(html.includes('benchmark-dot nation') && html.includes('benchmark-dot region') && html.includes('benchmark-dot school'));
-assert.ok(src.includes('left:50%') && src.includes("left:'+x(school)"),'Markers must move left and right on the line');
+assert.ok(src.includes('left:50%') && src.includes("left:'+position(school)"),'Markers must move left and right on the line');
 assert.ok(html.includes('benchmark-plot:before{content:"";position:absolute;left:8%;right:8%;top:50%'),'Comparison line must be horizontal');
 assert.ok(html.includes('benchmark-values'),'Actual approved comparison values must remain visible at the bottom');
 assert.ok(src.includes('!isSchoolOverviewRepeat(x)'),'Repeated school identity fields must be omitted from historical details');
