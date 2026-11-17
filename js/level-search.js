@@ -490,7 +490,7 @@
         const tag=make('div','sort-result',
           (selectedSort==='address'?'주소':selectedSort==='beagu_percentile_2025'?'2025 배구지수 백분위'
            :selectedSort==='student_count'?'학생 수'+(school.student_reference_year?' ('+school.student_reference_year+'년 기준)':'')
-           :'행정구역 공동주택 평균 공시가격')+' · '+sortValue);
+           :(school.sido_standard==='세종'?'세종시 전체 공동주택 평균 공시가격':'행정구역 공동주택 평균 공시가격'))+' · '+sortValue);
         const meta=card.querySelector('.school-meta')||card.querySelector('.school-name');
         if(meta&&meta.parentNode)meta.insertAdjacentElement('afterend',tag);
         else card.append(tag);
