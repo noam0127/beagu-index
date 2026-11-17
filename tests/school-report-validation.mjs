@@ -88,10 +88,10 @@ assert.ok(!src.includes('검수·공개 승인된 학교별 통계가 아직 없
 assert.ok(src.includes("Number(data?.n)>=5"),'Existing privacy safeguards must not be lowered by UI changes');
 
 // One response is counted as participation, not released as one respondent's answer.
-assert.ok(html.includes('2025년 조사에 응답한 학교는 1건부터 참여 기록을 표시합니다.'),'Explain one-response participation separately from result disclosure');
-assert.ok(html.includes('검증과 공개 동의 등 공개 요건을 충족한 경우에만 표시합니다.'),'State that survey results require verification and publication consent');
+assert.ok(html.includes('2023~2025년은 학교별 조사 기록을 확인할 수 있습니다.'),'Explain all historical years transparently');
+assert.ok(html.includes('자료 검증과 공개 요건을 충족한 경우에만 표시합니다.'),'State survey result publication is conditional');
 assert.ok(src.includes('state.participationYears=Array.isArray(r.participationYears)'),'Receive only vetted boolean participation years from the API');
-assert.ok(src.includes("participated?'2025 조사 참여 · 문항 결과는 공개 조건 충족 시 표시'"),'One participating response must not be presented as zero activity');
+assert.ok(src.includes("year===2025?'2025 조사 참여 · 공개 결과는 별도 승인'"),'Distinguish 2025 participants from 2023-24 historical records');
 assert.ok(src.includes('state.participationYears=[]'),'Clear participation on school change');
 const api=fs.readFileSync('supabase/functions/beagu-level-api/index.ts','utf8');
 assert.ok(api.includes(".gte('respondents',1)"),'Participation should reflect even one approved response');
@@ -106,6 +106,16 @@ assert.equal(participantFile.schoolIds.length,1458,'2025 approved participating 
 assert.equal(new Set(participantFile.schoolIds).size,1458,'No duplicate participating schools');
 assert.ok(participantFile.schoolIds.every(id=>/^\d{7}$/.test(id)),'Only school IDs can appear in the participation index');
 assert.ok(!('responses' in participantFile)&&!('counts' in participantFile)&&!('answers' in participantFile));
-assert.ok(src.includes("state.publicParticipationIndex.has(String(state.school?.school_id))"),'Public year card should identify participation from one record');
-assert.ok(src.includes("data/public-2025-participation-v1.json?v=20261118"),'School report should load the public participation-only index');
+assert.ok(src.includes('state.publicParticipationByYear[String(year)]?.has(String(state.school?.school_id))'),'Public year card should show all historic school-year records');
+const historicIndex=JSON.parse(fs.readFileSync('data/public-2023-2025-school-records-v2.json','utf8'));
+assert.deepEqual(Object.keys(historicIndex.schoolIdsByYear),['2023','2024','2025']);
+for(const [year,count] of [['2023',2807],['2024',3284],['2025',1458]]){
+ const ids=historicIndex.schoolIdsByYear[year];
+ assert.equal(ids.length,count,'Historic school-year presence count for '+year);
+ assert.equal(new Set(ids).size,count,'No duplicated school IDs in '+year);
+ assert.ok(ids.every(id=>/^\d{7}$/.test(id)),'Only school IDs are allowed');
+}
+assert.ok(!('answers' in historicIndex)&&!('counts' in historicIndex)&&!('responses' in historicIndex));
+assert.deepEqual(historicIndex.schoolIdsByYear['2025'],participantFile.schoolIds);
+assert.ok(src.includes('data/public-2023-2025-school-records-v2.json?v=20261118'),'Public school report should load all three verified historical-year indexes');
 console.log('School report JS syntax, UI bindings and public/private separation: PASS');
