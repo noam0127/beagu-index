@@ -37,7 +37,8 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
     console.error("arcade_db", method, response.status);
     throw new Error("database_unavailable");
   }
-  return response.status === 204 ? null : response.json();
+  if(response.status===204)return null;
+  const raw=await response.text();return raw?JSON.parse(raw):null;
 }
 async function top(game: Game): Promise<Entry[]> {
   const q = new URLSearchParams({select:"nickname,score,created_at",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
@@ -88,9 +89,9 @@ Deno.serve(async (req:Request)=>{
     const hash=await ipHash(req);
     if(payload.action==="start"){
       const since=new Date(Date.now()-15*60*1000).toISOString();
-      const q=new URLSearchParams({select:"id",ip_hash:"eq."+hash,started_at:"gte."+since,limit:"7"});
+      const q=new URLSearchParams({select:"id",ip_hash:"eq."+hash,started_at:"gte."+since,limit:"40"});
       const recent=await db("arcade_game_sessions?"+q);
-      if(recent.length>=7)return error("too_many_plays",429,origin);
+      if(recent.length>=40)return error("too_many_plays",429,origin);
       const rows=await db("arcade_game_sessions","POST",{game,ip_hash:hash},"return=representation");
       return json({session:rows[0].id},200,origin);
     }
