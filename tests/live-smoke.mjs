@@ -52,7 +52,7 @@ async function main() {
     'statistics.html', 'styles/statistics.css', 'styles/statistics-compare.css', 'js/statistics-directory-v2.js', 'js/statistics-compare.js', 'data/public-statistics-question-catalog-v1.json',
     'result.html', 'survey.html', 'js/challenge.html',
     'challenge.html', 'js/challenge.js', 'js/challenge-progress-v1.js',
-    'styles/challenge-progress-v1.css', 'styles/beagu-design-system-v1.css', 'styles/beagu-loading-v1.css', 'js/beagu-loading-v1.js', 'teacher-volleyball.html', 'teacher-run.html', 'js/search-telemetry-v1.js',
+    'styles/challenge-progress-v1.css', 'styles/beagu-design-system-v1.css', 'styles/beagu-ui-refresh-v2.css', 'styles/beagu-loading-v1.css', 'js/beagu-loading-v1.js', 'teacher-volleyball.html', 'teacher-run.html', 'js/search-telemetry-v1.js',
     'lv2-edited-column-schema.json', 'data/public-lv0-percentiles-v1.2.json'
   ];
   const responses = new Map();
