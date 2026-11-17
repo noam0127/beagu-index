@@ -1,4 +1,4 @@
-/* Beagu 2026 XP progress: read-only, based only on challenge participant_no. */
+/* 2026 challenge progress uses only the server's issued participant ordinal. */
 (function(){
  'use strict';
  const GOAL=1000;
@@ -9,8 +9,7 @@
   const remainder=target.querySelector('[data-xp-remainder]');
   const bar=target.querySelector('[data-xp-progress]');
   const state=target.querySelector('[data-xp-state]');
-  if(!number||!remainder||!bar||!state)return false;
-  if(!valid(n))return false;
+  if(!number||!remainder||!bar||!state||!valid(n))return false;
   const progress=Math.min(n/GOAL*100,100);
   number.textContent=n.toLocaleString('ko-KR')+' / '+GOAL.toLocaleString('ko-KR');
   remainder.textContent=n>=GOAL?'목표 달성':(GOAL-n).toLocaleString('ko-KR')+'명 남음';
@@ -28,9 +27,9 @@
   const bar=target.querySelector('[data-xp-progress]');
   if(number)number.textContent='집계 확인 불가';
   if(remainder)remainder.textContent='순번 조회 필요';
-  if(state)state.textContent='기존 챌린지 순번을 불러오지 못했습니다.';
+  if(state)state.textContent='챌린지 순번을 불러오지 못했습니다.';
   if(bar){bar.style.width='0%';bar.removeAttribute('aria-valuenow');}
-  // An unavailable count is NEVER represented as 0 / 1000.
+  // A connection failure must never be shown as 0 / 1000.
  }
  let underway=null;
  async function refresh(){
@@ -38,8 +37,7 @@
   if(!targets.length)return null;
   if(underway)return underway;
   underway=(async()=>{
-   // Retry the same read-only RPC for a transient network or cold-start error.
-   // No visits are recorded, and no participant number is issued by this call.
+   // Read existing data only; do not issue new participation numbers.
    for(let attempt=0;attempt<3;attempt++){
     try{
      if(typeof supabaseClient==='undefined'||typeof supabaseClient.rpc!=='function')throw Error('RPC_UNAVAILABLE');
@@ -61,12 +59,6 @@
  window.BeaguChallengeProgress=Object.freeze({GOAL,render,unavailable,refresh});
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{void refresh();},{once:true});
  else void refresh();
- // Back-forward browser cache can reuse an old percentage. Re-read live data.
+ // Back-forward cache may restore a stale count.
  window.addEventListener('pageshow',event=>{if(event.persisted)void refresh();});
-})();;
-  return underway;
- }
- window.BeaguChallengeProgress=Object.freeze({GOAL,render,unavailable,refresh});
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});
- else void refresh();
 })();
