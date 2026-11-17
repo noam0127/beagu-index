@@ -180,11 +180,11 @@ body { min-width: 0; }
 
   
 
-/* Lv.1 global descending sorting: after location filters and before results. */
+/* 지역 검색은 가나다순·주소순, 수치 검색은 높은 순으로 정렬합니다. */
 .sorting-panel{background:#fff;border:1px solid #e0e8f2;border-radius:14px;padding:13px 14px;margin:17px 0 8px}
 .sorting-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:14px;font-weight:750;margin-bottom:10px}
 .sorting-heading small{font-size:12px;font-weight:500;color:#64748b}
-.sort-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.sort-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .sort-tab{cursor:pointer;background:#f7f9fe;border:1px solid #d8e3ef;border-radius:9px;padding:11px 3px;font-weight:700;font-size:12px;line-height:1.45;color:#42536f}
 .sort-tab[aria-pressed="true"]{color:white;background:#2563eb;border-color:#2563eb}
 .sort-tab:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
@@ -266,21 +266,22 @@ body { min-width: 0; }
         <div class="field-group"><label class="field-label" for="regionSelect">1. 시도 선택</label>
           <select id="regionSelect" class="region-select"><option value="">17개 시도·재외한국학교 선택</option><option>서울</option><option>부산</option><option>대구</option><option>인천</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>경기</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option><option value="재외한국학교">재외한국학교</option></select>
         </div>
-        <div class="field-group"><label class="field-label" for="officeSelect">2. 교육지원청 / 국가 선택</label>
+        <div class="field-group"><label class="field-label" for="officeSelect">2. 교육지원청 선택</label>
           <select id="officeSelect" class="region-select" disabled><option value="">시도를 먼저 선택하세요</option></select>
         </div>
         <p class="field-hint">시도를 선택하면 해당 지역 학교를, 교육지원청을 선택하면 관할 학교를 볼 수 있습니다.</p>
       </section>
 
       <section class="sorting-panel" id="sortPanel" aria-label="학교 정렬">
-        <div class="sorting-heading">학교 정렬 <small>모두 내림차순 ↓</small></div>
+        <div class="sorting-heading">학교 정렬 <small>가나다순 또는 높은 순</small></div>
         <div class="sort-tabs" id="sortTabs" role="group" aria-label="정렬 기준">
-          <button type="button" class="sort-tab" data-sort="school_name" aria-pressed="true">학교명순 ↓</button>
+          <button type="button" class="sort-tab" data-sort="school_name" aria-pressed="true">학교명 가나다순 ↑</button>
+          <button type="button" class="sort-tab" data-sort="address" aria-pressed="false">주소순 ↑</button>
           <button type="button" class="sort-tab" data-sort="beagu_percentile_2025" aria-pressed="false">배구지수순 ↓</button>
           <button type="button" class="sort-tab" data-sort="student_count" aria-pressed="false">학생수순 ↓</button>
           <button type="button" class="sort-tab" data-sort="housing_price_won" aria-pressed="false">공시가격순 ↓</button>
         </div>
-        <p class="sort-explainer">배구지수: 2025년 검증·공개 백분위 / 학생 수: 최신 승인 학교정보 / 공시가격: 2025년 행정구역 공동주택 평균 공시가격. 값이 없는 학교는 맨 뒤에 표시합니다.</p>
+        <p class="sort-explainer">학교명·주소는 가나다순으로, 배구지수·학생 수·공동주택 평균 공시가격은 큰 값부터 정렬합니다. 수치가 없는 학교는 맨 뒤에 표시됩니다.</p>
       </section>
       <div id="resultCount" class="result-count" aria-live="polite"></div>
       <div id="results" class="results"></div>
@@ -300,7 +301,7 @@ body { min-width: 0; }
   <script src="js/school-detail-groups-v1.js?v=20261031-groups6"></script>
   <script src="js/school-mbti-v1.js?v=20261031-mbti1"></script>
   <script src="js/historical-original-questions.js?v=20261117-source-headers"></script>
-  <script src="js/level-search.js?v=20261117-school-dist6"></script>
+  <script src="js/level-search.js?v=20261117-region-sort7"></script>
   <script src="js/visit-stats.js?v=20261031-1350"></script>
 <script src="js/search-telemetry-v1.js?v=20261031-xp8"></script>
   <script>
