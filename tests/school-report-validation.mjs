@@ -104,7 +104,7 @@ const participantFile=JSON.parse(fs.readFileSync('data/public-2025-participation
 assert.equal(participantFile.year,2025);
 assert.equal(participantFile.schoolIds.length,1458,'2025 approved participating schools should not be lost');
 assert.equal(new Set(participantFile.schoolIds).size,1458,'No duplicate participating schools');
-assert.ok(participantFile.schoolIds.every(id=>/^\\d{7}$/.test(id)),'Only school IDs can appear in the participation index');
+assert.ok(participantFile.schoolIds.every(id=>/^\d{7}$/.test(id)),'Only school IDs can appear in the participation index');
 assert.ok(!('responses' in participantFile)&&!('counts' in participantFile)&&!('answers' in participantFile));
 assert.ok(src.includes("state.publicParticipationIndex.has(String(state.school?.school_id))"),'Public year card should identify participation from one record');
 assert.ok(src.includes("data/public-2025-participation-v1.json?v=20261118"),'School report should load the public participation-only index');
