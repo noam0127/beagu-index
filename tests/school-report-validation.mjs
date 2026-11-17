@@ -64,4 +64,16 @@ assert.ok(src.includes("학교별 수치가 없습니다"),'Unavailable approved
 assert.ok(src.includes('Lv.1 인증 후에는 검증된 학교별 수치'),'Level 1 scope must exceed public Level 0');
 assert.ok(!html.includes('SCHOOL REPORT · 2023—2026'),'Redundant English UI labels should be removed');
 
+// Every 2023–2026 question starts with the reference comparison when available.
+assert.ok(src.includes('function questionComparisonVisual('),'Question comparison widget must be shared across selected years');
+assert.ok(src.includes('row.prepend(chart)'),'Comparison must appear before the question and answer options');
+assert.ok(html.includes('.question-visual-axis:before'),'Comparison must be drawn as a horizontal line');
+assert.ok(src.includes("kindNation==='ordinal_mean'&&kindRegion==='ordinal_mean'"),'Do not impose an order on categorical modes');
+assert.ok(src.includes("if(!isFreeText){"),'Private free-text responses must not be charted');
+assert.ok(src.includes('const chart=questionComparisonVisual({'),'All four year templates must invoke the comparison chart');
+assert.ok(src.includes('canonicalRegion(state.school.sido_standard||state.school.sido)'),'Use consistent approved region matching');
+assert.ok(src.includes("return '광주'")&&src.includes("return '전남'"),'Preserve Gwangju and Jeonnam separate region references');
+assert.ok(src.includes("nation:state.tier>=1?national:null"),'Level 0 must not expose authenticated comparison data');
+assert.ok(src.includes("school:itemApproved?majority:null"),'Do not render unpublished school mode');
+
 console.log('School report JS syntax, UI bindings and public/private separation: PASS');
