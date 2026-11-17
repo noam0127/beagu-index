@@ -75,9 +75,9 @@ async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
    privacy_reviewed:"eq.true",
    limit:"4"
  });
- const rows=await db("beagu_school_report_yearly?"+p) as Array<{survey_year:number;percentile:number|null}>;
+ const annualRows=await db("beagu_school_report_yearly?"+p) as Array<{survey_year:number;percentile:number|null}>;
  const percentiles=new Map<number,number>();
- for(const row of rows){
+ for(const row of annualRows){
    const raw=row.percentile;
    if(raw===null||raw===undefined||raw==="")continue;
    const value=Number(raw);
