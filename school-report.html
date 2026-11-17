@@ -1042,7 +1042,8 @@
   const TIER_SESSION_KEY='beagu-level-session-v1';
   const geographyComparisonCache={}; // Only server-reviewed, non-identifying regional and national aggregate choices
   const viItem=q=>/^Q(0[1-9]|1[0-3])$/.test(q);
-  // Existing teacher survey questions remain restricted until individually reviewed.\n  const requiredTier=item=>1; // Only server-reviewed question aggregates can unlock at unified Lv.1.
+  // Existing teacher survey questions remain restricted until individually reviewed.
+  const requiredTier=item=>1; // Only server-reviewed question aggregates can unlock at unified Lv.1.
   const remembered=()=>{try{return sessionStorage.getItem(TIER_SESSION_KEY)||''}catch{return ''}};
   const saveToken=t=>{try{if(t)sessionStorage.setItem(TIER_SESSION_KEY,t);else sessionStorage.removeItem(TIER_SESSION_KEY)}catch{}};
   async function tierCall(action,other={}){
@@ -1239,6 +1240,22 @@
           }
         }
 
+      }
+      // Server-approved historical school distributions arrive without raw
+      // response counts; these are coarse 10%-rounded option shares only.
+      for(const d of Array.isArray(r.schoolDistributions)?r.schoolDistributions:[]){
+        const year=Number(d?.year),qid=String(d?.questionId||'');
+        if(![2023,2024].includes(year)||!/^Q\\d{2}$/.test(qid)||
+           !state.years[String(year)]?.items||
+           typeof d.modeOption!=='string'||d.modeOption.length>180||
+           !Array.isArray(d.roundedDistribution)||d.roundedDistribution.length>10)continue;
+        const valid=d.roundedDistribution.every(a=>a&&typeof a.label==='string'&&
+          a.label.length<=180&&Number.isInteger(a.pct)&&a.pct>=0&&a.pct<=100&&a.pct%10===0);
+        if(!valid)continue;
+        state.years[String(year)].items[qid]={
+          display:d.modeOption,modeOption:d.modeOption,serverApproved:true,
+          roundedDistribution:d.roundedDistribution.map(a=>({label:a.label,pct:a.pct}))
+        };
       }
       if(requested===2){
         try{
@@ -1460,7 +1477,7 @@
     const anyAuth=state.tier>0&&((state.approvedSummary[String(year)]||[]).length>0||Object.values(entry.items||{}).some(v=>v?.serverApproved===true));
     const status=$('dataStatus');status.className='data-status'+(state.demo?' demo':entry.approved||anyAuth?' ready':'');
     status.textContent=state.demo?'가상 자료 · 시연':anyAuth?'Lv.'+state.tier+' 승인 자료 일부 공개':entry.approved?'공개 승인 자료':'상세 자료 미공개';
-    const count=catalog?.items?.length ?? 0,approvedRows=Object.entries(entry.items||{}).filter(([key,o])=>o&&typeof o==='object'&&o.display!=null&&!(year===2026&&key==='Q51')&&state.tier>=(year===2026&&viItem(key)?1:2)).length;
+    const count=catalog?.items?.length ?? 0,approvedRows=Object.entries(entry.items||{}).filter(([key,o])=>o&&typeof o==='object'&&o.display!=null&&!(year===2026&&key==='Q51')&&state.tier>=1&&o.serverApproved===true).length;
     const cards=[['조사 문항',count?nf(count)+'개':'—','행렬형 하위항목 별도'],['공개 상세항목',nf(approvedRows)+'개',entry.approved?'승인된 자료만':'미공개 · 승인된 자료 없음']];
     $('metricRow').innerHTML=cards.map(([a,b,c])=>`<dl class="metric-box"><dt>${escapeHTML(a)}</dt><dd>${escapeHTML(b)}</dd><dt>${escapeHTML(c)}</dt></dl>`).join('');
     officialUI();
@@ -1584,7 +1601,7 @@
       choices.append(desc);
     }
     row.append(choices);
-    const majority=itemApproved?verifiedModalOption(data?.distribution):null;
+    const majority=itemApproved?(typeof data?.modeOption==='string'?data.modeOption:verifiedModalOption(data?.distribution)):null;
     const area=String(state.school?.sido_standard||state.school?.sido||'');
     const historical=geographyComparisonCache[area+'|'+state.selected]?.items?.[item.id]||{};
     const sourceNation=historical.national||null,sourceRegion=historical.regional||null;
@@ -1613,7 +1630,26 @@
         row.append(note);
       }
     }
-    if(itemApproved && Array.isArray(data?.distribution)&&data.distribution.length&&state.demo){
+    if(itemApproved&&Array.isArray(data?.roundedDistribution)&&data.roundedDistribution.length){
+      const dist=document.createElement('div');dist.className='distribution';
+      const title=document.createElement('p');title.className='question-meta';
+      title.textContent='학교별 검증된 보기 분포 · 비율은 10% 단위로 반올림한 근삿값이며 합계가 100%와 다를 수 있습니다.';
+      dist.append(title);
+      for(const answer of data.roundedDistribution){
+        if(!answer||typeof answer.label!=='string'||!Number.isInteger(answer.pct)||
+           answer.pct<0||answer.pct>100)continue;
+        const line=document.createElement('div');line.className='dist-row';
+        const label=document.createElement('span');label.className='dist-label';
+        label.textContent=answer.label;
+        const track=document.createElement('span');track.className='dist-track';
+        const bar=document.createElement('span');bar.className='dist-bar';
+        bar.style.width=String(answer.pct)+'%';track.append(bar);
+        const pct=document.createElement('span');pct.className='dist-pct';
+        pct.textContent=String(answer.pct)+'%';
+        line.append(label,track,pct);dist.append(line);
+      }
+      row.append(dist);
+    }else if(itemApproved && Array.isArray(data?.distribution)&&data.distribution.length&&state.demo){
       const dist=document.createElement('div');dist.className='distribution';
       const d=data.distribution.filter(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.count))&&Number(x.count)>=0);
       const total=d.reduce((a,b)=>a+Number(b.count),0);
