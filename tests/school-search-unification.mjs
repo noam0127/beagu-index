@@ -18,6 +18,9 @@ for(const path of pages){
  }
 }
 const lv0=read('search.html');
+assert.match(lv0,/data\/public-2025-participation-v1\.json/,'Lv.0 must show verified participation from one response');
+assert.match(lv0,/publicParticipationIndex\.has\(String\(school\.school_id\)\)/,'School list must show participating-school flags');
+assert.doesNotMatch(lv0,/\.select\('respondents'/,'Do not query private response counts in Lv.0');
 assert.match(lv0,/id="searchInput"/,'Lv.0 browsing restored');
 assert.match(lv0,/href="search-lv1\.html"/,'Lv.1 accessible from public level');
 assert.match(read('search-lv2.html'),/search-lv1\.html/,'Lv.2 URL forwarded to Lv.1');
