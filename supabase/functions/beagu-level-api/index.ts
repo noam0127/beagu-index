@@ -43,7 +43,7 @@ Deno.serve(async(req:Request)=>{
    if(writeError)return send({error:'SESSION_UNAVAILABLE'},503,origin);
    return send({token:v,level:acc.access_level,expires_at:expiry},200,origin);
   }
-  if(body.action!=='verify'&&body.action!=='school'&&body.action!=='logout'&&body.action!=='percentiles')return send({error:'UNKNOWN_ACTION'},400,origin);
+  if(body.action!=='verify'&&body.action!=='school'&&body.action!=='logout'&&body.action!=='percentiles'&&body.action!=='offices'&&body.action!=='ranked_schools')return send({error:'UNKNOWN_ACTION'},400,origin);
   const session=await check(req);
   if(!session)return send({error:'AUTH_REQUIRED'},401,origin);
   if(body.action==='logout'){
@@ -73,6 +73,44 @@ Deno.serve(async(req:Request)=>{
     if(approved.length)out[id]=approved[0].value;
    }
    return send({values:out},200,origin);
+  }
+
+
+  if(body.action==='offices'){
+   if(Number(session.access_level)<1)return send({error:'ACCESS_DENIED'},403,origin);
+   const region=typeof body.region==='string'?body.region.trim():'';
+   if(!/^[가-힣A-Za-z·\s]{2,24}$/.test(region))return send({error:'INVALID_REGION'},400,origin);
+   const {data,error}=await admin.from('beagu_lv1_office_directory')
+     .select('support_office').eq('sido_standard',region).order('support_office',{ascending:true}).limit(300);
+   if(error)return send({error:'OFFICE_UNAVAILABLE'},503,origin);
+   return send({offices:(data||[]).map((x:any)=>String(x.support_office)).filter((v:string)=>v.length>0&&v.length<=100)},200,origin);
+  }
+  if(body.action==='ranked_schools'){
+   if(Number(session.access_level)<1)return send({error:'ACCESS_DENIED'},403,origin);
+   const searchText=typeof body.searchText==='string'?body.searchText.trim():'';
+   const region=typeof body.region==='string'?body.region.trim():'';
+   const office=typeof body.office==='string'?body.office.trim():'';
+   const sort=typeof body.sort==='string'?body.sort:'school_name';
+   const pagination=Number(body.page);
+   const sorts=new Set(['school_name','beagu_percentile_2025','student_count','housing_price_won']);
+   if(!sorts.has(sort)||!Number.isSafeInteger(pagination)||pagination<0||pagination>500||
+      searchText.length>80||region.length>24||office.length>100||
+      !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
+      (!searchText&&!region)||(!region&&office))
+      return send({error:'INVALID_SEARCH_FILTER'},400,origin);
+   let query=admin.from('beagu_lv1_school_sort_index')
+      .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,housing_price_won',{count:'exact'});
+   if(searchText)query=query.ilike('school_name','%'+searchText.replace(/[%_\\]/g,'')+'%');
+   if(region)query=query.eq('sido_standard',region);
+   if(office)query=query.eq('support_office',office);
+   const from=pagination*20;
+   const {data,count,error}=await query
+     .order(sort,{ascending:false,nullsFirst:false})
+     .order('school_name',{ascending:false,nullsFirst:false})
+     .order('school_id',{ascending:false})
+     .range(from,from+19);
+   if(error)return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
+   return send({schools:data||[],total:count||0,page:pagination,sort,direction:'desc',nulls:'last'},200,origin);
   }
 
   const id=String(body.schoolId||'');
