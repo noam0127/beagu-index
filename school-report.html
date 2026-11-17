@@ -1135,13 +1135,13 @@
     if(!school||!national||!region||school.unit!==national.unit||region.unit!==national.unit)return '';
     const extent=Math.max(Math.abs(school.n-national.n),Math.abs(region.n-national.n),1e-9);
     // Same units; equal distances from the nationwide mean get equal horizontal spacing.
-    const x=v=>(Math.max(15,Math.min(85,50+35*(v.n-national.n)/extent))).toFixed(1);
+    const position=v=>(Math.max(15,Math.min(85,50+35*(v.n-national.n)/extent))).toFixed(1);
     const safe=v=>escapeHTML(v);
     const aria='전국 평균 '+x.nationalAverage+', 지역 평균 '+x.regionalAverage+', 우리 학교 '+x.value;
     return '<figure class="benchmark-figure" role="img" aria-label="'+safe(aria)+'">'+
       '<div class="benchmark-plot" aria-hidden="true">'+
-      '<span class="benchmark-dot school" style="left:'+x(school)+'%"></span>'+
-      '<span class="benchmark-dot region" style="left:'+x(region)+'%"></span>'+
+      '<span class="benchmark-dot school" style="left:'+position(school)+'%"></span>'+
+      '<span class="benchmark-dot region" style="left:'+position(region)+'%"></span>'+
       '<span class="benchmark-dot nation" style="left:50%"></span></div>'+
       '<div class="benchmark-values">'+
       '<span class="nation"><small>전국 평균</small><strong>'+safe(x.nationalAverage)+'</strong></span>'+
