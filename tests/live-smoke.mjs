@@ -154,7 +154,7 @@ async function main() {
     level2.includes('explicitEnter'));
   check('학교 홈페이지 링크가 검색 결과에서 제거됨',
     ![html0,html1,html2,level1,level2,report].some(h=>h.includes('🌐 학교 홈페이지')));
-  check('홈에서 Lv.0~2 열람 버튼 제거·자료 공개 안내', !/search-lv[12]\.html|href="search\.html"/.test(home) && home.includes('1,000명 달성 시 2026 배구지수 자료를 공개합니다.'));
+  check('홈에 Lv.0 공개자료만 복원·Lv.1/2 제외', home.includes('class="lv0-public-link" href="search.html"') && !/href="search-lv[12]\.html"/.test(home) && home.includes('1,000명 달성 시 2026 배구지수 자료를 공개합니다.'));
   check('홈→챌린지 버튼 없음·기존 설문 연결', !home.includes('href="challenge.html"') && home.includes('https://forms.gle/TPyCakK6Sj2zchRy7'));
   check('챌린지 Lv.2 안내 제거·인증 기능 보존', !/Lv\.2|step-3|cafe\.naver\.com/.test(challengeHTML) && challengeHTML.includes('id="capture"') && challengeHTML.includes('id="loungeLink"'));
   check('두 HTML의 JS 연결', html1.includes('js/level-search.js') && html2.includes('js/lv2-edited-search.js'));
