@@ -80,14 +80,6 @@
     });
     section.append(graph);
   }
-  const notes=el('ul','percentile-notes');
-  [
-   '표시 순서: 2023 → 2024 → 2025 → 2026. 각 점은 해당 연도의 독립적인 백분위이며, 연도 간 상승·하락을 의미하지 않습니다.',
-   '2023·2024: 해당 연도 문항과 당시 산정 기준의 공개값. 2025: 8개 영역 종합값을 비교집단 1,458개교에서 재산출(99%는 상위 약 1%).',
-   '2026: 수정5 신규 조사 기준의 공개 승인 결과만 표시. 자료 없음·검수 중·미공개·불러오기 실패는 서로 다른 상태입니다.'
-  ].forEach(s=>notes.append(el('li','percentile-note',s)));
-  section.append(notes);
-  section.append(el('p','percentile-note','자료 기준: 2026.10.31 · 2025 전국백분위 재산출'));
   return section;
  }
  // Canonical card tree. Lv.0 opens the public report; authenticated tiers
