@@ -17,6 +17,7 @@ on:
       - 'search-lv2.html'
       - 'js/**'
       - 'data/public-lv0-percentiles-v1.2.json'
+      - 'data/public-statistics-question-catalog-v1.json'
       - 'lv2-edited-column-schema.json'
       - 'styles/beagu-loading-v1.css'
       - 'js/beagu-loading-v1.js'

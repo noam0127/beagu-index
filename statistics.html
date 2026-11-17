@@ -8,7 +8,7 @@
   <title>학교·연도 비교표 | 배구지수</title>
   <link rel="stylesheet" href="styles/statistics.css?v=20261031-canonical7">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
-  <link rel="stylesheet" href="styles/statistics-compare.css?v=20261118-c1">
+  <link rel="stylesheet" href="styles/statistics-compare.css?v=20261118-c2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-rolling1"></script>
 </head>
@@ -30,29 +30,31 @@
         <p class="overline"><span class="live-dot" aria-hidden="true"></span> SCHOOL COMPARISON <span class="overline-sep">/</span> 2023—2025</p>
         <h1 id="headingTitle">우리 학교, <span>나란히 비교</span></h1>
         <p class="subtitle">학교와 연도를 선택해 최대 5개 비교 열을 만들고, 검증된 공개 자료를 항목별로 살펴보세요.</p>
-        <div class="intro-tags"><span>최대 5개 학교·연도</span><span>2023—2025</span><span>항목별 나란히 비교</span><span>Lv.0 공개 자료</span></div>
+        <div class="intro-tags"><span>최대 5개 학교·연도</span><span>2023—2025</span><span>항목별 나란히 비교</span><span>공개 기록 비교</span></div>
       </div>
       <div class="intro-graphic" aria-hidden="true"><div class="graphic-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="graphic-line"></div><div class="graphic-label">COMPARE <b>01—05</b></div></div>
     </section>
 
-    <section class="content-card controls" aria-label="학교 찾기 및 필터">
-      <div class="section-head"><div><p class="section-overline">FIND &amp; ADD</p><h2>비교할 학교 찾기</h2></div><button id="resetFilters" class="quiet-button" type="button"><span aria-hidden="true">↺</span> 초기화</button></div>
-      <div class="filters">
-        <div class="control control-search"><label for="searchInput">학교명 검색</label><div class="search-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6"/><path d="M16 16l5 5"/></svg><input id="searchInput" type="search" placeholder="학교명을 입력하세요 · 예: 강릉초등학교" autocomplete="off" enterkeyhint="search" autocapitalize="off"><button id="clearSearch" type="button" class="search-clear" aria-label="검색어 지우기" hidden>지우기 ×</button><div id="compareSuggestions" class="compare-suggestions" role="group" aria-label="비교할 학교 검색 결과" hidden></div></div></div>
-        <div class="control"><label for="regionSelect">시도</label><select id="regionSelect"><option value="">전국</option></select></div>
-        <div class="control"><label for="officeSelect">교육지원청</label><select id="officeSelect" disabled><option value="">시도를 먼저 선택</option></select></div>
-        <div class="control control-year"><label for="yearSelect">추가할 연도 · 목록 표시</label><select id="yearSelect"><option value="2023">2023년</option><option value="2024">2024년</option><option value="2025" selected>2025년</option><option value="2026" disabled>2026년 (미공개)</option><option value="all">2023~2025년 각각 보기</option></select></div>
-      </div>
-      <div class="filter-foot"><span class="tiny-circle" aria-hidden="true"></span><span>학교명을 2글자 이상 입력한 뒤 검색 결과에서 추가하세요. 선택한 학교의 연도는 아래에서 각각 변경할 수 있습니다.</span></div>
-    </section>
 
+    <section class="content-card controls compare-search-only" aria-label="비교할 학교 검색">
+      <div class="section-head"><div><p class="section-overline">FIND &amp; ADD</p><h2>비교할 학교 찾기</h2></div></div>
+      <div class="compare-search-field">
+        <label for="searchInput">학교명 검색</label>
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.6"/><path d="M16 16l5 5"/></svg>
+          <input id="searchInput" type="search" placeholder="학교명을 입력하세요 · 예: 강릉초등학교" autocomplete="off" enterkeyhint="search" autocapitalize="off">
+          <button id="clearSearch" type="button" class="search-clear" aria-label="검색어 지우기" hidden>지우기 ×</button>
+          <div id="compareSuggestions" class="compare-suggestions" role="group" aria-label="비교할 학교 검색 결과" hidden></div>
+        </div>
+      </div>
+    </section>
 
     <section class="comparison-section content-card" aria-labelledby="compareHeading">
       <div class="comparison-head">
         <div>
           <p class="section-overline">SIDE-BY-SIDE COMPARISON</p>
           <h2 id="compareHeading">학교·연도 비교표</h2>
-          <p class="comparison-subtitle">한 열에 학교 하나와 기준연도 하나를 표시합니다. 같은 학교의 다른 연도도 비교할 수 있습니다.</p>
+          <p class="comparison-subtitle">학교마다 연도를 고르고, 해당 연도의 세부 문항을 펼쳐 비교하세요.</p>
         </div>
         <div class="comparison-head-actions">
           <span id="compareCounter" class="compare-counter" aria-live="polite">0 / 5 선택</span>
@@ -65,60 +67,22 @@
       <div id="compareEmpty" class="compare-empty">
         <span class="compare-empty-icon" aria-hidden="true">＋</span>
         <strong>비교할 학교를 추가하세요</strong>
-        <span>위 검색창에서 학교를 찾거나 아래 학교 목록에서 ‘비교에 추가’를 누르세요.</span>
+        <span>학교명을 검색해 추가한 뒤, 각 학교 카드에서 연도를 선택하세요.</span>
       </div>
       <div id="compareScroll" class="compare-scroll" role="region" tabindex="0" aria-label="학교·연도별 항목 비교, 좌우 스크롤 가능" hidden>
         <table id="compareTable" class="compare-table"></table>
       </div>
-      <p class="compare-fineprint">학교 기본정보는 현재 학교목록 기준이며, 백분위는 각 선택 연도의 기존 공개 기록입니다. 자료 없음은 0점이 아닙니다. 상세 설문 문항은 학교 상세화면에서 별도로 확인할 수 있습니다.</p>
+      <p class="compare-fineprint">각 연도의 조사 문항 전체를 펼쳐 표시합니다. 학교별 문항 응답값은 승인된 열람 권한이 필요하며, 자료 없음은 0점이 아닙니다.</p>
     </section>
-    <section class="data-section" aria-labelledby="resultHeading">
-      <div class="data-top"><div><p class="section-overline">DATA TABLE</p><h2 id="resultHeading">전체 학교 목록</h2><p id="resultSummary" class="data-subtitle" role="status" aria-live="polite">학교 목록을 불러오는 중입니다.</p></div><div class="table-tools"><label class="small-select">한 페이지 <select id="pageSize"><option value="25">25행</option><option value="50">50행</option><option value="100">100행</option></select></label><span class="public-stamp">LV.0 / 공개 자료</span></div></div>
-      <div class="mobile-viewbar" aria-label="모바일 보기 방식 선택">
-        <span class="mobile-viewtitle">보기 방식</span>
-        <div class="mobile-viewoptions" role="group" aria-label="학교 목록 표시 방식">
-          <button type="button" id="viewCards" class="mobile-viewbtn" aria-pressed="true">카드로 보기</button>
-          <button type="button" id="viewTable" class="mobile-viewbtn" aria-pressed="false">표로 보기</button>
-        </div>
-      </div>
-      <p id="tableSwipeHint" class="mobile-swipe-hint" hidden>표를 좌우로 밀어 다른 항목을 확인할 수 있습니다. 학교명은 왼쪽에 고정됩니다.</p>
-      <div id="loadProgress" class="load-progress" aria-live="polite"><span class="spinner" aria-hidden="true"></span><span id="progressText">학교 디렉터리 확인 중…</span></div>
-      <div class="table-frame" id="dataTable" tabindex="0" role="region" aria-label="학교정보 표, 좌우 스크롤 가능">
-        <table id="schoolTable">
-          <thead><tr>
-            <th class="col-number" scope="col">번호</th>
-            <th class="col-school" scope="col" id="colSchool"><button class="sort-button" data-sort="school_name" type="button" aria-label="학교명으로 정렬">학교명 <span class="sort-glyph" aria-hidden="true">↕</span></button></th>
-            <th scope="col" id="colRegion"><button class="sort-button" data-sort="sido_standard" type="button" aria-label="시도로 정렬">시도 <span class="sort-glyph" aria-hidden="true">↕</span></button></th>
-            <th scope="col" id="colOffice"><button class="sort-button" data-sort="support_office" type="button" aria-label="교육지원청으로 정렬">교육지원청 <span class="sort-glyph" aria-hidden="true">↕</span></button></th>
-            <th scope="col" id="colEstablishment"><button class="sort-button" data-sort="establishment" type="button" aria-label="설립구분으로 정렬">설립구분 <span class="sort-glyph" aria-hidden="true">↕</span></button></th>
-            <th id="percentileHeader" scope="col" class="col-percentile">2025년 공개 백분위</th>
-            <th id="statusHeader" scope="col" class="col-status">자료 상태</th>
-            <th class="col-action" scope="col">학교정보 · 비교</th>
-          </tr></thead>
-          <tbody id="schoolRows"><tr><td colspan="8" class="loading-cell">학교정보를 불러오고 있습니다…</td></tr></tbody>
-        </table>
-      </div>
-      <div id="mobileCards" class="mobile-card-list" aria-label="학교정보 카드 목록"></div>
-      <div class="below-table"><div class="legend"><span><i class="legend-dot published"></i> 공개 기록</span><span><i class="legend-dot pending"></i> 검수 중</span><span><i class="legend-dot none"></i> 자료 없음</span></div><div class="pager"><button id="prevPage" class="page-button" type="button" disabled aria-label="이전 페이지">이전</button><span id="pageLabel" aria-live="polite">— / —</span><button id="nextPage" class="page-button" type="button" disabled aria-label="다음 페이지">다음</button></div></div>
-    </section>
-
-    <aside class="notice" aria-labelledby="noticeHeading"><div class="notice-icon" aria-hidden="true">i</div><div><h3 id="noticeHeading">통계표를 읽기 전에</h3><p>여기의 백분위는 <strong>기존 Lv.0 공개본에 있는 과거 기록</strong>입니다. 연도별 문항·산식·참여 집단이 달라 연도 사이의 점수 상승·하락을 뜻하지 않습니다. 전국순위나 학교 우열을 생성하지 않으며, 백분위 순 정렬도 제공하지 않습니다.</p><p class="notice-small">`자료 없음`은 0점이 아니며, `검수 중`은 아직 표시할 수 없는 값입니다. Lv.1·Lv.2 상세지표는 이 공개 페이지에 포함하지 않았습니다.</p></div></aside>
+    <aside class="notice" aria-labelledby="noticeHeading"><div class="notice-icon" aria-hidden="true">i</div><div><h3 id="noticeHeading">비교 자료 안내</h3><p>여기의 백분위는 <strong>기존 Lv.0 공개본에 있는 과거 기록</strong>입니다. 연도별 문항·산식·참여 집단이 달라 연도 사이의 점수 상승·하락을 뜻하지 않습니다. 전국순위나 학교 우열을 생성하지 않으며, 백분위 순 정렬도 제공하지 않습니다.</p><p class="notice-small">`자료 없음`은 0점이 아니며, `검수 중`은 아직 표시할 수 없는 값입니다. 학교별 상세 설문 응답은 별도 인증된 상세화면에서 열람합니다.</p></div></aside>
     <footer class="footer"><p>© 배구지수 · 학교정보 공개 통계표 <span id="snapshotLabel">2023—2025</span></p><p>학교목록: 배구지수 기존 공개 DB · 백분위: 기존 검증 Lv.0 스냅샷</p></footer>
   </main>
-
-  <div id="infoDialog" class="dialog-backdrop" hidden>
-    <section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
-      <div class="dialog-top"><div><p class="section-overline">SCHOOL RECORD</p><h2 id="dialogTitle">학교정보</h2><p id="dialogMeta" class="data-subtitle"></p></div><button class="dialog-close" id="dialogClose" type="button" aria-label="학교정보 닫기">×</button></div>
-      <div class="dialog-body" id="dialogBody"></div>
-      <div class="dialog-bottom"><span>2026년 승인 결과와 과거 기록은 학교 상세화면에서 확인하세요.</span><a class="page-button" id="dialogReportLink" href="school-report.html">학교 상세보기</a><button class="page-button" id="dialogDismiss" type="button">닫기</button></div>
-    </section>
-  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/master-percentiles-v1.2.js?v=20261118-alpha1"></script>
-  <script src="js/statistics-table.js?v=20261118-comparison1"></script>
-  <script src="js/statistics-compare.js?v=20261118-c1"></script>
+  <script src="js/statistics-directory-v2.js?v=20261118-v2"></script>
+  <script src="js/statistics-compare.js?v=20261118-c2"></script>
   <script src="js/visit-stats.js?v=20261031-1350"></script>
 </body>
 </html>

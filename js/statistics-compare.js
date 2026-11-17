@@ -6,10 +6,10 @@
   const YEARS = [2023, 2024, 2025];
   const collator = new Intl.Collator('ko-KR', { numeric:true, sensitivity:'base' });
   const state = { directory:new Map(), schools:[], snapshot:new Map(), snapshotReady:false,
-    ready:false, selected:[], restored:false };
+    ready:false, selected:[], restored:false, questionCatalog:null,
+    approvedBySchool:new Map(), approvedLoading:new Set(), sessionToken:'' };
   const elements = {
-    search:$('searchInput'), region:$('regionSelect'), office:$('officeSelect'),
-    year:$('yearSelect'), suggestions:$('compareSuggestions'),
+    search:$('searchInput'), suggestions:$('compareSuggestions'),
     selections:$('compareSelections'), table:$('compareTable'),
     panel:$('compareScroll'), empty:$('compareEmpty'), count:$('compareCounter'),
     feedback:$('compareFeedback'), clear:$('clearCompare'), copy:$('copyCompareLink')
@@ -28,10 +28,7 @@
     b.addEventListener('click',onClick);
     return b;
   }
-  function currentYear() {
-    const candidate=Number(elements.year.value);
-    return YEARS.includes(candidate) ? candidate : 2025;
-  }
+  function currentYear() { return 2025; }
   function labelForSchool(s) {
     return [s.sido_standard, s.support_office].filter(Boolean).join(' · ') || '지역 미확인';
   }
@@ -71,6 +68,7 @@
     state.selected.push({id,year});
     notice(school.school_name+' ('+year+'년)을 비교표에 추가했습니다.');
     sync();
+    loadApprovedSchool(id);
     return true;
   }
   function removeSchool(index) {
@@ -129,7 +127,7 @@
         make('div',labelForSchool(school),'compare-selection-subtitle'),yearLabel);
       fragment.append(card);
     });
-    for (let index=state.selected.length;state.selected.length && index<LIMIT;index++) {
+    for (let index=state.selected.length;state.selected.length && index<Math.min(LIMIT,state.selected.length+1);index++) {
       const placeholder=make('div',null,'compare-placeholder');
       placeholder.setAttribute('aria-hidden','true');
       placeholder.append(make('strong','＋'),make('span',String(index+1)+'번째 학교'));
@@ -188,12 +186,7 @@
     elements.empty.hidden=!!state.selected.length;
     if (!state.selected.length) { elements.table.replaceChildren(); return; }
     const body=make('tbody');
-    appendGroup(body,'학교 기본정보 · 현재 학교목록 기준');
-    appendMetric(body,'학교명',s=>s.school_name);
-    appendMetric(body,'시도',s=>s.sido_standard||'미확인');
-    appendMetric(body,'교육지원청',s=>s.support_office||'미확인');
-    appendMetric(body,'설립 구분',s=>s.establishment||'미확인');
-    appendGroup(body,'배구지수 · 선택 연도별 기존 공개 기록');
+    appendGroup(body,'배구지수 · 선택 연도별 공개 기록');
     appendMetric(body,'조사 기준연도',(_s,y)=>y+'년');
     appendMetric(body,'공개 백분위',(s,y)=>{
       const d=percentile(s,y);
@@ -208,25 +201,130 @@
       const d=percentile(s,y);
       return make('span',d.label,'status-pill '+d.kind);
     });
-    appendMetric(body,'학교별 상세정보',s=>{
-      const link=make('a','상세보기','compare-view-link');
-      link.href='school-report.html?school_id='+encodeURIComponent(String(s.school_id));
-      return link;
-    });
+    const years=[...new Set(state.selected.map(e=>e.year))].sort((a,b)=>a-b);
+    for(const year of years){
+      const catalog=state.questionCatalog?.years?.[String(year)];
+      if(!catalog||!Array.isArray(catalog.items)) {
+        appendGroup(body,year+'년 · 문항 정보');
+        appendMetric(body,'설문 문항',(_s,selectedYear)=>selectedYear===year?'문항 목록을 불러오는 중…':'—');
+        continue;
+      }
+      const groups=[...new Set(catalog.items.map(x=>x.group))];
+      for(const group of groups){
+        appendGroup(body,year+'년 · '+group);
+        for(const item of catalog.items.filter(x=>x.group===group)){
+          appendMetric(body,item.id+' · '+item.label,(school,selectedYear)=>{
+            if(selectedYear!==year)return make('span','—','compare-other-year');
+            const approved=state.approvedBySchool.get(String(school.school_id));
+            if(approved?.items?.[year]?.[item.id]!==undefined)
+              return make('span',approved.items[year][item.id],'compare-approved-value');
+            if(state.approvedLoading.has(String(school.school_id)))
+              return make('span','확인 중…','compare-unavailable');
+            return make('span',state.sessionToken && approved ? '승인된 값 없음' : '상세 인증 후 열람','compare-unavailable');
+          });
+        }
+      }
+    }
+    // Only summary metrics returned by the authenticated server are shown.
+    // Do not infer missing school data from other schools' figures.
+    const summaryYears=years.filter(year=>state.selected.some(entry=>
+      Array.isArray(state.approvedBySchool.get(entry.id)?.summaries?.[year]) &&
+      state.approvedBySchool.get(entry.id).summaries[year].length));
+    for(const year of summaryYears){
+      const rows=new Map();
+      for(const entry of state.selected.filter(e=>e.year===year)){
+        const values=state.approvedBySchool.get(entry.id)?.summaries?.[year]||[];
+        for(const item of values) rows.set(item.group+' · '+item.label,item);
+      }
+      if(!rows.size)continue;
+      appendGroup(body,year+'년 · 승인된 추가 학교정보');
+      for(const key of rows.keys()){
+        appendMetric(body,key,(school,selectedYear)=>{
+          if(selectedYear!==year)return '—';
+          const approved=state.approvedBySchool.get(String(school.school_id));
+          const data=approved?.summaries?.[year]?.find(x=>x.group+' · '+x.label===key);
+          return data?make('span',data.value,'compare-approved-value'):'—';
+        });
+      }
+    }
     elements.table.replaceChildren(createHeader(),body);
+  }
+  async function loadPublicQuestions() {
+    try {
+      const response=await fetch('data/public-statistics-question-catalog-v1.json',{cache:'no-cache'});
+      if(!response.ok)throw Error('설문 문항 목록 응답 실패');
+      const catalog=await response.json();
+      if(!catalog?.years || !YEARS.every(y=>
+        Array.isArray(catalog.years[String(y)]?.items)))throw Error('설문 문항 목록 형식 오류');
+      state.questionCatalog=catalog;
+    }catch(err) {
+      console.error('설문 문항 로드 실패',err);
+      notice('설문 문항 목록을 불러오지 못했습니다. 새로고침해 주세요.');
+    }
+    renderTable();
+  }
+  function validServerText(value,max=180) {
+    return (typeof value==='string'||typeof value==='number') &&
+      String(value).length<=max && !/[\u0000-\u0008]/.test(String(value));
+  }
+  async function loadApprovedSchool(id) {
+    if(!state.sessionToken || !/^[A-Z0-9]{7}$/.test(String(id)) ||
+        state.approvedLoading.has(id) || state.approvedBySchool.has(id) ||
+        typeof SUPABASE_URL!=='string') return;
+    state.approvedLoading.add(id);
+    renderTable();
+    try{
+      const response=await fetch(SUPABASE_URL+'/functions/v1/beagu-level-api',{
+        method:'POST',cache:'no-store',
+        headers:{'Content-Type':'application/json','X-Beagu-Session':state.sessionToken},
+        body:JSON.stringify({action:'school',schoolId:id})
+      });
+      if(!response.ok) {
+        if(response.status===401||response.status===403)state.sessionToken='';
+        throw Error('인증된 자료 조회 실패');
+      }
+      const data=await response.json();
+      const approved={items:{2023:{},2024:{},2025:{}},summaries:{2023:[],2024:[],2025:[]}};
+      for(const row of Array.isArray(data?.rows)?data.rows:[]){
+        const year=Number(row?.year);
+        if(!YEARS.includes(year) || ![1,2].includes(Number(row?.access_level)))continue;
+        for(const metric of Array.isArray(row?.summary?.metrics)?row.summary.metrics:[]){
+          if(!metric||typeof metric!=='object')continue;
+          if(/^Q\d{2}$/.test(metric.key||'') &&
+            typeof metric.value==='number'&&Number.isFinite(metric.value) &&
+            validServerText(metric.unit||'',20)){
+            approved.items[year][metric.key]=String(metric.value)+String(metric.unit||'');
+          }else if(validServerText(metric.label,80)&&validServerText(metric.value,100)){
+            approved.summaries[year].push({
+              group:metric.group==='편집본 공식 학교정보'?'편집본 공식 학교정보':'승인된 설문 영역 요약',
+              label:String(metric.label),value:String(metric.value)
+            });
+          }
+        }
+      }
+      for(const record of Array.isArray(data?.schoolDistributions)?data.schoolDistributions:[]){
+        const year=Number(record?.year),qid=String(record?.questionId||'');
+        if(![2023,2024].includes(year)||!/^Q\d{2}$/.test(qid)||
+           !validServerText(record.modeOption,180))continue;
+        approved.items[year][qid]=String(record.modeOption);
+      }
+      state.approvedBySchool.set(id,approved);
+    }catch(error){
+      console.warn('승인된 학교별 상세자료 확인 실패:',error);
+    }finally{
+      state.approvedLoading.delete(id);
+      renderTable();
+    }
   }
   function renderSuggestions() {
     elements.suggestions.replaceChildren();
     const query=normalize(elements.search.value);
     if (!state.ready || query.length<2) { elements.suggestions.hidden=true;return; }
-    const region=elements.region.value,office=elements.office.value;
     const matches=state.schools.filter(s=>
-      normalize(s.school_name).includes(query) &&
-      (!region || (s.sido_standard||'미분류')===region) &&
-      (!office || (s.support_office||'미분류')===office)
+      normalize(s.school_name).includes(query)
     ).sort((a,b)=>collator.compare(a.school_name,b.school_name)).slice(0,8);
     if (!matches.length) {
-      elements.suggestions.append(make('p','검색 결과가 없습니다. 시도·교육지원청 필터를 확인하세요.','compare-suggestion-empty'));
+      elements.suggestions.append(make('p','검색 결과가 없습니다. 학교명을 확인해 주세요.','compare-suggestion-empty'));
     } else {
       const year=currentYear();
       for (const school of matches) {
@@ -262,20 +360,27 @@
     state.ready=schools.length>0;
     restoreUrl();
     renderSelections();renderTable();renderSuggestions();
-    if (!state.snapshotReady && state.ready) notice('공개 백분위를 확인할 수 없어 학교 기본정보만 비교할 수 있습니다.');
+    if (!state.snapshotReady && state.ready) notice('공개 백분위를 확인할 수 없어 문항 목록만 표시됩니다.');
+    try { state.sessionToken=sessionStorage.getItem('beagu-level-session-v1')||''; }
+    catch (_) { state.sessionToken=''; }
+    for(const entry of state.selected)loadApprovedSchool(entry.id);
   });
+  loadPublicQuestions();
   elements.search.addEventListener('input',renderSuggestions);
   elements.search.addEventListener('focus',renderSuggestions);
-  elements.region.addEventListener('change',renderSuggestions);
-  elements.office.addEventListener('change',renderSuggestions);
-  elements.year.addEventListener('change',renderSuggestions);
-  $('clearSearch').addEventListener('click',()=>{elements.suggestions.hidden=true;});
-  $('resetFilters').addEventListener('click',()=>{elements.suggestions.hidden=true;});
+  $('clearSearch').addEventListener('click',()=>{
+    elements.search.value='';$('clearSearch').hidden=true;
+    elements.suggestions.hidden=true;
+    elements.search.focus();
+  });
+  elements.search.addEventListener('input',()=>{
+    $('clearSearch').hidden=!elements.search.value;
+  });
   elements.search.addEventListener('keydown',event=>{
     if (event.key==='Escape') elements.suggestions.hidden=true;
   });
   document.addEventListener('click',event=>{
-    if (!event.target.closest('.control-search')) elements.suggestions.hidden=true;
+    if (!event.target.closest('.compare-search-field')) elements.suggestions.hidden=true;
   });
   elements.clear.addEventListener('click',()=>{
     state.selected=[];notice('비교표를 초기화했습니다.');sync();
