@@ -49,7 +49,7 @@ async function main() {
     'js/school-mbti-v1.js', 'styles/school-mbti-v1.css',
     'js/school-search-card-v1.js', 'styles/school-search-card-v1.css',
     'js/school-detail-groups-v1.js', 'styles/school-detail-groups-v1.css',
-    'statistics.html', 'styles/statistics.css', 'js/statistics-table.js',
+    'statistics.html', 'styles/statistics.css', 'styles/statistics-compare.css', 'js/statistics-table.js', 'js/statistics-compare.js',
     'result.html', 'survey.html', 'js/challenge.html',
     'challenge.html', 'js/challenge.js', 'js/challenge-progress-v1.js',
     'styles/challenge-progress-v1.css', 'styles/beagu-design-system-v1.css', 'styles/beagu-loading-v1.css', 'js/beagu-loading-v1.js', 'teacher-volleyball.html', 'teacher-run.html', 'js/search-telemetry-v1.js',

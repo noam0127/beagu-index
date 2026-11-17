@@ -177,7 +177,11 @@
       const show=text('button','학교 기본정보 보기','mobile-info-button');show.type='button';
       show.setAttribute('aria-label',`${s.school_name} 기본정보 보기`);
       show.addEventListener('click',()=>openInfo(s,show));
-      statusBox.append(statusPill(stateOfRecords),show);
+      const addButton=text('button','＋ 비교에 추가','mobile-info-button compare-add-button');
+       addButton.type='button';
+       addButton.setAttribute('aria-label',s.school_name+' 비교표에 추가');
+       addButton.addEventListener('click',()=>window.BeaguStatisticsCompare?.add(s.school_id,year.value));
+       statusBox.append(statusPill(stateOfRecords),addButton,show);
       record.append(kicker,name,detail,records,statusBox);
       frag.append(record);
     }
@@ -250,7 +254,10 @@
       const b=text('button','기본정보','detail-button'); b.type='button';
       b.setAttribute('aria-label',`${s.school_name} 기본정보 보기`);
       b.addEventListener('click',()=>openInfo(s,b));
-      action.append(b);tr.append(action);
+      const add=text('button','＋ 비교','detail-button compare-add-button');add.type='button';
+       add.setAttribute('aria-label',s.school_name+' 비교표에 추가');
+       add.addEventListener('click',()=>window.BeaguStatisticsCompare?.add(s.school_id,year.value));
+       action.append(add,b);tr.append(action);
       fragment.append(tr);
     }
     schoolRows.append(fragment);
@@ -349,7 +356,11 @@
       render();
     // 두 자원 모두 공개 자료다. 승인되지 않은 Supabase 내부 결과 테이블은 조회하지 않는다.
     const [directory,snapshot]=await Promise.allSettled([loadDirectory(),loadPublicSnapshot()]);
-    if (directory.status==='rejected') { showFatal(directory.reason); return; }
+    if (directory.status==='rejected') {
+      showFatal(directory.reason);
+      window.dispatchEvent(new CustomEvent('beagu:statistics-ready',{detail:{schools:[],snapshot:new Map(),snapshotReady:false}}));
+      return;
+    }
     if (snapshot.status==='rejected') {
       state.snapshotError=snapshot.reason;
       console.error('기존 공개 백분위 확인 실패:',snapshot.reason);
@@ -362,6 +373,10 @@
       $('dataTable').before(notice);
     }
     render();
+    // Pass only vetted public data to the school-by-year comparison.
+    window.dispatchEvent(new CustomEvent('beagu:statistics-ready',{
+      detail:{schools:state.schools,snapshot:state.snapshot,snapshotReady:state.snapshotReady}
+    }));
     } finally {
       window.BeaguLoading?.finish(beaguLoadingTask);
     }
