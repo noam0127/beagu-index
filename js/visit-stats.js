@@ -1,31 +1,75 @@
 (() => {
-  let visitor;
-  try {
-    visitor = localStorage.getItem('beagu-visitor-v1');
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(visitor || '')) {
-      visitor = crypto.randomUUID(); localStorage.setItem('beagu-visitor-v1', visitor);
+  'use strict';
+  const key = 'beagu-visitor-v1';
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const cells = [...document.querySelectorAll('[data-stat]')];
+  const show = text => cells.forEach(el => { el.textContent = text; });
+
+  // Use a stable anonymous visitor token; fall back to session storage when
+  // persistent browser storage is blocked. Never invent aggregate figures.
+  let visitor = null;
+  for (const store of [() => localStorage, () => sessionStorage]) {
+    try {
+      const storage = store();
+      const saved = storage.getItem(key);
+      visitor = uuid.test(saved || '') ? saved : crypto.randomUUID();
+      if (!uuid.test(saved || '')) storage.setItem(key, visitor);
+      break;
+    } catch (_) {
+      visitor = null;
     }
-  } catch (_) {
+  }
+  if (!visitor) {
     window.beaguVisitor = null;
-    document.querySelectorAll('[data-stat]').forEach(el => el.textContent = '저장 허용 필요');
+    show('저장 허용 필요');
     return;
   }
   window.beaguVisitor = visitor;
+
   const event = crypto.randomUUID();
   const rawPage = (location.pathname.split('/').pop() || 'index.html').replace(/\.html$/,'');
-  // The database accepts only these page categories. Unknown detail/list routes
-  // previously sent invalid p_page values, causing HTTP 400 on every page visit.
+  // Preserve the existing server page categories and original visit events.
   const page = ['index','search','result','survey','challenge'].includes(rawPage)
     ? rawPage
     : ['search-lv1','search-lv2','school-report','statistics'].includes(rawPage) ? 'search' : 'index';
+
+  const display = raw => {
+    const result = Array.isArray(raw) ? raw[0] : raw;
+    if (!result || typeof result !== 'object') return false;
+    let valid = true;
+    const values = {};
+    for (const stat of ['today','month','total']) {
+      const value = result[stat];
+      const n = typeof value === 'number' ? value
+        : typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : NaN;
+      if (!Number.isSafeInteger(n) || n < 0) valid = false;
+      values[stat] = n;
+    }
+    if (!valid) return false;
+    for (const el of cells) {
+      const n = values[el.dataset.stat];
+      if (Number.isSafeInteger(n)) el.textContent = n.toLocaleString('ko-KR');
+    }
+    return true;
+  };
+
   window.beaguVisitReady = (async () => {
-    try {
-      const {data,error} = await supabaseClient.rpc('beagu_record_visit', {p_visitor:visitor,p_event:event,p_page:page});
-      if(error) throw error;
-      for(const el of document.querySelectorAll('[data-stat]')) {
-        const n = data?.[el.dataset.stat];
-        el.textContent = typeof n === 'number' ? n.toLocaleString('ko-KR') : '확인 불가';
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        if (typeof supabaseClient === 'undefined') throw new Error('CLIENT_UNAVAILABLE');
+        // Reuse the same event UUID on retries, preventing duplicate visit events.
+        const {data,error} = await supabaseClient.rpc('beagu_record_visit', {p_visitor:visitor,p_event:event,p_page:page});
+        if (error) throw error;
+        if (display(data)) return data;
+        throw new Error('INVALID_VISIT_STATS');
+      } catch (_) {
+        if (attempt === 2) {
+          show('집계 확인 불가');
+          return null;
+        }
+        await new Promise(resolve => setTimeout(resolve, 900 * (attempt + 1)));
       }
-    } catch (_) { document.querySelectorAll('[data-stat]').forEach(el=>el.textContent='집계 연결 대기'); }
+    }
+    return null;
   })();
 })();
