@@ -5,6 +5,10 @@ on:
     paths:
       - school-report.html
       - tests/school-report-validation.mjs
+      - tests/three-day-release.mjs
+      - data/public-2023-2025-school-records-v2.json
+      - supabase/functions/_shared/release-policy.mjs
+      - supabase/migrations/20261118_public_2026_72hour_review_cooldown.sql
       - .github/workflows/school-report-validation.yml
   workflow_dispatch:
 
@@ -17,4 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate report UI code
-        run: node tests/school-report-validation.mjs
+        run: |
+          node tests/school-report-validation.mjs
+          node tests/three-day-release.mjs
