@@ -1246,12 +1246,13 @@
       for(const d of Array.isArray(r.schoolDistributions)?r.schoolDistributions:[]){
         const year=Number(d?.year),qid=String(d?.questionId||'');
         if(![2023,2024].includes(year)||!/^Q\d{2}$/.test(qid)||
-           !state.years[String(year)]?.items||
+           !state.years[String(year)]||
            typeof d.modeOption!=='string'||d.modeOption.length>180||
            !Array.isArray(d.roundedDistribution)||d.roundedDistribution.length>10)continue;
         const valid=d.roundedDistribution.every(a=>a&&typeof a.label==='string'&&
           a.label.length<=180&&Number.isInteger(a.pct)&&a.pct>=0&&a.pct<=100&&a.pct%10===0);
         if(!valid)continue;
+        if(!state.years[String(year)].items)state.years[String(year)].items={};
         state.years[String(year)].items[qid]={
           display:d.modeOption,modeOption:d.modeOption,serverApproved:true,
           roundedDistribution:d.roundedDistribution.map(a=>({label:a.label,pct:a.pct}))
