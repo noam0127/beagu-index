@@ -32,6 +32,22 @@ function setupDailyNoonTrigger() {
     .everyDays(1).atHour(12).nearMinute(0).inTimezone(BEAGU26.timezone).create();
   Logger.log("매일 한국시간 정오 부근(±15분) 집계 트리거를 설치했습니다.");
 }
+// Optional near-real-time private aggregation after each genuine Google Form submission.
+// This never publishes a result or bypasses the per-school privacy review.
+function setupBeagu2026FormSubmitTrigger() {
+  const name="onBeagu2026FormSubmitted";
+  ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()===name)
+    .forEach(t=>ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger(name).forSpreadsheet(BEAGU26.sourceId).onFormSubmit().create();
+  Logger.log("2026 본조사 응답 제출 후 비공개 집계 갱신 트리거를 설치했습니다.");
+}
+function onBeagu2026FormSubmitted(event) {
+  // Only an installed spreadsheet form-submit trigger, never a direct web request.
+  if(!event||!event.range||event.range.getSheet().getName()!==BEAGU26.sourceTab)return;
+  // refreshBeagu2026Stats already implements a script-wide lock and validates
+  // respondent dates and school matches. It only writes to a private MASTER.
+  refreshBeagu2026Stats();
+}
 function normalize(s) {
   return String(s||"").replace(/[①-⑳]/g,"").normalize("NFKC").replace(/[\s,.'"“”\[\]()/\\\-]/g,"").trim();
 }
