@@ -82,7 +82,7 @@
   document.addEventListener('click',event=>{
     if(validNavigation(event))start('페이지를 이동하고 있습니다…',{timeoutMs:11000});
   });
-  window.addEventListener('pageshow',clearAll);
+  window.addEventListener('pageshow',event=>{if(event.persisted)clearAll()});
   window.addEventListener('pagehide',clearAll);
   window.BeaguLoading=Object.freeze({start,finish,clearAll});
 })();
