@@ -1,5 +1,5 @@
 /* Shared design for all three Beagu search-result levels, based on Lv.0. */
-.school-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 3px 14px rgba(0,0,0,.05);min-width:0}
+.school-card{background:#fff;border:2px solid #2563eb;border-radius:16px;padding:20px;box-shadow:0 4px 18px rgba(37,99,235,.08);min-width:0}
 .school-card .region-badge{display:inline-block;margin-bottom:10px;padding:5px 9px;border-radius:999px;background:#eef2ff;color:#2563eb;font-size:12px;font-weight:700}
 .school-card .school-name{font-size:18px;font-weight:700;margin-bottom:8px;overflow-wrap:anywhere}
 .school-card .school-meta{font-size:14px;color:#666;line-height:1.6;overflow-wrap:anywhere;word-break:keep-all}
