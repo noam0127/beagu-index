@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f6f8fc">
-  <meta name="description" content="최대 5개 학교의 2023~2025년 배구지수 공개 기록과 기본정보를 나란히 비교합니다">
+  <meta name="description" content="2023~2026년 학교별 배구지수와 승인된 설문 항목을 최대 5개까지 비교합니다">
   <title>학교 비교 | 배구인덱스</title>
   <link rel="stylesheet" href="styles/statistics.css?v=20261031-canonical7">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
-  <link rel="stylesheet" href="styles/statistics-compare.css?v=20261118-c4">
+  <link rel="stylesheet" href="styles/statistics-compare.css?v=20261118-c5">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-rolling1"></script>
-<link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-3">
+<link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 </head>
 <body class="beagu-ui-page beagu-page-compare">
   <a class="skip-link" href="#compareHeading">학교 비교하기로 건너뛰기</a>
@@ -28,10 +28,10 @@
   <main class="shell">
     <section class="intro" aria-labelledby="headingTitle">
       <div class="intro-content">
-        <p class="overline"><span class="live-dot" aria-hidden="true"></span> SCHOOL COMPARISON <span class="overline-sep">/</span> 2023—2025</p>
-        <h1 id="headingTitle">우리 학교, <span>나란히 비교</span></h1>
-        <p class="subtitle">학교와 연도를 선택해 최대 5개 비교 열을 만들고, 검증된 공개 자료를 항목별로 살펴보세요.</p>
-        <div class="intro-tags"><span>최대 5개 학교·연도</span><span>2023—2025</span><span>항목별 나란히 비교</span><span>공개 기록 비교</span></div>
+        <p class="overline"><span class="live-dot" aria-hidden="true"></span> SCHOOL COMPARISON <span class="overline-sep">/</span> 2023—2026</p>
+        <h1 id="headingTitle">우리 학교,<span class="compare-heading-phrase">나란히 비교</span></h1>
+        <p class="subtitle">학교와 연도를 골라 최대 5개까지 비교하세요.</p>
+        
       </div>
       <div class="intro-graphic" aria-hidden="true"><div class="graphic-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="graphic-line"></div><div class="graphic-label">COMPARE <b>01—05</b></div></div>
     </section>
@@ -40,9 +40,9 @@
     <section id="compareLv1AuthPanel" class="content-card compare-auth-card" aria-labelledby="compareLv1Title">
       <div class="compare-auth-heading">
         <div>
-          <p class="section-overline">LEVEL 1 · PARTICIPANT ACCESS</p>
-          <h2 id="compareLv1Title">Lv.1 참여자 인증</h2>
-          <p class="compare-auth-help">참여코드를 인증하면 비교표에 공개 승인된 학교별 상세 통계가 추가됩니다. 기존 Lv.1·Lv.2 코드도 사용할 수 있습니다.</p>
+          <p class="section-overline">LEVEL 1</p>
+          <h2 id="compareLv1Title">Lv.1 인증</h2>
+          
         </div>
         <span id="compareLv1Badge" class="compare-auth-badge">미인증</span>
       </div>
@@ -54,10 +54,10 @@
             <button id="compareLv1Toggle" type="button" class="compare-auth-toggle" aria-label="참여코드 표시" aria-pressed="false">표시</button>
           </div>
         </div>
-        <button id="compareLv1Submit" type="submit" class="compare-auth-submit">Lv.1 인증하기</button>
+        <button id="compareLv1Submit" type="submit" class="compare-auth-submit">인증하기</button>
       </form>
       <div id="compareLv1SignedIn" class="compare-auth-signed-in" hidden>
-        <span id="compareLv1Status">Lv.1 인증 완료 · 승인된 상세자료를 확인할 수 있습니다.</span>
+        <span id="compareLv1Status">인증 완료</span>
         <button id="compareLv1Logout" type="button" class="compare-auth-logout">로그아웃</button>
       </div>
       <p id="compareLv1Message" class="compare-auth-message" role="status" aria-live="polite"></p>
@@ -82,7 +82,7 @@
           <div>
             <p class="section-overline">MY SCHOOL COMPARISON</p>
             <h2 id="compareHeading">학교 비교하기</h2>
-            <p class="comparison-subtitle">위에서 선택한 학교가 여기에 표시됩니다. 연도를 바꿔 최대 5개까지 비교하세요.</p>
+            <p class="comparison-subtitle">최대 5개 학교 · 연도별 비교</p>
           </div>
           <div class="comparison-head-actions">
             <span id="compareCounter" class="compare-counter" aria-live="polite">0 / 5 선택</span>
@@ -101,24 +101,24 @@
       <section id="compareResults" class="comparison-results" aria-labelledby="compareResultsTitle" hidden>
         <div class="comparison-results-heading">
           <h3 id="compareResultsTitle">항목별 비교</h3>
-          <p>선택한 학교의 연도별 공개 결과와 설문 항목을 모두 펼쳐 보여줍니다.</p>
+          
         </div>
         <div id="compareScroll" class="compare-scroll" role="region" tabindex="0"
              aria-label="선택한 학교들의 항목별 비교표, 좌우 스크롤 가능" hidden>
           <table id="compareTable" class="compare-table"></table>
         </div>
-        <p class="compare-fineprint">각 연도의 조사 문항을 펼쳐 표시합니다. 학교별 응답값은 승인된 열람 권한에 따라 제공하며, 자료 없음은 0점이 아닙니다.</p>
+        <p class="compare-fineprint">자료 없음 ≠ 0점 · 미공개 응답은 인증 후 표시</p>
       </section>
     </section>
-    <aside class="notice" aria-labelledby="noticeHeading"><div class="notice-icon" aria-hidden="true">i</div><div><h3 id="noticeHeading">비교 자료 안내</h3><p>여기의 백분위는 <strong>기존 Lv.0 공개본에 있는 과거 기록</strong>입니다. 연도별 문항·산식·참여 집단이 달라 연도 사이의 점수 상승·하락을 뜻하지 않습니다. 전국순위나 학교 우열을 생성하지 않으며, 백분위 순 정렬도 제공하지 않습니다.</p><p class="notice-small">`자료 없음`은 0점이 아니며, `검수 중`은 아직 표시할 수 없는 값입니다. 학교별 상세 설문 응답은 별도 인증된 상세화면에서 열람합니다.</p></div></aside>
-    <footer class="footer"><p>© 배구지수 · 학교 비교 <span id="snapshotLabel">2023—2025</span></p><p>학교목록: 배구지수 기존 공개 DB · 백분위: 기존 검증 Lv.0 스냅샷</p></footer>
+    <aside class="notice" aria-labelledby="noticeHeading"><div class="notice-icon" aria-hidden="true">i</div><div><h3 id="noticeHeading">비교 자료 안내</h3><p>연도별 조사 문항과 산식이 다를 수 있어 연도 간 백분위만으로 변화를 판단할 수 없습니다.</p><p class="notice-small">2026년 결과는 공개 승인 및 지연 기간을 충족한 경우에만 표시됩니다.</p></div></aside>
+    <footer class="footer"><p>© 배구지수 · 학교 비교 <span id="snapshotLabel">2023—2026</span></p><p>승인된 공개·참여자 자료만 표시</p></footer>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/master-percentiles-v1.2.js?v=20261118-alpha1"></script>
   <script src="js/statistics-directory-v2.js?v=20261118-v2"></script>
-  <script src="js/statistics-compare.js?v=20261118-c4"></script>
+  <script src="js/statistics-compare.js?v=20261118-c5"></script>
   <script src="js/visit-stats.js?v=20261031-1350"></script>
 </body>
 </html>
