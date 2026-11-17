@@ -1,5 +1,5 @@
 // Public arcade ranking API. All database access is server-side through the service key.
-// User-entered names are restricted to 2–8 ASCII letters. No profile or school information is requested.
+// User-entered nicknames are restricted to 2–8 ASCII letters; school names are resolved from canonical directory records.
 const SUPA_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const BASE = SUPA_URL + "/rest/v1/";
@@ -47,7 +47,12 @@ async function top(game: Game): Promise<Entry[]> {
 }
 
 type School = { school_id:string; school_name:string; sido_standard:string };
-type SchoolChoice = { school_id:string; school_name:string; region:string; difficulty:"easy"|"normal"|"hard"; source_year:number|null; has_index:boolean };
+type Difficulty = "easy"|"normal"|"hard";
+type SchoolChoice = {
+ school_id:string; school_name:string; region:string; difficulty:Difficulty|null;
+ eligible:boolean; missing_years:number[]; available_years:number[];
+ source_year:number|null; has_index:boolean;
+};
 async function searchSchools(raw:string):Promise<School[]>{
  const keyword=raw.trim().replace(/[^\p{L}\p{N}\s]/gu,"").slice(0,30);
  if(keyword.length<2)return [];
@@ -59,13 +64,34 @@ async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
  const q=new URLSearchParams({select:"school_id,school_name,sido_standard",school_id:"eq."+rawId,school_kind:"eq.초등학교",status:"eq.운영",limit:"1"});
  const rows=await db("schools?"+q) as School[];
  const school=rows[0];if(!school)return null;
- // Use only the existing vetted 2025 release, and never expose numerical percentile or survey counts.
- const p=new URLSearchParams({select:"national_percentile",school_id:"eq."+school.school_id,survey_year:"eq.2025",publication_status:"eq.PUBLISHED",source_status:"eq.VETTED_LEGACY_2025",limit:"1"});
- const percentiles=await db("beagu_2025_empirical_percentiles?"+p);
- const percentile=percentiles.length?Number(percentiles[0].national_percentile):NaN;
- const available=Number.isFinite(percentile)&&percentile>=0&&percentile<=100;
- const difficulty=available?(percentile>=66.6667?"easy":percentile<=33.3333?"hard":"normal"):"normal";
- return {school_id:school.school_id,school_name:school.school_name,region:school.sido_standard||"",difficulty,source_year:available?2025:null,has_index:available};
+ // Four *published and reviewed* annual school percentiles are mandatory.
+ // A missing/unreleased year must never be substituted with a different year or a default tier.
+ const years=[2023,2024,2025,2026];
+ const p=new URLSearchParams({
+   select:"survey_year,percentile",
+   school_id:"eq."+school.school_id,
+   survey_year:"in.(2023,2024,2025,2026)",
+   publication_status:"eq.PUBLISHED",
+   privacy_reviewed:"eq.true",
+   limit:"4"
+ });
+ const rows=await db("beagu_school_report_yearly?"+p) as Array<{survey_year:number;percentile:number|null}>;
+ const percentiles=new Map<number,number>();
+ for(const row of rows){
+   const raw=row.percentile;
+   if(raw===null||raw===undefined||raw==="")continue;
+   const value=Number(raw);
+   if(Number.isFinite(value)&&value>=0&&value<=100&&years.includes(Number(row.survey_year)))
+     percentiles.set(Number(row.survey_year),value);
+ }
+ const available_years=years.filter(year=>percentiles.has(year));
+ const missing_years=years.filter(year=>!percentiles.has(year));
+ const eligible=missing_years.length===0;
+ const average=eligible?years.reduce((sum,year)=>sum+(percentiles.get(year)??0),0)/years.length:null;
+ const difficulty:Difficulty|null=average===null?null:(average>=66.6667?"easy":average<=33.3333?"hard":"normal");
+ // Send only a tier and year availability, not unpublished scores or individual survey values.
+ return {school_id:school.school_id,school_name:school.school_name,region:school.sido_standard||"",
+   difficulty,eligible,missing_years,available_years,source_year:eligible?2026:null,has_index:eligible};
 }
 
 async function ipHash(req: Request): Promise<string> {
@@ -116,6 +142,7 @@ Deno.serve(async (req:Request)=>{
     if(payload.action==="start"){
       const selected=await resolveSchool(payload.school_id);
       if(!selected)return error("select_school",400,origin);
+      if(!selected.eligible)return json({error:"school_ineligible",missing_years:selected.missing_years},409,origin);
       const since=new Date(Date.now()-15*60*1000).toISOString();
       const q=new URLSearchParams({select:"id",ip_hash:"eq."+hash,started_at:"gte."+since,limit:"40"});
       const recent=await db("arcade_game_sessions?"+q);
@@ -132,6 +159,9 @@ Deno.serve(async (req:Request)=>{
     const session=rows[0];
     if(!session || session.game!==game || session.ip_hash!==hash || session.submitted_at)return error("session_expired",409,origin);
     if(!session.school_id||!session.school_name||!session.difficulty)return error("school_required",409,origin);
+    const currentSchool=await resolveSchool(session.school_id);
+    if(!currentSchool?.eligible||currentSchool.difficulty!==session.difficulty)
+      return error("school_ineligible",409,origin);
     const elapsed=(Date.now()-Date.parse(session.started_at))/1000;
     if(elapsed<4||elapsed>3600)return error("invalid_duration",400,origin);
     let score:number;
