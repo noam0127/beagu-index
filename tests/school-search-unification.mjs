@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import {Script,runInNewContext} from 'node:vm';
 import assert from 'node:assert/strict';
 const read=name=>readFileSync(name,'utf8');
-const pages=['search.html','search-lv1.html','search-lv2.html'];
+const pages=['search-lv1.html','search-lv2.html'];
 const scripts=['js/school-search-card-v1.js','js/level-search.js','js/lv2-edited-search.js','js/school-mbti-v1.js','js/school-detail-groups-v1.js'];
 for(const file of scripts)assert.doesNotThrow(()=>new Script(read(file),{filename:file}),file+' invalid JS');
 for(const path of pages){
@@ -18,11 +18,13 @@ for(const path of pages){
  }
 }
 const lv0=read('search.html');
+assert.match(lv0,/http-equiv="refresh" content="0;url=\.\/index\.html"/,'Lv.0 viewing page retired');
+assert.doesNotMatch(lv0,/BeaguSchoolSearchCard/,'No Lv.0 browsing UI');
 const lv1=read('js/level-search.js');
 const lv2=read('js/lv2-edited-search.js');
 const mbti=read('js/school-mbti-v1.js');
 const report=read('school-report.html');
-for(const [level,code] of [[0,lv0],[1,lv1],[2,lv2]]){
+for(const [level,code] of [[1,lv1],[2,lv2]]){
  assert.match(code,/BeaguSchoolSearchCard\.createCard\(/,'Lv.'+level+' not using canonical card');
  assert.match(code,new RegExp('level:\\s*'+level),'Lv.'+level+' incorrect card privilege');
  assert.doesNotMatch(code,/🌐 학교 홈페이지|address,homepage/);
