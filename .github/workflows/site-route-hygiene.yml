@@ -12,6 +12,8 @@ on:
       - 'tests/site-route-hygiene.mjs'
       - 'tests/brand-ui-consistency.mjs'
       - 'tests/rolling-volleyball-loading.mjs'
+      - 'tests/ui-refresh-v2.mjs'
+      - 'styles/beagu-ui-refresh-v2.css'
       - 'styles/beagu-loading-v1.css'
       - 'js/beagu-loading-v1.js'
       - 'styles/beagu-design-system-v1.css'
@@ -39,3 +41,4 @@ jobs:
       - run: node tests/site-route-hygiene.mjs
       - run: node tests/brand-ui-consistency.mjs
       - run: node tests/rolling-volleyball-loading.mjs
+      - run: node tests/ui-refresh-v2.mjs
