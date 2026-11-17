@@ -1010,6 +1010,7 @@
     }
   }
 }</script>
+<script src="js/2026-questionnaire-options-v1.2.js?v=20261117-original50"></script>
 <script>
 /* 학교별 조사기록 UI v1.0. 공개 자료만 사용합니다.
  * Lv.1/Lv.2의 실제 접근 권한은 기존 Supabase 서버 검증 로직에서 처리해야 합니다.
@@ -1479,6 +1480,9 @@
       '③ 거절하면 눈치나 부담을 준다','④ 사실상 거절하기 어렵다','⑤ 판단하기 어렵다']
   });
   const actualOptions=(year,item)=>{
+    const full=year===2026?window.Beagu2026Questionnaire?.[item.id]:null;
+    if(full&&Array.isArray(full.options)&&full.options.length)return full.options;
+    if(full&&Array.isArray(full.columns)&&full.columns.length)return full.columns;
     if(Array.isArray(item.options)&&item.options.length&&item.options.every(x=>typeof x==='string'))return item.options;
     if(year===2026&&/^Q(0[1-9]|1[0-1])$/.test(item.id))return standard2026;
     if(year===2026)return verified2026Options[item.id]||null;
@@ -1502,7 +1506,7 @@
     const displayed=itemApproved&&data&&typeof data.display==='string'?data.display.trim():null;
     const status=isFreeText?'전 등급 비공개':locked?'Lv.'+requiredTier(item)+' 인증 후 열람':displayed||missing;
     const row=document.createElement('article');row.className='question-row';
-    row.innerHTML=`<div class="question-line"><div class="question-label"><span class="question-code">${escapeHTML(item.id)}</span>${escapeHTML(item.label)}</div><div class="question-value ${locked?'tier-locked':(!displayed?'missing':'')}">${locked?'<span class="mask-shape" aria-hidden="true"></span><span>'+escapeHTML(status)+' 🔒</span>':escapeHTML(status)}</div></div>`;
+    row.innerHTML=`<div class="question-line"><div class="question-label"><span class="question-code">${escapeHTML(item.id)}</span>${escapeHTML((state.selected===2026&&window.Beagu2026Questionnaire?.[item.id]?.question)||item.label)}</div><div class="question-value ${locked?'tier-locked':(!displayed?'missing':'')}">${locked?'<span class="mask-shape" aria-hidden="true"></span><span>'+escapeHTML(status)+' 🔒</span>':escapeHTML(status)}</div></div>`;
     const n=data?.n;
     const meta=document.createElement('div');meta.className='question-meta';
     if(isFreeText)meta.textContent='개인 식별 및 비공개 위험으로 자유서술 원문은 표시하지 않습니다.';
@@ -1512,19 +1516,41 @@
     row.append(meta);
     // Question and source-verified complete answer options are public questionnaire
     // metadata, not individual teacher responses.
+    const full=state.selected===2026?window.Beagu2026Questionnaire?.[item.id]:null;
     const options=actualOptions(state.selected,item);
     const choices=document.createElement('div');choices.className='question-choices';
-    const heading=document.createElement('h5');heading.textContent='전체 보기';
+    const heading=document.createElement('h5');
+    heading.textContent=full?.kind==='grid'?'전체 그리드 보기 (행·열)':'전체 보기';
     choices.append(heading);
+    if(full?.kind==='grid'&&Array.isArray(full.rows)&&full.rows.length){
+      const label=document.createElement('strong');label.textContent='질문 행';
+      label.style.cssText='display:block;font-size:12px;margin-top:4px';
+      choices.append(label);
+      const lines=document.createElement('ol');lines.style.cssText='padding-left:22px;font-size:13px';
+      for(const value of full.rows){const li=document.createElement('li');li.textContent=value;lines.append(li);}
+      choices.append(lines);
+    }
     if(options&&options.length){
-      const list=document.createElement('ol');list.style.listStyle='none';list.style.paddingLeft='0';
+      if(full?.kind==='grid'){
+        const label=document.createElement('strong');label.textContent='공통 선택 보기 (열)';
+        label.style.cssText='display:block;font-size:12px;margin-top:7px';
+        choices.append(label);
+      }
+      const list=document.createElement('ol');
+      list.style.cssText='list-style:none;padding-left:0;font-size:13px';
       for(const option of options){const line=document.createElement('li');line.textContent=option;list.append(line);}
       choices.append(list);
     }else{
       const note=document.createElement('p');
-      note.textContent='원본 설문의 선택지 전체를 아직 검증하지 못했습니다. 확인되지 않은 보기는 임의로 생성하지 않습니다.';
-      note.style.cssText='font-size:12px;margin:0';
-      choices.append(note);
+      note.textContent=full?.kind==='time'?'시각 직접 입력형 문항 · 고정 선택 보기 없음':
+        '원본 설문의 선택지 전체를 아직 검증하지 못했습니다. 확인되지 않은 보기는 임의로 생성하지 않습니다.';
+      note.style.cssText='font-size:12px;margin:0';choices.append(note);
+    }
+    if(full?.description){
+      const desc=document.createElement('p');
+      desc.textContent='설문 안내: '+full.description;
+      desc.style.cssText='font-size:12px;line-height:1.5;margin:9px 0 0;color:#526178';
+      choices.append(desc);
     }
     row.append(choices);
     const majority=itemApproved?verifiedModalOption(data?.distribution):null;
