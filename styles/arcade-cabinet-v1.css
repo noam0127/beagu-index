@@ -1,0 +1,69 @@
+/* Arcade Cabinet UI — both games, no changes to school data pages */
+:root { --arcade-ink:#eefbff; --arcade-cyan:#61f5e8; --arcade-gold:#ffe47c; --arcade-pink:#ff80b3; --arcade-edge:#668cc0; --arcade-deep:#0a1027; }
+body.arcade-body {
+  background-color:#080f22;
+  background-image: radial-gradient(ellipse at 50% -20%,rgba(65,89,183,.45),transparent 67%),repeating-linear-gradient(90deg,transparent 0 39px,rgba(90,154,209,.055) 40px 41px);
+  color:var(--arcade-ink); text-rendering:optimizeLegibility;
+}
+.arcade-body .game-shell,.arcade-body .shell { position:relative; }
+.arcade-body .brand,.arcade-body .version,.arcade-body .pill {
+  font-family:ui-monospace,"Courier New",monospace; font-weight:900; text-shadow:0 2px #101a4c,0 0 13px rgba(124,220,255,.18);
+}
+.arcade-body .brand { letter-spacing:.01em; }
+.arcade-body .version,.arcade-body .pill { background:#111e3c; border:2px solid #5c72ac; color:#ffd87e; border-radius:5px; box-shadow:3px 3px 0 #070c20; }
+.arcade-body .scoreboard,.arcade-body .stat {
+  border:2px solid #5e85b6; border-radius:4px; background:linear-gradient(180deg,#1a3058,#101e3a);
+  box-shadow:inset 0 2px 0 #597aa1,0 3px 0 #060b20; }
+.arcade-body .stat span,.arcade-body .team span {font-family:ui-monospace,monospace;letter-spacing:.06em;color:#aac6e7}
+.arcade-body .stat strong,.arcade-body .team strong,.arcade-body .center-label {font-family:ui-monospace,"Courier New",monospace;text-shadow:2px 2px #091026}
+.arcade-body .court,.arcade-body .stage {
+  position:relative;border:3px solid #486ea2;border-radius:4px;background:#151d44;box-shadow:0 5px 0 #090f29,0 0 0 2px #1d3662; }
+.arcade-body .court::after,.arcade-body .stage::after {
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:repeating-linear-gradient(to bottom,rgba(4,8,26,.055) 0 2px,transparent 2px 5px);
+}
+.arcade-body canvas {image-rendering:auto; }
+.arcade-body .actions button,.arcade-body .touch button,.arcade-body .control button,.arcade-body .toolbar button,
+.arcade-body .choices button {border-radius:5px;box-shadow:0 4px 0 #080e20, inset 0 1px 0 rgba(255,255,255,.12);transition:filter .1s ease,transform .1s ease}
+.arcade-body .actions button:active,.arcade-body .touch button:active,.arcade-body .control button:active,.arcade-body .toolbar button:active,
+.arcade-body .choices button:active {transform:translateY(3px);box-shadow:0 1px 0 #080e20}
+.arcade-body button:focus-visible,.arcade-ranking button:focus-visible,.arcade-dialog button:focus-visible,.arcade-dialog input:focus-visible {outline:3px solid #fff7a6;outline-offset:3px}
+.arcade-body .panel {border-radius:5px;background:linear-gradient(170deg,#223d6a,#0e1a38);border:3px solid #679bbd;box-shadow:7px 7px 0 #081229}
+.arcade-body .overlay {backdrop-filter:blur(2px);}
+.arcade-body .status {font-family:ui-monospace,monospace;color:#ffe98c;text-shadow:1px 1px #101228}
+.arcade-body .game-shell,.arcade-body .shell {contain:layout style}
+.arcade-ranking {
+  margin:14px auto 4px; padding:13px; max-width:640px; min-width:0; color:#ecfbff;
+  background:linear-gradient(155deg,#101d3d,#101630 75%);
+  border:3px solid #5d8aaf;border-radius:5px;box-shadow:5px 5px 0 #060b1c;
+  font-family:ui-monospace,"Courier New",monospace;
+}
+.arcade-ranking-head {display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;margin-bottom:10px}
+.arcade-ranking-head strong{color:#ffe57f;font-weight:900;font-size:15px;letter-spacing:.1em;text-shadow:2px 2px #4e365c}
+.arcade-ranking-head small{font-size:10px;color:#a7c4df}
+.arcade-rank-grid{display:grid;grid-template-columns:43px minmax(0,1fr) minmax(75px,130px);gap:8px;min-width:0;align-items:center}
+.arcade-rank-grid span:last-child{text-align:right}
+.arcade-rank-label {color:#86aedd;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 5px 8px;border-bottom:1px solid #2b4971}
+.arcade-rank-row {border-bottom:1px solid #273958;padding:8px 5px;color:#f2f8ff;font-size:clamp(11px,3vw,13px);font-weight:800;letter-spacing:.07em}
+.arcade-rank-row:nth-child(-n+4){color:#ffe49a}
+.arcade-rank-row span {white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.arcade-rank-empty {padding:12px 4px;text-align:center;color:#a8c3df;font-size:12px}
+.arcade-rank-row span:nth-child(1){color:#79dfea}
+.arcade-dialog {padding:0;border:0;border-radius:6px;max-height:min(92vh,850px);width:min(92vw,420px);
+  max-width:calc(100% - 18px);background:#0a1530;color:#f3f9ff;box-shadow:0 0 0 4px #77ddea,0 16px 50px #060c21}
+.arcade-dialog::backdrop {background:rgba(4,9,27,.82)}
+.arcade-dialog-inner{padding:19px;text-align:center;min-width:0}
+.arcade-dialog h2{font:900 clamp(19px,5vw,25px)/1.3 ui-monospace,monospace;letter-spacing:.05em;color:#ffe57c;text-shadow:2px 3px #7b4367;margin:4px 0 8px}
+.arcade-dialog .final-score{font:900 clamp(21px,7vw,33px)/1.3 ui-monospace,monospace;color:#70f4de;margin-bottom:13px;word-break:break-word}
+.arcade-dialog label{font:bold 12px ui-monospace,monospace;color:#c4d8ef;display:block;margin:8px 0}
+.arcade-dialog input{width:100%;min-height:54px;border:2px solid #ffd771;border-radius:3px;background:#101d3c;color:#fff;text-align:center;
+  font:900 23px ui-monospace,"Courier New",monospace;letter-spacing:.2em;text-transform:uppercase;padding:8px;min-width:0}
+.arcade-dialog .record-actions{display:flex;gap:8px;margin-top:12px}
+.arcade-dialog button{flex:1;min-height:44px;border:2px solid #96e9db;background:#58dfc0;border-radius:3px;color:#103049;font-weight:900;cursor:pointer;padding:9px}
+.arcade-dialog button.alt{background:#253b60;border-color:#5675a5;color:#e9f6ff}
+.arcade-dialog .error{font-size:11px;min-height:16px;color:#ffbcae;margin-top:7px;overflow-wrap:anywhere}
+@media(max-width:360px){
+ .arcade-ranking{padding:10px}.arcade-rank-grid{grid-template-columns:32px minmax(0,1fr) 78px;gap:5px}
+ .arcade-dialog-inner{padding:13px}.arcade-ranking-head strong{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){.arcade-body *{transition:none!important}}
