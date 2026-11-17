@@ -13,6 +13,10 @@
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
   const YEARS = [2023, 2024, 2025, 2026];
+  const conciseQuestion=value=>String(value||'').replace(
+    /^\s*\(\d+\s*[~～〜\-–]\s*\d+\)\s*아래는\s*있다\s*,\s*없다\s*혹은\s*모름을\s*체크해\s*주세요\s*/u,
+    ''
+  ).trim();
   // Exact education office names come from the verified schools table.
   let officeLoadSerial=0;
   const SORTS=new Set(['school_name_asc','school_name_desc','address_asc','address_desc']);
@@ -290,7 +294,7 @@
       for(const item of vetted){
         const card=make('div','section-card');
         const names=window.BeaguHistoricalOriginalQuestions?.[String(year)]||{};
-        card.append(make('h4','',item.questionId+' · '+String(names[item.questionId]||'원본 질문 확인 필요')));
+        card.append(make('h4','',item.questionId+' · '+conciseQuestion(names[item.questionId]||'원본 질문 확인 필요')));
         addRow(card,'학교별 최다 선택 보기',item.modeOption);
         const d=make('div','question-distribution');
         for(const answer of item.roundedDistribution){
