@@ -81,6 +81,11 @@ async function main() {
     } catch (e) { check(`배포 자산 일치: ${relative}`, false, e.message); }
   }
 
+  check('학교 상세 가로형 지표: 전국 평균 중앙 및 좌우 방향 표시',
+    (responses.get('school-report.html')||'').includes('benchmark-directions') &&
+    (responses.get('school-report.html')||'').includes('전국 평균보다 낮음') &&
+    (responses.get('school-report.html')||'').includes('전국 평균보다 높음') &&
+    (responses.get('school-report.html')||'').includes('benchmark-plot:before{content:"";position:absolute;left:8%;right:8%;top:50%'));
   check('자료 공개·열람 기준 링크 제거',
     ['search.html','search-lv1.html','school-report.html','statistics.html']
       .every(p=>!(responses.get(p)||'').includes('href="release-policy.html"')));
