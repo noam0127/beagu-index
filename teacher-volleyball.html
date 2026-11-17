@@ -20,9 +20,8 @@
   .center-label { color: #cddcf5; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
   .court { position: relative; overflow: hidden; border: 1px solid #436185; border-top: 0; background: #dbefff; }
   canvas { display: block; width: 100%; height: auto; aspect-ratio: 9 / 5; touch-action: none; cursor: crosshair; }
-  .touch { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-  .touch button { min-height: 52px; border: 1px solid #6888b3; border-radius: 12px; background: #304d73; color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; user-select: none; touch-action: none; -webkit-user-select: none; }
-  .touch button[data-key="spike"] { background: #eaa84e; border-color: #f0c375; color: #2b2331; }
+  .touch { display: grid; grid-template-columns: minmax(0,1fr); justify-items:center; gap: 12px; margin-top: 10px; }
+  .touch button { width:100%; max-width:320px; min-height: 52px; border: 1px solid #6888b3; border-radius: 12px; background: #304d73; color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; user-select: none; touch-action: none; -webkit-user-select: none; }
   .touch button.is-down { transform: translateY(2px); filter: brightness(1.18); }
   .actions { display: flex; gap: 8px; margin-top: 10px; }
   .actions button { flex: 1; min-height: 44px; padding: 10px; border: 0; border-radius: 10px; background: #6bd9c6; color: #12314d; font: inherit; font-weight: 850; cursor: pointer; }
@@ -54,7 +53,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 .touch{gap:9px;margin-top:10px}
 .touch button{min-width:0;min-height:56px;border-radius:13px;background:linear-gradient(150deg,#365c80,#294a6a);border-color:#618aa9;
   box-shadow:0 3px 0 #1b3651;font-size:clamp(13px,3.9vw,16px)}
-.touch button[data-key="spike"]{background:linear-gradient(150deg,#ffd58b,#f4a954);border-color:#ffe1a8;box-shadow:0 3px 0 #a57d42}
 .actions{gap:8px;margin-top:10px}
 .actions button{min-width:0;min-height:45px;font-size:14px;padding:9px 10px;border-radius:12px}
 .actions button.secondary{flex:0 0 59px}
@@ -86,12 +84,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong></div>
   </div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
-  <div class="touch" aria-label="모바일 점프와 스파이크 조작 버튼">
-    <button type="button" data-key="spike">⚡ 스파이크</button>
+  <div class="touch" aria-label="모바일 점프 버튼">
     <button type="button" data-key="jump">↑ 점프</button>
   </div>
   <div class="actions"><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 터치·드래그 비행　↔ 방향키 · A/D　⚡ 스파이크</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 터치·드래그 비행　↔ 방향키 · A/D　⚡ 빠른 이동 중 공을 맞히면 스파이크</div>
   <div id="arcade-top10" aria-label="선생님배구 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-retro1"></script>
@@ -108,13 +105,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const helpButton=document.getElementById("help"),helpPanel=document.getElementById("help-panel");
   const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("volleyball","#arcade-top10") : null;
   const SPEED_MULTIPLIER=2; // horizontal player and AI reaction (5->10, 3.65->7.3)
+  const AUTO_SPIKE_SPEED=8; // player-driven displacement per simulation frame
   const getFinalScore=()=>state.leftScore*120+Math.min(60,state.spikes)*25+
     (state.leftScore>state.rightScore ? 600+Math.max(0,7-state.rightScore)*30 : 0);
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 305, NET_W = 14, R = 32; // double-size ball
-  const keys = { left: false, right: false, jump: false, spike: false };
+  const keys = { left: false, right: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null, jumpRequested: false };
   const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0 };
-  const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, side: "left", jumpLock: false };
+  const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, cooldown: 0, trail: [] };
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
@@ -128,7 +126,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     pauseButton.setAttribute("aria-label",state.phase === "paused"?"계속하기":"일시정지");
   }
   function resetPositions() {
-    Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false });
+    Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, impactSpeed: 0, jumpLock: false });
     Object.assign(right, { x: 690, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false });
     ball.x = state.serveLeft ? 215 : 685;
     ball.y = 223;
@@ -171,9 +169,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     touchControl.targetY = null;
     touchControl.jumpRequested = false;
     left.vy = 0;
+    left.impactSpeed = 0;
     document.querySelectorAll(".touch button").forEach(b => b.classList.remove("is-down"));
   }
-  const codes = { KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "jump", ArrowUp: "jump", Space: "jump", KeyJ: "spike", KeyK: "spike" };
+  const codes = { KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "jump", ArrowUp: "jump", Space: "jump" };
   document.addEventListener("keydown", e => {
     if (e.target && e.target.tagName === "BUTTON") return;
     const key = codes[e.code];
@@ -183,7 +182,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   });
   document.addEventListener("keyup", e => { if (codes[e.code]) keys[codes[e.code]] = false; });
   // Touch/drag: fly freely in the player's half of the court.
-  // Gravity resumes on release; keyboard jumping and spike remain available.
+  // Gravity resumes on release; automatic spike is triggered by rapid movement.
   function targetFromPointer(e) {
     const bounds = canvas.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
@@ -260,8 +259,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const reach = p.side === "left" ? 43 : 42;
     if (ball.cooldown > 0 || dx * dx + dy * dy > (reach + R) * (reach + R)) return;
     const sign = p.side === "left" ? 1 : -1;
-    const spike = p.side === "left" && keys.spike;
-    ball.vx = sign * (spike ? 16.5 : p.side === "left" ? 11.5 : 10.8) + p.vx * .22;
+    const spike = p.side === "left" && p.impactSpeed >= AUTO_SPIKE_SPEED;
+    ball.vx = sign * (spike ? 16.5 : p.side === "left" ? 11.5 : 10.8) + clamp(p.vx,-12,12) * .22;
     ball.vy = spike ? -7.4 : -11.8;
     if (p.vy < -2) ball.vy -= 1.3;
     ball.x = p.x + sign * (reach + R + 1);
@@ -295,6 +294,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     if (state.phase !== "playing") return;
     const keyboardDirection = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+    const beforeMoveX = left.x, beforeMoveY = left.y;
     if (touchControl.pointerId !== null && touchControl.targetX !== null && touchControl.targetY !== null) {
       // Responsive, smoothed 2-axis flight; remain within the player's half-court.
       const oldX = left.x, oldY = left.y;
@@ -309,6 +309,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     } else {
       controlPlayer(left, keyboardDirection, keys.jump || touchControl.jumpRequested, 5*SPEED_MULTIPLIER);
     }
+    // Only intentional, fast player movement powers up the next ball contact.
+    const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || keys.jump;
+    left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
     touchControl.jumpRequested = false;
     moveAI();
     const previousX = ball.x, previousY = ball.y;
