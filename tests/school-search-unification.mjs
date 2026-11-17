@@ -27,7 +27,7 @@ assert.match(lv0,/data\/public-2023-2025-school-records-v2\.json/,'Lv.0 must sho
 assert.match(lv0,/publicParticipationByYear\[y\]\?\.has\(String\(school\.school_id\)\)/,'School list must show historical school-year presence');
 assert.doesNotMatch(lv0,/\.select\('respondents'/,'Do not query private response counts in Lv.0');
 assert.match(lv0,/id="searchInput"/,'Lv.0 browsing restored');
-assert.match(lv0,/href="search-lv1\.html"/,'Lv.1 accessible from public level');
+assert.match(read('search-lv1.html'),/id="searchPanel"/,'Lv.1 search route must remain available');
 assert.match(read('search-lv2.html'),/search-lv1\.html/,'Lv.2 URL forwarded to Lv.1');
 const lv1=read('js/level-search.js');
 const lv2=read('js/lv2-edited-search.js');
