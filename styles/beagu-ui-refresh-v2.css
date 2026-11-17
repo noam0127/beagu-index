@@ -559,3 +559,46 @@ body.beagu-page-compare .intro .graphic-line{background:#94b6e252}
 body.beagu-page-compare .intro .graphic-label,
 body.beagu-page-compare .intro .graphic-label b{color:#4775ac}
 body.beagu-page-lv1 .results{grid-template-columns:1fr}
+
+
+/* Mobile homepage alignment: desktop grid-item alignment must NOT leak into
+   the phone flex layout. Without this the brand centers and H1 sticks right. */
+@media (max-width:760px){
+  body.beagu-page-home main.container>.logo{
+    grid-column:auto;
+    align-self:stretch;
+    width:100%;
+    margin:0;
+    display:flex;
+    justify-content:flex-start;
+    text-align:left;
+  }
+  body.beagu-page-home main.container>.logo>.beagu-brand-link{margin:0;max-width:100%}
+  body.beagu-page-home main.container>.beagu-global-nav{
+    grid-column:auto;
+    align-self:stretch;
+    width:100%;
+    max-width:100%;
+    justify-content:flex-start;
+    margin:0 0 6px;
+    gap:clamp(16px,4vw,25px);
+    padding-inline:0;
+  }
+  body.beagu-page-home main.container>h1{
+    grid-column:auto;
+    align-self:stretch;
+    width:100%;
+    min-width:0;
+    text-align:left;
+    margin:0 0 1px;
+    font-size:clamp(37px,9vw,51px);
+    line-height:1.15;
+    letter-spacing:-.065em;
+  }
+  body.beagu-page-home main.container>.beagu-content-note{
+    grid-column:auto;
+    align-self:stretch;
+    width:100%;
+    margin:0;
+  }
+}
