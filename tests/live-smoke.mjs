@@ -49,7 +49,7 @@ async function main() {
     'js/school-mbti-v1.js', 'styles/school-mbti-v1.css',
     'js/school-search-card-v1.js', 'styles/school-search-card-v1.css',
     'js/school-detail-groups-v1.js', 'styles/school-detail-groups-v1.css',
-    'statistics.html', 'styles/statistics.css', 'styles/statistics-compare.css', 'js/statistics-table.js', 'js/statistics-compare.js',
+    'statistics.html', 'styles/statistics.css', 'styles/statistics-compare.css', 'js/statistics-directory-v2.js', 'js/statistics-compare.js', 'data/public-statistics-question-catalog-v1.json',
     'result.html', 'survey.html', 'js/challenge.html',
     'challenge.html', 'js/challenge.js', 'js/challenge-progress-v1.js',
     'styles/challenge-progress-v1.css', 'styles/beagu-design-system-v1.css', 'styles/beagu-loading-v1.css', 'js/beagu-loading-v1.js', 'teacher-volleyball.html', 'teacher-run.html', 'js/search-telemetry-v1.js',
@@ -129,7 +129,8 @@ async function main() {
     !html0.includes('js/school-detail-groups-v1.js'));
   const statsHTML=responses.get('statistics.html')||'';
   const statsCSS=responses.get('styles/statistics.css')||'';
-  const statsScript=responses.get('js/statistics-table.js')||'';
+  const statsScript=responses.get('js/statistics-directory-v2.js')||'';
+  const compareScript=responses.get('js/statistics-compare.js')||'';
   const legacyResult=responses.get('result.html')||'';
   const legacyChallenge=responses.get('js/challenge.html')||'';
   const legacySurvey=responses.get('survey.html')||'';
@@ -138,7 +139,9 @@ async function main() {
     !statsHTML.includes('href="css/statistics.css') &&
     statsCSS.includes('.table-frame') &&
     statsScript.includes('public-lv0-percentiles-v1.2.json') &&
-    statsHTML.includes('dialogReportLink'));
+    statsHTML.includes('id="compareScroll"') &&
+    !statsHTML.includes('id="dataTable"') &&
+    compareScript.includes('public-statistics-question-catalog-v1.json'));
   check('구형 결과 페이지 → 현재 학교 상세 연결',
     legacyResult.includes("location.replace(target)") &&
     legacyResult.includes("beaguVisitReady") &&
@@ -159,7 +162,12 @@ async function main() {
     level2.includes('explicitEnter'));
   check('학교 홈페이지 링크가 검색 결과에서 제거됨',
     ![html0,html1,html2,level1,level2,report].some(h=>h.includes('🌐 학교 홈페이지')));
-  check('단일 자료열람 버튼·Lv.0/1·Lv.2 이전경로 통합', home.includes('class="data-access-link" href="search.html"') && html0.includes('id="searchInput"') && html0.includes('href="search-lv1.html"') && html2.includes('search-lv1.html') && !html2.includes('id="loginForm"'));
+  check('학교 검색 상단 Lv.0·Lv.1 배지 제거 및 인증경로 보존',
+    home.includes('class="data-access-link" href="search.html"') &&
+    html0.includes('id="searchInput"') &&
+    !html0.includes('aria-label="자료 열람 단계"') &&
+    !html1.includes('class="current-level"') &&
+    html2.includes('search-lv1.html') && !html2.includes('id="loginForm"'));
   check('홈 상단 공통메뉴·기존 설문 연결', home.includes('beagu-global-nav') && home.includes('href="challenge.html"') && home.includes('https://forms.gle/TPyCakK6Sj2zchRy7'));
 check('전 페이지 B 로고·영문 VOLLEYBALL INDEX 제거', ['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html'].every(p=>((responses.get(p)||'').includes('beagu-brand-mark') || (responses.get(p)||'').includes('class="brand-symbol"')) && !(responses.get(p)||'').includes('VOLLEYBALL INDEX')));
 check('테스트 설문 비활성화', legacySurvey.includes('2026 배구지수 공식 설문') && !legacySurvey.includes('submit_survey'));
@@ -169,7 +177,7 @@ check('테스트 설문 비활성화', legacySurvey.includes('2026 배구지수 
     html1.includes('js/school-mbti-v1.js')&&html1.includes('styles/school-mbti-v1.css') &&
     level1.includes('BeaguSchoolMBTI.createDetail') && level2.includes('BeaguSchoolMBTI.createDetail') &&
     mbtiJS.includes('beagu-school-culture-v1'));
-  for (const file of ['js/percentile-chart.js','js/school-search-card-v1.js','js/school-detail-groups-v1.js','js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js','js/statistics-table.js','js/challenge.js','js/challenge-progress-v1.js','js/search-telemetry-v1.js']) {
+  for (const file of ['js/percentile-chart.js','js/school-search-card-v1.js','js/school-detail-groups-v1.js','js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js','js/statistics-directory-v2.js','js/statistics-compare.js','js/challenge.js','js/challenge-progress-v1.js','js/search-telemetry-v1.js']) {
     try { new Script(responses.get(file)||''); check('JS 문법 검증: '+file,true); }
     catch(e) { check('JS 문법 검증: '+file,false,e.message); }
   }
