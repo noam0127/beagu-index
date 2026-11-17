@@ -232,7 +232,7 @@
     // The unified school report contains the verified original question titles
     // and clearly labels unavailable or privacy-restricted answer aggregates.
     // This link does not grant access or expose any private response records.
-    if(/^\d{7}$/.test(String(schoolId))){
+    if(/^[A-Z0-9]{7}$/.test(String(schoolId))){
       const allQuestions=make('a','question-catalog-link',year+'년 전체 조사 문항·공개 상태 보기');
       allQuestions.href='school-report.html?school_id='+encodeURIComponent(String(schoolId))+'&year='+year;
       allQuestions.style.cssText='display:block;margin:12px 0 18px;padding:12px 14px;border:1px solid #b9cbea;border-radius:10px;color:#1d4ed8;text-decoration:none;font-weight:700;background:#f8fbff';
@@ -361,7 +361,7 @@
     });
   }
   function loadPagePercentiles(list,requestId){
-    const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^\d{7}$/.test(id)))];
+    const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^[A-Z0-9]{7}$/.test(id)))];
     if(!ids.length)return;
     const refresh=()=>{
       if(serial!==requestId)return;
