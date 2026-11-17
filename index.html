@@ -168,6 +168,9 @@
       padding:8px 11px;line-height:1.25}
     .teacher-game-footer a:hover{background:#244f6f}
     @media(max-width:380px){.teacher-game-feature{border-radius:16px}.teacher-game-header{padding:13px 13px 10px}.teacher-game-header h2{font-size:18px}.teacher-game-footer{padding:7px 12px 12px}}
+    .teacher-game-details summary{list-style:none;cursor:pointer;color:#d9eaff;padding:12px 22px;font-size:13px;font-weight:700;text-decoration:underline;text-underline-offset:4px}
+    .teacher-game-details summary::-webkit-details-marker{display:none}
+    .teacher-game-details summary:focus-visible{outline:3px solid #fff;outline-offset:-3px}
   </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
@@ -215,6 +218,8 @@
       <div class="teacher-game-header">
         <h2 id="teacher-game-title">🏐 선생님배구</h2>
       </div>
+      <details class="teacher-game-details" open>
+        <summary>게임 화면 접기 · 펼치기</summary>
       <iframe
         class="teacher-game-frame"
         id="teacher-game-frame"
