@@ -93,6 +93,13 @@ assert.ok(challenge.indexOf('data-beagu-xp')>challenge.indexOf('id="certificate"
 assert.match(read('js/challenge.js'),/beagu_join_challenge/);
 assert.match(read('js/challenge.js'),/BeaguChallengeProgress\.refresh/);
 assert.match(read('js/visit-stats.js'),/beagu_record_visit/,'Preserve preexisting visit accounting');
+assert.match(read('js/visit-stats.js'),/sessionStorage/,'Browser session fallback');
+assert.match(read('js/visit-stats.js'),/p_event:event/,'Reuse one event for retries');
+assert.match(read('js/visit-stats.js'),/Number.isSafeInteger/,'Do not invent visit totals');
+assert.match(read('js/challenge.js'),/participantNo\.textContent = '순번 조회 실패'/,'Show a retryable ordinal error');
+assert.match(home,/방문한 선생님/);
+assert.doesNotMatch(home,/자료 공개 기준/);
+assert.doesNotMatch(home,/href="challenge\.html"/,'No home challenge link');
 
 for(const page of ['search.html','search-lv1.html','search-lv2.html','school-report.html']){
  const html=read(page);
