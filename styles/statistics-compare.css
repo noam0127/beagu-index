@@ -117,3 +117,37 @@
   .compare-table tbody th{min-width:132px;width:132px;max-width:132px}
   .compare-table tbody td{min-width:158px;width:158px}
 }
+
+/* School comparison flow: selected schools in a single picker box,
+   with the full item-by-item result shown underneath (not another card). */
+.comparison-workspace{margin-top:18px;margin-bottom:24px}
+.comparison-picker{padding:25px 28px}
+.comparison-picker .comparison-head h2{color:#153963}
+.comparison-picker .comparison-subtitle{font-size:13px}
+.comparison-picker .compare-selections{display:flex;flex-wrap:wrap;gap:10px;margin-top:19px}
+.comparison-picker .compare-selection{flex:0 1 220px;max-width:100%;min-width:185px}
+.comparison-picker .compare-selection-year{margin-top:8px}
+.comparison-picker .compare-empty{min-height:96px;padding:20px 12px;margin-top:18px;border:1px dashed #cfdfef;background:#fbfdff;box-shadow:none}
+.comparison-picker .compare-empty-icon{display:none}
+.comparison-picker .compare-empty strong{font-size:15px}
+.comparison-picker .compare-empty span:last-child{font-size:12px}
+.comparison-results{margin-top:26px}
+.comparison-results-heading{margin:0 0 13px 2px}
+.comparison-results-heading h3{font-size:19px;font-weight:850;line-height:1.4;letter-spacing:-.04em;color:#1d416e;margin:0}
+.comparison-results-heading p{font-size:12px;line-height:1.65;color:#72849c;margin:5px 0 0}
+.comparison-results .compare-scroll{margin:0;background:#fff}
+.comparison-results .compare-fineprint{margin-top:12px}
+@media(max-width:720px){
+  .comparison-workspace{margin-top:14px}
+  .comparison-picker{padding:19px 15px}
+  .comparison-picker .comparison-head{gap:10px}
+  .comparison-picker .comparison-head h2{font-size:21px}
+  .comparison-picker .compare-selections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .comparison-picker .compare-selection{min-width:0;width:auto;max-width:none;flex:auto}
+  .comparison-results{margin-top:21px}
+  .comparison-results-heading h3{font-size:18px}
+}
+@media(max-width:390px){
+  .comparison-picker .compare-selections{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .comparison-picker .compare-selection-title{font-size:12px}
+}
