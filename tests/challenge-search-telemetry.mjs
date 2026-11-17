@@ -86,6 +86,7 @@ assert.doesNotMatch(xp,/beagu_join_challenge|Google\s*Forms\s*API|random\(\)/,'N
 const home=read('index.html'),challenge=read('challenge.html');
 for(const html of [home,challenge]){
  assert.match(html,/2026 챌린지 · 목표 1,000명/);
+ assert.doesNotMatch(html,/1,000명 달성 시 2026 배구지수 자료를 공개합니다/);
  assert.doesNotMatch(html,/2026 챌린지 XP · 목표 1,000명/);
  assert.match(html,/js\/challenge-progress-v1\.js\?v=20261117-live1000/);
  assert.match(html,/data-beagu-xp/);
