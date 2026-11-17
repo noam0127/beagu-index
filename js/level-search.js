@@ -246,7 +246,7 @@
   // represented as this particular school's response.
   function loadGeographyComparisons(year,region){
     if(![2023,2024,2025].includes(year)||typeof region!=='string'||
-       !/^[가-힣A-Za-z·\\s]{2,24}$/.test(region))return Promise.resolve(null);
+       !/^[가-힣A-Za-z·\s]{2,24}$/.test(region))return Promise.resolve(null);
     const cacheKey=year+'|'+region;
     if(geographyComparisons.has(cacheKey))return geographyComparisons.get(cacheKey);
     const promise=api('survey_comparisons',{year,region}).then(result=>{
@@ -268,7 +268,7 @@
   }
   function renderHistoricalBenchmarks(host,year,school,distributions,comparison,loadStatus){
     const questions=window.BeaguHistoricalOriginalQuestions?.[String(year)]||{};
-    const qids=Object.keys(questions).filter(id=>/^Q\\d{2}$/.test(id)).sort();
+    const qids=Object.keys(questions).filter(id=>/^Q\d{2}$/.test(id)).sort();
     if(!qids.length)return;
     const section=make('section','data-section');
     section.append(make('h4','','역대 문항별 결과 · 전국·지역 비교'));
@@ -286,7 +286,7 @@
     overview.style.cssText='margin:8px 0 14px;font-weight:600';
     section.append(overview);
     const vetted=new Map((Array.isArray(distributions)?distributions:[])
-      .filter(d=>Number(d.year)===year && /^Q\\d{2}$/.test(String(d.questionId||'')) &&
+      .filter(d=>Number(d.year)===year && /^Q\d{2}$/.test(String(d.questionId||'')) &&
         typeof d.modeOption==='string'&&Array.isArray(d.roundedDistribution))
       .map(d=>[d.questionId,d.modeOption]));
     const region=String(school?.sido_standard||school?.sido||'지역');
