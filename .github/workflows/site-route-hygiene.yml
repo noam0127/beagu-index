@@ -19,6 +19,7 @@ on:
       - 'challenge.html'
       - 'release-policy.html'
       - 'teacher-volleyball.html'
+      - 'teacher-run.html'
       - '.github/workflows/site-route-hygiene.yml'
   workflow_dispatch:
 permissions:
