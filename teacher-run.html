@@ -280,19 +280,29 @@ function roundRect(x,y,w,h,r,color){
  ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();
 }
 function background(){
- const colors=[["#95d5ed","#d4f4f1"],["#99d2fa","#f9f1ca"],["#ffd19c","#f2dec3"],["#e4bfe9","#c4ddf3"],["#c2d2fc","#ffe1c4"]];
- const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,colors[day][0]);bg.addColorStop(1,colors[day][1]);ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
- ctx.fillStyle="rgba(255,255,255,.4)";for(let i=0;i<4;i++){const x=(i*183+clock*6)%Math.max(W,1);ctx.beginPath();ctx.ellipse(x,68+i%2*35,40,11,0,0,Math.PI*2);ctx.fill();}
- // 교실 칠판
- roundRect(12,76,Math.max(70,W*.34),98,11,"#347a71");roundRect(20,84,Math.max(54,W*.34-16),82,7,"#25645d");
- ctx.fillStyle="#eafff2";ctx.font="bold 15px sans-serif";ctx.textAlign="center";ctx.fillText("오늘도 무사히!",12+Math.max(70,W*.34)/2,117);
- ctx.font="12px sans-serif";ctx.fillText(days[day]+" · "+dayTitles[day].slice(0,9),12+Math.max(70,W*.34)/2,139);
- const wx=W-136;roundRect(wx,82,116,108,7,"#e8f0f8");roundRect(wx+7,90,102,94,3,"#8dd0ee");
- ctx.fillStyle="#fff";ctx.fillRect(wx+54,89,5,96);ctx.fillRect(wx+8,132,100,5);
- ctx.fillStyle="#b8e0d9";ctx.fillRect(0,H-31,W,31);
- ctx.strokeStyle="rgba(57,104,97,.3)";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,H-31);ctx.lineTo(W,H-31);ctx.stroke();
- // 책상 패턴
- for(let x=32;x<W;x+=120){roundRect(x,H-42,75,12,5,"#9e745f");}
+ const palettes=[
+  ["#b1e5f8","#e3f7ef","#4e998e"],
+  ["#a9dcff","#eef5da","#468fa0"],
+  ["#ffdbac","#fff0d9","#bf8c5f"],
+  ["#dad0f8","#edf2ff","#7e82aa"],
+  ["#b9d9ff","#ffe5c9","#466fb2"]
+ ];
+ const p=palettes[day],g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,p[0]);g.addColorStop(1,p[1]);
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ // 바닥과 교실, 화면 폭에 반응하는 칠판과 창문
+ const chalkW=Math.min(185,Math.max(80,W*.43)),chalkX=12,windowW=Math.min(112,Math.max(68,W*.28)),windowX=W-12-windowW;
+ ctx.fillStyle="rgba(255,255,255,.3)";ctx.beginPath();ctx.arc(W*.74,58,64,0,Math.PI*2);ctx.fill();
+ roundRect(0,H-70,W,70,0,"#d0e8d2");
+ ctx.fillStyle="rgba(73,122,116,.12)";for(let x=0;x<W;x+=49)ctx.fillRect(x,H-69,1,69);
+ roundRect(chalkX+2,97,chalkW,98,9,"#d3aa76");roundRect(chalkX+8,103,chalkW-12,86,6,p[2]);
+ ctx.fillStyle="rgba(250,255,247,.95)";ctx.font="bold 13px sans-serif";ctx.textAlign="center";
+ ctx.fillText("오늘도 무사히!",chalkX+chalkW/2+2,139,chalkW-20);
+ ctx.fillStyle="#d9fff0";ctx.font="12px sans-serif";ctx.fillText(days[day],chalkX+chalkW/2+2,162,chalkW-20);
+ roundRect(windowX,98,windowW,96,9,"#f5fcff");roundRect(windowX+6,104,windowW-12,84,4,"#84d3f2");
+ ctx.fillStyle="#f9fcff";ctx.fillRect(windowX+windowW/2-3,103,6,85);ctx.fillRect(windowX+6,143,windowW-12,6);
+ ctx.fillStyle="rgba(255,255,255,.55)";ctx.beginPath();ctx.ellipse(windowX+windowW*.25,118,18,8,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="rgba(38,85,102,.15)";ctx.fillRect(0,H-40,W,4);
+ for(let x=15;x<W;x+=117){roundRect(x,H-49,72,12,5,"#a97b61");roundRect(x+6,H-38,7,20,3,"#94694f");}
 }
 function playerDraw(){
  ctx.save();ctx.translate(player.x,player.y);
@@ -311,28 +321,45 @@ function playerDraw(){
 function drawItems(){
  for(const a of items){
   ctx.save();ctx.translate(a.x,a.y);
-  ctx.shadowColor="rgba(36,48,67,.24)";ctx.shadowBlur=11;ctx.shadowOffsetY=4;
-  roundRect(-31,-23,62,48,13,a.color);ctx.shadowBlur=0;ctx.shadowOffsetY=0;
-  ctx.fillStyle="#fff";ctx.font="22px sans-serif";ctx.textAlign="center";ctx.fillText(a.emoji,0,-1);
-  ctx.fillStyle="#23354d";ctx.font="bold 10px sans-serif";ctx.fillText(a.name,0,15);
+  ctx.shadowColor="rgba(22,54,70,.25)";ctx.shadowBlur=12;ctx.shadowOffsetY=4;
+  const shade=a.good?"#e1fff1":"#ffe9e1",edge=a.good?"#27a781":"#df7672";
+  roundRect(-25,-25,50,50,13,shade);ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.lineWidth=2.5;ctx.strokeStyle=edge;ctx.beginPath();ctx.roundRect(-23,-23,46,46,11);ctx.stroke();
+  ctx.fillStyle=edge;ctx.beginPath();ctx.arc(18,-18,5,0,Math.PI*2);ctx.fill();
+  ctx.textAlign="center";ctx.font="27px sans-serif";ctx.fillText(a.emoji,0,10,37);
   ctx.restore();
  }
 }
 function draw(){
- ctx.clearRect(0,0,W,H);ctx.save();if(shake>0){ctx.translate((Math.random()-.5)*8,(Math.random()-.5)*5);}
+ ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
  background();drawItems();playerDraw();
- for(const s of sparks){ctx.globalAlpha=Math.min(1,s.life/.35);ctx.fillStyle=s.color;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
- for(const f of floats){ctx.globalAlpha=Math.min(1,f.life*1.7);ctx.font="bold 14px sans-serif";ctx.textAlign="center";ctx.fillStyle=f.color;ctx.strokeStyle="rgba(18,35,52,.55)";ctx.lineWidth=3;ctx.strokeText(f.text,f.x,f.y);ctx.fillText(f.text,f.x,f.y);}ctx.globalAlpha=1;
- // 상단 상태판
- roundRect(10,10,Math.min(W-20,235),49,12,"rgba(16,38,57,.84)");
- ctx.fillStyle="#fff";ctx.textAlign="left";ctx.font="bold 12px sans-serif";ctx.fillText("체력 "+Math.round(life)+"/"+maxLife,20,27);
- roundRect(20,36,Math.min(W-40,210),9,5,"#516d78");
- roundRect(20,36,Math.max(0,Math.min(W-40,210)*life/maxLife),9,5,life<35?"#ff8b7e":"#78e2aa");
- ctx.textAlign="right";ctx.font="bold 12px sans-serif";ctx.fillStyle="#143650";ctx.fillText("퇴근까지 "+Math.max(0,Math.ceil(23.5-dayTime))+"초",W-13,27);
- if(combo>=3){ctx.font="bold 13px sans-serif";ctx.fillStyle="#8a3c1b";ctx.fillText("🔥 "+combo+" 콤보",W-13,46);}
- if(player.cool>0){ctx.textAlign="center";roundRect(W/2-62,H-18,124,15,7,"rgba(19,47,71,.83)");ctx.font="bold 10px sans-serif";ctx.fillStyle="#fff";ctx.fillText("회피 충전 "+player.cool.toFixed(1)+"초",W/2,H-7);}
- if(noticeTime>0){ctx.textAlign="center";roundRect(W/2-Math.min(135,W/2-6),60,Math.min(270,W-12),27,9,"rgba(18,46,64,.82)");ctx.fillStyle="#fff";ctx.font="bold 13px sans-serif";ctx.fillText(notice,W/2,78);}
- if(day===4&&dayTime>13){ctx.textAlign="center";ctx.fillStyle="#9d272c";ctx.font="900 13px sans-serif";ctx.fillText("⚠ 마지막 공문 폭풍!",W/2,120);}
+ for(const q of sparks){ctx.globalAlpha=Math.min(1,q.life/.35);ctx.fillStyle=q.color;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+ for(const f of floats){
+  const x=Math.max(65,Math.min(W-65,f.x));
+  ctx.globalAlpha=Math.min(1,f.life*1.7);ctx.font="bold 13px sans-serif";ctx.textAlign="center";
+  ctx.fillStyle=f.color;ctx.strokeStyle="rgba(15,35,50,.55)";ctx.lineWidth=3;
+  ctx.strokeText(f.text,x,f.y,Math.max(90,W-12));ctx.fillText(f.text,x,f.y,Math.max(90,W-12));
+ }ctx.globalAlpha=1;
+ const healthW=Math.min(156,Math.max(104,W*.48)),timeW=Math.min(95,Math.max(68,W*.26));
+ roundRect(9,10,healthW,49,12,"rgba(18,44,61,.9)");
+ roundRect(W-timeW-9,10,timeW,49,12,"rgba(18,44,61,.9)");
+ ctx.fillStyle="#fff";ctx.textAlign="left";ctx.font="bold 12px sans-serif";
+ ctx.fillText("♥ "+Math.round(life)+"/"+maxLife,18,29,healthW-14);
+ const barW=healthW-18;
+ roundRect(18,39,barW,8,4,"#53747c");
+ if(life>0)roundRect(18,39,barW*Math.min(1,life/maxLife),8,4,life<35?"#ff8c82":"#77e2b4");
+ ctx.textAlign="center";ctx.font="900 18px sans-serif";ctx.fillStyle="#f8fafb";
+ ctx.fillText(Math.max(0,Math.ceil(23.5-dayTime))+"s",W-timeW/2-9,33,timeW-12);
+ ctx.font="bold 9px sans-serif";ctx.fillStyle="#b9ecdd";ctx.fillText("퇴근",W-timeW/2-9,48,timeW-12);
+ if(combo>=3){
+  ctx.textAlign="center";roundRect(W/2-53,64,106,24,11,"rgba(108,55,32,.9)");
+  ctx.font="900 12px sans-serif";ctx.fillStyle="#fff3c9";ctx.fillText("🔥 "+combo+" COMBO",W/2,80,101);
+ }
+ if(player.cool>0){roundRect(W/2-53,H-23,106,16,7,"rgba(19,47,71,.88)");ctx.textAlign="center";ctx.font="bold 10px sans-serif";ctx.fillStyle="#fff";ctx.fillText("⚡ "+player.cool.toFixed(1)+"s",W/2,H-11);}
+ roundRect(12,H-7,W-24,3,2,"rgba(24,62,83,.15)");
+ if(dayTime>0)roundRect(12,H-7,(W-24)*Math.min(1,dayTime/23.5),3,2,"#2b9c8b");
+ if(noticeTime>0){ctx.textAlign="center";roundRect(W/2-68,93,136,27,9,"rgba(17,54,70,.88)");ctx.font="bold 13px sans-serif";ctx.fillStyle="#fff";ctx.fillText(notice,W/2,111,126);}
+ if(day===4&&dayTime>13){ctx.textAlign="center";ctx.font="900 12px sans-serif";ctx.fillStyle="#8e3030";ctx.fillText("⚠ 공문 폭풍",W/2,131,Math.max(120,W-20));}
  ctx.restore();
 }
 function tick(t){const dt=Math.min(.04,(t-last)/1000||0);last=t;if(state==="playing")update(dt);draw();requestAnimationFrame(tick);}
