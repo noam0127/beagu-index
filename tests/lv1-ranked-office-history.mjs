@@ -73,4 +73,16 @@ for(const [input,expected] of [
 ]) assert.equal(matcher.normalizeOffice(input),expected,'2026 matching '+input);
 console.log('PASS: Changwon 3-area search and 2026 normalization');
 
+for(const file of [
+ 'search.html','js/school-search-card-v1.js','js/level-search.js',
+ 'school-report.html','js/statistics-table.js','js/school-mbti-v1.js',
+ 'supabase/functions/beagu-level-api/index.ts'
+]){
+ assert.ok(read(file).includes('[A-Z0-9]{7}'),file+' must support an official NEIS alphanumeric school ID');
+}
+assert.ok(/^[A-Z0-9]{7}$/.test('C150029'),'NEIS alphanumeric school ID is valid');
+assert.equal(/^[A-Z0-9]{7}$/.test('       '),false,'blank placeholder school ID is invalid');
+console.log('PASS: NEIS alphanumeric school ID validation');
+
+
 console.log('PASS: 5 full-dataset sorts including Hangul alphabetical and address, abbreviated labels preserving office IDs');
