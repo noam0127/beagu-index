@@ -147,7 +147,11 @@ async function main() {
     statsHTML.includes('id="compareLv1Logout"') &&
     compareScript.includes("authRequest('login'") &&
     compareScript.includes("authRequest('verify'") &&
-    compareScript.includes('state.approvedBySchool.clear()'));
+    compareScript.includes('state.approvedBySchool.clear()') &&
+    compareScript.includes("eq('survey_year',2026)") &&
+    compareScript.includes("eq('publication_status','PUBLISHED')") &&
+    statsHTML.includes('compare-heading-phrase') &&
+    !statsHTML.includes('class="intro-tags"'));
   check('구형 결과 페이지 → 현재 학교 상세 연결',
     legacyResult.includes("location.replace(target)") &&
     legacyResult.includes("beaguVisitReady") &&
