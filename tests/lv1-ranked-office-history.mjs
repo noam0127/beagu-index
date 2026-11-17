@@ -54,4 +54,23 @@ assert.equal(Object.keys(w2.BeaguHistoricalQuestionnaire['2023']).length,10);
 assert.equal(Object.keys(w2.BeaguHistoricalQuestionnaire['2024']).length,13);
 assert.equal(Object.keys(w2.BeaguHistoricalQuestionnaire['2025']).length,20);
 assert.doesNotMatch(report,/\['학교별 응답자'/,'No public teacher response counts');
+
+const publicSearch=read('search.html');
+const sync=read('scripts/beagu-2026-noon-sync.gs');
+assert.match(publicSearch,/CHANGWON_SURVEY_AREAS/, 'Lv.0 must offer 3 Changwon areas');
+assert.doesNotMatch(publicSearch,/LEGACY_GYEONGNAM/, 'obsolete office names must not be selectable');
+for(const x of ['창원교육지원청', '창원교육지원청(마산센터)', '창원교육지원청(진해센터)']) {
+ assert.ok(publicSearch.includes(x),'Lv.0 missing region option '+x);
+ assert.ok(search.includes(x),'Lv.1 missing short label '+x);
+}
+assert.doesNotThrow(()=>new vm.Script(sync),'2026 matching script syntax');
+const matcher=vm.runInNewContext(sync+'\\n;({normalizeOffice})',{}, {timeout:1000});
+for(const [input,expected] of [
+ ['창원교육지원청','창원'], ['창원','창원'],
+ ['마산','마산'], ['마산교육청','마산'], ['창원교육지원청(마산센터)','마산'],
+ ['진해','진해'], ['진해교육청','진해'], ['창원교육지원청(진해센터)','진해'],
+ ['경기도수원교육지원청','수원']
+]) assert.equal(matcher.normalizeOffice(input),expected,'2026 matching '+input);
+console.log('PASS: Changwon 3-area search and 2026 normalization');
+
 console.log('PASS: 5 full-dataset sorts including Hangul alphabetical and address, abbreviated labels preserving office IDs');
