@@ -437,7 +437,9 @@
           (selectedSort==='beagu_percentile_2025'?'2025 배구지수 백분위'
            :selectedSort==='student_count'?'학생 수'+(school.student_reference_year?' ('+school.student_reference_year+'년 기준)':'')
            :'행정구역 공동주택 평균 공시가격')+' · '+sortValue);
-        card.insertBefore(tag,button.parentNode===card?button:button.parentNode);
+        const meta=card.querySelector('.school-meta')||card.querySelector('.school-name');
+        if(meta&&meta.parentNode)meta.insertAdjacentElement('afterend',tag);
+        else card.append(tag);
       }
       button.setAttribute('aria-expanded', 'false');
       button.addEventListener('click', async (event) => {
