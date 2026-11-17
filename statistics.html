@@ -5,25 +5,25 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f6f8fc">
   <meta name="description" content="최대 5개 학교의 2023~2025년 배구지수 공개 기록과 기본정보를 나란히 비교합니다">
-  <title>학교·연도 비교표 | 배구지수</title>
+  <title>학교 비교 | 배구지수</title>
   <link rel="stylesheet" href="styles/statistics.css?v=20261031-canonical7">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
-  <link rel="stylesheet" href="styles/statistics-compare.css?v=20261118-c2">
+  <link rel="stylesheet" href="styles/statistics-compare.css?v=20261118-c3">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-rolling1"></script>
 </head>
 <body>
-  <a class="skip-link" href="#compareHeading">학교 비교표로 건너뛰기</a>
+  <a class="skip-link" href="#compareHeading">학교 비교하기로 건너뛰기</a>
   <header class="site-top">
     <div class="shell top-inner">
       <a href="index.html" class="brand beagu-brand-link" aria-label="배구인덱스 홈으로">
         <span class="beagu-brand-mark" aria-hidden="true">B</span>
         <span><strong>BAEGU INDEX</strong><small>학교·교직문화 데이터</small></span>
       </a>
-      <nav class="topnav" aria-label="페이지 이동"><a href="index.html">홈</a><span class="nav-current">학교·연도 비교표</span></nav>
+      <nav class="topnav" aria-label="페이지 이동"><a href="index.html">홈</a><span class="nav-current">학교 비교</span></nav>
     </div>
   </header>
-<nav class="beagu-global-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교 검색</a><a href="statistics.html" aria-current="page">통계표</a><a href="challenge.html">참여 인증</a></nav>
+<nav class="beagu-global-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교 검색</a><a href="statistics.html" aria-current="page">학교 비교</a><a href="challenge.html">참여 인증</a></nav>
   <main class="shell">
     <section class="intro" aria-labelledby="headingTitle">
       <div class="intro-content">
@@ -49,40 +49,49 @@
       </div>
     </section>
 
-    <section class="comparison-section content-card" aria-labelledby="compareHeading">
-      <div class="comparison-head">
-        <div>
-          <p class="section-overline">SIDE-BY-SIDE COMPARISON</p>
-          <h2 id="compareHeading">학교·연도 비교표</h2>
-          <p class="comparison-subtitle">학교마다 연도를 고르고, 해당 연도의 세부 문항을 펼쳐 비교하세요.</p>
+    <section class="comparison-workspace" aria-labelledby="compareHeading">
+      <div class="comparison-picker content-card">
+        <div class="comparison-head">
+          <div>
+            <p class="section-overline">MY SCHOOL COMPARISON</p>
+            <h2 id="compareHeading">학교 비교하기</h2>
+            <p class="comparison-subtitle">위에서 선택한 학교가 여기에 표시됩니다. 연도를 바꿔 최대 5개까지 비교하세요.</p>
+          </div>
+          <div class="comparison-head-actions">
+            <span id="compareCounter" class="compare-counter" aria-live="polite">0 / 5 선택</span>
+            <button id="copyCompareLink" class="compare-plain-button" type="button" disabled>비교 링크 복사</button>
+            <button id="clearCompare" class="compare-plain-button" type="button" disabled>전체 제거</button>
+          </div>
         </div>
-        <div class="comparison-head-actions">
-          <span id="compareCounter" class="compare-counter" aria-live="polite">0 / 5 선택</span>
-          <button id="copyCompareLink" class="compare-plain-button" type="button" disabled>비교 링크 복사</button>
-          <button id="clearCompare" class="compare-plain-button" type="button" disabled>전체 제거</button>
+        <div id="compareSelections" class="compare-selections" aria-label="학교 비교하기에 추가한 학교" aria-live="polite"></div>
+        <p id="compareFeedback" class="compare-feedback" role="status" aria-live="polite"></p>
+        <div id="compareEmpty" class="compare-empty">
+          <span class="compare-empty-icon" aria-hidden="true">＋</span>
+          <strong>선택한 학교가 없습니다</strong>
+          <span>위의 '비교할 학교 찾기'에서 학교를 검색하고 ＋ 추가를 누르세요.</span>
         </div>
       </div>
-      <div id="compareSelections" class="compare-selections" aria-label="비교 대상으로 선택한 학교"></div>
-      <p id="compareFeedback" class="compare-feedback" role="status" aria-live="polite"></p>
-      <div id="compareEmpty" class="compare-empty">
-        <span class="compare-empty-icon" aria-hidden="true">＋</span>
-        <strong>비교할 학교를 추가하세요</strong>
-        <span>학교명을 검색해 추가한 뒤, 각 학교 카드에서 연도를 선택하세요.</span>
-      </div>
-      <div id="compareScroll" class="compare-scroll" role="region" tabindex="0" aria-label="학교·연도별 항목 비교, 좌우 스크롤 가능" hidden>
-        <table id="compareTable" class="compare-table"></table>
-      </div>
-      <p class="compare-fineprint">각 연도의 조사 문항 전체를 펼쳐 표시합니다. 학교별 문항 응답값은 승인된 열람 권한이 필요하며, 자료 없음은 0점이 아닙니다.</p>
+      <section id="compareResults" class="comparison-results" aria-labelledby="compareResultsTitle" hidden>
+        <div class="comparison-results-heading">
+          <h3 id="compareResultsTitle">항목별 비교</h3>
+          <p>선택한 학교의 연도별 공개 결과와 설문 항목을 모두 펼쳐 보여줍니다.</p>
+        </div>
+        <div id="compareScroll" class="compare-scroll" role="region" tabindex="0"
+             aria-label="선택한 학교들의 항목별 비교표, 좌우 스크롤 가능" hidden>
+          <table id="compareTable" class="compare-table"></table>
+        </div>
+        <p class="compare-fineprint">각 연도의 조사 문항을 펼쳐 표시합니다. 학교별 응답값은 승인된 열람 권한에 따라 제공하며, 자료 없음은 0점이 아닙니다.</p>
+      </section>
     </section>
     <aside class="notice" aria-labelledby="noticeHeading"><div class="notice-icon" aria-hidden="true">i</div><div><h3 id="noticeHeading">비교 자료 안내</h3><p>여기의 백분위는 <strong>기존 Lv.0 공개본에 있는 과거 기록</strong>입니다. 연도별 문항·산식·참여 집단이 달라 연도 사이의 점수 상승·하락을 뜻하지 않습니다. 전국순위나 학교 우열을 생성하지 않으며, 백분위 순 정렬도 제공하지 않습니다.</p><p class="notice-small">`자료 없음`은 0점이 아니며, `검수 중`은 아직 표시할 수 없는 값입니다. 학교별 상세 설문 응답은 별도 인증된 상세화면에서 열람합니다.</p></div></aside>
-    <footer class="footer"><p>© 배구지수 · 학교정보 공개 통계표 <span id="snapshotLabel">2023—2025</span></p><p>학교목록: 배구지수 기존 공개 DB · 백분위: 기존 검증 Lv.0 스냅샷</p></footer>
+    <footer class="footer"><p>© 배구지수 · 학교 비교 <span id="snapshotLabel">2023—2025</span></p><p>학교목록: 배구지수 기존 공개 DB · 백분위: 기존 검증 Lv.0 스냅샷</p></footer>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/master-percentiles-v1.2.js?v=20261118-alpha1"></script>
   <script src="js/statistics-directory-v2.js?v=20261118-v2"></script>
-  <script src="js/statistics-compare.js?v=20261118-c2"></script>
+  <script src="js/statistics-compare.js?v=20261118-c3"></script>
   <script src="js/visit-stats.js?v=20261031-1350"></script>
 </body>
 </html>
