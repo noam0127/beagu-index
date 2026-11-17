@@ -121,7 +121,7 @@ Deno.serve(async(req:Request)=>{
    const office=typeof body.office==='string'?body.office.trim():'';
    const sort=typeof body.sort==='string'?body.sort:'school_name';
    const pagination=Number(body.page);
-   const sorts=new Set(['school_name','beagu_percentile_2025','student_count','housing_price_won']);
+   const sorts=new Set(['school_name','address','beagu_percentile_2025','student_count','housing_price_won']);
    if(!sorts.has(sort)||!Number.isSafeInteger(pagination)||pagination<0||pagination>500||
       searchText.length>80||region.length>24||office.length>100||
       !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
@@ -133,13 +133,15 @@ Deno.serve(async(req:Request)=>{
    if(region)query=query.eq('sido_standard',region);
    if(office)query=query.eq('support_office',office);
    const from=pagination*20;
-   const {data,count,error}=await query
-     .order(sort,{ascending:false,nullsFirst:false})
-     .order('school_name',{ascending:false,nullsFirst:false})
-     .order('school_id',{ascending:false})
+   const ascending=sort==='school_name'||sort==='address';
+   let sorted=query.order(sort,{ascending,nullsFirst:false});
+   // Sort all schools BEFORE pagination; school name is always the stable tie-breaker.
+   if(sort!=='school_name')sorted=sorted.order('school_name',{ascending:true,nullsFirst:false});
+   const {data,count,error}=await sorted
+     .order('school_id',{ascending:true})
      .range(from,from+19);
    if(error)return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
-   return send({schools:data||[],total:count||0,page:pagination,sort,direction:'desc',nulls:'last'},200,origin);
+   return send({schools:data||[],total:count||0,page:pagination,sort,direction:ascending?'asc':'desc',nulls:'last'},200,origin);
   }
 
   const id=String(body.schoolId||'');
