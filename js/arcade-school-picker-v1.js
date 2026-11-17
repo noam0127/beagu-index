@@ -11,19 +11,23 @@ class ArcadeSchoolPicker{
   if(!this.mount)throw new Error("school picker mount unavailable");
   this.selected=null;this.locked=false;this.onChange=null;this.serial=0;this.timer=null;
   const heading=make("div","arcade-school-heading","🏫 SELECT YOUR SCHOOL");
-  const note=make("p","arcade-school-guide","난이도는 2023~2026년 학교별 배구지수 백분위의 4개년 평균으로 결정됩니다. 한 해라도 조사·확정된 백분위가 없으면 플레이할 수 없습니다.");
+  const note=make("p","arcade-school-guide","2023~2026년 중 조사 결과가 한 해라도 있으면 플레이할 수 있습니다. 난이도는 공개·확인된 연도별 배구지수 백분위의 평균으로 결정됩니다.");
   this.input=make("input","arcade-school-input");
   this.input.type="search";this.input.placeholder="학교명 2글자 이상 입력";this.input.maxLength=30;this.input.autocomplete="off";
   this.input.setAttribute("aria-label","학교명 검색");this.input.setAttribute("aria-controls","arcade-school-results");
   this.results=make("div","arcade-school-results");this.results.id="arcade-school-results";
-  this.status=make("p","arcade-school-status","2023~2026년 4개년 백분위가 모두 확인된 학교만 플레이할 수 있습니다.");
+  this.status=make("p","arcade-school-status","2023~2026년 중 한 해 이상 백분위가 확인되면 플레이할 수 있습니다.");
   this.status.setAttribute("role","status");this.status.setAttribute("aria-live","polite");
   this.mount.classList.add("arcade-school-picker");
-  this.mount.append(heading,note,this.input,this.results,this.status);
+  this.surveyLink=make("a","arcade-school-survey","📝 2026년 배구지수 조사 참여하기");
+  this.surveyLink.href="https://forms.gle/TPyCakK6Sj2zchRy7";
+  this.surveyLink.target="_blank";this.surveyLink.rel="noopener noreferrer";
+  this.surveyLink.hidden=true;
+  this.mount.append(heading,note,this.input,this.results,this.status,this.surveyLink);
   this.input.addEventListener("input",()=>{this.clear();clearTimeout(this.timer);this.timer=setTimeout(()=>this.search(),250);});
  }
  clear(){
-  this.serial++;this.selected=null;this.results.replaceChildren();this.status.textContent="2023~2026년 4개년 백분위가 모두 확인된 학교만 플레이할 수 있습니다.";
+  this.serial++;this.selected=null;this.surveyLink.hidden=true;this.results.replaceChildren();this.status.textContent="2023~2026년 중 한 해 이상 백분위가 확인되면 플레이할 수 있습니다.";
   if(typeof this.onChange==="function")this.onChange(null);
  }
  focus(){this.input.focus();}
@@ -64,14 +68,15 @@ class ArcadeSchoolPicker{
    if(!school||!isSafe(school.school_name)||typeof school.eligible!=="boolean"||
       (school.eligible&&!["easy","normal","hard"].includes(school.difficulty)))throw new Error("invalid_school");
    this.selected=school;
+   this.surveyLink.hidden=school.eligible===true;
    this.input.value=school.school_name+" · "+(school.region||"");
    this.results.replaceChildren();
    if(school.eligible){
-    this.status.textContent="✅ "+school.school_name+" | 난이도 "+difficultyLabels[school.difficulty]+" · 2023~2026년 4개년 백분위 평균 기준";
+    const years=Array.isArray(school.available_years)?school.available_years.filter(y=>[2023,2024,2025,2026].includes(y)):[];
+    this.status.textContent="✅ "+school.school_name+" | 난이도 "+difficultyLabels[school.difficulty]+
+      " · 확인된 "+years.length+"개년("+years.join("·")+") 백분위 평균 기준";
    }else{
-    const years=Array.isArray(school.missing_years)?school.missing_years.filter(y=>[2023,2024,2025,2026].includes(y)):[];
-    const missing=years.length?years.join("·")+"년":"필수 연도";
-    this.status.textContent="🔒 플레이 불가 · "+missing+" 백분위 자료 없음 또는 미확정. 2023~2026년 4개년이 모두 확인되어야 시작할 수 있습니다.";
+    this.status.textContent="🔒 플레이 불가 · 2023~2026년 조사 백분위가 한 해도 확인되지 않았습니다. 2026년 배구지수 조사에 참여해 주세요. 조사 후 백분위 반영이 완료되면 시작할 수 있습니다.";
    }
    if(typeof this.onChange==="function")this.onChange(school);
   }catch(e){if(ticket===this.serial)this.status.textContent="학교 확인 실패. 다시 선택해 주세요.";}
