@@ -13,7 +13,7 @@ const xpScope={
 };
 runInNewContext(xp,xpScope);
 const progress=xpScope.window.BeaguChallengeProgress;
-assert.equal(progress.GOAL,500);
+assert.equal(progress.GOAL,1000);
 function target(){
  const controls=new Map();
  for(const k of ['number','remainder','progress','state']){
@@ -24,20 +24,20 @@ function target(){
  return {dataset:{},querySelector:s=>controls.get(s.match(/data-xp-(.*?)\]/)?.[1]),controls};
 }
 let a=target();
-assert.equal(progress.render(a,499),true);
+assert.equal(progress.render(a,999),true);
 assert.equal(a.controls.get('remainder').textContent,'1명 남음');
-assert.equal(a.controls.get('progress').style.width,'99.8%');
-assert.equal(a.controls.get('progress').attributes['aria-valuenow'],'499');
-a=target();progress.render(a,500);
+assert.equal(a.controls.get('progress').style.width,'99.9%');
+assert.equal(a.controls.get('progress').attributes['aria-valuenow'],'999');
+a=target();progress.render(a,1000);
 assert.equal(a.controls.get('progress').style.width,'100.0%');
 assert.equal(a.controls.get('remainder').textContent,'목표 달성');
-a=target();progress.render(a,501);
-assert.equal(a.controls.get('number').textContent,'501 / 500');
+a=target();progress.render(a,1001);
+assert.equal(a.controls.get('number').textContent,'1001 / 1000');
 assert.equal(a.controls.get('progress').style.width,'100.0%');
-assert.equal(a.controls.get('progress').attributes['aria-valuenow'],'500');
+assert.equal(a.controls.get('progress').attributes['aria-valuenow'],'1000');
 a=target();progress.unavailable(a);
 assert.equal(a.controls.get('number').textContent,'집계 확인 불가');
-assert.notEqual(a.controls.get('number').textContent,'0 / 500');
+assert.notEqual(a.controls.get('number').textContent,'0 / 1000');
 assert.equal(a.controls.get('progress').attributes['aria-valuenow'],undefined);
 assert.equal(progress.render(a,NaN),false);
 assert.notEqual(a.dataset.xpState,'ready');
@@ -130,4 +130,4 @@ for(const file of ['search.html','school-report.html','index.html','challenge.ht
   if(block[1].trim())assert.doesNotThrow(()=>new Script(block[1]),file+' has invalid inline script');
  }
 }
-console.log('PASS: existing participant ordinal only, 499/500/501, error≠0, intentional school events, privacy and original permissions');
+console.log('PASS: existing participant ordinal only, 999/1000/1001, error≠0, intentional school events, privacy and original permissions');
