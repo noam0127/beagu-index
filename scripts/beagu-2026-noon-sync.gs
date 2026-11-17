@@ -48,6 +48,29 @@ function onBeagu2026FormSubmitted(event) {
   // respondent dates and school matches. It only writes to a private MASTER.
   refreshBeagu2026Stats();
 }
+// Send ONLY a national total of official submission rows. No school IDs,
+// teacher responses, answer content, timestamps, or per-school counts leave
+// the private aggregation workflow. This is NOT a distinct-teacher count.
+function publishBeagu2026NationalCount(officialRows) {
+  const secret=PropertiesService.getScriptProperties().getProperty("BEAGU_2026_INGEST_TOKEN")||"";
+  if(secret.length<32)return "SKIPPED_NOT_CONFIGURED";
+  if(!Number.isSafeInteger(officialRows)||officialRows<0||officialRows>50000)
+    throw Error("Official response-row count is invalid");
+  const endpoint=BEAGU26.supabaseUrl+"/functions/v1/beagu-2026-public-count-ingest";
+  const response=UrlFetchApp.fetch(endpoint,{
+    method:"post",contentType:"application/json",
+    headers:{"X-Beagu-Ingest-Token":secret},
+    payload:JSON.stringify({
+      source_spreadsheet_id:BEAGU26.sourceId,
+      first_official_day:BEAGU26.firstOfficialResponseDay,
+      official_submission_rows:officialRows
+    }),
+    muteHttpExceptions:true
+  });
+  if(response.getResponseCode()!==200)
+    throw Error("National count publish failed: HTTP "+response.getResponseCode());
+  return "PUBLISHED";
+}
 function normalize(s) {
   return String(s||"").replace(/[①-⑳]/g,"").normalize("NFKC").replace(/[\s,.'"“”\[\]()/\\\-]/g,"").trim();
 }
@@ -211,7 +234,14 @@ function refreshBeagu2026Stats() {
     replaceBody(destination.getSheetByName(BEAGU26.summaryTab),output,23);
     replaceBody(destination.getSheetByName(BEAGU26.holdTab),holds,6);
     matched=output.length;
-    destination.getSheetByName(BEAGU26.logTab).appendRow([now,scanned,matched,unmatched,"SUCCESS","본조사 이전 "+prelaunch+"건 제외; 시각 불명 "+undated+"건 보류; 비공개 집계만 갱신"]);
+    // Publish a nationwide submission-row count even when only one official
+    // survey submission exists. Never publish single-school/single-teacher answers.
+    // An unavailable public bridge must not invalidate completed private results.
+    let publishStatus="SKIPPED";
+    try{publishStatus=publishBeagu2026NationalCount(scanned-prelaunch-undated)}
+    catch(e){publishStatus="PUBLIC_ERROR";Logger.log("National count publish: "+String(e.message||e).slice(0,100))}
+    destination.getSheetByName(BEAGU26.logTab).appendRow([now,scanned,matched,unmatched,"SUCCESS",
+      "본조사 이전 "+prelaunch+"건 제외; 시각 불명 "+undated+"건 보류; 전국 응답건수 "+publishStatus+" · 학교별 통계 비공개 검수"]);
     Logger.log("Updated internal school summary: "+matched+" schools");
   }catch(e){
     const stamp=Utilities.formatDate(new Date(),BEAGU26.timezone,"yyyy-MM-dd HH:mm:ss");
