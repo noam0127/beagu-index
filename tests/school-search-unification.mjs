@@ -17,6 +17,11 @@ for(const path of pages){
   assert.doesNotThrow(()=>new Script(js,{filename:path}),path+' invalid inline JS');
  }
 }
+const sharedCardCSS=read('styles/school-search-card-v1.css');
+assert.match(sharedCardCSS,/\.school-card\{[^}]*border:2px solid #2563eb/, 'Each complete search-result card must have a blue outer border');
+for(const page of pages){
+  assert.match(read(page),/styles\/school-search-card-v1\.css\?v=20261118-blue-outline2/,page+' must load updated shared card border');
+}
 const lv0=read('search.html');
 assert.match(lv0,/data\/public-2023-2025-school-records-v2\.json/,'Lv.0 must show 2023-2025 historical presence');
 assert.match(lv0,/publicParticipationByYear\[y\]\?\.has\(String\(school\.school_id\)\)/,'School list must show historical school-year presence');
