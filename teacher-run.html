@@ -78,6 +78,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-rolling1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261118-retro1">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-tier1">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-3">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
@@ -88,6 +89,7 @@ canvas{height:400px;cursor:default}
     <div class="stat"><span>1UP</span><strong id="scoreLabel">0</strong></div>
     <div class="stat"><span>HI-SCORE</span><strong id="bestLabel">0</strong></div>
   </div>
+  <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="stage">
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 게임 영역. 방향키나 아래 버튼으로 이동하고 스페이스 또는 회피 버튼으로 긴급 회피합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
@@ -106,13 +108,18 @@ canvas{height:400px;cursor:default}
   </div>
   <div id="arcade-top10" aria-label="험난한 교직생활 TOP 10 순위"></div>
 </main>
-<script src="js/arcade-leaderboard-v1.js?v=20261118-retro1"></script>
+<script src="js/arcade-leaderboard-v1.js?v=20261118-schools1"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261118-schools1"></script>
 <script>
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
 const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("teacher_run","#arcade-top10") : null;
+const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
+const difficultyScale={easy:.78,normal:1,hard:1.32};
+const difficultyName={easy:"하 · 쉬움",normal:"중 · 보통",hard:"상 · 어려움"};
+schoolPicker.onChange=()=>{if(state==="ready")intro();};
 if(!ctx){$("overlayDesc").textContent="이 브라우저에서는 캔버스 게임을 실행할 수 없습니다.";return;}
 const days=["월요일","화요일","수요일","목요일","금요일"];
 const dayTitles=["출근 첫날, 메일이 쌓인다","회의와 공문의 이중주","수요일의 언덕을 넘자","방심하면 야근이다","오늘만 버티면 주말!"];
@@ -174,15 +181,23 @@ function message(title,desc,choices,symbol="🎒"){
  $("overlay").hidden=false;$("pause").disabled=true;
 }
 function closeMessage(){$("overlay").hidden=true;$("pause").disabled=false;canvas.focus({preventScroll:true});}
-function start(mult=1){
- difficulty=mult;state="playing";day=0;dayTime=0;clock=0;score=0;life=100;maxLife=100;
- ranking?.start();
+function start(){
+ const selected=schoolPicker.get();
+ if(!selected){intro();schoolPicker.focus();return;}
+ difficulty=difficultyScale[selected.difficulty]||1;
+ schoolPicker.setLocked(true);
+ state="playing";day=0;dayTime=0;clock=0;score=0;life=100;maxLife=100;
+ ranking?.start(selected);
  combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1,dash:0};
  items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=1.5;player.cool=0;player.dashTime=0;pointerId=null;pointerY=null;
  pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice("월요일 시작!",2);closeMessage();playTone(500,.13);
 }
 function intro(){
- state="ready";message("험난한 교직생활","📄 피하고   ☕ 획득\n월 → 금 생존!",[{label:"🌱 보통 · 시작",action:()=>start(1)},{label:"🔥 어려움 · 시작",action:()=>start(1.3)}],"🏫");
+ state="ready";schoolPicker.setLocked(false);
+ const selected=schoolPicker.get();
+ const title=selected?selected.school_name+" · "+difficultyName[selected.difficulty]:"먼저 학교를 선택하세요";
+ const desc=selected?"학교 배구지수 등급에 맞춰 난이도가 자동 설정됩니다.\n월 → 금 생존!":"게임 화면 위에서 학교 이름을 검색하고 선택해 주세요.";
+ message("험난한 교직생활",title+"\n"+desc,[{label:selected?"▶ 선택 학교로 시작":"🏫 학교 선택하기",action:()=>{if(selected)start();else schoolPicker.focus();}}],"🏫");
 }
 function updateLabels(){$("dayLabel").textContent=days[day]+" · "+(day+1)+"/5";$("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");}
 function setNotice(t,time=1.8){notice=t;noticeTime=time;}
@@ -235,6 +250,7 @@ function choose(u){
 }
 function finish(win){
  state="over";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
+ schoolPicker.setLocked(false);
  let bonus=win?1500+Math.round(life*5):0;score+=bonus;
  if(score>best){best=Math.floor(score);persist();}
  updateLabels();$("bestLabel").textContent=best.toLocaleString("ko-KR");
@@ -245,8 +261,8 @@ function finish(win){
  "아슬아슬 회피 "+nearCount+"회 · 충돌 "+misses+"회\n"+
  (win?"주말은 선생님 편입니다.":"괜찮아요. 다음 주는 더 잘 피할 수 있어요!");
  message(win?"🎊 주말을 지켜냈어요!":"🫖 잠깐 쉬어가요",text,[
- {label:"🔄 다시 하기",action:()=>start(difficulty)},
- {label:"🌱 보통 모드",action:()=>start(1)}],win?"🎉":"🫖");
+ {label:"🔄 같은 학교로 다시 하기",action:()=>start()},
+ {label:"🏫 학교 변경",action:intro}],win?"🎉":"🫖");
  playTone(win?950:280,.32);
 }
 function pause(){
