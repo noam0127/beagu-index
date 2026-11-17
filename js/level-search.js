@@ -122,6 +122,7 @@
     const code = $('levelCode').value.trim();
     $('loginButton').disabled = true;
     $('loginMessage').textContent = '인증 중...';
+    const loginTask=window.BeaguLoading?.start('참여코드를 확인하는 중…');
     try {
       const data = await api('login', {code});
       if (data.level < level) {
@@ -137,6 +138,7 @@
       $('loginMessage').textContent = '참여코드를 확인해주세요.';
     } finally {
       $('loginButton').disabled = false;
+      window.BeaguLoading?.finish(loginTask);
     }
   });
   $('logoutButton').addEventListener('click', () => loggedOut());
@@ -504,6 +506,7 @@
         button.setAttribute('aria-expanded', 'true');
         if (detail.dataset.loaded) return;
         detail.textContent = '불러오는 중...';
+        const detailTask=window.BeaguLoading?.start('학교 상세자료를 불러오는 중…');
         try {
           const data = await api('school', {schoolId:school.school_id});
           await loaded;
@@ -514,6 +517,8 @@
         } catch (error) {
           if (error.unauthorized) { loggedOut('인증이 만료되었습니다. 다시 입력하세요.'); return; }
           detail.textContent = '자료를 불러오지 못했습니다. 다시 열람해 주세요.';
+        } finally {
+          window.BeaguLoading?.finish(detailTask);
         }
       });
       host.append(card);
@@ -533,6 +538,7 @@
       $('results').replaceChildren(); $('resultCount').textContent = ''; $('pager').hidden = true; return;
     }
     $('resultCount').textContent = '검색 중...';
+    const searchTask=window.BeaguLoading?.start('학교 검색 결과를 불러오는 중…');
     try {
       const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?$('regionSort').value:'school_name_asc';
       const sort=sortValue.startsWith('address')?'address':'school_name';
@@ -557,6 +563,8 @@
       console.error(error);
       $('resultCount').textContent = '';
       $('results').replaceChildren(make('div', 'empty', '검색에 실패했습니다.'));
+    } finally {
+      window.BeaguLoading?.finish(searchTask);
     }
   }
   (async () => {
