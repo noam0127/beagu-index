@@ -1265,6 +1265,27 @@
       const id=params.get('school_id');if(id&&id.length<160)await selectSchoolById(id);
     }
     if(params.has('year')){const y=Number(params.get('year'));if([2023,2024,2025,2026].includes(y)){state.selected=y;render()}}
+    // Reuse the already validated Lv.1 session from the unified search page.
+    // Verification remains server-side; never trust a stored token alone.
+    if(!state.demo && state.school){
+      const existing=remembered();
+      if(existing){
+        state.authToken=existing;
+        try{
+          const check=await tierCall('verify');
+          if(Number(check.level)>=1){
+            state.authLevel=Number(check.level);
+            state.tier=1;state.requestedTier=1;
+            tierUI();
+            await protectedReport(String(state.school.school_id));
+          }else{
+            state.authToken='';saveToken('');tierUI();
+          }
+        }catch(_){
+          state.authToken='';saveToken('');tierUI();
+        }
+      }
+    }
   }
   function bind(){
     for(const level of [0,1])$('tier'+level).addEventListener('click',()=>chooseTier(level));
