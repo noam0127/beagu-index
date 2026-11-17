@@ -1011,6 +1011,7 @@
   }
 }</script>
 <script src="js/2026-questionnaire-options-v1.2.js?v=20261117-original50"></script>
+<script src="js/historical-questionnaire-choices.js?v=20261117-verified-v1"></script>
 <script>
 /* 학교별 조사기록 UI v1.0. 공개 자료만 사용합니다.
  * Lv.1/Lv.2의 실제 접근 권한은 기존 Supabase 서버 검증 로직에서 처리해야 합니다.
@@ -1483,6 +1484,8 @@
     const full=year===2026?window.Beagu2026Questionnaire?.[item.id]:null;
     if(full&&Array.isArray(full.options)&&full.options.length)return full.options;
     if(full&&Array.isArray(full.columns)&&full.columns.length)return full.columns;
+    const prior=window.BeaguHistoricalQuestionnaire?.[year]?.[item.id];
+    if(Array.isArray(prior)&&prior.length&&prior.every(x=>typeof x==='string'))return prior;
     if(Array.isArray(item.options)&&item.options.length&&item.options.every(x=>typeof x==='string'))return item.options;
     if(year===2026&&/^Q(0[1-9]|1[0-1])$/.test(item.id))return standard2026;
     if(year===2026)return verified2026Options[item.id]||null;
