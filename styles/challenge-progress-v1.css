@@ -10,3 +10,7 @@
 .beagu-xp[data-xp-state="unavailable"] .beagu-xp-number{color:#64748b}
 @media(max-width:450px){.beagu-xp{padding:14px}.beagu-xp h2{font-size:13px}.beagu-xp-number{font-size:12px}.beagu-xp-footer{font-size:11px;flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.beagu-xp-fill{transition:none}}
+
+.beagu-xp-promise{margin:14px 0 0;padding:15px 14px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;line-height:1.5;text-align:center;word-break:keep-all}
+.beagu-xp-promise strong{display:block;font-size:15px;font-weight:800}
+.beagu-xp-promise span{display:block;margin-top:5px;font-size:12px;color:#475569}
