@@ -142,10 +142,12 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     '경기':'경기도','강원':'강원특별자치도','충북':'충청북도','충남':'충청남도',
     '전북':'전북특별자치도','전남':'전남광주통합특별시','경북':'경상북도','경남':'','제주':''
   };
-  const LEGACY_GYEONGNAM = [
-    ['마산 (과거 분류)','마산교육청(폐지)'],
-    ['진해 (과거 분류)','진해교육청(폐지)'],
-    ['창원 (과거 분류)','창원교육청(폐지)']
+  // Survey grouping is 3 local areas under the single formal Changwon Education Support Office.
+  // Each value is the exact persisted schools.support_office; never use obsolete office names.
+  const CHANGWON_SURVEY_AREAS = [
+    ['창원(본청)', '창원교육지원청'],
+    ['마산센터', '창원교육지원청(마산센터)'],
+    ['진해센터', '창원교육지원청(진해센터)']
   ];
 
   function populateOffices(region) {
@@ -162,8 +164,9 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     }
     const prefix = OFFICE_PREFIX[region] || '';
     const names = (OFFICE_NAMES[region] || '').split(' ').filter(Boolean);
-    names.forEach(name => officeSelect.add(new Option(name, prefix + name + '교육지원청')));
-    if (region === '경남') LEGACY_GYEONGNAM.forEach(([label,value]) => officeSelect.add(new Option(label,value)));
+    names.filter(name => region !== '경남' || name !== '창원')
+      .forEach(name => officeSelect.add(new Option(name, prefix + name + '교육지원청')));
+    if (region === '경남') CHANGWON_SURVEY_AREAS.forEach(([label,value]) => officeSelect.add(new Option(label,value)));
   }
 
   function selectMode(target) {
