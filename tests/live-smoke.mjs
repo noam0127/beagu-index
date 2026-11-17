@@ -142,10 +142,10 @@ async function main() {
   const progressJS=responses.get('js/challenge-progress-v1.js')||'';
   const telemetryJS=responses.get('js/search-telemetry-v1.js')||'';
   const challengeHTML=responses.get('challenge.html')||'';
-  check('2026 XP 500명 게이지: 원본 챌린지 순번 사용',
+  check('2026 XP 1,000명 게이지: 원본 챌린지 순번 사용',
     [home,challengeHTML].every(h=>h.includes('data-beagu-xp')&&h.includes('js/challenge-progress-v1.js')) &&
     progressJS.includes('beagu_get_challenge_progress') &&
-    progressJS.includes('집계 확인 불가') && progressJS.includes('const GOAL=500'));
+    progressJS.includes('집계 확인 불가') && progressJS.includes('const GOAL=1000'));
   check('학교 검색기록: 확정·선택·상세 구별',
     [html0,html1,html2,report].every(h=>h.includes('js/search-telemetry-v1.js')) &&
     telemetryJS.includes('search_confirmed') && telemetryJS.includes('school_selected') &&
@@ -154,7 +154,7 @@ async function main() {
     level2.includes('explicitEnter'));
   check('학교 홈페이지 링크가 검색 결과에서 제거됨',
     ![html0,html1,html2,level1,level2,report].some(h=>h.includes('🌐 학교 홈페이지')));
-  check('홈에서 Lv.1·Lv.2로 연결', home.includes('search-lv1.html') && home.includes('search-lv2.html'));
+  check('홈에서 Lv.0~2 열람 버튼 제거·자료 공개 안내', !/search-lv[12]\.html|href="search\.html"/.test(home) && home.includes('1,000명 달성 시 2026 배구지수 자료를 공개합니다.'));
   check('두 HTML의 JS 연결', html1.includes('js/level-search.js') && html2.includes('js/lv2-edited-search.js'));
   check('학교 MBTI Lv.1·Lv.2 공통 자산 연결',
     [html1,html2].every(h=>h.includes('js/school-mbti-v1.js')&&h.includes('styles/school-mbti-v1.css')) &&
