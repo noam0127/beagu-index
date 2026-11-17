@@ -3,10 +3,11 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const LIMIT = 5;
-  const YEARS = [2023, 2024, 2025];
+  const YEARS = [2023, 2024, 2025, 2026];
   const collator = new Intl.Collator('ko-KR', { numeric:true, sensitivity:'base' });
   const state = { directory:new Map(), schools:[], snapshot:new Map(), snapshotReady:false,
     ready:false, selected:[], restored:false, questionCatalog:null,
+    public2026:new Map(), public2026Checked:new Set(), public2026Loading:new Set(), public2026Error:new Set(),
     approvedBySchool:new Map(), approvedLoading:new Set(), sessionToken:'',
     authLevel:0, authEpoch:0 };
   const elements = {
@@ -35,7 +36,7 @@
     b.addEventListener('click',onClick);
     return b;
   }
-  function currentYear() { return 2025; }
+  function currentYear() { return 2026; }
   function labelForSchool(s) {
     return [s.sido_standard, s.support_office].filter(Boolean).join(' · ') || '지역 미확인';
   }
@@ -121,7 +122,7 @@
     return state.selected.some(x=>x.id===String(id) && x.year===Number(year));
   }
   function nextAvailableYear(id) {
-    return [2025,2024,2023].find(y=>!selectedPair(id,y)) ?? null;
+    return [2026,2025,2024,2023].find(y=>!selectedPair(id,y)) ?? null;
   }
   function encodeSelection() {
     return state.selected.map(x=>x.id+':'+x.year).join(',');
@@ -137,7 +138,7 @@
     state.restored=true;
     const raw=new URLSearchParams(window.location.search).get('compare') || '';
     for (const token of raw.split(',').slice(0,LIMIT)) {
-      const pair=/^([A-Z0-9]{7}):(2023|2024|2025)$/.exec(token);
+      const pair=/^([A-Z0-9]{7}):(2023|2024|2025|2026)$/.exec(token);
       if (!pair || !state.directory.has(pair[1]) || selectedPair(pair[1],Number(pair[2]))) continue;
       state.selected.push({id:pair[1], year:Number(pair[2])});
     }
@@ -155,6 +156,7 @@
     state.selected.push({id,year});
     notice(school.school_name+' ('+year+'년)을 비교표에 추가했습니다.');
     sync();
+    loadPublic2026([id]);
     loadApprovedSchool(id);
     return true;
   }
@@ -220,7 +222,49 @@
     elements.clear.disabled=!state.selected.length;
     elements.copy.disabled=!state.selected.length;
   }
+  // The anonymous API is RLS-restricted to reviewed, manually released
+  // 2026 rows with a 72-hour cooldown. Do not query draft or raw survey data.
+  async function loadPublic2026(ids) {
+    const requested=[...new Set(ids.map(String))].filter(id=>
+      /^[A-Z0-9]{7}$/.test(id) &&
+      !state.public2026Checked.has(id) && !state.public2026Loading.has(id));
+    if(!requested.length || typeof supabaseClient==='undefined')return;
+    requested.forEach(id=>state.public2026Loading.add(id));
+    renderTable();
+    try{
+      const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
+        .select('school_id,survey_year,percentile')
+        .in('school_id',requested)
+        .eq('survey_year',2026)
+        .eq('publication_status','PUBLISHED')
+        .limit(requested.length);
+      if(error)throw error;
+      for(const row of Array.isArray(data)?data:[]){
+        const id=String(row?.school_id||'');
+        const value=row?.percentile;
+        if(!requested.includes(id)||Number(row?.survey_year)!==2026||
+           typeof value!=='number'||!Number.isFinite(value)||value<0||value>100)continue;
+        state.public2026.set(id,value);
+      }
+      requested.forEach(id=>state.public2026Checked.add(id));
+    }catch(error){
+      console.warn('2026년 공개 승인 기록 조회 실패',error);
+      requested.forEach(id=>state.public2026Error.add(id));
+    }finally{
+      requested.forEach(id=>state.public2026Loading.delete(id));
+      renderTable();
+    }
+  }
   function percentile(school,year) {
+    if(year===2026){
+      const id=String(school.school_id);
+      const value=state.public2026.get(id);
+      if(typeof value==='number')return {value,label:'공개 기록',kind:'yes'};
+      if(state.public2026Loading.has(id)||(!state.public2026Checked.has(id)&&!state.public2026Error.has(id)))
+        return {value:null,label:'확인 중',kind:'pending'};
+      if(state.public2026Error.has(id))return {value:null,label:'조회 실패',kind:'failure'};
+      return {value:null,label:'미공개',kind:'empty'};
+    }
     if (!state.snapshotReady) return {value:null,label:'연결 오류',kind:'failure'};
     const row=state.snapshot.get(String(school.school_id));
     if (!row || !Array.isArray(row.statuses) || !Array.isArray(row.percentiles))
@@ -363,7 +407,7 @@
     try{
       const data=await authRequest('school',{schoolId:id},token);
       if(epoch!==state.authEpoch || token!==state.sessionToken) return;
-      const approved={items:{2023:{},2024:{},2025:{}},summaries:{2023:[],2024:[],2025:[]}};
+      const approved={items:{2023:{},2024:{},2025:{},2026:{}},summaries:{2023:[],2024:[],2025:[],2026:[]}};
       for(const row of Array.isArray(data?.rows)?data.rows:[]){
         const year=Number(row?.year);
         if(!YEARS.includes(year) || ![1,2].includes(Number(row?.access_level)) || Number(row.access_level)>state.authLevel)continue;
@@ -446,6 +490,7 @@
     restoreUrl();
     renderSelections();renderTable();renderSuggestions();
     if (!state.snapshotReady && state.ready) notice('공개 백분위를 확인할 수 없어 문항 목록만 표시됩니다.');
+    loadPublic2026(state.selected.map(x=>x.id));
     refreshApprovedSelections();
   });
   loadPublicQuestions();
