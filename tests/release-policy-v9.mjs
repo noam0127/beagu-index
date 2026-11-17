@@ -16,7 +16,7 @@ assert.doesNotMatch(policy,/<script[^>]+src=/,'No tracking or restricted server 
 for(const p of ['search.html','search-lv1.html',
                  'school-report.html','statistics.html']){
  const h=read(p);
- assert.match(h,/href="release-policy\.html"/,'Policy navigation missing: '+p);
+ assert.doesNotMatch(h,/href="release-policy\\.html"/,'Removed policy navigation must stay hidden: '+p);
  assert.ok(existsSync('release-policy.html'));
 }
 const index=read('index.html');
@@ -29,7 +29,7 @@ assert.match(search,/id="searchInput"/,'Lv.0 public browser restored');
 assert.match(search,/href="search-lv1\.html"/,'Lv.1 entry from Lv.0');
 assert.match(read('search-lv2.html'),/url=\.\/search-lv1\.html/,'Legacy Lv.2 route redirects to Lv.1');
 assert.match(policy,/href="search\.html"/,'Public level remains accessible');
-assert.match(index,/1,000명 달성 시 2026 배구지수 자료를 공개합니다\./);
+assert.doesNotMatch(index,/1,000명 달성 시 2026 배구지수 자료를 공개합니다\./);
 assert.doesNotMatch(index,/href="challenge\.html"/,'Do not add a home-to-challenge button');
 assert.match(index,/https:\/\/forms\.gle\/TPyCakK6Sj2zchRy7/);
 const challenge=read('challenge.html');
