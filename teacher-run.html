@@ -389,7 +389,7 @@ const endDrag=e=>{if(pointerId===e.pointerId){pointerId=null;pointerX=null;}};
 canvas.addEventListener("pointerup",endDrag);canvas.addEventListener("pointercancel",endDrag);
 $("pause").addEventListener("click",pause);
 $("how").addEventListener("click",help);
-$("sound").addEventListener("click",()=>{soundOn=!soundOn;$("sound").textContent=soundOn?"🔊 소리 켬":"🔇 소리 끔";$("sound").setAttribute("aria-pressed",String(soundOn));try{localStorage.setItem("teacherRunSoundV2",soundOn?"1":"0");}catch(e){}playTone(800,.12);});
+$("sound").addEventListener("click",()=>{soundOn=!soundOn;$("sound").textContent=soundOn?"🔊":"🔇";$("sound").setAttribute("aria-pressed",String(soundOn));$("sound").setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");try{localStorage.setItem("teacherRunSoundV2",soundOn?"1":"0");}catch(e){}playTone(800,.12);});
 function postHeight(){
  try{window.parent.postMessage({type:"teacher-run:resize",height:document.documentElement.scrollHeight},window.location.origin);}catch(e){}
 }
