@@ -18,8 +18,8 @@ for(const path of pages){
  }
 }
 const lv0=read('search.html');
-assert.match(lv0,/data\/public-2025-participation-v1\.json/,'Lv.0 must show verified participation from one response');
-assert.match(lv0,/publicParticipationIndex\.has\(String\(school\.school_id\)\)/,'School list must show participating-school flags');
+assert.match(lv0,/data\/public-2023-2025-school-records-v2\.json/,'Lv.0 must show 2023-2025 verified school record presence');
+assert.match(lv0,/publicParticipationByYear\[y\]\?\.has\(String\(school\.school_id\)\)/,'School list must show historical school-year presence');
 assert.doesNotMatch(lv0,/\.select\('respondents'/,'Do not query private response counts in Lv.0');
 assert.match(lv0,/id="searchInput"/,'Lv.0 browsing restored');
 assert.match(lv0,/href="search-lv1\.html"/,'Lv.1 accessible from public level');
