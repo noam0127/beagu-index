@@ -5,7 +5,7 @@
  */
 (function(){
  'use strict';
- const ID=/^\d{7}$/;
+ const ID=/^[A-Z0-9]{7}$/;
  const PAGES=Object.freeze({'search':0,'search-lv1':1,'search-lv2':2,'school-report':0});
  const TYPES=new Set(['search_confirmed','school_selected','detail_viewed']);
  const recent=new Map(),viewed=new Set();
