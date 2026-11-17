@@ -13,7 +13,7 @@
   const progress=Math.min(n/GOAL*100,100);
   number.textContent=n.toLocaleString('ko-KR')+' / '+GOAL.toLocaleString('ko-KR');
   remainder.textContent=n>=GOAL?'목표 달성':(GOAL-n).toLocaleString('ko-KR')+'명 남음';
-  state.textContent=n>=GOAL?'1,000명 챌린지 목표에 도달했습니다. 자료 공개를 준비합니다.':'기존 챌린지 발급 순번 기준';
+  state.textContent=n>=GOAL?'1,000명 챌린지 목표에 도달했습니다.':'기존 챌린지 발급 순번 기준';
   bar.style.width=progress.toFixed(1)+'%';
   bar.setAttribute('aria-valuenow',String(Math.min(n,GOAL)));
   target.dataset.xpState='ready';
