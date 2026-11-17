@@ -78,7 +78,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-rolling1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261118-retro1">
-<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-tier1">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-anyyear3">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-3">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
@@ -108,8 +108,8 @@ canvas{height:400px;cursor:default}
   </div>
   <div id="arcade-top10" aria-label="험난한 교직생활 TOP 10 순위"></div>
 </main>
-<script src="js/arcade-leaderboard-v1.js?v=20261118-fouryear2"></script>
-<script src="js/arcade-school-picker-v1.js?v=20261118-fouryear2"></script>
+<script src="js/arcade-leaderboard-v1.js?v=20261118-anyyear3"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261118-anyyear3"></script>
 <script>
 (function(){
 "use strict";
@@ -186,11 +186,11 @@ async function start(){
  if(!selected?.eligible){intro();schoolPicker.focus();return;}
  if(state==="starting")return;
  state="starting";
- message("4개년 자료 확인 중","2023~2026년 학교별 백분위와 게임 참가 자격을 확인하고 있습니다.",[],"🏫");
+ message("조사 자료 확인 중","2023~2026년 중 한 해 이상 백분위가 있는지 확인하고 있습니다.",[],"🏫");
  const session=ranking?await ranking.start(selected):null;
  if(!session){
   state="ready";intro();
-  schoolPicker.status.textContent="게임 시작 불가 · 4개년 자료를 다시 확인하거나 연결 상태를 확인하세요.";
+  schoolPicker.status.textContent="게임 시작 불가 · 조사 자료를 다시 확인하거나 서버 연결 상태를 확인하세요.";
   return;
  }
  difficulty=difficultyScale[selected.difficulty]||1;
@@ -204,12 +204,12 @@ function intro(){
  state="ready";schoolPicker.setLocked(false);
  const selected=schoolPicker.get();
  const ready=selected?.eligible===true;
- const missing=Array.isArray(selected?.missing_years)?selected.missing_years.join("·")+"년":"해당 연도";
+ const available=Array.isArray(selected?.available_years)?selected.available_years.join("·")+"년":"확인 연도";
  const title=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
    selected?selected.school_name+" · 플레이 불가":"먼저 학교를 선택하세요";
- const desc=ready?"2023~2026년 배구지수 백분위 4개년 평균에 따른 자동 난이도입니다.\n월 → 금 생존!":
-   selected?"2023~2026년 백분위 중 "+missing+" 자료가 없거나 아직 확정되지 않았습니다.\n4개년 모두 확보돼야 플레이 가능합니다.":
-   "2023·2024·2025·2026년 백분위가 모두 있는 학교만 플레이할 수 있습니다.\n위에서 학교를 검색해 선택해 주세요.";
+ const desc=ready?"확인된 "+available+" 배구지수 백분위 평균으로 난이도를 결정합니다.\n월 → 금 생존!":
+   selected?"2023~2026년 조사 백분위가 한 해도 확인되지 않았습니다.\n2026년 배구지수 조사에 참여해 주세요. 조사 반영 후 플레이 가능합니다.":
+   "2023~2026년 중 한 해라도 조사 백분위가 있는 학교는 플레이할 수 있습니다.\n위에서 학교를 검색해 선택해 주세요.";
  message("험난한 교직생활",title+"\n"+desc,[
   {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
    action:()=>ready?start():schoolPicker.focus()}
