@@ -13,29 +13,9 @@
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
   const YEARS = [2023, 2024, 2025, 2026];
-  const offices = {
-    '서울':'강남서초 강동송파 강서양천 남부 동부 동작관악 북부 서부 성동광진 성북강북 중부',
-    '부산':'남부 동래 북부 서부 해운대',
-    '대구':'군위 남부 달성 동부 서부',
-    '인천':'강화 남부 동부 북부 서부',
-    '광주':'동부 서부', '대전':'동부 서부', '울산':'강남 강북', '세종':'세종',
-    '경기':'가평 고양 광명 광주하남 구리남양주 군포의왕 김포 동두천양주 부천 성남 수원 시흥 안산 안성 안양과천 양평 여주 연천 용인 의정부 이천 파주 평택 포천 화성오산',
-    '강원':'강릉 고성 동해 삼척 속초양양 양구 영월 원주 인제 정선 철원 춘천 태백 평창 홍천 화천 횡성',
-    '충북':'괴산증평 단양 보은 영동 옥천 음성 제천 진천 청주 충주',
-    '충남':'공주 금산 논산계룡 당진 보령 부여 서산 서천 아산 예산 천안 청양 태안 홍성',
-    '전북':'고창 군산 김제 남원 무주 부안 순창 완주 익산 임실 장수 전주 정읍 진안',
-    '전남':'강진 고흥 곡성 광양 구례 나주 담양 목포 무안 보성 순천 신안 여수 영광 영암 완도 장성 장흥 진도 함평 해남 화순',
-    '경북':'경산 경주 고령 구미 김천 문경 봉화 상주 성주 안동 영덕 영양 영주 영천 예천 울릉 울진 의성 청도 청송 칠곡 포항',
-    '경남':'거제 거창 고성 김해 남해 밀양 사천 산청 양산 의령 진주 창녕 창원 통영 하동 함안 함양 합천',
-    '제주':'서귀포시 제주시'
-  };
-  const prefixes = {
-    '서울':'서울특별시', '부산':'부산광역시', '대구':'대구광역시', '인천':'인천광역시',
-    '광주':'전남광주통합특별시광주', '대전':'대전광역시', '울산':'울산광역시',
-    '경기':'경기도', '강원':'강원특별자치도', '충북':'충청북도', '충남':'충청남도',
-    '전북':'전북특별자치도', '전남':'전남광주통합특별시', '경북':'경상북도',
-    '경남':'', '제주':''
-  };
+  // Exact education office names come from the verified schools table.
+  let selectedSort='school_name',officeLoadSerial=0;
+  const SORTS=new Set(['school_name','beagu_percentile_2025','student_count','housing_price_won']);
   const escape = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;')
     .replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
   const make = (tag, className, value) => {
@@ -132,30 +112,39 @@
   }
   $('schoolTab').addEventListener('click', () => selectMode('school'));
   $('regionTab').addEventListener('click', () => selectMode('region'));
-  $('regionSelect').addEventListener('change', () => {
-    const region = $('regionSelect').value;
-    const select = $('officeSelect');
-    select.replaceChildren(new Option(region ? '전체 교육지원청' : '시도를 먼저 선택하세요', ''));
-    select.disabled = !region;
-    if (region === '재외한국학교') {
-      ["일본","중국","대만","베트남","사우디아라비아","인도네시아","싱가포르","태국","필리핀","파라과이","아르헨티나","러시아","이란","이집트","말레이시아","캄보디아"].forEach(country => select.add(new Option(country, country)));
-    } else if (region === '세종') {
-      select.add(new Option('세종시교육청', '세종특별자치시교육청'));
-    } else if (region) {
-      for (const name of offices[region].split(' ')) {
-        select.add(new Option(name, (prefixes[region] || '') + name + '교육지원청'));
-      }
-      if (region === '경남') {
-        for (const [label, value] of [
-          ['마산 (과거 분류)', '마산교육청(폐지)'],
-          ['진해 (과거 분류)', '진해교육청(폐지)'],
-          ['창원 (과거 분류)', '창원교육청(폐지)']
-        ]) select.add(new Option(label, value));
-      }
+
+  $('regionSelect').addEventListener('change', async () => {
+    const region=$('regionSelect').value, select=$('officeSelect');
+    const run=++officeLoadSerial;
+    select.disabled=true;
+    select.replaceChildren(new Option(region?'교육지원청 불러오는 중…':'시도를 먼저 선택하세요',''));
+    void search(true);
+    if(!region)return;
+    try{
+      const result=await api('offices',{region});
+      if(run!==officeLoadSerial||$('regionSelect').value!==region)return;
+      select.replaceChildren(new Option('전체 교육청·교육지원청',''));
+      const values=[...new Set(Array.isArray(result.offices)?result.offices:[])].filter(x=>typeof x==='string');
+      for(const value of values) select.add(new Option(value,value));
+      select.disabled=false;
+    }catch(err){
+      if(run!==officeLoadSerial)return;
+      if(err.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
+      select.replaceChildren(new Option('교육청 목록을 다시 불러오려면 시도를 다시 선택하세요',''));
+      select.disabled=true;
     }
-    search(true);
   });
   $('officeSelect').addEventListener('change', () => search(true));
+  // Sort is applied by the backend BEFORE pagination. Never sort only the 20 visible cards.
+  for(const button of document.querySelectorAll('#sortTabs [data-sort]')){
+    button.addEventListener('click',()=>{
+      if(!SORTS.has(button.dataset.sort))return;
+      selectedSort=button.dataset.sort;
+      for(const b of document.querySelectorAll('#sortTabs [data-sort]'))
+        b.setAttribute('aria-pressed',String(b===button));
+      void search(true);
+    });
+  }
   $('searchInput').addEventListener('input', () => {
     clearTimeout(timer); timer = setTimeout(() => search(true), 250);
   });
@@ -436,6 +425,20 @@
         level:1,
         percentile:percentilePanel(school)
       });
+      const sortValue=selectedSort==='beagu_percentile_2025'
+        ?(school.beagu_percentile_2025==null?'자료 없음':Number(school.beagu_percentile_2025).toFixed(2)+'%')
+        :selectedSort==='student_count'
+        ?(school.student_count==null?'자료 없음':Number(school.student_count).toLocaleString('ko-KR')+'명')
+        :selectedSort==='housing_price_won'
+        ?(school.housing_price_won==null?'자료 없음':Number(school.housing_price_won).toLocaleString('ko-KR')+'원')
+        :null;
+      if(sortValue!==null){
+        const tag=make('div','sort-result',
+          (selectedSort==='beagu_percentile_2025'?'2025 배구지수 백분위'
+           :selectedSort==='student_count'?'학생 수'+(school.student_reference_year?' ('+school.student_reference_year+'년 기준)':'')
+           :'행정구역 공동주택 평균 공시가격')+' · '+sortValue);
+        card.insertBefore(tag,button.parentNode===card?button:button.parentNode);
+      }
       button.setAttribute('aria-expanded', 'false');
       button.addEventListener('click', async (event) => {
         if (!detail.hidden) {
@@ -480,17 +483,10 @@
     }
     $('resultCount').textContent = '검색 중...';
     try {
-      let query = supabaseClient.from('schools')
-        .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status', {count:'exact'})
-        .eq('status','운영');
-      if (q) query = query.ilike('school_name', `%${q.replaceAll('%','\\%').replaceAll('_','\\_')}%`);
-      if (region) query = query.eq('sido_standard', region);
-      if (office) query = query.eq('support_office', office);
-      const start = page * LIMIT;
-      const {data, count, error} = await query.order('address', {ascending:true,nullsFirst:false})
-        .order('school_name', {ascending:true}).range(start,start + LIMIT - 1);
+      const response=await api('ranked_schools',{searchText:q,region,office,sort:selectedSort,page});
+      const data=Array.isArray(response.schools)?response.schools:[];
+      const count=Number(response.total)||0;
       if (request !== serial) return;
-      if (error) throw error;
       await loaded;
       if (request !== serial) return;
       if(!publicStaticAvailable) {
