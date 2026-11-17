@@ -131,6 +131,22 @@
       .logo { margin-bottom: 22px; }
       .description { margin-bottom: 22px; }
     }
+    /* 원래 홈 요소와 격리된 게임 섹션 */
+    .teacher-game-feature {
+      margin-top: 22px;
+      overflow: hidden;
+      border-radius: 20px;
+      color: #fff;
+      background: #10223d;
+      box-shadow: 0 8px 28px rgba(20, 40, 71, .15);
+    }
+    .teacher-game-header { padding: 23px 22px 0; }
+    .teacher-game-header h2 { margin: 0 0 8px; font-size: 23px; letter-spacing: -.6px; }
+    .teacher-game-header p { margin: 0; line-height: 1.55; font-size: 14px; color: #d3e3f5; }
+    .teacher-game-frame { display: block; width: 100%; height: 565px; border: 0; background: #10223d; }
+    .teacher-game-footer { padding: 0 22px 22px; text-align: right; }
+    .teacher-game-footer a { display: inline-block; color: #9be6db; font-weight: 750; font-size: 14px; text-underline-offset: 3px; }
+    .teacher-game-footer a:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
   </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
 </head>
@@ -172,6 +188,22 @@
 
     <a class="data-access-link" href="search.html">자료 열람</a>
 
+    <section class="teacher-game-feature" aria-labelledby="teacher-game-title">
+      <div class="teacher-game-header">
+        <h2 id="teacher-game-title">🏐 선생님배구</h2>
+        <p>쉬는 시간, 선생님의 배구 한 판! 레트로 2D 배구를 홈에서 바로 즐겨보세요.</p>
+      </div>
+      <iframe
+        class="teacher-game-frame"
+        id="teacher-game-frame"
+        src="teacher-volleyball.html"
+        title="선생님배구 — 직접 조작하는 1대1 배구 미니게임"
+        loading="lazy"
+        allowfullscreen></iframe>
+      <div class="teacher-game-footer"><a href="teacher-volleyball.html" target="_blank" rel="noopener noreferrer">큰 화면에서 게임하기 ↗</a></div>
+    </section>
+
+
     <section class="card" style="margin-top:20px" aria-label="방문 통계">
       <h2>방문한 선생님</h2>
       <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center">
@@ -186,6 +218,19 @@
 <script src="js/supabase-config.js"></script>
 <script src="js/visit-stats.js?v=20261117-visitfix1"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
+
+<script>
+  // 같은 사이트의 선생님배구에서 전송한 크기만 반영합니다.
+  (function () {
+    const frame = document.getElementById("teacher-game-frame");
+    window.addEventListener("message", function (event) {
+      if (!frame || event.origin !== window.location.origin || event.source !== frame.contentWindow) return;
+      if (!event.data || event.data.type !== "teacher-volleyball:resize") return;
+      const height = Number(event.data.height);
+      if (Number.isFinite(height) && height >= 250 && height <= 1300) frame.style.height = Math.ceil(height) + "px";
+    });
+  })();
+</script>
 
 </body>
 </html>
