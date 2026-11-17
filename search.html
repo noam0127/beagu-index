@@ -192,15 +192,17 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     return name.replace(/특별자치도|특별자치시|특별시|광역시/g,'');
   };
 
-  let publicParticipationIndex=new Set();
-  const participationReady=fetch('data/public-2025-participation-v1.json?v=20261118',{cache:'no-cache'})
-    .then(r=>{if(!r.ok)throw new Error('2025 참여 기록 조회 실패');return r.json()})
+  let publicParticipationByYear={};
+  const participationReady=fetch('data/public-2023-2025-school-records-v2.json?v=20261118',{cache:'no-cache'})
+    .then(r=>{if(!r.ok)throw new Error('학교별 조사 기록 조회 실패');return r.json()})
     .then(data=>{
-      if(data?.year!==2025||!Array.isArray(data.schoolIds)||
-        !data.schoolIds.every(id=>typeof id==='string'&&/^[A-Z0-9]{7}$/.test(id)))return;
-      publicParticipationIndex=new Set(data.schoolIds);
-    }).catch(error=>{console.warn('참여 기록 조회 실패, 기존 공개 자료만 표시',error)});
-  let percentileIndex = new Map();
+      const index=data?.schoolIdsByYear;
+      if(!index||!['2023','2024','2025'].every(y=>Array.isArray(index[y])&&
+        index[y].every(id=>typeof id==='string'&&/^[A-Z0-9]{7}$/.test(id))))return;
+      publicParticipationByYear=Object.fromEntries(
+        ['2023','2024','2025'].map(y=>[y,new Set(index[y])]));
+    }).catch(error=>{console.warn('학교별 조사 기록 조회 실패, 기존 공개 자료만 표시',error)});
+    let percentileIndex = new Map();
   let percentileLoadError = false, percentileStaticLoaded = false;
   const percentileReady = fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025', {cache:'no-cache'})
     .then(r => { if (!r.ok) throw new Error('백분위 자료 로딩 실패'); return r.json(); })
@@ -263,10 +265,12 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
         level:0,
         percentile:renderPercentiles(school)
       });
-      if(publicParticipationIndex.has(String(school.school_id))){
+      const recorded=['2023','2024','2025'].filter(y=>
+        publicParticipationByYear[y]?.has(String(school.school_id)));
+      if(recorded.length){
         const note=document.createElement('span');
         note.className='school-participation';
-        note.textContent='2025 조사 참여 기록 있음 · 공개된 문항별 결과와 별개';
+        note.textContent=recorded.join(' · ')+'년 조사 기록 있음 · 문항별 공개 결과와 별개';
         card.append(note);
       }
       const link=card.querySelector('.view-button');
