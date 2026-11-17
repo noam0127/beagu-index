@@ -132,4 +132,17 @@ for(const [year,count] of [['2023',2807],['2024',3284],['2025',1458]]){
 assert.ok(!('answers' in historicIndex)&&!('counts' in historicIndex)&&!('responses' in historicIndex));
 assert.deepEqual(historicIndex.schoolIdsByYear['2025'],participantFile.schoolIds);
 assert.ok(src.includes('data/public-2023-2025-school-records-v2.json?v=20261118'),'Public school report should load all three verified historical-year indexes');
+// A real published school survey percentile must not disappear from yearly details
+// simply because individual question results are separately restricted.
+assert.ok(html.includes('id="schoolSurveySnapshot"'),'Dedicated school survey result panel required');
+assert.ok(src.includes('function renderSchoolSurveySnapshot()'),'Annual report must render published school percentile');
+assert.ok(src.includes('const year=state.selected,entry=yearData(year),p=num(entry.percentile)'),'School percentile must use already vetted year-specific data');
+assert.ok(src.includes('value.textContent=p.toFixed(1)'),'Show actual vetted percentile without inventing a question mean');
+assert.ok(src.includes("year===2025") && src.includes('조사 비교집단 1,458개 학교'),'2025 sample interpretation must be explicit');
+assert.ok(src.includes('renderSchoolSurveySnapshot();'),'School results must render on year switch and async data refresh');
+assert.ok(src.includes("role==='school'?'학교별 문항 결과 미공개'"),'Distinguish missing detailed approval from no survey response');
+assert.ok(src.includes('학교별 종합 백분위와 구분'),'Do not misrepresent a published percentile as a question answer');
+assert.ok(src.includes('우리 학교 종합지표 공개 · 문항별 별도 검증'),'Show proper annual status when only the percentile is public');
+assert.ok(src.includes('if(![2023,2024].includes(year)')||src.includes('if(![2023,2024].includes(year)')||src.includes('if(![2023,2024].includes(year)'),'Keep school-question distributions limited to reviewed historical data');
+
 console.log('School report JS syntax, UI bindings and public/private separation: PASS');
