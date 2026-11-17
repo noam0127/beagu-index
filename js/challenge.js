@@ -2,6 +2,7 @@
   'use strict';
   const byId = id => document.getElementById(id);
   const status = byId('status'), capture = byId('capture'), retry = byId('retry');
+  const participantNo = byId('participantNo');
   let imageUrl = null, participant = null, busy = false;
   const deadline = (promise, ms, message) => {
     let timer;
@@ -26,7 +27,7 @@
         const n = Number(data);
         if (error || !Number.isSafeInteger(n) || n < 1) throw new Error('참여 순번을 확인하지 못했습니다. 다시 시도해주세요.');
         participant = n;
-        byId('participantNo').textContent = n.toLocaleString('ko-KR') + '번째';
+        participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
         if(window.BeaguChallengeProgress)void BeaguChallengeProgress.refresh();
       }
       status.textContent = '인증 이미지를 준비하고 있습니다.';
@@ -42,6 +43,7 @@
       capture.disabled = false;
       status.textContent = '인증 이미지가 준비되었습니다. 저장한 뒤 2단계에서 참여 인증을 진행해주세요.';
     } catch (error) {
+      if (participant === null) participantNo.textContent = '순번 조회 실패';
       status.textContent = error.message === 'STORAGE_UNAVAILABLE'
         ? '브라우저 저장 공간을 허용한 뒤 페이지를 새로고침해주세요.'
         : error.message || '처리하지 못했습니다. 다시 시도해주세요.';
