@@ -33,25 +33,62 @@
   button:focus-visible { outline: 3px solid #ffec93; outline-offset: 2px; }
   @media (hover: hover) and (pointer: fine) { .touch { display: none; } .game-shell { padding: 18px; } }
   @media(max-width: 380px) { .game-shell { padding: 9px; } .touch { gap: 5px; } .touch button { min-height: 47px; font-size: 13px; } .scoreboard { padding: 8px; } }
+
+/* 2.1 responsive volley arcade polish */
+body{background:#10223d;color:#f8fbff}
+.game-shell{max-width:1100px;padding:10px}
+.top{min-width:0;gap:5px;margin-bottom:8px}
+.brand{min-width:0;font-size:clamp(14px,4vw,17px);font-weight:900;letter-spacing:-.04em;overflow-wrap:anywhere}
+.top .beagu-brand-mark{width:30px;height:30px;border-radius:9px;font-size:21px}
+.pill{font-size:11px;padding:6px 9px;background:#203e5e;border-color:#426c91}
+.scoreboard{border-radius:15px 15px 0 0;grid-template-columns:minmax(0,1fr) 50px minmax(0,1fr);padding:12px 15px;
+  background:linear-gradient(125deg,#24486e,#1e3657);border:1px solid #557b9c}
+.team{min-width:0;font-size:12px;font-weight:850;color:#c0d8ed}
+.team span{overflow-wrap:anywhere}
+.team strong{font-size:clamp(23px,6vw,30px);line-height:1.15}
+.team:first-child strong{color:#a6f4ff}
+.team.right strong{color:#ffc0d4}
+.center-label{font-size:14px;letter-spacing:.04em;color:#fff5d1}
+.court{border:1px solid #547897;border-top:0;border-radius:0 0 15px 15px;box-shadow:0 12px 24px rgba(0,0,0,.2)}
+canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:default}
+.touch{gap:9px;margin-top:10px}
+.touch button{min-width:0;min-height:56px;border-radius:13px;background:linear-gradient(150deg,#365c80,#294a6a);border-color:#618aa9;
+  box-shadow:0 3px 0 #1b3651;font-size:clamp(13px,3.9vw,16px)}
+.touch button[data-key="spike"]{background:linear-gradient(150deg,#ffd58b,#f4a954);border-color:#ffe1a8;box-shadow:0 3px 0 #a57d42}
+.actions{gap:8px;margin-top:10px}
+.actions button{min-width:0;min-height:45px;font-size:14px;padding:9px 10px;border-radius:12px}
+.actions button.secondary{flex:0 0 59px}
+.actions button.auxiliary{flex:0 0 46px;background:#385372;color:#f8fbff}
+.status{min-height:18px;margin:8px 2px 0;font-size:12px;line-height:1.45;overflow-wrap:anywhere;white-space:normal;color:#f9e8bb}
+.hint{display:none}
+.mini-help{margin-top:7px;padding:9px 10px;border:1px solid #4d7292;border-radius:10px;
+  background:#1c3856;color:#d9eafa;font-size:12px;line-height:1.6;overflow-wrap:anywhere;text-align:center}
+.mini-help[hidden]{display:none}
+@media(hover:hover) and (pointer:fine){.game-shell{padding:12px}.touch{display:none}}
+@media(max-width:380px){
+ .game-shell{padding:7px}.top{flex-wrap:wrap}.pill{font-size:10px}
+ .scoreboard{padding:9px;gap:4px;grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr)}
+ .team{font-size:10px}.team strong{font-size:23px}.center-label{font-size:12px}
+ .touch{gap:6px}.touch button{font-size:13px;min-height:50px}
+}
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
 </head>
 <body>
 <main class="game-shell">
-  <div class="top"><span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="beagu-brand-mark" aria-hidden="true">B</span>선생님배구</span><span class="pill">레트로 1:1 · VS 컴퓨터</span></div>
+  <div class="top"><span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="beagu-brand-mark" aria-hidden="true">B</span>선생님배구</span><span class="pill">7점 경기</span></div>
   <div class="scoreboard" aria-label="현재 점수">
-    <div class="team"><span>나 · 파란 선생님</span><strong id="player-score">0</strong></div>
-    <div class="center-label">FIRST TO 7*</div>
-    <div class="team right"><span>컴퓨터 · 분홍 선생님</span><strong id="cpu-score">0</strong></div>
+    <div class="team"><span>나</span><strong id="player-score">0</strong></div>
+    <div class="center-label">VS</div>
+    <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong></div>
   </div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
   <div class="touch" aria-label="모바일 점프와 스파이크 조작 버튼">
     <button type="button" data-key="spike">⚡ 스파이크</button>
     <button type="button" data-key="jump">↑ 점프</button>
   </div>
-  <div class="actions"><button type="button" id="start">경기 시작</button><button type="button" class="secondary" id="pause" disabled>일시정지</button></div>
-  <div class="status" id="status" aria-live="polite">7점 이상, 2점 차이가 나면 승리!</div>
-  <p class="hint">PC: A / D 또는 ← / → 이동 · W / ↑ / Space 점프 · J / K 스파이크<br>휴대전화: 경기장을 터치·드래그해 이동, 위로 쓸어 점프 · 왼쪽 스파이크 버튼을 누르세요.</p>
+  <div class="actions"><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>↔ A·D / 방향키 또는 드래그　↑ 점프·위로 밀기　⚡ J·K 또는 스파이크</div>
 </main>
 <script>
 (function () {
@@ -63,6 +100,7 @@
   const startButton = document.getElementById("start");
   const pauseButton = document.getElementById("pause");
   const status = document.getElementById("status");
+  const helpButton=document.getElementById("help"),helpPanel=document.getElementById("help-panel");
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 305, NET_W = 14, R = 16;
   const keys = { left: false, right: false, jump: false, spike: false };
   const touchControl = { pointerId: null, targetX: null, startY: 0, swiped: false, jumpRequested: false };
@@ -75,9 +113,10 @@
   function syncUI() {
     scoreP.textContent = String(state.leftScore);
     scoreC.textContent = String(state.rightScore);
-    startButton.textContent = state.phase === "finished" ? "다시 대결" : state.phase === "ready" ? "경기 시작" : "처음부터";
+    startButton.textContent = state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "↻ 다시 시작";
     pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point";
-    pauseButton.textContent = state.phase === "paused" ? "이어하기" : "일시정지";
+    pauseButton.textContent = state.phase === "paused" ? "▶" : "⏸";
+    pauseButton.setAttribute("aria-label",state.phase === "paused"?"계속하기":"일시정지");
   }
   function resetPositions() {
     Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false });
@@ -99,7 +138,7 @@
     state.message = "";
     state.flash = 0;
     resetPositions();
-    setStatus("공을 상대 진영에 떨어뜨리세요!");
+    setStatus("");
     syncUI();
     canvas.focus();
   }
@@ -107,10 +146,10 @@
     if (state.phase === "playing") {
       state.phase = "paused";
       releaseKeys();
-      setStatus("잠시 쉬는 중");
+      setStatus("일시정지");
     } else if (state.phase === "paused") {
       state.phase = "playing";
-      setStatus("경기 재개!");
+      setStatus("");
     }
     syncUI();
   }
@@ -180,6 +219,7 @@
   });
   startButton.addEventListener("click", startMatch);
   pauseButton.addEventListener("click", pause);
+  helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
   window.addEventListener("blur", () => { releaseKeys(); if (state.phase === "playing") pause(); });
   document.addEventListener("visibilitychange", () => { if (document.hidden && state.phase === "playing") pause(); });
   function controlPlayer(p, direction, jump, speed) {
@@ -224,11 +264,11 @@
     state.pointTicks = 100;
     state.serveLeft = !leftWins;
     if (leftWins) state.leftScore += 1; else state.rightScore += 1;
-    state.message = leftWins ? "나이스! 선생님 득점!" : "앗! 컴퓨터 선생님 득점!";
+    state.message = leftWins ? "득점! +1" : "실점!";
     setStatus(state.message);
     if ((state.leftScore >= 7 || state.rightScore >= 7) && Math.abs(state.leftScore - state.rightScore) >= 2) {
       state.phase = "finished";
-      state.winner = state.leftScore > state.rightScore ? "승리! 오늘의 배구왕 🏆" : "아쉽게 패배! 다시 도전해요";
+      state.winner = state.leftScore > state.rightScore ? "🏆 승리!" : "다시 도전!";
       state.message = state.winner;
       setStatus(state.winner);
     }
@@ -237,7 +277,7 @@
   function step() {
     if (state.flash > 0) state.flash--;
     if (state.phase === "point") {
-      if (--state.pointTicks <= 0) { state.phase = "playing"; state.message = ""; resetPositions(); syncUI(); setStatus("다음 랠리!"); }
+      if (--state.pointTicks <= 0) { state.phase = "playing"; state.message = ""; resetPositions(); syncUI(); setStatus(""); }
       return;
     }
     if (state.phase !== "playing") return;
@@ -380,10 +420,10 @@
     drawTeacher(right, "#ec7b97");
     drawBall();
     if (state.flash > 0) textLabel("NICE SPIKE!", left.x + 85, left.y - 115, 23, "#db5c2e");
-    if (state.phase === "ready") overlay("🏐 선생님배구", "경기 시작 버튼을 눌러주세요");
-    else if (state.phase === "paused") overlay("일시정지", "이어하기를 눌러주세요");
-    else if (state.phase === "point") overlay(state.message, "잠시 후 다음 랠리!");
-    else if (state.phase === "finished") overlay(state.winner, "다시 대결 버튼을 눌러주세요");
+    if (state.phase === "ready") overlay("🏐 선생님배구", "");
+    else if (state.phase === "paused") overlay("⏸ 일시정지", "");
+    else if (state.phase === "point") overlay(state.message, "");
+    else if (state.phase === "finished") overlay(state.winner, "");
   }
   let last = 0, accumulator = 0;
   function frame(time) {
