@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {Script} from 'node:vm';
+
+const read=path=>readFileSync(path,'utf8');
+const home=read('index.html');
+const display=read('js/2026-form-count.js');
+const ingest=read('supabase/functions/beagu-2026-public-count-ingest/index.ts');
+const sync=read('scripts/beagu-2026-noon-sync.gs');
+const lv1=read('js/level-search.js');
+const report=read('school-report.html');
+const setup=read('docs/2026-live-aggregate-setup.md');
+
+assert.doesNotThrow(()=>new Script(display));
+assert.doesNotThrow(()=>new Script(sync));
+assert.match(home,/data-beagu-2026-form-count/);
+assert.match(home,/js\/2026-form-count\.js\?v=/);
+assert.match(home,/data-xp-progress/,'Challenge ordinal retained separately');
+assert.match(home,/2026년 11월 1일 이후 접수된 설문 응답/);
+assert.match(display,/\.from\('beagu_2026_public_progress'\)/);
+assert.match(display,/select\('official_submission_rows,refreshed_at,publish_policy'\)/);
+assert.doesNotMatch(display,/survey_answers|survey_submissions|survey_responses|beagu_private|school_id/i);
+assert.match(display,/집계 연동 대기/,'Unavailable is not silently 0');
+assert.match(sync,/scanned-prelaunch-undated/,'Exclude prelaunch and undated forms');
+assert.match(sync,/BEAGU_2026_INGEST_TOKEN/);
+assert.match(sync,/publishBeagu2026NationalCount/);
+assert.match(sync,/onBeagu2026FormSubmitted/);
+assert.match(ingest,/INGEST_NOT_CONFIGURED/,'No secret means fail closed');
+assert.match(ingest,/UNAUTHORIZED/);
+assert.match(ingest,/BEAGU_2026_INGEST_TOKEN/);
+assert.match(ingest,/body\.official_submission_rows/);
+assert.match(ingest,/body\.source_spreadsheet_id!==sourceId/);
+assert.doesNotMatch(ingest,/survey_answers|survey_submissions|school_id|response_distribution/);
+assert.match(lv1,/전체 조사 문항·공개 상태 보기/);
+assert.match(report,/const check=await tierCall\('verify'\)/,'Token must be revalidated before shared session is used');
+assert.match(setup,/Google Apps Script 실제 설치/);
+console.log('PASS: 2026 one-record nationwide publication is aggregate-only, fail-closed and separate from challenge and school results');
