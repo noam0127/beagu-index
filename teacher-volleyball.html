@@ -34,10 +34,11 @@
   @media (hover: hover) and (pointer: fine) { .touch { display: none; } .game-shell { padding: 18px; } }
   @media(max-width: 380px) { .game-shell { padding: 9px; } .touch { gap: 5px; } .touch button { min-height: 47px; font-size: 13px; } .scoreboard { padding: 8px; } }
 </style>
+<link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
 </head>
 <body>
 <main class="game-shell">
-  <div class="top"><span class="brand">🏐 선생님배구</span><span class="pill">레트로 1:1 · VS 컴퓨터</span></div>
+  <div class="top"><span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="beagu-brand-mark" aria-hidden="true">B</span>선생님배구</span><span class="pill">레트로 1:1 · VS 컴퓨터</span></div>
   <div class="scoreboard" aria-label="현재 점수">
     <div class="team"><span>나 · 파란 선생님</span><strong id="player-score">0</strong></div>
     <div class="center-label">FIRST TO 7*</div>
