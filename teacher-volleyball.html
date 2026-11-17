@@ -19,8 +19,8 @@
   .team strong { font-size: 24px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
   .center-label { color: #cddcf5; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
   .court { position: relative; overflow: hidden; border: 1px solid #436185; border-top: 0; background: #dbefff; }
-  canvas { display: block; width: 100%; height: auto; aspect-ratio: 9 / 5; touch-action: manipulation; }
-  .touch { display: grid; grid-template-columns: 1fr 1fr 1.1fr 1.25fr; gap: 8px; margin-top: 10px; }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 9 / 5; touch-action: none; cursor: crosshair; }
+  .touch { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
   .touch button { min-height: 52px; border: 1px solid #6888b3; border-radius: 12px; background: #304d73; color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; user-select: none; touch-action: none; -webkit-user-select: none; }
   .touch button[data-key="spike"] { background: #eaa84e; border-color: #f0c375; color: #2b2331; }
   .touch button.is-down { transform: translateY(2px); filter: brightness(1.18); }
@@ -44,15 +44,13 @@
     <div class="team right"><span>컴퓨터 · 분홍 선생님</span><strong id="cpu-score">0</strong></div>
   </div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
-  <div class="touch" aria-label="터치 조작 버튼">
-    <button type="button" data-key="left" aria-label="왼쪽으로 이동">◀ 이동</button>
-    <button type="button" data-key="right" aria-label="오른쪽으로 이동">이동 ▶</button>
-    <button type="button" data-key="jump">↑ 점프</button>
+  <div class="touch" aria-label="모바일 점프와 스파이크 조작 버튼">
     <button type="button" data-key="spike">⚡ 스파이크</button>
+    <button type="button" data-key="jump">↑ 점프</button>
   </div>
   <div class="actions"><button type="button" id="start">경기 시작</button><button type="button" class="secondary" id="pause" disabled>일시정지</button></div>
   <div class="status" id="status" aria-live="polite">7점 이상, 2점 차이가 나면 승리!</div>
-  <p class="hint">PC: A / D 또는 ← / → 이동 · W / ↑ / Space 점프 · J / K 스파이크<br>휴대전화: 아래 터치 버튼으로 조작 · 온라인 저장 없이 즐길 수 있어요.</p>
+  <p class="hint">PC: A / D 또는 ← / → 이동 · W / ↑ / Space 점프 · J / K 스파이크<br>휴대전화: 경기장을 터치·드래그해 이동, 위로 쓸어 점프 · 왼쪽 스파이크 버튼을 누르세요.</p>
 </main>
 <script>
 (function () {
@@ -66,6 +64,7 @@
   const status = document.getElementById("status");
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 305, NET_W = 14, R = 16;
   const keys = { left: false, right: false, jump: false, spike: false };
+  const touchControl = { pointerId: null, targetX: null, startY: 0, swiped: false, jumpRequested: false };
   const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!" };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, side: "left", jumpLock: false };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
@@ -92,6 +91,7 @@
   function startMatch() {
     state.leftScore = 0;
     state.rightScore = 0;
+    releaseKeys();
     state.serveLeft = Math.random() < 0.5;
     state.phase = "playing";
     state.winner = "";
@@ -115,6 +115,9 @@
   }
   function releaseKeys() {
     Object.keys(keys).forEach(k => { keys[k] = false; });
+    touchControl.pointerId = null;
+    touchControl.targetX = null;
+    touchControl.jumpRequested = false;
     document.querySelectorAll(".touch button").forEach(b => b.classList.remove("is-down"));
   }
   const codes = { KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "jump", ArrowUp: "jump", Space: "jump", KeyJ: "spike", KeyK: "spike" };
@@ -126,6 +129,41 @@
     keys[key] = true;
   });
   document.addEventListener("keyup", e => { if (codes[e.code]) keys[codes[e.code]] = false; });
+  // 모바일에서는 경기장에 손가락을 대거나 드래그하면 해당 위치로 이동합니다.
+  // 위로 밀면 한 번 점프합니다. 점프 버튼은 별도로 제공하여 접근성을 높입니다.
+  function targetFromPointer(e) {
+    const bounds = canvas.getBoundingClientRect();
+    if (!bounds.width) return;
+    const relativeX = (e.clientX - bounds.left) * (W / bounds.width);
+    touchControl.targetX = clamp(relativeX, 35, NET_X - NET_W / 2 - 36);
+  }
+  canvas.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" || state.phase !== "playing" || touchControl.pointerId !== null) return;
+    e.preventDefault();
+    touchControl.pointerId = e.pointerId;
+    touchControl.startY = e.clientY;
+    touchControl.swiped = false;
+    targetFromPointer(e);
+    if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (touchControl.pointerId !== e.pointerId) return;
+    e.preventDefault();
+    targetFromPointer(e);
+    if (!touchControl.swiped && touchControl.startY - e.clientY >= 24) {
+      touchControl.jumpRequested = true;
+      touchControl.swiped = true;
+    }
+  });
+  function endCourtTouch(e) {
+    if (touchControl.pointerId !== e.pointerId) return;
+    touchControl.pointerId = null;
+    // 짧게 탭해도 지정한 위치까지 이동합니다.
+    if (e.type === "pointercancel") touchControl.targetX = null;
+  }
+  canvas.addEventListener("pointerup", endCourtTouch);
+  canvas.addEventListener("pointercancel", endCourtTouch);
+  canvas.addEventListener("lostpointercapture", endCourtTouch);
   document.querySelectorAll(".touch button").forEach(button => {
     const key = button.dataset.key;
     button.addEventListener("pointerdown", e => {
@@ -202,7 +240,15 @@
       return;
     }
     if (state.phase !== "playing") return;
-    controlPlayer(left, (keys.right ? 1 : 0) - (keys.left ? 1 : 0), keys.jump, 5);
+    const keyboardDirection = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+    let direction = keyboardDirection;
+    if (!direction && touchControl.targetX !== null) {
+      const difference = touchControl.targetX - left.x;
+      if (Math.abs(difference) > 5) direction = Math.sign(difference);
+      else touchControl.targetX = null;
+    }
+    controlPlayer(left, direction, keys.jump || touchControl.jumpRequested, 5);
+    touchControl.jumpRequested = false;
     moveAI();
     const previousX = ball.x, previousY = ball.y;
     ball.vy += .30;
