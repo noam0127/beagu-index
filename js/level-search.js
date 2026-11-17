@@ -20,6 +20,11 @@
   // exact school-support office string used for server-side filtering.
   const shortOfficeName=(full,region)=>{
     const raw=String(full||'').trim();
+    if(region==='경남'){
+      if(raw==='창원교육지원청')return '창원(본청)';
+      if(raw==='창원교육지원청(마산센터)')return '마산센터';
+      if(raw==='창원교육지원청(진해센터)')return '진해센터';
+    }
     if(!raw.endsWith('교육지원청')){
       if(raw.endsWith('교육청'))return region+'교육청';
       return raw;
