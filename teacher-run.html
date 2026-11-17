@@ -289,14 +289,19 @@ function roundRect(x,y,w,h,r,color){
 }
 function background(){
  const palettes=[
-  ["#b1e5f8","#e3f7ef","#4e998e"],
-  ["#a9dcff","#eef5da","#468fa0"],
-  ["#ffdbac","#fff0d9","#bf8c5f"],
-  ["#dad0f8","#edf2ff","#7e82aa"],
-  ["#b9d9ff","#ffe5c9","#466fb2"]
+  ["#81d0e9","#c0e7ec","#287a8b"],
+  ["#8ab6f2","#d7ebff","#3b73ac"],
+  ["#f8b974","#ffdeb2","#ae5c59"],
+  ["#ba9be0","#d4bfe6","#70549d"],
+  ["#879df2","#ffbbbc","#54498e"]
  ];
  const p=palettes[day],g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,p[0]);g.addColorStop(1,p[1]);
  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+ // Dithered 8-bit background: small window pixels + scrolling sparkle blocks
+ for(let yy=10;yy<H-70;yy+=24){for(let xx=10;xx<W;xx+=24){
+  if(((xx/24+yy/24+day)%4)<1){ctx.fillStyle="rgba(10,49,91,.06)";ctx.fillRect(xx,yy,11,11);}
+ }}
+ for(let k=0;k<7;k++){const xx=(k*99+clock*12)%(W+26)-13,yy=75+(k*33)%170;ctx.fillStyle="rgba(255,255,255,.3)";ctx.fillRect(xx,yy,6,6);}
  // 바닥과 교실, 화면 폭에 반응하는 칠판과 창문
  const chalkW=Math.min(185,Math.max(80,W*.43)),chalkX=12,windowW=Math.min(112,Math.max(68,W*.28)),windowX=W-12-windowW;
  ctx.fillStyle="rgba(255,255,255,.3)";ctx.beginPath();ctx.arc(W*.74,58,64,0,Math.PI*2);ctx.fill();
@@ -313,17 +318,28 @@ function background(){
  for(let x=15;x<W;x+=117){roundRect(x,H-49,72,12,5,"#a97b61");roundRect(x+6,H-38,7,20,3,"#94694f");}
 }
 function playerDraw(){
- ctx.save();ctx.translate(player.x,player.y);
- const blink=player.inv>0&&Math.floor(clock*11)%2===0;
- if(blink)ctx.globalAlpha=.43;
- if(player.dashTime>0){ctx.fillStyle="rgba(255,222,120,.28)";ctx.beginPath();ctx.arc(0,0,38,0,Math.PI*2);ctx.fill();}
- ctx.fillStyle="#325775";ctx.beginPath();ctx.ellipse(0,28,25,6,0,0,Math.PI*2);ctx.fill();
- roundRect(-19,-5,38,37,11,"#3e6b9c");roundRect(-12,10,24,16,4,"#c4ecf0");
- ctx.fillStyle="#f9cda7";ctx.beginPath();ctx.arc(0,-17,17,0,Math.PI*2);ctx.fill();
- ctx.fillStyle="#253349";ctx.beginPath();ctx.arc(0,-23,17,Math.PI,Math.PI*2);ctx.lineTo(16,-17);ctx.lineTo(-15,-17);ctx.fill();
- ctx.fillStyle="#1b334f";ctx.beginPath();ctx.arc(-5,-15,1.7,0,Math.PI*2);ctx.arc(5,-15,1.7,0,Math.PI*2);ctx.fill();
- ctx.strokeStyle="#865c53";ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(0,-9,4,0,Math.PI);ctx.stroke();
- roundRect(-18,27,14,10,4,"#2c445b");roundRect(4,27,14,10,4,"#2c445b");
+ ctx.save();ctx.translate(Math.round(player.x),Math.round(player.y));
+ if(player.inv>0&&Math.floor(clock*12)%2===0)ctx.globalAlpha=.45;
+ if(player.dashTime>0){
+  ctx.fillStyle="rgba(255,236,119,.22)";ctx.fillRect(-39,-50,78,80);
+  ctx.strokeStyle="#ffe873";ctx.lineWidth=3;ctx.strokeRect(-39,-50,78,80);
+ }
+ // 16-bit style sprite made of solid square pixels
+ const px=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
+ px(-24,27,17,8,"#0b213f");px(7,27,17,8,"#0b213f");
+ px(-25,23,20,8,"#ffffff");px(5,23,20,8,"#ffffff");
+ px(-22,4,14,22,"#253b6f");px(8,4,14,22,"#253b6f");
+ px(-27,-9,54,34,"#10263f");px(-24,-6,48,28,"#4a84c9");
+ px(-24,-3,7,20,"#244d96");px(17,-3,7,20,"#244d96");
+ px(-14,6,28,7,"#d5f4ff");px(-10,13,20,6,"#ffe381");
+ px(-26,-36,52,27,"#183a4a");
+ px(-19,-39,38,32,"#f5c69d");
+ px(-18,-44,36,12,"#1a2e54");px(-21,-40,9,15,"#1a2e54");px(13,-41,8,15,"#1a2e54");
+ px(-12,-24,5,5,"#11263f");px(7,-24,5,5,"#11263f");
+ px(-3,-14,6,3,"#b97165");
+ px(-23,-2,6,15,"#f5c69d");px(17,-2,6,15,"#f5c69d");
+ // small badge
+ px(-9,0,18,4,"#ecf7fa");px(-5,4,10,4,"#ffd974");
  ctx.restore();
 }
 function drawItems(){
@@ -331,8 +347,9 @@ function drawItems(){
   ctx.save();ctx.translate(a.x,a.y);
   ctx.shadowColor="rgba(22,54,70,.25)";ctx.shadowBlur=12;ctx.shadowOffsetY=4;
   const shade=a.good?"#e1fff1":"#ffe9e1",edge=a.good?"#27a781":"#df7672";
-  roundRect(-25,-25,50,50,13,shade);ctx.shadowBlur=0;ctx.shadowOffsetY=0;
-  ctx.lineWidth=2.5;ctx.strokeStyle=edge;ctx.beginPath();ctx.roundRect(-23,-23,46,46,11);ctx.stroke();
+  ctx.fillStyle="#17294c";ctx.fillRect(-27,-27,54,54);ctx.fillStyle=shade;ctx.fillRect(-24,-24,48,48);
+  ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+  ctx.strokeStyle=edge;ctx.lineWidth=3;ctx.strokeRect(-24,-24,48,48);
   ctx.fillStyle=edge;ctx.beginPath();ctx.arc(18,-18,5,0,Math.PI*2);ctx.fill();
   ctx.textAlign="center";ctx.font="27px sans-serif";ctx.fillText(a.emoji,0,10,37);
   ctx.restore();
