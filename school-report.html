@@ -119,6 +119,52 @@
 .year-card.latest-year{background:#f2f7ff;border-color:#bcd1fb}
 .year-card.latest-year .year-label:after{content:'최신';font-size:10px;letter-spacing:0;color:#1d4ed8;background:#dbeafe;border-radius:6px;padding:2px 6px;margin-left:auto}
 @media(max-width:580px){.latest-year-status{padding:14px}.latest-year-status strong{font-size:14px}.year-card.latest-year .year-label:after{font-size:9px;padding:1px 4px}}
+
+/* 2026-11-18 — compact, mobile-first school comparisons and question cards. */
+.question-row{padding:14px 14px 18px}
+.question-row .question-visual{margin:0 0 10px;padding:18px;border-radius:17px;background:#fff;border:1px solid #e1e8f2;box-shadow:0 5px 22px rgba(30,53,91,.045)}
+.question-visual>.question-line{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;border-bottom:1px solid #edf1f7;padding-bottom:12px;margin:0 0 11px}
+.question-visual .question-label{color:#20304b;font-size:14px;font-weight:800;line-height:1.5;letter-spacing:-.025em}
+.question-visual .question-value{color:#6a7890;font-size:11px;max-width:40%;flex:0 0 auto}
+.question-visual-directions{font-size:11px;line-height:1.45;gap:12px;margin:2px 0;color:#62748c}
+.question-visual-directions span{max-width:48%}
+.question-visual-axis{height:54px;margin:7px 4px 10px}
+.question-visual-values{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding-top:12px}
+.question-visual-value{border:1px solid #e7ecf5;background:#f8fafc;border-radius:12px;padding:11px 9px;min-width:0;text-align:left}
+.question-visual-value span{font-size:11px;font-weight:800;line-height:1.35;word-break:keep-all}
+.question-visual-value strong{display:block;font-size:12px;color:#2b3a52;font-weight:650;line-height:1.6;overflow-wrap:anywhere;word-break:keep-all}
+.question-visual-value.nation{border-top:3px solid #2563eb}
+.question-visual-value.region{border-top:3px solid #16a34a}
+.question-visual-value.school{border-top:3px solid #7c3aed}
+.question-visual-notice{margin:9px 0 0;font-size:10px;color:#7a879b}
+.question-row>.question-choices{margin:10px 0 0;background:#f7f9fc;border:1px solid #edf1f6;border-radius:13px;padding:12px 14px}
+.question-row .question-choices h5{font-size:11px;font-weight:750;color:#8a97ab;margin-bottom:5px}
+.question-row .question-choices li{font-size:11px;line-height:1.7;color:#64748b}
+.question-row>.question-meta{margin:8px 2px;font-size:11px;color:#64748b}
+.approved-summary .summary-metric{min-width:0;overflow:hidden}
+.approved-summary .summary-metric.school-only-metric{display:flex;align-items:center;gap:15px;border:1px solid #e2eaf5;background:#fff;border-radius:14px;padding:15px}
+.approved-summary .summary-metric.school-only-metric>span{font-weight:750;color:#4b5c75}
+.approved-summary .summary-metric.school-only-metric>strong{font-size:17px;color:#283f61;font-weight:850;white-space:normal;text-align:right;overflow-wrap:anywhere}
+.approved-summary .summary-metric.compare-metric{background:#fff;border:1px solid #e2eaf5;border-radius:16px;padding:17px;box-shadow:0 4px 16px rgba(38,72,120,.035)}
+.approved-summary .summary-metric.compare-metric>.compare-label{font-size:14px}
+.benchmark-values{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-width:0}
+.benchmark-values>span{border:1px solid #e4eaf4;background:#f8fafc;border-radius:11px;padding:10px 8px;min-width:0;overflow:hidden}
+.benchmark-values>span strong{display:block;max-width:100%;font-size:clamp(11px,1.15vw,15px);line-height:1.45;color:#27374f;white-space:normal;overflow-wrap:anywhere;word-break:break-word;font-variant-numeric:tabular-nums}
+.benchmark-values>span small{display:block;font-size:11px;line-height:1.4;white-space:normal}
+.summary-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+@media(max-width:740px){
+ .summary-metrics{grid-template-columns:1fr}
+ .benchmark-values{grid-template-columns:1fr}
+ .benchmark-values>span{display:flex;flex-direction:row;justify-content:space-between;align-items:center;gap:12px;text-align:left;padding:11px 13px}
+ .benchmark-values>span small{flex:0 0 78px}
+ .benchmark-values>span strong{font-size:14px;text-align:right}
+ .question-visual-values{grid-template-columns:1fr;gap:7px}
+ .question-visual-value{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:9px 12px}
+ .question-visual-value span{flex:0 0 91px;margin:0}
+ .question-visual-value strong{flex:1;text-align:right;font-size:12px}
+ .question-row .question-visual{padding:12px 12px 14px}
+}
+
 </style>
 </head>
 <body>
@@ -1195,6 +1241,7 @@
         '<p class="approved-empty">Lv.0에서는 학교 개요와 공개 백분위를 볼 수 있습니다. '+
         'Lv.1 인증 후에는 검증된 학교별 수치와 전국·지역 비교, 승인된 설문 응답 분포를 추가로 확인할 수 있습니다.</p>';return;
     }
+    const singleSchoolFacts=new Set(['설립구분','설립유형','교감수','급식장소']);
     const unique=[...new Map(list.filter(x=>x&&typeof x.label==='string'&&x.label.length<=80&&
         typeof x.value==='string'&&x.value.length<=90&&!isSchoolOverviewRepeat(x))
       .map(x=>[(x.group||'승인된 설문 영역 요약')+':'+x.label,x])).values()];
@@ -1210,11 +1257,12 @@
         return rows.length?'<h5 class="approved-subheading">'+escapeHTML(g==='편집본 공식 학교정보'?'연도별 학교 지표':g)+'</h5><div class="summary-metrics">'+
           rows.map(x=>{
             const official=x.group==='편집본 공식 학교정보';
-            const compared=official&&x.comparisonKind;
+            const onlySchool=official&&singleSchoolFacts.has(normalizedOverviewLabel(x.label));
+            const compared=official&&x.comparisonKind&&!onlySchool;
             const kind=x.comparisonKind==='mode'?'최다 선택 보기':'평균';
             const safe=v=>typeof v==='string'&&v.length<90?escapeHTML(v):'비교 자료 없음';
             const benchmark=compared?schoolBenchmark(x):'';
-            return '<div class="summary-metric'+(benchmark?' compare-metric':'')+'"><span class="'+(benchmark?'compare-label':'')+'">'+escapeHTML(x.label)+'</span>'+
+            return '<div class="summary-metric'+(benchmark?' compare-metric':(onlySchool?' school-only-metric':''))+'"><span class="'+(benchmark?'compare-label':'')+'">'+escapeHTML(x.label)+'</span>'+
               (benchmark|| (compared?
                 '<div class="school-compare-grid">'+
                 '<div class="school-compare-cell"><span class="compare-caption">우리 학교</span><strong>'+escapeHTML(x.value)+'</strong></div>'+
@@ -1677,9 +1725,6 @@
   function questionComparisonVisual({nation,regional,school,kindNation,kindRegion,options,year,area}){
     const root=document.createElement('section');
     root.className='question-visual';
-    const title=document.createElement('h5');title.className='question-visual-heading';
-    title.textContent='전국 · '+(area||'지역')+' · 우리 학교';
-    root.append(title);
     const isOrdinal=kindNation==='ordinal_mean'&&kindRegion==='ordinal_mean'&&
       typeof nation==='string'&&typeof regional==='string';
     const n=isOrdinal?ordinalChoicePosition(nation,options):null;
@@ -1689,7 +1734,7 @@
       const extent=Math.max(Math.abs(r-n),Number.isInteger(k)?Math.abs(k-n):0,1);
       const position=v=>Math.max(12,Math.min(88,50+36*(v-n)/extent)).toFixed(1)+'%';
       const dir=document.createElement('div');dir.className='question-visual-directions';
-      dir.innerHTML='<span>← 평균 보기보다 낮은 응답 번호</span><span>높은 응답 번호 →</span>';
+      dir.innerHTML='<span>← 낮은 보기 번호</span><span>높은 보기 번호 →</span>';
       root.append(dir);
       const plot=document.createElement('div');plot.className='question-visual-axis';
       plot.setAttribute('role','img');
@@ -1703,15 +1748,15 @@
       root.append(plot);
     }else{
       const empty=document.createElement('div');empty.className='question-visual-empty';
-      empty.textContent=!nation&&!regional?'전국·지역 비교값이 아직 공개 승인되지 않았습니다.':
-        '확인된 보기 비교입니다. 선택형 문항은 순서가 없어 위치를 매기지 않습니다.';
+      empty.textContent=!nation&&!regional?'전국·지역 비교값 없음':
+        '선택지에 순서가 없어 가로 위치는 표시하지 않습니다.';
       root.append(empty);
     }
     const values=document.createElement('div');values.className='question-visual-values';
     for(const [role,label,value] of [
-      ['nation','전국 '+(kindNation==='most_frequent'?'최다 선택':'평균 가까운 보기'),nation],
-      ['region',(area||'지역')+' '+(kindRegion==='most_frequent'?'최다 선택':'평균 가까운 보기'),regional],
-      ['school','우리 학교 최다 선택',school]
+      ['nation','전국 '+(kindNation==='most_frequent'?'최다 선택':'평균 보기'),nation],
+      ['region',(area||'지역')+' '+(kindRegion==='most_frequent'?'최다 선택':'평균 보기'),regional],
+      ['school','우리 학교',school]
     ]){
       const cell=document.createElement('div');cell.className='question-visual-value '+role;
       const cap=document.createElement('span');cap.textContent=label;
@@ -1719,12 +1764,11 @@
       cell.append(cap,val);values.append(cell);
     }
     root.append(values);
-    const note=document.createElement('p');note.className='question-visual-notice';
-    note.textContent=isOrdinal&&Number.isInteger(n)&&Number.isInteger(r)
-      ?'원본 응답의 평균에 가장 가까운 선택지와 학교의 최다 선택 보기를 비교합니다. 실제 평균 점수나 학교 전체의 대표값은 아닙니다.'
-      :year===2026?'2026년 전국·지역 문항별 비교 집계가 공개 승인되면 표시됩니다.':
-       '검증된 원본 참고값만 사용합니다. 학교별 미승인 응답은 표시하지 않습니다.';
-    root.append(note);
+    if(isOrdinal&&Number.isInteger(n)&&Number.isInteger(r)){
+      const note=document.createElement('p');note.className='question-visual-notice';
+      note.textContent='선 위의 위치는 선택지 번호 비교입니다. 학교값은 승인된 최다 선택 보기입니다.';
+      root.append(note);
+    }
     return root;
   }
   function renderItem(item){
@@ -1741,8 +1785,8 @@
     if(isFreeText)meta.textContent='개인 식별 및 비공개 위험으로 자유서술 원문은 표시하지 않습니다.';
     else if(locked)meta.textContent='잠긴 영역입니다. 실제 값은 내려받지 않았으며 서버 인증과 공개 심사를 모두 통과해야 표시됩니다.';
     else if(displayed)meta.textContent='검수 및 공개 승인된 문항별 집계';
-    else meta.textContent=yearData(state.selected).approved?'이 문항은 공개된 통계가 없습니다.':'검수·공개 승인된 학교별 통계가 아직 없습니다.';
-    row.append(meta);
+    else meta.textContent='';
+    if(meta.textContent)row.append(meta);
     // Question and source-verified complete answer options are public questionnaire
     // metadata, not individual teacher responses.
     const full=state.selected===2026?window.Beagu2026Questionnaire?.[item.id]:null;
@@ -1752,7 +1796,7 @@
     heading.textContent=full?.kind==='grid'?'전체 그리드 보기 (행·열)':
       (state.selected===2025 && window.Beagu2025ObservedChoices?.[item.id] &&
        !window.BeaguHistoricalQuestionnaire?.[2025]?.[item.id])?
-      '원본 응답에서 확인된 보기 (일부 미선택 보기 누락 가능)':'전체 보기';
+      '확인된 보기':'보기';
     choices.append(heading);
     if(full?.kind==='grid'&&Array.isArray(full.rows)&&full.rows.length){
       const label=document.createElement('strong');label.textContent='질문 행';
@@ -1810,6 +1854,11 @@
         const notice=document.createElement('p');notice.className='question-visual-notice';
         notice.textContent='Lv.1 인증 후 검증된 전국·지역 참고값과 학교별 승인 집계를 볼 수 있습니다.';
         chart.append(title,notice);
+      }
+      const questionLine=row.querySelector('.question-line');
+      if(questionLine){
+        if(!locked)questionLine.querySelector('.question-value')?.remove();
+        chart.prepend(questionLine);
       }
       row.prepend(chart);
     }

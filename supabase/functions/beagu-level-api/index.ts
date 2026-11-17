@@ -226,10 +226,12 @@ Deno.serve(async(req:Request)=>{
     if(!bucket){bucket={year,access_level:required,summary:{metrics:[]}};facts.push(bucket)}
     const compare=index.get([year,sourceYear,fact_key].join(':'))||{};
     const fmt=category?(v:unknown)=>presentCategory(fact_key,v):(v:unknown)=>presentNumber(v,unit);
+    // These are school-level facts, not meaningful nationwide/regional comparisons.
+    const schoolOnly=new Set(['establishment_type','vice_principals','meal_place']).has(fact_key);
     bucket.summary.metrics.push({
       label,value,group:'편집본 공식 학교정보',
-      nationalAverage:fmt(compare.national),regionalAverage:fmt(compare.regional),
-      comparisonKind:category?'mode':'average',referenceYear:sourceYear
+      nationalAverage:schoolOnly?null:fmt(compare.national),regionalAverage:schoolOnly?null:fmt(compare.regional),
+      comparisonKind:schoolOnly?undefined:(category?'mode':'average'),referenceYear:sourceYear
     });
   };
   for(const fact of officialNumbers.data||[]){
