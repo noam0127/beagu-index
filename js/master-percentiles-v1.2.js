@@ -7,7 +7,7 @@
     if(!['public-lv0-20261027-v1.2','public-lv0-20261031-v1.3-empirical-2025'].includes(data?.data_version) || data.publication_status!=='LV0_EXISTING_PUBLIC_SCOPE' || !Array.isArray(data.rows)) throw new Error('Unsupported public data');
     const index=new Map();
     for(const row of data.rows){
-      if(typeof row.school_id!=='string' || !/^\d{7}$/.test(row.school_id) || index.has(row.school_id)) throw new Error('Invalid school identity');
+      if(typeof row.school_id!=='string' || !/^[A-Z0-9]{7}$/.test(row.school_id) || index.has(row.school_id)) throw new Error('Invalid school identity');
       if(!Array.isArray(row.percentiles) || row.percentiles.length!==3 || !Array.isArray(row.statuses) || row.statuses.length!==3) throw new Error('Invalid years');
       row.percentiles.forEach((v,i)=>{
         if(!allowed.has(row.statuses[i]) || (v!==null && !valid(v))) throw new Error('Invalid percentile');
