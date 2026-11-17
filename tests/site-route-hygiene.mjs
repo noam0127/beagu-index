@@ -16,8 +16,8 @@ assert.equal(css,original,'Canonical statistics CSS must preserve existing desig
 assert.match(stats,/href="styles\/statistics\.css\?v=20261031-canonical7"/);
 assert.doesNotMatch(stats,/href="css\//,'Broken statistics CSS link must not reappear');
 assert.match(stats,/src="js\/statistics-directory-v2\.js\?v=20261118-v2"/);
-assert.match(stats,/src="js\/statistics-compare\.js\?v=20261118-c4"/);
-assert.match(stats,/href="styles\/statistics-compare\.css\?v=20261118-c4"/);
+assert.match(stats,/src="js\/statistics-compare\.js\?v=20261118-c5"/);
+assert.match(stats,/href="styles\/statistics-compare\.css\?v=20261118-c5"/);
 assert.match(stats,/id="compareScroll"/);
 assert.match(stats,/id="compareSuggestions"/);
 assert.match(stats,/id="compareSelections"/);
@@ -45,7 +45,17 @@ assert.match(compareJS,/sessionStorage\.removeItem\(SESSION_KEY\)/);
 assert.match(compareJS,/state\.approvedBySchool\.clear\(\)/,'Protected cached values must clear on logout');
 assert.match(compareJS,/epoch===state\.authEpoch && token===state\.sessionToken/,'Stale fetches must not repopulate cached results');
 
-assert.match(stats,/기존 Lv\.0 공개본/,'Keep public scope reminder');
+assert.match(stats,/2023—2026/,'Compare now supports four years');
+assert.match(stats,/class="compare-heading-phrase">나란히 비교<\/span>/,'Heading phrase must stay on one line');
+assert.doesNotMatch(stats,/class="intro-tags"|class="compare-auth-help"/,'Crossed-out copy removed');
+assert.match(compareJS,/const YEARS = \[2023, 2024, 2025, 2026\]/);
+assert.match(compareJS,/eq\('publication_status','PUBLISHED'\)/,'2026 public values require publication');
+assert.match(compareJS,/beagu_school_report_yearly/,'2026 values must use RLS-protected annual table');
+assert.match(compareJS,/public2026Checked/,'Do not invent missing 2026 results');
+const questionCatalog=JSON.parse(read('data/public-statistics-question-catalog-v1.json'));
+assert.equal(questionCatalog.years['2026'].items.length,50,'Include verified 2026 Q01-Q50 only');
+assert.ok(!questionCatalog.years['2026'].items.some(item=>item.id==='Q51'),'Exclude free text');
+
 
 assert.match(oldResult,/location\.replace\(target\)/,'Legacy URLs must forward');
 assert.match(oldResult,/params\.get\('school_id'\)\|\|params\.get\('school'\)/);
