@@ -81,11 +81,11 @@ async function main() {
     } catch (e) { check(`배포 자산 일치: ${relative}`, false, e.message); }
   }
 
-  const releasePolicy=responses.get('release-policy.html')||'';
-  check('2026 공개·권한·비교 유의사항 안내 배포',
-    ['Lv.0','Lv.1','Q51','소표본','미공개'].every(v=>releasePolicy.includes(v)) &&
+  check('자료 공개·열람 기준 링크 제거',
     ['search.html','search-lv1.html','school-report.html','statistics.html']
-      .every(p=>(responses.get(p)||'').includes('release-policy.html')));
+      .every(p=>!(responses.get(p)||'').includes('href="release-policy.html"')));
+  check('1,000명 달성 후 공개 약속 문구 제거',
+    ['index.html','challenge.html'].every(p=>!(responses.get(p)||'').includes('1,000명 달성 시 2026 배구지수 자료를 공개합니다.')));
   const report = responses.get('school-report.html')||'';
   const html0 = responses.get('search.html')||'';
   const html1 = responses.get('search-lv1.html')||'';
