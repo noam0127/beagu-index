@@ -22,6 +22,17 @@ assert.match(sharedCardCSS,/\.school-card\{[^}]*border:2px solid #2563eb/, 'Each
 for(const page of pages){
   assert.match(read(page),/styles\/school-search-card-v1\.css\?v=20261118-blue-outline2/,page+' must load updated shared card border');
 }
+// Public search contains an inline Lv.1 login without disclosing codes.
+const publicHtml=read('search.html');
+for(const id of ['lv1QuickForm','lv1QuickCode','lv1QuickSubmit','lv1QuickMessage','lv1QuickAuthenticated']){
+  assert.match(publicHtml,new RegExp('id="'+id+'"'),'Missing first-screen Lv.1 login '+id);
+}
+assert.match(publicHtml,/id="lv1QuickCode" type="password"/,'Lv.1 code must be masked');
+assert.match(publicHtml,/action==='login'\?\{action,code\}/,'Authenticate using server-side login');
+assert.match(publicHtml,/Number\(data\.level\)<1/,'Reject weaker access codes');
+assert.match(publicHtml,/sessionStorage\.setItem\(key,data\.token\)/,'Store only server session token');
+assert.match(publicHtml,/window\.location\.assign\('search-lv1\.html'\)/,'Continue into authenticated search');
+assert.doesNotMatch(publicHtml,/localStorage\.setItem\(.*(?:code|password)/,'Do not store raw access codes');
 const lv0=read('search.html');
 assert.match(lv0,/data\/public-2023-2025-school-records-v2\.json/,'Lv.0 must show 2023-2025 historical presence');
 assert.match(lv0,/publicParticipationByYear\[y\]\?\.has\(String\(school\.school_id\)\)/,'School list must show historical school-year presence');
