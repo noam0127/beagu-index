@@ -52,7 +52,7 @@ async function main() {
     'statistics.html', 'styles/statistics.css', 'js/statistics-table.js',
     'result.html', 'survey.html', 'js/challenge.html',
     'challenge.html', 'js/challenge.js', 'js/challenge-progress-v1.js',
-    'styles/challenge-progress-v1.css', 'js/search-telemetry-v1.js',
+    'styles/challenge-progress-v1.css', 'styles/beagu-design-system-v1.css', 'teacher-volleyball.html', 'js/search-telemetry-v1.js',
     'lv2-edited-column-schema.json', 'data/public-lv0-percentiles-v1.2.json'
   ];
   const responses = new Map();
@@ -160,7 +160,9 @@ async function main() {
   check('학교 홈페이지 링크가 검색 결과에서 제거됨',
     ![html0,html1,html2,level1,level2,report].some(h=>h.includes('🌐 학교 홈페이지')));
   check('단일 자료열람 버튼·Lv.0/1·Lv.2 이전경로 통합', home.includes('class="data-access-link" href="search.html"') && html0.includes('id="searchInput"') && html0.includes('href="search-lv1.html"') && html2.includes('search-lv1.html') && !html2.includes('id="loginForm"'));
-  check('홈→챌린지 버튼 없음·기존 설문 연결', !home.includes('href="challenge.html"') && home.includes('https://forms.gle/TPyCakK6Sj2zchRy7'));
+  check('홈 상단 공통메뉴·기존 설문 연결', home.includes('beagu-global-nav') && home.includes('href="challenge.html"') && home.includes('https://forms.gle/TPyCakK6Sj2zchRy7'));
+check('전 페이지 B 로고·영문 VOLLEYBALL INDEX 제거', ['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html'].every(p=>(responses.get(p)||'').includes('beagu-brand-mark') && !(responses.get(p)||'').includes('VOLLEYBALL INDEX')));
+check('테스트 설문 비활성화', legacySurvey.includes('2026 배구지수 공식 설문') && !legacySurvey.includes('submit_survey'));
   check('챌린지 Lv.2 안내 제거·인증 기능 보존', !/Lv\.2|step-3|cafe\.naver\.com/.test(challengeHTML) && challengeHTML.includes('id="capture"') && challengeHTML.includes('id="loungeLink"'));
   check('2단계 열람 및 2026 새로고침', html1.includes('js/level-search.js') && level1.includes('const YEARS = [2023, 2024, 2025, 2026]') && level1.includes('2026년 승인 결과 새로고침'));
   check('학교 MBTI Lv.1·Lv.2 공통 자산 연결',
