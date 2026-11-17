@@ -89,7 +89,7 @@ assert.ok(src.includes("Number(data?.n)>=5"),'Existing privacy safeguards must n
 
 // One response is counted as participation, not released as one respondent's answer.
 assert.ok(html.includes('검증된 2025년 응답은 1건부터 참여 기록에 반영됩니다.'),'Explain one-response participation separately from result disclosure');
-assert.ok(html.includes('자료 검증·개인정보 보호 등 공개 기준을 충족했을 때'),'State that survey result publication is conditional');
+assert.ok(html.includes('자료 검증·개인정보 보호 등의 공개 기준을 충족하면'),'State that survey result publication is conditional');
 assert.ok(src.includes('state.participationYears=Array.isArray(r.participationYears)'),'Receive only vetted boolean participation years from the API');
 assert.ok(src.includes("participated?'참여 기록 있음 · 결과는 공개 조건에 따라 표시'"),'One participating response must not be presented as zero activity');
 assert.ok(src.includes('state.participationYears=[]'),'Clear participation on school change');
