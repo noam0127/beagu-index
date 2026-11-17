@@ -14,6 +14,8 @@ const xpScope={
 runInNewContext(xp,xpScope);
 const progress=xpScope.window.BeaguChallengeProgress;
 assert.equal(progress.GOAL,1000);
+assert.match(xp,/beagu_get_challenge_progress/,'XP must use the live database RPC');
+assert.match(xp,/event\.persisted/,'XP must refresh after back-forward cache restore');
 function target(){
  const controls=new Map();
  for(const k of ['number','remainder','progress','state']){
@@ -83,6 +85,9 @@ assert.doesNotMatch(xp,/beagu_join_challenge|Google\s*Forms\s*API|random\(\)/,'N
 
 const home=read('index.html'),challenge=read('challenge.html');
 for(const html of [home,challenge]){
+ assert.match(html,/2026 챌린지 · 목표 1,000명/);
+ assert.doesNotMatch(html,/2026 챌린지 XP · 목표 1,000명/);
+ assert.match(html,/js\/challenge-progress-v1\.js\?v=20261117-live1000/);
  assert.match(html,/data-beagu-xp/);
  assert.match(html,/styles\/challenge-progress-v1\.css/);
  assert.match(html,/js\/challenge-progress-v1\.js/);
