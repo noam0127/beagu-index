@@ -234,9 +234,9 @@ function refreshBeagu2026Stats() {
     replaceBody(destination.getSheetByName(BEAGU26.summaryTab),output,23);
     replaceBody(destination.getSheetByName(BEAGU26.holdTab),holds,6);
     matched=output.length;
-    // Publish a nationwide submission-row count even when only one official
-    // survey submission exists. Never publish single-school/single-teacher answers.
-    // An unavailable public bridge must not invalidate completed private results.
+    // Synchronize nationwide submission-row count to an INTERNAL service-role-only
+    // backend. Public counter UI and table SELECT permissions are disabled.
+    // Never transmit single-school or individual teacher answers.
     let publishStatus="SKIPPED";
     try{publishStatus=publishBeagu2026NationalCount(scanned-prelaunch-undated)}
     catch(e){publishStatus="PUBLIC_ERROR";Logger.log("National count publish: "+String(e.message||e).slice(0,100))}
