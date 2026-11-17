@@ -218,6 +218,7 @@ body { min-width: 0; }
   <link rel="stylesheet" href="styles/school-mbti-v1.css?v=20261031-mbti1">
   <link rel="stylesheet" href="styles/school-search-card-v1.css?v=20261031-independent5">
   <link rel="stylesheet" href="styles/school-detail-groups-v1.css?v=20261031-groups6">
+<link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
 </head>
 <body>
   <header class="participation-bar">
@@ -227,9 +228,10 @@ body { min-width: 0; }
   <main class="container">
     <nav class="topbar" aria-label="페이지 탐색">
       <a class="back" href="index.html" aria-label="배구지수 대문으로 돌아가기">←</a>
-      <a class="logo" href="index.html">VOLLEYBALL INDEX</a>
+      <a href="index.html" class="beagu-brand-link" aria-label="배구인덱스 홈"><span class="beagu-brand-mark" aria-hidden="true">B</span><span class="beagu-brand-word">배구인덱스</span></a>
       <a class="current-level" href="search.html" style="color:#1d4ed8;text-decoration:none">Lv.0 공개자료</a><span class="current-level">Lv.1</span>
     </nav>
+    <nav class="beagu-global-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html" aria-current="page">학교 검색</a><a href="statistics.html">통계표</a><a href="challenge.html">참여 인증</a></nav>
 
     <section class="auth-card" id="loginPanel" aria-labelledby="loginTitle">
       <div class="tier-label">LEVEL 1 · 참여자 열람</div>
@@ -288,7 +290,7 @@ body { min-width: 0; }
       <div id="pager" class="pager" hidden>
         <button id="prevPage" type="button">이전</button><span id="pageInfo" aria-live="polite"></span><button id="nextPage" type="button">다음</button>
       </div>
-      <p class="legal-note"><strong>공개 안내:</strong> 검증된 2025년 응답은 1건부터 참여 기록에 반영됩니다. 문항별 결과는 응답 횟수와 검수·개인정보 보호 등의 공개 조건을 충족하면 표시됩니다.</p>
+      <p class="beagu-content-note"><strong>자료 표시 기준</strong> · 학교 참여 여부와 공개 승인된 학교별 문항 결과는 다릅니다. 문항별 결과는 검수와 개인정보 보호 심사를 통과한 경우만 표시합니다.</p>
       <p class="legal-note">Lv.1에서 공개 승인된 2023~2026년 학교 규모·시설·급식·행정·조사 통계를 연도별로 살펴볼 수 있습니다. 2026 학교 MBTI는 Q14~Q17 응답이 충분하고 검수·승인된 경우에만 표시됩니다. 응답이 적거나 검수되지 않은 항목은 제공되지 않습니다. 2025년 백분위는 8개 영역 종합값을 조사 비교집단 1,458개교와 비교해 재산출했습니다. 99%는 조사 비교집단 상위 약 1%이며, 2023·2024년과 산식이 달라 연도 간 직접 비교는 주의해 주세요.</p>
     </section>
     
