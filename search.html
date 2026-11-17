@@ -48,6 +48,32 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 .percentile-cell.percentile-locked .percentile-value{display:block;color:#47658d;font-weight:700}.percentile-cell.percentile-locked .percentile-value::before{content:'▦ ▥ ▦';display:block;letter-spacing:3px;font-size:18px;line-height:1.2;filter:blur(2.5px);color:#8296b6;margin-bottom:4px}
 @media(max-width:480px){.percentile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.percentile-value{font-size:15px}}
 .school-participation{display:block;width:fit-content;max-width:100%;margin:10px 0 0;padding:7px 11px;border-radius:999px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;font-size:11px;line-height:1.45;font-weight:750;word-break:keep-all}
+
+/* Lv.1 quick authentication inside the public school-search landing page. */
+.lv1-quick-auth{margin:0 0 24px;padding:18px 18px 16px;background:#fff;border:1px solid #c8dcff;border-radius:16px;box-shadow:0 4px 18px rgba(37,99,235,.055)}
+.lv1-quick-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:11px}
+.lv1-quick-head h2{margin:0;font-size:17px;font-weight:800;color:#1e3a8a;letter-spacing:-.035em}
+.lv1-quick-head small{font-size:12px;color:#64748b;font-weight:600}
+.lv1-quick-label{display:block;margin-bottom:6px;font-size:12px;font-weight:750;color:#475569}
+.lv1-quick-row{display:flex;align-items:stretch;gap:8px;min-width:0}
+.lv1-quick-input-wrap{position:relative;min-width:0;flex:1}
+.lv1-quick-input{width:100%;height:47px;border:1px solid #cbd5e1;border-radius:11px;background:#fff;padding:11px 60px 11px 13px;font-size:15px;color:#14213b;outline:none}
+.lv1-quick-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px #dbeafe}
+.lv1-quick-toggle{position:absolute;right:5px;top:5px;min-width:47px;min-height:37px;border:0;background:#eff6ff;border-radius:8px;color:#1d4ed8;font-size:12px;font-weight:800;cursor:pointer}
+.lv1-quick-submit,.lv1-quick-open{display:inline-flex;justify-content:center;align-items:center;min-height:47px;padding:11px 17px;border:0;border-radius:11px;background:#2563eb;color:#fff;font-size:13px;font-weight:800;text-decoration:none;white-space:nowrap;cursor:pointer}
+.lv1-quick-submit:hover,.lv1-quick-open:hover{background:#1d4ed8}
+.lv1-quick-submit:disabled{opacity:.55;cursor:wait}
+.lv1-quick-message{margin:8px 0 0;font-size:12px;color:#b91c1c;min-height:0}
+.lv1-quick-message:empty{display:none}
+.lv1-quick-authenticated{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.lv1-quick-authenticated span{font-size:13px;font-weight:750;color:#166534}
+@media(max-width:440px){
+ .lv1-quick-auth{padding:15px;margin-bottom:21px}
+ .lv1-quick-row{flex-wrap:wrap}
+ .lv1-quick-input-wrap{flex:1 1 100%}
+ .lv1-quick-submit{width:100%}
+ .lv1-quick-open{width:100%}
+}
 </style>
   <link rel="stylesheet" href="styles/school-search-card-v1.css?v=20261118-blue-outline2">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
@@ -63,6 +89,27 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 <nav class="beagu-global-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html" aria-current="page">학교 검색</a><a href="statistics.html">학교 비교</a><a href="challenge.html">참여 인증</a></nav>
 <h1>학교를 찾아보세요</h1>
 <p class="description">전국 초등학교를 학교명과 지역으로 검색할 수 있습니다.</p>
+<section class="lv1-quick-auth" id="lv1QuickAuth" aria-labelledby="lv1QuickTitle">
+  <div class="lv1-quick-head">
+    <h2 id="lv1QuickTitle">Lv.1 참여자 인증</h2>
+    <small>참여코드로 학교별 상세자료 열람</small>
+  </div>
+  <form id="lv1QuickForm" autocomplete="off">
+    <label class="lv1-quick-label" for="lv1QuickCode">Lv.1 비밀번호(참여코드)</label>
+    <div class="lv1-quick-row">
+      <div class="lv1-quick-input-wrap">
+        <input class="lv1-quick-input" id="lv1QuickCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" placeholder="참여코드를 입력하세요" required>
+        <button class="lv1-quick-toggle" id="lv1QuickToggle" type="button" aria-label="비밀번호 표시" aria-pressed="false">보기</button>
+      </div>
+      <button class="lv1-quick-submit" id="lv1QuickSubmit" type="submit">Lv.1 인증하기</button>
+    </div>
+  </form>
+  <p class="lv1-quick-message" id="lv1QuickMessage" role="status" aria-live="polite"></p>
+  <div class="lv1-quick-authenticated" id="lv1QuickAuthenticated" hidden>
+    <span>✓ Lv.1 인증됨</span>
+    <a class="lv1-quick-open" href="search-lv1.html">Lv.1 학교 검색하기</a>
+  </div>
+</section>
 <div class="search-tabs" role="tablist" aria-label="찾기 방법">
   <button type="button" class="search-tab" id="schoolTab" role="tab" aria-selected="true" aria-controls="schoolPanel">학교별 찾기</button>
   <button type="button" class="search-tab" id="regionTab" role="tab" aria-selected="false" aria-controls="regionPanel">지역 찾기</button>
@@ -345,6 +392,86 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
   });
   prevPage.addEventListener('click',()=>{if(page>0){page-=1;loadSchools(false);}});
   nextPage.addEventListener('click',()=>{page+=1;loadSchools(false);});
+</script>
+<script>
+  (() => {
+    'use strict';
+    // Reuse the exact existing Lv.1 server login and the same-tab session key.
+    // Never expose access codes in links, logs, analytics, or stored credentials.
+    const key='beagu-level-session-v1';
+    const endpoint=SUPABASE_URL+'/functions/v1/beagu-level-api';
+    const form=document.getElementById('lv1QuickForm');
+    const input=document.getElementById('lv1QuickCode');
+    const button=document.getElementById('lv1QuickSubmit');
+    const toggle=document.getElementById('lv1QuickToggle');
+    const message=document.getElementById('lv1QuickMessage');
+    const authenticated=document.getElementById('lv1QuickAuthenticated');
+    let requestId=0;
+    async function authRequest(action,token='',code=''){
+      const response=await fetch(endpoint,{
+        method:'POST',cache:'no-store',
+        headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+        body:JSON.stringify(action==='login'?{action,code}:{action})
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error('인증 실패');
+      return data;
+    }
+    function showAuthenticated(){
+      form.hidden=true;
+      message.textContent='';
+      authenticated.hidden=false;
+    }
+    toggle.addEventListener('click',()=>{
+      const visible=input.type==='password';
+      input.type=visible?'text':'password';
+      toggle.textContent=visible?'숨기기':'보기';
+      toggle.setAttribute('aria-pressed',String(visible));
+      toggle.setAttribute('aria-label',visible?'비밀번호 숨기기':'비밀번호 표시');
+    });
+    form.addEventListener('submit',async event=>{
+      event.preventDefault();
+      if(button.disabled)return;
+      const code=input.value.trim();
+      if(code.length<8||code.length>120){
+        message.textContent='참여코드를 8자 이상 입력해 주세요.';
+        input.focus();
+        return;
+      }
+      const id=++requestId;
+      button.disabled=true;
+      message.textContent='참여코드를 확인하고 있습니다.';
+      try{
+        const data=await authRequest('login','',code);
+        if(id!==requestId)return;
+        if(Number(data.level)<1||typeof data.token!=='string'||!data.token){
+          message.textContent='Lv.1 이상 참여코드를 입력해 주세요.';
+          return;
+        }
+        sessionStorage.setItem(key,data.token);
+        input.value='';
+        input.type='password';
+        showAuthenticated();
+        window.location.assign('search-lv1.html');
+      }catch(_){
+        if(id===requestId)message.textContent='인증에 실패했습니다. 참여코드나 인터넷 연결을 확인해 주세요.';
+      }finally{
+        if(id===requestId)button.disabled=false;
+      }
+    });
+    // If this tab already has a session, verify it server-side before showing "authenticated".
+    const saved=sessionStorage.getItem(key);
+    if(saved){
+      const id=++requestId;
+      authRequest('verify',saved).then(data=>{
+        if(id!==requestId)return;
+        if(Number(data.level)>=1)showAuthenticated();
+        else sessionStorage.removeItem(key);
+      }).catch(()=>{
+        if(id===requestId)sessionStorage.removeItem(key);
+      });
+    }
+  })();
 </script>
 <script src="js/visit-stats.js?v=20261031-1350"></script>
 <script src="js/search-telemetry-v1.js?v=20261118-alpha1"></script>
