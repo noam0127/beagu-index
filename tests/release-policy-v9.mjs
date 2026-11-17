@@ -16,7 +16,7 @@ assert.doesNotMatch(policy,/<script[^>]+src=/,'No tracking or restricted server 
 for(const p of ['search.html','search-lv1.html',
                  'school-report.html','statistics.html']){
  const h=read(p);
- assert.doesNotMatch(h,/href="release-policy\\.html"/,'Removed policy navigation must stay hidden: '+p);
+ assert.doesNotMatch(h,/href="release-policy\.html"/,'Removed policy navigation must stay hidden: '+p);
  assert.ok(existsSync('release-policy.html'));
 }
 const index=read('index.html');
