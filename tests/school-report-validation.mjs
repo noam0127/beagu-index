@@ -76,4 +76,15 @@ assert.ok(src.includes("return '광주'")&&src.includes("return '전남'"),'Pres
 assert.ok(src.includes("nation:state.tier>=1?national:null"),'Level 0 must not expose authenticated comparison data');
 assert.ok(src.includes("school:itemApproved?majority:null"),'Do not render unpublished school mode');
 
+// UI readability: move the actual question to the beginning of its own chart.
+assert.ok(src.includes('chart.prepend(questionLine)'),'Question prompt must appear at the top of comparison card');
+assert.ok(src.includes("if(!locked)questionLine.querySelector('.question-value')?.remove()"),'Remove duplicated missing/approved status from the question heading');
+assert.ok(html.includes('.question-visual-value{display:flex;align-items:flex-start'),'Stack question values on narrow mobile screens');
+assert.ok(html.includes('.benchmark-values{grid-template-columns:1fr}'),'Avoid overlaps between long official metric values on mobile');
+assert.ok(src.includes("singleSchoolFacts.has(normalizedOverviewLabel(x.label))"),'Establishment/vice principals/meal place must show school-only values');
+assert.ok(src.includes("const singleSchoolFacts=new Set(['설립구분','설립유형','교감수','급식장소'])"),'All requested single-school fields must be matched regardless of spacing');
+assert.ok(!src.includes("title.textContent='전국 · '"),'Remove duplicate summary title from question comparison');
+assert.ok(!src.includes('검수·공개 승인된 학교별 통계가 아직 없습니다.'),'Remove repetitive missing-approval text');
+assert.ok(src.includes("Number(data?.n)>=5"),'Existing privacy safeguards must not be lowered by UI changes');
+
 console.log('School report JS syntax, UI bindings and public/private separation: PASS');
