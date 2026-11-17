@@ -10,6 +10,15 @@ on:
       - 'js/statistics-table.js'
       - 'styles/statistics.css'
       - 'tests/site-route-hygiene.mjs'
+      - 'tests/brand-ui-consistency.mjs'
+      - 'styles/beagu-design-system-v1.css'
+      - 'index.html'
+      - 'search.html'
+      - 'search-lv1.html'
+      - 'school-report.html'
+      - 'challenge.html'
+      - 'release-policy.html'
+      - 'teacher-volleyball.html'
       - '.github/workflows/site-route-hygiene.yml'
   workflow_dispatch:
 permissions:
@@ -24,3 +33,4 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/site-route-hygiene.mjs
+      - run: node tests/brand-ui-consistency.mjs
