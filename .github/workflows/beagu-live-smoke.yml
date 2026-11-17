@@ -18,6 +18,8 @@ on:
       - 'js/**'
       - 'data/public-lv0-percentiles-v1.2.json'
       - 'lv2-edited-column-schema.json'
+      - 'styles/beagu-loading-v1.css'
+      - 'js/beagu-loading-v1.js'
       - 'tests/live-smoke.mjs'
       - '.github/workflows/beagu-live-smoke.yml'
 
