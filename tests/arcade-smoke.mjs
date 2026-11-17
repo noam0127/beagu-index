@@ -19,7 +19,7 @@ new Function(shared);
 new Function(picker);
 assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
 assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
-assert.match(picker,/missing_years/,"missing year reasons are shown");
+assert.match(picker,/available_years/,"confirmed survey years shown; empty school gets survey CTA");
 assert.match(backend,/years=\[2023,2024,2025,2026\]/);
 assert.match(backend,/available_years\.reduce\(\(sum,year\)/,"average only available survey years");
 assert.match(backend,/available_years\.length>0/,"one year unlocks games");
