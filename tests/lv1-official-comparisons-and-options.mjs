@@ -34,7 +34,7 @@ assert.match(api,/district_housing_price_mean/);
 assert.match(api,/september_participation_rate/);
 assert.match(api,/beagu_official_numeric_comparisons/);
 assert.match(api,/beagu_official_category_comparisons/);
-assert.match(api,/review_status','Approved facts must stay guarded');
+assert.match(api,/review_status/,'Approved facts must stay guarded');
 assert.equal(detail.includes("['학교별 응답자'"),false,'Respondent counts must stay hidden');
 assert.equal(detail.includes('data-beagu-2026-form-count'),false);
 console.log('PASS: Lv1 basic facts with two geographical comparisons, 2026 all source-verified question options, no hidden response counts');
