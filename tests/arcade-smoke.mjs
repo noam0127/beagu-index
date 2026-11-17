@@ -17,10 +17,12 @@ for(const h of [volley,runner]){
 }
 new Function(shared);
 new Function(picker);
-assert.match(picker,/2023~2026년/,"school picker explains four-year prerequisite");
+assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
+assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
 assert.match(picker,/missing_years/,"missing year reasons are shown");
 assert.match(backend,/years=\[2023,2024,2025,2026\]/);
-assert.match(backend,/years\.reduce\(\(sum,year\)/);
+assert.match(backend,/available_years\.reduce\(\(sum,year\)/,"average only available survey years");
+assert.match(backend,/available_years\.length>0/,"one year unlocks games");
 assert.match(backend,/!selected\.eligible/,"server refuses missing years");
 assert.match(backend,/!currentSchool\?\.eligible/,"previously issued sessions are rechecked");
 assert.match(volley,/new window\.ArcadeSchoolPicker/);
@@ -67,8 +69,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261118-fouryear2")&&
-     site.body.includes("teacher-run.html?v=20261118-fouryear2"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261118-anyyear3")&&
+     site.body.includes("teacher-run.html?v=20261118-anyyear3"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -78,8 +80,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261118-fouryear2/);
-assert.match(site.body,/teacher-run\.html\?v=20261118-fouryear2/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261118-anyyear3/);
+assert.match(site.body,/teacher-run\.html\?v=20261118-anyyear3/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
@@ -103,7 +105,7 @@ assert.equal(school.school_name,canonical.school_name);
 assert.equal(typeof school.eligible,"boolean");
 assert.ok(Array.isArray(school.missing_years));
 assert.ok(Array.isArray(school.available_years));
-assert.equal(school.missing_years.length===0,school.eligible,"all four annual percentiles are mandatory");
+assert.equal(school.available_years.length>0,school.eligible,"any one surveyed year must be eligible");
 assert.equal(school.available_years.length+school.missing_years.length,4);
 assert.equal("national_percentile" in school,false,"never return individual raw percentiles");
 assert.equal("average_percentile" in school,false,"do not leak potentially sensitive average values");
@@ -135,5 +137,24 @@ if(school.eligible){
  assert.deepEqual(failed.missing_years,school.missing_years);
  console.log("PASS: four-year survey requirement blocks ineligible school");
 }
-console.log("PASS: school search and four-year percentile eligibility (no raw values)");
+console.log("PASS: school search and any-year percentile eligibility (no raw values)");
+// Verify a one-year school is eligible, and a four-year-zero school is refused.
+const oneYear=JSON.parse((await requestWithRetry(api+"?school_id=7021086",200,{headers:origin})).body).school;
+assert.equal(oneYear.eligible,true,"one-year school should play");
+assert.deepEqual(oneYear.available_years,[2024],"2024-only school is grounded");
+assert.ok(["easy","normal","hard"].includes(oneYear.difficulty));
+const oneStart=JSON.parse((await requestWithRetry(api,200,{
+ method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"volleyball",school_id:oneYear.school_id})
+})).body);
+assert.equal(oneStart.school.eligible,true);
+assert.match(oneStart.session,/^[0-9a-f-]{36}$/i);
+const zeroYear=JSON.parse((await requestWithRetry(api+"?school_id=7003849",200,{headers:origin})).body).school;
+assert.equal(zeroYear.eligible,false,"zero-year school should not play");
+assert.deepEqual(zeroYear.available_years,[]);
+const zeroDenied=JSON.parse((await requestWithRetry(api,409,{
+ method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"teacher_run",school_id:zeroYear.school_id})
+})).body);
+assert.equal(zeroDenied.error,"school_ineligible");
+assert.equal(zeroDenied.survey_url,"https://forms.gle/TPyCakK6Sj2zchRy7");
+console.log("PASS: single surveyed year unlocks both games; no years requires 2026 survey");
 
