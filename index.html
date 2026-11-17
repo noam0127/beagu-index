@@ -173,15 +173,15 @@
 <p class="beagu-content-note"><strong>학교·교직문화 데이터 플랫폼</strong><br>학교를 검색하고, 연도별 승인된 조사 결과를 살펴보세요.</p>
 
 
-    <!-- 고정 누적 조사 통계: 수치 변경 시 아래 숫자만 수정합니다. 방문 통계와 별개입니다. -->
+    <!-- 2023–2025 기준값 + 공식 2026 설문 집계: 백엔드에서 자동 갱신 -->
     <dl class="survey-totals" aria-label="누적 조사 통계">
       <div>
-        <dt>누적 참여자</dt>
-        <dd><span class="survey-total-number">18,797</span><span class="survey-total-unit">명</span></dd>
+        <dt>누적 참여횟수</dt>
+        <dd><span class="survey-total-number" data-cumulative="responses" aria-live="polite">18,798</span><span class="survey-total-unit">회</span></dd>
       </div>
       <div>
-        <dt>누적 참여교</dt>
-        <dd><span class="survey-total-number">4,177</span><span class="survey-total-unit">개교</span></dd>
+        <dt>누적 참여학교</dt>
+        <dd><span class="survey-total-number" data-cumulative="schools" aria-live="polite">4,177</span><span class="survey-total-unit">개교</span></dd>
       </div>
     </dl>
 
@@ -238,6 +238,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
+ <script src="js/home-cumulative-stats.js?v=20261118-live1"></script>
 <script src="js/visit-stats.js?v=20261117-visitfix1"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 
