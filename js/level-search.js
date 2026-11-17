@@ -247,7 +247,7 @@
     // Only safety-checked, coarsened school distributions supplied by the
     // signed-session API are rendered. No raw responses or respondent counts.
     const vetted=(Array.isArray(distributions)?distributions:[]).filter(d=>
-      Number(d?.year)===year && /^Q\\d{2}$/.test(String(d?.questionId||'')) &&
+      Number(d?.year)===year && /^Q\d{2}$/.test(String(d?.questionId||'')) &&
       typeof d.modeOption==='string' && Array.isArray(d.roundedDistribution));
     if(vetted.length){
       const section=make('section','data-section');
