@@ -37,7 +37,7 @@
     const params=new URLSearchParams(location.search);
     const school=params.get('school_id')||params.get('school');
     const destination=new URL('school-report.html',location.href);
-    if(school&&/^\d{7}$/.test(school))destination.searchParams.set('school_id',school);
+    if(school&&/^[A-Z0-9]{7}$/.test(school))destination.searchParams.set('school_id',school);
     const year=params.get('year');
     if(year&&['2023','2024','2025','2026'].includes(year))destination.searchParams.set('year',year);
     const target=destination.pathname+destination.search;
