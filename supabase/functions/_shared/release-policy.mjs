@@ -1,11 +1,21 @@
 export const isVI = key => /^Q(0[1-9]|1[0-3])$/.test(key);
 const text = (v,max=240) => typeof v==='string' && v.length<=max && !/[<>\r\n]/.test(v);
 const forbidden = /응답.*(수|횟|건)|관측|표본|소표본|원자료|자유서술|respondent|observation|sample|raw_row|n_valid|count/i;
+// Results are never returned immediately following their 2026 release approval.
+// An approval happens after data collection, so this also guarantees at least
+// 72 hours elapsed since submission. Privacy review remains mandatory.
+export const THREE_DAY_DELAY_MS=72*60*60*1000;
+export function approved2026ReleaseIsOldEnough(approvedAt,nowMs=Date.now()){
+  if(typeof approvedAt!=='string')return false;
+  const time=Date.parse(approvedAt);
+  return Number.isFinite(time)&&time<=nowMs-THREE_DAY_DELAY_MS;
+}
 export function releaseMetrics(rows,catalog,level){
   if(![1,2].includes(level))return [];
   const definitions=new Map(catalog.filter(c=>c.verified===true).map(c=>[`${c.survey_year}:${c.question_id}`,c]));
   const candidates=rows.flatMap(r=>{
     if(r.survey_year===2026&&/^Q51(?:$|[._-])/.test(r.question_id))return [];
+    if(r.survey_year===2026&&!approved2026ReleaseIsOldEnough(r.approved_at))return [];
     const d=definitions.get(`${r.survey_year}:${r.question_id}`);
     if(!d||r.approval_status!=='APPROVED'||r.privacy_status!=='PASSED'||!r.identity_reviewed||!r.question_reviewed||!r.small_cell_reviewed||!r.differencing_reviewed||!r.approved_at||!r.approved_by||!r.approval_evidence)return [];
     const min=r.survey_year===2026&&(r.question_id==='percentile'||isVI(r.question_id))?1:2;
