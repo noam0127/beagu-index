@@ -25,6 +25,7 @@
 .summary-metric.compare-metric{display:block;padding:15px 14px;min-width:0}
 .summary-metric.compare-metric>.compare-label{display:block;font-weight:800;color:#253754;margin-bottom:5px}
 .benchmark-figure{margin:7px 0 0;max-width:100%;color:#334155}
+.benchmark-directions{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11px;font-weight:700;color:#64748b;margin:9px 1% 0}.benchmark-directions span{white-space:nowrap}.benchmark-values .nation small:before{content:"● ";color:#2563eb}.benchmark-values .region small:before{content:"● ";color:#16a34a}.benchmark-values .school small:before{content:"● ";color:#7c3aed}
 .benchmark-plot{position:relative;width:100%;max-width:520px;height:76px;margin:11px auto 9px}
 .benchmark-plot:before{content:"";position:absolute;left:8%;right:8%;top:50%;height:4px;border-radius:4px;background:#bed1f6;transform:translateY(-50%)}
 .benchmark-plot:after{content:"";position:absolute;left:50%;top:15%;bottom:15%;border-left:1px dashed #9cb5e5}
@@ -1139,6 +1140,7 @@
     const safe=v=>escapeHTML(v);
     const aria='전국 평균 '+x.nationalAverage+', 지역 평균 '+x.regionalAverage+', 우리 학교 '+x.value;
     return '<figure class="benchmark-figure" role="img" aria-label="'+safe(aria)+'">'+
+      '<div class="benchmark-directions" aria-hidden="true"><span>← 전국 평균보다 낮음</span><span>전국 평균보다 높음 →</span></div>'+
       '<div class="benchmark-plot" aria-hidden="true">'+
       '<span class="benchmark-dot school" style="left:'+position(school)+'%"></span>'+
       '<span class="benchmark-dot region" style="left:'+position(region)+'%"></span>'+
@@ -1147,7 +1149,7 @@
       '<span class="nation"><small>전국 평균</small><strong>'+safe(x.nationalAverage)+'</strong></span>'+
       '<span class="region"><small>지역 평균</small><strong>'+safe(x.regionalAverage)+'</strong></span>'+
       '<span class="school"><small>우리 학교</small><strong>'+safe(x.value)+'</strong></span></div>'+
-      '<figcaption class="benchmark-note">전국 평균은 가운데에 놓고, 지역과 우리 학교의 차이를 좌우로 표시합니다.</figcaption>'+
+      '<figcaption class="benchmark-note">가운데가 전국 평균입니다. 좌우 거리는 이 지표 안에서만 비교하세요.</figcaption>'+
       '</figure>';
   }
   function summaryUI(){

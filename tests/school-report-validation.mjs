@@ -57,6 +57,7 @@ assert.ok(src.includes('50+35*(v.n-national.n)/extent'),'National mean must sit 
 assert.ok(html.includes('benchmark-dot nation') && html.includes('benchmark-dot region') && html.includes('benchmark-dot school'));
 assert.ok(src.includes('left:50%') && src.includes("left:'+position(school)"),'Markers must move left and right on the line');
 assert.ok(html.includes('benchmark-plot:before{content:"";position:absolute;left:8%;right:8%;top:50%'),'Comparison line must be horizontal');
+assert.ok(html.includes('benchmark-directions') && html.includes('전국 평균보다 낮음') && html.includes('전국 평균보다 높음'),'Horizontal direction cues required');
 assert.ok(html.includes('benchmark-values'),'Actual approved comparison values must remain visible at the bottom');
 assert.ok(src.includes('!isSchoolOverviewRepeat(x)'),'Repeated school identity fields must be omitted from historical details');
 assert.ok(src.includes("학교별 수치가 없습니다"),'Unavailable approved fields must not be fabricated');

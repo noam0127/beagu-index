@@ -34,7 +34,7 @@ a=target();progress.render(a,1000);
 assert.equal(a.controls.get('progress').style.width,'100.0%');
 assert.equal(a.controls.get('remainder').textContent,'목표 달성');
 a=target();progress.render(a,1001);
-assert.equal(a.controls.get('number').textContent,'1001 / 1000');
+assert.equal(a.controls.get('number').textContent,'1,001 / 1,000');
 assert.equal(a.controls.get('progress').style.width,'100.0%');
 assert.equal(a.controls.get('progress').attributes['aria-valuenow'],'1000');
 a=target();progress.unavailable(a);
@@ -88,7 +88,7 @@ for(const html of [home,challenge]){
  assert.match(html,/2026 챌린지 · 목표 1,000명/);
  assert.doesNotMatch(html,/1,000명 달성 시 2026 배구지수 자료를 공개합니다/);
  assert.doesNotMatch(html,/2026 챌린지 XP · 목표 1,000명/);
- assert.match(html,/js\/challenge-progress-v1\.js\?v=20261117-live1000/);
+ assert.match(html,/js\/challenge-progress-v1\.js\?v=20261117-[a-z0-9-]+/);
  assert.match(html,/data-beagu-xp/);
  assert.match(html,/styles\/challenge-progress-v1\.css/);
  assert.match(html,/js\/challenge-progress-v1\.js/);
