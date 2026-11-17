@@ -17,6 +17,8 @@ on:
       - 'styles/school-search-card-v1.css'
       - 'scripts/beagu-2026-mbti-review-sync.gs'
       - 'tests/school-search-unification.mjs'
+      - 'tests/lv1-ranked-office-history.mjs'
+      - 'supabase/functions/beagu-level-api/index.ts'
       - '.github/workflows/school-search-unification.yml'
   workflow_dispatch:
 permissions:
@@ -30,3 +32,4 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/school-search-unification.mjs
+      - run: node tests/lv1-ranked-office-history.mjs

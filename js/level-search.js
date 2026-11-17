@@ -15,7 +15,29 @@
   const YEARS = [2023, 2024, 2025, 2026];
   // Exact education office names come from the verified schools table.
   let selectedSort='school_name',officeLoadSerial=0;
-  const SORTS=new Set(['school_name','beagu_percentile_2025','student_count','housing_price_won']);
+  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','housing_price_won']);
+  // Only the visible name is shortened. The option value remains the verified
+  // exact school-support office string used for server-side filtering.
+  const shortOfficeName=(full,region)=>{
+    const raw=String(full||'').trim();
+    if(!raw.endsWith('교육지원청')){
+      if(raw.endsWith('교육청'))return region+'교육청';
+      return raw;
+    }
+    let name=raw.slice(0,-'교육지원청'.length);
+    const prefixes=[
+      '전남광주통합특별시','강원특별자치도','전북특별자치도','제주특별자치도',
+      '세종특별자치시','서울특별시','부산광역시','대구광역시','인천광역시',
+      '광주광역시','대전광역시','울산광역시',
+      '강원도','경기도','충청북도','충청남도','전라북도','전라남도',
+      '경상북도','경상남도','제주도'
+    ];
+    for(const prefix of prefixes){
+      if(name.startsWith(prefix)){name=name.slice(prefix.length);break;}
+    }
+    if(region==='광주'&&name.startsWith('광주')&&name.length>2)name=name.slice(2);
+    return name||raw;
+  };
   const escape = v => String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;')
     .replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
   const make = (tag, className, value) => {
@@ -125,7 +147,7 @@
       if(run!==officeLoadSerial||$('regionSelect').value!==region)return;
       select.replaceChildren(new Option('전체 교육청·교육지원청',''));
       const values=[...new Set(Array.isArray(result.offices)?result.offices:[])].filter(x=>typeof x==='string');
-      for(const value of values) select.add(new Option(value,value));
+      for(const value of values) select.add(new Option(shortOfficeName(value,region),value));
       select.disabled=false;
     }catch(err){
       if(run!==officeLoadSerial)return;
@@ -455,7 +477,9 @@
         level:1,
         percentile:percentilePanel(school)
       });
-      const sortValue=selectedSort==='beagu_percentile_2025'
+      const sortValue=selectedSort==='address'
+        ?(school.address||'주소 미확인')
+        :selectedSort==='beagu_percentile_2025'
         ?(school.beagu_percentile_2025==null?'자료 없음':Number(school.beagu_percentile_2025).toFixed(2)+'%')
         :selectedSort==='student_count'
         ?(school.student_count==null?'자료 없음':Number(school.student_count).toLocaleString('ko-KR')+'명')
@@ -464,7 +488,7 @@
         :null;
       if(sortValue!==null){
         const tag=make('div','sort-result',
-          (selectedSort==='beagu_percentile_2025'?'2025 배구지수 백분위'
+          (selectedSort==='address'?'주소':selectedSort==='beagu_percentile_2025'?'2025 배구지수 백분위'
            :selectedSort==='student_count'?'학생 수'+(school.student_reference_year?' ('+school.student_reference_year+'년 기준)':'')
            :'행정구역 공동주택 평균 공시가격')+' · '+sortValue);
         const meta=card.querySelector('.school-meta')||card.querySelector('.school-name');
