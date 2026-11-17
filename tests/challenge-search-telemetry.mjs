@@ -137,4 +137,32 @@ for(const file of ['search.html','school-report.html','index.html','challenge.ht
   if(block[1].trim())assert.doesNotThrow(()=>new Script(block[1]),file+' has invalid inline script');
  }
 }
+// The homepage must show real numeric visit totals returned by the RPC.
+const visitSource=read('js/visit-stats.js');
+assert.doesNotThrow(()=>new Script(visitSource));
+const counts=['today','month','total'].map(stat=>({dataset:{stat},textContent:'집계 중'}));
+const storedVisitor='11111111-1111-4111-8111-111111111111';
+const visitCalls=[];
+const visitScope={
+ window:{},
+ document:{querySelectorAll:()=>counts},
+ localStorage:{getItem:()=>storedVisitor,setItem:()=>{}},
+ sessionStorage:{getItem:()=>null,setItem:()=>{}},
+ crypto:{randomUUID:()=> '22222222-2222-4222-8222-222222222222'},
+ location:{pathname:'/'},
+ supabaseClient:{rpc:async(name,args)=>{
+  visitCalls.push({name,args});
+  return {data:{today:'7',month:91,total:'1000'},error:null};
+ }}
+};
+runInNewContext(visitSource,visitScope);
+await visitScope.window.beaguVisitReady;
+assert.equal(visitScope.window.beaguVisitor,storedVisitor);
+assert.equal(visitCalls.length,1);
+assert.equal(visitCalls[0].name,'beagu_record_visit');
+assert.equal(visitCalls[0].args.p_page,'index');
+assert.equal(counts[0].textContent,'7');
+assert.equal(counts[1].textContent,'91');
+assert.equal(counts[2].textContent,'1,000');
+
 console.log('PASS: existing participant ordinal only, 999/1000/1001, error≠0, intentional school events, privacy and original permissions');
