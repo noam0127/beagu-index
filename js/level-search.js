@@ -53,6 +53,17 @@
   };
   let publicIndex = new Map(), publicStaticAvailable = false, publicLoadError = false;
   let current2026 = new Map();
+  let historicalPresenceByYear={};
+  const historicalPresenceReady=fetch('data/public-2023-2025-school-records-v2.json?v=20261118',{cache:'no-cache'})
+    .then(r=>{if(!r.ok)throw new Error('과거 조사 기록 파일 조회 실패');return r.json()})
+    .then(data=>{
+      const years=data?.schoolIdsByYear;
+      if(!years||!['2023','2024','2025'].every(y=>Array.isArray(years[y])&&
+          years[y].every(id=>typeof id==='string'&&/^[A-Z0-9]{7}$/.test(id))))return;
+      historicalPresenceByYear=Object.fromEntries(
+        ['2023','2024','2025'].map(y=>[y,new Set(years[y])]));
+    }).catch(e=>{console.warn('조사 기록이 표시되지 않아도 기존 검색은 유지됩니다.',e)});
+
   const loaded = fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025', {cache:'force-cache'})
     .then(r => { if (!r.ok) throw new Error('PUBLIC_DATA_UNAVAILABLE'); return r.json(); })
     .then(data => { publicIndex = BeaguPublic.buildIndex(data); publicStaticAvailable = true; })
@@ -500,6 +511,9 @@
         if(meta&&meta.parentNode)meta.insertAdjacentElement('afterend',tag);
         else card.append(tag);
       }
+      const recorded=['2023','2024','2025'].filter(y=>
+        historicalPresenceByYear[y]?.has(String(school.school_id)));
+      if(recorded.length)card.append(make('div','sort-result',recorded.join(' · ')+'년 조사 기록 있음'));
       button.setAttribute('aria-expanded', 'false');
       button.addEventListener('click', async (event) => {
         if (!detail.hidden) {
@@ -548,7 +562,7 @@
       const data=Array.isArray(response.schools)?response.schools:[];
       const count=Number(response.total)||0;
       if (request !== serial) return;
-      await loaded;
+      await Promise.all([loaded,historicalPresenceReady]);
       if (request !== serial) return;
       if(!publicStaticAvailable) {
         try { await recoverPublicIndex(data||[]); }
