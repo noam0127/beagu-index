@@ -64,8 +64,8 @@ async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
  const q=new URLSearchParams({select:"school_id,school_name,sido_standard",school_id:"eq."+rawId,school_kind:"eq.초등학교",status:"eq.운영",limit:"1"});
  const rows=await db("schools?"+q) as School[];
  const school=rows[0];if(!school)return null;
- // Four *published and reviewed* annual school percentiles are mandatory.
- // A missing/unreleased year must never be substituted with a different year or a default tier.
+ // At least one published, reviewed school percentile (2023–2026) is required.
+ // Average only observed years: no missing-year imputation or zero scores.
  const years=[2023,2024,2025,2026];
  const p=new URLSearchParams({
    select:"survey_year,percentile",
@@ -86,12 +86,12 @@ async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
  }
  const available_years=years.filter(year=>percentiles.has(year));
  const missing_years=years.filter(year=>!percentiles.has(year));
- const eligible=missing_years.length===0;
- const average=eligible?years.reduce((sum,year)=>sum+(percentiles.get(year)??0),0)/years.length:null;
+ const eligible=available_years.length>0;
+ const average=eligible?available_years.reduce((sum,year)=>sum+(percentiles.get(year)??0),0)/available_years.length:null;
  const difficulty:Difficulty|null=average===null?null:(average>=66.6667?"easy":average<=33.3333?"hard":"normal");
  // Send only a tier and year availability, not unpublished scores or individual survey values.
  return {school_id:school.school_id,school_name:school.school_name,region:school.sido_standard||"",
-   difficulty,eligible,missing_years,available_years,source_year:eligible?2026:null,has_index:eligible};
+   difficulty,eligible,missing_years,available_years,source_year:eligible?Math.max(...available_years):null,has_index:eligible};
 }
 
 async function ipHash(req: Request): Promise<string> {
@@ -142,7 +142,7 @@ Deno.serve(async (req:Request)=>{
     if(payload.action==="start"){
       const selected=await resolveSchool(payload.school_id);
       if(!selected)return error("select_school",400,origin);
-      if(!selected.eligible)return json({error:"school_ineligible",missing_years:selected.missing_years},409,origin);
+      if(!selected.eligible)return json({error:"school_ineligible",missing_years:selected.missing_years,reason:"no_survey_year",survey_url:"https://forms.gle/TPyCakK6Sj2zchRy7"},409,origin);
       const since=new Date(Date.now()-15*60*1000).toISOString();
       const q=new URLSearchParams({select:"id",ip_hash:"eq."+hash,started_at:"gte."+since,limit:"40"});
       const recent=await db("arcade_game_sessions?"+q);
