@@ -43,7 +43,7 @@ Deno.serve(async(req:Request)=>{
    if(writeError)return send({error:'SESSION_UNAVAILABLE'},503,origin);
    return send({token:v,level:acc.access_level,expires_at:expiry},200,origin);
   }
-  if(body.action!=='verify'&&body.action!=='school'&&body.action!=='logout'&&body.action!=='percentiles'&&body.action!=='offices'&&body.action!=='ranked_schools')return send({error:'UNKNOWN_ACTION'},400,origin);
+  if(body.action!=='verify'&&body.action!=='school'&&body.action!=='logout'&&body.action!=='percentiles'&&body.action!=='offices'&&body.action!=='ranked_schools'&&body.action!=='survey_comparisons')return send({error:'UNKNOWN_ACTION'},400,origin);
   const session=await check(req);
   if(!session)return send({error:'AUTH_REQUIRED'},401,origin);
   if(body.action==='logout'){
@@ -75,6 +75,35 @@ Deno.serve(async(req:Request)=>{
    return send({values:out},200,origin);
   }
 
+
+
+  if(body.action==='survey_comparisons'){
+    if(Number(session.access_level)<1)return send({error:'ACCESS_DENIED'},403,origin);
+    const year=Number(body.year);
+    const region=typeof body.region==='string'?body.region.trim():'';
+    if(![2023,2024,2025].includes(year)||!/^[가-힣A-Za-z·\s]{2,24}$/.test(region))
+      return send({error:'INVALID_COMPARISON'},400,origin);
+    const fields='question_id,scope,mode_option,mean_option,comparison_kind';
+    const [nation,prov]=await Promise.all([
+      admin.from('beagu_survey_geography_comparisons_v1').select(fields)
+       .eq('survey_year',year).eq('scope','national').eq('region','').eq('review_status','SOURCE_CHECKED').limit(60),
+      admin.from('beagu_survey_geography_comparisons_v1').select(fields)
+       .eq('survey_year',year).eq('scope','regional').eq('region',region).eq('review_status','SOURCE_CHECKED').limit(60)
+    ]);
+    if(nation.error||prov.error)return send({error:'COMPARISONS_UNAVAILABLE'},503,origin);
+    const items:Record<string,{national?:unknown;regional?:unknown}>={};
+    for(const row of nation.data||[]){
+      const k=String(row.question_id);
+      if(!/^Q\d{2}$/.test(k))continue;
+      items[k]={national:{mean:row.mean_option||null,mode:row.mode_option||null,kind:row.comparison_kind}};
+    }
+    for(const row of prov.data||[]){
+      const k=String(row.question_id);
+      if(!/^Q\d{2}$/.test(k))continue;
+      items[k]={...(items[k]||{}),regional:{mean:row.mean_option||null,mode:row.mode_option||null,kind:row.comparison_kind}};
+    }
+    return send({year,region,source:'historical-source-workbook-sample',fullPopulationVerified:false,items},200,origin);
+  }
 
   if(body.action==='offices'){
    if(Number(session.access_level)<1)return send({error:'ACCESS_DENIED'},403,origin);
