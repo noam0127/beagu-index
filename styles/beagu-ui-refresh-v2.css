@@ -602,3 +602,153 @@ body.beagu-page-lv1 .results{grid-template-columns:1fr}
     margin:0;
   }
 }
+
+/* Cohesive Baegu visual language · compact copy / 2026 comparison */
+:root{
+  --ui-ink:#1b304c;
+  --ui-heading:#112a4a;
+  --ui-muted:#586c83;
+  --ui-blue:#265ed4;
+  --ui-blue-dark:#1645ac;
+  --ui-accent:#078d9c;
+  --ui-blue-soft:#edf3ff;
+  --ui-line:#dde6f1;
+  --ui-line-strong:#cbd9e8;
+  --ui-canvas:#f6f8fc;
+  --ui-shadow:0 7px 24px rgba(21,56,105,.055),0 1px 3px rgba(21,56,105,.035);
+}
+body.beagu-ui-page:not(.beagu-page-game){
+  letter-spacing:-.014em;
+  font-family: -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard Variable","Noto Sans KR",sans-serif;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.school-card,.auth-card,.content-card,.report-card,.block,.step-card){
+  border-color:var(--ui-line);
+  box-shadow:var(--ui-shadow);
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.school-card,.auth-card,.content-card,.block,.step-card):focus-within{
+  border-color:#9fbceb;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.primary-button,.view-button,.compare-auth-submit):not(:disabled){
+  background:var(--ui-blue);
+  color:#fff;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.primary-button,.view-button,.compare-auth-submit):not(:disabled):hover{
+  background:var(--ui-blue-dark);
+}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-global-nav>a[aria-current="page"]{
+  color:var(--ui-blue);
+  border-bottom-color:var(--ui-accent);
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.region-badge,.tier-pill,.compare-counter){
+  border-radius:12px;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(h1,h2,h3){
+  text-rendering:optimizeLegibility;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(input,select,button){
+  letter-spacing:-.012em;
+}
+body.beagu-page-compare .topnav{display:none}
+body.beagu-page-compare .intro{
+  min-height:0;
+  margin:16px 0 18px;
+  padding:0;
+  background:linear-gradient(117deg,#eef5ff 0%,#eaf2ff 67%,#e6f6fa 100%);
+  border:1px solid #dce7f4;
+  border-radius:22px;
+  box-shadow:none;
+}
+body.beagu-page-compare .intro-content{
+  padding:26px 32px 27px;
+  max-width:760px;
+}
+body.beagu-page-compare .intro h1{
+  font-size:clamp(31px,3.4vw,45px);
+  font-weight:880;
+  letter-spacing:-.065em;
+  line-height:1.15;
+  text-wrap:initial;
+  word-break:keep-all;
+  margin:0 0 11px;
+}
+body.beagu-page-compare .intro .compare-heading-phrase{
+  display:block;
+  white-space:nowrap;
+  color:var(--ui-blue);
+  letter-spacing:-.065em;
+}
+body.beagu-page-compare .intro .overline{
+  display:inline-flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:9px;
+  color:#346388;
+  font-size:11px;
+  letter-spacing:.105em;
+  margin:0 0 12px;
+}
+body.beagu-page-compare .intro .live-dot{background:var(--ui-accent);width:7px;height:7px}
+body.beagu-page-compare .intro .subtitle{
+  font-size:14px;
+  color:#536b86;
+  max-width:none;
+  line-height:1.6;
+  white-space:normal;
+}
+body.beagu-page-compare .intro .graphic-grid span:nth-child(3n){background:rgba(53,119,209,.1)}
+body.beagu-page-compare .intro .graphic-grid span:nth-child(7),
+body.beagu-page-compare .intro .graphic-grid span:nth-child(13){background:rgba(8,145,163,.14)}
+body.beagu-page-compare .compare-auth-card,
+body.beagu-page-compare .compare-search-only,
+body.beagu-page-compare .comparison-picker,
+body.beagu-page-compare .comparison-results{
+  border:1px solid var(--ui-line);
+  border-radius:19px;
+  background:#fff;
+  box-shadow:var(--ui-shadow);
+}
+body.beagu-page-compare .compare-auth-card{padding:19px 24px;margin:0 0 13px}
+body.beagu-page-compare .compare-search-only{padding:20px 24px;margin-bottom:13px}
+body.beagu-page-compare .comparison-picker{padding:20px 24px}
+body.beagu-page-compare .comparison-results{padding:20px 24px}
+body.beagu-page-compare .compare-auth-heading h2,
+body.beagu-page-compare .section-head h2,
+body.beagu-page-compare .comparison-head h2{
+  color:var(--ui-heading);font-size:20px;line-height:1.35;letter-spacing:-.044em;
+}
+body.beagu-page-compare .compare-auth-heading .section-overline,
+body.beagu-page-compare .section-overline{
+  color:var(--ui-accent);
+  font-size:10px;
+  letter-spacing:.09em;
+}
+body.beagu-page-compare .comparison-workspace{gap:14px}
+body.beagu-page-compare .comparison-results-heading h3{font-size:18px}
+body.beagu-page-compare .compare-table thead th{background:#eaf1fc}
+body.beagu-page-compare .compare-table .compare-group th{background:#e5f1fb!important;color:#1d587d}
+body.beagu-page-compare .compare-percent-track>span{background:linear-gradient(90deg,#2496ac,#2966d6)}
+body.beagu-page-compare .compare-auth-badge.is-authenticated{
+  color:#146e63;background:#e5f7f3;border-color:#bcebe0;
+}
+body.beagu-page-compare .compare-selection-index{background:var(--ui-blue)}
+body.beagu-page-compare .compare-selection{background:#fcfdff}
+body.beagu-page-compare .notice{
+  background:#f7faff;
+  border-color:#e1e9f4;
+}
+@media(max-width:720px){
+  body.beagu-page-compare .intro{margin:12px 0 14px;border-radius:18px}
+  body.beagu-page-compare .intro-content{padding:24px 21px 25px}
+  body.beagu-page-compare .intro h1{font-size:clamp(29px,8.4vw,37px);line-height:1.17}
+  body.beagu-page-compare .intro .subtitle{font-size:13px;line-height:1.55}
+  body.beagu-page-compare .intro .overline{font-size:10px;margin-bottom:12px}
+  body.beagu-page-compare .compare-auth-card,
+  body.beagu-page-compare .compare-search-only,
+  body.beagu-page-compare .comparison-picker,
+  body.beagu-page-compare .comparison-results{padding:18px 17px}
+  body.beagu-page-compare .comparison-head-actions{gap:7px}
+}
+@media(max-width:340px){
+  body.beagu-page-compare .intro-content{padding:22px 16px}
+  body.beagu-page-compare .intro h1{font-size:28px}
+}
