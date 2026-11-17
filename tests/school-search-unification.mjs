@@ -93,6 +93,7 @@ for(const level of [0,1,2]){
  assert.equal(card.dataset.schoolId,'7832070');
  assert.deepEqual(card.children.slice(0,5).map(x=>x.className),['region-badge','school-name','school-meta','percentile-panel','school-actions']);
  assert.ok(!JSON.stringify(card).includes('홈페이지'));
+ assert.equal(percentile.children.length,3,'Show only title, yearly values, and chart without repeated notes');
  const cells=percentile.children[1].children;
  assert.equal(cells.length,4);
  assert.deepEqual(cells.map(c=>c.dataset.year),['2023','2024','2025','2026']);
@@ -160,7 +161,7 @@ assert.match(svgMissing,/2026년 미공개/);
 assert.doesNotMatch(svgMissing,/>null%|>NaN%/);
 for(const page of pages)assert.match(read(page),/js\/percentile-chart\.js\?v=20261031-independent5b/);
 assert.match(read('js/school-search-card-v1.js'),/for\(const i of \[0,1,2,3\]\)/);
-assert.match(read('js/school-search-card-v1.js'),/각 점은 해당 연도의 독립적인 백분위/);
+assert.doesNotMatch(read('js/school-search-card-v1.js'),/표시 순서: 2023|각 점은 해당 연도의 독립적인 백분위|자료 기준: 2026\.10\.31|percentile-notes|percentile-note/);
 
 // User-visible grouping must be mobile-friendly and never drop unrecognized approved fields.
 runInNewContext(read('js/school-detail-groups-v1.js'),{window,document});
