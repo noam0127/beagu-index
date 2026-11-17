@@ -32,25 +32,38 @@
   if(bar){bar.style.width='0%';bar.removeAttribute('aria-valuenow');}
   // An unavailable count is NEVER represented as 0 / 1000.
  }
- let underway;
+ let underway=null;
  async function refresh(){
   const targets=[...document.querySelectorAll('[data-beagu-xp]')];
   if(!targets.length)return null;
   if(underway)return underway;
   underway=(async()=>{
-   try{
-    if(typeof supabaseClient==='undefined'||typeof supabaseClient.rpc!=='function')throw Error('RPC_UNAVAILABLE');
-    const {data,error}=await supabaseClient.rpc('beagu_get_challenge_progress');
-    if(error||data===null||data===undefined||data==='')throw Error('PROGRESS_UNAVAILABLE');
-    const n=Number(data);
-    if(!valid(n))throw Error('INVALID_CHALLENGE_SEQUENCE');
-    targets.forEach(node=>render(node,n));
-    return n;
-   }catch(e){
-    targets.forEach(unavailable);
-    return null;
-   }finally{underway=null;}
+   // Retry the same read-only RPC for a transient network or cold-start error.
+   // No visits are recorded, and no participant number is issued by this call.
+   for(let attempt=0;attempt<3;attempt++){
+    try{
+     if(typeof supabaseClient==='undefined'||typeof supabaseClient.rpc!=='function')throw Error('RPC_UNAVAILABLE');
+     const {data,error}=await supabaseClient.rpc('beagu_get_challenge_progress');
+     if(error||data===null||data===undefined||data==='')throw Error('PROGRESS_UNAVAILABLE');
+     const n=typeof data==='number'?data:Number(data);
+     if(!valid(n))throw Error('INVALID_CHALLENGE_SEQUENCE');
+     targets.forEach(node=>render(node,n));
+     return n;
+    }catch(_){
+     if(attempt<2)await new Promise(resolve=>setTimeout(resolve,800*(attempt+1)));
+    }
+   }
+   targets.forEach(unavailable);
+   return null;
   })();
+  try{return await underway;}finally{underway=null;}
+ }
+ window.BeaguChallengeProgress=Object.freeze({GOAL,render,unavailable,refresh});
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{void refresh();},{once:true});
+ else void refresh();
+ // Back-forward browser cache can reuse an old percentage. Re-read live data.
+ window.addEventListener('pageshow',event=>{if(event.persisted)void refresh();});
+})();;
   return underway;
  }
  window.BeaguChallengeProgress=Object.freeze({GOAL,render,unavailable,refresh});
