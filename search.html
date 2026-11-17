@@ -294,6 +294,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       results.replaceChildren();resultCount.textContent='';pager.hidden=true;return;
     }
     resultCount.textContent='검색 중...';pager.hidden=true;
+    const loadingTask=window.BeaguLoading?.start('학교 검색 결과를 불러오는 중…');
     try {
       let query=supabaseClient.from('schools')
         .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,status',{count:'exact'})
@@ -328,6 +329,8 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       console.error('학교 검색 오류:',error);
       resultCount.textContent='';pager.hidden=true;
       results.innerHTML='<div class="empty">학교 검색 중 오류가 발생했습니다.</div>';
+    } finally {
+      window.BeaguLoading?.finish(loadingTask);
     }
   }
 
