@@ -87,4 +87,16 @@ assert.ok(!src.includes("title.textContent='전국 · '"),'Remove duplicate summ
 assert.ok(!src.includes('검수·공개 승인된 학교별 통계가 아직 없습니다.'),'Remove repetitive missing-approval text');
 assert.ok(src.includes("Number(data?.n)>=5"),'Existing privacy safeguards must not be lowered by UI changes');
 
+// One response is counted as participation, not released as one respondent's answer.
+assert.ok(html.includes('검증된 2025년 응답은 1건부터 참여 기록에 반영됩니다.'),'Explain one-response participation separately from result disclosure');
+assert.ok(html.includes('자료 검증·개인정보 보호 등의 공개 기준을 충족하면'),'State that survey result publication is conditional');
+assert.ok(src.includes('state.participationYears=Array.isArray(r.participationYears)'),'Receive only vetted boolean participation years from the API');
+assert.ok(src.includes("participated?'참여 기록 있음 · 결과는 공개 조건에 따라 표시'"),'One participating response must not be presented as zero activity');
+assert.ok(src.includes('state.participationYears=[]'),'Clear participation on school change');
+const api=fs.readFileSync('supabase/functions/beagu-level-api/index.ts','utf8');
+assert.ok(api.includes(".gte('respondents',1)"),'Participation should reflect even one approved response');
+assert.ok(api.includes("eq('release_status','approved')"),'Participation flag must derive from approved source');
+assert.ok(api.includes('participationYears=[...new Set'),'Return only participating years, not individual responses');
+assert.ok(!api.includes('participationCount:')&&!api.includes('participationRespondents:'),'Never return a raw respondent count with participation flag');
+
 console.log('School report JS syntax, UI bindings and public/private separation: PASS');

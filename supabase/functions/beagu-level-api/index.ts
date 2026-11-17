@@ -270,11 +270,25 @@ Deno.serve(async(req:Request)=>{
       roundedDistribution:rounded.map((x:any)=>({label:x.label,pct:x.pct}))});
   }
 
+  // A single verified participation record can mark a school-year as "participated".
+  // Never return the response count, the teacher's choice, or any unrestricted metric.
+  // The legacy 2023/2024 summaries do not contain verified respondent counts.
+  const {data:participationRows,error:participationError}=await admin
+    .from('beagu_level_data')
+    .select('survey_year')
+    .eq('school_id',id)
+    .eq('release_status','approved')
+    .eq('survey_year',2025)
+    .gte('respondents',1)
+    .limit(4);
+  if(participationError)return send({error:'PARTICIPATION_STATUS_UNAVAILABLE'},503,origin);
+  const participationYears=[...new Set((participationRows||[])
+    .map((r:any)=>Number(r.survey_year)).filter((y:number)=>y===2025))];
   rows.push(...facts);
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
-  return send({school_id:id,level,rows,schoolDistributions},200,origin);
+  return send({school_id:id,level,rows,schoolDistributions,participationYears},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
 
