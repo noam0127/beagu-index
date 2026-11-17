@@ -1012,6 +1012,7 @@
 }</script>
 <script src="js/2026-questionnaire-options-v1.2.js?v=20261117-original50"></script>
 <script src="js/historical-questionnaire-choices.js?v=20261117-verified-v1"></script>
+<script src="js/2025-observed-choices.js?v=20261117-observed30"></script>
 <script>
 /* 학교별 조사기록 UI v1.0. 공개 자료만 사용합니다.
  * Lv.1/Lv.2의 실제 접근 권한은 기존 Supabase 서버 검증 로직에서 처리해야 합니다.
@@ -1038,6 +1039,7 @@
   function client(){return typeof supabaseClient !== 'undefined'?supabaseClient:window.supabaseClient;}
 
   const TIER_SESSION_KEY='beagu-level-session-v1';
+  const geographyComparisonCache={}; // Only server-reviewed, non-identifying regional and national aggregate choices
   const viItem=q=>/^Q(0[1-9]|1[0-3])$/.test(q);
   // Existing teacher survey questions remain restricted until individually reviewed.\n  const requiredTier=item=>1; // Only server-reviewed question aggregates can unlock at unified Lv.1.
   const remembered=()=>{try{return sessionStorage.getItem(TIER_SESSION_KEY)||''}catch{return ''}};
@@ -1050,6 +1052,25 @@
     const body=await response.json().catch(()=>({}));
     if(!response.ok){const error=new Error(body.error||'서버 연결 오류');error.status=response.status;throw error}
     return body;
+  }
+
+  async function fetchHistoricalGeography(){
+    if(state.tier<1||!state.school||state.demo)return;
+    const region=String(state.school.sido_standard||state.school.sido||'').trim();
+    if(!region||region.length>24)return;
+    const request=state.reportSerial;
+    const years=[2023,2024,2025];
+    const results=await Promise.allSettled(years.map(year=>{
+      const cacheKey=region+'|'+year;
+      if(geographyComparisonCache[cacheKey])return Promise.resolve(geographyComparisonCache[cacheKey]);
+      return tierCall('survey_comparisons',{year,region});
+    }));
+    if(request!==state.reportSerial||state.tier<1)return;
+    for(let i=0;i<results.length;i++){
+      const result=results[i];
+      if(result.status==='fulfilled'&&result.value&&result.value.items&&typeof result.value.items==='object')
+        geographyComparisonCache[region+'|'+years[i]]=result.value;
+    }
   }
   function tierUI(){
     for(const level of [0,1])$('tier'+level).setAttribute('aria-pressed',String(state.tier===level));
@@ -1256,6 +1277,7 @@
           }
         }catch(e){console.warn('Lv.2 승인 학교정보 연동 실패')}
       }
+      await fetchHistoricalGeography();
       render();
     }catch(error){
       if(error.status===401||error.status===403){
@@ -1486,6 +1508,8 @@
     if(full&&Array.isArray(full.columns)&&full.columns.length)return full.columns;
     const prior=window.BeaguHistoricalQuestionnaire?.[year]?.[item.id];
     if(Array.isArray(prior)&&prior.length&&prior.every(x=>typeof x==='string'))return prior;
+    const observed=year===2025?window.Beagu2025ObservedChoices?.[item.id]:null;
+    if(Array.isArray(observed)&&observed.length&&observed.every(x=>typeof x==='string'))return observed;
     if(Array.isArray(item.options)&&item.options.length&&item.options.every(x=>typeof x==='string'))return item.options;
     if(year===2026&&/^Q(0[1-9]|1[0-1])$/.test(item.id))return standard2026;
     if(year===2026)return verified2026Options[item.id]||null;
@@ -1523,7 +1547,10 @@
     const options=actualOptions(state.selected,item);
     const choices=document.createElement('div');choices.className='question-choices';
     const heading=document.createElement('h5');
-    heading.textContent=full?.kind==='grid'?'전체 그리드 보기 (행·열)':'전체 보기';
+    heading.textContent=full?.kind==='grid'?'전체 그리드 보기 (행·열)':
+      (state.selected===2025 && window.Beagu2025ObservedChoices?.[item.id] &&
+       !window.BeaguHistoricalQuestionnaire?.[2025]?.[item.id])?
+      '원본 응답에서 확인된 보기 (일부 미선택 보기 누락 가능)':'전체 보기';
     choices.append(heading);
     if(full?.kind==='grid'&&Array.isArray(full.rows)&&full.rows.length){
       const label=document.createElement('strong');label.textContent='질문 행';
@@ -1557,19 +1584,34 @@
     }
     row.append(choices);
     const majority=itemApproved?verifiedModalOption(data?.distribution):null;
-    const national=itemApproved&&typeof data?.nationalMeanOption==='string'&&data.nationalMeanOption.length<150
-      ?data.nationalMeanOption:null;
-    const regional=itemApproved&&typeof data?.regionalMeanOption==='string'&&data.regionalMeanOption.length<150
-      ?data.regionalMeanOption:null;
+    const area=String(state.school?.sido_standard||state.school?.sido||'');
+    const historical=geographyComparisonCache[area+'|'+state.selected]?.items?.[item.id]||{};
+    const sourceNation=historical.national||null,sourceRegion=historical.regional||null;
+    const optionValue=metric=>metric&&typeof metric==='object'
+      ?(typeof metric.mean==='string'?metric.mean:
+        typeof metric.mode==='string'?metric.mode:null):null;
+    const national=optionValue(sourceNation)||(itemApproved&&typeof data?.nationalMeanOption==='string'
+      ?data.nationalMeanOption:null);
+    const regional=optionValue(sourceRegion)||(itemApproved&&typeof data?.regionalMeanOption==='string'
+      ?data.regionalMeanOption:null);
+    const nationLabel=sourceNation?.kind==='most_frequent'?'전국 최다 선택 보기':'전국평균 보기';
+    const regionLabel=sourceRegion?.kind==='most_frequent'?'시도 최다 선택 보기':'시도평균 보기';
     const comparison=document.createElement('div');comparison.className='question-comparisons';
     for(const [name,val] of [
-      ['학교별 최다 선택 보기',majority||'검수된 분포 자료 없음'],
-      ['전국평균 보기',national||'전국 집계 검증 대기'],
-      ['지역평균 보기',regional||'지역 집계 검증 대기']
+      ['학교별 최다 선택 보기',majority||'검수된 학교별 분포 자료 없음'],
+      [nationLabel,national||'원본 집계 검증 대기'],
+      [regionLabel,regional||'지역별 집계 검증 대기']
     ]){const cell=document.createElement('div');const cap=document.createElement('span');
       const value=document.createElement('strong');cap.textContent=name;value.textContent=val;
       cell.append(cap,value);comparison.append(cell);}
-    if(!isFreeText&&state.tier>=1)row.append(comparison);
+    if(!isFreeText&&state.tier>=1){
+      row.append(comparison);
+      if(historical.national||historical.regional){
+        const note=document.createElement('p');note.className='question-meta';
+        note.textContent='확인된 과거 원본 응답의 전국·시도 참고값입니다. 원본 범위가 전체 모집단을 대표한다고 보장하지 않으며, 공개 응답 건수는 표시하지 않습니다.';
+        row.append(note);
+      }
+    }
     if(itemApproved && Array.isArray(data?.distribution)&&data.distribution.length&&state.demo){
       const dist=document.createElement('div');dist.className='distribution';
       const d=data.distribution.filter(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.count))&&Number(x.count)>=0);
