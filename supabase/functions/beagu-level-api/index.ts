@@ -139,7 +139,8 @@ Deno.serve(async(req:Request)=>{
   const detailedKeys=new Set([
     'vice_principals','lead_teachers','classrooms','gym_spaces','cafeterias',
     'teacher_support_spaces','land_area','playground_area','admin_employees',
-    'school_employees','meal_place','milk_lunch','junior_teacher_ratio','male_teacher_ratio'
+    'school_employees','meal_place','milk_lunch','junior_teacher_ratio','male_teacher_ratio',
+    'district_housing_price_mean','september_participation_rate'
   ]);
   const vettedCategories:Record<string,Set<string>>={
     establishment_type:new Set(['국립','공립','사립']),
@@ -164,7 +165,8 @@ Deno.serve(async(req:Request)=>{
   };
   for(const fact of officialNumbers.data||[]){
     const n=Number(fact.fact_value),y=Number(fact.survey_year);
-    if(!Number.isFinite(n)||n<0||n>10000000)continue;
+    const cap=String(fact.fact_key)==='district_housing_price_mean'?10000000000:10000000;
+    if(!Number.isFinite(n)||n<0||n>cap)continue;
     const unit=typeof fact.unit==='string'&&fact.unit.length<=5?fact.unit:'';
     addFact(y,String(fact.fact_key),String(fact.label),n.toLocaleString('ko-KR',{maximumFractionDigits:2})+unit,Number(fact.source_year),unit,false);
   }
