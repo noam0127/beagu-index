@@ -1355,6 +1355,7 @@
     event.preventDefault();
     const code=$('tierCode').value.trim(),button=$('tierSubmit');if(!code)return;
     button.disabled=true;$('tierError').textContent='서버에서 인증을 확인하는 중…';
+    const beaguTierLoginTask=window.BeaguLoading?.start('참여코드를 확인하는 중…');
     try{
       const r=await tierCall('login',{code});
       const level=Number(r.level);
@@ -1366,9 +1367,11 @@
       $('tierCode').value='';$('tierError').textContent='';
       await chooseTier(state.requestedTier);
     }catch(e){$('tierError').textContent='인증할 수 없습니다. 코드 또는 서버 연결 상태를 확인해 주세요.'}
-    finally{button.disabled=false}
+    finally{button.disabled=false;window.BeaguLoading?.finish(beaguTierLoginTask)}
   }
   async function protectedReport(id){
+    const beaguLoadingTask=window.BeaguLoading?.start('승인된 학교 상세자료를 불러오는 중…');
+    try {
     if(!/^[A-Z0-9]{7}$/.test(id)||state.tier===0||!state.authToken)return;
     const serial=state.reportSerial,requested=state.tier;
     try{
@@ -1466,6 +1469,9 @@
         $('tierError').textContent='추가 통계 조회에 실패했습니다. 잠긴 데이터는 표시되지 않습니다.';
       }
     }
+    } finally {
+      window.BeaguLoading?.finish(beaguLoadingTask);
+    }
   }
   function demoData(){
     return {
@@ -1483,6 +1489,8 @@
     catch(e){if(!optional)console.warn('자료 로드 실패',url,e);return null;}
   }
   async function initialize(){
+    const beaguLoadingTask=window.BeaguLoading?.start('학교 자료를 준비하는 중…');
+    try {
     state.catalog=JSON.parse(document.getElementById('embeddedCatalog').textContent);
     state.publicRecords=await loadJSON('data/public-school-reports-v1.json',true);
     const participation=await loadJSON('data/public-2023-2025-school-records-v2.json?v=20261118',true);
@@ -1524,6 +1532,9 @@
         }
       }
     }
+    } finally {
+      window.BeaguLoading?.finish(beaguLoadingTask);
+    }
   }
   function bind(){
     for(const level of [0,1])$('tier'+level).addEventListener('click',()=>chooseTier(level));
@@ -1555,6 +1566,8 @@
     });
   }
   async function searchSchools(q){
+    const beaguLoadingTask=window.BeaguLoading?.start('학교를 검색하는 중…');
+    try {
     const serial=++state.searchSerial;
     // Supabase 패턴 와일드카드를 제거해 의도하지 않은 전역 검색을 방지합니다.
     const safe=q.replace(/[%_\\,()]/g,'').slice(0,55);
@@ -1577,6 +1590,9 @@
       });
       $('suggestions').hidden=false;$('searchHelp').textContent=`학교 ${data?.length||0}개 표시 · 검색은 공식 학교명 기준`;
     }catch(e){if(serial!==state.searchSerial)return;console.warn('검색 오류',e);$('searchHelp').textContent='학교 검색 연결에 실패했습니다. 네트워크 또는 Supabase 연결을 확인하세요.'}
+    } finally {
+      window.BeaguLoading?.finish(beaguLoadingTask);
+    }
   }
   function buildYears(id){
     const entry=state.percentileIndex.get(String(id));let values=[null,null,null];
@@ -1594,6 +1610,8 @@
     });return result;
   }
   async function selectSchoolById(id,preserveURL=true){
+    const beaguLoadingTask=window.BeaguLoading?.start('학교 정보를 확인하는 중…');
+    try {
     if(!client()){$('searchHelp').textContent='학교검색 연결 설정을 찾지 못했습니다.';return}
     try{
       const {data,error}=await client().from('schools')
@@ -1603,6 +1621,9 @@
       if(!data){$('searchHelp').textContent='해당 학교를 찾을 수 없습니다.';return}
       showSchool(data,buildYears(id));publicYearDB(String(id));$('schoolInput').value=data.school_name;
     }catch(e){console.warn(e);$('searchHelp').textContent='학교 정보를 조회하지 못했습니다.'}
+    } finally {
+      window.BeaguLoading?.finish(beaguLoadingTask);
+    }
   }
   function showSchool(school,years){state.school=school;state.years=years;state.yearLookupError=false;state.tier=0;state.requestedTier=0;state.reportSerial++;state.approvedSummary={};state.participationYears=[];state.officialFacts=[];state.officialCategories=[];if(!state.demo)state.selected=[2026,2025,2024,2023].find(y=>years[String(y)]?.approved||num(years[String(y)]?.percentile)!==null)||2026;state.mode='essential';state.q='';state.category='전체 영역';$('questionSearch').value='';$('welcome').hidden=true;$('mainContent').hidden=false;tierUI();render();if(!state.demo)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),0,'school-report')}
   function render(){if(!state.school)return;
