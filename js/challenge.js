@@ -41,7 +41,7 @@
       if (imageUrl) URL.revokeObjectURL(imageUrl);
       imageUrl = URL.createObjectURL(blob);
       capture.disabled = false;
-      status.textContent = '인증 이미지가 준비되었습니다. 저장한 뒤 2단계에서 참여 인증을 진행해주세요.';
+      status.textContent = '';
     } catch (error) {
       if (participant === null) participantNo.textContent = '순번 조회 실패';
       status.textContent = error.message === 'STORAGE_UNAVAILABLE'
