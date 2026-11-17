@@ -91,7 +91,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     <button type="button" data-key="jump">↑ 점프</button>
   </div>
   <div class="actions"><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>↔ A·D / 방향키 · 드래그　↑ 점프　⚡ 스파이크</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 터치·드래그 비행　↔ 방향키 · A/D　⚡ 스파이크</div>
   <div id="arcade-top10" aria-label="선생님배구 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-retro1"></script>
@@ -110,9 +110,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const SPEED_MULTIPLIER=2; // horizontal player and AI reaction (5->10, 3.65->7.3)
   const getFinalScore=()=>state.leftScore*120+Math.min(60,state.spikes)*25+
     (state.leftScore>state.rightScore ? 600+Math.max(0,7-state.rightScore)*30 : 0);
-  const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 305, NET_W = 14, R = 16;
+  const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 305, NET_W = 14, R = 32; // double-size ball
   const keys = { left: false, right: false, jump: false, spike: false };
-  const touchControl = { pointerId: null, targetX: null, startY: 0, swiped: false, jumpRequested: false };
+  const touchControl = { pointerId: null, targetX: null, targetY: null, jumpRequested: false };
   const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0 };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, side: "left", jumpLock: false };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
@@ -168,7 +168,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     Object.keys(keys).forEach(k => { keys[k] = false; });
     touchControl.pointerId = null;
     touchControl.targetX = null;
+    touchControl.targetY = null;
     touchControl.jumpRequested = false;
+    left.vy = 0;
     document.querySelectorAll(".touch button").forEach(b => b.classList.remove("is-down"));
   }
   const codes = { KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "jump", ArrowUp: "jump", Space: "jump", KeyJ: "spike", KeyK: "spike" };
@@ -180,20 +182,20 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     keys[key] = true;
   });
   document.addEventListener("keyup", e => { if (codes[e.code]) keys[codes[e.code]] = false; });
-  // 모바일에서는 경기장에 손가락을 대거나 드래그하면 해당 위치로 이동합니다.
-  // 위로 밀면 한 번 점프합니다. 점프 버튼은 별도로 제공하여 접근성을 높입니다.
+  // Touch/drag: fly freely in the player's half of the court.
+  // Gravity resumes on release; keyboard jumping and spike remain available.
   function targetFromPointer(e) {
     const bounds = canvas.getBoundingClientRect();
-    if (!bounds.width) return;
-    const relativeX = (e.clientX - bounds.left) * (W / bounds.width);
-    touchControl.targetX = clamp(relativeX, 35, NET_X - NET_W / 2 - 36);
+    if (!bounds.width || !bounds.height) return;
+    const x = (e.clientX - bounds.left) * W / bounds.width;
+    const y = (e.clientY - bounds.top) * H / bounds.height;
+    touchControl.targetX = clamp(x, 35, NET_X - NET_W / 2 - 36);
+    touchControl.targetY = clamp(y, 86, FLOOR - 31);
   }
   canvas.addEventListener("pointerdown", e => {
-    if (e.pointerType === "mouse" || state.phase !== "playing" || touchControl.pointerId !== null) return;
+    if (state.phase !== "playing" || touchControl.pointerId !== null) return;
     e.preventDefault();
     touchControl.pointerId = e.pointerId;
-    touchControl.startY = e.clientY;
-    touchControl.swiped = false;
     targetFromPointer(e);
     if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
   });
@@ -201,16 +203,13 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if (touchControl.pointerId !== e.pointerId) return;
     e.preventDefault();
     targetFromPointer(e);
-    if (!touchControl.swiped && touchControl.startY - e.clientY >= 24) {
-      touchControl.jumpRequested = true;
-      touchControl.swiped = true;
-    }
   });
   function endCourtTouch(e) {
     if (touchControl.pointerId !== e.pointerId) return;
     touchControl.pointerId = null;
-    // 짧게 탭해도 지정한 위치까지 이동합니다.
-    if (e.type === "pointercancel") touchControl.targetX = null;
+    touchControl.targetX = null;
+    touchControl.targetY = null;
+    left.vy = 0; // land naturally instead of carrying pointer velocity
   }
   canvas.addEventListener("pointerup", endCourtTouch);
   canvas.addEventListener("pointercancel", endCourtTouch);
@@ -296,13 +295,20 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     if (state.phase !== "playing") return;
     const keyboardDirection = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
-    let direction = keyboardDirection;
-    if (!direction && touchControl.targetX !== null) {
-      const difference = touchControl.targetX - left.x;
-      if (Math.abs(difference) > 5) direction = Math.sign(difference);
-      else touchControl.targetX = null;
+    if (touchControl.pointerId !== null && touchControl.targetX !== null && touchControl.targetY !== null) {
+      // Responsive, smoothed 2-axis flight; remain within the player's half-court.
+      const oldX = left.x, oldY = left.y;
+      const flightStep = 24 * SPEED_MULTIPLIER;
+      left.x += clamp(touchControl.targetX - left.x, -flightStep, flightStep);
+      left.y += clamp(touchControl.targetY - left.y, -flightStep, flightStep);
+      left.x = clamp(left.x, 35, NET_X - NET_W / 2 - 36);
+      left.y = clamp(left.y, 86, FLOOR - 31);
+      left.vx = left.x - oldX;
+      left.vy = left.y - oldY;
+      left.jumpLock = false;
+    } else {
+      controlPlayer(left, keyboardDirection, keys.jump || touchControl.jumpRequested, 5*SPEED_MULTIPLIER);
     }
-    controlPlayer(left, direction, keys.jump || touchControl.jumpRequested, 5*SPEED_MULTIPLIER);
     touchControl.jumpRequested = false;
     moveAI();
     const previousX = ball.x, previousY = ball.y;
@@ -414,16 +420,34 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  ctx.restore();
 }
   function drawBall() {
-    ball.trail.forEach((pos, i) => oval(pos.x, pos.y, 5 + i, 5 + i, "rgba(255,251,232," + (.04 + i * .035) + ")"));
-    oval(ball.x + 2, ball.y + 2, R + 2, R + 2, "rgba(43,84,110,.17)");
-    oval(ball.x,ball.y,R,R,"#ffffff");
-    ctx.fillStyle="#ffdc83";ctx.fillRect(ball.x-7,ball.y-10,5,5);ctx.fillStyle="#f28b77";ctx.fillRect(ball.x+4,ball.y+3,6,6);
-    ctx.lineWidth = 4; ctx.strokeStyle = "#f2a341";
+    // Full-size collision radius R: shading and seams scale with the doubled ball.
+    const trailSize = R * .15;
+    ball.trail.forEach((pos, i) => oval(pos.x, pos.y,
+      trailSize + i * 1.1, trailSize + i * 1.1,
+      "rgba(255,248,218," + (.04 + i * .035) + ")"));
+    ctx.save();
+    ctx.translate(ball.x, ball.y);
+    ctx.shadowColor = "rgba(255,244,180,.64)";
+    ctx.shadowBlur = 14;
+    oval(2, 3, R+3, R+3, "rgba(24,54,83,.24)");
+    oval(0, 0, R, R, "#fffdf2");
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(-R*.48, -R*.62, R*.42, R*.18);
+    ctx.fillStyle = "#ffdf8e";
+    ctx.fillRect(-R*.45, -R*.42, R*.31, R*.32);
+    ctx.fillStyle = "#f68b7a";
+    ctx.fillRect(R*.18, R*.15, R*.36, R*.33);
+    ctx.strokeStyle = "#eba24e";
+    ctx.lineWidth = Math.max(4,R*.13);
     ctx.beginPath();
-    ctx.arc(ball.x, ball.y, 12, -.9, 1.2);
-    ctx.moveTo(ball.x - 14, ball.y + 2); ctx.quadraticCurveTo(ball.x, ball.y - 6, ball.x + 11, ball.y - 11);
-    ctx.moveTo(ball.x - 4, ball.y + 15); ctx.quadraticCurveTo(ball.x - 2, ball.y + 1, ball.x + 15, ball.y - 2);
+    ctx.arc(0, 0, R*.74, -.95, 1.35);
+    ctx.moveTo(-R*.84,R*.1);
+    ctx.quadraticCurveTo(0,-R*.4,R*.72,-R*.72);
+    ctx.moveTo(-R*.27,R*.92);
+    ctx.quadraticCurveTo(-R*.2,R*.03,R*.9,-R*.12);
     ctx.stroke();
+    ctx.restore();
   }
   function overlay(headline, subtitle) {
     rect(0,0,W,H,"rgba(11,31,54,.56)");
