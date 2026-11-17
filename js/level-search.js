@@ -199,7 +199,7 @@
     const match = metric.value.trim().match(/^(\d{1,3}(?:\.\d+)?)\s*%$/);
     return !!match && Math.abs(Number(match[1]) - value) < 0.005;
   }
-  function renderYear(host, year, rows, publicValue, schoolId) {
+  function renderYear(host, year, rows, publicValue, schoolId, distributions=[]) {
     host.replaceChildren();
     host.append(make('h3', '', `${year}년 조사 결과`));
     // The unified school report contains the verified original question titles
@@ -244,6 +244,36 @@
     legacy.append(make('h4', '', '기존 공개 백분위'));
     addRow(legacy, `${year}년 전국 백분위`, publicValue === null ? '자료 없음' : publicValue.toFixed(1) + '%');
     host.append(legacy);
+    // Only safety-checked, coarsened school distributions supplied by the
+    // signed-session API are rendered. No raw responses or respondent counts.
+    const vetted=(Array.isArray(distributions)?distributions:[]).filter(d=>
+      Number(d?.year)===year && /^Q\\d{2}$/.test(String(d?.questionId||'')) &&
+      typeof d.modeOption==='string' && Array.isArray(d.roundedDistribution));
+    if(vetted.length){
+      const section=make('section','data-section');
+      section.append(make('h4','','학교별 검증 설문 응답 분포'));
+      section.append(make('p','detail-note','원본과 학교를 대조하고 소수 응답을 검토한 항목만 표시합니다. 비율은 10% 단위로 반올림해 합계가 100%와 다를 수 있습니다.'));
+      for(const item of vetted){
+        const card=make('div','section-card');
+        const names=window.BeaguHistoricalOriginalQuestions?.[String(year)]||{};
+        card.append(make('h4','',item.questionId+' · '+String(names[item.questionId]||'원본 질문 확인 필요')));
+        addRow(card,'학교별 최다 선택 보기',item.modeOption);
+        const d=make('div','question-distribution');
+        for(const answer of item.roundedDistribution){
+          const pct=Number(answer?.pct);
+          if(typeof answer?.label!=='string'||!Number.isInteger(pct)||pct<0||pct>100||pct%10!==0)continue;
+          const row=make('div','',answer.label+' · 약 '+pct+'%');
+          row.style.cssText='margin:6px 0;font-size:13px;color:#334155';
+          const track=make('div','');
+          track.style.cssText='height:7px;margin:3px 0 10px;border-radius:6px;background:#e8eef8;overflow:hidden';
+          const bar=make('div','');
+          bar.style.cssText='height:100%;width:'+pct+'%;background:#2563eb;border-radius:6px';
+          track.append(bar);d.append(row,track);
+        }
+        card.append(d);section.append(card);
+      }
+      host.append(section);
+    }
     const section = make('div', 'data-section');
     section.append(make('h4', '', 'Lv.1 승인 통계'));
     if (!yearRows.length) {
@@ -333,7 +363,7 @@
       refresh();
     });
   }
-  function showDetails(host, rows, school) {
+  function showDetails(host, rows, school, distributions=[]) {
     host.replaceChildren();
     const section=make('section','detail');
     const vals=asPublicPercentiles(school);
@@ -384,7 +414,7 @@
       for (const button of tabs.children) {
         button.setAttribute('aria-selected', String(Number(button.dataset.year) === year));
       }
-      renderYear(content, year, rows, vals[year - 2023] ?? null, school.school_id);
+      renderYear(content, year, rows, vals[year - 2023] ?? null, school.school_id, distributions);
     }
     for (const year of YEARS) {
       const button = make('button', '', year + '년');
@@ -459,7 +489,7 @@
           const data = await api('school', {schoolId:school.school_id});
           await loaded;
           // The server enforces the session's authorization and release_status.
-          showDetails(detail, data.rows, school);
+          showDetails(detail, data.rows, school, data.schoolDistributions);
           detail.dataset.loaded = '1';
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         } catch (error) {
