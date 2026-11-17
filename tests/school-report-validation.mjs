@@ -76,6 +76,17 @@ assert.ok(src.includes("return '광주'")&&src.includes("return '전남'"),'Pres
 assert.ok(src.includes("nation:state.tier>=1?national:null"),'Level 0 must not expose authenticated comparison data');
 assert.ok(src.includes("school:itemApproved?majority:null"),'Do not render unpublished school mode');
 
+// Crossed-out controls are removed from every school and year report.
+assert.ok(!html.includes('id="essentialBtn"')&&!html.includes('id="allBtn"'),'No two-mode switch');
+assert.ok(!src.includes('state.mode'),'Every category displays all of its questions');
+assert.ok(src.includes('groupItems.forEach(item=>wrap.append(renderItem(item)))'),'Render every question in the selected category');
+assert.ok(!src.includes("const groups=['전체 영역'"),'Remove the redundant all-category pill');
+assert.ok(src.includes("state.category=state.category===g?'전체 영역':g"),'Tapping an active category resets to all questions');
+assert.ok(!html.includes('선택지에 순서가 없어 가로 위치는 표시하지 않습니다.'),'No empty-axis explanation box');
+assert.ok(src.includes("root.classList.add('question-visual--values-only')"),'Comparison values remain visible without an ordinal axis');
+assert.ok(src.includes("displayQuestionLabel("),'Repeated grouped-question instruction must be shortened');
+assert.ok(html.includes('question-visual--values-only .question-visual-values'),'Removed notices leave no excess gap');
+
 // UI readability: move the actual question to the beginning of its own chart.
 assert.ok(src.includes('chart.prepend(questionLine)'),'Question prompt must appear at the top of comparison card');
 assert.ok(src.includes("if(!locked)questionLine.querySelector('.question-value')?.remove()"),'Remove duplicated missing/approved status from the question heading');
@@ -87,9 +98,12 @@ assert.ok(!src.includes("title.textContent='전국 · '"),'Remove duplicate summ
 assert.ok(!src.includes('검수·공개 승인된 학교별 통계가 아직 없습니다.'),'Remove repetitive missing-approval text');
 assert.ok(src.includes("Number(data?.n)>=5"),'Existing privacy safeguards must not be lowered by UI changes');
 
+// Repetitive captions are not displayed, but year cards, publication states, and privacy rules stay intact.
+assert.ok(!html.includes('class="participation-notice"'),'Remove crossed-out year introduction');
+assert.ok(!html.includes('class="chart-disclaimer"'),'Remove crossed-out explanatory note');
+assert.ok(src.includes('for(const year of [2023,2024,2025,2026])'),'Every historical year stays selectable');
+assert.ok(src.includes("year===2025?'2025 조사 참여 · 공개 결과는 별도 승인'"),'Published and participation states stay distinct');
 // One response is counted as participation, not released as one respondent's answer.
-assert.ok(html.includes('2023~2025년은 학교별 조사 기록을 확인할 수 있습니다.'),'Explain all historical years transparently');
-assert.ok(html.includes('자료 검증과 공개 요건을 충족한 경우에만 표시합니다.'),'State survey result publication is conditional');
 assert.ok(src.includes('state.participationYears=Array.isArray(r.participationYears)'),'Receive only vetted boolean participation years from the API');
 assert.ok(src.includes("year===2025?'2025 조사 참여 · 공개 결과는 별도 승인'"),'Distinguish 2025 participants from 2023-24 historical records');
 assert.ok(src.includes('state.participationYears=[]'),'Clear participation on school change');
