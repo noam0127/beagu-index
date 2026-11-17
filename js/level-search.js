@@ -501,6 +501,7 @@
       render(data || [], count || 0);
     } catch (error) {
       if (request !== serial) return;
+      if(error.unauthorized){loggedOut('인증이 만료되었습니다. 참여코드로 다시 로그인해주세요.');return;}
       console.error(error);
       $('resultCount').textContent = '';
       $('results').replaceChildren(make('div', 'empty', '검색에 실패했습니다.'));
