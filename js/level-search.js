@@ -166,9 +166,38 @@
   $('prevPage').addEventListener('click', () => { page = Math.max(0, page - 1); search(false); });
   $('nextPage').addEventListener('click', () => { page++; search(false); });
 
-  function addRow(host, label, value) {
+  function addRow(host, label, value, comparison = null) {
     const div = make('div', 'data-row');
-    div.append(make('span', '', label), make('strong', '', value));
+    if (!comparison || comparison.group!=='편집본 공식 학교정보') {
+      div.append(make('span', '', label), make('strong', '', value));
+      host.append(div);
+      return;
+    }
+    div.style.cssText='display:block;padding:14px 0';
+    const heading=make('div','compare-label',label);
+    heading.style.cssText='font-weight:700;margin-bottom:8px';
+    const grid=make('div','compare-grid');
+    grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;width:100%';
+    const kind=comparison.comparisonKind==='mode'?'최빈 보기':'평균';
+    for (const [name,v] of [
+      ['우리 학교',value],
+      ['전국 '+kind,comparison.nationalAverage||'비교 자료 없음'],
+      ['지역 '+kind,comparison.regionalAverage||'비교 자료 없음']
+    ]) {
+      const cell=make('div','compare-value');
+      cell.style.cssText='border:1px solid #dce6f5;border-radius:10px;padding:10px;min-width:0';
+      const labelNode=make('span','',name);
+      labelNode.style.cssText='display:block;font-size:12px;color:#63758f;margin-bottom:4px';
+      const valueNode=make('strong','',v);
+      valueNode.style.cssText='display:block;font-size:16px;overflow-wrap:anywhere';
+      cell.append(labelNode,valueNode);grid.append(cell);
+    }
+    div.append(heading,grid);
+    if(Number.isInteger(comparison.referenceYear)) {
+      const note=make('small','detail-note',comparison.referenceYear+'년 자료 기준 · 검수된 학교들만 집계한 비교값');
+      note.style.cssText='display:block;margin-top:6px;font-size:11px';
+      div.append(note);
+    }
     host.append(div);
   }
   function asPublicPercentiles(school) {
@@ -245,11 +274,11 @@
         if (isDuplicatePublicPercentile(metric, year, publicValue)) continue;
         if (metric.label.includes(String(year)) && metric.label.includes('백분위') && publicValue !== null)
           hadMismatch = true;
-        releasedMetrics.push({label:metric.label,value:metric.value,group:metric.group});
+        releasedMetrics.push({label:metric.label,value:metric.value,group:metric.group,nationalAverage:metric.nationalAverage,regionalAverage:metric.regionalAverage,comparisonKind:metric.comparisonKind,referenceYear:metric.referenceYear});
         count++;
       }
     }
-    BeaguDetailGroups.appendGrouped(section,releasedMetrics,(body,m)=>addRow(body,m.label,m.value));
+    BeaguDetailGroups.appendGrouped(section,releasedMetrics,(body,m)=>addRow(body,m.label,m.value,m));
     if (hadMismatch) section.append(make('p', 'detail-note', '백분위 출처별 값이 달라 원본 검수가 필요합니다. 임의로 합치지 않았습니다.'));
     if (hadRestricted) section.append(make('p', 'detail-note', '승인 범위에 따라 일부 세부 항목은 공개하지 않습니다.'));
     if (!count && !hadRestricted) section.append(make('p', 'detail-note', '추가 승인 통계가 없습니다. 위의 기존 공개 백분위를 참고하세요.'));
@@ -337,14 +366,18 @@
       .filter(r=>[2024,2025].includes(Number(r.year))&&Number(r.access_level)===1)
       .flatMap(r=>(Array.isArray(r.summary?.metrics)?r.summary.metrics:[])
         .filter(m=>m.group==='편집본 공식 학교정보'&&typeof m.label==='string'&&typeof m.value==='string')
-        .map(m=>({year:Number(r.year),label:m.label,value:m.value})));
+        .map(m=>({year:Number(r.year),label:m.label,value:m.value,group:m.group,nationalAverage:m.nationalAverage,regionalAverage:m.regionalAverage,comparisonKind:m.comparisonKind,referenceYear:m.referenceYear})));
     const schoolScale=[];
-    for(const label of ['학생 수','교원 수','학급 수']){
-      const found=[2025,2024].map(year=>published.find(m=>m.year===year&&m.label===label)).find(Boolean);
-      if(found)schoolScale.push({label:label+' ('+found.year+'년 편집본)',value:found.value,group:'학교 규모'});
+    const seen=new Set();
+    for(const year of [2025,2024]){
+      for(const fact of published.filter(x=>x.year===year)){
+        if(seen.has(fact.label))continue;
+        seen.add(fact.label);
+        schoolScale.push({...fact,group:'학교 기본·교직원·시설 정보'});
+      }
     }
     if(schoolScale.length){
-      BeaguDetailGroups.appendGrouped(section,schoolScale,(body,m)=>addRow(body,m.label,m.value));
+      BeaguDetailGroups.appendGrouped(section,schoolScale,(body,m)=>addRow(body,m.label,m.value,{...m,group:'편집본 공식 학교정보'}));
     }else{
       section.append(make('p','detail-note','이 학교의 추가 승인 규모정보는 아직 없습니다. 과거 백분위는 아래에서 확인할 수 있습니다.'));
     }
