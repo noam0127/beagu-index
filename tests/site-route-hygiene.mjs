@@ -33,7 +33,9 @@ assert.match(oldResult,/js\/visit-stats\.js/);
 assert.match(oldResult,/school-report\.html/);
 assert.match(oldResult,/name="robots" content="noindex,follow"/);
 assert.doesNotMatch(oldResult,/향후 회원 등급|과거 배구지수[^\n]*잠금/,'Outdated result messages removed');
-assert.match(survey,/school-report\.html\?school_id=\$\{encodeURIComponent\(selectedSchool\.school_id\)\}/);
+assert.match(survey,/school-report\\.html\\?school_id=/,'Legacy school link remains available');
+assert.doesNotMatch(survey,/submit_survey|TEST 1|테스트 응답 제출/,'No public test survey write path');
+assert.match(survey,/2026 배구지수 공식 설문/,'Public survey goes to official form');
 assert.doesNotMatch(survey,/href="result\.html\?school=/,'Legacy survey no longer links to outdated result');
 
 assert.match(oldChallenge,/new URL\('\.\.\/challenge\.html',location\.href\)/);
