@@ -77,14 +77,15 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-rolling1"></script>
+<link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261118-retro1">
 </head>
-<body>
+<body class="arcade-body">
 <main class="shell">
-  <header class="top"><div class="brand" style="display:flex;align-items:center;gap:8px"><span class="beagu-brand-mark" aria-hidden="true">B</span>험난한 교직생활 <span style="color:#8ae4d7">2.0</span></div><span class="version">MON → FRI</span></header>
+  <header class="top"><div class="brand" style="display:flex;align-items:center;gap:8px"><span class="beagu-brand-mark" aria-hidden="true">B</span>험난한 교직생활 <span style="color:#8ae4d7">2.0</span></div><span class="version">ARCADE · 1UP</span></header>
   <div class="hud" aria-label="게임 현황">
-    <div class="stat"><span>근무</span><strong id="dayLabel">월요일 · 1/5</strong></div>
-    <div class="stat"><span>점수</span><strong id="scoreLabel">0</strong></div>
-    <div class="stat"><span>최고</span><strong id="bestLabel">0</strong></div>
+    <div class="stat"><span>DAY</span><strong id="dayLabel">월요일 · 1/5</strong></div>
+    <div class="stat"><span>1UP</span><strong id="scoreLabel">0</strong></div>
+    <div class="stat"><span>HI-SCORE</span><strong id="bestLabel">0</strong></div>
   </div>
   <div class="stage">
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 게임 영역. 방향키나 아래 버튼으로 이동하고 스페이스 또는 회피 버튼으로 긴급 회피합니다."></canvas>
@@ -102,12 +103,15 @@ canvas{height:400px;cursor:default}
     <button id="sound" type="button" aria-pressed="false" aria-label="소리 켜기" title="효과음">🔇</button>
     <button id="how" class="help" type="button" aria-label="게임 방법" title="게임 방법">?</button><a class="original" href="https://ilovebaegu.itch.io/teacherrun09" target="_blank" rel="noopener noreferrer" aria-label="원작 게임">↗ 원작</a>
   </div>
+  <div id="arcade-top10" aria-label="험난한 교직생활 TOP 10 순위"></div>
 </main>
+<script src="js/arcade-leaderboard-v1.js?v=20261118-retro1"></script>
 <script>
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
+const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("teacher_run","#arcade-top10") : null;
 if(!ctx){$("overlayDesc").textContent="이 브라우저에서는 캔버스 게임을 실행할 수 없습니다.";return;}
 const days=["월요일","화요일","수요일","목요일","금요일"];
 const dayTitles=["출근 첫날, 메일이 쌓인다","회의와 공문의 이중주","수요일의 언덕을 넘자","방심하면 야근이다","오늘만 버티면 주말!"];
@@ -170,6 +174,7 @@ function message(title,desc,choices,symbol="🎒"){
 function closeMessage(){$("overlay").hidden=true;$("pause").disabled=false;canvas.focus({preventScroll:true});}
 function start(mult=1){
  difficulty=mult;state="playing";day=0;dayTime=0;clock=0;score=0;life=100;maxLife=100;
+ ranking?.start();
  combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1,dash:0};
  items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.inv=1.5;player.cool=0;player.dashTime=0;
  pressed.clear();pointerX=null;updateLabels();setNotice("월요일 시작!",2);closeMessage();playTone(500,.13);
@@ -231,6 +236,7 @@ function finish(win){
  let bonus=win?1500+Math.round(life*5):0;score+=bonus;
  if(score>best){best=Math.floor(score);persist();}
  updateLabels();$("bestLabel").textContent=best.toLocaleString("ko-KR");
+ ranking?.finish(Math.floor(score),{score:Math.floor(score),day:day+1,victory:win});
  const grade=win?(life>70?"S":"A"):(day>=3?"B":"C");
  const text=(win?"금요일 퇴근 성공! 🎉":"오늘은 여기까지! 체력 회복이 필요해요.")+"\n"+
  "최종 점수 "+Math.floor(score).toLocaleString("ko-KR")+"점 · "+grade+"등급\n"+
