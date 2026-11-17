@@ -16,6 +16,11 @@ for(const h of [volley,runner]){
 new Function(shared);
 assert.ok(html.indexOf('id="teacher-game-frame"')<html.indexOf('id="teacher-run-frame"'));
 assert.match(volley,/SPEED_MULTIPLIER=2/);
+assert.match(volley,/AUTO_SPIKE_SPEED=8/,"automatic spike requires fast movement");
+assert.match(volley,/impactSpeed >= AUTO_SPIKE_SPEED/,"contact fires automatic spike");
+assert.doesNotMatch(volley,/data-key="spike"/,"separate spike button removed");
+assert.doesNotMatch(volley,/keys\.spike/,"manual spike input removed");
+
 assert.match(volley,/R = 32;/,"volleyball radius doubles from 16 to 32");
 assert.match(volley,/touchControl\.targetY/,"volleyball touch flight has vertical axis");
 assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is implemented");
@@ -55,7 +60,7 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261118-flying-ball2x/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261118-autospike1/);
 assert.match(site.body,/teacher-run\.html\?v=20261118-flying/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
