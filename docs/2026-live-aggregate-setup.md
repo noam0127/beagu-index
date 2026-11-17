@@ -26,10 +26,11 @@
 ## 2. Google Apps Script 실제 설치
 1. 먼저 기존 설치 스크립트·트리거 목록을 백업·확인해 중복 실행을 피합니다.
 2. 기존 코드와 충돌하지 않게 GitHub의 `scripts/beagu-2026-noon-sync.gs` 최신 내용을 반영합니다. 다른 파일에 같은 이름의 함수를 중복 선언하지 않습니다.
-3. `refreshBeagu2026Stats()` 를 수동 실행하고 Google Sheets·외부 요청 권한을 승인합니다. 이 함수는 2026-11-01 이전 테스트 응답을 제외합니다.
-4. `setupBeagu2026FormSubmitTrigger()` 를 **한 번** 실행하여 원본 응답 Sheet 제출 트리거를 등록합니다.
-5. `setupDailyNoonTrigger()` 는 선택적으로 매일 재동기화 보호용으로 사용합니다.
-6. Apps Script 실행 로그 및 비공개 MASTER `정오_실행로그`에서 `SUCCESS`와 `전국 응답건수 PUBLISHED` 확인. `SKIPPED_NOT_CONFIGURED`면 토큰이 미설치, `PUBLIC_ERROR`면 Edge Function/연결 확인.
+3. Apps Script 함수 목록에서 **`installBeagu2026Sync`** 를 선택해 **한 번 실행**하고 Google Sheets·외부 요청 권한을 승인합니다.
+4. 이 함수는 두 비밀키 설정 여부를 검증하고, `onBeagu2026FormSubmitted` 설문 제출 트리거와 `refreshBeagu2026Stats` 정오 백업 트리거를 중복 없이 설치합니다.
+5. 트리거 설치가 확인되면 기존 공식 시작일(2026-11-01) 기준으로 초기 **비공개 집계**를 실행합니다.
+6. Apps Script 실행 로그와 비공개 MASTER `정오_실행로그`에서 `SUCCESS` 및 백엔드 동기화 `PUBLISHED` 상태를 확인합니다. `SKIPPED_NOT_CONFIGURED`면 토큰 미설치, `PUBLIC_ERROR`면 서버 연결·토큰 값을 점검합니다. **PUBLISHED는 내부 저장 성공이며 대외 공개가 아닙니다.**
+7. 설치한 트리거는 Apps Script 왼쪽 '트리거' 메뉴에서 직접 확인합니다. 이 프로젝트 코드를 GitHub에 저장한 것만으로 실제 설치된 것이 아닙니다.
 
 ## 3. 검증
 - 원본 Sheet 공식 시작일: **2026-11-01**. 시범 응답(이전 날짜) 제외.
