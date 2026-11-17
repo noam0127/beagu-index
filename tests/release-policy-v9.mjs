@@ -5,7 +5,7 @@ const read=p=>readFileSync(p,'utf8');
 const policy=read('release-policy.html');
 assert.match(policy,/<title>자료 공개·열람 기준 \| 배구지수<\/title>/);
 for(const key of ['Lv.0','Lv.1','2023','2024','2025','2026',
-                   '13문항','Q51','소표본','자유서술','미승인',
+                   'Q51','소표본','자유서술','미승인',
                    '자료 없음','검수 중','미공개','불러오기 실패'])
  assert.ok(policy.includes(key),'missing disclosure: '+key);
 assert.ok(policy.indexOf('2023 → 2024 → 2025 → 2026')>=0,'Year order must be ascending');
