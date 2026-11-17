@@ -58,6 +58,8 @@
   let publicIndex = new Map(), publicStaticAvailable = false, publicLoadError = false;
   let current2026 = new Map();
   let historicalPresenceByYear={};
+  const geographyComparisons=new Map(); // approved national/province benchmarks; never school responses
+
   const historicalPresenceReady=fetch('data/public-2023-2025-school-records-v2.json?v=20261118',{cache:'no-cache'})
     .then(r=>{if(!r.ok)throw new Error('과거 조사 기록 파일 조회 실패');return r.json()})
     .then(data=>{
@@ -98,6 +100,7 @@
 
   function loggedOut(message = '') {
     session = '';
+    geographyComparisons.clear();
     sessionStorage.removeItem(key);
     $('loginPanel').hidden = false;
     $('searchPanel').hidden = true;
@@ -134,6 +137,7 @@
         return;
       }
       session = data.token;
+      geographyComparisons.clear();
       sessionStorage.setItem(key, session);
       $('levelCode').value = '';
       loggedIn();
@@ -237,7 +241,108 @@
     const match = metric.value.trim().match(/^(\d{1,3}(?:\.\d+)?)\s*%$/);
     return !!match && Math.abs(Number(match[1]) - value) < 0.005;
   }
-  function renderYear(host, year, rows, publicValue, schoolId, distributions=[]) {
+
+  // Reviewed aggregated historical benchmarks. A region's result must never be
+  // represented as this particular school's response.
+  function loadGeographyComparisons(year,region){
+    if(![2023,2024,2025].includes(year)||typeof region!=='string'||
+       !/^[가-힣A-Za-z·\\s]{2,24}$/.test(region))return Promise.resolve(null);
+    const cacheKey=year+'|'+region;
+    if(geographyComparisons.has(cacheKey))return geographyComparisons.get(cacheKey);
+    const promise=api('survey_comparisons',{year,region}).then(result=>{
+      if(Number(result.year)!==year||result.region!==region||!result.items||
+         typeof result.items!=='object'||Array.isArray(result.items))throw Error('BAD_COMPARISON_RESULT');
+      return result;
+    }).catch(error=>{geographyComparisons.delete(cacheKey);throw error;});
+    geographyComparisons.set(cacheKey,promise);
+    return promise;
+  }
+  function verifiedOptions(year,questionId){
+    const authoritative=window.BeaguHistoricalQuestionnaire?.[String(year)]?.[questionId];
+    if(Array.isArray(authoritative)&&authoritative.length)return {values:authoritative,source:'verified'};
+    const additional=window.BeaguHistoricalAdditionalObserved?.[String(year)]?.[questionId];
+    if(Array.isArray(additional)&&additional.length)return {values:additional,source:'observed'};
+    const observed=year===2025?window.Beagu2025ObservedChoices?.[questionId]:null;
+    if(Array.isArray(observed)&&observed.length)return {values:observed,source:'observed'};
+    return {values:[],source:'missing'};
+  }
+  function renderHistoricalBenchmarks(host,year,school,distributions,comparison,loadStatus){
+    const questions=window.BeaguHistoricalOriginalQuestions?.[String(year)]||{};
+    const qids=Object.keys(questions).filter(id=>/^Q\\d{2}$/.test(id)).sort();
+    if(!qids.length)return;
+    const section=make('section','data-section');
+    section.append(make('h4','','역대 문항별 결과 · 전국·지역 비교'));
+    const intro=make('p','detail-note',
+      '학교 고유 결과는 별도 공개 심사를 통과한 경우에만 표시합니다. 그 외에는 학교가 속한 시도 및 전국의 검증된 집계값을 참고값으로 제공합니다. 지역·전국 기준값은 해당 학교의 응답이 아닙니다.');
+    intro.style.cssText='margin:8px 0 14px;line-height:1.6';
+    section.append(intro);
+    const all=comparison?.items&&typeof comparison.items==='object'?comparison.items:{};
+    const nationalCount=qids.filter(id=>typeof all[id]?.national?.mean==='string'||typeof all[id]?.national?.mode==='string').length;
+    const regionalCount=qids.filter(id=>typeof all[id]?.regional?.mean==='string'||typeof all[id]?.regional?.mode==='string').length;
+    const overview=make('p','detail-note',
+      loadStatus==='loading'?'승인된 전국·지역 비교값을 확인하는 중…':
+      loadStatus==='error'?'비교값 연결에 실패했습니다. 연도를 다시 선택하면 재조회합니다.':
+      '확인된 비교 문항: 전국 '+nationalCount+'/'+qids.length+' · 지역 '+regionalCount+'/'+qids.length);
+    overview.style.cssText='margin:8px 0 14px;font-weight:600';
+    section.append(overview);
+    const vetted=new Map((Array.isArray(distributions)?distributions:[])
+      .filter(d=>Number(d.year)===year && /^Q\\d{2}$/.test(String(d.questionId||'')) &&
+        typeof d.modeOption==='string'&&Array.isArray(d.roundedDistribution))
+      .map(d=>[d.questionId,d.modeOption]));
+    const region=String(school?.sido_standard||school?.sido||'지역');
+    for(const id of qids){
+      const block=make('article','historical-question-row');
+      block.style.cssText='margin:12px 0;padding:14px;border:1px solid #dbe5f3;border-radius:12px;background:#fff';
+      const header=make('h5','',id+' · '+conciseQuestion(questions[id]));
+      header.style.cssText='font-size:14px;line-height:1.65;margin:0 0 10px;color:#1d314e;overflow-wrap:anywhere';
+      block.append(header);
+      const comparisonValues=all[id]||{};
+      const benchmark=m=>{
+        if(!m||typeof m!=='object')return null;
+        const preferred=m.kind==='most_frequent'||m.kind==='mode'?m.mode||m.mean:m.mean||m.mode;
+        return typeof preferred==='string'&&preferred.length<=180?preferred:null;
+      };
+      const cells=[
+        ['우리 학교',vetted.get(id)||null,'school'],
+        [region+' 참고값',benchmark(comparisonValues.regional),'region'],
+        ['전국 참고값',benchmark(comparisonValues.national),'nation']
+      ];
+      const grid=make('div','historical-benchmark-grid');
+      grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px';
+      for(const [label,value,role] of cells){
+        const cell=make('div','historical-benchmark-value '+role);
+        cell.style.cssText='border:1px solid #e2e8f0;border-radius:9px;padding:10px;min-width:0;overflow-wrap:anywhere';
+        const top=make('span','',label);
+        top.style.cssText='display:block;font-size:11px;color:#62758d;margin-bottom:5px';
+        const hasValue=typeof value==='string'&&value.trim();
+        const display=hasValue?value:role==='school'?'학교별 문항 집계 미공개':'비교 자료 없음';
+        const val=make('strong','',display);
+        val.style.cssText='display:block;font-size:13px;line-height:1.5;color:'+(hasValue?'#142a47':'#748299');
+        cell.append(top,val);grid.append(cell);
+      }
+      block.append(grid);
+      const optionData=verifiedOptions(year,id);
+      if(optionData.values.length){
+        const title=make('div','',optionData.source==='verified'?'원본 설문 보기':'원자료에서 확인된 보기 (전체 목록 미확인)');
+        title.style.cssText='font-size:12px;font-weight:700;margin:13px 0 4px;color:#425675';
+        const list=make('ul','historical-answer-choices');
+        list.style.cssText='padding-left:18px;margin:0;font-size:12px;line-height:1.7;color:#59677b';
+        for(const value of optionData.values){
+          if(typeof value!=='string'||value.length>180)continue;
+          const li=make('li','',value);list.append(li);
+        }
+        block.append(title,list);
+      }else{
+        const note=make('p','detail-note','해당 문항의 원본 선택지는 아직 검증되지 않았습니다.');
+        note.style.cssText='margin:10px 0 0;font-size:12px';
+        block.append(note);
+      }
+      section.append(block);
+    }
+    host.append(section);
+  }
+
+  function renderYear(host, year, rows, publicValue, schoolId, distributions=[], school=null,comparison=null,loadStatus='loading') {
     host.replaceChildren();
     host.append(make('h3', '', `${year}년 조사 결과`));
     // The unified school report contains the verified original question titles
@@ -312,6 +417,7 @@
       }
       host.append(section);
     }
+    renderHistoricalBenchmarks(host,year,school,distributions,comparison,loadStatus);
     const section = make('div', 'data-section');
     section.append(make('h4', '', 'Lv.1 승인 통계'));
     if (!yearRows.length) {
@@ -448,11 +554,27 @@
     tabs.setAttribute('aria-label', '2023년부터 2026년까지 결과 연도 선택');
     const content = make('div', 'school-year-details');
     content.setAttribute('role', 'tabpanel');
+    let currentYear=null;
+    const readyByYear=new Map();
     function choose(year) {
+      currentYear=year;
       for (const button of tabs.children) {
         button.setAttribute('aria-selected', String(Number(button.dataset.year) === year));
       }
-      renderYear(content, year, rows, vals[year - 2023] ?? null, school.school_id, distributions);
+      const draw=(data,status)=>renderYear(content,year,rows,vals[year-2023]??null,
+        school.school_id,distributions,school,data,status);
+      if(year===2026){draw(null,'ready');return;}
+      if(readyByYear.has(year)){draw(readyByYear.get(year),'ready');return;}
+      const region=String(school.sido_standard||school.sido||'');
+      draw(null,'loading');
+      loadGeographyComparisons(year,region).then(result=>{
+        if(currentYear!==year||!content.isConnected||host.hidden||!session)return;
+        readyByYear.set(year,result);
+        draw(result,'ready');
+      }).catch(error=>{
+        if(error.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
+        if(currentYear===year&&content.isConnected&&!host.hidden)draw(null,'error');
+      });
     }
     for (const year of YEARS) {
       const button = make('button', '', year + '년');
