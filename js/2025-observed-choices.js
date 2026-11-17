@@ -1,8 +1,8 @@
-/* Historical 2025 option labels observed in a limited raw-data workbook.
- * These are NOT guaranteed to be the complete original form choices.
- * Multiple-choice questions Q03/Q04/Q30 are excluded because response
- * combination strings cannot identify original per-option labels reliably.
- * No respondent records or counts are included. */
+/* 2025 original raw-data season3 observed choice labels, NOT the full form schema.
+ * Multi-choice Q03/Q04/Q30 tokens separated at commas outside parentheses,
+ * and retained only if independently observed at least three times.
+ * Other Qs use repeated source-confirmed circled labels. No respondent records
+ * or frequency values are included. Never call this a complete option list. */
 window.Beagu2025ObservedChoices=Object.freeze({
   "Q01": [
     "① 그런 일이 존재한다는 게 믿을 수 없다",
@@ -194,5 +194,49 @@ window.Beagu2025ObservedChoices=Object.freeze({
     "③장소는 있으나 실제 분리는 안 된다",
     "④분리 장소가 없다",
     "⑤어떤 일이 있어도 담임 또는 수업중인 교사가 교실에서 모든 것을 해결한다"
+  ],
+  "Q03": [
+    "강사 채용 및 강사 급여 관리",
+    "교과서 구입",
+    "기초생활수급자 통신비 지원",
+    "물품 구입(컴퓨터 부속품, 프린터 토너 등)",
+    "민방위훈련",
+    "방과후 자유수강권 관리",
+    "안함",
+    "업무 메신저 및 학교 홈페이지 관리",
+    "예산 품의",
+    "유무선네트워크 및 전산실 관리",
+    "잘 모름",
+    "잘모름",
+    "정보공시",
+    "정보기기(태블릿, PC, TV) 관리(불용처리 포함)",
+    "평생교육",
+    "하드디스크 파기 작업",
+    "학운위 운영",
+    "CCTV 관리"
+  ],
+  "Q04": [
+    "교장선생님 훈화말씀이 있는 전교생 아침조회(교실방송)",
+    "교장선생님 훈화말씀이 있는 전교생 아침조회(운동장 또는 강당/체육관)",
+    "그 밖의 학부모 초청 행사",
+    "바자회",
+    "수련회",
+    "수학여행",
+    "안함",
+    "운동회",
+    "축제",
+    "학부모 공개수업",
+    "학생회선거",
+    "학예회"
+  ],
+  "Q30": [
+    "1학년",
+    "2학년",
+    "3학년",
+    "4학년",
+    "5학년",
+    "6학년",
+    "기피하는 학년이 없다.",
+    "모른다"
   ]
 });
