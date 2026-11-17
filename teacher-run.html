@@ -181,13 +181,21 @@ function message(title,desc,choices,symbol="🎒"){
  $("overlay").hidden=false;$("pause").disabled=true;
 }
 function closeMessage(){$("overlay").hidden=true;$("pause").disabled=false;canvas.focus({preventScroll:true});}
-function start(){
+async function start(){
  const selected=schoolPicker.get();
- if(!selected){intro();schoolPicker.focus();return;}
+ if(!selected?.eligible){intro();schoolPicker.focus();return;}
+ if(state==="starting")return;
+ state="starting";
+ message("4개년 자료 확인 중","2023~2026년 학교별 백분위와 게임 참가 자격을 확인하고 있습니다.",[],"🏫");
+ const session=ranking?await ranking.start(selected):null;
+ if(!session){
+  state="ready";intro();
+  schoolPicker.status.textContent="게임 시작 불가 · 4개년 자료를 다시 확인하거나 연결 상태를 확인하세요.";
+  return;
+ }
  difficulty=difficultyScale[selected.difficulty]||1;
  schoolPicker.setLocked(true);
  state="playing";day=0;dayTime=0;clock=0;score=0;life=100;maxLife=100;
- ranking?.start(selected);
  combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1,dash:0};
  items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=1.5;player.cool=0;player.dashTime=0;pointerId=null;pointerY=null;
  pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice("월요일 시작!",2);closeMessage();playTone(500,.13);
@@ -195,10 +203,19 @@ function start(){
 function intro(){
  state="ready";schoolPicker.setLocked(false);
  const selected=schoolPicker.get();
- const title=selected?selected.school_name+" · "+difficultyName[selected.difficulty]:"먼저 학교를 선택하세요";
- const desc=selected?"학교 배구지수 등급에 맞춰 난이도가 자동 설정됩니다.\n월 → 금 생존!":"게임 화면 위에서 학교 이름을 검색하고 선택해 주세요.";
- message("험난한 교직생활",title+"\n"+desc,[{label:selected?"▶ 선택 학교로 시작":"🏫 학교 선택하기",action:()=>{if(selected)start();else schoolPicker.focus();}}],"🏫");
+ const ready=selected?.eligible===true;
+ const missing=Array.isArray(selected?.missing_years)?selected.missing_years.join("·")+"년":"해당 연도";
+ const title=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
+   selected?selected.school_name+" · 플레이 불가":"먼저 학교를 선택하세요";
+ const desc=ready?"2023~2026년 배구지수 백분위 4개년 평균에 따른 자동 난이도입니다.\n월 → 금 생존!":
+   selected?"2023~2026년 백분위 중 "+missing+" 자료가 없거나 아직 확정되지 않았습니다.\n4개년 모두 확보돼야 플레이 가능합니다.":
+   "2023·2024·2025·2026년 백분위가 모두 있는 학교만 플레이할 수 있습니다.\n위에서 학교를 검색해 선택해 주세요.";
+ message("험난한 교직생활",title+"\n"+desc,[
+  {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
+   action:()=>ready?start():schoolPicker.focus()}
+ ],"🏫");
 }
+
 function updateLabels(){$("dayLabel").textContent=days[day]+" · "+(day+1)+"/5";$("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");}
 function setNotice(t,time=1.8){notice=t;noticeTime=time;}
 function burst(x,y,color,n=9){
