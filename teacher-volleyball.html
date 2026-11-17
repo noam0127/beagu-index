@@ -20,9 +20,6 @@
   .center-label { color: #cddcf5; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
   .court { position: relative; overflow: hidden; border: 1px solid #436185; border-top: 0; background: #dbefff; }
   canvas { display: block; width: 100%; height: auto; aspect-ratio: 9 / 5; touch-action: none; cursor: crosshair; }
-  .touch { display: grid; grid-template-columns: minmax(0,1fr); justify-items:center; gap: 12px; margin-top: 10px; }
-  .touch button { width:100%; max-width:320px; min-height: 52px; border: 1px solid #6888b3; border-radius: 12px; background: #304d73; color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; user-select: none; touch-action: none; -webkit-user-select: none; }
-  .touch button.is-down { transform: translateY(2px); filter: brightness(1.18); }
   .actions { display: flex; gap: 8px; margin-top: 10px; }
   .actions button { flex: 1; min-height: 44px; padding: 10px; border: 0; border-radius: 10px; background: #6bd9c6; color: #12314d; font: inherit; font-weight: 850; cursor: pointer; }
   .actions button.secondary { flex: 0 0 30%; color: #f8fbff; background: #385372; }
@@ -30,8 +27,8 @@
   .hint { font-size: 12px; line-height: 1.45; color: #bed1e9; text-align: center; margin: 10px 2px 0; }
   .status { min-height: 20px; font-size: 12px; font-weight: 700; text-align: center; color: #ffdea6; margin-top: 8px; }
   button:focus-visible { outline: 3px solid #ffec93; outline-offset: 2px; }
-  @media (hover: hover) and (pointer: fine) { .touch { display: none; } .game-shell { padding: 18px; } }
-  @media(max-width: 380px) { .game-shell { padding: 9px; } .touch { gap: 5px; } .touch button { min-height: 47px; font-size: 13px; } .scoreboard { padding: 8px; } }
+  @media (hover: hover) and (pointer: fine) { .game-shell { padding: 18px; } }
+  @media(max-width: 380px) { .game-shell { padding: 9px; } .scoreboard { padding: 8px; } }
 
 /* 2.1 responsive volley arcade polish */
 body{background:#10223d;color:#f8fbff}
@@ -50,9 +47,6 @@ body{background:#10223d;color:#f8fbff}
 .center-label{font-size:14px;letter-spacing:.04em;color:#fff5d1}
 .court{border:1px solid #547897;border-top:0;border-radius:0 0 15px 15px;box-shadow:0 12px 24px rgba(0,0,0,.2)}
 canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:default}
-.touch{gap:9px;margin-top:10px}
-.touch button{min-width:0;min-height:56px;border-radius:13px;background:linear-gradient(150deg,#365c80,#294a6a);border-color:#618aa9;
-  box-shadow:0 3px 0 #1b3651;font-size:clamp(13px,3.9vw,16px)}
 .actions{gap:8px;margin-top:10px}
 .actions button{min-width:0;min-height:45px;font-size:14px;padding:9px 10px;border-radius:12px}
 .actions button.secondary{flex:0 0 59px}
@@ -62,12 +56,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 .mini-help{margin-top:7px;padding:9px 10px;border:1px solid #4d7292;border-radius:10px;
   background:#1c3856;color:#d9eafa;font-size:12px;line-height:1.6;overflow-wrap:anywhere;text-align:center}
 .mini-help[hidden]{display:none}
-@media(hover:hover) and (pointer:fine){.game-shell{padding:12px}.touch{display:none}}
+@media(hover:hover) and (pointer:fine){.game-shell{padding:12px}}
 @media(max-width:380px){
  .game-shell{padding:7px}.top{flex-wrap:wrap}.pill{font-size:10px}
  .scoreboard{padding:9px;gap:4px;grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr)}
  .team{font-size:10px}.team strong{font-size:23px}.center-label{font-size:12px}
- .touch{gap:6px}.touch button{font-size:13px;min-height:50px}
 }
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
@@ -85,9 +78,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong></div>
   </div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
-  <div class="touch" aria-label="모바일 점프 버튼">
-    <button type="button" data-key="jump">↑ 점프</button>
-  </div>
   <div class="actions"><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
   <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 터치·드래그 비행　↔ 방향키 · A/D　⚡ 빠른 이동 중 공을 맞히면 스파이크</div>
   <div id="arcade-top10" aria-label="선생님배구 TOP 10 순위"></div>
@@ -109,9 +99,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const AUTO_SPIKE_SPEED=8; // player-driven displacement per simulation frame
   const getFinalScore=()=>state.leftScore*120+Math.min(60,state.spikes)*25+
     (state.leftScore>state.rightScore ? 600+Math.max(0,7-state.rightScore)*30 : 0);
-  const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 305, NET_W = 14, R = 32; // double-size ball
+  const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 354, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, jump: false };
-  const touchControl = { pointerId: null, targetX: null, targetY: null, jumpRequested: false };
+  const touchControl = { pointerId: null, targetX: null, targetY: null };
   const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0 };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
@@ -168,10 +158,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     touchControl.pointerId = null;
     touchControl.targetX = null;
     touchControl.targetY = null;
-    touchControl.jumpRequested = false;
     left.vy = 0;
     left.impactSpeed = 0;
-    document.querySelectorAll(".touch button").forEach(b => b.classList.remove("is-down"));
   }
   const codes = { KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "jump", ArrowUp: "jump", Space: "jump" };
   document.addEventListener("keydown", e => {
@@ -214,19 +202,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   canvas.addEventListener("pointerup", endCourtTouch);
   canvas.addEventListener("pointercancel", endCourtTouch);
   canvas.addEventListener("lostpointercapture", endCourtTouch);
-  document.querySelectorAll(".touch button").forEach(button => {
-    const key = button.dataset.key;
-    button.addEventListener("pointerdown", e => {
-      e.preventDefault();
-      button.setPointerCapture(e.pointerId);
-      keys[key] = true;
-      button.classList.add("is-down");
-    });
-    const up = e => { if (e) e.preventDefault(); keys[key] = false; button.classList.remove("is-down"); };
-    button.addEventListener("pointerup", up);
-    button.addEventListener("pointercancel", up);
-    button.addEventListener("lostpointercapture", up);
-  });
   startButton.addEventListener("click", startMatch);
   pauseButton.addEventListener("click", pause);
   helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
@@ -257,7 +232,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   function playerHit(p) {
     const dx = ball.x - p.x, dy = ball.y - (p.y - 7);
-    const reach = p.side === "left" ? 43 : 42;
+    const reach = p.side === "left" ? 43 * .75 : 42 * .75; // hit reach reduced to 3/4
     if (ball.cooldown > 0 || dx * dx + dy * dy > (reach + R) * (reach + R)) return;
     const sign = p.side === "left" ? 1 : -1;
     const spike = p.side === "left" && p.impactSpeed >= AUTO_SPIKE_SPEED;
@@ -308,12 +283,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       left.vy = left.y - oldY;
       left.jumpLock = false;
     } else {
-      controlPlayer(left, keyboardDirection, keys.jump || touchControl.jumpRequested, 5*SPEED_MULTIPLIER);
+      controlPlayer(left, keyboardDirection, keys.jump, 5*SPEED_MULTIPLIER);
     }
     // Only intentional, fast player movement powers up the next ball contact.
     const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || keys.jump;
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
-    touchControl.jumpRequested = false;
     moveAI();
     const previousX = ball.x, previousY = ball.y;
     ball.vy += .30;
