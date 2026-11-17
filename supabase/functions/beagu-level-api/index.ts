@@ -254,7 +254,7 @@ Deno.serve(async(req:Request)=>{
   const schoolDistributions:(Record<string,unknown>)[]=[];
   for(const item of verifiedSchoolDistributions||[]){
     const y=Number(item.survey_year),qid=String(item.question_id||'');
-    if(![2023,2024].includes(y)||!/^Q\\d{2}$/.test(qid)||
+    if(![2023,2024].includes(y)||!/^Q\d{2}$/.test(qid)||
        typeof item.mode_option!=='string'||item.mode_option.length>180||
        item.review_policy!=='N10_CELL3_PATTERNS5_STRICT_MATCH'||
        !Array.isArray(item.rounded_distribution))continue;
