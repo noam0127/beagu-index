@@ -11,7 +11,8 @@
   const elements = {
     search:$('searchInput'), suggestions:$('compareSuggestions'),
     selections:$('compareSelections'), table:$('compareTable'),
-    panel:$('compareScroll'), empty:$('compareEmpty'), count:$('compareCounter'),
+    panel:$('compareScroll'), results:$('compareResults'),
+    empty:$('compareEmpty'), count:$('compareCounter'),
     feedback:$('compareFeedback'), clear:$('clearCompare'), copy:$('copyCompareLink')
   };
   const normalize = value => String(value ?? '').normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
@@ -130,12 +131,7 @@
         make('div',labelForSchool(school),'compare-selection-subtitle'),yearLabel);
       fragment.append(card);
     });
-    for (let index=state.selected.length;state.selected.length && index<Math.min(LIMIT,state.selected.length+1);index++) {
-      const placeholder=make('div',null,'compare-placeholder');
-      placeholder.setAttribute('aria-hidden','true');
-      placeholder.append(make('strong','＋'),make('span',String(index+1)+'번째 학교'));
-      fragment.append(placeholder);
-    }
+    // Show only schools the user actually selected; no empty slot cards.
     elements.selections.append(fragment);
     elements.count.textContent=state.selected.length+' / '+LIMIT+' 선택';
     elements.clear.disabled=!state.selected.length;
@@ -185,8 +181,10 @@
     tbody.append(tr);
   }
   function renderTable() {
-    elements.panel.hidden=!state.selected.length;
-    elements.empty.hidden=!!state.selected.length;
+    const hasSelections=state.selected.length>0;
+    elements.panel.hidden=!hasSelections;
+    elements.results.hidden=!hasSelections;
+    elements.empty.hidden=hasSelections;
     if (!state.selected.length) { elements.table.replaceChildren(); return; }
     const body=make('tbody');
     appendGroup(body,'배구지수 · 선택 연도별 공개 기록');

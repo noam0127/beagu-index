@@ -16,11 +16,16 @@ assert.equal(css,original,'Canonical statistics CSS must preserve existing desig
 assert.match(stats,/href="styles\/statistics\.css\?v=20261031-canonical7"/);
 assert.doesNotMatch(stats,/href="css\//,'Broken statistics CSS link must not reappear');
 assert.match(stats,/src="js\/statistics-directory-v2\.js\?v=20261118-v2"/);
-assert.match(stats,/src="js\/statistics-compare\.js\?v=20261118-c2"/);
-assert.match(stats,/href="styles\/statistics-compare\.css\?v=20261118-c2"/);
+assert.match(stats,/src="js\/statistics-compare\.js\?v=20261118-c3"/);
+assert.match(stats,/href="styles\/statistics-compare\.css\?v=20261118-c3"/);
 assert.match(stats,/id="compareScroll"/);
 assert.match(stats,/id="compareSuggestions"/);
 assert.match(stats,/id="compareSelections"/);
+assert.match(stats,/id="compareHeading">학교 비교하기/);
+assert.match(stats,/id="compareResults"/);
+assert.doesNotMatch(stats,/학교·연도 비교표/);
+assert.match(stats,/<a href="statistics\.html" aria-current="page">학교 비교<\/a>/);
+assert.doesNotMatch(stats,/id="dataTable"|id="schoolRows"|전체 학교 목록/);
 assert.doesNotMatch(stats,/id="(regionSelect|officeSelect|yearSelect|dataTable|schoolRows|mobileCards|infoDialog)"/,'Removed filters and directory must stay absent');
 assert.doesNotMatch(stats,/전체 학교 목록|학교별 상세정보.*상세보기/);
 assert.match(loaderJS,/beagu:statistics-ready/);
