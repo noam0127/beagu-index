@@ -16,6 +16,11 @@ for(const h of [volley,runner]){
 new Function(shared);
 assert.ok(html.indexOf('id="teacher-game-frame"')<html.indexOf('id="teacher-run-frame"'));
 assert.match(volley,/SPEED_MULTIPLIER=2/);
+assert.match(volley,/R = 32;/,"volleyball radius doubles from 16 to 32");
+assert.match(volley,/touchControl\.targetY/,"volleyball touch flight has vertical axis");
+assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is implemented");
+assert.match(runner,/pointerY=target\.y/,"survival game tracks 2D touch target");
+assert.match(runner,/player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically");
 assert.match(volley,/ranking\?\.finish/);
 assert.match(runner,/ranking\?\.finish/);
 console.log("PASS: home order, game scripts, score hooks, 2x controls");
@@ -39,8 +44,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261118-arcade2/);
-assert.match(site.body,/teacher-run\.html\?v=20261118-arcade2/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261118-flying-ball2x/);
+assert.match(site.body,/teacher-run\.html\?v=20261118-flying/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
