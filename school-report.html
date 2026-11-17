@@ -1743,9 +1743,9 @@
     $('reportHeading').textContent=`${year}년 ${titles[year]}`;
     const anyAuth=state.tier>0&&((state.approvedSummary[String(year)]||[]).length>0||Object.values(entry.items||{}).some(v=>v?.serverApproved===true));
     const status=$('dataStatus');status.className='data-status'+(state.demo?' demo':entry.approved||anyAuth?' ready':'');
-    status.textContent=state.demo?'가상 자료 · 시연':anyAuth?'Lv.'+state.tier+' 승인 자료 일부 공개':entry.approved?'공개 승인 자료':'상세 자료 미공개';
+    status.textContent=state.demo?'가상 자료 · 시연':anyAuth?'Lv.'+state.tier+' 승인 자료 일부 공개':entry.approved?'공개 승인 자료':num(entry.percentile)!==null?'우리 학교 종합지표 공개 · 문항별 별도 검증':'문항별 공개 자료 없음';
     const count=catalog?.items?.length ?? 0,approvedRows=Object.entries(entry.items||{}).filter(([key,o])=>o&&typeof o==='object'&&o.display!=null&&!(year===2026&&key==='Q51')&&state.tier>=1&&o.serverApproved===true).length;
-    const cards=[['조사 문항',count?nf(count)+'개':'—','행렬형 하위항목 별도'],['공개 상세항목',nf(approvedRows)+'개',entry.approved?'승인된 자료만':'미공개 · 승인된 자료 없음']];
+    const cards=[['조사 문항',count?nf(count)+'개':'—','행렬형 하위항목 별도'],['학교별 공개 문항',nf(approvedRows)+'개',approvedRows?'검증된 학교별 문항 결과':'학교별 종합 백분위와 구분']];
     $('metricRow').innerHTML=cards.map(([a,b,c])=>`<dl class="metric-box"><dt>${escapeHTML(a)}</dt><dd>${escapeHTML(b)}</dd><dt>${escapeHTML(c)}</dt></dl>`).join('');
     renderSchoolSurveySnapshot();
     officialUI();
