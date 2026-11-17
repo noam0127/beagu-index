@@ -64,7 +64,7 @@ for(const x of ['창원교육지원청', '창원교육지원청(마산센터)', 
  assert.ok(search.includes(x),'Lv.1 missing short label '+x);
 }
 assert.doesNotThrow(()=>new vm.Script(sync),'2026 matching script syntax');
-const matcher=vm.runInNewContext(sync+'\\n;({normalizeOffice})',{}, {timeout:1000});
+const matcher=vm.runInNewContext(sync+'\n;({normalizeOffice})',{}, {timeout:1000});
 for(const [input,expected] of [
  ['창원교육지원청','창원'], ['창원','창원'],
  ['마산','마산'], ['마산교육청','마산'], ['창원교육지원청(마산센터)','마산'],
