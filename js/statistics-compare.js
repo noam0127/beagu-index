@@ -36,6 +36,9 @@
   function selectedPair(id, year) {
     return state.selected.some(x=>x.id===String(id) && x.year===Number(year));
   }
+  function nextAvailableYear(id) {
+    return [2025,2024,2023].find(y=>!selectedPair(id,y)) ?? null;
+  }
   function encodeSelection() {
     return state.selected.map(x=>x.id+':'+x.year).join(',');
   }
@@ -326,17 +329,17 @@
     if (!matches.length) {
       elements.suggestions.append(make('p','검색 결과가 없습니다. 학교명을 확인해 주세요.','compare-suggestion-empty'));
     } else {
-      const year=currentYear();
       for (const school of matches) {
-        const already=selectedPair(school.school_id,year);
+        const year=nextAvailableYear(school.school_id);
+        const already=year===null;
         const full=state.selected.length>=LIMIT;
         const item=button(null,'compare-suggestion',()=>{
-          if(addSchool(school.school_id,year)){ elements.suggestions.hidden=true; }
-        },school.school_name+' '+year+'년 비교에 추가');
+          if(year!==null && addSchool(school.school_id,year)){ elements.suggestions.hidden=true; }
+        },school.school_name+(year!==null?' '+year+'년':'')+' 비교에 추가');
         item.disabled=already||full;
         const title=make('span',null,'compare-suggestion-main');
         title.append(make('strong',school.school_name),make('small',labelForSchool(school)));
-        const action=make('span',already?'추가됨':full?'5개 선택됨':'+ 비교에 추가','compare-suggestion-add');
+        const action=make('span',already?'모든 연도 추가됨':full?'5개 선택됨':'＋ '+year+'년 추가','compare-suggestion-add');
         item.append(title,action);
         elements.suggestions.append(item);
       }
