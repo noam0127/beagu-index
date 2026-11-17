@@ -12,6 +12,15 @@
 6. [비공개 집계 MASTER](https://docs.google.com/spreadsheets/d/1I9SXXmOCnyeWP3RjoBHW5Tfvg0RpgR4RjnEVoxZvpp8/edit)의 `학교별_집계_내부`, `학교매칭_보류`, `정오_실행로그` 탭을 확인한다.
 7. `setupDailyNoonTrigger`를 **한 번** 실행하여 시간 기반 트리거를 생성한다. Apps Script의 실행/트리거 탭에서 등록 여부 확인.
 
+## 설문 제출 직후 자동 집계 (선택 설치)
+
+- 원본 응답 시트의 Apps Script에 갱신된 `beagu-2026-noon-sync.gs`를 반영한 뒤, 소유자가 **`setupBeagu2026FormSubmitTrigger`를 한 번 실행하여 권한 승인**합니다.
+- Google Forms에서 실제 응답이 제출될 때 `onBeagu2026FormSubmitted`가 실행되어 비공개 MASTER를 다시 집계합니다. Google 처리 및 Apps Script 실행 지연이 있어 '즉시'를 보장할 수는 없습니다.
+- 기존 `setupDailyNoonTrigger`는 장애 복구용으로 계속 유지합니다. 두 갱신 경로는 잠금으로 중복 실행을 막습니다.
+- 최초 설치 전에 **현재 트리거 목록·실행 로그를 점검**해 동일 목적 트리거가 중복되지 않게 하세요.
+- **이 작업은 비공개 집계만 갱신**합니다. 웹사이트의 2026 결과는 서버가 검수·승인한 문항 통계가 존재할 때에만 표시하며, 응답 1~2건을 학교별 결과로 직접 공개하지 않습니다.
+- 설치되지 않은 트리거가 실제로 작동한다고 표시하거나, 현재 승인된 결과가 있다고 주장하지 않습니다.
+
 ## 일정 및 동작
 
 - Google Apps Script 설치형 트리거: `Asia/Seoul` 매일 12시 부근(일반적으로 ±15분; 정확한 분 단위 실행은 보장되지 않음).
