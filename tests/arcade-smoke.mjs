@@ -8,12 +8,19 @@ const html=await readFile("index.html","utf8");
 const volley=await readFile("teacher-volleyball.html","utf8");
 const runner=await readFile("teacher-run.html","utf8");
 const shared=await readFile("js/arcade-leaderboard-v1.js","utf8");
+const picker=await readFile("js/arcade-school-picker-v1.js","utf8");
 for(const h of [volley,runner]){
  const inline=[...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
  assert.equal(inline.length,1,"expected one inline game script");
  new Function(inline[0]);
 }
 new Function(shared);
+new Function(picker);
+assert.match(volley,/new window\.ArcadeSchoolPicker/);
+assert.match(runner,/new window\.ArcadeSchoolPicker/);
+assert.match(runner,/difficultyScale=\{easy/);
+assert.match(volley,/diffScale=\{easy/);
+assert.match(shared,/arcade-rank-school/);
 assert.ok(html.indexOf('id="teacher-game-frame"')<html.indexOf('id="teacher-run-frame"'));
 assert.match(volley,/SPEED_MULTIPLIER=2/);
 assert.match(volley,/AUTO_SPIKE_SPEED=8/,"automatic spike requires fast movement");
@@ -53,8 +60,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261118-ball48-net97-reach75")&&
-     site.body.includes("teacher-run.html?v=20261118-flying"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261118-school-tier1")&&
+     site.body.includes("teacher-run.html?v=20261118-school-tier1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -64,8 +71,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261118-ball48-net97-reach75/);
-assert.match(site.body,/teacher-run\.html\?v=20261118-flying/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261118-school-tier1/);
+assert.match(site.body,/teacher-run\.html\?v=20261118-school-tier1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
@@ -77,14 +84,30 @@ for(const response of [topVolley,topRun]){
 }
 console.log("PASS: deployed home and live shared Top 10 for both games");
 
+// Public school search returns canonical name and region, but never raw percentiles.
+const searched=await requestWithRetry(api+"?schools="+encodeURIComponent("거제"),200,{headers:origin});
+const schools=JSON.parse(searched.body).schools;
+assert.ok(schools.length>0,"school search must return real elementary schools");
+assert.ok(schools.every(s=>typeof s.school_id==="string" && typeof s.school_name==="string"));
+const canonical=schools[0];
+const lookup=await requestWithRetry(api+"?school_id="+encodeURIComponent(canonical.school_id),200,{headers:origin});
+const school=JSON.parse(lookup.body).school;
+assert.equal(school.school_name,canonical.school_name);
+assert.ok(["easy","normal","hard"].includes(school.difficulty));
+assert.equal("national_percentile" in school,false,"never return raw school survey percentile");
+console.log("PASS: canonical school search and 3-tier difficulty (no raw percentile)");
+
 const start=await requestWithRetry(api,200,{
- method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"volleyball"})
+ method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"volleyball",school_id:school.school_id})
 });
-const session=JSON.parse(start.body).session;
+const started=JSON.parse(start.body);
+const session=started.session;
+assert.equal(started.school.school_id,school.school_id);
+assert.equal(started.school.difficulty,school.difficulty);
 assert.match(session,/^[0-9a-f-]{36}$/i);
 const invalid=await requestWithRetry(api,400,{
  method:"POST",headers:origin,
  body:JSON.stringify({action:"submit",game:"volleyball",session,nickname:"123",stats:{player:7,cpu:0,spikes:0}})
 });
 assert.equal(JSON.parse(invalid.body).error,"invalid_name");
-console.log("PASS: server creates sessions and rejects non-English nickname");
+console.log("PASS: server binds canonical school to session and rejects non-English nickname");
