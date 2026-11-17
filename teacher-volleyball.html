@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#142847">
+<title>선생님배구 | 배구지수</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: #10223d; color: #f8fbff; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  .game-shell { margin: 0 auto; max-width: 1100px; padding: 12px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+  .brand { font-size: 13px; font-weight: 850; letter-spacing: -.3px; }
+  .pill { display: inline-block; padding: 5px 9px; border: 1px solid #6f97c0; border-radius: 999px; font-size: 11px; color: #d6eaff; white-space: nowrap; }
+  .scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 10px 13px; background: #21395b; border: 1px solid #436185; border-radius: 12px 12px 0 0; }
+  .team { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: #cfe1ff; }
+  .team.right { text-align: right; }
+  .team strong { font-size: 24px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+  .center-label { color: #cddcf5; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
+  .court { position: relative; overflow: hidden; border: 1px solid #436185; border-top: 0; background: #dbefff; }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 9 / 5; touch-action: manipulation; }
+  .touch { display: grid; grid-template-columns: 1fr 1fr 1.1fr 1.25fr; gap: 8px; margin-top: 10px; }
+  .touch button { min-height: 52px; border: 1px solid #6888b3; border-radius: 12px; background: #304d73; color: #fff; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; user-select: none; touch-action: none; -webkit-user-select: none; }
+  .touch button[data-key="spike"] { background: #eaa84e; border-color: #f0c375; color: #2b2331; }
+  .touch button.is-down { transform: translateY(2px); filter: brightness(1.18); }
+  .actions { display: flex; gap: 8px; margin-top: 10px; }
+  .actions button { flex: 1; min-height: 44px; padding: 10px; border: 0; border-radius: 10px; background: #6bd9c6; color: #12314d; font: inherit; font-weight: 850; cursor: pointer; }
+  .actions button.secondary { flex: 0 0 30%; color: #f8fbff; background: #385372; }
+  .actions button:disabled { opacity: .45; cursor: not-allowed; }
+  .hint { font-size: 12px; line-height: 1.45; color: #bed1e9; text-align: center; margin: 10px 2px 0; }
+  .status { min-height: 20px; font-size: 12px; font-weight: 700; text-align: center; color: #ffdea6; margin-top: 8px; }
+  button:focus-visible { outline: 3px solid #ffec93; outline-offset: 2px; }
+  @media(min-width: 740px) and (hover: hover) { .touch { display: none; } .game-shell { padding: 18px; } }
+  @media(max-width: 380px) { .game-shell { padding: 9px; } .touch { gap: 5px; } .touch button { min-height: 47px; font-size: 13px; } .scoreboard { padding: 8px; } }
+</style>
+</head>
+<body>
+<main class="game-shell">
+  <div class="top"><span class="brand">🏐 선생님배구</span><span class="pill">레트로 1:1 · VS 컴퓨터</span></div>
+  <div class="scoreboard" aria-label="현재 점수">
+    <div class="team"><span>나 · 파란 선생님</span><strong id="player-score">0</strong></div>
+    <div class="center-label">FIRST TO 7*</div>
+    <div class="team right"><span>컴퓨터 · 분홍 선생님</span><strong id="cpu-score">0</strong></div>
+  </div>
+  <div class="court"><canvas id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
+  <div class="touch" aria-label="터치 조작 버튼">
+    <button type="button" data-key="left" aria-label="왼쪽으로 이동">◀ 이동</button>
+    <button type="button" data-key="right" aria-label="오른쪽으로 이동">이동 ▶</button>
+    <button type="button" data-key="jump">↑ 점프</button>
+    <button type="button" data-key="spike">⚡ 스파이크</button>
+  </div>
+  <div class="actions"><button type="button" id="start">경기 시작</button><button type="button" class="secondary" id="pause" disabled>일시정지</button></div>
+  <div class="status" id="status" aria-live="polite">7점 이상, 2점 차이가 나면 승리!</div>
+  <p class="hint">PC: A / D 또는 ← / → 이동 · W / ↑ / Space 점프 · J / K 스파이크<br>휴대전화: 아래 터치 버튼으로 조작 · 온라인 저장 없이 즐길 수 있어요.</p>
+</main>
+<script>
+(function () {
+  "use strict";
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const scoreP = document.getElementById("player-score");
+  const scoreC = document.getElementById("cpu-score");
+  const startButton = document.getElementById("start");
+  const pauseButton = document.getElementById("pause");
+  const status = document.getElementById("status");
+  const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 305, NET_W = 14, R = 16;
+  const keys = { left: false, right: false, jump: false, spike: false };
+  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!" };
+  const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, side: "left", jumpLock: false };
+  const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
+  const ball = { x: 228, y: 218, vx: 0, vy: 0, cooldown: 0, trail: [] };
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const setStatus = text => { status.textContent = text; };
+  function syncUI() {
+    scoreP.textContent = String(state.leftScore);
+    scoreC.textContent = String(state.rightScore);
+    startButton.textContent = state.phase === "finished" ? "다시 대결" : state.phase === "ready" ? "경기 시작" : "처음부터";
+    pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point";
+    pauseButton.textContent = state.phase === "paused" ? "이어하기" : "일시정지";
+  }
+  function resetPositions() {
+    Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false });
+    Object.assign(right, { x: 690, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false });
+    ball.x = state.serveLeft ? 215 : 685;
+    ball.y = 223;
+    ball.vx = state.serveLeft ? 6.1 : -6.1;
+    ball.vy = -6.3;
+    ball.cooldown = 0;
+    ball.trail.length = 0;
+  }
+  function startMatch() {
+    state.leftScore = 0;
+    state.rightScore = 0;
+    state.serveLeft = Math.random() < 0.5;
+    state.phase = "playing";
+    state.winner = "";
+    state.message = "";
+    state.flash = 0;
+    resetPositions();
+    setStatus("공을 상대 진영에 떨어뜨리세요!");
+    syncUI();
+    canvas.focus();
+  }
+  function pause() {
+    if (state.phase === "playing") {
+      state.phase = "paused";
+      releaseKeys();
+      setStatus("잠시 쉬는 중");
+    } else if (state.phase === "paused") {
+      state.phase = "playing";
+      setStatus("경기 재개!");
+    }
+    syncUI();
+  }
+  function releaseKeys() {
+    Object.keys(keys).forEach(k => { keys[k] = false; });
+    document.querySelectorAll(".touch button").forEach(b => b.classList.remove("is-down"));
+  }
+  const codes = { KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "jump", ArrowUp: "jump", Space: "jump", KeyJ: "spike", KeyK: "spike" };
+  document.addEventListener("keydown", e => {
+    if (e.target && e.target.tagName === "BUTTON") return;
+    const key = codes[e.code];
+    if (!key) return;
+    e.preventDefault();
+    keys[key] = true;
+  });
+  document.addEventListener("keyup", e => { if (codes[e.code]) keys[codes[e.code]] = false; });
+  document.querySelectorAll(".touch button").forEach(button => {
+    const key = button.dataset.key;
+    button.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      button.setPointerCapture(e.pointerId);
+      keys[key] = true;
+      button.classList.add("is-down");
+    });
+    const up = e => { if (e) e.preventDefault(); keys[key] = false; button.classList.remove("is-down"); };
+    button.addEventListener("pointerup", up);
+    button.addEventListener("pointercancel", up);
+    button.addEventListener("lostpointercapture", up);
+  });
+  startButton.addEventListener("click", startMatch);
+  pauseButton.addEventListener("click", pause);
+  window.addEventListener("blur", () => { releaseKeys(); if (state.phase === "playing") pause(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden && state.phase === "playing") pause(); });
+  function controlPlayer(p, direction, jump, speed) {
+    p.vx = direction * speed;
+    p.x = clamp(p.x + p.vx, p.side === "left" ? 35 : NET_X + NET_W / 2 + 36, p.side === "left" ? NET_X - NET_W / 2 - 36 : W - 35);
+    const grounded = p.y >= FLOOR - 31 - .1;
+    if (jump && grounded && !p.jumpLock) { p.vy = -10.8; p.jumpLock = true; }
+    if (!jump) p.jumpLock = false;
+    p.vy += .49;
+    p.y += p.vy;
+    if (p.y > FLOOR - 31) { p.y = FLOOR - 31; p.vy = 0; }
+  }
+  function moveAI() {
+    let target = 688;
+    if (ball.x > NET_X + 2) {
+      target = clamp(ball.x + ball.vx * 8, NET_X + 48, W - 42);
+    } else if (ball.vx > 0 && ball.y < NET_TOP) {
+      target = clamp(NET_X + 130, NET_X + 48, W - 42);
+    }
+    const difference = target - right.x;
+    const move = Math.abs(difference) > 8 ? Math.sign(difference) : 0;
+    const close = ball.x > NET_X && Math.abs(ball.x - right.x) < 76;
+    const jump = close && ball.y > right.y - 155 && ball.y < right.y + 15 && ball.vy > -3;
+    controlPlayer(right, move, jump, 3.65);
+  }
+  function playerHit(p) {
+    const dx = ball.x - p.x, dy = ball.y - (p.y - 7);
+    const reach = p.side === "left" ? 43 : 42;
+    if (ball.cooldown > 0 || dx * dx + dy * dy > (reach + R) * (reach + R)) return;
+    const sign = p.side === "left" ? 1 : -1;
+    const spike = p.side === "left" && keys.spike;
+    ball.vx = sign * (spike ? 11.8 : p.side === "left" ? 7.6 : 7.1) + p.vx * .18;
+    ball.vy = spike ? -5.6 : -9.7;
+    if (p.vy < -2) ball.vy -= 1.3;
+    ball.x = p.x + sign * (reach + R + 1);
+    ball.y = Math.min(ball.y, p.y - 22);
+    ball.cooldown = 12;
+    if (spike) state.flash = 9;
+  }
+  function point(leftWins) {
+    state.phase = "point";
+    state.pointTicks = 100;
+    state.serveLeft = !leftWins;
+    if (leftWins) state.leftScore += 1; else state.rightScore += 1;
+    state.message = leftWins ? "나이스! 선생님 득점!" : "앗! 컴퓨터 선생님 득점!";
+    setStatus(state.message);
+    if ((state.leftScore >= 7 || state.rightScore >= 7) && Math.abs(state.leftScore - state.rightScore) >= 2) {
+      state.phase = "finished";
+      state.winner = state.leftScore > state.rightScore ? "승리! 오늘의 배구왕 🏆" : "아쉽게 패배! 다시 도전해요";
+      state.message = state.winner;
+      setStatus(state.winner);
+    }
+    syncUI();
+  }
+  function step() {
+    if (state.flash > 0) state.flash--;
+    if (state.phase === "point") {
+      if (--state.pointTicks <= 0) { state.phase = "playing"; state.message = ""; resetPositions(); syncUI(); setStatus("다음 랠리!"); }
+      return;
+    }
+    if (state.phase !== "playing") return;
+    controlPlayer(left, (keys.right ? 1 : 0) - (keys.left ? 1 : 0), keys.jump, 5);
+    moveAI();
+    const previousX = ball.x, previousY = ball.y;
+    ball.vy += .30;
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    ball.vx *= .999;
+    if (ball.cooldown > 0) ball.cooldown--;
+    if (ball.x - R < 0) { ball.x = R; ball.vx = Math.abs(ball.vx) * .94; }
+    if (ball.x + R > W) { ball.x = W - R; ball.vx = -Math.abs(ball.vx) * .94; }
+    if (ball.y - R < 25) { ball.y = R + 25; ball.vy = Math.abs(ball.vy) * .85; }
+    if (Math.abs(ball.x - NET_X) < NET_W / 2 + R && ball.y + R >= NET_TOP && ball.y - R < FLOOR) {
+      if (previousY + R <= NET_TOP + 4 && ball.vy > 0) {
+        ball.y = NET_TOP - R;
+        ball.vy = -Math.max(3.7, Math.abs(ball.vy) * .7);
+      } else if (previousX <= NET_X) {
+        ball.x = NET_X - NET_W / 2 - R;
+        ball.vx = -Math.max(2.8, Math.abs(ball.vx) * .85);
+      } else {
+        ball.x = NET_X + NET_W / 2 + R;
+        ball.vx = Math.max(2.8, Math.abs(ball.vx) * .85);
+      }
+    }
+    playerHit(left);
+    playerHit(right);
+    ball.trail.push({ x: ball.x, y: ball.y });
+    if (ball.trail.length > 6) ball.trail.shift();
+    if (ball.y + R >= FLOOR) {
+      ball.y = FLOOR - R;
+      point(ball.x >= NET_X);
+    }
+  }
+  function rect(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h); }
+  function oval(x, y, rx, ry, color) {
+    ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  function textLabel(text, x, y, size, color, align) {
+    ctx.textAlign = align || "center";
+    ctx.fillStyle = color; ctx.font = "900 " + size + "px system-ui, sans-serif";
+    ctx.fillText(text, x, y);
+  }
+  function background() {
+    const sky = ctx.createLinearGradient(0, 0, 0, 420);
+    sky.addColorStop(0, "#a8d4f5"); sky.addColorStop(1, "#eaf9fc");
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    // 구름과 학교 관중석: 모든 그래픽은 게임 전용으로 직접 그립니다.
+    [[100,83],[315,57],[716,75]].forEach(([x,y]) => {
+      oval(x, y, 35, 15, "#fff"); oval(x + 21, y - 8, 25, 17, "#fff"); oval(x - 20, y - 5, 22, 15, "#fff");
+    });
+    rect(0, 174, 900, 124, "#b8d4e5");
+    rect(0, 174, 900, 9, "#7199bb");
+    for (let row = 0; row < 3; row++) {
+      for (let i = 0; i < 27; i++) {
+        const x = i * 35 + (row % 2 ? 14 : 0), y = 190 + row * 31;
+        rect(x + 2, y + 10, 20, 13, ["#7eafd5", "#5f99c1", "#8bbbd5"][(i + row) % 3]);
+        oval(x + 11, y + 5, 8, 8, ["#edbc8c", "#b87955", "#f6d5ac", "#d39a68"][(i + 2 * row) % 4]);
+        rect(x + 4, y - 2, 14, 4, ["#4a5f76", "#715248", "#394d64"][(i + row) % 3]);
+      }
+    }
+    rect(0, 285, W, 11, "#476d90");
+    rect(0, 295, W, FLOOR - 295, "#f9d5a5");
+    for (let i = 0; i < W; i += 92) {
+      rect(i, 310, 3, FLOOR - 310, "#eebf89");
+    }
+    rect(0, FLOOR, W, 49, "#cc8b5d");
+    rect(0, FLOOR, W, 7, "#ffffff");
+    rect(0, FLOOR + 15, W, 3, "#ab6e4e");
+    rect(25, 307, 6, FLOOR - 307, "#fdf9ec");
+    rect(W - 31, 307, 6, FLOOR - 307, "#fdf9ec");
+    rect(NET_X - 4, NET_TOP, 8, FLOOR - NET_TOP, "#fefefe");
+    rect(NET_X - NET_W / 2, NET_TOP, NET_W, 9, "#e7737a");
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2;
+    for (let y = NET_TOP + 18; y < FLOOR - 2; y += 19) {
+      ctx.beginPath(); ctx.moveTo(NET_X - NET_W / 2, y); ctx.lineTo(NET_X + NET_W / 2, y); ctx.stroke();
+    }
+    rect(0, 0, 900, 10, "#325879");
+    rect(315, 12, 270, 47, "#21465f");
+    textLabel("선생님들의 쉬는 시간", 450, 43, 23, "#fff1c6");
+  }
+  function drawTeacher(p, uniform) {
+    const x = Math.round(p.x), y = Math.round(p.y), leftSide = p.side === "left";
+    oval(x, FLOOR + 2, 36, 6, "rgba(68,57,57,.18)");
+    // 신발과 바지
+    rect(x - 21, y + 15, 16, 17, "#203a5a"); rect(x + 6, y + 15, 16, 17, "#203a5a");
+    rect(x - 24, y + 27, 20, 7, "#fff"); rect(x + 5, y + 27, 20, 7, "#fff");
+    // 상의, 팔, 손
+    oval(x, y + 7, 31, 27, uniform);
+    oval(x + (leftSide ? 24 : -24), y + 4, 11, 13, uniform);
+    oval(x + (leftSide ? 30 : -30), y + 10, 9, 8, "#f0bf8d");
+    rect(x - 3, y + 1, 6, 23, "#fff6d9");
+    oval(x, y + 19, 5, 7, "#eabc4f");
+    // 얼굴 / 머리
+    oval(x, y - 30, 27, 29, "#f4c99d");
+    oval(x, y - 49, 27, 14, leftSide ? "#34485a" : "#714d49");
+    rect(x - 27, y - 50, 54, 10, leftSide ? "#34485a" : "#714d49");
+    // 안경 + 미소
+    ctx.strokeStyle = "#34465b"; ctx.lineWidth = 3;
+    ctx.strokeRect(x - 20, y - 36, 16, 12); ctx.strokeRect(x + 4, y - 36, 16, 12);
+    rect(x - 4, y - 33, 8, 3, "#34465b");
+    ctx.beginPath(); ctx.arc(x, y - 21, 7, .22, Math.PI - .22); ctx.stroke();
+    rect(x - 11, y - 5, 22, 4, "#fff");
+    if (leftSide) {
+      rect(x - 24, y + 2, 10, 4, "#ffe2b1");
+    } else {
+      oval(x + 30, y - 28, 7, 7, "#ffb5c0");
+    }
+  }
+  function drawBall() {
+    ball.trail.forEach((pos, i) => oval(pos.x, pos.y, 5 + i, 5 + i, "rgba(255,251,232," + (.04 + i * .035) + ")"));
+    oval(ball.x + 2, ball.y + 2, R + 2, R + 2, "rgba(43,84,110,.17)");
+    oval(ball.x, ball.y, R, R, "#fff9ec");
+    ctx.lineWidth = 4; ctx.strokeStyle = "#f2a341";
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, 12, -.9, 1.2);
+    ctx.moveTo(ball.x - 14, ball.y + 2); ctx.quadraticCurveTo(ball.x, ball.y - 6, ball.x + 11, ball.y - 11);
+    ctx.moveTo(ball.x - 4, ball.y + 15); ctx.quadraticCurveTo(ball.x - 2, ball.y + 1, ball.x + 15, ball.y - 2);
+    ctx.stroke();
+  }
+  function overlay(headline, subtitle) {
+    rect(0, 0, W, H, "rgba(13,32,58,.62)");
+    ctx.fillStyle = "#162b4c"; ctx.beginPath(); ctx.roundRect(187, 155, 526, 173, 22); ctx.fill();
+    textLabel(headline, 450, 226, 31, "#fff6cb");
+    textLabel(subtitle, 450, 274, 19, "#d9eeff");
+  }
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+    background();
+    drawTeacher(left, "#448bd8");
+    drawTeacher(right, "#ec7b97");
+    drawBall();
+    if (state.flash > 0) textLabel("NICE SPIKE!", left.x + 85, left.y - 115, 23, "#db5c2e");
+    if (state.phase === "ready") overlay("🏐 선생님배구", "경기 시작 버튼을 눌러주세요");
+    else if (state.phase === "paused") overlay("일시정지", "이어하기를 눌러주세요");
+    else if (state.phase === "point") overlay(state.message, "잠시 후 다음 랠리!");
+    else if (state.phase === "finished") overlay(state.winner, "다시 대결 버튼을 눌러주세요");
+  }
+  let last = 0, accumulator = 0;
+  function frame(time) {
+    if (!last) last = time;
+    accumulator += Math.min((time - last) / 1000, .06);
+    last = time;
+    let loops = 0;
+    while (accumulator >= 1 / 60 && loops < 4) { step(); accumulator -= 1 / 60; loops++; }
+    render();
+    requestAnimationFrame(frame);
+  }
+  syncUI();
+  render();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
