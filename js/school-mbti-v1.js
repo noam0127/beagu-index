@@ -40,7 +40,7 @@
   async function fetchValues(ids, token) {
     if (!token || !ids.length) return {};
     authorized(token);
-    const need = [...new Set(ids)].filter(id=>/^\d{7}$/.test(id) && !cache.has(id));
+    const need = [...new Set(ids)].filter(id=>/^[A-Z0-9]{7}$/.test(id) && !cache.has(id));
     if (need.length) {
       // The server accepts at most 20 school IDs per authorized request.
       for (let i=0;i<need.length;i+=20) {
@@ -71,7 +71,7 @@
     const ids = [];
     for (const card of cards) {
       const id=card.dataset.schoolId || '';
-      if (!/^\d{7}$/.test(id)) continue;
+      if (!/^[A-Z0-9]{7}$/.test(id)) continue;
       ids.push(id);
       let badge=card.querySelector('.beagu-mbti-badge');
       if (!badge) {
@@ -146,7 +146,7 @@
     card.append(content);
     card.append(e('p','beagu-mbti-disclaimer',
       'Q14~Q17 관계·의사결정·변화도입·수업운영 응답에 근거한 학교문화 분류입니다. 개인 MBTI 검사와 동일한 척도가 아니며 학교의 우열을 뜻하지 않습니다.'));
-    if (!/^\d{7}$/.test(String(schoolId)) || !token) return card;
+    if (!/^[A-Z0-9]{7}$/.test(String(schoolId)) || !token) return card;
     fetchValues([String(schoolId)],token).then(values=>{
       if (!card.isConnected || activeToken!==token) return;
       content.remove();
