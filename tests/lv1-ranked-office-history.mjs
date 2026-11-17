@@ -14,7 +14,8 @@ assert.match(search,/function renderHistoricalBenchmarks\(/, 'Lv.1 must display 
 assert.match(search,/loadGeographyComparisons\(year,region\)/, 'Lv.1 must fetch approved 2023-25 regional/national benchmarks');
 assert.match(search,/api\('survey_comparisons',\{year,region\}\)/, 'benchmarks are authenticated and reviewed server-side');
 assert.match(search,/학교별 문항 집계 미공개/, 'unapproved school-level single-respondent results must not be inferred');
-assert.match(search,/학교가 속한 시도 및 전국의 검증된 집계값/, 'regional aggregates must be clearly labeled as references, not school results');
+assert.match(search,/학교가 속한 시도 및 전국의 자발적 참여 표본 집계값/, 'regional aggregates must be clearly labeled as sample references, not school results');
+assert.match(search,/비교값.*최다 선택|comparisonLabel\(comparisonValues\.regional\)/, 'multi-select items must be reported as modes rather than means');
 assert.match(search,/vetted\.get\(id\)\|\|null/, 'only verified school distributions can populate school cell');
 assert.match(search,/원자료에서 확인된 보기 \(전체 목록 미확인\)/, 'observed partial option lists must be distinguished from authoritative options');
 for(const s of ['school_name_asc','school_name_desc','address_asc','address_desc','beagu_percentile_2025_desc','student_count_desc','housing_price_won_desc'])assert.ok(html.includes('value="'+s+'"'),'Missing region sort '+s);
