@@ -19,7 +19,7 @@
   ).trim();
   // Exact education office names come from the verified schools table.
   let officeLoadSerial=0;
-  const SORTS=new Set(['school_name_asc','school_name_desc','address_asc','address_desc']);
+  const SORTS=new Set(['school_name_asc','school_name_desc','address_asc','address_desc','beagu_percentile_2025_desc','student_count_desc','housing_price_won_desc']);
   // Only the visible name is shortened. The option value remains the verified
   // exact school-support office string used for server-side filtering.
   const shortOfficeName=(full,region)=>{
@@ -478,7 +478,7 @@
     choose(firstAvailable || 2025);
   }
 
-  function render(list, total) {
+  function render(list, total, sortValue='school_name_asc') {
     current2026=new Map();
     const host = $('results'); host.replaceChildren();
     const pages = Math.ceil(total / LIMIT);
@@ -493,6 +493,19 @@
         level:1,
         percentile:percentilePanel(school)
       });
+      // Only show the chosen metric when sorting a regional list; values come from the existing authenticated sort API.
+      if(mode==='region'){
+        const metricSort={
+          beagu_percentile_2025_desc:['2025 배구지수',school.beagu_percentile_2025,v=>Number(v).toFixed(2)+'%'],
+          student_count_desc:['학생 수',school.student_count,v=>Number(v).toLocaleString('ko-KR')+'명'],
+          housing_price_won_desc:['공동주택 평균 공시가격',school.housing_price_won,v=>Number(v).toLocaleString('ko-KR')+'원']
+        }[sortValue];
+        if(metricSort){
+          const [label,value,format]=metricSort;
+          const numeric=value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));
+          card.append(make('div','sort-result',label+' · '+(numeric?format(value):'자료 없음')));
+        }
+      }
       const recorded=['2023','2024','2025'].filter(y=>
         historicalPresenceByYear[y]?.has(String(school.school_id)));
       if(recorded.length)card.append(make('div','sort-result',recorded.join(' · ')+'년 조사 기록 있음'));
@@ -545,7 +558,7 @@
     const searchTask=window.BeaguLoading?.start('학교 검색 결과를 불러오는 중…');
     try {
       const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?$('regionSort').value:'school_name_asc';
-      const sort=sortValue.startsWith('address')?'address':'school_name';
+      const sort=sortValue.replace(/_(?:asc|desc)$/,'');
       const direction=sortValue.endsWith('_desc')?'desc':'asc';
       const response=await api('ranked_schools',{searchText:q,region,office,sort,direction,page});
       const data=Array.isArray(response.schools)?response.schools:[];
@@ -560,7 +573,7 @@
       if (request !== serial) return;
       if(explicitEnter&&q&&count===1&&Array.isArray(data)&&data.length===1)
         window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),1,'search-lv1');
-      render(data || [], count || 0);
+      render(data || [], count || 0, sortValue);
     } catch (error) {
       if (request !== serial) return;
       if(error.unauthorized){loggedOut('인증이 만료되었습니다. 참여코드로 다시 로그인해주세요.');return;}
