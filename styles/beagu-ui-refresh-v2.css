@@ -539,3 +539,23 @@ body.beagu-ui-page .beagu-skip-link:focus{top:14px}
  body.beagu-page-compare .comparison-picker .compare-selection,
  body.beagu-page-compare .comparison-picker .compare-placeholder{flex:1 1 100%;max-width:100%}
 }
+
+
+/* The legacy comparison intro used pale text on a dark background; the new
+   pale hero requires renewed contrast for every highlighted phrase and tag. */
+body.beagu-page-compare .intro .overline{color:#3f6699}
+body.beagu-page-compare .intro .overline-sep{color:#7c93b2}
+body.beagu-page-compare .intro h1 span{color:#245dbd}
+body.beagu-page-compare .intro-tags span{
+  background:rgba(255,255,255,.65);
+  color:#2b568a;border:1px solid #cfdef2;
+  font-size:12px;font-weight:720;padding:8px 12px;
+}
+body.beagu-page-compare .intro .graphic-grid span{border-color:rgba(34,91,172,.19);background:rgba(95,153,224,.09)}
+body.beagu-page-compare .intro .graphic-grid span:nth-child(3n){background:rgba(71,139,223,.19)}
+body.beagu-page-compare .intro .graphic-grid span:nth-child(7),
+body.beagu-page-compare .intro .graphic-grid span:nth-child(13){background:rgba(55,128,217,.26)}
+body.beagu-page-compare .intro .graphic-line{background:#94b6e252}
+body.beagu-page-compare .intro .graphic-label,
+body.beagu-page-compare .intro .graphic-label b{color:#4775ac}
+body.beagu-page-lv1 .results{grid-template-columns:1fr}
