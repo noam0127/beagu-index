@@ -241,9 +241,11 @@
       if(error)throw error;
       for(const row of Array.isArray(data)?data:[]){
         const id=String(row?.school_id||'');
-        const value=row?.percentile;
+        const raw=row?.percentile;
+        if(raw===null||raw===undefined||raw==='')continue;
+        const value=Number(raw);
         if(!requested.includes(id)||Number(row?.survey_year)!==2026||
-           typeof value!=='number'||!Number.isFinite(value)||value<0||value>100)continue;
+           !Number.isFinite(value)||value<0||value>100)continue;
         state.public2026.set(id,value);
       }
       requested.forEach(id=>state.public2026Checked.add(id));
