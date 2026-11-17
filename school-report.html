@@ -1024,7 +1024,7 @@
 
   const TIER_SESSION_KEY='beagu-level-session-v1';
   const viItem=q=>/^Q(0[1-9]|1[0-3])$/.test(q);
-  // Existing teacher survey questions remain restricted until individually reviewed.\n  const requiredTier=item=>(state.selected===2026&&viItem(item.id)?1:2);
+  // Existing teacher survey questions remain restricted until individually reviewed.\n  const requiredTier=item=>1; // Only server-reviewed question aggregates can unlock at unified Lv.1.
   const remembered=()=>{try{return sessionStorage.getItem(TIER_SESSION_KEY)||''}catch{return ''}};
   const saveToken=t=>{try{if(t)sessionStorage.setItem(TIER_SESSION_KEY,t);else sessionStorage.removeItem(TIER_SESSION_KEY)}catch{}};
   async function tierCall(action,other={}){
@@ -1429,7 +1429,7 @@
     const meta=document.createElement('div');meta.className='question-meta';
     if(isFreeText)meta.textContent='개인 식별 및 비공개 위험으로 자유서술 원문은 표시하지 않습니다.';
     else if(locked)meta.textContent='잠긴 영역입니다. 실제 값은 내려받지 않았으며 서버 인증과 공개 심사를 모두 통과해야 표시됩니다.';
-    else if(displayed)meta.textContent=`문항별 응답자 ${Number.isFinite(Number(n))?nf(n)+'명':'확인 필요'} · 가장 많은 응답 또는 집계 대표값`;
+    else if(displayed)meta.textContent=Number.isSafeInteger(Number(n))&&Number(n)>=5 ? `검수된 문항별 집계 · 응답자 ${nf(n)}명` : '서버 검수 및 공개 승인된 문항별 집계';
     else meta.textContent=yearData(state.selected).approved?'이 문항은 공개된 통계가 없습니다.':'검수·공개 승인된 학교별 통계가 아직 없습니다.';
     row.append(meta);
     if(itemApproved && Array.isArray(data?.distribution)&&data.distribution.length&&state.demo){
