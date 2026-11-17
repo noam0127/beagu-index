@@ -13,7 +13,7 @@ assert.doesNotMatch(policy,/data\/raw|beagu_private|service_role|sb_secret_|p_pa
 assert.doesNotMatch(policy,/\b(?:2026년)?\s*학교별\s*(?:총점|전국순위)\b/);
 assert.doesNotMatch(policy,/<script[^>]+src=/,'No tracking or restricted server client on static policy page');
 
-for(const p of ['search.html','search-lv1.html','search-lv2.html',
+for(const p of ['search-lv1.html','search-lv2.html',
                  'school-report.html','statistics.html']){
  const h=read(p);
  assert.match(h,/href="release-policy\.html"/,'Policy navigation missing: '+p);
@@ -23,9 +23,10 @@ const index=read('index.html');
 const search=read('search.html');
 const lv1=read('js/level-search.js');
 const lv2=read('js/lv2-edited-search.js');
-assert.match(index,/<a class="lv0-public-link" href="search\.html">Lv\.0 공개자료 보기<\/a>/,'Restore only the original Lv.0 public page');
-assert.doesNotMatch(index,/href="search-lv[12]\.html"/,'No home links to protected Lv.1 / Lv.2');
-assert.equal((index.match(/href="search\.html"/g)||[]).length,1,'Exactly one public Lv.0 link');
+assert.doesNotMatch(index,/lv0-public-link|href="search(?:-lv[12])?\.html"/,'No level browsing buttons on homepage');
+assert.match(search,/<meta http-equiv="refresh" content="0;url=\.\/index\.html">/,'Retired Lv.0 route redirects home');
+assert.doesNotMatch(search,/schoolPanel|regionPanel|BeaguSchoolSearchCard/,'No Lv.0 search interface');
+assert.doesNotMatch(policy,/href="search\.html"/,'No old Lv.0 navigation in policy');
 assert.match(index,/1,000명 달성 시 2026 배구지수 자료를 공개합니다\./);
 assert.doesNotMatch(index,/href="challenge\.html"/,'Do not add a home-to-challenge button');
 assert.match(index,/https:\/\/forms\.gle\/TPyCakK6Sj2zchRy7/);
@@ -34,7 +35,7 @@ assert.doesNotMatch(challenge,/Lv\.2|step-3|cafe\.naver\.com/,'Level 2 promotion
 assert.match(challenge,/id="capture"/);
 assert.match(challenge,/id="loungeLink"/);
 assert.match(challenge,/id="participantNo"/);
-assert.match(search,/locked:true/);
+assert.doesNotMatch(search,/locked:true/);
 assert.match(lv1,/api\('school', \{schoolId:school\.school_id\}\)/);
 assert.match(lv2,/beagu-level-api/);
 assert.match(lv2,/beagu-edited-api-v1/);
