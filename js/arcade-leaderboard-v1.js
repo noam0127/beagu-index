@@ -56,16 +56,27 @@ class ArcadeLeaderboard{
   try{return await this.pendingLoad;}finally{this.pendingLoad=null;}
  }
  start(school){
-  if(!school||!school.school_id||!school.school_name)throw new Error("school selection required");
+  this.session=null;this.pendingStart=null;this.lastStartError=null;
+  if(!school||!school.eligible||!school.school_id||!school.school_name){
+   this.lastStartError="school_ineligible";return Promise.resolve(null);
+  }
   this.school={school_id:String(school.school_id),school_name:String(school.school_name),difficulty:school.difficulty};
   const generation=++this.playGeneration;
-  this.session=null;
   if(this.dialog && this.dialog.open)this.dialog.close();
   this.pendingStart=(async()=>{
    try{
     const data=await this.request("POST",{action:"start",game:this.game,school_id:this.school.school_id});
-    if(generation===this.playGeneration&&typeof data.session==="string")this.session=data.session;
-   }catch(error){if(generation===this.playGeneration)this.session=null;/* game remains available offline */}
+    if(generation!==this.playGeneration)return null;
+    if(data.school?.eligible!==true || typeof data.session!=="string")throw new Error("school_ineligible");
+    this.session=data.session;
+    return this.session;
+   }catch(error){
+    if(generation===this.playGeneration){
+     this.session=null;
+     this.lastStartError=String(error?.message||"network_unavailable");
+    }
+    return null;
+   }
   })();
   return this.pendingStart;
  }
