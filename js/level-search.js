@@ -273,7 +273,7 @@
     const section=make('section','data-section');
     section.append(make('h4','','역대 문항별 결과 · 전국·지역 비교'));
     const intro=make('p','detail-note',
-      '학교 고유 결과는 별도 공개 심사를 통과한 경우에만 표시합니다. 그 외에는 학교가 속한 시도 및 전국의 검증된 집계값을 참고값으로 제공합니다. 지역·전국 기준값은 해당 학교의 응답이 아닙니다.');
+      '학교 고유 결과는 별도 공개 심사를 통과한 경우에만 표시합니다. 그 외에는 학교가 속한 시도 및 전국의 자발적 참여 표본 집계값을 참고값으로 제공합니다. 지역·전국 기준값은 해당 학교의 응답이나 모집단 전체의 대표값이 아닙니다.');
     intro.style.cssText='margin:8px 0 14px;line-height:1.6';
     section.append(intro);
     const all=comparison?.items&&typeof comparison.items==='object'?comparison.items:{};
@@ -302,10 +302,11 @@
         const preferred=m.kind==='most_frequent'||m.kind==='mode'?m.mode||m.mean:m.mean||m.mode;
         return typeof preferred==='string'&&preferred.length<=180?preferred:null;
       };
+      const comparisonLabel=m=>m?.kind==='most_frequent'?'최다 선택':'평균에 해당하는 보기';
       const cells=[
         ['우리 학교',vetted.get(id)||null,'school'],
-        [region+' 참고값',benchmark(comparisonValues.regional),'region'],
-        ['전국 참고값',benchmark(comparisonValues.national),'nation']
+        [region+' · '+comparisonLabel(comparisonValues.regional),benchmark(comparisonValues.regional),'region'],
+        ['전국 · '+comparisonLabel(comparisonValues.national),benchmark(comparisonValues.national),'nation']
       ];
       const grid=make('div','historical-benchmark-grid');
       grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px';
