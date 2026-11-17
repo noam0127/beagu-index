@@ -60,7 +60,7 @@
   <section class="search-surface" aria-label="학교 검색"><div class="search-heading"><label for="schoolInput">🔎 학교 검색</label><span>학교명을 검색하거나 기존 검색 결과에서 학교를 선택하세요.</span></div><div class="input-wrap"><input id="schoolInput" type="search" autocomplete="off" placeholder="예: 서울개원초등학교, 강릉초등학교" aria-autocomplete="list" aria-controls="suggestions"><button id="clearSearch" type="button" aria-label="검색어 지우기">×</button></div><div class="suggestions" id="suggestions" role="listbox" hidden></div><div class="search-help" id="searchHelp" aria-live="polite">학교명을 2글자 이상 입력하면 검색합니다.</div></section>
   <div class="main-content" id="mainContent" hidden>
     <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><a href="index.html" class="change-school">홈으로 ↗</a></div></section>
-    <section class="tier-panel" id="tierPanel" aria-label="등급별 열람"><h3>열람 범위 선택</h3><p>공개 자료와 참여자·교사 승인 자료를 구분합니다. 잠긴 항목은 데이터 자체를 내려받지 않습니다.</p><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong><span>학교정보 · 연도별 백분위</span></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자 🔒</strong><span>인증된 승인 요약</span></button><button class="tier-button" id="tier2" type="button" aria-pressed="false"><strong>Lv.2 교사 🔒</strong><span>인증된 승인 상세</span></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">인증하기</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div><p class="tier-privacy-note">※ 일부 문항은 Lv.2라도 표본·개인정보 보호 심사를 통과하기 전까지 공개되지 않습니다. 2026년 Q51 자유서술은 전 등급 비공개입니다.</p></section>
+    <section class="tier-panel" id="tierPanel" aria-label="등급별 열람"><h3>열람 범위 선택</h3><p>공개 자료와 참여자·교사 승인 자료를 구분합니다. 잠긴 항목은 데이터 자체를 내려받지 않습니다.</p><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong><span>학교정보 · 연도별 백분위</span></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자 🔒</strong><span>인증된 승인 요약</span></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">인증하기</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div><p class="tier-privacy-note">※ Lv.1에서도 표본·개인정보 보호 심사를 통과한 문항만 표시합니다. 2026년 Q51 자유서술은 전 등급 비공개입니다.</p></section>
     <section class="year-overview" aria-label="연도별 조사 기록"><div class="section-top"><div><h3>연도별 기록</h3><p>카드를 누르면 해당 연도의 조사 내용을 볼 수 있습니다.</p></div><button class="outline-btn" id="comparisonHelp" type="button">비교 시 유의사항 <span aria-hidden="true">ⓘ</span></button></div><div class="year-grid" id="yearGrid" role="tablist" aria-label="연도 선택"></div><p class="chart-disclaimer">연도별 문항·척도·참여 학교가 달라 숫자를 하나의 연속 점수처럼 비교하지 않습니다.</p></section>
     <section class="latest-year-status" aria-label="2026년 최신 조사 공개 상태">
       <div><strong>2026년 최신 조사</strong><p id="latestYearMessage" aria-live="polite">2026년 학교별 공개 승인 상태를 확인 중입니다.</p></div>
@@ -68,7 +68,7 @@
     <section class="report-body"><div class="report-title"><div><p class="eyebrow" id="reportSubtitle">2026 REPORT</p><h3 id="reportHeading">2026년 조사 결과</h3><p class="report-description" id="reportDescription"></p></div><span class="data-status" id="dataStatus">자료 확인 중</span></div>
       <div class="metric-row" id="metricRow"></div>
       <section class="approved-summary" id="officialSummary" aria-live="polite"><h4>공식 학교정보</h4><p class="approved-empty">해당 연도에 확인된 학교정보를 불러오는 중입니다.</p></section>
-      <section class="approved-summary" id="approvedSummary" aria-live="polite"><h4>등급별 승인 집계</h4><p class="approved-empty">Lv.1·Lv.2로 인증하면 검수된 추가 통계가 나타납니다.</p></section>
+      <section class="approved-summary" id="approvedSummary" aria-live="polite"><h4>등급별 승인 집계</h4><p class="approved-empty">Lv.1로 인증하면 검수된 추가 통계가 나타납니다.</p></section>
       <div class="controls-bar"><div class="filter-left"><button type="button" class="switch-btn active" id="essentialBtn" aria-pressed="true">핵심만 보기</button><button type="button" class="switch-btn" id="allBtn" aria-pressed="false">전체 문항</button></div><div class="filter-right"><label for="questionSearch" class="sr-only">조사 문항 검색</label><input id="questionSearch" type="search" placeholder="문항 찾기" autocomplete="off"></div></div>
       <nav id="categoryNav" class="category-nav" aria-label="영역 바로가기"></nav>
       <div id="sections" class="report-sections"></div>
@@ -1024,7 +1024,7 @@
 
   const TIER_SESSION_KEY='beagu-level-session-v1';
   const viItem=q=>/^Q(0[1-9]|1[0-3])$/.test(q);
-  const requiredTier=item=>(state.selected===2026&&viItem(item.id)?1:2);
+  // Existing teacher survey questions remain restricted until individually reviewed.\n  const requiredTier=item=>(state.selected===2026&&viItem(item.id)?1:2);
   const remembered=()=>{try{return sessionStorage.getItem(TIER_SESSION_KEY)||''}catch{return ''}};
   const saveToken=t=>{try{if(t)sessionStorage.setItem(TIER_SESSION_KEY,t);else sessionStorage.removeItem(TIER_SESSION_KEY)}catch{}};
   async function tierCall(action,other={}){
@@ -1037,7 +1037,7 @@
     return body;
   }
   function tierUI(){
-    for(const level of [0,1,2])$('tier'+level).setAttribute('aria-pressed',String(state.tier===level));
+    for(const level of [0,1])$('tier'+level).setAttribute('aria-pressed',String(state.tier===level));
     $('tierCodePanel').hidden=state.requestedTier===0 || state.tier===state.requestedTier;
     $('accessTag').textContent=state.demo?'가상 자료 · 시연':'Lv.'+state.tier+(state.tier===0?' 공개 정보':' 인증된 승인 통계');
   }
@@ -1050,14 +1050,14 @@
     panel.hidden=state.tier!==0;
     if(state.tier===0)panel.innerHTML='<h4>학교별 상세 통계</h4>'+
       '<p class="approved-empty">전국 백분위는 바로 위에 공개되어 있습니다. '+
-      '학교 규모·교원·학급 수는 Lv.1 인증 후, 시설·행정 세부 정보는 Lv.2 인증 후 확인할 수 있습니다.</p>';
+      '학교 규모·교원·시설·행정 등 검수된 학교정보는 Lv.1 인증 후 확인할 수 있습니다.</p>';
   }
   function summaryUI(){
     const box=$('approvedSummary');if(!box)return;
     const list=state.approvedSummary[String(state.selected)]||[];
     if(state.demo){box.innerHTML='<h4>미리보기 안내</h4><p class="approved-empty">실제 학교의 보호 통계는 포함되지 않습니다.</p>';return}
     if(state.tier===0){
-      box.innerHTML='<h4>등급별 추가 통계 🔒</h4><div class="summary-metrics"><div class="summary-metric"><span>Lv.1 승인 집계</span><i class="mask-shape" aria-hidden="true"></i></div><div class="summary-metric"><span>Lv.2 승인 상세</span><i class="mask-shape" aria-hidden="true"></i></div></div><p class="tier-locked-note">모자이크는 디자인용이며 실제 수치는 전달되지 않았습니다.</p>';return;
+      box.innerHTML='<h4>등급별 추가 통계 🔒</h4><div class="summary-metrics"><div class="summary-metric"><span>Lv.1 승인 집계</span><i class="mask-shape" aria-hidden="true"></i></div></div><p class="tier-locked-note">모자이크는 디자인용이며 실제 수치는 전달되지 않았습니다.</p>';return;
     }
     if(!list.length){box.innerHTML='<h4>승인된 추가 통계 · Lv.'+state.tier+'</h4><p class="approved-empty">현재 학교·연도의 공개 승인된 추가 요약 통계가 없습니다.</p>';return}
     const unique=[...new Map(list.filter(x=>x&&typeof x.label==='string'&&x.label.length<=80&&typeof x.value==='string'&&x.value.length<=90)
@@ -1267,7 +1267,7 @@
     if(params.has('year')){const y=Number(params.get('year'));if([2023,2024,2025,2026].includes(y)){state.selected=y;render()}}
   }
   function bind(){
-    for(const level of [0,1,2])$('tier'+level).addEventListener('click',()=>chooseTier(level));
+    for(const level of [0,1])$('tier'+level).addEventListener('click',()=>chooseTier(level));
     $('tierCodeForm').addEventListener('submit',loginTier);
     let timeout;
     $('schoolInput').addEventListener('input',()=>{
