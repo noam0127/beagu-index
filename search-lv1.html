@@ -179,6 +179,19 @@ body { min-width: 0; }
 @media (max-width: 420px) { .topbar { margin-bottom: 25px; } .auth-card h1 { font-size: 29px; } }
 
   
+
+/* Lv.1 global descending sorting: after location filters and before results. */
+.sorting-panel{background:#fff;border:1px solid #e0e8f2;border-radius:14px;padding:13px 14px;margin:17px 0 8px}
+.sorting-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:14px;font-weight:750;margin-bottom:10px}
+.sorting-heading small{font-size:12px;font-weight:500;color:#64748b}
+.sort-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.sort-tab{cursor:pointer;background:#f7f9fe;border:1px solid #d8e3ef;border-radius:9px;padding:11px 3px;font-weight:700;font-size:12px;line-height:1.45;color:#42536f}
+.sort-tab[aria-pressed="true"]{color:white;background:#2563eb;border-color:#2563eb}
+.sort-tab:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.sort-explainer{font-size:11px;color:#64748b;line-height:1.65;margin:10px 0 0}
+.sort-result{font-size:12px;color:#1d4ed8;margin:6px 0;padding:8px 10px;background:#eef4ff;border-radius:8px;font-weight:650}
+@media(max-width:440px){.sort-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.sort-tab{font-size:13px}}
+
 /* 2026 + 2023~2025 detailed school layout (2026-10-30). */
 .percentile-grid, .percentiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .percentile-cell, .percentiles > div { padding: 12px 3px; }
@@ -258,6 +271,17 @@ body { min-width: 0; }
         </div>
         <p class="field-hint">시도를 선택하면 해당 지역 학교를, 교육지원청을 선택하면 관할 학교를 볼 수 있습니다.</p>
       </section>
+
+      <section class="sorting-panel" id="sortPanel" aria-label="학교 정렬">
+        <div class="sorting-heading">학교 정렬 <small>모두 내림차순 ↓</small></div>
+        <div class="sort-tabs" id="sortTabs" role="group" aria-label="정렬 기준">
+          <button type="button" class="sort-tab" data-sort="school_name" aria-pressed="true">학교명순 ↓</button>
+          <button type="button" class="sort-tab" data-sort="beagu_percentile_2025" aria-pressed="false">배구지수순 ↓</button>
+          <button type="button" class="sort-tab" data-sort="student_count" aria-pressed="false">학생수순 ↓</button>
+          <button type="button" class="sort-tab" data-sort="housing_price_won" aria-pressed="false">공시가격순 ↓</button>
+        </div>
+        <p class="sort-explainer">배구지수: 2025년 검증·공개 백분위 / 학생 수: 최신 승인 학교정보 / 공시가격: 2025년 행정구역 공동주택 평균 공시가격. 값이 없는 학교는 맨 뒤에 표시합니다.</p>
+      </section>
       <div id="resultCount" class="result-count" aria-live="polite"></div>
       <div id="results" class="results"></div>
       <div id="pager" class="pager" hidden>
@@ -275,7 +299,7 @@ body { min-width: 0; }
     <script src="js/school-search-card-v1.js?v=20261031-independent5"></script>
   <script src="js/school-detail-groups-v1.js?v=20261031-groups6"></script>
   <script src="js/school-mbti-v1.js?v=20261031-mbti1"></script>
-  <script src="js/level-search.js?v=20261117-two-levels4"></script>
+  <script src="js/level-search.js?v=20261117-ranked-offices5"></script>
   <script src="js/visit-stats.js?v=20261031-1350"></script>
 <script src="js/search-telemetry-v1.js?v=20261031-xp8"></script>
   <script>
