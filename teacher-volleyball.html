@@ -67,7 +67,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-rolling1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261118-retro1">
-<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-tier1">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-anyyear3">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-3">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
@@ -84,8 +84,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 터치·드래그 비행　↔ 방향키 · A/D　⚡ 빠른 이동 중 공을 맞히면 스파이크</div>
   <div id="arcade-top10" aria-label="선생님배구 TOP 10 순위"></div>
 </main>
-<script src="js/arcade-leaderboard-v1.js?v=20261118-fouryear2"></script>
-<script src="js/arcade-school-picker-v1.js?v=20261118-fouryear2"></script>
+<script src="js/arcade-leaderboard-v1.js?v=20261118-anyyear3"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261118-anyyear3"></script>
 <script>
 (function () {
   "use strict";
@@ -104,8 +104,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   let currentDifficulty="normal";
   schoolPicker.onChange=school=>{
     if(state.phase==="ready"||state.phase==="finished"){
-      setStatus(!school ? "2023~2026년 백분위가 모두 있는 학교만 플레이할 수 있습니다." :
-        school.eligible ? school.school_name+" · "+diffName[school.difficulty]+" · 4개년 평균" :
+      setStatus(!school ? "2023~2026년 중 한 해라도 조사 백분위가 있으면 플레이할 수 있습니다." :
+        school.eligible ? school.school_name+" · "+diffName[school.difficulty]+" · 확인 연도 평균" :
         "플레이 불가 · 학교 선택창의 누락 연도 안내를 확인하세요.");
       syncUI();
     }
@@ -146,18 +146,18 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   async function startMatch() {
     const school=schoolPicker.get();
     if(!school?.eligible){
-      setStatus("플레이 불가 · 2023~2026년 4개년 백분위가 모두 있어야 합니다.");
+      setStatus("플레이 불가 · 2023~2026년 조사 결과가 한 해도 없습니다. 2026년 조사에 참여해 주세요.");
       schoolPicker.focus();syncUI();return;
     }
     if(state.phase==="starting")return;
     const previousPhase=state.phase;
-    state.phase="starting";syncUI();setStatus("4개년 백분위와 참가 자격 확인 중…");
+    state.phase="starting";syncUI();setStatus("조사 백분위와 참가 자격 확인 중…");
     const session=ranking?await ranking.start(school):null;
     if(!session){
       state.phase=previousPhase;
       schoolPicker.setLocked(false);
       syncUI();
-      setStatus("시작할 수 없습니다. 4개년 백분위 또는 게임 서버 연결을 확인하세요.");
+      setStatus("시작할 수 없습니다. 조사 백분위 또는 게임 서버 연결을 확인하세요.");
       return;
     }
     currentDifficulty=school.difficulty;
@@ -167,7 +167,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
     resetPositions();
-    setStatus(school.school_name+" · 2023~2026년 평균 난이도 "+diffName[school.difficulty]);
+    setStatus(school.school_name+" · 확인된 연도 평균 난이도 "+diffName[school.difficulty]);
     syncUI();canvas.focus();
   }
   function pause() {
