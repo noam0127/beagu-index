@@ -15,6 +15,10 @@ for(const s of ['school_name','address','beagu_percentile_2025','student_count',
 }
 assert.match(html,/학교명 가나다순/);
 assert.match(html,/주소순/);
+assert.doesNotMatch(html,/세종은 2025년 세종시 전체 공동주택 평균 공시가격을 적용했습니다/);
+assert.match(html,/세종의 학교 소재 법정동별 공시가격은 원자료 확인 전까지 표시하지 않습니다/);
+assert.match(search,/법정동별 원자료 확인 중/);
+assert.doesNotMatch(search,/세종시 전체 공동주택 평균 공시가격/);
 assert.match(html,/가나다순 또는 높은 순/);
 assert.match(search,/api\('offices'/);
 assert.match(search,/api\('ranked_schools'/);
