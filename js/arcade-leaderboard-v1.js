@@ -21,7 +21,7 @@ class ArcadeLeaderboard{
  constructor(game,mount){
   if(!games.has(game))throw new Error("invalid leaderboard game");
   this.game=game;this.mount=typeof mount==="string"?document.querySelector(mount):mount;
-  this.board=[];this.remote=false;this.session=null;this.pendingStart=null;this.pendingLoad=null;this.score=0;this.stats=null;
+  this.board=[];this.remote=false;this.session=null;this.pendingStart=null;this.pendingLoad=null;this.score=0;this.stats=null;this.school=null;this.playGeneration=0;
   this.dialog=null;this.isSubmitting=false;
   if(this.mount){this.draw();this.load();}
  }
@@ -55,14 +55,17 @@ class ArcadeLeaderboard{
   })();
   try{return await this.pendingLoad;}finally{this.pendingLoad=null;}
  }
- start(){
+ start(school){
+  if(!school||!school.school_id||!school.school_name)throw new Error("school selection required");
+  this.school={school_id:String(school.school_id),school_name:String(school.school_name),difficulty:school.difficulty};
+  const generation=++this.playGeneration;
   this.session=null;
   if(this.dialog && this.dialog.open)this.dialog.close();
   this.pendingStart=(async()=>{
    try{
-    const data=await this.request("POST",{action:"start",game:this.game});
-    if(typeof data.session==="string")this.session=data.session;
-   }catch(error){this.session=null;/* game remains available offline */}
+    const data=await this.request("POST",{action:"start",game:this.game,school_id:this.school.school_id});
+    if(generation===this.playGeneration&&typeof data.session==="string")this.session=data.session;
+   }catch(error){if(generation===this.playGeneration)this.session=null;/* game remains available offline */}
   })();
   return this.pendingStart;
  }
@@ -102,7 +105,7 @@ class ArcadeLeaderboard{
  }
  openRecord(){
   const dialog=this.dialogElement();
-  this.dialogScore.textContent=fmt(this.score);
+  this.dialogScore.textContent=fmt(this.score)+" · "+(this.school?.school_name||"학교 미등록");
   this.dialogMessage.textContent="";
   try{this.nameInput.value=cleanName(localStorage.getItem("arcade-last-name-v1")||"");}catch(e){this.nameInput.value="";}
   if(!dialog.open){if(typeof dialog.showModal==="function")dialog.showModal();else dialog.setAttribute("open","");}
@@ -131,7 +134,7 @@ class ArcadeLeaderboard{
     }
    }
    if(!saved){
-    this.remote=false;this.board=order([...this.getLocal(),{nickname:name,score:this.score,created_at:new Date().toISOString()}]);this.setLocal(this.board);
+    this.remote=false;this.board=order([...this.getLocal(),{nickname:name,score:this.score,school_name:this.school?.school_name||null,difficulty:this.school?.difficulty||null,created_at:new Date().toISOString()}]);this.setLocal(this.board);
    }
    try{localStorage.setItem("arcade-last-name-v1",name);}catch(e){}
    this.draw();this.closeDialog();
@@ -144,11 +147,13 @@ class ArcadeLeaderboard{
   const status=el("small","",this.remote?"WORLD RECORDS":"OFFLINE · 이 기기");
   head.append(heading,status);container.append(head);
   const labels=el("div","arcade-rank-grid arcade-rank-label");
-  ["RANK","NAME","SCORE"].forEach(x=>labels.append(el("span","",x)));container.append(labels);
+  ["RANK","NAME · 학교","SCORE"].forEach(x=>labels.append(el("span","",x)));container.append(labels);
   if(!this.board.length){container.append(el("div","arcade-rank-empty","NO RECORDS"));return;}
   this.board.slice(0,10).forEach((entry,i)=>{
    const row=el("div","arcade-rank-grid arcade-rank-row");
-   row.append(el("span","",String(i+1).padStart(2,"0")),el("span","",entry.nickname),el("span","",fmt(entry.score)));
+   const person=el("div","arcade-rank-person");
+   person.append(el("span","arcade-rank-nick",entry.nickname),el("span","arcade-rank-school",entry.school_name||"학교 미등록"));
+   row.append(el("span","",String(i+1).padStart(2,"0")),person,el("span","",fmt(entry.score)));
    container.append(row);
   });
  }
