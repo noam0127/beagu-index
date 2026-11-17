@@ -14,8 +14,8 @@
   const LIMIT = 20;
   const YEARS = [2023, 2024, 2025, 2026];
   // Exact education office names come from the verified schools table.
-  let selectedSort='school_name',officeLoadSerial=0;
-  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','housing_price_won']);
+  let officeLoadSerial=0;
+  const SORTS=new Set(['school_name_asc','school_name_desc','address_asc','address_desc']);
   // Only the visible name is shortened. The option value remains the verified
   // exact school-support office string used for server-side filtering.
   const shortOfficeName=(full,region)=>{
@@ -173,16 +173,10 @@
     }
   });
   $('officeSelect').addEventListener('change', () => search(true));
-  // Sort is applied by the backend BEFORE pagination. Never sort only the 20 visible cards.
-  for(const button of document.querySelectorAll('#sortTabs [data-sort]')){
-    button.addEventListener('click',()=>{
-      if(!SORTS.has(button.dataset.sort))return;
-      selectedSort=button.dataset.sort;
-      for(const b of document.querySelectorAll('#sortTabs [data-sort]'))
-        b.setAttribute('aria-pressed',String(b===button));
-      void search(true);
-    });
-  }
+  // 지역 찾기만 선택형 정렬을 사용합니다. 서버는 페이지 나누기 전에 정렬합니다.
+  $('regionSort').addEventListener('change',()=>{
+    if(SORTS.has($('regionSort').value))void search(true);
+  });
   $('searchInput').addEventListener('input', () => {
     clearTimeout(timer); timer = setTimeout(() => search(true), 250);
   });
@@ -493,24 +487,6 @@
         level:1,
         percentile:percentilePanel(school)
       });
-      const sortValue=selectedSort==='address'
-        ?(school.address||'주소 미확인')
-        :selectedSort==='beagu_percentile_2025'
-        ?(school.beagu_percentile_2025==null?'자료 없음':Number(school.beagu_percentile_2025).toFixed(2)+'%')
-        :selectedSort==='student_count'
-        ?(school.student_count==null?'자료 없음':Number(school.student_count).toLocaleString('ko-KR')+'명')
-        :selectedSort==='housing_price_won'
-        ?(school.housing_price_won==null?(school.sido_standard==='세종'?'법정동별 원자료 확인 중':'자료 없음'):Number(school.housing_price_won).toLocaleString('ko-KR')+'원')
-        :null;
-      if(sortValue!==null){
-        const tag=make('div','sort-result',
-          (selectedSort==='address'?'주소':selectedSort==='beagu_percentile_2025'?'2025 배구지수 백분위'
-           :selectedSort==='student_count'?'학생 수'+(school.student_reference_year?' ('+school.student_reference_year+'년 기준)':'')
-           :(school.sido_standard==='세종'?'학교 소재 법정동 공동주택 평균 공시가격':'행정구역 공동주택 평균 공시가격'))+' · '+sortValue);
-        const meta=card.querySelector('.school-meta')||card.querySelector('.school-name');
-        if(meta&&meta.parentNode)meta.insertAdjacentElement('afterend',tag);
-        else card.append(tag);
-      }
       const recorded=['2023','2024','2025'].filter(y=>
         historicalPresenceByYear[y]?.has(String(school.school_id)));
       if(recorded.length)card.append(make('div','sort-result',recorded.join(' · ')+'년 조사 기록 있음'));
@@ -558,7 +534,10 @@
     }
     $('resultCount').textContent = '검색 중...';
     try {
-      const response=await api('ranked_schools',{searchText:q,region,office,sort:selectedSort,page});
+      const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?$('regionSort').value:'school_name_asc';
+      const sort=sortValue.startsWith('address')?'address':'school_name';
+      const direction=sortValue.endsWith('_desc')?'desc':'asc';
+      const response=await api('ranked_schools',{searchText:q,region,office,sort,direction,page});
       const data=Array.isArray(response.schools)?response.schools:[];
       const count=Number(response.total)||0;
       if (request !== serial) return;
