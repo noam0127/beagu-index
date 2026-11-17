@@ -228,7 +228,7 @@ body { min-width: 0; }
   <main class="container">
     <nav class="topbar" aria-label="페이지 탐색">
       <a class="back" href="index.html" aria-label="배구지수 대문으로 돌아가기">←</a>
-      <a href="index.html" class="beagu-brand-link" aria-label="배구인덱스 홈"><span class="beagu-brand-mark" aria-hidden="true">B</span><span class="beagu-brand-word">배구인덱스</span></a>
+      <a href="index.html" class="beagu-brand-link" aria-label="배구인덱스 홈"><span class="beagu-brand-mark" aria-hidden="true">B</span><span class="beagu-brand-word">BAEGU INDEX</span></a>
       <a class="current-level" href="search.html" style="color:#1d4ed8;text-decoration:none">Lv.0 공개자료</a><span class="current-level">Lv.1</span>
     </nav>
     <nav class="beagu-global-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html" aria-current="page">학교 검색</a><a href="statistics.html">통계표</a><a href="challenge.html">참여 인증</a></nav>
@@ -272,26 +272,13 @@ body { min-width: 0; }
           <select id="officeSelect" class="region-select" disabled><option value="">시도를 먼저 선택하세요</option></select>
         </div>
         <p class="field-hint">시도를 선택하면 해당 지역 학교를, 교육지원청을 선택하면 관할 학교를 볼 수 있습니다.</p>
-      </section>
-
-      <section class="sorting-panel" id="sortPanel" aria-label="학교 정렬">
-        <div class="sorting-heading">학교 정렬 <small>가나다순 또는 높은 순</small></div>
-        <div class="sort-tabs" id="sortTabs" role="group" aria-label="정렬 기준">
-          <button type="button" class="sort-tab" data-sort="school_name" aria-pressed="true">학교명 가나다순 ↑</button>
-          <button type="button" class="sort-tab" data-sort="address" aria-pressed="false">주소순 ↑</button>
-          <button type="button" class="sort-tab" data-sort="beagu_percentile_2025" aria-pressed="false">배구지수순 ↓</button>
-          <button type="button" class="sort-tab" data-sort="student_count" aria-pressed="false">학생수순 ↓</button>
-          <button type="button" class="sort-tab" data-sort="housing_price_won" aria-pressed="false">공시가격순 ↓</button>
-        </div>
-        <p class="sort-explainer">학교명·주소는 가나다순으로, 배구지수·학생 수·공동주택 평균 공시가격은 큰 값부터 정렬합니다. 수치가 없는 학교는 맨 뒤에 표시됩니다. 세종의 학교 소재 법정동별 공시가격은 원자료 확인 전까지 표시하지 않습니다.</p>
+        <div class="beagu-search-sort"><label for="regionSort">정렬 기준</label><select id="regionSort"><option value="school_name_asc">학교명순 ↑</option><option value="school_name_desc">학교명순 ↓</option><option value="address_asc">주소순 ↑</option><option value="address_desc">주소순 ↓</option></select></div>
       </section>
       <div id="resultCount" class="result-count" aria-live="polite"></div>
       <div id="results" class="results"></div>
       <div id="pager" class="pager" hidden>
         <button id="prevPage" type="button">이전</button><span id="pageInfo" aria-live="polite"></span><button id="nextPage" type="button">다음</button>
       </div>
-      <p class="beagu-content-note"><strong>자료 표시 기준</strong> · 학교 참여 여부와 공개 승인된 학교별 문항 결과는 다릅니다. 문항별 결과는 검수와 개인정보 보호 심사를 통과한 경우만 표시합니다. 2026년 결과는 검수·승인 뒤 최소 72시간이 지나야 공개됩니다.</p>
-      <p class="legal-note">Lv.1에서 공개 승인된 2023~2026년 학교 규모·시설·급식·행정·조사 통계를 연도별로 살펴볼 수 있습니다. 2026 학교 MBTI는 Q14~Q17 응답이 충분하고 검수·승인된 경우에만 표시됩니다. 응답이 적거나 검수되지 않은 항목은 제공되지 않습니다. 2025년 백분위는 8개 영역 종합값을 조사 비교집단 1,458개교와 비교해 재산출했습니다. 99%는 조사 비교집단 상위 약 1%이며, 2023·2024년과 산식이 달라 연도 간 직접 비교는 주의해 주세요.</p>
     </section>
     
 </main>
