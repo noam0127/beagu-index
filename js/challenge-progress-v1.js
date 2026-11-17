@@ -60,5 +60,5 @@
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{void refresh();},{once:true});
  else void refresh();
  // Back-forward cache may restore a stale count.
- window.addEventListener('pageshow',event=>{if(event.persisted)void refresh();});
+ if(typeof window.addEventListener==='function')window.addEventListener('pageshow',event=>{if(event.persisted)void refresh();});
 })();
