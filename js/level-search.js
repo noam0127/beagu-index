@@ -484,13 +484,13 @@
         :selectedSort==='student_count'
         ?(school.student_count==null?'자료 없음':Number(school.student_count).toLocaleString('ko-KR')+'명')
         :selectedSort==='housing_price_won'
-        ?(school.housing_price_won==null?'자료 없음':Number(school.housing_price_won).toLocaleString('ko-KR')+'원')
+        ?(school.housing_price_won==null?(school.sido_standard==='세종'?'법정동별 원자료 확인 중':'자료 없음'):Number(school.housing_price_won).toLocaleString('ko-KR')+'원')
         :null;
       if(sortValue!==null){
         const tag=make('div','sort-result',
           (selectedSort==='address'?'주소':selectedSort==='beagu_percentile_2025'?'2025 배구지수 백분위'
            :selectedSort==='student_count'?'학생 수'+(school.student_reference_year?' ('+school.student_reference_year+'년 기준)':'')
-           :(school.sido_standard==='세종'?'세종시 전체 공동주택 평균 공시가격':'행정구역 공동주택 평균 공시가격'))+' · '+sortValue);
+           :(school.sido_standard==='세종'?'학교 소재 법정동 공동주택 평균 공시가격':'행정구역 공동주택 평균 공시가격'))+' · '+sortValue);
         const meta=card.querySelector('.school-meta')||card.querySelector('.school-name');
         if(meta&&meta.parentNode)meta.insertAdjacentElement('afterend',tag);
         else card.append(tag);
