@@ -185,6 +185,23 @@
  .group-title{margin:13px 0 9px}
  .question-row .question-visual{padding:12px;margin-bottom:6px}
 }
+
+/* Published historical school survey results: visible regardless of Lv.1 token. */
+.school-survey-snapshot{display:block;background:linear-gradient(130deg,#f8faff 0%,#fff 78%);border:1px solid #d9e4f5;border-radius:19px;padding:18px 19px;margin:8px 0 18px;box-shadow:0 4px 16px rgba(31,61,106,.045)}
+.school-survey-snapshot__header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+.school-survey-snapshot__header h4{margin:0;color:#1d3151;font-size:17px;font-weight:850;letter-spacing:-.03em}
+.school-survey-snapshot__chip{color:#41628f;background:#e9f1ff;border:1px solid #d6e5fd;border-radius:99px;padding:4px 10px;font-size:11px;font-weight:750}
+.school-survey-snapshot__result{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.school-survey-snapshot__value{font-size:clamp(32px,5vw,46px);line-height:1.15;letter-spacing:-.055em;color:#2846a0;font-weight:900;font-variant-numeric:tabular-nums}
+.school-survey-snapshot__result>span{font-size:15px;font-weight:800;color:#355c9a}
+.school-survey-snapshot__result p{margin:4px 0 0;flex-basis:100%;font-size:12px;line-height:1.6;color:#536781;word-break:keep-all}
+.school-survey-snapshot__track{overflow:hidden;height:9px;border-radius:20px;background:#dae4f4;margin:14px 0 6px}
+.school-survey-snapshot__track span{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#60a5fa,#345dc7)}
+.school-survey-snapshot__bounds{display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:#718198}
+.school-survey-snapshot__note{margin:11px 0 0;font-size:11px;line-height:1.7;color:#657590}
+.school-survey-snapshot__empty{margin:0;padding:9px 0;color:#53647f;font-size:13px;line-height:1.7;word-break:keep-all}
+@media(max-width:520px){.school-survey-snapshot{padding:15px 13px;margin:7px 0 14px}.school-survey-snapshot__header h4{font-size:15px}.school-survey-snapshot__result p{font-size:11px}}
+
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -204,6 +221,7 @@
       <div><strong>2026년 최신 조사</strong><p id="latestYearMessage" aria-live="polite">2026년 학교별 공개 승인 상태를 확인 중입니다.</p></div>
     </section>
     <section class="report-body"><div class="report-title"><div><p class="eyebrow" id="reportSubtitle">2026 REPORT</p><h3 id="reportHeading">2026년 조사 결과</h3></div><span class="data-status" id="dataStatus">자료 확인 중</span></div>
+      <section class="school-survey-snapshot" id="schoolSurveySnapshot" aria-live="polite" aria-label="우리 학교 배구지수 조사 결과"></section>
       <div class="metric-row" id="metricRow"></div>
       <section class="approved-summary" id="officialSummary" aria-live="polite"><h4>공식 학교정보</h4><p class="approved-empty">해당 연도에 확인된 학교정보를 불러오는 중입니다.</p></section>
       <section class="approved-summary" id="approvedSummary" aria-live="polite"><h4>등급별 승인 집계</h4><p class="approved-empty">Lv.1로 인증하면 검수된 추가 통계가 나타납니다.</p></section>
@@ -1676,6 +1694,49 @@
       el.append(card);
     }
   }
+  // A published percentile is an actual school-level survey result, not the
+  // answer to any one question. Display it prominently in every yearly detail.
+  // Never turn participation alone into a fictitious survey score.
+  function renderSchoolSurveySnapshot(){
+    const host=$('schoolSurveySnapshot');
+    if(!host)return;
+    const year=state.selected,entry=yearData(year),p=num(entry.percentile);
+    const valid=p!==null&&p>=0&&p<=100;
+    const recorded=Boolean(state.publicParticipationByYear[String(year)]?.has(String(state.school?.school_id)))||
+      (year===2025&&state.participationYears.includes(year));
+    host.replaceChildren();
+    const header=document.createElement('div');header.className='school-survey-snapshot__header';
+    const heading=document.createElement('h4');heading.textContent='우리 학교 배구지수';
+    const chip=document.createElement('span');chip.className='school-survey-snapshot__chip';
+    chip.textContent=String(year)+'년';
+    header.append(heading,chip);host.append(header);
+    if(valid){
+      const result=document.createElement('div');result.className='school-survey-snapshot__result';
+      const value=document.createElement('strong');value.className='school-survey-snapshot__value';
+      value.textContent=p.toFixed(1);
+      const unit=document.createElement('span');unit.textContent='백분위';
+      const desc=document.createElement('p');desc.textContent=year===2025
+        ?'2025년 조사 비교집단 1,458개 학교에서의 상대 위치'
+        :'해당 연도 조사 비교집단에서의 상대 위치';
+      result.append(value,unit,desc);host.append(result);
+      const track=document.createElement('div');track.className='school-survey-snapshot__track';
+      track.setAttribute('role','img');
+      track.setAttribute('aria-label','우리 학교 '+year+'년 공개 배구지수 백분위 '+p.toFixed(1));
+      const fill=document.createElement('span');fill.style.width=p.toFixed(1)+'%';track.append(fill);
+      const bounds=document.createElement('div');bounds.className='school-survey-snapshot__bounds';
+      bounds.innerHTML='<span>0백분위</span><span>100백분위</span>';
+      host.append(track,bounds);
+      const note=document.createElement('p');note.className='school-survey-snapshot__note';
+      note.textContent='학교별로 공개 승인된 종합지표입니다. 개별 문항의 평균이나 선택 결과와는 다릅니다.';
+      host.append(note);
+    }else{
+      const empty=document.createElement('p');empty.className='school-survey-snapshot__empty';
+      empty.textContent=recorded?'조사 기록은 확인됐지만, 학교별 종합 백분위는 공개되지 않았습니다.'
+        :year===2026?'2026년 학교별 조사 결과는 검증과 공개 지연 절차를 거쳐 제공됩니다.'
+        :'이 학교·연도의 공개 승인된 종합 백분위가 없습니다.';
+      host.append(empty);
+    }
+  }
   function renderYearBody(){
     const year=state.selected,entry=yearData(year),n=num(entry.n),catalog=state.catalog?.years?.[String(year)];
     $('reportSubtitle').textContent=`${year}년 조사`;
@@ -1686,6 +1747,7 @@
     const count=catalog?.items?.length ?? 0,approvedRows=Object.entries(entry.items||{}).filter(([key,o])=>o&&typeof o==='object'&&o.display!=null&&!(year===2026&&key==='Q51')&&state.tier>=1&&o.serverApproved===true).length;
     const cards=[['조사 문항',count?nf(count)+'개':'—','행렬형 하위항목 별도'],['공개 상세항목',nf(approvedRows)+'개',entry.approved?'승인된 자료만':'미공개 · 승인된 자료 없음']];
     $('metricRow').innerHTML=cards.map(([a,b,c])=>`<dl class="metric-box"><dt>${escapeHTML(a)}</dt><dd>${escapeHTML(b)}</dd><dt>${escapeHTML(c)}</dt></dl>`).join('');
+    renderSchoolSurveySnapshot();
     officialUI();
     summaryUI();
     renderSections();
@@ -1805,7 +1867,7 @@
     ]){
       const cell=document.createElement('div');cell.className='question-visual-value '+role;
       const cap=document.createElement('span');cap.textContent=label;
-      const val=document.createElement('strong');val.textContent=value||'검증된 자료 없음';
+      const val=document.createElement('strong');val.textContent=value||(role==='school'?'학교별 문항 결과 미공개':'비교 자료 없음');
       cell.append(cap,val);values.append(cell);
     }
     root.append(values);
