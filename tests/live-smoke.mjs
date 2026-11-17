@@ -103,7 +103,7 @@ async function main() {
   const chartJS=responses.get('js/percentile-chart.js')||'';
   check('2023~2026 연도 UI 오름차순',
     report.includes('for(const year of [2023,2024,2025,2026])') &&
-    level1.includes('const YEARS = [2023, 2024, 2025]') &&
+    level1.includes('const YEARS = [2023, 2024, 2025, 2026]') &&
     level2.includes('const years=[2023,2024,2025]') &&
     (responses.get('js/school-search-card-v1.js')||'').includes('for(const i of [0,1,2,3])'));
   check('연도별 개별 백분위 · 연결선 없는 도표',
