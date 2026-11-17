@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {Script} from 'node:vm';
 const read=p=>readFileSync(p,'utf8');
-const active=['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html','release-policy.html','teacher-volleyball.html','survey.html'];
+const active=['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html','release-policy.html','teacher-volleyball.html','teacher-run.html','survey.html'];
 for(const p of active){
  const s=read(p);
  assert.doesNotMatch(s,/VOLLEYBALL INDEX/,p+' old brand');
