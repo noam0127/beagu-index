@@ -325,48 +325,46 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function oval(x, y, rx, ry, color) {
     ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
   }
-  function textLabel(text, x, y, size, color, align) {
+  function textLabel(text, x, y, size, color, align, maxWidth) {
     ctx.textAlign = align || "center";
     ctx.fillStyle = color; ctx.font = "900 " + size + "px system-ui, sans-serif";
-    ctx.fillText(text, x, y);
+    ctx.fillText(text, x, y, maxWidth || 850);
   }
   function background() {
-    const sky = ctx.createLinearGradient(0, 0, 0, 420);
-    sky.addColorStop(0, "#a8d4f5"); sky.addColorStop(1, "#eaf9fc");
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
-    // 구름과 학교 관중석: 모든 그래픽은 게임 전용으로 직접 그립니다.
-    [[100,83],[315,57],[716,75]].forEach(([x,y]) => {
-      oval(x, y, 35, 15, "#fff"); oval(x + 21, y - 8, 25, 17, "#fff"); oval(x - 20, y - 5, 22, 15, "#fff");
-    });
-    rect(0, 174, 900, 124, "#b8d4e5");
-    rect(0, 174, 900, 9, "#7199bb");
-    for (let row = 0; row < 3; row++) {
-      for (let i = 0; i < 27; i++) {
-        const x = i * 35 + (row % 2 ? 14 : 0), y = 190 + row * 31;
-        rect(x + 2, y + 10, 20, 13, ["#7eafd5", "#5f99c1", "#8bbbd5"][(i + row) % 3]);
-        oval(x + 11, y + 5, 8, 8, ["#edbc8c", "#b87955", "#f6d5ac", "#d39a68"][(i + 2 * row) % 4]);
-        rect(x + 4, y - 2, 14, 4, ["#4a5f76", "#715248", "#394d64"][(i + row) % 3]);
+    const sky=ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,"#95ceef");sky.addColorStop(.57,"#e2f8fa");sky.addColorStop(1,"#ffe7c4");
+    ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+    // 체육관 천장과 채광
+    rect(0,0,W,14,"#254767");rect(0,14,W,6,"#628dac");
+    for(let i=0;i<5;i++){
+      const x=45+i*195;rect(x,21,13,145,"rgba(238,250,255,.4)");
+      oval(x+8,24,36,11,"rgba(255,255,255,.33)");
+    }
+    rect(0,162,W,136,"#b4d1e5");rect(0,162,W,11,"#517da2");
+    for(let i=0;i<8;i++){const x=22+i*120;rect(x,174,94,48,"#93bad5");rect(x+6,179,82,38,"#bde0f1");}
+    rect(0,231,W,11,"#5885a8");rect(0,244,W,54,"#7baccf");
+    for(let row=0;row<2;row++){
+      for(let i=0;i<29;i++){
+        const x=i*33+(row%2)*14,y=251+row*25;
+        oval(x+9,y+6,7,8,["#f4c99d","#d6a075","#eab481","#a67055"][(i+row)%4]);
+        oval(x+9,y-1,9,4,["#355778","#6e5362","#38495d"][(i+row)%3]);
+        rect(x+2,y+13,16,12,["#466eaa","#f5a36b","#84c7b8","#e9cc76"][(i*3+row)%4]);
       }
     }
-    rect(0, 285, W, 11, "#476d90");
-    rect(0, 295, W, FLOOR - 295, "#f9d5a5");
-    for (let i = 0; i < W; i += 92) {
-      rect(i, 310, 3, FLOOR - 310, "#eebf89");
-    }
-    rect(0, FLOOR, W, 49, "#cc8b5d");
-    rect(0, FLOOR, W, 7, "#ffffff");
-    rect(0, FLOOR + 15, W, 3, "#ab6e4e");
-    rect(25, 307, 6, FLOOR - 307, "#fdf9ec");
-    rect(W - 31, 307, 6, FLOOR - 307, "#fdf9ec");
-    rect(NET_X - 4, NET_TOP, 8, FLOOR - NET_TOP, "#fefefe");
-    rect(NET_X - NET_W / 2, NET_TOP, NET_W, 9, "#e7737a");
-    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2;
-    for (let y = NET_TOP + 18; y < FLOOR - 2; y += 19) {
-      ctx.beginPath(); ctx.moveTo(NET_X - NET_W / 2, y); ctx.lineTo(NET_X + NET_W / 2, y); ctx.stroke();
-    }
-    rect(0, 0, 900, 10, "#325879");
-    rect(315, 12, 270, 47, "#21465f");
-    textLabel("선생님들의 쉬는 시간", 450, 43, 23, "#fff1c6");
+    rect(0,295,W,9,"#37668f");
+    const floor=ctx.createLinearGradient(0,304,0,FLOOR);
+    floor.addColorStop(0,"#f9e0b4");floor.addColorStop(.55,"#f4ce97");floor.addColorStop(1,"#e5b47e");
+    ctx.fillStyle=floor;ctx.fillRect(0,304,W,FLOOR-304);
+    for(let x=0;x<W;x+=65)rect(x,306,2,FLOOR-306,"rgba(162,98,62,.13)");
+    rect(0,FLOOR,W,H-FLOOR,"#bb7e59");rect(0,FLOOR,W,8,"#fffaf0");rect(0,FLOOR+20,W,3,"#a56e53");
+    rect(29,306,5,FLOOR-306,"#fffbeb");rect(W-34,306,5,FLOOR-306,"#fffbeb");
+    ctx.fillStyle="rgba(243,254,255,.28)";ctx.fillRect(NET_X-29,NET_TOP,58,FLOOR-NET_TOP);
+    rect(NET_X-5,NET_TOP,10,FLOOR-NET_TOP,"#f9fdff");rect(NET_X-9,NET_TOP-3,18,12,"#ee7889");
+    ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=2;
+    for(let y=NET_TOP+17;y<FLOOR-4;y+=18){ctx.beginPath();ctx.moveTo(NET_X-27,y);ctx.lineTo(NET_X+27,y);ctx.stroke();}
+    for(let x=NET_X-25;x<=NET_X+25;x+=12){ctx.beginPath();ctx.moveTo(x,NET_TOP+11);ctx.lineTo(x,FLOOR-2);ctx.stroke();}
+    oval(W/2,67,33,33,"rgba(23,67,99,.85)");oval(W/2,67,22,22,"#fff8eb");
+    ctx.strokeStyle="#f0ad52";ctx.lineWidth=4;ctx.beginPath();ctx.arc(W/2,67,16,-1.1,1.4);ctx.stroke();
   }
   function drawTeacher(p, uniform) {
     const x = Math.round(p.x), y = Math.round(p.y), leftSide = p.side === "left";
@@ -399,7 +397,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function drawBall() {
     ball.trail.forEach((pos, i) => oval(pos.x, pos.y, 5 + i, 5 + i, "rgba(255,251,232," + (.04 + i * .035) + ")"));
     oval(ball.x + 2, ball.y + 2, R + 2, R + 2, "rgba(43,84,110,.17)");
-    oval(ball.x, ball.y, R, R, "#fff9ec");
+    const ballGradient=ctx.createRadialGradient(ball.x-5,ball.y-8,2,ball.x,ball.y,R);ballGradient.addColorStop(0,"#fff");ballGradient.addColorStop(1,"#e9e5d5");ctx.fillStyle=ballGradient;ctx.beginPath();ctx.arc(ball.x,ball.y,R,0,Math.PI*2);ctx.fill();
     ctx.lineWidth = 4; ctx.strokeStyle = "#f2a341";
     ctx.beginPath();
     ctx.arc(ball.x, ball.y, 12, -.9, 1.2);
@@ -408,10 +406,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ctx.stroke();
   }
   function overlay(headline, subtitle) {
-    rect(0, 0, W, H, "rgba(13,32,58,.62)");
-    ctx.fillStyle = "#162b4c"; ctx.beginPath(); ctx.roundRect(187, 155, 526, 173, 22); ctx.fill();
-    textLabel(headline, 450, 226, 31, "#fff6cb");
-    textLabel(subtitle, 450, 274, 19, "#d9eeff");
+    rect(0,0,W,H,"rgba(11,31,54,.56)");
+    ctx.save();ctx.shadowColor="rgba(12,26,45,.5)";ctx.shadowBlur=24;ctx.shadowOffsetY=13;
+    ctx.fillStyle="#183552";ctx.beginPath();ctx.roundRect(180,163,540,177,24);ctx.fill();ctx.restore();
+    ctx.lineWidth=3;ctx.strokeStyle="#6a9bb6";ctx.beginPath();ctx.roundRect(180,163,540,177,24);ctx.stroke();
+    textLabel(headline,450,249,45,"#fff6d8","center",494);
+    if(subtitle)textLabel(subtitle,450,290,22,"#deefff","center",490);
   }
   function render() {
     ctx.clearRect(0, 0, W, H);
@@ -419,7 +419,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     drawTeacher(left, "#448bd8");
     drawTeacher(right, "#ec7b97");
     drawBall();
-    if (state.flash > 0) textLabel("NICE SPIKE!", left.x + 85, left.y - 115, 23, "#db5c2e");
+    if (state.flash > 0) textLabel("⚡ SPIKE!", clamp(left.x+85,115,W-115), left.y-115,25,"#a94b27","center",220);
     if (state.phase === "ready") overlay("🏐 선생님배구", "");
     else if (state.phase === "paused") overlay("⏸ 일시정지", "");
     else if (state.phase === "point") overlay(state.message, "");
