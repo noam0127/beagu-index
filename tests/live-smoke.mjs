@@ -83,8 +83,8 @@ async function main() {
 
   const releasePolicy=responses.get('release-policy.html')||'';
   check('2026 공개·권한·비교 유의사항 안내 배포',
-    ['Lv.0','Lv.1','Lv.2','Q51','소표본','미공개'].every(v=>releasePolicy.includes(v)) &&
-    ['search-lv1.html','search-lv2.html','school-report.html','statistics.html']
+    ['Lv.0','Lv.1','Q51','소표본','미공개'].every(v=>releasePolicy.includes(v)) &&
+    ['search.html','search-lv1.html','school-report.html','statistics.html']
       .every(p=>(responses.get(p)||'').includes('release-policy.html')));
   const report = responses.get('school-report.html')||'';
   const html0 = responses.get('search.html')||'';
@@ -111,12 +111,12 @@ async function main() {
     visitStats.includes("'search-lv1','search-lv2','school-report','statistics'") &&
     visitStats.includes("page = ['index','search','result','survey','challenge']"));
   check('Lv.1·Lv.2 공통 학교검색 카드 연결 유지',
-    [html1,html2].every(h=>h.includes('js/school-search-card-v1.js') && h.includes('styles/school-search-card-v1.css')) &&
+    [html0,html1].every(h=>h.includes('js/school-search-card-v1.js') && h.includes('styles/school-search-card-v1.css')) &&
     [level1,level2].every(h=>h.includes('BeaguSchoolSearchCard.createCard')) &&
     (responses.get('js/school-search-card-v1.js')||'').includes('function createCard('));
   const groupJS=responses.get('js/school-detail-groups-v1.js')||'';
   check('Lv.1·Lv.2 승인 상세정보 접기/펼치기',
-    [html1,html2].every(h=>h.includes('js/school-detail-groups-v1.js')&&h.includes('styles/school-detail-groups-v1.css')) &&
+    html1.includes('js/school-detail-groups-v1.js')&&html1.includes('styles/school-detail-groups-v1.css') &&
     groupJS.includes("document.createElement('details')") &&
     groupJS.includes('details.open=false') &&
     level1.includes('BeaguDetailGroups.appendGrouped') &&
@@ -147,19 +147,19 @@ async function main() {
     progressJS.includes('beagu_get_challenge_progress') &&
     progressJS.includes('집계 확인 불가') && progressJS.includes('const GOAL=1000'));
   check('학교 검색기록: 확정·선택·상세 구별',
-    [html1,html2,report].every(h=>h.includes('js/search-telemetry-v1.js')) &&
+    [html0,html1,report].every(h=>h.includes('js/search-telemetry-v1.js')) &&
     telemetryJS.includes('search_confirmed') && telemetryJS.includes('school_selected') &&
     telemetryJS.includes('detail_viewed') && telemetryJS.includes('beagu_log_school_search') &&
     level1.includes('explicitEnter') &&
     level2.includes('explicitEnter'));
   check('학교 홈페이지 링크가 검색 결과에서 제거됨',
     ![html0,html1,html2,level1,level2,report].some(h=>h.includes('🌐 학교 홈페이지')));
-  check('홈에서 모든 등급 열람 버튼 제거·Lv.0 화면 비활성화', !/href="search(?:-lv[12])?\.html"|lv0-public-link/.test(home) && html0.includes('http-equiv="refresh"') && !html0.includes('id="searchInput"') && home.includes('1,000명 달성 시 2026 배구지수 자료를 공개합니다.'));
+  check('단일 자료열람 버튼·Lv.0/1·Lv.2 이전경로 통합', home.includes('class="data-access-link" href="search.html"') && html0.includes('id="searchInput"') && html0.includes('href="search-lv1.html"') && html2.includes('search-lv1.html') && !html2.includes('id="loginForm"'));
   check('홈→챌린지 버튼 없음·기존 설문 연결', !home.includes('href="challenge.html"') && home.includes('https://forms.gle/TPyCakK6Sj2zchRy7'));
   check('챌린지 Lv.2 안내 제거·인증 기능 보존', !/Lv\.2|step-3|cafe\.naver\.com/.test(challengeHTML) && challengeHTML.includes('id="capture"') && challengeHTML.includes('id="loungeLink"'));
-  check('두 HTML의 JS 연결', html1.includes('js/level-search.js') && html2.includes('js/lv2-edited-search.js'));
+  check('2단계 열람 및 2026 새로고침', html1.includes('js/level-search.js') && level1.includes('const YEARS = [2023, 2024, 2025, 2026]') && level1.includes('2026년 승인 결과 새로고침'));
   check('학교 MBTI Lv.1·Lv.2 공통 자산 연결',
-    [html1,html2].every(h=>h.includes('js/school-mbti-v1.js')&&h.includes('styles/school-mbti-v1.css')) &&
+    html1.includes('js/school-mbti-v1.js')&&html1.includes('styles/school-mbti-v1.css') &&
     level1.includes('BeaguSchoolMBTI.createDetail') && level2.includes('BeaguSchoolMBTI.createDetail') &&
     mbtiJS.includes('beagu-school-culture-v1'));
   for (const file of ['js/percentile-chart.js','js/school-search-card-v1.js','js/school-detail-groups-v1.js','js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js','js/statistics-table.js','js/challenge.js','js/challenge-progress-v1.js','js/search-telemetry-v1.js']) {
