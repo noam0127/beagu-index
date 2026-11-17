@@ -1,8 +1,8 @@
 // Public arcade ranking API. All database access is server-side through the service key.
 // User-entered names are restricted to 2–8 ASCII letters. No profile or school information is requested.
-const URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPA_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const BASE = URL + "/rest/v1/";
+const BASE = SUPA_URL + "/rest/v1/";
 const ALLOWED_ORIGINS = new Set(["https://baeguindex.com","https://www.baeguindex.com","https://noam0127.github.io"]);
 const VALID_GAMES = new Set(["volleyball","teacher_run"]);
 const encoder = new TextEncoder();
@@ -50,7 +50,7 @@ async function ipHash(req: Request): Promise<string> {
     || req.headers.get("x-real-ip")
     || req.headers.get("x-forwarded-for")?.split(",")[0]
     || "unknown").trim().slice(0,120);
-  const key = await crypto.subtle.importKey("raw",encoder.encode(SERVICE_KEY),"HMAC",false,["sign"]);
+  const key = await crypto.subtle.importKey("raw",encoder.encode(SERVICE_KEY),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
   const mac = await crypto.subtle.sign("HMAC",key,encoder.encode("arcade-v1:" + address));
   return [...new Uint8Array(mac)].map(b=>b.toString(16).padStart(2,"0")).join("");
 }
@@ -73,7 +73,7 @@ Deno.serve(async (req:Request)=>{
   const origin=rawOrigin&&ALLOWED_ORIGINS.has(rawOrigin)?rawOrigin:"https://baeguindex.com";
   if(rawOrigin && !ALLOWED_ORIGINS.has(rawOrigin)) return error("origin_not_allowed",403,origin);
   if(req.method==="OPTIONS") return json({},200,origin);
-  if(!SERVICE_KEY||!URL) return error("not_configured",503,origin);
+  if(!SERVICE_KEY||!SUPA_URL) return error("not_configured",503,origin);
   try{
     if(req.method==="GET"){
       const game=new URL(req.url).searchParams.get("game");
