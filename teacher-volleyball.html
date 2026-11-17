@@ -103,7 +103,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const diffName={easy:"하 · 쉬움",normal:"중 · 보통",hard:"상 · 어려움"};
   let currentDifficulty="normal";
   schoolPicker.onChange=school=>{
-    if(state.phase==="ready"||state.phase==="finished")setStatus(school ? school.school_name+" · "+diffName[school.difficulty] : "게임을 시작하려면 학교를 선택하세요.");
+    if(state.phase==="ready"||state.phase==="finished"){
+      setStatus(!school ? "2023~2026년 백분위가 모두 있는 학교만 플레이할 수 있습니다." :
+        school.eligible ? school.school_name+" · "+diffName[school.difficulty]+" · 4개년 평균" :
+        "플레이 불가 · 학교 선택창의 누락 연도 안내를 확인하세요.");
+      syncUI();
+    }
   };
   const SPEED_MULTIPLIER=2; // horizontal player and AI reaction (5->10, 3.65->7.3)
   const AUTO_SPIKE_SPEED=8; // player-driven displacement per simulation frame
@@ -121,8 +126,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function syncUI() {
     scoreP.textContent = String(state.leftScore);
     scoreC.textContent = String(state.rightScore);
-    startButton.textContent = state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "↻ 다시 시작";
-    pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point";
+    startButton.textContent = state.phase === "starting" ? "⏳ 학교 확인 중" : state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "↻ 다시 시작";
+    startButton.disabled = state.phase === "starting" ||
+      ((state.phase === "ready" || state.phase === "finished") && schoolPicker.get()?.eligible !== true);
+    pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point" || state.phase === "starting";
     pauseButton.textContent = state.phase === "paused" ? "▶" : "⏸";
     pauseButton.setAttribute("aria-label",state.phase === "paused"?"계속하기":"일시정지");
   }
@@ -136,25 +143,32 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.cooldown = 0;
     ball.trail.length = 0;
   }
-  function startMatch() {
+  async function startMatch() {
     const school=schoolPicker.get();
-    if(!school){setStatus("시작하기 전에 학교를 검색해 선택하세요.");schoolPicker.focus();return;}
+    if(!school?.eligible){
+      setStatus("플레이 불가 · 2023~2026년 4개년 백분위가 모두 있어야 합니다.");
+      schoolPicker.focus();syncUI();return;
+    }
+    if(state.phase==="starting")return;
+    const previousPhase=state.phase;
+    state.phase="starting";syncUI();setStatus("4개년 백분위와 참가 자격 확인 중…");
+    const session=ranking?await ranking.start(school):null;
+    if(!session){
+      state.phase=previousPhase;
+      schoolPicker.setLocked(false);
+      syncUI();
+      setStatus("시작할 수 없습니다. 4개년 백분위 또는 게임 서버 연결을 확인하세요.");
+      return;
+    }
     currentDifficulty=school.difficulty;
     schoolPicker.setLocked(true);
-    state.leftScore = 0;
-    state.rightScore = 0;
-    state.spikes = 0;
-    ranking?.start(school);
+    state.leftScore=0;state.rightScore=0;state.spikes=0;
     releaseKeys();
-    state.serveLeft = Math.random() < 0.5;
-    state.phase = "playing";
-    state.winner = "";
-    state.message = "";
-    state.flash = 0;
+    state.serveLeft=Math.random()<.5;
+    state.phase="playing";state.winner="";state.message="";state.flash=0;
     resetPositions();
-    setStatus(school.school_name+" · 난이도 "+diffName[school.difficulty]);
-    syncUI();
-    canvas.focus();
+    setStatus(school.school_name+" · 2023~2026년 평균 난이도 "+diffName[school.difficulty]);
+    syncUI();canvas.focus();
   }
   function pause() {
     if (state.phase === "playing") {
