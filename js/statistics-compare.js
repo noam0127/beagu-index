@@ -129,7 +129,7 @@
         make('div',labelForSchool(school),'compare-selection-subtitle'),yearLabel);
       fragment.append(card);
     });
-    for (let index=state.selected.length;index<LIMIT;index++) {
+    for (let index=state.selected.length;state.selected.length && index<LIMIT;index++) {
       const placeholder=make('div',null,'compare-placeholder');
       placeholder.setAttribute('aria-hidden','true');
       placeholder.append(make('strong','＋'),make('span',String(index+1)+'번째 학교'));
