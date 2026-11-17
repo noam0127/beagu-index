@@ -8,22 +8,15 @@ const observed=read('js/2025-observed-choices.js');
 const prompts=read('js/historical-original-questions.js');
 const prior=read('js/historical-questionnaire-choices.js');
 assert.doesNotThrow(()=>new vm.Script(search));
-assert.equal((html.match(/data-sort="/g)||[]).length,5);
-for(const s of ['school_name','address','beagu_percentile_2025','student_count','housing_price_won']){
- assert.ok(html.includes('data-sort="'+s+'"'), 'missing verified sort '+s);
- assert.ok(api.includes("'"+s+"'"),'server whitelist '+s);
-}
-assert.match(html,/학교명 가나다순/);
-assert.match(html,/주소순/);
-assert.doesNotMatch(html,/세종은 2025년 세종시 전체 공동주택 평균 공시가격을 적용했습니다/);
-assert.match(html,/세종의 학교 소재 법정동별 공시가격은 원자료 확인 전까지 표시하지 않습니다/);
-assert.match(search,/법정동별 원자료 확인 중/);
+for(const s of ['school_name_asc','school_name_desc','address_asc','address_desc'])assert.ok(html.includes('value="'+s+'"'),'Missing region sort '+s);
+for(const label of ['학교명순 ↑','학교명순 ↓','주소순 ↑','주소순 ↓'])assert.ok(html.includes(label));
+assert.doesNotMatch(html,/id="sortTabs"/,'No school search sorting buttons');
+assert.doesNotMatch(html,/자료 표시 기준|Lv.1에서 공개 승인된 2023~2026년 학교 규모/);
 assert.doesNotMatch(search,/세종시 전체 공동주택 평균 공시가격/);
-assert.match(html,/가나다순 또는 높은 순/);
 assert.match(search,/api\('offices'/);
 assert.match(search,/api\('ranked_schools'/);
 assert.doesNotMatch(search,/query\.order\('address'/,'must not sort only one page');
-assert.match(api,/const ascending=sort==='school_name'\|\|sort==='address'/);
+assert.match(api,/const ascending=direction==='asc'/);
 assert.match(api,/query\.order\(sort,\{ascending,nullsFirst:false\}\)/);
 assert.match(api,/direction:ascending\?'asc':'desc'/);
 assert.match(search,/new Option\(shortOfficeName\(value,region\),value\)/,'short visible label must retain exact server filter');
