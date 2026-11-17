@@ -18,7 +18,7 @@ for(const p of ['index.html','search.html','search-lv1.html','school-report.html
 }
 const search=read('search.html');
 assert.match(search,/publicSort\.addEventListener\('change'/,'Lv0 sorting must query server');
-assert.match(search,/\.order\(publicSort\.value/,'Sort must happen before pagination');
+assert.match(search,/\.order\(sortColumn,\{ascending,nullsFirst:false\}\)/,'Regional sort must happen before pagination');
 const report=read('school-report.html');
 assert.doesNotMatch(report,/class="symbol-dot"/,'No symbol decorations');
 assert.match(report,/다른 학교 검색/);
