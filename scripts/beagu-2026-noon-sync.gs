@@ -5,7 +5,7 @@
  *
  * 설치: 원본 응답 시트의 확장 프로그램 > Apps Script 에 전체 붙여넣기
  *       프로젝트 설정 > 스크립트 속성에 SUPABASE_PUBLISHABLE_KEY 저장
- *       setupDailyNoonTrigger()를 한 번 수동 실행하여 Google 권한 승인
+ *       installBeagu2026Sync()를 한 번 수동 실행해 권한 승인 및 트리거 2종 설치
  * 테스트: refreshBeagu2026Stats()를 수동 실행한다.
  * 정오: Asia/Seoul 12:00 부근(구글 Apps Script 트리거는 ±15분 지연 가능)
  *
@@ -70,6 +70,27 @@ function publishBeagu2026NationalCount(officialRows) {
   if(response.getResponseCode()!==200)
     throw Error("National count publish failed: HTTP "+response.getResponseCode());
   return "PUBLISHED";
+}
+/**
+ * Owner-run setup. This must execute inside the original Google Apps Script
+ * project with the owner's OAuth approval. GitHub commits do not install it.
+ * Never print or transmit the secret values in the log.
+ */
+function installBeagu2026Sync() {
+  const props=PropertiesService.getScriptProperties();
+  const key=String(props.getProperty("SUPABASE_PUBLISHABLE_KEY")||"").trim();
+  const token=String(props.getProperty("BEAGU_2026_INGEST_TOKEN")||"").trim();
+  if(!key)throw Error("설치 중단: 스크립트 속성 SUPABASE_PUBLISHABLE_KEY가 없습니다.");
+  if(token.length<32)throw Error("설치 중단: BEAGU_2026_INGEST_TOKEN은 32자 이상의 비밀 값이어야 합니다.");
+  setupBeagu2026FormSubmitTrigger();
+  setupDailyNoonTrigger();
+  const active=ScriptApp.getProjectTriggers().map(t=>t.getHandlerFunction());
+  if(!active.includes("onBeagu2026FormSubmitted")||!active.includes("refreshBeagu2026Stats"))
+    throw Error("자동 집계 트리거 설치를 확인하지 못했습니다.");
+  Logger.log("2026 본조사 설치형 트리거 2종 확인 완료. 인증키 값은 기록하지 않습니다.");
+  // Initial private aggregation; output count remains inaccessible to public roles.
+  refreshBeagu2026Stats();
+  Logger.log("초기 비공개 집계 실행 완료. 새 설문 제출 때마다 자동 집계됩니다.");
 }
 function normalize(s) {
   return String(s||"").replace(/[①-⑳]/g,"").normalize("NFKC").replace(/[\s,.'"“”\[\]()/\\\-]/g,"").trim();
