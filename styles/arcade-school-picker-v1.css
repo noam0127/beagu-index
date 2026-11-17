@@ -21,3 +21,7 @@
 .arcade-rank-person .arcade-rank-nick{font-weight:900;color:#fce5a1;letter-spacing:.06em;white-space:nowrap}
 .arcade-ranking .arcade-rank-label{font-size:10px}
 @media(max-width:380px){.arcade-school-picker{padding:9px}.arcade-school-option{font-size:12px}.arcade-school-guide{font-size:11px}}
+
+.arcade-school-survey{display:block;width:100%;margin-top:10px;padding:12px 10px;min-height:44px;border:2px solid #f4da81;border-radius:5px;background:#f4da81;color:#25334a!important;text-decoration:none!important;text-align:center;font-weight:900;font-size:13px;line-height:1.4}
+.arcade-school-survey:hover,.arcade-school-survey:focus-visible{background:#fff1aa;outline:2px solid #fff1aa;outline-offset:2px}
+.arcade-school-survey[hidden]{display:none!important}
