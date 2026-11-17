@@ -21,6 +21,8 @@ assert.match(css, /@media\(max-width:450px\)/,'small phone layout');
 assert.match(css, /prefers-reduced-motion:reduce/,'respect reduced motion');
 assert.match(css, /body\.beagu-page-report \.school-hero :is\(h2,.region,.address,.icon-fact\)\{color:#fff\}/,'dark hero text must contrast');
 assert.match(css, /body\.beagu-page-compare \.comparison-picker \.compare-selection/,'five-school tiles must be responsive');
+assert.match(css,/\.compare-heading-phrase[^{]*\{[^}]*white-space:nowrap/s,'Keep 나란히 비교 on one line');
+assert.match(css,/--ui-accent:#078d9c/,'Shared accent color');
 const phoneOverride = css.slice(css.lastIndexOf('/* Mobile homepage alignment:'));
 assert.ok(phoneOverride.includes('@media (max-width:760px)'), 'mobile header overrides limited to small screens');
 for(const [selector,rule] of [
@@ -52,7 +54,7 @@ assert.equal(comment,false,'CSS comment closed');
 for(const [path,type] of pageTypes){
   const html=read(path);
   assert.match(html,new RegExp('class="[^"]*beagu-ui-page beagu-page-'+type+'[^"]*"'),path+' body class');
-  const themeVersion = path==='index.html' ? '20261118-mobile4' : '20261118-3';
+  const themeVersion = '20261118-compare5';
   const matches=[...html.matchAll(new RegExp('<link[^>]+href="styles/beagu-ui-refresh-v2\\.css\\?v='+themeVersion+'"','g'))];
   assert.equal(matches.length,1,path+' exactly one refreshed theme');
   assert.ok(html.indexOf('styles/beagu-ui-refresh-v2.css')<html.indexOf('</head>'),path+' stylesheet in head');
