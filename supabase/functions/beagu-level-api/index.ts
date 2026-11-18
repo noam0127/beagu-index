@@ -294,7 +294,7 @@ Deno.serve(async(req:Request)=>{
       const qid=String(question?.questionId||'');
       const mode=question?.modeOption;
       const dist=question?.roundedDistribution;
-      if(!/^Q\\d{2}$/.test(qid)||typeof mode!=='string'||mode.length<1||mode.length>180||
+      if(!/^Q\d{2}$/.test(qid)||typeof mode!=='string'||mode.length<1||mode.length>180||
         !Number.isInteger(question?.validRows)||question.validRows<1||
         !Array.isArray(dist)||dist.length<1||dist.length>10)continue;
       if(!dist.every((item:any)=>item&&typeof item.label==='string'&&
