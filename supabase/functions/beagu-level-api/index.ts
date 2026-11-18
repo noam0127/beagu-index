@@ -148,6 +148,7 @@ Deno.serve(async(req:Request)=>{
   const id=String(body.schoolId||'');
   if(!/^[A-Z0-9]{7}$/.test(id))return send({error:'INVALID_SCHOOL'},400,origin);
   const level=Number(session.access_level);
+  if(level<1)return send({error:'ACCESS_DENIED'},403,origin);
   const [legacy,metrics,catalog,curated2025]=await Promise.all([
    level===2?admin.from('beagu_level_data').select('survey_year,access_level,summary,release_status').eq('school_id',id).eq('release_status','approved').lt('survey_year',2026).order('survey_year').limit(20):Promise.resolve({data:[],error:null}),
    admin.from('beagu_release_metrics_v2').select('survey_year,question_id,access_level,value,release_version,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence').eq('school_id',id).eq('approval_status','APPROVED').lte('access_level',level).order('release_version',{ascending:false}).limit(1000),
