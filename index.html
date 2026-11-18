@@ -149,7 +149,14 @@
     .teacher-game-footer a { display: inline-block; color: #9be6db; font-weight: 750; font-size: 14px; text-underline-offset: 3px; }
     .teacher-game-footer a:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
     .teacher-run-feature { background: linear-gradient(140deg, #173e4d 0%, #10223d 68%); border: 1px solid #35677b; }
-    #teacher-run-feature[hidden] { display: none !important; }
+    #teacher-run-home-lock[hidden], #teacher-run-home-content[hidden] { display: none !important; }
+    .teacher-run-home-lock { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; min-height: 245px; margin: 0 15px 15px; padding: 25px 18px; text-align: center; border: 1px solid rgba(167, 218, 231, .28); border-radius: 16px; background: radial-gradient(circle at 50% 5%, rgba(123, 227, 202, .13), rgba(8, 27, 45, .38) 70%); }
+    .teacher-run-lock-icon { font-size: 35px; line-height: 1; }
+    .teacher-run-home-lock h3 { margin: 0; color: #f6fcff; font-size: clamp(18px, 4.7vw, 21px); letter-spacing: -.04em; }
+    .teacher-run-home-lock p { margin: 0; color: #d5e8f4; font-size: 13px; line-height: 1.5; }
+    .teacher-run-lock-action { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; margin-top: 6px; padding: 10px 18px; border-radius: 12px; background: #7be3ca; color: #12334b; font-size: 14px; font-weight: 850; text-decoration: none; }
+    .teacher-run-lock-action:hover { background: #a9f2df; }
+    .teacher-run-lock-action:focus-visible { outline: 3px solid white; outline-offset: 3px; }
     .teacher-run-feature .teacher-game-frame { height: 720px; }
     .teacher-run-feature .teacher-game-footer a { color: #a1fae7; }
     .teacher-run-feature .game-tag { font-size: 11px; padding: 3px 7px; margin-left: 5px; vertical-align: middle; background: #78e2c4; color: #193e4c; border-radius: 6px; font-weight: 850; white-space: nowrap; }
@@ -245,18 +252,26 @@
 
 
 
-    <section id="teacher-run-feature" class="teacher-game-feature teacher-run-feature" aria-labelledby="teacher-run-title" hidden>
+    <section id="teacher-run-feature" class="teacher-game-feature teacher-run-feature" aria-labelledby="teacher-run-title">
       <div class="teacher-game-header">
         <h2 id="teacher-run-title">🎒 험난한 교직생활 2.0</h2>
       </div>
-      <iframe
-        class="teacher-game-frame"
-        id="teacher-run-frame"
-        data-src="teacher-run.html?v=20261118-five-tiers1"
-        title="험난한 교직생활 2.0 — 월요일부터 금요일까지 살아남는 교사 생존 게임"
-        loading="lazy"
-        allowfullscreen></iframe>
-      <div class="teacher-game-footer"><a href="teacher-run.html" target="_blank" rel="noopener noreferrer">↗ 크게 보기</a></div>
+      <div id="teacher-run-home-lock" class="teacher-run-home-lock" aria-labelledby="teacher-run-lock-title">
+        <span class="teacher-run-lock-icon" aria-hidden="true">🔒</span>
+        <h3 id="teacher-run-lock-title">Lv.1 전용 게임</h3>
+        <p data-lv1-gate-message role="status">Lv.1 인증 후 플레이할 수 있습니다.</p>
+        <a class="teacher-run-lock-action" href="search.html">Lv.1 인증하기</a>
+      </div>
+      <div id="teacher-run-home-content" hidden>
+        <iframe
+          class="teacher-game-frame"
+          id="teacher-run-frame"
+          data-src="teacher-run.html?v=20261118-five-tiers1"
+          title="험난한 교직생활 2.0 — 월요일부터 금요일까지 살아남는 교사 생존 게임"
+          loading="lazy"
+          allowfullscreen></iframe>
+        <div class="teacher-game-footer"><a href="teacher-run.html" target="_blank" rel="noopener noreferrer">↗ 크게 보기</a></div>
+      </div>
     </section>
 
     <section class="card" style="margin-top:20px" aria-label="방문 통계">
@@ -274,7 +289,7 @@
  <script src="js/home-cumulative-stats.js?v=20261118-live1"></script>
 <script src="js/visit-stats.js?v=20261117-visitfix1"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
-<script defer src="js/beagu-game-lv1-gate-v1.js?v=20261118-gate1"></script>
+<script defer src="js/beagu-game-lv1-gate-v1.js?v=20261118-lock2"></script>
 
 <script>
   // 각각의 게임 iframe에서 발생한 리사이즈 이벤트만 허용합니다.
