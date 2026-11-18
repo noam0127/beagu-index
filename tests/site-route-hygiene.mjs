@@ -16,7 +16,7 @@ assert.equal(css,original,'Canonical statistics CSS must preserve existing desig
 assert.match(stats,/href="styles\/statistics\.css\?v=20261031-canonical7"/);
 assert.doesNotMatch(stats,/href="css\//,'Broken statistics CSS link must not reappear');
 assert.match(stats,/src="js\/statistics-directory-v2\.js\?v=20261118-gjjn2025"/);
-assert.match(stats,/src="js\/statistics-compare\.js\?v=20261118-c5"/);
+assert.match(stats,/src="js\/statistics-compare\.js\?v=20261118-mode-only-v1"/);
 assert.match(stats,/href="styles\/statistics-compare\.css\?v=20261118-c5"/);
 assert.match(stats,/id="compareScroll"/);
 assert.match(stats,/id="compareSuggestions"/);
