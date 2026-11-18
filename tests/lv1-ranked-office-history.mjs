@@ -8,6 +8,23 @@ const observed=read('js/2025-observed-choices.js');
 const prompts=read('js/historical-original-questions.js');
 const prior=read('js/historical-questionnaire-choices.js');
 assert.doesNotThrow(()=>new vm.Script(search));
+const publicSnapshot=JSON.parse(read('data/public-lv0-percentiles-v1.2.json'));
+const restored=publicSnapshot.rows.find(r=>r.school_id==='7392112');
+assert.ok(restored,'Gwangju Gyerim elementary must be present in restored history');
+assert.equal(restored.percentiles[0],45.72,'2023 preserved vetted Gwangju percentile');
+assert.equal(restored.percentiles[2],58.13,'2025 verified rank restored from original edited workbook');
+assert.ok(publicSnapshot.restoration_20261118?.school_ids===317 &&
+  publicSnapshot.restoration_20261118.published_school_years===503,
+  'Both regions must have 503 published school-years restored');
+for(const file of ['search.html','js/level-search.js','school-report.html','js/statistics-directory-v2.js']){
+ assert.ok(read(file).includes('v=20261118-gjjn2025'),file+' must use refreshed Gwangju/Jeonnam percentile bundle');
+}
+assert.match(api,/approvedDomainLabels/, 'Lv.1 must display the eight curated 2025 school areas');
+assert.match(api,/APPROVED_SANITIZED_LEGACY_VIEW/, 'Only prior owner-approved public-release whitelist may be shown');
+assert.match(api,/r\.respondents<1/, 'One response is allowed but zero responses are not');
+assert.match(api,/NO_RAW_QUESTION_VALUES_NO_FREE_TEXT_NO_PERSONAL_IDENTIFIERS/, 'Never expose individual raw teacher choices or free text');
+console.log('PASS: 503 school-year values restored and 2025 N>=1 sanitized domain release');
+
 assert.match(html,/js\/historical-questionnaire-choices\.js/, 'Lv.1 must load original verified 2023/24/25 options');
 assert.match(html,/js\/2025-observed-choices\.js/, 'Lv.1 must load observed multi-choice 2025 labels');
 assert.match(search,/function renderHistoricalBenchmarks\(/, 'Lv.1 must display per-question original prompts and benchmarks');
