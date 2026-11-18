@@ -167,7 +167,10 @@
       background:linear-gradient(145deg,#193d63 0%,#10263f 65%,#0d1d32 100%);
       box-shadow:0 14px 35px rgba(14,36,64,.16);border-radius:22px}
     .teacher-game-header{display:flex;justify-content:space-between;align-items:center;min-width:0;padding:17px 19px 13px}
-    .teacher-game-header h2{margin:0;font-size:clamp(18px,4.6vw,22px);line-height:1.3;letter-spacing:-.04em;overflow-wrap:anywhere;color:#f7fcff}
+    .teacher-game-header h2{margin:0;min-width:0;font-size:clamp(18px,4.6vw,22px);line-height:1.3;letter-spacing:-.04em;overflow-wrap:anywhere;color:#f7fcff}
+    .teacher-game-access-level{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;margin-left:10px;padding:6px 10px;min-height:29px;white-space:nowrap;border:1px solid rgba(133,244,222,.45);border-radius:999px;background:rgba(123,227,202,.13);color:#b8f8e9;font-size:12px;font-weight:850;line-height:1.2;letter-spacing:.01em}
+    .teacher-game-access-level--locked{color:#ffe7b8;background:rgba(245,196,105,.12);border-color:rgba(255,225,171,.45)}
+    @media(max-width:380px){.teacher-game-access-level{font-size:11px;padding:6px 8px;margin-left:6px}.teacher-game-header{gap:7px}.teacher-game-header h2{font-size:clamp(15px,4.5vw,18px)}}
     .teacher-game-frame{display:block;width:100%;min-height:440px;border:0;background:#10223d}
     .teacher-run-feature{background:linear-gradient(145deg,#1e5260,#10263f 68%)}
     .teacher-run-feature .teacher-game-frame{min-height:625px}
@@ -236,6 +239,7 @@
     <section class="teacher-game-feature" aria-labelledby="teacher-game-title">
       <div class="teacher-game-header">
         <h2 id="teacher-game-title">🏐 선생님배구</h2>
+        <span class="teacher-game-access-level" aria-label="이용 가능 레벨: 레벨 0 이상">Lv.0 이상</span>
       </div>
       <details class="teacher-game-details" open>
         <summary>게임 접기 · 펼치기</summary>
@@ -255,6 +259,7 @@
     <section id="teacher-run-feature" class="teacher-game-feature teacher-run-feature" aria-labelledby="teacher-run-title">
       <div class="teacher-game-header">
         <h2 id="teacher-run-title">🎒 험난한 교직생활 2.0</h2>
+        <span class="teacher-game-access-level teacher-game-access-level--locked" aria-label="이용 가능 레벨: 레벨 1 인증 필요">Lv.1 전용</span>
       </div>
       <div id="teacher-run-home-lock" class="teacher-run-home-lock" aria-labelledby="teacher-run-lock-title">
         <span class="teacher-run-lock-icon" aria-hidden="true">🔒</span>
