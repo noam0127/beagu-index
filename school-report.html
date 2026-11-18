@@ -1295,6 +1295,8 @@
     }
     const groups=['편집본 공식 학교정보','승인된 설문 영역 요약'];
     box.innerHTML='<h4>Lv.1 추가 분석</h4>'+
+      (state.selected===2025&&unique.some(x=>x.group==='승인된 설문 영역 요약')
+        ?'<p class="approved-empty">2025년 영역별 점수는 응답 1건인 학교도 포함한 참여 응답의 요약값입니다. 학교 전체 교사 의견을 대표하는 평균으로 해석하지 마세요. 개별 문항 선택·자유서술은 포함하지 않습니다.</p>':'')+
       groups.map(g=>{
         const rows=unique.filter(x=>(x.group||'승인된 설문 영역 요약')===g);
         return rows.length?'<h5 class="approved-subheading">'+escapeHTML(g==='편집본 공식 학교정보'?'연도별 학교 지표':g)+'</h5><div class="summary-metrics">'+
