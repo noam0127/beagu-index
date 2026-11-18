@@ -378,7 +378,7 @@ function background(){
  for(let x=15;x<W;x+=117){roundRect(x,H-49,72,12,5,"#a97b61");roundRect(x+6,H-38,7,20,3,"#94694f");}
 }
 function playerDraw(){
- ctx.save();ctx.translate(Math.round(player.x),Math.round(player.y));
+ ctx.save();ctx.translate(Math.round(player.x),Math.round(player.y));ctx.scale(profile.heroSize,profile.heroSize);
  if(pointerId!==null&&state==="playing"){
   const blink=Math.floor(clock*18)%2;
   ctx.fillStyle="#ffe078";ctx.fillRect(-16,31,11,blink?15:23);ctx.fillRect(6,31,11,blink?23:15);
