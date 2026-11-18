@@ -1,0 +1,54 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+
+const js=readFileSync('scripts/beagu-2026-noon-sync.gs','utf8');
+const culture=readFileSync('scripts/beagu-2026-mbti-review-sync.gs','utf8');
+const scope={Date,Map,Set,Number,Object,Array,String,Math,RegExp,Error,JSON,Logger:{log:()=>{}}};
+runInNewContext(js,scope,{timeout:2500,filename:'beagu-2026-noon-sync.gs'});
+runInNewContext(culture,scope,{timeout:2500,filename:'beagu-2026-mbti-review-sync.gs'});
+
+assert.equal(scope.getSubmittedDay('2026. 10. 30 오전 10:12:17'),'2026-10-30');
+assert.equal(scope.getSubmittedDay('2026. 11. 1 오후 9:53:38'),'2026-11-01');
+assert.equal(scope.getSubmittedDay('2026. 11. 32'),null);
+const header=Array(41).fill('');
+header[0]='타임스탬프';header[1]='B01. 시도';header[6]='B02. 인천';
+header[21]='B03. 공식학교명';header[22]='B04. 학교유형';
+for(let n=1;n<=13;n++)header[23+n]='Q'+String(n).padStart(2,'0')+'. 문항';
+for(let n=14;n<=17;n++)header[23+n]='Q'+String(n).padStart(2,'0')+'. 학교문화';
+const cols=scope.questionColumns(header);
+assert.equal(cols.region,1);
+assert.equal(cols.school,21);
+assert.equal(cols.schoolType,22);
+assert.equal(cols.q[0],24);
+assert.equal(cols.q[12],36);
+const row=Array(41).fill('');
+row[1]='인천';row[6]='④ 북부교육지원청';row[21]='인천부현초등학교';row[22]='③ 국립초등학교';
+const schools=[{school_id:'7331195',school_name:'인천부현초등학교',sido_standard:'인천',
+ support_office:'인천광역시북부교육지원청',establishment:'공립'}];
+const matched=scope.resolveSchool(row,cols,schools);
+assert.equal(matched.school.school_id,'7331195');
+assert.equal(matched.typeConflict,true);
+assert.equal(matched.selectedType,'국립');
+assert.equal(matched.registeredType,'공립');
+assert.equal(scope.questionScore(1,'④ 그렇다'),75);
+assert.equal(scope.questionScore(2,'① 전혀 그렇지 않다'),100);
+assert.equal(scope.questionScore(12,'① 운영하지 않는다'),100);
+assert.equal(scope.questionScore(13,'① 그런 일이 없다'),100);
+assert.match(js,/newTrigger\("onBeagu2026FormSubmitted"\)|newTrigger\(name\)\.forSpreadsheet/);
+assert.match(js,/newTrigger\("refreshBeagu2026AllPrivateStats"\)/);
+assert.match(js,/refreshBeagu2026AllPrivateStats\(\);/);
+assert.match(js,/if\(typeof refreshBeagu2026SchoolCulture==="function"\)/);
+assert.match(js,/firstOfficialResponseDay: "2026-11-01"/);
+assert.match(js,/publishBeagu2026NationalCount\(scanned-prelaunch-undated,newUniqueSchools\)/);
+assert.doesNotMatch(js,/from\(['"]beagu_release_metrics_v2/);
+assert.doesNotMatch(js,/service_role|SUPABASE_SERVICE_ROLE/i);
+
+const invoked=[];
+scope.refreshBeagu2026Stats=()=>invoked.push('core');
+scope.refreshBeagu2026SchoolCulture=()=>invoked.push('culture');
+scope.onBeagu2026FormSubmitted({range:{getSheet:()=>({getName:()=> '설문지 응답 시트1'})}});
+assert.deepEqual(invoked,['core','culture'],'One form submission should update both private summaries');
+scope.onBeagu2026FormSubmitted({range:{getSheet:()=>({getName:()=> '다른 시트'})}});
+assert.equal(invoked.length,2,'Unrelated sheet must not trigger refresh');
+console.log('PASS: 2026 one-time trigger path, one official row, school-type review, Q01-Q17 private auto aggregation');
