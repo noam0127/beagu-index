@@ -17,7 +17,7 @@ assert.match(search,/aria-labelledby/);
 assert.match(search,/aria-busy/);
 assert.match(search,/readyByYear/);
 assert.doesNotMatch(search,/학교별 검증 설문 응답 분포/);
-assert.match(search,/if\(!comparison \|\| comparison\.group!=='편집본 공식 학교정보'\)/);
+assert.match(search,/if\s*\(!comparison \|\| comparison\.group!=='편집본 공식 학교정보'\)/);
 assert.match(search,/api\('school',\{schoolId:school\.school_id\}\)/);
 assert.match(search,/vetted\.get\(id\)\|\|null/);
 assert.match(search,/원자료에서 확인된 보기 \(전체 목록 미확인\)/);
