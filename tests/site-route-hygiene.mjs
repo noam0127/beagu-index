@@ -15,7 +15,7 @@ const original=read('\u200bcss/statistics.css');
 assert.equal(css,original,'Canonical statistics CSS must preserve existing design');
 assert.match(stats,/href="styles\/statistics\.css\?v=20261031-canonical7"/);
 assert.doesNotMatch(stats,/href="css\//,'Broken statistics CSS link must not reappear');
-assert.match(stats,/src="js\/statistics-directory-v2\.js\?v=20261118-v2"/);
+assert.match(stats,/src="js\/statistics-directory-v2\.js\?v=20261118-gjjn2025"/);
 assert.match(stats,/src="js\/statistics-compare\.js\?v=20261118-c5"/);
 assert.match(stats,/href="styles\/statistics-compare\.css\?v=20261118-c5"/);
 assert.match(stats,/id="compareScroll"/);
@@ -60,7 +60,7 @@ assert.ok(!questionCatalog.years['2026'].items.some(item=>item.id==='Q51'),'Excl
 assert.match(oldResult,/location\.replace\(target\)/,'Legacy URLs must forward');
 assert.match(oldResult,/params\.get\('school_id'\)\|\|params\.get\('school'\)/);
 assert.match(oldResult,/destination\.searchParams\.set\('school_id',school\)/);
-assert.match(oldResult,/\^\\d\{7\}\$/,'School identifier must be validated');
+assert.match(oldResult,/\^\[A-Z0-9\]\{7\}\$/,'School identifier must be validated');
 assert.match(oldResult,/beaguVisitReady/,'Legacy result page visit tracking must be retained');
 assert.match(oldResult,/js\/visit-stats\.js/);
 assert.match(oldResult,/school-report\.html/);
