@@ -73,6 +73,11 @@ canvas{height:400px;cursor:default}
 .hint{display:none}
 @media(max-width:480px){.shell{padding:7px}.top{gap:5px}.version{padding:5px 8px;font-size:9px}.hud{gap:5px}.stat{padding:8px 7px}.stat span{font-size:10px}.stat strong{font-size:clamp(12px,3.7vw,17px)}canvas{height:370px}.panel{padding:12px}.panel .symbol{font-size:31px;margin:0}.panel p{font-size:11px;line-height:1.35;margin-bottom:9px}.choices{gap:6px}.choices button{padding:9px 8px;min-height:43px}.controls{gap:7px}.control button{min-height:54px}}
 @media(max-width:310px){.version{display:none}.toolbar .original{font-size:10px}.stat strong{font-size:11px}}
+.teacher-run-lv1-gate{max-width:820px;margin:40px auto;padding:28px 22px;text-align:center;border:1px solid #4e708e;border-radius:18px;background:#1d3d5b;color:#f6fbff}
+.teacher-run-lv1-gate h1{font-size:22px;margin:0 0 12px}
+.teacher-run-lv1-gate p{font-size:14px;line-height:1.6;color:#d6e7f8;margin:0 0 18px}
+.teacher-run-lv1-gate a{display:inline-block;padding:11px 18px;border-radius:10px;background:#7be3ca;color:#12334b;font-weight:800;text-decoration:none}
+#teacher-run-protected[hidden],#teacher-run-lv1-gate[hidden]{display:none!important}
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -88,7 +93,12 @@ canvas{height:400px;cursor:default}
 <body class="arcade-body beagu-ui-page beagu-page-game">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="challenge.html">인증</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="search-lv1.html" aria-label="인증 상태 확인 중">확인 중</a></div>
-<main class="shell">
+<section id="teacher-run-lv1-gate" class="teacher-run-lv1-gate" aria-labelledby="teacher-run-lv1-title">
+  <h1 id="teacher-run-lv1-title">Lv.1 인증이 필요합니다</h1>
+  <p data-lv1-gate-message role="status">Lv.1 인증 후 이용할 수 있습니다.</p>
+  <a href="search.html">Lv.1 인증하기</a>
+</section>
+<main id="teacher-run-protected" class="shell" hidden>
   <header class="top"><div class="brand" style="display:flex;align-items:center;gap:8px"><span class="beagu-brand-mark" aria-hidden="true">B</span>험난한 교직생활 <span style="color:#8ae4d7">2.0</span></div><span class="version">ARCADE · 1UP</span></header>
   <div class="hud" aria-label="게임 현황">
     <div class="stat"><span>DAY</span><strong id="dayLabel">월요일 · 1/5</strong></div>
@@ -498,5 +508,6 @@ window.addEventListener("resize",postHeight);
 resize();intro();requestAnimationFrame(tick);postHeight();
 })();
 </script>
+<script defer src="js/beagu-game-lv1-gate-v1.js?v=20261118-gate1"></script>
 </body>
 </html>
