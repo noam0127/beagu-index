@@ -588,12 +588,18 @@
         if(selected)content.setAttribute('aria-labelledby',button.id);
       }
       markSelectedYear(year);
-      const draw=(data,status)=>renderYear(content,year,rows,vals[year-2023]??null,
-        school.school_id,distributions,school,data,status);
+      const draw=(data,status)=>{
+        content.removeAttribute('aria-busy');
+        renderYear(content,year,rows,vals[year-2023]??null,
+          school.school_id,distributions,school,data,status);
+      };
       if(year===2026){draw(null,'ready');return;}
       if(readyByYear.has(year)){draw(readyByYear.get(year),'ready');return;}
       const region=String(school.sido_standard||school.sido||'');
-      draw(null,'loading');
+      content.setAttribute('aria-busy','true');
+      const busy=make('p','beagu-detail-feedback','선택한 연도 결과를 불러오는 중…');
+      busy.setAttribute('role','status');
+      content.replaceChildren(busy);
       loadGeographyComparisons(year,region).then(result=>{
         if(currentYear!==year||!content.isConnected||host.hidden||!session)return;
         readyByYear.set(year,result);
