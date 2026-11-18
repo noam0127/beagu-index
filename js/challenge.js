@@ -3,7 +3,7 @@
   const byId = id => document.getElementById(id);
   const status = byId('status'), capture = byId('capture'), retry = byId('retry');
   const participantNo = byId('participantNo');
-  let imageUrl = null, participant = null, busy = false;
+  let imageUrl = null, participant = null, busy = false, accessGranted = false;
   const deadline = (promise, ms, message) => {
     let timer;
     return Promise.race([Promise.resolve(promise), new Promise((_, reject) => {
@@ -12,7 +12,7 @@
   };
 
   async function prepare() {
-    if (busy) return;
+    if (!accessGranted || busy) return;
     busy = true;
     capture.disabled = true;
     retry.hidden = true;
@@ -24,12 +24,14 @@
         const {data, error} = await deadline(supabaseClient.rpc('beagu_join_challenge', {
           p_visitor: window.beaguVisitor
         }), 15000, '연결이 지연되고 있습니다. 다시 시도해주세요.');
+        if (!accessGranted) return;
         const n = Number(data);
         if (error || !Number.isSafeInteger(n) || n < 1) throw new Error('참여 순번을 확인하지 못했습니다. 다시 시도해주세요.');
         participant = n;
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
         if(window.BeaguChallengeProgress)void window.BeaguChallengeProgress.refresh();
       }
+      if (!accessGranted) return;
       status.textContent = '인증 이미지를 준비하고 있습니다.';
       if (typeof html2canvas !== 'function') throw new Error('이미지 기능을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
       if (document.fonts) await deadline(document.fonts.ready, 10000, '글꼴 로딩이 지연되고 있습니다. 다시 시도해주세요.');
@@ -38,6 +40,7 @@
       }), 20000, '이미지 생성이 지연되고 있습니다. 다시 시도해주세요.');
       const blob = await deadline(new Promise(resolve => canvas.toBlob(resolve, 'image/png')), 10000, '이미지 변환에 실패했습니다. 다시 시도해주세요.');
       if (!blob) throw new Error('이미지를 생성하지 못했습니다. 다시 시도해주세요.');
+      if (!accessGranted) return;
       if (imageUrl) URL.revokeObjectURL(imageUrl);
       imageUrl = URL.createObjectURL(blob);
       capture.disabled = false;
@@ -55,7 +58,7 @@
   }
 
   capture.addEventListener('click', () => {
-    if (!imageUrl) return;
+    if (!accessGranted || !imageUrl) return;
     try {
       const link = document.createElement('a');
       link.href = imageUrl;
@@ -75,6 +78,19 @@
   window.addEventListener('pagehide', event => {
     if (!event.persisted && imageUrl) URL.revokeObjectURL(imageUrl);
   });
-  prepare();
+  window.addEventListener('beagu:challenge-access-revoked', () => {
+    accessGranted = false;
+    participant = null;
+    if (imageUrl) URL.revokeObjectURL(imageUrl);
+    imageUrl = null;
+    capture.disabled = true;
+    participantNo.textContent = '순번 확인 중';
+    status.textContent = '';
+    retry.hidden = true;
+  });
+  window.addEventListener('beagu:challenge-access-granted', () => {
+    accessGranted = true;
+    void prepare();
+  });
 })();
 
