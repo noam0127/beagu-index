@@ -148,12 +148,15 @@ Deno.serve(async(req:Request)=>{
   const id=String(body.schoolId||'');
   if(!/^[A-Z0-9]{7}$/.test(id))return send({error:'INVALID_SCHOOL'},400,origin);
   const level=Number(session.access_level);
-  const [legacy,metrics,catalog]=await Promise.all([
+  const [legacy,metrics,catalog,curated2025]=await Promise.all([
    level===2?admin.from('beagu_level_data').select('survey_year,access_level,summary,release_status').eq('school_id',id).eq('release_status','approved').lt('survey_year',2026).order('survey_year').limit(20):Promise.resolve({data:[],error:null}),
    admin.from('beagu_release_metrics_v2').select('survey_year,question_id,access_level,value,release_version,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence').eq('school_id',id).eq('approval_status','APPROVED').lte('access_level',level).order('release_version',{ascending:false}).limit(1000),
-   admin.from('beagu_metric_catalog').select('*').eq('verified',true).limit(1000)
+   admin.from('beagu_metric_catalog').select('*').eq('verified',true).limit(1000),
+   admin.from('beagu_level_data').select('survey_year,access_level,respondents,summary,release_status')
+     .eq('school_id',id).eq('survey_year',2025).eq('access_level',1)
+     .eq('release_status','approved').limit(1)
   ]);
-  if(legacy.error||metrics.error||catalog.error)return send({error:'DATA_UNAVAILABLE'},503,origin);
+  if(legacy.error||metrics.error||catalog.error||curated2025.error)return send({error:'DATA_UNAVAILABLE'},503,origin);
   const rows=legacyRows(legacy.data||[],level);
   const safe=releaseMetrics(metrics.data||[],catalog.data||[],level);
   // School facts are independently reviewed, not teacher survey observations.
@@ -270,6 +273,43 @@ Deno.serve(async(req:Request)=>{
     schoolDistributions.push({year:y,questionId:qid,modeOption:item.mode_option,
       roundedDistribution:rounded.map((x:any)=>({label:x.label,pct:x.pct}))});
   }
+
+  // 2025 legacy public-release whitelist explicitly authorizes curated domain
+  // scores for >=1 source observation. This is NOT permission to expose the
+  // teacher's raw choices, free text, counts, or sensitive survey columns.
+  // Respondent consent is represented by the existing owner-authorized gate.
+  const approvedDomainLabels=new Set([
+    '학생·학부모 문화','교직원 문화','조직운영','업무부하',
+    '교직관행','체험학습 관행','복무관행','학교환경'
+  ]);
+  const curatedRows:(Record<string,unknown>)[]=[];
+  for(const item of curated2025.data||[]){
+    const r=item as Record<string,any>;
+    const quality=r.summary?.quality?.release_gate_20261027;
+    const release=r.summary?.public_release_v1;
+    if(r.survey_year!==2025||r.access_level!==1||r.release_status!=='approved'||
+       !Number.isInteger(r.respondents)||r.respondents<1||
+       quality?.status!=='APPROVED_SANITIZED_LEGACY_VIEW'||
+       quality?.approved_for_public_api!==true||
+       quality?.public_approval_scope!=='ONLY_PUBLIC_RELEASE_V1_WHITELIST'||
+       quality?.privacy_restriction!=='NO_RAW_QUESTION_VALUES_NO_FREE_TEXT_NO_PERSONAL_IDENTIFIERS'||
+       !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(String(quality?.owner_authorized_on||''))||
+       release?.release_format!=='DOMAIN_AGGREGATES_ONLY'||
+       !Array.isArray(release.metrics))continue;
+    const emitted=new Set<string>();
+    const metrics=[];
+    for(const source of release.metrics){
+      const label=source?.label,value=source?.value;
+      if(typeof label!=='string'||!approvedDomainLabels.has(label)||emitted.has(label)||
+         typeof value!=='string'||! /^(?:100(?:\\.0)?|[1-9]?\\d(?:\\.\\d)?|0(?:\\.0)?)점$/.test(value))continue;
+      const numeric=Number(value.slice(0,-1));
+      if(!Number.isFinite(numeric)||numeric<0||numeric>100)continue;
+      emitted.add(label);
+      metrics.push({label,value,group:'2025년 조사 영역별 점수 · 응답 표본 참고'});
+    }
+    if(metrics.length)curatedRows.push({year:2025,access_level:1,summary:{metrics}});
+  }
+  rows.push(...curatedRows);
 
   // A single verified participation record can mark a school-year as "participated".
   // Never return the response count, the teacher's choice, or any unrestricted metric.
