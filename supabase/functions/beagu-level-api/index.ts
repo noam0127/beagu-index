@@ -292,13 +292,33 @@ Deno.serve(async(req:Request)=>{
       modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:mode});
     }
   }
+  // A 2025 checkbox question receives a school mode only when every included
+  // source choice was matched and one choice alone has the highest frequency.
+  // Unverified options and ties remain excluded. Require the already reviewed
+  // owner-authorized 2025 school/year as an independent release gate.
+  if(ownerHistory?.some(row=>row.survey_year===2025&&
+       row.review_status==='OWNER_AUTHORIZED_CLOSED_CHOICE')){
+    const {data:supplement,error:supplementError}=await admin
+      .from('beagu_school_question_modes_supplement_v1')
+      .select('survey_year,question_id,mode_option,review_status')
+      .eq('school_id',id).eq('survey_year',2025)
+      .eq('review_status','SOURCE_VERIFIED_UNIQUE_MODE').limit(3);
+    if(supplementError)return send({error:'SCHOOL_MODES_UNAVAILABLE'},503,origin);
+    for(const row of supplement||[]){
+      const qid=String(row.question_id||'');
+      if(!['Q03','Q04','Q30'].includes(qid)||!safeMode(row.mode_option))continue;
+      if(!modeIndex.has('2025:'+qid))
+        modeIndex.set('2025:'+qid,{year:2025,questionId:qid,modeOption:row.mode_option});
+    }
+  }
   const schoolQuestionModes=[...modeIndex.values()].sort((a,b)=>
     a.year-b.year||a.questionId.localeCompare(b.questionId));
 
   // 2025 legacy public-release whitelist explicitly authorizes curated domain
   // scores for >=1 source observation. This is NOT permission to expose the
   // teacher's raw choices, free text, counts, or sensitive survey columns.
-  // Respondent consent is represented by the existing owner-authorized gate.
+  // Owner authorization alone is not proof of every respondent's specific
+  // publication consent. Review rights and reidentification risk separately.
   const approvedDomainLabels=new Set([
     '학생·학부모 문화','교직원 문화','조직운영','업무부하',
     '교직관행','체험학습 관행','복무관행','학교환경'
