@@ -1288,7 +1288,7 @@
     if(state.tier===0){
       box.innerHTML='<h4>Lv.1에서 더 볼 수 있는 자료 🔒</h4>'+
         '<p class="approved-empty">Lv.0에서는 학교 개요와 공개 백분위를 볼 수 있습니다. '+
-        'Lv.1 인증 후에는 검증된 학교별 수치와 전국·지역 비교, 승인된 설문 응답 분포를 추가로 확인할 수 있습니다.</p>';return;
+        'Lv.1 인증 후에는 학교별 최다 선택값과 전국·지역 비교를 확인할 수 있습니다. 보기별 응답 분포와 비율은 공개하지 않습니다.</p>';return;
     }
     const singleSchoolFacts=new Set(['설립구분','설립유형','교감수','급식장소']);
     const unique=[...new Map(list.filter(x=>x&&typeof x.label==='string'&&x.label.length<=80&&
@@ -1302,7 +1302,7 @@
     const groups=['편집본 공식 학교정보','승인된 설문 영역 요약'];
     box.innerHTML='<h4>Lv.1 추가 분석</h4>'+
       (state.selected===2025&&unique.some(x=>x.group==='승인된 설문 영역 요약')
-        ?'<p class="approved-empty">2025년 영역별 점수는 응답 1건인 학교도 포함한 참여 응답의 요약값입니다. 학교 전체 교사 의견을 대표하는 평균으로 해석하지 마세요. 개별 문항 선택·자유서술은 포함하지 않습니다.</p>':'')+
+        ?'<p class="approved-empty">2025년 영역별 점수는 응답 1건인 학교도 포함한 참여 응답의 요약값입니다. 학교 전체 교사 의견을 대표하는 평균으로 해석하지 마세요. 개인별 응답 목록·자유서술은 포함하지 않습니다.</p>':'')+
       groups.map(g=>{
         const rows=unique.filter(x=>(x.group||'승인된 설문 영역 요약')===g);
         return rows.length?'<h5 class="approved-subheading">'+escapeHTML(g==='편집본 공식 학교정보'?'연도별 학교 지표':g)+'</h5><div class="summary-metrics">'+
@@ -1449,21 +1449,17 @@
         }
 
       }
-      // Server-approved historical school distributions arrive without raw
-      // response counts; these are coarse 10%-rounded option shares only.
-      for(const d of Array.isArray(r.schoolDistributions)?r.schoolDistributions:[]){
+      // Only a reviewed mode is transmitted. Never render a response
+      // distribution, percentage, response count, or individual answer.
+      for(const d of Array.isArray(r.schoolQuestionModes)?r.schoolQuestionModes:[]){
         const year=Number(d?.year),qid=String(d?.questionId||'');
         if(![2023,2024,2025].includes(year)||!/^Q\d{2}$/.test(qid)||
            !state.years[String(year)]||
-           typeof d.modeOption!=='string'||d.modeOption.length>180||
-           !Array.isArray(d.roundedDistribution)||d.roundedDistribution.length>10)continue;
-        const valid=d.roundedDistribution.every(a=>a&&typeof a.label==='string'&&
-          a.label.length<=180&&Number.isInteger(a.pct)&&a.pct>=0&&a.pct<=100&&a.pct%10===0);
-        if(!valid)continue;
+           typeof d.modeOption!=='string'||!d.modeOption.trim()||
+           d.modeOption.length>180)continue;
         if(!state.years[String(year)].items)state.years[String(year)].items={};
         state.years[String(year)].items[qid]={
-          display:d.modeOption,modeOption:d.modeOption,serverApproved:true,
-          roundedDistribution:d.roundedDistribution.map(a=>({label:a.label,pct:a.pct}))
+          display:d.modeOption,modeOption:d.modeOption,serverApproved:true
         };
       }
       if(requested===2){
@@ -1972,37 +1968,6 @@
         chart.prepend(questionLine);
       }
       row.prepend(chart);
-    }
-    if(itemApproved&&Array.isArray(data?.roundedDistribution)&&data.roundedDistribution.length){
-      const dist=document.createElement('div');dist.className='distribution';
-      dist.setAttribute('aria-label','학교별 보기 분포. 비율은 10% 단위 반올림 근삿값입니다.');
-      for(const answer of data.roundedDistribution){
-        if(!answer||typeof answer.label!=='string'||!Number.isInteger(answer.pct)||
-           answer.pct<0||answer.pct>100)continue;
-        const line=document.createElement('div');line.className='dist-row';
-        const label=document.createElement('span');label.className='dist-label';
-        label.textContent=answer.label;
-        const track=document.createElement('span');track.className='dist-track';
-        const bar=document.createElement('span');bar.className='dist-bar';
-        bar.style.width=String(answer.pct)+'%';track.append(bar);
-        const pct=document.createElement('span');pct.className='dist-pct';
-        pct.textContent=String(answer.pct)+'%';
-        line.append(label,track,pct);dist.append(line);
-      }
-      row.append(dist);
-    }else if(itemApproved && Array.isArray(data?.distribution)&&data.distribution.length&&state.demo){
-      const dist=document.createElement('div');dist.className='distribution';
-      const d=data.distribution.filter(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.count))&&Number(x.count)>=0);
-      const total=d.reduce((a,b)=>a+Number(b.count),0);
-      if(total){dist.innerHTML=d.map(x=>{const pct=100*Number(x.count)/total;
-        return `<div class="dist-row"><span class="dist-label">${escapeHTML(x.label)}</span><span class="dist-track"><span class="dist-bar" style="width:${Math.max(0,Math.min(100,pct)).toFixed(1)}%"></span></span><span class="dist-pct">${pct.toFixed(0)}%</span></div>`}).join('');row.append(dist)}
-    }else if(itemApproved && Array.isArray(data?.distribution)&&data.distribution.length){
-      // 공개파일 승인 + 소표본 방어 조건. 서버 심사를 대체하지 않습니다.
-      const dist=document.createElement('div');dist.className='distribution';
-      const d=data.distribution.filter(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.count))&&Number(x.count)>=0);
-      const total=d.reduce((a,b)=>a+Number(b.count),0);
-      if(total){dist.innerHTML=d.map(x=>{const pct=100*Number(x.count)/total;
-        return `<div class="dist-row"><span class="dist-label">${escapeHTML(x.label)}</span><span class="dist-track"><span class="dist-bar" style="width:${Math.max(0,Math.min(100,pct)).toFixed(1)}%"></span></span><span class="dist-pct">${pct.toFixed(0)}%</span></div>`}).join('');row.append(dist)}
     }
     return row;
   }
