@@ -98,11 +98,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
   <div class="actions"><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 터치·드래그 비행　↔ 방향키 · A/D　⚡ 빠른 이동 중 공을 맞히면 스파이크</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 드래그 이동 · ⚡ 더블 터치 필살기 · ↔ 방향키</div>
   <div id="arcade-top10" aria-label="선생님배구 1.0 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-recordfix1"></script>
-<script src="js/arcade-school-picker-v1.js?v=20261118-tier-ability2"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261118-hp-super-time1"></script>
 <script>
 (function () {
   "use strict";
@@ -141,9 +141,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   let currentDifficulty="normal",battle=battleProfiles.normal,energy=energyProfiles.hard,specialProfile=specialProfiles.hard,startTicket=0,lastTapAt=0,lastTapX=0,lastTapY=0;
   schoolPicker.onChange=school=>{
     if(state.phase==="ready"||state.phase==="finished"){
-      setStatus(!school ? "2023~2026년 중 한 해라도 조사 백분위가 있으면 플레이할 수 있습니다." :
+      setStatus(!school ? "" :
         school.eligible ? school.school_name+" · "+diffName[school.difficulty] :
-        "플레이 불가 · 학교 선택창의 누락 연도 안내를 확인하세요.");
+        "🔒 조사 참여 필요");
       if(state.phase==="ready"){
         const tier=school?.difficulty||"hard";
         energy=energyProfiles[tier]||energyProfiles.hard;
@@ -240,7 +240,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   async function startMatch() {
     const school=schoolPicker.get();
     if(!school?.eligible){
-      setStatus("플레이 불가 · 2023~2026년 조사 결과가 한 해도 없습니다. 2026년 조사에 참여해 주세요.");
+      setStatus("🔒 조사 참여 필요");
       schoolPicker.focus();syncUI();return;
     }
     if(state.phase==="starting")return;
