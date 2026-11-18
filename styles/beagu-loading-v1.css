@@ -1,4 +1,4 @@
-/* 배구인덱스 공통 지연 로딩: 배구공이 느리게 굴러가는 화면 */
+/* 배구지수 공통 지연 로딩: 배구공이 느리게 굴러가는 화면 */
 .beagu-loading-screen{
   position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;
   padding:24px;background:rgba(247,250,255,.97);backdrop-filter:blur(7px);
