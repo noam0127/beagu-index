@@ -634,9 +634,17 @@
     }
     section.append(tabs,content);
     host.append(section);
+    // A school can have approved historical question distributions even when
+    // it has no separately released summary metrics or percentile.
+    // Select its most recent available survey year instead of a blank 2025 tab.
+    const reviewedYears=new Set((Array.isArray(distributions)?distributions:[])
+      .filter(item=>/^Q\d{2}$/.test(String(item?.questionId||'')) &&
+        Array.isArray(item?.roundedDistribution)&&item.roundedDistribution.length>0)
+      .map(item=>Number(item.year)));
     const firstAvailable=[2026,2025,2024,2023].find(year=>
+      reviewedYears.has(year)||
       (Array.isArray(rows)?rows:[]).some(row=>
-        Number(row.year)===year&&Number(row.access_level)===level&&
+        Number(row.year)===year&&Number(row.access_level)<=level&&
         (Array.isArray(row.summary?.metrics)?row.summary.metrics:[]).length>0));
     choose(firstAvailable||2025);
   }
