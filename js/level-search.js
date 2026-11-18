@@ -332,8 +332,8 @@
       const comparisonLabel=m=>m?.kind==='most_frequent'?'최다 선택':'평균에 해당하는 보기';
       const cells=[
         ['우리 학교',vetted.get(id)||null,'school','검증된 최다 선택'],
-        [region,benchmark(comparisonValues.regional),'region',comparisonLabel(comparisonValues.regional)],
-        ['전국',benchmark(comparisonValues.national),'nation',comparisonLabel(comparisonValues.national)]
+        ['전국',benchmark(comparisonValues.national),'nation',comparisonLabel(comparisonValues.national)],
+        [region,benchmark(comparisonValues.regional),'region',comparisonLabel(comparisonValues.regional)]
       ];
       const grid=make('div','historical-benchmark-grid');
       for(const [label,value,role,note] of cells){
