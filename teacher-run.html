@@ -31,7 +31,7 @@ canvas:focus-visible{outline:3px solid #7be3ca;outline-offset:-3px}
 .choices button{background:#7be3ca;border:0;border-radius:11px;padding:12px 14px;color:#12334b;font-size:14px;font-weight:900;text-align:center;min-height:45px}
 .choices button.secondary{background:#385778;color:#f0f9ff;border:1px solid #6988ab}
 .choices button:focus-visible,.control button:focus-visible,.toolbar button:focus-visible{outline:3px solid #fff;outline-offset:2px}
-.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-top:10px;touch-action:pan-y}
+.controls{display:none}
 .control button{width:100%;min-height:58px;user-select:none;touch-action:none;-webkit-user-select:none;border:1px solid #728ba9;background:#2b496d;color:#fff;border-radius:12px;font-weight:900;font-size:17px}
 .control button.dash{background:#ffcb66;color:#342a23;border-color:#ffd99a;font-size:14px}
 .control button.down{transform:translateY(2px);filter:brightness(1.2)}
@@ -83,7 +83,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-rolling1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261118-retro1">
-<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-five-tiers1">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-tier-ability2">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261118-global2">
@@ -107,15 +107,10 @@ canvas{height:400px;cursor:default}
   </div>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="stage">
-    <canvas id="game" tabindex="0" aria-label="험난한 교직생활 게임 영역. 방향키나 아래 버튼으로 이동하고 스페이스 또는 회피 버튼으로 긴급 회피합니다."></canvas>
+    <canvas id="game" tabindex="0" aria-label="험난한 교직생활 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
       <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 2.0</h2><p id="overlayDesc">월요일부터 금요일까지, 선생님의 체력을 지키며 퇴근하세요!</p><div class="choices" id="choices"></div></div>
     </div>
-  </div>
-  <div class="controls" aria-label="모바일 이동 버튼">
-    <div class="control"><button type="button" id="left" aria-label="왼쪽 이동">◀</button></div>
-    <div class="control"><button type="button" id="right" aria-label="오른쪽 이동">▶</button></div>
-    <div class="control"><button class="dash" type="button" id="dash">⚡ 회피</button></div>
   </div>
   <div class="toolbar">
     <button id="pause" type="button" disabled aria-label="일시정지" title="일시정지">⏸</button>
@@ -124,8 +119,8 @@ canvas{height:400px;cursor:default}
   </div>
   <div id="arcade-top10" aria-label="험난한 교직생활 TOP 10 순위"></div>
 </main>
-<script src="js/arcade-leaderboard-v1.js?v=20261118-five-tiers1"></script>
-<script src="js/arcade-school-picker-v1.js?v=20261118-five-tiers1"></script>
+<script src="js/arcade-leaderboard-v1.js?v=20261118-tier-ability2"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261118-tier-ability2"></script>
 <script>
 (function(){
 "use strict";
@@ -133,9 +128,16 @@ const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
 const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("teacher_run","#arcade-top10") : null;
 const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
-const difficultyScale={easy:.72,normal:.86,hard:1,very_hard:1.17,extreme:1.36};
+const difficultyProfiles={
+ easy:{heroSpeed:1.34,heroSize:.86,startingLife:150,damage:.54,enemySpeed:.72,spawnPressure:.62,enemySize:.83,goodChance:.34,heal:1.48,inv:1.95,homing:0,zigzag:.65,label:"교사 강화 · 위협 느림 · 회복 풍부"},
+ normal:{heroSpeed:1.18,heroSize:.93,startingLife:125,damage:.76,enemySpeed:.86,spawnPressure:.82,enemySize:.92,goodChance:.28,heal:1.22,inv:1.6,homing:9,zigzag:.85,label:"교사 우세 · 회복 충분"},
+ hard:{heroSpeed:1,heroSize:1,startingLife:100,damage:1,enemySpeed:1,spawnPressure:1,enemySize:1,goodChance:.20,heal:1,inv:1.3,homing:25,zigzag:1,label:"표준 · 장애물 추격 시작"},
+ very_hard:{heroSpeed:.88,heroSize:1.09,startingLife:90,damage:1.26,enemySpeed:1.18,spawnPressure:1.24,enemySize:1.15,goodChance:.14,heal:.79,inv:1.08,homing:48,zigzag:1.25,label:"교사 약화 · 장애물 추격 강화"},
+ extreme:{heroSpeed:.78,heroSize:1.17,startingLife:78,damage:1.51,enemySpeed:1.38,spawnPressure:1.52,enemySize:1.28,goodChance:.09,heal:.63,inv:.90,homing:78,zigzag:1.5,label:"교사 약화 · 큰 위협·집중 추격"}
+};
 const difficultyName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
 schoolPicker.onChange=()=>{if(state==="ready")intro();};
+schoolPicker.onRequestChange=stopAndChangeSchool;
 if(!ctx){$("overlayDesc").textContent="이 브라우저에서는 캔버스 게임을 실행할 수 없습니다.";return;}
 const days=["월요일","화요일","수요일","목요일","금요일"];
 const dayTitles=["출근 첫날, 메일이 쌓인다","회의와 공문의 이중주","수요일의 언덕을 넘자","방심하면 야근이다","오늘만 버티면 주말!"];
@@ -156,13 +158,12 @@ const upgrades=[
  {title:"💪 퇴근 체력 +25",detail:"체력 최대치 증가 + 현재 체력 회복",id:"vital"},
  {title:"👟 가벼운 발걸음",detail:"이동 속도 18% 증가",id:"speed"},
  {title:"🛡️ 마음의 여유",detail:"충돌 후 무적 시간 0.4초 연장",id:"guard"},
- {title:"☕ 회복의 기술",detail:"회복 아이템 효과 +50%",id:"heal"},
- {title:"⚡ 재빠른 회피",detail:"회피 쿨타임 0.7초 단축",id:"dash"}
+ {title:"☕ 회복의 기술",detail:"회복 아이템 효과 +50%",id:"heal"}
 ];
 let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100;
-let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1,dash:0};
-let player={x:300,y:360,r:22,inv:0,dashTime:0,cool:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
-let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,difficulty=1;
+let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
+let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
+let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0;
 try{best=Number(localStorage.getItem("teacherRunBestV2"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
 $("bestLabel").textContent=best.toLocaleString("ko-KR");
 $("sound").textContent=soundOn?"🔊":"🔇";
@@ -201,20 +202,34 @@ async function start(){
  const selected=schoolPicker.get();
  if(!selected?.eligible){intro();schoolPicker.focus();return;}
  if(state==="starting")return;
+ const ticket=++startTicket;
  state="starting";
  message("조사 자료 확인 중","2023~2026년 중 한 해 이상 백분위가 있는지 확인하고 있습니다.",[],"🏫");
  const session=ranking?await ranking.start(selected):null;
+ if(ticket!==startTicket)return;
  if(!session){
   state="ready";intro();
   schoolPicker.status.textContent="게임 시작 불가 · 조사 자료를 다시 확인하거나 서버 연결 상태를 확인하세요.";
   return;
  }
- difficulty=difficultyScale[selected.difficulty]||1;
+ profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
- state="playing";day=0;dayTime=0;clock=0;score=0;life=100;maxLife=100;
- combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1,dash:0};
- items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=1.5;player.cool=0;player.dashTime=0;pointerId=null;pointerY=null;
- pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice("월요일 시작!",2);closeMessage();playTone(500,.13);
+ state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;
+ combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};
+ items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;pointerId=null;pointerY=null;
+ pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
+}
+function stopToIntro(){
+ ++startTicket;ranking?.cancel();state="ready";
+ pressed.clear();pointerId=null;pointerX=null;pointerY=null;
+ items=[];sparks=[];floats=[];score=0;day=0;dayTime=0;combo=0;
+ life=100;maxLife=100;player.inv=0;
+ schoolPicker.setLocked(false);
+ updateLabels();intro();
+}
+function stopAndChangeSchool(){
+ stopToIntro();
+ schoolPicker.resetForChange();
 }
 function intro(){
  state="ready";schoolPicker.setLocked(false);
@@ -223,7 +238,7 @@ function intro(){
  const available=Array.isArray(selected?.available_years)?selected.available_years.join("·")+"년":"확인 연도";
  const title=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
    selected?selected.school_name+" · 플레이 불가":"먼저 학교를 선택하세요";
- const desc=ready?"확인된 "+available+" 배구지수 백분위 평균으로 난이도를 결정합니다.\n월 → 금 생존!":
+ const desc=ready?"확인된 "+available+" 백분위 평균 · "+(difficultyProfiles[selected.difficulty]?.label||"")+"\n월 → 금 생존!":
    selected?"2023~2026년 조사 백분위가 한 해도 확인되지 않았습니다.\n2026년 배구지수 조사에 참여해 주세요. 조사 반영 후 플레이 가능합니다.":
    "2023~2026년 중 한 해라도 조사 백분위가 있는 학교는 플레이할 수 있습니다.\n위에서 학교를 검색해 선택해 주세요.";
  message("험난한 교직생활",title+"\n"+desc,[
@@ -240,35 +255,30 @@ function burst(x,y,color,n=9){
 }
 function float(x,y,text,color="#fff"){floats.push({x,y,text,color,life:1});}
 function addScore(n){score+=Math.round(n*(1+Math.min(combo,20)*.04));updateLabels();}
-function activateDash(){
- if(state!=="playing"||player.cool>0)return;
- player.cool=Math.max(1.8,4-skill.dash);player.dashTime=.36;player.inv=Math.max(player.inv,.52);
- burst(player.x,player.y,"#ffdf84",12);float(player.x,player.y-46,"⚡ 회피!","#f4ffb5");playTone(710,.11,"square",.03);
-}
 function hit(a){
  if(a.good){
-  let amount=Math.round(a.heal*skill.heal),before=life;life=Math.min(maxLife,life+amount);
+  let amount=Math.round(a.heal*skill.heal*profile.heal),before=life;life=Math.min(maxLife,life+amount);
   combo=Math.min(25,combo+1);addScore(75);float(a.x,a.y,"+"+(life-before)+" 체력","#1e945b");burst(a.x,a.y,"#7be3ca",12);playTone(760,.1);return;
  }
- if(player.inv>0||player.dashTime>0){combo=Math.min(25,combo+1);addScore(55);float(a.x,a.y,"PERFECT +55","#fcdd87");burst(a.x,a.y,"#ffe7a0",8);return;}
- let amount=Math.round(a.damage*difficulty);
- life=Math.max(0,life-amount);combo=0;player.inv=1.25+skill.guard;shake=.2;misses++;
+ if(player.inv>0){combo=Math.min(25,combo+1);addScore(55);float(a.x,a.y,"PERFECT +55","#fcdd87");burst(a.x,a.y,"#ffe7a0",8);return;}
+ let amount=Math.round(a.damage*profile.damage);
+ life=Math.max(0,life-amount);combo=0;player.inv=profile.inv+skill.guard;shake=.2;misses++;
  float(a.x,a.y,"-"+amount,"#b32738");burst(a.x,a.y,"#ff9d88",15);playTone(190,.24,"sawtooth",.04);
  if(navigator.vibrate)navigator.vibrate(70);
  if(life<=0)finish(false);
 }
 function spawn(){
- const isGood=Math.random()<(dayTime>12?.22:.16),source=isGood?good:bad;
+ const isGood=Math.random()<Math.min(.55,profile.goodChance+(dayTime>12?.04:0)),source=isGood?good:bad;
  let a=source[Math.floor(Math.random()*source.length)];
  const x=30+Math.random()*Math.max(1,W-60);
- let speed=(88+day*18+Math.random()*56)*difficulty;
+ let speed=(88+day*18+Math.random()*56)*profile.enemySpeed;
  if(day===4&&dayTime>13)speed*=1.3;
- items.push({x,y:-40,speed,r:20+Math.random()*3,wobble:Math.random()*7,phase:Math.random()*6.28,good:isGood,...a});
+ items.push({x,y:-40,speed,r:(20+Math.random()*3)*(isGood?1:profile.enemySize),size:isGood?1:profile.enemySize,wobble:(3+Math.random()*7)*profile.zigzag,phase:Math.random()*6.28,good:isGood,...a});
 }
 function nextDay(){
  if(day===4){finish(true);return;}
  state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;playTone(900,.3);
- let picks=upgrades.filter(u=>!(u.id==="dash"&&skill.dash>=1.4));
+ let picks=upgrades.slice();
  picks.sort(()=>Math.random()-.5);picks=picks.slice(0,3);
  message(days[day]+" 퇴근!","능력 선택",picks.map(u=>({label:u.title,detail:u.detail,action:()=>choose(u)})),"🌙");
 }
@@ -277,8 +287,7 @@ function choose(u){
  if(u.id==="speed")skill.speed*=1.18;
  if(u.id==="guard")skill.guard+=.4;
  if(u.id==="heal")skill.heal*=1.5;
- if(u.id==="dash")skill.dash+=.7;
- day++;dayTime=0;items=[];spawnClock=.65;life=Math.min(maxLife,life+10);
+  day++;dayTime=0;items=[];spawnClock=.65;life=Math.min(maxLife,life+10);
  player.inv=1.2;pointerId=null;pointerX=null;pointerY=null;state="playing";updateLabels();setNotice(days[day]+" 시작!",2);closeMessage();playTone(610,.16);
 }
 function finish(win){
@@ -295,29 +304,28 @@ function finish(win){
  (win?"주말은 선생님 편입니다.":"괜찮아요. 다음 주는 더 잘 피할 수 있어요!");
  message(win?"🎊 주말을 지켜냈어요!":"🫖 잠깐 쉬어가요",text,[
  {label:"🔄 같은 학교로 다시 하기",action:()=>start()},
- {label:"🏫 학교 변경",action:intro}],win?"🎉":"🫖");
+ {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?"🎉":"🫖");
  playTone(win?950:280,.32);
 }
 function pause(){
- if(state==="playing"){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;message("일시정지","",[{label:"▶ 계속",action:resume},{label:"↩ 처음으로",action:intro}],"⏸");}
+ if(state==="playing"){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;message("일시정지","",[{label:"▶ 계속",action:resume},{label:"🏫 다른 학교로 변경",action:stopAndChangeSchool},{label:"↩ 처음으로",action:stopToIntro}],"⏸");}
  else if(state==="paused")resume();
 }
 function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","📄 공문 · 📞 전화 · 📅 회의 등 장애물을 피하세요.\n☕ 커피 · 💌 응원 · 🤝 동료 아이템을 받으면 체력이 회복됩니다.\n스치듯 피하면 콤보 점수! ⚡ 긴급 회피 중에는 무적입니다.\n\nPC: ← → / A D, 스페이스\n모바일: 터치·드래그로 비행, 버튼으로 좌우 이동",[
- {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else intro();}}],"❔");
+ message("게임 방법","📄 공문 · 📞 전화 · 📅 회의 등 장애물을 피하세요.\n☕ 커피 · 💌 응원 · 🤝 동료 아이템을 받으면 체력이 회복됩니다.\n장애물을 아슬아슬하게 피하면 콤보 점수를 얻습니다.\n\nPC: ← → / A D\n모바일: 화면 터치·드래그로 자유롭게 이동",[
+ {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
 function update(dt){
  clock+=dt;dayTime+=dt;score+=dt*9;player.inv=Math.max(0,player.inv-dt);
- player.cool=Math.max(0,player.cool-dt);player.dashTime=Math.max(0,player.dashTime-dt);
- shake=Math.max(0,shake-dt);noticeTime=Math.max(0,noticeTime-dt);
+  shake=Math.max(0,shake-dt);noticeTime=Math.max(0,noticeTime-dt);
  const dir=(pressed.has("right")?1:0)-(pressed.has("left")?1:0);
- const speed=285*skill.speed*(player.dashTime>0?2.1:1);
+ const speed=285*skill.speed*profile.heroSpeed;
  if(pointerId!==null&&pointerX!==null&&pointerY!==null){
   // Finger/mouse targets both axes while actively touching the canvas.
-  const flyingSpeed=1300*skill.speed*(player.dashTime>0?1.5:1);
+  const flyingSpeed=1300*skill.speed*profile.heroSpeed;
   const dx=pointerX-player.x,dy=pointerY-player.y;
   player.x+=Math.sign(dx)*Math.min(Math.abs(dx),flyingSpeed*dt);
   player.y+=Math.sign(dy)*Math.min(Math.abs(dy),flyingSpeed*dt);
@@ -329,10 +337,14 @@ function update(dt){
  player.x=Math.max(27,Math.min(W-27,player.x));
  player.y=Math.max(76,Math.min(H-52,player.y));
  spawnClock-=dt;
- if(spawnClock<=0){spawn();spawnClock=Math.max(.3,(.86-day*.085-(dayTime>13&&day===4?.2:0))/difficulty)*(0.8+Math.random()*.45);}
+ if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-day*.085-(dayTime>13&&day===4?.2:0))/profile.spawnPressure)*(0.8+Math.random()*.45);}
  for(let i=items.length-1;i>=0;i--){
-  const a=items[i];a.y+=a.speed*dt;a.x+=Math.sin(clock*2+a.phase)*a.wobble*dt;
-  if(Math.hypot(a.x-player.x,a.y-player.y)<a.r+player.r*.78){
+  const a=items[i];a.y+=a.speed*dt;a.x+=Math.sin(clock*(2+profile.zigzag)+a.phase)*a.wobble*dt;
+   if(!a.good&&a.y>H*.18&&a.y<H-75){
+    a.x+=Math.sign(player.x-a.x)*Math.min(Math.abs(player.x-a.x),profile.homing*dt);
+   }
+   a.x=Math.max(a.r,Math.min(W-a.r,a.x));
+  if(Math.hypot(a.x-player.x,a.y-player.y)<a.r+player.r*.78*profile.heroSize){
    items.splice(i,1);hit(a);if(state!=="playing")return;continue;
   }
   if(a.y>H+35){
@@ -379,17 +391,13 @@ function background(){
  for(let x=15;x<W;x+=117){roundRect(x,H-49,72,12,5,"#a97b61");roundRect(x+6,H-38,7,20,3,"#94694f");}
 }
 function playerDraw(){
- ctx.save();ctx.translate(Math.round(player.x),Math.round(player.y));
+ ctx.save();ctx.translate(Math.round(player.x),Math.round(player.y));ctx.scale(profile.heroSize,profile.heroSize);
  if(pointerId!==null&&state==="playing"){
   const blink=Math.floor(clock*18)%2;
   ctx.fillStyle="#ffe078";ctx.fillRect(-16,31,11,blink?15:23);ctx.fillRect(6,31,11,blink?23:15);
   ctx.fillStyle="#fa8f69";ctx.fillRect(-11,50,7,blink?10:6);ctx.fillRect(10,50,7,blink?6:10);
  }
  if(player.inv>0&&Math.floor(clock*12)%2===0)ctx.globalAlpha=.45;
- if(player.dashTime>0){
-  ctx.fillStyle="rgba(255,236,119,.22)";ctx.fillRect(-39,-50,78,80);
-  ctx.strokeStyle="#ffe873";ctx.lineWidth=3;ctx.strokeRect(-39,-50,78,80);
- }
  // 16-bit style sprite made of solid square pixels
  const px=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
  px(-24,27,17,8,"#0b213f");px(7,27,17,8,"#0b213f");
@@ -412,12 +420,12 @@ function drawItems(){
  for(const a of items){
   ctx.save();ctx.translate(a.x,a.y);
   ctx.shadowColor="rgba(22,54,70,.25)";ctx.shadowBlur=12;ctx.shadowOffsetY=4;
-  const shade=a.good?"#e1fff1":"#ffe9e1",edge=a.good?"#27a781":"#df7672";
-  ctx.fillStyle="#17294c";ctx.fillRect(-27,-27,54,54);ctx.fillStyle=shade;ctx.fillRect(-24,-24,48,48);
+  const shade=a.good?"#e1fff1":"#ffe9e1",edge=a.good?"#27a781":"#df7672",size=27*a.size,inner=24*a.size;
+  ctx.fillStyle="#17294c";ctx.fillRect(-size,-size,size*2,size*2);ctx.fillStyle=shade;ctx.fillRect(-inner,-inner,inner*2,inner*2);
   ctx.shadowBlur=0;ctx.shadowOffsetY=0;
-  ctx.strokeStyle=edge;ctx.lineWidth=3;ctx.strokeRect(-24,-24,48,48);
-  ctx.fillStyle=edge;ctx.beginPath();ctx.arc(18,-18,5,0,Math.PI*2);ctx.fill();
-  ctx.textAlign="center";ctx.font="27px sans-serif";ctx.fillText(a.emoji,0,10,37);
+  ctx.strokeStyle=edge;ctx.lineWidth=3;ctx.strokeRect(-inner,-inner,inner*2,inner*2);
+  ctx.fillStyle=edge;ctx.beginPath();ctx.arc(inner*.75,-inner*.75,5,0,Math.PI*2);ctx.fill();
+  ctx.textAlign="center";ctx.font=Math.round(27*a.size)+"px sans-serif";ctx.fillText(a.emoji,0,10*a.size,37*a.size);
   ctx.restore();
  }
 }
@@ -446,7 +454,6 @@ function draw(){
   ctx.textAlign="center";roundRect(W/2-53,64,106,24,11,"rgba(108,55,32,.9)");
   ctx.font="900 12px sans-serif";ctx.fillStyle="#fff3c9";ctx.fillText("🔥 "+combo+" COMBO",W/2,80,101);
  }
- if(player.cool>0){roundRect(W/2-53,H-23,106,16,7,"rgba(19,47,71,.88)");ctx.textAlign="center";ctx.font="bold 10px sans-serif";ctx.fillStyle="#fff";ctx.fillText("⚡ "+player.cool.toFixed(1)+"s",W/2,H-11);}
  roundRect(12,H-7,W-24,3,2,"rgba(24,62,83,.15)");
  if(dayTime>0)roundRect(12,H-7,(W-24)*Math.min(1,dayTime/23.5),3,2,"#2b9c8b");
  if(noticeTime>0){ctx.textAlign="center";roundRect(W/2-68,93,136,27,9,"rgba(17,54,70,.88)");ctx.font="bold 13px sans-serif";ctx.fillStyle="#fff";ctx.fillText(notice,W/2,111,126);}
@@ -456,23 +463,15 @@ function draw(){
 function tick(t){const dt=Math.min(.04,(t-last)/1000||0);last=t;if(state==="playing")update(dt);draw();requestAnimationFrame(tick);}
 window.addEventListener("keydown",e=>{
  const key=e.key.toLowerCase();
- if(["arrowleft","arrowright"," ","a","d"].includes(key)&&(state==="playing"||state==="paused"))e.preventDefault();
+ if(e.target?.matches?.("input,textarea,[contenteditable]"))return;
+  if(["arrowleft","arrowright","a","d"].includes(key)&&(state==="playing"||state==="paused"))e.preventDefault();
  if(key==="arrowleft"||key==="a")pressed.add("left");
  if(key==="arrowright"||key==="d")pressed.add("right");
- if(key===" "&&!e.repeat)activateDash();
- if(key==="escape"&&(state==="playing"||state==="paused"))pause();
+  if(key==="escape"&&(state==="playing"||state==="paused"))pause();
 });
 window.addEventListener("keyup",e=>{let key=e.key.toLowerCase();if(key==="arrowleft"||key==="a")pressed.delete("left");if(key==="arrowright"||key==="d")pressed.delete("right");});
 window.addEventListener("blur",()=>{pressed.clear();pointerId=null;pointerX=null;pointerY=null;if(state==="playing")pause();});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state==="playing")pause();});
-for(let dir of ["left","right"]){
- const el=$(dir);
- el.addEventListener("pointerdown",e=>{e.preventDefault();el.setPointerCapture(e.pointerId);pressed.add(dir);pointerId=null;pointerX=null;pointerY=null;el.classList.add("down");});
- const off=()=>{pressed.delete(dir);el.classList.remove("down");};
- el.addEventListener("pointerup",off);el.addEventListener("pointercancel",off);el.addEventListener("lostpointercapture",off);
-}
-$("dash").addEventListener("pointerdown",e=>{e.preventDefault();activateDash();$("dash").classList.add("down");});
-["pointerup","pointercancel","pointerleave"].forEach(k=>$("dash").addEventListener(k,()=>$("dash").classList.remove("down")));
 function dragPosition(e){
  const r=canvas.getBoundingClientRect();
  if(!r.width||!r.height)return null;
