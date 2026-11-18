@@ -24,7 +24,7 @@
 .beagu-page-challenge .challenge-access-submit{
   display:inline-flex;align-items:center;justify-content:center;width:100%;
   min-height:51px;margin-top:13px;border:0;border-radius:12px;
-  background:#2563eb;color:white;font:800 15px/1.4 inherit;cursor:pointer
+  background:#2563eb;color:white;font-family:inherit;font-size:15px;font-weight:800;line-height:1.4;cursor:pointer
 }
 .beagu-page-challenge .challenge-access-submit:hover{background:#1d4ed8}
 .beagu-page-challenge .challenge-access-submit:disabled{opacity:.55;cursor:wait}
