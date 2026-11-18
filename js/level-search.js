@@ -117,11 +117,13 @@
     session = '';
     geographyComparisons.clear();
     sessionStorage.removeItem(key);
+    window.dispatchEvent(new Event('beagu:level-state-change'));
     $('loginPanel').hidden = false;
     $('searchPanel').hidden = true;
     $('loginMessage').textContent = message;
   }
   function loggedIn() {
+    window.dispatchEvent(new Event('beagu:level-state-change'));
     $('loginPanel').hidden = true;
     $('searchPanel').hidden = false;
   }
