@@ -6,19 +6,19 @@
 
 1. [2026 배구지수 본조사 응답 시트](https://docs.google.com/spreadsheets/d/1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4/edit)를 소유자 또는 편집자 권한으로 연다.
 2. **확장 프로그램 → Apps Script** 를 연다.
-3. `scripts/beagu-2026-noon-sync.gs`의 전체 내용을 복사하여 기본 `Code.gs`에 붙여넣는다. 기존 코드가 있다면 먼저 백업하고 함부로 덮어쓰지 않는다.
+3. `scripts/beagu-2026-noon-sync.gs`를 `Code.gs`에, `scripts/beagu-2026-mbti-review-sync.gs`를 별도 `MBTI_Review.gs`에 반영한다. 기존 Apps Script 코드와 트리거를 먼저 백업한다. 같은 이름의 함수를 중복 정의하지 않는다.
 4. Apps Script의 **프로젝트 설정 → 스크립트 속성**에서 `SUPABASE_PUBLISHABLE_KEY`를 추가한다. 값은 GitHub `js/supabase-config.js`의 공개용 publishable/anon 키를 사용한다. **service_role 키를 입력하지 않는다.**
-5. `refreshBeagu2026Stats`를 한 번 수동 실행하고 Google 계정 권한을 승인한다.
+5. 테스트용 실제 응답을 새로 만들지 않는다. 스크립트 함수 `refreshBeagu2026AllPrivateStats`를 한 번 실행해 이미 있는 원본 응답 2행을 재집계하며 Google 계정 권한을 승인한다. 첫 사전 응답은 집계에서 제외한다.
 6. [비공개 집계 MASTER](https://docs.google.com/spreadsheets/d/1I9SXXmOCnyeWP3RjoBHW5Tfvg0RpgR4RjnEVoxZvpp8/edit)의 `학교별_집계_내부`, `학교매칭_보류`, `정오_실행로그` 탭을 확인한다.
-7. `SUPABASE_PUBLISHABLE_KEY`, `BEAGU_2026_INGEST_TOKEN`(서버와 동일한 비밀 토큰)을 스크립트 속성에서 확인하고 `installBeagu2026Sync`를 **한 번** 실행해 제출 직후 갱신 트리거와 정오 백업 트리거 2종을 설치한다. Apps Script의 실행/트리거 탭에서 확인한다.
+7. `SUPABASE_PUBLISHABLE_KEY`, `BEAGU_2026_INGEST_TOKEN`(서버와 동일한 비밀 토큰)을 스크립트 속성에서 확인하고 `installBeagu2026Sync`를 **한 번** 실행한다. 설치되는 두 트리거는 `onBeagu2026FormSubmitted`(폼 제출 직후), `refreshBeagu2026AllPrivateStats`(매일 정오 백업)이다. 두 집계(Q01~Q13, Q14~Q17)가 같은 트리거로 동작한다. Apps Script 실행/트리거 탭에서 두 개의 설치·성공 여부를 확인한다.
 
-## 설문 제출 직후 자동 집계 (선택 설치)
+## 설문 제출 직후 자동 집계 (최초 설치 후 자동 운영)
 
-- 원본 응답 시트의 Apps Script에 갱신된 `beagu-2026-noon-sync.gs`를 반영한 뒤, 소유자가 **`setupBeagu2026FormSubmitTrigger`를 한 번 실행하여 권한 승인**합니다.
+- 위 1회 설치가 완료되면 이후 응답은 `onBeagu2026FormSubmitted`가 자동으로 비공개 집계한다. **매 응답마다 ChatGPT에 등록 명령을 할 필요가 없다.** 초기 설치는 Google Apps Script 소유자의 OAuth 승인이 필요하므로 GitHub 커밋만으로 실제 트리거가 설치되지 않는다.
 - Google Forms에서 실제 응답이 제출될 때 `onBeagu2026FormSubmitted`가 실행되어 비공개 MASTER를 다시 집계합니다. Google 처리 및 Apps Script 실행 지연이 있어 '즉시'를 보장할 수는 없습니다.
-- 기존 `setupDailyNoonTrigger`는 장애 복구용으로 계속 유지합니다. 두 갱신 경로는 잠금으로 중복 실행을 막습니다.
+- 매일 정오 백업 트리거 `refreshBeagu2026AllPrivateStats`도 함께 실행된다. 최초 설치 함수는 기존 독립 집계·MBTI 백업 트리거를 정리해 중복 실행을 방지한다.
 - 최초 설치 전에 **현재 트리거 목록·실행 로그를 점검**해 동일 목적 트리거가 중복되지 않게 하세요.
-- **이 작업은 학교별 통계를 비공개 집계하면서, 홈 화면에는 전국 누적 참여횟수와 중복 없는 참여학교 수만 공개합니다.** 2026 학교별 상세 문항 결과는 별도의 서버 검수·승인 정책을 그대로 적용합니다.
+- **학교별 Q01~Q13 채점과 Q14~Q17 학교문화 자료는 내부 집계만 자동 갱신한다.** 전국 누적 참여횟수·참여학교 수도 별도 보호된 전송 경로로 동기화한다. 2026년 학교별 상세조회에 결과가 표시되려면 데이터 검증, 동의·재식별 검토, 수동 공개 승인과 72시간 지연을 통과해야 한다.
 - 설치되지 않은 트리거가 실제로 작동한다고 표시하거나, 현재 승인된 결과가 있다고 주장하지 않습니다.
 
 ## 일정 및 동작
