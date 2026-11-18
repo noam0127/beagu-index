@@ -19,10 +19,10 @@ assert.equal(scope.mbti26_office('전남광주통합특별시광주동부교육�
 assert.equal(scope.mbti26_parseDay('2026. 10. 3'), '2026-10-03');
 assert.equal(scope.mbti26_parseDay('2026. 11. 1. 오전 11:00'), '2026-11-01');
 assert.equal(scope.mbti26_parseDay('2026. 11. 32'), null);
-const h=Array.from({length:41},()=>''),headers={1:'B01. 학교가 있는 지역',2:'B02. 경기',21:'B03. 공식 명칭',37:'Q14. 관계',38:'Q15. 결정',39:'Q16. 변화',40:'Q17. 운영'};
+const h=Array.from({length:41},()=>''),headers={1:'B01. 학교가 있는 지역',2:'B02. 경기',21:'B03. 공식 명칭',22:'B04. 설립 유형',37:'Q14. 관계',38:'Q15. 결정',39:'Q16. 변화',40:'Q17. 운영'};
 for(const [i,label] of Object.entries(headers))h[Number(i)]=label;
 const c=scope.mbti26_columns(h);
-assert.equal(c.region,1);assert.equal(c.school,21);
+assert.equal(c.region,1);assert.equal(c.school,21);assert.equal(c.schoolType,22);
 assert.equal(c.offices[0],2);
 assert.equal(JSON.stringify(c.q),'[37,38,39,40]');
 assert.equal(scope.mbti26_classify([1,-1,-1,1])[0],'ENFP');
