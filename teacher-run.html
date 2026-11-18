@@ -78,6 +78,16 @@ canvas{height:400px;cursor:default}
 .teacher-run-lv1-gate p{font-size:14px;line-height:1.6;color:#d6e7f8;margin:0 0 18px}
 .teacher-run-lv1-gate a{display:inline-block;padding:11px 18px;border-radius:10px;background:#7be3ca;color:#12334b;font-weight:800;text-decoration:none}
 #teacher-run-protected[hidden],#teacher-run-lv1-gate[hidden]{display:none!important}
+.arcade-survival-health{margin:0 0 10px;padding:11px 13px;background:linear-gradient(110deg,#1b3857,#193047);border:1px solid #5b83a0;border-radius:12px;min-width:0}
+.arcade-survival-health-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px 10px;margin-bottom:8px;font-size:13px;font-weight:800;color:#e6f7ff}
+.arcade-survival-health-top strong{color:#fff1b1;white-space:nowrap;font-size:13px;font-variant-numeric:tabular-nums}
+.arcade-survival-life-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap;white-space:nowrap}
+#run-lives{color:#ff9eaf;letter-spacing:3px;font-size:17px}
+#run-life-tier{font-size:11px;font-weight:900;color:#9ff9dd}
+.arcade-survival-health-track{position:relative;overflow:hidden;height:16px;border:1px solid #5b7187;border-radius:7px;background:#35495e;box-shadow:inset 0 2px 5px rgba(0,0,0,.26)}
+.arcade-survival-health-fill{width:100%;height:100%;border-radius:5px;background:linear-gradient(90deg,#2ab79a,#85f2bd);transition:width .17s linear,background-color .17s}
+.arcade-survival-health-fill.is-low{background:linear-gradient(90deg,#d24654,#ff9e73)}
+@media(max-width:380px){.arcade-survival-health{padding:9px 10px}.arcade-survival-health-top{font-size:11px;gap:5px}.arcade-survival-health-top strong{font-size:11px}#run-lives{font-size:15px;letter-spacing:1px}}
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -105,6 +115,13 @@ canvas{height:400px;cursor:default}
     <div class="stat"><span>1UP</span><strong id="scoreLabel">0</strong></div>
     <div class="stat"><span>HI-SCORE</span><strong id="bestLabel">0</strong></div>
   </div>
+  <section class="arcade-survival-health" aria-label="교사 체력과 남은 목숨">
+    <div class="arcade-survival-health-top">
+      <span>♥ 체력 <strong id="run-health-numbers">100 / 100</strong></span>
+      <div class="arcade-survival-life-badges"><span id="run-life-tier">—</span><span id="run-lives" aria-label="남은 목숨">♥♥</span></div>
+    </div>
+    <div class="arcade-survival-health-track" id="run-health-progress" role="progressbar" aria-label="교사 체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="arcade-survival-health-fill" id="run-health-fill"></div></div>
+  </section>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="stage">
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 3.0 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
@@ -129,14 +146,19 @@ const canvas=$("game"),ctx=canvas.getContext("2d");
 const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("teacher_run","#arcade-top10") : null;
 const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
 const difficultyProfiles={
- easy:{heroSpeed:1.34,heroSize:.86,startingLife:150,damage:.54,enemySpeed:.72,spawnPressure:.62,enemySize:.83,goodChance:.34,heal:1.48,inv:1.95,homing:0,zigzag:.65,label:"교사 강화 · 위협 느림 · 회복 풍부"},
- normal:{heroSpeed:1.18,heroSize:.93,startingLife:125,damage:.76,enemySpeed:.86,spawnPressure:.82,enemySize:.92,goodChance:.28,heal:1.22,inv:1.6,homing:9,zigzag:.85,label:"교사 우세 · 회복 충분"},
- hard:{heroSpeed:1,heroSize:1,startingLife:100,damage:1,enemySpeed:1,spawnPressure:1,enemySize:1,goodChance:.20,heal:1,inv:1.3,homing:25,zigzag:1,label:"표준 · 장애물 추격 시작"},
- very_hard:{heroSpeed:.88,heroSize:1.09,startingLife:90,damage:1.26,enemySpeed:1.18,spawnPressure:1.24,enemySize:1.15,goodChance:.14,heal:.79,inv:1.08,homing:48,zigzag:1.25,label:"교사 약화 · 장애물 추격 강화"},
- extreme:{heroSpeed:.78,heroSize:1.17,startingLife:78,damage:1.51,enemySpeed:1.38,spawnPressure:1.52,enemySize:1.28,goodChance:.09,heal:.63,inv:.90,homing:78,zigzag:1.5,label:"교사 약화 · 큰 위협·집중 추격"}
+ easy:{lives:3,heroSpeed:1.34,heroSize:.86,startingLife:150,damage:.54,enemySpeed:.72,spawnPressure:.62,enemySize:.83,goodChance:.34,heal:1.48,inv:1.95,homing:0,zigzag:.65,label:"교사 강화 · 위협 느림 · 회복 풍부"},
+ normal:{lives:2,heroSpeed:1.18,heroSize:.93,startingLife:125,damage:.76,enemySpeed:.86,spawnPressure:.82,enemySize:.92,goodChance:.28,heal:1.22,inv:1.6,homing:9,zigzag:.85,label:"교사 우세 · 회복 충분"},
+ hard:{lives:2,heroSpeed:1,heroSize:1,startingLife:100,damage:1,enemySpeed:1,spawnPressure:1,enemySize:1,goodChance:.20,heal:1,inv:1.3,homing:25,zigzag:1,label:"표준 · 장애물 추격 시작"},
+ very_hard:{lives:1,heroSpeed:.88,heroSize:1.09,startingLife:90,damage:1.26,enemySpeed:1.18,spawnPressure:1.24,enemySize:1.15,goodChance:.14,heal:.79,inv:1.08,homing:48,zigzag:1.25,label:"교사 약화 · 장애물 추격 강화"},
+ extreme:{lives:1,heroSpeed:.78,heroSize:1.17,startingLife:78,damage:1.51,enemySpeed:1.38,spawnPressure:1.52,enemySize:1.28,goodChance:.09,heal:.63,inv:.90,homing:78,zigzag:1.5,label:"교사 약화 · 큰 위협·집중 추격"}
 };
 const difficultyName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
-schoolPicker.onChange=()=>{if(state==="ready")intro();};
+schoolPicker.onChange=()=>{if(state==="ready"){
+  const chosen=schoolPicker.get();
+  profile=difficultyProfiles[chosen?.difficulty]||difficultyProfiles.hard;
+  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;
+  updateLabels();intro();
+ }};
 schoolPicker.onRequestChange=stopAndChangeSchool;
 if(!ctx){$("overlayDesc").textContent="이 브라우저에서는 캔버스 게임을 실행할 수 없습니다.";return;}
 const days=["월요일","화요일","수요일","목요일","금요일"];
@@ -160,7 +182,7 @@ const upgrades=[
  {title:"🛡️ 마음의 여유",detail:"충돌 후 무적 시간 0.4초 연장",id:"guard"},
  {title:"☕ 회복의 기술",detail:"회복 아이템 효과 +50%",id:"heal"}
 ];
-let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100;
+let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
 let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
 let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0;
@@ -214,7 +236,7 @@ async function start(){
  }
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
- state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;
+ state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;
  combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};
  items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;pointerId=null;pointerY=null;
  pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
@@ -223,7 +245,7 @@ function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];score=0;day=0;dayTime=0;combo=0;
- life=100;maxLife=100;player.inv=0;
+ maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
 }
