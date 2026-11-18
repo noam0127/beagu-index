@@ -172,12 +172,26 @@ Deno.serve(async (req:Request)=>{
     if(existing.length>=10 && score<=existing[9].score){
       return json({ranked:false,score,top10:existing},200,origin);
     }
-    const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null",select:"id"});
-    const marked=await db("arcade_game_sessions?"+patchQ,"PATCH",{submitted_at:new Date().toISOString()},"return=representation");
-    if(!marked?.length)return error("session_expired",409,origin);
-    await db("arcade_game_scores","POST",{session_id:session.id,game,nickname,score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},"return=minimal");
+    // Persist the score BEFORE consuming the session. A transient insert failure
+    // must not permanently invalidate a valid finished match.
+    // A unique session_id plus ignore-duplicates makes concurrent submits safe.
+    const inserted=await db(
+      "arcade_game_scores?on_conflict=session_id&select=created_at",
+      "POST",
+      {session_id:session.id,game,nickname,score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
+      "resolution=ignore-duplicates,return=representation"
+    ) as Array<{created_at:string}>;
+    if(!inserted?.length)return error("session_expired",409,origin);
+    const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"});
+    try{
+      await db("arcade_game_sessions?"+patchQ,"PATCH",{submitted_at:new Date().toISOString()},"return=minimal");
+    }catch(_err){
+      // The unique score is safely stored even if the completion marker fails.
+      console.error("arcade_completion_marker_failed");
+    }
     const board=await top(game);
-    const rank=board.findIndex(e=>e.nickname===nickname&&e.score===score)+1;
+    // Nicknames and scores are not unique; use the database-created timestamp as a tie-breaker.
+    const rank=board.findIndex(e=>e.nickname===nickname&&e.score===score&&e.created_at===inserted[0].created_at)+1;
     return json({ranked:rank>0,rank,score,top10:board},200,origin);
   }catch(e){
     console.error("arcade_error",e instanceof Error?e.message:"unknown");
