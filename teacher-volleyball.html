@@ -69,7 +69,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  .volley-energy-fill{height:100%;width:100%;background:linear-gradient(90deg,#4fc6ba,#9aefc3);transition:width .16s linear}
  .team.right .volley-energy-fill{margin-left:auto;background:linear-gradient(90deg,#e98cab,#ffd0a3)}
  .volley-energy-fill.is-low{background:linear-gradient(90deg,#cf4c55,#ff996f)}
- .volley-special-status{text-align:center;padding:8px 9px;background:#193956;border:1px solid #456985;border-top:none;border-radius:0 0 10px 10px;color:#f4da8b;font-size:11px;font-weight:850;line-height:1.45}
+ .volley-special-status{text-align:center;padding:7px 9px;background:#193956;border:1px solid #456985;border-top:none;border-radius:0 0 10px;color:#f4da8b;font-size:12px;font-weight:850;line-height:1.45}
+ .center-label small{display:block;margin-top:6px;font-size:10px;line-height:1.2;white-space:nowrap;color:#d3fff4;letter-spacing:0}
  @media(max-width:380px){.volley-energy-meta{font-size:9px}.volley-energy-track{height:9px}}
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
@@ -87,10 +88,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="challenge.html">인증</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="search-lv1.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 <main class="game-shell">
-  <div class="top"><span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="beagu-brand-mark" aria-hidden="true">B</span>선생님배구 1.0</span><span class="pill">2× SPEED · 7 PTS</span></div>
+  <div class="top"><span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="beagu-brand-mark" aria-hidden="true">B</span>선생님배구 1.0</span><span class="pill">7 PTS</span></div>
   <div class="scoreboard" aria-label="현재 점수">
     <div class="team"><span>나</span><strong id="player-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="player-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="우리 팀 체력" id="player-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="player-energy-fill"></div></div></div>
-    <div class="center-label">VS</div>
+    <div class="center-label">VS<small id="volley-time-label">⏱ 0초</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="cpu-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="상대 팀 체력" id="cpu-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="cpu-energy-fill"></div></div></div>
   </div>
   <div class="volley-special-status" id="volley-special-status" role="status">⚡ 필살기 준비 · 경기 중 화면 더블 터치</div>
@@ -141,7 +142,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   schoolPicker.onChange=school=>{
     if(state.phase==="ready"||state.phase==="finished"){
       setStatus(!school ? "2023~2026년 중 한 해라도 조사 백분위가 있으면 플레이할 수 있습니다." :
-        school.eligible ? school.school_name+" · "+diffName[school.difficulty]+" · 확인 연도 평균" :
+        school.eligible ? school.school_name+" · "+diffName[school.difficulty] :
         "플레이 불가 · 학교 선택창의 누락 연도 안내를 확인하세요.");
       if(state.phase==="ready"){
         const tier=school?.difficulty||"hard";
@@ -154,12 +155,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   };
   const SPEED_MULTIPLIER=2; // horizontal player and AI reaction (5->10, 3.65->7.3)
   const AUTO_SPIKE_SPEED=8; // player-driven displacement per simulation frame
-  const getFinalScore=()=>state.leftScore*120+Math.min(60,state.spikes)*25+
+  const getBaseScore=()=>state.leftScore*120+Math.min(60,state.spikes)*25+
     (state.leftScore>state.rightScore ? 600+Math.max(0,7-state.rightScore)*30 : 0);
+  const getSurvivalSeconds=()=>Math.floor(state.playFrames/60);
+  const getSurvivalBonus=()=>Math.min(900,getSurvivalSeconds()*4);
+  const getFinalScore=()=>getBaseScore()+getSurvivalBonus();
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 354, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null };
-  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false, leftEnergy:100, rightEnergy:100, leftMaxEnergy:100, rightMaxEnergy:100, specialCooldownFrames:0,specialChargeFrames:0, energyTick:0 };
+  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false, leftEnergy:100, rightEnergy:100, leftMaxEnergy:100, rightMaxEnergy:100, specialCooldownFrames:0,specialChargeFrames:0, energyTick:0, playFrames:0 };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, cooldown: 0, trail: [] };
@@ -189,11 +193,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       ui.progress.setAttribute("aria-valuemax",String(max));
       ui.progress.setAttribute("aria-valuenow",String(Math.ceil(current)));
     }
+    document.getElementById("volley-time-label").textContent="⏱ "+getSurvivalSeconds()+"초";
     const seconds=Math.ceil(state.specialCooldownFrames/60);
     specialStatus.textContent=state.specialChargeFrames>0
-      ?"⚡ 필살기 충전! 다음 공 접촉 시 슈퍼 스파이크 ("+Math.ceil(state.specialChargeFrames/60)+"초)"
-      :seconds>0?"⚡ 필살기 재충전 "+seconds+"초"
-      :"⚡ 필살기 준비 · 경기 중 화면 더블 터치";
+      ?"⚡ 슈퍼 스파이크 준비 "+Math.ceil(state.specialChargeFrames/60)+"초"
+      :seconds>0?"⚡ 재충전 "+seconds+"초"
+      :"⚡ 더블 터치 · 필살기";
    }
    function energyFactor(side){
      const fraction=side==="left"?state.leftEnergy/state.leftMaxEnergy:state.rightEnergy/state.rightMaxEnergy;
@@ -206,7 +211,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
      state.specialCooldownFrames=specialProfile.cooldown*60;
      state.specialChargeFrames=specialProfile.chargeFrames;
      state.flash=18;
-     setStatus("⚡ 필살기 발동! 다음 공을 터치하면 슈퍼 스파이크!");
+     setStatus("⚡ 슈퍼 스파이크 준비!");
      updateEnergyUI();
      return true;
    }
@@ -257,12 +262,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     specialProfile=specialProfiles[currentDifficulty]||specialProfiles.hard;
     resetEnergy();
     schoolPicker.setLocked(true);
-    state.leftScore=0;state.rightScore=0;state.spikes=0;
+    state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
     releaseKeys();
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
     resetPositions();
-    setStatus(school.school_name+" · "+diffName[school.difficulty]+" | "+battle.label);
+    setStatus(school.school_name+" · "+diffName[school.difficulty]);
     syncUI();canvas.focus();
   }
   function stopForSchoolChange(){
@@ -270,7 +275,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ranking?.cancel();
     releaseKeys();
     state.phase="ready";state.message="";state.winner="";state.flash=0;
-    state.leftScore=0;state.rightScore=0;state.spikes=0;
+    state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
     energy=energyProfiles.hard;specialProfile=specialProfiles.hard;resetEnergy();
     schoolPicker.setLocked(false);
     schoolPicker.resetForChange();
@@ -418,10 +423,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       state.phase = "finished";
       state.winner = state.leftScore > state.rightScore ? "🏆 승리!" : "다시 도전!";
       state.message = state.winner;
-      setStatus(state.winner+" · "+String(getFinalScore()).padStart(7,"0")+" PTS");
+      setStatus(state.winner+" · 기본 "+getBaseScore()+" + 생존 "+getSurvivalSeconds()+"초("+getSurvivalBonus()+") = "+getFinalScore()+"점");
       schoolPicker.setLocked(false);
       ranking?.finish(getFinalScore(),{
-        player:state.leftScore,cpu:state.rightScore,spikes:state.spikes
+        player:state.leftScore,cpu:state.rightScore,spikes:state.spikes,survivalSeconds:getSurvivalSeconds()
       });
     }
     syncUI();
@@ -429,6 +434,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function step() {
     if (state.flash > 0) state.flash--;
     if(state.phase==="playing"){
+      state.playFrames++;
       if(state.specialCooldownFrames>0)state.specialCooldownFrames--;
       if(state.specialChargeFrames>0)state.specialChargeFrames--;
       if(++state.energyTick%10===0)updateEnergyUI();
