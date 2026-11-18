@@ -33,3 +33,15 @@ body.beagu-page-policy .hero{padding-top:25px}
  body.beagu-page-compare .intro-content{padding:23px 21px}
  body.beagu-page-report .welcome{padding:35px 16px}
 }
+
+/* Homepage: two unmistakable actions, not a strip of fine print. */
+body.beagu-page-home .beagu-home-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+body.beagu-page-home .beagu-home-actions>.data-access-link{grid-column:auto;width:100%;margin:0;min-height:59px}
+body.beagu-page-home .survey-access-link{display:inline-flex;align-items:center;justify-content:center;min-height:59px;padding:12px 16px;border-radius:15px;border:1px solid #bdd1ef;color:#2357aa!important;background:#fff;text-decoration:none;font-size:17px;font-weight:850;box-shadow:0 6px 18px rgba(27,52,88,.04)}
+body.beagu-page-home .survey-access-link:hover{background:#edf5ff;border-color:#8eb4e9}
+body.beagu-page-home .survey-access-link:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+body.beagu-page-search .lv1-quick-head,body.beagu-page-lv1 .auth-card .tier-label{margin-bottom:12px}
+@media(max-width:620px){
+body.beagu-page-home .beagu-home-actions{display:grid;grid-template-columns:1fr;gap:9px}
+body.beagu-page-home .survey-access-link,body.beagu-page-home .beagu-home-actions>.data-access-link{min-height:54px;font-size:16px}
+}
