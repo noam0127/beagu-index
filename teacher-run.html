@@ -139,7 +139,7 @@ canvas{height:400px;cursor:default}
   <div id="arcade-top10" aria-label="험난한 교직생활 3.0 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-recordfix1"></script>
-<script src="js/arcade-school-picker-v1.js?v=20261118-tier-ability2"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261118-hp-super-time1"></script>
 <script>
 (function(){
 "use strict";
@@ -179,10 +179,10 @@ const good=[
  {emoji:"🌿",name:"쉬는 시간",heal:15,color:"#ecffe0"}
 ];
 const upgrades=[
- {title:"💪 퇴근 체력 +25",detail:"체력 최대치 증가 + 현재 체력 회복",id:"vital"},
- {title:"👟 가벼운 발걸음",detail:"이동 속도 18% 증가",id:"speed"},
- {title:"🛡️ 마음의 여유",detail:"충돌 후 무적 시간 0.4초 연장",id:"guard"},
- {title:"☕ 회복의 기술",detail:"회복 아이템 효과 +50%",id:"heal"}
+ {title:"💪 체력 +25",id:"vital"},
+ {title:"👟 이동속도 +18%",id:"speed"},
+ {title:"🛡️ 무적시간 +0.4초",id:"guard"},
+ {title:"☕ 회복효과 +50%",id:"heal"}
 ];
 let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
@@ -228,12 +228,12 @@ async function start(){
  if(state==="starting")return;
  const ticket=++startTicket;
  state="starting";
- message("조사 자료 확인 중","2023~2026년 중 한 해 이상 백분위가 있는지 확인하고 있습니다.",[],"🏫");
+ message("학교 확인 중","",[],"🏫");
  const session=ranking?await ranking.start(selected):null;
  if(ticket!==startTicket)return;
  if(!session){
   state="ready";intro();
-  schoolPicker.status.textContent="게임 시작 불가 · 조사 자료를 다시 확인하거나 서버 연결 상태를 확인하세요.";
+  schoolPicker.status.textContent="게임 서버 연결 실패";
   return;
  }
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
@@ -246,7 +246,7 @@ async function start(){
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
- items=[];sparks=[];floats=[];score=0;day=0;dayTime=0;combo=0;
+ items=[];sparks=[];floats=[];score=0;day=0;dayTime=0;clock=0;combo=0;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -299,7 +299,7 @@ function activateSpecial(){
   }
  }
  if(cleared)addScore(Math.min(cleared,8)*60);
- setNotice("⚡ 위기 탈출! 장애물 "+cleared+"개 제거 · 보호막",2);
+ setNotice("⚡ 필살기! "+cleared+"개 제거",2);
  playTone(1080,.24);updateLabels();
  return true;
 }
@@ -342,7 +342,7 @@ function nextDay(){
  state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;playTone(900,.3);
  let picks=upgrades.slice();
  picks.sort(()=>Math.random()-.5);picks=picks.slice(0,3);
- message(days[day]+" 퇴근!","능력 선택",picks.map(u=>({label:u.title,detail:u.detail,action:()=>choose(u)})),"🌙");
+ message(days[day]+" 퇴근!","능력 선택",picks.map(u=>({label:u.title,action:()=>choose(u)})),"🌙");
 }
 function choose(u){
  if(u.id==="vital"){maxLife+=25;life=Math.min(maxLife,life+35);}
@@ -379,7 +379,7 @@ function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","📄 공문 · 📞 전화 · 📅 회의 등 장애물을 피하세요.\n☕ 커피 · 💌 응원 · 🤝 동료 아이템을 받으면 체력이 회복됩니다.\n장애물을 아슬아슬하게 피하면 콤보 점수를 얻습니다.\n⚡ 화면 더블 터치: 주변 장애물 제거 + 보호막 (재충전 필요)\n\nPC: ← → / A D\n모바일: 화면 터치·드래그로 자유롭게 이동",[
+ message("게임 방법","📄 회피 · ☕ 회복 · ⚡ 더블 터치 필살기\nPC ← → · 모바일 드래그",[
  {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
 function update(dt){
