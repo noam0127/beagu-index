@@ -353,15 +353,7 @@
   function renderYear(host, year, rows, publicValue, schoolId, distributions=[], school=null,comparison=null,loadStatus='loading') {
     host.replaceChildren();
     host.append(make('h3', '', `${year}년 조사 결과`));
-    // The unified school report contains the verified original question titles
-    // and clearly labels unavailable or privacy-restricted answer aggregates.
-    // This link does not grant access or expose any private response records.
-    if(/^[A-Z0-9]{7}$/.test(String(schoolId))){
-      const allQuestions=make('a','question-catalog-link',year+'년 전체 조사 문항·공개 상태 보기');
-      allQuestions.href='school-report.html?school_id='+encodeURIComponent(String(schoolId))+'&year='+year;
-      allQuestions.style.cssText='display:block;margin:12px 0 18px;padding:12px 14px;border:1px solid #b9cbea;border-radius:10px;color:#1d4ed8;text-decoration:none;font-weight:700;background:#f8fbff';
-      host.append(allQuestions);
-    }
+    // Lv.1 results expand in this search card; do not navigate to a new page.
     if(year === 2026) {
       const vetted = metrics2026(rows);
       if(vetted.length) {
@@ -495,7 +487,14 @@
         for(const card of $('results').querySelectorAll('.school-card')){
           if(card.dataset.schoolId!==id)continue;
           const old=card.querySelector('.percentile-panel');
-          if(old)old.replaceWith(percentilePanel(school));
+          if(old){
+            // Preserve the already-mounted in-card disclosure, its listeners,
+            // and the chosen year while refreshing only the published values.
+            const fresh=percentilePanel(school);
+            const previousGrid=old.querySelector('.percentile-grid');
+            const updatedGrid=fresh.querySelector('.percentile-grid');
+            if(previousGrid&&updatedGrid)previousGrid.replaceWith(updatedGrid);
+          }
           break;
         }
       }
@@ -519,43 +518,8 @@
     host.replaceChildren();
     const section=make('section','detail');
     const vals=asPublicPercentiles(school);
-    const profile = make('section', 'school-profile');
-    profile.append(make('h3', '', '학교 기본정보'));
-    for (const [label, value] of [
-      ['학교명', school.school_name],
-      ['시도', school.sido_standard || school.sido],
-      ['교육지원청', school.support_office],
-      ['주소', school.address],
-      ['설립유형', school.establishment],
-      ['학교급', school.school_kind]
-    ]) addRow(profile, label, value || '자료 없음');
-    section.append(profile);
-
-    // Surface the already approved Lv.1 school-size facts before the history tabs.
-    // Values are received only from the session-validated Edge Function.
-    const published=(Array.isArray(rows)?rows:[])
-      .filter(r=>[2024,2025].includes(Number(r.year))&&Number(r.access_level)===1)
-      .flatMap(r=>(Array.isArray(r.summary?.metrics)?r.summary.metrics:[])
-        .filter(m=>m.group==='편집본 공식 학교정보'&&typeof m.label==='string'&&typeof m.value==='string')
-        .map(m=>({year:Number(r.year),label:m.label,value:m.value,group:m.group,nationalAverage:m.nationalAverage,regionalAverage:m.regionalAverage,comparisonKind:m.comparisonKind,referenceYear:m.referenceYear})));
-    const schoolScale=[];
-    const seen=new Set();
-    for(const year of [2025,2024]){
-      for(const fact of published.filter(x=>x.year===year)){
-        if(seen.has(fact.label))continue;
-        seen.add(fact.label);
-        schoolScale.push({...fact,group:'학교 기본·교직원·시설 정보'});
-      }
-    }
-    if(schoolScale.length){
-      BeaguDetailGroups.appendGrouped(section,schoolScale,(body,m)=>addRow(body,m.label,m.value,{...m,group:'편집본 공식 학교정보'}));
-    }else{
-      section.append(make('p','detail-note','이 학교의 추가 승인 규모정보는 아직 없습니다. 과거 백분위는 아래에서 확인할 수 있습니다.'));
-    }
-
-
-
-
+    // The compact Lv.1 disclosure contains history only. The school identity,
+    // percentile summaries and MBTI are already shown above/below this panel.
     section.append(make('h3', 'school-history-heading', '연도별 상세자료 · 2023~2026'));
     const tabs = make('div', 'year-tabs');
     tabs.setAttribute('role', 'tablist');
@@ -594,10 +558,7 @@
       tabs.append(button);
     }
     section.append(tabs, content);
-    if (window.BeaguSchoolMBTI) section.append(BeaguSchoolMBTI.createDetail(String(school.school_id), session));
-
-    section.append(make('p', 'detail-note',
-      '연도별 조사 문항·산정 기준이 다릅니다. 2025년 백분위는 8개 영역 종합값을 조사 비교집단 1,458개교에서 재산출한 값으로, 이전 연도와 직접 비교하지 마세요.'));
+    // A single MBTI summary remains directly after the history box.
     host.append(section);
     const firstAvailable = [2025, 2024, 2023].find(year =>
       (Array.isArray(rows) ? rows : []).some(row =>
@@ -636,41 +597,54 @@
           card.append(make('div','sort-result',label+' · '+(numeric?format(value):'자료 없음')));
         }
       }
-      const recorded=['2023','2024','2025'].filter(y=>
-        historicalPresenceByYear[y]?.has(String(school.school_id)));
-      if(recorded.length)card.append(make('div','sort-result',recorded.join(' · ')+'년 조사 기록 있음'));
-      button.setAttribute('aria-expanded', 'false');
-      button.addEventListener('click', async (event) => {
-        if (!detail.hidden) {
-          detail.hidden = true;
-          button.textContent = '🔍 연도별 상세 기록 보기';
-          button.setAttribute('aria-expanded', 'false');
-          return;
-        }
+      // The four-year result panel itself is the disclosure trigger.
+      // Remove the trend graphic and the extra action button; the MBTI badge
+      // is inserted directly after this panel by BeaguSchoolMBTI.decorateCards.
+      const historyPanel=card.querySelector('.percentile-panel');
+      const heading=historyPanel?.querySelector('.percentile-heading');
+      const graphic=historyPanel?.querySelector('.percentile-graph');
+      if(!historyPanel||!heading||!detail)throw Error('LV1_HISTORY_PANEL_MISSING');
+      graphic?.remove();
+      historyPanel.classList.add('lv1-history-disclosure');
+      const trigger=make('button','lv1-history-trigger','역대 조사결과');
+      trigger.type='button';
+      trigger.setAttribute('aria-controls',detail.id);
+      trigger.setAttribute('aria-expanded','false');
+      trigger.setAttribute('aria-label',String(school.school_name||'학교')+' 역대 조사결과 펼치기');
+      heading.replaceWith(trigger);
+      historyPanel.append(detail);
+      card.querySelector('.school-actions')?.remove();
+      async function toggleHistory(event){
+        const opening=detail.hidden;
+        detail.hidden=!opening;
+        historyPanel.classList.toggle('is-expanded',opening);
+        trigger.setAttribute('aria-expanded',String(opening));
+        trigger.setAttribute('aria-label',String(school.school_name||'학교')+' 역대 조사결과 '+(opening?'접기':'펼치기'));
+        if(!opening||detail.dataset.loaded)return;
         const action=window.BeaguSearchTelemetry?.selected(String(school.school_id),1,'search-lv1',event);
-        detail.hidden = false;
-        button.textContent = '상세보기 접기';
-        button.setAttribute('aria-expanded', 'true');
-        if (detail.dataset.loaded) return;
-        detail.textContent = '불러오는 중...';
-        const detailTask=window.BeaguLoading?.start('학교 상세자료를 불러오는 중…');
-        try {
-          const data = await api('school', {schoolId:school.school_id});
+        detail.textContent='역대 조사결과를 불러오는 중…';
+        const detailTask=window.BeaguLoading?.start('역대 조사결과를 불러오는 중…');
+        try{
+          const data=await api('school',{schoolId:school.school_id});
           await loaded;
-          // The server enforces the session's authorization and release_status.
-          showDetails(detail, data.rows, school, data.schoolDistributions);
-          detail.dataset.loaded = '1';
+          // The signed-session API enforces access rights and release status.
+          if(!detail.isConnected)return;
+          showDetails(detail,data.rows,school,data.schoolDistributions);
+          detail.dataset.loaded='1';
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
-        } catch (error) {
-          if (error.unauthorized) { loggedOut('인증이 만료되었습니다. 다시 입력하세요.'); return; }
-          detail.textContent = '자료를 불러오지 못했습니다. 다시 열람해 주세요.';
-        } finally {
+        }catch(error){
+          if(error.unauthorized){loggedOut('인증이 만료되었습니다. 다시 입력하세요.');return;}
+          detail.textContent='자료를 불러오지 못했습니다. 다시 펼쳐 확인해 주세요.';
+        }finally{
           window.BeaguLoading?.finish(detailTask);
         }
+      }
+      trigger.addEventListener('click',toggleHistory);
+      historyPanel.addEventListener('click',event=>{
+        if(event.target.closest('button,a,.school-detail'))return;
+        trigger.click();
       });
       host.append(card);
-      // A unique school search should show the approved tier data immediately.
-      if (list.length === 1 && total === 1) button.click();
     }
     loadPagePercentiles(list,serial);
     if (window.BeaguSchoolMBTI) void BeaguSchoolMBTI.decorateCards(host,session);
