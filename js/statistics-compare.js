@@ -18,7 +18,7 @@
     feedback:$('compareFeedback'), clear:$('clearCompare'), copy:$('copyCompareLink'),
     authForm:$('compareLv1Form'), authCode:$('compareLv1Code'),
     authSubmit:$('compareLv1Submit'), authBadge:$('compareLv1Badge'),
-    authSignedIn:$('compareLv1SignedIn'), authStatus:$('compareLv1Status'),
+    authSignedIn:$('compareLv1SignedIn'),
     authMessage:$('compareLv1Message'), authToggle:$('compareLv1Toggle'),
     authLogout:$('compareLv1Logout')
   };
@@ -50,8 +50,6 @@
     elements.authSignedIn.hidden=!authenticated;
     elements.authBadge.textContent=authenticated ? 'Lv.'+state.authLevel+' 인증됨' : '미인증';
     elements.authBadge.classList.toggle('is-authenticated',authenticated);
-    elements.authStatus.textContent=authenticated ?
-      'Lv.'+state.authLevel+' 인증 완료 · 승인된 상세자료를 비교표에서 확인할 수 있습니다.' : '';
   }
   function clearAuth(message='',removeStored=true) {
     state.authEpoch++;
@@ -91,7 +89,7 @@
     try{sessionStorage.setItem(SESSION_KEY,token)}catch(_){}
     window.dispatchEvent(new Event('beagu:level-state-change'));
     updateAuthUI();
-    authMessage('인증이 완료되었습니다. 선택한 학교의 승인 통계를 불러옵니다.');
+    authMessage('');
     renderTable();
     refreshApprovedSelections();
   }
@@ -311,12 +309,96 @@
     });
     tbody.append(tr);
   }
+
+  // Keep the selected schools and current section visible while the page itself
+  // scrolls. CSS-only sticky cannot escape the horizontal overflow container.
+  const stickyHeader={root:null,scroller:null,label:null,table:null,frame:0};
+  function ensureStickyHeader(){
+    if(stickyHeader.root)return;
+    const root=make('div',null,'compare-sticky-viewport');
+    root.hidden=true;
+    root.setAttribute('aria-hidden','true');
+    const scroller=make('div',null,'compare-sticky-scroll');
+    const table=make('table',null,'compare-table compare-sticky-table');
+    scroller.append(table);
+    const label=make('div',null,'compare-sticky-title');
+    root.append(scroller,label);
+    document.body.append(root);
+    Object.assign(stickyHeader,{root,scroller,label,table});
+    elements.panel.addEventListener('scroll',()=>{
+      if(!root.hidden)scroller.scrollLeft=elements.panel.scrollLeft;
+      scheduleStickyHeader();
+    },{passive:true});
+    window.addEventListener('scroll',scheduleStickyHeader,{passive:true});
+    window.addEventListener('resize',refreshStickyHeader,{passive:true});
+  }
+  function scheduleStickyHeader(){
+    if(!stickyHeader.root||stickyHeader.frame)return;
+    stickyHeader.frame=requestAnimationFrame(()=>{
+      stickyHeader.frame=0;
+      updateStickyHeader();
+    });
+  }
+  function refreshStickyHeader(){
+    if(!stickyHeader.root)return;
+    const head=elements.table.tHead;
+    if(!head || elements.panel.hidden){stickyHeader.root.hidden=true;return;}
+    const originalCells=[...head.rows[0].cells];
+    const widths=originalCells.map(cell=>cell.getBoundingClientRect().width);
+    if(!widths.length||widths.some(width=>width<=0)){
+      stickyHeader.root.hidden=true;return;
+    }
+    const cols=make('colgroup');
+    widths.forEach(width=>{
+      const col=make('col');
+      col.style.width=width+'px';
+      cols.append(col);
+    });
+    const copiedHead=head.cloneNode(true);
+    [...copiedHead.rows[0].cells].forEach((cell,index)=>{
+      cell.style.width=widths[index]+'px';
+      cell.style.minWidth=widths[index]+'px';
+      cell.style.maxWidth=widths[index]+'px';
+    });
+    stickyHeader.table.style.width=widths.reduce((sum,width)=>sum+width,0)+'px';
+    stickyHeader.table.replaceChildren(cols,copiedHead);
+    stickyHeader.scroller.scrollLeft=elements.panel.scrollLeft;
+    scheduleStickyHeader();
+  }
+  function updateStickyHeader(){
+    if(!stickyHeader.root)return;
+    const head=elements.table.tHead;
+    if(!head||elements.panel.hidden){
+      stickyHeader.root.hidden=true;return;
+    }
+    const bounds=elements.panel.getBoundingClientRect();
+    const headHeight=head.getBoundingClientRect().height;
+    const shouldShow=bounds.top+headHeight<0 &&
+      bounds.bottom>headHeight+45 && bounds.width>0;
+    stickyHeader.root.hidden=!shouldShow;
+    if(!shouldShow)return;
+    stickyHeader.root.style.left=bounds.left+'px';
+    stickyHeader.root.style.width=bounds.width+'px';
+    stickyHeader.scroller.scrollLeft=elements.panel.scrollLeft;
+    const groups=[...elements.table.querySelectorAll('tbody .compare-group')];
+    const threshold=stickyHeader.root.getBoundingClientRect().bottom;
+    let title=groups[0]?.textContent.trim()||'항목별 비교';
+    for(const group of groups){
+      if(group.getBoundingClientRect().top>threshold)break;
+      title=group.textContent.trim();
+    }
+    if(stickyHeader.label.textContent!==title)stickyHeader.label.textContent=title;
+  }
   function renderTable() {
     const hasSelections=state.selected.length>0;
     elements.panel.hidden=!hasSelections;
     elements.results.hidden=!hasSelections;
     elements.empty.hidden=hasSelections;
-    if (!state.selected.length) { elements.table.replaceChildren(); return; }
+    if (!state.selected.length) {
+      elements.table.replaceChildren();
+      if(stickyHeader.root)stickyHeader.root.hidden=true;
+      return;
+    }
     const body=make('tbody');
     appendGroup(body,'배구지수 · 선택 연도별 공개 기록');
     appendMetric(body,'조사 기준연도',(_s,y)=>y+'년');
@@ -328,10 +410,6 @@
       const track=make('div',null,'compare-percent-track');
       const fill=make('span'); fill.style.width=d.value+'%';track.append(fill);wrap.append(track);
       return wrap;
-    });
-    appendMetric(body,'자료 상태',(s,y)=>{
-      const d=percentile(s,y);
-      return make('span',d.label,'status-pill '+d.kind);
     });
     const years=[...new Set(state.selected.map(e=>e.year))].sort((a,b)=>a-b);
     for(const year of years){
@@ -380,6 +458,8 @@
       }
     }
     elements.table.replaceChildren(createHeader(),body);
+    ensureStickyHeader();
+    refreshStickyHeader();
   }
   async function loadPublicQuestions() {
     try {
