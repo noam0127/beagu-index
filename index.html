@@ -149,6 +149,7 @@
     .teacher-game-footer a { display: inline-block; color: #9be6db; font-weight: 750; font-size: 14px; text-underline-offset: 3px; }
     .teacher-game-footer a:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
     .teacher-run-feature { background: linear-gradient(140deg, #173e4d 0%, #10223d 68%); border: 1px solid #35677b; }
+    #teacher-run-feature[hidden] { display: none !important; }
     .teacher-run-feature .teacher-game-frame { height: 720px; }
     .teacher-run-feature .teacher-game-footer a { color: #a1fae7; }
     .teacher-run-feature .game-tag { font-size: 11px; padding: 3px 7px; margin-left: 5px; vertical-align: middle; background: #78e2c4; color: #193e4c; border-radius: 6px; font-weight: 850; white-space: nowrap; }
@@ -244,14 +245,14 @@
 
 
 
-    <section class="teacher-game-feature teacher-run-feature" aria-labelledby="teacher-run-title">
+    <section id="teacher-run-feature" class="teacher-game-feature teacher-run-feature" aria-labelledby="teacher-run-title" hidden>
       <div class="teacher-game-header">
         <h2 id="teacher-run-title">🎒 험난한 교직생활 2.0</h2>
       </div>
       <iframe
         class="teacher-game-frame"
         id="teacher-run-frame"
-        src="teacher-run.html?v=20261118-five-tiers1"
+        data-src="teacher-run.html?v=20261118-five-tiers1"
         title="험난한 교직생활 2.0 — 월요일부터 금요일까지 살아남는 교사 생존 게임"
         loading="lazy"
         allowfullscreen></iframe>
@@ -273,6 +274,7 @@
  <script src="js/home-cumulative-stats.js?v=20261118-live1"></script>
 <script src="js/visit-stats.js?v=20261117-visitfix1"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
+<script defer src="js/beagu-game-lv1-gate-v1.js?v=20261118-gate1"></script>
 
 <script>
   // 각각의 게임 iframe에서 발생한 리사이즈 이벤트만 허용합니다.
