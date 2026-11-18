@@ -444,6 +444,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       return data;
     }
     function showAuthenticated(){
+      window.dispatchEvent(new Event('beagu:level-state-change'));
       form.hidden=true;
       message.textContent='';
       authenticated.hidden=false;
@@ -492,9 +493,9 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       authRequest('verify',saved).then(data=>{
         if(id!==requestId)return;
         if(Number(data.level)>=1)showAuthenticated();
-        else sessionStorage.removeItem(key);
+        else {sessionStorage.removeItem(key);window.dispatchEvent(new Event('beagu:level-state-change'));}
       }).catch(()=>{
-        if(id===requestId)sessionStorage.removeItem(key);
+        if(id===requestId){sessionStorage.removeItem(key);window.dispatchEvent(new Event('beagu:level-state-change'));}
       });
     }
   })();
