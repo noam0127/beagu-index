@@ -23,6 +23,8 @@ assert.match(picker,/available_years/,"confirmed survey years shown; empty schoo
 assert.match(backend,/years=\[2023,2024,2025,2026\]/);
 assert.match(backend,/available_years\.reduce\(\(sum,year\)/,"average only available survey years");
 assert.match(backend,/available_years\.length>0/,"one year unlocks games");
+assert.match(backend,/average>=80\?"extreme":average>=60\?"very_hard":average>=40\?"hard":average>=20\?"normal":"easy"/,"percentile tiers rise toward Extreme");
+assert.match(picker,/difficultyLabels=\{easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"\}/,"five English difficulty labels");
 assert.match(backend,/!selected\.eligible/,"server refuses missing years");
 assert.match(backend,/!currentSchool\?\.eligible/,"previously issued sessions are rechecked");
 assert.match(volley,/new window\.ArcadeSchoolPicker/);
@@ -110,7 +112,7 @@ assert.equal(school.available_years.length+school.missing_years.length,4);
 assert.equal("national_percentile" in school,false,"never return individual raw percentiles");
 assert.equal("average_percentile" in school,false,"do not leak potentially sensitive average values");
 if(school.eligible){
- assert.ok(["easy","normal","hard"].includes(school.difficulty));
+ assert.ok(["easy","normal","hard","very_hard","extreme"].includes(school.difficulty));
  const start=await requestWithRetry(api,200,{
   method:"POST",headers:origin,
   body:JSON.stringify({action:"start",game:"volleyball",school_id:school.school_id})
@@ -142,7 +144,7 @@ console.log("PASS: school search and any-year percentile eligibility (no raw val
 const oneYear=JSON.parse((await requestWithRetry(api+"?school_id=7021086",200,{headers:origin})).body).school;
 assert.equal(oneYear.eligible,true,"one-year school should play");
 assert.deepEqual(oneYear.available_years,[2024],"2024-only school is grounded");
-assert.ok(["easy","normal","hard"].includes(oneYear.difficulty));
+assert.ok(["easy","normal","hard","very_hard","extreme"].includes(oneYear.difficulty));
 const oneStart=JSON.parse((await requestWithRetry(api,200,{
  method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"volleyball",school_id:oneYear.school_id})
 })).body);
