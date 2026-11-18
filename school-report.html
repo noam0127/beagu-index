@@ -1731,7 +1731,7 @@
       bounds.innerHTML='<span>0백분위</span><span>100백분위</span>';
       host.append(track,bounds);
       const note=document.createElement('p');note.className='school-survey-snapshot__note';
-      note.textContent='학교별로 공개 승인된 종합지표입니다. 개별 문항의 평균이나 선택 결과와는 다릅니다.';
+      note.textContent=year===2025?'참여 응답으로 산출한 종합 백분위입니다. 응답 기록이 적은 학교도 포함되며, 학교 전체 교사의 의견을 대표하는 값은 아닙니다.':'학교별로 공개 승인된 종합지표입니다. 개별 문항의 평균이나 선택 결과와는 다릅니다.';
       host.append(note);
     }else{
       const empty=document.createElement('p');empty.className='school-survey-snapshot__empty';
