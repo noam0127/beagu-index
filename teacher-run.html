@@ -269,7 +269,20 @@ function intro(){
  ],"🏫");
 }
 
-function updateLabels(){$("dayLabel").textContent=days[day]+" · "+(day+1)+"/5";$("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");}
+function updateLabels(){
+ $("dayLabel").textContent=days[day]+" · "+(day+1)+"/5";
+ $("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");
+ const hp=Math.max(0,Math.min(maxLife,life));
+ const fraction=maxLife>0?hp/maxLife:0;
+ $("run-health-numbers").textContent=Math.ceil(hp)+" / "+maxLife;
+ $("run-health-fill").style.width=(fraction*100).toFixed(1)+"%";
+ $("run-health-fill").classList.toggle("is-low",fraction<=.3);
+ $("run-health-progress").setAttribute("aria-valuemax",String(maxLife));
+ $("run-health-progress").setAttribute("aria-valuenow",String(Math.ceil(hp)));
+ $("run-lives").textContent="♥".repeat(livesLeft)+"♡".repeat(maxLives-livesLeft);
+ $("run-lives").setAttribute("aria-label","남은 목숨 "+livesLeft+"개 / "+maxLives+"개");
+ $("run-life-tier").textContent=difficultyName[schoolPicker.get()?.difficulty]||"—";
+}
 function setNotice(t,time=1.8){notice=t;noticeTime=time;}
 function burst(x,y,color,n=9){
  for(let i=0;i<n;i++){let a=Math.PI*2*i/n+(Math.random()-.5)*.8,v=50+Math.random()*140;
@@ -287,7 +300,15 @@ function hit(a){
  life=Math.max(0,life-amount);combo=0;player.inv=profile.inv+skill.guard;shake=.2;misses++;
  float(a.x,a.y,"-"+amount,"#b32738");burst(a.x,a.y,"#ff9d88",15);playTone(190,.24,"sawtooth",.04);
  if(navigator.vibrate)navigator.vibrate(70);
- if(life<=0)finish(false);
+ if(life<=0){
+  if(livesLeft>1){
+   livesLeft--;life=Math.max(1,Math.round(maxLife*.62));
+   player.inv=Math.max(player.inv,profile.inv+1.4+skill.guard);
+   setNotice("♥ 남은 목숨 "+livesLeft+"개 · 체력 회복",2.1);
+   burst(player.x,player.y,"#f6ec87",18);playTone(740,.2);
+  }else{finish(false);return;}
+ }
+ updateLabels();
 }
 function spawn(){
  const isGood=Math.random()<Math.min(.55,profile.goodChance+(dayTime>12?.04:0)),source=isGood?good:bad;
@@ -322,7 +343,7 @@ function finish(win){
  const grade=win?(life>70?"S":"A"):(day>=3?"B":"C");
  const text=(win?"금요일 퇴근 성공! 🎉":"오늘은 여기까지! 체력 회복이 필요해요.")+"\n"+
  "최종 점수 "+Math.floor(score).toLocaleString("ko-KR")+"점 · "+grade+"등급\n"+
- "아슬아슬 회피 "+nearCount+"회 · 충돌 "+misses+"회\n"+
+ "남은 목숨 "+livesLeft+"/"+maxLives+" · 아슬아슬 회피 "+nearCount+"회 · 충돌 "+misses+"회\n"+
  (win?"주말은 선생님 편입니다.":"괜찮아요. 다음 주는 더 잘 피할 수 있어요!");
  message(win?"🎊 주말을 지켜냈어요!":"🫖 잠깐 쉬어가요",text,[
  {label:"🔄 같은 학교로 다시 하기",action:()=>start()},
@@ -461,14 +482,8 @@ function draw(){
   ctx.fillStyle=f.color;ctx.strokeStyle="rgba(15,35,50,.55)";ctx.lineWidth=3;
   ctx.strokeText(f.text,x,f.y,Math.max(90,W-12));ctx.fillText(f.text,x,f.y,Math.max(90,W-12));
  }ctx.globalAlpha=1;
- const healthW=Math.min(156,Math.max(104,W*.48)),timeW=Math.min(95,Math.max(68,W*.26));
- roundRect(9,10,healthW,49,12,"rgba(18,44,61,.9)");
+ const timeW=Math.min(95,Math.max(68,W*.26));
  roundRect(W-timeW-9,10,timeW,49,12,"rgba(18,44,61,.9)");
- ctx.fillStyle="#fff";ctx.textAlign="left";ctx.font="bold 12px sans-serif";
- ctx.fillText("♥ "+Math.round(life)+"/"+maxLife,18,29,healthW-14);
- const barW=healthW-18;
- roundRect(18,39,barW,8,4,"#53747c");
- if(life>0)roundRect(18,39,barW*Math.min(1,life/maxLife),8,4,life<35?"#ff8c82":"#77e2b4");
  ctx.textAlign="center";ctx.font="900 18px sans-serif";ctx.fillStyle="#f8fafb";
  ctx.fillText(Math.max(0,Math.ceil(23.5-dayTime))+"s",W-timeW/2-9,33,timeW-12);
  ctx.font="bold 9px sans-serif";ctx.fillStyle="#b9ecdd";ctx.fillText("퇴근",W-timeW/2-9,48,timeW-12);
