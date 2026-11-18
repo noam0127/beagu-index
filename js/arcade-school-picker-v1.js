@@ -2,7 +2,7 @@
 (function(){
 "use strict";
 const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard";
-const difficultyLabels={easy:"하 · 쉬움",normal:"중 · 보통",hard:"상 · 어려움"};
+const difficultyLabels={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
 const isSafe=s=>typeof s==="string" && s.length>0;
 function make(tag,cls,label){const el=document.createElement(tag);if(cls)el.className=cls;if(label!==undefined)el.textContent=label;return el;}
 class ArcadeSchoolPicker{
@@ -66,7 +66,7 @@ class ArcadeSchoolPicker{
    if(ticket!==this.serial||this.locked)return;
    const school=data.school;
    if(!school||!isSafe(school.school_name)||typeof school.eligible!=="boolean"||
-      (school.eligible&&!["easy","normal","hard"].includes(school.difficulty)))throw new Error("invalid_school");
+      (school.eligible&&!["easy","normal","hard","very_hard","extreme"].includes(school.difficulty)))throw new Error("invalid_school");
    this.selected=school;
    this.surveyLink.hidden=school.eligible===true;
    this.input.value=school.school_name+" · "+(school.region||"");
@@ -74,7 +74,7 @@ class ArcadeSchoolPicker{
    if(school.eligible){
     const years=Array.isArray(school.available_years)?school.available_years.filter(y=>[2023,2024,2025,2026].includes(y)):[];
     this.status.textContent="✅ "+school.school_name+" | 난이도 "+difficultyLabels[school.difficulty]+
-      " · 확인된 "+years.length+"개년("+years.join("·")+") 백분위 평균 기준";
+      " · 확인된 "+years.length+"개년("+years.join("·")+") 백분위 평균 기준 · 백분위가 높을수록 어려움";
    }else{
     this.status.textContent="🔒 플레이 불가 · 2023~2026년 조사 백분위가 한 해도 확인되지 않았습니다. 2026년 배구지수 조사에 참여해 주세요. 조사 후 백분위 반영이 완료되면 시작할 수 있습니다.";
    }
