@@ -105,7 +105,7 @@ assert.match(read('js/visit-stats.js'),/Number.isSafeInteger/,'Do not invent vis
 assert.match(read('js/challenge.js'),/participantNo\.textContent = '순번 조회 실패'/,'Show a retryable ordinal error');
 assert.match(read('index.html'),/방문한 선생님/);
 assert.doesNotMatch(read('index.html'),/자료 공개 기준/);
-assert.doesNotMatch(read('index.html'),/href="challenge\.html"/,'No home challenge link');
+assert.doesNotMatch(read('index.html'),/class="data-access-link" href="challenge\.html"/,'No standalone home challenge CTA');
 
 for(const page of ['search.html','search-lv1.html','school-report.html']){
  const html=read(page);
