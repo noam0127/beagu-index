@@ -2,9 +2,9 @@
 .beagu-unified-header,.beagu-unified-header *{box-sizing:border-box}
 .beagu-unified-header{width:100%;margin:0;background:#fff;border-bottom:1px solid #e0e8f3;color:#172b49;position:relative;z-index:12;box-shadow:0 2px 12px rgba(27,54,91,.025)}
 .beagu-unified-inner{width:min(100% - 40px,1160px);min-height:76px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:24px}
-.beagu-unified-brand{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;text-decoration:none!important;color:#182a47!important;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Arial,sans-serif;font-weight:850;font-size:19px;letter-spacing:-.045em;line-height:1.2}
+.beagu-unified-brand{display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;text-decoration:none!important;color:#182a47!important;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Arial,sans-serif;font-weight:880;font-size:20px;letter-spacing:.018em;line-height:1.2}
 .beagu-unified-mark{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;background:#2563eb;border-radius:11px;color:white;font:850 25px/1 Arial,Helvetica,sans-serif;letter-spacing:0}
-.beagu-unified-name{white-space:nowrap}
+.beagu-unified-name{white-space:nowrap;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;font-weight:900;letter-spacing:.025em}.beagu-unified-name-accent{color:#2563eb}
 .beagu-unified-nav{display:flex;align-items:center;justify-content:flex-end;gap:clamp(6px,1.35vw,16px);margin:0;padding:0;min-width:0}
 .beagu-unified-nav a{display:inline-flex;justify-content:center;align-items:center;min-height:42px;padding:9px 15px;border-radius:12px;border:1px solid transparent;background:transparent;text-decoration:none!important;color:#596b86!important;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:14px;font-weight:750;line-height:1.4;white-space:nowrap;transition:background-color .15s,color .15s,border-color .15s}
 .beagu-unified-nav a:hover{background:#f0f5ff;color:#1d4ed8!important}
@@ -14,7 +14,7 @@
 .beagu-embedded .beagu-unified-header{display:none!important}
 @media(max-width:760px){
   .beagu-unified-inner{width:min(100% - 28px,1160px);min-height:auto;padding:12px 0 9px;display:flex;flex-direction:column;align-items:stretch;gap:11px}
-  .beagu-unified-brand{font-size:18px}
+  .beagu-unified-brand{font-size:17px;letter-spacing:0}
   .beagu-unified-mark{width:35px;height:35px;flex-basis:35px;font-size:23px;border-radius:10px}
   .beagu-unified-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;width:100%}
   .beagu-unified-nav a{min-width:0;min-height:40px;padding:8px 3px;border-radius:9px;font-size:13px}
