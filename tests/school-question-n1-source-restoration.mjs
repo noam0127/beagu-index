@@ -13,10 +13,10 @@ assert.doesNotMatch(edge,/\.select\('survey_year,questions,review_status,source_
 assert.match(edge,/OWNER_AUTHORIZED_CLOSED_CHOICE/);
 assert.match(edge,/\[2023,2024,2025\]/);
 assert.match(edge,/question\.validRows<1/);
-assert.match(edge,/distributionIndex\.set\(year\+':'\+qid/);
-assert.match(lv1,/data\.schoolDistributions/);
-assert.match(report,/if\(!\[2023,2024,2025\]\.includes\(year\)/);
-assert.match(compare,/if\(!\[2023,2024,2025\]\.includes\(year\)/);
+assert.match(edge,/modeIndex\.set\(year\+':'\+qid/);
+assert.match(lv1,/data\.schoolQuestionModes/);
+assert.match(report,/r\.schoolQuestionModes/);
+assert.match(compare,/data\?\.schoolQuestionModes/);
 assert.match(migration,/ENABLE ROW LEVEL SECURITY/);
 assert.match(migration,/REVOKE ALL .*anon, authenticated/);
 assert.match(read('supabase/functions/_shared/release-policy.mjs'),/THREE_DAY_DELAY_MS=72\*60\*60\*1000/);
