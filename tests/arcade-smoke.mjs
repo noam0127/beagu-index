@@ -66,8 +66,8 @@ assert.match(volley,/battleProfiles=\{/,"volleyball defines five ally/CPU profil
 assert.match(shared,/arcade-rank-school/);
 assert.match(html,/id="teacher-game-title">🏐 선생님배구 1\.0<\/h2>/,"volleyball homepage title should show 1.0");
 assert.match(html,/id="teacher-run-title">🎒 험난한 교직생활 3\.0<\/h2>/,"teacher-run homepage title should show 3.0");
-assert.match(volley,/<title>선생님배구 1\.0 \| 배구인덱스<\/title>/);
-assert.match(runner,/<title>험난한 교직생활 3\.0 \| 배구인덱스<\/title>/);
+assert.match(volley,/<title>선생님배구 1\.0 \| 배구지수<\/title>/);
+assert.match(runner,/<title>험난한 교직생활 3\.0 \| 배구지수<\/title>/);
 assert.doesNotMatch(html,/험난한 교직생활 2\.0|선생님배구(?! 1\.0)/,"old game titles removed from home");
 assert.doesNotMatch(runner,/험난한 교직생활 2\.0/,"old teacher-run title removed");
 assert.ok(html.indexOf('id="teacher-game-frame"')<html.indexOf('id="teacher-run-frame"'));
