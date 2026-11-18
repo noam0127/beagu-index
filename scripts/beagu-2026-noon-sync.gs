@@ -28,7 +28,7 @@ const BEAGU26 = Object.freeze({
 function setupDailyNoonTrigger() {
   const existing=ScriptApp.getProjectTriggers();
   // Replace both older single-pipeline jobs and duplicates with one backup job.
-  existing.filter(t=>["refreshBeagu2026Stats","refreshBeagu2026AllPrivateStats"].includes(t.getHandlerFunction()))
+  existing.filter(t=>["refreshBeagu2026Stats","refreshBeagu2026SchoolCulture","refreshBeagu2026AllPrivateStats"].includes(t.getHandlerFunction()))
     .forEach(t=>ScriptApp.deleteTrigger(t));
   ScriptApp.newTrigger("refreshBeagu2026AllPrivateStats").timeBased()
     .everyDays(1).atHour(12).nearMinute(0).inTimezone(BEAGU26.timezone).create();
