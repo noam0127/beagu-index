@@ -835,3 +835,11 @@ body.beagu-page-lv1 .school-card .lv1-history-disclosure + .beagu-mbti-badge{
   body.beagu-page-lv1 .school-card .lv1-history-disclosure{padding:12px;}
   body.beagu-page-lv1 .school-card .lv1-history-trigger{font-size:16px;}
 }
+
+/* Shared Lv.0 / Lv.1 sort controls: criterion and direction are independent. */
+body.beagu-ui-page .beagu-search-sort .beagu-sort-controls{display:flex;align-items:stretch;gap:8px;width:min(100%,320px);min-width:0}
+body.beagu-ui-page .beagu-search-sort .beagu-sort-controls select{flex:1 1 auto;width:auto;min-width:0}
+body.beagu-ui-page .beagu-search-sort .beagu-sort-direction{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;min-width:44px;min-height:43px;padding:0;border:1px solid var(--ui-line-strong);border-radius:11px;background:#f1f6ff;color:var(--ui-blue);font-size:23px;font-weight:800;line-height:1;cursor:pointer}
+body.beagu-ui-page .beagu-search-sort .beagu-sort-direction:hover{background:#dfeafe;border-color:#8aaff2}
+body.beagu-ui-page .beagu-search-sort .beagu-sort-direction:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+@media(max-width:700px){body.beagu-ui-page .beagu-search-sort .beagu-sort-controls{width:100%}}
