@@ -60,7 +60,7 @@ function mbti26_columns(headers){
  };
  const offices=headers.map((v,i)=>/^B02\./.test(String(v).trim())?i:-1).filter(i=>i>=0);
  if(!offices.length)throw Error("B02 교육지원청 열 누락");
- return {region:requireOne("B01"),school:requireOne("B03"),offices,
+ return {region:requireOne("B01"),school:requireOne("B03"),schoolType:requireOne("B04"),offices,
          q:[14,15,16,17].map(n=>requireOne("Q"+n))};
 }
 function mbti26_score(answer){
@@ -80,7 +80,7 @@ function mbti26_fetchSchools(){
  if(!key)throw Error("프로젝트 설정의 SUPABASE_PUBLISHABLE_KEY(공개키)를 지정하세요");
  const all=[];
  for(let i=0;i<10000;i+=1000){
-  const endpoint=MBTI26_CONFIG.url+"/rest/v1/schools?select=school_id,school_name,sido_standard,support_office,status&status=eq.%EC%9A%B4%EC%98%81&order=school_id.asc&limit=1000&offset="+i;
+  const endpoint=MBTI26_CONFIG.url+"/rest/v1/schools?select=school_id,school_name,sido_standard,support_office,establishment,status&status=eq.%EC%9A%B4%EC%98%81&order=school_id.asc&limit=1000&offset="+i;
   const res=UrlFetchApp.fetch(endpoint,{headers:{"apikey":key},muteHttpExceptions:true});
   if(res.getResponseCode()!==200)throw Error("학교 MASTER 조회 실패: "+res.getResponseCode());
   const chunk=JSON.parse(res.getContentText());
@@ -157,9 +157,18 @@ function refreshBeagu2026SchoolCulture(){
       held++;continue;
     }
     const school=schoolMatches[0],id=String(school.school_id);
+    const selectedType=String(r[c.schoolType]||"").match(/(?:공립|국립|사립)/)?.[0]||"";
+    const registeredType=String(school.establishment||"").match(/(?:공립|국립|사립)/)?.[0]||"";
+    const typeConflict=!!selectedType&&!!registeredType&&selectedType!==registeredType;
+    if(typeConflict){
+      holds.push([i+1,String(r[c.region]||""),offices.join(" / "),String(r[c.school]||""),
+        "설립유형 선택("+selectedType+")과 학교공시("+registeredType+") 불일치","NEEDS_TYPE_REVIEW",""]);
+      held++;
+    }
     const scores=c.q.map((j)=>mbti26_score(r[j])); // Unknown option throws; existing staging preserved
-    if(!grouped.has(id))grouped.set(id,{school,n:[0,0,0,0],sum:[0,0,0,0],rows:0,full:0});
+    if(!grouped.has(id))grouped.set(id,{school,n:[0,0,0,0],sum:[0,0,0,0],rows:0,full:0,typeConflict:false});
     const item=grouped.get(id);
+    item.typeConflict ||= typeConflict;
     item.rows++;matched++;
     if(scores.every(x=>typeof x==="number"))item.full++;
     scores.forEach((v,j)=>{if(typeof v==="number"){item.n[j]++;item.sum[j]+=v}});
@@ -173,13 +182,13 @@ function refreshBeagu2026SchoolCulture(){
     const marker=[g.rows,...g.n.flatMap((n,i)=>[n,averages[i]??""]),g.full,candidate[0],candidate[1],candidate[2]].join("|");
     const oldMarker=old?[old[4],old[5],old[6],old[7],old[8],old[9],old[10],old[11],old[12],old[13],old[14],old[15],old[16]].join("|"):null;
     const unchanged=!!old&&marker===oldMarker;
-    const review=unchanged?old.slice(17,22):["MATCHED","UNVERIFIED","PENDING","PENDING","PENDING"];
+    const review=g.typeConflict?["NEEDS_TYPE_REVIEW","UNVERIFIED","PENDING","PENDING","PENDING"]:(unchanged?old.slice(17,22):["MATCHED","UNVERIFIED","PENDING","PENDING","PENDING"]);
     // Human sign-off is never applied or assumed automatically.
     return [
       String(g.school.school_id),String(g.school.sido_standard),String(g.school.support_office),String(g.school.school_name),g.rows,
       g.n[0],averages[0]??"",g.n[1],averages[1]??"",g.n[2],averages[2]??"",g.n[3],averages[3]??"",
       g.full,candidate[0],candidate[1],candidate[2],
-      ...review,MBTI26_CONFIG.version,stamp,unchanged?old[24]:"고유 교사 수·소표본·반복 공개 위험 확인 전 웹 공개 금지"
+      ...review,MBTI26_CONFIG.version,stamp,g.typeConflict?"설립유형 불일치 · 학교 식별 및 응답자 공개동의 확인 전 공개 금지":(unchanged?old[24]:"고유 교사 수·소표본·반복 공개 위험 확인 전 웹 공개 금지")
     ];
   });
   // Only the private worksheets are updated. Supabase release/approval tables are NEVER modified.
