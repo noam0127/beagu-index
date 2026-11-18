@@ -19,7 +19,15 @@
   ).trim();
   // Exact education office names come from the verified schools table.
   let officeLoadSerial=0;
-  const SORTS=new Set(['school_name_asc','school_name_desc','address_asc','address_desc','beagu_percentile_2025_desc','student_count_desc','housing_price_won_desc']);
+  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','housing_price_won']);
+  let sortDirection='asc';
+  const updateSortDirection=()=>{
+    const button=$('regionSortDirection');
+    const ascending=sortDirection==='asc';
+    button.textContent=ascending?'↑':'↓';
+    button.setAttribute('aria-label',ascending?'현재 오름차순, 내림차순으로 전환':'현재 내림차순, 오름차순으로 전환');
+    button.title=ascending?'현재 오름차순 · 클릭하면 내림차순':'현재 내림차순 · 클릭하면 오름차순';
+  };
   // Only the visible name is shortened. The option value remains the verified
   // exact school-support office string used for server-side filtering.
   const shortOfficeName=(full,region)=>{
@@ -194,6 +202,12 @@
   $('regionSort').addEventListener('change',()=>{
     if(SORTS.has($('regionSort').value))void search(true);
   });
+  $('regionSortDirection').addEventListener('click',()=>{
+    sortDirection=sortDirection==='asc'?'desc':'asc';
+    updateSortDirection();
+    void search(true);
+  });
+  updateSortDirection();
   $('searchInput').addEventListener('input', () => {
     clearTimeout(timer); timer = setTimeout(() => search(true), 250);
   });
@@ -592,10 +606,10 @@
       // Only show the chosen metric when sorting a regional list; values come from the existing authenticated sort API.
       if(mode==='region'){
         const metricSort={
-          beagu_percentile_2025_desc:['2025 배구지수',school.beagu_percentile_2025,v=>Number(v).toFixed(2)+'%'],
-          student_count_desc:['학생 수',school.student_count,v=>Number(v).toLocaleString('ko-KR')+'명'],
-          housing_price_won_desc:['공동주택 평균 공시가격',school.housing_price_won,v=>Number(v).toLocaleString('ko-KR')+'원']
-        }[sortValue];
+          beagu_percentile_2025:['2025 배구지수',school.beagu_percentile_2025,v=>Number(v).toFixed(2)+'%'],
+          student_count:['학생 수',school.student_count,v=>Number(v).toLocaleString('ko-KR')+'명'],
+          housing_price_won:['공동주택 평균 공시가격',school.housing_price_won,v=>Number(v).toLocaleString('ko-KR')+'원']
+        }[sortValue.replace(/_(?:asc|desc)$/,'')];
         if(metricSort){
           const [label,value,format]=metricSort;
           const numeric=value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));
@@ -666,7 +680,7 @@
     $('resultCount').textContent = '검색 중...';
     const searchTask=window.BeaguLoading?.start('학교 검색 결과를 불러오는 중…');
     try {
-      const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?$('regionSort').value:'school_name_asc';
+      const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?`${$('regionSort').value}_${sortDirection}`:'school_name_asc';
       const sort=sortValue.replace(/_(?:asc|desc)$/,'');
       const direction=sortValue.endsWith('_desc')?'desc':'asc';
       const response=await api('ranked_schools',{searchText:q,region,office,sort,direction,page});
