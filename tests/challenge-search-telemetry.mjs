@@ -172,4 +172,68 @@ assert.equal(counts[0].textContent,'7');
 assert.equal(counts[1].textContent,'91');
 assert.equal(counts[2].textContent,'1,000');
 
+
+// The challenge certificate must be inaccessible before a server-confirmed Level 1 session.
+const challengeGate=read('js/challenge-access-v1.js');
+const challengeLogic=read('js/challenge.js');
+assert.doesNotThrow(()=>new Script(challengeGate));
+assert.doesNotThrow(()=>new Script(challengeLogic));
+assert.match(challenge,/id="challengeAccessPanel"/);
+assert.match(challenge,/id="challengeAccessForm"[^>]*hidden/);
+assert.match(challenge,/id="challengeProtected" hidden/);
+assert.ok(challenge.indexOf('id="challengeProtected"')<challenge.indexOf('id="certificate"'));
+assert.match(challenge,/js\/challenge-access-v1\.js/);
+assert.match(challenge,/styles\/challenge-access-v1\.css/);
+assert.match(challengeLogic,/beagu:challenge-access-granted/);
+assert.match(challengeLogic,/beagu:challenge-access-revoked/);
+assert.doesNotMatch(challengeLogic,/^\s*prepare\(\);\s*$/m,'Do not join public challenge without Lv1');
+assert.match(challengeGate,/api\('verify',\{\},token\)/,'Validate saved sessions on server');
+assert.match(challengeGate,/Number\.isInteger\(level\)&&level>=1/,'Level 0 is insufficient');
+
+const gateElements=Object.fromEntries([
+  'challengeAccessPanel','challengeAccessForm','challengeAccessCode',
+  'challengeAccessSubmit','challengeAccessFeedback','challengeProtected','challengeLogout'
+].map(id=>[id,{hidden:id==='challengeProtected'||id==='challengeAccessForm',
+  disabled:false,value:'',textContent:'',listeners:{},addEventListener(type,fn){this.listeners[type]=fn;}}]));
+const gateEvents=[];
+let returnedLevel=0;
+const gateFetchCalls=[];
+let storedGateToken='';
+const gateWindow={
+  addEventListener(){},
+  dispatchEvent(event){gateEvents.push(event.type);}
+};
+runInNewContext(challengeGate,{
+  SUPABASE_URL:'https://example.supabase.co',
+  document:{getElementById:id=>gateElements[id]},
+  window:gateWindow,
+  Event:class{constructor(type){this.type=type;}},
+  sessionStorage:{
+    getItem(){return storedGateToken;},
+    setItem(key,value){assert.equal(key,'beagu-level-session-v1');storedGateToken=value;},
+    removeItem(){storedGateToken='';}
+  },
+  fetch:async(_url,options)=>{
+    const payload=JSON.parse(options.body);
+    gateFetchCalls.push(payload);
+    return {ok:true,status:200,json:async()=>payload.action==='login'
+      ? {level:returnedLevel,token:'f'.repeat(64)}
+      : {level:returnedLevel}};
+  }
+});
+assert.equal(gateElements.challengeProtected.hidden,true,'Anonymous certificate remains hidden');
+assert.equal(gateElements.challengeAccessForm.hidden,false,'Anonymous users see login form');
+gateElements.challengeAccessCode.value='samplecode';
+await gateElements.challengeAccessForm.listeners.submit({preventDefault(){}});
+assert.equal(gateElements.challengeProtected.hidden,true,'Level 0 cannot enter');
+assert.equal(storedGateToken,'','Do not cache Level 0 token');
+returnedLevel=1;
+gateElements.challengeAccessCode.value='samplecode';
+await gateElements.challengeAccessForm.listeners.submit({preventDefault(){}});
+assert.equal(gateElements.challengeProtected.hidden,false,'Level 1 can enter');
+assert.equal(gateElements.challengeAccessPanel.hidden,true);
+assert.equal(storedGateToken,'f'.repeat(64),'Share verified session with search');
+assert.ok(gateEvents.includes('beagu:challenge-access-granted'),'Only verified access signals certificate generator');
+assert.equal(gateFetchCalls.filter(x=>x.action==='login').length,2);
+
 console.log('PASS: existing participant ordinal only, 999/1000/1001, error≠0, intentional school events, privacy and original permissions');
