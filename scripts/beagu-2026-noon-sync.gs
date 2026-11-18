@@ -125,6 +125,44 @@ function publishBeagu2026NationalCount(officialRows,newUniqueSchools) {
   return "PUBLISHED";
 }
 /**
+ * Forward only per-school QA counts to a private, token-authenticated endpoint.
+ * No source teacher row, selected option, contact, free-text or school name.
+ * 2026 school-specific survey results are NEVER approved or published here.
+ */
+function sendBeagu2026PrivateQaChecks(groups){
+  const token=String(PropertiesService.getScriptProperties().getProperty("BEAGU_2026_INGEST_TOKEN")||"").trim();
+  if(token.length<32)throw Error("비공개 검수 전송 토큰이 설정되지 않았습니다.");
+  const schools=[...groups.values()].map(g=>({
+    school_id:String(g.school.school_id),
+    school_response_rows:g.rows,
+    school_match_status:g.typeConflict?"NEEDS_REVIEW":"EXACT_REGION_OFFICE_NAME",
+    core_valid_counts:Object.fromEntries(g.counts.map((n,i)=>[
+      "Q"+String(i+1).padStart(2,"0"),n
+    ]))
+  }));
+  const endpoint=BEAGU26.supabaseUrl+"/functions/v1/beagu-2026-private-qa-ingest";
+  let accepted=0;
+  for(let i=0;i<schools.length;i+=60){
+    const batch=schools.slice(i,i+60);
+    const res=UrlFetchApp.fetch(endpoint,{
+      method:"post",contentType:"application/json",
+      headers:{"X-Beagu-Ingest-Token":token},
+      payload:JSON.stringify({
+        source_spreadsheet_id:BEAGU26.sourceId,
+        official_start_day:BEAGU26.firstOfficialResponseDay,
+        schools:batch
+      }),muteHttpExceptions:true
+    });
+    if(res.getResponseCode()!==200)
+      throw Error("비공개 검수 집계 전송 실패: HTTP "+res.getResponseCode());
+    const result=JSON.parse(res.getContentText());
+    if(result.ok!==true||result.accepted!==batch.length)
+      throw Error("비공개 검수 집계 확인 오류");
+    accepted+=result.accepted;
+  }
+  return "SENT_"+accepted;
+}
+/**
  * Owner-run setup. This must execute inside the original Google Apps Script
  * project with the owner's OAuth approval. GitHub commits do not install it.
  * Never print or transmit the secret values in the log.
@@ -332,6 +370,13 @@ function refreshBeagu2026Stats() {
     // Synchronize nationwide submission-row count to an INTERNAL service-role-only
     // backend. Public counter UI and table SELECT permissions are disabled.
     // Never transmit single-school or individual teacher answers.
+    let privateQaStatus="SKIPPED";
+    try{
+      privateQaStatus=sendBeagu2026PrivateQaChecks(groups);
+    }catch(e){
+      privateQaStatus="PRIVATE_QA_ERROR";
+      Logger.log("2026 private QA staging: "+String(e.message||e).slice(0,150));
+    }
     let publishStatus="SKIPPED";
     try{
       const newUniqueSchools=countBeagu2026FirstTimeSchools(groups);
@@ -339,7 +384,7 @@ function refreshBeagu2026Stats() {
     }
     catch(e){publishStatus="PUBLIC_ERROR";Logger.log("National count publish: "+String(e.message||e).slice(0,100))}
     destination.getSheetByName(BEAGU26.logTab).appendRow([now,scanned,matched,unmatched,"SUCCESS",
-      "본조사 이전 "+prelaunch+"건 제외; 시각 불명 "+undated+"건 보류; 전국 응답건수 "+publishStatus+" · 학교별 통계 비공개 검수"]);
+      "본조사 이전 "+prelaunch+"건 제외; 시각 불명 "+undated+"건 보류; 전국 응답건수 "+publishStatus+" · 비공개 자동검수 "+privateQaStatus]);
     Logger.log("Updated internal school summary: "+matched+" schools");
   }catch(e){
     const stamp=Utilities.formatDate(new Date(),BEAGU26.timezone,"yyyy-MM-dd HH:mm:ss");
