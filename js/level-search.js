@@ -65,6 +65,9 @@
   };
   let publicIndex = new Map(), publicStaticAvailable = false, publicLoadError = false;
   let current2026 = new Map();
+  // Only signed API-approved 2026 values can refresh on an active search page.
+  let visiblePageSchools=[];
+  let refreshingReleased2026=false;
   let historicalPresenceByYear={};
   const geographyComparisons=new Map(); // approved national/province benchmarks; never school responses
 
@@ -116,6 +119,7 @@
   function loggedOut(message = '') {
     session = '';
     geographyComparisons.clear();
+    visiblePageSchools=[];
     sessionStorage.removeItem(key);
     window.dispatchEvent(new Event('beagu:level-state-change'));
     $('loginPanel').hidden = false;
@@ -624,6 +628,7 @@
 
   function render(list, total, sortValue='school_name_asc') {
     current2026=new Map();
+    visiblePageSchools=Array.isArray(list)?list:[];
     const host = $('results'); host.replaceChildren();
     const pages = Math.ceil(total / LIMIT);
     $('resultCount').textContent = `검색 결과 ${total.toLocaleString()}개${pages > 1 ? ` · ${page * LIMIT + 1}~${page * LIMIT + list.length}번째` : ''}`;
@@ -716,6 +721,7 @@
     const office = mode === 'region' ? $('officeSelect').value : '';
     const request = ++serial;
     if ((mode === 'school' && !q) || (mode === 'region' && !region)) {
+      visiblePageSchools=[];
       $('results').replaceChildren(); $('resultCount').textContent = ''; $('pager').hidden = true; return;
     }
     $('resultCount').textContent = '검색 중...';
@@ -746,6 +752,53 @@
       window.BeaguLoading?.finish(searchTask);
     }
   }
+  // Poll ONLY reviewed/approved public data. An on-form-submit event is not
+  // itself a release; server review and the 2026 72-hour cooldown still apply.
+  // Never poll private Google Sheets or expose school-specific response counts.
+  async function refreshApproved2026OnScreen(){
+    if(refreshingReleased2026||!session||$('searchPanel').hidden||
+       document.visibilityState!=='visible'||!visiblePageSchools.length)return;
+    refreshingReleased2026=true;
+    const requestId=serial;
+    try{
+      // A single signed batch request refreshes 2026 cards on the current page.
+      loadPagePercentiles(visiblePageSchools,requestId);
+      const details=[...$('results').querySelectorAll('.school-card')].filter(card=>{
+        const detail=card.querySelector('.school-detail');
+        return detail&&!detail.hidden&&detail.dataset.loaded==='1'&&
+          detail.querySelector('.year-tabs button[data-year="2026"][aria-selected="true"]')&&
+          detail.querySelector('.school-year-details');
+      });
+      // Refresh only actively expanded 2026 panels; never overwrite other-year tabs.
+      await Promise.all(details.map(async card=>{
+        const id=String(card.dataset.schoolId||'');
+        if(!/^[A-Z0-9]{7}$/.test(id))return;
+        try{
+          const fresh=await api('school',{schoolId:id});
+          if(serial!==requestId||!card.isConnected||!session)return;
+          const detail=card.querySelector('.school-detail');
+          const tab=detail?.querySelector('.year-tabs button[data-year="2026"][aria-selected="true"]');
+          const content=detail?.querySelector('.school-year-details');
+          if(!detail||detail.hidden||!tab||!content)return;
+          renderYear(content,2026,fresh.rows,null,id);
+        }catch(error){
+          if(error.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
+          // Preserve the last server-approved result on transient network errors.
+          console.warn('2026 공개 승인값 자동 확인 실패',error);
+        }
+      }));
+      if(serial===requestId&&session&&window.BeaguSchoolMBTI){
+        window.BeaguSchoolMBTI.invalidateCache?.();
+        await window.BeaguSchoolMBTI.decorateCards($('results'),session);
+      }
+    }finally{refreshingReleased2026=false;}
+  }
+  // Google Forms responses are privately ingested independently. This timer
+  // only detects *newly approved* publications on a visible authenticated page.
+  window.setInterval(()=>{void refreshApproved2026OnScreen()},60000);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')void refreshApproved2026OnScreen();
+  });
   (async () => {
     if (!session) { loggedOut(); return; }
     try {
