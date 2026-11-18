@@ -8,7 +8,7 @@ const search=read('js/level-search.js');
 const css=read('styles/beagu-search-details-v1.css');
 assert.doesNotThrow(()=>new vm.Script(search));
 assert.match(html,/styles\/beagu-search-details-v1\.css\?v=20261118-in-card-v2/);
-assert.match(html,/js\/level-search\.js\?v=20261118-in-card-v3/);
+assert.match(html,/js\/level-search\.js\?v=20261118-mode-only-v1/);
 assert.match(css,/historical-benchmark-grid/);
 assert.match(css,/@media\(max-width:680px\)/);
 assert.match(search,/event\.key==='ArrowRight'/);
@@ -57,8 +57,7 @@ const renderer=new Function('make','document','window','conciseQuestion','verifi
 );
 const host=make('div');
 renderer(host,2025,{sido_standard:'부산'},[
-  {year:2025,questionId:'Q01',modeOption:'예',
-    roundedDistribution:[{label:'예',pct:70},{label:'아니오',pct:30}]}
+  {year:2025,questionId:'Q01',modeOption:'예'}
 ],{items:{Q01:{
   national:{mode:'예',kind:'most_frequent'},
   regional:{mode:'아니오',kind:'most_frequent'}
@@ -67,8 +66,8 @@ const find=(node,cls)=>[node,...node.children.flatMap(child=>find(child,cls))]
   .filter(item=>item.className?.split(' ').includes(cls));
 const cards=find(host,'historical-question-row');
 assert.equal(cards.length,15,'one original question must create only one result card');
-assert.equal(find(host,'beagu-question-distribution').length,1,
-  'only approved school distributions are shown inline');
+assert.equal(find(host,'beagu-question-distribution').length,0,
+  'option distributions must not be shown in school detail');
 assert.equal(find(host,'historical-answer-choices').length,15,
   'original verified answer options remain available');
 assert.equal(find(host,'historical-benchmark-grid').length,15,
