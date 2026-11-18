@@ -162,5 +162,8 @@
     });
     return card;
   }
-  window.BeaguSchoolMBTI=Object.freeze({decorateCards,createDetail});
+  // Invalidate only the signed-session cache. Called when a visible search
+  // page re-checks newly approved 2026 releases; never touches raw form data.
+  function invalidateCache(){cache.clear();}
+  window.BeaguSchoolMBTI=Object.freeze({decorateCards,createDetail,invalidateCache});
 })();
