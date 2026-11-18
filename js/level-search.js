@@ -19,7 +19,7 @@
   ).trim();
   // Exact education office names come from the verified schools table.
   let officeLoadSerial=0;
-  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','housing_price_won']);
+  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won']);
   let sortDirection='asc';
   const updateSortDirection=()=>{
     const button=$('regionSortDirection');
@@ -610,6 +610,8 @@
         const metricSort={
           beagu_percentile_2025:['2025 배구지수',school.beagu_percentile_2025,v=>Number(v).toFixed(2)+'%'],
           student_count:['학생 수',school.student_count,v=>Number(v).toLocaleString('ko-KR')+'명'],
+          junior_teacher_ratio:['2급 정교사 비율 (2024년 기준)',school.junior_teacher_ratio,v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'],
+          male_teacher_ratio:['남교사 비율 (2024년 기준)',school.male_teacher_ratio,v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'],
           housing_price_won:['공동주택 평균 공시가격',school.housing_price_won,v=>Number(v).toLocaleString('ko-KR')+'원']
         }[sortValue.replace(/_(?:asc|desc)$/,'')];
         if(metricSort){
