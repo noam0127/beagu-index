@@ -30,5 +30,10 @@ assert.doesNotMatch(compare, /schoolDistributions/);
 assert.match(sql, /ENABLE ROW LEVEL SECURITY/);
 assert.match(sql, /REVOKE ALL ON .* FROM PUBLIC, anon, authenticated/);
 assert.match(sql, /valid_rows integer NOT NULL CHECK \(valid_rows >= 1\)/);
+const guard = read('supabase/migrations/20261118_checkbox_mode_parent_count_guard.sql');
+assert.match(guard, /NEW\.valid_rows > parent_rows/);
+assert.match(guard, /FOREIGN KEY \(school_id,survey_year\)/);
+assert.match(compare, /Array\.isArray\(data\?\.schoolQuestionModes\)\?data\.schoolQuestionModes:\[\]/,
+  'The school comparison must iterate over the new mode-only array');
 assert.doesNotThrow(() => new Script(lv1));
 console.log('PASS: school modes only, verified checkbox supplement, no distribution/percentages in Lv1 API or UI.');
