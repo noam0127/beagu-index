@@ -7,14 +7,15 @@ for(const p of active){
  const s=read(p);
  assert.doesNotMatch(s,/VOLLEYBALL INDEX/,p+' old brand');
  assert.match(s,/styles\/beagu-design-system-v1\.css/,p+' design tokens');
- assert.match(s,/beagu-brand-mark|class="brand-symbol" aria-hidden="true">B/,p+' B mark');
+ assert.match(s,/beagu-unified-mark/,p+' unified B mark');
+ assert.match(s,/BAEGU<span class="beagu-unified-name-accent">INDEX<\/span>/,p+' uppercase wordmark');
  for(const block of s.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/g)){
    if(!block[1].trim() || /type="application\/json"/.test(block[0].split('>')[0]))continue;
    assert.doesNotThrow(()=>new Script(block[1],{filename:p}),p+' script syntax');
  }
 }
 for(const p of ['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html']){
- assert.match(read(p),/beagu-global-nav/,p+' navigation');
+ assert.match(read(p),/beagu-unified-nav/,p+' shared navigation');
 }
 const search=read('search.html');
 assert.match(search,/publicSort\.addEventListener\('change'/,'Lv0 sorting must query server');
@@ -22,7 +23,7 @@ assert.match(search,/\.order\(sortColumn,\{ascending,nullsFirst:false\}\)/,'Regi
 const report=read('school-report.html');
 assert.doesNotMatch(report,/class="symbol-dot"/,'No symbol decorations');
 assert.match(report,/다른 학교 검색/);
-assert.match(report,/비교 기준/);
+assert.match(report,/자료 해석 기준/);
 const survey=read('survey.html');
 assert.doesNotMatch(survey,/submit_survey|supabaseClient|테스트 응답 제출/);
 assert.match(survey,/2026 배구지수 공식 설문/);
