@@ -12,8 +12,8 @@ const picker=await readFile("js/arcade-school-picker-v1.js","utf8");
 const backend=await readFile("supabase/functions/arcade-leaderboard/index.ts","utf8");
 for(const h of [volley,runner]){
  const inline=[...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
- assert.equal(inline.length,1,"expected one inline game script");
- new Function(inline[0]);
+ assert.ok(inline.length>=1,"expected inline game scripts");
+ inline.forEach(src=>new Function(src));
 }
 new Function(shared);
 new Function(picker);
