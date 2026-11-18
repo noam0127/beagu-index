@@ -20,7 +20,7 @@
       '<path d="M20 16 Q53 46 24 83 M48 6 Q83 47 52 94 M78 17 Q46 50 79 84" fill="none" stroke="#628cb6" stroke-width="5" stroke-linecap="round"/>'+
       '<path d="M9 40 Q50 19 91 40 M8 67 Q51 85 92 66" fill="none" stroke="#b0c8e0" stroke-width="4" stroke-linecap="round"/>'+
       '</svg></div>'+
-      '<p class="beagu-loading-title">배구인덱스</p>'+
+      '<p class="beagu-loading-title">배구지수</p>'+
       '<p class="beagu-loading-message">자료를 불러오는 중…</p></div>';
     message=node.querySelector('.beagu-loading-message');
     document.body.appendChild(node);
