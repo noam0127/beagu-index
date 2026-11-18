@@ -21,17 +21,17 @@ for(const match of html.matchAll(/<script(?![^>]*src)[^>]*>([\s\S]*?)<\/script>/
 }
 assert.match(edge,/beagu_verified_school_question_distributions_v1/);
 assert.match(edge,/release_status','APPROVED_AGGREGATE_ONLY/);
-assert.match(edge,/schoolDistributions/);
-assert.match(edge,/roundedDistribution/);
+assert.match(edge,/schoolQuestionModes/);
+assert.doesNotMatch(edge,/roundedDistribution:/,'The API must not send option percentages');
 assert.match(edge,/N10_CELL3_PATTERNS5_STRICT_MATCH/);
 assert.doesNotMatch(edge,/select\('survey_year,question_id,mode_option,rounded_distribution,review_policy,valid_response_rows'\)/,
  'Do not return private N');
-assert.match(lv1,/data\.schoolDistributions/);
-assert.match(lv1,/10% 단위로 반올림/);
-assert.match(html,/r\.schoolDistributions/);
-assert.match(html,/data\.roundedDistribution/);
-assert.match(html,/10% 단위로 반올림/);
+assert.match(lv1,/data\.schoolQuestionModes/);
+assert.doesNotMatch(lv1,/beagu-question-distribution/);
+assert.match(html,/r\.schoolQuestionModes/);
+assert.doesNotMatch(html,/data\.roundedDistribution/);
+assert.doesNotMatch(html,/className='distribution'/);
 assert.ok(html.includes('const requiredTier=item=>1'));
 assert.ok(html.includes('/^Q\\d{2}$/.test(qid)')===false ||
           !html.includes('/^Q\\\\d{2}$/.test(qid)'),'Double-backslash regex must not remain');
-console.log('PASS: release-threshold promise and disclosure links removed, protected rounded school distributions only');
+console.log('PASS: no school distribution reaches the browser; approved mode-only rendering remains gated');
