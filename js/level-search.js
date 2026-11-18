@@ -540,7 +540,11 @@
             const fresh=percentilePanel(school);
             const previousGrid=old.querySelector('.percentile-grid');
             const updatedGrid=fresh.querySelector('.percentile-grid');
-            if(previousGrid&&updatedGrid)previousGrid.replaceWith(updatedGrid);
+            if(previousGrid&&updatedGrid){
+              const selected=previousGrid.querySelector('.percentile-cell.is-current-year')?.dataset.year;
+              if(selected)updatedGrid.querySelector('.percentile-cell[data-year="'+selected+'"]')?.classList.add('is-current-year');
+              previousGrid.replaceWith(updatedGrid);
+            }
           }
           break;
         }
@@ -561,25 +565,35 @@
       refresh();
     });
   }
-  function showDetails(host, rows, school, distributions=[]) {
+  function showDetails(host,rows,school,distributions=[]) {
     host.replaceChildren();
-    const section=make('section','detail');
+    const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
-    // The compact Lv.1 disclosure contains history only. The school identity,
-    // percentile summaries and MBTI are already shown above/below this panel.
-    section.append(make('h3', 'school-history-heading', '연도별 상세자료 · 2023~2026'));
-    const tabs = make('div', 'year-tabs');
-    tabs.setAttribute('role', 'tablist');
-    tabs.setAttribute('aria-label', '2023년부터 2026년까지 결과 연도 선택');
-    const content = make('div', 'school-year-details');
-    content.setAttribute('role', 'tabpanel');
+    const prefix='beagu-history-'+String(school.school_id);
+    section.append(make('h3','school-history-heading','연도별 상세자료'));
+    const tabs=make('div','year-tabs');
+    tabs.setAttribute('role','tablist');
+    tabs.setAttribute('aria-label','조사 연도 선택');
+    const content=make('div','school-year-details');
+    content.id=prefix+'-panel';
+    content.setAttribute('role','tabpanel');
+    content.tabIndex=0;
     let currentYear=null;
     const readyByYear=new Map();
-    function choose(year) {
+    function markSelectedYear(year){
+      const card=host.closest('.school-card');
+      card?.querySelectorAll('.percentile-cell').forEach(cell=>
+        cell.classList.toggle('is-current-year',Number(cell.dataset.year)===year));
+    }
+    function choose(year){
       currentYear=year;
-      for (const button of tabs.children) {
-        button.setAttribute('aria-selected', String(Number(button.dataset.year) === year));
+      for(const button of tabs.children){
+        const selected=Number(button.dataset.year)===year;
+        button.setAttribute('aria-selected',String(selected));
+        button.tabIndex=selected?0:-1;
+        if(selected)content.setAttribute('aria-labelledby',button.id);
       }
+      markSelectedYear(year);
       const draw=(data,status)=>renderYear(content,year,rows,vals[year-2023]??null,
         school.school_id,distributions,school,data,status);
       if(year===2026){draw(null,'ready');return;}
@@ -595,25 +609,36 @@
         if(currentYear===year&&content.isConnected&&!host.hidden)draw(null,'error');
       });
     }
-    for (const year of YEARS) {
-      const button = make('button', '', year + '년');
-      button.type = 'button';
-      button.dataset.year = String(year);
-      button.setAttribute('role', 'tab');
-      button.setAttribute('aria-selected', 'false');
-      button.addEventListener('click', () => choose(year));
+    for(const [index,year] of YEARS.entries()){
+      const button=make('button','',year+'년');
+      button.id=prefix+'-tab-'+year;
+      button.type='button';
+      button.dataset.year=String(year);
+      button.setAttribute('role','tab');
+      button.setAttribute('aria-controls',content.id);
+      button.setAttribute('aria-selected','false');
+      button.tabIndex=-1;
+      button.addEventListener('click',()=>choose(year));
+      button.addEventListener('keydown',event=>{
+        let next=null;
+        if(event.key==='ArrowRight')next=YEARS[(index+1)%YEARS.length];
+        else if(event.key==='ArrowLeft')next=YEARS[(index+YEARS.length-1)%YEARS.length];
+        else if(event.key==='Home')next=YEARS[0];
+        else if(event.key==='End')next=YEARS[YEARS.length-1];
+        if(next===null)return;
+        event.preventDefault();
+        choose(next);
+        Array.from(tabs.children).find(b=>Number(b.dataset.year)===next)?.focus();
+      });
       tabs.append(button);
     }
-    section.append(tabs, content);
-    // A single MBTI summary remains directly after the history box.
+    section.append(tabs,content);
     host.append(section);
-    const firstAvailable = [2025, 2024, 2023].find(year =>
-      (Array.isArray(rows) ? rows : []).some(row =>
-        Number(row.year) === year && Number(row.access_level) === level &&
-        (Array.isArray(row.summary?.metrics) ? row.summary.metrics : []).length > 0
-      )
-    );
-    choose(firstAvailable || 2025);
+    const firstAvailable=[2026,2025,2024,2023].find(year=>
+      (Array.isArray(rows)?rows:[]).some(row=>
+        Number(row.year)===year&&Number(row.access_level)===level&&
+        (Array.isArray(row.summary?.metrics)?row.summary.metrics:[]).length>0));
+    choose(firstAvailable||2025);
   }
 
   function render(list, total, sortValue='school_name_asc') {
@@ -643,7 +668,8 @@
         if(metricSort){
           const [label,value,format]=metricSort;
           const numeric=value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));
-          card.append(make('div','sort-result',label+' · '+(numeric?format(value):'자료 없음')));
+          const indicator=make('div','sort-result',label+' · '+(numeric?format(value):'자료 없음'));
+          card.insertBefore(indicator,card.querySelector('.percentile-panel'));
         }
       }
       // The four-year result panel itself is the disclosure trigger.
@@ -669,9 +695,11 @@
         historyPanel.classList.toggle('is-expanded',opening);
         trigger.setAttribute('aria-expanded',String(opening));
         trigger.setAttribute('aria-label',String(school.school_name||'학교')+' 역대 조사결과 '+(opening?'접기':'펼치기'));
-        if(!opening||detail.dataset.loaded)return;
+        if(!opening||detail.dataset.loaded||detail.dataset.loading==='1')return;
         const action=window.BeaguSearchTelemetry?.selected(String(school.school_id),1,'search-lv1',event);
-        detail.textContent='역대 조사결과를 불러오는 중…';
+        detail.dataset.loading='1';
+        detail.setAttribute('aria-busy','true');
+        detail.replaceChildren(make('p','beagu-detail-feedback','상세 결과를 불러오는 중…'));
         const detailTask=window.BeaguLoading?.start('역대 조사결과를 불러오는 중…');
         try{
           const data=await api('school',{schoolId:school.school_id});
@@ -683,8 +711,10 @@
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         }catch(error){
           if(error.unauthorized){loggedOut('인증이 만료되었습니다. 다시 입력하세요.');return;}
-          detail.textContent='자료를 불러오지 못했습니다. 다시 펼쳐 확인해 주세요.';
+          detail.replaceChildren(make('p','beagu-detail-feedback is-error','불러오지 못했습니다. 접었다가 다시 펼치면 재시도합니다.'));
         }finally{
+          delete detail.dataset.loading;
+          detail.removeAttribute('aria-busy');
           window.BeaguLoading?.finish(detailTask);
         }
       }
