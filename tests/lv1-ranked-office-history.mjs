@@ -35,8 +35,12 @@ assert.match(search,/학교가 속한 시도 및 전국의 자발적 참여 표�
 assert.match(search,/비교값.*최다 선택|comparisonLabel\(comparisonValues\.regional\)/, 'multi-select items must be reported as modes rather than means');
 assert.match(search,/vetted\.get\(id\)\|\|null/, 'only verified school distributions can populate school cell');
 assert.match(search,/원자료에서 확인된 보기 \(전체 목록 미확인\)/, 'observed partial option lists must be distinguished from authoritative options');
-for(const s of ['school_name_asc','school_name_desc','address_asc','address_desc','beagu_percentile_2025_desc','student_count_desc','housing_price_won_desc'])assert.ok(html.includes('value="'+s+'"'),'Missing region sort '+s);
-for(const label of ['학교명순 ↑','학교명순 ↓','주소순 ↑','주소순 ↓','배구지수순 ↓','학생수순 ↓','공시가격순 ↓'])assert.ok(html.includes(label));
+for(const s of ['school_name','address','beagu_percentile_2025','student_count','housing_price_won'])assert.ok(html.includes('value="'+s+'"'),'Missing region sort '+s);
+for(const label of ['학교명','주소','배구지수','학생수','공시가격'])assert.ok(html.includes('>'+label+'</option>'),'Missing sort label '+label);
+assert.match(html,/id="regionSortDirection"/,'Lv.1 must include a separate direction toggle');
+assert.match(search,/sortDirection=sortDirection==='asc'\?'desc':'asc'/,'Lv.1 direction button must toggle ascending/descending');
+assert.match(search,/value}_\$\{sortDirection\}/,'Lv.1 must send the selected direction to full-dataset API');
+assert.doesNotMatch(html,/학교명순 ↑|학교명순 ↓|주소순 ↑|주소순 ↓/,'Sort criteria must not embed arrows');
 assert.ok(search.includes("const sort=sortValue.replace(/_(?:asc|desc)$/,'')"),'Full metric field must be forwarded to the API');
 assert.match(search,/render\(data \|\| \[\], count \|\| 0, sortValue\)/,'Render selected sorted metric');
 assert.match(api,/beagu_percentile_2025/,'2025 percentile is a verified server sort');
@@ -81,6 +85,10 @@ assert.equal(Object.keys(w2.BeaguHistoricalQuestionnaire['2025']).length,20);
 assert.doesNotMatch(report,/\['학교별 응답자'/,'No public teacher response counts');
 
 const publicSearch=read('search.html');
+for(const s of ['school_name','address'])assert.ok(publicSearch.includes('value="'+s+'"'),'Lv.0 missing criterion '+s);
+assert.match(publicSearch,/id="publicSortDirection"/,'Lv.0 needs a direction toggle');
+assert.match(publicSearch,/sortDirection=sortDirection==='asc'\?'desc':'asc'/,'Lv.0 must toggle ascending/descending');
+assert.doesNotMatch(publicSearch,/학교명순 ↑|학교명순 ↓|주소순 ↑|주소순 ↓/,'Lv.0 criteria must not embed arrows');
 const sync=read('scripts/beagu-2026-noon-sync.gs');
 assert.match(publicSearch,/CHANGWON_SURVEY_AREAS/, 'Lv.0 must offer 3 Changwon areas');
 assert.doesNotMatch(publicSearch,/LEGACY_GYEONGNAM/, 'obsolete office names must not be selectable');
