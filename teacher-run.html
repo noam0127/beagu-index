@@ -289,6 +289,22 @@ function updateLabels(){
    :"⚡ 위기 탈출 준비 · 화면 더블 터치";
 }
 function setNotice(t,time=1.8){notice=t;noticeTime=time;}
+function activateSpecial(){
+ if(state!=="playing"||specialCooldown>0)return false;
+ specialCooldown=profile.specialCooldown;specialFlash=.9;
+ player.inv=Math.max(player.inv,profile.specialShield);
+ let cleared=0;
+ for(let i=items.length-1;i>=0;i--){
+  const a=items[i];
+  if(!a.good&&Math.hypot(a.x-player.x,a.y-player.y)<=profile.specialRadius){
+   burst(a.x,a.y,"#ffeea5",8);items.splice(i,1);cleared++;
+  }
+ }
+ if(cleared)addScore(Math.min(cleared,8)*60);
+ setNotice("⚡ 위기 탈출! 장애물 "+cleared+"개 제거 · 보호막",2);
+ playTone(1080,.24);updateLabels();
+ return true;
+}
 function burst(x,y,color,n=9){
  for(let i=0;i<n;i++){let a=Math.PI*2*i/n+(Math.random()-.5)*.8,v=50+Math.random()*140;
  sparks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.5+Math.random()*.4,color,r:2+Math.random()*3});}
@@ -363,11 +379,11 @@ function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","📄 공문 · 📞 전화 · 📅 회의 등 장애물을 피하세요.\n☕ 커피 · 💌 응원 · 🤝 동료 아이템을 받으면 체력이 회복됩니다.\n장애물을 아슬아슬하게 피하면 콤보 점수를 얻습니다.\n\nPC: ← → / A D\n모바일: 화면 터치·드래그로 자유롭게 이동",[
+ message("게임 방법","📄 공문 · 📞 전화 · 📅 회의 등 장애물을 피하세요.\n☕ 커피 · 💌 응원 · 🤝 동료 아이템을 받으면 체력이 회복됩니다.\n장애물을 아슬아슬하게 피하면 콤보 점수를 얻습니다.\n⚡ 화면 더블 터치: 주변 장애물 제거 + 보호막 (재충전 필요)\n\nPC: ← → / A D\n모바일: 화면 터치·드래그로 자유롭게 이동",[
  {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
 function update(dt){
- clock+=dt;dayTime+=dt;score+=dt*9;player.inv=Math.max(0,player.inv-dt);
+ clock+=dt;dayTime+=dt;specialCooldown=Math.max(0,specialCooldown-dt);specialFlash=Math.max(0,specialFlash-dt);player.inv=Math.max(0,player.inv-dt);
   shake=Math.max(0,shake-dt);noticeTime=Math.max(0,noticeTime-dt);
  const dir=(pressed.has("right")?1:0)-(pressed.has("left")?1:0);
  const speed=285*skill.speed*profile.heroSpeed;
@@ -480,6 +496,12 @@ function drawItems(){
 function draw(){
  ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
  background();drawItems();playerDraw();
+ if(specialFlash>0){
+  ctx.save();ctx.strokeStyle="rgba(255,235,117,"+Math.min(1,specialFlash*1.1)+")";
+  ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,profile.specialRadius*(1-specialFlash*.1),0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle="#fff4b5";ctx.textAlign="center";ctx.font="bold 16px sans-serif";
+  ctx.fillText("⚡ CLEAR!",player.x,Math.max(30,player.y-67),140);ctx.restore();
+ }
  for(const q of sparks){ctx.globalAlpha=Math.min(1,q.life/.35);ctx.fillStyle=q.color;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
  for(const f of floats){
   const x=Math.max(65,Math.min(W-65,f.x));
@@ -528,7 +550,14 @@ function setFlightTarget(e){
 }
 canvas.addEventListener("pointerdown",e=>{
  if(state!=="playing"||pointerId!==null)return;
- e.preventDefault();pointerId=e.pointerId;
+ e.preventDefault();
+ const now=Date.now(),bounds=canvas.getBoundingClientRect();
+ const px=bounds.width?(e.clientX-bounds.left)/bounds.width*W:0;
+ const py=bounds.height?(e.clientY-bounds.top)/bounds.height*H:0;
+ if(lastTapAt&&now-lastTapAt<=320&&Math.hypot(px-lastTapX,py-lastTapY)<105){
+  activateSpecial();lastTapAt=0;
+ }else{lastTapAt=now;lastTapX=px;lastTapY=py;}
+ pointerId=e.pointerId;
  if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);
  setFlightTarget(e);
 });
