@@ -185,7 +185,7 @@ check('테스트 설문 비활성화', legacySurvey.includes('2026 배구지수 
   check('2단계 열람 및 2026 새로고침', html1.includes('js/level-search.js') && level1.includes('const YEARS = [2023, 2024, 2025, 2026]') && level1.includes('2026년 승인 결과 새로고침'));
   check('학교 MBTI Lv.1·Lv.2 공통 자산 연결',
     html1.includes('js/school-mbti-v1.js')&&html1.includes('styles/school-mbti-v1.css') &&
-    level1.includes('BeaguSchoolMBTI.createDetail') && level2.includes('BeaguSchoolMBTI.createDetail') &&
+    (level1.includes('BeaguSchoolMBTI.decorateCards')||level1.includes('BeaguSchoolMBTI.createDetail')) && level2.includes('BeaguSchoolMBTI.createDetail') &&
     mbtiJS.includes('beagu-school-culture-v1'));
   for (const file of ['js/percentile-chart.js','js/school-search-card-v1.js','js/school-detail-groups-v1.js','js/school-mbti-v1.js','js/level-search.js','js/lv2-edited-search.js','js/statistics-directory-v2.js','js/statistics-compare.js','js/challenge.js','js/challenge-progress-v1.js','js/search-telemetry-v1.js']) {
     try { new Script(responses.get(file)||''); check('JS 문법 검증: '+file,true); }
@@ -215,7 +215,7 @@ check('테스트 설문 비활성화', legacySurvey.includes('2026 배구지수 
       const idx=scope.BeaguPublic.buildIndex(publicData);
       const published2025=publicData.rows.filter(r=>r.percentiles?.[2]!==null).length;
       check('웹 백분위 파서와 현재 데이터 버전 호환',
-        idx.size===publicData.rows.length && published2025===1294,
+        idx.size===publicData.rows.length && published2025===1372,
         '학교 '+idx.size+'개, 2025 공개 '+published2025+'개교');
     } catch(e) { check('웹 백분위 파서와 현재 데이터 버전 호환',false,String(e.message)); }
   } catch(e) { check('공개 백분위 JSON 무결성', false, e.message); }
