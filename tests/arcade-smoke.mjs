@@ -29,8 +29,8 @@ assert.match(backend,/!selected\.eligible/,"server refuses missing years");
 assert.match(backend,/!currentSchool\?\.eligible/,"previously issued sessions are rechecked");
 assert.match(volley,/new window\.ArcadeSchoolPicker/);
 assert.match(runner,/new window\.ArcadeSchoolPicker/);
-assert.match(runner,/difficultyScale=\{easy/);
-assert.match(volley,/diffScale=\{easy/);
+assert.match(runner,/difficultyProfiles=\{/,"survival game defines five hero/enemy profiles");
+assert.match(volley,/battleProfiles=\{/,"volleyball defines five ally/CPU profiles");
 assert.match(shared,/arcade-rank-school/);
 assert.ok(html.indexOf('id="teacher-game-frame"')<html.indexOf('id="teacher-run-frame"'));
 assert.match(volley,/SPEED_MULTIPLIER=2/);
@@ -41,13 +41,28 @@ assert.doesNotMatch(volley,/keys\.spike/,"manual spike input removed");
 
 assert.match(volley,/R = 48;/,"volleyball radius enlarged 1.5x from 32 to 48");
 assert.match(volley,/NET_TOP = 354/,"net height reduced from 146 to 97");
-assert.match(volley,/43 \* \.75 : 42 \* \.75/,"player contact reach reduced to 3/4");
+assert.match(volley,/43 \* \.75 \* battle\.allyReach/,"baseline reach is tier-adjusted");
 assert.doesNotMatch(volley,/data-key="jump"/,"touch jump button removed");
 assert.doesNotMatch(volley,/class="touch"/,"empty touch control region removed");
 assert.match(volley,/touchControl\.targetY/,"volleyball touch flight has vertical axis");
 assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is implemented");
 assert.match(runner,/pointerY=target\.y/,"survival game tracks 2D touch target");
 assert.match(runner,/player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically");
+assert.match(runner,/enemySize:1\.28/,"extreme hazards have larger collision size");
+assert.match(runner,/profile\.homing\*dt/,"harder hazards track the player");
+assert.match(runner,/profile\.heroSpeed/,"hero mobility scales by difficulty");
+assert.match(runner,/profile\.startingLife/,"hero starting health scales by difficulty");
+assert.match(volley,/enemyJumpChance/,"AI jump probability scales by tier");
+assert.match(volley,/enemySmashChance/,"AI attack strength scales by tier");
+assert.match(volley,/battle\.allySpeed/,"player mobility scales by tier");
+assert.match(picker,/resetForChange/,"school selection can reset");
+assert.match(picker,/onRequestChange/,"school change signals game to stop");
+assert.match(shared,/cancel\(\)/,"rank session can be discarded safely");
+assert.match(volley,/schoolPicker\.onRequestChange=stopForSchoolChange/);
+assert.match(runner,/schoolPicker\.onRequestChange=stopAndChangeSchool/);
+assert.match(runner,/🏫 다른 학교로 변경/,"survival pause offers school switch");
+assert.doesNotMatch(runner,/id="dash"|id="left"|id="right"/,"no mobile movement buttons remain");
+assert.doesNotMatch(runner,/activateDash|skill\.dash/,"no hidden dash mechanics remain");
 assert.match(volley,/ranking\?\.finish/);
 assert.match(runner,/ranking\?\.finish/);
 console.log("PASS: home order, game scripts, score hooks, 2x controls");
@@ -71,8 +86,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261118-anyyear3")&&
-     site.body.includes("teacher-run.html?v=20261118-anyyear3"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261118-tier-ability2")&&
+     site.body.includes("teacher-run.html?v=20261118-tier-ability2"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -82,8 +97,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261118-anyyear3/);
-assert.match(site.body,/teacher-run\.html\?v=20261118-anyyear3/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261118-tier-ability2/);
+assert.match(site.body,/teacher-run\.html\?v=20261118-tier-ability2/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
