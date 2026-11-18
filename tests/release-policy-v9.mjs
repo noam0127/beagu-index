@@ -13,7 +13,7 @@ assert.doesNotMatch(policy,/data\/raw|beagu_private|service_role|sb_secret_|p_pa
 assert.doesNotMatch(policy,/\b(?:2026년)?\s*학교별\s*(?:총점|전국순위)\b/);
 const policyScripts=[...policy.matchAll(/<script[^>]+src="([^"]+)"/g)].map(match=>match[1].split('?')[0]);
 assert.deepEqual(policyScripts,['js/beagu-level-state-v1.js'],'Policy can verify the common level indicator but must not load trackers or data clients');
-assert.doesNotMatch(policy,/src="js\\/(?:visit-stats|search-telemetry|supabase-config)/,'No visit tracker or data client on policy page');
+assert.ok(!['js/visit-stats','js/search-telemetry','js/supabase-config'].some(path=>policy.includes('src="'+path)),'No visit tracker or data client on policy page');
 
 for(const p of ['search.html','search-lv1.html',
                  'school-report.html','statistics.html']){
