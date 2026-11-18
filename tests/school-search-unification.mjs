@@ -76,7 +76,7 @@ for(const page of ['search-lv1.html']){
 assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(section,releasedMetrics/);
 assert.doesNotMatch(lv1,/BeaguDetailGroups\.appendGrouped\(section,schoolScale/,'Lv.1 omits duplicated school profile and scale fields in the history disclosure');
 assert.match(lv1,/historyPanel\.append\(detail\)/,'Lv.1 detail appears inside the tapped year-result panel');
-assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(host,vetted/);
+assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(section,vetted/);
 assert.match(lv2,/BeaguDetailGroups\.appendGrouped\(root,approvedItems/);
 assert.match(lv2,/BeaguDetailGroups\.appendGrouped\(newer,stats/);
 assert.match(lv2,/releasedFields\(metadata,year,values\)/,'Lv.2 server-reviewed field allowlist remains enforced');
