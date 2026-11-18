@@ -100,6 +100,11 @@ assert.match(backend,/average>=80\?"extreme":average>=60\?"very_hard":average>=4
 assert.match(picker,/difficultyLabels=\{easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"\}/,"five English difficulty labels");
 assert.match(backend,/!selected\.eligible/,"server refuses missing years");
 assert.match(backend,/!currentSchool\?\.eligible/,"previously issued sessions are rechecked");
+assert.match(backend,/arcade_game_scores\?on_conflict=session_id&select=created_at/,"unique session key protects record against double submission");
+assert.match(backend,/resolution=ignore-duplicates,return=representation/,"only one score per match");
+assert.match(backend,/e\.created_at===inserted\[0\]\.created_at/,"same nickname and score do not steal another player's rank");
+assert.ok(backend.indexOf('"arcade_game_scores?on_conflict=session_id&select=created_at"')<backend.indexOf('const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"})'),"score persists before session completion marker");
+
 assert.match(volley,/new window\.ArcadeSchoolPicker/);
 assert.match(runner,/new window\.ArcadeSchoolPicker/);
 assert.match(runner,/difficultyProfiles=\{/,"survival game defines five hero/enemy profiles");
