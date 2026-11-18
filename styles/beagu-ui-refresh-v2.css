@@ -192,6 +192,17 @@ body.beagu-page-home .data-access-link{
 }
 body.beagu-page-home .data-access-link::after{content:"→";font-size:22px;font-weight:400;line-height:1}
 body.beagu-page-home .data-access-link:hover{background:var(--ui-blue-dark);box-shadow:0 12px 27px rgba(36,93,217,.2)}
+/* Let the games heading span the whole desktop dashboard grid. */
+body.beagu-page-home main.container > .teacher-arcade-intro {
+  grid-column: 1 / -1;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  margin: 10px 0 -6px;
+  padding-inline: 8px;
+  text-align: center;
+  text-wrap: balance;
+}
 body.beagu-page-home .teacher-game-feature{
   grid-column:1/7;margin-top:0;border:1px solid #2b4b70;
   border-radius:21px;box-shadow:0 12px 33px rgba(16,38,64,.12);
