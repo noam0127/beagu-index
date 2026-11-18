@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - 'scripts/beagu-2026-mbti-review-sync.gs'
+      - 'scripts/beagu-2026-noon-sync.gs'
+      - 'tests/2026-form-submit-private-sync.mjs'
       - 'tests/school-mbti-staging.mjs'
       - '.github/workflows/school-mbti-staging-validation.yml'
   workflow_dispatch:
@@ -18,3 +20,4 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/school-mbti-staging.mjs
+      - run: node tests/2026-form-submit-private-sync.mjs
