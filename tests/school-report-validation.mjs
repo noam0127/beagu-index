@@ -34,7 +34,7 @@ for(const [year,columns] of Object.entries(fields.years)){
 }
 const percentiles=JSON.parse(fs.readFileSync('data/public-lv0-percentiles-v1.2.json','utf8'));
 assert.ok(percentiles.data_version.includes('empirical-2025'),'Static public 2025 data version is outdated');
-assert.equal(percentiles.rows.filter(r=>r.percentiles[2]!==null).length,1294,'Vetted 2025 release count changed unexpectedly');
+assert.equal(percentiles.rows.filter(r=>r.percentiles[2]!==null).length,1372,'2025 published value count must include 1294 existing plus 78 source-verified Gwangju/Jeonnam schools');
 const syncScript=fs.readFileSync('scripts/beagu-2026-noon-sync.gs','utf8');
 assert.ok(syncScript.includes('firstOfficialResponseDay: "2026-11-01"'),'2026 prelaunch response exclusion missing');
 assert.ok(syncScript.includes('getSubmittedDay(r[0])'),'2026 timestamp must be checked before aggregation');
