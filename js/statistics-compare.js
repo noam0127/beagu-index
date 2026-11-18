@@ -431,7 +431,7 @@
       }
       for(const record of Array.isArray(data?.schoolDistributions)?data.schoolDistributions:[]){
         const year=Number(record?.year),qid=String(record?.questionId||'');
-        if(![2023,2024].includes(year)||!/^Q\d{2}$/.test(qid)||
+        if(![2023,2024,2025].includes(year)||!/^Q\d{2}$/.test(qid)||
            !validServerText(record.modeOption,180))continue;
         approved.items[year][qid]=String(record.modeOption);
       }
