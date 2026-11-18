@@ -1453,7 +1453,7 @@
       // response counts; these are coarse 10%-rounded option shares only.
       for(const d of Array.isArray(r.schoolDistributions)?r.schoolDistributions:[]){
         const year=Number(d?.year),qid=String(d?.questionId||'');
-        if(![2023,2024].includes(year)||!/^Q\d{2}$/.test(qid)||
+        if(![2023,2024,2025].includes(year)||!/^Q\d{2}$/.test(qid)||
            !state.years[String(year)]||
            typeof d.modeOption!=='string'||d.modeOption.length>180||
            !Array.isArray(d.roundedDistribution)||d.roundedDistribution.length>10)continue;
