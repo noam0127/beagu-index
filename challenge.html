@@ -119,11 +119,24 @@
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261118-global2">
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
+<link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261118-gate1">
 </head>
 <body class="beagu-ui-page beagu-page-challenge">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="challenge.html" aria-current="page">인증</a></nav></div></header>
 <main id="main-content">
+  <section id="challengeAccessPanel" class="challenge-access-panel" aria-labelledby="challengeAccessTitle">
+    <h1 id="challengeAccessTitle">Lv.1 인증</h1>
+    <p id="challengeAccessFeedback" class="challenge-access-feedback" role="status" aria-live="polite">인증 상태 확인 중…</p>
+    <form id="challengeAccessForm" autocomplete="off" hidden>
+      <label for="challengeAccessCode">참여코드</label>
+      <input id="challengeAccessCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" placeholder="Lv.1 참여코드" required>
+      <button id="challengeAccessSubmit" type="submit" class="challenge-access-submit">인증하고 입장하기</button>
+    </form>
+    <p class="challenge-access-help"><a href="survey.html">참여코드 받기 · 조사 참여</a></p>
+  </section>
+  <div id="challengeProtected" hidden>
+    <div class="challenge-auth-status"><span>Lv.1 인증 완료</span><button id="challengeLogout" type="button">인증 해제</button></div>
   
 
 
@@ -160,6 +173,7 @@
     </section>
 
   </section>
+  </div>
 
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -167,7 +181,8 @@
 <script src="js/visit-stats.js?v=20261117-visitfix1"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="js/challenge.js?v=20261117-no-ready-message"></script>
+<script src="js/challenge.js?v=20261118-levelgate1"></script>
+<script src="js/challenge-access-v1.js?v=20261118-levelgate1"></script>
 </body>
 </html>
 
