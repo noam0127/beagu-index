@@ -285,7 +285,7 @@
   }
   // One card per original question: school / region / nation together with
   // the verified rounded distribution. No separate duplicated question list.
-  function renderHistoricalBenchmarks(host,year,school,distributions,comparison,loadStatus){
+  function renderHistoricalBenchmarks(host,year,school,modes,comparison,loadStatus){
     const questions=window.BeaguHistoricalOriginalQuestions?.[String(year)]||{};
     const qids=Object.keys(questions).filter(id=>/^Q\d{2}$/.test(id)).sort();
     if(!qids.length)return;
@@ -294,11 +294,11 @@
     header.append(make('h4','','문항별 결과'),make('span','beagu-question-count',qids.length+'개 문항'));
     section.append(header);
     section.append(make('p','beagu-question-intro',
-      '우리 학교는 공개 승인된 집계만, 지역·전국은 참여 표본의 참고값을 표시합니다.'));
+      '우리 학교는 최다 선택값만, 지역·전국은 참여 표본의 비교값을 표시합니다.'));
     const details=make('details','beagu-source-note');
     details.append(make('summary','','자료 해석 안내'));
     details.append(make('p','',
-      '학교 고유 결과는 별도 공개 심사를 통과한 경우에만 표시합니다. 그 외에는 학교가 속한 시도 및 전국의 자발적 참여 표본 집계값을 참고값으로 제공합니다. 지역·전국 기준값은 해당 학교의 응답이나 모집단 전체의 대표값이 아닙니다. 응답 건수와 개인별 선택 내용은 제공하지 않습니다.'));
+      '학교 고유 결과는 별도 공개 심사를 통과한 경우에만 표시합니다. 그 외에는 학교가 속한 시도 및 전국의 자발적 참여 표본 집계값을 참고값으로 제공합니다. 지역·전국 기준값은 해당 학교의 응답이나 모집단 전체의 대표값이 아닙니다. 응답 건수와 보기별 분포·비율은 표시하지 않습니다. 응답이 하나인 학교에서는 최다 선택값이 그 응답과 같을 수 있습니다.'));
     section.append(details);
     const all=comparison?.items&&typeof comparison.items==='object'?comparison.items:{};
     const nationalCount=qids.filter(id=>typeof all[id]?.national?.mean==='string'||typeof all[id]?.national?.mode==='string').length;
@@ -309,11 +309,10 @@
       '전국 '+nationalCount+'/'+qids.length+' · 지역 '+regionalCount+'/'+qids.length+' 문항 비교');
     overview.setAttribute('role','status');
     section.append(overview);
-    const vettedRows=new Map((Array.isArray(distributions)?distributions:[])
-      .filter(d=>Number(d.year)===year && /^Q\d{2}$/.test(String(d.questionId||'')) &&
-        typeof d.modeOption==='string'&&Array.isArray(d.roundedDistribution))
-      .map(d=>[d.questionId,d]));
-    const vetted=new Map([...vettedRows].map(([id,item])=>[id,item.modeOption]));
+    const vetted=new Map((Array.isArray(modes)?modes:[])
+      .filter(d=>Number(d.year)===year&&/^Q\d{2}$/.test(String(d.questionId||''))&&
+        typeof d.modeOption==='string'&&d.modeOption.length>0)
+      .map(d=>[d.questionId,d.modeOption]));
     const region=String(school?.sido_standard||school?.sido||'지역');
     const list=make('div','beagu-question-list');
     const blocks=[];
@@ -348,32 +347,6 @@
         grid.append(cell);
       }
       block.append(grid);
-      const rounded=Array.isArray(vettedRows.get(id)?.roundedDistribution)
-        ?vettedRows.get(id).roundedDistribution:[];
-      const validRows=rounded.filter(answer=>{
-        const pct=Number(answer?.pct);
-        return typeof answer?.label==='string'&&answer.label.trim() &&
-          Number.isInteger(pct)&&pct>=0&&pct<=100&&pct%10===0;
-      });
-      if(validRows.length){
-        const dist=make('div','beagu-question-distribution');
-        dist.append(make('h6','beagu-distribution-title','우리 학교 응답 분포'));
-        for(const answer of validRows){
-          const pct=Number(answer.pct);
-          const row=make('div','beagu-distribution-row');
-          const label=make('span','beagu-distribution-label',answer.label);
-          const amount=make('strong','beagu-distribution-percent','약 '+pct+'%');
-          const track=make('div','beagu-distribution-track');
-          const bar=make('div','beagu-distribution-fill');
-          bar.style.width=pct+'%';
-          track.setAttribute('role','img');
-          track.setAttribute('aria-label',answer.label+' 약 '+pct+'%');
-          track.append(bar);
-          row.append(label,amount,track);
-          dist.append(row);
-        }
-        block.append(dist);
-      }
       const optionData=verifiedOptions(year,id);
       if(optionData.values.length){
         const optionTitle=make('h6','beagu-options-title',
@@ -418,7 +391,7 @@
     host.append(section);
   }
 
-  function renderYear(host, year, rows, publicValue, schoolId, distributions=[], school=null,comparison=null,loadStatus='loading') {
+  function renderYear(host, year, rows, publicValue, schoolId, modes=[], school=null,comparison=null,loadStatus='loading') {
     host.replaceChildren();
     const heading=make('div','beagu-year-header');
     heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
@@ -488,7 +461,7 @@
       if(hadRestricted)section.append(make('p','beagu-source-caption','일부 세부 항목은 승인 범위에 따라 제공되지 않습니다.'));
       host.append(section);
     }
-    renderHistoricalBenchmarks(host,year,school,distributions,comparison,loadStatus);
+    renderHistoricalBenchmarks(host,year,school,modes,comparison,loadStatus);
   }
 
 
@@ -559,7 +532,7 @@
       refresh();
     });
   }
-  function showDetails(host,rows,school,distributions=[]) {
+  function showDetails(host,rows,school,modes=[]) {
     host.replaceChildren();
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
@@ -591,7 +564,7 @@
       const draw=(data,status)=>{
         content.removeAttribute('aria-busy');
         renderYear(content,year,rows,vals[year-2023]??null,
-          school.school_id,distributions,school,data,status);
+          school.school_id,modes,school,data,status);
       };
       if(year===2026){draw(null,'ready');return;}
       if(readyByYear.has(year)){draw(readyByYear.get(year),'ready');return;}
@@ -637,9 +610,9 @@
     // A school can have approved historical question distributions even when
     // it has no separately released summary metrics or percentile.
     // Select its most recent available survey year instead of a blank 2025 tab.
-    const reviewedYears=new Set((Array.isArray(distributions)?distributions:[])
+    const reviewedYears=new Set((Array.isArray(modes)?modes:[])
       .filter(item=>/^Q\d{2}$/.test(String(item?.questionId||'')) &&
-        Array.isArray(item?.roundedDistribution)&&item.roundedDistribution.length>0)
+        typeof item?.modeOption==='string'&&item.modeOption.length>0)
       .map(item=>Number(item.year)));
     const firstAvailable=[2026,2025,2024,2023].find(year=>
       reviewedYears.has(year)||
@@ -714,7 +687,7 @@
           await loaded;
           // The signed-session API enforces access rights and release status.
           if(!detail.isConnected)return;
-          showDetails(detail,data.rows,school,data.schoolDistributions);
+          showDetails(detail,data.rows,school,data.schoolQuestionModes);
           detail.dataset.loaded='1';
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         }catch(error){
