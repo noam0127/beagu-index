@@ -20,6 +20,7 @@ on:
       - 'tests/school-search-unification.mjs'
       - 'tests/lv1-ranked-office-history.mjs'
       - 'tests/search-detail-ui-v1.mjs'
+      - 'tests/school-question-mode-only-privacy.mjs'
       - 'supabase/functions/beagu-level-api/index.ts'
       - '.github/workflows/school-search-unification.yml'
   workflow_dispatch:
@@ -36,3 +37,4 @@ jobs:
       - run: node tests/school-search-unification.mjs
       - run: node tests/lv1-ranked-office-history.mjs
       - run: node tests/search-detail-ui-v1.mjs
+      - run: node tests/school-question-mode-only-privacy.mjs
