@@ -35,8 +35,8 @@ assert.match(search,/학교가 속한 시도 및 전국의 자발적 참여 표�
 assert.match(search,/비교값.*최다 선택|comparisonLabel\(comparisonValues\.regional\)/, 'multi-select items must be reported as modes rather than means');
 assert.match(search,/vetted\.get\(id\)\|\|null/, 'only verified school distributions can populate school cell');
 assert.match(search,/원자료에서 확인된 보기 \(전체 목록 미확인\)/, 'observed partial option lists must be distinguished from authoritative options');
-for(const s of ['school_name','address','beagu_percentile_2025','student_count','housing_price_won'])assert.ok(html.includes('value="'+s+'"'),'Missing region sort '+s);
-for(const label of ['학교명','주소','배구지수','학생수','공시가격'])assert.ok(html.includes('>'+label+'</option>'),'Missing sort label '+label);
+for(const s of ['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won'])assert.ok(html.includes('value="'+s+'"'),'Missing region sort '+s);
+for(const label of ['학교명','주소','배구지수','학생수','2정교사비','남교사비','공시지가'])assert.ok(html.includes('>'+label+'</option>'),'Missing sort label '+label);
 assert.match(html,/id="regionSortDirection"/,'Lv.1 must include a separate direction toggle');
 assert.match(search,/sortDirection=sortDirection==='asc'\?'desc':'asc'/,'Lv.1 direction button must toggle ascending/descending');
 assert.match(search,/value}_\$\{sortDirection\}/,'Lv.1 must send the selected direction to full-dataset API');
@@ -46,6 +46,9 @@ assert.match(search,/render\(data \|\| \[\], count \|\| 0, sortValue\)/,'Render 
 assert.match(api,/beagu_percentile_2025/,'2025 percentile is a verified server sort');
 assert.match(api,/student_count/,'Student count is a verified server sort');
 assert.match(api,/housing_price_won/,'Housing price is a verified server sort');
+assert.match(api,/junior_teacher_ratio/,'2nd-class teacher ratio is a verified server sort');
+assert.match(api,/male_teacher_ratio/,'Male teacher ratio is a verified server sort');
+assert.match(api,/student_count,student_reference_year,housing_price_won,junior_teacher_ratio,male_teacher_ratio/,'Approved school ratios must be returned for sort cards');
 assert.doesNotMatch(html,/id="sortTabs"/,'No school search sorting buttons');
 assert.doesNotMatch(html,/자료 표시 기준|Lv.1에서 공개 승인된 2023~2026년 학교 규모/);
 assert.doesNotMatch(search,/세종시 전체 공동주택 평균 공시가격/);
