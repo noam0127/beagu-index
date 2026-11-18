@@ -118,7 +118,7 @@ canvas{height:400px;cursor:default}
   </div>
   <section class="arcade-survival-health" aria-label="교사 체력과 남은 목숨">
     <div class="arcade-survival-health-top">
-      <span>♥ 체력 <strong id="run-health-numbers">100 / 100</strong></span>
+      <span>♥ 체력 <strong id="run-health-numbers">100 / 100</strong> · <span id="run-time-label">⏱ 0초</span></span>
       <div class="arcade-survival-life-badges"><span id="run-life-tier">—</span><span id="run-lives" aria-label="남은 목숨">♥♥</span></div>
     </div>
     <div class="arcade-survival-health-track" id="run-health-progress" role="progressbar" aria-label="교사 체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="arcade-survival-health-fill" id="run-health-fill"></div></div>
@@ -259,12 +259,9 @@ function intro(){
  state="ready";schoolPicker.setLocked(false);
  const selected=schoolPicker.get();
  const ready=selected?.eligible===true;
- const available=Array.isArray(selected?.available_years)?selected.available_years.join("·")+"년":"확인 연도";
  const title=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
-   selected?selected.school_name+" · 플레이 불가":"먼저 학교를 선택하세요";
- const desc=ready?"확인된 "+available+" 백분위 평균 · "+(difficultyProfiles[selected.difficulty]?.label||"")+"\n월 → 금 생존!":
-   selected?"2023~2026년 조사 백분위가 한 해도 확인되지 않았습니다.\n2026년 배구지수 조사에 참여해 주세요. 조사 반영 후 플레이 가능합니다.":
-   "2023~2026년 중 한 해라도 조사 백분위가 있는 학교는 플레이할 수 있습니다.\n위에서 학교를 검색해 선택해 주세요.";
+   selected?selected.school_name+" · 조사 필요":"학교를 선택하세요";
+ const desc=ready?"월 → 금 생존":selected?"2026년 조사 참여 후 시작 가능":"학교 선택";
  message("험난한 교직생활 3.0",title+"\n"+desc,[
   {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
    action:()=>ready?start():schoolPicker.focus()}
@@ -277,6 +274,7 @@ function updateLabels(){
  const hp=Math.max(0,Math.min(maxLife,life));
  const fraction=maxLife>0?hp/maxLife:0;
  $("run-health-numbers").textContent=Math.ceil(hp)+" / "+maxLife;
+ $("run-time-label").textContent="⏱ "+Math.floor(clock)+"초";
  $("run-health-fill").style.width=(fraction*100).toFixed(1)+"%";
  $("run-health-fill").classList.toggle("is-low",fraction<=.3);
  $("run-health-progress").setAttribute("aria-valuemax",String(maxLife));
@@ -327,7 +325,7 @@ function hit(a){
    player.inv=Math.max(player.inv,profile.inv+1.4+skill.guard);
    setNotice("♥ 남은 목숨 "+livesLeft+"개 · 체력 회복",2.1);
    burst(player.x,player.y,"#f6ec87",18);playTone(740,.2);
-  }else{finish(false);return;}
+  }else{livesLeft=0;updateLabels();finish(false);return;}
  }
  updateLabels();
 }
@@ -357,18 +355,20 @@ function choose(u){
 function finish(win){
  state="over";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  schoolPicker.setLocked(false);
- let bonus=win?1500+Math.round(life*5):0;score+=bonus;
+ const survivalSeconds=Math.floor(clock);
+ const baseScore=Math.floor(score+(win?1500+Math.round(life*5):0));
+ const survivalBonus=survivalSeconds*10;
+ score=baseScore+survivalBonus;
  if(score>best){best=Math.floor(score);persist();}
  updateLabels();$("bestLabel").textContent=best.toLocaleString("ko-KR");
- ranking?.finish(Math.floor(score),{score:Math.floor(score),day:day+1,victory:win});
- const grade=win?(life>70?"S":"A"):(day>=3?"B":"C");
- const text=(win?"금요일 퇴근 성공! 🎉":"오늘은 여기까지! 체력 회복이 필요해요.")+"\n"+
- "최종 점수 "+Math.floor(score).toLocaleString("ko-KR")+"점 · "+grade+"등급\n"+
- "남은 목숨 "+livesLeft+"/"+maxLives+" · 아슬아슬 회피 "+nearCount+"회 · 충돌 "+misses+"회\n"+
- (win?"주말은 선생님 편입니다.":"괜찮아요. 다음 주는 더 잘 피할 수 있어요!");
- message(win?"🎊 주말을 지켜냈어요!":"🫖 잠깐 쉬어가요",text,[
- {label:"🔄 같은 학교로 다시 하기",action:()=>start()},
- {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?"🎉":"🫖");
+ ranking?.finish(Math.floor(score),{
+  score:Math.floor(score),baseScore,survivalSeconds,day:day+1,victory:win
+ });
+ const details="기본 "+baseScore.toLocaleString("ko-KR")+"점 · 생존 "+survivalSeconds+"초 +"+survivalBonus.toLocaleString("ko-KR")+"점\n"+
+  "최종 "+Math.floor(score).toLocaleString("ko-KR")+"점 · ♥ "+livesLeft+"/"+maxLives;
+ message(win?"🎉 퇴근 성공!":"🫖 게임 종료",details,[
+  {label:"↻ 다시 하기",action:()=>start()},
+  {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?"🎉":"🫖");
  playTone(win?950:280,.32);
 }
 function pause(){
