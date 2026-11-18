@@ -62,6 +62,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  .scoreboard{padding:9px;gap:4px;grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr)}
  .team{font-size:10px}.team strong{font-size:23px}.center-label{font-size:12px}
 }
+ .volley-energy-meta{display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:10px;line-height:1.35;color:#cfe5f4}
+ .team.right .volley-energy-meta{flex-direction:row-reverse}
+ .volley-energy-meta output{font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap}
+ .volley-energy-track{height:10px;margin-top:3px;overflow:hidden;border:1px solid #69869e;border-radius:5px;background:#344962}
+ .volley-energy-fill{height:100%;width:100%;background:linear-gradient(90deg,#4fc6ba,#9aefc3);transition:width .16s linear}
+ .team.right .volley-energy-fill{margin-left:auto;background:linear-gradient(90deg,#e98cab,#ffd0a3)}
+ .volley-energy-fill.is-low{background:linear-gradient(90deg,#cf4c55,#ff996f)}
+ @media(max-width:380px){.volley-energy-meta{font-size:9px}.volley-energy-track{height:9px}}
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -80,9 +88,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <main class="game-shell">
   <div class="top"><span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="beagu-brand-mark" aria-hidden="true">B</span>선생님배구 1.0</span><span class="pill">2× SPEED · 7 PTS</span></div>
   <div class="scoreboard" aria-label="현재 점수">
-    <div class="team"><span>나</span><strong id="player-score">0</strong></div>
+    <div class="team"><span>나</span><strong id="player-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="player-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="우리 팀 체력" id="player-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="player-energy-fill"></div></div></div>
     <div class="center-label">VS</div>
-    <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong></div>
+    <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="cpu-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="상대 팀 체력" id="cpu-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="cpu-energy-fill"></div></div></div>
   </div>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
@@ -112,8 +120,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     very_hard:{allySpeed:.89,allyJump:.91,allyReach:.94,allyAttack:.91,enemySpeed:9.2,enemyReaction:5,enemyLead:7,enemyError:18,enemyDeadzone:7,enemyJumpChance:.72,enemyJumpReach:172,enemyJumpForce:13.7,enemyReach:1.10,enemyAttack:1.23,enemySmashChance:.38,label:"아군 약화 · 상대 예측 점프·강타"},
     extreme:{allySpeed:.79,allyJump:.83,allyReach:.86,allyAttack:.83,enemySpeed:11,enemyReaction:2,enemyLead:9,enemyError:5,enemyDeadzone:3,enemyJumpChance:.96,enemyJumpReach:195,enemyJumpForce:14.8,enemyReach:1.20,enemyAttack:1.48,enemySmashChance:.63,label:"아군 약화 · 상대 초고속 수비·강타"}
    };
+  const energyProfiles={
+    easy:{allyMax:150,enemyMax:80,allyCost:.60,enemyCost:1.55,allyRest:.27,enemyRest:.12},
+    normal:{allyMax:125,enemyMax:90,allyCost:.8,enemyCost:1.3,allyRest:.23,enemyRest:.15},
+    hard:{allyMax:100,enemyMax:100,allyCost:1,enemyCost:1,allyRest:.2,enemyRest:.2},
+    very_hard:{allyMax:85,enemyMax:130,allyCost:1.2,enemyCost:.8,allyRest:.16,enemyRest:.24},
+    extreme:{allyMax:70,enemyMax:160,allyCost:1.5,enemyCost:.65,allyRest:.13,enemyRest:.28}
+   };
   const diffName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
-  let currentDifficulty="normal",battle=battleProfiles.normal,startTicket=0;
+  let currentDifficulty="normal",battle=battleProfiles.normal,energy=energyProfiles.hard,startTicket=0;
   schoolPicker.onChange=school=>{
     if(state.phase==="ready"||state.phase==="finished"){
       setStatus(!school ? "2023~2026년 중 한 해라도 조사 백분위가 있으면 플레이할 수 있습니다." :
@@ -129,7 +144,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 354, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null };
-  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false };
+  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false, leftEnergy:100, rightEnergy:100, leftMaxEnergy:100, rightMaxEnergy:100 };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, cooldown: 0, trail: [] };
@@ -177,6 +192,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     currentDifficulty=school.difficulty;
     battle=battleProfiles[currentDifficulty]||battleProfiles.hard;
+    energy=energyProfiles[currentDifficulty]||energyProfiles.hard;
+    resetEnergy();
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;
     releaseKeys();
