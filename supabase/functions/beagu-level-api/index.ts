@@ -274,6 +274,40 @@ Deno.serve(async(req:Request)=>{
       roundedDistribution:rounded.map((x:any)=>({label:x.label,pct:x.pct}))});
   }
 
+  // Owner-authorized 1+ closed-choice school aggregates for 2023-2025.
+  // Fetch only under the verified Lv.1 session and never return source counts,
+  // respondent rows, timestamps, school matching evidence or free text.
+  const {data:ownerHistory,error:ownerHistoryError}=await admin
+    .from('beagu_school_question_aggregates_v2')
+    .select('survey_year,questions,review_status')
+    .eq('school_id',id).eq('review_status','OWNER_AUTHORIZED_CLOSED_CHOICE')
+    .in('survey_year',[2023,2024,2025]).limit(3);
+  if(ownerHistoryError)return send({error:'SCHOOL_HISTORY_UNAVAILABLE'},503,origin);
+  const distributionIndex=new Map<string,Record<string,unknown>>();
+  for(const row of schoolDistributions)
+    distributionIndex.set(String(row.year)+':'+String(row.questionId),row);
+  for(const record of ownerHistory||[]){
+    const year=Number(record.survey_year);
+    if(![2023,2024,2025].includes(year)||record.review_status!=='OWNER_AUTHORIZED_CLOSED_CHOICE'||
+      !Array.isArray(record.questions)||record.questions.length>50)continue;
+    for(const question of record.questions){
+      const qid=String(question?.questionId||'');
+      const mode=question?.modeOption;
+      const dist=question?.roundedDistribution;
+      if(!/^Q\\d{2}$/.test(qid)||typeof mode!=='string'||mode.length<1||mode.length>180||
+        !Number.isInteger(question?.validRows)||question.validRows<1||
+        !Array.isArray(dist)||dist.length<1||dist.length>10)continue;
+      if(!dist.every((item:any)=>item&&typeof item.label==='string'&&
+          item.label.length>=1&&item.label.length<=180&&
+          Number.isInteger(item.pct)&&item.pct>=0&&item.pct<=100&&item.pct%10===0))continue;
+      distributionIndex.set(year+':'+qid,{year,questionId:qid,modeOption:mode,
+        roundedDistribution:dist.map((item:any)=>({label:item.label,pct:item.pct}))});
+    }
+  }
+  schoolDistributions.splice(0,schoolDistributions.length,
+    ...[...distributionIndex.values()].sort((a,b)=>Number(a.year)-Number(b.year)||
+      String(a.questionId).localeCompare(String(b.questionId))));
+
   // 2025 legacy public-release whitelist explicitly authorizes curated domain
   // scores for >=1 source observation. This is NOT permission to expose the
   // teacher's raw choices, free text, counts, or sensitive survey columns.
