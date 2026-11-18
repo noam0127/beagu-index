@@ -16,7 +16,7 @@ BEGIN
    AND d.release_status='approved'
    AND d.summary->'public_release_v1'->>'release_format'='HISTORICAL_PERCENTILE_ONLY'
    AND d.summary->'public_release_v1'->>'source_percentile'
-       ~ '^(100|[1-9]?[0-9])(\\.[0-9]{1,4})?$';
+       ~ '^(100|[1-9]?[0-9])(\.[0-9]{1,4})?$';
  IF source_count<>425 THEN RAISE EXCEPTION '2023/24 source changed: %',source_count; END IF;
 END $$;
 
@@ -33,7 +33,7 @@ WHERE s.sido_standard IN('광주','전남') AND s.status='운영'
   AND d.release_status='approved'
   AND d.summary->'public_release_v1'->>'release_format'='HISTORICAL_PERCENTILE_ONLY'
   AND d.summary->'public_release_v1'->>'source_percentile'
-      ~ '^(100|[1-9]?[0-9])(\\.[0-9]{1,4})?$'
+      ~ '^(100|[1-9]?[0-9])(\.[0-9]{1,4})?$'
 ON CONFLICT(school_id,survey_year) DO NOTHING;
 
 -- The base source contains three duplicate edited-school records.
