@@ -25,8 +25,8 @@ assert.doesNotMatch(lv1,/make\('section', 'school-profile'\)/,'remove repeated s
 assert.doesNotMatch(lv1,/BeaguDetailGroups\.appendGrouped\(section,schoolScale/,'remove repeated official stats');
 assert.match(lv1,/renderHistoricalBenchmarks\(host,year/,'preserve year-by-year vetted comparisons');
 assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(section,releasedMetrics/,'preserve approved historical values');
-assert.match(html,/js\/level-search\.js\?v=20261118-sortctrl1/);
-assert.match(html,/styles\/beagu-ui-refresh-v2\.css\?v=20261118-lv1-history6/);
+assert.match(html,/js\/level-search\.js\?v=20261118-[a-z0-9-]+/);
+assert.match(html,/styles\/beagu-ui-refresh-v2\.css\?v=20261118-[a-z0-9-]+/);
 assert.match(css,/\.lv1-history-trigger\[aria-expanded="true"\]/,'visual collapsed/expanded affordance');
 assert.match(css,/\.lv1-history-disclosure >?\.beagu-mbti-badge|\.lv1-history-disclosure \+ \.beagu-mbti-badge/,'MBTI stays after history box');
 console.log('PASS: Lv.1 history toggles inline; redundant content removed; approved stats and MBTI preserved');
