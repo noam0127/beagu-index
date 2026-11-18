@@ -251,63 +251,49 @@ Deno.serve(async(req:Request)=>{
     if(!vettedCategories[key]?.has(value))continue;
     addFact(Number(fact.survey_year),key,String(fact.label),key==='milk_lunch'?(value==='O'?'운영':'미운영'):value,Number(fact.reference_year),'',true);
   }
-  // Return only conservatively reviewed, rounded survey distributions after
-  // the existing Lv.1 server-side session check. Never expose the internal N,
-  // full source frequencies, respondent IDs or unreleased school observations.
-  const {data:verifiedSchoolDistributions,error:distError}=await admin
+  // Return only the reviewed most-frequently-selected option for each school
+  // and question, never the option distribution, percentages, sample size, raw
+  // answers, or respondent metadata. Lv.1 session verification is required.
+  const {data:verifiedSchoolModes,error:modeError}=await admin
     .from('beagu_verified_school_question_distributions_v1')
-    .select('survey_year,question_id,mode_option,rounded_distribution,review_policy')
+    .select('survey_year,question_id,mode_option,review_policy')
     .eq('school_id',id).eq('release_status','APPROVED_AGGREGATE_ONLY')
     .in('survey_year',[2023,2024]).limit(100);
-  if(distError)return send({error:'SCHOOL_DISTRIBUTIONS_UNAVAILABLE'},503,origin);
-  const schoolDistributions:(Record<string,unknown>)[]=[];
-  for(const item of verifiedSchoolDistributions||[]){
-    const y=Number(item.survey_year),qid=String(item.question_id||'');
-    if(![2023,2024].includes(y)||!/^Q\d{2}$/.test(qid)||
-       typeof item.mode_option!=='string'||item.mode_option.length>180||
-       item.review_policy!=='N10_CELL3_PATTERNS5_STRICT_MATCH'||
-       !Array.isArray(item.rounded_distribution))continue;
-    const rounded=item.rounded_distribution;
-    if(rounded.length<2||rounded.length>10)continue;
-    if(!rounded.every((x:any)=>x&&typeof x.label==='string'&&x.label.length<=180&&
-       Number.isInteger(x.pct)&&x.pct>=0&&x.pct<=100&&x.pct%10===0))continue;
-    schoolDistributions.push({year:y,questionId:qid,modeOption:item.mode_option,
-      roundedDistribution:rounded.map((x:any)=>({label:x.label,pct:x.pct}))});
+  if(modeError)return send({error:'SCHOOL_MODES_UNAVAILABLE'},503,origin);
+  const modeIndex=new Map<string,{year:number,questionId:string,modeOption:string}>();
+  const safeMode=(value:unknown):value is string =>
+    typeof value==='string'&&value.trim().length>0&&value.length<=180&&
+    !/[<>\r\n]/.test(value)&&!/@|https?:\/\/|(?:^|\D)01[016789]-?\d{3,4}-?\d{4}(?:\D|$)/i.test(value);
+  for(const record of verifiedSchoolModes||[]){
+    const year=Number(record.survey_year),qid=String(record.question_id||'');
+    if(![2023,2024].includes(year)||!/^Q\d{2}$/.test(qid)||
+       record.review_policy!=='N10_CELL3_PATTERNS5_STRICT_MATCH'||
+       !safeMode(record.mode_option))continue;
+    modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:record.mode_option});
   }
 
-  // Owner-authorized 1+ closed-choice school aggregates for 2023-2025.
-  // Fetch only under the verified Lv.1 session and never return source counts,
-  // respondent rows, timestamps, school matching evidence or free text.
+  // Owner-authorized 1+ historical closed-choice aggregates. Keep the
+  // distributions inside the DB and return only an approved mode label.
   const {data:ownerHistory,error:ownerHistoryError}=await admin
     .from('beagu_school_question_aggregates_v2')
     .select('survey_year,questions,review_status')
     .eq('school_id',id).eq('review_status','OWNER_AUTHORIZED_CLOSED_CHOICE')
     .in('survey_year',[2023,2024,2025]).limit(3);
   if(ownerHistoryError)return send({error:'SCHOOL_HISTORY_UNAVAILABLE'},503,origin);
-  const distributionIndex=new Map<string,Record<string,unknown>>();
-  for(const row of schoolDistributions)
-    distributionIndex.set(String(row.year)+':'+String(row.questionId),row);
   for(const record of ownerHistory||[]){
     const year=Number(record.survey_year);
     if(![2023,2024,2025].includes(year)||record.review_status!=='OWNER_AUTHORIZED_CLOSED_CHOICE'||
-      !Array.isArray(record.questions)||record.questions.length>50)continue;
+       !Array.isArray(record.questions)||record.questions.length>50)continue;
     for(const question of record.questions){
       const qid=String(question?.questionId||'');
       const mode=question?.modeOption;
-      const dist=question?.roundedDistribution;
-      if(!/^Q\d{2}$/.test(qid)||typeof mode!=='string'||mode.length<1||mode.length>180||
-        !Number.isInteger(question?.validRows)||question.validRows<1||
-        !Array.isArray(dist)||dist.length<1||dist.length>10)continue;
-      if(!dist.every((item:any)=>item&&typeof item.label==='string'&&
-          item.label.length>=1&&item.label.length<=180&&
-          Number.isInteger(item.pct)&&item.pct>=0&&item.pct<=100&&item.pct%10===0))continue;
-      distributionIndex.set(year+':'+qid,{year,questionId:qid,modeOption:mode,
-        roundedDistribution:dist.map((item:any)=>({label:item.label,pct:item.pct}))});
+      if(!/^Q\d{2}$/.test(qid)||!safeMode(mode)||
+         !Number.isInteger(question?.validRows)||question.validRows<1)continue;
+      modeIndex.set(year+':'+qid,{year,questionId:qid,modeOption:mode});
     }
   }
-  schoolDistributions.splice(0,schoolDistributions.length,
-    ...[...distributionIndex.values()].sort((a,b)=>Number(a.year)-Number(b.year)||
-      String(a.questionId).localeCompare(String(b.questionId))));
+  const schoolQuestionModes=[...modeIndex.values()].sort((a,b)=>
+    a.year-b.year||a.questionId.localeCompare(b.questionId));
 
   // 2025 legacy public-release whitelist explicitly authorizes curated domain
   // scores for >=1 source observation. This is NOT permission to expose the
@@ -364,7 +350,7 @@ Deno.serve(async(req:Request)=>{
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
-  return send({school_id:id,level,rows,schoolDistributions,participationYears},200,origin);
+  return send({school_id:id,level,rows,schoolQuestionModes,participationYears},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
 
