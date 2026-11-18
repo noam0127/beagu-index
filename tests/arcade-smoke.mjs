@@ -17,6 +17,38 @@ for(const h of [volley,runner]){
 }
 new Function(shared);
 new Function(picker);
+
+// Regression: an abandoned match must not attach its score to the next school.
+const mockWindow={};
+new Function("window",shared)(mockWindow);
+const sessionBoard=new mockWindow.ArcadeLeaderboard("volleyball",null);
+let answerStart;
+sessionBoard.request=()=>new Promise(resolve=>{answerStart=resolve;});
+const pendingSession=sessionBoard.start({eligible:true,school_id:"test-old",school_name:"Old School",difficulty:"easy"});
+sessionBoard.cancel();
+answerStart({school:{eligible:true},session:"stale-session"});
+assert.equal(await pendingSession,null,"stale start must be ignored");
+assert.equal(sessionBoard.session,null,"abandoned session must be cleared");
+let resolveLoading;
+sessionBoard.session="pending-finish";
+sessionBoard.load=()=>new Promise(resolve=>{resolveLoading=resolve;});
+let promptShown=false;
+sessionBoard.openRecord=()=>{promptShown=true;};
+const finishing=sessionBoard.finish(150,{player:7,cpu:1});
+sessionBoard.cancel();resolveLoading([]);
+await finishing;
+assert.equal(promptShown,false,"old school record dialog must not reopen");
+
+const pickerWindow={};
+new Function("window","clearTimeout",picker)(pickerWindow,()=>{});
+const mockPicker={
+ timer:null,input:{value:"Old School"},status:{textContent:""},didUnlock:false,didClear:false,didFocus:false,
+ setLocked(value){this.didUnlock=value===false;},clear(){this.didClear=true;},focus(){this.didFocus=true;}
+};
+pickerWindow.ArcadeSchoolPicker.prototype.resetForChange.call(mockPicker);
+assert.equal(mockPicker.input.value,"");
+assert.ok(mockPicker.didUnlock&&mockPicker.didClear&&mockPicker.didFocus,"reset enables searching another school");
+console.log("PASS: cancellation prevents stale school records and unlocks a new school search");
 assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
 assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
 assert.match(picker,/available_years/,"confirmed survey years shown; empty school gets survey CTA");
