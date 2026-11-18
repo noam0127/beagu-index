@@ -1196,7 +1196,7 @@
   // Existing teacher survey questions remain restricted until individually reviewed.
   const requiredTier=item=>1; // Only server-reviewed question aggregates can unlock at unified Lv.1.
   const remembered=()=>{try{return sessionStorage.getItem(TIER_SESSION_KEY)||''}catch{return ''}};
-  const saveToken=t=>{try{if(t)sessionStorage.setItem(TIER_SESSION_KEY,t);else sessionStorage.removeItem(TIER_SESSION_KEY)}catch{}};
+  const saveToken=t=>{try{if(t)sessionStorage.setItem(TIER_SESSION_KEY,t);else sessionStorage.removeItem(TIER_SESSION_KEY)}catch{}window.dispatchEvent(new Event('beagu:level-state-change'));};
   async function tierCall(action,other={}){
     const response=await fetch(SUPABASE_URL+'/functions/v1/beagu-level-api',{
       method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Beagu-Session':state.authToken},
