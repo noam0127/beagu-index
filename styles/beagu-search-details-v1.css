@@ -4,7 +4,6 @@
  */
 body.beagu-page-lv1 .school-card{
   overflow:visible;
-  container-type:inline-size;
 }
 body.beagu-page-lv1 .school-card .region-badge{
   margin-bottom:8px;
@@ -484,4 +483,71 @@ body.beagu-page-lv1 .school-card .year-2026-button:disabled{opacity:.55;cursor:w
 }
 @media(prefers-reduced-motion:reduce){
   body.beagu-page-lv1 .school-card .percentile-cell{transition:none}
+}
+
+/* Verified official metrics: same three-part comparison language as questions. */
+body.beagu-page-lv1 .school-card .beagu-comparison-row{
+  display:block;
+  padding:13px 0;
+  border-bottom:1px solid #e7edf5;
+}
+body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-label{
+  margin:0 0 9px;
+  color:#263f5d;
+  font-size:13px;
+  font-weight:850;
+  line-height:1.55;
+}
+body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+}
+body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-value{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+  padding:12px 10px;
+  border:1px solid #e4eaf4;
+  border-radius:10px;
+  background:#f8fafd;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-value.school{
+  border-color:#bdd4f7;
+  background:#eef5ff;
+}
+body.beagu-page-lv1 .school-card .compare-value-label{
+  color:#637b98;
+  font-size:11px;
+  font-weight:750;
+}
+body.beagu-page-lv1 .school-card .compare-value-text{
+  color:#1d385c;
+  font-size:14px;
+  font-weight:850;
+  line-height:1.5;
+}
+body.beagu-page-lv1 .school-card .compare-value.school .compare-value-text{color:#1a51a0}
+body.beagu-page-lv1 .school-card .beagu-compare-source{
+  display:block;
+  margin-top:7px;
+  color:#8492a4;
+  font-size:10px;
+  line-height:1.5;
+}
+@media(max-width:680px){
+  body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-grid{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-value{
+    display:grid;
+    grid-template-columns:minmax(90px,28%) minmax(0,1fr);
+    gap:7px;
+    align-items:start;
+    padding:10px 11px;
+  }
 }
