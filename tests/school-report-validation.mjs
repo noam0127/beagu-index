@@ -143,6 +143,6 @@ assert.ok(src.includes('renderSchoolSurveySnapshot();'),'School results must ren
 assert.ok(src.includes("role==='school'?'학교별 문항 결과 미공개'"),'Distinguish missing detailed approval from no survey response');
 assert.ok(src.includes('학교별 종합 백분위와 구분'),'Do not misrepresent a published percentile as a question answer');
 assert.ok(src.includes('우리 학교 종합지표 공개 · 문항별 별도 검증'),'Show proper annual status when only the percentile is public');
-assert.ok(src.includes('if(![2023,2024].includes(year)')||src.includes('if(![2023,2024].includes(year)')||src.includes('if(![2023,2024].includes(year)'),'Keep school-question distributions limited to reviewed historical data');
+assert.ok(src.includes('if(![2023,2024,2025].includes(year)'),'Allow approved historical school-question distributions across 2023–2025');
 
 console.log('School report JS syntax, UI bindings and public/private separation: PASS');
