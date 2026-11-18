@@ -92,7 +92,7 @@ console.log("PASS: upload success, rank race, offline warning, API expiry, stale
 
 assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
 assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
-assert.match(picker,/available_years/,"confirmed survey years shown; empty school gets survey CTA");
+assert.match(backend,/available_years/,"server tracks available surveyed years; empty school gets survey CTA");
 assert.match(backend,/years=\[2023,2024,2025,2026\]/);
 assert.match(backend,/available_years\.reduce\(\(sum,year\)/,"average only available survey years");
 assert.match(backend,/available_years\.length>0/,"one year unlocks games");
@@ -151,6 +151,63 @@ assert.match(volley,/ranking\?\.finish/);
 assert.match(runner,/ranking\?\.finish/);
 console.log("PASS: home order, game scripts, score hooks, 2x controls");
 
+// HP, lives, double-touch and time bonus contract.
+const runProfilesMatch=runner.match(/const difficultyProfiles=(\{[\s\S]*?\n\s*\});/);
+const volleyProfilesMatch=volley.match(/const energyProfiles=(\{[\s\S]*?\n\s*\});/);
+const volleySpecialMatch=volley.match(/const specialProfiles=(\{[\s\S]*?\n\s*\});/);
+assert.ok(runProfilesMatch&&volleyProfilesMatch&&volleySpecialMatch,"five tier profiles exist");
+const parseProfile=match=>new Function("return "+match[1])();
+const runProfiles=parseProfile(runProfilesMatch),energyProfiles=parseProfile(volleyProfilesMatch),specialProfiles=parseProfile(volleySpecialMatch);
+const tiers=["easy","normal","hard","very_hard","extreme"];
+for(let i=0;i<tiers.length;i++){
+ const t=tiers[i];
+ assert.ok(runProfiles[t]&&energyProfiles[t]&&specialProfiles[t],"tier "+t+" has HP/life/special definition");
+ if(i>0){
+  const prior=tiers[i-1];
+  assert.ok(runProfiles[t].startingLife<runProfiles[prior].startingLife,"harder tier has less starting HP");
+  assert.ok(runProfiles[t].lives<=runProfiles[prior].lives,"harder tier cannot gain extra lives");
+  assert.ok(runProfiles[t].specialCooldown>runProfiles[prior].specialCooldown,"harder tier has longer special cooldown");
+  assert.ok(energyProfiles[t].allyMax<energyProfiles[prior].allyMax,"harder tier has less ally stamina");
+  assert.ok(energyProfiles[t].enemyMax>energyProfiles[prior].enemyMax,"harder tier has more CPU stamina");
+  assert.ok(specialProfiles[t].cooldown>specialProfiles[prior].cooldown,"harder tier has longer super spike cooldown");
+ }
+}
+assert.match(volley,/id="player-energy-progress"/);
+assert.match(volley,/id="cpu-energy-progress"/);
+assert.match(runner,/id="run-health-progress"/);
+assert.match(runner,/id="run-lives"/);
+assert.match(volley,/function activateSuperSpike\(\)/);
+assert.match(runner,/function activateSpecial\(\)/);
+assert.match(volley,/now-lastTapAt<=320/);
+assert.match(runner,/now-lastTapAt<=320/);
+assert.match(volley,/state\.playFrames\+\+/,"time counted during live play only");
+assert.match(volley,/Math\.min\(900,getSurvivalSeconds\(\)\*4\)/,"volleyball survival bonus capped");
+assert.match(runner,/const survivalBonus=survivalSeconds\*10/,"survival run score includes time explicitly");
+assert.doesNotMatch(runner,/score\+=dt\*9/,"run survival time is counted once");
+assert.doesNotMatch(picker,/arcade-school-guide/,"long school selector description removed");
+assert.match(picker,/🏫 학교 선택/,"short school heading");
+assert.match(backend,/function validatedSurvivalSeconds/);
+assert.match(backend,/invalid_survival_time/);
+assert.match(backend,/invalid_time_bonus/);
+// Run the actual server's pure score functions with TypeScript annotations removed.
+const scoring=backend.slice(backend.indexOf("function validatedSurvivalSeconds"),backend.indexOf("Deno.serve("));
+assert.ok(scoring.startsWith("function validatedSurvivalSeconds"));
+const javascript=scoring.replace(/:\s*(?:any|number)/g,"");
+const scoreFns=new Function("int",javascript+"\nreturn {scoreFromVolleyball,scoreFromRun};")(
+ (v,min,max)=>typeof v==="number"&&Number.isInteger(v)&&v>=min&&v<=max
+);
+const vBase=7*120+2*25+600+(7-3)*30;
+assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2,survivalSeconds:90},100),vBase+360);
+assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2,survivalSeconds:400},410),vBase+900);
+assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2},100),vBase,"legacy clients are compatible");
+assert.throws(()=>scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2,survivalSeconds:90},50),/invalid_survival_time/);
+assert.equal(scoreFns.scoreFromRun({score:1380,baseScore:420,survivalSeconds:96,day:4,victory:false},120),1380);
+assert.throws(()=>scoreFns.scoreFromRun({score:1381,baseScore:420,survivalSeconds:96,day:4,victory:false},120),/invalid_time_bonus/);
+assert.throws(()=>scoreFns.scoreFromRun({score:1380,baseScore:420,survivalSeconds:96,day:4,victory:false},40),/invalid_survival_time/);
+assert.equal(scoreFns.scoreFromRun({score:1500,day:3,victory:false},100),1500,"cached legacy game supported");
+console.log("PASS: tier HP, lives, double-tap, concise UI, both time bonus formulas and tamper rejection");
+
+
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
  for(let i=0;i<times;i++){
@@ -170,8 +227,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261118-recordfix1")&&
-     site.body.includes("teacher-run.html?v=20261118-recordfix1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261118-hp-super-time1")&&
+     site.body.includes("teacher-run.html?v=20261118-hp-super-time1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -181,8 +238,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261118-recordfix1/);
-assert.match(site.body,/teacher-run\.html\?v=20261118-recordfix1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261118-hp-super-time1/);
+assert.match(site.body,/teacher-run\.html\?v=20261118-hp-super-time1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));

@@ -103,18 +103,31 @@ async function ipHash(req: Request): Promise<string> {
   const mac = await crypto.subtle.sign("HMAC",key,encoder.encode("arcade-v1:" + address));
   return [...new Uint8Array(mac)].map(b=>b.toString(16).padStart(2,"0")).join("");
 }
-function scoreFromVolleyball(result: any): number {
+function validatedSurvivalSeconds(result:any,elapsed:number):number {
+  // Legacy cached clients without survivalSeconds continue to work without a time bonus.
+  if(result?.survivalSeconds===undefined)return 0;
+  const seconds=result.survivalSeconds;
+  if(!int(seconds,0,3600) || seconds>Math.floor(elapsed)+2)throw new Error("invalid_survival_time");
+  return seconds;
+}
+function scoreFromVolleyball(result: any,elapsed:number): number {
   const p = result?.player, c = result?.cpu, spikes = result?.spikes;
   if (!int(p,0,99) || !int(c,0,99) || !int(spikes,0,300)) throw new Error("invalid_stats");
   if (Math.max(p,c)<7 || Math.abs(p-c)<2) throw new Error("invalid_match");
+  const seconds=validatedSurvivalSeconds(result,elapsed);
   return p*120 + Math.min(60,spikes)*25 +
-    (p>c ? 600 + Math.max(0,7-c)*30 : 0);
+    (p>c ? 600 + Math.max(0,7-c)*30 : 0) + Math.min(900,seconds*4);
 }
 function scoreFromRun(result: any, elapsed: number): number {
   const s = result?.score, day = result?.day, victory=result?.victory;
   if (!int(s,1,100000) || !int(day,1,5) || typeof victory !== "boolean") throw new Error("invalid_stats");
   if (victory && (day!==5 || elapsed<100)) throw new Error("invalid_duration");
   if (s>Math.min(100000,Math.floor(elapsed*220+4000))) throw new Error("invalid_score");
+  if(result?.survivalSeconds!==undefined){
+    const seconds=validatedSurvivalSeconds(result,elapsed);
+    if(!int(result.baseScore,0,100000) || result.baseScore + seconds*10!==s)throw new Error("invalid_time_bonus");
+    if(victory&&seconds<100)throw new Error("invalid_duration");
+  }
   return s;
 }
 Deno.serve(async (req:Request)=>{
@@ -166,7 +179,7 @@ Deno.serve(async (req:Request)=>{
     if(elapsed<4||elapsed>3600)return error("invalid_duration",400,origin);
     let score:number;
     try {
-      score=game==="volleyball" ? scoreFromVolleyball(payload.stats) : scoreFromRun(payload.stats,elapsed);
+      score=game==="volleyball" ? scoreFromVolleyball(payload.stats,elapsed) : scoreFromRun(payload.stats,elapsed);
     } catch(e) {return error(e instanceof Error?e.message:"invalid_stats",400,origin);}
     const existing=await top(game);
     if(existing.length>=10 && score<=existing[9].score){

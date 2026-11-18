@@ -78,6 +78,17 @@ canvas{height:400px;cursor:default}
 .teacher-run-lv1-gate p{font-size:14px;line-height:1.6;color:#d6e7f8;margin:0 0 18px}
 .teacher-run-lv1-gate a{display:inline-block;padding:11px 18px;border-radius:10px;background:#7be3ca;color:#12334b;font-weight:800;text-decoration:none}
 #teacher-run-protected[hidden],#teacher-run-lv1-gate[hidden]{display:none!important}
+.arcade-survival-health{margin:0 0 10px;padding:11px 13px;background:linear-gradient(110deg,#1b3857,#193047);border:1px solid #5b83a0;border-radius:12px;min-width:0}
+.arcade-survival-health-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px 10px;margin-bottom:8px;font-size:13px;font-weight:800;color:#e6f7ff}
+.arcade-survival-health-top strong{color:#fff1b1;white-space:nowrap;font-size:13px;font-variant-numeric:tabular-nums}
+.arcade-survival-life-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap;white-space:nowrap}
+#run-lives{color:#ff9eaf;letter-spacing:3px;font-size:17px}
+#run-life-tier{font-size:11px;font-weight:900;color:#9ff9dd}
+.arcade-survival-health-track{position:relative;overflow:hidden;height:16px;border:1px solid #5b7187;border-radius:7px;background:#35495e;box-shadow:inset 0 2px 5px rgba(0,0,0,.26)}
+.arcade-survival-health-fill{width:100%;height:100%;border-radius:5px;background:linear-gradient(90deg,#2ab79a,#85f2bd);transition:width .17s linear,background-color .17s}
+.arcade-survival-health-fill.is-low{background:linear-gradient(90deg,#d24654,#ff9e73)}
+.arcade-run-special-status{margin-top:8px;color:#ffdf92;font-size:11px;font-weight:850;line-height:1.45}
+@media(max-width:380px){.arcade-survival-health{padding:9px 10px}.arcade-survival-health-top{font-size:11px;gap:5px}.arcade-survival-health-top strong{font-size:11px}#run-lives{font-size:15px;letter-spacing:1px}}
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -99,12 +110,20 @@ canvas{height:400px;cursor:default}
   <a href="search.html">Lv.1 인증하기</a>
 </section>
 <main id="teacher-run-protected" class="shell" hidden>
-  <header class="top"><div class="brand" style="display:flex;align-items:center;gap:8px"><span class="beagu-brand-mark" aria-hidden="true">B</span>험난한 교직생활 <span style="color:#8ae4d7">3.0</span></div><span class="version">ARCADE · 1UP</span></header>
+  <header class="top"><div class="brand" style="display:flex;align-items:center;gap:8px"><span class="beagu-brand-mark" aria-hidden="true">B</span>험난한 교직생활 <span style="color:#8ae4d7">3.0</span></div><span class="version">ARCADE · LIFE</span></header>
   <div class="hud" aria-label="게임 현황">
     <div class="stat"><span>DAY</span><strong id="dayLabel">월요일 · 1/5</strong></div>
-    <div class="stat"><span>1UP</span><strong id="scoreLabel">0</strong></div>
+    <div class="stat"><span>SCORE</span><strong id="scoreLabel">0</strong></div>
     <div class="stat"><span>HI-SCORE</span><strong id="bestLabel">0</strong></div>
   </div>
+  <section class="arcade-survival-health" aria-label="교사 체력과 남은 목숨">
+    <div class="arcade-survival-health-top">
+      <span>♥ 체력 <strong id="run-health-numbers">100 / 100</strong> · <span id="run-time-label">⏱ 0초</span></span>
+      <div class="arcade-survival-life-badges"><span id="run-life-tier">—</span><span id="run-lives" aria-label="남은 목숨">♥♥</span></div>
+    </div>
+    <div class="arcade-survival-health-track" id="run-health-progress" role="progressbar" aria-label="교사 체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="arcade-survival-health-fill" id="run-health-fill"></div></div>
+    <div class="arcade-run-special-status" id="run-special-status" role="status">⚡ 필살기 준비 · 화면 더블 터치</div>
+  </section>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="stage">
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 3.0 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
@@ -120,7 +139,7 @@ canvas{height:400px;cursor:default}
   <div id="arcade-top10" aria-label="험난한 교직생활 3.0 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-recordfix1"></script>
-<script src="js/arcade-school-picker-v1.js?v=20261118-tier-ability2"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261118-hp-super-time1"></script>
 <script>
 (function(){
 "use strict";
@@ -129,14 +148,19 @@ const canvas=$("game"),ctx=canvas.getContext("2d");
 const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("teacher_run","#arcade-top10") : null;
 const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
 const difficultyProfiles={
- easy:{heroSpeed:1.34,heroSize:.86,startingLife:150,damage:.54,enemySpeed:.72,spawnPressure:.62,enemySize:.83,goodChance:.34,heal:1.48,inv:1.95,homing:0,zigzag:.65,label:"교사 강화 · 위협 느림 · 회복 풍부"},
- normal:{heroSpeed:1.18,heroSize:.93,startingLife:125,damage:.76,enemySpeed:.86,spawnPressure:.82,enemySize:.92,goodChance:.28,heal:1.22,inv:1.6,homing:9,zigzag:.85,label:"교사 우세 · 회복 충분"},
- hard:{heroSpeed:1,heroSize:1,startingLife:100,damage:1,enemySpeed:1,spawnPressure:1,enemySize:1,goodChance:.20,heal:1,inv:1.3,homing:25,zigzag:1,label:"표준 · 장애물 추격 시작"},
- very_hard:{heroSpeed:.88,heroSize:1.09,startingLife:90,damage:1.26,enemySpeed:1.18,spawnPressure:1.24,enemySize:1.15,goodChance:.14,heal:.79,inv:1.08,homing:48,zigzag:1.25,label:"교사 약화 · 장애물 추격 강화"},
- extreme:{heroSpeed:.78,heroSize:1.17,startingLife:78,damage:1.51,enemySpeed:1.38,spawnPressure:1.52,enemySize:1.28,goodChance:.09,heal:.63,inv:.90,homing:78,zigzag:1.5,label:"교사 약화 · 큰 위협·집중 추격"}
+ easy:{specialCooldown:10,specialShield:3.0,specialRadius:230,lives:3,heroSpeed:1.34,heroSize:.86,startingLife:150,damage:.54,enemySpeed:.72,spawnPressure:.62,enemySize:.83,goodChance:.34,heal:1.48,inv:1.95,homing:0,zigzag:.65,label:"교사 강화 · 위협 느림 · 회복 풍부"},
+ normal:{specialCooldown:14,specialShield:2.7,specialRadius:205,lives:2,heroSpeed:1.18,heroSize:.93,startingLife:125,damage:.76,enemySpeed:.86,spawnPressure:.82,enemySize:.92,goodChance:.28,heal:1.22,inv:1.6,homing:9,zigzag:.85,label:"교사 우세 · 회복 충분"},
+ hard:{specialCooldown:18,specialShield:2.4,specialRadius:185,lives:2,heroSpeed:1,heroSize:1,startingLife:100,damage:1,enemySpeed:1,spawnPressure:1,enemySize:1,goodChance:.20,heal:1,inv:1.3,homing:25,zigzag:1,label:"표준 · 장애물 추격 시작"},
+ very_hard:{specialCooldown:23,specialShield:2.0,specialRadius:160,lives:1,heroSpeed:.88,heroSize:1.09,startingLife:90,damage:1.26,enemySpeed:1.18,spawnPressure:1.24,enemySize:1.15,goodChance:.14,heal:.79,inv:1.08,homing:48,zigzag:1.25,label:"교사 약화 · 장애물 추격 강화"},
+ extreme:{specialCooldown:28,specialShield:1.6,specialRadius:145,lives:1,heroSpeed:.78,heroSize:1.17,startingLife:78,damage:1.51,enemySpeed:1.38,spawnPressure:1.52,enemySize:1.28,goodChance:.09,heal:.63,inv:.90,homing:78,zigzag:1.5,label:"교사 약화 · 큰 위협·집중 추격"}
 };
 const difficultyName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
-schoolPicker.onChange=()=>{if(state==="ready")intro();};
+schoolPicker.onChange=()=>{if(state==="ready"){
+  const chosen=schoolPicker.get();
+  profile=difficultyProfiles[chosen?.difficulty]||difficultyProfiles.hard;
+  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
+  updateLabels();intro();
+ }};
 schoolPicker.onRequestChange=stopAndChangeSchool;
 if(!ctx){$("overlayDesc").textContent="이 브라우저에서는 캔버스 게임을 실행할 수 없습니다.";return;}
 const days=["월요일","화요일","수요일","목요일","금요일"];
@@ -155,15 +179,15 @@ const good=[
  {emoji:"🌿",name:"쉬는 시간",heal:15,color:"#ecffe0"}
 ];
 const upgrades=[
- {title:"💪 퇴근 체력 +25",detail:"체력 최대치 증가 + 현재 체력 회복",id:"vital"},
- {title:"👟 가벼운 발걸음",detail:"이동 속도 18% 증가",id:"speed"},
- {title:"🛡️ 마음의 여유",detail:"충돌 후 무적 시간 0.4초 연장",id:"guard"},
- {title:"☕ 회복의 기술",detail:"회복 아이템 효과 +50%",id:"heal"}
+ {title:"💪 체력 +25",id:"vital"},
+ {title:"👟 이동속도 +18%",id:"speed"},
+ {title:"🛡️ 무적시간 +0.4초",id:"guard"},
+ {title:"☕ 회복효과 +50%",id:"heal"}
 ];
-let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100;
+let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
 let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
-let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0;
+let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0,specialCooldown=0,specialFlash=0,lastTapAt=0,lastTapX=0,lastTapY=0;
 try{best=Number(localStorage.getItem("teacherRunBestV2"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
 $("bestLabel").textContent=best.toLocaleString("ko-KR");
 $("sound").textContent=soundOn?"🔊":"🔇";
@@ -204,17 +228,17 @@ async function start(){
  if(state==="starting")return;
  const ticket=++startTicket;
  state="starting";
- message("조사 자료 확인 중","2023~2026년 중 한 해 이상 백분위가 있는지 확인하고 있습니다.",[],"🏫");
+ message("학교 확인 중","",[],"🏫");
  const session=ranking?await ranking.start(selected):null;
  if(ticket!==startTicket)return;
  if(!session){
   state="ready";intro();
-  schoolPicker.status.textContent="게임 시작 불가 · 조사 자료를 다시 확인하거나 서버 연결 상태를 확인하세요.";
+  schoolPicker.status.textContent="게임 서버 연결 실패";
   return;
  }
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
- state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;
+ state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
  combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};
  items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;pointerId=null;pointerY=null;
  pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
@@ -222,8 +246,8 @@ async function start(){
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
- items=[];sparks=[];floats=[];score=0;day=0;dayTime=0;combo=0;
- life=100;maxLife=100;player.inv=0;
+ items=[];sparks=[];floats=[];score=0;day=0;dayTime=0;clock=0;combo=0;
+ maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
 }
@@ -235,20 +259,50 @@ function intro(){
  state="ready";schoolPicker.setLocked(false);
  const selected=schoolPicker.get();
  const ready=selected?.eligible===true;
- const available=Array.isArray(selected?.available_years)?selected.available_years.join("·")+"년":"확인 연도";
  const title=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
-   selected?selected.school_name+" · 플레이 불가":"먼저 학교를 선택하세요";
- const desc=ready?"확인된 "+available+" 백분위 평균 · "+(difficultyProfiles[selected.difficulty]?.label||"")+"\n월 → 금 생존!":
-   selected?"2023~2026년 조사 백분위가 한 해도 확인되지 않았습니다.\n2026년 배구지수 조사에 참여해 주세요. 조사 반영 후 플레이 가능합니다.":
-   "2023~2026년 중 한 해라도 조사 백분위가 있는 학교는 플레이할 수 있습니다.\n위에서 학교를 검색해 선택해 주세요.";
+   selected?selected.school_name+" · 조사 필요":"학교를 선택하세요";
+ const desc=ready?"월 → 금 생존":selected?"2026년 조사 참여 후 시작 가능":"학교 선택";
  message("험난한 교직생활 3.0",title+"\n"+desc,[
   {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
    action:()=>ready?start():schoolPicker.focus()}
  ],"🏫");
 }
 
-function updateLabels(){$("dayLabel").textContent=days[day]+" · "+(day+1)+"/5";$("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");}
+function updateLabels(){
+ $("dayLabel").textContent=days[day]+" · "+(day+1)+"/5";
+ $("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");
+ const hp=Math.max(0,Math.min(maxLife,life));
+ const fraction=maxLife>0?hp/maxLife:0;
+ $("run-health-numbers").textContent=Math.ceil(hp)+" / "+maxLife;
+ $("run-time-label").textContent="⏱ "+Math.floor(clock)+"초";
+ $("run-health-fill").style.width=(fraction*100).toFixed(1)+"%";
+ $("run-health-fill").classList.toggle("is-low",fraction<=.3);
+ $("run-health-progress").setAttribute("aria-valuemax",String(maxLife));
+ $("run-health-progress").setAttribute("aria-valuenow",String(Math.ceil(hp)));
+ $("run-lives").textContent="♥".repeat(livesLeft)+"♡".repeat(maxLives-livesLeft);
+ $("run-lives").setAttribute("aria-label","남은 목숨 "+livesLeft+"개 / "+maxLives+"개");
+ $("run-life-tier").textContent=difficultyName[schoolPicker.get()?.difficulty]||"—";
+ $("run-special-status").textContent=specialCooldown>0
+   ?"⚡ 필살기 재충전 "+Math.ceil(specialCooldown)+"초"
+   :"⚡ 위기 탈출 준비 · 화면 더블 터치";
+}
 function setNotice(t,time=1.8){notice=t;noticeTime=time;}
+function activateSpecial(){
+ if(state!=="playing"||specialCooldown>0)return false;
+ specialCooldown=profile.specialCooldown;specialFlash=.9;
+ player.inv=Math.max(player.inv,profile.specialShield);
+ let cleared=0;
+ for(let i=items.length-1;i>=0;i--){
+  const a=items[i];
+  if(!a.good&&Math.hypot(a.x-player.x,a.y-player.y)<=profile.specialRadius){
+   burst(a.x,a.y,"#ffeea5",8);items.splice(i,1);cleared++;
+  }
+ }
+ if(cleared)addScore(Math.min(cleared,8)*60);
+ setNotice("⚡ 필살기! "+cleared+"개 제거",2);
+ playTone(1080,.24);updateLabels();
+ return true;
+}
 function burst(x,y,color,n=9){
  for(let i=0;i<n;i++){let a=Math.PI*2*i/n+(Math.random()-.5)*.8,v=50+Math.random()*140;
  sparks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.5+Math.random()*.4,color,r:2+Math.random()*3});}
@@ -265,7 +319,15 @@ function hit(a){
  life=Math.max(0,life-amount);combo=0;player.inv=profile.inv+skill.guard;shake=.2;misses++;
  float(a.x,a.y,"-"+amount,"#b32738");burst(a.x,a.y,"#ff9d88",15);playTone(190,.24,"sawtooth",.04);
  if(navigator.vibrate)navigator.vibrate(70);
- if(life<=0)finish(false);
+ if(life<=0){
+  if(livesLeft>1){
+   livesLeft--;life=Math.max(1,Math.round(maxLife*.62));
+   player.inv=Math.max(player.inv,profile.inv+1.4+skill.guard);
+   setNotice("♥ 남은 목숨 "+livesLeft+"개 · 체력 회복",2.1);
+   burst(player.x,player.y,"#f6ec87",18);playTone(740,.2);
+  }else{livesLeft=0;updateLabels();finish(false);return;}
+ }
+ updateLabels();
 }
 function spawn(){
  const isGood=Math.random()<Math.min(.55,profile.goodChance+(dayTime>12?.04:0)),source=isGood?good:bad;
@@ -280,7 +342,7 @@ function nextDay(){
  state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;playTone(900,.3);
  let picks=upgrades.slice();
  picks.sort(()=>Math.random()-.5);picks=picks.slice(0,3);
- message(days[day]+" 퇴근!","능력 선택",picks.map(u=>({label:u.title,detail:u.detail,action:()=>choose(u)})),"🌙");
+ message(days[day]+" 퇴근!","능력 선택",picks.map(u=>({label:u.title,action:()=>choose(u)})),"🌙");
 }
 function choose(u){
  if(u.id==="vital"){maxLife+=25;life=Math.min(maxLife,life+35);}
@@ -293,18 +355,20 @@ function choose(u){
 function finish(win){
  state="over";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  schoolPicker.setLocked(false);
- let bonus=win?1500+Math.round(life*5):0;score+=bonus;
+ const survivalSeconds=Math.floor(clock);
+ const baseScore=Math.floor(score+(win?1500+Math.round(life*5):0));
+ const survivalBonus=survivalSeconds*10;
+ score=baseScore+survivalBonus;
  if(score>best){best=Math.floor(score);persist();}
  updateLabels();$("bestLabel").textContent=best.toLocaleString("ko-KR");
- ranking?.finish(Math.floor(score),{score:Math.floor(score),day:day+1,victory:win});
- const grade=win?(life>70?"S":"A"):(day>=3?"B":"C");
- const text=(win?"금요일 퇴근 성공! 🎉":"오늘은 여기까지! 체력 회복이 필요해요.")+"\n"+
- "최종 점수 "+Math.floor(score).toLocaleString("ko-KR")+"점 · "+grade+"등급\n"+
- "아슬아슬 회피 "+nearCount+"회 · 충돌 "+misses+"회\n"+
- (win?"주말은 선생님 편입니다.":"괜찮아요. 다음 주는 더 잘 피할 수 있어요!");
- message(win?"🎊 주말을 지켜냈어요!":"🫖 잠깐 쉬어가요",text,[
- {label:"🔄 같은 학교로 다시 하기",action:()=>start()},
- {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?"🎉":"🫖");
+ ranking?.finish(Math.floor(score),{
+  score:Math.floor(score),baseScore,survivalSeconds,day:day+1,victory:win
+ });
+ const details="기본 "+baseScore.toLocaleString("ko-KR")+"점 · 생존 "+survivalSeconds+"초 +"+survivalBonus.toLocaleString("ko-KR")+"점\n"+
+  "최종 "+Math.floor(score).toLocaleString("ko-KR")+"점 · ♥ "+livesLeft+"/"+maxLives;
+ message(win?"🎉 퇴근 성공!":"🫖 게임 종료",details,[
+  {label:"↻ 다시 하기",action:()=>start()},
+  {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?"🎉":"🫖");
  playTone(win?950:280,.32);
 }
 function pause(){
@@ -315,11 +379,11 @@ function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","📄 공문 · 📞 전화 · 📅 회의 등 장애물을 피하세요.\n☕ 커피 · 💌 응원 · 🤝 동료 아이템을 받으면 체력이 회복됩니다.\n장애물을 아슬아슬하게 피하면 콤보 점수를 얻습니다.\n\nPC: ← → / A D\n모바일: 화면 터치·드래그로 자유롭게 이동",[
+ message("게임 방법","📄 회피 · ☕ 회복 · ⚡ 더블 터치 필살기\nPC ← → · 모바일 드래그",[
  {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
 function update(dt){
- clock+=dt;dayTime+=dt;score+=dt*9;player.inv=Math.max(0,player.inv-dt);
+ clock+=dt;dayTime+=dt;specialCooldown=Math.max(0,specialCooldown-dt);specialFlash=Math.max(0,specialFlash-dt);player.inv=Math.max(0,player.inv-dt);
   shake=Math.max(0,shake-dt);noticeTime=Math.max(0,noticeTime-dt);
  const dir=(pressed.has("right")?1:0)-(pressed.has("left")?1:0);
  const speed=285*skill.speed*profile.heroSpeed;
@@ -432,6 +496,12 @@ function drawItems(){
 function draw(){
  ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
  background();drawItems();playerDraw();
+ if(specialFlash>0){
+  ctx.save();ctx.strokeStyle="rgba(255,235,117,"+Math.min(1,specialFlash*1.1)+")";
+  ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,profile.specialRadius*(1-specialFlash*.1),0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle="#fff4b5";ctx.textAlign="center";ctx.font="bold 16px sans-serif";
+  ctx.fillText("⚡ CLEAR!",player.x,Math.max(30,player.y-67),140);ctx.restore();
+ }
  for(const q of sparks){ctx.globalAlpha=Math.min(1,q.life/.35);ctx.fillStyle=q.color;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
  for(const f of floats){
   const x=Math.max(65,Math.min(W-65,f.x));
@@ -439,14 +509,8 @@ function draw(){
   ctx.fillStyle=f.color;ctx.strokeStyle="rgba(15,35,50,.55)";ctx.lineWidth=3;
   ctx.strokeText(f.text,x,f.y,Math.max(90,W-12));ctx.fillText(f.text,x,f.y,Math.max(90,W-12));
  }ctx.globalAlpha=1;
- const healthW=Math.min(156,Math.max(104,W*.48)),timeW=Math.min(95,Math.max(68,W*.26));
- roundRect(9,10,healthW,49,12,"rgba(18,44,61,.9)");
+ const timeW=Math.min(95,Math.max(68,W*.26));
  roundRect(W-timeW-9,10,timeW,49,12,"rgba(18,44,61,.9)");
- ctx.fillStyle="#fff";ctx.textAlign="left";ctx.font="bold 12px sans-serif";
- ctx.fillText("♥ "+Math.round(life)+"/"+maxLife,18,29,healthW-14);
- const barW=healthW-18;
- roundRect(18,39,barW,8,4,"#53747c");
- if(life>0)roundRect(18,39,barW*Math.min(1,life/maxLife),8,4,life<35?"#ff8c82":"#77e2b4");
  ctx.textAlign="center";ctx.font="900 18px sans-serif";ctx.fillStyle="#f8fafb";
  ctx.fillText(Math.max(0,Math.ceil(23.5-dayTime))+"s",W-timeW/2-9,33,timeW-12);
  ctx.font="bold 9px sans-serif";ctx.fillStyle="#b9ecdd";ctx.fillText("퇴근",W-timeW/2-9,48,timeW-12);
@@ -486,7 +550,14 @@ function setFlightTarget(e){
 }
 canvas.addEventListener("pointerdown",e=>{
  if(state!=="playing"||pointerId!==null)return;
- e.preventDefault();pointerId=e.pointerId;
+ e.preventDefault();
+ const now=Date.now(),bounds=canvas.getBoundingClientRect();
+ const px=bounds.width?(e.clientX-bounds.left)/bounds.width*W:0;
+ const py=bounds.height?(e.clientY-bounds.top)/bounds.height*H:0;
+ if(lastTapAt&&now-lastTapAt<=320&&Math.hypot(px-lastTapX,py-lastTapY)<105){
+  activateSpecial();lastTapAt=0;
+ }else{lastTapAt=now;lastTapX=px;lastTapY=py;}
+ pointerId=e.pointerId;
  if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);
  setFlightTarget(e);
 });
