@@ -60,6 +60,7 @@
     state.approvedBySchool.clear();
     state.approvedLoading.clear();
     if(removeStored){try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}}
+    window.dispatchEvent(new Event('beagu:level-state-change'));
     updateAuthUI();
     authMessage(message);
     renderTable();
@@ -88,6 +89,7 @@
     state.approvedBySchool.clear();
     state.approvedLoading.clear();
     try{sessionStorage.setItem(SESSION_KEY,token)}catch(_){}
+    window.dispatchEvent(new Event('beagu:level-state-change'));
     updateAuthUI();
     authMessage('인증이 완료되었습니다. 선택한 학교의 승인 통계를 불러옵니다.');
     renderTable();
