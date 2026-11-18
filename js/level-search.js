@@ -441,6 +441,11 @@
         count++;
       }
     }
+    if(year===2025 && releasedMetrics.some(m=>m.group==='2025년 조사 영역별 점수 · 응답 표본 참고')){
+      const note=make('p','detail-note','2025년 영역별 점수는 참여 응답을 요약한 참고값입니다. 응답 기록이 1건인 학교도 포함하며, 학교 전체 교사의 의견을 대표하는 값은 아닙니다. 단일 교사의 문항별 원문이나 선택 결과는 공개하지 않습니다.');
+      note.style.cssText='margin:10px 0 14px;line-height:1.7';
+      section.append(note);
+    }
     BeaguDetailGroups.appendGrouped(section,releasedMetrics,(body,m)=>addRow(body,m.label,m.value,m));
     if (hadMismatch) section.append(make('p', 'detail-note', '백분위 출처별 값이 달라 원본 검수가 필요합니다. 임의로 합치지 않았습니다.'));
     if (hadRestricted) section.append(make('p', 'detail-note', '승인 범위에 따라 일부 세부 항목은 공개하지 않습니다.'));
