@@ -301,7 +301,7 @@ Deno.serve(async(req:Request)=>{
     for(const source of release.metrics){
       const label=source?.label,value=source?.value;
       if(typeof label!=='string'||!approvedDomainLabels.has(label)||emitted.has(label)||
-         typeof value!=='string'||! /^(?:100(?:\\.0)?|[1-9]?\\d(?:\\.\\d)?|0(?:\\.0)?)점$/.test(value))continue;
+         typeof value!=='string'||!/^(?:100(?:\.0)?|[1-9]?\d(?:\.\d)?|0(?:\.0)?)점$/.test(value))continue;
       const numeric=Number(value.slice(0,-1));
       if(!Number.isFinite(numeric)||numeric<0||numeric>100)continue;
       emitted.add(label);
