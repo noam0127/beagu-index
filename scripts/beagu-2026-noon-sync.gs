@@ -27,10 +27,26 @@ const BEAGU26 = Object.freeze({
 });
 function setupDailyNoonTrigger() {
   const existing=ScriptApp.getProjectTriggers();
-  existing.filter(t=>t.getHandlerFunction()==="refreshBeagu2026Stats").forEach(t=>ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger("refreshBeagu2026Stats").timeBased()
+  // Replace both older single-pipeline jobs and duplicates with one backup job.
+  existing.filter(t=>["refreshBeagu2026Stats","refreshBeagu2026AllPrivateStats"].includes(t.getHandlerFunction()))
+    .forEach(t=>ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger("refreshBeagu2026AllPrivateStats").timeBased()
     .everyDays(1).atHour(12).nearMinute(0).inTimezone(BEAGU26.timezone).create();
-  Logger.log("매일 한국시간 정오 부근(±15분) 집계 트리거를 설치했습니다.");
+  Logger.log("매일 한국시간 정오 부근(±15분) 학교별·학교문화 집계 백업 트리거를 설치했습니다.");
+}
+/**
+ * One refresh entrypoint for form submission and the daily fallback.
+ * Both pipelines ONLY write to private review sheets; neither authorizes
+ * publication. MBTI is optional for backward compatibility with installs
+ * where the second source file has not yet been added.
+ */
+function refreshBeagu2026AllPrivateStats() {
+  refreshBeagu2026Stats();
+  if(typeof refreshBeagu2026SchoolCulture==="function") {
+    refreshBeagu2026SchoolCulture();
+  } else {
+    Logger.log("Q14~Q17 학교문화 자동 집계 미설치: MBTI 스크립트 파일을 추가하세요.");
+  }
 }
 // Optional near-real-time private aggregation after each genuine Google Form submission.
 // This never publishes a result or bypasses the per-school privacy review.
@@ -44,9 +60,9 @@ function setupBeagu2026FormSubmitTrigger() {
 function onBeagu2026FormSubmitted(event) {
   // Only an installed spreadsheet form-submit trigger, never a direct web request.
   if(!event||!event.range||event.range.getSheet().getName()!==BEAGU26.sourceTab)return;
-  // refreshBeagu2026Stats already implements a script-wide lock and validates
-  // respondent dates and school matches. It only writes to a private MASTER.
-  refreshBeagu2026Stats();
+  // Idempotently recompute both private summaries (Q01-Q13 and Q14-Q17).
+  // A submitted response is never directly published as a school result.
+  refreshBeagu2026AllPrivateStats();
 }
 // Send ONLY a national total of official submission rows. No school IDs,
 // teacher responses, answer content, timestamps, or per-school counts leave
@@ -122,12 +138,14 @@ function installBeagu2026Sync() {
   setupBeagu2026FormSubmitTrigger();
   setupDailyNoonTrigger();
   const active=ScriptApp.getProjectTriggers().map(t=>t.getHandlerFunction());
-  if(!active.includes("onBeagu2026FormSubmitted")||!active.includes("refreshBeagu2026Stats"))
+  if(!active.includes("onBeagu2026FormSubmitted")||!active.includes("refreshBeagu2026AllPrivateStats"))
     throw Error("자동 집계 트리거 설치를 확인하지 못했습니다.");
-  Logger.log("2026 본조사 설치형 트리거 2종 확인 완료. 인증키 값은 기록하지 않습니다.");
+  if(typeof refreshBeagu2026SchoolCulture!=="function")
+    Logger.log("Q14~Q17 스크립트가 없어 수직성 Q01~Q13만 자동 집계됩니다.");
+  Logger.log("2026 본조사 제출/정오 백업 트리거 확인 완료. 인증키 값은 기록하지 않습니다.");
   // Initial private aggregation; output count remains inaccessible to public roles.
-  refreshBeagu2026Stats();
-  Logger.log("초기 비공개 집계 실행 완료. 새 설문 제출 때마다 자동 집계됩니다.");
+  refreshBeagu2026AllPrivateStats();
+  Logger.log("초기 비공개 집계 완료. 다음부터 개별 등록 명령 없이 새 설문 제출 때마다 갱신합니다.");
 }
 function normalize(s) {
   return String(s||"").replace(/[①-⑳]/g,"").normalize("NFKC").replace(/[\s,.'"“”\[\]()/\\\-]/g,"").trim();
