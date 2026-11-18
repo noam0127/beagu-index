@@ -426,14 +426,21 @@
 
   function renderYear(host, year, rows, publicValue, schoolId, distributions=[], school=null,comparison=null,loadStatus='loading') {
     host.replaceChildren();
-    host.append(make('h3', '', `${year}년 조사 결과`));
-    // Lv.1 results expand in this search card; do not navigate to a new page.
+    const heading=make('div','beagu-year-header');
+    heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
+    heading.append(make('span','beagu-year-caption',year===2026?'승인된 최신 자료':'문항·학교정보 비교'));
+    host.append(heading);
+    // Lv.1 results expand inside the selected search card; no page change.
     if(year === 2026) {
       const vetted = metrics2026(rows);
       if(vetted.length) {
-        BeaguDetailGroups.appendGrouped(host,vetted,(body,m)=>addRow(body,m.label,metricValue(m)));
+        const section=make('section','beagu-approved-section');
+        BeaguDetailGroups.appendGrouped(section,vetted,(body,m)=>addRow(body,m.label,metricValue(m)));
+        section.querySelectorAll('.beagu-detail-group').forEach(group=>{group.open=true;});
+        host.append(section);
       } else {
-        host.append(make('p','detail-note','2026년 학교별 문항 결과는 아직 공개 승인되지 않았습니다. 실시간 원응답은 공개하지 않습니다.'));
+        host.append(make('p','beagu-year-empty',
+          '2026년 학교별 문항 결과는 아직 공개 승인되지 않았습니다. 실시간 원응답은 공개하지 않습니다.'));
       }
       const reload = make('button','year-2026-button','2026년 승인 결과 새로고침');
       reload.type='button';
@@ -447,86 +454,47 @@
           if(e.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
           reload.disabled=false;
           reload.textContent='다시 조회하기';
-          host.append(make('p','detail-note','연결 오류로 최신 승인 결과를 확인하지 못했습니다.'));
+          host.append(make('p','beagu-year-error','연결 오류로 최신 승인 결과를 확인하지 못했습니다.'));
         }
       });
       host.append(reload);
       return;
     }
-    const yearRows = (Array.isArray(rows) ? rows : []).filter(row =>
-      Number(row.year) === year && Number(row.access_level) === level
-    );
-    // Public value is loaded from the separately vetted Lv.0 dataset.
-    const legacy = make('div', 'data-section');
-    legacy.append(make('h4', '', '기존 공개 백분위'));
-    addRow(legacy, `${year}년 전국 백분위`, publicValue === null ? '자료 없음' : publicValue.toFixed(1) + '%');
-    host.append(legacy);
-    // Only safety-checked, coarsened school distributions supplied by the
-    // signed-session API are rendered. No raw responses or respondent counts.
-    const vetted=(Array.isArray(distributions)?distributions:[]).filter(d=>
-      Number(d?.year)===year && /^Q\d{2}$/.test(String(d?.questionId||'')) &&
-      typeof d.modeOption==='string' && Array.isArray(d.roundedDistribution));
-    if(vetted.length){
-      const section=make('section','data-section');
-      section.append(make('h4','','학교별 검증 설문 응답 분포'));
-      section.append(make('p','detail-note','원본과 학교를 대조하고 소수 응답을 검토한 항목만 표시합니다. 비율은 10% 단위로 반올림해 합계가 100%와 다를 수 있습니다.'));
-      for(const item of vetted){
-        const card=make('div','section-card');
-        const names=window.BeaguHistoricalOriginalQuestions?.[String(year)]||{};
-        card.append(make('h4','',item.questionId+' · '+conciseQuestion(names[item.questionId]||'원본 질문 확인 필요')));
-        addRow(card,'학교별 최다 선택 보기',item.modeOption);
-        const d=make('div','question-distribution');
-        for(const answer of item.roundedDistribution){
-          const pct=Number(answer?.pct);
-          if(typeof answer?.label!=='string'||!Number.isInteger(pct)||pct<0||pct>100||pct%10!==0)continue;
-          const row=make('div','',answer.label+' · 약 '+pct+'%');
-          row.style.cssText='margin:6px 0;font-size:13px;color:#334155';
-          const track=make('div','');
-          track.style.cssText='height:7px;margin:3px 0 10px;border-radius:6px;background:#e8eef8;overflow:hidden';
-          const bar=make('div','');
-          bar.style.cssText='height:100%;width:'+pct+'%;background:#2563eb;border-radius:6px';
-          track.append(bar);d.append(row,track);
-        }
-        card.append(d);section.append(card);
+    // The already-visible year grid above carries the public percentile; do
+    // not repeat the same value as a second section in the expanded detail.
+    const yearRows=(Array.isArray(rows)?rows:[]).filter(row=>
+      Number(row.year)===year && Number(row.access_level)===level);
+    const releasedMetrics=[];
+    let hadRestricted=false,hadMismatch=false;
+    for(const row of yearRows){
+      if(row.insufficient){hadRestricted=true;continue;}
+      // Only display sanitized summary.metrics released by the signed API.
+      for(const metric of Array.isArray(row.summary?.metrics)?row.summary.metrics:[]){
+        if(typeof metric?.label!=='string'||typeof metric?.value!=='string')continue;
+        if(isDuplicatePublicPercentile(metric,year,publicValue))continue;
+        if(metric.label.includes(String(year))&&metric.label.includes('백분위')&&publicValue!==null)
+          hadMismatch=true;
+        releasedMetrics.push({
+          label:metric.label,value:metric.value,group:metric.group,
+          nationalAverage:metric.nationalAverage,regionalAverage:metric.regionalAverage,
+          comparisonKind:metric.comparisonKind,referenceYear:metric.referenceYear
+        });
       }
+    }
+    if(releasedMetrics.length||hadRestricted||hadMismatch){
+      const section=make('section','data-section beagu-approved-section');
+      section.append(make('h4','','학교별 승인 자료'));
+      if(year===2025 && releasedMetrics.some(m=>m.group==='2025년 조사 영역별 점수 · 응답 표본 참고')){
+        section.append(make('p','beagu-source-caption',
+          '영역별 점수는 참여 응답을 요약한 참고값으로, 학교 전체 교사의 의견을 대표하지 않습니다.'));
+      }
+      BeaguDetailGroups.appendGrouped(section,releasedMetrics,(body,m)=>addRow(body,m.label,m.value,m));
+      section.querySelectorAll('.beagu-detail-group').forEach(group=>{group.open=true;});
+      if(hadMismatch)section.append(make('p','beagu-source-caption','출처별 백분위 값이 달라 원본 검수가 필요합니다.'));
+      if(hadRestricted)section.append(make('p','beagu-source-caption','일부 세부 항목은 승인 범위에 따라 제공되지 않습니다.'));
       host.append(section);
     }
     renderHistoricalBenchmarks(host,year,school,distributions,comparison,loadStatus);
-    const section = make('div', 'data-section');
-    section.append(make('h4', '', 'Lv.1 승인 통계'));
-    if (!yearRows.length) {
-      section.append(make('p', 'detail-note', '해당 연도에 추가로 공개 승인된 학교 통계가 없습니다.'));
-      host.append(section);
-      return;
-    }
-    let count = 0, hadRestricted = false, hadMismatch = false;
-    const releasedMetrics=[];
-    for (const row of yearRows) {
-      if (row.insufficient) { hadRestricted = true; continue; }
-      // The edge function only emits a curated summary.metrics array.
-      // NEVER use the underlying database's historical_values, survey_summary,
-      // raw school rows, rankings, or unsanitized source keys.
-      for (const metric of Array.isArray(row.summary?.metrics) ? row.summary.metrics : []) {
-        if (typeof metric?.label !== 'string' || typeof metric?.value !== 'string') continue;
-        if (isDuplicatePublicPercentile(metric, year, publicValue)) continue;
-        if (metric.label.includes(String(year)) && metric.label.includes('백분위') && publicValue !== null)
-          hadMismatch = true;
-        releasedMetrics.push({label:metric.label,value:metric.value,group:metric.group,nationalAverage:metric.nationalAverage,regionalAverage:metric.regionalAverage,comparisonKind:metric.comparisonKind,referenceYear:metric.referenceYear});
-        count++;
-      }
-    }
-    if(year===2025 && releasedMetrics.some(m=>m.group==='2025년 조사 영역별 점수 · 응답 표본 참고')){
-      const note=make('p','detail-note','2025년 영역별 점수는 참여 응답을 요약한 참고값입니다. 응답 기록이 1건인 학교도 포함하며, 학교 전체 교사의 의견을 대표하는 값은 아닙니다. 단일 교사의 문항별 원문이나 선택 결과는 공개하지 않습니다.');
-      note.style.cssText='margin:10px 0 14px;line-height:1.7';
-      section.append(note);
-    }
-    BeaguDetailGroups.appendGrouped(section,releasedMetrics,(body,m)=>addRow(body,m.label,m.value,m));
-    if (hadMismatch) section.append(make('p', 'detail-note', '백분위 출처별 값이 달라 원본 검수가 필요합니다. 임의로 합치지 않았습니다.'));
-    if (hadRestricted) section.append(make('p', 'detail-note', '승인 범위에 따라 일부 세부 항목은 공개하지 않습니다.'));
-    if (!count && !hadRestricted) section.append(make('p', 'detail-note', '추가 승인 통계가 없습니다. 위의 기존 공개 백분위를 참고하세요.'));
-    if (year === 2025) section.append(make('p', 'detail-note', '영역별 점수는 해당 연도 조사 방식에 따른 참고자료입니다.'));
-    else section.append(make('p', 'detail-note', '학교별 상세 문항 결과는 공개 승인된 집계만 표시합니다. 미검수 문항은 제공하지 않습니다.'));
-    host.append(section);
   }
 
 
