@@ -67,7 +67,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-rolling1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261118-retro1">
-<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-five-tiers1">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-tier-ability2">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261118-global2">
@@ -90,8 +90,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 터치·드래그 비행　↔ 방향키 · A/D　⚡ 빠른 이동 중 공을 맞히면 스파이크</div>
   <div id="arcade-top10" aria-label="선생님배구 TOP 10 순위"></div>
 </main>
-<script src="js/arcade-leaderboard-v1.js?v=20261118-five-tiers1"></script>
-<script src="js/arcade-school-picker-v1.js?v=20261118-five-tiers1"></script>
+<script src="js/arcade-leaderboard-v1.js?v=20261118-tier-ability2"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261118-tier-ability2"></script>
 <script>
 (function () {
   "use strict";
@@ -105,9 +105,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const helpButton=document.getElementById("help"),helpPanel=document.getElementById("help-panel");
   const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("volleyball","#arcade-top10") : null;
   const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
-  const diffScale={easy:.70,normal:.85,hard:1,very_hard:1.17,extreme:1.38};
+  const battleProfiles={
+    easy:{allySpeed:1.38,allyJump:1.20,allyReach:1.22,allyAttack:1.24,enemySpeed:4.7,enemyReaction:17,enemyLead:1,enemyError:82,enemyDeadzone:25,enemyJumpChance:.10,enemyJumpReach:105,enemyJumpForce:10.5,enemyReach:.82,enemyAttack:.68,enemySmashChance:.02,label:"아군 강화 · 상대 점프 드묾"},
+    normal:{allySpeed:1.20,allyJump:1.10,allyReach:1.12,allyAttack:1.12,enemySpeed:6.0,enemyReaction:12,enemyLead:3,enemyError:58,enemyDeadzone:17,enemyJumpChance:.27,enemyJumpReach:125,enemyJumpForce:11.5,enemyReach:.91,enemyAttack:.83,enemySmashChance:.08,label:"아군 우세 · 상대 수비 보통"},
+    hard:{allySpeed:1,allyJump:1,allyReach:1,allyAttack:1,enemySpeed:7.5,enemyReaction:8,enemyLead:5,enemyError:35,enemyDeadzone:11,enemyJumpChance:.49,enemyJumpReach:148,enemyJumpForce:12.8,enemyReach:1,enemyAttack:1,enemySmashChance:.19,label:"양 팀 균형 · 상대 점프 수비"},
+    very_hard:{allySpeed:.89,allyJump:.91,allyReach:.94,allyAttack:.91,enemySpeed:9.2,enemyReaction:5,enemyLead:7,enemyError:18,enemyDeadzone:7,enemyJumpChance:.72,enemyJumpReach:172,enemyJumpForce:13.7,enemyReach:1.10,enemyAttack:1.23,enemySmashChance:.38,label:"아군 약화 · 상대 예측 점프·강타"},
+    extreme:{allySpeed:.79,allyJump:.83,allyReach:.86,allyAttack:.83,enemySpeed:11,enemyReaction:2,enemyLead:9,enemyError:5,enemyDeadzone:3,enemyJumpChance:.96,enemyJumpReach:195,enemyJumpForce:14.8,enemyReach:1.20,enemyAttack:1.48,enemySmashChance:.63,label:"아군 약화 · 상대 초고속 수비·강타"}
+   };
   const diffName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
-  let currentDifficulty="normal";
+  let currentDifficulty="normal",battle=battleProfiles.normal,startTicket=0;
   schoolPicker.onChange=school=>{
     if(state.phase==="ready"||state.phase==="finished"){
       setStatus(!school ? "2023~2026년 중 한 해라도 조사 백분위가 있으면 플레이할 수 있습니다." :
@@ -123,7 +129,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 354, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null };
-  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0 };
+  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, cooldown: 0, trail: [] };
@@ -148,6 +154,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.vy = -6.3;
     ball.cooldown = 0;
     ball.trail.length = 0;
+    state.aiRecalc=0;state.aiJump=false;state.aiTargetX=688;
   }
   async function startMatch() {
     const school=schoolPicker.get();
@@ -157,8 +164,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     if(state.phase==="starting")return;
     const previousPhase=state.phase;
+    const ticket=++startTicket;
     state.phase="starting";syncUI();setStatus("조사 백분위와 참가 자격 확인 중…");
     const session=ranking?await ranking.start(school):null;
+    if(ticket!==startTicket)return;
     if(!session){
       state.phase=previousPhase;
       schoolPicker.setLocked(false);
@@ -167,15 +176,29 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       return;
     }
     currentDifficulty=school.difficulty;
+    battle=battleProfiles[currentDifficulty]||battleProfiles.hard;
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;
     releaseKeys();
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
     resetPositions();
-    setStatus(school.school_name+" · 확인된 연도 평균 난이도 "+diffName[school.difficulty]);
+    setStatus(school.school_name+" · "+diffName[school.difficulty]+" | "+battle.label);
     syncUI();canvas.focus();
   }
+  function stopForSchoolChange(){
+    ++startTicket;
+    ranking?.cancel();
+    releaseKeys();
+    state.phase="ready";state.message="";state.winner="";state.flash=0;
+    state.leftScore=0;state.rightScore=0;state.spikes=0;
+    schoolPicker.setLocked(false);
+    schoolPicker.resetForChange();
+    resetPositions();
+    syncUI();
+    setStatus("게임을 중단했습니다. 다른 학교를 선택해 시작하세요.");
+  }
+  schoolPicker.onRequestChange=stopForSchoolChange;
   function pause() {
     if (state.phase === "playing") {
       state.phase = "paused";
@@ -241,37 +264,46 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
   window.addEventListener("blur", () => { releaseKeys(); if (state.phase === "playing") pause(); });
   document.addEventListener("visibilitychange", () => { if (document.hidden && state.phase === "playing") pause(); });
-  function controlPlayer(p, direction, jump, speed) {
+  function controlPlayer(p, direction, jump, speed, jumpStrength=12.8) {
     p.vx = direction * speed;
     p.x = clamp(p.x + p.vx, p.side === "left" ? 35 : NET_X + NET_W / 2 + 36, p.side === "left" ? NET_X - NET_W / 2 - 36 : W - 35);
     const grounded = p.y >= FLOOR - 31 - .1;
-    if (jump && grounded && !p.jumpLock) { p.vy = -12.8; p.jumpLock = true; }
+    if (jump && grounded && !p.jumpLock) { p.vy = -jumpStrength; p.jumpLock = true; }
     if (!jump) p.jumpLock = false;
     p.vy += .49;
     p.y += p.vy;
     if (p.y > FLOOR - 31) { p.y = FLOOR - 31; p.vy = 0; }
   }
   function moveAI() {
-    let target = 688;
-    if (ball.x > NET_X + 2) {
-      target = clamp(ball.x + ball.vx * 8, NET_X + 48, W - 42);
-    } else if (ball.vx > 0 && ball.y < NET_TOP) {
-      target = clamp(NET_X + 130, NET_X + 48, W - 42);
+    // Tier-specific reaction delay, aim error, anticipation and jump decisions.
+    if(--state.aiRecalc<=0){
+      state.aiRecalc=battle.enemyReaction;
+      let target=688;
+      if(ball.x>NET_X+2){
+        target=ball.x+ball.vx*battle.enemyLead+(Math.random()-.5)*battle.enemyError;
+      }else if(ball.vx>0&&ball.y<NET_TOP){
+        target=NET_X+130+(Math.random()-.5)*battle.enemyError;
+      }
+      state.aiTargetX=clamp(target,NET_X+48,W-42);
+      const near=ball.x>NET_X && Math.abs(ball.x-right.x)<95 &&
+        ball.y>right.y-battle.enemyJumpReach && ball.y<right.y+22 && ball.vy>-4;
+      state.aiJump=near&&Math.random()<battle.enemyJumpChance;
     }
-    const difference = target - right.x;
-    const move = Math.abs(difference) > 8 ? Math.sign(difference) : 0;
-    const close = ball.x > NET_X && Math.abs(ball.x - right.x) < 76;
-    const jump = close && ball.y > right.y - 155 && ball.y < right.y + 15 && ball.vy > -3;
-    controlPlayer(right, move, jump, 3.65*SPEED_MULTIPLIER*diffScale[currentDifficulty]);
+    const difference=state.aiTargetX-right.x;
+    const move=Math.abs(difference)>battle.enemyDeadzone?Math.sign(difference):0;
+    controlPlayer(right,move,state.aiJump,battle.enemySpeed,battle.enemyJumpForce);
   }
   function playerHit(p) {
     const dx = ball.x - p.x, dy = ball.y - (p.y - 7);
-    const reach = p.side === "left" ? 43 * .75 : 42 * .75; // hit reach reduced to 3/4
+    const reach = p.side === "left" ? 43 * .75 * battle.allyReach : 42 * .75 * battle.enemyReach; // 3/4 baseline plus tier
     if (ball.cooldown > 0 || dx * dx + dy * dy > (reach + R) * (reach + R)) return;
     const sign = p.side === "left" ? 1 : -1;
     const spike = p.side === "left" && p.impactSpeed >= AUTO_SPIKE_SPEED;
-    ball.vx = sign * (spike ? 16.5 : p.side === "left" ? 11.5 : 10.8*diffScale[currentDifficulty]) + clamp(p.vx,-12,12) * .22;
-    ball.vy = spike ? -7.4 : -11.8;
+    const cpuSmash=p.side==="right"&&Math.random()<battle.enemySmashChance;
+    const attack=p.side==="left" ? (spike?16.5:11.5)*battle.allyAttack :
+      (cpuSmash?13.2:10.8)*battle.enemyAttack;
+    ball.vx=sign*attack+clamp(p.vx,-12,12)*.16;
+    ball.vy=p.side==="left" ? (spike?-7.4:-11.8) : (cpuSmash?-8.5:-12.8);
     if (p.vy < -2) ball.vy -= 1.3;
     ball.x = p.x + sign * (reach + R + 1);
     ball.y = Math.min(ball.y, p.y - 22);
@@ -309,7 +341,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if (touchControl.pointerId !== null && touchControl.targetX !== null && touchControl.targetY !== null) {
       // Responsive, smoothed 2-axis flight; remain within the player's half-court.
       const oldX = left.x, oldY = left.y;
-      const flightStep = 24 * SPEED_MULTIPLIER;
+      const flightStep = 24 * SPEED_MULTIPLIER * battle.allySpeed;
       left.x += clamp(touchControl.targetX - left.x, -flightStep, flightStep);
       left.y += clamp(touchControl.targetY - left.y, -flightStep, flightStep);
       left.x = clamp(left.x, 35, NET_X - NET_W / 2 - 36);
@@ -318,7 +350,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       left.vy = left.y - oldY;
       left.jumpLock = false;
     } else {
-      controlPlayer(left, keyboardDirection, keys.jump, 5*SPEED_MULTIPLIER);
+      controlPlayer(left, keyboardDirection, keys.jump, 5*SPEED_MULTIPLIER*battle.allySpeed,12.8*battle.allyJump);
     }
     // Only intentional, fast player movement powers up the next ball contact.
     const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || keys.jump;
