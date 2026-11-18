@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {Script} from 'node:vm';
+const read=path=>readFileSync(path,'utf8');
+const route=read('search-lv2.html');
+const html=read('search-lv1.html');
+const search=read('js/level-search.js');
+const culture=read('js/school-mbti-v1.js');
+const api=read('supabase/functions/beagu-level-api/index.ts');
+const policy=read('supabase/functions/_shared/release-policy.mjs');
+
+assert.match(route,/location\.replace\(destination\.href\)/,'Lv2 legacy route must redirect to active unified search');
+assert.match(route,/search-lv1\.html/);
+assert.match(html,/js\/level-search\.js\?v=20261118-approved-auto60-v1/);
+assert.match(html,/js\/school-mbti-v1\.js\?v=20261118-approved-auto60-v1/);
+assert.doesNotThrow(()=>new Script(search));
+assert.doesNotThrow(()=>new Script(culture));
+assert.match(search,/async function refreshApproved2026OnScreen\(\)/);
+assert.match(search,/window\.setInterval\(\(\)=>\{void refreshApproved2026OnScreen\(\)\},60000\)/);
+assert.match(search,/document\.visibilityState!=='visible'/);
+assert.match(search,/document\.addEventListener\('visibilitychange'/);
+assert.match(search,/loadPagePercentiles\(visiblePageSchools,requestId\)/);
+assert.match(search,/api\('school',\{schoolId:id\}\)/);
+assert.match(search,/Number\(r\.year\) === 2026/);
+assert.match(search,/renderYear\(content,2026,fresh\.rows,null,id\)/);
+assert.match(search,/\.querySelector\('\.year-tabs button\[data-year="2026"\]\[aria-selected="true"\]'\)/);
+assert.match(search,/window\.BeaguSchoolMBTI\.invalidateCache\?\.\(\)/);
+assert.match(culture,/function invalidateCache\(\)\{cache\.clear\(\);\}/);
+assert.match(api,/releaseMetrics\(metrics\.data\|\|\[\],catalog\.data\|\|\[\],level\)/);
+assert.match(api,/rows\.push\(\{year,access_level:year===2026\?1:2/);
+assert.match(policy,/approved2026ReleaseIsOldEnough\(r\.approved_at\)/);
+assert.match(policy,/THREE_DAY_DELAY_MS=72\*60\*60\*1000/);
+assert.doesNotMatch(search,/beagu_2026_school_coverage|beagu_school_question_aggregates_v2|forms\/d\/e\//,
+  'Client refresh must not fetch private form or raw school responses');
+console.log('PASS: legacy Lv2 redirects; visible unified search refreshes 2026 approved-only releases every minute');
