@@ -39,7 +39,7 @@ assert.match(challenge,/id="capture"/);
 assert.match(challenge,/id="loungeLink"/);
 assert.match(challenge,/id="participantNo"/);
 assert.match(search,/locked:true/,'Lv.0 must not expose restricted 2026');
-assert.match(lv1,/api\('school', \{schoolId:school\.school_id\}\)/);
+assert.match(lv1,/api\('school',\s*\{schoolId:school\.school_id\}\)/);
 assert.match(lv1,/const YEARS = \[2023, 2024, 2025, 2026\]/);
 assert.doesNotMatch(policy,/href="search-lv2\.html"/);
 assert.match(lv2,/beagu-level-api/);
