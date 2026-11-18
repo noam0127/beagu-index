@@ -227,33 +227,27 @@
       host.append(div);
       return;
     }
-    div.style.cssText='display:block;padding:14px 0';
-    const heading=make('div','compare-label',label);
-    heading.style.cssText='font-weight:700;margin-bottom:8px';
+    div.classList.add('beagu-comparison-row');
+    const heading=make('h5','compare-label',label);
     const grid=make('div','compare-grid');
-    grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;width:100%';
     const kind=comparison.comparisonKind==='mode'?'최빈 보기':'평균';
-    for (const [name,v] of [
-      ['우리 학교',value],
-      ['전국 '+kind,comparison.nationalAverage||'비교 자료 없음'],
-      ['지역 '+kind,comparison.regionalAverage||'비교 자료 없음']
-    ]) {
-      const cell=make('div','compare-value');
-      cell.style.cssText='border:1px solid #dce6f5;border-radius:10px;padding:10px;min-width:0';
-      const labelNode=make('span','',name);
-      labelNode.style.cssText='display:block;font-size:12px;color:#63758f;margin-bottom:4px';
-      const valueNode=make('strong','',v);
-      valueNode.style.cssText='display:block;font-size:16px;overflow-wrap:anywhere';
-      cell.append(labelNode,valueNode);grid.append(cell);
+    for(const [name,v,role] of [
+      ['우리 학교',value,'school'],
+      ['전국 '+kind,comparison.nationalAverage||'비교 자료 없음','national'],
+      ['지역 '+kind,comparison.regionalAverage||'비교 자료 없음','regional']
+    ]){
+      const cell=make('div','compare-value '+role);
+      const labelNode=make('span','compare-value-label',name);
+      const valueNode=make('strong','compare-value-text',v);
+      cell.append(labelNode,valueNode);
+      grid.append(cell);
     }
     div.append(heading,grid);
-    if(Number.isInteger(comparison.referenceYear)) {
-      const note=make('small','detail-note',comparison.referenceYear+'년 자료 기준 · 검수된 학교들만 집계한 비교값');
-      note.style.cssText='display:block;margin-top:6px;font-size:11px';
-      div.append(note);
-    }
+    if(Number.isInteger(comparison.referenceYear))
+      div.append(make('small','beagu-compare-source',comparison.referenceYear+'년 자료 기준 · 검수된 학교 집계값'));
     host.append(div);
   }
+
   function asPublicPercentiles(school) {
     try { return BeaguPublic.values(publicIndex.get(String(school.school_id))); }
     catch (_) { return [null, null, null]; }
