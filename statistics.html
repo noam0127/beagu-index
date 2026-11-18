@@ -23,9 +23,8 @@
   <main class="shell">
     <section class="intro" aria-labelledby="headingTitle">
       <div class="intro-content">
-        <p class="overline"><span class="live-dot" aria-hidden="true"></span> SCHOOL COMPARISON <span class="overline-sep">/</span> 2023—2026</p>
-        <h1 id="headingTitle">우리 학교,<span class="compare-heading-phrase">나란히 비교</span></h1>
-        <p class="subtitle">학교와 연도를 골라 최대 5개까지 비교하세요.</p>
+        
+        <h1 id="headingTitle">학교를 <span class="compare-heading-phrase">나란히 비교</span></h1>
         
       </div>
       <div class="intro-graphic" aria-hidden="true"><div class="graphic-grid"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="graphic-line"></div><div class="graphic-label">COMPARE <b>01—05</b></div></div>
@@ -35,7 +34,7 @@
     <section id="compareLv1AuthPanel" class="content-card compare-auth-card" aria-labelledby="compareLv1Title">
       <div class="compare-auth-heading">
         <div>
-          <p class="section-overline">LEVEL 1</p>
+          
           <h2 id="compareLv1Title">Lv.1 인증</h2>
           
         </div>
@@ -59,7 +58,7 @@
     </section>
 
     <section class="content-card controls compare-search-only" aria-label="비교할 학교 검색">
-      <div class="section-head"><div><p class="section-overline">FIND &amp; ADD</p><h2>비교할 학교 찾기</h2></div></div>
+      <div class="section-head"><div><h2>비교할 학교 찾기</h2></div></div>
       <div class="compare-search-field">
         <label for="searchInput">학교명 검색</label>
         <div class="search-wrap">
@@ -75,9 +74,9 @@
       <div class="comparison-picker content-card">
         <div class="comparison-head">
           <div>
-            <p class="section-overline">MY SCHOOL COMPARISON</p>
+            
             <h2 id="compareHeading">학교 비교하기</h2>
-            <p class="comparison-subtitle">최대 5개 학교 · 연도별 비교</p>
+            
           </div>
           <div class="comparison-head-actions">
             <span id="compareCounter" class="compare-counter" aria-live="polite">0 / 5 선택</span>
@@ -90,7 +89,7 @@
         <div id="compareEmpty" class="compare-empty">
           <span class="compare-empty-icon" aria-hidden="true">＋</span>
           <strong>선택한 학교가 없습니다</strong>
-          <span>위의 '비교할 학교 찾기'에서 학교를 검색하고 ＋ 추가를 누르세요.</span>
+          
         </div>
       </div>
       <section id="compareResults" class="comparison-results" aria-labelledby="compareResultsTitle" hidden>
@@ -102,11 +101,11 @@
              aria-label="선택한 학교들의 항목별 비교표, 좌우 스크롤 가능" hidden>
           <table id="compareTable" class="compare-table"></table>
         </div>
-        <p class="compare-fineprint">자료 없음 ≠ 0점 · 승인된 세부 통계는 인증 후 표시</p>
+        <details class="beagu-inline-disclosure"><summary>비교 기준</summary><p>자료 없음은 0점이 아닙니다. 세부 통계는 인증 후 표시됩니다.</p><p>연도별 문항과 산식이 달라 백분위만으로 변화를 판단할 수 없습니다. 2026년 결과는 공개 기준에 따라 지연 표시됩니다.</p></details>
       </section>
     </section>
-    <aside class="notice" aria-labelledby="noticeHeading"><div class="notice-icon" aria-hidden="true">i</div><div><h3 id="noticeHeading">비교 자료 안내</h3><p>연도별 조사 문항과 산식이 다를 수 있어 연도 간 백분위만으로 변화를 판단할 수 없습니다.</p><p class="notice-small">2026년 결과는 공개 승인 및 지연 기간을 충족한 경우에만 표시됩니다.</p></div></aside>
-    <footer class="footer"><p>© 배구지수 · 학교 비교 <span id="snapshotLabel">2023—2026</span></p><p>승인된 공개·참여자 자료만 표시</p></footer>
+    
+    <span id="snapshotLabel" hidden>2023—2026</span>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
