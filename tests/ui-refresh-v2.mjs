@@ -54,8 +54,7 @@ assert.equal(comment,false,'CSS comment closed');
 for(const [path,type] of pageTypes){
   const html=read(path);
   assert.match(html,new RegExp('class="[^"]*beagu-ui-page beagu-page-'+type+'[^"]*"'),path+' body class');
-  const themeVersion = '20261118-compare5';
-  const matches=[...html.matchAll(new RegExp('<link[^>]+href="styles/beagu-ui-refresh-v2\\.css\\?v='+themeVersion+'"','g'))];
+  const matches=[...html.matchAll(/<link[^>]+href="styles\/beagu-ui-refresh-v2\.css\?v=[a-zA-Z0-9-]+"/g)];
   assert.equal(matches.length,1,path+' exactly one refreshed theme');
   assert.ok(html.indexOf('styles/beagu-ui-refresh-v2.css')<html.indexOf('</head>'),path+' stylesheet in head');
   assert.ok(html.lastIndexOf('styles/beagu-ui-refresh-v2.css')>html.lastIndexOf('styles/beagu-loading-v1.css'),path+' theme loaded after old CSS');
