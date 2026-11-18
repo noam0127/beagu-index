@@ -1,0 +1,11 @@
+.beagu-level-state{box-sizing:border-box;position:fixed;top:15px;right:max(18px,calc((100vw - 1160px)/2));z-index:900;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:84px;min-height:40px;padding:8px 13px;border:1px solid #d8e2f0;border-radius:999px;background:#fff;box-shadow:0 4px 15px rgba(18,45,83,.085);color:#60718a;text-decoration:none!important;white-space:nowrap;font:800 13px/1.2 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;transition:background-color .15s,border-color .15s,color .15s}
+.beagu-level-state::before{content:"";width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#a3b2c4}
+.beagu-level-state[data-level="1"]{background:#edf5ff;border-color:#b8d4ff;color:#1858bd}
+.beagu-level-state[data-level="1"]::before{background:#2563eb}
+.beagu-level-state:hover{border-color:#9ebbec;background:#f5f9ff}
+.beagu-level-state:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+.beagu-unified-inner{padding-right:119px}
+.beagu-embedded .beagu-level-state{display:none!important}
+@media(max-width:760px){.beagu-level-state{top:12px;right:14px;min-width:79px;min-height:36px;padding:7px 11px;font-size:12px}.beagu-unified-inner{padding-right:0}.beagu-unified-brand{max-width:calc(100% - 91px)}}
+@media(max-width:390px){.beagu-unified-brand{font-size:15px!important;gap:8px}.beagu-unified-name{letter-spacing:0}.beagu-level-state{right:11px;min-width:72px;padding:7px 9px}}
+@media(prefers-reduced-motion:reduce){.beagu-level-state{transition:none}}
