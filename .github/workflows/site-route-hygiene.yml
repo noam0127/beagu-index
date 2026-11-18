@@ -13,6 +13,8 @@ on:
       - 'tests/brand-ui-consistency.mjs'
       - 'tests/rolling-volleyball-loading.mjs'
       - 'tests/ui-refresh-v2.mjs'
+      - 'tests/lv1-inline-history-disclosure.mjs'
+      - 'js/level-search.js'
       - 'styles/beagu-ui-refresh-v2.css'
       - 'styles/beagu-loading-v1.css'
       - 'js/beagu-loading-v1.js'
@@ -42,3 +44,4 @@ jobs:
       - run: node tests/brand-ui-consistency.mjs
       - run: node tests/rolling-volleyball-loading.mjs
       - run: node tests/ui-refresh-v2.mjs
+      - run: node tests/lv1-inline-history-disclosure.mjs
