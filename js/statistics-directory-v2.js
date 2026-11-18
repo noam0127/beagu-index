@@ -28,7 +28,7 @@
     return [...map.values()];
   }
   async function snapshot(){
-    const res=await fetch('data/public-lv0-percentiles-v1.2.json',{cache:'no-cache'});
+    const res=await fetch('data/public-lv0-percentiles-v1.2.json?v=20261118-gjjn2025',{cache:'no-cache'});
     if(!res.ok)throw Error('공개 백분위 로드 실패');
     if(!window.BeaguPublic?.buildIndex)throw Error('공개 백분위 검증 함수가 없습니다.');
     const map=window.BeaguPublic.buildIndex(await res.json());
