@@ -69,6 +69,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  .volley-energy-fill{height:100%;width:100%;background:linear-gradient(90deg,#4fc6ba,#9aefc3);transition:width .16s linear}
  .team.right .volley-energy-fill{margin-left:auto;background:linear-gradient(90deg,#e98cab,#ffd0a3)}
  .volley-energy-fill.is-low{background:linear-gradient(90deg,#cf4c55,#ff996f)}
+ .volley-special-status{text-align:center;padding:8px 9px;background:#193956;border:1px solid #456985;border-top:none;border-radius:0 0 10px 10px;color:#f4da8b;font-size:11px;font-weight:850;line-height:1.45}
  @media(max-width:380px){.volley-energy-meta{font-size:9px}.volley-energy-track{height:9px}}
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
@@ -92,6 +93,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     <div class="center-label">VS</div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="cpu-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="상대 팀 체력" id="cpu-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="cpu-energy-fill"></div></div></div>
   </div>
+  <div class="volley-special-status" id="volley-special-status" role="status">⚡ 필살기 준비 · 경기 중 화면 더블 터치</div>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
   <div class="actions"><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
@@ -121,14 +123,21 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     extreme:{allySpeed:.79,allyJump:.83,allyReach:.86,allyAttack:.83,enemySpeed:11,enemyReaction:2,enemyLead:9,enemyError:5,enemyDeadzone:3,enemyJumpChance:.96,enemyJumpReach:195,enemyJumpForce:14.8,enemyReach:1.20,enemyAttack:1.48,enemySmashChance:.63,label:"아군 약화 · 상대 초고속 수비·강타"}
    };
   const energyProfiles={
-    easy:{allyMax:150,enemyMax:80,allyCost:.60,enemyCost:1.55,allyRest:.27,enemyRest:.12},
-    normal:{allyMax:125,enemyMax:90,allyCost:.8,enemyCost:1.3,allyRest:.23,enemyRest:.15},
-    hard:{allyMax:100,enemyMax:100,allyCost:1,enemyCost:1,allyRest:.2,enemyRest:.2},
-    very_hard:{allyMax:85,enemyMax:130,allyCost:1.2,enemyCost:.8,allyRest:.16,enemyRest:.24},
-    extreme:{allyMax:70,enemyMax:160,allyCost:1.5,enemyCost:.65,allyRest:.13,enemyRest:.28}
+    easy:{allyMax:150,enemyMax:80,allyCost:.60,enemyCost:1.55,allyRest:.14,enemyRest:.055},
+    normal:{allyMax:125,enemyMax:90,allyCost:.8,enemyCost:1.3,allyRest:.12,enemyRest:.075},
+    hard:{allyMax:100,enemyMax:100,allyCost:1,enemyCost:1,allyRest:.09,enemyRest:.09},
+    very_hard:{allyMax:85,enemyMax:130,allyCost:1.2,enemyCost:.8,allyRest:.07,enemyRest:.12},
+    extreme:{allyMax:70,enemyMax:160,allyCost:1.5,enemyCost:.65,allyRest:.05,enemyRest:.14}
    };
+  const specialProfiles={
+    easy:{cooldown:12,cost:10,chargeFrames:540},
+    normal:{cooldown:16,cost:12,chargeFrames:480},
+    hard:{cooldown:20,cost:14,chargeFrames:450},
+    very_hard:{cooldown:24,cost:16,chargeFrames:420},
+    extreme:{cooldown:28,cost:18,chargeFrames:390}
+  };
   const diffName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
-  let currentDifficulty="normal",battle=battleProfiles.normal,energy=energyProfiles.hard,startTicket=0;
+  let currentDifficulty="normal",battle=battleProfiles.normal,energy=energyProfiles.hard,specialProfile=specialProfiles.hard,startTicket=0,lastTapAt=0,lastTapX=0,lastTapY=0;
   schoolPicker.onChange=school=>{
     if(state.phase==="ready"||state.phase==="finished"){
       setStatus(!school ? "2023~2026년 중 한 해라도 조사 백분위가 있으면 플레이할 수 있습니다." :
@@ -144,12 +153,57 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 354, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null };
-  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false, leftEnergy:100, rightEnergy:100, leftMaxEnergy:100, rightMaxEnergy:100 };
+  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false, leftEnergy:100, rightEnergy:100, leftMaxEnergy:100, rightMaxEnergy:100, specialCooldownFrames:0,specialChargeFrames:0, energyTick:0 };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, cooldown: 0, trail: [] };
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const setStatus = text => { status.textContent = text; };
+   const energyUi={
+    left:{number:document.getElementById("player-energy-number"),fill:document.getElementById("player-energy-fill"),progress:document.getElementById("player-energy-progress")},
+    right:{number:document.getElementById("cpu-energy-number"),fill:document.getElementById("cpu-energy-fill"),progress:document.getElementById("cpu-energy-progress")}
+   };
+   const specialStatus=document.getElementById("volley-special-status");
+   function resetEnergy(){
+    state.leftMaxEnergy=energy.allyMax;state.rightMaxEnergy=energy.enemyMax;
+    state.leftEnergy=energy.allyMax;state.rightEnergy=energy.enemyMax;
+    state.specialCooldownFrames=0;state.specialChargeFrames=0;
+    state.energyTick=0;lastTapAt=0;
+    updateEnergyUI();
+   }
+   function updateEnergyUI(){
+    for(const side of ["left","right"]){
+      const max=side==="left"?state.leftMaxEnergy:state.rightMaxEnergy;
+      const current=side==="left"?state.leftEnergy:state.rightEnergy;
+      const percent=clamp(100*current/max,0,100);
+      const ui=energyUi[side];
+      ui.number.textContent=Math.ceil(current)+"/"+max;
+      ui.fill.style.width=percent.toFixed(1)+"%";
+      ui.fill.classList.toggle("is-low",percent<=30);
+      ui.progress.setAttribute("aria-valuemax",String(max));
+      ui.progress.setAttribute("aria-valuenow",String(Math.ceil(current)));
+    }
+    const seconds=Math.ceil(state.specialCooldownFrames/60);
+    specialStatus.textContent=state.specialChargeFrames>0
+      ?"⚡ 필살기 충전! 다음 공 접촉 시 슈퍼 스파이크 ("+Math.ceil(state.specialChargeFrames/60)+"초)"
+      :seconds>0?"⚡ 필살기 재충전 "+seconds+"초"
+      :"⚡ 필살기 준비 · 경기 중 화면 더블 터치";
+   }
+   function energyFactor(side){
+     const fraction=side==="left"?state.leftEnergy/state.leftMaxEnergy:state.rightEnergy/state.rightMaxEnergy;
+     return .70+.30*clamp(fraction,0,1);
+   }
+   function activateSuperSpike(){
+     if(state.phase!=="playing"||state.specialCooldownFrames>0||state.specialChargeFrames>0)return false;
+     if(state.leftEnergy<specialProfile.cost){setStatus("필살기 체력이 부족합니다.");return false;}
+     state.leftEnergy=Math.max(0,state.leftEnergy-specialProfile.cost);
+     state.specialCooldownFrames=specialProfile.cooldown*60;
+     state.specialChargeFrames=specialProfile.chargeFrames;
+     state.flash=18;
+     setStatus("⚡ 필살기 발동! 다음 공을 터치하면 슈퍼 스파이크!");
+     updateEnergyUI();
+     return true;
+   }
   function syncUI() {
     scoreP.textContent = String(state.leftScore);
     scoreC.textContent = String(state.rightScore);
@@ -159,6 +213,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point" || state.phase === "starting";
     pauseButton.textContent = state.phase === "paused" ? "▶" : "⏸";
     pauseButton.setAttribute("aria-label",state.phase === "paused"?"계속하기":"일시정지");
+    updateEnergyUI();
   }
   function resetPositions() {
     Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, impactSpeed: 0, jumpLock: false });
@@ -193,6 +248,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     currentDifficulty=school.difficulty;
     battle=battleProfiles[currentDifficulty]||battleProfiles.hard;
     energy=energyProfiles[currentDifficulty]||energyProfiles.hard;
+    specialProfile=specialProfiles[currentDifficulty]||specialProfiles.hard;
     resetEnergy();
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;
@@ -209,6 +265,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     releaseKeys();
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;
+    energy=energyProfiles.hard;specialProfile=specialProfiles.hard;resetEnergy();
     schoolPicker.setLocked(false);
     schoolPicker.resetForChange();
     resetPositions();
