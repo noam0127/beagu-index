@@ -262,8 +262,14 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
   // If mobile Safari/CDN cannot load the 750 KB static index, recover from the
   // separately approved public annual Supabase table, 20 visible schools at a time.
   async function recoverPublishedPercentiles(schools) {
-    if (percentileStaticLoaded || !schools.length) return;
-    const ids=[...new Set(schools.map(s=>String(s.school_id)).filter(id=>/^[A-Z0-9]{7}$/.test(id)))];
+    if (!schools.length) return;
+    const ids=[...new Set(schools.map(s=>String(s.school_id))
+      .filter(id=>/^[A-Z0-9]{7}$/.test(id))
+      .filter(id=>{
+        const item=percentileIndex.get(id);
+        return !item || !Array.isArray(item.percentiles) ||
+          item.percentiles.some(v=>v==null);
+      }))];
     if (!ids.length) return;
     const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
       .select('school_id,survey_year,percentile')
@@ -271,12 +277,15 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       .limit(100);
     if (error) throw error;
     for (const id of ids) {
-      const p=[null,null,null], statuses=['NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE'];
+      const previous=percentileIndex.get(id);
+      const p=Array.isArray(previous?.percentiles)?previous.percentiles.slice(0,3):[null,null,null];
+      const statuses=Array.isArray(previous?.statuses)?previous.statuses.slice(0,3):
+        ['NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE'];
       for (const item of data||[]) {
-        if (String(item.school_id)!==id) continue;
+        if (String(item.school_id)!==id || item.percentile===null) continue;
         const index=[2023,2024,2025].indexOf(Number(item.survey_year));
         const value=Number(item.percentile);
-        if(index>=0&&Number.isFinite(value)&&value>=0&&value<=100){
+        if(index>=0&&Number.isFinite(value)&&value>=0&&value<=100&&p[index]===null){
           p[index]=value; statuses[index]='EXISTING_PUBLIC_VALUE_PRESERVED';
         }
       }
@@ -364,10 +373,8 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       if (error) throw error;
       await Promise.all([percentileReady,participationReady]);
       if (token!==searchSerial) return;
-      if (!percentileStaticLoaded) {
-        try { await recoverPublishedPercentiles(data||[]); }
-        catch(e) { percentileLoadError=true; console.warn('공개 백분위 DB 조회 실패',e); }
-      }
+      try { await recoverPublishedPercentiles(data||[]); }
+      catch(e) { percentileLoadError=true; console.warn('공개 백분위 DB 조회 실패',e); }
       if (token!==searchSerial) return;
       if(explicitEnter&&keyword&&count===1&&Array.isArray(data)&&data.length===1)
         window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),0,'search');
