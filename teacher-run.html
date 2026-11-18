@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#142841">
-<title>험난한 교직생활 2.0 | 배구인덱스</title>
+<title>험난한 교직생활 3.0 | 배구인덱스</title>
 <style>
 :root{color-scheme:dark;--ink:#f6fbff;--muted:#b9cce6;--line:#395472;--mint:#7be3ca}
 *{box-sizing:border-box}
@@ -99,7 +99,7 @@ canvas{height:400px;cursor:default}
   <a href="search.html">Lv.1 인증하기</a>
 </section>
 <main id="teacher-run-protected" class="shell" hidden>
-  <header class="top"><div class="brand" style="display:flex;align-items:center;gap:8px"><span class="beagu-brand-mark" aria-hidden="true">B</span>험난한 교직생활 <span style="color:#8ae4d7">2.0</span></div><span class="version">ARCADE · 1UP</span></header>
+  <header class="top"><div class="brand" style="display:flex;align-items:center;gap:8px"><span class="beagu-brand-mark" aria-hidden="true">B</span>험난한 교직생활 <span style="color:#8ae4d7">3.0</span></div><span class="version">ARCADE · 1UP</span></header>
   <div class="hud" aria-label="게임 현황">
     <div class="stat"><span>DAY</span><strong id="dayLabel">월요일 · 1/5</strong></div>
     <div class="stat"><span>1UP</span><strong id="scoreLabel">0</strong></div>
@@ -107,9 +107,9 @@ canvas{height:400px;cursor:default}
   </div>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="stage">
-    <canvas id="game" tabindex="0" aria-label="험난한 교직생활 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
+    <canvas id="game" tabindex="0" aria-label="험난한 교직생활 3.0 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
-      <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 2.0</h2><p id="overlayDesc">월요일부터 금요일까지, 선생님의 체력을 지키며 퇴근하세요!</p><div class="choices" id="choices"></div></div>
+      <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 3.0</h2><p id="overlayDesc">월요일부터 금요일까지, 선생님의 체력을 지키며 퇴근하세요!</p><div class="choices" id="choices"></div></div>
     </div>
   </div>
   <div class="toolbar">
@@ -117,7 +117,7 @@ canvas{height:400px;cursor:default}
     <button id="sound" type="button" aria-pressed="false" aria-label="소리 켜기" title="효과음">🔇</button>
     <button id="how" class="help" type="button" aria-label="게임 방법" title="게임 방법">?</button><a class="original" href="https://ilovebaegu.itch.io/teacherrun09" target="_blank" rel="noopener noreferrer" aria-label="원작 게임">↗ 원작</a>
   </div>
-  <div id="arcade-top10" aria-label="험난한 교직생활 TOP 10 순위"></div>
+  <div id="arcade-top10" aria-label="험난한 교직생활 3.0 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-tier-ability2"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261118-tier-ability2"></script>
@@ -241,7 +241,7 @@ function intro(){
  const desc=ready?"확인된 "+available+" 백분위 평균 · "+(difficultyProfiles[selected.difficulty]?.label||"")+"\n월 → 금 생존!":
    selected?"2023~2026년 조사 백분위가 한 해도 확인되지 않았습니다.\n2026년 배구지수 조사에 참여해 주세요. 조사 반영 후 플레이 가능합니다.":
    "2023~2026년 중 한 해라도 조사 백분위가 있는 학교는 플레이할 수 있습니다.\n위에서 학교를 검색해 선택해 주세요.";
- message("험난한 교직생활",title+"\n"+desc,[
+ message("험난한 교직생활 3.0",title+"\n"+desc,[
   {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
    action:()=>ready?start():schoolPicker.focus()}
  ],"🏫");
