@@ -59,7 +59,7 @@ for(const [path,type] of pageTypes){
   assert.ok(html.indexOf('styles/beagu-ui-refresh-v2.css')<html.indexOf('</head>'),path+' stylesheet in head');
   assert.ok(html.lastIndexOf('styles/beagu-ui-refresh-v2.css')>html.lastIndexOf('styles/beagu-loading-v1.css'),path+' theme loaded after old CSS');
   if(type!=='game'){
-    assert.match(html,/배구인덱스/,path+' Korean brand');
+    assert.match(html,/BAEGU<span class="beagu-unified-name-accent">INDEX<\/span>/,path+' uppercase wordmark');
     assert.doesNotMatch(html,/<span class="beagu-brand-word">BAEGU INDEX<\/span>/,path+' outdated header');
   }
   if(!['game','compare'].includes(type)){
@@ -72,7 +72,7 @@ for(const [path,type] of pageTypes){
   }
 }
 for(const page of ['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html']){
-  assert.match(read(page),/beagu-global-nav/,'main menu preserved: '+page);
+  assert.match(read(page),/beagu-unified-nav/,'main menu preserved: '+page);
 }
 const home=read('index.html');
 assert.match(home,/data-cumulative="responses"/,'live survey response counters preserved');
