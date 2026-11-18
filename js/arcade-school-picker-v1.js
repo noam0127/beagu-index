@@ -43,7 +43,7 @@ class ArcadeSchoolPicker{
   this.status.textContent="다른 학교를 검색해 선택하세요. 중단한 경기 점수는 저장되지 않습니다.";
   this.focus();
  }
- setLocked(value){this.locked=Boolean(value);this.input.disabled=this.locked;this.results.hidden=this.locked;}
+ setLocked(value){this.locked=Boolean(value);this.input.disabled=this.locked;this.results.hidden=this.locked;this.changeButton.textContent=this.locked?"⏹ 정지 · 학교 변경":"🏫 다른 학교 선택";}
  async request(path){
   const r=await fetch(API+path,{cache:"no-store",headers:{"Accept":"application/json"}});
   if(!r.ok)throw new Error("school_api_"+r.status);
