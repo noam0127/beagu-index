@@ -10,12 +10,13 @@ assert.match(css,/4\.2s ease-in-out infinite alternate/);
 assert.match(css,/prefers-reduced-motion:reduce/);
 assert.match(css,/beagu-loading-screen\[hidden\]/);
 for(const p of ['index.html','search.html','search-lv1.html','school-report.html',
-  'statistics.html','challenge.html','survey.html','release-policy.html',
+  'statistics.html','challenge.html','survey.html',
   'teacher-volleyball.html','teacher-run.html']){
   const html=read(p);
   assert.match(html,/styles\/beagu-loading-v1\.css/,p+' loader CSS');
   assert.match(html,/js\/beagu-loading-v1\.js/,p+' loader JS');
 }
+assert.doesNotMatch(read('release-policy.html'),/js\/beagu-loading-v1\.js/,'Public policy page must remain script-free');
 for(const p of ['search.html','js/level-search.js','school-report.html','js/statistics-table.js']){
   const source=read(p);
   assert.match(source,/BeaguLoading\?\.start/,p+' start request');
