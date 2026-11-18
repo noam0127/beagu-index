@@ -49,6 +49,47 @@ pickerWindow.ArcadeSchoolPicker.prototype.resetForChange.call(mockPicker);
 assert.equal(mockPicker.input.value,"");
 assert.ok(mockPicker.didUnlock&&mockPicker.didClear&&mockPicker.didFocus,"reset enables searching another school");
 console.log("PASS: cancellation prevents stale school records and unlocks a new school search");
+
+const recordSchool={school_id:"7023456",school_name:"기록초등학교",difficulty:"extreme"};
+const recordButton={disabled:false},recordMsg={textContent:""};
+function mockRecordBoard(game="volleyball"){
+ const board=new mockWindow.ArcadeLeaderboard(game,null);
+ board.session="test-session";board.school={...recordSchool};board.score=1200;
+ board.stats={player:7,cpu:1,spikes:2};board.draw=()=>{};board.closeDialog=()=>{};
+ return board;
+}
+const uploaded=mockRecordBoard();
+uploaded.request=async()=>({ranked:true,rank:2,top10:[{nickname:"EXAMPLE",score:1200,created_at:"2026-11-18T12:00:00Z",school_name:recordSchool.school_name,difficulty:"extreme"}]});
+await uploaded.submitName("EXAMPLE",recordButton,recordMsg);
+assert.equal(uploaded.session,null);assert.equal(uploaded.remote,true);
+assert.match(uploaded.notice,/TOP 2위/);assert.equal(uploaded.board[0].difficulty,"extreme");
+const displaced=mockRecordBoard();
+displaced.request=async()=>({ranked:false,top10:[]});
+await displaced.submitName("EXAMPLE",recordButton,recordMsg);
+assert.match(displaced.notice,/TOP 10에서 밀렸/);
+const offline=mockRecordBoard("teacher_run");
+offline.request=async()=>{throw new Error("network_unavailable");};
+await offline.submitName("EXAMPLE",recordButton,recordMsg);
+assert.equal(offline.remote,false);assert.match(offline.notice,/이 기기에만 저장됨/);
+assert.equal(offline.board[0].school_name,recordSchool.school_name);
+const expired=mockRecordBoard();expired.request=async()=>{const e=new Error("session_expired");e.status=409;throw e;};
+await expired.submitName("EXAMPLE",recordButton,recordMsg);
+assert.match(recordMsg.textContent,/만료되었거나 이미 등록/);assert.equal(expired.session,"test-session");
+const duringSave=mockRecordBoard();let respondSave;
+duringSave.request=()=>new Promise(resolve=>respondSave=resolve);
+const saving=duringSave.submitName("EXAMPLE",recordButton,recordMsg);
+duringSave.cancel();duringSave.school={school_id:"7099999",school_name:"다음학교",difficulty:"easy"};duringSave.session="next-session";
+respondSave({ranked:true,rank:1,top10:[{nickname:"EXAMPLE",score:1200,created_at:"2026-11-18T12:00:00Z"}]});
+await saving;
+assert.equal(duringSave.school.school_name,"다음학교");assert.equal(duringSave.session,"next-session");
+assert.deepEqual(duringSave.board,[]);
+const unqualified=mockRecordBoard();
+unqualified.remote=true;unqualified.board=Array.from({length:10},(_,i)=>({nickname:"EXAMPLE",score:1000-i*50}));
+unqualified.load=async()=>unqualified.board;unqualified.openRecord=()=>{throw new Error("should not ask for name");};
+await unqualified.finish(100,{player:0,cpu:7,spikes:0});
+assert.match(unqualified.notice,/TOP 10 진입 실패/);
+console.log("PASS: upload success, rank race, offline warning, API expiry, stale async save, below Top10");
+
 assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
 assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
 assert.match(picker,/available_years/,"confirmed survey years shown; empty school gets survey CTA");
@@ -124,8 +165,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261118-tier-ability2")&&
-     site.body.includes("teacher-run.html?v=20261118-tier-ability2"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261118-recordfix1")&&
+     site.body.includes("teacher-run.html?v=20261118-recordfix1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -135,8 +176,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261118-tier-ability2/);
-assert.match(site.body,/teacher-run\.html\?v=20261118-tier-ability2/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261118-recordfix1/);
+assert.match(site.body,/teacher-run\.html\?v=20261118-recordfix1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
