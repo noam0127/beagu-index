@@ -1541,7 +1541,7 @@
       state.publicParticipationByYear=Object.fromEntries(
         ['2023','2024','2025'].map(y=>[y,new Set(index[y])]));
     }
-    const p=await loadJSON('data/public-lv0-percentiles-v1.2.json',true);
+    const p=await loadJSON('data/public-lv0-percentiles-v1.2.json?v=20261118-gjjn2025',true);
     if(p && window.BeaguPublic?.buildIndex){try{state.percentileIndex=window.BeaguPublic.buildIndex(p)}catch(e){console.warn(e)}}
     if(!state.catalog){$('searchHelp').textContent='문항정보 파일을 불러오지 못했습니다. GitHub에 data 폴더를 업로드했는지 확인하세요.';}
     bind();questionCatalogDB();
