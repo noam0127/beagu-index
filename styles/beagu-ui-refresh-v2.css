@@ -752,3 +752,86 @@ body.beagu-page-compare .notice{
   body.beagu-page-compare .intro-content{padding:22px 16px}
   body.beagu-page-compare .intro h1{font-size:28px}
 }
+
+
+/* Lv.1 historical results are a single in-card disclosure.
+   No secondary navigation, duplicate school profile, or trend chart. */
+body.beagu-page-lv1 .school-card .lv1-history-disclosure{
+  margin:16px 0 0;
+  padding:15px 17px;
+  border:1px solid #c9dcf5;
+  border-radius:15px;
+  background:#f9fbff;
+  box-shadow:none;
+  cursor:pointer;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure:hover{
+  border-color:#95b9ed;
+  background:#f4f8ff;
+}
+body.beagu-page-lv1 .school-card .lv1-history-trigger{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  min-height:45px;
+  padding:5px 0 13px;
+  border:0;
+  border-bottom:1px solid #e2ebf8;
+  background:transparent;
+  color:#193b68;
+  font-size:17px;
+  font-weight:850;
+  text-align:left;
+  letter-spacing:-.035em;
+  cursor:pointer;
+}
+body.beagu-page-lv1 .school-card .lv1-history-trigger::after{
+  content:"펼치기  ▾";
+  flex:0 0 auto;
+  padding:6px 10px;
+  border-radius:9px;
+  color:#245bb2;
+  background:#e7f0ff;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:0;
+}
+body.beagu-page-lv1 .school-card .lv1-history-trigger[aria-expanded="true"]::after{
+  content:"접기  ▴";
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure>.percentile-grid{
+  margin:13px 0 3px;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure>.school-detail{
+  cursor:default;
+  margin:16px 0 0;
+  border-top:1px solid #dbe7f7;
+  padding-top:18px;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure>.school-detail[hidden]{
+  display:none!important;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure .year-tabs{
+  margin:12px 0 18px;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure .year-tabs button{
+  min-height:44px;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure .school-history-heading{
+  margin:0 0 8px;
+  font-size:15px;
+  color:#2a4f83;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure .school-year-details{
+  min-width:0;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure + .beagu-mbti-badge{
+  margin-top:14px;
+  margin-bottom:0;
+}
+@media(max-width:450px){
+  body.beagu-page-lv1 .school-card .lv1-history-disclosure{padding:12px;}
+  body.beagu-page-lv1 .school-card .lv1-history-trigger{font-size:16px;}
+}
