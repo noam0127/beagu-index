@@ -80,11 +80,20 @@ class ArcadeLeaderboard{
   })();
   return this.pendingStart;
  }
+ cancel(){
+  // Abandoned matches cannot submit or open a stale record prompt.
+  this.playGeneration++;this.session=null;this.pendingStart=null;
+  this.school=null;this.score=0;this.stats=null;this.closeDialog();
+ }
  async finish(score,stats){
+  const generation=this.playGeneration;
+  if(!this.session)return;
   this.score=Math.floor(Number(score)||0);this.stats=stats;
   if(this.score<=0)return;
   try{if(this.pendingStart)await this.pendingStart;}catch(e){}
+  if(generation!==this.playGeneration||!this.session)return;
   await this.load();
+  if(generation!==this.playGeneration||!this.session)return;
   if(this.board.length===10&&this.score<=this.board[9].score)return;
   this.openRecord();
  }
