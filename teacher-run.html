@@ -295,7 +295,7 @@ function finish(win){
  playTone(win?950:280,.32);
 }
 function pause(){
- if(state==="playing"){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;message("일시정지","",[{label:"▶ 계속",action:resume},{label:"🏫 다른 학교로 변경",action:stopAndChangeSchool},{label:"↩ 처음으로",action:stopToIntro}],"⏸");
+ if(state==="playing"){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;message("일시정지","",[{label:"▶ 계속",action:resume},{label:"🏫 다른 학교로 변경",action:stopAndChangeSchool},{label:"↩ 처음으로",action:stopToIntro}],"⏸");}
  else if(state==="paused")resume();
 }
 function resume(){state="playing";closeMessage();}
@@ -385,7 +385,7 @@ function playerDraw(){
   ctx.fillStyle="#fa8f69";ctx.fillRect(-11,50,7,blink?10:6);ctx.fillRect(10,50,7,blink?6:10);
  }
  if(player.inv>0&&Math.floor(clock*12)%2===0)ctx.globalAlpha=.45;
- // 16-bit style sprite// 16-bit style sprite made of solid square pixels
+ // 16-bit style sprite made of solid square pixels
  const px=(x,y,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,y,w,h);};
  px(-24,27,17,8,"#0b213f");px(7,27,17,8,"#0b213f");
  px(-25,23,20,8,"#ffffff");px(5,23,20,8,"#ffffff");
@@ -441,7 +441,7 @@ function draw(){
   ctx.textAlign="center";roundRect(W/2-53,64,106,24,11,"rgba(108,55,32,.9)");
   ctx.font="900 12px sans-serif";ctx.fillStyle="#fff3c9";ctx.fillText("🔥 "+combo+" COMBO",W/2,80,101);
  }
- roundRect(12,H-7roundRect(12,H-7,W-24,3,2,"rgba(24,62,83,.15)");
+ roundRect(12,H-7,W-24,3,2,"rgba(24,62,83,.15)");
  if(dayTime>0)roundRect(12,H-7,(W-24)*Math.min(1,dayTime/23.5),3,2,"#2b9c8b");
  if(noticeTime>0){ctx.textAlign="center";roundRect(W/2-68,93,136,27,9,"rgba(17,54,70,.88)");ctx.font="bold 13px sans-serif";ctx.fillStyle="#fff";ctx.fillText(notice,W/2,111,126);}
  if(day===4&&dayTime>13){ctx.textAlign="center";ctx.font="900 12px sans-serif";ctx.fillStyle="#8e3030";ctx.fillText("⚠ 공문 폭풍",W/2,131,Math.max(120,W-20));}
