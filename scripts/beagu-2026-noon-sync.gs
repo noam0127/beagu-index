@@ -159,7 +159,7 @@ function fetchSchools() {
   if(!key)throw Error("스크립트 속성 SUPABASE_PUBLISHABLE_KEY를 설정하세요.");
   const out=[];
   for(let offset=0;offset<BEAGU26.maxSchools;offset+=1000) {
-    const url=BEAGU26.supabaseUrl+"/rest/v1/schools?select=school_id,school_name,sido_standard,support_office,status&status=eq.%EC%9A%B4%EC%98%81&order=school_id.asc&limit=1000&offset="+offset;
+    const url=BEAGU26.supabaseUrl+"/rest/v1/schools?select=school_id,school_name,sido_standard,support_office,establishment,status&status=eq.%EC%9A%B4%EC%98%81&order=school_id.asc&limit=1000&offset="+offset;
     const response=UrlFetchApp.fetch(url,{headers:{"apikey":key},muteHttpExceptions:true});
     if(response.getResponseCode()!==200)throw Error("학교 MASTER 조회 실패: HTTP "+response.getResponseCode());
     const list=JSON.parse(response.getContentText());
@@ -179,10 +179,11 @@ function questionColumns(headers) {
     q.push(hits[0]);
   }
   const school=headers.findIndex(h=>/^B03\./.test(String(h)));
+  const schoolType=headers.findIndex(h=>/^B04\./.test(String(h)));
   const region=headers.findIndex(h=>/^B01\./.test(String(h)));
   const office=headers.map((h,i)=>/^B02\./.test(String(h))?i:-1).filter(i=>i>=0);
-  if(school<0||region<0||office.length<1)throw Error("지역·지원청·학교명 열을 확인하세요.");
-  return {q,school,region,office};
+  if(school<0||schoolType<0||region<0||office.length<1)throw Error("지역·지원청·학교명·설립유형 열을 확인하세요.");
+  return {q,school,schoolType,region,office};
 }
 function questionScore(code,answer){
   const s=String(answer||"").trim();
@@ -230,7 +231,12 @@ function resolveSchool(row,c,schools) {
     &&normalize(s.school_name)===schoolName
     &&normalizeOffice(s.support_office)===office);
   if(same.length!==1)return {error:same.length===0?"학교 MASTER 미매칭":"동일명 학교 중복",region,office};
-  return {school:same[0],region,office};
+  // B04 is used for a *review flag*, not as a replacement for the unique
+  // region + office + school-name identity match.
+  const selectedType=String(row[c.schoolType]||"").match(/(?:공립|국립|사립)/)?.[0]||"";
+  const registeredType=String(same[0].establishment||"").match(/(?:공립|국립|사립)/)?.[0]||"";
+  const typeConflict=!!selectedType&&!!registeredType&&selectedType!==registeredType;
+  return {school:same[0],region,office,typeConflict,selectedType,registeredType};
 }
 function replaceBody(sheet,rows,columns) {
   const necessary=rows.length+1;
@@ -278,10 +284,15 @@ function refreshBeagu2026Stats() {
         unmatched++;continue;
       }
       const key=m.school.school_id;
+      if(m.typeConflict){
+        holds.push([i+1,String(r[columns.region]||""),String(r[columns.office.find(k=>r[k]) ]||""),
+          String(r[columns.school]||""),"설립유형 선택("+m.selectedType+")과 학교공시("+m.registeredType+") 불일치","NEEDS_TYPE_REVIEW"]);
+      }
       const scores=[];
       for(let j=0;j<13;j++)scores.push(questionScore(j+1,r[columns.q[j]]));
       let g=groups.get(key);
-      if(!g){g={school:m.school,counts:Array(13).fill(0),sums:Array(13).fill(0),rows:0,viScores:[]};groups.set(key,g)}
+      if(!g){g={school:m.school,counts:Array(13).fill(0),sums:Array(13).fill(0),rows:0,viScores:[],typeConflict:false};groups.set(key,g)}
+      g.typeConflict ||= m.typeConflict;
       g.rows++;
       scores.forEach((v,j)=>{if(typeof v==="number"){g.counts[j]++;g.sums[j]+=v}});
       const v=scores.filter(x=>typeof x==="number");
@@ -292,12 +303,14 @@ function refreshBeagu2026Stats() {
       const s=g.school;
       const avg=g.sums.map((sum,j)=>g.counts[j]?Math.round(sum/g.counts[j]*10)/10:"");
       const vi=g.viScores.length?Math.round(g.viScores.reduce((a,b)=>a+b,0)/g.viScores.length*10)/10:"";
-      return [String(s.school_id),s.sido_standard,s.support_office,s.school_name,g.rows,...avg,vi,"","PENDING_VERIFICATION",now,"원자료 재집계(비공개) · 공식 2026 백분위 산식/공개 검수 대기"];
+      return [String(s.school_id),s.sido_standard,s.support_office,s.school_name,g.rows,...avg,vi,"",g.typeConflict?"NEEDS_TYPE_REVIEW":"PENDING_VERIFICATION",now,g.typeConflict?"설립유형 응답과 공시정보 불일치 · 내부 참고값만 보관 · 학교유형·공개동의 검수 대기":"원자료 재집계(비공개) · 공식 2026 백분위 산식/공개 검수 대기"];
     });
     // 원본 데이터와 학교 매칭 오류 검사를 모두 마친 뒤에만 결과 시트를 갱신한다.
     replaceBody(destination.getSheetByName(BEAGU26.summaryTab),output,23);
     replaceBody(destination.getSheetByName(BEAGU26.holdTab),holds,6);
     matched=output.length;
+    // Holds include both unresolved schools and independently flagged type conflicts.
+    unmatched=holds.length;
     // Synchronize nationwide submission-row count to an INTERNAL service-role-only
     // backend. Public counter UI and table SELECT permissions are disabled.
     // Never transmit single-school or individual teacher answers.
