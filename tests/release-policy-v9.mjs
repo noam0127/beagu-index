@@ -27,7 +27,7 @@ const lv1=read('js/level-search.js');
 const lv2=read('js/lv2-edited-search.js');
 assert.match(index,/<a class="data-access-link" href="search\.html">학교 검색하기<\/a>/,'Unified homepage entry');
 assert.match(index,/class="beagu-home-actions"/,'Homepage actions grouped without duplicate notices');
-assert.doesNotMatch(index,/href="search-lv[12]\.html"/,'No separate level button');
+assert.doesNotMatch(index,/class="data-access-link" href="search-lv[12]\.html"/,'No standalone level button; the fixed Lv badge may link to authentication');
 assert.match(search,/id="searchInput"/,'Lv.0 public browser restored');
 assert.match(search,/href="search-lv1\.html"/,'Lv.1 entry from Lv.0');
 assert.match(read('search-lv2.html'),/url=\.\/search-lv1\.html/,'Legacy Lv.2 route redirects to Lv.1');
