@@ -122,14 +122,14 @@ Deno.serve(async(req:Request)=>{
    const sort=typeof body.sort==='string'?body.sort:'school_name';
    const direction=typeof body.direction==='string'?body.direction:(sort==='school_name'||sort==='address'?'asc':'desc');
    const pagination=Number(body.page);
-   const sorts=new Set(['school_name','address','beagu_percentile_2025','student_count','housing_price_won']);
+   const sorts=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won']);
    if(!sorts.has(sort)||!['asc','desc'].includes(direction)||!Number.isSafeInteger(pagination)||pagination<0||pagination>500||
       searchText.length>80||region.length>24||office.length>100||
       !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
       (!searchText&&!region)||(!region&&office))
       return send({error:'INVALID_SEARCH_FILTER'},400,origin);
    let query=admin.from('beagu_lv1_school_sort_index')
-      .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,housing_price_won',{count:'exact'});
+      .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,housing_price_won,junior_teacher_ratio,male_teacher_ratio',{count:'exact'});
    if(searchText)query=query.ilike('school_name','%'+searchText.replace(/[%_\\]/g,'')+'%');
    if(region)query=query.eq('sido_standard',region);
    if(office)query=query.eq('support_office',office);
