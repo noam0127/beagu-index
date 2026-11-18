@@ -289,36 +289,46 @@
     if(Array.isArray(observed)&&observed.length)return {values:observed,source:'observed'};
     return {values:[],source:'missing'};
   }
+  // One card per original question: school / region / nation together with
+  // the verified rounded distribution. No separate duplicated question list.
   function renderHistoricalBenchmarks(host,year,school,distributions,comparison,loadStatus){
     const questions=window.BeaguHistoricalOriginalQuestions?.[String(year)]||{};
     const qids=Object.keys(questions).filter(id=>/^Q\d{2}$/.test(id)).sort();
     if(!qids.length)return;
-    const section=make('section','data-section');
-    section.append(make('h4','','역대 문항별 결과 · 전국·지역 비교'));
-    const intro=make('p','detail-note',
-      '학교 고유 결과는 별도 공개 심사를 통과한 경우에만 표시합니다. 그 외에는 학교가 속한 시도 및 전국의 자발적 참여 표본 집계값을 참고값으로 제공합니다. 지역·전국 기준값은 해당 학교의 응답이나 모집단 전체의 대표값이 아닙니다.');
-    intro.style.cssText='margin:8px 0 14px;line-height:1.6';
-    section.append(intro);
+    const section=make('section','data-section beagu-question-section');
+    const header=make('div','beagu-questions-header');
+    header.append(make('h4','','문항별 결과'),make('span','beagu-question-count',qids.length+'개 문항'));
+    section.append(header);
+    section.append(make('p','beagu-question-intro',
+      '우리 학교는 공개 승인된 집계만, 지역·전국은 참여 표본의 참고값을 표시합니다.'));
+    const details=make('details','beagu-source-note');
+    details.append(make('summary','','자료 해석 안내'));
+    details.append(make('p','',
+      '학교 고유 결과는 별도 공개 심사를 통과한 경우에만 표시합니다. 그 외에는 학교가 속한 시도 및 전국의 자발적 참여 표본 집계값을 참고값으로 제공합니다. 지역·전국 기준값은 해당 학교의 응답이나 모집단 전체의 대표값이 아닙니다. 응답 건수와 개인별 선택 내용은 제공하지 않습니다.'));
+    section.append(details);
     const all=comparison?.items&&typeof comparison.items==='object'?comparison.items:{};
     const nationalCount=qids.filter(id=>typeof all[id]?.national?.mean==='string'||typeof all[id]?.national?.mode==='string').length;
     const regionalCount=qids.filter(id=>typeof all[id]?.regional?.mean==='string'||typeof all[id]?.regional?.mode==='string').length;
-    const overview=make('p','detail-note',
-      loadStatus==='loading'?'승인된 전국·지역 비교값을 확인하는 중…':
-      loadStatus==='error'?'비교값 연결에 실패했습니다. 연도를 다시 선택하면 재조회합니다.':
-      '확인된 비교 문항: 전국 '+nationalCount+'/'+qids.length+' · 지역 '+regionalCount+'/'+qids.length);
-    overview.style.cssText='margin:8px 0 14px;font-weight:600';
+    const overview=make('p','beagu-comparison-status',
+      loadStatus==='loading'?'전국·지역 비교값을 불러오는 중…':
+      loadStatus==='error'?'비교값 연결 실패 · 다른 연도를 선택한 뒤 다시 시도하세요':
+      '전국 '+nationalCount+'/'+qids.length+' · 지역 '+regionalCount+'/'+qids.length+' 문항 비교');
+    overview.setAttribute('role','status');
     section.append(overview);
-    const vetted=new Map((Array.isArray(distributions)?distributions:[])
+    const vettedRows=new Map((Array.isArray(distributions)?distributions:[])
       .filter(d=>Number(d.year)===year && /^Q\d{2}$/.test(String(d.questionId||'')) &&
         typeof d.modeOption==='string'&&Array.isArray(d.roundedDistribution))
-      .map(d=>[d.questionId,d.modeOption]));
+      .map(d=>[d.questionId,d]));
+    const vetted=new Map([...vettedRows].map(([id,item])=>[id,item.modeOption]));
     const region=String(school?.sido_standard||school?.sido||'지역');
+    const list=make('div','beagu-question-list');
+    const blocks=[];
     for(const id of qids){
       const block=make('article','historical-question-row');
-      block.style.cssText='margin:12px 0;padding:14px;border:1px solid #dbe5f3;border-radius:12px;background:#fff';
-      const header=make('h5','',id+' · '+conciseQuestion(questions[id]));
-      header.style.cssText='font-size:14px;line-height:1.65;margin:0 0 10px;color:#1d314e;overflow-wrap:anywhere';
-      block.append(header);
+      const question=conciseQuestion(questions[id]);
+      const title=make('h5','beagu-question-title');
+      title.append(make('span','beagu-question-number',id),document.createTextNode(question));
+      block.append(title);
       const comparisonValues=all[id]||{};
       const benchmark=m=>{
         if(!m||typeof m!=='object')return null;
@@ -327,42 +337,90 @@
       };
       const comparisonLabel=m=>m?.kind==='most_frequent'?'최다 선택':'평균에 해당하는 보기';
       const cells=[
-        ['우리 학교',vetted.get(id)||null,'school'],
-        [region+' · '+comparisonLabel(comparisonValues.regional),benchmark(comparisonValues.regional),'region'],
-        ['전국 · '+comparisonLabel(comparisonValues.national),benchmark(comparisonValues.national),'nation']
+        ['우리 학교',vetted.get(id)||null,'school','검증된 최다 선택'],
+        [region,benchmark(comparisonValues.regional),'region',comparisonLabel(comparisonValues.regional)],
+        ['전국',benchmark(comparisonValues.national),'nation',comparisonLabel(comparisonValues.national)]
       ];
       const grid=make('div','historical-benchmark-grid');
-      grid.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:8px';
-      for(const [label,value,role] of cells){
+      for(const [label,value,role,note] of cells){
         const cell=make('div','historical-benchmark-value '+role);
-        cell.style.cssText='border:1px solid #e2e8f0;border-radius:9px;padding:10px;min-width:0;overflow-wrap:anywhere';
-        const top=make('span','',label);
-        top.style.cssText='display:block;font-size:11px;color:#62758d;margin-bottom:5px';
-        const hasValue=typeof value==='string'&&value.trim();
+        const top=make('span','beagu-benchmark-label',label);
+        const hasValue=typeof value==='string'&&!!value.trim();
         const display=hasValue?value:role==='school'?'학교별 문항 집계 미공개':'비교 자료 없음';
-        const val=make('strong','',display);
-        val.style.cssText='display:block;font-size:13px;line-height:1.5;color:'+(hasValue?'#142a47':'#748299');
-        cell.append(top,val);grid.append(cell);
+        const val=make('strong','beagu-benchmark-result',display);
+        if(!hasValue)cell.classList.add('is-unavailable');
+        const kind=make('small','beagu-benchmark-kind',note);
+        cell.append(top,val,kind);
+        grid.append(cell);
       }
       block.append(grid);
+      const rounded=Array.isArray(vettedRows.get(id)?.roundedDistribution)
+        ?vettedRows.get(id).roundedDistribution:[];
+      const validRows=rounded.filter(answer=>{
+        const pct=Number(answer?.pct);
+        return typeof answer?.label==='string'&&answer.label.trim() &&
+          Number.isInteger(pct)&&pct>=0&&pct<=100&&pct%10===0;
+      });
+      if(validRows.length){
+        const dist=make('div','beagu-question-distribution');
+        dist.append(make('h6','beagu-distribution-title','우리 학교 응답 분포'));
+        for(const answer of validRows){
+          const pct=Number(answer.pct);
+          const row=make('div','beagu-distribution-row');
+          const label=make('span','beagu-distribution-label',answer.label);
+          const amount=make('strong','beagu-distribution-percent','약 '+pct+'%');
+          const track=make('div','beagu-distribution-track');
+          const bar=make('div','beagu-distribution-fill');
+          bar.style.width=pct+'%';
+          track.setAttribute('role','img');
+          track.setAttribute('aria-label',answer.label+' 약 '+pct+'%');
+          track.append(bar);
+          row.append(label,amount,track);
+          dist.append(row);
+        }
+        block.append(dist);
+      }
       const optionData=verifiedOptions(year,id);
       if(optionData.values.length){
-        const title=make('div','',optionData.source==='verified'?'원본 설문 보기':'원자료에서 확인된 보기 (전체 목록 미확인)');
-        title.style.cssText='font-size:12px;font-weight:700;margin:13px 0 4px;color:#425675';
-        const list=make('ul','historical-answer-choices');
-        list.style.cssText='padding-left:18px;margin:0;font-size:12px;line-height:1.7;color:#59677b';
+        const optionTitle=make('h6','beagu-options-title',
+          optionData.source==='verified'?'원본 설문 보기':'원자료에서 확인된 보기 (전체 목록 미확인)');
+        const optionList=make('ul','historical-answer-choices');
         for(const value of optionData.values){
           if(typeof value!=='string'||value.length>180)continue;
-          const li=make('li','',value);list.append(li);
+          optionList.append(make('li','',value));
         }
-        block.append(title,list);
+        block.append(optionTitle,optionList);
       }else{
-        const note=make('p','detail-note','해당 문항의 원본 선택지는 아직 검증되지 않았습니다.');
-        note.style.cssText='margin:10px 0 0;font-size:12px';
-        block.append(note);
+        block.append(make('p','beagu-options-empty',
+          '해당 문항의 원본 선택지는 아직 검증되지 않았습니다.'));
       }
-      section.append(block);
+      blocks.push(block);
+      list.append(block);
     }
+    if(qids.length>14){
+      const finder=make('div','beagu-question-finder');
+      const input=make('input','beagu-question-input');
+      input.type='search';
+      input.placeholder='문항 검색';
+      input.setAttribute('aria-label',year+'년 문항 검색');
+      const count=make('span','beagu-question-match','전체 '+qids.length+'개');
+      const empty=make('p','beagu-question-empty','일치하는 문항이 없습니다.');
+      empty.hidden=true;
+      input.addEventListener('input',()=>{
+        const q=input.value.trim().toLocaleLowerCase('ko-KR');
+        let visible=0;
+        for(const block of blocks){
+          const match=!q||block.textContent.toLocaleLowerCase('ko-KR').includes(q);
+          block.hidden=!match;
+          if(match)visible++;
+        }
+        count.textContent=q?'검색 '+visible+'개':'전체 '+qids.length+'개';
+        empty.hidden=visible!==0;
+      });
+      finder.append(input,count);
+      section.append(finder,empty);
+    }
+    section.append(list);
     host.append(section);
   }
 
