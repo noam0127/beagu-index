@@ -11,7 +11,9 @@ for(const key of ['Lv.0','Lv.1','2023','2024','2025','2026',
 assert.ok(policy.indexOf('2023 → 2024 → 2025 → 2026')>=0,'Year order must be ascending');
 assert.doesNotMatch(policy,/data\/raw|beagu_private|service_role|sb_secret_|p_password|survey_answers/i);
 assert.doesNotMatch(policy,/\b(?:2026년)?\s*학교별\s*(?:총점|전국순위)\b/);
-assert.doesNotMatch(policy,/<script[^>]+src=/,'No tracking or restricted server client on static policy page');
+const policyScripts=[...policy.matchAll(/<script[^>]+src="([^"]+)"/g)].map(match=>match[1].split('?')[0]);
+assert.deepEqual(policyScripts,['js/beagu-level-state-v1.js'],'Policy can verify the common level indicator but must not load trackers or data clients');
+assert.doesNotMatch(policy,/src="js\\/(?:visit-stats|search-telemetry|supabase-config)/,'No visit tracker or data client on policy page');
 
 for(const p of ['search.html','search-lv1.html',
                  'school-report.html','statistics.html']){
