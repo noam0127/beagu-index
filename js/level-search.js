@@ -76,20 +76,27 @@
     .catch(error => { console.warn('공개 백분위 파일 미응답, 승인 DB를 사용합니다.', error); });
 
   async function recoverPublicIndex(list) {
-    if(publicStaticAvailable || !list.length) return;
+    if(!list.length) return;
     const ids=[...new Set(list.map(s=>String(s.school_id))
-      .filter(id=>id.length===7 && [...id].every(c=>c>='0'&&c<='9')))];
+      .filter(id=>/^[A-Z0-9]{7}$/.test(id))
+      .filter(id=>{
+        const item=publicIndex.get(id);
+        return !item||!Array.isArray(item.percentiles)||item.percentiles.some(v=>v==null);
+      }))];
     if(!ids.length) return;
     const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
       .select('school_id,survey_year,percentile').in('school_id',ids)
       .eq('publication_status','PUBLISHED').in('survey_year',[2023,2024,2025]).limit(100);
     if(error) throw error;
     for(const id of ids) {
-      const values=[null,null,null],statuses=['NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE'];
+      const previous=publicIndex.get(id);
+      const values=Array.isArray(previous?.percentiles)?previous.percentiles.slice(0,3):[null,null,null];
+      const statuses=Array.isArray(previous?.statuses)?previous.statuses.slice(0,3):
+        ['NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE','NO_PUBLISHED_VALUE'];
       for(const row of data||[]) {
         if(String(row.school_id)!==id || row.percentile===null) continue;
         const i=[2023,2024,2025].indexOf(Number(row.survey_year)),n=Number(row.percentile);
-        if(i>=0 && Number.isFinite(n) && n>=0 && n<=100){
+        if(i>=0 && Number.isFinite(n) && n>=0 && n<=100&&values[i]===null){
           values[i]=n;statuses[i]='EXISTING_PUBLIC_VALUE_PRESERVED';
         }
       }
@@ -689,10 +696,8 @@
       if (request !== serial) return;
       await Promise.all([loaded,historicalPresenceReady]);
       if (request !== serial) return;
-      if(!publicStaticAvailable) {
-        try { await recoverPublicIndex(data||[]); }
-        catch(e){ publicLoadError=true; console.warn('Lv.1 백분위 DB 재조회 실패',e); }
-      }
+      try { await recoverPublicIndex(data||[]); }
+      catch(e){ publicLoadError=true; console.warn('Lv.1 백분위 DB 재조회 실패',e); }
       if (request !== serial) return;
       if(explicitEnter&&q&&count===1&&Array.isArray(data)&&data.length===1)
         window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),1,'search-lv1');
