@@ -291,7 +291,7 @@ function finish(win){
  (win?"주말은 선생님 편입니다.":"괜찮아요. 다음 주는 더 잘 피할 수 있어요!");
  message(win?"🎊 주말을 지켜냈어요!":"🫖 잠깐 쉬어가요",text,[
  {label:"🔄 같은 학교로 다시 하기",action:()=>start()},
- {label:"🏫 학교 변경",action:intro}],win?"🎉":"🫖");
+ {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?"🎉":"🫖");
  playTone(win?950:280,.32);
 }
 function pause(){
@@ -303,7 +303,7 @@ function help(){
  const wasPlaying=state==="playing";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
  message("게임 방법","📄 공문 · 📞 전화 · 📅 회의 등 장애물을 피하세요.\n☕ 커피 · 💌 응원 · 🤝 동료 아이템을 받으면 체력이 회복됩니다.\n장애물을 아슬아슬하게 피하면 콤보 점수를 얻습니다.\n\nPC: ← → / A D\n모바일: 화면 터치·드래그로 자유롭게 이동",[
- {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else intro();}}],"❔");
+ {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
 function update(dt){
  clock+=dt;dayTime+=dt;score+=dt*9;player.inv=Math.max(0,player.inv-dt);
