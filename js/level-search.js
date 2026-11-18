@@ -70,7 +70,7 @@
         ['2023','2024','2025'].map(y=>[y,new Set(years[y])]));
     }).catch(e=>{console.warn('조사 기록이 표시되지 않아도 기존 검색은 유지됩니다.',e)});
 
-  const loaded = fetch('data/public-lv0-percentiles-v1.2.json?v=20261031-empirical2025', {cache:'force-cache'})
+  const loaded = fetch('data/public-lv0-percentiles-v1.2.json?v=20261118-gjjn2025', {cache:'no-cache'})
     .then(r => { if (!r.ok) throw new Error('PUBLIC_DATA_UNAVAILABLE'); return r.json(); })
     .then(data => { publicIndex = BeaguPublic.buildIndex(data); publicStaticAvailable = true; })
     .catch(error => { console.warn('공개 백분위 파일 미응답, 승인 DB를 사용합니다.', error); });
