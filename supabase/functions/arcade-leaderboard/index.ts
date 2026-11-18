@@ -47,7 +47,7 @@ async function top(game: Game): Promise<Entry[]> {
 }
 
 type School = { school_id:string; school_name:string; sido_standard:string };
-type Difficulty = "easy"|"normal"|"hard";
+type Difficulty = "easy"|"normal"|"hard"|"very_hard"|"extreme";
 type SchoolChoice = {
  school_id:string; school_name:string; region:string; difficulty:Difficulty|null;
  eligible:boolean; missing_years:number[]; available_years:number[];
@@ -88,7 +88,7 @@ async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
  const missing_years=years.filter(year=>!percentiles.has(year));
  const eligible=available_years.length>0;
  const average=eligible?available_years.reduce((sum,year)=>sum+(percentiles.get(year)??0),0)/available_years.length:null;
- const difficulty:Difficulty|null=average===null?null:(average>=66.6667?"easy":average<=33.3333?"hard":"normal");
+ const difficulty:Difficulty|null=average===null?null:(average>=80?"extreme":average>=60?"very_hard":average>=40?"hard":average>=20?"normal":"easy");
  // Send only a tier and year availability, not unpublished scores or individual survey values.
  return {school_id:school.school_id,school_name:school.school_name,region:school.sido_standard||"",
    difficulty,eligible,missing_years,available_years,source_year:eligible?Math.max(...available_years):null,has_index:eligible};
