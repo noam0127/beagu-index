@@ -13,7 +13,14 @@ const CAST=Object.freeze({
 const EXPRESSIONS=['neutral','smile','worried','flustered','tired','shy'];
 /* SD female cast: deliberately different silhouettes, facial proportions and gestures.
    Supporting actors are visuals only: no extra route or romantic choices. */
-function femalePortraitSvg(id,x){
+const SEASONAL_COATS=Object.freeze({
+ woman:Object.freeze({'cold-spring':'#ead6bf',spring:'#f0dfca','late-spring':'#f1e1d3','early-summer':'#f5e7d9',summer:'#faf2e9'}),
+ none:Object.freeze({'cold-spring':'#92a887',spring:'#adbea0','late-spring':'#bad0af','early-summer':'#c9dcc0',summer:'#dcead4'}),
+ suhyun:Object.freeze({'cold-spring':'#747a86',spring:'#858d98','late-spring':'#9a9fa6','early-summer':'#b0b5bc',summer:'#c7cbd0'}),
+ sea:Object.freeze({'cold-spring':'#c1ab91',spring:'#d6c2a9','late-spring':'#e1cdb7','early-summer':'#eaddc8',summer:'#f1e8d7'}),
+ yuri:Object.freeze({'cold-spring':'#a38bb2',spring:'#b9a5c5','late-spring':'#cbbbd5','early-summer':'#d8cbe0',summer:'#e6daea'})
+});
+function femalePortraitSvg(id,x,season){
  const c=CAST[id];
  const face={
   woman:{rx:90,ry:103,y:183},none:{rx:85,ry:99,y:184},
@@ -48,7 +55,17 @@ function femalePortraitSvg(id,x){
   '<path d="M165 245q12 8 25 0" stroke="#aa6b70" stroke-width="4" fill="none"/>';
  const cheeks=x==='shy'||x==='flustered'?'<ellipse cx="103" cy="225" rx="18" ry="10" fill="#e99ca8" opacity=".42"/><ellipse cx="247" cy="225" rx="18" ry="10" fill="#e99ca8" opacity=".42"/>':'';
  const glasses=id==='suhyun'?'<g fill="none" stroke="#899099" stroke-width="4"><rect x="98" y="182" width="62" height="39" rx="12"/><rect x="191" y="182" width="62" height="39" rx="12"/><path d="M160 195Q176 188 191 195M98 192L83 186M253 192L267 186"/></g>':'';
- const clothes='<path d="M54 425Q50 315 122 301H229Q298 311 298 425Z" fill="'+c.coat+'" stroke="#6f6867" stroke-width="4"/><path d="M142 299l34 42 34-42v126h-68Z" fill="#fffaf3"/><path d="M90 348Q78 389 88 424M259 349Q271 390 262 425" stroke="#695a60" stroke-width="5" fill="none" opacity=".55"/>';
+ const coatColor=(SEASONAL_COATS[id]&&SEASONAL_COATS[id][season])||c.coat;
+ const clothes='<path d="M54 425Q50 315 122 301H229Q298 311 298 425Z" fill="'+coatColor+'" stroke="#6f6867" stroke-width="4"/><path d="M142 299l34 42 34-42v126h-68Z" fill="#fffaf3"/><path d="M90 348Q78 389 88 424M259 349Q271 390 262 425" stroke="#695a60" stroke-width="5" fill="none" opacity=".55"/>';
+ const seasonalDetail=season==='cold-spring'
+  ?'<path d="M145 295Q177 313 207 295L201 324Q179 338 151 325Z" fill="#e6ded6" stroke="#b7ada9" stroke-width="3"/><path d="M198 322L213 358" stroke="#e6ded6" stroke-width="12" stroke-linecap="round"/>'
+  :season==='late-spring'
+  ?'<path d="M143 304L176 337L207 304" fill="none" stroke="#e9e1d8" stroke-width="5"/><circle cx="176" cy="366" r="4" fill="#e9e1d8"/>'
+  :season==='early-summer'
+  ?'<path d="M123 327L145 352M224 327L202 352" stroke="#fffaf4" stroke-width="6" fill="none"/><path d="M89 384L102 385M250 385L264 384" stroke="#fff8f0" stroke-width="8" fill="none"/>'
+  :season==='summer'
+  ?'<path d="M139 306L176 351L211 306" fill="none" stroke="#fffdf8" stroke-width="9"/><path d="M89 350Q79 378 89 402M260 351Q272 378 260 403" stroke="#faf8f1" stroke-width="10" fill="none"/>'
+  :'';
  const details={
   woman:'<path d="M160 303Q176 325 192 303" fill="none" stroke="#c6a37d" stroke-width="2"/><circle cx="176" cy="323" r="4" fill="#d6a65b"/><path d="M128 319l17 27-5 78M222 319l-17 27 5 78" stroke="#dcc7ac" stroke-width="4" fill="none"/><circle cx="233" cy="247" r="2" fill="#ab8678"/>',
   none:'<rect x="214" y="332" width="75" height="83" rx="7" fill="#e6e8d4" stroke="#607664" stroke-width="4"/><path d="M225 348H276M225 361H270M225 374H273" stroke="#a1ae99" stroke-width="3"/><circle cx="101" cy="395" r="8" fill="#343940"/>',
@@ -57,7 +74,7 @@ function femalePortraitSvg(id,x){
   yuri:'<path d="M162 323l14 24 14-24" stroke="#967da6" stroke-width="4" fill="none"/><rect x="220" y="343" width="68" height="73" rx="7" fill="#fbf7f2" stroke="#806d85" stroke-width="4"/><path d="M230 361h49M230 374h49M230 387h39" stroke="#b8a6c0" stroke-width="3"/>'
  }[id];
  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 430" aria-hidden="true">'+
- '<ellipse cx="175" cy="418" rx="125" ry="10" fill="#28313d" opacity=".14"/>'+clothes+details+back+
+ '<ellipse cx="175" cy="418" rx="125" ry="10" fill="#28313d" opacity=".14"/>'+clothes+seasonalDetail+details+back+
  '<ellipse cx="175" cy="'+face.y+'" rx="'+face.rx+'" ry="'+face.ry+'" fill="'+c.skin+'" stroke="#b89283" stroke-width="3"/>'+
  '<ellipse cx="86" cy="207" rx="12" ry="16" fill="'+c.skin+'"/><ellipse cx="263" cy="207" rx="12" ry="16" fill="'+c.skin+'"/>'+
  fringe+brow+eyes+glasses+mouth+cheeks+
@@ -65,9 +82,9 @@ function femalePortraitSvg(id,x){
  (id==='sea'?'<path d="M115 220q9 4 17 0M221 220q9 4 17 0" fill="none" stroke="#ba9686" stroke-width="2" opacity=".6"/>':'')+'</svg>';
 }
 
-function portraitSvg(who,expression){
+function portraitSvg(who,expression,season){
  const femaleId=CAST[who]&&who!=='man'?who:({jiyoon:'woman',minseo:'none',park_suhyun:'suhyun',oh_sea:'sea',kang_yuri:'yuri'}[who]);
- if(femaleId)return femalePortraitSvg(femaleId,EXPRESSIONS.includes(expression)?expression:(expression==='happy'||expression==='warm'||expression==='tender'?'smile':expression==='tension'?'worried':'neutral'));
+ if(femaleId)return femalePortraitSvg(femaleId,EXPRESSIONS.includes(expression)?expression:(expression==='happy'||expression==='warm'||expression==='tender'?'smile':expression==='tension'?'worried':'neutral'),season);
  const id=CAST[who]?who:'woman',c=CAST[id];
  const x=EXPRESSIONS.includes(expression)?expression:(expression==='happy'||expression==='warm'||expression==='tender'?'smile':'neutral');
  const hair=c.style==='half'
