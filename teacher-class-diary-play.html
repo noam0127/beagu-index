@@ -357,6 +357,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-ui-v2.css?v=20261120-paper-1">
 <link rel="stylesheet" href="styles/class-diary-semester-ui-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-supporting-cast-v1.css?v=20261120-men-1">
+<link rel="stylesheet" href="styles/class-diary-female-matte-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-male-live-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-student-doyun-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-hq1">
@@ -595,7 +596,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <script src="js/class-diary-hq-sea-v1.js?v=20261120-hq1"></script>
 <script src="js/class-diary-hq-yuri-v1.js?v=20261120-hq1"></script>
 <script src="js/class-diary-female-hq-emotions-v1.js?v=20261120-hq1"></script>
-<script src="js/class-diary-female-hq-v1.js?v=20261120-hq1"></script>
+<script src="js/class-diary-female-hq-v1.js?v=20261120-matte-1"></script>
 <script src="js/class-diary-male-photos-v1.js?v=20261120-1"></script>
 <script src="js/class-diary-semester-male-art-v1.js?v=20261120-1"></script>
 <script src="js/class-diary-student-doyun-v1.js?v=20261120-1"></script>
@@ -659,6 +660,18 @@ for(const [id,partner] of [['setupPortraitSuhyun','suhyun'],['setupPortraitSea',
  $(id).src=art||visual.dataUrl(sd.portraitSvg(partner,'neutral'));
  $(id).dataset.artQuality=art?'hq':'sd';
 }
+/* Repaint only the currently visible portrait after skin-specific highlights
+ * are compressed in memory; no game data or assets are sent to a server. */
+if(femaleHQ&&typeof femaleHQ.prepareMatte==='function')femaleHQ.prepareMatte((who,matteUrl)=>{
+ const setupMap={woman:'setupPortraitWoman',none:'setupPortraitNone',
+  suhyun:'setupPortraitSuhyun',sea:'setupPortraitSea',yuri:'setupPortraitYuri'};
+ const setupNode=$(setupMap[who]);
+ if(setupNode&&setupNode.dataset.artQuality==='hq')setupNode.src=matteUrl;
+ const main=$('scenePortrait');
+ if(main&&main.dataset.sdCharacter===who&&main.dataset.artQuality==='hq')main.src=matteUrl;
+ const guest=$('sceneGuestPortrait');
+ if(guest&&$('sceneGuest').dataset.sdCharacter===who&&guest.dataset.artQuality==='hq')guest.src=matteUrl;
+});
 for(const [id,person] of [['setupMaleJunseo','junseo'],['setupMaleDohyun','dohyun'],['setupMaleTaesik','taesik']])malePhotos.paint($(id),person);
 maleSemester.preload(()=>{maleSemester.paint($('setupHyunwooLive'),'neutral','cold-spring');$('setupHyunwooLive').hidden=false;$('setupPortraitMan').hidden=true;});
 for(const card of document.querySelectorAll('[data-partner-choice]')){
