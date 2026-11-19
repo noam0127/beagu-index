@@ -94,7 +94,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261118-recordfix1">
-<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-tier-ability2">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261118-global2">
@@ -110,7 +110,7 @@ canvas{height:400px;cursor:default}
   <a href="search.html">Lv.1 인증하기</a>
 </section>
 <main id="teacher-run-protected" class="shell" hidden>
-  <header class="top"><div class="brand" style="display:flex;align-items:center;gap:8px"><span class="beagu-brand-mark" aria-hidden="true">B</span>험난한 교직생활 <span style="color:#8ae4d7">3.0</span></div><span class="version">ARCADE · LIFE</span></header>
+  <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="hud" aria-label="게임 현황">
     <div class="stat"><span>DAY</span><strong id="dayLabel">월요일 · 1/5</strong></div>
     <div class="stat"><span>SCORE</span><strong id="scoreLabel">0</strong></div>
@@ -124,7 +124,6 @@ canvas{height:400px;cursor:default}
     <div class="arcade-survival-health-track" id="run-health-progress" role="progressbar" aria-label="교사 체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="arcade-survival-health-fill" id="run-health-fill"></div></div>
     <div class="arcade-run-special-status" id="run-special-status" role="status">⚡ 필살기 준비 · 화면 더블 터치</div>
   </section>
-  <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="stage">
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 3.0 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
@@ -139,7 +138,7 @@ canvas{height:400px;cursor:default}
   <div id="arcade-top10" aria-label="험난한 교직생활 3.0 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-recordfix1"></script>
-<script src="js/arcade-school-picker-v1.js?v=20261118-hp-super-time1"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261119-picker-top1"></script>
 <script>
 (function(){
 "use strict";
