@@ -243,6 +243,9 @@ function validateProfile(profile){
   if(!MBTI.test(mbti))throw Error('MBTI_INVALID');
   /* 직무·학급·교직문화는 체험을 위해 사용자가 고르는 가상 조건이며 학교 실태 추정값이 아니다. */
   const experience=profile.experience||'mid';
+  const experienceYears=profile.experienceYears===undefined?null:Number(profile.experienceYears);
+  if(experienceYears!==null&&(!Number.isInteger(experienceYears)||experienceYears<0||experienceYears>45))
+    throw Error('EXPERIENCE_YEARS_INVALID');
   const duty=profile.duty||'general';
   const classTone=profile.classTone||'steady';
   const workCulture=profile.workCulture||'collaborative';
@@ -262,7 +265,9 @@ function validateProfile(profile){
   if(!['lower','middle','upper'].includes(gradeBand))throw Error('GRADE_BAND_INVALID');
   if(!['small','medium','large'].includes(fictionalSchoolSize))throw Error('FICTIONAL_SCALE_INVALID');
   if(!['rural','urban','other'].includes(storyRegion))throw Error('REGION_SCENARIO_INVALID');
-  return {name,age,gender,partner,mbti,experience,duty,classTone,workCulture,
+  return {name,age,gender,partner,mbti,experience,experienceYears,duty,classTone,workCulture,
+    storyCueSource:profile.storyCueSource==='approved_historical_aggregate'?
+      'approved_historical_aggregate':'fictional_general',
     sportsCulture,assignmentPractice,informalRequests,gradeBand,fictionalSchoolSize,storyRegion};
 }
 /**
@@ -270,7 +275,7 @@ function validateProfile(profile){
  * Work culture, assigned duty, personality and teachers' behaviour cannot be
  * inferred from school demographics or survey scores. Those remain fiction.
  */
-function inferredProfile(world,player){
+function inferredProfile(world,player,plan){
  const demo=world&&world.mode==='public_fiction_demo';
  const stats=!demo&&world&&world.numbers||{};
  const students=stats.students;
@@ -282,12 +287,29 @@ function inferredProfile(world,player){
  const rural=verified.some(t=>['admin_eup','admin_myeon','rural'].includes(t.id));
  const urban=verified.some(t=>['admin_dong','urban_core'].includes(t.id));
  const region=rural?'rural':urban?'urban':'other';
+ const years=player.experienceYears===undefined?null:Number(player.experienceYears);
+ if(years!==null&&(!Number.isInteger(years)||years<0||years>45))
+   throw Error('EXPERIENCE_YEARS_INVALID');
+ // Historical signals are validated through the existing Lv2 gated API.
+ // Public fiction demos never use school-specific historical cues.
+ const cues=!demo&&plan&&plan.schoolId===world?.basic?.id&&
+   plan.fictionalContext&&plan.fictionalContext.boundary==='fictional_story_only'?
+   plan.fictionalContext:null;
  return {
   ...player,
   /* Fixed fictional third-grade class; not an inference from the school's grade distribution */
   gradeBand:'middle',
-  experience:'mid',duty:'general',classTone:'steady',workCulture:'collaborative',
-  sportsCulture:'optional',assignmentPractice:'balanced',informalRequests:'respectful',
+  experience:years===null?(player.experience||'mid'):years<=3?'new':years<=14?'mid':'senior',
+  experienceYears:years,
+  duty:'general',classTone:'steady',
+  // Work relations are fictional premises influenced by corroborated
+  // historical aggregated responses, never actual allegations.
+  workCulture:cues&&cues.cooperationCue==='coordination_story'?'deflecting':'collaborative',
+  sportsCulture:cues&&cues.socialCue==='choice_pressure_story'?'pressured':'optional',
+  assignmentPractice:cues&&cues.assignmentCue==='newcomer_assignment_story'?'newcomer_first':'balanced',
+  informalRequests:'respectful',
+  storyCueSource:cues&&cues.source==='approved_historical_aggregate'?
+    'approved_historical_aggregate':'fictional_general',
   fictionalSchoolSize:size,storyRegion:region
  };
 }
@@ -358,7 +380,11 @@ function chapter(state,world,plan){
   if(atmosphereLine)p.unshift(atmosphereLine);
   /* 주인공 성별은 편견이나 결과 점수에 관여하지 않는다. 나이와 유형은 독백만 바꾼다. */
   if(state.day===1){
-    p.unshift('나는 올해 '+state.profile.age+'살이었다. 3월 둘째 주 월요일도 나이에 상관없이 언제나 조금 낯설었다.');
+    p.unshift('나는 올해 '+state.profile.age+'살이었다. '+
+      (state.profile.experienceYears===0?'올해 처음 교단에 섰다.':
+       Number.isInteger(state.profile.experienceYears)?'교직 경력은 '+state.profile.experienceYears+'년.':
+       '경력이 쌓여도 학기 초는 늘 새로웠다.')+
+      ' 3월 둘째 주 월요일도 어쩐지 조금 낯설었다.');
   }
   if(state.day===2){
     p.unshift(state.profile.mbti[0]==='I'?
