@@ -369,7 +369,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-student-doyun-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-thigh4">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
-<link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-lines2">
+<link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-sentence-cursor1">
 <link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-linear-flow2">
 <link rel="stylesheet" href="styles/class-diary-progress-controls-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-background-only-v1.css?v=20261120-1">
@@ -620,7 +620,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <script src="js/class-diary-character-routes-v1.js"></script>
 <script src="js/class-diary-director-v1.js"></script>
 <script src="js/class-diary-context-v1.js"></script>
-<script src="js/class-diary-sound-v1.js"></script>
+<script src="js/class-diary-sound-v1.js?v=20261120-paper-typing1"></script>
 <script src="js/class-diary-visual-v1.js"></script>
 <script src="js/class-diary-seasonal-background-v1.js?v=20261120-36"></script>
 <script src="js/class-diary-sd-v1.js?v=20261120-female-sd3"></script>
@@ -640,7 +640,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <script src="js/class-diary-demo-v1.js"></script>
 <script src="js/class-diary-journey-v1.js?v=20261120-school-name-input7"></script>
 <script src="js/class-diary-motion-v1.js"></script>
-<script src="js/class-diary-literary-v1.js?v=20261120-lines2"></script>
+<script src="js/class-diary-literary-v1.js?v=20261120-sentence-cursor1"></script>
 <script>
 (function(){
 'use strict';
@@ -656,6 +656,8 @@ const schoolContext=window.BeaguClassDiaryContext;
 const scenario=window.BeaguClassDiaryScenario;
 const incidents=window.BeaguClassDiaryIncidents;
 const sound=window.BeaguClassDiarySound;
+// Subtle synthesized typing follows the existing effect-volume and mute controls.
+literary.setTypingSound(()=>sound.note('typing'));
 const visual=window.BeaguClassDiaryVisual;
 const seasonalBackground=window.BeaguClassDiarySeasonalBackground;
 const sd=window.BeaguClassDiarySD;
@@ -1092,6 +1094,12 @@ function displayStage(id,who,expression,season,semesterBackground){
    preload.src=imagePath;
   }
  }
+ // Background-only story phase: character artwork remains unrendered.
+ ++maleFrameSerial;
+ $('scenePortrait').hidden=true;
+ $('scenePortrait').removeAttribute('src');
+ $('sceneHyunwooLive').hidden=true;
+ return;
  const highRes=femaleHQ&&femaleHQ.portrait(who);
  $('scenePortrait').src=highRes||visual.dataUrl(sd.portraitSvg(who,expression||'neutral',season));
  $('scenePortrait').dataset.artQuality=highRes?'hq':'sd';
@@ -1114,6 +1122,11 @@ function displayStage(id,who,expression,season,semesterBackground){
  }
 }
 function renderSupportingCast(moment,season){
+ // Character illustrations are on hold; prose and dialogue are preserved.
+ $('sceneGuest').hidden=true;
+ $('sceneGuestPortrait').removeAttribute('src');
+ $('sceneGuestMalePhoto').hidden=true;
+ return;
  const guest=supportingCast.describe(moment)||(moment&&femaleSemester.WOMEN[moment.id]?moment:null);
  const node=$('sceneGuest');
  node.hidden=!guest;
@@ -1143,6 +1156,9 @@ function renderSupportingCast(moment,season){
 }
 function showCharacterFace(who,expression,initial){
  const avatar=$('characterAvatar');
+ avatar.textContent='';
+ avatar.style.backgroundImage='';
+ return;
  const face=femaleHQ&&femaleHQ.face(who,expression||'neutral');
  avatar.textContent=initial;
  avatar.style.backgroundImage=face?'url("'+face+'")':'';
@@ -1358,7 +1374,7 @@ function renderSemester(){
  displayStage(view.visual,game.profile.partner,semesterArt.expression,semesterArt.season,semesterBackground);
  const actualGuest=semesterArt.guest||maleSemester.guestFor(game.episode,reflection);
  renderSupportingCast(semesterArt.guest||maleSemester.guestFor(game.episode,reflection),semesterArt.season);
- studentDoyun.render($("sceneDoyun"),game.episode,reflection,Boolean(actualGuest));
+ studentDoyun.hide($("sceneDoyun")); // No character artwork in the story scene.
  // The semester follows its own 36-chapter score; the 7-day demo keeps its original soundtrack.
  const score=sound.semesterScore(game.episode,{
   reflection,
