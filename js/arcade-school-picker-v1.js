@@ -36,7 +36,7 @@ class ArcadeSchoolPicker{
   this.input.addEventListener("input",()=>{this.clear();clearTimeout(this.timer);this.timer=setTimeout(()=>this.search(),250);});
  }
  clear(){
-  this.serial++;this.selected=null;this.changeButton.hidden=true;this.surveyLink.hidden=true;this.results.replaceChildren();this.status.textContent="";
+  this.serial++;this.selected=null;delete this.mount.dataset.schoolId;this.changeButton.hidden=true;this.surveyLink.hidden=true;this.results.replaceChildren();this.status.textContent="";
   if(typeof this.onChange==="function")this.onChange(null);
  }
  focus(){this.input.focus();}
@@ -83,6 +83,7 @@ class ArcadeSchoolPicker{
    if(!school||!isSafe(school.school_name)||typeof school.eligible!=="boolean"||
       (school.eligible&&!["easy","normal","hard","very_hard","extreme"].includes(school.difficulty)))throw new Error("invalid_school");
    this.selected=school;
+   this.mount.dataset.schoolId=String(school.school_id);
    this.changeButton.hidden=false;
    this.surveyLink.hidden=school.eligible===true;
    this.input.value=school.school_name+" · "+(school.region||"");
