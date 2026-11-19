@@ -201,7 +201,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     specialCooldownFrames:0,specialChargeFrames:0,uiTick:0,playFrames:0,activeFrames:0,
     hitStopFrames:0,impactFrames:0,impactX:0,impactY:0,bossWarnFrames:0,bossCooldownFrames:0,
     winStreak:0,bestStreak:0,pointCheer:"",recordBroken:false,timeRecordBroken:false,endedEarly:false,
-    rescueUsed:false,qualityText:"",qualityFrames:0 };
+    rescueUsed:false,qualityText:"",qualityFrames:0,winCheer:"" };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false, contactFrames:0 };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false, contactFrames:0 };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
@@ -410,7 +410,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     resetPower();
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
-    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;
+    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     releaseKeys();
     state.serveLeft=Math.random()<.5;
@@ -428,7 +428,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     releaseKeys();
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
-    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;
+    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
     currentDifficulty="hard";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     specialProfile=specialProfiles.hard;resetPower();
@@ -639,6 +639,23 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     if (spike) { state.flash=charged?32:9;state.spikes+=1; }
   }
+  function volleyballCongratulations(cpu,difficulty,streak,newScore,newFast){
+    const margin=MATCH_TARGET-cpu;
+    if(cpu===0)return {title:"🏆 25대 0, 완벽한 승리!",detail:"상대에게 한 점도 허용하지 않은 멋진 경기입니다!"};
+    if(difficulty==="extreme")return {title:"⛓️ 족쇄를 넘은 챔피언!",detail:"공 두 개의 압박을 버텨 낸 믿기 어려운 승리!"};
+    if(cpu>=23)return {title:"🔥 마지막 한 점까지 버텼어요!",detail:"손에 땀을 쥐게 한 접전! 끝내 승리를 가져왔습니다."};
+    if(newScore&&newFast)return {title:"🏅 두 개의 신기록!",detail:"최고 점수와 최단시간을 동시에 새로 썼어요!"};
+    if(margin>=15)return {title:"⚡ 압도적인 25점 승리!",detail:"좋은 리시브와 정확한 타격이 완승을 만들었습니다."};
+    if(streak>=6)return {title:"🔥 연속 득점의 주인공!",detail:streak+"연속 득점! 공격의 흐름이 정말 좋았습니다."};
+    if(newFast)return {title:"⏱ 최단시간 신기록!",detail:"조금 더 빠르게, 마침내 25점을 달성했어요!"};
+    if(newScore)return {title:"📈 최고 점수를 새로 썼어요!",detail:"한 번의 도전이 새로운 기준이 됐습니다!"};
+    const cheers=[
+      {title:"🎊 25점, 멋진 승리!",detail:"공 하나하나에 집중한 시간이 결실을 맺었습니다."},
+      {title:"🙌 오늘의 승자는 선생님!",detail:"끝까지 공을 살려 낸 집중력이 빛났습니다."},
+      {title:"🏐 환상적인 경기였습니다!",detail:"다음에는 더 큰 점수 차에도 도전해 보세요."}
+    ];
+    return cheers[(cpu+streak)%cheers.length];
+  }
   function finishMatch(early=false){
     if(state.phase==="finished"||state.phase==="ready"||state.phase==="starting")return;
     if(early&&activeTenths()<40){setStatus("4초 이상 플레이하면 기록을 남길 수 있어요");return;}
@@ -652,6 +669,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.message=state.winner;releaseKeys();schoolPicker.setLocked(false);
     state.recordBroken=rememberBestScore(finalScore);
     state.timeRecordBroken=won&&rememberFastest25(elapsedTenths);
+    if(won){
+      const cheer=volleyballCongratulations(state.rightScore,currentDifficulty,
+        state.bestStreak,state.recordBroken,state.timeRecordBroken);
+      state.winner=cheer.title;state.winCheer=cheer.detail;
+    }
     const summary=base.toLocaleString("ko-KR")+"점 + 플레이 "+bonus.toLocaleString("ko-KR")+
       "점"+(won?" ×"+multiplier:"")+" = "+finalScore.toLocaleString("ko-KR")+"점";
     setStatus((state.recordBroken?"🎉 점수 신기록! ":"")+
@@ -984,13 +1006,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ctx.stroke();
     ctx.restore();
   }
-  function overlay(headline, subtitle) {
+  function overlay(headline, subtitle, detail="") {
     rect(0,0,W,H,"rgba(11,31,54,.56)");
     ctx.save();ctx.shadowColor="rgba(12,26,45,.5)";ctx.shadowBlur=24;ctx.shadowOffsetY=13;
     ctx.fillStyle="#183552";ctx.beginPath();ctx.roundRect(180,163,540,177,24);ctx.fill();ctx.restore();
     ctx.lineWidth=3;ctx.strokeStyle="#6a9bb6";ctx.beginPath();ctx.roundRect(180,163,540,177,24);ctx.stroke();
     textLabel(headline,450,249,45,"#fff6d8","center",494);
-    if(subtitle)textLabel(subtitle,450,290,22,"#deefff","center",490);
+    if(subtitle)textLabel(subtitle,450,289,19,"#deefff","center",492);
+    if(detail)textLabel(detail,450,317,17,"#ffe8a5","center",492);
   }
   function render() {
     ctx.clearRect(0, 0, W, H);
@@ -1047,7 +1070,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       textLabel(state.pointCheer,450,82,15,"#d7f8ff","center",470);ctx.restore();
     }
     else if (state.phase === "finished") overlay(state.winner,
-      (state.recordBroken?"🎉 점수 신기록 · ":"")+
+      state.winCheer||"다음 경기에 다시 도전해 보세요.",
       "최종 "+getMatchScore(state.leftScore,state.rightScore,activeTenths()).toLocaleString("ko-KR")+"점"+
       (state.timeRecordBroken?" · ⏱ 최단 "+fmtTime(activeTenths()):""));
     ctx.restore();
