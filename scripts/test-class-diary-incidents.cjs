@@ -19,7 +19,7 @@ function goToDay(state,day){
   const x=JSON.parse(JSON.stringify(state));x.day=day;return x;
 }
 const happy=make();
-const hostile=make({workCulture:'deflecting'});
+const hostile=make({workCulture:'hostile'});
 const rural=make({storyRegion:'rural',fictionalSchoolSize:'small'});
 assert(incidents.schedule(happy,demoWorld).includes('parking'));
 assert(incidents.schedule(happy,demoWorld).includes('arrival'));
@@ -28,6 +28,8 @@ assert(incidents.schedule(goToDay(happy,2),demoWorld).includes('seat_song'));
 assert(incidents.schedule(goToDay(happy,2),demoWorld).includes('break_clean'));
 assert(incidents.schedule(goToDay(happy,2),demoWorld).includes('shared_break'));
 assert(incidents.schedule(goToDay(hostile,2),demoWorld).includes('hostile_break'));
+assert(!incidents.schedule(goToDay(make({workCulture:'deflecting'}),2),demoWorld).includes('hostile_break'),
+ 'Task shifting is not identical to hostility');
 assert(incidents.schedule(goToDay(happy,4),demoWorld).includes('shared_meeting'));
 assert(incidents.schedule(goToDay(hostile,4),demoWorld).includes('hostile_meeting'));
 assert(incidents.schedule(goToDay(happy,5),demoWorld).includes('barbecue'));
@@ -38,7 +40,7 @@ assert(!incidents.schedule(goToDay(rural,5),demoWorld).includes('friendship_chai
 assert(!incidents.schedule(goToDay(make({...profile,gradeBand:'upper'}),2),demoWorld).includes('seat_song'));
 assert(incidents.schedule(goToDay(make({...profile,workCulture:'deflecting',fictionalSchoolSize:'small'}),5),demoWorld).length===0);
 // One day can include multiple incidents, each with a full 3-way decision.
-for(const workCulture of ['collaborative','deflecting']){
+for(const workCulture of ['collaborative','hostile']){
  const start=make({workCulture,storyRegion:workCulture==='collaborative'?'rural':'urban'});
  for(let day=1;day<=7;day++){
   const ready=goToDay(start,day);
@@ -85,7 +87,7 @@ function complete(overrides={}){
  return s;
 }
 const x=complete({workCulture:'collaborative',storyRegion:'rural'});
-const y=complete({workCulture:'deflecting',storyRegion:'urban'});
+const y=complete({workCulture:'hostile',storyRegion:'urban'});
 assert(x.incidentEvents.length>8);
 assert(y.incidentEvents.length>8);
 assert(x.incidentEvents.some(e=>e.id==='shared_break'));
