@@ -28,6 +28,7 @@ on:
       - 'tests/lv1-ox-multiselect-ui.mjs'
       - 'tests/2026-approved-search-refresh.mjs'
       - 'tests/2026-school-empty-survey-cta.mjs'
+      - 'tests/lv1-percentile-chart-parity.mjs'
       - 'supabase/functions/beagu-level-api/index.ts'
       - 'supabase/migrations/20261119_school_checkbox_choices_v1.sql'
       - 'supabase/migrations/20261119_2025_domain_comparisons_v1.sql'
@@ -52,3 +53,4 @@ jobs:
       - run: node tests/lv1-ox-multiselect-ui.mjs
       - run: node tests/2026-approved-search-refresh.mjs
       - run: node tests/2026-school-empty-survey-cta.mjs
+      - run: node tests/lv1-percentile-chart-parity.mjs
