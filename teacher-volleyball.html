@@ -72,7 +72,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  .volley-energy-fill{height:100%;width:100%;background:linear-gradient(90deg,#4fc6ba,#9aefc3);transition:width .16s linear}
  .team.right .volley-energy-fill{margin-left:auto;background:linear-gradient(90deg,#e98cab,#ffd0a3)}
  .volley-energy-fill.is-low{background:linear-gradient(90deg,#cf4c55,#ff996f)}
- .volley-special-status{text-align:center;padding:7px 9px;background:#193956;border:1px solid #456985;border-top:none;border-radius:0 0 10px;color:#f4da8b;font-size:12px;font-weight:850;line-height:1.45}
  .center-label small{display:block;margin-top:6px;font-size:10px;line-height:1.2;white-space:nowrap;color:#d3fff4;letter-spacing:0}
  @media(max-width:380px){.volley-energy-meta{font-size:9px}.volley-energy-track{height:9px}}
 </style>
@@ -98,7 +97,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     <div class="center-label">VS<small id="volley-time-label">⏱ 0초</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="cpu-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="상대 팀 체력" id="cpu-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="cpu-energy-fill"></div></div></div>
   </div>
-  <div class="volley-special-status" id="volley-special-status" role="status">⚡ 필살기 준비 · 경기 중 화면 더블 터치</div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
   <div class="actions"><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
   <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 드래그 이동 · ⚡ 더블 터치 필살기 · ↔ 방향키</div>
@@ -188,7 +186,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     left:{number:document.getElementById("player-energy-number"),fill:document.getElementById("player-energy-fill"),progress:document.getElementById("player-energy-progress")},
     right:{number:document.getElementById("cpu-energy-number"),fill:document.getElementById("cpu-energy-fill"),progress:document.getElementById("cpu-energy-progress")}
    };
-   const specialStatus=document.getElementById("volley-special-status");
    function resetEnergy(){
     state.leftMaxEnergy=energy.allyMax;state.rightMaxEnergy=energy.enemyMax;
     state.leftEnergy=energy.allyMax;state.rightEnergy=energy.enemyMax;
@@ -209,11 +206,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       ui.progress.setAttribute("aria-valuenow",String(Math.ceil(current)));
     }
     document.getElementById("volley-time-label").textContent="⏱ "+getSurvivalSeconds()+"초";
-    const seconds=Math.ceil(state.specialCooldownFrames/60);
-    specialStatus.textContent=state.specialChargeFrames>0
-      ?"⚡ 슈퍼 스파이크 준비 "+Math.ceil(state.specialChargeFrames/60)+"초"
-      :seconds>0?"⚡ 재충전 "+seconds+"초"
-      :"⚡ 더블 터치 · 필살기";
    }
    function energyFactor(side){
      const fraction=side==="left"?state.leftEnergy/state.leftMaxEnergy:state.rightEnergy/state.rightMaxEnergy;
@@ -642,7 +634,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       for(let i=0;i<15;i++){const fx=(i*79+state.flash*13)%W,fy=(i*41)%270+25;ctx.fillRect(fx,fy,6,6);}
       textLabel(state.flash>18?"⚡ SUPER SPIKE!":"⚡ SPIKE!",clamp(left.x+85,115,W-115),left.y-115,25,"#a94b27","center",250);
     }
-    if (state.phase === "ready") overlay("PRESS START", "");
+    if (state.phase === "ready") {
+      const chosen=schoolPicker.get();
+      if(chosen?.eligible)overlay(chosen.school_name, (diffName[chosen.difficulty]||"")+" · ▶ 시작");
+      else if(chosen)overlay("조사 참여 필요", "2026 배구지수 조사 참여 후 시작");
+      else overlay("학교를 선택하세요", "위의 학교 검색창에서 선택");
+    }
     else if (state.phase === "paused") overlay("PAUSE", "");
     else if (state.phase === "point") overlay(state.message, "");
     else if (state.phase === "finished") overlay(state.winner, "");
