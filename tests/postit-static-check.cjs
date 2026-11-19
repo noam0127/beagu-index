@@ -77,19 +77,20 @@ for(const id of ['challengeAccessPanel','challengeProtected','certificate','part
 assert.ok(challenge.includes('data-html2canvas-ignore="true"'),
  'Private identity remains outside exported certificate');
 assert.ok(challenge.includes('class="challenge-lv2-pending"'),
- 'Independent Level 2 upgrade card remains available');
-assert.ok(!challenge.includes('Lv.2(진) · 임시 레벨업'),
- 'No overlapping temporary-upgrade heading');
-assert.ok(challenge.includes('aria-label="레벨업 인증 안내"'),
- 'Upgrade card has accessible name without visible redundant heading');
+ 'The permanent-account explanation remains below the certificate');
+assert.ok(!challenge.includes('Lv.2(진)'), 'Retired Level 2 label is absent');
+assert.ok(challenge.includes('aria-label="정식 Lv.2 계정 안내"'),
+ 'The separate note is informational, not a duplicate upgrade form');
 assert.ok(challenge.includes('class="challenge-lv2-description"'),
- 'Explanation is in its own layout cell');
-assert.ok(challenge.includes('grid-template-columns: minmax(0, 1fr) auto'),
- 'Desktop upgrade card uses separate text and button columns');
-assert.ok(challenge.includes('@media (max-width: 600px)'),
- 'Upgrade card stacks on narrow screens');
-assert.ok(challenge.includes('data-beagu-open-levelup'),
- 'Existing upgrade action remains wired');
+ 'Account-ownership boundary is still explained');
+assert.ok(challenge.includes('id="challengeAccessPanel"') &&
+ challenge.includes('id="challengeAccessBadge"') &&
+ challenge.includes('id="challengeLogout"'),
+ 'Verification, server level and logout are in the same visible panel');
+assert.ok(!challenge.includes('data-beagu-open-levelup>레벨업 인증</button>'),
+ 'A second upgrade button must not appear below the private code');
+assert.ok(read('js/beagu-level-state-v1.js').includes("'#challengeAccessForm'"),
+ 'The global upgrade modal still attaches to the preserved challenge form');
 assert.ok(challenge.includes('.step-card {')&&challenge.includes('border-radius: 16px;'),
  'Challenge retains rounded standard cards');
 
