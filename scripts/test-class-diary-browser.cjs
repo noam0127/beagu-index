@@ -44,14 +44,21 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    assert.equal(await page.locator('#musicBtn').getAttribute('aria-pressed'),'false');
    assert((await page.locator('#sceneBackdrop').evaluate(x=>x.style.backgroundImage)).includes('data:image/svg+xml'));
    assert((await page.locator('#scenePortrait').getAttribute('src')).startsWith('data:image/svg+xml'));
+   assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('is-playing')),true,'Single-screen VN mode must be active');
+   const stage=await page.locator('#novelCard').boundingBox();
+   assert(stage&&stage.height<=variant.height+1,'VN must fit within viewport');
+   assert.equal(await page.locator('#vnMore').isVisible(),true,'Dialogue paging button must be visible');
+   assert.equal(await page.locator('#choiceSection').isVisible(),false,'Choices should appear after reading dialogue');
+
    if(variant.name==='desktop')await page.screenshot({path:'artifacts/class-diary/desktop-first-scene.png',fullPage:true});
    else await page.screenshot({path:'artifacts/class-diary/mobile-first-scene.png',fullPage:true});
-   let turns=0,sawFull=false,sawFriendly=false,sawCareer=false,sawCharacterVoice=false;
+   let turns=0,sawFull=false,sawFriendly=false,sawCareer=false,sawCharacterVoice=false,seenStory='';
    const full=variant.name==='desktop'?'최윤호 선생님':variant.name==='friendship'?'박루다 선생님':'김민서 선생님';
    const friendly=variant.name==='desktop'?'윤호 쌤':variant.name==='friendship'?'루다 쌤':'민서 쌤';
    while(await page.locator('#ending').isHidden()){
-    if(turns++>170)throw Error('Scene flow did not finish within 170 interactions');
-    const now=(await page.locator('#chapterText').innerText())+' '+(await page.locator('#outcomeLine').innerText());
+    if(turns++>1200)throw Error('Scene flow did not finish within 1200 interactions');
+    const now=(await page.locator('#chapterText').innerText())+' '+(await page.locator('#outcomeText').innerText());
+    seenStory+=' '+now;
     sawFull ||= now.includes(full);
     sawFriendly ||= now.includes(friendly);
     const unique=variant.partner==='woman'?'지윤 선생님은 내가 설명을 다 끝낼 때까지 기다렸다':
@@ -59,6 +66,8 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
     sawCharacterVoice ||= now.includes(unique);
     sawCareer ||= now.includes(variant.name==='desktop'?
       '경력이 쌓여도 학기 초는 늘 새로웠다':'아직 교단에서 배우는 일이 더 많았다');
+    const more=page.locator('#vnMore');
+    if(await more.isVisible()){await more.click();continue;}
     const choices=page.locator('#choiceSection .choice:visible');
     const n=await choices.count();
     if(n>0){
@@ -69,10 +78,10 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      await next.click();
     }
    }
-   assert(sawCareer,'Selected career stage must shape narration across the first day');
-   assert(sawCharacterVoice,'Every selected adult colleague must have distinct opening narration');
-   assert(sawFull,'Colleagues must use the character full name in initial scenes');
-   assert(sawFriendly,'Closer colleagues must use given-name 쌤 on later days');
+   assert(sawCareer||seenStory.includes(variant.name==='desktop'?'경력이 쌓여도 학기 초는 늘 새로웠다':'아직 교단에서 배우는 일이 더 많았다'),'Selected career stage must shape narration across the first day');
+   assert(sawCharacterVoice||seenStory.includes(variant.partner==='woman'?'지윤 선생님은 내가 설명을 다 끝낼 때까지 기다렸다':variant.partner==='man'?'현우 선생님은 복합기 옆에서':'민서 선생님은 자리에 앉자마자'),'Every selected adult colleague must have distinct opening narration');
+   assert(sawFull||seenStory.includes(full),'Colleagues must use the character full name in initial scenes');
+   assert(sawFriendly||seenStory.includes(friendly),'Closer colleagues must use given-name 쌤 on later days');
    assert((await page.locator('#endingTitle').innerText()).startsWith('나의 '));
    assert((await page.locator('#endingText').innerText()).length>100);
    if(variant.partner==='none'){
@@ -90,7 +99,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.reload({waitUntil:'domcontentloaded'});
    await page.locator('#setup').waitFor({state:'visible'});
    assert(await page.locator('#ending').isHidden(),'Reload must clear session progress');
-   console.log('PASS '+variant.name+': '+turns+' clicks, ending reached, no saved progress, responsive viewport');
+   console.log('PASS '+variant.name+': '+turns+' clicks, single viewport VN dialogue, ending reached, no saved progress');
    await page.close();
   }
   const page=await browser.newPage();
