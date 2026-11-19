@@ -559,6 +559,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <script src="js/class-diary-context-v1.js"></script>
 <script src="js/class-diary-sound-v1.js"></script>
 <script src="js/class-diary-visual-v1.js"></script>
+<script src="js/class-diary-seasonal-background-v1.js?v=20261120-36"></script>
 <script src="js/class-diary-sd-v1.js?v=20261120-female-sd3"></script>
 <script src="js/class-diary-male-photos-v1.js?v=20261120-1"></script>
 <script src="js/class-diary-supporting-cast-v1.js?v=20261120-men-1"></script>
@@ -584,6 +585,7 @@ const scenario=window.BeaguClassDiaryScenario;
 const incidents=window.BeaguClassDiaryIncidents;
 const sound=window.BeaguClassDiarySound;
 const visual=window.BeaguClassDiaryVisual;
+const seasonalBackground=window.BeaguClassDiarySeasonalBackground;
 const sd=window.BeaguClassDiarySD;
 const supportingCast=window.BeaguClassDiarySupportingCast;
 const malePhotos=window.BeaguClassDiaryMalePhotos;
@@ -767,12 +769,22 @@ function fillParagraphs(id,texts){
  const node=$(id);node.replaceChildren();
  for(const sentence of texts)node.append(el('p',sentence));
 }
-function displayStage(id,who,expression,season){
- $('sceneBackdrop').style.backgroundImage='url("'+visual.dataUrl(visual.backgroundSvg(id))+'")';
+function displayStage(id,who,expression,season,semesterBackground){
+ const backdrop=$('sceneBackdrop'),stage=$('sceneArt');
+ if(semesterBackground&&seasonalBackground){
+  backdrop.style.backgroundImage='url("'+seasonalBackground.dataUrl(visual,semesterBackground)+'")';
+  stage.dataset.season=semesterBackground.season;
+  stage.dataset.weather=semesterBackground.weather;
+  stage.setAttribute('aria-label','가상 한국 초등학교 · '+semesterBackground.seasonName+' · '+semesterBackground.label);
+ }else{
+  backdrop.style.backgroundImage='url("'+visual.dataUrl(visual.backgroundSvg(id))+'")';
+  stage.removeAttribute('data-season');
+  stage.removeAttribute('data-weather');
+  stage.setAttribute('aria-label','가상 한국 초등학교 풍경의 글자 없는 삽화');
+ }
  $('scenePortrait').src=visual.dataUrl(sd.portraitSvg(who,expression||'neutral',season));
  $('scenePortrait').dataset.season=season||'original';
  $('scenePortrait').setAttribute('data-sd-character',who);
- $('sceneArt').setAttribute('aria-label','가상 한국 초등학교 풍경의 글자 없는 삽화');
 }
 function renderSupportingCast(moment,season){
  const guest=supportingCast.describe(moment)||(moment&&femaleSemester.WOMEN[moment.id]?moment:null);
@@ -1002,7 +1014,8 @@ function renderSemester(){
   episode:game.episode,partner:game.profile.partner,reflection,
   choiceId:game.lastOutcome&&game.lastOutcome.id,scenes:semester.SCENES
  });
- displayStage(view.visual,game.profile.partner,semesterArt.expression,semesterArt.season);
+ const semesterBackground=seasonalBackground?seasonalBackground.resolve(view):null;
+ displayStage(view.visual,game.profile.partner,semesterArt.expression,semesterArt.season,semesterBackground);
  renderSupportingCast(semesterArt.guest,semesterArt.season);
  // The semester follows its own 36-chapter score; the 7-day demo keeps its original soundtrack.
  const score=sound.semesterScore(game.episode,{
@@ -1024,7 +1037,7 @@ function renderSemester(){
   $(id).textContent=game.stats[key];
  $('chapterDay').textContent=view.episode+' / 36 · 제'+view.act+'부 '+view.actName;
  $('chapterTitle').textContent=view.title;
- $('chapterPlace').textContent=Number(view.date.slice(5,7))+'월 '+Number(view.date.slice(8,10))+'일 · '+view.place+' · '+game.profile.name+' 선생님';
+ $('chapterPlace').textContent=Number(view.date.slice(5,7))+'월 '+Number(view.date.slice(8,10))+'일 · '+(semesterBackground?semesterBackground.label:view.place)+' · '+game.profile.name+' 선생님';
  $('chapterProgress').style.width=(view.episode/36*100)+'%';
  $('worldDetail').hidden=true;$('schoolFacts').hidden=true;
  $('chapterSource').textContent='2027년의 가상 학교에서 벌어지는 허구의 사건입니다. 실제 교직원과 학생의 언행이 아닙니다.';
