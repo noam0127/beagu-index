@@ -434,6 +434,89 @@ assert.equal(liveScore("finished",false),running+600+(7-2)*30,"victory bonus gra
 assert.equal(liveScore("finished",true),running,"KO has no victory bonus");
 console.log("PASS: net height, tier speed and enemy armor, correct current SCORE and finish bonus");
 
+// Fun update: volley hit-stop/impact should be bounded and CPU boss strikes telegraphed.
+assert.match(volley,/state\.hitStopFrames=charged\?5:bossStrike\?4:3/,"spikes trigger short hit-stop");
+assert.match(volley,/if\(state\.hitStopFrames>0\)\{state\.hitStopFrames--;return;\}/,"hit-stop visibly freezes gameplay for a few frames");
+assert.match(volley,/state\.impactFrames=charged\?19:bossStrike\?15:11/,"impact rings vary by spike strength");
+assert.match(volley,/ctx\.arc\(state\.impactX,state\.impactY,15\+75\*t/,"shockwave expands outward");
+assert.match(volley,/ctx\.translate\(\(Math\.random\(\)-\.5\)\*2\*shake/,"spikes shake the court");
+assert.match(volley,/state\.bossWarnFrames=currentDifficulty==="extreme"\?39:32/,"hard opponent telegraphs strike");
+assert.match(volley,/state\.bossCooldownFrames=currentDifficulty==="extreme"\?190:250/,"boss strike cooldown");
+assert.match(volley,/if\(state\.bossWarnFrames>0\)/,"warning effect appears above CPU");
+assert.match(volley,/const bossStrike=p\.side==="right"&&state\.bossWarnFrames>0/,"CPU can use warned boss attack");
+assert.match(volley,/bossStrike\?\(state\.playFrames%2===0\?-6\.6:-11\.2\)/,"boss strike alternates attack angle");
+assert.match(volley,/state\.bossWarnFrames=0;state\.flash=19/,"warning ends on boss strike");
+// Daily events: one of three distinct events each day, exactly once per day.
+const eventsMatch=runner.match(/const dayEvents=(\[[\s\S]*?\n\s*\]);/);
+assert.ok(eventsMatch,"five day event sets exist");
+const dayEvents=new Function("return "+eventsMatch[1])();
+assert.equal(dayEvents.length,5);
+for(const eventSet of dayEvents){
+ assert.equal(eventSet.length,3,"three possible events for each weekday");
+ assert.deepEqual(new Set(eventSet.map(e=>e.id)),new Set(["rush","support","focus"]));
+}
+const startEvt=runner.indexOf("function triggerDayEvent(){");
+const endEvt=runner.indexOf("function spawn(){",startEvt);
+assert.ok(startEvt>0&&endEvt>startEvt);
+const dayEventCode=runner.slice(startEvt,endEvt);
+function simulateDayEvent(index,dayIndex=0){
+ const fakeMath=Object.create(Math);fakeMath.random=()=>index/3+.001;
+ return new Function("dayEvents","day","Math",[
+   'let state="playing",eventTriggered=false,activeEvent=null,eventSeconds=0;',
+   'let life=60,maxLife=100,player={x:150,y:250,inv:0},skill={guard:0};',
+   'let burstCount=0,notice="",updated=false;',
+   'const burst=()=>{burstCount++;},updateLabels=()=>{updated=true;},setNotice=s=>{notice=s;},playTone=()=>{};',
+   dayEventCode,
+   'triggerDayEvent();const selected=activeEvent;',
+   'triggerDayEvent();return {selected,eventTriggered,eventSeconds,life,inv:player.inv,burstCount,notice,updated};'
+ ].join("\n"))(dayEvents,dayIndex,fakeMath);
+}
+const rushEvent=simulateDayEvent(0);
+assert.equal(rushEvent.selected.id,"rush");
+assert.equal(rushEvent.eventSeconds,6);
+assert.equal(rushEvent.burstCount,0);
+const supportEvent=simulateDayEvent(1,2);
+assert.equal(supportEvent.selected.id,"rush"); // second Wednesday event
+const helpEvent=simulateDayEvent(0,2);
+assert.equal(helpEvent.selected.id,"support");
+assert.equal(helpEvent.life,78,"support event immediately heals");
+assert.ok(helpEvent.inv>=2.7,"support event grants invincibility");
+assert.equal(helpEvent.burstCount,1);
+const focusEvent=simulateDayEvent(2);
+assert.equal(focusEvent.selected.id,"focus");
+assert.match(focusEvent.notice,/점수 35% 추가/);
+assert.match(runner,/if\(!eventTriggered&&dayTime>=6\)triggerDayEvent\(\)/);
+assert.match(runner,/activeEvent=null;eventSeconds=0;eventTriggered=false;/,"fresh event on next weekday");
+assert.match(runner,/activeEvent\?\.id==="rush"\?1\.30:1/,"rush speeds obstacle spawning");
+assert.match(runner,/if\(activeEvent\?\.id==="rush"\)speed\*=1\.20/);
+const scoreFnMatch=runner.match(/function addScore\(n\)\{[^}]+\}/);
+assert.ok(scoreFnMatch);
+const eventScore=(id)=>new Function("activeEvent",[
+   'let score=0,combo=0;const updateLabels=()=>{};',
+   scoreFnMatch[0],'addScore(100);return score;'
+ ].join("\n"))(id?{id}:null);
+assert.equal(eventScore(null),100);
+assert.equal(eventScore("focus"),135);
+assert.match(runner,/if\(day===4&&dayTime>=13&&!fridayBossAnnounced\)/,"Friday boss warning once");
+assert.match(runner,/Math\.floor\(\(dayTime-13\)\/2\.7\)%2===0\?\.25:\.75/,"Friday wave alternates two lanes");
+// Existing weekday upgrades now present clear consequences and fair choices.
+const upgradesMatch=runner.match(/const upgrades=(\[[\s\S]*?\n\s*\]);/);
+assert.ok(upgradesMatch);
+const upgrades=new Function("return "+upgradesMatch[1])();
+assert.equal(upgrades.length,4);
+assert.ok(upgrades.every(x=>x.detail&&x.detail.length>=8));
+assert.match(runner,/picks=picks\.slice\(0,3\)/);
+assert.match(runner,/detail:u\.detail,action:\(\)=>choose\(u\)/);
+assert.match(runner,/if\(u\.id==="vital"\)/);
+assert.match(runner,/if\(u\.id==="speed"\)/);
+assert.match(runner,/if\(u\.id==="guard"\)/);
+assert.match(runner,/if\(u\.id==="heal"\)/);
+assert.match(runner,/activeEvent&&eventSeconds>0/,"events only appear while active");
+assert.match(html,/teacher-volleyball\.html\?v=20261119-arcade-fun1/);
+assert.match(html,/teacher-run\.html\?v=20261119-arcade-fun1/);
+console.log("PASS: volleyball impact and boss cues; run 5-day events, timed bonuses, upgrade choices and Friday pattern");
+
+
 
 
 
@@ -457,8 +540,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-netballscore1")&&
-     site.body.includes("teacher-run.html?v=20261119-extreme-best-intro1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-arcade-fun1")&&
+     site.body.includes("teacher-run.html?v=20261119-arcade-fun1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -468,8 +551,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-netballscore1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-extreme-best-intro1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-arcade-fun1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-arcade-fun1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
