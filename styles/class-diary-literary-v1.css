@@ -571,3 +571,14 @@ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-liter
 @media(prefers-reduced-motion:reduce){
  body.is-playing.is-literary-mode .diary-reading-cursor{animation:none;opacity:1}
 }
+
+/* The final chapter uses exactly the same waiting cursor as ordinary dialogue. */
+body.is-ending .diary-reading-cursor{
+ display:inline-block;min-width:.45em;margin-left:.08em;color:#956f8e;
+ font-size:.86em;vertical-align:baseline;
+ animation:diary-sentence-cursor-blink .95s steps(1,end) infinite;
+ user-select:none;pointer-events:none;
+}
+body.is-ending .diary-literary-typing .diary-reading-cursor{visibility:hidden;animation:none}
+body.is-ending #endingText{cursor:pointer;touch-action:manipulation}
+@media(prefers-reduced-motion:reduce){body.is-ending .diary-reading-cursor{animation:none;opacity:1}}
