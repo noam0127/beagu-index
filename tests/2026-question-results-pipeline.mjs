@@ -9,6 +9,35 @@ const select=(raw,opts,multi)=>JSON.parse(JSON.stringify(context.beagu26Selectio
 assert.deepEqual(select('① 하나, ㉑ 청소년단체(스카우트, 아람단)',['하나','청소년단체(스카우트, 아람단)'],true),[0,1]);
 assert.equal(select('기타: 개인 이름',['기타'],true),null);
 assert.equal(select('임의 보기',['승인 보기'],false),null);
+// Review-only rows must never travel with the ingest snapshot.
+context.questionColumns=()=>({school:2});
+context.getSubmittedDay=value=>String(value).slice(0,10);
+context.resolveSchool=()=>({school:{school_id:'1000001'},typeConflict:false});
+context.BEAGU26={sourceId};
+const fixtureCatalog={
+  Q12:{kind:'choice',options:['운영하지 않는다','기타'],rows:[],columns:[]},
+  Q14:{kind:'choice',options:['A에 매우 가깝다','B에 매우 가깝다'],rows:[],columns:[]}
+};
+const fixtureRows=[
+  ['날짜','지역','학교','Q12. 문항','Q14. 문항'],
+  ['2026-10-30','부산','시범학교','운영하지 않는다','A에 매우 가깝다'],
+  ['2026-11-19','부산','시범학교','부장은 1회 근무한다.','A에 매우 가깝다'],
+  ['2026-11-19','부산','시범학교','운영하지 않는다','미등록 선택지']
+];
+const reviewed=context.beagu26BuildResults(fixtureRows,[],fixtureCatalog);
+assert.equal(reviewed.totals.prelaunch_rows,1);
+assert.equal(reviewed.totals.official_rows,2);
+assert.equal(reviewed.schools[0].school_response_rows,2);
+assert.deepEqual(Array.from(reviewed.schools[0].questions, q=>[q.valid,q.invalid]),[[1,1],[1,1]]);
+assert.equal(reviewed.reviewRows.length,2);
+assert.equal(JSON.stringify(reviewed.reviewRows).includes('부장은 1회 근무한다.'),false);
+assert.equal(JSON.stringify(context.beagu26BuildResults(fixtureRows,[],fixtureCatalog)),JSON.stringify(reviewed));
+const {reviewRows, ...safePayload}=reviewed;
+assert.equal('reviewRows' in safePayload,false);
+const otherRow=[
+  fixtureRows[0],['2026-11-19','부산','시범학교','기타','A에 매우 가깝다']
+];
+assert.equal(context.beagu26BuildResults(otherRow,[],fixtureCatalog).reviewRows[0][4],'OTHER_OPTION');
 const questions=Object.entries(catalog).flatMap(([id,m])=>(m.kind==='grid'?m.rows:[null]).map((_,i)=>({id,row:m.kind==='grid'?i:-1,valid:0,invalid:0,counts:(m.kind==='grid'?m.columns:m.options).map(()=>0),minutes_sum:0})));
 const payload={source_spreadsheet_id:sourceId,official_start_day:'2026-11-01',schema_version:1,snapshot_at:new Date().toISOString(),totals:{source_rows:2,official_rows:1,prelaunch_rows:1,unmatched_rows:0,undated_rows:0},schools:[{school_id:'1000001',school_response_rows:1,school_match_status:'EXACT_REGION_OFFICE_NAME',questions}]};
 assert.equal(validateSnapshot(payload),payload);
