@@ -19,7 +19,7 @@ function el(tag,cls,text){
  return e;
 }
 function order(rows,game){
- return rows.filter(x=>x&&Number.isSafeInteger(x.score)&&x.score>0)
+ return rows.filter(x=>x&&Number.isSafeInteger(x.score)&&x.score>=0)
   .map(x=>({score:x.score,created_at:String(x.created_at||""),
     school_name:String(x.school_name||"학교 미등록"),difficulty:x.difficulty||null}))
   .sort((a,b)=>b.score-a.score||a.created_at.localeCompare(b.created_at))
@@ -103,8 +103,9 @@ class ArcadeLeaderboard{
  async finish(score,stats){
   const generation=this.playGeneration;
   if(!this.session||this.isSubmitting)return;
-  this.score=Math.floor(Number(score)||0);this.stats=stats;
-  if(this.score<=0)return;
+  const value=Number(score);
+  if(!Number.isFinite(value)||value<0)return;
+  this.score=Math.floor(value);this.stats=stats;
   try{if(this.pendingStart)await this.pendingStart;}catch(e){}
   if(generation!==this.playGeneration||!this.session)return;
   this.isSubmitting=true;
@@ -175,6 +176,12 @@ class ArcadeLeaderboard{
     row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmtTime(entry.timeTenths)));root.append(row);
    }
   }
+  const history=el("a","arcade-history-link","📚 역대 게임 기록 전체 보기");
+  history.href="arcade-history.html?game="+encodeURIComponent(this.game);
+  history.target="_top";
+  history.setAttribute("aria-label",this.game==="volleyball_25"?
+   "선생님배구 역대 게임 기록 모두 보기":"험난한 교직생활 역대 게임 기록 모두 보기");
+  root.append(history);
  }
 
 }
