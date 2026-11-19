@@ -1,0 +1,42 @@
+name: Isolated Lv0-Lv2 staging checks (no deploy)
+on:
+  push:
+    branches: [feature/test-web-lv0-lv2-20261120]
+    paths: ['test-web/**','test-environment/**','tests/test-web-stage-contract.mjs','.github/workflows/test-web-stage.yml']
+  pull_request:
+    branches: [feature/lv2-referral-phase1-20261119]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static:
+    name: static (${{ matrix.case }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+          - 'test environment starts disconnected'
+          - 'all browser handlers refer'
+          - 'private tables use RLS'
+          - 'referral submit is atomic'
+          - 'account identity, verification'
+          - 'no production survey'
+          - 'legacy Edge preview'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test --test-name-pattern="${{ matrix.case }}" tests/test-web-stage-contract.mjs
+  deno:
+    name: deno (test Edge only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check test-environment/supabase/functions/beagu-test-v1/index.ts
