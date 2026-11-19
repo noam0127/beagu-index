@@ -3,14 +3,14 @@
 -- No emails, school data, response answers, passwords, or Auth tokens are copied here.
 
 create table if not exists beagu_private.account_v1_settings (
-  name text primary key check (name in ('signup_enabled','login_enabled','registration_enabled','recovery_enabled','account_deletion_enabled','account_deletion_enabled')),
+  name text primary key check (name in ('signup_enabled','login_enabled','registration_enabled','recovery_enabled','account_deletion_enabled')),
   enabled boolean not null default false,
   changed_at timestamptz not null default now()
 );
 insert into beagu_private.account_v1_settings(name,enabled) values
  ('signup_enabled',false),('login_enabled',false),
  ('registration_enabled',false),('recovery_enabled',false),
- ('account_deletion_enabled',false),('account_deletion_enabled',false)
+ ('account_deletion_enabled',false)
 on conflict (name) do nothing;
 
 create table if not exists beagu_private.account_profiles_v1 (
@@ -133,58 +133,43 @@ grant execute on function public.beagu_account_v1_bind(uuid,text) to service_rol
 grant execute on function public.beagu_account_v1_owner(text) to service_role;
 grant execute on function public.beagu_account_v1_profile(uuid) to service_role;
 
--- Self-deletion purges only hashed login-budget keys derivable for the owner.
--- HMAC pepper and raw identifiers are never accepted by or stored in SQL.
+-- Only service-role callers may remove HMAC digests associated with a
+-- verified, deleted account. Never accepts raw emails or user identifiers.
 create or replace function public.beagu_account_v1_purge_budgets(p_hashes text[])
 returns integer language plpgsql volatile security invoker set search_path=''
-as $
+as $$
 declare removed integer;
 begin
-  if p_hashes is null or cardinality(p_hashes) > 20 or
-     exists(select 1 from pg_catalog.unnest(p_hashes) as h(value)
-            where h.value !~ '^[a-f0-9]{64}
--- Google Forms/Apps Script, the existing Lv.1 sessions, or referral flags.
-)
-  then raise exception 'invalid budget keys' using errcode='22023'; end if;
+  if p_hashes is null or cardinality(p_hashes)>20
+     or exists (
+       select 1 from pg_catalog.unnest(p_hashes) as h(value)
+       where h.value is null or h.value !~ '^[a-f0-9]{64}$'
+     )
+  then
+    raise exception 'invalid budget keys' using errcode='22023';
+  end if;
   delete from beagu_private.account_login_budgets_v1
-  where key_sha256 = any(p_hashes);
+   where key_sha256 = any(p_hashes);
   get diagnostics removed = row_count;
   return removed;
-end $;
+end $$;
 
--- Retention cleanup needs an authorized scheduled invocation; no public cron.
+-- Scheduled cleanup must be configured and authorized separately.
 create or replace function public.beagu_account_v1_expire_budgets()
 returns integer language plpgsql volatile security invoker set search_path=''
-as $
+as $$
 declare removed integer;
 begin
   delete from beagu_private.account_login_budgets_v1
-  where window_started_at < now() - interval '30 days';
+   where window_started_at < now() - interval '30 days';
   get diagnostics removed = row_count;
   return removed;
-end $;
+end $$;
+
 revoke all on function public.beagu_account_v1_purge_budgets(text[]) from public,anon,authenticated;
 revoke all on function public.beagu_account_v1_expire_budgets() from public,anon,authenticated;
 grant execute on function public.beagu_account_v1_purge_budgets(text[]) to service_role;
 grant execute on function public.beagu_account_v1_expire_budgets() to service_role;
 
--- This migration deliberately does NOT modify challenge identity APIs,
--- Google Forms/Apps Script, the existing Lv.1 sessions, or referral flags.
-
-
--- Service-role-only retention maintenance; never deletes Auth account records.
--- Expired rate budget digests are discarded after 30 days. If the operational
--- retention schedule is shorter, that is safe too. Scheduling is a separate
--- admin action and is NOT enabled by this migration.
-create or replace function public.beagu_account_v1_purge_budgets()
-returns integer language plpgsql volatile security invoker set search_path=''
-as $$
-declare purged integer;
-begin
-  delete from beagu_private.account_login_budgets_v1
-   where window_started_at < now() - interval '30 days';
-  get diagnostics purged = row_count;
-  return purged;
-end $$;
-revoke all on function public.beagu_account_v1_purge_budgets() from public, anon, authenticated;
-grant execute on function public.beagu_account_v1_purge_budgets() to service_role;
+-- This migration does NOT change existing Lv1 sessions, challenge identifiers,
+-- public survey records or Google Forms/Apps Script settings.
