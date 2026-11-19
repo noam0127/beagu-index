@@ -98,12 +98,67 @@ const CHOICES=Object.freeze({
    line:'“일을 잘하는 사람에게 일이 더 몰리는 건 해결책이 아니죠.”'}
  ]
 });
+
+/* 배구지수 2026년 공식 설문 Q01/Q05/Q08/Q13/Q36/Q37에서 가져온 "주제"일 뿐,
+   해당 학교의 답변이나 특정 교사의 실제 행위를 재현하는 정보가 아니다. */
+const SURVEY_THEMES=Object.freeze({
+ sports:['2026:Q01','2026:Q37'],newcomer:['2026:Q08'],
+ informal:['2026:Q13'],habit:['2026:Q05','2026:Q27'],
+ social:['2026:Q01','2026:Q36']
+});
+const SPORTS_CHOICES=Object.freeze([
+ {id:'sport_join',label:'좋아서 참가하되 다음번 참석 여부는 직접 정하겠다고 한다',
+  delta:{affection:6,trust:3,agency:2,fatigue:2},
+  reply:['“오늘은 저도 한 게임 할게요. 그런데 다음번에는 못 올 수도 있어요.” 말하고 나니 마음이 조금 편해졌다.','배구공을 한 번 받아 보니 웃음이 났다. 좋은 모임이라면 참석하지 않는 사람도 편해야 했다.'],
+  line:'“맞아요. 오고 싶은 사람끼리 즐겁게 해요.”'},
+ {id:'sport_decline',label:'오늘은 쉬겠다며 편하게 불참하겠다고 말한다',
+  delta:{affection:2,trust:5,agency:5,fatigue:-6},
+  reply:['“저 오늘은 먼저 갈게요.” 조심스레 말했지만 더 긴 이유를 댈 필요는 없었다.','스포츠활동이 없는 금요일도 내게는 괜찮은 금요일이었다.'],
+  line:'“그럼 다음에 봐요. 푹 쉬세요.”'},
+ {id:'sport_change',label:'희망 종목과 참석 여부를 먼저 묻자고 제안한다',
+  delta:{affection:4,trust:8,agency:8,fatigue:1},
+  reply:['“배구 말고 다른 운동을 좋아하는 분도 있잖아요. 희망자부터 받으면 어떨까요?”','잠깐의 침묵 뒤 누군가 걷기를 좋아한다고 말했다. 마음에 드는 종목도, 쉬고 싶은 마음도 함께 존중받았으면 했다.'],
+  line:'“다음에는 종목부터 희망조사를 해 봅시다.”'}
+]);
+const BARBECUE_CHOICES=Object.freeze([
+ {id:'bbq_join',label:'수업 준비를 마친 뒤 자율 모임에 잠깐 참석한다',
+  delta:{affection:8,trust:6,agency:3,fatigue:-1},
+  reply:['학교 뒤뜰에서 고기 굽는 소리가 났다. 나는 준비해 둔 모둠 활동지를 덮고 늦게 합류했다.','아무도 왜 이제 왔느냐고 묻지 않았다. 종이접시를 건네는 손이 먼저 보였다.'],
+  line:'“늦게 오셔도 괜찮아요. 같이 한 입 드세요.”'},
+ {id:'bbq_rest',label:'고맙다고 인사하고 오늘은 쉬겠다고 한다',
+  delta:{affection:4,trust:7,agency:5,fatigue:-7},
+  reply:['“초대해 주셔서 고마워요. 오늘은 먼저 쉬어야 할 것 같아요.”','{colleague}은 퇴근길에 손을 흔들었다. 참여하지 않았다고 사이가 멀어지는 분위기는 아니었다.'],
+  line:'“다음에 마음 내키면 오세요. 주말 잘 보내요.”'},
+ {id:'bbq_help',label:'준비를 돕되 부담되지 않게 역할을 나눠 보자고 한다',
+  delta:{affection:7,trust:8,agency:6,fatigue:1},
+  reply:['나는 준비물을 옮기면서 “다음에는 희망자끼리 조금씩 준비해요”라고 말했다.','서로의 일을 편하게 나누니 뒷정리도 오래 걸리지 않았다. 좋은 친목은 한 사람의 희생으로 굴러가지 않았다.'],
+  line:'“그렇죠. 맛있게 먹는 일까지 업무가 되면 안 되죠.”'}
+]);
+const FORCED_CHOICES=Object.freeze([
+ {id:'club_check',label:'친목회장 선출 방식과 업무 범위를 확인하겠다고 한다',
+  delta:{affection:3,trust:8,agency:7,fatigue:2},
+  reply:['“제가 하게 된 이유와 회장 역할을 먼저 확인해도 될까요?” 말을 끝내자 마음이 쿵 내려앉았다.','회비 정산, 행사 예약, 참석 조사, 뒷정리까지. 업무분장표에 없는 일이 이렇게 길 줄은 몰랐다.'],
+  line:'“이건 우리끼리 다시 의논해야겠네요. 그냥 맡길 일은 아니죠.”'},
+ {id:'club_reform',label:'회장을 돌아가며 맡거나 자원자를 받자고 제안한다',
+  delta:{affection:5,trust:7,agency:9,fatigue:3},
+  reply:['나는 “친목회장은 희망자를 먼저 받고, 일도 나누면 좋겠습니다”라고 말했다.','누군가는 귀찮은 일을 다시 의논하느냐는 얼굴이었다. 그래도 말하지 않으면 내년에도 같은 일이 반복될 것 같았다.'],
+  line:'“한 사람이 다 준비하는 건 오래가기 어려워요.”'},
+ {id:'club_accept',label:'일단 친목회장을 맡고 행사 준비를 혼자 시작한다',
+  delta:{affection:0,trust:-3,agency:-6,fatigue:14},
+  reply:['정식 업무 하나를 더 맡은 것도 아닌데 주안 뒤에 또 해야 할 일이 줄을 섰다. 회비 확인, 고기 주문, 참석 조사, 장소 정리.','어두워진 학년연구실에서 일정표를 수정하다가 야간 당직 선생님의 목소리를 들었다. “선생님, 이제 문 잠가야 해요. 얼른 퇴근하세요.”'],
+  line:'“이렇게 혼자 다 맡으시면 버티기 힘들어요. 다음 주엔 꼭 이야기해요.”'}
+]);
+const SPECIAL_CHOICES=Object.freeze({sports:SPORTS_CHOICES,barbecue:BARBECUE_CHOICES,forced_social:FORCED_CHOICES});
+
 const CULTURE_DELTAS=Object.freeze({
  protect:[7,7],restructure:[10,5],endure:[-6,-8],
  clarify:[6,10],offer:[5,5],accept:[-5,-10],
  boundary:[3,10],helpbrief:[3,5],dropwork:[-5,-8],
  process:[7,9],consult:[5,6],solo:[-8,-10],
- reassign:[9,10],sharehelp:[6,6],takeall:[-5,-12]
+ reassign:[9,10],sharehelp:[6,6],takeall:[-5,-12],
+ sport_join:[3,3],sport_decline:[6,10],sport_change:[10,9],
+ bbq_join:[4,4],bbq_rest:[5,10],bbq_help:[7,7],
+ club_check:[8,9],club_reform:[10,8],club_accept:[-8,-12]
 });
 function duty(p){return DUTIES[p.duty]||DUTIES.general;}
 function acceptedOfficialFact(world,key){
