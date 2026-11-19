@@ -155,6 +155,7 @@ canvas{height:400px;cursor:default}
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261119-foldedtop1"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261119-picker-top1"></script>
+<script src="js/arcade-play-lock-v1.js?v=20261120-game3-lock1"></script>
 <script>
 (function(){
 "use strict";
@@ -850,22 +851,29 @@ function draw(){
  if(getAge()>=60){ctx.textAlign="center";ctx.font="900 12px sans-serif";ctx.fillStyle="#8e3030";ctx.fillText("⚠ 정년 직전 공문 폭풍",W/2,177,Math.max(120,W-20));}
  ctx.restore();
 }
-function tick(t){const dt=Math.min(.04,(t-last)/1000||0);last=t;if(state==="playing")update(dt);draw();requestAnimationFrame(tick);}
+function tick(t){window.ArcadePlayLock?.sync(state==="playing");const dt=Math.min(.04,(t-last)/1000||0);last=t;if(state==="playing")update(dt);draw();requestAnimationFrame(tick);}
 window.addEventListener("keydown",e=>{
  const key=e.key.toLowerCase();
- if(e.target?.matches?.("input,textarea,[contenteditable]"))return;
-  if(["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(key)&&(state==="playing"||state==="paused"))e.preventDefault();
+ if(e.target?.matches?.("input,textarea,select,[contenteditable]"))return;
+ if(key==="escape"&&(state==="playing"||state==="paused")){
+  e.preventDefault();
+  if(!e.repeat)pause();
+  return;
+ }
+ if(state!=="playing")return;
+ if(!["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(key))return;
+ e.preventDefault(); // Arrow keys and WASD move the teacher, not the page.
  if(key==="arrowleft"||key==="a")pressed.add("left");
  if(key==="arrowright"||key==="d")pressed.add("right");
-  if(key==="arrowup"||key==="w")pressed.add("up");
-  if(key==="arrowdown"||key==="s")pressed.add("down");
-  if(key==="escape"&&(state==="playing"||state==="paused"))pause();
+ if(key==="arrowup"||key==="w")pressed.add("up");
+ if(key==="arrowdown"||key==="s")pressed.add("down");
 });
 window.addEventListener("keyup",e=>{let key=e.key.toLowerCase();if(key==="arrowleft"||key==="a")pressed.delete("left");if(key==="arrowright"||key==="d")pressed.delete("right");
   if(key==="arrowup"||key==="w")pressed.delete("up");
   if(key==="arrowdown"||key==="s")pressed.delete("down");});
-window.addEventListener("blur",()=>{pressed.clear();pointerId=null;pointerX=null;pointerY=null;if(state==="playing")pause();});
-document.addEventListener("visibilitychange",()=>{if(document.hidden&&state==="playing")pause();});
+// Browser focus changes are not a request to pause the match.
+window.addEventListener("blur",()=>{pressed.clear();});
+document.addEventListener("visibilitychange",()=>{if(document.hidden){pressed.clear();pointerId=null;pointerX=null;pointerY=null;}});
 function dragPosition(e){
  const r=canvas.getBoundingClientRect();
  if(!r.width||!r.height)return null;
