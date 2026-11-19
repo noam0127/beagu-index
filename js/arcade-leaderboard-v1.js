@@ -122,7 +122,8 @@ class ArcadeLeaderboard{
    this.notice=data.ranked
     ?"🏆 점수 TOP "+data.rank+"위 · "+displayScore(finalScore)
     :data.timeRanked?"⏱ 25점 최단시간 TOP "+data.timeRank+"위 · "+displayScore(finalScore)
-    :"이번 경기 "+displayScore(finalScore)+" · 역대 게임 기록에 저장됨";
+    :data.recorded===false?"이번 경기 "+displayScore(finalScore)+" · 상위 100위 밖 · 기록 미등록"
+    :"이번 경기 "+displayScore(finalScore)+" · 역대 상위 100위 안에 기록됨";
   }catch(err){
    if(generation!==this.playGeneration)return;
    this.notice=err.status===409?"경기가 만료되었거나 이미 기록되었습니다":
@@ -176,7 +177,7 @@ class ArcadeLeaderboard{
     row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmtTime(entry.timeTenths)));root.append(row);
    }
   }
-  const history=el("a","arcade-history-link","📚 역대 게임 기록 전체 보기");
+  const history=el("a","arcade-history-link","📚 역대 게임 기록 · 상위 100위 보기");
   history.href="arcade-history.html?game="+encodeURIComponent(this.game);
   history.target="_top";
   history.setAttribute("aria-label",this.game==="volleyball_25"?
