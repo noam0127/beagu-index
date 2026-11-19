@@ -13,15 +13,19 @@ assert.match(edge, /\.from\('beagu_school_question_aggregates_v2'\)/);
 assert.match(edge, /\.from\('beagu_school_question_modes_supplement_v1'\)/);
 assert.match(edge, /SOURCE_VERIFIED_UNIQUE_MODE/);
 assert.match(edge, /schoolQuestionModes=\[\.\.\.modeIndex\.values\(\)\]/);
-assert.match(edge, /return send\(\{school_id:id,level,rows,schoolQuestionModes,participationYears\}/);
+assert.match(edge, /return send\(\{school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,participationYears\}/);
 assert.doesNotMatch(edge, /schoolDistributions|roundedDistribution:/,
   'No school percentages or distribution arrays may leave the API');
 assert.doesNotMatch(edge, /\.select\('[^']*source_rows/,
   'Raw source row counts must remain private');
 assert.match(lv1, /data\.schoolQuestionModes/);
+assert.match(lv1, /data\.schoolQuestionSelections/);
+assert.match(edge, /beagu_school_checkbox_choices_v1/);
+assert.match(edge, /SOURCE_VERIFIED_MULTI_SELECTION/);
+assert.match(edge, /checkboxAllowed\[questionId\]/);
 assert.match(lv1, /vetted\.get\(id\)\|\|null/);
 assert.doesNotMatch(lv1, /beagu-question-distribution|roundedDistribution/,
-  'Lv.1 search must show only one most-selected option');
+  'Lv.1 search must not expose choice distributions or percentages');
 assert.match(report, /r\.schoolQuestionModes/);
 assert.doesNotMatch(report, /roundedDistribution|className='distribution'/,
   'The standalone report must not render any school distribution');
@@ -36,4 +40,4 @@ assert.match(guard, /FOREIGN KEY \(school_id,survey_year\)/);
 assert.match(compare, /Array\.isArray\(data\?\.schoolQuestionModes\)\?data\.schoolQuestionModes:\[\]/,
   'The school comparison must iterate over the new mode-only array');
 assert.doesNotThrow(() => new Script(lv1));
-console.log('PASS: school modes only, verified checkbox supplement, no distribution/percentages in Lv1 API or UI.');
+console.log('PASS: verified school-level mode and checkbox labels only; no raw answers, response counts or distributions.');
