@@ -381,11 +381,33 @@
     ];
     let expandedFrame=null,expandedFeature=null;
     let playingFrame=null,lockedY=0,savedBodyStyle=null;
+    function alignSurvivalGameBeforeLock(frame){
+      // The page must scroll to the playable character BEFORE position:fixed
+      // disables scrolling. Otherwise starting from a half-visible stage traps
+      // the player below the phone's viewport.
+      if(frame.id!=="teacher-run-frame"||expandedFrame===frame)return null;
+      let canvas;
+      try{canvas=frame.contentDocument?.querySelector(".stage #game");}catch(_){return null;}
+      if(!canvas)return null;
+      const canvasBounds=canvas.getBoundingClientRect();
+      const frameBounds=frame.getBoundingClientRect();
+      const screenBottom=frameBounds.top+canvasBounds.bottom;
+      const visibleHeight=window.visualViewport?.height||window.innerHeight;
+      if(!visibleHeight||!Number.isFinite(screenBottom))return null;
+      const bottomSpace=Math.max(32,Math.min(76,visibleHeight*.09));
+      if(screenBottom<=visibleHeight-bottomSpace&&screenBottom>=visibleHeight*.43)return null;
+      const now=window.scrollY||window.pageYOffset||0;
+      const maxY=Math.max(0,document.documentElement.scrollHeight-visibleHeight);
+      const target=Math.max(0,Math.min(maxY,now+screenBottom-(visibleHeight-bottomSpace)));
+      window.scrollTo(0,target);
+      return target;
+    }
     function lockPageDuringMatch(frame,playing){
       if(playing){
         if(playingFrame)return;
         playingFrame=frame;
-        lockedY=window.scrollY||window.pageYOffset||0;
+        const alignedY=alignSurvivalGameBeforeLock(frame);
+        lockedY=alignedY===null?(window.scrollY||window.pageYOffset||0):alignedY;
         const body=document.body;
         savedBodyStyle={
           position:body.style.position,top:body.style.top,left:body.style.left,
