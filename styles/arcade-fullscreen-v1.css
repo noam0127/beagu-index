@@ -8,6 +8,11 @@
  box-shadow:0 3px 12px rgba(0,0,0,.27);
  font:900 23px/1 system-ui,sans-serif;cursor:pointer;touch-action:manipulation
 }
+.arcade-fullscreen-toggle svg{
+ display:block;width:24px;height:24px;flex:none;pointer-events:none;
+ stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;fill:none
+}
+@media(max-width:480px){.arcade-fullscreen-toggle svg{width:22px;height:22px}}
 .arcade-fullscreen-toggle:hover{background:rgba(33,83,112,.96)}
 .arcade-fullscreen-toggle:focus-visible{outline:3px solid #b1ffed;outline-offset:3px}
 .arcade-game-viewport:fullscreen,.arcade-game-viewport:-webkit-full-screen{
