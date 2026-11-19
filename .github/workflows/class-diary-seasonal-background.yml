@@ -27,3 +27,33 @@ jobs:
         run: node scripts/test-class-diary-seasonal-background.cjs
       - name: Confirm existing 36-episode story and choices
         run: node scripts/test-class-diary-semester.cjs
+
+  verify-deployed-background:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate-seasonal-background
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm live 36-episode seasonal assets match main
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://baeguindex.com'
+          for file in teacher-class-diary-play.html js/class-diary-seasonal-background-v1.js; do
+            matched=0
+            for attempt in {1..15}; do
+              if curl -fLsS --retry 1 --max-time 15 -H 'Cache-Control: no-cache' \
+                   "$base/$file?seasonal_sha=$GITHUB_SHA" -o /tmp/class-diary-seasonal-live \
+                 && cmp -s "$file" /tmp/class-diary-seasonal-live; then
+                matched=1
+                break
+              fi
+              sleep 6
+            done
+            if [[ "$matched" != 1 ]]; then
+              echo "FAIL seasonal production file differs or is unavailable: $file"
+              exit 1
+            fi
+            echo "PASS exact live asset: $file"
+          done
