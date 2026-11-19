@@ -1,0 +1,17 @@
+/* Original fictional student: noninteractive supporting cameo, never a romance character. */
+.scene-student{position:absolute;z-index:3;left:clamp(18px,9%,100px);bottom:29%;width:clamp(104px,21%,195px);display:flex;flex-direction:column;align-items:center;gap:0;pointer-events:none;filter:drop-shadow(0 8px 18px #18223b48)}
+.scene-student[hidden]{display:none!important}
+.scene-student-photo{display:block;aspect-ratio:1;width:100%;background-color:#bcb9bc;background-repeat:no-repeat;border-radius:16px 16px 5px 5px;box-shadow:0 7px 25px #18223b55;mask-image:linear-gradient(180deg,#000 0%,#000 84%,transparent 100%)}
+.scene-student-label{display:flex;flex-direction:column;align-items:center;margin-top:-4px;z-index:1;padding:4px 11px;background:#23263ad9;color:#fff;border:1px solid #ffffff4d;border-radius:10px;font:700 12px/1.3 "Apple SD Gothic Neo",Pretendard,"Malgun Gothic",sans-serif;text-shadow:0 1px 2px #0007}
+.scene-student-label small{font-size:10px;font-weight:500;color:#efe8ef}
+.scene-student.with-other-guest{left:clamp(104px,28%,230px);width:clamp(84px,16%,154px);bottom:34%}
+.scene-student[data-emotion="worried"] .scene-student-photo{filter:saturate(.87) brightness(.94)}
+.scene-student[data-emotion="smile"] .scene-student-photo{filter:saturate(1.04)}
+@media(max-width:620px){
+ .scene-student{left:3%;bottom:36%;width:clamp(94px,26vw,140px)}
+ .scene-student.with-other-guest{left:clamp(82px,26vw,130px);bottom:42%;width:clamp(76px,22vw,108px)}
+ .scene-student-label{padding:3px 7px;font-size:11px}
+ .scene-student-label small{font-size:9px}
+}
+@media(max-width:370px){.scene-student.with-other-guest{left:25%;width:23vw}}
+@media(prefers-reduced-motion:reduce){.scene-student,.scene-student-photo{transition:none!important;animation:none!important}}
