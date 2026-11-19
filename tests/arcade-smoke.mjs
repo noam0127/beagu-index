@@ -544,7 +544,7 @@ const contact=new Function("ball","state","p","tier",[
  'const battle={allyReach:1,enemyReach:1,allyAttack:1,enemyAttack:1,enemySmashChance:0};',
  'const energy={allyCost:1,enemyCost:1};',
  'const receiveHealProfiles='+healsMatch[1],
- 'const ballSpeedFactor=()=>1,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));',
+ 'const ballSpeedFactor=()=>1,energyFactor=()=>1,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));',
  'let status="";const setStatus=s=>{status=s;},tone=()=>{},spikeSound=()=>{},updateEnergyUI=()=>{};',
  hitSrc,'playerHit(p);return status;'
 ].join("\n"));
