@@ -1,0 +1,61 @@
+/* Fullscreen only the playable court/stage, never the full website shell. */
+.arcade-game-viewport{position:relative;isolation:isolate}
+.arcade-fullscreen-toggle{
+ position:absolute;top:10px;right:10px;z-index:12;
+ display:inline-flex;align-items:center;justify-content:center;
+ width:44px;height:44px;border:1px solid rgba(231,249,255,.9);
+ border-radius:12px;background:rgba(11,31,52,.86);color:#fff;
+ box-shadow:0 3px 12px rgba(0,0,0,.27);
+ font:900 23px/1 system-ui,sans-serif;cursor:pointer;touch-action:manipulation
+}
+.arcade-fullscreen-toggle:hover{background:rgba(33,83,112,.96)}
+.arcade-fullscreen-toggle:focus-visible{outline:3px solid #b1ffed;outline-offset:3px}
+.arcade-game-viewport:fullscreen,.arcade-game-viewport:-webkit-full-screen{
+ width:100vw!important;height:100vh!important;height:100dvh!important;
+ max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;
+ border:0!important;border-radius:0!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ background:#09192e!important;overflow:hidden!important
+}
+.arcade-game-viewport:fullscreen canvas,.arcade-game-viewport:-webkit-full-screen canvas{
+ display:block!important;width:100%!important;height:100%!important;
+ max-width:100%!important;max-height:100%!important;object-fit:contain!important;flex:1 1 auto
+}
+.arcade-game-viewport:fullscreen .arcade-fullscreen-toggle,.arcade-game-viewport:-webkit-full-screen .arcade-fullscreen-toggle{
+ position:absolute;top:max(12px,env(safe-area-inset-top));right:max(12px,env(safe-area-inset-right));
+ z-index:30;background:rgba(7,22,39,.9)
+}
+/* School selection and its primary action form one unified panel. */
+#arcade-school-picker:has(#volley-school-choose){
+ border-radius:15px;border:1px solid #6288b4;background:linear-gradient(145deg,#1c3859,#10253e);
+ box-shadow:0 8px 22px rgba(0,0,0,.2);padding:16px
+}
+#arcade-school-picker .volley-school-choose{
+ position:static!important;transform:none!important;display:flex!important;
+ width:100%;min-height:46px;margin:12px 0 0;padding:11px 16px;
+ color:#12334b;background:#88ead9;border:1px solid #a9ffe9;border-radius:10px;
+ font:900 15px/1.4 system-ui,sans-serif;white-space:normal;cursor:pointer
+}
+#arcade-school-picker .volley-school-choose[hidden]{display:none!important}
+#arcade-school-picker .volley-school-choose:hover{background:#b1f9e9}
+.teacher-run-inline-auth{
+ display:flex;flex-direction:column;align-items:stretch;gap:9px;
+ width:min(100%,370px);margin:10px auto 0;text-align:left
+}
+.teacher-run-inline-auth label{font-size:12px;font-weight:800;color:#e1f4ff}
+.teacher-run-inline-auth input{
+ width:100%;min-height:46px;padding:10px 13px;border-radius:10px;
+ border:1px solid #84abc9;background:#0c2038;color:#fff;font-size:15px
+}
+.teacher-run-inline-auth input:focus-visible{outline:3px solid #85e9dc;outline-offset:2px}
+.teacher-run-inline-auth button{
+ display:flex;align-items:center;justify-content:center;width:100%;min-height:46px;
+ padding:10px 14px;border:0;border-radius:10px;background:#7be3ca;
+ color:#12334b;font-size:14px;font-weight:900;cursor:pointer
+}
+.teacher-run-inline-auth button:disabled{opacity:.7;cursor:wait}
+.teacher-run-inline-auth [data-game-lv1-message]{min-height:0;margin:0!important;text-align:center;color:#ffdeb0;font-size:12px;line-height:1.45}
+@media(max-width:480px){
+ .arcade-fullscreen-toggle{width:40px;height:40px;font-size:21px;top:7px;right:7px}
+ #arcade-school-picker:has(#volley-school-choose){padding:12px}
+}
