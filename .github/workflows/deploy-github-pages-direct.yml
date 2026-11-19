@@ -1,0 +1,54 @@
+name: Direct GitHub Pages publish (no Vercel)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages-direct
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify class diary autosave and resume
+        run: |
+          node scripts/test-class-diary-progress.cjs
+          node scripts/test-class-diary-play-page.cjs
+          node scripts/test-class-diary-semester.cjs
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare static site
+        run: |
+          test -f index.html
+          test -f CNAME
+          test "$(cat CNAME)" = "baeguindex.com"
+          test -f teacher-class-diary-play.html
+          test -f js/class-diary-progress-v1.js
+          test -f .nojekyll || touch .nojekyll
+      - name: Upload website without a Vercel build
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: Publish directly to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
