@@ -34,6 +34,15 @@ assert(play.src.includes("director.decorateEnding(game)"));
 assert(play.src.includes("director.decorateChapter("));
 assert(play.src.includes("director.decorateOutcome(game)"));
 assert(play.src.includes('id="sceneArt"'));
+assert(play.src.includes('id="experience"'));
+assert(play.src.includes('id="duty"'));
+assert(play.src.includes('id="classTone"'));
+assert(play.src.includes('id="workCulture"'));
+assert(play.src.includes('src="js/class-diary-scenario-v1.js"'));
+assert(play.src.includes('scenario.scene(game,world)'));
+assert(play.src.includes('scenario.choose(game,choice.id)'));
+assert(play.src.includes('scenario.continueStory(game)'));
+
 assert(play.src.includes('id="characterAvatar"'));
 assert(play.src.includes('src="js/class-diary-director-v1.js"'));
 assert(play.src.includes('src="js/class-diary-context-v1.js"'));
