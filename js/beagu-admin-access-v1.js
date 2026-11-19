@@ -289,6 +289,28 @@
       warn("2단계 인증이 완료되지 않았습니다. 코드를 확인하고 다시 시도해 주세요.");
     } finally {busy(false);}
   });
+  $("adminPasswordChangeForm").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(pending)return;
+    const first=$("adminNewPassword"),second=$("adminConfirmPassword"),status=$("adminPasswordFeedback");
+    const password=first.value;
+    if(password.length<16||password!==second.value){
+      status.textContent="16자 이상인 같은 비밀번호를 두 칸에 입력해 주세요.";
+      return;
+    }
+    busy(true);status.textContent="변경 요청 중입니다.";
+    try{
+      await gate("verify");
+      const {error}=await auth.updateUser({password});
+      if(error)throw error;
+      status.textContent="비밀번호가 변경되었습니다. 다음 로그인부터 새 비밀번호를 사용하세요.";
+      first.value="";second.value="";
+    }catch{
+      status.textContent="비밀번호를 변경하지 못했습니다. 다시 인증한 뒤 시도해 주세요.";
+      first.value="";second.value="";
+    }finally{busy(false);}
+  });
+
   async function logout() {
     if (pending) return;
     busy(true);
