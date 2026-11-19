@@ -61,8 +61,10 @@ test('account identity, verification, email safety and auth gates',()=>{
  assert.match(edge,/admin!\.auth\.admin\.signOut/);
  assert.match(edge,/admin!\.auth\.admin\.deleteUser/);
  assert.match(sql,/references auth\.users\(id\) on delete cascade/);
- assert.match(js,/history\.replaceState\(null,'',location\.pathname\)/);
+ assert.match(js,/history\.replaceState\(null,'',location\.pathname\+location\.search\)/);
  assert.match(recover,/history\.replaceState\(null,'',location\.pathname\)/);
+ assert.match(js,/location\.hash\.replace/);
+ assert.match(recover,/location\.hash\.replace/);
 });
 test('no production survey or challenge identifiers are linked',()=>{
  assert.doesNotMatch(sql,/challenge_identity_codes|survey_submissions|2026_noon_sync/i);
