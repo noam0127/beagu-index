@@ -212,6 +212,7 @@
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261118-global2">
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261119-level-guide1">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261119-game1">
 <script defer src="js/beagu-level-state-v1.js?v=20261119-level-guide1"></script>
 </head>
 
@@ -264,7 +265,7 @@
       <iframe
         class="teacher-game-frame"
         id="teacher-game-frame"
-        src="teacher-volleyball.html?v=20261119-foldedtop1"
+        src="teacher-volleyball.html?v=20261119-gamefullscreen1"
         title="선생님배구 1.0 — 직접 조작하는 1대1 배구 미니게임"
         loading="lazy"
         allowfullscreen></iframe>
@@ -281,13 +282,18 @@
         <span class="teacher-run-lock-icon" aria-hidden="true">🔒</span>
         <h3 id="teacher-run-lock-title">Lv.1 전용 게임</h3>
         <p data-lv1-gate-message role="status">Lv.1 인증 필요</p>
-        <a class="teacher-run-lock-action" href="search.html">Lv.1 인증하기</a>
+        <form class="teacher-run-inline-auth" data-game-lv1-form autocomplete="off">
+          <label for="teacher-run-home-code">인증번호(참여코드)</label>
+          <input id="teacher-run-home-code" data-game-lv1-code type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" placeholder="발급받은 인증번호 입력" required>
+          <button type="submit" data-game-lv1-submit>🔓 Lv.1 인증하기</button>
+          <p data-game-lv1-message role="status" aria-live="polite"></p>
+        </form>
       </div>
       <div id="teacher-run-home-content" hidden>
         <iframe
           class="teacher-game-frame"
           id="teacher-run-frame"
-          data-src="teacher-run.html?v=20261119-foldedtop1"
+          data-src="teacher-run.html?v=20261119-gamefullscreen1"
           title="험난한 교직생활 3.0 — 24세 임용부터 62세 정년까지 살아남는 교사 생존 게임"
           loading="lazy"
           allowfullscreen></iframe>
@@ -323,7 +329,7 @@
  <script src="js/home-cumulative-stats.js?v=20261118-live1"></script>
 <script src="js/visit-stats.js?v=20261117-visitfix1"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
-<script defer src="js/beagu-game-lv1-gate-v1.js?v=20261118-lock2"></script>
+<script defer src="js/beagu-game-lv1-gate-v1.js?v=20261119-inlineauth1"></script>
 
 <script>
   // 각각의 게임 iframe에서 발생한 리사이즈 이벤트만 허용합니다.
