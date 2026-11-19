@@ -410,7 +410,7 @@ const resetSource=volley.slice(serveStart,serveEnd);
 const serveSpeed=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
  "const ballSpeedProfiles="+speedMatch[1],
  "const ballSpeedFactor=()=>ballSpeedProfiles[tier];",
- "const FLOOR=451,NET_X=450,state={serveLeft},left={},right={},ball={trail:[]};",
+ "const FLOOR=451,NET_X=450,currentDifficulty=tier,state={serveLeft},left={},right={},ball={trail:[]};",
  "const volleyShackle={x:0,dir:-1},secondBall={trail:[]},activeBalls=[ball],clones=[];",
  "const cloneProfiles={easy:2,normal:1,hard:0,very_hard:0,extreme:0};",
  resetSource,"resetPositions();return {vx:ball.vx,vy:ball.vy};"
