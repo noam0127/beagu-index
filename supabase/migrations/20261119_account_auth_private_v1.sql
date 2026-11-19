@@ -39,7 +39,7 @@ revoke all on beagu_private.account_login_budgets_v1 from public, anon, authenti
 grant usage on schema beagu_private to service_role;
 grant select on beagu_private.account_v1_settings to service_role;
 grant select,insert,update on beagu_private.account_profiles_v1 to service_role;
-grant select,insert,update on beagu_private.account_login_budgets_v1 to service_role;
+grant select,insert,update,delete on beagu_private.account_login_budgets_v1 to service_role;
 
 -- SECURITY INVOKER: the caller must be service_role, not a shared anonymous session.
 create or replace function public.beagu_account_v1_feature(p_name text)
@@ -131,6 +131,41 @@ grant execute on function public.beagu_account_v1_take_slot(text,integer,integer
 grant execute on function public.beagu_account_v1_bind(uuid,text) to service_role;
 grant execute on function public.beagu_account_v1_owner(text) to service_role;
 grant execute on function public.beagu_account_v1_profile(uuid) to service_role;
+
+-- Self-deletion purges only hashed login-budget keys derivable for the owner.
+-- HMAC pepper and raw identifiers are never accepted by or stored in SQL.
+create or replace function public.beagu_account_v1_purge_budgets(p_hashes text[])
+returns integer language plpgsql volatile security invoker set search_path=''
+as $
+declare removed integer;
+begin
+  if p_hashes is null or cardinality(p_hashes) > 20 or
+     exists(select 1 from pg_catalog.unnest(p_hashes) as h(value)
+            where h.value !~ '^[a-f0-9]{64}
+-- Google Forms/Apps Script, the existing Lv.1 sessions, or referral flags.
+)
+  then raise exception 'invalid budget keys' using errcode='22023'; end if;
+  delete from beagu_private.account_login_budgets_v1
+  where key_sha256 = any(p_hashes);
+  get diagnostics removed = row_count;
+  return removed;
+end $;
+
+-- Retention cleanup needs an authorized scheduled invocation; no public cron.
+create or replace function public.beagu_account_v1_expire_budgets()
+returns integer language plpgsql volatile security invoker set search_path=''
+as $
+declare removed integer;
+begin
+  delete from beagu_private.account_login_budgets_v1
+  where window_started_at < now() - interval '30 days';
+  get diagnostics removed = row_count;
+  return removed;
+end $;
+revoke all on function public.beagu_account_v1_purge_budgets(text[]) from public,anon,authenticated;
+revoke all on function public.beagu_account_v1_expire_budgets() from public,anon,authenticated;
+grant execute on function public.beagu_account_v1_purge_budgets(text[]) to service_role;
+grant execute on function public.beagu_account_v1_expire_budgets() to service_role;
 
 -- This migration deliberately does NOT modify challenge identity APIs,
 -- Google Forms/Apps Script, the existing Lv.1 sessions, or referral flags.
