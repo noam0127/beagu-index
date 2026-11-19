@@ -125,7 +125,7 @@ assert.doesNotMatch(volley,/keys\.spike/,"manual spike input removed");
 
 assert.match(volley,/R = 48;/,"volleyball radius enlarged 1.5x from 32 to 48");
 assert.match(volley,/NET_TOP = 342/,"net rises from 97px to 109px");
-assert.match(volley,/43 \* \.75 \* battle\.allyReach/,"baseline reach is tier-adjusted");
+assert.match(volley,/43\s*\*\s*\.75\s*\*\s*battle\.allyReach/,"forearm reach remains tier-adjusted");
 assert.doesNotMatch(volley,/data-key="jump"/,"touch jump button removed");
 assert.doesNotMatch(volley,/class="touch"/,"empty touch control region removed");
 assert.match(volley,/touchControl\.targetY/,"volleyball touch flight has vertical axis");
@@ -512,9 +512,75 @@ assert.match(runner,/if\(u\.id==="speed"\)/);
 assert.match(runner,/if\(u\.id==="guard"\)/);
 assert.match(runner,/if\(u\.id==="heal"\)/);
 assert.match(runner,/activeEvent&&eventSeconds>0/,"events only appear while active");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-no-round1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-natural-receive1/);
 assert.match(html,/teacher-run\.html\?v=20261119-arcade-fun1/);
 console.log("PASS: volleyball impact and boss cues; run 5-day events, timed bonuses, upgrade choices and Friday pattern");
+
+// Ball reception physics and earned stamina recovery.
+assert.doesNotMatch(volley,/ball\.x\s*=\s*p\.x\s*\+\s*sign\s*\*\s*\(reach\s*\+\s*R\s*\+\s*1\)/);
+assert.doesNotMatch(volley,/ball\.y\s*=\s*Math\.min\(ball\.y,\s*p\.y\s*-\s*22\)/);
+assert.match(volley,/const handX=p\.x\+sign\*29, handY=p\.y-15/);
+assert.match(volley,/const push=Math\.min\(12,Math\.max\(0,reach\+R-contactDistance\+1\)\)/);
+assert.match(volley,/const framesToNet=clamp\(\(NET_X-ball\.x\)\/ball\.vx,4,45\)/);
+assert.match(volley,/ball\.spin\+=ball\.vx\*\.009/);
+assert.match(volley,/ctx\.rotate\(ball\.spin\)/);
+assert.match(volley,/if\(p\.contactFrames>0\)/);
+assert.match(volley,/if\(left\.contactFrames>0\)left\.contactFrames--/);
+const healsMatch=volley.match(/const receiveHealProfiles=(\{[^}]+\});/);
+assert.ok(healsMatch);
+const heals=new Function("return "+healsMatch[1])();
+assert.deepEqual(heals,{easy:10,normal:9,hard:8,very_hard:7,extreme:6});
+assert.match(volley,/state\.receiveStreak%3===0\?12:0/);
+assert.match(volley,/if\(!spike&&!charged&&incomingVx< -1\)/);
+assert.match(volley,/state\.receiveStreak=0/);
+assert.match(volley,/state\.rightScore \+= 1; state\.receiveStreak=0/);
+assert.match(volley,/textLabel\("💚 \+"\+state\.healAmount\+" 체력"/);
+const hitStart=volley.indexOf("function playerHit(p) {");
+const hitEnd=volley.indexOf("function finishMatch(",hitStart);
+assert.ok(hitStart>0&&hitEnd>hitStart);
+const hitSrc=volley.slice(hitStart,hitEnd);
+const contact=new Function("ball","state","p","tier",[
+ 'const currentDifficulty=tier,R=48,NET_X=450,NET_TOP=342,AUTO_SPIKE_SPEED=8;',
+ 'const battle={allyReach:1,enemyReach:1,allyAttack:1,enemyAttack:1,enemySmashChance:0};',
+ 'const energy={allyCost:1,enemyCost:1};',
+ 'const receiveHealProfiles='+healsMatch[1],
+ 'const ballSpeedFactor=()=>1,energyFactor=()=>1,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));',
+ 'let status="";const setStatus=s=>{status=s;},tone=()=>{},spikeSound=()=>{},updateEnergyUI=()=>{};',
+ hitSrc,'playerHit(p);return status;'
+].join("\n"));
+function contactCase(tier="hard"){
+ const ball={x:248,y:376,vx:-8,vy:3,cooldown:0,spin:0,trail:[],shadowFrames:0};
+ const state={leftEnergy:60,leftMaxEnergy:100,rightEnergy:100,rightMaxEnergy:100,specialChargeFrames:0,
+   bossWarnFrames:0,playFrames:100,spikes:0,receiveStreak:0,healFrames:0,healAmount:0};
+ const p={x:210,y:420,vx:0,vy:0,impactSpeed:0,side:"left",contactFrames:0};
+ return {ball,state,p,receive(){
+  Object.assign(ball,{x:248,y:376,vx:-8,vy:3,cooldown:0});
+  return contact(ball,state,p,tier);
+ }};
+}
+const reception=contactCase();
+const notice=reception.receive();
+assert.match(notice,/리시브 성공/);
+assert.equal(reception.state.leftEnergy,62,"6 used, 8 recovered");
+assert.equal(reception.state.healAmount,8);
+assert.equal(reception.state.receiveStreak,1);
+assert.ok(Math.hypot(reception.ball.x-248,reception.ball.y-376)<=12.01,"no ball teleportation");
+assert.ok(reception.ball.vx>0&&reception.ball.vy<0,"outbound arc");
+assert.ok(reception.p.contactFrames>0,"receiver animates hands");
+reception.receive();
+assert.match(reception.receive(),/연속 리시브 3회/);
+assert.equal(reception.state.receiveStreak,3);
+assert.equal(reception.state.leftEnergy,78,"three returns trigger +12 bonus");
+assert.equal(reception.state.healAmount,20);
+const full=contactCase();full.state.leftEnergy=99;full.receive();
+assert.equal(full.state.leftEnergy,100,"HP capped");
+const extremeCase=contactCase("extreme");extremeCase.receive();
+assert.equal(extremeCase.state.healAmount,6);
+const spikeCase=contactCase();spikeCase.p.impactSpeed=12;spikeCase.receive();
+assert.equal(spikeCase.state.receiveStreak,0,"spikes do not heal");
+assert.equal(spikeCase.state.healAmount,0);
+console.log("PASS: arm-centered contact, smooth non-teleporting volley returns, forearm animation and earned healing");
+
 
 
 
@@ -540,7 +606,7 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-no-round1")&&
+  if(site.body.includes("teacher-volleyball.html?v=20261119-natural-receive1")&&
      site.body.includes("teacher-run.html?v=20261119-arcade-fun1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
@@ -551,7 +617,7 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-no-round1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-natural-receive1/);
 assert.match(site.body,/teacher-run\.html\?v=20261119-arcade-fun1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
