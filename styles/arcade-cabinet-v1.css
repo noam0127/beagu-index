@@ -38,6 +38,12 @@ body.arcade-body {
   border:3px solid #5d8aaf;border-radius:5px;box-shadow:5px 5px 0 #060b1c;
   font-family:ui-monospace,"Courier New",monospace;
 }
+.arcade-ranking-toggle{display:flex;width:100%;min-height:44px;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border:1px solid #648db3;border-radius:9px;background:#193958;color:#ffe57f;text-align:left;font:900 14px/1.4 ui-monospace,"Apple SD Gothic Neo",sans-serif;cursor:pointer}
+.arcade-ranking-toggle:hover{background:#224e70}
+.arcade-ranking-toggle:focus-visible{outline:3px solid #fff7a6;outline-offset:3px}
+.arcade-ranking-chevron{font-size:17px;flex:0 0 auto;color:#b4f7e8}
+.arcade-ranking-content{padding-top:13px}
+.arcade-ranking-content[hidden]{display:none!important}
 .arcade-ranking-head {display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;margin-bottom:10px}
 .arcade-ranking-head strong{color:#ffe57f;font-weight:900;font-size:15px;letter-spacing:.1em;text-shadow:2px 2px #4e365c}
 .arcade-ranking-head small{font-size:10px;color:#a7c4df}
