@@ -1377,10 +1377,14 @@ function renderSemester(){
   $(id).textContent=game.stats[key];
  $('chapterDay').textContent=view.episode+' / 36 · 제'+view.act+'부 '+view.actName;
  $('chapterTitle').textContent=view.title;
- $('chapterPlace').textContent=Number(view.date.slice(5,7))+'월 '+Number(view.date.slice(8,10))+'일 · '+(semesterBackground?semesterBackground.label:view.place)+' · '+game.profile.name+' 선생님';
+ $('chapterPlace').textContent=Number(view.date.slice(5,7))+'월 '+Number(view.date.slice(8,10))+'일 · '+(semesterBackground?semesterBackground.label:view.place)+' · '+(game.schoolContext?game.schoolName+' · ':'')+game.profile.name+' 선생님';
  $('chapterProgress').style.width=(view.episode/36*100)+'%';
  $('worldDetail').hidden=true;$('schoolFacts').hidden=true;
- $('chapterSource').textContent='2027년의 가상 학교에서 벌어지는 허구의 사건입니다. 실제 교직원과 학생의 언행이 아닙니다.';
+ const publicSchool=game.schoolContext;
+ $('chapterSource').textContent=publicSchool&&Array.isArray(publicSchool.publishedYears)?
+  game.schoolName+' · '+publicSchool.region+' · 공개 조사 '+publicSchool.publishedYears.join(', ')+
+  '년을 배경 정보로만 참고합니다. 등장인물·대화·사건은 모두 허구입니다.':
+  '2027년 가상의 교실에서 벌어지는 허구의 사건입니다. 실제 교직원이나 학생을 재현하지 않습니다.';
  $('choiceSection').hidden=reflection;
  $('choiceSection').querySelector('.option-title').textContent='제'+view.act+'부 · '+view.episode+'화, 어떻게 하시겠어요?';
  $('outcome').hidden=!reflection;
@@ -1618,6 +1622,17 @@ $('profileForm').addEventListener('submit',e=>{
    experience:$('experience').value,
    gender:$('gender').value,mbti:$('mbti').value,partner:$('partner').value
   },plan));
+  if(storyMode==='semester'){
+   if(!schoolSelection)throw Error('SCHOOL_NOT_SELECTED');
+   // Public school context is saved separately; the original 36-episode fiction
+   // engine and demo fixture remain unchanged and cannot infer real staff conduct.
+   baseGame.schoolName=schoolSelection.name;
+   baseGame.schoolContext={
+    schoolId:schoolSelection.id,
+    region:schoolSelection.region,
+    publishedYears:schoolSelection.years.slice()
+   };
+  }
   game=storyMode==='semester'?semester.createGame(baseGame):baseGame;
   sound.note('uiStart');
   render();autoSaveProgress();
