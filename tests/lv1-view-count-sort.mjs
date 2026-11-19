@@ -12,7 +12,8 @@ const counts=read('js/school-view-counts-v1.js');
 
 assert.doesNotThrow(()=>new Script(script));
 assert.match(lv1,/<option value="view_count"[^>]*>조회수<\/option>/);
-assert.doesNotMatch(lv0,/<option value="view_count"/,'Lv.0 cannot sort by views');
+assert.match(lv0,/<option value="view_count" disabled>🔒 조회수<\/option>/,'Lv.0 shows a genuinely disabled locked view sort option');
+assert.match(lv0,/id="publicSortLevelHelp"[^>]*>[^]*?Lv\.1 인증 후 이용<\/a>/,'Lv.0 explains how to unlock sorting');
 assert.match(lv1,/js\/level-search\.js\?v=20261120-historyfull2/);
 assert.match(lv1,/js\/school-view-counts-v1\.js/);
 assert.match(script,/const SORTS=new Set\(\[[^\]]*'view_count'\]\)/);
