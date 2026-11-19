@@ -18,6 +18,16 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
    await page.goto(URL+'/teacher-class-diary-play.html?demo=1',{waitUntil:'domcontentloaded'});
    await page.locator('#setup').waitFor({state:'visible'});
+   // Browser must receive the revised fictional incident dialogue.
+   const incidentVersion=await page.evaluate(()=>{
+     const events=window.BeaguClassDiaryIncidents?.INCIDENTS;
+     return {
+       choices:events?.friendship_chair?.choices?.length||0,
+       prose:events?.barbecue?.choices?.find(c=>c.id==='bbq_join')?.reply?.[0]||''
+     };
+   });
+   assert.equal(incidentVersion.choices,3,'Friendship episode choices must load');
+   assert(incidentVersion.prose.includes('종이접시'),'Revised event dialogue must load');
    await page.locator('#playerName').fill(variant.name==='desktop'?'최윤호':'김민서');
    const count=await page.locator('#profileForm input,#profileForm select').count();
    assert.equal(count,6,'Character form must contain exactly 6 fields');
