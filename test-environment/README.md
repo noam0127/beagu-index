@@ -51,7 +51,7 @@ Supabase 조직은 Free로 조회되며 프로젝트 1개만 확인되었다. �
    - SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY = **테스트 프로젝트 소속 값만**
    비밀값은 GitHub에 커밋하거나 브라우저에 노출하지 않는다.
 4. Auth 이메일 인증 필수, 테스트용 SMTP/Redirect Allow List 설정. 복구 메일 템플릿에서
-   `https://<test-host>/recover.html?token_hash={{ .TokenHash }}` 를 사용해야 한다.
+   `https://<test-host>/recover.html#token_hash={{ .TokenHash }}` 를 사용해야 한다.
 5. Supabase Auth > Protection에서 Turnstile CAPTCHA를 실제로 활성화하고 직접 Auth API 우회 차단을 검사한다.
 6. 새 Cloudflare Pages **별도 프로젝트**의 build output root를 `test-web/` 로 지정. 기존 운영 프로젝트나 main/배포 설정을 수정하지 않는다.
 7. 테스트 전용 호스트가 정해지면 `test-web/config.js`의 5개 **공개** 변수만 수정하고, `_headers` CSP connect-src를 정확한 테스트 Supabase hostname으로 좁힌다. 기존 운영 Supabase hostname 사용 금지.
