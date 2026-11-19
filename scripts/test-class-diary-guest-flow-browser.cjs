@@ -13,7 +13,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
   for(const device of [{name:'mobile',width:390,height:844},{name:'desktop',width:1365,height:850}]){
    const page=await browser.newPage({viewport:{width:device.width,height:device.height},deviceScaleFactor:1});
    const errors=[];let codeCheck=0,ticketCheck=0,revision=0,latestCheckpoint=null;
-   page.on('pageerror',error=>errors.push(error.message));
+   page.on('pageerror',error=>errors.push(error.stack||error.message));
    await page.route(api,route=>{
     const body=JSON.parse(route.request().postData()||'{}');
     if(body.action==='verify-code'){
