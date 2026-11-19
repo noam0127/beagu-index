@@ -11,8 +11,8 @@
     return;
   }
   const config = window.BEAGU_REFERRAL_FORM || {};
-  if (!/^\\d{5,20}$/.test(config.tokenEntryId || '') ||
-      !/^\\d{5,20}$/.test(config.deviceEntryId || '') ||
+  if (!/^\d{5,20}$/.test(config.tokenEntryId || '') ||
+      !/^\d{5,20}$/.test(config.deviceEntryId || '') ||
       config.tokenEntryId === config.deviceEntryId) {
     original.hidden = true; // Do not silently route a referral to a non-prefilled Form.
     feedback.textContent = '추천 설문 연결을 준비하고 있습니다.';
