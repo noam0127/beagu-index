@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 function init(options){
- const {show,sound,validateSchoolName}=options;
+ const {show,sound,validateSchoolName,openSchoolSearch}=options;
  const $=id=>document.getElementById(id);
  const setup=$('setup'),form=$('profileForm');
  let step=1;
@@ -33,9 +33,8 @@ function init(options){
   if(part===1){
    const school=$('diarySchoolName');
    if(!school.value.trim()){
-    school.setCustomValidity('학교 이름을 입력해 주세요.');
-    school.reportValidity();
-    school.focus();
+    if(typeof openSchoolSearch==='function')openSchoolSearch();
+    else school.focus();
     return false;
    }
    school.setCustomValidity('');
