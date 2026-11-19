@@ -117,12 +117,11 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    earlyWorldCalls++;return route.abort('blockedbyclient');
   });
   await legacy.goto(base+'/teacher-class-diary-play.html?schoolId=A123456',{waitUntil:'domcontentloaded'});
-  await legacy.locator('#diaryLanding').waitFor({state:'visible'});
-  assert.equal(earlyWorldCalls,0,'Initial title must not request school data');
-  assert.equal(await legacy.locator('#notice').isVisible(),false,'No preselection school error');
-  await legacy.locator('#diaryLandingStart').click();
-  await legacy.locator('#setup').waitFor({state:'visible'});
-  assert.equal(await legacy.locator('#diarySchoolName').isVisible(),true);
+  // Current security rule: direct non-guest URLs must return to the home code gate.
+  await legacy.waitForURL('**/index.html#teacher-diary-feature',{timeout:12000});
+  await legacy.locator('#homeDiaryGuestForm').waitFor({state:'visible'});
+  assert.equal(earlyWorldCalls,0,'Direct school URLs must not request any private school data');
+  assert.equal(await legacy.locator('#diaryLanding').count(),0,'Direct navigation must not bypass the home entry gate');
   await legacy.close();
  }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exit(1)});
