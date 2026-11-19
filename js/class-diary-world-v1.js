@@ -166,7 +166,8 @@
     const years = [...new Set((Array.isArray(payload.publishedYears) ?
       payload.publishedYears : []).filter(y=>Number.isInteger(y)&&y>=2023&&y<=2026))].sort();
     const basic = {
-      schoolId:trim(school.school_id,7),schoolCode:trim(school.school_code,32)||null,
+      id:trim(school.school_id,7),schoolId:trim(school.school_id,7),
+      schoolCode:trim(school.school_code,32)||null,
       name:trim(school.school_name,120),sido:trim(school.sido_standard||school.sido,60),
       office:trim(school.support_office,100),address:trim(school.address,240)||null,
       schoolKind:trim(school.school_kind,50),establishment:trim(school.establishment,50),
