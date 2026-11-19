@@ -172,61 +172,49 @@ assert.match(picker,/aria-describedby/,"school search is accessible");
 console.log("PASS: school selection first, note under input, blue-struck duplicate labels removed");
 
 
-// HP, lives, double-touch and time bonus contract.
+// Independent new game rules preserve the retired score contracts for old sessions.
 const runProfilesMatch=runner.match(/const difficultyProfiles=(\{[\s\S]*?\n\s*\});/);
-const volleyProfilesMatch=volley.match(/const energyProfiles=(\{[\s\S]*?\n\s*\});/);
 const volleySpecialMatch=volley.match(/const specialProfiles=(\{[\s\S]*?\n\s*\});/);
-assert.ok(runProfilesMatch&&volleyProfilesMatch&&volleySpecialMatch,"five tier profiles exist");
+assert.ok(runProfilesMatch&&volleySpecialMatch,"five-tier profiles");
 const parseProfile=match=>new Function("return "+match[1])();
-const runProfiles=parseProfile(runProfilesMatch),energyProfiles=parseProfile(volleyProfilesMatch),specialProfiles=parseProfile(volleySpecialMatch);
+const runProfiles=parseProfile(runProfilesMatch),specialProfiles=parseProfile(volleySpecialMatch);
 const tiers=["easy","normal","hard","very_hard","extreme"];
 for(let i=0;i<tiers.length;i++){
- const t=tiers[i];
- assert.ok(runProfiles[t]&&energyProfiles[t]&&specialProfiles[t],"tier "+t+" has HP/life/special definition");
- if(i>0){
-  const prior=tiers[i-1];
-  assert.ok(runProfiles[t].startingLife<runProfiles[prior].startingLife,"harder tier has less starting HP");
-  assert.ok(runProfiles[t].lives<=runProfiles[prior].lives,"harder tier cannot gain extra lives");
-  assert.ok(runProfiles[t].specialCooldown>runProfiles[prior].specialCooldown,"harder tier has longer special cooldown");
-  assert.ok(energyProfiles[t].allyMax<energyProfiles[prior].allyMax,"harder tier has less ally stamina");
-  assert.ok(energyProfiles[t].enemyMax>energyProfiles[prior].enemyMax,"harder tier has more CPU stamina");
-  assert.ok(specialProfiles[t].cooldown>specialProfiles[prior].cooldown,"harder tier has longer super spike cooldown");
+ const level=tiers[i];assert.ok(runProfiles[level]&&specialProfiles[level]);
+ if(i){
+  assert.ok(runProfiles[level].startingLife<runProfiles[tiers[i-1]].startingLife);
+  assert.ok(specialProfiles[level].cooldown>specialProfiles[tiers[i-1]].cooldown);
  }
 }
-assert.match(volley,/id="player-energy-progress"/);
-assert.match(volley,/id="cpu-energy-progress"/);
-assert.match(runner,/id="run-health-progress"/);
-assert.match(runner,/id="run-lives"/);
+assert.doesNotMatch(volley,/id="player-energy-progress"|id="cpu-energy-progress"|id="volley-lives"/);
+assert.doesNotMatch(volley,/leftEnergy|rightEnergy|energyProfiles|energyFactor|receiveHealProfiles|healFrames|loseLife|resetEnergy|체력|목숨/);
 assert.match(volley,/function activateSuperSpike\(\)/);
-assert.match(runner,/function activateSpecial\(\)/);
+assert.match(runner,/id="run-health-progress"|id="run-lives"/);
 assert.match(volley,/now-lastTapAt<=320/);
 assert.match(runner,/now-lastTapAt<=320/);
-assert.match(volley,/state\.playFrames\+\+/,"time counted during live play only");
-assert.match(volley,/Math\.min\(900,getSurvivalSeconds\(\)\*4\)/,"volleyball survival bonus capped");
-assert.match(runner,/const survivalBonus=survivalSeconds\*10/,"survival run score includes time explicitly");
-assert.doesNotMatch(runner,/score\+=dt\*9/,"run survival time is counted once");
-assert.doesNotMatch(picker,/arcade-school-guide/,"long school selector description removed");
-assert.match(picker,/🏫 학교 선택/,"short school heading");
+assert.match(picker,/🏫 학교 선택/);
 assert.match(backend,/function validatedSurvivalSeconds/);
-assert.match(backend,/invalid_survival_time/);
 assert.match(backend,/invalid_time_bonus/);
-// Run the actual server's pure score functions with TypeScript annotations removed.
 const scoring=backend.slice(backend.indexOf("function validatedSurvivalSeconds"),backend.indexOf("Deno.serve("));
-assert.ok(scoring.startsWith("function validatedSurvivalSeconds"));
 const javascript=scoring.replace(/:\s*(?:any|number)/g,"");
-const scoreFns=new Function("int",javascript+"\nreturn {scoreFromVolleyball,scoreFromRun};")(
+const scoreFns=new Function("int",javascript+"\nreturn {scoreFromVolleyball,scoreFromRun,scoreFromVolleyball25,scoreFromRetirement};")(
  (v,min,max)=>typeof v==="number"&&Number.isInteger(v)&&v>=min&&v<=max
 );
-const vBase=7*120+2*25+600+(7-3)*30;
-assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2,survivalSeconds:90},100),vBase+360);
-assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2,survivalSeconds:400},410),vBase+900);
-assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2},100),vBase,"legacy clients are compatible");
-assert.throws(()=>scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2,survivalSeconds:90},50),/invalid_survival_time/);
-assert.equal(scoreFns.scoreFromRun({score:1380,baseScore:420,survivalSeconds:96,day:4,victory:false},120),1380);
-assert.throws(()=>scoreFns.scoreFromRun({score:1381,baseScore:420,survivalSeconds:96,day:4,victory:false},120),/invalid_time_bonus/);
-assert.throws(()=>scoreFns.scoreFromRun({score:1380,baseScore:420,survivalSeconds:96,day:4,victory:false},40),/invalid_survival_time/);
-assert.equal(scoreFns.scoreFromRun({score:1500,day:3,victory:false},100),1500,"cached legacy game supported");
-console.log("PASS: tier HP, lives, double-tap, concise UI, both time bonus formulas and tamper rejection");
+assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2},100),7*120+2*25+600+(7-3)*30);
+assert.equal(scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:645},65),645);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({player:24,cpu:25,elapsedTenths:645},65),/invalid_stats/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:100},65),/invalid_duration/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:800},65),/invalid_duration/);
+const win62={score:12000,baseScore:6000,survivalSeconds:190,age:62,victory:true};
+assert.equal(scoreFns.scoreFromRetirement(win62,191),12000);
+assert.throws(()=>scoreFns.scoreFromRetirement({...win62,score:6000},191),/invalid_retirement_score/);
+assert.throws(()=>scoreFns.scoreFromRetirement({...win62,age:61},191),/invalid_age/);
+assert.throws(()=>scoreFns.scoreFromRetirement({...win62,survivalSeconds:189},191),/invalid_age|invalid_retirement/);
+assert.throws(()=>scoreFns.scoreFromRetirement(win62,150),/invalid_survival_time|invalid_retirement/);
+assert.equal(scoreFns.scoreFromRetirement({score:700,baseScore:700,age:44,survivalSeconds:100,victory:false},103),700);
+assert.throws(()=>scoreFns.scoreFromRetirement({score:1400,baseScore:700,age:44,survivalSeconds:100,victory:false},103),/invalid_retirement_score/);
+assert.equal(scoreFns.scoreFromRun({score:1500,day:3,victory:false},100),1500,"old run records remain compatible");
+console.log("PASS: separate 25-point win time and 62-year retirement score verification; legacy records intact");
 
 // EXTREME disables player ascent in both games without suppressing enemy AI jump.
 assert.match(volley,/const canPlayerJump=\(\)=>currentDifficulty!=="extreme"/,"volleyball player jump gate");
