@@ -6,6 +6,7 @@ on:
       - 'teacher-class-diary-play.html'
       - 'js/class-diary-play-v1.js'
       - 'js/class-diary-director-v1.js'
+      - 'js/class-diary-character-routes-v1.js'
       - 'js/class-diary-scenario-v1.js'
       - 'js/class-diary-incidents-v1.js'
       - 'js/class-diary-sound-v1.js'
@@ -33,6 +34,7 @@ jobs:
             'js/class-diary-scenario-v1.js'
             'js/class-diary-incidents-v1.js'
             'js/class-diary-director-v1.js'
+            'js/class-diary-character-routes-v1.js'
           )
           fail=0
           for file in "${files[@]}"; do
