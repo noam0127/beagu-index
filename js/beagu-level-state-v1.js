@@ -4,6 +4,7 @@
   try { if (window.self !== window.top) return; } catch (_) { return; }
   const indicator=document.getElementById('beaguLevelState');
   if (!indicator) return;
+  indicator.setAttribute('href','levels.html');
   const KEY='beagu-level-session-v1';
   const VERIFY_URL='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
   let generation=0;
@@ -16,13 +17,14 @@
     indicator.textContent=label;
     indicator.setAttribute('aria-label',aria);
     indicator.title=aria;
+    window.dispatchEvent(new CustomEvent('beagu:level-state-updated', {detail:{level:Number.isInteger(Number(level))?Number(level):null,status:level}}));
   };
   async function refresh(){
     const seq=++generation;
     const token=getToken();
     if(!token){
       lastValidatedToken='';
-      setState('0','Lv.0','Lv.0 공개 열람 · 눌러서 Lv.1 인증');
+      setState('0','Lv.0','현재 Lv.0 · 레벨 안내 보기');
       return;
     }
     if(token!==lastValidatedToken){
@@ -38,7 +40,7 @@
       if(response.status===401||response.status===403){
         lastValidatedToken='';
         try{if(getToken()===token)sessionStorage.removeItem(KEY);}catch(_){}
-        setState('0','Lv.0','Lv.0 공개 열람 · 인증 만료, 다시 인증하기');
+        setState('0','Lv.0','현재 Lv.0 · 인증 만료 · 레벨 안내 보기');
         return;
       }
       if(!response.ok)throw Error('AUTH_CHECK_UNAVAILABLE');
@@ -46,15 +48,16 @@
       if(seq!==generation||getToken()!==token)return;
       if(Number.isInteger(result?.level)&&result.level>=1){
         lastValidatedToken=token;
-        setState('1','Lv.1','Lv.1 참여자 인증됨 · 인증된 학교 검색으로 이동');
+        const tier=result.level>=2?2:1;
+        setState(String(tier),'Lv.'+tier,'현재 Lv.'+tier+' · 레벨 안내 보기');
       }else{
         lastValidatedToken='';
-        setState('0','Lv.0','Lv.0 공개 열람 · 눌러서 Lv.1 인증');
+        setState('0','Lv.0','현재 Lv.0 · 레벨 안내 보기');
       }
     }catch(_){
       if(seq!==generation)return;
       lastValidatedToken='';
-      setState('error','확인 불가','인증 상태를 확인할 수 없습니다 · 눌러서 인증 화면으로 이동');
+      setState('error','확인 불가','인증 상태 확인 불가 · 레벨 안내 보기');
     }
   }
   const refreshIfVisible=()=>{if(!document.hidden)void refresh();};

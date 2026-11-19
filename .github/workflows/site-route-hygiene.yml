@@ -20,6 +20,10 @@ on:
       - 'js/beagu-loading-v1.js'
       - 'styles/beagu-design-system-v1.css'
       - 'index.html'
+      - 'levels.html'
+      - 'js/beagu-level-guide-v1.js'
+      - 'styles/beagu-level-guide-v1.css'
+      - 'tests/level-guide-route.mjs'
       - 'search.html'
       - 'search-lv1.html'
       - 'school-report.html'
@@ -40,6 +44,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node tests/level-guide-route.mjs
       - run: node tests/site-route-hygiene.mjs
       - run: node tests/brand-ui-consistency.mjs
       - run: node tests/rolling-volleyball-loading.mjs

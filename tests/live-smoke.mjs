@@ -43,7 +43,7 @@ async function main() {
 
   // 사이트의 실제 캐시/배포 파일이 GitHub 체크아웃 버전과 일치하는지 검사.
   const assets = [
-    'index.html', 'search.html', 'search-lv1.html', 'search-lv2.html', 'school-report.html', 'release-policy.html',
+    'index.html', 'levels.html', 'styles/beagu-level-guide-v1.css', 'styles/beagu-level-state-v1.css', 'js/beagu-level-guide-v1.js', 'js/beagu-level-state-v1.js', 'search.html', 'search-lv1.html', 'search-lv2.html', 'school-report.html', 'release-policy.html',
     'js/master-percentiles-v1.2.js', 'js/visit-stats.js', 'js/percentile-chart.js',
     'js/level-search.js', 'js/lv2-edited-search.js',
     'js/school-mbti-v1.js', 'styles/school-mbti-v1.css',

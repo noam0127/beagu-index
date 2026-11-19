@@ -2,6 +2,8 @@
 .beagu-level-state::before{content:"";width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#a3b2c4}
 .beagu-level-state[data-level="1"]{background:#edf5ff;border-color:#b8d4ff;color:#1858bd}
 .beagu-level-state[data-level="1"]::before{background:#2563eb}
+.beagu-level-state[data-level="2"]{background:#f1efff;border-color:#d3ccff;color:#4c37ad}
+.beagu-level-state[data-level="2"]::before{background:#6956cc}
 .beagu-level-state:hover{border-color:#9ebbec;background:#f5f9ff}
 .beagu-level-state:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
 .beagu-unified-inner{padding-right:119px}
