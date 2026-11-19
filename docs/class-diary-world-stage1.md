@@ -5,7 +5,7 @@
 - supabase/functions/class-diary-world-v1/index.ts — 신규 읽기 전용 레벨2 승인 학교자료 API
 - teacher-class-diary.html — 학교 검색 및 세계 설정 확인용 개발 미리보기 (7일 시나리오 미구현)
 - scripts/test-class-diary-world.cjs — 회귀 검사
-- Supabase Edge Function class-diary-world-v1 v1 ACTIVE
+- Supabase Edge Function class-diary-world-v1 v2 ACTIVE
 - **기존 두 게임·기존 Edge Function·DB 스키마·트리거·설문 집계는 변경하지 않음**
 
 ## 운영 환경 재확인
@@ -74,12 +74,17 @@ POST /functions/v1/class-diary-world-v1
 - issues / coverage: 누락·상충·사용 가능한 정보 범위
 
 ## 검증 (2026-11-19)
-- 저장된 JS 모듈을 V8 환경에서 파싱·평가하고 테스트 원문을 실행: 14개 논리 검사 PASS.
+- 저장된 JS 모듈을 V8 환경에서 파싱·평가하고 테스트 원문을 실행: 데이터 품질·검수·지리·메타데이터 검사를 통과하고, 공식 지표 21개 전부에 사건 입력 조건이 연결됨.
 - 운영 DB에서 서로 다른 5개교를 읽어 실데이터로 생성 테스트: PASS. 서울 동산초(중), 부산 가남초(소), 강원 간성초(중, 읍), 경남 가고파초(대), 제주 귀덕초(소, 읍). 승인된 교원비율과 9·4 값은 값이 있을 때만 조건으로 사용됨.
-- Supabase Edge Function v1 ACTIVE 확인. 단, **레벨2 계정으로 실제 브라우저 POST를 수행하는 종단간 검사 및 GitHub Pages 반영 확인은 아직 미완료**.
+- Supabase Edge Function v2 ACTIVE 확인. GitHub Actions에서 실제 운영 API에 인증 없는 POST를 전송해 401 LEVEL2_REQUIRED를 확인함. **유효한 레벨2 계정의 실제 브라우저 POST 및 GitHub Pages 반영 확인은 아직 미완료**.
 
 ## 후속 과제
 1. GIS 등 공식 근거를 통해 지역 복합 태그 검증·적용.
 2. 학교 MBTI의 공개 승인 API 결과를 세계 데이터에 통합.
 3. 연도×문항×세부 항목×보기별 공개 기준 검토 후 2단계 서사 매핑 100% 검사.
 4. 실제 소설 장면·호감도·엔딩·저장·점수는 3~5단계에서 구현. 이 시점에서는 플레이 가능 게임이라고 홍보하지 않음.
+
+## 2024년 학생수 분포 검증과 남은 공식정보
+학생수의 같은 기준연도에 값이 상충하는 8개교를 제외한 3,342개교 중 150명 이하 511개교(15.3%), 151~600명 1,511개교(45.2%), 601명 이상 1,320개교(39.5%). 세 구간을 임시 규칙으로 유지하되 추후 게임 밸런스에서 조정할 수 있음.
+운영 학교 명부에는 개교일, 전입·전출 추이, 지리 좌표, 지리 검증 태그의 정규화 열이 확인되지 않았으므로 현재 세계 생성기에서 해당 항목은 명시적으로 null 처리. 교육청명/교육청 코드/홈페이지/원자료 출처/동기화 시각은 v2 서버 응답과 최신 생성기 basic 객체에 포함.
+GitHub Actions class-diary-world-validation.yml에서 Node 내장 assert 기반 자동 검사와 운영 API의 무인증 접근 차단 검사를 실행한다.
