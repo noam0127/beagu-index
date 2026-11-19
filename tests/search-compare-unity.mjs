@@ -22,11 +22,10 @@ for(const [key,html] of Object.entries(pages)){
     key+' loads fresh common CSS');
   assert.ok(html.includes('class="beagu-levelup-') ||
     html.includes('beagu-levelup-card'),key+' uses shared level-up card');
-  assert.ok(html.includes('data-beagu-open-levelup') || html.includes('compareLv1Form') ||
-    html.includes('lv1QuickForm'),key+' retains functional levelup entry');
+  assert.ok(html.includes('compareLv1Form') || html.includes('lv1QuickForm') || html.includes('loginForm'),key+' retains original Level1 verification form');
   assert.ok(html.includes('id="beaguLevelState"'),key+' retains fixed level status');
-  assert.ok(html.includes('js/beagu-level-state-v1.js?v=20261120-auth-unity1'),
-    key+' busts cache for temporary Lv2 label');
+  assert.ok(html.includes('js/beagu-level-state-v1.js?v=20261120-lv1-plain1'),
+    key+' loads the restored inline auth state script');
 }
 for(const key of ['public','level1']){
   const html=pages[key];
@@ -42,11 +41,12 @@ for(const key of ['public','level1']){
 }
 assert.ok(pages.level1.includes('class="beagu-levelup-card beagu-levelup-status"'),
   'authenticated search status uses the same verification card');
-assert.ok(pages.level1.includes('data-beagu-open-levelup>고유번호 인증</button>'),
-  'authenticated Lv1 can open existing server-backed modal');
+assert.ok(!pages.level1.includes('data-beagu-open-levelup') && !pages.level1.includes('고유번호 인증</button>'),
+  'authenticated Lv1 has no identity-code verification button');
 assert.ok(pages.level1.includes('id="logoutButton"'),'Lv1 logout intact');
 assert.ok(pages.public.includes('id="lv1QuickForm"'),'public auth form intact');
 assert.ok(pages.level1.includes('id="loginForm"'),'Lv1 form intact');
+for(const html of Object.values(pages)) assert.ok(html.includes('>레벨1 인증</button>'),'Native Lv1 form has consistent button label');
 assert.ok(pages.comparison.includes('id="compareLv1Form"'),'compare form intact');
 assert.ok(pages.comparison.includes('beagu-auth-card beagu-levelup-card'),
   'comparison uses the same verification card');
