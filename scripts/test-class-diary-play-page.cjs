@@ -1,4 +1,4 @@
-/* Stage 4 checks: no game persistence, safe markup, stable Lv2 access. */
+/* Stage 4: no automatic game persistence, safe markup, Lv2 access, opt-in checkpoints. */
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -113,7 +113,9 @@ assert(play.src.includes('schoolContext.forDay(world,game.day)'));
 assert(play.src.includes("$('statVoice').textContent"));
 assert(play.src.includes("$('statBoundary').textContent"));
 assert(!play.src.includes('type="checkbox"'));
-assert(play.src.includes('기록은 저장되지 않습니다'));
+assert(play.src.includes('기록은 자동 저장되지 않습니다'), 'Opt-in save must be disclosed');
+assert(play.src.includes('src="js/class-diary-save-v1.js?v=20261120-1"'));
+assert(play.src.includes('BeaguClassDiarySave.mount('));
 assert(play.src.includes("localStorage.removeItem(key)"));
 assert(!play.src.includes('localStorage.setItem('));
 assert(!play.src.includes('localStorage.getItem('));
@@ -133,4 +135,4 @@ for(const id of ['profileForm','setup','novel','ending','chapterText','choiceBut
 }
 assert(!play.src.includes('id="resumeBox"'));
 assert(!play.src.includes('id="records"'));
-console.log('PASS: Lv2 page syntax, no game persistence, legacy cleanup, stage4 director UI, no unsafe HTML insertion');
+console.log('PASS: Lv2 page syntax, no automatic persistence, opt-in save UI, legacy cleanup, safe markup');
