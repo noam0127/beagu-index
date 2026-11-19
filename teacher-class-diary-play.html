@@ -185,38 +185,13 @@ button{font:inherit;cursor:pointer}
 <p class="muted">주인공은 성인 초등교사입니다. 등장하는 동료 역시 성인 교사이며 모두 창작 인물입니다. 성별이나 MBTI로 성격·운명을 단정하거나 불이익을 주지 않습니다.</p>
 <form id="profileForm">
 <div class="form-grid">
+<div><label for="playerName">주인공 이름</label><input id="playerName" name="playerName" type="text" minlength="2" maxlength="8" pattern="[가-힣]{2,8}" placeholder="예: 최윤호" autocomplete="off" required><div class="field-note">한글 2~8자 · 게임이 진행되는 동안에만 사용합니다.</div></div>
 <div><label for="age">주인공 나이</label><input id="age" type="number" min="20" max="75" step="1" placeholder="예: 32" required><div class="field-note">성인 주인공만 선택할 수 있습니다.</div></div>
 <div><label for="gender">주인공 성별</label><select id="gender" required><option value="">선택하세요</option><option value="woman">여성</option><option value="man">남성</option><option value="undisclosed">밝히지 않음</option></select></div>
 <div><label for="mbti">주인공 MBTI</label><select id="mbti" required><option value="">선택하세요</option></select><div class="field-note">독백의 뉘앙스에만 일부 반영됩니다.</div></div>
 <div><label for="partner">관계를 쌓을 동료 인물</label><select id="partner" required><option value="">선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">동학년 선생님 · 우정 중심</option></select></div>
-<div><label for="experience">교직 경력 · 가상 설정</label>
-<select id="experience" required><option value="new">신규·저경력 교사</option><option value="mid" selected>경력 교사</option><option value="senior">고경력 교사</option></select></div>
-<div><label for="duty">업무분장 · 가상 설정</label>
-<select id="duty" required><option value="none">별도 업무 없음</option><option value="general" selected>일반 업무</option><option value="academic">교무 업무 담당</option><option value="violence">학교폭력 관련 업무 담당</option></select></div>
-<div><label for="classTone">학급 상황 · 가상 설정</label>
-<select id="classTone" required><option value="steady" selected>차근차근 적응하는 학급</option><option value="demanding">첫날부터 지도가 많이 필요한 학급</option></select></div>
-<div><label for="workCulture">학교 업무 분위기 · 가상 설정</label>
-<select id="workCulture" required><option value="collaborative" selected>담당을 확인하고 서로 돕는 분위기</option><option value="deflecting">담당하지 않은 일이 떠넘겨지기도 하는 분위기</option><option value="hostile">교직원 사이에 갈등과 적대감이 있는 분위기</option></select></div>
 </div>
-<details class="extended-setup">
-<summary>학년·친목·관행 세부 설정 <span style="font-size:12px;color:#6a8294">선택 사항</span></summary>
-<div class="form-grid" style="margin:16px 0">
-<div><label for="gradeBand">담임 학년</label>
-<select id="gradeBand"><option value="lower" selected>저학년(1~2학년)</option><option value="middle">중학년(3~4학년)</option><option value="upper">고학년(5~6학년)</option></select></div>
-<div><label for="sportsCulture">교직원 체육활동 · 가상 상황</label>
-<select id="sportsCulture"><option value="optional" selected>희망자 중심으로 참여</option><option value="pressured">참석 압박을 느끼는 분위기</option><option value="none">관련 모임이 없음</option></select></div>
-<div><label for="assignmentPractice">업무배정 관행 · 가상 상황</label>
-<select id="assignmentPractice"><option value="balanced" selected>담당과 경력을 함께 고려</option><option value="newcomer_first">신규에게 특정 업무 우선 배정</option></select></div>
-<div><label for="informalRequests">성별·나이에 따른 비공식 부탁 · 가상 상황</label>
-<select id="informalRequests"><option value="respectful" selected>서로 편하게 거절 가능</option><option value="stereotyped">성별·나이를 이유로 부탁</option></select></div>
-<div id="fictionalSchoolSizeField"><label for="fictionalSchoolSize">체험판의 학교 규모 · 가상 상황</label>
-<select id="fictionalSchoolSize"><option value="small">소규모 학교</option><option value="medium" selected>중규모 학교</option><option value="large">대규모 학교</option></select></div>
-<div><label for="storyRegion">체험판의 지역 배경 · 가상 상황</label>
-<select id="storyRegion"><option value="other" selected>지역 특성 별도 선택 안 함</option><option value="rural">읍·면·농촌</option><option value="urban">도심</option></select></div>
-</div>
-<p class="muted">가상 조건에 따라 장면이 달라집니다. 실제 학교 규모·성비·2정교사 비율과 특정 관행을 직접 연결하거나 추정하지 않습니다.</p>
-</details>
-<p class="muted">위 설정은 **선택한 학교의 실제 평가가 아니라 이야기의 가상 조건**입니다. 상세페이지의 검증된 공식 수치는 별도로 구분해 표시합니다.</p>
+<p id="worldAutoNote" class="muted">학교의 규모와 위치는 검증된 공개 자료가 있으면 자동 반영합니다. 확인되지 않는 교직문화·업무분장·학급 분위기는 실제 학교의 특성으로 추정하지 않고 가상의 이야기로 구성합니다.</p>
 <p class="privacy">주인공 설정·선택·진행 상황·최종 결과는 저장하지 않습니다. 게임을 진행하는 동안에만 화면에 표시됩니다.</p>
 <div class="actions"><button type="submit" class="primary">첫날의 교실 열기</button><a class="linklike" href="teacher-class-diary.html">학교 변경</a></div>
 </form>
@@ -483,10 +458,10 @@ async function boot(){
   world=fixture.world;
   plan=fixture.plan;
   $('accessLabel').textContent='공개 체험판 · 로그인 없이 플레이';
-  $('fictionalSchoolSizeField').hidden=false;
   $('schoolLine').textContent='가상의 초등학교 · 순수 창작 · 실제 학교 자료 사용 안 함';
   document.title='나의 OO한 학급일지 · 무료 체험판';
   show('setup');
+  $('worldAutoNote').textContent='이 체험판은 실제 학교 정보를 사용하지 않습니다. 학교 규모·지역·업무·교직문화는 가상의 배경으로 구성됩니다.';
   status('체험판을 열었습니다. 주인공을 설정하고 바로 시작하세요.');
   return;
  }
@@ -499,7 +474,6 @@ async function boot(){
   ]);
   if(!catalogResponse.ok)throw Error('CATALOG_UNAVAILABLE');
   world=window.BeaguClassDiaryWorld.generateWorld(payload);
-  $('fictionalSchoolSizeField').hidden=true;
   if(!world.eligible||world.basic.id!==schoolId){fail('공개·검증된 배구지수 조사 자료가 없어 이 학교는 아직 플레이할 수 없습니다.');return;}
   const catalog=await catalogResponse.json();
   const blueprint=window.BeaguClassDiaryNarrative.createBlueprint(catalog,window.Beagu2026Questionnaire);
@@ -515,6 +489,7 @@ async function boot(){
   }
   plan=window.BeaguClassDiaryNarrative.scenePlan(blueprint,world,signals);
   $('schoolLine').textContent=world.basic.name+' · '+(world.basic.sido||'')+' · 공개 검증된 조사 연도 '+world.publishedYears.join(', ');
+  $('worldAutoNote').textContent='승인된 공식 자료에서 확인된 학교 규모·행정구역만 이야기 배경에 반영합니다. 학년·업무·교직문화와 인물의 행동은 가상 설정이며 실제 학교에 대한 평가가 아닙니다.';
   show('setup');
   status('학교 세계와 공개 자료를 확인했습니다. 주인공을 설정해 주세요.');
  }catch(err){
@@ -531,15 +506,13 @@ $('profileForm').addEventListener('submit',e=>{
  e.preventDefault();
  try{
   if(!soundPreferenceTouched)sound.setEnabled(true);updateMusicButton();sound.setMusicVolume(Number($('musicVolume').value)/100);
-  game=engine.createGame(world,plan,{age:Number($('age').value),
-   gender:$('gender').value,partner:$('partner').value,mbti:$('mbti').value,
-   experience:$('experience').value,duty:$('duty').value,
-   classTone:$('classTone').value,workCulture:$('workCulture').value,
-   gradeBand:$('gradeBand').value,sportsCulture:$('sportsCulture').value,
-   assignmentPractice:$('assignmentPractice').value,informalRequests:$('informalRequests').value,
-   fictionalSchoolSize:$('fictionalSchoolSize').value,storyRegion:$('storyRegion').value});
+  game=engine.createGame(world,plan,engine.inferredProfile(world,{
+   name:$('playerName').value,
+   age:Number($('age').value),gender:$('gender').value,
+   mbti:$('mbti').value,partner:$('partner').value
+  }));
   render();
- }catch(err){status('주인공 설정을 확인해 주세요. 성인 나이와 모든 선택이 필요합니다.');}
+ }catch(err){status('이름은 한글 2~8자로, 나이는 20세 이상으로 입력하고 나머지 항목을 선택해 주세요.');}
 });
 $('nextBtn').addEventListener('click',()=>{
  sound.note('transition');
