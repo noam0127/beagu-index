@@ -121,13 +121,13 @@ assert.match(backend,/average>=80\?"extreme":average>=60\?"very_hard":average>=4
 assert.match(picker,/difficultyLabels=\{easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"\}/,"five English difficulty labels");
 assert.match(backend,/!selected\.eligible/,"server refuses missing years");
 assert.match(backend,/!currentSchool\?\.eligible/,"previously issued sessions are rechecked");
-assert.match(backend,/arcade_game_scores\?on_conflict=session_id&select=created_at/,"unique session key protects record against double submission");
+assert.match(backend,/arcade_game_scores\?on_conflict=session_id&select=id,created_at/,"unique session key protects record against double submission");
 assert.match(backend,/resolution=ignore-duplicates,return=representation/,"only one score per match");
 assert.match(backend,/e\.created_at===inserted\[0\]\.created_at/,"anonymous timestamp and score identify new record placement");
 assert.match(backend,/nickname_not_supported/,"API rejects user-entered nicknames");
 assert.doesNotMatch(backend,/nickname:"ANON"|select:"nickname/,"API neither stores nor exposes nicknames");
 assert.doesNotMatch(backend,/existing\.length>=10&&score<=existing\[9\]\.score/,"all games save finished results below TOP10");
-assert.ok(backend.indexOf('"arcade_game_scores?on_conflict=session_id&select=created_at"')<backend.indexOf('const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"})'),"score persists before session completion marker");
+assert.ok(backend.indexOf('"arcade_game_scores?on_conflict=session_id&select=id,created_at"')<backend.indexOf('const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"})'),"score persists before session completion marker");
 
 assert.match(volley,/new window\.ArcadeSchoolPicker/);
 assert.match(runner,/new window\.ArcadeSchoolPicker/);
