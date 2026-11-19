@@ -286,7 +286,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.spin=0;
     ball.shadowFrames=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;
-    state.healFrames=0;
     ball.trail.length=0;
     activeBalls.length=1;
     if(currentDifficulty==="extreme"){
@@ -730,6 +729,17 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
      px(xx,yy,7+(i%2)*4,9+(i%3)*3,auraColor);
    }
    if(look.aura===2){px(-26,-77,52,5,"#ffcb64");px(-14,-86,28,6,"#ff9955");}
+   ctx.restore();
+ }
+ // EASY: animated feather wings stay behind the playable character, not clones.
+ if(p===left&&currentDifficulty==="easy"){
+   const flap=Math.round(Math.sin(state.playFrames*.18)*10);
+   ctx.save();ctx.globalAlpha=.92;
+   px(-68,-46-flap,33,13,"#b9edff");px(-80,-39-flap,27,11,"#f0fdff");
+   px(-70,-26-flap,29,11,"#def8ff");px(-56,-14,22,12,"#77c9f4");
+   px(36,-46-flap,33,13,"#b9edff");px(53,-39-flap,27,11,"#f0fdff");
+   px(41,-26-flap,29,11,"#def8ff");px(34,-14,22,12,"#77c9f4");
+   px(-81,-48-flap,12,8,"#ffffff");px(69,-48-flap,12,8,"#ffffff");
    ctx.restore();
  }
  px(-35,30,70,7,"rgba(25,45,77,.15)");
