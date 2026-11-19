@@ -145,9 +145,11 @@ function capture(){
  const source=$(isOutcome?'outcomeText':'chapterText');
  if(!source)return;
  // Log only the completed sentence, never partial typing or the blinking cursor.
- const row=source.querySelector('p.diary-literary-line');
- if(row&&(!row.classList.contains('diary-literary-ready')||row.classList.contains('diary-literary-typing')))return;
- const text=row?[...row.childNodes].filter(node=>node.nodeType===3).map(node=>node.nodeValue).join('').trim():source.textContent.trim();
+ const ready=[...source.querySelectorAll('p.diary-literary-line.diary-literary-ready:not([hidden])')];
+ const row=ready[ready.length-1];
+ if(source.querySelector('p.diary-literary-line')&&!row)return;
+ // Keep the narration log sentence-sized, never the unshown page or cursor.
+ const text=row?(row.getAttribute('aria-label')||row.textContent).trim():source.textContent.trim();
  if(text)record(text,isOutcome?'선택 결과':'대사');
 }
 const watched=$('vnDialogueSlot');

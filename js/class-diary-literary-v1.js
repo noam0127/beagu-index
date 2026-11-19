@@ -121,8 +121,9 @@ function paginate(paragraphs,source){
  const text=source || $('#chapterText');
  const reader=text&&text.closest('.vn-dialogue,.outcome');
  if(!enabled||!reader||!reader.clientHeight||!text.clientWidth){
-  return paginateForHeight(sentences,Math.max(80,root.innerHeight*.5),
-   current=>current.length*(parseFloat(root.getComputedStyle(text).lineHeight)||32)*2);
+  const widthChars=Math.max(16,Math.floor((root.innerWidth||390)/13));
+  return paginateForHeight(sentences,Math.max(96,(root.innerHeight||700)*.5),
+   current=>current.reduce((height,item)=>height+Math.max(1,Math.ceil(graphemes(item.text).length/widthChars))*32,0));
  }
  const style=root.getComputedStyle(reader);
  const maxHeight=Math.max(48,reader.clientHeight
@@ -132,8 +133,8 @@ function paginate(paragraphs,source){
  // Use the same prose / paragraph styles as the actual page, offscreen.
  for(const [property,value] of Object.entries({
   position:'absolute',left:'-10000px',top:'0',display:'block',width:text.clientWidth+'px',
-  height:'auto',minHeight:'0',maxHeight:'none',flex:'none',visibility:'hidden',
-  pointerEvents:'none',overflow:'visible',boxSizing:'border-box'
+  height:'auto','min-height':'0','max-height':'none',flex:'none',visibility:'hidden',
+  'pointer-events':'none',overflow:'visible','box-sizing':'border-box'
  }))probe.style.setProperty(property,value,'important');
  reader.append(probe);
  function measureHeight(items){

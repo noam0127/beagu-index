@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const sound=require('../js/class-diary-sound-v1.js');
-const names=['daily','playful','heartfelt','tension','tender','restful','bright','ending','quiet','comic','intimate','reconcile'];
+const names=['daily','playful','heartfelt','tension','tender','restful','bright','ending','quiet','comic','intimate','reconcile','wildflowers','withhands','unraveling','incredulity'];
 assert.deepEqual(Object.keys(sound.TRACKS),names);
 for(const key of names){
  const t=sound.TRACKS[key];
@@ -65,11 +65,36 @@ assert.equal(sound.setSfxVolume(-1),0);
 sound.setEffectsEnabled(false);sound.note('choice');sound.setEffectsEnabled(true);
 sound.note('paper');sound.note('step');sound.note('door');sound.note('cup');
 sound.setEnabled(false);
-assert(sound.credit().tracks.length===12);
+assert(sound.credit().tracks.length===16);
 assert.equal(sound.credit().recordings.length,3);
 // The semester is scored by actual chapter, never the 7-day music cycle.
 const semester=require('../js/class-diary-semester-v1.js');
 assert.equal(sound.SEMESTER_SCORE.length,36);
+assert.equal(sound.SEMESTER_REFLECTIONS.length,36);
+const chapterTracks=Array.from({length:36},(_,i)=>sound.semesterScore(i+1).track);
+const counts=Object.fromEntries(names.map(key=>[key,chapterTracks.filter(x=>x===key).length]));
+assert(new Set(chapterTracks).size>=14,'Use at least 14 tracks across 36 chapters');
+assert(Math.max(...Object.values(counts))<=5,'No one track should dominate 36 episodes');
+for(let i=1;i<36;i++)assert.notEqual(chapterTracks[i],chapterTracks[i-1],
+ 'Adjacent chapters should not repeat exactly the same music: '+(i+1));
+for(const key of ['wildflowers','withhands','unraveling','incredulity','playful','comic','daily'])
+ assert(chapterTracks.includes(key),'Added or underused mood must appear in a chapter: '+key);
+for(const id of [6,12,18,28,33,34,36]){
+ const friendship=sound.semesterScore(id,{partner:'none'});
+ assert(!['intimate','tender'].includes(friendship.track),'Minseo must not have romantic music: '+id);
+}
+for(const id of [1,3,11,14,19,20,21,23,25,26]){
+ const main=sound.semesterScore(id);
+ assert(!['tender','intimate','playful','comic'].includes(main.track),
+  'Student or parent distress cannot use romantic/playful music: '+id);
+ for(const choice of ['0','1','2']){
+  const reflection=sound.semesterScore(id,{reflection:true,choice,partner:'none'});
+  assert(!['tender','intimate','playful','comic'].includes(reflection.track),
+   'Student or parent distress cannot use romantic/playful outcome music: '+id);
+ }
+}
+assert(new Set(Array.from({length:36},(_,i)=>sound.semesterScore(i+1,{reflection:true,choice:'2',partner:'woman'}).track)).size>=4,
+ 'Reflective option 2 must not collapse into only quiet/restful');
 assert.equal(semester.validate().episodes,36);
 for(let i=1;i<=36;i++){
  const scene=semester.SCENES[i-1],cue=sound.semesterScore(i);
@@ -114,4 +139,4 @@ assert(semesterPage.includes("sound.setAmbience(null);\n const ending=game.endin
 const src=fs.readFileSync(path.join(__dirname,'../js/class-diary-sound-v1.js'),'utf8');
 assert(!/localStorage|sessionStorage|indexedDB|sendBeacon|fetch\(/.test(src),
  'Sound module cannot store gameplay, preferences or transmit user data');
-console.log('PASS: 36 scored chapters, reflection/route cues, 12 BGM, optional ambience, 7-day continuity and no persistence');
+console.log('PASS: 36 chapters, 108 varied reflection cues, 16 credited BGM, student-safe scenes, 7-day continuity and no persistence');

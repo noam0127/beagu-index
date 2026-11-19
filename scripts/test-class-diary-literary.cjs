@@ -1,4 +1,4 @@
-/* Contract: one complete Korean sentence per tap; retain measuring helpers for layout. */
+/* Contract: a complete Korean sentence appears per tap, accumulating until the box fills. */
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -29,8 +29,15 @@ for(const forbidden of ['diary-literary-echo','localStorage','sessionStorage','f
 const sentences=api.splitSentences('교실은 조용했다. “돌아올게요.” 그가 고개를 끄덕였다!');
 assert.deepEqual(sentences,['교실은 조용했다.','“돌아올게요.”','그가 고개를 끄덕였다!'],'Split at sentence endings including quotations');
 assert.deepEqual(api.splitSentences('2027.03.08 새 학기. 3.14가 보였다.'),['2027.03.08 새 학기.','3.14가 보였다.'],'Do not split decimals or date strings');
-assert.deepEqual(api.paginate(original).flat().map(x=>x.text),original.flatMap(api.splitSentences),'Each tap yields one complete sentence in order');
+assert.deepEqual(api.splitSentences('“여기야. 괜찮아?” 그는 물었다. “응” 고개를 끄덕였다.'),
+ ['“여기야. 괜찮아?”','그는 물었다.','“응”','고개를 끄덕였다.'],
+ 'Preserve sentences inside quotations until the closing quote, even without punctuation');
+const expected=original.flatMap(api.splitSentences);
+assert.deepEqual(api.paginate(original).flat().map(x=>x.text),expected,'Each tap yields one complete sentence in order');
+const packed=api.paginateForHeight(expected.map(text=>({text,paragraphEnd:true})),101,items=>items.length*33);
+assert.deepEqual(packed.map(page=>page.length),[3,2],'Sentences should fill each page to capacity without adding or losing any');
+assert(packed[0].length>1,'A page must retain multiple sentences rather than replacing them');
 assert.equal(typeof api.setTypingSound,'function','Sound hook must respect existing SFX controls');
 assert(implementation.includes("className='diary-reading-cursor'"),'A blinking cursor must appear while waiting');
 assert(implementation.includes('writingTimer=root.setInterval'),'Letters should appear with a brief typewriter animation');
-console.log('PASS literary v3: sentence splitting, pause cursor, typewriter and original line layout helpers');
+console.log('PASS literary v4: punctuation/quote splitting, page capacity packing, full sentences and typing cursor');
