@@ -125,7 +125,7 @@ assert.doesNotMatch(volley,/keys\.spike/,"manual spike input removed");
 
 assert.match(volley,/R = 48;/,"volleyball radius enlarged 1.5x from 32 to 48");
 assert.match(volley,/NET_TOP = 342/,"net rises from 97px to 109px");
-assert.match(volley,/43 \* \.75 \* battle\.allyReach/,"baseline reach is tier-adjusted");
+assert.match(volley,/43\s*\*\s*\.75\s*\*\s*battle\.allyReach/,"forearm reach remains tier-adjusted");
 assert.doesNotMatch(volley,/data-key="jump"/,"touch jump button removed");
 assert.doesNotMatch(volley,/class="touch"/,"empty touch control region removed");
 assert.match(volley,/touchControl\.targetY/,"volleyball touch flight has vertical axis");
@@ -512,7 +512,7 @@ assert.match(runner,/if\(u\.id==="speed"\)/);
 assert.match(runner,/if\(u\.id==="guard"\)/);
 assert.match(runner,/if\(u\.id==="heal"\)/);
 assert.match(runner,/activeEvent&&eventSeconds>0/,"events only appear while active");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-no-round1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-natural-receive1/);
 assert.match(html,/teacher-run\.html\?v=20261119-arcade-fun1/);
 console.log("PASS: volleyball impact and boss cues; run 5-day events, timed bonuses, upgrade choices and Friday pattern");
 
@@ -540,7 +540,7 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-no-round1")&&
+  if(site.body.includes("teacher-volleyball.html?v=20261119-natural-receive1")&&
      site.body.includes("teacher-run.html?v=20261119-arcade-fun1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
@@ -551,7 +551,7 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-no-round1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-natural-receive1/);
 assert.match(site.body,/teacher-run\.html\?v=20261119-arcade-fun1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
