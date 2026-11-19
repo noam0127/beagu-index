@@ -1,0 +1,40 @@
+name: Class diary desktop and mobile browser E2E
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'teacher-class-diary-play.html'
+      - 'js/class-diary-play-v1.js'
+      - 'js/class-diary-scenario-v1.js'
+      - 'js/class-diary-incidents-v1.js'
+      - 'js/class-diary-sound-v1.js'
+      - 'js/class-diary-visual-v1.js'
+      - 'scripts/test-class-diary-browser.cjs'
+      - '.github/workflows/class-diary-browser-e2e.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependencies
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Serve site and complete both game routes
+        run: |
+          python3 -m http.server 8123 --bind 127.0.0.1 >/tmp/diary-web.log 2>&1 &
+          node scripts/test-class-diary-browser.cjs
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: class-diary-desktop-mobile
+          path: artifacts/class-diary/
+          if-no-files-found: ignore
