@@ -291,7 +291,7 @@ function schedule(state,world){
    2:[w.grade==='lower'?'seat_song':null,'break_clean',w.fictionalCulture==='collaborative'?'shared_break':'hostile_break','late_guard'],
    3:[w.locale==='rural'?'wildlife':null,'gender_duty'],
    4:[w.fictionalCulture==='collaborative'?'shared_meeting':'hostile_meeting','sport'],
-   5:[w.fictionalCulture==='deflecting'&&w.scale==='large'?'friendship_chair':
+   5:[['deflecting','hostile'].includes(w.fictionalCulture)&&w.scale==='large'?'friendship_chair':
        w.fictionalCulture==='collaborative'?'barbecue':null]
  };
  return (days[d]||[]).filter(Boolean);
@@ -337,6 +337,17 @@ function choose(state,world,id){
    if(!Object.prototype.hasOwnProperty.call(result.stats,k))throw Error('UNEXPECTED_STAT');
    result.stats[k]=limit(result.stats[k]+v);
  }
+ /* 같은 교실·행사 사건도 교직원 간 지원 여부에 따라 소진의 정도가 달라진다.
+  * 이 수치는 체험판 가상 설정의 영향이며 특정 학교의 실제 평가가 아니다. */
+ const climate=result.profile.workCulture;
+ const impact=climate==='collaborative'?
+   {trust:3,fatigue:-3,support:4}:
+   climate==='hostile'?{trust:-4,fatigue:4,support:-5}:
+   {trust:-2,fatigue:3,support:-3};
+ for(const [key,delta] of Object.entries(impact)){
+   if(Object.prototype.hasOwnProperty.call(result.stats,key))
+     result.stats[key]=limit(result.stats[key]+delta);
+ }
  /* 같은 일이어도 도움을 받는 문화인지, 서로 탓하는 문화인지에 따라
     교사가 느끼는 피로와 지지 경험은 달라진다. 가상 게임 지표일 뿐 실제 학교 평가가 아니다. */
  if(['shared_break','shared_meeting','barbecue'].includes(current.id)){
@@ -351,8 +362,15 @@ function choose(state,world,id){
  result.incidentEvents.push({day:state.day,id:current.id,choiceId:id});
  const name=result.profile.partner==='man'?'현우 선생님':
   result.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
+ const consequences=choice.reply.map(x=>x.replace(/\{colleague\}/g,name));
+ if(climate==='collaborative')
+   consequences.push('“다음 준비는 제가 나눠 할게요.” 동료가 먼저 자리를 당겼다. 일이 줄지 않아도 혼자서 버티는 학교는 아니었다.');
+ else if(climate==='hostile')
+   consequences.push('일보다 서로의 말을 견디는 시간이 더 길었다. 동료를 경계하는 분위기를 혼자 바꿀 수는 없었다.');
+ else
+   consequences.push('책임을 나누어야 할 때에도 서로 눈치를 보는 분위기가 남았다. 부탁과 떠넘김은 다르다는 생각이 들었다.');
  result.incidentReflection={day:state.day,id:current.id,
-   paragraphs:choice.reply.map(x=>x.replace(/\{colleague\}/g,name)),
+   paragraphs:consequences,
    line:choice.line.replace(/\{colleague\}/g,name)};
  return result;
 }
