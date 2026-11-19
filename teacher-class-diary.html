@@ -32,7 +32,7 @@ footer{font-size:13px;color:#738598}
 </head>
 <body>
 <main>
-<header><a class="brand" href="index.html">B · BA EGUINDEX</a><a href="search-lv2.html">레벨2 인증</a></header>
+<header><a class="brand" href="index.html">B · BAEGUINDEX</a><a href="search-lv2.html">레벨2 인증</a></header>
 <div class="badge">1단계 · 학교 세계 생성기 시범</div>
 <h1>나의 OO한 학급일지</h1>
 <p class="muted">학교마다 다른 일주일이 시작될 준비를 합니다. 이 화면은 현재 학교별 공식정보를 검증하는 개발용 미리보기이며, 이야기·관계·게임 기록은 아직 제공하지 않습니다.</p>
@@ -66,7 +66,7 @@ function render(world){
   $('identity').textContent=[world.basic.sido,world.basic.office,world.basic.address].filter(Boolean).join(' · ');
   $('tags').replaceChildren();
   const scale={small:'소규모 (150명 이하)',medium:'중규모 (151~600명)',large:'대규모 (601명 이상)'};
-  if(world.basic.scale)$('tags').append(node('span',scale[world.basic.scale]));
+  if(world.basic.scale){const s=node('span',scale[world.basic.scale]);s.className='chip';$('tags').append(s);}
   for(const t of world.geography.tags){const chip=node('span',t.label);chip.className='chip';$('tags').append(chip)}
   $('eligibility').textContent=world.eligible?
     '플레이 조건 충족 · 공개·검증된 조사연도: '+world.publishedYears.join(', '):
