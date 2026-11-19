@@ -189,8 +189,14 @@
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="postit.html">포스트잇</a><a href="challenge.html" aria-current="page">챌린지</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 <main id="main-content">
-  <section id="challengeAccessPanel" class="challenge-access-panel" aria-labelledby="challengeAccessTitle">
-    <h1 id="challengeAccessTitle">Lv.1 인증</h1>
+  <section id="challengeAccessPanel" class="challenge-access-panel beagu-auth-card beagu-levelup-card" aria-labelledby="challengeAccessTitle">
+    <div class="beagu-auth-heading">
+      <h1 id="challengeAccessTitle">레벨업 인증</h1>
+      <div class="beagu-auth-actions">
+        <span id="challengeAccessBadge" class="beagu-auth-badge" role="status" aria-live="polite">확인 중</span>
+        <button id="challengeLogout" class="beagu-auth-logout" type="button" hidden>로그아웃</button>
+      </div>
+    </div>
     <p id="challengeAccessFeedback" class="challenge-access-feedback" role="status" aria-live="polite">인증 상태 확인 중…</p>
     <form id="challengeAccessForm" autocomplete="off" hidden>
       <label for="challengeAccessCode">참여코드</label>
@@ -200,7 +206,6 @@
     <p class="challenge-access-help"><a href="survey.html">참여코드 받기 · 조사 참여</a></p>
   </section>
   <div id="challengeProtected" hidden>
-    <div class="challenge-auth-status"><span>Lv.1 인증 완료</span><button id="challengeLogout" type="button">인증 해제</button></div>
   
 
 
@@ -228,9 +233,8 @@
     <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
   </section>
 
-  <section class="challenge-lv2-pending" aria-label="레벨업 인증 안내" data-html2canvas-ignore="true">
-    <p class="challenge-lv2-description">고유번호를 인증하면 Lv.2(임시)로 표시됩니다. 포스트잇 작성은 정식 로그인 계정 생성 후 이용할 수 있습니다.</p>
-    <button type="button" class="beagu-levelup-trigger" data-beagu-open-levelup>레벨업 인증</button>
+  <section class="challenge-lv2-pending" aria-label="정식 Lv.2 계정 안내" data-html2canvas-ignore="true">
+    <p class="challenge-lv2-description">Lv.2(임시)는 고유번호 인증 상태입니다. 포스트잇 작성은 정식 계정 생성 후 이용할 수 있습니다.</p>
   </section>
 
     <section class="beagu-xp" data-beagu-xp data-xp-state="loading" aria-label="2026년 챌린지 목표 달성률">
