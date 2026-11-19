@@ -41,7 +41,7 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
   const raw=await response.text();return raw?JSON.parse(raw):null;
 }
 async function top(game: Game): Promise<Entry[]> {
-  const q = new URLSearchParams({select:"score,created_at,school_name,difficulty",game:"eq."+game,order:game==="volleyball_25"?"score.asc,created_at.asc":"score.desc,created_at.asc",limit:"10"});
+  const q = new URLSearchParams({select:"score,created_at,school_name,difficulty",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
   const list = await db("arcade_game_scores?" + q);
   return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
@@ -129,15 +129,22 @@ function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number 
   return p*120+Math.min(60,spikes)*25+
     (!knockout&&p>c?600+Math.max(0,7-c)*30:0)+Math.min(900,seconds*4);
 }
-function scoreFromVolleyball25(result:any, elapsed:number):number {
- const player=result?.player,cpu=result?.cpu,time=result?.elapsedTenths;
- if(player!==25 || !int(cpu,0,24) || !int(time,1,36000))
+function scoreFromVolleyball25(result:any,elapsed:number):number {
+ const player=result?.player,cpu=result?.cpu,base=result?.baseScore,
+       multiplier=result?.multiplier,final=result?.finalScore,victory=result?.victory;
+ if(!int(player,0,25)||!int(cpu,0,25)||!int(base,0,2500)||
+    !int(multiplier,1,6)||!int(final,0,15000)||typeof victory!=="boolean")
    throw new Error("invalid_stats");
- // A match has at least 24 replay gaps (100 frames each). Accept generous
- // network/mobile slack, but reject impossible time claims and future time.
- if(time<Math.max(150,(player+cpu-1)*13)||time>(elapsed+2)*10)
-   throw new Error("invalid_duration");
- return time; // deciseconds; lower values outrank higher values.
+ if((player!==25&&cpu!==25)||(player===25&&cpu===25))
+   throw new Error("invalid_match");
+ if(victory!==(player===25))throw new Error("invalid_victory");
+ // Every completed rally takes game time; time is NOT a ranking factor.
+ if(elapsed<Math.max(4,(player+cpu-1)*1.2))throw new Error("invalid_duration");
+ const expectedBase=Math.max(0,player*100-cpu*50);
+ const expectedMultiplier=player===25?1+Math.floor((25-cpu)/5):1;
+ if(base!==expectedBase||multiplier!==expectedMultiplier||final!==expectedBase*expectedMultiplier)
+   throw new Error("invalid_score");
+ return final;
 }
 function scoreFromRetirement(result:any,elapsed:number):number {
  if(result?.survivalSeconds===undefined)throw new Error("invalid_survival_time");
@@ -221,7 +228,7 @@ Deno.serve(async (req:Request)=>{
          scoreFromRun(payload.stats,elapsed);
     } catch(e) {return error(e instanceof Error?e.message:"invalid_stats",400,origin);}
     const existing=await top(game);
-    if(existing.length>=10 && (game==="volleyball_25"?score>=existing[9].score:score<=existing[9].score)){
+    if(existing.length>=10 && score<=existing[9].score){
       return json({ranked:false,score,top10:existing},200,origin);
     }
     // Persist the score BEFORE consuming the session. A transient insert failure
