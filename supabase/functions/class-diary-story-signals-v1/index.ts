@@ -6,7 +6,9 @@ const ORIGINS=new Set([
   'https://baeguindex.com','https://www.baeguindex.com',
   'https://noam0127.github.io','http://localhost:8000','http://127.0.0.1:8000'
 ]);
-const BLOCKED=new Set(['2023:Q06','2023:Q10','2024:Q06','2024:Q10']);
+const BLOCKED=new Set(['2023:Q06','2023:Q10','2024:Q06','2024:Q10',
+  '2025:Q06','2025:Q09','2025:Q29','2025:Q30',
+  '2026:Q03','2026:Q13','2026:Q31']);
 const POLICY='N10_CELL3_PATTERNS5_STRICT_MATCH';
 const encoder=new TextEncoder();
 const safeString=(x,n)=>typeof x==='string'?x.trim().slice(0,n):'';
