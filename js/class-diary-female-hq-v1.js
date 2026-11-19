@@ -11,6 +11,16 @@ const PEOPLE=Object.freeze({
  yuri:root.BeaguClassDiaryFemaleHQYuri
 });
 const emotions=root.BeaguClassDiaryFemaleHQEmotions;
+/* Transparent full-height matte artwork: five clearly different silhouettes.
+ * The original encoded high-resolution portraits remain a no-network fallback.
+ */
+const MATTE_ASSETS=Object.freeze({
+ woman:'assets/class-diary/characters/female-jiyoon-matte-v2.webp',
+ none:'assets/class-diary/characters/female-minseo-matte-v2.webp',
+ suhyun:'assets/class-diary/characters/female-suhyun-matte-v2.webp',
+ sea:'assets/class-diary/characters/female-sea-matte-v2.webp',
+ yuri:'assets/class-diary/characters/female-yuri-matte-v2.webp'
+});
 function has(who){return Object.prototype.hasOwnProperty.call(PEOPLE,who)&&!!PEOPLE[who]&&typeof PEOPLE[who].dataUrl==='string';}
 /* Skin-tone-only matte pass. All pixels stay in-memory; no network or persistence.
  * It gently compresses pale specular pixels on facial skin while preserving hair,
@@ -25,7 +35,7 @@ const STYLE_KEYS=Object.freeze({
  sea:Object.freeze({shape:'mature-round',gesture:'steady',palette:'sand'}),
  yuri:Object.freeze({shape:'heart-smile',gesture:'energetic',palette:'lilac'})
 });
-function portrait(who){return has(who)?(MATTE_CACHE[who]||PEOPLE[who].dataUrl):null;}
+function portrait(who){return has(who)?(MATTE_CACHE[who]||MATTE_ASSETS[who]||PEOPLE[who].dataUrl):null;}
 function mattePixels(pixels,w,h){
  if(!pixels||!Number.isInteger(w)||!Number.isInteger(h))return;
  const limit=Math.round(h*.51);
@@ -51,7 +61,7 @@ function prepareMatte(onReady){
  let started=0;
  for(const id of Object.keys(STYLE_KEYS)){
   if(!has(id)||MATTE_CACHE[id]||MATTE_BUSY[id])continue;
-  const source=PEOPLE[id].dataUrl;
+  const source=MATTE_ASSETS[id]||PEOPLE[id].dataUrl;
   MATTE_BUSY[id]=true;started++;
   const img=new Image();
   img.onload=()=>{
@@ -72,7 +82,11 @@ function prepareMatte(onReady){
    }catch(_){/* original remains available as a fallback */}
    finally{delete MATTE_BUSY[id];}
   };
-  img.onerror=()=>{delete MATTE_BUSY[id];};
+  img.onerror=()=>{
+   delete MATTE_BUSY[id];
+   MATTE_CACHE[id]=PEOPLE[id].dataUrl;
+   if(typeof onReady==='function')onReady(id,MATTE_CACHE[id]);
+  };
   img.src=source;
  }
  return started;
@@ -85,7 +99,7 @@ function validate(){
   if(!face(id,expression))throw Error('FEMALE_HQ_EXPRESSION_MISSING_'+id+'_'+expression);
  return Object.freeze({characters:ids.length,expressions:ids.length*6});
 }
-const api=Object.freeze({VERSION,PEOPLE,STYLE_KEYS,has,portrait,face,validate,prepareMatte,mattePixels});
+const api=Object.freeze({VERSION,PEOPLE,MATTE_ASSETS,STYLE_KEYS,has,portrait,face,validate,prepareMatte,mattePixels});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiaryFemaleHQ=api;
 })(typeof window!=='undefined'?window:globalThis);
