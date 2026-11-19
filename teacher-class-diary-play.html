@@ -1317,31 +1317,20 @@ function renderScenario(){
 const endingState={pages:[],index:0};
 function endingPresent(){
  const text=$('endingText'),page=endingState.pages[endingState.index]||['…'];
- text.replaceChildren(...page.map(p=>el('p',p)));
+ text.replaceChildren(...page.map(p=>el('p',typeof p==='string'?p:p.text)));
+ literary.present(text);
  $('endingMore').hidden=endingState.index>=endingState.pages.length-1;
  $('endingPageLabel').textContent=(endingState.index+1)+' / '+endingState.pages.length;
- requestAnimationFrame(()=>{
-  let n=0;
-  while(text.scrollHeight>text.clientHeight+2&&n++<32){
-   const current=endingState.pages[endingState.index],tail=current[current.length-1];
-   const next=endingState.pages[endingState.index+1]||[];
-   if(current.length>1){current.pop();next.unshift(tail);}
-   else{
-    const words=tail.trim().split(/\s+/);
-    if(words.length<2)break;
-    const at=Math.max(1,Math.floor(words.length*.72));
-    current[0]=words.slice(0,at).join(' ');next.unshift(words.slice(at).join(' '));
-   }
-   endingState.pages[endingState.index+1]=next;
-   text.replaceChildren(...current.map(p=>el('p',p)));
-  }
-  $('endingMore').hidden=endingState.index>=endingState.pages.length-1;
-  $('endingPageLabel').textContent=(endingState.index+1)+' / '+endingState.pages.length;
- });
 }
-$('endingMore').addEventListener('click',()=>{
- if(endingState.index<endingState.pages.length-1){endingState.index++;sound.note('pageTurn');endingPresent()}
-});
+function advanceEndingSentence(){
+ // End credits use the same sentence cadence and can be tapped directly.
+ if(literary.reveal())return;
+ if(endingState.index<endingState.pages.length-1){
+  endingState.index++;sound.note('pageTurn');endingPresent();
+ }
+}
+$('endingMore').addEventListener('click',advanceEndingSentence);
+$('endingText').addEventListener('click',advanceEndingSentence);
 function renderEnding(){
  show('ending');
  mood('ending');
@@ -1349,7 +1338,7 @@ function renderEnding(){
  const ending=director.decorateEnding(game);
  $('endingTitle').textContent=ending.title;
  $('endingHeading').textContent=ending.heading;
- endingState.pages=vnPages(ending.paragraphs);endingState.index=0;endingPresent();
+ endingState.pages=vnPages(ending.paragraphs).map(page=>page.map(p=>typeof p==='string'?p:p.text));endingState.index=0;endingPresent();
  $('endingAffection').textContent=game.ending.affection+' / 100';
  $('endingScore').textContent='이야기 점수 '+game.ending.score+' / 100';
  $('endingSchool').textContent=game.schoolName+'에서 시작된 7일간의 기록';
@@ -1434,7 +1423,7 @@ function renderSemesterEnding(){
  $('endingHeading').textContent=ending.heading;
  $('ending').querySelector('.emblem').textContent='2027년 7월 16일 · 36화의 마지막 페이지';
  $('ending').querySelector('.credits-roll p:last-child').textContent='한 학기의 이야기를 함께해 주셔서 고맙습니다.';
- endingState.pages=vnPages(ending.paragraphs);endingState.index=0;endingPresent();
+ endingState.pages=vnPages(ending.paragraphs).map(page=>page.map(p=>typeof p==='string'?p:p.text));endingState.index=0;endingPresent();
  $('endingAffection').textContent=ending.affection+' / 100';
  $('endingScore').textContent='이야기 점수 '+ending.score+' / 100';
  $('endingSchool').textContent=game.schoolName+' · 2027년 3월–7월, 36화의 기록';
