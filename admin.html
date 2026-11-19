@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>관리자 · 배구지수</title>
-  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-a1">
+  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-dashboard1">
 </head>
 <body>
   <main class="shell">
@@ -51,22 +51,104 @@
 
     <section id="adminDashboard" hidden>
       <div class="dashboard-head">
-        <div><p class="eyebrow">ACCESS VERIFIED</p><h2>운영 현황</h2><p class="help">관리자 권한과 2단계 인증이 서버에서 확인되었습니다.</p></div>
+        <div><p class="eyebrow">OPERATIONS · PRIVATE</p><h2>운영 통계</h2>
+          <p class="help">서버에서 관리자 권한과 2단계 인증을 확인한 뒤 통계를 불러옵니다.</p></div>
         <button id="adminLogout" type="button" class="secondary">로그아웃</button>
       </div>
-      <div class="metrics">
-        <article><h3>사이트 이용 현황</h3><div class="empty">미수집 · 통계 API 연동 전</div></article>
-        <article><h3>학교 조회 현황</h3><div class="empty">미수집 · 통계 API 연동 전</div></article>
-        <article><h3>게임 이용 현황</h3><div class="empty">미연동 · 통계 API 연동 전</div></article>
-        <article><h3>챌린지와 레벨</h3><div class="empty">미연동 · 통계 API 연동 전</div></article>
-        <article><h3>보안·운영 감사</h3><div class="empty">관리자 감사 로그 수집 준비</div></article>
-      </div>
+      <nav class="period-tabs" aria-label="통계 조회 기간" id="adminPeriods">
+        <button type="button" data-period="today">오늘</button>
+        <button type="button" data-period="7d" aria-pressed="true">7일</button>
+        <button type="button" data-period="30d">30일</button>
+        <button type="button" data-period="all">전체</button>
+      </nav>
+      <p class="subtle" id="adminDataAsOf" aria-live="polite">통계를 확인하는 중입니다.</p>
+
+      <section class="dash-section" aria-labelledby="adminSiteHeading">
+        <div class="section-title"><h3 id="adminSiteHeading">사이트 이용 현황</h3><small>방문 기록을 기준으로 집계</small></div>
+        <div class="metrics" id="adminSiteMetrics">
+          <article><h4>전체 페이지 방문</h4><strong data-site="page_views">—</strong></article>
+          <article><h4>추정 고유 방문자</h4><strong data-site="estimated_unique_visitors">—</strong></article>
+          <article><h4>신규 Auth 가입자</h4><strong data-site="new_accounts">—</strong></article>
+          <article><h4>활성 가입자</h4><strong data-site="active_registered_users">미수집</strong></article>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><h4>방문 추이</h4><div class="mini-tabs" id="adminTrendScale">
+            <button type="button" data-scale="day" aria-pressed="true">일간</button>
+            <button type="button" data-scale="week">주간</button>
+            <button type="button" data-scale="month">월간</button>
+          </div></div>
+          <div class="bar-chart" id="adminVisitChart" role="img" aria-label="기간별 방문 추이"><p class="empty">불러오는 중</p></div>
+        </div>
+      </section>
+
+      <section class="dash-section" aria-labelledby="adminSearchHeading">
+        <div class="section-title"><h3 id="adminSearchHeading">학교 검색 · 조회</h3><small>검색, 상세 진입, 조회수는 서로 다른 지표</small></div>
+        <div class="metrics">
+          <article><h4>학교 검색 확정</h4><strong data-search="searches">—</strong></article>
+          <article><h4>학교 상세 진입</h4><strong data-search="detail_entries">—</strong></article>
+          <article><h4>학교 조회수 기록</h4><strong data-view="total">—</strong><small>학교·방문자·한국 날짜당 1회</small></article>
+          <article><h4>상세 진입 / 검색 이벤트</h4><strong data-search="conversion_rate">—</strong><small>개인별 전환율은 아님</small></article>
+        </div>
+        <div class="chart-card"><h4>검색과 상세 진입 추이</h4>
+          <div class="bar-chart" id="adminSearchChart" role="img" aria-label="학교 검색 및 상세 진입 이벤트 추이"><p class="empty">불러오는 중</p></div>
+        </div>
+        <div class="ranking-card">
+          <div class="ranking-controls">
+            <label for="adminSchoolRankingMode">학교별 순위</label>
+            <select id="adminSchoolRankingMode">
+              <option value="views">누적 학교 조회수</option>
+              <option value="searched">학교 검색 횟수</option>
+              <option value="detailed">상세페이지 진입</option>
+              <option value="played">게임 플레이 학교</option>
+            </select>
+            <label for="adminSchoolRankingSearch" class="sr-only">학교명 검색</label>
+            <input id="adminSchoolRankingSearch" type="search" placeholder="학교명 찾기" autocomplete="off">
+          </div>
+          <div class="ranking-list" id="adminSchoolRanking"><p class="empty">통계를 불러오는 중입니다.</p></div>
+        </div>
+      </section>
+
+      <section class="dash-section" aria-labelledby="adminGamesHeading">
+        <div class="section-title"><h3 id="adminGamesHeading">게임 이용 현황</h3><small>시작 세션과 종료 기록 기준</small></div>
+        <div class="game-analytics" id="adminGameCards">
+          <article class="game-stat"><h4>선생님배구</h4><p class="empty">불러오는 중</p></article>
+          <article class="game-stat"><h4>험난한 교직생활</h4><p class="empty">불러오는 중</p></article>
+          <article class="game-stat"><h4>나의 OO한 학급일지</h4><p class="empty">영구 이용 통계 미수집</p></article>
+        </div>
+        <div class="chart-card"><h4>게임 플레이 추이</h4>
+          <div class="bar-chart" id="adminGameChart" role="img" aria-label="게임별 플레이 횟수의 날짜별 추이"><p class="empty">불러오는 중</p></div></div>
+        <div class="ranking-card"><h4>난이도별 시작 횟수</h4><div id="adminGameDifficulty" class="pill-list"><p class="empty">불러오는 중</p></div></div>
+      </section>
+
+      <section class="dash-section" aria-labelledby="adminLevelHeading">
+        <div class="section-title"><h3 id="adminLevelHeading">챌린지 · 레벨</h3><small>참여 기록과 계정 수를 혼동하지 않습니다</small></div>
+        <div class="metrics">
+          <article><h4>챌린지 신규 참여</h4><strong data-challenge="participants">—</strong></article>
+          <article><h4>초대링크 발급</h4><strong data-challenge="referral_links_issued">—</strong></article>
+          <article><h4>레벨2 승급</h4><strong data-challenge="level_2_upgrades">—</strong></article>
+          <article><h4>추천 참여 이벤트</h4><strong data-challenge="referral_events">—</strong></article>
+          <article><h4>현재 Lv.1 세션</h4><strong data-level="level_1_sessions">—</strong></article>
+          <article><h4>현재 Lv.2 세션</h4><strong data-level="level_2_sessions">—</strong></article>
+        </div>
+        <p class="subtle">레벨 세션 수는 사용자 수가 아닙니다. 레벨0의 고유 계정 수는 별도로 수집하지 않습니다.</p>
+      </section>
+
+      <section class="dash-section" aria-labelledby="adminSecurityHeading">
+        <div class="section-title"><h3 id="adminSecurityHeading">운영 · 보안</h3><small>민감한 개인정보와 원본 설문 답변은 표시하지 않습니다</small></div>
+        <div class="metrics">
+          <article><h4>관리자 인증 성공</h4><strong data-security="admin_logins">—</strong></article>
+          <article><h4>관리자 권한 거부</h4><strong data-security="access_denials">—</strong></article>
+          <article><h4>일반 Auth 로그인 실패</h4><strong data-security="auth_failures">미수집</strong></article>
+          <article><h4>통계 수집 오류</h4><strong data-security="collector_errors">미수집</strong></article>
+        </div>
+        <div class="ranking-card"><h4>최근 관리자 감사 기록</h4><div id="adminAudit" class="audit-list"><p class="empty">기록을 불러오는 중입니다.</p></div></div>
+      </section>
     </section>
 
     <footer>공개 통계와 관리자 감사 기록은 별도로 관리합니다.</footer>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
-  <script defer src="js/beagu-admin-access-v1.js?v=20261120-a1"></script>
+  <script defer src="js/beagu-admin-access-v1.js?v=20261120-dashboard1"></script>
 </body>
 </html>
