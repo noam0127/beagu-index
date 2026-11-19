@@ -85,6 +85,6 @@ for(const marker of ['id="semesterStart"','src="js/class-diary-semester-v1.js?v=
  assert(page.includes(marker),'Semester UI connection missing '+marker);
 for(const englishLabel of ['PROLOGUE 00','PLAYER SETUP','MY STORY','STORY · 나의 학급일지','END CREDITS'])
  assert(!page.includes(englishLabel),'Untranslated game UI label: '+englishLabel);
-for(const label of ['학교 선택','함께할 동료','이야기 · 나의 학급일지','제작진'])
+for(const label of ['학교 선택','알고 싶은 사람','이야기 · 나의 학급일지','제작진'])
  assert(page.includes(label),'Korean game UI label missing: '+label);
 console.log('PASS: 36 chapters show Korean places, internal artwork codes stay unchanged, UI labels Korean, five endings, no persistence');
