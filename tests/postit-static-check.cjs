@@ -30,6 +30,9 @@ for(const file of ['teacher-run.html','teacher-volleyball.html','teacher-class-d
 const edge=read('supabase/functions/beagu-postit-api-v1/index.ts');
 assert.ok(edge.includes('const user=await identity(req)'), 'writes authenticated');
 assert.ok(edge.includes('const viewer=await identity(req,1)'), 'Lv1 verified server-side for comment reads');
+assert.ok(!/\bconst URL\s*=/.test(edge), 'global URL constructor must not be shadowed');
+assert.ok(edge.includes('const SUPABASE_URL = Deno.env.get('), 'Supabase URL configured separately');
+assert.ok(edge.includes('new URL(req.url)'), 'request URL parsing uses built-in constructor');
 assert.ok(edge.includes('COMMENT_READ_LEVEL_REQUIRED'), 'Lv0 comment API denial');
 assert.ok(edge.includes('LEVEL_REQUIRED'), 'post author level 2 server gate');
 assert.ok(edge.includes('status:"hidden"'), 'report-hide capability');
