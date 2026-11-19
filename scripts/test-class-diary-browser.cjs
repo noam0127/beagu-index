@@ -151,6 +151,30 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    console.log('PASS '+variant.name+': '+turns+' clicks, single viewport VN dialogue, ending reached, no saved progress');
    await page.close();
   }
+  // Desktop full-semester opening scene must fit without page scrolling.
+  const semesterDesktop=await browser.newPage({viewport:{width:1365,height:850},deviceScaleFactor:1});
+  const deskErrors=[];
+  semesterDesktop.on('pageerror',e=>deskErrors.push(e.message));
+  await semesterDesktop.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
+  await semesterDesktop.goto(URL+'/teacher-class-diary-play.html?demo=1',{waitUntil:'domcontentloaded'});
+  await semesterDesktop.locator('#semesterStart').click();
+  await semesterDesktop.locator('#playerName').fill('한가람');
+  await semesterDesktop.locator('#experience').selectOption('mid');
+  await semesterDesktop.locator('#gender').selectOption('undisclosed');
+  await semesterDesktop.locator('#mbti').selectOption('INFP');
+  await semesterDesktop.locator('#setupNext').click();
+  await semesterDesktop.locator('[data-partner-choice="man"]').click();
+  await semesterDesktop.locator('#setupNext').click();
+  await semesterDesktop.locator('#profileForm button[type="submit"]').click();
+  await semesterDesktop.locator('#novel').waitFor({state:'visible'});
+  assert.equal(await semesterDesktop.locator('.diary-day-progress span').count(),6,'Desktop semester must show six-act progress');
+  assert.equal(await semesterDesktop.locator('#diarySemesterMeta').isVisible(),true,'Desktop semester seasonal HUD must be visible');
+  const desktopRect=await semesterDesktop.locator('#novelCard').boundingBox();
+  assert(desktopRect&&desktopRect.height<=851,'Desktop semester chapter must fit a single viewport');
+  assert.equal(await semesterDesktop.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+8),true,'Desktop semester overflow');
+  assert.equal(deskErrors.length,0,'Desktop semester browser errors: '+deskErrors.join('; '));
+  await semesterDesktop.screenshot({path:'artifacts/class-diary/semester-desktop-first-scene.png'});
+  await semesterDesktop.close();
   // Full-semester browser path: all 36 scenes must reach an ending in a real DOM.
   const semesterPage=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
   const semesterErrors=[];
