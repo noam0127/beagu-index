@@ -12,7 +12,25 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    const errors=[];
    page.on('pageerror',err=>errors.push(err.message));
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
-   await page.goto(url+'/teacher-class-diary-play.html?demo=1',{waitUntil:'domcontentloaded'});
+   // Simulate the signed home-entry handoff without using a real identity or code.
+   await page.addInitScript(()=>{
+    sessionStorage.setItem('beagu-class-diary-guest-handoff-v1','v1.fakepayload.fakesignature');
+   });
+   await page.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-guest-access-v1',
+    route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+     ok:true,scope:'class-diary-fictional-guest',progressToken:'p1.fake.token'
+    })}));
+   let revision=0;
+   await page.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-progress-v1',route=>{
+    const request=JSON.parse(route.request().postData()||'{}');
+    if(request.action==='load')return route.fulfill({
+     status:200,contentType:'application/json',body:JSON.stringify({ok:true,progress:null})
+    });
+    revision++;
+    return route.fulfill({status:200,contentType:'application/json',
+     body:JSON.stringify({ok:true,revision,updatedAt:'2026-11-20T00:00:00Z'})});
+   });
+   await page.goto(url+'/teacher-class-diary-play.html?guest=1',{waitUntil:'domcontentloaded'});
    await page.locator('#diaryLanding').waitFor({state:'visible'});
    await page.locator('#diaryLandingStart').click();
    await page.locator('#diarySchoolName').fill('가상 새봄초등학교');
