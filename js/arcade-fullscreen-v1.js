@@ -12,12 +12,17 @@
   if(!isEmbedded())return false;
   try{return window.parent.location.origin===window.location.origin;}catch(_){return false;}
  };
+ // Familiar outward/inward arrows replace ambiguous square emoji.
+ const svgBase='xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"';
+ const maximizeIcon='<svg '+svgBase+'><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><path d="m3 3 6 6m12-6-6 6m6 12-6-6M3 21l6-6"/></svg>';
+ const minimizeIcon='<svg '+svgBase+'><path d="M9 9H3M9 9V3M15 9h6M15 9V3M9 15H3M9 15v6M15 15h6M15 15v6"/><path d="m3 3 6 6m18-6-12 12M3 21l6-6m12 6-6-6" style="display:none"/></svg>';
+ // Inward-facing corners express returning to the smaller game viewport.
  function sync(){
   const expanded=active();
-  button.textContent=expanded?'🔽':'🔳';
-  button.setAttribute('aria-label',expanded?'작은 화면으로 돌아가기':'게임 화면 전체화면');
+  button.innerHTML=expanded?minimizeIcon:maximizeIcon;
+  button.setAttribute('aria-label',expanded?'전체화면 종료 · 작은 화면으로':'전체화면으로 확대');
   button.setAttribute('aria-pressed',String(expanded));
-  button.title=expanded?'작은 화면으로':'게임만 전체화면';
+  button.title=expanded?'작은 화면으로':'전체화면으로';
  }
  function setFallback(value){
   fallback=Boolean(value);
