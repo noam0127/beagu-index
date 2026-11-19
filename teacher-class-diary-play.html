@@ -39,7 +39,25 @@ button{font:inherit;cursor:pointer}
 .privacy{font-size:12px;color:#75889a;margin:12px 0 0;line-height:1.8}
 
 .novel{padding:0;overflow:hidden}
-.novel-top{padding:26px 28px 19px;background:#ecf2f6;border-bottom:1px solid #dfe8ed}
+.novel-top{position:relative;padding:24px 28px 23px;border-bottom:1px solid #dfe8ed;background:linear-gradient(120deg,#edf4f7,#dcebf3);overflow:hidden}
+.scene-art{position:relative;height:118px;display:grid;place-items:center;margin:-24px -28px 20px;background:linear-gradient(135deg,#e0ebf5,#afc9dc);overflow:hidden;isolation:isolate}
+.scene-art::before{content:"";position:absolute;width:220px;height:220px;border:1px solid rgba(255,255,255,.65);border-radius:50%;left:17%;top:-128px;box-shadow:0 0 0 34px rgba(255,255,255,.07),0 0 0 66px rgba(255,255,255,.06)}
+.scene-art::after{content:"";position:absolute;height:55px;width:85%;border-top:1px solid rgba(255,255,255,.6);bottom:0;transform:skew(-23deg);opacity:.7}
+.scene-symbol{font-family:"Nanum Myeongjo","Batang",serif;font-size:46px;color:#fff;text-shadow:0 3px 18px rgba(15,40,60,.17);z-index:1}
+.novel[data-scene="meeting"] .scene-art{background:linear-gradient(130deg,#d1dbe3,#98b5ca)}
+.novel[data-scene="classroom"] .scene-art{background:linear-gradient(130deg,#c4d6b6,#83aa9f)}
+.novel[data-scene="hallway"] .scene-art{background:linear-gradient(130deg,#ddcdb6,#b5bbc8)}
+.novel[data-scene="evening"] .scene-art{background:linear-gradient(130deg,#e4bdac,#b08eac)}
+.novel[data-scene="weekend"] .scene-art{background:linear-gradient(130deg,#c5d7cd,#94b7cc)}
+.novel[data-scene="night"] .scene-art{background:linear-gradient(130deg,#667c9d,#263d64)}
+.character-strip{display:flex;align-items:center;gap:14px;border:1px solid #e0e9f0;border-radius:16px;background:#f8fafc;padding:13px 16px;margin-bottom:27px}
+.character-avatar{width:53px;height:53px;flex:none;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#d7e7e9,#a9c9d3);color:#214967;font-family:"Nanum Myeongjo","Batang",serif;font-weight:bold;font-size:20px;border:2px solid #fff;box-shadow:0 2px 9px #45667722}
+.character-name{font-size:14px;font-weight:800;color:#2b4d63}
+.character-bio{font-size:12px;line-height:1.6;color:#75899a;margin:3px 0 0}
+.world-context{font-size:11px;color:#375a6c;margin:10px 0 0;letter-spacing:-.01em}
+@keyframes page-reveal{from{opacity:.55;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.novel-body{animation:page-reveal .34s ease-out}
+@media(prefers-reduced-motion:reduce){.novel-body{animation:none}.track span{transition:none}}
 .novel-top .tag{display:inline-block;background:#dbe9f1;color:#305e7b;padding:6px 11px;border-radius:20px;font-size:12px}
 .novel-top h2{font-family:"Nanum Myeongjo","Batang",serif;font-size:clamp(23px,5vw,32px);line-height:1.45;margin:12px 0 5px}
 .date-place{font-size:12px;color:#668196}
@@ -111,14 +129,17 @@ button{font:inherit;cursor:pointer}
 <div class="stat"><small>학생의 자리</small><strong id="statAgency">—</strong></div>
 <div class="stat"><small>피로도</small><strong id="statFatigue">—</strong></div>
 </div>
-<article class="panel novel">
+<article class="panel novel" id="novelCard" data-scene="morning">
 <div class="novel-top">
+<div class="scene-art" id="sceneArt" role="img" aria-label="학교의 하루를 상징하는 추상 배경"><span class="scene-symbol" id="sceneSymbol" aria-hidden="true">✧</span></div>
 <span class="tag" id="chapterDay">첫째 날</span>
 <h2 id="chapterTitle"></h2>
 <div class="date-place" id="chapterPlace"></div>
+<p class="world-context" id="worldDetail" hidden></p>
 <div class="track"><span id="chapterProgress"></span></div>
 </div>
 <div class="novel-body">
+<div class="character-strip" aria-label="동료 인물"><div class="character-avatar" id="characterAvatar" aria-hidden="true"></div><div><div class="character-name" id="characterName"></div><p class="character-bio" id="characterBio"></p></div></div>
 <div class="prose" id="chapterText"></div>
 <p class="muted" id="chapterSource"></p>
 <div id="choiceSection"><div class="option-title">이번 장면에서 어떻게 할까요?</div><div class="choices" id="choiceButtons"></div></div>
@@ -144,12 +165,14 @@ button{font:inherit;cursor:pointer}
 <script src="js/2026-questionnaire-options-v1.2.js"></script>
 <script src="js/class-diary-narrative-v1.js"></script>
 <script src="js/class-diary-play-v1.js"></script>
+<script src="js/class-diary-director-v1.js"></script>
 <script>
 (function(){
 'use strict';
 const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
+const director=window.BeaguClassDiaryDirector;
 const token=sessionStorage.getItem('beagu-level-session-v1')||'';
 const params=new URLSearchParams(location.search);
 const schoolId=params.get('schoolId')||'';
@@ -174,12 +197,21 @@ function fillParagraphs(id,texts){
 function renderNovel(){
  show('novel');
  const isReflection=game.phase==='reflection';
- const view=engine.chapter(isReflection?{...game,phase:'chapter'}:game,world,plan);
+ const view=director.decorateChapter(isReflection?{...game,phase:'chapter'}:game,world,
+  engine.chapter(isReflection?{...game,phase:'chapter'}:game,world,plan));
  $('statAffection').textContent=game.stats.affection;
  $('statTrust').textContent=game.stats.trust;
  $('statAgency').textContent=game.stats.agency;
  $('statFatigue').textContent=game.stats.fatigue;
  $('chapterDay').textContent=game.day+' / 7 · '+view.date+' '+view.weekday;
+ $('novelCard').dataset.scene=view.visual.id;
+ $('sceneArt').setAttribute('aria-label',view.visual.label+'을 상징하는 추상적인 배경');
+ $('sceneSymbol').textContent=({morning:'✧',meeting:'▤',classroom:'◈',hallway:'◇',evening:'☼',weekend:'❀',night:'✦'})[view.visual.id]||'✧';
+ $('characterAvatar').textContent=view.character.initial;
+ $('characterName').textContent=view.character.name;
+ $('characterBio').textContent=view.character.caption;
+ $('worldDetail').hidden=!view.worldDetail;
+ $('worldDetail').textContent=view.worldDetail?view.worldDetail.label+' · '+view.worldDetail.value:'';
  $('chapterTitle').textContent=view.title;
  $('chapterPlace').textContent=view.place+' · '+view.partner;
  $('chapterProgress').style.width=(game.day/7*100)+'%';
@@ -199,16 +231,18 @@ function renderNovel(){
    options.append(btn);
   });
  }else{
-  fillParagraphs('outcomeText',game.lastOutcome.paragraphs);
-  $('outcomeLine').textContent=game.lastOutcome.line;
+  const response=director.decorateOutcome(game);
+  fillParagraphs('outcomeText',response.paragraphs);
+  $('outcomeLine').textContent=response.line;
  }
  status('소설 속 상황을 살펴보고 선택해 주세요.');
 }
 function renderEnding(){
  show('ending');
- $('endingTitle').textContent=game.ending.title;
- $('endingHeading').textContent=game.ending.heading;
- fillParagraphs('endingText',game.ending.paragraphs);
+ const ending=director.decorateEnding(game);
+ $('endingTitle').textContent=ending.title;
+ $('endingHeading').textContent=ending.heading;
+ fillParagraphs('endingText',ending.paragraphs);
  $('endingAffection').textContent=game.ending.affection+' / 100';
  $('endingScore').textContent='이야기 점수 '+game.ending.score+' / 100';
  $('endingSchool').textContent=game.schoolName+'에서 시작된 7일간의 기록';
