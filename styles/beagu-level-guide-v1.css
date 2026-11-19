@@ -5,6 +5,7 @@ body.beagu-page-levels [hidden] {display:none!important}
 .beagu-level-guide a {text-decoration:none}
 .beagu-level-guide-hero {text-align:center;margin:0 auto 25px;max-width:760px}
 .beagu-level-guide-eyebrow {display:inline-flex;align-items:center;gap:8px;color:#275dc3;font-size:12px;font-weight:850;letter-spacing:.08em}
+.beagu-level-guide-title-line{display:block;white-space:nowrap;word-break:keep-all}
 .beagu-level-guide-hero h1 {font-size:clamp(29px,4.8vw,43px);font-weight:880;line-height:1.25;letter-spacing:-.055em;margin:13px 0 12px}
 .beagu-level-guide-hero p {font-size:clamp(14px,2.4vw,16px);color:#5f718a;line-height:1.65;margin:0}
 .beagu-level-guide-status {display:flex;justify-content:center;align-items:center;gap:10px;min-height:53px;margin:28px auto 24px;padding:10px 18px;width:fit-content;max-width:100%;background:#fff;border:1px solid #dae5f4;box-shadow:0 5px 20px rgba(17,47,82,.04);border-radius:999px;font-size:13px;color:#51647e}
