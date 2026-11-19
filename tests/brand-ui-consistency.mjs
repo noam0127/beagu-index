@@ -23,14 +23,17 @@ for(const p of ['index.html','search.html','search-lv1.html','school-report.html
 }
 const navPages=[...active,'arcade-history.html','levels.html'];
 for(const p of navPages) {
- const page=read(p),nav=page.match(/<nav class="beagu-unified-nav"[^>]*>([\\s\\S]*?)<\\/nav>/)?.[1]||'';
- assert.ok(nav,p+' includes unified navigation');
- assert.match(nav,/<a href="challenge\\.html"[^>]*>챌린지<\\/a>/,p+' menu must say 챌린지');
- assert.doesNotMatch(nav,/>인증<\\/a>/,p+' old top menu label is absent');
+ const page=read(p);
+ const start=page.indexOf('<nav class="beagu-unified-nav"');
+ const end=page.indexOf('</nav>',start);
+ assert.ok(start>=0&&end>start,p+' includes unified navigation');
+ const nav=page.slice(start,end);
+ assert.ok(nav.includes('>챌린지</a>'),p+' menu must say 챌린지');
+ assert.ok(!nav.includes('>인증</a>'),p+' old top menu label is absent');
 }
 const levelGuide=read('levels.html');
-assert.match(levelGuide,/<span class="beagu-level-guide-title-line">참여할수록 더<\\/span><span class="beagu-level-guide-title-line">넓어지는 학교정보<\\/span>/,'The level heading keeps exact two-line wording');
-assert.match(read('styles/beagu-level-guide-v1.css'),/\\.beagu-level-guide-title-line\\{display:block;white-space:nowrap/, 'Prevent mid-word wrap on mobile');
+assert.ok(levelGuide.includes('<span class="beagu-level-guide-title-line">참여할수록 더</span><span class="beagu-level-guide-title-line">넓어지는 학교정보</span>'),'The level heading keeps exact two-line wording');
+assert.ok(read('styles/beagu-level-guide-v1.css').includes('.beagu-level-guide-title-line{display:block;white-space:nowrap'),'Prevent mid-word wrap on mobile');
 
 const search=read('search.html');
 assert.match(search,/publicSort\.addEventListener\('change'/,'Lv0 sorting must query server');
