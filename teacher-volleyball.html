@@ -247,61 +247,32 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     try{localStorage.setItem(SOUND_KEY,soundOn?"1":"0");}catch(e){}
     syncSoundUI();if(soundOn)tone(660,.09,"sine",.055);
   });
-   const currentScoreLabel=document.getElementById("volley-current-score");
-   const livesLabel=document.getElementById("volley-lives");
-   const energyUi={
-    left:{number:document.getElementById("player-energy-number"),fill:document.getElementById("player-energy-fill"),progress:document.getElementById("player-energy-progress")},
-    right:{number:document.getElementById("cpu-energy-number"),fill:document.getElementById("cpu-energy-fill"),progress:document.getElementById("cpu-energy-progress")}
-   };
-   function resetEnergy(){
-    state.leftMaxEnergy=energy.allyMax;state.rightMaxEnergy=energy.enemyMax;
-    state.leftEnergy=energy.allyMax;state.rightEnergy=energy.enemyMax;
+  function resetPower(){
     state.specialCooldownFrames=0;state.specialChargeFrames=0;
-    state.energyTick=0;lastTapAt=0;
-    updateEnergyUI();
-   }
-   function updateEnergyUI(){
-    for(const side of ["left","right"]){
-      const max=side==="left"?state.leftMaxEnergy:state.rightMaxEnergy;
-      const current=side==="left"?state.leftEnergy:state.rightEnergy;
-      const percent=clamp(100*current/max,0,100);
-      const ui=energyUi[side];
-      ui.number.textContent=Math.ceil(current)+"/"+max;
-      ui.fill.style.width=percent.toFixed(1)+"%";
-      ui.fill.classList.toggle("is-low",percent<=30);
-      ui.progress.setAttribute("aria-valuemax",String(max));
-      ui.progress.setAttribute("aria-valuenow",String(Math.ceil(current)));
-    }
-    document.getElementById("volley-time-label").textContent="⏱ "+getSurvivalSeconds()+"초";
-    currentScoreLabel.textContent=getFinalScore().toLocaleString("ko-KR");
-    livesLabel.textContent="♥".repeat(state.livesLeft)+"♡".repeat(state.maxLives-state.livesLeft);
-    livesLabel.setAttribute("aria-label","남은 목숨 "+state.livesLeft+"개 / "+state.maxLives+"개");
-   }
-   function energyFactor(side){
-     const fraction=side==="left"?state.leftEnergy/state.leftMaxEnergy:state.rightEnergy/state.rightMaxEnergy;
-     return .70+.30*clamp(fraction,0,1);
-   }
-   function activateSuperSpike(){
-     if(state.phase!=="playing"||state.specialCooldownFrames>0||state.specialChargeFrames>0)return false;
-     if(state.leftEnergy<specialProfile.cost){setStatus("필살기 체력이 부족합니다.");return false;}
-     state.leftEnergy=Math.max(0,state.leftEnergy-specialProfile.cost);
-     state.specialCooldownFrames=specialProfile.cooldown*60;
-     state.specialChargeFrames=specialProfile.chargeFrames;
-     state.flash=18;
-     setStatus("⚡ 슈퍼 스파이크 준비!");
-     updateEnergyUI();
-     return true;
-   }
+    state.uiTick=0;lastTapAt=0;
+    updateClockUI();
+  }
+  function updateClockUI(){
+    document.getElementById("volley-time-label").textContent="⏱ "+formatTime(getElapsedTenths());
+  }
+  function activateSuperSpike(){
+    if(state.phase!=="playing"||state.specialCooldownFrames>0||state.specialChargeFrames>0)return false;
+    state.specialCooldownFrames=specialProfile.cooldown*60;
+    state.specialChargeFrames=specialProfile.chargeFrames;
+    state.flash=18;
+    setStatus("⚡ 슈퍼 스파이크 준비!");
+    return true;
+  }
   function syncUI() {
-    scoreP.textContent = String(state.leftScore);
-    scoreC.textContent = String(state.rightScore);
+    scoreP.textContent = state.leftScore+" / "+MATCH_TARGET;
+    scoreC.textContent = state.rightScore+" / "+MATCH_TARGET;
     startButton.textContent = state.phase === "starting" ? "⏳ 학교 확인 중" : state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "↻ 다시 시작";
     startButton.disabled = state.phase === "starting" ||
       ((state.phase === "ready" || state.phase === "finished") && schoolPicker.get()?.eligible !== true);
     pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point" || state.phase === "starting";
     pauseButton.textContent = state.phase === "paused" ? "▶" : "⏸";
     pauseButton.setAttribute("aria-label",state.phase === "paused"?"계속하기":"일시정지");
-    updateEnergyUI();
+    updateClockUI();
   }
   function resetPositions() {
     Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, impactSpeed: 0, jumpLock: false, contactFrames:0 });
@@ -356,20 +327,19 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     currentDifficulty=school.difficulty;
     battle=battleProfiles[currentDifficulty]||battleProfiles.hard;
-    energy=energyProfiles[currentDifficulty]||energyProfiles.hard;
     specialProfile=specialProfiles[currentDifficulty]||specialProfiles.hard;
-    resetEnergy();
+    resetPower();
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
-    state.maxLives=lifeProfiles[currentDifficulty];state.livesLeft=state.maxLives;
-    state.knockout=false;state.receiveStreak=0;state.healFrames=0;state.healAmount=0;
+    state.startedAt=0;state.pausedAt=0;state.pausedMs=0;state.finishedAt=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     releaseKeys();
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
+    state.startedAt=performance.now();
     resetPositions();
     if(!canPlayerJump())setStatus(school.school_name+" · EXTREME · 공 2개 · 족쇄 · 점프 불가");
-    else if(currentDifficulty==="easy")setStatus(school.school_name+" · EASY · 분신 2명 지원");
+    else if(currentDifficulty==="easy")setStatus(school.school_name+" · EASY · 날개와 분신 2명 지원");
     else if(currentDifficulty==="normal")setStatus(school.school_name+" · NORMAL · 분신 1명 지원");
     else setStatus(school.school_name+" · "+diffName[school.difficulty]);
     syncUI();canvas.focus();
@@ -380,10 +350,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     releaseKeys();
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
-    currentDifficulty="hard";state.maxLives=lifeProfiles.hard;state.livesLeft=state.maxLives;
-    state.knockout=false;state.receiveStreak=0;state.healFrames=0;state.healAmount=0;
+    state.startedAt=0;state.pausedAt=0;state.pausedMs=0;state.finishedAt=0;
+    currentDifficulty="hard";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
-    energy=energyProfiles.hard;specialProfile=specialProfiles.hard;resetEnergy();
+    specialProfile=specialProfiles.hard;resetPower();
     schoolPicker.setLocked(false);
     schoolPicker.resetForChange();
     resetPositions();
@@ -393,11 +363,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   schoolPicker.onRequestChange=stopForSchoolChange;
   function pause() {
     if (state.phase === "playing") {
-      state.phase = "paused";
+      state.pausedAt=performance.now();
+      state.phase="paused";
       releaseKeys();
-      setStatus("일시정지");
+      setStatus("일시정지 · 경기 시간 정지");
     } else if (state.phase === "paused") {
-      state.phase = "playing";
+      state.pausedMs+=performance.now()-state.pausedAt;
+      state.pausedAt=0;
+      state.phase="playing";
       setStatus("");
     }
     syncUI();
@@ -522,7 +495,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     const difference=state.aiTargetX-right.x;
     const move=Math.abs(difference)>battle.enemyDeadzone?Math.sign(difference):0;
-    controlPlayer(right,move,state.aiJump,battle.enemySpeed*energyFactor("right"),battle.enemyJumpForce);
+    controlPlayer(right,move,state.aiJump,battle.enemySpeed,battle.enemyJumpForce);
   }
   function playerHit(p,ball=activeBalls[0]) {
     const sign = p.side === "left" ? 1 : -1;
@@ -540,32 +513,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const cpuSmash=p.side==="right"&&(bossStrike||Math.random()<battle.enemySmashChance);
     const attack=p.side==="left" ? (charged?23.5:spike?16.5:11.5)*battle.allyAttack :
       (bossStrike?14.5:cpuSmash?13.2:10.8)*battle.enemyAttack;
-    ball.vx=(sign*attack*energyFactor(p.side)+clamp(p.vx,-12,12)*.16)*ballSpeedFactor();
+    ball.vx=(sign*attack+clamp(p.vx,-12,12)*.16)*ballSpeedFactor();
     ball.vy=(p.side==="left" ? (charged?-8.8:spike?-7.4:-11.8) :
       bossStrike?(state.playFrames%2===0?-6.6:-11.2):cpuSmash?-8.5:-12.8)*ballSpeedFactor();
-    if(p.side==="left"){
-      state.leftEnergy=Math.max(0,state.leftEnergy-(charged?0:spike?10:6)*energy.allyCost);
-      if(!spike&&!charged&&incomingVx< -1){
-        // Honest defense earns recovery; a hard hit costs energy, a safe
-        // forearm reception restores it. Every third defended ball adds a bonus.
-        state.receiveStreak++;
-        const baseHeal=receiveHealProfiles[currentDifficulty]||receiveHealProfiles.hard;
-        const chainBonus=state.receiveStreak%3===0?12:0;
-        const beforeHeal=state.leftEnergy;
-        state.leftEnergy=clamp(state.leftEnergy+baseHeal+chainBonus,0,state.leftMaxEnergy);
-        state.healAmount=Math.ceil(state.leftEnergy-beforeHeal);
-        state.healFrames=45;
-        if(state.healAmount>0)setStatus(
-          chainBonus?"💚 연속 리시브 3회 · 체력 +"+state.healAmount:
-          "💚 리시브 성공 · 체력 +"+state.healAmount
-        );
-      }
-      if(charged){state.specialChargeFrames=0;state.flash=32;setStatus("⚡ 필살기! 슈퍼 스파이크!");}
-    }else{
-      state.rightEnergy=Math.max(0,state.rightEnergy-(cpuSmash?10:6)*energy.enemyCost);
-      if(bossStrike){state.bossWarnFrames=0;state.flash=19;}
+    if(charged){
+      state.specialChargeFrames=0;state.flash=32;
+      setStatus("⚡ 필살기! 슈퍼 스파이크!");
     }
-    updateEnergyUI();
+    if(bossStrike){state.bossWarnFrames=0;state.flash=19;}
     // Push only enough to separate overlapping hit areas (max 12px); never
     // teleport the ball to a fixed spot beside the teacher.
     const distance=Math.max(1,contactDistance);
@@ -597,71 +552,46 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     if (spike) { state.flash=charged?32:9;state.spikes+=1; }
   }
-  function finishMatch(knockout=false){
+  function finishMatch(){
     if(state.phase==="finished")return;
-    state.knockout=Boolean(knockout);
+    state.finishedAt=performance.now();
     state.phase="finished";
-    const won=!knockout&&state.leftScore>state.rightScore;
-    state.winner=knockout?"💔 목숨 소진":won?"🏆 승리!":"다시 도전!";
+    const won=state.leftScore>=MATCH_TARGET;
+    const duration=getElapsedTenths();
+    state.winner=won?"🏆 25점 선착순 승리!":"⛔ 컴퓨터 25점 · 패배";
     state.message=state.winner;
     releaseKeys();
     schoolPicker.setLocked(false);
-    rememberBest(getFinalScore());
-    setStatus(state.winner+" · 기본 "+getBaseScore()+" + 생존 "+getSurvivalSeconds()+"초("+getSurvivalBonus()+") = "+getFinalScore()+"점");
-    if(knockout){tone(320,.23,"sawtooth",.04,0,115);tone(195,.28,"sine",.035,.16,100);}
-    else if(won){tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);}
-    else{tone(240,.20,"triangle",.045,0,150);}
-    const finalScore=getFinalScore();
-    // Zero-point attempts are displayed but not eligible for the public leaderboard.
-    if(finalScore>0)ranking?.finish(finalScore,{
-      player:state.leftScore,cpu:state.rightScore,spikes:state.spikes,
-      survivalSeconds:getSurvivalSeconds(),
-      ...(knockout?{knockout:true,livesLost:state.maxLives}:{})
-    });
-    syncUI();
-  }
-  function loseLife(){
-    if(state.phase!=="playing"&&state.phase!=="point")return false;
-    if(state.leftEnergy>0||state.livesLeft<=0)return false;
-    state.livesLeft--;
-    state.receiveStreak=0;
-    releaseKeys();
-    tone(300,.18,"sawtooth",.04,0,160);
-    if(state.livesLeft===0){
-      updateEnergyUI();
-      finishMatch(true);
-      return true;
+    if(won){
+      rememberFastest(duration);
+      setStatus("🏆 승리 · "+formatTime(duration)+" · 짧은 기록이 유리합니다");
+      tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);
+      ranking?.finish(duration,{player:state.leftScore,cpu:state.rightScore,elapsedTenths:duration});
+    }else{
+      setStatus("패배 · "+formatTime(duration)+" · 먼저 25점을 획득해 보세요");
+      tone(240,.20,"triangle",.045,0,150);
     }
-    state.serveLeft=false;
-    resetEnergy();
-    resetPositions();
-    state.phase="point";state.pointTicks=110;
-    state.message="♥ 목숨 -1 · 남은 목숨 "+state.livesLeft+"개";
-    setStatus(state.message);
-    updateEnergyUI();
     syncUI();
-    return true;
   }
   function point(leftWins) {
+    if(state.phase!=="playing")return;
     state.phase="point";
     state.pointTicks=100;
     state.serveLeft=!leftWins;
-    if (leftWins) state.leftScore += 1; else { state.rightScore += 1; state.receiveStreak=0; }
-    state.message = leftWins ? "득점! +1" : "실점!";
-    state.leftEnergy=clamp(state.leftEnergy+(leftWins?7:-9)*energy.allyCost,0,state.leftMaxEnergy);
-    state.rightEnergy=clamp(state.rightEnergy+(leftWins?-9:7)*energy.enemyCost,0,state.rightMaxEnergy);
-    updateEnergyUI();
+    if(leftWins)state.leftScore++;
+    else state.rightScore++;
+    state.message=leftWins?"득점! "+state.leftScore+" / "+MATCH_TARGET:
+      "실점! "+state.rightScore+" / "+MATCH_TARGET;
     setStatus(state.message);
     tone(leftWins?760:340,.12,leftWins?"triangle":"sawtooth",.038);
-    if ((state.leftScore >= 7 || state.rightScore >= 7) && Math.abs(state.leftScore - state.rightScore) >= 2) {
-      finishMatch(false);return;
+    if(state.leftScore>=MATCH_TARGET||state.rightScore>=MATCH_TARGET){
+      finishMatch();return;
     }
-    if(loseLife())return;
     syncUI();
   }
   function step() {
+    if((state.phase==="playing"||state.phase==="point")&&++state.uiTick%6===0)updateClockUI();
     if(state.hitStopFrames>0){state.hitStopFrames--;return;}
-    if(state.healFrames>0)state.healFrames--;
     if(left.contactFrames>0)left.contactFrames--;
     if(right.contactFrames>0)right.contactFrames--;
     for(const ally of clones)if(ally.contactFrames>0)ally.contactFrames--;
@@ -674,7 +604,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       state.playFrames++;
       if(state.specialCooldownFrames>0)state.specialCooldownFrames--;
       if(state.specialChargeFrames>0)state.specialChargeFrames--;
-      if(++state.energyTick%10===0)updateEnergyUI();
     }
     if (state.phase === "point") {
       if (--state.pointTicks <= 0) { state.phase = "playing"; state.message = ""; resetPositions(); syncUI(); setStatus(""); }
@@ -686,7 +615,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if (touchControl.pointerId !== null && touchControl.targetX !== null && touchControl.targetY !== null) {
       // Responsive, smoothed 2-axis flight; remain within the player's half-court.
       const oldX = left.x, oldY = left.y;
-      const flightStep = 24 * SPEED_MULTIPLIER * battle.allySpeed * energyFactor("left");
+      const flightStep = 24 * SPEED_MULTIPLIER * battle.allySpeed;
       left.x += clamp(touchControl.targetX - left.x, -flightStep, flightStep);
       left.y += canPlayerJump() ? clamp(touchControl.targetY - left.y, -flightStep, flightStep) : 0;
       left.x = clamp(left.x, 35, NET_X - NET_W / 2 - 36);
@@ -695,7 +624,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       left.vy = left.y - oldY;
       left.jumpLock = false;
     } else {
-      controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump, 5*SPEED_MULTIPLIER*battle.allySpeed*energyFactor("left"),12.8*battle.allyJump);
+      controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump, 5*SPEED_MULTIPLIER*battle.allySpeed,12.8*battle.allyJump);
     }
     if(currentDifficulty==="extreme"){
       if(Math.abs(left.x-beforeMoveX)>.2)volleyShackle.dir=left.x>beforeMoveX?-1:1;
@@ -705,12 +634,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     // Only intentional, fast player movement powers up the next ball contact.
     const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || (canPlayerJump()&&keys.jump);
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
-    state.leftEnergy=clamp(state.leftEnergy+
-      (activeMove?-left.impactSpeed*.0065*energy.allyCost:energy.allyRest),0,state.leftMaxEnergy);
-    if(loseLife())return;
     moveAI();moveClones();
-    state.rightEnergy=clamp(state.rightEnergy+
-      (Math.abs(right.vx)>0.1?-Math.abs(right.vx)*.0065*energy.enemyCost:energy.enemyRest),0,state.rightMaxEnergy);
     for(const liveBall of activeBalls){
     const ball=liveBall;
     const previousX = ball.x, previousY = ball.y;
@@ -736,7 +660,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       }
     }
     playerHit(left,ball);
-    if(loseLife())return;
     for(const ally of clones)if(cloneHit(ally,ball))break;
     playerHit(right,ball);
     ball.trail.push({ x: ball.x, y: ball.y });
@@ -975,12 +898,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       ctx.restore();
     }
     for(const liveBall of activeBalls)drawBall(liveBall);
-    if(state.healFrames>0&&state.healAmount>0){
-      ctx.save();ctx.globalAlpha=Math.min(1,state.healFrames/14);
-      const rise=(45-state.healFrames)*.55;
-      textLabel("💚 +"+state.healAmount+" 체력",clamp(left.x,106,NET_X-82),left.y-92-rise,18,"#278e5f","center",185);
-      ctx.restore();
-    }
     if(state.impactFrames>0){
       const t=1-state.impactFrames/19;
       ctx.save();
@@ -1003,7 +920,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     else if (state.phase === "paused") overlay("PAUSE", "");
     else if (state.phase === "point") overlay(state.message, "");
-    else if (state.phase === "finished") overlay(state.winner, "");
+    else if (state.phase === "finished") overlay(state.winner,formatTime(getElapsedTenths()));
     ctx.restore();
   }
   let last = 0, accumulator = 0;
