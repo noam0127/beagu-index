@@ -138,7 +138,7 @@ function refreshBeagu2026SchoolCulture(){
       if(r[0])previous.set(r[0],r);
     }
   }
-  const grouped=new Map(),holds=[];
+  const grouped=new Map(),holds=[],optionReview=[];
   for(let i=1;i<values.length;i++){
     const r=values[i];
     if(!r[0]&&!r[c.school])continue;
@@ -166,10 +166,20 @@ function refreshBeagu2026SchoolCulture(){
         "설립유형 선택("+selectedType+")과 학교공시("+registeredType+") 불일치","NEEDS_TYPE_REVIEW",""]);
       held++;
     }
-    const scores=c.q.map((j)=>mbti26_score(r[j])); // Unknown option throws; existing staging preserved
-    if(!grouped.has(id))grouped.set(id,{school,n:[0,0,0,0],sum:[0,0,0,0],rows:0,full:0,typeConflict:false});
+    const reviewStart=optionReview.length;
+    const scores=c.q.map((j,index)=>{
+      try { return mbti26_score(r[j]); }
+      catch(error) {
+        if(!String(error.message||'').startsWith('검증되지 않은 Q14~Q17 선택지'))throw error;
+        optionReview.push([i+1,id,'Q'+(14+index),'OTHER_OR_UNKNOWN','원본 응답을 확인한 후 코드북 검수','PENDING_REVIEW']);
+        return null; // Keep valid answers from other questions and schools.
+      }
+    });
+    const hasOptionReview=optionReview.length>reviewStart;
+    if(!grouped.has(id))grouped.set(id,{school,n:[0,0,0,0],sum:[0,0,0,0],rows:0,full:0,typeConflict:false,optionHold:false});
     const item=grouped.get(id);
     item.typeConflict = item.typeConflict || typeConflict;
+    item.optionHold = item.optionHold || hasOptionReview;
     item.rows++;matched++;
     if(scores.every(x=>typeof x==="number"))item.full++;
     scores.forEach((v,j)=>{if(typeof v==="number"){item.n[j]++;item.sum[j]+=v}});
@@ -183,18 +193,21 @@ function refreshBeagu2026SchoolCulture(){
     const marker=[g.rows,...g.n.flatMap((n,i)=>[n,averages[i]??""]),g.full,candidate[0],candidate[1],candidate[2]].join("|");
     const oldMarker=old?[old[4],old[5],old[6],old[7],old[8],old[9],old[10],old[11],old[12],old[13],old[14],old[15],old[16]].join("|"):null;
     const unchanged=!!old&&marker===oldMarker;
-    const review=g.typeConflict?["NEEDS_TYPE_REVIEW","UNVERIFIED","PENDING","PENDING","PENDING"]:(unchanged?old.slice(17,22):["MATCHED","UNVERIFIED","PENDING","PENDING","PENDING"]);
+    const review=g.typeConflict?["NEEDS_TYPE_REVIEW","UNVERIFIED","PENDING","PENDING","PENDING"]:g.optionHold?["NEEDS_QUESTION_REVIEW","UNVERIFIED","PENDING","PENDING","PENDING"]:(unchanged?old.slice(17,22):["MATCHED","UNVERIFIED","PENDING","PENDING","PENDING"]);
     // Human sign-off is never applied or assumed automatically.
     return [
       String(g.school.school_id),String(g.school.sido_standard),String(g.school.support_office),String(g.school.school_name),g.rows,
       g.n[0],averages[0]??"",g.n[1],averages[1]??"",g.n[2],averages[2]??"",g.n[3],averages[3]??"",
       g.full,candidate[0],candidate[1],candidate[2],
-      ...review,MBTI26_CONFIG.version,stamp,g.typeConflict?"설립유형 불일치 · 학교 식별 및 응답자 공개동의 확인 전 공개 금지":(unchanged?old[24]:"고유 교사 수·소표본·반복 공개 위험 확인 전 웹 공개 금지")
+      ...review,MBTI26_CONFIG.version,stamp,g.typeConflict?"설립유형 불일치 · 학교 식별 및 응답자 공개동의 확인 전 공개 금지":g.optionHold?"Q14~Q17 미인식 보기 확인 필요 · 공개 보류":(unchanged?old[24]:"고유 교사 수·소표본·반복 공개 위험 확인 전 웹 공개 금지")
     ];
   });
   // Only the private worksheets are updated. Supabase release/approval tables are NEVER modified.
   mbti26_write(reviewSheet,output,25);
   mbti26_write(holdSheet,holds,7);
+  const optionReviewTab=destination.getSheetByName('MBTI_기타응답_검수대기')||destination.insertSheet('MBTI_기타응답_검수대기');
+  optionReviewTab.getRange(1,1,1,6).setValues([['원본행번호','학교ID','문항','검수유형','조치안내','집계상태']]);
+  mbti26_write(optionReviewTab,optionReview,6);
   schoolCount=output.length;
   logSheet.appendRow([stamp,scanned,excluded,matched,held,schoolCount,"SUCCESS","비공개 후보 갱신·공개 승인 없음"]);
   Logger.log("2026 MBTI 내부 후보 "+schoolCount+"개 학교; 매칭보류 "+held+"건");
