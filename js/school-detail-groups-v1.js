@@ -1,35 +1,50 @@
-/* Collapsible approved-data groups for Lv.1/Lv.2 school detail.
- * Presentation only: NEVER fetches, stores, infers, or authorizes protected data.
- * Its caller must pass only fields released by the existing server checks.
- */
+/* Collapsible approved data groups for authenticated school detail. Source fields are allowlisted by the server. */
 (function(){
   'use strict';
   const TOPICS=Object.freeze([
     {key:'scale',title:'학교 규모'},
+    {key:'teachers',title:'교원'},
+    {key:'classes',title:'학급'},
     {key:'facilities',title:'시설·환경'},
     {key:'meals',title:'급식'},
     {key:'admin',title:'행정·업무'},
     {key:'other',title:'기타 승인정보'}
   ]);
+  const KEYS=Object.freeze({
+    students:'scale',district_housing_price_mean:'scale',
+    teachers:'teachers',junior_teacher_ratio:'teachers',male_teacher_ratio:'teachers',
+    september_participation_rate:'teachers',vice_principals:'teachers',lead_teachers:'teachers',
+    classes:'classes',students_per_class:'classes',
+    meal_place:'meals',milk_lunch:'meals',cafeterias:'meals',
+    classrooms:'facilities',gym_spaces:'facilities',teacher_support_spaces:'facilities',
+    land_area:'facilities',playground_area:'facilities',
+    admin_employees:'admin',school_employees:'admin'
+  });
+  const ORDER=Object.freeze({
+    scale:['students','district_housing_price_mean'],
+    teachers:['teachers','junior_teacher_ratio','male_teacher_ratio','september_participation_rate','vice_principals','lead_teachers'],
+    classes:['classes','students_per_class']
+  });
   function classify(item){
+    const key=String(item?.factKey||'');
+    if(KEYS[key])return KEYS[key];
     const label=String(item?.label||item?.title||'').replace(/\s+/g,'');
     const section=String(item?.section||item?.group||'').replace(/\s+/g,'');
-    // Use specific field names before broad section names so mixed historical
-    // sections (e.g. "학교·교원·시설 기본정보") do not misclassify student counts.
     if(/급식|식당|우유|배식|영양/.test(label))return 'meals';
-    if(/학생수|교원수|교사수|학급수|학급당|재학생|학교규모|특수학생수|기간제교원수/.test(label))
-      return 'scale';
-    if(/시설|운동장|주차|공간|체육관|휴게실|정수기|연구실|학교대지|건물|교실수|실내체육/.test(label))
-      return 'facilities';
-    if(/업무|행정|복무|결재|보고|분장|공문|출장|근무|담임행정|행사|예산|조퇴/.test(label))
-      return 'admin';
+    if(/교원수|교사수|2급정교사|남교사|9·4참여|94참여|수석교사|교감/.test(label))return 'teachers';
+    if(/학생수|재학생|공시가격|공시지가/.test(label))return 'scale';
+    if(/학급수|학급당|특수학생수|학급현황/.test(label))return 'classes';
+    if(/시설|운동장|주차|공간|체육관|휴게실|정수기|연구실|학교대지|건물|교실수|실내체육/.test(label))return 'facilities';
+    if(/업무|행정|복무|결재|보고|분장|공문|출장|근무|담임행정|행사|예산|조퇴/.test(label))return 'admin';
     if(/급식|우유|식당/.test(section))return 'meals';
-    if(/학교규모|학급현황|교원현황|학생현황/.test(section))return 'scale';
+    if(/교원현황/.test(section))return 'teachers';
+    if(/학생현황|학교규모/.test(section))return 'scale';
+    if(/학급현황/.test(section))return 'classes';
     if(/시설|학교환경|근무환경|공간/.test(section))return 'facilities';
     if(/업무부하|행정|복무관행|업무분장|조직운영/.test(section))return 'admin';
     return 'other';
   }
-  function panel(topic, count){
+  function panel(topic,count){
     const data=TOPICS.find(t=>t.key===topic)||TOPICS[TOPICS.length-1];
     const details=document.createElement('details');
     details.className='beagu-detail-group';
@@ -50,8 +65,6 @@
     const body=document.createElement('div');
     body.className='beagu-detail-body';
     details.append(summary,body);
-    // The native <details> control is accessible with keyboard and screen reader.
-    // All groups start closed on desktop and mobile to reduce long scrolling.
     details.open=false;
     return {details,body};
   }
@@ -67,6 +80,14 @@
     for(const topic of TOPICS){
       const rows=map.get(topic.key);
       if(!rows.length)continue;
+      const order=ORDER[topic.key];
+      if(order){
+        rows.sort((a,b)=>{
+          const ia=order.indexOf(String(a.factKey||'')),ib=order.indexOf(String(b.factKey||''));
+          const va=ia===-1?order.length:ia,vb=ib===-1?order.length:ib;
+          return va-vb;
+        });
+      }
       const {details,body}=panel(topic.key,rows.length);
       rows.forEach(item=>render(body,item));
       host.append(details);
