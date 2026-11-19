@@ -55,4 +55,33 @@ assert.equal(plan.scenes.length,7);
 assert(plan.scenes.some(s=>s.basis==='approved_historical_aggregate'));
 assert(plan.scenes.some(s=>s.basis==='fictional_general'));
 assert(plan.scenes.every(s=>s.note.includes('허구')));
+/* Verified historical school answers influence FICTIONAL event tone, not actual staff claims. */
+const world26={basic:{id:'7972013'},publishedYears:[2026]};
+const sample=(id,option,overrides={})=>({...good,schoolId:'7972013',
+ surveyYear:2026,questionId:id,modeOption:option,manualReleaseApproved:true,...overrides});
+const verified=[
+ sample('Q08','그렇다'),             // newcomer task assignment reported
+ sample('Q04','매우 그렇다'),       // perceived pressure to dissent
+ sample('Q06','그렇지 않다'),       // allocation criteria less transparent
+ sample('Q01','전혀 그렇지 않다')
+];
+const strongPlan=source.scenePlan(blueprint,world26,verified);
+assert.equal(strongPlan.fictionalContext.assignmentCue,'newcomer_assignment_story');
+assert.equal(strongPlan.fictionalContext.cooperationCue,'coordination_story');
+assert.equal(strongPlan.fictionalContext.socialCue,'choice_pressure_story');
+assert.equal(strongPlan.fictionalContext.boundary,'fictional_story_only');
+assert(!JSON.stringify(strongPlan).includes('validResponseRows'),'No aggregate respondent counts exposed');
+const singlePlan=source.scenePlan(blueprint,world26,[verified[1]]);
+assert.equal(singlePlan.fictionalContext.cooperationCue,'neutral',
+ 'Never label a school contentious based on a single historical item');
+const neutralPlan=source.scenePlan(blueprint,world26,
+ [sample('Q04','보통이다'),sample('Q08','판단하기 어렵다'),sample('Q06','해당 없음')]);
+assert.equal(neutralPlan.fictionalContext.assignmentCue,'neutral');
+assert.equal(neutralPlan.fictionalContext.cooperationCue,'neutral');
+assert.equal(source.scenePlan(blueprint,world26,[sample('Q04','매우 그렇다',{validResponseRows:2})])
+ .fictionalContext.cooperationCue,'neutral','Privacy threshold cannot be bypassed');
+assert.equal(source.scenePlan(blueprint,world26,[sample('Q04','그렇다',{manualReleaseApproved:false})])
+ .fictionalContext.cooperationCue,'neutral','2026 manual release is mandatory');
+assert.equal(source.scenePlan(blueprint,{basic:{id:'DEMO001'},publishedYears:[]},verified)
+ .fictionalContext.cooperationCue,'neutral','Public demo cannot read actual school signals');
 console.log('PASS: 128 questions, '+blueprint.coverage.subitemCount+' verified 2026 subitems, 7-day scene plan, release/privacy gating');
