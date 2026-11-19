@@ -413,8 +413,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
-assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-anon25-cheers1/);
+assert.match(html,/teacher-run\.html\?v=20261119-anon25-cheers1/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -537,8 +537,8 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
-assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-anon25-cheers1/);
+assert.match(html,/teacher-run\.html\?v=20261119-anon25-cheers1/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
@@ -611,8 +611,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-vol25-retirement1")&&
-     site.body.includes("teacher-run.html?v=20261119-vol25-retirement1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-anon25-cheers1")&&
+     site.body.includes("teacher-run.html?v=20261119-anon25-cheers1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -622,14 +622,14 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-vol25-retirement1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-anon25-cheers1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-anon25-cheers1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
  assert.ok(parsed.top10.length<=10);
  for(const row of parsed.top10){
-  assert.match(row.nickname,/^[A-Z]{2,8}$/);
+  assert.equal("nickname" in row,false,"public ranking never exposes nicknames");
   assert.ok(Number.isInteger(row.score)&&row.score>0);
  }
 }
@@ -666,8 +666,8 @@ if(school.eligible){
   method:"POST",headers:origin,
   body:JSON.stringify({action:"submit",game:"volleyball_25",session:started.session,nickname:"123",stats:{player:25,cpu:0,elapsedTenths:500}})
  });
- assert.equal(JSON.parse(invalid.body).error,"invalid_name");
- console.log("PASS: eligible four-year school session and nickname validation");
+ assert.equal(JSON.parse(invalid.body).error,"nickname_not_supported");
+ console.log("PASS: eligible school session and rejection of user-supplied nicknames");
 }else{
  assert.equal(school.difficulty,null,"no provisional middle-tier fallback");
  const refused=await requestWithRetry(api,409,{
@@ -686,7 +686,7 @@ assert.equal(oneYear.eligible,true,"one-year school should play");
 assert.deepEqual(oneYear.available_years,[2024],"2024-only school is grounded");
 assert.ok(["easy","normal","hard","very_hard","extreme"].includes(oneYear.difficulty));
 const oneStart=JSON.parse((await requestWithRetry(api,200,{
- method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"volleyball",school_id:oneYear.school_id})
+ method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"volleyball_25",school_id:oneYear.school_id})
 })).body);
 assert.equal(oneStart.school.eligible,true);
 assert.match(oneStart.session,/^[0-9a-f-]{36}$/i);
@@ -694,7 +694,7 @@ const zeroYear=JSON.parse((await requestWithRetry(api+"?school_id=7003849",200,{
 assert.equal(zeroYear.eligible,false,"zero-year school should not play");
 assert.deepEqual(zeroYear.available_years,[]);
 const zeroDenied=JSON.parse((await requestWithRetry(api,409,{
- method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"teacher_run",school_id:zeroYear.school_id})
+ method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"teacher_run_retirement",school_id:zeroYear.school_id})
 })).body);
 assert.equal(zeroDenied.error,"school_ineligible");
 assert.equal(zeroDenied.survey_url,"https://forms.gle/TPyCakK6Sj2zchRy7");
