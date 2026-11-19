@@ -88,7 +88,7 @@
     '<button id="beaguLevelUpSubmit" class="beagu-levelup-submit" type="submit">레벨업하기</button></form>'+
     '<p id="beaguLevelUpFeedback" class="beagu-levelup-feedback" role="status" aria-live="polite"></p>'+
     '<div class="beagu-levelup-links"><a href="survey.html">Lv.1 · 2026 참가 ↗</a><a href="challenge.html">Lv.2 · 챌린지 ↗</a></div>'+
-    '<p class="beagu-levelup-note">고유번호로 인증하면 Lv.2(임시)이 됩니다. 포스트잇 작성은 추후 정식 로그인 계정 생성 후 이용할 수 있습니다.</p>'+
+    '<p class="beagu-levelup-note">고유번호로 인증하면 Lv.2(임시)로 표시됩니다. 포스트잇 작성은 추후 정식 로그인 계정 생성 후 이용할 수 있습니다.</p>'+
     '</section>';
   document.body.appendChild(overlay);
   const codeInput=overlay.querySelector('#beaguLevelUpCode');
