@@ -343,6 +343,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <link rel="stylesheet" href="styles/class-diary-semester-ui-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-supporting-cast-v1.css?v=20261120-men-1">
 <link rel="stylesheet" href="styles/class-diary-male-live-v1.css?v=20261120-1">
+<link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-hq1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 <link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-ink-2">
 <link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-guest1">
@@ -561,6 +562,13 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <script src="js/class-diary-visual-v1.js"></script>
 <script src="js/class-diary-seasonal-background-v1.js?v=20261120-36"></script>
 <script src="js/class-diary-sd-v1.js?v=20261120-female-sd3"></script>
+<script src="js/class-diary-hq-jiyoon-v1.js?v=20261120-hq1"></script>
+<script src="js/class-diary-hq-minseo-v1.js?v=20261120-hq1"></script>
+<script src="js/class-diary-hq-suhyun-v1.js?v=20261120-hq1"></script>
+<script src="js/class-diary-hq-sea-v1.js?v=20261120-hq1"></script>
+<script src="js/class-diary-hq-yuri-v1.js?v=20261120-hq1"></script>
+<script src="js/class-diary-female-hq-emotions-v1.js?v=20261120-hq1"></script>
+<script src="js/class-diary-female-hq-v1.js?v=20261120-hq1"></script>
 <script src="js/class-diary-male-photos-v1.js?v=20261120-1"></script>
 <script src="js/class-diary-semester-male-art-v1.js?v=20261120-1"></script>
 <script src="js/class-diary-supporting-cast-v1.js?v=20261120-men-1"></script>
@@ -588,6 +596,7 @@ const sound=window.BeaguClassDiarySound;
 const visual=window.BeaguClassDiaryVisual;
 const seasonalBackground=window.BeaguClassDiarySeasonalBackground;
 const sd=window.BeaguClassDiarySD;
+const femaleHQ=window.BeaguClassDiaryFemaleHQ;
 const supportingCast=window.BeaguClassDiarySupportingCast;
 const malePhotos=window.BeaguClassDiaryMalePhotos;
 const maleSemester=window.BeaguClassDiarySemesterMaleArt;
@@ -611,10 +620,14 @@ function syncSetupName(){
  $('setupPlayerPreview').textContent=name?name+' 선생님':'이름을 입력해 주세요';
 }
 for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','man'],['setupPortraitNone','none']]){
- $(id).src=visual.dataUrl(sd.portraitSvg(partner,'neutral'));
+ const art=femaleHQ&&femaleHQ.portrait(partner);
+ $(id).src=art||visual.dataUrl(sd.portraitSvg(partner,'neutral'));
+ $(id).dataset.artQuality=art?'hq':'sd';
 }
 for(const [id,partner] of [['setupPortraitSuhyun','suhyun'],['setupPortraitSea','sea'],['setupPortraitYuri','yuri']]){
- $(id).src=visual.dataUrl(sd.portraitSvg(partner,'neutral'));
+ const art=femaleHQ&&femaleHQ.portrait(partner);
+ $(id).src=art||visual.dataUrl(sd.portraitSvg(partner,'neutral'));
+ $(id).dataset.artQuality=art?'hq':'sd';
 }
 for(const [id,person] of [['setupMaleJunseo','junseo'],['setupMaleDohyun','dohyun'],['setupMaleTaesik','taesik']])malePhotos.paint($(id),person);
 maleSemester.preload(()=>{maleSemester.paint($('setupHyunwooLive'),'neutral','cold-spring');$('setupHyunwooLive').hidden=false;$('setupPortraitMan').hidden=true;});
@@ -843,7 +856,10 @@ function displayStage(id,who,expression,season,semesterBackground){
   stage.removeAttribute('data-weather');
   stage.setAttribute('aria-label','가상 한국 초등학교 풍경의 글자 없는 삽화');
  }
- $('scenePortrait').src=visual.dataUrl(sd.portraitSvg(who,expression||'neutral',season));
+ const highRes=femaleHQ&&femaleHQ.portrait(who);
+ $('scenePortrait').src=highRes||visual.dataUrl(sd.portraitSvg(who,expression||'neutral',season));
+ $('scenePortrait').dataset.artQuality=highRes?'hq':'sd';
+ $('scenePortrait').dataset.hqExpression=expression||'neutral';
  $('scenePortrait').dataset.season=season||'original';
  $('scenePortrait').setAttribute('data-sd-character',who);
  const frame=++maleFrameSerial;
@@ -875,12 +891,24 @@ function renderSupportingCast(moment,season){
  $('sceneGuestPortrait').hidden=male;
  $('sceneGuestMalePhoto').hidden=!male;
  if(male)malePhotos.paint($('sceneGuestMalePhoto'),guest.id);
- else $('sceneGuestPortrait').src=visual.dataUrl(sd.portraitSvg(guest.id,guest.expression,season));
+ else{
+  const highRes=femaleHQ&&femaleHQ.portrait(guest.id);
+  $('sceneGuestPortrait').src=highRes||visual.dataUrl(sd.portraitSvg(guest.id,guest.expression,season));
+  $('sceneGuestPortrait').dataset.artQuality=highRes?'hq':'sd';
+  node.dataset.artQuality=highRes?'hq':'sd';
+ }
  $('sceneGuestName').textContent=guest.name;
  $('sceneGuestRole').textContent=guest.role;
  node.dataset.sdCharacter=guest.id;
  node.dataset.season=season||'original';
  node.setAttribute('aria-label',guest.name+' · '+guest.role);
+}
+function showCharacterFace(who,expression,initial){
+ const avatar=$('characterAvatar');
+ const face=femaleHQ&&femaleHQ.face(who,expression||'neutral');
+ avatar.textContent=initial;
+ avatar.style.backgroundImage=face?'url("'+face+'")':'';
+ avatar.dataset.artQuality=face?'hq':'sd';
 }
 function mood(id){if(sound.isEnabled())sound.setTrack(id).catch(()=>{});}
 function updateMusicButton(){
@@ -910,7 +938,7 @@ function renderNovel(){
  sound.setAmbience(sound.ambienceFor(view.place,chapterMood));
  if(!isReflection)playSceneDetail('chapter:'+game.day,view.place);
  
- $('characterAvatar').textContent=view.character.initial;
+ showCharacterFace(game.profile.partner,isReflection?(game.lastOutcome&&game.lastOutcome.id==='carry'?'worried':'smile'):'neutral',view.character.initial);
  $('characterName').textContent=view.character.name;
  $('characterBio').textContent=view.character.caption;
  $('worldDetail').hidden=!view.worldDetail;
@@ -971,7 +999,7 @@ function renderScenario(){
  sound.setAmbience(sound.ambienceFor(event.place,eventMood));
  if(!event.result)playSceneDetail('event:'+game.day+':'+event.id,event.place);
  
- $('characterAvatar').textContent=profile.initial;
+ showCharacterFace(game.profile.partner,event.kind==='tense'?'worried':'neutral',profile.initial);
  $('characterName').textContent=partner;
  $('characterBio').textContent=profile.caption;
  for(const [id,key] of [['statAffection','affection'],['statTrust','trust'],
@@ -1103,7 +1131,7 @@ function renderSemester(){
   lastPhysicalScene='semester:'+game.episode;
   sound.note(score.cue);
  }
- $('characterAvatar').textContent=profile.initial;
+ showCharacterFace(game.profile.partner,semesterArt.expression,profile.initial);
  $('characterName').textContent=profile.name;
  $('characterBio').textContent=profile.caption;
  for(const [id,key] of [['statAffection','affection'],['statTrust','trust'],['statAgency','agency'],
