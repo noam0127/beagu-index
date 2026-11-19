@@ -723,7 +723,7 @@ document.addEventListener('keydown',event=>{
  }
 });
 syncScreenButtons();
-function show(id){for(const target of ['notice','guestAccess','opening','setup','novel','ending'])$(target).hidden=target!==id;for(const [cls,which] of [['is-playing','novel'],['is-setting','setup'],['is-intro','opening'],['is-ending','ending']])document.body.classList.toggle(cls,id===which);document.body.classList.remove('is-choosing');$('diaryScreenToggle').hidden=!['opening','setup','ending'].includes(id);$('choiceSection').hidden=true;window.scrollTo(0,0);}
+function show(id){for(const target of ['notice','guestAccess','opening','setup','novel','ending'])$(target).hidden=target!==id;for(const [cls,which] of [['is-playing','novel'],['is-setting','setup'],['is-intro','opening'],['is-ending','ending'],['is-ticket','guestAccess']])document.body.classList.toggle(cls,id===which);document.body.classList.remove('is-choosing');$('diaryScreenToggle').hidden=!['opening','setup','ending'].includes(id);$('choiceSection').hidden=true;window.scrollTo(0,0);}
 function fail(message){show('notice');$('noticeText').textContent=message;status('접근 권한 또는 데이터를 확인하지 못했습니다.');}
 /* Temporary in-memory dialogue pages: no autosave or new APIs. */
 const vnState={pages:[],index:0,kind:'chapter'};
@@ -1179,11 +1179,50 @@ async function apiPost(endpoint,body){
 }
 async function boot(){
  if(isGuest){
-  $('accessLabel').textContent='고유번호 임시 입장 · 2026';
-  $('schoolLine').textContent='고유번호 확인 후 가상의 초등학교 이야기 진행';
-  document.title='나의 OO한 학급일지 · 고유번호 임시 입장';
+  // Home already verified the code. Consume the 10-minute signed game ticket once.
+  const handoffKey='beagu-class-diary-guest-handoff-v1';
+  let ticket='';
+  try{
+   ticket=sessionStorage.getItem(handoffKey)||'';
+   sessionStorage.removeItem(handoffKey);
+  }catch(_){}
+  document.body.classList.add('is-guest-flow');
+  $('accessLabel').textContent='2026 챌린지 · 가상 학급일지';
+  document.title='나의 OO한 학급일지';
   show('guestAccess');
-  status('2026 챌린지 고유번호를 입력해 주세요.');
+  if(!/^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(ticket)){
+   fail('고유번호는 홈에서 한 번만 입력하면 됩니다. 홈에서 다시 입장해 주세요.');
+   return;
+  }
+  try{
+   const response=await fetch(API+'class-diary-guest-access-v1',{
+    method:'POST',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'verify-ticket',ticket})
+   });
+   ticket='';
+   if(!response.ok)throw Error('INVALID_GUEST_TICKET');
+   const result=await response.json();
+   if(result.ok!==true||result.scope!=='class-diary-fictional-guest')throw Error('INVALID_SCOPE');
+   const fixture=window.BeaguClassDiaryDemo.createDemo();
+   world=fixture.world;plan=fixture.plan;
+   prepareGuestProfile();
+   $('schoolLine').textContent='가상의 초등학교 · 2027년 3월–7월';
+   $('openingSchool').textContent=$('schoolLine').textContent;
+   $('worldAutoNote').textContent='실제 학교 정보를 사용하지 않는 가상의 이야기입니다.';
+   sound.setEnabled(true);
+   updateMusicButton();guestStartMusic();
+   const opening=$('opening');opening.classList.remove('intro-autoplay');
+   show('opening');void opening.offsetWidth;opening.classList.add('intro-autoplay');
+   clearTimeout(guestIntroTimer);
+   guestIntroTimer=setTimeout(()=>{
+    if(!opening.hidden){opening.classList.remove('intro-autoplay');$('semesterStart').click()}
+   },5000);
+   status('학급일지에 오신 것을 환영합니다. 화면을 터치하면 다음 장으로 넘어갑니다.');
+  }catch(_){
+   ticket='';
+   fail('임시 입장권을 확인하지 못했습니다. 배구지수 홈에서 다시 입장해 주세요.');
+  }
   return;
  }
  if(isDemo){
@@ -1238,41 +1277,6 @@ for(const a of ['I','E'])for(const b of ['N','S'])for(const c of ['F','T'])for(c
  const mbti=a+b+c+d;
  const option=el('option',mbti);option.value=mbti;$('mbti').append(option);
 }
-$('guestForm').addEventListener('submit',async event=>{
- event.preventDefault();
- if(!isGuest)return;
- const input=$('guestCode'),message=$('guestMessage'),button=$('guestSubmit');
- const code=input.value.trim().toUpperCase();
- if(!/^[A-Z0-9-]{10,29}$/.test(code)){
-  message.textContent='고유번호 형식을 확인해 주세요.';return;
- }
- button.disabled=true;message.textContent='발급된 번호인지 확인하고 있습니다.';
- try{
-  const response=await fetch(API+'class-diary-guest-access-v1',{
-   method:'POST',cache:'no-store',referrerPolicy:'no-referrer',
-   headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({action:'verify-code',code})
-  });
-  if(response.status===429){message.textContent='인증 요청이 많습니다. 잠시 후 다시 시도해 주세요.';return;}
-  if(!response.ok){message.textContent=response.status===401?'발급 기록에서 확인되지 않은 고유번호입니다.':'인증 서버에 연결하지 못했습니다. 다시 시도해 주세요.';return;}
-  const result=await response.json();
-  if(result.ok!==true||result.scope!=='class-diary-fictional-guest')throw Error('INVALID_RESPONSE');
-  input.value='';
-  const fixture=window.BeaguClassDiaryDemo.createDemo();
-  world=fixture.world;plan=fixture.plan;
-  $('schoolLine').textContent='고유번호 확인 완료 · 가상의 초등학교 · 실제 학교 자료 사용 안 함';
-  $('openingSchool').textContent=$('schoolLine').textContent;
-  $('worldAutoNote').textContent='고유번호 임시 입장은 실제 학교의 설문·교직원 정보를 사용하지 않습니다. 이야기는 모두 허구입니다.';
-  sound.note('uiStart');
-  const opening=$('opening');opening.classList.remove('intro-autoplay');
-  show('opening');void opening.offsetWidth;opening.classList.add('intro-autoplay');
-  $('openingStart').textContent='설정으로 건너뛰기 →';
-  clearTimeout(guestIntroTimer);
-  guestIntroTimer=setTimeout(()=>{if(!opening.hidden){opening.classList.remove('intro-autoplay');$('semesterStart').click()}},5000);
-  status('고유번호 확인 완료. 짧은 인포그래픽 오프닝 후 설정 화면으로 넘어갑니다.');
- }catch(_){message.textContent='인증 서버에 일시적인 문제가 있습니다. 다시 시도해 주세요.';}
- finally{button.disabled=false;}
-});
 // Empty-space taps page forward; selection controls keep their own click behavior.
 $('opening').addEventListener('click',event=>{
  if(!isGuest||!document.body.classList.contains('is-intro')||event.target.closest('button,a,input,select'))return;
