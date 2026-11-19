@@ -9,6 +9,7 @@ const encoder = new TextEncoder();
 const CACHE = "no-store";
 type Game = "volleyball" | "teacher_run" | "volleyball_25" | "teacher_run_retirement";
 type Entry = { score: number; created_at: string; school_name?: string | null; difficulty?: string | null };
+type FastEntry = { win_time_tenths: number; created_at: string; school_name?: string | null; difficulty?: string | null };
 type Session = { id: string; game: Game; ip_hash: string; started_at: string; submitted_at: string | null; school_id?:string; school_name?:string; difficulty?:string };
 
 function json(data: unknown, status = 200, origin = "https://baeguindex.com"): Response {
@@ -44,6 +45,17 @@ async function top(game: Game): Promise<Entry[]> {
   const q = new URLSearchParams({select:"score,created_at,school_name,difficulty",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
   const list = await db("arcade_game_scores?" + q);
   return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_name:e.school_name??null,difficulty:e.difficulty??null}));
+}
+
+async function fastest25():Promise<Array<{timeTenths:number;created_at:string;school_name:string|null;difficulty:string|null}>>{
+ const q=new URLSearchParams({
+  select:"win_time_tenths,created_at,school_name,difficulty",
+  game:"eq.volleyball_25",win_time_tenths:"not.is.null",
+  order:"win_time_tenths.asc,created_at.asc",limit:"10"
+ });
+ const rows=await db("arcade_game_scores?"+q) as FastEntry[];
+ return rows.map(e=>({timeTenths:e.win_time_tenths,created_at:e.created_at,
+  school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
 
 type School = { school_id:string; school_name:string; sido_standard:string };
@@ -131,19 +143,27 @@ function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number 
 }
 function scoreFromVolleyball25(result:any,elapsed:number):number {
  const player=result?.player,cpu=result?.cpu,base=result?.baseScore,
-       multiplier=result?.multiplier,final=result?.finalScore,victory=result?.victory;
+   bonus=result?.survivalBonus,multiplier=result?.multiplier,final=result?.finalScore,
+   victory=result?.victory,endedEarly=result?.endedEarly,tenths=result?.activeTenths;
  if(!int(player,0,25)||!int(cpu,0,25)||!int(base,0,2500)||
-    !int(multiplier,1,6)||!int(final,0,15000)||typeof victory!=="boolean")
-   throw new Error("invalid_stats");
- if((player!==25&&cpu!==25)||(player===25&&cpu===25))
-   throw new Error("invalid_match");
- if(victory!==(player===25))throw new Error("invalid_victory");
- // Every completed rally takes game time; time is NOT a ranking factor.
- if(elapsed<Math.max(4,(player+cpu-1)*1.2))throw new Error("invalid_duration");
+   !int(bonus,0,3600)||!int(multiplier,1,6)||!int(final,0,36600)||
+   !int(tenths,1,36000)||typeof victory!=="boolean"||typeof endedEarly!=="boolean")
+  throw new Error("invalid_stats");
+ if(tenths>Math.floor(elapsed*10)+20)throw new Error("invalid_survival_time");
+ const matchEnded=(player===25||cpu===25)&&!(player===25&&cpu===25);
+ if(endedEarly){
+  if(matchEnded||tenths<40)throw new Error("invalid_early_end");
+ }else{
+  if(!matchEnded)throw new Error("invalid_match");
+  if(tenths<Math.max(40,(player+cpu-1)*10))throw new Error("invalid_duration");
+ }
+ if(victory!==(player===25&&cpu<25))throw new Error("invalid_victory");
  const expectedBase=Math.max(0,player*100-cpu*50);
- const expectedMultiplier=player===25?1+Math.floor((25-cpu)/5):1;
- if(base!==expectedBase||multiplier!==expectedMultiplier||final!==expectedBase*expectedMultiplier)
-   throw new Error("invalid_score");
+ const expectedBonus=Math.min(900,Math.floor(tenths/10))*4;
+ const expectedMultiplier=victory?1+Math.floor((25-cpu)/5):1;
+ if(base!==expectedBase||bonus!==expectedBonus||multiplier!==expectedMultiplier||
+    final!==(expectedBase+expectedBonus)*expectedMultiplier)
+  throw new Error("invalid_score");
  return final;
 }
 function scoreFromRetirement(result:any,elapsed:number):number {
@@ -186,7 +206,11 @@ Deno.serve(async (req:Request)=>{
       if(params.has("school_id")){const school=await resolveSchool(params.get("school_id"));return school?json({school},200,origin):error("school_not_found",404,origin);}
       const game=params.get("game");
       if(!isGame(game))return error("invalid_game",400,origin);
-      return json({game,top10:await top(game)},200,origin);
+      if(game==="volleyball_25"){
+         const [top10,fastestTop10]=await Promise.all([top(game),fastest25()]);
+         return json({game,top10,fastestTop10},200,origin);
+       }
+       return json({game,top10:await top(game)},200,origin);
     }
     if(req.method!=="POST")return error("method_not_allowed",405,origin);
     if(Number(req.headers.get("content-length")||"0")>6000)return error("payload_too_large",413,origin);
@@ -228,7 +252,7 @@ Deno.serve(async (req:Request)=>{
          scoreFromRun(payload.stats,elapsed);
     } catch(e) {return error(e instanceof Error?e.message:"invalid_stats",400,origin);}
     const existing=await top(game);
-    if(existing.length>=10 && score<=existing[9].score){
+    if(game!=="volleyball_25"&&existing.length>=10&&score<=existing[9].score){
       return json({ranked:false,score,top10:existing},200,origin);
     }
     // Persist the score BEFORE consuming the session. A transient insert failure
@@ -237,7 +261,9 @@ Deno.serve(async (req:Request)=>{
     const inserted=await db(
       "arcade_game_scores?on_conflict=session_id&select=created_at",
       "POST",
-      {session_id:session.id,game,score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
+      {session_id:session.id,game,score,
+        win_time_tenths:game==="volleyball_25"&&payload.stats?.victory===true?payload.stats.activeTenths:null,
+        school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
       "resolution=ignore-duplicates,return=representation"
     ) as Array<{created_at:string}>;
     if(!inserted?.length)return error("session_expired",409,origin);
@@ -248,10 +274,13 @@ Deno.serve(async (req:Request)=>{
       // The unique score is safely stored even if the completion marker fails.
       console.error("arcade_completion_marker_failed");
     }
-    const board=await top(game);
-    // Anonymous entries are matched using the server-issued timestamp, score and school.
+    const [board,fastestTop10]=await Promise.all([top(game),game==="volleyball_25"?fastest25():Promise.resolve([])]);
     const rank=board.findIndex(e=>e.score===score&&e.created_at===inserted[0].created_at&&e.school_name===session.school_name)+1;
-    return json({ranked:rank>0,rank,score,top10:board},200,origin);
+    const timeRank=game==="volleyball_25"&&payload.stats?.victory===true?
+      fastestTop10.findIndex(e=>e.timeTenths===payload.stats.activeTenths&&
+        e.created_at===inserted[0].created_at&&e.school_name===session.school_name)+1:0;
+    return json({ranked:rank>0,rank,score,top10:board,
+      ...(game==="volleyball_25"?{fastestTop10,timeRanked:timeRank>0,timeRank}:{})},200,origin);
   }catch(e){
     console.error("arcade_error",e instanceof Error?e.message:"unknown");
     return error("service_unavailable",503,origin);
