@@ -307,6 +307,7 @@ const incidents=window.BeaguClassDiaryIncidents;
 const sound=window.BeaguClassDiarySound;
 const visual=window.BeaguClassDiaryVisual;
 let effectsOn=true;
+let soundPreferenceTouched=false;
 const params=new URLSearchParams(location.search);
 const isDemo=params.get('demo')==='1';
 const token=isDemo?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
@@ -387,8 +388,8 @@ function renderNovel(){
    const btn=el('button',(index+1)+'. '+choice.label);
    btn.className='choice';btn.type='button';
    btn.addEventListener('mouseenter',()=>sound.note('hover'));
-   btn.addEventListener('click',()=>{sound.note('choice');game=engine.choose(game,choice.id);
-    if(game.stats.affection>=62)sound.note('affection');renderNovel();});
+   btn.addEventListener('click',()=>{const previousAffection=game.stats.affection;sound.note('choice');game=engine.choose(game,choice.id);
+    if(game.stats.affection>previousAffection)sound.note('affection');renderNovel();});
    options.append(btn);
   });
  }else{
@@ -529,7 +530,7 @@ for(const a of ['I','E'])for(const b of ['N','S'])for(const c of ['F','T'])for(c
 $('profileForm').addEventListener('submit',e=>{
  e.preventDefault();
  try{
-  sound.setEnabled(true);updateMusicButton();sound.setMusicVolume(Number($('musicVolume').value)/100);
+  if(!soundPreferenceTouched)sound.setEnabled(true);updateMusicButton();sound.setMusicVolume(Number($('musicVolume').value)/100);
   game=engine.createGame(world,plan,{age:Number($('age').value),
    gender:$('gender').value,partner:$('partner').value,mbti:$('mbti').value,
    experience:$('experience').value,duty:$('duty').value,
@@ -549,6 +550,7 @@ $('nextBtn').addEventListener('click',()=>{
  render();
 });
 $('musicBtn').addEventListener('click',()=>{
+ soundPreferenceTouched=true;
  const next=!sound.isEnabled();sound.setEnabled(next);updateMusicButton();
  if(next){if(game)render();else sound.setTrack('daily').catch(()=>{});}
 });
