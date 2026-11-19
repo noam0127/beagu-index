@@ -80,7 +80,7 @@ for(const key of ['woman','man','none']){
 assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a cast card should play a cue');
 assert(play.src.includes("sound.note('uiStart')"),'Beginning the novel should play a cue');
 assert(play.src.includes("setupDescription"),'Selecting cast should update story introduction');
-assert(play.src.includes('role="group" aria-label="동료 캐릭터 선택"'),'Card chooser should be accessible');
+assert(play.src.includes('role="group" aria-label="프롤로그의 화자, 알고 싶은 사람 선택"'),'Card chooser should be accessible');
 assert(!play.ids.has('partnerDescription'),'Redundant character-description box must be removed');
 assert(play.src.includes('<select id="partner" required hidden'),'Legacy partner data remains in a hidden form control');
 assert(play.ids.has('diarySchoolSurveyLink'),'Schools without published results offer a 2026 survey link');
