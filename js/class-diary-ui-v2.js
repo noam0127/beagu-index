@@ -31,6 +31,10 @@ stats.setAttribute('aria-label','현재 호감도와 피로도');
 const love=build('span',''),fatigue=build('span','');
 stats.append(love,fatigue);
 $('vnOverlay').append(stats);
+const sceneDate=build('time','diary-scene-date');
+sceneDate.id='diarySceneDate';
+sceneDate.setAttribute('aria-label','이야기 속 날짜');
+$('vnOverlay').append(sceneDate);
 /* Keep the chapter HUD compact by default; expand on demand without obscuring the story. */
 const hud=$('vnHud'),hudActions=hud.querySelector('.vn-top-actions');
 hudActions.id='diaryHudActions';
@@ -78,6 +82,15 @@ function refreshStatus(){
  love.replaceChildren(build('span','','♥ 동료 호감'),build('b','', $('statAffection').textContent||'—'));
  fatigue.replaceChildren(build('span','','◷ 피로도'),build('b','', $('statFatigue').textContent||'—'));
  const heading=($('chapterDay').textContent||'').trim();
+ const placeText=($('chapterPlace').textContent||'').trim();
+ const observedDate=(placeText+' '+heading).match(/(?:2027[-.])?(\d{1,2})[-.월]\s*(\d{1,2})(?:일)?/);
+ if(observedDate){
+  const month=Number(observedDate[1]),day=Number(observedDate[2]);
+  if(month>=1&&month<=12&&day>=1&&day<=31){
+   sceneDate.textContent=month+'월 '+day+'일';
+   sceneDate.dateTime='2027-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+  }else{sceneDate.textContent='';sceneDate.removeAttribute('datetime');}
+ }else{sceneDate.textContent='';sceneDate.removeAttribute('datetime');}
  const semester=heading.match(/^(\d+)\s*\/\s*36\s*·\s*제(\d+)부\s*(.*)$/);
  const week=heading.match(/^\s*([1-7])\s*\/\s*7/);
  const episode=semester?Number(semester[1]):week?Number(week[1]):1;
