@@ -255,6 +255,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     mode = target;
     schoolPanel.hidden = target !== 'school';
     regionPanel.hidden = target !== 'region';
+    document.getElementById('beaguInterest').hidden = target !== 'school';
     schoolTab.setAttribute('aria-selected', String(target === 'school'));
     regionTab.setAttribute('aria-selected', String(target === 'region'));
     loadSchools(true);
