@@ -27,6 +27,7 @@
     protectedArea.hidden=true;
     panel.hidden=false;
     form.hidden=false;
+    logoutButton.hidden=true;
     input.value='';
     button.disabled=false;
     message(text);
@@ -35,8 +36,10 @@
   function unlock(token){
     if(!token)return;
     activeToken=token;
-    panel.hidden=true;
+    panel.hidden=false;
+    form.hidden=true;
     protectedArea.hidden=false;
+    logoutButton.hidden=false;
     input.value='';
     message('');
     window.dispatchEvent(new Event('beagu:challenge-access-granted'));
