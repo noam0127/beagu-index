@@ -124,9 +124,10 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261118-global2">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261119-level-guide1">
 <script defer src="js/beagu-level-state-v1.js?v=20261119-level-guide1"></script>
+<link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-1">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
-<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="challenge.html">챌린지</a></nav></div></header>
+<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="postit.html">포스트잇</a><a href="challenge.html">챌린지</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 <section id="teacher-run-lv1-gate" class="teacher-run-lv1-gate" aria-labelledby="teacher-run-lv1-title">
   <h1 id="teacher-run-lv1-title">Lv.1 인증이 필요합니다</h1>
@@ -164,6 +165,7 @@ canvas{height:400px;cursor:default}
     <button id="sound" type="button" aria-pressed="false" aria-label="소리 켜기" title="효과음">🔇</button>
     <button id="how" class="help" type="button" aria-label="게임 방법" title="게임 방법">?</button><a class="original" href="https://ilovebaegu.itch.io/teacherrun09" target="_blank" rel="noopener noreferrer" aria-label="원작 게임">↗ 원작</a>
   </div>
+  <a class="postit-arcade-link postit-lv2-link" data-postit-game="teacher-run" href="postit.html?game=teacher-run">▤ 이 게임 포스트잇</a>
   <div id="arcade-top10" aria-label="험난한 교직생활 정년 생존 TOP 10 순위"></div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -953,5 +955,6 @@ resize();intro();requestAnimationFrame(tick);postHeight();
 </script>
 <script src="js/arcade-fullscreen-v1.js?v=20261120-fullscreen-icons2"></script>
 <script defer src="js/beagu-game-lv1-gate-v1.js?v=20261119-inlineauth1"></script>
+<script defer src="js/postit-entry-links-v1.js?v=20261120-1"></script>
 </body>
 </html>
