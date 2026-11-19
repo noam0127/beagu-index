@@ -405,8 +405,8 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <p>새 학기가 시작됐습니다. 교실과 연구실, 복도에서 만난 사람들. 당신의 선택이 일주일의 이야기를 바꿉니다.</p>
 <div class="diary-opening-stat"><div><strong>7일</strong><small>3월 8일–14일</small></div><div><strong>3명</strong><small>서로 다른 동료 이야기</small></div><div><strong>5개</strong><small>서로 다른 결말</small></div></div>
 <div class="diary-opening-days" aria-label="일곱 날의 이야기"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
-<p id="openingSchool"></p><p class="diary-opening-note">인물·관계·사건은 허구입니다. 게임 진행은 저장하지 않습니다.</p>
-<button id="openingStart" type="button" class="primary diary-opening-start">나의 첫 페이지 펼치기 →</button>
+<p class="semester-teaser">3월의 이름표에서 7월의 방학식까지, 선택의 결과가 한 학기 뒤에 다시 돌아옵니다. 한국 현대소설의 장면과 대사로 쓴 오리지널 6부 36화.</p><p id="openingSchool"></p><p class="diary-opening-note">인물·관계·사건은 허구입니다. 게임 진행은 저장하지 않습니다.</p>
+<button id="semesterStart" type="button" class="primary diary-opening-start">한 학기 36화 본편 시작 →</button><button id="openingStart" type="button" class="secondary diary-opening-start">기존 7일 이야기 체험</button>
 </div></section>
 <section id="setup" class="panel vn-setup" data-step="1" hidden>
 <div class="setup-head">
@@ -547,6 +547,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <script src="js/2026-questionnaire-options-v1.2.js"></script>
 <script src="js/class-diary-narrative-v1.js"></script>
 <script src="js/class-diary-play-v1.js"></script>
+<script src="js/class-diary-semester-v1.js?v=20261120"></script>
 <script src="js/class-diary-character-routes-v1.js"></script>
 <script src="js/class-diary-director-v1.js"></script>
 <script src="js/class-diary-context-v1.js"></script>
@@ -566,6 +567,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
+const semester=window.BeaguClassDiarySemester;
 const director=window.BeaguClassDiaryDirector;
 const characterRoutes=window.BeaguClassDiaryCharacterRoutes;
 const schoolContext=window.BeaguClassDiaryContext;
@@ -629,6 +631,13 @@ const isGuest=!isDemo&&params.get('guest')==='1';
 const token=isDemo||isGuest?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
 const schoolId=params.get('schoolId')||'';
 let world=null,plan=null,game=null;
+let storyMode='week';
+$('openingStart').addEventListener('click',()=>{storyMode='week';});
+$('semesterStart').addEventListener('click',()=>{
+ $('openingStart').click();storyMode='semester';
+ $('setup').querySelector('.setup-head p').textContent='2027년 3월부터 7월까지, 한 학기 동안 이어질 선생님의 이야기입니다.';
+ $('setup').querySelector('.setup-story-note p').textContent='2027년 3월–7월 · 한국 현대소설 문체 36화 장편';
+});
 /* Only erase records from old versions; this game never saves new records. */
 try{
   const keys=[];
@@ -911,7 +920,63 @@ function renderEnding(){
  status('일주일의 이야기를 마쳤습니다.');
 
 }
+function renderSemester(){
+ if(game.phase==='semester_ending')return renderSemesterEnding();
+ show('novel');
+ const reflection=game.phase==='semester_reflection';
+ const view=semester.chapter(reflection?{...game,phase:'semester_chapter'}:game);
+ const profile=director.RELATIONSHIPS[game.profile.partner]||director.RELATIONSHIPS.none;
+ $('novelCard').dataset.scene=view.visual;
+ displayStage(view.visual,game.profile.partner,reflection?'smile':'neutral');
+ mood(reflection?'daily':sound.dayTrack((game.episode-1)%7+1));
+ if(!reflection)playSceneDetail('semester:'+game.episode,view.place);
+ $('characterAvatar').textContent=profile.initial;
+ $('characterName').textContent=profile.name;
+ $('characterBio').textContent=profile.caption;
+ for(const [id,key] of [['statAffection','affection'],['statTrust','trust'],['statAgency','agency'],
+  ['statFatigue','fatigue'],['statVoice','voice'],['statBoundary','boundary'],['statSupport','support']])
+  $(id).textContent=game.stats[key];
+ $('chapterDay').textContent=view.episode+' / 36 · 제'+view.act+'부 '+view.actName;
+ $('chapterTitle').textContent=view.title;
+ $('chapterPlace').textContent=view.date+' · '+view.place+' · '+game.profile.name+' 선생님';
+ $('chapterProgress').style.width=(view.episode/36*100)+'%';
+ $('worldDetail').hidden=true;$('schoolFacts').hidden=true;
+ $('chapterSource').textContent='2027년의 가상 학교에서 벌어지는 허구의 사건입니다. 실제 교직원과 학생의 언행이 아닙니다.';
+ $('choiceSection').hidden=reflection;
+ $('outcome').hidden=!reflection;
+ $('nextBtn').hidden=!reflection;
+ $('nextBtn').setAttribute('aria-label',game.episode===36?'한 학기의 마지막 페이지':'다음 회차');
+ const options=$('choiceButtons');options.replaceChildren();
+ if(!reflection){
+  fillParagraphs('chapterText',view.paragraphs);
+  view.choices.forEach((choice,i)=>{
+   const btn=el('button',(i+1)+'. '+choice.label);
+   btn.className='choice';btn.type='button';
+   btn.addEventListener('click',()=>{sound.note('choice');game=semester.choose(game,choice.id);renderSemester();});
+   options.append(btn);
+  });
+ }else{
+  fillParagraphs('chapterText',view.paragraphs);
+  fillParagraphs('outcomeText',game.lastOutcome.paragraphs);
+  $('outcomeLine').textContent=game.lastOutcome.line;
+ }
+ vnStart(reflection);
+ status('제'+view.act+'부 · '+view.episode+'화 / 36화');
+}
+function renderSemesterEnding(){
+ show('ending');mood('ending');
+ const ending=game.ending;
+ $('endingTitle').textContent=ending.title;
+ $('endingHeading').textContent=ending.heading;
+ fillParagraphs('endingText',ending.paragraphs);
+ $('endingAffection').textContent=ending.affection+' / 100';
+ $('endingScore').textContent='이야기 점수 '+ending.score+' / 100';
+ $('endingSchool').textContent=game.schoolName+' · 2027년 3월–7월, 36화의 기록';
+ status('한 학기의 이야기를 마쳤습니다.');
+}
+
 function render(){
+ if(storyMode==='semester')return renderSemester();
  if(game.phase==='ending')return renderEnding();
  if(game.phase==='chapter'&&(incidents.next(game,world)||scenario.scene(game,world)))return renderScenario();
  renderNovel();
@@ -1022,17 +1087,19 @@ $('profileForm').addEventListener('submit',e=>{
  if(!journey.ready())return;
  try{
   if(!soundPreferenceTouched)sound.setEnabled(true);updateMusicButton();sound.setMusicVolume(Number($('musicVolume').value)/100);
-  game=engine.createGame(world,plan,engine.inferredProfile(world,{
+  const baseGame=engine.createGame(world,plan,engine.inferredProfile(world,{
    name:$('playerName').value,
    experience:$('experience').value,
    gender:$('gender').value,mbti:$('mbti').value,partner:$('partner').value
   },plan));
+  game=storyMode==='semester'?semester.createGame(baseGame):baseGame;
   sound.note('uiStart');
   render();
  }catch(err){status('이름을 입력하고 교직 경력·성별·MBTI·동료를 선택해 주세요.');}
 });
 $('nextBtn').addEventListener('click',()=>{
  sound.note('pageTurn');
+ if(storyMode==='semester'){game=semester.advance(game);render();return;}
  const incident=game.phase==='chapter'?incidents.next(game,world):null;
  const event=game.phase==='chapter'&&!incident?scenario.scene(game,world):null;
  game=incident&&incident.result?incidents.continueStory(game):
@@ -1056,10 +1123,10 @@ sound.onStatus(message=>{$('musicStatus').textContent=message});
 $('choiceButtons').addEventListener('mouseover',e=>{if(e.target.closest('.choice'))sound.note('hover');});
 $('resetBtn').addEventListener('click',()=>{
  if(!game)return;
- game=engine.createGame(world,plan,game.profile);render();
+ const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;render();
 });
 $('againBtn').addEventListener('click',()=>{
- game=engine.createGame(world,plan,game.profile);render();
+ const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;render();
 });
 boot();
 })();
