@@ -543,6 +543,15 @@
           '영역별 점수는 참여 응답을 요약한 참고값으로, 학교 전체 교사의 의견을 대표하지 않습니다.'));
       }
       BeaguDetailGroups.appendGrouped(section,releasedMetrics,(body,m)=>addRow(body,m.label,m.value,m));
+      // Explain the direction of the domain scores where the scores appear.
+      // Only the 2025 '분야별 점수' group receives this short note.
+      const domainBody=section.querySelector('.beagu-detail-group[data-topic="domains"] .beagu-detail-body');
+      if(domainBody){
+        domainBody.insertBefore(
+          make('p','beagu-domain-score-note','점수가 높을수록 교사 부담이 증가합니다.'),
+          domainBody.firstChild
+        );
+      }
       section.querySelectorAll('.beagu-detail-group').forEach(group=>{group.open=true;});
       if(hadMismatch)section.append(make('p','beagu-source-caption','출처별 백분위 값이 달라 원본 검수가 필요합니다.'));
       if(hadRestricted)section.append(make('p','beagu-source-caption','일부 세부 항목은 승인 범위에 따라 제공되지 않습니다.'));
