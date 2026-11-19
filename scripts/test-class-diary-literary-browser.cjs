@@ -1,4 +1,4 @@
-/* Real Chromium regression: one click/Enter reveals one stable-sized line.
+/* Real Chromium regression: tap/Enter progresses one complete sentence with a waiting cursor.
  * Only the public fictional demo is used; no account or school-data access. */
 'use strict';
 const assert=require('node:assert/strict');
@@ -80,63 +80,60 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#novel').waitFor({state:'visible',timeout:5000});
    const sample=()=>page.evaluate(()=>{
     const rows=[...document.querySelectorAll('#chapterText .diary-literary-line')];
-    const shown=rows.filter(r=>!r.hidden);
+    const current=rows[0];
     const stage=document.querySelector('#sceneArt');
     const reader=document.querySelector('#vnDialogueSlot');
-    const body=document.body;
-    const first=shown[0];
     return {
-     total:rows.length,visible:shown.length,
-     lines:shown.map(r=>r.textContent),
-     sizes:shown.map(r=>getComputedStyle(r).fontSize),
-     opacity:shown.map(r=>getComputedStyle(r).opacity),
-     echo:document.querySelectorAll('.diary-literary-echo').length,
+     total:rows.length,visible:rows.filter(row=>!row.hidden).length,
+     text:current?.textContent||'',full:current?.getAttribute('aria-label')||'',
+     ready:current?.classList.contains('diary-literary-ready')||false,
+     cursor:!!current?.querySelector('.diary-reading-cursor'),
+     cursorAnimation:current?.querySelector('.diary-reading-cursor')?getComputedStyle(current.querySelector('.diary-reading-cursor')).animationName:'',
      viewportHeight:innerHeight,viewportWidth:innerWidth,
      stageHeight:stage.getBoundingClientRect().height,
      pageWidth:reader.getBoundingClientRect().width,
-     readerHeight:reader.clientHeight,
-     readerScrollHeight:reader.scrollHeight,
-     scene:body.classList.contains('is-literary-mode'),
-     semester:body.classList.contains('is-semester-mode'),
-     choosing:body.classList.contains('is-choosing'),
-     pageIndex:document.querySelector('#chapterDay').textContent
+     readerHeight:reader.clientHeight,readerScrollHeight:reader.scrollHeight,
+     scene:document.body.classList.contains('is-literary-mode'),
+     semester:document.body.classList.contains('is-semester-mode'),
+     choosing:document.body.classList.contains('is-choosing'),
+     portraits:document.querySelector('#scenePortrait').getBoundingClientRect().width,
+     echo:document.querySelectorAll('.diary-literary-echo').length
     };
    });
+   await page.waitForFunction(()=>!!document.querySelector('#chapterText p.diary-literary-ready'),null,{timeout:12000});
    const first=await sample();
-   assert(first.scene,'The literary line-reader must be enabled in both stories');
-   assert.equal(first.semester,story==='semester','Only the 36-episode story may use semester-specific state');
-   assert.equal(first.visible,1,'Exactly the first line should be visible initially');
-   assert(first.total>=3,'The first page must contain at least three manually revealed lines');
-   assert.equal(first.echo,0,'There must be no previous-text echo');
-   assert(first.pageWidth>first.viewportWidth*.75,'Prose must occupy most of the screen width');
-   assert(first.stageHeight<=first.viewportHeight+2,'Stage must fit the viewport');
-   const touchPoint={x:Math.round(device.width*.47),y:Math.round(device.height*.52)};
-   await page.locator('#sceneArt').click({position:touchPoint});
+   assert(first.scene,'Literary prose mode is enabled');
+   assert(first.semester,'Semester story mode is enabled');
+   assert.equal(first.total,1,'One complete sentence, not several lines, must be present');
+   assert.equal(first.visible,1,'Only the current sentence is visible');
+   assert(first.full.length>=3,'Sentence text must be nonempty');
+   assert(first.cursor,'A cursor must wait after the sentence');
+   assert(first.cursorAnimation.includes('diary-sentence-cursor-blink'),'Waiting cursor must blink');
+   assert.equal(first.portraits,0,'Only the scene background should render without character images');
+   assert.equal(first.echo,0,'No past-line echo is allowed');
+   assert(first.pageWidth>first.viewportWidth*.75,'Text should occupy most of the screen width');
+   assert(first.stageHeight<=first.viewportHeight+2,'Stage stays within one viewport');
+
+   // A tap after completion replaces the sentence, not adds another visible line.
+   await page.evaluate(()=>document.getElementById('sceneArt').click());
+   await page.waitForFunction(previous=>{
+    const row=document.querySelector('#chapterText p.diary-literary-line');
+    return row&&row.getAttribute('aria-label')!==previous;
+   },first.full,{timeout:5000});
+   await page.waitForFunction(()=>!!document.querySelector('#chapterText p.diary-literary-ready'),null,{timeout:12000});
    const second=await sample();
-   assert.equal(second.visible,2,'A touch adds exactly one line');
-   assert.equal(second.lines[0],first.lines[0],'Previous lines remain unchanged');
-   assert.equal(second.sizes[0],first.sizes[0],'Previous lines cannot shrink');
+   assert.equal(second.total,1,'Next tap should replace, not append, prose');
+   assert.notEqual(second.full,first.full,'A new sentence must follow the first');
+   assert(second.cursor,'Cursor must remain at the end of the next sentence');
+   // Enter provides identical progression to tapping, including on phones.
    await page.evaluate(()=>document.activeElement?.blur());
    await page.keyboard.press('Enter');
+   await page.waitForFunction(previous=>document.querySelector('#chapterText p.diary-literary-line')?.getAttribute('aria-label')!==previous,second.full,{timeout:5000});
    const third=await sample();
-   assert.equal(third.visible,3,'Enter reveals exactly one more line');
-   assert(third.sizes.every(size=>size===first.sizes[0]),'Every displayed line has the same font size');
-   let tapped=0,sawFullPage=false;
-   while(tapped++<70){
-    const before=await sample();
-    await page.evaluate(()=>document.getElementById('sceneArt').click());
-    const after=await sample();
-    if(after.visible===1&&before.visible>1){sawFullPage=true;break;}
-    if(after.choosing){
-     assert.equal(before.visible,before.total,'Choices must open only after every line has been read');
-     sawFullPage=true;break;
-    }
-    assert(after.visible===before.visible+1,'Each input must reveal exactly one additional line');
-    assert(after.readerScrollHeight<=after.readerHeight+7,'Text must fit without inner scrolling');
-   }
-   assert(sawFullPage,'After the last line, the scene must turn the page or open the choices');
+   assert.equal(third.total,1,'Enter must show only the next sentence');
+   assert.notEqual(third.full,second.full,'Keyboard advances exactly one sentence');
    assert.equal(errors.length,0,'Uncaught browser errors: '+errors.join('; '));
-   console.log('PASS literary line-by-line '+device.name+' '+story+': no echoes, stable typography, touch/Enter, full-width and no scroll');
+   console.log('PASS literary sentence reader '+device.name+' '+story+': punctuation-sized pages, blinking cursor, tap and Enter, no portraits');
    await page.close();
    }
   }
