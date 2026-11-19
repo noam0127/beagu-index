@@ -96,7 +96,15 @@ for(const html of [home,challenge]){
 }
 assert.ok(challenge.indexOf('data-beagu-xp')>challenge.indexOf('id="certificate"'),
  'XP should not alter the printable personal certificate');
-assert.match(read('js/challenge.js'),/beagu_join_challenge/);
+assert.match(read('js/challenge.js'),/beagu-challenge-identity/,'Issue codes through the session-verified API');
+assert.doesNotMatch(read('js/challenge.js'),/supabaseClient\.rpc\('beagu_join_challenge'/,
+ 'No browser-direct ordinal issuance');
+assert.match(read('js/challenge.js'),/X-Beagu-Session/,'Require the existing Level 1 session');
+assert.match(read('js/challenge.js'),/identityCode\.textContent = code/,'Show the issued unique code');
+assert.ok(challenge.indexOf('id="identityCode"') > challenge.indexOf('</section>',challenge.indexOf('id="certificate"')),
+ 'Identity code must be outside the image capture root');
+assert.match(challenge,/data-html2canvas-ignore="true"/,'Private code should never render in generated certificate');
+assert.match(challenge,/레벨1 참여코드가 아닙니다/,'Clearly distinguish future identifier from Level 1 code');
 assert.match(read('js/challenge.js'),/BeaguChallengeProgress\.refresh/);
 assert.match(read('js/visit-stats.js'),/beagu_record_visit/,'Preserve preexisting visit accounting');
 assert.match(read('js/visit-stats.js'),/sessionStorage/,'Browser session fallback');
