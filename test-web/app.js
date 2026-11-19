@@ -16,7 +16,7 @@ try{
  deviceProof=localStorage.getItem(key)||'';
  if(!validToken(deviceProof)){
   const random=crypto.getRandomValues(new Uint8Array(32));
-  deviceProof=btoa(String.fromCharCode(...random)).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+  deviceProof=btoa(String.fromCharCode(...random)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
   localStorage.setItem(key,deviceProof);
  }
 }catch(_){deviceProof='';}
