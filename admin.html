@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>관리자 · 배구지수</title>
+  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-a1">
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <a class="brand" href="index.html" aria-label="배구지수 홈"><span class="mark">B</span><strong>BAEGUINDEX</strong></a>
+      <span class="admin-tag">관리자 전용</span>
+    </header>
+    <section class="hero">
+      <p class="eyebrow">BAEGUINDEX OPERATIONS</p>
+      <h1>관리자</h1>
+      <p>기존 레벨0·1·2와 별도로 운영되는 관리자 계정입니다.</p>
+    </section>
+    <p class="notice" id="adminNotice" role="status" aria-live="polite">인증 상태를 확인하는 중입니다.</p>
+
+    <section class="panel" id="adminLogin" hidden>
+      <div class="panel-head"><h2>관리자 로그인</h2><span>1 / 2</span></div>
+      <form id="adminLoginForm">
+        <label for="adminEmail">이메일</label>
+        <input id="adminEmail" name="email" type="email" autocomplete="username" inputmode="email" required maxlength="254">
+        <label for="adminPassword">비밀번호</label>
+        <input id="adminPassword" name="password" type="password" autocomplete="current-password" required minlength="8">
+        <button type="submit" class="primary">로그인</button>
+      </form>
+      <p class="help">기존 챌린지 참여코드는 관리자 로그인에 사용할 수 없습니다.</p>
+    </section>
+
+    <section class="panel" id="adminMfa" hidden>
+      <div class="panel-head"><h2>2단계 인증</h2><span>2 / 2</span></div>
+      <p id="adminMfaIntro">인증 앱에서 생성된 6자리 코드를 입력해 주세요.</p>
+      <button id="adminEnroll" type="button" class="secondary" hidden>인증 앱 등록하기</button>
+      <div class="qr-wrap" id="adminQrWrap" hidden>
+        <img id="adminQr" alt="인증 앱 등록용 QR 코드">
+        <p>인증 앱으로 QR 코드를 읽고 6자리 코드를 입력하세요. 이 QR 코드를 다른 사람에게 공유하지 마세요.</p>
+      </div>
+      <form id="adminMfaForm" hidden>
+        <label for="adminTotp">인증 앱 코드</label>
+        <input id="adminTotp" name="totp" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required placeholder="6자리 숫자">
+        <button class="primary" type="submit">인증 완료</button>
+      </form>
+      <button id="adminMfaLogout" type="button" class="link-button">로그아웃</button>
+    </section>
+
+    <section id="adminDashboard" hidden>
+      <div class="dashboard-head">
+        <div><p class="eyebrow">ACCESS VERIFIED</p><h2>운영 현황</h2><p class="help">관리자 권한과 2단계 인증이 서버에서 확인되었습니다.</p></div>
+        <button id="adminLogout" type="button" class="secondary">로그아웃</button>
+      </div>
+      <div class="metrics">
+        <article><h3>사이트 이용 현황</h3><div class="empty">미수집 · 통계 API 연동 전</div></article>
+        <article><h3>학교 조회 현황</h3><div class="empty">미수집 · 통계 API 연동 전</div></article>
+        <article><h3>게임 이용 현황</h3><div class="empty">미연동 · 통계 API 연동 전</div></article>
+        <article><h3>챌린지와 레벨</h3><div class="empty">미연동 · 통계 API 연동 전</div></article>
+        <article><h3>보안·운영 감사</h3><div class="empty">관리자 감사 로그 수집 준비</div></article>
+      </div>
+    </section>
+
+    <footer>공개 통계와 관리자 감사 기록은 별도로 관리합니다.</footer>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+  <script src="js/supabase-config.js"></script>
+  <script defer src="js/beagu-admin-access-v1.js?v=20261120-a1"></script>
+</body>
+</html>
