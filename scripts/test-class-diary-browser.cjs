@@ -5,21 +5,32 @@ const {chromium}=require('playwright');
 const fs=require('node:fs/promises');
 const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
 async function advanceColleaguePrologue(page,expectedNarrator){
+ await page.locator('#diaryPrologueSchool').waitFor({state:'visible'});
+ assert(await page.locator('#diaryPrologueSchoolFacts dt').count()>=2,'School intro must show approved public fields');
+ await page.locator('#diaryPrologueSchoolContinue').click();
+ await page.locator('#novel').waitFor({state:'visible'});
  const header=page.locator('#chapterDay');
  const title=await header.innerText();
  assert(title.includes('프롤로그')&&title.includes(expectedNarrator),'Selected colleague must narrate prologue: '+title);
  const text=await page.locator('#outcomeText').innerText();
  assert(text.includes('나는')||text.includes('내가'),'Prologue must be first-person colleague narration');
  let taps=0;
- while((await header.innerText()).includes('프롤로그')&&taps++<250){
+ while(!(await page.locator('#playerSetup').isVisible())&&taps++<250){
   if(await page.locator('#vnMore').isVisible())await page.locator('#vnMore').click();
   else if(await page.locator('#nextBtn').isVisible())await page.locator('#nextBtn').click();
-  else throw Error('Prologue is blocked before Chapter 1');
+  else throw Error('Prologue is blocked before protagonist setup');
  }
  assert(taps<250,'Prologue did not complete');
- assert((await header.innerText()).startsWith('1 / 36'),'After colleague prologue, player chapter 1 should begin');
- assert((await header.innerText()).includes('나의 시점'),'Chapter 1 must clearly be the player perspective');
+ assert.equal(await page.locator('#playerSetup').isVisible(),true,'Protagonist setup must appear between prologue and Chapter 1');
+ await page.locator('#heroName').fill('한가람');
+ await page.locator('#heroExperience').selectOption('new');
+ await page.locator('#playerSetupForm button[type="submit"]').click();
+ await page.locator('#novel').waitFor({state:'visible'});
+ const episode=await header.innerText();
+ assert(episode.startsWith('1 / 36'),'Chapter 1 starts only after player setup');
+ assert(episode.includes('나의 시점'),'The selected narrator must switch to the player');
 }
+
 (async()=>{
  await fs.mkdir('artifacts/class-diary',{recursive:true});
  const browser=await chromium.launch({headless:true});
