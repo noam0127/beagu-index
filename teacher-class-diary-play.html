@@ -978,6 +978,8 @@ function vnSplit(text,limit){
 /* Allow the story to breathe across the full-height paper panel.
    Preserve paragraph breaks, while keeping long chapters paged and scrollable. */
 function vnPages(paragraphs){
+ // The full-semester story uses actual screen-width lines, not arbitrary character pages.
+ if(storyMode==='semester'&&document.body.classList.contains('is-playing'))return literary.paginate(paragraphs);
  const limit=storyMode==='semester'?(window.innerHeight<=520?74:window.innerWidth<=360?98:window.innerWidth<=620?125:205):(window.matchMedia('(max-width:620px)').matches?620:1000);
  const pages=[];let current=[],count=0;
  for(const paragraph of paragraphs){
@@ -1012,7 +1014,7 @@ function vnFitPage(reader,target){
 }
 function vnPresent(){
  const done=vnState.kind==='outcome',target=$(done?'outcomeText':'chapterText');
- target.replaceChildren(...(vnState.pages[vnState.index]||['…']).map(paragraph=>el('p',paragraph)));
+ target.replaceChildren(...(vnState.pages[vnState.index]||['…']).map(line=>el('p',typeof line==='string'?line:line.text)));
  literary.present(target);
  target.classList.remove('diary-text-arrive');void target.offsetWidth;target.classList.add('diary-text-arrive');
  const reader=document.querySelector(done?'#outcome':'#vnDialogueSlot .vn-dialogue');
@@ -1023,7 +1025,7 @@ function vnPresent(){
  $('choiceSection').hidden=true;
  $('nextBtn').hidden=true;
  $('vnMore').hidden=false;
- $('vnMore').setAttribute('aria-label',vnState.index<vnState.pages.length-1?'다음 대사':done?'다음 장면':'선택지 보기');
+ $('vnMore').setAttribute('aria-label',storyMode==='semester'?'다음 줄 또는 페이지':vnState.index<vnState.pages.length-1?'다음 대사':done?'다음 장면':'선택지 보기');
 }
 function vnStart(done){
  const source=$(done?'outcomeText':'chapterText');
