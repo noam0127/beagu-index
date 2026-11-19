@@ -227,3 +227,57 @@ body.beagu-page-compare .content-card{
 @media(prefers-reduced-motion:reduce){
   body.beagu-ui-page .beagu-levelup-card .beagu-auth-submit{transition:none;}
 }
+
+/* One identically styled upgrade action across public search, Lv1 and comparison. */
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare) .beagu-levelup-card>.beagu-levelup-trigger,
+body.beagu-page-lv1 .beagu-levelup-status .beagu-levelup-trigger{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:auto;min-width:176px;max-width:100%;min-height:51px;
+  padding:12px 24px;margin:5px 0 9px;
+  border:0;border-radius:13px;
+  background:linear-gradient(135deg,#2f6fda,#2458b9);
+  box-shadow:0 5px 11px rgba(33,92,186,.16);
+  color:#fff;font:850 15px/1.35 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  cursor:pointer;white-space:normal;text-align:center;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare) .beagu-levelup-card>.beagu-levelup-trigger:hover,
+body.beagu-page-lv1 .beagu-levelup-status .beagu-levelup-trigger:hover{
+  background:linear-gradient(135deg,#235fc5,#1a4a9c);
+}
+body.beagu-page-compare .compare-auth-card.beagu-levelup-card.is-authenticated{
+  padding:21px 28px 18px;
+}
+body.beagu-page-compare .beagu-levelup-card .compare-auth-heading{
+  margin:0 0 12px;gap:12px;
+}
+body.beagu-page-compare .beagu-levelup-card .compare-auth-heading h2{
+  font-size:21px;
+}
+body.beagu-page-compare .beagu-levelup-card .compare-auth-actions{
+  display:flex;align-items:center;justify-content:flex-end;gap:10px;
+}
+body.beagu-page-compare .beagu-levelup-card .compare-auth-badge{
+  min-height:34px;padding:7px 12px;
+}
+body.beagu-page-lv1 .beagu-levelup-status .beagu-levelup-heading{
+  display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0;
+}
+body.beagu-page-lv1 .beagu-levelup-status .beagu-levelup-trigger{
+  min-height:40px;min-width:125px;padding:9px 14px;margin:0 0 0 auto;
+  font-size:13px;
+}
+/* Existing level-up entry opens the same modal; no extra login flow. */
+@media(max-width:720px){
+  body.beagu-page-compare .compare-auth-card.beagu-levelup-card.is-authenticated{
+    padding:20px 18px 18px;
+  }
+  body.beagu-page-compare .beagu-levelup-card .compare-auth-heading h2{font-size:20px}
+}
+@media(max-width:440px){
+  body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare) .beagu-levelup-card>.beagu-levelup-trigger{
+    width:100%;min-width:0;margin:5px 0 4px;
+  }
+  body.beagu-page-lv1 .beagu-levelup-status .beagu-levelup-trigger{
+    width:auto;min-width:120px;margin:5px 0 0;
+  }
+}
