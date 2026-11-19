@@ -61,7 +61,7 @@ assert(play.src.includes("selectSchoolMode('demo')"),'Fictional demo school shou
 assert(play.src.includes("if(!/^[0-9a-f]{64}$/.test(token))"),'Real school selection must not bypass Lv2 verification');
 assert(preview.src.includes("location.replace('teacher-class-diary-play.html')"),'Legacy preview must send users straight to the title card');
 
-assert(play.src.includes("selectSchoolMode('demo');\n  $('semesterStart').click();"),'Demo should skip the opening cinematic and go straight to the setup');
+assert(play.src.includes("selectSchoolMode('demo');\n  show('diaryLanding');"),'Demo entry opens the title card before school setup');
 assert(play.src.includes("selectSchoolMode('real',world.basic.name);\n  $('semesterStart').click();"),'Authorized real school should also skip the opening');
 assert(play.src.includes('function vnFitPage('),'Overflowing dialogue must be repaginated');
 assert(play.src.includes('class="panel vn-setup"'),'Dating-sim setup should replace plain form');
@@ -79,6 +79,12 @@ assert(!play.ids.has('partnerDescription'),'Redundant character-description box 
 assert(play.src.includes('<select id="partner" required hidden'),'Legacy partner data remains in a hidden form control');
 assert(play.ids.has('diarySchoolSurveyLink'),'Schools without published results offer a 2026 survey link');
 assert(play.src.includes('arcade-leaderboard?school_id='),'School survey eligibility is queried from existing published API');
+assert(play.src.includes('async function loadSchoolWorld(schoolId)'),'School world API waits for an explicit school choice');
+assert(play.src.includes('await loadSchoolWorld(record.school_id)'),'School selection triggers the world loader');
+assert(play.src.includes('The title and first setup step never require a school ID'),'Preselection must not block the initial title card');
+assert(!play.src.includes("if($('setup').dataset.step==='2')$('profileForm').requestSubmit()"),'Portrait tap cannot skip the next action');
+assert(play.src.includes("Fail closed for checkpoint writes"),'Failed progress reads must never overwrite existing saves');
+
 assert(play.src.indexOf('id="diarySchoolMode"') < play.src.indexOf('id="playerName"'),'School selection precedes name');
 
 
