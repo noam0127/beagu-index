@@ -61,7 +61,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#diaryLandingStart').click();
    await page.locator('#setup').waitFor({state:'visible'});
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'1');
-   assert.equal(await page.locator('.diary-landing-verse').innerText(),'낯선 교실에 첫 발을 내딛던 날.\n그날의 걸음을 우리는 잊지 못한다.','Title card text must match');
+   assert.equal((await page.locator('.diary-landing-verse').innerText()).replace(/\s+/g,''),'낯선교실에첫발을내딛던날.그날의걸음을우리는잊지못한다.','Title card text must match regardless of responsive line breaks');
    assert.equal(await page.locator('#diarySchoolName').isVisible(),true,'School text field must be visible');
    assert.equal(await page.locator('#diarySchoolMode').isVisible(),false,'Mode dropdown must be hidden');
    for(const selector of ['#playerName','#experience','#gender','#mbti'])
