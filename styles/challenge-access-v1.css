@@ -1,46 +1,39 @@
-/* Lv.1-only entry for the challenge certificate; keep normal pages unaffected. */
-.beagu-page-challenge .challenge-access-panel{
-  margin:20px auto 0;padding:28px 26px 25px;background:#fff;
-  border:1px solid #dce5f1;border-radius:21px;max-width:560px;
-  box-shadow:0 9px 28px rgba(17,43,77,.055)
+/* Challenge uses the same form, badge and buttons as search and compare.
+   All common visual rules live in beagu-auth-unified-v1.css and
+   beagu-auth-journey-v1.css; only authenticated-state sizing differs. */
+body.beagu-page-challenge #challengeAccessPanel{
+  width:100%;
+  box-sizing:border-box;
 }
-.beagu-page-challenge .challenge-access-panel h1{
-  margin:0 0 12px;font-size:clamp(26px,5vw,33px);font-weight:850;
-  letter-spacing:-.045em;color:#173358
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-form{
+  width:100%;
+  min-width:0;
+  margin:0;
+  gap:14px;
 }
-.beagu-page-challenge .challenge-access-feedback{
-  margin:0 0 14px;min-height:20px;color:#61728c;font-size:13px;line-height:1.5
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-field,
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-input-wrap{
+  min-width:0;
+  width:100%;
 }
-.beagu-page-challenge .challenge-access-panel label{
-  display:block;color:#405572;font-size:14px;font-weight:750;margin-bottom:8px
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-message{
+  color:#61748c;
 }
-.beagu-page-challenge .challenge-access-panel input{
-  width:100%;min-height:51px;padding:12px 15px;border:1px solid #cdd9e9;
-  background:#fff;border-radius:12px;color:#142b47;font-size:16px;outline-offset:3px
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-message:not(:empty){
+  margin:12px 0 0;
 }
-.beagu-page-challenge .challenge-access-panel input:focus-visible{
-  border-color:#2563eb;outline:3px solid #bfd5ff
+body.beagu-page-challenge #challengeAccessPanel[data-auth-level="1"],
+body.beagu-page-challenge #challengeAccessPanel[data-auth-level="2"]{
+  min-height:0;
+  padding-bottom:20px;
 }
-.beagu-page-challenge .challenge-access-submit{
-  display:inline-flex;align-items:center;justify-content:center;width:100%;
-  min-height:51px;margin-top:13px;border:0;border-radius:12px;
-  background:#2563eb;color:white;font-family:inherit;font-size:15px;font-weight:800;line-height:1.4;cursor:pointer
+body.beagu-page-challenge #challengeAccessPanel[data-auth-level="1"] .beagu-auth-heading,
+body.beagu-page-challenge #challengeAccessPanel[data-auth-level="2"] .beagu-auth-heading{
+  margin-bottom:0;
 }
-.beagu-page-challenge .challenge-access-submit:hover{background:#1d4ed8}
-.beagu-page-challenge .challenge-access-submit:disabled{opacity:.55;cursor:wait}
-.beagu-page-challenge .challenge-access-help{margin:14px 0 0}
-.beagu-page-challenge .challenge-access-help a{font-size:13px;font-weight:750;color:#245cb2;text-decoration:none}
-.beagu-page-challenge .challenge-access-help a:hover{text-decoration:underline}
-.beagu-page-challenge .challenge-auth-status{
-  display:flex;justify-content:space-between;align-items:center;
-  gap:10px;margin:0 0 15px;color:#416290;font-size:13px;font-weight:750
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-logout[hidden]{
+  display:none!important;
 }
-.beagu-page-challenge .challenge-auth-status button{
-  min-height:37px;padding:7px 11px;border:1px solid #d6e1ef;
-  border-radius:10px;background:#fff;color:#426089;font:700 12px/1.3 inherit;cursor:pointer
-}
-.beagu-page-challenge .challenge-auth-status button:hover{background:#eef5ff}
-@media(max-width:520px){
-  .beagu-page-challenge .challenge-access-panel{padding:22px 18px;margin-top:9px}
-  .beagu-page-challenge .challenge-access-panel h1{font-size:26px}
+@media(max-width:720px){
+  body.beagu-page-challenge #challengeAccessPanel .beagu-auth-form{gap:13px}
 }
