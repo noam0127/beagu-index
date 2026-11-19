@@ -32,9 +32,12 @@
    return data;
   }
   async function load(){
+   // Explicit continue waits for any earlier save to settle before reading the server.
+   await pending.catch(()=>false);
    report('loading');
    const result=await request('load',{});
    revision=Number(result.progress?.revision)||0;
+   blocked=false;
    report(result.progress?'loaded':'new');
    return result.progress?{...result.progress,compatible:compatible(result.progress.state)}:null;
   }
