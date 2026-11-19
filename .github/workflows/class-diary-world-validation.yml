@@ -8,6 +8,10 @@ on:
       - 'scripts/test-class-diary-narrative.cjs'
       - 'js/class-diary-play-v1.js'
       - 'js/class-diary-semester-v1.js'
+      - 'js/class-diary-semester-ui-v1.js'
+      - 'js/class-diary-ui-v2.js'
+      - 'styles/class-diary-semester-ui-v1.css'
+      - 'scripts/test-class-diary-semester-ui.cjs'
       - 'scripts/test-class-diary-semester.cjs'
       - 'js/class-diary-director-v1.js'
       - 'js/class-diary-character-routes-v1.js'
@@ -57,6 +61,7 @@ jobs:
           node scripts/test-class-diary-narrative.cjs
           node scripts/test-class-diary-play.cjs
           node scripts/test-class-diary-semester.cjs
+          node scripts/test-class-diary-semester-ui.cjs
           node scripts/test-class-diary-director.cjs
           node scripts/test-class-diary-character-routes.cjs
           node scripts/test-class-diary-context.cjs
