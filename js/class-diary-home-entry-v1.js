@@ -1,5 +1,5 @@
 /* Home entry for the original fictional Class Diary.
- * Existing 2026 challenge codes are verified server-side, once, on the home page.
+ * Temporary developer preview PIN is verified server-side; no public challenge codes.
  * Session storage holds only a 10-minute game-scoped handoff ticket (not a code,
  * level, choice, profile, score or progress), deleted when the game consumes it.
  */
@@ -16,11 +16,11 @@
  form.addEventListener('submit',async function(event){
   event.preventDefault();
   if(busy)return;
-  const code=input.value.trim().toUpperCase();
-  if(!/^[A-Z0-9-]{10,29}$/.test(code)){
-   message.textContent='고유번호를 다시 확인해 주세요.';input.focus();return;
+  const code=input.value.trim();
+  if(!/^[0-9]{4}$/.test(code)){
+   message.textContent='테스트 입장 코드 4자리를 입력해 주세요.';input.focus();return;
   }
-  busy=true;button.disabled=true;message.textContent='발급 기록을 확인하는 중…';
+  busy=true;button.disabled=true;message.textContent='테스트 입장 권한을 확인하는 중…';
   try{
    const response=await fetch(endpoint,{
     method:'POST',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',
@@ -28,7 +28,7 @@
     body:JSON.stringify({action:'verify-code',code})
    });
    if(response.status===429){message.textContent='요청이 많습니다. 잠시 후 다시 시도해 주세요.';return}
-   if(!response.ok){message.textContent=response.status===401?'발급 기록에서 확인되지 않은 고유번호예요.':'연결 상태를 확인한 후 다시 시도해 주세요.';return}
+   if(!response.ok){message.textContent=response.status===401?'현재 준비 중입니다. 올바른 테스트 코드가 필요합니다.':'연결 상태를 확인한 후 다시 시도해 주세요.';return}
    const result=await response.json();
    if(result.ok!==true||result.scope!=='class-diary-fictional-guest'||
       typeof result.ticket!=='string'||!/^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(result.ticket))
