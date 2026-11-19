@@ -16,7 +16,7 @@ const SCENES=[["03-08","아직 낯선 이름","classroom","아침 햇볕이 교�
 const CHOICES=[0,1,2],clamp=n=>Math.max(0,Math.min(100,Math.round(n)));
 const copy=x=>JSON.parse(JSON.stringify(x));
 const PERSON={
- woman:{name:'지윤 선생님',beats:['지윤은 내 말을 끝까지 듣고는 자신이 생각한 것과 다른 부분을 물었다.','지윤은 틀린 수업안을 지우면서도 괜찮은 척했다. 내가 그걸 알아채자 잠깐 고개를 숙였다.','늘 혼자 해결하려던 지윤이 힘들다고 말했다. 그 말이 나오기까지 얼마나 오래 걸렸을까.','지윤은 문서를 함께 읽으면서도 결정을 대신하지 않았다. 내 손에 펜을 돌려주었다.','지윤은 처음으로 작은 부탁을 먼저 꺼냈다. 그 사람도 누군가에게 기대는 법을 배우는 중이었다.','지윤은 교실 불을 끄다 말고 말했다. “3월에는 여기서 이렇게 웃을 줄 몰랐어요.”'],near:'지윤이 내 이름을 부르다가 웃었다. 어깨가 닿을 만큼 가까워진 뒤에도 우리는 걸음을 서두르지 않았다.',distant:'지윤의 대답은 짧았다. 무슨 일이 있느냐고 재촉하지 않고 그 사람의 다음 말을 기다렸다.',end:'지윤과 가까워진 건 어떤 특별한 고백 때문이 아니었다. 서로의 말을 듣기 위해 멈추었던 수많은 오후가 있었다.'},
+ woman:{name:'지윤 선생님',beats:['지윤은 내 말을 끝까지 듣고는 자신이 생각한 것과 다른 부분을 물었다.','지윤은 틀린 수업안을 지우면서도 괜찮은 척했다. 내가 그걸 알아채자 잠깐 고개를 숙였다.','늘 혼자 해결하려던 지윤이 힘들다고 말했다. 그 말이 나오기까지 얼마나 오래 걸렸을까.','지윤은 문서를 함께 읽으면서도 결정을 대신하지 않았다. 내 손에 펜을 돌려주었다.','지윤은 처음으로 작은 부탁을 먼저 꺼냈다. 그런 부탁을 듣는 건 처음이었다. 지윤이 나를 보고 있었다.','지윤은 교실 불을 끄다 말고 말했다. “3월에는 여기서 이렇게 웃을 줄 몰랐어요.”'],near:'지윤이 내 이름을 부르다가 웃었다. 어깨가 닿을 만큼 가까워진 뒤에도 우리는 걸음을 서두르지 않았다.',distant:'지윤의 대답은 짧았다. 무슨 일이 있느냐고 재촉하지 않고 그 사람의 다음 말을 기다렸다.',end:'지윤과 가까워진 건 어떤 특별한 고백 때문이 아니었다. 서로의 말을 듣기 위해 멈추었던 수많은 오후가 있었다.'},
  man:{name:'현우 선생님',beats:['현우는 고장 난 복합기에 대고 “오늘은 제가 이깁니다” 하고 말했다. 우리는 결국 종이를 다시 넣었다.','현우는 농담을 하다가도 교실 이야기가 시작되면 의자를 바로 당겨 앉았다.','현우가 한 농담에 아무도 웃지 않았다. 그는 웃는 얼굴을 거두고 자기 말이 어땠는지 물었다.','현우는 말을 꺼내려다 멈췄다. “오늘은 웃길 자신이 없네요.”','현우는 자기가 잘못했던 일부터 이야기했다. 나는 괜찮다는 말을 서두르지 않았다.','현우는 마지막 날에도 웃겼다. 다만 웃음이 끝나고 오래 머무는 사람이 되었다.'],near:'현우가 농담을 하려다 그만뒀다. “그냥 같이 있고 싶었어요.” 그런 말을 할 때는 늘 시선을 피했다.',distant:'현우는 침묵이 찾아오자 손목시계를 만졌다. 그가 농담을 꺼내지 않은 것은 처음이었다.',end:'현우의 농담보다 오래 남은 건 그가 웃음을 멈추고 내 말을 끝까지 들었던 순간이었다.'},
  none:{name:'민서 선생님',beats:['민서는 수첩의 빠진 줄을 찾아내 조용히 손가락으로 짚었다.','민서는 한 번 정한 것은 지켜야 한다고 생각했다. 내가 규칙도 바뀔 수 있지 않느냐고 묻자 수첩을 덮었다.','민서는 일을 정확하게 해내려다 다른 사람까지 지치게 했다는 말을 듣고 한참 아무 말이 없었다.','민서는 확인한 사실과 모르는 사실을 나눴다. 그러나 사람의 마음은 그렇게 나눌 수 없었다.','민서는 “제가 조금 서둘렀나 봐요” 하고 말했다. 그 한마디 뒤에 회의실의 공기가 달라졌다.','민서는 이번 학기 수첩의 마지막 장을 보여 주었다. 함께 했던 일이 작은 글씨로 빼곡했다.'],near:'민서와는 일일이 설명하지 않아도 되는 일이 늘었다. 서로가 어려울 때 먼저 물어볼 수 있는 동료가 생겼다.',distant:'민서는 할 말을 적었다가 지웠다. 우리는 여전히 상대의 속도를 배우고 있었다.',end:'민서와 나 사이에 남은 것은 연애가 아니라 서로 다른 속도를 견디는 우정이었다.'}
 };
@@ -26,9 +26,9 @@ const EFFECTS=[
  {agency:-2,voice:-1,trust:-1,affection:0,fatigue:-4,boundary:3,support:0}
 ];
 const THREADS={
-  9:{from:4,lines:['3월에 아이들과 정했던 약속이 있었다. 나는 그 말에 책임을 지고 싶은 마음으로 복도를 바라봤다.','그날 함께 계단을 확인했던 동료가 다시 옆에 섰다.','내일 다시 묻겠다던 날이 오늘이었다. 도윤은 내가 기억하는지 살피고 있었다.']},
+  9:{from:4,lines:['3월에 아이들과 정했던 약속이 있었다. 나는 그 말에 책임을 지고 싶은 마음으로 복도를 바라봤다.','그날 함께 계단을 확인했던 동료가 다시 옆에 섰다.','내일 다시 묻겠다던 날이 오늘이었다. 도윤은 내 얼굴을 올려다보며 “그때 약속 기억해요?” 하고 물었다.']},
   13:{from:5,lines:['3월 회의 때 고쳐 쓴 한 줄이 떠올랐다. 그때 남겨 둔 학급의 결정이 지금 문제의 출발점이었다.','학년부장과 함께 적은 메모를 다시 펼쳤다.','회의 뒤 수첩에 남긴 문장이 도움이 됐다. 아직 늦지 않았다.']},
-  15:{from:3,lines:['서아가 처음 손을 들었을 때 나는 끝까지 듣기로 했다. 그날의 서툰 말이 오늘 다시 돌아왔다.','자리 배치를 함께 적었던 종이가 서랍 한쪽에 남아 있었다.','그날을 다시 이야기하겠다고 정한 뒤 시간이 많이 흘렀다. 서아는 날짜를 기억하고 있었다.']},
+  15:{from:3,lines:['서아가 처음 손을 들었을 때 나는 끝까지 듣기로 했다. 그날의 서툰 말이 오늘 다시 돌아왔다.','자리 배치를 함께 적었던 종이가 서랍 한쪽에 남아 있었다.','그날을 다시 이야기하겠다고 정한 뒤 시간이 많이 흘렀다. 서아는 달력에 표시해 둔 날짜를 내게 보여 주었다.']},
   19:{from:11,lines:['4월 복도에서 들었던 울음이 아직 잊히지 않았다. 안전부터 확인하겠다는 마음이 다시 앞섰다.','동료와 나눠 적었던 연락처가 이번에는 시간을 아껴 주었다.','위험한 길을 바꿨는데도 또 사고가 났다. 한 번의 조치로 끝나는 일이 아니었다.']},
   24:{from:5,lines:['3월에 “전원 동의”라는 말을 고쳐 달라고 했던 일이 떠올랐다. 회의록의 한 줄이 다시 중요해졌다.','학년에서 함께 정리하기로 했던 약속을 이번에는 먼저 꺼냈다.','전에는 회의를 마치고서야 의견을 적었다. 이번에는 그보다 조금 일찍 손을 들었다.']},
   34:{from:6,lines:['찬바람이 불던 3월 교문 앞에서 동료의 이야기를 들었던 일이 떠올랐다. 이제는 내가 먼저 말할 차례였다.','그날 내가 서툴렀다고 말하자 동료는 웃지 않았다. 그래서 다시 말할 수 있었다.','3월에는 인사만 하고 돌아섰다. 이번에는 조금 더 오래 서 있고 싶었다.']},
@@ -50,14 +50,14 @@ function chapter(s){
  }
  paragraphs.push(p.beats[act]);
  if(s.episode%6===0)paragraphs.push(s.stats.trust>=57&&(s.profile.partner==='none'||s.stats.affection>=55)?p.near:p.distant);
- return {episode:s.episode,total:36,act:act+1,actName:ACTS[act],date:'2027-'+e[0],title:e[1],place:PLACE_OVERRIDES[s.episode]||PLACE_NAMES[e[2]]||'학교',visual:e[2],paragraphs,partner:p.name,choices:e.slice(5,8).map((label,i)=>({id:String(i),label}))};
+ return {perspective:'player',narrator:'player',episode:s.episode,total:36,act:act+1,actName:ACTS[act],date:'2027-'+e[0],title:e[1],place:PLACE_OVERRIDES[s.episode]||PLACE_NAMES[e[2]]||'학교',visual:e[2],paragraphs,partner:p.name,choices:e.slice(5,8).map((label,i)=>({id:String(i),label}))};
 }
 function choose(s,id){
  if(s.phase!=='semester_chapter'||!CHOICES.includes(Number(id))||!/^[012]$/.test(String(id)))throw Error('SEMESTER_CHOICE_REQUIRED');
  const e=SCENES[s.episode-1],choice=Number(id),n=copy(s),d=EFFECTS[choice];
  for(const [key,value] of Object.entries(d))if(typeof n.stats[key]==='number')n.stats[key]=clamp(n.stats[key]+value);
  n.history.push({episode:n.episode,choice});
- n.lastOutcome={id:String(id),paragraphs:[e[8+choice],choice===0?'일이 빨리 끝나지는 않았다. 그래도 그날 들은 말은 쉽게 잊히지 않을 것 같았다.':choice===1?'함께 정리한 종이가 책상에 남았다. 오늘은 혼자만의 기억으로 끝나지 않을 것이다.':'종이 울리자 나는 말을 멈췄다. 고르지 않은 길은 내일 다시 생각할 수 있을 것이다.'],line:choice===1?'“선생님, 다음에는 저도 먼저 말할게요.”':choice===0?'“그 말, 조금 더 듣고 싶어요.”':'“괜찮아요. 내일 다시 얘기해요.”'};
+ n.lastOutcome={perspective:'player',id:String(id),paragraphs:[e[8+choice],choice===0?'일이 빨리 끝나지는 않았다. 그래도 그날 들은 말은 쉽게 잊히지 않을 것 같았다.':choice===1?'함께 정리한 종이가 책상에 남았다. 오늘은 혼자만의 기억으로 끝나지 않을 것이다.':'종이 울리자 나는 말을 멈췄다. 고르지 않은 길은 내일 다시 생각할 수 있을 것이다.'],line:choice===1?'“선생님, 다음에는 저도 먼저 말할게요.”':choice===0?'“그 말, 조금 더 듣고 싶어요.”':'“괜찮아요. 내일 다시 얘기해요.”'};
  n.phase='semester_reflection';return n;
 }
 function advance(s){
@@ -68,7 +68,7 @@ function advance(s){
  const romantic=n.profile.partner!=='none';
  const kind=romantic&&a>=78&&t>=75&&c>=50?'warm':t>=70&&c>=70?'parallel':c>=72?'steady':romantic&&a>=64?'tender':'ordinary';
  const names={warm:'소중한',parallel:'든든한',steady:'단단한',tender:'다정한',ordinary:'솔직한'};
- n.ending={id:kind,title:'나의 '+names[kind]+' 학급일지',heading:'방학식이 끝난 뒤',affection:a,score:clamp(a*.10+t*.15+c*.25+n.stats.voice*.25+n.stats.boundary*.25),
+ n.ending={perspective:'player',id:kind,title:'나의 '+names[kind]+' 학급일지',heading:'방학식이 끝난 뒤',affection:a,score:clamp(a*.10+t*.15+c*.25+n.stats.voice*.25+n.stats.boundary*.25),
  paragraphs:['빈 교실에 남은 햇살은 3월보다 길었다. 처음에는 아무것도 바꿀 수 없을 것 같던 곳에서 우리는 몇 번이나 약속을 새로 썼다.','서아와 도윤의 이름을 적다가 펜을 멈췄다. 두 아이가 내게 남긴 것은 좋은 교사라는 칭찬보다 내일 다시 묻고 싶은 질문이었다.',p.end,kind==='steady'?'완벽하게 지킨 약속은 거의 없었다. 고칠 수 있다는 사실만큼은 잊지 않으려 한다.':kind==='ordinary'?'하지 못한 말들도 있었다. 다음 학기에는 조금 늦더라도 제대로 말해 보고 싶었다.':'교문을 지나면 다시 만날 사람이 있다는 게 이상하게 좋았다.','수첩에 제목을 적고 덮었다. 학교 밖에서는 긴 여름이 시작되고 있었다.']};
  n.phase='semester_ending';return n;
 }
