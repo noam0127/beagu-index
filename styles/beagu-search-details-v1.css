@@ -696,3 +696,40 @@ body.beagu-page-lv1 .school-card .beagu-school-only-meaning{
   body.beagu-page-lv1 .school-card .beagu-school-only-value{justify-content:flex-start;}
 }
 /* The comparison order is explicitly school, region, then nation. */
+
+/* 2026 empty-state invitation: visible only when no approved results are present. */
+body.beagu-page-lv1 .school-card .beagu-year-survey-link{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  min-height:48px;
+  box-sizing:border-box;
+  margin:12px 0 0;
+  padding:12px 16px;
+  border:1px solid #2b61d5;
+  border-radius:11px;
+  background:#2b61d5;
+  color:#fff;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.5;
+  text-decoration:none;
+  text-align:center;
+}
+body.beagu-page-lv1 .school-card .beagu-year-survey-link:hover{
+  background:#1e50b2;
+  border-color:#1e50b2;
+  color:#fff;
+}
+body.beagu-page-lv1 .school-card .beagu-year-survey-link:focus-visible{
+  outline:3px solid #93c5fd;
+  outline-offset:3px;
+}
+body.beagu-page-lv1 .school-card .beagu-year-survey-help{
+  margin:8px 2px 0;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.65;
+}
