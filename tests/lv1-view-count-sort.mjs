@@ -13,7 +13,7 @@ const counts=read('js/school-view-counts-v1.js');
 assert.doesNotThrow(()=>new Script(script));
 assert.match(lv1,/<option value="view_count"[^>]*>조회수<\/option>/);
 assert.doesNotMatch(lv0,/<option value="view_count"/,'Lv.0 cannot sort by views');
-assert.match(lv1,/js\/level-search\.js\?v=20261120-views-sort1/);
+assert.match(lv1,/js\/level-search\.js\?v=20261120-historyfull2/);
 assert.match(lv1,/js\/school-view-counts-v1\.js/);
 assert.match(script,/const SORTS=new Set\(\[[^\]]*'view_count'\]\)/);
 assert.match(script,/ranked_schools'.*\{searchText:q,region,office,sort,direction,page\}/);
