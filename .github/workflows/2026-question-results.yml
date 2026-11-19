@@ -1,0 +1,36 @@
+name: 2026 Question Results Pipeline
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/beagu-2026-*.gs'
+      - 'scripts/beagu-2026-results-*.js'
+      - 'scripts/build-2026-results.mjs'
+      - 'supabase/functions/_shared/*2026*'
+      - 'supabase/functions/beagu-2026-results-ingest/**'
+      - 'supabase/migrations/20261119170000_beagu_2026_question_results.sql'
+      - 'js/2026-approved-question-results.js'
+      - 'js/level-search.js'
+      - 'tests/2026-*.mjs'
+      - '.github/workflows/2026-question-results.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node scripts/build-2026-results.mjs
+          git diff --exit-code -- scripts/beagu-2026-noon-sync.gs supabase/functions/_shared/questionnaire-2026.mjs
+          node tests/2026-question-results-pipeline.mjs
+          node tests/2026-form-submit-private-sync.mjs
+          node tests/2026-approved-search-refresh.mjs
+          node tests/2026-school-empty-survey-cta.mjs
+          node tests/school-question-mode-only-privacy.mjs
+          node tests/three-day-release.mjs
+          node tests/lv1-percentile-chart-parity.mjs

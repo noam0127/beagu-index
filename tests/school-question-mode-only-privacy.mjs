@@ -13,7 +13,7 @@ assert.match(edge, /\.from\('beagu_school_question_aggregates_v2'\)/);
 assert.match(edge, /\.from\('beagu_school_question_modes_supplement_v1'\)/);
 assert.match(edge, /SOURCE_VERIFIED_UNIQUE_MODE/);
 assert.match(edge, /schoolQuestionModes=\[\.\.\.modeIndex\.values\(\)\]/);
-assert.match(edge, /return send\(\{school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,participationYears\}/);
+assert.match(edge, /return send\(\{school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears\}/);
 assert.doesNotMatch(edge, /schoolDistributions|roundedDistribution:/,
   'No school percentages or distribution arrays may leave the API');
 assert.doesNotMatch(edge, /\.select\('[^']*source_rows/,

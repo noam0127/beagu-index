@@ -10,8 +10,8 @@ const url='https://forms.gle/TPyCakK6Sj2zchRy7';
 
 assert.doesNotThrow(()=>new vm.Script(script));
 assert.ok(read('index.html').includes(url),'Survey URL must match the official homepage link');
-assert.ok(page.includes('js/level-search.js?v=20261119-lv1-graph1'));
-assert.ok(page.includes('styles/beagu-search-details-v1.css?v=20261119-survey-empty1'));
+assert.match(page,/js\/level-search\.js\?v=/);
+assert.match(page,/styles\/beagu-search-details-v1\.css\?v=/);
 assert.match(css,/beagu-year-survey-link/);
 assert.match(css,/beagu-year-survey-link:focus-visible/);
 
@@ -41,9 +41,13 @@ const BeaguDetailGroups={
   }
 };
 const api=async()=>({rows:[]});
-const draw=new Function('make','BeaguDetailGroups','addRow','metricValue','api','loggedOut','renderHistoricalBenchmarks',
+const browser={window:{},document:{createElement:tag=>new Node(tag)}};
+vm.createContext(browser);
+vm.runInContext(read('js/2026-questionnaire-options-v1.2.js'),browser);
+vm.runInContext(read('js/2026-approved-question-results.js'),browser);
+const draw=new Function('window','make','BeaguDetailGroups','addRow','metricValue','api','loggedOut','renderHistoricalBenchmarks',
   script.slice(a,b)+'\nreturn renderYear;')(
-  make,BeaguDetailGroups,(host,label,value)=>host.append(make('p','',value)),
+  browser.window,make,BeaguDetailGroups,(host,label,value)=>host.append(make('p','',value)),
   m=>String(m.value),api,()=>{},()=>{}
 );
 function find(node,cls){
@@ -72,3 +76,8 @@ assert.equal(find(released,'beagu-year-empty').length,0);
 assert.ok(find(released,'beagu-approved-section').length===1);
 assert.equal(find(released,'year-2026-button').length,1);
 console.log('PASS: Lv.1 empty 2026 school details link to the official survey, released details do not');
+
+const questionOnly=new Node('div');
+draw(questionOnly,2026,[],null,'ABC1234',[],null,null,'ready',[],[{questionId:'Q01',row:-1,values:['보통이다']}]);
+assert.equal(find(questionOnly,'beagu-year-survey-link').length,0);
+assert.equal(find(questionOnly,'beagu-question-block').length,1);

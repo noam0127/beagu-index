@@ -8,9 +8,9 @@
 
 ## 설치와 남은 승인
 
-Google Apps Script는 이전 확인 당시 빈 프로젝트를 백업하고 두 파일을 저장했으나, 필수 스크립트 속성이 없었다. 이번 연결 버전의 Code.gs/MBTI_Review.gs 재설치와 트리거 실행은 브라우저 접근 문제로 미확인이다. 저장소·서버 배포 및 수동 집계 검증과 자동 운영 완료를 구분한다.
+Google Apps Script는 이전 확인 당시 빈 프로젝트를 백업하고 두 파일을 저장했으나, 필수 스크립트 속성이 없었다. 브라우저 연결 복구 후 이번 연결 버전의 Code.gs/MBTI_Review.gs 두 파일을 저장하고 GitHub main 원문과 전체 일치를 확인했다. 현재 스크립트 속성은 두 항목 모두 없고 설치형 트리거는 0개다. 저장소·서버 배포 및 수동 집계 검증과 자동 운영 완료를 구분한다.
 
-필수 속성: SUPABASE_PUBLISHABLE_KEY, BEAGU_2026_INGEST_TOKEN. 기존 값을 보존하며 비밀값을 채팅·로그·GitHub에 남기지 않는다. 두 파일 저장 후 Google OAuth 권한 승인은 운영자가 수행한다. installBeagu2026Sync가 onBeagu2026FormSubmitted 및 refreshBeagu2026AllPrivateStats 트리거를 설치한다.
+필수 속성: SUPABASE_PUBLISHABLE_KEY, BEAGU_2026_INGEST_TOKEN. 신규 Edge Function 직접 호출은 HTTP 503 INGEST_NOT_CONFIGURED로 응답했다. Supabase에도 같은 이름의 서버 비밀값 설정이 필요하다. 임의 토큰은 생성하지 않았다. 기존 값을 보존하며 비밀값을 채팅·로그·GitHub에 남기지 않는다. 두 파일 저장 후 Google OAuth 권한 승인은 운영자가 수행한다. installBeagu2026Sync가 onBeagu2026FormSubmitted 및 refreshBeagu2026AllPrivateStats 트리거를 설치한다.
 
 공개 승인은 운영자가 실제 증빙을 검토한 후 정확한 집계 해시를 대상으로 수행한다. 익명 설문에서 중복 확인 불가능 여부, n=1의 개인 추론 위험도 검토 대상이다. 자동 기술 검수 성공은 공개 승인이 아니다.
 
@@ -23,3 +23,7 @@ Google Apps Script는 이전 확인 당시 빈 프로젝트를 백업하고 두 
 - 트랜잭션 롤백 테스트에서 승인 23시간59분 차단, 24시간 허용, 동의 증빙 누락 차단 확인. 테스트 승인은 남기지 않음.
 - 기존 2023~2025 데이터는 수정하지 않음.
 - MASTER 백업: 같은 파일의 백업_1119_학교별_집계_내부, 백업_1119_학교매칭_보류, 백업_1119_MBTI_학교별_검수대기, 백업_1119_MBTI_학교매칭_보류.
+
+Apps Script 추가 백업: 같은 프로젝트의 Backup_20261119_before_results.html. 두 이전 소스 전체를 HTML 이스케이프한 비실행 파일로 저장해 함수 중복을 방지했다.
+
+GitHub Pages 빌드·배포 성공. 기존 CI의 school-search-unification 및 school-report-validation 테스트는 변경 전 기준에서도 실패함을 대조 확인했다. 이번 변경의 캐시 버전·API 필드·갱신 인자에 영향을 받는 회귀 테스트는 갱신하고 다시 검증했다.

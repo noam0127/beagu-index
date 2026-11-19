@@ -11,7 +11,7 @@ const sharedChart=readFileSync('js/percentile-chart.js','utf8');
 assert.doesNotThrow(()=>new Script(source),'Lv.1 script is valid JavaScript');
 assert.match(lv0,/js\/percentile-chart\.js\?v=20261031-independent5b/);
 assert.match(lv1,/js\/percentile-chart\.js\?v=20261031-independent5b/);
-assert.match(lv1,/js\/level-search\.js\?v=20261119-lv1-graph1/);
+assert.match(lv1,/js\/level-search\.js\?v=/);
 assert.match(source,/percentile:percentilePanel\(school\)/,
   'Lv.1 reuses the same canonical percentile renderer as Lv.0');
 assert.match(cards,/percentileChart\(values,\{/,
