@@ -97,3 +97,19 @@ Supabase 조직은 Free로 조회되며 프로젝트 1개만 확인되었다. �
 ## 독립 미리보기에서 실제 가입을 열기 전 주의
 `test-environment/supabase/functions/beagu-stage-preview/index.ts`는 `test-web/*` 정적 파일을 Edge source 내부에 번들했습니다. `test-web/app.js` 또는 HTML 변경 시 **미리보기 Edge 함수를 재배포해야** 합니다.
 실제 가입 사용을 위한 비밀 구성은 사용자 대시보드에서만 하되, service_role 키를 GitHub 코드/브라우저에 삽입하지 마세요. 새 Supabase 프로젝트의 Function Secrets에 `BEAGU_TEST_PROJECT_REF`, `BEAGU_TEST_SITE_ORIGIN`(`https://ycwuugggqbunlbwuzvbx.supabase.co`), `BEAGU_TEST_RATE_SECRET`, `BEAGU_TEST_REFERRAL_SECRET`, `BEAGU_TEST_LEVEL1_CODE`, `BEAGU_TEST_ENABLED`, `BEAGU_TEST_CAPTCHA_CONFIRMED`가 필요합니다. 마지막 두 항목은 Auth 보호 동작 실제 확인 후 true로 전환하세요.
+
+
+## 2026-11-20 iPhone 렌더링 장애 — Supabase Edge HTML 미지원
+사용자 iPhone 화면에서 Supabase Edge 정적 미리보기가 raw HTML source로 표시됨. Supabase 공식 문서에서 **기본 .supabase.co 도메인의 GET text/html 응답을 text/plain으로 치환**하므로 Edge Functions를 프론트엔드 정적 HTML 호스트로 사용하는 것은 불가함.
+참고: https://supabase.com/docs/guides/functions/http-methods
+
+**올바른 분리**: 프론트엔드 HTML/JS는 별도 Cloudflare Pages 또는 Vercel 프로젝트에 배포하고, API/DB는 독립 TEST Supabase ref `ycwuugggqbunlbwuzvbx`에 둔다. Supabase Edge preview URL은 사용하지 말 것. 운영 main, 기존 Cloudflare 운영 프로젝트와 운영 인증 설정을 변경하지 말 것.
+
+### Vercel 신규 프로젝트 설정 (연결 후 작업)
+- GitHub Repository: `noam0127/beagu-index`, branch `feature/test-web-lv0-lv2-20261120` 테스트 전용 선택. Vercel에서 테스트 프리뷰/프로덕션 브랜치의 실제 대상이 main이 되지 않도록 확인.
+- **Root Directory: `test-web`** (중요: 절대 repository root 전체를 배포하지 않음), Framework Preset: Other, 정적 HTML 프로젝트.
+- `test-web/vercel.json` 에 noindex/nosniff/referrer/CSP 헤더 준비됨. `test-web/config.js` 는 enabled:false (실제 Auth 요청 잠금).
+- 배포 URL이 생성된 뒤 대시보드의 테스트 전용 Edge Secrets `BEAGU_TEST_SITE_ORIGIN`, 프론트엔드 siteOrigin, Auth redirect URLs 등을 실제 별도 도메인으로 맞춘 후, 이메일·CAPTCHA·Edge 보안을 완료하고 활성화할 것.
+- Vercel 별도 프로젝트는 비용/프리뷰 공개 설정을 확인. 사용자의 비밀키를 Vercel 프론트엔드 환경변수나 GitHub 파일에 저장하지 말 것.
+
+현재 독립 프론트엔드 호스트를 직접 제어하는 연결 도구가 없어 호스팅 자체는 아직 미완료. 운영에 영향을 주지 않는 테스트 정적 배포만 진행해야 한다.
