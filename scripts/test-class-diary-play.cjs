@@ -32,10 +32,10 @@ assert.throws(()=>engine.choose(game,'invalid'),/CHOICE_INVALID/);
 const expectedVocab=[
  ['주안','나이스','에듀파인','개인정보 수집·이용 동의서','학년연구실'],
  ['교직원전체회의','학년연구실','학년회의'],
- ['전담시간','모둠','학급회의','아이스크림'],
+ ['전담시간','모둠','학급회의','아이스크림','인디스쿨','유튜브'],
  ['교외체험학습신청서','나이스','보호자','학년연구실'],
  ['주안','에듀파인','품의','퇴근'],
- ['인디스쿨','아이스크림','유튜브','전담시간'],
+ ['토요일','서점','카페','평일'],
  ['주안','학년연구실','나이스','에듀파인','학급회의']
 ];
 let vocabularyRun=engine.createGame(world,plan,profile);
@@ -54,6 +54,11 @@ for(let i=0;i<7;i++){
   vocabularyRun=engine.choose(vocabularyRun,view.choices[0].id);
   vocabularyRun=engine.advance(vocabularyRun);
 }
+
+/* Teacher uses lesson sites in weekday breaks, never as a required weekend task. */
+const day3Prose=engine.chapter((()=>{let p=engine.createGame(world,plan,profile);for(let d=1;d<3;d++){p=engine.choose(p,engine.chapter(p,world,plan).choices[0].id);p=engine.advance(p);}return p;})(),world,plan).paragraphs.join(' ');
+assert(day3Prose.includes('인디스쿨')&&day3Prose.includes('아이스크림')&&day3Prose.includes('유튜브'));
+assert(day3Prose.includes('전담시간'));
 
 const history=[];
 for(let day=1;day<=7;day++){
