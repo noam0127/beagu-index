@@ -57,13 +57,13 @@ const CHAPTERS=[
   '창에는 나이스가 열려 있었고, 옆 탭에는 학급 물품 품의를 올리려고 접속한 K-에듀파인이 남아 있었다. 수업 준비를 하러 왔는데 하루가 서류부터 시작되는 것 같았다. 복합기 앞에서 내가 할 일과 학년이 함께 할 일을 가려야 했다.'
  ],
  choices:[
-  {id:'ask',label:'주안과 동의서 취합 담당부터 함께 확인한다',delta:{affection:4,trust:7,agency:3,fatigue:-3},
+  {id:'ask',label:'주안과 동의서를 누가 맡을지 학년 선생님들과 확인한다',delta:{affection:4,trust:7,agency:3,fatigue:-3},
    response:['“이번 주 주안은 같이 맞추는 거죠? 동의서는 어디까지 취합하나요?” 나는 학년 업무표를 펼쳤다. {colleague}이 취합해야 할 서류와 담당자에게 넘길 서류를 짚어 주었다.','내 이름 앞에 적힌 일과 아닌 일을 구분하자 책상이 조금 넓어진 느낌이었다.'],
    line:'“모르는 건 학년에서 같이 확인해요. 학기 초에는 다들 정신없어요.”'},
-  {id:'carry',label:'일단 동의서와 주안을 혼자 챙겨 보겠다고 한다',delta:{affection:1,trust:0,agency:0,fatigue:9},
+  {id:'carry',label:'일단 내가 챙겨 보겠다고 말하고 서류를 가져온다',delta:{affection:1,trust:0,agency:0,fatigue:9},
    response:['나는 주안 출력물과 동의서 파일을 끌어안았다. 나이스 출결도 아직 끝나지 않았는데, 괜히 해 보겠다고 한 건 아닐까 싶었다.','{colleague}이 복합기 옆에서 말했다. “혼자 다 하실 필요는 없어요. 학년에서 같이 맞추면 되죠.”'],
    line:'“일단 1교시부터 무사히 하고, 전담시간에 같이 봐요.”'},
-  {id:'share',label:'복합기 앞에서 학기 초의 고충을 함께 나눈다',delta:{affection:8,trust:4,agency:1,fatigue:-2},
+  {id:'share',label:'학기 초라 정신없다며 동료와 잠깐 이야기한다',delta:{affection:8,trust:4,agency:1,fatigue:-2},
    response:['“저만 이렇게 정신없는 거 아니죠?” 내가 묻자 {colleague}이 웃었다. “저도 동의서 세다가 주안 올리는 걸 깜빡했어요.”','별것 아닌 대화였는데도 웃음이 났다. 우리 학년에서 내 자리가 조금씩 생기는 기분이었다.'],
    line:'“오늘 전담시간 겹치면 학년연구실에서 커피 한 잔 해요.”'}
  ]
@@ -77,13 +77,13 @@ const CHAPTERS=[
   '{colleague}이 내 쪽으로 몸을 기울였다. “아까 학년회의 때 말씀하신 거 있잖아요. 지금 이야기해도 될 것 같은데요?” 교직원전체회의에서 처음 의견을 내는 일은 생각보다 긴장됐다.'
  ],
  choices:[
-  {id:'reopen',label:'학급에서 학생들과 정할 부분을 남기자고 제안한다',delta:{affection:5,trust:8,agency:9,fatigue:2},
+  {id:'reopen',label:'반마다 아이들과 정할 수 있는 규칙은 남겨 두자고 말한다',delta:{affection:5,trust:8,agency:9,fatigue:2},
    response:['“공통으로 지킬 기준은 두되, 줄서기 같은 건 학급회의에서 정해 보면 어떨까요?” 내가 말하자 몇몇 선생님이 고개를 들었다.','{colleague}이 회의록에 ‘학급별 협의 후 재논의’라고 덧붙였다. 전원 동의라는 네 글자 옆에 작은 빈틈이 생겼다.'],
    line:'“학급회의에서 정해 보고, 다음 학년회의 때 같이 나눠요.”'},
-  {id:'private',label:'회의가 끝난 뒤 학년연구실에서 의견을 전한다',delta:{affection:6,trust:4,agency:4,fatigue:-1},
+  {id:'private',label:'회의가 끝난 뒤 동학년 선생님에게 생각을 말한다',delta:{affection:6,trust:4,agency:4,fatigue:-1},
    response:['회의가 끝나고 학년연구실로 돌아와 {colleague}에게 조용히 말했다. 다 같이 있는 자리에서는 말이 잘 나오지 않았다고.','{colleague}은 의자를 당겨 앉았다. “그럼 다음 학년회의 안건으로 올려 볼까요?”'],
    line:'“교직원전체회의에서 못 한 얘기도 학년에서부터 시작하면 되죠.”'},
-  {id:'follow',label:'이번에는 정해진 공통 기준을 따르기로 한다',delta:{affection:0,trust:1,agency:-3,fatigue:-4},
+  {id:'follow',label:'일단 공통 규칙을 따르고 아이들 반응을 살핀다',delta:{affection:0,trust:1,agency:-3,fatigue:-4},
    response:['나는 회의록에 적힌 내용을 다시 읽었다. 다음 날 아침부터 적용하면 되는 일이라 마음은 편했다.','그런데 교실로 돌아오는 복도에서 생각이 걸렸다. 아이들이 왜 그렇게 해야 하는지 묻는다면 뭐라고 답할까.'],
    line:'“우리 반에서 의견이 나오면, 그때 다시 이야기해 봐요.”'}
  ]
@@ -97,13 +97,13 @@ const CHAPTERS=[
   '나는 칠판에 적힌 오늘 할 일을 바라보았다. 주안대로라면 다른 활동을 할 차례였다. 하지만 아이들이 교실의 작은 규칙을 바꾸고 싶다고 말하는 순간은 지금이었다. 문밖으로 지나가던 {colleague}도 발소리를 낮췄다.'
  ],
  choices:[
-  {id:'council',label:'학급회의를 열어 급식 줄서기 규칙을 함께 정한다',delta:{affection:5,trust:7,agency:11,fatigue:4},
+  {id:'council',label:'급식 줄서는 방법을 학급회의 안건으로 올린다',delta:{affection:5,trust:7,agency:11,fatigue:4},
    response:['“그럼 안건으로 올려 볼까?” 모둠마다 의견이 나왔다. 출석번호순, 모둠별, 매일 돌아가며 서기. 나는 찬성 의견뿐 아니라 걱정되는 점도 칠판에 적었다.','수업은 조금 밀렸지만 아이들은 결정한 방법을 며칠 써 보고 다시 이야기하기로 했다.'],
    line:'“오늘 학급회의, 아이들 의견이 꽤 구체적이었네요.”'},
-  {id:'trial',label:'두 가지 줄서기 방법을 번갈아 써 보기로 한다',delta:{affection:4,trust:6,agency:7,fatigue:1},
+  {id:'trial',label:'두 가지 방법을 며칠씩 써 보고 다시 정한다',delta:{affection:4,trust:6,agency:7,fatigue:1},
    response:['모둠별로 한 번, 번호순으로 한 번. 아이들은 서로 다른 방법을 써 보고 편한 점과 불편한 점을 말해 보기로 했다.','{colleague}이 쉬는 시간에 교실을 들여다보았다. “우리 반에도 물어봐야겠어요.”'],
    line:'“바로 정답 내리지 않고 써 보는 것도 좋네요.”'},
-  {id:'explain',label:'지금 줄서기 규칙을 정한 이유부터 설명한다',delta:{affection:2,trust:3,agency:2,fatigue:-2},
+  {id:'explain',label:'지금 규칙을 쓰는 이유를 먼저 설명한다',delta:{affection:2,trust:3,agency:2,fatigue:-2},
    response:['나는 복도에서 안전하게 이동해야 하는 이유와 급식실이 붐비는 시간을 설명했다. 아이들은 고개를 끄덕였다.','그래도 질문한 아이는 포기하지 않았다. “그럼 모둠별로 서도 안전하면 바꿀 수 있어요?” 그 말을 내일의 학급회의 안건으로 적어 두었다.'],
    line:'“아이들한테 이유를 말해 주고, 바꿀 수 있는 것도 알려 주면 좋겠어요.”'}
  ]
@@ -117,13 +117,13 @@ const CHAPTERS=[
   '학년연구실에서 돌아오던 {colleague}이 내 표정을 보더니 조용히 물었다. “무슨 일 있어요? 같이 확인할까요?” 혼자 해결해 주겠다는 말보다 함께 살피자는 말이 더 든든했다.'
  ],
  choices:[
-  {id:'together',label:'동학년 선생님과 사실관계 및 상담 절차를 함께 확인한다',delta:{affection:6,trust:9,agency:6,fatigue:-4},
+  {id:'together',label:'동학년 선생님과 확인할 사실과 상담 절차를 정리한다',delta:{affection:6,trust:9,agency:6,fatigue:-4},
    response:['나는 {colleague}에게 상황을 설명했다. 우리는 아이들 진술을 섞어 쓰지 않고, 필요한 경우 학교에서 정해 둔 절차에 따라 확인하기로 했다.','보호자에게는 지금 확인된 내용과 앞으로 살펴볼 내용을 구분해 안내했다. 일을 함께한다는 건 책임을 미루는 일이 아니었다.'],
    line:'“담임이 다 혼자 해결하려고 하지 않아도 돼요. 학년에서 같이 보죠.”'},
-  {id:'listen',label:'아이들 이야기를 각각 충분히 듣고 다음 절차를 정한다',delta:{affection:4,trust:6,agency:8,fatigue:2},
+  {id:'listen',label:'아이들 말을 따로 듣고 확인할 내용을 정리한다',delta:{affection:4,trust:6,agency:8,fatigue:2},
    response:['나는 아이들을 차례로 만나 각자가 기억하는 일을 들었다. 아이들은 처음엔 자기 말만 했지만, 조금 지나자 상대방이 느꼈을 마음을 이야기하기 시작했다.','{colleague}이 확인할 내용을 따로 정리해 주었다. 급한 답보다 정확한 확인이 먼저였다.'],
    line:'“학부모님께도 아직 확인 중이라고 정확히 말씀드리면 돼요.”'},
-  {id:'alone',label:'먼저 보호자 연락을 직접 받고 필요하면 도움을 청한다',delta:{affection:1,trust:0,agency:2,fatigue:10},
+  {id:'alone',label:'우선 보호자와 통화하고 나중에 학년과 상의한다',delta:{affection:1,trust:0,agency:2,fatigue:10},
    response:['나는 전화기를 들었다. 한참 설명하고 나서야 확인하지 않은 일을 단정해 말하면 안 된다는 생각이 들었다.','통화를 마친 뒤 {colleague}에게 상황을 알렸다. 그제야 학년에서 상의할 문제를 혼자 끌어안고 있었다는 걸 깨달았다.'],
    line:'“다음 연락은 같이 정리해요. 담임이 혼자 감당할 일은 아니에요.”'}
  ]
@@ -137,13 +137,13 @@ const CHAPTERS=[
   '{colleague}이 내게 물었다. “주안은 거의 끝났어요? 오늘 저녁은 어떠세요?” 같은 말이었는데 업무를 묻는 부분보다 뒤의 한 문장에 마음이 조금 더 갔다.'
  ],
  choices:[
-  {id:'invite',label:'퇴근하고 둘이 잠깐 산책할지 물어본다',delta:{affection:9,trust:5,agency:3,fatigue:-2},
+  {id:'invite',label:'퇴근길에 잠깐 같이 걸을지 물어본다',delta:{affection:9,trust:5,agency:3,fatigue:-2},
    response:['“저녁 모임 말고 잠깐 걸을래요?” 내가 묻자 {colleague}이 놀란 듯 웃었다.','서로 할 일을 정리한 뒤 교문을 나섰다. 오늘은 주안도, 에듀파인도 아닌 다른 이야기를 해 보고 싶었다.'],
    line:'“좋아요. 학교 얘기는 잠깐 내려놓고 걸어요.”'},
-  {id:'choice',label:'회식은 각자 편하게 선택하면 좋겠다고 말한다',delta:{affection:5,trust:8,agency:7,fatigue:-1},
+  {id:'choice',label:'저녁 모임은 참석하고 싶은 사람만 가면 좋겠다고 말한다',delta:{affection:5,trust:8,agency:7,fatigue:-1},
    response:['나는 모임에 못 가는 사람도 부담 갖지 않았으면 좋겠다고 말했다. 몇몇 선생님은 집에 일이 있다고 편하게 인사했다.','{colleague}이 가방을 메면서 작은 목소리로 말했다. “그렇게 말해 줘서 고마워요.”'],
    line:'“함께하는 것도 좋지만, 안 가도 괜찮은 분위기가 더 좋죠.”'},
-  {id:'rest',label:'다음 주 수업 준비를 마무리하고 바로 퇴근한다',delta:{affection:3,trust:4,agency:4,fatigue:-7},
+  {id:'rest',label:'다음 주 준비를 여기까지 마치고 퇴근한다',delta:{affection:3,trust:4,agency:4,fatigue:-7},
    response:['나는 다음 주 주안만 마무리하고 컴퓨터를 껐다. 주말에 할 일을 조금 덜 남기려고 했는데, 오늘은 여기까지면 충분했다.','집에 가는 길에 {colleague}에게서 메시지가 왔다. ‘이번 주 진짜 고생 많으셨어요.’'],
    line:'“다음 주에 또 봐요. 주말에는 푹 쉬세요.”'}
  ]
@@ -157,13 +157,13 @@ const CHAPTERS=[
   '손에는 별다른 일정이 없었다. 만나자고 연락해도 좋고, 혼자 카페에서 책을 읽어도 좋은 오후였다.'
  ],
  choices:[
-  {id:'coffee',label:'카페에서 커피 한 잔 할지 조심스럽게 물어본다',delta:{affection:8,trust:6,agency:2,fatigue:-3},
+  {id:'coffee',label:'괜찮다면 카페에서 잠깐 만날지 물어본다',delta:{affection:8,trust:6,agency:2,fatigue:-3},
    response:['“혹시 오늘 시간 괜찮으세요? 어려우시면 다음에요.” 메시지를 보내고 휴대전화를 내려놓았다.','조금 뒤 {colleague}에게서 답장이 왔다. 가까운 카페에서 잠깐 볼 수 있겠다고 했다. 만나는 시간을 서로 편한 쪽으로 정했다.'],
    line:'“오늘은 주안 얘기 말고 책 얘기부터 해요.”'},
-  {id:'letter',label:'한 주 고마웠다는 메시지만 보내고 각자 쉰다',delta:{affection:5,trust:7,agency:3,fatigue:-6},
+  {id:'letter',label:'이번 주 고마웠다고 짧게 연락하고 각자 쉰다',delta:{affection:5,trust:7,agency:3,fatigue:-6},
    response:['나는 ‘이번 주에 많이 도와주셔서 고마웠어요’라고 적었다. 학년연구실에서 미처 못 했던 인사였다.','{colleague}은 웃는 표시와 함께 ‘주말 잘 보내세요’라고 답했다. 학교 밖에서까지 누군가에게 업무를 묻지 않아도 되는 순간이었다.'],
    line:'“월요일에 봐요. 푹 쉬세요.”'},
-  {id:'offline',label:'휴대전화를 내려놓고 나만의 주말을 보낸다',delta:{affection:1,trust:2,agency:5,fatigue:-10},
+  {id:'offline',label:'연락하지 않고 혼자 조용히 주말을 보낸다',delta:{affection:1,trust:2,agency:5,fatigue:-10},
    response:['책을 읽다가 창밖을 한참 바라보았다. 오늘만큼은 수업 자료를 검색할 필요도, 내일 쓸 활동지를 고칠 필요도 없었다.','학교 생각 없이 보낸 몇 시간이 생각보다 길었다. 아무 일도 없어서 좋은 토요일이었다.'],
    line:'“주말까지 선생님일 필요는 없으니까요.”'}
  ]
@@ -177,13 +177,13 @@ const CHAPTERS=[
   '나는 이번 주의 제목을 적으려다 펜을 멈췄다. 주안에는 적히지 않는 것들까지 교실의 하루였다. 다음 주에도 잊지 않고 싶은 일 하나를 정하기로 했다.'
  ],
  choices:[
-  {id:'promise',label:'아이들의 의견을 듣고 동학년과 함께 고민하겠다고 적는다',delta:{affection:7,trust:9,agency:9,fatigue:-2},
+  {id:'promise',label:'아이들의 의견을 다시 묻고 학년과 의논하기로 적는다',delta:{affection:7,trust:9,agency:9,fatigue:-2},
    response:['나는 수첩에 ‘학급회의에서 나온 의견 다시 확인하기’라고 적고, 그 아래에는 ‘학년 선생님에게 도움 청하기’라고 덧붙였다.','월요일 시간표의 맨 앞에는 수업이 있지만, 그 수업을 지탱하는 사람들은 시간표 밖에도 있었다.'],
    line:'“다음 주 학년회의 때 아이들 이야기 또 들려주세요.”'},
-  {id:'thanks',label:'한 주 동안 함께한 동료에게 감사 인사를 보낸다',delta:{affection:10,trust:7,agency:4,fatigue:-2},
+  {id:'thanks',label:'이번 주 함께한 동료에게 고맙다고 연락한다',delta:{affection:10,trust:7,agency:4,fatigue:-2},
    response:['나는 메시지를 몇 번 고쳐 썼다. “이번 주에 덕분에 정말 많이 배웠어요.” 그 말이면 충분했다.','{colleague}에게서 답장이 왔다. 주안 파일을 보내 달라는 말도, 내일 준비물을 챙기라는 말도 아닌 짧은 인사였다.'],
    line:'“저도 즐거웠어요. 다음 주에도 같이 잘해 봐요.”'},
-  {id:'quiet',label:'월요일 준비는 여기까지 하고 일찍 쉰다',delta:{affection:3,trust:5,agency:7,fatigue:-7},
+  {id:'quiet',label:'다음 주 일은 내일 생각하고 일찍 쉰다',delta:{affection:3,trust:5,agency:7,fatigue:-7},
    response:['나는 수첩 맨 아래 ‘아이들 말 한 번 더 듣기’라고 썼다. 그리고 덮었다. 주안은 이미 금요일에 정리했으니 일요일 밤에 다시 열 필요는 없었다.','내일의 출결도, 수업도, 아이들 표정도 지금 다 알 수는 없었다. 오늘은 잘 쉬는 것으로 월요일을 준비했다.'],
    line:'“전담시간에 커피 한 잔 할 여유도 남겨 두세요.”'}
  ]
@@ -235,6 +235,8 @@ const ENDINGS=Object.freeze({
 function validateProfile(profile){
   if(!profile||typeof profile!=='object')throw Error('PROFILE_REQUIRED');
   const age=Number(profile.age),gender=profile.gender,partner=profile.partner,mbti=profile.mbti;
+   const name=profile.name===undefined?'다온':String(profile.name).trim().replace(/\s+/g,'');
+   if(!/^[가-힣]{2,8}$/.test(name))throw Error('NAME_INVALID');
   if(!Number.isInteger(age)||age<20||age>75)throw Error('ADULT_AGE_REQUIRED');
   if(!['woman','man','undisclosed'].includes(gender))throw Error('GENDER_INVALID');
   if(!['woman','man','none'].includes(partner))throw Error('PARTNER_INVALID');
@@ -251,7 +253,7 @@ function validateProfile(profile){
   const sportsCulture=profile.sportsCulture||'optional';
   const assignmentPractice=profile.assignmentPractice||'balanced';
   const informalRequests=profile.informalRequests||'respectful';
-  const gradeBand=profile.gradeBand||'lower';
+  const gradeBand=profile.gradeBand||'middle';
   const fictionalSchoolSize=profile.fictionalSchoolSize||'medium';
   const storyRegion=profile.storyRegion||'other';
   if(!['optional','pressured','none'].includes(sportsCulture))throw Error('SPORTS_SCENARIO_INVALID');
@@ -260,8 +262,42 @@ function validateProfile(profile){
   if(!['lower','middle','upper'].includes(gradeBand))throw Error('GRADE_BAND_INVALID');
   if(!['small','medium','large'].includes(fictionalSchoolSize))throw Error('FICTIONAL_SCALE_INVALID');
   if(!['rural','urban','other'].includes(storyRegion))throw Error('REGION_SCENARIO_INVALID');
-  return {age,gender,partner,mbti,experience,duty,classTone,workCulture,
+  return {name,age,gender,partner,mbti,experience,duty,classTone,workCulture,
     sportsCulture,assignmentPractice,informalRequests,gradeBand,fictionalSchoolSize,storyRegion};
+}
+/**
+ * Derive only non-personal physical school context from approved information.
+ * Work culture, assigned duty, personality and teachers' behaviour cannot be
+ * inferred from school demographics or survey scores. Those remain fiction.
+ */
+function inferredProfile(world,player){
+ const demo=world&&world.mode==='public_fiction_demo';
+ const stats=!demo&&world&&world.numbers||{};
+ const students=stats.students;
+ const accepted=students&&students.status==='APPROVED'&&Number.isInteger(students.referenceYear)&&
+   Number.isFinite(students.value)&&students.value>=0;
+ const size=accepted?(students.value<=150?'small':students.value<=600?'medium':'large'):'medium';
+ const tags=!demo&&world&&world.geography&&Array.isArray(world.geography.tags)?world.geography.tags:[];
+ const verified=tags.filter(t=>t&&(['official_address','official_geospatial'].includes(t.source)));
+ const rural=verified.some(t=>['admin_eup','admin_myeon','rural'].includes(t.id));
+ const urban=verified.some(t=>['admin_dong','urban_core'].includes(t.id));
+ const region=rural?'rural':urban?'urban':'other';
+ return {
+  ...player,
+  /* Fixed fictional third-grade class; not an inference from the school's grade distribution */
+  gradeBand:'middle',
+  experience:'mid',duty:'general',classTone:'steady',workCulture:'collaborative',
+  sportsCulture:'optional',assignmentPractice:'balanced',informalRequests:'respectful',
+  fictionalSchoolSize:size,storyRegion:region
+ };
+}
+function playerAddress(state){
+ const p=state&&state.profile||{},name=typeof p.name==='string'&&p.name?' '+p.name:' 다온';
+ const full=name.trim();
+ if(state&&state.day>=3&&state.stats&&state.stats.affection>=60&&state.stats.trust>=58){
+  return (full.length>2?full.slice(-2):full)+' 쌤';
+ }
+ return full+' 선생님';
 }
 function partnerName(profile){return profile.partner==='man'?'현우 선생님':profile.partner==='woman'?'지윤 선생님':'동학년 선생님';}
 function validateWorld(world,plan){
@@ -424,7 +460,7 @@ function validateStory(){
 }
 const api=Object.freeze({
  VERSION,DAYS,WEEKDAYS,ENDINGS,ENDING_WORDS,
- validateProfile,validateStory,validateEndings,createGame,chapter,choose,advance,
+ validateProfile,validateStory,validateEndings,inferredProfile,playerAddress,createGame,chapter,choose,advance,
  partnerName
 });
 if(typeof module==='object'&&module.exports)module.exports=api;
