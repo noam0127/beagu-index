@@ -1,0 +1,27 @@
+name: Class diary temporary-code access smoke
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'teacher-class-diary-play.html'
+      - 'supabase/functions/class-diary-guest-access-v1/**'
+      - 'scripts/test-class-diary-guest-live.cjs'
+      - '.github/workflows/class-diary-guest-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: class-diary-guest-smoke-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  guest-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify home link and live guest endpoint rejects unknown codes
+        run: node scripts/test-class-diary-guest-live.cjs
