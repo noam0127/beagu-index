@@ -175,6 +175,7 @@
     mode = nextMode;
     $('schoolPanel').hidden = mode !== 'school';
     $('regionPanel').hidden = mode !== 'region';
+    $('beaguInterest').hidden = mode !== 'school';
     $('schoolTab').setAttribute('aria-selected', String(mode === 'school'));
     $('regionTab').setAttribute('aria-selected', String(mode === 'region'));
     search(true);
