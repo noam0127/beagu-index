@@ -121,7 +121,7 @@ begin
     group by 1) q;
 
   select coalesce(jsonb_agg(to_jsonb(q) order by q.day),'[]'::jsonb) into v_game_trend from (
-    select (started_at at time zone 'Asia/Seoul')::date day,count(*)::bigint plays,
+    select (started_at at time zone 'Asia/Seoul')::date as day,count(*)::bigint as plays,
       count(*) filter(where submitted_at is not null)::bigint completed
     from public.arcade_game_sessions where started_at>=v_start
     group by 1 order by 1 desc limit 120) q;
