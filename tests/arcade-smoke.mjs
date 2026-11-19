@@ -106,15 +106,15 @@ assert.match(gameGate,/window\.dispatchEvent\(new Event\('beagu:level-state-chan
  assert.ok(!areaStates.has("arcade-fullscreen-fallback"));
  assert.equal(button.textContent,"🔳");
 }
-const hostFullscreenScript=[...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)]
+const hostFullscreenScript=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
  .map(match=>match[1]).find(src=>src.includes("arcade:fullscreen-request"));
 assert.ok(hostFullscreenScript,"homepage iframe host expansion is installed");
 new Function(hostFullscreenScript);
-assert.match(hostFullscreenScript,/frame\\.closest\\("\\.teacher-game-feature"\\)/,
+assert.match(hostFullscreenScript,/frame\.closest\("\.teacher-game-feature"\)/,
  "host expands the existing game section instead of replacing its iframe");
-assert.match(hostFullscreenScript,/event\\.source===frame\\.contentWindow/,
+assert.match(hostFullscreenScript,/event\.source===frame\.contentWindow/,
  "only messages from known arcade iframes are accepted");
-assert.match(fullscreenCSS,/\\.arcade-game-viewport\\.arcade-fullscreen-fallback/,
+assert.match(fullscreenCSS,/\.arcade-game-viewport\.arcade-fullscreen-fallback/,
  "a fixed viewport is available when browser Fullscreen API is blocked");
 assert.match(fullscreenCSS,/contain:none!important/,
  "the arcade cabinet CSS contain property cannot trap fixed fullscreen");
