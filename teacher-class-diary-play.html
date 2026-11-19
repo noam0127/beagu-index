@@ -227,6 +227,13 @@ body.is-playing #sceneArt .scene-fade{inset:35% 0 0;background:linear-gradient(1
  .vn-fiction{font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){#vnMore,.vn-overlay *{animation:none!important;transition:none!important}}
+
+.vn-hud h2{font-family:"Nanum Myeongjo","Batang",serif;color:#fff;font-size:clamp(17px,2.5vw,24px);font-weight:700;line-height:1.3;margin:8px 0 0;text-shadow:0 2px 12px #191825}
+.vn-info{position:absolute;top:72px;left:14px;right:14px;max-height:min(45vh,350px);overflow:auto;z-index:8;border:1px solid #ffffff65;border-radius:12px;background:#242539f4;padding:12px;color:#fff;box-shadow:0 12px 30px #1118}
+.vn-info .school-facts{background:#ffffff10;border-color:#ffffff29;margin:0 0 8px}
+.vn-info .school-facts strong,.vn-info .school-facts small{color:#eee}
+.vn-info .school-facts li{background:#ffffff20;color:#fff}
+.vn-info .muted{color:#eee;font-size:12px;margin:0}
 </style>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 </head>
@@ -296,7 +303,7 @@ body.is-playing #sceneArt .scene-fade{inset:35% 0 0;background:linear-gradient(1
 </div>
 <article class="panel novel" id="novelCard" data-scene="morning">
 <div class="novel-top">
-<div class="scene-art" id="sceneArt" role="img" aria-label="가상의 한국 초등학교를 그린 배경"><div id="sceneBackdrop" class="scene-backdrop" aria-hidden="true"></div><img id="scenePortrait" class="scene-portrait" alt="" aria-hidden="true"><div class="scene-fade" aria-hidden="true"></div><div class="vn-overlay" id="vnOverlay"><div class="vn-hud" id="vnHud"><div id="vnHeaderSlot"></div><div class="vn-top-actions"><button type="button" id="vnSound" aria-label="배경음악 켜기 또는 끄기">♫</button><button type="button" id="vnReset" aria-label="처음부터">↺</button></div></div><div class="vn-bottom" id="vnBottom"><div id="vnDialogueSlot"></div><div class="vn-control-row"><span class="vn-fiction">가상 이야기 · 저장하지 않음</span><button type="button" id="vnMore">다음 대사 ▸</button></div></div></div></div>
+<div class="scene-art" id="sceneArt" role="group" aria-label="가상의 한국 초등학교를 배경으로 한 비주얼노벨 장면"><div id="sceneBackdrop" class="scene-backdrop" aria-hidden="true"></div><img id="scenePortrait" class="scene-portrait" alt="" aria-hidden="true"><div class="scene-fade" aria-hidden="true"></div><div class="vn-overlay" id="vnOverlay"><div class="vn-hud" id="vnHud"><div id="vnHeaderSlot"></div><div class="vn-top-actions"><button type="button" id="vnInfoBtn" aria-label="장면의 가상 정보와 자료 보기" aria-expanded="false">ⓘ</button><button type="button" id="vnSound" aria-label="배경음악 켜기 또는 끄기">♫</button><button type="button" id="vnReset" aria-label="처음부터">↺</button></div></div><div class="vn-info" id="vnInfo" hidden></div><div class="vn-bottom" id="vnBottom"><div id="vnDialogueSlot"></div><div class="vn-control-row"><span class="vn-fiction">가상 이야기 · 저장하지 않음</span><button type="button" id="vnMore">다음 대사 ▸</button></div></div></div></div>
 <span class="tag" id="chapterDay">첫째 날</span>
 <h2 id="chapterTitle"></h2>
 <div class="date-place" id="chapterPlace"></div>
@@ -423,6 +430,7 @@ function vnStart(done){
  vnState.pages=texts.flatMap(vnSplit);
  if(!vnState.pages.length)vnState.pages=['…'];
  vnState.index=0;vnState.kind=done?'outcome':'chapter';
+ $('vnInfo').hidden=true;$('vnInfoBtn').setAttribute('aria-expanded','false');
  vnPresent();
 }
 $('vnMore').addEventListener('click',()=>{
@@ -435,7 +443,9 @@ $('vnMore').addEventListener('click',()=>{
 $('vnSound').addEventListener('click',()=>$('musicBtn').click());
 $('vnReset').addEventListener('click',()=>$('resetBtn').click());
 const stageHud=$('vnHeaderSlot'),stageBody=$('vnDialogueSlot'),stageBottom=$('vnBottom');
-stageHud.append($('chapterDay'),$('chapterPlace'));
+stageHud.append($('chapterDay'),$('chapterTitle'),$('chapterPlace'));
+$('vnInfo').append($('schoolFacts'),$('chapterSource'));
+$('vnInfoBtn').addEventListener('click',()=>{$('vnInfo').hidden=!$('vnInfo').hidden;$('vnInfoBtn').setAttribute('aria-expanded',String(!$('vnInfo').hidden));});
 stageBody.append($('novelCard').querySelector('.character-strip'),$('novelCard').querySelector('.vn-dialogue'),$('outcome'));
 stageBottom.append($('choiceSection'),$('novelCard').querySelector('.novel-body .actions'));
 function fillParagraphs(id,texts){
