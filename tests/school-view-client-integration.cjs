@@ -7,11 +7,11 @@ new vm.Script(telemetry);
 new vm.Script(widget);
 for(const path of ['search.html','search-lv1.html','school-report.html']){
   const html=fs.readFileSync(path,'utf8');
-  assert.match(html,/js\\/search-telemetry-v1\\.js\\?v=20261120-selection-record2/);
-  assert.match(html,/js\\/school-view-counts-v1\\.js\\?v=20261120-selection-record2/);
+  assert.ok(html.includes('js/search-telemetry-v1.js?v=20261120-selection-record2'),'Search telemetry must be cache-busted on '+path);
+  assert.ok(html.includes('js/school-view-counts-v1.js?v=20261120-selection-record2'),'Counter widget must be cache-busted on '+path);
 }
-assert.match(telemetry,/supabaseClient\\.rpc\\('beagu_record_school_view'/);
-assert.match(widget,/applyConfirmedCount:paint/);
+assert.ok(telemetry.includes("supabaseClient.rpc('beagu_record_school_view'"));
+assert.ok(widget.includes('applyConfirmedCount:paint'));
 const visitor='123e4567-e89b-42d3-a456-426614174000';
 async function scenario(withWidget){
   const calls=[],paints=[];
