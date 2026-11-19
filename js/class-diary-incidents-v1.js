@@ -185,7 +185,84 @@ const INCIDENTS=Object.freeze({
    {id:'chair_decline',label:'정중히 거절하고 공식 업무를 먼저 마무리한다',delta:{trust:5,agency:4,voice:8,boundary:10,fatigue:-4},
     reply:['“지금 맡은 업무와 수업 준비만으로도 벅차서요. 제가 회장을 맡기는 어렵습니다.”','내 말이 모두를 편하게 하지는 못했다. 그래도 동의하지 않은 일을 맡는 것보다 분명히 말하는 쪽을 택했다.'],line:'“괜찮아요. 맡을 사람을 다시 찾아봐야죠.”'}
   ]
+ },
+ shared_break:{
+  day:2,title:'내 교실만 힘든 게 아니었구나',place:'화요일 2교시 뒤 · 학년연구실',kind:'gentle',
+  prose:[
+   '쉬는 시간 종이 울리자마자 나는 학년연구실로 들어갔다. 아침에 걷은 개인정보 동의서가 제대로 들어왔는지 확인하고, 3교시 모둠 활동지를 손봐야 했다. 물 한 잔 마실 틈도 없었다.',
+   '옆자리 선생님이 내 책상 위 서류를 보더니 자기 주안 파일을 열었다. “저희 반도 동의서 아직 다 못 걷었어요. 취합표 같이 맞출까요?” 누구 하나가 특별히 여유로운 것도 아니었다.',
+   '할 일은 그대로였다. 그런데 둘이서 종이를 나눠 보니 오늘을 버틸 만하겠다는 생각이 들었다. 함께 일한다는 게 거창한 일은 아니었다.'
+  ],
+  choices:[
+   {id:'shared_pair',label:'서류 취합과 수업 자료를 서로 확인해 주기로 한다',
+     delta:{trust:10,agency:5,voice:5,boundary:7,fatigue:-7},
+     reply:['우리는 한 사람은 동의서 취합표를 확인하고, 다른 사람은 모둠 활동 자료를 살폈다. 각자의 담당을 바꾸지 않고 필요한 부분만 도왔다.','짧은 쉬는 시간이었는데도 한숨 돌릴 수 있었다.'],line:'“우리가 조금씩 나눠 하면 되죠. 혼자 다 하지 마세요.”'},
+   {id:'shared_ask',label:'막히는 부분 하나를 짚어 도움을 청한다',
+     delta:{trust:9,agency:4,voice:8,boundary:8,fatigue:-5},
+     reply:['“교외체험학습신청서 확인은 제가 처음이라 그런데, 어디부터 보면 될까요?” 나는 어려운 부분만 물었다.','동료가 학교에서 정한 절차를 알려 줬다. 그다음 일은 내가 할 수 있었다.'],line:'“이런 건 물어보셔도 돼요. 저도 처음엔 그랬어요.”'},
+   {id:'shared_thanks',label:'도움은 고맙게 받고 내 전담시간은 수업 준비에 쓴다',
+     delta:{trust:7,agency:3,voice:5,boundary:9,fatigue:-6},
+     reply:['나는 고맙다고 인사하고 다음 교시에 쓸 자료부터 꺼냈다. 함께 도와준다는 말이 내 시간을 모두 내어 주라는 뜻은 아니었다.','동료도 자기 수업을 준비했다. 서로 바쁜 시간을 건드리지 않는 것 역시 도움이었다.'],line:'“전담시간에는 수업 준비하세요. 급한 건 제가 먼저 볼게요.”'}
+  ]
+ },
+ hostile_break:{
+  day:2,title:'학년연구실의 차가운 말',place:'화요일 2교시 뒤 · 학년연구실',kind:'tense',
+  prose:[
+   '쉬는 시간이 되자 급히 학년연구실로 들어왔다. 주안과 동의서 취합표를 한꺼번에 확인하던 참이었다. 그때 누군가 내가 올린 파일을 보고 말했다. “이런 건 미리 해 놓으셔야죠.”',
+   '어제 알려 준 양식과 다른 부분이 있었다. 수정할 수 있는 일이었지만 말투 때문에 마음이 먼저 움츠러들었다. 한 선생님은 아무 말 없이 자기 컴퓨터만 바라봤다.',
+   '수업 시작까지 몇 분 남지 않았다. 실수를 고치는 일과 다른 사람의 면박까지 감당하는 일은 같지 않았다. 이곳에서는 어려운 일이 생겨도 편하게 물어볼 수 있을까.'
+  ],
+  choices:[
+   {id:'hostile_confirm',label:'수정할 내용과 기준을 확인하고 수업 뒤에 마무리한다',
+     delta:{trust:2,agency:4,voice:8,boundary:8,fatigue:7},
+     reply:['“어느 부분을 수정하면 되는지 정확히 알려 주시면 반영하겠습니다. 지금은 수업이 있어서 끝나고 확인할게요.” 나는 짧게 답했다.','상대가 바로 부드러워진 것은 아니었다. 그래도 수업 시간에까지 그 말을 붙들고 있지는 않기로 했다.'],line:'“수정할 부분을 확인했으니 수업 끝나고 봐도 됩니다.”'},
+   {id:'hostile_ally',label:'말을 믿고 건넬 수 있는 동학년에게 따로 상의한다',
+     delta:{trust:5,agency:4,voice:7,boundary:6,fatigue:5},
+     reply:['나는 복도에서 {colleague}에게 상황을 설명했다. 그 사람은 처음부터 대신 해결해 주겠다고 하지 않고, 어떤 말이 오갔는지 물었다.','누구나 나와 같은 편일 필요는 없었다. 그래도 내 말을 온전히 들어 주는 동료가 한 명 있다는 사실이 컸다.'],line:'“같이 기준을 확인해 봐요. 선생님 혼자 잘못한 일은 아닐 수도 있잖아요.”'},
+   {id:'hostile_record',label:'업무 내용을 정리해 공식 협의에서 기준을 맞추자고 한다',
+     delta:{trust:3,agency:5,voice:10,boundary:9,fatigue:8},
+     reply:['나는 파일 버전과 수정 요청 내용을 정리했다. 개인적인 말다툼으로 남기기보다 학년회의에서 양식을 통일하자고 제안할 생각이었다.','회의가 한 번 더 필요해질 수 있었다. 그러나 매번 다른 기준으로 지적받는 일을 줄일 길이기도 했다.'],line:'“누가 잘못했느냐보다 다음에는 어떻게 할지 정해야죠.”'}
+  ]
+ },
+ shared_meeting:{
+  day:4,title:'힘들다는 말을 할 수 있는 자리',place:'목요일 방과 후 · 학년회의',kind:'gentle',
+  prose:[
+   '학년회의 마지막 안건은 다음 주 행사 준비였다. 주안을 맞추고 보호자 연락까지 마친 선생님들은 모두 피곤해 보였다. 누군가 말했다. “이번 주 좀 버거웠어요.”',
+   '아무도 그 선생님에게 요령이 없다고 하지 않았다. 다른 사람도 자기가 놓친 일을 말하기 시작했다. 회의록에는 잘한 일보다 도울 일이 더 많이 적혔다.',
+   '내게도 버거운 일이 있었다. 이 학교에서는 잘 못 하고 있다는 고백이 곧 흠이 되지는 않을 것 같았다.'
+  ],
+  choices:[
+   {id:'shared_roles',label:'다음 주 준비와 보호자 안내 역할을 나눠 정한다',
+     delta:{trust:11,agency:5,voice:7,boundary:8,fatigue:-8},
+     reply:['우리는 할 일을 적고 맡을 수 있는 시간을 확인했다. 자기 반 아이들과 보낼 시간이 부족한 선생님에게는 다른 업무를 덜어 주기로 했다.','일이 줄어든 건 아니었다. 다만 일을 혼자 지고 서 있는 사람이 줄었다.'],line:'“각자 하나씩만 해도 생각보다 많이 해결되겠어요.”'},
+   {id:'shared_speak',label:'나도 힘들었던 순간을 말하고 도움이 필요한 일을 부탁한다',
+     delta:{trust:9,agency:5,voice:10,boundary:7,fatigue:-6},
+     reply:['나는 늦은 학교 복도에서 문을 닫으려던 경비 담당자와 마주친 이야기를 꺼냈다. 끝까지 남아야 한다는 생각이 당연했던 건 아니라고 말했다.','여러 선생님이 고개를 끄덕였다. 그 이야기를 하고 나니 혼자서만 못 버티는 것 같던 마음이 조금 가벼워졌다.'],line:'“다음에는 꼭 얘기해요. 혼자 그렇게 오래 남지 말고요.”'},
+   {id:'shared_rest',label:'급하지 않은 일은 다음 주로 미루고 회의를 제시간에 끝내자고 한다',
+     delta:{trust:7,agency:4,voice:6,boundary:10,fatigue:-9},
+     reply:['우리는 오늘 결론이 필요한 것만 정했다. 나머지는 다음 학년회의에 다시 보기로 했다.','회의가 끝난 뒤 {colleague}이 “오늘은 좀 일찍 가세요”라며 웃었다. 그 말이 고마웠다.'],line:'“쉬어야 내일도 아이들 앞에 서죠.”'}
+  ]
+ },
+ hostile_meeting:{
+  day:4,title:'회의실에 남은 침묵',place:'목요일 방과 후 · 학년회의',kind:'tense',
+  prose:[
+   '학년회의에서 행사 준비 이야기가 나오자 한 선생님이 내 이름을 말했다. 내가 맡기로 했다는 일이었다. 하지만 그런 이야기를 나눈 기억이 없었다.',
+   '“다들 바쁜 건 똑같아요.” 누군가 덧붙였다. 말은 맞았지만 그 말로 누가 어떤 일을 맡아야 하는지가 정해지는 건 아니었다. 회의실이 조용해졌다.',
+   '같은 교직원인데도 서로를 믿지 못하면 일이 두 배로 힘들어졌다. 나는 아이들 앞에서는 경청을 말하면서 정작 이 자리에서는 내 말 한마디가 왜 이렇게 어려운지 생각했다.'
+  ],
+  choices:[
+   {id:'hostile_meeting_check',label:'업무분장표를 확인하고 합의되지 않은 일임을 차분하게 설명한다',
+     delta:{trust:2,agency:6,voice:10,boundary:10,fatigue:8},
+     reply:['“그 일은 제가 맡기로 정한 적이 없습니다. 업무분장과 일정부터 같이 확인해 보면 좋겠습니다.”','회의실의 분위기가 곧바로 좋아지지는 않았다. 하지만 적어도 내 동의 없이 일이 정해지는 건 막았다.'],line:'“담당과 협조 범위는 확인하고 정합시다.”'},
+   {id:'hostile_meeting_ally',label:'다른 선생님의 의견도 묻고 업무 조정안을 함께 제안한다',
+     delta:{trust:5,agency:6,voice:8,boundary:8,fatigue:6},
+     reply:['나는 다른 선생님들에게 지금 맡은 일과 가능한 시간을 물었다. {colleague}도 자기 업무를 꺼내 놓았다.','한 사람의 문제가 아니라 정해지지 않은 업무를 모두가 피하고 있다는 사실이 드러났다. 그때부터 논의가 조금 달라졌다.'],line:'“다 같이 바쁘다면, 다 같이 나눌 방법을 정해야죠.”'},
+   {id:'hostile_meeting_record',label:'결정 과정과 요청 사항을 정리해 관리자와 다시 협의한다',
+     delta:{trust:3,agency:5,voice:9,boundary:10,fatigue:9},
+     reply:['나는 회의에서 정해진 것과 아직 협의가 필요한 것을 구분해 기록했다. 공식 담당자에게 확인해야 할 부분도 적었다.','오늘 안에 갈등이 해결되지는 않았다. 하지만 누군가를 탓하는 말보다 책임을 확인하는 절차가 필요했다.'],line:'“이건 개인적으로 떠안을 문제가 아니라 학교에서 조정할 일입니다.”'}
+  ]
  }
+
 });
 function accepted(world,key){
  const entry=world&&world.numbers&&world.numbers[key];
@@ -211,9 +288,9 @@ function schedule(state,world){
  const w=setting(state,world),d=state.day;
  const days={
    1:[w.locale==='urban'?'parking':null,'arrival','focus'],
-   2:[w.grade==='lower'?'seat_song':null,'break_clean','late_guard'],
+   2:[w.grade==='lower'?'seat_song':null,'break_clean',w.fictionalCulture==='collaborative'?'shared_break':'hostile_break','late_guard'],
    3:[w.locale==='rural'?'wildlife':null,'gender_duty'],
-   4:['sport'],
+   4:[w.fictionalCulture==='collaborative'?'shared_meeting':'hostile_meeting','sport'],
    5:[w.fictionalCulture==='deflecting'&&w.scale==='large'?'friendship_chair':
        w.fictionalCulture==='collaborative'?'barbecue':null]
  };
@@ -262,8 +339,11 @@ function choose(state,world,id){
  }
  result.incidentEvents=Array.isArray(result.incidentEvents)?result.incidentEvents:[];
  result.incidentEvents.push({day:state.day,id:current.id,choiceId:id});
+ const name=result.profile.partner==='man'?'현우 선생님':
+  result.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
  result.incidentReflection={day:state.day,id:current.id,
-   paragraphs:choice.reply.slice(),line:choice.line};
+   paragraphs:choice.reply.map(x=>x.replace(/\{colleague\}/g,name)),
+   line:choice.line.replace(/\{colleague\}/g,name)};
  return result;
 }
 function continueStory(state){
