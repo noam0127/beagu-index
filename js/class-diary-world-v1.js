@@ -111,6 +111,8 @@
       '실제 기준연도의 학생 규모에 따라 첫 교무실·학급 풍경을 달리 구성한다.'));
     if (geo.tags.length) hooks.push(hook('place',1,'setting',['address'],
       '확인된 행정·지리 태그만 풍경 묘사의 조건으로 사용한다.'));
+    if (categories.establishment_type) hooks.push(hook('establishment',1,'setting',
+      ['establishment_type'],'확인된 학교 설립 형태에 맞춰 제도적 배경을 구성한다.'));
     if (numbers.teachers || numbers.junior_teacher_ratio || numbers.male_teacher_ratio)
       hooks.push(hook('staff',1,'setting',
         ['teachers','junior_teacher_ratio','male_teacher_ratio'],
@@ -119,6 +121,12 @@
       hooks.push(hook('work_support',2,'context',
         ['admin_employees','school_employees'],
         '행정·지원 인력 수를 업무 협의의 배경 조건으로만 사용한다.'));
+    if (numbers.vice_principals || numbers.lead_teachers)
+      hooks.push(hook('leadership_roles',2,'context',
+        ['vice_principals','lead_teachers'],
+        '실제 교감·수석교사 수를 배경에 반영하지만 인물의 성격·권위와 동일시하지 않는다.'));
+    if (numbers.land_area) hooks.push(hook('school_grounds',3,'setting',
+      ['land_area'],'교사대지 면적은 이동 동선과 공간의 크기를 묘사할 때 참고한다.'));
     if (numbers.classes || numbers.classrooms || numbers.students_per_class)
       hooks.push(hook('class_space',3,'setting',
         ['classes','classrooms','students_per_class'],
@@ -162,6 +170,12 @@
       name:trim(school.school_name,120),sido:trim(school.sido_standard||school.sido,60),
       office:trim(school.support_office,100),address:trim(school.address,240)||null,
       schoolKind:trim(school.school_kind,50),establishment:trim(school.establishment,50),
+      educationOffice:trim(school.education_office,120)||null,
+      educationOfficeCode:trim(school.education_office_code,40)||null,
+      homepage:trim(school.homepage,240)||null,
+      originalSource:trim(school.source,120)||null,
+      schoolListSyncedAt:trim(school.last_synced_at,60)||null,
+      openingDate:null,studentTransfers:null,coordinates:null,
       schoolStatus:trim(school.status,40),scale,
       studentCountReferenceYear:numbers.students ? numbers.students.referenceYear : null
     };
