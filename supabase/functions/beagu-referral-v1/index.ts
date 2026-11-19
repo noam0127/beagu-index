@@ -9,7 +9,7 @@ const encoder = new TextEncoder();
 const allowed = new Set(['https://baeguindex.com', 'https://www.baeguindex.com',
   'https://noam0127.github.io', 'http://localhost:8000', 'http://127.0.0.1:8000']);
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const codePattern = /^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6})$/;
+const codePattern = /^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}|[A-HJ-NP-Z2-9]{10})$/;
 const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
 const hex = (array: Uint8Array) => Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
 async function sha(value: string): Promise<string> {
