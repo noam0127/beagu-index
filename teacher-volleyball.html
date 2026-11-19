@@ -181,7 +181,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       </div>
     </div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · EXTREME 공 2개·족쇄·적 부하</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하</div>
   <a class="postit-arcade-link postit-lv2-link" data-postit-game="teacher-volleyball" target="_top" href="postit.html?game=teacher-volleyball">▤ 이 게임 포스트잇</a>
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
@@ -217,7 +217,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     easy:{allySpeed:1.38,allyJump:1.20,allyReach:1.22,allyAttack:1.24,enemySpeed:4.7,enemyReaction:17,enemyLead:1,enemyError:82,enemyDeadzone:25,enemyJumpChance:.10,enemyJumpReach:105,enemyJumpForce:10.5,enemyReach:.82,enemyAttack:.68,enemySmashChance:.02,label:"아군 강화 · 상대 점프 드묾"},
     normal:{allySpeed:1.20,allyJump:1.10,allyReach:1.12,allyAttack:1.12,enemySpeed:6.0,enemyReaction:12,enemyLead:3,enemyError:58,enemyDeadzone:17,enemyJumpChance:.27,enemyJumpReach:125,enemyJumpForce:11.5,enemyReach:.91,enemyAttack:.83,enemySmashChance:.08,label:"아군 우세 · 상대 수비 보통"},
     hard:{allySpeed:1,allyJump:1,allyReach:1,allyAttack:1,enemySpeed:7.5,enemyReaction:8,enemyLead:5,enemyError:35,enemyDeadzone:11,enemyJumpChance:.49,enemyJumpReach:148,enemyJumpForce:12.8,enemyReach:1,enemyAttack:1,enemySmashChance:.19,label:"양 팀 균형 · 상대 점프 수비"},
-    very_hard:{allySpeed:.89,allyJump:.91,allyReach:.94,allyAttack:.91,enemySpeed:9.2,enemyReaction:5,enemyLead:7,enemyError:18,enemyDeadzone:7,enemyJumpChance:.72,enemyJumpReach:172,enemyJumpForce:13.7,enemyReach:1.10,enemyAttack:1.23,enemySmashChance:.38,label:"아군 약화 · 상대 예측 점프·강타"},
+    very_hard:{allySpeed:.89,allyJump:.91,allyReach:.94,allyAttack:.91,enemySpeed:9.2,enemyReaction:5,enemyLead:7,enemyError:18,enemyDeadzone:7,enemyJumpChance:.72,enemyJumpReach:172,enemyJumpForce:13.7,enemyReach:1.10,enemyAttack:1.23,enemySmashChance:.38,label:"아군 약화 · 상대 예측 점프·강타·부하 간헐 등장"},
     extreme:{allySpeed:.79,allyJump:.83,allyReach:.86,allyAttack:.83,enemySpeed:11,enemyReaction:2,enemyLead:9,enemyError:5,enemyDeadzone:3,enemyJumpChance:.96,enemyJumpReach:195,enemyJumpForce:14.8,enemyReach:1.20,enemyAttack:1.48,enemySmashChance:.63,label:"아군 약화 · 상대 초고속 수비·강타·작은 부하"}
    };
   // Stronger opponents get distinctive pixel armor, helmets and a boss aura.
@@ -285,8 +285,32 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
   const secondBall={x:685,y:168,vx:-6,vy:-5,spin:0,cooldown:0,trail:[],shadowFrames:0,shadowColor:"#762b4b"};
   const activeBalls=[ball],clones=[];
-  // EXTREME: one miniature defender belonging to the opposing team.
-  const enemyMinion={x:810,y:FLOOR-31,vx:0,contactFrames:0,cooldown:0,name:"부하",side:"right",mini:true};
+  // EXTREME: always present. VERY HARD: a short intermittent visit.
+  const enemyMinion={x:810,y:FLOOR-31,vx:0,contactFrames:0,cooldown:0,
+    name:"부하",side:"right",mini:true,active:false,nextSpawnFrame:0,activeUntilFrame:0};
+  const isEnemyMinionActive=()=>currentDifficulty==="extreme"||
+    (currentDifficulty==="very_hard"&&enemyMinion.active);
+  function resetEnemyMinionSchedule(){
+    enemyMinion.active=false;
+    enemyMinion.activeUntilFrame=0;
+    enemyMinion.nextSpawnFrame=currentDifficulty==="very_hard"
+      ?state.activeFrames+Math.round((12+Math.random()*8)*60):0;
+  }
+  function updateEnemyMinionPresence(){
+    if(currentDifficulty!=="very_hard")return;
+    if(enemyMinion.active){
+      if(state.activeFrames>=enemyMinion.activeUntilFrame){
+        enemyMinion.active=false;
+        enemyMinion.cooldown=0;
+        enemyMinion.nextSpawnFrame=state.activeFrames+Math.round((22+Math.random()*14)*60);
+      }
+    }else if(state.activeFrames>=enemyMinion.nextSpawnFrame){
+      enemyMinion.active=true;
+      enemyMinion.activeUntilFrame=state.activeFrames+Math.round((7+Math.random()*4)*60);
+      enemyMinion.x=810;
+      enemyMinion.cooldown=0;
+    }
+  }
   const volleyShackle={x:156,dir:-1};
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const setStatus = text => { status.textContent = text; };
@@ -505,6 +529,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
     state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
+    resetEnemyMinionSchedule();
     releaseKeys();
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
@@ -727,7 +752,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   // Small defender: only chases incoming, descending balls and is slower
   // than the main CPU player, with one shared collision cooldown.
   function moveEnemyMinion(){
-    if(currentDifficulty!=="extreme")return;
+    if(!isEnemyMinionActive())return;
     if(enemyMinion.cooldown>0)enemyMinion.cooldown--;
     const threat=activeBalls.filter(b=>b.x>NET_X+R&&b.vx>0&&b.vy>0)
       .sort((a,b)=>Math.abs(a.x-enemyMinion.x)-Math.abs(b.x-enemyMinion.x))[0];
@@ -739,7 +764,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     enemyMinion.y=FLOOR-31;
   }
   function enemyMinionHit(hitBall){
-    if(currentDifficulty!=="extreme"||enemyMinion.cooldown>0||
+    if(!isEnemyMinionActive()||enemyMinion.cooldown>0||
        hitBall.enemyMinionCooldown>0||hitBall.cooldown>0)return false;
     // Body collision fits the visibly smaller 58%-scale character.
     const nearX=clamp(hitBall.x,enemyMinion.x-20,enemyMinion.x+20);
@@ -934,6 +959,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       return;
     }
     if (state.phase !== "playing") return;
+    updateEnemyMinionPresence();
     const keyboardDirection = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
     const keyboardVertical = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
     const beforeMoveX = left.x, beforeMoveY = left.y;
@@ -1238,7 +1264,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     drawTeacher(left, "#448bd8");
     drawVolleyShackle();
-    if(currentDifficulty==="extreme"){
+    if(isEnemyMinionActive()){
       ctx.save();
       ctx.translate(enemyMinion.x,enemyMinion.y);
       ctx.scale(.58,.58);
