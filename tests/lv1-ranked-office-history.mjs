@@ -17,7 +17,7 @@ assert.ok(publicSnapshot.restoration_20261118?.school_ids===317 &&
   publicSnapshot.restoration_20261118.published_school_years===503,
   'Both regions must have 503 published school-years restored');
 for(const file of ['search.html','js/level-search.js','school-report.html','js/statistics-directory-v2.js']){
- assert.ok(read(file).includes('v=20261118-gjjn2025'),file+' must use refreshed Gwangju/Jeonnam percentile bundle');
+ assert.ok(read(file).includes('v=20261120-all-regions1'),file+' must use refreshed Gwangju/Jeonnam percentile bundle');
 }
 assert.match(api,/approvedDomainLabels/, 'Lv.1 must display the eight curated 2025 school areas');
 assert.match(api,/APPROVED_SANITIZED_LEGACY_VIEW/, 'Only prior owner-approved public-release whitelist may be shown');
