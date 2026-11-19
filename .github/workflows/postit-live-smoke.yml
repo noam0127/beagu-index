@@ -1,6 +1,12 @@
 name: Post-it public live smoke
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/postit-live-smoke.yml
+      - postit.html
+      - js/postit-v1.js
+      - supabase/functions/beagu-postit-api-v1/index.ts
   push:
     branches: [main]
     paths:
