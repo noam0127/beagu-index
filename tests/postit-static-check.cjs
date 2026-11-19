@@ -12,6 +12,9 @@ assert.ok(css.includes('#fff1a0')&&css.includes('#ffccd9')&&css.includes('#b9e5f
 assert.ok(app.includes('encodeURIComponent(comp.selection)'),'compare route');
 assert.ok(app.includes('school-report.html?school_id='),'school report route');
 assert.ok(app.includes('LEVEL_REQUIRED'),'level gate feedback');
+assert.ok(app.includes('COMMENT_READ_LEVEL_REQUIRED'),'Lv0 comment feedback');
+assert.ok(app.includes('state.level>=1'),'Lv1 frontend comment-read gate');
+assert.ok(page.includes('댓글은 Lv.1부터'),'clear user-facing comment policy');
 assert.ok(css.includes('postit-breeze-flutter')&&css.includes('postit-corner-flutter')&&css.includes('postit-bookmark-flick'),'scroll wind and folded-corner animation exist');
 assert.ok(app.includes('flutterOnScroll')&&app.includes('previousScrollY')&&app.includes('breezePreference.matches'),'down-scroll only and reduced-motion gating');
 const compare=read('statistics.html'),core=read('js/statistics-compare.js');
@@ -26,6 +29,8 @@ for(const file of ['teacher-run.html','teacher-volleyball.html','teacher-class-d
  assert.ok(read(file).includes('data-postit-game'),'game link in '+file);
 const edge=read('supabase/functions/beagu-postit-api-v1/index.ts');
 assert.ok(edge.includes('const user=await identity(req)'), 'writes authenticated');
+assert.ok(edge.includes('const viewer=await identity(req,1)'), 'Lv1 verified server-side for comment reads');
+assert.ok(edge.includes('COMMENT_READ_LEVEL_REQUIRED'), 'Lv0 comment API denial');
 assert.ok(edge.includes('LEVEL_REQUIRED'), 'post author level 2 server gate');
 assert.ok(edge.includes('status:"hidden"'), 'report-hide capability');
 assert.ok(edge.includes('manual_release_approved'), 'release policy preserved');
