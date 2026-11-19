@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 function init(options){
- const {show,sound}=options;
+ const {show,sound,validateSchoolName}=options;
  const $=id=>document.getElementById(id);
  const setup=$('setup'),form=$('profileForm');
  let step=1;
@@ -20,12 +20,16 @@ function init(options){
  }
  function validate(part){
   if(part===1){
-   const mode=$('diarySchoolMode');
-   if(mode.value==='real'&&mode.dataset.schoolReady!=='true'){
-    mode.dispatchEvent(new Event('change'));
+   const school=$('diarySchoolName');
+   if(!school.value.trim()){
+    school.setCustomValidity('학교 이름을 입력해 주세요.');
+    school.reportValidity();
+    school.focus();
     return false;
    }
-   if(!mode.checkValidity()){mode.reportValidity();mode.focus();return false}
+   school.setCustomValidity('');
+   if(!school.checkValidity()){school.reportValidity();school.focus();return false}
+   if(typeof validateSchoolName==='function'&&!validateSchoolName())return false;
   }
   if(part===2&&!$('partner').checkValidity()){
    const first=form.querySelector('[data-partner-choice]');
