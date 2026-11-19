@@ -103,9 +103,9 @@ class ArcadeLeaderboard{
  async finish(score,stats){
   const generation=this.playGeneration;
   const session=this.session,game=this.game,tier=this.tier;
-  if(!session||this.isSubmitting)return;
+  if(!session||this.isSubmitting)return false;
   const value=Number(score);
-  if(!Number.isFinite(value)||value<0)return;
+  if(!Number.isFinite(value)||value<0)return false;
   const finalScore=Math.floor(value);
   // Start the request immediately. Do not first await the TOP 10 fetch:
   // a player who taps "play again" must not silently lose the finished match.
@@ -124,6 +124,7 @@ class ArcadeLeaderboard{
     :data.timeRanked?"⏱ 25점 최단시간 TOP "+data.timeRank+"위 · "+displayScore(finalScore)
     :data.recorded===false?"이번 경기 "+displayScore(finalScore)+" · 상위 100위 밖 · 기록 미등록"
     :"이번 경기 "+displayScore(finalScore)+" · 역대 상위 100위 안에 기록됨";
+    return true;
   }catch(err){
    if(generation!==this.playGeneration)return;
    this.notice=err.status===409?"경기가 만료되었거나 이미 기록되었습니다":
