@@ -69,7 +69,7 @@ assert.equal("nickname" in requestPayload,false,"no user-entered identifiers sen
 const displaced=mockRecordBoard();
 displaced.request=async()=>({ranked:false,top10:[]});
 await displaced.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
-assert.match(displaced.notice,/진입 실패/);
+assert.match(displaced.notice,/TOP 10 밖/);
 const offline=mockRecordBoard("teacher_run_retirement");
 offline.request=async()=>{throw new Error("network_unavailable");};
 await offline.finish(1200,{score:1200,baseScore:1200,survivalSeconds:80,age:40,victory:false});
