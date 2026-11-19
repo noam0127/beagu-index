@@ -20,7 +20,7 @@ assert(o.paragraphs.length>=3);
 state=game.advance(state);
 const second=director.decorateChapter(state,world,game.chapter(state,world,plan));
 assert.equal(second.callbackFrom,'carry');
-assert(second.paragraphs.some(x=>x.includes('전날 가방에 넣어 둔 서류')));
+assert(second.paragraphs.some(x=>x.includes('전날 혼자 챙긴 주안 출력물')));
 for(const p of ['woman','man','none']){
  const x=game.createGame(world,plan,{...profile,partner:p});
  const view=director.decorateChapter(x,world,game.chapter(x,world,plan));
@@ -34,6 +34,7 @@ for(let idx=0;idx<2187;idx++){
  for(let day=1;day<=7;day++){
   const c=director.decorateChapter(s,world,game.chapter(s,world,plan));
   assert(c.visual&&c.paragraphs.length>=4);
+  assert(!c.paragraphs.some(x=>x.includes('{colleague}')), 'No raw colleague placeholders');
   if(day>1)assert(c.callbackFrom,'All choices must have follow-up prose');
   const option=c.choices[n%3];n=Math.floor(n/3);
   s=game.choose(s,option.id);
