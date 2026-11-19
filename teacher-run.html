@@ -263,7 +263,10 @@ async function start(){
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;
  shackle={x:player.x-52,dir:-1};pointerId=null;pointerY=null;
- pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 족쇄 · 점프 불가":(selected.difficulty==="easy"||selected.difficulty==="normal")?difficultyName[selected.difficulty]+" · 자동 분필 지원":difficultyName[selected.difficulty]+" · 24세 임용!",2);closeMessage();playTone(500,.13);
+ pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 족쇄 · 점프 불가":
+  selected.difficulty==="easy"?"EASY · 날개와 자동 분필 지원":
+  selected.difficulty==="normal"?"NORMAL · 자동 분필 지원":
+  difficultyName[selected.difficulty]+" · 24세 임용!",2);closeMessage();playTone(500,.13);
 }
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
@@ -593,6 +596,21 @@ function background(){
 }
 function playerDraw(){
  ctx.save();ctx.translate(Math.round(player.x),Math.round(player.y));ctx.scale(profile.heroSize,profile.heroSize);
+ if(profile===difficultyProfiles.easy){
+  // EASY: animated wings show why the teacher is light and quick.
+  const flap=Math.sin(clock*10)*8;
+  ctx.fillStyle="#ffffff";
+  ctx.beginPath();ctx.moveTo(-19,-12);ctx.quadraticCurveTo(-61,-66-flap,-72,-42-flap);
+  ctx.quadraticCurveTo(-78,-10-flap,-24,19);ctx.fill();
+  ctx.beginPath();ctx.moveTo(19,-12);ctx.quadraticCurveTo(61,-66-flap,72,-42-flap);
+  ctx.quadraticCurveTo(78,-10-flap,24,19);ctx.fill();
+  ctx.fillStyle="#9ce0f8";
+  for(let j=0;j<3;j++){
+   const lift=j*9;
+   ctx.fillRect(-68+j*10,-30+lift-flap*.5,20,7);
+   ctx.fillRect(48-j*10,-30+lift-flap*.5,20,7);
+  }
+ }
  if(pointerId!==null&&state==="playing"){
   const blink=Math.floor(clock*18)%2;
   ctx.fillStyle="#ffe078";ctx.fillRect(-16,31,11,blink?15:23);ctx.fillRect(6,31,11,blink?23:15);
