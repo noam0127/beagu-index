@@ -20,13 +20,17 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#setup').waitFor({state:'visible'});
    await page.locator('#playerName').fill(variant.name==='desktop'?'최윤호':'김민서');
    const count=await page.locator('#profileForm input,#profileForm select').count();
-   assert.equal(count,5,'Character form must contain exactly 5 fields');
+   assert.equal(count,6,'Character form must contain exactly 6 fields');
+   await page.locator('#experienceYears').fill(variant.name==='desktop'?'8':'0');
    await page.locator('#age').fill('31');
    await page.locator('#gender').selectOption('undisclosed');
    await page.locator('#mbti').selectOption('INFP');
    await page.locator('#partner').selectOption(variant.partner);
    await page.locator('#profileForm button[type="submit"]').click();
    await page.locator('#novel').waitFor({state:'visible'});
+   const chapter=await page.locator('#chapterText').innerText();
+   assert(chapter.includes(variant.name==='desktop'?'교직 경력은 8년':'올해 처음 교단에 섰다'),
+     'Entered career years must change the first-day narration');
    assert.equal(await page.locator('#musicBtn').getAttribute('aria-pressed'),'true','Game start enables music');
    await page.locator('#musicBtn').click(); // silence background while testing branches
    assert.equal(await page.locator('#musicBtn').getAttribute('aria-pressed'),'false');
