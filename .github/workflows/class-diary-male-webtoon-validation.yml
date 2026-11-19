@@ -1,9 +1,11 @@
-name: Class Diary illustrated male cast
+name: Class Diary Korean drama photo cast restoration
 on:
   push:
     branches: [main]
     paths:
-      - 'assets/class-diary/characters/male-cast-webtoon-v1.webp'
+      - 'assets/class-diary/characters/hyunwoo-six-expressions.webp'
+      - 'assets/class-diary/characters/male-supporting-strip.webp'
+      - 'assets/class-diary/characters/doyun-four-expressions.webp'
       - 'js/class-diary-semester-male-art-v1.js'
       - 'js/class-diary-male-photos-v1.js'
       - 'js/class-diary-student-doyun-v1.js'

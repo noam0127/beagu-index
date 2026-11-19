@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 const VERSION='class-diary-semester-male-art/v1';
-const SPRITE='assets/class-diary/characters/male-cast-webtoon-v1.webp';
+const SPRITE='assets/class-diary/characters/hyunwoo-six-expressions.webp';
 const EXPRESSIONS=Object.freeze(['neutral','smile','worried','flustered','tired','shy']);
 const CELLS=Object.freeze({neutral:['0%','0%'],smile:['50%','0%'],worried:['100%','0%'],flustered:['0%','100%'],tired:['50%','100%'],shy:['100%','100%']});
 const MOODS=Object.freeze([
@@ -28,10 +28,9 @@ function paint(node,expression,season){
  if(!node||!node.style)throw Error('MALE_ART_NODE_REQUIRED');
  const type=Object.prototype.hasOwnProperty.call(CELLS,expression)?expression:'neutral';
  node.style.backgroundImage='url("'+SPRITE+'")';
- node.style.backgroundSize='500% 100%';
- node.style.backgroundPosition='0% 0%';
+ node.style.backgroundSize='300% 200%';
+ node.style.backgroundPosition=CELLS[type].join(' ');
  node.dataset.expression=type;
- node.dataset.artStyle='webtoon';
  node.dataset.season=season||'cold-spring';
  return node;
 }

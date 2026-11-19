@@ -3,7 +3,7 @@
 (function(root){
 'use strict';
 const VERSION='class-diary-student-doyun/v1';
-const SPRITE='assets/class-diary/characters/male-cast-webtoon-v1.webp';
+const SPRITE='assets/class-diary/characters/doyun-four-expressions.webp';
 const MOODS=Object.freeze(['neutral','worried','smile','speaking']);
 const CELLS=Object.freeze({
  neutral:Object.freeze(['0%','0%']),
@@ -38,9 +38,8 @@ function render(node,episode,reflection,withOtherGuest){
  node.dataset.episode=String(state.episode);
  node.classList.toggle('with-other-guest',Boolean(withOtherGuest));
  photo.style.backgroundImage='url("'+SPRITE+'")';
- photo.style.backgroundSize='500% 100%';
- photo.style.backgroundPosition='100% 0%';
- if(photo.dataset)photo.dataset.artStyle='webtoon';
+ photo.style.backgroundSize='200% 200%';
+ photo.style.backgroundPosition=coords.join(' ');
  return state;
 }
 const api=Object.freeze({VERSION,SPRITE,MOODS,SCENES,stateFor,render,hide});
