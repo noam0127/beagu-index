@@ -183,3 +183,46 @@ body.is-playing #choiceSection .choice{padding:clamp(8px,1.5dvh,14px) 13px;font-
  .intro-autoplay .diary-school,.intro-autoplay .diary-intro-sun,.intro-autoplay .diary-intro-paper,
  .intro-autoplay .diary-opening-body>h2,.intro-autoplay .diary-opening-stat>div,.intro-autoplay .diary-opening-days span{animation:none!important}
 }
+
+
+/* Ending: keep each story page, actions and score within one viewport. */
+body.is-ending{height:100dvh;overflow:hidden;background:#f8f1f6}
+body.is-ending main{max-width:none;height:100dvh;overflow:hidden;padding:0;margin:0}
+body.is-ending header,body.is-ending .hero,body.is-ending .no-save,body.is-ending .sound-panel,body.is-ending .status,body.is-ending .footer-note{display:none!important}
+body.is-ending #ending{width:100%;height:100dvh;min-height:0;margin:0;padding:clamp(8px,1.3dvh,22px) clamp(13px,4vw,30px);border:0;border-radius:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:clamp(2px,.8dvh,9px);overflow:hidden}
+body.is-ending #ending .emblem{font-size:clamp(10px,1.7vmin,13px)}
+body.is-ending #ending h2{font-size:clamp(22px,4.5vmin,39px);margin:0}
+body.is-ending #ending h3{font-size:clamp(12px,2.2vmin,16px);margin:2px 0}
+body.is-ending #endingText{width:min(100%,640px);height:min(26dvh,185px);min-height:45px;overflow:hidden!important;text-align:left;margin:clamp(4px,1dvh,12px) auto;padding:clamp(4px,1dvh,12px);background:#fff8fa;border-radius:12px;border:1px solid #eedee7;font-family:"Gowun Batang",serif;font-size:clamp(12px,2.4vmin,16px);line-height:1.55}
+body.is-ending #endingText p{margin:0 0 8px}
+body.is-ending #ending .ending-page-controls{width:min(100%,640px);display:flex;align-items:center;justify-content:flex-end;gap:10px;min-height:30px}
+body.is-ending #endingPageLabel{font-size:11px;color:#816d7e}
+body.is-ending #endingMore{width:32px;height:32px;display:grid;place-items:center;border:1px solid #e6d4e0;border-radius:50%;background:#8e6688;color:#fff}
+body.is-ending #endingMore[hidden]{display:none!important}
+body.is-ending #endingMore .vn-arrow-mark{width:19px;height:19px}
+body.is-ending #ending .final-score{margin:0;padding:clamp(7px,1.5dvh,14px) 12px;width:min(100%,380px)}
+body.is-ending #ending .final-score strong{font-size:clamp(20px,3.3vmin,30px)}
+body.is-ending #ending .final-score .muted{font-size:11px}
+body.is-ending #endingSchool,body.is-ending #ending>.muted{margin:0;font-size:11px;line-height:1.4}
+body.is-ending #ending .postit-arcade-link{padding:5px 10px;font-size:11px}
+body.is-ending #ending .ending-credits{width:min(100%,520px);margin:3px auto 0;padding:4px 0}
+body.is-ending #ending .ending-credits h3{font-size:9px}
+body.is-ending #ending .credits-window{height:clamp(48px,11dvh,110px)}
+body.is-ending #ending .credits-roll{padding:42px 5px 90px}
+body.is-ending #ending .credits-roll p{font-size:11px;margin:0 0 6px}
+body.is-ending #ending .ending-credits-access{font-size:10px;color:#6d5870;text-align:center}
+body.is-ending #ending .ending-credits-access summary{cursor:pointer;text-decoration:underline}
+body.is-ending #ending .ending-credits-access[open] .ending-license-details{position:fixed;z-index:130;inset:auto 10px 13dvh;max-width:460px;margin:auto;padding:16px 18px;background:#fff;color:#544357;border:1px solid #d3bdcc;border-radius:14px;box-shadow:0 10px 30px #0003;text-align:left;line-height:1.8}
+body.is-ending #ending .actions{margin:2px 0 0;justify-content:center}
+body.is-ending #ending .actions .primary,body.is-ending #ending .actions .secondary{font-size:clamp(11px,2.1vmin,13px);padding:8px 12px}
+@media(max-height:560px){
+ body.is-ending #ending .ending-credits{display:none}
+ body.is-ending #ending .ending-credits-access{display:block}
+ body.is-ending #endingText{height:22dvh;min-height:38px}
+ body.is-ending #ending .final-score{padding:5px 10px}
+ body.is-ending #ending .emblem{display:none}
+ body.is-ending #ending h2{font-size:clamp(19px,4vmin,28px)}
+ body.is-ending #ending h3{font-size:11px}
+ body.is-ending #ending .actions .primary,body.is-ending #ending .actions .secondary{padding:7px 10px}
+}
+@media(min-height:561px){body.is-ending #ending .ending-credits-access{display:none}}
