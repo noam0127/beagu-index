@@ -70,8 +70,8 @@ function finishOneWeek(first,school){
 const director=require('../js/class-diary-director-v1.js');
 const goodEnding=director.decorateEnding(finishOneWeek(game.createGame(world,plan,supportiveProfile),world));
 const hardEnding=director.decorateEnding(finishOneWeek(game.createGame(world,plan,hostileProfile),world));
-assert(goodEnding.paragraphs.join(' ').includes('함께 만드는 학교'));
-assert(/적대|경계/.test(hardEnding.paragraphs.join(' ')));
+assert(goodEnding.paragraphs.join(' ').includes('커피 드실래요'),'Support should appear as concrete acts, not abstract moral slogans');
+assert(hardEnding.paragraphs.join(' ').includes('학년연구실로 들어서는 일이 두려웠던'),'Difficult workplace must remain meaningfully distinct');
 for(const grade of ['lower','middle','upper']){
  const first=game.createGame(world,plan,{...supportiveProfile,gradeBand:grade});
  assert(scenario.scene(first,world).paragraphs.some(x=>x.includes('배움터지킴이')));
