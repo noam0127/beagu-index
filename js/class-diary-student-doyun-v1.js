@@ -40,7 +40,7 @@ function render(node,episode,reflection,withOtherGuest){
  photo.style.backgroundImage='url("'+SPRITE+'")';
  photo.style.backgroundSize='500% 100%';
  photo.style.backgroundPosition='100% 0%';
- photo.dataset.artStyle='webtoon';
+ if(photo.dataset)photo.dataset.artStyle='webtoon';
  return state;
 }
 const api=Object.freeze({VERSION,SPRITE,MOODS,SCENES,stateFor,render,hide});
