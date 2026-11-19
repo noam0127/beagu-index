@@ -343,6 +343,14 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 .diary-resume-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 .diary-resume-actions button{flex:1;min-width:140px;min-height:48px}
 .vn-fiction[data-save-status="failed"],.vn-fiction[data-save-status="conflict"],.vn-fiction[data-save-status="expired"]{color:#ffd4d4!important}
+/* The original one-screen VN layout, legibility and portrait layers are unchanged. */
+body.is-playing #sceneArt[data-season="cold-spring"] #sceneBackdrop[data-asset="hd-webp"]{filter:saturate(.83) contrast(1.04) brightness(.82)}
+body.is-playing #sceneArt[data-season="spring"] #sceneBackdrop[data-asset="hd-webp"]{filter:saturate(.96) contrast(1.02) brightness(.84)}
+body.is-playing #sceneArt[data-season="late-spring"] #sceneBackdrop[data-asset="hd-webp"]{filter:saturate(1.04) contrast(1.03) brightness(.85)}
+body.is-playing #sceneArt[data-season="early-summer"] #sceneBackdrop[data-asset="hd-webp"]{filter:saturate(1.10) contrast(1.05) brightness(.83)}
+body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-webp"]{filter:saturate(1.14) contrast(1.06) brightness(.84)}
+
+
 </style>
 <link rel="stylesheet" href="styles/class-diary-journey-v1.css?v=20261120-screen-toggle1">
 <link rel="stylesheet" href="styles/class-diary-motion-v1.css?v=20261120-1">
@@ -882,8 +890,11 @@ function fillParagraphs(id,texts){
  for(const sentence of texts)node.append(el('p',sentence));
 }
 let maleFrameSerial=0;
+let backgroundImageSequence=0;
 function displayStage(id,who,expression,season,semesterBackground){
  const backdrop=$('sceneBackdrop'),stage=$('sceneArt');
+ const backgroundSequence=++backgroundImageSequence;
+ backdrop.dataset.asset='svg-fallback';
  if(semesterBackground&&seasonalBackground){
   backdrop.style.backgroundImage='url("'+seasonalBackground.dataUrl(visual,semesterBackground)+'")';
   stage.dataset.season=semesterBackground.season;
@@ -894,6 +905,24 @@ function displayStage(id,who,expression,season,semesterBackground){
   stage.removeAttribute('data-season');
   stage.removeAttribute('data-weather');
   stage.setAttribute('aria-label','가상 한국 초등학교 풍경의 글자 없는 삽화');
+ }
+ // Show the existing SVG instantly, then exchange for the full-HD photograph.
+ // Ignore stale image loads if the player already advanced to another scene.
+ if(semesterBackground&&seasonalBackground&&typeof seasonalBackground.assetFor==='function'){
+  const imagePath=seasonalBackground.assetFor(semesterBackground);
+  if(imagePath){
+   const preload=new Image();
+   preload.decoding='async';
+   preload.onload=()=>{
+    if(backgroundImageSequence!==backgroundSequence)return;
+    backdrop.style.backgroundImage='url("'+imagePath+'")';
+    backdrop.dataset.asset='hd-webp';
+   };
+   preload.onerror=()=>{
+    if(backgroundImageSequence===backgroundSequence)backdrop.dataset.asset='svg-fallback';
+   };
+   preload.src=imagePath;
+  }
  }
  const highRes=femaleHQ&&femaleHQ.portrait(who);
  $('scenePortrait').src=highRes||visual.dataUrl(sd.portraitSvg(who,expression||'neutral',season));
