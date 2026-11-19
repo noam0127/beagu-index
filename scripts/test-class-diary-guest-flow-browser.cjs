@@ -91,6 +91,10 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'1');
    assert.equal((await page.locator('.diary-landing-verse').innerText()).replace(/\s+/g,''),'낯선교실에첫발을내딛던날.봄에서여름까지,하나의이야기가시작된다.','Title card text must match regardless of line wrapping');
    assert.equal(await page.locator('#diarySchoolName').isVisible(),true,'School text field must be visible');
+   assert.equal(await page.locator('.diary-school-flow').count(),0,'No prologue-to-school illustration');
+   assert.equal(await page.locator('.diary-school-intro').isVisible(),true,'New school-intro appears');
+   assert.equal(await page.locator('.diary-school-input-wrap').isVisible(),true,'School search control is directly visible');
+   assert.equal(await page.locator('.diary-school-narrative').isVisible(),true,'Disclosure remains readable');
    assert.equal(await page.locator('#diarySchoolMode').isVisible(),false,'Mode dropdown must be hidden');
    for(const selector of ['#playerName','#experience','#gender','#mbti'])
     assert.equal(await page.locator(selector).isVisible(),false,'No personal questionnaire: '+selector);
