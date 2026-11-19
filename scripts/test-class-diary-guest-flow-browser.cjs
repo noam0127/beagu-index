@@ -41,6 +41,21 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
     }
     throw Error('Unexpected progress action');
    });
+   // Mock public school-directory calls only; the private world API remains untouched.
+   let privateWorldCalls=0;
+   await page.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-world-v1',route=>{
+    privateWorldCalls++;return route.abort('blockedbyclient');
+   });
+   await page.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard**',route=>{
+    const query=new URL(route.request().url()).searchParams;
+    if(query.has('schools'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+     schools:[{school_id:'A123456',school_name:'봄빛초등학교',sido_standard:'부산광역시'}]
+    })});
+    if(query.has('school_id'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+     school:{school_id:'A123456',school_name:'봄빛초등학교',region:'부산광역시',eligible:true,available_years:[2025]}
+    })});
+    throw Error('Unexpected directory lookup');
+   });
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
    await page.goto(base+'/index.html',{waitUntil:'domcontentloaded'});
    await page.locator('#homeDiaryGuestForm').waitFor({state:'visible'});
@@ -61,17 +76,26 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#diaryLandingStart').click();
    await page.locator('#setup').waitFor({state:'visible'});
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'1');
-   assert.equal(await page.locator('.diary-landing-verse').innerText(),'낯선 교실에 첫 발을 내딛던 날.\n그날의 걸음을 우리는 잊지 못한다.','Title card text must match');
+   assert.equal(await page.locator('.diary-landing-verse').innerText(),'낯선 교실에 첫 발을 내딛던 날.\n봄에서 여름까지, 하나의 이야기가 시작된다.','Title card text must match');
    assert.equal(await page.locator('#diarySchoolName').isVisible(),true,'School text field must be visible');
    assert.equal(await page.locator('#diarySchoolMode').isVisible(),false,'Mode dropdown must be hidden');
    for(const selector of ['#playerName','#experience','#gender','#mbti'])
     assert.equal(await page.locator(selector).isVisible(),false,'No personal questionnaire: '+selector);
+   assert.equal(await page.locator('#diarySchoolName').getAttribute('readonly'),'','School name comes from public directory');
+   assert.equal(await page.locator('#semesterStart').isVisible(),false,'No second game choice');
+   assert.equal(await page.locator('#openingStart').isVisible(),false,'No 7-day trial choice');
    await page.locator('#setupNext').click();
-   assert.equal(await page.locator('#setup').getAttribute('data-step'),'1','School name cannot be blank');
-   await page.locator('#diarySchoolName').fill('봄빛초등학교');
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'1','School selection required');
+   await page.locator('#diarySchoolSearchDialog').waitFor({state:'visible'});
+   await page.locator('#diarySchoolQuery').fill('봄빛');
+   await page.locator('.diary-school-result').first().click();
+   await page.waitForFunction(()=>document.getElementById('diarySchoolMode').dataset.schoolReady==='true');
+   assert.equal(await page.locator('#diarySchoolName').inputValue(),'봄빛초등학교');
+   assert((await page.locator('#diarySchoolSelected').innerText()).includes('2025'));
    await page.locator('#setupNext').click();
-   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Colleague choice follows a typed school name');
-   assert.equal(await page.locator('#schoolLine').textContent(),'봄빛초등학교 · 가상의 이야기');
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Colleague choice follows verified public school');
+   assert.equal(await page.locator('#schoolLine').textContent(),'봄빛초등학교 · 부산광역시 · 과거 공개 조사 2025년');
+   assert.equal(privateWorldCalls,0,'Private Level2 school API must never be called by owner preview');
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),3);
    await page.locator('[data-partner-choice="none"]').click();
@@ -96,6 +120,9 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#diarySaveNow').click();
    await page.waitForFunction(()=>document.querySelector('#vnSaveNotice')?.textContent?.includes('저장 완료'),null,{timeout:5000});
    assert(latestCheckpoint&&latestCheckpoint.version==='class-diary-semester/v1','Manual save must reach the mock progress API');
+   assert.equal(latestCheckpoint.schoolName,'봄빛초등학교');
+   assert.deepEqual(latestCheckpoint.schoolContext,{schoolId:'A123456',region:'부산광역시',publishedYears:[2025]});
+   assert((await page.locator('#chapterSource').innerText()).includes('2025'));
    page.once('dialog',dialog=>dialog.accept());
    await page.locator('#diaryContinueNow').click();
    await page.waitForFunction(()=>document.querySelector('#vnSaveNotice')?.textContent?.includes('이전 기록 확인됨'),null,{timeout:5000});
@@ -117,17 +144,9 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.close();
   }
   const legacy=await browser.newPage({viewport:{width:390,height:844}});
-  let earlyWorldCalls=0;
-  await legacy.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-world-v1',route=>{
-   earlyWorldCalls++;return route.abort('blockedbyclient');
-  });
   await legacy.goto(base+'/teacher-class-diary-play.html?schoolId=A123456',{waitUntil:'domcontentloaded'});
-  await legacy.locator('#diaryLanding').waitFor({state:'visible'});
-  assert.equal(earlyWorldCalls,0,'Initial title must not request school data');
-  assert.equal(await legacy.locator('#notice').isVisible(),false,'No preselection school error');
-  await legacy.locator('#diaryLandingStart').click();
-  await legacy.locator('#setup').waitFor({state:'visible'});
-  assert.equal(await legacy.locator('#diarySchoolName').isVisible(),true);
+  await legacy.waitForURL('**/index.html#teacher-diary-feature');
+  assert.equal(await legacy.locator('#teacher-diary-feature').count(),1,'Direct URL must not bypass PIN');
   await legacy.close();
  }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exit(1)});
