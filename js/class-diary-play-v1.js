@@ -372,19 +372,19 @@ function createGame(world,plan,inputProfile){
 function atmosphere(world,day){
   const scale=world&&world.basic?world.basic.scale:null;
   if(day===1){
-    if(scale==='small')return '학교는 한눈에 들어올 듯 아담했다. 하지만 이곳에서 보내게 될 시간의 무게까지 작은 것은 아니었다.';
-    if(scale==='medium')return '복도를 돌아 나오자 다시 복도가 이어졌다. 학교는 익숙한 듯하면서도 아직 지도를 펼쳐야 하는 곳 같았다.';
-    if(scale==='large')return '긴 복도 너머에서 여러 교실의 소리가 겹쳐 들렸다. 많은 사람이 같은 시간표를 살지만, 하루의 무게는 저마다 달랐다.';
-    return '학교의 규모는 아직 손에 잡히지 않았다. 첫날의 교실은 숫자로 헤아릴 수 없는 크기로 다가왔다.';
+    if(scale==='small')return '교문에서 학년연구실까지 금방이었다. 복도를 한 번만 꺾으면 내 교실이 보였다.';
+    if(scale==='medium')return '계단을 올랐다가 복도 끝에서 다시 방향을 틀었다. 아직은 학년연구실까지 가는 길도 낯설었다.';
+    if(scale==='large')return '교실이 이어진 긴 복도에서 종소리가 울렸다. 여러 반에서 한꺼번에 아이들 목소리가 터져 나왔다.';
+    return '새 학교 복도에서 길을 한 번 잘못 들었다. 문마다 비슷하게 생긴 이름표가 붙어 있었다.';
   }
   if(day===3){
     const kind=world&&world.categories&&world.categories.meal_place;
-    if(kind&&kind.status==='APPROVED')return '점심시간의 풍경은 예전 공개 자료를 참고해 상상한 것이었다. 실제 올해의 운영 방식은 이야기와 다를 수 있다.';
+    if(kind&&kind.status==='APPROVED')return '급식실로 내려가는 아이들의 발소리가 복도를 가득 메웠다. 나는 문을 열어 두고 마지막 모둠을 기다렸다.';
   }
   if(day===6){
     const tags=world&&world.geography&&world.geography.tags||[];
-    if(tags.some(t=>t.id==='admin_eup'))return '학교 주소에는 읍이라는 글자가 있었다. 나는 그 글자 뒤에 있을 평범한 누군가의 토요일을 상상했다.';
-    if(tags.some(t=>t.id==='admin_myeon'))return '학교 주소에는 면이라는 글자가 있었다. 주말의 풍경을 섣불리 떠올릴 수는 없었지만, 사람들의 쉼은 어디서나 필요했다.';
+    if(tags.some(t=>t.id==='admin_eup'))return '학교에서 나오던 버스가 지나갔다. 토요일 오후의 거리는 평일보다 조금 한산했다.';
+    if(tags.some(t=>t.id==='admin_myeon'))return '멀리서 버스가 한 대 들어왔다. 정류장에 서 있던 사람들 사이로 토요일의 바람이 지나갔다.';
   }
   return null;
 }
@@ -400,7 +400,7 @@ function chapter(state,world,plan){
   if(atmosphereLine)p.unshift(atmosphereLine);
   /* 주인공 성별은 편견이나 결과 점수에 관여하지 않는다. 나이와 유형은 독백만 바꾼다. */
   if(state.day===1){
-    p.unshift('나는 올해 '+state.profile.age+'살이었다. '+
+    p.unshift('나는 이제 '+state.profile.age+'살이었다. '+
       (state.profile.experience==='new'?'아직 교단에서 배우는 일이 더 많았다.':
        state.profile.experience==='senior'?'여러 번 새 학기를 맞았지만 익숙해지지 않는 순간도 있었다.':
        '경력이 쌓여도 학기 초는 늘 새로웠다.')+
@@ -408,21 +408,21 @@ function chapter(state,world,plan){
   }
   if(state.day===2){
     p.unshift(state.profile.mbti[0]==='I'?
-      '생각이 모일 때까지 잠시 기다렸다. 입 밖으로 내는 말은 종이 위의 문장과 달리 지울 수 없었다.':
-      '말을 건네야 생각도 제 모양을 갖출 것 같았다. 그래도 다른 사람의 말을 먼저 듣기로 했다.');
+      '입 밖으로 나오려던 말을 삼키고 잠깐 숨을 골랐다. 회의실에서는 누군가 종이를 넘기고 있었다.':
+      '옆자리의 펜 소리가 자꾸 신경 쓰였다. 나는 손을 들까 말까 하다가 자료를 한번 더 읽었다.');
   }
   if(state.day===5){
     p.unshift(state.profile.gender==='undisclosed'?
-      '내가 어떤 사람인지는 누구나 한마디로 정할 수 없는 일이었다. 오늘은 내 이름보다 내 선택이 존중받기를 바랐다.':
-      '나의 성별과 나이가 해야 할 일을 미리 결정해 주지는 않았다. 나는 오늘 저녁도 스스로 선택하고 싶었다.');
+      '누군가 내 이름을 불렀다. 오늘 저녁에 올 거냐는 물음이었다. 나는 가방 지퍼를 만지작거렸다.':
+      '퇴근 시간이 다가왔는데도 학년연구실은 환했다. 나는 마지막 파일을 저장하고 의자를 밀었다.');
   }
   if(state.day===6){
     p.unshift(state.profile.mbti[3]==='J'?
-      '계획대로 흘러가는 하루가 반가울 때도 있었다. 그러나 오늘은 빈 시간 한 칸을 남겨 두고 싶었다.':
-      '아무 계획 없는 오후의 속도가 좋았다. 정하지 않은 시간 속에서도 마음은 조금씩 길을 찾았다.');
+      '오늘 할 일을 적은 칸은 비어 있었다. 나는 그 빈칸을 그대로 두고 집을 나섰다.':
+      '토요일 오후인데도 시계를 몇 번이나 봤다. 약속은 없었다. 그래도 발걸음이 빨라졌다.');
   }
   /* 승인된 과거 집계의 문장도 가상 장면으로만 사용하며 최다선택 원문은 표시하지 않는다. */
-  if(seed.basis==='approved_historical_aggregate')p.unshift('오래전 공개된 조사에서 떠올린 장면 하나가 문득 겹쳤다. '+seed.passage);
+  if(seed.basis==='approved_historical_aggregate')p.unshift(replace(seed.passage,colleague));
   return {
     day:state.day,date:DAYS[state.day-1],weekday:WEEKDAYS[state.day-1],
     title:book.title,place:book.place,paragraphs:p,partner:colleague,
