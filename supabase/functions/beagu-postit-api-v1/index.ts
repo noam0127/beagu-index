@@ -58,7 +58,7 @@ async function schoolInfo(ids:string[]){
  const [s,m,p]=await Promise.all([
    db.from("schools").select("school_id,school_name,sido_standard,sido").in("school_id",unique),
    db.from("beagu_lv1_school_sort_index").select("school_id,student_count,student_reference_year").in("school_id",unique),
-   db.from("beagu_school_report_yearly").select("school_id,survey_year,percentile")
+   db.from("beagu_school_report_yearly").select("school_id,survey_year,percentile,valid_observation_count,unique_respondents_reviewed,school_identity_reviewed,small_cell_reviewed,differencing_reviewed,manual_release_approved,manual_release_at,manual_release_by,release_evidence,source_status,updated_at")
     .in("school_id",unique).eq("publication_status","PUBLISHED").eq("privacy_reviewed",true)
     .order("survey_year",{ascending:false})
  ]);
@@ -70,7 +70,19 @@ async function schoolInfo(ids:string[]){
   map[row.school_id].students=Number.isFinite(n)&&n>=0?n:null;
   map[row.school_id].student_year=Number(row.student_reference_year)||null;
  }
- for(const row of p.data||[])if(map[row.school_id] && map[row.school_id].percentile_year===undefined){
+ for(const row of p.data||[]){
+  if(!map[row.school_id]||map[row.school_id].percentile_year!==undefined)continue;
+  // Service-role reads bypass RLS: reproduce the public annual release guard.
+  if(Number(row.survey_year)===2026){
+    const before=Date.now()-24*3600000;
+    if(!(Number(row.valid_observation_count)>=1 && row.unique_respondents_reviewed===true &&
+      row.school_identity_reviewed===true && row.small_cell_reviewed===true &&
+      row.differencing_reviewed===true && row.manual_release_approved===true &&
+      row.manual_release_at && row.manual_release_by && row.release_evidence &&
+      row.source_status==="VETTED_2026_RELEASE" &&
+      new Date(row.manual_release_at).getTime()<=before &&
+      new Date(row.updated_at).getTime()<=before))continue;
+  }else if(![2023,2024,2025].includes(Number(row.survey_year)))continue;
   const value=row.percentile==null?NaN:Number(row.percentile);
   if(Number.isFinite(value)&&value>=0&&value<=100){
    map[row.school_id].percentile=Number(value.toFixed(1));
