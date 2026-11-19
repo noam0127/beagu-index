@@ -1,4 +1,4 @@
-/* Stage 3 document wiring and browser script syntax check. No network or test credentials. */
+/* Stage 4 checks: no game persistence, safe markup, stable Lv2 access. */
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -27,14 +27,22 @@ assert(preview.src.includes('teacher-class-diary-play.html?schoolId='));
 assert(preview.src.includes("$('playSection').hidden=!world.eligible"));
 assert(play.src.includes("sessionStorage.getItem('beagu-level-session-v1')"));
 assert(play.src.includes("engine.createGame(world,plan"));
-assert(play.src.includes("engine.restore(world,plan"));
+assert(!play.src.includes('engine.restore('));
+assert(!play.src.includes('engine.createSnapshot('));
 assert(play.src.includes("game=engine.advance(game)"));
 assert(play.src.includes("game.ending.title"));
-assert(play.src.includes('type="checkbox"'));
+assert(!play.src.includes('type="checkbox"'));
+assert(play.src.includes('기록은 저장되지 않습니다'));
+assert(play.src.includes("localStorage.removeItem(key)"));
+assert(!play.src.includes('localStorage.setItem('));
+assert(!play.src.includes('localStorage.getItem('));
+assert(!play.src.includes('sessionStorage.setItem('));
 assert(play.src.includes("window.scrollTo(0,0)"));
 assert(play.src.includes('레벨2'));
 assert(!play.src.includes('.innerHTML'),'Use textContent instead of interpolating user data as HTML');
-for(const id of ['profileForm','setup','novel','ending','chapterText','choiceButtons','outcome','resumeBtn','clearBtn','clearRecordsBtn']){
+for(const id of ['profileForm','setup','novel','ending','chapterText','choiceButtons','outcome','noSaveNotice']){
  assert(play.ids.has(id),'Required interactive UI element missing: '+id);
 }
-console.log('PASS: Lv2 page syntax, script paths, 3-stage UI, all named elements, opt-in local save and no unsafe HTML insertion');
+assert(!play.src.includes('id="resumeBox"'));
+assert(!play.src.includes('id="records"'));
+console.log('PASS: Lv2 page syntax, no game persistence, legacy cleanup, non-persistent play, no unsafe HTML insertion');
