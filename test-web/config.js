@@ -1,10 +1,10 @@
-/* Intentionally disconnected. Replace ONLY after a dedicated staging project
- * and domain have been created, verified, and approved. Never use prod ref.
- * Publishable configuration contains no service-role or other secret key. */
+/* Test-only public settings. Login, signup, and API remain DISABLED pending
+ * test Auth SMTP, Turnstile, Function Secrets, and live two-account verification.
+ * Do not copy production service keys into any frontend file. */
 window.BEAGU_STAGE_CONFIG = Object.freeze({
   enabled:false,
-  projectRef:'',
-  endpoint:'',
-  siteOrigin:'',
+  projectRef:'ycwuugggqbunlbwuzvbx',
+  endpoint:'https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-test-v1',
+  siteOrigin:'https://baegu-index-test.vercel.app',
   turnstileSiteKey:''
 });
