@@ -1545,7 +1545,7 @@
     try {
     state.catalog=JSON.parse(document.getElementById('embeddedCatalog').textContent);
     state.publicRecords=await loadJSON('data/public-school-reports-v1.json',true);
-    const participation=await loadJSON('data/public-2023-2025-school-records-v2.json?v=20261118',true);
+    const participation=await loadJSON('data/public-2023-2025-school-records-v2.json?v=20261120-historyfull2',true);
     const index=participation?.schoolIdsByYear;
     if(index && ['2023','2024','2025'].every(y=>Array.isArray(index[y])&&
        index[y].every(id=>typeof id==='string'&&/^[A-Z0-9]{7}$/.test(id)))){
