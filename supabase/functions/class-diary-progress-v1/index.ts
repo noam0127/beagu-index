@@ -4,6 +4,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 const url=Deno.env.get('SUPABASE_URL')||'';
 const secret=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')||'';
 const db=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
+// Private owner-preview progress only. Previously issued participant records remain untouched.
+const PREVIEW_SUBJECT='8a61e133-2afd-469c-b611-f409b4197d61';
 const origins=new Set(['https://baeguindex.com','https://www.baeguindex.com',
  'https://noam0127.github.io','http://localhost:8000','http://127.0.0.1:8000','http://127.0.0.1:8123']);
 const encoder=new TextEncoder();
@@ -75,16 +77,17 @@ Deno.serve(async req=>{
   if(!body||typeof body!=='object'||Array.isArray(body)||
     !['load','save'].includes(body.action))return reply({error:'INVALID_ACTION'},400,origin);
   const visitorId=await subject(body.token);
-  if(!visitorId)return reply({error:'PROGRESS_SESSION_EXPIRED'},401,origin);
+  if(!visitorId||visitorId!==PREVIEW_SUBJECT)
+    return reply({error:'PROGRESS_SESSION_EXPIRED'},401,origin);
   if(body.action==='load'){
-   const {data,error}=await db.rpc('beagu_class_diary_progress_read',{p_visitor:visitorId});
+   const {data,error}=await db.rpc('beagu_class_diary_preview_progress_read');
    if(error)return reply({error:'DATABASE_UNAVAILABLE'},503,origin);
    return reply({ok:true,progress:data||null},200,origin);
   }
   if(!Number.isSafeInteger(body.expectedRevision)||body.expectedRevision<0||
      !validState(body.state))return reply({error:'INVALID_SAVE'},400,origin);
-  const {data,error}=await db.rpc('beagu_class_diary_progress_write',{
-   p_visitor:visitorId,p_expected_revision:body.expectedRevision,p_state:body.state
+  const {data,error}=await db.rpc('beagu_class_diary_preview_progress_write',{
+   p_expected_revision:body.expectedRevision,p_state:body.state
   });
   if(error)return reply({error:'DATABASE_UNAVAILABLE'},503,origin);
   if(!data)return reply({error:'SAVE_CONFLICT'},409,origin);
