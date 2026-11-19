@@ -3,6 +3,8 @@ on:
   push:
     branches: [feature/test-web-lv0-lv2-20261120]
     paths: ['test-web/**','test-environment/**','tests/test-web-stage-contract.mjs','.github/workflows/test-web-stage.yml']
+  pull_request:
+    branches: [feature/lv2-referral-phase1-20261119]
   workflow_dispatch:
 permissions:
   contents: read
