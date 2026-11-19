@@ -4,7 +4,7 @@ const url=Deno.env.get('SUPABASE_URL')||'',key=Deno.env.get('SUPABASE_SERVICE_RO
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 const origins=new Set(['https://baeguindex.com','https://www.baeguindex.com','https://noam0127.github.io','http://localhost:8000','http://127.0.0.1:8000','http://127.0.0.1:8123']);
 const digest=async(s:string)=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))].map(x=>x.toString(16).padStart(2,'0')).join('');
-function head(o:string){return {'Access-Control-Allow-Origin':origins.has(o)?o:'https://baeguindex.com','Access-Control-Allow-Headers':'content-type, x-beagu-session, x-class-diary-guest-ticket','Access-Control-Allow-Methods':'POST,OPTIONS','Vary':'Origin','Cache-Control':'no-store, private','Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff'};}
+function head(o:string){return {'Access-Control-Allow-Origin':origins.has(o)?o:'https://baeguindex.com','Access-Control-Allow-Headers':'content-type, x-beagu-session, x-class-diary-guest-ticket, x-class-diary-save-grant','Access-Control-Allow-Methods':'POST,OPTIONS','Vary':'Origin','Cache-Control':'no-store, private','Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff'};}
 const reply=(o:string,status:number,value:unknown)=>new Response(JSON.stringify(value),{status,headers:head(o)});
 const decode=(s:string)=>Uint8Array.from(atob(s.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));
 async function guestAllowed(ticket:string){
@@ -15,6 +15,23 @@ async function guestAllowed(ticket:string){
   if(payload?.v!==1||payload.scope!=='class-diary-fictional-guest'||!Number.isSafeInteger(payload.exp)||payload.exp<Date.now()||payload.exp>Date.now()+600000||!/^[A-Za-z0-9_-]{16}$/.test(payload.nonce))return false;
   const signing=await crypto.subtle.importKey('raw',new TextEncoder().encode('class-diary-guest-v1:'+key),{name:'HMAC',hash:'SHA-256'},false,['verify']);
   return crypto.subtle.verify('HMAC',signing,decode(sig),new TextEncoder().encode('v1.'+body));
+ }catch{return false;}
+}
+const b64=(b:Uint8Array)=>btoa(String.fromCharCode(...b)).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+async function issueGrant(){
+ const payload=b64(new TextEncoder().encode(JSON.stringify({v:1,scope:'class-diary-save-only',exp:Date.now()+86400000,nonce:b64(crypto.getRandomValues(new Uint8Array(12)))})));
+ const signing=await crypto.subtle.importKey('raw',new TextEncoder().encode('class-diary-save-grant-v1:'+key),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+ const signature=await crypto.subtle.sign('HMAC',signing,new TextEncoder().encode('g1.'+payload));
+ return 'g1.'+payload+'.'+b64(new Uint8Array(signature));
+}
+async function grantAllowed(grant:string){
+ if(!/^g1\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]{43}$/.test(grant)||grant.length>500)return false;
+ try{
+  const [,body,sig]=grant.split('.');
+  const payload=JSON.parse(new TextDecoder().decode(decode(body)));
+  if(payload?.v!==1||payload.scope!=='class-diary-save-only'||!Number.isSafeInteger(payload.exp)||payload.exp<Date.now()||payload.exp>Date.now()+86400000||!/^[A-Za-z0-9_-]{16}$/.test(payload.nonce))return false;
+  const signing=await crypto.subtle.importKey('raw',new TextEncoder().encode('class-diary-save-grant-v1:'+key),{name:'HMAC',hash:'SHA-256'},false,['verify']);
+  return crypto.subtle.verify('HMAC',signing,decode(sig),new TextEncoder().encode('g1.'+body));
  }catch{return false;}
 }
 async function levelAllowed(session:string){
@@ -49,6 +66,10 @@ Deno.serve(async(req:Request)=>{
   while(true){const x=await reader.read();if(x.done)break;size+=x.value.byteLength;if(size>12500)return reply(origin,413,{error:'TOO_LARGE'});raw+=decoder.decode(x.value,{stream:true});}
   body=JSON.parse(raw+decoder.decode());
  }catch{return reply(origin,400,{error:'BAD_JSON'})}
+ if(body&&body.action==='permit'){
+  if(!await guestAllowed(body.ticket||''))return reply(origin,401,{error:'GUEST_TICKET_REQUIRED'});
+  return reply(origin,200,{ok:true,grant:await issueGrant(),expiresInSeconds:86400});
+ }
  if(!body||!['save','load','delete'].includes(body.action)||typeof body.recoveryKey!=='string'||!/^[0-9a-f]{64}$/.test(body.recoveryKey))return reply(origin,400,{error:'BAD_REQUEST'});
  const id=await digest('beagu-diary-save-v1:'+body.recoveryKey);
  const table=admin.schema('beagu_private').from('class_diary_save_slots_v1');
@@ -68,7 +89,7 @@ Deno.serve(async(req:Request)=>{
   const {error}=await table.update({payload:snapshot,updated_at:new Date().toISOString(),expires_at:new Date(Date.now()+90*86400000).toISOString()}).eq('token_sha256',id);
   if(error)return reply(origin,503,{error:'WRITE_FAILED'});
  }else{
-  const ok=scope==='guest'?await guestAllowed(req.headers.get('x-class-diary-guest-ticket')||''):await levelAllowed(req.headers.get('x-beagu-session')||'');
+  const ok=scope==='guest'?(await guestAllowed(req.headers.get('x-class-diary-guest-ticket')||'')||await grantAllowed(req.headers.get('x-class-diary-save-grant')||'')):await levelAllowed(req.headers.get('x-beagu-session')||'');
   if(!ok)return reply(origin,401,{error:'ACCESS_REQUIRED'});
   const {error}=await table.insert({token_sha256:id,scope,school_id:schoolId,payload:snapshot});
   if(error)return reply(origin,503,{error:'WRITE_FAILED'});
