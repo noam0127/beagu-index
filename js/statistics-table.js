@@ -306,7 +306,7 @@
     dialogInvokedBy?.focus();
   }
   async function loadPublicSnapshot() {
-    const response=await fetch('data/public-lv0-percentiles-v1.2.json?v=20261118-gjjn2025',{cache:'no-cache'});
+    const response=await fetch('data/public-lv0-percentiles-v1.2.json?v=20261120-all-regions1',{cache:'no-cache'});
     if (!response.ok) throw new Error(`공개 백분위 요청 실패 (${response.status})`);
     const data=await response.json();
     if (!window.BeaguPublic || typeof BeaguPublic.buildIndex !== 'function') throw new Error('공개본 검증 코드가 없습니다');
