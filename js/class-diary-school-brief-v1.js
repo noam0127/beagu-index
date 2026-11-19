@@ -9,7 +9,7 @@
  const own=(obj,key)=>Object.prototype.hasOwnProperty.call(obj||{},key);
  function verifiedFact(numbers,key,label,unit){
   const fact=numbers&&numbers[key];
-  if(!fact||!Number.isInteger(fact.referenceYear)||fact.referenceYear<2000||fact.referenceYear>2026||
+  if(!fact||fact.status!=='APPROVED'||!Number.isInteger(fact.referenceYear)||fact.referenceYear<2000||fact.referenceYear>2026||
    !Number.isFinite(fact.value)||fact.value<0||fact.value>1000000)return null;
   // World builder has already accepted only approved and nonconflicting data.
   return Object.freeze({label,value:fact.value.toLocaleString('ko-KR')+unit,year:fact.referenceYear});
