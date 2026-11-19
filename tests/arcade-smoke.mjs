@@ -124,7 +124,7 @@ assert.doesNotMatch(volley,/data-key="spike"/,"separate spike button removed");
 assert.doesNotMatch(volley,/keys\.spike/,"manual spike input removed");
 
 assert.match(volley,/R = 48;/,"volleyball radius enlarged 1.5x from 32 to 48");
-assert.match(volley,/NET_TOP = 354/,"net height reduced from 146 to 97");
+assert.match(volley,/NET_TOP = 342/,"net rises from 97px to 109px");
 assert.match(volley,/43 \* \.75 \* battle\.allyReach/,"baseline reach is tier-adjusted");
 assert.doesNotMatch(volley,/data-key="jump"/,"touch jump button removed");
 assert.doesNotMatch(volley,/class="touch"/,"empty touch control region removed");
@@ -381,6 +381,60 @@ assert.equal(scoreFns.scoreFromVolleyball({
 assert.match(backend,/scoreFromVolleyball\(payload\.stats,elapsed,session\.difficulty\)/);
 console.log("PASS: volleyball life rounds, final KO, tier verification, time score, shaded spike trails and sound control");
 
+// Five-tier ball velocity, stronger pixel opponents and real current-score regression.
+const netTopMatch=volley.match(/NET_TOP = (\d+), NET_W/);
+assert.ok(netTopMatch);assert.equal(Number(netTopMatch[1]),342,"net is slightly higher");
+const speedMatch=volley.match(/const ballSpeedProfiles=(\{[^}]+\});/);
+const looksMatch=volley.match(/const enemyLooks=(\{[\s\S]*?\n\s*\});/);
+assert.ok(speedMatch&&looksMatch,"tier speed and opponent profiles exist");
+const speeds=new Function("return "+speedMatch[1])(),looks=new Function("return "+looksMatch[1])();
+const levels=["easy","normal","hard","very_hard","extreme"];
+assert.deepEqual(Object.keys(speeds),levels);
+assert.deepEqual(Object.keys(looks),levels);
+assert.equal(speeds.hard,1);
+for(let i=1;i<levels.length;i++){
+ assert.ok(speeds[levels[i]]>speeds[levels[i-1]],"ball speed grows with tier");
+ assert.ok(looks[levels[i]].armor>=looks[levels[i-1]].armor,"armor does not weaken");
+ assert.ok(looks[levels[i]].aura>=looks[levels[i-1]].aura,"aura does not weaken");
+}
+assert.equal(new Set(levels.map(t=>looks[t].uniform)).size,5,"unique enemy uniforms");
+assert.equal(looks.extreme.armor,3);assert.equal(looks.extreme.aura,2);
+assert.match(volley,/drawTeacher\(right, \(enemyLooks\[currentDifficulty\]\|\|enemyLooks\.normal\)\.uniform\)/);
+assert.match(volley,/if\(look&&look\.armor\)/);
+assert.match(volley,/if\(look&&look\.aura\)/);
+assert.match(volley,/ball\.vx=\(sign\*attack\*energyFactor\(p\.side\)\+clamp\(p\.vx,-12,12\)\*\.16\)\*ballSpeedFactor\(\)/);
+assert.match(volley,/ball\.vy=\(p\.side==="left" \?[\s\S]*?\)\*ballSpeedFactor\(\)/);
+const serveStart=volley.indexOf("function resetPositions()"),serveEnd=volley.indexOf("async function startMatch()",serveStart);
+assert.ok(serveStart>0&&serveEnd>serveStart);
+const resetSource=volley.slice(serveStart,serveEnd);
+const serveSpeed=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
+ "const ballSpeedProfiles="+speedMatch[1],
+ "const ballSpeedFactor=()=>ballSpeedProfiles[tier];",
+ "const FLOOR=451,NET_X=450,state={serveLeft},left={},right={},ball={trail:[]};",
+ resetSource,"resetPositions();return {vx:ball.vx,vy:ball.vy};"
+].join("\n"))(tier,serveLeft);
+assert.ok(Math.abs(serveSpeed("easy").vx)<Math.abs(serveSpeed("hard").vx));
+assert.ok(Math.abs(serveSpeed("hard").vx)<Math.abs(serveSpeed("extreme").vx));
+assert.ok(Math.abs(serveSpeed("easy").vy)<Math.abs(serveSpeed("extreme").vy));
+assert.ok(serveSpeed("extreme",false).vx<0,"serve direction remains correct");
+assert.match(volley,/id="volley-current-score"/);
+assert.match(volley,/class="volley-current-chip"/);
+assert.match(volley,/currentScoreLabel\.textContent=getFinalScore\(\)\.toLocaleString\("ko-KR"\)/);
+assert.match(volley,/state\.phase==="finished"&&state\.leftScore>state\.rightScore/);
+const calcStart=volley.indexOf("const getBaseScore="),calcEnd=volley.indexOf("  const W =",calcStart);
+assert.ok(calcStart>0&&calcEnd>calcStart);
+const scoreSource=volley.slice(calcStart,calcEnd);
+const liveScore=(phase,knockout)=>new Function("state",scoreSource+"\nreturn getFinalScore();")({
+ phase,knockout,leftScore:4,rightScore:2,spikes:2,playFrames:35*60
+});
+const running=4*120+2*25+35*4;
+assert.equal(liveScore("playing",false),running,"premature victory bonus is excluded");
+assert.equal(liveScore("point",false),running);
+assert.equal(liveScore("finished",false),running+600+(7-2)*30,"victory bonus granted only on finish");
+assert.equal(liveScore("finished",true),running,"KO has no victory bonus");
+console.log("PASS: net height, tier speed and enemy armor, correct current SCORE and finish bonus");
+
+
 
 
 
@@ -403,7 +457,7 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-volley-lives-sfx1")&&
+  if(site.body.includes("teacher-volleyball.html?v=20261119-netballscore1")&&
      site.body.includes("teacher-run.html?v=20261119-extreme-best-intro1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
@@ -414,7 +468,7 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-volley-lives-sfx1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-netballscore1/);
 assert.match(site.body,/teacher-run\.html\?v=20261119-extreme-best-intro1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
