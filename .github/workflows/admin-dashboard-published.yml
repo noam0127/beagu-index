@@ -1,0 +1,20 @@
+name: Live admin dashboard publication smoke
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'admin.html'
+      - 'js/beagu-admin-access-v1.js'
+      - 'styles/beagu-admin-v1.css'
+      - 'tests/admin-dashboard-published.cjs'
+      - '.github/workflows/admin-dashboard-published.yml'
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/admin-dashboard-published.cjs
