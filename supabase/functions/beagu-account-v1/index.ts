@@ -323,9 +323,23 @@ async function handler(req: Request): Promise<Response> {
       if (logoutError) return respond(origin,503,{error:'DELETION_UNAVAILABLE'});
       const {error:deleteError}=await admin.auth.admin.deleteUser(user.id);
       if (deleteError) return respond(origin,503,{error:'DELETION_UNAVAILABLE'});
+      // Purge HMAC-budget records derived from the deleted account. Other
+      // shared/global counters cannot identify the account and expire by TTL.
+      const canonicalEmail=user.email.toLowerCase();
+      const username=typeof current.username==='string' ? current.username : '';
+      const hashedKeys=await Promise.all([
+        'signup-email:'+canonicalEmail,'login-email:'+canonicalEmail,
+        'recovery-email:'+canonicalEmail,'signup-username:'+username,
+        'login-name:'+username,'register-user:'+user.id,'delete-user:'+user.id
+      ].map(hmac));
+      const {error:cleanupError}=await admin.rpc('beagu_account_v1_purge_budgets',{
+        p_hashes:hashedKeys
+      });
       // Existing survey_submissions.user_id is ON DELETE SET NULL; anonymized
       // survey data is NOT automatically deleted, see retention policy.
-      return respond(origin,200,{ok:true,accountDeleted:true});
+      return respond(origin,200,{
+        ok:true,accountDeleted:true,securityBudgetCleanupPending:!!cleanupError
+      });
     }
 
     if (action==='sign-out') {
