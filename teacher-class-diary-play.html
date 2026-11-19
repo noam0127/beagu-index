@@ -1394,9 +1394,65 @@ async function apiPost(endpoint,body){
 }
 async function boot(){
  if(isGuest){
-  // Temporary maintenance gate: deny all guest handoff tickets, including previously issued ones.
-  try{sessionStorage.removeItem('beagu-class-diary-guest-handoff-v1')}catch(_){}
-  fail('『나의 OO한 학급일지』는 현재 준비 중입니다. 고유번호 입장은 이용할 수 없습니다.');
+  // Home already verified the code. Consume the 10-minute signed game ticket once.
+  const handoffKey='beagu-class-diary-guest-handoff-v1';
+  let ticket='';
+  try{
+   ticket=sessionStorage.getItem(handoffKey)||'';
+   sessionStorage.removeItem(handoffKey);
+  }catch(_){}
+  document.body.classList.add('is-guest-flow');
+  $('accessLabel').textContent='2026 챌린지 · 가상 학급일지';
+  document.title='나의 OO한 학급일지';
+  show('guestAccess');
+  if(!/^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(ticket)){
+   fail('고유번호는 홈에서 한 번만 입력하면 됩니다. 홈에서 다시 입장해 주세요.');
+   return;
+  }
+  try{
+   const response=await fetch(API+'class-diary-guest-access-v1',{
+    method:'POST',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'verify-ticket',ticket})
+   });
+   ticket='';
+   if(!response.ok)throw Error('INVALID_GUEST_TICKET');
+   const result=await response.json();
+   if(result.ok!==true||result.scope!=='class-diary-fictional-guest')throw Error('INVALID_SCOPE');
+   if(typeof result.progressToken!=='string')throw Error('NO_PROGRESS_TOKEN');
+   progressSession=window.BeaguClassDiaryProgress.create(result.progressToken,progressStatus);
+    $('diaryCheckpointControls').hidden=false;
+   const fixture=window.BeaguClassDiaryDemo.createDemo();
+   world=fixture.world;plan=fixture.plan;
+   prepareGuestProfile();
+   $('schoolLine').textContent='가상의 초등학교 · 2027년 3월–7월';
+   $('openingSchool').textContent=$('schoolLine').textContent;
+   $('worldAutoNote').textContent='실제 학교 정보를 사용하지 않는 가상의 이야기입니다.';
+   $('noSaveNotice').textContent='고유번호별 진행 기록을 자동 저장합니다. 다른 기기에서도 같은 번호로 이어할 수 있습니다.';
+   $('opening').querySelector('.diary-opening-note').textContent='고유번호별 자동 저장 · 언제든 이어하기';
+   const privacy=$('setup').querySelector('.privacy');
+   if(privacy)privacy.textContent='모든 인물과 사건은 허구입니다. 진행 상황과 선택 기록은 고유번호별로 저장됩니다.';
+   const saved=await progressSession.load();
+   if(saved&&!saved.compatible)throw Error('UNSUPPORTED_SAVE_FORMAT');
+   if(saved&&saved.state){
+    $('guestResumeSummary').textContent='제 '+saved.state.episode+'화 · '+
+     (saved.state.phase==='semester_ending'?'마지막 장까지':'저장된 곳부터')+
+     ' 이어서 읽을 수 있습니다.';
+    $('guestResume').hidden=false;
+    $('guestResumeBtn').onclick=()=>{
+     game=saved.state;storyMode='semester';
+     sound.setEnabled(true);updateMusicButton();guestStartMusic();
+     render();status('저장된 학급일지를 불러왔습니다.');
+    };
+    $('guestNewBtn').onclick=()=>{$('guestResume').hidden=true;enterGuestOpening();};
+    status('저장된 이야기가 있습니다. 이어할지 선택해 주세요.');
+    return;
+   }
+   enterGuestOpening();
+  }catch(_){
+   ticket='';
+   fail('고유번호 확인 또는 저장 기록 불러오기에 실패했습니다. 홈에서 다시 입장해 주세요. 기존 기록은 그대로 보존됩니다.');
+  }
   return;
  }
  if(isDemo){
