@@ -651,21 +651,23 @@ assert.match(volley,/for\(const liveBall of activeBalls\)\{/,"each ball particip
 assert.match(volley,/for\(const liveBall of activeBalls\)drawBall\(liveBall\)/,"both balls visible");
 assert.match(volley,/break; \/\/ First grounded ball ends this rally: one point/,"one point per rally");
 assert.match(volley,/const ball=activeBalls\.find\(b=>b\.x>NET_X&&b\.vx>0\)/,"CPU targets live balls");
-const helperStart=volley.indexOf("function cloneHit(ally,hitBall){");
+const helperStart=volley.indexOf("function allyBodyTouchesBall(ally,hitBall){");
 const helperEnd=volley.indexOf("function moveAI()",helperStart);
 assert.ok(helperStart>0&&helperEnd>helperStart);
 const cloneHitSrc=volley.slice(helperStart,helperEnd);
 const testCloneHit=new Function("hitBall","ally",[
- "const R=48,FLOOR=451,left={x:80},state={rescueUsed:false},ballSpeedFactor=()=>1,tone=()=>{},setStatus=()=>{};",
+ "const R=48,FLOOR=451,NET_X=450,NET_W=14,clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),left={x:80},state={rescueUsed:false},ballSpeedFactor=()=>1,tone=()=>{},setStatus=()=>{};",
  cloneHitSrc,"return cloneHit(ally,hitBall);"
 ].join("\n"));
 const testHelper={x:210,y:420,contactFrames:0};
 const protectedBall={x:240,y:380,vx:-9,vy:4,cooldown:0,shadowFrames:0,shadowColor:""};
 assert.equal(testCloneHit(protectedBall,testHelper),true,"clone actually receives incoming ball");
 assert.ok(protectedBall.vx>0&&protectedBall.vy<0,"clone returns ball over net");
-assert.equal(protectedBall.cooldown,11,"clone cannot rapidly re-hit same ball");
+assert.equal(protectedBall.allyCooldown,16,"clone contact applies a separate bounded helper cooldown");
+assert.equal(protectedBall.cooldown,9,"clone cannot rapidly re-hit same ball");
 assert.ok(testHelper.contactFrames>0,"helper contact animation runs");
-assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0},testHelper),false,"clone never hits outbound ball");
+assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0,allyCooldown:0},testHelper),true,"outgoing ball can receive a controlled redirect");
+assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0,allyCooldown:10},testHelper),false,"helper cooldown prevents repetitive touches");
 assert.match(volley,/function drawVolleyShackle\(\)/);
 assert.match(volley,/currentDifficulty!=="extreme"\|\|state\.phase==="ready"/);
 assert.match(volley,/volleyShackle\.dir=left\.x>beforeMoveX\?-1:1/,"volleyball shackle trails movement direction");
