@@ -177,6 +177,8 @@
   }
   function changeYear(index, year) {
     const entry=state.selected[index];
+    // Year selection must never reopen the school-name suggestion list.
+    elements.suggestions.hidden=true;
     const newYear=Number(year);
     if (!entry || !YEARS.includes(newYear)) return;
     if (state.selected.some((x,i)=>i!==index && x.id===entry.id && x.year===newYear)) {
@@ -614,7 +616,7 @@
   function sync() {
     renderSelections();
     renderTable();
-    renderSuggestions();
+    // Suggestions open only through explicit interaction with the search input.
     updateUrl();
   }
   window.BeaguStatisticsCompare={ add:addSchool };
@@ -627,7 +629,8 @@
     state.snapshotReady=detail.snapshotReady===true;
     state.ready=schools.length>0;
     restoreUrl();
-    renderSelections();renderTable();renderSuggestions();
+    renderSelections();renderTable();
+    if(document.activeElement===elements.search)renderSuggestions();
     if (!state.snapshotReady && state.ready) notice('공개 백분위를 확인할 수 없어 문항 목록만 표시됩니다.');
     loadPublic2026(state.selected.map(x=>x.id));
     refreshApprovedSelections();
