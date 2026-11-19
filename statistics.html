@@ -8,7 +8,7 @@
   <title>학교 비교 | 배구지수</title>
   <link rel="stylesheet" href="styles/statistics.css?v=20261031-canonical7">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
-  <link rel="stylesheet" href="styles/statistics-compare.css?v=20261118-sticky2">
+  <link rel="stylesheet" href="styles/statistics-compare.css?v=20261119-auth-compact1">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
@@ -36,12 +36,13 @@
 
     <section id="compareLv1AuthPanel" class="content-card compare-auth-card" aria-labelledby="compareLv1Title">
       <div class="compare-auth-heading">
-        <div>
-          
-          <h2 id="compareLv1Title">Lv.1 인증</h2>
-          
+        <h2 id="compareLv1Title">Lv.1 인증</h2>
+        <div class="compare-auth-actions">
+          <span id="compareLv1Badge" class="compare-auth-badge">미인증</span>
+          <div id="compareLv1SignedIn" class="compare-auth-signed-in" hidden>
+            <button id="compareLv1Logout" type="button" class="compare-auth-logout">로그아웃</button>
+          </div>
         </div>
-        <span id="compareLv1Badge" class="compare-auth-badge">미인증</span>
       </div>
       <form id="compareLv1Form" class="compare-auth-form" autocomplete="off">
         <div class="compare-auth-field">
@@ -53,9 +54,6 @@
         </div>
         <button id="compareLv1Submit" type="submit" class="compare-auth-submit">인증하기</button>
       </form>
-      <div id="compareLv1SignedIn" class="compare-auth-signed-in" hidden>
-        <button id="compareLv1Logout" type="button" class="compare-auth-logout">로그아웃</button>
-      </div>
       <p id="compareLv1Message" class="compare-auth-message" role="status" aria-live="polite"></p>
     </section>
 
@@ -114,7 +112,7 @@
   <script src="js/supabase-config.js"></script>
   <script src="js/master-percentiles-v1.2.js?v=20261118-alpha1"></script>
   <script src="js/statistics-directory-v2.js?v=20261118-gjjn2025"></script>
-  <script src="js/statistics-compare.js?v=20261118-sticky2"></script>
+  <script src="js/statistics-compare.js?v=20261119-auth-compact1"></script>
   <script src="js/visit-stats.js?v=20261031-1350"></script>
 </body>
 </html>
