@@ -3,12 +3,71 @@
 'use strict';
 const VERSION='class-diary-sd/v1';
 const CAST=Object.freeze({
- woman:{name:'서지윤',hair:'#725143',coat:'#eee1cb',skin:'#f8d9c2',style:'half'},
+ woman:{name:'서지윤',age:30,role:'3학년 담임',hair:'#795442',coat:'#f0dfca',skin:'#f8d9c2',style:'half'},
  man:{name:'한현우',hair:'#463732',coat:'#344a69',skin:'#f4d0b7',style:'short'},
- none:{name:'윤민서',hair:'#34343b',coat:'#adbea0',skin:'#f7d7c3',style:'bob'}
+ none:{name:'윤민서',age:29,role:'3학년 담임',hair:'#34343b',coat:'#adbea0',skin:'#f7d7c3',style:'bob'},
+ suhyun:{name:'박수현',age:39,role:'3학년 부장',hair:'#282932',coat:'#858d98',skin:'#ecc6b3',style:'straight'},
+ sea:{name:'오세아',age:52,role:'교감',hair:'#775446',coat:'#d6c2a9',skin:'#eac3ac',style:'round'},
+ yuri:{name:'강유리',age:34,role:'행정실 주무관',hair:'#62483e',coat:'#b9a5c5',skin:'#f4d0c0',style:'bun'}
 });
 const EXPRESSIONS=['neutral','smile','worried','flustered','tired','shy'];
+/* SD female cast: deliberately different silhouettes, facial proportions and gestures.
+   Supporting actors are visuals only: no extra route or romantic choices. */
+function femalePortraitSvg(id,x){
+ const c=CAST[id];
+ const face={
+  woman:{rx:90,ry:103,y:183},none:{rx:85,ry:99,y:184},
+  suhyun:{rx:93,ry:101,y:183},sea:{rx:99,ry:98,y:185},
+  yuri:{rx:89,ry:103,y:184}
+ }[id];
+ const back={
+  woman:'<path d="M82 159Q68 56 174 53Q272 51 278 164L289 329Q260 347 232 319H115Q87 345 66 325Z" fill="#795442" stroke="#634438" stroke-width="4"/><path d="M126 78Q172 45 221 79" stroke="#a57d62" stroke-width="9" fill="none"/><ellipse cx="174" cy="74" rx="28" ry="15" fill="#ac8671"/>',
+  none:'<path d="M73 161Q73 59 173 57Q284 61 284 164L289 286Q265 310 238 304H109Q70 315 72 286Z" fill="#34343b" stroke="#24242a" stroke-width="5"/><path d="M88 291H266" stroke="#575962" stroke-width="6"/>',
+  suhyun:'<path d="M72 156Q70 56 175 52Q280 56 286 158L291 347H246L234 291H112L103 347H62Z" fill="#282932" stroke="#202229" stroke-width="5"/><path d="M84 166L77 336M269 167L279 334" stroke="#4a4b53" stroke-width="6"/>',
+  sea:'<path d="M64 165Q60 56 174 53Q285 56 290 166Q297 259 255 291L113 293Q61 270 64 165Z" fill="#775446" stroke="#5d4138" stroke-width="5"/><path d="M85 140Q100 64 175 65Q249 63 274 143" stroke="#a57d65" stroke-width="11" fill="none"/>',
+  yuri:'<ellipse cx="263" cy="274" rx="55" ry="62" fill="#62483e" stroke="#4b352d" stroke-width="4"/><path d="M82 157Q72 60 174 56Q276 60 281 158L275 286H94Z" fill="#62483e" stroke="#50382f" stroke-width="5"/><ellipse cx="268" cy="283" rx="36" ry="43" fill="#866052" opacity=".6"/>'
+ }[id];
+ const fringe={
+  woman:'<path d="M89 157Q92 89 146 79Q186 73 209 92Q240 91 270 150Q226 135 209 113Q160 159 106 155Z" fill="#795442"/><path d="M105 138Q92 209 114 277M264 137Q279 211 250 272" stroke="#795442" stroke-width="13" stroke-linecap="round" fill="none"/>',
+  none:'<path d="M84 159Q85 92 145 78Q214 56 273 132Q232 132 210 111Q174 148 84 159Z" fill="#34343b"/><path d="M91 168L87 278" stroke="#34343b" stroke-width="16"/><path d="M270 163L275 274" stroke="#34343b" stroke-width="12"/>',
+  suhyun:'<path d="M87 151Q84 86 147 73Q216 58 273 132Q212 124 176 116Q133 146 90 161Z" fill="#282932"/><path d="M99 146L90 306M262 146L271 318" stroke="#282932" stroke-width="17" fill="none"/>',
+  sea:'<path d="M85 161Q82 81 153 76Q231 65 275 143Q233 138 218 110Q174 154 88 163Z" fill="#775446"/><path d="M98 137Q67 217 99 255M258 129Q291 214 258 255" stroke="#775446" stroke-width="18" fill="none"/>',
+  yuri:'<path d="M90 162Q82 89 158 74Q215 66 269 138Q225 113 207 93Q172 149 92 163Z" fill="#62483e"/><path d="M107 139Q95 201 105 261" stroke="#62483e" stroke-width="14" fill="none"/>'
+ }[id];
+ const rx=id==='none'?9:id==='sea'?11:10;
+ const iris=id==='none'||id==='suhyun'?'#383941':'#4b3836';
+ const eyes=x==='smile'
+  ?'<path d="M109 194Q128 175 147 193M201 193Q220 177 240 194" stroke="'+iris+'" stroke-width="7" stroke-linecap="round" fill="none"/>'
+  :x==='tired'
+  ?'<path d="M112 201Q129 196 148 201M202 201Q220 197 239 201" stroke="'+iris+'" stroke-width="6" stroke-linecap="round" fill="none"/><path d="M115 210Q131 214 146 210M204 210Q222 214 237 210" stroke="#b58d83" stroke-width="2" fill="none"/>'
+  :'<ellipse cx="131" cy="197" rx="'+rx+'" ry="'+(x==='flustered'?16:12)+'" fill="'+iris+'"/><ellipse cx="219" cy="197" rx="'+rx+'" ry="'+(x==='flustered'?16:12)+'" fill="'+iris+'"/><circle cx="134" cy="192" r="3" fill="white"/><circle cx="222" cy="192" r="3" fill="white"/>';
+ const brow=x==='worried'?'<path d="M108 174l40-11M201 163l40 11" stroke="#695049" stroke-width="5" fill="none"/>':'<path d="M111 175q18-8 38-2M201 173q20-7 39 2" stroke="#695049" stroke-width="5" fill="none"/>';
+ const mouth=x==='smile'?'<path d="M161 245q16 18 30 0" stroke="#b36c70" stroke-width="5" stroke-linecap="round" fill="none"/>':
+  x==='worried'?'<path d="M161 250q16-11 30 0" stroke="#aa6b70" stroke-width="4" fill="none"/>':
+  x==='flustered'?'<ellipse cx="176" cy="248" rx="8" ry="11" fill="#ad717b"/>':
+  '<path d="M165 245q12 8 25 0" stroke="#aa6b70" stroke-width="4" fill="none"/>';
+ const cheeks=x==='shy'||x==='flustered'?'<ellipse cx="103" cy="225" rx="18" ry="10" fill="#e99ca8" opacity=".42"/><ellipse cx="247" cy="225" rx="18" ry="10" fill="#e99ca8" opacity=".42"/>':'';
+ const glasses=id==='suhyun'?'<g fill="none" stroke="#899099" stroke-width="4"><rect x="98" y="182" width="62" height="39" rx="12"/><rect x="191" y="182" width="62" height="39" rx="12"/><path d="M160 195Q176 188 191 195M98 192L83 186M253 192L267 186"/></g>':'';
+ const clothes='<path d="M54 425Q50 315 122 301H229Q298 311 298 425Z" fill="'+c.coat+'" stroke="#6f6867" stroke-width="4"/><path d="M142 299l34 42 34-42v126h-68Z" fill="#fffaf3"/><path d="M90 348Q78 389 88 424M259 349Q271 390 262 425" stroke="#695a60" stroke-width="5" fill="none" opacity=".55"/>';
+ const details={
+  woman:'<path d="M160 303Q176 325 192 303" fill="none" stroke="#c6a37d" stroke-width="2"/><circle cx="176" cy="323" r="4" fill="#d6a65b"/><path d="M128 319l17 27-5 78M222 319l-17 27 5 78" stroke="#dcc7ac" stroke-width="4" fill="none"/><circle cx="233" cy="247" r="2" fill="#ab8678"/>',
+  none:'<rect x="214" y="332" width="75" height="83" rx="7" fill="#e6e8d4" stroke="#607664" stroke-width="4"/><path d="M225 348H276M225 361H270M225 374H273" stroke="#a1ae99" stroke-width="3"/><circle cx="101" cy="395" r="8" fill="#343940"/>',
+  suhyun:'<path d="M126 308l31 43-17 16 20 57M224 308l-30 43 17 16-20 57" stroke="#606a73" stroke-width="5" fill="none"/><rect x="235" y="341" width="56" height="77" rx="4" fill="#d8e2e3" stroke="#6e818b" stroke-width="3"/>',
+  sea:'<path d="M125 307l29 45-16 15 21 57M225 307l-29 45 16 15-21 57" stroke="#ad967b" stroke-width="5" fill="none"/><path d="M166 302L176 344L188 302" fill="#d4a79c"/><rect x="224" y="344" width="61" height="76" rx="6" fill="#947154" stroke="#71503d" stroke-width="3"/>',
+  yuri:'<path d="M162 323l14 24 14-24" stroke="#967da6" stroke-width="4" fill="none"/><rect x="220" y="343" width="68" height="73" rx="7" fill="#fbf7f2" stroke="#806d85" stroke-width="4"/><path d="M230 361h49M230 374h49M230 387h39" stroke="#b8a6c0" stroke-width="3"/>'
+ }[id];
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 430" aria-hidden="true">'+
+ '<ellipse cx="175" cy="418" rx="125" ry="10" fill="#28313d" opacity=".14"/>'+clothes+details+back+
+ '<ellipse cx="175" cy="'+face.y+'" rx="'+face.rx+'" ry="'+face.ry+'" fill="'+c.skin+'" stroke="#b89283" stroke-width="3"/>'+
+ '<ellipse cx="86" cy="207" rx="12" ry="16" fill="'+c.skin+'"/><ellipse cx="263" cy="207" rx="12" ry="16" fill="'+c.skin+'"/>'+
+ fringe+brow+eyes+glasses+mouth+cheeks+
+ '<path d="M174 204l-5 19 8 2" fill="none" stroke="#c6978a" stroke-width="3" stroke-linecap="round"/>'+
+ (id==='sea'?'<path d="M115 220q9 4 17 0M221 220q9 4 17 0" fill="none" stroke="#ba9686" stroke-width="2" opacity=".6"/>':'')+'</svg>';
+}
+
 function portraitSvg(who,expression){
+ const femaleId=CAST[who]&&who!=='man'?who:({jiyoon:'woman',minseo:'none',park_suhyun:'suhyun',oh_sea:'sea',kang_yuri:'yuri'}[who]);
+ if(femaleId)return femalePortraitSvg(femaleId,EXPRESSIONS.includes(expression)?expression:(expression==='happy'||expression==='warm'||expression==='tender'?'smile':expression==='tension'?'worried':'neutral'));
  const id=CAST[who]?who:'woman',c=CAST[id];
  const x=EXPRESSIONS.includes(expression)?expression:(expression==='happy'||expression==='warm'||expression==='tender'?'smile':'neutral');
  const hair=c.style==='half'
