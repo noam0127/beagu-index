@@ -13,15 +13,15 @@ function init(options){
   // Neutral internal defaults are not part of the player's chosen profile.
   const traits=$('setupReviewTraits');
   if(traits&&traits.parentElement)traits.parentElement.hidden=true;
-  $('setupReviewPartner').textContent=partnerNames[$('partner').value]||'동료를 선택해 주세요';
+  $('setupReviewPartner').textContent=partnerNames[$('partner').value]||'알고 싶은 사람을 선택해 주세요';
  }
  function go(next){
   step=Math.max(1,Math.min(3,Number(next)||1));
   setup.dataset.step=String(step);
   $('setupBack').hidden=step===1;
-  $('setupBack').textContent=step===3?'← 동료 선택':'← 학교 선택';
+  $('setupBack').textContent=step===3?'← 알고 싶은 사람 선택':'← 학교 선택';
   $('setupNext').hidden=step===3;
-  $('setupNext').textContent=step===1?'함께할 동료 만나기 →':'첫 등교 준비 →';
+  $('setupNext').textContent=step===1?'이야기가 궁금한 사람 고르기 →':'프롤로그 준비 →';
   if(step===3)review();
   for(const item of document.querySelectorAll('[data-step-label]')){
    if(Number(item.dataset.stepLabel)===step)item.setAttribute('aria-current','step');
