@@ -28,6 +28,15 @@ assert.ok(challenge.includes('data-html2canvas-ignore="true"'));
 for(const id of ['copyReferralLink','referralProgress','referralLevel','referralLv2Link','identityRecovery'])
   assert.ok(challenge.includes('id="'+id+'"'),id);
 assert.ok(challengeJs.includes('deviceProof: deviceProof()'));
+for (const [label, code] of [
+  ['long', 'BG26-1234-5678-ABCD-DCBA-1234'],
+  ['short', 'BG26-ABCDEF-234567'],
+  ['bare', 'ABCDEFGH23']
+]) {
+  assert.match(code, /^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}|[A-HJ-NP-Z2-9]{10})$/, label);
+  assert.ok(challengeJs.includes('[A-HJ-NP-Z2-9]{10}'), 'All 3 legacy formats in client');
+  assert.ok(edge.includes('[A-HJ-NP-Z2-9]{10}'), 'All 3 legacy formats in backend');
+}
 assert.ok(challengeJs.includes("legacyIdentityCode: legacyIdentityInput.value.trim()"));
 assert.ok(issuer.includes('beagu_issue_challenge_identity_bound'));
 assert.ok(!issuer.includes("admin.rpc('beagu_issue_challenge_identity',"));
