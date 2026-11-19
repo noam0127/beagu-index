@@ -21,7 +21,8 @@ const test=game.createGame(world,plan,base);
 const first=scenario.scene(test,world);
 assert(first.paragraphs.join(' ').includes('등교한 지'));
 assert(first.paragraphs.join(' ').includes('교무'));
-assert(first.paragraphs.join(' ').includes('확인된 학교 상세정보:'));
+assert(first.sourceFacts.some(x=>x.includes('확인된 학교 상세정보:')),'Official facts must be separate from fictional paragraphs');
+assert(!first.paragraphs.some(x=>x.startsWith('확인된 학교 상세정보:')));
 assert.equal(first.choices.length,3);
 assert.equal(first.source,'fictional_scenario');
 const dutyNone=scenario.scene(game.createGame(world,plan,{...base,duty:'none'}),world);
@@ -33,7 +34,8 @@ const demoWorld={eligible:true,mode:'public_fiction_demo',basic:{id:'DEMO001',na
 const demoPlan={schoolId:'DEMO001',scenes:Array.from({length:7},(_,i)=>({day:i+1,basis:'fictional_general'}))};
 const demoGame=game.createGame(demoWorld,demoPlan,base);
 const text=scenario.scene(demoGame,demoWorld).paragraphs.join(' ');
-assert(!text.includes('확인된 학교 상세정보:'),'Demo never displays official facts');
+assert(!text.includes('확인된 학교 상세정보:'),'Demo never narrates official facts');
+assert.equal(scenario.scene(demoGame,demoWorld).sourceFacts.length,0,'Demo never receives real school metadata');
 
 /* 2026 조사 취지: 동료 협력과 교직원 적대는 같은 업무량이라도 다른 경험이다. */
 const supportiveProfile={...base,workCulture:'collaborative'};
