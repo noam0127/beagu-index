@@ -222,8 +222,9 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    const match=header.match(/^(\d+) \/ 36/);
    if(match){
     visited.add(Number(match[1]));
-    const month=(await semesterPage.locator('#chapterPlace').innerText()).match(/2027-(0[3-7])-\d{2}/);
-    if(month)months.add(month[1]);
+    const season=await semesterPage.locator('#novelCard').getAttribute('data-season');
+    const month={march:'03',april:'04',may:'05',june:'06',july:'07'}[season];
+    if(month)months.add(month);
     const info=await semesterPage.locator('#diarySemesterMeta').innerText();
     const part=info.match(/제([1-6])부/);
     if(part)parts.add(Number(part[1]));
