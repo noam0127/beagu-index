@@ -49,32 +49,27 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#homeDiaryCode').fill('AAAAAAAAAA');
    await page.locator('#homeDiarySubmit').click();
    await page.waitForURL('**/teacher-class-diary-play.html?guest=1',{timeout:12000});
-   await page.locator('#opening').waitFor({state:'visible'});
+   await page.locator('#diaryLanding').waitFor({state:'visible'});
    assert.equal(codeCheck,1,'Code should be verified exactly once, on home');
    assert.equal(ticketCheck,1,'Ticket should be validated on game arrival');
    assert.equal(await page.locator('#guestCode').count(),0,'No duplicate code field in game');
    assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-class-diary-guest-handoff-v1')),null,
     'Ticket must be consumed before the story appears');
-   assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+3),true,'Opening must not scroll');
-   await page.locator('.diary-opening-visual').click();
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+3),true,'Title card must fit viewport');
+   assert.equal(await page.locator('#opening').isVisible(),false,'Skip the separate infographic');
+   assert.equal(await page.locator('.diary-landing-verse').isVisible(),true,'Poetic introduction under the title');
+   await page.locator('#diaryLandingStart').click();
    await page.locator('#setup').waitFor({state:'visible'});
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'1');
-   assert.equal(await page.locator('#diarySchoolMode').isVisible(),true,'School selector must appear before player name');
-   assert.equal(await page.evaluate(()=>document.querySelector('#diarySchoolMode').compareDocumentPosition(document.querySelector('#playerName'))&Node.DOCUMENT_POSITION_FOLLOWING),4,'School selection comes first');
-   assert.equal(await page.locator('#playerName').isVisible(),true,'Guest must be able to enter a pen name');
-   assert.equal(await page.locator('#mbti').isVisible(),false,'Guest should not need MBTI');
-   assert.equal(await page.locator('#experience').isVisible(),false,'Guest should not need career data');
-   await page.locator('#playerName').fill('루다');
-   assert.equal(await page.locator('#setupPlayerPreview').innerText(),'루다 선생님');
-   assert.equal(await page.locator('#setup').evaluate(el=>el.querySelector('.form-grid').compareDocumentPosition(el.querySelector('.setup-player-stamp'))&Node.DOCUMENT_POSITION_FOLLOWING),4,'Pencil preview must be after form');
+   assert.equal(await page.locator('#diarySchoolMode').isVisible(),true,'First setup shows school choice');
+   assert.equal(await page.locator('#diarySchoolMode').inputValue(),'demo','Guest code defaults to fictional prologue');
+   for(const selector of ['#playerName','#experience','#gender','#mbti'])
+    assert.equal(await page.locator(selector).isVisible(),false,'No personal questionnaire: '+selector);
    await page.locator('#setupNext').click();
-   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2');
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Colleague choice follows school');
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),3);
    await page.locator('[data-partner-choice="none"]').click();
-   assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','Picture selection should advance directly');
-   assert((await page.locator('#setupReviewPartner').innerText()).includes('민서'));
-   await page.locator('#setupReviewPartner').click();
    await page.locator('#novel').waitFor({state:'visible'});
    const state=await page.evaluate(()=>({
     scrollHeight:document.documentElement.scrollHeight,
@@ -104,7 +99,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#diaryEffectsVolume').isVisible(),true);
    await page.locator('.diary-panel-close').click();
    assert.equal(errors.length,0,'Browser errors: '+errors.join('; '));
-   console.log('PASS mocked guest '+device.name+': home code, secure ticket handoff, no re-entry, picture choice, fullscreen, music in settings');
+   console.log('PASS mocked guest '+device.name+': home code → title → school → colleague → story, saved progress and settings');
    await page.close();
   }
  }finally{await browser.close()}
