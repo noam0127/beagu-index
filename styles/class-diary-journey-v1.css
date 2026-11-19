@@ -297,3 +297,67 @@ body.diary-theater-mode.is-playing #sceneArt{border-radius:0}
 @media(prefers-reduced-motion:reduce){
  .diary-screen-toggle{transition:none}
 }
+
+
+/* Direct profile entry and school-first setup. Only one title card appears at entry. */
+body.is-landing{height:100dvh;overflow:hidden;background:linear-gradient(155deg,#eef2f8,#f8f4f8)}
+body.is-landing main{height:100dvh;max-width:none;width:100%;padding:0;margin:0;display:grid;place-items:center}
+body.is-landing main>header,body.is-landing main>.hero,body.is-landing main>.no-save,
+body.is-landing main>.sound-panel,body.is-landing main>.status,
+body.is-landing main>.footer-note,body.is-landing .diary-screen-toggle--floating{display:none!important}
+body.is-landing #diaryLanding{
+ display:grid;place-items:center;width:100%;height:100dvh;min-height:0;
+ padding:clamp(16px,4vw,38px);margin:0;
+}
+.diary-landing-card{
+ width:min(100%,690px);min-height:clamp(240px,43dvh,410px);
+ display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+ gap:clamp(15px,3.4dvh,26px);padding:clamp(26px,6vw,66px);
+ border:1px solid #ffffff35;border-radius:clamp(23px,4vw,38px);
+ text-align:left;cursor:pointer;color:#fff;
+ background:radial-gradient(circle at 86% 12%,#3e55715e,transparent 40%),linear-gradient(139deg,#172e48,#244360 83%,#26445f);
+ box-shadow:0 20px 50px #15304727,inset 0 1px 0 #ffffff22;
+ transition:transform .2s ease,box-shadow .2s ease;
+}
+.diary-landing-card:hover{transform:translateY(-3px);box-shadow:0 25px 65px #15304737}
+.diary-landing-card:focus-visible{outline:4px solid #c89eb8;outline-offset:5px}
+.diary-landing-eyebrow{font-size:clamp(11px,2.4vmin,14px);font-weight:750;letter-spacing:.15em;color:#b5cadd}
+.diary-landing-card strong{
+ font:500 clamp(31px,7vw,54px)/1.32 "Gowun Batang","Nanum Myeongjo","Batang",serif;
+ letter-spacing:-.065em;word-break:keep-all;
+}
+.diary-landing-enter{align-self:flex-end;margin-top:clamp(4px,2dvh,18px);font-size:clamp(14px,2.8vmin,17px);font-weight:750;color:#e6dfe7}
+.diary-landing-enter span{display:inline-block;font-size:24px;vertical-align:-1px;margin-left:9px}
+body.is-setting .diary-school-field{grid-column:1/-1}
+body.is-setting .diary-school-field select{border:1px solid #bf9bb1;background:#fff9fd}
+body.is-setting #diarySchoolSelected{display:block;line-height:1.45;font-size:clamp(10px,1.7vmin,12px);color:#7c667c;min-height:1.3em;word-break:keep-all}
+body.is-setting #setup[data-step="1"] #profileForm .form-grid{gap:clamp(4px,.8dvh,10px) 10px;margin:clamp(4px,1dvh,11px) 0}
+body.is-setting #setup[data-step="1"] #profileForm .setup-player{padding-top:clamp(6px,1.3dvh,16px)}
+body.is-setting #setup[data-step="1"] .setup-micro{font-size:9px}
+.diary-school-search-dialog[hidden]{display:none!important}
+.diary-school-search-dialog{
+ position:fixed;inset:0;z-index:550;display:grid;place-items:center;
+ padding:calc(18px + env(safe-area-inset-top,0px)) 14px calc(18px + env(safe-area-inset-bottom,0px));
+ background:#141628aa;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.diary-school-search-card{
+ width:min(100%,520px);max-height:88dvh;display:flex;flex-direction:column;gap:12px;
+ padding:clamp(17px,4vw,26px);border-radius:23px;background:#fffbfd;
+ border:1px solid #e7d8e4;box-shadow:0 25px 65px #080e2390;color:#3b3242;
+}
+.diary-school-search-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.diary-school-search-heading h2{font-size:22px;margin:0;font-weight:800;color:#563e58}
+.diary-school-search-heading button{font-size:26px;width:42px;height:42px;border:0;border-radius:50%;color:#594354;background:#eee4eb;cursor:pointer}
+.diary-school-search-card label{font-size:13px;font-weight:700}
+.diary-school-search-card input{width:100%;height:48px;padding:10px 12px;border:1px solid #cdbecb;border-radius:12px;font-size:16px}
+.diary-school-search-card p{font-size:12px;line-height:1.5;color:#76667b;margin:2px 0}
+.diary-school-results{display:flex;flex-direction:column;gap:5px;overflow-y:auto;min-height:0;max-height:45dvh;overscroll-behavior:contain}
+.diary-school-result{width:100%;padding:12px;text-align:left;border:1px solid #e9dfe8;border-radius:12px;background:#fff;font-size:13px;color:#473a4a;cursor:pointer}
+.diary-school-result:hover,.diary-school-result:focus-visible{background:#f7ecf4;border-color:#be93b3}
+.diary-school-auth{align-self:flex-start;font-size:13px;font-weight:700;color:#875b81}
+@media(max-height:650px){
+ body.is-setting #setup[data-step="1"] #profileForm .setup-player-stamp{display:none}
+ body.is-setting #setup[data-step="1"] #profileForm .setup-micro{display:none}
+ body.is-setting #setup[data-step="1"] #profileForm .field-note{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){.diary-landing-card{transition:none}}
