@@ -192,6 +192,14 @@
     <p class="challenge-identity-note">개인 고유번호는 다른 사람에게 공유하지 마세요.</p>
     <p class="challenge-identity-warning"><strong>레벨1 참여코드가 아닙니다.</strong> 레벨2 로그인은 보안 검증 후 열립니다.</p>
     <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
+    <div id="identityRecovery" hidden>
+      <label for="legacyIdentityInput" class="challenge-identity-note">이전에 발급받은 고유번호 확인</label>
+      <input id="legacyIdentityInput" class="code-box" type="password"
+        autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="120"
+        placeholder="기존 고유번호 입력">
+      <button id="legacyIdentityConfirm" class="action soft" type="button">기존 번호 확인</button>
+      <p class="challenge-identity-note">이전 번호가 없다면 관리자에게 복구를 요청해야 합니다.</p>
+    </div>
   </section>
   <!-- New referral card is NOT part of the certificate PNG. Phase 1 stays locked. -->
   <section class="challenge-identity" id="challengeReferralPanel" data-html2canvas-ignore="true" aria-labelledby="referralTitle">
