@@ -14,6 +14,12 @@ assert.match(edge,/OWNER_AUTHORIZED_CLOSED_CHOICE/);
 assert.match(edge,/\[2023,2024,2025\]/);
 assert.match(edge,/question\.validRows<1/);
 assert.match(edge,/modeIndex\.set\(year\+':'\+qid/);
+// Live Lv1 result wiring contract (static, not an authenticated browser E2E).
+assert.match(edge,/if\(!session\)return send\(\{error:'AUTH_REQUIRED'\},401,origin\)/);
+assert.match(edge,/const schoolQuestionModes=\[\.\.\.modeIndex\.values\(\)\]/);
+assert.match(edge,/return send\(\{school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears\},200,origin\)/);
+assert.match(lv1,/showDetails\(detail,data\.rows,school,data\.schoolQuestionModes,data\.schoolQuestionSelections,data\.schoolQuestionResults2026\)/);
+assert.match(lv1,/const vetted=new Map\(\(Array\.isArray\(modes\)\?modes:\[\]\)/);
 assert.match(lv1,/data\.schoolQuestionModes/);
 assert.match(report,/r\.schoolQuestionModes/);
 assert.match(compare,/data\?\.schoolQuestionModes/);
