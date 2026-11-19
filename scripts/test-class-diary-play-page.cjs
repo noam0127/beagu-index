@@ -16,7 +16,7 @@ function checkPage(name){
  }
  for(const m of src.matchAll(/<script\s+src="([^"]+)"/g)){
   assert(!m[1].startsWith('http:'),'Remote insecure JS');
-  assert(fs.existsSync(path.join(root,m[1])),'Missing script '+m[1]);
+  assert(fs.existsSync(path.join(root,m[1].split('?')[0])),'Missing script '+m[1]);
  }
  assert(!src.includes('SUPABASE_SERVICE_ROLE_KEY'),'Never put a service role key in the client');
  return {ids,src};
