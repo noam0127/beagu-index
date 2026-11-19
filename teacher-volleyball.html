@@ -615,8 +615,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   startButton.addEventListener("click",()=>{unlockSound();if(["playing","point","paused"].includes(state.phase))finishMatch(true);else startMatch();});
   pauseButton.addEventListener("click", pause);
   helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
-  window.addEventListener("blur", () => { releaseKeys(); if (state.phase === "playing") pause(); });
-  document.addEventListener("visibilitychange", () => { if (document.hidden && state.phase === "playing") pause(); });
+  // Focus changes are frequent in mobile/embedded browsers. Only pause button pauses.
+  // Clear keyboard input on blur without cancelling a finger dragging on canvas.
+  window.addEventListener("blur", () => { Object.keys(keys).forEach(k => { keys[k] = false; }); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) releaseKeys(); });
   function controlPlayer(p, direction, jump, speed, jumpStrength=12.8) {
     p.vx = direction * speed;
     p.x = clamp(p.x + p.vx, p.side === "left" ? 35 : NET_X + NET_W / 2 + 36, p.side === "left" ? NET_X - NET_W / 2 - 36 : W - 35);
@@ -711,7 +713,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const attack=p.side==="left" ? (charged?23.5:spike?16.5:11.5)*battle.allyAttack :
       (bossStrike?14.5:cpuSmash?13.2:10.8)*battle.enemyAttack;
     ball.vx=(sign*attack+clamp(p.vx,-12,12)*.16+(precise?1.9:0))*ballSpeedFactor();
-    ball.vy=(p.side==="left" ? (charged?-8.8:spike?-7.4:-11.8) :
+    // Aim by the teacher's actual diagonal movement at impact:
+    // moving right-down sends the ball right-down; right-up sends it right-up.
+    const diagonalAim=p.side==="left"&&p.vx>3&&Math.abs(p.vy)>3;
+    const downwardAim=diagonalAim&&p.vy>0;
+    const directedVy=downwardAim
+      ?Math.max(5.5,Math.min(14,attack*.62))
+      :-Math.max(8,Math.min(19,attack*.72));
+    ball.vy=(diagonalAim?directedVy:
+      p.side==="left"?(charged?-8.8:spike?-7.4:-11.8):
       bossStrike?(state.playFrames%2===0?-6.6:-11.2):cpuSmash?-8.5:-12.8)*ballSpeedFactor();
     if(charged){
       state.specialChargeFrames=0;state.flash=32;
@@ -728,7 +738,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.vy+=clamp((handY-ball.y)*.025,-1.25,1.25)-clamp(incomingVy*.09,-1.2,1.2);
     if(p.vy<-2)ball.vy-=1.1;
     // Aim to clear the raised net when time permits, without forcing a teleport.
-    if(sign*(NET_X-ball.x)>0 && Math.abs(ball.vx)>1){
+    if(!downwardAim && sign*(NET_X-ball.x)>0 && Math.abs(ball.vx)>1){
       const framesToNet=clamp((NET_X-ball.x)/ball.vx,4,45);
       const neededVy=(NET_TOP-R-14-ball.y-.15*framesToNet*(framesToNet+1))/framesToNet;
       ball.vy=clamp(Math.min(ball.vy,neededVy),-19*ballSpeedFactor(),-4*ballSpeedFactor());
