@@ -6,7 +6,10 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const RATE_PEPPER = Deno.env.get('BEAGU_ACCOUNT_RATE_PEPPER') || ''; 
+const RATE_PEPPER = Deno.env.get('BEAGU_ACCOUNT_RATE_PEPPER') || '';
+const CAPTCHA_CONFIRMED = Deno.env.get('BEAGU_AUTH_CAPTCHA_CONFIRMED') === 'true';
+// The operator must verify Auth native CAPTCHA actually enforces challenges
+// (including direct requests to Auth), not merely the presence of tokens. 
 // Production must enable Auth -> Bot and Abuse Protection -> CAPTCHA. Without
 // this setting, a client could call Auth directly and bypass the Edge layer.
 const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
@@ -124,6 +127,12 @@ async function handler(req: Request): Promise<Response> {
       return respond(origin,400,{error:'INVALID_REQUEST'});
   } catch { return respond(origin,400,{error:'INVALID_REQUEST'}); }
   const action=input.action;
+  // Signup, login, recovery request and credential reauthentication must not
+  // be released before the project's native Auth CAPTCHA has been configured.
+  const captchaActions = new Set(['sign-up','bootstrap-sign-in','sign-in',
+      'request-recovery','delete-account']);
+  if (captchaActions.has(String(action)) && !CAPTCHA_CONFIRMED)
+    return respond(origin,423,{error:'CAPTCHA_NOT_CONFIGURED'});
   try {
     if (action==='sign-up') {
       if (!await enabled('signup_enabled')) return respond(origin,423,{error:'SIGNUP_DISABLED'});
