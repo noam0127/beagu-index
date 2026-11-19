@@ -303,29 +303,28 @@ function next(state,world){
  if(current&&current.day===state.day){
    const data=INCIDENTS[current.id];
    if(!data)return null;
+   const partner=state.profile.partner==='man'?'현우 선생님':
+     state.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
    return {...data,id:current.id,date:DATES[state.day-1],kind:data.kind,
-      paragraphs:data.prose.slice(),choices:data.choices.map(c=>({id:c.id,label:c.label})),
+      paragraphs:data.prose.map(p=>p.replace(/\{colleague\}/g,partner)),choices:data.choices.map(c=>({id:c.id,label:c.label})),
       result:cp(current),fictionLabel:'이 사건은 지역과 가상 교직문화 설정으로 고른 창작 장면이며 실제 발생 사실이 아닙니다.'};
  }
  const id=schedule(state,world).find(id=>!completed.some(x=>x.day===state.day&&x.id===id));
  if(!id)return null;
  const data=INCIDENTS[id];
- const paragraphs=data.prose.slice();
- const scale=setting(state,world);
- if(id==='parking')paragraphs.unshift('도심의 통학로와 주차장을 배경으로 한 가상 사건이다.');
- if(id==='wildlife')paragraphs.unshift('읍·면 또는 농촌 지형 정보를 소재로 만든 가상 사건이며, 실제 야생동물 출현을 뜻하지 않는다.');
- if(id==='friendship_chair'&&scale.scale==='large'&&scale.realOfficialCount)
-  paragraphs.unshift(scale.realOfficialCount.year+'년 공개 승인 학생 수는 '+scale.realOfficialCount.value+'명이다. 그러나 학교의 실제 친목회 관행을 알려 주는 자료는 아니며, 아래의 강요 상황은 창작이다.');
- if(id==='gender_duty'&&world?.mode!=='public_fiction_demo'){
-  const male=accepted(world,'male_teacher_ratio'),junior=accepted(world,'junior_teacher_ratio');
-  const values=[];
-  if(male&&male.value<=100)values.push(male.referenceYear+'년 남교사 비율 '+male.value+'%');
-  if(junior&&junior.value<=100)values.push(junior.referenceYear+'년 2급 정교사 비율 '+junior.value+'%');
-  if(values.length)paragraphs.unshift('학교의 공개 검증된 공식 배경 자료에는 '+values.join(', ')+'가 기록돼 있다. 다만 이 수치가 실제 선생님의 성격이나 비공식 업무 배정을 설명하지는 않는다. 아래 사건은 가상의 상황이다.');
- }
+ const partner=state.profile.partner==='man'?'현우 선생님':
+   state.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
+ const paragraphs=data.prose.map(p=>p.replace(/\{colleague\}/g,partner));
+ // Data provenance belongs outside the fictional scene; never introduce survey
+ // diagnostics or risk attribution into the narrator's first-person prose.
+ const fictionNote=id==='friendship_chair'?
+  '허구 장면 · 실제 친목회 관행을 알려 주는 자료는 아니며 실제 사건도 아닙니다.':
+  id==='wildlife'?'허구 장면 · 실제 야생동물 출현을 뜻하지 않습니다.':
+  id==='gender_duty'?'허구 장면 · 교사 구성 비율로 개인의 업무를 판단하지 않습니다.':
+  '허구 장면 · 실제 학교의 사건이나 교직원 언행을 재현한 것이 아닙니다.';
  return {id,day:state.day,date:DATES[state.day-1],title:data.title,place:data.place,
    kind:data.kind,paragraphs,choices:data.choices.map(c=>({id:c.id,label:c.label})),
-   result:null,fictionLabel:'이 사건은 지역과 가상 교직문화 설정으로 고른 창작 장면이며 실제 발생 사실이 아닙니다.'};
+   result:null,fictionLabel:fictionNote};
 }
 function choose(state,world,id){
  const current=next(state,world);
@@ -364,11 +363,11 @@ function choose(state,world,id){
   result.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
  const consequences=choice.reply.map(x=>x.replace(/\{colleague\}/g,name));
  if(climate==='collaborative')
-   consequences.push('“다음 준비는 제가 나눠 할게요.” 동료가 먼저 자리를 당겼다. 일이 줄지 않아도 혼자서 버티는 학교는 아니었다.');
+   consequences.push('“이거 제가 봐 둘게요.” '+name+'이 의자를 내 옆으로 당겨 왔다. 나는 고개를 끄덕였다.');
  else if(climate==='hostile')
-   consequences.push('일보다 서로의 말을 견디는 시간이 더 길었다. 동료를 경계하는 분위기를 혼자 바꿀 수는 없었다.');
+   consequences.push('교실로 돌아와 문을 닫고서야 어깨에 힘이 잔뜩 들어가 있었다는 걸 알았다. 한동안 창밖만 바라봤다.');
  else
-   consequences.push('책임을 나누어야 할 때에도 서로 눈치를 보는 분위기가 남았다. 부탁과 떠넘김은 다르다는 생각이 들었다.');
+   consequences.push('학년연구실 문 앞에서 한 번 더 돌아봤다. 다음에는 할 말을 미리 생각해 두어야 할 것 같았다.');
  result.incidentReflection={day:state.day,id:current.id,
    paragraphs:consequences,
    line:choice.line.replace(/\{colleague\}/g,name)};
