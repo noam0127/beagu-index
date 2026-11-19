@@ -598,6 +598,14 @@
               if(selected)updatedGrid.querySelector('.percentile-cell[data-year="'+selected+'"]')?.classList.add('is-current-year');
               previousGrid.replaceWith(updatedGrid);
             }
+            // Keep Lv.0 and Lv.1's independently rendered four-year vertical
+            // percentile graph synchronized with newly published 2026 data.
+            // Do not replace the disclosure element or the expanded details.
+            const existingGraph=old.querySelector('.percentile-graph');
+            const latestGraph=fresh.querySelector('.percentile-graph');
+            if(existingGraph&&latestGraph)existingGraph.replaceWith(latestGraph);
+            else if(existingGraph)existingGraph.remove();
+            else if(latestGraph)old.insertBefore(latestGraph,old.querySelector('.school-detail'));
           }
           break;
         }
@@ -740,14 +748,12 @@
           card.insertBefore(indicator,card.querySelector('.percentile-panel'));
         }
       }
-      // The four-year result panel itself is the disclosure trigger.
-      // Remove the trend graphic and the extra action button; the MBTI badge
-      // is inserted directly after this panel by BeaguSchoolMBTI.decorateCards.
+      // Preserve Lv.0's exact four-year vertical percentile chart. Each
+      // year is an independent marker, never a connecting trend line.
+      // Only the heading becomes the detail disclosure control.
       const historyPanel=card.querySelector('.percentile-panel');
       const heading=historyPanel?.querySelector('.percentile-heading');
-      const graphic=historyPanel?.querySelector('.percentile-graph');
       if(!historyPanel||!heading||!detail)throw Error('LV1_HISTORY_PANEL_MISSING');
-      graphic?.remove();
       historyPanel.classList.add('lv1-history-disclosure');
       const trigger=make('button','lv1-history-trigger','역대 조사결과');
       trigger.type='button';
