@@ -221,6 +221,14 @@ assert.match(shared,/cancel\(\)/,"rank session can be discarded safely");
 assert.match(volley,/schoolPicker\.onRequestChange=stopForSchoolChange/);
 assert.match(runner,/schoolPicker\.onRequestChange=stopAndChangeSchool/);
 assert.match(runner,/🏫 다른 학교로 변경/,"survival pause offers school switch");
+assert.match(volley,/id="volley-pause-overlay"/);
+assert.match(volley,/id="volley-go-first"/);
+assert.match(volley,/id="volley-change-school"/);
+assert.match(volley,/const saved=await finishMatch\(true\)/);
+assert.match(runner,/const saved=await ranking\?\.finish\(rawScore/);
+assert.match(runner,/if\(saved!==true\)/);
+assert.match(volley,/name:i===0\?"동료":"관리자"/);
+assert.doesNotMatch(volley,/textLabel\("분신"/);
 assert.doesNotMatch(runner,/id="dash"|id="left"|id="right"/,"no mobile movement buttons remain");
 assert.doesNotMatch(runner,/activateDash|skill\.dash/,"no hidden dash mechanics remain");
 assert.match(volley,/ranking\?\.finish/);
@@ -520,8 +528,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=20261119-foldedtop1/);
-assert.match(html,/teacher-run\.html\?v=20261119-foldedtop1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261120-arcade-pause-helpers3/);
+assert.match(html,/teacher-run\.html\?v=20261120-arcade-pause-helpers3/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -617,35 +625,46 @@ assert.equal(chalkProfiles.easy.maxShots,2);
 assert.equal(chalkProfiles.normal.maxShots,1);
 assert.ok(chalkProfiles.easy.interval<chalkProfiles.normal.interval);
 for(const t of ["hard","very_hard","extreme"])assert.equal(chalkProfiles[t],undefined,t+" disables chalk");
+const helperStartRun=runner.indexOf("function helperPosition(helper){");
+const helperEndRun=runner.indexOf("schoolPicker.onChange=",helperStartRun);
 const chalkStart=runner.indexOf("function fireChalk(dt){");
 const chalkEnd=runner.indexOf("function drawChalk(){",chalkStart);
-assert.ok(chalkStart>0&&chalkEnd>chalkStart);
+assert.ok(helperStartRun>0&&helperEndRun>helperStartRun&&chalkStart>0&&chalkEnd>chalkStart);
 const chalkSource=runner.slice(chalkStart,chalkEnd);
-const shoot=(tier,good=false)=>new Function("tier","good",[
- "const chalkProfiles="+chalkMatch[1],
- "const chalkProfile=()=>chalkProfiles[tier]||null;",
- 'const state="playing",player={x:300,y:368};',
- 'let items=[{x:300,y:260,good,r:23}],chalkShots=[],chalkCooldown=0,score=0,removed=0;',
- 'const burst=()=>{removed++;},float=()=>{},playTone=()=>{},addScore=n=>{score+=n;};',
- chalkSource,
- 'fireChalk(.05);const created=chalkShots.length;',
- 'for(let i=0;i<5;i++)updateChalk(.05);',
- 'return {created,remaining:items.length,score,removed};'
-].join("\n"))(tier,good);
-assert.deepEqual(shoot("easy"),{created:1,remaining:0,score:5,removed:1},"EASY chalk automatically destroys falling hazard");
-assert.deepEqual(shoot("normal"),{created:1,remaining:0,score:5,removed:1},"NORMAL chalk also protects");
-assert.deepEqual(shoot("hard"),{created:0,remaining:1,score:0,removed:0},"HARD has no chalk");
-assert.deepEqual(shoot("extreme"),{created:0,remaining:1,score:0,removed:0},"EXTREME has no chalk");
-assert.deepEqual(shoot("easy",true),{created:0,remaining:1,score:0,removed:0},"healing pickups are never shot");
+const helperSource=runner.slice(helperStartRun,helperEndRun);
+function shoot(tier,good=false,hitRoll=.1){
+ const mockMath=Object.create(Math);mockMath.random=()=>hitRoll;
+ return new Function("tier","good","Math",[
+  "const chalkProfiles="+chalkMatch[1],
+  "const chalkProfile=()=>chalkProfiles[tier]||null;",
+  'const W=600,H=420,state="playing";',
+  'let items=[{x:300,y:260,good,r:23}],chalkShots=[],chalkHelpers=[],score=0,removed=0;',
+  'const burst=()=>{removed++;},float=()=>{},playTone=()=>{},addScore=n=>{score+=n;};',
+  helperSource,chalkSource,
+  'resetChalkHelpers();const roles=chalkHelpers.map(h=>h.role);',
+  'fireChalk(.4);const created=chalkShots.length;',
+  'for(let i=0;i<100;i++)updateChalk(.04);',
+  'return {created,remaining:items.length,score,removed,roles};'
+ ].join("\n"))(tier,good,mockMath);
+}
+assert.deepEqual(shoot("easy"),{created:1,remaining:0,score:5,removed:1,roles:["동료","관리자"]});
+assert.deepEqual(shoot("normal"),{created:1,remaining:0,score:5,removed:1,roles:["동료"]});
+assert.deepEqual(shoot("easy",false,.9),{created:1,remaining:1,score:0,removed:0,roles:["동료","관리자"]});
+assert.deepEqual(shoot("hard"),{created:0,remaining:1,score:0,removed:0,roles:[]});
+assert.deepEqual(shoot("extreme"),{created:0,remaining:1,score:0,removed:0,roles:[]});
+assert.deepEqual(shoot("easy",true),{created:0,remaining:1,score:0,removed:0,roles:["동료","관리자"]});
+assert.match(runner,/const willHit=Math\.random\(\)<\.5/);
+assert.match(runner,/function drawChalkHelpers\(\)/);
+assert.match(runner,/x:helper\.role==="관리자"\?W-38:38,y:H-52/);
 assert.match(runner,/function drawShackle\(\)/);
 assert.match(runner,/if\(profile\.jumpEnabled!==false\|\|state==="ready"\)return/);
 assert.match(runner,/if\(profile\.jumpEnabled===false\)\{/,"runner shackle only follows EXTREME steps");
 assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
-assert.match(runner,/drawItems\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
+assert.match(runner,/drawItems\(\);drawChalkHelpers\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-foldedtop1/);
-assert.match(html,/teacher-run\.html\?v=20261119-foldedtop1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261120-arcade-pause-helpers3/);
+assert.match(html,/teacher-run\.html\?v=20261120-arcade-pause-helpers3/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
@@ -766,8 +785,8 @@ assert.doesNotMatch(html,/<a href="teacher-volleyball\.html"[^>]*>↗ 크게 보
  "the embedded volleyball game no longer has a zoom/enlarge link");
 assert.match(html,/<a href="teacher-run\.html"[^>]*>↗ 크게 보기<\/a>/,
  "survival external link remains unchanged");
-assert.match(volley,/arcade-leaderboard-v1\.js\?v=20261119-foldedtop1/);
-assert.match(runner,/arcade-leaderboard-v1\.js\?v=20261119-foldedtop1/);
+assert.match(volley,/arcade-leaderboard-v1\.js\?v=20261120-arcade-pause-helpers3/);
+assert.match(runner,/arcade-leaderboard-v1\.js\?v=20261120-arcade-pause-helpers3/);
 assert.match(shared,/this\.expanded=false/);
 assert.match(shared,/aria-expanded/);
 assert.match(shared,/arcade-ranking-content/);
@@ -855,8 +874,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-foldedtop1")&&
-     site.body.includes("teacher-run.html?v=20261119-foldedtop1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261120-arcade-pause-helpers3")&&
+     site.body.includes("teacher-run.html?v=20261120-arcade-pause-helpers3"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -866,8 +885,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-foldedtop1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-foldedtop1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261120-arcade-pause-helpers3/);
+assert.match(site.body,/teacher-run\.html\?v=20261120-arcade-pause-helpers3/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
