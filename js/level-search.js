@@ -838,6 +838,7 @@
     }
     loadPagePercentiles(list,serial);
     if (window.BeaguSchoolMBTI) void BeaguSchoolMBTI.decorateCards(host,session);
+    void window.BeaguSchoolViewCounts?.refreshCards(host);
   }
   async function search(reset,explicitEnter=false) {
     if (reset) page = 0;

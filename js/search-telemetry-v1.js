@@ -30,6 +30,9 @@
    }).then(({data,error})=>{
      if(error){console.warn('학교 이용 이벤트 기록 비활성화');return;}
      if(data!==true)return;
+     // Count a view only AFTER the detail_viewed event has been saved.
+     if(type==='detail_viewed')
+       void window.BeaguSchoolViewCounts?.record(schoolId,actionId,visitor);
      // Only a server-accepted school action can contribute to rankings.
      // The database stores a salted digest, never the visitor UUID.
      return supabaseClient.rpc('beagu_record_school_interest',{

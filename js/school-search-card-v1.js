@@ -19,7 +19,17 @@
   if(school.address){
    meta.append(document.createElement('br'),document.createTextNode(String(school.address)));
   }
-  card.append(el('span','region-badge',region),el('div','school-name',name),meta);
+  const nameLine=el('div','school-name-row');
+  const views=el('span','school-view-count');
+  views.dataset.schoolViewCount='';
+  views.dataset.schoolId=String(school.school_id);
+  views.title='학교 상세 열람 조회수 · 하루 중복 제외';
+  views.setAttribute('aria-label','학교 상세 조회수 확인 중');
+  const eye=el('span','school-view-eye','👁');
+  eye.setAttribute('aria-hidden','true');
+  views.append(eye,el('strong','school-view-number','—'));
+  nameLine.append(el('div','school-name',name),views);
+  card.append(el('span','region-badge',region),nameLine,meta);
   return card;
  }
  // Explicit display states must not imply a review process when none is recorded.
