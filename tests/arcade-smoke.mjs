@@ -131,7 +131,7 @@ assert.doesNotMatch(volley,/class="touch"/,"empty touch control region removed")
 assert.match(volley,/touchControl\.targetY/,"volleyball touch flight has vertical axis");
 assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is implemented");
 assert.match(runner,/pointerY=target\.y/,"survival game tracks 2D touch target");
-assert.match(runner,/player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically");
+assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically except EXTREME");
 assert.match(runner,/enemySize:1\.28/,"extreme hazards have larger collision size");
 assert.match(runner,/profile\.homing\*dt/,"harder hazards track the player");
 assert.match(runner,/profile\.heroSpeed/,"hero mobility scales by difficulty");
@@ -228,6 +228,79 @@ assert.throws(()=>scoreFns.scoreFromRun({score:1380,baseScore:420,survivalSecond
 assert.equal(scoreFns.scoreFromRun({score:1500,day:3,victory:false},100),1500,"cached legacy game supported");
 console.log("PASS: tier HP, lives, double-tap, concise UI, both time bonus formulas and tamper rejection");
 
+// EXTREME disables player ascent in both games without suppressing enemy AI jump.
+assert.match(volley,/const canPlayerJump=\(\)=>currentDifficulty!=="extreme"/,"volleyball player jump gate");
+assert.match(volley,/controlPlayer\(left, keyboardDirection, canPlayerJump\(\)&&keys\.jump/,"keyboard jump gated");
+assert.match(volley,/left\.y = canPlayerJump\(\) \? clamp\(left\.y, 86, FLOOR - 31\) : FLOOR - 31/,"volleyball flight clamped to floor in EXTREME");
+assert.match(volley,/controlPlayer\(right,move,state\.aiJump/,"CPU retains jump in EXTREME");
+assert.match(runner,/extreme:\{jumpEnabled:false,/,"runner disables aerial control in EXTREME");
+assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"runner upward drag gated by difficulty");
+assert.match(runner,/player\.y=canPlayerRise\(\)\?Math\.max\(76,Math\.min\(H-52,player\.y\)\):H-52/,"runner grounded on each frame");
+assert.match(runner,/player\.y=!canPlayerRise\(\)\|\|pointerId===null\?H-52/,"runner remains grounded on resize");
+const volleyPointerSource=volley.slice(volley.indexOf('function targetFromPointer(e)'),volley.indexOf('canvas.addEventListener("pointerdown"'));
+const volleyPointer=new Function("difficulty", [
+ 'const W=900,H=500,FLOOR=451,NET_X=450,NET_W=14;',
+ 'const touchControl={targetX:null,targetY:null};',
+ 'const canvas={getBoundingClientRect:()=>({left:0,top:0,width:450,height:250})};',
+ 'const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));',
+ 'const canPlayerJump=()=>difficulty!=="extreme";',
+ volleyPointerSource,
+ 'targetFromPointer({clientX:100,clientY:0});',
+ 'return touchControl;'
+].join("\n"));
+assert.equal(volleyPointer("extreme").targetY,420,"extreme volleyball touch must stay on court floor");
+assert.equal(volleyPointer("hard").targetY,86,"other volleyball difficulties may fly upward");
+const runnerPointerSource=runner.slice(runner.indexOf('function dragPosition(e)'),runner.indexOf('function setFlightTarget(e)'));
+const runnerPointer=new Function("jumpEnabled",[
+ 'const profile={jumpEnabled},canPlayerRise=()=>profile.jumpEnabled!==false,W=600,H=420;',
+ 'const canvas={getBoundingClientRect:()=>({left:0,top:0,width:300,height:210})};',
+ runnerPointerSource,
+ 'return dragPosition({clientX:150,clientY:0});'
+].join("\n"));
+assert.equal(runnerPointer(false).y,368,"extreme run touch must stay on ground");
+assert.equal(runnerPointer(true).y,76,"other run difficulties still allow rising");
+// Personal high score shown upper-right is saved per device.
+assert.match(volley,/class="volley-best-row"/);
+assert.match(volley,/id="volley-best-label"/);
+assert.ok(volley.indexOf('class="volley-best-row"')<volley.indexOf('id="player-score"'),"best score precedes team scores");
+assert.match(volley,/const BEST_KEY="teacherVolleyballBestV1"/);
+assert.match(volley,/rememberBest\(getFinalScore\(\)\)/,"finished game updates personal best");
+const bestSource=volley.slice(volley.indexOf('function rememberBest(score){'),volley.indexOf('const canPlayerJump='));
+assert.ok(bestSource.includes("localStorage.setItem"),"personal high score persists");
+const mockStore={value:null,setItem(k,v){this.value=v;}},bestLabel={textContent:""};
+const updatedBest=new Function("localStorage","bestLabel",[
+ 'let bestScore=0;const BEST_KEY="teacherVolleyballBestV1";',
+ bestSource,
+ 'rememberBest(1390);rememberBest(1000);',
+ 'return bestScore;'
+].join("\n"))(mockStore,bestLabel);
+assert.equal(updatedBest,1390,"lower finish cannot replace high score");
+assert.equal(mockStore.value,"1390");
+assert.match(bestLabel.textContent,/1,390/);
+// Intro overlay now reflects school choice instead of permanent PRESS START.
+assert.doesNotMatch(volley,/overlay\("PRESS START"/);
+const introStart=volley.indexOf('if (state.phase === "ready") {',volley.indexOf('function render()'));
+const introEnd=volley.indexOf('else if (state.phase === "paused")',introStart);
+assert.ok(introStart>0&&introEnd>introStart);
+const overlaySnippet=volley.slice(introStart,introEnd);
+const introOverlay=new Function("school",[
+ 'const state={phase:"ready"},schoolPicker={get:()=>school};',
+ 'const diffName={extreme:"EXTREME",easy:"EASY"};',
+ 'let shown=null;const overlay=(...args)=>{shown=args;};',
+ overlaySnippet,
+ 'return shown;'
+].join("\n"));
+assert.equal(introOverlay(null)[0],"학교를 선택하세요");
+assert.equal(introOverlay({eligible:true,school_name:"가람초등학교",difficulty:"easy"})[0],"가람초등학교");
+assert.equal(introOverlay({eligible:false})[0],"조사 참여 필요");
+// Permanent double-touch helper copy removed; core special actions remain.
+assert.doesNotMatch(volley,/id="volley-special-status"|class="volley-special-status"/);
+assert.doesNotMatch(runner,/id="run-special-status"|class="arcade-run-special-status"/);
+assert.match(volley,/function activateSuperSpike\(\)/);
+assert.match(runner,/function activateSpecial\(\)/);
+console.log("PASS: EXTREME ground restriction, personal HI-SCORE, school-intro overlay and tutorial text removal");
+
+
 
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
@@ -248,8 +321,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-picker-top1")&&
-     site.body.includes("teacher-run.html?v=20261119-picker-top1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-extreme-best-intro1")&&
+     site.body.includes("teacher-run.html?v=20261119-extreme-best-intro1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -259,8 +332,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-picker-top1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-picker-top1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-extreme-best-intro1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-extreme-best-intro1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
