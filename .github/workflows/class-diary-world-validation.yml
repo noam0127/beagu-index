@@ -7,6 +7,8 @@ on:
       - 'js/class-diary-narrative-v1.js'
       - 'scripts/test-class-diary-narrative.cjs'
       - 'js/class-diary-play-v1.js'
+      - 'js/class-diary-semester-v1.js'
+      - 'scripts/test-class-diary-semester.cjs'
       - 'js/class-diary-director-v1.js'
       - 'js/class-diary-character-routes-v1.js'
       - 'js/class-diary-context-v1.js'
@@ -37,6 +39,9 @@ on:
     paths:
       - 'js/class-diary-world-v1.js'
       - 'scripts/test-class-diary-world.cjs'
+      - 'js/class-diary-semester-v1.js'
+      - 'scripts/test-class-diary-semester.cjs'
+      - 'teacher-class-diary-play.html'
   workflow_dispatch:
 permissions:
   contents: read
@@ -51,6 +56,7 @@ jobs:
           node scripts/test-class-diary-world.cjs
           node scripts/test-class-diary-narrative.cjs
           node scripts/test-class-diary-play.cjs
+          node scripts/test-class-diary-semester.cjs
           node scripts/test-class-diary-director.cjs
           node scripts/test-class-diary-character-routes.cjs
           node scripts/test-class-diary-context.cjs
