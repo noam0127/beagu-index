@@ -23,7 +23,7 @@ assert(play.includes("sessionStorage.removeItem(handoffKey)"),'Ticket must be co
 assert(play.includes("result.scope!=='class-diary-fictional-guest'"),'Guest scope guard missing');
 assert(!play.includes('sessionStorage.setItem('),'Game must not save code or game state');
 assert(edge.includes("crypto.subtle.verify('HMAC'"),'Ticket must have an unforgeable MAC');
-assert(edge.includes("await issueTicket()"),'Verified code must issue a short-lived ticket');
+assert(/await issueTicket\((?:subject)?\)/.test(edge),'Verified code must issue a short-lived ticket');
 assert(!edge.includes("grant_level2"),'Guest route must not elevate any tier');
 
 (async()=>{
