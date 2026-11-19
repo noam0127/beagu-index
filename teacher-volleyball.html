@@ -196,6 +196,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
   const secondBall={x:685,y:168,vx:-6,vy:-5,spin:0,cooldown:0,trail:[],shadowFrames:0,shadowColor:"#762b4b"};
   const activeBalls=[ball],clones=[];
+  const volleyShackle={x:156,dir:-1};
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const setStatus = text => { status.textContent = text; };
   const BEST_KEY="teacherVolleyballBestV1";
@@ -313,6 +314,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   function resetPositions() {
     Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, impactSpeed: 0, jumpLock: false, contactFrames:0 });
+    volleyShackle.x=left.x-54;volleyShackle.dir=-1;
     Object.assign(right, { x: 690, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false, contactFrames:0 });
     ball.x = state.serveLeft ? 215 : 685;
     ball.y = 223;
@@ -702,6 +704,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     } else {
       controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump, 5*SPEED_MULTIPLIER*battle.allySpeed*energyFactor("left"),12.8*battle.allyJump);
     }
+    if(currentDifficulty==="extreme"){
+      if(Math.abs(left.x-beforeMoveX)>.2)volleyShackle.dir=left.x>beforeMoveX?-1:1;
+      const trailing=clamp(left.x+volleyShackle.dir*58,24,NET_X-50);
+      volleyShackle.x+=clamp((trailing-volleyShackle.x)*.19,-8,8);
+    }
     // Only intentional, fast player movement powers up the next ball contact.
     const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || (canPlayerJump()&&keys.jump);
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
@@ -873,6 +880,23 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  }
  ctx.restore();
 }
+  function drawVolleyShackle(){
+    if(currentDifficulty!=="extreme"||state.phase==="ready"||state.phase==="starting")return;
+    const ankleX=left.x+12,ankleY=left.y+25;
+    const weightX=volleyShackle.x,weightY=FLOOR-16+Math.sin(state.playFrames*.23)*1.3;
+    ctx.save();ctx.lineCap="round";
+    ctx.strokeStyle="#394653";ctx.lineWidth=7;
+    ctx.beginPath();ctx.moveTo(ankleX,ankleY);
+    ctx.quadraticCurveTo((ankleX+weightX)/2,FLOOR+1,weightX,weightY);ctx.stroke();
+    ctx.strokeStyle="#aab4c2";ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(ankleX,ankleY);
+    ctx.quadraticCurveTo((ankleX+weightX)/2,FLOOR+1,weightX,weightY);ctx.stroke();
+    oval(weightX,weightY,21,21,"#2b3746");
+    oval(weightX-5,weightY-7,7,6,"#9eacb9");
+    ctx.fillStyle="#4a596c";ctx.fillRect(ankleX-14,ankleY-8,28,13);
+    ctx.fillStyle="#c3d0d9";ctx.fillRect(ankleX-10,ankleY-5,20,4);
+    ctx.restore();
+  }
   function drawBall(ball=activeBalls[0]) {
     // Spikes leave a dark, fading shadow of the ball plus a short speed streak.
     if(ball.shadowFrames>0){
@@ -948,6 +972,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       textLabel("분신",ally.x,ally.y-66,13,"#217f85","center",45);
     }
     drawTeacher(left, "#448bd8");
+    drawVolleyShackle();
     drawTeacher(right, (enemyLooks[currentDifficulty]||enemyLooks.normal).uniform);
     if(state.bossWarnFrames>0){
       const glow=state.bossWarnFrames%10<5?"#ffe57a":"#ff8e70";
