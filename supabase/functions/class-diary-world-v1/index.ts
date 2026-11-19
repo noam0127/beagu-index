@@ -87,7 +87,7 @@ Deno.serve(async req => {
     if (!(await checkLevel2(req))) return send({error:'LEVEL2_REQUIRED'},401,origin);
     const id=body.schoolId;
     const schools=await db('schools',{
-      select:'school_id,school_code,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,source',
+      select:'school_id,school_code,school_name,sido,sido_standard,support_office,education_office,education_office_code,address,homepage,establishment,school_kind,status,source,last_synced_at',
       school_id:'eq.'+id,school_kind:'eq.초등학교',status:'eq.운영',limit:'1'
     });
     if (!schools.length) return send({error:'SCHOOL_NOT_FOUND'},404,origin);
