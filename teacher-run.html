@@ -291,6 +291,8 @@ function stopToIntro(){
  updateLabels();intro();
 }
 function stopAndChangeSchool(){
+ if(state==="playing"){pause();void leavePausedRun(true);return;}
+ if(state==="paused"){void leavePausedRun(true);return;}
  stopToIntro();
  schoolPicker.resetForChange();
 }
@@ -473,16 +475,55 @@ function finish(win){
    {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?celebration.icon:"🫖");
  playTone(win?950:280,.32);
 }
+let savingPausedRun=false;
+async function leavePausedRun(changeSchool=false){
+ if(state!=="paused"||savingPausedRun)return;
+ if(clock<1){
+  $("overlayDesc").textContent="공식 기록을 남기려면 1초 이상 플레이해 주세요.";
+  return;
+ }
+ savingPausedRun=true;state="saving";
+ message("기록 저장 중","지금까지의 점수와 나이를 기록하고 있습니다.",[],"💾");
+ const rawScore=Math.max(0,Math.floor(score));
+ const survivalSeconds=Math.floor(clock);
+ if(rawScore>best){best=rawScore;persist();}
+ $("bestLabel").textContent=best.toLocaleString("ko-KR");
+ try{
+  const saved=await ranking?.finish(rawScore,{
+   score:rawScore,baseScore:rawScore,survivalSeconds,age:getAge(),victory:false,
+   nearMisses:nearCount,hits:misses,livesLeft,
+   healthPercent:Math.max(0,Math.min(100,Math.round(life/Math.max(1,maxLife)*100)))
+  });
+  if(saved!==true){
+   state="over";
+   message("기록 저장 실패","공식 기록을 저장하지 못했습니다. 연결 상태를 확인해 주세요.",[
+    {label:"↩ 처음으로 (기록 미저장)",action:stopToIntro},
+    {label:"🏫 다른 학교 선택",action:()=>{stopToIntro();schoolPicker.resetForChange();}}
+   ],"⚠️");
+   return;
+  }
+  stopToIntro();
+  if(changeSchool)schoolPicker.resetForChange();
+  schoolPicker.status.textContent="✅ 직전 경기 기록을 저장했습니다.";
+ }finally{savingPausedRun=false;}
+}
 function pause(){
- if(state==="playing"){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;message("일시정지","",[{label:"▶ 계속",action:resume},{label:"🏫 다른 학교로 변경",action:stopAndChangeSchool},{label:"↩ 처음으로",action:stopToIntro}],"⏸");}
- else if(state==="paused")resume();
+ if(state==="playing"){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
+  message("일시정지","",[
+   {label:"▶ 계속",action:resume},
+   {label:"🏫 다른 학교로 변경",action:()=>{void leavePausedRun(true);}},
+   {label:"↩ 처음으로",action:()=>{void leavePausedRun(false);}}
+  ],"⏸");
+ }else if(state==="paused")resume();
 }
 function resume(){state="playing";closeMessage();}
 function help(){
- const wasPlaying=state==="playing";
+ const wasPlaying=state==="playing",wasPaused=state==="paused";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\nEASY 날개·자동 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
- {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
+ message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\nEASY 날개·동료·관리자 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
+  {label:wasPlaying?"▶ 게임으로 돌아가기":wasPaused?"⏸ 일시정지 메뉴":"확인",
+   action:()=>{if(wasPlaying)resume();else if(wasPaused){state="playing";pause();}else stopToIntro();}}
+ ],"❔");
 }
 function fireChalk(dt){
  // Target dangerous falling objects only; do not harm beneficial recovery items.
