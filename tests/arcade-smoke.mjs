@@ -90,15 +90,15 @@ assert.equal(duringSave.school.school_name,"다음학교");assert.equal(duringSa
 assert.deepEqual(duringSave.board,[]);
 const unqualified=mockRecordBoard();
 unqualified.remote=true;
-unqualified.board=Array.from({length:10},(_,i)=>({score:500+i*10}));
+unqualified.board=Array.from({length:10},(_,i)=>({score:5000-i*100}));
 unqualified.load=async()=>unqualified.board;
-unqualified.request=async()=>{throw new Error("must not submit a slower time");};
+unqualified.request=async()=>{throw new Error("must not submit a lower score");};
 await unqualified.finish(610,{player:25,cpu:7,elapsedTenths:610});
 assert.match(unqualified.notice,/기준 미달/);
 assert.doesNotMatch(shared,/submitName|openRecord|dialogElement|ENTER YOUR NAME|input\.maxLength/);
 assert.match(shared,/localStorage\.removeItem\("arcade-last-name-v1"\)/,"wipe prior typed names on visitors' devices");
-assert.match(shared,/const timedGame=game=>game==="volleyball_25"/);
-console.log("PASS: automatic anonymous record, rejected slow time, server errors and safe stale-response cancellation");
+assert.match(shared,/\.sort\(\(a,b\)=>b\.score-a\.score/);
+console.log("PASS: automatic anonymous record, rejected low score, server errors and safe stale-response cancellation");
 
 assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
 assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
