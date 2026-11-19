@@ -359,7 +359,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-supporting-cast-v1.css?v=20261120-men-1">
 <link rel="stylesheet" href="styles/class-diary-male-live-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-student-doyun-v1.css?v=20261120-1">
-<link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-hq1">
+<link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-bust1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 <link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-hud-center1">
 <link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-linear-flow2">
@@ -621,7 +621,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <script src="js/class-diary-hq-sea-v1.js?v=20261120-hq1"></script>
 <script src="js/class-diary-hq-yuri-v1.js?v=20261120-hq1"></script>
 <script src="js/class-diary-female-hq-emotions-v1.js?v=20261120-hq1"></script>
-<script src="js/class-diary-female-hq-v1.js?v=20261120-original-photo-2"></script>
+<script src="js/class-diary-female-hq-v1.js?v=20261120-upper-body-1"></script>
 <script src="js/class-diary-male-photos-v1.js?v=20261120-photo-restore-1"></script>
 <script src="js/class-diary-semester-male-art-v1.js?v=20261120-photo-restore-1"></script>
 <script src="js/class-diary-student-doyun-v1.js?v=20261120-photo-restore-1"></script>
@@ -682,12 +682,34 @@ for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','m
  const art=femaleHQ&&femaleHQ.portrait(partner);
  $(id).src=art||visual.dataUrl(sd.portraitSvg(partner,'neutral'));
  $(id).dataset.artQuality=art?'hq':'sd';
+ $(id).dataset.portraitFraming=art&&femaleHQ.hasBust(partner)?'bust':'original';
 }
 for(const [id,partner] of [['setupPortraitSuhyun','suhyun'],['setupPortraitSea','sea'],['setupPortraitYuri','yuri']]){
  const art=femaleHQ&&femaleHQ.portrait(partner);
  $(id).src=art||visual.dataUrl(sd.portraitSvg(partner,'neutral'));
  $(id).dataset.artQuality=art?'hq':'sd';
+ $(id).dataset.portraitFraming=art&&femaleHQ.hasBust(partner)?'bust':'original';
 }
+/* Upper-body framing matches the male cast without changing canonical female faces. */
+if(femaleHQ&&typeof femaleHQ.prepareBust==='function')femaleHQ.prepareBust((who,bustUrl)=>{
+ const setupMap={woman:'setupPortraitWoman',none:'setupPortraitNone',
+  suhyun:'setupPortraitSuhyun',sea:'setupPortraitSea',yuri:'setupPortraitYuri'};
+ const setupImg=$(setupMap[who]);
+ if(setupImg&&setupImg.dataset.artQuality==='hq'){
+  setupImg.src=bustUrl;
+  setupImg.dataset.portraitFraming='bust';
+ }
+ const stageImg=$('scenePortrait');
+ if(stageImg&&stageImg.dataset.sdCharacter===who&&stageImg.dataset.artQuality==='hq'){
+  stageImg.src=bustUrl;
+  stageImg.dataset.portraitFraming='bust';
+ }
+ const guestImg=$('sceneGuestPortrait');
+ if(guestImg&&$('sceneGuest').dataset.sdCharacter===who&&guestImg.dataset.artQuality==='hq'){
+  guestImg.src=bustUrl;
+  guestImg.dataset.portraitFraming='bust';
+ }
+});
 for(const [id,person] of [['setupMaleJunseo','junseo'],['setupMaleDohyun','dohyun'],['setupMaleTaesik','taesik']])malePhotos.paint($(id),person);
 maleSemester.preload(()=>{maleSemester.paint($('setupHyunwooLive'),'neutral','cold-spring');$('setupHyunwooLive').hidden=false;$('setupPortraitMan').hidden=true;});
 for(const card of document.querySelectorAll('[data-partner-choice]')){
@@ -867,8 +889,7 @@ $('semesterStart').addEventListener('click',()=>{
  $('openingStart').click();storyMode='semester';
  $('setup').querySelector('.setup-head p').textContent='2027년 3월부터 7월까지, 한 학기 동안 이어질 선생님의 이야기입니다.';
  $('setup').querySelector('.setup-story-note p').textContent='2027년 3월–7월 · 6부 36화 · 108개의 선택';
- const stamp=$('setup').querySelector('.setup-player-stamp small');
- if(stamp)stamp.textContent='나만의 학급일지 · 36화';
+ // The personal profile stamp is deliberately absent from the school-first setup.
 });
 /* Only erase records from old versions; this game never saves new records. */
 try{
@@ -1068,6 +1089,7 @@ function displayStage(id,who,expression,season,semesterBackground){
  const highRes=femaleHQ&&femaleHQ.portrait(who);
  $('scenePortrait').src=highRes||visual.dataUrl(sd.portraitSvg(who,expression||'neutral',season));
  $('scenePortrait').dataset.artQuality=highRes?'hq':'sd';
+ $('scenePortrait').dataset.portraitFraming=highRes&&femaleHQ.hasBust(who)?'bust':'original';
  $('scenePortrait').dataset.hqExpression=expression||'neutral';
  $('scenePortrait').dataset.season=season||'original';
  $('scenePortrait').setAttribute('data-sd-character',who);
@@ -1104,6 +1126,7 @@ function renderSupportingCast(moment,season){
   const highRes=femaleHQ&&femaleHQ.portrait(guest.id);
   $('sceneGuestPortrait').src=highRes||visual.dataUrl(sd.portraitSvg(guest.id,guest.expression,season));
   $('sceneGuestPortrait').dataset.artQuality=highRes?'hq':'sd';
+  $('sceneGuestPortrait').dataset.portraitFraming=highRes&&femaleHQ.hasBust(guest.id)?'bust':'original';
   node.dataset.artQuality=highRes?'hq':'sd';
  }
  $('sceneGuestName').textContent=guest.name;

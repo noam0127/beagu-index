@@ -9,6 +9,8 @@
   const feedback=document.getElementById('challengeAccessFeedback');
   const protectedArea=document.getElementById('challengeProtected');
   const logoutButton=document.getElementById('challengeLogout');
+  const badge=document.getElementById('challengeAccessBadge');
+  const toggle=document.getElementById('challengeAccessToggle');
   let activeToken='';
   let requestSerial=0;
 
@@ -22,6 +24,25 @@
     try{sessionStorage.setItem(SESSION_KEY,token);}catch(_){}
   };
   const message=(text)=>{feedback.textContent=text;};
+  function resetCodeVisibility(){
+    input.type='password';
+    toggle.textContent='표시';
+    toggle.setAttribute('aria-pressed','false');
+    toggle.setAttribute('aria-label','참여코드 표시');
+  }
+  function authState(level){
+    const verified=Number(level)>=1;
+    badge.textContent=level==='checking'?'확인 중':verified?'Lv.'+level+' 인증 완료':'미인증';
+    badge.classList.toggle('is-authenticated',verified);
+    panel.setAttribute('data-auth-level',verified?String(level):'0');
+  }
+  toggle.addEventListener('click',()=>{
+    const reveal=input.type==='password';
+    input.type=reveal?'text':'password';
+    toggle.textContent=reveal?'숨기기':'표시';
+    toggle.setAttribute('aria-pressed',String(reveal));
+    toggle.setAttribute('aria-label',reveal?'참여코드 숨기기':'참여코드 표시');
+  });
   function lock(text=''){
     activeToken='';
     protectedArea.hidden=true;
@@ -29,11 +50,13 @@
     form.hidden=false;
     logoutButton.hidden=true;
     input.value='';
+    resetCodeVisibility();
+    authState(0);
     button.disabled=false;
     message(text);
     window.dispatchEvent(new Event('beagu:challenge-access-revoked'));
   }
-  function unlock(token){
+  function unlock(token,level=1){
     if(!token)return;
     activeToken=token;
     panel.hidden=false;
@@ -41,6 +64,8 @@
     protectedArea.hidden=false;
     logoutButton.hidden=false;
     input.value='';
+    resetCodeVisibility();
+    authState(level);
     message('');
     window.dispatchEvent(new Event('beagu:challenge-access-granted'));
   }
@@ -69,6 +94,8 @@
     panel.hidden=false;
     protectedArea.hidden=true;
     form.hidden=true;
+    logoutButton.hidden=true;
+    authState('checking');
     message('Lv.1 인증 상태 확인 중…');
     try{
       const result=await api('verify',{},token);
@@ -78,7 +105,7 @@
         lock('Lv.1 인증이 필요합니다.');
         return;
       }
-      unlock(token);
+      unlock(token,Number(result.level));
     }catch(error){
       if(serial!==requestSerial)return;
       if(error.status===401||error.status===403){
@@ -106,7 +133,7 @@
         return;
       }
       save(result.token);
-      unlock(result.token);
+      unlock(result.token,Number(result.level));
     }catch(error){
       if(serial!==requestSerial)return;
       button.disabled=false;

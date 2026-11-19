@@ -37,3 +37,44 @@ body.is-playing .vn-bottom .character-strip:has(.character-avatar[data-art-quali
 @media(prefers-reduced-motion:reduce){
  .scene-portrait[data-art-quality="hq"]{transition:none!important;transform:none}
 }
+
+/* Female half-body framing (same head-and-torso scale as the male photo cast).
+ * Keep the existing original Korean-drama-style faces; no matte/cartoon filter.
+ * Portraits are cropped in memory, not stretched or regenerated. */
+#setup .setup-character-art img[data-portrait-framing="bust"][data-art-quality="hq"]{
+ width:100%;height:100%;
+ object-fit:cover;object-position:center 10%;
+}
+#setup .setup-supporting-person img[data-portrait-framing="bust"][data-art-quality="hq"]{
+ object-fit:cover;object-position:center 8%;
+ border-radius:7px;
+}
+body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+ width:min(46vw,490px);
+ height:auto;
+ max-width:70%;
+ max-height:72%;
+ right:5%;
+ bottom:24%;
+ object-fit:contain;
+ object-position:center bottom;
+}
+#sceneGuestPortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+ width:100%;height:auto;
+ max-height:clamp(140px,31vh,285px);
+ object-fit:contain;object-position:center bottom;
+}
+@media(max-width:620px){
+ body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+  width:min(80vw,355px);
+  height:auto;
+  max-width:90%;
+  max-height:63%;
+  right:-1%;
+  bottom:30%;
+  object-fit:contain;
+ }
+ #sceneGuestPortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+  max-height:clamp(115px,24vh,185px);
+ }
+}
