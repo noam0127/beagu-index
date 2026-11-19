@@ -11,6 +11,7 @@
   const sections = ["adminLogin","adminMfa","adminDashboard"];
   let activeFactorId = "";
   let pending = false;
+  let period='7d',scale='day',dashboard=null,requestSeq=0;
 
   function show(section, message, error = false) {
     for (const id of sections) $(id).hidden = id !== section;
@@ -46,12 +47,162 @@
     }
     return json;
   }
+  const num=v=>v==null?"미수집":Number.isFinite(Number(v))?Number(v).toLocaleString("ko-KR"):"미수집";
+  const make=(tag,cls="",txt)=>{const el=document.createElement(tag);if(cls)el.className=cls;if(txt!==undefined)el.textContent=String(txt);return el};
+  const errMessage="통계 API에 연결하지 못했습니다. 관리자 인증 상태와 서버 설정을 확인해 주세요.";
+  function fill(kind,info){
+    document.querySelectorAll("[data-"+kind+"]").forEach(el=>{
+      const k=el.dataset[kind],v=info?.[k];
+      el.textContent=kind==="search"&&k==="conversion_rate"?(v==null?"계산 불가":num(v)+"%"):
+        kind==="view"&&k==="total"&&Number(v)===0?"기록 없음":num(v);
+    });
+  }
+  function keyFor(day){
+    if(scale==="day")return day;
+    if(scale==="month")return day.slice(0,7);
+    const d=new Date(day+"T00:00:00Z");
+    if(Number.isNaN(d.getTime()))return day;
+    d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);
+    return d.toISOString().slice(0,10);
+  }
+  function renderChart(id,rows,metric){
+    const root=$(id);root.replaceChildren();
+    const groups=new Map();
+    for(const d of rows||[]){
+      const day=String(d.day||"");
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(day))continue;
+      const k=keyFor(day);groups.set(k,(groups.get(k)||0)+(Number(d[metric])||0));
+    }
+    const values=[...groups].sort((a,b)=>a[0].localeCompare(b[0])).slice(-60);
+    if(!values.length){root.append(make("p","empty","해당 기간의 기록이 없습니다."));return;}
+    const max=Math.max(1,...values.map(x=>x[1]));
+    for(const [day,count] of values){
+      const col=make("div","bar-col"),bar=make("div","bar-rect");
+      bar.style.height=Math.max(2,Math.round(count/max*120))+"px";
+      col.title=day+" · "+num(count)+"건";col.setAttribute("aria-label",col.title);
+      col.append(bar);root.append(col);
+    }
+  }
+  function renderRanks(){
+    const root=$("adminSchoolRanking");root.replaceChildren();
+    if(!dashboard)return;
+    const mode=$("adminSchoolRankingMode").value;
+    const rows=mode==="views"?dashboard.school_views?.top:mode==="searched"?dashboard.top_searched:
+      mode==="detailed"?dashboard.top_detailed:dashboard.game_schools;
+    const field=mode==="views"?"views":mode==="played"?"plays":"hits";
+    const term=$("adminSchoolRankingSearch").value.trim().toLocaleLowerCase("ko");
+    const matched=(rows||[]).filter(x=>String(x.school_name||"").toLocaleLowerCase("ko").includes(term))
+      .sort((a,b)=>(Number(b[field])||0)-(Number(a[field])||0));
+    if(!matched.length){root.append(make("p","empty",term?"일치하는 학교가 없습니다.":"해당 기간에 저장된 학교별 기록이 없습니다."));return;}
+    matched.forEach((v,i)=>{
+      const row=make("div","rank-line");
+      row.append(make("span","rank-number",String(i+1).padStart(2,"0")),
+        make("span","rank-school",v.school_name||v.school_id||"학교 미등록"),
+        make("span","rank-count",num(v[field])+"회"));root.append(row);
+    });
+  }
+  function renderGames(){
+    const root=$("adminGameCards");root.replaceChildren();
+    const named=[["선생님배구","volleyball"],["험난한 교직생활","teacher_run"],["나의 OO한 학급일지","visual_novel"]];
+    for(const [name,code] of named){
+      const card=make("article","game-stat");card.append(make("h4","",name));
+      const data=(dashboard?.games||[]).find(g=>g.game===code);
+      if(code==="visual_novel"){card.append(make("p","empty","영구 이용 통계 미수집"));root.append(card);continue;}
+      card.append(make("strong","game-value",num(data?.plays??0)+"회"));
+      const details=make("dl");
+      for(const [k,v] of [["완료한 게임",num(data?.completed??0)+"회"],
+        ["완료율",data?.completion_rate==null?"계산 불가":num(data.completion_rate)+"%"],
+        ["완료 게임 평균 시간",data?.average_seconds==null?"기록 없음":num(data.average_seconds)+"초"]]){
+        details.append(make("dt","",k),make("dd","",v));
+      }
+      card.append(details);root.append(card);
+    }
+    const list=$("adminGameDifficulty");list.replaceChildren();
+    const rows=dashboard?.game_difficulty||[];
+    if(!rows.length)list.append(make("p","empty","난이도별 기록이 없습니다."));
+    rows.forEach(row=>list.append(make("span","pill",row.difficulty+" · "+num(row.plays)+"회")));
+  }
+  function renderScores(){
+    const root=$("adminGameScores");root.replaceChildren();
+    const now=Date.now();
+    const today=new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Seoul"});
+    const scores=(dashboard?.retained_game_scores||[]).filter(row=>{
+      const t=Date.parse(row.created_at);
+      if(!Number.isFinite(t))return false;
+      if(period==="today")return new Date(t).toLocaleDateString("sv-SE",{timeZone:"Asia/Seoul"})===today;
+      if(period==="7d")return now-t<=7*86400000;
+      if(period==="30d")return now-t<=30*86400000;
+      return true;
+    }).sort((a,b)=>Number(b.score)-Number(a.score)).slice(0,15);
+    if(!scores.length){root.append(make("p","empty","현재 기간에 보관된 최고점 기록이 없습니다."));return;}
+    const names={volleyball:"선생님배구",volleyball_25:"선생님배구",teacher_run:"험난한 교직생활",teacher_run_retirement:"험난한 교직생활"};
+    scores.forEach((v,i)=>{
+      const line=make("div","rank-line");
+      line.append(make("span","rank-number",i+1),
+        make("span","rank-school",(names[v.game]||"게임")+" · "+(v.school_name||"학교 미등록")),
+        make("span","rank-count",num(v.score)+"점"));root.append(line);
+    });
+  }
+  function renderAudit(){
+    const root=$("adminAudit");root.replaceChildren();
+    const rows=dashboard?.security?.recent||[];
+    if(!rows.length){root.append(make("p","empty","해당 기간에 관리자 감사 기록이 없습니다."));return;}
+    rows.forEach(entry=>{
+      const line=make("div","audit-line");
+      const when=entry.occurred_at?new Date(entry.occurred_at).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",hour12:false}):"기록 시간 없음";
+      line.append(make("span","event",String(entry.event_type)+" · "+String(entry.outcome)),make("time","muted",when));
+      root.append(line);
+    });
+  }
+  function displayDashboard(data){
+    dashboard=data;
+    for(const [name,object] of [["site",data.site],["search",data.search],["view",data.school_views],
+      ["level",data.levels],["challenge",data.challenge],["security",data.security]])fill(name,object);
+    renderChart("adminVisitChart",data.visit_trend,"views");
+    renderChart("adminSearchChart",data.search_trend,"searches");
+    renderChart("adminGameChart",data.game_trend,"plays");
+    renderRanks();renderGames();renderScores();renderAudit();
+    $("adminDataAsOf").textContent="집계 시각: "+new Date(data.as_of).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",hour12:false})+" · 개인정보 비표시";
+  }
+  async function loadMetrics(){
+    const seq=++requestSeq;
+    $("adminDataAsOf").textContent="통계를 불러오는 중입니다.";
+    const {data,error}=await auth.getSession();
+    if(error||!data?.session?.access_token)throw new Error("session_required");
+    const response=await fetch(SUPABASE_URL+"/functions/v1/beagu-admin-dashboard-v1",{
+      method:"POST",cache:"no-store",
+      headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+data.session.access_token},
+      body:JSON.stringify({action:"dashboard",period})
+    });
+    const payload=await response.json().catch(()=>({}));
+    if(!response.ok){const ex=new Error(payload.error||"dashboard_unavailable");ex.status=response.status;throw ex;}
+    if(seq!==requestSeq)return;
+    if(!payload.analytics||typeof payload.analytics!=="object")throw Error("invalid_response");
+    displayDashboard(payload.analytics);
+  }
+  document.querySelectorAll("[data-period]").forEach(button=>button.addEventListener("click",async()=>{
+    period=button.dataset.period;
+    document.querySelectorAll("[data-period]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn===button)));
+    try{await loadMetrics()}catch{warn(errMessage);}
+  }));
+  document.querySelectorAll("[data-scale]").forEach(button=>button.addEventListener("click",()=>{
+    scale=button.dataset.scale;
+    document.querySelectorAll("[data-scale]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn===button)));
+    if(dashboard){
+      renderChart("adminVisitChart",dashboard.visit_trend,"views");
+      renderChart("adminSearchChart",dashboard.search_trend,"searches");
+      renderChart("adminGameChart",dashboard.game_trend,"plays");
+    }
+  }));
+  $("adminSchoolRankingMode").addEventListener("change",renderRanks);
+  $("adminSchoolRankingSearch").addEventListener("input",renderRanks);
   async function authorized() {
     const proof = await gate("verify");
     if (!proof.permitted || !proof.mfa_verified) throw new Error("mfa_required");
     $("adminPassword").value = "";
     $("adminTotp").value = "";
     show("adminDashboard", "관리자 인증 완료 · 권한: " + proof.role);
+    await loadMetrics();
   }
   async function chooseFactor() {
     const {data, error} = await auth.mfa.listFactors();
@@ -138,12 +289,35 @@
       warn("2단계 인증이 완료되지 않았습니다. 코드를 확인하고 다시 시도해 주세요.");
     } finally {busy(false);}
   });
+  $("adminPasswordChangeForm").addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(pending)return;
+    const first=$("adminNewPassword"),second=$("adminConfirmPassword"),status=$("adminPasswordFeedback");
+    const password=first.value;
+    if(password.length<16||password!==second.value){
+      status.textContent="16자 이상인 같은 비밀번호를 두 칸에 입력해 주세요.";
+      return;
+    }
+    busy(true);status.textContent="변경 요청 중입니다.";
+    try{
+      await gate("verify");
+      const {error}=await auth.updateUser({password});
+      if(error)throw error;
+      status.textContent="비밀번호가 변경되었습니다. 다음 로그인부터 새 비밀번호를 사용하세요.";
+      first.value="";second.value="";
+    }catch{
+      status.textContent="비밀번호를 변경하지 못했습니다. 다시 인증한 뒤 시도해 주세요.";
+      first.value="";second.value="";
+    }finally{busy(false);}
+  });
+
   async function logout() {
     if (pending) return;
     busy(true);
     try {
       await auth.signOut();
       activeFactorId = "";
+      dashboard=null;requestSeq++;
       $("adminPassword").value = "";
       $("adminTotp").value = "";
       $("adminQrWrap").hidden = true;
