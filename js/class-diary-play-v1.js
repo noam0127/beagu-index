@@ -246,7 +246,14 @@ function validateProfile(profile){
   if(!['none','general','academic','violence'].includes(duty))throw Error('DUTY_INVALID');
   if(!['steady','demanding'].includes(classTone))throw Error('CLASS_SCENARIO_INVALID');
   if(!['collaborative','deflecting'].includes(workCulture))throw Error('CULTURE_SCENARIO_INVALID');
-  return {age,gender,partner,mbti,experience,duty,classTone,workCulture};
+  const sportsCulture=profile.sportsCulture||'optional';
+  const assignmentPractice=profile.assignmentPractice||'balanced';
+  const informalRequests=profile.informalRequests||'respectful';
+  if(!['optional','pressured','none'].includes(sportsCulture))throw Error('SPORTS_SCENARIO_INVALID');
+  if(!['balanced','newcomer_first'].includes(assignmentPractice))throw Error('ASSIGNMENT_SCENARIO_INVALID');
+  if(!['respectful','stereotyped'].includes(informalRequests))throw Error('INFORMAL_REQUESTS_INVALID');
+  return {age,gender,partner,mbti,experience,duty,classTone,workCulture,
+    sportsCulture,assignmentPractice,informalRequests};
 }
 function partnerName(profile){return profile.partner==='man'?'현우 선생님':profile.partner==='woman'?'지윤 선생님':'동학년 선생님';}
 function validateWorld(world,plan){
