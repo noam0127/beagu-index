@@ -33,6 +33,10 @@ assert.equal(manifest.artDirection.rendering,'photorealistic');
 assert.equal(manifest.artDirection.format,'fictional-original-adult-cast');
 assert.equal(manifest.artDirection.referenceUse,'composition-only-no-identity-copy');
 assert.equal(manifest.artDirection.protagonist,'first-person-configurable-no-fixed-portrait');
+assert.equal(manifest.artDirection.distinctivenessRequirement,'face-and-silhouette-distinguishable-without-labels-colors-or-costumes');
+assert.equal(manifest.artDirection.identityContinuityRequirement,'same-actor-face-across-six-expressions-no-drift');
+assert.equal(manifest.artDirection.distinctivenessStatus,'spec-only-manual-image-review-pending');
+assert.equal(manifest.artDirection.manualArtReview.length,5);
 for(const banned of ['anime','cartoon','manga','watercolor','chibi','celebrity-likeness','existing-drama-stills']){
  assert(manifest.artDirection.forbiddenStyles.includes(banned),'Missing prohibited visual direction '+banned);
 }
@@ -54,6 +58,13 @@ for(const c of manifest.characters){
  assert.equal(visual.CAST[c.legacyKey].name,c.name);
  assert(c.age>=20,'All romance/friendship cast must be adult');
  assert.equal(c.identityLock,'same-fictional-adult-actor-across-six-expression-assets');
+ const features=c.distinctiveIdentity;
+ assert(features&&typeof features==='object','Distinct facial identity missing for '+c.id);
+ for(const key of ['silhouetteKey','facialStructure','eyesBrows','noseMouth','hairContour','signatureDetail','shoulderGesture','neutralRead','smileRead','worriedRead','thumbnailCue']){
+  assert(typeof features[key]==='string'&&features[key].trim().length>=12,'Missing visual identity field '+key+' for '+c.id);
+ }
+ assert.deepEqual(c.distinctFrom.sort(),Object.values(REQUIRED_PARTNERS).filter(id=>id!==c.id).sort());
+
  assert.equal(c.expressionRendering,'subtle-natural-facial-muscle-movement-no-cartoon-exaggeration');
  assert.deepEqual(Object.keys(c.expressionStatus),REQUIRED_EXPRESSIONS);
  for(const exp of REQUIRED_EXPRESSIONS)checkImage(
@@ -61,6 +72,9 @@ for(const c of manifest.characters){
    c.expressionStatus[exp],manifest.limits.portraitBytes);
 }
 assert.equal(manifest.characters.find(c=>c.id==='minseo').relationship,'friendship-only');
+for(const key of ['silhouetteKey','facialStructure','eyesBrows','noseMouth','hairContour','signatureDetail','shoulderGesture','neutralRead','smileRead','worriedRead','thumbnailCue']){
+ assert.equal(new Set(manifest.characters.map(c=>c.distinctiveIdentity[key])).size,3,'Identity signatures overlap for '+key);
+}
 assert.deepEqual(Object.keys(manifest.expressionFallback).map(k=>manifest.expressionFallback[k]),
  ['neutral','happy','worried','worried','worried','happy']);
 assert.deepEqual(manifest.backgrounds.map(x=>x.id).filter(x=>x!=='bookstore').sort(),REQUIRED_LEGACY_SCENES.sort());
@@ -75,4 +89,4 @@ for(const rule of ['originalArtOnly','noSchoolIdentifyingInformation','noRealSta
  assert.equal(manifest.rules[rule],true,'Missing visual safety rule: '+rule);
 }
 assert.equal(uniquePaths.size,29);
-console.log('PASS stage 7-1 photorealistic direction: 3 original adult cast × 6 expressions, 11 planned backgrounds, legacy SVG fallback, '+ready+' ready images validated, no game state touched');
+console.log('PASS stage 7-1 photorealistic cast identities with 3 distinct visual signatures: 3 original adult cast × 6 expressions, 11 planned backgrounds, legacy SVG fallback, '+ready+' ready images validated, no game state touched');
