@@ -25,7 +25,7 @@ for(const [key,html] of Object.entries(pages)){
   assert.ok(html.includes('data-beagu-open-levelup') || html.includes('compareLv1Form') ||
     html.includes('lv1QuickForm'),key+' retains functional levelup entry');
   assert.ok(html.includes('id="beaguLevelState"'),key+' retains fixed level status');
-  assert.ok(html.includes('js/beagu-level-state-v1.js?v=20261120-lv2-imsi2'),
+  assert.ok(html.includes('js/beagu-level-state-v1.js?v=20261120-auth-unity1'),
     key+' busts cache for temporary Lv2 label');
 }
 for(const key of ['public','level1']){
@@ -42,7 +42,7 @@ for(const key of ['public','level1']){
 }
 assert.ok(pages.level1.includes('class="beagu-levelup-card beagu-levelup-status"'),
   'authenticated search status uses the same verification card');
-assert.ok(pages.level1.includes('data-beagu-open-levelup>레벨업 인증</button>'),
+assert.ok(pages.level1.includes('data-beagu-open-levelup>고유번호 인증</button>'),
   'authenticated Lv1 can open existing server-backed modal');
 assert.ok(pages.level1.includes('id="logoutButton"'),'Lv1 logout intact');
 assert.ok(pages.public.includes('id="lv1QuickForm"'),'public auth form intact');
