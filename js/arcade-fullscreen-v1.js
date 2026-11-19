@@ -14,9 +14,9 @@
  };
  // Familiar outward/inward arrows replace ambiguous square emoji.
  const svgBase='xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"';
- const maximizeIcon='<svg '+svgBase+'><path d="M8 3H3v5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><path d="m3 3 6 6m12-6-6 6m6 12-6-6M3 21l6-6"/></svg>';
- const minimizeIcon='<svg '+svgBase+'><path d="M9 9H3M9 9V3M15 9h6M15 9V3M9 15H3M9 15v6M15 15h6M15 15v6"/><path d="m3 3 6 6m18-6-12 12M3 21l6-6m12 6-6-6" style="display:none"/></svg>';
- // Inward-facing corners express returning to the smaller game viewport.
+ const maximizeIcon='<svg '+svgBase+'><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
+ const minimizeIcon='<svg '+svgBase+'><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>';
+ // Outward arrows enlarge the view; inward arrowheads restore the small view.
  function sync(){
   const expanded=active();
   button.innerHTML=expanded?minimizeIcon:maximizeIcon;
