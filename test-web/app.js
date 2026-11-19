@@ -10,6 +10,16 @@ const invite=validToken(incoming)?incoming:null;
 if(incoming){history.replaceState(null,'',location.pathname);}
 let access='',refresh='',user='',level=0,notice=false;
 let captchaToken='',turnstileId=null;
+let deviceProof='';
+try{
+ const key='beagu-test-device-v1';
+ deviceProof=localStorage.getItem(key)||'';
+ if(!validToken(deviceProof)){
+  const random=crypto.getRandomValues(new Uint8Array(32));
+  deviceProof=btoa(String.fromCharCode(...random)).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+  localStorage.setItem(key,deviceProof);
+ }
+}catch(_){deviceProof='';}
 let proof='';
 try{proof=sessionStorage.getItem('beagu-test-level1-proof')||'';}catch(_){}
 const isReady=()=>{
@@ -146,7 +156,7 @@ $('doBootstrap').onclick=()=>busy($('doBootstrap'),async()=>{
  const result=await api('bootstrap',{email:$('bootstrapEmail').value,
   password:$('bootstrapPass').value,captchaToken});
  takeSession(result);
- const created=await api('register',{username:$('bootstrapName').value},true);
+ const created=await api('register',{username:$('bootstrapName').value,deviceProof},true);
  user=created.username||'';await claimProof();await validateMe();
  show('accountPanel',false);message('globalStatus','이메일 확인 계정 등록 완료. 현재 Lv.'+level);
 });
