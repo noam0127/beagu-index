@@ -245,7 +245,7 @@
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261118-global2">
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261119-level-guide1">
-<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261119-game1">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261120-safari-fallback4">
 <script defer src="js/beagu-level-state-v1.js?v=20261119-level-guide1"></script>
 </head>
 
@@ -372,27 +372,67 @@
 <script defer src="js/beagu-game-lv1-gate-v1.js?v=20261119-inlineauth1"></script>
 
 <script>
-  // 각각의 게임 iframe에서 발생한 리사이즈 이벤트만 허용합니다.
+  // Keep the same iframe alive while expanding the game: moving or replacing it
+  // could restart a live match and lose its pending score submission.
   (function () {
-    const games = [
-      { id: "teacher-game-frame", type: "teacher-volleyball:resize" },
-      { id: "teacher-run-frame", type: "teacher-run:resize" }
+    const games=[
+      {id:"teacher-game-frame",resizeType:"teacher-volleyball:resize"},
+      {id:"teacher-run-frame",resizeType:"teacher-run:resize"}
     ];
-    window.addEventListener("message", function (event) {
-      if (event.origin !== window.location.origin || !event.data) return;
-      const config = games.find(function (item) {
-        const frame = document.getElementById(item.id);
-        return frame && event.data.type === item.type && event.source === frame.contentWindow;
-      });
-      if (!config) return;
-      const height = Number(event.data.height);
-      // Taller scoreboards, menus and expanded rankings must grow the frame,
-      // rather than creating an independent scrollbar inside the game.
-      if (!Number.isFinite(height) || height < 250 || height > 8000) return;
-      const frame = document.getElementById(config.id);
-      const targetHeight = Math.ceil(height) + "px";
-      if (frame.style.height !== targetHeight) frame.style.height = targetHeight;
+    let expandedFrame=null,expandedFeature=null;
+    function matchingFrame(event){
+      if(event.origin!==window.location.origin||!event.data)return null;
+      for(const game of games){
+        const frame=document.getElementById(game.id);
+        if(frame&&event.source===frame.contentWindow)return {frame,game};
+      }
+      return null;
+    }
+    function notify(frame,expanded){
+      try{
+        frame.contentWindow?.postMessage({
+          type:"arcade:fullscreen-state",active:expanded
+        },window.location.origin);
+      }catch(_){}
+    }
+    function collapse(){
+      if(!expandedFrame)return;
+      const frame=expandedFrame,feature=expandedFeature;
+      expandedFrame=null;expandedFeature=null;
+      feature?.classList.remove("arcade-host-expanded");
+      document.documentElement.classList.remove("arcade-game-host-open");
+      notify(frame,false);
+    }
+    function expand(frame){
+      if(expandedFrame===frame){notify(frame,true);return;}
+      if(expandedFrame)collapse();
+      const feature=frame.closest(".teacher-game-feature");
+      if(!feature||frame.hidden||feature.hidden)return;
+      expandedFrame=frame;expandedFeature=feature;
+      feature.classList.add("arcade-host-expanded");
+      document.documentElement.classList.add("arcade-game-host-open");
+      notify(frame,true);
+    }
+    window.addEventListener("message",event=>{
+      const matched=matchingFrame(event);
+      if(!matched)return;
+      const {frame,game}=matched;
+      if(event.data.type==="arcade:fullscreen-request"){
+        if(event.data.active===true)expand(frame);
+        else if(expandedFrame===frame)collapse();
+        else notify(frame,false);
+        return;
+      }
+      if(event.data.type!==game.resizeType||expandedFrame===frame)return;
+      const height=Number(event.data.height);
+      if(!Number.isFinite(height)||height<250||height>8000)return;
+      const nextHeight=Math.ceil(height)+"px";
+      if(frame.style.height!==nextHeight)frame.style.height=nextHeight;
     });
+    window.addEventListener("keydown",event=>{
+      if(event.key==="Escape"&&expandedFrame){event.preventDefault();collapse();}
+    });
+    window.addEventListener("pagehide",collapse);
   })();
 </script>
 
