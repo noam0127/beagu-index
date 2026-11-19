@@ -90,7 +90,7 @@ function choiceTrack(day,choice){
 }
 function sceneTrack(event){
  if(!event)return 'daily';
- if(event.kind==='tense'||event.tone==='tense'||event.tone==='unsettled')return 'tension';
+ if(event.kind==='tense'||event.kind==='unsettled'||event.tone==='tense'||event.tone==='unsettled')return 'tension';
  if(event.kind==='gentle'||event.tone==='gentle')return 'heartfelt';
  if(event.tone==='playful')return 'playful';
  if(event.tone==='reflective')return 'restful';
