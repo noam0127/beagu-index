@@ -45,28 +45,80 @@ assert.match(gameGate,/JSON\.stringify\(\{action:'login',code\}\)/,"in-place for
 assert.match(gameGate,/sessionStorage\.setItem\(sessionKey, data\.token\)/,"only the server session token persists");
 assert.match(gameGate,/window\.dispatchEvent\(new Event\('beagu:level-state-change'\)\)/,
  "successful inline authentication refreshes game visibility");
+
 {
- const listeners={};
- const buttonHandlers={};
+ // A mobile Safari mock rejects the native Fullscreen API. CSS fallback must work.
+ const listeners={};const buttonHandlers={};const states=new Set();
  const button={setAttribute(){},addEventListener(name,handler){buttonHandlers[name]=handler;}};
- let stage;
- const doc={
-  fullscreenElement:null,
-  querySelector(){return stage;},
-  addEventListener(name,handler){listeners[name]=handler;},
-  async exitFullscreen(){this.fullscreenElement=null;listeners.fullscreenchange?.();}
- };
- stage={
+ const area={
   querySelector(){return button;},
-  async requestFullscreen(){doc.fullscreenElement=stage;listeners.fullscreenchange?.();}
+  classList:{toggle(name,on){if(on)states.add(name);else states.delete(name);}},
+  async requestFullscreen(){throw new Error("iOS native canvas fullscreen unavailable");}
  };
- new Function("document",fullscreenSource)(doc);
- assert.equal(button.textContent,"🔳","game starts in normal size");
- await buttonHandlers.click();
- assert.equal(button.textContent,"🔽","fullscreen shows the shrink emoji");
- await buttonHandlers.click();
- assert.equal(button.textContent,"🔳","shrink restores fullscreen entry emoji");
+ const doc={
+  fullscreenElement:null,querySelector(){return area;},
+  documentElement:{classList:{toggle(){}}},
+  addEventListener(name,handler){listeners[name]=handler;}
+ };
+ const win={
+  parent:null,location:{origin:base},
+  addEventListener(name,handler){listeners[name]=handler;},
+  dispatchEvent(){}
+ };
+ win.parent=win;
+ new Function("window","document","Event",fullscreenSource)(win,doc,class MockEvent{});
+ assert.equal(button.textContent,"🔳");
+ buttonHandlers.click();await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(button.textContent,"🔽","iOS fallback enters expanded mode");
+ assert.ok(states.has("arcade-fullscreen-fallback"),"the game stage becomes fixed fullscreen");
+ buttonHandlers.click();await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(button.textContent,"🔳","the shrink button exits iOS fallback");
+ assert.ok(!states.has("arcade-fullscreen-fallback"));
 }
+{
+ // Homepage iframes request host expansion without destroying the ongoing iframe.
+ const listeners={};const handlers={};const messages=[];const areaStates=new Set();
+ const button={setAttribute(){},addEventListener(name,handler){handlers[name]=handler;}};
+ const area={
+  querySelector(){return button;},
+  classList:{toggle(name,on){on?areaStates.add(name):areaStates.delete(name);}}
+ };
+ const doc={
+  fullscreenElement:null,documentElement:{classList:{toggle(){}}},
+  querySelector(){return area;},addEventListener(name,handler){listeners[name]=handler;}
+ };
+ let parent;
+ parent={
+  location:{origin:base},
+  postMessage(data,origin){
+   assert.equal(origin,base);messages.push(data);
+   listeners.message({source:parent,origin:base,data:{type:"arcade:fullscreen-state",active:data.active}});
+  }
+ };
+ const win={parent,location:{origin:base},addEventListener(name,fn){listeners[name]=fn;},dispatchEvent(){}};
+ new Function("window","document","Event",fullscreenSource)(win,doc,class MockEvent{});
+ handlers.click();
+ assert.equal(messages.at(-1).active,true);
+ assert.ok(areaStates.has("arcade-fullscreen-fallback"));
+ assert.equal(button.textContent,"🔽");
+ handlers.click();
+ assert.equal(messages.at(-1).active,false);
+ assert.ok(!areaStates.has("arcade-fullscreen-fallback"));
+ assert.equal(button.textContent,"🔳");
+}
+const hostFullscreenScript=[...html.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)]
+ .map(match=>match[1]).find(src=>src.includes("arcade:fullscreen-request"));
+assert.ok(hostFullscreenScript,"homepage iframe host expansion is installed");
+new Function(hostFullscreenScript);
+assert.match(hostFullscreenScript,/frame\\.closest\\("\\.teacher-game-feature"\\)/,
+ "host expands the existing game section instead of replacing its iframe");
+assert.match(hostFullscreenScript,/event\\.source===frame\\.contentWindow/,
+ "only messages from known arcade iframes are accepted");
+assert.match(fullscreenCSS,/\\.arcade-game-viewport\\.arcade-fullscreen-fallback/,
+ "a fixed viewport is available when browser Fullscreen API is blocked");
+assert.match(fullscreenCSS,/contain:none!important/,
+ "the arcade cabinet CSS contain property cannot trap fixed fullscreen");
+
 console.log("PASS: game-only fullscreen controls, unified volleyball picker, and inline Lv.1 game auth");
 
 // Anonymous automatic leaderboard: no dialog, no typed nickname, and no stale session.
@@ -528,8 +580,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=20261120-arcade-pause-helpers3/);
-assert.match(html,/teacher-run\.html\?v=20261120-arcade-pause-helpers3/);
+assert.match(html,/teacher-volleyball\.html\?v=20261120-safari-fallback4/);
+assert.match(html,/teacher-run\.html\?v=20261120-safari-fallback4/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -663,8 +715,8 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalkHelpers\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261120-arcade-pause-helpers3/);
-assert.match(html,/teacher-run\.html\?v=20261120-arcade-pause-helpers3/);
+assert.match(html,/teacher-volleyball\.html\?v=20261120-safari-fallback4/);
+assert.match(html,/teacher-run\.html\?v=20261120-safari-fallback4/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
@@ -785,8 +837,8 @@ assert.doesNotMatch(html,/<a href="teacher-volleyball\.html"[^>]*>↗ 크게 보
  "the embedded volleyball game no longer has a zoom/enlarge link");
 assert.match(html,/<a href="teacher-run\.html"[^>]*>↗ 크게 보기<\/a>/,
  "survival external link remains unchanged");
-assert.match(volley,/arcade-leaderboard-v1\.js\?v=20261120-arcade-pause-helpers3/);
-assert.match(runner,/arcade-leaderboard-v1\.js\?v=20261120-arcade-pause-helpers3/);
+assert.match(volley,/arcade-leaderboard-v1\.js\?v=20261120-safari-fallback4/);
+assert.match(runner,/arcade-leaderboard-v1\.js\?v=20261120-safari-fallback4/);
 assert.match(shared,/this\.expanded=false/);
 assert.match(shared,/aria-expanded/);
 assert.match(shared,/arcade-ranking-content/);
@@ -874,8 +926,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261120-arcade-pause-helpers3")&&
-     site.body.includes("teacher-run.html?v=20261120-arcade-pause-helpers3"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261120-safari-fallback4")&&
+     site.body.includes("teacher-run.html?v=20261120-safari-fallback4"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -885,8 +937,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261120-arcade-pause-helpers3/);
-assert.match(site.body,/teacher-run\.html\?v=20261120-arcade-pause-helpers3/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261120-safari-fallback4/);
+assert.match(site.body,/teacher-run\.html\?v=20261120-safari-fallback4/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
