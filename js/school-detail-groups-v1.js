@@ -8,6 +8,7 @@
     {key:'facilities',title:'시설·환경'},
     {key:'meals',title:'급식'},
     {key:'admin',title:'행정·업무'},
+    {key:'domains',title:'분야별 점수'},
     {key:'other',title:'기타 승인정보'}
   ]);
   const KEYS=Object.freeze({
@@ -26,6 +27,7 @@
     classes:['classes','students_per_class']
   });
   function classify(item){
+    if(item?.group==='2025년 조사 영역별 점수 · 응답 표본 참고')return 'domains';
     const key=String(item?.factKey||'');
     if(KEYS[key])return KEYS[key];
     const label=String(item?.label||item?.title||'').replace(/\s+/g,'');
