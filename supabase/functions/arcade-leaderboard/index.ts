@@ -110,13 +110,24 @@ function validatedSurvivalSeconds(result:any,elapsed:number):number {
   if(!int(seconds,0,3600) || seconds>Math.floor(elapsed)+2)throw new Error("invalid_survival_time");
   return seconds;
 }
-function scoreFromVolleyball(result: any,elapsed:number): number {
-  const p = result?.player, c = result?.cpu, spikes = result?.spikes;
-  if (!int(p,0,99) || !int(c,0,99) || !int(spikes,0,300)) throw new Error("invalid_stats");
-  if (Math.max(p,c)<7 || Math.abs(p-c)<2) throw new Error("invalid_match");
+function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number {
+  const p=result?.player, c=result?.cpu, spikes=result?.spikes;
+  if(!int(p,0,99)||!int(c,0,99)||!int(spikes,0,300))throw new Error("invalid_stats");
+  if(result?.knockout!==undefined && typeof result.knockout!=="boolean")throw new Error("invalid_stats");
+  const knockout=result?.knockout===true;
+  const matchEnded=Math.max(p,c)>=7 && Math.abs(p-c)>=2;
+  if(knockout){
+    // A match can now finish early when the player's last life is depleted.
+    // Validate the number of lives against the school's server-verified tier.
+    const livesForTier=new Map([["easy",3],["normal",2],["hard",2],["very_hard",1],["extreme",1]]);
+    const requiredLives=livesForTier.get(String(difficulty));
+    if(!requiredLives||result.livesLost!==requiredLives)throw new Error("invalid_lives");
+    if(matchEnded)throw new Error("invalid_match");
+    if(result.survivalSeconds===undefined)throw new Error("invalid_survival_time");
+  }else if(!matchEnded)throw new Error("invalid_match");
   const seconds=validatedSurvivalSeconds(result,elapsed);
-  return p*120 + Math.min(60,spikes)*25 +
-    (p>c ? 600 + Math.max(0,7-c)*30 : 0) + Math.min(900,seconds*4);
+  return p*120+Math.min(60,spikes)*25+
+    (!knockout&&p>c?600+Math.max(0,7-c)*30:0)+Math.min(900,seconds*4);
 }
 function scoreFromRun(result: any, elapsed: number): number {
   const s = result?.score, day = result?.day, victory=result?.victory;
@@ -179,7 +190,7 @@ Deno.serve(async (req:Request)=>{
     if(elapsed<4||elapsed>3600)return error("invalid_duration",400,origin);
     let score:number;
     try {
-      score=game==="volleyball" ? scoreFromVolleyball(payload.stats,elapsed) : scoreFromRun(payload.stats,elapsed);
+      score=game==="volleyball" ? scoreFromVolleyball(payload.stats,elapsed,session.difficulty) : scoreFromRun(payload.stats,elapsed);
     } catch(e) {return error(e instanceof Error?e.message:"invalid_stats",400,origin);}
     const existing=await top(game);
     if(existing.length>=10 && score<=existing[9].score){

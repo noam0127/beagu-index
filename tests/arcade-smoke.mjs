@@ -300,6 +300,88 @@ assert.match(volley,/function activateSuperSpike\(\)/);
 assert.match(runner,/function activateSpecial\(\)/);
 console.log("PASS: EXTREME ground restriction, personal HI-SCORE, school-intro overlay and tutorial text removal");
 
+// Life depletion → round reset → final KO, spike shadows and sound toggle.
+const volleyLifeSource=volley.match(/const lifeProfiles=(\{[^}]+\});/);
+assert.ok(volleyLifeSource,"volleyball has tier-based life profiles");
+const volleyLifeProfile=new Function("return "+volleyLifeSource[1])();
+assert.deepEqual(volleyLifeProfile,{easy:3,normal:2,hard:2,very_hard:1,extreme:1});
+assert.match(volley,/id="volley-lives"/);
+assert.match(volley,/id="volley-round-label"/);
+assert.match(volley,/id="player-energy-progress"/);
+assert.match(volley,/id="sound" class="sound-toggle"/);
+assert.match(volley,/soundButton\.addEventListener\("click"/);
+assert.match(volley,/localStorage\.setItem\(SOUND_KEY/);
+assert.match(volley,/function unlockSound\(\)/);
+assert.match(volley,/window\.AudioContext\|\|window\.webkitAudioContext/);
+assert.match(volley,/function spikeSound\(superSpike=false\)/);
+assert.match(volley,/spikeSound\(charged\)/);
+assert.match(volley,/ball\.shadowFrames=charged\?26:18/);
+assert.match(volley,/ball\.trail\.length > \(ball\.shadowFrames>0\?14:6\)/);
+assert.match(volley,/if\(ball\.shadowFrames>0\)/);
+assert.match(volley,/ctx\.ellipse\(ball\.x-ball\.vx\*i\*1\.55/);
+const volleyFunctionsStart=volley.indexOf('function finishMatch(knockout=false){');
+const volleyFunctionsEnd=volley.indexOf('function step() {',volleyFunctionsStart);
+assert.ok(volleyFunctionsStart>0&&volleyFunctionsEnd>volleyFunctionsStart);
+const volleyLifeFunctions=volley.slice(volleyFunctionsStart,volleyFunctionsEnd);
+const lifeTestState={
+ phase:"playing",leftEnergy:0,rightEnergy:75,leftMaxEnergy:100,rightMaxEnergy:100,
+ livesLeft:2,maxLives:2,round:1,knockout:false,leftScore:3,rightScore:1,spikes:2
+};
+const lifeObserved={resets:0,positions:0,rank:null,unlocked:0};
+const mockedLifeFunctions=new Function("state","observed",[
+  'const tone=()=>{},releaseKeys=()=>{},syncUI=()=>{},updateEnergyUI=()=>{},setStatus=()=>{};',
+  'const schoolPicker={setLocked:()=>{observed.unlocked++;}};',
+  'const rememberBest=()=>{},getFinalScore=()=>550,getBaseScore=()=>270,getSurvivalSeconds=()=>70,getSurvivalBonus=()=>280;',
+  'const resetEnergy=()=>{observed.resets++;state.leftEnergy=100;};',
+  'const resetPositions=()=>{observed.positions++;};',
+  'const ranking={finish:(score,stats)=>{observed.rank={score,stats};}};',
+  'const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),energy={allyCost:1,enemyCost:1};',
+  volleyLifeFunctions,'return {loseLife,point,finishMatch};'
+].join("\n"))(lifeTestState,lifeObserved);
+assert.equal(mockedLifeFunctions.loseLife(),true);
+assert.equal(lifeTestState.livesLeft,1,"first exhaustion consumes exactly one life");
+assert.equal(lifeTestState.round,2,"first exhaustion advances round");
+assert.equal(lifeTestState.phase,"point","round intermission protects the user from instant repeated KO");
+assert.equal(lifeTestState.leftEnergy,100,"round restores stamina");
+assert.equal(lifeObserved.resets,1);
+assert.equal(lifeObserved.positions,1);
+assert.equal(lifeObserved.rank,null,"intermediate rounds do not submit records");
+lifeTestState.phase="playing";lifeTestState.leftEnergy=0;
+assert.equal(mockedLifeFunctions.loseLife(),true);
+assert.equal(lifeTestState.livesLeft,0);
+assert.equal(lifeTestState.phase,"finished");
+assert.equal(lifeTestState.knockout,true);
+assert.equal(lifeObserved.rank.stats.knockout,true);
+assert.equal(lifeObserved.rank.stats.livesLost,2);
+assert.equal(lifeObserved.rank.stats.survivalSeconds,70);
+assert.equal(lifeObserved.rank.score,550);
+assert.equal(lifeObserved.resets,1,"final KO must not start a new round");
+// Server accepts verified difficulty-based knockouts before seven points.
+assert.equal(scoreFns.scoreFromVolleyball({
+ player:3,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:1
+},80,"extreme"),3*120+2*25+70*4,"KO receives no undeserved victory bonus");
+assert.equal(scoreFns.scoreFromVolleyball({
+ player:3,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:2
+},80,"hard"),3*120+2*25+70*4,"hard two-life KO allowed");
+assert.throws(()=>scoreFns.scoreFromVolleyball({
+ player:3,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:1
+},80,"hard"),/invalid_lives/);
+assert.throws(()=>scoreFns.scoreFromVolleyball({
+ player:7,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:1
+},80,"extreme"),/invalid_match/);
+assert.throws(()=>scoreFns.scoreFromVolleyball({
+ player:3,cpu:1,spikes:2,survivalSeconds:90,knockout:true,livesLost:1
+},70,"extreme"),/invalid_survival_time/);
+assert.throws(()=>scoreFns.scoreFromVolleyball({
+ player:3,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:1
+},80,"mystery"),/invalid_lives/);
+assert.equal(scoreFns.scoreFromVolleyball({
+ player:7,cpu:3,spikes:2,survivalSeconds:70
+},80,"easy"),7*120+2*25+600+(7-3)*30+70*4,"normal winning match remains compatible");
+assert.match(backend,/scoreFromVolleyball\(payload\.stats,elapsed,session\.difficulty\)/);
+console.log("PASS: volleyball life rounds, final KO, tier verification, time score, shaded spike trails and sound control");
+
+
 
 
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
@@ -321,7 +403,7 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-extreme-best-intro1")&&
+  if(site.body.includes("teacher-volleyball.html?v=20261119-volley-lives-sfx1")&&
      site.body.includes("teacher-run.html?v=20261119-extreme-best-intro1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
@@ -332,7 +414,7 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-extreme-best-intro1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-volley-lives-sfx1/);
 assert.match(site.body,/teacher-run\.html\?v=20261119-extreme-best-intro1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
