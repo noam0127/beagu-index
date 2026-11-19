@@ -61,7 +61,7 @@ assert.ok(html.includes('benchmark-directions') && html.includes('전국 평균�
 assert.ok(html.includes('benchmark-values'),'Actual approved comparison values must remain visible at the bottom');
 assert.ok(src.includes('!isSchoolOverviewRepeat(x)'),'Repeated school identity fields must be omitted from historical details');
 assert.ok(src.includes("학교별 수치가 없습니다"),'Unavailable approved fields must not be fabricated');
-assert.ok(src.includes('Lv.1 인증 후에는 검증된 학교별 수치'),'Level 1 scope must exceed public Level 0');
+assert.ok(src.includes('Lv.1 인증 후에는 학교별 최다 선택값') && src.includes('state.tier>=1'), 'Level 1 must retain protected school-level data beyond Lv0');
 assert.ok(!html.includes('SCHOOL REPORT · 2023—2026'),'Redundant English UI labels should be removed');
 
 // Every 2023–2026 question starts with the reference comparison when available.
