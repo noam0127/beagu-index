@@ -6,6 +6,7 @@ const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const admin = createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 // Intentionally fail closed if the private server setting has not been configured.
 const previewPin = Deno.env.get('CLASS_DIARY_PREVIEW_PIN') || '';
+const PREVIEW_SUBJECT = '8a61e133-2afd-469c-b611-f409b4197d61';
 const allowed = new Set([
  'https://baeguindex.com','https://www.baeguindex.com','https://noam0127.github.io',
  'http://localhost:8000','http://127.0.0.1:8000','http://127.0.0.1:8123'
@@ -41,14 +42,14 @@ function decode(value:string){
 }
 async function issueProgressToken(sub:string){
  const payload={v:1,scope:'class-diary-progress',campaign:'2026',sub,
-  exp:Date.now()+12*60*60_000,nonce:encode(crypto.getRandomValues(new Uint8Array(12))),sub};
+  exp:Date.now()+12*60*60_000,nonce:encode(crypto.getRandomValues(new Uint8Array(12)))};
  const body=encode(new TextEncoder().encode(JSON.stringify(payload)));
  const sig=await crypto.subtle.sign('HMAC',await progressKeyPromise,new TextEncoder().encode('progress.v1.'+body));
  return 'p1.'+body+'.'+encode(new Uint8Array(sig));
 }
 async function issueTicket(sub:string){
  const payload={v:1,scope:'class-diary-fictional-guest',exp:Date.now()+10*60_000,
-  nonce:encode(crypto.getRandomValues(new Uint8Array(12)))};
+  nonce:encode(crypto.getRandomValues(new Uint8Array(12))),sub};
  const body=encode(new TextEncoder().encode(JSON.stringify(payload)));
  const sig=await crypto.subtle.sign('HMAC',await ticketKeyPromise,new TextEncoder().encode('v1.'+body));
  return 'v1.'+body+'.'+encode(new Uint8Array(sig));
@@ -58,7 +59,7 @@ async function validateTicket(ticket:unknown){
  const [,body,signature]=ticket.split('.');
  try{
   const parsed=JSON.parse(new TextDecoder().decode(decode(body)));
-  if(parsed?.v!==1||parsed?.scope!=='class-diary-fictional-guest'||
+  if(parsed?.v!==1||parsed?.scope!=='class-diary-fictional-guest'||parsed?.sub!==PREVIEW_SUBJECT||
      !Number.isSafeInteger(parsed.exp)||parsed.exp<Date.now()||parsed.exp>Date.now()+10*60_000||
      !/^[A-Za-z0-9_-]{16}$/.test(parsed.nonce))return false;
   const valid=await crypto.subtle.verify('HMAC',await ticketKeyPromise,decode(signature),new TextEncoder().encode('v1.'+body));
@@ -113,7 +114,7 @@ Deno.serve(async req=>{
   if(!/^[0-9]{4}$/.test(code)||!/^[0-9]{4}$/.test(previewPin)||code!==previewPin)
     return respond({error:'INVALID_CODE'},401,origin);
   // Private preview access only. Never grant Lv.1/Lv.2 or accept challenge codes.
-  const ticket=await issueTicket('');
+  const ticket=await issueTicket(PREVIEW_SUBJECT);
   return respond({ok:true,scope:'class-diary-fictional-guest',ticket,expiresInSeconds:600},200,origin);
  }catch{return respond({error:'AUTH_UNAVAILABLE'},503,origin);}
 });
