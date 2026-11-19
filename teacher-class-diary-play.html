@@ -352,7 +352,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 
 
 </style>
-<link rel="stylesheet" href="styles/class-diary-journey-v1.css?v=20261120-direct-school1">
+<link rel="stylesheet" href="styles/class-diary-journey-v1.css?v=20261120-linear-flow2">
 <link rel="stylesheet" href="styles/class-diary-motion-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-ui-v2.css?v=20261120-paper-1">
 <link rel="stylesheet" href="styles/class-diary-semester-ui-v1.css?v=20261120-1">
@@ -362,7 +362,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-hq1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 <link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-hud-center1">
-<link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-guest1">
+<link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-linear-flow2">
 <link rel="stylesheet" href="styles/class-diary-progress-controls-v1.css?v=20261120-1">
 </head>
 <body>
@@ -629,7 +629,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <script src="js/class-diary-scenario-v1.js"></script>
 <script src="js/class-diary-incidents-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
-<script src="js/class-diary-journey-v1.js?v=20261120-direct-school1"></script>
+<script src="js/class-diary-journey-v1.js?v=20261120-linear-flow2"></script>
 <script src="js/class-diary-motion-v1.js"></script>
 <script src="js/class-diary-literary-v1.js?v=20261120-1"></script>
 <script>
@@ -694,7 +694,7 @@ for(const card of document.querySelectorAll('[data-partner-choice]')){
  card.addEventListener('click',()=>{
   $('partner').value=card.dataset.partnerChoice;
   syncSetupPartner();sound.note('uiPick');
-  if(isGuest)journey.go(3);
+  if($('setup').dataset.step==='2')$('profileForm').requestSubmit();
  });
 }
 $('partner').addEventListener('change',()=>{syncSetupPartner();sound.note('uiPick')});
@@ -812,27 +812,29 @@ $('diarySchoolQuery').addEventListener('input',()=>{
  schoolSearchTimer=setTimeout(()=>{void searchDiarySchools(query,serial);},300);
 });
 $('diaryLandingStart').addEventListener('click',()=>{
- const fixture=window.BeaguClassDiaryDemo.createDemo();
- world=fixture.world;plan=fixture.plan;
- $('accessLabel').textContent='가상학교 체험';
- $('schoolLine').textContent='가상의 초등학교';
- $('worldAutoNote').textContent='실제 학교 자료를 사용하지 않는 가상의 이야기입니다.';
+ if(isGuest&&!$('guestResume').hidden){show('guestAccess');return;}
+ if(!world||!plan){
+  const fixture=window.BeaguClassDiaryDemo.createDemo();
+  world=fixture.world;plan=fixture.plan;
+ }
+ if(!isGuest){
+  $('accessLabel').textContent='프롤로그 · 가상학교 체험';
+  $('schoolLine').textContent='가상의 초등학교';
+  $('worldAutoNote').textContent='실제 학교 자료를 사용하지 않는 가상의 이야기입니다.';
+ }
  selectSchoolMode('demo');
  $('semesterStart').click();
 });
 $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
 let storyMode='week';
 function prepareGuestProfile(){
- // Fictional alias and neutral defaults: no profile fields after home verification.
- $('playerName').value='';
+ // Use a fictional in-story name and neutral defaults; never ask for personal traits.
+ $('playerName').value='새봄';
  $('experience').value='mid';
  $('gender').value='undisclosed';
  $('mbti').value='INFP';
  syncSetupName();
- const stamp=$('setup').querySelector('.setup-player-stamp small');
- if(stamp)stamp.textContent='학급일지에 쓰일 이름을 적어 주세요';
- const hint=$('setup').querySelector('.setup-section-title small');
- if(hint)hint.textContent='학교를 고르고 이름을 입력해 주세요.';
+ selectSchoolMode('demo');
  const note=$('setup').querySelector('.setup-story-note p');
  if(note)note.textContent='2027년 3월–7월 · 36화';
 }
@@ -848,14 +850,12 @@ function autoSaveProgress(){
  if(isGuest&&storyMode==='semester'&&progressSession&&game)void progressSession.save(game);
 }
 function enterGuestOpening(){
+ // Home code authentication has already finished. The first visible screen is the title card.
  sound.setEnabled(true);updateMusicButton();guestStartMusic();
- const opening=$('opening');opening.classList.remove('intro-autoplay');
- show('opening');void opening.offsetWidth;opening.classList.add('intro-autoplay');
  clearTimeout(guestIntroTimer);
- guestIntroTimer=setTimeout(()=>{
-  if(!opening.hidden){opening.classList.remove('intro-autoplay');$('semesterStart').click();}
- },5000);
- status('학급일지에 오신 것을 환영합니다. 화면을 터치하면 다음 장으로 넘어갑니다.');
+ $('opening').classList.remove('intro-autoplay');
+ show('diaryLanding');
+ status('첫 페이지를 펼치면 학교를 선택할 수 있습니다.');
 }
 function guestStartMusic(){
  if(isGuest&&sound.isEnabled())void sound.setTrack('daily').catch(()=>{});
@@ -1467,8 +1467,9 @@ async function boot(){
      sound.setEnabled(true);updateMusicButton();guestStartMusic();
      render();status('저장된 학급일지를 불러왔습니다.');
     };
-    $('guestNewBtn').onclick=()=>{$('guestResume').hidden=true;enterGuestOpening();};
-    status('저장된 이야기가 있습니다. 이어할지 선택해 주세요.');
+    $('guestNewBtn').onclick=()=>{$('guestResume').hidden=true;selectSchoolMode('demo');$('semesterStart').click();};
+    enterGuestOpening();
+    status('제목 카드를 누르면 이어하기 또는 처음부터 시작할 수 있습니다.');
     return;
    }
    enterGuestOpening();
@@ -1546,7 +1547,6 @@ $('setup').addEventListener('click',event=>{
  if(!isGuest||!document.body.classList.contains('is-setting')||event.target.closest('button,a,input,select,label'))return;
  const step=$('setup').dataset.step;
  if(step==='1')$('setupNext').click();
- else if(step==='3')$('profileForm').requestSubmit();
 });
 $('novel').addEventListener('click',event=>{
  if(!isGuest||!document.body.classList.contains('is-playing')||
