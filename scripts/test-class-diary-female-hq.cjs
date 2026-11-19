@@ -78,7 +78,7 @@ for(const marker of [
  'femaleHQ.portrait(guest.id)','id="sceneGuestPortrait"','id="scenePortrait"'
 ])assert(page.includes(marker),'Missing screen connection '+marker);
 assert(page.includes('styles/class-diary-female-hq-v1.css?v=20261120-waistup3'));
-assert(page.includes('femaleHQ.prepareBust('),'Five female photo crops should initialize');
+assert(!page.includes('femaleHQ.prepareBust('),'Transparent WebP cutouts must load without Canvas cropping');
 assert(page.includes("dataset.portraitFraming='bust'"),'Visible portrait should update when crop finishes');
 assert(page.includes("femaleHQ.hasBust(who)"),'In-scene female art should use bust variant');
 assert(page.includes("femaleHQ.hasBust(guest.id)"),'Female supporting actors should use bust variant');
