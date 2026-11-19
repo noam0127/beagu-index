@@ -76,7 +76,7 @@ function init(){
  let previousDay='';
  function dayChanged(){
    const raw=(day.textContent||'').trim();
-   const match=/^\d+\s*\/\s*7/.exec(raw);
+   const match=/^\d+\s*\/\s*(?:7|36)\b/.exec(raw);
    const key=match?match[0]:raw;
    if(!key||key===previousDay)return;
    previousDay=key;
