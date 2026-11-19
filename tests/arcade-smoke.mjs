@@ -645,6 +645,53 @@ assert.match(backend,/order:"win_time_tenths\.asc,created_at\.asc"/);
 assert.match(backend,/Persist each validated result/);
 console.log("PASS: separate fastest-25 and high-score boards, partial match uploads, anonymous records");
 
+
+// Real victory headline selection: no generic copy for distinct achievements.
+const vcStart=volley.indexOf("function volleyballCongratulations(");
+const vcEnd=volley.indexOf("function finishMatch(early=false){",vcStart);
+assert.ok(vcStart>0&&vcEnd>vcStart);
+const volleyVictory=new Function("MATCH_TARGET",volley.slice(vcStart,vcEnd)+"return volleyballCongratulations;")(25);
+assert.match(volleyVictory(0,"easy",2,false,false).title,/완벽한 승리/);
+assert.match(volleyVictory(24,"hard",2,false,false).title,/마지막 한 점/);
+assert.match(volleyVictory(12,"extreme",1,false,false).title,/족쇄/);
+assert.match(volleyVictory(12,"hard",1,true,true).title,/두 개의 신기록/);
+assert.match(volleyVictory(9,"hard",1,false,false).title,/압도적인/);
+assert.match(volleyVictory(19,"hard",6,false,false).title,/연속 득점/);
+assert.match(volleyVictory(19,"hard",2,false,true).title,/최단시간/);
+assert.match(volleyVictory(19,"hard",2,true,false).title,/최고 점수/);
+const rcStart=runner.indexOf("function retirementCongratulations(");
+const rcEnd=runner.indexOf("function finish(win){",rcStart);
+assert.ok(rcStart>0&&rcEnd>rcStart);
+const runVictory=new Function(runner.slice(rcStart,rcEnd)+"return retirementCongratulations;")();
+assert.match(runVictory("normal",0,1,2,.8,10000,false).title,/무사고/);
+assert.match(runVictory("extreme",3,3,1,.3,10000,false).title,/족쇄/);
+assert.match(runVictory("hard",3,15,1,.3,10000,false).title,/회피의 달인/);
+assert.match(runVictory("normal",3,2,2,.9,10000,false).title,/건강하게/);
+assert.match(runVictory("hard",3,2,1,.2,10000,true).title,/점수 신기록/);
+assert.match(runVictory("hard",3,2,1,.2,21000,false).title,/전설/);
+const otherCelebrations=new Set([0,1,2].map(x=>runVictory("hard",3,x,1,.2,5000+x,false).title));
+assert.ok(otherCelebrations.size>=2,"ordinary retirement clear messages vary");
+assert.match(volley,/state\.pointTicks=24/,"point intermission cut to 0.4 seconds");
+assert.match(volley,/const precise=p\.side==="left"&&accuracy/,"precision-based hit timing matters");
+assert.match(volley,/state\.rescueUsed\|\|hitBall\.cooldown/,"clones only rescue once");
+assert.match(volley,/Math\.abs\(hitBall\.x-left\.x\)<115/,"helpers stay out when player can receive");
+assert.match(runner,/closestClearance<58/,"near miss verified by real distance");
+assert.doesNotMatch(runner,/!a\.good&&Math\.abs\(a\.x-player\.x\)<83/,"old false near-miss scoring removed");
+assert.doesNotMatch(runner,/addScore\(55\);float\(a\.x,a\.y,"PERFECT \+55"/,"protected collisions no longer grant combo points");
+assert.match(runner,/addScore\(90\)/,"dodging rewarded above auto chalk");
+assert.match(runner,/addScore\(5\);playTone\(760/,"auto chalk less valuable than dodging");
+assert.match(runner,/earlyMilestones\.has\(mark\)/,"10,20,30 second rewards exist");
+assert.match(runner,/const flyingSpeed=speed/,"touch and keyboard speed parity");
+assert.match(runner,/profile\.homing,45/,"mid-career homing pattern");
+assert.match(runner,/stage===3&&|if\(stage===3\)/,"career-specific safe lane");
+assert.match(shared,/arcade-tier-filter/,"tiered leaderboard filter available");
+assert.match(backend,/RANK_TIERS=new Set/,"server validates leaderboard tiers");
+assert.match(backend,/if\(tier\)q\.set\("difficulty","eq\."\+tier\)/,"ranking tier applied at DB query");
+assert.match(backend,/Persist each validated result/,"all runner results are persisted");
+assert.match(runner,/ranking\?\.finish\(Math\.floor\(score\)/,"runner auto submits on finish");
+assert.match(runner,/닉네임 없이 결과를 자동 기록합니다/);
+console.log("PASS: conditional congratulations, core action rewards, input parity and automatic tiered ranking");
+
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
  for(let i=0;i<times;i++){
