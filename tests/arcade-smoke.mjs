@@ -30,7 +30,9 @@ for (const game of [volley,runner]) {
 }
 assert.match(fullscreenCSS,/:fullscreen canvas/,"fullscreen scales the gameplay canvas");
 assert.match(fullscreenCSS,/100dvh/,"fullscreen uses actual viewport height");
-assert.match(volley,/schoolPicker\.mount\.appendChild\(schoolChooseButton\)/,"school CTA joins the search card");
+assert.match(volley,/id="volley-ready-overlay"/,"volleyball start overlay appears inside the court");
+assert.match(volley,/<h2 id="volley-ready-title">학교를 선택하세요<\/h2>/,"start card has its own heading");
+assert.doesNotMatch(volley,/위의 학교 검색창에서 선택/,"obsolete instruction removed");
 assert.match(volley,/▶ 이 학교로 시작하기/,"school CTA switches after eligible selection");
 assert.match(volley,/if\(schoolPicker\.get\(\)\?\.eligible===true\)\{void startMatch\(\);return;\}/,
  "selected school starts the match without reopening selection");
@@ -808,8 +810,15 @@ console.log("PASS: no volleyball zoom link, both TOP10 panels folded by default 
 
 
 // The volleyball start-screen school button is real, keyboard-accessible and connected to the live picker.
-assert.match(volley,/<button type="button" id="volley-school-choose"[^>]*aria-controls="arcade-school-picker"[^>]*hidden>🏫 학교 선택하기<\/button>/);
-assert.match(volley,/schoolChooseButton\.hidden=state\.phase!=="ready"/,"button only shown on the pre-game screen");
+assert.match(volley,/<div class="volley-ready-overlay"[\s\S]*?<div class="volley-ready-panel">[\s\S]*?<h2 id="volley-ready-title">학교를 선택하세요<\/h2>[\s\S]*?<button type="button" id="volley-school-choose"[^>]*aria-controls="arcade-school-picker">🏫 학교 선택하기<\/button>/,
+ "school button is inside the in-court ready panel, as in survival game");
+assert.match(volley,/readyOverlay\.hidden=!isReady/,"ready overlay only appears before a match");
+assert.match(volley,/schoolChooseButton\.hidden=!isReady/,"button visibility follows the ready state");
+assert.match(volley,/readyTitle\.textContent=chosen\?\.eligible/,"ready panel reflects chosen school");
+assert.match(volley,/schoolChooseButton\.textContent=chosen\?\.eligible\?"▶ 이 학교로 시작하기"/,
+ "selected eligible school gets an in-panel start button");
+assert.doesNotMatch(volley,/schoolPicker\.mount\.appendChild\(schoolChooseButton\)/,
+ "school CTA must not remain in the search bar");
 assert.match(volley,/schoolChooseButton\.addEventListener\("click",/);
 assert.match(volley,/schoolPicker\.resetForChange\(\)/,"choosing a new school clears the old selection");
 assert.match(volley,/schoolPicker\.focus\(\)/,"button focuses school-name search");
