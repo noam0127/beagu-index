@@ -246,6 +246,7 @@
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261119-level-guide1">
 <link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261120-fullscreen-icons2">
+<link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <script defer src="js/beagu-level-state-v1.js?v=20261119-level-guide1"></script>
 </head>
 
@@ -370,6 +371,7 @@
 <script src="js/visit-stats.js?v=20261117-visitfix1"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script defer src="js/beagu-game-lv1-gate-v1.js?v=20261119-inlineauth1"></script>
+<script src="js/arcade-scroll-rail-v1.js?v=20261120-rightscroll1"></script>
 
 <script>
   // Keep the same iframe alive while expanding the game: moving or replacing it
@@ -380,7 +382,18 @@
       {id:"teacher-run-frame",resizeType:"teacher-run:resize"}
     ];
     let expandedFrame=null,expandedFeature=null;
-    let playingFrame=null,lockedY=0,savedBodyStyle=null;
+    let playingFrame=null,lockedY=0,maxLockedY=0,savedBodyStyle=null;
+    function showPlayingScrollRail(){
+      if(!playingFrame||expandedFrame){window.ArcadeScrollRail?.hide();return;}
+      window.ArcadeScrollRail?.show({
+        get:()=>lockedY,
+        max:()=>maxLockedY,
+        set:position=>{
+          lockedY=Math.max(0,Math.min(maxLockedY,Number(position)||0));
+          document.body.style.top=-lockedY+"px";
+        }
+      });
+    }
     function centerGameBeforeLock(frame){
       // An iframe sends its first play-state event only when a match starts.
       // Align the court/stage within the phone viewport before freezing scroll.
@@ -417,6 +430,9 @@
         playingFrame=frame;
         const alignedY=centerGameBeforeLock(frame);
         lockedY=alignedY===null?(window.scrollY||window.pageYOffset||0):alignedY;
+        const viewportHeight=window.visualViewport?.height||window.innerHeight||1;
+        maxLockedY=Math.max(0,document.documentElement.scrollHeight-viewportHeight,
+          document.body.scrollHeight-viewportHeight);
         const body=document.body;
         savedBodyStyle={
           position:body.style.position,top:body.style.top,left:body.style.left,
@@ -426,7 +442,9 @@
           position:"fixed",top:-lockedY+"px",left:"0",right:"0",width:"100%",overflow:"hidden"
         });
         document.documentElement.classList.add("arcade-match-active");
+        showPlayingScrollRail();
       }else if(playingFrame===frame){
+        window.ArcadeScrollRail?.hide();
         playingFrame=null;
         document.documentElement.classList.remove("arcade-match-active");
         if(savedBodyStyle)Object.assign(document.body.style,savedBodyStyle);
@@ -463,6 +481,7 @@
       feature?.classList.remove("arcade-host-expanded");
       document.documentElement.classList.remove("arcade-game-host-open");
       notify(frame,false);
+      showPlayingScrollRail();
     }
     function expand(frame){
       if(expandedFrame===frame){notify(frame,true);return;}
@@ -470,6 +489,7 @@
       const feature=frame.closest(".teacher-game-feature");
       if(!feature||frame.hidden||feature.hidden)return;
       expandedFrame=frame;expandedFeature=feature;
+      window.ArcadeScrollRail?.hide();
       feature.classList.add("arcade-host-expanded");
       document.documentElement.classList.add("arcade-game-host-open");
       notify(frame,true);
