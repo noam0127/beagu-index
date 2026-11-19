@@ -624,6 +624,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   function finishMatch(early=false){
     if(state.phase==="finished"||state.phase==="ready"||state.phase==="starting")return;
+    if(early&&activeTenths()<40){setStatus("4초 이상 플레이하면 기록을 남길 수 있어요");return;}
     state.phase="finished";state.endedEarly=early;
     const won=state.leftScore===MATCH_TARGET&&state.rightScore<MATCH_TARGET;
     const elapsedTenths=activeTenths(),bonus=getSurvivalBonus(elapsedTenths);
