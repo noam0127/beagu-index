@@ -148,6 +148,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     extreme:{allyMax:70,enemyMax:160,allyCost:1.5,enemyCost:.65,allyRest:.05,enemyRest:.14}
    };
   const lifeProfiles={easy:3,normal:2,hard:2,very_hard:1,extreme:1};
+  const receiveHealProfiles={easy:10,normal:9,hard:8,very_hard:7,extreme:6};
   // Ball speed scales with school difficulty, independent of player and CPU movement.
   const ballSpeedProfiles={easy:.80,normal:.91,hard:1,very_hard:1.13,extreme:1.27};
   const ballSpeedFactor=()=>ballSpeedProfiles[currentDifficulty]||ballSpeedProfiles.hard;
@@ -188,7 +189,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null };
-  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false, leftEnergy:100, rightEnergy:100, leftMaxEnergy:100, rightMaxEnergy:100, specialCooldownFrames:0,specialChargeFrames:0, energyTick:0, playFrames:0, maxLives:2, livesLeft:2, knockout:false, hitStopFrames:0, impactFrames:0, impactX:0, impactY:0, bossWarnFrames:0, bossCooldownFrames:0 };
+  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false, leftEnergy:100, rightEnergy:100, leftMaxEnergy:100, rightMaxEnergy:100, specialCooldownFrames:0,specialChargeFrames:0, energyTick:0, playFrames:0, maxLives:2, livesLeft:2, knockout:false, receiveStreak:0, healFrames:0, healAmount:0, hitStopFrames:0, impactFrames:0, impactX:0, impactY:0, bossWarnFrames:0, bossCooldownFrames:0 };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false, contactFrames:0 };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false, contactFrames:0 };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
@@ -318,6 +319,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.spin=0;
     ball.shadowFrames=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;
+    state.healFrames=0;
     ball.trail.length = 0;
     state.aiRecalc=0;state.aiJump=false;state.aiTargetX=688;
   }
@@ -348,7 +350,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
     state.maxLives=lifeProfiles[currentDifficulty];state.livesLeft=state.maxLives;
-    state.knockout=false;
+    state.knockout=false;state.receiveStreak=0;state.healFrames=0;state.healAmount=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     releaseKeys();
     state.serveLeft=Math.random()<.5;
@@ -365,7 +367,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
     currentDifficulty="hard";state.maxLives=lifeProfiles.hard;state.livesLeft=state.maxLives;
-    state.knockout=false;
+    state.knockout=false;state.receiveStreak=0;state.healFrames=0;state.healAmount=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     energy=energyProfiles.hard;specialProfile=specialProfiles.hard;resetEnergy();
     schoolPicker.setLocked(false);
@@ -504,6 +506,21 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       bossStrike?(state.playFrames%2===0?-6.6:-11.2):cpuSmash?-8.5:-12.8)*ballSpeedFactor();
     if(p.side==="left"){
       state.leftEnergy=Math.max(0,state.leftEnergy-(charged?0:spike?10:6)*energy.allyCost);
+      if(!spike&&!charged&&incomingVx< -1){
+        // Honest defense earns recovery; a hard hit costs energy, a safe
+        // forearm reception restores it. Every third defended ball adds a bonus.
+        state.receiveStreak++;
+        const baseHeal=receiveHealProfiles[currentDifficulty]||receiveHealProfiles.hard;
+        const chainBonus=state.receiveStreak%3===0?12:0;
+        const beforeHeal=state.leftEnergy;
+        state.leftEnergy=clamp(state.leftEnergy+baseHeal+chainBonus,0,state.leftMaxEnergy);
+        state.healAmount=Math.ceil(state.leftEnergy-beforeHeal);
+        state.healFrames=45;
+        if(state.healAmount>0)setStatus(
+          chainBonus?"💚 연속 리시브 3회 · 체력 +"+state.healAmount:
+          "💚 리시브 성공 · 체력 +"+state.healAmount
+        );
+      }
       if(charged){state.specialChargeFrames=0;state.flash=32;setStatus("⚡ 필살기! 슈퍼 스파이크!");}
     }else{
       state.rightEnergy=Math.max(0,state.rightEnergy-(cpuSmash?10:6)*energy.enemyCost);
@@ -568,6 +585,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if(state.phase!=="playing"&&state.phase!=="point")return false;
     if(state.leftEnergy>0||state.livesLeft<=0)return false;
     state.livesLeft--;
+    state.receiveStreak=0;
     releaseKeys();
     tone(300,.18,"sawtooth",.04,0,160);
     if(state.livesLeft===0){
@@ -589,7 +607,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.phase="point";
     state.pointTicks=100;
     state.serveLeft=!leftWins;
-    if (leftWins) state.leftScore += 1; else state.rightScore += 1;
+    if (leftWins) state.leftScore += 1; else { state.rightScore += 1; state.receiveStreak=0; }
     state.message = leftWins ? "득점! +1" : "실점!";
     state.leftEnergy=clamp(state.leftEnergy+(leftWins?7:-9)*energy.allyCost,0,state.leftMaxEnergy);
     state.rightEnergy=clamp(state.rightEnergy+(leftWins?-9:7)*energy.enemyCost,0,state.rightMaxEnergy);
@@ -604,6 +622,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   function step() {
     if(state.hitStopFrames>0){state.hitStopFrames--;return;}
+    if(state.healFrames>0)state.healFrames--;
     if(left.contactFrames>0)left.contactFrames--;
     if(right.contactFrames>0)right.contactFrames--;
     if(state.impactFrames>0)state.impactFrames--;
@@ -882,6 +901,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       ctx.restore();
     }
     drawBall();
+    if(state.healFrames>0&&state.healAmount>0){
+      ctx.save();ctx.globalAlpha=Math.min(1,state.healFrames/14);
+      const rise=(45-state.healFrames)*.55;
+      textLabel("💚 +"+state.healAmount+" 체력",clamp(left.x,106,NET_X-82),left.y-92-rise,18,"#278e5f","center",185);
+      ctx.restore();
+    }
     if(state.impactFrames>0){
       const t=1-state.impactFrames/19;
       ctx.save();
