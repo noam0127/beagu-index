@@ -115,7 +115,7 @@ assert.match(backend,/resolution=ignore-duplicates,return=representation/,"only 
 assert.match(backend,/e\.created_at===inserted\[0\]\.created_at/,"anonymous timestamp and score identify new record placement");
 assert.match(backend,/nickname_not_supported/,"API rejects user-entered nicknames");
 assert.doesNotMatch(backend,/nickname:"ANON"|select:"nickname/,"API neither stores nor exposes nicknames");
-assert.match(backend,/if\(existing\.length>=10 && score<=existing\[9\]\.score\)/,"leaderboard ranks highest points first");
+assert.match(backend,/game!=="volleyball_25"&&existing\.length>=10&&score<=existing\[9\]\.score/,"score gate preserved for retirement; volleyball still records fastest win");
 assert.ok(backend.indexOf('"arcade_game_scores?on_conflict=session_id&select=created_at"')<backend.indexOf('const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"})'),"score persists before session completion marker");
 
 assert.match(volley,/new window\.ArcadeSchoolPicker/);
