@@ -152,7 +152,7 @@ button{font:inherit;cursor:pointer}
 <div><label for="classTone">학급 상황 · 가상 설정</label>
 <select id="classTone" required><option value="steady" selected>차근차근 적응하는 학급</option><option value="demanding">첫날부터 지도가 많이 필요한 학급</option></select></div>
 <div><label for="workCulture">학교 업무 분위기 · 가상 설정</label>
-<select id="workCulture" required><option value="collaborative" selected>담당을 확인하고 서로 돕는 분위기</option><option value="deflecting">담당하지 않은 일이 떠넘겨지기도 하는 분위기</option></select></div>
+<select id="workCulture" required><option value="collaborative" selected>담당을 확인하고 서로 돕는 분위기</option><option value="deflecting">담당하지 않은 일이 떠넘겨지기도 하는 분위기</option><option value="hostile">교직원 사이에 갈등과 적대감이 있는 분위기</option></select></div>
 </div>
 <details class="extended-setup">
 <summary>학년·친목·관행 세부 설정 <span style="font-size:12px;color:#6a8294">선택 사항</span></summary>
@@ -186,6 +186,7 @@ button{font:inherit;cursor:pointer}
 <div class="stat"><small>피로도</small><strong id="statFatigue">—</strong></div>
 <div class="stat"><small>회의의 발언권</small><strong id="statVoice">—</strong></div>
 <div class="stat"><small>업무 경계</small><strong id="statBoundary">—</strong></div>
+<div class="stat"><small>함께 버틸 힘</small><strong id="statSupport">—</strong></div>
 </div>
 <article class="panel novel" id="novelCard" data-scene="morning">
 <div class="novel-top">
@@ -291,6 +292,7 @@ function renderNovel(){
  $('statFatigue').textContent=game.stats.fatigue;
  $('statVoice').textContent=game.stats.voice;
  $('statBoundary').textContent=game.stats.boundary;
+ $('statSupport').textContent=game.stats.support;
  $('chapterDay').textContent=game.day+' / 7 · '+view.date+' '+view.weekday;
  $('novelCard').dataset.scene=view.visual.id;
  $('sceneArt').setAttribute('aria-label',view.visual.label+'을 상징하는 추상적인 배경');
@@ -350,7 +352,7 @@ function renderScenario(){
  $('characterBio').textContent='학교의 역할과 교직문화를 함께 고민하는 동학년 교사';
  for(const [id,key] of [['statAffection','affection'],['statTrust','trust'],
    ['statAgency','agency'],['statFatigue','fatigue'],['statVoice','voice'],
-   ['statBoundary','boundary']])$(id).textContent=game.stats[key];
+   ['statBoundary','boundary'],['statSupport','support']])$(id).textContent=game.stats[key];
  $('chapterDay').textContent=game.day+' / 7 · '+event.date+' · '+(incident?'하루 속 또 다른 사건':'학교 생활 사건');
  $('chapterTitle').textContent=event.title;
  $('chapterPlace').textContent=event.place;
