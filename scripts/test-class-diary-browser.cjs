@@ -30,6 +30,15 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    assert.equal(incidentVersion.choices,3,'Friendship episode choices must load');
    assert(incidentVersion.prose.includes('종이접시'),'Revised event dialogue must load');
    await page.locator('#playerName').fill(variant.name==='desktop'?'최윤호':variant.name==='friendship'?'박루다':'김민서');
+   assert.equal(await page.locator('[data-partner-choice]').count(),3,'All three date-sim character cards must render');
+   const card=page.locator('[data-partner-choice="'+variant.partner+'"]');
+   await card.click();
+   assert.equal(await page.locator('#partner').inputValue(),variant.partner,'Card must update original partner field');
+   assert.equal(await card.getAttribute('aria-pressed'),'true','Selected card must be visually announced');
+   assert((await page.locator('#partnerDescription').innerText()).length>25,'Selected cast profile must update');
+   for(const id of ['setupPortraitWoman','setupPortraitMan','setupPortraitNone']){
+     assert((await page.locator('#'+id).getAttribute('src')).startsWith('data:image/svg+xml'),'SD setup art must be bundled');
+   }
    const count=await page.locator('#profileForm input,#profileForm select').count();
    assert.equal(count,6,'Character form must contain exactly 6 fields');
    await page.locator('#experience').selectOption(variant.name==='desktop'?'mid':'new');
