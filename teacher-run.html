@@ -153,6 +153,8 @@ const difficultyProfiles={
 };
 const difficultyName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
 const canPlayerRise=()=>profile.jumpEnabled!==false;
+const chalkProfiles={easy:{interval:.62,maxShots:2,range:300},normal:{interval:1.15,maxShots:1,range:260}};
+const chalkProfile=()=>chalkProfiles[schoolPicker.get()?.difficulty]||null;
 schoolPicker.onChange=()=>{if(state==="ready"){
   const chosen=schoolPicker.get();
   profile=difficultyProfiles[chosen?.difficulty]||difficultyProfiles.hard;
@@ -192,6 +194,7 @@ const dayEvents=[
 ];
 let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
+let chalkShots=[],chalkCooldown=0,shackle={x:245,dir:-1};
 let activeEvent=null,eventSeconds=0,eventTriggered=false,fridayBossAnnounced=false;
 let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
 let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0,specialCooldown=0,specialFlash=0,lastTapAt=0,lastTapX=0,lastTapY=0;
@@ -216,7 +219,8 @@ function resize(){
  dpr=Math.min(2,window.devicePixelRatio||1);
  canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
  ctx.setTransform(dpr,0,0,dpr,0,0);
- if(oldW>0){player.x=player.x/oldW*W;items.forEach(a=>a.x=a.x/oldW*W);}
+ if(oldW>0){player.x=player.x/oldW*W;items.forEach(a=>a.x=a.x/oldW*W);
+  shackle.x=shackle.x/oldW*W;chalkShots.forEach(b=>b.x=b.x/oldW*W);}
  if(oldH>0&&pointerId!==null)player.y=player.y/oldH*H;
  player.x=Math.max(player.r,Math.min(W-player.r,player.x));
  player.y=!canPlayerRise()||pointerId===null?H-52:Math.max(76,Math.min(H-52,player.y));
@@ -247,13 +251,16 @@ async function start(){
  schoolPicker.setLocked(true);
  state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
  combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;eventTriggered=false;fridayBossAnnounced=false;
- items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;pointerId=null;pointerY=null;
+ items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;
+ spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;
+ shackle={x:player.x-52,dir:-1};pointerId=null;pointerY=null;
  pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 점프 불가":difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
 }
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
- items=[];sparks=[];floats=[];score=0;day=0;dayTime=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;eventTriggered=false;fridayBossAnnounced=false;
+ items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;
+ score=0;day=0;dayTime=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;eventTriggered=false;fridayBossAnnounced=false;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -376,7 +383,7 @@ function choose(u){
  if(u.id==="speed")skill.speed*=1.18;
  if(u.id==="guard")skill.guard+=.4;
  if(u.id==="heal")skill.heal*=1.5;
-  day++;dayTime=0;items=[];spawnClock=.65;life=Math.min(maxLife,life+10);
+  day++;dayTime=0;items=[];chalkShots=[];chalkCooldown=.4;spawnClock=.65;life=Math.min(maxLife,life+10);
   activeEvent=null;eventSeconds=0;eventTriggered=false;
  player.inv=1.2;pointerId=null;pointerX=null;pointerY=null;state="playing";updateLabels();setNotice(days[day]+" 시작!",2);closeMessage();playTone(610,.16);
 }
@@ -407,7 +414,7 @@ function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","📄 회피 · ☕ 회복 · ⚡ 더블 터치 필살기\nPC ← → · 모바일 드래그",[
+ message("게임 방법","📄 회피 · ☕ 회복 · ⚡ 더블 터치 필살기\nEASY/NORMAL 자동 분필 · EXTREME 족쇄\nPC ← → · 모바일 드래그",[
  {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
 function update(dt){
