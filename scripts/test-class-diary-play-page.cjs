@@ -65,7 +65,7 @@ assert(play.src.includes("selectSchoolMode('demo');\n  $('semesterStart').click(
 assert(play.src.includes("selectSchoolMode('real',world.basic.name);\n  $('semesterStart').click();"),'Authorized real school should also skip the opening');
 assert(play.src.includes('function vnFitPage('),'Overflowing dialogue must be repaginated');
 assert(play.src.includes('class="panel vn-setup"'),'Dating-sim setup should replace plain form');
-for(const id of ['setupPlayerPreview','setupPortraitWoman','setupPortraitMan','setupPortraitNone','partnerDescription']){
+for(const id of ['setupPlayerPreview','setupPortraitWoman','setupPortraitMan','setupPortraitNone']){
  assert(play.ids.has(id),'Setup portrait/preview missing: '+id);
 }
 for(const key of ['woman','man','none']){
@@ -75,6 +75,12 @@ assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a
 assert(play.src.includes("sound.note('uiStart')"),'Beginning the novel should play a cue');
 assert(play.src.includes("setupDescription"),'Selecting cast should update story introduction');
 assert(play.src.includes('role="group" aria-label="동료 캐릭터 선택"'),'Card chooser should be accessible');
+assert(!play.ids.has('partnerDescription'),'Redundant character-description box must be removed');
+assert(play.src.includes('<select id="partner" required hidden'),'Legacy partner data remains in a hidden form control');
+assert(play.ids.has('diarySchoolSurveyLink'),'Schools without published results offer a 2026 survey link');
+assert(play.src.includes('arcade-leaderboard?school_id='),'School survey eligibility is queried from existing published API');
+assert(play.src.indexOf('id="diarySchoolMode"') < play.src.indexOf('id="playerName"'),'School selection precedes name');
+
 
 assert(play.src.includes('engine.inferredProfile(world,{'));
 assert(play.src.includes("experience:$('experience').value"));
