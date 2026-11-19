@@ -83,6 +83,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261118-global2">
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261118-level1">
+<link rel="stylesheet" href="styles/beagu-auth-unified-v1.css?v=20261119-auth1">
 <script defer src="js/beagu-level-state-v1.js?v=20261118-level1"></script>
 </head>
 <body class="beagu-ui-page beagu-page-search">
@@ -94,22 +95,25 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 
 
 <h1>학교 검색</h1>
-<section class="lv1-quick-auth" id="lv1QuickAuth" aria-labelledby="lv1QuickTitle">
-  <div class="lv1-quick-head">
-    <h2 id="lv1QuickTitle">Lv.1 참여자 인증</h2>
-    
+<section class="lv1-quick-auth beagu-auth-card" id="lv1QuickAuth" aria-labelledby="lv1QuickTitle">
+  <div class="lv1-quick-head beagu-auth-heading">
+    <h2 id="lv1QuickTitle">Lv.1 인증</h2>
+    <span id="lv1QuickBadge" class="beagu-auth-badge">미인증</span>
   </div>
-  <form id="lv1QuickForm" autocomplete="off">
-    <label class="lv1-quick-label" for="lv1QuickCode">Lv.1 비밀번호(참여코드)</label>
-    <div class="lv1-quick-row">
-      <div class="lv1-quick-input-wrap">
-        <input class="lv1-quick-input" id="lv1QuickCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" placeholder="참여코드를 입력하세요" required>
-        <button class="lv1-quick-toggle" id="lv1QuickToggle" type="button" aria-label="비밀번호 표시" aria-pressed="false">보기</button>
+  <form id="lv1QuickForm" class="beagu-auth-form" autocomplete="off">
+    <div class="beagu-auth-field">
+      <label class="lv1-quick-label beagu-auth-label" for="lv1QuickCode">참여코드</label>
+      <div class="lv1-quick-row">
+        <div class="lv1-quick-input-wrap beagu-auth-input-wrap">
+          <input class="lv1-quick-input" id="lv1QuickCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" placeholder="발급받은 참여코드를 입력하세요" required>
+          <button class="lv1-quick-toggle beagu-auth-toggle" id="lv1QuickToggle" type="button" aria-label="참여코드 표시" aria-pressed="false">표시</button>
+        </div>
       </div>
-      <button class="lv1-quick-submit" id="lv1QuickSubmit" type="submit">Lv.1 인증하기</button>
     </div>
+    <button class="lv1-quick-submit beagu-auth-submit" id="lv1QuickSubmit" type="submit">인증하기</button>
   </form>
-  <p class="lv1-quick-message" id="lv1QuickMessage" role="status" aria-live="polite"></p>
+  <p class="lv1-quick-message beagu-auth-message" id="lv1QuickMessage" role="status" aria-live="polite"></p>
+  <p class="beagu-auth-help">참여코드는 <a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a> 시 발급됩니다.</p>
   <div class="lv1-quick-authenticated" id="lv1QuickAuthenticated" hidden>
     <span role="status">✓ Lv.1 인증됨 · 검색화면으로 이동 중…</span>
   </div>
@@ -443,6 +447,8 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       return data;
     }
     function showAuthenticated(){
+      const badge=document.getElementById('lv1QuickBadge');
+      if(badge){badge.textContent='인증됨';badge.classList.add('is-authenticated');}
       window.dispatchEvent(new Event('beagu:level-state-change'));
       form.hidden=true;
       message.textContent='';
@@ -453,9 +459,9 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     toggle.addEventListener('click',()=>{
       const visible=input.type==='password';
       input.type=visible?'text':'password';
-      toggle.textContent=visible?'숨기기':'보기';
+      toggle.textContent=visible?'숨김':'표시';
       toggle.setAttribute('aria-pressed',String(visible));
-      toggle.setAttribute('aria-label',visible?'비밀번호 숨기기':'비밀번호 표시');
+      toggle.setAttribute('aria-label',visible?'참여코드 숨김':'참여코드 표시');
     });
     form.addEventListener('submit',async event=>{
       event.preventDefault();
