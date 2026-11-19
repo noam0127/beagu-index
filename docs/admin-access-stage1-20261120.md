@@ -32,7 +32,8 @@
 
 - The public dashboard page HTML is not a security boundary. All future admin data APIs must run this same bearer-user + server allowlist + AAL2 check.
 - Stage 1 does not provide actual dashboard metric retrieval. Do not turn placeholder into a numeric 0.
-- Admin exclusion from normal *site-wide* visits/searches/games is a separate follow-up and **must be implemented before active admin use** on the public site.
+- Admin suppression has been added at the **BEFORE INSERT** stage for visits and school search events. The arcade Edge Function v18 also avoids session and score writes when a valid admin Auth JWT is sent. Do not remove Auth bearer forwarding from the game clients.
+- **Not complete**: challenge participation and future visual-novel/event collectors, any unauthenticated traffic, manual user actions outside Auth, and the full statistics dashboard still require separate treatment. Do not assert a site-wide guarantee until those paths are covered and a live admin AAL2 session is tested.
 - A browser using no Auth token is indistinguishable from an unauthenticated visitor. Every future telemetry endpoint must receive a verified user bearer token when an administrator is signed in; never trust a client-side isAdmin flag.
 - Password login failures are registered by Supabase Auth's own audit subsystem; this application stage audits server-verified administrator access.
 - Node regression tests are static checks. Actual MFA enrollment and authorized E2E await creation of a real admin identity.
