@@ -23,7 +23,7 @@ function mount(options){
  const context=()=>{const s=state();return {scope:s.isDemo?'demo':s.isGuest?'guest':'level2',schoolId:s.isGuest||s.isDemo?'fictional':s.schoolId||'',game:s.game,mode:s.mode,session:s.session||'',ticket:s.ticket||'',grant:s.grant||'',page:s.page||0}};
  const localKey=()=>{const c=context();return keyFor(c.scope,c.schoolId)};
  const read=()=>{try{const v=JSON.parse(localStorage.getItem(localKey())||'null');return v&&v.version===VERSION&&validSnapshot(v.snapshot)&&/^[0-9a-f]{64}$/.test(v.recoveryKey)?v:null}catch{return null}};
- const showMessage=(message)=>{const node=$('diarySaveStatus');if(node){node.textContent=message;node.hidden=false;}};
+ const showMessage=(message)=>{const node=$('diarySaveStatus');if(node){node.textContent=message;node.hidden=false;}const notice=$('diarySaveDialogNote');if(notice&&!notice.closest('.diary-save-overlay').hidden)notice.textContent=message;};
  const bytes=()=>Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');
  const snapshot=()=>{const c=context();if(c.mode!=='semester'||!c.game)return null;
   const g=c.game;
@@ -38,10 +38,14 @@ function mount(options){
  const status=document.createElement('div');status.id='diarySaveStatus';status.className='diary-save-status';status.hidden=true;status.setAttribute('role','status');status.setAttribute('aria-live','polite');$('vnBottom').append(status);
  const openContinue=make('저장한 이야기 이어하기',continuePlay);openContinue.classList.add('diary-opening-continue');openContinue.hidden=true;
  const opening=$('opening');opening.querySelector('.diary-opening-body').append(openContinue);
+ const noticeContinue=make('저장한 가상 이야기 이어하기',continuePlay);
+ noticeContinue.classList.add('diary-opening-continue');noticeContinue.hidden=true;
+ $('notice').querySelector('.actions').append(noticeContinue);
  const cover=document.createElement('div');cover.className='diary-save-overlay';cover.hidden=true;
  const dialog=document.createElement('section');dialog.className='diary-save-dialog';dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-labelledby','diarySaveDialogTitle');
  const title=document.createElement('h2');title.id='diarySaveDialogTitle';title.textContent='이야기를 간직하기';
  const note=document.createElement('p');note.textContent='이 기기에 저장한 이야기는 이어서 읽을 수 있습니다. 서버 복구키는 다른 기기에서도 불러올 때 사용하며, 다른 사람에게 알려 주지 마세요.';
+ note.id='diarySaveDialogNote';
  const input=document.createElement('input');input.id='diaryRecoveryKey';input.type='text';input.maxLength=64;input.autocomplete='off';input.autocapitalize='off';input.spellcheck=false;input.placeholder='64자리 복구키 입력 또는 복사';
  input.setAttribute('aria-label','이야기 복구키');
  const buttons=document.createElement('div');buttons.className='diary-save-dialog-actions';
@@ -54,7 +58,7 @@ function mount(options){
  function openDialog(recoveryKey='',message=''){input.value=recoveryKey;note.textContent=message||'64자리 복구키를 붙여넣으면 다른 기기에서 저장한 이야기를 불러올 수 있습니다. 복구키를 다른 사람과 공유하지 마세요.';cover.hidden=false;input.focus()}
  cover.addEventListener('click',e=>{if(e.target===cover)closeDialog()});
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!cover.hidden){e.stopImmediatePropagation();closeDialog()}},true);
- function refresh(){openContinue.hidden=!read();}
+ function refresh(){const saved=read();openContinue.hidden=!saved;noticeContinue.hidden=!saved||context().scope==='level2';}
  async function call(action,recoveryKey,snap){
   const c=context();const headers={'Content-Type':'application/json'};
   if(c.session)headers['X-Beagu-Session']=c.session;
