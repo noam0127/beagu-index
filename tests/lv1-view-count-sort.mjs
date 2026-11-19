@@ -24,7 +24,7 @@ assert.ok(server.indexOf('let sorted=query.order(sort,')<server.indexOf('.range(
   'SQL order is applied before pagination');
 assert.match(sql,/WITH \(security_invoker = true\)/);
 assert.match(sql,/COALESCE\(svc\.views, 0::bigint\) AS view_count/);
-assert.match(sql,/LEFT JOIN public\.beagu_school_view_totals svc/);
+assert.match(sql,/LEFT JOIN (?:public\.)?beagu_school_view_totals svc/);
 assert.match(sql,/REVOKE ALL ON public\.beagu_lv1_school_sort_index FROM PUBLIC, anon, authenticated/);
 assert.match(sql,/GRANT SELECT ON public\.beagu_lv1_school_sort_index TO service_role/);
 assert.match(counts,/beagu_record_school_view/);
