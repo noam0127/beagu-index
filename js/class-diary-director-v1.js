@@ -129,7 +129,16 @@ function decorateEnding(state){
   const energy=state.stats.fatigue>=60?
     '피로가 쌓인 일주일이었다. 마음을 다했다는 이유로 나를 끝까지 소모해서는 안 된다고 생각했다.':
     '쉬어야 할 때를 잊지 않은 덕분에, 내일 다시 시작할 힘이 남아 있었다.';
-  return {...state.ending,paragraphs:state.ending.paragraphs.concat(contributed,energy),directorVersion:VERSION};
+  const support=Number(state.stats.support);
+  const workplace=state.profile.workCulture;
+  const relationship=workplace==='hostile'?
+    (support>=35?
+      '같은 교직원끼리 서로를 경계하는 학교에서 한 사람의 편이 생긴다는 것은 큰 일이었다. 그렇다고 동료 몇 사람의 선의만으로 학교의 문제가 해결되는 것은 아니었다.':
+      '서로를 향한 말이 날카로웠던 한 주였다. 내가 부족해서 힘든 것이 아니었다. 서로 적대하는 문화를 바꾸려면 개인의 인내가 아니라 학교의 책임과 대화할 구조가 필요했다.') :
+    workplace==='collaborative'?
+      '교직원들은 여전히 바빴다. 다만 어려운 일이 생기면 서로의 책상으로 다가갔다. 힘든 하루에도 버틸 만한 이유가 남는 학교는, 그렇게 함께 만드는 학교였다.':
+      '일을 떠넘기는 말보다 담당을 확인하고 나누는 말을 더 많이 듣는 학교가 되었으면 했다. 작은 협의 하나가 그 시작일 수 있었다.';
+  return {...state.ending,paragraphs:state.ending.paragraphs.concat(contributed,energy,relationship),directorVersion:VERSION};
 }
 const api=Object.freeze({
  VERSION,BRIDGES,VISUAL,RELATIONSHIPS,
