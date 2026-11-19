@@ -41,10 +41,10 @@ const BeaguDetailGroups={
   }
 };
 const api=async()=>({rows:[]});
-const draw=new Function('make','BeaguDetailGroups','addRow','api','loggedOut','renderHistoricalBenchmarks',
+const draw=new Function('make','BeaguDetailGroups','addRow','metricValue','api','loggedOut','renderHistoricalBenchmarks',
   script.slice(a,b)+'\nreturn renderYear;')(
   make,BeaguDetailGroups,(host,label,value)=>host.append(make('p','',value)),
-  api,()=>{},()=>{}
+  m=>String(m.value),api,()=>{},()=>{}
 );
 function find(node,cls){
   return [node,...node.children.flatMap(child=>find(child,cls))]
