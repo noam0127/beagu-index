@@ -150,7 +150,9 @@ function buildPost(post){
   if(!confirm("작성한 포스트잇을 삭제하시겠습니까?"))return;
   await mutation("remove",{target_type:"post",target_id:post.id});
  },{className:"paper-remove"}));
- paper.append(actions);entry.append(paper);
+ paper.append(actions);
+ const tape=node("span","paper-tape");tape.setAttribute("aria-hidden","true");
+ entry.append(tape,paper);
  const comments=node("div","postit-comments");comments.id="comments-"+post.id;
  if(!state.expanded.has(post.id))comments.hidden=true;
  entry.append(comments);
