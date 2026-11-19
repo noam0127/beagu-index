@@ -445,6 +445,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.vx = (state.serveLeft ? 6.1 : -6.1)*ballSpeedFactor();
     ball.vy = -6.3*ballSpeedFactor();
     ball.cooldown = 0;
+    ball.allyCooldown = 0;
     ball.spin=0;
     ball.shadowFrames=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;
@@ -454,7 +455,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       Object.assign(secondBall,{
         x:state.serveLeft?685:215,y:168,
         vx:(state.serveLeft?-5.5:5.5)*ballSpeedFactor(),vy:-5.6*ballSpeedFactor(),
-        spin:0,cooldown:0,shadowFrames:0
+        spin:0,cooldown:0,allyCooldown:0,shadowFrames:0
       });
       secondBall.trail.length=0;
       activeBalls.push(secondBall);
@@ -650,19 +651,37 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       ally.y=FLOOR-31;
     }
   }
+  // Circle versus the companion's actual torso/head/legs rectangle.
+  // The previous rescue-only predicate let the ball visibly pass through teammates.
+  function allyBodyTouchesBall(ally,hitBall){
+    const nearX=clamp(hitBall.x,ally.x-30,ally.x+30);
+    const nearY=clamp(hitBall.y,ally.y-54,ally.y+33);
+    const dx=hitBall.x-nearX,dy=hitBall.y-nearY;
+    return dx*dx+dy*dy<=R*R;
+  }
   function cloneHit(ally,hitBall){
-    const dx=hitBall.x-(ally.x+29),dy=hitBall.y-(ally.y-15);
-    // A companion only rescues one truly missed, descending shot per rally.
-    // Most touches should still belong to the player.
-    if(state.rescueUsed||hitBall.cooldown>0||hitBall.vx>=-.5||hitBall.vy<=0||
-      hitBall.y<FLOOR-115||Math.abs(hitBall.x-left.x)<115||
-      dx*dx+dy*dy>(R+31)*(R+31))return false;
-    hitBall.vx=(10.7+Math.min(2,Math.abs(hitBall.vx)*.12))*ballSpeedFactor();
-    hitBall.vy=-11.2*ballSpeedFactor();
-    state.rescueUsed=true;
-    hitBall.cooldown=11;ally.contactFrames=11;
-    setStatus("🤝 "+(ally.name||"동료")+"가 놓친 공을 구했어요! 다음 공은 직접 받아보세요");
-    hitBall.shadowFrames=10;hitBall.shadowColor="#257d84";
+    if(hitBall.x>NET_X+R || hitBall.allyCooldown>0 || !allyBodyTouchesBall(ally,hitBall))
+      return false;
+    // Both descending and rising balls collide. An outgoing ball is gently
+    // redirected forward; an incoming ball is received and lifted back over the net.
+    const incoming=hitBall.vx<0;
+    const speed=ballSpeedFactor();
+    hitBall.vx=(incoming?(state.rescueUsed?8.3:10.2):
+      clamp(Math.abs(hitBall.vx),7.6,12.2))*speed;
+    hitBall.vy=-(incoming?(state.rescueUsed?8.1:10.4):8.6)*speed;
+    // A short bounded push and independent teammate cooldown prevent repeated
+    // contacts while the large ball overlaps the character's sprite.
+    hitBall.x=clamp(hitBall.x+Math.min(14,Math.max(3,ally.x+30+R-hitBall.x)),
+      R,NET_X-NET_W/2-R-2);
+    hitBall.y=Math.min(hitBall.y,ally.y-17);
+    hitBall.allyCooldown=16;
+    hitBall.cooldown=Math.max(hitBall.cooldown,9);
+    ally.contactFrames=11;
+    if(incoming&&!state.rescueUsed){
+      state.rescueUsed=true;
+      setStatus("🤝 "+(ally.name||"동료")+"가 공을 받아냈어요!");
+    }
+    hitBall.shadowFrames=12;hitBall.shadowColor="#257d84";
     tone(540,.09,"triangle",.03);
     return true;
   }
@@ -913,6 +932,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.spin+=ball.vx*.009;
     ball.vx *= .999;
     if (ball.cooldown > 0) ball.cooldown--;
+    if (ball.allyCooldown > 0) ball.allyCooldown--;
     if (ball.x - R < 0) { ball.x = R; ball.vx = Math.abs(ball.vx) * .94; }
     if (ball.x + R > W) { ball.x = W - R; ball.vx = -Math.abs(ball.vx) * .94; }
     if (ball.y - R < 25) { ball.y = R + 25; ball.vy = Math.abs(ball.vy) * .85; }
