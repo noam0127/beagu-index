@@ -237,7 +237,7 @@ $('runDemo').onclick=()=>{
  const distinct=demo.alice!==demo.bob;
  const inserted=distinct&&!demo.events.has('bob-survey')&&demo.tokens.has(ref);
  if(inserted){demo.events.add('bob-survey');demo.alice.level=2;}
- const duplicate=!demo.events.has('bob-survey')?false:false;
+ const duplicate=distinct&&demo.tokens.has(ref)&&!demo.events.has('bob-survey');
  $('demoOutput').textContent=[
   '[모의 검증 — 실제 인증/DB가 아닙니다]',
   '1. 가상 계정 A 회원가입 → Lv.0',
