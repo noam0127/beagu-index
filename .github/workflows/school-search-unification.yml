@@ -22,6 +22,7 @@ on:
       - 'tests/school-search-unification.mjs'
       - 'tests/lv1-ranked-office-history.mjs'
       - 'tests/lv1-view-count-sort.mjs'
+      - 'tests/lv0-locked-sort-options.mjs'
       - 'tests/overseas-history-presence.mjs'
       - 'tests/regional-percentile-coverage-20261120.mjs'
       - 'data/public-lv0-percentiles-v1.2.json'
@@ -53,6 +54,7 @@ jobs:
       - run: node tests/school-search-unification.mjs
       - run: node tests/lv1-ranked-office-history.mjs
       - run: node tests/lv1-view-count-sort.mjs
+      - run: node tests/lv0-locked-sort-options.mjs
       - run: node tests/overseas-history-presence.mjs
       - run: node tests/regional-percentile-coverage-20261120.mjs
       - run: node tests/search-detail-ui-v1.mjs
