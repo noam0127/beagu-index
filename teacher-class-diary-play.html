@@ -440,6 +440,15 @@ $('vnMore').addEventListener('click',()=>{
  if(vnState.kind==='outcome')$('nextBtn').hidden=false;
  else $('choiceSection').hidden=false;
 });
+$('sceneArt').addEventListener('click',event=>{
+ if(event.target.closest('button,a,input,select,textarea'))return;
+ if(document.body.classList.contains('is-playing')&&!$('vnMore').hidden)$('vnMore').click();
+});
+document.addEventListener('keydown',event=>{
+ if(!document.body.classList.contains('is-playing')||!['Enter',' ','ArrowRight'].includes(event.key))return;
+ if(event.target.closest('button,a,input,select,textarea'))return;
+ if(!$('vnMore').hidden){event.preventDefault();$('vnMore').click();}
+});
 $('vnSound').addEventListener('click',()=>$('musicBtn').click());
 $('vnReset').addEventListener('click',()=>$('resetBtn').click());
 const stageHud=$('vnHeaderSlot'),stageBody=$('vnDialogueSlot'),stageBottom=$('vnBottom');
