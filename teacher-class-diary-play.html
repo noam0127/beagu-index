@@ -167,6 +167,8 @@ button{font:inherit;cursor:pointer}
 <select id="informalRequests"><option value="respectful" selected>서로 편하게 거절 가능</option><option value="stereotyped">성별·나이를 이유로 부탁</option></select></div>
 <div id="fictionalSchoolSizeField"><label for="fictionalSchoolSize">체험판의 학교 규모 · 가상 상황</label>
 <select id="fictionalSchoolSize"><option value="small">소규모 학교</option><option value="medium" selected>중규모 학교</option><option value="large">대규모 학교</option></select></div>
+<div><label for="storyRegion">체험판의 지역 배경 · 가상 상황</label>
+<select id="storyRegion"><option value="other" selected>지역 특성 별도 선택 안 함</option><option value="rural">읍·면·농촌</option><option value="urban">도심</option></select></div>
 </div>
 <p class="muted">가상 조건에 따라 장면이 달라집니다. 실제 학교 규모·성비·2정교사 비율과 특정 관행을 직접 연결하거나 추정하지 않습니다.</p>
 </details>
@@ -244,6 +246,7 @@ button{font:inherit;cursor:pointer}
 <script src="js/class-diary-context-v1.js"></script>
 <script src="js/class-diary-sound-v1.js"></script>
 <script src="js/class-diary-scenario-v1.js"></script>
+<script src="js/class-diary-incidents-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
 <script>
 (function(){
@@ -254,6 +257,7 @@ const engine=window.BeaguClassDiaryPlay;
 const director=window.BeaguClassDiaryDirector;
 const schoolContext=window.BeaguClassDiaryContext;
 const scenario=window.BeaguClassDiaryScenario;
+const incidents=window.BeaguClassDiaryIncidents;
 const params=new URLSearchParams(location.search);
 const isDemo=params.get('demo')==='1';
 const token=isDemo?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
@@ -332,7 +336,8 @@ function renderNovel(){
 }
 function renderScenario(){
  show('novel');
- const event=scenario.scene(game,world);
+ const incident=incidents.next(game,world);
+ const event=incident||scenario.scene(game,world);
  if(!event)return renderNovel();
  const partner=engine.partnerName(game.profile);
  const profile=director.RELATIONSHIPS[game.profile.partner]||director.RELATIONSHIPS.none;
@@ -346,7 +351,7 @@ function renderScenario(){
  for(const [id,key] of [['statAffection','affection'],['statTrust','trust'],
    ['statAgency','agency'],['statFatigue','fatigue'],['statVoice','voice'],
    ['statBoundary','boundary']])$(id).textContent=game.stats[key];
- $('chapterDay').textContent=game.day+' / 7 · '+event.date+' · 학교 생활 사건';
+ $('chapterDay').textContent=game.day+' / 7 · '+event.date+' · '+(incident?'하루 속 또 다른 사건':'학교 생활 사건');
  $('chapterTitle').textContent=event.title;
  $('chapterPlace').textContent=event.place;
  $('chapterProgress').style.width=(game.day/7*100)+'%';
@@ -367,7 +372,10 @@ function renderScenario(){
   for(const [i,choice] of event.choices.entries()){
    const btn=el('button',(i+1)+'. '+choice.label);
    btn.className='choice';btn.type='button';
-   btn.addEventListener('click',()=>{game=scenario.choose(game,choice.id,world);render();});
+   btn.addEventListener('click',()=>{
+    game=incident?incidents.choose(game,world,choice.id):scenario.choose(game,choice.id,world);
+    render();
+   });
    buttons.append(btn);
   }
  }
@@ -387,7 +395,7 @@ function renderEnding(){
 }
 function render(){
  if(game.phase==='ending')return renderEnding();
- if(game.phase==='chapter'&&scenario.scene(game,world))return renderScenario();
+ if(game.phase==='chapter'&&(incidents.next(game,world)||scenario.scene(game,world)))return renderScenario();
  renderNovel();
 }
 async function apiPost(endpoint,body){
@@ -459,13 +467,15 @@ $('profileForm').addEventListener('submit',e=>{
    classTone:$('classTone').value,workCulture:$('workCulture').value,
    gradeBand:$('gradeBand').value,sportsCulture:$('sportsCulture').value,
    assignmentPractice:$('assignmentPractice').value,informalRequests:$('informalRequests').value,
-   fictionalSchoolSize:$('fictionalSchoolSize').value});
+   fictionalSchoolSize:$('fictionalSchoolSize').value,storyRegion:$('storyRegion').value});
   render();
  }catch(err){status('주인공 설정을 확인해 주세요. 성인 나이와 모든 선택이 필요합니다.');}
 });
 $('nextBtn').addEventListener('click',()=>{
- const event=game.phase==='chapter'?scenario.scene(game,world):null;
- game=event&&event.result?scenario.continueStory(game):engine.advance(game);
+ const incident=game.phase==='chapter'?incidents.next(game,world):null;
+ const event=game.phase==='chapter'&&!incident?scenario.scene(game,world):null;
+ game=incident&&incident.result?incidents.continueStory(game):
+  event&&event.result?scenario.continueStory(game):engine.advance(game);
  render();
 });
 $('resetBtn').addEventListener('click',()=>{
