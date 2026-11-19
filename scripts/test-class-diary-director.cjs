@@ -7,6 +7,17 @@ const world={eligible:true,basic:{id:'7972013',name:'검증된 가상학교',sca
   numbers:{students:{status:'APPROVED',value:283,referenceYear:2024}},categories:{},geography:{tags:[{id:'admin_eup',source:'official_address',label:'읍 소재'}]}};
 const plan={schoolId:world.basic.id,scenes:Array.from({length:7},(_,i)=>({day:i+1,basis:'fictional_general',passage:'허구의 장면'}))};
 const profile={age:32,gender:'woman',mbti:'INFP',partner:'woman'};
+const person={...profile,name:'최윤호'};
+const firstNamed=game.createGame(world,plan,person);
+const namedView=director.decorateChapter(firstNamed,world,game.chapter(firstNamed,world,plan));
+assert(namedView.paragraphs.join(' ').includes('최윤호 선생님'));
+const grown=JSON.parse(JSON.stringify(firstNamed));
+grown.day=4;grown.stats.affection=73;grown.stats.trust=77;
+const familiarView=director.decorateChapter(grown,world,game.chapter(grown,world,plan));
+assert(familiarView.paragraphs.join(' ').includes('윤호 쌤'));
+const shy=game.choose(firstNamed,'ask');
+assert(director.decorateOutcome(shy).line.includes('최윤호 선생님'));
+
 let state=game.createGame(world,plan,profile);
 const first=director.decorateChapter(state,world,game.chapter(state,world,plan));
 assert.equal(first.character.name,'지윤 선생님');
