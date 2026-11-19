@@ -94,7 +94,7 @@ button{font:inherit;cursor:pointer}
 <main>
 <header><a class="brand" href="index.html">B · BAEGUINDEX</a><a class="back" href="teacher-class-diary.html">학교 선택으로 돌아가기</a></header>
 <section class="hero">
-<div class="overline">Interactive Korean novel · Level 2</div>
+<div class="overline" id="accessLabel">Interactive Korean novel · Level 2</div>
 <h1>나의 OO한 학급일지</h1>
 <p>서류 한 장, 아이들의 질문 한마디, 교무실에서 건네받은 작은 배려. 일주일의 선택이 끝나면, 빈칸에는 당신만의 말이 들어갑니다.</p>
 <div class="schoolline" id="schoolLine">학교 정보를 확인하는 중</div>
@@ -166,6 +166,7 @@ button{font:inherit;cursor:pointer}
 <script src="js/class-diary-narrative-v1.js"></script>
 <script src="js/class-diary-play-v1.js"></script>
 <script src="js/class-diary-director-v1.js"></script>
+<script src="js/class-diary-demo-v1.js"></script>
 <script>
 (function(){
 'use strict';
@@ -173,8 +174,9 @@ const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const director=window.BeaguClassDiaryDirector;
-const token=sessionStorage.getItem('beagu-level-session-v1')||'';
 const params=new URLSearchParams(location.search);
+const isDemo=params.get('demo')==='1';
+const token=isDemo?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
 const schoolId=params.get('schoolId')||'';
 let world=null,plan=null,game=null;
 /* Only erase records from old versions; this game never saves new records. */
@@ -263,6 +265,17 @@ async function apiPost(endpoint,body){
  return response.json();
 }
 async function boot(){
+ if(isDemo){
+  const fixture=window.BeaguClassDiaryDemo.createDemo();
+  world=fixture.world;
+  plan=fixture.plan;
+  $('accessLabel').textContent='공개 체험판 · 로그인 없이 플레이';
+  $('schoolLine').textContent='가상의 초등학교 · 순수 창작 · 실제 학교 자료 사용 안 함';
+  document.title='나의 OO한 학급일지 · 무료 체험판';
+  show('setup');
+  status('체험판을 열었습니다. 주인공을 설정하고 바로 시작하세요.');
+  return;
+ }
  if(!/^[A-Z0-9]{7}$/.test(schoolId)){fail('먼저 학교를 선택한 뒤 게임을 시작해 주세요.');return;}
  if(!/^[0-9a-f]{64}$/.test(token)){fail('레벨2 인증이 필요합니다. 같은 브라우저에서 로그인한 뒤 다시 선택해 주세요.');return;}
  try{
