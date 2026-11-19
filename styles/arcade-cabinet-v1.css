@@ -41,6 +41,8 @@ body.arcade-body {
 .arcade-ranking-head {display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;margin-bottom:10px}
 .arcade-ranking-head strong{color:#ffe57f;font-weight:900;font-size:15px;letter-spacing:.1em;text-shadow:2px 2px #4e365c}
 .arcade-ranking-head small{font-size:10px;color:#a7c4df}
+.arcade-tier-filter{display:block;width:min(230px,100%);margin:0 0 10px;padding:8px 12px;border:1px solid #527ba3;border-radius:8px;background:#102b4b;color:#eff9ff;font-size:12px;font-weight:800;cursor:pointer}
+.arcade-tier-filter:focus-visible{outline:3px solid #fff7a6;outline-offset:2px}
 .arcade-rank-grid{display:grid;grid-template-columns:43px minmax(0,1fr) minmax(75px,130px);gap:8px;min-width:0;align-items:center}
 .arcade-rank-grid span:last-child{text-align:right}
 .arcade-rank-label {color:#86aedd;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 5px 8px;border-bottom:1px solid #2b4971}
@@ -52,6 +54,6 @@ body.arcade-body {
 .arcade-rank-row span:nth-child(1){color:#79dfea}
 @media(max-width:360px){
  .arcade-ranking{padding:10px}.arcade-rank-grid{grid-template-columns:32px minmax(0,1fr) 78px;gap:5px}
- .arcade-dialog-inner{padding:13px}.arcade-ranking-head strong{font-size:13px}
+ .arcade-ranking-head strong{font-size:13px}
 }
 @media(prefers-reduced-motion:reduce){.arcade-body *{transition:none!important}}

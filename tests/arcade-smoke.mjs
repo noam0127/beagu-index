@@ -92,9 +92,11 @@ const unqualified=mockRecordBoard("teacher_run_retirement");
 unqualified.remote=true;
 unqualified.board=Array.from({length:10},(_,i)=>({score:5000-i*100}));
 unqualified.load=async()=>unqualified.board;
-unqualified.request=async()=>{throw new Error("must not submit a lower score");};
-await unqualified.finish(610,{player:25,cpu:7,elapsedTenths:610});
-assert.match(unqualified.notice,/기준 미달/);
+let autoUploadedLow=0;
+unqualified.request=async()=>{autoUploadedLow++;return {ranked:false,top10:unqualified.board};};
+await unqualified.finish(610,{score:610,baseScore:610,survivalSeconds:10,age:26,victory:false});
+assert.equal(autoUploadedLow,1,"retirement results below TOP10 are auto-saved");
+assert.match(unqualified.notice,/TOP 10 밖/);
 assert.doesNotMatch(shared,/submitName|openRecord|dialogElement|ENTER YOUR NAME|input\.maxLength/);
 assert.match(shared,/localStorage\.removeItem\("arcade-last-name-v1"\)/,"wipe prior typed names on visitors' devices");
 assert.match(shared,/\.sort\(\(a,b\)=>b\.score-a\.score/);
@@ -115,7 +117,7 @@ assert.match(backend,/resolution=ignore-duplicates,return=representation/,"only 
 assert.match(backend,/e\.created_at===inserted\[0\]\.created_at/,"anonymous timestamp and score identify new record placement");
 assert.match(backend,/nickname_not_supported/,"API rejects user-entered nicknames");
 assert.doesNotMatch(backend,/nickname:"ANON"|select:"nickname/,"API neither stores nor exposes nicknames");
-assert.match(backend,/game!=="volleyball_25"&&existing\.length>=10&&score<=existing\[9\]\.score/,"score gate preserved for retirement; volleyball still records fastest win");
+assert.doesNotMatch(backend,/existing\.length>=10&&score<=existing\[9\]\.score/,"all games save finished results below TOP10");
 assert.ok(backend.indexOf('"arcade_game_scores?on_conflict=session_id&select=created_at"')<backend.indexOf('const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"})'),"score persists before session completion marker");
 
 assert.match(volley,/new window\.ArcadeSchoolPicker/);
@@ -147,7 +149,7 @@ assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is imple
 assert.match(runner,/pointerY=target\.y/,"survival game tracks 2D touch target");
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically except EXTREME");
 assert.match(runner,/enemySize:1\.28/,"extreme hazards have larger collision size");
-assert.match(runner,/profile\.homing\*dt/,"harder hazards track the player");
+assert.match(runner,/trackSpeed\*dt/,"career-stage tracking hazards follow the player");
 assert.match(runner,/profile\.heroSpeed/,"hero mobility scales by difficulty");
 assert.match(runner,/profile\.startingLife/,"hero starting health scales by difficulty");
 assert.match(volley,/enemyJumpChance/,"AI jump probability scales by tier");
@@ -222,13 +224,13 @@ const volleyStats=(player,cpu,activeTenths=800,endedEarly=false)=>{
  const survivalBonus=Math.min(900,Math.floor(activeTenths/10))*4;
  const multiplier=victory?1+Math.floor((25-cpu)/5):1;
  return {player,cpu,baseScore,survivalBonus,multiplier,
-  finalScore:(baseScore+survivalBonus)*multiplier,victory,endedEarly,activeTenths};
+  finalScore:baseScore*multiplier+survivalBonus,victory,endedEarly,activeTenths};
 };
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,0),82),(2500+320)*6,"25–0 win: lead multiplier and play bonus");
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,5),82),(2250+320)*5);
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,10),82),(2000+320)*4);
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,15),82),(1750+320)*3);
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,20),82),(1500+320)*2);
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,0),82),2500*6+320,"25–0 win: lead multiplier and play bonus");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,5),82),2250*5+320);
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,10),82),2000*4+320);
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,15),82),1750*3+320);
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,20),82),1500*2+320);
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,24),82),1300+320);
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(24,25),82),1150+320,"loss still saves points");
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(3,25),82),320,"long survival has value even when losing badly");
@@ -298,7 +300,7 @@ assert.match(volley,/id="volley-fastest-label"/);
 assert.doesNotMatch(shared,/timedGame|openRecord|dialogElement|nickname:/,"no player-entered names");
 assert.match(shared,/function orderFast\(rows\)/,"fastest wins ranked separately");
 assert.match(shared,/b\.score-a\.score/,"higher scores rank ahead");
-assert.match(shared,/this\.score<=this\.board\[9\]\.score/,"retirement scores still use top10 gate");
+assert.doesNotMatch(shared,/this\.score<=this\.board\[9\]\.score/,"retirement results are saved automatically below TOP10");
 assert.match(volley,/EASY: animated feather wings/);
 assert.match(volley,/p===left&&currentDifficulty==="easy"/);
 assert.match(runner,/profile===difficultyProfiles\.easy/);
@@ -363,7 +365,7 @@ for(let i=1;i<levels.length;i++){
 }
 assert.match(volley,/drawTeacher\(right, \(enemyLooks\[currentDifficulty\]\|\|enemyLooks\.normal\)\.uniform\)/);
 assert.match(volley,/if\(look&&look\.armor\)/);
-assert.match(volley,/ball\.vx=\(sign\*attack\+clamp\(p\.vx,-12,12\)\*\.16\)\*ballSpeedFactor\(\)/);
+assert.match(volley,/ball\.vx=\(sign\*attack\+clamp\(p\.vx,-12,12\)\*\.16\+\(precise\?1\.9:0\)\)\*ballSpeedFactor\(\)/);
 const serveStart=volley.indexOf("function resetPositions()");
 const serveEnd=volley.indexOf("async function startMatch()",serveStart);
 assert.ok(serveStart>0&&serveEnd>serveStart);
@@ -457,8 +459,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=20261119-playtime-fastest1/);
-assert.match(html,/teacher-run\.html\?v=20261119-playtime-fastest1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-corefun-celebrate1/);
+assert.match(html,/teacher-run\.html\?v=20261119-corefun-celebrate1/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -533,7 +535,7 @@ const helperEnd=volley.indexOf("function moveAI()",helperStart);
 assert.ok(helperStart>0&&helperEnd>helperStart);
 const cloneHitSrc=volley.slice(helperStart,helperEnd);
 const testCloneHit=new Function("hitBall","ally",[
- "const R=48,ballSpeedFactor=()=>1,tone=()=>{};",
+ "const R=48,FLOOR=451,left={x:80},state={rescueUsed:false},ballSpeedFactor=()=>1,tone=()=>{},setStatus=()=>{};",
  cloneHitSrc,"return cloneHit(ally,hitBall);"
 ].join("\n"));
 const testHelper={x:210,y:420,contactFrames:0};
@@ -569,8 +571,8 @@ const shoot=(tier,good=false)=>new Function("tier","good",[
  'for(let i=0;i<5;i++)updateChalk(.05);',
  'return {created,remaining:items.length,score,removed};'
 ].join("\n"))(tier,good);
-assert.deepEqual(shoot("easy"),{created:1,remaining:0,score:25,removed:1},"EASY chalk automatically destroys falling hazard");
-assert.deepEqual(shoot("normal"),{created:1,remaining:0,score:25,removed:1},"NORMAL chalk also protects");
+assert.deepEqual(shoot("easy"),{created:1,remaining:0,score:5,removed:1},"EASY chalk automatically destroys falling hazard");
+assert.deepEqual(shoot("normal"),{created:1,remaining:0,score:5,removed:1},"NORMAL chalk also protects");
 assert.deepEqual(shoot("hard"),{created:0,remaining:1,score:0,removed:0},"HARD has no chalk");
 assert.deepEqual(shoot("extreme"),{created:0,remaining:1,score:0,removed:0},"EXTREME has no chalk");
 assert.deepEqual(shoot("easy",true),{created:0,remaining:1,score:0,removed:0},"healing pickups are never shot");
@@ -581,13 +583,13 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-playtime-fastest1/);
-assert.match(html,/teacher-run\.html\?v=20261119-playtime-fastest1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-corefun-celebrate1/);
+assert.match(html,/teacher-run\.html\?v=20261119-corefun-celebrate1/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
 // Execute actual career finish code: 62-year win doubles accumulated points; losses do not.
-const finishStart=runner.indexOf("function finish(win){");
+const finishStart=runner.indexOf("function retirementCongratulations(");
 const finishEnd=runner.indexOf("function pause(){",finishStart);
 assert.ok(finishStart>0&&finishEnd>finishStart);
 const runFinishSource=runner.slice(finishStart,finishEnd);
@@ -595,8 +597,8 @@ function finishCareer(initialScore,seconds,victory){
  return new Function("initialScore","seconds","victory",[
  'let state="playing",clock=seconds,score=initialScore,best=0,pointerId=null,pointerX=null,pointerY=null;',
  'const RETIREMENT_SECONDS=190,START_AGE=24,SECONDS_PER_YEAR=5;',
- 'const pressed={clear(){}},schoolPicker={setLocked(){}},ranking={finish(score,stats){submitted={score,stats};}};',
- 'let submitted=null,headline="",description="";',
+ 'const pressed={clear(){}},schoolPicker={setLocked(){},get(){return {difficulty:"hard"}}},ranking={finish(score,stats){submitted={score,stats};}};',
+ 'let submitted=null,headline="",description="",misses=0,nearCount=0,livesLeft=2,life=100,maxLife=100;',
  'const getAge=()=>Math.min(62,24+Math.floor(clock/5));',
  'const persist=()=>{},updateLabels=()=>{},playTone=()=>{},stopAndChangeSchool=()=>{},$=()=>({textContent:""});',
  'const message=(title,desc)=>{headline=title;description=desc;};',
@@ -612,7 +614,7 @@ assert.equal(fullCareer.best,8400);
 assert.deepEqual(fullCareer.submitted.stats,{
  score:8400,baseScore:4200,survivalSeconds:190,age:62,victory:true
 });
-assert.match(fullCareer.headline,/62세 정년 달성/);
+assert.match(fullCareer.headline,/정년/);
 assert.match(fullCareer.description,/× 2/);
 const earlyCareer=finishCareer(900,60,false);
 assert.equal(earlyCareer.score,900);
@@ -640,8 +642,55 @@ assert.equal(calls,2,"high score also uploaded without names");
 assert.match(backend,/order:"score\.desc,created_at\.asc"/);
 assert.match(backend,/win_time_tenths:"not\.is\.null"/);
 assert.match(backend,/order:"win_time_tenths\.asc,created_at\.asc"/);
-assert.match(backend,/game!=="volleyball_25"&&existing\.length>=10/);
+assert.match(backend,/Persist each validated result/);
 console.log("PASS: separate fastest-25 and high-score boards, partial match uploads, anonymous records");
+
+
+// Real victory headline selection: no generic copy for distinct achievements.
+const vcStart=volley.indexOf("function volleyballCongratulations(");
+const vcEnd=volley.indexOf("function finishMatch(early=false){",vcStart);
+assert.ok(vcStart>0&&vcEnd>vcStart);
+const volleyVictory=new Function("MATCH_TARGET",volley.slice(vcStart,vcEnd)+"return volleyballCongratulations;")(25);
+assert.match(volleyVictory(0,"easy",2,false,false).title,/완벽한 승리/);
+assert.match(volleyVictory(24,"hard",2,false,false).title,/마지막 한 점/);
+assert.match(volleyVictory(12,"extreme",1,false,false).title,/족쇄/);
+assert.match(volleyVictory(12,"hard",1,true,true).title,/두 개의 신기록/);
+assert.match(volleyVictory(9,"hard",1,false,false).title,/압도적인/);
+assert.match(volleyVictory(19,"hard",6,false,false).title,/연속 득점/);
+assert.match(volleyVictory(19,"hard",2,false,true).title,/최단시간/);
+assert.match(volleyVictory(19,"hard",2,true,false).title,/최고 점수/);
+const rcStart=runner.indexOf("function retirementCongratulations(");
+const rcEnd=runner.indexOf("function finish(win){",rcStart);
+assert.ok(rcStart>0&&rcEnd>rcStart);
+const runVictory=new Function(runner.slice(rcStart,rcEnd)+"return retirementCongratulations;")();
+assert.match(runVictory("normal",0,1,2,.8,10000,false).title,/무사고/);
+assert.match(runVictory("extreme",3,3,1,.3,10000,false).title,/족쇄/);
+assert.match(runVictory("hard",3,15,1,.3,10000,false).title,/회피의 달인/);
+assert.match(runVictory("normal",3,2,2,.9,10000,false).title,/건강하게/);
+assert.match(runVictory("hard",3,2,1,.2,10000,true).title,/점수 신기록/);
+assert.match(runVictory("hard",3,2,1,.2,21000,false).title,/전설/);
+const otherCelebrations=new Set([0,1,2].map(x=>runVictory("hard",3,x,1,.2,5000+x,false).title));
+assert.ok(otherCelebrations.size>=2,"ordinary retirement clear messages vary");
+assert.match(volley,/state\.pointTicks=24/,"point intermission cut to 0.4 seconds");
+assert.match(volley,/const precise=p\.side==="left"&&accuracy/,"precision-based hit timing matters");
+assert.match(volley,/state\.rescueUsed\|\|hitBall\.cooldown/,"clones only rescue once");
+assert.match(volley,/Math\.abs\(hitBall\.x-left\.x\)<115/,"helpers stay out when player can receive");
+assert.match(runner,/closestClearance<58/,"near miss verified by real distance");
+assert.doesNotMatch(runner,/!a\.good&&Math\.abs\(a\.x-player\.x\)<83/,"old false near-miss scoring removed");
+assert.doesNotMatch(runner,/addScore\(55\);float\(a\.x,a\.y,"PERFECT \+55"/,"protected collisions no longer grant combo points");
+assert.match(runner,/addScore\(90\)/,"dodging rewarded above auto chalk");
+assert.match(runner,/addScore\(5\);playTone\(760/,"auto chalk less valuable than dodging");
+assert.match(runner,/earlyMilestones\.has\(mark\)/,"10,20,30 second rewards exist");
+assert.match(runner,/const flyingSpeed=speed/,"touch and keyboard speed parity");
+assert.match(runner,/profile\.homing,45/,"mid-career homing pattern");
+assert.match(runner,/stage===3&&|if\(stage===3\)/,"career-specific safe lane");
+assert.match(shared,/arcade-tier-filter/,"tiered leaderboard filter available");
+assert.match(backend,/RANK_TIERS=new Set/,"server validates leaderboard tiers");
+assert.match(backend,/if\(tier\)q\.set\("difficulty","eq\."\+tier\)/,"ranking tier applied at DB query");
+assert.match(backend,/Persist each validated result/,"all runner results are persisted");
+assert.match(runner,/ranking\?\.finish\(Math\.floor\(score\)/,"runner auto submits on finish");
+assert.match(runner,/닉네임 없이 결과를 자동 기록합니다/);
+console.log("PASS: conditional congratulations, core action rewards, input parity and automatic tiered ranking");
 
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
@@ -662,8 +711,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-playtime-fastest1")&&
-     site.body.includes("teacher-run.html?v=20261119-playtime-fastest1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-corefun-celebrate1")&&
+     site.body.includes("teacher-run.html?v=20261119-corefun-celebrate1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -673,8 +722,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-playtime-fastest1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-playtime-fastest1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-corefun-celebrate1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-corefun-celebrate1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
