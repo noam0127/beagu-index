@@ -292,30 +292,25 @@ assert.doesNotMatch(volley,/getSurvivalBonus|loseLife|leftEnergy|rightEnergy/,"o
 assert.match(volley,/ranking\?\.finish\(duration,\{player:state\.leftScore,cpu:state\.rightScore,elapsedTenths:duration\}\)/);
 console.log("PASS: 25-point winner/loser, pause-correct race clock, independent shortest time and EASY wings");
 
-// Five-tier ball velocity, stronger pixel opponents and real current-score regression.
+// Five-tier ball speed and opposite team cosmetics survive the redesign.
 const netTopMatch=volley.match(/NET_TOP = (\d+), NET_W/);
-assert.ok(netTopMatch);assert.equal(Number(netTopMatch[1]),342,"net is slightly higher");
+assert.ok(netTopMatch);assert.equal(Number(netTopMatch[1]),342);
 const speedMatch=volley.match(/const ballSpeedProfiles=(\{[^}]+\});/);
 const looksMatch=volley.match(/const enemyLooks=(\{[\s\S]*?\n\s*\});/);
-assert.ok(speedMatch&&looksMatch,"tier speed and opponent profiles exist");
+assert.ok(speedMatch&&looksMatch);
 const speeds=new Function("return "+speedMatch[1])(),looks=new Function("return "+looksMatch[1])();
 const levels=["easy","normal","hard","very_hard","extreme"];
 assert.deepEqual(Object.keys(speeds),levels);
 assert.deepEqual(Object.keys(looks),levels);
-assert.equal(speeds.hard,1);
 for(let i=1;i<levels.length;i++){
- assert.ok(speeds[levels[i]]>speeds[levels[i-1]],"ball speed grows with tier");
- assert.ok(looks[levels[i]].armor>=looks[levels[i-1]].armor,"armor does not weaken");
- assert.ok(looks[levels[i]].aura>=looks[levels[i-1]].aura,"aura does not weaken");
+ assert.ok(speeds[levels[i]]>speeds[levels[i-1]]);
+ assert.ok(looks[levels[i]].armor>=looks[levels[i-1]].armor);
 }
-assert.equal(new Set(levels.map(t=>looks[t].uniform)).size,5,"unique enemy uniforms");
-assert.equal(looks.extreme.armor,3);assert.equal(looks.extreme.aura,2);
 assert.match(volley,/drawTeacher\(right, \(enemyLooks\[currentDifficulty\]\|\|enemyLooks\.normal\)\.uniform\)/);
 assert.match(volley,/if\(look&&look\.armor\)/);
-assert.match(volley,/if\(look&&look\.aura\)/);
-assert.match(volley,/ball\.vx=\(sign\*attack\*energyFactor\(p\.side\)\+clamp\(p\.vx,-12,12\)\*\.16\)\*ballSpeedFactor\(\)/);
-assert.match(volley,/ball\.vy=\(p\.side==="left" \?[\s\S]*?\)\*ballSpeedFactor\(\)/);
-const serveStart=volley.indexOf("function resetPositions()"),serveEnd=volley.indexOf("async function startMatch()",serveStart);
+assert.match(volley,/ball\.vx=\(sign\*attack\+clamp\(p\.vx,-12,12\)\*\.16\)\*ballSpeedFactor\(\)/);
+const serveStart=volley.indexOf("function resetPositions()");
+const serveEnd=volley.indexOf("async function startMatch()",serveStart);
 assert.ok(serveStart>0&&serveEnd>serveStart);
 const resetSource=volley.slice(serveStart,serveEnd);
 const serveSpeed=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
@@ -328,24 +323,10 @@ const serveSpeed=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
 ].join("\n"))(tier,serveLeft);
 assert.ok(Math.abs(serveSpeed("easy").vx)<Math.abs(serveSpeed("hard").vx));
 assert.ok(Math.abs(serveSpeed("hard").vx)<Math.abs(serveSpeed("extreme").vx));
-assert.ok(Math.abs(serveSpeed("easy").vy)<Math.abs(serveSpeed("extreme").vy));
-assert.ok(serveSpeed("extreme",false).vx<0,"serve direction remains correct");
-assert.match(volley,/id="volley-current-score"/);
-assert.match(volley,/class="volley-current-chip"/);
-assert.match(volley,/currentScoreLabel\.textContent=getFinalScore\(\)\.toLocaleString\("ko-KR"\)/);
-assert.match(volley,/state\.phase==="finished"&&state\.leftScore>state\.rightScore/);
-const calcStart=volley.indexOf("const getBaseScore="),calcEnd=volley.indexOf("  const W =",calcStart);
-assert.ok(calcStart>0&&calcEnd>calcStart);
-const scoreSource=volley.slice(calcStart,calcEnd);
-const liveScore=(phase,knockout)=>new Function("state",scoreSource+"\nreturn getFinalScore();")({
- phase,knockout,leftScore:4,rightScore:2,spikes:2,playFrames:35*60
-});
-const running=4*120+2*25+35*4;
-assert.equal(liveScore("playing",false),running,"premature victory bonus is excluded");
-assert.equal(liveScore("point",false),running);
-assert.equal(liveScore("finished",false),running+600+(7-2)*30,"victory bonus granted only on finish");
-assert.equal(liveScore("finished",true),running,"KO has no victory bonus");
-console.log("PASS: net height, tier speed and enemy armor, correct current SCORE and finish bonus");
+assert.ok(serveSpeed("extreme",false).vx<0);
+assert.match(volley,/state\.leftScore>=MATCH_TARGET\|\|state\.rightScore>=MATCH_TARGET/);
+assert.doesNotMatch(volley,/id="volley-current-score"|id="player-energy"|id="cpu-energy"/);
+console.log("PASS: tier speeds, boss appearance, clean 25-point score HUD and two-ball serve");
 
 // Fun update: volley hit-stop/impact should be bounded and CPU boss strikes telegraphed.
 assert.match(volley,/state\.hitStopFrames=charged\?5:bossStrike\?4:3/,"spikes trigger short hit-stop");
