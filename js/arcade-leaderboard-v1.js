@@ -1,14 +1,12 @@
-/* Shared arcade Top 10. Scores are public nicknames only; never requests a real name. */
+/* Anonymous public arcade TOP 10. No player-entered names, profiles or name storage. */
 (function(){
 "use strict";
 const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard";
-const fmt=n=>String(Math.max(0,Math.floor(Number(n)||0))).padStart(7,"0");
+const games=new Set(["volleyball_25","teacher_run_retirement"]);
 const timedGame=game=>game==="volleyball_25";
+const fmt=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString("ko-KR");
 const fmtTime=n=>{const t=Math.max(0,Math.floor(Number(n)||0));return Math.floor(t/600)+":"+String(Math.floor(t%600/10)).padStart(2,"0")+"."+(t%10);};
 const displayScore=(score,game)=>timedGame(game)?fmtTime(score):fmt(score)+"점";
-const idFor=game=>"arcade-local-top10-v1-"+game;
-const cleanName=s=>String(s||"").toUpperCase().replace(/[^A-Z]/g,"").slice(0,8);
-const games=new Set(["volleyball","volleyball_25","teacher_run","teacher_run_retirement"]);
 const levelNames={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
 function el(tag,cls,text){
  const e=document.createElement(tag);
@@ -17,50 +15,51 @@ function el(tag,cls,text){
  return e;
 }
 function order(rows,game){
- return rows.filter(x=>x&&/^[A-Z]{2,8}$/.test(x.nickname)&&Number.isSafeInteger(x.score)&&x.score>0)
- .sort((a,b)=>(timedGame(game)?a.score-b.score:b.score-a.score)||String(a.created_at||"").localeCompare(String(b.created_at||"")))
- .slice(0,10);
+ return rows.filter(x=>x&&Number.isSafeInteger(x.score)&&x.score>0)
+  .map(x=>({score:x.score,created_at:String(x.created_at||""),
+    school_name:String(x.school_name||"학교 미등록"),difficulty:x.difficulty||null}))
+  .sort((a,b)=>(timedGame(game)?a.score-b.score:b.score-a.score)||a.created_at.localeCompare(b.created_at))
+  .slice(0,10);
 }
+// Purge historical local leaderboard caches, including previously typed nicknames.
+try{
+ localStorage.removeItem("arcade-last-name-v1");
+ for(const game of ["volleyball","volleyball_25","teacher_run","teacher_run_retirement"])
+  localStorage.removeItem("arcade-local-top10-v1-"+game);
+}catch(e){}
 class ArcadeLeaderboard{
  constructor(game,mount){
   if(!games.has(game))throw new Error("invalid leaderboard game");
   this.game=game;this.mount=typeof mount==="string"?document.querySelector(mount):mount;
-  this.board=[];this.remote=false;this.session=null;this.pendingStart=null;this.pendingLoad=null;this.score=0;this.stats=null;this.school=null;this.playGeneration=0;
-  this.dialog=null;this.isSubmitting=false;this.notice="";
+  this.board=[];this.remote=false;this.session=null;this.pendingStart=null;
+  this.pendingLoad=null;this.score=0;this.stats=null;this.school=null;
+  this.playGeneration=0;this.isSubmitting=false;this.notice="";
   if(this.mount){this.draw();this.load();}
- }
- getLocal(){
-  try{const parsed=JSON.parse(localStorage.getItem(idFor(this.game))||"[]");return order(Array.isArray(parsed)?parsed:[],this.game);}catch{return [];}
- }
- setLocal(rows){
-  try{localStorage.setItem(idFor(this.game),JSON.stringify(order(rows,this.game)));}catch(e){}
  }
  async request(method,body=null){
   const options={method,cache:"no-store",headers:{"Content-Type":"application/json"}};
   if(body)options.body=JSON.stringify(body);
   const url=API+(method==="GET"?"?game="+encodeURIComponent(this.game):"");
-  const r=await fetch(url,options);
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok){const error=new Error(data.error||"api_error");error.status=r.status;throw error;}
+  const response=await fetch(url,options);
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok){const err=new Error(data.error||"api_error");err.status=response.status;throw err;}
   return data;
  }
  async load(){
-  if(!this.mount)return [];
   if(this.pendingLoad)return this.pendingLoad;
   this.pendingLoad=(async()=>{
    try{
     const data=await this.request("GET");
     if(!Array.isArray(data.top10))throw new Error("invalid_response");
     this.remote=true;this.board=order(data.top10,this.game);
-   }catch(err){
-    this.remote=false;this.board=this.getLocal();
+   }catch(e){
+    this.remote=false;this.board=[];
    }
    this.draw();return this.board;
   })();
   try{return await this.pendingLoad;}finally{this.pendingLoad=null;}
  }
  start(school){
-  // Invalidate the previous play and any asynchronous record save first.
   this.cancel();this.lastStartError=null;
   if(!school||!school.eligible||!school.school_id||!school.school_name){
    this.lastStartError="school_ineligible";return Promise.resolve(null);
@@ -73,13 +72,11 @@ class ArcadeLeaderboard{
     if(generation!==this.playGeneration)return null;
     if(data.school?.eligible!==true||typeof data.session!=="string")throw new Error("school_ineligible");
     this.session=data.session;
-    // The canonical server selection is authoritative, never a typed school label.
     this.school={school_id:data.school.school_id,school_name:data.school.school_name,difficulty:data.school.difficulty};
     return this.session;
-   }catch(error){
+   }catch(e){
     if(generation===this.playGeneration){
-     this.session=null;
-     this.lastStartError=String(error?.message||"network_unavailable");
+     this.session=null;this.lastStartError=String(e?.message||"network_unavailable");
     }
     return null;
    }
@@ -87,137 +84,66 @@ class ArcadeLeaderboard{
   return this.pendingStart;
  }
  cancel(){
-  // Old games and pending score submissions cannot mutate the next school's record.
-  this.playGeneration++;this.session=null;this.pendingStart=null;
-  this.school=null;this.score=0;this.stats=null;this.notice="";
-  this.isSubmitting=false;
-  if(this.dialogSave)this.dialogSave.disabled=false;
-  this.closeDialog();
+  // Any delayed start/record result belongs to the previous match.
+  this.playGeneration++;this.session=null;this.pendingStart=null;this.school=null;
+  this.score=0;this.stats=null;this.notice="";this.isSubmitting=false;
+  this.draw();
  }
  async finish(score,stats){
   const generation=this.playGeneration;
-  if(!this.session)return;
+  if(!this.session||this.isSubmitting)return;
   this.score=Math.floor(Number(score)||0);this.stats=stats;
   if(this.score<=0)return;
   try{if(this.pendingStart)await this.pendingStart;}catch(e){}
   if(generation!==this.playGeneration||!this.session)return;
-  await this.load();
-  if(generation!==this.playGeneration||!this.session)return;
-  if(this.remote&&this.board.length===10&&(timedGame(this.game)?this.score>=this.board[9].score:this.score<=this.board[9].score)){
-   this.notice="이번 경기 "+displayScore(this.score,this.game)+" · TOP 10 진입 실패";
-   this.draw();return;
-  }
-  this.openRecord();
- }
- dialogElement(){
-  if(this.dialog)return this.dialog;
-  const d=el("dialog","arcade-dialog");
-  d.setAttribute("aria-label","TOP 10 기록 입력");
-  const wrap=el("div","arcade-dialog-inner");
-  const heading=el("h2","","NEW RECORD!");
-  const score=el("div","final-score");
-  const form=el("form");form.method="dialog";form.noValidate=true;
-  const label=el("label","","ENTER YOUR NAME");
-  const input=el("input");
-  input.type="text";input.maxLength=8;input.minLength=2;input.pattern="[A-Za-z]{2,8}";
-  input.autocomplete="off";input.spellcheck=false;input.setAttribute("autocapitalize","characters");
-  input.setAttribute("inputmode","latin");input.setAttribute("aria-label","영문 닉네임 2~8글자");
-  const msg=el("div","error");msg.setAttribute("aria-live","polite");
-  const actions=el("div","record-actions");
-  const save=el("button","","SAVE");save.type="submit";
-  const skip=el("button","alt","SKIP");skip.type="button";
-  actions.append(save,skip);form.append(label,input,msg,actions);wrap.append(heading,score,form);d.append(wrap);
-  document.body.append(d);
-  input.addEventListener("input",()=>{const at=input.selectionStart;input.value=cleanName(input.value);try{input.setSelectionRange(Math.min(at,input.value.length),Math.min(at,input.value.length));}catch(e){}msg.textContent="";});
-  form.addEventListener("submit",e=>{e.preventDefault();this.submitName(cleanName(input.value),save,msg);});
-  skip.addEventListener("click",()=>this.closeDialog());
-  d.addEventListener("cancel",()=>this.closeDialog());
-  this.dialog=d;this.nameInput=input;this.dialogScore=score;this.dialogMessage=msg;this.dialogSave=save;
-  return d;
- }
- openRecord(){
-  const dialog=this.dialogElement();
-  this.dialogScore.textContent=displayScore(this.score,this.game)+" · "+(this.school?.school_name||"학교 미등록");
-  this.dialogMessage.textContent="";
-  try{this.nameInput.value=cleanName(localStorage.getItem("arcade-last-name-v1")||"");}catch(e){this.nameInput.value="";}
-  if(!dialog.open){if(typeof dialog.showModal==="function")dialog.showModal();else dialog.setAttribute("open","");}
-  this.nameInput.focus();
- }
- closeDialog(){
-  if(!this.dialog)return;
-  if(typeof this.dialog.close==="function" && this.dialog.open)this.dialog.close();
-  else this.dialog.removeAttribute("open");
- }
- async submitName(name,button,msg){
-  if(this.isSubmitting)return;
-  if(!/^[A-Z]{2,8}$/.test(name)){msg.textContent="영문 2~8글자를 입력하세요";this.nameInput.focus();return;}
-  const generation=this.playGeneration;
-  const session=this.session;
-  const score=this.score;
-  const stats=this.stats;
-  const school=this.school?{...this.school}:null;
-  this.isSubmitting=true;button.disabled=true;msg.textContent="공식 기록 저장 중…";
+  this.isSubmitting=true;
+  this.notice="익명 기록 자동 확인 중…";this.draw();
   try{
-   let saved=false;
-   if(session){
-    try{
-     const data=await this.request("POST",{action:"submit",game:this.game,session,nickname:name,stats});
-     if(generation!==this.playGeneration)return;
-     if(!Array.isArray(data.top10)||typeof data.ranked!=="boolean")throw new Error("invalid_response");
-     this.remote=true;this.board=order(data.top10,this.game);
-     this.session=null;saved=true;
-     this.notice=data.ranked
-      ?"🏆 공식 TOP "+data.rank+"위 등록 완료 · "+displayScore(score,this.game)
-      :"이번 경기 "+displayScore(score,this.game)+" · 등록 직전 TOP 10에서 밀렸습니다";
-    }catch(err){
-     if(generation!==this.playGeneration)return;
-     if(err.status){
-      const message=err.status===409?"경기 기록이 만료되었거나 이미 등록되었습니다. 다시 플레이해 주세요."
-       :err.status===400?"점수 검증에 실패했습니다. 다시 플레이해 주세요."
-       :"공식 기록 서버 오류 · 잠시 후 다시 시도해 주세요.";
-      msg.textContent=message;
-      return;
-     }
-     // A network error does not imply a confirmed world record.
-     this.notice="공식 서버 확인 실패 · 이 기기에만 기록합니다";
-    }
+   await this.load();
+   if(generation!==this.playGeneration||!this.session)return;
+   // Avoid consuming a session for a definitely nonqualifying entry.
+   if(this.remote&&this.board.length===10&&
+      (timedGame(this.game)?this.score>=this.board[9].score:this.score<=this.board[9].score)){
+    this.notice="이번 "+displayScore(this.score,this.game)+" · TOP 10 기준 미달";
+    this.session=null;this.draw();return;
    }
+   const data=await this.request("POST",{action:"submit",game:this.game,session:this.session,stats:this.stats});
    if(generation!==this.playGeneration)return;
-   if(!saved){
-    this.remote=false;
-    this.board=order([...this.getLocal(),{nickname:name,score,school_name:school?.school_name||null,difficulty:school?.difficulty||null,created_at:new Date().toISOString()}],this.game);
-    this.setLocal(this.board);
-    this.notice="OFFLINE · 이 기기에만 저장됨 (공식 TOP 10 아님)";
-   }
-   try{localStorage.setItem("arcade-last-name-v1",name);}catch(e){}
-   this.draw();this.closeDialog();
+   if(!Array.isArray(data.top10)||typeof data.ranked!=="boolean")throw new Error("invalid_response");
+   this.remote=true;this.board=order(data.top10,this.game);this.session=null;
+   this.notice=data.ranked
+    ?"🏆 익명 기록 자동 등록 · "+data.rank+"위 · "+displayScore(this.score,this.game)
+    :"이번 "+displayScore(this.score,this.game)+" · TOP 10 진입 실패";
+  }catch(err){
+   if(generation!==this.playGeneration)return;
+   this.notice=err.status===409?"경기가 만료되었거나 이미 기록되었습니다":
+    err.status===400?"기록 검증 실패 · 다시 플레이해 주세요":
+    "공식 기록 서버 연결 실패 · 기록이 저장되지 않았습니다";
   }finally{
-   if(generation===this.playGeneration){
-    this.isSubmitting=false;button.disabled=false;
-   }
+   if(generation===this.playGeneration){this.isSubmitting=false;this.draw();}
   }
  }
  draw(){
   if(!this.mount)return;
-  const container=this.mount;container.replaceChildren();container.classList.add("arcade-ranking");
-  const head=el("div","arcade-ranking-head"),heading=el("strong","","🏆 TOP 10");
-  const status=el("small","",this.remote?"WORLD RECORDS":"OFFLINE · 이 기기");
-  head.append(heading,status);container.append(head);
-  if(this.notice){
-   const notice=el("p","arcade-rank-feedback",this.notice);
-   notice.setAttribute("role","status");container.append(notice);
-  }
+  const root=this.mount;root.replaceChildren();root.classList.add("arcade-ranking");
+  const header=el("div","arcade-ranking-head");
+  header.append(el("strong","",timedGame(this.game)?"🏆 25점 최단 시간 TOP 10":"🏆 정년 생존 점수 TOP 10"),
+   el("small","",this.remote?"공식 기록 · 익명":"공식 서버 확인 중"));
+  root.append(header);
+  if(this.notice){const node=el("p","arcade-rank-feedback",this.notice);node.setAttribute("role","status");root.append(node);}
   const labels=el("div","arcade-rank-grid arcade-rank-label");
-  ["RANK","NAME · 학교",timedGame(this.game)?"TIME":"SCORE"].forEach(x=>labels.append(el("span","",x)));container.append(labels);
-  if(!this.board.length){container.append(el("div","arcade-rank-empty","NO RECORDS"));return;}
-  this.board.slice(0,10).forEach((entry,i)=>{
+  ["순위","학교 · 난이도",timedGame(this.game)?"완주 시간":"점수"].forEach(x=>labels.append(el("span","",x)));
+  root.append(labels);
+  if(!this.board.length){root.append(el("div","arcade-rank-empty",this.remote?"아직 등록된 기록이 없습니다":"기록을 불러올 수 없습니다"));return;}
+  for(const [i,entry] of this.board.entries()){
    const row=el("div","arcade-rank-grid arcade-rank-row");
-   const person=el("div","arcade-rank-person");
-   const school=[entry.school_name||"학교 미등록",levelNames[entry.difficulty]].filter(Boolean).join(" · ");
-   person.append(el("span","arcade-rank-nick",entry.nickname),el("span","arcade-rank-school",school));
-   row.append(el("span","",String(i+1).padStart(2,"0")),person,el("span","",timedGame(this.game)?fmtTime(entry.score):fmt(entry.score)));
-   container.append(row);
-  });
+   const school=el("div","arcade-rank-person");
+   school.append(el("span","arcade-rank-school",entry.school_name),
+    el("span","arcade-rank-nick",levelNames[entry.difficulty]||""));
+   row.append(el("span","",String(i+1).padStart(2,"0")),school,
+    el("span","",timedGame(this.game)?fmtTime(entry.score):fmt(entry.score)));
+   root.append(row);
+  }
  }
 }
 window.ArcadeLeaderboard=ArcadeLeaderboard;
