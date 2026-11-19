@@ -13,6 +13,13 @@ const edge=read('test-environment/supabase/functions/beagu-test-v1/index.ts');
 
 test('test environment starts disconnected, no prod API in site scripts',()=>{
  assert.match(config,/enabled:false/);
+ assert.match(config,/projectRef:'ycwuugggqbunlbwuzvbx'/);
+ assert.match(config,/siteOrigin:'https:\/\/baegu-index-test\.vercel\.app'/);
+ assert.match(config,/endpoint:'https:\/\/ycwuugggqbunlbwuzvbx\.supabase\.co\/functions\/v1\/beagu-test-v1'/);
+ const deployConfig=JSON.parse(read('test-web/vercel.json'));
+ const csp=deployConfig.headers.flatMap(group=>group.headers).find(h=>h.key==='Content-Security-Policy')?.value||'';
+ assert.match(csp,/https:\/\/ycwuugggqbunlbwuzvbx\.supabase\.co/);
+ assert.doesNotMatch(csp,/https:\/\/\*\.supabase\.co/);
  for(const text of [ui,js,recover,config]){
    assert.doesNotMatch(text,/https:\/\/snvzwrexuqavnfvzgxqj\.supabase\.co/);
    assert.doesNotMatch(text,/service.role.key|SUPABASE_SERVICE_ROLE_KEY|BEAGU_2026_INGEST_TOKEN/i);
