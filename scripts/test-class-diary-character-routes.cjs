@@ -45,9 +45,11 @@ for(const kind of kinds){
 assert(routes.relationshipMoment(state('none',5)).includes('민서'),'Platonic route retains an independent, named friendship');
 assert.notEqual(routes.relationshipMoment(state('woman',5)),routes.relationshipMoment(state('man',5)));
 assert.notEqual(routes.relationshipMoment(state('woman',5,{affection:42,trust:38})),routes.relationshipMoment(state('woman',5)));
-assert(!['warm','tender'].includes(engine.endingFor(state('none',7,{affection:100,trust:100,agency:75}))),
+const platonic=state('none',7,{affection:100,trust:100,agency:75});
+const finished=engine.advance(engine.choose(platonic,'thanks'));
+assert(!['warm','tender'].includes(finished.ending.id),
  'Platonic route cannot be forced into romance');
-assert.throws(()=>routes.chapterMoment(state('woman',7,{trust:60,affection:50,...{}})&&null),/ROUTE_STATE_REQUIRED/);
+assert.throws(()=>routes.chapterMoment(null),/ROUTE_STATE_REQUIRED/);
 const src=fs.readFileSync(path.join(__dirname,'..','js/class-diary-character-routes-v1.js'),'utf8');
 assert(!/localStorage|sessionStorage|indexedDB|fetch\(|sendBeacon\(|XMLHttpRequest|WebSocket|Math\.random\(/.test(src),
  'Character dialogue engine cannot save, track, or send data');
