@@ -61,12 +61,17 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#diaryLandingStart').click();
    await page.locator('#setup').waitFor({state:'visible'});
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'1');
-   assert.equal(await page.locator('#diarySchoolMode').isVisible(),true,'First setup shows school choice');
-   assert.equal(await page.locator('#diarySchoolMode').inputValue(),'demo','Guest code defaults to fictional prologue');
+   assert.equal(await page.locator('.diary-landing-verse').innerText(),'낯선 교실에 첫 발을 내딛던 날.\n그날의 걸음을 우리는 잊지 못한다.','Title card text must match');
+   assert.equal(await page.locator('#diarySchoolName').isVisible(),true,'School text field must be visible');
+   assert.equal(await page.locator('#diarySchoolMode').isVisible(),false,'Mode dropdown must be hidden');
    for(const selector of ['#playerName','#experience','#gender','#mbti'])
     assert.equal(await page.locator(selector).isVisible(),false,'No personal questionnaire: '+selector);
    await page.locator('#setupNext').click();
-   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Colleague choice follows school');
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'1','School name cannot be blank');
+   await page.locator('#diarySchoolName').fill('봄빛초등학교');
+   await page.locator('#setupNext').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Colleague choice follows a typed school name');
+   assert.equal(await page.locator('#schoolLine').textContent(),'봄빛초등학교 · 가상의 이야기');
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),3);
    await page.locator('[data-partner-choice="none"]').click();
@@ -117,7 +122,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
   assert.equal(await legacy.locator('#notice').isVisible(),false,'No preselection school error');
   await legacy.locator('#diaryLandingStart').click();
   await legacy.locator('#setup').waitFor({state:'visible'});
-  assert.equal(await legacy.locator('#diarySchoolMode').isVisible(),true);
+  assert.equal(await legacy.locator('#diarySchoolName').isVisible(),true);
   await legacy.close();
  }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exit(1)});
