@@ -36,6 +36,7 @@ class ArcadeLeaderboard{
   if(!games.has(game))throw new Error("invalid leaderboard game");
   this.game=game;this.mount=typeof mount==="string"?document.querySelector(mount):mount;
   this.board=[];this.fastestBoard=[];this.remote=false;this.session=null;this.pendingStart=null;
+  this.tier=null;this.loadRequestId=0;this.pendingTier=null;
   this.pendingLoad=null;this.score=0;this.stats=null;this.school=null;
   this.playGeneration=0;this.isSubmitting=false;this.notice="";
   if(this.mount){this.draw();this.load();}
@@ -43,26 +44,31 @@ class ArcadeLeaderboard{
  async request(method,body=null){
   const options={method,cache:"no-store",headers:{"Content-Type":"application/json"}};
   if(body)options.body=JSON.stringify(body);
-  const url=API+(method==="GET"?"?game="+encodeURIComponent(this.game):"");
+  const url=API+(method==="GET"?"?game="+encodeURIComponent(this.game)+(this.tier?"&difficulty="+encodeURIComponent(this.tier):""):"");
   const response=await fetch(url,options);
   const data=await response.json().catch(()=>({}));
   if(!response.ok){const err=new Error(data.error||"api_error");err.status=response.status;throw err;}
   return data;
  }
  async load(){
-  if(this.pendingLoad)return this.pendingLoad;
-  this.pendingLoad=(async()=>{
+  if(this.pendingLoad&&this.pendingTier===this.tier)return this.pendingLoad;
+  const requestId=++this.loadRequestId;
+  this.pendingTier=this.tier;
+  const current=(async()=>{
    try{
     const data=await this.request("GET");
     if(!Array.isArray(data.top10))throw new Error("invalid_response");
+    if(requestId!==this.loadRequestId)return this.board;
     this.remote=true;this.board=order(data.top10,this.game);
     if(this.game==="volleyball_25")this.fastestBoard=orderFast(data.fastestTop10||[]);
    }catch(e){
+    if(requestId!==this.loadRequestId)return this.board;
     this.remote=false;this.board=[];this.fastestBoard=[];
    }
    this.draw();return this.board;
   })();
-  try{return await this.pendingLoad;}finally{this.pendingLoad=null;}
+  this.pendingLoad=current;
+  try{return await current;}finally{if(requestId===this.loadRequestId)this.pendingLoad=null;}
  }
  start(school){
   this.cancel();this.lastStartError=null;
@@ -106,12 +112,8 @@ class ArcadeLeaderboard{
   try{
    await this.load();
    if(generation!==this.playGeneration||!this.session)return;
-   // Avoid consuming a session for a definitely nonqualifying entry.
-   if(this.game!=="volleyball_25"&&this.remote&&this.board.length===10&&this.score<=this.board[9].score){
-    this.notice="이번 "+displayScore(this.score)+" · TOP 10 기준 미달";
-    this.session=null;this.draw();return;
-   }
-   const data=await this.request("POST",{action:"submit",game:this.game,session:this.session,stats:this.stats});
+   // Save all validated completed games, even if they do not reach TOP 10.
+   const data=await this.request("POST",{action:"submit",game:this.game,session:this.session,stats:this.stats,...(this.tier?{difficulty:this.tier}:{})});
    if(generation!==this.playGeneration)return;
    if(!Array.isArray(data.top10)||typeof data.ranked!=="boolean")throw new Error("invalid_response");
    this.remote=true;this.board=order(data.top10,this.game);this.session=null;
@@ -136,6 +138,17 @@ class ArcadeLeaderboard{
   header.append(el("strong","",this.game==="volleyball_25"?"🏆 배구 최고 점수 TOP 10":"🏆 정년 생존 점수 TOP 10"),
     el("small","",this.remote?"공식 기록 · 익명":"공식 서버 확인 중"));
   root.append(header);
+  const filter=el("select","arcade-tier-filter");
+  filter.setAttribute("aria-label","랭킹 난이도 선택");
+  for(const [value,label] of [["","전체 난이도"],...Object.entries(levelNames)]){
+   const opt=document.createElement("option");opt.value=value;opt.textContent=label;filter.append(opt);
+  }
+  filter.value=this.tier||"";
+  filter.addEventListener("change",()=>{
+   this.tier=filter.value||null;
+   this.load();
+  });
+  root.append(filter);
   if(this.notice){const node=el("p","arcade-rank-feedback",this.notice);node.setAttribute("role","status");root.append(node);}
   const labels=el("div","arcade-rank-grid arcade-rank-label");
   ["순위","학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));root.append(labels);
