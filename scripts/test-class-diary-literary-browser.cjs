@@ -37,7 +37,20 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#setupNext').click();
    await page.locator('[data-partner-choice="woman"]').click();
    await page.locator('#setupNext').click();
-   await page.locator('#novel').waitFor({state:'visible'});
+   await page.waitForTimeout(300);
+   if(await page.locator('#novel').isHidden()){
+    const state=await page.evaluate(()=>({
+     setupStep:document.getElementById('setup').dataset.step,
+     setupHidden:document.getElementById('setup').hidden,
+     partner:document.getElementById('partner').value,
+     school:document.getElementById('diarySchoolName').value,
+     story:document.body.dataset.diaryStory,
+     status:document.getElementById('status').textContent,
+     selected:document.querySelector('[data-partner-choice="woman"]').getAttribute('aria-pressed')
+    }));
+    throw Error('Line reader setup never opened the story: '+JSON.stringify(state)+' errors='+errors.join('; '));
+   }
+   await page.locator('#novel').waitFor({state:'visible',timeout:5000});
    const sample=()=>page.evaluate(()=>{
     const rows=[...document.querySelectorAll('#chapterText .diary-literary-line')];
     const shown=rows.filter(r=>!r.hidden);
