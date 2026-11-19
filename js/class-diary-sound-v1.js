@@ -1,97 +1,131 @@
-/* 『나의 OO한 학급일지』 배경음과 진행 효과음.
- * 음악: Scott Buckley, CC BY 4.0; 공식 사이트에서 직접 배포하는 MP3.
- * 플레이 기록과 음향 설정을 어디에도 저장하지 않는다.
+/* Class Diary soundtrack: Scott Buckley CC BY 4.0 and original synthesized interface cues.
+ * Only per-tab memory; never save player choices, progress or sound preferences.
+ * Source credits: https://www.scottbuckley.com.au/library/using-this-music/
  */
 (function(root){
 'use strict';
-const VERSION='class-diary-sound/v1';
+const VERSION='class-diary-sound/v2';
 const LICENSE='https://creativecommons.org/licenses/by/4.0/';
-const TRACKS=Object.freeze({
- daily:Object.freeze({name:'Simplicity',url:'https://www.scottbuckley.com.au/library/wp-content/uploads/2024/03/Simplicity.mp3',license:LICENSE}),
- tension:Object.freeze({name:'Intervention',url:'https://www.scottbuckley.com.au/library/wp-content/uploads/2019/01/sb_intervention.mp3',license:LICENSE}),
- bright:Object.freeze({name:'Felicity',url:'https://www.scottbuckley.com.au/library/wp-content/uploads/2021/03/sb_felicity.mp3',license:LICENSE}),
- tender:Object.freeze({name:'Moonlight',url:'https://www.scottbuckley.com.au/library/wp-content/uploads/2022/07/Moonlight.mp3',license:LICENSE}),
- ending:Object.freeze({name:'Home Was You',url:'https://www.scottbuckley.com.au/library/wp-content/uploads/2026/07/HomeWasYou.mp3',license:LICENSE})
-});
-const DAYS=Object.freeze(['daily','tension','bright','tension','daily','tender','daily']);
-let enabled=false,currentId=null,current=null,context=null,request=0;
+const HOST='https://www.scottbuckley.com.au/library/';
+const FILES={
+ daily:['Simplicity','2024/03/Simplicity.mp3','simplicity'],
+ playful:['Ice Cream','2023/08/IceCream.mp3','ice-cream'],
+ heartfelt:['Amberlight','2025/03/Amberlight.mp3','amberlight'],
+ tension:['Intervention','2019/01/sb_intervention.mp3','intervention'],
+ tender:['Moonlight','2022/07/Moonlight.mp3','moonlight'],
+ restful:['Castles in the Sky','2021/11/sb_castlesinthesky.mp3','castles-in-the-sky'],
+ bright:['Felicity','2021/03/sb_felicity.mp3','felicity'],
+ ending:['Home Was You','2026/07/HomeWasYou.mp3','home-was-you']
+};
+const TRACKS=Object.freeze(Object.fromEntries(Object.entries(FILES).map(([id,[name,file,slug]])=>[
+ id,Object.freeze({name,url:HOST+'wp-content/uploads/'+file,page:HOST+slug+'/',license:LICENSE})
+])));
+const DAYS=Object.freeze(['daily','tension','heartfelt','tension','playful','restful','daily']);
+let enabled=false,current=null,currentId=null,request=0,fadeTimer=null;
+let musicVolume=.13,sfxVolume=.17,fxEnabled=true,ctx=null,onStatus=()=>{};
 const AudioAPI=typeof root.Audio==='function'?root.Audio:null;
-const AudioContextAPI=root.AudioContext||root.webkitAudioContext;
-let onStatus=()=>{};
-function status(value){try{onStatus(value)}catch(e){}}
-function createPlayer(id){
+const ContextAPI=root.AudioContext||root.webkitAudioContext;
+function status(message){try{onStatus(message)}catch(_){}}
+function clamp(n){return Math.min(1,Math.max(0,Number.isFinite(Number(n))?Number(n):0))}
+function stopFade(){if(fadeTimer!==null){root.clearInterval(fadeTimer);fadeTimer=null}}
+function stop(){request++;stopFade();if(current){current.pause();current.src='';current=null}currentId=null}
+function createAudio(id){
  if(!AudioAPI)return null;
- const audio=new AudioAPI();
- audio.src=TRACKS[id].url;audio.preload='none';audio.loop=id!=='ending';audio.volume=.14;
- audio.addEventListener('error',()=>status('배경음악을 불러오지 못했습니다. 음악 없이 계속 플레이할 수 있습니다.'));
- return audio;
-}
-function stop(){
- request++;if(current){current.pause();current.currentTime=0;current=null;}
- currentId=null;
+ const player=new AudioAPI(TRACKS[id].url);
+ player.preload='none';player.loop=id!=='ending';player.volume=0;
+ player.addEventListener('error',()=>status('음원을 불러오지 못했습니다. 화면의 출처 링크에서 음원을 확인해 주세요.'));
+ return player;
 }
 async function setTrack(id){
  if(!Object.prototype.hasOwnProperty.call(TRACKS,id))throw Error('UNKNOWN_TRACK');
  if(!enabled)return;
  if(currentId===id&&current&&!current.paused)return;
- const turn=++request;
- const next=createPlayer(id);
- if(!next){status('이 브라우저에서는 배경음악을 사용할 수 없습니다.');return;}
- const previous=current;current=next;currentId=id;
- if(previous){previous.pause();previous.currentTime=0;}
+ const turn=++request,previous=current,next=createAudio(id);
+ if(!next){status('오디오를 지원하지 않는 브라우저입니다.');return}
+ current=next;currentId=id;
  try{
   await next.play();
-  if(turn!==request){next.pause();return;}
-  status(TRACKS[id].name+' 재생 중');
- }catch(e){
+  if(turn!==request){next.pause();return}
+  const steps=12;let step=0;stopFade();
+  fadeTimer=root.setInterval(()=>{
+   if(turn!==request){stopFade();next.pause();return}
+   step++;const progress=Math.min(1,step/steps);
+   next.volume=musicVolume*progress;
+   if(previous){previous.volume=Math.max(0,musicVolume*(1-progress))}
+   if(progress===1){stopFade();if(previous){previous.pause();previous.src=''}}
+  },45);
+  status(TRACKS[id].name+' · Scott Buckley 재생 중');
+ }catch(err){
   if(turn!==request)return;
-  status('음악 재생이 차단됐습니다. 음악 켜기 버튼을 다시 누르면 재생을 시도합니다.');
+  if(previous){previous.pause();previous.src=''}
+  status('브라우저가 재생을 차단했거나 음원에 접근할 수 없습니다. 음악 버튼을 눌러 다시 시도하세요.');
  }
 }
-function setEnabled(on){
- enabled=Boolean(on);
- if(!enabled){stop();status('배경음악 꺼짐');}
- else status('배경음악 켜짐');
+function setEnabled(value){
+ enabled=!!value;
+ if(!enabled){stop();status('배경음악 꺼짐')}
+ else status('배경음악 켜짐 · 게임 시작 후 재생');
+ return enabled;
 }
-function isEnabled(){return enabled;}
+function isEnabled(){return enabled}
+function setMusicVolume(value){
+ musicVolume=clamp(value);
+ if(current)current.volume=musicVolume;
+ return musicVolume;
+}
+function setSfxVolume(value){sfxVolume=clamp(value);return sfxVolume}
+function musicLevel(){return musicVolume}
+function sfxLevel(){return sfxVolume}
+function setEffectsEnabled(value){fxEnabled=!!value;return fxEnabled}
 function dayTrack(day){
  if(!Number.isInteger(day)||day<1||day>7)throw Error('INVALID_DAY');
  return DAYS[day-1];
 }
 function choiceTrack(day,choice){
- if(day===2||day===4)return ['reopen','together','listen'].includes(choice)?'daily':'tension';
- if(day===3)return 'bright';
+ if(day===2||day===4)return ['reopen','together','listen'].includes(choice)?'heartfelt':'tension';
+ if(day===3)return ['council','trial'].includes(choice)?'heartfelt':'playful';
  if((day===5&&choice==='invite')||(day===6&&choice==='coffee'))return 'tender';
+ if(day===7&&choice==='promise')return 'heartfelt';
  return dayTrack(day);
 }
-function note(tone){
- // original, gentle short interface tones via Web Audio; no sound files/rights needed
- if(!AudioContextAPI)return;
+function sceneTrack(event){
+ if(!event)return 'daily';
+ if(event.kind==='tense'||event.tone==='tense'||event.tone==='unsettled')return 'tension';
+ if(event.kind==='gentle'||event.tone==='gentle')return 'heartfelt';
+ if(event.tone==='playful')return 'playful';
+ if(event.tone==='reflective')return 'restful';
+ return 'daily';
+}
+/* Short original sine-wave cues; no third-party sound recording. */
+const CUES=Object.freeze({
+ hover:[540,570,.035,.04], choice:[550,740,.10,.16],
+ advance:[415,510,.07,.08], affection:[590,880,.19,.24],
+ tension:[310,260,.20,.17], transition:[465,615,.12,.12]
+});
+function note(kind){
+ if(!fxEnabled||sfxVolume<=0||!ContextAPI||!CUES[kind])return;
  try{
-  if(!context)context=new AudioContextAPI();
-  if(context.state==='suspended')context.resume().catch(()=>{});
-  const now=context.currentTime,osc=context.createOscillator(),gain=context.createGain();
-  osc.type='sine';osc.frequency.setValueAtTime(tone==='choice'?587.33:440,now);
-  osc.frequency.exponentialRampToValueAtTime(tone==='choice'?783.99:659.25,now+.085);
-  gain.gain.setValueAtTime(.0001,now);
-  gain.gain.exponentialRampToValueAtTime(tone==='choice'?.038:.02,now+.009);
-  gain.gain.exponentialRampToValueAtTime(.0001,now+.14);
-  osc.connect(gain);gain.connect(context.destination);
-  osc.start(now);osc.stop(now+.16);
- }catch(e){}
+  if(!ctx)ctx=new ContextAPI();
+  if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+  const [from,to,seconds,level]=CUES[kind],at=ctx.currentTime;
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=kind==='tension'?'triangle':'sine';
+  o.frequency.setValueAtTime(from,at);o.frequency.exponentialRampToValueAtTime(to,at+seconds);
+  g.gain.setValueAtTime(.0001,at);
+  g.gain.exponentialRampToValueAtTime(Math.max(.0002,level*sfxVolume),at+.015);
+  g.gain.exponentialRampToValueAtTime(.0001,at+seconds+.035);
+  o.connect(g);g.connect(ctx.destination);
+  o.start(at);o.stop(at+seconds+.055);
+ }catch(_){}
 }
 function credit(){
- return {
-  creator:'Scott Buckley',
-  url:'https://www.scottbuckley.com.au',
-  license:LICENSE,
-  credit:"Music: 'Simplicity', 'Intervention', 'Felicity', 'Moonlight', 'Home Was You' by Scott Buckley — CC BY 4.0."
- };
+ return {creator:'Scott Buckley',url:'https://www.scottbuckley.com.au',
+ license:LICENSE,tracks:Object.values(TRACKS).map(t=>({name:t.name,page:t.page})),
+ credit:'Music by Scott Buckley — CC BY 4.0. www.scottbuckley.com.au'};
 }
-const api=Object.freeze({
- VERSION,TRACKS,dayTrack,choiceTrack,note,setTrack,setEnabled,isEnabled,stop,credit,
- onStatus(fn){onStatus=typeof fn==='function'?fn:()=>{}}
-});
+const api=Object.freeze({VERSION,TRACKS,dayTrack,choiceTrack,sceneTrack,note,setTrack,setEnabled,
+ isEnabled,setMusicVolume,setSfxVolume,musicLevel,sfxLevel,setEffectsEnabled,stop,credit,
+ onStatus(fn){onStatus=typeof fn==='function'?fn:()=>{}}});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiarySound=api;
 })(typeof window!=='undefined'?window:globalThis);
