@@ -53,8 +53,16 @@ assert(!play.src.includes('레벨2 임시 승인'),'Guest must not be misreprese
 assert(play.src.includes('id="playerName"'));
 const setupSection=play.src.split('<form id="profileForm">')[1].split('</form>')[0];
 const formInputs=[...setupSection.matchAll(/\<(?:input|select)\b[^>]*\bid="([^"]+)"/g)].map(x=>x[1]);
-assert.deepEqual(formInputs,['playerName','experience','gender','mbti','partner'],'Exactly 5 setup fields, without age');
+assert.deepEqual(formInputs,['diarySchoolMode','playerName','experience','gender','mbti','partner','diarySchoolQuery'],'School-first setup with six profile controls and separate school search, without age');
 assert(!play.ids.has('age'),'No player age input');
+assert(play.ids.has('diaryLandingStart'),'One-card story entry is required');
+assert(play.ids.has('diarySchoolMode'),'School must be selectable before profile details');
+assert(play.ids.has('diarySchoolResults'),'School search results must be available');
+assert(play.src.includes("show('diaryLanding')"),'Unparameterized game entry must show the simple title card');
+assert(play.src.includes("selectSchoolMode('demo')"),'Fictional demo school should be the safe default');
+assert(play.src.includes("if(!/^[0-9a-f]{64}$/.test(token))"),'Real school selection must not bypass Lv2 verification');
+assert(preview.src.includes("location.replace('teacher-class-diary-play.html')"),'Legacy preview must send users straight to the title card');
+
 assert(play.src.includes('guestIntroTimer=setTimeout('),'Guest intro must advance after the cinematic');
 assert(play.src.includes('},5000)'),'Guest cinematic must last approximately five seconds');
 assert(play.src.includes('function vnFitPage('),'Overflowing dialogue must be repaginated');
