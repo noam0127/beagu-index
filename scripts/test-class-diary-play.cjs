@@ -42,10 +42,13 @@ let vocabularyRun=engine.createGame(world,plan,profile);
 for(let i=0;i<7;i++){
   const view=engine.chapter(vocabularyRun,world,plan);
   const texts=view.paragraphs.concat(view.choices.map(x=>x.label));
-  const all=typeof texts.join==='function'?texts.join(' '):'';
-  // All choice aftermaths are reached separately and should remain coherent.
+  for(const option of view.choices){
+    const outcome=engine.choose(vocabularyRun,option.id).lastOutcome;
+    texts.push(...outcome.paragraphs,outcome.line);
+  }
+  const all=texts.join(' ');
   for(const token of expectedVocab[i]){
-    assert(all.includes(token)|| (i===5&&token==='유튜브'),
+    assert(all.includes(token),
       'Missing authentic Korean elementary-school term '+token+' on day '+(i+1));
   }
   vocabularyRun=engine.choose(vocabularyRun,view.choices[0].id);
