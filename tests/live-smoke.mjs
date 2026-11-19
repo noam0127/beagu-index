@@ -98,7 +98,7 @@ async function main() {
   const home = responses.get('index.html')||'';
   const level1 = responses.get('js/level-search.js')||'';
   const level2 = responses.get('js/lv2-edited-search.js')||'';
-  check('Lv.0에서 Lv.1 정렬 6종 잠금 · 인증 화면 연결',()=>{
+  check('Lv.0에서 Lv.1 정렬 6종 잠금 · 인증 화면 연결',(()=>{
     const block0=html0.match(/<select id="publicSort"[^>]*>([\s\S]*?)<\/select>/)?.[1]||'';
     const block1=html1.match(/<select id="regionSort"[^>]*>([\s\S]*?)<\/select>/)?.[1]||'';
     const publicOptions=[...block0.matchAll(/<option value="([^"]+)"([^>]*)>([^<]*)<\/option>/g)];
@@ -112,7 +112,7 @@ async function main() {
       level1Options.every((item,i)=>item[1]===publicOptions[i][1]&&!item[2].includes('disabled'))&&
       html0.includes('href="search-lv1.html"')&&
       html0.includes('id="publicSortLevelHelp"');
-  }());
+  })());
   const visitStats = responses.get('js/visit-stats.js')||'';
   const mbtiJS = responses.get('js/school-mbti-v1.js')||'';
   const chartJS=responses.get('js/percentile-chart.js')||'';
