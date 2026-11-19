@@ -245,7 +245,7 @@ function validateProfile(profile){
   if(!['new','mid','senior'].includes(experience))throw Error('EXPERIENCE_INVALID');
   if(!['none','general','academic','violence'].includes(duty))throw Error('DUTY_INVALID');
   if(!['steady','demanding'].includes(classTone))throw Error('CLASS_SCENARIO_INVALID');
-  if(!['collaborative','deflecting'].includes(workCulture))throw Error('CULTURE_SCENARIO_INVALID');
+  if(!['collaborative','deflecting','hostile'].includes(workCulture))throw Error('CULTURE_SCENARIO_INVALID');
   const sportsCulture=profile.sportsCulture||'optional';
   const assignmentPractice=profile.assignmentPractice||'balanced';
   const informalRequests=profile.informalRequests||'respectful';
@@ -284,7 +284,8 @@ function createGame(world,plan,inputProfile){
   return {
     version:VERSION,schoolId:world.basic.id,schoolName:name,
     profile,day:1,phase:'chapter',history:[],
-    stats:{affection:35,trust:42,agency:42,fatigue:35,voice:45,boundary:48},
+    stats:{affection:35,trust:42,agency:42,fatigue:35,voice:45,boundary:48,
+      support:profile.workCulture==='collaborative'?67:profile.workCulture==='hostile'?24:42},
     lastOutcome:null,ending:null
   };
 }
