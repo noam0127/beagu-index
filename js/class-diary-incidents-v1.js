@@ -200,7 +200,7 @@ function setting(state,world){
    ['official_geospatial','official_address','official_sido'].includes(t.source));
  const count=accepted(world,'students');
  const scale=count?(count.value>600?'large':count.value<=150?'small':'medium'):
-   world?.mode==='public_fiction_demo'?(state.profile.storySize||'medium'):null;
+   world?.mode==='public_fiction_demo'?(state.profile.fictionalSchoolSize||'medium'):null;
  const locale=world?.mode==='public_fiction_demo'?(state.profile.storyRegion||'other'):
    rural?'rural':urban?'urban':'other';
  return {locale,scale,grade:state.profile.gradeBand||'upper',
@@ -210,12 +210,12 @@ function setting(state,world){
 function schedule(state,world){
  const w=setting(state,world),d=state.day;
  const days={
-   1:['arrival',w.locale==='urban'?'parking':null,'focus'],
+   1:[w.locale==='urban'?'parking':null,'arrival','focus'],
    2:[w.grade==='lower'?'seat_song':null,'break_clean','late_guard'],
    3:[w.locale==='rural'?'wildlife':null,'gender_duty'],
    4:['sport'],
    5:[w.fictionalCulture==='deflecting'&&w.scale==='large'?'friendship_chair':
-       w.fictionalCulture==='collaborative'?'barbecue':'friendship_chair']
+       w.fictionalCulture==='collaborative'?'barbecue':null]
  };
  return (days[d]||[]).filter(Boolean);
 }
@@ -239,6 +239,13 @@ function next(state,world){
  if(id==='wildlife')paragraphs.unshift('읍·면 또는 농촌 지형 정보를 소재로 만든 가상 사건이며, 실제 야생동물 출현을 뜻하지 않는다.');
  if(id==='friendship_chair'&&scale.scale==='large'&&scale.realOfficialCount)
   paragraphs.unshift(scale.realOfficialCount.year+'년 공개 승인 학생 수는 '+scale.realOfficialCount.value+'명이다. 그러나 학교의 실제 친목회 관행을 알려 주는 자료는 아니며, 아래의 강요 상황은 창작이다.');
+ if(id==='gender_duty'&&world?.mode!=='public_fiction_demo'){
+  const male=accepted(world,'male_teacher_ratio'),junior=accepted(world,'junior_teacher_ratio');
+  const values=[];
+  if(male&&male.value<=100)values.push(male.referenceYear+'년 남교사 비율 '+male.value+'%');
+  if(junior&&junior.value<=100)values.push(junior.referenceYear+'년 2급 정교사 비율 '+junior.value+'%');
+  if(values.length)paragraphs.unshift('학교의 공개 검증된 공식 배경 자료에는 '+values.join(', ')+'가 기록돼 있다. 다만 이 수치가 실제 선생님의 성격이나 비공식 업무 배정을 설명하지는 않는다. 아래 사건은 가상의 상황이다.');
+ }
  return {id,day:state.day,date:DATES[state.day-1],title:data.title,place:data.place,
    kind:data.kind,paragraphs,choices:data.choices.map(c=>({id:c.id,label:c.label})),
    result:null,fictionLabel:'이 사건은 지역과 가상 교직문화 설정으로 고른 창작 장면이며 실제 발생 사실이 아닙니다.'};
