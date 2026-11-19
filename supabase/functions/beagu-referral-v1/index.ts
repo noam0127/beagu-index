@@ -18,7 +18,7 @@ async function sha(value: string): Promise<string> {
 async function hmac(label: string, value: string): Promise<string> {
   const key = await crypto.subtle.importKey('raw', encoder.encode(service), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const signed = new Uint8Array(await crypto.subtle.sign('HMAC', key, encoder.encode(label + ':' + value)));
-  return btoa(String.fromCharCode(...signed)).replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+  return btoa(String.fromCharCode(...signed)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 async function safeMatch(a: string, b: string): Promise<boolean> {
   // Fixed-length digests; do not compare raw server secrets.
