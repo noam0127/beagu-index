@@ -309,6 +309,16 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 @media(max-width:370px){.setup-portrait-grid{gap:5px}.setup-character{padding:4px}.setup-character-name{font-size:12px}.setup-character-tag{font-size:9px}.setup-partner-label small{display:none}}
 @media(prefers-reduced-motion:reduce){.setup-character,.setup-begin{transition:none}.setup-character:hover{transform:none}}
 
+/* Female supporting SD cast is informational, not an additional romance route. */
+.setup-supporting-cast{margin:12px 0 6px;padding:12px;border:1px solid #e6d7de;border-radius:14px;background:#fffdfbf0}
+.setup-supporting-title{display:block;font-size:12px;color:#755a70;margin-bottom:9px}
+.setup-supporting-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.setup-supporting-person{display:flex;align-items:center;gap:6px;padding:5px;border:1px solid #e8e3e4;background:#fbf8f6;border-radius:10px;min-width:0}
+.setup-supporting-person img{width:46px;height:61px;object-fit:contain;flex-shrink:0}
+.setup-supporting-person span{font-weight:750;font-size:12px;color:#4e4652}
+.setup-supporting-person small{display:block;font-weight:500;font-size:10px;color:#857b83;margin-top:3px}
+@media(max-width:480px){.setup-supporting-grid{gap:4px}.setup-supporting-person{flex-direction:column;gap:1px;padding:5px 2px;text-align:center}.setup-supporting-person img{width:49px;height:58px}.setup-supporting-person span{font-size:11px}.setup-supporting-person small{font-size:9px}}
+
 </style>
 <link rel="stylesheet" href="styles/class-diary-journey-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
@@ -397,6 +407,14 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
     <span class="setup-character-art minseo"><img id="setupPortraitNone" alt="" aria-hidden="true"></span>
     <span class="setup-character-name">윤민서</span><span class="setup-character-tag">깊어지는 우정</span>
    </button>
+  </div>
+  <div class="setup-supporting-cast" aria-label="학교에서 만날 여성 교직원">
+   <strong class="setup-supporting-title">학교에서 만날 선생님들</strong>
+   <div class="setup-supporting-grid">
+    <div class="setup-supporting-person"><img id="setupPortraitSuhyun" alt="" aria-hidden="true"><span>박수현<small>3학년 부장</small></span></div>
+    <div class="setup-supporting-person"><img id="setupPortraitSea" alt="" aria-hidden="true"><span>오세아<small>교감</small></span></div>
+    <div class="setup-supporting-person"><img id="setupPortraitYuri" alt="" aria-hidden="true"><span>강유리<small>행정실</small></span></div>
+   </div>
   </div>
   <label class="setup-partner-label" for="partner">동료 선택 <small>캐릭터 카드 또는 목록에서 선택</small></label>
   <select id="partner" required><option value="">동료를 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
@@ -489,7 +507,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <script src="js/class-diary-context-v1.js"></script>
 <script src="js/class-diary-sound-v1.js"></script>
 <script src="js/class-diary-visual-v1.js"></script>
-<script src="js/class-diary-sd-v1.js"></script>
+<script src="js/class-diary-sd-v1.js?v=20261120-female-sd2"></script>
 <script src="js/class-diary-scenario-v1.js"></script>
 <script src="js/class-diary-incidents-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
@@ -526,6 +544,9 @@ function syncSetupName(){
  $('setupPlayerPreview').textContent=name?name+' 선생님':'이름을 입력해 주세요';
 }
 for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','man'],['setupPortraitNone','none']]){
+ $(id).src=visual.dataUrl(sd.portraitSvg(partner,'neutral'));
+}
+for(const [id,partner] of [['setupPortraitSuhyun','suhyun'],['setupPortraitSea','sea'],['setupPortraitYuri','yuri']]){
  $(id).src=visual.dataUrl(sd.portraitSvg(partner,'neutral'));
 }
 for(const card of document.querySelectorAll('[data-partner-choice]')){
