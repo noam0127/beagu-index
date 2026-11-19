@@ -29,7 +29,8 @@ assert.match(index,/<a class="data-access-link" href="search\.html">학교 검�
 assert.match(index,/class="beagu-home-actions"/,'Homepage actions grouped without duplicate notices');
 assert.doesNotMatch(index,/class="data-access-link" href="search-lv[12]\.html"/,'No standalone level button; the fixed Lv badge may link to authentication');
 assert.match(search,/id="searchInput"/,'Lv.0 public browser restored');
-assert.match(search,/href="search-lv1\.html"/,'Lv.1 entry from Lv.0');
+assert.match(search,/id="lv1QuickForm"/,'Lv.1 authentication entry on Lv.0');
+assert.match(search,/window\\.location\\.replace\\('search-lv1\\.html'\\)/,'Authenticated user transitions to Lv.1');
 assert.match(read('search-lv2.html'),/url=\.\/search-lv1\.html/,'Legacy Lv.2 route redirects to Lv.1');
 assert.match(policy,/href="search\.html"/,'Public level remains accessible');
 assert.doesNotMatch(index,/1,000명 달성 시 2026 배구지수 자료를 공개합니다\./);
