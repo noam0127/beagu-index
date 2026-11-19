@@ -34,6 +34,49 @@ const demoPlan={schoolId:'DEMO001',scenes:Array.from({length:7},(_,i)=>({day:i+1
 const demoGame=game.createGame(demoWorld,demoPlan,base);
 const text=scenario.scene(demoGame,demoWorld).paragraphs.join(' ');
 assert(!text.includes('확인된 학교 상세정보:'),'Demo never displays official facts');
+
+/* 2026 조사 취지: 동료 협력과 교직원 적대는 같은 업무량이라도 다른 경험이다. */
+const supportiveProfile={...base,workCulture:'collaborative'};
+const hostileProfile={...base,workCulture:'hostile'};
+const supportive=game.createGame(world,plan,supportiveProfile);
+const hostile=game.createGame(world,plan,hostileProfile);
+assert(supportive.stats.support>hostile.stats.support);
+assert(scenario.scene(supportive,world).paragraphs.some(x=>x.includes('동의서')));
+assert(scenario.scene(hostile,world).paragraphs.some(x=>x.includes('왜 벌써 시끄러워요')));
+assert(scenario.STAFF_MOOD.hostile&&scenario.STAFF_MOOD.collaborative);
+assert.equal(scenario.scene(hostile,world).choices.length,3);
+let aided=scenario.choose(supportive,'protect',world);
+let isolated=scenario.choose(hostile,'protect',world);
+assert(aided.stats.support>isolated.stats.support);
+assert(aided.storyReflection.paragraphs.some(x=>x.includes('같이 해요')));
+assert(isolated.storyReflection.paragraphs.some(x=>x.includes('같이 확인')));
+let unheard=scenario.choose(hostile,'endure',world);
+assert(unheard.stats.support<isolated.stats.support);
+function finishOneWeek(first,school){
+ let st=first;
+ for(let day=1;day<=7;day++){
+  if(day<=5){
+   const event=scenario.scene(st,school);
+   if(event){
+    st=scenario.choose(st,event.choices[0].id,school);
+    st=scenario.continueStory(st);
+   }
+  }
+  st=game.choose(st,game.chapter(st,school,plan).choices[0].id);
+  st=game.advance(st);
+ }
+ return st;
+}
+const director=require('../js/class-diary-director-v1.js');
+const goodEnding=director.decorateEnding(finishOneWeek(game.createGame(world,plan,supportiveProfile),world));
+const hardEnding=director.decorateEnding(finishOneWeek(game.createGame(world,plan,hostileProfile),world));
+assert(goodEnding.paragraphs.join(' ').includes('함께 만드는 학교'));
+assert(hardEnding.paragraphs.join(' ').includes('서로를 경계하는 학교'));
+for(const grade of ['lower','middle','upper']){
+ const first=game.createGame(world,plan,{...supportiveProfile,gradeBand:grade});
+ assert(scenario.scene(first,world).paragraphs.some(x=>x.includes('배움터지킴이')));
+}
+
 const endings=new Set();
 for(let n=0;n<243;n++){
  let code=n,s=game.createGame(world,plan,base);
