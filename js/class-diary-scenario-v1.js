@@ -259,7 +259,7 @@ function climateParagraph(state){
  return ((STAFF_MOOD[mode]||STAFF_MOOD.collaborative)[state.day])||'';
 }
 function eventProse(state,world){
- const p=state.profile,d=state.day,young=p.age<=32,novice=p.experience==='new';
+ const p=state.profile,d=state.day,novice=p.experience==='new';
  const dutyline=duty(p).text;
  const pressure=p.workCulture==='deflecting';
  const demanding=p.classTone==='demanding';
@@ -299,7 +299,7 @@ function eventProse(state,world){
     p.gender==='woman'?
     '“여자 선생님이니까 행사 다과 준비 좀 부탁할게요.” 내 수업 준비가 끝났는지 묻는 사람은 없었다. 성별이 업무분장표는 아니었다.':
     '“젊은 선생님이니까 행사 준비 좀 해 주세요.” 나이부터 불리는 순간 내 이름이 잠깐 뒤로 밀렸다.') :
-  young?'전담시간에 다음 차시 모둠 활동지를 고치고 있을 때, 옆 반 선생님이 문을 열었다. “혹시 교실 태블릿 화면 연결하는 법 아세요? 자꾸 안 돼서요.”':
+  novice?'전담시간에 다음 차시 모둠 활동지를 고치고 있을 때, 옆 반 선생님이 문을 열었다. “혹시 교실 태블릿 화면 연결하는 법 아세요? 자꾸 안 돼서요.”':
   '전담시간에 인디스쿨에서 모둠 자료를 찾고 있는데, 옆자리 선생님이 복합기 앞에서 난감한 얼굴로 서 있었다. “지금 수업 준비하시죠? 끝나고 잠깐 봐주실래요?”',
   '아이들이 교과전담 수업을 들으러 가자 교실이 조용해졌다. 나는 아이스크림 자료를 열었다가 유튜브 수업 영상을 다시 봤다. 영상을 멈춘 채 한참 생각하다 활동지 문장 하나를 고쳤다.',
   '쉬는 시간이 끝나기 직전, 교실 바닥에 색종이 조각들이 흩어져 있었다. 신나게 놀던 아이 하나가 내 표정을 보더니 빗자루를 집었다. “선생님, 이거 제가 치울게요.”',
@@ -398,11 +398,6 @@ function choose(state,id,world){
  }
  if(next.day===5&&raw.id==='takeall'){
   reply.push('늦은 교실에서 문득 밖을 보니 운동장이 까맣게 잠겨 있었다. “선생님, 이제 퇴근하셔야죠.” 문을 두드리는 소리에 나는 황급히 파일을 저장했다.');
- }
- if(next.day===3&&next.profile.age>32){
-   for(let i=0;i<reply.length;i++)reply[i]=reply[i]
-     .replace(/내비게이션 업데이트/g,'복합기 인쇄 설정')
-     .replace(/내비게이션 화면에서 업데이트 안내/g,'복합기 설정 화면에서 인쇄 안내');
  }
  const name=next.profile.partner==='man'?'현우 선생님':next.profile.partner==='woman'?'지윤 선생님':'민서 선생님';
  for(const key of ['affection','trust','agency','fatigue'])
