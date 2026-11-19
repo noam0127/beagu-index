@@ -50,7 +50,7 @@
       list.append(item);
     }
     message.hidden=schools.length>0;
-    if(!schools.length)message.textContent='급상승 학교를 집계 중입니다. 방문 기록이 충분히 쌓이면 순위가 표시됩니다.';
+    if(!schools.length)message.innerHTML='급상승 학교를 집계 중입니다.<br>방문 기록이 충분히 쌓이면 순위가 표시됩니다.';
     more.hidden=schools.length<=5;
     more.textContent=expanded?'접기':'10위까지 보기';
   }
