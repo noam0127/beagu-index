@@ -22,7 +22,7 @@ for(let day=1;day<=7;day++){
  assert.equal(book.day,day);
  assert.equal(book.source,'fiction');
  assert.equal(book.worldDetail, null===book.worldDetail?null:book.worldDetail); // safe rendering contract
- assert.equal(book.character.name,'동학년 선생님');
+ assert.equal(book.character.name,'민서 선생님');
  assert.equal(book.choices.length,3);
  state=game.choose(state,book.choices[0].id);
  state=game.advance(state);
