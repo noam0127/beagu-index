@@ -1,4 +1,4 @@
-/* Lv.1+ live rising schools: rolling 72h vs prior 72h, refreshed hourly. */
+/* Lv.1+ live rising schools: rolling 72h vs prior 72h, refreshed every 15 minutes. */
 (() => {
   'use strict';
   const root=document.getElementById('beaguInterest');
@@ -64,7 +64,7 @@
       if(updated)updated.textContent='';
       return;
     }
-    if(!force&&token===lastToken&&Date.now()-lastLoadedAt<3600000)return;
+    if(!force&&token===lastToken&&Date.now()-lastLoadedAt<900000)return;
     const seq=++requestId;
     if(!quiet||!schools.length){
       if(!quiet)list.replaceChildren();
@@ -101,7 +101,7 @@
     }
   }
   const shouldPoll=()=>!document.hidden&&!root.hidden&&!root.closest('#searchPanel')?.hidden;
-  setInterval(()=>{if(shouldPoll())void load({quiet:true})},3600000);
+  setInterval(()=>{if(shouldPoll())void load({quiet:true})},900000);
   document.addEventListener('visibilitychange',()=>{if(shouldPoll())void load()});
   window.addEventListener('focus',()=>{if(shouldPoll())void load()});
   window.addEventListener('beagu:level-state-change',()=>{lastLoadedAt=0;void load()});
