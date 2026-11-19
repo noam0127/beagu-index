@@ -399,6 +399,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
  body.is-playing #vnHud>#diaryHomeReturn{height:34px;min-width:98px;padding:0 8px}
 }
 </style>
+<link rel="stylesheet" href="styles/class-diary-player-flow-v1.css?v=20261120-a1">
 </head>
 <body>
 <main>
@@ -570,7 +571,46 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 </div>
 </form>
 </section>
+<section id="playerSetup" class="panel diary-player-config" hidden aria-labelledby="playerSetupTitle">
+ <span class="diary-prologue-overline">프롤로그를 마치며 · 제1화 이전</span>
+ <h2 id="playerSetupTitle">이제, 나의 이야기를 시작할 차례</h2>
+ <p>그 사람의 눈에 비친 첫날을 읽었습니다. 이제 이 교실에서 살아갈 <strong>나</strong>를 정해 주세요. 실명 대신 이야기 속 이름을 사용해도 됩니다.</p>
+ <form id="playerSetupForm">
+  <div class="diary-player-profile-fields">
+   <div class="wide">
+    <label for="heroName">이야기 속 내 이름</label>
+    <input id="heroName" type="text" maxlength="12" minlength="1" value="새봄" autocomplete="off" required aria-describedby="heroNameHelp">
+    <small id="heroNameHelp" class="field-note">1~12글자. 다른 등장인물과 구별할 수 있는 이름이나 별명을 써 주세요.</small>
+   </div>
+   <div><label for="heroExperience">교직 경력</label>
+    <select id="heroExperience">
+     <option value="new">신규·저경력 교사</option>
+     <option value="mid" selected>중간경력 교사</option>
+     <option value="senior">고경력 교사</option>
+    </select>
+   </div>
+   <div><label for="heroGender">나의 성별</label>
+    <select id="heroGender">
+     <option value="undisclosed" selected>설정하지 않음</option>
+     <option value="female">여성</option>
+     <option value="male">남성</option>
+    </select>
+   </div>
+  </div>
+  <p class="field-note">성별은 선택하지 않아도 됩니다. 경력 설정은 일부 장면의 독백에 반영되며, 학교와 인물의 실제 상황을 나타내지 않습니다.</p>
+  <div class="actions"><button type="submit" class="primary">제1화 · 나의 시점으로 시작하기 <span aria-hidden="true">›</span></button></div>
+ </form>
+</section>
 <section id="novel" hidden>
+<div id="diaryPrologueSchool" class="diary-prologue-school-screen" hidden role="group" aria-labelledby="diaryPrologueSchoolTitle">
+ <div class="diary-prologue-school-card">
+  <span class="diary-prologue-overline">학교 소개 · 프롤로그가 시작되기 전</span>
+  <h2 id="diaryPrologueSchoolTitle"></h2>
+  <dl id="diaryPrologueSchoolFacts" class="diary-prologue-facts"></dl>
+  <p id="diaryPrologueSchoolSource" class="diary-prologue-disclaimer"></p>
+  <button id="diaryPrologueSchoolContinue" class="primary" type="button">이 학교에서 프롤로그 읽기 <span aria-hidden="true">›</span></button>
+ </div>
+</div>
 <div class="statbar" aria-label="현재 이야기 상태">
 <div class="stat"><small>동료 호감도</small><strong id="statAffection">—</strong></div>
 <div class="stat"><small>서로의 신뢰</small><strong id="statTrust">—</strong></div>
@@ -641,6 +681,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-play-v1.js"></script>
 <script src="js/class-diary-semester-v1.js?v=20261120"></script>
 <script src="js/class-diary-narrator-v1.js?v=20261120-pov1"></script>
+<script src="js/class-diary-school-brief-v1.js?v=20261120-a1"></script>
 <script src="js/class-diary-progress-v1.js?v=20261120-1"></script>
 <script src="js/class-diary-female-semester-v1.js?v=20261120"></script>
 <script src="js/class-diary-character-routes-v1.js"></script>
@@ -675,6 +716,7 @@ const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const semester=window.BeaguClassDiarySemester;
 const narrator=window.BeaguClassDiaryNarrator;
+const schoolBrief=window.BeaguClassDiarySchoolBrief;
 const literary=window.BeaguClassDiaryLiterary;
 const femaleSemester=window.BeaguClassDiaryFemaleSemester;
 const director=window.BeaguClassDiaryDirector;
@@ -882,6 +924,8 @@ $('diaryLandingStart').addEventListener('click',()=>{
 $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
 let storyMode='semester';
 let prologuePending=false;
+let schoolIntroPending=false;
+let playerSetupPending=false;
 function prepareGuestProfile(){
  // Use a fictional in-story name and neutral defaults; never ask for personal traits.
  $('playerName').value='새봄';
@@ -903,7 +947,7 @@ function progressStatus(kind){
  if(node){node.textContent='가상 이야기 · '+label;node.dataset.saveStatus=kind;}
 }
 function autoSaveProgress(){
- if(isGuest&&storyMode==='semester'&&!prologuePending&&progressSession&&game)void progressSession.save(game);
+ if(isGuest&&storyMode==='semester'&&!prologuePending&&!schoolIntroPending&&!playerSetupPending&&progressSession&&game)void progressSession.save(game);
 }
 function enterGuestOpening(){
  // Home code authentication has already finished. The first visible screen is the title card.
@@ -972,7 +1016,7 @@ document.addEventListener('keydown',event=>{
  }
 });
 syncScreenButtons();
-function show(id){for(const target of ['diaryLanding','notice','guestAccess','opening','setup','novel','ending'])$(target).hidden=target!==id;for(const [cls,which] of [['is-landing','diaryLanding'],['is-playing','novel'],['is-setting','setup'],['is-intro','opening'],['is-ending','ending'],['is-ticket','guestAccess']])document.body.classList.toggle(cls,id===which);document.body.classList.remove('is-choosing');$('diaryScreenToggle').hidden=!['opening','setup','ending'].includes(id);$('choiceSection').hidden=true;window.scrollTo(0,0);}
+function show(id){for(const target of ['diaryLanding','notice','guestAccess','opening','setup','playerSetup','novel','ending'])$(target).hidden=target!==id;for(const [cls,which] of [['is-landing','diaryLanding'],['is-playing','novel'],['is-setting','setup'],['is-intro','opening'],['is-ending','ending'],['is-ticket','guestAccess'],['is-player-config','playerSetup']])document.body.classList.toggle(cls,id===which);document.body.classList.remove('is-choosing');$('diaryScreenToggle').hidden=!['opening','setup','playerSetup','ending'].includes(id);$('choiceSection').hidden=true;window.scrollTo(0,0);}
 function fail(message){show('notice');$('noticeText').textContent=message;status('접근 권한 또는 데이터를 확인하지 못했습니다.');}
 /* Temporary in-memory dialogue pages: no autosave or new APIs. */
 const vnState={pages:[],index:0,kind:'chapter'};
@@ -1406,6 +1450,54 @@ function renderNarratorPrologue(){
  vnStart(true);
  status(view.narrator+'의 프롤로그 · 다음 페이지에서 나의 이야기로 전환');
 }
+function renderPrologueSchoolIntroduction(){
+ renderNarratorPrologue();
+ const selection=schoolSelection||(game.schoolContext?{
+  id:game.schoolContext.schoolId,name:game.schoolName,region:game.schoolContext.region,years:game.schoolContext.publishedYears
+ }:null);
+ const data=schoolBrief.summarize(selection,world);
+ $('diaryPrologueSchoolTitle').textContent=data.name;
+ const facts=$('diaryPrologueSchoolFacts');facts.replaceChildren();
+ for(const item of data.facts){
+  const dt=el('dt',item.label),dd=el('dd',item.value);
+  if(item.year)dd.append(el('small','('+item.year+'년 기준)'));
+  facts.append(dt,dd);
+ }
+ $('diaryPrologueSchoolSource').textContent=data.sourceNote;
+ $('diaryPrologueSchool').hidden=false;
+ status(data.name+' · 학교 공개 기본정보를 확인한 뒤 프롤로그를 시작합니다.');
+}
+$('diaryPrologueSchoolContinue').addEventListener('click',()=>{
+ schoolIntroPending=false;
+ $('diaryPrologueSchool').hidden=true;
+ sound.note('pageTurn');
+ render();
+});
+function renderPlayerSetup(){
+ show('playerSetup');
+ $('heroName').value=game.profile.name||'새봄';
+ $('heroExperience').value=['new','mid','senior'].includes(game.profile.experience)?game.profile.experience:'mid';
+ $('heroGender').value=['female','male','undisclosed'].includes(game.profile.gender)?game.profile.gender:'undisclosed';
+ status('프롤로그를 읽었습니다. 제1화부터 등장할 나의 설정을 정해 주세요.');
+}
+$('playerSetupForm').addEventListener('submit',event=>{
+ event.preventDefault();
+ if(!game||!playerSetupPending||prologuePending||schoolIntroPending)return;
+ const name=$('heroName').value.normalize('NFC').trim();
+ if(!name||name.length>12||/[<>\r\n{}]/.test(name)){
+  $('heroName').setCustomValidity('1~12글자 이름이나 별명을 써 주세요.');
+  $('heroName').reportValidity();
+  return;
+ }
+ $('heroName').setCustomValidity('');
+ const experience=$('heroExperience').value,gender=$('heroGender').value;
+ if(!['new','mid','senior'].includes(experience)||!['male','female','undisclosed'].includes(gender))return;
+ game={...game,profile:{...game.profile,name,experience,gender}};
+ playerSetupPending=false;
+ sound.note('pageTurn');
+ render();autoSaveProgress();
+});
+$('heroName').addEventListener('input',()=>$('heroName').setCustomValidity(''));
 function renderSemester(){
  literary.mode(true);
  if(game.phase==='semester_ending')return renderSemesterEnding();
@@ -1501,7 +1593,9 @@ function render(){
   $('ending').querySelector('.emblem').textContent='2027년 3월 14일 · 마지막 페이지';
   $('ending').querySelector('.credits-roll p:last-child').textContent='일곱 날의 이야기를 함께해 주셔서 고맙습니다.';
  }
+ if(storyMode==='semester'&&schoolIntroPending)return renderPrologueSchoolIntroduction();
  if(storyMode==='semester'&&prologuePending)return renderNarratorPrologue();
+ if(storyMode==='semester'&&playerSetupPending)return renderPlayerSetup();
  if(storyMode==='semester')return renderSemester();
  if(game.phase==='ending')return renderEnding();
  if(game.phase==='chapter'&&(incidents.next(game,world)||scenario.scene(game,world)))return renderScenario();
@@ -1578,7 +1672,7 @@ async function boot(){
      ' 이어서 읽을 수 있습니다.';
     $('guestResume').hidden=false;
     $('guestResumeBtn').onclick=()=>{
-     game=saved.state;storyMode='semester';prologuePending=false;
+     game=saved.state;storyMode='semester';prologuePending=false;schoolIntroPending=false;playerSetupPending=false;
      sound.setEnabled(true);updateMusicButton();guestStartMusic();
      render();status('저장된 학급일지를 불러왔습니다.');
     };
@@ -1705,13 +1799,15 @@ $('profileForm').addEventListener('submit',e=>{
   }
   game=storyMode==='semester'?semester.createGame(baseGame):baseGame;
   prologuePending=storyMode==='semester';
+  schoolIntroPending=storyMode==='semester';
+  playerSetupPending=false;
   sound.note('uiStart');
   render();autoSaveProgress();
  }catch(err){status('이야기 설정을 확인하지 못했습니다. 다시 시도해 주세요.');}
 });
 $('nextBtn').addEventListener('click',()=>{
  sound.note('pageTurn');
- if(storyMode==='semester'&&prologuePending){prologuePending=false;render();autoSaveProgress();return;}
+ if(storyMode==='semester'&&prologuePending){prologuePending=false;playerSetupPending=true;render();return;}
  if(storyMode==='semester'){game=semester.advance(game);render();autoSaveProgress();return;}
  const incident=game.phase==='chapter'?incidents.next(game,world):null;
  const event=game.phase==='chapter'&&!incident?scenario.scene(game,world):null;
@@ -1736,14 +1832,14 @@ sound.onStatus(message=>{$('musicStatus').textContent=message});
 $('choiceButtons').addEventListener('mouseover',e=>{if(e.target.closest('.choice'))sound.note('hover');});
 $('resetBtn').addEventListener('click',()=>{
  if(!game)return;
- const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';render();autoSaveProgress();
+ const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
 });
 $('againBtn').addEventListener('click',()=>{
- const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';render();autoSaveProgress();
+ const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
 });
 $('diarySaveNow').addEventListener('click',async()=>{
  const control=$('diarySaveNow');
- if(prologuePending){status('프롤로그가 끝난 뒤부터 저장할 수 있습니다.');return;}
+ if(prologuePending||schoolIntroPending||playerSetupPending){status('제1화부터 저장할 수 있습니다.');return;}
  if(!isGuest||storyMode!=='semester'||!progressSession||!game){progressStatus('invalid');return;}
  control.disabled=true;
  try{
@@ -1760,7 +1856,7 @@ $('diaryContinueNow').addEventListener('click',async()=>{
   const saved=await progressSession.load();
   if(!saved){progressStatus('notfound');return;}
   if(!saved.compatible){progressStatus('invalid');return;}
-  game=saved.state;storyMode='semester';prologuePending=false;render();progressStatus('loaded');
+  game=saved.state;storyMode='semester';prologuePending=false;schoolIntroPending=false;playerSetupPending=false;render();progressStatus('loaded');
  }catch(_){progressStatus('failed')}
  finally{control.disabled=false;}
 });
