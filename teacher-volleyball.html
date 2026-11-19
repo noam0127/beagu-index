@@ -317,7 +317,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     document.getElementById("volley-next-goal").textContent=mine>=MATCH_TARGET
       ?"🏆 25점 달성!"
       :cpu>=24?"⚠ 상대 매치포인트 · 마지막까지!"
-      :mine>=20?"🏁 마지막 "+(MATCH_TARGET-mine)+"점 · 결승선이 보여요"
+      :mine>=20?"🏁 마지막 "+(MATCH_TARGET-mine)+"점 · 이대로 승리하면 ×"+getVictoryMultiplier(MATCH_TARGET,cpu)
       :"다음 목표 · "+nextMilestone(mine)+"점까지 "+(nextMilestone(mine)-mine)+"점";
     document.getElementById("volley-my-fill").classList.toggle("final",mine>=20);
   }
