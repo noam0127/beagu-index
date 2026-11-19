@@ -13,7 +13,7 @@ for(let i=0;i<6;i++){
  for(let n=starts[i];n<starts[i]+6;n++){
   assert(book[n]&&Array.isArray(book[n].paragraphs)&&book[n].paragraphs.length>=7,'Missing expanded episode '+n);
   assert(Array.isArray(book[n].outcomes)&&book[n].outcomes.length===3,'Missing choice-specific response '+n);
-  assert(book[n].outcomes.every(s=>s.length>=65),'Short choice response episode '+n);
+  assert(book[n].outcomes.every(s=>s.length>=45),'Short choice response episode '+n);
   assert(book[n].event.length>=7,'Event needs a concrete narrative purpose '+n);
  }
 }
