@@ -187,41 +187,6 @@
     .teacher-run-lock-action { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; margin-top: 6px; padding: 10px 18px; border-radius: 12px; background: #7be3ca; color: #12334b; font-size: 14px; font-weight: 850; text-decoration: none; }
     .teacher-run-lock-action:hover { background: #a9f2df; }
     .teacher-run-lock-action:focus-visible { outline: 3px solid white; outline-offset: 3px; }
-    /* Class Diary stays in grayscale/blur preview mode until public release. */
-    body.beagu-page-home main.container > .teacher-diary-feature {
-      grid-column: 1 / -1;
-      background: linear-gradient(145deg, #626978 0%, #444b57 65%, #303845 100%);
-      border-color: #949bab;
-    }
-    .teacher-diary-feature::before {
-      content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
-      background: rgba(158, 167, 179, .18);
-      -webkit-backdrop-filter: grayscale(1) blur(2px);
-      backdrop-filter: grayscale(1) blur(2px);
-    }
-    .teacher-diary-feature > * { position: relative; z-index: 1; }
-    .teacher-diary-feature .teacher-game-header { background: rgba(42, 48, 60, .3); }
-    .teacher-diary-feature .teacher-game-access-level {
-      color: #e9edf5; background: rgba(255,255,255,.1);
-      border-color: rgba(233,238,245,.45);
-    }
-    .teacher-diary-feature .teacher-diary-lock {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 11px; min-height: 244px; padding: 28px 18px 32px; margin: 0 15px 15px;
-      text-align: center; border: 1px solid rgba(198, 197, 246, .25);
-      border-radius: 16px; background: linear-gradient(145deg, rgba(36,43,56,.9), rgba(45,51,62,.86));
-    }
-    .teacher-diary-lock .teacher-diary-lock-icon { font-size: 37px; line-height: 1.15; }
-    .teacher-diary-lock h3 { margin: 0; color: #f6f8ff; font-size: clamp(18px, 4.7vw, 22px); letter-spacing: -.04em; }
-    .teacher-diary-lock p { margin: 0; color: #d5deef; font-size: 13px; line-height: 1.6; }
-    .teacher-diary-lock .teacher-diary-link {
-      display: inline-flex; align-items: center; justify-content: center; min-height: 42px;
-      margin-top: 5px; padding: 10px 18px; border-radius: 12px;
-      background: #e1e5ff; color: #243358; font-size: 14px; font-weight: 850;
-      text-decoration: none;
-    }
-    .teacher-diary-lock .teacher-diary-link:hover { background: #fff; }
-    .teacher-diary-lock .teacher-diary-link:focus-visible { outline: 3px solid white; outline-offset: 3px; }
     .teacher-run-feature .teacher-game-frame { height: 720px; }
     .teacher-run-feature .teacher-game-footer a { color: #a1fae7; }
     .teacher-run-feature .game-tag { font-size: 11px; padding: 3px 7px; margin-left: 5px; vertical-align: middle; background: #78e2c4; color: #193e4c; border-radius: 6px; font-weight: 850; white-space: nowrap; }
@@ -249,71 +214,6 @@
     .teacher-game-footer a:hover{background:#244f6f}
     @media(max-width:380px){.teacher-game-feature{border-radius:16px}.teacher-game-header{padding:13px 13px 10px}.teacher-game-header h2{font-size:18px}.teacher-game-footer{padding:7px 12px 12px}}
   
-    /* Class diary entry: generous touch targets and clearly legible code form. */
-    #teacher-diary-feature .teacher-diary-lock{
-      min-height:0;gap:12px;padding:32px clamp(18px,3.5vw,44px) 36px;margin:0 18px 18px;
-      background:radial-gradient(circle at 50% 0,#d5b0d02a,transparent 70%),#17233d;
-    }
-    #teacher-diary-feature .teacher-diary-lock h3{
-      font-family:"Gowun Batang","Nanum Myeongjo",serif;
-      font-size:clamp(23px,2.8vw,32px);line-height:1.38;
-    }
-    #teacher-diary-feature .teacher-diary-lock>p{
-      font-size:clamp(14px,1.5vw,16px);line-height:1.6;color:#e4cce6;
-    }
-    #homeDiaryGuestForm{
-      margin:16px auto 0;max-width:780px;width:100%;display:grid;
-      gap:12px;text-align:left;
-    }
-    #homeDiaryGuestForm label{
-      color:#f8ebf7;font-size:16px;line-height:1.5;font-weight:850;letter-spacing:.025em;
-    }
-    #homeDiaryGuestForm .teacher-diary-code-row{
-      display:grid;grid-template-columns:minmax(0,1fr) minmax(175px,210px);
-      align-items:stretch;gap:12px;width:100%;min-width:0;
-    }
-    #homeDiaryGuestForm input{
-      box-sizing:border-box;width:100%;min-width:0;min-height:64px;
-      padding:16px 19px;font-family:inherit;font-size:18px;font-weight:650;
-      line-height:1.4;letter-spacing:.025em;
-      border:2px solid #d8c9df;border-radius:15px;color:#30263c;background:#fffafd;
-      box-shadow:inset 0 1px 3px rgba(36,20,50,.07);
-    }
-    #homeDiaryGuestForm input::placeholder{color:#786f85;opacity:1;font-weight:500;letter-spacing:0}
-    #homeDiaryGuestForm input:focus-visible,#homeDiaryGuestForm button:focus-visible{
-      outline:3px solid #ffe4a2;outline-offset:3px;
-    }
-    #homeDiaryGuestForm button{
-      box-sizing:border-box;width:100%;min-width:0;min-height:64px;
-      padding:14px 18px;border:1px solid #ddc6dc;
-      border-radius:15px;background:linear-gradient(115deg,#ecd5e6,#ffedf1);color:#503750;
-      font-family:inherit;font-size:17px;font-weight:900;line-height:1.3;
-      cursor:pointer;box-shadow:0 6px 16px #100b2538;
-      transition:transform .16s ease,filter .16s ease;
-    }
-    #homeDiaryGuestForm button:hover{filter:brightness(1.05);transform:translateY(-1px)}
-    #homeDiaryGuestForm button:disabled{cursor:wait;opacity:.67;transform:none}
-    #homeDiaryGuestForm button span{font-size:24px;line-height:0;vertical-align:-1px;padding-left:7px}
-    #homeDiaryGuestForm .teacher-diary-code-message{
-      margin:0;font-size:14px;color:#e8d9ed;line-height:1.6;min-height:1.6em;
-      text-align:left;overflow-wrap:anywhere;
-    }
-    @media(max-width:760px){
-      #teacher-diary-feature .teacher-diary-lock{
-        gap:10px;padding:25px 18px 28px;margin:0 12px 12px;
-      }
-      #homeDiaryGuestForm{margin-top:12px;gap:10px}
-      #homeDiaryGuestForm .teacher-diary-code-row{grid-template-columns:minmax(0,1fr);gap:10px}
-      #homeDiaryGuestForm input,#homeDiaryGuestForm button{min-height:58px}
-      #homeDiaryGuestForm input{font-size:17px;padding:14px 16px}
-      #homeDiaryGuestForm button{font-size:17px}
-    }
-    @media(max-width:380px){
-      #teacher-diary-feature .teacher-diary-lock{padding:22px 14px 25px;margin:0 9px 9px}
-      #homeDiaryGuestForm input{font-size:16px}
-      #homeDiaryGuestForm .teacher-diary-code-message{font-size:13px}
-    }
-    @media(prefers-reduced-motion:reduce){#homeDiaryGuestForm button{transition:none}}
 
 </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
@@ -328,8 +228,6 @@
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <script defer src="js/beagu-level-state-v1.js?v=20261120-lv2-imsi2"></script>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
-
-<script defer src="js/class-diary-home-entry-v1.js?v=20261120-preview-pin2"></script>
 </head>
 
 <body class="beagu-ui-page beagu-page-home">
@@ -416,28 +314,6 @@
           loading="lazy"
           allowfullscreen></iframe>
         <div class="teacher-game-footer"><a href="teacher-run.html" target="_blank" rel="noopener noreferrer">↗ 크게 보기</a></div>
-      </div>
-    </section>
-
-    <section id="teacher-diary-feature" class="teacher-game-feature teacher-diary-feature" aria-labelledby="teacher-diary-title">
-      <div class="teacher-game-header">
-        <h2 id="teacher-diary-title">📖 나의 OO한 학급일지</h2>
-        <span class="teacher-game-access-level teacher-game-access-level--locked">준비 중</span>
-      </div>
-      <div class="teacher-diary-lock" aria-labelledby="teacher-diary-lock-title">
-        <span class="teacher-diary-lock-icon" aria-hidden="true">🔒</span>
-        <h3 id="teacher-diary-lock-title">준비 중</h3>
-        <p>나의 OO한 학급일지 · 개발자 미리보기</p>
-        <form id="homeDiaryGuestForm" autocomplete="off" aria-label="학급일지 비공개 테스트 입장">
-          <label for="homeDiaryCode">테스트 입장 코드</label>
-          <div class="teacher-diary-code-row">
-            <input id="homeDiaryCode" name="diaryCode" type="password" inputmode="numeric" spellcheck="false"
-              autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" aria-describedby="homeDiaryMessage"
-              placeholder="4자리 코드" required>
-            <button id="homeDiarySubmit" type="submit">미리보기 입장 <span aria-hidden="true">›</span></button>
-          </div>
-          <p id="homeDiaryMessage" class="teacher-diary-code-message" role="status" aria-live="polite">공개 전 테스트 중입니다. 일반 이용은 아직 불가능합니다.</p>
-        </form>
       </div>
     </section>
 
