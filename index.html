@@ -237,30 +237,69 @@
     .teacher-game-footer a:hover{background:#244f6f}
     @media(max-width:380px){.teacher-game-feature{border-radius:16px}.teacher-game-header{padding:13px 13px 10px}.teacher-game-header h2{font-size:18px}.teacher-game-footer{padding:7px 12px 12px}}
   
-    /* Quiet, one-action novel entry; challenge codes are verified only server-side. */
-    #teacher-diary-feature .teacher-diary-lock{min-height:0;gap:7px;padding:20px 16px 23px;
-      background:radial-gradient(circle at 50% 0,#d5b0d02a,transparent 70%),#17233d;}
-    #teacher-diary-feature .teacher-diary-lock h3{font-family:"Gowun Batang","Nanum Myeongjo",serif;font-size:clamp(17px,3.6vw,23px)}
-    #teacher-diary-feature .teacher-diary-lock>p{font-size:12px;color:#d9bdda}
-    #homeDiaryGuestForm{margin:10px auto 0;max-width:540px;width:100%;display:grid;gap:8px;text-align:left}
-    #homeDiaryGuestForm label{color:#f4e9f4;font-size:12px;font-weight:800;letter-spacing:.04em}
-    #homeDiaryGuestForm .teacher-diary-code-row{display:flex;align-items:stretch;gap:8px}
-    #homeDiaryGuestForm input{flex:1;min-width:0;min-height:46px;padding:11px 14px;font:inherit;
-      font-size:14px;border:1px solid #d8c9df;border-radius:13px;color:#30263c;background:#fdf8fb}
-    #homeDiaryGuestForm input:focus-visible,#homeDiaryGuestForm button:focus-visible{outline:3px solid #ffe4a2;outline-offset:2px}
-    #homeDiaryGuestForm button{flex:none;border:1px solid #ddc6dc;min-height:46px;padding:10px 19px;
-      border-radius:13px;background:linear-gradient(115deg,#ecd5e6,#ffedf1);color:#503750;
-      font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 6px 16px #100b2538;
-      transition:transform .16s ease,filter .16s ease}
+    /* Class diary entry: generous touch targets and clearly legible code form. */
+    #teacher-diary-feature .teacher-diary-lock{
+      min-height:0;gap:12px;padding:32px clamp(18px,3.5vw,44px) 36px;margin:0 18px 18px;
+      background:radial-gradient(circle at 50% 0,#d5b0d02a,transparent 70%),#17233d;
+    }
+    #teacher-diary-feature .teacher-diary-lock h3{
+      font-family:"Gowun Batang","Nanum Myeongjo",serif;
+      font-size:clamp(23px,2.8vw,32px);line-height:1.38;
+    }
+    #teacher-diary-feature .teacher-diary-lock>p{
+      font-size:clamp(14px,1.5vw,16px);line-height:1.6;color:#e4cce6;
+    }
+    #homeDiaryGuestForm{
+      margin:16px auto 0;max-width:780px;width:100%;display:grid;
+      gap:12px;text-align:left;
+    }
+    #homeDiaryGuestForm label{
+      color:#f8ebf7;font-size:16px;line-height:1.5;font-weight:850;letter-spacing:.025em;
+    }
+    #homeDiaryGuestForm .teacher-diary-code-row{
+      display:grid;grid-template-columns:minmax(0,1fr) minmax(175px,210px);
+      align-items:stretch;gap:12px;width:100%;min-width:0;
+    }
+    #homeDiaryGuestForm input{
+      box-sizing:border-box;width:100%;min-width:0;min-height:64px;
+      padding:16px 19px;font-family:inherit;font-size:18px;font-weight:650;
+      line-height:1.4;letter-spacing:.025em;
+      border:2px solid #d8c9df;border-radius:15px;color:#30263c;background:#fffafd;
+      box-shadow:inset 0 1px 3px rgba(36,20,50,.07);
+    }
+    #homeDiaryGuestForm input::placeholder{color:#786f85;opacity:1;font-weight:500;letter-spacing:0}
+    #homeDiaryGuestForm input:focus-visible,#homeDiaryGuestForm button:focus-visible{
+      outline:3px solid #ffe4a2;outline-offset:3px;
+    }
+    #homeDiaryGuestForm button{
+      box-sizing:border-box;width:100%;min-width:0;min-height:64px;
+      padding:14px 18px;border:1px solid #ddc6dc;
+      border-radius:15px;background:linear-gradient(115deg,#ecd5e6,#ffedf1);color:#503750;
+      font-family:inherit;font-size:17px;font-weight:900;line-height:1.3;
+      cursor:pointer;box-shadow:0 6px 16px #100b2538;
+      transition:transform .16s ease,filter .16s ease;
+    }
     #homeDiaryGuestForm button:hover{filter:brightness(1.05);transform:translateY(-1px)}
     #homeDiaryGuestForm button:disabled{cursor:wait;opacity:.67;transform:none}
-    #homeDiaryGuestForm button span{font-size:20px;line-height:0;vertical-align:-1px;padding-left:6px}
-    #homeDiaryGuestForm .teacher-diary-code-message{margin:0;font-size:11px;color:#dbcbe2;line-height:1.5;min-height:1.5em}
-    @media(max-width:450px){
-      #teacher-diary-feature .teacher-diary-lock{padding:17px 12px 19px;margin:0 10px 10px}
-      #homeDiaryGuestForm .teacher-diary-code-row{gap:6px}
-      #homeDiaryGuestForm button{padding:10px 12px;font-size:12px}
-      #homeDiaryGuestForm input{padding:10px;font-size:13px}
+    #homeDiaryGuestForm button span{font-size:24px;line-height:0;vertical-align:-1px;padding-left:7px}
+    #homeDiaryGuestForm .teacher-diary-code-message{
+      margin:0;font-size:14px;color:#e8d9ed;line-height:1.6;min-height:1.6em;
+      text-align:left;overflow-wrap:anywhere;
+    }
+    @media(max-width:760px){
+      #teacher-diary-feature .teacher-diary-lock{
+        gap:10px;padding:25px 18px 28px;margin:0 12px 12px;
+      }
+      #homeDiaryGuestForm{margin-top:12px;gap:10px}
+      #homeDiaryGuestForm .teacher-diary-code-row{grid-template-columns:minmax(0,1fr);gap:10px}
+      #homeDiaryGuestForm input,#homeDiaryGuestForm button{min-height:58px}
+      #homeDiaryGuestForm input{font-size:17px;padding:14px 16px}
+      #homeDiaryGuestForm button{font-size:17px}
+    }
+    @media(max-width:380px){
+      #teacher-diary-feature .teacher-diary-lock{padding:22px 14px 25px;margin:0 9px 9px}
+      #homeDiaryGuestForm input{font-size:16px}
+      #homeDiaryGuestForm .teacher-diary-code-message{font-size:13px}
     }
     @media(prefers-reduced-motion:reduce){#homeDiaryGuestForm button{transition:none}}
 
