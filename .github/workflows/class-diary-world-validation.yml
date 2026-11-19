@@ -8,8 +8,10 @@ on:
       - 'scripts/test-class-diary-narrative.cjs'
       - 'js/class-diary-play-v1.js'
       - 'js/class-diary-director-v1.js'
+      - 'js/class-diary-demo-v1.js'
       - 'scripts/test-class-diary-play.cjs'
       - 'scripts/test-class-diary-director.cjs'
+      - 'scripts/test-class-diary-demo.cjs'
       - 'scripts/test-class-diary-play-page.cjs'
       - 'teacher-class-diary.html'
       - 'teacher-class-diary-play.html'
@@ -36,6 +38,7 @@ jobs:
           node scripts/test-class-diary-narrative.cjs
           node scripts/test-class-diary-play.cjs
           node scripts/test-class-diary-director.cjs
+          node scripts/test-class-diary-demo.cjs
           node scripts/test-class-diary-play-page.cjs
       - name: Confirm the live API rejects missing Lv2 session
         run: |
