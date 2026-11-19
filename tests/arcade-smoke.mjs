@@ -557,8 +557,8 @@ async function waitForPublishedHome() {
 }
 const [site,topVolley,topRun]=await Promise.all([
  waitForPublishedHome(),
- requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
- requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
+ requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
+ requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
 assert.match(site.body,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
 assert.match(site.body,/teacher-run\.html\?v=20261119-vol25-retirement1/);
@@ -593,7 +593,7 @@ if(school.eligible){
  assert.ok(["easy","normal","hard","very_hard","extreme"].includes(school.difficulty));
  const start=await requestWithRetry(api,200,{
   method:"POST",headers:origin,
-  body:JSON.stringify({action:"start",game:"volleyball",school_id:school.school_id})
+  body:JSON.stringify({action:"start",game:"volleyball_25",school_id:school.school_id})
  });
  const started=JSON.parse(start.body);
  assert.equal(started.school.eligible,true);
@@ -602,7 +602,7 @@ if(school.eligible){
  assert.match(started.session,/^[0-9a-f-]{36}$/i);
  const invalid=await requestWithRetry(api,400,{
   method:"POST",headers:origin,
-  body:JSON.stringify({action:"submit",game:"volleyball",session:started.session,nickname:"123",stats:{player:7,cpu:0,spikes:0}})
+  body:JSON.stringify({action:"submit",game:"volleyball_25",session:started.session,nickname:"123",stats:{player:25,cpu:0,elapsedTenths:500}})
  });
  assert.equal(JSON.parse(invalid.body).error,"invalid_name");
  console.log("PASS: eligible four-year school session and nickname validation");
@@ -610,7 +610,7 @@ if(school.eligible){
  assert.equal(school.difficulty,null,"no provisional middle-tier fallback");
  const refused=await requestWithRetry(api,409,{
   method:"POST",headers:origin,
-  body:JSON.stringify({action:"start",game:"volleyball",school_id:school.school_id})
+  body:JSON.stringify({action:"start",game:"volleyball_25",school_id:school.school_id})
  });
  const failed=JSON.parse(refused.body);
  assert.equal(failed.error,"school_ineligible");
