@@ -26,6 +26,10 @@ function init(options){
   setup.scrollIntoView({block:'start',behavior:'instant'});
  }
  function validate(part){
+  if(part===1&&root.BeaguClassDiarySchoolPicker&&!root.BeaguClassDiarySchoolPicker.ready()){
+   root.BeaguClassDiarySchoolPicker.focus();
+   return false;
+  }
   const ids=part===1?['playerName','experience','gender','mbti']:part===2?['partner']:[];
   for(const id of ids){
    const el=$(id);
@@ -49,6 +53,7 @@ function init(options){
  return {
   ready(){
    if(step!==3)return false;
+   if(root.BeaguClassDiarySchoolPicker&&!root.BeaguClassDiarySchoolPicker.ready()){go(1);validate(1);return false}
    if(['playerName','experience','gender','mbti'].some(id=>!$(id).checkValidity())){go(1);validate(1);return false}
    if(!$('partner').checkValidity()){go(2);validate(2);return false}
    return true;
