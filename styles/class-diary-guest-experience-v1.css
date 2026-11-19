@@ -199,3 +199,58 @@ body.is-setting #setup[data-step="2"] .setup-step-actions{
  body.is-setting #setup[data-step="2"] .setup-character-name{font-size:13px!important}
  body.is-setting #setup[data-step="2"] .setup-character-tag{font-size:9px!important}
 }
+
+/* 2026-11-20 · align Minseo with Jiyoon / Hyunwoo headshot framing.
+   The source WebP is a transparent waist-up cutout, so it needs a tighter
+   on-card crop; keep original artwork and scene character art untouched. */
+body.is-setting #setup[data-step="2"] .setup-character-art.minseo{
+ background:linear-gradient(140deg,#dce9de 0%,#f4f3ed 70%,#ece2e8 100%)!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character-art.minseo img#setupPortraitNone{
+ display:block!important;
+ width:100%!important;height:100%!important;
+ max-width:none!important;max-height:none!important;
+ object-fit:cover!important;object-position:center 22%!important;
+ transform:scale(1.29)!important;transform-origin:center 34%!important;
+ transition:transform .2s ease-out;
+}
+@media(max-width:390px){
+ body.is-setting #setup[data-step="2"] .setup-character-art.minseo img#setupPortraitNone{
+  transform:scale(1.34)!important;
+ }
+}
+/* The diary's main calls to action follow the novel's literary type,
+   while small utility buttons retain the functional sans-serif. */
+body.is-setting #setup #setupBack,
+body.is-setting #setup #setupNext,
+body.is-setting #setup .setup-begin,
+body.is-landing #diaryLandingStart,
+body.is-intro #openingStart,
+body.is-intro #semesterStart,
+body.is-playing #choiceSection button.choice{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif!important;
+ font-weight:700!important;
+ letter-spacing:-.035em!important;
+ font-size:clamp(14px,2.45vmin,18px)!important;
+ line-height:1.32!important;
+ word-break:keep-all;
+}
+body.is-setting #setup .setup-begin{
+ min-height:44px!important;
+ padding:9px 20px!important;
+ border-radius:999px!important;
+}
+body.is-setting #setup[data-step="3"] .setup-step-actions{
+ justify-content:flex-start;
+}
+body.is-setting #setup[data-step="3"] #setupNext{display:none!important}
+body.is-setting #setup[data-step="3"] .setup-end{
+ display:block!important;
+ flex:0 0 auto;
+}
+body.is-setting #setup[data-step="3"] .setup-end .actions{
+ display:flex!important;
+ justify-content:center;
+ margin:6px 0!important;
+}
+body.is-setting #setup[data-step="3"] .setup-review-fields div[hidden]{display:none!important}
