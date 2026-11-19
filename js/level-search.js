@@ -19,7 +19,7 @@
   ).trim();
   // Exact education office names come from the verified schools table.
   let officeLoadSerial=0;
-  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won']);
+  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count']);
   let sortDirection='asc';
   const updateSortDirection=()=>{
     const button=$('regionSortDirection');
@@ -206,7 +206,13 @@
   $('officeSelect').addEventListener('change', () => search(true));
   // 지역 찾기만 선택형 정렬을 사용합니다. 서버는 페이지 나누기 전에 정렬합니다.
   $('regionSort').addEventListener('change',()=>{
-    if(SORTS.has($('regionSort').value))void search(true);
+    if(!SORTS.has($('regionSort').value))return;
+    // "조회수" defaults to most viewed first; the arrow still toggles either direction.
+    if($('regionSort').value==='view_count'){
+      sortDirection='desc';
+      updateSortDirection();
+    }
+    void search(true);
   });
   $('regionSortDirection').addEventListener('click',()=>{
     sortDirection=sortDirection==='asc'?'desc':'asc';
