@@ -18,6 +18,9 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
    await page.goto(URL+'/teacher-class-diary-play.html?demo=1',{waitUntil:'domcontentloaded'});
    await page.locator('#setup').waitFor({state:'visible'});
+   await page.locator('#playerName').fill(variant.name==='desktop'?'최윤호':'김민서');
+   const count=await page.locator('#profileForm input,#profileForm select').count();
+   assert.equal(count,5,'Character form must contain exactly 5 fields');
    await page.locator('#age').fill('31');
    await page.locator('#gender').selectOption('undisclosed');
    await page.locator('#mbti').selectOption('INFP');
@@ -31,9 +34,14 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    assert((await page.locator('#scenePortrait').getAttribute('src')).startsWith('data:image/svg+xml'));
    if(variant.name==='desktop')await page.screenshot({path:'artifacts/class-diary/desktop-first-scene.png',fullPage:true});
    else await page.screenshot({path:'artifacts/class-diary/mobile-first-scene.png',fullPage:true});
-   let turns=0;
+   let turns=0,sawFull=false,sawFriendly=false;
+   const full=variant.name==='desktop'?'최윤호 선생님':'김민서 선생님';
+   const friendly=variant.name==='desktop'?'윤호 쌤':'민서 쌤';
    while(await page.locator('#ending').isHidden()){
     if(turns++>170)throw Error('Scene flow did not finish within 170 interactions');
+    const now=(await page.locator('#chapterText').innerText())+' '+(await page.locator('#outcomeLine').innerText());
+    sawFull ||= now.includes(full);
+    sawFriendly ||= now.includes(friendly);
     const choices=page.locator('#choiceSection .choice:visible');
     const n=await choices.count();
     if(n>0){
@@ -44,6 +52,8 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      await next.click();
     }
    }
+   assert(sawFull,'Colleagues must use the character full name in initial scenes');
+   assert(sawFriendly,'Closer colleagues must use given-name 쌤 on later days');
    assert((await page.locator('#endingTitle').innerText()).startsWith('나의 '));
    assert((await page.locator('#endingText').innerText()).length>100);
    const state=await page.evaluate(()=>({
