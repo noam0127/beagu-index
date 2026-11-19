@@ -27,6 +27,8 @@ on:
       - 'js/class-diary-ui-v2.js'
       - 'styles/class-diary-ui-v2.css'
       - 'styles/class-diary-journey-v1.css'
+      - 'scripts/test-class-diary-literary.cjs'
+      - 'scripts/test-class-diary-literary-browser.cjs'
       - 'scripts/test-class-diary-browser.cjs'
       - '.github/workflows/class-diary-browser-e2e.yml'
   pull_request:
@@ -51,6 +53,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify line layout without browser
+        run: node scripts/test-class-diary-literary.cjs
       - name: Install browser test dependencies
         run: |
           npm install --no-save --no-package-lock playwright
@@ -58,6 +62,7 @@ jobs:
       - name: Serve site and complete both game routes
         run: |
           python3 -m http.server 8123 --bind 127.0.0.1 >/tmp/diary-web.log 2>&1 &
+          node scripts/test-class-diary-literary-browser.cjs
           node scripts/test-class-diary-guest-flow-browser.cjs
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
