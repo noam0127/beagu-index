@@ -46,7 +46,13 @@
       if(seq!==generation||getToken()!==token)return;
       if(Number.isInteger(result?.level)&&result.level>=1){
         lastValidatedToken=token;
-        setState('1','Lv.1','Lv.1 참여자 인증됨 · 인증된 학교 검색으로 이동');
+        if(result.level>=2){
+          indicator.href='search-lv2.html';
+          setState('2','Lv.2','Lv.2 인증됨 · 레벨2 학교 검색으로 이동');
+        }else{
+          indicator.href='search-lv1.html';
+          setState('1','Lv.1','Lv.1 참여자 인증됨 · 인증된 학교 검색으로 이동');
+        }
       }else{
         lastValidatedToken='';
         setState('0','Lv.0','Lv.0 공개 열람 · 눌러서 Lv.1 인증');
