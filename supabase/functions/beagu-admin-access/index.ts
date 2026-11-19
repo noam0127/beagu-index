@@ -34,7 +34,7 @@ async function audit(userId: string | null, eventType: string, outcome: "success
   const { error } = await db.from("beagu_admin_audit_events").insert({
     actor_user_id: userId, event_type: eventType, outcome, details: {},
   });
-  if (error) console.error("admin_audit_write_failed", error.code);
+  if (error) { console.error("admin_audit_write_failed", error.code); throw new Error("audit_unavailable"); }
 }
 Deno.serve(async (request: Request): Promise<Response> => {
   const origin = request.headers.get("Origin") || "";
