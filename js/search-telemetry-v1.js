@@ -30,8 +30,8 @@
    }).then(({data,error})=>{
      if(error){console.warn('학교 이용 이벤트 기록 비활성화');return;}
      if(data!==true)return;
-     // Count a view only AFTER the detail_viewed event has been saved.
-     if(type==='detail_viewed')
+     // Count a school selection only AFTER the school_selected event has been saved.
+     if(type==='school_selected')
        void window.BeaguSchoolViewCounts?.record(schoolId,actionId,visitor);
      // Only a server-accepted school action can contribute to rankings.
      // The database stores a salted digest, never the visitor UUID.
@@ -66,6 +66,11 @@
   if(!ev||ev.isTrusted!==true)return null;
   return emit(id,'school_selected',level,page);
  }
+ function selectedFromReport(id){
+  // Opening a specific school's public report is a school selection, including direct links.
+  // The server still requires a saved school_selected action and deduplicates per day.
+  return emit(id,'school_selected',0,'school-report');
+ }
  function detailViewed(id,level,page,actionId){
   // Count once per actual school detail render on the current page.
   const key=page+'|'+id;
@@ -74,5 +79,5 @@
   if(action)viewed.add(key);
   return action;
  }
- window.BeaguSearchTelemetry=Object.freeze({searchConfirmed,selected,detailViewed});
+ window.BeaguSearchTelemetry=Object.freeze({searchConfirmed,selected,selectedFromReport,detailViewed});
 })();
