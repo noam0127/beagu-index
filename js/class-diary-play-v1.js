@@ -259,10 +259,9 @@ const ENDINGS=Object.freeze({
 });
 function validateProfile(profile){
   if(!profile||typeof profile!=='object')throw Error('PROFILE_REQUIRED');
-  const age=Number(profile.age),gender=profile.gender,partner=profile.partner,mbti=profile.mbti;
+  const gender=profile.gender,partner=profile.partner,mbti=profile.mbti;
    const name=profile.name===undefined?'다온':String(profile.name).trim().replace(/\s+/g,'');
    if(!/^[가-힣]{2,8}$/.test(name))throw Error('NAME_INVALID');
-  if(!Number.isInteger(age)||age<20||age>75)throw Error('ADULT_AGE_REQUIRED');
   if(!['woman','man','undisclosed'].includes(gender))throw Error('GENDER_INVALID');
   if(!['woman','man','none'].includes(partner))throw Error('PARTNER_INVALID');
   if(!MBTI.test(mbti))throw Error('MBTI_INVALID');
@@ -287,7 +286,7 @@ function validateProfile(profile){
   if(!['lower','middle','upper'].includes(gradeBand))throw Error('GRADE_BAND_INVALID');
   if(!['small','medium','large'].includes(fictionalSchoolSize))throw Error('FICTIONAL_SCALE_INVALID');
   if(!['rural','urban','other'].includes(storyRegion))throw Error('REGION_SCENARIO_INVALID');
-  return {name,age,gender,partner,mbti,experience,duty,classTone,workCulture,
+  return {name,gender,partner,mbti,experience,duty,classTone,workCulture,
     storyCueSource:profile.storyCueSource==='approved_historical_aggregate'?
       'approved_historical_aggregate':'fictional_general',
     sportsCulture,assignmentPractice,informalRequests,gradeBand,fictionalSchoolSize,storyRegion};
@@ -398,9 +397,9 @@ function chapter(state,world,plan){
    p.push(replace(CHAPTER_MOMENTS[state.day-1],colleague));
   const atmosphereLine=atmosphere(world,state.day);
   if(atmosphereLine)p.unshift(atmosphereLine);
-  /* 주인공 성별은 편견이나 결과 점수에 관여하지 않는다. 나이와 유형은 독백만 바꾼다. */
+  /* 주인공의 선택은 편견이나 나이 수치가 아닌 경험과 장면의 맥락에서 전개한다. */
   if(state.day===1){
-    p.unshift('나는 이제 '+state.profile.age+'살이었다. '+
+    p.unshift(
       (state.profile.experience==='new'?'아직 교단에서 배우는 일이 더 많았다.':
        state.profile.experience==='senior'?'여러 번 새 학기를 맞았지만 익숙해지지 않는 순간도 있었다.':
        '경력이 쌓여도 학기 초는 늘 새로웠다.')+
