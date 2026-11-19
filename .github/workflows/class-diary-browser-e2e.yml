@@ -34,6 +34,8 @@ on:
       - 'teacher-class-diary-play.html'
       - 'js/class-diary-semester-v1.js'
       - 'scripts/test-class-diary-browser.cjs'
+      - 'scripts/test-class-diary-guest-flow-browser.cjs'
+      - '.github/workflows/class-diary-browser-e2e.yml'
   workflow_dispatch:
 permissions:
   contents: read
