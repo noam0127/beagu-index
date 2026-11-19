@@ -62,6 +62,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  .scoreboard{padding:9px;gap:4px;grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr)}
  .team{font-size:10px}.team strong{font-size:23px}.center-label{font-size:12px}
 }
+ .volley-best-row{grid-column:1/-1;display:flex;justify-content:flex-end;align-items:center;margin:-3px 0 0;min-height:27px}
+ .volley-best-chip{display:inline-flex;align-items:center;justify-content:space-between;gap:9px;padding:4px 9px;border:1px solid #587da1;border-radius:9px;background:#183554;color:#bcdcf2;font-size:10px;font-weight:850;letter-spacing:.035em;white-space:nowrap;font-variant-numeric:tabular-nums}
+ .volley-best-chip strong{font-size:16px;line-height:1.2;color:#ffe9aa;letter-spacing:0}
  .volley-energy-meta{display:flex;align-items:center;justify-content:space-between;gap:4px;font-size:10px;line-height:1.35;color:#cfe5f4}
  .team.right .volley-energy-meta{flex-direction:row-reverse}
  .volley-energy-meta output{font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -90,6 +93,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <main class="game-shell">
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="scoreboard" aria-label="현재 점수">
+    <div class="volley-best-row"><span class="volley-best-chip" aria-label="이 기기의 선생님배구 최고 점수">HI-SCORE <strong id="volley-best-label">0</strong></span></div>
     <div class="team"><span>나</span><strong id="player-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="player-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="우리 팀 체력" id="player-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="player-energy-fill"></div></div></div>
     <div class="center-label">VS<small id="volley-time-label">⏱ 0초</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="cpu-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="상대 팀 체력" id="cpu-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="cpu-energy-fill"></div></div></div>
@@ -168,6 +172,18 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const ball = { x: 228, y: 218, vx: 0, vy: 0, cooldown: 0, trail: [] };
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const setStatus = text => { status.textContent = text; };
+  const BEST_KEY="teacherVolleyballBestV1";
+  const bestLabel=document.getElementById("volley-best-label");
+  let bestScore=0;
+  try{bestScore=Math.max(0,Math.floor(Number(localStorage.getItem(BEST_KEY))||0));}catch(e){}
+  bestLabel.textContent=bestScore.toLocaleString("ko-KR");
+  function rememberBest(score){
+    if(!Number.isFinite(score)||score<=bestScore)return;
+    bestScore=Math.floor(score);
+    bestLabel.textContent=bestScore.toLocaleString("ko-KR");
+    try{localStorage.setItem(BEST_KEY,String(bestScore));}catch(e){}
+  }
+  const canPlayerJump=()=>currentDifficulty!=="extreme";
    const energyUi={
     left:{number:document.getElementById("player-energy-number"),fill:document.getElementById("player-energy-fill"),progress:document.getElementById("player-energy-progress")},
     right:{number:document.getElementById("cpu-energy-number"),fill:document.getElementById("cpu-energy-fill"),progress:document.getElementById("cpu-energy-progress")}
@@ -266,7 +282,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
     resetPositions();
-    setStatus(school.school_name+" · "+diffName[school.difficulty]);
+    if(!canPlayerJump())setStatus(school.school_name+" · EXTREME · 점프 불가");
+    else setStatus(school.school_name+" · "+diffName[school.difficulty]);
     syncUI();canvas.focus();
   }
   function stopForSchoolChange(){
@@ -319,7 +336,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const x = (e.clientX - bounds.left) * W / bounds.width;
     const y = (e.clientY - bounds.top) * H / bounds.height;
     touchControl.targetX = clamp(x, 35, NET_X - NET_W / 2 - 36);
-    touchControl.targetY = clamp(y, 86, FLOOR - 31);
+    touchControl.targetY = canPlayerJump() ? clamp(y, 86, FLOOR - 31) : FLOOR - 31;
   }
   canvas.addEventListener("pointerdown", e => {
     if (state.phase !== "playing" || touchControl.pointerId !== null) return;
@@ -424,6 +441,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       state.message = state.winner;
       setStatus(state.winner+" · 기본 "+getBaseScore()+" + 생존 "+getSurvivalSeconds()+"초("+getSurvivalBonus()+") = "+getFinalScore()+"점");
       schoolPicker.setLocked(false);
+      rememberBest(getFinalScore());
       ranking?.finish(getFinalScore(),{
         player:state.leftScore,cpu:state.rightScore,spikes:state.spikes,survivalSeconds:getSurvivalSeconds()
       });
@@ -450,17 +468,17 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       const oldX = left.x, oldY = left.y;
       const flightStep = 24 * SPEED_MULTIPLIER * battle.allySpeed * energyFactor("left");
       left.x += clamp(touchControl.targetX - left.x, -flightStep, flightStep);
-      left.y += clamp(touchControl.targetY - left.y, -flightStep, flightStep);
+      left.y += canPlayerJump() ? clamp(touchControl.targetY - left.y, -flightStep, flightStep) : 0;
       left.x = clamp(left.x, 35, NET_X - NET_W / 2 - 36);
-      left.y = clamp(left.y, 86, FLOOR - 31);
+      left.y = canPlayerJump() ? clamp(left.y, 86, FLOOR - 31) : FLOOR - 31;
       left.vx = left.x - oldX;
       left.vy = left.y - oldY;
       left.jumpLock = false;
     } else {
-      controlPlayer(left, keyboardDirection, keys.jump, 5*SPEED_MULTIPLIER*battle.allySpeed*energyFactor("left"),12.8*battle.allyJump);
+      controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump, 5*SPEED_MULTIPLIER*battle.allySpeed*energyFactor("left"),12.8*battle.allyJump);
     }
     // Only intentional, fast player movement powers up the next ball contact.
-    const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || keys.jump;
+    const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || (canPlayerJump()&&keys.jump);
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
     state.leftEnergy=clamp(state.leftEnergy+
       (activeMove?-left.impactSpeed*.0065*energy.allyCost:energy.allyRest),0,state.leftMaxEnergy);
