@@ -289,7 +289,7 @@
   }
   // One card per original question: school / region / nation together with
   // the verified rounded distribution. No separate duplicated question list.
-  function renderHistoricalBenchmarks(host,year,school,modes,comparison,loadStatus){
+  function renderHistoricalBenchmarks(host,year,school,modes,comparison,loadStatus,selections=[]){
     const questions=window.BeaguHistoricalOriginalQuestions?.[String(year)]||{};
     const qids=Object.keys(questions).filter(id=>/^Q\d{2}$/.test(id)).sort();
     if(!qids.length)return;
@@ -298,7 +298,7 @@
     header.append(make('h4','','문항별 결과'),make('span','beagu-question-count',qids.length+'개 문항'));
     section.append(header);
     section.append(make('p','beagu-question-intro',
-      '우리 학교는 최다 선택값만, 지역·전국은 참여 표본의 비교값을 표시합니다.'));
+      '학교별 검증된 선택 결과를 표시합니다. 전국·지역은 참여 표본의 참고값입니다.'));
     const details=make('details','beagu-source-note');
     details.append(make('summary','','자료 해석 안내'));
     details.append(make('p','',
@@ -318,6 +318,23 @@
         typeof d.modeOption==='string'&&d.modeOption.length>0)
       .map(d=>[d.questionId,d.modeOption]));
     const region=String(school?.sido_standard||school?.sido||'지역');
+    // Review-approved checkbox choices are a school-level union of selected
+    // original options, never an individual answer or raw response combination.
+    const selectedOptions=new Map((Array.isArray(selections)?selections:[])
+      .filter(item=>year===2025&&item?.year===2025&&['Q03','Q04'].includes(item.questionId)
+        &&Array.isArray(item.selectedOptions)&&item.selectedOptions.length>0
+        &&item.selectedOptions.every(v=>typeof v==='string'&&v.trim().length>0&&v.length<=180))
+      .map(item=>[item.questionId,[...new Set(item.selectedOptions)]]));
+    const answerBadge=(value,questionId)=>{
+      if(year!==2025)return null;
+      const q=Number(questionId.slice(1));
+      if(!(q>=31&&q<=50))return null;
+      const v=String(value||'').trim();
+      if(v==='있다')return {symbol:'O',label:'있다',kind:'yes'};
+      if(v==='없다')return {symbol:'X',label:'없다',kind:'no'};
+      if(v==='모름'||v==='잘 모름'||v==='잘모름')return {symbol:'?',label:'모름',kind:'unknown'};
+      return null;
+    };
     const list=make('div','beagu-question-list');
     const blocks=[];
     for(const id of qids){
@@ -333,8 +350,11 @@
         return typeof preferred==='string'&&preferred.length<=180?preferred:null;
       };
       const comparisonLabel=m=>m?.kind==='most_frequent'?'최다 선택':'평균에 해당하는 보기';
+      const checkboxQuestion=year===2025&&(id==='Q03'||id==='Q04');
+      const checked=checkboxQuestion?selectedOptions.get(id)||null:null;
       const cells=[
-        ['우리 학교',vetted.get(id)||null,'school','검증된 최다 선택'],
+        ['우리 학교',checkboxQuestion?(checked?.length?'확인된 체크 항목':''):vetted.get(id)||null,
+          'school',checkboxQuestion?'응답 기준 · 복수 선택':'검증된 최다 선택'],
         ['전국',benchmark(comparisonValues.national),'nation',comparisonLabel(comparisonValues.national)],
         [region,benchmark(comparisonValues.regional),'region',comparisonLabel(comparisonValues.regional)]
       ];
@@ -343,8 +363,28 @@
         const cell=make('div','historical-benchmark-value '+role);
         const top=make('span','beagu-benchmark-label',label);
         const hasValue=typeof value==='string'&&!!value.trim();
-        const display=hasValue?value:role==='school'?'학교별 문항 집계 미공개':'비교 자료 없음';
-        const val=make('strong','beagu-benchmark-result',display);
+        const display=hasValue?value:role==='school'?
+          (checkboxQuestion?'검증된 체크 항목 없음':'학교별 문항 집계 미공개'):'비교 자료 없음';
+        let val;
+        if(role==='school'&&checkboxQuestion&&checked?.length){
+          val=make('ul','beagu-selected-options');
+          val.setAttribute('aria-label','해당 학교 응답에서 체크된 항목');
+          for(const choice of checked){
+            const li=make('li','beagu-selected-choice');
+            li.append(make('span','beagu-selected-mark','✓'),document.createTextNode(choice));
+            val.append(li);
+          }
+        }else{
+          const flag=answerBadge(value,id);
+          if(flag){
+            val=make('div','beagu-benchmark-result beagu-answer-symbol');
+            const pill=make('span','beagu-ox-pill is-'+flag.kind,flag.symbol);
+            pill.setAttribute('aria-label',flag.label);
+            val.append(pill,make('span','beagu-ox-text',flag.label));
+          }else{
+            val=make('strong','beagu-benchmark-result',display);
+          }
+        }
         if(!hasValue)cell.classList.add('is-unavailable');
         const kind=make('small','beagu-benchmark-kind',note);
         cell.append(top,val,kind);
@@ -360,7 +400,14 @@
           if(typeof value!=='string'||value.length>180)continue;
           optionList.append(make('li','',value));
         }
-        block.append(optionTitle,optionList);
+        if(checkboxQuestion){
+          const folded=make('details','beagu-checkbox-original-options');
+          folded.append(make('summary','','전체 설문 보기 확인'));
+          folded.append(optionTitle,optionList);
+          block.append(folded);
+        }else{
+          block.append(optionTitle,optionList);
+        }
       }else{
         block.append(make('p','beagu-options-empty',
           '해당 문항의 원본 선택지는 아직 검증되지 않았습니다.'));
@@ -395,7 +442,7 @@
     host.append(section);
   }
 
-  function renderYear(host, year, rows, publicValue, schoolId, modes=[], school=null,comparison=null,loadStatus='loading') {
+  function renderYear(host, year, rows, publicValue, schoolId, modes=[], school=null,comparison=null,loadStatus='loading',selections=[]) {
     host.replaceChildren();
     const heading=make('div','beagu-year-header');
     heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
@@ -465,7 +512,7 @@
       if(hadRestricted)section.append(make('p','beagu-source-caption','일부 세부 항목은 승인 범위에 따라 제공되지 않습니다.'));
       host.append(section);
     }
-    renderHistoricalBenchmarks(host,year,school,modes,comparison,loadStatus);
+    renderHistoricalBenchmarks(host,year,school,modes,comparison,loadStatus,selections);
   }
 
 
@@ -536,7 +583,7 @@
       refresh();
     });
   }
-  function showDetails(host,rows,school,modes=[]) {
+  function showDetails(host,rows,school,modes=[],selections=[]) {
     host.replaceChildren();
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
@@ -568,7 +615,7 @@
       const draw=(data,status)=>{
         content.removeAttribute('aria-busy');
         renderYear(content,year,rows,vals[year-2023]??null,
-          school.school_id,modes,school,data,status);
+          school.school_id,modes,school,data,status,selections);
       };
       if(year===2026){draw(null,'ready');return;}
       if(readyByYear.has(year)){draw(readyByYear.get(year),'ready');return;}
@@ -692,7 +739,7 @@
           await loaded;
           // The signed-session API enforces access rights and release status.
           if(!detail.isConnected)return;
-          showDetails(detail,data.rows,school,data.schoolQuestionModes);
+          showDetails(detail,data.rows,school,data.schoolQuestionModes,data.schoolQuestionSelections);
           detail.dataset.loaded='1';
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         }catch(error){
