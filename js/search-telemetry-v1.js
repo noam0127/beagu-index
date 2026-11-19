@@ -27,8 +27,17 @@
    void supabaseClient.rpc('beagu_log_school_search',{
     p_school_id:schoolId,p_event_type:type,p_viewer_level:level,
     p_source_page:page,p_action_id:actionId,p_visitor:visitor
-   }).then(({error})=>{if(error)console.warn('학교 이용 이벤트 기록 비활성화');})
-     .catch(()=>{});
+   }).then(({data,error})=>{
+     if(error){console.warn('학교 이용 이벤트 기록 비활성화');return;}
+     if(data!==true)return;
+     // Only a server-accepted school action can contribute to rankings.
+     // The database stores a salted digest, never the visitor UUID.
+     return supabaseClient.rpc('beagu_record_school_interest',{
+      p_school_id:schoolId,p_action_id:actionId,p_visitor:visitor
+     }).then(({error:interestError})=>{
+      if(interestError)console.warn('학교 관심 집계 비활성화');
+     });
+   }).catch(()=>{});
    return true;
   }catch(_){return false;}
  }
