@@ -43,7 +43,7 @@ assert(s.includes("const saveButton=make('저장하기',save)"));
 assert(!s.includes("addEventListener('beforeunload'"),'Saves must be opt in');
 assert(s.includes("history:(g.history||[]).map"),'Save only selected choice history');
 assert(!s.includes("JSON.stringify(g)"),'Full game objects may include school data');
-assert(edge.includes("admin.schema('beagu_private')"),'Server must only access private table');
+assert(edge.includes("admin.rpc('beagu_class_diary_slot_get'")&&edge.includes("admin.rpc('beagu_class_diary_slot_put'")&&edge.includes("admin.rpc('beagu_class_diary_slot_delete'"),'Server must access private table only through restricted RPCs');
 assert(edge.includes("digest('beagu-diary-save-v1:'+body.recoveryKey)"),'Never store bearer recovery keys');
 assert(edge.includes("levelAllowed(")&&edge.includes("guestAllowed("),'New save must require authorized player');
 assert(edge.includes("grantAllowed("),'Guest late save grant required');
