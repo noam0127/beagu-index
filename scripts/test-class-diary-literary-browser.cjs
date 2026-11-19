@@ -12,6 +12,16 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    const errors=[];
    page.on('pageerror',err=>errors.push(err.message));
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
+   // Capture a swallowed story-start exception only inside this local test.
+   await page.route('**/teacher-class-diary-play.html?guest=1',async route=>{
+    const response=await route.fetch();
+    let html=await response.text();
+    const needle="}catch(err){status('이야기 설정을 확인하지 못했습니다. 다시 시도해 주세요.');}";
+    const amended="}catch(err){window.__litTestError=err.stack||String(err);status('이야기 설정을 확인하지 못했습니다. 다시 시도해 주세요.');}";
+    if(!html.includes(needle))throw Error('Expected story-start catch missing');
+    html=html.replace(needle,amended);
+    await route.fulfill({response,body:html});
+   });
    // Simulate the signed home-entry handoff without using a real identity or code.
    await page.addInitScript(()=>{
     sessionStorage.setItem('beagu-class-diary-guest-handoff-v1','v1.fakepayload.fakesignature');
@@ -46,6 +56,7 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      school:document.getElementById('diarySchoolName').value,
      story:document.body.dataset.diaryStory,
      status:document.getElementById('status').textContent,
+     error:window.__litTestError||'',
      selected:document.querySelector('[data-partner-choice="woman"]').getAttribute('aria-pressed')
     }));
     throw Error('Line reader setup never opened the story: '+JSON.stringify(state)+' errors='+errors.join('; '));
