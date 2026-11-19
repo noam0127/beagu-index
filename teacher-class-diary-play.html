@@ -398,7 +398,10 @@ function renderScenario(){
  $('chapterTitle').textContent=event.title;
  $('chapterPlace').textContent=event.place;
  $('chapterProgress').style.width=(game.day/7*100)+'%';
- $('schoolFacts').hidden=true;
+ $('schoolFactsList').replaceChildren();
+ const facts=Array.isArray(event.sourceFacts)?event.sourceFacts:[];
+ for(const fact of facts)$('schoolFactsList').append(el('li',fact));
+ $('schoolFacts').hidden=facts.length===0;
  $('worldDetail').hidden=true;
  $('chapterSource').textContent=event.fictionLabel;
  /* Additional fictional school-life episodes also greet the named protagonist. */
