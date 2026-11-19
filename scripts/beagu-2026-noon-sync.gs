@@ -421,6 +421,8 @@ const BEAGU26_QUESTION_CATALOG={"Q01":{"question":"교직원 친목·체육·회
  * Output contains school IDs and closed-option counts, never response records. */
 /* Pure aggregate builder. Input stays in the private spreadsheet runtime.
  * Output contains school IDs and closed-option counts, never response records. */
+/* Pure aggregate builder. Input stays in the private spreadsheet runtime.
+ * Output contains school IDs and closed-option counts, never response records. */
 function beagu26CleanOption(value) {
   return String(value || '').replace(/(^|,\s*)[①-⑳㉑-㉟㊱-㊿]\s*/g, '$1').normalize('NFKC').replace(/\s+/g, ' ').trim();
 }
@@ -503,7 +505,6 @@ function beagu26BuildResults(values, schools, catalog) {
   return {source_spreadsheet_id:BEAGU26.sourceId,official_start_day:'2026-11-01',schema_version:1,
     totals,schools:[...groups.values()].sort((a,b)=>a.school_id.localeCompare(b.school_id)),reviewRows};
 }
-
 
 function refreshBeagu2026QuestionResults() {
   const lock=LockService.getScriptLock();
