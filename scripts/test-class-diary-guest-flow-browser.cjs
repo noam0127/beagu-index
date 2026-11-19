@@ -94,6 +94,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(state.saved.length,0,'Guest story cannot save player progress');
    assert.equal(await page.locator('.sound-panel').isVisible(),false,'Music controls should not clutter the page');
    assert.equal(await page.locator('#vnSound').isVisible(),false,'Music toggle must live inside settings only');
+   await page.locator('#diaryHudFold').click();
    assert.equal(await page.locator('#diarySettings').isVisible(),true);
    await page.locator('#diarySettings').click();
    assert.equal(await page.locator('#diaryMusicVolume').isVisible(),true,'Volume slider must live in settings');
