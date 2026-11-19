@@ -10,6 +10,8 @@ on:
       - 'scripts/test-class-diary-guest-flow-browser.cjs'
       - 'js/class-diary-play-v1.js'
       - 'js/class-diary-semester-v1.js'
+      - 'js/class-diary-narrator-v1.js'
+      - 'js/class-diary-journey-v1.js'
       - 'js/class-diary-semester-ui-v1.js'
       - 'styles/class-diary-semester-ui-v1.css'
       - 'scripts/test-class-diary-semester-ui.cjs'
