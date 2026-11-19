@@ -188,6 +188,39 @@ function officialContext(world,day){
  return '확인된 학교 상세정보: '+found.map(x=>x.referenceYear+'년 '+x.label+' '+x.value+x.unit).join(', ')+
   '. 이 수치는 배경 정보일 뿐 학급 소란이나 교직문화를 증명하지 않는다.';
 }
+function schoolSize(state,world){
+ if(world&&world.mode==='public_fiction_demo')return state.profile.fictionalSchoolSize||'medium';
+ return world&&world.basic&&['small','medium','large'].includes(world.basic.scale)?world.basic.scale:null;
+}
+function chosenEvent(state,world){
+ if(state.day!==5)return EVENTS[state.day];
+ const p=state.profile,scale=schoolSize(state,world);
+ if(p.workCulture==='deflecting'&&scale==='large')
+   return {id:'forced_social',title:'친목회장은 누가 하기로 했나요?',tone:'tense',place:'금요일 방과 후 · 학년연구실'};
+ if(p.sportsCulture==='pressured')
+   return {id:'sports',title:'오늘 배구, 빠지면 안 되죠?',tone:'tense',place:'금요일 방과 후 · 교무실'};
+ if(p.workCulture==='collaborative'&&p.sportsCulture==='optional')
+   return {id:'barbecue',title:'뒤뜰에서 고기 구울까요?',tone:'happy',place:'금요일 방과 후 · 학교 뒤뜰'};
+ return EVENTS[5];
+}
+function schoolContextLines(state,world){
+ if(!world||world.mode==='public_fiction_demo'||world.eligible!==true)return [];
+ const lines=[];
+ const get=(key)=>acceptedOfficialFact(world,key);
+ const name=world.basic&&world.basic.sido;
+ if(state.day===1&&typeof name==='string'&&name.trim()&&name.length<40)
+   lines.push('학교 주소에 적힌 지역은 '+name.trim()+'이었다. 하지만 그 지역에서 살아가는 아이들의 하루까지 지명 하나로 알 수 있는 건 아니었다.');
+ const students=get('students'),classes=get('classes'),junior=get('junior_teacher_ratio'),male=get('male_teacher_ratio');
+ if(state.day===1&&students)
+   lines.push(students.year+'년 학생 수 '+students.value+'명. 아이들을 일일이 알아 가기에는 숫자보다 시간이 더 필요했다.');
+ if(state.day===2&&junior&&junior.value<=100)
+   lines.push('공개된 '+junior.year+'년 2정교사 비율은 '+junior.value+'%였다. 그 비율이 신규교사에게 어려운 일이 몰린다는 증거는 아니었다. 배정 기준은 직접 물어야 알 수 있었다.');
+ if(state.day===3&&classes)
+   lines.push('공개된 '+classes.year+'년 학급 수는 '+classes.value+'학급이었다. 교사의 전담시간은 그 숫자만으로 설명할 수 없었다.');
+ if(state.day===5&&male&&male.value<=100)
+   lines.push('공개된 '+male.year+'년 남교사 비율은 '+male.value+'%였다. 그 숫자만으로 누가 배구를 하거나 친목회장을 맡을지는 알 수 없었다.');
+ return lines;
+}
 function eventProse(state,world){
  const p=state.profile,d=state.day,young=p.age<=32,novice=p.experience==='new';
  const dutyline=duty(p).text;
@@ -212,6 +245,8 @@ function eventProse(state,world){
   '몇 번의 새 학기를 보냈어도 학기 초가 익숙해지지는 않았다. 새 학교의 업무를 누가 어떻게 나누는지, 아이들에게 어떤 말이 통하는지 다시 배워야 했다.'
  ];
  if(d===2)return [
+  p.assignmentPractice==='newcomer_first'&&novice?
+   '“신규 선생님이니까 학년교육과정 계획 좀 맡아 주세요.” 학년연구실에서 업무분장표를 다 펼치기도 전에 나온 말이었다. 이번 일의 담당 기준이 무엇인지 묻고 싶었다.':
   pressure?
    '쉬는 시간, 한 선생님이 업무분장표에 적힌 일을 가리키며 말을 꺼냈다. “이건 제가 하기 좀 그래서요. 선생님이 해 주시면 안 돼요?” 내 이름은 그 일의 담당 칸에 없었다.':
    '쉬는 시간, 다른 선생님이 도움을 청했다. “이번 주에 제가 일정이 겹쳐서 그런데 잠깐 같이 봐주실 수 있을까요?” 부탁과 업무분장을 바꾸는 일은 달랐다.',
@@ -221,6 +256,12 @@ function eventProse(state,world){
   '내 업무도 처리 중이었다. 동료를 도우면서도 그 일의 담당과 책임이 흐려져서는 안 됐다.',
   '나이스 창을 닫으며 생각했다. 일의 무게는 담당자가 정해졌다는 이유만으로 가벼워지지 않았다.'];
  if(d===3)return [
+  p.informalRequests==='stereotyped'?
+   (p.gender==='man'?
+    '“남자 선생님이시니까 체육 물품 옮기는 건 부탁드려도 되죠?” 전담시간에 갑자기 들은 말이었다. 무거운 물품이 필요한 일인지, 왜 성별로 담당을 정하는지 먼저 묻고 싶었다.':
+    p.gender==='woman'?
+    '“여자 선생님이니까 행사 다과 준비 좀 부탁할게요.” 내 수업 준비가 끝났는지 묻는 사람은 없었다. 성별이 업무분장표는 아니었다.':
+    '“젊은 선생님이니까 행사 준비 좀 해 주세요.” 나이부터 불리는 순간 내 이름이 잠깐 뒤로 밀렸다.') :
   young?'전담시간에 다음 차시 모둠 활동지를 고치고 있을 때, 경력이 오래된 한 선생님이 들어왔다. “혹시 차 내비게이션 업데이트하는 방법 알아요? 제가 이건 잘 몰라서요.”':
   '전담시간에 인디스쿨에서 모둠 활동을 살펴보고 있는데, 옆자리 선생님이 복합기 인쇄 설정을 물었다. “지금 바쁘시면 나중에 알려주셔도 돼요.”',
   '아이들은 교과전담 수업을 들으러 이동했다. 나는 쉬는 시간을 쪼개 아이스크림 자료와 유튜브 수업 영상을 보고 다음 시간을 준비했다. 이 시간은 잠깐 숨 돌리면서도 바로 다음 수업을 챙기는 귀한 틈이었다.',
@@ -234,11 +275,30 @@ function eventProse(state,world){
   demanding?'학급에서 갈등이 생겼다는 이야기도 이어졌다. 아이들마다 들려준 말이 달랐다. 누구의 잘못인지를 서둘러 정하면 보이지 않는 사정이 생긴다.':
   '큰 갈등은 아니었지만 확인할 일이 쌓였다. 학교 안에서 역할이 분명하다면 작은 일이 불필요한 부담으로 커지지 않을 수도 있었다.',
   '무엇보다 이 문제는 특정 교사 혼자만 잘한다고 해결될 일이 아니었다.'];
- if(d===5)return [
-  pressure?'주안 파일을 올리고도 책상 위의 일은 끝나지 않았다. 맡지 않은 업무를 부탁받은 기록까지 한 줄씩 남았다. 힘든 이유가 내 능력 부족인지, 일의 분배 방식인지 묻고 싶었다.':
-  '주안을 맞추고 다음 주 수업을 준비했다. 동학년 선생님들이 서로 바쁜 날을 먼저 확인하는 모습이 눈에 띄었다. 도움을 청하기 편한 분위기가 시간을 아껴 주었다.',
-  dutyline,
-  '나는 학교의 근무 난이도가 교사 개인의 인내심만으로 정해지지 않는다고 생각했다. 업무분장과 회의 문화, 실제 도움이 되는 지원이 하루의 모양을 바꾼다.'];
+ if(d===5){
+  const kind=chosenEvent(state,world).id;
+  if(kind==='barbecue')return [
+   '금요일 주안을 겨우 마무리할 즈음 {colleague}이 말했다. “학교 뒤뜰에서 희망자끼리 바비큐를 하기로 했어요. 시간 되면 오세요.”',
+   '학교에서 허락받은 곳을 함께 준비하자는 이야기였다. 누가 빠져도 따로 이유를 묻지 않았다. 얼굴을 마주하고 웃고 싶은 사람이 모인다는 게 반가웠다.',
+   '나는 이번 주 내내 자꾸 바빴던 날들을 떠올렸다. 좋은 친목은 다음번에도 나오라고 눈치를 주지 않고, 누군가의 준비와 희생을 당연하게 여기지 않는 관계였다.'
+  ];
+  if(kind==='forced_social')return [
+   '대규모 학교의 학년연구실에 남아 있는데 “올해 친목회장은 젊은 선생님이 하는 걸로 하죠”라는 말이 들렸다. 언제 결정했는지, 나한테 물은 적은 없었다.',
+   '친목회장이라는 직함 하나 아래 회비 걷기, 식당 예약, 행사 준비, 단체 대화방 공지, 참석 조사까지 줄줄이 달렸다. 교무 업무가 있든 없든, 수업 준비 시간을 따로 주는 사람은 없었다.',
+   '뒤뜰에서는 즐겁게 모일 수도 있는 교직원 친목이, 여기서는 누군가의 퇴근을 붙잡는 또 하나의 일이 됐다. 학생 수가 많아서가 아니라 역할을 정하는 방식이 문제였다.'
+  ];
+  if(kind==='sports')return [
+   '주안을 올리자마자 교무실에 배구 모임 안내가 떴다. “오늘은 다들 나오시죠?” 참석을 확인하는 말이 묘하게 출석을 부르는 것처럼 들렸다.',
+   '나는 체육활동 자체를 싫어하지 않았다. 하지만 땀이 나도록 공을 받아 내는 즐거움과 참석하지 않으면 눈치를 보는 일은 다른 문제였다.',
+   '배구를 좋아하는 사람도, 걷기나 피클볼이 좋은 사람도, 오늘은 쉬고 싶은 사람도 있었다. 각자의 선택이 똑같이 존중될 수 있을까.'
+  ];
+  return [
+   pressure?'주안 파일을 올리고도 책상 위의 일은 끝나지 않았다. 다른 선생님이 맡기 싫다던 일까지 붙어 있었다. 그 일을 혼자 감당해야 한다는 생각이 더 피곤했다.':
+   '주안을 맞추고 다음 주 수업을 준비했다. 동학년 선생님들이 서로 바쁜 날을 먼저 확인하는 모습이 눈에 띄었다.',
+   dutyline,
+   '창밖이 어두워지는 걸 보고서야 시간을 확인했다. 수업 준비를 조금만 더 하려는데 복도 끝에서 야간 당직 선생님의 발소리가 들렸다.'
+  ];
+ }
  return [];
 }
 function previousImpact(state){
@@ -266,9 +326,11 @@ function scene(state,world){
  const completed=prev.some(x=>x.day===state.day);
  const reflecting=state.storyReflection&&state.storyReflection.day===state.day;
  if(completed&&!reflecting)return null;
- const data=EVENTS[state.day];
+ const data=chosenEvent(state,world);
  const office=officialContext(world,state.day);
- const paragraphs=eventProse(state,world);
+ const colleague=state.profile.partner==='man'?'현우 선생님':state.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
+ const paragraphs=eventProse(state,world).map(x=>x.replace(/\{colleague\}/g,colleague));
+ paragraphs.push(...schoolContextLines(state,world));
  const last=previousImpact(state);
  if(last)paragraphs.splice(1,0,last);
  if(office)paragraphs.push(office);
@@ -276,7 +338,10 @@ function scene(state,world){
   id:data.id,day:state.day,date:'2027-03-'+String(7+state.day).padStart(2,'0'),
   title:data.title,place:data.place,paragraphs,kind:data.tone,
   source:'fictional_scenario',fictionLabel:'가상 시나리오 · 실제 학교에서 발생한 일이라는 뜻이 아닙니다.',
-  choices:CHOICES[data.id].map(c=>({id:c.id,label:c.label})),
+  surveyThemes:data.id==='barbecue'||data.id==='forced_social'?SURVEY_THEMES.social:
+   data.id==='sports'?SURVEY_THEMES.sports:
+   state.day===2?SURVEY_THEMES.newcomer:state.day===3?SURVEY_THEMES.informal:SURVEY_THEMES.habit,
+  choices:(SPECIAL_CHOICES[data.id]||CHOICES[data.id]).map(c=>({id:c.id,label:c.label})),
   result:reflecting?copy(state.storyReflection):null
  };
 }
@@ -307,7 +372,7 @@ function continueStory(state){
   state.storyReflection.day!==state.day)throw Error('SCENARIO_CONTINUE_INVALID');
  const next=copy(state);next.storyReflection=null;return next;
 }
-const api=Object.freeze({VERSION,DUTIES,EVENTS,CHOICES,officialFacts,scene,choose,continueStory});
+const api=Object.freeze({VERSION,DUTIES,EVENTS,CHOICES,SURVEY_THEMES,SPECIAL_CHOICES,officialFacts,scene,choose,continueStory});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiaryScenario=api;
 })(typeof window!=='undefined'?window:globalThis);
