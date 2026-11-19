@@ -287,36 +287,6 @@ function advance(state){
   }else{next.day+=1;next.phase='chapter';}
   return next;
 }
-function createSnapshot(state){
-  if(!state||state.version!==VERSION||!['chapter','reflection','ending'].includes(state.phase))throw Error('STATE_INVALID');
-  return {version:VERSION,schoolId:state.schoolId,profile:copy(state.profile),
-    history:state.history.map(x=>({day:x.day,choiceId:x.choiceId})),
-    phase:state.phase};
-}
-function restore(world,plan,snapshot){
-  validateWorld(world,plan);
-  if(!snapshot||snapshot.version!==VERSION||snapshot.schoolId!==world.basic.id||
-     !Array.isArray(snapshot.history)||snapshot.history.length>7||
-     !['chapter','reflection','ending'].includes(snapshot.phase))throw Error('SNAPSHOT_INVALID');
-  let state=createGame(world,plan,snapshot.profile);
-  for(let i=0;i<snapshot.history.length;i++){
-    const row=snapshot.history[i];
-    if(!row||row.day!==i+1||typeof row.choiceId!=='string')throw Error('SNAPSHOT_HISTORY_INVALID');
-    state=choose(state,row.choiceId);
-    if(i<snapshot.history.length-1)state=advance(state);
-  }
-  if(snapshot.phase==='chapter'){
-    if(state.phase==='reflection')state=advance(state);
-    if(state.phase!=='chapter')throw Error('SNAPSHOT_PHASE_MISMATCH');
-  }else if(snapshot.phase==='reflection'){
-    if(state.phase!=='reflection')throw Error('SNAPSHOT_PHASE_MISMATCH');
-  }else{
-    if(state.phase!=='reflection'||state.day!==7)throw Error('SNAPSHOT_PHASE_MISMATCH');
-    state=advance(state);
-    if(state.phase!=='ending')throw Error('SNAPSHOT_PHASE_MISMATCH');
-  }
-  return state;
-}
 function validateStory(){
   if(CHAPTERS.length!==7||DAYS.length!==7)throw Error('SEVEN_DAYS_REQUIRED');
   for(let i=0;i<7;i++){
@@ -334,7 +304,7 @@ function validateStory(){
 const api=Object.freeze({
  VERSION,DAYS,WEEKDAYS,ENDINGS,
  validateProfile,validateStory,createGame,chapter,choose,advance,
- createSnapshot,restore,partnerName
+ partnerName
 });
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiaryPlay=api;
