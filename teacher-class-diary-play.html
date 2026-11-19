@@ -715,6 +715,88 @@ const token=isGuest?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
 const schoolId=params.get('schoolId')||'';
 let world=null,plan=null,game=null,progressSession=null;
 let guestIntroTimer=null;
+let schoolSearchSerial=0,schoolSearchTimer=null;
+function selectSchoolMode(mode,name){
+ const field=$('diarySchoolMode'),label=$('diarySchoolSelected');
+ field.value=mode;
+ if(mode==='real'&&name){
+  label.textContent='선택한 학교: '+name+' · 레벨2 인증 완료';
+  field.dataset.schoolReady='true';
+ }else{
+  field.dataset.schoolReady=mode==='demo'?'true':'false';
+  label.textContent=mode==='demo'?'가상의 초등학교에서 이야기가 시작됩니다.':'학교 이름을 검색하고 한 곳을 선택하세요.';
+ }
+}
+function closeSchoolSearch(){
+ $('diarySchoolSearchDialog').hidden=true;
+ if($('diarySchoolMode').value==='real'&&$('diarySchoolMode').dataset.schoolReady!=='true')selectSchoolMode('demo');
+ $('diarySchoolMode').focus();
+}
+function showSchoolSearch(){
+ $('diarySchoolSearchDialog').hidden=false;
+ $('diarySchoolResults').replaceChildren();
+ $('diarySchoolQuery').value='';
+ $('diarySchoolSearchMessage').textContent=token&&/^[0-9a-f]{64}$/.test(token)?
+  '학교 이름을 두 글자 이상 입력해 검색하세요.':'학교 검색은 가능하지만 실제 학교 게임을 시작하려면 레벨2 인증이 필요합니다.';
+ $('diarySchoolQuery').focus();
+}
+$('diarySchoolMode').addEventListener('change',()=>{
+ const mode=$('diarySchoolMode').value;
+ if(mode==='demo'&&world&&world.basic&&world.basic.id!=='DEMO001'){
+  location.assign('teacher-class-diary-play.html?demo=1');return;
+ }
+ selectSchoolMode(mode,mode==='real'&&world&&world.basic&&world.basic.id!=='DEMO001'?world.basic.name:undefined);
+ if(mode==='real'&&$('diarySchoolMode').dataset.schoolReady!=='true')showSchoolSearch();
+});
+$('diarySchoolSearchClose').addEventListener('click',closeSchoolSearch);
+$('diarySchoolSearchDialog').addEventListener('click',event=>{
+ if(event.target===$('diarySchoolSearchDialog'))closeSchoolSearch();
+});
+$('diarySchoolSearchDialog').addEventListener('keydown',event=>{
+ if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeSchoolSearch();}
+});
+async function searchDiarySchools(query,serial){
+ const results=$('diarySchoolResults');
+ results.replaceChildren();
+ if(query.length<2){$('diarySchoolSearchMessage').textContent='학교명을 두 글자 이상 입력하세요.';return;}
+ $('diarySchoolSearchMessage').textContent='학교 검색 중…';
+ try{
+  const response=await fetch(API+'arcade-leaderboard?schools='+encodeURIComponent(query),{cache:'no-store'});
+  if(!response.ok)throw Error('SCHOOL_SEARCH_'+response.status);
+  const data=await response.json();
+  if(serial!==schoolSearchSerial||$('diarySchoolSearchDialog').hidden)return;
+  const schools=Array.isArray(data.schools)?data.schools:[];
+  let shown=0;
+  for(const record of schools){
+   if(!/^[A-Z0-9]{7}$/.test(String(record.school_id||'')))continue;
+   const button=el('button',String(record.school_name||'학교')+' · '+String(record.sido_standard||''));
+   button.type='button';button.className='diary-school-result';button.setAttribute('role','option');
+   button.addEventListener('click',()=>{
+    if(!/^[0-9a-f]{64}$/.test(token)){
+     $('diarySchoolSearchMessage').textContent='실제 학교 플레이에는 레벨2 인증이 필요합니다. 아래 인증 링크를 이용하세요.';
+     return;
+    }
+    location.assign('teacher-class-diary-play.html?schoolId='+encodeURIComponent(record.school_id));
+   });
+   results.append(button);shown++;
+  }
+  $('diarySchoolSearchMessage').textContent=shown?'학교를 선택하세요.':'검색된 학교가 없습니다.';
+ }catch(_){if(serial===schoolSearchSerial)$('diarySchoolSearchMessage').textContent='학교 검색에 실패했습니다. 다시 입력해 주세요.';}
+}
+$('diarySchoolQuery').addEventListener('input',()=>{
+ clearTimeout(schoolSearchTimer);
+ const serial=++schoolSearchSerial,query=$('diarySchoolQuery').value.trim();
+ schoolSearchTimer=setTimeout(()=>{void searchDiarySchools(query,serial);},300);
+});
+$('diaryLandingStart').addEventListener('click',()=>{
+ const fixture=window.BeaguClassDiaryDemo.createDemo();
+ world=fixture.world;plan=fixture.plan;
+ $('accessLabel').textContent='가상학교 체험';
+ $('schoolLine').textContent='가상의 초등학교';
+ $('worldAutoNote').textContent='실제 학교 자료를 사용하지 않는 가상의 이야기입니다.';
+ selectSchoolMode('demo');
+ $('semesterStart').click();
+});
 $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
 let storyMode='week';
 function prepareGuestProfile(){
