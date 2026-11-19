@@ -96,7 +96,8 @@ function decorateChapter(state,world,base){
   const copy={...base,paragraphs:base.paragraphs.slice(),choices:base.choices.map(c=>({...c}))};
   const previous=prevChoice(state);
   const callback=previous&&BRIDGES[state.day]&&BRIDGES[state.day][previous];
-  if(callback)copy.paragraphs.splice(1,0,callback);
+  const colleague=(RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none).name;
+  if(callback)copy.paragraphs.splice(1,0,callback.replace(/\{colleague\}/g,colleague));
   const relationship=dynamicLine(state);
   if(relationship)copy.paragraphs.push(relationship);
   const profile=RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none;
