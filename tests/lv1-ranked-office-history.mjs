@@ -32,7 +32,7 @@ assert.match(search,/loadGeographyComparisons\(year,region\)/, 'Lv.1 must fetch 
 assert.match(search,/api\('survey_comparisons',\{year,region\}\)/, 'benchmarks are authenticated and reviewed server-side');
 assert.match(search,/학교별 문항 집계 미공개/, 'unapproved school-level single-respondent results must not be inferred');
 assert.match(search,/학교가 속한 시도 및 전국의 자발적 참여 표본 집계값/, 'regional aggregates must be clearly labeled as sample references, not school results');
-assert.match(search,/비교값.*최다 선택|comparisonLabel\(comparisonValues\.regional\)/, 'multi-select items must be reported as modes rather than means');
+assert.match(search,/m\.kind==='most_frequent'\|\|m\.kind==='mode'/, 'mode comparisons must prefer the recorded mode over an arithmetic mean');
 assert.match(search,/vetted\.get\(id\)\|\|null/, 'only verified school distributions can populate school cell');
 assert.match(search,/원자료에서 확인된 보기 \(전체 목록 미확인\)/, 'observed partial option lists must be distinguished from authoritative options');
 for(const s of ['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won'])assert.ok(html.includes('value="'+s+'"'),'Missing region sort '+s);
