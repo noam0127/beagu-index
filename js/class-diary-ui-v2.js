@@ -31,6 +31,34 @@ stats.setAttribute('aria-label','현재 호감도와 피로도');
 const love=build('span',''),fatigue=build('span','');
 stats.append(love,fatigue);
 $('vnOverlay').append(stats);
+/* Keep the chapter HUD compact by default; expand on demand without obscuring the story. */
+const hud=$('vnHud'),hudActions=hud.querySelector('.vn-top-actions');
+hudActions.id='diaryHudActions';
+stats.id='diaryHudStats';
+const hudFold=build('button','diary-hud-fold');
+hudFold.id='diaryHudFold';
+hudFold.type='button';
+hudFold.setAttribute('aria-controls','vnHeaderSlot diaryHudActions diaryHudStats');
+const foldMark=build('span','diary-hud-fold-mark','⌄');
+foldMark.setAttribute('aria-hidden','true');
+const foldText=build('span','diary-hud-fold-text','정보');
+hudFold.append(foldMark,foldText);
+hud.append(hudFold);
+function setHudOpen(open){
+ document.body.classList.toggle('diary-hud-open',open);
+ document.body.classList.toggle('diary-hud-collapsed',!open);
+ hudFold.setAttribute('aria-expanded',String(open));
+ hudFold.setAttribute('aria-label',open?'상단 아이콘과 이야기 정보 접기':'상단 아이콘과 이야기 정보 펼치기');
+ hudFold.title=open?'상단 접기':'상단 펼치기';
+ foldText.textContent=open?'접기':'정보';
+ if(!open){
+  $('vnInfo').hidden=true;
+  $('vnInfoBtn').setAttribute('aria-expanded','false');
+ }
+}
+setHudOpen(false);
+hudFold.addEventListener('click',()=>setHudOpen(!document.body.classList.contains('diary-hud-open')));
+
 const dayTrack=build('div','diary-day-progress');
 dayTrack.setAttribute('aria-label','7일 중 현재 진행 날짜');
 for(let i=0;i<7;i++){const segment=build('span','');segment.setAttribute('aria-hidden','true');dayTrack.append(segment)}
