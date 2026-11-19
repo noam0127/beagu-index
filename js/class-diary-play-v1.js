@@ -341,7 +341,7 @@ function playerAddress(state){
  }
  return full+' 선생님';
 }
-function partnerName(profile){return profile.partner==='man'?'현우 선생님':profile.partner==='woman'?'지윤 선생님':'동학년 선생님';}
+function partnerName(profile){return profile.partner==='man'?'현우 선생님':profile.partner==='woman'?'지윤 선생님':'민서 선생님';}
 function validateWorld(world,plan){
   if(!world||world.eligible!==true||!world.basic||
      !/^[A-Z0-9]{7}$/.test(String(world.basic.id||''))||
