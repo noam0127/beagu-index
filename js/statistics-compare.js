@@ -391,6 +391,39 @@
     }
     if(stickyHeader.label.textContent!==title)stickyHeader.label.textContent=title;
   }
+  // Reviewed school facts are returned by the authenticated school endpoint.
+  // Facts may have a different source year from the comparison survey year.
+  const basicFactLabels=[
+    ['students','학생수'],
+    ['teachers','교원수'],
+    ['junior_teacher_ratio','2급 정교사 비율'],
+    ['male_teacher_ratio','남교사 비율']
+  ];
+  const basicFactKeys=new Set(basicFactLabels.map(([key])=>key));
+  function basicFactFor(school,selectedYear,key){
+    const approved=state.approvedBySchool.get(String(school.school_id));
+    const candidates=[2024,2025]
+      .filter(year=>year<=selectedYear)
+      .map(year=>({year,fact:approved?.basicFacts?.[year]?.[key]}))
+      .filter(({fact})=>fact && Number.isInteger(fact.referenceYear) &&
+        fact.referenceYear<=selectedYear && fact.referenceYear>=2000)
+      .sort((a,b)=>b.fact.referenceYear-a.fact.referenceYear||b.year-a.year);
+    return candidates[0]?.fact||null;
+  }
+  function basicFactCell(school,selectedYear,key){
+    if(!state.sessionToken || state.authLevel<1)
+      return make('span','Lv.1 인증 후 확인','compare-unavailable');
+    const fact=basicFactFor(school,selectedYear,key);
+    if(!fact){
+      if(state.approvedLoading.has(String(school.school_id)))
+        return make('span','확인 중…','compare-unavailable');
+      return make('span','자료 없음','compare-unavailable');
+    }
+    const wrap=make('div',null,'compare-basic-value');
+    wrap.append(make('strong',fact.value,'compare-approved-value'),
+      make('small',fact.referenceYear+'년 기준','compare-basic-reference'));
+    return wrap;
+  }
   function renderTable() {
     const hasSelections=state.selected.length>0;
     elements.panel.hidden=!hasSelections;
@@ -413,6 +446,9 @@
       const fill=make('span'); fill.style.width=d.value+'%';track.append(fill);wrap.append(track);
       return wrap;
     });
+    appendGroup(body,'기본사항');
+    for(const [key,label] of basicFactLabels)
+      appendMetric(body,label,(school,year)=>basicFactCell(school,year,key));
     const years=[...new Set(state.selected.map(e=>e.year))].sort((a,b)=>a-b);
     for(const year of years){
       const catalog=state.questionCatalog?.years?.[String(year)];
@@ -493,7 +529,11 @@
     try{
       const data=await authRequest('school',{schoolId:id},token);
       if(epoch!==state.authEpoch || token!==state.sessionToken) return;
-      const approved={items:{2023:{},2024:{},2025:{},2026:{}},summaries:{2023:[],2024:[],2025:[],2026:[]}};
+      const approved={
+        items:{2023:{},2024:{},2025:{},2026:{}},
+        summaries:{2023:[],2024:[],2025:[],2026:[]},
+        basicFacts:{2024:{},2025:{}}
+      };
       for(const row of Array.isArray(data?.rows)?data.rows:[]){
         const year=Number(row?.year);
         if(!YEARS.includes(year) || ![1,2].includes(Number(row?.access_level)) || Number(row.access_level)>state.authLevel)continue;
@@ -504,10 +544,22 @@
             validServerText(metric.unit||'',20)){
             approved.items[year][metric.key]=String(metric.value)+String(metric.unit||'');
           }else if(validServerText(metric.label,80)&&validServerText(metric.value,100)){
-            approved.summaries[year].push({
-              group:metric.group==='편집본 공식 학교정보'?'편집본 공식 학교정보':'승인된 설문 영역 요약',
-              label:String(metric.label),value:String(metric.value)
-            });
+            const official=metric.group==='편집본 공식 학교정보';
+            const factKey=String(metric.factKey||'');
+            const referenceYear=Number(metric.referenceYear);
+            // Promote four official facts without duplicating them in the
+            // original generic "additional school information" table.
+            if(official && basicFactKeys.has(factKey) && [2024,2025].includes(year)){
+              if(Number.isInteger(referenceYear)&&referenceYear>=2000&&referenceYear<=2026)
+                approved.basicFacts[year][factKey]={
+                  value:String(metric.value),referenceYear
+                };
+            }else{
+              approved.summaries[year].push({
+                group:official?'편집본 공식 학교정보':'승인된 설문 영역 요약',
+                label:String(metric.label),value:String(metric.value)
+              });
+            }
           }
         }
       }
