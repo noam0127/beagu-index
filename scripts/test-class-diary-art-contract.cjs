@@ -28,6 +28,15 @@ function checkImage(relative,status,limit){
 }
 assert.equal(manifest.schema,'class-diary-art-manifest/v1');
 assert.equal(manifest.fallback,'legacy-svg');
+assert.equal(manifest.artDirection.id,'korean-live-action-drama-photorealistic-v1');
+assert.equal(manifest.artDirection.rendering,'photorealistic');
+assert.equal(manifest.artDirection.format,'fictional-original-adult-cast');
+assert.equal(manifest.artDirection.referenceUse,'composition-only-no-identity-copy');
+assert.equal(manifest.artDirection.protagonist,'first-person-configurable-no-fixed-portrait');
+for(const banned of ['anime','cartoon','manga','watercolor','chibi','celebrity-likeness','existing-drama-stills']){
+ assert(manifest.artDirection.forbiddenStyles.includes(banned),'Missing prohibited visual direction '+banned);
+}
+
 assert.equal(visual.VERSION,'class-diary-visual/v1');
 assert.deepEqual(manifest.expressions,REQUIRED_EXPRESSIONS);
 assert.equal(manifest.baseDimensions.portrait.width,1536);
@@ -44,6 +53,8 @@ for(const c of manifest.characters){
  assert.equal(c.id,REQUIRED_PARTNERS[c.legacyKey]);
  assert.equal(visual.CAST[c.legacyKey].name,c.name);
  assert(c.age>=20,'All romance/friendship cast must be adult');
+ assert.equal(c.identityLock,'same-fictional-adult-actor-across-six-expression-assets');
+ assert.equal(c.expressionRendering,'subtle-natural-facial-muscle-movement-no-cartoon-exaggeration');
  assert.deepEqual(Object.keys(c.expressionStatus),REQUIRED_EXPRESSIONS);
  for(const exp of REQUIRED_EXPRESSIONS)checkImage(
    'assets/class-diary/characters/'+c.id+'/'+exp+'.webp',
@@ -56,11 +67,12 @@ assert.deepEqual(manifest.backgrounds.map(x=>x.id).filter(x=>x!=='bookstore').so
 assert(manifest.backgrounds.some(x=>x.id==='bookstore'&&x.status==='planned'),'Bookstore is not wired yet');
 for(const s of manifest.backgrounds){
  assert(s.title&&s.light&&s.description);
+ assert.equal(s.visualTreatment,'photorealistic-fictional-korean-school-or-neighborhood-set');
  if(s.id!=='bookstore')assert(visual.backgroundSvg(s.id).startsWith('<svg'),'Missing legacy SVG background');
  checkImage(s.file,s.status,manifest.limits.backgroundBytes);
 }
-for(const rule of ['originalArtOnly','noSchoolIdentifyingInformation','noRealStaffInference','studentRomanceForbidden','noPlayerStateStorage','doNotRenderPlannedAssets','visualEffectReducedMotion']){
+for(const rule of ['originalArtOnly','noSchoolIdentifyingInformation','noRealStaffInference','studentRomanceForbidden','noPlayerStateStorage','doNotRenderPlannedAssets','visualEffectReducedMotion','noRealPersonLikeness','noReferenceFrameReproduction','noFixedProtagonistGender','mustMatchPhotorealisticDirection']){
  assert.equal(manifest.rules[rule],true,'Missing visual safety rule: '+rule);
 }
 assert.equal(uniquePaths.size,29);
-console.log('PASS stage 7-1: 3 original adult cast × 6 expressions, 11 planned backgrounds, legacy SVG fallback, '+ready+' ready images validated, no game state touched');
+console.log('PASS stage 7-1 photorealistic direction: 3 original adult cast × 6 expressions, 11 planned backgrounds, legacy SVG fallback, '+ready+' ready images validated, no game state touched');
