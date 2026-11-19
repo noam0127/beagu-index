@@ -1,0 +1,29 @@
+name: Class diary seasonal backgrounds 36
+on:
+  push:
+    paths:
+      - 'js/class-diary-seasonal-background-v1.js'
+      - 'scripts/test-class-diary-seasonal-background.cjs'
+      - 'js/class-diary-semester-v1.js'
+      - 'teacher-class-diary-play.html'
+      - '.github/workflows/class-diary-seasonal-background.yml'
+  pull_request:
+    paths:
+      - 'js/class-diary-seasonal-background-v1.js'
+      - 'scripts/test-class-diary-seasonal-background.cjs'
+      - 'js/class-diary-semester-v1.js'
+      - 'teacher-class-diary-play.html'
+      - '.github/workflows/class-diary-seasonal-background.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-seasonal-background:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate all semester scene backgrounds
+        run: node scripts/test-class-diary-seasonal-background.cjs
+      - name: Confirm existing 36-episode story and choices
+        run: node scripts/test-class-diary-semester.cjs
