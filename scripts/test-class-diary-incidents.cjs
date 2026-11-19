@@ -112,7 +112,8 @@ const fictionalHostility=incidents.next(goToDay(real,5),fakeReal);
 assert(fictionalHostility.paragraphs.join('').includes('실제 친목회 관행을 알려 주는 자료는 아니며'));
 const withheld={...fakeReal,numbers:{students:{status:'WITHHELD',value:1500,referenceYear:2024}}};
 const noFact=incidents.next(goToDay(real,5),withheld);
-assert(!noFact.paragraphs.join('').includes('공개 승인 학생 수'));
+assert(noFact===null||!noFact.paragraphs.join('').includes('공개 승인 학생 수'),
+ 'Withheld official facts must not be displayed, and omission of the event is permitted');
 const src=require('node:fs').readFileSync(require('node:path').join(__dirname,'..','js/class-diary-incidents-v1.js'),'utf8');
 assert(!/localStorage|sessionStorage|fetch\(|sendBeacon\(/.test(src));
 console.log('PASS: multi-events/day, staff solidarity vs hostility, geography, school size, boundaries, privacy and 7-day completion');
