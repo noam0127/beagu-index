@@ -907,6 +907,12 @@ console.log("PASS: pre-game school selection button and overflow-safe two-line 2
 
 
 
+// PRs execute all local gameplay contracts; live HTTP checks run only after production deploy.
+if(process.env.GITHUB_EVENT_NAME==="pull_request"){
+ console.log("PASS: PR static arcade regression checks; production HTTP smoke reserved for main");
+ process.exit(0);
+}
+
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
  for(let i=0;i<times;i++){
