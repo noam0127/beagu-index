@@ -18,27 +18,26 @@ for(const h of [volley,runner]){
 new Function(shared);
 new Function(picker);
 
-// Regression: an abandoned match must not attach its score to the next school.
+// Anonymous automatic leaderboard: no dialog, no typed nickname, and no stale session.
 const mockWindow={};
 new Function("window",shared)(mockWindow);
-const sessionBoard=new mockWindow.ArcadeLeaderboard("volleyball",null);
+const sessionBoard=new mockWindow.ArcadeLeaderboard("volleyball_25",null);
 let answerStart;
 sessionBoard.request=()=>new Promise(resolve=>{answerStart=resolve;});
 const pendingSession=sessionBoard.start({eligible:true,school_id:"test-old",school_name:"Old School",difficulty:"easy"});
 sessionBoard.cancel();
 answerStart({school:{eligible:true},session:"stale-session"});
-assert.equal(await pendingSession,null,"stale start must be ignored");
-assert.equal(sessionBoard.session,null,"abandoned session must be cleared");
-let resolveLoading;
+assert.equal(await pendingSession,null);
+assert.equal(sessionBoard.session,null);
 sessionBoard.session="pending-finish";
+let resolveLoading;
 sessionBoard.load=()=>new Promise(resolve=>{resolveLoading=resolve;});
-let promptShown=false;
-sessionBoard.openRecord=()=>{promptShown=true;};
-const finishing=sessionBoard.finish(150,{player:7,cpu:1});
+let staleSubmitted=false;
+sessionBoard.request=async()=>{staleSubmitted=true;return {};};
+const finishing=sessionBoard.finish(150,{player:25,cpu:7,elapsedTenths:150});
 sessionBoard.cancel();resolveLoading([]);
 await finishing;
-assert.equal(promptShown,false,"old school record dialog must not reopen");
-
+assert.equal(staleSubmitted,false,"abandoned match cannot post an anonymous record");
 const pickerWindow={};
 new Function("window","clearTimeout",picker)(pickerWindow,()=>{});
 const mockPicker={
@@ -47,48 +46,59 @@ const mockPicker={
 };
 pickerWindow.ArcadeSchoolPicker.prototype.resetForChange.call(mockPicker);
 assert.equal(mockPicker.input.value,"");
-assert.ok(mockPicker.didUnlock&&mockPicker.didClear&&mockPicker.didFocus,"reset enables searching another school");
-console.log("PASS: cancellation prevents stale school records and unlocks a new school search");
+assert.ok(mockPicker.didUnlock&&mockPicker.didClear&&mockPicker.didFocus);
+console.log("PASS: session cancellation prevents stale anonymous records and resets school search");
 
 const recordSchool={school_id:"7023456",school_name:"기록초등학교",difficulty:"extreme"};
-const recordButton={disabled:false},recordMsg={textContent:""};
-function mockRecordBoard(game="volleyball"){
+function mockRecordBoard(game="volleyball_25"){
  const board=new mockWindow.ArcadeLeaderboard(game,null);
- board.session="test-session";board.school={...recordSchool};board.score=1200;
- board.stats={player:7,cpu:1,spikes:2};board.draw=()=>{};board.closeDialog=()=>{};
+ board.session="test-session";board.school={...recordSchool};
+ board.load=async()=>{board.remote=true;board.board=[];return [];};
  return board;
 }
-const uploaded=mockRecordBoard();
-uploaded.request=async()=>({ranked:true,rank:2,top10:[{nickname:"EXAMPLE",score:1200,created_at:"2026-11-18T12:00:00Z",school_name:recordSchool.school_name,difficulty:"extreme"}]});
-await uploaded.submitName("EXAMPLE",recordButton,recordMsg);
+const uploaded=mockRecordBoard();let requestPayload;
+uploaded.request=async(_method,payload)=>{
+ requestPayload=payload;
+ return {ranked:true,rank:2,top10:[{score:1200,created_at:"2026-11-18T12:00:00Z",school_name:recordSchool.school_name,difficulty:"extreme"}]};
+};
+await uploaded.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
 assert.equal(uploaded.session,null);assert.equal(uploaded.remote,true);
-assert.match(uploaded.notice,/TOP 2위/);assert.equal(uploaded.board[0].difficulty,"extreme");
+assert.match(uploaded.notice,/2위/);assert.equal(uploaded.board[0].difficulty,"extreme");
+assert.equal(requestPayload.action,"submit");
+assert.equal("nickname" in requestPayload,false,"no user-entered identifiers sent");
 const displaced=mockRecordBoard();
 displaced.request=async()=>({ranked:false,top10:[]});
-await displaced.submitName("EXAMPLE",recordButton,recordMsg);
-assert.match(displaced.notice,/TOP 10에서 밀렸/);
-const offline=mockRecordBoard("teacher_run");
+await displaced.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
+assert.match(displaced.notice,/진입 실패/);
+const offline=mockRecordBoard("teacher_run_retirement");
 offline.request=async()=>{throw new Error("network_unavailable");};
-await offline.submitName("EXAMPLE",recordButton,recordMsg);
-assert.equal(offline.remote,false);assert.match(offline.notice,/이 기기에만 저장됨/);
-assert.equal(offline.board[0].school_name,recordSchool.school_name);
-const expired=mockRecordBoard();expired.request=async()=>{const e=new Error("session_expired");e.status=409;throw e;};
-await expired.submitName("EXAMPLE",recordButton,recordMsg);
-assert.match(recordMsg.textContent,/만료되었거나 이미 등록/);assert.equal(expired.session,"test-session");
-const duringSave=mockRecordBoard();let respondSave;
-duringSave.request=()=>new Promise(resolve=>respondSave=resolve);
-const saving=duringSave.submitName("EXAMPLE",recordButton,recordMsg);
+await offline.finish(1200,{score:1200,baseScore:1200,survivalSeconds:80,age:40,victory:false});
+assert.match(offline.notice,/저장되지 않았습니다/);
+const expired=mockRecordBoard();
+expired.request=async()=>{const e=new Error("session_expired");e.status=409;throw e;};
+await expired.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
+assert.match(expired.notice,/만료/);
+const duringSave=mockRecordBoard();let respondSave,enteredRequest;
+const savingStarted=new Promise(resolve=>{enteredRequest=resolve;});
+duringSave.request=()=>{enteredRequest();return new Promise(resolve=>{respondSave=resolve;});};
+const saving=duringSave.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
+await savingStarted;
 duringSave.cancel();duringSave.school={school_id:"7099999",school_name:"다음학교",difficulty:"easy"};duringSave.session="next-session";
-respondSave({ranked:true,rank:1,top10:[{nickname:"EXAMPLE",score:1200,created_at:"2026-11-18T12:00:00Z"}]});
+respondSave({ranked:true,rank:1,top10:[{score:1200,created_at:"2026-11-18T12:00:00Z"}]});
 await saving;
 assert.equal(duringSave.school.school_name,"다음학교");assert.equal(duringSave.session,"next-session");
 assert.deepEqual(duringSave.board,[]);
 const unqualified=mockRecordBoard();
-unqualified.remote=true;unqualified.board=Array.from({length:10},(_,i)=>({nickname:"EXAMPLE",score:1000-i*50}));
-unqualified.load=async()=>unqualified.board;unqualified.openRecord=()=>{throw new Error("should not ask for name");};
-await unqualified.finish(100,{player:0,cpu:7,spikes:0});
-assert.match(unqualified.notice,/TOP 10 진입 실패/);
-console.log("PASS: upload success, rank race, offline warning, API expiry, stale async save, below Top10");
+unqualified.remote=true;
+unqualified.board=Array.from({length:10},(_,i)=>({score:500+i*10}));
+unqualified.load=async()=>unqualified.board;
+unqualified.request=async()=>{throw new Error("must not submit a slower time");};
+await unqualified.finish(610,{player:25,cpu:7,elapsedTenths:610});
+assert.match(unqualified.notice,/기준 미달/);
+assert.doesNotMatch(shared,/submitName|openRecord|dialogElement|ENTER YOUR NAME|input\.maxLength/);
+assert.match(shared,/localStorage\.removeItem\("arcade-last-name-v1"\)/,"wipe prior typed names on visitors' devices");
+assert.match(shared,/const timedGame=game=>game==="volleyball_25"/);
+console.log("PASS: automatic anonymous record, rejected slow time, server errors and safe stale-response cancellation");
 
 assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
 assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
