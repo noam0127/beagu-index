@@ -254,7 +254,7 @@ async function start(){
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;
  shackle={x:player.x-52,dir:-1};pointerId=null;pointerY=null;
- pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 점프 불가":difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
+ pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 족쇄 · 점프 불가":(selected.difficulty==="easy"||selected.difficulty==="normal")?difficultyName[selected.difficulty]+" · 자동 분필 지원":difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
 }
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
