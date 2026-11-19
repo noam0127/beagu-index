@@ -4,6 +4,22 @@ const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const fs=require('node:fs/promises');
 const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
+async function advanceColleaguePrologue(page,expectedNarrator){
+ const header=page.locator('#chapterDay');
+ const title=await header.innerText();
+ assert(title.includes('프롤로그')&&title.includes(expectedNarrator),'Selected colleague must narrate prologue: '+title);
+ const text=await page.locator('#outcomeText').innerText();
+ assert(text.includes('나는')||text.includes('내가'),'Prologue must be first-person colleague narration');
+ let taps=0;
+ while((await header.innerText()).includes('프롤로그')&&taps++<250){
+  if(await page.locator('#vnMore').isVisible())await page.locator('#vnMore').click();
+  else if(await page.locator('#nextBtn').isVisible())await page.locator('#nextBtn').click();
+  else throw Error('Prologue is blocked before Chapter 1');
+ }
+ assert(taps<250,'Prologue did not complete');
+ assert((await header.innerText()).startsWith('1 / 36'),'After colleague prologue, player chapter 1 should begin');
+ assert((await header.innerText()).includes('나의 시점'),'Chapter 1 must clearly be the player perspective');
+}
 (async()=>{
  await fs.mkdir('artifacts/class-diary',{recursive:true});
  const browser=await chromium.launch({headless:true});
@@ -175,6 +191,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
   await semesterDesktop.locator('#setupNext').click();
   await semesterDesktop.locator('#profileForm button[type="submit"]').click();
   await semesterDesktop.locator('#novel').waitFor({state:'visible'});
+  await advanceColleaguePrologue(semesterDesktop,'한현우');
   assert.equal(await semesterDesktop.locator('.diary-day-progress span').count(),6,'Desktop semester must show six-act progress');
   assert.equal(await semesterDesktop.locator('#diarySemesterMeta').isVisible(),true,'Desktop semester seasonal HUD must be visible');
   const desktopRect=await semesterDesktop.locator('#novelCard').boundingBox();
@@ -203,6 +220,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
   await semesterPage.locator('#setupNext').click();
   await semesterPage.locator('#profileForm button[type="submit"]').click();
   await semesterPage.locator('#novel').waitFor({state:'visible'});
+  await advanceColleaguePrologue(semesterPage,'서지윤');
   const proseMode=await semesterPage.evaluate(()=>({
     semester:document.body.classList.contains('is-semester-mode'),
     overlayLoaded:typeof window.BeaguClassDiaryLiterary?.present==='function',
