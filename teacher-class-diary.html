@@ -19,6 +19,7 @@ input{width:100%;font:inherit;padding:14px;border:1px solid #a9bfd1;border-radiu
 input:focus{outline:2px solid #3a83bd}button{font:inherit;cursor:pointer}
 .result{display:block;width:100%;padding:12px;text-align:left;background:white;border:0;border-bottom:1px solid #e5edf5}
 .result:hover,.result:focus{background:#eef6ff}
+#playSection[hidden],[hidden]{display:none!important}
 #status{min-height:24px;font-size:14px}#world[hidden],#results:empty{display:none}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .chip{border-radius:18px;background:#eaf3fa;color:#31546e;padding:6px 10px;font-size:13px}
@@ -44,7 +45,7 @@ footer{font-size:13px;color:#738598}
 </section>
 <div id="world" hidden>
 <section class="panel"><h2 id="schoolName"></h2><p id="identity" class="muted"></p><div id="tags" class="chips"></div><p id="eligibility"></p></section>
-<section class="panel"><a id="playLink" class="chip" href="teacher-class-diary-play.html" hidden style="text-decoration:none;display:inline-block;padding:12px 16px;font-weight:800">나의 OO한 학급일지 · 게임 시작</a></section>
+<section class="panel" id="playSection" hidden><a id="playLink" class="chip" href="teacher-class-diary-play.html" style="text-decoration:none;padding:12px 16px;font-weight:800">나의 OO한 학급일지 · 게임 시작</a></section>
 <section class="panel"><h2>확인된 학교 정보</h2><dl id="facts"></dl></section>
 <section class="panel"><h2>이야기의 재료</h2><p class="muted">아래 항목은 아직 소설 본문이 아닙니다. 실제 장면으로 발전시키기 위한 조건입니다.</p><ol id="hooks" class="hooks"></ol></section>
 <section class="panel" id="storyPanel" hidden><h2>일주일의 이야기 · 2단계 미리보기</h2><p class="muted">2027년 3월 8~14일을 배경으로 한 소설 장면의 씨앗입니다. 과거 설문 결과를 참고하더라도 실제 학교에서 벌어진 사건이나 발언을 뜻하지 않습니다.</p><p id="storyCoverage"></p><ol class="hooks" id="storyScenes"></ol></section>
@@ -67,7 +68,7 @@ function status(text){$('status').textContent=text}
 function render(world){
   $('world').hidden=false;
   $('storyPanel').hidden=true;
-  $('playLink').hidden=!world.eligible;
+  $('playSection').hidden=!world.eligible;
   $('playLink').href='teacher-class-diary-play.html?schoolId='+encodeURIComponent(world.basic.id);
   $('schoolName').textContent=world.basic.name;
   $('identity').textContent=[world.basic.sido,world.basic.office,world.basic.address].filter(Boolean).join(' · ');
@@ -161,7 +162,7 @@ async function choose(record,ticket){
 }
 async function search(){
   const q=$('search').value.trim();const ticket=++serial;
-  $('world').hidden=true;$('playLink').hidden=true;$('results').replaceChildren();
+  $('world').hidden=true;$('playSection').hidden=true;$('results').replaceChildren();
   if(q.length<2){status('학교명을 두 글자 이상 입력하세요.');return}
   status('학교 검색 중…');
   try{
