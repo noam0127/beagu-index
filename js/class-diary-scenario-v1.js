@@ -342,19 +342,19 @@ function previousImpact(state){
  const prev=Array.isArray(state.storyEvents)?state.storyEvents.find(e=>e.day===state.day-1):null;
  if(!prev)return '';
  const notes={
- protect:'어제 교실에서 아이들 안전을 먼저 살피고 동학년과 지원을 의논했다. 오늘은 부탁을 받을 때에도 혼자 떠안지 않겠다는 생각이 들었다.',
- restructure:'아이들과 함께 교실 규칙을 정한 일이 떠올랐다. 교직원의 일도 당사자의 목소리를 듣고 정해야 하지 않을까.',
- endure:'어제 아이들 사이의 소란을 혼자 감당한 피로가 남았다. 다른 사람의 업무까지 받는다면 이번 주가 더 길어질 것 같았다.',
- clarify:'어제 업무분장표에서 역할을 확인했다. 오늘 전담시간에도 내 수업 준비를 먼저 챙기고 싶었다.',
- offer:'도울 수 있는 일과 내 담당을 구분했던 어제가 떠올랐다. 잠깐의 부탁 앞에서도 지킬 선은 있었다.',
- accept:'어제 부탁받은 업무까지 처리하느라 모둠 활동지를 다 준비하지 못했다. 전담시간을 놓칠 수 없었다.',
- boundary:'전담시간에 수업을 준비해 둔 덕분에 오늘은 차분히 사실관계를 살펴볼 수 있었다.',
- helpbrief:'어제 부탁을 조금 도와주고 수업 준비로 돌아왔다. 도움을 주는 일과 떠맡는 일 사이의 차이가 조금 분명해졌다.',
- dropwork:'어제는 수업 준비가 밀렸다. 오늘도 급한 요청이 들어왔지만 순서를 확인해야 한다는 생각이 들었다.',
- process:'어제 확인된 사실과 정해진 절차를 구분해 기록했다. 다음 주에는 이렇게 함께 의논할 수 있는 시간이 필요했다.',
- consult:'어제 동학년의 이야기를 들으며 각자의 일을 나눴다. 금요일의 협의도 조금은 덜 막막했다.',
- solo:'어제 뒤늦게 도움을 청했다. 금요일에는 같은 일이 반복되지 않도록 업무 경계를 먼저 이야기하고 싶었다.'
- };
+  "protect": "어제 아이들 사이에 끼어 앉던 장면이 떠올랐다. 오늘도 무턱대고 대답하기보다 말을 끝까지 들어 보려고 했다.",
+  "restructure": "아이들이 직접 고친 교실 규칙이 생각났다. 어쩐지 업무분장표의 빈칸도 그 칠판과 닮아 보였다.",
+  "endure": "어제 소란을 정리하고 집에 갔을 때는 목이 다 쉬어 있었다. 오늘은 같은 일을 반복하고 싶지 않았다.",
+  "clarify": "어제 업무분장표를 같이 들여다봤다. 오늘은 내 시간이 얼마나 남았는지 먼저 시계를 봤다.",
+  "offer": "어제 도와주겠다고 한 일은 끝났다. 오늘도 누군가 문을 열고 들어오자 이번에는 먼저 내 시간표를 펼쳤다.",
+  "accept": "어제 맡은 일을 끝내느라 모둠 활동지가 그대로 남았다. 아침에 프린터 앞에서 몇 번이나 시간을 확인했다.",
+  "boundary": "어제 전담시간에 수업 준비를 마친 덕분에 오늘은 조금 여유가 있었다. 종이컵에 커피를 따를 수도 있었다.",
+  "helpbrief": "어제 인쇄 설정을 같이 봤던 선생님과 복도에서 마주쳤다. “어제 고마웠어요.” 그 한마디가 반가웠다.",
+  "dropwork": "어제는 준비를 끝내지 못하고 교실로 돌아갔다. 오늘도 메신저가 울리자 잠깐 손을 멈췄다.",
+  "process": "어제 확인한 내용을 날짜순으로 적어 놓았다. 오늘 다시 펴 보니 놓친 부분이 하나 보였다.",
+  "consult": "어제 학년에서 일을 나눴다. 옆자리 선생님이 오늘은 먼저 자료를 건네주었다.",
+  "solo": "어제 혼자 해결해 보려다 늦게까지 남았다. 금요일은 조금 다르게 보내고 싶었다."
+};
  return notes[prev.choiceId]||'';
 }
 function scene(state,world){
@@ -368,7 +368,7 @@ function scene(state,world){
  const colleague=state.profile.partner==='man'?'현우 선생님':state.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
  const paragraphs=eventProse(state,world).map(x=>x.replace(/\{colleague\}/g,colleague));
  const climate=climateParagraph(state);
- if(climate)paragraphs.splice(Math.min(1,paragraphs.length),0,climate);
+ if(climate)paragraphs.splice(Math.min(1,paragraphs.length),0,climate.replace(/\{colleague\}/g,colleague));
  paragraphs.push(...schoolContextLines(state,world));
  const last=previousImpact(state);
  if(last)paragraphs.splice(1,0,last);
@@ -391,13 +391,13 @@ function choose(state,id,world){
  if(!raw)throw Error('SCENARIO_CHOICE_INVALID');
  const next=copy(state),reply=copy(raw.reply);
  if(next.day===4&&raw.id==='solo'){
-  reply.push('시계가 아홉 시를 향하는데도 교실 형광등이 켜져 있었다. 복도로 나가자 교실 문들이 까맣게 닫혀 있었다. 선생님이라도 이렇게 늦은 학교는 조금 무서웠다.');
-  reply.push('야간 당직 선생님이 손전등을 들고 복도 끝에서 말했다. “선생님, 이제 문 잠글 시간이에요. 남은 건 내일 하시고 얼른 들어가세요.”');
+  reply.push('벽시계가 아홉 시를 가리켰다. 교실 형광등을 끄자 복도가 생각보다 어두웠다. 발소리가 나면 저도 모르게 돌아보게 됐다.');
+  reply.push('보안업무를 맡은 분이 복도 끝에서 말했다. “선생님, 이제 마무리하고 들어가셔야죠.” 나는 한꺼번에 창을 닫았다.');
  }else if(next.day===4&&raw.id==='process'){
-  reply.push('동학년 선생님과 역할을 나누고 나니 수업 준비를 마친 뒤에도 해가 남아 있었다. 무리하지 않고 퇴근하는 금요일을 맞을 수 있을 것 같았다.');
+  reply.push('마지막 서류를 덮었을 때 창밖은 아직 밝았다. {colleague}이 먼저 가방을 메더니 나를 기다렸다.');
  }
  if(next.day===5&&raw.id==='takeall'){
-  reply.push('밤이 된 교실에서는 복도 소리 하나에도 고개가 돌아갔다. 아이들이 없어진 학교가 낯설었다. 야간 당직 선생님이 “선생님, 이제 퇴근하셔야죠” 하고 문을 두드렸다.');
+  reply.push('늦은 교실에서 문득 밖을 보니 운동장이 까맣게 잠겨 있었다. “선생님, 이제 퇴근하셔야죠.” 문을 두드리는 소리에 나는 황급히 파일을 저장했다.');
  }
  if(next.day===3&&next.profile.age>32){
    for(let i=0;i<reply.length;i++)reply[i]=reply[i]
@@ -413,14 +413,14 @@ function choose(state,id,world){
  const pressure=mode==='hostile'?-4:mode==='deflecting'?-2:2;
  next.stats.support=clamp(next.stats.support+SUPPORT_SHIFTS[raw.id]+pressure);
  if(mode==='collaborative'){
-   reply.push('“이건 같이 해요.” {colleague}이 짧게 말하고 내 옆에 앉았다. 해야 할 일은 그대로였지만 혼자 떠안지는 않아도 됐다.');
+   reply.push('“그거 같이 해요.” {colleague}이 의자를 옆으로 당겼다. 프린터에서는 종이가 또 한 장 나왔다.');
  }else if(mode==='hostile'){
    if(['protect','restructure','clarify','offer','boundary','helpbrief','process','consult','reassign','sharehelp','club_check','club_reform'].includes(raw.id))
-     reply.push('모두가 반가운 표정은 아니었다. 그래도 {colleague}이 한 걸음 다가와 “저도 그 문제 같이 확인해 드릴게요”라고 말했다. 적대적인 분위기 속에서도 손을 내미는 사람이 있다는 것이 중요했다.');
+     reply.push('모두의 표정이 밝지는 않았다. 그래도 {colleague}이 내 곁으로 와서 말했다. “저도 같이 확인해 드릴게요.” 나는 그제야 숨을 길게 내쉬었다.');
    else
-     reply.push('교무실에서는 서로의 탓이라는 말이 돌아다녔다. 수업 준비에 쓴 시간보다 그 말을 견딘 시간이 더 길게 느껴졌다. 그렇다고 이 분위기의 책임이 내게 있는 것은 아니었다.');
+     reply.push('교무실에서 나온 뒤에도 아까 들은 말이 자꾸 떠올랐다. 돌아서서 무슨 말을 했어야 했을까. 교실 문 앞에서 잠깐 멈춰 섰다.');
  }else{
-   reply.push('업무를 나누는 기준을 다시 의논할 수 있으면 좋겠다고 생각했다. 서로 바쁜 사정을 알면서도 일이 한쪽에 몰리지 않게 하는 일은 필요했다.');
+   reply.push('나는 업무분장표를 서랍에서 꺼내 책상 위에 놓았다. 다음에는 어떤 말을 먼저 꺼내야 할지 몇 번이나 생각했다.');
  }
  next.storyEvents=Array.isArray(next.storyEvents)?next.storyEvents:[];
  next.storyEvents.push({day:next.day,eventId:current.id,choiceId:raw.id});
