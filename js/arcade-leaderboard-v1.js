@@ -134,23 +134,36 @@ class ArcadeLeaderboard{
   const root=this.mount;root.replaceChildren();root.classList.add("arcade-ranking");
   const header=el("div","arcade-ranking-head");
   header.append(el("strong","",this.game==="volleyball_25"?"🏆 배구 최고 점수 TOP 10":"🏆 정년 생존 점수 TOP 10"),
-   el("small","",this.remote?"공식 기록 · 익명":"공식 서버 확인 중"));
+    el("small","",this.remote?"공식 기록 · 익명":"공식 서버 확인 중"));
   root.append(header);
   if(this.notice){const node=el("p","arcade-rank-feedback",this.notice);node.setAttribute("role","status");root.append(node);}
   const labels=el("div","arcade-rank-grid arcade-rank-label");
-  ["순위","학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));
-  root.append(labels);
-  if(!this.board.length){root.append(el("div","arcade-rank-empty",this.remote?"아직 등록된 기록이 없습니다":"기록을 불러올 수 없습니다"));return;}
-  for(const [i,entry] of this.board.entries()){
-   const row=el("div","arcade-rank-grid arcade-rank-row");
-   const school=el("div","arcade-rank-person");
-   school.append(el("span","arcade-rank-school",entry.school_name),
-    el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
-   row.append(el("span","",String(i+1).padStart(2,"0")),school,
-    el("span","",fmt(entry.score)));
-   root.append(row);
+  ["순위","학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));root.append(labels);
+  if(!this.board.length)root.append(el("div","arcade-rank-empty",
+    this.remote?"아직 등록된 점수 기록이 없습니다":"기록을 불러올 수 없습니다"));
+  else for(const [i,entry] of this.board.entries()){
+   const row=el("div","arcade-rank-grid arcade-rank-row"),school=el("div","arcade-rank-person");
+   school.append(el("span","arcade-rank-school",entry.school_name),el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
+   row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmt(entry.score)));root.append(row);
+  }
+  if(this.game==="volleyball_25"){
+   const headerTime=el("div","arcade-ranking-head");headerTime.style.marginTop="16px";
+   headerTime.append(el("strong","","⏱ 25점 승리 최단시간 TOP 10"),el("small","","25점 승리 경기만 · 빠른 시간순"));
+   root.append(headerTime);
+   const timeLabels=el("div","arcade-rank-grid arcade-rank-label");
+   ["순위","학교 · 난이도","완주 시간"].forEach(x=>timeLabels.append(el("span","",x)));
+   root.append(timeLabels);
+   if(!this.fastestBoard.length)root.append(el("div","arcade-rank-empty",
+     this.remote?"아직 25점 승리 시간 기록이 없습니다":"기록을 불러올 수 없습니다"));
+   else for(const [i,entry] of this.fastestBoard.entries()){
+    const row=el("div","arcade-rank-grid arcade-rank-row"),school=el("div","arcade-rank-person");
+    school.append(el("span","arcade-rank-school",entry.school_name),
+      el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
+    row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmtTime(entry.timeTenths)));root.append(row);
+   }
   }
  }
+
 }
 window.ArcadeLeaderboard=ArcadeLeaderboard;
 })();
