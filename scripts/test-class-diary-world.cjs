@@ -20,6 +20,8 @@ function payload(overrides={}){
 const make=(x)=>world.generateWorld(payload(x));
 const one=make();
 assert.equal(one.eligible,true);
+assert.equal(one.basic.id,baseSchool.school_id);
+assert.equal(one.basic.schoolId,baseSchool.school_id);
 assert.equal(one.basic.scale,'small');
 assert.equal(one.numbers.students.value,110);
 assert.equal(one.numbers.students.referenceYear,2024);
