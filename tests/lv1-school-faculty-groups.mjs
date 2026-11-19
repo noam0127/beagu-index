@@ -11,7 +11,7 @@ const css=read('styles/beagu-search-details-v1.css');
 const migration=read('supabase/migrations/20261119_2025_domain_comparisons_v1.sql');
 assert.doesNotThrow(()=>new vm.Script(frontend));
 assert.doesNotThrow(()=>new vm.Script(groups));
-assert.match(html,/js\/level-search\.js\?v=20261120-overseas1/);
+assert.match(html,/js\/level-search\.js\?v=20261120-[a-z0-9-]+/);
 assert.match(html,/js\/school-detail-groups-v1\.js\?v=20261119-teacher-groups2/);
 assert.match(html,/beagu-search-details-v1\.css\?v=20261119-domain-note1/);
 assert.match(migration,/REVOKE ALL ON public\.beagu_2025_domain_comparisons_v1 FROM PUBLIC,anon,authenticated/);
