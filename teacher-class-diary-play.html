@@ -55,6 +55,23 @@ button{font:inherit;cursor:pointer}
 .character-name{font-size:14px;font-weight:800;color:#2b4d63}
 .character-bio{font-size:12px;line-height:1.6;color:#75899a;margin:3px 0 0}
 .world-context{font-size:11px;color:#375a6c;margin:10px 0 0;letter-spacing:-.01em}
+.sound-panel{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border:1px solid #dce5ee;background:#fff;border-radius:13px;margin-top:12px}
+.sound-panel button{border:1px solid #c9dae5;background:#edf5fa;color:#28526f;border-radius:10px;font-weight:750;padding:9px 14px;font-size:13px}
+.sound-panel span{color:#658197;font-size:12px;line-height:1.5}
+.vn-dialogue{background:linear-gradient(170deg,rgba(255,255,255,.98),#f5f9fc);border:1px solid #cbdfe9;border-left:4px solid #6c9eb8;border-radius:17px;padding:26px 24px;margin-bottom:17px;box-shadow:0 12px 40px #24445b13}
+.vn-caption{font-size:10px;letter-spacing:.15em;font-weight:800;color:#7891a5;margin-bottom:15px}
+.scene-art{min-height:212px}
+.ending-credits{max-width:540px;margin:38px auto 0;padding:14px 0;border-top:1px solid #cbdde8;border-bottom:1px solid #cbdde8}
+.ending-credits h3{font-size:12px;letter-spacing:.17em;color:#728ba0}
+.credits-window{height:175px;overflow:hidden;position:relative}
+.credits-roll{padding:115px 10px 100px;animation:credits-rise 21s linear infinite}
+.credits-roll p{line-height:1.9;margin:0 0 14px;font-size:13px;color:#527085}
+.credits-roll .creator{font-family:"Nanum Myeongjo","Batang",serif;font-size:21px;color:#22536e;font-weight:700}
+.credits-roll a{text-decoration:underline;color:#255d88}
+@keyframes credits-rise{0%{transform:translateY(0)}100%{transform:translateY(-72%)}}
+@media(prefers-reduced-motion:reduce){.credits-roll{animation:none;padding:10px}.credits-window{height:auto;overflow:visible}}
+@media(max-width:620px){.sound-panel{flex-direction:column;align-items:flex-start}.vn-dialogue{padding:19px 17px}.scene-art{min-height:170px}}
+
 .school-facts{border:1px solid #dce6ed;background:#f7fafc;border-radius:14px;padding:14px 16px;margin:0 0 24px}
 .school-facts strong{color:#315670;font-size:12px}
 .school-facts ul{list-style:none;display:flex;flex-wrap:wrap;gap:7px;padding:0;margin:11px 0 0}
@@ -105,6 +122,10 @@ button{font:inherit;cursor:pointer}
 <div class="schoolline" id="schoolLine">학교 정보를 확인하는 중</div>
 </section>
 <p class="no-save" role="note" id="noSaveNotice">기록은 저장되지 않습니다. 페이지를 나가거나 새로고침하면 진행 상황과 결과가 모두 사라집니다.</p>
+<div class="sound-panel" aria-label="게임 음악 및 효과음">
+<button type="button" id="musicBtn" aria-pressed="false">♫ 배경음악 켜기</button>
+<span id="musicStatus" role="status" aria-live="polite">게임 시작 시 잔잔한 음악이 재생됩니다.</span>
+</div>
 <p class="status" id="status" role="status" aria-live="polite">레벨2 접근 권한을 확인하고 있습니다.</p>
 <section id="notice" class="panel" hidden>
 <h2>이야기를 시작할 수 없습니다</h2>
@@ -161,7 +182,10 @@ button{font:inherit;cursor:pointer}
 <ul id="schoolFactsList"></ul>
 <small>실제 공식자료의 기준연도별 값입니다. 2027년의 상황이나 실제 선생님의 성격·업무를 뜻하지 않습니다.</small>
 </section>
+<div class="vn-dialogue">
+<div class="vn-caption">STORY · 나의 학급일지</div>
 <div class="prose" id="chapterText"></div>
+</div>
 <p class="muted" id="chapterSource"></p>
 <div id="choiceSection"><div class="option-title">이번 장면에서 어떻게 할까요?</div><div class="choices" id="choiceButtons"></div></div>
 <section class="outcome" id="outcome" hidden><strong>당신의 선택이 남긴 장면</strong><div class="prose" id="outcomeText"></div><p class="dialogue" id="outcomeLine"></p></section>
@@ -177,6 +201,17 @@ button{font:inherit;cursor:pointer}
 <div class="final-score"><span class="muted">동료 호감도</span><strong id="endingAffection"></strong><span class="muted" id="endingScore"></span></div>
 <p id="endingSchool" class="muted"></p>
 <p class="muted">게임 속 점수이며 실제 학교의 근무 환경이나 교사 개인에 대한 평가가 아닙니다.</p>
+<div class="ending-credits">
+<h3>END CREDITS</h3>
+<div class="credits-window"><div class="credits-roll">
+<p>말할 자리가 있는 교실을 위해</p>
+<p class="creator">제작자: 카리브해매너티</p>
+<p>배경음악 · Scott Buckley</p>
+<p>Home Was You · CC BY 4.0</p>
+<p><a href="https://www.scottbuckley.com.au/library/home-was-you/" target="_blank" rel="noopener noreferrer">음악 저작권 및 다운로드</a></p>
+<p><a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0 라이선스</a></p>
+<p>일곱 날의 이야기를 함께해 주셔서 고맙습니다.</p>
+</div></div></div>
 <div class="actions" style="justify-content:center"><button class="primary" id="againBtn" type="button">다른 선택으로 다시 시작</button><a class="secondary" href="teacher-class-diary.html" style="text-decoration:none">다른 학교 선택</a></div>
 </section>
 
@@ -188,6 +223,7 @@ button{font:inherit;cursor:pointer}
 <script src="js/class-diary-play-v1.js"></script>
 <script src="js/class-diary-director-v1.js"></script>
 <script src="js/class-diary-context-v1.js"></script>
+<script src="js/class-diary-sound-v1.js"></script>
 <script src="js/class-diary-scenario-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
 <script>
