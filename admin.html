@@ -143,6 +143,18 @@
           <article><h4>통계 수집 오류</h4><strong data-security="collector_errors">미수집</strong></article>
         </div>
         <div class="ranking-card"><h4>최근 관리자 감사 기록</h4><div id="adminAudit" class="audit-list"><p class="empty">기록을 불러오는 중입니다.</p></div></div>
+        <div class="ranking-card password-card">
+          <h4>관리자 비밀번호 변경</h4>
+          <p class="subtle">본인 기기에서만 입력하세요. 새 비밀번호는 Supabase Auth에만 전달되며 통계·감사 로그에 저장되지 않습니다.</p>
+          <form id="adminPasswordChangeForm" autocomplete="off">
+            <label for="adminNewPassword">새 비밀번호 · 16자 이상</label>
+            <input id="adminNewPassword" type="password" autocomplete="new-password" minlength="16" maxlength="128" required>
+            <label for="adminConfirmPassword">새 비밀번호 확인</label>
+            <input id="adminConfirmPassword" type="password" autocomplete="new-password" minlength="16" maxlength="128" required>
+            <button type="submit" class="secondary">비밀번호 변경</button>
+          </form>
+          <p id="adminPasswordFeedback" class="help" role="status"></p>
+        </div>
       </section>
     </section>
 
