@@ -7,6 +7,7 @@ assert.equal(storyInfo.chapters,7);
 assert.equal(storyInfo.choices,21);
 assert.equal(engine.createSnapshot,undefined);
 assert.equal(engine.restore,undefined);
+assert.equal(engine.validateStory().choices,21);
 assert.equal(engine.DAYS.join('|'),
  '2027-03-08|2027-03-09|2027-03-10|2027-03-11|2027-03-12|2027-03-13|2027-03-14');
 const world={
@@ -76,6 +77,10 @@ for(let day=1;day<=7;day++){
  if(day<7)assert.equal(game.day,day+1);
 }
 assert.equal(game.phase,'ending');assert.equal(game.history.length,7);
+assert(Number.isInteger(game.stats.voice));
+assert(Number.isInteger(game.stats.boundary));
+assert(game.stats.voice>=0&&game.stats.voice<=100);
+assert(game.stats.boundary>=0&&game.stats.boundary<=100);
 assert(game.ending.title.startsWith('나의 '));assert(game.ending.title.endsWith(' 학급일지'));
 assert(Number.isInteger(game.ending.affection));
 assert(game.ending.score>=0&&game.ending.score<=100);
@@ -91,6 +96,8 @@ for(let mask=0;mask<2187;mask++){
  assert.equal(s.phase,'ending');
  assert(s.ending.score>=0&&s.ending.score<=100);
  assert(s.stats.agency>=0&&s.stats.agency<=100);
+ assert(s.stats.voice>=0&&s.stats.voice<=100);
+ assert(s.stats.boundary>=0&&s.stats.boundary<=100);
  fingerprints.add(s.ending.id);
 }
 assert.equal(fingerprints.size,5,'All five named endings must be reachable');
