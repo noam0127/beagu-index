@@ -131,7 +131,6 @@ body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player{
 body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid{
  display:grid!important;width:min(100%,570px);margin:clamp(7px,2dvh,18px) auto!important;
 }
-body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-flow,
 body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{display:flex!important}
 body.is-guest-flow.is-setting #setup[data-step="1"] .guest-setup-poem,
 body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player-stamp{display:none!important}
@@ -286,4 +285,123 @@ body.is-setting #setup[data-step="3"] .setup-review-fields strong{
  font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;
  font-size:clamp(13px,2.6vmin,18px);
  font-weight:700;
+}
+
+/* November 20 school-screen refresh: a quiet story lead, one real-school picker,
+   one factual disclosure; no oversized intermediate progress illustration. */
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-setup{
+ justify-content:center!important;align-items:stretch!important;
+ gap:clamp(11px,2.65dvh,24px)!important;
+ padding:clamp(10px,2.2dvh,24px) clamp(16px,4.5vw,36px)!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro,
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-setup .form-grid,
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{
+ width:min(100%,600px)!important;
+ margin-left:auto!important;margin-right:auto!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro{
+ flex:0 0 auto;gap:0;text-align:left;animation:diary-school-arrive .45s ease-out both;
+}
+@keyframes diary-school-arrive{
+ from{opacity:0;transform:translateY(8px)}
+ to{opacity:1;transform:translateY(0)}
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-kicker{
+ font:800 clamp(11px,2vmin,13px)/1.35 "Gowun Batang","Nanum Myeongjo",serif;
+ letter-spacing:.10em;color:#98758c;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro p{
+ margin:7px 0 0!important;
+ font:400 clamp(16px,3.35vmin,23px)/1.65 "Gowun Batang","Nanum Myeongjo",serif;
+ color:#756575;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro p strong{
+ color:#4b3d4e;font-weight:700;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ flex:0 0 auto;margin:0 auto!important;gap:0!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-field label{
+ display:flex;align-items:center;gap:7px;
+ margin-bottom:9px!important;font:700 clamp(13px,2.4vmin,16px)/1.3 "Gowun Batang","Nanum Myeongjo",serif;
+ color:#5f4d60;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-field .setup-required{
+ font:700 10px/1.25 sans-serif;padding:4px 6px;
+ border-radius:5px;color:#996779;background:#f6e9ef;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-input-wrap{
+ position:relative;width:100%;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] #diarySchoolName[readonly]{
+ height:clamp(49px,8dvh,60px)!important;min-height:49px!important;
+ padding:10px 49px 10px 17px!important;
+ font:600 clamp(15px,2.8vmin,18px)/1.5 "Gowun Batang","Nanum Myeongjo",sans-serif!important;
+ border:1.5px solid #c9b6c7!important;border-radius:15px!important;
+ color:#49364f!important;
+ background:linear-gradient(120deg,#fffefd,#fcf8fb)!important;
+ box-shadow:0 5px 18px #72557515!important;
+ cursor:pointer!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] #diarySchoolName[readonly]::placeholder{
+ color:#9d8b9e!important;opacity:1;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-input-icon{
+ position:absolute;right:16px;top:50%;transform:translateY(-50%);
+ color:#98758f;font-size:25px;pointer-events:none;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] #diarySchoolSelected{
+ display:block!important;min-height:1.4em;margin:9px 0 0!important;
+ font:400 clamp(11px,1.95vmin,13px)/1.45 "Gowun Batang","Nanum Myeongjo",sans-serif!important;
+ color:#887888!important;word-break:keep-all;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{
+ display:flex!important;gap:10px!important;justify-content:flex-start!important;
+ align-items:flex-start!important;flex:0 0 auto;
+ padding:0!important;margin-top:0!important;
+ color:#92808f!important;
+ font:400 clamp(10px,1.85vmin,12px)/1.6 "Gowun Batang","Nanum Myeongjo",serif!important;
+ text-align:left!important;word-break:keep-all;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-note-symbol{
+ color:#b792aa;flex:none;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-step-actions{
+ width:min(100%,650px);margin:0 auto!important;
+ gap:8px;padding:0 clamp(16px,4.5vw,36px) max(13px,env(safe-area-inset-bottom,0px))!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] #setupNext{
+ min-height:46px;border-radius:999px;padding:12px 27px!important;
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;
+}
+@media(max-width:620px){
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro,
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{
+  max-width:100%;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] .setup-step-actions #setupNext{
+  width:100%;min-height:50px;margin:0;
+ }
+}
+@media(max-height:540px){
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-setup{
+  gap:clamp(5px,1.5dvh,10px)!important;padding-top:6px!important;padding-bottom:6px!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro p{
+  margin:3px 0 0!important;font-size:clamp(14px,3.2vmin,17px)!important;line-height:1.4;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] #diarySchoolName[readonly]{
+  height:45px!important;min-height:45px!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{
+  font-size:10px!important;line-height:1.4!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] .setup-step-actions #setupNext{
+  min-height:42px!important;padding:7px 18px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro{animation:none}
 }

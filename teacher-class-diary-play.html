@@ -360,7 +360,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 
 
 </style>
-<link rel="stylesheet" href="styles/class-diary-journey-v1.css?v=20261120-school-name-input7">
+<link rel="stylesheet" href="styles/class-diary-journey-v1.css?v=20261120-school-layout8">
 <link rel="stylesheet" href="styles/class-diary-motion-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-ui-v2.css?v=20261120-paper-1">
 <link rel="stylesheet" href="styles/class-diary-semester-ui-v1.css?v=20261120-1">
@@ -370,7 +370,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-thigh4">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 <link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-sentence-fill4">
-<link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-linear-flow2">
+<link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-school-layout8">
 <link rel="stylesheet" href="styles/class-diary-progress-controls-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-background-only-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-actors-natural-v1.css?v=20261120-alpha-1">
@@ -493,16 +493,22 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <form id="profileForm">
 <div class="setup-layout">
  <div class="setup-player diary-school-setup" data-setup-screen="1">
-  <div class="setup-section-title"><span class="setup-number">01</span><div><strong>학교 선택</strong><small>실제 학교를 고르면 한 학기의 이야기가 시작됩니다.</small></div></div>
-  <div class="diary-school-flow" aria-label="진행 순서"><span>프롤로그</span><span aria-hidden="true">›</span><span>학교 생활</span></div>
+  <div class="diary-school-intro">
+   <span class="diary-school-kicker">첫 번째 선택 <span aria-hidden="true">✧</span></span>
+   <p>새 학기의 첫 페이지,<br><strong>이야기의 무대가 될 학교를 골라 주세요.</strong></p>
+  </div>
   <div class="form-grid">
-   <div class="diary-school-field"><label for="diarySchoolName">실제 초등학교 <span class="setup-required">필수</span></label>
-    <input id="diarySchoolName" type="text" inputmode="text" maxlength="30" autocomplete="off" placeholder="터치하여 실제 학교 검색·선택" required readonly aria-haspopup="dialog" aria-controls="diarySchoolSearchDialog" aria-describedby="diarySchoolSelected">
+   <div class="diary-school-field">
+    <label for="diarySchoolName">학교 이름 <span class="setup-required">필수</span></label>
+    <div class="diary-school-input-wrap">
+     <input id="diarySchoolName" type="text" inputmode="text" maxlength="30" autocomplete="off" placeholder="초등학교 이름으로 검색하기" required readonly aria-haspopup="dialog" aria-controls="diarySchoolSearchDialog" aria-describedby="diarySchoolSelected">
+     <span class="diary-school-input-icon" aria-hidden="true">⌕</span>
+    </div>
     <input id="diarySchoolMode" type="hidden" value="choose">
-    <small id="diarySchoolSelected" class="field-note" role="status">실제로 존재하는 초등학교를 검색해 선택해 주세요.</small>
+    <small id="diarySchoolSelected" class="field-note" role="status">실제 초등학교를 검색해 선택해 주세요.</small>
    </div>
   </div>
-  <p class="diary-school-narrative">인물·사건은 허구입니다. 실제 학교의 이름·지역·공개 조사연도 일부만 이야기의 배경에 사용합니다.</p>
+  <p class="diary-school-narrative"><span class="diary-school-note-symbol" aria-hidden="true">✦</span><span>학교의 이름·지역·공개 조사연도 일부만 배경으로 사용합니다.<br>등장인물과 사건은 모두 허구입니다.</span></p>
   <div class="diary-hidden-profile" hidden aria-hidden="true">
    <input id="playerName" name="playerName" type="hidden" value="새봄">
    <select id="experience" hidden><option value="mid" selected>중간경력</option></select>

@@ -55,6 +55,11 @@ assert.deepEqual(formInputs,['diarySchoolName','diarySchoolMode','playerName','e
 assert(!play.ids.has('age'),'No player age input');
 assert(play.ids.has('diaryLandingStart'),'One-card story entry is required');
 assert(play.ids.has('diarySchoolName'),'Actual school must be chosen in the first setup step');
+assert(!play.src.includes('class="diary-school-flow"'),'Oversized prologue-to-school progress box must be absent');
+assert(play.src.includes('class="diary-school-intro"'),'School selection should have the new compact story lead');
+assert(play.src.includes('class="diary-school-input-wrap"'),'Search control should have a dedicated discoverable surface');
+assert(play.src.includes('class="diary-school-narrative"'),'Real school data limitations must remain disclosed');
+assert(play.src.includes('styles/class-diary-guest-experience-v1.css?v=20261120-school-layout8'),'New CSS must not be cached as the old screen');
 assert(play.src.includes('id="diarySchoolName" type="text"'),'School selection should be a plain text input');
 assert(play.src.includes('id="diarySchoolMode" type="hidden"'),'The old mode dropdown must be removed from the user interface');
 assert(play.src.includes('봄에서 여름까지, 하나의 이야기가 시작된다.'),'Landing card should lead into the semester story');
