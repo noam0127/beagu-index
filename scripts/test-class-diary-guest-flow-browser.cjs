@@ -59,7 +59,19 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    });
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
    await page.goto(base+'/index.html',{waitUntil:'domcontentloaded'});
-   await page.locator('#homeDiaryGuestForm').waitFor({state:'visible'});
+   const homeProbe=await page.evaluate(()=>{
+    const form=document.getElementById('homeDiaryGuestForm');
+    const game=document.getElementById('teacher-diary-feature');
+    const parents=[];let el=form;
+    while(el&&parents.length<7){
+     const style=getComputedStyle(el),bounds=el.getBoundingClientRect();
+     parents.push({tag:el.tagName,id:el.id,display:style.display,visibility:style.visibility,opacity:style.opacity,width:bounds.width,height:bounds.height,hidden:el.hidden});
+     el=el.parentElement;
+    }
+    return {url:location.href,documentTitle:document.title,formExists:!!form,sectionExists:!!game,parents,firstText:document.body?.innerText?.slice(0,280)};
+   });
+   console.log('DIARY_HOME_PROBE',JSON.stringify(homeProbe));
+   await page.locator('#homeDiaryGuestForm').waitFor({state:'visible',timeout:4500});
    assert.equal(await page.locator('#homeDiaryCode').count(),1);
    assert.equal(await page.locator('#teacher-diary-feature .teacher-diary-code-message').count(),1);
    await page.locator('#homeDiaryCode').fill('1234');
