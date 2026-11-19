@@ -40,15 +40,15 @@
       return {loggedIn:true,registered,level};
     }
     return Object.freeze({
-      async signUp({username:choice,email,password}) {
-        return await call('sign-up',{username:choice,email,password});
+      async signUp({username:choice,email,password,captchaToken}) {
+        return await call('sign-up',{username:choice,email,password,captchaToken});
       },
-      async login({username:choice,password}) {
-        return capture(await call('sign-in',{username:choice,password}));
+      async login({username:choice,password,captchaToken}) {
+        return capture(await call('sign-in',{username:choice,password,captchaToken}));
       },
       // One-time email login after confirmation; finish registration to reserve ID.
-      async beginConfirmedRegistration({email,password}) {
-        return capture(await call('bootstrap-sign-in',{email,password}));
+      async beginConfirmedRegistration({email,password,captchaToken}) {
+        return capture(await call('bootstrap-sign-in',{email,password,captchaToken}));
       },
       async finishRegistration(usernameChoice) {
         const data=await call('complete-registration',{username:usernameChoice},true);
@@ -68,9 +68,15 @@
         if(!refreshToken) throw new Error('AUTH_REQUIRED');
         return capture(await call('refresh',{refreshToken}));
       },
-      async requestPasswordRecovery(email) {
-        // Recovery is separately feature-flagged OFF until callback UI is vetted.
-        return await call('request-recovery',{email});
+      async requestPasswordRecovery(email,captchaToken) {
+        // Recovery is separately feature-flagged OFF until SMTP/template verified.
+        return await call('request-recovery',{email,captchaToken});
+      },
+      async deleteAccount({password,confirm}) {
+        // Sensitive, reauthenticated deletion. Only self-owned Auth ID is used.
+        const result=await call('delete-account',{password,confirm},true);
+        if(result.accountDeleted===true)clear();
+        return result;
       },
       async logout() {
         try {
