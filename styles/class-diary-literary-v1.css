@@ -533,3 +533,41 @@ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-liter
   animation:none!important;opacity:1!important;transform:none!important;
  }
 }
+
+
+/* Sentence cursor / background-only story.
+   A single sentence is drawn character-by-character; tapping proceeds.
+   Keep colleague-selection images intact, but suppress all story-scene portraits. */
+body.is-playing #scenePortrait,
+body.is-playing #sceneHyunwooLive,
+body.is-playing #sceneGuest,
+body.is-playing #sceneGuestPortrait,
+body.is-playing #sceneGuestMalePhoto,
+body.is-playing #sceneDoyun,
+body.is-playing #novelCard .character-strip,
+body.is-playing #novelCard #characterAvatar{
+ display:none!important;
+}
+body.is-playing.is-literary-mode .diary-reading-cursor{
+ display:inline-block;min-width:.45em;margin-left:.08em;
+ color:#ead4e5;font-size:.86em;line-height:1;
+ vertical-align:baseline;transform:translateY(-.05em);
+ animation:diary-sentence-cursor-blink .95s steps(1,end) infinite;
+ user-select:none;pointer-events:none;
+}
+body.is-playing.is-literary-mode .diary-literary-typing .diary-reading-cursor{
+ visibility:hidden;animation:none;
+}
+@keyframes diary-sentence-cursor-blink{
+ 0%,49%{opacity:1}
+ 50%,100%{opacity:0}
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line{
+ text-align:left;min-height:1.65em;white-space:pre-wrap;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line.diary-literary-typing{
+ animation:none!important;transform:none!important;opacity:1!important;
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing.is-literary-mode .diary-reading-cursor{animation:none;opacity:1}
+}
