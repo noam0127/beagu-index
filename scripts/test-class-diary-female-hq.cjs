@@ -40,7 +40,12 @@ function webpBytes(src){
 const photoHashes=new Set();
 const emotionHashes=new Set();
 for(const id of ids){
- const photo=webpBytes(art.portrait(id));
+ const photoRef=art.portrait(id);
+ const expectedPath='assets/class-diary/characters/female-'+({woman:'jiyoon',none:'minseo',suhyun:'suhyun',sea:'sea',yuri:'yuri'}[id])+'-matte-v2.webp';
+ assert.equal(photoRef,expectedPath,'New matte transparent artwork must be preferred for '+id);
+ const photo=fs.readFileSync(path.join(root,photoRef));
+ assert.equal(photo.toString('ascii',0,4),'RIFF');
+ assert.equal(photo.toString('ascii',8,12),'WEBP');
  assert(photo.length>10000&&photo.length<150000,'Portrait compression budget '+id);
  photoHashes.add(crypto.createHash('sha256').update(photo).digest('hex'));
  for(const mood of moods){
@@ -79,4 +84,4 @@ for(const marker of [
 assert(page.includes('styles/class-diary-female-hq-v1.css?v=20261120-hq1'));
 assert(css.includes('max-width:620px'),'Mobile HQ layout must exist');
 assert(css.includes('data-art-quality="hq"'),'HQ styling must be scoped');
-console.log('PASS HQ: 5 distinct women, 30 expressions, local matte skin highlight reduction, 36-episode/7-day integration, no persistence');
+console.log('PASS HQ: 5 new matte transparent full-height WebPs, 30 expressions, 7-day/36-episode integration, privacy');
