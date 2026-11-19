@@ -46,7 +46,9 @@
   try{
    if(area.requestFullscreen)await area.requestFullscreen();
    else if(area.webkitRequestFullscreen)await area.webkitRequestFullscreen();
-   else setFallback(true);
+   // Some WebKit versions expose the method but silently decline fullscreen.
+   // A resolved call without an active fullscreen element still gets CSS fallback.
+   if(!nativeActive())setFallback(true);
   }catch(_){setFallback(true);}
   sync();
  }
