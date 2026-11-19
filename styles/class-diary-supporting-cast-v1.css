@@ -1,0 +1,9 @@
+/* In-scene SD cameo: secondary fictional colleagues, not player choices. */
+.scene-guest{position:absolute;z-index:2;left:clamp(8px,5%,48px);bottom:23%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;width:clamp(115px,20%,190px);pointer-events:none;filter:drop-shadow(0 7px 13px #15151e45)}
+.scene-guest[hidden]{display:none!important}
+.scene-guest img{display:block;width:100%;max-height:clamp(150px,35vh,305px);object-fit:contain;object-position:center bottom}
+.scene-guest-label{padding:4px 9px;border-radius:8px;border:1px solid #ffffff80;background:#22293ed9;color:#fff;text-shadow:0 1px 3px #1118;text-align:center;font-size:12px;line-height:1.3;backdrop-filter:blur(6px)}
+.scene-guest-label strong{display:block;font-size:12px}
+.scene-guest-label small{display:block;margin-top:2px;color:#f4e8ee;font-size:10px}
+@media(max-width:620px){.scene-guest{left:3%;bottom:34%;width:clamp(92px,27vw,132px)}.scene-guest img{max-height:clamp(118px,24vh,180px)}.scene-guest-label{padding:3px 5px;font-size:10px}.scene-guest-label strong{font-size:11px}.scene-guest-label small{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.scene-guest{transition:none!important;animation:none!important}}
