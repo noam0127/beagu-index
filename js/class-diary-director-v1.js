@@ -5,35 +5,35 @@
 'use strict';
 const VERSION='class-diary-director/v1';
 const BRIDGES=Object.freeze({
-  2:{
-    ask:'전날 주안과 동의서 취합 담당을 학년 업무표로 확인했다. 오늘 교직원전체회의에서도 모르는 건 물어봐도 된다는 생각이 힘이 됐다.',
-    carry:'전날 혼자 챙긴 주안 출력물과 동의서가 아직 책상 위에 남아 있었다. 나이스 출결도 마무리해야 하는데 회의에서 의견을 꺼내려니 괜히 부담스러웠다.',
-    share:'복합기 앞에서 학기 초가 다들 정신없다는 이야기를 나눴다. 오늘 교직원전체회의에서도 {colleague}과 눈이 마주치자 조금 덜 긴장됐다.'
+  "2": {
+    "ask": "어제 나눠 보던 업무분장표가 떠올랐다. 오늘 회의 자료를 펼치면서도 괜히 한 번 더 확인했다. 이제는 모르는 걸 물어보는 일이 조금 덜 어렵다.",
+    "carry": "전날 혼자 챙긴 주안 출력물이 학년연구실 책상에 그대로 있었다. 아침에 커피까지 쏟을 뻔했다. 회의에서는 오늘만큼은 입을 다물지 말자고 마음먹었다.",
+    "share": "어제 복합기 앞에서 {colleague}과 웃던 일이 생각났다. 회의가 길어지자 옆을 돌아봤다. 마침 그 사람도 나를 보고 있었다."
   },
-  3:{
-    reopen:'어제 교직원전체회의에서 학급별로 정할 부분을 남겨 두자고 말했다. 오늘 아이들과 학급회의를 하려니 그 말을 지킬 차례가 된 것 같았다.',
-    private:'어제는 학년연구실에서 {colleague}에게만 의견을 말했다. 오늘 우리 반 아이들에게는 먼저 자기 생각을 말할 기회를 주고 싶었다.',
-    follow:'어제 공통 생활 규칙을 그대로 따르기로 했다. 오늘 아이가 급식 줄서기를 묻자, 그때 못 꺼낸 말이 다시 떠올랐다.'
+  "3": {
+    "reopen": "어제 회의 때 한 말이 머리에 남아 있었다. 아이들 의견을 듣자고 했으니 오늘은 정말 물어봐야 할 차례였다.",
+    "private": "학년연구실에서 {colleague}에게만 털어놓았던 말을 떠올렸다. 아이들 앞에서는 나도 너무 늦게 말하는 어른이 되지 않고 싶었다.",
+    "follow": "어제는 정해진 규칙대로 하겠다고 했다. 그런데 오늘 급식 줄을 묻는 아이 앞에서는 그 대답이 썩 간단하지 않았다."
   },
-  4:{
-    council:'어제 학급회의에서 나온 급식 줄서기 의견이 칠판 한쪽에 남아 있었다. 오늘도 아이들 말을 확인하기 전에 답부터 정하지 않으려고 했다.',
-    trial:'어제 아이들과 정한 두 가지 줄서기 방법을 번갈아 써 보기로 했다. 아이들 사이의 오해도 직접 확인하지 않고 결론 낼 수는 없었다.',
-    explain:'어제는 왜 번호대로 줄을 서는지 먼저 설명했다. 아이들 질문이 끝나지 않았듯, 오늘 생긴 일에도 답을 서두르지 않기로 했다.'
+  "4": {
+    "council": "어제 아이들이 정한 줄서기 방법은 아직 칠판 구석에 적혀 있었다. 나는 그 아래에 날짜를 하나 더 써 놓았다. 며칠 뒤 다시 물어보려고.",
+    "trial": "아이들은 오늘도 급식 줄을 바꿔 서 보자고 졸랐다. 내일 해 보자고 달랬는데, 그 얼굴들이 자꾸 떠올랐다.",
+    "explain": "아이들이 왜냐고 물었을 때 나는 안전 때문이라고 답했다. 하지만 왜 꼭 그 방법이어야 하느냐는 질문에는 아직 답하지 못했다."
   },
-  5:{
-    together:'어제 보호자 연락을 받은 뒤 동학년 선생님과 사실관계를 함께 확인했다. 오늘 학년연구실로 돌아오니 같은 책상에서 일한다는 게 조금 든든했다.',
-    listen:'어제 아이들 말을 하나씩 들었다. 오늘 주안을 맞추며 {colleague}과 이야기를 나누는데, 서로의 말을 끝까지 듣는 일이 교실 밖에서도 중요했다.',
-    alone:'어제 보호자와 통화한 뒤에야 {colleague}에게 도움을 청했다. 피곤한 채로 다음 주 주안을 펼쳤지만, 이제는 혼자 붙들고 있지 않아도 된다는 걸 알았다.'
+  "5": {
+    "together": "어제 메모 두 장을 같이 들여다보던 {colleague}이 떠올랐다. 오늘 학년연구실로 들어오자 그 사람이 먼저 손을 들었다.",
+    "listen": "어제 아이들에게서 들은 말들이 계속 마음에 남았다. 오늘 {colleague}이 말을 시작했을 때도 나는 서두르지 않고 끝까지 들었다.",
+    "alone": "어제는 전화를 끊고 나서야 {colleague}에게 연락했다. 그 사람이 화를 내지 않고 “일단 앉아요”라고 했던 게 자꾸 생각났다."
   },
-  6:{
-    invite:'어제 주안과 에듀파인 품의를 마무리하고 {colleague}과 교문 밖을 함께 걸었다. 그 짧은 산책이 자꾸 생각났다.',
-    choice:'어제 저녁 모임은 각자 선택하자고 말했다. 주말이 되자 그 말이 나에게도 필요하다는 생각이 들었다.',
-    rest:'어제는 다음 주 주안만 정리하고 바로 퇴근했다. 주말 아침에는 업무용 메시지를 확인하지 않고도 마음 편히 하루를 시작했다.'
+  "6": {
+    "invite": "어제 교문을 지나 한참을 함께 걸었다. 오늘 아침에도 그 길을 떠올렸다. 별말 없이 걷던 때가 이상하게 선명했다.",
+    "choice": "어제 저녁을 먹으러 가는 사람들을 배웅하고 곧장 집에 왔다. 오래 잔 것도 아닌데 토요일 아침은 한결 가뿐했다.",
+    "rest": "어제 컴퓨터를 끄고 바로 퇴근했다. 아침에 눈을 뜨자마자 업무 메신저부터 열지 않은 건 정말 오랜만이었다."
   },
-  7:{
-    coffee:'어제 카페에서는 전담시간이나 주안 이야기가 아니라 좋아하는 책 이야기를 더 많이 했다. 동학년이라는 말 밖의 얼굴을 하나 더 알게 됐다.',
-    letter:'어제 한 주 고마웠다는 메시지를 보냈다. 일요일 저녁 수첩을 펼치니 평일 학년연구실에서 받았던 배려가 생각났다.',
-    offline:'어제는 연락도 검색도 미뤘다. 수업 준비는 평일 쉬는 시간에 그때그때 해 두었으니, 일요일까지 교사 역할을 붙들고 있을 필요는 없었다.'
+  "7": {
+    "coffee": "어제 카페에서 {colleague}이 웃으면서 말한 책 제목을 자꾸 떠올렸다. 주안 얘기를 하지 않고도 시간이 그렇게 빨리 갈 줄 몰랐다.",
+    "letter": "어제 보낸 짧은 메시지와 돌아온 답장. 별것 아닌 문장인데도 수첩을 펼치는 손끝에 그 말이 따라왔다.",
+    "offline": "어제는 휴대전화를 한 번도 꺼내지 않고 책을 읽었다. 누군가의 답장을 기다리지 않는 시간도 내겐 소중했다."
   }
 });
 const RELATIONSHIPS=Object.freeze({
@@ -57,11 +57,11 @@ function address(state){
  return fallback+' 선생님';
 }
 const COLLEAGUE_GREETINGS=Object.freeze({
- 1:'이번 주 주안, 같이 확인해 볼까요?',
- 2:'아까 학년에서 이야기한 부분, 지금 말씀해 보셔도 될 것 같아요.',
- 3:'아이들이 낸 의견, 나중에 어떻게 됐는지 들려주세요.',
- 4:'보호자 연락 전에 확인할 내용부터 같이 정리할까요?',
- 5:'오늘도 수고 많으셨어요. 주안은 제가 한 번 더 볼게요.'
+  "1": "주안 올리셨어요? 아직이면 제가 파일 확인해 드릴게요.",
+  "2": "아까 학년회의 때 하시려던 말씀, 아직 안 하셨죠?",
+  "3": "오늘 아이들이 뭐라고 했는지 나중에 들려주세요.",
+  "4": "보호자 연락 많이 힘드셨죠? 잠깐 앉으세요.",
+  "5": "주안 확인 끝나셨어요? 같이 퇴근할까요?"
 });
 function prevChoice(state){
   if(!state||!Array.isArray(state.history)||state.day<2)return null;
@@ -69,17 +69,18 @@ function prevChoice(state){
   return record&&typeof record.choiceId==='string'?record.choiceId:null;
 }
 function dynamicLine(state){
-  if(!state||!state.stats||!state.profile)return '';
-  if(state.day===1)return '낯선 사람과 가까워지는 데에는 저마다 다른 속도가 있다.';
-  const partner=state.profile.partner;
-  if(partner==='none'){
-    if(state.stats.trust>=63)return '일을 함께 해결한 사람과는 말이 길어지지 않아도 어색하지 않았다. 그 신뢰를 연애라고 부를 이유는 없었다.';
-    return '나란히 일하는 사람에게도 지켜 주고 싶은 거리가 있었다. 나는 그 거리부터 존중하기로 했다.';
-  }
-  if(state.stats.affection>=62&&state.stats.trust>=62)return '그 사람의 발걸음 소리가 익숙해졌다. 익숙함이 허락을 대신할 수는 없다는 사실도 함께 기억했다.';
-  if(state.stats.affection>=52)return '괜히 더 물어보고 싶은 이야기가 생겼다. 그렇지만 지금은 질문 하나를 아껴 두기로 했다.';
-  if(state.stats.trust<50)return '우리는 아직 서로의 말을 더 들어야 했다. 가까워지는 일에는 답을 재촉하지 않는 태도가 필요했다.';
-  return '그 사람과 나 사이에는 말을 건넬 수 있을 만큼의 거리가 생겨 있었다.';
+ if(!state||!state.stats||!state.profile)return '';
+ if(state.day===1)return '처음 나눈 말은 대부분 잊어버리게 마련인데, 그날의 목소리는 이상하게 귀에 남았다.';
+ if(state.profile.partner==='none')return state.stats.trust>=63?
+   '학년연구실에서 마주치면 먼저 농담을 건네는 사이가 됐다. 바쁜 날에는 말 없이 프린터 용지를 채워 주기도 했다.':
+   '아직 서로 모르는 것이 많았다. 그래도 옆자리에서 함께 일하는 사람이라는 게 조금씩 익숙해졌다.';
+ if(state.stats.affection>=62&&state.stats.trust>=62)
+   return '복도에서 발소리가 들리면 저도 모르게 고개를 들었다. 예상한 얼굴이 나타나면 별일 아닌 척 화면으로 시선을 돌렸다.';
+ if(state.stats.affection>=52)
+   return '오늘은 그 사람에게 무슨 이야기를 할까. 사소한 질문을 하나 골라 두고도 정작 마주치면 잊어버렸다.';
+ if(state.stats.trust<50)
+   return '말이 끊기면 괜히 자료를 정리했다. 아직은 서로의 침묵이 조금 낯설었다.';
+ return '멀리서 눈이 마주쳤다. 서로 아는 사람을 만났다는 듯 고개를 살짝 끄덕였다.';
 }
 function worldDetail(world,day){
   if(!world||!world.basic)return null;
@@ -138,32 +139,33 @@ function decorateOutcome(state){
   const lowEnergy=state.stats.fatigue>=65;
   const trust=state.stats.trust;
   const text=lowEnergy?
-    '몸이 무거웠다. 잘하려는 마음만으로는 쉬어야 할 시간을 대신할 수 없었다.':
-    trust>=65?'다음 날의 고민을 혼자 하지 않아도 된다는 사실이 조금 든든했다.':
-    '그날의 선택은 아직 끝난 일이 아니었다. 나는 다음에 할 말을 천천히 골랐다.';
+    '책상에 팔을 올리고 잠깐 눈을 감았다. 복도에서는 아이들이 웃으며 지나가고 있었다.':
+    trust>=65?'복도에서 {colleague}의 목소리가 들렸다. 나도 모르게 얼굴을 들었다.':
+    '한참 뒤에야 아까 하지 못한 말이 떠올랐다. 나는 메모지 한 귀퉁이에 짧게 적어 두었다.';
   const line=typeof base.line==='string'&&base.line.startsWith('“')?
     '“'+address(state)+', '+base.line.slice(1):base.line;
-  return {paragraphs:base.paragraphs.concat(text),line,
+  return {paragraphs:base.paragraphs.concat(text.replace(/\{colleague\}/g,(RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none).name)),line,
     cue:lowEnergy?'휴식이 필요한 때':trust>=65?'쌓여 가는 신뢰':'다음 날을 위한 여백'};
 }
 function decorateEnding(state){
   if(!state||state.phase!=='ending'||!state.ending)throw Error('ENDING_REQUIRED');
   const choices=state.history.map(x=>x.choiceId);
   const contributed=choices.includes('council')?
-    '학급회의에서 아이들이 고른 약속이 수첩에 남았다. 월요일에는 그 약속이 실제로 잘 지켜지는지 물어봐야겠다.':'아이들 질문에 바로 답부터 했던 순간도 있었다. 다음 학급회의에는 아이들이 먼저 말할 자리를 남겨 두기로 했다.';
+    '수첩을 덮기 전에 아이들이 고른 줄서기 방법을 다시 읽었다. 내일은 아이들한테도 잘 지냈는지 물어봐야겠다.':
+    '아이들 말을 제대로 듣지 못한 순간도 떠올랐다. 내일은 누가 손을 들면 조금 더 기다려 보기로 했다.';
   const energy=state.stats.fatigue>=60?
-    '피로가 쌓인 일주일이었다. 마음을 다했다는 이유로 나를 끝까지 소모해서는 안 된다고 생각했다.':
-    '쉬어야 할 때를 잊지 않은 덕분에, 내일 다시 시작할 힘이 남아 있었다.';
-  const support=Number(state.stats.support);
+    '어깨가 뻐근했다. 책상 앞에 더 앉아 있어도 아무것도 달라질 것 같지 않았다. 나는 불을 끄고 침대로 향했다.':
+    '내일 입을 옷을 꺼내 의자에 걸었다. 조금 이르지만 잠자리에 들고 싶었다.';
   const workplace=state.profile.workCulture;
+  const support=Number(state.stats.support);
   const relationship=workplace==='hostile'?
     (support>=35?
-      '같은 교직원끼리 서로를 경계하는 학교에서 한 사람의 편이 생긴다는 것은 큰 일이었다. 그렇다고 동료 몇 사람의 선의만으로 학교의 문제가 해결되는 것은 아니었다.':
-      '서로를 경계하는 학교에서 보낸 한 주는 유난히 길었다. 내가 부족해서 힘든 것이 아니었다. 서로 적대하는 문화를 바꾸려면 개인의 인내가 아니라 학교의 책임과 대화할 구조가 필요했다.') :
+      '학년연구실에서 마음 상하는 말을 들은 날에도 {colleague}은 내 옆에 의자를 가져왔다. 그날만큼은 누군가의 얼굴이 오래 남았다.':
+      '학년연구실로 들어서는 일이 두려웠던 날도 있었다. 다음 주에는 혼자 말고 다른 선생님과 업무를 의논할 시간을 만들어 봐야겠다.') :
     workplace==='collaborative'?
-      '교직원들은 여전히 바빴다. 다만 어려운 일이 생기면 서로의 책상으로 다가갔다. 힘든 하루에도 버틸 만한 이유가 남는 학교는, 그렇게 함께 만드는 학교였다.':
-      '일을 떠넘기는 말보다 담당을 확인하고 나누는 말을 더 많이 듣는 학교가 되었으면 했다. 작은 협의 하나가 그 시작일 수 있었다.';
-  return {...state.ending,paragraphs:state.ending.paragraphs.concat(contributed,energy,relationship),directorVersion:VERSION};
+      '아침에 학년연구실에 들어서면 누군가 먼저 “커피 드실래요?” 하고 물었다. 그 말이 있는 날은 컴퓨터를 켜는 손도 조금 가벼웠다.':
+      '서로 바쁜 얼굴로 앉아 있던 날들이 지나갔다. 언젠가 우리도 조금은 웃으면서 업무를 나눌 수 있을까.';
+  return {...state.ending,paragraphs:state.ending.paragraphs.concat(contributed,energy,relationship.replace(/\{colleague\}/g,(RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none).name)),directorVersion:VERSION};
 }
 const api=Object.freeze({
  VERSION,BRIDGES,VISUAL,RELATIONSHIPS,
