@@ -30,14 +30,19 @@ answerStart({school:{eligible:true},session:"stale-session"});
 assert.equal(await pendingSession,null);
 assert.equal(sessionBoard.session,null);
 sessionBoard.session="pending-finish";
-let resolveLoading;
-sessionBoard.load=()=>new Promise(resolve=>{resolveLoading=resolve;});
-let staleSubmitted=false;
-sessionBoard.request=async()=>{staleSubmitted=true;return {};};
+let resolveSubmission,submits=0;
+sessionBoard.request=async(_method,payload)=>{
+ submits++;
+ assert.equal(payload.session,"pending-finish");
+ return new Promise(resolve=>{resolveSubmission=resolve;});
+};
 const finishing=sessionBoard.finish(150,{player:25,cpu:7,elapsedTenths:150});
-sessionBoard.cancel();resolveLoading([]);
+assert.equal(submits,1,"a finished match starts saving before a user can restart");
+sessionBoard.cancel();
+resolveSubmission({ranked:true,rank:1,top10:[{score:150,school_name:"기록초등학교"}]});
 await finishing;
-assert.equal(staleSubmitted,false,"abandoned match cannot post an anonymous record");
+assert.equal(submits,1,"immediately replaying cannot cancel the submitted result");
+assert.equal(sessionBoard.board.length,0,"old response cannot replace the next game's ranking");
 const pickerWindow={};
 new Function("window","clearTimeout",picker)(pickerWindow,()=>{});
 const mockPicker={
@@ -69,11 +74,11 @@ assert.equal("nickname" in requestPayload,false,"no user-entered identifiers sen
 const displaced=mockRecordBoard();
 displaced.request=async()=>({ranked:false,top10:[]});
 await displaced.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
-assert.match(displaced.notice,/TOP 10 밖/);
+assert.match(displaced.notice,/역대 상위 100위 안에 기록됨/);
 const offline=mockRecordBoard("teacher_run_retirement");
 offline.request=async()=>{throw new Error("network_unavailable");};
 await offline.finish(1200,{score:1200,baseScore:1200,survivalSeconds:80,age:40,victory:false});
-assert.match(offline.notice,/저장되지 않았습니다/);
+assert.match(offline.notice,/저장하지 못했습니다/);
 const expired=mockRecordBoard();
 expired.request=async()=>{const e=new Error("session_expired");e.status=409;throw e;};
 await expired.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
@@ -96,11 +101,15 @@ let autoUploadedLow=0;
 unqualified.request=async()=>{autoUploadedLow++;return {ranked:false,top10:unqualified.board};};
 await unqualified.finish(610,{score:610,baseScore:610,survivalSeconds:10,age:26,victory:false});
 assert.equal(autoUploadedLow,1,"retirement results below TOP10 are auto-saved");
-assert.match(unqualified.notice,/TOP 10 밖/);
+assert.match(unqualified.notice,/역대 상위 100위 안에 기록됨/);
+const offBoard=mockRecordBoard("teacher_run_retirement");
+offBoard.request=async()=>({ranked:false,recorded:false,top10:[]});
+await offBoard.finish(3,{score:3,baseScore:3,survivalSeconds:2,age:24,victory:false});
+assert.match(offBoard.notice,/상위 100위 밖.*기록 미등록/);
 assert.doesNotMatch(shared,/submitName|openRecord|dialogElement|ENTER YOUR NAME|input\.maxLength/);
 assert.match(shared,/localStorage\.removeItem\("arcade-last-name-v1"\)/,"wipe prior typed names on visitors' devices");
 assert.match(shared,/\.sort\(\(a,b\)=>b\.score-a\.score/);
-console.log("PASS: automatic anonymous record, rejected low score, server errors and safe stale-response cancellation");
+console.log("PASS: automatic anonymous saves even below TOP10, failure warnings and safe quick-replay delivery");
 
 assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
 assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
@@ -112,13 +121,13 @@ assert.match(backend,/average>=80\?"extreme":average>=60\?"very_hard":average>=4
 assert.match(picker,/difficultyLabels=\{easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"\}/,"five English difficulty labels");
 assert.match(backend,/!selected\.eligible/,"server refuses missing years");
 assert.match(backend,/!currentSchool\?\.eligible/,"previously issued sessions are rechecked");
-assert.match(backend,/arcade_game_scores\?on_conflict=session_id&select=created_at/,"unique session key protects record against double submission");
+assert.match(backend,/arcade_game_scores\?on_conflict=session_id&select=id,created_at/,"unique session key protects record against double submission");
 assert.match(backend,/resolution=ignore-duplicates,return=representation/,"only one score per match");
 assert.match(backend,/e\.created_at===inserted\[0\]\.created_at/,"anonymous timestamp and score identify new record placement");
 assert.match(backend,/nickname_not_supported/,"API rejects user-entered nicknames");
 assert.doesNotMatch(backend,/nickname:"ANON"|select:"nickname/,"API neither stores nor exposes nicknames");
 assert.doesNotMatch(backend,/existing\.length>=10&&score<=existing\[9\]\.score/,"all games save finished results below TOP10");
-assert.ok(backend.indexOf('"arcade_game_scores?on_conflict=session_id&select=created_at"')<backend.indexOf('const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"})'),"score persists before session completion marker");
+assert.ok(backend.indexOf('"arcade_game_scores?on_conflict=session_id&select=id,created_at"')<backend.indexOf('const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"})'),"score persists before session completion marker");
 
 assert.match(volley,/new window\.ArcadeSchoolPicker/);
 assert.match(runner,/new window\.ArcadeSchoolPicker/);
@@ -211,8 +220,9 @@ assert.match(runner,/now-lastTapAt<=320/);
 assert.match(picker,/🏫 학교 선택/);
 assert.match(backend,/function validatedSurvivalSeconds/);
 assert.match(backend,/invalid_time_bonus/);
-const scoring=backend.slice(backend.indexOf("function validatedSurvivalSeconds"),backend.indexOf("Deno.serve("));
-const javascript=scoring.replace(/:\s*(?:any|number)/g,"");
+const scoring=backend.slice(backend.indexOf("function validatedSurvivalSeconds"),backend.indexOf("function publicGameResult("))+
+ backend.slice(backend.indexOf("function scoreFromRetirement("),backend.indexOf("Deno.serve("));
+const javascript=scoring.replace(/:\s*(?:any|number)/g,"").replace(/\s+as const/g,"");
 const scoreFns=new Function("int",javascript+"\nreturn {scoreFromVolleyball,scoreFromRun,scoreFromVolleyball25,scoreFromRetirement};")(
  (v,min,max)=>typeof v==="number"&&Number.isInteger(v)&&v>=min&&v<=max
 );
@@ -459,8 +469,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=20261119-corefun-celebrate1/);
-assert.match(html,/teacher-run\.html\?v=20261119-corefun-celebrate1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-arcade-history1001/);
+assert.match(html,/teacher-run\.html\?v=20261119-arcade-history1001/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -583,8 +593,8 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-corefun-celebrate1/);
-assert.match(html,/teacher-run\.html\?v=20261119-corefun-celebrate1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-arcade-history1001/);
+assert.match(html,/teacher-run\.html\?v=20261119-arcade-history1001/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
@@ -612,7 +622,8 @@ assert.equal(fullCareer.clock,190);
 assert.equal(fullCareer.score,8400);
 assert.equal(fullCareer.best,8400);
 assert.deepEqual(fullCareer.submitted.stats,{
- score:8400,baseScore:4200,survivalSeconds:190,age:62,victory:true
+ score:8400,baseScore:4200,survivalSeconds:190,age:62,victory:true,
+ nearMisses:0,hits:0,livesLeft:2,healthPercent:100
 });
 assert.match(fullCareer.headline,/정년/);
 assert.match(fullCareer.description,/× 2/);
@@ -640,9 +651,9 @@ scoreBoard.session="score-session";
 await scoreBoard.finish(12500,volleyStats(25,5));
 assert.equal(calls,2,"high score also uploaded without names");
 assert.match(backend,/order:"score\.desc,created_at\.asc"/);
-assert.match(backend,/win_time_tenths:"not\.is\.null"/);
+assert.match(backend,/arcade_fastest25_records/,"fastest ten are stored separately from score TOP100");
 assert.match(backend,/order:"win_time_tenths\.asc,created_at\.asc"/);
-assert.match(backend,/Persist each validated result/);
+assert.match(backend,/All finished games have a verified result/);
 console.log("PASS: separate fastest-25 and high-score boards, partial match uploads, anonymous records");
 
 
@@ -687,9 +698,16 @@ assert.match(runner,/stage===3&&|if\(stage===3\)/,"career-specific safe lane");
 assert.match(shared,/arcade-tier-filter/,"tiered leaderboard filter available");
 assert.match(backend,/RANK_TIERS=new Set/,"server validates leaderboard tiers");
 assert.match(backend,/if\(tier\)q\.set\("difficulty","eq\."\+tier\)/,"ranking tier applied at DB query");
-assert.match(backend,/Persist each validated result/,"all runner results are persisted");
+assert.match(backend,/only the 100 highest scores/,"runner TOP100 is bounded");
 assert.match(runner,/ranking\?\.finish\(Math\.floor\(score\)/,"runner auto submits on finish");
 assert.match(runner,/닉네임 없이 결과를 자동 기록합니다/);
+assert.match(shared,/arcade-history\.html\?game=/,"both games have an accessible records link");
+assert.match(backend,/function gameHistory\(game:Game,tier:string\|null,page:number\)/,"history API is implemented");
+assert.match(backend,/maxRecords:100/,"history declares its TOP100 limit");
+assert.match(backend,/order:"score\.desc,created_at\.asc,id\.asc"/,"history is ranked by high score, not just date");
+assert.match(backend,/\^\[1-4\]\$/,"history refuses pages beyond one hundred results");
+assert.match(backend,/arcade_fastest25_records/,"fastest win TOP10 persists separately from score TOP100");
+assert.match(backend,/recorded,score,top10/,"API returns whether result survived TOP100 pruning");
 console.log("PASS: conditional congratulations, core action rewards, input parity and automatic tiered ranking");
 
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
@@ -711,8 +729,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-corefun-celebrate1")&&
-     site.body.includes("teacher-run.html?v=20261119-corefun-celebrate1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-arcade-history1001")&&
+     site.body.includes("teacher-run.html?v=20261119-arcade-history1001"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -722,15 +740,15 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-corefun-celebrate1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-corefun-celebrate1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-arcade-history1001/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-arcade-history1001/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
  assert.ok(parsed.top10.length<=10);
  for(const row of parsed.top10){
   assert.equal("nickname" in row,false,"public ranking never exposes nicknames");
-  assert.ok(Number.isInteger(row.score)&&row.score>0);
+  assert.ok(Number.isInteger(row.score)&&row.score>=0);
  }
 }
 console.log("PASS: deployed home and live shared Top 10 for both games");
