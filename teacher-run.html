@@ -111,7 +111,7 @@ canvas{height:400px;cursor:default}
 <main id="teacher-run-protected" class="shell" hidden>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="hud" aria-label="게임 현황">
-    <div class="stat"><span>DAY</span><strong id="dayLabel">월요일 · 1/5</strong></div>
+    <div class="stat"><span>나이</span><strong id="dayLabel">24세 / 정년 62세</strong></div>
     <div class="stat"><span>SCORE</span><strong id="scoreLabel">0</strong></div>
     <div class="stat"><span>HI-SCORE</span><strong id="bestLabel">0</strong></div>
   </div>
@@ -125,7 +125,7 @@ canvas{height:400px;cursor:default}
   <div class="stage">
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 3.0 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
-      <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 3.0</h2><p id="overlayDesc">월요일부터 금요일까지, 선생님의 체력을 지키며 퇴근하세요!</p><div class="choices" id="choices"></div></div>
+      <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 3.0</h2><p id="overlayDesc">24세 임용, 62세 정년까지! 5초마다 한 살 · 정년 달성 시 점수 2배</p><div class="choices" id="choices"></div></div>
     </div>
   </div>
   <div class="toolbar">
@@ -133,16 +133,16 @@ canvas{height:400px;cursor:default}
     <button id="sound" type="button" aria-pressed="false" aria-label="소리 켜기" title="효과음">🔇</button>
     <button id="how" class="help" type="button" aria-label="게임 방법" title="게임 방법">?</button><a class="original" href="https://ilovebaegu.itch.io/teacherrun09" target="_blank" rel="noopener noreferrer" aria-label="원작 게임">↗ 원작</a>
   </div>
-  <div id="arcade-top10" aria-label="험난한 교직생활 3.0 TOP 10 순위"></div>
+  <div id="arcade-top10" aria-label="험난한 교직생활 정년 생존 TOP 10 순위"></div>
 </main>
-<script src="js/arcade-leaderboard-v1.js?v=20261118-recordfix1"></script>
+<script src="js/arcade-leaderboard-v1.js?v=20261119-vol25-retirement1"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261119-picker-top1"></script>
 <script>
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
-const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("teacher_run","#arcade-top10") : null;
+const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("teacher_run_retirement","#arcade-top10") : null;
 const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
 const difficultyProfiles={
  easy:{specialCooldown:10,specialShield:3.0,specialRadius:230,lives:3,heroSpeed:1.34,heroSize:.86,startingLife:150,damage:.54,enemySpeed:.72,spawnPressure:.62,enemySize:.83,goodChance:.34,heal:1.48,inv:1.95,homing:0,zigzag:.65,label:"교사 강화 · 위협 느림 · 회복 풍부"},
@@ -163,8 +163,17 @@ schoolPicker.onChange=()=>{if(state==="ready"){
  }};
 schoolPicker.onRequestChange=stopAndChangeSchool;
 if(!ctx){$("overlayDesc").textContent="이 브라우저에서는 캔버스 게임을 실행할 수 없습니다.";return;}
-const days=["월요일","화요일","수요일","목요일","금요일"];
-const dayTitles=["출근 첫날, 메일이 쌓인다","회의와 공문의 이중주","수요일의 언덕을 넘자","방심하면 야근이다","오늘만 버티면 주말!"];
+const START_AGE=24,RETIRE_AGE=62,SECONDS_PER_YEAR=5,RETIREMENT_SECONDS=(RETIRE_AGE-START_AGE)*SECONDS_PER_YEAR;
+const careerStages=[
+ {name:"신규교사",phase:"24~31세"},
+ {name:"성장교사",phase:"32~39세"},
+ {name:"중견교사",phase:"40~47세"},
+ {name:"숙련교사",phase:"48~55세"},
+ {name:"정년 준비",phase:"56~62세"}
+];
+const getAge=()=>Math.min(RETIRE_AGE,START_AGE+Math.floor(clock/SECONDS_PER_YEAR));
+const getCareerStage=()=>Math.min(4,Math.floor((getAge()-START_AGE)/8));
+const stageElapsed=()=>Math.max(0,clock-stage*8*SECONDS_PER_YEAR);
 const bad=[
  {emoji:"📄",name:"긴급 공문",damage:16,color:"#ffe2d4"},
  {emoji:"📞",name:"민원 전화",damage:20,color:"#f5d8ff"},
@@ -180,29 +189,29 @@ const good=[
 ];
 const upgrades=[
  {title:"💪 체력 +25",id:"vital",detail:"최대 체력 증가 · 즉시 체력 회복"},
- {title:"👟 이동속도 +18%",id:"speed",detail:"남은 요일 동안 이동이 빨라짐"},
+ {title:"👟 이동속도 +18%",id:"speed",detail:"정년까지 이동속도 향상"},
  {title:"🛡️ 무적시간 +0.4초",id:"guard",detail:"피격 후 보호시간 연장"},
  {title:"☕ 회복효과 +50%",id:"heal",detail:"회복 아이템 효과 증가"}
 ];
-// Each day picks one of three different events; explanations appear only while active.
-const dayEvents=[
- [{id:"rush",icon:"📨",title:"메일 폭주"},{id:"support",icon:"🤝",title:"동료의 도움"},{id:"focus",icon:"✨",title:"수업 몰입"}],
- [{id:"rush",icon:"📞",title:"돌발 전화"},{id:"focus",icon:"🎨",title:"수업 집중"},{id:"support",icon:"☕",title:"커피 휴식"}],
- [{id:"support",icon:"💌",title:"응원의 메시지"},{id:"rush",icon:"📋",title:"추가 업무"},{id:"focus",icon:"🌟",title:"멋진 수업"}],
- [{id:"rush",icon:"🗂️",title:"서류 폭주"},{id:"support",icon:"🤝",title:"동료의 응원"},{id:"focus",icon:"💡",title:"아이디어 번뜩"}],
- [{id:"focus",icon:"🎉",title:"퇴근이 눈앞에"},{id:"rush",icon:"📣",title:"긴급 공문"},{id:"support",icon:"🌿",title:"쉬는 시간"}]
+// Temporary, randomly selected events for each eight-year career stage.
+const careerEvents=[
+ [{id:"rush",icon:"📨",title:"초임 메일 폭주"},{id:"support",icon:"🤝",title:"선배의 도움"},{id:"focus",icon:"✨",title:"첫 수업의 몰입"}],
+ [{id:"rush",icon:"📞",title:"업무 전화"},{id:"focus",icon:"🎨",title:"수업 전문성"},{id:"support",icon:"☕",title:"잠깐의 재충전"}],
+ [{id:"support",icon:"💌",title:"제자의 응원"},{id:"rush",icon:"📋",title:"중견교사 추가업무"},{id:"focus",icon:"🌟",title:"기억에 남는 수업"}],
+ [{id:"rush",icon:"🗂️",title:"숙련교사 서류 폭주"},{id:"support",icon:"🤝",title:"동료의 응원"},{id:"focus",icon:"💡",title:"경험에서 나온 아이디어"}],
+ [{id:"focus",icon:"🎉",title:"정년이 눈앞에"},{id:"rush",icon:"📣",title:"정년 직전 공문"},{id:"support",icon:"🌿",title:"오랜 동료와의 휴식"}]
 ];
-let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
+let W=600,H=420,dpr=1,state="ready",stage=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
 let chalkShots=[],chalkCooldown=0,shackle={x:245,dir:-1};
-let activeEvent=null,eventSeconds=0,eventTriggered=false,fridayBossAnnounced=false;
+let activeEvent=null,eventSeconds=0,lastEventCycle=-1,retirementRushAnnounced=false;
 let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
 let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0,specialCooldown=0,specialFlash=0,lastTapAt=0,lastTapX=0,lastTapY=0;
-try{best=Number(localStorage.getItem("teacherRunBestV2"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
+try{best=Number(localStorage.getItem("teacherRunRetirementBestV1"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
 $("bestLabel").textContent=best.toLocaleString("ko-KR");
 $("sound").textContent=soundOn?"🔊":"🔇";
 $("sound").setAttribute("aria-pressed",String(soundOn));$("sound").setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");
-function persist(){try{localStorage.setItem("teacherRunBestV2",String(best));}catch(e){}}
+function persist(){try{localStorage.setItem("teacherRunRetirementBestV1",String(best));}catch(e){}}
 function playTone(freq,duration=.1,type="sine",volume=.055){
  if(!soundOn)return;
  try{
@@ -249,18 +258,21 @@ async function start(){
  }
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
- state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;eventTriggered=false;fridayBossAnnounced=false;
+ state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
+ combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;
  shackle={x:player.x-52,dir:-1};pointerId=null;pointerY=null;
- pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 족쇄 · 점프 불가":(selected.difficulty==="easy"||selected.difficulty==="normal")?difficultyName[selected.difficulty]+" · 자동 분필 지원":difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
+ pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 족쇄 · 점프 불가":
+  selected.difficulty==="easy"?"EASY · 날개와 자동 분필 지원":
+  selected.difficulty==="normal"?"NORMAL · 자동 분필 지원":
+  difficultyName[selected.difficulty]+" · 24세 임용!",2);closeMessage();playTone(500,.13);
 }
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;
- score=0;day=0;dayTime=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;eventTriggered=false;fridayBossAnnounced=false;
+ score=0;stage=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -275,7 +287,7 @@ function intro(){
  const ready=selected?.eligible===true;
  const title=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
    selected?selected.school_name+" · 조사 필요":"학교를 선택하세요";
- const desc=ready?"월 → 금 생존":selected?"2026년 조사 참여 후 시작 가능":"학교 선택";
+ const desc=ready?"24세 임용 → 62세 정년 · 5초마다 1년":selected?"2026년 조사 참여 후 시작 가능":"학교 선택";
  message("험난한 교직생활 3.0",title+"\n"+desc,[
   {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
    action:()=>ready?start():schoolPicker.focus()}
@@ -283,7 +295,7 @@ function intro(){
 }
 
 function updateLabels(){
- $("dayLabel").textContent=days[day]+" · "+(day+1)+"/5";
+ $("dayLabel").textContent=getAge()+"세 / 정년 "+RETIRE_AGE+"세";
  $("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");
  const hp=Math.max(0,Math.min(maxLife,life));
  const fraction=maxLife>0?hp/maxLife:0;
@@ -340,10 +352,9 @@ function hit(a){
  }
  updateLabels();
 }
-function triggerDayEvent(){
- if(eventTriggered||state!=="playing")return;
- eventTriggered=true;
- const events=dayEvents[day];
+function triggerCareerEvent(){
+ if(state!=="playing")return;
+ const events=careerEvents[stage];
  activeEvent=events[Math.floor(Math.random()*events.length)];
  eventSeconds=activeEvent.id==="support"?3.5:6;
  if(activeEvent.id==="support"){
@@ -359,51 +370,64 @@ function triggerDayEvent(){
  playTone(activeEvent.id==="rush"?430:activeEvent.id==="support"?820:690,.17,"triangle",.035);
 }
 function spawn(){
- const isGood=Math.random()<Math.min(.55,profile.goodChance+(dayTime>12?.04:0)),source=isGood?good:bad;
+ const isGood=Math.random()<Math.min(.55,profile.goodChance+(stageElapsed()>12?.04:0)),source=isGood?good:bad;
  let a=source[Math.floor(Math.random()*source.length)];
  let x=30+Math.random()*Math.max(1,W-60);
- // Friday's final rush alternates two edge lanes, leaving an escape route.
- if(day===4&&dayTime>13&&!isGood)x=Math.max(30,Math.min(W-30,
-   W*(Math.floor((dayTime-13)/2.7)%2===0?.25:.75)+(Math.random()-.5)*W*.19));
- let speed=(88+day*18+Math.random()*56)*profile.enemySpeed;
+ // From age 60, retirement paperwork sweeps alternating court lanes.
+ if(getAge()>=60&&!isGood)x=Math.max(30,Math.min(W-30,
+   W*(Math.floor((clock-180)/2.7)%2===0?.25:.75)+(Math.random()-.5)*W*.19));
+ let speed=(88+stage*18+Math.random()*56)*profile.enemySpeed;
  if(activeEvent?.id==="rush")speed*=1.20;
- if(day===4&&dayTime>13)speed*=1.20;
+ if(getAge()>=60)speed*=1.20;
  items.push({x,y:-40,speed,r:(20+Math.random()*3)*(isGood?1:profile.enemySize),size:isGood?1:profile.enemySize,wobble:(3+Math.random()*7)*profile.zigzag,phase:Math.random()*6.28,good:isGood,...a});
 }
-function nextDay(){
- if(day===4){finish(true);return;}
- state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;playTone(900,.3);
+function nextCareerStage(){
+ const next=getCareerStage();
+ if(next<=stage)return;
+ stage=next;
+ state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
+ activeEvent=null;eventSeconds=0;lastEventCycle=-1;
+ playTone(900,.3);
  let picks=upgrades.slice();
  for(let i=picks.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[picks[i],picks[j]]=[picks[j],picks[i]];}
  picks=picks.slice(0,3);
- message(days[day]+" 퇴근!","보상 하나를 선택하세요",picks.map(u=>({label:u.title,detail:u.detail,action:()=>choose(u)})),"🌙");
+ message(getAge()+"세 · "+careerStages[stage].name,
+   "다음 경력 단계! 보상 하나를 선택하세요",
+   picks.map(u=>({label:u.title,detail:u.detail,action:()=>choose(u)})),"🎖️");
 }
 function choose(u){
  if(u.id==="vital"){maxLife+=25;life=Math.min(maxLife,life+35);}
  if(u.id==="speed")skill.speed*=1.18;
  if(u.id==="guard")skill.guard+=.4;
  if(u.id==="heal")skill.heal*=1.5;
-  day++;dayTime=0;items=[];chalkShots=[];chalkCooldown=.4;spawnClock=.65;life=Math.min(maxLife,life+10);
-  activeEvent=null;eventSeconds=0;eventTriggered=false;
- player.inv=1.2;pointerId=null;pointerX=null;pointerY=null;state="playing";updateLabels();setNotice(days[day]+" 시작!",2);closeMessage();playTone(610,.16);
+ items=[];chalkShots=[];chalkCooldown=.4;spawnClock=.65;
+ life=Math.min(maxLife,life+10);
+ player.inv=1.2;pointerId=null;pointerX=null;pointerY=null;
+ state="playing";updateLabels();
+ setNotice(getAge()+"세 · "+careerStages[stage].name+" 시작!",2);
+ closeMessage();playTone(610,.16);
 }
 function finish(win){
+ if(state==="over")return;
  state="over";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  schoolPicker.setLocked(false);
+ if(win)clock=RETIREMENT_SECONDS;
  const survivalSeconds=Math.floor(clock);
- const baseScore=Math.floor(score+(win?1500+Math.round(life*5):0));
- const survivalBonus=survivalSeconds*10;
- score=baseScore+survivalBonus;
+ const rawScore=Math.floor(score);
+ score=win?rawScore*2:rawScore;
  if(score>best){best=Math.floor(score);persist();}
  updateLabels();$("bestLabel").textContent=best.toLocaleString("ko-KR");
- ranking?.finish(Math.floor(score),{
-  score:Math.floor(score),baseScore,survivalSeconds,day:day+1,victory:win
+ if(score>0)ranking?.finish(Math.floor(score),{
+   score:Math.floor(score),baseScore:rawScore,
+   survivalSeconds,age:getAge(),victory:win
  });
- const details="기본 "+baseScore.toLocaleString("ko-KR")+"점 · 생존 "+survivalSeconds+"초 +"+survivalBonus.toLocaleString("ko-KR")+"점\n"+
-  "최종 "+Math.floor(score).toLocaleString("ko-KR")+"점 · ♥ "+livesLeft+"/"+maxLives;
- message(win?"🎉 퇴근 성공!":"🫖 게임 종료",details,[
-  {label:"↻ 다시 하기",action:()=>start()},
-  {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?"🎉":"🫖");
+ const details=win?
+   "24세 임용 → 62세 정년 달성!\n획득 "+rawScore.toLocaleString("ko-KR")+"점 × 2 = "+
+     Math.floor(score).toLocaleString("ko-KR")+"점":
+   getAge()+"세에 퇴장\n획득 "+rawScore.toLocaleString("ko-KR")+"점 · 정년 보너스 없음";
+ message(win?"🎉 62세 정년 달성!":"🫖 교직생활 종료",details,[
+   {label:"↻ 다시 하기",action:()=>start()},
+   {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?"🏆":"🫖");
  playTone(win?950:280,.32);
 }
 function pause(){
@@ -414,7 +438,7 @@ function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","📄 회피 · ☕ 회복 · ⚡ 더블 터치 필살기\nEASY/NORMAL 자동 분필 · EXTREME 족쇄\nPC ← → · 모바일 드래그",[
+ message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\nEASY 날개·자동 분필 · EXTREME 족쇄 · PC ← → / 모바일 드래그",[
  {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
 function fireChalk(dt){
@@ -479,11 +503,18 @@ function drawShackle(){
  ctx.restore();
 }
 function update(dt){
- clock+=dt;dayTime+=dt;
+ clock=Math.min(RETIREMENT_SECONDS,clock+dt);
+ if(clock>=RETIREMENT_SECONDS){finish(true);return;}
+ if(getCareerStage()>stage){nextCareerStage();return;}
  if(eventSeconds>0){eventSeconds=Math.max(0,eventSeconds-dt);if(eventSeconds===0)activeEvent=null;}
- if(!eventTriggered&&dayTime>=6)triggerDayEvent();
- if(day===4&&dayTime>=13&&!fridayBossAnnounced){
-  fridayBossAnnounced=true;setNotice("⚠ 금요일 공문 폭풍 · 좌우를 살펴요",2.5);playTone(240,.26,"sawtooth",.04);
+ const cycle=Math.floor((stageElapsed()-5)/14);
+ if(cycle>=0&&cycle!==lastEventCycle){
+  lastEventCycle=cycle;triggerCareerEvent();
+ }
+ if(getAge()>=60&&!retirementRushAnnounced){
+  retirementRushAnnounced=true;
+  setNotice("⚠ 정년 직전 공문 폭풍 · 좌우를 살펴요",2.5);
+  playTone(240,.26,"sawtooth",.04);
  }
  specialCooldown=Math.max(0,specialCooldown-dt);specialFlash=Math.max(0,specialFlash-dt);player.inv=Math.max(0,player.inv-dt);
   shake=Math.max(0,shake-dt);noticeTime=Math.max(0,noticeTime-dt);
@@ -510,7 +541,7 @@ function update(dt){
  }
  fireChalk(dt);
  spawnClock-=dt;
- if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-day*.085-(dayTime>13&&day===4?.2:0))/profile.spawnPressure)*(0.8+Math.random()*.45)/(activeEvent?.id==="rush"?1.30:1);}
+ if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-stage*.085-(getAge()>=60?.2:0))/profile.spawnPressure)*(0.8+Math.random()*.45)/(activeEvent?.id==="rush"?1.30:1);}
  for(let i=items.length-1;i>=0;i--){
   const a=items[i];a.y+=a.speed*dt;a.x+=Math.sin(clock*(2+profile.zigzag)+a.phase)*a.wobble*dt;
    if(!a.good&&a.y>H*.18&&a.y<H-75){
@@ -528,7 +559,6 @@ function update(dt){
  updateChalk(dt);
  for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=125*dt;s.life-=dt;if(s.life<=0)sparks.splice(i,1);}
  for(let i=floats.length-1;i>=0;i--){let f=floats[i];f.y-=42*dt;f.life-=dt;if(f.life<=0)floats.splice(i,1);}
- if(dayTime>=23.5)nextDay();
  updateLabels();
 }
 function roundRect(x,y,w,h,r,color){
@@ -542,11 +572,11 @@ function background(){
   ["#ba9be0","#d4bfe6","#70549d"],
   ["#879df2","#ffbbbc","#54498e"]
  ];
- const p=palettes[day],g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,p[0]);g.addColorStop(1,p[1]);
+ const p=palettes[stage],g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,p[0]);g.addColorStop(1,p[1]);
  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
  // Dithered 8-bit background: small window pixels + scrolling sparkle blocks
  for(let yy=10;yy<H-70;yy+=24){for(let xx=10;xx<W;xx+=24){
-  if(((xx/24+yy/24+day)%4)<1){ctx.fillStyle="rgba(10,49,91,.06)";ctx.fillRect(xx,yy,11,11);}
+  if(((xx/24+yy/24+stage)%4)<1){ctx.fillStyle="rgba(10,49,91,.06)";ctx.fillRect(xx,yy,11,11);}
  }}
  for(let k=0;k<7;k++){const xx=(k*99+clock*12)%(W+26)-13,yy=75+(k*33)%170;ctx.fillStyle="rgba(255,255,255,.3)";ctx.fillRect(xx,yy,6,6);}
  // 바닥과 교실, 화면 폭에 반응하는 칠판과 창문
@@ -556,8 +586,8 @@ function background(){
  ctx.fillStyle="rgba(73,122,116,.12)";for(let x=0;x<W;x+=49)ctx.fillRect(x,H-69,1,69);
  roundRect(chalkX+2,97,chalkW,98,9,"#d3aa76");roundRect(chalkX+8,103,chalkW-12,86,6,p[2]);
  ctx.fillStyle="rgba(250,255,247,.95)";ctx.font="bold 13px sans-serif";ctx.textAlign="center";
- ctx.fillText("오늘도 무사히!",chalkX+chalkW/2+2,139,chalkW-20);
- ctx.fillStyle="#d9fff0";ctx.font="12px sans-serif";ctx.fillText(days[day],chalkX+chalkW/2+2,162,chalkW-20);
+ ctx.fillText("정년까지 무사히!",chalkX+chalkW/2+2,139,chalkW-20);
+ ctx.fillStyle="#d9fff0";ctx.font="12px sans-serif";ctx.fillText(careerStages[stage].name,chalkX+chalkW/2+2,162,chalkW-20);
  roundRect(windowX,98,windowW,96,9,"#f5fcff");roundRect(windowX+6,104,windowW-12,84,4,"#84d3f2");
  ctx.fillStyle="#f9fcff";ctx.fillRect(windowX+windowW/2-3,103,6,85);ctx.fillRect(windowX+6,143,windowW-12,6);
  ctx.fillStyle="rgba(255,255,255,.55)";ctx.beginPath();ctx.ellipse(windowX+windowW*.25,118,18,8,0,0,Math.PI*2);ctx.fill();
@@ -566,6 +596,21 @@ function background(){
 }
 function playerDraw(){
  ctx.save();ctx.translate(Math.round(player.x),Math.round(player.y));ctx.scale(profile.heroSize,profile.heroSize);
+ if(profile===difficultyProfiles.easy){
+  // EASY: animated wings show why the teacher is light and quick.
+  const flap=Math.sin(clock*10)*8;
+  ctx.fillStyle="#ffffff";
+  ctx.beginPath();ctx.moveTo(-19,-12);ctx.quadraticCurveTo(-61,-66-flap,-72,-42-flap);
+  ctx.quadraticCurveTo(-78,-10-flap,-24,19);ctx.fill();
+  ctx.beginPath();ctx.moveTo(19,-12);ctx.quadraticCurveTo(61,-66-flap,72,-42-flap);
+  ctx.quadraticCurveTo(78,-10-flap,24,19);ctx.fill();
+  ctx.fillStyle="#9ce0f8";
+  for(let j=0;j<3;j++){
+   const lift=j*9;
+   ctx.fillRect(-68+j*10,-30+lift-flap*.5,20,7);
+   ctx.fillRect(48-j*10,-30+lift-flap*.5,20,7);
+  }
+ }
  if(pointerId!==null&&state==="playing"){
   const blink=Math.floor(clock*18)%2;
   ctx.fillStyle="#ffe078";ctx.fillRect(-16,31,11,blink?15:23);ctx.fillRect(6,31,11,blink?23:15);
@@ -622,21 +667,21 @@ function draw(){
  const timeW=Math.min(95,Math.max(68,W*.26));
  roundRect(W-timeW-9,10,timeW,49,12,"rgba(18,44,61,.9)");
  ctx.textAlign="center";ctx.font="900 18px sans-serif";ctx.fillStyle="#f8fafb";
- ctx.fillText(Math.max(0,Math.ceil(23.5-dayTime))+"s",W-timeW/2-9,33,timeW-12);
- ctx.font="bold 9px sans-serif";ctx.fillStyle="#b9ecdd";ctx.fillText("퇴근",W-timeW/2-9,48,timeW-12);
+ ctx.fillText(Math.max(0,Math.ceil(RETIREMENT_SECONDS-clock))+"s",W-timeW/2-9,33,timeW-12);
+ ctx.font="bold 9px sans-serif";ctx.fillStyle="#b9ecdd";ctx.fillText("정년까지",W-timeW/2-9,48,timeW-12);
  if(combo>=3){
   ctx.textAlign="center";roundRect(W/2-53,64,106,24,11,"rgba(108,55,32,.9)");
   ctx.font="900 12px sans-serif";ctx.fillStyle="#fff3c9";ctx.fillText("🔥 "+combo+" COMBO",W/2,80,101);
  }
  roundRect(12,H-7,W-24,3,2,"rgba(24,62,83,.15)");
- if(dayTime>0)roundRect(12,H-7,(W-24)*Math.min(1,dayTime/23.5),3,2,"#2b9c8b");
+ if(clock>0)roundRect(12,H-7,(W-24)*Math.min(1,clock/RETIREMENT_SECONDS),3,2,"#2b9c8b");
  if(noticeTime>0){ctx.textAlign="center";roundRect(W/2-68,93,136,27,9,"rgba(17,54,70,.88)");ctx.font="bold 13px sans-serif";ctx.fillStyle="#fff";ctx.fillText(notice,W/2,111,126);}
  if(activeEvent&&eventSeconds>0){
   const label=activeEvent.icon+" "+activeEvent.title+" · "+Math.ceil(eventSeconds)+"s";
   ctx.textAlign="center";roundRect(W/2-78,124,156,25,10,"rgba(25,55,84,.9)");
   ctx.font="bold 12px sans-serif";ctx.fillStyle="#fff6ce";ctx.fillText(label,W/2,141,150);
  }
- if(day===4&&dayTime>13){ctx.textAlign="center";ctx.font="900 12px sans-serif";ctx.fillStyle="#8e3030";ctx.fillText("⚠ 공문 폭풍",W/2,177,Math.max(120,W-20));}
+ if(getAge()>=60){ctx.textAlign="center";ctx.font="900 12px sans-serif";ctx.fillStyle="#8e3030";ctx.fillText("⚠ 정년 직전 공문 폭풍",W/2,177,Math.max(120,W-20));}
  ctx.restore();
 }
 function tick(t){const dt=Math.min(.04,(t-last)/1000||0);last=t;if(state==="playing")update(dt);draw();requestAnimationFrame(tick);}

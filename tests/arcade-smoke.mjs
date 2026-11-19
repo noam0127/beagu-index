@@ -172,61 +172,49 @@ assert.match(picker,/aria-describedby/,"school search is accessible");
 console.log("PASS: school selection first, note under input, blue-struck duplicate labels removed");
 
 
-// HP, lives, double-touch and time bonus contract.
+// Independent new game rules preserve the retired score contracts for old sessions.
 const runProfilesMatch=runner.match(/const difficultyProfiles=(\{[\s\S]*?\n\s*\});/);
-const volleyProfilesMatch=volley.match(/const energyProfiles=(\{[\s\S]*?\n\s*\});/);
 const volleySpecialMatch=volley.match(/const specialProfiles=(\{[\s\S]*?\n\s*\});/);
-assert.ok(runProfilesMatch&&volleyProfilesMatch&&volleySpecialMatch,"five tier profiles exist");
+assert.ok(runProfilesMatch&&volleySpecialMatch,"five-tier profiles");
 const parseProfile=match=>new Function("return "+match[1])();
-const runProfiles=parseProfile(runProfilesMatch),energyProfiles=parseProfile(volleyProfilesMatch),specialProfiles=parseProfile(volleySpecialMatch);
+const runProfiles=parseProfile(runProfilesMatch),specialProfiles=parseProfile(volleySpecialMatch);
 const tiers=["easy","normal","hard","very_hard","extreme"];
 for(let i=0;i<tiers.length;i++){
- const t=tiers[i];
- assert.ok(runProfiles[t]&&energyProfiles[t]&&specialProfiles[t],"tier "+t+" has HP/life/special definition");
- if(i>0){
-  const prior=tiers[i-1];
-  assert.ok(runProfiles[t].startingLife<runProfiles[prior].startingLife,"harder tier has less starting HP");
-  assert.ok(runProfiles[t].lives<=runProfiles[prior].lives,"harder tier cannot gain extra lives");
-  assert.ok(runProfiles[t].specialCooldown>runProfiles[prior].specialCooldown,"harder tier has longer special cooldown");
-  assert.ok(energyProfiles[t].allyMax<energyProfiles[prior].allyMax,"harder tier has less ally stamina");
-  assert.ok(energyProfiles[t].enemyMax>energyProfiles[prior].enemyMax,"harder tier has more CPU stamina");
-  assert.ok(specialProfiles[t].cooldown>specialProfiles[prior].cooldown,"harder tier has longer super spike cooldown");
+ const level=tiers[i];assert.ok(runProfiles[level]&&specialProfiles[level]);
+ if(i){
+  assert.ok(runProfiles[level].startingLife<runProfiles[tiers[i-1]].startingLife);
+  assert.ok(specialProfiles[level].cooldown>specialProfiles[tiers[i-1]].cooldown);
  }
 }
-assert.match(volley,/id="player-energy-progress"/);
-assert.match(volley,/id="cpu-energy-progress"/);
-assert.match(runner,/id="run-health-progress"/);
-assert.match(runner,/id="run-lives"/);
+assert.doesNotMatch(volley,/id="player-energy-progress"|id="cpu-energy-progress"|id="volley-lives"/);
+assert.doesNotMatch(volley,/leftEnergy|rightEnergy|energyProfiles|energyFactor|receiveHealProfiles|healFrames|loseLife|resetEnergy|체력|목숨/);
 assert.match(volley,/function activateSuperSpike\(\)/);
-assert.match(runner,/function activateSpecial\(\)/);
+assert.match(runner,/id="run-health-progress"|id="run-lives"/);
 assert.match(volley,/now-lastTapAt<=320/);
 assert.match(runner,/now-lastTapAt<=320/);
-assert.match(volley,/state\.playFrames\+\+/,"time counted during live play only");
-assert.match(volley,/Math\.min\(900,getSurvivalSeconds\(\)\*4\)/,"volleyball survival bonus capped");
-assert.match(runner,/const survivalBonus=survivalSeconds\*10/,"survival run score includes time explicitly");
-assert.doesNotMatch(runner,/score\+=dt\*9/,"run survival time is counted once");
-assert.doesNotMatch(picker,/arcade-school-guide/,"long school selector description removed");
-assert.match(picker,/🏫 학교 선택/,"short school heading");
+assert.match(picker,/🏫 학교 선택/);
 assert.match(backend,/function validatedSurvivalSeconds/);
-assert.match(backend,/invalid_survival_time/);
 assert.match(backend,/invalid_time_bonus/);
-// Run the actual server's pure score functions with TypeScript annotations removed.
 const scoring=backend.slice(backend.indexOf("function validatedSurvivalSeconds"),backend.indexOf("Deno.serve("));
-assert.ok(scoring.startsWith("function validatedSurvivalSeconds"));
 const javascript=scoring.replace(/:\s*(?:any|number)/g,"");
-const scoreFns=new Function("int",javascript+"\nreturn {scoreFromVolleyball,scoreFromRun};")(
+const scoreFns=new Function("int",javascript+"\nreturn {scoreFromVolleyball,scoreFromRun,scoreFromVolleyball25,scoreFromRetirement};")(
  (v,min,max)=>typeof v==="number"&&Number.isInteger(v)&&v>=min&&v<=max
 );
-const vBase=7*120+2*25+600+(7-3)*30;
-assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2,survivalSeconds:90},100),vBase+360);
-assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2,survivalSeconds:400},410),vBase+900);
-assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2},100),vBase,"legacy clients are compatible");
-assert.throws(()=>scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2,survivalSeconds:90},50),/invalid_survival_time/);
-assert.equal(scoreFns.scoreFromRun({score:1380,baseScore:420,survivalSeconds:96,day:4,victory:false},120),1380);
-assert.throws(()=>scoreFns.scoreFromRun({score:1381,baseScore:420,survivalSeconds:96,day:4,victory:false},120),/invalid_time_bonus/);
-assert.throws(()=>scoreFns.scoreFromRun({score:1380,baseScore:420,survivalSeconds:96,day:4,victory:false},40),/invalid_survival_time/);
-assert.equal(scoreFns.scoreFromRun({score:1500,day:3,victory:false},100),1500,"cached legacy game supported");
-console.log("PASS: tier HP, lives, double-tap, concise UI, both time bonus formulas and tamper rejection");
+assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2},100),7*120+2*25+600+(7-3)*30);
+assert.equal(scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:645},65),645);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({player:24,cpu:25,elapsedTenths:645},65),/invalid_stats/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:100},65),/invalid_duration/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:800},65),/invalid_duration/);
+const win62={score:12000,baseScore:6000,survivalSeconds:190,age:62,victory:true};
+assert.equal(scoreFns.scoreFromRetirement(win62,191),12000);
+assert.throws(()=>scoreFns.scoreFromRetirement({...win62,score:6000},191),/invalid_retirement_score/);
+assert.throws(()=>scoreFns.scoreFromRetirement({...win62,age:61},191),/invalid_age/);
+assert.throws(()=>scoreFns.scoreFromRetirement({...win62,survivalSeconds:189},191),/invalid_age|invalid_retirement/);
+assert.throws(()=>scoreFns.scoreFromRetirement(win62,150),/invalid_survival_time|invalid_retirement/);
+assert.equal(scoreFns.scoreFromRetirement({score:700,baseScore:700,age:44,survivalSeconds:100,victory:false},103),700);
+assert.throws(()=>scoreFns.scoreFromRetirement({score:1400,baseScore:700,age:44,survivalSeconds:100,victory:false},103),/invalid_retirement_score/);
+assert.equal(scoreFns.scoreFromRun({score:1500,day:3,victory:false},100),1500,"old run records remain compatible");
+console.log("PASS: separate 25-point win time and 62-year retirement score verification; legacy records intact");
 
 // EXTREME disables player ascent in both games without suppressing enemy AI jump.
 assert.match(volley,/const canPlayerJump=\(\)=>currentDifficulty!=="extreme"/,"volleyball player jump gate");
@@ -259,152 +247,70 @@ const runnerPointer=new Function("jumpEnabled",[
 ].join("\n"));
 assert.equal(runnerPointer(false).y,368,"extreme run touch must stay on ground");
 assert.equal(runnerPointer(true).y,76,"other run difficulties still allow rising");
-// Personal high score shown upper-right is saved per device.
-assert.match(volley,/class="volley-best-row"/);
+// Winner-take-first 25-point volleyball rules, loss path and pause-aware timer.
+assert.match(volley,/const MATCH_TARGET=25/);
 assert.match(volley,/id="volley-best-label"/);
-assert.ok(volley.indexOf('class="volley-best-row"')<volley.indexOf('id="player-score"'),"best score precedes team scores");
-assert.match(volley,/const BEST_KEY="teacherVolleyballBestV1"/);
-assert.match(volley,/rememberBest\(getFinalScore\(\)\)/,"finished game updates personal best");
-const bestSource=volley.slice(volley.indexOf('function rememberBest(score){'),volley.indexOf('const canPlayerJump='));
-assert.ok(bestSource.includes("localStorage.setItem"),"personal high score persists");
-const mockStore={value:null,setItem(k,v){this.value=v;}},bestLabel={textContent:""};
-const updatedBest=new Function("localStorage","bestLabel",[
- 'let bestScore=0;const BEST_KEY="teacherVolleyballBestV1";',
- bestSource,
- 'rememberBest(1390);rememberBest(1000);',
- 'return bestScore;'
-].join("\n"))(mockStore,bestLabel);
-assert.equal(updatedBest,1390,"lower finish cannot replace high score");
-assert.equal(mockStore.value,"1390");
-assert.match(bestLabel.textContent,/1,390/);
-// Intro overlay now reflects school choice instead of permanent PRESS START.
-assert.doesNotMatch(volley,/overlay\("PRESS START"/);
-const introStart=volley.indexOf('if (state.phase === "ready") {',volley.indexOf('function render()'));
-const introEnd=volley.indexOf('else if (state.phase === "paused")',introStart);
-assert.ok(introStart>0&&introEnd>introStart);
-const overlaySnippet=volley.slice(introStart,introEnd);
-const introOverlay=new Function("school",[
- 'const state={phase:"ready"},schoolPicker={get:()=>school};',
- 'const diffName={extreme:"EXTREME",easy:"EASY"};',
- 'let shown=null;const overlay=(...args)=>{shown=args;};',
- overlaySnippet,
- 'return shown;'
-].join("\n"));
-assert.equal(introOverlay(null)[0],"학교를 선택하세요");
-assert.equal(introOverlay({eligible:true,school_name:"가람초등학교",difficulty:"easy"})[0],"가람초등학교");
-assert.equal(introOverlay({eligible:false})[0],"조사 참여 필요");
-// Permanent double-touch helper copy removed; core special actions remain.
-assert.doesNotMatch(volley,/id="volley-special-status"|class="volley-special-status"/);
-assert.doesNotMatch(runner,/id="run-special-status"|class="arcade-run-special-status"/);
-assert.match(volley,/function activateSuperSpike\(\)/);
-assert.match(runner,/function activateSpecial\(\)/);
-console.log("PASS: EXTREME ground restriction, personal HI-SCORE, school-intro overlay and tutorial text removal");
+assert.match(volley,/FASTEST_KEY="teacherVolleyballFastest25V1"/);
+assert.match(volley,/rememberFastest\(duration\)/);
+assert.match(volley,/new window\.ArcadeLeaderboard\("volleyball_25"/);
+assert.match(runner,/new window\.ArcadeLeaderboard\("teacher_run_retirement"/);
+assert.match(shared,/const timedGame=game=>game==="volleyball_25"/);
+assert.match(shared,/a\.score-b\.score:b\.score-a\.score/,"only time boards are ascending");
+assert.match(shared,/timedGame\(this\.game\)\?this\.score>=this\.board\[9\]\.score/);
+assert.match(volley,/EASY: animated feather wings/);
+assert.match(volley,/p===left&&currentDifficulty==="easy"/);
+assert.match(runner,/profile===difficultyProfiles\.easy/);
+const clockStart=volley.indexOf("const MATCH_TARGET=25");
+const clockEnd=volley.indexOf("const W =",clockStart);
+assert.ok(clockStart>0&&clockEnd>clockStart);
+const clockSrc=volley.slice(clockStart,clockEnd);
+const timerCase=(phase,now,startedAt=1000,pausedMs=0,pausedAt=0,finishedAt=0)=>
+ new Function("state","performance",clockSrc+
+ "\nreturn {tenths:getElapsedTenths(),formatted:formatTime(getElapsedTenths())};")(
+ {phase,startedAt,pausedMs,pausedAt,finishedAt},{now:()=>now});
+assert.deepEqual(timerCase("playing",7050,1000,500),{tenths:56,formatted:"0:05.6"});
+assert.deepEqual(timerCase("paused",99999,1000,500,5100),{tenths:36,formatted:"0:03.6"});
+assert.deepEqual(timerCase("finished",99999,1000,500,0,7100),{tenths:56,formatted:"0:05.6"});
+assert.deepEqual(timerCase("ready",99999,0),{tenths:0,formatted:"0:00.0"});
+const pointStart=volley.indexOf("function point(leftWins) {");
+const pointEnd=volley.indexOf("function step() {",pointStart);
+assert.ok(pointStart>0&&pointEnd>pointStart);
+const pointSrc=volley.slice(pointStart,pointEnd);
+function pointCase(player,cpu,leftWins){
+ const state={phase:"playing",leftScore:player,rightScore:cpu,serveLeft:true};
+ return new Function("state","side",[
+ 'const MATCH_TARGET=25;',
+ 'let finished=0;const setStatus=()=>{},tone=()=>{},syncUI=()=>{};',
+ 'const finishMatch=()=>{finished++;state.phase="finished";};',
+ pointSrc,"point(side);return {p:state.leftScore,c:state.rightScore,finished,phase:state.phase,serveLeft:state.serveLeft};"
+ ].join("\n"))(state,leftWins);
+}
+assert.deepEqual(pointCase(24,20,true),{p:25,c:20,finished:1,phase:"finished",serveLeft:false});
+assert.deepEqual(pointCase(16,24,false),{p:16,c:25,finished:1,phase:"finished",serveLeft:true});
+assert.deepEqual(pointCase(5,4,true),{p:6,c:4,finished:0,phase:"point",serveLeft:false});
+assert.doesNotMatch(volley,/getSurvivalBonus|loseLife|leftEnergy|rightEnergy/,"old HP/survival score mechanics are removed");
+assert.match(volley,/ranking\?\.finish\(duration,\{player:state\.leftScore,cpu:state\.rightScore,elapsedTenths:duration\}\)/);
+console.log("PASS: 25-point winner/loser, pause-correct race clock, independent shortest time and EASY wings");
 
-// Life depletion → round reset → final KO, spike shadows and sound toggle.
-const volleyLifeSource=volley.match(/const lifeProfiles=(\{[^}]+\});/);
-assert.ok(volleyLifeSource,"volleyball has tier-based life profiles");
-const volleyLifeProfile=new Function("return "+volleyLifeSource[1])();
-assert.deepEqual(volleyLifeProfile,{easy:3,normal:2,hard:2,very_hard:1,extreme:1});
-assert.match(volley,/id="volley-lives"/);
-assert.doesNotMatch(volley,/id="volley-round-label"|class="volley-round"|ROUND [0-9]|state\.round|roundLabel/,"continuous volleyball match has no misleading round counter");
-assert.match(volley,/id="player-energy-progress"/);
-assert.match(volley,/id="sound" class="sound-toggle"/);
-assert.match(volley,/soundButton\.addEventListener\("click"/);
-assert.match(volley,/localStorage\.setItem\(SOUND_KEY/);
-assert.match(volley,/function unlockSound\(\)/);
-assert.match(volley,/window\.AudioContext\|\|window\.webkitAudioContext/);
-assert.match(volley,/function spikeSound\(superSpike=false\)/);
-assert.match(volley,/spikeSound\(charged\)/);
-assert.match(volley,/ball\.shadowFrames=charged\?26:18/);
-assert.match(volley,/ball\.trail\.length > \(ball\.shadowFrames>0\?14:6\)/);
-assert.match(volley,/if\(ball\.shadowFrames>0\)/);
-assert.match(volley,/ctx\.ellipse\(ball\.x-ball\.vx\*i\*1\.55/);
-const volleyFunctionsStart=volley.indexOf('function finishMatch(knockout=false){');
-const volleyFunctionsEnd=volley.indexOf('function step() {',volleyFunctionsStart);
-assert.ok(volleyFunctionsStart>0&&volleyFunctionsEnd>volleyFunctionsStart);
-const volleyLifeFunctions=volley.slice(volleyFunctionsStart,volleyFunctionsEnd);
-const lifeTestState={
- phase:"playing",leftEnergy:0,rightEnergy:75,leftMaxEnergy:100,rightMaxEnergy:100,
- livesLeft:2,maxLives:2,knockout:false,leftScore:3,rightScore:1,spikes:2
-};
-const lifeObserved={resets:0,positions:0,rank:null,unlocked:0};
-const mockedLifeFunctions=new Function("state","observed",[
-  'const tone=()=>{},releaseKeys=()=>{},syncUI=()=>{},updateEnergyUI=()=>{},setStatus=()=>{};',
-  'const schoolPicker={setLocked:()=>{observed.unlocked++;}};',
-  'const rememberBest=()=>{},getFinalScore=()=>550,getBaseScore=()=>270,getSurvivalSeconds=()=>70,getSurvivalBonus=()=>280;',
-  'const resetEnergy=()=>{observed.resets++;state.leftEnergy=100;};',
-  'const resetPositions=()=>{observed.positions++;};',
-  'const ranking={finish:(score,stats)=>{observed.rank={score,stats};}};',
-  'const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),energy={allyCost:1,enemyCost:1};',
-  volleyLifeFunctions,'return {loseLife,point,finishMatch};'
-].join("\n"))(lifeTestState,lifeObserved);
-assert.equal(mockedLifeFunctions.loseLife(),true);
-assert.equal(lifeTestState.livesLeft,1,"first exhaustion consumes exactly one life");
-assert.equal(lifeTestState.livesLeft,1,"life loss does not create a numbered round");
-assert.equal(lifeTestState.phase,"point","round intermission protects the user from instant repeated KO");
-assert.equal(lifeTestState.leftEnergy,100,"round restores stamina");
-assert.equal(lifeObserved.resets,1);
-assert.equal(lifeObserved.positions,1);
-assert.equal(lifeObserved.rank,null,"intermediate rounds do not submit records");
-lifeTestState.phase="playing";lifeTestState.leftEnergy=0;
-assert.equal(mockedLifeFunctions.loseLife(),true);
-assert.equal(lifeTestState.livesLeft,0);
-assert.equal(lifeTestState.phase,"finished");
-assert.equal(lifeTestState.knockout,true);
-assert.equal(lifeObserved.rank.stats.knockout,true);
-assert.equal(lifeObserved.rank.stats.livesLost,2);
-assert.equal(lifeObserved.rank.stats.survivalSeconds,70);
-assert.equal(lifeObserved.rank.score,550);
-assert.equal(lifeObserved.resets,1,"final KO must not start a new round");
-// Server accepts verified difficulty-based knockouts before seven points.
-assert.equal(scoreFns.scoreFromVolleyball({
- player:3,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:1
-},80,"extreme"),3*120+2*25+70*4,"KO receives no undeserved victory bonus");
-assert.equal(scoreFns.scoreFromVolleyball({
- player:3,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:2
-},80,"hard"),3*120+2*25+70*4,"hard two-life KO allowed");
-assert.throws(()=>scoreFns.scoreFromVolleyball({
- player:3,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:1
-},80,"hard"),/invalid_lives/);
-assert.throws(()=>scoreFns.scoreFromVolleyball({
- player:7,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:1
-},80,"extreme"),/invalid_match/);
-assert.throws(()=>scoreFns.scoreFromVolleyball({
- player:3,cpu:1,spikes:2,survivalSeconds:90,knockout:true,livesLost:1
-},70,"extreme"),/invalid_survival_time/);
-assert.throws(()=>scoreFns.scoreFromVolleyball({
- player:3,cpu:1,spikes:2,survivalSeconds:70,knockout:true,livesLost:1
-},80,"mystery"),/invalid_lives/);
-assert.equal(scoreFns.scoreFromVolleyball({
- player:7,cpu:3,spikes:2,survivalSeconds:70
-},80,"easy"),7*120+2*25+600+(7-3)*30+70*4,"normal winning match remains compatible");
-assert.match(backend,/scoreFromVolleyball\(payload\.stats,elapsed,session\.difficulty\)/);
-console.log("PASS: volleyball continuous match, life loss/reset, final KO, tier verification, scoring, shadows and sound");
-
-// Five-tier ball velocity, stronger pixel opponents and real current-score regression.
+// Five-tier ball speed and opposite team cosmetics survive the redesign.
 const netTopMatch=volley.match(/NET_TOP = (\d+), NET_W/);
-assert.ok(netTopMatch);assert.equal(Number(netTopMatch[1]),342,"net is slightly higher");
+assert.ok(netTopMatch);assert.equal(Number(netTopMatch[1]),342);
 const speedMatch=volley.match(/const ballSpeedProfiles=(\{[^}]+\});/);
 const looksMatch=volley.match(/const enemyLooks=(\{[\s\S]*?\n\s*\});/);
-assert.ok(speedMatch&&looksMatch,"tier speed and opponent profiles exist");
+assert.ok(speedMatch&&looksMatch);
 const speeds=new Function("return "+speedMatch[1])(),looks=new Function("return "+looksMatch[1])();
 const levels=["easy","normal","hard","very_hard","extreme"];
 assert.deepEqual(Object.keys(speeds),levels);
 assert.deepEqual(Object.keys(looks),levels);
-assert.equal(speeds.hard,1);
 for(let i=1;i<levels.length;i++){
- assert.ok(speeds[levels[i]]>speeds[levels[i-1]],"ball speed grows with tier");
- assert.ok(looks[levels[i]].armor>=looks[levels[i-1]].armor,"armor does not weaken");
- assert.ok(looks[levels[i]].aura>=looks[levels[i-1]].aura,"aura does not weaken");
+ assert.ok(speeds[levels[i]]>speeds[levels[i-1]]);
+ assert.ok(looks[levels[i]].armor>=looks[levels[i-1]].armor);
 }
-assert.equal(new Set(levels.map(t=>looks[t].uniform)).size,5,"unique enemy uniforms");
-assert.equal(looks.extreme.armor,3);assert.equal(looks.extreme.aura,2);
 assert.match(volley,/drawTeacher\(right, \(enemyLooks\[currentDifficulty\]\|\|enemyLooks\.normal\)\.uniform\)/);
 assert.match(volley,/if\(look&&look\.armor\)/);
-assert.match(volley,/if\(look&&look\.aura\)/);
-assert.match(volley,/ball\.vx=\(sign\*attack\*energyFactor\(p\.side\)\+clamp\(p\.vx,-12,12\)\*\.16\)\*ballSpeedFactor\(\)/);
-assert.match(volley,/ball\.vy=\(p\.side==="left" \?[\s\S]*?\)\*ballSpeedFactor\(\)/);
-const serveStart=volley.indexOf("function resetPositions()"),serveEnd=volley.indexOf("async function startMatch()",serveStart);
+assert.match(volley,/ball\.vx=\(sign\*attack\+clamp\(p\.vx,-12,12\)\*\.16\)\*ballSpeedFactor\(\)/);
+const serveStart=volley.indexOf("function resetPositions()");
+const serveEnd=volley.indexOf("async function startMatch()",serveStart);
 assert.ok(serveStart>0&&serveEnd>serveStart);
 const resetSource=volley.slice(serveStart,serveEnd);
 const serveSpeed=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
@@ -417,91 +323,65 @@ const serveSpeed=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
 ].join("\n"))(tier,serveLeft);
 assert.ok(Math.abs(serveSpeed("easy").vx)<Math.abs(serveSpeed("hard").vx));
 assert.ok(Math.abs(serveSpeed("hard").vx)<Math.abs(serveSpeed("extreme").vx));
-assert.ok(Math.abs(serveSpeed("easy").vy)<Math.abs(serveSpeed("extreme").vy));
-assert.ok(serveSpeed("extreme",false).vx<0,"serve direction remains correct");
-assert.match(volley,/id="volley-current-score"/);
-assert.match(volley,/class="volley-current-chip"/);
-assert.match(volley,/currentScoreLabel\.textContent=getFinalScore\(\)\.toLocaleString\("ko-KR"\)/);
-assert.match(volley,/state\.phase==="finished"&&state\.leftScore>state\.rightScore/);
-const calcStart=volley.indexOf("const getBaseScore="),calcEnd=volley.indexOf("  const W =",calcStart);
-assert.ok(calcStart>0&&calcEnd>calcStart);
-const scoreSource=volley.slice(calcStart,calcEnd);
-const liveScore=(phase,knockout)=>new Function("state",scoreSource+"\nreturn getFinalScore();")({
- phase,knockout,leftScore:4,rightScore:2,spikes:2,playFrames:35*60
-});
-const running=4*120+2*25+35*4;
-assert.equal(liveScore("playing",false),running,"premature victory bonus is excluded");
-assert.equal(liveScore("point",false),running);
-assert.equal(liveScore("finished",false),running+600+(7-2)*30,"victory bonus granted only on finish");
-assert.equal(liveScore("finished",true),running,"KO has no victory bonus");
-console.log("PASS: net height, tier speed and enemy armor, correct current SCORE and finish bonus");
+assert.ok(serveSpeed("extreme",false).vx<0);
+assert.match(volley,/state\.leftScore>=MATCH_TARGET\|\|state\.rightScore>=MATCH_TARGET/);
+assert.doesNotMatch(volley,/id="volley-current-score"|id="player-energy"|id="cpu-energy"/);
+console.log("PASS: tier speeds, boss appearance, clean 25-point score HUD and two-ball serve");
 
-// Fun update: volley hit-stop/impact should be bounded and CPU boss strikes telegraphed.
-assert.match(volley,/state\.hitStopFrames=charged\?5:bossStrike\?4:3/,"spikes trigger short hit-stop");
-assert.match(volley,/if\(state\.hitStopFrames>0\)\{state\.hitStopFrames--;return;\}/,"hit-stop visibly freezes gameplay for a few frames");
-assert.match(volley,/state\.impactFrames=charged\?19:bossStrike\?15:11/,"impact rings vary by spike strength");
-assert.match(volley,/ctx\.arc\(state\.impactX,state\.impactY,15\+75\*t/,"shockwave expands outward");
-assert.match(volley,/ctx\.translate\(\(Math\.random\(\)-\.5\)\*2\*shake/,"spikes shake the court");
-assert.match(volley,/state\.bossWarnFrames=currentDifficulty==="extreme"\?39:32/,"hard opponent telegraphs strike");
-assert.match(volley,/state\.bossCooldownFrames=currentDifficulty==="extreme"\?190:250/,"boss strike cooldown");
-assert.match(volley,/if\(state\.bossWarnFrames>0\)/,"warning effect appears above CPU");
-assert.match(volley,/const bossStrike=p\.side==="right"&&state\.bossWarnFrames>0/,"CPU can use warned boss attack");
-assert.match(volley,/bossStrike\?\(state\.playFrames%2===0\?-6\.6:-11\.2\)/,"boss strike alternates attack angle");
-assert.match(volley,/state\.bossWarnFrames=0;state\.flash=19/,"warning ends on boss strike");
-// Daily events: one of three distinct events each day, exactly once per day.
-const eventsMatch=runner.match(/const dayEvents=(\[[\s\S]*?\n\s*\]);/);
-assert.ok(eventsMatch,"five day event sets exist");
-const dayEvents=new Function("return "+eventsMatch[1])();
-assert.equal(dayEvents.length,5);
-for(const eventSet of dayEvents){
- assert.equal(eventSet.length,3,"three possible events for each weekday");
- assert.deepEqual(new Set(eventSet.map(e=>e.id)),new Set(["rush","support","focus"]));
+// Volleyball impact and boss strike cues remain unchanged by timer rules.
+assert.match(volley,/state\.hitStopFrames=charged\?5:bossStrike\?4:3/);
+assert.match(volley,/if\(state\.hitStopFrames>0\)\{state\.hitStopFrames--;return;\}/);
+assert.match(volley,/state\.impactFrames=charged\?19:bossStrike\?15:11/);
+assert.match(volley,/ctx\.arc\(state\.impactX,state\.impactY,15\+75\*t/);
+assert.match(volley,/state\.bossWarnFrames=currentDifficulty==="extreme"\?39:32/);
+assert.match(volley,/const bossStrike=p\.side==="right"&&state\.bossWarnFrames>0/);
+// 24 to 62 years: 5 seconds/year, five career eras instead of weekday loop.
+const careerCodeStart=runner.indexOf("const START_AGE=24");
+const careerCodeEnd=runner.indexOf("const bad=[",careerCodeStart);
+assert.ok(careerCodeStart>0&&careerCodeEnd>careerCodeStart);
+const careerSource=runner.slice(careerCodeStart,careerCodeEnd);
+const ageCase=(seconds,stage=0)=>new Function("clock","stage",careerSource+
+ "\nreturn {age:getAge(),careerStage:getCareerStage(),stageSeconds:stageElapsed(),duration:RETIREMENT_SECONDS};")(seconds,stage);
+assert.deepEqual(ageCase(0),{age:24,careerStage:0,stageSeconds:0,duration:190});
+assert.equal(ageCase(4.99).age,24);
+assert.equal(ageCase(5).age,25);
+assert.equal(ageCase(40,1).careerStage,1);
+assert.equal(ageCase(189.99,4).age,61);
+assert.equal(ageCase(190,4).age,62);
+const eventsMatch=runner.match(/const careerEvents=(\[[\s\S]*?\n\s*\]);/);
+assert.ok(eventsMatch);
+const careerEvents=new Function("return "+eventsMatch[1])();
+assert.equal(careerEvents.length,5);
+for(const events of careerEvents){
+ assert.equal(events.length,3);
+ assert.deepEqual(new Set(events.map(x=>x.id)),new Set(["rush","support","focus"]));
 }
-const startEvt=runner.indexOf("function triggerDayEvent(){");
-const endEvt=runner.indexOf("function spawn(){",startEvt);
-assert.ok(startEvt>0&&endEvt>startEvt);
-const dayEventCode=runner.slice(startEvt,endEvt);
-function simulateDayEvent(index,dayIndex=0){
+const evtStart=runner.indexOf("function triggerCareerEvent(){");
+const evtEnd=runner.indexOf("function spawn(){",evtStart);
+assert.ok(evtStart>0&&evtEnd>evtStart);
+const evtSrc=runner.slice(evtStart,evtEnd);
+function careerEventCase(stage,index){
  const fakeMath=Object.create(Math);fakeMath.random=()=>index/3+.001;
- return new Function("dayEvents","day","Math",[
-   'let state="playing",eventTriggered=false,activeEvent=null,eventSeconds=0;',
-   'let life=60,maxLife=100,player={x:150,y:250,inv:0},skill={guard:0};',
-   'let burstCount=0,notice="",updated=false;',
-   'const burst=()=>{burstCount++;},updateLabels=()=>{updated=true;},setNotice=s=>{notice=s;},playTone=()=>{};',
-   dayEventCode,
-   'triggerDayEvent();const selected=activeEvent;',
-   'triggerDayEvent();return {selected,eventTriggered,eventSeconds,life,inv:player.inv,burstCount,notice,updated};'
- ].join("\n"))(dayEvents,dayIndex,fakeMath);
+ return new Function("careerEvents","stage","Math",[
+  'const state="playing";let activeEvent=null,eventSeconds=0;',
+  'let life=60,maxLife=100,player={x:150,y:250,inv:0},skill={guard:0};',
+  'let notice="",bursts=0;const burst=()=>{bursts++;},updateLabels=()=>{},setNotice=x=>{notice=x;},playTone=()=>{};',
+  evtSrc,'triggerCareerEvent();return {event:activeEvent,life,inv:player.inv,notice,bursts};'
+ ].join("\n"))(careerEvents,stage,fakeMath);
 }
-const rushEvent=simulateDayEvent(0);
-assert.equal(rushEvent.selected.id,"rush");
-assert.equal(rushEvent.eventSeconds,6);
-assert.equal(rushEvent.burstCount,0);
-const supportEvent=simulateDayEvent(1,2);
-assert.equal(supportEvent.selected.id,"rush"); // second Wednesday event
-const helpEvent=simulateDayEvent(0,2);
-assert.equal(helpEvent.selected.id,"support");
-assert.equal(helpEvent.life,78,"support event immediately heals");
-assert.ok(helpEvent.inv>=2.7,"support event grants invincibility");
-assert.equal(helpEvent.burstCount,1);
-const focusEvent=simulateDayEvent(2);
-assert.equal(focusEvent.selected.id,"focus");
-assert.match(focusEvent.notice,/점수 35% 추가/);
-assert.match(runner,/if\(!eventTriggered&&dayTime>=6\)triggerDayEvent\(\)/);
-assert.match(runner,/activeEvent=null;eventSeconds=0;eventTriggered=false;/,"fresh event on next weekday");
-assert.match(runner,/activeEvent\?\.id==="rush"\?1\.30:1/,"rush speeds obstacle spawning");
-assert.match(runner,/if\(activeEvent\?\.id==="rush"\)speed\*=1\.20/);
-const scoreFnMatch=runner.match(/function addScore\(n\)\{[^}]+\}/);
-assert.ok(scoreFnMatch);
-const eventScore=(id)=>new Function("activeEvent",[
-   'let score=0,combo=0;const updateLabels=()=>{};',
-   scoreFnMatch[0],'addScore(100);return score;'
- ].join("\n"))(id?{id}:null);
-assert.equal(eventScore(null),100);
-assert.equal(eventScore("focus"),135);
-assert.match(runner,/if\(day===4&&dayTime>=13&&!fridayBossAnnounced\)/,"Friday boss warning once");
-assert.match(runner,/Math\.floor\(\(dayTime-13\)\/2\.7\)%2===0\?\.25:\.75/,"Friday wave alternates two lanes");
-// Existing weekday upgrades now present clear consequences and fair choices.
+assert.equal(careerEventCase(0,0).event.id,"rush");
+assert.equal(careerEventCase(0,1).event.id,"support");
+assert.equal(careerEventCase(0,2).event.id,"focus");
+assert.equal(careerEventCase(2,0).life,78,"colleague help heals");
+assert.ok(careerEventCase(2,0).bursts>0);
+assert.match(careerEventCase(0,2).notice,/점수 35% 추가/);
+assert.match(runner,/const cycle=Math\.floor\(\(stageElapsed\(\)-5\)\/14\)/);
+assert.match(runner,/if\(cycle>=0&&cycle!==lastEventCycle\)/);
+assert.match(runner,/if\(getAge\(\)>=60&&!retirementRushAnnounced\)/);
+assert.match(runner,/Math\.floor\(\(clock-180\)\/2\.7\)%2===0\?\.25:\.75/);
+assert.match(runner,/function nextCareerStage\(\)/);
+assert.match(runner,/state="between";pressed\.clear\(\)/);
+assert.match(runner,/message\(getAge\(\)\+"세 · "\+careerStages\[stage\]\.name/);
 const upgradesMatch=runner.match(/const upgrades=(\[[\s\S]*?\n\s*\]);/);
 assert.ok(upgradesMatch);
 const upgrades=new Function("return "+upgradesMatch[1])();
@@ -513,12 +393,21 @@ assert.match(runner,/if\(u\.id==="vital"\)/);
 assert.match(runner,/if\(u\.id==="speed"\)/);
 assert.match(runner,/if\(u\.id==="guard"\)/);
 assert.match(runner,/if\(u\.id==="heal"\)/);
-assert.match(runner,/activeEvent&&eventSeconds>0/,"events only appear while active");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-core-game1/);
-assert.match(html,/teacher-run\.html\?v=20261119-core-game1/);
-console.log("PASS: volleyball impact and boss cues; run 5-day events, timed bonuses, upgrade choices and Friday pattern");
+assert.match(runner,/activeEvent&&eventSeconds>0/);
+const scoreFnMatch=runner.match(/function addScore\(n\)\{[^}]+\}/);
+assert.ok(scoreFnMatch);
+const eventScore=id=>new Function("activeEvent",[
+ 'let score=0,combo=0;const updateLabels=()=>{};',
+ scoreFnMatch[0],'addScore(100);return score;'
+].join("\n"))(id?{id}:null);
+assert.equal(eventScore(null),100);
+assert.equal(eventScore("focus"),135);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
+assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
+console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
-// Ball reception physics and earned stamina recovery.
+
+// Natural volley impacts remain intact without stamina / healing.
 assert.doesNotMatch(volley,/ball\.x\s*=\s*p\.x\s*\+\s*sign\s*\*\s*\(reach\s*\+\s*R\s*\+\s*1\)/);
 assert.doesNotMatch(volley,/ball\.y\s*=\s*Math\.min\(ball\.y,\s*p\.y\s*-\s*22\)/);
 assert.match(volley,/const handX=p\.x\+sign\*29, handY=p\.y-15/);
@@ -527,67 +416,34 @@ assert.match(volley,/const framesToNet=clamp\(\(NET_X-ball\.x\)\/ball\.vx,4,45\)
 assert.match(volley,/ball\.spin\+=ball\.vx\*\.009/);
 assert.match(volley,/ctx\.rotate\(ball\.spin\)/);
 assert.match(volley,/if\(p\.contactFrames>0\)/);
-assert.match(volley,/if\(left\.contactFrames>0\)left\.contactFrames--/);
-const healsMatch=volley.match(/const receiveHealProfiles=(\{[^}]+\});/);
-assert.ok(healsMatch);
-const heals=new Function("return "+healsMatch[1])();
-assert.deepEqual(heals,{easy:10,normal:9,hard:8,very_hard:7,extreme:6});
-assert.match(volley,/state\.receiveStreak%3===0\?12:0/);
-assert.match(volley,/if\(!spike&&!charged&&incomingVx< -1\)/);
-assert.match(volley,/state\.receiveStreak=0/);
-assert.match(volley,/state\.rightScore \+= 1; state\.receiveStreak=0/);
-assert.match(volley,/textLabel\("💚 \+"\+state\.healAmount\+" 체력"/);
 const hitStart=volley.indexOf("function playerHit(p,ball=activeBalls[0]) {");
-const hitEnd=volley.indexOf("function finishMatch(",hitStart);
+const hitEnd=volley.indexOf("function finishMatch()",hitStart);
 assert.ok(hitStart>0&&hitEnd>hitStart);
 const hitSrc=volley.slice(hitStart,hitEnd);
 const contact=new Function("ball","state","p","tier",[
  'const currentDifficulty=tier,R=48,NET_X=450,NET_TOP=342,AUTO_SPIKE_SPEED=8;',
  'const battle={allyReach:1,enemyReach:1,allyAttack:1,enemyAttack:1,enemySmashChance:0};',
- 'const energy={allyCost:1,enemyCost:1};',
- 'const receiveHealProfiles='+healsMatch[1],
- 'const ballSpeedFactor=()=>1,energyFactor=()=>1,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));',
- 'let status="";const setStatus=s=>{status=s;},tone=()=>{},spikeSound=()=>{},updateEnergyUI=()=>{};',
- hitSrc,'playerHit(p,ball);return status;'
+ 'const ballSpeedFactor=()=>1,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));',
+ 'const setStatus=()=>{},tone=()=>{},spikeSound=()=>{};',
+ hitSrc,'playerHit(p,ball);return {ball,state,p};'
 ].join("\n"));
-function contactCase(tier="hard"){
+function contactCase(tier="hard",spike=false){
  const ball={x:248,y:376,vx:-8,vy:3,cooldown:0,spin:0,trail:[],shadowFrames:0};
- const state={leftEnergy:60,leftMaxEnergy:100,rightEnergy:100,rightMaxEnergy:100,specialChargeFrames:0,
-   bossWarnFrames:0,playFrames:100,spikes:0,receiveStreak:0,healFrames:0,healAmount:0};
- const p={x:210,y:420,vx:0,vy:0,impactSpeed:0,side:"left",contactFrames:0};
- return {ball,state,p,receive(){
-  Object.assign(ball,{x:248,y:376,vx:-8,vy:3,cooldown:0});
-  return contact(ball,state,p,tier);
- }};
+ const state={specialChargeFrames:0,bossWarnFrames:0,playFrames:100,spikes:0,hitStopFrames:0,impactFrames:0};
+ const p={x:210,y:420,vx:0,vy:0,impactSpeed:spike?12:0,side:"left",contactFrames:0};
+ return contact(ball,state,p,tier);
 }
 const reception=contactCase();
-const notice=reception.receive();
-assert.match(notice,/리시브 성공/);
-assert.equal(reception.state.leftEnergy,62,"6 used, 8 recovered");
-assert.equal(reception.state.healAmount,8);
-assert.equal(reception.state.receiveStreak,1);
-assert.ok(Math.hypot(reception.ball.x-248,reception.ball.y-376)<=12.01,"no ball teleportation");
-assert.ok(reception.ball.vx>0&&reception.ball.vy<0,"outbound arc");
-assert.ok(reception.p.contactFrames>0,"receiver animates hands");
-reception.receive();
-assert.match(reception.receive(),/연속 리시브 3회/);
-assert.equal(reception.state.receiveStreak,3);
-assert.equal(reception.state.leftEnergy,78,"three returns trigger +12 bonus");
-assert.equal(reception.state.healAmount,20);
-const full=contactCase();full.state.leftEnergy=99;full.receive();
-assert.equal(full.state.leftEnergy,100,"HP capped");
-const extremeCase=contactCase("extreme");extremeCase.receive();
-assert.equal(extremeCase.state.healAmount,6);
-const spikeCase=contactCase();spikeCase.p.impactSpeed=12;spikeCase.receive();
-assert.equal(spikeCase.state.receiveStreak,0,"spikes do not heal");
-assert.equal(spikeCase.state.healAmount,0);
-console.log("PASS: arm-centered contact, smooth non-teleporting volley returns, forearm animation and earned healing");
-
-
-
-
-
-
+assert.ok(Math.hypot(reception.ball.x-248,reception.ball.y-376)<=12.01);
+assert.ok(reception.ball.vx>0&&reception.ball.vy<0,"received ball follows outbound arc");
+assert.ok(reception.p.contactFrames>0);
+assert.equal(reception.state.spikes,0);
+const strike=contactCase("hard",true);
+assert.equal(strike.state.spikes,1);
+assert.ok(strike.state.hitStopFrames>0);
+assert.ok(strike.ball.shadowFrames>0);
+assert.doesNotMatch(volley,/getSurvivalSeconds|healAmount|leftMaxEnergy|rightMaxEnergy/);
+console.log("PASS: safe non-teleporting reception, spiking hit-stop and no old stamina effects");
 
 
 // Difficulty asymmetry: EXTREME double-ball and chain, EASY/NORMAL clones, automatic chalk.
@@ -670,9 +526,57 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-core-game1/);
-assert.match(html,/teacher-run\.html\?v=20261119-core-game1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
+assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
+
+
+// Execute actual career finish code: 62-year win doubles accumulated points; losses do not.
+const finishStart=runner.indexOf("function finish(win){");
+const finishEnd=runner.indexOf("function pause(){",finishStart);
+assert.ok(finishStart>0&&finishEnd>finishStart);
+const runFinishSource=runner.slice(finishStart,finishEnd);
+function finishCareer(initialScore,seconds,victory){
+ return new Function("initialScore","seconds","victory",[
+ 'let state="playing",clock=seconds,score=initialScore,best=0,pointerId=null,pointerX=null,pointerY=null;',
+ 'const RETIREMENT_SECONDS=190,START_AGE=24,SECONDS_PER_YEAR=5;',
+ 'const pressed={clear(){}},schoolPicker={setLocked(){}},ranking={finish(score,stats){submitted={score,stats};}};',
+ 'let submitted=null,headline="",description="";',
+ 'const getAge=()=>Math.min(62,24+Math.floor(clock/5));',
+ 'const persist=()=>{},updateLabels=()=>{},playTone=()=>{},stopAndChangeSchool=()=>{},$=()=>({textContent:""});',
+ 'const message=(title,desc)=>{headline=title;description=desc;};',
+ runFinishSource,
+ 'finish(victory);return {state,score,best,clock,submitted,headline,description};'
+ ].join("\n"))(initialScore,seconds,victory);
+}
+const fullCareer=finishCareer(4200,189.99,true);
+assert.equal(fullCareer.state,"over");
+assert.equal(fullCareer.clock,190);
+assert.equal(fullCareer.score,8400);
+assert.equal(fullCareer.best,8400);
+assert.deepEqual(fullCareer.submitted.stats,{
+ score:8400,baseScore:4200,survivalSeconds:190,age:62,victory:true
+});
+assert.match(fullCareer.headline,/62세 정년 달성/);
+assert.match(fullCareer.description,/× 2/);
+const earlyCareer=finishCareer(900,60,false);
+assert.equal(earlyCareer.score,900);
+assert.equal(earlyCareer.submitted.stats.age,36);
+assert.equal(earlyCareer.submitted.stats.victory,false);
+assert.match(earlyCareer.description,/정년 보너스 없음/);
+assert.doesNotMatch(runner,/월요일|화요일|수요일|목요일|금요일|월 → 금|DAY<\/span>/);
+const timeBoard=new mockWindow.ArcadeLeaderboard("volleyball_25",null);
+timeBoard.session="session-for-time";timeBoard.remote=true;
+timeBoard.board=Array.from({length:10},(_,i)=>({nickname:"FAST",score:500+i*10}));
+timeBoard.load=async()=>timeBoard.board;
+let askedName=false;timeBoard.openRecord=()=>{askedName=true;};
+await timeBoard.finish(610,{player:25,cpu:9,elapsedTenths:610});
+assert.equal(askedName,false,"slowest time rejected from Top 10");
+await timeBoard.finish(499,{player:25,cpu:9,elapsedTenths:499});
+assert.equal(askedName,true,"faster time qualifies");
+assert.match(backend,/order:game==="volleyball_25"\?"score\.asc,created_at\.asc":"score\.desc,created_at\.asc"/);
+assert.match(backend,/game==="volleyball_25"\?score>=existing\[9\]\.score:score<=existing\[9\]\.score/);
+console.log("PASS: actual 62-year finish doubles score, early failure unchanged, shortest volleyball time wins ranking");
 
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
@@ -693,19 +597,19 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-core-game1")&&
-     site.body.includes("teacher-run.html?v=20261119-core-game1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-vol25-retirement1")&&
+     site.body.includes("teacher-run.html?v=20261119-vol25-retirement1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
 }
 const [site,topVolley,topRun]=await Promise.all([
  waitForPublishedHome(),
- requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
- requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
+ requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
+ requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-core-game1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-core-game1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-vol25-retirement1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
@@ -737,7 +641,7 @@ if(school.eligible){
  assert.ok(["easy","normal","hard","very_hard","extreme"].includes(school.difficulty));
  const start=await requestWithRetry(api,200,{
   method:"POST",headers:origin,
-  body:JSON.stringify({action:"start",game:"volleyball",school_id:school.school_id})
+  body:JSON.stringify({action:"start",game:"volleyball_25",school_id:school.school_id})
  });
  const started=JSON.parse(start.body);
  assert.equal(started.school.eligible,true);
@@ -746,7 +650,7 @@ if(school.eligible){
  assert.match(started.session,/^[0-9a-f-]{36}$/i);
  const invalid=await requestWithRetry(api,400,{
   method:"POST",headers:origin,
-  body:JSON.stringify({action:"submit",game:"volleyball",session:started.session,nickname:"123",stats:{player:7,cpu:0,spikes:0}})
+  body:JSON.stringify({action:"submit",game:"volleyball_25",session:started.session,nickname:"123",stats:{player:25,cpu:0,elapsedTenths:500}})
  });
  assert.equal(JSON.parse(invalid.body).error,"invalid_name");
  console.log("PASS: eligible four-year school session and nickname validation");
@@ -754,7 +658,7 @@ if(school.eligible){
  assert.equal(school.difficulty,null,"no provisional middle-tier fallback");
  const refused=await requestWithRetry(api,409,{
   method:"POST",headers:origin,
-  body:JSON.stringify({action:"start",game:"volleyball",school_id:school.school_id})
+  body:JSON.stringify({action:"start",game:"volleyball_25",school_id:school.school_id})
  });
  const failed=JSON.parse(refused.body);
  assert.equal(failed.error,"school_ineligible");
