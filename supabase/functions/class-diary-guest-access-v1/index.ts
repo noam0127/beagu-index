@@ -21,6 +21,36 @@ function respond(data:unknown,status:number,origin:string){
   'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'
  }});
 }
+// A short-lived, HMAC-signed handoff ticket. Contains no identity code or school data.
+// The signing key remains server-side. A ticket is not a Level 2 session.
+const ticketKeyPromise=crypto.subtle.importKey(
+ 'raw',new TextEncoder().encode('class-diary-guest-v1:'+key),
+ {name:'HMAC',hash:'SHA-256'},false,['sign','verify']
+);
+const encode=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+function decode(value:string){
+ if(!/^[A-Za-z0-9_-]{1,512}$/.test(value))throw Error('BAD_ENCODING');
+ const bytes=atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4));
+ return Uint8Array.from(bytes,c=>c.charCodeAt(0));
+}
+async function issueTicket(){
+ const payload={v:1,scope:'class-diary-fictional-guest',exp:Date.now()+10*60_000,
+  nonce:encode(crypto.getRandomValues(new Uint8Array(12)))};
+ const body=encode(new TextEncoder().encode(JSON.stringify(payload)));
+ const sig=await crypto.subtle.sign('HMAC',await ticketKeyPromise,new TextEncoder().encode('v1.'+body));
+ return 'v1.'+body+'.'+encode(new Uint8Array(sig));
+}
+async function validateTicket(ticket:unknown){
+ if(typeof ticket!=='string'||ticket.length>480||!/^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(ticket))return false;
+ const [,body,signature]=ticket.split('.');
+ try{
+  const parsed=JSON.parse(new TextDecoder().decode(decode(body)));
+  if(parsed?.v!==1||parsed?.scope!=='class-diary-fictional-guest'||
+     !Number.isSafeInteger(parsed.exp)||parsed.exp<Date.now()||parsed.exp>Date.now()+10*60_000||
+     !/^[A-Za-z0-9_-]{16}$/.test(parsed.nonce))return false;
+  return crypto.subtle.verify('HMAC',await ticketKeyPromise,decode(signature),new TextEncoder().encode('v1.'+body));
+ }catch{return false}
+}
 Deno.serve(async req=>{
  const origin=req.headers.get('Origin')||'';
  if(origin&&!allowed.has(origin))return respond({error:'ORIGIN_DENIED'},403,origin);
@@ -44,8 +74,16 @@ Deno.serve(async req=>{
   }
   body=JSON.parse(raw+decoder.decode());
  }catch{return respond({error:'INVALID_JSON'},400,origin);}
- if(!body||typeof body!=='object'||Array.isArray(body)||('action' in body)&&body.action!=='verify-code')
+ if(!body||typeof body!=='object'||Array.isArray(body))
    return respond({error:'INVALID_REQUEST'},400,origin);
+ const action='action' in body&&body.action==='verify-ticket'?'verify-ticket':'verify-code';
+ if('action' in body&&body.action!==action)return respond({error:'INVALID_REQUEST'},400,origin);
+ if(action==='verify-ticket'){
+  const valid=await validateTicket('ticket' in body?body.ticket:null);
+  return valid
+   ?respond({ok:true,scope:'class-diary-fictional-guest'},200,origin)
+   :respond({error:'INVALID_TICKET'},401,origin);
+ }
  try{
   // Share the protected global login attempt budget; do not reveal code guesses.
   const {data:permitted,error:budgetError}=await admin.rpc('beagu_consume_login_budget');
@@ -59,6 +97,7 @@ Deno.serve(async req=>{
   if(valid!==true)return respond({error:'INVALID_CODE'},401,origin);
   // This proves only that the code exists, not the caller's personal identity.
   // Do not send an Lv2 token, school records, participant no, or identity code back.
-  return respond({ok:true,scope:'class-diary-fictional-guest'},200,origin);
+  const ticket=await issueTicket();
+  return respond({ok:true,scope:'class-diary-fictional-guest',ticket,expiresInSeconds:600},200,origin);
  }catch{return respond({error:'AUTH_UNAVAILABLE'},503,origin);}
 });
