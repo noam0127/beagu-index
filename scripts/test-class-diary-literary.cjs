@@ -1,4 +1,4 @@
-/* Contract: 36-episode prose is paged by real lines, never by echo or shrinking. */
+/* Contract: one complete Korean sentence per tap; retain measuring helpers for layout. */
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -23,7 +23,14 @@ assert.deepEqual(pages.flat(),rows,'Pagination must preserve the complete ordere
 const tiny=api.wrapParagraph('가나다라마바사아자차카타파하',20,measure);
 assert(tiny.every(x=>measure(x.text)<=20),'A long unbroken Korean word must still fit');
 const implementation=fs.readFileSync(path.join(__dirname,'../js/class-diary-literary-v1.js'),'utf8');
-for(const forbidden of ['diary-literary-echo','durationPerCharacter','localStorage','sessionStorage','fetch(','sendBeacon']){
- assert(!implementation.includes(forbidden),'Line reader must not use echoes, auto-typing or persistence: '+forbidden);
+for(const forbidden of ['diary-literary-echo','localStorage','sessionStorage','fetch(','sendBeacon']){
+ assert(!implementation.includes(forbidden),'Literary reader must not echo, persist, or transmit data: '+forbidden);
 }
-console.log('PASS literary v2: full-width line wrapping, fixed typography, manual reveal contract and lossless pagination');
+const sentences=api.splitSentences('교실은 조용했다. “돌아올게요.” 그가 고개를 끄덕였다!');
+assert.deepEqual(sentences,['교실은 조용했다.','“돌아올게요.”','그가 고개를 끄덕였다!'],'Split at sentence endings including quotations');
+assert.deepEqual(api.splitSentences('2027.03.08 새 학기. 3.14가 보였다.'),['2027.03.08 새 학기.','3.14가 보였다.'],'Do not split decimals or date strings');
+assert.deepEqual(api.paginate(original).flat().map(x=>x.text),original.flatMap(api.splitSentences),'Each tap yields one complete sentence in order');
+assert.equal(typeof api.setTypingSound,'function','Sound hook must respect existing SFX controls');
+assert(implementation.includes("className='diary-reading-cursor'"),'A blinking cursor must appear while waiting');
+assert(implementation.includes('writingTimer=root.setInterval'),'Letters should appear with a brief typewriter animation');
+console.log('PASS literary v3: sentence splitting, pause cursor, typewriter and original line layout helpers');
