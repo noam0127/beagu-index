@@ -57,13 +57,17 @@ Deno.serve(async(req:Request)=>{
   const {data,error}=await admin.rpc("beagu_admin_dashboard_v1",{p_period:period});
   if(error||!data){console.error("dashboard_aggregate_error",error?.code||"unknown");
    return send({error:"metrics_unavailable"},503,origin);}
+  // Only retained Top-100-ranked anonymous score rows, no session/IP hash or player identity.
+  const {data:recentScores,error:scoresError}=await admin.from("arcade_game_scores")
+    .select("game,score,created_at,school_name,difficulty").order("created_at",{ascending:false}).limit(100);
+  if(scoresError)return send({error:"metrics_unavailable"},503,origin);
   const {error:auditError}=await admin.from("beagu_admin_audit_events").insert({
     actor_user_id:actor,event_type:"admin_dashboard_read",outcome:"success",
     details:{period}
   });
   if(auditError){console.error("admin_dashboard_audit_error",auditError.code);
    return send({error:"audit_unavailable"},503,origin);}
-  return send({analytics:data},200,origin);
+  return send({analytics:{...data,retained_game_scores:recentScores||[]}},200,origin);
  }catch(e){
   console.error("admin_dashboard_unavailable",e instanceof Error?e.name:"unknown");
   return send({error:"service_unavailable"},503,origin);
