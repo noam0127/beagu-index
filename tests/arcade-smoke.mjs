@@ -216,8 +216,9 @@ assert.match(runner,/now-lastTapAt<=320/);
 assert.match(picker,/🏫 학교 선택/);
 assert.match(backend,/function validatedSurvivalSeconds/);
 assert.match(backend,/invalid_time_bonus/);
-const scoring=backend.slice(backend.indexOf("function validatedSurvivalSeconds"),backend.indexOf("Deno.serve("));
-const javascript=scoring.replace(/:\s*(?:any|number)/g,"");
+const scoring=backend.slice(backend.indexOf("function validatedSurvivalSeconds"),backend.indexOf("function publicGameResult("))+
+ backend.slice(backend.indexOf("function scoreFromRetirement("),backend.indexOf("Deno.serve("));
+const javascript=scoring.replace(/:\s*(?:any|number)/g,"").replace(/\s+as const/g,"");
 const scoreFns=new Function("int",javascript+"\nreturn {scoreFromVolleyball,scoreFromRun,scoreFromVolleyball25,scoreFromRetirement};")(
  (v,min,max)=>typeof v==="number"&&Number.isInteger(v)&&v>=min&&v<=max
 );
