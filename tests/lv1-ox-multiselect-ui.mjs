@@ -7,7 +7,7 @@ const js=read('js/level-search.js');
 const edge=read('supabase/functions/beagu-level-api/index.ts');
 const css=read('styles/beagu-search-details-v1.css');
 assert.doesNotThrow(()=>new vm.Script(js));
-assert.match(html,/20261119-ox-multi2/);
+assert.match(html,/20261119-teacher-groups1/);
 assert.match(js,/schoolQuestionSelections/);
 assert.match(edge,/SOURCE_VERIFIED_MULTI_SELECTION/);
 assert.match(edge,/checkboxAllowed\[questionId\]/);
