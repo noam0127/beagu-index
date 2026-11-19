@@ -140,6 +140,7 @@ function scoreFromVolleyball25(result:any, elapsed:number):number {
  return time; // deciseconds; lower values outrank higher values.
 }
 function scoreFromRetirement(result:any,elapsed:number):number {
+ if(result?.survivalSeconds===undefined)throw new Error("invalid_survival_time");
  const score=result?.score,base=result?.baseScore,age=result?.age,
        victory=result?.victory,seconds=validatedSurvivalSeconds(result,elapsed);
  if(!int(base,0,100000)||!int(score,1,200000)||typeof victory!=="boolean"
