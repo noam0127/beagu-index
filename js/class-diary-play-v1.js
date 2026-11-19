@@ -222,6 +222,25 @@ function chapter(state,world,plan){
   const p=book.prose.map(s=>replace(s,colleague));
   const atmosphereLine=atmosphere(world,state.day);
   if(atmosphereLine)p.unshift(atmosphereLine);
+  /* 주인공 성별은 편견이나 결과 점수에 관여하지 않는다. 나이와 유형은 독백만 바꾼다. */
+  if(state.day===1){
+    p.unshift('나는 올해 '+state.profile.age+'살이었다. 학교의 첫날은 나이에 상관없이 언제나 조금 낯설었다.');
+  }
+  if(state.day===2){
+    p.unshift(state.profile.mbti[0]==='I'?
+      '생각이 모일 때까지 잠시 기다렸다. 입 밖으로 내는 말은 종이 위의 문장과 달리 지울 수 없었다.':
+      '말을 건네야 생각도 제 모양을 갖출 것 같았다. 그래도 다른 사람의 말을 먼저 듣기로 했다.');
+  }
+  if(state.day===5){
+    p.unshift(state.profile.gender==='undisclosed'?
+      '내가 어떤 사람인지는 누구나 한마디로 정할 수 없는 일이었다. 오늘은 내 이름보다 내 선택이 존중받기를 바랐다.':
+      '나의 성별과 나이가 해야 할 일을 미리 결정해 주지는 않았다. 나는 오늘 저녁도 스스로 선택하고 싶었다.');
+  }
+  if(state.day===6){
+    p.unshift(state.profile.mbti[3]==='J'?
+      '계획대로 흘러가는 하루가 반가울 때도 있었다. 그러나 오늘은 빈 시간 한 칸을 남겨 두고 싶었다.':
+      '아무 계획 없는 오후의 속도가 좋았다. 정하지 않은 시간 속에서도 마음은 조금씩 길을 찾았다.');
+  }
   /* 승인된 과거 집계의 문장도 가상 장면으로만 사용하며 최다선택 원문은 표시하지 않는다. */
   if(seed.basis==='approved_historical_aggregate')p.unshift('오래전 공개된 조사에서 떠올린 장면 하나가 문득 겹쳤다. '+seed.passage);
   return {
