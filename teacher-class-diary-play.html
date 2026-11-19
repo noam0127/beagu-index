@@ -574,6 +574,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <section id="playerSetup" class="panel diary-player-config" hidden aria-labelledby="playerSetupTitle">
  <span class="diary-prologue-overline">프롤로그를 마치며 · 제1화 이전</span>
  <h2 id="playerSetupTitle">이제, 나의 이야기를 시작할 차례</h2>
+ <p><strong>나의 배역: 3학년 옆 반에 새로 투입된 기간제 담임교사.</strong> 전임 담임의 부재를 메우기 위해 7월까지 아이들의 교실을 맡습니다. 경력은 그전까지의 교직 경험을 선택하는 항목입니다.</p>
  <p>그 사람의 눈에 비친 첫날을 읽었습니다. 이제 이 교실에서 살아갈 <strong>나</strong>를 정해 주세요. 실명 대신 이야기 속 이름을 사용해도 됩니다.</p>
  <form id="playerSetupForm">
   <div class="diary-player-profile-fields">
@@ -679,7 +680,13 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/2026-questionnaire-options-v1.2.js"></script>
 <script src="js/class-diary-narrative-v1.js"></script>
 <script src="js/class-diary-play-v1.js"></script>
-<script src="js/class-diary-semester-v1.js?v=20261120"></script>
+<script src="js/class-diary-prose-act1-v1.js?v=20261120-novel2"></script>
+<script src="js/class-diary-prose-act2-v1.js?v=20261120-novel2"></script>
+<script src="js/class-diary-prose-act3-v1.js?v=20261120-novel2"></script>
+<script src="js/class-diary-prose-act4-v1.js?v=20261120-novel2"></script>
+<script src="js/class-diary-prose-act5-v1.js?v=20261120-novel2"></script>
+<script src="js/class-diary-prose-act6-v1.js?v=20261120-novel2"></script>
+<script src="js/class-diary-semester-v1.js?v=20261120-novel2"></script>
 <script src="js/class-diary-narrator-v1.js?v=20261120-pov1"></script>
 <script src="js/class-diary-school-brief-v1.js?v=20261120-a1"></script>
 <script src="js/class-diary-progress-v1.js?v=20261120-1"></script>
@@ -1478,7 +1485,7 @@ function renderPlayerSetup(){
  $('heroName').value=game.profile.name||'새봄';
  $('heroExperience').value=['new','mid','senior'].includes(game.profile.experience)?game.profile.experience:'mid';
  $('heroGender').value=['female','male','undisclosed'].includes(game.profile.gender)?game.profile.gender:'undisclosed';
- status('프롤로그를 읽었습니다. 제1화부터 등장할 나의 설정을 정해 주세요.');
+ status('프롤로그를 읽었습니다. 제1화부터는 옆 반에 투입된 기간제 담임인 나의 시점으로 진행합니다.');
 }
 $('playerSetupForm').addEventListener('submit',event=>{
  event.preventDefault();
@@ -1492,7 +1499,7 @@ $('playerSetupForm').addEventListener('submit',event=>{
  $('heroName').setCustomValidity('');
  const experience=$('heroExperience').value,gender=$('heroGender').value;
  if(!['new','mid','senior'].includes(experience)||!['man','woman','undisclosed'].includes(gender))return;
- game={...game,profile:{...game.profile,name,experience,gender}};
+ game={...game,profile:{...game.profile,name,experience,gender,employment:'fixed_term',grade:3}};
  playerSetupPending=false;
  sound.note('pageTurn');
  render();autoSaveProgress();
@@ -1567,7 +1574,7 @@ function renderSemester(){
   $('outcomeLine').textContent=game.lastOutcome.line;
  }
  vnStart(reflection);
- status('제'+view.act+'부 · '+view.episode+'화 / 36화');
+ status('제'+view.act+'부 · '+view.episode+'화 / 36화 · 옆 반 기간제 담임의 이야기');
 }
 function renderSemesterEnding(){
  show('ending');mood('ending');sound.setAmbience(null);
