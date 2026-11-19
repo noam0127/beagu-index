@@ -22,11 +22,14 @@ for(const path of ['js/challenge.js','js/level-search.js','js/survey-referral-v1
   'js/referral-form-config.js','js/beagu-level-state-v1.js']){
   new Script(read(path),{filename:path}); // JS syntactic smoke test
 }
-assert.ok(challenge.includes('id="challengeReferralPanel"'));
-assert.ok(challenge.indexOf('id="challengeReferralPanel"')>challenge.indexOf('id="certificate"'));
+assert.ok(challenge.includes('id="challengeSharePanel"'));
+assert.ok(challenge.indexOf('id="challengeSharePanel"')>challenge.indexOf('id="certificate"'));
 assert.ok(challenge.includes('data-html2canvas-ignore="true"'));
-for(const id of ['copyReferralLink','referralProgress','referralLevel','referralLv2Link','identityRecovery'])
+for(const id of ['copyChallengeUrl','challengeShareFeedback','identityRecovery'])
   assert.ok(challenge.includes('id="'+id+'"'),id);
+assert.ok(!challenge.includes('id="challengeReferralPanel"'), 'Challenge must not enroll Lv2 referrals');
+assert.ok(!challengeJs.includes('loadReferral'), 'Challenge JS must not call legacy code/UUID referral enroll');
+assert.ok(!challengeJs.includes("action: 'enroll'"), 'Referrals belong to authenticated level-up');
 assert.ok(challengeJs.includes('deviceProof: deviceProof()'));
 for (const [label, code] of [
   ['long', 'BG26-1234-5678-ABCD-DCBA-1234'],
