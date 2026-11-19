@@ -72,27 +72,25 @@ Deno.serve(async(req:Request)=>{
  }
  if(!body||!['save','load','delete'].includes(body.action)||typeof body.recoveryKey!=='string'||!/^[0-9a-f]{64}$/.test(body.recoveryKey))return reply(origin,400,{error:'BAD_REQUEST'});
  const id=await digest('beagu-diary-save-v1:'+body.recoveryKey);
- const table=admin.schema('beagu_private').from('class_diary_save_slots_v1');
- const {data:row,error:readError}=await table.select('scope,school_id,payload,expires_at').eq('token_sha256',id).maybeSingle();
+ // Private table stays outside the Data API; only service-role RPCs can access it.
+ const {data:rows,error:readError}=await admin.rpc('beagu_class_diary_slot_get',{p_sha:id});
  if(readError)return reply(origin,503,{error:'DATABASE_UNAVAILABLE'});
+ const row=Array.isArray(rows)?rows[0]||null:null;
  const available=!!row&&Date.parse(row.expires_at)>Date.now();
  if(body.action==='load')return available?reply(origin,200,{ok:true,scope:row.scope,schoolId:row.school_id,snapshot:row.payload}):reply(origin,404,{error:'NOT_FOUND'});
  if(body.action==='delete'){
-  if(available){const {error}=await table.delete().eq('token_sha256',id);if(error)return reply(origin,503,{error:'DATABASE_UNAVAILABLE'})}
+  if(available){const {error}=await admin.rpc('beagu_class_diary_slot_delete',{p_sha:id});if(error)return reply(origin,503,{error:'DATABASE_UNAVAILABLE'})}
   return reply(origin,200,{ok:true});
  }
  const {scope,schoolId,snapshot}=body;
  if(!['guest','level2'].includes(scope)||typeof schoolId!=='string'||!(schoolId==='fictional'||/^[A-Z0-9]{7}$/.test(schoolId))||(scope==='guest'&&schoolId!=='fictional')||!valid(snapshot)||JSON.stringify(snapshot).length>9000)return reply(origin,400,{error:'INVALID_SNAPSHOT'});
  if(row&&!available)return reply(origin,410,{error:'EXPIRED'});
- if(row){
-  if(row.scope!==scope||row.school_id!==schoolId)return reply(origin,403,{error:'SCOPE_MISMATCH'});
-  const {error}=await table.update({payload:snapshot,updated_at:new Date().toISOString(),expires_at:new Date(Date.now()+90*86400000).toISOString()}).eq('token_sha256',id);
-  if(error)return reply(origin,503,{error:'WRITE_FAILED'});
- }else{
+ if(row&& (row.scope!==scope||row.school_id!==schoolId))return reply(origin,403,{error:'SCOPE_MISMATCH'});
+ if(!row){
   const ok=scope==='guest'?(await guestAllowed(req.headers.get('x-class-diary-guest-ticket')||'')||await grantAllowed(req.headers.get('x-class-diary-save-grant')||'')):await levelAllowed(req.headers.get('x-beagu-session')||'');
   if(!ok)return reply(origin,401,{error:'ACCESS_REQUIRED'});
-  const {error}=await table.insert({token_sha256:id,scope,school_id:schoolId,payload:snapshot});
-  if(error)return reply(origin,503,{error:'WRITE_FAILED'});
  }
+ const {data:written,error:writeError}=await admin.rpc('beagu_class_diary_slot_put',{p_sha:id,p_scope:scope,p_school_id:schoolId,p_payload:snapshot});
+ if(writeError||written!==true)return reply(origin,503,{error:'WRITE_FAILED'});
  return reply(origin,200,{ok:true,expiresInDays:90});
 });
