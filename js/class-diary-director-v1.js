@@ -100,6 +100,12 @@ function decorateChapter(state,world,base){
   if(callback)copy.paragraphs.splice(1,0,callback.replace(/\{colleague\}/g,colleague));
   const relationship=dynamicLine(state);
   if(relationship)copy.paragraphs.push(relationship);
+  if(state.day>=6&&state.stats&&Number.isFinite(Number(state.stats.support))){
+    const remembered=state.stats.support>=55?
+      '학교를 떠나온 주말에도 힘이 남아 있었다. 함께 주안을 맞추고 아이들 일을 의논해 준 동료들이 있어서, 월요일이 아주 막막하지만은 않았다.':
+      '학교 밖인데도 학년연구실에서 들은 말이 자꾸 떠올랐다. 어른들끼리 서로 적대하는 분위기에서 교실의 하루까지 지켜 내는 일은 쉽지 않았다. 그건 내 능력만의 문제가 아니었다.';
+    copy.paragraphs.splice(Math.min(2,copy.paragraphs.length),0,remembered);
+  }
   const profile=RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none;
   return {
     ...copy,directionVersion:VERSION,character:{...profile},
