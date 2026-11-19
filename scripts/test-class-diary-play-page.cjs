@@ -36,6 +36,10 @@ assert(play.src.includes("director.decorateOutcome(game)"));
 assert(play.src.includes('id="sceneArt"'));
 assert(play.src.includes('id="characterAvatar"'));
 assert(play.src.includes('src="js/class-diary-director-v1.js"'));
+assert(play.src.includes('src="js/class-diary-context-v1.js"'));
+assert(play.src.includes('schoolContext.forDay(world,game.day)'));
+assert(play.src.includes("$('statVoice').textContent"));
+assert(play.src.includes("$('statBoundary').textContent"));
 assert(!play.src.includes('type="checkbox"'));
 assert(play.src.includes('기록은 저장되지 않습니다'));
 assert(play.src.includes("localStorage.removeItem(key)"));
@@ -52,7 +56,7 @@ assert(play.src.includes('src="js/class-diary-demo-v1.js"'));
 assert(play.src.includes('로그인 없이 플레이'));
 assert(play.src.includes('실제 학교 자료 사용 안 함'));
 assert(!play.src.includes('.innerHTML'),'Use textContent instead of interpolating user data as HTML');
-for(const id of ['profileForm','setup','novel','ending','chapterText','choiceButtons','outcome','noSaveNotice']){
+for(const id of ['profileForm','setup','novel','ending','chapterText','choiceButtons','outcome','noSaveNotice','schoolFacts','schoolFactsList','statVoice','statBoundary']){
  assert(play.ids.has(id),'Required interactive UI element missing: '+id);
 }
 assert(!play.src.includes('id="resumeBox"'));
