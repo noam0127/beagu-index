@@ -808,7 +808,7 @@ const otherCelebrations=new Set([0,1,2].map(x=>runVictory("hard",3,x,1,.2,5000+x
 assert.ok(otherCelebrations.size>=2,"ordinary retirement clear messages vary");
 assert.match(volley,/state\.pointTicks=24/,"point intermission cut to 0.4 seconds");
 assert.match(volley,/const precise=p\.side==="left"&&accuracy/,"precision-based hit timing matters");
-assert.match(volley,/state\.rescueUsed\|\|hitBall\.cooldown/,"clones only rescue once");
+assert.match(volley,/hitBall\.allyCooldown>0/,"teammate cooldown prevents repeated overlap hits");
 assert.match(volley,/Math\.abs\(hitBall\.x-left\.x\)<115/,"helpers stay out when player can receive");
 assert.match(runner,/closestClearance<58/,"near miss verified by real distance");
 assert.doesNotMatch(runner,/!a\.good&&Math\.abs\(a\.x-player\.x\)<83/,"old false near-miss scoring removed");
