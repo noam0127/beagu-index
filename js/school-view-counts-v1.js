@@ -3,7 +3,7 @@
  */
 (() => {
   'use strict';
-  const ID=/^[0-9]{7}$/;
+  const ID=/^[A-Z0-9]{7}$/;
   const cache=new Map();
   const valid=n=>Number.isSafeInteger(n)&&n>=0;
   const client=()=>typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
