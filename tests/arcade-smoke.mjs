@@ -365,7 +365,7 @@ for(let i=1;i<levels.length;i++){
 }
 assert.match(volley,/drawTeacher\(right, \(enemyLooks\[currentDifficulty\]\|\|enemyLooks\.normal\)\.uniform\)/);
 assert.match(volley,/if\(look&&look\.armor\)/);
-assert.match(volley,/ball\.vx=\(sign\*attack\+clamp\(p\.vx,-12,12\)\*\.16\)\*ballSpeedFactor\(\)/);
+assert.match(volley,/ball\.vx=\(sign\*attack\+clamp\(p\.vx,-12,12\)\*\.16\+\(precise\?1\.9:0\)\)\*ballSpeedFactor\(\)/);
 const serveStart=volley.indexOf("function resetPositions()");
 const serveEnd=volley.indexOf("async function startMatch()",serveStart);
 assert.ok(serveStart>0&&serveEnd>serveStart);
