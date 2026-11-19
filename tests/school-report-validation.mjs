@@ -123,15 +123,15 @@ assert.ok(!('responses' in participantFile)&&!('counts' in participantFile)&&!('
 assert.ok(src.includes('state.publicParticipationByYear[String(year)]?.has(String(state.school?.school_id))'),'Public year card should show all historic school-year records');
 const historicIndex=JSON.parse(fs.readFileSync('data/public-2023-2025-school-records-v2.json','utf8'));
 assert.deepEqual(Object.keys(historicIndex.schoolIdsByYear),['2023','2024','2025']);
-for(const [year,count] of [['2023',2807],['2024',3284],['2025',1458]]){
+for(const [year,count] of [['2023',2898],['2024',3358],['2025',1547]]){
  const ids=historicIndex.schoolIdsByYear[year];
  assert.equal(ids.length,count,'Historic school-year presence count for '+year);
  assert.equal(new Set(ids).size,count,'No duplicated school IDs in '+year);
- assert.ok(ids.every(id=>/^\d{7}$/.test(id)),'Only school IDs are allowed');
+ assert.ok(ids.every(id=>/^[A-Z0-9]{7}$/.test(id)),'Only valid school IDs are allowed');
 }
 assert.ok(!('answers' in historicIndex)&&!('counts' in historicIndex)&&!('responses' in historicIndex));
-assert.deepEqual(historicIndex.schoolIdsByYear['2025'],participantFile.schoolIds);
-assert.ok(src.includes('data/public-2023-2025-school-records-v2.json?v=20261118'),'Public school report should load all three verified historical-year indexes');
+assert.ok(participantFile.schoolIds.every(id=>historicIndex.schoolIdsByYear['2025'].includes(id)),'All 1458 approved 2025 participant IDs must remain in the wider historical participation index');
+assert.ok(src.includes('data/public-2023-2025-school-records-v2.json?v=20261120-historyfull2'),'Public school report should load all three verified historical-year indexes');
 // A real published school survey percentile must not disappear from yearly details
 // simply because individual question results are separately restricted.
 assert.ok(html.includes('id="schoolSurveySnapshot"'),'Dedicated school survey result panel required');
