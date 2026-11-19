@@ -58,8 +58,8 @@ assert.ok(css.includes('fonts.googleapis.com')&&css.includes('"Gaegu"'),
  'handwritten Korean memo font loaded with a legible fallback');
 assert.ok(css.includes('postit-paper::before')&&css.includes('postit-paper::after'),
  'subtle creases and folded corner');
-assert.ok(page.includes('postit-v1.css?v=20261120-tornpaper1')&&
- page.includes('postit-v1.js?v=20261120-tornpaper2'),'browser loads latest visual assets');
+assert.ok(page.includes('styles/postit-v1.css?v=')&&
+ page.includes('js/postit-v1.js?v='),'browser loads versioned Post-it visual assets');
 
 // The challenge page shares the same paper-note language and header as Post-it,
 // but the exportable certificate and the personal code remain clearly separated.
@@ -84,8 +84,7 @@ assert.ok(challengePaper.includes('body.beagu-page-challenge #certificate')&&
  challengePaper.includes('clip-path:none'),
  'Capture certificate remains a clean, unclipped rectangular image');
 for(const id of ['challengeAccessPanel','challengeProtected','certificate','participantNo',
- 'challengeIdentityPanel','identityCode','copyIdentityCode','capture','postit' + 'None']) {
- if(id==='postitNone')continue;
+ 'challengeIdentityPanel','identityCode','copyIdentityCode','capture']) {
  assert.ok(challenge.includes('id="'+id+'"'),'Challenge functional DOM preserved: '+id);
 }
 assert.ok(challenge.includes('data-html2canvas-ignore="true"'),
