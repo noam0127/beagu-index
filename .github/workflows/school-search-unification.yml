@@ -22,12 +22,14 @@ on:
       - 'tests/school-search-unification.mjs'
       - 'tests/lv1-ranked-office-history.mjs'
       - 'tests/search-detail-ui-v1.mjs'
+      - 'tests/lv1-school-faculty-groups.mjs'
       - 'tests/auth-unified-2026-link.mjs'
       - 'tests/school-question-mode-only-privacy.mjs'
       - 'tests/lv1-ox-multiselect-ui.mjs'
       - 'tests/2026-approved-search-refresh.mjs'
       - 'supabase/functions/beagu-level-api/index.ts'
       - 'supabase/migrations/20261119_school_checkbox_choices_v1.sql'
+      - 'supabase/migrations/20261119_2025_domain_comparisons_v1.sql'
       - '.github/workflows/school-search-unification.yml'
   workflow_dispatch:
 permissions:
@@ -43,6 +45,7 @@ jobs:
       - run: node tests/school-search-unification.mjs
       - run: node tests/lv1-ranked-office-history.mjs
       - run: node tests/search-detail-ui-v1.mjs
+      - run: node tests/lv1-school-faculty-groups.mjs
       - run: node tests/auth-unified-2026-link.mjs
       - run: node tests/school-question-mode-only-privacy.mjs
       - run: node tests/lv1-ox-multiselect-ui.mjs
