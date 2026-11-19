@@ -4,10 +4,10 @@ const SUPA_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const BASE = SUPA_URL + "/rest/v1/";
 const ALLOWED_ORIGINS = new Set(["https://baeguindex.com","https://www.baeguindex.com","https://noam0127.github.io"]);
-const VALID_GAMES = new Set(["volleyball","teacher_run"]);
+const VALID_GAMES = new Set(["volleyball","teacher_run","volleyball_25","teacher_run_retirement"]);
 const encoder = new TextEncoder();
 const CACHE = "no-store";
-type Game = "volleyball" | "teacher_run";
+type Game = "volleyball" | "teacher_run" | "volleyball_25" | "teacher_run_retirement";
 type Entry = { nickname: string; score: number; created_at: string; school_name?: string | null; difficulty?: string | null };
 type Session = { id: string; game: Game; ip_hash: string; started_at: string; submitted_at: string | null; school_id?:string; school_name?:string; difficulty?:string };
 
@@ -41,7 +41,7 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
   const raw=await response.text();return raw?JSON.parse(raw):null;
 }
 async function top(game: Game): Promise<Entry[]> {
-  const q = new URLSearchParams({select:"nickname,score,created_at,school_name,difficulty",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
+  const q = new URLSearchParams({select:"nickname,score,created_at,school_name,difficulty",game:"eq."+game,order:game==="volleyball_25"?"score.asc,created_at.asc":"score.desc,created_at.asc",limit:"10"});
   const list = await db("arcade_game_scores?" + q);
   return list.map((e:Entry)=>({nickname:e.nickname,score:e.score,created_at:e.created_at,school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
@@ -129,6 +129,30 @@ function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number 
   return p*120+Math.min(60,spikes)*25+
     (!knockout&&p>c?600+Math.max(0,7-c)*30:0)+Math.min(900,seconds*4);
 }
+function scoreFromVolleyball25(result:any, elapsed:number):number {
+ const player=result?.player,cpu=result?.cpu,time=result?.elapsedTenths;
+ if(player!==25 || !int(cpu,0,24) || !int(time,1,36000))
+   throw new Error("invalid_stats");
+ // A match has at least 24 replay gaps (100 frames each). Accept generous
+ // network/mobile slack, but reject impossible time claims and future time.
+ if(time<Math.max(150,(player+cpu-1)*13)||time>(elapsed+2)*10)
+   throw new Error("invalid_duration");
+ return time; // deciseconds; lower values outrank higher values.
+}
+function scoreFromRetirement(result:any,elapsed:number):number {
+ const score=result?.score,base=result?.baseScore,age=result?.age,
+       victory=result?.victory,seconds=validatedSurvivalSeconds(result,elapsed);
+ if(!int(base,0,100000)||!int(score,1,200000)||typeof victory!=="boolean"
+   ||!int(age,24,62))throw new Error("invalid_stats");
+ if(age!==Math.min(62,24+Math.floor(seconds/5)))throw new Error("invalid_age");
+ if(victory){
+   if(age!==62||seconds!==190||elapsed<188)throw new Error("invalid_retirement");
+ }else if(seconds>=190)throw new Error("invalid_retirement");
+ if(score!==base*(victory?2:1))throw new Error("invalid_retirement_score");
+ if(base>Math.min(100000,Math.floor(seconds*220+4000)))
+   throw new Error("invalid_score");
+ return score;
+}
 function scoreFromRun(result: any, elapsed: number): number {
   const s = result?.score, day = result?.day, victory=result?.victory;
   if (!int(s,1,100000) || !int(day,1,5) || typeof victory !== "boolean") throw new Error("invalid_stats");
@@ -190,10 +214,13 @@ Deno.serve(async (req:Request)=>{
     if(elapsed<4||elapsed>3600)return error("invalid_duration",400,origin);
     let score:number;
     try {
-      score=game==="volleyball" ? scoreFromVolleyball(payload.stats,elapsed,session.difficulty) : scoreFromRun(payload.stats,elapsed);
+      score=game==="volleyball"?scoreFromVolleyball(payload.stats,elapsed,session.difficulty):
+         game==="volleyball_25"?scoreFromVolleyball25(payload.stats,elapsed):
+         game==="teacher_run_retirement"?scoreFromRetirement(payload.stats,elapsed):
+         scoreFromRun(payload.stats,elapsed);
     } catch(e) {return error(e instanceof Error?e.message:"invalid_stats",400,origin);}
     const existing=await top(game);
-    if(existing.length>=10 && score<=existing[9].score){
+    if(existing.length>=10 && (game==="volleyball_25"?score>=existing[9].score:score<=existing[9].score)){
       return json({ranked:false,score,top10:existing},200,origin);
     }
     // Persist the score BEFORE consuming the session. A transient insert failure
