@@ -299,7 +299,7 @@
         class="teacher-game-frame"
         id="teacher-game-frame"
         scrolling="no"
-        src="teacher-volleyball.html?v=20261120-safari-fallback5"
+        src="teacher-volleyball.html?v=20261120-game3-lock1"
         title="선생님배구 1.0 — 직접 조작하는 1대1 배구 미니게임"
         loading="lazy"
         allowfullscreen></iframe>
@@ -328,7 +328,7 @@
           class="teacher-game-frame"
           id="teacher-run-frame"
         scrolling="no"
-          data-src="teacher-run.html?v=20261120-safari-fallback5"
+          data-src="teacher-run.html?v=20261120-game3-lock1"
           title="험난한 교직생활 3.0 — 24세 임용부터 62세 정년까지 살아남는 교사 생존 게임"
           loading="lazy"
           allowfullscreen></iframe>
@@ -380,6 +380,36 @@
       {id:"teacher-run-frame",resizeType:"teacher-run:resize"}
     ];
     let expandedFrame=null,expandedFeature=null;
+    let playingFrame=null,lockedY=0,savedBodyStyle=null;
+    function lockPageDuringMatch(frame,playing){
+      if(playing){
+        if(playingFrame)return;
+        playingFrame=frame;
+        lockedY=window.scrollY||window.pageYOffset||0;
+        const body=document.body;
+        savedBodyStyle={
+          position:body.style.position,top:body.style.top,left:body.style.left,
+          right:body.style.right,width:body.style.width,overflow:body.style.overflow
+        };
+        Object.assign(body.style,{
+          position:"fixed",top:-lockedY+"px",left:"0",right:"0",width:"100%",overflow:"hidden"
+        });
+        document.documentElement.classList.add("arcade-match-active");
+      }else if(playingFrame===frame){
+        playingFrame=null;
+        document.documentElement.classList.remove("arcade-match-active");
+        if(savedBodyStyle)Object.assign(document.body.style,savedBodyStyle);
+        savedBodyStyle=null;
+        window.scrollTo(0,lockedY);
+      }
+    }
+    // iOS may keep scrolling the parent while an embedded game handles touches.
+    document.addEventListener("touchmove",event=>{
+      if(playingFrame&&event.cancelable)event.preventDefault();
+    },{passive:false});
+    document.addEventListener("wheel",event=>{
+      if(playingFrame&&event.cancelable)event.preventDefault();
+    },{passive:false});
     function matchingFrame(event){
       if(event.origin!==window.location.origin||!event.data)return null;
       for(const game of games){
@@ -417,6 +447,10 @@
       const matched=matchingFrame(event);
       if(!matched)return;
       const {frame,game}=matched;
+      if(event.data.type==="arcade:play-state"){
+        if(typeof event.data.active==="boolean")lockPageDuringMatch(frame,event.data.active);
+        return;
+      }
       if(event.data.type==="arcade:fullscreen-request"){
         if(event.data.active===true)expand(frame);
         else if(expandedFrame===frame)collapse();
@@ -432,7 +466,10 @@
     window.addEventListener("keydown",event=>{
       if(event.key==="Escape"&&expandedFrame){event.preventDefault();collapse();}
     });
-    window.addEventListener("pagehide",collapse);
+    window.addEventListener("pagehide",()=>{
+      if(playingFrame)lockPageDuringMatch(playingFrame,false);
+      collapse();
+    });
   })();
 </script>
 
