@@ -328,72 +328,60 @@ assert.match(volley,/state\.leftScore>=MATCH_TARGET\|\|state\.rightScore>=MATCH_
 assert.doesNotMatch(volley,/id="volley-current-score"|id="player-energy"|id="cpu-energy"/);
 console.log("PASS: tier speeds, boss appearance, clean 25-point score HUD and two-ball serve");
 
-// Fun update: volley hit-stop/impact should be bounded and CPU boss strikes telegraphed.
-assert.match(volley,/state\.hitStopFrames=charged\?5:bossStrike\?4:3/,"spikes trigger short hit-stop");
-assert.match(volley,/if\(state\.hitStopFrames>0\)\{state\.hitStopFrames--;return;\}/,"hit-stop visibly freezes gameplay for a few frames");
-assert.match(volley,/state\.impactFrames=charged\?19:bossStrike\?15:11/,"impact rings vary by spike strength");
-assert.match(volley,/ctx\.arc\(state\.impactX,state\.impactY,15\+75\*t/,"shockwave expands outward");
-assert.match(volley,/ctx\.translate\(\(Math\.random\(\)-\.5\)\*2\*shake/,"spikes shake the court");
-assert.match(volley,/state\.bossWarnFrames=currentDifficulty==="extreme"\?39:32/,"hard opponent telegraphs strike");
-assert.match(volley,/state\.bossCooldownFrames=currentDifficulty==="extreme"\?190:250/,"boss strike cooldown");
-assert.match(volley,/if\(state\.bossWarnFrames>0\)/,"warning effect appears above CPU");
-assert.match(volley,/const bossStrike=p\.side==="right"&&state\.bossWarnFrames>0/,"CPU can use warned boss attack");
-assert.match(volley,/bossStrike\?\(state\.playFrames%2===0\?-6\.6:-11\.2\)/,"boss strike alternates attack angle");
-assert.match(volley,/state\.bossWarnFrames=0;state\.flash=19/,"warning ends on boss strike");
-// Daily events: one of three distinct events each day, exactly once per day.
-const eventsMatch=runner.match(/const dayEvents=(\[[\s\S]*?\n\s*\]);/);
-assert.ok(eventsMatch,"five day event sets exist");
-const dayEvents=new Function("return "+eventsMatch[1])();
-assert.equal(dayEvents.length,5);
-for(const eventSet of dayEvents){
- assert.equal(eventSet.length,3,"three possible events for each weekday");
- assert.deepEqual(new Set(eventSet.map(e=>e.id)),new Set(["rush","support","focus"]));
+// Volleyball impact and boss strike cues remain unchanged by timer rules.
+assert.match(volley,/state\.hitStopFrames=charged\?5:bossStrike\?4:3/);
+assert.match(volley,/if\(state\.hitStopFrames>0\)\{state\.hitStopFrames--;return;\}/);
+assert.match(volley,/state\.impactFrames=charged\?19:bossStrike\?15:11/);
+assert.match(volley,/ctx\.arc\(state\.impactX,state\.impactY,15\+75\*t/);
+assert.match(volley,/state\.bossWarnFrames=currentDifficulty==="extreme"\?39:32/);
+assert.match(volley,/const bossStrike=p\.side==="right"&&state\.bossWarnFrames>0/);
+// 24 to 62 years: 5 seconds/year, five career eras instead of weekday loop.
+const careerCodeStart=runner.indexOf("const START_AGE=24");
+const careerCodeEnd=runner.indexOf("const bad=[",careerCodeStart);
+assert.ok(careerCodeStart>0&&careerCodeEnd>careerCodeStart);
+const careerSource=runner.slice(careerCodeStart,careerCodeEnd);
+const ageCase=(seconds,stage=0)=>new Function("clock","stage",careerSource+
+ "\nreturn {age:getAge(),careerStage:getCareerStage(),stageSeconds:stageElapsed(),duration:RETIREMENT_SECONDS};")(seconds,stage);
+assert.deepEqual(ageCase(0),{age:24,careerStage:0,stageSeconds:0,duration:190});
+assert.equal(ageCase(4.99).age,24);
+assert.equal(ageCase(5).age,25);
+assert.equal(ageCase(40,1).careerStage,1);
+assert.equal(ageCase(189.99,4).age,61);
+assert.equal(ageCase(190,4).age,62);
+const eventsMatch=runner.match(/const careerEvents=(\[[\s\S]*?\n\s*\]);/);
+assert.ok(eventsMatch);
+const careerEvents=new Function("return "+eventsMatch[1])();
+assert.equal(careerEvents.length,5);
+for(const events of careerEvents){
+ assert.equal(events.length,3);
+ assert.deepEqual(new Set(events.map(x=>x.id)),new Set(["rush","support","focus"]));
 }
-const startEvt=runner.indexOf("function triggerDayEvent(){");
-const endEvt=runner.indexOf("function spawn(){",startEvt);
-assert.ok(startEvt>0&&endEvt>startEvt);
-const dayEventCode=runner.slice(startEvt,endEvt);
-function simulateDayEvent(index,dayIndex=0){
+const evtStart=runner.indexOf("function triggerCareerEvent(){");
+const evtEnd=runner.indexOf("function spawn(){",evtStart);
+assert.ok(evtStart>0&&evtEnd>evtStart);
+const evtSrc=runner.slice(evtStart,evtEnd);
+function careerEventCase(stage,index){
  const fakeMath=Object.create(Math);fakeMath.random=()=>index/3+.001;
- return new Function("dayEvents","day","Math",[
-   'let state="playing",eventTriggered=false,activeEvent=null,eventSeconds=0;',
-   'let life=60,maxLife=100,player={x:150,y:250,inv:0},skill={guard:0};',
-   'let burstCount=0,notice="",updated=false;',
-   'const burst=()=>{burstCount++;},updateLabels=()=>{updated=true;},setNotice=s=>{notice=s;},playTone=()=>{};',
-   dayEventCode,
-   'triggerDayEvent();const selected=activeEvent;',
-   'triggerDayEvent();return {selected,eventTriggered,eventSeconds,life,inv:player.inv,burstCount,notice,updated};'
- ].join("\n"))(dayEvents,dayIndex,fakeMath);
+ return new Function("careerEvents","stage","Math",[
+  'const state="playing";let activeEvent=null,eventSeconds=0;',
+  'let life=60,maxLife=100,player={x:150,y:250,inv:0},skill={guard:0};',
+  'let notice="",bursts=0;const burst=()=>{bursts++;},updateLabels=()=>{},setNotice=x=>{notice=x;},playTone=()=>{};',
+  evtSrc,'triggerCareerEvent();return {event:activeEvent,life,inv:player.inv,notice,bursts};'
+ ].join("\n"))(careerEvents,stage,fakeMath);
 }
-const rushEvent=simulateDayEvent(0);
-assert.equal(rushEvent.selected.id,"rush");
-assert.equal(rushEvent.eventSeconds,6);
-assert.equal(rushEvent.burstCount,0);
-const supportEvent=simulateDayEvent(1,2);
-assert.equal(supportEvent.selected.id,"rush"); // second Wednesday event
-const helpEvent=simulateDayEvent(0,2);
-assert.equal(helpEvent.selected.id,"support");
-assert.equal(helpEvent.life,78,"support event immediately heals");
-assert.ok(helpEvent.inv>=2.7,"support event grants invincibility");
-assert.equal(helpEvent.burstCount,1);
-const focusEvent=simulateDayEvent(2);
-assert.equal(focusEvent.selected.id,"focus");
-assert.match(focusEvent.notice,/점수 35% 추가/);
-assert.match(runner,/if\(!eventTriggered&&dayTime>=6\)triggerDayEvent\(\)/);
-assert.match(runner,/activeEvent=null;eventSeconds=0;eventTriggered=false;/,"fresh event on next weekday");
-assert.match(runner,/activeEvent\?\.id==="rush"\?1\.30:1/,"rush speeds obstacle spawning");
-assert.match(runner,/if\(activeEvent\?\.id==="rush"\)speed\*=1\.20/);
-const scoreFnMatch=runner.match(/function addScore\(n\)\{[^}]+\}/);
-assert.ok(scoreFnMatch);
-const eventScore=(id)=>new Function("activeEvent",[
-   'let score=0,combo=0;const updateLabels=()=>{};',
-   scoreFnMatch[0],'addScore(100);return score;'
- ].join("\n"))(id?{id}:null);
-assert.equal(eventScore(null),100);
-assert.equal(eventScore("focus"),135);
-assert.match(runner,/if\(day===4&&dayTime>=13&&!fridayBossAnnounced\)/,"Friday boss warning once");
-assert.match(runner,/Math\.floor\(\(dayTime-13\)\/2\.7\)%2===0\?\.25:\.75/,"Friday wave alternates two lanes");
-// Existing weekday upgrades now present clear consequences and fair choices.
+assert.equal(careerEventCase(0,0).event.id,"rush");
+assert.equal(careerEventCase(0,1).event.id,"support");
+assert.equal(careerEventCase(0,2).event.id,"focus");
+assert.equal(careerEventCase(2,0).life,78,"colleague help heals");
+assert.ok(careerEventCase(2,0).bursts>0);
+assert.match(careerEventCase(0,2).notice,/점수 35% 추가/);
+assert.match(runner,/const cycle=Math\.floor\(\(stageElapsed\(\)-5\)\/14\)/);
+assert.match(runner,/if\(cycle>=0&&cycle!==lastEventCycle\)/);
+assert.match(runner,/if\(getAge\(\)>=60&&!retirementRushAnnounced\)/);
+assert.match(runner,/Math\.floor\(\(clock-180\)\/2\.7\)%2===0\?\.25:\.75/);
+assert.match(runner,/function nextCareerStage\(\)/);
+assert.match(runner,/state="between";pressed\.clear\(\)/);
+assert.match(runner,/message\(getAge\(\)\+"세 · "\+careerStages\[stage\]\.name/);
 const upgradesMatch=runner.match(/const upgrades=(\[[\s\S]*?\n\s*\]);/);
 assert.ok(upgradesMatch);
 const upgrades=new Function("return "+upgradesMatch[1])();
@@ -405,10 +393,19 @@ assert.match(runner,/if\(u\.id==="vital"\)/);
 assert.match(runner,/if\(u\.id==="speed"\)/);
 assert.match(runner,/if\(u\.id==="guard"\)/);
 assert.match(runner,/if\(u\.id==="heal"\)/);
-assert.match(runner,/activeEvent&&eventSeconds>0/,"events only appear while active");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-core-game1/);
-assert.match(html,/teacher-run\.html\?v=20261119-core-game1/);
-console.log("PASS: volleyball impact and boss cues; run 5-day events, timed bonuses, upgrade choices and Friday pattern");
+assert.match(runner,/activeEvent&&eventSeconds>0/);
+const scoreFnMatch=runner.match(/function addScore\(n\)\{[^}]+\}/);
+assert.ok(scoreFnMatch);
+const eventScore=id=>new Function("activeEvent",[
+ 'let score=0,combo=0;const updateLabels=()=>{};',
+ scoreFnMatch[0],'addScore(100);return score;'
+].join("\n"))(id?{id}:null);
+assert.equal(eventScore(null),100);
+assert.equal(eventScore("focus"),135);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
+assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
+console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
+
 
 // Ball reception physics and earned stamina recovery.
 assert.doesNotMatch(volley,/ball\.x\s*=\s*p\.x\s*\+\s*sign\s*\*\s*\(reach\s*\+\s*R\s*\+\s*1\)/);
