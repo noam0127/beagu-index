@@ -74,7 +74,7 @@ assert.equal("nickname" in requestPayload,false,"no user-entered identifiers sen
 const displaced=mockRecordBoard();
 displaced.request=async()=>({ranked:false,top10:[]});
 await displaced.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
-assert.match(displaced.notice,/역대 게임 기록에 저장됨/);
+assert.match(displaced.notice,/역대 상위 100위 안에 기록됨/);
 const offline=mockRecordBoard("teacher_run_retirement");
 offline.request=async()=>{throw new Error("network_unavailable");};
 await offline.finish(1200,{score:1200,baseScore:1200,survivalSeconds:80,age:40,victory:false});
@@ -101,7 +101,11 @@ let autoUploadedLow=0;
 unqualified.request=async()=>{autoUploadedLow++;return {ranked:false,top10:unqualified.board};};
 await unqualified.finish(610,{score:610,baseScore:610,survivalSeconds:10,age:26,victory:false});
 assert.equal(autoUploadedLow,1,"retirement results below TOP10 are auto-saved");
-assert.match(unqualified.notice,/역대 게임 기록에 저장됨/);
+assert.match(unqualified.notice,/역대 상위 100위 안에 기록됨/);
+const offBoard=mockRecordBoard("teacher_run_retirement");
+offBoard.request=async()=>({ranked:false,recorded:false,top10:[]});
+await offBoard.finish(3,{score:3,baseScore:3,survivalSeconds:2,age:24,victory:false});
+assert.match(offBoard.notice,/상위 100위 밖.*기록 미등록/);
 assert.doesNotMatch(shared,/submitName|openRecord|dialogElement|ENTER YOUR NAME|input\.maxLength/);
 assert.match(shared,/localStorage\.removeItem\("arcade-last-name-v1"\)/,"wipe prior typed names on visitors' devices");
 assert.match(shared,/\.sort\(\(a,b\)=>b\.score-a\.score/);
@@ -697,6 +701,13 @@ assert.match(backend,/if\(tier\)q\.set\("difficulty","eq\."\+tier\)/,"ranking ti
 assert.match(backend,/Persist each validated result/,"all runner results are persisted");
 assert.match(runner,/ranking\?\.finish\(Math\.floor\(score\)/,"runner auto submits on finish");
 assert.match(runner,/닉네임 없이 결과를 자동 기록합니다/);
+assert.match(shared,/arcade-history\.html\?game=/,"both games have an accessible records link");
+assert.match(backend,/function gameHistory\(game:Game,tier:string\|null,page:number\)/,"history API is implemented");
+assert.match(backend,/maxRecords:100/,"history declares its TOP100 limit");
+assert.match(backend,/order:"score\.desc,created_at\.asc,id\.asc"/,"history is ranked by high score, not just date");
+assert.match(backend,/\^\[1-4\]\$/,"history refuses pages beyond one hundred results");
+assert.match(backend,/arcade_fastest25_records/,"fastest win TOP10 persists separately from score TOP100");
+assert.match(backend,/recorded,score,top10/,"API returns whether result survived TOP100 pruning");
 console.log("PASS: conditional congratulations, core action rewards, input parity and automatic tiered ranking");
 
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
