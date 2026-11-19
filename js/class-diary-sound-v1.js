@@ -244,6 +244,8 @@ const CUES=Object.freeze({
  cup:[920,1170,.085,.055]
 });
 const PHYSICAL=Object.freeze({
+ // Quiet original pencil-on-paper rustle, sounded sparingly during each line reveal.
+ typing:{seconds:.034,type:'highpass',frequency:2550,level:.014},
  paper:{seconds:.13,type:'highpass',frequency:1400,level:.065},
  step:{seconds:.16,type:'lowpass',frequency:320,level:.08},
  door:{seconds:.20,type:'lowpass',frequency:570,level:.09}
