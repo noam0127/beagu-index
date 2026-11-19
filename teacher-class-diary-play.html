@@ -27,7 +27,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 label{display:block;font-size:13px;font-weight:750;margin:0 0 8px;color:#294257}
 input,select{background:#fbfcfe;border:1px solid #bdcdda;border-radius:12px;width:100%;padding:13px;font:inherit;font-size:15px;color:#182a3c}
 input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid #87b6e7;outline-offset:3px}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:20px 0 14px}
+.form-grid>div:first-child{grid-column:1/-1}\n.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:20px 0 14px}
 .field-note{color:#798797;font-size:12px;margin-top:7px}
 button{font:inherit;cursor:pointer}
 .primary,.secondary,.linklike{border:0;border-radius:12px;padding:14px 19px;font-weight:800}
@@ -399,7 +399,22 @@ function renderScenario(){
  $('schoolFacts').hidden=true;
  $('worldDetail').hidden=true;
  $('chapterSource').textContent=event.fictionLabel;
- fillParagraphs('chapterText',event.paragraphs);
+ /* Additional fictional school-life episodes also greet the named protagonist. */
+ const episodeIntros={
+  first_day:'우리 반 준비, 어디부터 같이 볼까요?',
+  hand_off:'이건 누가 맡을 일인지 먼저 확인해 볼까요?',
+  lesson_break:'전담시간이시죠? 준비하시는 것부터 마무리하세요.',
+  procedure:'확인할 사실부터 차근차근 정리해 봐요.',
+  week_end:'이번 주 정말 고생 많으셨어요.',
+  forced_social:'친목회장 얘기 들으셨어요? 의견을 좀 듣고 싶어요.',
+  sports:'오늘 체육 모임은 어떻게 하실 거예요?',
+  barbecue:'잠깐 함께하셔도 좋고 바로 퇴근하셔도 괜찮아요.'
+ };
+ const episodeProse=event.paragraphs.map(p=>p.replace(/\{colleague\}/g,partner));
+ if(!incident&&episodeIntros[event.id])
+   episodeProse.splice(1,0,partner+'이 조용히 말을 건넸다. “'+
+     engine.playerAddress(game)+', '+episodeIntros[event.id]+'”');
+ fillParagraphs('chapterText',episodeProse);
  const done=!!event.result;
  $('choiceSection').hidden=done;
  $('outcome').hidden=!done;
