@@ -23,6 +23,39 @@ const plan={schoolId:'7972013',scenes:Array.from({length:7},(_,i)=>({
  passage:'검증된 과거 집계에 착안한 창작 장면이다.'
 }))};
 const profile={age:32,gender:'woman',partner:'man',mbti:'INFP'};
+const inferredWorld={
+ eligible:true,basic:{id:'TEST001',name:'공식 자료 검증 학교',scale:'large'},
+ publishedYears:[2024],mode:'real_approved',
+ numbers:{students:{status:'APPROVED',value:132,referenceYear:2025}},
+ geography:{tags:[{id:'admin_myeon',source:'official_address',label:'면 소재'}]}
+};
+const namedInput={name:'최윤호',age:32,gender:'man',partner:'woman',mbti:'INFP'};
+const guessed=engine.inferredProfile(inferredWorld,namedInput);
+assert.equal(guessed.fictionalSchoolSize,'small','Only approved official student count may determine size');
+assert.equal(guessed.storyRegion,'rural','Only verified official geography may determine region');
+assert.equal(guessed.gradeBand,'middle','Fixed fictional 3rd grade is not inferred from staff traits');
+assert.equal(guessed.workCulture,'collaborative','Culture is a fictional baseline, not guessed from demographics');
+assert.equal(guessed.duty,'general','Duty cannot be inferred from official school demographics');
+const unsafe={...inferredWorld,numbers:{students:{status:'WITHHELD',value:1950,referenceYear:2025}},
+ geography:{tags:[{id:'admin_dong',source:'guessed',label:'미검증'}]}};
+const strict=engine.inferredProfile(unsafe,namedInput);
+assert.equal(strict.fictionalSchoolSize,'medium');
+assert.equal(strict.storyRegion,'other');
+const fictional=engine.inferredProfile({...inferredWorld,mode:'public_fiction_demo'},namedInput);
+assert.equal(fictional.fictionalSchoolSize,'medium');
+assert.equal(fictional.storyRegion,'other');
+assert.throws(()=>engine.validateProfile({...namedInput,name:'<img src=x>'}),/NAME_INVALID/);
+assert.throws(()=>engine.validateProfile({...namedInput,name:'가'}),/NAME_INVALID/);
+const namedState=engine.createGame(world,plan,namedInput);
+assert.equal(namedState.profile.name,'최윤호');
+assert.equal(engine.playerAddress(namedState),'최윤호 선생님');
+namedState.day=4;
+namedState.stats.affection=75;
+namedState.stats.trust=70;
+assert.equal(engine.playerAddress(namedState),'윤호 쌤');
+namedState.stats.trust=30;
+assert.equal(engine.playerAddress(namedState),'최윤호 선생님');
+
 assert.throws(()=>engine.createGame({...world,eligible:false},plan,profile),/APPROVED_WORLD_REQUIRED/);
 assert.throws(()=>engine.createGame(world,{...plan,schoolId:'0000000'},profile),/VERIFIED_SCENE_PLAN_REQUIRED/);
 assert.throws(()=>engine.createGame(world,plan,{...profile,age:17}),/ADULT_AGE_REQUIRED/);
