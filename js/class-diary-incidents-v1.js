@@ -288,9 +288,9 @@ function schedule(state,world){
  const w=setting(state,world),d=state.day;
  const days={
    1:[w.locale==='urban'?'parking':null,'arrival','focus'],
-   2:[w.grade==='lower'?'seat_song':null,'break_clean',w.fictionalCulture==='collaborative'?'shared_break':'hostile_break','late_guard'],
+   2:[w.grade==='lower'?'seat_song':null,'break_clean',w.fictionalCulture==='collaborative'?'shared_break':w.fictionalCulture==='hostile'?'hostile_break':null,'late_guard'],
    3:[w.locale==='rural'?'wildlife':null,'gender_duty'],
-   4:[w.fictionalCulture==='collaborative'?'shared_meeting':'hostile_meeting','sport'],
+   4:[w.fictionalCulture==='collaborative'?'shared_meeting':w.fictionalCulture==='hostile'?'hostile_meeting':null,'sport'],
    5:[['deflecting','hostile'].includes(w.fictionalCulture)&&w.scale==='large'?'friendship_chair':
        w.fictionalCulture==='collaborative'?'barbecue':null]
  };
