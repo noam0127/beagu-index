@@ -170,11 +170,55 @@ function scoreFromVolleyball25(result:any,elapsed:number):number {
   throw new Error("invalid_score");
  return final;
 }
+// Deliberately return only gameplay facts, never session UUIDs, IP-derived hashes,
+ // school IDs, visitor IDs, nicknames or arbitrary client-supplied properties.
+function publicGameResult(game:Game,result:any):Record<string,unknown>{
+ if(game==="volleyball_25"){
+  return {
+   outcome:result.victory?"victory":result.endedEarly?"stopped":"defeat",
+   playerPoints:result.player,cpuPoints:result.cpu,
+   baseScore:result.baseScore,playBonus:result.survivalBonus,
+   winMultiplier:result.multiplier,playedTenths:result.activeTenths
+  };
+ }
+ return {
+  outcome:result.victory?"retired":"retired_early",
+  startAge:24,endAge:result.age,playedSeconds:result.survivalSeconds,
+  baseScore:result.baseScore,retirementBonus:result.victory?result.baseScore:0,
+  ...(result.nearMisses===undefined?{}:{nearMisses:result.nearMisses}),
+  ...(result.hits===undefined?{}:{hits:result.hits}),
+  ...(result.livesLeft===undefined?{}:{livesLeft:result.livesLeft}),
+  ...(result.healthPercent===undefined?{}:{healthPercent:result.healthPercent})
+ };
+}
+async function gameHistory(game:Game,tier:string|null,page:number){
+ const pageSize=30,offset=(page-1)*pageSize;
+ const q=new URLSearchParams({
+  select:"id,score,created_at,school_name,difficulty,win_time_tenths,public_result",
+  game:"eq."+game,order:"created_at.desc,id.desc",
+  limit:String(pageSize+1),offset:String(offset)
+ });
+ if(tier)q.set("difficulty","eq."+tier);
+ const results=await db("arcade_game_scores?"+q) as Array<{
+  score:number;created_at:string;school_name:string|null;difficulty:string|null;
+  win_time_tenths:number|null;public_result:Record<string,unknown>|null
+ }>;
+ const records=results.slice(0,pageSize).map(record=>({
+  score:record.score,createdAt:record.created_at,
+  schoolName:record.school_name??"학교 미등록",difficulty:record.difficulty,
+  winTimeTenths:record.win_time_tenths,
+  details:record.public_result&&typeof record.public_result==="object"?record.public_result:{}
+ }));
+ return {game,page,pageSize,hasMore:results.length>pageSize,records};
+}
 function scoreFromRetirement(result:any,elapsed:number):number {
  if(result?.survivalSeconds===undefined)throw new Error("invalid_survival_time");
  const score=result?.score,base=result?.baseScore,age=result?.age,
        victory=result?.victory,seconds=validatedSurvivalSeconds(result,elapsed);
- if(!int(base,0,100000)||!int(score,1,200000)||typeof victory!=="boolean"
+ for(const [key,max] of [["nearMisses",20000],["hits",20000],["livesLeft",5],["healthPercent",100]] as const){
+  if(result[key]!==undefined&&!int(result[key],0,max))throw new Error("invalid_stats");
+ }
+ if(!int(base,0,100000)||!int(score,0,200000)||typeof victory!=="boolean"
    ||!int(age,24,62))throw new Error("invalid_stats");
  if(age!==Math.min(62,24+Math.floor(seconds/5)))throw new Error("invalid_age");
  if(victory){
@@ -212,6 +256,12 @@ Deno.serve(async (req:Request)=>{
       if(!isGame(game))return error("invalid_game",400,origin);
       const tier=params.has("difficulty")?rankTier(params.get("difficulty")):null;
       if(params.has("difficulty")&&!tier)return error("invalid_difficulty",400,origin);
+      if(params.get("history")==="1"){
+        const rawPage=params.get("page")??"1";
+        if(!/^[1-9][0-9]{0,4}$/.test(rawPage))return error("invalid_page",400,origin);
+        return json(await gameHistory(game,tier,Number(rawPage)),200,origin);
+      }
+      if(params.has("history"))return error("invalid_history",400,origin);
       if(game==="volleyball_25"){
          const [top10,fastestTop10]=await Promise.all([top(game,tier),fastest25(tier)]);
          return json({game,top10,fastestTop10},200,origin);
@@ -267,6 +317,7 @@ Deno.serve(async (req:Request)=>{
       "arcade_game_scores?on_conflict=session_id&select=created_at",
       "POST",
       {session_id:session.id,game,score,
+        public_result:publicGameResult(game,payload.stats),
         win_time_tenths:game==="volleyball_25"&&payload.stats?.victory===true?payload.stats.activeTenths:null,
         school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
       "resolution=ignore-duplicates,return=representation"
