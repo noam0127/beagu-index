@@ -87,7 +87,7 @@ function updateComposeAccess(){
  state.level=Number.isInteger(level)&&level>=0?level:0;
  const provisional=$("beaguLevelState")?.dataset.provisional==="true";
  const allowed=canWrite();
- $("postitAccess").textContent=provisional?"Lv.2(진) · 정식 계정 대기":allowed?"Lv.2 · 작성 가능":"🔒 Lv.2부터 작성";
+ $("postitAccess").textContent=provisional?"Lv.2(임시) · 정식 계정 대기":allowed?"Lv.2 · 작성 가능":"🔒 Lv.2부터 작성";
  const lockedText=$("postitLocked")?.querySelector("b");
  if(lockedText)lockedText.textContent=provisional?"정식 Lv.2 계정 생성 후 작성 가능":"Lv.2부터 작성할 수 있습니다";
  $("postitLocked").hidden=allowed;
