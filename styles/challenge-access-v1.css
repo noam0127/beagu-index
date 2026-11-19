@@ -29,7 +29,8 @@ body.beagu-page-challenge #challengeAccessPanel[data-auth-level="2"]{
 }
 body.beagu-page-challenge #challengeAccessPanel[data-auth-level="1"] .beagu-auth-heading,
 body.beagu-page-challenge #challengeAccessPanel[data-auth-level="2"] .beagu-auth-heading{
-  margin-bottom:0;
+  /* Small, readable gap between the level heading and the code-verification CTA. */
+  margin-bottom:12px;
 }
 body.beagu-page-challenge #challengeAccessPanel .beagu-auth-logout[hidden]{
   display:none!important;
