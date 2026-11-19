@@ -37,6 +37,18 @@ assert(play.src.includes('id="playerName"'));
 const setupSection=play.src.split('<form id="profileForm">')[1].split('</form>')[0];
 const formInputs=[...setupSection.matchAll(/\<(?:input|select)\b[^>]*\bid="([^"]+)"/g)].map(x=>x[1]);
 assert.deepEqual(formInputs,['playerName','age','experience','gender','mbti','partner'],'Exactly 6 setup fields');
+assert(play.src.includes('class="panel vn-setup"'),'Dating-sim setup should replace plain form');
+for(const id of ['setupPlayerPreview','setupPortraitWoman','setupPortraitMan','setupPortraitNone','partnerDescription']){
+ assert(play.ids.has(id),'Setup portrait/preview missing: '+id);
+}
+for(const key of ['woman','man','none']){
+ assert(play.src.includes('data-partner-choice="'+key+'"'),'Character card missing: '+key);
+}
+assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a cast card should play a cue');
+assert(play.src.includes("sound.note('uiStart')"),'Beginning the novel should play a cue');
+assert(play.src.includes("setupDescription"),'Selecting cast should update story introduction');
+assert(play.src.includes('role="group" aria-label="동료 캐릭터 선택"'),'Card chooser should be accessible');
+
 assert(play.src.includes('engine.inferredProfile(world,{'));
 assert(play.src.includes("experience:$('experience').value"));
 assert(!play.src.includes('experienceYears'));
