@@ -111,7 +111,7 @@ canvas{height:400px;cursor:default}
 <main id="teacher-run-protected" class="shell" hidden>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="hud" aria-label="게임 현황">
-    <div class="stat"><span>DAY</span><strong id="dayLabel">월요일 · 1/5</strong></div>
+    <div class="stat"><span>나이</span><strong id="dayLabel">24세 / 정년 62세</strong></div>
     <div class="stat"><span>SCORE</span><strong id="scoreLabel">0</strong></div>
     <div class="stat"><span>HI-SCORE</span><strong id="bestLabel">0</strong></div>
   </div>
@@ -125,7 +125,7 @@ canvas{height:400px;cursor:default}
   <div class="stage">
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 3.0 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
-      <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 3.0</h2><p id="overlayDesc">월요일부터 금요일까지, 선생님의 체력을 지키며 퇴근하세요!</p><div class="choices" id="choices"></div></div>
+      <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 3.0</h2><p id="overlayDesc">24세 임용, 62세 정년까지! 5초마다 한 살 · 정년 달성 시 점수 2배</p><div class="choices" id="choices"></div></div>
     </div>
   </div>
   <div class="toolbar">
@@ -133,7 +133,7 @@ canvas{height:400px;cursor:default}
     <button id="sound" type="button" aria-pressed="false" aria-label="소리 켜기" title="효과음">🔇</button>
     <button id="how" class="help" type="button" aria-label="게임 방법" title="게임 방법">?</button><a class="original" href="https://ilovebaegu.itch.io/teacherrun09" target="_blank" rel="noopener noreferrer" aria-label="원작 게임">↗ 원작</a>
   </div>
-  <div id="arcade-top10" aria-label="험난한 교직생활 3.0 TOP 10 순위"></div>
+  <div id="arcade-top10" aria-label="험난한 교직생활 정년 생존 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-recordfix1"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261119-picker-top1"></script>
@@ -142,7 +142,7 @@ canvas{height:400px;cursor:default}
 "use strict";
 const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
-const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("teacher_run","#arcade-top10") : null;
+const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("teacher_run_retirement","#arcade-top10") : null;
 const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
 const difficultyProfiles={
  easy:{specialCooldown:10,specialShield:3.0,specialRadius:230,lives:3,heroSpeed:1.34,heroSize:.86,startingLife:150,damage:.54,enemySpeed:.72,spawnPressure:.62,enemySize:.83,goodChance:.34,heal:1.48,inv:1.95,homing:0,zigzag:.65,label:"교사 강화 · 위협 느림 · 회복 풍부"},
@@ -163,8 +163,17 @@ schoolPicker.onChange=()=>{if(state==="ready"){
  }};
 schoolPicker.onRequestChange=stopAndChangeSchool;
 if(!ctx){$("overlayDesc").textContent="이 브라우저에서는 캔버스 게임을 실행할 수 없습니다.";return;}
-const days=["월요일","화요일","수요일","목요일","금요일"];
-const dayTitles=["출근 첫날, 메일이 쌓인다","회의와 공문의 이중주","수요일의 언덕을 넘자","방심하면 야근이다","오늘만 버티면 주말!"];
+const START_AGE=24,RETIRE_AGE=62,SECONDS_PER_YEAR=5,RETIREMENT_SECONDS=(RETIRE_AGE-START_AGE)*SECONDS_PER_YEAR;
+const careerStages=[
+ {name:"신규교사",phase:"24~31세"},
+ {name:"성장교사",phase:"32~39세"},
+ {name:"중견교사",phase:"40~47세"},
+ {name:"숙련교사",phase:"48~55세"},
+ {name:"정년 준비",phase:"56~62세"}
+];
+const getAge=()=>Math.min(RETIRE_AGE,START_AGE+Math.floor(clock/SECONDS_PER_YEAR));
+const getCareerStage=()=>Math.min(4,Math.floor((getAge()-START_AGE)/8));
+const stageElapsed=()=>Math.max(0,clock-stage*8*SECONDS_PER_YEAR);
 const bad=[
  {emoji:"📄",name:"긴급 공문",damage:16,color:"#ffe2d4"},
  {emoji:"📞",name:"민원 전화",damage:20,color:"#f5d8ff"},
@@ -180,29 +189,29 @@ const good=[
 ];
 const upgrades=[
  {title:"💪 체력 +25",id:"vital",detail:"최대 체력 증가 · 즉시 체력 회복"},
- {title:"👟 이동속도 +18%",id:"speed",detail:"남은 요일 동안 이동이 빨라짐"},
+ {title:"👟 이동속도 +18%",id:"speed",detail:"정년까지 이동속도 향상"},
  {title:"🛡️ 무적시간 +0.4초",id:"guard",detail:"피격 후 보호시간 연장"},
  {title:"☕ 회복효과 +50%",id:"heal",detail:"회복 아이템 효과 증가"}
 ];
-// Each day picks one of three different events; explanations appear only while active.
-const dayEvents=[
- [{id:"rush",icon:"📨",title:"메일 폭주"},{id:"support",icon:"🤝",title:"동료의 도움"},{id:"focus",icon:"✨",title:"수업 몰입"}],
- [{id:"rush",icon:"📞",title:"돌발 전화"},{id:"focus",icon:"🎨",title:"수업 집중"},{id:"support",icon:"☕",title:"커피 휴식"}],
- [{id:"support",icon:"💌",title:"응원의 메시지"},{id:"rush",icon:"📋",title:"추가 업무"},{id:"focus",icon:"🌟",title:"멋진 수업"}],
- [{id:"rush",icon:"🗂️",title:"서류 폭주"},{id:"support",icon:"🤝",title:"동료의 응원"},{id:"focus",icon:"💡",title:"아이디어 번뜩"}],
- [{id:"focus",icon:"🎉",title:"퇴근이 눈앞에"},{id:"rush",icon:"📣",title:"긴급 공문"},{id:"support",icon:"🌿",title:"쉬는 시간"}]
+// Temporary, randomly selected events for each eight-year career stage.
+const careerEvents=[
+ [{id:"rush",icon:"📨",title:"초임 메일 폭주"},{id:"support",icon:"🤝",title:"선배의 도움"},{id:"focus",icon:"✨",title:"첫 수업의 몰입"}],
+ [{id:"rush",icon:"📞",title:"업무 전화"},{id:"focus",icon:"🎨",title:"수업 전문성"},{id:"support",icon:"☕",title:"잠깐의 재충전"}],
+ [{id:"support",icon:"💌",title:"제자의 응원"},{id:"rush",icon:"📋",title:"중견교사 추가업무"},{id:"focus",icon:"🌟",title:"기억에 남는 수업"}],
+ [{id:"rush",icon:"🗂️",title:"숙련교사 서류 폭주"},{id:"support",icon:"🤝",title:"동료의 응원"},{id:"focus",icon:"💡",title:"경험에서 나온 아이디어"}],
+ [{id:"focus",icon:"🎉",title:"정년이 눈앞에"},{id:"rush",icon:"📣",title:"정년 직전 공문"},{id:"support",icon:"🌿",title:"오랜 동료와의 휴식"}]
 ];
-let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
+let W=600,H=420,dpr=1,state="ready",stage=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
 let chalkShots=[],chalkCooldown=0,shackle={x:245,dir:-1};
-let activeEvent=null,eventSeconds=0,eventTriggered=false,fridayBossAnnounced=false;
+let activeEvent=null,eventSeconds=0,lastEventCycle=-1,retirementRushAnnounced=false;
 let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
 let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0,specialCooldown=0,specialFlash=0,lastTapAt=0,lastTapX=0,lastTapY=0;
-try{best=Number(localStorage.getItem("teacherRunBestV2"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
+try{best=Number(localStorage.getItem("teacherRunRetirementBestV1"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
 $("bestLabel").textContent=best.toLocaleString("ko-KR");
 $("sound").textContent=soundOn?"🔊":"🔇";
 $("sound").setAttribute("aria-pressed",String(soundOn));$("sound").setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");
-function persist(){try{localStorage.setItem("teacherRunBestV2",String(best));}catch(e){}}
+function persist(){try{localStorage.setItem("teacherRunRetirementBestV1",String(best));}catch(e){}}
 function playTone(freq,duration=.1,type="sine",volume=.055){
  if(!soundOn)return;
  try{
@@ -249,18 +258,18 @@ async function start(){
  }
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
- state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;eventTriggered=false;fridayBossAnnounced=false;
+ state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
+ combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;
  shackle={x:player.x-52,dir:-1};pointerId=null;pointerY=null;
- pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 족쇄 · 점프 불가":(selected.difficulty==="easy"||selected.difficulty==="normal")?difficultyName[selected.difficulty]+" · 자동 분필 지원":difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
+ pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 족쇄 · 점프 불가":(selected.difficulty==="easy"||selected.difficulty==="normal")?difficultyName[selected.difficulty]+" · 자동 분필 지원":difficultyName[selected.difficulty]+" · 24세 임용!",2);closeMessage();playTone(500,.13);
 }
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;
- score=0;day=0;dayTime=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;eventTriggered=false;fridayBossAnnounced=false;
+ score=0;stage=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -275,7 +284,7 @@ function intro(){
  const ready=selected?.eligible===true;
  const title=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
    selected?selected.school_name+" · 조사 필요":"학교를 선택하세요";
- const desc=ready?"월 → 금 생존":selected?"2026년 조사 참여 후 시작 가능":"학교 선택";
+ const desc=ready?"24세 임용 → 62세 정년 · 5초마다 1년":selected?"2026년 조사 참여 후 시작 가능":"학교 선택";
  message("험난한 교직생활 3.0",title+"\n"+desc,[
   {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
    action:()=>ready?start():schoolPicker.focus()}
@@ -283,7 +292,7 @@ function intro(){
 }
 
 function updateLabels(){
- $("dayLabel").textContent=days[day]+" · "+(day+1)+"/5";
+ $("dayLabel").textContent=getAge()+"세 / 정년 "+RETIRE_AGE+"세";
  $("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");
  const hp=Math.max(0,Math.min(maxLife,life));
  const fraction=maxLife>0?hp/maxLife:0;
