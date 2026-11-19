@@ -4,7 +4,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='class-diary-sound/v5';
+const VERSION='class-diary-sound/v6';
 const LICENSE='https://creativecommons.org/licenses/by/4.0/';
 const HOST='https://www.scottbuckley.com.au/library/';
 const FILES={
@@ -19,7 +19,11 @@ const FILES={
  quiet:['Elementary','2017/07/sb_elementary.mp3','elementary'],
  comic:['Quirky Lane','https://www.scottbuckley.com.au/wp-content/audio/iha/sb_iha_quirkylane.mp3','quirky-lane'],
  intimate:['Growing Up','2018/05/sb_growingup.mp3','growing-up'],
- reconcile:['Reawakening','2023/05/Reawakening.mp3','reawakening']
+ reconcile:['Reawakening','2023/05/Reawakening.mp3','reawakening'],
+ wildflowers:['Wildflowers','2025/12/Wildflowers.mp3','wildflowers'],
+ withhands:['With These Hands','2026/06/WithTheseHands.mp3','with-these-hands'],
+ unraveling:['Unraveling','2026/05/Unraveling.mp3','unraveling'],
+ incredulity:['Incredulity','2025/04/Incredulity.mp3','incredulity']
 };
 const TRACKS=Object.freeze(Object.fromEntries(Object.entries(FILES).map(([id,[name,file,slug]])=>[
  id,Object.freeze({name,url:file.startsWith('https://')?file:HOST+'wp-content/uploads/'+file,page:HOST+slug+'/',license:LICENSE})
@@ -49,66 +53,108 @@ const FOLEY=Object.freeze({
  * Episodes 19–23: accident, testimony, family and rumors. Never use cute romance stingers.
  * Schoolchildren's struggles never trigger affection sounds.
  */
+/* Music direction by scene: 2027-03-08 – 07-16. The 36 chapters have distinct
+ * stakes and should not repeat the two generic reflection songs.
+ * All external MP3s are licensed CC BY 4.0; credits are displayed by credit().
+ * Sound design must never treat student distress as romance or reward.
+ */
 const SEMESTER_SCORE=Object.freeze([
- // 제1부 · 1–6화
  ['quiet','classroom','paper'], // 1화
- ['daily','workroom','paper'], // 2화
+ ['comic','workroom','paper'], // 2화
  ['heartfelt','classroom','paper'], // 3화
- ['quiet',null,'step'], // 4화
+ ['daily',null,'step'], // 4화
  ['tension','workroom','paper'], // 5화
  ['tender',null,'step'], // 6화
- // 제2부 · 7–12화
- ['reconcile','classroom','paper'], // 7화
- ['quiet','workroom','paper'], // 8화
- ['tension',null,'step'], // 9화
+ ['playful','classroom','paper'], // 7화
+ ['wildflowers','workroom','paper'], // 8화
+ ['incredulity',null,'step'], // 9화
  ['heartfelt','classroom','paper'], // 10화
- ['tension',null,'door'], // 11화
+ ['unraveling',null,'door'], // 11화
  ['restful',null,'paper'], // 12화
- // 제3부 · 13–18화
- ['tension','workroom','paper'], // 13화
- ['tension',null,null], // 14화
- ['heartfelt','classroom','paper'], // 15화
- ['heartfelt',null,'step'], // 16화
- ['tension','workroom','paper'], // 17화
+ ['incredulity','workroom','paper'], // 13화
+ ['quiet',null,null], // 14화
+ ['withhands','classroom','paper'], // 15화
+ ['wildflowers',null,'step'], // 16화
+ ['incredulity','workroom','paper'], // 17화
  ['intimate',null,null], // 18화
- // 제4부 · 19–24화
  ['tension',null,'door'], // 19화
- ['quiet',null,null], // 20화
+ ['unraveling',null,null], // 20화
  ['tension',null,null], // 21화
  ['reconcile','workroom','paper'], // 22화
  ['tension',null,'door'], // 23화
- ['reconcile','classroom','paper'], // 24화
- // 제5부 · 25–30화
+ ['withhands','classroom','paper'], // 24화
  ['quiet','classroom','paper'], // 25화
- ['tension','classroom',null], // 26화
+ ['incredulity','classroom',null], // 26화
  ['restful','workroom','paper'], // 27화
  ['tender',null,'step'], // 28화
  ['tension','workroom','paper'], // 29화
  ['reconcile','classroom','paper'], // 30화
- // 제6부 · 31–36화
  ['bright','workroom','paper'], // 31화
- ['reconcile','workroom','paper'], // 32화
- ['intimate',null,null], // 33화
+ ['withhands','workroom','paper'], // 32화
+ ['wildflowers',null,null], // 33화
  ['tender',null,'step'], // 34화
  ['heartfelt','classroom','paper'], // 35화
- ['intimate',null,'paper'] // 36화
+ ['intimate',null,'paper'], // 36화
 ].map(([track,ambience,cue])=>Object.freeze({track,ambience,cue})));
-const SEMESTER_RELATIONSHIPS=Object.freeze([6,12,18,28,33,34]);
-const SEMESTER_REPAIR=Object.freeze([7,10,15,22,24,30,32,35]);
+/* Choice-specific reflective cues; deterministic, not random. Choice 2 often
+ * represents hesitation or postponement, but is not always the same music.
+ * None (윤민서) route avoids romantic underscoring at every phase.
+ */
+const SEMESTER_REFLECTIONS=Object.freeze([
+ ['wildflowers','heartfelt','restful'], // 1화
+ ['playful','daily','quiet'], // 2화
+ ['withhands','wildflowers','restful'], // 3화
+ ['reconcile','daily','quiet'], // 4화
+ ['quiet','reconcile','restful'], // 5화
+ ['intimate','tender','wildflowers'], // 6화
+ ['reconcile','withhands','restful'], // 7화
+ ['wildflowers','daily','quiet'], // 8화
+ ['heartfelt','reconcile','restful'], // 9화
+ ['reconcile','withhands','quiet'], // 10화
+ ['quiet','incredulity','restful'], // 11화
+ ['tender','wildflowers','daily'], // 12화
+ ['quiet','reconcile','restful'], // 13화
+ ['unraveling','withhands','quiet'], // 14화
+ ['reconcile','heartfelt','restful'], // 15화
+ ['withhands','wildflowers','quiet'], // 16화
+ ['quiet','reconcile','restful'], // 17화
+ ['intimate','wildflowers','daily'], // 18화
+ ['quiet','unraveling','restful'], // 19화
+ ['quiet','withhands','incredulity'], // 20화
+ ['unraveling','quiet','restful'], // 21화
+ ['reconcile','withhands','quiet'], // 22화
+ ['quiet','incredulity','restful'], // 23화
+ ['reconcile','withhands','quiet'], // 24화
+ ['quiet','withhands','restful'], // 25화
+ ['quiet','unraveling','restful'], // 26화
+ ['wildflowers','restful','daily'], // 27화
+ ['intimate','tender','wildflowers'], // 28화
+ ['quiet','withhands','restful'], // 29화
+ ['reconcile','wildflowers','quiet'], // 30화
+ ['reconcile','wildflowers','restful'], // 31화
+ ['reconcile','withhands','quiet'], // 32화
+ ['intimate','wildflowers','restful'], // 33화
+ ['intimate','tender','wildflowers'], // 34화
+ ['reconcile','withhands','quiet'], // 35화
+ ['withhands','wildflowers','restful'], // 36화
+].map(row=>Object.freeze(row)));
+function friendshipTrack(track,episode,choice){
+ if(track==='tender')return choice==='0'?'heartfelt':'wildflowers';
+ if(track==='intimate')return choice==='0'?'heartfelt':'withhands';
+ return track;
+}
 function semesterScore(episode,options={}){
  if(!Number.isInteger(episode)||episode<1||episode>SEMESTER_SCORE.length)throw Error('INVALID_SEMESTER_EPISODE');
  const base=SEMESTER_SCORE[episode-1];
- const reflection=options.reflection===true;
- if(!reflection)return {...base,ambience:base.track==='tension'?null:base.ambience};
+ const noRomance=options.partner==='none';
+ if(options.reflection!==true){
+  const track=noRomance?friendshipTrack(base.track,episode):base.track;
+  return {track,ambience:track==='tension'?null:base.ambience,cue:base.cue};
+ }
  const choice=String(options.choice??'');
  if(!['0','1','2'].includes(choice))throw Error('INVALID_SEMESTER_CHOICE');
- const partner=options.partner||'none';
- const track=SEMESTER_RELATIONSHIPS.includes(episode)?
-   (choice==='2'?'restful':partner==='none'?'heartfelt':'intimate'):
-   SEMESTER_REPAIR.includes(episode)?
-    (choice==='2'?'quiet':'reconcile'):
-    choice==='2'?'restful':'quiet';
- // Reflection after a major event is a pause. No recorded footsteps, room loops or sentimental cues.
+ let track=SEMESTER_REFLECTIONS[episode-1][Number(choice)];
+ if(noRomance)track=friendshipTrack(track,episode,choice);
  return {track,ambience:null,cue:null};
 }
 const DAYS=Object.freeze(['quiet','tension','heartfelt','tension','playful','restful','intimate']);
@@ -305,7 +351,7 @@ function credit(){
  credit:'Music by Scott Buckley — CC BY 4.0. www.scottbuckley.com.au',
  recordings:[...Object.values(AMBIENCE),...Object.values(FOLEY)].map(({name,creator,page,license})=>({name,creator,page,license}))};
 }
-const api=Object.freeze({VERSION,TRACKS,AMBIENCE,FOLEY,SEMESTER_SCORE,semesterScore,dayTrack,choiceTrack,sceneTrack,placeCue,ambienceFor,setAmbience,note,setTrack,setEnabled,
+const api=Object.freeze({VERSION,TRACKS,AMBIENCE,FOLEY,SEMESTER_SCORE,SEMESTER_REFLECTIONS,semesterScore,dayTrack,choiceTrack,sceneTrack,placeCue,ambienceFor,setAmbience,note,setTrack,setEnabled,
  isEnabled,setMusicVolume,setSfxVolume,musicLevel,sfxLevel,setEffectsEnabled,stop,credit,
  onStatus(fn){onStatus=typeof fn==='function'?fn:()=>{}}});
 if(typeof module==='object'&&module.exports)module.exports=api;
