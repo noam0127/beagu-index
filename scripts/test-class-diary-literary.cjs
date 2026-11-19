@@ -35,7 +35,7 @@ assert.deepEqual(api.splitSentences('“여기야. 괜찮아?” 그는 물었�
 const expected=original.flatMap(api.splitSentences);
 assert.deepEqual(api.paginate(original).flat().map(x=>x.text),expected,'Each tap yields one complete sentence in order');
 const packed=api.paginateForHeight(expected.map(text=>({text,paragraphEnd:true})),101,items=>items.length*33);
-assert.deepEqual(packed.map(page=>page.length),[3,3],'Sentences should fill a page to capacity, then continue');
+assert.deepEqual(packed.map(page=>page.length),[3,2],'Sentences should fill each page to capacity without adding or losing any');
 assert(packed[0].length>1,'A page must retain multiple sentences rather than replacing them');
 assert.equal(typeof api.setTypingSound,'function','Sound hook must respect existing SFX controls');
 assert(implementation.includes("className='diary-reading-cursor'"),'A blinking cursor must appear while waiting');
