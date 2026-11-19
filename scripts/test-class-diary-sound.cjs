@@ -1,4 +1,4 @@
-/* Audio v3: 12 licensed BGM tracks and context-sensitive original memory-only cues. */
+/* Audio v4: 12 licensed BGM tracks, three public-domain recordings and contextual audio. */
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -38,6 +38,24 @@ assert.equal(sound.placeCue('목요일 오후 · 복도'),'door');
 assert.equal(sound.placeCue('수요일 3교시 · 학년연구실'),'paper');
 assert.equal(sound.placeCue('토요일 오후 · 동네 카페'),'cup');
 assert.equal(sound.placeCue('알 수 없음'),null);
+assert.deepEqual(Object.keys(sound.AMBIENCE),['classroom','workroom']);
+assert.deepEqual(Object.keys(sound.FOLEY),['pageTurn']);
+assert.equal(sound.ambienceFor('3학년 교실 · 수요일 4교시','heartfelt'),'classroom');
+assert.equal(sound.ambienceFor('월요일 아침 · 학년연구실','quiet'),'workroom');
+assert.equal(sound.ambienceFor('월요일 아침 · 학년연구실','tension'),null);
+assert.equal(sound.ambienceFor('교문 앞 · 등교','quiet'),null);
+assert.equal(sound.ambienceFor('동네 카페 · 오후','tender'),null);
+assert.equal(sound.ambienceFor('교실','ending'),null);
+for(const track of [...Object.values(sound.AMBIENCE),...Object.values(sound.FOLEY)]){
+ assert.equal(track.license,'public-domain');
+ assert(track.url.startsWith('https://upload.wikimedia.org/wikipedia/commons/'));
+ assert(track.url.endsWith('.ogg'));
+ assert(track.page.startsWith('https://commons.wikimedia.org/wiki/File:'));
+}
+assert.throws(()=>sound.setAmbience('missing'),/UNKNOWN_AMBIENCE/);
+sound.setAmbience(null);
+sound.setAmbience('classroom');
+sound.note('pageTurn');
 assert.throws(()=>sound.dayTrack(8),/INVALID_DAY/);
 assert.rejects(sound.setTrack('unknown'),/UNKNOWN_TRACK/).catch(e=>{process.exitCode=1;console.error(e)});
 assert.equal(sound.isEnabled(),false);
@@ -48,7 +66,8 @@ sound.setEffectsEnabled(false);sound.note('choice');sound.setEffectsEnabled(true
 sound.note('paper');sound.note('step');sound.note('door');sound.note('cup');
 sound.setEnabled(false);
 assert(sound.credit().tracks.length===12);
+assert.equal(sound.credit().recordings.length,3);
 const src=fs.readFileSync(path.join(__dirname,'../js/class-diary-sound-v1.js'),'utf8');
 assert(!/localStorage|sessionStorage|indexedDB|sendBeacon|fetch\(/.test(src),
  'Sound module cannot store gameplay, preferences or transmit user data');
-console.log('PASS: 12 CC BY 4.0 tracks, contextual cues, bounded volume, no game persistence');
+console.log('PASS: 12 BGM, three public-domain recordings, scene routing, no game persistence');

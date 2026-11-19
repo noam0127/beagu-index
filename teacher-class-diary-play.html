@@ -346,7 +346,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <label for="sfxVolume">효과음 <input id="sfxVolume" type="range" min="0" max="100" step="1" value="17" aria-label="효과음 음량"></label>
 </div>
 <span id="musicStatus" role="status" aria-live="polite">게임을 시작하면 조용한 배경음악을 재생합니다. 소리 설정은 저장되지 않습니다.</span>
-<details class="credits-list"><summary>음악 출처 및 라이선스</summary><div>
+<details class="credits-list"><summary>음악·현장음 출처 및 라이선스</summary><div>
 음악: Scott Buckley · CC BY 4.0 · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">라이선스</a><p>
 <a href="https://www.scottbuckley.com.au/library/simplicity/">Simplicity</a> ·
 <a href="https://www.scottbuckley.com.au/library/ice-cream/">Ice Cream</a> ·
@@ -360,6 +360,11 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <a href="https://www.scottbuckley.com.au/library/quirky-lane/">Quirky Lane</a> ·
 <a href="https://www.scottbuckley.com.au/library/growing-up/">Growing Up</a> ·
 <a href="https://www.scottbuckley.com.au/library/reawakening/">Reawakening</a>.
+<p>현장 녹음(퍼블릭 도메인):
+<a href="https://commons.wikimedia.org/wiki/File:Ambient_classroom_mono.ogg" target="_blank" rel="noopener noreferrer">Ambient Classroom-Mono · rcrossley</a> ·
+<a href="https://commons.wikimedia.org/wiki/File:Typing_medium_speed.ogg" target="_blank" rel="noopener noreferrer">Typing - Medium Speed · teto_yasha</a> ·
+<a href="https://commons.wikimedia.org/wiki/File:Turning_a_page.ogg" target="_blank" rel="noopener noreferrer">Turning a page · planish</a>.
+한국 학교에서 녹음한 자료는 아니며, 오디오를 지원하지 않거나 연결이 불안정하면 현장음 없이 진행됩니다.</p>
 </p></div></details></div>
 <p class="status" id="status" role="status" aria-live="polite">레벨2 접근 권한을 확인하고 있습니다.</p>
 <section id="notice" class="panel" hidden>
@@ -700,8 +705,10 @@ function renderNovel(){
  $('chapterDay').textContent=game.day+' / 7 · '+view.date+' '+view.weekday;
  $('novelCard').dataset.scene=view.visual.id;
  displayStage(view.visual.id,game.profile.partner,isReflection?(game.lastOutcome&&game.lastOutcome.id==='carry'?'worried':'smile'):'neutral');
- mood(isReflection?sound.choiceTrack(game.day,game.lastOutcome&&game.lastOutcome.id):sound.dayTrack(game.day));
-  if(!isReflection)playSceneDetail('chapter:'+game.day,view.place);
+ const chapterMood=isReflection?sound.choiceTrack(game.day,game.lastOutcome&&game.lastOutcome.id):sound.dayTrack(game.day);
+ mood(chapterMood);
+ sound.setAmbience(sound.ambienceFor(view.place,chapterMood));
+ if(!isReflection)playSceneDetail('chapter:'+game.day,view.place);
  
  $('characterAvatar').textContent=view.character.initial;
  $('characterName').textContent=view.character.name;
@@ -755,8 +762,10 @@ function renderScenario(){
  const tone=(game.day===1?'morning':game.day===2?'meeting':game.day===3?'classroom':game.day===4?'hallway':'evening');
  $('novelCard').dataset.scene=tone;
  displayStage(visual.sceneForEvent(event,game.day),game.profile.partner,event.kind==='tense'?'worried':'neutral');
- mood(sound.sceneTrack(event));
-  if(!event.result)playSceneDetail('event:'+game.day+':'+event.id,event.place);
+ const eventMood=sound.sceneTrack(event);
+ mood(eventMood);
+ sound.setAmbience(sound.ambienceFor(event.place,eventMood));
+ if(!event.result)playSceneDetail('event:'+game.day+':'+event.id,event.place);
  
  $('characterAvatar').textContent=profile.initial;
  $('characterName').textContent=partner;
@@ -820,6 +829,7 @@ function renderScenario(){
 function renderEnding(){
  show('ending');
  mood('ending');
+ sound.setAmbience(null);
  const ending=director.decorateEnding(game);
  $('endingTitle').textContent=ending.title;
  $('endingHeading').textContent=ending.heading;
@@ -913,7 +923,7 @@ $('profileForm').addEventListener('submit',e=>{
  }catch(err){status('이름·나이를 입력하고 교직 경력·성별·MBTI·동료를 선택해 주세요.');}
 });
 $('nextBtn').addEventListener('click',()=>{
- sound.note('transition');
+ sound.note('pageTurn');
  const incident=game.phase==='chapter'?incidents.next(game,world):null;
  const event=game.phase==='chapter'&&!incident?scenario.scene(game,world):null;
  game=incident&&incident.result?incidents.continueStory(game):
