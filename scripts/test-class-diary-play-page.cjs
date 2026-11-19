@@ -29,7 +29,14 @@ assert(play.src.includes("sessionStorage.getItem('beagu-level-session-v1')"));
 assert(play.src.includes("engine.createGame(world,plan"));
 assert(!play.src.includes('engine.restore('));
 assert(!play.src.includes('engine.createSnapshot('));
-assert(play.src.includes("scenario.continueStory(game):engine.advance(game)"));
+assert(play.src.includes('scenario.continueStory(game):engine.advance(game)'));
+assert(play.src.includes('incidents.continueStory(game)'));
+assert(play.src.includes('src="js/class-diary-incidents-v1.js"'));
+assert(play.src.includes('incidents.next(game,world)'));
+assert(play.src.includes('id="storyRegion"'));
+assert(play.src.includes('제작자: 카리브해매너티'));
+assert(play.src.includes('id="musicBtn"'));
+
 assert(play.src.includes("director.decorateEnding(game)"));
 assert(play.src.includes("director.decorateChapter("));
 assert(play.src.includes("director.decorateOutcome(game)"));
@@ -40,7 +47,8 @@ assert(play.src.includes('id="classTone"'));
 assert(play.src.includes('id="workCulture"'));
 assert(play.src.includes('src="js/class-diary-scenario-v1.js"'));
 assert(play.src.includes('scenario.scene(game,world)'));
-assert(play.src.includes('scenario.choose(game,choice.id)'));
+assert(play.src.includes('scenario.choose(game,choice.id,world)'));
+assert(play.src.includes('incidents.choose(game,world,choice.id)'));
 assert(play.src.includes('scenario.continueStory(game)'));
 
 assert(play.src.includes('id="characterAvatar"'));
