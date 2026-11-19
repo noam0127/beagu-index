@@ -39,7 +39,11 @@ async function identity(req:Request,minLevel=2){
  const {data,error}=await db.from("beagu_level_sessions").select("access_level,identity_visitor_id")
    .eq("token_sha256",hash).gt("expires_at",new Date().toISOString()).maybeSingle();
  if(error||!data||Number(data.access_level)<minLevel)return null;
- const seed=String(data.identity_visitor_id||hash);
+ // A session token is a rotating credential, not an enduring person ID.
+ // Readers may use Lv1 sessions without a bound identity, but writers must not
+ // gain a new author persona on every login or regain like/report quotas.
+ if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null};
+ const seed=String(data.identity_visitor_id);
  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(ROLE_KEY),
    {name:"HMAC",hash:"SHA-256"},false,["sign"]);
  const mac=new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode("postit:"+seed)));
@@ -218,6 +222,7 @@ Deno.serve(async(req:Request)=>{
   }
   // All mutations require an active server-issued Lv2 session.
   const user=await identity(req);if(!user)return fail(req,"LEVEL_REQUIRED",403);
+  if(!user.id)return fail(req,"WRITER_IDENTITY_REQUIRED",403);
   const settings=await minimumLevel();
   if(user.level<Math.max(2,Number(settings.minimum_write_level)))
     return fail(req,"LEVEL_REQUIRED",403);

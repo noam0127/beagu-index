@@ -59,10 +59,16 @@ assert.ok(css.includes('fonts.googleapis.com')&&css.includes('"Gaegu"'),
 assert.ok(css.includes('postit-paper::before')&&css.includes('postit-paper::after'),
  'subtle creases and folded corner');
 assert.ok(page.includes('postit-v1.css?v=20261120-tornpaper1')&&
- page.includes('postit-v1.js?v=20261120-tornpaper1'),'browser loads latest visual assets');
+ page.includes('postit-v1.js?v=20261120-tornpaper2'),'browser loads latest visual assets');
 
 const edge=read('supabase/functions/beagu-postit-api-v1/index.ts');
 assert.ok(edge.includes('const user=await identity(req)'), 'writes authenticated');
+assert.ok(!edge.includes('identity_visitor_id||hash'), 'session token hash must not become rotating writer identity');
+assert.ok(edge.includes('if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null}'),
+ 'Lv1 can read without identity but no actor UUID is synthesized');
+assert.ok(edge.includes('if(!user.id)return fail(req,"WRITER_IDENTITY_REQUIRED",403)'),
+ 'Lv2 writes fail closed until trusted permanent identity is bound');
+assert.ok(app.includes('WRITER_IDENTITY_REQUIRED'), 'client explains pending Lv2 account verification');
 assert.ok(edge.includes('const viewer=await identity(req,1)'), 'Lv1 verified server-side for comment reads');
 assert.ok(!/\bconst URL\s*=/.test(edge), 'global URL constructor must not be shadowed');
 assert.ok(edge.includes('const SUPABASE_URL = Deno.env.get('), 'Supabase URL configured separately');
