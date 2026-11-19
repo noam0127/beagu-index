@@ -81,6 +81,7 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      readerHeight:reader.clientHeight,
      readerScrollHeight:reader.scrollHeight,
      scene:body.classList.contains('is-semester-mode'),
+     choosing:body.classList.contains('is-choosing'),
      pageIndex:document.querySelector('#chapterDay').textContent
     };
    });
@@ -108,10 +109,14 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
     await page.evaluate(()=>document.getElementById('sceneArt').click());
     const after=await sample();
     if(after.visible===1&&before.visible>1){sawFullPage=true;break;}
-    assert(after.visible===before.visible+1,'Each input must advance one line, then clear on page turn');
+    if(after.choosing){
+     assert.equal(before.visible,before.total,'Choices must open only after every line has been read');
+     sawFullPage=true;break;
+    }
+    assert(after.visible===before.visible+1,'Each input must reveal exactly one additional line');
     assert(after.readerScrollHeight<=after.readerHeight+7,'Text must fit without inner scrolling');
    }
-   assert(sawFullPage,'A full page should be replaced by the first line of the next page');
+   assert(sawFullPage,'After the last line, the scene must turn the page or open the choices');
    assert.equal(errors.length,0,'Uncaught browser errors: '+errors.join('; '));
    console.log('PASS literary line-by-line '+device.name+': no echoes, stable typography, touch/Enter, full-width and no scroll');
    await page.close();
