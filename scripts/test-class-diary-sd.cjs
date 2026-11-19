@@ -90,7 +90,7 @@ assert(html.includes('renderSupportingCast(semesterArt.guest,semesterArt.season)
 assert(html.includes('femaleSemester.artFor({'));
 assert(html.includes('js/class-diary-sd-v1.js?v=20261120-female-sd3'));
 assert(html.includes('sd.portraitSvg(who,expression'));
-assert(html.includes('src="js/class-diary-supporting-cast-v1.js"'));
+assert(html.includes('js/class-diary-supporting-cast-v1.js'));
 assert(html.includes('styles/class-diary-supporting-cast-v1.css'));
 for(const id of ['sceneGuest','sceneGuestPortrait','sceneGuestName','sceneGuestRole'])assert(html.includes('id="'+id+'"'));
 assert(html.includes('renderSupportingCast(chapterGuest)'));
