@@ -6,6 +6,9 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#14253d">
 <title>나의 OO한 학급일지 | 이야기 플레이</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{font-family:"Apple SD Gothic Neo",Pretendard,"Malgun Gothic",sans-serif;background:#f4f6fa;color:#182a3c}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0}
@@ -322,7 +325,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 </style>
 <link rel="stylesheet" href="styles/class-diary-journey-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-motion-v1.css?v=20261120-1">
-<link rel="stylesheet" href="styles/class-diary-ui-v2.css?v=20261120-1">
+<link rel="stylesheet" href="styles/class-diary-ui-v2.css?v=20261120-paper-1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 </head>
 <body>
@@ -594,19 +597,35 @@ function show(id){for(const target of ['notice','opening','setup','novel','endin
 function fail(message){show('notice');$('noticeText').textContent=message;status('접근 권한 또는 데이터를 확인하지 못했습니다.');}
 /* Temporary in-memory dialogue pages: no autosave or new APIs. */
 const vnState={pages:[],index:0,kind:'chapter'};
-function vnSplit(text){
+function vnSplit(text,limit){
  const words=String(text||'').trim().split(/\s+/).filter(Boolean),chunks=[];
  let current='';
  for(const word of words){
-  if(current&&(current+' '+word).length>125){chunks.push(current);current=word;}
+  if(current&&(current+' '+word).length>limit){chunks.push(current);current=word;}
   else current+=(current?' ':'')+word;
  }
  if(current)chunks.push(current);
  return chunks;
 }
+/* Allow the story to breathe across the full-height paper panel.
+   Preserve paragraph breaks, while keeping long chapters paged and scrollable. */
+function vnPages(paragraphs){
+ const limit=window.matchMedia('(max-width:620px)').matches?620:1000;
+ const pages=[];let current=[],count=0;
+ for(const paragraph of paragraphs){
+  for(const part of vnSplit(paragraph,limit)){
+   if(current.length&&count+part.length>limit){pages.push(current);current=[];count=0;}
+   current.push(part);count+=part.length;
+  }
+ }
+ if(current.length)pages.push(current);
+ return pages;
+}
 function vnPresent(){
  const done=vnState.kind==='outcome',target=$(done?'outcomeText':'chapterText');
- target.replaceChildren(el('p',vnState.pages[vnState.index]||''));
+ target.replaceChildren(...(vnState.pages[vnState.index]||['…']).map(paragraph=>el('p',paragraph)));
+ const reader=document.querySelector(done?'#outcome':'#vnDialogueSlot .vn-dialogue');
+ if(reader)reader.scrollTop=0;
  $('vnDialogueSlot').querySelector('.vn-dialogue').hidden=done;
  $('outcome').hidden=!done;
  $('outcomeLine').hidden=true;
@@ -619,8 +638,8 @@ function vnStart(done){
  const source=$(done?'outcomeText':'chapterText');
  const texts=[...source.querySelectorAll('p')].map(node=>node.textContent);
  if(done&&$('outcomeLine').textContent)texts.push($('outcomeLine').textContent);
- vnState.pages=texts.flatMap(vnSplit);
- if(!vnState.pages.length)vnState.pages=['…'];
+ vnState.pages=vnPages(texts);
+ if(!vnState.pages.length)vnState.pages=[['…']];
  vnState.index=0;vnState.kind=done?'outcome':'chapter';
  $('vnInfo').hidden=true;$('vnInfoBtn').setAttribute('aria-expanded','false');
  vnPresent();
