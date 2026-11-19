@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>포스트잇 | 배구지수</title>
+<meta name="description" content="선생님들이 학교와 게임에 남긴 익명 포스트잇. 누구나 읽고 Lv.2부터 참여합니다.">
+<link rel="stylesheet" href="styles/beagu-design-system-v1.css">
+<link rel="stylesheet" href="styles/beagu-site-header-v1.css">
+<link rel="stylesheet" href="styles/beagu-level-state-v1.css">
+<link rel="stylesheet" href="styles/postit-v1.css?v=20261120-1">
+<script defer src="js/beagu-level-state-v1.js"></script>
+</head>
+<body class="beagu-ui-page beagu-postit-page">
+<a class="beagu-skip-link" href="#postit-main">본문으로 건너뛰기</a>
+<header class="beagu-unified-header"><div class="beagu-unified-inner">
+<a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈">
+<span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span>
+</a><nav class="beagu-unified-nav" aria-label="주요 메뉴">
+<a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="postit.html" aria-current="page">포스트잇</a><a href="challenge.html">챌린지</a>
+</nav></div></header>
+<div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" href="levels.html" data-level="checking">확인 중</a></div>
+<main id="postit-main" class="postit-layout">
+<header class="postit-intro"><div class="postit-kicker">BAEGUINDEX · NOTES ON A STRING</div>
+<h1>포스트잇<span aria-hidden="true">.</span></h1><p>숫자에 담기지 않은 이야기를 한 장씩 붙입니다.</p>
+<div class="postit-tools"><label for="postitSort" class="sr-only">정렬</label>
+<select id="postitSort" aria-label="포스트잇 정렬"><option value="recent">최신순</option><option value="popular">공감순</option></select>
+<a href="search.html" class="postit-link">학교 찾아보기</a></div></header>
+<section class="postit-compose" aria-labelledby="composeTitle">
+<div class="compose-head"><h2 id="composeTitle">새 포스트잇 붙이기</h2><span id="postitAccess" class="access-tag">등급 확인 중</span></div>
+<div id="postitContext" class="postit-context" role="status" aria-live="polite">학교검색 · 게임 · 비교하기에서 포스트잇을 붙일 수 있습니다.</div>
+<div id="postitSubjectPicker" class="postit-subject-picker">
+<label for="postitSchoolSearch">학교를 찾아 붙이기</label>
+<input id="postitSchoolSearch" type="search" placeholder="학교명 검색" autocomplete="off" maxlength="25">
+<div id="postitSchoolResults" class="postit-school-results" role="listbox" aria-label="학교 선택 결과"></div>
+</div>
+<div id="postitWriteForm" class="postit-form" hidden>
+<label for="postitBody" class="sr-only">포스트잇 본문</label>
+<textarea id="postitBody" rows="3" maxlength="200" placeholder="학교나 게임에 관해 남기고 싶은 이야기를 200자 이내로 적어주세요. 특정 개인을 식별할 수 있는 내용은 적지 마세요."></textarea>
+<div class="postit-form-footer"><small id="postitCounter">0 / 200</small><button type="button" id="postitSubmit">포스트잇 붙이기</button></div>
+</div>
+<div id="postitLocked" class="postit-lock" hidden><span aria-hidden="true">🔒</span>
+<b>Lv.2부터 작성할 수 있습니다</b><span>포스트잇과 댓글은 Lv.0부터 열람할 수 있습니다.</span>
+<a href="levels.html">레벨 안내 보기</a></div>
+<div id="postitMessage" class="postit-message" role="status" aria-live="polite"></div>
+</section>
+<section class="postit-board" aria-labelledby="boardTitle"><div class="postit-board-heading"><h2 id="boardTitle">이어지는 이야기</h2><p id="postitListStatus" role="status">포스트잇을 불러오는 중…</p></div>
+<div class="postit-thread" id="postitThread" aria-live="polite"></div>
+<button id="postitReload" class="postit-reload" type="button">다시 불러오기</button>
+</section>
+<footer class="postit-footer">익명 게시글은 개인의 경험과 의견이며 학교 전체의 평가가 아닙니다. 개인·학생을 특정하거나 비방하는 글은 삼가주세요.</footer>
+</main>
+<script src="js/postit-v1.js?v=20261120-1" defer></script>
+</body></html>

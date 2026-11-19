@@ -15,7 +15,7 @@
     selections:$('compareSelections'), table:$('compareTable'),
     panel:$('compareScroll'), results:$('compareResults'),
     empty:$('compareEmpty'), count:$('compareCounter'),
-    feedback:$('compareFeedback'), clear:$('clearCompare'), copy:$('copyCompareLink'),
+    feedback:$('compareFeedback'), clear:$('clearCompare'), copy:$('copyCompareLink'), postit:$('comparePostit'),
     authForm:$('compareLv1Form'), authCode:$('compareLv1Code'),
     authCard:$('compareLv1AuthPanel'),
     authSubmit:$('compareLv1Submit'), authBadge:$('compareLv1Badge'),
@@ -225,6 +225,7 @@
     elements.count.textContent=state.selected.length+' / '+LIMIT+' 선택';
     elements.clear.disabled=!state.selected.length;
     elements.copy.disabled=!state.selected.length;
+    elements.postit.disabled=!state.selected.length;
   }
   // The anonymous API is RLS-restricted to reviewed, manually released
   // 2026 rows with a 24-hour cooldown. Do not query draft or raw survey data.
@@ -702,7 +703,17 @@
       notice('비교 링크를 표시했습니다.');
     }
   });
-  elements.authForm.addEventListener('submit',async event=>{
+  elements.postit.addEventListener('click',async()=>{
+    if(!state.selected.length)return;
+    const comparison=encodeSelection();
+    const shareUrl=new URL('statistics.html',window.location.href);
+    shareUrl.searchParams.set('compare',comparison);
+    const postitUrl=new URL('postit.html',window.location.href);
+    postitUrl.searchParams.set('compare',comparison);
+    try{await navigator.clipboard?.writeText?.(shareUrl.href)}catch(_){}
+    window.location.assign(postitUrl.href);
+   });
+   elements.authForm.addEventListener('submit',async event=>{
     event.preventDefault();
     const code=elements.authCode.value.trim();
     if(!code)return;
