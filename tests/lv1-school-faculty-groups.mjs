@@ -13,7 +13,7 @@ assert.doesNotThrow(()=>new vm.Script(frontend));
 assert.doesNotThrow(()=>new vm.Script(groups));
 assert.match(html,/js\/level-search\.js\?v=20261119-circled-options1/);
 assert.match(html,/js\/school-detail-groups-v1\.js\?v=20261119-teacher-groups2/);
-assert.match(html,/beagu-search-details-v1\.css\?v=20261119-survey-empty1/);
+assert.match(html,/beagu-search-details-v1\.css\?v=20261119-domain-note1/);
 assert.match(migration,/REVOKE ALL ON public\.beagu_2025_domain_comparisons_v1 FROM PUBLIC,anon,authenticated/);
 assert.match(backend,/beagu_2025_domain_comparisons_v1/);
 assert.match(backend,/n>=2\?'O':'X'/);
