@@ -1,4 +1,4 @@
-/* Regression: male characters use the previous Korean-drama-style photographic artwork. 
+/* Regression: male characters use the Korean-drama-style photographic cutouts with transparent backgrounds. 
  * This file retains its previous path so the existing CI workflow and test links keep working. */
 'use strict';
 const assert=require('node:assert/strict');
@@ -8,9 +8,9 @@ const root=path.join(__dirname,'..');
 const lead=require('../js/class-diary-semester-male-art-v1.js');
 const colleagues=require('../js/class-diary-male-photos-v1.js');
 const boy=require('../js/class-diary-student-doyun-v1.js');
-assert.equal(lead.SPRITE,'assets/class-diary/characters/hyunwoo-six-expressions.webp');
-assert.equal(colleagues.SPRITE,'assets/class-diary/characters/male-supporting-strip.webp');
-assert.equal(boy.SPRITE,'assets/class-diary/characters/doyun-four-expressions.webp');
+assert.equal(lead.SPRITE,'assets/class-diary/characters/hyunwoo-six-transparent-v2.webp');
+assert.equal(colleagues.SPRITE,'assets/class-diary/characters/male-supporting-transparent-v2.webp');
+assert.equal(boy.SPRITE,'assets/class-diary/characters/doyun-four-transparent-v2.webp');
 assert.equal(new Set([lead.SPRITE,colleagues.SPRITE,boy.SPRITE]).size,3);
 for(const source of [lead.SPRITE,colleagues.SPRITE,boy.SPRITE]){
  const file=fs.readFileSync(path.join(root,source));
@@ -41,7 +41,7 @@ assert.equal(photo.style.backgroundSize,'200% 200%');
 assert.equal(boy.render(student,36,false,false),null);
 const html=fs.readFileSync(path.join(root,'teacher-class-diary-play.html'),'utf8');
 for(const script of ['class-diary-male-photos-v1.js','class-diary-semester-male-art-v1.js','class-diary-student-doyun-v1.js']){
- assert(html.includes(script+'?v=20261120-photo-restore-1'),'Versioned photo module not linked: '+script);
+ assert(html.includes(script+'?v=20261120-alpha-1'),'Versioned photo module not linked: '+script);
 }
 assert(!html.includes('class-diary-male-webtoon-v1.css'),'Webtoon CSS must not load');
 assert(html.includes('renderSupportingCast(')&&html.includes('studentDoyun.render('));
@@ -50,4 +50,4 @@ for(const file of ['js/class-diary-semester-male-art-v1.js','js/class-diary-male
  for(const pattern of ['localStorage','sessionStorage','indexedDB','XMLHttpRequest','navigator.sendBeacon','fetch('])
   assert(!src.includes(pattern),'Private data collection forbidden: '+file);
 }
-console.log('PASS: restored photoreal male cast + six/four expressions + original guests + privacy');
+console.log('PASS: transparent Korean-drama male actors + six/four expressions + original guests + privacy');

@@ -367,12 +367,13 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-supporting-cast-v1.css?v=20261120-men-1">
 <link rel="stylesheet" href="styles/class-diary-male-live-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-student-doyun-v1.css?v=20261120-1">
-<link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-waistup3">
+<link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-thigh4">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 <link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-lines2">
 <link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-linear-flow2">
 <link rel="stylesheet" href="styles/class-diary-progress-controls-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-background-only-v1.css?v=20261120-1">
+<link rel="stylesheet" href="styles/class-diary-actors-natural-v1.css?v=20261120-alpha-1">
 </head>
 <body>
 <main>
@@ -629,10 +630,10 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <script src="js/class-diary-hq-sea-v1.js?v=20261120-hq1"></script>
 <script src="js/class-diary-hq-yuri-v1.js?v=20261120-hq1"></script>
 <script src="js/class-diary-female-hq-emotions-v1.js?v=20261120-hq1"></script>
-<script src="js/class-diary-female-hq-v1.js?v=20261120-waistup3"></script>
-<script src="js/class-diary-male-photos-v1.js?v=20261120-photo-restore-1"></script>
-<script src="js/class-diary-semester-male-art-v1.js?v=20261120-photo-restore-1"></script>
-<script src="js/class-diary-student-doyun-v1.js?v=20261120-photo-restore-1"></script>
+<script src="js/class-diary-female-hq-v1.js?v=20261120-thigh4"></script>
+<script src="js/class-diary-male-photos-v1.js?v=20261120-alpha-1"></script>
+<script src="js/class-diary-semester-male-art-v1.js?v=20261120-alpha-1"></script>
+<script src="js/class-diary-student-doyun-v1.js?v=20261120-alpha-1"></script>
 <script src="js/class-diary-supporting-cast-v1.js?v=20261120-men-1"></script>
 <script src="js/class-diary-scenario-v1.js"></script>
 <script src="js/class-diary-incidents-v1.js"></script>
@@ -959,7 +960,7 @@ function vnSplit(text,limit){
    Preserve paragraph breaks, while keeping long chapters paged and scrollable. */
 function vnPages(paragraphs){
  // The full-semester story uses actual screen-width lines, not arbitrary character pages.
- if(storyMode==='semester'&&document.body.classList.contains('is-playing'))return literary.paginate(paragraphs);
+ if(document.body.classList.contains('is-playing')&&document.body.classList.contains('is-literary-mode'))return literary.paginate(paragraphs);
  const limit=storyMode==='semester'?(window.innerHeight<=520?74:window.innerWidth<=360?98:window.innerWidth<=620?125:205):(window.matchMedia('(max-width:620px)').matches?620:1000);
  const pages=[];let current=[],count=0;
  for(const paragraph of paragraphs){
@@ -998,14 +999,14 @@ function vnPresent(){
  literary.present(target);
  target.classList.remove('diary-text-arrive');void target.offsetWidth;target.classList.add('diary-text-arrive');
  const reader=document.querySelector(done?'#outcome':'#vnDialogueSlot .vn-dialogue');
- if(reader){reader.scrollTop=0;if(storyMode!=='semester')requestAnimationFrame(()=>{if(!reader.hidden)vnFitPage(reader,target)})}
+ if(reader){reader.scrollTop=0;if(!document.body.classList.contains('is-literary-mode'))requestAnimationFrame(()=>{if(!reader.hidden)vnFitPage(reader,target)})}
  $('vnDialogueSlot').querySelector('.vn-dialogue').hidden=done;
  $('outcome').hidden=!done;
  $('outcomeLine').hidden=true;
  $('choiceSection').hidden=true;
  $('nextBtn').hidden=true;
  $('vnMore').hidden=false;
- $('vnMore').setAttribute('aria-label',storyMode==='semester'?'다음 줄 또는 페이지':vnState.index<vnState.pages.length-1?'다음 대사':done?'다음 장면':'선택지 보기');
+ $('vnMore').setAttribute('aria-label',document.body.classList.contains('is-literary-mode')?'다음 줄 또는 페이지':vnState.index<vnState.pages.length-1?'다음 대사':done?'다음 장면':'선택지 보기');
 }
 function vnStart(done){
  const source=$(done?'outcomeText':'chapterText');
@@ -1425,10 +1426,11 @@ function renderSemesterEnding(){
 }
 
 function render(){
- literary.mode(storyMode==='semester');
+ literary.mode(true,storyMode==='semester');
  document.body.dataset.diaryStory=storyMode;
  if(storyMode!=='semester'){
   $('novelCard').removeAttribute('data-act');
+  $('novelCard').removeAttribute('data-season');
   $('choiceSection').querySelector('.option-title').textContent='어떻게 하시겠어요?';
   $('ending').querySelector('.emblem').textContent='2027년 3월 14일 · 마지막 페이지';
   $('ending').querySelector('.credits-roll p:last-child').textContent='일곱 날의 이야기를 함께해 주셔서 고맙습니다.';

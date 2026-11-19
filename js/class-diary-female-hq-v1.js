@@ -16,16 +16,16 @@ const emotions=root.BeaguClassDiaryFemaleHQEmotions;
  * No canvas recoloring or alternate anime-style assets are loaded.
  */
 /* Original high-resolution photographic cutouts: five distinct natural
- * waist-up poses with real alpha transparency, no rectangle or scenery.
+ * head-to-mid-thigh (3/4) poses with real alpha transparency, no rectangle or scenery.
  * The preexisting full-body photo data remains an offline/rollback fallback.
  * Images are served as immutable same-origin WebP assets, not Canvas crops.
  */
 const BUST_ASSETS=Object.freeze({
- woman:'assets/class-diary/characters/female-jiyoon-waistup-v3.webp',
- none:'assets/class-diary/characters/female-minseo-waistup-v3.webp',
- suhyun:'assets/class-diary/characters/female-suhyun-waistup-v3.webp',
- sea:'assets/class-diary/characters/female-sea-waistup-v3.webp',
- yuri:'assets/class-diary/characters/female-yuri-waistup-v3.webp'
+ woman:'assets/class-diary/characters/female-jiyoon-thigh-v4.webp',
+ none:'assets/class-diary/characters/female-minseo-thigh-v4.webp',
+ suhyun:'assets/class-diary/characters/female-suhyun-thigh-v4.webp',
+ sea:'assets/class-diary/characters/female-sea-thigh-v4.webp',
+ yuri:'assets/class-diary/characters/female-yuri-thigh-v4.webp'
 });
 function has(who){return Object.prototype.hasOwnProperty.call(PEOPLE,who)&&!!PEOPLE[who]&&typeof PEOPLE[who].dataUrl==='string';}
 function hasBust(who){return has(who)&&Object.prototype.hasOwnProperty.call(BUST_ASSETS,who);}

@@ -41,7 +41,7 @@ const photoHashes=new Set();
 const emotionHashes=new Set();
 for(const id of ids){
  const photoRef=art.portrait(id);
- const filename='assets/class-diary/characters/female-'+({woman:'jiyoon',none:'minseo',suhyun:'suhyun',sea:'sea',yuri:'yuri'}[id])+'-waistup-v3.webp';
+ const filename='assets/class-diary/characters/female-'+({woman:'jiyoon',none:'minseo',suhyun:'suhyun',sea:'sea',yuri:'yuri'}[id])+'-thigh-v4.webp';
  assert.equal(photoRef,filename,'Game should use the transparent natural-pose portrait '+id);
  const photo=fs.readFileSync(path.join(root,photoRef));
  assert.equal(photo.toString('ascii',0,4),'RIFF');
@@ -63,27 +63,27 @@ assert.equal(art.face('man','neutral'),null,'No changes to male character emotic
 const page=fs.readFileSync(path.join(root,'teacher-class-diary-play.html'),'utf8');
 const css=fs.readFileSync(path.join(root,'styles/class-diary-female-hq-v1.css'),'utf8');
 for(const name of jsFiles){
- const version=name==='class-diary-female-hq-v1.js'?'20261120-waistup3':'20261120-hq1';
+ const version=name==='class-diary-female-hq-v1.js'?'20261120-thigh4':'20261120-hq1';
  assert(page.includes('src="js/'+name+'?v='+version+'"'),'Missing game asset '+name);
 }
 assert(!page.includes('class-diary-female-matte-v1.css'),'Matte illustration filtering must be disabled');
 assert(!page.includes('femaleHQ.prepareMatte('),'No glossy-skin recoloring or matte image substitution');
 assert(!('prepareMatte' in art),'Original photo portraits must load without a matte recoloring step');
 assert(!('MATTE_ASSETS' in art),'Image source must not refer to cartoon/matte assets');
-for(const id of ids)assert(art.portrait(id).endsWith('-waistup-v3.webp'),'Real-alpha waist-up art enabled');
+for(const id of ids)assert(art.portrait(id).endsWith('-thigh-v4.webp'),'Real-alpha mid-thigh 3/4 art enabled');
 for(const marker of [
  'femaleHQ.portrait(partner)','femaleHQ.portrait(who)','femaleHQ.portrait(guest.id)',
  'femaleHQ.face(who,expression','showCharacterFace(game.profile.partner,semesterArt.expression',
  'renderSupportingCast(chapterGuest)','maleSemester.paint(',
  'femaleHQ.portrait(guest.id)','id="sceneGuestPortrait"','id="scenePortrait"'
 ])assert(page.includes(marker),'Missing screen connection '+marker);
-assert(page.includes('styles/class-diary-female-hq-v1.css?v=20261120-waistup3'));
+assert(page.includes('styles/class-diary-female-hq-v1.css?v=20261120-thigh4'));
 assert(!page.includes('femaleHQ.prepareBust('),'Transparent WebP cutouts must load without Canvas cropping');
 assert(page.includes("dataset.portraitFraming=highRes&&femaleHQ.hasBust(who)?'bust':'original'"),'Real-alpha bust cutout should render immediately');
 assert(page.includes("femaleHQ.hasBust(who)"),'In-scene female art should use bust variant');
 assert(page.includes("femaleHQ.hasBust(guest.id)"),'Female supporting actors should use bust variant');
 assert(css.includes('[data-portrait-framing="bust"]'),'Upper-body framing CSS exists');
-assert(css.includes('width:min(80vw,355px)'),'Mobile bust scaling exists');
+assert(css.includes('width:min(86vw,370px)'),'Mobile 3/4 scaling exists');
 assert(css.includes('max-width:620px'),'Mobile HQ layout must exist');
 assert(css.includes('data-art-quality="hq"'),'HQ styling must be scoped');
 // Explicitly check that real-alpha WebP cutouts replace browser Canvas crops.
@@ -93,4 +93,4 @@ for(const id of ids)assert(art.hasBust(id),'Missing alpha cutout '+id);
 assert(!art.hasBust('man'),'Do not change male portraits');
 assert(!page.includes('femaleHQ.prepareBust('),'No async photo crop callback remains in setup');
 assert(!/BUST_CACHE|BUST_CROP|canvas\.toDataURL/.test(fs.readFileSync(path.join(root,'js/class-diary-female-hq-v1.js'),'utf8')));
-console.log('PASS female natural poses: five transparent alpha WebPs, 30 facial thumbnails, original photos preserved, mobile/desktop game integration, no storage');
+console.log('PASS female 3/4 thigh framing: five transparent alpha WebPs, 30 facial thumbnails, original photos preserved, mobile/desktop game integration, no storage');

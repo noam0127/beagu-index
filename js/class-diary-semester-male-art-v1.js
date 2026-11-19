@@ -2,7 +2,7 @@
 (function(root){
 'use strict';
 const VERSION='class-diary-semester-male-art/v1';
-const SPRITE='assets/class-diary/characters/hyunwoo-six-expressions.webp';
+const SPRITE='assets/class-diary/characters/hyunwoo-six-transparent-v2.webp';
 const EXPRESSIONS=Object.freeze(['neutral','smile','worried','flustered','tired','shy']);
 const CELLS=Object.freeze({neutral:['0%','0%'],smile:['50%','0%'],worried:['100%','0%'],flustered:['0%','100%'],tired:['50%','100%'],shy:['100%','100%']});
 const MOODS=Object.freeze([
@@ -31,6 +31,7 @@ function paint(node,expression,season){
  node.style.backgroundSize='300% 200%';
  node.style.backgroundPosition=CELLS[type].join(' ');
  node.dataset.expression=type;
+ node.dataset.pose=type;
  node.dataset.season=season||'cold-spring';
  return node;
 }

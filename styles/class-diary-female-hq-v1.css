@@ -98,3 +98,23 @@ body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bus
 body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"] {
  object-position:center bottom;
 }
+
+/* Female 3/4 portraits (head to mid-thigh). Retain the historical 'bust'
+   data attribute for compatibility with other school-game screens. */
+body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+ width:min(49vw,540px);height:80%;max-height:80%;max-width:65%;
+ right:3%;bottom:17%;object-fit:contain;object-position:center bottom;
+}
+#setup .setup-character-art img[data-portrait-framing="bust"][data-art-quality="hq"],
+#setup .setup-supporting-person img[data-portrait-framing="bust"][data-art-quality="hq"]{
+ object-fit:contain;object-position:center bottom;
+}
+#sceneGuestPortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+ object-fit:contain;object-position:center bottom;
+}
+@media(max-width:620px){
+ body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+  width:min(86vw,370px);height:74%;max-height:74%;max-width:92%;
+  right:-1%;bottom:24%;object-fit:contain;object-position:center bottom;
+ }
+}

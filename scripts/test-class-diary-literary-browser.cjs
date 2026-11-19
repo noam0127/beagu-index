@@ -8,10 +8,21 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
  const browser=await chromium.launch({headless:true});
  try{
   for(const device of [{name:'mobile',width:390,height:844},{name:'desktop',width:1365,height:850}]){
+   for(const story of ['semester','week']){
    const page=await browser.newPage({viewport:{width:device.width,height:device.height}});
    const errors=[];
    page.on('pageerror',err=>errors.push(err.message));
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
+   // Capture a swallowed story-start exception only inside this local test.
+   await page.route('**/teacher-class-diary-play.html?guest=1',async route=>{
+    const response=await route.fetch();
+    let html=await response.text();
+    const needle="}catch(err){status('이야기 설정을 확인하지 못했습니다. 다시 시도해 주세요.');}";
+    const amended="}catch(err){window.__litTestError=err.stack||String(err);status('이야기 설정을 확인하지 못했습니다. 다시 시도해 주세요.');}";
+    if(!html.includes(needle))throw Error('Expected story-start catch missing');
+    html=html.replace(needle,amended);
+    await route.fulfill({response,body:html});
+   });
    // Simulate the signed home-entry handoff without using a real identity or code.
    await page.addInitScript(()=>{
     sessionStorage.setItem('beagu-class-diary-guest-handoff-v1','v1.fakepayload.fakesignature');
@@ -33,6 +44,11 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.goto(url+'/teacher-class-diary-play.html?guest=1',{waitUntil:'domcontentloaded'});
    await page.locator('#diaryLanding').waitFor({state:'visible'});
    await page.locator('#diaryLandingStart').click();
+   if(story==='week'){
+    // The seven-day preview is intentionally preserved but not exposed as a separate guest entry.
+    // The original openingStart handler switches the existing setup to the classic storyline.
+    await page.evaluate(()=>document.getElementById('openingStart').click());
+   }
    await page.locator('#diarySchoolName').fill('가상 새봄초등학교');
    await page.locator('#setupNext').click();
    await page.locator('[data-partner-choice="woman"]').click();
@@ -46,6 +62,7 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      school:document.getElementById('diarySchoolName').value,
      story:document.body.dataset.diaryStory,
      status:document.getElementById('status').textContent,
+     error:window.__litTestError||'',
      selected:document.querySelector('[data-partner-choice="woman"]').getAttribute('aria-pressed')
     }));
     throw Error('Line reader setup never opened the story: '+JSON.stringify(state)+' errors='+errors.join('; '));
@@ -69,14 +86,17 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      pageWidth:reader.getBoundingClientRect().width,
      readerHeight:reader.clientHeight,
      readerScrollHeight:reader.scrollHeight,
-     scene:body.classList.contains('is-semester-mode'),
+     scene:body.classList.contains('is-literary-mode'),
+     semester:body.classList.contains('is-semester-mode'),
+     choosing:body.classList.contains('is-choosing'),
      pageIndex:document.querySelector('#chapterDay').textContent
     };
    });
    const first=await sample();
-   assert(first.scene,'36-episode literary mode must be on');
+   assert(first.scene,'The literary line-reader must be enabled in both stories');
+   assert.equal(first.semester,story==='semester','Only the 36-episode story may use semester-specific state');
    assert.equal(first.visible,1,'Exactly the first line should be visible initially');
-   assert(first.total>=5,'The first page must offer several lines to read');
+   assert(first.total>=3,'The first page must contain at least three manually revealed lines');
    assert.equal(first.echo,0,'There must be no previous-text echo');
    assert(first.pageWidth>first.viewportWidth*.75,'Prose must occupy most of the screen width');
    assert(first.stageHeight<=first.viewportHeight+2,'Stage must fit the viewport');
@@ -97,13 +117,18 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
     await page.evaluate(()=>document.getElementById('sceneArt').click());
     const after=await sample();
     if(after.visible===1&&before.visible>1){sawFullPage=true;break;}
-    assert(after.visible===before.visible+1,'Each input must advance one line, then clear on page turn');
+    if(after.choosing){
+     assert.equal(before.visible,before.total,'Choices must open only after every line has been read');
+     sawFullPage=true;break;
+    }
+    assert(after.visible===before.visible+1,'Each input must reveal exactly one additional line');
     assert(after.readerScrollHeight<=after.readerHeight+7,'Text must fit without inner scrolling');
    }
-   assert(sawFullPage,'A full page should be replaced by the first line of the next page');
+   assert(sawFullPage,'After the last line, the scene must turn the page or open the choices');
    assert.equal(errors.length,0,'Uncaught browser errors: '+errors.join('; '));
-   console.log('PASS literary line-by-line '+device.name+': no echoes, stable typography, touch/Enter, full-width and no scroll');
+   console.log('PASS literary line-by-line '+device.name+' '+story+': no echoes, stable typography, touch/Enter, full-width and no scroll');
    await page.close();
+   }
   }
  }finally{await browser.close()}
 })().catch(err=>{console.error(err);process.exit(1)});

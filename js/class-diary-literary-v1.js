@@ -1,18 +1,21 @@
-/* Class Diary: full-screen, line-at-a-time prose for the 36-episode story.
+/* Class Diary: full-screen, line-at-a-time prose for 7-day and 36-episode stories.
  * One Enter/tap reveals exactly one new line. Previous lines retain their
  * original size, weight and opacity; no echo, shrinking or auto-typing.
  * Presentation only; no network or persistence.
  */
 (function(root){
 'use strict';
-let semester=false;
+let enabled=false;
 let active=null;
 let visibleLines=0;
 const $=selector=>root.document&&root.document.querySelector(selector);
-function mode(on){
- semester=Boolean(on);
- if(root.document)root.document.body.classList.toggle('is-semester-mode',semester);
- if(!semester)start();
+function mode(on,semester=on){
+ enabled=Boolean(on);
+ if(root.document){
+  root.document.body.classList.toggle('is-literary-mode',enabled);
+  root.document.body.classList.toggle('is-semester-mode',enabled&&Boolean(semester));
+ }
+ if(!enabled)start();
 }
 function start(){active=null;visibleLines=0;}
 function graphemes(s){
@@ -56,7 +59,7 @@ function paginateForMetrics(paragraphs,maxWidth,maxLines,measure){
  return pages;
 }
 function paginate(paragraphs){
- if(!semester||!root.document)return [paragraphs];
+ if(!enabled||!root.document)return [paragraphs];
  const slot=$('#vnDialogueSlot');
  const text=$('#chapterText');
  const styles=text?root.getComputedStyle(text):null;
@@ -76,7 +79,7 @@ function paginate(paragraphs){
  return paginateForMetrics(paragraphs,maxWidth,maxLines,measure);
 }
 function present(target){
- if(!semester||!target)return;
+ if(!enabled||!target)return;
  active=target;
  const rows=[...target.querySelectorAll('p')];
  visibleLines=rows.length?1:0;
@@ -90,7 +93,7 @@ function present(target){
  if(reader)reader.scrollTop=0;
 }
 function reveal(){
- if(!semester||!active)return false;
+ if(!enabled||!active)return false;
  const rows=active.querySelectorAll('p.diary-literary-line');
  if(visibleLines>=rows.length)return false;
  const line=rows[visibleLines++];
