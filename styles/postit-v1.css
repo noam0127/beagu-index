@@ -58,3 +58,5 @@
 @media(max-width:520px){.postit-layout{padding:35px 15px 60px}.postit-compose{padding:15px}.postit-thread{padding-left:25px;gap:27px}.postit-thread::before{left:8px}.postit-entry::before{left:-20px;width:21px}.postit-entry::after{left:-24px}.postit-paper{padding:19px 16px}.paper-topic a{font-size:16px}.paper-content{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.postit-paper,.postit-thread::before,.postit-entry{animation:none!important;transition:none!important}}
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* Five navigation destinations fit on one mobile row without a dangling second line. */
+@media(max-width:760px){.beagu-unified-nav:has(a[href="postit.html"]){grid-template-columns:repeat(5,minmax(0,1fr))}.beagu-unified-nav:has(a[href="postit.html"]) a{font-size:12px;padding-left:1px;padding-right:1px}}
