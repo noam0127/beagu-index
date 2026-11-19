@@ -174,18 +174,32 @@ Deno.serve(async(req:Request)=>{
 
   // These are pre-aggregated APPROVED official school facts only. The view is
   // service-role restricted: never query teacher responses or raw files.
-  const [schoolRegion,nationalRegionalNumbers,nationalRegionalCategories]=await Promise.all([
+  const [schoolRegion,nationalRegionalNumbers,nationalRegionalCategories,domainReferences]=await Promise.all([
     admin.from('schools').select('sido_standard').eq('school_id',id).maybeSingle(),
     admin.from('beagu_official_numeric_comparisons')
       .select('survey_year,source_year,fact_key,scope,region,average_value')
       .in('survey_year',[2024,2025]).limit(1000),
     admin.from('beagu_official_category_comparisons')
       .select('survey_year,reference_year,fact_key,scope,region,mode_value')
-      .in('survey_year',[2024,2025]).limit(600)
+      .in('survey_year',[2024,2025]).limit(600),
+    admin.from('beagu_2025_domain_comparisons_v1')
+      .select('domain_label,scope,region,average_value').limit(160)
   ]);
-  if(schoolRegion.error||nationalRegionalNumbers.error||nationalRegionalCategories.error)
+  if(schoolRegion.error||nationalRegionalNumbers.error||nationalRegionalCategories.error||domainReferences.error)
     return send({error:'COMPARISON_DATA_UNAVAILABLE'},503,origin);
   const schoolSido=String(schoolRegion.data?.sido_standard||'');
+  const domainIndex=new Map<string,{national?:string;regional?:string}>();
+  for(const row of domainReferences.data||[]){
+    const label=String(row.domain_label||''),scope=String(row.scope||'');
+    const region=String(row.region||''),value=Number(row.average_value);
+    if(!label||!Number.isFinite(value)||value<0||value>100||
+       !(scope==='national'||(scope==='regional'&&region===schoolSido)))continue;
+    const item=domainIndex.get(label)||{};
+    const score=value.toLocaleString('ko-KR',{maximumFractionDigits:2})+'점';
+    if(scope==='national')item.national=score;
+    else item.regional=score;
+    domainIndex.set(label,item);
+  }
   const index=new Map<string,{national?:unknown;regional?:unknown}>();
   const put=(y:number,year:number,k:string,scope:string,region:string,v:unknown)=>{
     if(scope!=='national'&&!(scope==='regional'&&region===schoolSido))return;
@@ -206,7 +220,9 @@ Deno.serve(async(req:Request)=>{
   };
   const presentCategory=(key:string,v:unknown)=>{
     if(typeof v!=='string')return null;
-    return key==='milk_lunch'?(v==='O'?'운영':v==='X'?'미운영':null):v;
+    if(key==='milk_lunch')return v==='O'||v==='X'?v:null;
+    if(key==='meal_place')return v==='식당+교실'?'식당·교실 병행':v;
+    return v;
   };
 
   const basicKeys=new Set(['students','teachers','classes','students_per_class','establishment_type']);
@@ -221,7 +237,7 @@ Deno.serve(async(req:Request)=>{
     meal_place:new Set(['식당','교실','식당+교실']),
     milk_lunch:new Set(['O','X'])
   };
-  const facts:Array<{year:number;access_level:number;summary:{metrics:Array<{label:string;value:string;group:string;nationalAverage?:string|null;regionalAverage?:string|null;comparisonKind?:string;referenceYear?:number}>}}>= [];
+  const facts:Array<{year:number;access_level:number;summary:{metrics:Array<{label:string;value:string;group:string;factKey:string;schoolOnly:boolean;nationalAverage?:string|null;regionalAverage?:string|null;comparisonKind?:string;referenceYear?:number}>}}>= [];
   const addFact=(year:number,fact_key:string,label:string,value:string,sourceYear:number,unit:string,category:boolean)=>{
     if(![2024,2025].includes(year)||!/^.{1,60}$/.test(label)||!/^.{1,60}$/.test(value)||/[<>\r\n]/.test(label+value))return;
     // Unified Lv.1: approved official school facts only, never raw teacher surveys.
@@ -232,9 +248,9 @@ Deno.serve(async(req:Request)=>{
     const compare=index.get([year,sourceYear,fact_key].join(':'))||{};
     const fmt=category?(v:unknown)=>presentCategory(fact_key,v):(v:unknown)=>presentNumber(v,unit);
     // These are school-level facts, not meaningful nationwide/regional comparisons.
-    const schoolOnly=new Set(['establishment_type','vice_principals','meal_place']).has(fact_key);
+    const schoolOnly=new Set(['establishment_type','vice_principals','lead_teachers','meal_place','milk_lunch']).has(fact_key);
     bucket.summary.metrics.push({
-      label,value,group:'편집본 공식 학교정보',
+      label,value,group:'편집본 공식 학교정보',factKey:fact_key,schoolOnly,
       nationalAverage:schoolOnly?null:fmt(compare.national),regionalAverage:schoolOnly?null:fmt(compare.regional),
       comparisonKind:schoolOnly?undefined:(category?'mode':'average'),referenceYear:sourceYear
     });
@@ -244,12 +260,21 @@ Deno.serve(async(req:Request)=>{
     const cap=String(fact.fact_key)==='district_housing_price_mean'?10000000000:10000000;
     if(!Number.isFinite(n)||n<0||n>cap)continue;
     const unit=typeof fact.unit==='string'&&fact.unit.length<=5?fact.unit:'';
-    addFact(y,String(fact.fact_key),String(fact.label),n.toLocaleString('ko-KR',{maximumFractionDigits:2})+unit,Number(fact.source_year),unit,false);
+    const k=String(fact.fact_key);
+    // Missing values are never treated as X.
+    if(k==='vice_principals'){
+      if(Number.isInteger(n))addFact(y,k,'교감 2인 이상',n>=2?'O':'X',Number(fact.source_year),'',false);
+    }else if(k==='lead_teachers'){
+      if(Number.isInteger(n))addFact(y,k,'수석교사 유무',n>=1?'O':'X',Number(fact.source_year),'',false);
+    }else{
+      addFact(y,k,String(fact.label),n.toLocaleString('ko-KR',{maximumFractionDigits:2})+unit,Number(fact.source_year),unit,false);
+    }
   }
   for(const fact of officialCategories.data||[]){
     const key=String(fact.fact_key),value=String(fact.fact_value);
     if(!vettedCategories[key]?.has(value))continue;
-    addFact(Number(fact.survey_year),key,String(fact.label),key==='milk_lunch'?(value==='O'?'운영':'미운영'):value,Number(fact.reference_year),'',true);
+    const normalized=presentCategory(key,value);
+    if(normalized!==null)addFact(Number(fact.survey_year),key,String(fact.label),normalized,Number(fact.reference_year),'',true);
   }
   // Return only the reviewed most-frequently-selected option for each school
   // and question, never the option distribution, percentages, sample size, raw
@@ -374,7 +399,10 @@ Deno.serve(async(req:Request)=>{
       const numeric=Number(value.slice(0,-1));
       if(!Number.isFinite(numeric)||numeric<0||numeric>100)continue;
       emitted.add(label);
-      metrics.push({label,value,group:'2025년 조사 영역별 점수 · 응답 표본 참고'});
+      const compare=domainIndex.get(label)||{};
+      metrics.push({label,value,group:'2025년 조사 영역별 점수 · 응답 표본 참고',
+        regionalAverage:compare.regional||null,nationalAverage:compare.national||null,
+        comparisonKind:'average',referenceYear:2025});
     }
     if(metrics.length)curatedRows.push({year:2025,access_level:1,summary:{metrics}});
   }
