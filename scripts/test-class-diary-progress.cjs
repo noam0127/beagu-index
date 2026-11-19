@@ -18,7 +18,9 @@ assert(!html.includes('id="guestCode"'),'Guest code must only be entered on home
 assert(html.includes("action:'verify-ticket'"),'Only a server-verified home ticket can start the guest journey');
 assert(html.includes("result.scope!=='class-diary-fictional-guest'"),'Guest ticket must be limited to fictional stories');
 assert(!server.includes('identity_code'),'Progress API must never read/store raw codes');
-assert(guest.includes("p_code:code"),'Verified identity code must be mapped server-side');
+assert(guest.includes("CLASS_DIARY_PREVIEW_PIN"),'Private preview PIN must be configured server-side');
+assert(guest.includes("beagu_consume_class_diary_preview_budget"),'Private preview PIN must have a strict server-side rate limit');
+assert(!guest.includes("p_code:code"),'Private preview must not grant challenge identity privileges');
 assert(guest.includes('class-diary-progress-v1:'),'Guest and progress endpoints must agree on HMAC purpose');
 assert(server.includes('class-diary-progress-v1:'),'Progress signature purpose must match');
 assert(server.includes("p_expected_revision:body.expectedRevision"),'Optimistic concurrency is required');
