@@ -2,7 +2,7 @@
    An embedded game asks its trusted same-origin home page to lock scrolling. */
 (() => {
   "use strict";
-  let active=false, previous=null, scrollY=0;
+  let active=false, previous=null, scrollY=0,maxScrollY=0;
   const embedded=window.parent!==window;
   function standaloneLock(lock){
     const body=document.body;
@@ -32,6 +32,9 @@
           window.scrollTo(0,scrollY);
         }
       }
+      const visibleHeight=window.visualViewport?.height||window.innerHeight||1;
+      maxScrollY=Math.max(0,document.documentElement.scrollHeight-visibleHeight,
+        document.body.scrollHeight-visibleHeight);
       previous={
         position:body.style.position,top:body.style.top,left:body.style.left,
         right:body.style.right,width:body.style.width,overflow:body.style.overflow
@@ -39,7 +42,16 @@
       Object.assign(body.style,{
         position:"fixed",top:-scrollY+"px",left:"0",right:"0",width:"100%",overflow:"hidden"
       });
+      window.ArcadeScrollRail?.show({
+        get:()=>scrollY,
+        max:()=>maxScrollY,
+        set:position=>{
+          scrollY=Math.max(0,Math.min(maxScrollY,Number(position)||0));
+          body.style.top=-scrollY+"px";
+        }
+      });
     }else if(previous){
+      window.ArcadeScrollRail?.hide();
       Object.assign(body.style,previous);
       previous=null;
       window.scrollTo(0,scrollY);
