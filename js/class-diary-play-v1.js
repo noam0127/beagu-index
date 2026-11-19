@@ -183,8 +183,8 @@ function validateWorld(world,plan){
   // The demo is an explicit, fictional-only offline world. It cannot stand in for a real school.
   const demo=world.mode==='public_fiction_demo'&&world.basic.id==='DEMO001'&&
     world.publishedYears.length===0&&world.basic.name==='가상의 초등학교';
-  if(!demo&&!world.publishedYears.length)throw Error('APPROVED_WORLD_REQUIRED');
   if(world.mode==='public_fiction_demo'&&!demo)throw Error('DEMO_WORLD_INVALID');
+  if(!demo&&!world.publishedYears.length)throw Error('APPROVED_WORLD_REQUIRED');
   if(!plan||plan.schoolId!==world.basic.id||!Array.isArray(plan.scenes)||plan.scenes.length!==7||
      !plan.scenes.every((s,i)=>s.day===i+1&&
        (demo?s.basis==='fictional_general':
