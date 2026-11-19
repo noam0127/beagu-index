@@ -3,9 +3,12 @@
 "use strict";
 const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard";
 const fmt=n=>String(Math.max(0,Math.floor(Number(n)||0))).padStart(7,"0");
+const timedGame=game=>game==="volleyball_25";
+const fmtTime=n=>{const t=Math.max(0,Math.floor(Number(n)||0));return Math.floor(t/600)+":"+String(Math.floor(t%600/10)).padStart(2,"0")+"."+(t%10);};
+const displayScore=(score,game)=>timedGame(game)?fmtTime(score):fmt(score)+"점";
 const idFor=game=>"arcade-local-top10-v1-"+game;
 const cleanName=s=>String(s||"").toUpperCase().replace(/[^A-Z]/g,"").slice(0,8);
-const games=new Set(["volleyball","teacher_run"]);
+const games=new Set(["volleyball","volleyball_25","teacher_run","teacher_run_retirement"]);
 const levelNames={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
 function el(tag,cls,text){
  const e=document.createElement(tag);
@@ -13,9 +16,9 @@ function el(tag,cls,text){
  if(text!==undefined)e.textContent=String(text);
  return e;
 }
-function order(rows){
+function order(rows,game){
  return rows.filter(x=>x&&/^[A-Z]{2,8}$/.test(x.nickname)&&Number.isSafeInteger(x.score)&&x.score>0)
- .sort((a,b)=>b.score-a.score || String(a.created_at||"").localeCompare(String(b.created_at||"")))
+ .sort((a,b)=>(timedGame(game)?a.score-b.score:b.score-a.score)||String(a.created_at||"").localeCompare(String(b.created_at||"")))
  .slice(0,10);
 }
 class ArcadeLeaderboard{
@@ -27,10 +30,10 @@ class ArcadeLeaderboard{
   if(this.mount){this.draw();this.load();}
  }
  getLocal(){
-  try{const parsed=JSON.parse(localStorage.getItem(idFor(this.game))||"[]");return order(Array.isArray(parsed)?parsed:[]);}catch{return [];}
+  try{const parsed=JSON.parse(localStorage.getItem(idFor(this.game))||"[]");return order(Array.isArray(parsed)?parsed:[],this.game);}catch{return [];}
  }
  setLocal(rows){
-  try{localStorage.setItem(idFor(this.game),JSON.stringify(order(rows)));}catch(e){}
+  try{localStorage.setItem(idFor(this.game),JSON.stringify(order(rows,this.game)));}catch(e){}
  }
  async request(method,body=null){
   const options={method,cache:"no-store",headers:{"Content-Type":"application/json"}};
@@ -48,7 +51,7 @@ class ArcadeLeaderboard{
    try{
     const data=await this.request("GET");
     if(!Array.isArray(data.top10))throw new Error("invalid_response");
-    this.remote=true;this.board=order(data.top10);
+    this.remote=true;this.board=order(data.top10,this.game);
    }catch(err){
     this.remote=false;this.board=this.getLocal();
    }
@@ -100,8 +103,8 @@ class ArcadeLeaderboard{
   if(generation!==this.playGeneration||!this.session)return;
   await this.load();
   if(generation!==this.playGeneration||!this.session)return;
-  if(this.remote&&this.board.length===10&&this.score<=this.board[9].score){
-   this.notice="이번 경기 "+fmt(this.score)+"점 · TOP 10 진입 실패";
+  if(this.remote&&this.board.length===10&&(timedGame(this.game)?this.score>=this.board[9].score:this.score<=this.board[9].score)){
+   this.notice="이번 경기 "+displayScore(this.score,this.game)+" · TOP 10 진입 실패";
    this.draw();return;
   }
   this.openRecord();
@@ -134,7 +137,7 @@ class ArcadeLeaderboard{
  }
  openRecord(){
   const dialog=this.dialogElement();
-  this.dialogScore.textContent=fmt(this.score)+" · "+(this.school?.school_name||"학교 미등록");
+  this.dialogScore.textContent=displayScore(this.score,this.game)+" · "+(this.school?.school_name||"학교 미등록");
   this.dialogMessage.textContent="";
   try{this.nameInput.value=cleanName(localStorage.getItem("arcade-last-name-v1")||"");}catch(e){this.nameInput.value="";}
   if(!dialog.open){if(typeof dialog.showModal==="function")dialog.showModal();else dialog.setAttribute("open","");}
@@ -161,11 +164,11 @@ class ArcadeLeaderboard{
      const data=await this.request("POST",{action:"submit",game:this.game,session,nickname:name,stats});
      if(generation!==this.playGeneration)return;
      if(!Array.isArray(data.top10)||typeof data.ranked!=="boolean")throw new Error("invalid_response");
-     this.remote=true;this.board=order(data.top10);
+     this.remote=true;this.board=order(data.top10,this.game);
      this.session=null;saved=true;
      this.notice=data.ranked
-      ?"🏆 공식 TOP "+data.rank+"위 등록 완료 · "+fmt(score)+"점"
-      :"이번 경기 "+fmt(score)+"점 · 등록 직전 TOP 10에서 밀렸습니다";
+      ?"🏆 공식 TOP "+data.rank+"위 등록 완료 · "+displayScore(score,this.game)
+      :"이번 경기 "+displayScore(score,this.game)+" · 등록 직전 TOP 10에서 밀렸습니다";
     }catch(err){
      if(generation!==this.playGeneration)return;
      if(err.status){
@@ -182,7 +185,7 @@ class ArcadeLeaderboard{
    if(generation!==this.playGeneration)return;
    if(!saved){
     this.remote=false;
-    this.board=order([...this.getLocal(),{nickname:name,score,school_name:school?.school_name||null,difficulty:school?.difficulty||null,created_at:new Date().toISOString()}]);
+    this.board=order([...this.getLocal(),{nickname:name,score,school_name:school?.school_name||null,difficulty:school?.difficulty||null,created_at:new Date().toISOString()}],this.game);
     this.setLocal(this.board);
     this.notice="OFFLINE · 이 기기에만 저장됨 (공식 TOP 10 아님)";
    }
@@ -205,14 +208,14 @@ class ArcadeLeaderboard{
    notice.setAttribute("role","status");container.append(notice);
   }
   const labels=el("div","arcade-rank-grid arcade-rank-label");
-  ["RANK","NAME · 학교","SCORE"].forEach(x=>labels.append(el("span","",x)));container.append(labels);
+  ["RANK","NAME · 학교",timedGame(this.game)?"TIME":"SCORE"].forEach(x=>labels.append(el("span","",x)));container.append(labels);
   if(!this.board.length){container.append(el("div","arcade-rank-empty","NO RECORDS"));return;}
   this.board.slice(0,10).forEach((entry,i)=>{
    const row=el("div","arcade-rank-grid arcade-rank-row");
    const person=el("div","arcade-rank-person");
    const school=[entry.school_name||"학교 미등록",levelNames[entry.difficulty]].filter(Boolean).join(" · ");
    person.append(el("span","arcade-rank-nick",entry.nickname),el("span","arcade-rank-school",school));
-   row.append(el("span","",String(i+1).padStart(2,"0")),person,el("span","",fmt(entry.score)));
+   row.append(el("span","",String(i+1).padStart(2,"0")),person,el("span","",timedGame(this.game)?fmtTime(entry.score):fmt(entry.score)));
    container.append(row);
   });
  }
