@@ -289,15 +289,38 @@ function playTone(freq,duration=.1,type="sine",volume=.055){
  }catch(e){}
 }
 function resize(){
- const oldW=W,oldH=H;W=Math.max(220,canvas.clientWidth);H=canvas.clientHeight;
+ // Safari briefly reports a zero-height canvas during fullscreen transitions.
+ // Never turn that temporary measurement into the game's collision world.
+ const nextW=canvas.clientWidth,nextH=canvas.clientHeight;
+ if(nextW<180||nextH<180)return;
+ if(Math.abs(W-nextW)<1&&Math.abs(H-nextH)<1&&canvas.width>0&&canvas.height>0)return;
+ const oldW=W,oldH=H;
+ W=Math.max(220,nextW);H=nextH;
  dpr=Math.min(2,window.devicePixelRatio||1);
  canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);
  ctx.setTransform(dpr,0,0,dpr,0,0);
- if(oldW>0){player.x=player.x/oldW*W;items.forEach(a=>a.x=a.x/oldW*W);
-  shackle.x=shackle.x/oldW*W;chalkShots.forEach(b=>b.x=b.x/oldW*W);}
- if(oldH>0&&pointerId!==null)player.y=player.y/oldH*H;
+ if(oldW>0){
+  const sx=W/oldW;
+  player.x*=sx;shackle.x*=sx;
+  items.forEach(a=>a.x*=sx);
+  chalkShots.forEach(b=>b.x*=sx);
+  sideStudents.forEach(a=>{a.x*=sx;a.stopX*=sx;});
+  paperBullets.forEach(a=>{a.x*=sx;a.vx*=sx;});
+  if(paperTarget)paperTarget.x*=sx;
+  if(pointerX!==null)pointerX*=sx;
+ }
+ if(oldH>0){
+  const sy=H/oldH;
+  player.y*=sy;
+  items.forEach(a=>a.y*=sy);
+  chalkShots.forEach(a=>a.y*=sy);
+  sideStudents.forEach(a=>a.y*=sy);
+  paperBullets.forEach(a=>{a.y*=sy;a.vy*=sy;});
+  if(paperTarget)paperTarget.y*=sy;
+  if(pointerY!==null)pointerY*=sy;
+ }
  player.x=Math.max(player.r,Math.min(W-player.r,player.x));
- player.y=!canPlayerRise()||pointerId===null?H-52:Math.max(76,Math.min(H-52,player.y));
+ player.y=canPlayerRise()?Math.max(76,Math.min(H-52,player.y)):H-52;
 }
 if(typeof ResizeObserver!=="undefined"){new ResizeObserver(resize).observe(canvas);}else{window.addEventListener("resize",resize);}
 function message(title,desc,choices,symbol="🎒"){
