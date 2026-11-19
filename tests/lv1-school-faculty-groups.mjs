@@ -11,9 +11,9 @@ const css=read('styles/beagu-search-details-v1.css');
 const migration=read('supabase/migrations/20261119_2025_domain_comparisons_v1.sql');
 assert.doesNotThrow(()=>new vm.Script(frontend));
 assert.doesNotThrow(()=>new vm.Script(groups));
-assert.match(html,/js\/level-search\.js\?v=20261119-teacher-groups1/);
-assert.match(html,/js\/school-detail-groups-v1\.js\?v=20261119-teacher-groups1/);
-assert.match(html,/beagu-search-details-v1\.css\?v=20261119-teacher-groups1/);
+assert.match(html,/js\/level-search\.js\?v=20261119-teacher-groups2/);
+assert.match(html,/js\/school-detail-groups-v1\.js\?v=20261119-teacher-groups2/);
+assert.match(html,/beagu-search-details-v1\.css\?v=20261119-teacher-groups2/);
 assert.match(migration,/REVOKE ALL ON public\.beagu_2025_domain_comparisons_v1 FROM PUBLIC,anon,authenticated/);
 assert.match(backend,/beagu_2025_domain_comparisons_v1/);
 assert.match(backend,/n>=2\?'O':'X'/);
@@ -56,6 +56,7 @@ const fields=[
 const expected=['scale','scale','teachers','teachers','teachers','teachers',
   'teachers','teachers','classes','meals','meals'];
 assert.deepEqual(fields.map(classify),expected);
+assert.equal(classify({label:'업무부하',group:'2025년 조사 영역별 점수 · 응답 표본 참고'}),'domains');
 const host=new Node('div');
 const shuffled=[fields[6],fields[4],fields[8],fields[1],fields[7],fields[3],fields[2],
   fields[5],fields[0],fields[9],fields[10]];
