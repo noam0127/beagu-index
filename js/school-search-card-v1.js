@@ -120,7 +120,10 @@
    detail.setAttribute('aria-label',String(school.school_name||'학교')+' 상세정보');
    open.setAttribute('aria-controls',detail.id);
   }
-  actions.append(open);
+  const postit=el('a','postit-quick-link postit-lv2-link','▤ 포스트잇');
+  postit.href='postit.html?school_id='+encodeURIComponent(String(school.school_id));
+  postit.setAttribute('aria-label',String(school.school_name||'학교')+' 포스트잇 열람 · 작성은 Lv.2부터');
+  actions.append(open,postit);
   card.append(actions);
   if(detail)card.append(detail);
   return {card,open,detail};
