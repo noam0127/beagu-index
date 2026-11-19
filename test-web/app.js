@@ -4,10 +4,10 @@ const PROD='snvzwrexuqavnfvzgxqj';
 const cfg=window.BEAGU_STAGE_CONFIG||{};
 const $=id=>document.getElementById(id);
 const validToken=s=>typeof s==='string'&&/^[A-Za-z0-9_-]{43}$/.test(s);
-const q=new URLSearchParams(location.search);
+const q=new URLSearchParams(location.hash.replace(/^#/,''));
 const incoming=q.get('ref');
 const invite=validToken(incoming)?incoming:null;
-if(incoming){history.replaceState(null,'',location.pathname);}
+if(incoming){history.replaceState(null,'',location.pathname+location.search);}
 let access='',refresh='',user='',level=0,notice=false;
 let captchaToken='',turnstileId=null;
 let deviceProof='';
@@ -188,7 +188,7 @@ $('doLevel1').onclick=()=>busy($('doLevel1'),async()=>{
 $('doReferral').onclick=()=>busy($('doReferral'),async()=>{
  const r=await api('referral',{},true);
  if(!validToken(r.referralToken))throw Error('잘못된 추천 토큰');
- const link=location.origin+location.pathname+'?ref='+encodeURIComponent(r.referralToken);
+ const link=location.origin+location.pathname+'#ref='+encodeURIComponent(r.referralToken);
  $('referralUrl').value=link;show('referralUrl',true);show('referralLabel',true);show('shareTools',true);
  message('upgradeStatus','전용 설문 링크가 발급되었습니다. 다른 테스트 계정으로 참여해 주세요.');
 },'upgradeStatus');
