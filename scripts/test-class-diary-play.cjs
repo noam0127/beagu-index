@@ -166,5 +166,5 @@ const maleProtagonist=engine.createGame(world,plan,{...profile,gender:'man'});
 assert.deepEqual(maleProtagonist.stats,engine.createGame(world,plan,profile).stats,
  'Gender must not change starting scores');
 const platonic=engine.createGame(world,plan,{...profile,partner:'none'});
-assert.equal(engine.chapter(platonic,world,plan).partner,'동학년 선생님');
+assert.equal(engine.chapter(platonic,world,plan).partner,'민서 선생님');
 console.log('PASS: 7 coherent days / 21 options / all 2187 routes / five reachable endings / ephemeral memory-only state / Lv2-gated world contract');
