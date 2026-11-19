@@ -251,7 +251,7 @@ function questionScore(code,answer){
   const regular=["① 전혀 그렇지 않다","② 그렇지 않다","③ 보통이다","④ 그렇다","⑤ 매우 그렇다","⑥ 판단하기 어렵다"];
   if(positive.has(code)||reverse.has(code)){
     const idx=regular.indexOf(s);
-    if(idx<0)throw Error("Q"+code+" 확인되지 않은 보기: "+s.slice(0,45));
+    if(idx<0)throw Error("Q"+code+" 확인되지 않은 보기");
     if(idx===5)return null;
     return positive.has(code)?idx*25:(4-idx)*25;
   }
@@ -262,7 +262,7 @@ function questionScore(code,answer){
       "④ 희망과 관계없이 배정하고 조정하기 어렵다":0,
       "⑤ 잘 모르겠다":null
     };
-    if(!Object.prototype.hasOwnProperty.call(opts,s))throw Error("Q12 보기 불일치: "+s.slice(0,45));
+    if(!Object.prototype.hasOwnProperty.call(opts,s))throw Error("Q12 보기 불일치");
     return opts[s];
   }
   if(code===13){
@@ -273,10 +273,24 @@ function questionScore(code,answer){
       "④ 사실상 거절하기 어렵다":0,
       "⑤ 판단하기 어렵다":null
     };
-    if(!Object.prototype.hasOwnProperty.call(opts,s))throw Error("Q13 보기 불일치: "+s.slice(0,45));
+    if(!Object.prototype.hasOwnProperty.call(opts,s))throw Error("Q13 보기 불일치");
     return opts[s];
   }
   return null;
+}
+// Record a source-row pointer, never the free-text answer, in the PRIVATE MASTER.
+// An unknown choice invalidates only this score and cannot be auto-published.
+function beagu26ScoreOrReview(code, answer, sourceRow, schoolId, reviewRows) {
+  try { return questionScore(code, answer); }
+  catch(e) {
+    if(!/보기/.test(String(e.message||"")))throw e;
+    reviewRows.push([
+      sourceRow, String(schoolId), "Q"+String(code).padStart(2,"0"),
+      code===12||code===13?"OTHER_OR_UNKNOWN":"UNKNOWN_OPTION",
+      "원본 시트의 해당 행·문항을 확인하고 코드북을 검수", "PENDING_REVIEW"
+    ]);
+    return null;
+  }
 }
 function resolveSchool(row,c,schools) {
   const schoolName=normalize(row[c.school]);
@@ -327,7 +341,7 @@ function refreshBeagu2026Stats() {
     const values=source.getRange(1,1,Math.max(1,rCount),Math.min(50,source.getLastColumn())).getDisplayValues();
     const columns=questionColumns(values[0]);
     const schools=fetchSchools(); // 학교 MASTER가 없으면 기존 결과 보존
-    const groups=new Map(),holds=[];
+    const groups=new Map(),holds=[],reviewRows=[];
     for(let i=1;i<values.length;i++){
       const r=values[i];
       if(!r[0]&&!r[columns.school])continue;
@@ -347,7 +361,7 @@ function refreshBeagu2026Stats() {
           String(r[columns.school]||""),"설립유형 선택("+m.selectedType+")과 학교공시("+m.registeredType+") 불일치","NEEDS_TYPE_REVIEW"]);
       }
       const scores=[];
-      for(let j=0;j<13;j++)scores.push(questionScore(j+1,r[columns.q[j]]));
+      for(let j=0;j<13;j++)scores.push(beagu26ScoreOrReview(j+1,r[columns.q[j]],i+1,key,reviewRows));
       let g=groups.get(key);
       if(!g){g={school:m.school,counts:Array(13).fill(0),sums:Array(13).fill(0),rows:0,viScores:[],typeConflict:false};groups.set(key,g)}
       g.typeConflict = g.typeConflict || m.typeConflict;
@@ -366,6 +380,12 @@ function refreshBeagu2026Stats() {
     // 원본 데이터와 학교 매칭 오류 검사를 모두 마친 뒤에만 결과 시트를 갱신한다.
     replaceBody(destination.getSheetByName(BEAGU26.summaryTab),output,23);
     replaceBody(destination.getSheetByName(BEAGU26.holdTab),holds,6);
+    const reviewTab=destination.getSheetByName("2026_기타응답_검수대기")
+      ||destination.insertSheet("2026_기타응답_검수대기");
+    reviewTab.getRange(1,1,1,6).setValues([[
+      "원본행번호","학교ID","문항","검수유형","조치안내","집계상태"
+    ]]);
+    replaceBody(reviewTab,reviewRows,6);
     matched=output.length;
     // Holds include both unresolved schools and independently flagged type conflicts.
     unmatched=holds.length;
@@ -386,7 +406,7 @@ function refreshBeagu2026Stats() {
     }
     catch(e){publishStatus="PUBLIC_ERROR";Logger.log("National count publish: "+String(e.message||e).slice(0,100))}
     destination.getSheetByName(BEAGU26.logTab).appendRow([now,scanned,matched,unmatched,"SUCCESS",
-      "본조사 이전 "+prelaunch+"건 제외; 시각 불명 "+undated+"건 보류; 전국 응답건수 "+publishStatus+" · 비공개 자동검수 "+privateQaStatus]);
+      "본조사 이전 "+prelaunch+"건 제외; 시각 불명 "+undated+"건 보류; 기타·미등록 보기 검수 "+reviewRows.length+"건; 전국 응답건수 "+publishStatus+" · 비공개 자동검수 "+privateQaStatus]);
     Logger.log("Updated internal school summary: "+matched+" schools");
   }catch(e){
     const stamp=Utilities.formatDate(new Date(),BEAGU26.timezone,"yyyy-MM-dd HH:mm:ss");
