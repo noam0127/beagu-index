@@ -4,6 +4,11 @@ on:
     paths:
       - 'js/class-diary-world-v1.js'
       - 'scripts/test-class-diary-world.cjs'
+      - 'js/class-diary-narrative-v1.js'
+      - 'scripts/test-class-diary-narrative.cjs'
+      - 'data/public-statistics-question-catalog-v1.json'
+      - 'js/2026-questionnaire-options-v1.2.js'
+      - 'supabase/functions/class-diary-story-signals-v1/index.ts'
       - '.github/workflows/class-diary-world-validation.yml'
   pull_request:
     paths:
@@ -19,7 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test school world inputs and privacy gates
-        run: node scripts/test-class-diary-world.cjs
+        run: |
+          node scripts/test-class-diary-world.cjs
+          node scripts/test-class-diary-narrative.cjs
       - name: Confirm the live API rejects missing Lv2 session
         run: |
           code=$(curl --retry 2 --max-time 15 --silent --show-error \
@@ -29,3 +36,12 @@ jobs:
             'https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-world-v1')
           test "$code" = '401'
           grep -q 'LEVEL2_REQUIRED' /tmp/class-diary-no-auth.json
+      - name: Confirm story signal API rejects missing Lv2 session
+        run: |
+          code=$(curl --retry 2 --max-time 15 --silent --show-error \
+            --output /tmp/class-diary-story-no-auth.json --write-out '%{http_code}' \
+            --request POST --header 'Content-Type: application/json' \
+            --data '{"schoolId":"7972013"}' \
+            'https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-story-signals-v1')
+          test "$code" = '401'
+          grep -q 'LEVEL2_REQUIRED' /tmp/class-diary-story-no-auth.json
