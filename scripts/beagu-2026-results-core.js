@@ -39,8 +39,9 @@ function beagu26BuildResults(values, schools, catalog) {
         multiple:meta.kind==='multi'||id==='Q45',time:meta.kind==='time'});
     });
   }
-  const groups=new Map(), totals={source_rows:0,official_rows:0,prelaunch_rows:0,unmatched_rows:0,undated_rows:0};
-  for(const r of values.slice(1)){
+  const groups=new Map(), reviewRows=[], totals={source_rows:0,official_rows:0,prelaunch_rows:0,unmatched_rows:0,undated_rows:0};
+  for(let sourceIndex=1;sourceIndex<values.length;sourceIndex++){
+    const r=values[sourceIndex];
     if(!r[0]&&!r[c.school])continue;
     totals.source_rows++;
     const day=getSubmittedDay(r[0]);
@@ -67,10 +68,17 @@ function beagu26BuildResults(values, schools, catalog) {
         q.valid++;q.minutes_sum+=hour*60+minute;return;
       }
       const selected=beagu26Selections(raw,s.options,s.multiple);
-      if(selected===null){q.invalid++;return;}
+      // '기타' and unknown labels stay in the source sheet for human review.
+      // Review rows contain pointers only; never free-text values or identities.
+      const containsOther=selected!==null&&selected.some(i=>beagu26CleanOption(s.options[i])==='기타');
+      if(selected===null||containsOther){
+        q.invalid++;
+        reviewRows.push([sourceIndex+1,id,s.id,s.row,containsOther?'OTHER_OPTION':'UNKNOWN_OPTION','PENDING_REVIEW']);
+        return;
+      }
       if(selected.length){q.valid++;selected.forEach(i=>q.counts[i]++);}
     });
   }
   return {source_spreadsheet_id:BEAGU26.sourceId,official_start_day:'2026-11-01',schema_version:1,
-    totals,schools:[...groups.values()].sort((a,b)=>a.school_id.localeCompare(b.school_id))};
+    totals,schools:[...groups.values()].sort((a,b)=>a.school_id.localeCompare(b.school_id)),reviewRows};
 }
