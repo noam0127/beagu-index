@@ -36,7 +36,9 @@ const menuPages=[
 ];
 for(const file of menuPages){
  const pageHtml=read(file);
- const nav=pageHtml.match(/<nav class="beagu-unified-nav"[^>]*>([\\s\\S]*?)<\\/nav>/)?.[1];
+ const navStart=pageHtml.indexOf('<nav class="beagu-unified-nav"');
+ const navEnd=pageHtml.indexOf('</nav>',navStart);
+ const nav=navStart>=0&&navEnd>navStart?pageHtml.slice(navStart,navEnd):'';
  assert.ok(nav,'shared nav on '+file);
  assert.ok(nav.includes('href="postit.html"'),'Post-it menu link on '+file);
  const label='>포스트잇</a>';
