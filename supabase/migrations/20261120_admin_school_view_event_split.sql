@@ -1,5 +1,5 @@
-// 2026-11-20: Keep public-deduplicated school views separate from raw school-selection events.
-// A saved school_selected event is not necessarily a new unique daily view.
+-- 2026-11-20: Keep public-deduplicated school views separate from raw school-selection events.
+-- A saved school_selected event is not necessarily a new unique daily view.
 -- Read-only, service-role-only aggregate for the administrator dashboard.
 -- Does not expose respondents, IPs, device identifiers, visitor UUIDs, or raw game sessions.
 -- No historical values are synthesized. Null means not currently collected.
