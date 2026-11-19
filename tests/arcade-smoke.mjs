@@ -411,6 +411,8 @@ const serveSpeed=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
  "const ballSpeedProfiles="+speedMatch[1],
  "const ballSpeedFactor=()=>ballSpeedProfiles[tier];",
  "const FLOOR=451,NET_X=450,state={serveLeft},left={},right={},ball={trail:[]};",
+ "const volleyShackle={x:0,dir:-1},secondBall={trail:[]},activeBalls=[ball],clones=[];",
+ "const cloneProfiles={easy:2,normal:1,hard:0,very_hard:0,extreme:0};",
  resetSource,"resetPositions();return {vx:ball.vx,vy:ball.vy};"
 ].join("\n"))(tier,serveLeft);
 assert.ok(Math.abs(serveSpeed("easy").vx)<Math.abs(serveSpeed("hard").vx));
@@ -535,7 +537,7 @@ assert.match(volley,/if\(!spike&&!charged&&incomingVx< -1\)/);
 assert.match(volley,/state\.receiveStreak=0/);
 assert.match(volley,/state\.rightScore \+= 1; state\.receiveStreak=0/);
 assert.match(volley,/textLabel\("💚 \+"\+state\.healAmount\+" 체력"/);
-const hitStart=volley.indexOf("function playerHit(p) {");
+const hitStart=volley.indexOf("function playerHit(p,ball=activeBalls[0]) {");
 const hitEnd=volley.indexOf("function finishMatch(",hitStart);
 assert.ok(hitStart>0&&hitEnd>hitStart);
 const hitSrc=volley.slice(hitStart,hitEnd);
@@ -546,7 +548,7 @@ const contact=new Function("ball","state","p","tier",[
  'const receiveHealProfiles='+healsMatch[1],
  'const ballSpeedFactor=()=>1,energyFactor=()=>1,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));',
  'let status="";const setStatus=s=>{status=s;},tone=()=>{},spikeSound=()=>{},updateEnergyUI=()=>{};',
- hitSrc,'playerHit(p);return status;'
+ hitSrc,'playerHit(p,ball);return status;'
 ].join("\n"));
 function contactCase(tier="hard"){
  const ball={x:248,y:376,vx:-8,vy:3,cooldown:0,spin:0,trail:[],shadowFrames:0};
