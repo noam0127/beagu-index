@@ -43,8 +43,8 @@ jobs:
             const origin = process.env.SITE;
             const checks = [
               ['home', '/', 'postit.html'],
-              ['postit', '/postit.html', '댓글은 Lv.1부터'],
-              ['postit-js', '/js/postit-v1.js?v=20261120-4', 'COMMENT_READ_LEVEL_REQUIRED'],
+              ['postit', '/postit.html', 'postit-v1.js?v=20261120-tornpaper2'],
+              ['postit-js', '/js/postit-v1.js?v=20261120-tornpaper2', 'WRITER_IDENTITY_REQUIRED'],
               ['wind-css', '/styles/postit-v1.css', 'postit-breeze-flutter'],
               ['school-search', '/search.html', 'postit.html'],
               ['school-search-lv1', '/search-lv1.html', 'postit.html'],
@@ -71,6 +71,17 @@ jobs:
             assert.equal(denied.status, 403, 'Lv0 must not read comments');
             assert.equal(JSON.parse(denied.body).error, 'COMMENT_READ_LEVEL_REQUIRED');
             console.log('PASS Lv0 server-side comment denial 403');
+            // A denied POST never creates a moderation or user-data fixture.
+            const blockedWrite = await fetch(api, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'create_post', subject_type: 'game', game_slug: 'teacher-volleyball', text: '권한 테스트' }),
+              signal: AbortSignal.timeout(18000)
+            });
+            assert.equal(blockedWrite.status, 403, 'anonymous writes must fail closed');
+            assert.equal((await blockedWrite.json()).error, 'LEVEL_REQUIRED');
+            console.log('PASS anonymous create_post denied HTTP 403 (no data written)');
+
             console.log('Public smoke test passed. Lv1/Lv2 session tests and mobile visuals require separate checks.');
           }
           run().catch(error => { console.error('FAIL: ' + error.message); process.exitCode = 1; });
