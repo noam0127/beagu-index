@@ -212,10 +212,26 @@ const scoreFns=new Function("int",javascript+"\nreturn {scoreFromVolleyball,scor
  (v,min,max)=>typeof v==="number"&&Number.isInteger(v)&&v>=min&&v<=max
 );
 assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2},100),7*120+2*25+600+(7-3)*30);
-assert.equal(scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:645},65),645);
-assert.throws(()=>scoreFns.scoreFromVolleyball25({player:24,cpu:25,elapsedTenths:645},65),/invalid_stats/);
-assert.throws(()=>scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:100},65),/invalid_duration/);
-assert.throws(()=>scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:800},65),/invalid_duration/);
+// Volleyball server validates score points, defeat penalties and lead multipliers.
+const volleyStats=(player,cpu)=>{
+ const baseScore=Math.max(0,player*100-cpu*50);
+ const victory=player===25&&cpu<25;
+ const multiplier=victory?1+Math.floor((25-cpu)/5):1;
+ return {player,cpu,baseScore,multiplier,finalScore:baseScore*multiplier,victory};
+};
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,0),80),15000,"25–0 win gains 6x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,5),80),9000,"25–5 win gains 5x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,10),80),6000,"25–10 win gains 4x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,15),80),5250,"25–15 win gains 3x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,20),80),3000,"25–20 win gains 2x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,24),80),1300,"25–24 win gains 1x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(24,25),80),1150,"loss can earn base points but never a win bonus");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(3,25),80),0,"penalties cannot make score negative");
+assert.throws(()=>scoreFns.scoreFromVolleyball25(volleyStats(24,24),80),/invalid_match/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25(volleyStats(25,25),80),/invalid_match/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({...volleyStats(25,5),multiplier:6},80),/invalid_score/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({...volleyStats(25,5),finalScore:9999},80),/invalid_score/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25(volleyStats(25,5),10),/invalid_duration/);
 const win62={score:12000,baseScore:6000,survivalSeconds:190,age:62,victory:true};
 assert.equal(scoreFns.scoreFromRetirement(win62,191),12000);
 assert.throws(()=>scoreFns.scoreFromRetirement({...win62,score:6000},191),/invalid_retirement_score/);
@@ -225,7 +241,7 @@ assert.throws(()=>scoreFns.scoreFromRetirement(win62,150),/invalid_survival_time
 assert.equal(scoreFns.scoreFromRetirement({score:700,baseScore:700,age:44,survivalSeconds:100,victory:false},103),700);
 assert.throws(()=>scoreFns.scoreFromRetirement({score:1400,baseScore:700,age:44,survivalSeconds:100,victory:false},103),/invalid_retirement_score/);
 assert.equal(scoreFns.scoreFromRun({score:1500,day:3,victory:false},100),1500,"old run records remain compatible");
-console.log("PASS: separate 25-point win time and 62-year retirement score verification; legacy records intact");
+console.log("PASS: verified 25-point +100/-50 win-margin scoring and 62-year retirement rules");
 
 // EXTREME disables player ascent in both games without suppressing enemy AI jump.
 assert.match(volley,/const canPlayerJump=\(\)=>currentDifficulty!=="extreme"/,"volleyball player jump gate");
@@ -258,50 +274,64 @@ const runnerPointer=new Function("jumpEnabled",[
 ].join("\n"));
 assert.equal(runnerPointer(false).y,368,"extreme run touch must stay on ground");
 assert.equal(runnerPointer(true).y,76,"other run difficulties still allow rising");
-// Winner-take-first 25-point volleyball rules, loss path and pause-aware timer.
+// 25-point rules and score lead multipliers, never elapsed-time rankings.
 assert.match(volley,/const MATCH_TARGET=25/);
-assert.match(volley,/id="volley-best-label"/);
-assert.match(volley,/FASTEST_KEY="teacherVolleyballFastest25V2"/);
-assert.match(volley,/state\.recordBroken=rememberFastest\(duration\)/);
+assert.match(volley,/const POINT_GAIN=100,POINT_LOSS=50/);
+assert.match(volley,/BEST_SCORE_KEY="teacherVolleyballScore25BestV1"/);
+assert.match(volley,/state\.recordBroken=rememberBestScore\(finalScore\)/);
 assert.match(volley,/new window\.ArcadeLeaderboard\("volleyball_25"/);
 assert.match(runner,/new window\.ArcadeLeaderboard\("teacher_run_retirement"/);
-assert.match(shared,/const timedGame=game=>game==="volleyball_25"/);
-assert.match(shared,/a\.score-b\.score:b\.score-a\.score/,"only time boards are ascending");
-assert.match(shared,/timedGame\(this\.game\)\?this\.score>=this\.board\[9\]\.score/);
+assert.doesNotMatch(volley,/formatTime|getElapsedTenths|updateClockUI|volley-time-label|BEST TIME|⏱/);
+assert.doesNotMatch(shared,/timedGame|fmtTime|openRecord|dialogElement|nickname/,"no name or time-rank inputs");
+assert.match(shared,/b\.score-a\.score/,"higher scores rank ahead");
+assert.match(shared,/this\.score<=this\.board\[9\]\.score/,"lower nonqualifying score gets excluded");
 assert.match(volley,/EASY: animated feather wings/);
 assert.match(volley,/p===left&&currentDifficulty==="easy"/);
 assert.match(runner,/profile===difficultyProfiles\.easy/);
-const clockStart=volley.indexOf("const MATCH_TARGET=25");
-const clockEnd=volley.indexOf("const W =",clockStart);
-assert.ok(clockStart>0&&clockEnd>clockStart);
-const clockSrc=volley.slice(clockStart,clockEnd);
-const timerCase=(phase,now,startedAt=1000,pausedMs=0,pausedAt=0,finishedAt=0)=>
- new Function("state","performance",clockSrc+
- "\nreturn {tenths:getElapsedTenths(),formatted:formatTime(getElapsedTenths())};")(
- {phase,startedAt,pausedMs,pausedAt,finishedAt},{now:()=>now});
-assert.deepEqual(timerCase("playing",7050,1000,500),{tenths:56,formatted:"0:05.6"});
-assert.deepEqual(timerCase("paused",99999,1000,500,5100),{tenths:36,formatted:"0:03.6"});
-assert.deepEqual(timerCase("finished",99999,1000,500,0,7100),{tenths:56,formatted:"0:05.6"});
-assert.deepEqual(timerCase("ready",99999,0),{tenths:0,formatted:"0:00.0"});
+const scoringStart=volley.indexOf("const MATCH_TARGET=25");
+const scoringEnd=volley.indexOf("const W =",scoringStart);
+assert.ok(scoringStart>0&&scoringEnd>scoringStart);
+const scoringSrc=volley.slice(scoringStart,scoringEnd);
+const clientScore=new Function(scoringSrc+"return {base:getBaseMatchScore,multiplier:getVictoryMultiplier,final:getMatchScore};")();
+for(const [p,c] of [[0,0],[25,0],[25,5],[25,10],[25,15],[25,20],[25,24],[24,25],[3,25]]){
+ const expected=volleyStats(p,c);
+ assert.equal(clientScore.base(p,c),expected.baseScore);
+ assert.equal(clientScore.multiplier(p,c),expected.multiplier);
+ assert.equal(clientScore.final(p,c),expected.finalScore);
+}
+assert.match(volley,/cheerMilestones=\{/);
+assert.match(volley,/5:"✨/);
+assert.match(volley,/10:"🔥/);
+assert.match(volley,/15:"💪/);
+assert.match(volley,/20:"🚀/);
+assert.match(volley,/23:"🎯/);
+assert.match(volley,/24:"🏁/);
+assert.match(volley,/state\.winStreak\+\+/);
+assert.match(volley,/id="volley-my-progress"/);
+assert.match(volley,/id="volley-cpu-progress"/);
+assert.match(volley,/state\.pointCheer=pointEncouragement/);
 const pointStart=volley.indexOf("function point(leftWins) {");
 const pointEnd=volley.indexOf("function step() {",pointStart);
 assert.ok(pointStart>0&&pointEnd>pointStart);
 const pointSrc=volley.slice(pointStart,pointEnd);
 function pointCase(player,cpu,leftWins){
- const state={phase:"playing",leftScore:player,rightScore:cpu,serveLeft:true};
+ const state={phase:"playing",leftScore:player,rightScore:cpu,serveLeft:true,winStreak:0,bestStreak:0,flash:0};
  return new Function("state","side",[
- 'const MATCH_TARGET=25;',
- 'let finished=0;const setStatus=()=>{},tone=()=>{},syncUI=()=>{};',
- 'const finishMatch=()=>{finished++;state.phase="finished";};',
- pointSrc,"point(side);return {p:state.leftScore,c:state.rightScore,finished,phase:state.phase,serveLeft:state.serveLeft};"
+  'const MATCH_TARGET=25,POINT_GAIN=100,POINT_LOSS=50;',
+  'const cheerMilestones={5:"첫 고비",10:"10점",15:"15점",20:"20점",23:"23점",24:"24점"};',
+  'const pointEncouragement=()=>"+100 또는 -50";',
+  'let finished=0;const setStatus=()=>{},tone=()=>{},syncUI=()=>{};',
+  'const finishMatch=()=>{finished++;state.phase="finished";};',
+  pointSrc,
+  'point(side);return {p:state.leftScore,c:state.rightScore,finished,phase:state.phase,serveLeft:state.serveLeft};'
  ].join("\n"))(state,leftWins);
 }
 assert.deepEqual(pointCase(24,20,true),{p:25,c:20,finished:1,phase:"finished",serveLeft:false});
 assert.deepEqual(pointCase(16,24,false),{p:16,c:25,finished:1,phase:"finished",serveLeft:true});
 assert.deepEqual(pointCase(5,4,true),{p:6,c:4,finished:0,phase:"point",serveLeft:false});
-assert.doesNotMatch(volley,/getSurvivalBonus|loseLife|leftEnergy|rightEnergy/,"old HP/survival score mechanics are removed");
-assert.match(volley,/ranking\?\.finish\(duration,\{player:state\.leftScore,cpu:state\.rightScore,elapsedTenths:duration\}\)/);
-console.log("PASS: 25-point winner/loser, pause-correct race clock, independent shortest time and EASY wings");
+assert.doesNotMatch(volley,/getSurvivalBonus|loseLife|leftEnergy|rightEnergy/);
+assert.match(volley,/ranking\?\.finish\(finalScore,\{/,"final scored result auto-recorded, including nonzero losses");
+console.log("PASS: 25-point high-score competition, victory ×1–×6 lead bonuses, no timer, stage cheers");
 
 // Five-tier ball speed and opposite team cosmetics survive the redesign.
 const netTopMatch=volley.match(/NET_TOP = (\d+), NET_W/);
