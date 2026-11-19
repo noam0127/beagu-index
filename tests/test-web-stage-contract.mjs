@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {new Script} from 'node:vm';
+import { Script } from 'node:vm';
 import {test} from 'node:test';
 
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
