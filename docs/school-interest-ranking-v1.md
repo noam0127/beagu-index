@@ -7,17 +7,17 @@
 - 초기 기획의 '많이 찾는 학교' 탭을 없애고 **실시간 급상승 학교** 하나만 제공한다.
 
 ## 급상승 정의
-- 최근 24시간 순방문 브라우저 수에서 직전 24시간 순방문 브라우저 수를 뺀 **증가 인원** 기준 내림차순.
+- 최근 72시간 순방문 브라우저 수에서 직전 72시간 순방문 브라우저 수를 뺀 **증가 인원** 기준 내림차순.
 - 한 브라우저가 같은 학교를 반복 검색해도 해당 기간에는 1명으로 계산(임의 UUID의 해시).
-- 최근 24시간 순방문 수 5명 이상, 직전 24시간 대비 증가 3명 이상일 때 표시.
+- 최근 72시간 순방문 수 5명 이상, 직전 72시간 대비 증가 3명 이상일 때 표시.
 - 5위까지 기본 노출, 최대 10위 펼치기. 각 학교 옆에 `↑ N명` 증가량을 표시한다.
 - 페이지가 열려 있는 동안 **1분마다 서버에 새 순위를 요청**한다. 숨김 탭/비활성 페이지에서는 폴링하지 않는다.
 - Supabase Realtime 스트리밍이 아니라 60초 간격으로 최신 집계를 가져오는 방식이다.
 - 집계 부족 시 가상 학교 순위 대신 안내 문구를 출력한다. 방문자 수는 실제 사람 수와 정확히 일치하지 않을 수 있다.
 
 ## 구현
-- DB migration: `beagu_interest_live_rising_24h` (기존 `beagu_school_interest_rankings()` 조회 기준 교체).
-- Edge Function `beagu-school-interest-v1` v2: 기존 서버 Lv.1 세션 검증 유지, `rising` 목록만 응답.
+- DB migration: `beagu_interest_rising_72_hours_v1` (기존 `beagu_school_interest_rankings()` 조회 기준 교체).
+- Edge Function `beagu-school-interest-v1` v3: 기존 서버 Lv.1 세션 검증 유지, `rising` 목록만 응답.
 - UI: `styles/beagu-school-interest-v1.css`, `js/beagu-school-interest-v1.js`
 - 탭 상태 동기화: `search.html` 및 `js/level-search.js`
 - 기존 학교 조회 이벤트 수집과 보안 제한, 35일 자동 정리, RLS, 최소 공개 기준은 유지한다.
