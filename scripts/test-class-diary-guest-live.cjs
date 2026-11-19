@@ -23,7 +23,7 @@ assert(play.includes("sessionStorage.removeItem(handoffKey)"),'Ticket must be co
 assert(play.includes("result.scope!=='class-diary-fictional-guest'"),'Guest scope guard missing');
 assert(!play.includes('sessionStorage.setItem('),'Game must not save code or game state');
 assert(edge.includes("crypto.subtle.verify('HMAC'"),'Ticket must have an unforgeable MAC');
-assert(/await issueTicket\(''\)/.test(edge),'Server-approved preview PIN must issue short-lived ticket without escalating a level');
+assert(/await issueTicket\(PREVIEW_SUBJECT\)/.test(edge),'Server-approved preview PIN must issue a scoped signed ticket for private saves');
 assert(edge.includes("CLASS_DIARY_PREVIEW_PIN"),'PIN must come from a server-side setting');
 assert(!edge.includes("beagu_class_diary_progress_subject"),'Legacy challenge codes must not grant preview access');
 assert(!edge.includes("grant_level2"),'Guest route must not elevate any tier');
