@@ -936,6 +936,48 @@ function drawItems(){
   ctx.restore();
  }
 }
+function drawPatternHazards(){
+ if(paperTarget){
+  const x=paperTarget.x,y=paperTarget.y;
+  ctx.save();ctx.strokeStyle="#f55c67";ctx.lineWidth=2.5;
+  ctx.setLineDash([6,5]);ctx.beginPath();
+  ctx.arc(x,y,27+(Math.sin(clock*13)+1)*4,0,Math.PI*2);
+  ctx.moveTo(x-34,y);ctx.lineTo(x+34,y);
+  ctx.moveTo(x,y-34);ctx.lineTo(x,y+34);ctx.stroke();ctx.setLineDash([]);
+  ctx.font="bold 12px sans-serif";ctx.textAlign="center";
+  ctx.fillStyle="#d82941";ctx.fillText("공문 표적",x,Math.max(56,y-43));ctx.restore();
+ }
+ for(const a of sideStudents){
+  ctx.save();ctx.translate(a.phase==="warn"?(a.vx>0?14:W-14):a.x,a.y);
+  if(a.phase==="warn"){
+   ctx.globalAlpha=.65+Math.sin(clock*22)*.3;
+   ctx.fillStyle="#e53f53";ctx.font="bold 23px sans-serif";
+   ctx.textAlign="center";ctx.fillText("!",0,-12);
+   ctx.fillRect(-9,4,18,4);
+  }else{
+   // Compact student sprite: not an oversized hitbox.
+   ctx.fillStyle="#f6cba7";ctx.beginPath();ctx.arc(0,-12,10,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle="#24395f";ctx.fillRect(-9,-20,18,6);
+   ctx.fillStyle="#536b9f";ctx.fillRect(-11,-3,22,20);
+   ctx.fillStyle="#fff2d0";ctx.fillRect(-6,1,12,5);
+   ctx.fillStyle="#354765";ctx.fillRect(-8,17,6,8);ctx.fillRect(2,17,6,8);
+   ctx.fillStyle="#fff";ctx.font="bold 9px sans-serif";
+   ctx.textAlign="center";ctx.fillText("학생",0,13);
+   ctx.strokeStyle="#e76050";ctx.lineWidth=2.5;ctx.beginPath();
+   ctx.moveTo(-a.vx*17,4);ctx.lineTo(-a.vx*29,4);ctx.stroke();
+  }
+  ctx.restore();
+ }
+ for(const a of paperBullets){
+  ctx.save();ctx.translate(a.x,a.y);ctx.rotate(a.angle);
+  ctx.fillStyle="#fff6e8";ctx.strokeStyle="#c5727b";ctx.lineWidth=1.2;
+  ctx.fillRect(-8,-11,16,22);ctx.strokeRect(-8,-11,16,22);
+  ctx.fillStyle="#8792a9";ctx.fillRect(-5,-6,10,1.5);
+  ctx.fillRect(-5,-2,9,1.5);ctx.fillRect(-5,2,8,1.5);
+  ctx.fillStyle="#ce5d6d";ctx.fillRect(2,6,4,2);
+  ctx.restore();
+ }
+}
 function draw(){
  ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
  background();drawItems();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();
