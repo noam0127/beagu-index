@@ -1,7 +1,7 @@
 (() => {'use strict';
 const PROD='snvzwrexuqavnfvzgxqj';
 const cfg=window.BEAGU_STAGE_CONFIG||{};
-const params=new URLSearchParams(location.search);
+const params=new URLSearchParams(location.hash.replace(/^#/,''));
 const hash=params.get('token_hash')||'';
 history.replaceState(null,'',location.pathname);
 const status=document.getElementById('status');
