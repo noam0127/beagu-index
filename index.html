@@ -195,6 +195,9 @@
     .teacher-game-access-level--locked{color:#ffe7b8;background:rgba(245,196,105,.12);border-color:rgba(255,225,171,.45)}
     @media(max-width:380px){.teacher-game-access-level{font-size:11px;padding:6px 8px;margin-left:6px}.teacher-game-header{gap:7px}.teacher-game-header h2{font-size:clamp(15px,4.5vw,18px)}}
     .teacher-game-frame{display:block;width:100%;min-height:440px;border:0;background:#10223d}
+    /* Each game expands to its contents; only the outer home page scrolls. */
+    body.beagu-page-home .teacher-game-frame { overflow: hidden; }
+
     .teacher-run-feature{background:linear-gradient(145deg,#1e5260,#10263f 68%)}
     .teacher-run-feature .teacher-game-frame{min-height:625px}
     .teacher-game-footer{display:flex;align-items:center;justify-content:flex-end;padding:8px 18px 14px}
@@ -265,7 +268,8 @@
       <iframe
         class="teacher-game-frame"
         id="teacher-game-frame"
-        src="teacher-volleyball.html?v=20261119-gamefullscreen1"
+        scrolling="no"
+        src="teacher-volleyball.html?v=20261119-autoframe2"
         title="선생님배구 1.0 — 직접 조작하는 1대1 배구 미니게임"
         loading="lazy"
         allowfullscreen></iframe>
@@ -293,7 +297,8 @@
         <iframe
           class="teacher-game-frame"
           id="teacher-run-frame"
-          data-src="teacher-run.html?v=20261119-gamefullscreen1"
+        scrolling="no"
+          data-src="teacher-run.html?v=20261119-autoframe2"
           title="험난한 교직생활 3.0 — 24세 임용부터 62세 정년까지 살아남는 교사 생존 게임"
           loading="lazy"
           allowfullscreen></iframe>
@@ -346,8 +351,12 @@
       });
       if (!config) return;
       const height = Number(event.data.height);
-      if (!Number.isFinite(height) || height < 250 || height > 1500) return;
-      document.getElementById(config.id).style.height = Math.ceil(height) + "px";
+      // Taller scoreboards, menus and expanded rankings must grow the frame,
+      // rather than creating an independent scrollbar inside the game.
+      if (!Number.isFinite(height) || height < 250 || height > 8000) return;
+      const frame = document.getElementById(config.id);
+      const targetHeight = Math.ceil(height) + "px";
+      if (frame.style.height !== targetHeight) frame.style.height = targetHeight;
     });
   })();
 </script>
