@@ -15,7 +15,7 @@ async function check(req:Request){
  const v=(req.headers.get('X-Beagu-Session')||'').trim();
  if(!/^[a-f0-9]{64}$/.test(v))return null;
  const digest=await hash(v);
- const {data,error}=await admin.from('beagu_level_sessions').select('access_level,expires_at').eq('token_sha256',digest).maybeSingle();
+ const {data,error}=await admin.from('beagu_level_sessions').select('access_level,expires_at,identity_visitor_id').eq('token_sha256',digest).maybeSingle();
  if(error||!data||(!Number.isFinite(Date.parse(data.expires_at))||Date.parse(data.expires_at)<=Date.now()))return null;
  return data;
 }
@@ -38,11 +38,22 @@ Deno.serve(async(req:Request)=>{
    if(!/^[A-Za-z0-9-]{8,120}$/.test(code))return send({error:'INVALID_CODE'},401,origin);
    const {data:acc,error}=await admin.from('beagu_level_codes').select('access_level').eq('code_sha256',await hash(code)).eq('active',true).maybeSingle();
    if(error)return send({error:'AUTH_UNAVAILABLE'},503,origin);
-   if(!acc)return send({error:'INVALID_CODE'},401,origin);
+   // A challenge identity code is a temporary, server-verified Lv.2 credential.
+   // It must never become a full account or a Post-it author identity.
+   let level=Number(acc?.access_level)||0;
+   let provisional=false;
+   if(!acc){
+     const {data:valid,error:identityError}=await admin.rpc('beagu_check_class_diary_guest_code',{p_code:code});
+     if(identityError)return send({error:'AUTH_UNAVAILABLE'},503,origin);
+     if(valid===true){level=2;provisional=true;}
+   }
+   if(level<1)return send({error:'INVALID_CODE'},401,origin);
+   // Existing legacy Lv.2 codes also have no linked account identity.
+   if(level>=2)provisional=true;
    const v=token(),expiry=new Date(Date.now()+6*60*60*1000).toISOString();
-   const {error:writeError}=await admin.from('beagu_level_sessions').insert({token_sha256:await hash(v),access_level:acc.access_level,expires_at:expiry});
+   const {error:writeError}=await admin.from('beagu_level_sessions').insert({token_sha256:await hash(v),access_level:level,expires_at:expiry});
    if(writeError)return send({error:'SESSION_UNAVAILABLE'},503,origin);
-   return send({token:v,level:acc.access_level,expires_at:expiry},200,origin);
+   return send({token:v,level,provisional,expires_at:expiry},200,origin);
   }
   if(body.action!=='verify'&&body.action!=='school'&&body.action!=='logout'&&body.action!=='percentiles'&&body.action!=='offices'&&body.action!=='ranked_schools'&&body.action!=='survey_comparisons')return send({error:'UNKNOWN_ACTION'},400,origin);
   const session=await check(req);
@@ -51,7 +62,7 @@ Deno.serve(async(req:Request)=>{
    const {error}=await admin.from('beagu_level_sessions').delete().eq('token_sha256',await hash((req.headers.get('X-Beagu-Session')||'').trim()));
    return send(error?{error:'LOGOUT_UNAVAILABLE'}:{ok:true},error?503:200,origin);
   }
-  if(body.action==='verify')return send({level:session.access_level,expires_at:session.expires_at},200,origin);
+  if(body.action==='verify')return send({level:session.access_level,provisional:Number(session.access_level)>=2&&!session.identity_visitor_id,expires_at:session.expires_at},200,origin);
   if(body.action==='percentiles'){
    // Batch only a vetted 2026 percentile, never raw survey rows, counts or metadata.
    const ids=body.schoolIds;
