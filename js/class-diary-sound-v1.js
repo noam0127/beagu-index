@@ -98,6 +98,7 @@ function sceneTrack(event){
  if(!event)return 'daily';
  // A result is a reflective pause, not necessarily a happy resolution.
  if(event.result)return 'intimate';
+ if(['seat_song','sport'].includes(event.id))return 'comic';
  if(event.kind==='tense'||event.kind==='unsettled'||event.tone==='tense'||event.tone==='unsettled')return 'tension';
  if(event.kind==='bright'||event.tone==='bright'||event.tone==='happy'||event.kind==='happy')return 'bright';
  if(event.kind==='gentle'||event.tone==='gentle')return 'heartfelt';
@@ -108,7 +109,8 @@ function sceneTrack(event){
 function placeCue(place){
  const text=String(place||'');
  if(/카페|뒤뜰/.test(text))return 'cup';
- if(/교문|복도|주차장|운동장|출근길|퇴근길/.test(text))return 'step';
+ if(/복도|현관|출입문/.test(text))return 'door';
+ if(/교문|주차장|운동장|출근길|퇴근길/.test(text))return 'step';
  if(/교실|연구실|교무실|회의실|서점|수첩|집/.test(text))return 'paper';
  return null;
 }
