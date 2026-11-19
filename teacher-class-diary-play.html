@@ -458,8 +458,8 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <div class="setup-head">
  <span class="setup-eyebrow">프롤로그 <span aria-hidden="true">✦</span> 한 학기의 시작</span>
  <h2>어느 교실에서 시작할까요?</h2>
- <p>프롤로그에서 첫 이야기를 만나고, 학교를 정해 본편으로 이어갑니다.</p>
- <div class="setup-progress" aria-label="게임 준비 과정"><span data-step-label="1">01 · 학교 선택</span><span data-step-label="2">02 · 알고 싶은 사람</span><span data-step-label="3">03 · 첫 등교</span></div>
+ <p>학교를 정하고 알고 싶은 사람을 고르면, 그 사람의 프롤로그를 읽은 뒤 나의 이야기가 시작됩니다.</p>
+ <div class="setup-progress" aria-label="게임 준비 과정"><span data-step-label="1">01 · 학교 선택</span><span data-step-label="2">02 · 알고 싶은 사람</span><span data-step-label="3">03 · 프롤로그 준비</span></div>
 </div>
 <form id="profileForm">
 <div class="setup-layout">
@@ -532,7 +532,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
  </div>
 </div>
 <div class="setup-review" data-setup-screen="3">
-<div class="setup-section-title"><span class="setup-number">03</span><div><strong>첫 등교 준비</strong><small>설정을 확인하고 게임을 시작하세요.</small></div></div>
+<div class="setup-section-title"><span class="setup-number">03</span><div><strong>프롤로그 준비</strong><small>누구의 눈으로 첫날을 바라볼지 확인하세요.</small></div></div>
 <div class="setup-review-road" aria-hidden="true">✧　·　·　·　🏫</div>
 <div class="setup-review-fields"><div><small>선택한 학교</small><strong id="setupReviewSchool">—</strong></div><div><small>주인공</small><strong id="setupReviewName">—</strong></div><div><small>교직 경력 · 성별 · MBTI</small><strong id="setupReviewTraits">—</strong></div><div><small>프롤로그의 화자</small><strong id="setupReviewPartner">—</strong></div></div>
 <p class="setup-review-quote">“이 한 학기를 지나고 나면, 어떤 교실이 남아 있을까.”</p>
@@ -1727,6 +1727,7 @@ $('againBtn').addEventListener('click',()=>{
 });
 $('diarySaveNow').addEventListener('click',async()=>{
  const control=$('diarySaveNow');
+ if(prologuePending){status('프롤로그가 끝난 뒤부터 저장할 수 있습니다.');return;}
  if(!isGuest||storyMode!=='semester'||!progressSession||!game){progressStatus('invalid');return;}
  control.disabled=true;
  try{
