@@ -55,7 +55,7 @@ function chapter(s){
   if(record)paragraphs.push(thread.lines[record.choice]);
  }
  if(s.episode%6===0)paragraphs.push(p.beats[act]);
- if(s.episode%6===0)paragraphs.push(s.stats.trust>=57&&(s.profile.partner==='none'||s.stats.affection>=55)?p.near:p.distant);
+ /* Each act already has its own character beat; do not repeat a generic romantic refrain. */
  return {perspective:'player',narrator:'player',event:expansion&&expansion.event||e[1],episode:s.episode,total:36,act:act+1,actName:ACTS[act],date:'2027-'+e[0],title:e[1],place:PLACE_OVERRIDES[s.episode]||PLACE_NAMES[e[2]]||'학교',visual:e[2],paragraphs,partner:p.name,choices:e.slice(5,8).map((label,i)=>({id:String(i),label}))};
 }
 function choose(s,id){
