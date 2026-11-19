@@ -426,6 +426,42 @@
       make('small',fact.referenceYear+'년 기준','compare-basic-reference'));
     return wrap;
   }
+  // Consistent circled option indexes for every survey year (display only).
+  // Never rewrite stored data, official numeric facts, quantities or scores.
+  function circledChoiceIndex(n){
+    if(n>=1&&n<=20)return String.fromCodePoint(0x2460+n-1);
+    if(n>=21&&n<=35)return String.fromCodePoint(0x3251+n-21);
+    if(n>=36&&n<=50)return String.fromCodePoint(0x32B1+n-36);
+    return null;
+  }
+  function normalizeChoiceNumbering(value){
+    if(typeof value!=='string'||!value)return value;
+    const parts=value.split(/(\s*[·;|]\s*|\s+\/\s+|,\s*(?=\s*(?:50|[1-4]\d|[1-9])(?:\s*[,;·|]|\s*[.)、:]|\s+\S|\s*$)))/);
+    return parts.map((part,index)=>{
+      if(index%2||!part.trim())return part;
+      const original=part.trim();
+      // The number itself represents a verified survey choice.
+      if(/^(?:50|[1-4]\d|[1-9])$/.test(original))
+        return part.replace(original,circledChoiceIndex(Number(original)));
+      // Enumerated option with a separator: "1. 내용" / "2) 내용".
+      const numbered=original.match(/^(50|[1-4]\d|[1-9])([.)、:])\s*([\s\S]*)$/);
+      if(numbered){
+        const label=numbered[3].trim();
+        // Do not reinterpret decimals (1.5), ratios (1:2), or clock times.
+        if((numbered[2]==='.'||numbered[2]===':')&&/^\d/.test(label))return part;
+        const circle=circledChoiceIndex(Number(numbered[1]));
+        return part.replace(original,circle+(label?' '+label:''));
+      }
+      // The historical answer "1 1회미만" is an enumerated option,
+      // unlike "1회미만", "1점" or a numeric measurement.
+      const spaced=original.match(/^(50|[1-4]\d|[1-9])\s+(\S[\s\S]*)$/);
+      if(spaced){
+        if(/^(?:점|%|명|명당|원|㎡|학급|개|년|월|일|회)(?:\s|$)/.test(spaced[2]))return part;
+        return part.replace(original,circledChoiceIndex(Number(spaced[1]))+' '+spaced[2]);
+      }
+      return part;
+    }).join('');
+  }
   function renderTable() {
     const hasSelections=state.selected.length>0;
     elements.panel.hidden=!hasSelections;
@@ -467,7 +503,7 @@
             if(selectedYear!==year)return make('span','—','compare-other-year');
             const approved=state.approvedBySchool.get(String(school.school_id));
             if(approved?.items?.[year]?.[item.id]!==undefined)
-              return make('span',approved.items[year][item.id],'compare-approved-value');
+              return make('span',normalizeChoiceNumbering(approved.items[year][item.id]),'compare-approved-value');
             if(state.approvedLoading.has(String(school.school_id)))
               return make('span','확인 중…','compare-unavailable');
             return make('span',state.sessionToken && approved ? '승인된 값 없음' : '상세 인증 후 열람','compare-unavailable');
