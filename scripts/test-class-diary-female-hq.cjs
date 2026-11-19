@@ -55,7 +55,21 @@ assert.equal(art.portrait('man'),null,'No changes to male character assets');
 assert.equal(art.face('man','neutral'),null,'No changes to male character emoticons');
 const page=fs.readFileSync(path.join(root,'teacher-class-diary-play.html'),'utf8');
 const css=fs.readFileSync(path.join(root,'styles/class-diary-female-hq-v1.css'),'utf8');
-for(const name of jsFiles)assert(page.includes('src="js/'+name+'?v=20261120-hq1"'),'Missing game asset '+name);
+for(const name of jsFiles){
+ const version=name==='class-diary-female-hq-v1.js'?'20261120-matte-1':'20261120-hq1';
+ assert(page.includes('src="js/'+name+'?v='+version+'"'),'Missing game asset '+name);
+}
+assert(page.includes('styles/class-diary-female-matte-v1.css?v=20261120-1'));
+assert(page.includes('femaleHQ.prepareMatte('),'Matte pass must be active in the game');
+const matteCss=fs.readFileSync(path.join(root,'styles/class-diary-female-matte-v1.css'),'utf8');
+assert(matteCss.includes('brightness(.97)')&&matteCss.includes('saturate(.92)'),'Matte styling');
+assert.equal(Object.keys(art.STYLE_KEYS).length,5,'Five distinctive identities');
+assert.equal(art.prepareMatte(),0,'Node tests must not touch browser Canvas');
+const pixels=new Uint8ClampedArray([250,225,209,255, 240,240,240,255, 85,67,54,255]);
+art.mattePixels(pixels,3,1);
+assert(pixels[0]<250&&pixels[1]<225,'Warm pale specular skin must lose highlight');
+assert.deepEqual(Array.from(pixels.slice(4,8)),[240,240,240,255],'Neutral grays must not be recolored');
+assert.deepEqual(Array.from(pixels.slice(8,12)),[85,67,54,255],'Dark linework must stay intact');
 for(const marker of [
  'femaleHQ.portrait(partner)','femaleHQ.portrait(who)','femaleHQ.portrait(guest.id)',
  'femaleHQ.face(who,expression','showCharacterFace(game.profile.partner,semesterArt.expression',
@@ -65,4 +79,4 @@ for(const marker of [
 assert(page.includes('styles/class-diary-female-hq-v1.css?v=20261120-hq1'));
 assert(css.includes('max-width:620px'),'Mobile HQ layout must exist');
 assert(css.includes('data-art-quality="hq"'),'HQ styling must be scoped');
-console.log('PASS 5 photoreal female character portraits + 30 six-expression images, 36-episode/7-day integration, male regression, no persistence');
+console.log('PASS HQ: 5 distinct women, 30 expressions, local matte skin highlight reduction, 36-episode/7-day integration, no persistence');
