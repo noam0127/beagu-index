@@ -139,7 +139,7 @@ class ArcadeLeaderboard{
    const row=el("div","arcade-rank-grid arcade-rank-row");
    const school=el("div","arcade-rank-person");
    school.append(el("span","arcade-rank-school",entry.school_name),
-    el("span","arcade-rank-nick",levelNames[entry.difficulty]||""));
+    el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
    row.append(el("span","",String(i+1).padStart(2,"0")),school,
     el("span","",timedGame(this.game)?fmtTime(entry.score):fmt(entry.score)));
    root.append(row);
