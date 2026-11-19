@@ -3,7 +3,11 @@
   const byId = id => document.getElementById(id);
   const status = byId('status'), capture = byId('capture'), retry = byId('retry');
   const participantNo = byId('participantNo');
-  let imageUrl = null, participant = null, busy = false, accessGranted = false;
+  const identityCode = byId('identityCode'), copyIdentityCode = byId('copyIdentityCode');
+  const identityCopyFeedback = byId('identityCopyFeedback');
+  const identityEndpoint = SUPABASE_URL + '/functions/v1/beagu-challenge-identity';
+  const levelSessionKey = 'beagu-level-session-v1';
+  let imageUrl = null, participant = null, personalCode = null, busy = false, accessGranted = false;
   const deadline = (promise, ms, message) => {
     let timer;
     return Promise.race([Promise.resolve(promise), new Promise((_, reject) => {
@@ -19,17 +23,35 @@
     retry.disabled = true;
     try {
       if (!window.beaguVisitor) throw new Error('STORAGE_UNAVAILABLE');
-      if (participant === null) {
-        status.textContent = '참여 순번을 확인하고 있습니다.';
-        const {data, error} = await deadline(supabaseClient.rpc('beagu_join_challenge', {
-          p_visitor: window.beaguVisitor
+      if (participant === null || personalCode === null) {
+        status.textContent = '참여 순번과 고유번호를 확인하고 있습니다.';
+        identityCode.textContent = '고유번호 확인 중';
+        let sessionToken = '';
+        try { sessionToken = sessionStorage.getItem(levelSessionKey) || ''; } catch (_) {}
+        if (!sessionToken) throw new Error('레벨1 인증이 필요합니다. 다시 인증해 주세요.');
+        const response = await deadline(fetch(identityEndpoint, {
+          method: 'POST', cache: 'no-store',
+          headers: { 'Content-Type': 'application/json', 'X-Beagu-Session': sessionToken },
+          body: JSON.stringify({ action: 'issue', visitor: window.beaguVisitor })
         }), 15000, '연결이 지연되고 있습니다. 다시 시도해주세요.');
         if (!accessGranted) return;
-        const n = Number(data);
-        if (error || !Number.isSafeInteger(n) || n < 1) throw new Error('참여 순번을 확인하지 못했습니다. 다시 시도해주세요.');
+        if (response.status === 401 || response.status === 403) throw new Error('레벨1 인증이 만료되었습니다. 다시 인증해 주세요.');
+        if (!response.ok) throw new Error('고유번호 발급에 실패했습니다. 다시 시도해주세요.');
+        const data = await response.json();
+        if (!accessGranted) return;
+        const n = Number(data.participantNo);
+        const code = data.identityCode;
+        if (!Number.isSafeInteger(n) || n < 1 ||
+            typeof code !== 'string' || !/^BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}$/.test(code)) {
+          throw new Error('발급 결과를 확인하지 못했습니다. 다시 시도해주세요.');
+        }
         participant = n;
+        personalCode = code;
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
-        if(window.BeaguChallengeProgress)void window.BeaguChallengeProgress.refresh();
+        identityCode.textContent = code;
+        copyIdentityCode.disabled = false;
+        identityCopyFeedback.textContent = '';
+        if (window.BeaguChallengeProgress) void window.BeaguChallengeProgress.refresh();
       }
       if (!accessGranted) return;
       status.textContent = '인증 이미지를 준비하고 있습니다.';
@@ -47,6 +69,10 @@
       status.textContent = '';
     } catch (error) {
       if (participant === null) participantNo.textContent = '순번 조회 실패';
+      if (personalCode === null) {
+        identityCode.textContent = '고유번호 발급 실패';
+        copyIdentityCode.disabled = true;
+      }
       status.textContent = error.message === 'STORAGE_UNAVAILABLE'
         ? '브라우저 저장 공간을 허용한 뒤 페이지를 새로고침해주세요.'
         : error.message || '처리하지 못했습니다. 다시 시도해주세요.';
@@ -73,6 +99,17 @@
     }
   });
 
+  copyIdentityCode.addEventListener('click', async () => {
+    if (!accessGranted || !personalCode) return;
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('UNAVAILABLE');
+      await navigator.clipboard.writeText(personalCode);
+      identityCopyFeedback.textContent = '고유번호를 복사했습니다. 개인적으로 보관해 주세요.';
+    } catch (_) {
+      identityCopyFeedback.textContent = '복사가 지원되지 않습니다. 번호를 길게 눌러 직접 복사해 주세요.';
+    }
+  });
+
   retry.addEventListener('click', prepare);
   // 뒤로가기로 복원되는 페이지에서는 이미지 URL을 유지합니다.
   window.addEventListener('pagehide', event => {
@@ -81,6 +118,10 @@
   window.addEventListener('beagu:challenge-access-revoked', () => {
     accessGranted = false;
     participant = null;
+    personalCode = null;
+    identityCode.textContent = '고유번호 확인 중';
+    copyIdentityCode.disabled = true;
+    identityCopyFeedback.textContent = '';
     if (imageUrl) URL.revokeObjectURL(imageUrl);
     imageUrl = null;
     capture.disabled = true;
