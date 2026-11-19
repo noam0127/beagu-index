@@ -13,7 +13,7 @@ assert.equal(sound.choiceTrack(4,'together'),'daily');
 assert.equal(sound.choiceTrack(5,'invite'),'tender');
 assert.equal(sound.choiceTrack(6,'coffee'),'tender');
 assert.throws(()=>sound.dayTrack(8),/INVALID_DAY/);
-assert.throws(()=>sound.setTrack('unknown'),/UNKNOWN_TRACK/);
+assert.rejects(sound.setTrack('unknown'),/UNKNOWN_TRACK/).catch(e=>{process.exitCode=1;console.error(e);});
 assert.equal(sound.isEnabled(),false);
 const credit=sound.credit();
 assert(credit.credit.includes('Scott Buckley'));
