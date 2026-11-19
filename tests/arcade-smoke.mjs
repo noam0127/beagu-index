@@ -220,8 +220,8 @@ const volleyStats=(player,cpu)=>{
  return {player,cpu,baseScore,multiplier,finalScore:baseScore*multiplier,victory};
 };
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,0),80),15000,"25–0 win gains 6x");
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,5),80),9000,"25–5 win gains 5x");
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,10),80),6000,"25–10 win gains 4x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,5),80),11250,"25–5 win gains 5x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,10),80),8000,"25–10 win gains 4x");
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,15),80),5250,"25–15 win gains 3x");
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,20),80),3000,"25–20 win gains 2x");
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,24),80),1300,"25–24 win gains 1x");
