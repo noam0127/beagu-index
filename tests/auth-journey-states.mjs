@@ -12,7 +12,7 @@ const gateJS=read('js/challenge-access-v1.js');
 for(const p of ['js/beagu-level-state-v1.js','js/statistics-compare.js','js/challenge-access-v1.js'])
   assert.doesNotThrow(()=>new Script(read(p),{filename:p}),p+' parses');
 for(const path of paths){
-  assert.ok(pages[path].includes('styles/beagu-auth-journey-v1.css?v=20261120-auth-unity1'),
+  assert.ok(pages[path].includes('styles/beagu-auth-journey-v1.css?v=20261120-compact-card1'),
     path+' uses the same auth card stylesheet');
   assert.ok(pages[path].includes('js/beagu-level-state-v1.js?v=20261120-auth-unity1'),
     path+' loads fresh level UI state');
@@ -47,6 +47,22 @@ for(const segment of ['#lv1QuickAuth','#loginPanel','#compareLv1AuthPanel',
 assert.ok(css.includes('body.beagu-page-challenge main#main-content'),
  'Challenge mobile card has same outer alignment as search/comparison');
 assert.ok(css.includes('clip-path:none'),'Auth card avoids torn-paper cropping');
+const compactStart=css.indexOf('/* Compact authenticated upgrade cards:');
+assert.ok(compactStart>=0,'Authenticated card has compact override');
+const compact=css.slice(compactStart);
+for(const selector of [
+ 'body.beagu-page-lv1 #searchPanel .beagu-levelup-status',
+ 'body.beagu-page-compare #compareLv1AuthPanel.is-authenticated'
+]) assert.ok(compact.includes(selector),'Compact authenticated layout: '+selector);
+assert.ok(compact.includes('min-height:0;')&&compact.includes('height:auto;'),
+ 'No artificial blank space above identity code CTA');
+assert.ok(compact.includes('margin-bottom:12px;'),'Natural 12px space after header');
+assert.ok(compact.includes('margin:0;'),'Identity verification CTA no longer pushed to bottom');
+assert.ok(compact.includes('@media(max-width:720px)'),
+ 'Compact style applies on screenshot-sized mobile screens');
+assert.ok(!compact.includes('body.beagu-page-search #lv1QuickAuth'),
+ 'Anonymous entry card should retain normal login form sizing');
+
 
 const a=levelJS.indexOf('  const syncLevelCards=');
 const b=levelJS.indexOf('  const setState=',a);
