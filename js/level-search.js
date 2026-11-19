@@ -362,6 +362,23 @@
         return raw.split(/\s*[,，]\s*/).map(x=>circles[Number(x)]).join(' ');
       return null;
     };
+    // A stored school choice may be "1 1회미만" although the original
+    // questionnaire option is "① 1회미만". Require an exact option match,
+    // so scores, counts, dates and unrelated free text are never reformatted.
+    const circledCatalogOption=(value,options)=>{
+      if(typeof value!=='string'||!Array.isArray(options)||!options.length)return null;
+      const match=value.trim().match(/^(10|[1-9])\\s+(\\S[\\s\\S]*)$/);
+      if(!match)return null;
+      const circle=['','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'][Number(match[1])];
+      const label=match[2].trim();
+      const normalize=text=>text.replace(/\\s+/g,'').trim();
+      const exact=options.some(option=>{
+        if(typeof option!=='string')return false;
+        const original=option.trim().match(/^([①②③④⑤⑥⑦⑧⑨⑩])\\s*(\\S[\\s\\S]*)$/);
+        return original&&original[1]===circle&&normalize(original[2])===normalize(label);
+      });
+      return exact?circle+' '+label:null;
+    };
     const list=make('div','beagu-question-list');
     const blocks=[];
     for(const id of qids){
@@ -371,6 +388,7 @@
       title.append(make('span','beagu-question-number',id),document.createTextNode(question));
       block.append(title);
       const comparisonValues=all[id]||{};
+      const optionData=verifiedOptions(year,id);
       const benchmark=m=>{
         if(!m||typeof m!=='object')return null;
         const preferred=m.kind==='most_frequent'||m.kind==='mode'?m.mode||m.mean:m.mean||m.mode;
@@ -400,7 +418,8 @@
             val.append(li);
           }
         }else{
-          const ordinal=role==='school'&&!checkboxQuestion?circledOption(value):null;
+          const ordinal=role==='school'&&!checkboxQuestion
+            ? (circledOption(value)??circledCatalogOption(value,optionData.values)) :null;
           const displayValue=ordinal??display;
           const flag=answerBadge(value);
           if(flag){
@@ -417,7 +436,6 @@
         grid.append(cell);
       }
       block.append(grid);
-      const optionData=verifiedOptions(year,id);
       if(optionData.values.length){
         const optionTitle=make('h6','beagu-options-title',
           optionData.source==='verified'?'원본 설문 보기':'원자료에서 확인된 보기 (전체 목록 미확인)');
