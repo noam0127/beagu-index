@@ -304,7 +304,7 @@ function next(state,world){
    const data=INCIDENTS[current.id];
    if(!data)return null;
    const partner=state.profile.partner==='man'?'현우 선생님':
-     state.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
+     state.profile.partner==='woman'?'지윤 선생님':'민서 선생님';
    return {...data,id:current.id,date:DATES[state.day-1],kind:data.kind,
       paragraphs:data.prose.map(p=>p.replace(/\{colleague\}/g,partner)),choices:data.choices.map(c=>({id:c.id,label:c.label})),
       result:cp(current),fictionLabel:'이 사건은 지역과 가상 교직문화 설정으로 고른 창작 장면이며 실제 발생 사실이 아닙니다.'};
@@ -313,7 +313,7 @@ function next(state,world){
  if(!id)return null;
  const data=INCIDENTS[id];
  const partner=state.profile.partner==='man'?'현우 선생님':
-   state.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
+   state.profile.partner==='woman'?'지윤 선생님':'민서 선생님';
  const paragraphs=data.prose.map(p=>p.replace(/\{colleague\}/g,partner));
  // Data provenance belongs outside the fictional scene; never introduce survey
  // diagnostics or risk attribution into the narrator's first-person prose.
@@ -360,7 +360,7 @@ function choose(state,world,id){
  result.incidentEvents=Array.isArray(result.incidentEvents)?result.incidentEvents:[];
  result.incidentEvents.push({day:state.day,id:current.id,choiceId:id});
  const name=result.profile.partner==='man'?'현우 선생님':
-  result.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
+  result.profile.partner==='woman'?'지윤 선생님':'민서 선생님';
  const consequences=choice.reply.map(x=>x.replace(/\{colleague\}/g,name));
  if(climate==='collaborative')
    consequences.push('“이거 제가 봐 둘게요.” '+name+'이 의자를 내 옆으로 당겨 왔다. 나는 고개를 끄덕였다.');
