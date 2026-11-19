@@ -185,6 +185,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-leaderboard-v1.js?v=20261119-foldedtop1"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261119-picker-top1"></script>
 <script src="js/arcade-fullscreen-v1.js?v=20261120-safari-fallback5"></script>
+<script src="js/arcade-play-lock-v1.js?v=20261120-game3-lock1"></script>
 <script>
 (function () {
   "use strict";
@@ -265,7 +266,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const fmtTime=tenths=>{const t=Math.max(0,Math.floor(Number(tenths)||0));
     return Math.floor(t/600)+":"+String(Math.floor((t%600)/10)).padStart(2,"0")+"."+(t%10);};
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
-  const keys = { left: false, right: false, jump: false };
+  const keys = { left: false, right: false, up: false, down: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null };
   const state = { phase:"ready",leftScore:0,rightScore:0,serveLeft:true,pointTicks:0,flash:0,winner:"",
     message:"경기 시작을 눌러주세요!",spikes:0,aiRecalc:0,aiTargetX:688,aiJump:false,
@@ -501,7 +502,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     else if(currentDifficulty==="easy")setStatus(school.school_name+" · EASY · 날개·동료·관리자 지원");
     else if(currentDifficulty==="normal")setStatus(school.school_name+" · NORMAL · 동료 지원");
     else setStatus(school.school_name+" · "+diffName[school.difficulty]);
-    syncUI();canvas.focus();
+    syncUI();canvas.focus({preventScroll:true});
   }
   function stopForSchoolChange(keepSchool=false){
     ++startTicket;
@@ -565,15 +566,22 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     left.vy = 0;
     left.impactSpeed = 0;
   }
-  const codes = { KeyA: "left", ArrowLeft: "left", KeyD: "right", ArrowRight: "right", KeyW: "jump", ArrowUp: "jump", Space: "jump" };
+  // Desktop arrows and WASD fly in all four directions (including diagonals).
+  // Space still makes a standard jump.
+  const codes = { KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",
+    KeyW:"up",ArrowUp:"up",KeyS:"down",ArrowDown:"down",Space:"jump" };
   document.addEventListener("keydown", e => {
-    if (e.target && e.target.tagName === "BUTTON") return;
-    const key = codes[e.code];
-    if (!key) return;
-    e.preventDefault();
-    keys[key] = true;
+    if(!["playing","point"].includes(state.phase))return;
+    if(e.target?.closest?.("input,textarea,select,[contenteditable]"))return;
+    const key=codes[e.code];
+    if(!key)return;
+    e.preventDefault(); // Arrow keys and space must not scroll the page.
+    if(state.phase==="playing")keys[key]=true;
   });
-  document.addEventListener("keyup", e => { if (codes[e.code]) keys[codes[e.code]] = false; });
+  document.addEventListener("keyup", e => {
+    const key=codes[e.code];
+    if(key)keys[key]=false;
+  });
   // Touch/drag: fly freely in the player's half of the court.
   // Gravity resumes on release; automatic spike is triggered by rapid movement.
   function targetFromPointer(e) {
@@ -862,6 +870,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     if (state.phase !== "playing") return;
     const keyboardDirection = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+    const keyboardVertical = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
     const beforeMoveX = left.x, beforeMoveY = left.y;
     if (touchControl.pointerId !== null && touchControl.targetX !== null && touchControl.targetY !== null) {
       // Responsive, smoothed 2-axis flight; remain within the player's half-court.
@@ -874,6 +883,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       left.vx = left.x - oldX;
       left.vy = left.y - oldY;
       left.jumpLock = false;
+    } else if(canPlayerJump() && keyboardVertical!==0){
+      // Match mobile two-axis flight controls; release restores gravity.
+      const oldX=left.x, oldY=left.y;
+      const keyboardStep=10*SPEED_MULTIPLIER*battle.allySpeed;
+      left.x=clamp(left.x+keyboardDirection*keyboardStep,35,NET_X-NET_W/2-36);
+      left.y=clamp(left.y+keyboardVertical*keyboardStep,86,FLOOR-31);
+      left.vx=left.x-oldX;
+      left.vy=left.y-oldY;
+      left.jumpLock=false;
     } else {
       controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump, 5*SPEED_MULTIPLIER*battle.allySpeed,12.8*battle.allyJump);
     }
@@ -883,7 +901,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       volleyShackle.x+=clamp((trailing-volleyShackle.x)*.19,-8,8);
     }
     // Only intentional, fast player movement powers up the next ball contact.
-    const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || (canPlayerJump()&&keys.jump);
+    const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || keyboardVertical !== 0 || (canPlayerJump()&&keys.jump);
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
     moveAI();moveClones();
     for(const liveBall of activeBalls){
@@ -1193,6 +1211,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   let last = 0, accumulator = 0;
   function frame(time) {
+    window.ArcadePlayLock?.sync(state.phase==="playing"||state.phase==="point");
     if (!last) last = time;
     accumulator += Math.min((time - last) / 1000, .06);
     last = time;
