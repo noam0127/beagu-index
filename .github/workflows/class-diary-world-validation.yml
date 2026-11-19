@@ -1,0 +1,22 @@
+name: Class diary world validation
+on:
+  push:
+    paths:
+      - 'js/class-diary-world-v1.js'
+      - 'scripts/test-class-diary-world.cjs'
+      - '.github/workflows/class-diary-world-validation.yml'
+  pull_request:
+    paths:
+      - 'js/class-diary-world-v1.js'
+      - 'scripts/test-class-diary-world.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  world-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test school world inputs and privacy gates
+        run: node scripts/test-class-diary-world.cjs
