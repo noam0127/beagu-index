@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<script>
+/* Public story entry is the single title card. Legacy world preview remains opt-in for testing. */
+if(new URLSearchParams(location.search).get('preview')!=='1'){
+ location.replace('teacher-class-diary-play.html');
+}
+</script>
 <title>나의 OO한 학급일지 · 학교 세계 생성기</title>
 <style>
 :root{font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#152b3b;background:#f4f7fb}
