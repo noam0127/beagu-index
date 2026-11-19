@@ -70,6 +70,10 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),3);
    await page.locator('[data-partner-choice="none"]').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Photo selects without skipping the first-day action');
+   assert.equal(await page.locator('#partner').inputValue(),'none');
+   assert.equal(await page.locator('#setupNext').isVisible(),true,'Bottom first-day action remains visible');
+   await page.locator('#setupNext').click();
    await page.locator('#novel').waitFor({state:'visible'});
    const state=await page.evaluate(()=>({
     scrollHeight:document.documentElement.scrollHeight,
@@ -102,5 +106,18 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    console.log('PASS mocked guest '+device.name+': home code → title → school → colleague → story, saved progress and settings');
    await page.close();
   }
+  const legacy=await browser.newPage({viewport:{width:390,height:844}});
+  let earlyWorldCalls=0;
+  await legacy.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-world-v1',route=>{
+   earlyWorldCalls++;return route.abort('blockedbyclient');
+  });
+  await legacy.goto(base+'/teacher-class-diary-play.html?schoolId=A123456',{waitUntil:'domcontentloaded'});
+  await legacy.locator('#diaryLanding').waitFor({state:'visible'});
+  assert.equal(earlyWorldCalls,0,'Initial title must not request school data');
+  assert.equal(await legacy.locator('#notice').isVisible(),false,'No preselection school error');
+  await legacy.locator('#diaryLandingStart').click();
+  await legacy.locator('#setup').waitFor({state:'visible'});
+  assert.equal(await legacy.locator('#diarySchoolMode').isVisible(),true);
+  await legacy.close();
  }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exit(1)});

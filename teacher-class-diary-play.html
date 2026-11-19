@@ -380,7 +380,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <div class="overline" id="accessLabel">Interactive Korean novel · Level 2</div>
 <h1>나의 OO한 학급일지</h1>
 <p>교실에서 시작된 작은 말들이 한 학기 뒤에 다시 돌아옵니다. 봄과 여름 사이, 당신의 학급일지를 완성하세요.</p>
-<div class="schoolline" id="schoolLine">학교 정보를 확인하는 중</div>
+<div class="schoolline" id="schoolLine">학교는 다음 화면에서 선택할 수 있습니다.</div>
 </section>
 <p class="no-save" role="note" id="noSaveNotice">기록은 저장되지 않습니다. 페이지를 나가거나 새로고침하면 진행 상황과 결과가 모두 사라집니다.</p>
 <div class="sound-panel" aria-label="게임 음악 및 효과음">
@@ -716,7 +716,7 @@ for(const card of document.querySelectorAll('[data-partner-choice]')){
  card.addEventListener('click',()=>{
   $('partner').value=card.dataset.partnerChoice;
   syncSetupPartner();sound.note('uiPick');
-  if($('setup').dataset.step==='2')$('profileForm').requestSubmit();
+  // Selecting a portrait does not advance until the bottom action is pressed.
  });
 }
 $('partner').addEventListener('change',()=>{syncSetupPartner();sound.note('uiPick')});
@@ -819,7 +819,7 @@ async function searchDiarySchools(query,serial){
       $('diarySchoolSearchMessage').textContent='공개 조사 결과는 확인됐습니다. 실제 학교 플레이는 레벨2 인증이 필요합니다.';
       return;
      }
-     location.assign('teacher-class-diary-play.html?schoolId='+encodeURIComponent(record.school_id));
+     await loadSchoolWorld(record.school_id);
     }catch(_){$('diarySchoolSearchMessage').textContent='학교 결과를 확인할 수 없습니다. 다시 선택해 주세요.';}
     finally{button.disabled=false;}
    });
@@ -1453,7 +1453,8 @@ async function boot(){
   document.title='나의 OO한 학급일지';
   show('guestAccess');
   if(!/^v1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(ticket)){
-   fail('고유번호는 홈에서 한 번만 입력하면 됩니다. 홈에서 다시 입장해 주세요.');
+   // An invalid guest ticket never grants access to guest saves.
+   location.replace('teacher-class-diary-play.html');
    return;
   }
   try{
@@ -1479,8 +1480,18 @@ async function boot(){
    $('opening').querySelector('.diary-opening-note').textContent='고유번호별 자동 저장 · 언제든 이어하기';
    const privacy=$('setup').querySelector('.privacy');
    if(privacy)privacy.textContent='모든 인물과 사건은 허구입니다. 진행 상황과 선택 기록은 고유번호별로 저장됩니다.';
-   const saved=await progressSession.load();
-   if(saved&&!saved.compatible)throw Error('UNSUPPORTED_SAVE_FORMAT');
+   let saved=null;
+   try{
+    saved=await progressSession.load();
+    if(saved&&!saved.compatible)throw Error('UNSUPPORTED_SAVE_FORMAT');
+   }catch(_){
+    // Fail closed for checkpoint writes if the server read is unavailable.
+    progressSession=null;
+    $('diaryCheckpointControls').hidden=true;
+    $('noSaveNotice').textContent='저장 기록을 확인하지 못했습니다. 이번 진행은 저장되지 않으며 기존 기록은 보존됩니다.';
+    $('opening').querySelector('.diary-opening-note').textContent='기존 기록 보존 · 저장 일시 중단';
+    $('diaryLanding').querySelector('.diary-landing-verse').textContent='학교는 다음 화면에서 선택할 수 있습니다. 기존 기록을 불러오지 못해 이번 진행은 저장하지 않습니다. 이전 기록은 그대로 보존됩니다.';
+   }
    if(saved&&saved.state){
     $('guestResumeSummary').textContent='제 '+saved.state.episode+'화 · '+
      (saved.state.phase==='semester_ending'?'마지막 장까지':'저장된 곳부터')+
@@ -1499,7 +1510,8 @@ async function boot(){
    enterGuestOpening();
   }catch(_){
    ticket='';
-   fail('고유번호 확인 또는 저장 기록 불러오기에 실패했습니다. 홈에서 다시 입장해 주세요. 기존 기록은 그대로 보존됩니다.');
+   // Keep the public fictional story accessible without granting guest privileges.
+   location.replace('teacher-class-diary-play.html');
   }
   return;
  }
@@ -1513,17 +1525,18 @@ async function boot(){
   $('openingSchool').textContent=$('schoolLine').textContent;
   $('worldAutoNote').textContent='체험판은 실제 학교 자료를 사용하지 않습니다. 학교의 규모와 업무·동료 관계는 전부 창작한 설정입니다.';
   selectSchoolMode('demo');
-  $('semesterStart').click();
-  status('체험판을 열었습니다. 주인공을 설정하고 바로 시작하세요.');
-  return;
- }
- if(!schoolId){
   show('diaryLanding');
-  status('나의 OO한 학급일지를 시작할 수 있습니다.');
+  status('제목 카드를 펼친 후 다음 화면에서 학교를 선택하세요.');
   return;
  }
- if(!/^[A-Z0-9]{7}$/.test(schoolId)){fail('학교 정보가 올바르지 않습니다. 다시 학교를 선택해 주세요.');return;}
- if(!/^[0-9a-f]{64}$/.test(token)){fail('레벨2 인증이 필요합니다. 같은 브라우저에서 로그인한 뒤 다시 선택해 주세요.');return;}
+ // The title and first setup step never require a school ID.
+ show('diaryLanding');
+ status('제목 카드 다음 설정 화면에서 학교를 선택하세요.');
+ return;
+}
+async function loadSchoolWorld(schoolId){
+ if(!/^[A-Z0-9]{7}$/.test(schoolId)){$('diarySchoolSearchMessage').textContent='학교 정보가 올바르지 않습니다.';return false;}
+ if(!/^[0-9a-f]{64}$/.test(token)){$('diarySchoolSearchMessage').textContent='실제 학교는 레벨2 인증 후 선택할 수 있습니다.';return false;}
  try{
   const [payload,catalogResponse]=await Promise.all([
    apiPost('class-diary-world-v1',{schoolId}),
@@ -1531,7 +1544,7 @@ async function boot(){
   ]);
   if(!catalogResponse.ok)throw Error('CATALOG_UNAVAILABLE');
   world=window.BeaguClassDiaryWorld.generateWorld(payload);
-  if(!world.eligible||world.basic.id!==schoolId){fail('공개된 조사 결과가 없습니다. 설문에 참여하고 결과 공개 후 다시 확인해 주세요.');$('diarySchoolSurveyNotice').hidden=false;return;}
+  if(!world.eligible||world.basic.id!==schoolId){$('diarySchoolSearchMessage').textContent='학교 설문 결과가 아직 공개되지 않았습니다. 조사 참여 후 공개되면 다시 확인해 주세요.';$('diarySchoolSurveyLink').hidden=false;return false;}
   const catalog=await catalogResponse.json();
   const blueprint=window.BeaguClassDiaryNarrative.createBlueprint(catalog,window.Beagu2026Questionnaire);
   if(blueprint.coverage.questionCount!==128)throw Error('CATALOG_INCOMPLETE');
@@ -1550,13 +1563,17 @@ async function boot(){
   $('openingSchool').textContent=$('schoolLine').textContent;
   selectSchoolMode('real',world.basic.name);
   $('semesterStart').click();
-  status('이야기가 준비되었습니다. 주인공을 설정해 주세요.');
+  $('diarySchoolSearchDialog').hidden=true;
+  status('학교를 선택했습니다. 함께할 동료를 고를 수 있습니다.');
+  return true;
  }catch(err){
-  fail(err.message==='LEVEL2_REQUIRED'?
-   '레벨2 로그인 또는 유효한 인증 상태가 필요합니다. 다른 기기에서 새로 로그인했다면 이 기기에서도 인증해야 합니다.':
-   '학교 세계와 승인된 설문 자료를 불러오지 못했습니다. 다른 학교를 선택하거나 다시 시도해 주세요.');
+  $('diarySchoolSearchMessage').textContent=err.message==='LEVEL2_REQUIRED'?
+   '레벨2 인증을 확인한 후 학교를 다시 선택해 주세요.':
+   '학교 자료 연결에 실패했습니다. 학교를 다시 선택해 주세요.';
+  return false;
  }
 }
+
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.classList.contains('is-choosing')){event.preventDefault();journey.closeChoice();$('vnMore').hidden=false;$('vnMore').setAttribute('aria-label','선택지 보기');$('vnMore').focus()}});
 for(const a of ['I','E'])for(const b of ['N','S'])for(const c of ['F','T'])for(const d of ['P','J']){
  const mbti=a+b+c+d;

@@ -10,8 +10,8 @@ function init(options){
   step=Math.max(1,Math.min(2,Number(next)||1));
   setup.dataset.step=String(step);
   $('setupBack').hidden=step===1;
-  $('setupNext').hidden=step===2;
-  $('setupNext').textContent='함께할 동료 만나기 →';
+  $('setupNext').hidden=false;
+  $('setupNext').textContent=step===1?'함께할 동료 만나기 →':'첫 등교 준비 →';
   for(const item of document.querySelectorAll('[data-step-label]')){
    if(Number(item.dataset.stepLabel)===step)item.setAttribute('aria-current','step');
    else item.removeAttribute('aria-current');
@@ -35,7 +35,10 @@ function init(options){
   return true;
  }
  $('openingStart').addEventListener('click',()=>{sound.note('uiStart');show('setup');go(1)});
- $('setupNext').addEventListener('click',()=>{if(validate(1)){sound.note('uiTap');go(2)}});
+ $('setupNext').addEventListener('click',()=>{
+  if(step===1){if(validate(1)){sound.note('uiTap');go(2)}return;}
+  if(step===2&&validate(2)){sound.note('uiTap');form.requestSubmit();}
+ });
  $('setupBack').addEventListener('click',()=>{sound.note('uiTap');go(1)});
  form.noValidate=true;
  go(1);
