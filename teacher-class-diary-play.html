@@ -343,6 +343,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <link rel="stylesheet" href="styles/class-diary-semester-ui-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-supporting-cast-v1.css?v=20261120-men-1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
+<link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-1">
 </head>
 <body>
 <main>
@@ -566,6 +567,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <script src="js/class-diary-demo-v1.js"></script>
 <script src="js/class-diary-journey-v1.js"></script>
 <script src="js/class-diary-motion-v1.js"></script>
+<script src="js/class-diary-literary-v1.js?v=20261120-1"></script>
 <script>
 (function(){
 'use strict';
@@ -573,6 +575,7 @@ const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const semester=window.BeaguClassDiarySemester;
+const literary=window.BeaguClassDiaryLiterary;
 const femaleSemester=window.BeaguClassDiaryFemaleSemester;
 const director=window.BeaguClassDiaryDirector;
 const characterRoutes=window.BeaguClassDiaryCharacterRoutes;
@@ -675,7 +678,7 @@ function vnSplit(text,limit){
 /* Allow the story to breathe across the full-height paper panel.
    Preserve paragraph breaks, while keeping long chapters paged and scrollable. */
 function vnPages(paragraphs){
- const limit=window.matchMedia('(max-width:620px)').matches?620:1000;
+ const limit=storyMode==='semester'?(window.innerHeight<=520?88:window.innerWidth<=620?142:225):(window.matchMedia('(max-width:620px)').matches?620:1000);
  const pages=[];let current=[],count=0;
  for(const paragraph of paragraphs){
   for(const part of vnSplit(paragraph,limit)){
@@ -710,9 +713,10 @@ function vnFitPage(reader,target){
 function vnPresent(){
  const done=vnState.kind==='outcome',target=$(done?'outcomeText':'chapterText');
  target.replaceChildren(...(vnState.pages[vnState.index]||['…']).map(paragraph=>el('p',paragraph)));
+ literary.present(target);
  target.classList.remove('diary-text-arrive');void target.offsetWidth;target.classList.add('diary-text-arrive');
  const reader=document.querySelector(done?'#outcome':'#vnDialogueSlot .vn-dialogue');
- if(reader){reader.scrollTop=0;requestAnimationFrame(()=>{if(!reader.hidden)vnFitPage(reader,target)})}
+ if(reader){reader.scrollTop=0;if(storyMode!=='semester')requestAnimationFrame(()=>{if(!reader.hidden)vnFitPage(reader,target)})}
  $('vnDialogueSlot').querySelector('.vn-dialogue').hidden=done;
  $('outcome').hidden=!done;
  $('outcomeLine').hidden=true;
@@ -725,6 +729,7 @@ function vnStart(done){
  const source=$(done?'outcomeText':'chapterText');
  const texts=[...source.querySelectorAll('p')].map(node=>node.textContent);
  if(done&&$('outcomeLine').textContent)texts.push($('outcomeLine').textContent);
+ literary.start();
  vnState.pages=vnPages(texts);
  if(!vnState.pages.length)vnState.pages=[['…']];
  vnState.index=0;vnState.kind=done?'outcome':'chapter';
@@ -733,6 +738,7 @@ function vnStart(done){
 }
 window.addEventListener('resize',()=>{if(document.body.classList.contains('is-playing'))vnPresent()});
 $('vnMore').addEventListener('click',()=>{
+ if(literary.reveal())return;
  sound.note('advance');
  if(vnState.index<vnState.pages.length-1){vnState.index++;vnPresent();return;}
  $('vnMore').hidden=true;
@@ -983,6 +989,7 @@ function renderEnding(){
 
 }
 function renderSemester(){
+ literary.mode(true);
  if(game.phase==='semester_ending')return renderSemesterEnding();
  show('novel');
  const reflection=game.phase==='semester_reflection';
@@ -990,6 +997,7 @@ function renderSemester(){
  const profile=director.RELATIONSHIPS[game.profile.partner]||director.RELATIONSHIPS.none;
  $('novelCard').dataset.scene=view.visual;
  $('novelCard').dataset.act=String(view.act);
+ $('novelCard').dataset.season=({'03':'march','04':'april','05':'may','06':'june','07':'july'})[view.date.slice(5,7)]||'march';
  const semesterArt=femaleSemester.artFor({
   episode:game.episode,partner:game.profile.partner,reflection,
   choiceId:game.lastOutcome&&game.lastOutcome.id,scenes:semester.SCENES
@@ -1049,6 +1057,7 @@ function renderSemesterEnding(){
 }
 
 function render(){
+ literary.mode(storyMode==='semester');
  document.body.dataset.diaryStory=storyMode;
  if(storyMode!=='semester'){
   $('novelCard').removeAttribute('data-act');
