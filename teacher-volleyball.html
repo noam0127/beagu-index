@@ -71,6 +71,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  .volley-target-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;
    background:rgba(48,113,128,.48);border:1px solid #59c4bf;border-radius:9px;
    color:#d8fff5;font-size:12px;font-weight:900;white-space:nowrap}
+ .volley-progress{background:#1a3553;border-left:1px solid #436185;border-right:1px solid #436185;
+   padding:8px 13px 9px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+ .volley-progress-label{display:flex;align-items:center;justify-content:space-between;
+   color:#cde9f7;font-size:10px;font-weight:800;margin-bottom:4px}
+ .volley-progress-track{height:7px;background:#0d243e;border-radius:999px;overflow:hidden}
+ .volley-progress-fill{height:100%;width:0;transition:width .3s ease;background:#53d3ce;border-radius:inherit}
+ .volley-progress-fill.cpu{background:#ef8a96}
+ .volley-progress-fill.final{background:#ffe284;box-shadow:0 0 12px #ffe284}
+ .volley-progress-next{grid-column:1/-1;font-size:11px;text-align:center;color:#d8efd8;font-weight:800;min-height:13px}
  .actions button.sound-toggle{flex:0 0 48px;min-width:45px;background:#264762;color:#f5fbff;font-size:19px;border:1px solid #567c96;padding:6px}
  .actions button.sound-toggle[aria-pressed="true"]{background:#23565c;border-color:#78c9b6}
  @media(max-width:380px){.actions button.sound-toggle{flex-basis:43px;min-width:41px}}
@@ -94,10 +103,17 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <main class="game-shell">
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="scoreboard" aria-label="25점 선착순 경기와 승리 시간">
-    <div class="volley-best-row"><span class="volley-target-chip">🏁 먼저 25점</span><span class="volley-best-chip" aria-label="이 기기의 최단 승리 시간">BEST TIME <strong id="volley-best-label">—</strong></span></div>
+    <div class="volley-best-row"><span class="volley-target-chip">🏁 먼저 25점</span><span class="volley-best-chip" aria-label="이 기기의 최단 승리 시간">신기록 <strong id="volley-best-label">—</strong></span></div>
     <div class="team"><span class="volley-team-name">나</span><strong id="player-score">0 / 25</strong></div>
     <div class="center-label">VS<small id="volley-time-label">⏱ 0:00.0</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0 / 25</strong></div>
+  </div>
+  <div class="volley-progress" aria-label="25점 달성 진행 상황">
+   <div><div class="volley-progress-label"><span>나의 25점</span><span id="volley-my-remain">25점 남음</span></div>
+    <div class="volley-progress-track" id="volley-my-progress" role="progressbar" aria-label="내 점수 진행" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0"><div class="volley-progress-fill" id="volley-my-fill"></div></div></div>
+   <div><div class="volley-progress-label"><span>컴퓨터</span><span id="volley-cpu-remain">25점 남음</span></div>
+    <div class="volley-progress-track" id="volley-cpu-progress" role="progressbar" aria-label="컴퓨터 점수 진행" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0"><div class="volley-progress-fill cpu" id="volley-cpu-fill"></div></div></div>
+   <div class="volley-progress-next" id="volley-next-goal">첫 목표 · 5점 도달하기</div>
   </div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
@@ -181,7 +197,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     message:"경기 시작을 눌러주세요!",spikes:0,aiRecalc:0,aiTargetX:688,aiJump:false,
     specialCooldownFrames:0,specialChargeFrames:0,uiTick:0,playFrames:0,
     startedAt:0,pausedAt:0,pausedMs:0,finishedAt:0,
-    hitStopFrames:0,impactFrames:0,impactX:0,impactY:0,bossWarnFrames:0,bossCooldownFrames:0 };
+    hitStopFrames:0,impactFrames:0,impactX:0,impactY:0,bossWarnFrames:0,bossCooldownFrames:0,
+    winStreak:0,bestStreak:0,pointCheer:"",recordBroken:false };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false, contactFrames:0 };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false, contactFrames:0 };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
@@ -190,16 +207,19 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const volleyShackle={x:156,dir:-1};
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const setStatus = text => { status.textContent = text; };
-  const FASTEST_KEY="teacherVolleyballFastest25V1";
+  const FASTEST_KEY="teacherVolleyballFastest25V2";
+  // Fresh era: purge local historical achievements from prior rule variants.
+  try{localStorage.removeItem("teacherVolleyballFastest25V1");localStorage.removeItem("teacherVolleyballBestV1");}catch(e){}
   const bestLabel=document.getElementById("volley-best-label");
   let fastestTenths=0;
   try{fastestTenths=Math.max(0,Math.floor(Number(localStorage.getItem(FASTEST_KEY))||0));}catch(e){}
   bestLabel.textContent=fastestTenths?formatTime(fastestTenths):"—";
   function rememberFastest(tenths){
-    if(!Number.isSafeInteger(tenths)||tenths<=0||(fastestTenths&&tenths>=fastestTenths))return;
+    if(!Number.isSafeInteger(tenths)||tenths<=0||(fastestTenths&&tenths>=fastestTenths))return false;
     fastestTenths=tenths;
     bestLabel.textContent=formatTime(tenths);
     try{localStorage.setItem(FASTEST_KEY,String(tenths));}catch(e){}
+    return true;
   }
   const canPlayerJump=()=>currentDifficulty!=="extreme";
   const soundButton=document.getElementById("sound");
@@ -263,9 +283,47 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     setStatus("⚡ 슈퍼 스파이크 준비!");
     return true;
   }
+  const cheerMilestones={
+    5:"✨ 첫 고비를 넘었어요! 다음은 10점!",
+    10:"🔥 벌써 10점! 리듬을 이어가요!",
+    15:"💪 15점 돌파! 목표가 가까워집니다!",
+    20:"🚀 이제 마지막 5점! 집중해서 마무리!",
+    23:"🎯 두 점 남았어요! 조금만 더!",
+    24:"🏁 매치포인트! 마지막 한 점!"
+  };
+  function pointEncouragement(mine,theirs,streak,leftWins){
+    if(leftWins&&cheerMilestones[mine])return cheerMilestones[mine];
+    if(!leftWins&&theirs===24)return "⚠ 상대 매치포인트! 끝까지 막아내요!";
+    if(leftWins&&streak>=4)return "🔥 "+streak+"연속 득점! 지금의 흐름을 유지하세요!";
+    if(leftWins&&streak>=2)return "👏 "+streak+"연속 득점! 손끝의 감각이 좋아요!";
+    if(theirs-mine>=4)return "🌱 아직 기회가 있어요. 한 점씩 따라가요!";
+    if(!leftWins&&theirs>mine)return "좋아요, 다음 공부터 다시 따라가요!";
+    if(mine>=20)return "25점까지 "+(MATCH_TARGET-mine)+"점! 마지막까지 집중!";
+    if(leftWins&&mine>theirs)return "앞서고 있어요! 서두르지 말고 정확히!";
+    return "한 번 더! 공을 정확하게 받아내세요!";
+  }
+  function nextMilestone(score){
+    return [5,10,15,20,23,24,25].find(x=>x>score)||25;
+  }
+  function updateScoreProgress(){
+    const mine=state.leftScore,cpu=state.rightScore;
+    document.getElementById("volley-my-fill").style.width=(mine/MATCH_TARGET*100)+"%";
+    document.getElementById("volley-cpu-fill").style.width=(cpu/MATCH_TARGET*100)+"%";
+    document.getElementById("volley-my-progress").setAttribute("aria-valuenow",String(mine));
+    document.getElementById("volley-cpu-progress").setAttribute("aria-valuenow",String(cpu));
+    document.getElementById("volley-my-remain").textContent=Math.max(0,MATCH_TARGET-mine)+"점 남음";
+    document.getElementById("volley-cpu-remain").textContent=Math.max(0,MATCH_TARGET-cpu)+"점 남음";
+    document.getElementById("volley-next-goal").textContent=mine>=MATCH_TARGET
+      ?"🏆 25점 달성!"
+      :cpu>=24?"⚠ 상대 매치포인트 · 마지막까지!"
+      :mine>=20?"🏁 마지막 "+(MATCH_TARGET-mine)+"점 · 결승선이 보여요"
+      :"다음 목표 · "+nextMilestone(mine)+"점까지 "+(nextMilestone(mine)-mine)+"점";
+    document.getElementById("volley-my-fill").classList.toggle("final",mine>=20);
+  }
   function syncUI() {
     scoreP.textContent = state.leftScore+" / "+MATCH_TARGET;
     scoreC.textContent = state.rightScore+" / "+MATCH_TARGET;
+    updateScoreProgress();
     startButton.textContent = state.phase === "starting" ? "⏳ 학교 확인 중" : state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "↻ 다시 시작";
     startButton.disabled = state.phase === "starting" ||
       ((state.phase === "ready" || state.phase === "finished") && schoolPicker.get()?.eligible !== true);
@@ -330,6 +388,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     resetPower();
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
+    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;
     state.startedAt=0;state.pausedAt=0;state.pausedMs=0;state.finishedAt=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     releaseKeys();
@@ -349,6 +408,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     releaseKeys();
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
+    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;
     state.startedAt=0;state.pausedAt=0;state.pausedMs=0;state.finishedAt=0;
     currentDifficulty="hard";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
@@ -562,12 +622,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     releaseKeys();
     schoolPicker.setLocked(false);
     if(won){
-      rememberFastest(duration);
-      setStatus("🏆 승리 · "+formatTime(duration)+" · 짧은 기록이 유리합니다");
+      state.recordBroken=rememberFastest(duration);
+      setStatus((state.recordBroken?"🎉 신기록! ":"🏆 승리! ")+formatTime(duration)+" · 익명 기록 자동 등록 중");
       tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);
       ranking?.finish(duration,{player:state.leftScore,cpu:state.rightScore,elapsedTenths:duration});
     }else{
-      setStatus("패배 · "+formatTime(duration)+" · 먼저 25점을 획득해 보세요");
+      setStatus("25점까지 "+(MATCH_TARGET-state.leftScore)+"점 남겼어요 · 다시 도전해 신기록을 노려보세요!");
       tone(240,.20,"triangle",.045,0,150);
     }
     syncUI();
@@ -577,15 +637,26 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.phase="point";
     state.pointTicks=100;
     state.serveLeft=!leftWins;
-    if(leftWins)state.leftScore++;
-    else state.rightScore++;
+    if(leftWins){
+      state.leftScore++;
+      state.winStreak++;
+      state.bestStreak=Math.max(state.bestStreak,state.winStreak);
+    }else{
+      state.rightScore++;
+      state.winStreak=0;
+    }
+    state.pointCheer=pointEncouragement(state.leftScore,state.rightScore,state.winStreak,leftWins);
     state.message=leftWins?"득점! "+state.leftScore+" / "+MATCH_TARGET:
       "실점! "+state.rightScore+" / "+MATCH_TARGET;
-    setStatus(state.message);
-    tone(leftWins?760:340,.12,leftWins?"triangle":"sawtooth",.038);
+    if(leftWins&&cheerMilestones[state.leftScore]){
+      tone(660,.09,"triangle",.03);
+      tone(880,.13,"triangle",.03,.1);
+    }else tone(leftWins?760:340,.12,leftWins?"triangle":"sawtooth",.038);
+    if(leftWins&&state.leftScore>=20)state.flash=Math.max(state.flash,17);
     if(state.leftScore>=MATCH_TARGET||state.rightScore>=MATCH_TARGET){
       finishMatch();return;
     }
+    setStatus(state.pointCheer);
     syncUI();
   }
   function step() {
@@ -605,7 +676,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       if(state.specialChargeFrames>0)state.specialChargeFrames--;
     }
     if (state.phase === "point") {
-      if (--state.pointTicks <= 0) { state.phase = "playing"; state.message = ""; resetPositions(); syncUI(); setStatus(""); }
+      if (--state.pointTicks <= 0) { state.phase = "playing"; state.message = ""; state.pointCheer=""; resetPositions(); syncUI(); setStatus(""); }
       return;
     }
     if (state.phase !== "playing") return;
@@ -929,8 +1000,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       else overlay("학교를 선택하세요", "위의 학교 검색창에서 선택");
     }
     else if (state.phase === "paused") overlay("PAUSE", "");
-    else if (state.phase === "point") overlay(state.message, "");
-    else if (state.phase === "finished") overlay(state.winner,formatTime(getElapsedTenths()));
+    else if (state.phase === "point") overlay(state.message, state.pointCheer);
+    else if (state.phase === "finished") overlay(state.winner,(state.recordBroken?"🎉 신기록 · ":"")+"기록 "+formatTime(getElapsedTenths()));
     ctx.restore();
   }
   let last = 0, accumulator = 0;
