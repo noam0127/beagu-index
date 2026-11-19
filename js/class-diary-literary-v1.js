@@ -8,6 +8,18 @@
 let enabled=false;
 let active=null;
 let visibleLines=0;
+let writingTimer=null;
+let writingRow=null;
+let writingText='';
+let writingNode=null;
+let writingCursor=null;
+let writingGraphemes=[];
+let typingSound=()=>{};
+function stopWriting(){
+ if(writingTimer!==null){clearInterval(writingTimer);writingTimer=null;}
+ writingRow=null;writingText='';writingNode=null;writingCursor=null;writingGraphemes=[];
+}
+function setTypingSound(callback){typingSound=typeof callback==='function'?callback:()=>{};}
 const $=selector=>root.document&&root.document.querySelector(selector);
 function mode(on,semester=on){
  enabled=Boolean(on);
@@ -17,11 +29,30 @@ function mode(on,semester=on){
  }
  if(!enabled)start();
 }
-function start(){active=null;visibleLines=0;}
+function start(){stopWriting();active=null;visibleLines=0;}
 function graphemes(s){
  if(root.Intl&&root.Intl.Segmenter)
   return [...new root.Intl.Segmenter('ko',{granularity:'grapheme'}).segment(String(s))].map(v=>v.segment);
  return Array.from(String(s));
+}
+/* Keep the punctuation and its closing quotes with each complete sentence. */
+function splitSentences(paragraph){
+ const chars=Array.from(String(paragraph||'').replace(/\s+/gu,' ').trim());
+ const sentences=[];let current='';
+ const ending=/[.!?。！？]/u,closer=/[”’"』」\)\]]/u;
+ for(let i=0;i<chars.length;i++){
+  const ch=chars[i];current+=ch;
+  if(!ending.test(ch))continue;
+  // A period inside a decimal, date or numbered version is not a sentence break.
+  if(ch==='.'&&/\d/.test(chars[i-1]||'')&&/\d/.test(chars[i+1]||''))continue;
+  while(i+1<chars.length&&(ending.test(chars[i+1])||closer.test(chars[i+1])))
+   current+=chars[++i];
+  const phrase=current.trim();
+  if(phrase)sentences.push(phrase);
+  current='';
+ }
+ if(current.trim())sentences.push(current.trim());
+ return sentences;
 }
 /* Wrap by measured font width so both mobile and desktop show genuine lines.
  * Break at spaces where possible, but preserve every character of long words.
@@ -58,29 +89,28 @@ function paginateForMetrics(paragraphs,maxWidth,maxLines,measure){
  for(let at=0;at<all.length;at+=cap)pages.push(all.slice(at,at+cap));
  return pages;
 }
+/* One complete sentence per tap; never reveal a wrapped line or a whole paragraph. */
 function paginate(paragraphs){
- if(!enabled||!root.document)return [paragraphs];
- const slot=$('#vnDialogueSlot');
- const text=$('#chapterText');
- const styles=text?root.getComputedStyle(text):null;
- const fontSize=parseFloat(styles&&styles.fontSize)||18;
- const lineHeight=parseFloat(styles&&styles.lineHeight)||fontSize*1.7;
- const width=Math.max(180,(slot&&slot.clientWidth)||root.innerWidth*.88);
- const height=Math.max(190,(slot&&slot.clientHeight)||root.innerHeight*.72);
- const maxWidth=Math.max(110,width-40);
- const maxLines=Math.max(3,Math.min(32,Math.floor((height-22)/(lineHeight+3))));
- const canvas=root.document.createElement('canvas');
- const context=canvas.getContext&&canvas.getContext('2d');
- if(context)context.font=[styles?.fontWeight||'500',styles?.fontSize||'18px',styles?.fontFamily||'serif'].join(' ');
- const spacing=parseFloat(styles?.letterSpacing)||0;
- const measure=str=>context
-  ? context.measureText(str).width + Math.max(0,graphemes(str).length-1)*spacing
-  :graphemes(str).length*fontSize*.95;
- return paginateForMetrics(paragraphs,maxWidth,maxLines,measure);
+ const pages=[];
+ for(const paragraph of paragraphs){
+  for(const sentence of splitSentences(paragraph)){
+   pages.push([{text:sentence,paragraphEnd:true}]);
+  }
+ }
+ return pages.length?pages:[[{text:'…',paragraphEnd:true}]];
+}
+function finishWriting(){
+ if(!writingRow)return false;
+ if(writingTimer!==null){clearInterval(writingTimer);writingTimer=null;}
+ if(writingNode)writingNode.nodeValue=writingText;
+ writingRow.classList.remove('diary-literary-typing');
+ writingRow.classList.add('diary-literary-ready');
+ writingRow=null;writingText='';writingNode=null;writingCursor=null;writingGraphemes=[];
+ return true;
 }
 function present(target){
  if(!enabled||!target)return;
- active=target;
+ stopWriting();active=target;
  const rows=[...target.querySelectorAll('p')];
  visibleLines=rows.length?1:0;
  rows.forEach((row,index)=>{
@@ -88,21 +118,42 @@ function present(target){
   row.hidden=index!==0;
  });
  target.classList.remove('diary-literary-revealed','diary-text-arrive');
- if(rows[0])rows[0].classList.add('diary-literary-line-enter');
- const reader=target.closest('.vn-dialogue,.outcome');
- if(reader)reader.scrollTop=0;
+ if(!rows.length)return;
+ const row=rows[0],text=row.textContent||'…';
+ row.classList.add('diary-literary-typing');
+ row.classList.remove('diary-literary-ready','diary-literary-line-enter');
+ const textNode=root.document.createTextNode('');
+ const cursor=root.document.createElement('span');
+ cursor.className='diary-reading-cursor';
+ cursor.setAttribute('aria-hidden','true');
+ cursor.textContent='▌';
+ row.replaceChildren(textNode,cursor);
+ row.setAttribute('aria-label',text);
+ writingRow=row;writingText=text;writingNode=textNode;writingCursor=cursor;
+ writingGraphemes=graphemes(text);
+ const symbols=writingGraphemes;
+ let count=0,ticks=0;
+ const reducedMotion=Boolean(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
+ if(reducedMotion||!root.setInterval){finishWriting();return;}
+ // Two graphemes at a time produces a short, soft letter-rustle, not a long typing delay.
+ writingTimer=root.setInterval(()=>{
+  if(!writingRow||writingRow!==row){stopWriting();return;}
+  const end=Math.min(symbols.length,count+2);
+  textNode.nodeValue+=symbols.slice(count,end).join('');
+  count=end;ticks++;
+  if(count<symbols.length&&ticks%4===1&&/\S/u.test(symbols.slice(Math.max(0,count-2),count).join(''))){
+   try{typingSound()}catch(_){}
+  }
+  if(count>=symbols.length)finishWriting();
+ },26);
 }
 function reveal(){
+ // One touch completes the current sentence; the next touch reveals the next sentence.
  if(!enabled||!active)return false;
- const rows=active.querySelectorAll('p.diary-literary-line');
- if(visibleLines>=rows.length)return false;
- const line=rows[visibleLines++];
- line.hidden=false;
- line.classList.add('diary-literary-line-enter');
- return true;
+ return finishWriting();
 }
-function isPrinting(){return Boolean(active&&visibleLines<active.querySelectorAll('p.diary-literary-line').length);}
-const api=Object.freeze({VERSION:'literary/v2',mode,start,paginate,present,reveal,isPrinting,wrapParagraph,paginateForMetrics});
+function isPrinting(){return Boolean(writingRow);}
+const api=Object.freeze({VERSION:'literary/v3',mode,start,paginate,present,reveal,isPrinting,setTypingSound,splitSentences,wrapParagraph,paginateForMetrics});
 root.BeaguClassDiaryLiterary=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
