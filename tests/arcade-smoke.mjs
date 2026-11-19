@@ -18,6 +18,55 @@ for(const h of [volley,runner]){
 new Function(shared);
 new Function(picker);
 
+const fullscreenSource=await readFile("js/arcade-fullscreen-v1.js","utf8");
+const fullscreenCSS=await readFile("styles/arcade-fullscreen-v1.css","utf8");
+const gameGate=await readFile("js/beagu-game-lv1-gate-v1.js","utf8");
+new Function(fullscreenSource);
+new Function(gameGate);
+for (const game of [volley,runner]) {
+ assert.match(game,/data-arcade-fullscreen/,"game has a fullscreen-only viewport");
+ assert.match(game,/data-arcade-fullscreen-button/,"viewport contains a fullscreen toggle");
+ assert.match(game,/js\/arcade-fullscreen-v1\.js/,"game loads its fullscreen behavior");
+}
+assert.match(fullscreenCSS,/:fullscreen canvas/,"fullscreen scales the gameplay canvas");
+assert.match(fullscreenCSS,/100dvh/,"fullscreen uses actual viewport height");
+assert.match(volley,/schoolPicker\.mount\.appendChild\(schoolChooseButton\)/,"school CTA joins the search card");
+assert.match(volley,/▶ 이 학교로 시작하기/,"school CTA switches after eligible selection");
+assert.match(volley,/if\(schoolPicker\.get\(\)\?\.eligible===true\)\{void startMatch\(\);return;\}/,
+ "selected school starts the match without reopening selection");
+assert.match(html,/id="teacher-run-home-code"/,"homepage provides an in-place game authentication code field");
+assert.match(runner,/id="teacher-run-code"/,"standalone survival game provides an in-place code field");
+assert.match(html,/data-game-lv1-form/);
+assert.match(runner,/data-game-lv1-form/);
+assert.doesNotMatch(runner,/<a href="search\.html">Lv\.1 인증하기<\/a>/,"standalone auth does not navigate");
+assert.match(gameGate,/JSON\.stringify\(\{action:'login',code\}\)/,"in-place form checks codes on the existing server");
+assert.match(gameGate,/sessionStorage\.setItem\(sessionKey, data\.token\)/,"only the server session token persists");
+assert.match(gameGate,/window\.dispatchEvent\(new Event\('beagu:level-state-change'\)\)/,
+ "successful inline authentication refreshes game visibility");
+{
+ const listeners={};
+ const buttonHandlers={};
+ const button={setAttribute(){},addEventListener(name,handler){buttonHandlers[name]=handler;}};
+ let stage;
+ const doc={
+  fullscreenElement:null,
+  querySelector(){return stage;},
+  addEventListener(name,handler){listeners[name]=handler;},
+  async exitFullscreen(){this.fullscreenElement=null;listeners.fullscreenchange?.();}
+ };
+ stage={
+  querySelector(){return button;},
+  async requestFullscreen(){doc.fullscreenElement=stage;listeners.fullscreenchange?.();}
+ };
+ new Function("document",fullscreenSource)(doc);
+ assert.equal(button.textContent,"🔳","game starts in normal size");
+ await buttonHandlers.click();
+ assert.equal(button.textContent,"🔽","fullscreen shows the shrink emoji");
+ await buttonHandlers.click();
+ assert.equal(button.textContent,"🔳","shrink restores fullscreen entry emoji");
+}
+console.log("PASS: game-only fullscreen controls, unified volleyball picker, and inline Lv.1 game auth");
+
 // Anonymous automatic leaderboard: no dialog, no typed nickname, and no stale session.
 const mockWindow={};
 new Function("window",shared)(mockWindow);
