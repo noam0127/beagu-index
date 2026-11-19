@@ -469,8 +469,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=20261119-arcade-history1001/);
-assert.match(html,/teacher-run\.html\?v=20261119-arcade-history1001/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-foldedtop1/);
+assert.match(html,/teacher-run\.html\?v=20261119-foldedtop1/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -593,8 +593,8 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-arcade-history1001/);
-assert.match(html,/teacher-run\.html\?v=20261119-arcade-history1001/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-foldedtop1/);
+assert.match(html,/teacher-run\.html\?v=20261119-foldedtop1/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
@@ -710,6 +710,74 @@ assert.match(backend,/arcade_fastest25_records/,"fastest win TOP10 persists sepa
 assert.match(backend,/recorded,score,top10/,"API returns whether result survived TOP100 pruning");
 console.log("PASS: conditional congratulations, core action rewards, input parity and automatic tiered ranking");
 
+// Both TOP10 panels are initially folded and remain user-controlled during redraws.
+assert.doesNotMatch(html,/<a href="teacher-volleyball\.html"[^>]*>↗ 크게 보기<\/a>/,
+ "the embedded volleyball game no longer has a zoom/enlarge link");
+assert.match(html,/<a href="teacher-run\.html"[^>]*>↗ 크게 보기<\/a>/,
+ "survival external link remains unchanged");
+assert.match(volley,/arcade-leaderboard-v1\.js\?v=20261119-foldedtop1/);
+assert.match(runner,/arcade-leaderboard-v1\.js\?v=20261119-foldedtop1/);
+assert.match(shared,/this\.expanded=false/);
+assert.match(shared,/aria-expanded/);
+assert.match(shared,/arcade-ranking-content/);
+assert.match(shared,/boardBody|content\.hidden=!this\.expanded/);
+const makeMockNode=(tag)=>({
+ tagName:tag,children:[],attrs:{},listeners:{},style:{},hidden:false,
+ classList:{add(){}},
+ append(...children){this.children.push(...children);},
+ replaceChildren(...children){this.children=[...children];},
+ setAttribute(name,value){this.attrs[name]=value;},
+ addEventListener(type,cb){this.listeners[type]=cb;}
+});
+const documentMock={createElement:makeMockNode,querySelector:()=>null};
+const windowMock={};
+new Function("window","document","localStorage",shared)(
+ windowMock,documentMock,{removeItem(){}});
+windowMock.ArcadeLeaderboard.prototype.load=async function(){this.remote=true;this.draw();return [];};
+for(const game of ["volleyball_25","teacher_run_retirement"]){
+ const mount=makeMockNode("div");
+ const board=new windowMock.ArcadeLeaderboard(game,mount);
+ const toggle=mount.children[0],body=mount.children.at(-1);
+ assert.equal(toggle.tagName,"button");
+ assert.equal(toggle.attrs["aria-expanded"],"false");
+ assert.equal(toggle.attrs["aria-controls"],body.id);
+ assert.equal(body.hidden,true,"TOP10 must be folded before first interaction");
+ assert.ok(body.children.some(c=>c.className==="arcade-history-link"),"history link is inside the folded content");
+ toggle.listeners.click();
+ assert.equal(toggle.attrs["aria-expanded"],"true");
+ assert.equal(body.hidden,false,"TOP10 opens on first click");
+ board.notice="🏆 기록 자동 등록 완료";
+ board.draw();
+ assert.equal(mount.children[0].attrs["aria-expanded"],"true","open state survives result redraw");
+ assert.equal(mount.children.at(-1).hidden,false);
+ assert.equal(mount.children[1].className,"arcade-rank-feedback","submission result stays visible");
+ mount.children[0].listeners.click();
+ assert.equal(mount.children[0].attrs["aria-expanded"],"false");
+ assert.equal(mount.children.at(-1).hidden,true,"second click folds records again");
+}
+console.log("PASS: no volleyball zoom link, both TOP10 panels folded by default and freely toggled");
+
+
+// The volleyball start-screen school button is real, keyboard-accessible and connected to the live picker.
+assert.match(volley,/<button type="button" id="volley-school-choose"[^>]*aria-controls="arcade-school-picker"[^>]*hidden>🏫 학교 선택하기<\/button>/);
+assert.match(volley,/schoolChooseButton\.hidden=state\.phase!=="ready"/,"button only shown on the pre-game screen");
+assert.match(volley,/schoolChooseButton\.addEventListener\("click",/);
+assert.match(volley,/schoolPicker\.resetForChange\(\)/,"choosing a new school clears the old selection");
+assert.match(volley,/schoolPicker\.focus\(\)/,"button focuses school-name search");
+assert.match(volley,/scrollIntoView\?\.\(\{behavior:"smooth",block:"start"\}\)/,"button scrolls to top picker");
+
+// Retirement age displays in two lines instead of overflowing the first narrow HUD tile.
+assert.match(runner,/<strong id="dayLabel" class="career-age-display">/);
+assert.match(runner,/<span class="career-age-current" id="careerCurrentAge">24세<\/span>/);
+assert.match(runner,/<span class="career-age-target">정년 62세<\/span>/);
+assert.match(runner,/\$\("careerCurrentAge"\)\.textContent=getAge\(\)\+"세"/);
+assert.match(runner,/\.stat \.career-age-display\{display:flex;flex-direction:column;/);
+assert.match(runner,/\.stat \.career-age-display \.career-age-target\{font-size:clamp/);
+assert.doesNotMatch(runner,/id="dayLabel">24세 \/ 정년 62세/);
+console.log("PASS: pre-game school selection button and overflow-safe two-line 24/62 age card");
+
+
+
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
  for(let i=0;i<times;i++){
@@ -729,8 +797,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-arcade-history1001")&&
-     site.body.includes("teacher-run.html?v=20261119-arcade-history1001"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-foldedtop1")&&
+     site.body.includes("teacher-run.html?v=20261119-foldedtop1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -740,8 +808,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-arcade-history1001/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-arcade-history1001/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-foldedtop1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-foldedtop1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
