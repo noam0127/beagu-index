@@ -99,6 +99,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261119-foldedtop1">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261119-game1">
 <link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
@@ -112,7 +113,12 @@ canvas{height:400px;cursor:default}
 <section id="teacher-run-lv1-gate" class="teacher-run-lv1-gate" aria-labelledby="teacher-run-lv1-title">
   <h1 id="teacher-run-lv1-title">Lv.1 인증이 필요합니다</h1>
   <p data-lv1-gate-message role="status">Lv.1 인증 후 이용할 수 있습니다.</p>
-  <a href="search.html">Lv.1 인증하기</a>
+  <form class="teacher-run-inline-auth" data-game-lv1-form autocomplete="off">
+    <label for="teacher-run-code">인증번호(참여코드)</label>
+    <input id="teacher-run-code" data-game-lv1-code type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" placeholder="발급받은 인증번호 입력" required>
+    <button type="submit" data-game-lv1-submit>🔓 Lv.1 인증하기</button>
+    <p data-game-lv1-message role="status" aria-live="polite"></p>
+  </form>
 </section>
 <main id="teacher-run-protected" class="shell" hidden>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
@@ -128,7 +134,8 @@ canvas{height:400px;cursor:default}
     </div>
     <div class="arcade-survival-health-track" id="run-health-progress" role="progressbar" aria-label="교사 체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="arcade-survival-health-fill" id="run-health-fill"></div></div>
   </section>
-  <div class="stage">
+  <div class="stage arcade-game-viewport" data-arcade-fullscreen>
+    <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="게임 화면 전체화면" title="게임만 전체화면">🔳</button>
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 3.0 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
       <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 3.0</h2><p id="overlayDesc">24세 임용, 62세 정년까지! 5초마다 한 살 · 정년 달성 시 점수 2배</p><div class="choices" id="choices"></div></div>
@@ -812,6 +819,7 @@ window.addEventListener("resize",postHeight);
 resize();intro();requestAnimationFrame(tick);postHeight();
 })();
 </script>
-<script defer src="js/beagu-game-lv1-gate-v1.js?v=20261118-gate1"></script>
+<script src="js/arcade-fullscreen-v1.js?v=20261119-game1"></script>
+<script defer src="js/beagu-game-lv1-gate-v1.js?v=20261119-inlineauth1"></script>
 </body>
 </html>
