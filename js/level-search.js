@@ -224,31 +224,45 @@
   $('prevPage').addEventListener('click', () => { page = Math.max(0, page - 1); search(false); });
   $('nextPage').addEventListener('click', () => { page++; search(false); });
 
-  function addRow(host, label, value, comparison = null) {
-    const div = make('div', 'data-row');
-    if (!comparison || comparison.group!=='편집본 공식 학교정보') {
-      div.append(make('span', '', label), make('strong', '', value));
-      host.append(div);
-      return;
+  function addRow(host,label,value,comparison=null){
+    const div=make('div','data-row');
+    const factKey=String(comparison?.factKey||'');
+    const official=comparison?.group==='편집본 공식 학교정보';
+    const domain=comparison?.group==='2025년 조사 영역별 점수 · 응답 표본 참고';
+    const schoolOnly=official&&(comparison?.schoolOnly===true||
+      ['establishment_type','vice_principals','lead_teachers','meal_place','milk_lunch'].includes(factKey));
+    if(schoolOnly){
+      div.classList.add('beagu-school-only-row');
+      const key=make('span','beagu-school-only-label',label);
+      const val=make('strong','beagu-school-only-value');
+      const presence=['vice_principals','lead_teachers','milk_lunch'].includes(factKey);
+      const symbol=presence&&['O','X'].includes(String(value).trim())?String(value).trim():null;
+      if(symbol){
+        const pill=make('span','beagu-ox-pill is-'+(symbol==='O'?'yes':'no'),symbol);
+        pill.setAttribute('aria-label',symbol==='O'?'있음':'없음');
+        val.append(pill,make('span','beagu-school-only-meaning',symbol==='O'?'있음':'없음'));
+      }else val.textContent=String(value||'자료 없음');
+      div.append(key,val);
+    }else if(official||domain){
+      div.classList.add('beagu-comparison-row');
+      div.append(make('h5','compare-label',label));
+      const grid=make('div','compare-grid');
+      const kind=domain?'평균':comparison?.comparisonKind==='mode'?'최빈 보기':'평균';
+      for(const [name,v,role] of [
+        ['우리 학교',value,'school'],
+        ['지역 '+kind,comparison?.regionalAverage||'비교 자료 없음','regional'],
+        ['전국 '+kind,comparison?.nationalAverage||'비교 자료 없음','national']
+      ]){
+        const cell=make('div','compare-value '+role);
+        cell.append(make('span','compare-value-label',name),make('strong','compare-value-text',v));
+        grid.append(cell);
+      }
+      div.append(grid);
+      if(Number.isInteger(comparison?.referenceYear))
+        div.append(make('small','beagu-compare-source',comparison.referenceYear+'년 자료 기준 · '+(domain?'승인된 학교별 점수 평균 참고값':'검수된 학교 집계값')));
+    }else{
+      div.append(make('span','',label),make('strong','',value));
     }
-    div.classList.add('beagu-comparison-row');
-    const heading=make('h5','compare-label',label);
-    const grid=make('div','compare-grid');
-    const kind=comparison.comparisonKind==='mode'?'최빈 보기':'평균';
-    for(const [name,v,role] of [
-      ['우리 학교',value,'school'],
-      ['전국 '+kind,comparison.nationalAverage||'비교 자료 없음','national'],
-      ['지역 '+kind,comparison.regionalAverage||'비교 자료 없음','regional']
-    ]){
-      const cell=make('div','compare-value '+role);
-      const labelNode=make('span','compare-value-label',name);
-      const valueNode=make('strong','compare-value-text',v);
-      cell.append(labelNode,valueNode);
-      grid.append(cell);
-    }
-    div.append(heading,grid);
-    if(Number.isInteger(comparison.referenceYear))
-      div.append(make('small','beagu-compare-source',comparison.referenceYear+'년 자료 기준 · 검수된 학교 집계값'));
     host.append(div);
   }
 
@@ -334,6 +348,20 @@
       if(v==='모름'||v==='잘 모름'||v==='잘모름')return {symbol:'?',label:'모름',kind:'unknown'};
       return null;
     };
+    const circledOption=value=>{
+      if(typeof value!=='string')return null;
+      const raw=value.trim();
+      // Never convert numeric scores, rates, dates, quantities or measurement units.
+      if(/(?:점|%|명|명당|원|㎡|학급|개|년|월|일)$/.test(raw))return null;
+      const circles=['','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+      const exact=raw.match(/^([1-9]|10)\s*[,，.]?$/);
+      if(exact)return circles[Number(exact[1])];
+      const labelled=raw.match(/^([1-9]|10)\s*[.)、]\s*(\S[\s\S]*)$/);
+      if(labelled)return circles[Number(labelled[1])]+' '+labelled[2];
+      if(/^(?:10|[1-9])(?:\s*[,，]\s*(?:10|[1-9]))+$/.test(raw))
+        return raw.split(/\s*[,，]\s*/).map(x=>circles[Number(x)]).join(' ');
+      return null;
+    };
     const list=make('div','beagu-question-list');
     const blocks=[];
     for(const id of qids){
@@ -354,8 +382,8 @@
       const cells=[
         ['우리 학교',checkboxQuestion?(checked?.length?'확인된 체크 항목':''):vetted.get(id)||null,
           'school',checkboxQuestion?'응답 기준 · 복수 선택':'검증된 최다 선택'],
-        ['전국',benchmark(comparisonValues.national),'nation',comparisonLabel(comparisonValues.national)],
-        [region,benchmark(comparisonValues.regional),'region',comparisonLabel(comparisonValues.regional)]
+        [region,benchmark(comparisonValues.regional),'region',comparisonLabel(comparisonValues.regional)],
+        ['전국',benchmark(comparisonValues.national),'nation',comparisonLabel(comparisonValues.national)]
       ];
       const grid=make('div','historical-benchmark-grid');
       for(const [label,value,role,note] of cells){
@@ -374,6 +402,8 @@
             val.append(li);
           }
         }else{
+          const ordinal=role==='school'&&!checkboxQuestion?circledOption(value):null;
+          const displayValue=ordinal??display;
           const flag=answerBadge(value);
           if(flag){
             val=make('div','beagu-benchmark-result beagu-answer-symbol');
@@ -381,12 +411,11 @@
             pill.setAttribute('aria-label',flag.label);
             val.append(pill,make('span','beagu-ox-text',flag.label));
           }else{
-            val=make('strong','beagu-benchmark-result',display);
+            val=make('strong','beagu-benchmark-result',displayValue);
           }
         }
         if(!hasValue)cell.classList.add('is-unavailable');
-        const kind=make('small','beagu-benchmark-kind',note);
-        cell.append(top,val,kind);
+        cell.append(top,val);
         grid.append(cell);
       }
       block.append(grid);
@@ -494,7 +523,8 @@
         releasedMetrics.push({
           label:metric.label,value:metric.value,group:metric.group,
           nationalAverage:metric.nationalAverage,regionalAverage:metric.regionalAverage,
-          comparisonKind:metric.comparisonKind,referenceYear:metric.referenceYear
+          comparisonKind:metric.comparisonKind,referenceYear:metric.referenceYear,
+          factKey:metric.factKey,schoolOnly:metric.schoolOnly
         });
       }
     }
