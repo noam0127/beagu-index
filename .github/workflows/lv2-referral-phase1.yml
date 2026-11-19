@@ -1,0 +1,35 @@
+name: Lv2 Referral Phase 1 (staging only)
+on:
+  push:
+    branches:
+      - feature/lv2-referral-phase1-20261119
+    paths:
+      - 'challenge.html'
+      - 'survey.html'
+      - 'search-lv2.html'
+      - 'js/challenge.js'
+      - 'js/level-search.js'
+      - 'js/survey-referral-v1.js'
+      - 'js/referral-form-config.js'
+      - 'js/beagu-level-state-v1.js'
+      - 'scripts/beagu-2026-noon-sync.gs'
+      - 'scripts/beagu-2026-referral-addon.gs'
+      - 'supabase/functions/beagu-referral-v1/**'
+      - 'supabase/functions/beagu-challenge-identity/**'
+      - 'supabase/migrations/20261119_lv2_*.sql'
+      - 'tests/lv2-referral-phase1.mjs'
+      - '.github/workflows/lv2-referral-phase1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/lv2-referral-phase1.mjs
+      - run: node tests/2026-form-submit-private-sync.mjs
