@@ -670,6 +670,84 @@ function drawShackle(){
  ctx.fillStyle="#aeb8c3";ctx.fillRect(ankleX-10,ankleY-4,18,3);
  ctx.restore();
 }
+// Miniature side-rushers attack the edges, leaving a central dodge lane.
+function beginSideRush(){
+ const cfg=chaosProfile();if(!cfg.students)return;
+ const count=cfg.students+Math.min(1,Math.floor(stage/3));
+ const firstSide=Math.random()<.5?"left":"right";
+ for(let i=0;i<count;i++){
+  const side=i%3===2?(firstSide==="left"?"right":"left"):firstSide;
+  sideStudents.push({
+   x:side==="left"?-28:W+28,
+   y:Math.max(105,Math.min(H-52,player.y+(i-(count-1)/2)*25)),
+   vx:side==="left"?1:-1,phase:"warn",wait:.58+i*.22,r:13,
+   stopX:side==="left"?W*.38:W*.62
+  });
+ }
+ setNotice("⚠ 돌진 학생 "+count+"명 등장! 중앙에 피할 공간이 있어요",1.7);
+}
+// Snapshot player position at warning time: no unfair homing afterward.
+function beginPaperStorm(){
+ const cfg=chaosProfile();if(!cfg.papers)return;
+ paperTarget={x:player.x,y:player.y,wait:.85,count:cfg.papers+Math.min(stage*2,6)};
+ setNotice("🎯 공문 표적 지정! 느린 탄막이 다가옵니다",1.7);
+}
+function firePaperStorm(target){
+ const count=Math.min(24,target.count);
+ const startCenter=Math.max(30,Math.min(W-30,target.x));
+ const spread=Math.min(W*.86,Math.max(160,W*.75));
+ const aimY=Math.max(H*.6,target.y);
+ for(let i=0;i<count;i++){
+  const frac=count===1?.5:i/(count-1);
+  const aimX=Math.max(12,Math.min(W-12,target.x+(frac-.5)*spread));
+  const x=Math.max(12,Math.min(W-12,startCenter+(frac-.5)*Math.min(W*.3,105)));
+  const dx=aimX-x,dy=aimY+15;
+  const dist=Math.max(1,Math.hypot(dx,dy));
+  const speed=90+Math.random()*20+stage*2.5;
+  paperBullets.push({x,y:-14-(i%5)*12,vx:dx/dist*speed,vy:dy/dist*speed,
+   r:8,angle:(i%2?1:-1)*.12,spin:(i%2?1:-1)*.45});
+ }
+}
+function updatePatternHazards(dt){
+ const cfg=chaosProfile();
+ sideRushClock-=dt;paperStormClock-=dt;
+ if(sideRushClock<=0){
+  beginSideRush();sideRushClock=cfg.rushEvery*(.9+Math.random()*.25)*(1-stage*.035);
+ }
+ if(paperStormClock<=0){
+  if(!paperTarget)beginPaperStorm();
+  paperStormClock=cfg.paperEvery*(.9+Math.random()*.25)*(1-stage*.035);
+ }
+ if(paperTarget){
+  paperTarget.wait-=dt;
+  if(paperTarget.wait<=0){firePaperStorm(paperTarget);paperTarget=null;}
+ }
+ for(let i=sideStudents.length-1;i>=0;i--){
+  const a=sideStudents[i];
+  if(a.phase==="warn"){
+   a.wait-=dt;if(a.wait>0)continue;
+   a.phase="rush";
+  }
+  a.x+=a.vx*(175+stage*10)*dt;
+  if((a.vx>0&&a.x>=a.stopX)||(a.vx<0&&a.x<=a.stopX)){
+   sideStudents.splice(i,1);continue;
+  }
+  if(Math.hypot(a.x-player.x,(a.y-10)-player.y)<a.r+player.r*.77*profile.heroSize){
+   sideStudents.splice(i,1);
+   hit({good:false,damage:11,x:a.x,y:a.y});
+   if(state!=="playing")return;
+  }
+ }
+ for(let i=paperBullets.length-1;i>=0;i--){
+  const a=paperBullets[i];a.x+=a.vx*dt;a.y+=a.vy*dt;a.angle+=a.spin*dt;
+  if(a.y>H+25||a.x<-25||a.x>W+25){paperBullets.splice(i,1);continue;}
+  if(Math.hypot(a.x-player.x,a.y-player.y)<a.r+player.r*.77*profile.heroSize){
+   paperBullets.splice(i,1);
+   hit({good:false,damage:6,x:a.x,y:a.y});
+   if(state!=="playing")return;
+  }
+ }
+}
 function update(dt){
  clock=Math.min(RETIREMENT_SECONDS,clock+dt);
  if(clock>=RETIREMENT_SECONDS){finish(true);return;}
