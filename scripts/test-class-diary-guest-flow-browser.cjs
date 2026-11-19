@@ -41,9 +41,37 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
     }
     throw Error('Unexpected progress action');
    });
+   // Mock public school-directory calls only; the private world API remains untouched.
+   let privateWorldCalls=0;
+   await page.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-world-v1',route=>{
+    privateWorldCalls++;return route.abort('blockedbyclient');
+   });
+   await page.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard**',route=>{
+    const query=new URL(route.request().url()).searchParams;
+    if(query.has('schools'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+     schools:[{school_id:'A123456',school_name:'봄빛초등학교',sido_standard:'부산광역시'}]
+    })});
+    if(query.has('school_id'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+     school:{school_id:'A123456',school_name:'봄빛초등학교',region:'부산광역시',eligible:true,available_years:[2025]}
+    })});
+    // The home page also reads game leaderboards; stub those harmless GETs.
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({entries:[],top:[],leaderboard:[]})});
+   });
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
    await page.goto(base+'/index.html',{waitUntil:'domcontentloaded'});
-   await page.locator('#homeDiaryGuestForm').waitFor({state:'visible'});
+   const homeProbe=await page.evaluate(()=>{
+    const form=document.getElementById('homeDiaryGuestForm');
+    const game=document.getElementById('teacher-diary-feature');
+    const parents=[];let el=form;
+    while(el&&parents.length<7){
+     const style=getComputedStyle(el),bounds=el.getBoundingClientRect();
+     parents.push({tag:el.tagName,id:el.id,display:style.display,visibility:style.visibility,opacity:style.opacity,width:bounds.width,height:bounds.height,hidden:el.hidden});
+     el=el.parentElement;
+    }
+    return {url:location.href,documentTitle:document.title,formExists:!!form,sectionExists:!!game,parents,firstText:document.body?.innerText?.slice(0,280)};
+   });
+   console.log('DIARY_HOME_PROBE',JSON.stringify(homeProbe));
+   await page.locator('#homeDiaryGuestForm').waitFor({state:'visible',timeout:4500});
    assert.equal(await page.locator('#homeDiaryCode').count(),1);
    assert.equal(await page.locator('#teacher-diary-feature .teacher-diary-code-message').count(),1);
    await page.locator('#homeDiaryCode').fill('1234');
@@ -61,17 +89,26 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#diaryLandingStart').click();
    await page.locator('#setup').waitFor({state:'visible'});
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'1');
-   assert.equal((await page.locator('.diary-landing-verse').innerText()).replace(/\s+/g,''),'낯선교실에첫발을내딛던날.그날의걸음을우리는잊지못한다.','Title card text must match regardless of responsive line breaks');
+   assert.equal((await page.locator('.diary-landing-verse').innerText()).replace(/\s+/g,''),'낯선교실에첫발을내딛던날.봄에서여름까지,하나의이야기가시작된다.','Title card text must match regardless of line wrapping');
    assert.equal(await page.locator('#diarySchoolName').isVisible(),true,'School text field must be visible');
    assert.equal(await page.locator('#diarySchoolMode').isVisible(),false,'Mode dropdown must be hidden');
    for(const selector of ['#playerName','#experience','#gender','#mbti'])
     assert.equal(await page.locator(selector).isVisible(),false,'No personal questionnaire: '+selector);
+   assert.equal(await page.locator('#diarySchoolName').getAttribute('readonly'),'','School name comes from public directory');
+   assert.equal(await page.locator('#semesterStart').isVisible(),false,'No second game choice');
+   assert.equal(await page.locator('#openingStart').isVisible(),false,'No 7-day trial choice');
    await page.locator('#setupNext').click();
-   assert.equal(await page.locator('#setup').getAttribute('data-step'),'1','School name cannot be blank');
-   await page.locator('#diarySchoolName').fill('봄빛초등학교');
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'1','School selection required');
+   await page.locator('#diarySchoolSearchDialog').waitFor({state:'visible'});
+   await page.locator('#diarySchoolQuery').fill('봄빛');
+   await page.locator('.diary-school-result').first().click();
+   await page.waitForFunction(()=>document.getElementById('diarySchoolMode').dataset.schoolReady==='true');
+   assert.equal(await page.locator('#diarySchoolName').inputValue(),'봄빛초등학교');
+   assert((await page.locator('#diarySchoolSelected').innerText()).includes('2025'));
    await page.locator('#setupNext').click();
-   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Colleague choice follows a typed school name');
-   assert.equal(await page.locator('#schoolLine').textContent(),'봄빛초등학교 · 가상의 이야기');
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Colleague choice follows verified public school');
+   assert.equal(await page.locator('#schoolLine').textContent(),'봄빛초등학교 · 부산광역시 · 과거 공개 조사 2025년');
+   assert.equal(privateWorldCalls,0,'Private Level2 school API must never be called by owner preview');
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),3);
    await page.locator('[data-partner-choice="none"]').click();
@@ -79,6 +116,11 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#partner').inputValue(),'none');
    assert.equal(await page.locator('#setupNext').isVisible(),true,'Bottom first-day action remains visible');
    await page.locator('#setupNext').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','First-day review appears after colleague selection');
+   assert.equal(await page.locator('#setupReviewSchool').innerText(),'봄빛초등학교','Chosen school is reviewed');
+   assert.equal(await page.locator('#setupReviewPartner').innerText(),'윤민서','Chosen colleague is reviewed');
+   assert.equal(await page.locator('#setupNext').isVisible(),false,'Duplicate next action is hidden on review');
+   await page.locator('.setup-begin').click();
    await page.locator('#novel').waitFor({state:'visible'});
    const state=await page.evaluate(()=>({
     scrollHeight:document.documentElement.scrollHeight,
@@ -91,6 +133,9 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#diarySaveNow').click();
    await page.waitForFunction(()=>document.querySelector('#vnSaveNotice')?.textContent?.includes('저장 완료'),null,{timeout:5000});
    assert(latestCheckpoint&&latestCheckpoint.version==='class-diary-semester/v1','Manual save must reach the mock progress API');
+   assert.equal(latestCheckpoint.schoolName,'봄빛초등학교');
+   assert.deepEqual(latestCheckpoint.schoolContext,{schoolId:'A123456',region:'부산광역시',publishedYears:[2025]});
+   assert((await page.locator('#chapterSource').innerText()).includes('2025'));
    page.once('dialog',dialog=>dialog.accept());
    await page.locator('#diaryContinueNow').click();
    await page.waitForFunction(()=>document.querySelector('#vnSaveNotice')?.textContent?.includes('이전 기록 확인됨'),null,{timeout:5000});
@@ -112,16 +157,9 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.close();
   }
   const legacy=await browser.newPage({viewport:{width:390,height:844}});
-  let earlyWorldCalls=0;
-  await legacy.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-world-v1',route=>{
-   earlyWorldCalls++;return route.abort('blockedbyclient');
-  });
   await legacy.goto(base+'/teacher-class-diary-play.html?schoolId=A123456',{waitUntil:'domcontentloaded'});
-  // Current security rule: direct non-guest URLs must return to the home code gate.
-  await legacy.waitForURL('**/index.html#teacher-diary-feature',{timeout:12000});
-  await legacy.locator('#homeDiaryGuestForm').waitFor({state:'visible'});
-  assert.equal(earlyWorldCalls,0,'Direct school URLs must not request any private school data');
-  assert.equal(await legacy.locator('#diaryLanding').count(),0,'Direct navigation must not bypass the home entry gate');
+  await legacy.waitForURL('**/index.html#teacher-diary-feature');
+  assert.equal(await legacy.locator('#teacher-diary-feature').count(),1,'Direct URL must not bypass PIN');
   await legacy.close();
  }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exit(1)});

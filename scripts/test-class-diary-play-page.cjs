@@ -54,17 +54,17 @@ const formInputs=[...setupSection.matchAll(/\<(?:input|select)\b[^>]*\bid="([^"]
 assert.deepEqual(formInputs,['diarySchoolName','diarySchoolMode','playerName','experience','gender','mbti','partner','diarySchoolQuery'],'One visible school text field, hidden fictional defaults, colleague selector and optional legacy lookup');
 assert(!play.ids.has('age'),'No player age input');
 assert(play.ids.has('diaryLandingStart'),'One-card story entry is required');
-assert(play.ids.has('diarySchoolName'),'School name must be typed directly');
+assert(play.ids.has('diarySchoolName'),'Actual school must be chosen in the first setup step');
 assert(play.src.includes('id="diarySchoolName" type="text"'),'School selection should be a plain text input');
 assert(play.src.includes('id="diarySchoolMode" type="hidden"'),'The old mode dropdown must be removed from the user interface');
-assert(play.src.includes('그날의 걸음을 우리는 잊지 못한다.'),'Landing card must use the exact poetic sentence');
-assert(play.src.includes('validateSchoolName:applySchoolName'),'Typed school must be validated before colleague choice');
-assert(play.src.includes("world.basic.name=name"),'Input school name must appear in the fictional game world');
+assert(play.src.includes('봄에서 여름까지, 하나의 이야기가 시작된다.'),'Landing card should lead into the semester story');
+assert(play.src.includes('validateSchoolName:applySchoolName'),'Actual school must be verified before colleague choice');
+assert(play.src.includes('schoolSelection=Object.freeze('),'School identity must come from the verified public directory');
 assert(play.ids.has('diarySchoolResults'),'School search results must be available');
 assert(play.src.includes("if(!isGuest){location.replace('index.html#teacher-diary-feature');return;}"),'Non-guest entry cannot bypass private preview');
 assert(play.src.includes('id="diary-private-preview-gate"'),'Direct game links must be blocked early');
-assert(play.src.includes("selectSchoolMode('demo')"),'Fictional demo school should be the safe default');
-assert(play.src.includes("if(!/^[0-9a-f]{64}$/.test(token))"),'Real school selection must not bypass Lv2 verification');
+assert(play.src.includes("selectSchoolMode('choose')"),'Every new session must require school selection');
+assert(play.src.includes("if(!/^[0-9a-f]{64}$/.test(token))"),'Protected legacy Lv2 world API must retain its authorization check');
 assert(preview.src.includes("location.replace('index.html#teacher-diary-feature')"),'Paused legacy preview must return safely to the home diary entry');
 
 assert(play.src.includes("selectSchoolMode('demo');\n  show('diaryLanding');"),'Demo shows the title before selecting a school');
@@ -85,8 +85,24 @@ assert(!play.ids.has('partnerDescription'),'Redundant character-description box 
 assert(play.src.includes('<select id="partner" required hidden'),'Legacy partner data remains in a hidden form control');
 assert(play.ids.has('diarySchoolSurveyLink'),'Schools without published results offer a 2026 survey link');
 assert(play.src.includes('arcade-leaderboard?school_id='),'School survey eligibility is queried from existing published API');
+assert(play.src.includes("school.eligible!==true||!years.length"),'Schools without approved public survey years require survey participation');
+assert(play.src.includes("baseGame.schoolContext={"),'Approved public school identity must survive progress saves');
+assert(play.src.includes("let storyMode='semester'"),'All user journeys default to the 36-episode narrative');
+assert(play.src.includes('id="openingStart" type="button" class="secondary diary-opening-start" hidden'),'7-day trial button must not appear');
+assert(play.src.includes('id="semesterStart" type="button" class="primary diary-opening-start" hidden'),'No alternative game start button');
+assert(play.src.includes('학교명·지역·공개 조사연도'),'Only grounded, public school attributes may be described as real');
+
 assert(play.src.includes('async function loadSchoolWorld(schoolId)'),'School data loads only after explicit selection');
-assert(play.src.includes('await loadSchoolWorld(record.school_id)'),'Real school choice invokes the deferred loader');
+const journey=fs.readFileSync('js/class-diary-journey-v1.js','utf8');
+const guestStyle=fs.readFileSync('styles/class-diary-guest-experience-v1.css','utf8');
+assert(journey.includes('Math.min(3,Number(next)||1)'),'Setup must support the third review step');
+assert(journey.includes('go(3)'),'Colleague next button must enter the review screen');
+assert(journey.includes("step!==3"),'Submitting story should only work from first-day review');
+assert(journey.includes("setupReviewPartner"),'Review must show the actual selected colleague');
+assert(guestStyle.includes('setupPortraitNone'),'Minseo must have a matching photograph scale');
+assert(guestStyle.includes('Gowun Batang'),'Main action buttons should use the diary literary typography');
+
+assert(play.src.includes('schoolSelection=Object.freeze({id:record.school_id,name,region,years})'),'Public school choice must not demand a Level 2 world API');
 assert(play.src.includes('The title and first setup step never require a school ID'),'Initial screen cannot block on school');
 assert(play.src.includes("Fail closed for checkpoint writes"),'Failed progress retrieval cannot overwrite existing saves');
 

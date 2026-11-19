@@ -8,10 +8,20 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
  const browser=await chromium.launch({headless:true});
  try{
   for(const device of [{name:'mobile',width:390,height:844},{name:'desktop',width:1365,height:850}]){
-   for(const story of ['semester','week']){
+   for(const story of ['semester']){
    const page=await browser.newPage({viewport:{width:device.width,height:device.height}});
    const errors=[];
    page.on('pageerror',err=>errors.push(err.message));
+   await page.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard**',route=>{
+    const query=new URL(route.request().url()).searchParams;
+    if(query.has('schools'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+     schools:[{school_id:'A123456',school_name:'봄빛초등학교',sido_standard:'부산광역시'}]
+    })});
+    if(query.has('school_id'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+     school:{school_id:'A123456',school_name:'봄빛초등학교',region:'부산광역시',eligible:true,available_years:[2025]}
+    })});
+    throw Error('Unexpected public-school search');
+   });
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
    // Capture a swallowed story-start exception only inside this local test.
    await page.route('**/teacher-class-diary-play.html?guest=1',async route=>{
@@ -44,15 +54,15 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.goto(url+'/teacher-class-diary-play.html?guest=1',{waitUntil:'domcontentloaded'});
    await page.locator('#diaryLanding').waitFor({state:'visible'});
    await page.locator('#diaryLandingStart').click();
-   if(story==='week'){
-    // The seven-day preview is intentionally preserved but not exposed as a separate guest entry.
-    // The original openingStart handler switches the existing setup to the classic storyline.
-    await page.evaluate(()=>document.getElementById('openingStart').click());
-   }
-   await page.locator('#diarySchoolName').fill('가상 새봄초등학교');
+   await page.locator('#diarySchoolName').click();
+   await page.locator('#diarySchoolQuery').fill('봄빛');
+   await page.locator('.diary-school-result').first().click();
+   await page.waitForFunction(()=>document.getElementById('diarySchoolMode').dataset.schoolReady==='true');
    await page.locator('#setupNext').click();
    await page.locator('[data-partner-choice="woman"]').click();
    await page.locator('#setupNext').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','One 36-chapter story uses a first-day confirmation');
+   await page.locator('.setup-begin').click();
    await page.waitForTimeout(300);
    if(await page.locator('#novel').isHidden()){
     const state=await page.evaluate(()=>({

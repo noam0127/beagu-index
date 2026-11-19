@@ -215,6 +215,64 @@
     @media(max-width:380px){.teacher-game-feature{border-radius:16px}.teacher-game-header{padding:13px 13px 10px}.teacher-game-header h2{font-size:18px}.teacher-game-footer{padding:7px 12px 12px}}
   
 
+
+    /* Developer-only class diary PIN entry; no public direct-game links. */
+    body.beagu-page-home main.container > .teacher-diary-feature{
+      grid-column:1/-1;position:relative;isolation:isolate;
+      background:linear-gradient(138deg,#5d6170,#343d50);
+      border:1px solid #808998;color:#fff;border-radius:20px;
+      padding:0 0 10px;overflow:hidden;margin-top:22px;
+    }
+    .teacher-diary-feature .teacher-game-header{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px 23px 13px;
+    }
+    .teacher-diary-feature .teacher-game-header h2{
+      font:700 clamp(19px,4vw,26px)/1.4 "Gowun Batang","Nanum Myeongjo","Malgun Gothic",serif;
+      margin:0;color:#faf5fb;
+    }
+    .teacher-diary-feature .teacher-game-access-level{
+      font-size:11px;color:#fcf6ff;border:1px solid #ffffff77;border-radius:999px;
+      padding:5px 10px;white-space:nowrap;
+    }
+    .teacher-diary-feature .teacher-diary-lock{
+      display:flex;flex-direction:column;align-items:center;gap:10px;min-height:215px;
+      margin:0 14px 11px;padding:25px clamp(15px,3vw,34px) 30px;
+      border-radius:18px;text-align:center;background:#17243cc7;border:1px solid #c9b7d255;
+    }
+    .teacher-diary-lock-icon{font-size:28px}
+    .teacher-diary-feature .teacher-diary-lock h3{
+      color:#faf5fc;margin:0;
+      font:700 clamp(20px,4vw,29px)/1.4 "Gowun Batang","Nanum Myeongjo",serif;
+    }
+    .teacher-diary-feature .teacher-diary-lock>p{
+      color:#e0d3e7;font-size:13px;line-height:1.6;margin:0;
+    }
+    #homeDiaryGuestForm{
+      display:grid;width:min(100%,720px);gap:10px;text-align:left;margin:12px auto 0;
+    }
+    #homeDiaryGuestForm label{font-size:14px;font-weight:750;color:#f9e8f7}
+    #homeDiaryGuestForm .teacher-diary-code-row{
+      display:grid;grid-template-columns:minmax(0,1fr) minmax(145px,195px);
+      gap:10px;
+    }
+    #homeDiaryGuestForm input,#homeDiaryGuestForm button{
+      box-sizing:border-box;min-width:0;width:100%;min-height:54px;border-radius:12px;
+      padding:12px 15px;font-size:16px;
+    }
+    #homeDiaryGuestForm input{border:1px solid #d5c1d9;background:#fffafd;color:#342a40}
+    #homeDiaryGuestForm button{
+      background:#e8d1e5;color:#4c3551;border:0;font-weight:800;
+      font-family:"Gowun Batang","Nanum Myeongjo","Malgun Gothic",serif;cursor:pointer;
+    }
+    #homeDiaryGuestForm button:disabled{opacity:.66;cursor:wait}
+    #homeDiaryGuestForm .teacher-diary-code-message{
+      margin:0;min-height:1.6em;font-size:12px;line-height:1.6;color:#ebddec;
+    }
+    @media(max-width:600px){
+      #homeDiaryGuestForm .teacher-diary-code-row{grid-template-columns:1fr}
+      .teacher-diary-feature .teacher-game-header{padding:15px}
+      .teacher-diary-feature .teacher-diary-lock{padding:18px 15px 23px;margin:0 10px 10px}
+    }
 </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
@@ -228,6 +286,7 @@
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <script defer src="js/beagu-level-state-v1.js?v=20261120-lv1-plain1"></script>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
+<script defer src="js/class-diary-home-entry-v1.js?v=20261120-unified"></script>
 </head>
 
 <body class="beagu-ui-page beagu-page-home">
@@ -314,6 +373,28 @@
           loading="lazy"
           allowfullscreen></iframe>
         <div class="teacher-game-footer"><a href="teacher-run.html" target="_blank" rel="noopener noreferrer">↗ 크게 보기</a></div>
+      </div>
+    </section>
+
+    <section id="teacher-diary-feature" class="teacher-game-feature teacher-diary-feature" aria-labelledby="teacher-diary-title">
+      <div class="teacher-game-header">
+        <h2 id="teacher-diary-title">📖 나의 OO한 학급일지</h2>
+        <span class="teacher-game-access-level teacher-game-access-level--locked">준비 중</span>
+      </div>
+      <div class="teacher-diary-lock" aria-labelledby="teacher-diary-lock-title">
+        <span class="teacher-diary-lock-icon" aria-hidden="true">🔒</span>
+        <h3 id="teacher-diary-lock-title">준비 중</h3>
+        <p>나의 OO한 학급일지 · 개발자 미리보기</p>
+        <form id="homeDiaryGuestForm" autocomplete="off" aria-label="학급일지 비공개 테스트 입장">
+          <label for="homeDiaryCode">테스트 입장 코드</label>
+          <div class="teacher-diary-code-row">
+            <input id="homeDiaryCode" name="diaryCode" type="password" inputmode="numeric" spellcheck="false"
+              autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" aria-describedby="homeDiaryMessage"
+              placeholder="4자리 코드" required>
+            <button id="homeDiarySubmit" type="submit">미리보기 입장 <span aria-hidden="true">›</span></button>
+          </div>
+          <p id="homeDiaryMessage" class="teacher-diary-code-message" role="status" aria-live="polite">공개 전 테스트 중입니다. 일반 이용은 아직 불가능합니다.</p>
+        </form>
       </div>
     </section>
 
