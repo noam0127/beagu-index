@@ -94,7 +94,7 @@ vm.runInNewContext(read('js/2025-observed-choices.js'),observedScope);
 const q15Options=observedScope.window.Beagu2025ObservedChoices?.Q15;
 assert.ok(q15Options?.includes('① 1회미만'),'Use the actually verified Q15 options');
 const circledRenderer=new Function('make','document','window','conciseQuestion','verifiedOptions',
-  search.slice(start,end)+'\\n return renderHistoricalBenchmarks;')(
+  search.slice(start,end)+'\n return renderHistoricalBenchmarks;')(
     make,document,{BeaguHistoricalOriginalQuestions:{'2025':{Q15:'[담임교사 공문량] 기안 공문 수'}}},
     x=>x,()=>({values:q15Options,source:'observed'})
   );
