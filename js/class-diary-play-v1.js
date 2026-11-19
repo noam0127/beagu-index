@@ -167,7 +167,7 @@ const CHAPTERS=[
  ]
 },
 {
- title:'일요일 밤의 수업 준비',
+ title:'일요일 밤의 빈 페이지',
  place:'일요일 밤 · 집의 작은 책상',
  prose:[
   '일요일 저녁에는 노트북 대신 수첩을 펼쳤다. 다음 주 주안은 금요일 학년연구실에서 이미 맞췄고, 교실에서 쓸 활동 자료도 평일 쉬는 시간마다 조금씩 준비해 두었다. 오늘은 업무를 다시 시작하는 밤이 아니라 한 주를 돌아보는 밤이었다.',
@@ -187,17 +187,48 @@ const CHAPTERS=[
  ]
 }
 ];
+/* 교사의 삶을 말하는 제목은 한국어에서 자연스럽게 쓰는 관형형만 사용한다.
+ * 감정을 영어로 이름 붙인 뒤 번역하지 않고, 일주일의 장면에서 제목을 고른다.
+ * 5개 제목은 모두 '나의 ○○한 학급일지' 꼴로 정확히 읽힌다.
+ */
+const ENDING_WORDS=Object.freeze({
+ warm:'소중한',
+ parallel:'든든한',
+ steady:'단단한',
+ tender:'다정한',
+ ordinary:'솔직한'
+});
 const ENDINGS=Object.freeze({
- warm:{title:'나의 소중한 학급일지',heading:'서로에게 닿는 마음',
-  prose:['월요일에는 말을 고르는 데 오래 걸렸다. 일요일이 되자 말하지 않아도 알 수 있는 것들이 조금 생겼다.','{colleague}과 나는 서로에게 서두르지 않기로 했다. 그것은 무심함이 아니라, 서로의 시간을 존중하며 가까워지는 방법이었다.','아이들이 내일 아침 교실에 오면 또 새로운 질문을 할 것이다. 나는 그 질문들을, 혼자가 아닌 사람의 마음으로 맞이할 수 있을 것 같았다.']},
- parallel:{title:'나의 든든한 학급일지',heading:'같은 방향을 바라보며',
-  prose:['우리는 모든 일에 같은 생각을 하지 않았다. 대신 생각이 다른 날에도 서로의 말을 끝까지 들어 주었다.','{colleague}은 나와 나란히 걸었다. 가까운 거리보다 중요한 것은 방향을 잃었을 때 다시 묻는 일이었다.','학교의 일주일은 끝났지만 함께 고민할 일은 남았다. 그 사실이 이제는 두렵지만은 않았다.']},
- steady:{title:'나의 씩씩한 학급일지',heading:'지키기로 한 것들',
-  prose:['흔들리지 않는 사람은 없었다. 다만 흔들리는 와중에도 어떤 약속은 지킬 수 있었다.','나는 내일의 교실에 아이들의 질문이 들어올 자리를 남겨 두기로 했다. {colleague}도 자기 자리에서 같은 일을 하겠다고 했다.','우리가 만든 일주일은 크고 근사하지 않았다. 그런데 이상하게도 오래 버틸 수 있을 것 같았다.']},
- tender:{title:'나의 설레는 학급일지',heading:'서두르지 않는 사이',
-  prose:['마음이 가까워지는 날에도 우리는 서로를 다 알 수 없었다. 모른다는 사실을 인정하는 편이 더 다정할 때가 있었다.','{colleague}에게 보낼 다음 메시지를 지우고 다시 적었다. 내일 학교에서 만나도, 만나지 못해도 괜찮은 문장이었다.','창문을 닫으며 생각했다. 관계에도, 교실에도, 조금 늦게 도착해야 보이는 것이 있다고.']},
- ordinary:{title:'나의 서툰 학급일지',heading:'고쳐 쓸 수 있는 일주일',
-  prose:['잘해 낸 날보다 마음에 걸리는 날이 더 오래 기억났다. 나는 수첩에서 몇 줄을 고쳤다.','{colleague}과 마음이 맞지 않았던 순간도 있었다. 그러나 그 순간 때문에 다른 장면이 사라지는 것은 아니었다.','새 학기란 원래 완성되지 않은 채 시작되는 것인지도 몰랐다. 내일의 교실에는 다시 쓸 수 있는 종이가 남아 있었다.']}
+ warm:{title:'나의 소중한 학급일지',heading:'잊지 않고 싶은 사람들',
+  prose:[
+   '월요일에 주안과 동의서 앞에서 막막해하던 내가, 일요일 밤에는 수첩을 한 장 더 펼치고 있었다. 한 주 동안 대단한 일을 한 것은 아니었다. 그렇지만 놓치고 싶지 않은 얼굴이 몇 생겼다.',
+   '{colleague}과의 대화도 그중 하나였다. 내 말을 다 알아들은 척하지 않고 끝까지 들어 준 사람. 나 역시 그 사람에게 그렇게 하고 싶었다.',
+   '아이들은 내일도 복도에서 뛰고, 모둠별로 다투고, 자기 이야기를 해 달라며 손을 들 것이다. 그 평범한 하루가 어느새 소중해졌다.'
+  ]},
+ parallel:{title:'나의 든든한 학급일지',heading:'혼자 하지 않아도 되는 일',
+  prose:[
+   '새 학기에는 선생님 혼자 해결해야 한다고 생각한 일이 많았다. 주안을 맞추고, 동의서를 걷고, 보호자 연락을 받는 동안에도 그랬다.',
+   '그런데 같은 문제를 다른 선생님과 나눠 생각하는 데 익숙해졌다. {colleague}이 내 편이어서가 아니라, 서로 틀릴 수도 있다는 전제로 이야기를 해 주었기 때문이다.',
+   '아이들의 말도 마찬가지였다. 누구 하나의 목소리만으로 돌아가지 않는 교실. 내일의 일이 여전히 많겠지만, 오늘은 왠지 든든했다.'
+  ]},
+ steady:{title:'나의 단단한 학급일지',heading:'흔들려도 다시 고를 수 있는 것',
+  prose:[
+   '회의가 길어질 때도 있었고, 아이들과 정한 규칙이 생각처럼 지켜지지 않을 수도 있었다. 그렇다고 처음 마음먹은 이유까지 지워지는 것은 아니었다.',
+   '나는 쉬운 결론을 미루고, 학급회의에서 아이들이 직접 이야기할 자리를 만들었다. {colleague}과 다른 생각을 한 날에도 내 의견을 조심스럽게 전했다.',
+   '단단하다는 건 흔들리지 않는다는 뜻이 아니었다. 흔들린 뒤에도 무엇을 지키고 싶은지 다시 정할 수 있다는 뜻이었다.'
+  ]},
+ tender:{title:'나의 다정한 학급일지',heading:'조심스럽게 건넨 한마디',
+  prose:[
+   '학년연구실에서 마주칠 때마다 먼저 무슨 말을 할지 생각하게 되었다. 처음에는 주안 얘기밖에 할 줄 몰랐는데, 어느새 하루가 어땠는지 묻게 되었다.',
+   '{colleague}에게 마음이 기울었다고 해서 서둘러 이름 붙일 필요는 없었다. 조금씩 알아 가는 시간을 아끼고 싶었다.',
+   '아이들이 자기 말을 할 수 있도록 기다려 주듯, 서로에게도 그럴 수 있으면 좋겠다. 그 마음 하나가 일요일 밤을 따뜻하게 밝혔다.'
+  ]},
+ ordinary:{title:'나의 솔직한 학급일지',heading:'잘하지 못한 날도 내 일주일',
+  prose:[
+   '이번 주에는 말을 아낀 날도 있었고, 혼자 처리하겠다고 했다가 늦게 도움을 청한 날도 있었다. 잘한 일을 세어 보자니 잘못한 일이 먼저 떠올랐다.',
+   '그래도 수첩을 덮지는 않았다. {colleague}과 서먹했던 순간도, 아이들에게 바로 답해 버린 순간도 지울 필요가 없었다. 내일 다시 물어보면 되니까.',
+   '완벽한 담임이 되었다고 적을 수는 없다. 대신 오늘의 내가 어떤 사람인지 솔직하게 적었다. 그 정도면 다음 주를 시작할 수 있을 것 같았다.'
+  ]}
 });
 function validateProfile(profile){
   if(!profile||typeof profile!=='object')throw Error('PROFILE_REQUIRED');
@@ -344,7 +375,20 @@ function advance(state){
   }else{next.day+=1;next.phase='chapter';}
   return next;
 }
+function validateEndings(){
+  const words=Object.values(ENDING_WORDS);
+  if(new Set(words).size!==5||Object.keys(ENDINGS).length!==5)
+    throw Error('FIVE_DISTINCT_ENDINGS_REQUIRED');
+  for(const [key,word] of Object.entries(ENDING_WORDS)){
+    const ending=ENDINGS[key];
+    if(!ending||ending.title!=='나의 '+word+' 학급일지'||
+       !word.endsWith('한')||ending.prose.length<3)
+      throw Error('UNNATURAL_ENDING_TITLE_'+key);
+  }
+  return words;
+}
 function validateStory(){
+  validateEndings();
   if(CHAPTERS.length!==7||DAYS.length!==7)throw Error('SEVEN_DAYS_REQUIRED');
   for(let i=0;i<7;i++){
     const chapter=CHAPTERS[i],ids=new Set();
@@ -362,8 +406,8 @@ function validateStory(){
   return {chapters:CHAPTERS.length,choices:CHAPTERS.reduce((n,x)=>n+x.choices.length,0)};
 }
 const api=Object.freeze({
- VERSION,DAYS,WEEKDAYS,ENDINGS,
- validateProfile,validateStory,createGame,chapter,choose,advance,
+ VERSION,DAYS,WEEKDAYS,ENDINGS,ENDING_WORDS,
+ validateProfile,validateStory,validateEndings,createGame,chapter,choose,advance,
  partnerName
 });
 if(typeof module==='object'&&module.exports)module.exports=api;
