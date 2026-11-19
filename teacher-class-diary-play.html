@@ -400,7 +400,8 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
  <a class="linklike" href="challenge.html">고유번호 확인하기</a>
 </section>
 <section id="opening" class="diary-opening panel" hidden aria-labelledby="openingTitle">
-<div class="diary-opening-visual" aria-hidden="true"><div class="diary-school"><span>▣　▣　▣</span></div></div>
+<div class="diary-intro-progress" aria-hidden="true"><span></span></div>
+<div class="diary-opening-visual" aria-hidden="true"><div class="diary-intro-sun"></div><div class="diary-school"><span>▣　▣　▣</span></div><div class="diary-intro-paper">✦</div></div>
 <div class="diary-opening-body"><span class="setup-eyebrow">PROLOGUE · 2027년 3월</span><h2 id="openingTitle">일곱 날, 다섯 개의 결말</h2>
 <p>새 학기가 시작됐습니다. 교실과 연구실, 복도에서 만난 사람들. 당신의 선택이 일주일의 이야기를 바꿉니다.</p>
 <div class="diary-opening-stat"><div><strong>7일</strong><small>3월 8일–14일</small></div><div><strong>3명</strong><small>서로 다른 동료 이야기</small></div><div><strong>5개</strong><small>서로 다른 결말</small></div></div>
@@ -631,6 +632,8 @@ const isGuest=!isDemo&&params.get('guest')==='1';
 const token=isDemo||isGuest?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
 const schoolId=params.get('schoolId')||'';
 let world=null,plan=null,game=null;
+let guestIntroTimer=null;
+$('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
 let storyMode='week';
 $('openingStart').addEventListener('click',()=>{storyMode='week';});
 $('semesterStart').addEventListener('click',()=>{
@@ -649,7 +652,7 @@ try{
 }catch(e){}
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);return n};
 function status(text){$('status').textContent=text||''}
-function show(id){for(const target of ['notice','guestAccess','opening','setup','novel','ending'])$(target).hidden=target!==id;document.body.classList.toggle('is-playing',id==='novel');document.body.classList.remove('is-choosing');$('choiceSection').hidden=true;window.scrollTo(0,0);}
+function show(id){for(const target of ['notice','guestAccess','opening','setup','novel','ending'])$(target).hidden=target!==id;for(const [cls,which] of [['is-playing','novel'],['is-setting','setup'],['is-intro','opening'],['is-ending','ending']])document.body.classList.toggle(cls,id===which);document.body.classList.remove('is-choosing');$('choiceSection').hidden=true;window.scrollTo(0,0);}
 function fail(message){show('notice');$('noticeText').textContent=message;status('접근 권한 또는 데이터를 확인하지 못했습니다.');}
 /* Temporary in-memory dialogue pages: no autosave or new APIs. */
 const vnState={pages:[],index:0,kind:'chapter'};
@@ -666,7 +669,7 @@ function vnSplit(text,limit){
 /* Allow the story to breathe across the full-height paper panel.
    Preserve paragraph breaks, while keeping long chapters paged and scrollable. */
 function vnPages(paragraphs){
- const limit=window.matchMedia('(max-width:620px)').matches?620:1000;
+ const limit=window.matchMedia('(max-width:620px)').matches?230:360;
  const pages=[];let current=[],count=0;
  for(const paragraph of paragraphs){
   for(const part of vnSplit(paragraph,limit)){
@@ -677,11 +680,32 @@ function vnPages(paragraphs){
  if(current.length)pages.push(current);
  return pages;
 }
+function vnFitPage(reader,target){
+ if(!reader||reader.clientHeight<=0)return;
+ let attempts=0;
+ while(reader.scrollHeight>reader.clientHeight+2&&attempts++<32){
+  const current=vnState.pages[vnState.index]||[];
+  if(!current.length)break;
+  const tail=current[current.length-1];
+  const next=vnState.pages[vnState.index+1]||[];
+  if(current.length>1){current.pop();next.unshift(tail);}
+  else{
+   const words=tail.trim().split(/\s+/);
+   if(words.length<2)break;
+   const split=Math.max(1,Math.floor(words.length*.72));
+   current[0]=words.slice(0,split).join(' ');
+   next.unshift(words.slice(split).join(' '));
+  }
+  vnState.pages[vnState.index+1]=next;
+  target.replaceChildren(...current.map(paragraph=>el('p',paragraph)));
+ }
+ $('vnMore').setAttribute('aria-label',vnState.index<vnState.pages.length-1?'다음 대사':vnState.kind==='outcome'?'다음 장면':'선택지 보기');
+}
 function vnPresent(){
  const done=vnState.kind==='outcome',target=$(done?'outcomeText':'chapterText');
  target.replaceChildren(...(vnState.pages[vnState.index]||['…']).map(paragraph=>el('p',paragraph)));
  const reader=document.querySelector(done?'#outcome':'#vnDialogueSlot .vn-dialogue');
- if(reader)reader.scrollTop=0;
+ if(reader){reader.scrollTop=0;requestAnimationFrame(()=>{if(!reader.hidden)vnFitPage(reader,target)})}
  $('vnDialogueSlot').querySelector('.vn-dialogue').hidden=done;
  $('outcome').hidden=!done;
  $('outcomeLine').hidden=true;
@@ -700,6 +724,7 @@ function vnStart(done){
  $('vnInfo').hidden=true;$('vnInfoBtn').setAttribute('aria-expanded','false');
  vnPresent();
 }
+window.addEventListener('resize',()=>{if(document.body.classList.contains('is-playing'))vnPresent()});
 $('vnMore').addEventListener('click',()=>{
  sound.note('advance');
  if(vnState.index<vnState.pages.length-1){vnState.index++;vnPresent();return;}
@@ -1077,8 +1102,13 @@ $('guestForm').addEventListener('submit',async event=>{
   $('schoolLine').textContent='고유번호 확인 완료 · 가상의 초등학교 · 실제 학교 자료 사용 안 함';
   $('openingSchool').textContent=$('schoolLine').textContent;
   $('worldAutoNote').textContent='고유번호 임시 입장은 실제 학교의 설문·교직원 정보를 사용하지 않습니다. 이야기는 모두 허구입니다.';
-  sound.note('uiStart');show('opening');
-  status('고유번호가 확인됐습니다. 이야기를 시작해 주세요.');
+  sound.note('uiStart');
+  const opening=$('opening');opening.classList.remove('intro-autoplay');
+  show('opening');void opening.offsetWidth;opening.classList.add('intro-autoplay');
+  $('openingStart').textContent='설정으로 건너뛰기 →';
+  clearTimeout(guestIntroTimer);
+  guestIntroTimer=setTimeout(()=>{if(!opening.hidden){opening.classList.remove('intro-autoplay');$('openingStart').click()}},5000);
+  status('고유번호 확인 완료. 짧은 인포그래픽 오프닝 후 설정 화면으로 넘어갑니다.');
  }catch(_){message.textContent='인증 서버에 일시적인 문제가 있습니다. 다시 시도해 주세요.';}
  finally{button.disabled=false;}
 });
