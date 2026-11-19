@@ -232,7 +232,6 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopAuto()});
 $('resetBtn').addEventListener('click',()=>{stopAuto();closePanel();logs.length=0;lastKey=''},true);
 $('againBtn').addEventListener('click',()=>{stopAuto();closePanel();logs.length=0;lastKey=''},true);
-$('vnReset').addEventListener('click',()=>{stopAuto();closePanel();logs.length=0;lastKey=''},true);
 const resetObserver=new MutationObserver(()=>{if(!playing()){stopAuto();closePanel()}});
 resetObserver.observe($('novel'),{attributes:true,attributeFilter:['hidden']});
 })();
