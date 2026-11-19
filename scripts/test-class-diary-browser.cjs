@@ -28,9 +28,6 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#partner').selectOption(variant.partner);
    await page.locator('#profileForm button[type="submit"]').click();
    await page.locator('#novel').waitFor({state:'visible'});
-   const chapter=await page.locator('#chapterText').innerText();
-   assert(chapter.includes(variant.name==='desktop'?'경력이 쌓여도 학기 초는 늘 새로웠다':'아직 교단에서 배우는 일이 더 많았다'),
-     'Entered career years must change the first-day narration');
    assert.equal(await page.locator('#musicBtn').getAttribute('aria-pressed'),'true','Game start enables music');
    await page.locator('#musicBtn').click(); // silence background while testing branches
    assert.equal(await page.locator('#musicBtn').getAttribute('aria-pressed'),'false');
@@ -38,7 +35,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    assert((await page.locator('#scenePortrait').getAttribute('src')).startsWith('data:image/svg+xml'));
    if(variant.name==='desktop')await page.screenshot({path:'artifacts/class-diary/desktop-first-scene.png',fullPage:true});
    else await page.screenshot({path:'artifacts/class-diary/mobile-first-scene.png',fullPage:true});
-   let turns=0,sawFull=false,sawFriendly=false;
+   let turns=0,sawFull=false,sawFriendly=false,sawCareer=false;
    const full=variant.name==='desktop'?'최윤호 선생님':'김민서 선생님';
    const friendly=variant.name==='desktop'?'윤호 쌤':'민서 쌤';
    while(await page.locator('#ending').isHidden()){
@@ -46,6 +43,8 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
     const now=(await page.locator('#chapterText').innerText())+' '+(await page.locator('#outcomeLine').innerText());
     sawFull ||= now.includes(full);
     sawFriendly ||= now.includes(friendly);
+    sawCareer ||= now.includes(variant.name==='desktop'?
+      '경력이 쌓여도 학기 초는 늘 새로웠다':'아직 교단에서 배우는 일이 더 많았다');
     const choices=page.locator('#choiceSection .choice:visible');
     const n=await choices.count();
     if(n>0){
@@ -56,6 +55,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      await next.click();
     }
    }
+   assert(sawCareer,'Selected career stage must shape narration across the first day');
    assert(sawFull,'Colleagues must use the character full name in initial scenes');
    assert(sawFriendly,'Closer colleagues must use given-name 쌤 on later days');
    assert((await page.locator('#endingTitle').innerText()).startsWith('나의 '));
