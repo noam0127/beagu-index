@@ -10,7 +10,7 @@ const url='https://forms.gle/TPyCakK6Sj2zchRy7';
 
 assert.doesNotThrow(()=>new vm.Script(script));
 assert.ok(read('index.html').includes(url),'Survey URL must match the official homepage link');
-assert.ok(page.includes('js/level-search.js?v=20261119-survey-empty1'));
+assert.ok(page.includes('js/level-search.js?v=20261119-lv1-graph1'));
 assert.ok(page.includes('styles/beagu-search-details-v1.css?v=20261119-survey-empty1'));
 assert.match(css,/beagu-year-survey-link/);
 assert.match(css,/beagu-year-survey-link:focus-visible/);
