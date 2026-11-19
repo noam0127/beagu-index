@@ -41,12 +41,8 @@ const photoHashes=new Set();
 const emotionHashes=new Set();
 for(const id of ids){
  const photoRef=art.portrait(id);
- const expectedPath='assets/class-diary/characters/female-'+({woman:'jiyoon',none:'minseo',suhyun:'suhyun',sea:'sea',yuri:'yuri'}[id])+'-matte-v2.webp';
- assert.equal(photoRef,expectedPath,'New matte transparent artwork must be preferred for '+id);
- const photo=fs.readFileSync(path.join(root,photoRef));
- assert.equal(photo.toString('ascii',0,4),'RIFF');
- assert.equal(photo.toString('ascii',8,12),'WEBP');
- assert(photo.length>10000&&photo.length<150000,'Portrait compression budget '+id);
+ const photo=webpBytes(photoRef);
+ assert(photo.length>8000&&photo.length<150000,'Original photo-style WebP compressed and intact: '+id);
  photoHashes.add(crypto.createHash('sha256').update(photo).digest('hex'));
  for(const mood of moods){
   const face=webpBytes(art.face(id,mood));
@@ -61,20 +57,14 @@ assert.equal(art.face('man','neutral'),null,'No changes to male character emotic
 const page=fs.readFileSync(path.join(root,'teacher-class-diary-play.html'),'utf8');
 const css=fs.readFileSync(path.join(root,'styles/class-diary-female-hq-v1.css'),'utf8');
 for(const name of jsFiles){
- const version=name==='class-diary-female-hq-v1.js'?'20261120-matte-1':'20261120-hq1';
+ const version=name==='class-diary-female-hq-v1.js'?'20261120-original-photo-2':'20261120-hq1';
  assert(page.includes('src="js/'+name+'?v='+version+'"'),'Missing game asset '+name);
 }
-assert(page.includes('styles/class-diary-female-matte-v1.css?v=20261120-1'));
-assert(page.includes('femaleHQ.prepareMatte('),'Matte pass must be active in the game');
-const matteCss=fs.readFileSync(path.join(root,'styles/class-diary-female-matte-v1.css'),'utf8');
-assert(matteCss.includes('brightness(.97)')&&matteCss.includes('saturate(.92)'),'Matte styling');
-assert.equal(Object.keys(art.STYLE_KEYS).length,5,'Five distinctive identities');
-assert.equal(art.prepareMatte(),0,'Node tests must not touch browser Canvas');
-const pixels=new Uint8ClampedArray([250,225,209,255, 240,240,240,255, 85,67,54,255]);
-art.mattePixels(pixels,3,1);
-assert(pixels[0]<250&&pixels[1]<225,'Warm pale specular skin must lose highlight');
-assert.deepEqual(Array.from(pixels.slice(4,8)),[240,240,240,255],'Neutral grays must not be recolored');
-assert.deepEqual(Array.from(pixels.slice(8,12)),[85,67,54,255],'Dark linework must stay intact');
+assert(!page.includes('class-diary-female-matte-v1.css'),'Matte illustration filtering must be disabled');
+assert(!page.includes('femaleHQ.prepareMatte('),'No glossy-skin recoloring or matte image substitution');
+assert(!('prepareMatte' in art),'Original photo portraits must load without a matte recoloring step');
+assert(!('MATTE_ASSETS' in art),'Image source must not refer to cartoon/matte assets');
+for(const id of ids)assert(art.portrait(id).startsWith('data:image/webp;base64,'),'Photo-style WebP restored');
 for(const marker of [
  'femaleHQ.portrait(partner)','femaleHQ.portrait(who)','femaleHQ.portrait(guest.id)',
  'femaleHQ.face(who,expression','showCharacterFace(game.profile.partner,semesterArt.expression',
@@ -84,4 +74,4 @@ for(const marker of [
 assert(page.includes('styles/class-diary-female-hq-v1.css?v=20261120-hq1'));
 assert(css.includes('max-width:620px'),'Mobile HQ layout must exist');
 assert(css.includes('data-art-quality="hq"'),'HQ styling must be scoped');
-console.log('PASS HQ: 5 new matte transparent full-height WebPs, 30 expressions, 7-day/36-episode integration, privacy');
+console.log('PASS HQ restoration: 5 original Korean-drama photo-style WebPs, 30 expressions, 7-day/36-episode integration, no matte filters, privacy');
