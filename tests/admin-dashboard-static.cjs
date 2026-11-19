@@ -17,6 +17,10 @@ assert(!/href="admin\.html"|src="admin\.html"/.test(home),"Admin page must stay 
 assert(/<meta name="robots" content="noindex,nofollow,noarchive">/.test(html));
 assert(/gate\("verify"\)/.test(client) && /await loadMetrics\(\)/.test(client));
 assert(/mfa\.challengeAndVerify/.test(client));
+assert(/id="adminPasswordChangeForm"/.test(html));
+assert(/auth\.updateUser\(\{password\}\)/.test(client));
+assert(/minlength="16"/.test(html));
+assert(!/adminNewPassword|adminConfirmPassword/.test(api),"No password fields in admin API");
 assert(/auth\.getSession\(\)/.test(client));
 assert(!/service_role|SUPABASE_SERVICE_ROLE_KEY/.test(client));
 assert(/admin\.auth\.getUser\(jwt\)/.test(api));
