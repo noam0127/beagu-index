@@ -2,9 +2,9 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.0";
 
 // Post-it's data and author identities never become directly queryable with
 // the browser's publishable key. Public requests receive curated projections.
-const URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const db = createClient(URL, ROLE_KEY, { auth: { persistSession:false, autoRefreshToken:false }});
+const db = createClient(SUPABASE_URL, ROLE_KEY, { auth: { persistSession:false, autoRefreshToken:false }});
 const origins = new Set(["https://baeguindex.com","https://www.baeguindex.com","https://noam0127.github.io",
   "http://localhost:8788","http://localhost:8000","http://127.0.0.1:8000"]);
 const GAMES:Record<string,string>={
@@ -158,7 +158,7 @@ Deno.serve(async(req:Request)=>{
  const origin=req.headers.get("origin")||"";
  if(origin&&!origins.has(origin))return fail(req,"ORIGIN_NOT_ALLOWED",403);
  if(Number(req.headers.get("content-length")||0)>2048)return fail(req,"BODY_TOO_LARGE",413);
- if(!URL||!ROLE_KEY)return fail(req,"SERVER_NOT_CONFIGURED",503);
+ if(!SUPABASE_URL||!ROLE_KEY)return fail(req,"SERVER_NOT_CONFIGURED",503);
  try{
   const url=new URL(req.url);
   const body=req.method==="POST"?await req.json().catch(()=>null):null;
