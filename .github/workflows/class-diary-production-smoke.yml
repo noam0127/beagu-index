@@ -50,7 +50,10 @@ jobs:
           if [[ "$fail" != 0 ]]; then exit 1; fi
           if ! curl -fLsS --max-time 20 \
              "$base/teacher-class-diary-play.html?demo=1&verify=${GITHUB_SHA}" \
-             | grep -q 'id="sceneBackdrop"'; then
+             -o /tmp/class-diary-demo; then
+            echo 'FAIL public demo download'; exit 1
+          fi
+          if ! grep -q 'id="sceneBackdrop"' /tmp/class-diary-demo; then
             echo 'FAIL public demo route'; exit 1
           fi
           echo 'PASS public demo route, audio and visual scripts deployed'
