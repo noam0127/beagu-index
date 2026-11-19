@@ -71,13 +71,25 @@ assert.ok(challenge.includes('href="postit.html">포스트잇</a>'),
 assert.ok(challenge.includes('styles/beagu-site-header-v1.css'),
  'Shared navigation remains available');
 for(const id of ['challengeAccessPanel','challengeProtected','certificate','participantNo',
- 'challengeIdentityPanel','identityCode','copyIdentityCode','capture','challengeLv2PendingTitle']) {
+ 'challengeIdentityPanel','identityCode','copyIdentityCode','capture']) {
  assert.ok(challenge.includes('id="'+id+'"'),'Challenge functional DOM preserved: '+id);
 }
 assert.ok(challenge.includes('data-html2canvas-ignore="true"'),
  'Private identity remains outside exported certificate');
 assert.ok(challenge.includes('class="challenge-lv2-pending"'),
- 'Independent Level 2 pending card remains available');
+ 'Independent Level 2 upgrade card remains available');
+assert.ok(!challenge.includes('Lv.2(진) · 임시 레벨업'),
+ 'No overlapping temporary-upgrade heading');
+assert.ok(challenge.includes('aria-label="레벨업 인증 안내"'),
+ 'Upgrade card has accessible name without visible redundant heading');
+assert.ok(challenge.includes('class="challenge-lv2-description"'),
+ 'Explanation is in its own layout cell');
+assert.ok(challenge.includes('grid-template-columns: minmax(0, 1fr) auto'),
+ 'Desktop upgrade card uses separate text and button columns');
+assert.ok(challenge.includes('@media (max-width: 600px)'),
+ 'Upgrade card stacks on narrow screens');
+assert.ok(challenge.includes('data-beagu-open-levelup'),
+ 'Existing upgrade action remains wired');
 assert.ok(challenge.includes('.step-card {')&&challenge.includes('border-radius: 16px;'),
  'Challenge retains rounded standard cards');
 
