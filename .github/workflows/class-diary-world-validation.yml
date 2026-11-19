@@ -35,6 +35,8 @@ on:
       - 'scripts/test-class-diary-play-page.cjs'
       - 'teacher-class-diary.html'
       - 'teacher-class-diary-play.html'
+      - 'js/class-diary-home-entry-v1.js'
+      - 'styles/class-diary-guest-experience-v1.css'
       - 'data/public-statistics-question-catalog-v1.json'
       - 'js/2026-questionnaire-options-v1.2.js'
       - 'supabase/functions/class-diary-story-signals-v1/index.ts'
