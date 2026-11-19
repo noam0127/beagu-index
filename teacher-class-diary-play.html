@@ -1004,8 +1004,18 @@ function renderSemester(){
  });
  displayStage(view.visual,game.profile.partner,semesterArt.expression,semesterArt.season);
  renderSupportingCast(semesterArt.guest,semesterArt.season);
- mood(reflection?'daily':sound.dayTrack((game.episode-1)%7+1));
- if(!reflection)playSceneDetail('semester:'+game.episode,view.place);
+ // The semester follows its own 36-chapter score; the 7-day demo keeps its original soundtrack.
+ const score=sound.semesterScore(game.episode,{
+  reflection,
+  choice:reflection&&game.lastOutcome?game.lastOutcome.id:null,
+  partner:game.profile.partner
+ });
+ mood(score.track);
+ sound.setAmbience(score.ambience);
+ if(!reflection&&score.cue&&lastPhysicalScene!=='semester:'+game.episode){
+  lastPhysicalScene='semester:'+game.episode;
+  sound.note(score.cue);
+ }
  $('characterAvatar').textContent=profile.initial;
  $('characterName').textContent=profile.name;
  $('characterBio').textContent=profile.caption;
@@ -1043,7 +1053,7 @@ function renderSemester(){
  status('제'+view.act+'부 · '+view.episode+'화 / 36화');
 }
 function renderSemesterEnding(){
- show('ending');mood('ending');
+ show('ending');mood('ending');sound.setAmbience(null);
  const ending=game.ending;
  $('endingTitle').textContent=ending.title;
  $('endingHeading').textContent=ending.heading;

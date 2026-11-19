@@ -4,7 +4,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='class-diary-sound/v4';
+const VERSION='class-diary-sound/v5';
 const LICENSE='https://creativecommons.org/licenses/by/4.0/';
 const HOST='https://www.scottbuckley.com.au/library/';
 const FILES={
@@ -43,6 +43,74 @@ const FOLEY=Object.freeze({
   page:'https://commons.wikimedia.org/wiki/File:Turning_a_page.ogg',
   license:'public-domain',durationSeconds:3.4,bytes:49152})
 });
+/* Sound direction for 2027-03-08 to 07-16, following the 36-episode novel.
+ * [music, quiet background recording, short entrance cue]; NULL means intentional silence.
+ * Story episodes/choices remain owned by class-diary-semester-v1.js.
+ * Episodes 19–23: accident, testimony, family and rumors. Never use cute romance stingers.
+ * Schoolchildren's struggles never trigger affection sounds.
+ */
+const SEMESTER_SCORE=Object.freeze([
+ // 제1부 · 1–6화
+ ['quiet','classroom','paper'], // 1화
+ ['daily','workroom','paper'], // 2화
+ ['heartfelt','classroom','paper'], // 3화
+ ['quiet',null,'step'], // 4화
+ ['tension','workroom','paper'], // 5화
+ ['tender',null,'step'], // 6화
+ // 제2부 · 7–12화
+ ['reconcile','classroom','paper'], // 7화
+ ['quiet','workroom','paper'], // 8화
+ ['tension',null,'step'], // 9화
+ ['heartfelt','classroom','paper'], // 10화
+ ['tension',null,'door'], // 11화
+ ['restful',null,'paper'], // 12화
+ // 제3부 · 13–18화
+ ['tension','workroom','paper'], // 13화
+ ['tension',null,null], // 14화
+ ['heartfelt','classroom','paper'], // 15화
+ ['heartfelt',null,'step'], // 16화
+ ['tension','workroom','paper'], // 17화
+ ['intimate',null,null], // 18화
+ // 제4부 · 19–24화
+ ['tension',null,'door'], // 19화
+ ['quiet',null,null], // 20화
+ ['tension',null,null], // 21화
+ ['reconcile','workroom','paper'], // 22화
+ ['tension',null,'door'], // 23화
+ ['reconcile','classroom','paper'], // 24화
+ // 제5부 · 25–30화
+ ['quiet','classroom','paper'], // 25화
+ ['tension','classroom',null], // 26화
+ ['restful','workroom','paper'], // 27화
+ ['tender',null,'step'], // 28화
+ ['tension','workroom','paper'], // 29화
+ ['reconcile','classroom','paper'], // 30화
+ // 제6부 · 31–36화
+ ['bright','workroom','paper'], // 31화
+ ['reconcile','workroom','paper'], // 32화
+ ['intimate',null,null], // 33화
+ ['tender',null,'step'], // 34화
+ ['heartfelt','classroom','paper'], // 35화
+ ['intimate',null,'paper'] // 36화
+].map(([track,ambience,cue])=>Object.freeze({track,ambience,cue})));
+const SEMESTER_RELATIONSHIPS=Object.freeze([6,12,18,28,33,34]);
+const SEMESTER_REPAIR=Object.freeze([7,10,15,22,24,30,32,35]);
+function semesterScore(episode,options={}){
+ if(!Number.isInteger(episode)||episode<1||episode>SEMESTER_SCORE.length)throw Error('INVALID_SEMESTER_EPISODE');
+ const base=SEMESTER_SCORE[episode-1];
+ const reflection=options.reflection===true;
+ if(!reflection)return {...base,ambience:base.track==='tension'?null:base.ambience};
+ const choice=String(options.choice??'');
+ if(!['0','1','2'].includes(choice))throw Error('INVALID_SEMESTER_CHOICE');
+ const partner=options.partner||'none';
+ const track=SEMESTER_RELATIONSHIPS.includes(episode)?
+   (choice==='2'?'restful':partner==='none'?'heartfelt':'intimate'):
+   SEMESTER_REPAIR.includes(episode)?
+    (choice==='2'?'quiet':'reconcile'):
+    choice==='2'?'restful':'quiet';
+ // Reflection after a major event is a pause. No recorded footsteps, room loops or sentimental cues.
+ return {track,ambience:null,cue:null};
+}
 const DAYS=Object.freeze(['quiet','tension','heartfelt','tension','playful','restful','intimate']);
 let enabled=false,current=null,currentId=null,request=0,fadeTimer=null,ambience=null,ambienceId=null;
 let musicVolume=.13,sfxVolume=.17,fxEnabled=true,ctx=null,onStatus=()=>{};
@@ -235,7 +303,7 @@ function credit(){
  credit:'Music by Scott Buckley — CC BY 4.0. www.scottbuckley.com.au',
  recordings:[...Object.values(AMBIENCE),...Object.values(FOLEY)].map(({name,creator,page,license})=>({name,creator,page,license}))};
 }
-const api=Object.freeze({VERSION,TRACKS,AMBIENCE,FOLEY,dayTrack,choiceTrack,sceneTrack,placeCue,ambienceFor,setAmbience,note,setTrack,setEnabled,
+const api=Object.freeze({VERSION,TRACKS,AMBIENCE,FOLEY,SEMESTER_SCORE,semesterScore,dayTrack,choiceTrack,sceneTrack,placeCue,ambienceFor,setAmbience,note,setTrack,setEnabled,
  isEnabled,setMusicVolume,setSfxVolume,musicLevel,sfxLevel,setEffectsEnabled,stop,credit,
  onStatus(fn){onStatus=typeof fn==='function'?fn:()=>{}}});
 if(typeof module==='object'&&module.exports)module.exports=api;
