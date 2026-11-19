@@ -1,0 +1,87 @@
+/* One-entry story flow: authenticate on the home page, then never ask for the code again.
+   Original demo/Lv2 game state, scenarios, level authentication and score logic unchanged. */
+body.is-guest-flow .sound-panel,
+body.is-guest-flow #vnSound{display:none!important}
+body.is-guest-flow.is-ticket{height:100dvh;overflow:hidden;background:#f9f1f4}
+body.is-guest-flow.is-ticket main{height:100dvh;max-width:none;padding:0;margin:0}
+body.is-guest-flow.is-ticket header,
+body.is-guest-flow.is-ticket .hero,
+body.is-guest-flow.is-ticket .no-save,
+body.is-guest-flow.is-ticket .status,
+body.is-guest-flow.is-ticket .footer-note{display:none!important}
+body.is-guest-flow.is-ticket #guestAccess{display:flex!important;flex-direction:column;align-items:center;
+ justify-content:center;gap:22px;height:100dvh;min-height:0;margin:0;padding:20px;
+ border:none;border-radius:0;background:radial-gradient(circle at 50% 38%,#fbe1e6,#f6f1f7 65%,#e6edf3);
+ text-align:center}
+body.is-guest-flow.is-ticket #guestAccess h2{font-family:"Gowun Batang","Nanum Myeongjo",serif;font-size:clamp(24px,5vw,36px);color:#795c78}
+body.is-guest-flow.is-ticket #guestAccess p{font-size:13px;color:#89738c}
+body.is-guest-flow.is-ticket .guest-check-mark{font-size:45px;color:#a77f9e;
+ animation:guest-page-breathe 2s ease-in-out infinite}
+@keyframes guest-page-breathe{50%{transform:translateY(-6px) rotate(8deg);opacity:.65}}
+body.is-guest-flow.is-setting .setup-player{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
+body.is-guest-flow.is-setting .setup-player .form-grid,
+body.is-guest-flow.is-setting .setup-player .setup-micro,
+body.is-guest-flow.is-setting #partner,
+body.is-guest-flow.is-setting .setup-partner-label,
+body.is-guest-flow.is-setting .setup-supporting-cast,
+body.is-guest-flow.is-setting .setup-story-note{display:none!important}
+body.is-guest-flow .setup-player-stamp{order:10;margin-top:auto;width:min(100%,420px);
+ padding:15px 19px;border:1px solid #e1c6d3;border-radius:18px;
+ background:linear-gradient(125deg,#f3dce6,#fff5ef);box-shadow:0 9px 30px #7d597b1b}
+body.is-guest-flow .setup-stamp-mark{font-size:30px}
+body.is-guest-flow.is-setting .setup-player .setup-section-title{align-self:flex-start;text-align:left}
+body.is-guest-flow.is-setting .guest-setup-poem{display:block!important;flex:1;min-height:0;
+ align-content:center;font-family:"Gowun Batang","Nanum Myeongjo",serif;
+ color:#6b526b;font-size:clamp(19px,4.5vmin,31px);line-height:2;word-break:keep-all;
+ animation:guest-poem-fade .7s ease-out both}
+body.is-guest-flow.is-setting .guest-setup-poem small{display:block;margin-top:22px;
+ color:#9d8295;font-size:clamp(11px,2vmin,13px);line-height:1.7}
+@keyframes guest-poem-fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-cast{display:flex!important;
+ flex-direction:column;justify-content:center;align-items:stretch;gap:clamp(8px,2.3dvh,20px)}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid{width:min(100%,900px);
+ align-self:center;gap:clamp(7px,2vw,20px)}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character{border-radius:21px;
+ padding:clamp(7px,1.6vw,14px);background:#fff9fc;
+ box-shadow:0 7px 24px #38223911;min-height:0}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{height:clamp(110px,33dvh,345px);
+ border-radius:16px;transition:transform .24s ease}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character:hover .setup-character-art{transform:scale(1.035)}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-name{font-size:clamp(15px,3vmin,22px)}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-tag{font-size:clamp(10px,1.75vmin,12px);min-height:0}
+body.is-guest-flow.is-setting #setup[data-step="2"] #partnerDescription{min-height:0;
+ margin:0 auto;width:min(100%,580px);padding:13px 16px;background:#fdf5fa;
+ border:1px solid #eadbe7;border-radius:15px;color:#745f74;font-size:clamp(11px,1.9vmin,13px)}
+body.is-guest-flow.is-setting #setup[data-step="2"] #setupNext{display:none!important}
+body.is-guest-flow.is-setting #setup[data-step="3"] .setup-review-fields>div:nth-child(2){display:none}
+body.is-guest-flow.is-setting .setup-end .muted{display:none}
+body.is-guest-flow.is-setting .setup-end .privacy{font-size:10px;color:#997e96;text-align:center}
+body.is-guest-flow.is-setting .setup-end .setup-begin{margin:auto;min-height:44px;border-radius:999px;
+ padding:10px 23px;background:linear-gradient(115deg,#8b6386,#ad7e9c)!important}
+body.is-guest-flow.is-intro #opening{cursor:pointer;touch-action:manipulation}
+body.is-guest-flow.is-intro #opening button{cursor:pointer}
+body.is-guest-flow.is-playing #novel{touch-action:manipulation}
+body.is-guest-flow.is-playing #novelCard{min-height:0;max-height:100dvh}
+body.is-guest-flow.is-playing #novelCard .vn-overlay{touch-action:manipulation}
+body.is-guest-flow.is-playing #novelCard .vn-bottom .vn-fiction{font-size:10px;opacity:.8}
+@media(max-width:620px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{height:clamp(100px,27dvh,270px)}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid{gap:6px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character{padding:6px;border-radius:13px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{border-radius:10px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-name{font-size:14px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-tag{font-size:9px}
+ body.is-guest-flow .setup-player-stamp{padding:13px}
+}
+@media(max-height:620px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{height:clamp(65px,20dvh,160px)}
+ body.is-guest-flow.is-setting .guest-setup-poem{font-size:clamp(15px,3vmin,24px);line-height:1.65}
+ body.is-guest-flow.is-setting .guest-setup-poem small{margin-top:7px}
+ body.is-guest-flow.is-setting .setup-player-stamp{display:flex!important;margin-top:auto;padding:8px 12px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] #partnerDescription{font-size:10px;padding:6px 9px}
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-guest-flow .guest-check-mark,
+ body.is-guest-flow .guest-setup-poem{animation:none!important}
+ body.is-guest-flow.is-setting .setup-character-art{transition:none!important}
+}
