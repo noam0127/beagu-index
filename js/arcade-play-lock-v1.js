@@ -10,6 +10,19 @@
     if(lock){
       if(previous)return;
       scrollY=window.scrollY||window.pageYOffset||0;
+      // On a standalone survival page, move the canvas (and the teacher near
+      // its bottom) into view before the body becomes immovable.
+      const survivalCanvas=document.querySelector(".stage #game");
+      const viewportH=window.visualViewport?.height||window.innerHeight;
+      if(survivalCanvas&&viewportH){
+        const bottom=survivalCanvas.getBoundingClientRect().bottom;
+        const gap=Math.max(32,Math.min(76,viewportH*.09));
+        if(bottom>viewportH-gap||bottom<viewportH*.43){
+          const maxY=Math.max(0,document.documentElement.scrollHeight-viewportH);
+          scrollY=Math.max(0,Math.min(maxY,scrollY+bottom-(viewportH-gap)));
+          window.scrollTo(0,scrollY);
+        }
+      }
       previous={
         position:body.style.position,top:body.style.top,left:body.style.left,
         right:body.style.right,width:body.style.width,overflow:body.style.overflow
