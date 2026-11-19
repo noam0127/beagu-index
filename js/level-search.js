@@ -71,7 +71,7 @@
   let historicalPresenceByYear={};
   const geographyComparisons=new Map(); // approved national/province benchmarks; never school responses
 
-  const historicalPresenceReady=fetch('data/public-2023-2025-school-records-v2.json?v=20261118',{cache:'no-cache'})
+  const historicalPresenceReady=fetch('data/public-2023-2025-school-records-v2.json?v=20261120-overseas1',{cache:'no-cache'})
     .then(r=>{if(!r.ok)throw new Error('과거 조사 기록 파일 조회 실패');return r.json()})
     .then(data=>{
       const years=data?.schoolIdsByYear;
@@ -826,6 +826,14 @@
         if(event.target.closest('button,a,.school-detail'))return;
         trigger.click();
       });
+      // A reviewed survey record exists independently of a published percentile.
+      // This uses the public school-year presence index, not raw teacher responses.
+      const recorded=['2023','2024','2025'].filter(y=>
+        historicalPresenceByYear[y]?.has(String(school.school_id)));
+      if(recorded.length){
+        card.append(make('span','school-participation',
+          recorded.join(' · ')+'년 조사 기록 있음 · 백분위 공개와 별개'));
+      }
       host.append(card);
     }
     loadPagePercentiles(list,serial);
