@@ -642,7 +642,7 @@ assert.equal(calls,2,"high score also uploaded without names");
 assert.match(backend,/order:"score\.desc,created_at\.asc"/);
 assert.match(backend,/win_time_tenths:"not\.is\.null"/);
 assert.match(backend,/order:"win_time_tenths\.asc,created_at\.asc"/);
-assert.match(backend,/Every valid completed game is saved/);
+assert.match(backend,/Persist each validated result/);
 console.log("PASS: separate fastest-25 and high-score boards, partial match uploads, anonymous records");
 
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
