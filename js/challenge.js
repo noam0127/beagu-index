@@ -7,6 +7,51 @@
   const identityCopyFeedback = byId('identityCopyFeedback');
   const identityEndpoint = SUPABASE_URL + '/functions/v1/beagu-challenge-identity';
   const levelSessionKey = 'beagu-level-session-v1';
+  const referralEndpoint = SUPABASE_URL + '/functions/v1/beagu-referral-v1';
+  const referralProgress = byId('referralProgress');
+  const referralLevel = byId('referralLevel');
+  const copyReferral = byId('copyReferralLink');
+  const referralFeedback = byId('referralFeedback');
+  const lv2Link = byId('referralLv2Link');
+  let inviteUrl = null;
+  async function loadReferral() {
+    if (!accessGranted || !personalCode || !window.beaguVisitor) return;
+    const issuedCode = personalCode;
+    let token = '';
+    try { token = sessionStorage.getItem(levelSessionKey) || ''; } catch (_) {}
+    if (!token) return;
+    try {
+      const res = await deadline(fetch(referralEndpoint, {
+        method: 'POST', cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', 'X-Beagu-Session': token },
+        body: JSON.stringify({ action: 'enroll',
+          visitor: window.beaguVisitor, identityCode: issuedCode })
+      }), 12000, 'referral timeout');
+      if (!res.ok) throw new Error('REFERRAL_NOT_READY');
+      const data = await res.json();
+      if (!accessGranted || personalCode !== issuedCode) return;
+      if (!/^https:\/\/baeguindex\.com\/survey\.html\?ref=[A-Za-z0-9_-]{43}$/.test(data.inviteUrl))
+        throw new Error('INVALID_INVITE');
+      inviteUrl = data.inviteUrl;
+      const success = data.validReferrals === 1 ? 1 : 0;
+      referralProgress.textContent = '유효 추천 ' + success + '/1명';
+      const upgraded = data.level === 2 && success === 1;
+      referralLevel.textContent = upgraded ? '활성화' : '잠금';
+      lv2Link.hidden = !upgraded;
+      copyReferral.disabled = false;
+      referralFeedback.textContent = upgraded
+        ? '레벨2가 열렸습니다.'
+        : '한 분만 설문에 참여해도 레벨2가 열립니다.';
+    } catch (_) {
+      if (!accessGranted || personalCode !== issuedCode) return;
+      inviteUrl = null;
+      copyReferral.disabled = true;
+      lv2Link.hidden = true;
+      referralLevel.textContent = '잠금';
+      referralProgress.textContent = '유효 추천 확인 전';
+      referralFeedback.textContent = '초대 기능을 준비하고 있습니다.';
+    }
+  }
   let imageUrl = null, participant = null, personalCode = null, busy = false, accessGranted = false;
   const deadline = (promise, ms, message) => {
     let timer;
@@ -47,6 +92,7 @@
         }
         participant = n;
         personalCode = code;
+        void loadReferral();
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
         identityCode.textContent = code;
         copyIdentityCode.disabled = false;
@@ -110,6 +156,15 @@
     }
   });
 
+  copyReferral.addEventListener('click', async () => {
+    if (!accessGranted || !inviteUrl) return;
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      referralFeedback.textContent = '초대 링크를 복사했습니다.';
+    } catch (_) {
+      referralFeedback.textContent = '이 브라우저에서는 링크를 복사할 수 없습니다.';
+    }
+  });
   retry.addEventListener('click', prepare);
   // 뒤로가기로 복원되는 페이지에서는 이미지 URL을 유지합니다.
   window.addEventListener('pagehide', event => {
@@ -119,6 +174,12 @@
     accessGranted = false;
     participant = null;
     personalCode = null;
+    inviteUrl = null;
+    copyReferral.disabled = true;
+    lv2Link.hidden = true;
+    referralLevel.textContent = '잠금';
+    referralProgress.textContent = '유효 추천 확인 중';
+    referralFeedback.textContent = '초대 기능 준비 중';
     identityCode.textContent = '고유번호 확인 중';
     copyIdentityCode.disabled = true;
     identityCopyFeedback.textContent = '';
