@@ -22,14 +22,14 @@ const plan={schoolId:'7972013',scenes:Array.from({length:7},(_,i)=>({
  day:i+1,basis:i===2?'approved_historical_aggregate':'fictional_general',
  passage:'검증된 과거 집계에 착안한 창작 장면이다.'
 }))};
-const profile={age:32,gender:'woman',partner:'man',mbti:'INFP'};
+const profile={gender:'woman',partner:'man',mbti:'INFP'};
 const inferredWorld={
  eligible:true,basic:{id:'TEST001',name:'공식 자료 검증 학교',scale:'large'},
  publishedYears:[2024],mode:'real_approved',
  numbers:{students:{status:'APPROVED',value:132,referenceYear:2025}},
  geography:{tags:[{id:'admin_myeon',source:'official_address',label:'면 소재'}]}
 };
-const namedInput={name:'최윤호',age:32,gender:'man',partner:'woman',mbti:'INFP'};
+const namedInput={name:'최윤호',gender:'man',partner:'woman',mbti:'INFP'};
 const guessed=engine.inferredProfile(inferredWorld,namedInput);
 const early=engine.inferredProfile(inferredWorld,{...namedInput,experience:'new'});
 const mid=engine.inferredProfile(inferredWorld,{...namedInput,experience:'mid'});
@@ -78,7 +78,7 @@ assert.equal(engine.playerAddress(namedState),'최윤호 선생님');
 
 assert.throws(()=>engine.createGame({...world,eligible:false},plan,profile),/APPROVED_WORLD_REQUIRED/);
 assert.throws(()=>engine.createGame(world,{...plan,schoolId:'0000000'},profile),/VERIFIED_SCENE_PLAN_REQUIRED/);
-assert.throws(()=>engine.createGame(world,plan,{...profile,age:17}),/ADULT_AGE_REQUIRED/);
+assert(!Object.hasOwn(engine.createGame(world,plan,profile).profile,'age'),'Player profile must not collect age');
 assert.throws(()=>engine.createGame(world,plan,{...profile,mbti:'ZZZZ'}),/MBTI_INVALID/);
 let game=engine.createGame(world,plan,profile);
 assert.equal(game.day,1);assert.equal(game.phase,'chapter');
