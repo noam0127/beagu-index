@@ -50,6 +50,19 @@ const VISUAL=Object.freeze([
   {id:'weekend',label:'토요일의 거리',theme:'rest'},
   {id:'night',label:'일요일의 책상',theme:'night'}
 ]);
+function address(state){
+ const engine=root.BeaguClassDiaryPlay;
+ if(engine&&typeof engine.playerAddress==='function')return engine.playerAddress(state);
+ const fallback=state&&state.profile&&state.profile.name||'다온';
+ return fallback+' 선생님';
+}
+const COLLEAGUE_GREETINGS=Object.freeze({
+ 1:'이번 주 주안, 같이 확인해 볼까요?',
+ 2:'아까 학년에서 이야기한 부분, 지금 말씀해 보셔도 될 것 같아요.',
+ 3:'아이들이 낸 의견, 나중에 어떻게 됐는지 들려주세요.',
+ 4:'보호자 연락 전에 확인할 내용부터 같이 정리할까요?',
+ 5:'오늘도 수고 많으셨어요. 주안은 제가 한 번 더 볼게요.'
+});
 function prevChoice(state){
   if(!state||!Array.isArray(state.history)||state.day<2)return null;
   const record=state.history.find(x=>x&&x.day===state.day-1);
@@ -97,6 +110,10 @@ function decorateChapter(state,world,base){
   const previous=prevChoice(state);
   const callback=previous&&BRIDGES[state.day]&&BRIDGES[state.day][previous];
   const colleague=(RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none).name;
+  /* Workday greetings address the player by name; nickname is earned, never imposed. */
+  if(state.day<=5&&COLLEAGUE_GREETINGS[state.day])
+    copy.paragraphs.splice(1,0,colleague+'이 내 쪽을 보고 말했다. “'+
+      address(state)+', '+COLLEAGUE_GREETINGS[state.day]+'”');
   if(callback)copy.paragraphs.splice(1,0,callback.replace(/\{colleague\}/g,colleague));
   const relationship=dynamicLine(state);
   if(relationship)copy.paragraphs.push(relationship);
@@ -124,7 +141,9 @@ function decorateOutcome(state){
     '몸이 무거웠다. 잘하려는 마음만으로는 쉬어야 할 시간을 대신할 수 없었다.':
     trust>=65?'다음 날의 고민을 혼자 하지 않아도 된다는 사실이 조금 든든했다.':
     '그날의 선택은 아직 끝난 일이 아니었다. 나는 다음에 할 말을 천천히 골랐다.';
-  return {paragraphs:base.paragraphs.concat(text),line:base.line,
+  const line=typeof base.line==='string'&&base.line.startsWith('“')?
+    '“'+address(state)+', '+base.line.slice(1):base.line;
+  return {paragraphs:base.paragraphs.concat(text),line,
     cue:lowEnergy?'휴식이 필요한 때':trust>=65?'쌓여 가는 신뢰':'다음 날을 위한 여백'};
 }
 function decorateEnding(state){
