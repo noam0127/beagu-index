@@ -448,7 +448,7 @@ function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\nEASY 날개·자동 분필 · EXTREME 족쇄 · PC ← → / 모바일 드래그",[
+ message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\nEASY 날개·자동 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
  {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
 function fireChalk(dt){
@@ -515,6 +515,22 @@ function drawShackle(){
 function update(dt){
  clock=Math.min(RETIREMENT_SECONDS,clock+dt);
  if(clock>=RETIREMENT_SECONDS){finish(true);return;}
+ for(const mark of [10,20,30]){
+  if(clock>=mark&&!earlyMilestones.has(mark)){
+   earlyMilestones.add(mark);
+   const title=mark===10?"첫 10초 성공!":mark===20?"20초 돌파!":"30초 생존! 다음 경력이 보여요";
+   addScore(75);setNotice("🎖️ "+title+" +75점",2);
+   float(player.x,Math.max(110,player.y-80),"+75","#fff1b1");
+   playTone(720+mark*9,.15);
+  }
+ }
+ if(stage===3){
+  const safeLane=Math.floor(clock/5)%2;
+  if(safeLane!==lastSafeLane){
+   lastSafeLane=safeLane;
+   setNotice("🛟 안전한 통로가 "+(safeLane===0?"왼쪽":"오른쪽")+"으로 바뀝니다",1.8);
+  }
+ }
  if(getCareerStage()>stage){nextCareerStage();return;}
  if(eventSeconds>0){eventSeconds=Math.max(0,eventSeconds-dt);if(eventSeconds===0)activeEvent=null;}
  const cycle=Math.floor((stageElapsed()-5)/14);
@@ -533,14 +549,15 @@ function update(dt){
  const oldX=player.x;
  if(pointerId!==null&&pointerX!==null&&pointerY!==null){
   // Finger/mouse targets both axes while actively touching the canvas.
-  const flyingSpeed=1300*skill.speed*profile.heroSpeed;
+  const flyingSpeed=speed; // same maximum movement speed as keyboard
   const dx=pointerX-player.x,dy=pointerY-player.y;
   player.x+=Math.sign(dx)*Math.min(Math.abs(dx),flyingSpeed*dt);
   if(canPlayerRise())player.y+=Math.sign(dy)*Math.min(Math.abs(dy),flyingSpeed*dt);
  }else{
   player.x+=dir*speed*dt;
-  // Landing: release restores altitude smoothly.
-  player.y=Math.min(H-52,player.y+520*dt);
+  const vertical=(pressed.has("down")?1:0)-(pressed.has("up")?1:0);
+  if(canPlayerRise()&&vertical!==0)player.y+=vertical*speed*dt;
+  else player.y=Math.min(H-52,player.y+520*dt);
  }
  player.x=Math.max(27,Math.min(W-27,player.x));
  player.y=canPlayerRise()?Math.max(76,Math.min(H-52,player.y)):H-52;
@@ -701,6 +718,13 @@ function draw(){
   ctx.textAlign="center";roundRect(W/2-78,124,156,25,10,"rgba(25,55,84,.9)");
   ctx.font="bold 12px sans-serif";ctx.fillStyle="#fff6ce";ctx.fillText(label,W/2,141,150);
  }
+ if(stage===3){
+  const leftSafe=Math.floor(clock/5)%2===0;
+  const x=leftSafe?0:W*.55,w=W*.45;
+  ctx.fillStyle="rgba(109,235,178,.10)";ctx.fillRect(x,70,w,H-140);
+  ctx.textAlign="center";ctx.font="bold 11px sans-serif";ctx.fillStyle="#166e58";
+  ctx.fillText("🛟 안전 통로",x+w/2,H-75);
+ }
  if(getAge()>=60){ctx.textAlign="center";ctx.font="900 12px sans-serif";ctx.fillStyle="#8e3030";ctx.fillText("⚠ 정년 직전 공문 폭풍",W/2,177,Math.max(120,W-20));}
  ctx.restore();
 }
@@ -708,12 +732,16 @@ function tick(t){const dt=Math.min(.04,(t-last)/1000||0);last=t;if(state==="play
 window.addEventListener("keydown",e=>{
  const key=e.key.toLowerCase();
  if(e.target?.matches?.("input,textarea,[contenteditable]"))return;
-  if(["arrowleft","arrowright","a","d"].includes(key)&&(state==="playing"||state==="paused"))e.preventDefault();
+  if(["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(key)&&(state==="playing"||state==="paused"))e.preventDefault();
  if(key==="arrowleft"||key==="a")pressed.add("left");
  if(key==="arrowright"||key==="d")pressed.add("right");
+  if(key==="arrowup"||key==="w")pressed.add("up");
+  if(key==="arrowdown"||key==="s")pressed.add("down");
   if(key==="escape"&&(state==="playing"||state==="paused"))pause();
 });
-window.addEventListener("keyup",e=>{let key=e.key.toLowerCase();if(key==="arrowleft"||key==="a")pressed.delete("left");if(key==="arrowright"||key==="d")pressed.delete("right");});
+window.addEventListener("keyup",e=>{let key=e.key.toLowerCase();if(key==="arrowleft"||key==="a")pressed.delete("left");if(key==="arrowright"||key==="d")pressed.delete("right");
+  if(key==="arrowup"||key==="w")pressed.delete("up");
+  if(key==="arrowdown"||key==="s")pressed.delete("down");});
 window.addEventListener("blur",()=>{pressed.clear();pointerId=null;pointerX=null;pointerY=null;if(state==="playing")pause();});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&state==="playing")pause();});
 function dragPosition(e){
