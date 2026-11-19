@@ -17,6 +17,7 @@
     empty:$('compareEmpty'), count:$('compareCounter'),
     feedback:$('compareFeedback'), clear:$('clearCompare'), copy:$('copyCompareLink'),
     authForm:$('compareLv1Form'), authCode:$('compareLv1Code'),
+    authCard:$('compareLv1AuthPanel'),
     authSubmit:$('compareLv1Submit'), authBadge:$('compareLv1Badge'),
     authSignedIn:$('compareLv1SignedIn'),
     authMessage:$('compareLv1Message'), authToggle:$('compareLv1Toggle'),
@@ -50,6 +51,7 @@
     elements.authSignedIn.hidden=!authenticated;
     elements.authBadge.textContent=authenticated ? 'Lv.'+state.authLevel+' 인증됨' : '미인증';
     elements.authBadge.classList.toggle('is-authenticated',authenticated);
+    elements.authCard.classList.toggle('is-authenticated',authenticated);
   }
   function clearAuth(message='',removeStored=true) {
     state.authEpoch++;
