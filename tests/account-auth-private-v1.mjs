@@ -59,7 +59,6 @@ for(const action of ['sign-up','bootstrap-sign-in','sign-in','complete-registrat
 
 // Headless client has no markup, navigation or persistence; all credentials are
 // held only inside a closure and authorization is attached to a direct request.
-assert.ok(!client.includes('localStorage')===false ? true : true); // verified below without comments
 const jsWithoutComments=client.replace(/\/\*[\s\S]*?\*\//g,'').replace(/\/\/.*$/gm,'');
 assert.ok(!jsWithoutComments.includes('localStorage'));
 assert.ok(!jsWithoutComments.includes('sessionStorage'));
