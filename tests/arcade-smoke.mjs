@@ -589,6 +589,91 @@ console.log("PASS: arm-centered contact, smooth non-teleporting volley returns, 
 
 
 
+
+// Difficulty asymmetry: EXTREME double-ball and chain, EASY/NORMAL clones, automatic chalk.
+const cloneProfileMatch=volley.match(/const cloneProfiles=(\{[^}]+\});/);
+assert.ok(cloneProfileMatch,"helper clones exist");
+const cloneCounts=new Function("return "+cloneProfileMatch[1])();
+assert.deepEqual(cloneCounts,{easy:2,normal:1,hard:0,very_hard:0,extreme:0});
+const formation=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
+ "const currentDifficulty=tier,FLOOR=451,NET_X=450,clamp=(x,a,b)=>Math.max(a,Math.min(b,x));",
+ "const volleyShackle={x:0,dir:-1},left={},right={},ball={trail:[]},secondBall={trail:[]};",
+ "const state={serveLeft},activeBalls=[ball],clones=[],cloneProfiles="+cloneProfileMatch[1],
+ "const ballSpeedFactor=()=>1;",
+ resetSource,"resetPositions();return {balls:activeBalls.map(b=>({x:b.x,y:b.y,vx:b.vx,vy:b.vy})),clones:clones.map(c=>({...c})),shackle:volleyShackle};"
+].join("\n"))(tier,serveLeft);
+for(const tier of levels){
+ const x=formation(tier);
+ assert.equal(x.balls.length,tier==="extreme"?2:1,tier+" ball count");
+ assert.equal(x.clones.length,cloneCounts[tier],tier+" companion count");
+ assert.equal(x.shackle.x,156,"volley shackle resets beside player's foot");
+}
+const pair=formation("extreme");
+assert.notEqual(pair.balls[0].x,pair.balls[1].x,"two independent ball origins");
+assert.ok(pair.balls[0].vx>0&&pair.balls[1].vx<0,"opposed initial ball directions");
+const reversed=formation("extreme",false);
+assert.ok(reversed.balls[0].vx<0&&reversed.balls[1].vx>0,"second serve direction reverses");
+assert.match(volley,/for\(const liveBall of activeBalls\)\{/,"each ball participates in physics");
+assert.match(volley,/for\(const liveBall of activeBalls\)drawBall\(liveBall\)/,"both balls visible");
+assert.match(volley,/break; \/\/ First grounded ball ends this rally: one point/,"one point per rally");
+assert.match(volley,/const ball=activeBalls\.find\(b=>b\.x>NET_X&&b\.vx>0\)/,"CPU targets live balls");
+const helperStart=volley.indexOf("function cloneHit(ally,hitBall){");
+const helperEnd=volley.indexOf("function moveAI()",helperStart);
+assert.ok(helperStart>0&&helperEnd>helperStart);
+const cloneHitSrc=volley.slice(helperStart,helperEnd);
+const testCloneHit=new Function("hitBall","ally",[
+ "const R=48,ballSpeedFactor=()=>1,tone=()=>{};",
+ cloneHitSrc,"return cloneHit(ally,hitBall);"
+].join("\n"));
+const testHelper={x:210,y:420,contactFrames:0};
+const protectedBall={x:240,y:380,vx:-9,vy:4,cooldown:0,shadowFrames:0,shadowColor:""};
+assert.equal(testCloneHit(protectedBall,testHelper),true,"clone actually receives incoming ball");
+assert.ok(protectedBall.vx>0&&protectedBall.vy<0,"clone returns ball over net");
+assert.equal(protectedBall.cooldown,11,"clone cannot rapidly re-hit same ball");
+assert.ok(testHelper.contactFrames>0,"helper contact animation runs");
+assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0},testHelper),false,"clone never hits outbound ball");
+assert.match(volley,/function drawVolleyShackle\(\)/);
+assert.match(volley,/currentDifficulty!=="extreme"\|\|state\.phase==="ready"/);
+assert.match(volley,/volleyShackle\.dir=left\.x>beforeMoveX\?-1:1/,"volleyball shackle trails movement direction");
+assert.match(volley,/drawTeacher\(left, "#448bd8"\);\s*drawVolleyShackle\(\)/,"volleyball chain drawn on ankle");
+const chalkMatch=runner.match(/const chalkProfiles=(\{[^\n]+\});/);
+assert.ok(chalkMatch);
+const chalkProfiles=new Function("return "+chalkMatch[1])();
+assert.equal(chalkProfiles.easy.maxShots,2);
+assert.equal(chalkProfiles.normal.maxShots,1);
+assert.ok(chalkProfiles.easy.interval<chalkProfiles.normal.interval);
+for(const t of ["hard","very_hard","extreme"])assert.equal(chalkProfiles[t],undefined,t+" disables chalk");
+const chalkStart=runner.indexOf("function fireChalk(dt){");
+const chalkEnd=runner.indexOf("function drawChalk(){",chalkStart);
+assert.ok(chalkStart>0&&chalkEnd>chalkStart);
+const chalkSource=runner.slice(chalkStart,chalkEnd);
+const shoot=(tier,good=false)=>new Function("tier","good",[
+ "const chalkProfiles="+chalkMatch[1],
+ "const chalkProfile=()=>chalkProfiles[tier]||null;",
+ 'const state="playing",player={x:300,y:368};',
+ 'let items=[{x:300,y:260,good,r:23}],chalkShots=[],chalkCooldown=0,score=0,removed=0;',
+ 'const burst=()=>{removed++;},float=()=>{},playTone=()=>{},addScore=n=>{score+=n;};',
+ chalkSource,
+ 'fireChalk(.05);const created=chalkShots.length;',
+ 'for(let i=0;i<5;i++)updateChalk(.05);',
+ 'return {created,remaining:items.length,score,removed};'
+].join("\n"))(tier,good);
+assert.deepEqual(shoot("easy"),{created:1,remaining:0,score:25,removed:1},"EASY chalk automatically destroys falling hazard");
+assert.deepEqual(shoot("normal"),{created:1,remaining:0,score:25,removed:1},"NORMAL chalk also protects");
+assert.deepEqual(shoot("hard"),{created:0,remaining:1,score:0,removed:0},"HARD has no chalk");
+assert.deepEqual(shoot("extreme"),{created:0,remaining:1,score:0,removed:0},"EXTREME has no chalk");
+assert.deepEqual(shoot("easy",true),{created:0,remaining:1,score:0,removed:0},"healing pickups are never shot");
+assert.match(runner,/function drawShackle\(\)/);
+assert.match(runner,/if\(profile\.jumpEnabled!==false\|\|state==="ready"\)return/);
+assert.match(runner,/if\(profile\.jumpEnabled===false\)\{/,"runner shackle only follows EXTREME steps");
+assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
+assert.match(runner,/drawItems\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
+assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
+assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
+assert.match(html,/teacher-volleyball\.html\?v=20261119-core-game1/);
+assert.match(html,/teacher-run\.html\?v=20261119-core-game1/);
+console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
+
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
  for(let i=0;i<times;i++){
