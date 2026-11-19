@@ -33,20 +33,15 @@ assert(play.src.includes('scenario.continueStory(game):engine.advance(game)'));
 assert(play.src.includes('incidents.continueStory(game)'));
 assert(play.src.includes('src="js/class-diary-incidents-v1.js"'));
 assert(play.src.includes('incidents.next(game,world)'));
-assert(play.src.includes('id="guestAccess"'),'Guest verification view must exist');
-assert(!play.src.includes('id="guestCode"'),'The game must never ask for the same code twice');
-assert(!play.src.includes('id="guestForm"'),'The game must not have a duplicate guest login form');
-assert(play.src.includes("params.get('guest')==='1'"),'Guest must require explicit URL selection');
-assert(play.src.includes("show('guestAccess')"),'Guest route must first verify home handoff');
-assert(play.src.includes('beagu-class-diary-guest-handoff-v1'),'Game must consume a home-issued ticket');
-assert(play.src.includes("sessionStorage.removeItem(handoffKey)"),'Ticket must be consumed and erased immediately');
-assert(play.src.includes("action:'verify-ticket'"),'Guest ticket must be checked by the server');
-assert(play.src.includes("class-diary-guest-access-v1"),'Edge Function verification missing');
-assert(play.src.includes("result.scope!=='class-diary-fictional-guest'"),'Ticket must be strictly scoped to fictional game');
-assert(play.src.includes("prepareGuestProfile()"),'Guest story must not ask for profile fields');
-assert(play.src.includes("if(isGuest)journey.go(3)"),'Picture selection should advance the guest setup');
-assert(play.src.indexOf('class="setup-player-stamp"')>play.src.indexOf('class="form-grid"'),'Pencil preview must be below input section');
-assert(play.src.includes('class-diary-guest-experience-v1.css'),'Guest should use one-screen presentation');
+assert(!play.src.includes('id="guestCode"'),'The game must never ask for raw guest codes');
+assert(!play.src.includes('id="guestForm"'),'The game must never contain a guest login form');
+assert(play.src.includes("params.get('guest')==='1'"),'Guest route must be explicit');
+assert(play.src.includes("sessionStorage.removeItem('beagu-class-diary-guest-handoff-v1')"),'Stale guest handoffs must be erased');
+assert(play.src.includes("fail('『나의 OO한 학급일지』는 현재 준비 중입니다."),'Guest handoff remains blocked while preparing');
+assert(play.src.indexOf("if(isGuest){")<play.src.indexOf("if(isDemo){"),'Guest access must be checked before the demo route');
+assert(play.src.indexOf('class="setup-player-stamp"')>play.src.indexOf('class="form-grid"'),'Pencil preview must be below the form');
+assert(play.src.includes('class-diary-guest-experience-v1.css'),'Guest stylesheet remains available');
+
 
 assert(!play.src.includes('sessionStorage.setItem('),'Guest code may not be saved in client session');
 assert(!play.src.includes('레벨2 임시 승인'),'Guest must not be misrepresented as Level 2');
@@ -63,8 +58,8 @@ assert(play.src.includes("selectSchoolMode('demo')"),'Fictional demo school shou
 assert(play.src.includes("if(!/^[0-9a-f]{64}$/.test(token))"),'Real school selection must not bypass Lv2 verification');
 assert(preview.src.includes("location.replace('teacher-class-diary-play.html')"),'Legacy preview must send users straight to the title card');
 
-assert(play.src.includes('guestIntroTimer=setTimeout('),'Guest intro must advance after the cinematic');
-assert(play.src.includes('},5000)'),'Guest cinematic must last approximately five seconds');
+assert(play.src.includes("selectSchoolMode('demo');\n  $('semesterStart').click();"),'Demo should skip the opening cinematic and go straight to the setup');
+assert(play.src.includes("selectSchoolMode('real',world.basic.name);\n  $('semesterStart').click();"),'Authorized real school should also skip the opening');
 assert(play.src.includes('function vnFitPage('),'Overflowing dialogue must be repaginated');
 assert(play.src.includes('class="panel vn-setup"'),'Dating-sim setup should replace plain form');
 for(const id of ['setupPlayerPreview','setupPortraitWoman','setupPortraitMan','setupPortraitNone','partnerDescription']){
