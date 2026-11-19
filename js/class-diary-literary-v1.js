@@ -38,20 +38,32 @@ function graphemes(s){
 /* Keep the punctuation and its closing quotes with each complete sentence. */
 function splitSentences(paragraph){
  const chars=Array.from(String(paragraph||'').replace(/\s+/gu,' ').trim());
- const sentences=[];let current='';
- const ending=/[.!?。！？]/u,closer=/[”’"』」\)\]]/u;
+ const sentences=[],quoteStack=[];
+ let current='';
+ const end=/[.!?。！？…]/u,open={ '“':'”','‘':'’','「':'」','『':'』' };
+ const close=/[”’」』"]/u;
+ const flush=()=>{if(current.trim())sentences.push(current.trim());current='';};
  for(let i=0;i<chars.length;i++){
-  const ch=chars[i];current+=ch;
-  if(!ending.test(ch))continue;
-  // A period inside a decimal, date or numbered version is not a sentence break.
-  if(ch==='.'&&/\d/.test(chars[i-1]||'')&&/\d/.test(chars[i+1]||''))continue;
-  while(i+1<chars.length&&(ending.test(chars[i+1])||closer.test(chars[i+1])))
-   current+=chars[++i];
-  const phrase=current.trim();
-  if(phrase)sentences.push(phrase);
-  current='';
+  const ch=chars[i],next=chars[i+1]||'';
+  current+=ch;
+  if(open[ch])quoteStack.push(open[ch]);
+  else if(ch==='"'){
+   if(quoteStack[quoteStack.length-1]==='"')quoteStack.pop();
+   else quoteStack.push('"');
+  }else if(close.test(ch)&&quoteStack[quoteStack.length-1]===ch)quoteStack.pop();
+  // Keep dialogue intact through its closing quotation mark.
+  if(quoteStack.length)continue;
+  if(end.test(ch)){
+   if(ch==='.'&&/\d/u.test(chars[i-1]||'')&&/\d/u.test(next))continue;
+   // Sentence punctuation and the following quote/closing bracket form one unit.
+   if(end.test(next)||/[”’」』\)\]]/u.test(next))continue;
+   flush();
+  }else if(close.test(ch)&&(!next||/\s/u.test(next))){
+   // A quoted line without terminal punctuation is a complete dialogue unit.
+   flush();
+  }
  }
- if(current.trim())sentences.push(current.trim());
+ flush();
  return sentences;
 }
 /* Wrap by measured font width so both mobile and desktop show genuine lines.
@@ -89,15 +101,60 @@ function paginateForMetrics(paragraphs,maxWidth,maxLines,measure){
  for(let at=0;at<all.length;at+=cap)pages.push(all.slice(at,at+cap));
  return pages;
 }
-/* One complete sentence per tap; never reveal a wrapped line or a whole paragraph. */
-function paginate(paragraphs){
- const pages=[];
- for(const paragraph of paragraphs){
-  for(const sentence of splitSentences(paragraph)){
-   pages.push([{text:sentence,paragraphEnd:true}]);
-  }
+/* Group entire sentences into pages, never splitting an utterance merely
+ * because it wraps visually. A page turns only before the next sentence
+ * would exceed the actual dialogue area.
+ */
+function paginateForHeight(sentences,maxHeight,measureHeight){
+ const pages=[];let current=[];
+ for(const item of sentences){
+  if(current.length && measureHeight([...current,item])>maxHeight){
+   pages.push(current);current=[item];
+  }else current.push(item);
  }
+ if(current.length)pages.push(current);
  return pages.length?pages:[[{text:'…',paragraphEnd:true}]];
+}
+function paginate(paragraphs,source){
+ const sentences=paragraphs.flatMap(p=>splitSentences(p).map(text=>({text,paragraphEnd:true})));
+ if(!sentences.length)sentences.push({text:'…',paragraphEnd:true});
+ const text=source || $('#chapterText');
+ const reader=text&&text.closest('.vn-dialogue,.outcome');
+ if(!enabled||!reader||!reader.clientHeight||!text.clientWidth){
+  return paginateForHeight(sentences,Math.max(80,root.innerHeight*.5),
+   current=>current.length*(parseFloat(root.getComputedStyle(text).lineHeight)||32)*2);
+ }
+ const style=root.getComputedStyle(reader);
+ const maxHeight=Math.max(48,reader.clientHeight
+  -(parseFloat(style.paddingTop)||0)-(parseFloat(style.paddingBottom)||0)-14);
+ const probe=root.document.createElement('div');
+ probe.className='prose diary-literary-measure';
+ // Use the same prose / paragraph styles as the actual page, offscreen.
+ for(const [property,value] of Object.entries({
+  position:'absolute',left:'-10000px',top:'0',display:'block',width:text.clientWidth+'px',
+  height:'auto',minHeight:'0',maxHeight:'none',flex:'none',visibility:'hidden',
+  pointerEvents:'none',overflow:'visible',boxSizing:'border-box'
+ }))probe.style.setProperty(property,value,'important');
+ reader.append(probe);
+ function measureHeight(items){
+  probe.replaceChildren(...items.map((item,index)=>{
+   const row=root.document.createElement('p');
+   row.className='diary-literary-line diary-literary-ready';
+   row.textContent=item.text;
+   if(index===items.length-1){
+    const cursor=root.document.createElement('span');
+    cursor.className='diary-reading-cursor';
+    cursor.textContent='▌';
+    cursor.style.animation='none';
+    row.append(cursor);
+   }
+   return row;
+  }));
+  return probe.getBoundingClientRect().height;
+ }
+ try{
+  return paginateForHeight(sentences,maxHeight,measureHeight);
+ }finally{probe.remove();}
 }
 function finishWriting(){
  if(!writingRow)return false;
@@ -108,38 +165,31 @@ function finishWriting(){
  writingRow=null;writingText='';writingNode=null;writingCursor=null;writingGraphemes=[];
  return true;
 }
-function present(target){
- if(!enabled||!target)return;
- stopWriting();active=target;
- const rows=[...target.querySelectorAll('p')];
- visibleLines=rows.length?1:0;
- rows.forEach((row,index)=>{
-  row.classList.add('diary-literary-line');
-  row.hidden=index!==0;
- });
- target.classList.remove('diary-literary-revealed','diary-text-arrive');
- if(!rows.length)return;
- const row=rows[0],text=row.textContent||'…';
+function writeSentence(row){
+ if(!row)return;
+ // Only the active sentence has a cursor. Earlier sentences remain intact.
+ if(active)for(const cursor of active.querySelectorAll('.diary-reading-cursor'))cursor.remove();
+ const text=row.getAttribute('aria-label')||row.textContent||'…';
+ row.hidden=false;
  row.classList.add('diary-literary-typing');
  row.classList.remove('diary-literary-ready','diary-literary-line-enter');
- const textNode=root.document.createTextNode('');
+ const node=root.document.createTextNode('');
  const cursor=root.document.createElement('span');
  cursor.className='diary-reading-cursor';
  cursor.setAttribute('aria-hidden','true');
  cursor.textContent='▌';
- row.replaceChildren(textNode,cursor);
+ row.replaceChildren(node,cursor);
  row.setAttribute('aria-label',text);
- writingRow=row;writingText=text;writingNode=textNode;writingCursor=cursor;
+ writingRow=row;writingText=text;writingNode=node;writingCursor=cursor;
  writingGraphemes=graphemes(text);
  const symbols=writingGraphemes;
  let count=0,ticks=0;
  const reducedMotion=Boolean(root.matchMedia&&root.matchMedia('(prefers-reduced-motion: reduce)').matches);
  if(reducedMotion||!root.setInterval){finishWriting();return;}
- // Two graphemes at a time produces a short, soft letter-rustle, not a long typing delay.
  writingTimer=root.setInterval(()=>{
   if(!writingRow||writingRow!==row){stopWriting();return;}
   const end=Math.min(symbols.length,count+2);
-  textNode.nodeValue+=symbols.slice(count,end).join('');
+  node.nodeValue+=symbols.slice(count,end).join('');
   count=end;ticks++;
   if(count<symbols.length&&ticks%4===1&&/\S/u.test(symbols.slice(Math.max(0,count-2),count).join(''))){
    try{typingSound()}catch(_){}
@@ -147,13 +197,30 @@ function present(target){
   if(count>=symbols.length)finishWriting();
  },26);
 }
+function present(target){
+ if(!enabled||!target)return;
+ stopWriting();active=target;
+ const rows=[...target.querySelectorAll('p')];
+ visibleLines=rows.length?1:0;
+ rows.forEach((row,index)=>{
+  row.classList.add('diary-literary-line');
+  row.setAttribute('aria-label',row.textContent);
+  row.hidden=index!==0;
+ });
+ target.classList.remove('diary-literary-revealed','diary-text-arrive');
+ if(rows[0])writeSentence(rows[0]);
+}
 function reveal(){
- // One touch completes the current sentence; the next touch reveals the next sentence.
+ // A tap completes typing; the next tap adds exactly one whole sentence.
  if(!enabled||!active)return false;
- return finishWriting();
+ if(finishWriting())return true;
+ const rows=active.querySelectorAll('p.diary-literary-line');
+ if(visibleLines>=rows.length)return false;
+ writeSentence(rows[visibleLines++]);
+ return true;
 }
 function isPrinting(){return Boolean(writingRow);}
-const api=Object.freeze({VERSION:'literary/v3',mode,start,paginate,present,reveal,isPrinting,setTypingSound,splitSentences,wrapParagraph,paginateForMetrics});
+const api=Object.freeze({VERSION:'literary/v4',mode,start,paginate,present,reveal,isPrinting,setTypingSound,splitSentences,wrapParagraph,paginateForMetrics,paginateForHeight});
 root.BeaguClassDiaryLiterary=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
