@@ -254,3 +254,36 @@ body.is-setting #setup[data-step="3"] .setup-end .actions{
  margin:6px 0!important;
 }
 body.is-setting #setup[data-step="3"] .setup-review-fields div[hidden]{display:none!important}
+
+/* One-title 36-episode flow · real-school identity is selected via a public directory.
+   The school name cannot be free-typed; modal selection is required. */
+body.is-setting #diarySchoolName[readonly]{
+ cursor:pointer!important;caret-color:transparent;
+ background:linear-gradient(120deg,#fffdfd,#f9eff7)!important;
+ border:1px solid #b99db2!important;
+ box-shadow:0 3px 13px #78607712;
+ color:#503e55;
+}
+body.is-setting #diarySchoolName[readonly]:focus-visible{
+ outline:3px solid #bea6bf;outline-offset:2px;
+}
+body.is-setting #diarySchoolSelected{font-size:clamp(10px,1.75vmin,12px);line-height:1.4}
+body.is-setting .diary-school-search-dialog .diary-school-result{
+ touch-action:manipulation;min-height:42px;
+}
+body.is-setting .diary-school-search-dialog #diarySchoolSurveyLink{
+ display:inline-flex;align-items:center;min-height:40px;
+ border:1px solid #af82a5;background:#f7e8f1;padding:8px 13px;
+ border-radius:12px;text-decoration:none;
+}
+body.is-setting .diary-school-search-dialog #diarySchoolSurveyLink[hidden]{display:none!important}
+body.is-landing .diary-landing-meta{
+ display:block;
+ color:#c7b6cd;font:700 clamp(10px,1.8vmin,13px)/1.5 "Gowun Batang","Nanum Myeongjo",serif;
+ letter-spacing:.02em;
+}
+body.is-setting #setup[data-step="3"] .setup-review-fields strong{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+ font-size:clamp(13px,2.6vmin,18px);
+ font-weight:700;
+}
