@@ -1,14 +1,14 @@
 // Public arcade ranking API. All database access is server-side through the service key.
-// User-entered nicknames are restricted to 2–8 ASCII letters; school names are resolved from canonical directory records.
+// All submitted records are anonymous; no nickname or other name is accepted from clients.
 const SUPA_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const BASE = SUPA_URL + "/rest/v1/";
 const ALLOWED_ORIGINS = new Set(["https://baeguindex.com","https://www.baeguindex.com","https://noam0127.github.io"]);
-const VALID_GAMES = new Set(["volleyball","teacher_run","volleyball_25","teacher_run_retirement"]);
+const VALID_GAMES = new Set(["volleyball_25","teacher_run_retirement"]);
 const encoder = new TextEncoder();
 const CACHE = "no-store";
 type Game = "volleyball" | "teacher_run" | "volleyball_25" | "teacher_run_retirement";
-type Entry = { nickname: string; score: number; created_at: string; school_name?: string | null; difficulty?: string | null };
+type Entry = { score: number; created_at: string; school_name?: string | null; difficulty?: string | null };
 type Session = { id: string; game: Game; ip_hash: string; started_at: string; submitted_at: string | null; school_id?:string; school_name?:string; difficulty?:string };
 
 function json(data: unknown, status = 200, origin = "https://baeguindex.com"): Response {
@@ -41,9 +41,9 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
   const raw=await response.text();return raw?JSON.parse(raw):null;
 }
 async function top(game: Game): Promise<Entry[]> {
-  const q = new URLSearchParams({select:"nickname,score,created_at,school_name,difficulty",game:"eq."+game,order:game==="volleyball_25"?"score.asc,created_at.asc":"score.desc,created_at.asc",limit:"10"});
+  const q = new URLSearchParams({select:"score,created_at,school_name,difficulty",game:"eq."+game,order:game==="volleyball_25"?"score.asc,created_at.asc":"score.desc,created_at.asc",limit:"10"});
   const list = await db("arcade_game_scores?" + q);
-  return list.map((e:Entry)=>({nickname:e.nickname,score:e.score,created_at:e.created_at,school_name:e.school_name??null,difficulty:e.difficulty??null}));
+  return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
 
 type School = { school_id:string; school_name:string; sido_standard:string };
@@ -200,9 +200,9 @@ Deno.serve(async (req:Request)=>{
       return json({session:rows[0].id,school:selected},200,origin);
     }
     if(payload.action!=="submit")return error("unknown_action",400,origin);
-    const sessionId=payload.session, nickname=payload.nickname;
+    const sessionId=payload.session;
+    if(Object.prototype.hasOwnProperty.call(payload,"nickname"))return error("nickname_not_supported",400,origin);
     if(typeof sessionId!=="string"||!/^[0-9a-f-]{36}$/i.test(sessionId))return error("invalid_session",400,origin);
-    if(typeof nickname!=="string"||!/^[A-Z]{2,8}$/.test(nickname))return error("invalid_name",400,origin);
     const qs=new URLSearchParams({select:"id,game,ip_hash,started_at,submitted_at,school_id,school_name,difficulty",id:"eq."+sessionId,limit:"1"});
     const rows=await db("arcade_game_sessions?"+qs) as Session[];
     const session=rows[0];
@@ -230,7 +230,7 @@ Deno.serve(async (req:Request)=>{
     const inserted=await db(
       "arcade_game_scores?on_conflict=session_id&select=created_at",
       "POST",
-      {session_id:session.id,game,nickname,score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
+      {session_id:session.id,game,nickname:"ANON",score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
       "resolution=ignore-duplicates,return=representation"
     ) as Array<{created_at:string}>;
     if(!inserted?.length)return error("session_expired",409,origin);
@@ -242,8 +242,8 @@ Deno.serve(async (req:Request)=>{
       console.error("arcade_completion_marker_failed");
     }
     const board=await top(game);
-    // Nicknames and scores are not unique; use the database-created timestamp as a tie-breaker.
-    const rank=board.findIndex(e=>e.nickname===nickname&&e.score===score&&e.created_at===inserted[0].created_at)+1;
+    // Anonymous entries are matched using the server-issued timestamp, score and school.
+    const rank=board.findIndex(e=>e.score===score&&e.created_at===inserted[0].created_at&&e.school_name===session.school_name)+1;
     return json({ranked:rank>0,rank,score,top10:board},200,origin);
   }catch(e){
     console.error("arcade_error",e instanceof Error?e.message:"unknown");
