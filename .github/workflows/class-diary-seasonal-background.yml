@@ -6,6 +6,8 @@ on:
       - 'scripts/test-class-diary-seasonal-background.cjs'
       - 'js/class-diary-semester-v1.js'
       - 'teacher-class-diary-play.html'
+      - 'assets/class-diary/backgrounds/**'
+      - 'scripts/test-class-diary-hd-backgrounds.cjs'
       - '.github/workflows/class-diary-seasonal-background.yml'
   pull_request:
     paths:
@@ -13,6 +15,8 @@ on:
       - 'scripts/test-class-diary-seasonal-background.cjs'
       - 'js/class-diary-semester-v1.js'
       - 'teacher-class-diary-play.html'
+      - 'assets/class-diary/backgrounds/**'
+      - 'scripts/test-class-diary-hd-backgrounds.cjs'
       - '.github/workflows/class-diary-seasonal-background.yml'
   workflow_dispatch:
 permissions:
@@ -24,7 +28,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate all semester scene backgrounds
-        run: node scripts/test-class-diary-seasonal-background.cjs
+        run: |
+          node scripts/test-class-diary-seasonal-background.cjs
+          node scripts/test-class-diary-hd-backgrounds.cjs
       - name: Confirm existing 36-episode story and choices
         run: node scripts/test-class-diary-semester.cjs
 
@@ -40,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
           base='https://baeguindex.com'
-          for file in teacher-class-diary-play.html js/class-diary-seasonal-background-v1.js; do
+          for file in teacher-class-diary-play.html js/class-diary-seasonal-background-v1.js assets/class-diary/backgrounds/*.webp; do
             matched=0
             for attempt in {1..15}; do
               if curl -fLsS --retry 1 --max-time 15 -H 'Cache-Control: no-cache' \

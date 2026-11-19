@@ -144,8 +144,27 @@ function svg(visual,context){
  const veil='<rect width="1200" height="730" fill="'+light+'" opacity="'+alpha+'"/>'+mist;
  return base.replace('</svg>',veil+'</svg>');
 }
+
+/* Original full-HD photography of a fictional Korean elementary school. */
+const HD_DIR='assets/class-diary/backgrounds/';
+const HD_ASSETS=Object.freeze({
+ classroom:'classroom-cold-spring-morning.webp',
+ morning:'grade-office-morning.webp',
+ meeting:'meeting-room-afternoon.webp',
+ hallway:'hallway-cold-spring-day.webp',
+ gate:'school-gate-dusk.webp',
+ consultation:'consultation-room-day.webp',
+ bookstore:'bookstore-dusk.webp',
+ yard:'playground-day.webp',
+ weekend:'street-dusk.webp',
+ night:'bedroom-night.webp'
+});
+function assetFor(context){
+ if(!context || !Object.prototype.hasOwnProperty.call(HD_ASSETS,context.scene))return null;
+ return HD_DIR+HD_ASSETS[context.scene];
+}
 function dataUrl(visual,context){return visual.dataUrl(svg(visual,context))}
-const api=Object.freeze({VERSION,LABELS,SHOTS,MONTHS,resolve,svg,dataUrl});
+const api=Object.freeze({VERSION,LABELS,SHOTS,MONTHS,HD_ASSETS,resolve,assetFor,svg,dataUrl});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiarySeasonalBackground=api;
 })(typeof window!=='undefined'?window:globalThis);
