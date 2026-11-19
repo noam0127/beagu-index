@@ -437,14 +437,16 @@ function finish(win){
  schoolPicker.setLocked(false);
  if(win)clock=RETIREMENT_SECONDS;
  const survivalSeconds=Math.floor(clock);
- const rawScore=Math.max(1,Math.floor(score));
+ const rawScore=Math.max(0,Math.floor(score));
  score=win?rawScore*2:rawScore;
  const newRecord=score>best;
  if(newRecord){best=Math.floor(score);persist();}
  updateLabels();$("bestLabel").textContent=best.toLocaleString("ko-KR");
  ranking?.finish(Math.floor(score),{
    score:Math.floor(score),baseScore:rawScore,
-   survivalSeconds,age:getAge(),victory:win
+   survivalSeconds,age:getAge(),victory:win,
+   nearMisses:nearCount,hits:misses,livesLeft,
+   healthPercent:Math.max(0,Math.min(100,Math.round(life/Math.max(1,maxLife)*100)))
  });
  const celebration=win?retirementCongratulations(schoolPicker.get()?.difficulty,
    misses,nearCount,livesLeft,life/Math.max(1,maxLife),Math.floor(score),newRecord):null;
