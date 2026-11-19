@@ -40,6 +40,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#mbti').selectOption('INFP');
    await page.locator('#setupNext').click();
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'2');
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),true,'Setting screens must not scroll');
    assert.equal(await page.locator('[data-partner-choice]').count(),3,'All three date-sim character cards must render');
    const card=page.locator('[data-partner-choice="'+variant.partner+'"]');
    await card.click();
@@ -50,7 +51,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      assert((await page.locator('#'+id).getAttribute('src')).startsWith('data:image/svg+xml'),'SD setup art must be bundled');
    }
    const count=await page.locator('#profileForm input,#profileForm select').count();
-   assert.equal(count,6,'Character form must contain exactly 6 fields');
+   assert.equal(count,5,'Character form must contain exactly 5 fields without age');
    await page.locator('#partner').selectOption(variant.partner);
    await page.locator('#setupNext').click();
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'3');
@@ -67,6 +68,8 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    const stage=await page.locator('#novelCard').boundingBox();
    assert(stage&&stage.height<=variant.height+1,'VN must fit within viewport');
    assert.equal(await page.locator('#vnMore').isVisible(),true,'Dialogue paging button must be visible');
+   await page.waitForTimeout(100);
+   assert.equal(await page.locator('#chapterText').evaluate(e=>e.closest('.vn-dialogue').scrollHeight<=e.closest('.vn-dialogue').clientHeight+3),true,'Dialogue must fit without inner scrolling');
    assert.equal(await page.locator('#choiceSection').isVisible(),false,'Choices should appear after reading dialogue');
    // UI v2 controls: accessible, functional and entirely temporary.
    assert.equal(await page.locator('.diary-toolbar button').count(),3,'Auto, skip and log must be available');
