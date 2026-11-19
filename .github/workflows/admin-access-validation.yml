@@ -13,6 +13,7 @@ on:
       - 'teacher-volleyball.html'
       - 'supabase/migrations/20261120_admin_access_mfa_audit.sql'
       - 'scripts/test-admin-access.cjs'
+      - 'scripts/test-admin-access-live.cjs'
       - '.github/workflows/admin-access-validation.yml'
   push:
     branches:
@@ -27,3 +28,5 @@ jobs:
           node-version: '22'
       - name: Verify admin access is isolated and TOTP is mandatory
         run: node scripts/test-admin-access.cjs
+      - name: Live unauthenticated API, RLS and method smoke
+        run: node scripts/test-admin-access-live.cjs
