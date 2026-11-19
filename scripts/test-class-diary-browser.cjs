@@ -68,6 +68,11 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#vnSound').click(); // in-scene sound control delegates to hidden settings button
    assert.equal(await page.locator('#musicBtn').getAttribute('aria-pressed'),'false');
    assert((await page.locator('#sceneBackdrop').evaluate(x=>x.style.backgroundImage)).includes('data:image/svg+xml'));
+   // Only the scenery may be visible during actual play; the cast remains selectable in setup.
+   assert.equal(await page.locator('#sceneBackdrop').isVisible(),true,'Scenery must remain visible');
+   for(const id of ['scenePortrait','sceneHyunwooLive','sceneGuest','sceneDoyun']){
+     assert.equal(await page.locator('#'+id).isVisible(),false,'Playable stage must hide character artwork: '+id);
+   }
    const portraitSrc=await page.locator('#scenePortrait').getAttribute('src');
    assert(portraitSrc.startsWith(variant.partner==='man'?'data:image/svg+xml':'data:image/webp;base64,'),'Portrait must match chosen cast style');
    if(variant.partner!=='man')assert.equal(await page.locator('#scenePortrait').getAttribute('data-art-quality'),'hq');
@@ -214,6 +219,10 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
   await semesterPage.screenshot({path:'artifacts/class-diary/semester-literary-first-scene.png',fullPage:true});
   assert.equal(await semesterPage.locator('.diary-day-progress span').count(),6,'Full semester must use six-part progress, not seven-day timeline');
   assert.equal(await semesterPage.locator('#diarySemesterMeta').isVisible(),true,'Season and act status must be visible in game');
+  assert.equal(await semesterPage.locator('#sceneBackdrop').isVisible(),true,'Semester scenery must remain visible');
+  for(const id of ['scenePortrait','sceneHyunwooLive','sceneGuest','sceneDoyun']){
+    assert.equal(await semesterPage.locator('#'+id).isVisible(),false,'Semester stage must hide character artwork: '+id);
+  }
   assert((await semesterPage.locator('#diarySemesterMeta').innerText()).includes('3월'),'March season marker missing');
   const gameFrame=await semesterPage.locator('#novelCard').boundingBox();
   assert(gameFrame && gameFrame.height<=844+1,'36-episode novel should remain one mobile viewport');
