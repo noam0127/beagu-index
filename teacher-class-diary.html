@@ -33,9 +33,9 @@ footer{font-size:13px;color:#738598}
 <body>
 <main>
 <header><a class="brand" href="index.html">B · BAEGUINDEX</a><a href="search-lv2.html">레벨2 인증</a></header>
-<div class="badge">1단계 · 학교 세계 생성기 시범</div>
+<div class="badge">1·2단계 · 학교 세계 미리보기</div>
 <h1>나의 OO한 학급일지</h1>
-<p class="muted">학교마다 다른 일주일이 시작될 준비를 합니다. 이 화면은 현재 학교별 공식정보를 검증하는 개발용 미리보기이며, 이야기·관계·게임 기록은 아직 제공하지 않습니다.</p>
+<p class="muted">학교마다 다른 일주일이 시작될 준비를 합니다. 이 화면에서는 학교 세계와 조사 기반 장면 소재를 검증할 수 있습니다. 실제 소설 플레이는 학교를 선택한 뒤 시작할 수 있습니다.</p>
 <section class="panel">
 <label for="search">플레이할 학교 찾아보기</label>
 <input id="search" type="search" placeholder="학교명을 두 글자 이상 입력하세요" autocomplete="off" maxlength="30">
@@ -44,6 +44,7 @@ footer{font-size:13px;color:#738598}
 </section>
 <div id="world" hidden>
 <section class="panel"><h2 id="schoolName"></h2><p id="identity" class="muted"></p><div id="tags" class="chips"></div><p id="eligibility"></p></section>
+<section class="panel"><a id="playLink" class="chip" href="teacher-class-diary-play.html" hidden style="text-decoration:none;display:inline-block;padding:12px 16px;font-weight:800">나의 OO한 학급일지 · 게임 시작</a></section>
 <section class="panel"><h2>확인된 학교 정보</h2><dl id="facts"></dl></section>
 <section class="panel"><h2>이야기의 재료</h2><p class="muted">아래 항목은 아직 소설 본문이 아닙니다. 실제 장면으로 발전시키기 위한 조건입니다.</p><ol id="hooks" class="hooks"></ol></section>
 <section class="panel" id="storyPanel" hidden><h2>일주일의 이야기 · 2단계 미리보기</h2><p class="muted">2027년 3월 8~14일을 배경으로 한 소설 장면의 씨앗입니다. 과거 설문 결과를 참고하더라도 실제 학교에서 벌어진 사건이나 발언을 뜻하지 않습니다.</p><p id="storyCoverage"></p><ol class="hooks" id="storyScenes"></ol></section>
@@ -66,6 +67,8 @@ function status(text){$('status').textContent=text}
 function render(world){
   $('world').hidden=false;
   $('storyPanel').hidden=true;
+  $('playLink').hidden=!world.eligible;
+  $('playLink').href='teacher-class-diary-play.html?schoolId='+encodeURIComponent(world.basic.id);
   $('schoolName').textContent=world.basic.name;
   $('identity').textContent=[world.basic.sido,world.basic.office,world.basic.address].filter(Boolean).join(' · ');
   $('tags').replaceChildren();
@@ -158,7 +161,7 @@ async function choose(record,ticket){
 }
 async function search(){
   const q=$('search').value.trim();const ticket=++serial;
-  $('world').hidden=true;$('results').replaceChildren();
+  $('world').hidden=true;$('playLink').hidden=true;$('results').replaceChildren();
   if(q.length<2){status('학교명을 두 글자 이상 입력하세요.');return}
   status('학교 검색 중…');
   try{
