@@ -45,7 +45,11 @@ assert(!play.src.includes('레벨2 임시 승인'),'Guest must not be misreprese
 assert(play.src.includes('id="playerName"'));
 const setupSection=play.src.split('<form id="profileForm">')[1].split('</form>')[0];
 const formInputs=[...setupSection.matchAll(/\<(?:input|select)\b[^>]*\bid="([^"]+)"/g)].map(x=>x[1]);
-assert.deepEqual(formInputs,['playerName','age','experience','gender','mbti','partner'],'Exactly 6 setup fields');
+assert.deepEqual(formInputs,['playerName','experience','gender','mbti','partner'],'Exactly 5 setup fields, without age');
+assert(!play.ids.has('age'),'No player age input');
+assert(play.src.includes('guestIntroTimer=setTimeout('),'Guest intro must advance after the cinematic');
+assert(play.src.includes('},5000)'),'Guest cinematic must last approximately five seconds');
+assert(play.src.includes('function vnFitPage('),'Overflowing dialogue must be repaginated');
 assert(play.src.includes('class="panel vn-setup"'),'Dating-sim setup should replace plain form');
 for(const id of ['setupPlayerPreview','setupPortraitWoman','setupPortraitMan','setupPortraitNone','partnerDescription']){
  assert(play.ids.has(id),'Setup portrait/preview missing: '+id);
