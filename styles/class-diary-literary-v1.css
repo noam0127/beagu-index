@@ -87,3 +87,261 @@ body.is-playing.is-semester-mode #novelCard[data-season="july"] #sceneBackdrop{f
 @media(prefers-reduced-motion:reduce){
  .diary-literary-char{opacity:1!important;filter:none!important;animation:none!important}
 }
+
+
+/* Mobile legibility & in-frame literary page-turn, 2026-11-20 */
+body.is-playing.is-semester-mode #vnBottom{
+ box-sizing:border-box;
+ overflow:hidden;
+ min-width:0;
+ border:1px solid rgba(252,233,237,.30);
+ border-radius:22px;
+ padding:clamp(12px,1.7vw,23px);
+ background:linear-gradient(152deg,rgba(24,25,37,.73),rgba(15,18,31,.80) 72%,rgba(38,28,43,.83));
+ box-shadow:0 16px 44px rgba(7,8,20,.37),inset 0 1px 0 rgba(255,242,249,.12);
+ backdrop-filter:blur(10px) saturate(.86);
+ -webkit-backdrop-filter:blur(10px) saturate(.86);
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot{
+ min-width:0;max-width:100%;
+ overflow:hidden;
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome{
+ min-width:0;
+ width:100%;
+ max-width:100%;
+ box-sizing:border-box;
+ padding:clamp(5px,1vw,13px) clamp(4px,1vw,12px)!important;
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose,
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose p,
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .diary-literary-text{
+ max-width:100%;
+ min-width:0;
+ box-sizing:border-box;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ word-break:keep-all;
+ color:#fff9f3!important;
+ text-shadow:0 2px 5px rgba(5,7,18,.90)!important;
+}
+body.is-playing.is-semester-mode .diary-literary-echo{
+ color:#f1dae1!important;
+ opacity:.78;
+ max-width:100%;
+ overflow-wrap:anywhere;
+ text-shadow:0 2px 6px #070818e8;
+}
+body.is-playing.is-semester-mode #novelCard .vn-bottom .vn-control-row{
+ width:100%;
+ max-width:100%;
+ min-width:0;
+ box-sizing:border-box;
+ flex:none;
+ justify-content:flex-end;
+ flex-wrap:nowrap;
+ padding:10px 4px 2px;
+ gap:8px;
+ border-top:1px solid rgba(255,231,237,.22);
+}
+body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar{
+ display:flex;
+ flex:0 1 auto;
+ min-width:0;
+ margin-right:auto;
+ gap:5px;
+}
+body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar button{
+ flex:none;
+ box-sizing:border-box;
+ border:1px solid rgba(255,238,243,.36);
+ background:rgba(32,27,45,.54);
+ color:#fdf1f3;
+ border-radius:11px;
+}
+body.is-playing.is-semester-mode #novelCard #vnMore,
+body.is-playing.is-semester-mode #novelCard #nextBtn{
+ box-sizing:border-box;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:9px;
+ flex:0 0 102px!important;
+ width:102px!important;
+ min-width:102px!important;
+ max-width:102px!important;
+ height:49px!important;
+ min-height:49px!important;
+ padding:0 13px!important;
+ border:1px solid rgba(255,231,233,.72)!important;
+ border-radius:999px!important;
+ background:linear-gradient(125deg,#b987a1,#92637f 66%,#714c71)!important;
+ color:#fff9fa!important;
+ box-shadow:0 6px 19px rgba(22,11,36,.40),inset 0 1px 0 #ffffff55!important;
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;
+ font-weight:700;
+ font-size:15px;
+ line-height:1;
+ letter-spacing:.02em;
+ overflow:hidden;
+ white-space:nowrap;
+ touch-action:manipulation;
+ transition:transform .18s ease,filter .18s ease,box-shadow .18s ease;
+}
+body.is-playing.is-semester-mode #novelCard #vnMore::before{
+ content:"다음";
+ display:block;
+ flex:none;
+}
+body.is-playing.is-semester-mode #novelCard #nextBtn::before{
+ content:"다음 장면";
+ display:block;
+ font-size:12px;
+ flex:none;
+}
+body.is-playing.is-semester-mode #novelCard #vnMore .vn-arrow-mark{
+ flex:none;
+ width:19px;height:19px;
+ transform:rotate(-90deg);
+ animation:diary-bookmark-arrow 1.8s ease-in-out infinite;
+}
+body.is-playing.is-semester-mode #novelCard #nextBtn .vn-arrow-mark{
+ flex:none;width:16px;height:16px;
+ animation:diary-next-breath 1.8s ease-in-out infinite;
+}
+@keyframes diary-bookmark-arrow{
+ 0%,100%{transform:translateX(0) rotate(-90deg);opacity:.78}
+ 50%{transform:translateX(4px) rotate(-90deg);opacity:1}
+}
+@keyframes diary-next-breath{
+ 0%,100%{transform:translateX(0);opacity:.78}
+ 50%{transform:translateX(4px);opacity:1}
+}
+body.is-playing.is-semester-mode #novelCard #vnMore:hover,
+body.is-playing.is-semester-mode #novelCard #nextBtn:hover{
+ transform:translateY(-2px);
+ filter:brightness(1.08);
+}
+body.is-playing.is-semester-mode #novelCard #vnMore:focus-visible,
+body.is-playing.is-semester-mode #novelCard #nextBtn:focus-visible{
+ outline:3px solid #f7e0e8;
+ outline-offset:3px;
+}
+body.is-playing.is-semester-mode #novelCard #vnMore[hidden],
+body.is-playing.is-semester-mode #novelCard #nextBtn[hidden]{
+ display:none!important;
+}
+body.is-playing.is-semester-mode #novelCard #vnBottom>.actions{
+ box-sizing:border-box;
+ display:flex;
+ justify-content:flex-end;
+ width:100%;
+ max-width:100%;
+ padding:0 4px 2px;
+ gap:0;
+ margin:0;
+}
+body.is-playing.is-semester-mode #novelCard #vnBottom>.actions #nextBtn{
+ flex-basis:115px!important;
+ width:115px!important;
+ min-width:115px!important;
+ max-width:115px!important;
+}
+@media(max-width:620px){
+ body.is-playing.is-semester-mode #vnBottom{
+  left:clamp(12px,4vw,20px)!important;
+  right:clamp(12px,4vw,20px)!important;
+  width:auto!important;
+  top:30%;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 25px)!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:12px 11px 11px;
+  border-radius:18px;
+ }
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .vn-dialogue,
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome{
+  padding:4px 5px 7px!important;
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .vn-control-row{
+  min-height:54px;
+  padding:9px 2px 0;
+  gap:5px;
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar{
+  gap:4px;
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar button{
+  width:36px;min-width:36px;height:40px;
+  border-radius:9px;
+ }
+ body.is-playing.is-semester-mode #novelCard #vnMore{
+  flex-basis:94px!important;
+  width:94px!important;
+  min-width:94px!important;
+  max-width:94px!important;
+  height:45px!important;
+  min-height:45px!important;
+  padding:0 10px!important;
+  font-size:14px;
+ }
+ body.is-playing.is-semester-mode #novelCard #vnBottom>.actions #nextBtn{
+  min-height:44px!important;
+  height:44px!important;
+ }
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose,
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome .prose{
+  font-size:clamp(16px,4.05vw,19px)!important;
+  line-height:1.67!important;
+ }
+ body.is-playing.is-semester-mode .diary-literary-echo{
+  font-size:clamp(13px,3.4vw,16px);
+  line-height:1.48;
+ }
+}
+@media(max-width:360px){
+ body.is-playing.is-semester-mode #vnBottom{
+  left:10px!important;
+  right:10px!important;
+  padding:10px 8px 10px;
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar button{
+  min-width:31px;width:31px;height:37px;font-size:8px;
+ }
+ body.is-playing.is-semester-mode #novelCard #vnMore{
+  flex-basis:88px!important;
+  width:88px!important;
+  min-width:88px!important;
+  max-width:88px!important;
+ }
+}
+@media(max-height:560px) and (orientation:landscape){
+ body.is-playing.is-semester-mode #vnBottom{
+  top:26%;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 10px)!important;
+  padding:8px 12px;
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .vn-control-row{
+  padding-top:4px;min-height:37px;
+ }
+ body.is-playing.is-semester-mode #novelCard #vnMore{
+  height:36px!important;
+  min-height:36px!important;
+ }
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose{
+  font-size:clamp(13px,2vw,17px)!important;
+  line-height:1.45!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing.is-semester-mode #novelCard #vnMore .vn-arrow-mark,
+ body.is-playing.is-semester-mode #novelCard #nextBtn .vn-arrow-mark{
+  animation:none!important;
+ }
+ body.is-playing.is-semester-mode #novelCard #vnMore,
+ body.is-playing.is-semester-mode #novelCard #nextBtn{
+  transition:none!important;
+ }
+}
+
