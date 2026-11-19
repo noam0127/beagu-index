@@ -35,6 +35,21 @@ assert.equal(scope.questionScore(1,'④ 그렇다'),75);
 assert.equal(scope.questionScore(2,'① 전혀 그렇지 않다'),100);
 assert.equal(scope.questionScore(12,'① 운영하지 않는다'),100);
 assert.equal(scope.questionScore(13,'① 그런 일이 없다'),100);
+// Other/write-in responses must not abort valid school aggregates.
+// The review queue stores only source row pointers; free text stays private in the original.
+const reviewRows=[];
+assert.equal(scope.beagu26ScoreOrReview(12,'부장은 1회 근무한다.',81,'7331195',reviewRows),null);
+assert.equal(scope.beagu26ScoreOrReview(13,'학교별 자체 방식',82,'7331195',reviewRows),null);
+assert.equal(scope.beagu26ScoreOrReview(1,'④ 그렇다',83,'7331195',reviewRows),75);
+assert.equal(scope.beagu26ScoreOrReview(2,'미등록 응답',84,'7331195',reviewRows),null);
+assert.equal(reviewRows.length,3);
+assert.deepEqual(JSON.parse(JSON.stringify(reviewRows[0])),[
+  81,'7331195','Q12','OTHER_OR_UNKNOWN',
+  '원본 시트의 해당 행·문항을 확인하고 코드북을 검수','PENDING_REVIEW'
+]);
+assert.ok(!JSON.stringify(reviewRows).includes('부장은'));
+assert.ok(!JSON.stringify(reviewRows).includes('학교별 자체 방식'));
+assert.match(js,/2026_기타응답_검수대기/);
 assert.match(js,/newTrigger\("onBeagu2026FormSubmitted"\)|newTrigger\(name\)\.forSpreadsheet/);
 assert.match(js,/newTrigger\("refreshBeagu2026AllPrivateStats"\)/);
 assert.match(js,/refreshBeagu2026AllPrivateStats\(\);/);
