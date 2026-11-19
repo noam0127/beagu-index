@@ -64,13 +64,13 @@ function onBeagu2026FormSubmitted(event) {
   if(!event||!event.range||event.range.getSheet().getName()!==BEAGU26.sourceTab)return;
   // Idempotently recompute both private summaries (Q01-Q13 and Q14-Q17).
   // A submitted response is never directly published as a school result.
-  // Non-blocking referral verification, only when Referral.gs is installed.
-  // A failure must never interrupt the existing Q01-Q17 aggregation pipeline.
+  // Preserve the original critical pipeline BEFORE any optional referral HTTP request.
+  refreshBeagu2026AllPrivateStats();
+  // Failures in the new referral bridge must not affect the completed Q01-Q17 aggregation.
   if(typeof beagu26ProcessReferral_==="function"){
     try { Logger.log("추천 확인: "+beagu26ProcessReferral_(event)); }
-    catch(_error){ Logger.log("추천 확인 미완료: 기존 설문 집계는 계속 진행합니다."); }
+    catch(_error){ Logger.log("추천 확인 미완료: 기존 설문 집계는 정상 종료되었습니다."); }
   }
-  refreshBeagu2026AllPrivateStats();
 }
 // Send ONLY a national total of official submission rows. No school IDs,
 // teacher responses, answer content, timestamps, or per-school counts leave
