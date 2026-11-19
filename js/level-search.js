@@ -152,7 +152,18 @@
     $('loginMessage').textContent = '인증 중...';
     const loginTask=window.BeaguLoading?.start('참여코드를 확인하는 중…');
     try {
-      const data = await api('login', {code});
+      const data = level === 2
+        ? await (async () => {
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/beagu-referral-v1`, {
+              method: 'POST', cache: 'no-store',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({action:'login',identityCode:code})
+            });
+            const payload = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error('개인 고유번호 인증이 준비되지 않았습니다.');
+            return payload;
+          })()
+        : await api('login', {code});
       if (data.level < level) {
         $('loginMessage').textContent = '이 등급에서 사용할 수 없는 참여코드입니다.';
         return;
