@@ -54,7 +54,8 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
     if(query.has('school_id'))return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
      school:{school_id:'A123456',school_name:'봄빛초등학교',region:'부산광역시',eligible:true,available_years:[2025]}
     })});
-    throw Error('Unexpected directory lookup');
+    // The home page also reads game leaderboards; stub those harmless GETs.
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({entries:[],top:[],leaderboard:[]})});
    });
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
    await page.goto(base+'/index.html',{waitUntil:'domcontentloaded'});
