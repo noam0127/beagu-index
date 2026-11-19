@@ -43,13 +43,31 @@ async function identity(req:Request,minLevel=2){
  // Readers may use Lv1 sessions without a bound identity, but writers must not
  // gain a new author persona on every login or regain like/report quotas.
  if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null};
- const seed=String(data.identity_visitor_id);
+ return {level:Number(data.access_level),id:await actorId(String(data.identity_visitor_id))};
+}
+// Derive an opaque stable UUID: author_uid is never included in public output.
+// Existing level sessions keep their original HMAC namespace and thus remain stable.
+async function actorId(seed:string){
  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(ROLE_KEY),
    {name:"HMAC",hash:"SHA-256"},false,["sign"]);
  const mac=new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode("postit:"+seed)));
  mac[6]=(mac[6]&15)|64;mac[8]=(mac[8]&63)|128;
  const h=Array.from(mac.slice(0,16),v=>v.toString(16).padStart(2,"0")).join("");
- return {level:Number(data.access_level),id:h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20,32)};
+ return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20,32);
+}
+// Canonical member identity: server-verified Supabase Auth user, not a visitor
+// UUID, an old shared level code, a displayed level, or a user-supplied ID.
+// The service-role-only RPC will be installed *after* the v3 account level
+// ledger is ready. Until then this branch always denies account writes.
+async function accountIdentity(req:Request,minLevel=2){
+ const raw=(req.headers.get("authorization")||"").trim();
+ const match=/^Bearer ([A-Za-z0-9_\-=]+\.[A-Za-z0-9_\-=]+\.[A-Za-z0-9_\-=]+)$/.exec(raw);
+ if(!match)return null;
+ const {data:{user},error:authError}=await db.auth.getUser(match[1]);
+ if(authError||!user?.id||!user.email_confirmed_at)return null;
+ const {data:level,error:levelError}=await db.rpc("beagu_postit_account_access_v1",{p_auth_user_id:user.id});
+ if(levelError||![0,1,2].includes(Number(level))||Number(level)<minLevel)return null;
+ return {level:Number(level),id:await actorId("auth-user:"+user.id)};
 }
 async function minimumLevel(){
  const {data,error}=await db.from("beagu_postit_settings").select("minimum_write_level,max_daily_posts,max_daily_comments").eq("id",1).single();
@@ -198,7 +216,7 @@ Deno.serve(async(req:Request)=>{
     if(schoolId)query=query.eq("school_id",schoolId);
     if(gameSlug)query=query.eq("game_slug",gameSlug);
     const {data,error}=await query;if(error)throw error;
-    const self=(await identity(req))?.id||null;
+    const self=(await accountIdentity(req,1))?.id||(await identity(req))?.id||null;
     let posts=await enrich(data||[],"post",self);
     if(sort==="popular")posts=posts.sort((a,b)=>b.likes-a.likes||b.created_at.localeCompare(a.created_at)).slice(0,30);
     return respond(req,{posts});
@@ -206,7 +224,7 @@ Deno.serve(async(req:Request)=>{
    if(action==="comments"){
     // A valid server-issued Lv1+ session is required to read any comment.
     // This check precedes even the post existence check to avoid disclosure.
-    const viewer=await identity(req,1);
+    const viewer=await accountIdentity(req,1)||await identity(req,1);
     if(!viewer)return fail(req,"COMMENT_READ_LEVEL_REQUIRED",403);
     const id=url.searchParams.get("post_id")||"";
     if(!UUID.test(id))return fail(req,"INVALID_POST");
@@ -220,9 +238,10 @@ Deno.serve(async(req:Request)=>{
    }
    return fail(req,"UNKNOWN_ACTION");
   }
-  // All mutations require an active server-issued Lv2 session.
-  const user=await identity(req);if(!user)return fail(req,"LEVEL_REQUIRED",403);
-  if(!user.id)return fail(req,"WRITER_IDENTITY_REQUIRED",403);
+  // Writes require a *verified* account with a live Lv2 grant; shared codes
+  // and visitor-bound sessions are read-only, even if they advertise Lv2.
+  const user=await accountIdentity(req,2);
+  if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403);
   const settings=await minimumLevel();
   if(user.level<Math.max(2,Number(settings.minimum_write_level)))
     return fail(req,"LEVEL_REQUIRED",403);

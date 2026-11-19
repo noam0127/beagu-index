@@ -93,14 +93,20 @@ assert.ok(!challengePaper.includes('user-select:none')&&!challengePaper.includes
  'Paper skin may not conceal code or block copying');
 
 const edge=read('supabase/functions/beagu-postit-api-v1/index.ts');
-assert.ok(edge.includes('const user=await identity(req)'), 'writes authenticated');
+assert.ok(edge.includes('const user=await accountIdentity(req,2)'), 'writes use verified Lv2 account only');
+assert.ok(!edge.includes('const user=await identity(req)'), 'legacy shared level session cannot write');
 assert.ok(!edge.includes('identity_visitor_id||hash'), 'session token hash must not become rotating writer identity');
 assert.ok(edge.includes('if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null}'),
  'Lv1 can read without identity but no actor UUID is synthesized');
-assert.ok(edge.includes('if(!user.id)return fail(req,"WRITER_IDENTITY_REQUIRED",403)'),
+assert.ok(edge.includes('if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403)'),
  'Lv2 writes fail closed until trusted permanent identity is bound');
 assert.ok(app.includes('WRITER_IDENTITY_REQUIRED'), 'client explains pending Lv2 account verification');
-assert.ok(edge.includes('const viewer=await identity(req,1)'), 'Lv1 verified server-side for comment reads');
+assert.ok(edge.includes('const viewer=await accountIdentity(req,1)||await identity(req,1)'), 'Lv1 member or legacy level session may read comments');
+assert.ok(edge.includes('db.auth.getUser(match[1])'), 'account JWT must be verified with Supabase Auth');
+assert.ok(edge.includes('!user.email_confirmed_at'), 'email not confirmed is denied');
+assert.ok(edge.includes('db.rpc("beagu_postit_account_access_v1"'), 'live account grant is checked by service-role RPC');
+assert.ok(edge.includes('await actorId("auth-user:"+user.id)'), 'stable opaque account writer identity');
+assert.ok(edge.includes('if(levelError||![0,1,2].includes(Number(level))'), 'missing RPC or invalid level fails closed');
 assert.ok(!/\bconst URL\s*=/.test(edge), 'global URL constructor must not be shadowed');
 assert.ok(edge.includes('const SUPABASE_URL = Deno.env.get('), 'Supabase URL configured separately');
 assert.ok(edge.includes('new URL(req.url)'), 'request URL parsing uses built-in constructor');
@@ -113,4 +119,15 @@ assert.ok(edge.includes('comparison_selection'), 'compare subject persisted');
 const migration=read('supabase/migrations/20261120_beagu_postit_school_conversations.sql');
 assert.ok(migration.includes('ENABLE ROW LEVEL SECURITY'),'RLS enabled');
 assert.ok(migration.includes('REVOKE ALL'),'direct browser access revoked');
+
+const accountBridgeSQL=read('supabase/migrations/20261120_beagu_postit_verified_account_bridge_v1.sql');
+assert.ok(accountBridgeSQL.includes('security invoker')&&accountBridgeSQL.includes("set search_path = ''"),
+ 'account-level RPC must use invoker permissions and a fixed search_path');
+assert.ok(accountBridgeSQL.includes('level1_verified_at is not null')&&accountBridgeSQL.includes('level2_upgraded_at is not null'),
+ 'account Lv2 eligibility must require a server-verified Lv1 and referral upgrade');
+assert.ok(accountBridgeSQL.includes('a.disabled is true or l.disabled is true'), 'revoked account or level is denied');
+assert.ok(accountBridgeSQL.includes('from PUBLIC, anon, authenticated')&&
+ accountBridgeSQL.includes('to service_role'), 'public users may not call account grant RPC');
+const accountContract=read('docs/postit-verified-account-bridge-20261120.md');
+assert.ok(accountContract.includes('운영 서비스/데이터베이스에는 새 계정 연동 기능을 출시하지 않는다')&&accountContract.includes('Lv0 계정 생성'),'rollout instructions documented');
 console.log('Post-it static validation passed.');
