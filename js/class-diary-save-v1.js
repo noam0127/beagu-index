@@ -20,7 +20,7 @@ function validSnapshot(p){
 }
 function mount(options){
  const {state,restore}=options;
- const context=()=>{const s=state();return {scope:s.isDemo?'demo':s.isGuest?'guest':'level2',schoolId:s.isGuest||s.isDemo?'fictional':s.schoolId||'',game:s.game,mode:s.mode,session:s.session||'',ticket:s.ticket||'',page:s.page||0}};
+ const context=()=>{const s=state();return {scope:s.isDemo?'demo':s.isGuest?'guest':'level2',schoolId:s.isGuest||s.isDemo?'fictional':s.schoolId||'',game:s.game,mode:s.mode,session:s.session||'',ticket:s.ticket||'',grant:s.grant||'',page:s.page||0}};
  const localKey=()=>{const c=context();return keyFor(c.scope,c.schoolId)};
  const read=()=>{try{const v=JSON.parse(localStorage.getItem(localKey())||'null');return v&&v.version===VERSION&&validSnapshot(v.snapshot)&&/^[0-9a-f]{64}$/.test(v.recoveryKey)?v:null}catch{return null}};
  const showMessage=(message)=>{const node=$('diarySaveStatus');if(node){node.textContent=message;node.hidden=false;}};
@@ -59,6 +59,7 @@ function mount(options){
   const c=context();const headers={'Content-Type':'application/json'};
   if(c.session)headers['X-Beagu-Session']=c.session;
   if(c.ticket)headers['X-Class-Diary-Guest-Ticket']=c.ticket;
+  if(c.grant)headers['X-Class-Diary-Save-Grant']=c.grant;
   const body={action,recoveryKey,...(snap?{scope:c.scope,schoolId:c.schoolId,snapshot:snap}:{})};
   const response=await fetch(API,{method:'POST',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',headers,body:JSON.stringify(body)});
   const data=await response.json().catch(()=>({}));
