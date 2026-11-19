@@ -381,6 +381,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
   <span class="diary-landing-eyebrow">프롤로그 · 첫 등교</span>
   <strong id="diaryLandingTitle">나의 OO한 학급일지</strong>
   <span class="diary-landing-verse">낯선 교실에 첫 발을 내딛던 날.<br>봄에서 여름까지, 하나의 이야기가 시작된다.</span>
+  <span class="diary-landing-meta">2027년 3월–7월 · 6부 36화 · 다섯 가지 결말</span>
   <span class="diary-landing-enter">첫 페이지 펼치기 <span aria-hidden="true">›</span></span>
  </button>
 </section>
@@ -467,7 +468,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
   <div class="form-grid">
    <div class="diary-school-field"><label for="diarySchoolName">실제 초등학교 <span class="setup-required">필수</span></label>
     <input id="diarySchoolName" type="text" inputmode="text" maxlength="30" autocomplete="off" placeholder="터치하여 실제 학교 검색·선택" required readonly aria-haspopup="dialog" aria-controls="diarySchoolSearchDialog" aria-describedby="diarySchoolSelected">
-    <input id="diarySchoolMode" type="hidden" value="demo">
+    <input id="diarySchoolMode" type="hidden" value="choose">
     <small id="diarySchoolSelected" class="field-note" role="status">실제로 존재하는 초등학교를 검색해 선택해 주세요.</small>
    </div>
   </div>
@@ -524,7 +525,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
   <div class="diary-school-search-heading"><h2 id="diarySchoolSearchTitle">학교 선택하기</h2><button id="diarySchoolSearchClose" type="button" aria-label="학교 검색 닫기">×</button></div>
   <label for="diarySchoolQuery">학교 이름</label><input id="diarySchoolQuery" type="search" placeholder="학교명을 두 글자 이상 입력하세요" maxlength="30" autocomplete="off">
   <div id="diarySchoolResults" class="diary-school-results" role="listbox" aria-label="학교 검색 결과"></div>
-  <p id="diarySchoolSearchMessage" role="status">실제 학교의 이야기는 레벨2 인증 후 이용할 수 있습니다.</p>
+  <p id="diarySchoolSearchMessage" role="status">실제 초등학교를 검색해 선택해 주세요.</p>
    <a id="diarySchoolSurveyLink" class="diary-school-auth" href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer" hidden>2026 배구지수 설문 참여하기</a>
   
  </div>
@@ -537,7 +538,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 </div>
 <div class="setup-step-actions"><button id="setupBack" type="button" class="secondary" hidden>← 학교 선택</button><button id="setupNext" type="button" class="primary">동료 만나기 →</button></div>
 <div class="setup-end">
- <p id="worldAutoNote" class="muted">공개·검증된 과거 학교 자료를 이야기의 배경으로 활용합니다. 실제 교직원이나 개인 업무를 특정하지 않습니다.</p>
+ <p id="worldAutoNote" class="muted">학교명·지역·공개된 과거 조사연도만 확인해 배경 정보로 활용합니다. 인물·관계·사건은 모두 허구입니다.</p>
  <p class="privacy">등장인물과 사건은 허구이며, 실제 교직원이나 학생의 언행을 재현하지 않습니다. 확인된 과거 공개 정보 일부만 배경에 참고합니다.</p>
  <div class="actions"><button type="submit" class="primary setup-begin">첫날 열기 <span aria-hidden="true">›</span></button></div>
 </div>
