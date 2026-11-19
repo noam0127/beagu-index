@@ -100,7 +100,9 @@ function sceneTrack(event){
 const CUES=Object.freeze({
  hover:[540,570,.035,.04], choice:[550,740,.10,.16],
  advance:[415,510,.07,.08], affection:[590,880,.19,.24],
- tension:[310,260,.20,.17], transition:[465,615,.12,.12]
+ tension:[310,260,.20,.17], transition:[465,615,.12,.12],
+ uiTap:[490,570,.055,.06], uiPick:[510,740,.12,.13],
+ uiStart:[390,900,.24,.18], uiEnd:[630,860,.20,.15]
 });
 function note(kind){
  if(!fxEnabled||sfxVolume<=0||!ContextAPI||!CUES[kind])return;
