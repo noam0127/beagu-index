@@ -8,6 +8,10 @@ on:
       - 'scripts/test-class-diary-narrative.cjs'
       - 'js/class-diary-play-v1.js'
       - 'js/class-diary-semester-v1.js'
+      - 'js/class-diary-progress-v1.js'
+      - 'scripts/test-class-diary-progress.cjs'
+      - 'supabase/functions/class-diary-progress-v1/index.ts'
+      - 'supabase/functions/class-diary-guest-access-v1/index.ts'
       - 'js/class-diary-semester-ui-v1.js'
       - 'js/class-diary-ui-v2.js'
       - 'styles/class-diary-semester-ui-v1.css'
@@ -65,6 +69,7 @@ jobs:
           node scripts/test-class-diary-narrative.cjs
           node scripts/test-class-diary-play.cjs
           node scripts/test-class-diary-semester.cjs
+          node scripts/test-class-diary-progress.cjs
           node scripts/test-class-diary-semester-ui.cjs
           node scripts/test-class-diary-director.cjs
           node scripts/test-class-diary-character-routes.cjs
