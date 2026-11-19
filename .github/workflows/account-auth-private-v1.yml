@@ -1,0 +1,26 @@
+name: Private Account/Auth V1 (not deployed)
+on:
+  push:
+    branches:
+      - feature/lv2-referral-phase1-20261119
+    paths:
+      - 'supabase/migrations/20261119_account_auth_private_v1.sql'
+      - 'supabase/functions/beagu-account-v1/**'
+      - 'js/beagu-account-client-v1.js'
+      - 'js/beagu-account-confirm-cleanup-v1.js'
+      - 'account-email-confirmed.html'
+      - 'tests/account-auth-private-v1.mjs'
+      - '.github/workflows/account-auth-private-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  account-auth-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tests/account-auth-private-v1.mjs
