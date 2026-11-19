@@ -422,12 +422,11 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
   <div class="setup-player-stamp"><span class="setup-stamp-mark" aria-hidden="true">✎</span><div><span>MY STORY</span><strong id="setupPlayerPreview">이름을 입력해 주세요</strong><small>나만의 학급일지 · 7일</small></div></div>
   <div class="form-grid">
    <div><label for="playerName">이름 <span class="setup-required">필수</span></label><input id="playerName" name="playerName" type="text" minlength="2" maxlength="8" pattern="[가-힣]{2,8}" placeholder="예: 루다" autocomplete="off" required><div class="field-note">한글 2~8자 · 주인공의 호칭에 반영됩니다.</div></div>
-   <div><label for="age">나이</label><input id="age" type="number" min="20" max="75" step="1" placeholder="예: 32" required></div>
    <div><label for="experience">교직 경력</label><select id="experience" required><option value="">선택하세요</option><option value="new">저경력</option><option value="mid">중간경력</option><option value="senior">고경력</option></select></div>
    <div><label for="gender">성별</label><select id="gender" required><option value="">선택하세요</option><option value="woman">여성</option><option value="man">남성</option><option value="undisclosed">밝히지 않음</option></select></div>
    <div><label for="mbti">MBTI</label><select id="mbti" required><option value="">선택하세요</option></select></div>
   </div>
-  <p class="setup-micro">성별·나이·MBTI에 따른 능력이나 점수 차별은 없습니다.</p>
+  <p class="setup-micro">성별·MBTI에 따른 능력이나 점수 차별은 없습니다.</p>
  </div>
  <div class="setup-cast" data-setup-screen="2">
   <div class="setup-section-title"><span class="setup-number">02</span><div><strong>함께할 동료</strong><small>관계에 따라 서로 다른 이야기가 펼쳐집니다.</small></div></div>
@@ -580,7 +579,7 @@ const malePhotos=window.BeaguClassDiaryMalePhotos;
 if(!malePhotos||typeof malePhotos.paint!=="function")throw Error("MALE_PHOTOS_MODULE_REQUIRED");
 const journey=window.BeaguClassDiaryJourney.init({show,sound});
 
-/* In-memory visual setup only: six original inputs remain authoritative. */
+/* In-memory visual setup only: five original inputs remain authoritative. */
 const setupDescription=Object.freeze({
  woman:'서지윤 · 30세 · 3학년 담임. 먼저 귀 기울이고 자신의 생각은 분명하게 말합니다. 관계가 가까워지면 조심스러운 호감으로 이어질 수 있습니다.',
  man:'한현우 · 32세 · 3학년 담임. 농담으로 긴장을 풀어 주지만 중요한 순간에는 진심을 전합니다. 서로의 시간을 존중하며 가까워질 수 있습니다.',
@@ -610,7 +609,7 @@ for(const card of document.querySelectorAll('[data-partner-choice]')){
 }
 $('partner').addEventListener('change',()=>{syncSetupPartner();sound.note('uiPick')});
 $('playerName').addEventListener('input',syncSetupName);
-for(const id of ['age','experience','gender','mbti']){
+for(const id of ['experience','gender','mbti']){
  $(id).addEventListener('change',()=>sound.note('uiTap'));
 }
 syncSetupPartner();syncSetupName();
@@ -1025,12 +1024,12 @@ $('profileForm').addEventListener('submit',e=>{
   if(!soundPreferenceTouched)sound.setEnabled(true);updateMusicButton();sound.setMusicVolume(Number($('musicVolume').value)/100);
   game=engine.createGame(world,plan,engine.inferredProfile(world,{
    name:$('playerName').value,
-   age:Number($('age').value),experience:$('experience').value,
+   experience:$('experience').value,
    gender:$('gender').value,mbti:$('mbti').value,partner:$('partner').value
   },plan));
   sound.note('uiStart');
   render();
- }catch(err){status('이름·나이를 입력하고 교직 경력·성별·MBTI·동료를 선택해 주세요.');}
+ }catch(err){status('이름을 입력하고 교직 경력·성별·MBTI·동료를 선택해 주세요.');}
 });
 $('nextBtn').addEventListener('click',()=>{
  sound.note('pageTurn');
