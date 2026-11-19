@@ -414,6 +414,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <section id="notice" class="panel" hidden>
 <h2>이야기를 시작할 수 없습니다</h2>
 <p id="noticeText" class="muted"></p>
+<a id="diarySchoolSurveyNotice" href="https://forms.gle/TPyCakK6Sj2zchRy7" class="secondary" target="_blank" rel="noopener noreferrer" hidden>2026 배구지수 설문 참여하기</a>
 <div class="actions"><a class="primary" href="teacher-class-diary.html" style="text-decoration:none">학교 다시 선택</a><a class="secondary" href="search-lv2.html" style="text-decoration:none">레벨2 인증</a></div>
 </section>
 <section id="guestAccess" class="panel diary-guest-access" hidden aria-labelledby="guestTitle">
@@ -475,15 +476,15 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
  <div class="setup-cast" data-setup-screen="2">
   <div class="setup-section-title"><span class="setup-number">02</span><div><strong>함께할 동료</strong><small>관계에 따라 서로 다른 이야기가 펼쳐집니다.</small></div></div>
   <div class="setup-portrait-grid" role="group" aria-label="동료 캐릭터 선택">
-   <button class="setup-character" type="button" data-partner-choice="woman" aria-pressed="false">
+   <button class="setup-character" type="button" data-partner-choice="woman" aria-pressed="false" aria-label="서지윤 선택">
     <span class="setup-character-art jiyoon"><img id="setupPortraitWoman" alt="" aria-hidden="true"></span>
     <span class="setup-character-name">서지윤</span><span class="setup-character-tag">천천히 가까워지는 호감</span>
    </button>
-   <button class="setup-character" type="button" data-partner-choice="man" aria-pressed="false">
+   <button class="setup-character" type="button" data-partner-choice="man" aria-pressed="false" aria-label="한현우 선택">
     <span class="setup-character-art hyunwoo"><img id="setupPortraitMan" alt="" aria-hidden="true"><span class="setup-hyunwoo-live" id="setupHyunwooLive" hidden aria-hidden="true"></span></span>
     <span class="setup-character-name">한현우</span><span class="setup-character-tag">농담 뒤의 진심</span>
    </button>
-   <button class="setup-character" type="button" data-partner-choice="none" aria-pressed="false">
+   <button class="setup-character" type="button" data-partner-choice="none" aria-pressed="false" aria-label="윤민서 선택">
     <span class="setup-character-art minseo"><img id="setupPortraitNone" alt="" aria-hidden="true"></span>
     <span class="setup-character-name">윤민서</span><span class="setup-character-tag">깊어지는 우정</span>
    </button>
@@ -505,9 +506,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
     </div>
     <p class="setup-supporting-note">모두 가상의 성인 인물로, 추가 연애 경로는 없습니다.</p>
    </div>
-  <label class="setup-partner-label" for="partner">동료 선택 <small>함께할 인물의 그림을 터치하세요</small></label>
-  <select id="partner" required><option value="">동료를 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
-  <p id="partnerDescription" class="setup-character-description" aria-live="polite">함께할 인물을 고르면 이곳에 소개가 나타납니다.</p>
+  <select id="partner" required hidden aria-hidden="true" tabindex="-1"><option value="">동료를 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
   <div class="setup-story-note"><span aria-hidden="true">✧</span><p>2027년 3월 8일–14일 · 7일의 이야기<br><small>21개의 기본 선택과 학교생활 속 다양한 사건</small></p></div>
  </div>
 </div>
@@ -517,6 +516,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
   <label for="diarySchoolQuery">학교 이름</label><input id="diarySchoolQuery" type="search" placeholder="학교명을 두 글자 이상 입력하세요" maxlength="30" autocomplete="off">
   <div id="diarySchoolResults" class="diary-school-results" role="listbox" aria-label="학교 검색 결과"></div>
   <p id="diarySchoolSearchMessage" role="status">실제 학교의 이야기는 레벨2 인증 후 이용할 수 있습니다.</p>
+   <a id="diarySchoolSurveyLink" class="diary-school-auth" href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer" hidden>2026 배구지수 설문 참여하기</a>
   <a class="diary-school-auth" href="search-lv2.html">레벨2 인증하기</a>
  </div>
 </div>
@@ -530,7 +530,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <div class="setup-end">
  <p id="worldAutoNote" class="muted">공개·검증된 과거 학교 자료를 이야기의 배경으로 활용합니다. 실제 교직원이나 개인 업무를 특정하지 않습니다.</p>
  <p class="privacy">모든 인물·관계·사건은 허구입니다. 주인공 설정·선택·진행·결말은 저장되지 않으며 새로고침하면 사라집니다.</p>
- <div class="actions"><button type="submit" class="primary setup-begin">첫날 열기 <span aria-hidden="true">›</span></button><a class="linklike" href="teacher-class-diary.html">학교 변경</a></div>
+ <div class="actions"><button type="submit" class="primary setup-begin">첫날 열기 <span aria-hidden="true">›</span></button></div>
 </div>
 </form>
 </section>
@@ -667,12 +667,15 @@ const setupDescription=Object.freeze({
 function syncSetupPartner(){
  const partner=$('partner').value;
  for(const card of document.querySelectorAll('[data-partner-choice]'))card.setAttribute('aria-pressed',String(card.dataset.partnerChoice===partner));
- $('partnerDescription').textContent=setupDescription[partner]||'함께할 인물을 고르면 이곳에 소개가 나타납니다.';
 }
 function syncSetupName(){
  const name=$('playerName').value.trim();
  $('setupPlayerPreview').textContent=name?name+' 선생님':'이름을 입력해 주세요';
 }
+/* Uniform headshots for colleague selection; gameplay art unchanged. */
+const setupPortraitSprite=new Image();
+setupPortraitSprite.onload=()=>{$('setup').classList.add('has-unified-portraits');};
+setupPortraitSprite.src='assets/class-diary/characters/setup-colleagues-20261120.webp';
 for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','man'],['setupPortraitNone','none']]){
  const art=femaleHQ&&femaleHQ.portrait(partner);
  $(id).src=art||visual.dataUrl(sd.portraitSvg(partner,'neutral'));
@@ -733,6 +736,7 @@ function closeSchoolSearch(){
  $('diarySchoolMode').focus();
 }
 function showSchoolSearch(){
+ $('diarySchoolSurveyLink').hidden=true;
  $('diarySchoolSearchDialog').hidden=false;
  $('diarySchoolResults').replaceChildren();
  $('diarySchoolQuery').value='';
@@ -756,6 +760,7 @@ $('diarySchoolSearchDialog').addEventListener('keydown',event=>{
  if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeSchoolSearch();}
 });
 async function searchDiarySchools(query,serial){
+ $('diarySchoolSurveyLink').hidden=true;
  const results=$('diarySchoolResults');
  results.replaceChildren();
  if(query.length<2){$('diarySchoolSearchMessage').textContent='학교명을 두 글자 이상 입력하세요.';return;}
@@ -771,12 +776,28 @@ async function searchDiarySchools(query,serial){
    if(!/^[A-Z0-9]{7}$/.test(String(record.school_id||'')))continue;
    const button=el('button',String(record.school_name||'학교')+' · '+String(record.sido_standard||''));
    button.type='button';button.className='diary-school-result';button.setAttribute('role','option');
-   button.addEventListener('click',()=>{
-    if(!/^[0-9a-f]{64}$/.test(token)){
-     $('diarySchoolSearchMessage').textContent='실제 학교 플레이에는 레벨2 인증이 필요합니다. 아래 인증 링크를 이용하세요.';
-     return;
-    }
-    location.assign('teacher-class-diary-play.html?schoolId='+encodeURIComponent(record.school_id));
+   button.addEventListener('click',async()=>{
+    button.disabled=true;
+    $('diarySchoolSurveyLink').hidden=true;
+    $('diarySchoolSearchMessage').textContent='공개된 조사 결과를 확인하고 있습니다.';
+    try{
+     const response=await fetch(API+'arcade-leaderboard?school_id='+encodeURIComponent(record.school_id),{cache:'no-store'});
+     if(!response.ok)throw Error('SCHOOL_STATUS_UNAVAILABLE');
+     const data=await response.json(),school=data.school;
+     if(!school||school.school_id!==record.school_id)throw Error('SCHOOL_NOT_FOUND');
+     const years=Array.isArray(school.available_years)?school.available_years.filter(y=>Number.isInteger(y)&&y>=2023&&y<=2026):[];
+     if(school.eligible!==true||!years.length){
+      $('diarySchoolSearchMessage').textContent='이 학교에는 공개된 배구지수 설문 결과가 없습니다. 아래 설문에 참여해 주세요. 참여 후 집계·검수·공개 전까지는 입장이 제한됩니다.';
+      $('diarySchoolSurveyLink').hidden=false;
+      return;
+     }
+     if(!/^[0-9a-f]{64}$/.test(token)){
+      $('diarySchoolSearchMessage').textContent='공개 조사 결과는 확인됐습니다. 실제 학교 플레이는 레벨2 인증이 필요합니다.';
+      return;
+     }
+     location.assign('teacher-class-diary-play.html?schoolId='+encodeURIComponent(record.school_id));
+    }catch(_){$('diarySchoolSearchMessage').textContent='학교 결과를 확인할 수 없습니다. 다시 선택해 주세요.';}
+    finally{button.disabled=false;}
    });
    results.append(button);shown++;
   }
@@ -801,15 +822,15 @@ $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$(
 let storyMode='week';
 function prepareGuestProfile(){
  // Fictional alias and neutral defaults: no profile fields after home verification.
- $('playerName').value='새봄';
+ $('playerName').value='';
  $('experience').value='mid';
  $('gender').value='undisclosed';
  $('mbti').value='INFP';
  syncSetupName();
  const stamp=$('setup').querySelector('.setup-player-stamp small');
- if(stamp)stamp.textContent='게임 속 임시 이름 · 입력할 필요 없어요';
+ if(stamp)stamp.textContent='학급일지에 쓰일 이름을 적어 주세요';
  const hint=$('setup').querySelector('.setup-section-title small');
- if(hint)hint.textContent='이름을 입력하지 않아도 이야기가 시작됩니다.';
+ if(hint)hint.textContent='학교를 고르고 이름을 입력해 주세요.';
  const note=$('setup').querySelector('.setup-story-note p');
  if(note)note.textContent='2027년 3월–7월 · 36화';
 }
@@ -1483,7 +1504,7 @@ async function boot(){
   ]);
   if(!catalogResponse.ok)throw Error('CATALOG_UNAVAILABLE');
   world=window.BeaguClassDiaryWorld.generateWorld(payload);
-  if(!world.eligible||world.basic.id!==schoolId){fail('공개·검증된 배구지수 조사 자료가 없어 이 학교는 아직 플레이할 수 없습니다.');return;}
+  if(!world.eligible||world.basic.id!==schoolId){fail('공개된 조사 결과가 없습니다. 설문에 참여하고 결과 공개 후 다시 확인해 주세요.');$('diarySchoolSurveyNotice').hidden=false;return;}
   const catalog=await catalogResponse.json();
   const blueprint=window.BeaguClassDiaryNarrative.createBlueprint(catalog,window.Beagu2026Questionnaire);
   if(blueprint.coverage.questionCount!==128)throw Error('CATALOG_INCOMPLETE');

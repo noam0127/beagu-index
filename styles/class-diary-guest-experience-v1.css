@@ -49,9 +49,6 @@ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{height:
 body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character:hover .setup-character-art{transform:scale(1.035)}
 body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-name{font-size:clamp(15px,3vmin,22px)}
 body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-tag{font-size:clamp(10px,1.75vmin,12px);min-height:0}
-body.is-guest-flow.is-setting #setup[data-step="2"] #partnerDescription{min-height:0;
- margin:0 auto;width:min(100%,580px);padding:13px 16px;background:#fdf5fa;
- border:1px solid #eadbe7;border-radius:15px;color:#745f74;font-size:clamp(11px,1.9vmin,13px)}
 body.is-guest-flow.is-setting #setup[data-step="2"] #setupNext{display:none!important}
 body.is-guest-flow.is-setting #setup[data-step="3"] .setup-review-fields>div:nth-child(2){display:none}
 body.is-guest-flow.is-setting .setup-end .muted{display:none}
@@ -85,3 +82,43 @@ body.is-guest-flow.is-playing #novelCard .vn-bottom .vn-fiction{font-size:10px;o
  body.is-guest-flow .guest-setup-poem{animation:none!important}
  body.is-guest-flow.is-setting .setup-character-art{transition:none!important}
 }
+
+/* 2026-11-20 · portrait-only partner selection.
+   Two new headshots are composed in one original same-origin WebP; Minseo
+   keeps the reference portrait. The original character art remains the fallback
+   until the strip finishes loading, without affecting game-scene expressions. */
+#setup.has-unified-portraits .setup-character-art.jiyoon,
+#setup.has-unified-portraits .setup-character-art.hyunwoo{
+ background-image:url("../assets/class-diary/characters/setup-colleagues-20261120.webp");
+ background-size:200% 100%;
+ background-repeat:no-repeat;
+ background-color:#f1edea;
+}
+#setup.has-unified-portraits .setup-character-art.jiyoon{background-position:0 50%}
+#setup.has-unified-portraits .setup-character-art.hyunwoo{background-position:100% 50%}
+#setup.has-unified-portraits .setup-character-art.jiyoon img,
+#setup.has-unified-portraits .setup-character-art.hyunwoo img,
+#setup.has-unified-portraits .setup-character-art .setup-hyunwoo-live{visibility:hidden!important}
+#setup[data-step="2"] .setup-character-art.minseo img{
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ object-position:center 42%;
+}
+body.is-setting #setup[data-step="2"] .setup-character{
+ touch-action:manipulation;
+ transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+body.is-setting #setup[data-step="2"] .setup-character[aria-pressed="true"]{
+ border-color:#936d92;
+ box-shadow:0 0 0 2px #dac6d9,0 9px 25px #624d6122;
+}
+body.is-setting #setup[data-step="2"] .setup-portrait-grid{
+ grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+/* Existing school selection precedes pen name when guest setup is available. */
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;margin:3px 0!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid>div:nth-child(n+3){display:none!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .guest-setup-poem{display:none!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player{justify-content:flex-start;align-items:stretch;text-align:left}

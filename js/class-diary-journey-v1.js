@@ -38,7 +38,11 @@ function init(options){
   const ids=part===1?['diarySchoolMode','playerName','experience','gender','mbti']:part===2?['partner']:[];
   for(const id of ids){
    const el=$(id);
-   if(!el.checkValidity()){el.reportValidity();el.focus();return false;}
+   if(!el.checkValidity()){
+    if(id==='partner'){const first=form.querySelector('[data-partner-choice]');if(first)first.focus();}
+    else{el.reportValidity();el.focus();}
+    return false;
+   }
   }
   return true;
  }
