@@ -472,7 +472,7 @@ assert.match(volley,/ball\.spin\+=ball\.vx\*\.009/);
 assert.match(volley,/ctx\.rotate\(ball\.spin\)/);
 assert.match(volley,/if\(p\.contactFrames>0\)/);
 const hitStart=volley.indexOf("function playerHit(p,ball=activeBalls[0]) {");
-const hitEnd=volley.indexOf("function finishMatch()",hitStart);
+const hitEnd=volley.indexOf("function finishMatch(early=false)",hitStart);
 assert.ok(hitStart>0&&hitEnd>hitStart);
 const hitSrc=volley.slice(hitStart,hitEnd);
 const contact=new Function("ball","state","p","tier",[
