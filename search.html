@@ -111,8 +111,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
   </form>
   <p class="lv1-quick-message" id="lv1QuickMessage" role="status" aria-live="polite"></p>
   <div class="lv1-quick-authenticated" id="lv1QuickAuthenticated" hidden>
-    <span>✓ Lv.1 인증됨</span>
-    <a class="lv1-quick-open" href="search-lv1.html">Lv.1 학교 검색하기</a>
+    <span role="status">✓ Lv.1 인증됨 · 검색화면으로 이동 중…</span>
   </div>
 </section>
 <div class="search-tabs" role="tablist" aria-label="찾기 방법">
@@ -448,6 +447,8 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       form.hidden=true;
       message.textContent='';
       authenticated.hidden=false;
+      // Both fresh and previously verified Lv.1 sessions open the search automatically.
+      window.location.replace('search-lv1.html');
     }
     toggle.addEventListener('click',()=>{
       const visible=input.type==='password';
@@ -479,7 +480,6 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
         input.value='';
         input.type='password';
         showAuthenticated();
-        window.location.assign('search-lv1.html');
       }catch(_){
         if(id===requestId)message.textContent='인증에 실패했습니다. 참여코드나 인터넷 연결을 확인해 주세요.';
       }finally{
@@ -492,7 +492,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
       const id=++requestId;
       authRequest('verify',saved).then(data=>{
         if(id!==requestId)return;
-        if(Number(data.level)>=1)showAuthenticated();
+        if(Number(data.level)>=1 && sessionStorage.getItem(key)===saved)showAuthenticated();
         else {sessionStorage.removeItem(key);window.dispatchEvent(new Event('beagu:level-state-change'));}
       }).catch(()=>{
         if(id===requestId){sessionStorage.removeItem(key);window.dispatchEvent(new Event('beagu:level-state-change'));}
