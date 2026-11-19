@@ -580,8 +580,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=20261120-safari-fallback5/);
-assert.match(html,/teacher-run\.html\?v=20261120-safari-fallback5/);
+assert.match(html,/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/);
+assert.match(html,/teacher-run\.html\?v=[a-zA-Z0-9-]+/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -651,21 +651,23 @@ assert.match(volley,/for\(const liveBall of activeBalls\)\{/,"each ball particip
 assert.match(volley,/for\(const liveBall of activeBalls\)drawBall\(liveBall\)/,"both balls visible");
 assert.match(volley,/break; \/\/ First grounded ball ends this rally: one point/,"one point per rally");
 assert.match(volley,/const ball=activeBalls\.find\(b=>b\.x>NET_X&&b\.vx>0\)/,"CPU targets live balls");
-const helperStart=volley.indexOf("function cloneHit(ally,hitBall){");
+const helperStart=volley.indexOf("function allyBodyTouchesBall(ally,hitBall){");
 const helperEnd=volley.indexOf("function moveAI()",helperStart);
 assert.ok(helperStart>0&&helperEnd>helperStart);
 const cloneHitSrc=volley.slice(helperStart,helperEnd);
 const testCloneHit=new Function("hitBall","ally",[
- "const R=48,FLOOR=451,left={x:80},state={rescueUsed:false},ballSpeedFactor=()=>1,tone=()=>{},setStatus=()=>{};",
+ "const R=48,FLOOR=451,NET_X=450,NET_W=14,clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),left={x:80},state={rescueUsed:false},ballSpeedFactor=()=>1,tone=()=>{},setStatus=()=>{};",
  cloneHitSrc,"return cloneHit(ally,hitBall);"
 ].join("\n"));
 const testHelper={x:210,y:420,contactFrames:0};
 const protectedBall={x:240,y:380,vx:-9,vy:4,cooldown:0,shadowFrames:0,shadowColor:""};
 assert.equal(testCloneHit(protectedBall,testHelper),true,"clone actually receives incoming ball");
 assert.ok(protectedBall.vx>0&&protectedBall.vy<0,"clone returns ball over net");
-assert.equal(protectedBall.cooldown,11,"clone cannot rapidly re-hit same ball");
+assert.equal(protectedBall.allyCooldown,16,"clone contact applies a separate bounded helper cooldown");
+assert.equal(protectedBall.cooldown,9,"clone cannot rapidly re-hit same ball");
 assert.ok(testHelper.contactFrames>0,"helper contact animation runs");
-assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0},testHelper),false,"clone never hits outbound ball");
+assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0,allyCooldown:0},testHelper),true,"outgoing ball can receive a controlled redirect");
+assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0,allyCooldown:10},testHelper),false,"helper cooldown prevents repetitive touches");
 assert.match(volley,/function drawVolleyShackle\(\)/);
 assert.match(volley,/currentDifficulty!=="extreme"\|\|state\.phase==="ready"/);
 assert.match(volley,/volleyShackle\.dir=left\.x>beforeMoveX\?-1:1/,"volleyball shackle trails movement direction");
@@ -715,8 +717,8 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalkHelpers\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261120-safari-fallback5/);
-assert.match(html,/teacher-run\.html\?v=20261120-safari-fallback5/);
+assert.match(html,/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/);
+assert.match(html,/teacher-run\.html\?v=[a-zA-Z0-9-]+/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
@@ -806,8 +808,8 @@ const otherCelebrations=new Set([0,1,2].map(x=>runVictory("hard",3,x,1,.2,5000+x
 assert.ok(otherCelebrations.size>=2,"ordinary retirement clear messages vary");
 assert.match(volley,/state\.pointTicks=24/,"point intermission cut to 0.4 seconds");
 assert.match(volley,/const precise=p\.side==="left"&&accuracy/,"precision-based hit timing matters");
-assert.match(volley,/state\.rescueUsed\|\|hitBall\.cooldown/,"clones only rescue once");
-assert.match(volley,/Math\.abs\(hitBall\.x-left\.x\)<115/,"helpers stay out when player can receive");
+assert.match(volley,/hitBall\.allyCooldown>0/,"teammate cooldown prevents repeated overlap hits");
+assert.match(volley,/allyBodyTouchesBall\(ally,hitBall\)/,"helpers assist only with real ball-body contact");
 assert.match(runner,/closestClearance<58/,"near miss verified by real distance");
 assert.doesNotMatch(runner,/!a\.good&&Math\.abs\(a\.x-player\.x\)<83/,"old false near-miss scoring removed");
 assert.doesNotMatch(runner,/addScore\(55\);float\(a\.x,a\.y,"PERFECT \+55"/,"protected collisions no longer grant combo points");
@@ -837,8 +839,8 @@ assert.doesNotMatch(html,/<a href="teacher-volleyball\.html"[^>]*>↗ 크게 보
  "the embedded volleyball game no longer has a zoom/enlarge link");
 assert.match(html,/<a href="teacher-run\.html"[^>]*>↗ 크게 보기<\/a>/,
  "survival external link remains unchanged");
-assert.match(volley,/arcade-leaderboard-v1\.js\?v=20261120-safari-fallback5/);
-assert.match(runner,/arcade-leaderboard-v1\.js\?v=20261120-safari-fallback5/);
+assert.match(volley,/arcade-leaderboard-v1\.js\?v=[a-zA-Z0-9-]+/);
+assert.match(runner,/arcade-leaderboard-v1\.js\?v=[a-zA-Z0-9-]+/);
 assert.match(shared,/this\.expanded=false/);
 assert.match(shared,/aria-expanded/);
 assert.match(shared,/arcade-ranking-content/);
@@ -907,6 +909,12 @@ console.log("PASS: pre-game school selection button and overflow-safe two-line 2
 
 
 
+// PRs execute all local gameplay contracts; live HTTP checks run only after production deploy.
+if(process.env.GITHUB_EVENT_NAME==="pull_request"){
+ console.log("PASS: PR static arcade regression checks; production HTTP smoke reserved for main");
+ process.exit(0);
+}
+
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
  for(let i=0;i<times;i++){
@@ -923,11 +931,15 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 }
 // Pages deployment and the smoke workflow run in parallel: poll until the
 // published home matches this commit instead of failing on the previous build.
+// Observe the exact cache-buster committed by THIS checkout instead of hardcoding a past release.
+const expectedVolleyFrame=html.match(/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/)?.[0];
+const expectedRunFrame=html.match(/teacher-run\.html\?v=[a-zA-Z0-9-]+/)?.[0];
+assert.ok(expectedVolleyFrame&&expectedRunFrame,"game iframe URLs must retain versioned paths");
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261120-safari-fallback5")&&
-     site.body.includes("teacher-run.html?v=20261120-safari-fallback5"))return site;
+  if(site.body.includes(expectedVolleyFrame)&&
+     site.body.includes(expectedRunFrame))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -937,8 +949,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261120-safari-fallback5/);
-assert.match(site.body,/teacher-run\.html\?v=20261120-safari-fallback5/);
+assert.ok(site.body.includes(expectedVolleyFrame),"published volleyball iframe must match tested version");
+assert.ok(site.body.includes(expectedRunFrame),"published run iframe must match tested version");
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
