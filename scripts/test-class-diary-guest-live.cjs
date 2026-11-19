@@ -1,4 +1,6 @@
-/* Production guest-code endpoint smoke test. Never read or print any real code. */
+/* Maintenance-mode smoke: no issued or guessed code may open the Class Diary.
+ * Only synthetic requests are sent; never read, print, or submit any real code.
+ */
 'use strict';
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
@@ -6,43 +8,35 @@ const url='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-gue
 const origin='https://baeguindex.com';
 const home=fs.readFileSync('index.html','utf8');
 const play=fs.readFileSync('teacher-class-diary-play.html','utf8');
-const homeClient=fs.readFileSync('js/class-diary-home-entry-v1.js','utf8');
 const edge=fs.readFileSync('supabase/functions/class-diary-guest-access-v1/index.ts','utf8');
-assert(home.includes('id="homeDiaryGuestForm"'),'Home must contain the only code form');
-assert(home.includes('id="homeDiaryCode"'),'Home must accept preissued codes');
-assert(home.includes('src="js/class-diary-home-entry-v1.js'),'Home verification script must load');
-assert(!home.includes('href="teacher-class-diary-play.html?guest=1"'),'Home may not bypass server verification with a public link');
-assert(homeClient.includes("action:'verify-code'"),'Home must verify codes server-side');
-assert(homeClient.includes("sessionStorage.setItem(KEY,result.ticket)"),'Home may transfer only the signed ticket');
-assert(!homeClient.includes('sessionStorage.setItem(KEY,code)'),'Identity code may never be saved');
-assert(play.includes("params.get('guest')==='1'"),'Guest requires explicit entry mode');
-assert(play.includes("show('guestAccess')"),'Guest must verify ticket before the game');
-assert(!play.includes('id="guestCode"'),'Guest game must not ask for the code again');
-assert(play.includes("action:'verify-ticket'"),'Guest ticket must be server-verified');
-assert(play.includes("sessionStorage.removeItem(handoffKey)"),'Ticket must be consumed');
-assert(play.includes("result.scope!=='class-diary-fictional-guest'"),'Guest scope guard missing');
-assert(!play.includes('sessionStorage.setItem('),'Game must not save code or game state');
-assert(edge.includes("crypto.subtle.verify('HMAC'"),'Ticket must have an unforgeable MAC');
-assert(/await issueTicket\((?:subject)?\)/.test(edge),'Verified code must issue a short-lived ticket');
-assert(!edge.includes("grant_level2"),'Guest route must not elevate any tier');
+
+assert(home.includes('id="teacher-diary-feature"'),'Home must retain the novel card');
+assert(home.includes('id="teacher-diary-lock-title">준비 중'),'Home must show preparation status');
+assert(!home.includes('id="homeDiaryGuestForm"'),'Home code entry must be removed');
+assert(!home.includes('id="homeDiaryCode"'),'No code field may be rendered');
+assert(!home.includes('js/class-diary-home-entry-v1.js'),'Guest verification script must not load');
+assert(!home.includes('href="teacher-class-diary-play.html?guest=1"'),'Home may not link to guest entry');
+assert(play.includes("params.get('guest')==='1'"),'Direct guest URLs must be detected');
+assert(play.includes("fail('『나의 OO한 학급일지』는 현재 준비 중입니다."),'Direct guest URLs must stop immediately');
+assert(play.includes("sessionStorage.removeItem('beagu-class-diary-guest-handoff-v1')"),'Stale handoffs must be discarded');
+assert(edge.includes("return respond({error:'CLASS_DIARY_PREPARING',message:'준비 중'},503,origin)"),
+ 'Every guest-code and guest-ticket POST must be disabled before any credential check');
 
 (async()=>{
  const get=await fetch(url,{method:'GET',headers:{Origin:origin},signal:AbortSignal.timeout(14000)});
- assert.equal(get.status,405,'Guest endpoint must reject GET');
+ assert.equal(get.status,405,'GET must remain disallowed');
  const opt=await fetch(url,{method:'OPTIONS',headers:{Origin:origin,'Access-Control-Request-Method':'POST'},signal:AbortSignal.timeout(14000)});
- assert.equal(opt.status,204,'Guest CORS preflight failed');
+ assert.equal(opt.status,204,'CORS preflight must still work');
  assert.equal(opt.headers.get('access-control-allow-origin'),origin,'Unexpected allowed origin');
- const invalid=await fetch(url,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({action:'verify-code',code:'AAAAAAAAAA'}),signal:AbortSignal.timeout(14000)});
- assert([401,429].includes(invalid.status),'Unknown/unissued code must not be accepted: '+invalid.status);
- const badTicket=await fetch(url,{method:'POST',
-   headers:{Origin:origin,'Content-Type':'application/json'},
-   body:JSON.stringify({action:'verify-ticket',ticket:'v1.invalid.invalid'}),
-   signal:AbortSignal.timeout(14000)});
- assert.equal(badTicket.status,401,'Tampered or fabricated guest ticket must be rejected');
- const ticketReply=await badTicket.json();
- assert.equal(ticketReply.error,'INVALID_TICKET');
- const reply=await invalid.json();
- assert(reply.error==='INVALID_CODE'||reply.error==='RATE_LIMITED','Unexpected code validation response');
- assert(!('token' in reply)&&!('identityCode' in reply),'Endpoint must not disclose codes/tokens');
- console.log('PASS guest live: home code form, signed handoff, GET/CORS, unknown codes/tickets rejected, no stored identity code');
+ for(const body of [{action:'verify-code',code:'AAAAAAAAAA'},{action:'verify-ticket',ticket:'v1.fake.fake'}]){
+  const response=await fetch(url,{
+   method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},
+   body:JSON.stringify(body),signal:AbortSignal.timeout(14000)
+  });
+  assert.equal(response.status,503,'Guest entry must be blocked for all request types');
+  const result=await response.json();
+  assert.equal(result.error,'CLASS_DIARY_PREPARING');
+  assert(!('ticket' in result)&&!('progressToken' in result),'No guest credentials may be returned');
+ }
+ console.log('PASS: Class Diary home shows preparation, direct guest route blocked, live code and ticket APIs disabled');
 })().catch(e=>{console.error(e);process.exitCode=1});
