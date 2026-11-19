@@ -181,7 +181,15 @@
       window.BeaguLoading?.finish(loginTask);
     }
   });
-  $('logoutButton').addEventListener('click', () => loggedOut());
+  $('logoutButton').addEventListener('click', () => {
+    const oldToken = session;
+    loggedOut();
+    // Revoke the server token as well; local state is cleared immediately.
+    if (/^[a-f0-9]{64}$/.test(oldToken))
+      void fetch(base, {method:'POST',cache:'no-store',
+        headers:{'Content-Type':'application/json','X-Beagu-Session':oldToken},
+        body:JSON.stringify({action:'logout'})}).catch(() => {});
+  });
   function selectMode(nextMode) {
     mode = nextMode;
     $('schoolPanel').hidden = mode !== 'school';
