@@ -173,7 +173,16 @@ function validateProfile(profile){
   if(!['woman','man','undisclosed'].includes(gender))throw Error('GENDER_INVALID');
   if(!['woman','man','none'].includes(partner))throw Error('PARTNER_INVALID');
   if(!MBTI.test(mbti))throw Error('MBTI_INVALID');
-  return {age,gender,partner,mbti};
+  /* 직무·학급·교직문화는 체험을 위해 사용자가 고르는 가상 조건이며 학교 실태 추정값이 아니다. */
+  const experience=profile.experience||'mid';
+  const duty=profile.duty||'general';
+  const classTone=profile.classTone||'steady';
+  const workCulture=profile.workCulture||'collaborative';
+  if(!['new','mid','senior'].includes(experience))throw Error('EXPERIENCE_INVALID');
+  if(!['none','general','academic','violence'].includes(duty))throw Error('DUTY_INVALID');
+  if(!['steady','demanding'].includes(classTone))throw Error('CLASS_SCENARIO_INVALID');
+  if(!['collaborative','deflecting'].includes(workCulture))throw Error('CULTURE_SCENARIO_INVALID');
+  return {age,gender,partner,mbti,experience,duty,classTone,workCulture};
 }
 function partnerName(profile){return profile.partner==='man'?'현우 선생님':profile.partner==='woman'?'지윤 선생님':'동학년 선생님';}
 function validateWorld(world,plan){
