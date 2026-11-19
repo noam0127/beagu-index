@@ -6,11 +6,11 @@
 - 안전 브랜치: feature/test-web-lv0-lv2-20261120
 - 이 PR의 base: feature/lv2-referral-phase1-20261119 (운영 main이 아님)
 - 계정 구현 선행: Draft PR #49 코드와 문서 확인
-- Supabase 연결 목록에는 운영 프로젝트 snvzwrexuqavnfvzgxqj 1개만 존재함
-- 조직: noam0127's Org, free. **테스트 프로젝트 미생성**
-- DNS·Cloudflare Pages 제어 연결이 없어서 실제 테스트 배포 주소 **없음**
+- 초기 조회 시 운영 프로젝트만 있었으나 2026-11-20에 독립 TEST 프로젝트 ycwuugggqbunlbwuzvbx를 신규 생성함
+- 조직: noam0127's Org, Free. 테스트 프로젝트 생성비용 실제 견적 월 $0, 프로젝트 생성 완료.
+- Cloudflare Pages 제어 연결은 없으나 별도 테스트 Supabase Edge Function 정적 미리보기를 배포함 (LIVE 상태 여부는 외부 GET 미검증)
 - 운영 DB, Edge Functions, 기존 Form/Apps Script, main **쓰기 작업 없음**
-- 테스트 웹의 기본 config.js는 enabled:false. 운영 API 요청이 코드에서 차단됨
+- 테스트 웹의 기본 config.js 및 Edge 정적 미리보기 설정은 enabled:false. 운영 API 요청 차단됨
 
 ## 파일 구조
 - test-web/index.html, app.js, config.js, recover.html, recover.js, robots.txt, _headers
@@ -33,7 +33,7 @@
 
 ## 테스트 Supabase 생성 전 필수 승인/비용 확인
 Supabase 조직은 Free로 조회되며 프로젝트 1개만 확인되었다. 공식 가격표는 Free 조직에 최대 2개 활성 프로젝트를 설명하지만, **이 조직에 새 프로젝트를 만들 때의 정확한 견적·승인 상태는 아직 확인하지 못했다.**
-조직/요금 확인 후 별도 프로젝트를 만들고 완료 상태가 ACTIVE_HEALTHY인지 검증해야 한다.
+별도 프로젝트 ref ycwuugggqbunlbwuzvbx 생성 및 ACTIVE_HEALTHY 확인 완료.
 운영 프로젝트 **snvzwrexuqavnfvzgxqj에는 새 SQL을 절대로 실행하지 않는다**.
 본 SQL은 운영 beagu_private 스키마가 보이면 PRODUCTION_FORBIDDEN 오류를 발생시킨다.
 
@@ -75,7 +75,25 @@ Supabase 조직은 Free로 조회되며 프로젝트 1개만 확인되었다. �
 - HMAC 추천 키 회전 및 기존 링크 폐기/관리자 정정 절차는 미구현.
 - 스테이징 SQL에 대한 실제 PostgreSQL 적용·RLS 검증 및 Edge Deno 타입 검사는 별도 프로젝트/CI 실행 결과 확인이 필요.
 - 기존 챌린지 고유번호 IDOR는 선행 브랜치에 패치 후보가 있으나 운영에 반영하지 않았고 실제 재현·재검증은 미실시.
-- 현재 TEST 사이트는 공개 접속 주소가 없고, 오프라인 모의 화면은 실제 E2E의 대체가 아니다.
+- Supabase Edge 미리보기 URL은 생성되었으나 외부 브라우저 GET 성공을 독립적으로 확인하지 못했고, 오프라인 모의 화면은 실제 E2E의 대체가 아니다.
 
 ## 운영 공개 금지 기준
 실제 2계정 E2E, SMTP/CAPTCHA 직접 검증, 독립 DB·호스트, RLS/IDOR, 데이터 삭제·민감 로그 및 보안 점검 모두 확인될 때까지 이 PR은 Draft 상태 유지. 운영 main, Cloudflare 운영 프로젝트, 운영 Google Form을 변경하지 않는다.
+
+
+## 2026-11-20 실행 결과 업데이트 (TEST ONLY)
+- 별도 Supabase 프로젝트 `ycwuugggqbunlbwuzvbx` (beagu-index-staging-lv2) 생성: Free 조직, 월 $0 견적, 서울 리전, ACTIVE_HEALTHY.
+- 테스트 스키마 마이그레이션 `beagu_staging_identity_level_referral_v1` **실제 적용 성공**.
+- 설치된 stage_private 테이블 6개 모두 RLS true, anon/authenticated SELECT 권한 false, service_role SELECT true. 11개 public.beagu_stage_* RPC 모두 SECURITY INVOKER, anon/authenticated EXECUTE false, service_role EXECUTE true.
+- Security Advisor INFO `rls_enabled_no_policy` 6건은 민간 role에 어떠한 정책도 허용하지 않는 서버 전용 설계이며, 직접 권한 조회로 확인함. 관련 공식 문서: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy
+- SQL BEGIN/DO/ROLLBACK **가상 3계정 검증 성공**: 레벨0, Lv1 전환, 토큰 발행, 자기 추천 차단, 동일 브라우저 추정값 차단, 유효 타계정 1회 Lv2 승급, 중복 설문 차단, 읽지 않은 알림 지움. 테스트 트랜잭션 뒤 auth.users=0 / members=0 / referrals=0 / submissions=0 상태 확인.
+- Edge Function `beagu-test-v1` 테스트 프로젝트에서 ACTIVE, verify_jwt=false(공개 가입 및 그 외 내부 JWT 검증). 필수 비밀 환경변수 미설정으로 전체 API가 `TEST_PROJECT_NOT_CONFIGURED`를 반환하도록 fail closed. 실제 이메일/Auth 테스트 미진행.
+- Edge Function `beagu-stage-preview` 테스트 프로젝트에서 ACTIVE. 공개 미리보기:
+  https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage-preview/
+  이 정적 미리보기에서 config enabled:false 이므로 실제 가입 요청은 전송되지 않음. 외부 도구 HTTP GET 성공 미확인.
+- 웹 UI의 추천 토큰과 복구 OTP 해시는 URL query 대신 URL fragment (#ref, #token_hash)를 사용해 초기 GET 서버 로그·Referer로의 유출을 줄임.
+- 당장 필요한 것: 테스트 전용 SMTP/Confirm Email, Supabase Auth CAPTCHA, Turnstile sitekey/secret, 테스트 Edge secrets 설정, UI config enabled 전환, 두 실제 계정 E2E, 필요하면 별도 test.baeguindex.com DNS 연결. 운영 변경은 금지.
+
+## 독립 미리보기에서 실제 가입을 열기 전 주의
+`test-environment/supabase/functions/beagu-stage-preview/index.ts`는 `test-web/*` 정적 파일을 Edge source 내부에 번들했습니다. `test-web/app.js` 또는 HTML 변경 시 **미리보기 Edge 함수를 재배포해야** 합니다.
+실제 가입 사용을 위한 비밀 구성은 사용자 대시보드에서만 하되, service_role 키를 GitHub 코드/브라우저에 삽입하지 마세요. 새 Supabase 프로젝트의 Function Secrets에 `BEAGU_TEST_PROJECT_REF`, `BEAGU_TEST_SITE_ORIGIN`(`https://ycwuugggqbunlbwuzvbx.supabase.co`), `BEAGU_TEST_RATE_SECRET`, `BEAGU_TEST_REFERRAL_SECRET`, `BEAGU_TEST_LEVEL1_CODE`, `BEAGU_TEST_ENABLED`, `BEAGU_TEST_CAPTCHA_CONFIRMED`가 필요합니다. 마지막 두 항목은 Auth 보호 동작 실제 확인 후 true로 전환하세요.
