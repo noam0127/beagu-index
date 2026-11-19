@@ -121,7 +121,16 @@ button{font:inherit;cursor:pointer}
 <div><label for="gender">주인공 성별</label><select id="gender" required><option value="">선택하세요</option><option value="woman">여성</option><option value="man">남성</option><option value="undisclosed">밝히지 않음</option></select></div>
 <div><label for="mbti">주인공 MBTI</label><select id="mbti" required><option value="">선택하세요</option></select><div class="field-note">독백의 뉘앙스에만 일부 반영됩니다.</div></div>
 <div><label for="partner">관계를 쌓을 동료 인물</label><select id="partner" required><option value="">선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">동학년 선생님 · 우정 중심</option></select></div>
+<div><label for="experience">교직 경력 · 가상 설정</label>
+<select id="experience" required><option value="new">신규·저경력 교사</option><option value="mid" selected>경력 교사</option><option value="senior">고경력 교사</option></select></div>
+<div><label for="duty">업무분장 · 가상 설정</label>
+<select id="duty" required><option value="none">별도 업무 없음</option><option value="general" selected>일반 업무</option><option value="academic">교무 업무 담당</option><option value="violence">학교폭력 관련 업무 담당</option></select></div>
+<div><label for="classTone">학급 상황 · 가상 설정</label>
+<select id="classTone" required><option value="steady" selected>차근차근 적응하는 학급</option><option value="demanding">첫날부터 지도가 많이 필요한 학급</option></select></div>
+<div><label for="workCulture">학교 업무 분위기 · 가상 설정</label>
+<select id="workCulture" required><option value="collaborative" selected>담당을 확인하고 서로 돕는 분위기</option><option value="deflecting">담당하지 않은 일이 떠넘겨지기도 하는 분위기</option></select></div>
 </div>
+<p class="muted">위 네 가지는 **선택한 학교의 실제 평가가 아니라 이야기의 가상 조건**입니다. 상세페이지의 검증된 공식 수치는 별도로 구분해 표시합니다.</p>
 <p class="privacy">주인공 설정·선택·진행 상황·최종 결과는 저장하지 않습니다. 게임을 진행하는 동안에만 화면에 표시됩니다.</p>
 <div class="actions"><button type="submit" class="primary">첫날의 교실 열기</button><a class="linklike" href="teacher-class-diary.html">학교 변경</a></div>
 </form>
@@ -179,6 +188,7 @@ button{font:inherit;cursor:pointer}
 <script src="js/class-diary-play-v1.js"></script>
 <script src="js/class-diary-director-v1.js"></script>
 <script src="js/class-diary-context-v1.js"></script>
+<script src="js/class-diary-scenario-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
 <script>
 (function(){
@@ -188,6 +198,7 @@ const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const director=window.BeaguClassDiaryDirector;
 const schoolContext=window.BeaguClassDiaryContext;
+const scenario=window.BeaguClassDiaryScenario;
 const params=new URLSearchParams(location.search);
 const isDemo=params.get('demo')==='1';
 const token=isDemo?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
@@ -264,6 +275,49 @@ function renderNovel(){
  }
  status('소설 속 상황을 살펴보고 선택해 주세요.');
 }
+function renderScenario(){
+ show('novel');
+ const event=scenario.scene(game,world);
+ if(!event)return renderNovel();
+ const partner=engine.partnerName(game.profile);
+ const profile=director.RELATIONSHIPS[game.profile.partner]||director.RELATIONSHIPS.none;
+ const tone=(game.day===1?'morning':game.day===2?'meeting':game.day===3?'classroom':game.day===4?'hallway':'evening');
+ $('novelCard').dataset.scene=tone;
+ $('sceneArt').setAttribute('aria-label',event.place+' 장면의 추상적인 배경');
+ $('sceneSymbol').textContent=event.kind==='tense'?'◆':'✧';
+ $('characterAvatar').textContent=profile.initial;
+ $('characterName').textContent=partner;
+ $('characterBio').textContent='학교의 역할과 교직문화를 함께 고민하는 동학년 교사';
+ for(const [id,key] of [['statAffection','affection'],['statTrust','trust'],
+   ['statAgency','agency'],['statFatigue','fatigue'],['statVoice','voice'],
+   ['statBoundary','boundary']])$(id).textContent=game.stats[key];
+ $('chapterDay').textContent=game.day+' / 7 · '+event.date+' · 학교 생활 사건';
+ $('chapterTitle').textContent=event.title;
+ $('chapterPlace').textContent=event.place;
+ $('chapterProgress').style.width=(game.day/7*100)+'%';
+ $('schoolFacts').hidden=true;
+ $('worldDetail').hidden=true;
+ $('chapterSource').textContent=event.fictionLabel;
+ fillParagraphs('chapterText',event.paragraphs);
+ const done=!!event.result;
+ $('choiceSection').hidden=done;
+ $('outcome').hidden=!done;
+ $('nextBtn').hidden=!done;
+ $('nextBtn').textContent='오늘의 이야기 이어 읽기';
+ const buttons=$('choiceButtons');buttons.replaceChildren();
+ if(done){
+  fillParagraphs('outcomeText',event.result.paragraphs);
+  $('outcomeLine').textContent=event.result.line;
+ }else{
+  for(const [i,choice] of event.choices.entries()){
+   const btn=el('button',(i+1)+'. '+choice.label);
+   btn.className='choice';btn.type='button';
+   btn.addEventListener('click',()=>{game=scenario.choose(game,choice.id);render();});
+   buttons.append(btn);
+  }
+ }
+ status('업무와 학급 상황을 다루는 가상 사건입니다. 어떤 선택을 하시겠어요?');
+}
 function renderEnding(){
  show('ending');
  const ending=director.decorateEnding(game);
@@ -277,7 +331,9 @@ function renderEnding(){
 
 }
 function render(){
- if(game.phase==='ending')renderEnding();else renderNovel();
+ if(game.phase==='ending')return renderEnding();
+ if(game.phase==='chapter'&&scenario.scene(game,world))return renderScenario();
+ renderNovel();
 }
 async function apiPost(endpoint,body){
  const response=await fetch(API+endpoint,{
@@ -341,11 +397,17 @@ $('profileForm').addEventListener('submit',e=>{
  e.preventDefault();
  try{
   game=engine.createGame(world,plan,{age:Number($('age').value),
-   gender:$('gender').value,partner:$('partner').value,mbti:$('mbti').value});
+   gender:$('gender').value,partner:$('partner').value,mbti:$('mbti').value,
+   experience:$('experience').value,duty:$('duty').value,
+   classTone:$('classTone').value,workCulture:$('workCulture').value});
   render();
  }catch(err){status('주인공 설정을 확인해 주세요. 성인 나이와 모든 선택이 필요합니다.');}
 });
-$('nextBtn').addEventListener('click',()=>{game=engine.advance(game);render();});
+$('nextBtn').addEventListener('click',()=>{
+ const event=game.phase==='chapter'?scenario.scene(game,world):null;
+ game=event&&event.result?scenario.continueStory(game):engine.advance(game);
+ render();
+});
 $('resetBtn').addEventListener('click',()=>{
  if(!game)return;
  game=engine.createGame(world,plan,game.profile);render();
