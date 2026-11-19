@@ -526,8 +526,8 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-core-game1/);
-assert.match(html,/teacher-run\.html\?v=20261119-core-game1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
+assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
@@ -549,8 +549,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-core-game1")&&
-     site.body.includes("teacher-run.html?v=20261119-core-game1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-vol25-retirement1")&&
+     site.body.includes("teacher-run.html?v=20261119-vol25-retirement1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -560,8 +560,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-core-game1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-core-game1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-vol25-retirement1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
