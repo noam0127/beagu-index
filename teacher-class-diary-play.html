@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<script id="diary-private-preview-gate">
+/* The story is available only after the home page receives a signed preview ticket. */
+if(new URLSearchParams(location.search).get('guest')!=='1'){
+  document.documentElement.classList.add('diary-entry-denied');
+  location.replace('index.html#teacher-diary-feature');
+}
+</script>
+<style>html.diary-entry-denied body{display:none!important}</style>
 <meta name="theme-color" content="#14253d">
 <title>나의 OO한 학급일지 | 이야기 플레이</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1441,6 +1449,8 @@ async function apiPost(endpoint,body){
  return response.json();
 }
 async function boot(){
+ // Direct, demo, or previously authorized Lv.2 links cannot bypass the preview PIN.
+ if(!isGuest){location.replace('index.html#teacher-diary-feature');return;}
  if(isGuest){
   // Home already verified the code. Consume the 10-minute signed game ticket once.
   const handoffKey='beagu-class-diary-guest-handoff-v1';
