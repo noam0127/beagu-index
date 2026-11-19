@@ -204,7 +204,7 @@ const careerEvents=[
 let W=600,H=420,dpr=1,state="ready",stage=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
 let chalkShots=[],chalkCooldown=0,shackle={x:245,dir:-1};
-let activeEvent=null,eventSeconds=0,lastEventCycle=-1,retirementRushAnnounced=false;
+let activeEvent=null,eventSeconds=0,lastEventCycle=-1,retirementRushAnnounced=false,earlyMilestones=new Set(),lastSafeLane=-1;
 let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
 let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0,specialCooldown=0,specialFlash=0,lastTapAt=0,lastTapX=0,lastTapY=0;
 try{best=Number(localStorage.getItem("teacherRunRetirementBestV1"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
@@ -259,7 +259,7 @@ async function start(){
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
  state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;
+ combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;
  shackle={x:player.x-52,dir:-1};pointerId=null;pointerY=null;
@@ -272,7 +272,7 @@ function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;
- score=0;stage=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;
+ score=0;stage=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -337,7 +337,7 @@ function hit(a){
   let amount=Math.round(a.heal*skill.heal*profile.heal),before=life;life=Math.min(maxLife,life+amount);
   combo=Math.min(25,combo+1);addScore(75);float(a.x,a.y,"+"+(life-before)+" 체력","#1e945b");burst(a.x,a.y,"#7be3ca",12);playTone(760,.1);return;
  }
- if(player.inv>0){combo=Math.min(25,combo+1);addScore(55);float(a.x,a.y,"PERFECT +55","#fcdd87");burst(a.x,a.y,"#ffe7a0",8);return;}
+ if(player.inv>0){float(a.x,a.y,"🛡️ 보호막","#fcdd87");burst(a.x,a.y,"#ffe7a0",8);return;}
  let amount=Math.round(a.damage*profile.damage);
  life=Math.max(0,life-amount);combo=0;player.inv=profile.inv+skill.guard;shake=.2;misses++;
  float(a.x,a.y,"-"+amount,"#b32738");burst(a.x,a.y,"#ff9d88",15);playTone(190,.24,"sawtooth",.04);
@@ -379,7 +379,17 @@ function spawn(){
  let speed=(88+stage*18+Math.random()*56)*profile.enemySpeed;
  if(activeEvent?.id==="rush")speed*=1.20;
  if(getAge()>=60)speed*=1.20;
- items.push({x,y:-40,speed,r:(20+Math.random()*3)*(isGood?1:profile.enemySize),size:isGood?1:profile.enemySize,wobble:(3+Math.random()*7)*profile.zigzag,phase:Math.random()*6.28,good:isGood,...a});
+ // Each career era has a distinct physical dodge pattern.
+ if(!isGood&&stage===1)x=Math.random()<.5?W*.24:W*.76;
+ if(!isGood&&stage===3)x=(Math.floor(clock/5)%2===0?W*.76:W*.24)+(Math.random()-.5)*W*.12;
+ const tracker=!isGood&&stage===2;
+ items.push({x,y:-40,speed,r:(20+Math.random()*3)*(isGood?1:profile.enemySize),size:isGood?1:profile.enemySize,
+   wobble:(3+Math.random()*7)*profile.zigzag,phase:Math.random()*6.28,good:isGood,tracker,
+   closestClearance:Infinity,nearMissWindow:false,...a});
+ if(!isGood&&stage===1&&Math.random()<.28){
+  items.push({x:x<W/2?W*.76:W*.24,y:-110,speed:speed*.93,r:20*profile.enemySize,size:profile.enemySize,
+    wobble:3,phase:0,good:false,tracker:false,closestClearance:Infinity,nearMissWindow:false,...a});
+ }
 }
 function nextCareerStage(){
  const next=getCareerStage();
@@ -468,8 +478,8 @@ function updateChalk(dt){
    if(index>=0&&!target.good){
     items.splice(index,1);
     burst(target.x,target.y,"#e6fbff",10);
-    float(target.x,target.y,"분필! +25","#fffbd2");
-    addScore(25);playTone(760,.07,"triangle",.025);
+    float(target.x,target.y,"분필! +5","#fffbd2");
+    addScore(5);playTone(760,.07,"triangle",.025);
    }
    chalkShots.splice(i,1);
   }
@@ -545,15 +555,25 @@ function update(dt){
  for(let i=items.length-1;i>=0;i--){
   const a=items[i];a.y+=a.speed*dt;a.x+=Math.sin(clock*(2+profile.zigzag)+a.phase)*a.wobble*dt;
    if(!a.good&&a.y>H*.18&&a.y<H-75){
-    a.x+=Math.sign(player.x-a.x)*Math.min(Math.abs(player.x-a.x),profile.homing*dt);
+    const trackSpeed=a.tracker?Math.max(profile.homing,45):profile.homing;
+     a.x+=Math.sign(player.x-a.x)*Math.min(Math.abs(player.x-a.x),trackSpeed*dt);
    }
    a.x=Math.max(a.r,Math.min(W-a.r,a.x));
-  if(Math.hypot(a.x-player.x,a.y-player.y)<a.r+player.r*.78*profile.heroSize){
+  // Reward only a measured narrow gap when the object actually passes nearby.
+   if(!a.good&&Math.abs(a.y-player.y)<a.r+player.r+58){
+    const clearance=Math.hypot(a.x-player.x,a.y-player.y)-(a.r+player.r*.78*profile.heroSize);
+    a.closestClearance=Math.min(a.closestClearance??Infinity,clearance);
+    a.nearMissWindow=true;
+   }
+   if(Math.hypot(a.x-player.x,a.y-player.y)<a.r+player.r*.78*profile.heroSize){
    items.splice(i,1);hit(a);if(state!=="playing")return;continue;
   }
   if(a.y>H+35){
    items.splice(i,1);
-   if(!a.good&&Math.abs(a.x-player.x)<83){nearCount++;combo=Math.min(25,combo+1);addScore(35);float(player.x,player.y-52,"아슬아슬! +35","#fff1b1");}
+   if(!a.good&&a.nearMissWindow&&a.closestClearance>0&&a.closestClearance<58){
+    nearCount++;combo=Math.min(25,combo+1);addScore(90);
+    float(player.x,player.y-52,"아슬아슬 회피! +90","#fff1b1");
+   }
   }
  }
  updateChalk(dt);
