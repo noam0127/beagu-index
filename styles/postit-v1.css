@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap");
 :root{--postit-ink:#263044;--postit-line:#d3b98a;--postit-paper:#fff9df}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body.beagu-postit-page{margin:0;background:linear-gradient(110deg,#f5f1e8,#f9f8f4 50%,#f1f2f5);color:var(--postit-ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
 .postit-layout{width:min(740px,100%);margin:0 auto;padding:52px 20px 100px;line-height:1.65}
@@ -100,3 +101,99 @@
 .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 /* Five navigation destinations fit on one mobile row without a dangling second line. */
 @media(max-width:760px){.beagu-unified-nav:has(a[href="postit.html"]){grid-template-columns:repeat(5,minmax(0,1fr))}.beagu-unified-nav:has(a[href="postit.html"]) a{font-size:12px;padding-left:1px;padding-right:1px}}
+
+
+/* Torn, crumpled handwritten notes — decorative layers never carry user text. */
+.postit-entry{filter:drop-shadow(3px 9px 8px rgba(75,57,38,.15))}
+.postit-paper{
+  overflow:hidden;
+  border:0;
+  border-radius:0;
+  padding:31px 27px 27px;
+  background:
+    radial-gradient(ellipse at 18% 15%,rgba(255,255,255,.56),transparent 36%),
+    radial-gradient(ellipse at 77% 77%,rgba(69,45,19,.095),transparent 45%),
+    linear-gradient(125deg,rgba(255,255,255,.3) 7%,transparent 28%,rgba(114,88,47,.065) 43%,transparent 61%,rgba(255,255,255,.22) 83%),
+    var(--base);
+  clip-path:polygon(
+    0.6% 2.5%, 3% .8%, 6% 1.9%, 9% .3%, 12% 1.6%, 16% .5%, 20% 1.5%, 24% .4%,
+    29% 1.9%, 34% .6%, 39% 1.5%, 44% .4%, 49% 1.8%, 54% .3%, 59% 1.7%, 64% .6%,
+    70% 1.8%, 75% .5%, 81% 1.8%, 86% .4%, 92% 1.6%, 96% .5%, 99.2% 1.8%,
+    98.7% 8%, 99.7% 15%, 98.8% 23%, 99.5% 31%, 98.7% 39%, 99.6% 47%,
+    98.9% 56%, 99.7% 66%, 98.7% 76%, 99.6% 85%, 98.6% 94%, 99.1% 98.6%,
+    95% 99.4%, 91% 98.1%, 86% 99.8%, 80% 98.5%, 74% 99.7%, 67% 98.2%,
+    61% 99.7%, 55% 98.5%, 48% 99.8%, 42% 98.3%, 36% 99.5%, 29% 98.4%,
+    22% 99.8%, 17% 98.2%, 11% 99.6%, 6% 98.4%, .8% 99.2%,
+    1.3% 91%, .4% 82%, 1.2% 75%, .3% 67%, 1.1% 58%, .3% 49%,
+    1.1% 40%, .4% 32%, 1.4% 24%, .3% 16%, 1.2% 9%
+  );
+  box-shadow:none;
+}
+.postit-entry:nth-child(3n+2) .postit-paper{
+  clip-path:polygon(
+    1% 1.3%,5% .5%,9% 2.2%,13% .3%,18% 1.8%,23% .7%,28% 1.8%,33% .2%,
+    39% 1.7%,44% .4%,49% 2%,55% .4%,61% 1.5%,67% .4%,73% 1.9%,
+    79% .7%,84% 1.7%,90% .2%,96% 1.5%,99.3% .8%,
+    98.8% 8%,99.6% 18%,98.7% 28%,99.5% 38%,98.7% 47%,99.6% 57%,
+    98.6% 68%,99.5% 79%,98.8% 89%,99.4% 99%,
+    94% 98.7%,88% 99.7%,82% 98.4%,76% 99.4%,69% 98.3%,63% 99.8%,
+    57% 98.4%,51% 99.6%,44% 98.2%,38% 99.6%,32% 98.6%,26% 99.7%,
+    19% 98.6%,12% 99.6%,6% 98.3%,.8% 99.2%,
+    1.2% 89%,.3% 77%,1.3% 66%,.5% 54%,1.4% 43%,.4% 33%,1.3% 21%,.5% 11%
+  );
+}
+.postit-entry:nth-child(3n+3) .postit-paper{
+  clip-path:polygon(
+    .6% .9%,5% 2%,11% .3%,16% 1.8%,21% .5%,27% 1.5%,32% .3%,
+    38% 2%,43% .5%,50% 1.4%,56% .4%,62% 2%,68% .6%,74% 1.6%,
+    81% .4%,87% 1.9%,94% .4%,99.4% 1.6%,
+    98.9% 11%,99.6% 22%,98.7% 35%,99.6% 46%,98.7% 59%,
+    99.6% 72%,98.8% 85%,99.3% 98.8%,
+    94% 99.7%,88% 98.3%,82% 99.7%,75% 98.5%,69% 99.6%,62% 98.4%,
+    56% 99.6%,50% 98.3%,44% 99.8%,38% 98.2%,32% 99.5%,
+    26% 98.5%,20% 99.6%,14% 98.3%,8% 99.8%,.8% 98.6%,
+    1.3% 86%,.4% 75%,1.3% 63%,.4% 52%,1.3% 41%,.4% 30%,1.3% 19%,.4% 9%
+  );
+}
+.postit-paper::before{
+  inset:0;opacity:.7;mix-blend-mode:multiply;
+  background:
+    linear-gradient(134deg,transparent 0 22%,rgba(255,255,255,.66) 22.2%,rgba(92,72,50,.07) 22.8%,transparent 23.5%),
+    linear-gradient(33deg,transparent 0 62%,rgba(88,69,43,.09) 62.2%,rgba(255,255,255,.5) 62.8%,transparent 63.5%),
+    linear-gradient(171deg,transparent 0 39%,rgba(106,78,55,.065) 39.2%,transparent 40%),
+    radial-gradient(ellipse at 27% 72%,rgba(69,45,25,.10),transparent 32%);
+}
+.postit-paper::after{width:47px;height:34px;background:linear-gradient(135deg,rgba(255,255,255,.65),rgba(83,65,40,.16));}
+.paper-tape{
+  position:absolute;z-index:4;top:-7px;left:calc(50% - 35px);
+  width:71px;height:29px;pointer-events:none;
+  background:repeating-linear-gradient(102deg,rgba(255,255,255,.16) 0 3px,transparent 3px 7px),
+             linear-gradient(160deg,rgba(255,255,255,.79),rgba(213,196,153,.73));
+  border-left:1px solid rgba(255,255,255,.56);
+  box-shadow:1px 3px 4px rgba(72,55,29,.12);
+  clip-path:polygon(0% 8%,8% 0%,16% 8%,25% 2%,37% 10%,49% 2%,60% 7%,73% 0%,86% 9%,100% 3%,97% 92%,86% 100%,73% 91%,61% 100%,49% 93%,36% 100%,24% 92%,11% 100%,0% 91%);
+  transform:rotate(-8deg);
+}
+.postit-entry:nth-child(4n+2) .paper-tape{left:20%;transform:rotate(12deg);background-color:rgba(231,209,197,.3)}
+.postit-entry:nth-child(4n+3) .paper-tape{left:65%;transform:rotate(-13deg);background-color:rgba(179,204,219,.25)}
+.postit-entry:nth-child(4n+4) .paper-tape{left:35%;transform:rotate(6deg)}
+.paper-overline{color:#665d51;letter-spacing:.02em}
+.paper-topic a{font-family:"Gaegu","Nanum Pen Script","Apple SD Gothic Neo",sans-serif;font-size:24px;line-height:1.15;letter-spacing:-.025em;font-weight:700;border-bottom:1px solid #4d4e4680}
+.paper-content{
+  font-family:"Gaegu","Nanum Pen Script","Apple SD Gothic Neo",sans-serif;
+  font-size:23px;font-weight:700;letter-spacing:-.02em;line-height:1.55;
+  color:#313943;text-shadow:.2px .2px 0 rgba(51,44,44,.14);
+  margin:8px 0 20px;padding:5px 4px 8px;
+  transform:rotate(-.28deg);
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(1.55em - 2px),rgba(90,78,55,.10) calc(1.55em - 1px),transparent 1.55em);
+}
+.postit-entry:nth-child(3n+2) .paper-content{transform:rotate(.35deg)}
+.postit-entry:nth-child(3n+3) .paper-content{transform:rotate(-.48deg)}
+.paper-actions button{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;font-size:12px;font-weight:700;min-height:36px;padding:5px 6px}
+.postit-paper a:focus-visible,.postit-paper button:focus-visible{outline:3px solid #164a91;outline-offset:2px}
+@media(max-width:520px){
+  .postit-paper{padding:31px 21px 25px}
+  .paper-topic a{font-size:22px}
+  .paper-content{font-size:21px;line-height:1.5}
+  .paper-tape{width:60px;height:25px}
+}
