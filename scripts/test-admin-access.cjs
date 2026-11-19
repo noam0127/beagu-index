@@ -1,0 +1,26 @@
+/* First-stage regression checks. These do NOT substitute for real-user MFA E2E. */
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const {execFileSync} = require("node:child_process");
+const read = path => fs.readFileSync(path,"utf8");
+execFileSync(process.execPath,["--check","js/beagu-admin-access-v1.js"],{stdio:"inherit"});
+const page=read("admin.html"),client=read("js/beagu-admin-access-v1.js");
+const gate=read("supabase/functions/beagu-admin-access/index.ts");
+const sql=read("supabase/migrations/20261120_admin_access_mfa_audit.sql");
+assert.match(page,/id="adminLoginForm"/);
+assert.match(page,/id="adminMfaForm"/);
+assert.doesNotMatch(page,/visit-stats|search-telemetry|arcade-leaderboard/);
+assert.match(client,/auth\.signInWithPassword/);
+assert.match(client,/auth\.mfa\.enroll/);
+assert.match(client,/auth\.mfa\.challengeAndVerify/);
+assert.match(client,/gate\("verify"\)/);
+assert.doesNotMatch(client,/service_role|SUPABASE_SERVICE_ROLE_KEY|\.signUp\(/);
+assert.match(gate,/db\.auth\.getUser\(jwt\)/);
+assert.match(gate,/claims\.aal !== "aal2"/);
+assert.match(gate,/beagu_admin_accounts/);
+assert.match(gate,/account\?\.enabled/);
+assert.match(sql,/enable row level security/gi);
+assert.match(sql,/revoke all on table public\.beagu_admin_accounts from public, anon, authenticated/);
+assert.match(sql,/revoke all on table public\.beagu_admin_audit_events from public, anon, authenticated/);
+assert.doesNotMatch(sql,/grant .* to authenticated/i);
+console.log("admin-access static/syntax checks passed; MFA browser E2E pending admin provisioning");
