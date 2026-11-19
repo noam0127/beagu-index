@@ -1,0 +1,53 @@
+/* Visible save/continue actions for the existing identity-code-scoped progress API. */
+#diaryCheckpointControls{display:flex;align-items:center;gap:5px;min-width:0;flex:0 1 auto}
+#diaryCheckpointControls[hidden]{display:none!important}
+#diaryCheckpointControls button{
+ min-width:49px;height:40px;padding:5px 7px;
+ border:1px solid #edd4de89;border-radius:11px;
+ background:linear-gradient(138deg,#352b44c9,#774963b0);
+ color:#fff8f6;font:700 10px/1.1 "Gowun Batang","Nanum Myeongjo",serif;
+ white-space:nowrap;cursor:pointer;
+ box-shadow:0 3px 12px #130b254a;
+ transition:background .17s ease,transform .17s ease;
+}
+#diaryCheckpointControls button:hover,#diaryCheckpointControls button:focus-visible{
+ background:linear-gradient(130deg,#a57595,#8b5778);
+ outline:2px solid #fce3ee;outline-offset:2px
+}
+#diaryCheckpointControls button:disabled{opacity:.6;cursor:wait}
+#diaryCheckpointControls button:first-child{
+ border-color:#fad7e9ad;background:linear-gradient(138deg,#956a88,#7d5471);
+}
+body.is-playing.is-semester-mode #novelCard .vn-bottom .vn-control-row{
+ gap:4px;min-width:0;max-width:100%;flex-wrap:nowrap
+}
+body.is-playing.is-semester-mode #novelCard .vn-bottom #diaryCheckpointControls{flex:none;gap:4px}
+body.is-playing.is-semester-mode #novelCard .vn-bottom #diaryCheckpointControls button{
+ flex:none;min-width:46px;max-width:46px;height:41px;padding:3px 2px;font-size:9px
+}
+@media(max-width:620px){
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar{
+  gap:3px;flex-shrink:1;min-width:0
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar button{
+  width:29px;min-width:29px;height:38px;font-size:8px;padding:2px 1px
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom #diaryCheckpointControls button{
+  min-width:42px;max-width:42px;height:39px;font-size:9px
+ }
+ body.is-playing.is-semester-mode #novelCard #vnMore{
+  flex-basis:78px!important;width:78px!important;min-width:78px!important;max-width:78px!important
+ }
+}
+@media(max-width:355px){
+ body.is-playing.is-semester-mode #novelCard .vn-bottom #diaryCheckpointControls button{
+  min-width:36px;max-width:36px;font-size:8px
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar button{
+  width:26px;min-width:26px
+ }
+ body.is-playing.is-semester-mode #novelCard #vnMore{
+  flex-basis:72px!important;width:72px!important;min-width:72px!important;max-width:72px!important
+ }
+}
+@media(prefers-reduced-motion:reduce){#diaryCheckpointControls button{transition:none!important}}
