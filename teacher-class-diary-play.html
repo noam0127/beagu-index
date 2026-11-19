@@ -421,7 +421,7 @@ function renderScenario(){
  $('choiceSection').hidden=done;
  $('outcome').hidden=!done;
  $('nextBtn').hidden=!done;
- $('nextBtn').textContent='오늘의 이야기 이어 읽기';
+ $('nextBtn').textContent='다음';
  const buttons=$('choiceButtons');buttons.replaceChildren();
  if(done){
   fillParagraphs('outcomeText',event.result.paragraphs);
