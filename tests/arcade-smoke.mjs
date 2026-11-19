@@ -151,6 +151,27 @@ assert.match(volley,/ranking\?\.finish/);
 assert.match(runner,/ranking\?\.finish/);
 console.log("PASS: home order, game scripts, score hooks, 2x controls");
 
+ // The school search must lead both embedded games, directly above score / health HUDs.
+const mainVolley=volley.slice(volley.indexOf('<main class="game-shell">'),volley.indexOf('</main>'));
+const mainRun=runner.slice(runner.indexOf('<main id="teacher-run-protected"'),runner.indexOf('</main>'));
+assert.match(mainVolley,/^<main class="game-shell">\s*<section id="arcade-school-picker"/,"volleyball school selection must be the first control");
+assert.match(mainRun,/^<main id="teacher-run-protected" class="shell" hidden>\s*<section id="arcade-school-picker"/,"survival school selection must be the first control");
+assert.ok(mainVolley.indexOf('id="arcade-school-picker"')<mainVolley.indexOf('class="scoreboard"'),"volleyball picker above HP and score");
+assert.ok(mainRun.indexOf('id="arcade-school-picker"')<mainRun.indexOf('class="hud"'),"run picker above day and HP");
+assert.equal((mainVolley.match(/id="arcade-school-picker"/g)||[]).length,1);
+assert.equal((mainRun.match(/id="arcade-school-picker"/g)||[]).length,1);
+assert.doesNotMatch(mainVolley,/class="top"|7 PTS|beagu-brand-mark/,"volleyball duplicate game logo and label removed");
+assert.doesNotMatch(mainRun,/class="top"|ARCADE · LIFE|beagu-brand-mark/,"run duplicate game header removed");
+assert.doesNotMatch(html,/<details class="teacher-game-details"|게임 펼치기 · 접기/,"home game no longer has unnecessary fold text");
+assert.match(html,/id="teacher-game-title">🏐 선생님배구 1\.0<\/h2>/,"outer game name remains");
+assert.match(html,/id="teacher-run-title">🎒 험난한 교직생활 3\.0<\/h2>/,"outer run name remains");
+assert.match(html,/id="teacher-run-home-lock"/,"LV1 game gate is preserved");
+assert.match(picker,/this\.guide=make\("p","arcade-school-brief-note","학교를 선택해주세요\. 배구지수 자료가 없는 학교는 2026 조사에 참여해야 진행이 가능합니다\."/);
+assert.match(picker,/this\.mount\.append\(heading,this\.input,this\.guide,this\.changeButton/,"small help directly follows the school input");
+assert.match(picker,/aria-describedby/,"school search is accessible");
+console.log("PASS: school selection first, note under input, blue-struck duplicate labels removed");
+
+
 // HP, lives, double-touch and time bonus contract.
 const runProfilesMatch=runner.match(/const difficultyProfiles=(\{[\s\S]*?\n\s*\});/);
 const volleyProfilesMatch=volley.match(/const energyProfiles=(\{[\s\S]*?\n\s*\});/);
@@ -227,8 +248,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261118-hp-super-time1")&&
-     site.body.includes("teacher-run.html?v=20261118-hp-super-time1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-picker-top1")&&
+     site.body.includes("teacher-run.html?v=20261119-picker-top1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -238,8 +259,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261118-hp-super-time1/);
-assert.match(site.body,/teacher-run\.html\?v=20261118-hp-super-time1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-picker-top1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-picker-top1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
