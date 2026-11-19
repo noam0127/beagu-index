@@ -25,4 +25,4 @@
  box-shadow:0 0 7px rgba(174,246,234,.6);will-change:transform
 }
 .arcade-mobile-scroll-rail:focus-visible{outline:3px solid #fff7ad;outline-offset:2px}
-@media(min-width:769px){.arcade-mobile-scroll-rail{display:none!important}}
+@media(min-width:769px) and (pointer:fine){.arcade-mobile-scroll-rail{display:none!important}}
