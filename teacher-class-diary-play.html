@@ -551,12 +551,13 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <script src="js/class-diary-narrative-v1.js"></script>
 <script src="js/class-diary-play-v1.js"></script>
 <script src="js/class-diary-semester-v1.js?v=20261120"></script>
+<script src="js/class-diary-female-semester-v1.js?v=20261120"></script>
 <script src="js/class-diary-character-routes-v1.js"></script>
 <script src="js/class-diary-director-v1.js"></script>
 <script src="js/class-diary-context-v1.js"></script>
 <script src="js/class-diary-sound-v1.js"></script>
 <script src="js/class-diary-visual-v1.js"></script>
-<script src="js/class-diary-sd-v1.js?v=20261120-female-sd2"></script>
+<script src="js/class-diary-sd-v1.js?v=20261120-female-sd3"></script>
 <script src="js/class-diary-male-photos-v1.js?v=20261120-1"></script>
 <script src="js/class-diary-supporting-cast-v1.js?v=20261120-men-1"></script>
 <script src="js/class-diary-scenario-v1.js"></script>
@@ -571,6 +572,7 @@ const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const semester=window.BeaguClassDiarySemester;
+const femaleSemester=window.BeaguClassDiaryFemaleSemester;
 const director=window.BeaguClassDiaryDirector;
 const characterRoutes=window.BeaguClassDiaryCharacterRoutes;
 const schoolContext=window.BeaguClassDiaryContext;
@@ -758,14 +760,15 @@ function fillParagraphs(id,texts){
  const node=$(id);node.replaceChildren();
  for(const sentence of texts)node.append(el('p',sentence));
 }
-function displayStage(id,who,expression){
+function displayStage(id,who,expression,season){
  $('sceneBackdrop').style.backgroundImage='url("'+visual.dataUrl(visual.backgroundSvg(id))+'")';
- $('scenePortrait').src=visual.dataUrl(sd.portraitSvg(who,expression||'neutral'));
+ $('scenePortrait').src=visual.dataUrl(sd.portraitSvg(who,expression||'neutral',season));
+ $('scenePortrait').dataset.season=season||'original';
  $('scenePortrait').setAttribute('data-sd-character',who);
  $('sceneArt').setAttribute('aria-label','가상 한국 초등학교 풍경의 글자 없는 삽화');
 }
-function renderSupportingCast(moment){
- const guest=supportingCast.describe(moment);
+function renderSupportingCast(moment,season){
+ const guest=supportingCast.describe(moment)||(moment&&femaleSemester.WOMEN[moment.id]?moment:null);
  const node=$('sceneGuest');
  node.hidden=!guest;
  if(!guest){
@@ -779,10 +782,11 @@ function renderSupportingCast(moment){
  $('sceneGuestPortrait').hidden=male;
  $('sceneGuestMalePhoto').hidden=!male;
  if(male)malePhotos.paint($('sceneGuestMalePhoto'),guest.id);
- else $('sceneGuestPortrait').src=visual.dataUrl(sd.portraitSvg(guest.id,guest.expression));
+ else $('sceneGuestPortrait').src=visual.dataUrl(sd.portraitSvg(guest.id,guest.expression,season));
  $('sceneGuestName').textContent=guest.name;
  $('sceneGuestRole').textContent=guest.role;
  node.dataset.sdCharacter=guest.id;
+ node.dataset.season=season||'original';
  node.setAttribute('aria-label',guest.name+' · '+guest.role);
 }
 function mood(id){if(sound.isEnabled())sound.setTrack(id).catch(()=>{});}
@@ -985,7 +989,12 @@ function renderSemester(){
  const profile=director.RELATIONSHIPS[game.profile.partner]||director.RELATIONSHIPS.none;
  $('novelCard').dataset.scene=view.visual;
  $('novelCard').dataset.act=String(view.act);
- displayStage(view.visual,game.profile.partner,reflection?'smile':'neutral');
+ const semesterArt=femaleSemester.artFor({
+  episode:game.episode,partner:game.profile.partner,reflection,
+  choiceId:game.lastOutcome&&game.lastOutcome.id,scenes:semester.SCENES
+ });
+ displayStage(view.visual,game.profile.partner,semesterArt.expression,semesterArt.season);
+ renderSupportingCast(semesterArt.guest,semesterArt.season);
  mood(reflection?'daily':sound.dayTrack((game.episode-1)%7+1));
  if(!reflection)playSceneDetail('semester:'+game.episode,view.place);
  $('characterAvatar').textContent=profile.initial;
@@ -1007,7 +1016,9 @@ function renderSemester(){
  $('nextBtn').setAttribute('aria-label',game.episode===36?'한 학기의 마지막 페이지':'다음 회차');
  const options=$('choiceButtons');options.replaceChildren();
  if(!reflection){
-  fillParagraphs('chapterText',view.paragraphs);
+  const semesterParagraphs=view.paragraphs.slice();
+  if(semesterArt.guest&&semesterArt.guest.text)semesterParagraphs.splice(Math.min(2,semesterParagraphs.length),0,semesterArt.guest.text);
+  fillParagraphs('chapterText',semesterParagraphs);
   view.choices.forEach((choice,i)=>{
    const btn=el('button',(i+1)+'. '+choice.label);
    btn.className='choice';btn.type='button';
