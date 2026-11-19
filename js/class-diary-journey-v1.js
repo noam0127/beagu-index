@@ -29,7 +29,15 @@ function init(options){
   const ids=part===1?['playerName','experience','gender','mbti']:part===2?['partner']:[];
   for(const id of ids){
    const el=$(id);
-   if(!el.checkValidity()){el.reportValidity();el.focus();return false;}
+   if(!el.checkValidity()){
+    if(id==='partner'){
+     // The select is deliberately hidden: the three cards are the only picker.
+     // Focus the first visible card rather than attempting to focus a hidden field.
+     const first=form.querySelector('[data-partner-choice]');
+     if(first)first.focus();
+    }else{el.reportValidity();el.focus();}
+    return false;
+   }
   }
   return true;
  }
