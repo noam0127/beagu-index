@@ -1,0 +1,52 @@
+/* Opt-in checkpoint contract: 36 episodes, positive save consent, no school data leakage. */
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const root=path.join(__dirname,'..');
+const source=p=>fs.readFileSync(path.join(root,p),'utf8');
+const s=source('js/class-diary-save-v1.js');
+const page=source('teacher-class-diary-play.html');
+const edge=source('supabase/functions/class-diary-save-v1/index.ts');
+const css=source('styles/class-diary-save-v1.css');
+new vm.Script(s,{filename:'class-diary-save-v1.js'});
+const sandbox={};
+vm.runInNewContext(s,{window:sandbox});
+const validate=sandbox.BeaguClassDiarySave.validSnapshot;
+const semester=require('../js/class-diary-semester-v1.js');
+const profile={name:'새봄',experience:'mid',gender:'undisclosed',mbti:'INFP',partner:'woman'};
+const base={schoolName:'가상의 초등학교',profile,
+ stats:{affection:35,trust:42,agency:42,fatigue:35,voice:45,boundary:48,support:67}};
+let game=semester.createGame(base);
+const history=[];
+for(let chapter=1;chapter<=36;chapter++){
+ const saved={version:1,mode:'semester',profile,history:[...history],episode:chapter,phase:'semester_chapter',page:1};
+ assert(validate(saved),'Save validation rejected chapter '+chapter);
+ game=semester.choose(game,String(chapter%3));
+ history.push({episode:chapter,choice:chapter%3});
+ assert(validate({...saved,phase:'semester_reflection',history:[...history]}),'Reflection checkpoint '+chapter);
+ game=semester.advance(game);
+}
+const last={version:1,mode:'semester',profile,history,episode:36,phase:'semester_ending',page:0};
+assert(validate(last),'Ending checkpoint should be saved');
+assert(!validate({...last,history:[...history.slice(0,35),{episode:36,choice:9}]}),'Invalid choice must reject');
+assert(!validate({...last,profile:{...profile,name:'A'.repeat(100)}}),'Name length must reject');
+assert(!validate({...last,episode:33}),'Ending must require final chapter');
+assert(page.includes("window.BeaguClassDiarySave.mount("));
+assert(page.includes('js/class-diary-save-v1.js?v=20261120-1'));
+assert(page.includes('styles/class-diary-save-v1.css?v=20261120-1'));
+assert(page.includes("localStorage.removeItem(key)"),'Legacy cleanup must remain');
+assert(!page.includes('localStorage.setItem('),'No implicit save in main rendering code');
+assert(s.includes("localStorage.setItem(localKey()"),'Explicit browser checkpoint missing');
+assert(s.includes("make('저장하기',save)"));
+assert(s.includes("make('이어하기',continuePlay)"));
+assert(s.includes("make('저장 삭제',deleteSave)"));
+assert(s.includes("const saveButton=make('저장하기',save)"));
+assert(!s.includes("addEventListener('beforeunload'"),'Saves must be opt in');
+assert(s.includes("history:(g.history||[]).map"),'Save only selected choice history');
+assert(!s.includes("JSON.stringify(g)"),'Full game objects may include school data');
+assert(edge.includes("admin.schema('beagu_private')"),'Server must only access private table');
+assert(edge.includes("digest('beagu-diary-save-v1:'+body.recoveryKey)"),'Never store bearer recovery keys');
+assert(edge.includes("levelAllowed(")&&edge.includes("guestAllowed("),'New save must require authorized player');
+assert(edge.includes("grantAllowed("),'Guest late save grant required');
+assert(edge.includes("'Cache-Control':'no-store, private'"),'Checkpoint replies must not be cached');
+assert(css.includes('.diary-save-overlay')&&css.includes('.diary-save-actions'));
+console.log('PASS: opt-in save contract, 36-episode replay data, private API, local/cloud recovery UI');
