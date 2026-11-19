@@ -1,4 +1,4 @@
-// Temporary Class Diary access by already-issued 2026 challenge identity code.
+// Temporarily disabled Class Diary code and handoff entry during preparation.
 // No new code issuance, no Level 2 elevation, no real school data access.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 const url = Deno.env.get('SUPABASE_URL') || '';
@@ -68,6 +68,8 @@ Deno.serve(async req=>{
  if(origin&&!allowed.has(origin))return respond({error:'ORIGIN_DENIED'},403,origin);
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors(origin)});
  if(req.method!=='POST')return respond({error:'METHOD_NOT_ALLOWED'},405,origin);
+ // Maintenance mode: neither a unique code nor an existing handoff ticket can open the game.
+ return respond({error:'CLASS_DIARY_PREPARING',message:'준비 중'},503,origin);
  if(!url||!key)return respond({error:'SERVICE_UNAVAILABLE'},503,origin);
  const length=Number(req.headers.get('Content-Length')||0);
  if(length>512)return respond({error:'BODY_TOO_LARGE'},413,origin);
