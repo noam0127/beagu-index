@@ -1,0 +1,71 @@
+name: Post-it public live smoke
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - postit.html
+      - js/postit-v1.js
+      - styles/postit-v1.css
+      - supabase/functions/beagu-postit-api-v1/index.ts
+      - .github/workflows/postit-live-smoke.yml
+
+permissions:
+  contents: read
+
+jobs:
+  public-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check public website and API (no test content written)
+        env:
+          SITE: https://baeguindex.com
+          POSTIT_API: https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          async function get(url) {
+            const response = await fetch(url, {
+              headers: { 'Cache-Control': 'no-cache' },
+              signal: AbortSignal.timeout(18000)
+            });
+            const body = await response.text();
+            return { status: response.status, body };
+          }
+          async function run() {
+            const origin = process.env.SITE;
+            const checks = [
+              ['home', '/', 'postit.html'],
+              ['postit', '/postit.html', '댓글은 Lv.1부터'],
+              ['postit-js', '/js/postit-v1.js?v=20261120-4', 'COMMENT_READ_LEVEL_REQUIRED'],
+              ['wind-css', '/styles/postit-v1.css', 'postit-breeze-flutter'],
+              ['school-search', '/search.html', 'postit.html'],
+              ['school-search-lv1', '/search-lv1.html', 'postit.html'],
+              ['school-compare', '/statistics.html', 'comparePostit'],
+              ['volleyball-game', '/teacher-volleyball.html', 'data-postit-game'],
+              ['teacher-run', '/teacher-run.html', 'data-postit-game'],
+              ['class-diary', '/teacher-class-diary-play.html', 'data-postit-game']
+            ];
+            for (const [label, path, expected] of checks) {
+              const res = await get(origin + path);
+              assert.equal(res.status, 200, label + ' HTTP ' + res.status);
+              assert.ok(res.body.includes(expected), label + ' expected current content');
+              console.log('PASS ' + label + ' HTTP 200 / content');
+            }
+            const api = process.env.POSTIT_API;
+            const list = await get(api + '?action=posts');
+            assert.equal(list.status, 200, 'public list HTTP');
+            const parsed = JSON.parse(list.body);
+            assert.ok(Array.isArray(parsed.posts), 'posts array');
+            assert.ok(parsed.posts.every(p => !('author_uid' in p) && !('author_id' in p)), 'no internal author identifier');
+            console.log('PASS Lv0 public posts and pseudonym privacy (no contents printed)');
+            const q = '?action=comments&post_id=00000000-0000-4000-8000-000000000001';
+            const denied = await get(api + q);
+            assert.equal(denied.status, 403, 'Lv0 must not read comments');
+            assert.equal(JSON.parse(denied.body).error, 'COMMENT_READ_LEVEL_REQUIRED');
+            console.log('PASS Lv0 server-side comment denial 403');
+            console.log('Public smoke test passed. Lv1/Lv2 session tests and mobile visuals require separate checks.');
+          }
+          run().catch(error => { console.error('FAIL: ' + error.message); process.exitCode = 1; });
+          NODE
