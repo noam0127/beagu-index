@@ -77,7 +77,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261118-recordfix1">
-<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261118-tier-ability2">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261118-global2">
@@ -88,21 +88,20 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="challenge.html">인증</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="search-lv1.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 <main class="game-shell">
-  <div class="top"><span class="brand" style="display:inline-flex;align-items:center;gap:10px"><span class="beagu-brand-mark" aria-hidden="true">B</span>선생님배구 1.0</span><span class="pill">7 PTS</span></div>
+  <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="scoreboard" aria-label="현재 점수">
     <div class="team"><span>나</span><strong id="player-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="player-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="우리 팀 체력" id="player-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="player-energy-fill"></div></div></div>
     <div class="center-label">VS<small id="volley-time-label">⏱ 0초</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="cpu-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="상대 팀 체력" id="cpu-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="cpu-energy-fill"></div></div></div>
   </div>
   <div class="volley-special-status" id="volley-special-status" role="status">⚡ 필살기 준비 · 경기 중 화면 더블 터치</div>
-  <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
   <div class="actions"><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
   <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 드래그 이동 · ⚡ 더블 터치 필살기 · ↔ 방향키</div>
   <div id="arcade-top10" aria-label="선생님배구 1.0 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-recordfix1"></script>
-<script src="js/arcade-school-picker-v1.js?v=20261118-hp-super-time1"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261119-picker-top1"></script>
 <script>
 (function () {
   "use strict";

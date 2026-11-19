@@ -15,6 +15,9 @@ class ArcadeSchoolPicker{
   this.input=make("input","arcade-school-input");
   this.input.type="search";this.input.placeholder="학교명 검색";this.input.maxLength=30;this.input.autocomplete="off";
   this.input.setAttribute("aria-label","학교명 검색");this.input.setAttribute("aria-controls","arcade-school-results");
+  this.guide=make("p","arcade-school-brief-note","학교를 선택해주세요. 배구지수 자료가 없는 학교는 2026 조사에 참여해야 진행이 가능합니다.");
+  this.guide.id="arcade-school-brief-note";
+  this.input.setAttribute("aria-describedby",this.guide.id);
   this.results=make("div","arcade-school-results");this.results.id="arcade-school-results";
   this.changeButton=make("button","arcade-school-change","⏹ 정지 · 학교 변경");
   this.changeButton.type="button";this.changeButton.hidden=true;
@@ -29,7 +32,7 @@ class ArcadeSchoolPicker{
   this.surveyLink.href="https://forms.gle/TPyCakK6Sj2zchRy7";
   this.surveyLink.target="_blank";this.surveyLink.rel="noopener noreferrer";
   this.surveyLink.hidden=true;
-  this.mount.append(heading,this.input,this.changeButton,this.results,this.status,this.surveyLink);
+  this.mount.append(heading,this.input,this.guide,this.changeButton,this.results,this.status,this.surveyLink);
   this.input.addEventListener("input",()=>{this.clear();clearTimeout(this.timer);this.timer=setTimeout(()=>this.search(),250);});
  }
  clear(){
