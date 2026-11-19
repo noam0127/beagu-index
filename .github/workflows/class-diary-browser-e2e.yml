@@ -11,6 +11,8 @@ on:
       - 'js/class-diary-incidents-v1.js'
       - 'js/class-diary-sound-v1.js'
       - 'js/class-diary-visual-v1.js'
+      - 'js/class-diary-motion-v1.js'
+      - 'styles/class-diary-motion-v1.css'
       - 'js/class-diary-sd-v1.js'
       - 'js/class-diary-ui-v2.js'
       - 'styles/class-diary-ui-v2.css'
