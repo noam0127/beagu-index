@@ -656,3 +656,43 @@ body.beagu-page-lv1 .school-card .beagu-checkbox-original-options .beagu-options
     font-size:12px;
   }
 }
+
+/* School-only binary/factual rows: never display regional or national placeholders. */
+body.beagu-page-lv1 .school-card .beagu-school-only-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:12px;
+  padding:13px 0;
+  border-bottom:1px solid #e7edf5;
+}
+body.beagu-page-lv1 .school-card .beagu-school-only-label{
+  font-size:13px;
+  font-weight:800;
+  line-height:1.6;
+  color:#263f5d;
+  min-width:0;
+  flex:1 1 150px;
+}
+body.beagu-page-lv1 .school-card .beagu-school-only-value{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  flex:0 1 auto;
+  font-size:14px;
+  line-height:1.5;
+  font-weight:830;
+  color:#1c4d89;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-school-only-meaning{
+  color:#637790;
+  font-size:12px;
+  font-weight:700;
+}
+@media(max-width:480px){
+  body.beagu-page-lv1 .school-card .beagu-school-only-row{align-items:center;flex-direction:row;}
+  body.beagu-page-lv1 .school-card .beagu-school-only-value{justify-content:flex-start;}
+}
+/* The comparison order is explicitly school, region, then nation. */
