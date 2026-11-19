@@ -99,6 +99,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261119-foldedtop1">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261119-game1">
 <link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
@@ -124,13 +125,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     <div class="volley-progress-track" id="volley-cpu-progress" role="progressbar" aria-label="컴퓨터 점수 진행" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0"><div class="volley-progress-fill cpu" id="volley-cpu-fill"></div></div></div>
    <div class="volley-progress-next" id="volley-next-goal">첫 목표 · 5점 도달하기</div>
   </div>
-  <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas><button type="button" id="volley-school-choose" class="volley-school-choose" aria-controls="arcade-school-picker" hidden>🏫 학교 선택하기</button></div>
+  <div class="court arcade-game-viewport" data-arcade-fullscreen><button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="게임 화면 전체화면" title="게임만 전체화면">🔳</button><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas><button type="button" id="volley-school-choose" class="volley-school-choose" aria-controls="arcade-school-picker" hidden>🏫 학교 선택하기</button></div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
   <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·분신 · EXTREME 공 2개·족쇄</div>
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261119-foldedtop1"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261119-picker-top1"></script>
+<script src="js/arcade-fullscreen-v1.js?v=20261119-game1"></script>
 <script>
 (function () {
   "use strict";
@@ -145,6 +147,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const schoolChooseButton=document.getElementById("volley-school-choose");
   const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("volleyball_25","#arcade-top10") : null;
   const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
+  // The school search and its context-aware start action belong to one panel.
+  schoolPicker.mount.appendChild(schoolChooseButton);
   const battleProfiles={
     easy:{allySpeed:1.38,allyJump:1.20,allyReach:1.22,allyAttack:1.24,enemySpeed:4.7,enemyReaction:17,enemyLead:1,enemyError:82,enemyDeadzone:25,enemyJumpChance:.10,enemyJumpReach:105,enemyJumpForce:10.5,enemyReach:.82,enemyAttack:.68,enemySmashChance:.02,label:"아군 강화 · 상대 점프 드묾"},
     normal:{allySpeed:1.20,allyJump:1.10,allyReach:1.12,allyAttack:1.12,enemySpeed:6.0,enemyReaction:12,enemyLead:3,enemyError:58,enemyDeadzone:17,enemyJumpChance:.27,enemyJumpReach:125,enemyJumpForce:11.5,enemyReach:.91,enemyAttack:.83,enemySmashChance:.08,label:"아군 우세 · 상대 수비 보통"},
@@ -353,6 +357,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   function syncUI() {
     schoolChooseButton.hidden=state.phase!=="ready";
+    schoolChooseButton.textContent=schoolPicker.get()?.eligible===true?"▶ 이 학교로 시작하기":"🏫 학교 선택하기";
+    schoolChooseButton.setAttribute("aria-label",schoolPicker.get()?.eligible===true?"선택한 학교로 게임 시작하기":"학교 선택하기");
     scoreP.textContent = state.leftScore+" / "+MATCH_TARGET;
     scoreC.textContent = state.rightScore+" / "+MATCH_TARGET;
     updateScoreProgress();
@@ -452,6 +458,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   schoolPicker.onRequestChange=stopForSchoolChange;
   schoolChooseButton.addEventListener("click",()=>{
     if(state.phase!=="ready")return;
+    if(schoolPicker.get()?.eligible===true){void startMatch();return;}
     if(schoolPicker.get())schoolPicker.resetForChange();
     else schoolPicker.focus();
     document.getElementById("arcade-school-picker").scrollIntoView?.({behavior:"smooth",block:"start"});
