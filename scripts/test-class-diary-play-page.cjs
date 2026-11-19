@@ -44,6 +44,13 @@ assert(!play.src.includes('localStorage.getItem('));
 assert(!play.src.includes('sessionStorage.setItem('));
 assert(play.src.includes("window.scrollTo(0,0)"));
 assert(play.src.includes('레벨2'));
+assert(play.src.includes("const isDemo=params.get('demo')==='1'"));
+assert(play.src.includes("if(isDemo){"));
+assert(play.src.indexOf('if(isDemo){')<play.src.indexOf("if(!/^[A-Z0-9]{7}$/.test(schoolId))"));
+assert(preview.src.includes('teacher-class-diary-play.html?demo=1'));
+assert(play.src.includes('src="js/class-diary-demo-v1.js"'));
+assert(play.src.includes('로그인 없이 플레이'));
+assert(play.src.includes('실제 학교 자료 사용 안 함'));
 assert(!play.src.includes('.innerHTML'),'Use textContent instead of interpolating user data as HTML');
 for(const id of ['profileForm','setup','novel','ending','chapterText','choiceButtons','outcome','noSaveNotice']){
  assert(play.ids.has(id),'Required interactive UI element missing: '+id);
