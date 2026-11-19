@@ -58,4 +58,22 @@ const falseGeo=make({verifiedRegionTags:[{tag:'island',label:'섬',source_type:'
   source_ref:'map',review_status:'APPROVED'}]});
 assert(!falseGeo.geography.tags.some(x=>x.id==='island'));
 assert.throws(()=>world.generateWorld({school:{school_id:'bad'}}),/INVALID_APPROVED_WORLD_INPUT/);
-console.log('PASS: class-diary-world-v1 14 source/size/geography/review/eligibility checks');
+const complete=make({
+  school:{...baseSchool,education_office:'강원특별자치도교육청',
+    education_office_code:'K10',source:'NEIS',last_synced_at:'2026-11-19'},
+  facts:world.NUMERIC_KEYS.map(key=>fact(key,20,
+    key==='september_participation_rate'?2023:
+    key==='district_housing_price_mean'?2025:2024)),
+  categories:world.CATEGORY_KEYS.map(key=>({
+    fact_key:key,fact_value:'검증',review_status:'APPROVED',
+    reference_year:2024,survey_year:2025,label:key
+  }))
+});
+assert.equal(complete.coverage.numericKnown,18);
+assert.equal(complete.coverage.categoricalKnown,3);
+assert.equal(complete.basic.educationOffice,'강원특별자치도교육청');
+assert.equal(complete.basic.openingDate,null);
+const linked=new Set(complete.storyHooks.flatMap(h=>h.referenceKeys));
+for(const key of world.NUMERIC_KEYS)assert(linked.has(key),'No context hook for '+key);
+for(const key of world.CATEGORY_KEYS)assert(linked.has(key),'No context hook for '+key);
+console.log('PASS: class-diary-world-v1 data quality, 21/21 hook coverage, and school provenance');
