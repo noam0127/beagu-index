@@ -17,7 +17,9 @@ assert.doesNotMatch(page,/Lv\.2\(진\)/,'Do not revive old temporary badge label
 assert.ok(page.includes('정식 계정 준비중'),'Permanent Level 2 signup is not claimed live');
 assert.ok(page.includes('포스트잇 작성: 정식 Lv.2 계정 생성 후 가능'),'Do not imply provisional posting permission');
 assert.ok(page.includes('href="challenge.html">챌린지 · 고유번호 확인</a>'),'Provide available challenge route');
-assert.ok(page.includes('레벨업 인증창에 고유번호를 입력해요.'),'Describe real interim login mechanism');
+assert.ok(!page.includes('레벨업 인증창에 고유번호를 입력해요.'),'No removed code authentication entry in guide');
+assert.ok(page.includes('href="search.html">레벨1 인증</a>'),'Guide links directly to Level1 login');
+assert.ok(page.includes('정식 레벨2 인증은 준비 중이에요.'),'Describe disabled new identity verification accurately');
 assert.ok(!page.includes('자동 승급 가능합니다'),'Do not advertise unfinished referral automation');
 assert.match(script,/indicator\.setAttribute\('href','levels\.html'\)/);
 assert.match(script,/result\.level>=2\?2:1/,'Show verified Lv2 rather than Lv1');
@@ -38,6 +40,6 @@ for(const file of [
  const html=read(file);
  const badge=html.match(/<a[^>]*id="beaguLevelState"[^>]*>/)?.[0];
  assert.ok(badge&&badge.includes('href="levels.html"'),file+' badge links to levels');
- assert.ok(html.includes('js/beagu-level-state-v1.js?v=20261120-lv2-imsi2'),file+' loads latest badge labels');
+ assert.ok(html.includes('js/beagu-level-state-v1.js?v=20261120-lv1-plain1'),file+' loads latest badge labels');
 }
 console.log('PASS: Lv.2(임시), current-level guide, 10 page links and restricted Lv2 actions');
