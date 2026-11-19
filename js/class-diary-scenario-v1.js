@@ -369,13 +369,13 @@ function scene(state,world){
  const paragraphs=eventProse(state,world).map(x=>x.replace(/\{colleague\}/g,colleague));
  const climate=climateParagraph(state);
  if(climate)paragraphs.splice(Math.min(1,paragraphs.length),0,climate.replace(/\{colleague\}/g,colleague));
- paragraphs.push(...schoolContextLines(state,world));
+ const sourceFacts=schoolContextLines(state,world);
  const last=previousImpact(state);
  if(last)paragraphs.splice(1,0,last);
- if(office)paragraphs.push(office);
+ if(office)sourceFacts.push(office);
  return {
   id:data.id,day:state.day,date:'2027-03-'+String(7+state.day).padStart(2,'0'),
-  title:data.title,place:data.place,paragraphs,kind:data.tone,
+  title:data.title,place:data.place,paragraphs,sourceFacts,kind:data.tone,
   source:'fictional_scenario',fictionLabel:'가상 시나리오 · 실제 학교에서 발생한 일이라는 뜻이 아닙니다.',
   surveyThemes:data.id==='barbecue'||data.id==='forced_social'?SURVEY_THEMES.social:
    data.id==='sports'?SURVEY_THEMES.sports:
