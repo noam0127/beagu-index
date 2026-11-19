@@ -5,6 +5,7 @@ on:
     paths:
       - 'teacher-class-diary-play.html'
       - 'js/class-diary-play-v1.js'
+      - 'js/class-diary-semester-v1.js'
       - 'js/class-diary-director-v1.js'
       - 'js/class-diary-character-routes-v1.js'
       - 'js/class-diary-scenario-v1.js'
@@ -31,6 +32,7 @@ jobs:
           files=(
             'teacher-class-diary-play.html'
             'js/class-diary-play-v1.js'
+            'js/class-diary-semester-v1.js'
             'js/class-diary-sound-v1.js'
             'js/class-diary-visual-v1.js'
             'js/class-diary-ui-v2.js'
