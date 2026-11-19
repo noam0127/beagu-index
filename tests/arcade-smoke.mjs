@@ -651,9 +651,9 @@ scoreBoard.session="score-session";
 await scoreBoard.finish(12500,volleyStats(25,5));
 assert.equal(calls,2,"high score also uploaded without names");
 assert.match(backend,/order:"score\.desc,created_at\.asc"/);
-assert.match(backend,/win_time_tenths:"not\.is\.null"/);
+assert.match(backend,/arcade_fastest25_records/,"fastest ten are stored separately from score TOP100");
 assert.match(backend,/order:"win_time_tenths\.asc,created_at\.asc"/);
-assert.match(backend,/Persist each validated result/);
+assert.match(backend,/All finished games have a verified result/);
 console.log("PASS: separate fastest-25 and high-score boards, partial match uploads, anonymous records");
 
 
@@ -698,7 +698,7 @@ assert.match(runner,/stage===3&&|if\(stage===3\)/,"career-specific safe lane");
 assert.match(shared,/arcade-tier-filter/,"tiered leaderboard filter available");
 assert.match(backend,/RANK_TIERS=new Set/,"server validates leaderboard tiers");
 assert.match(backend,/if\(tier\)q\.set\("difficulty","eq\."\+tier\)/,"ranking tier applied at DB query");
-assert.match(backend,/Persist each validated result/,"all runner results are persisted");
+assert.match(backend,/only the 100 highest scores/,"runner TOP100 is bounded");
 assert.match(runner,/ranking\?\.finish\(Math\.floor\(score\)/,"runner auto submits on finish");
 assert.match(runner,/닉네임 없이 결과를 자동 기록합니다/);
 assert.match(shared,/arcade-history\.html\?game=/,"both games have an accessible records link");
