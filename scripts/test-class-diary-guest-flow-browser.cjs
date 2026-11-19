@@ -84,12 +84,17 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#diarySaveNow').click();
    await page.waitForFunction(()=>document.querySelector('#vnSaveNotice')?.textContent?.includes('저장 완료'),null,{timeout:5000});
    assert(latestCheckpoint&&latestCheckpoint.version==='class-diary-semester/v1','Manual save must reach the mock progress API');
+   page.once('dialog',dialog=>dialog.accept());
+   await page.locator('#diaryContinueNow').click();
+   await page.waitForFunction(()=>document.querySelector('#vnSaveNotice')?.textContent?.includes('이전 기록 확인됨'),null,{timeout:5000});
+   assert.equal(await page.locator('#novel').isVisible(),true,'Saved story should resume in the game viewport');
    assert(state.scrollHeight<=state.viewport+3,'Game must fit one viewport: '+JSON.stringify(state));
    assert(state.scrollWidth<=state.width+3,'Game must not overflow horizontally');
    assert.equal(state.btn,'true','Music should be enabled by default');
    assert.equal(state.saved.length,0,'Guest story cannot save player progress');
    assert.equal(await page.locator('.sound-panel').isVisible(),false,'Music controls should not clutter the page');
    assert.equal(await page.locator('#vnSound').isVisible(),false,'Music toggle must live inside settings only');
+   await page.locator('#diaryHudFold').click();
    assert.equal(await page.locator('#diarySettings').isVisible(),true);
    await page.locator('#diarySettings').click();
    assert.equal(await page.locator('#diaryMusicVolume').isVisible(),true,'Volume slider must live in settings');
