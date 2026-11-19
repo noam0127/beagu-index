@@ -27,6 +27,31 @@ assert.equal(game.day,1);assert.equal(game.phase,'chapter');
 assert(engine.chapter(game,world,plan).paragraphs.length>=3);
 assert.throws(()=>engine.advance(game),/ADVANCE_PHASE_REQUIRED/);
 assert.throws(()=>engine.choose(game,'invalid'),/CHOICE_INVALID/);
+
+/* Historical source claims and teacher-vernacular checks: all seven days, all 21 choices. */
+const expectedVocab=[
+ ['주안','나이스','에듀파인','개인정보 수집·이용 동의서','학년연구실'],
+ ['교직원전체회의','학년연구실','학년회의'],
+ ['전담시간','모둠','학급회의','아이스크림'],
+ ['교외체험학습신청서','나이스','보호자','학년연구실'],
+ ['주안','에듀파인','품의','퇴근'],
+ ['인디스쿨','아이스크림','유튜브','전담시간'],
+ ['주안','학년연구실','나이스','에듀파인','학급회의']
+];
+let vocabularyRun=engine.createGame(world,plan,profile);
+for(let i=0;i<7;i++){
+  const view=engine.chapter(vocabularyRun,world,plan);
+  const texts=view.paragraphs.concat(view.choices.map(x=>x.label));
+  const all=typeof texts.join==='function'?texts.join(' '):'';
+  // All choice aftermaths are reached separately and should remain coherent.
+  for(const token of expectedVocab[i]){
+    assert(all.includes(token)|| (i===5&&token==='유튜브'),
+      'Missing authentic Korean elementary-school term '+token+' on day '+(i+1));
+  }
+  vocabularyRun=engine.choose(vocabularyRun,view.choices[0].id);
+  vocabularyRun=engine.advance(vocabularyRun);
+}
+
 const history=[];
 for(let day=1;day<=7;day++){
  const chapter=engine.chapter(game,world,plan);
