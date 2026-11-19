@@ -38,7 +38,7 @@ class ArcadeLeaderboard{
   this.board=[];this.fastestBoard=[];this.remote=false;this.session=null;this.pendingStart=null;
   this.tier=null;this.loadRequestId=0;this.pendingTier=null;
   this.pendingLoad=null;this.score=0;this.stats=null;this.school=null;
-  this.playGeneration=0;this.isSubmitting=false;this.notice="";
+  this.playGeneration=0;this.isSubmitting=false;this.notice="";this.expanded=false;
   if(this.mount){this.draw();this.load();}
  }
  async request(method,body=null){
@@ -136,10 +136,30 @@ class ArcadeLeaderboard{
  draw(){
   if(!this.mount)return;
   const root=this.mount;root.replaceChildren();root.classList.add("arcade-ranking");
+  const toggle=el("button","arcade-ranking-toggle",
+    this.game==="volleyball_25"?"🏆 TOP 10 기록 · 점수 / 최단시간":"🏆 TOP 10 기록 · 정년 생존");
+  toggle.type="button";
+  const content=el("div","arcade-ranking-content");
+  content.id=this.game==="volleyball_25"?"volleyball-top10-content":"teacher-run-top10-content";
+  content.hidden=!this.expanded;
+  toggle.setAttribute("aria-controls",content.id);
+  toggle.setAttribute("aria-expanded",String(this.expanded));
+  const indicator=el("span","arcade-ranking-chevron",this.expanded?"▴":"▾");
+  indicator.setAttribute("aria-hidden","true");
+  toggle.append(indicator);
+  toggle.addEventListener("click",()=>{
+    this.expanded=!this.expanded;
+    content.hidden=!this.expanded;
+    toggle.setAttribute("aria-expanded",String(this.expanded));
+    indicator.textContent=this.expanded?"▴":"▾";
+  });
+  root.append(toggle);
+  if(this.notice){const node=el("p","arcade-rank-feedback",this.notice);node.setAttribute("role","status");root.append(node);}
+  root.append(content);
   const header=el("div","arcade-ranking-head");
   header.append(el("strong","",this.game==="volleyball_25"?"🏆 배구 최고 점수 TOP 10":"🏆 정년 생존 점수 TOP 10"),
     el("small","",this.remote?"공식 기록 · 익명":"공식 서버 확인 중"));
-  root.append(header);
+  content.append(header);
   const filter=el("select","arcade-tier-filter");
   filter.setAttribute("aria-label","랭킹 난이도 선택");
   for(const [value,label] of [["","전체 난이도"],...Object.entries(levelNames)]){
@@ -150,31 +170,31 @@ class ArcadeLeaderboard{
    this.tier=filter.value||null;
    this.load();
   });
-  root.append(filter);
-  if(this.notice){const node=el("p","arcade-rank-feedback",this.notice);node.setAttribute("role","status");root.append(node);}
+  content.append(filter);
+
   const labels=el("div","arcade-rank-grid arcade-rank-label");
-  ["순위","학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));root.append(labels);
-  if(!this.board.length)root.append(el("div","arcade-rank-empty",
+  ["순위","학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));content.append(labels);
+  if(!this.board.length)content.append(el("div","arcade-rank-empty",
     this.remote?"아직 등록된 점수 기록이 없습니다":"기록을 불러올 수 없습니다"));
   else for(const [i,entry] of this.board.entries()){
    const row=el("div","arcade-rank-grid arcade-rank-row"),school=el("div","arcade-rank-person");
    school.append(el("span","arcade-rank-school",entry.school_name),el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
-   row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmt(entry.score)));root.append(row);
+   row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmt(entry.score)));content.append(row);
   }
   if(this.game==="volleyball_25"){
    const headerTime=el("div","arcade-ranking-head");headerTime.style.marginTop="16px";
    headerTime.append(el("strong","","⏱ 25점 승리 최단시간 TOP 10"),el("small","","25점 승리 경기만 · 빠른 시간순"));
-   root.append(headerTime);
+   content.append(headerTime);
    const timeLabels=el("div","arcade-rank-grid arcade-rank-label");
    ["순위","학교 · 난이도","완주 시간"].forEach(x=>timeLabels.append(el("span","",x)));
-   root.append(timeLabels);
-   if(!this.fastestBoard.length)root.append(el("div","arcade-rank-empty",
+   content.append(timeLabels);
+   if(!this.fastestBoard.length)content.append(el("div","arcade-rank-empty",
      this.remote?"아직 25점 승리 시간 기록이 없습니다":"기록을 불러올 수 없습니다"));
    else for(const [i,entry] of this.fastestBoard.entries()){
     const row=el("div","arcade-rank-grid arcade-rank-row"),school=el("div","arcade-rank-person");
     school.append(el("span","arcade-rank-school",entry.school_name),
       el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
-    row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmtTime(entry.timeTenths)));root.append(row);
+    row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmtTime(entry.timeTenths)));content.append(row);
    }
   }
   const history=el("a","arcade-history-link","📚 역대 게임 기록 · 상위 100위 보기");
@@ -182,7 +202,7 @@ class ArcadeLeaderboard{
   history.target="_top";
   history.setAttribute("aria-label",this.game==="volleyball_25"?
    "선생님배구 역대 게임 기록 모두 보기":"험난한 교직생활 역대 게임 기록 모두 보기");
-  root.append(history);
+  content.append(history);
  }
 
 }
