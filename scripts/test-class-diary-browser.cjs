@@ -49,9 +49,10 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    assert.equal(await page.locator('#partner').inputValue(),variant.partner,'Card must update original partner field');
    assert.equal(await card.getAttribute('aria-pressed'),'true','Selected card must be visually announced');
    assert((await page.locator('#partnerDescription').innerText()).length>25,'Selected cast profile must update');
-   for(const id of ['setupPortraitWoman','setupPortraitMan','setupPortraitNone']){
-     assert((await page.locator('#'+id).getAttribute('src')).startsWith('data:image/svg+xml'),'SD setup art must be bundled');
+   for(const id of ['setupPortraitWoman','setupPortraitNone','setupPortraitSuhyun','setupPortraitSea','setupPortraitYuri']){
+     assert((await page.locator('#'+id).getAttribute('src')).startsWith('data:image/webp;base64,'),'HQ female art must be bundled: '+id);
    }
+   assert((await page.locator('#setupPortraitMan').getAttribute('src')).startsWith('data:image/svg+xml'),'Male fallback must remain available');
    const count=await page.locator('#profileForm input,#profileForm select').count();
    assert.equal(count,5,'Character form must contain exactly 5 fields without age');
    await page.locator('#partner').selectOption(variant.partner);
@@ -67,7 +68,9 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#vnSound').click(); // in-scene sound control delegates to hidden settings button
    assert.equal(await page.locator('#musicBtn').getAttribute('aria-pressed'),'false');
    assert((await page.locator('#sceneBackdrop').evaluate(x=>x.style.backgroundImage)).includes('data:image/svg+xml'));
-   assert((await page.locator('#scenePortrait').getAttribute('src')).startsWith('data:image/svg+xml'));
+   const portraitSrc=await page.locator('#scenePortrait').getAttribute('src');
+   assert(portraitSrc.startsWith(variant.partner==='man'?'data:image/svg+xml':'data:image/webp;base64,'),'Portrait must match chosen cast style');
+   if(variant.partner!=='man')assert.equal(await page.locator('#scenePortrait').getAttribute('data-art-quality'),'hq');
    assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('is-playing')),true,'Single-screen VN mode must be active');
    const stage=await page.locator('#novelCard').boundingBox();
    assert(stage&&stage.height<=variant.height+1,'VN must fit within viewport');
