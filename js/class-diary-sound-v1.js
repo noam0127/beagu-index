@@ -4,7 +4,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='class-diary-sound/v2';
+const VERSION='class-diary-sound/v3';
 const LICENSE='https://creativecommons.org/licenses/by/4.0/';
 const HOST='https://www.scottbuckley.com.au/library/';
 const FILES={
@@ -15,12 +15,16 @@ const FILES={
  tender:['Moonlight','2022/07/Moonlight.mp3','moonlight'],
  restful:['Castles in the Sky','2021/11/sb_castlesinthesky.mp3','castles-in-the-sky'],
  bright:['Felicity','2021/03/sb_felicity.mp3','felicity'],
- ending:['Home Was You','2026/07/HomeWasYou.mp3','home-was-you']
+ ending:['Home Was You','2026/07/HomeWasYou.mp3','home-was-you'],
+ quiet:['Elementary','2017/07/sb_elementary.mp3','elementary'],
+ comic:['Quirky Lane','https://www.scottbuckley.com.au/wp-content/audio/iha/sb_iha_quirkylane.mp3','quirky-lane'],
+ intimate:['Growing Up','2018/05/sb_growingup.mp3','growing-up'],
+ reconcile:['Reawakening','2023/05/Reawakening.mp3','reawakening']
 };
 const TRACKS=Object.freeze(Object.fromEntries(Object.entries(FILES).map(([id,[name,file,slug]])=>[
- id,Object.freeze({name,url:HOST+'wp-content/uploads/'+file,page:HOST+slug+'/',license:LICENSE})
+ id,Object.freeze({name,url:file.startsWith('https://')?file:HOST+'wp-content/uploads/'+file,page:HOST+slug+'/',license:LICENSE})
 ])));
-const DAYS=Object.freeze(['daily','tension','heartfelt','tension','playful','restful','daily']);
+const DAYS=Object.freeze(['quiet','tension','heartfelt','tension','playful','restful','intimate']);
 let enabled=false,current=null,currentId=null,request=0,fadeTimer=null;
 let musicVolume=.13,sfxVolume=.17,fxEnabled=true,ctx=null,onStatus=()=>{};
 const AudioAPI=typeof root.Audio==='function'?root.Audio:null;
@@ -82,19 +86,31 @@ function dayTrack(day){
  return DAYS[day-1];
 }
 function choiceTrack(day,choice){
- if(day===2||day===4)return ['reopen','together','listen'].includes(choice)?'heartfelt':'tension';
- if(day===3)return ['council','trial'].includes(choice)?'heartfelt':'playful';
+ if(day===2||day===4)return ['reopen','together','listen'].includes(choice)?'reconcile':'tension';
+ if(day===3)return ['council','trial'].includes(choice)?'reconcile':'playful';
  if((day===5&&choice==='invite')||(day===6&&choice==='coffee'))return 'tender';
- if(day===7&&choice==='promise')return 'heartfelt';
+ if(day===6&&choice==='letter')return 'intimate';
+ if(day===7&&choice==='promise')return 'reconcile';
+ if(day===7&&choice==='thanks')return 'intimate';
  return dayTrack(day);
 }
 function sceneTrack(event){
  if(!event)return 'daily';
+ // A result is a reflective pause, not necessarily a happy resolution.
+ if(event.result)return 'intimate';
  if(event.kind==='tense'||event.kind==='unsettled'||event.tone==='tense'||event.tone==='unsettled')return 'tension';
+ if(event.kind==='bright'||event.tone==='bright'||event.tone==='happy'||event.kind==='happy')return 'bright';
  if(event.kind==='gentle'||event.tone==='gentle')return 'heartfelt';
- if(event.tone==='playful')return 'playful';
- if(event.tone==='reflective')return 'restful';
+ if(event.kind==='playful'||event.tone==='playful')return 'comic';
+ if(event.kind==='reflective'||event.tone==='reflective')return 'intimate';
  return 'daily';
+}
+function placeCue(place){
+ const text=String(place||'');
+ if(/카페|뒤뜰/.test(text))return 'cup';
+ if(/교문|복도|주차장|운동장|출근길|퇴근길/.test(text))return 'step';
+ if(/교실|연구실|교무실|회의실|서점|수첩|집/.test(text))return 'paper';
+ return null;
 }
 /* Short original sine-wave cues; no third-party sound recording. */
 const CUES=Object.freeze({
@@ -102,14 +118,43 @@ const CUES=Object.freeze({
  advance:[415,510,.07,.08], affection:[590,880,.19,.24],
  tension:[310,260,.20,.17], transition:[465,615,.12,.12],
  uiTap:[490,570,.055,.06], uiPick:[510,740,.12,.13],
- uiStart:[390,900,.24,.18], uiEnd:[630,860,.20,.15]
+ uiStart:[390,900,.24,.18], uiEnd:[630,860,.20,.15],
+ cup:[920,1170,.085,.055]
 });
+const PHYSICAL=Object.freeze({
+ paper:{seconds:.13,type:'highpass',frequency:1400,level:.065},
+ step:{seconds:.16,type:'lowpass',frequency:320,level:.08},
+ door:{seconds:.20,type:'lowpass',frequency:570,level:.09}
+});
+function physicalNote(kind,at){
+ const spec=PHYSICAL[kind],sampleRate=ctx.sampleRate||44100;
+ const length=Math.max(32,Math.floor(sampleRate*spec.seconds));
+ const buffer=ctx.createBuffer(1,length,sampleRate),data=buffer.getChannelData(0);
+ let seed=kind==='paper'?107:kind==='step'?211:509;
+ for(let i=0;i<length;i++){
+  seed=(Math.imul(1664525,seed)+1013904223)>>>0;
+  const fade=Math.pow(1-i/length,kind==='door'?.55:1.35);
+  data[i]=(seed/2147483648-1)*fade;
+ }
+ const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+ source.buffer=buffer;filter.type=spec.type;filter.frequency.value=spec.frequency;
+ gain.gain.setValueAtTime(.0001,at);
+ gain.gain.exponentialRampToValueAtTime(Math.max(.0002,spec.level*sfxVolume),at+.012);
+ gain.gain.exponentialRampToValueAtTime(.0001,at+spec.seconds);
+ source.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+ source.start(at);source.stop(at+spec.seconds+.005);
+}
 function note(kind){
- if(!fxEnabled||sfxVolume<=0||!ContextAPI||!CUES[kind])return;
+ if(!fxEnabled||sfxVolume<=0||!ContextAPI||(!CUES[kind]&&!PHYSICAL[kind]))return;
  try{
   if(!ctx)ctx=new ContextAPI();
   if(ctx.state==='suspended')ctx.resume().catch(()=>{});
-  const [from,to,seconds,level]=CUES[kind],at=ctx.currentTime;
+  const at=ctx.currentTime;
+  if(PHYSICAL[kind]){
+   if(ctx.createBuffer&&ctx.createBufferSource&&ctx.createBiquadFilter)physicalNote(kind,at);
+   return;
+  }
+  const [from,to,seconds,level]=CUES[kind];
   const o=ctx.createOscillator(),g=ctx.createGain();
   o.type=kind==='tension'?'triangle':'sine';
   o.frequency.setValueAtTime(from,at);o.frequency.exponentialRampToValueAtTime(to,at+seconds);
@@ -125,7 +170,7 @@ function credit(){
  license:LICENSE,tracks:Object.values(TRACKS).map(t=>({name:t.name,page:t.page})),
  credit:'Music by Scott Buckley — CC BY 4.0. www.scottbuckley.com.au'};
 }
-const api=Object.freeze({VERSION,TRACKS,dayTrack,choiceTrack,sceneTrack,note,setTrack,setEnabled,
+const api=Object.freeze({VERSION,TRACKS,dayTrack,choiceTrack,sceneTrack,placeCue,note,setTrack,setEnabled,
  isEnabled,setMusicVolume,setSfxVolume,musicLevel,sfxLevel,setEffectsEnabled,stop,credit,
  onStatus(fn){onStatus=typeof fn==='function'?fn:()=>{}}});
 if(typeof module==='object'&&module.exports)module.exports=api;
