@@ -29,7 +29,7 @@ const lv0=read('search.html'),lv1=read('js/level-search.js');
 const markup=read('search-lv1.html');
 const api=read('supabase/functions/beagu-level-api/index.ts');
 for(const file of [lv0,lv1]){
- assert.ok(file.includes('data/public-2023-2025-school-records-v2.json?v=20261120-overseas1'));
+ assert.ok(file.includes('data/public-2023-2025-school-records-v2.json?v=20261120-historyfull2'));
  assert.ok(file.includes('school-participation'));
  assert.ok(file.includes('조사 기록 있음'));
 }
