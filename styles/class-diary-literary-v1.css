@@ -3,7 +3,7 @@ body.is-playing.is-semester-mode #novelCard{width:min(100%,1380px);height:100dvh
 body.is-playing.is-semester-mode #sceneArt{position:relative;overflow:hidden}
 body.is-playing.is-semester-mode #sceneBackdrop{filter:brightness(.64) saturate(.84)}
 body.is-playing.is-semester-mode #sceneArt::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;background:linear-gradient(90deg,rgba(11,14,24,.04),rgba(9,13,27,.45) 34%,rgba(11,15,28,.70) 100%),linear-gradient(0deg,rgba(12,14,27,.45),transparent 35%,rgba(12,14,27,.29))}
-body.is-playing.is-semester-mode #scenePortrait{left:-3%;right:auto;bottom:0;height:92%;max-width:50%;z-index:2;object-position:left bottom;filter:drop-shadow(12px 9px 28px #080a1e72)}
+body.is-playing.is-semester-mode #novelCard #scenePortrait{left:-3%;right:auto;bottom:0;height:92%;max-width:50%;z-index:2;object-position:left bottom;filter:drop-shadow(12px 9px 28px #080a1e72)}
 body.is-playing.is-semester-mode #sceneGuest{z-index:2}
 body.is-playing.is-semester-mode #sceneArt .scene-fade{opacity:.3}
 body.is-playing.is-semester-mode #vnOverlay{z-index:7;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
@@ -12,28 +12,28 @@ body.is-playing.is-semester-mode #vnBottom{
  width:min(62%,850px);height:auto;max-height:none;min-height:0;margin:0;padding:0;
  display:flex;flex-direction:column;justify-content:space-between;gap:10px;align-self:auto;
 }
-body.is-playing.is-semester-mode #vnDialogueSlot{min-height:0;flex:1 1 auto;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
-body.is-playing.is-semester-mode #vnDialogueSlot .character-strip{display:none}
-body.is-playing.is-semester-mode #vnDialogueSlot .vn-dialogue,
-body.is-playing.is-semester-mode #vnDialogueSlot .outcome{
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot{min-height:0;flex:1 1 auto;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .character-strip{display:none}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome{
  display:flex;flex-direction:column;justify-content:center;flex:0 1 auto;
  min-height:0;max-height:100%;height:auto;overflow:hidden;overscroll-behavior:none;
  padding:0;margin:0;border:0!important;border-radius:0!important;background:none!important;
  box-shadow:none!important;backdrop-filter:none!important;color:#fff!important;
 }
-body.is-playing.is-semester-mode #vnDialogueSlot .vn-dialogue[hidden],
-body.is-playing.is-semester-mode #vnDialogueSlot .outcome[hidden]{display:none!important}
-body.is-playing.is-semester-mode #vnDialogueSlot .vn-dialogue::before,
-body.is-playing.is-semester-mode #vnDialogueSlot .outcome::before{display:none}
-body.is-playing.is-semester-mode #vnDialogueSlot .prose,
-body.is-playing.is-semester-mode #vnDialogueSlot .outcome .prose{
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .vn-dialogue[hidden],
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome[hidden]{display:none!important}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .vn-dialogue::before,
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome::before{display:none}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose,
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome .prose{
  font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif!important;
  font-size:clamp(18px,2.15vw,27px)!important;font-weight:500!important;
  line-height:1.85!important;letter-spacing:-.02em;word-break:keep-all;
  color:#f8f5f4!important;text-shadow:0 2px 3px #070918f5,0 0 18px #070918df!important;
 }
-body.is-playing.is-semester-mode #vnDialogueSlot .prose p{margin:0 0 .85em!important;overflow-wrap:anywhere}
-body.is-playing.is-semester-mode #vnDialogueSlot .prose p:last-child{margin-bottom:0!important}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose p{margin:0 0 .85em!important;overflow-wrap:anywhere}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose p:last-child{margin-bottom:0!important}
 body.is-playing.is-semester-mode .diary-literary-echo{
  max-height:3.3em;overflow:hidden;margin:0 0 .9em;color:#b6b8c3!important;
  font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;font-size:clamp(16px,1.9vw,23px);
@@ -48,11 +48,11 @@ body.is-playing.is-semester-mode #novelCard .vn-bottom .vn-control-row{
  padding:0;justify-content:flex-end;align-items:center;gap:8px;
 }
 body.is-playing.is-semester-mode .vn-control-row .vn-fiction{display:none}
-body.is-playing.is-semester-mode .diary-toolbar button{
+body.is-playing.is-semester-mode #novelCard .diary-toolbar button{
  width:34px;min-width:34px;height:38px;border:1px solid #ffffff44;background:#1f253866;color:#fff;
  font-size:9px;border-radius:8px;box-shadow:0 3px 9px #0002;
 }
-body.is-playing.is-semester-mode #vnMore,body.is-playing.is-semester-mode #nextBtn{
+body.is-playing.is-semester-mode #novelCard #vnMore,body.is-playing.is-semester-mode #novelCard #nextBtn{
  width:45px;height:45px;min-height:45px;flex-basis:45px;border:1px solid #ffffff5a;border-radius:50%;
  background:#17243888;color:#fff;box-shadow:0 0 14px #b8c5e73b;
 }
@@ -65,24 +65,24 @@ body.is-playing.is-semester-mode #novelCard[data-season="may"] #sceneBackdrop{fi
 body.is-playing.is-semester-mode #novelCard[data-season="june"] #sceneBackdrop{filter:brightness(.59) saturate(.81)}
 body.is-playing.is-semester-mode #novelCard[data-season="july"] #sceneBackdrop{filter:brightness(.69) saturate(1.02)}
 @media(max-width:620px){
- body.is-playing.is-semester-mode #scenePortrait{left:-20%;height:74%;max-width:85%;opacity:.72}
+ body.is-playing.is-semester-mode #novelCard #scenePortrait{left:-20%;height:74%;max-width:85%;opacity:.72}
  body.is-playing.is-semester-mode #sceneArt::after{background:linear-gradient(90deg,#090e19a1,#0b1024b8),linear-gradient(0deg,#0b112bb8,transparent 70%)}
  body.is-playing.is-semester-mode #vnBottom{top:29%;left:7%;right:7%;bottom:calc(env(safe-area-inset-bottom,0px) + 11px);width:86%;gap:8px}
- body.is-playing.is-semester-mode #vnDialogueSlot .prose,body.is-playing.is-semester-mode #vnDialogueSlot .outcome .prose{font-size:clamp(16px,4.15vw,20px)!important;line-height:1.72!important}
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose,body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome .prose{font-size:clamp(16px,4.15vw,20px)!important;line-height:1.72!important}
  body.is-playing.is-semester-mode .diary-literary-echo{font-size:clamp(14px,3.7vw,17px);max-height:3.1em}
  body.is-playing.is-semester-mode #novelCard .vn-bottom .vn-control-row{min-height:42px}
- body.is-playing.is-semester-mode .diary-toolbar button{width:32px;min-width:32px;height:35px}
+ body.is-playing.is-semester-mode #novelCard .diary-toolbar button{width:32px;min-width:32px;height:35px}
 }
 @media(max-height:520px) and (orientation:landscape){
  body.is-playing.is-semester-mode #vnHeaderSlot{max-width:calc(100% - 240px)}
  body.is-playing.is-semester-mode .vn-hud h2{font-size:16px}
  body.is-playing.is-semester-mode #vnBottom{top:28%;right:5%;bottom:8px;width:59%;left:auto}
- body.is-playing.is-semester-mode #scenePortrait{height:95%;max-width:45%;left:-3%;opacity:.9}
- body.is-playing.is-semester-mode #vnDialogueSlot .prose,body.is-playing.is-semester-mode #vnDialogueSlot .outcome .prose{font-size:clamp(14px,1.9vw,17px)!important;line-height:1.48!important}
+ body.is-playing.is-semester-mode #novelCard #scenePortrait{height:95%;max-width:45%;left:-3%;opacity:.9}
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose,body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome .prose{font-size:clamp(14px,1.9vw,17px)!important;line-height:1.48!important}
  body.is-playing.is-semester-mode .diary-literary-echo{font-size:13px;line-height:1.3;max-height:1.3em;margin-bottom:5px}
  body.is-playing.is-semester-mode #vnBottom{gap:4px}
- body.is-playing.is-semester-mode .diary-toolbar button{height:29px;font-size:8px;width:31px;min-width:31px}
- body.is-playing.is-semester-mode #vnMore,body.is-playing.is-semester-mode #nextBtn{width:35px;height:35px;min-height:35px;flex-basis:35px}
+ body.is-playing.is-semester-mode #novelCard .diary-toolbar button{height:29px;font-size:8px;width:31px;min-width:31px}
+ body.is-playing.is-semester-mode #novelCard #vnMore,body.is-playing.is-semester-mode #novelCard #nextBtn{width:35px;height:35px;min-height:35px;flex-basis:35px}
 }
 @media(prefers-reduced-motion:reduce){
  .diary-literary-char{opacity:1!important;filter:none!important;animation:none!important}
