@@ -119,8 +119,8 @@ function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number 
   if(knockout){
     // A match can now finish early when the player's last life is depleted.
     // Validate the number of lives against the school's server-verified tier.
-    const livesForTier={easy:3,normal:2,hard:2,very_hard:1,extreme:1};
-    const requiredLives=livesForTier[difficulty as keyof typeof livesForTier];
+    const livesForTier=new Map([["easy",3],["normal",2],["hard",2],["very_hard",1],["extreme",1]]);
+    const requiredLives=livesForTier.get(String(difficulty));
     if(!requiredLives||result.livesLost!==requiredLives)throw new Error("invalid_lives");
     if(matchEnded)throw new Error("invalid_match");
     if(result.survivalSeconds===undefined)throw new Error("invalid_survival_time");
