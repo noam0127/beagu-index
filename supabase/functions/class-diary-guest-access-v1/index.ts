@@ -1,9 +1,11 @@
-// Temporary Class Diary access by already-issued 2026 challenge identity code.
-// No new code issuance, no Level 2 elevation, no real school data access.
+// Private Class Diary preview gate: only the configured server-side PIN is accepted.
+// No challenge identity codes, Level 2 elevation, or real-school data access.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 const url = Deno.env.get('SUPABASE_URL') || '';
 const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const admin = createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+// Intentionally fail closed if the private server setting has not been configured.
+const previewPin = Deno.env.get('CLASS_DIARY_PREVIEW_PIN') || '';
 const allowed = new Set([
  'https://baeguindex.com','https://www.baeguindex.com','https://noam0127.github.io',
  'http://localhost:8000','http://127.0.0.1:8000','http://127.0.0.1:8123'
@@ -24,7 +26,7 @@ function respond(data:unknown,status:number,origin:string){
 // A short-lived, HMAC-signed handoff ticket. Contains no identity code or school data.
 // The signing key remains server-side. A ticket is not a Level 2 session.
 const ticketKeyPromise=crypto.subtle.importKey(
- 'raw',new TextEncoder().encode('class-diary-guest-v1:'+key),
+ 'raw',new TextEncoder().encode('class-diary-preview-ticket-v2:'+key),
  {name:'HMAC',hash:'SHA-256'},false,['sign','verify']
 );
 const progressKeyPromise=crypto.subtle.importKey(
@@ -103,15 +105,15 @@ Deno.serve(async req=>{
   const {data:permitted,error:budgetError}=await admin.rpc('beagu_consume_login_budget');
   if(budgetError)return respond({error:'AUTH_UNAVAILABLE'},503,origin);
   if(!permitted)return respond({error:'RATE_LIMITED'},429,origin);
-  const code='code' in body&&typeof body.code==='string'?body.code.trim().toUpperCase():'';
-  const validShape=/^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}|[A-HJ-NP-Z2-9]{10})$/.test(code);
-  if(!validShape)return respond({error:'INVALID_CODE'},401,origin);
-  const {data:subject,error}=await admin.rpc('beagu_class_diary_progress_subject',{p_code:code});
-  if(error)return respond({error:'AUTH_UNAVAILABLE'},503,origin);
-  if(typeof subject!=='string'||!/^[0-9a-f-]{36}$/i.test(subject))return respond({error:'INVALID_CODE'},401,origin);
-  // This proves only that the code exists, not the caller's personal identity.
-  // Do not send an Lv2 token, school records, participant no, or identity code back.
-  const ticket=await issueTicket(subject);
+  // Additional strict global rate limit for a low-entropy preview PIN.
+  const {data:pinBudget,error:pinBudgetError}=await admin.rpc('beagu_consume_class_diary_preview_budget');
+  if(pinBudgetError)return respond({error:'AUTH_UNAVAILABLE'},503,origin);
+  if(!pinBudget)return respond({error:'RATE_LIMITED'},429,origin);
+  const code='code' in body&&typeof body.code==='string'?body.code.trim():'';
+  if(!/^[0-9]{4}$/.test(code)||!/^[0-9]{4}$/.test(previewPin)||code!==previewPin)
+    return respond({error:'INVALID_CODE'},401,origin);
+  // Private preview access only. Never grant Lv.1/Lv.2 or accept challenge codes.
+  const ticket=await issueTicket('');
   return respond({ok:true,scope:'class-diary-fictional-guest',ticket,expiresInSeconds:600},200,origin);
  }catch{return respond({error:'AUTH_UNAVAILABLE'},503,origin);}
 });
