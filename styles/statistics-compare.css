@@ -271,3 +271,75 @@ body.beagu-page-compare .compare-sticky-title{
   }
   body.beagu-page-compare .compare-sticky-title{font-size:12px;padding:9px 12px}
 }
+
+/* Compact comparison authentication bar v2.
+   Keep the complete code-entry form unchanged for visitors without access. */
+body.beagu-page-compare .compare-auth-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+}
+body.beagu-page-compare .compare-auth-actions{
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-left:auto;
+  min-width:0;
+}
+body.beagu-page-compare .compare-auth-actions .compare-auth-signed-in{
+  display:flex;
+  align-items:center;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+body.beagu-page-compare .compare-auth-actions .compare-auth-logout{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  padding:6px 10px;
+  font-size:12px;
+  border-radius:9px;
+  white-space:nowrap;
+}
+body.beagu-page-compare .compare-auth-card.is-authenticated{
+  padding:14px 18px;
+  margin-bottom:12px;
+}
+body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-heading h2{
+  font-size:18px;
+  line-height:1.3;
+}
+body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-badge{
+  padding:7px 10px;
+  font-size:12px;
+}
+body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-message:empty{
+  display:none;
+}
+@media(max-width:420px){
+  body.beagu-page-compare .compare-auth-card.is-authenticated{
+    padding:13px 14px;
+  }
+  body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-heading h2{
+    font-size:17px;
+  }
+  body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-badge{
+    font-size:11px;
+    padding:6px 8px;
+  }
+  body.beagu-page-compare .compare-auth-actions{gap:6px}
+  body.beagu-page-compare .compare-auth-actions .compare-auth-logout{
+    font-size:11px;
+    min-height:34px;
+    padding:6px 8px;
+  }
+}
+
