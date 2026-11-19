@@ -325,11 +325,10 @@
         &&Array.isArray(item.selectedOptions)&&item.selectedOptions.length>0
         &&item.selectedOptions.every(v=>typeof v==='string'&&v.trim().length>0&&v.length<=180))
       .map(item=>[item.questionId,[...new Set(item.selectedOptions)]]));
-    const answerBadge=(value,questionId)=>{
-      if(year!==2025)return null;
-      const q=Number(questionId.slice(1));
-      if(!(q>=31&&q<=50))return null;
-      const v=String(value||'').trim();
+    const answerBadge=(value)=>{
+      // Transform only exact yes/no/unknown choice labels. Explanatory
+      // phrases such as "조금 있다" are never collapsed into O/X.
+      const v=String(value||'').trim().replace(/[.!]$/,'');
       if(v==='있다')return {symbol:'O',label:'있다',kind:'yes'};
       if(v==='없다')return {symbol:'X',label:'없다',kind:'no'};
       if(v==='모름'||v==='잘 모름'||v==='잘모름')return {symbol:'?',label:'모름',kind:'unknown'};
@@ -375,7 +374,7 @@
             val.append(li);
           }
         }else{
-          const flag=answerBadge(value,id);
+          const flag=answerBadge(value);
           if(flag){
             val=make('div','beagu-benchmark-result beagu-answer-symbol');
             const pill=make('span','beagu-ox-pill is-'+flag.kind,flag.symbol);
