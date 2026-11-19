@@ -3,13 +3,13 @@
 -- No emails, school data, response answers, passwords, or Auth tokens are copied here.
 
 create table if not exists beagu_private.account_v1_settings (
-  name text primary key check (name in ('signup_enabled','login_enabled','registration_enabled','recovery_enabled')),
+  name text primary key check (name in ('signup_enabled','login_enabled','registration_enabled','recovery_enabled','account_deletion_enabled')),
   enabled boolean not null default false,
   changed_at timestamptz not null default now()
 );
 insert into beagu_private.account_v1_settings(name,enabled) values
  ('signup_enabled',false),('login_enabled',false),
- ('registration_enabled',false),('recovery_enabled',false)
+ ('registration_enabled',false),('recovery_enabled',false),('account_deletion_enabled',false)
 on conflict (name) do nothing;
 
 create table if not exists beagu_private.account_profiles_v1 (
