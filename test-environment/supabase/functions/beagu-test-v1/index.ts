@@ -187,9 +187,13 @@ Deno.serve(async(req:Request)=>{
   const uid=verified.user.id;
   if(action==='register'){
    const username=asText(input.username).toLowerCase();
-   if(!rxName.test(username)||!await rate('register',uid,6))
-    return reply(origin,400,{error:'INVALID_USERNAME'});
-   const {data,error}=await admin!.rpc('beagu_stage_register',{p_uid:uid,p_username:username});
+   const deviceProof=asText(input.deviceProof);
+   if(!rxName.test(username)||!rxToken.test(deviceProof)||!await rate('register',uid,6))
+    return reply(origin,400,{error:'INVALID_USERNAME_OR_DEVICE'});
+   const deviceHash=hex(await hmac(rateSecret,'device:'+deviceProof));
+   const {data,error}=await admin!.rpc('beagu_stage_register',{
+    p_uid:uid,p_username:username,p_device_sha:deviceHash
+   });
    return error?reply(origin,409,{error:'USERNAME_UNAVAILABLE'}):reply(origin,200,{ok:true,...data});
   }
   if(action==='me'){
