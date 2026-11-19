@@ -17,13 +17,13 @@ const INCIDENTS=Object.freeze({
    '교실 문을 열자 주안, 개인정보 동의서, 나이스 출결, 모둠 자리표가 눈앞에 겹쳤다. 몇 년 차 교사든 학기 초 일주일은 정신이 없었다.'
   ],
   choices:[
-   {id:'hello_guard',label:'보안관 선생님께 인사하고 등교하는 아이들을 맞는다',
+   {id:'hello_guard',label:'배움터지킴이 선생님께 인사하고 아이들을 맞는다',
     delta:{trust:5,agency:5,voice:3,boundary:4,fatigue:2},
     reply:['“안녕하세요. 아침마다 고생 많으세요.” 보안관 선생님이 모자를 바로 쓰며 웃었다.','나는 아이들 이름을 하나씩 불러 주었다. 빨리 교실로 가라는 말 대신 오늘도 왔느냐는 인사를 하고 싶었다.'],line:'“이 시간이 제일 정신없지만 아이들 얼굴 보는 재미가 있죠.”'},
-   {id:'hello_children',label:'아이들이 안전하게 교문을 통과하는지 함께 살핀다',
+   {id:'hello_children',label:'아이들이 안전하게 등교하는지 잠깐 살핀다',
     delta:{trust:6,agency:7,voice:4,boundary:3,fatigue:3},
     reply:['가방끈이 풀린 아이가 멈춰 섰다. 나는 인도 쪽으로 데려가 가방을 고쳐 멜 시간을 주었다.','그 아이가 “선생님, 오늘 모둠 바꿔요?” 하고 물었다. 첫날부터 아이들 마음에는 궁금한 일이 많았다.'],line:'“교문 앞이 바쁠수록 천천히 보고 보내야 해요.”'},
-   {id:'hello_rush',label:'급한 서류를 생각하며 인사만 하고 교실로 올라간다',
+   {id:'hello_rush',label:'급한 서류가 떠올라 짧게 인사하고 교실로 간다',
     delta:{trust:3,agency:3,voice:3,boundary:5,fatigue:4},
     reply:['나는 보안관 선생님께 손을 흔들고 계단을 서둘러 올랐다. 주안을 확인하고 나이스를 열어야 했다.','복도 끝에 다다라서야 아까 교문에 있던 작은 아이 하나가 손을 흔들었다는 걸 떠올렸다. 내일은 먼저 인사해야지.'],line:'“선생님, 아침부터 바쁘시네요. 그래도 인사는 나누고 가요.”'}
   ]
@@ -37,9 +37,9 @@ const INCIDENTS=Object.freeze({
   choices:[
    {id:'parking_walk',label:'허용된 곳에 주차하고 통학로를 따라 걸어온다',delta:{trust:5,agency:5,voice:4,boundary:5,fatigue:4},
     reply:['조금 먼 곳에 차를 대고 걸었다. 횡단보도에서는 등교하는 아이들과 신호를 기다렸다.','학년연구실에 도착하니 숨이 찼다. 그래도 통학로를 막지 않은 게 다행이었다.'],line:'“주차장이 좁아도 아이들 다니는 길은 비워 둬야죠.”'},
-   {id:'parking_raise',label:'등교 차량과 교직원 주차 동선의 문제를 협의하자고 제안한다',delta:{trust:6,agency:5,voice:8,boundary:4,fatigue:5},
+   {id:'parking_raise',label:'등교 시간 차량 동선을 함께 점검하자고 건의한다',delta:{trust:6,agency:5,voice:8,boundary:4,fatigue:5},
     reply:['나는 어느 시간에 어느 구간이 막히는지 적었다. 단순히 주차 공간을 늘려 달라는 말보다 학생 안전까지 함께 이야기하고 싶었다.','학교의 동선은 한 사람의 출근 시간만 바꾼다고 해결되지 않았다.'],line:'“안전 담당 선생님하고 같이 살펴봅시다.”'},
-   {id:'parking_adjust',label:'다음 날 출근 방법을 바꾸고 오늘은 교실로 서두른다',delta:{trust:3,agency:3,voice:3,boundary:7,fatigue:2},
+   {id:'parking_adjust',label:'오늘은 안전하게 주차하고 내일부터 출근 방법을 바꾼다',delta:{trust:3,agency:3,voice:3,boundary:7,fatigue:2},
     reply:['나는 허용된 곳에 차를 대고 빠른 걸음으로 교실에 들어왔다. 내일은 다른 방법을 찾아볼 생각이었다.','그래도 이 불편을 혼자 감수하는 것이 당연한지, 언젠가는 묻고 싶었다.'],line:'“오늘은 먼저 수업하고, 주차 문제는 따로 얘기해요.”'}
   ]
  },
@@ -53,7 +53,7 @@ const INCIDENTS=Object.freeze({
   choices:[
    {id:'wildlife_route',label:'접근을 막고 담당자와 안전한 동선을 확인한다',delta:{trust:7,agency:6,voice:5,boundary:6,fatigue:3},
     reply:['나는 아이들이 제보 장소로 가지 않도록 안내했다. 학교 담당자와 상황을 확인하기 전까지 바깥활동을 조정하기로 했다.','모둠별로 교실에서 할 수 있는 협동 놀이를 골랐다.'],line:'“선생님들이 직접 잡으러 가는 건 아니에요. 안전부터 확인해요.”'},
-   {id:'wildlife_share',label:'학년과 학생 안전 안내를 함께 정한다',delta:{trust:8,agency:5,voice:7,boundary:6,fatigue:4},
+   {id:'wildlife_share',label:'동학년과 학생들에게 안내할 내용을 정한다',delta:{trust:8,agency:5,voice:7,boundary:6,fatigue:4},
     reply:['동학년 선생님과 상황을 나누고 학생을 맡을 사람과 담당자에게 연락할 사람을 구분했다.','확인된 사실만 안내하기로 하니 공연한 소문도 조금 가라앉았다.'],line:'“이런 일일수록 역할을 나눠야죠.”'},
    {id:'wildlife_listen',label:'아이들의 궁금증을 듣고 실내활동 대안을 정한다',delta:{trust:5,agency:9,voice:6,boundary:3,fatigue:4},
     reply:['“나가면 위험할 수 있으니 오늘은 확인하고 결정하자.” 나는 아이들의 물음에 아는 것과 모르는 것을 나눠 답했다.','아이들은 모둠별로 대체 활동을 고르기 시작했다.'],line:'“안전하게 바꾸는 이유를 말해 주니 아이들도 이해하네요.”'}
@@ -66,7 +66,7 @@ const INCIDENTS=Object.freeze({
    '나는 소리를 높이는 대신 아이들이 함께 사용할 집중 신호를 만들고 싶었다. 교사가 혼자 정하는 것도 한 방법이지만, 익숙해질 때까지 연습할 시간도 필요했다.'
   ],
   choices:[
-   {id:'focus_vote',label:'약속의 박수와 손 신호를 해 보고 아이들과 고른다',delta:{trust:6,agency:9,voice:7,boundary:3,fatigue:3},
+   {id:'focus_vote',label:'박수와 손 신호를 직접 해 보고 아이들과 하나를 정한다',delta:{trust:6,agency:9,voice:7,boundary:3,fatigue:3},
     reply:['“우리 반은 어떻게 모이면 좋을까?” 아이들이 박수와 손 신호를 직접 해 봤다.','우리는 먼저 일주일 동안 써 보고, 잘 안 되면 학급회의에서 바꾸기로 했다.'],line:'“집중 신호도 아이들과 같이 정하면 더 잘 지킬 수 있겠어요.”'},
    {id:'focus_clap',label:'약속의 박수를 먼저 알려 주고 함께 연습한다',delta:{trust:6,agency:5,voice:4,boundary:4,fatigue:0},
     reply:['나는 짧은 박수를 치고 아이들이 따라 치도록 했다. 처음에는 맞지 않았지만 몇 번 지나자 박수 소리가 하나로 모였다.','놓친 아이를 혼내기보다 다시 연습했다.'],line:'“딱 이 정도면 수업 시작할 때 편하겠어요.”'},
@@ -102,7 +102,7 @@ const INCIDENTS=Object.freeze({
     reply:['우리는 각 모둠이 맡을 구역을 작게 나누었다. 오래 걸리지 않도록 필요한 일만 정했다.','쉬는 시간을 전부 청소에 쓰지 않았다. 아이들 의견을 들어 구역도 다시 정할 수 있게 했다.'],line:'“하교 뒤에 남기지 않아도 교실을 함께 가꿀 수 있네요.”'},
    {id:'clean_quick',label:'오늘은 바닥과 책상 주변만 짧게 정리한다',delta:{trust:5,agency:5,voice:4,boundary:8,fatigue:1},
     reply:['아이들은 제자리 주변을 먼저 정리했다. 나는 빗자루를 들고 함께 움직였다.','완벽하지는 않아도 오늘 필요한 만큼은 깨끗해졌다.'],line:'“아이들 쉬는 시간도 남겨 줘야죠.”'},
-   {id:'clean_discuss',label:'언제 어떤 청소를 할지 학급회의 안건으로 남긴다',delta:{trust:6,agency:9,voice:6,boundary:5,fatigue:3},
+   {id:'clean_discuss',label:'청소 시간과 역할을 학급회의에서 정해 보기로 한다',delta:{trust:6,agency:9,voice:6,boundary:5,fatigue:3},
     reply:['우리는 우선 급한 곳만 정리한 뒤, 정리 시간을 어떻게 운영할지 의견을 적었다.','누구는 모둠별 분담을, 누구는 한 번에 짧게 하자고 했다.'],line:'“매일 하는 일이니 아이들 의견도 들어 봐요.”'}
   ]
  },
@@ -116,7 +116,7 @@ const INCIDENTS=Object.freeze({
   choices:[
    {id:'late_leave',label:'남은 준비를 구분하고 오늘은 바로 퇴근한다',delta:{trust:5,agency:6,voice:5,boundary:10,fatigue:-4},
     reply:['나는 오늘 꼭 끝내야 할 것과 내일 쉬는 시간에 해도 될 일을 나눴다.','컴퓨터를 끄고 경비 담당자에게 고맙다고 인사했다. 어두운 복도를 함께 지나니 마음이 놓였다.'],line:'“선생님도 이제 퇴근하세요. 내일 또 해야죠.”'},
-   {id:'late_share',label:'동학년에게 업무가 몰린 상황을 알리고 다음 날 나누자고 한다',delta:{trust:8,agency:5,voice:8,boundary:8,fatigue:0},
+   {id:'late_share',label:'동학년에게 일이 몰렸다고 말하고 내일 함께 나누기로 한다',delta:{trust:8,agency:5,voice:8,boundary:8,fatigue:0},
     reply:['나는 학년 메신저에 밤늦게 답을 요구하지 않는 짧은 메모를 남겼다. 내일 출근해서 함께 확인할 내용이었다.','불 꺼진 학년연구실을 나서며 생각했다. 혼자 오래 남는 일이 성실함의 유일한 증거는 아니었다.'],line:'“내일 업무시간에 같이 보면 됩니다.”'},
    {id:'late_minimum',label:'꼭 필요한 출력만 마무리하고 안전하게 문을 닫는다',delta:{trust:5,agency:4,voice:4,boundary:6,fatigue:3},
     reply:['나는 첫 시간에 꼭 필요한 자료만 출력하고 나머지는 내일로 미뤘다.','경비 담당자에게 먼저 상황을 알리고 정해진 폐쇄 시간 전에 나왔다.'],line:'“다음엔 너무 늦기 전에 정리하고 가세요.”'}
@@ -130,7 +130,7 @@ const INCIDENTS=Object.freeze({
    '나는 이 말을 불편해하는 사람이 나뿐인지 살폈다. 누군가를 탓하기보다 기준을 바꾸는 말을 할 수 있을까.'
   ],
   choices:[
-   {id:'duty_skills',label:'성별·나이 대신 담당 업무와 가능한 시간을 확인하자고 한다',delta:{trust:7,agency:6,voice:10,boundary:9,fatigue:2},
+   {id:'duty_skills',label:'나이와 성별보다 담당 업무와 가능한 시간을 보자고 한다',delta:{trust:7,agency:6,voice:10,boundary:9,fatigue:2},
     reply:['“그 일은 업무분장표에서 담당을 먼저 보고, 할 수 있는 시간을 같이 맞추면 어떨까요?” 내가 말했다.','동학년 선생님들이 서로 이번 주 시간표를 보여 주었다. 생각보다 나눌 방법이 많았다.'],line:'“누가 젊다고 무조건 맡을 일은 아니죠.”'},
    {id:'duty_offer',label:'내가 할 수 있는 일 하나만 정해 돕겠다고 말한다',delta:{trust:6,agency:4,voice:7,boundary:7,fatigue:3},
     reply:['나는 준비물 목록을 확인하는 일은 도울 수 있다고 말했다. 대신 다른 준비까지 모두 맡겠다고 하지는 않았다.','도움은 구체적일수록 서로에게 부담을 덜 남겼다.'],line:'“할 수 있는 걸 분명히 말해 주셔서 좋네요.”'},
@@ -146,11 +146,11 @@ const INCIDENTS=Object.freeze({
    '나는 동료들과 가까워지고 싶은 마음과 내 퇴근 시간을 지키고 싶은 마음을 함께 가지고 있었다.'
   ],
   choices:[
-   {id:'sport_optin',label:'참여와 불참을 편하게 선택할 수 있도록 제안한다',delta:{trust:8,agency:4,voice:9,boundary:10,fatigue:-1},
+   {id:'sport_optin',label:'체육 모임은 원하는 사람만 참여하자고 말한다',delta:{trust:8,agency:4,voice:9,boundary:10,fatigue:-1},
     reply:['나는 “오늘은 쉬고 싶은 분도 계실 테니까, 참여는 편하게 정하면 좋겠어요”라고 말했다.','참가한 선생님은 즐겁게 운동했고, 다른 선생님은 눈치 보지 않고 퇴근했다.'],line:'“하고 싶은 사람이 즐겁게 하는 게 제일 좋죠.”'},
    {id:'sport_play',label:'시간이 괜찮아 잠깐 참여하되 끝날 시간은 정한다',delta:{trust:7,agency:4,voice:5,boundary:7,fatigue:1},
     reply:['나는 동료들과 잠깐 배구공을 주고받았다. 서로 서툴러서 몇 번이나 웃음이 났다.','정해 둔 시간이 되자 인사를 하고 먼저 나왔다. 즐거움과 자율성은 함께 있을 수 있었다.'],line:'“다음에도 시간 되시면 같이 해요.”'},
-   {id:'sport_other',label:'체육보다 다른 방식으로 친해질 기회를 제안한다',delta:{trust:6,agency:5,voice:8,boundary:8,fatigue:0},
+   {id:'sport_other',label:'운동이 어려운 사람도 함께할 다른 모임을 제안한다',delta:{trust:6,agency:5,voice:8,boundary:8,fatigue:0},
     reply:['“운동 말고 점심시간에 차 한 잔 하는 것도 좋겠어요.” 다른 선생님이 고개를 끄덕였다.','서로 친해지는 길은 운동장 하나로 정해져 있지 않았다.'],line:'“맞아요. 운동은 좋아하는 사람끼리 하면 되죠.”'}
   ]
  },
@@ -166,7 +166,7 @@ const INCIDENTS=Object.freeze({
     reply:['“이번 주 진짜 정신없었죠.” 누군가 한마디 하자 웃음이 터졌다.','학교 이야기는 길지 않았다. 누가 더 힘들었는지 겨루지 않아도 되는 시간이 편했다.'],line:'“다음에도 이렇게 편할 때만 모여요.”'},
    {id:'bbq_help',label:'준비를 조금 돕고 원하는 시간에 먼저 퇴근한다',delta:{trust:8,agency:4,voice:6,boundary:9,fatigue:-3},
     reply:['나는 접시를 나누고 뒷정리를 조금 도왔다. 돌아갈 시간이 되자 편하게 인사했다.','아무도 더 있다 가라고 붙잡지 않았다. 그래서 다음에도 오고 싶어졌다.'],line:'“오늘 와 줘서 고마워요. 조심히 가세요.”'},
-   {id:'bbq_rest',label:'감사히 인사하고 오늘은 쉬러 가기로 한다',delta:{trust:6,agency:3,voice:6,boundary:10,fatigue:-8},
+   {id:'bbq_rest',label:'초대해 줘서 고맙다고 인사한 뒤 집으로 간다',delta:{trust:6,agency:3,voice:6,boundary:10,fatigue:-8},
     reply:['“오늘은 집에 가서 쉬려고요. 즐겁게 보내세요.” 나는 가볍게 인사했다.','돌아서는데 뒤에서 “다음에 편할 때 오세요”라는 말이 들렸다. 그 말이 오래 따뜻했다.'],line:'“다음에 시간 맞으면 같이 해요.”'}
   ]
  },
