@@ -1109,14 +1109,21 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     render();
     requestAnimationFrame(frame);
   }
-  // 부모 홈에 자연스럽게 들어가도록 내용 높이를 전달합니다.
+  // Embedded game content determines iframe height, not the iframe viewport.
+  // This prevents a nested scrollbar when school search or rankings expand.
+  const embeddedShell = document.querySelector(".game-shell");
+  let lastSentHeight = 0;
   function notifyHeight() {
-    if (window.parent === window) return;
-    const shell = document.querySelector(".game-shell");
-    window.parent.postMessage({ type: "teacher-volleyball:resize", height: Math.ceil(shell.getBoundingClientRect().height) + 2 }, window.location.origin);
+    if (window.parent === window || !embeddedShell) return;
+    const bounds = embeddedShell.getBoundingClientRect();
+    const height = Math.ceil(bounds.bottom + window.scrollY) + 8;
+    if (!Number.isFinite(height) || height === lastSentHeight) return;
+    lastSentHeight = height;
+    window.parent.postMessage({ type: "teacher-volleyball:resize", height }, window.location.origin);
   }
-  if (typeof ResizeObserver !== "undefined") new ResizeObserver(notifyHeight).observe(document.querySelector(".game-shell"));
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(notifyHeight).observe(embeddedShell);
   window.addEventListener("load", notifyHeight);
+  window.addEventListener("resize", notifyHeight);
   syncUI();
   render();
   requestAnimationFrame(frame);
