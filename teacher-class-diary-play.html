@@ -1049,7 +1049,7 @@ function renderSemesterEnding(){
  $('endingHeading').textContent=ending.heading;
  $('ending').querySelector('.emblem').textContent='2027년 7월 16일 · 36화의 마지막 페이지';
  $('ending').querySelector('.credits-roll p:last-child').textContent='한 학기의 이야기를 함께해 주셔서 고맙습니다.';
- fillParagraphs('endingText',ending.paragraphs);
+ endingState.pages=vnPages(ending.paragraphs);endingState.index=0;endingPresent();
  $('endingAffection').textContent=ending.affection+' / 100';
  $('endingScore').textContent='이야기 점수 '+ending.score+' / 100';
  $('endingSchool').textContent=game.schoolName+' · 2027년 3월–7월, 36화의 기록';
