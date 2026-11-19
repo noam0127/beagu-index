@@ -60,7 +60,8 @@ function refreshStatus(){
  }
  [...dayTrack.children].forEach((item,i)=>item.className=i+1===slot?'current':i+1<slot?'complete':'');
  if(semester){
-  const month=($('chapterPlace').textContent||'').match(/2027-(0[3-7])-\d{2}/)?.[1]||'03';
+  const place=($('chapterPlace').textContent||'');
+  const month=place.match(/2027-(0[3-7])-\d{2}/)?.[1]||place.match(/(?:^|[\s·])([3-7])월\s*\d+일/)?.[1]?.padStart(2,'0')||'03';
   const [season,label]=monthDetails[month]||monthDetails['03'];
   document.body.dataset.diarySeason=season;
   seasonPill.textContent=label;
