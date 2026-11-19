@@ -154,6 +154,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         "🔒 조사 참여 필요");
       if(state.phase==="ready"){
         const tier=school?.difficulty||"hard";
+        state.maxLives=lifeProfiles[tier];state.livesLeft=state.maxLives;
+        state.round=1;state.knockout=false;
         energy=energyProfiles[tier]||energyProfiles.hard;
         specialProfile=specialProfiles[tier]||specialProfiles.hard;
         resetEnergy();
@@ -191,14 +193,23 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const canPlayerJump=()=>currentDifficulty!=="extreme";
   const soundButton=document.getElementById("sound");
   const SOUND_KEY="teacherVolleyballSoundV1";
-  let soundOn=false,audioContext=null;
-  try{soundOn=localStorage.getItem(SOUND_KEY)==="1";}catch(e){}
+  let soundOn=true,audioContext=null;
+  try{const setting=localStorage.getItem(SOUND_KEY);if(setting!==null)soundOn=setting==="1";}catch(e){}
   function syncSoundUI(){
     soundButton.textContent=soundOn?"🔊":"🔇";
     soundButton.setAttribute("aria-pressed",String(soundOn));
     soundButton.setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");
   }
   syncSoundUI();
+  function unlockSound(){
+    if(!soundOn)return;
+    try{
+      const Ctx=window.AudioContext||window.webkitAudioContext;
+      if(!Ctx)return;
+      audioContext=audioContext||new Ctx();
+      if(audioContext.state==="suspended")audioContext.resume();
+    }catch(e){}
+  }
   function tone(freq,duration=.11,type="sine",volume=.055,delay=0,toFreq=null){
     if(!soundOn)return;
     try{
@@ -411,7 +422,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   canvas.addEventListener("pointerup", endCourtTouch);
   canvas.addEventListener("pointercancel", endCourtTouch);
   canvas.addEventListener("lostpointercapture", endCourtTouch);
-  startButton.addEventListener("click", startMatch);
+  startButton.addEventListener("click",()=>{unlockSound();startMatch();});
   pauseButton.addEventListener("click", pause);
   helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
   window.addEventListener("blur", () => { releaseKeys(); if (state.phase === "playing") pause(); });
@@ -689,11 +700,32 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  ctx.restore();
 }
   function drawBall() {
-    // Full-size collision radius R: shading and seams scale with the doubled ball.
-    const trailSize = R * .15;
-    ball.trail.forEach((pos, i) => oval(pos.x, pos.y,
-      trailSize + i * 1.1, trailSize + i * 1.1,
-      "rgba(255,248,218," + (.04 + i * .035) + ")"));
+    // Spikes leave a dark, fading shadow of the ball plus a short speed streak.
+    if(ball.shadowFrames>0){
+      const fade=Math.min(1,ball.shadowFrames/18);
+      ctx.save();
+      for(let i=0;i<ball.trail.length;i++){
+        const pos=ball.trail[i],progress=(i+1)/ball.trail.length;
+        ctx.globalAlpha=fade*(.07+.24*progress);
+        ctx.fillStyle=ball.shadowColor;
+        ctx.beginPath();
+        ctx.ellipse(pos.x-5,pos.y+5,R*(.54+.32*progress),R*(.54+.32*progress),0,0,Math.PI*2);
+        ctx.fill();
+      }
+      for(let i=4;i>=1;i--){
+        ctx.globalAlpha=fade*(.045+(5-i)*.04);
+        ctx.fillStyle=ball.shadowColor;
+        ctx.beginPath();
+        ctx.ellipse(ball.x-ball.vx*i*1.55,ball.y-ball.vy*i*1.55,
+          R*(.48+i*.07),R*(.45+i*.07),0,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }else{
+      const trailSize=R*.15;
+      ball.trail.forEach((pos,i)=>oval(pos.x,pos.y,
+        trailSize+i*1.1,trailSize+i*1.1,"rgba(255,248,218,"+(.04+i*.035)+")"));
+    }
     ctx.save();
     ctx.translate(ball.x, ball.y);
     ctx.shadowColor = "rgba(255,244,180,.64)";
