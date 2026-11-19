@@ -49,7 +49,7 @@ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{height:
 body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character:hover .setup-character-art{transform:scale(1.035)}
 body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-name{font-size:clamp(15px,3vmin,22px)}
 body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-tag{font-size:clamp(10px,1.75vmin,12px);min-height:0}
-body.is-guest-flow.is-setting #setup[data-step="2"] #setupNext{display:none!important}
+body.is-guest-flow.is-setting #setup[data-step="2"] #setupNext{display:inline-flex!important}
 body.is-guest-flow.is-setting #setup[data-step="3"] .setup-review-fields>div:nth-child(2){display:none}
 body.is-guest-flow.is-setting .setup-end .muted{display:none}
 body.is-guest-flow.is-setting .setup-end .privacy{font-size:10px;color:#997e96;text-align:center}
@@ -138,3 +138,64 @@ body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player-stamp{display:
 body.is-guest-flow.is-setting #setup[data-step="1"] .setup-section-title{align-self:center;width:min(100%,570px)}
 body.is-guest-flow.is-setting #setup[data-step="1"] #setupNext{display:inline-flex!important}
 body.is-guest-flow.is-setting #setup[data-step="2"] .setup-end{display:none!important}
+
+/* 2026-11-20 · reference layout for colleague selection.
+   The page is a single, scroll-free sheet: three equal photographic cards,
+   only their names and short relationship captions, with fixed bottom actions. */
+body.is-setting #setup[data-step="2"] .setup-supporting-cast,
+body.is-setting #setup[data-step="2"] .setup-story-note,
+body.is-setting #setup[data-step="2"] .setup-partner-label,
+body.is-setting #setup[data-step="2"] .setup-character-description,
+body.is-setting #setup[data-step="2"] #partner{display:none!important}
+body.is-setting #setup[data-step="2"] .setup-cast{
+ display:flex!important;flex-direction:column!important;
+ justify-content:flex-start!important;align-items:stretch!important;
+ gap:clamp(12px,2.3dvh,22px)!important;
+ padding-top:clamp(16px,3dvh,34px)!important;
+}
+body.is-setting #setup[data-step="2"] .setup-portrait-grid{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:clamp(7px,2.1vw,21px);width:100%;max-width:900px;margin:0 auto;
+}
+body.is-setting #setup[data-step="2"] .setup-character{
+ display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+ min-width:0;min-height:0;
+ background:#fff!important;border:2px solid #e7dae6!important;
+ border-radius:clamp(13px,2.5vw,23px)!important;
+ padding:clamp(6px,1.6vw,15px)!important;
+ box-shadow:0 5px 18px #62476a0a!important;
+ text-align:center;touch-action:manipulation;
+}
+body.is-setting #setup[data-step="2"] .setup-character[aria-pressed="true"]{
+ border-color:#946a94!important;
+ box-shadow:0 0 0 2px #dfcade,0 8px 24px #62476a21!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character-art{
+ display:block;width:100%;height:auto!important;
+ aspect-ratio:4/5!important;
+ border-radius:clamp(9px,1.8vw,17px)!important;
+ overflow:hidden;
+}
+body.is-setting #setup[data-step="2"] .setup-character-art.minseo img{
+ width:100%;height:100%;object-fit:cover;object-position:center 42%;
+}
+body.is-setting #setup[data-step="2"] .setup-character-name{
+ margin-top:clamp(5px,1dvh,12px)!important;
+ font-size:clamp(13px,2.8vmin,22px)!important;
+ font-weight:900;line-height:1.35;white-space:nowrap;
+}
+body.is-setting #setup[data-step="2"] .setup-character-tag{
+ min-height:0!important;margin-top:3px;
+ font-size:clamp(9px,1.75vmin,14px)!important;
+ line-height:1.45;letter-spacing:-.035em;word-break:keep-all;
+}
+body.is-setting #setup[data-step="2"] #setupNext{display:inline-flex!important}
+body.is-setting #setup[data-step="2"] .setup-step-actions{
+ margin-top:auto;padding-bottom:max(16px,env(safe-area-inset-bottom,0px));
+}
+@media(max-width:390px){
+ body.is-setting #setup[data-step="2"] .setup-portrait-grid{gap:6px}
+ body.is-setting #setup[data-step="2"] .setup-character{padding:5px!important}
+ body.is-setting #setup[data-step="2"] .setup-character-name{font-size:13px!important}
+ body.is-setting #setup[data-step="2"] .setup-character-tag{font-size:9px!important}
+}
