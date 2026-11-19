@@ -106,6 +106,23 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  @media(max-width:380px){.actions button.sound-toggle{flex-basis:43px;min-width:41px}}
  .center-label small{display:block;margin-top:6px;font-size:10px;line-height:1.2;white-space:nowrap;color:#d3fff4;letter-spacing:0}
 
+ .volley-pause-overlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+   background:rgba(9,26,48,.72);backdrop-filter:blur(4px);padding:clamp(8px,3vw,18px);overflow:auto}
+ .volley-pause-overlay[hidden]{display:none!important}
+ .volley-pause-panel{width:min(100%,430px);max-height:100%;overflow:auto;overscroll-behavior:contain;
+   padding:clamp(13px,3.5vw,20px);border:2px solid #829dc1;border-radius:16px;
+   background:linear-gradient(155deg,#294866,#142a43);box-shadow:0 14px 40px rgba(0,0,0,.32);text-align:center}
+ .volley-pause-icon{font-size:clamp(26px,6vw,38px);margin-bottom:6px}
+ .volley-pause-panel h2{font-size:clamp(21px,5vw,26px);color:#fff;margin:0 0 12px}
+ .volley-pause-choices{display:grid;gap:8px}
+ .volley-pause-choices button{min-height:48px;border:1px solid #6085a9;border-radius:10px;
+   padding:11px 12px;font:850 clamp(13px,3.2vw,16px)/1.35 system-ui,sans-serif;
+   background:#315d88;color:#e8f7ff;cursor:pointer}
+ .volley-pause-choices button:first-child{color:#12334b;background:#65cfce;border-color:#a1ede4}
+ .volley-pause-choices button:disabled{opacity:.6;cursor:wait}
+ .volley-pause-choices button:focus-visible{outline:3px solid #fff1ac;outline-offset:3px}
+ .volley-pause-status{font-size:12px;color:#ffe8b4;line-height:1.5;margin:9px 0 0}
+ .volley-pause-status:empty{display:none}
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -148,9 +165,21 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
           <button type="button" id="volley-school-choose" class="volley-school-choose" aria-controls="arcade-school-picker">🏫 학교 선택하기</button>
         </div>
       </div>
+      <div class="volley-pause-overlay" id="volley-pause-overlay" role="dialog" aria-labelledby="volley-pause-title" aria-modal="false" hidden>
+        <div class="volley-pause-panel">
+          <div class="volley-pause-icon" aria-hidden="true">⏸️</div>
+          <h2 id="volley-pause-title">일시정지</h2>
+          <div class="volley-pause-choices">
+            <button id="volley-resume" type="button">▶ 계속</button>
+            <button id="volley-change-school" type="button">🏫 다른 학교로 변경</button>
+            <button id="volley-go-first" type="button">↩ 처음으로</button>
+          </div>
+          <p class="volley-pause-status" id="volley-pause-status" role="status" aria-live="polite"></p>
+        </div>
+      </div>
     </div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·분신 · EXTREME 공 2개·족쇄</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · EXTREME 공 2개·족쇄</div>
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261119-foldedtop1"></script>
@@ -171,6 +200,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const readyOverlay=document.getElementById("volley-ready-overlay");
   const readyTitle=document.getElementById("volley-ready-title");
   const readyDetail=document.getElementById("volley-ready-detail");
+  const pauseOverlay=document.getElementById("volley-pause-overlay");
+  const pauseStatus=document.getElementById("volley-pause-status");
+  const pauseChoices=["volley-resume","volley-change-school","volley-go-first"].map(id=>document.getElementById(id));
+  let pauseExitBusy=false;
   const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("volleyball_25","#arcade-top10") : null;
   const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
   const battleProfiles={
@@ -429,7 +462,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const count=cloneProfiles[currentDifficulty]||0;
     for(let i=0;i<count;i++)clones.push({
       x:count===2?(i?335:145):315,y:FLOOR-31,vx:0,vy:0,
-      side:"left",contactFrames:0,impactSpeed:0,clone:true
+      side:"left",contactFrames:0,impactSpeed:0,clone:true,name:i===0?"동료":"관리자"
     });
     state.aiRecalc=0;state.aiJump=false;state.aiTargetX=688;
   }
@@ -465,12 +498,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.phase="playing";state.winner="";state.message="";state.flash=0;
     resetPositions();
     if(!canPlayerJump())setStatus(school.school_name+" · EXTREME · 공 2개 · 족쇄 · 점프 불가");
-    else if(currentDifficulty==="easy")setStatus(school.school_name+" · EASY · 날개와 분신 2명 지원");
-    else if(currentDifficulty==="normal")setStatus(school.school_name+" · NORMAL · 분신 1명 지원");
+    else if(currentDifficulty==="easy")setStatus(school.school_name+" · EASY · 날개·동료·관리자 지원");
+    else if(currentDifficulty==="normal")setStatus(school.school_name+" · NORMAL · 동료 지원");
     else setStatus(school.school_name+" · "+diffName[school.difficulty]);
     syncUI();canvas.focus();
   }
-  function stopForSchoolChange(){
+  function stopForSchoolChange(keepSchool=false){
     ++startTicket;
     ranking?.cancel();
     releaseKeys();
@@ -481,7 +514,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     specialProfile=specialProfiles.hard;resetPower();
     schoolPicker.setLocked(false);
-    schoolPicker.resetForChange();
+    if(!keepSchool)schoolPicker.resetForChange();
+    pauseOverlay.hidden=true;pauseStatus.textContent="";
     resetPositions();
     syncUI();
     setStatus("게임을 중단했습니다. 다른 학교를 선택해 시작하세요.");
@@ -497,11 +531,32 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function pause(){
     if(state.phase==="playing"){
       state.phase="paused";releaseKeys();setStatus("일시정지");
-    }else if(state.phase==="paused"){
-      state.phase="playing";setStatus("");
+      pauseStatus.textContent="";pauseOverlay.hidden=false;
+    }else if(state.phase==="paused"&&!pauseExitBusy){
+      state.phase="playing";setStatus("");pauseOverlay.hidden=true;
     }
     syncUI();
   }
+  async function leavePausedMatch(changeSchool){
+    if(state.phase!=="paused"||pauseExitBusy)return;
+    // Current official game verification requires at least four seconds of active play.
+    if(activeTenths()<40){
+      pauseStatus.textContent="공식 기록은 4초 이상 플레이한 뒤 남길 수 있습니다. ▶ 계속을 눌러 이어서 플레이해 주세요.";
+      return;
+    }
+    pauseExitBusy=true;pauseChoices.forEach(button=>button.disabled=true);
+    pauseStatus.textContent="이번 경기 기록을 서버에 저장하고 있습니다…";
+    try{
+      const saved=await finishMatch(true);
+      stopForSchoolChange(!changeSchool);
+      setStatus(saved===true?"✅ 경기 기록을 저장했습니다.":"⚠ 서버 연결 또는 검증 문제로 기록 저장에 실패했습니다.");
+    }finally{
+      pauseExitBusy=false;pauseChoices.forEach(button=>button.disabled=false);
+    }
+  }
+  pauseChoices[0].addEventListener("click",pause);
+  pauseChoices[1].addEventListener("click",()=>{void leavePausedMatch(true);});
+  pauseChoices[2].addEventListener("click",()=>{void leavePausedMatch(false);});
   function releaseKeys() {
     Object.keys(keys).forEach(k => { keys[k] = false; });
     touchControl.pointerId = null;
@@ -596,7 +651,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     hitBall.vy=-11.2*ballSpeedFactor();
     state.rescueUsed=true;
     hitBall.cooldown=11;ally.contactFrames=11;
-    setStatus("🤝 분신이 놓친 공을 구했어요! 다음 공은 직접 받아보세요");
+    setStatus("🤝 "+(ally.name||"동료")+"가 놓친 공을 구했어요! 다음 공은 직접 받아보세요");
     hitBall.shadowFrames=10;hitBall.shadowColor="#257d84";
     tone(540,.09,"triangle",.03);
     return true;
@@ -735,12 +790,13 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       (state.timeRecordBroken?"⏱ 최단시간 신기록! ":"")+summary);
     if(won){tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);}
     else tone(early?470:240,.18,"triangle",.035);
-    if(finalScore>0)ranking?.finish(finalScore,{
+    const saveResult=ranking?.finish(finalScore,{
       player:state.leftScore,cpu:state.rightScore,baseScore:base,
       survivalBonus:bonus,multiplier,finalScore,victory:won,
       endedEarly:early,activeTenths:elapsedTenths
     });
     syncUI();
+    return saveResult;
   }
   function point(leftWins) {
     if(state.phase!=="playing")return;
@@ -1080,9 +1136,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     background();
     for(const ally of clones){
       ctx.save();ctx.globalAlpha=.58;
-      drawTeacher(ally,"#50bdb5");
+      drawTeacher(ally,ally.name==="관리자"?"#8d9fcd":"#50bdb5");
       ctx.restore();
-      textLabel("분신",ally.x,ally.y-66,13,"#217f85","center",45);
+      textLabel(ally.name||"동료",ally.x,ally.y-66,13,"#217f85","center",45);
     }
     drawTeacher(left, "#448bd8");
     drawVolleyShackle();
