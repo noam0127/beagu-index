@@ -3,13 +3,14 @@
 -- No emails, school data, response answers, passwords, or Auth tokens are copied here.
 
 create table if not exists beagu_private.account_v1_settings (
-  name text primary key check (name in ('signup_enabled','login_enabled','registration_enabled','recovery_enabled','account_deletion_enabled')),
+  name text primary key check (name in ('signup_enabled','login_enabled','registration_enabled','recovery_enabled','account_deletion_enabled','account_deletion_enabled')),
   enabled boolean not null default false,
   changed_at timestamptz not null default now()
 );
 insert into beagu_private.account_v1_settings(name,enabled) values
  ('signup_enabled',false),('login_enabled',false),
- ('registration_enabled',false),('recovery_enabled',false),('account_deletion_enabled',false)
+ ('registration_enabled',false),('recovery_enabled',false),
+ ('account_deletion_enabled',false),('account_deletion_enabled',false)
 on conflict (name) do nothing;
 
 create table if not exists beagu_private.account_profiles_v1 (
@@ -169,3 +170,21 @@ grant execute on function public.beagu_account_v1_expire_budgets() to service_ro
 
 -- This migration deliberately does NOT modify challenge identity APIs,
 -- Google Forms/Apps Script, the existing Lv.1 sessions, or referral flags.
+
+
+-- Service-role-only retention maintenance; never deletes Auth account records.
+-- Expired rate budget digests are discarded after 30 days. If the operational
+-- retention schedule is shorter, that is safe too. Scheduling is a separate
+-- admin action and is NOT enabled by this migration.
+create or replace function public.beagu_account_v1_purge_budgets()
+returns integer language plpgsql volatile security invoker set search_path=''
+as $$
+declare purged integer;
+begin
+  delete from beagu_private.account_login_budgets_v1
+   where window_started_at < now() - interval '30 days';
+  get diagnostics purged = row_count;
+  return purged;
+end $$;
+revoke all on function public.beagu_account_v1_purge_budgets() from public, anon, authenticated;
+grant execute on function public.beagu_account_v1_purge_budgets() to service_role;
