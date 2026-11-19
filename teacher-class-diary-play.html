@@ -55,6 +55,11 @@ button{font:inherit;cursor:pointer}
 .character-name{font-size:14px;font-weight:800;color:#2b4d63}
 .character-bio{font-size:12px;line-height:1.6;color:#75899a;margin:3px 0 0}
 .world-context{font-size:11px;color:#375a6c;margin:10px 0 0;letter-spacing:-.01em}
+.school-facts{border:1px solid #dce6ed;background:#f7fafc;border-radius:14px;padding:14px 16px;margin:0 0 24px}
+.school-facts strong{color:#315670;font-size:12px}
+.school-facts ul{list-style:none;display:flex;flex-wrap:wrap;gap:7px;padding:0;margin:11px 0 0}
+.school-facts li{font-size:11px;line-height:1.65;padding:6px 9px;background:#e9f1f7;border-radius:8px;color:#37566e}
+.school-facts small{display:block;color:#73869a;font-size:10px;margin-top:8px;line-height:1.6}
 @keyframes page-reveal{from{opacity:.55;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .novel-body{animation:page-reveal .34s ease-out}
 @media(prefers-reduced-motion:reduce){.novel-body{animation:none}.track span{transition:none}}
@@ -74,7 +79,7 @@ button{font:inherit;cursor:pointer}
 .outcome .prose{font-size:16px}
 .outcome strong{font-size:12px;color:#476e7c}
 .outcome .dialogue{font-family:"Nanum Myeongjo","Batang",serif;font-weight:700;font-size:16px;color:#31506c}
-.statbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 20px}
+.statbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 20px}
 .stat{background:#fff;border:1px solid #dce5ec;border-radius:11px;padding:12px 9px}
 .stat small{display:block;font-size:11px;color:#738596;line-height:1.2}
 .stat strong{font-size:20px;color:#2a5269;display:block;margin-top:4px;font-variant-numeric:tabular-nums}
@@ -128,6 +133,8 @@ button{font:inherit;cursor:pointer}
 <div class="stat"><small>서로의 신뢰</small><strong id="statTrust">—</strong></div>
 <div class="stat"><small>학생의 자리</small><strong id="statAgency">—</strong></div>
 <div class="stat"><small>피로도</small><strong id="statFatigue">—</strong></div>
+<div class="stat"><small>회의의 발언권</small><strong id="statVoice">—</strong></div>
+<div class="stat"><small>업무 경계</small><strong id="statBoundary">—</strong></div>
 </div>
 <article class="panel novel" id="novelCard" data-scene="morning">
 <div class="novel-top">
@@ -140,6 +147,11 @@ button{font:inherit;cursor:pointer}
 </div>
 <div class="novel-body">
 <div class="character-strip" aria-label="동료 인물"><div class="character-avatar" id="characterAvatar" aria-hidden="true"></div><div><div class="character-name" id="characterName"></div><p class="character-bio" id="characterBio"></p></div></div>
+<section class="school-facts" id="schoolFacts" hidden aria-label="검증된 과거 학교정보">
+<strong>이 학교의 확인된 배경 자료</strong>
+<ul id="schoolFactsList"></ul>
+<small>실제 공식자료의 기준연도별 값입니다. 2027년의 상황이나 실제 선생님의 성격·업무를 뜻하지 않습니다.</small>
+</section>
 <div class="prose" id="chapterText"></div>
 <p class="muted" id="chapterSource"></p>
 <div id="choiceSection"><div class="option-title">이번 장면에서 어떻게 할까요?</div><div class="choices" id="choiceButtons"></div></div>
@@ -166,6 +178,7 @@ button{font:inherit;cursor:pointer}
 <script src="js/class-diary-narrative-v1.js"></script>
 <script src="js/class-diary-play-v1.js"></script>
 <script src="js/class-diary-director-v1.js"></script>
+<script src="js/class-diary-context-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
 <script>
 (function(){
@@ -174,6 +187,7 @@ const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const director=window.BeaguClassDiaryDirector;
+const schoolContext=window.BeaguClassDiaryContext;
 const params=new URLSearchParams(location.search);
 const isDemo=params.get('demo')==='1';
 const token=isDemo?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
@@ -205,6 +219,8 @@ function renderNovel(){
  $('statTrust').textContent=game.stats.trust;
  $('statAgency').textContent=game.stats.agency;
  $('statFatigue').textContent=game.stats.fatigue;
+ $('statVoice').textContent=game.stats.voice;
+ $('statBoundary').textContent=game.stats.boundary;
  $('chapterDay').textContent=game.day+' / 7 · '+view.date+' '+view.weekday;
  $('novelCard').dataset.scene=view.visual.id;
  $('sceneArt').setAttribute('aria-label',view.visual.label+'을 상징하는 추상적인 배경');
@@ -217,7 +233,16 @@ function renderNovel(){
  $('chapterTitle').textContent=view.title;
  $('chapterPlace').textContent=view.place+' · '+view.partner;
  $('chapterProgress').style.width=(game.day/7*100)+'%';
- fillParagraphs('chapterText',view.paragraphs);
+ const context=schoolContext.forDay(world,game.day);
+ $('schoolFacts').hidden=context.facts.length===0;
+ $('schoolFactsList').replaceChildren();
+ for(const fact of context.facts){
+  const yr=fact.referenceYear?fact.referenceYear+'년 기준 · ':'';
+  $('schoolFactsList').append(el('li',yr+fact.label+' '+fact.value));
+ }
+ const prose=view.paragraphs.slice();
+ if(context.passage)prose.splice(Math.min(2,prose.length),0,context.passage);
+ fillParagraphs('chapterText',prose);
  $('chapterSource').textContent=view.source==='historical_fiction'?
   '공개 검증된 과거 조사 경향을 소재로 재구성한 허구입니다.':'일반적인 교실 경험을 소재로 만든 허구입니다.';
  $('choiceSection').hidden=isReflection;
