@@ -44,6 +44,20 @@ class ArcadeLeaderboard{
  async request(method,body=null){
   const options={method,cache:"no-store",headers:{"Content-Type":"application/json"}};
   if(body)options.body=JSON.stringify(body);
+  // Standard Supabase Auth automatically shares the admin session across same-origin pages.
+  // An authenticated admin token MUST reach the Edge Function for server-side exclusion.
+  // If Auth storage exists but the SDK is unavailable, fail closed on scoring writes.
+  if(typeof supabaseClient!=="undefined" && supabaseClient?.auth?.getSession){
+    const {data,error}=await supabaseClient.auth.getSession();
+    if(error)throw new Error("auth_check_unavailable");
+    const token=data?.session?.access_token;
+    if(token)options.headers.Authorization="Bearer "+token;
+  }else if(method==="POST"){
+    try{
+      if(localStorage.getItem("sb-snvzwrexuqavnfvzgxqj-auth-token"))
+        throw new Error("auth_check_unavailable");
+    }catch(error){throw error;}
+  }
   const url=API+(method==="GET"?"?game="+encodeURIComponent(this.game)+(this.tier?"&difficulty="+encodeURIComponent(this.tier):""):"");
   const response=await fetch(url,options);
   const data=await response.json().catch(()=>({}));
@@ -119,7 +133,9 @@ class ArcadeLeaderboard{
    if(!Array.isArray(data.top10)||typeof data.ranked!=="boolean")throw new Error("invalid_response");
    this.remote=true;this.board=order(data.top10,game);
    if(game==="volleyball_25")this.fastestBoard=orderFast(data.fastestTop10||[]);
-   this.notice=data.ranked
+   this.notice=data.excluded===true
+    ?"관리자 플레이 · 일반 게임 기록과 통계에서 제외되었습니다."
+    :data.ranked
     ?"🏆 점수 TOP "+data.rank+"위 · "+displayScore(finalScore)
     :data.timeRanked?"⏱ 25점 최단시간 TOP "+data.timeRank+"위 · "+displayScore(finalScore)
     :data.recorded===false?"이번 경기 "+displayScore(finalScore)+" · 상위 100위 밖 · 기록 미등록"
