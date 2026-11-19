@@ -277,5 +277,43 @@ $("postitSubmit").addEventListener("click",async()=>{
  }catch(e){showMessage(readableError(e))}
  finally{btn.disabled=false;state.busy=false}
 });
+
+// Downward scroll gives the attached papers a brief, wind-like flutter.
+// Animate paper layers only: the thread's layout and FLIP positions stay fixed.
+const breezePreference=window.matchMedia("(prefers-reduced-motion: reduce)");
+let previousScrollY=window.scrollY;
+let breezeFrame=0;
+function flutterOnScroll(){
+ breezeFrame=0;
+ if(breezePreference.matches)return;
+ const thread=$("postitThread");
+ const viewportHeight=window.innerHeight;
+ let found=false;
+ for(const entry of thread.querySelectorAll(".postit-entry")){
+  if(entry.classList.contains("is-new")||entry.classList.contains("is-windward"))continue;
+  const bounds=entry.getBoundingClientRect();
+  if(bounds.bottom<=36||bounds.top>=viewportHeight-24)continue;
+  entry.classList.add("is-windward");
+  found=true;
+ }
+ if(found&&!thread.classList.contains("has-breeze"))thread.classList.add("has-breeze");
+}
+window.addEventListener("scroll",()=>{
+ const now=window.scrollY;
+ const movedDown=now-previousScrollY>3;
+ previousScrollY=now;
+ if(movedDown&&!breezePreference.matches&&!breezeFrame)
+  breezeFrame=window.requestAnimationFrame(flutterOnScroll);
+},{passive:true});
+$("postitThread").addEventListener("animationend",event=>{
+ if(event.animationName==="postit-string-breeze"){
+  $("postitThread").classList.remove("has-breeze");
+ }
+ if(!event.target.classList?.contains("postit-paper"))return;
+ const entry=event.target.closest(".postit-entry");
+ if(event.animationName==="postit-breeze-flutter")entry?.classList.remove("is-windward");
+ if(event.animationName==="paper-attach")entry?.classList.remove("is-new");
+});
+
 updateComposeAccess();void loadPosts();
 })();
