@@ -8,3 +8,6 @@
 .postit-compare-button:disabled{opacity:.45;cursor:not-allowed}
 body:not(:has(#beaguLevelState[data-level="2"])) .postit-lv2-link::after{content:" 🔒 Lv.2";font-size:11px;color:#7a6951;white-space:nowrap}
 @media(max-width:520px){.postit-compare-button{padding:9px 10px;font-size:12px}.postit-quick-link{flex-basis:100%}}
+
+/* Five navigation destinations fit on one mobile row without a dangling second line. */
+@media(max-width:760px){.beagu-unified-nav:has(a[href="postit.html"]){grid-template-columns:repeat(5,minmax(0,1fr))}.beagu-unified-nav:has(a[href="postit.html"]) a{font-size:12px;padding-left:1px;padding-right:1px}}
