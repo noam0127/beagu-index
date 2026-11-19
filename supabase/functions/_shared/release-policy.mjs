@@ -3,12 +3,12 @@ const text = (v,max=240) => typeof v==='string' && v.length<=max && !/[<>\r\n]/.
 const forbidden = /응답.*(수|횟|건)|관측|표본|소표본|원자료|자유서술|respondent|observation|sample|raw_row|n_valid|count/i;
 // Results are never returned immediately following their 2026 release approval.
 // An approval happens after data collection, so this also guarantees at least
-// 72 hours elapsed since submission. Privacy review remains mandatory.
-export const THREE_DAY_DELAY_MS=72*60*60*1000;
+// 24 hours elapsed since submission. Privacy review remains mandatory.
+export const RELEASE_DELAY_MS=24*60*60*1000;
 export function approved2026ReleaseIsOldEnough(approvedAt,nowMs=Date.now()){
   if(typeof approvedAt!=='string')return false;
   const time=Date.parse(approvedAt);
-  return Number.isFinite(time)&&time<=nowMs-THREE_DAY_DELAY_MS;
+  return Number.isFinite(time)&&time<=nowMs-RELEASE_DELAY_MS;
 }
 export function releaseMetrics(rows,catalog,level){
   if(![1,2].includes(level))return [];

@@ -19,5 +19,5 @@ assert.match(report,/r\.schoolQuestionModes/);
 assert.match(compare,/data\?\.schoolQuestionModes/);
 assert.match(migration,/ENABLE ROW LEVEL SECURITY/);
 assert.match(migration,/REVOKE ALL .*anon, authenticated/);
-assert.match(read('supabase/functions/_shared/release-policy.mjs'),/THREE_DAY_DELAY_MS=72\*60\*60\*1000/);
+assert.match(read('supabase/functions/_shared/release-policy.mjs'),/RELEASE_DELAY_MS=24\*60\*60\*1000/);
 console.log('PASS: Lv1 gated 1+ source-backed closed-choice survey aggregates, 2023–2025, and 2026 delay.');
