@@ -69,7 +69,14 @@ test('account identity, verification, email safety and auth gates',()=>{
 test('no production survey or challenge identifiers are linked',()=>{
  assert.doesNotMatch(sql,/challenge_identity_codes|survey_submissions|2026_noon_sync/i);
  assert.doesNotMatch(edge,/baegu_challenge_identity|2026_referral|google\.com\/forms/);
- for(const required of ['robots','noindex,nofollow','가상별빛초등학교','회원가입','레벨업하기'])
-   assert.ok((required==='robots'?read('test-web/robots.txt'):ui+sql).includes(required),required);
+ assert.match(read('test-web/robots.txt'),/Disallow:\s*\//);
+ for(const required of ['noindex,nofollow','가상별빛초등학교','회원가입','레벨업하기'])
+   assert.ok((ui+sql).includes(required),required);
 });
 console.log('STAGING CONTRACT: static checks only; not a live two-account test.');
+test('edge preview accepts both stripped and gateway URL paths',()=>{
+ const preview=read('test-environment/supabase/functions/beagu-stage-preview/index.ts');
+ assert.match(preview,/raw===.\/.|raw\.endsWith/);
+ assert.match(preview,/suffixes\.find/);
+ assert.match(preview,/beagu-stage-preview/);
+});
