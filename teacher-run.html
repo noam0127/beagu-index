@@ -53,6 +53,12 @@ canvas:focus-visible{outline:3px solid #7be3ca;outline-offset:-3px}
 .stat{padding:9px 10px;overflow:hidden;background:#203d59;border:1px solid #43678a;box-shadow:inset 0 1px 0 rgba(255,255,255,.09)}
 .stat span{font-size:10px;line-height:1.25;white-space:normal}
 .stat strong{font-size:clamp(13px,4vw,20px);font-weight:900;letter-spacing:-.04em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.stat .career-age-display{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  min-width:0;max-width:100%;gap:2px;line-height:1.12;letter-spacing:0;white-space:normal}
+.stat .career-age-display .career-age-current{font-size:clamp(15px,4vw,20px);font-weight:900;
+  letter-spacing:-.035em;color:#f7fff1;line-height:1.1;white-space:nowrap}
+.stat .career-age-display .career-age-target{font-size:clamp(10px,2.6vw,12px);font-weight:750;
+  letter-spacing:-.035em;color:#bfdfef;line-height:1.2;white-space:nowrap}
 .stage{border-radius:16px;border:2px solid #547ca0;box-shadow:0 12px 32px rgba(0,0,0,.24)}
 canvas{height:400px;cursor:default}
 .overlay{align-items:center;padding:10px;background:rgba(12,32,53,.68);backdrop-filter:blur(5px)}
@@ -111,7 +117,7 @@ canvas{height:400px;cursor:default}
 <main id="teacher-run-protected" class="shell" hidden>
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="hud" aria-label="게임 현황">
-    <div class="stat"><span>나이</span><strong id="dayLabel">24세 / 정년 62세</strong></div>
+    <div class="stat"><span>나이</span><strong id="dayLabel" class="career-age-display"><span class="career-age-current" id="careerCurrentAge">24세</span><span class="career-age-target">정년 62세</span></strong></div>
     <div class="stat"><span>SCORE</span><strong id="scoreLabel">0</strong></div>
     <div class="stat"><span>HI-SCORE</span><strong id="bestLabel">0</strong></div>
   </div>
@@ -295,7 +301,7 @@ function intro(){
 }
 
 function updateLabels(){
- $("dayLabel").textContent=getAge()+"세 / 정년 "+RETIRE_AGE+"세";
+ $("careerCurrentAge").textContent=getAge()+"세";
  $("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");
  const hp=Math.max(0,Math.min(maxLife,life));
  const fraction=maxLife>0?hp/maxLife:0;
