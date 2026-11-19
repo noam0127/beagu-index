@@ -1,0 +1,51 @@
+/* Stage 7.3: infographic opening, three-step setup and centered choices. Original static assets only. */
+.diary-opening{padding:0;overflow:hidden;background:#fffdfb;border-color:#e8dce3}
+.diary-opening-visual{height:clamp(176px,31vw,260px);display:flex;justify-content:center;align-items:flex-end;position:relative;overflow:hidden;background:linear-gradient(#b1d0e8 0%,#e2e9e7 73%,#f4e4db)}
+.diary-opening-visual:before{content:"";position:absolute;right:15%;top:20px;width:65px;height:65px;border-radius:50%;background:#fdf0b7;box-shadow:0 0 0 23px #ffefb855}
+.diary-school{height:115px;width:171px;background:#f5e4d5;border:5px solid #d5a9a7;border-radius:15px 15px 0 0;position:relative;box-shadow:0 13px 25px #53657922}
+.diary-school:before{content:"";position:absolute;left:-14px;right:-14px;top:-26px;height:26px;background:#af8797;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.diary-school:after{content:"";position:absolute;width:41px;height:57px;left:60px;bottom:-5px;border-radius:17px 17px 0 0;background:#98a8bb;border:4px solid #fff4ed}
+.diary-school span{position:absolute;top:23px;left:12px;right:12px;display:flex;justify-content:space-between;font-size:26px;color:#8da9bc}
+.diary-opening-body{text-align:center;padding:25px clamp(16px,4vw,40px) 34px}
+.diary-opening-body h2{font:700 clamp(22px,3.8vw,33px)/1.4 "Nanum Myeongjo","Batang",serif;color:#514354;margin:10px 0}
+.diary-opening-body p{font-size:13px;line-height:1.8;color:#726676;max-width:570px;margin:9px auto}
+.diary-opening-stat{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:23px auto;max-width:580px}
+.diary-opening-stat>div{border:1px solid #e7dbe5;border-radius:14px;padding:15px 7px;background:#fcf4f8}
+.diary-opening-stat strong{display:block;font-size:31px;font-weight:900;color:#8d637d}
+.diary-opening-stat small{display:block;color:#7d7182;font-size:11px;margin-top:5px}
+.diary-opening-days{display:flex;align-items:center;justify-content:space-between;max-width:570px;gap:6px;margin:21px auto}
+.diary-opening-days span{display:grid;place-items:center;width:32px;height:32px;border:2px solid #d7b8c8;border-radius:50%;font-size:12px;font-weight:800;color:#845d77;background:#fff}
+.diary-opening-days span:first-child,.diary-opening-days span:last-child{background:#85627d;color:#fff}
+.diary-opening-start{margin:10px auto 0;background:linear-gradient(120deg,#765872,#ad7997);box-shadow:0 8px 18px #7e537d40}
+.diary-opening-note{font-size:11px!important;color:#8d8190!important}
+.vn-setup .setup-layout{display:block;max-width:740px;margin:auto}
+.vn-setup .setup-player,.vn-setup .setup-cast{padding:28px;border-right:0;border-bottom:0;background:transparent}
+.vn-setup [data-setup-screen="3"]{max-width:740px;margin:auto;padding:25px 28px}
+.vn-setup[data-step="1"] [data-setup-screen]:not([data-setup-screen="1"]),
+.vn-setup[data-step="2"] [data-setup-screen]:not([data-setup-screen="2"]),
+.vn-setup[data-step="3"] [data-setup-screen]:not([data-setup-screen="3"]){display:none!important}
+.vn-setup[data-step="1"] .setup-end,.vn-setup[data-step="2"] .setup-end{display:none}
+.vn-setup .setup-progress [aria-current="step"]{background:#74546f;color:#fff;border-color:#74546f}
+.vn-setup .setup-progress span:first-child:not([aria-current="step"]){background:#ffffffbc;color:#82748a;border-color:#dfd5e0}
+.setup-step-actions{display:flex;justify-content:space-between;gap:10px;max-width:740px;margin:auto;padding:0 28px 22px}
+.setup-step-actions button:last-child{margin-left:auto}
+.setup-step-actions button{min-width:130px}
+.setup-review-road{padding:20px;background:linear-gradient(120deg,#f8e9f2,#edf3f5);border-radius:15px;text-align:center;color:#87617e;font-size:19px;letter-spacing:.2em}
+.setup-review-fields{display:grid;gap:10px;margin:20px 0}
+.setup-review-fields div{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:13px;border:1px solid #ebdce4;border-radius:11px}
+.setup-review-fields small{font-size:11px;color:#887889}
+.setup-review-fields strong{font-size:13px;color:#524053}
+.setup-review-quote{font-family:"Nanum Myeongjo","Batang",serif;color:#746078;text-align:center;line-height:1.8}
+body.is-playing #choiceSection{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(13,16,30,.67);padding:calc(24px + env(safe-area-inset-top,0px)) 17px calc(24px + env(safe-area-inset-bottom,0px));max-height:none;overflow:auto;backdrop-filter:blur(2px);animation:diaryVeil .22s ease both}
+body.is-playing #choiceSection .option-title{text-align:center;color:#fff;font-size:20px;font-weight:800;text-shadow:0 2px 15px #171522}
+body.is-playing #choiceSection .choices{width:min(100%,550px);display:grid;gap:10px;max-height:64dvh;overflow:auto}
+body.is-playing #choiceSection .choice{width:100%;text-align:left;background:#fffcff;color:#41364b;border:1px solid #eadce9;border-radius:14px;font-size:15px;line-height:1.6;padding:15px 20px;box-shadow:0 9px 25px #0004;animation:diaryChoiceIn .25s ease both}
+body.is-playing #choiceSection .choice:hover,body.is-playing #choiceSection .choice:focus-visible{background:#f9eaf5;outline-offset:3px}
+@keyframes diaryVeil{from{opacity:0}to{opacity:1}}
+@keyframes diaryChoiceIn{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
+body.is-playing #vnMore,body.is-playing #nextBtn{display:grid;place-items:center;width:44px;height:44px;min-height:44px;border-radius:50%;padding:0!important;background:#f9e8f2;color:#573955;box-shadow:0 5px 19px #15152862;border:1px solid #ffffffa5}
+body.is-playing #vnMore[hidden],body.is-playing #nextBtn[hidden]{display:none!important}
+.vn-arrow-mark{display:block;width:24px;height:24px;animation:diaryArrowPulse 1.4s ease-in-out infinite}
+@keyframes diaryArrowPulse{0%,100%{opacity:.65;transform:translateY(-3px)}60%{opacity:1;transform:translateY(3px)}}
+@media(max-width:690px){.vn-setup .setup-player,.vn-setup .setup-cast,.vn-setup [data-setup-screen="3"]{padding:20px 17px}.setup-step-actions{padding:0 17px 19px}.setup-review-fields div{grid-template-columns:1fr;gap:3px}.diary-opening-stat{gap:6px}.diary-opening-stat strong{font-size:27px}.diary-opening-stat small{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.vn-arrow-mark,body.is-playing #choiceSection,body.is-playing #choiceSection .choice{animation:none!important}}
