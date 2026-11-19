@@ -206,14 +206,36 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
   const proseMode=await semesterPage.evaluate(()=>({
     semester:document.body.classList.contains('is-semester-mode'),
     overlayLoaded:typeof window.BeaguClassDiaryLiterary?.present==='function',
-    animationChars:document.querySelectorAll('#chapterText .diary-literary-char').length,
+    totalLines:document.querySelectorAll('#chapterText .diary-literary-line').length,
+    visibleLines:[...document.querySelectorAll('#chapterText .diary-literary-line')].filter(el=>!el.hidden).length,
+    ghostLines:document.querySelectorAll('.diary-literary-echo').length,
     season:document.querySelector('#novelCard').dataset.season,
     paperBackground:getComputedStyle(document.querySelector('.vn-dialogue')).backgroundColor,
     height:document.querySelector('#novelCard').getBoundingClientRect().height,
     viewport:innerHeight
   }));
   assert(proseMode.semester&&proseMode.overlayLoaded,'The 36-chapter literary presentation must load');
-  assert(proseMode.animationChars>10,'Visible prose must be revealed character by character');
+  assert(proseMode.totalLines>=3,'Semester pages must contain several readable lines');
+  assert.equal(proseMode.visibleLines,1,'The first line is revealed before user input');
+  assert.equal(proseMode.ghostLines,0,'Prior-line echoes must not exist');
+  const beforeTap=await semesterPage.evaluate(()=>{
+    const row=document.querySelector('#chapterText .diary-literary-line:not([hidden])');
+    return {text:row.textContent,size:getComputedStyle(row).fontSize,opacity:getComputedStyle(row).opacity};
+  });
+  // A real touch-like click reveals exactly one additional line and preserves the first line.
+  await semesterPage.locator('#sceneArt').click({position:{x:75,y:370}});
+  const afterTap=await semesterPage.evaluate(()=>{
+    const rows=[...document.querySelectorAll('#chapterText .diary-literary-line:not([hidden])')];
+    return {count:rows.length,text:rows[0].textContent,size:getComputedStyle(rows[0]).fontSize};
+  });
+  assert.equal(afterTap.count,2,'One touch must add precisely one line');
+  assert.equal(afterTap.text,beforeTap.text,'Old text must remain unchanged');
+  assert.equal(afterTap.size,beforeTap.size,'Old text must not shrink');
+  // Enter advances one more line, with focus outside any form or button.
+  await semesterPage.evaluate(()=>document.activeElement?.blur());
+  await semesterPage.keyboard.press('Enter');
+  assert.equal(await semesterPage.locator('#chapterText .diary-literary-line:not([hidden])').count(),3,
+    'One Enter must reveal precisely the next line');
   assert.equal(proseMode.season,'march','The semester begins in chilly March');
   assert(proseMode.height<=proseMode.viewport+2,'36-chapter mode must fit the viewport');
   await semesterPage.screenshot({path:'artifacts/class-diary/semester-literary-first-scene.png',fullPage:true});
@@ -228,7 +250,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
   assert(gameFrame && gameFrame.height<=844+1,'36-episode novel should remain one mobile viewport');
   const visited=new Set(),months=new Set(),parts=new Set();
   let steps=0;
-  while(await semesterPage.locator('#ending').isHidden()&&steps<1600){
+  while(await semesterPage.locator('#ending').isHidden()&&steps<2400){
    steps++;
    const header=await semesterPage.locator('#chapterDay').innerText();
    const match=header.match(/^(\d+) \/ 36/);
@@ -246,11 +268,18 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
     const options=choice.locator('.choice');
     assert.equal(await options.count(),3,'Semester chapter must offer three choices');
     await options.nth(steps%3).click();
-   }else if(await semesterPage.locator('#vnMore').isVisible()){
-    await semesterPage.locator('#vnMore').click();
-   }else if(await semesterPage.locator('#nextBtn').isVisible()){
-    await semesterPage.locator('#nextBtn').click();
-   }else throw Error('Semester blocked at step '+steps+' ('+header+')');
+   }else{
+    // The public UI intentionally hides the old next buttons: touch/Enter
+    // still invoke their original handlers without a forced scroll.
+    const advanced=await semesterPage.evaluate(()=>{
+     const next=!document.getElementById('vnMore').hidden
+       ?document.getElementById('vnMore'):!document.getElementById('nextBtn').hidden
+       ?document.getElementById('nextBtn'):null;
+     if(!next)return false;
+     next.click();return true;
+    });
+    if(!advanced)throw Error('Semester blocked at step '+steps+' ('+header+')');
+   }
   }
   assert.equal(visited.size,36,'Must visit all 36 original fiction scenes');
   assert.deepEqual([...months].sort(),['03','04','05','06','07'],'March through July must appear in episode status');
