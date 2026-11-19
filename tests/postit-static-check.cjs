@@ -61,6 +61,38 @@ assert.ok(css.includes('postit-paper::before')&&css.includes('postit-paper::afte
 assert.ok(page.includes('postit-v1.css?v=20261120-tornpaper1')&&
  page.includes('postit-v1.js?v=20261120-tornpaper2'),'browser loads latest visual assets');
 
+// The challenge page shares the same paper-note language and header as Post-it,
+// but the exportable certificate and the personal code remain clearly separated.
+const challenge=read('challenge.html');
+const challengePaper=read('styles/challenge-postit-unity-v1.css');
+assert.ok(challenge.includes('styles/challenge-postit-unity-v1.css?v=20261120-paper1'),
+ 'Challenge includes scoped paper-unity CSS');
+assert.ok(challenge.includes('href="postit.html">포스트잇</a>'),
+ 'Challenge navigation retains the distinctive Post-it destination');
+const headerVersion='styles/beagu-site-header-v1.css?v=20261120-postit-challenge-unity1';
+assert.ok(page.includes(headerVersion)&&challenge.includes(headerVersion),
+ 'Challenge and Post-it must use exactly the same shared paper-tab header version');
+assert.ok(challengePaper.includes('body.beagu-page-challenge'),
+ 'Paper design is scoped to challenge and does not affect the entire website');
+assert.ok(challengePaper.includes('clip-path:polygon(')&&
+ challengePaper.includes('challenge-access-panel::before')&&
+ challengePaper.includes('step-card::before'),
+ 'Challenge supporting cards receive ripped edges and tape');
+assert.ok(challengePaper.includes('background:linear-gradient(110deg,#f5f1e8,#f9f8f4 50%,#f1f2f5)'),
+ 'Challenge background shares Post-it warm paper palette');
+assert.ok(challengePaper.includes('body.beagu-page-challenge #certificate')&&
+ challengePaper.includes('clip-path:none'),
+ 'Capture certificate remains a clean, unclipped rectangular image');
+for(const id of ['challengeAccessPanel','challengeProtected','certificate','participantNo',
+ 'challengeIdentityPanel','identityCode','copyIdentityCode','capture','postit' + 'None']) {
+ if(id==='postitNone')continue;
+ assert.ok(challenge.includes('id="'+id+'"'),'Challenge functional DOM preserved: '+id);
+}
+assert.ok(challenge.includes('data-html2canvas-ignore="true"'),
+ 'Private identity is excluded from exported certificate');
+assert.ok(!challengePaper.includes('user-select:none')&&!challengePaper.includes('display:none'),
+ 'Paper skin may not conceal code or block copying');
+
 const edge=read('supabase/functions/beagu-postit-api-v1/index.ts');
 assert.ok(edge.includes('const user=await identity(req)'), 'writes authenticated');
 assert.ok(!edge.includes('identity_visitor_id||hash'), 'session token hash must not become rotating writer identity');
