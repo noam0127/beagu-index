@@ -143,6 +143,52 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    console.log('PASS '+variant.name+': '+turns+' clicks, single viewport VN dialogue, ending reached, no saved progress');
    await page.close();
   }
+  // Full-semester browser path: all 36 scenes must reach an ending in a real DOM.
+  const semesterPage=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+  const semesterErrors=[];
+  semesterPage.on('pageerror',e=>semesterErrors.push(e.message));
+  await semesterPage.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
+  await semesterPage.goto(URL+'/teacher-class-diary-play.html?demo=1',{waitUntil:'domcontentloaded'});
+  await semesterPage.locator('#opening').waitFor({state:'visible'});
+  await semesterPage.locator('#semesterStart').click();
+  await semesterPage.locator('#setup').waitFor({state:'visible'});
+  await semesterPage.locator('#playerName').fill('한가람');
+  await semesterPage.locator('#age').fill('31');
+  await semesterPage.locator('#experience').selectOption('new');
+  await semesterPage.locator('#gender').selectOption('undisclosed');
+  await semesterPage.locator('#mbti').selectOption('INFP');
+  await semesterPage.locator('#setupNext').click();
+  await semesterPage.locator('[data-partner-choice="woman"]').click();
+  await semesterPage.locator('#setupNext').click();
+  await semesterPage.locator('#profileForm button[type="submit"]').click();
+  await semesterPage.locator('#novel').waitFor({state:'visible'});
+  const visited=new Set();
+  let steps=0;
+  while(await semesterPage.locator('#ending').isHidden()&&steps<850){
+   steps++;
+   const header=await semesterPage.locator('#chapterDay').innerText();
+   const match=header.match(/^(\d+) \/ 36/);
+   if(match)visited.add(Number(match[1]));
+   const choice=semesterPage.locator('#choiceSection');
+   if(await choice.isVisible()){
+    const options=choice.locator('.choice');
+    assert.equal(await options.count(),3,'Semester chapter must offer three choices');
+    await options.nth(steps%3).click();
+   }else if(await semesterPage.locator('#vnMore').isVisible()){
+    await semesterPage.locator('#vnMore').click();
+   }else if(await semesterPage.locator('#nextBtn').isVisible()){
+    await semesterPage.locator('#nextBtn').click();
+   }else throw Error('Semester blocked at step '+steps+' ('+header+')');
+  }
+  assert.equal(visited.size,36,'Must visit all 36 original fiction scenes');
+  assert(!await semesterPage.locator('#ending').isHidden(),'Semester must reach its final page');
+  assert((await semesterPage.locator('#endingTitle').innerText()).startsWith('나의 '));
+  assert((await semesterPage.locator('#endingSchool').innerText()).includes('36화의 기록'));
+  assert.equal(semesterErrors.length,0,'Semester browser errors: '+semesterErrors.join('; '));
+  const semesterStorage=await semesterPage.evaluate(()=>Object.keys(localStorage).filter(k=>k.includes('class-diary')));
+  assert.equal(semesterStorage.length,0,'Semester must not save game data');
+  console.log('PASS semester browser: '+visited.size+' chapters, '+steps+' interactions, ending, no saved progress');
+  await semesterPage.close();
   const page=await browser.newPage();
   await page.goto(URL+'/teacher-class-diary-play.html?schoolId=DEMO001',{waitUntil:'domcontentloaded'});
   await page.locator('#notice').waitFor({state:'visible'});
