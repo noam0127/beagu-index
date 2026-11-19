@@ -1,4 +1,4 @@
-/* Public, anonymized, paginated arcade result history. */
+/* Public, anonymized, highest-score TOP100 archive; 30 rows per page. */
 (function(){
  "use strict";
  const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard";
@@ -96,7 +96,7 @@
   syncUrl();
   $("pageInfo").textContent=page+" 페이지";
   prev.disabled=true;next.disabled=true;
-  list.replaceChildren(el("div","history-empty","경기 기록을 불러오는 중…"));
+  list.replaceChildren(el("div","history-empty","상위 100개 기록을 불러오는 중…"));
   try{
    const query=new URLSearchParams({game,history:"1",page:String(page)});
    if(difficulty)query.set("difficulty",difficulty);
@@ -108,9 +108,9 @@
    hasMore=data.hasMore;
    list.replaceChildren();
    if(!data.records.length)list.append(el("div","history-empty",
-    page===1?"아직 저장된 게임 기록이 없습니다.":"이 페이지에는 기록이 없습니다."));
+    page===1?"아직 상위 100위 기록이 없습니다.":"이 페이지에는 기록이 없습니다."));
    else for(const row of data.records)list.append(renderRecord(row));
-   prev.disabled=page<=1;next.disabled=!hasMore;
+   prev.disabled=page<=1;next.disabled=!hasMore||page>=4;
   }catch(err){
    if(token!==requestId)return;
    list.replaceChildren(el("div","history-empty","기록을 불러오지 못했습니다. 네트워크를 확인하고 새로고침해 주세요."));
@@ -119,8 +119,8 @@
  }
  selector.addEventListener("change",()=>{difficulty=selector.value;page=1;load();});
  prev.addEventListener("click",()=>{if(page<=1)return;page--;load();window.scrollTo({top:0,behavior:"smooth"});});
- next.addEventListener("click",()=>{if(!hasMore)return;page++;load();window.scrollTo({top:0,behavior:"smooth"});});
+ next.addEventListener("click",()=>{if(!hasMore||page>=4)return;page++;load();window.scrollTo({top:0,behavior:"smooth"});});
  const requestedPage=Number(params.get("page"));
- if(Number.isSafeInteger(requestedPage)&&requestedPage>=1&&requestedPage<=99999)page=requestedPage;
+ if(Number.isSafeInteger(requestedPage)&&requestedPage>=1&&requestedPage<=4)page=requestedPage;
  load();
 })();
