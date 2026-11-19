@@ -248,6 +248,7 @@ body.beagu-page-lv1 .school-card .school-participation{
 <script defer src="js/beagu-level-state-v1.js?v=20261120-levelup1"></script>
 <link rel="stylesheet" href="styles/beagu-school-interest-v1.css?v=20261120-live-rising72-15min">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
+<link rel="stylesheet" href="styles/beagu-search-compare-unity-v1.css?v=20261120-search-compare1">
 </head>
 <body class="beagu-ui-page beagu-page-lv1">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -256,10 +257,11 @@ body.beagu-page-lv1 .school-card .school-participation{
   
 
   <main class="container" id="main-content">
+    <section class="beagu-search-hero" aria-labelledby="searchTitle"><h1 id="searchTitle" aria-label="학교 검색">학교를 <span>바로 검색</span></h1></section>
     
 
 
-    <section class="auth-card beagu-auth-card" id="loginPanel" aria-labelledby="loginTitle">
+    <section class="auth-card beagu-auth-card beagu-levelup-card" id="loginPanel" aria-labelledby="loginTitle">
       <div class="beagu-auth-heading">
         <h2 id="loginTitle">Lv.1 인증</h2>
         <span class="beagu-auth-badge">미인증</span>
@@ -279,18 +281,23 @@ body.beagu-page-lv1 .school-card .school-participation{
     </section>
 
     <section id="searchPanel" hidden aria-labelledby="searchTitle">
-      <h1 id="searchTitle">학교 검색</h1>
-      <div class="auth-status">
-        <span class="tier-pill">Lv.1 참여자 열람</span>
-        <button class="text-button" type="button" id="logoutButton">로그아웃</button>
+      <div class="beagu-levelup-card beagu-levelup-status" aria-label="레벨업 인증 상태">
+        <div class="beagu-levelup-heading">
+          <h2>레벨업 인증</h2>
+          <div class="auth-status">
+            <span class="tier-pill">Lv.1 인증됨</span>
+            <button class="text-button" type="button" id="logoutButton">로그아웃</button>
+          </div>
+        </div>
       </div>
       <div class="search-tabs" role="tablist" aria-label="찾기 방법">
         <button type="button" class="search-tab" id="schoolTab" role="tab" aria-selected="true" aria-controls="schoolPanel">학교별 찾기</button>
         <button type="button" class="search-tab" id="regionTab" role="tab" aria-selected="false" aria-controls="regionPanel">지역 찾기</button>
       </div>
       <section id="schoolPanel" role="tabpanel" aria-labelledby="schoolTab">
+        <h2 class="beagu-search-card-title">학교별 찾기</h2>
         <label class="field-label" for="searchInput">학교명 검색</label>
-        <input id="searchInput" class="search-box" type="search" placeholder="예: 개원초, 서울개원초등학교" autocomplete="off">
+        <div class="beagu-school-input-wrap"><input id="searchInput" class="search-box" type="search" placeholder="예: 개원초, 서울개원초등학교" autocomplete="off"></div>
         
 
       </section>
