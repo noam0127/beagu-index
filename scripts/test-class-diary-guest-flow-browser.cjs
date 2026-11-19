@@ -17,7 +17,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.route(api,route=>{
     const body=JSON.parse(route.request().postData()||'{}');
     if(body.action==='verify-code'){
-     codeCheck++;assert.equal(body.code,'AAAAAAAAAA','Only synthetic test code may be used');
+     codeCheck++;assert.equal(body.code,'1234','Only synthetic test code may be used');
      return route.fulfill({status:200,contentType:'application/json',
       body:JSON.stringify({ok:true,scope:'class-diary-fictional-guest',ticket:'v1.fakepayload.fakesignature'})});
     }
@@ -46,7 +46,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#homeDiaryGuestForm').waitFor({state:'visible'});
    assert.equal(await page.locator('#homeDiaryCode').count(),1);
    assert.equal(await page.locator('#teacher-diary-feature .teacher-diary-code-message').count(),1);
-   await page.locator('#homeDiaryCode').fill('AAAAAAAAAA');
+   await page.locator('#homeDiaryCode').fill('1234');
    await page.locator('#homeDiarySubmit').click();
    await page.waitForURL('**/teacher-class-diary-play.html?guest=1',{timeout:12000});
    await page.locator('#diaryLanding').waitFor({state:'visible'});
