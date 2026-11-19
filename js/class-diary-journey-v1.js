@@ -7,6 +7,7 @@ function init(options){
  const setup=$('setup'),form=$('profileForm');
  let step=1;
  function review(){
+  $('setupReviewSchool').textContent=($('diarySchoolSelected').textContent||'가상의 초등학교').replace(/ · 레벨2 인증 완료$/, '');
   $('setupReviewName').textContent=($('playerName').value.trim()||'—')+' 선생님';
   const ex=$('experience'),gender=$('gender'),mbti=$('mbti'),partner=$('partner');
   $('setupReviewTraits').textContent=[ex.selectedOptions[0]?.textContent,gender.selectedOptions[0]?.textContent,mbti.value].filter(Boolean).join(' · ');
@@ -26,7 +27,15 @@ function init(options){
   setup.scrollIntoView({block:'start',behavior:'instant'});
  }
  function validate(part){
-  const ids=part===1?['playerName','experience','gender','mbti']:part===2?['partner']:[];
+  if(part===1){
+   const mode=$('diarySchoolMode');
+   if(mode.value==='real'&&mode.dataset.schoolReady!=='true'){
+    $('diarySchoolSearchMessage').textContent='학교를 먼저 선택해 주세요.';
+    $('diarySchoolMode').dispatchEvent(new Event('change'));
+    return false;
+   }
+  }
+  const ids=part===1?['diarySchoolMode','playerName','experience','gender','mbti']:part===2?['partner']:[];
   for(const id of ids){
    const el=$(id);
    if(!el.checkValidity()){el.reportValidity();el.focus();return false;}
@@ -41,6 +50,7 @@ function init(options){
  return {
   ready(){
    if(step!==3)return false;
+   if(!validate(1)){go(1);return false}
    if(['playerName','experience','gender','mbti'].some(id=>!$(id).checkValidity())){go(1);validate(1);return false}
    if(!$('partner').checkValidity()){go(2);validate(2);return false}
    return true;
