@@ -105,7 +105,12 @@ assert(play.src.includes("document.body.classList.contains('diary-theater-mode')
 assert(play.src.includes("setAttribute('aria-pressed',String(expanded))"),'The screen toggle must expose its state to assistive tech');
 assert(play.src.includes('id="experience"'),'Career selector is required');
 assert(!play.src.includes('id="experienceYears"'),'Numeric career field must not return');
-for(const value of ['new','mid','senior'])assert(setupSection.includes('value="'+value+'"'),'Missing career stage '+value);
+assert(setupSection.includes('id="experience" hidden'),'Internal default must not ask for career stage');
+assert(setupSection.includes('id="gender" hidden'),'Internal default must not ask for gender');
+assert(setupSection.includes('id="mbti" hidden'),'Internal default must not ask for MBTI');
+assert(setupSection.includes('id="playerName" name="playerName" type="hidden"'),'Internal pen name should not be requested');
+assert(play.src.includes("show('diaryLanding');\n status('첫 페이지를 펼치면 학교를 선택할 수 있습니다.')"),'Verified guest must see the title before settings');
+assert(play.src.includes("if($('setup').dataset.step==='2')$('profileForm').requestSubmit()"),'Tapping a colleague must launch the story directly');
 assert(!play.src.includes('id="duty"'),'Other profile settings are derived or fictional');
 assert(!play.src.includes('id="classTone"'),'Other profile settings are derived or fictional');
 assert(!play.src.includes('id="workCulture"'),'Other profile settings are derived or fictional');
