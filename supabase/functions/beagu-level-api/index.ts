@@ -314,6 +314,34 @@ Deno.serve(async(req:Request)=>{
   const schoolQuestionModes=[...modeIndex.values()].sort((a,b)=>
     a.year-b.year||a.questionId.localeCompare(b.questionId));
 
+  // School-level union of checked options, with an owner-authorized 2025 parent
+  // gate. No raw response combinations, counts, free text or distributions.
+  const schoolQuestionSelections:{year:number;questionId:string;selectedOptions:string[]}[]=[];
+  if(ownerHistory?.some(row=>row.survey_year===2025&&
+       row.review_status==='OWNER_AUTHORIZED_CLOSED_CHOICE')){
+  const checkboxAllowed:Record<string,Set<string>>={
+    Q03:new Set(["강사 채용 및 강사 급여 관리","교과서 구입","기초생활수급자 통신비 지원","물품 구입(컴퓨터 부속품, 프린터 토너 등)","민방위훈련","방과후 자유수강권 관리","안함","업무 메신저 및 학교 홈페이지 관리","예산 품의","유무선네트워크 및 전산실 관리","잘 모름","잘모름","정보공시","정보기기(태블릿, PC, TV) 관리(불용처리 포함)","평생교육","하드디스크 파기 작업","학운위 운영","CCTV 관리"]),
+    Q04:new Set(["교장선생님 훈화말씀이 있는 전교생 아침조회(교실방송)","교장선생님 훈화말씀이 있는 전교생 아침조회(운동장 또는 강당/체육관)","그 밖의 학부모 초청 행사","바자회","수련회","수학여행","안함","운동회","축제","학부모 공개수업","학생회선거","학예회"])
+  };
+    const {data:checked,error:checkboxError}=await admin
+      .from('beagu_school_checkbox_choices_v1')
+      .select('survey_year,question_id,selected_options,review_status')
+      .eq('school_id',id).eq('survey_year',2025)
+      .eq('review_status','SOURCE_VERIFIED_MULTI_SELECTION').limit(2);
+    if(checkboxError)return send({error:'SCHOOL_CHECKBOX_UNAVAILABLE'},503,origin);
+    for(const record of checked||[]){
+      const questionId=String(record.question_id||'');
+      if(record.survey_year!==2025||!checkboxAllowed[questionId]||
+         !Array.isArray(record.selected_options)||
+         record.selected_options.length<1||record.selected_options.length>24)continue;
+      const selected=record.selected_options;
+      if(selected.some((v:unknown)=>!safeMode(v)||!checkboxAllowed[questionId].has(v as string))||
+         new Set(selected).size!==selected.length)continue;
+      schoolQuestionSelections.push({year:2025,questionId,selectedOptions:selected});
+    }
+  }
+
+
   // 2025 legacy public-release whitelist explicitly authorizes curated domain
   // scores for >=1 source observation. This is NOT permission to expose the
   // teacher's raw choices, free text, counts, or sensitive survey columns.
@@ -370,7 +398,7 @@ Deno.serve(async(req:Request)=>{
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
-  return send({school_id:id,level,rows,schoolQuestionModes,participationYears},200,origin);
+  return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,participationYears},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
 
