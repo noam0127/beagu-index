@@ -282,14 +282,14 @@ body.beagu-page-lv1 .school-card .school-participation{
 
     <section id="searchPanel" hidden aria-labelledby="searchTitle">
       <div class="beagu-levelup-card beagu-levelup-status" aria-label="레벨업 인증 상태">
-        <div class="beagu-levelup-heading">
+        <div class="beagu-levelup-heading beagu-auth-heading">
           <h2>레벨업 인증</h2>
-          <div class="auth-status">
-            <span class="tier-pill">Lv.1 인증됨</span>
-            <button class="text-button" type="button" id="logoutButton">로그아웃</button>
+          <div class="auth-status beagu-auth-actions">
+            <span class="tier-pill beagu-auth-badge">Lv.1 인증됨</span>
+            <button class="text-button beagu-auth-logout" type="button" id="logoutButton">로그아웃</button>
           </div>
-          <button class="beagu-levelup-trigger" type="button" data-beagu-open-levelup>레벨업 인증</button>
         </div>
+        <button class="beagu-levelup-trigger" type="button" data-beagu-open-levelup>고유번호 인증</button>
       </div>
       <div class="search-tabs" role="tablist" aria-label="찾기 방법">
         <button type="button" class="search-tab" id="schoolTab" role="tab" aria-selected="true" aria-controls="schoolPanel">학교별 찾기</button>
