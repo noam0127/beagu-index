@@ -74,7 +74,7 @@ Deno.serve(async (req: Request) => {
     const number = Number(data?.participant_no);
     const code = data?.identity_code;
     if (!Number.isSafeInteger(number) || number < 1 ||
-      typeof code !== 'string' || !/^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6})$/.test(code)) {
+      typeof code !== 'string' || !/^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}|[A-HJ-NP-Z2-9]{10})$/.test(code)) {
       return respond({ error: 'INVALID_ISSUED_DATA' }, 503, origin);
     }
     return respond({ participantNo: number, identityCode: code, lv1Code: false, lv2Access: false }, 200, origin);
