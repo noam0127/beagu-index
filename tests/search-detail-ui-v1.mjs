@@ -8,7 +8,7 @@ const search=read('js/level-search.js');
 const css=read('styles/beagu-search-details-v1.css');
 assert.doesNotThrow(()=>new vm.Script(search));
 assert.match(html,/styles\/beagu-search-details-v1\.css\?v=20261119-survey-empty1/);
-assert.match(html,/js\/level-search\.js\?v=20261119-lv1-graph1/);
+assert.match(html,/js\/level-search\.js\?v=20261119-circled-options1/);
 assert.match(css,/historical-benchmark-grid/);
 assert.match(css,/@media\(max-width:680px\)/);
 assert.match(search,/event\.key==='ArrowRight'/);
@@ -88,4 +88,36 @@ finder.value='';
 finder.events.input();
 assert.equal(cards.filter(card=>!card.hidden).length,15,
   'clearing the filter restores all original questions');
+
+const observedScope={window:{}};
+vm.runInNewContext(read('js/2025-observed-choices.js'),observedScope);
+const q15Options=observedScope.window.Beagu2025ObservedChoices?.Q15;
+assert.ok(q15Options?.includes('① 1회미만'),'Use the actually verified Q15 options');
+const circledRenderer=new Function('make','document','window','conciseQuestion','verifiedOptions',
+  search.slice(start,end)+'\\n return renderHistoricalBenchmarks;')(
+    make,document,{BeaguHistoricalOriginalQuestions:{'2025':{Q15:'[담임교사 공문량] 기안 공문 수'}}},
+    x=>x,()=>({values:q15Options,source:'observed'})
+  );
+function actualCardValues(schoolAnswer){
+ const sample=make('div');
+ circledRenderer(sample,2025,{sido_standard:'세종'},[
+   {year:2025,questionId:'Q15',modeOption:schoolAnswer}
+ ],{items:{Q15:{
+   national:{mode:'③ 2~3회',kind:'most_frequent'},
+   regional:{mode:'③ 2~3회',kind:'most_frequent'}
+ }}},'ready');
+ const grid=find(sample,'historical-benchmark-grid')[0];
+ return grid.children.map(cell=>cell.children[1].textContent);
+}
+assert.deepEqual(actualCardValues('1 1회미만'),['① 1회미만','③ 2~3회','③ 2~3회'],
+ 'Q15 verified school-choice prefix must display a circled number like region/nation');
+assert.equal(actualCardValues('2 1회')[0],'② 1회');
+assert.equal(actualCardValues('3 2~3회')[0],'③ 2~3회');
+assert.equal(actualCardValues('1 99점')[0],'1 99점',
+ 'Unverified numeric content must not be mistaken for a choice number');
+assert.equal(actualCardValues('12%')[0],'12%','Percentages are never choice labels');
+assert.equal(actualCardValues('2점')[0],'2점','Score values are never choice labels');
+assert.equal(actualCardValues('1 임의보기')[0],'1 임의보기',
+ 'Do not create ordinal claims for choices absent from source options');
+
 console.log('PASS: consolidated school detail, accessible year controls, vetted comparison, in-year question search');
