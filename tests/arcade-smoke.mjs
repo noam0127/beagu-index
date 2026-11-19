@@ -514,8 +514,8 @@ assert.match(runner,/if\(u\.id==="speed"\)/);
 assert.match(runner,/if\(u\.id==="guard"\)/);
 assert.match(runner,/if\(u\.id==="heal"\)/);
 assert.match(runner,/activeEvent&&eventSeconds>0/,"events only appear while active");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-natural-receive1/);
-assert.match(html,/teacher-run\.html\?v=20261119-arcade-fun1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-core-game1/);
+assert.match(html,/teacher-run\.html\?v=20261119-core-game1/);
 console.log("PASS: volleyball impact and boss cues; run 5-day events, timed bonuses, upgrade choices and Friday pattern");
 
 // Ball reception physics and earned stamina recovery.
@@ -608,8 +608,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-natural-receive1")&&
-     site.body.includes("teacher-run.html?v=20261119-arcade-fun1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-core-game1")&&
+     site.body.includes("teacher-run.html?v=20261119-core-game1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -619,8 +619,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-natural-receive1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-arcade-fun1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-core-game1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-core-game1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
