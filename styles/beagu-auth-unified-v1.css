@@ -1,0 +1,205 @@
+/* Unified Lv.1 access panel: public search, authenticated search and comparison.
+   Appearance only; existing form IDs, session handling and API calls are unchanged. */
+body.beagu-ui-page .beagu-auth-card{
+  width:100%;
+  background:#fff;
+  border:1px solid #dbe5f1;
+  border-radius:20px;
+  padding:26px 28px 25px;
+  box-shadow:0 8px 22px rgba(31,63,102,.06);
+  margin-bottom:22px;
+}
+body.beagu-page-lv1 .beagu-auth-card{max-width:700px;margin:0 auto 24px}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px 14px;
+  flex-wrap:wrap;
+  margin:0 0 20px;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-heading h1,
+body.beagu-ui-page .beagu-auth-card .beagu-auth-heading h2{
+  margin:0;
+  font-size:clamp(21px,3vw,24px);
+  line-height:1.35;
+  font-weight:850;
+  letter-spacing:-.045em;
+  color:#182f4d;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  padding:7px 12px;
+  border-radius:999px;
+  border:1px solid #d9e3f0;
+  color:#687e9c;
+  background:#f1f5fb;
+  font-size:12px;
+  font-weight:780;
+  white-space:nowrap;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-badge.is-authenticated{
+  color:#1b7751;
+  border-color:#c3e9d4;
+  background:#eaf7f0;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-form{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:14px;
+  margin:0;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-field,
+body.beagu-ui-page .beagu-auth-card .compare-auth-field{
+  display:block;
+  width:100%;
+  max-width:none;
+  min-width:0;
+  margin:0;
+  flex:none;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-label{
+  display:block;
+  font-size:13px;
+  font-weight:800;
+  color:#405a78;
+  margin:0 0 9px;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-input-wrap{
+  position:relative;
+  display:block;
+  width:100%;
+  min-width:0;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-input-wrap input{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  height:52px;
+  min-height:52px;
+  min-width:0;
+  margin:0;
+  padding:0 79px 0 14px;
+  border:1px solid #d3dfed;
+  border-radius:12px;
+  background:#fff;
+  color:#203954;
+  box-shadow:none;
+  outline:0;
+  font-family:inherit;
+  font-size:16px;
+  line-height:1.35;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-input-wrap input::placeholder{color:#91a2b8;opacity:1}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-input-wrap input:focus-visible{
+  border-color:#6093e1;
+  box-shadow:0 0 0 3px rgba(47,113,221,.13);
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-toggle{
+  position:absolute;
+  right:7px;
+  top:50%;
+  transform:translateY(-50%);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:38px;
+  min-width:51px;
+  border:0;
+  border-radius:9px;
+  padding:0 11px;
+  background:#edf3fc;
+  color:#356395;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-toggle:hover{background:#e0edff}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-toggle:focus-visible{
+  outline:3px solid #8cb8f7;
+  outline-offset:2px;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-submit{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height:52px;
+  height:auto;
+  margin:0;
+  padding:12px 16px;
+  border:0;
+  border-radius:12px;
+  background:#2b61d5;
+  color:#fff;
+  font-family:inherit;
+  font-size:15px;
+  font-weight:850;
+  line-height:1.4;
+  text-align:center;
+  text-decoration:none;
+  white-space:normal;
+  cursor:pointer;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-submit:not(:disabled):hover{background:#1b50b8}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-submit:focus-visible{
+  outline:3px solid #8fbaff;
+  outline-offset:3px;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-submit:disabled{opacity:.6;cursor:wait}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-message:empty{display:none}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-message{
+  font-size:12px;
+  line-height:1.5;
+  margin:10px 0 0;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-help{
+  margin:14px 0 0;
+  color:#73849c;
+  font-size:12px;
+  font-weight:500;
+  line-height:1.6;
+  word-break:keep-all;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-help a{
+  color:#2864bc;
+  font-weight:780;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-help a:hover{color:#154b9c}
+body.beagu-ui-page .beagu-auth-card .beagu-auth-help a:focus-visible{
+  outline:2px solid #7faaf4;
+  outline-offset:3px;
+  border-radius:3px;
+}
+body.beagu-page-compare .compare-auth-card.is-authenticated .beagu-auth-help{display:none}
+@media(max-width:720px){
+  body.beagu-ui-page .beagu-auth-card{
+    padding:22px 20px 20px;
+    border-radius:18px;
+    margin-bottom:18px;
+  }
+  body.beagu-ui-page .beagu-auth-card .beagu-auth-heading{
+    margin-bottom:19px;
+  }
+  body.beagu-ui-page .beagu-auth-card .beagu-auth-heading h1,
+  body.beagu-ui-page .beagu-auth-card .beagu-auth-heading h2{font-size:21px}
+  body.beagu-ui-page .beagu-auth-card .beagu-auth-form{gap:13px}
+}
+@media(max-width:420px){
+  body.beagu-ui-page .beagu-auth-card{padding:20px 17px}
+  body.beagu-ui-page .beagu-auth-card .beagu-auth-badge{
+    font-size:11px;
+    min-height:34px;
+    padding:7px 10px;
+  }
+  body.beagu-ui-page .beagu-auth-card .beagu-auth-input-wrap input{
+    font-size:16px;
+  }
+}
