@@ -9,6 +9,9 @@ on:
       - 'js/beagu-account-client-v1.js'
       - 'js/beagu-account-confirm-cleanup-v1.js'
       - 'account-email-confirmed.html'
+      - 'account-password-reset.html'
+      - 'js/beagu-account-password-reset-v1.js'
+      - 'tests/account-lifecycle-security-v1.mjs'
       - 'tests/account-auth-private-v1.mjs'
       - '.github/workflows/account-auth-private-v1.yml'
   workflow_dispatch:
@@ -24,6 +27,7 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/account-auth-private-v1.mjs
+      - run: node tests/account-lifecycle-security-v1.mjs
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
