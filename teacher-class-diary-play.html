@@ -724,16 +724,16 @@ let guestIntroTimer=null;
 $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
 let storyMode='week';
 function prepareGuestProfile(){
- // Fictional alias and neutral defaults: no profile fields after home verification.
- $('playerName').value='새봄';
+ // School and pen name are entered on the first setup page; other values keep neutral defaults.
+ $('playerName').value='';
  $('experience').value='mid';
  $('gender').value='undisclosed';
  $('mbti').value='INFP';
  syncSetupName();
  const stamp=$('setup').querySelector('.setup-player-stamp small');
- if(stamp)stamp.textContent='게임 속 임시 이름 · 입력할 필요 없어요';
+ if(stamp)stamp.textContent='학급일지에 쓰일 이름을 적어 주세요';
  const hint=$('setup').querySelector('.setup-section-title small');
- if(hint)hint.textContent='이름을 입력하지 않아도 이야기가 시작됩니다.';
+ if(hint)hint.textContent='먼저 학교를 선택한 뒤 이름을 적어 주세요.';
  const note=$('setup').querySelector('.setup-story-note p');
  if(note)note.textContent='2027년 3월–7월 · 36화';
 }
