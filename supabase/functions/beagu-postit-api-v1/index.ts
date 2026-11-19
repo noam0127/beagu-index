@@ -131,7 +131,8 @@ async function tooSoon(table:string,userId:string,seconds:number){
 async function target(type:string,id:string){
  if(!["post","comment"].includes(type)||!UUID.test(id))return null;
  const table=type==="post"?"beagu_postit_posts":"beagu_postit_comments";
- const {data}=await db.from(table).select("id,author_uid,status,post_id").eq("id",id).maybeSingle();
+ const fields=type==="comment"?"id,author_uid,status,post_id":"id,author_uid,status";
+ const {data}=await db.from(table).select(fields).eq("id",id).maybeSingle();
  if(!data||data.status!=="published")return null;
  if(type==="comment"){
   const {data:p}=await db.from("beagu_postit_posts").select("status").eq("id",data.post_id).maybeSingle();
@@ -155,6 +156,13 @@ Deno.serve(async(req:Request)=>{
     const settings=await minimumLevel();
     return respond(req,{minimum_write_level:settings.minimum_write_level});
    }
+   if(action==="school_info"){
+    const ids=(url.searchParams.get("school_ids")||"").split(",").filter(Boolean);
+    if(ids.length<1||ids.length>5||ids.some(x=>!SCHOOL_ID.test(x)))
+      return fail(req,"INVALID_SCHOOLS");
+    const schools=await schoolInfo(ids);
+    return respond(req,{schools});
+   }
    if(action==="schools"){
     const q=(url.searchParams.get("q")||"").replace(/[%_\\]/g,"").trim().slice(0,25);
     if(q.length<2)return respond(req,{schools:[]});
@@ -165,11 +173,14 @@ Deno.serve(async(req:Request)=>{
    }
    if(action==="posts"){
     const schoolId=url.searchParams.get("school_id")||"";
+    const gameSlug=url.searchParams.get("game_slug")||"";
+    if(gameSlug&&!GAMES[gameSlug])return fail(req,"INVALID_GAME");
     const sort=url.searchParams.get("sort")==="popular"?"popular":"recent";
     if(schoolId&&!SCHOOL_ID.test(schoolId))return fail(req,"INVALID_SCHOOL");
     let query=db.from("beagu_postit_posts").select("id,school_id,subject_type,game_slug,comparison_selection,body,author_uid,created_at")
      .eq("status","published").order("created_at",{ascending:false}).limit(sort==="popular"?100:30);
     if(schoolId)query=query.eq("school_id",schoolId);
+    if(gameSlug)query=query.eq("game_slug",gameSlug);
     const {data,error}=await query;if(error)throw error;
     const self=(await identity(req))?.id||null;
     let posts=await enrich(data||[],"post",self);
