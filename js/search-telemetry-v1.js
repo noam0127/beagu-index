@@ -30,9 +30,20 @@
    }).then(({data,error})=>{
      if(error){console.warn('학교 이용 이벤트 기록 비활성화');return;}
      if(data!==true)return;
-     // Count a school selection only AFTER the school_selected event has been saved.
-     if(type==='school_selected')
-       void window.BeaguSchoolViewCounts?.record(schoolId,actionId,visitor);
+     // Record a verified school selection independently of optional UI counters.
+     // A missing/late-loading school-view widget must not silently discard the write.
+     if(type==='school_selected'){
+       void supabaseClient.rpc('beagu_record_school_view',{
+         p_school_id:schoolId,p_action_id:actionId,p_visitor:visitor
+       }).then(({data:view,error:viewError})=>{
+         if(viewError){
+           console.warn('학교 조회수 기록 비활성화');
+           return;
+         }
+         if(view?.school_id===schoolId && Number.isSafeInteger(Number(view.views)) && Number(view.views)>=0)
+           window.BeaguSchoolViewCounts?.applyConfirmedCount?.(schoolId,Number(view.views));
+       }).catch(()=>{console.warn('학교 조회수 기록 연결 실패');});
+     }
      // Only a server-accepted school action can contribute to rankings.
      // The database stores a salted digest, never the visitor UUID.
      return supabaseClient.rpc('beagu_record_school_interest',{
