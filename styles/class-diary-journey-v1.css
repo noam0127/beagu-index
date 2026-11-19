@@ -248,3 +248,52 @@ body.is-intro #opening.intro-autoplay #semesterStart{display:none!important}
  body.is-intro .diary-opening-stat{margin:2px auto}
  body.is-intro .diary-opening-days{margin:0 auto}
 }
+
+
+/* Fullscreen / compact screen control: soft glass, not part of the story text. */
+.diary-screen-toggle{
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;
+ min-width:44px;min-height:44px;padding:0 13px;appearance:none;
+ background:rgba(50,39,59,.7);color:#fff;
+ border:1px solid rgba(255,255,255,.56);border-radius:15px;
+ box-shadow:0 7px 24px rgba(25,15,33,.18),inset 0 1px 0 rgba(255,255,255,.18);
+ backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+ font:700 12px/1.2 "Apple SD Gothic Neo",Pretendard,"Malgun Gothic",sans-serif;
+ letter-spacing:-.01em;cursor:pointer;white-space:nowrap;
+ transition:background .2s ease,transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+ touch-action:manipulation;
+}
+.diary-screen-toggle[hidden]{display:none!important}
+.diary-screen-toggle:hover{background:rgba(75,54,83,.92);border-color:rgba(255,255,255,.84);transform:translateY(-1px)}
+.diary-screen-toggle:active{transform:scale(.96)}
+.diary-screen-toggle:focus-visible{outline:3px solid #f9d8ee;outline-offset:3px}
+.diary-screen-icon{display:block;width:20px;height:20px;flex:none}
+.diary-screen-toggle .diary-screen-contract{display:none}
+.diary-screen-toggle[aria-pressed="true"] .diary-screen-expand{display:none}
+.diary-screen-toggle[aria-pressed="true"] .diary-screen-contract{display:block}
+.diary-screen-toggle--floating{position:fixed;z-index:150;top:calc(14px + env(safe-area-inset-top,0px));right:calc(14px + env(safe-area-inset-right,0px));}
+body.is-intro .diary-screen-toggle--floating{background:rgba(78,60,81,.58)}
+body.is-setting .diary-screen-toggle--floating,body.is-ending .diary-screen-toggle--floating{background:rgba(97,71,96,.82)}
+body.is-playing .vn-top-actions .diary-screen-toggle--hud{
+ display:flex;width:44px;height:42px;min-height:42px;min-width:44px;padding:0;border-radius:13px;
+ background:rgba(55,42,68,.62);border:1px solid rgba(255,255,255,.65);
+}
+body.is-playing .vn-top-actions .diary-screen-toggle--hud .diary-screen-text{display:none}
+html:fullscreen body.is-playing #novelCard,
+body.diary-theater-mode.is-playing #novelCard{width:100%;max-width:none;height:100dvh;border-radius:0}
+html:fullscreen body.is-playing #sceneArt,
+body.diary-theater-mode.is-playing #sceneArt{border-radius:0}
+@media(max-width:620px){
+ .diary-screen-toggle--floating{min-width:44px;width:44px;padding:0;border-radius:14px}
+ .diary-screen-toggle--floating .diary-screen-text{display:none}
+ body.is-playing .vn-top-actions{gap:5px}
+ body.is-playing .vn-top-actions .diary-screen-toggle--hud{width:42px;min-width:42px;height:40px;min-height:40px}
+}
+@media(max-width:370px){
+ body.is-playing .vn-top-actions{gap:4px}
+ body.is-playing .vn-top-actions button:not(.diary-screen-toggle){width:35px;height:35px}
+ body.is-playing .vn-top-actions .diary-screen-toggle--hud{width:38px;min-width:38px;height:38px;min-height:38px}
+}
+@media(prefers-reduced-motion:reduce){
+ .diary-screen-toggle{transition:none}
+}
