@@ -114,7 +114,19 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
     const rows=[...document.querySelectorAll('#chapterText p.diary-literary-line:not([hidden])')];
     return rows.length>0&&rows[rows.length-1].classList.contains('diary-literary-ready');
    },null,{timeout:15000});
-   await waitReady();
+   try{await waitReady();}
+   catch(error){
+    const diag=await page.evaluate(()=>({
+     status:document.querySelector('#status')?.textContent,
+     error:window.__litTestError||'',
+     playing:!document.querySelector('#novel')?.hidden,
+     chapterHTML:document.querySelector('#chapterText')?.innerHTML.slice(0,600),
+     proseLines:document.querySelectorAll('#chapterText p').length,
+     literary:document.body.classList.contains('is-literary-mode'),
+     scriptVersion:window.BeaguClassDiaryLiterary?.VERSION
+    }));
+    throw Error('Initial literary page did not render: '+JSON.stringify(diag)+' | '+error.message);
+   }
    const first=await sample();
    assert(first.literary,'Literary narration is enabled in both editions');
    assert.equal(first.season,story==='semester','The correct story mode is retained');
