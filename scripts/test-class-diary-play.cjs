@@ -159,9 +159,9 @@ for(let mask=0;mask<2187;mask++){
 }
 assert.equal(fingerprints.size,5,'All five named endings must be reachable');
 assert.notDeepEqual(
- engine.chapter(engine.createGame(world,plan,{...profile,age:26}),world,plan).paragraphs,
- engine.chapter(engine.createGame(world,plan,{...profile,age:45}),world,plan).paragraphs,
- 'Age must influence narrator voice, not score');
+ engine.chapter(engine.createGame(world,plan,{...profile,experience:'new'}),world,plan).paragraphs,
+ engine.chapter(engine.createGame(world,plan,{...profile,experience:'senior'}),world,plan).paragraphs,
+ 'Career stage must influence narrator voice, not score');
 const maleProtagonist=engine.createGame(world,plan,{...profile,gender:'man'});
 assert.deepEqual(maleProtagonist.stats,engine.createGame(world,plan,profile).stats,
  'Gender must not change starting scores');
