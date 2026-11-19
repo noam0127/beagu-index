@@ -15,6 +15,8 @@ on:
       - 'js/class-diary-incidents-v1.js'
       - 'js/class-diary-sound-v1.js'
       - 'js/class-diary-visual-v1.js'
+      - 'js/class-diary-sd-v1.js'
+      - 'scripts/test-class-diary-sd.cjs'
       - 'scripts/test-class-diary-sound.cjs'
       - 'scripts/test-class-diary-visual.cjs'
       - 'scripts/test-class-diary-play.cjs'
@@ -58,6 +60,7 @@ jobs:
           node scripts/test-class-diary-play-page.cjs
           node scripts/test-class-diary-sound.cjs
           node scripts/test-class-diary-visual.cjs
+          node scripts/test-class-diary-sd.cjs
       - name: Confirm the live API rejects missing Lv2 session
         run: |
           code=$(curl --retry 2 --max-time 15 --silent --show-error \
