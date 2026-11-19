@@ -680,7 +680,7 @@ function vnSplit(text,limit){
 /* Allow the story to breathe across the full-height paper panel.
    Preserve paragraph breaks, while keeping long chapters paged and scrollable. */
 function vnPages(paragraphs){
- const limit=storyMode==='semester'?(window.innerHeight<=520?88:window.innerWidth<=620?142:225):(window.matchMedia('(max-width:620px)').matches?620:1000);
+ const limit=storyMode==='semester'?(window.innerHeight<=520?74:window.innerWidth<=360?98:window.innerWidth<=620?125:205):(window.matchMedia('(max-width:620px)').matches?620:1000);
  const pages=[];let current=[],count=0;
  for(const paragraph of paragraphs){
   for(const part of vnSplit(paragraph,limit)){
