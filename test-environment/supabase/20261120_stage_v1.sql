@@ -1,8 +1,8 @@
 -- STRICTLY ISOLATED STAGING PROJECT ONLY. NEVER RUN AGAINST snvzwrexuqavnfvzgxqj.
 -- All objects and fake data belong to a separate, empty Supabase test project.
 do $$ begin
- if current_database() = 'postgres' and
-    current_setting('app.settings.beagu_production', true) = 'true' then
+ if exists(select 1 from pg_catalog.pg_namespace where nspname='beagu_private')
+    or current_setting('app.settings.beagu_production', true) = 'true' then
     raise exception 'PRODUCTION_FORBIDDEN';
  end if;
 end $$;
@@ -74,18 +74,18 @@ $$;
 create or replace function public.beagu_stage_register(p_uid uuid,p_username text)
 returns jsonb language plpgsql security invoker set search_path=''
 as $$
-declare found stage_private.members%rowtype;
+declare rec stage_private.members%rowtype;
 begin
  if p_uid is null or p_username !~ '^[a-z][a-z0-9_]{3,19}$' then
   raise exception 'INVALID_USERNAME' using errcode='22023';
  end if;
  insert into stage_private.members(auth_user_id,username) values(p_uid,p_username)
  on conflict(auth_user_id) do nothing;
- select * into found from stage_private.members where auth_user_id=p_uid;
- if found.username is distinct from p_username then
+ select * into rec from stage_private.members where auth_user_id=p_uid;
+ if rec.username is distinct from p_username then
   raise exception 'ACCOUNT_ALREADY_REGISTERED' using errcode='23505';
  end if;
- return jsonb_build_object('username',found.username,'level',found.level);
+ return jsonb_build_object('username',rec.username,'level',rec.level);
 end $$;
 create or replace function public.beagu_stage_level1(p_uid uuid)
 returns integer language plpgsql security invoker set search_path=''
