@@ -41,6 +41,7 @@ assert.equal(count({}),1);
 assert.equal(count({schoolId:'0000000'}),0);
 assert.equal(count({surveyYear:2026}),0);
 assert.equal(count({validResponseRows:9}),0);
+assert.equal(count({validResponseRows:undefined,privacyMinRespondentsMet:true}),1);
 assert.equal(count({releaseStatus:'OWNER_AUTHORIZED_CLOSED_CHOICE'}),0);
 assert.equal(count({reviewPolicy:'NONE'}),0);
 assert.equal(count({annualStatus:'WITHHELD'}),0);
