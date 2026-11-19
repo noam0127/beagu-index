@@ -121,3 +121,81 @@ html.arcade-game-host-open .container{
  max-width:100%!important;max-height:100%!important;
  aspect-ratio:auto!important;object-fit:cover!important;flex:1 1 auto!important
 }
+
+/* Fullscreen-only HUDs are inside the viewport, so host iframe fullscreen
+   never hides the original score/HP information above the canvas. */
+.arcade-fullscreen-hud{display:none}
+.court.arcade-fullscreen-fallback,
+.court:fullscreen,
+.court:-webkit-full-screen{
+ box-sizing:border-box!important;
+ padding-top:max(58px,env(safe-area-inset-top))!important;
+}
+.court.arcade-fullscreen-fallback .arcade-volley-fullscreen-hud,
+.court:fullscreen .arcade-volley-fullscreen-hud,
+.court:-webkit-full-screen .arcade-volley-fullscreen-hud{
+ position:absolute;display:flex!important;align-items:center;justify-content:space-around;
+ left:max(10px,env(safe-area-inset-left));right:64px;
+ top:max(9px,env(safe-area-inset-top));height:42px;min-width:0;
+ padding:4px 8px;border:1px solid rgba(180,228,250,.4);
+ background:rgba(9,32,54,.93);border-radius:13px;z-index:20;
+ color:#fff;font:750 clamp(12px,3.5vw,17px)/1.2 system-ui,sans-serif;
+ pointer-events:none;white-space:nowrap;
+}
+.arcade-volley-fullscreen-hud strong{font-size:1.24em;color:#fff5b9}
+.arcade-volley-fullscreen-versus{font-size:.73em;color:#c2e9fa}
+.stage.arcade-fullscreen-fallback,
+.stage:fullscreen,
+.stage:-webkit-full-screen{
+ box-sizing:border-box!important;
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr)!important;
+ grid-template-rows:64px minmax(0,1fr)!important;
+ align-content:stretch!important;justify-items:stretch!important;
+ align-items:stretch!important;justify-content:stretch!important;
+ padding:max(8px,env(safe-area-inset-top)) 8px max(8px,env(safe-area-inset-bottom))!important;
+ overflow:hidden!important;
+}
+.stage.arcade-fullscreen-fallback .arcade-run-fullscreen-hud,
+.stage:fullscreen .arcade-run-fullscreen-hud,
+.stage:-webkit-full-screen .arcade-run-fullscreen-hud{
+ display:block!important;position:relative!important;inset:auto!important;
+ grid-row:1;align-self:center;justify-self:start;
+ width:calc(100% - 68px);max-width:520px;min-width:0;
+ box-sizing:border-box;padding:7px 12px;
+ background:rgba(10,34,57,.95);border:1px solid #618da6;border-radius:12px;
+ color:#fff;z-index:20;pointer-events:none;
+}
+.arcade-run-fullscreen-heading{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:8px;font:800 clamp(11px,3.3vw,15px)/1.25 system-ui,sans-serif;
+ white-space:nowrap;
+}
+.arcade-run-fullscreen-heading strong{color:#fff0a6}
+#run-fullscreen-lives{color:#ffa3b5;letter-spacing:1px}
+.arcade-run-fullscreen-track{
+ margin-top:6px;height:12px;overflow:hidden;border-radius:99px;
+ background:#3a4e60;border:1px solid #668197;
+}
+.arcade-run-fullscreen-fill{
+ width:100%;height:100%;border-radius:99px;
+ background:linear-gradient(90deg,#2bb79a,#8bf3bb);
+ transition:width .17s linear;
+}
+.arcade-run-fullscreen-fill.is-low{
+ background:linear-gradient(90deg,#d14656,#ffa071);
+}
+/* Override both portrait clamp rules and older object-fit:cover stretch.
+   The grid reserves HUD space before sizing the playable canvas. */
+html body .stage.arcade-fullscreen-fallback #game,
+html body .stage:fullscreen #game,
+html body .stage:-webkit-full-screen #game{
+ grid-row:2;display:block!important;
+ width:min(100%,700px)!important;
+ height:min(100%,700px)!important;
+ min-width:0!important;min-height:0!important;
+ max-width:100%!important;max-height:100%!important;
+ margin:0!important;object-fit:contain!important;
+ align-self:center!important;justify-self:center!important;
+ flex:0 1 auto!important;aspect-ratio:auto!important;
+}
