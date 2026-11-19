@@ -161,11 +161,16 @@ async function handler(req: Request): Promise<Response> {
           return respond(origin,429,{error:'TOO_MANY_ATTEMPTS'});
         const {data:id,error:lookupError}=await admin.rpc('beagu_account_v1_owner',{p_username:chosen});
         // A lookup result is never returned to the caller.
-        if (lookupError || !id) return refuseLogin(origin);
-        expectedUserId=String(id);
-        const {data,error}=await admin.auth.admin.getUserById(expectedUserId);
-        if (error || !data?.user?.email) return refuseLogin(origin);
-        loginEmail=data.user.email;
+        // For an unknown username still perform a dummy Auth password check.
+        // This reduces timing-based username enumeration. Never allow the dummy
+        // identity to authenticate: expectedUserId must be present and match.
+        loginEmail='nonexistent-beagu-login@invalid.invalid';
+        if (!lookupError && id) {
+          expectedUserId=String(id);
+          const {data}=await admin.auth.admin.getUserById(expectedUserId);
+          if (data?.user?.email) loginEmail=data.user.email;
+          else expectedUserId=null;
+        }
       } else {
         loginEmail=email(input.email);
         if (!emailPattern.test(loginEmail)) return refuseLogin(origin);
@@ -176,7 +181,8 @@ async function handler(req: Request): Promise<Response> {
         email:loginEmail,password:input.password as string
       });
       if (error || !data?.user?.id || !data.user.email_confirmed_at ||
-          (expectedUserId && data.user.id!==expectedUserId)) return refuseLogin(origin);
+          (action==='sign-in' && (!expectedUserId || data.user.id!==expectedUserId)))
+        return refuseLogin(origin);
       const account=await profile(data.user.id);
       if (account?.disabled) return refuseLogin(origin);
       if (action==='sign-in' && !account) return refuseLogin(origin);
