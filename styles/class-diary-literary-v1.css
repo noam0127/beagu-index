@@ -427,3 +427,10 @@ body.is-playing.is-semester-mode.diary-hud-open #novelCard #vnBottom{
 @media(prefers-reduced-motion:reduce){
  body.is-playing #vnHud>.diary-hud-fold,body.is-playing #vnHud .diary-hud-fold-mark{transition:none}
 }
+
+/* Read by touching the scene: keep controls functional but remove the oversized next pill. */
+body.is-playing.is-semester-mode #novelCard #vnMore,
+body.is-playing.is-semester-mode #novelCard #nextBtn{
+ display:none!important;
+}
+body.is-playing.is-semester-mode #novelCard #vnBottom>.actions{display:none!important}
