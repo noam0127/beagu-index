@@ -86,7 +86,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261119-level-guide1">
 <link rel="stylesheet" href="styles/beagu-auth-unified-v1.css?v=20261119-auth1">
 <script defer src="js/beagu-level-state-v1.js?v=20261119-level-guide1"></script>
-<link rel="stylesheet" href="styles/beagu-school-interest-v1.css?v=20261120-1">
+<link rel="stylesheet" href="styles/beagu-school-interest-v1.css?v=20261120-rising2">
 </head>
 <body class="beagu-ui-page beagu-page-search">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -127,20 +127,21 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
 <section id="schoolPanel" role="tabpanel" aria-labelledby="schoolTab">
   <label class="field-label" for="searchInput">학교명 검색</label>
   <input id="searchInput" class="search-box" type="search" placeholder="예: 개원초, 서울개원초등학교" autocomplete="off">
-  <section class="beagu-interest" id="beaguInterest" data-interest-locked="true" aria-labelledby="beaguInterestTitle">
+  
+
+</section>
+  <section class="beagu-interest beagu-interest--standalone" id="beaguInterest" data-interest-locked="true" aria-labelledby="beaguInterestTitle">
     <div class="beagu-interest-head">
-      <h2 id="beaguInterestTitle">많이 찾는 학교</h2>
-      <span class="beagu-interest-badge">Lv.1 이상</span>
+      <h2 id="beaguInterestTitle">실시간 급상승 학교</h2>
+      <span class="beagu-interest-badge">🔒 Lv.1 이상</span>
     </div>
     <div class="beagu-interest-lock">
       <span class="beagu-interest-lock-icon" aria-hidden="true">🔒</span>
-      <strong>레벨1부터 열리는 학교 관심 순위</strong>
-      <p>많이 찾는 학교 · 급상승 학교</p>
+      <strong>Lv.1부터 확인할 수 있습니다</strong>
+      <p>최근 24시간 사이 관심이 빠르게 늘어난 학교를 확인하세요.</p>
       <a href="search-lv1.html">Lv.1 인증하기</a>
     </div>
   </section>
-
-</section>
 <section id="regionPanel" role="tabpanel" aria-labelledby="regionTab" hidden>
   <div class="field-group"><label class="field-label" for="regionSelect">1. 시도 선택</label>
     <select id="regionSelect" class="region-select">
