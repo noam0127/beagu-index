@@ -11,6 +11,8 @@ on:
       - 'js/class-diary-incidents-v1.js'
       - 'js/class-diary-sound-v1.js'
       - 'js/class-diary-visual-v1.js'
+      - 'js/class-diary-ui-v2.js'
+      - 'styles/class-diary-ui-v2.css'
       - '.github/workflows/class-diary-production-smoke.yml'
   workflow_dispatch:
 permissions:
@@ -31,6 +33,8 @@ jobs:
             'js/class-diary-play-v1.js'
             'js/class-diary-sound-v1.js'
             'js/class-diary-visual-v1.js'
+            'js/class-diary-ui-v2.js'
+            'styles/class-diary-ui-v2.css'
             'js/class-diary-scenario-v1.js'
             'js/class-diary-incidents-v1.js'
             'js/class-diary-director-v1.js'
