@@ -730,56 +730,49 @@ const isGuest=!isDemo&&params.get('guest')==='1';
 const token=isGuest?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
 const schoolId=params.get('schoolId')||'';
 let world=null,plan=null,game=null,progressSession=null;
+let schoolSelection=null; // Public directory context only; never private survey responses.
 let guestIntroTimer=null;
 let schoolSearchSerial=0,schoolSearchTimer=null;
 function selectSchoolMode(mode,name){
  const field=$('diarySchoolMode'),label=$('diarySchoolSelected'),input=$('diarySchoolName');
  field.value=mode;
- const verifiedReal=mode==='real'&&Boolean(name);
- field.dataset.schoolReady=verifiedReal||mode==='demo'?'true':'false';
- if(verifiedReal){
-  input.value=name;
-  input.readOnly=true;
-  label.textContent='선택한 학교: '+name+' · 레벨2 인증 완료';
- }else{
-  input.readOnly=false;
-  label.textContent='입력한 학교 이름은 허구 이야기의 배경으로만 사용됩니다.';
- }
+ const ready=mode==='real'&&Boolean(schoolSelection)&&name===schoolSelection.name;
+ field.dataset.schoolReady=ready?'true':'false';
+ input.readOnly=true;
+ input.value=ready?name:'';
+ label.textContent=ready?
+  '선택 완료 · '+schoolSelection.region+' · '+schoolSelection.years.join(', ')+'년 공개 조사':
+  '실제로 존재하며 배구지수 결과가 공개된 초등학교를 검색해 주세요.';
 }
 function closeSchoolSearch(){
  $('diarySchoolSearchDialog').hidden=true;
- if($('diarySchoolMode').value==='real'&&$('diarySchoolMode').dataset.schoolReady!=='true')selectSchoolMode('demo');
- $('diarySchoolMode').focus();
+ $('diarySchoolName').focus();
 }
 function showSchoolSearch(){
  $('diarySchoolSurveyLink').hidden=true;
  $('diarySchoolSearchDialog').hidden=false;
  $('diarySchoolResults').replaceChildren();
  $('diarySchoolQuery').value='';
- $('diarySchoolSearchMessage').textContent=token&&/^[0-9a-f]{64}$/.test(token)?
-  '학교 이름을 두 글자 이상 입력해 검색하세요.':'학교 검색은 가능하지만 실제 학교 게임을 시작하려면 레벨2 인증이 필요합니다.';
+ $('diarySchoolSearchMessage').textContent='실제 초등학교를 검색해 선택해 주세요. 결과가 없는 경우 설문 참여를 안내합니다.';
  $('diarySchoolQuery').focus();
 }
-$('diarySchoolMode').addEventListener('change',()=>{
- const mode=$('diarySchoolMode').value;
- selectSchoolMode(mode,mode==='real'&&world&&world.basic&&world.basic.id!=='DEMO001'?world.basic.name:undefined);
- if(mode==='real'&&$('diarySchoolMode').dataset.schoolReady!=='true')showSchoolSearch();
+$('diarySchoolName').addEventListener('click',showSchoolSearch);
+$('diarySchoolName').addEventListener('keydown',event=>{
+ if(event.key==='Enter'||event.key===' '){event.preventDefault();showSchoolSearch();}
 });
 function applySchoolName(){
- const input=$('diarySchoolName'),name=input.value.trim().replace(/\s+/g,' ');
- input.value=name;
- if(name.length<2){input.setCustomValidity('학교 이름을 두 글자 이상 입력해 주세요.');input.reportValidity();return false}
- input.setCustomValidity('');
- if(!input.checkValidity()){input.reportValidity();return false}
- if(world&&world.basic&&world.basic.id==='DEMO001'){
-  // This name labels an entirely fictional world; no survey records or school lookup is implied.
-  world.basic.name=name;
-  $('schoolLine').textContent=name+' · 가상의 이야기';
-  $('openingSchool').textContent=$('schoolLine').textContent;
+ const input=$('diarySchoolName');
+ if(!schoolSelection||input.value!==schoolSelection.name||
+   $('diarySchoolMode').dataset.schoolReady!=='true'){
+  showSchoolSearch();return false;
  }
+ const note=schoolSelection.name+' · '+schoolSelection.region+
+  ' · 과거 공개 조사 '+schoolSelection.years.join(', ')+'년';
+ $('schoolLine').textContent=note;
+ $('openingSchool').textContent=note;
+ $('worldAutoNote').textContent='학교명·지역·공개 조사연도만 실제 자료에서 확인했습니다. 그 밖의 인물·사건·관계는 허구입니다.';
  return true;
 }
-$('diarySchoolName').addEventListener('input',()=>{$('diarySchoolName').setCustomValidity('')});
 $('diarySchoolSearchClose').addEventListener('click',closeSchoolSearch);
 $('diarySchoolSearchDialog').addEventListener('click',event=>{
  if(event.target===$('diarySchoolSearchDialog'))closeSchoolSearch();
