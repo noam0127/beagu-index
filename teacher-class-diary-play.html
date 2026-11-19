@@ -371,7 +371,8 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
  <button type="button" id="diaryLandingStart" class="diary-landing-card" aria-label="나의 OO한 학급일지 시작하기">
   <span class="diary-landing-eyebrow">나의 한 학기, 첫 페이지</span>
   <strong id="diaryLandingTitle">나의 OO한 학급일지</strong>
-  <span class="diary-landing-enter">이야기 시작 <span aria-hidden="true">›</span></span>
+  <span class="diary-landing-verse">낯선 교실에 첫 발을 내딛던 날.<br>그날의 마음이 한 학기의 이야기가 된다.</span>
+  <span class="diary-landing-enter">첫 페이지 펼치기 <span aria-hidden="true">›</span></span>
  </button>
 </section>
 <header><a class="brand" href="index.html">B · BAEGUINDEX</a><a class="back" href="teacher-class-diary.html">학교 선택으로 돌아가기</a></header>
@@ -444,34 +445,35 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 </div></section>
 <section id="setup" class="panel vn-setup" data-step="1" hidden>
 <div class="setup-head">
- <span class="setup-eyebrow">프롤로그 00 <span aria-hidden="true">✦</span> 주인공 설정</span>
- <h2>나의 첫 페이지를 펼치다</h2>
- <p>2027년 3월 8일, 낯선 새 학기. 당신은 어떤 선생님으로 일주일을 시작할까요?</p>
- <div class="setup-progress" aria-label="게임 준비 과정"><span data-step-label="1">01 · 나의 이야기</span><span data-step-label="2">02 · 함께할 동료</span><span data-step-label="3">03 · 첫 등교</span></div>
+ <span class="setup-eyebrow">프롤로그 <span aria-hidden="true">✦</span> 한 학기의 시작</span>
+ <h2>어느 교실에서 시작할까요?</h2>
+ <p>프롤로그에서 첫 이야기를 만나고, 학교를 정해 본편으로 이어갑니다.</p>
+ <div class="setup-progress" aria-label="게임 준비 과정"><span data-step-label="1">01 · 학교 선택</span><span data-step-label="2">02 · 함께할 동료</span></div>
 </div>
 <form id="profileForm">
 <div class="setup-layout">
- <div class="setup-player" data-setup-screen="1">
-  <div class="setup-section-title"><span class="setup-number">01</span><div><strong>당신의 프로필</strong><small>모든 설정은 이번 플레이에서만 사용됩니다.</small></div></div>
+ <div class="setup-player diary-school-setup" data-setup-screen="1">
+  <div class="setup-section-title"><span class="setup-number">01</span><div><strong>학교 선택</strong><small>프롤로그에서 시작해 한 학기의 이야기로 나아갑니다.</small></div></div>
+  <div class="diary-school-flow" aria-label="이야기 진행 순서"><span>프롤로그 · 가상의 교실</span><span aria-hidden="true">›</span><span>본편 · 내가 고른 학교</span></div>
   <div class="form-grid">
-   <div class="diary-school-field"><label for="diarySchoolMode">학교 선택 <span class="setup-required">필수</span></label>
+   <div class="diary-school-field"><label for="diarySchoolMode">이야기를 시작할 곳</label>
     <select id="diarySchoolMode" required>
-     <option value="demo">가상의 초등학교 · 무료 체험</option>
-     <option value="real">실제 초등학교 찾아보기 · 레벨2 전용</option>
+     <option value="demo">프롤로그 · 가상의 초등학교</option>
+     <option value="real">본편 · 실제 학교 선택 (레벨2)</option>
     </select>
-    <small id="diarySchoolSelected" class="field-note" role="status">가상의 초등학교에서 이야기가 시작됩니다.</small>
+    <small id="diarySchoolSelected" class="field-note" role="status">가상의 교실에서 프롤로그를 시작합니다.</small>
    </div>
-   <div><label for="playerName">이름 <span class="setup-required">필수</span></label><input id="playerName" name="playerName" type="text" minlength="2" maxlength="8" pattern="[가-힣]{2,8}" placeholder="예: 루다" autocomplete="off" required><div class="field-note">한글 2~8자 · 주인공의 호칭에 반영됩니다.</div></div>
-   <div><label for="experience">교직 경력</label><select id="experience" required><option value="">선택하세요</option><option value="new">저경력</option><option value="mid">중간경력</option><option value="senior">고경력</option></select></div>
-   <div><label for="gender">성별</label><select id="gender" required><option value="">선택하세요</option><option value="woman">여성</option><option value="man">남성</option><option value="undisclosed">밝히지 않음</option></select></div>
-   <div><label for="mbti">MBTI</label><select id="mbti" required><option value="">선택하세요</option></select></div>
   </div>
-  <p class="setup-micro">성별·MBTI에 따른 능력이나 점수 차별은 없습니다.</p>
-  <p class="guest-setup-poem" hidden>교실에 첫 햇살이 스며들었습니다.<br>아직 만나지 못한 이야기가<br>당신을 기다립니다.
-   <small>화면을 터치해 다음 장으로 넘어가세요.</small>
-  </p>
-  <div class="setup-player-stamp"><span class="setup-stamp-mark" aria-hidden="true">✎</span><div><span>나의 이야기</span><strong id="setupPlayerPreview">이름을 입력해 주세요</strong><small>나만의 학급일지 · 7일</small></div></div>
-
+  <p class="diary-school-narrative">하나의 교실에서 시작된 작은 선택이<br>다음 이야기의 문을 엽니다.</p>
+  <div class="diary-hidden-profile" hidden aria-hidden="true">
+   <input id="playerName" name="playerName" type="hidden" value="새봄">
+   <select id="experience" hidden><option value="mid" selected>중간경력</option></select>
+   <select id="gender" hidden><option value="undisclosed" selected>밝히지 않음</option></select>
+   <select id="mbti" hidden><option value="INFP" selected>INFP</option></select>
+   <strong id="setupPlayerPreview">새봄 선생님</strong>
+   <span class="setup-player-stamp" hidden aria-hidden="true">✎</span>
+   <span class="guest-setup-poem" hidden></span>
+  </div>
  </div>
  <div class="setup-cast" data-setup-screen="2">
   <div class="setup-section-title"><span class="setup-number">02</span><div><strong>함께할 동료</strong><small>관계에 따라 서로 다른 이야기가 펼쳐집니다.</small></div></div>
@@ -526,7 +528,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <div class="setup-review-fields"><div><small>선택한 학교</small><strong id="setupReviewSchool">—</strong></div><div><small>주인공</small><strong id="setupReviewName">—</strong></div><div><small>교직 경력 · 성별 · MBTI</small><strong id="setupReviewTraits">—</strong></div><div><small>함께할 동료</small><strong id="setupReviewPartner">—</strong></div></div>
 <p class="setup-review-quote">“이 일주일을 지나고 나면, 어떤 교실이 남아 있을까.”</p>
 </div>
-<div class="setup-step-actions"><button id="setupBack" type="button" class="secondary" hidden>← 이전</button><button id="setupNext" type="button" class="primary">다음 단계 →</button></div>
+<div class="setup-step-actions"><button id="setupBack" type="button" class="secondary" hidden>← 학교 선택</button><button id="setupNext" type="button" class="primary">동료 만나기 →</button></div>
 <div class="setup-end">
  <p id="worldAutoNote" class="muted">공개·검증된 과거 학교 자료를 이야기의 배경으로 활용합니다. 실제 교직원이나 개인 업무를 특정하지 않습니다.</p>
  <p class="privacy">모든 인물·관계·사건은 허구입니다. 주인공 설정·선택·진행·결말은 저장되지 않으며 새로고침하면 사라집니다.</p>
