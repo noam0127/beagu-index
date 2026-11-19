@@ -345,6 +345,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <link rel="stylesheet" href="styles/class-diary-male-live-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 <link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-ink-2">
+<link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-guest1">
 </head>
 <body>
 <main>
@@ -391,16 +392,9 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <div class="actions"><a class="primary" href="teacher-class-diary.html" style="text-decoration:none">학교 다시 선택</a><a class="secondary" href="search-lv2.html" style="text-decoration:none">레벨2 인증</a></div>
 </section>
 <section id="guestAccess" class="panel diary-guest-access" hidden aria-labelledby="guestTitle">
- <div class="diary-guest-kicker">TEMPORARY GUEST ACCESS · 2026</div>
- <h2 id="guestTitle">고유번호로 학급일지 시작하기</h2>
- <p>정식 레벨2 서비스 공개 전에는 <strong>기존 2026 챌린지에서 발급된 고유번호</strong>로 가상 학교 이야기에 입장할 수 있습니다.</p>
- <form id="guestForm" autocomplete="off">
-  <label for="guestCode">나의 고유번호</label>
-  <div class="diary-guest-form-row"><input id="guestCode" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="29" minlength="10" placeholder="기존에 발급받은 고유번호" required><button type="submit" id="guestSubmit" class="primary">입장하기</button></div>
-  <p id="guestMessage" role="status" aria-live="polite" class="diary-guest-message">번호는 서버에서만 검증하며 주소나 게임 기록에 저장하지 않습니다.</p>
- </form>
- <p class="diary-guest-note">임시 입장은 가상 학교 이야기만 제공합니다. 기존 레벨2 인증, 실제 학교 정보 열람 권한과는 관계가 없습니다.</p>
- <a class="linklike" href="challenge.html">고유번호 확인하기</a>
+ <div class="guest-check-mark" aria-hidden="true">✧</div>
+ <h2 id="guestTitle">교실 문을 열고 있어요</h2>
+ <p>고유번호를 확인하고 이야기를 준비하는 중입니다.</p>
 </section>
 <section id="opening" class="diary-opening panel" hidden aria-labelledby="openingTitle">
 <div class="diary-intro-progress" aria-hidden="true"><span></span></div>
@@ -423,7 +417,6 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <div class="setup-layout">
  <div class="setup-player" data-setup-screen="1">
   <div class="setup-section-title"><span class="setup-number">01</span><div><strong>당신의 프로필</strong><small>모든 설정은 이번 플레이에서만 사용됩니다.</small></div></div>
-  <div class="setup-player-stamp"><span class="setup-stamp-mark" aria-hidden="true">✎</span><div><span>나의 이야기</span><strong id="setupPlayerPreview">이름을 입력해 주세요</strong><small>나만의 학급일지 · 7일</small></div></div>
   <div class="form-grid">
    <div><label for="playerName">이름 <span class="setup-required">필수</span></label><input id="playerName" name="playerName" type="text" minlength="2" maxlength="8" pattern="[가-힣]{2,8}" placeholder="예: 루다" autocomplete="off" required><div class="field-note">한글 2~8자 · 주인공의 호칭에 반영됩니다.</div></div>
    <div><label for="experience">교직 경력</label><select id="experience" required><option value="">선택하세요</option><option value="new">저경력</option><option value="mid">중간경력</option><option value="senior">고경력</option></select></div>
@@ -431,6 +424,11 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
    <div><label for="mbti">MBTI</label><select id="mbti" required><option value="">선택하세요</option></select></div>
   </div>
   <p class="setup-micro">성별·MBTI에 따른 능력이나 점수 차별은 없습니다.</p>
+  <p class="guest-setup-poem" hidden>교실에 첫 햇살이 스며들었습니다.<br>아직 만나지 못한 이야기가<br>당신을 기다립니다.
+   <small>화면을 터치해 다음 장으로 넘어가세요.</small>
+  </p>
+  <div class="setup-player-stamp"><span class="setup-stamp-mark" aria-hidden="true">✎</span><div><span>나의 이야기</span><strong id="setupPlayerPreview">이름을 입력해 주세요</strong><small>나만의 학급일지 · 7일</small></div></div>
+
  </div>
  <div class="setup-cast" data-setup-screen="2">
   <div class="setup-section-title"><span class="setup-number">02</span><div><strong>함께할 동료</strong><small>관계에 따라 서로 다른 이야기가 펼쳐집니다.</small></div></div>
@@ -465,7 +463,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
     </div>
     <p class="setup-supporting-note">모두 가상의 성인 인물로, 추가 연애 경로는 없습니다.</p>
    </div>
-  <label class="setup-partner-label" for="partner">동료 선택 <small>캐릭터 카드 또는 목록에서 선택</small></label>
+  <label class="setup-partner-label" for="partner">동료 선택 <small>함께할 인물의 그림을 터치하세요</small></label>
   <select id="partner" required><option value="">동료를 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
   <p id="partnerDescription" class="setup-character-description" aria-live="polite">함께할 인물을 고르면 이곳에 소개가 나타납니다.</p>
   <div class="setup-story-note"><span aria-hidden="true">✧</span><p>2027년 3월 8일–14일 · 7일의 이야기<br><small>21개의 기본 선택과 학교생활 속 다양한 사건</small></p></div>
