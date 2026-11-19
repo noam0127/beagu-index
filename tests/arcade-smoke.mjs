@@ -580,8 +580,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=20261120-safari-fallback5/);
-assert.match(html,/teacher-run\.html\?v=20261120-safari-fallback5/);
+assert.match(html,/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/);
+assert.match(html,/teacher-run\.html\?v=[a-zA-Z0-9-]+/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -715,8 +715,8 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalkHelpers\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261120-safari-fallback5/);
-assert.match(html,/teacher-run\.html\?v=20261120-safari-fallback5/);
+assert.match(html,/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/);
+assert.match(html,/teacher-run\.html\?v=[a-zA-Z0-9-]+/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
@@ -837,8 +837,8 @@ assert.doesNotMatch(html,/<a href="teacher-volleyball\.html"[^>]*>↗ 크게 보
  "the embedded volleyball game no longer has a zoom/enlarge link");
 assert.match(html,/<a href="teacher-run\.html"[^>]*>↗ 크게 보기<\/a>/,
  "survival external link remains unchanged");
-assert.match(volley,/arcade-leaderboard-v1\.js\?v=20261120-safari-fallback5/);
-assert.match(runner,/arcade-leaderboard-v1\.js\?v=20261120-safari-fallback5/);
+assert.match(volley,/arcade-leaderboard-v1\.js\?v=[a-zA-Z0-9-]+/);
+assert.match(runner,/arcade-leaderboard-v1\.js\?v=[a-zA-Z0-9-]+/);
 assert.match(shared,/this\.expanded=false/);
 assert.match(shared,/aria-expanded/);
 assert.match(shared,/arcade-ranking-content/);
@@ -923,11 +923,15 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 }
 // Pages deployment and the smoke workflow run in parallel: poll until the
 // published home matches this commit instead of failing on the previous build.
+// Observe the exact cache-buster committed by THIS checkout instead of hardcoding a past release.
+const expectedVolleyFrame=html.match(/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/)?.[0];
+const expectedRunFrame=html.match(/teacher-run\.html\?v=[a-zA-Z0-9-]+/)?.[0];
+assert.ok(expectedVolleyFrame&&expectedRunFrame,"game iframe URLs must retain versioned paths");
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261120-safari-fallback5")&&
-     site.body.includes("teacher-run.html?v=20261120-safari-fallback5"))return site;
+  if(site.body.includes(expectedVolleyFrame)&&
+     site.body.includes(expectedRunFrame))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -937,8 +941,8 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261120-safari-fallback5/);
-assert.match(site.body,/teacher-run\.html\?v=20261120-safari-fallback5/);
+assert.ok(site.body.includes(expectedVolleyFrame),"published volleyball iframe must match tested version");
+assert.ok(site.body.includes(expectedRunFrame),"published run iframe must match tested version");
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
