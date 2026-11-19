@@ -191,7 +191,7 @@ button{font:inherit;cursor:pointer}
 <div><label for="experience">교직 경력</label><select id="experience" required><option value="">선택하세요</option><option value="new">저경력</option><option value="mid">중간경력</option><option value="senior">고경력</option></select></div>
 <div><label for="gender">주인공 성별</label><select id="gender" required><option value="">선택하세요</option><option value="woman">여성</option><option value="man">남성</option><option value="undisclosed">밝히지 않음</option></select></div>
 <div><label for="mbti">주인공 MBTI</label><select id="mbti" required><option value="">선택하세요</option></select></div>
-<div><label for="partner">관계를 쌓을 동료 인물</label><select id="partner" required><option value="">선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">동학년 선생님 · 우정 중심</option></select></div>
+<div><label for="partner">관계를 쌓을 동료 인물</label><select id="partner" required><option value="">선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select></div>
 </div>
 <p id="worldAutoNote" class="muted">공개·검증된 과거 학교 자료를 이야기의 배경으로 활용합니다. 실제 교직원이나 개인 업무를 특정하지 않습니다.</p>
 <p class="privacy">주인공 설정·선택·진행 상황·최종 결과는 저장하지 않습니다. 게임을 진행하는 동안에만 화면에 표시됩니다.</p>
@@ -264,6 +264,7 @@ button{font:inherit;cursor:pointer}
 <script src="js/2026-questionnaire-options-v1.2.js"></script>
 <script src="js/class-diary-narrative-v1.js"></script>
 <script src="js/class-diary-play-v1.js"></script>
+<script src="js/class-diary-character-routes-v1.js"></script>
 <script src="js/class-diary-director-v1.js"></script>
 <script src="js/class-diary-context-v1.js"></script>
 <script src="js/class-diary-sound-v1.js"></script>
@@ -278,6 +279,7 @@ const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const director=window.BeaguClassDiaryDirector;
+const characterRoutes=window.BeaguClassDiaryCharacterRoutes;
 const schoolContext=window.BeaguClassDiaryContext;
 const scenario=window.BeaguClassDiaryScenario;
 const incidents=window.BeaguClassDiaryIncidents;
@@ -390,7 +392,7 @@ function renderScenario(){
  
  $('characterAvatar').textContent=profile.initial;
  $('characterName').textContent=partner;
- $('characterBio').textContent='학교의 역할과 교직문화를 함께 고민하는 동학년 교사';
+ $('characterBio').textContent=profile.caption;
  for(const [id,key] of [['statAffection','affection'],['statTrust','trust'],
    ['statAgency','agency'],['statFatigue','fatigue'],['statVoice','voice'],
    ['statBoundary','boundary'],['statSupport','support']])$(id).textContent=game.stats[key];
@@ -419,6 +421,8 @@ function renderScenario(){
  if(!incident&&episodeIntros[event.id])
    episodeProse.splice(1,0,partner+'이 조용히 말을 건넸다. “'+
      engine.playerAddress(game)+', '+episodeIntros[event.id]+'”');
+ const individualBeat=characterRoutes.eventMoment(game,event);
+ if(individualBeat&&!event.result)episodeProse.splice(Math.min(2,episodeProse.length),0,individualBeat);
  fillParagraphs('chapterText',episodeProse);
  const done=!!event.result;
  $('choiceSection').hidden=done;
