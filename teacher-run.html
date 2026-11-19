@@ -386,6 +386,19 @@ function activateSpecial(){
    burst(a.x,a.y,"#ffeea5",8);items.splice(i,1);cleared++;
   }
  }
+ for(let i=paperBullets.length-1;i>=0;i--){
+  const a=paperBullets[i];
+  if(Math.hypot(a.x-player.x,a.y-player.y)<=profile.specialRadius){
+   burst(a.x,a.y,"#ffeea5",4);paperBullets.splice(i,1);cleared++;
+  }
+ }
+ for(let i=sideStudents.length-1;i>=0;i--){
+  const a=sideStudents[i];
+  if(Math.hypot(a.x-player.x,a.y-player.y)<=profile.specialRadius){
+   burst(a.x,a.y,"#ffeea5",4);sideStudents.splice(i,1);cleared++;
+  }
+ }
+ if(paperTarget&&Math.hypot(paperTarget.x-player.x,paperTarget.y-player.y)<=profile.specialRadius)paperTarget=null;
  if(cleared)addScore(Math.min(cleared,8)*60);
  setNotice("⚡ 필살기! "+cleared+"개 제거",2);
  playTone(1080,.24);updateLabels();
@@ -571,7 +584,7 @@ function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing",wasPaused=state==="paused";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\nEASY 날개·동료·관리자 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
+ message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\n난이도가 높을수록 옆에서 돌진 학생 증가 · 느린 공문 탄막 증가\nEASY 날개·동료·관리자 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
   {label:wasPlaying?"▶ 게임으로 돌아가기":wasPaused?"⏸ 일시정지 메뉴":"확인",
    action:()=>{if(wasPlaying)resume();else if(wasPaused){state="playing";pause();}else stopToIntro();}}
  ],"❔");
@@ -830,6 +843,8 @@ function update(dt){
   }
  }
  updateChalk(dt);
+ updatePatternHazards(dt);
+ if(state!=="playing")return;
  for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=125*dt;s.life-=dt;if(s.life<=0)sparks.splice(i,1);}
  for(let i=floats.length-1;i>=0;i--){let f=floats[i];f.y-=42*dt;f.life-=dt;if(f.life<=0)floats.splice(i,1);}
  updateLabels();
@@ -923,7 +938,7 @@ function drawItems(){
 }
 function draw(){
  ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
- background();drawItems();drawChalkHelpers();drawChalk();drawShackle();playerDraw();
+ background();drawItems();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();
  if(specialFlash>0){
   ctx.save();ctx.strokeStyle="rgba(255,235,117,"+Math.min(1,specialFlash*1.1)+")";
   ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,profile.specialRadius*(1-specialFlash*.1),0,Math.PI*2);ctx.stroke();
