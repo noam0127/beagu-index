@@ -26,42 +26,8 @@ assert.ok(sql.includes("interval '30 days'"));
 assert.ok(!sql.includes("'account_deletion_enabled','account_deletion_enabled'"),'No duplicate feature flag');
 assert.ok(!sql.includes("('account_deletion_enabled',false),('account_deletion_enabled',false)"));
 assert.equal((sql.match(/\$\$/g)||[]).length%2,0,'SQL function dollar quotes balanced');
-assert.ok(sql.includes("where h.value is null or h.value !~ '^[a-f0-9]{64}
-assert.ok(edge.includes("admin.rpc('beagu_account_v1_purge_budgets'"));
-assert.ok(edge.includes('securityBudgetCleanupPending'));
-assert.ok(edge.includes('captchaToken:proof')||edge.includes('options:{captchaToken:proof}'));
-assert.ok(edge.includes("error:'CAPTCHA_REQUIRED'"));
-assert.ok(edge.includes("beagu_account_v1_take_slot"));
-assert.ok(!edge.includes('console.log'));
-assert.ok(!edge.includes('console.error'));
-for(const page of ['index.html','search.html','search-lv1.html','statistics.html','challenge.html']){
-  const source=readFileSync(page,'utf8');
-  assert.ok(!source.includes('account-password-reset.html'),'Do not expose unlaunched screen '+page);
-}
-// Simulate browser page reading and scrubbing one-time token, without any
-// network requests before the user chooses a new password.
-const elements={
- resetStatus:{textContent:''},
- resetForm:{hidden:true,handlers:{},addEventListener(type,cb){this.handlers[type]=cb;}},
- resetPassword:{value:'StrongNewPasscode#12'},
- resetPasswordConfirm:{value:'StrongNewPasscode#12'}
-};
-const ctx={
- document:{getElementById:id=>elements[id]},
- location:{href:'https://baeguindex.com/account-password-reset.html?type=recovery&token_hash='+'a'.repeat(64),hash:''},
- history:{replaceState(_a,_b,path){this.path=path;}},
- URL,JSON,Error,Event:class {constructor(type){this.type=type;}},fetch:async()=>({ok:true,json:async()=>({passwordUpdated:true})})
-};
-new Script(src);
-runInNewContext(src,ctx,{timeout:3000});
-assert.equal(ctx.history.path,'/account-password-reset.html');
-assert.equal(elements.resetForm.hidden,false);
-assert.equal(elements.resetStatus.textContent,'새 비밀번호를 두 번 입력해 주세요.');
-console.log('PASS: reset recovery-only verifier, deletion reauthentication and staged native Auth captcha');
-"),'Hash key validation must be valid SQL');
-assert.ok(edge.includes("BEAGU_AUTH_CAPTCHA_CONFIRMED"),'Feature must fail closed before native Auth CAPTCHA configured');
-assert.ok(edge.includes("action==='delete-account'"),'Deletion API exists');
-
+assert.ok(sql.includes("where h.value is null or h.value !~ '^[a-f0-9]{64}$'"),'Hash validation remains valid SQL');
+assert.ok(edge.includes('BEAGU_AUTH_CAPTCHA_CONFIRMED'),'Native Auth CAPTCHA launch gate required');
 assert.ok(edge.includes("admin.rpc('beagu_account_v1_purge_budgets'"));
 assert.ok(edge.includes('securityBudgetCleanupPending'));
 assert.ok(edge.includes('captchaToken:proof')||edge.includes('options:{captchaToken:proof}'));
