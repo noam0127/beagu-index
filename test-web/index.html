@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#f7f8fa">
+<title>배구인덱스 TEST · Lv0~Lv2</title>
+<style>
+:root{--blue:#2563eb;--light:#eef2ff;--ink:#1b2431;--border:#dce4ef}*{box-sizing:border-box}
+body{margin:0;background:#f7f8fa;color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}
+a{color:var(--blue)}
+[hidden]{display:none!important}
+.test-strip{background:#142b54;color:#fff;text-align:center;font-size:13px;font-weight:750;letter-spacing:.02em;padding:9px 12px}
+.container{max-width:710px;margin:auto;padding:20px 20px 64px}
+.nav{display:flex;align-items:center;gap:10px;margin:10px 0 28px}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.03em;color:var(--blue)}.level{margin-left:auto;border-radius:99px;padding:4px 11px;background:var(--light);color:#1d4ed8;font-size:13px;font-weight:700}
+h1{font-size:32px;letter-spacing:-1.1px;line-height:1.35;margin:0}
+h2{font-size:21px;margin:0 0 14px;letter-spacing:-.4px}
+p{margin:9px 0 17px}.muted{color:#627084;font-size:14px}
+.card{background:#fff;border:1px solid #edf0f4;border-radius:18px;box-shadow:0 4px 18px #11233a0a;padding:23px 21px;margin-top:15px}
+.head{display:flex;justify-content:space-between;align-items:start;gap:14px}
+.small{font-size:12px}.tag{display:inline-block;background:var(--light);color:#1d4ed8;border-radius:20px;padding:4px 9px;font-size:12px;font-weight:700}
+label{display:block;margin:13px 0 6px;color:#405064;font-size:14px;font-weight:700}
+input{width:100%;min-width:0;border:1px solid #ccd6e3;border-radius:12px;padding:12px 14px;background:#fff;font-size:16px;outline-color:#60a5fa}
+button{border:0;border-radius:11px;padding:12px 15px;font-weight:750;background:#edf2f9;color:#1e3a63;min-height:45px}
+button.primary{background:var(--blue);color:white}
+button.minor{background:white;color:var(--blue);border:1px solid #c4d5ee}
+button:disabled{opacity:.5;cursor:not-allowed}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
+.toolbar button{flex:1 1 145px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-actions{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}
+.form-actions button{flex:1}
+fieldset{border:0;padding:0;margin:0}legend{font-weight:750;font-size:16px;margin-bottom:4px}
+.feedback{margin-top:12px;color:#254d88;font-weight:650;min-height:20px}
+.error{color:#a21c29}
+.note{font-size:13px;color:#526179;background:#f2f6fc;padding:11px 13px;border-radius:10px}
+.detail{border-top:1px solid #e8edf3;padding-top:15px;margin-top:16px}
+.score{font-size:26px;color:#1d4ed8;font-weight:850}
+.school{display:flex;justify-content:space-between;gap:15px;padding:13px 0;border-top:1px solid #e9edf4;align-items:center}
+.school strong{display:block}.school span{color:#667487;font-size:13px}
+#notice{background:#eef6ff;border:1px solid #bfd7ff;border-radius:14px;padding:17px 19px;margin-top:15px}
+#surveyInvite{border-left:4px solid var(--blue)}
+#demoOutput{white-space:pre-wrap;background:#f2f6fb;padding:13px;border-radius:10px;line-height:1.7}
+.row{display:flex;gap:9px;align-items:center}
+.row>*:first-child{flex:1}
+:focus-visible{outline:3px solid #9ac0ff;outline-offset:3px}
+@media(max-width:590px){.container{padding:16px 14px 45px}.grid{grid-template-columns:1fr}h1{font-size:27px}.card{padding:19px 17px}.toolbar button{flex:1 1 100%}}
+</style>
+<script defer src="./config.js"></script>
+<script defer src="./app.js"></script>
+</head>
+<body>
+<div class="test-strip">🧪 배구인덱스 독립 TEST 환경 — 운영 사이트·실제 설문과 무관</div>
+<main class="container">
+  <header class="nav">
+    <div class="logo">VOLLEYBALL INDEX <span class="small">TEST</span></div>
+    <span class="level" id="levelBadge">Lv.0 · 비로그인</span>
+  </header>
+  <h1>학교를 찾아보세요</h1>
+  <p class="muted">회원가입과 Lv.0 → Lv.1 → Lv.2 승급을 테스트하는 공간입니다. 실제 학교 자료는 제공되지 않습니다.</p>
+  <section id="statusCard" class="card">
+    <span class="tag" id="connection">서버 연결 확인 중</span>
+    <div class="toolbar">
+      <button id="openLogin">로그인</button>
+      <button id="openSignup" class="primary">회원가입</button>
+      <button id="openUpgrade">레벨업하기</button>
+      <button id="logout" hidden>로그아웃</button>
+    </div>
+    <p class="feedback" id="globalStatus" role="status" aria-live="polite"></p>
+  </section>
+  <div id="notice" hidden role="status"><strong>레벨2로 승급되었습니다!</strong><p>다른 테스트 계정의 유효한 가상 설문 제출로 레벨2를 이용할 수 있습니다.</p><button id="ackNotice" class="primary">확인</button></div>
+  <section id="accountPanel" class="card" hidden>
+    <div class="head"><h2 id="accountTitle">로그인</h2><button id="closeAccount" aria-label="닫기">×</button></div>
+    <div id="signupForm" hidden>
+      <label for="regName">아이디 (영문 소문자 시작, 4~20자)</label><input id="regName" autocomplete="username" placeholder="testteacher1">
+      <label for="regEmail">이메일</label><input type="email" id="regEmail" autocomplete="email" placeholder="test1@example.com">
+      <label for="regPass">비밀번호 (12자 이상)</label><input type="password" id="regPass" autocomplete="new-password">
+      <div class="form-actions"><button id="doSignup" class="primary">가입 이메일 인증 요청</button></div>
+      <p class="note">이메일 확인 후 '이메일 확인 뒤 등록' 화면에서 아이디를 확정합니다.</p>
+    </div>
+    <div id="loginForm" hidden>
+      <label for="loginName">아이디</label><input id="loginName" autocomplete="username">
+      <label for="loginPass">비밀번호</label><input type="password" id="loginPass" autocomplete="current-password">
+      <div class="form-actions"><button id="doLogin" class="primary">로그인</button></div>
+    </div>
+    <div id="bootstrapForm" hidden>
+      <label for="bootstrapEmail">이메일 인증을 마친 이메일</label><input type="email" id="bootstrapEmail">
+      <label for="bootstrapPass">비밀번호</label><input type="password" id="bootstrapPass">
+      <label for="bootstrapName">등록할 아이디</label><input id="bootstrapName">
+      <div class="form-actions"><button id="doBootstrap" class="primary">인증된 계정 등록</button></div>
+    </div>
+    <div id="recoveryForm" hidden>
+      <label for="recoveryEmail">가입한 이메일</label><input id="recoveryEmail" type="email">
+      <div class="form-actions"><button id="doRecovery" class="primary">재설정 메일 발송</button></div>
+    </div>
+    <div id="deleteForm" hidden>
+      <p class="muted">현재 비밀번호를 재확인하고 계정 및 테스트 추천 기록을 삭제합니다.</p>
+      <label for="deletePassword">현재 비밀번호</label><input id="deletePassword" type="password">
+      <label for="deleteConfirm">DELETE_MY_ACCOUNT 입력</label><input id="deleteConfirm" autocomplete="off">
+      <div class="form-actions"><button id="doDelete" class="primary">회원 탈퇴</button></div>
+    </div>
+    <div id="captchaBox" hidden><label>봇 방지 인증</label><div id="turnstile"></div><p class="note">실제 테스트 환경에서 Turnstile과 Supabase Auth CAPTCHA가 모두 켜져 있어야 작동합니다.</p></div>
+    <div class="toolbar">
+      <button id="goBootstrap" class="minor">이메일 확인 뒤 등록</button>
+      <button id="goRecovery" class="minor">비밀번호 재설정</button>
+      <button id="goDelete" class="minor" hidden>회원 탈퇴</button>
+    </div>
+    <p id="accountStatus" class="feedback" role="status"></p>
+  </section>
+  <section id="upgradePanel" class="card" hidden>
+    <div class="head"><h2>레벨업하기</h2><button id="closeUpgrade" aria-label="닫기">×</button></div>
+    <div id="levelOnePanel">
+      <p class="muted">테스트 전용 공통번호를 입력하면 레벨1 인증이 진행됩니다.</p>
+      <label for="commonCode">레벨1 공통번호</label><input id="commonCode" type="password" autocomplete="off">
+      <div class="form-actions"><button id="doLevel1" class="primary">레벨1 인증하기</button></div>
+    </div>
+    <div id="levelTwoPanel" hidden>
+      <p id="referralHelp" class="muted">레벨1 계정은 고유 설문 링크를 발급받을 수 있습니다.</p>
+      <div class="form-actions"><button id="doReferral" class="primary">나의 설문 링크 발급</button></div>
+      <label for="referralUrl" hidden id="referralLabel">나의 전용 설문 링크</label>
+      <input readonly id="referralUrl" hidden>
+      <div class="form-actions" id="shareTools" hidden>
+        <button id="copyReferral" class="minor">링크 복사</button>
+        <button id="shareReferral" class="minor">휴대전화 공유</button>
+      </div>
+    </div>
+    <div id="levelComplete" hidden><span class="tag">Lv.2 활성화</span><p>서버에 저장된 레벨2 계정으로 가상 학교 상세정보를 이용할 수 있습니다.</p></div>
+    <p class="feedback" id="upgradeStatus" role="status"></p>
+  </section>
+  <section id="surveyInvite" class="card" hidden>
+    <span class="tag">가상 추천 설문</span>
+    <h2 style="margin-top:12px">다른 계정으로 설문 제출</h2>
+    <p class="muted">추천받은 사람이 다른 테스트 계정으로 가입·로그인한 뒤 제출합니다. 설문 답안은 저장하지 않습니다.</p>
+    <button id="doSurvey" class="primary">가상 설문 제출하기</button>
+    <p id="surveyStatus" class="feedback" role="status"></p>
+  </section>
+  <section class="card">
+    <h2>학교 검색</h2>
+    <label for="schoolQuery">학교명</label><input id="schoolQuery" placeholder="가상별빛초등학교">
+    <div class="form-actions"><button id="doSearch" class="primary">검색하기</button></div>
+    <div id="schools"><p class="muted">검색 자료는 모두 가상 학교입니다. Lv.2 상세 수치는 로그인한 계정으로만 볼 수 있습니다.</p></div>
+  </section>
+  <section class="card">
+    <span class="tag">오프라인 모의 검증</span>
+    <h2 style="margin-top:12px">2계정 승급 시나리오</h2>
+    <p class="muted">실제 Supabase·이메일·CAPTCHA를 사용하지 않는 논리 시연입니다. 실제 통과로 계산하지 않습니다.</p>
+    <button id="runDemo" class="minor">A 가입 → A Lv1 → B 설문 → A Lv2 시뮬레이션</button>
+    <p id="demoOutput" class="small" hidden></p>
+  </section>
+  <p class="muted small">테스트 전용 · robots 차단 · 실제 사용자 개인정보 입력 금지 · 운영 챌린지와 인증번호를 사용하지 않습니다.</p>
+</main>
+</body></html>
