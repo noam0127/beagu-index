@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 
-// Dedicated challenge issuer. This code only uses the already verified Lv.1+
-// website session; the future Lv.2 identity is NOT an access credential.
+// Staged hardened issuer: Lv.1 session + bound device secret.
+// Do NOT deploy until legacy recovery flow and production switch are verified.
 const url = Deno.env.get('SUPABASE_URL')!;
 const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -51,11 +51,23 @@ Deno.serve(async (req: Request) => {
     try { body = JSON.parse(raw); } catch { return respond({ error: 'INVALID_JSON' }, 400, origin); }
     if (!body || typeof body !== 'object' || Array.isArray(body)) return respond({ error: 'INVALID_BODY' }, 400, origin);
     const input = body as Record<string, unknown>;
-    if (input.action !== 'issue' || typeof input.visitor !== 'string' || !uuid.test(input.visitor)) {
+    if (input.action !== 'issue' || typeof input.visitor !== 'string' || !uuid.test(input.visitor) ||
+      typeof input.deviceProof !== 'string' || !/^[a-f0-9]{64}$/.test(input.deviceProof) ||
+      (input.legacyIdentityCode !== undefined &&
+       (typeof input.legacyIdentityCode !== 'string' || input.legacyIdentityCode.length > 120))) {
       return respond({ error: 'INVALID_REQUEST' }, 400, origin);
     }
-    const { data, error } = await admin.rpc('beagu_issue_challenge_identity', { p_visitor: input.visitor });
+    // SHA256 of a fresh 256-bit browser secret is bound to this visitor UUID.
+    // Legacy identities must provide their saved identity code once; UUID alone
+    // never authorizes disclosure of an existing identity code.
+    const { data, error } = await admin.rpc('beagu_issue_challenge_identity_bound', {
+      p_visitor: input.visitor,
+      p_device_hash: await sha256(input.deviceProof),
+      p_existing_code: typeof input.legacyIdentityCode === 'string'
+        ? input.legacyIdentityCode.trim() : null
+    });
     if (error) {
+      if (error.code === '28000') return respond({ error: 'LEGACY_PROOF_REQUIRED' }, 403, origin);
       console.error('challenge code issuance error', error.code || 'UNKNOWN');
       return respond({ error: 'ISSUE_UNAVAILABLE' }, 503, origin);
     }
