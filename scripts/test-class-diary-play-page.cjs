@@ -51,10 +51,15 @@ assert(!play.src.includes('레벨2 임시 승인'),'Guest must not be misreprese
 assert(play.src.includes('id="playerName"'));
 const setupSection=play.src.split('<form id="profileForm">')[1].split('</form>')[0];
 const formInputs=[...setupSection.matchAll(/\<(?:input|select)\b[^>]*\bid="([^"]+)"/g)].map(x=>x[1]);
-assert.deepEqual(formInputs,['diarySchoolMode','playerName','experience','gender','mbti','partner','diarySchoolQuery'],'School-first setup with six profile controls and separate school search, without age');
+assert.deepEqual(formInputs,['diarySchoolName','diarySchoolMode','playerName','experience','gender','mbti','partner','diarySchoolQuery'],'One visible school text field, hidden fictional defaults, colleague selector and optional legacy lookup');
 assert(!play.ids.has('age'),'No player age input');
 assert(play.ids.has('diaryLandingStart'),'One-card story entry is required');
-assert(play.ids.has('diarySchoolMode'),'School must be selectable before profile details');
+assert(play.ids.has('diarySchoolName'),'School name must be typed directly');
+assert(play.src.includes('id="diarySchoolName" type="text"'),'School selection should be a plain text input');
+assert(play.src.includes('id="diarySchoolMode" type="hidden"'),'The old mode dropdown must be removed from the user interface');
+assert(play.src.includes('그날의 걸음을 우리는 잊지 못한다.'),'Landing card must use the exact poetic sentence');
+assert(play.src.includes('validateSchoolName:applySchoolName'),'Typed school must be validated before colleague choice');
+assert(play.src.includes("world.basic.name=name"),'Input school name must appear in the fictional game world');
 assert(play.ids.has('diarySchoolResults'),'School search results must be available');
 assert(play.src.includes("if(!isGuest){location.replace('index.html#teacher-diary-feature');return;}"),'Non-guest entry cannot bypass private preview');
 assert(play.src.includes('id="diary-private-preview-gate"'),'Direct game links must be blocked early');
