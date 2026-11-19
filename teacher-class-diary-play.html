@@ -340,6 +340,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <link rel="stylesheet" href="styles/class-diary-journey-v1.css?v=20261120-fullscreen2">
 <link rel="stylesheet" href="styles/class-diary-motion-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-ui-v2.css?v=20261120-paper-1">
+<link rel="stylesheet" href="styles/class-diary-semester-ui-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-supporting-cast-v1.css?v=20261120-men-1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 </head>
@@ -349,7 +350,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <section class="hero">
 <div class="overline" id="accessLabel">Interactive Korean novel · Level 2</div>
 <h1>나의 OO한 학급일지</h1>
-<p>서류 한 장, 아이들의 질문 한마디, 교무실에서 건네받은 작은 배려. 일주일의 선택이 끝나면, 빈칸에는 당신만의 말이 들어갑니다.</p>
+<p>교실에서 시작된 작은 말들이 한 학기 뒤에 다시 돌아옵니다. 봄과 여름 사이, 당신의 학급일지를 완성하세요.</p>
 <div class="schoolline" id="schoolLine">학교 정보를 확인하는 중</div>
 </section>
 <p class="no-save" role="note" id="noSaveNotice">기록은 저장되지 않습니다. 페이지를 나가거나 새로고침하면 진행 상황과 결과가 모두 사라집니다.</p>
@@ -390,7 +391,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <section id="guestAccess" class="panel diary-guest-access" hidden aria-labelledby="guestTitle">
  <div class="diary-guest-kicker">TEMPORARY GUEST ACCESS · 2026</div>
  <h2 id="guestTitle">고유번호로 학급일지 시작하기</h2>
- <p>정식 레벨2 서비스 공개 전에는 <strong>기존 2026 챌린지에서 발급된 고유번호</strong>로 7일간의 이야기에 입장할 수 있습니다.</p>
+ <p>정식 레벨2 서비스 공개 전에는 <strong>기존 2026 챌린지에서 발급된 고유번호</strong>로 가상 학교 이야기에 입장할 수 있습니다.</p>
  <form id="guestForm" autocomplete="off">
   <label for="guestCode">나의 고유번호</label>
   <div class="diary-guest-form-row"><input id="guestCode" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="29" minlength="10" placeholder="기존에 발급받은 고유번호" required><button type="submit" id="guestSubmit" class="primary">입장하기</button></div>
@@ -402,12 +403,12 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <section id="opening" class="diary-opening panel" hidden aria-labelledby="openingTitle">
 <div class="diary-intro-progress" aria-hidden="true"><span></span></div>
 <div class="diary-opening-visual" aria-hidden="true"><div class="diary-intro-sun"></div><div class="diary-school"><span>▣　▣　▣</span></div><div class="diary-intro-paper">✦</div></div>
-<div class="diary-opening-body"><span class="setup-eyebrow">PROLOGUE · 2027년 3월</span><h2 id="openingTitle">일곱 날, 다섯 개의 결말</h2>
-<p>새 학기가 시작됐습니다. 교실과 연구실, 복도에서 만난 사람들. 당신의 선택이 일주일의 이야기를 바꿉니다.</p>
-<div class="diary-opening-stat"><div><strong>7일</strong><small>3월 8일–14일</small></div><div><strong>3명</strong><small>서로 다른 동료 이야기</small></div><div><strong>5개</strong><small>서로 다른 결말</small></div></div>
-<div class="diary-opening-days" aria-label="일곱 날의 이야기"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
-<p class="semester-teaser">3월의 이름표에서 7월의 방학식까지, 선택의 결과가 한 학기 뒤에 다시 돌아옵니다. 한국 현대소설의 장면과 대사로 쓴 오리지널 6부 36화.</p><p id="openingSchool"></p><p class="diary-opening-note">인물·관계·사건은 허구입니다. 게임 진행은 저장하지 않습니다.</p>
-<button id="semesterStart" type="button" class="primary diary-opening-start">한 학기 36화 본편 시작 →</button><button id="openingStart" type="button" class="secondary diary-opening-start">기존 7일 이야기 체험</button>
+<div class="diary-opening-body"><span class="setup-eyebrow">PROLOGUE · 2027년 3월 — 7월</span><h2 id="openingTitle">봄을 지나, 여름에 닿는 이야기</h2>
+<p>아직 찬 바람이 남은 교실에서 시작된 이야기가 여름방학 전날까지 이어집니다. 당신의 선택은 어느 날 다시 돌아옵니다.</p>
+<div class="diary-opening-stat"><div><strong>36화</strong><small>2027년 3월–7월</small></div><div><strong>6부</strong><small>한 학기를 따라가는 이야기</small></div><div><strong>5개</strong><small>선택에 따라 달라지는 결말</small></div></div>
+<div class="diary-opening-days diary-semester-acts" aria-label="여섯 부로 이어지는 이야기"><span>봄의 시작</span><span>우리 반</span><span>교사의 마음</span><span>소문</span><span>서로의 편</span><span>여름방학</span></div>
+<p class="semester-teaser">36개의 장면, 108번의 선택. 지윤·현우·민서와 함께한 봄날의 대답이 여름의 교실에서 다시 울립니다.</p><p id="openingSchool"></p><p class="diary-opening-note">인물·관계·사건은 허구입니다. 게임 진행은 저장하지 않습니다.</p>
+<button id="semesterStart" type="button" class="primary diary-opening-start">한 학기 36화 본편 시작 →</button><button id="openingStart" type="button" class="secondary diary-opening-start">7일 체험판으로 시작</button>
 </div></section>
 <section id="setup" class="panel vn-setup" data-step="1" hidden>
 <div class="setup-head">
@@ -639,7 +640,8 @@ $('openingStart').addEventListener('click',()=>{storyMode='week';});
 $('semesterStart').addEventListener('click',()=>{
  $('openingStart').click();storyMode='semester';
  $('setup').querySelector('.setup-head p').textContent='2027년 3월부터 7월까지, 한 학기 동안 이어질 선생님의 이야기입니다.';
- $('setup').querySelector('.setup-story-note p').textContent='2027년 3월–7월 · 한국 현대소설 문체 36화 장편';
+ $('setup').querySelector('.setup-story-note p').textContent='2027년 3월–7월 · 6부 36화 · 108개의 선택';
+ $('setup').querySelector('.setup-player-stamp small').textContent='나만의 학급일지 · 36화';
 });
 /* Only erase records from old versions; this game never saves new records. */
 try{
@@ -669,7 +671,7 @@ function vnSplit(text,limit){
 /* Allow the story to breathe across the full-height paper panel.
    Preserve paragraph breaks, while keeping long chapters paged and scrollable. */
 function vnPages(paragraphs){
- const limit=window.matchMedia('(max-width:620px)').matches?230:360;
+ const limit=window.matchMedia('(max-width:620px)').matches?620:1000;
  const pages=[];let current=[],count=0;
  for(const paragraph of paragraphs){
   for(const part of vnSplit(paragraph,limit)){
@@ -704,6 +706,7 @@ function vnFitPage(reader,target){
 function vnPresent(){
  const done=vnState.kind==='outcome',target=$(done?'outcomeText':'chapterText');
  target.replaceChildren(...(vnState.pages[vnState.index]||['…']).map(paragraph=>el('p',paragraph)));
+ target.classList.remove('diary-text-arrive');void target.offsetWidth;target.classList.add('diary-text-arrive');
  const reader=document.querySelector(done?'#outcome':'#vnDialogueSlot .vn-dialogue');
  if(reader){reader.scrollTop=0;requestAnimationFrame(()=>{if(!reader.hidden)vnFitPage(reader,target)})}
  $('vnDialogueSlot').querySelector('.vn-dialogue').hidden=done;
@@ -952,6 +955,7 @@ function renderSemester(){
  const view=semester.chapter(reflection?{...game,phase:'semester_chapter'}:game);
  const profile=director.RELATIONSHIPS[game.profile.partner]||director.RELATIONSHIPS.none;
  $('novelCard').dataset.scene=view.visual;
+ $('novelCard').dataset.act=String(view.act);
  displayStage(view.visual,game.profile.partner,reflection?'smile':'neutral');
  mood(reflection?'daily':sound.dayTrack((game.episode-1)%7+1));
  if(!reflection)playSceneDetail('semester:'+game.episode,view.place);
@@ -963,11 +967,12 @@ function renderSemester(){
   $(id).textContent=game.stats[key];
  $('chapterDay').textContent=view.episode+' / 36 · 제'+view.act+'부 '+view.actName;
  $('chapterTitle').textContent=view.title;
- $('chapterPlace').textContent=view.date+' · '+view.place+' · '+game.profile.name+' 선생님';
+ $('chapterPlace').textContent=Number(view.date.slice(5,7))+'월 '+Number(view.date.slice(8,10))+'일 · '+view.place+' · '+game.profile.name+' 선생님';
  $('chapterProgress').style.width=(view.episode/36*100)+'%';
  $('worldDetail').hidden=true;$('schoolFacts').hidden=true;
  $('chapterSource').textContent='2027년의 가상 학교에서 벌어지는 허구의 사건입니다. 실제 교직원과 학생의 언행이 아닙니다.';
  $('choiceSection').hidden=reflection;
+ $('choiceSection').querySelector('.option-title').textContent='제'+view.act+'부 · '+view.episode+'화, 어떻게 하시겠어요?';
  $('outcome').hidden=!reflection;
  $('nextBtn').hidden=!reflection;
  $('nextBtn').setAttribute('aria-label',game.episode===36?'한 학기의 마지막 페이지':'다음 회차');
@@ -993,6 +998,8 @@ function renderSemesterEnding(){
  const ending=game.ending;
  $('endingTitle').textContent=ending.title;
  $('endingHeading').textContent=ending.heading;
+ $('ending').querySelector('.emblem').textContent='2027년 7월 16일 · 36화의 마지막 페이지';
+ $('ending').querySelector('.credits-roll p:last-child').textContent='한 학기의 이야기를 함께해 주셔서 고맙습니다.';
  fillParagraphs('endingText',ending.paragraphs);
  $('endingAffection').textContent=ending.affection+' / 100';
  $('endingScore').textContent='이야기 점수 '+ending.score+' / 100';
@@ -1001,6 +1008,13 @@ function renderSemesterEnding(){
 }
 
 function render(){
+ document.body.dataset.diaryStory=storyMode;
+ if(storyMode!=='semester'){
+  $('novelCard').removeAttribute('data-act');
+  $('choiceSection').querySelector('.option-title').textContent='어떻게 하시겠어요?';
+  $('ending').querySelector('.emblem').textContent='2027년 3월 14일 · 마지막 페이지';
+  $('ending').querySelector('.credits-roll p:last-child').textContent='일곱 날의 이야기를 함께해 주셔서 고맙습니다.';
+ }
  if(storyMode==='semester')return renderSemester();
  if(game.phase==='ending')return renderEnding();
  if(game.phase==='chapter'&&(incidents.next(game,world)||scenario.scene(game,world)))return renderScenario();
@@ -1107,7 +1121,7 @@ $('guestForm').addEventListener('submit',async event=>{
   show('opening');void opening.offsetWidth;opening.classList.add('intro-autoplay');
   $('openingStart').textContent='설정으로 건너뛰기 →';
   clearTimeout(guestIntroTimer);
-  guestIntroTimer=setTimeout(()=>{if(!opening.hidden){opening.classList.remove('intro-autoplay');$('openingStart').click()}},5000);
+  guestIntroTimer=setTimeout(()=>{if(!opening.hidden){opening.classList.remove('intro-autoplay');$('semesterStart').click()}},5000);
   status('고유번호 확인 완료. 짧은 인포그래픽 오프닝 후 설정 화면으로 넘어갑니다.');
  }catch(_){message.textContent='인증 서버에 일시적인 문제가 있습니다. 다시 시도해 주세요.';}
  finally{button.disabled=false;}
