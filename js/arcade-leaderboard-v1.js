@@ -3,10 +3,8 @@
 "use strict";
 const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard";
 const games=new Set(["volleyball_25","teacher_run_retirement"]);
-const timedGame=game=>game==="volleyball_25";
 const fmt=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString("ko-KR");
-const fmtTime=n=>{const t=Math.max(0,Math.floor(Number(n)||0));return Math.floor(t/600)+":"+String(Math.floor(t%600/10)).padStart(2,"0")+"."+(t%10);};
-const displayScore=(score,game)=>timedGame(game)?fmtTime(score):fmt(score)+"점";
+const displayScore=score=>fmt(score)+"점";
 const levelNames={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
 function el(tag,cls,text){
  const e=document.createElement(tag);
@@ -18,7 +16,7 @@ function order(rows,game){
  return rows.filter(x=>x&&Number.isSafeInteger(x.score)&&x.score>0)
   .map(x=>({score:x.score,created_at:String(x.created_at||""),
     school_name:String(x.school_name||"학교 미등록"),difficulty:x.difficulty||null}))
-  .sort((a,b)=>(timedGame(game)?a.score-b.score:b.score-a.score)||a.created_at.localeCompare(b.created_at))
+  .sort((a,b)=>b.score-a.score||a.created_at.localeCompare(b.created_at))
   .slice(0,10);
 }
 // Purge historical local leaderboard caches, including previously typed nicknames.
@@ -103,8 +101,8 @@ class ArcadeLeaderboard{
    if(generation!==this.playGeneration||!this.session)return;
    // Avoid consuming a session for a definitely nonqualifying entry.
    if(this.remote&&this.board.length===10&&
-      (timedGame(this.game)?this.score>=this.board[9].score:this.score<=this.board[9].score)){
-    this.notice="이번 "+displayScore(this.score,this.game)+" · TOP 10 기준 미달";
+      (this.score<=this.board[9].score)){
+    this.notice="이번 "+displayScore(this.score)+" · TOP 10 기준 미달";
     this.session=null;this.draw();return;
    }
    const data=await this.request("POST",{action:"submit",game:this.game,session:this.session,stats:this.stats});
@@ -112,8 +110,8 @@ class ArcadeLeaderboard{
    if(!Array.isArray(data.top10)||typeof data.ranked!=="boolean")throw new Error("invalid_response");
    this.remote=true;this.board=order(data.top10,this.game);this.session=null;
    this.notice=data.ranked
-    ?"🏆 익명 기록 자동 등록 · "+data.rank+"위 · "+displayScore(this.score,this.game)
-    :"이번 "+displayScore(this.score,this.game)+" · TOP 10 진입 실패";
+    ?"🏆 익명 기록 자동 등록 · "+data.rank+"위 · "+displayScore(this.score)
+    :"이번 "+displayScore(this.score)+" · TOP 10 진입 실패";
   }catch(err){
    if(generation!==this.playGeneration)return;
    this.notice=err.status===409?"경기가 만료되었거나 이미 기록되었습니다":
@@ -127,12 +125,12 @@ class ArcadeLeaderboard{
   if(!this.mount)return;
   const root=this.mount;root.replaceChildren();root.classList.add("arcade-ranking");
   const header=el("div","arcade-ranking-head");
-  header.append(el("strong","",timedGame(this.game)?"🏆 25점 최단 시간 TOP 10":"🏆 정년 생존 점수 TOP 10"),
+  header.append(el("strong","",this.game==="volleyball_25"?"🏆 배구 최고 점수 TOP 10":"🏆 정년 생존 점수 TOP 10"),
    el("small","",this.remote?"공식 기록 · 익명":"공식 서버 확인 중"));
   root.append(header);
   if(this.notice){const node=el("p","arcade-rank-feedback",this.notice);node.setAttribute("role","status");root.append(node);}
   const labels=el("div","arcade-rank-grid arcade-rank-label");
-  ["순위","학교 · 난이도",timedGame(this.game)?"완주 시간":"점수"].forEach(x=>labels.append(el("span","",x)));
+  ["순위","학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));
   root.append(labels);
   if(!this.board.length){root.append(el("div","arcade-rank-empty",this.remote?"아직 등록된 기록이 없습니다":"기록을 불러올 수 없습니다"));return;}
   for(const [i,entry] of this.board.entries()){
@@ -141,7 +139,7 @@ class ArcadeLeaderboard{
    school.append(el("span","arcade-rank-school",entry.school_name),
     el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
    row.append(el("span","",String(i+1).padStart(2,"0")),school,
-    el("span","",timedGame(this.game)?fmtTime(entry.score):fmt(entry.score)));
+    el("span","",fmt(entry.score)));
    root.append(row);
   }
  }
