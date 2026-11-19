@@ -177,10 +177,18 @@ function validateProfile(profile){
 }
 function partnerName(profile){return profile.partner==='man'?'현우 선생님':profile.partner==='woman'?'지윤 선생님':'동학년 선생님';}
 function validateWorld(world,plan){
-  if(!world||world.eligible!==true||!world.basic||!/^[A-Z0-9]{7}$/.test(String(world.basic.id||''))||
-      !Array.isArray(world.publishedYears)||!world.publishedYears.length)throw Error('APPROVED_WORLD_REQUIRED');
+  if(!world||world.eligible!==true||!world.basic||
+     !/^[A-Z0-9]{7}$/.test(String(world.basic.id||''))||
+     !Array.isArray(world.publishedYears))throw Error('APPROVED_WORLD_REQUIRED');
+  // The demo is an explicit, fictional-only offline world. It cannot stand in for a real school.
+  const demo=world.mode==='public_fiction_demo'&&world.basic.id==='DEMO001'&&
+    world.publishedYears.length===0&&world.basic.name==='가상의 초등학교';
+  if(!demo&&!world.publishedYears.length)throw Error('APPROVED_WORLD_REQUIRED');
+  if(world.mode==='public_fiction_demo'&&!demo)throw Error('DEMO_WORLD_INVALID');
   if(!plan||plan.schoolId!==world.basic.id||!Array.isArray(plan.scenes)||plan.scenes.length!==7||
-     !plan.scenes.every((s,i)=>s.day===i+1&&['fictional_general','approved_historical_aggregate'].includes(s.basis)))
+     !plan.scenes.every((s,i)=>s.day===i+1&&
+       (demo?s.basis==='fictional_general':
+         ['fictional_general','approved_historical_aggregate'].includes(s.basis))))
     throw Error('VERIFIED_SCENE_PLAN_REQUIRED');
 }
 function createGame(world,plan,inputProfile){
