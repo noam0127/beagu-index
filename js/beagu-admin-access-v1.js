@@ -122,6 +122,27 @@
     if(!rows.length)list.append(make("p","empty","난이도별 기록이 없습니다."));
     rows.forEach(row=>list.append(make("span","pill",row.difficulty+" · "+num(row.plays)+"회")));
   }
+  function renderScores(){
+    const root=$("adminGameScores");root.replaceChildren();
+    const now=Date.now();
+    const today=new Date().toLocaleDateString("sv-SE",{timeZone:"Asia/Seoul"});
+    const scores=(dashboard?.retained_game_scores||[]).filter(row=>{
+      const t=Date.parse(row.created_at);
+      if(!Number.isFinite(t))return false;
+      if(period==="today")return new Date(t).toLocaleDateString("sv-SE",{timeZone:"Asia/Seoul"})===today;
+      if(period==="7d")return now-t<=7*86400000;
+      if(period==="30d")return now-t<=30*86400000;
+      return true;
+    }).sort((a,b)=>Number(b.score)-Number(a.score)).slice(0,15);
+    if(!scores.length){root.append(make("p","empty","현재 기간에 보관된 최고점 기록이 없습니다."));return;}
+    const names={volleyball:"선생님배구",volleyball_25:"선생님배구",teacher_run:"험난한 교직생활",teacher_run_retirement:"험난한 교직생활"};
+    scores.forEach((v,i)=>{
+      const line=make("div","rank-line");
+      line.append(make("span","rank-number",i+1),
+        make("span","rank-school",(names[v.game]||"게임")+" · "+(v.school_name||"학교 미등록")),
+        make("span","rank-count",num(v.score)+"점"));root.append(line);
+    });
+  }
   function renderAudit(){
     const root=$("adminAudit");root.replaceChildren();
     const rows=dashboard?.security?.recent||[];
@@ -140,7 +161,7 @@
     renderChart("adminVisitChart",data.visit_trend,"views");
     renderChart("adminSearchChart",data.search_trend,"searches");
     renderChart("adminGameChart",data.game_trend,"plays");
-    renderRanks();renderGames();renderAudit();
+    renderRanks();renderGames();renderScores();renderAudit();
     $("adminDataAsOf").textContent="집계 시각: "+new Date(data.as_of).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",hour12:false})+" · 개인정보 비표시";
   }
   async function loadMetrics(){
