@@ -22,6 +22,10 @@ function run(partner,pick){
   assert(view.paragraphs.length>=3);
   assert(view.paragraphs.every(s=>s.length>15));
   assert(view.date.startsWith('2027-'));
+  assert(/[가-힣]/.test(view.place)&&!/^[a-z]+$/.test(view.place),
+   'Episode '+i+' must expose a Korean place name, not internal scene key: '+view.place);
+  assert.equal(view.visual,novel.SCENES[i-1][2],
+   'Visual artwork must continue to use the original internal scene key');
   assert.equal(view.act,Math.ceil(i/6));
   assert(view.title.length>=4);
   seen.push(view.title);
@@ -67,10 +71,20 @@ for(let i=1;i<=8;i++){
 assert.equal(a.episode,9);
 assert.notDeepEqual(novel.chapter(a).paragraphs,novel.chapter(b).paragraphs,
  'The March hallway decision must change the April scene');
+const placeCases={2:'학년연구실',4:'학교 복도',5:'회의실',12:'동네 서점',16:'운동장',33:'집',36:'교실'};
+for(const [episode,expected] of Object.entries(placeCases)){
+ let state=novel.createGame(base('woman'));
+ while(state.episode<Number(episode))state=novel.advance(novel.choose(state,'0'));
+ assert.equal(novel.chapter(state).place,expected);
+}
 const raw=fs.readFileSync(require.resolve('../js/class-diary-semester-v1.js'),'utf8');
 for(const banned of ['localStorage.setItem','sessionStorage.setItem','indexedDB','fetch(','XMLHttpRequest','navigator.sendBeacon'])
  assert(!raw.includes(banned),'Story engine must never persist or transmit game data: '+banned);
 const page=fs.readFileSync(require('node:path').join(__dirname,'../teacher-class-diary-play.html'),'utf8');
 for(const marker of ['id="semesterStart"','src="js/class-diary-semester-v1.js?v=20261120"',"semester.createGame(baseGame)","if(storyMode==='semester')return renderSemester()","semester.advance(game)"])
  assert(page.includes(marker),'Semester UI connection missing '+marker);
-console.log('PASS: 36 original-fiction episodes, 6 acts, 108 choices, 3 partner routes, 5 reachable endings and no game persistence');
+for(const englishLabel of ['PROLOGUE 00','PLAYER SETUP','MY STORY','STORY · 나의 학급일지','END CREDITS'])
+ assert(!page.includes(englishLabel),'Untranslated game UI label: '+englishLabel);
+for(const label of ['주인공 설정','나의 이야기','이야기 · 나의 학급일지','제작진'])
+ assert(page.includes(label),'Korean game UI label missing: '+label);
+console.log('PASS: 36 chapters show Korean places, internal artwork codes stay unchanged, UI labels Korean, five endings, no persistence');
