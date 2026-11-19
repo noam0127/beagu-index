@@ -6,7 +6,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || '';
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') || '';
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const RATE_PEPPER = Deno.env.get('BEAGU_ACCOUNT_RATE_PEPPER') || '';
+const RATE_PEPPER = Deno.env.get('BEAGU_ACCOUNT_RATE_PEPPER') || ''; 
+// Production must enable Auth -> Bot and Abuse Protection -> CAPTCHA. Without
+// this setting, a client could call Auth directly and bypass the Edge layer.
 const admin = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
 });
@@ -116,7 +118,7 @@ async function handler(req: Request): Promise<Response> {
   let input: Record<string,unknown>;
   try {
     const raw=await req.text();
-    if (encoder.encode(raw).length>2048) return respond(origin,413,{error:'REQUEST_TOO_LARGE'});
+    if (encoder.encode(raw).length>4096) return respond(origin,413,{error:'REQUEST_TOO_LARGE'});
     input=JSON.parse(raw);
     if (!input || typeof input!=='object' || Array.isArray(input))
       return respond(origin,400,{error:'INVALID_REQUEST'});
@@ -132,13 +134,19 @@ async function handler(req: Request): Promise<Response> {
       if (!await gate('signup-email',loginEmail.toLowerCase(),4) ||
           !await takeSlot('signup-username',chosen,8))
         return respond(origin,429,{error:'TOO_MANY_ATTEMPTS'});
+      const proof = typeof input.captchaToken==='string' ? input.captchaToken : '';
+      if (!/^[A-Za-z0-9._~-]{20,2048}$/.test(proof))
+        return respond(origin,400,{error:'CAPTCHA_REQUIRED'});
       const auth=newAuth();
+      // Auth's own native CAPTCHA setting MUST also be ON, or direct Auth calls
+      // can bypass this Edge API. This field is not validated by the Edge itself.
       // Username here is only a preference; it MUST NOT grant access or level.
       // Binding occurs separately after a confirmed Auth session.
       const {error}=await auth.auth.signUp({
         email:loginEmail,password:input.password as string,
         options:{
           emailRedirectTo:'https://baeguindex.com/account-email-confirmed.html',
+          captchaToken:proof,
           data:{beagu_preferred_username:chosen}
         }
       });
@@ -151,6 +159,9 @@ async function handler(req: Request): Promise<Response> {
       if (!await enabled('login_enabled')) return respond(origin,423,{error:'LOGIN_DISABLED'});
       if (!password(input.password))
         return refuseLogin(origin);
+      const proof = typeof input.captchaToken==='string' ? input.captchaToken : '';
+      if (!/^[A-Za-z0-9._~-]{20,2048}$/.test(proof))
+        return respond(origin,400,{error:'CAPTCHA_REQUIRED'});
       const auth=newAuth();
       let loginEmail='';
       let expectedUserId:string|null=null;
@@ -178,7 +189,8 @@ async function handler(req: Request): Promise<Response> {
           return respond(origin,429,{error:'TOO_MANY_ATTEMPTS'});
       }
       const {data,error}=await auth.auth.signInWithPassword({
-        email:loginEmail,password:input.password as string
+        email:loginEmail,password:input.password as string,
+        options:{captchaToken:proof}
       });
       if (error || !data?.user?.id || !data.user.email_confirmed_at ||
           (action==='sign-in' && (!expectedUserId || data.user.id!==expectedUserId)))
@@ -242,11 +254,78 @@ async function handler(req: Request): Promise<Response> {
         return respond(origin,400,{error:'INVALID_EMAIL'});
       if (!await gate('recovery-email',loginEmail.toLowerCase(),3))
         return respond(origin,429,{error:'TOO_MANY_ATTEMPTS'});
+      const proof = typeof input.captchaToken==='string' ? input.captchaToken : '';
+      if (!/^[A-Za-z0-9._~-]{20,2048}$/.test(proof))
+        return respond(origin,400,{error:'CAPTCHA_REQUIRED'});
       const auth=newAuth();
+      // The recovery email template must use {{ .TokenHash }} and point to
+      // /account-password-reset.html?token_hash=... (never tokens in fragments).
       await auth.auth.resetPasswordForEmail(loginEmail, {
-        redirectTo:'https://baeguindex.com/account-password-reset.html'
+        redirectTo:'https://baeguindex.com/account-password-reset.html',
+        captchaToken:proof
       });
       return respond(origin,200,{ok:true,message:'IF_REGISTERED_EMAIL_WILL_BE_SENT'});
+    }
+
+    if (action==='complete-recovery') {
+      if (!await enabled('recovery_enabled'))
+        return respond(origin,423,{error:'RECOVERY_DISABLED'});
+      const hash=typeof input.tokenHash==='string' ? input.tokenHash : '';
+      if (!/^[a-f0-9]{64}$/.test(hash) || !password(input.password))
+        return respond(origin,400,{error:'INVALID_RECOVERY'});
+      if (!await gate('recovery-proof',hash,4))
+        return respond(origin,429,{error:'TOO_MANY_ATTEMPTS'});
+      // A one-use, recovery-only OTP hash from the email template is required;
+      // a normal JWT, user ID, UUID or old identity code cannot change password.
+      const auth=newAuth();
+      const {data:proof,error:verifyError}=await auth.auth.verifyOtp({
+        token_hash:hash,type:'recovery'
+      });
+      if (verifyError || !proof?.user?.id || !proof.session?.access_token)
+        return respond(origin,401,{error:'RECOVERY_INVALID_OR_EXPIRED'});
+      const {error:updateError}=await auth.auth.updateUser({
+        password:input.password as string
+      });
+      if (updateError) {
+        await auth.auth.signOut({scope:'global'}).catch(()=>{});
+        return respond(origin,503,{error:'PASSWORD_UPDATE_UNAVAILABLE'});
+      }
+      // Revoke refresh tokens after recovery. Short-lived access tokens remain
+      // valid until expiry; all sensitive actions must re-check live user state.
+      const {error:revokeError}=await auth.auth.signOut({scope:'global'});
+      if (revokeError) return respond(origin,503,{error:'SESSION_REVOCATION_UNAVAILABLE'});
+      return respond(origin,200,{ok:true,passwordUpdated:true,loginRequired:true});
+    }
+
+    if (action==='delete-account') {
+      if (!await enabled('account_deletion_enabled'))
+        return respond(origin,423,{error:'DELETION_DISABLED'});
+      const user=await validatedUser(req);
+      if (!user?.email) return respond(origin,401,{error:'AUTH_REQUIRED'});
+      const current=await profile(user.id);
+      if (!current || current.disabled)
+        return respond(origin,403,{error:'ACCOUNT_NOT_ELIGIBLE'});
+      if (input.confirm!=='DELETE_MY_ACCOUNT' || !password(input.password))
+        return respond(origin,400,{error:'CONFIRMATION_REQUIRED'});
+      if (!await gate('delete-user',user.id,3))
+        return respond(origin,429,{error:'TOO_MANY_ATTEMPTS'});
+      const auth=newAuth();
+      // Fresh password verification prevents stolen access-token-only deletion.
+      const {data:verified,error:verifyError}=await auth.auth.signInWithPassword({
+        email:user.email,password:input.password as string
+      });
+      if (verifyError || verified?.user?.id!==user.id)
+        return refuseLogin(origin);
+      // Revoke all refresh sessions BEFORE Auth user removal. Never return the
+      // account password or email. App profile is FK ON DELETE CASCADE.
+      const jwt=bearer(req);
+      const {error:logoutError}=await admin.auth.admin.signOut(jwt,'global');
+      if (logoutError) return respond(origin,503,{error:'DELETION_UNAVAILABLE'});
+      const {error:deleteError}=await admin.auth.admin.deleteUser(user.id);
+      if (deleteError) return respond(origin,503,{error:'DELETION_UNAVAILABLE'});
+      // Existing survey_submissions.user_id is ON DELETE SET NULL; anonymized
+      // survey data is NOT automatically deleted, see retention policy.
+      return respond(origin,200,{ok:true,accountDeleted:true});
     }
 
     if (action==='sign-out') {
