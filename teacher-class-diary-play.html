@@ -665,7 +665,7 @@ const studentDoyun=window.BeaguClassDiaryStudentDoyun;
 if(!studentDoyun||typeof studentDoyun.render!=="function")throw Error("DOYUN_ART_REQUIRED");
 if(!maleSemester||typeof maleSemester.expressionFor!=="function")throw Error("MALE_SEMESTER_ASSET_REQUIRED");
 if(!malePhotos||typeof malePhotos.paint!=="function")throw Error("MALE_PHOTOS_MODULE_REQUIRED");
-const journey=window.BeaguClassDiaryJourney.init({show,sound,validateSchoolName:applySchoolName});
+const journey=window.BeaguClassDiaryJourney.init({show,sound,validateSchoolName:applySchoolName,openSchoolSearch:showSchoolSearch});
 
 /* In-memory visual setup only: five original inputs remain authoritative. */
 const setupDescription=Object.freeze({
@@ -841,17 +841,15 @@ $('diaryLandingStart').addEventListener('click',()=>{
   const fixture=window.BeaguClassDiaryDemo.createDemo();
   world=fixture.world;plan=fixture.plan;
  }
- if(!isGuest){
-  $('accessLabel').textContent='프롤로그 · 가상학교 체험';
-  $('schoolLine').textContent='가상의 초등학교';
-  $('worldAutoNote').textContent='실제 학교 자료를 사용하지 않는 가상의 이야기입니다.';
- }
- selectSchoolMode(world&&world.basic&&world.basic.id!=='DEMO001'?'real':'demo',
-  world&&world.basic&&world.basic.id!=='DEMO001'?world.basic.name:undefined);
- $('semesterStart').click();
+ storyMode='semester';
+ schoolSelection=null;
+ selectSchoolMode('choose');
+ show('setup');
+ journey.go(1);
+ status('실제 초등학교를 선택하면 한 학기의 이야기가 이어집니다.');
 });
 $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
-let storyMode='week';
+let storyMode='semester';
 function prepareGuestProfile(){
  // Use a fictional in-story name and neutral defaults; never ask for personal traits.
  $('playerName').value='새봄';
@@ -859,7 +857,8 @@ function prepareGuestProfile(){
  $('gender').value='undisclosed';
  $('mbti').value='INFP';
  syncSetupName();
- selectSchoolMode('demo');
+ schoolSelection=null;
+ selectSchoolMode('choose');
  const note=$('setup').querySelector('.setup-story-note p');
  if(note)note.textContent='2027년 3월–7월 · 36화';
 }
@@ -1480,13 +1479,13 @@ async function boot(){
    const fixture=window.BeaguClassDiaryDemo.createDemo();
    world=fixture.world;plan=fixture.plan;
    prepareGuestProfile();
-   $('schoolLine').textContent='가상의 초등학교 · 2027년 3월–7월';
+   $('schoolLine').textContent='학교 선택 전 · 2027년 3월–7월';
    $('openingSchool').textContent=$('schoolLine').textContent;
-   $('worldAutoNote').textContent='실제 학교 정보를 사용하지 않는 가상의 이야기입니다.';
+   $('worldAutoNote').textContent='실제 학교의 공개 정보 중 이름·지역·공개 조사연도만 일부 반영합니다. 인물과 사건은 허구입니다.';
    $('noSaveNotice').textContent='고유번호별 진행 기록을 자동 저장합니다. 다른 기기에서도 같은 번호로 이어할 수 있습니다.';
    $('opening').querySelector('.diary-opening-note').textContent='고유번호별 자동 저장 · 언제든 이어하기';
    const privacy=$('setup').querySelector('.privacy');
-   if(privacy)privacy.textContent='모든 인물과 사건은 허구입니다. 진행 상황과 선택 기록은 고유번호별로 저장됩니다.';
+   if(privacy)privacy.textContent='인물과 사건은 허구이며 실제 교직원을 재현하지 않습니다. 공개 학교 정보 일부와 진행 기록은 구분하여 사용하고, 선택은 승인된 미리보기 계정으로 저장됩니다.';
    let saved=null;
    try{
     saved=await progressSession.load();
@@ -1509,7 +1508,13 @@ async function boot(){
      sound.setEnabled(true);updateMusicButton();guestStartMusic();
      render();status('저장된 학급일지를 불러왔습니다.');
     };
-    $('guestNewBtn').onclick=()=>{$('guestResume').hidden=true;selectSchoolMode('demo');$('semesterStart').click();};
+    $('guestNewBtn').onclick=()=>{
+     $('guestResume').hidden=true;
+     storyMode='semester';
+     schoolSelection=null;
+     selectSchoolMode('choose');
+     show('setup');journey.go(1);
+    };
     enterGuestOpening();
     status('제목 카드를 누르면 이어하기 또는 처음부터 시작할 수 있습니다.');
     return;
