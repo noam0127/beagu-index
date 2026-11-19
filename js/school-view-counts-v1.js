@@ -52,5 +52,6 @@
         paint(String(id),Number(data.views));
     }catch(_){/* No locally invented counts on server failures. */}
   }
-  window.BeaguSchoolViewCounts=Object.freeze({refreshCards,refreshOne,record});
+  // Only server-confirmed totals can update the public counter display.
+  window.BeaguSchoolViewCounts=Object.freeze({refreshCards,refreshOne,record,applyConfirmedCount:paint});
 })();
