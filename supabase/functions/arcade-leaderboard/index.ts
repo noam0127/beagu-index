@@ -53,11 +53,10 @@ async function top(game: Game,tier:string|null=null): Promise<Entry[]> {
 async function fastest25(tier:string|null=null):Promise<Array<{timeTenths:number;created_at:string;school_name:string|null;difficulty:string|null}>>{
  const q=new URLSearchParams({
   select:"win_time_tenths,created_at,school_name,difficulty",
-  game:"eq.volleyball_25",win_time_tenths:"not.is.null",
   order:"win_time_tenths.asc,created_at.asc",limit:"10"
  });
  if(tier)q.set("difficulty","eq."+tier);
- const rows=await db("arcade_game_scores?"+q) as FastEntry[];
+ const rows=await db("arcade_fastest25_records?"+q) as FastEntry[];
  return rows.map(e=>({timeTenths:e.win_time_tenths,created_at:e.created_at,
   school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
@@ -170,11 +169,55 @@ function scoreFromVolleyball25(result:any,elapsed:number):number {
   throw new Error("invalid_score");
  return final;
 }
+// Deliberately return only gameplay facts, never session UUIDs, IP-derived hashes,
+ // school IDs, visitor IDs, nicknames or arbitrary client-supplied properties.
+function publicGameResult(game:Game,result:any):Record<string,unknown>{
+ if(game==="volleyball_25"){
+  return {
+   outcome:result.victory?"victory":result.endedEarly?"stopped":"defeat",
+   playerPoints:result.player,cpuPoints:result.cpu,
+   baseScore:result.baseScore,playBonus:result.survivalBonus,
+   winMultiplier:result.multiplier,playedTenths:result.activeTenths
+  };
+ }
+ return {
+  outcome:result.victory?"retired":"retired_early",
+  startAge:24,endAge:result.age,playedSeconds:result.survivalSeconds,
+  baseScore:result.baseScore,retirementBonus:result.victory?result.baseScore:0,
+  ...(result.nearMisses===undefined?{}:{nearMisses:result.nearMisses}),
+  ...(result.hits===undefined?{}:{hits:result.hits}),
+  ...(result.livesLeft===undefined?{}:{livesLeft:result.livesLeft}),
+  ...(result.healthPercent===undefined?{}:{healthPercent:result.healthPercent})
+ };
+}
+async function gameHistory(game:Game,tier:string|null,page:number){
+ const pageSize=30,offset=(page-1)*pageSize;
+ const q=new URLSearchParams({
+  select:"id,score,created_at,school_name,difficulty,win_time_tenths,public_result",
+  game:"eq."+game,order:"score.desc,created_at.asc,id.asc",
+  limit:String(pageSize+1),offset:String(offset)
+ });
+ if(tier)q.set("difficulty","eq."+tier);
+ const results=await db("arcade_game_scores?"+q) as Array<{
+  score:number;created_at:string;school_name:string|null;difficulty:string|null;
+  win_time_tenths:number|null;public_result:Record<string,unknown>|null
+ }>;
+ const records=results.slice(0,pageSize).map(record=>({
+  score:record.score,createdAt:record.created_at,
+  schoolName:record.school_name??"학교 미등록",difficulty:record.difficulty,
+  winTimeTenths:record.win_time_tenths,
+  details:record.public_result&&typeof record.public_result==="object"?record.public_result:{}
+ }));
+ return {game,page,pageSize,maxRecords:100,sort:"score_desc",hasMore:results.length>pageSize,records};
+}
 function scoreFromRetirement(result:any,elapsed:number):number {
  if(result?.survivalSeconds===undefined)throw new Error("invalid_survival_time");
  const score=result?.score,base=result?.baseScore,age=result?.age,
        victory=result?.victory,seconds=validatedSurvivalSeconds(result,elapsed);
- if(!int(base,0,100000)||!int(score,1,200000)||typeof victory!=="boolean"
+ for(const [key,max] of [["nearMisses",20000],["hits",20000],["livesLeft",5],["healthPercent",100]] as const){
+  if(result[key]!==undefined&&!int(result[key],0,max))throw new Error("invalid_stats");
+ }
+ if(!int(base,0,100000)||!int(score,0,200000)||typeof victory!=="boolean"
    ||!int(age,24,62))throw new Error("invalid_stats");
  if(age!==Math.min(62,24+Math.floor(seconds/5)))throw new Error("invalid_age");
  if(victory){
@@ -212,6 +255,12 @@ Deno.serve(async (req:Request)=>{
       if(!isGame(game))return error("invalid_game",400,origin);
       const tier=params.has("difficulty")?rankTier(params.get("difficulty")):null;
       if(params.has("difficulty")&&!tier)return error("invalid_difficulty",400,origin);
+      if(params.get("history")==="1"){
+        const rawPage=params.get("page")??"1";
+        if(!/^[1-4]$/.test(rawPage))return error("invalid_page",400,origin);
+        return json(await gameHistory(game,tier,Number(rawPage)),200,origin);
+      }
+      if(params.has("history"))return error("invalid_history",400,origin);
       if(game==="volleyball_25"){
          const [top10,fastestTop10]=await Promise.all([top(game,tier),fastest25(tier)]);
          return json({game,top10,fastestTop10},200,origin);
@@ -259,18 +308,20 @@ Deno.serve(async (req:Request)=>{
          game==="teacher_run_retirement"?scoreFromRetirement(payload.stats,elapsed):
          scoreFromRun(payload.stats,elapsed);
     } catch(e) {return error(e instanceof Error?e.message:"invalid_stats",400,origin);}
-    // Persist each validated result, including all retirement losses below TOP 10.
-    // Persist the score BEFORE consuming the session. A transient insert failure
-    // must not permanently invalidate a valid finished match.
-    // A unique session_id plus ignore-duplicates makes concurrent submits safe.
+    // All finished games have a verified result; only the 100 highest scores
+    // per game are retained. PostgreSQL trigger serializes pruning for
+    // concurrent submissions. The 10 fastest victorious volleyball times
+    // remain in a separate small table even if a score is outside TOP 100.
+    // Session IDs never appear in public GET results.
     const inserted=await db(
-      "arcade_game_scores?on_conflict=session_id&select=created_at",
+      "arcade_game_scores?on_conflict=session_id&select=id,created_at",
       "POST",
       {session_id:session.id,game,score,
+        public_result:publicGameResult(game,payload.stats),
         win_time_tenths:game==="volleyball_25"&&payload.stats?.victory===true?payload.stats.activeTenths:null,
         school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
       "resolution=ignore-duplicates,return=representation"
-    ) as Array<{created_at:string}>;
+    ) as Array<{id:string;created_at:string}>;
     if(!inserted?.length)return error("session_expired",409,origin);
     const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"});
     try{
@@ -279,13 +330,18 @@ Deno.serve(async (req:Request)=>{
       // The unique score is safely stored even if the completion marker fails.
       console.error("arcade_completion_marker_failed");
     }
-    const [board,fastestTop10]=await Promise.all([top(game,requestedTier),
-      game==="volleyball_25"?fastest25(requestedTier):Promise.resolve([])]);
+    const retainedQ=new URLSearchParams({select:"id",id:"eq."+inserted[0].id,limit:"1"});
+    const [board,fastestTop10,retainedRows]=await Promise.all([
+      top(game,requestedTier),
+      game==="volleyball_25"?fastest25(requestedTier):Promise.resolve([]),
+      db("arcade_game_scores?"+retainedQ)
+    ]);
+    const recorded=Array.isArray(retainedRows)&&retainedRows.length>0;
     const rank=board.findIndex(e=>e.score===score&&e.created_at===inserted[0].created_at&&e.school_name===session.school_name)+1;
     const timeRank=game==="volleyball_25"&&payload.stats?.victory===true?
       fastestTop10.findIndex(e=>e.timeTenths===payload.stats.activeTenths&&
         e.created_at===inserted[0].created_at&&e.school_name===session.school_name)+1:0;
-    return json({ranked:rank>0,rank,score,top10:board,
+    return json({ranked:rank>0,rank,recorded,score,top10:board,
       ...(game==="volleyball_25"?{fastestTop10,timeRanked:timeRank>0,timeRank}:{})},200,origin);
   }catch(e){
     console.error("arcade_error",e instanceof Error?e.message:"unknown");
