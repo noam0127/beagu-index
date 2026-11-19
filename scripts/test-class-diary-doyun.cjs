@@ -22,7 +22,7 @@ const classSet=new Set(),photo={style:{}};
 const node={hidden:true,dataset:{},classList:{add:x=>classSet.add(x),remove:x=>classSet.delete(x),toggle:(x,v)=>v?classSet.add(x):classSet.delete(x)},querySelector:()=>photo,removeAttribute:x=>{}};
 assert.equal(doyun.render(node,35,false,true).expression,'speaking');
 assert.equal(node.hidden,false);
-assert.equal(photo.style.backgroundPosition,'100% 100%');
+assert.equal(photo.style.backgroundPosition,'100% 0%');
 assert(classSet.has('with-other-guest'));
 assert.equal(doyun.render(node,36,false,false),null);
 assert.equal(node.hidden,true);
