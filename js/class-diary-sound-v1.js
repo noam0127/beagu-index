@@ -4,7 +4,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='class-diary-sound/v3';
+const VERSION='class-diary-sound/v4';
 const LICENSE='https://creativecommons.org/licenses/by/4.0/';
 const HOST='https://www.scottbuckley.com.au/library/';
 const FILES={
@@ -24,15 +24,66 @@ const FILES={
 const TRACKS=Object.freeze(Object.fromEntries(Object.entries(FILES).map(([id,[name,file,slug]])=>[
  id,Object.freeze({name,url:file.startsWith('https://')?file:HOST+'wp-content/uploads/'+file,page:HOST+slug+'/',license:LICENSE})
 ])));
+/* Field recordings: original public-domain audio served from Wikimedia Commons, not Korean-school recordings.
+ * See docs/class-diary-audio-field-recordings.md for attribution and sound provenance.
+ */
+const AMBIENCE=Object.freeze({
+ classroom:Object.freeze({name:'Ambient Classroom-Mono',creator:'rcrossley',
+  url:'https://upload.wikimedia.org/wikipedia/commons/1/10/Ambient_classroom_mono.ogg',
+  page:'https://commons.wikimedia.org/wiki/File:Ambient_classroom_mono.ogg',
+  license:'public-domain',durationSeconds:65,bytes:884672}),
+ workroom:Object.freeze({name:'Typing - Medium Speed',creator:'teto_yasha',
+  url:'https://upload.wikimedia.org/wikipedia/commons/3/34/Typing_medium_speed.ogg',
+  page:'https://commons.wikimedia.org/wiki/File:Typing_medium_speed.ogg',
+  license:'public-domain',durationSeconds:48,bytes:777216})
+});
+const FOLEY=Object.freeze({
+ pageTurn:Object.freeze({name:'Turning a page',creator:'planish',
+  url:'https://upload.wikimedia.org/wikipedia/commons/6/6b/Turning_a_page.ogg',
+  page:'https://commons.wikimedia.org/wiki/File:Turning_a_page.ogg',
+  license:'public-domain',durationSeconds:3.4,bytes:49152})
+});
 const DAYS=Object.freeze(['quiet','tension','heartfelt','tension','playful','restful','intimate']);
-let enabled=false,current=null,currentId=null,request=0,fadeTimer=null;
+let enabled=false,current=null,currentId=null,request=0,fadeTimer=null,ambience=null,ambienceId=null;
 let musicVolume=.13,sfxVolume=.17,fxEnabled=true,ctx=null,onStatus=()=>{};
 const AudioAPI=typeof root.Audio==='function'?root.Audio:null;
 const ContextAPI=root.AudioContext||root.webkitAudioContext;
 function status(message){try{onStatus(message)}catch(_){}}
 function clamp(n){return Math.min(1,Math.max(0,Number.isFinite(Number(n))?Number(n):0))}
 function stopFade(){if(fadeTimer!==null){root.clearInterval(fadeTimer);fadeTimer=null}}
-function stop(){request++;stopFade();if(current){current.pause();current.src='';current=null}currentId=null}
+function stopAmbience(){
+ if(ambience){ambience.pause();ambience.src='';ambience=null}
+ ambienceId=null;
+}
+function ambienceVolume(){return Math.min(.055,musicVolume*.27)}
+function ambienceFor(place,mood){
+ if(mood==='tension'||mood==='ending')return null;
+ const location=String(place||'');
+ if(/카페|뒤뜰|서점|집|상담/.test(location))return null;
+ if(/교실/.test(location))return 'classroom';
+ if(/학년연구실|교무실|교직원전체회의|교직원 회의|학년회의/.test(location))return 'workroom';
+ return null;
+}
+function setAmbience(id){
+ if(id!==null&&!Object.prototype.hasOwnProperty.call(AMBIENCE,id))throw Error('UNKNOWN_AMBIENCE');
+ if(!enabled||id===null){stopAmbience();return}
+ if(ambienceId===id&&ambience&&!ambience.paused)return;
+ stopAmbience();
+ if(!AudioAPI)return;
+ const player=new AudioAPI(AMBIENCE[id].url);
+ if(typeof player.canPlayType==='function'&&!player.canPlayType('audio/ogg'))return;
+ player.preload='none';player.loop=true;player.volume=ambienceVolume();
+ ambience=player;ambienceId=id;
+ const playing=player.play();
+ if(playing&&typeof playing.catch==='function')playing.catch(()=>{
+  if(ambience===player)stopAmbience();
+ });
+}
+function stop(){
+ request++;stopFade();
+ if(current){current.pause();current.src='';current=null}
+ currentId=null;stopAmbience();
+}
 function createAudio(id){
  if(!AudioAPI)return null;
  const player=new AudioAPI(TRACKS[id].url);
@@ -75,6 +126,7 @@ function isEnabled(){return enabled}
 function setMusicVolume(value){
  musicVolume=clamp(value);
  if(current)current.volume=musicVolume;
+ if(ambience)ambience.volume=ambienceVolume();
  return musicVolume;
 }
 function setSfxVolume(value){sfxVolume=clamp(value);return sfxVolume}
@@ -146,8 +198,18 @@ function physicalNote(kind,at){
  source.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
  source.start(at);source.stop(at+spec.seconds+.005);
 }
+function playFoley(kind){
+ if(!AudioAPI||!Object.prototype.hasOwnProperty.call(FOLEY,kind)){note('transition');return}
+ const clip=new AudioAPI(FOLEY[kind].url);
+ if(typeof clip.canPlayType==='function'&&!clip.canPlayType('audio/ogg')){note('transition');return}
+ clip.preload='none';clip.loop=false;clip.volume=Math.min(.2,sfxVolume*.4);
+ const playing=clip.play();
+ if(playing&&typeof playing.catch==='function')playing.catch(()=>note('transition'));
+}
 function note(kind){
- if(!fxEnabled||sfxVolume<=0||!ContextAPI||(!CUES[kind]&&!PHYSICAL[kind]))return;
+ if(!fxEnabled||sfxVolume<=0)return;
+ if(Object.prototype.hasOwnProperty.call(FOLEY,kind)){playFoley(kind);return}
+ if(!ContextAPI||(!CUES[kind]&&!PHYSICAL[kind]))return;
  try{
   if(!ctx)ctx=new ContextAPI();
   if(ctx.state==='suspended')ctx.resume().catch(()=>{});
@@ -170,9 +232,10 @@ function note(kind){
 function credit(){
  return {creator:'Scott Buckley',url:'https://www.scottbuckley.com.au',
  license:LICENSE,tracks:Object.values(TRACKS).map(t=>({name:t.name,page:t.page})),
- credit:'Music by Scott Buckley — CC BY 4.0. www.scottbuckley.com.au'};
+ credit:'Music by Scott Buckley — CC BY 4.0. www.scottbuckley.com.au',
+ recordings:[...Object.values(AMBIENCE),...Object.values(FOLEY)].map(({name,creator,page,license})=>({name,creator,page,license}))};
 }
-const api=Object.freeze({VERSION,TRACKS,dayTrack,choiceTrack,sceneTrack,placeCue,note,setTrack,setEnabled,
+const api=Object.freeze({VERSION,TRACKS,AMBIENCE,FOLEY,dayTrack,choiceTrack,sceneTrack,placeCue,ambienceFor,setAmbience,note,setTrack,setEnabled,
  isEnabled,setMusicVolume,setSfxVolume,musicLevel,sfxLevel,setEffectsEnabled,stop,credit,
  onStatus(fn){onStatus=typeof fn==='function'?fn:()=>{}}});
 if(typeof module==='object'&&module.exports)module.exports=api;
