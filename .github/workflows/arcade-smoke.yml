@@ -14,6 +14,14 @@ on:
       - 'supabase/functions/arcade-leaderboard/index.ts'
       - 'tests/arcade-smoke.mjs'
       - '.github/workflows/arcade-smoke.yml'
+  pull_request:
+    paths:
+      - 'tests/arcade-smoke.mjs'
+      - 'teacher-volleyball.html'
+      - 'teacher-run.html'
+      - 'index.html'
+      - 'js/arcade-leaderboard-v1.js'
+      - '.github/workflows/arcade-smoke.yml'
   workflow_dispatch:
 permissions:
   contents: read
