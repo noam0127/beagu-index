@@ -33,6 +33,7 @@ function link(url,label,cls){
 function showMessage(error){$("postitMessage").textContent=error||""}
 function readableError(e){
  const m={LEVEL_REQUIRED:"Lv.2 인증이 필요합니다. 오른쪽 위 레벨 표시를 확인하세요.",
+ COMMENT_READ_LEVEL_REQUIRED:"🔒 댓글은 Lv.1부터 열람할 수 있습니다.",
  POST_RATE_LIMIT:"오늘의 작성 횟수(3개) 또는 작성 간격 제한에 도달했습니다.",
  COMMENT_RATE_LIMIT:"오늘의 댓글 횟수(12개) 또는 작성 간격 제한에 도달했습니다.",
  INVALID_POST:"글을 확인해주세요. 이메일, 전화번호, 링크는 넣지 말아주세요.",
@@ -134,10 +135,12 @@ function buildPost(post){
  const like=actionButton((post.liked?"♥":"♡")+" "+post.likes,async()=>{
   await mutation("toggle_like",{target_type:"post",target_id:post.id});
  },{className:post.liked?"active":"",disabled:blocked,title:blocked?"Lv.2부터 공감할 수 있습니다":"공감"});
- const comment=actionButton("▤ 댓글 "+post.comments,async()=>{
+ const canReadComments=state.level>=1;
+ const comment=actionButton(canReadComments?"▤ 댓글 "+post.comments:"🔒 Lv.1 댓글",async()=>{
+  if(state.level<1)return;
   if(state.expanded.has(post.id))state.expanded.delete(post.id);else state.expanded.add(post.id);
   await toggleComments(post.id,entry);
- });
+ },{disabled:!canReadComments,title:canReadComments?"댓글 열람":"🔒 Lv.1부터 댓글을 열람할 수 있습니다"});
  const report=actionButton("⚑ 신고",async()=>{
   if(!confirm("이 포스트잇을 신고하시겠습니까?"))return;
   await mutation("report",{target_type:"post",target_id:post.id});
@@ -160,10 +163,11 @@ async function mutation(action,data){
  catch(e){showMessage(readableError(e))}
 }
 async function fillComments(id,host){
+ if(state.level<1){host.replaceChildren();host.hidden=true;return;}
  host.replaceChildren(node("div","bookmark-comment","댓글을 불러오는 중…"));
  try{
   const {comments}=await request("comments",{post_id:id});
-  if(!host.isConnected)return;
+  if(!host.isConnected||state.level<1){host.replaceChildren();host.hidden=true;return;}
   host.replaceChildren();
   if(!comments.length)host.append(node("div","bookmark-comment","첫 댓글을 남겨보세요."));
   for(const c of comments){
@@ -235,6 +239,14 @@ function handleLevel(e){
  const level=e?.detail?.level;
  if(Number.isInteger(level))$("beaguLevelState").dataset.level=String(level);
  updateComposeAccess();
+ if(state.level<1){
+  state.expanded.clear();
+  // Previously retrieved comments must not remain visible on downgrade.
+  for(const host of $("postitThread").querySelectorAll(".postit-comments")){
+   host.replaceChildren();host.hidden=true;
+  }
+ }
+ void loadPosts();
 }
 async function findSchools(){
  const q=$("postitSchoolSearch").value.trim();const list=$("postitSchoolResults");
@@ -277,6 +289,7 @@ $("postitSubmit").addEventListener("click",async()=>{
  }catch(e){showMessage(readableError(e))}
  finally{btn.disabled=false;state.busy=false}
 });
+
 // Downward scroll gives the attached papers a brief, wind-like flutter.
 // Animate paper layers only: the thread's layout and FLIP positions stay fixed.
 const breezePreference=window.matchMedia("(prefers-reduced-motion: reduce)");
