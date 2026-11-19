@@ -177,13 +177,22 @@ const good=[
  {emoji:"🌿",name:"쉬는 시간",heal:15,color:"#ecffe0"}
 ];
 const upgrades=[
- {title:"💪 체력 +25",id:"vital"},
- {title:"👟 이동속도 +18%",id:"speed"},
- {title:"🛡️ 무적시간 +0.4초",id:"guard"},
- {title:"☕ 회복효과 +50%",id:"heal"}
+ {title:"💪 체력 +25",id:"vital",detail:"최대 체력 증가 · 즉시 체력 회복"},
+ {title:"👟 이동속도 +18%",id:"speed",detail:"남은 요일 동안 이동이 빨라짐"},
+ {title:"🛡️ 무적시간 +0.4초",id:"guard",detail:"피격 후 보호시간 연장"},
+ {title:"☕ 회복효과 +50%",id:"heal",detail:"회복 아이템 효과 증가"}
+];
+// Each day picks one of three different events; explanations appear only while active.
+const dayEvents=[
+ [{id:"rush",icon:"📨",title:"메일 폭주"},{id:"support",icon:"🤝",title:"동료의 도움"},{id:"focus",icon:"✨",title:"수업 몰입"}],
+ [{id:"rush",icon:"📞",title:"돌발 전화"},{id:"focus",icon:"🎨",title:"수업 집중"},{id:"support",icon:"☕",title:"커피 휴식"}],
+ [{id:"support",icon:"💌",title:"응원의 메시지"},{id:"rush",icon:"📋",title:"추가 업무"},{id:"focus",icon:"🌟",title:"멋진 수업"}],
+ [{id:"rush",icon:"🗂️",title:"서류 폭주"},{id:"support",icon:"🤝",title:"동료의 응원"},{id:"focus",icon:"💡",title:"아이디어 번뜩"}],
+ [{id:"focus",icon:"🎉",title:"퇴근이 눈앞에"},{id:"rush",icon:"📣",title:"긴급 공문"},{id:"support",icon:"🌿",title:"쉬는 시간"}]
 ];
 let W=600,H=420,dpr=1,state="ready",day=0,dayTime=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
+let activeEvent=null,eventSeconds=0,eventTriggered=false,fridayBossAnnounced=false;
 let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
 let last=0,shake=0,notice="",noticeTime=0,soundOn=false,audio=null,profile=difficultyProfiles.hard,startTicket=0,specialCooldown=0,specialFlash=0,lastTapAt=0,lastTapX=0,lastTapY=0;
 try{best=Number(localStorage.getItem("teacherRunBestV2"))||0;soundOn=localStorage.getItem("teacherRunSoundV2")==="1";}catch(e){}
@@ -237,14 +246,14 @@ async function start(){
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
  state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};
+ combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;eventTriggered=false;fridayBossAnnounced=false;
  items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;pointerId=null;pointerY=null;
  pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 점프 불가":difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
 }
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
- items=[];sparks=[];floats=[];score=0;day=0;dayTime=0;clock=0;combo=0;
+ items=[];sparks=[];floats=[];score=0;day=0;dayTime=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;eventTriggered=false;fridayBossAnnounced=false;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -303,7 +312,7 @@ function burst(x,y,color,n=9){
  sparks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.5+Math.random()*.4,color,r:2+Math.random()*3});}
 }
 function float(x,y,text,color="#fff"){floats.push({x,y,text,color,life:1});}
-function addScore(n){score+=Math.round(n*(1+Math.min(combo,20)*.04));updateLabels();}
+function addScore(n){score+=Math.round(n*(1+Math.min(combo,20)*.04)*(activeEvent?.id==="focus"?1.35:1));updateLabels();}
 function hit(a){
  if(a.good){
   let amount=Math.round(a.heal*skill.heal*profile.heal),before=life;life=Math.min(maxLife,life+amount);
@@ -324,20 +333,43 @@ function hit(a){
  }
  updateLabels();
 }
+function triggerDayEvent(){
+ if(eventTriggered||state!=="playing")return;
+ eventTriggered=true;
+ const events=dayEvents[day];
+ activeEvent=events[Math.floor(Math.random()*events.length)];
+ eventSeconds=activeEvent.id==="support"?3.5:6;
+ if(activeEvent.id==="support"){
+  const heal=Math.max(8,Math.round(maxLife*.18));
+  life=Math.min(maxLife,life+heal);
+  player.inv=Math.max(player.inv,2.7+skill.guard);
+  burst(player.x,player.y,"#b2ffe0",18);
+  updateLabels();
+ }
+ const detail=activeEvent.id==="rush"?"업무 속도 상승":
+   activeEvent.id==="support"?"체력 회복 · 보호막":"점수 35% 추가";
+ setNotice(activeEvent.icon+" "+activeEvent.title+" · "+detail,2.8);
+ playTone(activeEvent.id==="rush"?430:activeEvent.id==="support"?820:690,.17,"triangle",.035);
+}
 function spawn(){
  const isGood=Math.random()<Math.min(.55,profile.goodChance+(dayTime>12?.04:0)),source=isGood?good:bad;
  let a=source[Math.floor(Math.random()*source.length)];
- const x=30+Math.random()*Math.max(1,W-60);
+ let x=30+Math.random()*Math.max(1,W-60);
+ // Friday's final rush alternates two edge lanes, leaving an escape route.
+ if(day===4&&dayTime>13&&!isGood)x=Math.max(30,Math.min(W-30,
+   W*(Math.floor((dayTime-13)/2.7)%2===0?.25:.75)+(Math.random()-.5)*W*.19));
  let speed=(88+day*18+Math.random()*56)*profile.enemySpeed;
- if(day===4&&dayTime>13)speed*=1.3;
+ if(activeEvent?.id==="rush")speed*=1.20;
+ if(day===4&&dayTime>13)speed*=1.20;
  items.push({x,y:-40,speed,r:(20+Math.random()*3)*(isGood?1:profile.enemySize),size:isGood?1:profile.enemySize,wobble:(3+Math.random()*7)*profile.zigzag,phase:Math.random()*6.28,good:isGood,...a});
 }
 function nextDay(){
  if(day===4){finish(true);return;}
  state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;playTone(900,.3);
  let picks=upgrades.slice();
- picks.sort(()=>Math.random()-.5);picks=picks.slice(0,3);
- message(days[day]+" 퇴근!","능력 선택",picks.map(u=>({label:u.title,action:()=>choose(u)})),"🌙");
+ for(let i=picks.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[picks[i],picks[j]]=[picks[j],picks[i]];}
+ picks=picks.slice(0,3);
+ message(days[day]+" 퇴근!","보상 하나를 선택하세요",picks.map(u=>({label:u.title,detail:u.detail,action:()=>choose(u)})),"🌙");
 }
 function choose(u){
  if(u.id==="vital"){maxLife+=25;life=Math.min(maxLife,life+35);}
@@ -345,6 +377,7 @@ function choose(u){
  if(u.id==="guard")skill.guard+=.4;
  if(u.id==="heal")skill.heal*=1.5;
   day++;dayTime=0;items=[];spawnClock=.65;life=Math.min(maxLife,life+10);
+  activeEvent=null;eventSeconds=0;eventTriggered=false;
  player.inv=1.2;pointerId=null;pointerX=null;pointerY=null;state="playing";updateLabels();setNotice(days[day]+" 시작!",2);closeMessage();playTone(610,.16);
 }
 function finish(win){
@@ -378,7 +411,13 @@ function help(){
  {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
 function update(dt){
- clock+=dt;dayTime+=dt;specialCooldown=Math.max(0,specialCooldown-dt);specialFlash=Math.max(0,specialFlash-dt);player.inv=Math.max(0,player.inv-dt);
+ clock+=dt;dayTime+=dt;
+ if(eventSeconds>0){eventSeconds=Math.max(0,eventSeconds-dt);if(eventSeconds===0)activeEvent=null;}
+ if(!eventTriggered&&dayTime>=6)triggerDayEvent();
+ if(day===4&&dayTime>=13&&!fridayBossAnnounced){
+  fridayBossAnnounced=true;setNotice("⚠ 금요일 공문 폭풍 · 좌우를 살펴요",2.5);playTone(240,.26,"sawtooth",.04);
+ }
+ specialCooldown=Math.max(0,specialCooldown-dt);specialFlash=Math.max(0,specialFlash-dt);player.inv=Math.max(0,player.inv-dt);
   shake=Math.max(0,shake-dt);noticeTime=Math.max(0,noticeTime-dt);
  const dir=(pressed.has("right")?1:0)-(pressed.has("left")?1:0);
  const speed=285*skill.speed*profile.heroSpeed;
@@ -396,7 +435,7 @@ function update(dt){
  player.x=Math.max(27,Math.min(W-27,player.x));
  player.y=canPlayerRise()?Math.max(76,Math.min(H-52,player.y)):H-52;
  spawnClock-=dt;
- if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-day*.085-(dayTime>13&&day===4?.2:0))/profile.spawnPressure)*(0.8+Math.random()*.45);}
+ if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-day*.085-(dayTime>13&&day===4?.2:0))/profile.spawnPressure)*(0.8+Math.random()*.45)/(activeEvent?.id==="rush"?1.30:1);}
  for(let i=items.length-1;i>=0;i--){
   const a=items[i];a.y+=a.speed*dt;a.x+=Math.sin(clock*(2+profile.zigzag)+a.phase)*a.wobble*dt;
    if(!a.good&&a.y>H*.18&&a.y<H-75){
@@ -516,7 +555,12 @@ function draw(){
  roundRect(12,H-7,W-24,3,2,"rgba(24,62,83,.15)");
  if(dayTime>0)roundRect(12,H-7,(W-24)*Math.min(1,dayTime/23.5),3,2,"#2b9c8b");
  if(noticeTime>0){ctx.textAlign="center";roundRect(W/2-68,93,136,27,9,"rgba(17,54,70,.88)");ctx.font="bold 13px sans-serif";ctx.fillStyle="#fff";ctx.fillText(notice,W/2,111,126);}
- if(day===4&&dayTime>13){ctx.textAlign="center";ctx.font="900 12px sans-serif";ctx.fillStyle="#8e3030";ctx.fillText("⚠ 공문 폭풍",W/2,131,Math.max(120,W-20));}
+ if(activeEvent&&eventSeconds>0){
+  const label=activeEvent.icon+" "+activeEvent.title+" · "+Math.ceil(eventSeconds)+"s";
+  ctx.textAlign="center";roundRect(W/2-78,124,156,25,10,"rgba(25,55,84,.9)");
+  ctx.font="bold 12px sans-serif";ctx.fillStyle="#fff6ce";ctx.fillText(label,W/2,141,150);
+ }
+ if(day===4&&dayTime>13){ctx.textAlign="center";ctx.font="900 12px sans-serif";ctx.fillStyle="#8e3030";ctx.fillText("⚠ 공문 폭풍",W/2,177,Math.max(120,W-20));}
  ctx.restore();
 }
 function tick(t){const dt=Math.min(.04,(t-last)/1000||0);last=t;if(state==="playing")update(dt);draw();requestAnimationFrame(tick);}
