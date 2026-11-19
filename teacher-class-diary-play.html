@@ -369,7 +369,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-student-doyun-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-thigh4">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
-<link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-hud-top3">
+<link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-sentence-fill4">
 <link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-linear-flow2">
 <link rel="stylesheet" href="styles/class-diary-progress-controls-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-background-only-v1.css?v=20261120-1">
@@ -666,7 +666,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-demo-v1.js"></script>
 <script src="js/class-diary-journey-v1.js?v=20261120-school-name-input7"></script>
 <script src="js/class-diary-motion-v1.js"></script>
-<script src="js/class-diary-literary-v1.js?v=20261120-sentence-cursor1"></script>
+<script src="js/class-diary-literary-v1.js?v=20261120-sentence-fill4"></script>
 <script>
 (function(){
 'use strict';
@@ -988,9 +988,9 @@ function vnSplit(text,limit){
 }
 /* Allow the story to breathe across the full-height paper panel.
    Preserve paragraph breaks, while keeping long chapters paged and scrollable. */
-function vnPages(paragraphs){
+function vnPages(paragraphs,source){
  // The full-semester story uses actual screen-width lines, not arbitrary character pages.
- if(document.body.classList.contains('is-playing')&&document.body.classList.contains('is-literary-mode'))return literary.paginate(paragraphs);
+ if(document.body.classList.contains('is-playing')&&document.body.classList.contains('is-literary-mode'))return literary.paginate(paragraphs,source);
  const limit=storyMode==='semester'?(window.innerHeight<=520?74:window.innerWidth<=360?98:window.innerWidth<=620?125:205):(window.matchMedia('(max-width:620px)').matches?620:1000);
  const pages=[];let current=[],count=0;
  for(const paragraph of paragraphs){
@@ -1036,14 +1036,17 @@ function vnPresent(){
  $('choiceSection').hidden=true;
  $('nextBtn').hidden=true;
  $('vnMore').hidden=false;
- $('vnMore').setAttribute('aria-label',document.body.classList.contains('is-literary-mode')?'다음 줄 또는 페이지':vnState.index<vnState.pages.length-1?'다음 대사':done?'다음 장면':'선택지 보기');
+ $('vnMore').setAttribute('aria-label',document.body.classList.contains('is-literary-mode')?'다음 문장 또는 페이지':vnState.index<vnState.pages.length-1?'다음 대사':done?'다음 장면':'선택지 보기');
 }
 function vnStart(done){
  const source=$(done?'outcomeText':'chapterText');
  const texts=[...source.querySelectorAll('p')].map(node=>node.textContent);
  if(done&&$('outcomeLine').textContent)texts.push($('outcomeLine').textContent);
  literary.start();
- vnState.pages=vnPages(texts);
+ // Ensure the destination box is measurable before deciding where pages break.
+ $('vnDialogueSlot').querySelector('.vn-dialogue').hidden=done;
+ $('outcome').hidden=!done;
+ vnState.pages=vnPages(texts,source);
  if(!vnState.pages.length)vnState.pages=[['…']];
  vnState.index=0;vnState.kind=done?'outcome':'chapter';
  $('vnInfo').hidden=true;$('vnInfoBtn').setAttribute('aria-expanded','false');
