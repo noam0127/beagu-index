@@ -365,7 +365,7 @@ function scene(state,world){
  if(completed&&!reflecting)return null;
  const data=chosenEvent(state,world);
  const office=officialContext(world,state.day);
- const colleague=state.profile.partner==='man'?'현우 선생님':state.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
+ const colleague=state.profile.partner==='man'?'현우 선생님':state.profile.partner==='woman'?'지윤 선생님':'민서 선생님';
  const paragraphs=eventProse(state,world).map(x=>x.replace(/\{colleague\}/g,colleague));
  const climate=climateParagraph(state);
  if(climate)paragraphs.splice(Math.min(1,paragraphs.length),0,climate.replace(/\{colleague\}/g,colleague));
@@ -404,7 +404,7 @@ function choose(state,id,world){
      .replace(/내비게이션 업데이트/g,'복합기 인쇄 설정')
      .replace(/내비게이션 화면에서 업데이트 안내/g,'복합기 설정 화면에서 인쇄 안내');
  }
- const name=next.profile.partner==='man'?'현우 선생님':next.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
+ const name=next.profile.partner==='man'?'현우 선생님':next.profile.partner==='woman'?'지윤 선생님':'민서 선생님';
  for(const key of ['affection','trust','agency','fatigue'])
    next.stats[key]=clamp(next.stats[key]+Number(raw.delta[key]||0));
  for(const [i,key] of ['voice','boundary'].entries())
