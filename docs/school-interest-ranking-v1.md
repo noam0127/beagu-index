@@ -1,34 +1,30 @@
-# 학교 관심 순위 v1 (2026-11-20)
+# 실시간 급상승 학교 (2026-11-20 개편)
 
-## 위치 / 레벨
-- 검색 화면의 **학교별 찾기** 입력창 바로 아래 (search.html, search-lv1.html).
-- Lv.0: 잠금 카드만 표시하며 순위 데이터 호출 없음.
-- Lv.1/Lv.2: `X-Beagu-Session` 토큰을 서버에서 확인한 뒤 두 순위 표시.
-- 최근 7일 많이 찾는 학교 / 이전 7일 대비 급상승 학교, 각 5개 기본 표시, 최대 10개.
-- 기준 미달일 때는 실제 순위를 추정하거나 가짜 데이터를 넣지 않음.
+## 위치와 접근
+- `search.html` 및 `search-lv1.html`의 **학교명 검색 입력칸 아래 별도 독립 카드**로 표시한다.
+- `학교별 찾기`에서만 표시하고, `지역 찾기` 탭에서는 감춘다.
+- Lv.0: 잠금 카드만 표시(서버 순위 데이터 미전달). Lv.1 이상: 자동 검증된 실제 순위.
+- 초기 기획의 '많이 찾는 학교' 탭을 없애고 **실시간 급상승 학교** 하나만 제공한다.
 
-## 집계
-- 기존 `beagu_log_school_search` 성공 후에만 `beagu_record_school_interest` 호출.
-- 검색을 확정하거나 학교를 직접 선택 / 상세 펼치기 할 때만 기록; 타이핑만으로 기록되지 않음.
-- 익명 브라우저 UUID + 서버측 비밀 소금값으로 SHA-256 해시를 생성해 당일 학교별 중복을 제거.
-- 7일 구간에서 `count(distinct visitor_digest)`로 재중복 제거.
-- 5개 이상의 서로 다른 익명 브라우저가 기록된 학교만 공개.
-- 급상승 = 최근 7일 순방문 수 - 이전 7일 순방문 수 >= 3.
-- 최소 공개 기준과 레벨 권한은 서버측 RPC/Edge Function에서 enforced.
-- 방문자는 실제 사람 1명과 정확히 일치하지 않음(브라우저별 UUID로 추정하며 조작 가능성 있음).
+## 급상승 정의
+- 최근 24시간 순방문 브라우저 수에서 직전 24시간 순방문 브라우저 수를 뺀 **증가 인원** 기준 내림차순.
+- 한 브라우저가 같은 학교를 반복 검색해도 해당 기간에는 1명으로 계산(임의 UUID의 해시).
+- 최근 24시간 순방문 수 5명 이상, 직전 24시간 대비 증가 3명 이상일 때 표시.
+- 5위까지 기본 노출, 최대 10위 펼치기. 각 학교 옆에 `↑ N명` 증가량을 표시한다.
+- 페이지가 열려 있는 동안 **1분마다 서버에 새 순위를 요청**한다. 숨김 탭/비활성 페이지에서는 폴링하지 않는다.
+- Supabase Realtime 스트리밍이 아니라 60초 간격으로 최신 집계를 가져오는 방식이다.
+- 집계 부족 시 가상 학교 순위 대신 안내 문구를 출력한다. 방문자 수는 실제 사람 수와 정확히 일치하지 않을 수 있다.
 
-## 서버 구성
-- Supabase 프로젝트: `snvzwrexuqavnfvzgxqj`
-- 마이그레이션: `beagu_school_interest_rankings_v1`
-- 테이블: `public.beagu_school_interest_daily` (RLS, 일반 열람/쓰기 권한 없음), `beagu_private.school_interest_actions` (RLS)
-- 기록용 RPC: `public.beagu_record_school_interest` (기존 이벤트의 유효 action_id를 검사)
-- 읽기 RPC: `public.beagu_school_interest_rankings` (service_role만 실행 가능)
-- Edge Function: `beagu-school-interest-v1` (`verify_jwt=false`; 자체 Lv.1+ 세션 검증, 공개 origin 제한)
-- `cron.job`: `beagu_interest_cleanup_v1` 매일 실행, 35일 경과 기록/해시 삭제
+## 구현
+- DB migration: `beagu_interest_live_rising_24h` (기존 `beagu_school_interest_rankings()` 조회 기준 교체).
+- Edge Function `beagu-school-interest-v1` v2: 기존 서버 Lv.1 세션 검증 유지, `rising` 목록만 응답.
+- UI: `styles/beagu-school-interest-v1.css`, `js/beagu-school-interest-v1.js`
+- 탭 상태 동기화: `search.html` 및 `js/level-search.js`
+- 기존 학교 조회 이벤트 수집과 보안 제한, 35일 자동 정리, RLS, 최소 공개 기준은 유지한다.
 
-## 운영·검증
-- 기존 school_search_events 기록은 변경하거나 삭제하지 않음; 과거 이벤트로 고유 방문자를 소급 추정하지 않음.
-- 신규 집계 전환 전의 검색 기록은 순위에 포함되지 않음.
-- DB 트랜잭션 안에서 정상 이벤트 → 익명 방문 1건 기록 → 전체 롤백을 검증함.
-- 무효 action_id 호출 실패, 일반 사용자 집계 테이블 읽기 불가, service_role RPC 권한 확인.
-- Edge Function은 ACTIVE로 배포됐으나 실제 브라우저를 통한 Lv.1 세션 종단간 테스트 및 Cloudflare 배포 확인은 별도 필요.
+## 검증
+- DB 트랜잭션 안에서 서로 다른 브라우저 5명의 가상 방문을 삽입하고,
+  급상승 결과가 5명 증가로 나타남을 확인했다. ROLLBACK하여 운영 데이터는 변경되지 않았다.
+- Supabase Edge Function v2 ACTIVE 확인.
+- GitHub main 파일 변경까지 확인. 실제 Cloudflare 운영 도메인 반영 여부 및
+  사용자 Lv.1 세션으로 브라우저에서 끝까지 작동하는지는 아직 검증하지 못했다.
