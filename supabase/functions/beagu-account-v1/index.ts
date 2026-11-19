@@ -307,12 +307,15 @@ async function handler(req: Request): Promise<Response> {
         return respond(origin,403,{error:'ACCOUNT_NOT_ELIGIBLE'});
       if (input.confirm!=='DELETE_MY_ACCOUNT' || !password(input.password))
         return respond(origin,400,{error:'CONFIRMATION_REQUIRED'});
+      const proof = typeof input.captchaToken==='string' ? input.captchaToken : '';
+      if (!/^[A-Za-z0-9._~-]{20,2048}$/.test(proof))
+        return respond(origin,400,{error:'CAPTCHA_REQUIRED'});
       if (!await gate('delete-user',user.id,3))
         return respond(origin,429,{error:'TOO_MANY_ATTEMPTS'});
       const auth=newAuth();
       // Fresh password verification prevents stolen access-token-only deletion.
       const {data:verified,error:verifyError}=await auth.auth.signInWithPassword({
-        email:user.email,password:input.password as string
+        email:user.email,password:input.password as string,options:{captchaToken:proof}
       });
       if (verifyError || verified?.user?.id!==user.id)
         return refuseLogin(origin);
