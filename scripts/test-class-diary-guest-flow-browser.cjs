@@ -70,6 +70,10 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),3);
    await page.locator('[data-partner-choice="none"]').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Portrait touch selects without skipping the first-day button');
+   assert.equal(await page.locator('#partner').inputValue(),'none','Portrait selection updates the form');
+   assert.equal(await page.locator('#setupNext').isVisible(),true,'First-day button remains at the bottom');
+   await page.locator('#setupNext').click();
    await page.locator('#novel').waitFor({state:'visible'});
    const state=await page.evaluate(()=>({
     scrollHeight:document.documentElement.scrollHeight,
@@ -102,5 +106,20 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    console.log('PASS mocked guest '+device.name+': home code → title → school → colleague → story, saved progress and settings');
    await page.close();
   }
+  // A bookmarked legacy school URL must show the title without doing
+  // school/world requests or displaying the blocking access error page.
+  const bare=await browser.newPage({viewport:{width:390,height:844}});
+  let worldCalls=0;
+  await bare.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-world-v1',route=>{
+   worldCalls++;return route.abort('blockedbyclient');
+  });
+  await bare.goto(base+'/teacher-class-diary-play.html?schoolId=A123456',{waitUntil:'domcontentloaded'});
+  await bare.locator('#diaryLanding').waitFor({state:'visible'});
+  assert.equal(worldCalls,0,'No school data lookup until school choice on the next screen');
+  assert.equal(await bare.locator('#notice').isVisible(),false,'Never show a preselection access error');
+  await bare.locator('#diaryLandingStart').click();
+  await bare.locator('#setup').waitFor({state:'visible'});
+  assert.equal(await bare.locator('#diarySchoolMode').isVisible(),true,'School selector belongs to the following setup page');
+  await bare.close();
  }finally{await browser.close()}
 })().catch(error=>{console.error(error);process.exit(1)});
