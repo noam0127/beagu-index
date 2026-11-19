@@ -43,7 +43,7 @@ assert(play.src.includes("sessionStorage.removeItem(handoffKey)"),'Ticket must b
 assert(play.src.includes("action:'verify-ticket'"),'Guest ticket must be checked by the server');
 assert(play.src.includes("class-diary-guest-access-v1"),'Edge Function verification missing');
 assert(play.src.includes("result.scope!=='class-diary-fictional-guest'"),'Ticket must be strictly scoped to fictional game');
-assert(play.src.includes("prepareGuestProfile()"),'Guest story must not ask for profile fields');
+assert(play.src.includes("prepareGuestProfile()"),'Guest needs neutral defaults for the non-name fields');
 assert(play.src.includes("if(isGuest)journey.go(3)"),'Picture selection should advance the guest setup');
 assert(play.src.indexOf('class="setup-player-stamp"')>play.src.indexOf('class="form-grid"'),'Pencil preview must be below input section');
 assert(play.src.includes('class-diary-guest-experience-v1.css'),'Guest should use one-screen presentation');
@@ -53,13 +53,17 @@ assert(!play.src.includes('레벨2 임시 승인'),'Guest must not be misreprese
 assert(play.src.includes('id="playerName"'));
 const setupSection=play.src.split('<form id="profileForm">')[1].split('</form>')[0];
 const formInputs=[...setupSection.matchAll(/\<(?:input|select)\b[^>]*\bid="([^"]+)"/g)].map(x=>x[1]);
-assert.deepEqual(formInputs,['playerName','experience','gender','mbti','partner'],'Exactly 5 setup fields, without age');
+assert.deepEqual(formInputs,['setupSchoolQuery','playerName','experience','gender','mbti','partner'],'One school query before 5 profile settings, without age');
+assert(setupSection.indexOf('id="setupSchoolQuery"')<setupSection.indexOf('id="playerName"'),'School must come before name');
+assert(setupSection.includes('id="setupSchoolSurvey"'),'Unpublished school must offer survey');
+assert(setupSection.includes('id="setupSchoolRecheck"'),'Unpublished school must allow rechecking');
+assert(play.src.includes('class-diary-school-picker-v1.js'),'Live school checker must be attached');
 assert(!play.ids.has('age'),'No player age input');
 assert(play.src.includes('guestIntroTimer=setTimeout('),'Guest intro must advance after the cinematic');
 assert(play.src.includes('},5000)'),'Guest cinematic must last approximately five seconds');
 assert(play.src.includes('function vnFitPage('),'Overflowing dialogue must be repaginated');
 assert(play.src.includes('class="panel vn-setup"'),'Dating-sim setup should replace plain form');
-for(const id of ['setupPlayerPreview','setupPortraitWoman','setupPortraitMan','setupPortraitNone','partnerDescription']){
+for(const id of ['setupPlayerPreview','setupPortraitWoman','setupPortraitMan','setupPortraitNone']){
  assert(play.ids.has(id),'Setup portrait/preview missing: '+id);
 }
 for(const key of ['woman','man','none']){
@@ -69,6 +73,8 @@ assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a
 assert(play.src.includes("sound.note('uiStart')"),'Beginning the novel should play a cue');
 assert(play.src.includes("setupDescription"),'Selecting cast should update story introduction');
 assert(play.src.includes('role="group" aria-label="동료 캐릭터 선택"'),'Card chooser should be accessible');
+assert(!play.src.includes('id="partnerDescription"'),'Removed descriptive form box must not return');
+assert(play.src.includes('<select id="partner" required hidden'),'Partner selection remains accessible to validation but not visual duplicates');
 
 assert(play.src.includes('engine.inferredProfile(world,{'));
 assert(play.src.includes("experience:$('experience').value"));
