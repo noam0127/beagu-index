@@ -774,7 +774,8 @@ function applySchoolName(){
  if(!input.checkValidity()){input.reportValidity();return false}
  if(world&&world.basic&&world.basic.id==='DEMO001'){
   // This name labels an entirely fictional world; no survey records or school lookup is implied.
-  world.basic.name=name;
+  // Keep the canonical demo world immutable for engine validation.
+  // The user-typed fictional school label belongs only to the story state.
   $('schoolLine').textContent=name+' · 가상의 이야기';
   $('openingSchool').textContent=$('schoolLine').textContent;
  }
@@ -1616,6 +1617,8 @@ $('profileForm').addEventListener('submit',e=>{
    experience:$('experience').value,
    gender:$('gender').value,mbti:$('mbti').value,partner:$('partner').value
   },plan));
+  if(world.mode==='public_fiction_demo'&&world.basic.id==='DEMO001')
+   baseGame.schoolName=$('diarySchoolName').value.trim().slice(0,80)||'가상의 초등학교';
   game=storyMode==='semester'?semester.createGame(baseGame):baseGame;
   sound.note('uiStart');
   render();autoSaveProgress();
