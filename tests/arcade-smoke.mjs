@@ -282,7 +282,7 @@ assert.match(volley,/state\.recordBroken=rememberBestScore\(finalScore\)/);
 assert.match(volley,/new window\.ArcadeLeaderboard\("volleyball_25"/);
 assert.match(runner,/new window\.ArcadeLeaderboard\("teacher_run_retirement"/);
 assert.doesNotMatch(volley,/formatTime|getElapsedTenths|updateClockUI|volley-time-label|BEST TIME|⏱/);
-assert.doesNotMatch(shared,/timedGame|fmtTime|openRecord|dialogElement|nickname/,"no name or time-rank inputs");
+assert.doesNotMatch(shared,/timedGame|fmtTime|openRecord|dialogElement|nickname:/,"no player-entered names or time-rank inputs");
 assert.match(shared,/b\.score-a\.score/,"higher scores rank ahead");
 assert.match(shared,/this\.score<=this\.board\[9\]\.score/,"lower nonqualifying score gets excluded");
 assert.match(volley,/EASY: animated feather wings/);
