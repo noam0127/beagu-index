@@ -800,25 +800,30 @@ async function searchDiarySchools(query,serial){
    button.addEventListener('click',async()=>{
     button.disabled=true;
     $('diarySchoolSurveyLink').hidden=true;
-    $('diarySchoolSearchMessage').textContent='공개된 조사 결과를 확인하고 있습니다.';
+    $('diarySchoolSearchMessage').textContent='이 학교의 공개 조사 결과를 확인하고 있습니다.';
     try{
-     const response=await fetch(API+'arcade-leaderboard?school_id='+encodeURIComponent(record.school_id),{cache:'no-store'});
-     if(!response.ok)throw Error('SCHOOL_STATUS_UNAVAILABLE');
-     const data=await response.json(),school=data.school;
-     if(!school||school.school_id!==record.school_id)throw Error('SCHOOL_NOT_FOUND');
-     const years=Array.isArray(school.available_years)?school.available_years.filter(y=>Number.isInteger(y)&&y>=2023&&y<=2026):[];
+     const response=await fetch(API+'arcade-leaderboard?school_id='+encodeURIComponent(record.school_id),{cache:'no-store',credentials:'omit'});
+     if(!response.ok)throw Error('PUBLIC_SCHOOL_RESULT_UNAVAILABLE');
+     const payload=await response.json(),school=payload.school;
+     if(!school||school.school_id!==record.school_id)throw Error('PUBLIC_SCHOOL_MISMATCH');
+     const years=Array.isArray(school.available_years)?
+      [...new Set(school.available_years.filter(year=>Number.isInteger(year)&&year>=2023&&year<=2026))].sort():[];
      if(school.eligible!==true||!years.length){
-      $('diarySchoolSearchMessage').textContent='이 학교에는 공개된 배구지수 설문 결과가 없습니다. 아래 설문에 참여해 주세요. 참여 후 집계·검수·공개 전까지는 입장이 제한됩니다.';
+      $('diarySchoolSearchMessage').textContent='이 학교는 공개된 배구지수 설문 결과가 없습니다. 설문에 참여해 주세요. 집계·검수 후 결과가 공개되면 시작할 수 있습니다.';
       $('diarySchoolSurveyLink').hidden=false;
       return;
      }
-     if(!/^[0-9a-f]{64}$/.test(token)){
-      $('diarySchoolSearchMessage').textContent='공개 조사 결과는 확인됐습니다. 실제 학교 플레이는 레벨2 인증이 필요합니다.';
-      return;
-     }
-     await loadSchoolWorld(record.school_id);
-    }catch(_){$('diarySchoolSearchMessage').textContent='학교 결과를 확인할 수 없습니다. 다시 선택해 주세요.';}
-    finally{button.disabled=false;}
+     const name=String(record.school_name||'').trim().slice(0,70);
+     const region=String(school.region||record.sido_standard||'지역 미확인').trim().slice(0,40);
+     if(!name)throw Error('PUBLIC_SCHOOL_NAME_MISSING');
+     schoolSelection=Object.freeze({id:record.school_id,name,region,years});
+     selectSchoolMode('real',name);
+     $('diarySchoolSearchDialog').hidden=true;
+     status(name+' · 공개된 학교 조사 정보 확인 완료');
+     $('diarySchoolName').focus();
+    }catch(_){
+     $('diarySchoolSearchMessage').textContent='학교 정보를 확인할 수 없습니다. 다시 선택해 주세요.';
+    }finally{button.disabled=false;}
    });
    results.append(button);shown++;
   }
