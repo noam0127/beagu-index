@@ -83,7 +83,8 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    }
    await page.locator('#novel').waitFor({state:'visible',timeout:5000});
    const sample=()=>page.evaluate(()=>{
-    const rows=[...document.querySelectorAll('#chapterText p.diary-literary-line')];
+    const activeId=document.getElementById('outcome').hidden?'chapterText':'outcomeText';
+    const rows=[...document.querySelectorAll('#'+activeId+' p.diary-literary-line')];
     const shown=rows.filter(row=>!row.hidden);
     const reader=document.querySelector('#vnDialogueSlot');
     const current=shown[shown.length-1];
@@ -107,11 +108,13 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      season:document.body.classList.contains('is-semester-mode'),
      literary:document.body.classList.contains('is-literary-mode'),
      choosing:document.body.classList.contains('is-choosing'),
+     nextScene:!document.getElementById('nextBtn').hidden,
      echo:document.querySelectorAll('.diary-literary-echo').length
     };
    });
    const waitReady=()=>page.waitForFunction(()=>{
-    const rows=[...document.querySelectorAll('#chapterText p.diary-literary-line:not([hidden])')];
+    const activeId=document.getElementById('outcome').hidden?'chapterText':'outcomeText';
+    const rows=[...document.querySelectorAll('#'+activeId+' p.diary-literary-line:not([hidden])')];
     return rows.length>0&&rows[rows.length-1].classList.contains('diary-literary-ready');
    },null,{timeout:15000});
    try{await waitReady();}
@@ -121,6 +124,7 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      error:window.__litTestError||'',
      playing:!document.querySelector('#novel')?.hidden,
      chapterHTML:document.querySelector('#chapterText')?.innerHTML.slice(0,600),
+     outcomeHTML:document.querySelector('#outcomeText')?.innerHTML.slice(0,600),
      proseLines:document.querySelectorAll('#chapterText p').length,
      literary:document.body.classList.contains('is-literary-mode'),
      scriptVersion:window.BeaguClassDiaryLiterary?.VERSION
@@ -161,14 +165,14 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    let turned=false;
    for(let n=0;n<90;n++){
     const before=await sample();
-    if(before.choosing){turned=true;break;}
+    if(before.choosing||before.nextScene){turned=true;break;}
     await page.evaluate(()=>document.getElementById('sceneArt').click());
     const after=await sample();
     if(before.visible<before.total){
      assert.equal(after.visible,before.visible+1,'Each input adds exactly one sentence');
      await waitReady();
     }else{
-     assert(after.choosing||after.visible===1,'A full page turns only on the next input');
+     assert(after.choosing||after.nextScene||after.visible===1,'A full page turns only on the next input');
      turned=true;
      break;
     }
