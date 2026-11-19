@@ -86,6 +86,15 @@ assert(play.src.includes('<select id="partner" required hidden'),'Legacy partner
 assert(play.ids.has('diarySchoolSurveyLink'),'Schools without published results offer a 2026 survey link');
 assert(play.src.includes('arcade-leaderboard?school_id='),'School survey eligibility is queried from existing published API');
 assert(play.src.includes('async function loadSchoolWorld(schoolId)'),'School data loads only after explicit selection');
+const journey=fs.readFileSync('js/class-diary-journey-v1.js','utf8');
+const guestStyle=fs.readFileSync('styles/class-diary-guest-experience-v1.css','utf8');
+assert(journey.includes('Math.min(3,Number(next)||1)'),'Setup must support the third review step');
+assert(journey.includes('go(3)'),'Colleague next button must enter the review screen');
+assert(journey.includes("step!==3"),'Submitting story should only work from first-day review');
+assert(journey.includes("setupReviewPartner"),'Review must show the actual selected colleague');
+assert(guestStyle.includes('setupPortraitNone'),'Minseo must have a matching photograph scale');
+assert(guestStyle.includes('Gowun Batang'),'Main action buttons should use the diary literary typography');
+
 assert(play.src.includes('await loadSchoolWorld(record.school_id)'),'Real school choice invokes the deferred loader');
 assert(play.src.includes('The title and first setup step never require a school ID'),'Initial screen cannot block on school');
 assert(play.src.includes("Fail closed for checkpoint writes"),'Failed progress retrieval cannot overwrite existing saves');
