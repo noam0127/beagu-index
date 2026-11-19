@@ -530,6 +530,54 @@ assert.match(html,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
 assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
+
+// Execute actual career finish code: 62-year win doubles accumulated points; losses do not.
+const finishStart=runner.indexOf("function finish(win){");
+const finishEnd=runner.indexOf("function pause(){",finishStart);
+assert.ok(finishStart>0&&finishEnd>finishStart);
+const runFinishSource=runner.slice(finishStart,finishEnd);
+function finishCareer(initialScore,seconds,victory){
+ return new Function("initialScore","seconds","victory",[
+ 'let state="playing",clock=seconds,score=initialScore,best=0,pointerId=null,pointerX=null,pointerY=null;',
+ 'const RETIREMENT_SECONDS=190,START_AGE=24,SECONDS_PER_YEAR=5;',
+ 'const pressed={clear(){}},schoolPicker={setLocked(){}},ranking={finish(score,stats){submitted={score,stats};}};',
+ 'let submitted=null,headline="",description="";',
+ 'const getAge=()=>Math.min(62,24+Math.floor(clock/5));',
+ 'const persist=()=>{},updateLabels=()=>{},playTone=()=>{},$=()=>({textContent:""});',
+ 'const message=(title,desc)=>{headline=title;description=desc;};',
+ runFinishSource,
+ 'finish(victory);return {state,score,best,clock,submitted,headline,description};'
+ ].join("\n"))(initialScore,seconds,victory);
+}
+const fullCareer=finishCareer(4200,189.99,true);
+assert.equal(fullCareer.state,"over");
+assert.equal(fullCareer.clock,190);
+assert.equal(fullCareer.score,8400);
+assert.equal(fullCareer.best,8400);
+assert.deepEqual(fullCareer.submitted.stats,{
+ score:8400,baseScore:4200,survivalSeconds:190,age:62,victory:true
+});
+assert.match(fullCareer.headline,/62세 정년 달성/);
+assert.match(fullCareer.description,/× 2/);
+const earlyCareer=finishCareer(900,60,false);
+assert.equal(earlyCareer.score,900);
+assert.equal(earlyCareer.submitted.stats.age,36);
+assert.equal(earlyCareer.submitted.stats.victory,false);
+assert.match(earlyCareer.description,/정년 보너스 없음/);
+assert.doesNotMatch(runner,/월요일|화요일|수요일|목요일|금요일|월 → 금|DAY<\/span>/);
+const timeBoard=new mockWindow.ArcadeLeaderboard("volleyball_25",null);
+timeBoard.session="session-for-time";timeBoard.remote=true;
+timeBoard.board=Array.from({length:10},(_,i)=>({nickname:"FAST",score:500+i*10}));
+timeBoard.load=async()=>timeBoard.board;
+let askedName=false;timeBoard.openRecord=()=>{askedName=true;};
+await timeBoard.finish(610,{player:25,cpu:9,elapsedTenths:610});
+assert.equal(askedName,false,"slowest time rejected from Top 10");
+await timeBoard.finish(499,{player:25,cpu:9,elapsedTenths:499});
+assert.equal(askedName,true,"faster time qualifies");
+assert.match(backend,/order:game==="volleyball_25"\?"score\.asc,created_at\.asc":"score\.desc,created_at\.asc"/);
+assert.match(backend,/game==="volleyball_25"\?score>=existing\[9\]\.score:score<=existing\[9\]\.score/);
+console.log("PASS: actual 62-year finish doubles score, early failure unchanged, shortest volleyball time wins ranking");
+
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
  for(let i=0;i<times;i++){
