@@ -407,7 +407,7 @@ assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
-// Ball reception physics and earned stamina recovery.
+// Natural volley impacts remain intact without stamina / healing.
 assert.doesNotMatch(volley,/ball\.x\s*=\s*p\.x\s*\+\s*sign\s*\*\s*\(reach\s*\+\s*R\s*\+\s*1\)/);
 assert.doesNotMatch(volley,/ball\.y\s*=\s*Math\.min\(ball\.y,\s*p\.y\s*-\s*22\)/);
 assert.match(volley,/const handX=p\.x\+sign\*29, handY=p\.y-15/);
@@ -416,67 +416,34 @@ assert.match(volley,/const framesToNet=clamp\(\(NET_X-ball\.x\)\/ball\.vx,4,45\)
 assert.match(volley,/ball\.spin\+=ball\.vx\*\.009/);
 assert.match(volley,/ctx\.rotate\(ball\.spin\)/);
 assert.match(volley,/if\(p\.contactFrames>0\)/);
-assert.match(volley,/if\(left\.contactFrames>0\)left\.contactFrames--/);
-const healsMatch=volley.match(/const receiveHealProfiles=(\{[^}]+\});/);
-assert.ok(healsMatch);
-const heals=new Function("return "+healsMatch[1])();
-assert.deepEqual(heals,{easy:10,normal:9,hard:8,very_hard:7,extreme:6});
-assert.match(volley,/state\.receiveStreak%3===0\?12:0/);
-assert.match(volley,/if\(!spike&&!charged&&incomingVx< -1\)/);
-assert.match(volley,/state\.receiveStreak=0/);
-assert.match(volley,/state\.rightScore \+= 1; state\.receiveStreak=0/);
-assert.match(volley,/textLabel\("💚 \+"\+state\.healAmount\+" 체력"/);
 const hitStart=volley.indexOf("function playerHit(p,ball=activeBalls[0]) {");
-const hitEnd=volley.indexOf("function finishMatch(",hitStart);
+const hitEnd=volley.indexOf("function finishMatch()",hitStart);
 assert.ok(hitStart>0&&hitEnd>hitStart);
 const hitSrc=volley.slice(hitStart,hitEnd);
 const contact=new Function("ball","state","p","tier",[
  'const currentDifficulty=tier,R=48,NET_X=450,NET_TOP=342,AUTO_SPIKE_SPEED=8;',
  'const battle={allyReach:1,enemyReach:1,allyAttack:1,enemyAttack:1,enemySmashChance:0};',
- 'const energy={allyCost:1,enemyCost:1};',
- 'const receiveHealProfiles='+healsMatch[1],
- 'const ballSpeedFactor=()=>1,energyFactor=()=>1,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));',
- 'let status="";const setStatus=s=>{status=s;},tone=()=>{},spikeSound=()=>{},updateEnergyUI=()=>{};',
- hitSrc,'playerHit(p,ball);return status;'
+ 'const ballSpeedFactor=()=>1,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));',
+ 'const setStatus=()=>{},tone=()=>{},spikeSound=()=>{};',
+ hitSrc,'playerHit(p,ball);return {ball,state,p};'
 ].join("\n"));
-function contactCase(tier="hard"){
+function contactCase(tier="hard",spike=false){
  const ball={x:248,y:376,vx:-8,vy:3,cooldown:0,spin:0,trail:[],shadowFrames:0};
- const state={leftEnergy:60,leftMaxEnergy:100,rightEnergy:100,rightMaxEnergy:100,specialChargeFrames:0,
-   bossWarnFrames:0,playFrames:100,spikes:0,receiveStreak:0,healFrames:0,healAmount:0};
- const p={x:210,y:420,vx:0,vy:0,impactSpeed:0,side:"left",contactFrames:0};
- return {ball,state,p,receive(){
-  Object.assign(ball,{x:248,y:376,vx:-8,vy:3,cooldown:0});
-  return contact(ball,state,p,tier);
- }};
+ const state={specialChargeFrames:0,bossWarnFrames:0,playFrames:100,spikes:0,hitStopFrames:0,impactFrames:0};
+ const p={x:210,y:420,vx:0,vy:0,impactSpeed:spike?12:0,side:"left",contactFrames:0};
+ return contact(ball,state,p,tier);
 }
 const reception=contactCase();
-const notice=reception.receive();
-assert.match(notice,/리시브 성공/);
-assert.equal(reception.state.leftEnergy,62,"6 used, 8 recovered");
-assert.equal(reception.state.healAmount,8);
-assert.equal(reception.state.receiveStreak,1);
-assert.ok(Math.hypot(reception.ball.x-248,reception.ball.y-376)<=12.01,"no ball teleportation");
-assert.ok(reception.ball.vx>0&&reception.ball.vy<0,"outbound arc");
-assert.ok(reception.p.contactFrames>0,"receiver animates hands");
-reception.receive();
-assert.match(reception.receive(),/연속 리시브 3회/);
-assert.equal(reception.state.receiveStreak,3);
-assert.equal(reception.state.leftEnergy,78,"three returns trigger +12 bonus");
-assert.equal(reception.state.healAmount,20);
-const full=contactCase();full.state.leftEnergy=99;full.receive();
-assert.equal(full.state.leftEnergy,100,"HP capped");
-const extremeCase=contactCase("extreme");extremeCase.receive();
-assert.equal(extremeCase.state.healAmount,6);
-const spikeCase=contactCase();spikeCase.p.impactSpeed=12;spikeCase.receive();
-assert.equal(spikeCase.state.receiveStreak,0,"spikes do not heal");
-assert.equal(spikeCase.state.healAmount,0);
-console.log("PASS: arm-centered contact, smooth non-teleporting volley returns, forearm animation and earned healing");
-
-
-
-
-
-
+assert.ok(Math.hypot(reception.ball.x-248,reception.ball.y-376)<=12.01);
+assert.ok(reception.ball.vx>0&&reception.ball.vy<0,"received ball follows outbound arc");
+assert.ok(reception.p.contactFrames>0);
+assert.equal(reception.state.spikes,0);
+const strike=contactCase("hard",true);
+assert.equal(strike.state.spikes,1);
+assert.ok(strike.state.hitStopFrames>0);
+assert.ok(strike.ball.shadowFrames>0);
+assert.doesNotMatch(volley,/getSurvivalSeconds|healAmount|leftMaxEnergy|rightMaxEnergy/);
+console.log("PASS: safe non-teleporting reception, spiking hit-stop and no old stamina effects");
 
 
 // Difficulty asymmetry: EXTREME double-ball and chain, EASY/NORMAL clones, automatic chalk.
