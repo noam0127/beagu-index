@@ -41,8 +41,8 @@ function init(options){
  return {
   ready(){
    if(step!==3)return false;
-   if(!validate(1)){go(1);validate(1);return false}
-   if(!validate(2)){go(2);validate(2);return false}
+   if(['playerName','age','experience','gender','mbti'].some(id=>!$(id).checkValidity())){go(1);validate(1);return false}
+   if(!$('partner').checkValidity()){go(2);validate(2);return false}
    return true;
   },
   go,
