@@ -16,7 +16,7 @@ for(const [path,form,input,toggle,submit,badge] of pages){
   assert.match(html,/Lv\.1 인증/,path+' title');
   assert.match(html,/>참여코드<\/label>/,path+' label');
   assert.ok(html.includes('placeholder="발급받은 참여코드를 입력하세요"'),path+' placeholder');
-  assert.match(html,/>인증하기<\/button>/,path+' submit label');
+  assert.match(html,/>레벨1 인증<\/button>/,path+' submit label');
   assert.ok(html.includes('aria-label="참여코드 표시"'),path+' visibility control');
   assert.ok(html.includes('참여코드는 <a'),path+' help start');
   assert.ok(html.includes('>2026 조사 참여</a> 시 발급됩니다.'),path+' help copy');
