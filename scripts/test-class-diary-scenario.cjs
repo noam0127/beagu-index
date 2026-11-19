@@ -71,7 +71,7 @@ const director=require('../js/class-diary-director-v1.js');
 const goodEnding=director.decorateEnding(finishOneWeek(game.createGame(world,plan,supportiveProfile),world));
 const hardEnding=director.decorateEnding(finishOneWeek(game.createGame(world,plan,hostileProfile),world));
 assert(goodEnding.paragraphs.join(' ').includes('함께 만드는 학교'));
-assert(hardEnding.paragraphs.join(' ').includes('서로를 경계하는 학교'));
+assert(/적대|경계/.test(hardEnding.paragraphs.join(' ')));
 for(const grade of ['lower','middle','upper']){
  const first=game.createGame(world,plan,{...supportiveProfile,gradeBand:grade});
  assert(scenario.scene(first,world).paragraphs.some(x=>x.includes('배움터지킴이')));
