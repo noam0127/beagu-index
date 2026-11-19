@@ -3,7 +3,11 @@
  */
 (function(root){
 'use strict';
-const VERSION='class-diary-director/v1';
+const VERSION='class-diary-director/v2';
+const routes=(typeof module==='object'&&module.exports)
+ ?require('./class-diary-character-routes-v1.js')
+ :root.BeaguClassDiaryCharacterRoutes;
+if(!routes||typeof routes.chapterMoment!=='function')throw Error('CHARACTER_ROUTES_REQUIRED');
 const BRIDGES=Object.freeze({
   "2": {
     "ask": "어제 나눠 보던 업무분장표가 떠올랐다. 오늘 회의 자료를 펼치면서도 괜히 한 번 더 확인했다. 이제는 모르는 걸 물어보는 일이 조금 덜 어렵다.",
@@ -39,7 +43,7 @@ const BRIDGES=Object.freeze({
 const RELATIONSHIPS=Object.freeze({
   woman:{name:'지윤 선생님',initial:'윤',style:'차분하게 귀 기울이는 동학년 동료',caption:'주변을 먼저 살피지만 자기 생각도 분명히 말하는 사람'},
   man:{name:'현우 선생님',initial:'우',style:'사소한 농담으로 긴장을 덜어 주는 동학년 동료',caption:'농담 뒤에 중요한 이야기를 그냥 흘려보내지 않는 사람'},
-  none:{name:'동학년 선생님',initial:'동',style:'서로의 일을 존중하는 동학년 동료',caption:'연애를 전제로 하지 않고 함께 성장하는 관계'}
+  none:{name:'민서 선생님',initial:'민',style:'상대를 서두르지 않고 지켜보는 동학년 동료',caption:'작은 메모를 나누며 가까워지는 우정'}
 });
 const VISUAL=Object.freeze([
   {id:'morning',label:'아침의 교무실',theme:'dawn'},
@@ -112,11 +116,15 @@ function decorateChapter(state,world,base){
   const callback=previous&&BRIDGES[state.day]&&BRIDGES[state.day][previous];
   const colleague=(RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none).name;
   /* Workday greetings address the player by name; nickname is earned, never imposed. */
-  if(state.day<=5&&COLLEAGUE_GREETINGS[state.day])
-    copy.paragraphs.splice(1,0,colleague+'이 내 쪽을 보고 말했다. “'+
-      address(state)+', '+COLLEAGUE_GREETINGS[state.day]+'”');
+  if(state.day<=5){
+    const greeting=routes.greeting(state);
+    if(greeting)copy.paragraphs.splice(1,0,colleague+'이 내 쪽을 보고 말했다. “'+
+      address(state)+', '+greeting+'”');
+  }
   if(callback)copy.paragraphs.splice(1,0,callback.replace(/\{colleague\}/g,colleague));
-  const relationship=dynamicLine(state);
+  const relationship=routes.relationshipMoment(state);
+  const moment=routes.chapterMoment(state);
+  if(moment)copy.paragraphs.push(moment);
   if(relationship)copy.paragraphs.push(relationship);
   if(state.day>=6&&state.stats&&Number.isFinite(Number(state.stats.support))){
     const remembered=state.stats.support>=55?
@@ -144,7 +152,9 @@ function decorateOutcome(state){
     '한참 뒤에야 아까 하지 못한 말이 떠올랐다. 나는 메모지 한 귀퉁이에 짧게 적어 두었다.';
   const line=typeof base.line==='string'&&base.line.startsWith('“')?
     '“'+address(state)+', '+base.line.slice(1):base.line;
-  return {paragraphs:base.paragraphs.concat(text.replace(/\{colleague\}/g,(RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none).name)),line,
+  const unique=routes.outcomeMoment(state);
+  const extra=unique?[unique]:[];
+  return {paragraphs:base.paragraphs.concat(text.replace(/\{colleague\}/g,(RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none).name),...extra),line,
     cue:lowEnergy?'휴식이 필요한 때':trust>=65?'쌓여 가는 신뢰':'다음 날을 위한 여백'};
 }
 function decorateEnding(state){
@@ -165,7 +175,8 @@ function decorateEnding(state){
     workplace==='collaborative'?
       '아침에 학년연구실에 들어서면 누군가 먼저 “커피 드실래요?” 하고 물었다. 그 말이 있는 날은 컴퓨터를 켜는 손도 조금 가벼웠다.':
       '서로 바쁜 얼굴로 앉아 있던 날들이 지나갔다. 언젠가 우리도 조금은 웃으면서 업무를 나눌 수 있을까.';
-  return {...state.ending,paragraphs:state.ending.paragraphs.concat(contributed,energy,relationship.replace(/\{colleague\}/g,(RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none).name)),directorVersion:VERSION};
+  const unique=routes.endingMoment(state);
+  return {...state.ending,paragraphs:state.ending.paragraphs.concat(contributed,energy,relationship.replace(/\{colleague\}/g,(RELATIONSHIPS[state.profile.partner]||RELATIONSHIPS.none).name),...(unique?[unique]:[])),directorVersion:VERSION};
 }
 const api=Object.freeze({
  VERSION,BRIDGES,VISUAL,RELATIONSHIPS,
