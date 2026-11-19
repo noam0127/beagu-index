@@ -306,7 +306,7 @@ assert.ok(volleyLifeSource,"volleyball has tier-based life profiles");
 const volleyLifeProfile=new Function("return "+volleyLifeSource[1])();
 assert.deepEqual(volleyLifeProfile,{easy:3,normal:2,hard:2,very_hard:1,extreme:1});
 assert.match(volley,/id="volley-lives"/);
-assert.match(volley,/id="volley-round-label"/);
+assert.doesNotMatch(volley,/id="volley-round-label"|class="volley-round"|ROUND [0-9]|state\.round|roundLabel/,"continuous volleyball match has no misleading round counter");
 assert.match(volley,/id="player-energy-progress"/);
 assert.match(volley,/id="sound" class="sound-toggle"/);
 assert.match(volley,/soundButton\.addEventListener\("click"/);
@@ -325,7 +325,7 @@ assert.ok(volleyFunctionsStart>0&&volleyFunctionsEnd>volleyFunctionsStart);
 const volleyLifeFunctions=volley.slice(volleyFunctionsStart,volleyFunctionsEnd);
 const lifeTestState={
  phase:"playing",leftEnergy:0,rightEnergy:75,leftMaxEnergy:100,rightMaxEnergy:100,
- livesLeft:2,maxLives:2,round:1,knockout:false,leftScore:3,rightScore:1,spikes:2
+ livesLeft:2,maxLives:2,knockout:false,leftScore:3,rightScore:1,spikes:2
 };
 const lifeObserved={resets:0,positions:0,rank:null,unlocked:0};
 const mockedLifeFunctions=new Function("state","observed",[
@@ -340,7 +340,7 @@ const mockedLifeFunctions=new Function("state","observed",[
 ].join("\n"))(lifeTestState,lifeObserved);
 assert.equal(mockedLifeFunctions.loseLife(),true);
 assert.equal(lifeTestState.livesLeft,1,"first exhaustion consumes exactly one life");
-assert.equal(lifeTestState.round,2,"first exhaustion advances round");
+assert.equal(lifeTestState.livesLeft,1,"life loss does not create a numbered round");
 assert.equal(lifeTestState.phase,"point","round intermission protects the user from instant repeated KO");
 assert.equal(lifeTestState.leftEnergy,100,"round restores stamina");
 assert.equal(lifeObserved.resets,1);
@@ -379,7 +379,7 @@ assert.equal(scoreFns.scoreFromVolleyball({
  player:7,cpu:3,spikes:2,survivalSeconds:70
 },80,"easy"),7*120+2*25+600+(7-3)*30+70*4,"normal winning match remains compatible");
 assert.match(backend,/scoreFromVolleyball\(payload\.stats,elapsed,session\.difficulty\)/);
-console.log("PASS: volleyball life rounds, final KO, tier verification, time score, shaded spike trails and sound control");
+console.log("PASS: volleyball continuous match, life loss/reset, final KO, tier verification, scoring, shadows and sound");
 
 // Five-tier ball velocity, stronger pixel opponents and real current-score regression.
 const netTopMatch=volley.match(/NET_TOP = (\d+), NET_W/);
@@ -512,7 +512,7 @@ assert.match(runner,/if\(u\.id==="speed"\)/);
 assert.match(runner,/if\(u\.id==="guard"\)/);
 assert.match(runner,/if\(u\.id==="heal"\)/);
 assert.match(runner,/activeEvent&&eventSeconds>0/,"events only appear while active");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-arcade-fun1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-no-round1/);
 assert.match(html,/teacher-run\.html\?v=20261119-arcade-fun1/);
 console.log("PASS: volleyball impact and boss cues; run 5-day events, timed bonuses, upgrade choices and Friday pattern");
 
@@ -540,7 +540,7 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-arcade-fun1")&&
+  if(site.body.includes("teacher-volleyball.html?v=20261119-no-round1")&&
      site.body.includes("teacher-run.html?v=20261119-arcade-fun1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
@@ -551,7 +551,7 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-arcade-fun1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-no-round1/);
 assert.match(site.body,/teacher-run\.html\?v=20261119-arcade-fun1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
