@@ -622,6 +622,7 @@ for(const card of document.querySelectorAll('[data-partner-choice]')){
  card.addEventListener('click',()=>{
   $('partner').value=card.dataset.partnerChoice;
   syncSetupPartner();sound.note('uiPick');
+  if(isGuest)journey.go(3);
  });
 }
 $('partner').addEventListener('change',()=>{syncSetupPartner();sound.note('uiPick')});
@@ -649,6 +650,25 @@ let world=null,plan=null,game=null;
 let guestIntroTimer=null;
 $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
 let storyMode='week';
+function prepareGuestProfile(){
+ // Fictional alias and neutral defaults: no profile fields after home verification.
+ $('playerName').value='새봄';
+ $('experience').value='mid';
+ $('gender').value='undisclosed';
+ $('mbti').value='INFP';
+ syncSetupName();
+ const stamp=$('setup').querySelector('.setup-player-stamp small');
+ if(stamp)stamp.textContent='게임 속 임시 이름 · 입력할 필요 없어요';
+ const hint=$('setup').querySelector('.setup-section-title small');
+ if(hint)hint.textContent='이름을 입력하지 않아도 이야기가 시작됩니다.';
+ const note=$('setup').querySelector('.setup-story-note p');
+ if(note)note.textContent='2027년 3월–7월 · 36화';
+}
+function guestStartMusic(){
+ if(isGuest&&sound.isEnabled())void sound.setTrack('daily').catch(()=>{});
+}
+// Audio autoplay is attempted on entry; first touch retries if the browser blocks it.
+document.addEventListener('pointerdown',()=>{if(isGuest)guestStartMusic()},{capture:true,once:true});
 $('openingStart').addEventListener('click',()=>{storyMode='week';});
 $('semesterStart').addEventListener('click',()=>{
  $('openingStart').click();storyMode='semester';
@@ -1253,6 +1273,24 @@ $('guestForm').addEventListener('submit',async event=>{
  }catch(_){message.textContent='인증 서버에 일시적인 문제가 있습니다. 다시 시도해 주세요.';}
  finally{button.disabled=false;}
 });
+// Empty-space taps page forward; selection controls keep their own click behavior.
+$('opening').addEventListener('click',event=>{
+ if(!isGuest||!document.body.classList.contains('is-intro')||event.target.closest('button,a,input,select'))return;
+ $('semesterStart').click();
+});
+$('setup').addEventListener('click',event=>{
+ if(!isGuest||!document.body.classList.contains('is-setting')||event.target.closest('button,a,input,select,label'))return;
+ const step=$('setup').dataset.step;
+ if(step==='1')$('setupNext').click();
+ else if(step==='3')$('profileForm').requestSubmit();
+});
+$('novel').addEventListener('click',event=>{
+ if(!isGuest||!document.body.classList.contains('is-playing')||
+   document.body.classList.contains('is-choosing')||
+   event.target.closest('#sceneArt,button,a,input,select,textarea,[role="dialog"]'))return;
+ if(!$('vnMore').hidden)$('vnMore').click();
+ else if(!$('nextBtn').hidden)$('nextBtn').click();
+});
 $('profileForm').addEventListener('submit',e=>{
  e.preventDefault();
  if(!journey.ready())return;
@@ -1266,7 +1304,7 @@ $('profileForm').addEventListener('submit',e=>{
   game=storyMode==='semester'?semester.createGame(baseGame):baseGame;
   sound.note('uiStart');
   render();
- }catch(err){status('이름을 입력하고 교직 경력·성별·MBTI·동료를 선택해 주세요.');}
+ }catch(err){status('이야기 설정을 확인하지 못했습니다. 다시 시도해 주세요.');}
 });
 $('nextBtn').addEventListener('click',()=>{
  sound.note('pageTurn');
