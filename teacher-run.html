@@ -82,7 +82,7 @@ canvas{height:400px;cursor:default}
 /* Mobile portrait: keep the entire playfield visible instead of filling
    the whole Safari viewport. resize() synchronizes the canvas hitbox/world. */
 @media(max-width:600px) and (orientation:portrait){
- #game{height:clamp(350px,50vh,440px);height:clamp(350px,50svh,440px)}
+ #game{height:clamp(380px,54vh,485px);height:clamp(380px,54svh,485px)}
  /* Fullscreen on iOS previously stretched the stage canvas to 100dvh.
     Keep fullscreen access but letterbox the actual playfield. */
  .stage.arcade-fullscreen-fallback #game,
@@ -90,8 +90,8 @@ canvas{height:400px;cursor:default}
  .stage:-webkit-full-screen #game{
    width:min(94vw,420px)!important;
    max-width:94vw!important;
-   height:clamp(350px,58svh,500px)!important;
-   max-height:68svh!important;
+   height:clamp(380px,63svh,535px)!important;
+   max-height:72svh!important;
    flex:0 0 auto!important;
    object-fit:contain!important;
  }
