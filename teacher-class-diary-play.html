@@ -239,6 +239,76 @@ body.is-playing #vnInfo .statbar{display:grid;grid-template-columns:repeat(2,min
 body.is-playing #vnInfo .stat{background:#ffffff12;border-color:#ffffff32;padding:9px 10px}
 body.is-playing #vnInfo .stat small{color:#e8deeb;font-size:11px}
 body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
+
+/* Stage 7 fast-release: dating-sim inspired original setup UI */
+.vn-setup{padding:0;overflow:hidden;border:1px solid #e3dbe3;background:#fffcfa;box-shadow:0 18px 58px #332b411a}
+.setup-head{position:relative;overflow:hidden;padding:31px 34px 22px;background:radial-gradient(circle at 90% 12%,#fce2e7,transparent 43%),linear-gradient(130deg,#fbf4f1,#edf0f5);border-bottom:1px solid #e5dbe3}
+.setup-head:after{content:"✧";position:absolute;right:24px;top:11px;color:#e2a9bb;font-size:64px;opacity:.38;pointer-events:none}
+.setup-eyebrow{display:block;font-size:11px;font-weight:850;letter-spacing:.14em;color:#916f87}
+.setup-head h2{font-family:"Nanum Myeongjo","Batang",serif;font-size:clamp(23px,3.9vw,33px);letter-spacing:-.055em;color:#403547;margin:10px 0}
+.setup-head p{font-size:13px;line-height:1.7;color:#71677c;margin:0}
+.setup-progress{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:21px}
+.setup-progress span{display:inline-block;border-radius:20px;padding:6px 12px;background:#ffffffbc;border:1px solid #dfd5e0;color:#82748a;font-size:11px;font-weight:750}
+.setup-progress span:first-child{background:#74546f;color:white;border-color:#74546f}
+.setup-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:0}
+.setup-player,.setup-cast{min-width:0;padding:25px 25px 21px}
+.setup-player{border-right:1px solid #eae0e6}
+.setup-cast{background:linear-gradient(165deg,#fffafb,#f6f4f7)}
+.setup-section-title{display:flex;align-items:center;gap:11px;margin-bottom:15px}
+.setup-number{display:grid;place-items:center;flex:none;width:32px;height:32px;border-radius:11px;background:#e9dfe9;color:#72516b;font-weight:900;font-size:14px}
+.setup-section-title strong{display:block;font-size:16px;color:#463e51}
+.setup-section-title small{display:block;margin-top:3px;font-size:11px;color:#897d8b;line-height:1.5}
+.setup-player-stamp{display:flex;align-items:center;gap:14px;padding:14px 17px;background:linear-gradient(130deg,#f5e8ed,#f5f1e8);border:1px solid #e9dbe0;border-radius:16px}
+.setup-stamp-mark{font-size:27px;color:#93697c}
+.setup-player-stamp span:not(.setup-stamp-mark){display:block;color:#997a8c;font-size:10px;letter-spacing:.12em;font-weight:800}
+.setup-player-stamp strong{display:block;font-family:"Nanum Myeongjo","Batang",serif;font-size:19px;color:#554054;margin:3px 0}
+.setup-player-stamp small{font-size:11px;color:#90798a}
+.vn-setup .form-grid{gap:13px 12px;margin:19px 0 10px}
+.vn-setup label{font-size:12px;color:#645267;margin:0 0 6px}
+.vn-setup input,.vn-setup select{font-size:14px;min-width:0;min-height:45px;border:1px solid #dacdd8;border-radius:11px;background:white;color:#393242;padding:10px 12px}
+.vn-setup input:focus,.vn-setup select:focus{border-color:#a784a7;box-shadow:0 0 0 3px #eacbd962}
+.setup-required{font-size:10px;color:#9b718c}
+.setup-micro{font-size:11px;line-height:1.7;color:#887e8c;margin:12px 0 0}
+.setup-portrait-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.setup-character{display:block;width:100%;min-width:0;background:#fff;border:2px solid #e6dfe7;border-radius:13px;padding:6px;text-align:center;color:#40394b;box-shadow:0 4px 12px #40344b09;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.setup-character:hover{transform:translateY(-3px);border-color:#c5a2bb}
+.setup-character[aria-pressed="true"]{border-color:#94709a;box-shadow:0 0 0 2px #d7c2d7,0 9px 20px #60486a23;background:#fffaff}
+.setup-character:focus-visible{outline:3px solid #956bad;outline-offset:3px}
+.setup-character-art{display:flex;align-items:flex-end;justify-content:center;overflow:hidden;aspect-ratio:4/5;border-radius:9px}
+.setup-character-art.jiyoon{background:linear-gradient(155deg,#fbe8e0,#ebd8e8)}
+.setup-character-art.hyunwoo{background:linear-gradient(155deg,#deeafa,#c6d4e6)}
+.setup-character-art.minseo{background:linear-gradient(155deg,#e4eddb,#ccd9d2)}
+.setup-character-art img{height:95%;width:100%;object-fit:contain;object-position:bottom center}
+.setup-character-name{display:block;font-size:14px;font-weight:900;line-height:1.45;margin-top:7px}
+.setup-character-tag{display:block;color:#847581;font-size:10px;line-height:1.45;min-height:28px}
+.setup-partner-label{display:flex;justify-content:space-between;gap:6px;align-items:center;margin:17px 0 8px!important;font-weight:800}
+.setup-partner-label small{font-size:10px;color:#a18b9e;font-weight:500}
+.setup-character-description{background:#fff;border:1px solid #ebdfe8;border-radius:11px;padding:12px 13px;min-height:69px;color:#66516b;font-size:12px;line-height:1.7;margin:13px 0}
+.setup-story-note{display:flex;align-items:center;gap:11px;padding:11px 13px;background:#eeedf2;border-radius:12px;color:#665b70}
+.setup-story-note>span{font-size:23px;color:#ae90ad}
+.setup-story-note p{margin:0;font-size:12px;font-weight:800;line-height:1.55}
+.setup-story-note small{font-size:10px;font-weight:400}
+.setup-end{border-top:1px solid #eae1e5;padding:20px 28px 25px}
+.setup-end .muted{font-size:12px;margin:0}
+.setup-end .privacy{margin:8px 0 0}
+.setup-end .actions{margin-top:15px}
+.setup-begin{min-width:220px;background:linear-gradient(120deg,#6c526f,#9a6e89)!important;display:flex;gap:20px;justify-content:space-between;align-items:center;box-shadow:0 7px 17px #58425d31}
+.setup-begin span{font-size:24px;line-height:0.5}
+.setup-begin:hover{filter:brightness(1.08)}
+@media(max-width:690px){
+ .setup-head{padding:24px 19px 18px}
+ .setup-layout{grid-template-columns:1fr}
+ .setup-player,.setup-cast{padding:20px 17px}
+ .setup-player{border-right:0;border-bottom:1px solid #eae0e6}
+ .setup-end{padding:18px 17px 22px}
+ .setup-progress{gap:5px}
+ .setup-progress span{padding:6px 9px;font-size:10px}
+ .setup-character-tag{min-height:29px}
+ .setup-begin{flex:1;min-width:0}
+}
+@media(max-width:370px){.setup-portrait-grid{gap:5px}.setup-character{padding:4px}.setup-character-name{font-size:12px}.setup-character-tag{font-size:9px}.setup-partner-label small{display:none}}
+@media(prefers-reduced-motion:reduce){.setup-character,.setup-begin{transition:none}.setup-character:hover{transform:none}}
+
 </style>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 </head>
@@ -277,24 +347,55 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <p id="noticeText" class="muted"></p>
 <div class="actions"><a class="primary" href="teacher-class-diary.html" style="text-decoration:none">학교 다시 선택</a><a class="secondary" href="search-lv2.html" style="text-decoration:none">레벨2 인증</a></div>
 </section>
-<section id="setup" class="panel" hidden>
-<div class="overline" style="color:#6a859a">CHARACTER</div>
-<h2>주인공 설정</h2>
-<p class="muted">주인공은 성인 초등교사입니다. 등장하는 동료 역시 성인 교사이며 모두 창작 인물입니다. 성별이나 MBTI로 성격·운명을 단정하거나 불이익을 주지 않습니다.</p>
-<form id="profileForm">
-<div class="form-grid">
-<div><label for="playerName">주인공 이름</label><input id="playerName" name="playerName" type="text" minlength="2" maxlength="8" pattern="[가-힣]{2,8}" placeholder="예: 루다" autocomplete="off" required><div class="field-note">한글 2~8자 · 게임이 진행되는 동안에만 사용합니다.</div></div>
-<div><label for="age">주인공 나이</label><input id="age" type="number" min="20" max="75" step="1" placeholder="예: 32" required><div class="field-note">성인 주인공만 선택할 수 있습니다.</div></div>
-<div><label for="experience">교직 경력</label><select id="experience" required><option value="">선택하세요</option><option value="new">저경력</option><option value="mid">중간경력</option><option value="senior">고경력</option></select></div>
-<div><label for="gender">주인공 성별</label><select id="gender" required><option value="">선택하세요</option><option value="woman">여성</option><option value="man">남성</option><option value="undisclosed">밝히지 않음</option></select></div>
-<div><label for="mbti">주인공 MBTI</label><select id="mbti" required><option value="">선택하세요</option></select></div>
-<div><label for="partner">관계를 쌓을 동료 인물</label><select id="partner" required><option value="">선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select></div>
+<section id="setup" class="panel vn-setup" hidden>
+<div class="setup-head">
+ <span class="setup-eyebrow">PROLOGUE 00 <span aria-hidden="true">✦</span> PLAYER SETUP</span>
+ <h2>나의 첫 페이지를 펼치다</h2>
+ <p>2027년 3월 8일, 낯선 새 학기. 당신은 어떤 선생님으로 일주일을 시작할까요?</p>
+ <div class="setup-progress" aria-label="게임 준비 과정"><span>01 · 나의 이야기</span><span>02 · 함께할 동료</span><span>03 · 첫 등교</span></div>
 </div>
-<p id="worldAutoNote" class="muted">공개·검증된 과거 학교 자료를 이야기의 배경으로 활용합니다. 실제 교직원이나 개인 업무를 특정하지 않습니다.</p>
-<p class="privacy">주인공 설정·선택·진행 상황·최종 결과는 저장하지 않습니다. 게임을 진행하는 동안에만 화면에 표시됩니다.</p>
-<div class="actions"><button type="submit" class="primary">첫날의 교실 열기</button><a class="linklike" href="teacher-class-diary.html">학교 변경</a></div>
+<form id="profileForm">
+<div class="setup-layout">
+ <div class="setup-player">
+  <div class="setup-section-title"><span class="setup-number">01</span><div><strong>당신의 프로필</strong><small>모든 설정은 이번 플레이에서만 사용됩니다.</small></div></div>
+  <div class="setup-player-stamp"><span class="setup-stamp-mark" aria-hidden="true">✎</span><div><span>MY STORY</span><strong id="setupPlayerPreview">이름을 입력해 주세요</strong><small>나만의 학급일지 · 7일</small></div></div>
+  <div class="form-grid">
+   <div><label for="playerName">이름 <span class="setup-required">필수</span></label><input id="playerName" name="playerName" type="text" minlength="2" maxlength="8" pattern="[가-힣]{2,8}" placeholder="예: 루다" autocomplete="off" required><div class="field-note">한글 2~8자 · 주인공의 호칭에 반영됩니다.</div></div>
+   <div><label for="age">나이</label><input id="age" type="number" min="20" max="75" step="1" placeholder="예: 32" required></div>
+   <div><label for="experience">교직 경력</label><select id="experience" required><option value="">선택하세요</option><option value="new">저경력</option><option value="mid">중간경력</option><option value="senior">고경력</option></select></div>
+   <div><label for="gender">성별</label><select id="gender" required><option value="">선택하세요</option><option value="woman">여성</option><option value="man">남성</option><option value="undisclosed">밝히지 않음</option></select></div>
+   <div><label for="mbti">MBTI</label><select id="mbti" required><option value="">선택하세요</option></select></div>
+  </div>
+  <p class="setup-micro">성별·나이·MBTI에 따른 능력이나 점수 차별은 없습니다.</p>
+ </div>
+ <div class="setup-cast">
+  <div class="setup-section-title"><span class="setup-number">02</span><div><strong>함께할 동료</strong><small>관계에 따라 서로 다른 이야기가 펼쳐집니다.</small></div></div>
+  <div class="setup-portrait-grid" role="group" aria-label="동료 캐릭터 선택">
+   <button class="setup-character" type="button" data-partner-choice="woman" aria-pressed="false">
+    <span class="setup-character-art jiyoon"><img id="setupPortraitWoman" alt="" aria-hidden="true"></span>
+    <span class="setup-character-name">서지윤</span><span class="setup-character-tag">천천히 가까워지는 호감</span>
+   </button>
+   <button class="setup-character" type="button" data-partner-choice="man" aria-pressed="false">
+    <span class="setup-character-art hyunwoo"><img id="setupPortraitMan" alt="" aria-hidden="true"></span>
+    <span class="setup-character-name">한현우</span><span class="setup-character-tag">농담 뒤의 진심</span>
+   </button>
+   <button class="setup-character" type="button" data-partner-choice="none" aria-pressed="false">
+    <span class="setup-character-art minseo"><img id="setupPortraitNone" alt="" aria-hidden="true"></span>
+    <span class="setup-character-name">윤민서</span><span class="setup-character-tag">깊어지는 우정</span>
+   </button>
+  </div>
+  <label class="setup-partner-label" for="partner">동료 선택 <small>캐릭터 카드 또는 목록에서 선택</small></label>
+  <select id="partner" required><option value="">동료를 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
+  <p id="partnerDescription" class="setup-character-description" aria-live="polite">함께할 인물을 고르면 이곳에 소개가 나타납니다.</p>
+  <div class="setup-story-note"><span aria-hidden="true">✧</span><p>2027년 3월 8일–14일 · 7일의 이야기<br><small>21개의 기본 선택과 학교생활 속 다양한 사건</small></p></div>
+ </div>
+</div>
+<div class="setup-end">
+ <p id="worldAutoNote" class="muted">공개·검증된 과거 학교 자료를 이야기의 배경으로 활용합니다. 실제 교직원이나 개인 업무를 특정하지 않습니다.</p>
+ <p class="privacy">모든 인물·관계·사건은 허구입니다. 주인공 설정·선택·진행·결말은 저장되지 않으며 새로고침하면 사라집니다.</p>
+ <div class="actions"><button type="submit" class="primary setup-begin">첫날의 교실 열기 <span aria-hidden="true">›</span></button><a class="linklike" href="teacher-class-diary.html">학교 변경</a></div>
+</div>
 </form>
-
 </section>
 <section id="novel" hidden>
 <div class="statbar" aria-label="현재 이야기 상태">
@@ -385,6 +486,38 @@ const incidents=window.BeaguClassDiaryIncidents;
 const sound=window.BeaguClassDiarySound;
 const visual=window.BeaguClassDiaryVisual;
 const sd=window.BeaguClassDiarySD;
+
+/* In-memory visual setup only: six original inputs remain authoritative. */
+const setupDescription=Object.freeze({
+ woman:'서지윤 · 30세 · 3학년 담임. 먼저 귀 기울이고 자신의 생각은 분명하게 말합니다. 관계가 가까워지면 조심스러운 호감으로 이어질 수 있습니다.',
+ man:'한현우 · 32세 · 3학년 담임. 농담으로 긴장을 풀어 주지만 중요한 순간에는 진심을 전합니다. 서로의 시간을 존중하며 가까워질 수 있습니다.',
+ none:'윤민서 · 29세 · 3학년 담임. 정확한 기록과 협력을 소중히 여깁니다. 이 경로는 연애가 아니라 깊어지는 우정의 이야기입니다.'
+});
+function syncSetupPartner(){
+ const partner=$('partner').value;
+ for(const card of document.querySelectorAll('[data-partner-choice]'))card.setAttribute('aria-pressed',String(card.dataset.partnerChoice===partner));
+ $('partnerDescription').textContent=setupDescription[partner]||'함께할 인물을 고르면 이곳에 소개가 나타납니다.';
+}
+function syncSetupName(){
+ const name=$('playerName').value.trim();
+ $('setupPlayerPreview').textContent=name?name+' 선생님':'이름을 입력해 주세요';
+}
+for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','man'],['setupPortraitNone','none']]){
+ $(id).src=visual.dataUrl(sd.portraitSvg(partner,'neutral'));
+}
+for(const card of document.querySelectorAll('[data-partner-choice]')){
+ card.addEventListener('click',()=>{
+  $('partner').value=card.dataset.partnerChoice;
+  syncSetupPartner();sound.note('uiPick');
+ });
+}
+$('partner').addEventListener('change',()=>{syncSetupPartner();sound.note('uiPick')});
+$('playerName').addEventListener('input',syncSetupName);
+for(const id of ['age','experience','gender','mbti']){
+ $(id).addEventListener('change',()=>sound.note('uiTap'));
+}
+syncSetupPartner();syncSetupName();
+
 let effectsOn=true;
 let soundPreferenceTouched=false;
 const params=new URLSearchParams(location.search);
@@ -459,7 +592,7 @@ $('vnReset').addEventListener('click',()=>$('resetBtn').click());
 const stageHud=$('vnHeaderSlot'),stageBody=$('vnDialogueSlot'),stageBottom=$('vnBottom');
 stageHud.append($('chapterDay'),$('chapterTitle'),$('chapterPlace'));
 $('vnInfo').append($('novel').querySelector('.statbar'),$('schoolFacts'),$('chapterSource'));
-$('vnInfoBtn').addEventListener('click',()=>{$('vnInfo').hidden=!$('vnInfo').hidden;$('vnInfoBtn').setAttribute('aria-expanded',String(!$('vnInfo').hidden));});
+$('vnInfoBtn').addEventListener('click',()=>{sound.note('uiTap');$('vnInfo').hidden=!$('vnInfo').hidden;$('vnInfoBtn').setAttribute('aria-expanded',String(!$('vnInfo').hidden));});
 stageBody.append($('novelCard').querySelector('.character-strip'),$('novelCard').querySelector('.vn-dialogue'),$('outcome'));
 stageBottom.append($('choiceSection'),$('novelCard').querySelector('.novel-body .actions'));
 function fillParagraphs(id,texts){
@@ -695,6 +828,7 @@ $('profileForm').addEventListener('submit',e=>{
    age:Number($('age').value),experience:$('experience').value,
    gender:$('gender').value,mbti:$('mbti').value,partner:$('partner').value
   },plan));
+  sound.note('uiStart');
   render();
  }catch(err){status('이름·나이를 입력하고 교직 경력·성별·MBTI·동료를 선택해 주세요.');}
 });
