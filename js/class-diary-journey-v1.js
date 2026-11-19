@@ -7,7 +7,7 @@ function init(options){
  const setup=$('setup'),form=$('profileForm');
  let step=1;
  function review(){
-  $('setupReviewName').textContent=($('playerName').value.trim()||'—')+' 선생님 · '+$('age').value+'세';
+  $('setupReviewName').textContent=($('playerName').value.trim()||'—')+' 선생님';
   const ex=$('experience'),gender=$('gender'),mbti=$('mbti'),partner=$('partner');
   $('setupReviewTraits').textContent=[ex.selectedOptions[0]?.textContent,gender.selectedOptions[0]?.textContent,mbti.value].filter(Boolean).join(' · ');
   $('setupReviewPartner').textContent=partner.selectedOptions[0]?.textContent||'—';
@@ -26,7 +26,7 @@ function init(options){
   setup.scrollIntoView({block:'start',behavior:'instant'});
  }
  function validate(part){
-  const ids=part===1?['playerName','age','experience','gender','mbti']:part===2?['partner']:[];
+  const ids=part===1?['playerName','experience','gender','mbti']:part===2?['partner']:[];
   for(const id of ids){
    const el=$(id);
    if(!el.checkValidity()){el.reportValidity();el.focus();return false;}
@@ -41,7 +41,7 @@ function init(options){
  return {
   ready(){
    if(step!==3)return false;
-   if(['playerName','age','experience','gender','mbti'].some(id=>!$(id).checkValidity())){go(1);validate(1);return false}
+   if(['playerName','experience','gender','mbti'].some(id=>!$(id).checkValidity())){go(1);validate(1);return false}
    if(!$('partner').checkValidity()){go(2);validate(2);return false}
    return true;
   },
