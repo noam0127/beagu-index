@@ -58,17 +58,15 @@ for(const partner of ['man','none']){
   if(partner==='none')assert(!['warm','tender'].includes(story.ending.id));
  }
 }
-const start=novel.createGame(base('woman'));
-let a=novel.choose(start,'0');
-let b=novel.choose(start,'2');
-for(let i=2;i<=9;i++){
- a=novel.advance(a);b=novel.advance(b);
- if(i===9)break;
- a=novel.choose(a,'1');b=novel.choose(b,'1');
+let a=novel.createGame(base('woman'));
+let b=novel.createGame(base('woman'));
+for(let i=1;i<=8;i++){
+ a=novel.advance(novel.choose(a,String(i===4?0:1)));
+ b=novel.advance(novel.choose(b,String(i===4?2:1)));
 }
 assert.equal(a.episode,9);
 assert.notDeepEqual(novel.chapter(a).paragraphs,novel.chapter(b).paragraphs,
- 'The remembered March decision must change the April scene');
+ 'The March hallway decision must change the April scene');
 const raw=fs.readFileSync(require.resolve('../js/class-diary-semester-v1.js'),'utf8');
 for(const banned of ['localStorage.setItem','sessionStorage.setItem','indexedDB','fetch(','XMLHttpRequest','navigator.sendBeacon'])
  assert(!raw.includes(banned),'Story engine must never persist or transmit game data: '+banned);
