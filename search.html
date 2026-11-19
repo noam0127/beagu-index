@@ -287,7 +287,7 @@ h1{font-size:32px;margin:0 0 10px;letter-spacing:-1.5px}.description{margin:0 0 
     }).catch(error=>{console.warn('학교별 조사 기록 조회 실패, 기존 공개 자료만 표시',error)});
     let percentileIndex = new Map();
   let percentileLoadError = false, percentileStaticLoaded = false;
-  const percentileReady = fetch('data/public-lv0-percentiles-v1.2.json?v=20261118-gjjn2025', {cache:'no-cache'})
+  const percentileReady = fetch('data/public-lv0-percentiles-v1.2.json?v=20261120-all-regions1', {cache:'no-cache'})
     .then(r => { if (!r.ok) throw new Error('백분위 자료 로딩 실패'); return r.json(); })
     .then(data => { percentileIndex = BeaguPublic.buildIndex(data); percentileStaticLoaded = true; })
     .catch(error => { percentileLoadError=true; console.warn('공개 백분위 파일 미응답, DB 재조회 사용',error); });
