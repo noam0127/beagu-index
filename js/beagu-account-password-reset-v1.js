@@ -7,13 +7,14 @@
   const confirmation=document.getElementById('resetPasswordConfirm');
   const url=new URL(location.href);
   const hash=url.searchParams.get('token_hash') || '';
+  const recoveryType=url.searchParams.get('type') || '';
   // Remove sensitive token from URL before any user interaction, network
   // request, screenshot, referrer or subsequent navigation.
   try{history.replaceState(null,'',url.pathname);}catch(_){}
   if (location.hash) {
     try{history.replaceState(null,'',url.pathname);}catch(_){}
   }
-  if(!/^[a-fA-F0-9]{64}$/.test(hash)){
+  if(recoveryType!=='recovery'||!/^[a-fA-F0-9]{64}$/.test(hash)){
     status.textContent='복구 링크가 유효하지 않습니다. 이메일에서 새 링크를 요청해 주세요.';
     return;
   }
