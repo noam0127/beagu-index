@@ -243,7 +243,7 @@ function validateProfile(profile){
   if(!MBTI.test(mbti))throw Error('MBTI_INVALID');
   /* 직무·학급·교직문화는 체험을 위해 사용자가 고르는 가상 조건이며 학교 실태 추정값이 아니다. */
   const experience=profile.experience||'mid';
-  const experienceYears=profile.experienceYears===undefined?null:Number(profile.experienceYears);
+  const experienceYears=profile.experienceYears==null?null:Number(profile.experienceYears);
   if(experienceYears!==null&&(!Number.isInteger(experienceYears)||experienceYears<0||experienceYears>45))
     throw Error('EXPERIENCE_YEARS_INVALID');
   const duty=profile.duty||'general';
@@ -287,7 +287,7 @@ function inferredProfile(world,player,plan){
  const rural=verified.some(t=>['admin_eup','admin_myeon','rural'].includes(t.id));
  const urban=verified.some(t=>['admin_dong','urban_core'].includes(t.id));
  const region=rural?'rural':urban?'urban':'other';
- const years=player.experienceYears===undefined?null:Number(player.experienceYears);
+ const years=player.experienceYears==null?null:Number(player.experienceYears);
  if(years!==null&&(!Number.isInteger(years)||years<0||years>45))
    throw Error('EXPERIENCE_YEARS_INVALID');
  // Historical signals are validated through the existing Lv2 gated API.
