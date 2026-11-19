@@ -98,6 +98,13 @@ const CHOICES=Object.freeze({
    line:'“일을 잘하는 사람에게 일이 더 몰리는 건 해결책이 아니죠.”'}
  ]
 });
+const CULTURE_DELTAS=Object.freeze({
+ protect:[7,7],restructure:[10,5],endure:[-6,-8],
+ clarify:[6,10],offer:[5,5],accept:[-5,-10],
+ boundary:[3,10],helpbrief:[3,5],dropwork:[-5,-8],
+ process:[7,9],consult:[5,6],solo:[-8,-10],
+ reassign:[9,10],sharehelp:[6,6],takeall:[-5,-12]
+});
 function duty(p){return DUTIES[p.duty]||DUTIES.general;}
 function acceptedOfficialFact(world,key){
  const item=world&&world.numbers&&world.numbers[key];
@@ -150,7 +157,7 @@ function eventProse(state,world){
   '나이스 창을 닫으며 생각했다. 일의 무게는 담당자가 정해졌다는 이유만으로 가벼워지지 않았다.'];
  if(d===3)return [
   young?'전담시간에 다음 차시 모둠 활동지를 고치고 있을 때, 경력이 오래된 한 선생님이 들어왔다. “혹시 차 내비게이션 업데이트하는 방법 알아요? 제가 이건 잘 몰라서요.”':
-  '전담시간에 인디스쿨에서 모둠 활동을 살펴보고 있는데, 옆자리 선생님이 자료 출력 방법을 물었다. “지금 바쁘시면 나중에 알려주셔도 돼요.”',
+  '전담시간에 인디스쿨에서 모둠 활동을 살펴보고 있는데, 옆자리 선생님이 복합기 인쇄 설정을 물었다. “지금 바쁘시면 나중에 알려주셔도 돼요.”',
   '아이들은 교과전담 수업을 들으러 이동했다. 나는 쉬는 시간을 쪼개 아이스크림 자료와 유튜브 수업 영상을 보고 다음 시간을 준비하고 있었다. 이 시간은 쉬기도 하고 수업을 준비하기도 하는 귀한 틈이었다.',
   '도움을 청한 사람의 나이나 경력이 문제는 아니었다. 부탁을 받은 내가 언제까지 어디까지 할 수 있는지 말할 수 있는지가 중요했다.'];
  if(d===4)return [
@@ -168,6 +175,25 @@ function eventProse(state,world){
   '나는 학교의 근무 난이도가 교사 개인의 인내심만으로 정해지지 않는다고 생각했다. 업무분장과 회의 문화, 실제 도움이 되는 지원이 하루의 모양을 바꾼다.'];
  return [];
 }
+function previousImpact(state){
+ const prev=Array.isArray(state.storyEvents)?state.storyEvents.find(e=>e.day===state.day-1):null;
+ if(!prev)return '';
+ const notes={
+ protect:'어제 교실에서 아이들 안전을 먼저 살피고 동학년과 지원을 의논했다. 오늘은 부탁을 받을 때에도 혼자 떠안지 않겠다는 생각이 들었다.',
+ restructure:'아이들과 함께 교실 규칙을 정한 일이 떠올랐다. 교직원의 일도 당사자의 목소리를 듣고 정해야 하지 않을까.',
+ endure:'어제 아이들 사이의 소란을 혼자 감당한 피로가 남았다. 다른 사람의 업무까지 받는다면 이번 주가 더 길어질 것 같았다.',
+ clarify:'어제 업무분장표에서 역할을 확인했다. 오늘 전담시간에도 내 수업 준비를 먼저 챙기고 싶었다.',
+ offer:'도울 수 있는 일과 내 담당을 구분했던 어제가 떠올랐다. 잠깐의 부탁 앞에서도 지킬 선은 있었다.',
+ accept:'어제 부탁받은 업무까지 처리하느라 모둠 활동지를 다 준비하지 못했다. 전담시간을 놓칠 수 없었다.',
+ boundary:'전담시간에 수업을 준비해 둔 덕분에 오늘은 차분히 사실관계를 살펴볼 수 있었다.',
+ helpbrief:'어제 부탁을 조금 도와주고 수업 준비로 돌아왔다. 도움을 주는 일과 떠맡는 일 사이의 차이가 조금 분명해졌다.',
+ dropwork:'어제는 수업 준비가 밀렸다. 오늘도 급한 요청이 들어왔지만 순서를 확인해야 한다는 생각이 들었다.',
+ process:'어제 확인된 사실과 정해진 절차를 구분해 기록했다. 다음 주에는 이렇게 함께 의논할 수 있는 시간이 필요했다.',
+ consult:'어제 동학년의 이야기를 들으며 각자의 일을 나눴다. 금요일의 협의도 조금은 덜 막막했다.',
+ solo:'어제 뒤늦게 도움을 청했다. 금요일에는 같은 일이 반복되지 않도록 업무 경계를 먼저 이야기하고 싶었다.'
+ };
+ return notes[prev.choiceId]||'';
+}
 function scene(state,world){
  if(!state||state.phase!=='chapter'||state.day<1||state.day>5)return null;
  const prev=Array.isArray(state.storyEvents)?state.storyEvents:[];
@@ -177,6 +203,8 @@ function scene(state,world){
  const data=EVENTS[state.day];
  const office=officialContext(world,state.day);
  const paragraphs=eventProse(state,world);
+ const last=previousImpact(state);
+ if(last)paragraphs.splice(1,0,last);
  if(office)paragraphs.push(office);
  return {
   id:data.id,day:state.day,date:'2027-03-'+String(7+state.day).padStart(2,'0'),
@@ -192,9 +220,16 @@ function choose(state,id){
  const raw=CHOICES[current.id].find(c=>c.id===id);
  if(!raw)throw Error('SCENARIO_CHOICE_INVALID');
  const next=copy(state),reply=copy(raw.reply);
+ if(next.day===3&&next.profile.age>32){
+   for(let i=0;i<reply.length;i++)reply[i]=reply[i]
+     .replace(/내비게이션 업데이트/g,'복합기 인쇄 설정')
+     .replace(/내비게이션 화면에서 업데이트 안내/g,'복합기 설정 화면에서 인쇄 안내');
+ }
  const name=next.profile.partner==='man'?'현우 선생님':next.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
  for(const key of ['affection','trust','agency','fatigue'])
    next.stats[key]=clamp(next.stats[key]+Number(raw.delta[key]||0));
+ for(const [i,key] of ['voice','boundary'].entries())
+   next.stats[key]=clamp(next.stats[key]+CULTURE_DELTAS[raw.id][i]);
  next.storyEvents=Array.isArray(next.storyEvents)?next.storyEvents:[];
  next.storyEvents.push({day:next.day,eventId:current.id,choiceId:raw.id});
  next.storyReflection={day:next.day,paragraphs:reply.map(x=>x.replace(/\{colleague\}/g,name)),
