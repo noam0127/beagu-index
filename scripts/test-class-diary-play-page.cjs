@@ -59,7 +59,7 @@ assert(play.ids.has('diarySchoolResults'),'School search results must be availab
 assert(play.src.includes("show('diaryLanding')"),'Unparameterized game entry must show the simple title card');
 assert(play.src.includes("selectSchoolMode('demo')"),'Fictional demo school should be the safe default');
 assert(play.src.includes("if(!/^[0-9a-f]{64}$/.test(token))"),'Real school selection must not bypass Lv2 verification');
-assert(preview.src.includes("location.replace('teacher-class-diary-play.html')"),'Legacy preview must send users straight to the title card');
+assert(preview.src.includes("location.replace('index.html#teacher-diary-feature')"),'Paused legacy preview must return safely to the home diary entry');
 
 assert(play.src.includes("selectSchoolMode('demo');\n  show('diaryLanding');"),'Demo shows the title before selecting a school');
 assert(play.src.includes("selectSchoolMode('real',world.basic.name);\n  $('semesterStart').click();"),'Authorized real school should also skip the opening');
