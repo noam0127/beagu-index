@@ -367,14 +367,14 @@
     // so scores, counts, dates and unrelated free text are never reformatted.
     const circledCatalogOption=(value,options)=>{
       if(typeof value!=='string'||!Array.isArray(options)||!options.length)return null;
-      const match=value.trim().match(/^(10|[1-9])\\s+(\\S[\\s\\S]*)$/);
+      const match=value.trim().match(/^(10|[1-9])\s+(\S[\s\S]*)$/);
       if(!match)return null;
       const circle=['','①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'][Number(match[1])];
       const label=match[2].trim();
-      const normalize=text=>text.replace(/\\s+/g,'').trim();
+      const normalize=text=>text.replace(/\s+/g,'').trim();
       const exact=options.some(option=>{
         if(typeof option!=='string')return false;
-        const original=option.trim().match(/^([①②③④⑤⑥⑦⑧⑨⑩])\\s*(\\S[\\s\\S]*)$/);
+        const original=option.trim().match(/^([①②③④⑤⑥⑦⑧⑨⑩])\s*(\S[\s\S]*)$/);
         return original&&original[1]===circle&&normalize(original[2])===normalize(label);
       });
       return exact?circle+' '+label:null;
