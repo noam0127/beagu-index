@@ -79,10 +79,22 @@ canvas{height:400px;cursor:default}
 .hint{display:none}
 @media(max-width:480px){.shell{padding:7px}.top{gap:5px}.version{padding:5px 8px;font-size:9px}.hud{gap:5px}.stat{padding:8px 7px}.stat span{font-size:10px}.stat strong{font-size:clamp(12px,3.7vw,17px)}canvas{height:370px}.panel{padding:12px}.panel .symbol{font-size:31px;margin:0}.panel p{font-size:11px;line-height:1.35;margin-bottom:9px}.choices{gap:6px}.choices button{padding:9px 8px;min-height:43px}.controls{gap:7px}.control button{min-height:54px}}
 @media(max-width:310px){.version{display:none}.toolbar .original{font-size:10px}.stat strong{font-size:11px}}
-/* Portrait phones use a taller playable world, not a stretched canvas image.
-   resize() syncs actual canvas height with movement and collision bounds. */
+/* Mobile portrait: keep the entire playfield visible instead of filling
+   the whole Safari viewport. resize() synchronizes the canvas hitbox/world. */
 @media(max-width:600px) and (orientation:portrait){
- #game{height:clamp(540px,78vh,780px);height:clamp(540px,78svh,780px)}
+ #game{height:clamp(350px,50vh,440px);height:clamp(350px,50svh,440px)}
+ /* Fullscreen on iOS previously stretched the stage canvas to 100dvh.
+    Keep fullscreen access but letterbox the actual playfield. */
+ .stage.arcade-fullscreen-fallback #game,
+ .stage:fullscreen #game,
+ .stage:-webkit-full-screen #game{
+   width:min(94vw,420px)!important;
+   max-width:94vw!important;
+   height:clamp(350px,58svh,500px)!important;
+   max-height:68svh!important;
+   flex:0 0 auto!important;
+   object-fit:contain!important;
+ }
 }
 .teacher-run-lv1-gate{max-width:820px;margin:40px auto;padding:28px 22px;text-align:center;border:1px solid #4e708e;border-radius:18px;background:#1d3d5b;color:#f6fbff}
 .teacher-run-lv1-gate h1{font-size:22px;margin:0 0 12px}
