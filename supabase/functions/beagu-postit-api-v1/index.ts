@@ -5,8 +5,13 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.0";
 const URL = Deno.env.get("SUPABASE_URL") || "";
 const ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const db = createClient(URL, ROLE_KEY, { auth: { persistSession:false, autoRefreshToken:false }});
-const origins = new Set(["https://baeguindex.com","https://www.baeguindex.com",
+const origins = new Set(["https://baeguindex.com","https://www.baeguindex.com","https://noam0127.github.io",
   "http://localhost:8788","http://localhost:8000","http://127.0.0.1:8000"]);
+const GAMES:Record<string,string>={
+ "teacher-volleyball":"선생님배구",
+ "teacher-run":"험난한 교직생활",
+ "teacher-class-diary-play":"나의 OO한 학급일지"
+};
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SCHOOL_ID = /^[A-Z0-9]{7}$/;
 function cors(req:Request){
@@ -26,26 +31,26 @@ function textCheck(v:unknown,max:number){
  /(?:01[016789])[- ]?\d{3,4}[- ]?\d{4}/.test(s))return "";
  return s;
 }
-async function userFrom(req:Request){
- const token=(req.headers.get("authorization")||"").replace(/^Bearer\s+/i,"").trim();
- if(!token||token===ROLE_KEY)return null;
- const {data,error}=await db.auth.getUser(token);
- if(error||!data?.user?.id)return null;
- return data.user;
+// Authorization is verified against the site's existing server-issued level sessions.
+async function identity(req:Request){
+ const token=(req.headers.get("x-beagu-level-session")||"").trim();
+ if(!/^[a-f0-9]{64}$/.test(token))return null;
+ const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token))),v=>v.toString(16).padStart(2,"0")).join("");
+ const {data,error}=await db.from("beagu_level_sessions").select("access_level,identity_visitor_id")
+   .eq("token_sha256",hash).gt("expires_at",new Date().toISOString()).maybeSingle();
+ if(error||!data||Number(data.access_level)<2)return null;
+ const seed=String(data.identity_visitor_id||hash);
+ const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(ROLE_KEY),
+   {name:"HMAC",hash:"SHA-256"},false,["sign"]);
+ const mac=new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode("postit:"+seed)));
+ mac[6]=(mac[6]&15)|64;mac[8]=(mac[8]&63)|128;
+ const h=Array.from(mac.slice(0,16),v=>v.toString(16).padStart(2,"0")).join("");
+ return {level:2,id:h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20,32)};
 }
 async function minimumLevel(){
  const {data,error}=await db.from("beagu_postit_settings").select("minimum_write_level,max_daily_posts,max_daily_comments").eq("id",1).single();
  if(error)throw error;
  return data;
-}
-async function tierFrom(req:Request){
- const session=(req.headers.get("x-beagu-level-session")||"").trim();
- if(session.length<20||session.length>250)return 0;
- const digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(session));
- const hash=[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,"0")).join("");
- const {data}=await db.from("beagu_level_sessions")
-  .select("access_level").eq("token_sha256",hash).gt("expires_at",new Date().toISOString()).maybeSingle();
- return Math.max(0,Math.min(2,Number(data?.access_level)||0));
 }
 async function schoolInfo(ids:string[]){
  const unique=[...new Set(ids)].filter(x=>SCHOOL_ID.test(x));
@@ -94,10 +99,19 @@ async function enrich(items:any[],type:"post"|"comment",self:string|null){
    .in("post_id",ids).eq("status","published").limit(10000);
   for(const c of comments||[])commentCounts[c.post_id]=(commentCounts[c.post_id]||0)+1;
  }
- const schools=type==="post"?await schoolInfo(items.map(x=>x.school_id)):{};
+ const compareIds=type==="post"?items.flatMap(x=>
+   typeof x.comparison_selection==="string"?x.comparison_selection.split(",").map((z:string)=>z.split(":")[0]):[]):[];
+ const schools=type==="post"?await schoolInfo([...items.map(x=>x.school_id).filter(Boolean),...compareIds]):{};
  return items.map(x=>({
   id:x.id,body:x.body,created_at:x.created_at,
-  ...(type==="post"?{school:schools[x.school_id]||null,comments:commentCounts[x.id]||0}:{}),
+  ...(type==="post"?{
+   subject_type:x.subject_type||"school",
+   school:schools[x.school_id]||null,
+   game:x.game_slug?{slug:x.game_slug,name:GAMES[x.game_slug]||"게임"}:null,
+   comparison:x.comparison_selection?{selection:x.comparison_selection,
+     schools:x.comparison_selection.split(",").map((part:string)=>schools[part.split(":")[0]]?.name).filter(Boolean)}:null,
+   comments:commentCounts[x.id]||0
+  }:{}),
   ...{likes:counts[x.id].likes,liked:counts[x.id].liked,reported:counts[x.id].reported,
    mine:Boolean(self&&self===x.author_uid)}
  }));
@@ -128,6 +142,9 @@ async function target(type:string,id:string){
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors(req)});
  if(req.method!=="GET"&&req.method!=="POST")return fail(req,"METHOD_NOT_ALLOWED",405);
+ const origin=req.headers.get("origin")||"";
+ if(origin&&!origins.has(origin))return fail(req,"ORIGIN_NOT_ALLOWED",403);
+ if(Number(req.headers.get("content-length")||0)>2048)return fail(req,"BODY_TOO_LARGE",413);
  if(!URL||!ROLE_KEY)return fail(req,"SERVER_NOT_CONFIGURED",503);
  try{
   const url=new URL(req.url);
@@ -150,11 +167,11 @@ Deno.serve(async(req:Request)=>{
     const schoolId=url.searchParams.get("school_id")||"";
     const sort=url.searchParams.get("sort")==="popular"?"popular":"recent";
     if(schoolId&&!SCHOOL_ID.test(schoolId))return fail(req,"INVALID_SCHOOL");
-    let query=db.from("beagu_postit_posts").select("id,school_id,body,author_uid,created_at")
+    let query=db.from("beagu_postit_posts").select("id,school_id,subject_type,game_slug,comparison_selection,body,author_uid,created_at")
      .eq("status","published").order("created_at",{ascending:false}).limit(sort==="popular"?100:30);
     if(schoolId)query=query.eq("school_id",schoolId);
     const {data,error}=await query;if(error)throw error;
-    const self=(await userFrom(req))?.id||null;
+    const self=(await identity(req))?.id||null;
     let posts=await enrich(data||[],"post",self);
     if(sort==="popular")posts=posts.sort((a,b)=>b.likes-a.likes||b.created_at.localeCompare(a.created_at)).slice(0,30);
     return respond(req,{posts});
@@ -167,27 +184,49 @@ Deno.serve(async(req:Request)=>{
     const {data,error}=await db.from("beagu_postit_comments").select("id,body,author_uid,created_at")
      .eq("post_id",id).eq("status","published").order("created_at",{ascending:true}).limit(80);
     if(error)throw error;
-    const comments=await enrich(data||[],"comment",(await userFrom(req))?.id||null);
+    const comments=await enrich(data||[],"comment",(await identity(req))?.id||null);
     return respond(req,{comments});
    }
    return fail(req,"UNKNOWN_ACTION");
   }
-  // Mutations require real Supabase Auth, including supported anonymous Auth.
-  const user=await userFrom(req);if(!user)return fail(req,"LOGIN_REQUIRED",401);
+  // All mutations require an active server-issued Lv2 session.
+  const user=await identity(req);if(!user)return fail(req,"LEVEL_REQUIRED",403);
   const settings=await minimumLevel();
-  // Read is public at Lv.0. Every user-created interaction is Lv.2 only;
-  // authors may still remove their own content if their level later changes.
-  if(action!=="remove" && (await tierFrom(req))<Number(settings.minimum_write_level))
+  if(user.level<Math.max(2,Number(settings.minimum_write_level)))
     return fail(req,"LEVEL_REQUIRED",403);
   if(action==="create_post"){
+   const subject=String(body?.subject_type||"school");
    const schoolId=String(body?.school_id||"");
+   const gameSlug=String(body?.game_slug||"");
+   const compare=String(body?.comparison_selection||"");
    const content=textCheck(body?.text,200);
-   if(!SCHOOL_ID.test(schoolId)||!content)return fail(req,"INVALID_POST");
-   const {data:school}=await db.from("schools").select("school_id").eq("school_id",schoolId).maybeSingle();
-   if(!school)return fail(req,"SCHOOL_NOT_FOUND",404);
+   if(!content||!["school","game","comparison"].includes(subject))
+     return fail(req,"INVALID_POST");
+   if(subject==="school"&&!SCHOOL_ID.test(schoolId))return fail(req,"INVALID_SCHOOL");
+   if(subject==="game"&&!GAMES[gameSlug])return fail(req,"INVALID_GAME");
+   if(subject==="game"&&schoolId&&!SCHOOL_ID.test(schoolId))return fail(req,"INVALID_SCHOOL");
+   if(subject==="comparison"){
+     const parts=compare.split(",");
+     if(!parts.length||parts.length>5||compare.length>120||
+        parts.some(x=>!/^[A-Z0-9]{7}:202[3-6]$/.test(x)) ||
+        new Set(parts).size!==parts.length)return fail(req,"INVALID_COMPARISON");
+   }
+   const ids=subject==="comparison"?compare.split(",").map(x=>x.split(":")[0]):schoolId?[schoolId]:[];
+   if(ids.length){
+     const {data,error}=await db.from("schools").select("school_id").in("school_id",[...new Set(ids)]);
+     if(error)throw error;
+     if(new Set((data||[]).map(x=>x.school_id)).size!==new Set(ids).size)
+       return fail(req,"SCHOOL_NOT_FOUND",404);
+   }
    if(!await countToday("beagu_postit_posts",user.id,settings.max_daily_posts)||await tooSoon("beagu_postit_posts",user.id,90))
      return fail(req,"POST_RATE_LIMIT",429);
-   const {data,error}=await db.from("beagu_postit_posts").insert({school_id:schoolId,author_uid:user.id,body:content}).select("id").single();
+   const {data,error}=await db.from("beagu_postit_posts").insert({
+     school_id:subject==="comparison"||!schoolId?null:schoolId,
+     subject_type:subject,
+     game_slug:subject==="game"?gameSlug:null,
+     comparison_selection:subject==="comparison"?compare:null,
+     author_uid:user.id,body:content
+   }).select("id").single();
    if(error)throw error;return respond(req,{id:data.id},201);
   }
   if(action==="create_comment"){
