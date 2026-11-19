@@ -149,7 +149,7 @@ assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is imple
 assert.match(runner,/pointerY=target\.y/,"survival game tracks 2D touch target");
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically except EXTREME");
 assert.match(runner,/enemySize:1\.28/,"extreme hazards have larger collision size");
-assert.match(runner,/profile\.homing\*dt/,"harder hazards track the player");
+assert.match(runner,/trackSpeed\*dt/,"career-stage tracking hazards follow the player");
 assert.match(runner,/profile\.heroSpeed/,"hero mobility scales by difficulty");
 assert.match(runner,/profile\.startingLife/,"hero starting health scales by difficulty");
 assert.match(volley,/enemyJumpChance/,"AI jump probability scales by tier");
@@ -224,13 +224,13 @@ const volleyStats=(player,cpu,activeTenths=800,endedEarly=false)=>{
  const survivalBonus=Math.min(900,Math.floor(activeTenths/10))*4;
  const multiplier=victory?1+Math.floor((25-cpu)/5):1;
  return {player,cpu,baseScore,survivalBonus,multiplier,
-  finalScore:(baseScore+survivalBonus)*multiplier,victory,endedEarly,activeTenths};
+  finalScore:baseScore*multiplier+survivalBonus,victory,endedEarly,activeTenths};
 };
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,0),82),(2500+320)*6,"25–0 win: lead multiplier and play bonus");
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,5),82),(2250+320)*5);
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,10),82),(2000+320)*4);
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,15),82),(1750+320)*3);
-assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,20),82),(1500+320)*2);
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,0),82),2500*6+320,"25–0 win: lead multiplier and play bonus");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,5),82),2250*5+320);
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,10),82),2000*4+320);
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,15),82),1750*3+320);
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,20),82),1500*2+320);
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,24),82),1300+320);
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(24,25),82),1150+320,"loss still saves points");
 assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(3,25),82),320,"long survival has value even when losing badly");
