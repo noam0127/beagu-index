@@ -10,7 +10,8 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
  try{
   for(const variant of [
    {name:'desktop',width:1365,height:850,partner:'woman'},
-   {name:'mobile',width:390,height:844,partner:'man'}
+   {name:'mobile',width:390,height:844,partner:'man'},
+   {name:'friendship',width:390,height:844,partner:'none'}
   ]){
    const page=await browser.newPage({viewport:{width:variant.width,height:variant.height},deviceScaleFactor:1});
    const errors=[];
@@ -28,7 +29,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    });
    assert.equal(incidentVersion.choices,3,'Friendship episode choices must load');
    assert(incidentVersion.prose.includes('종이접시'),'Revised event dialogue must load');
-   await page.locator('#playerName').fill(variant.name==='desktop'?'최윤호':'김민서');
+   await page.locator('#playerName').fill(variant.name==='desktop'?'최윤호':variant.name==='friendship'?'박루다':'김민서');
    const count=await page.locator('#profileForm input,#profileForm select').count();
    assert.equal(count,6,'Character form must contain exactly 6 fields');
    await page.locator('#experience').selectOption(variant.name==='desktop'?'mid':'new');
@@ -45,14 +46,17 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    assert((await page.locator('#scenePortrait').getAttribute('src')).startsWith('data:image/svg+xml'));
    if(variant.name==='desktop')await page.screenshot({path:'artifacts/class-diary/desktop-first-scene.png',fullPage:true});
    else await page.screenshot({path:'artifacts/class-diary/mobile-first-scene.png',fullPage:true});
-   let turns=0,sawFull=false,sawFriendly=false,sawCareer=false;
-   const full=variant.name==='desktop'?'최윤호 선생님':'김민서 선생님';
-   const friendly=variant.name==='desktop'?'윤호 쌤':'민서 쌤';
+   let turns=0,sawFull=false,sawFriendly=false,sawCareer=false,sawCharacterVoice=false;
+   const full=variant.name==='desktop'?'최윤호 선생님':variant.name==='friendship'?'박루다 선생님':'김민서 선생님';
+   const friendly=variant.name==='desktop'?'윤호 쌤':variant.name==='friendship'?'루다 쌤':'민서 쌤';
    while(await page.locator('#ending').isHidden()){
     if(turns++>170)throw Error('Scene flow did not finish within 170 interactions');
     const now=(await page.locator('#chapterText').innerText())+' '+(await page.locator('#outcomeLine').innerText());
     sawFull ||= now.includes(full);
     sawFriendly ||= now.includes(friendly);
+    const unique=variant.partner==='woman'?'지윤 선생님은 내가 설명을 다 끝낼 때까지 기다렸다':
+      variant.partner==='man'?'현우 선생님은 복합기 옆에서':'민서 선생님은 자리에 앉자마자';
+    sawCharacterVoice ||= now.includes(unique);
     sawCareer ||= now.includes(variant.name==='desktop'?
       '경력이 쌓여도 학기 초는 늘 새로웠다':'아직 교단에서 배우는 일이 더 많았다');
     const choices=page.locator('#choiceSection .choice:visible');
@@ -66,10 +70,16 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
     }
    }
    assert(sawCareer,'Selected career stage must shape narration across the first day');
+   assert(sawCharacterVoice,'Every selected adult colleague must have distinct opening narration');
    assert(sawFull,'Colleagues must use the character full name in initial scenes');
    assert(sawFriendly,'Closer colleagues must use given-name 쌤 on later days');
    assert((await page.locator('#endingTitle').innerText()).startsWith('나의 '));
    assert((await page.locator('#endingText').innerText()).length>100);
+   if(variant.partner==='none'){
+     assert((await page.locator('#endingText').innerText()).includes('민서 선생님'),'Platonic friendship has its own named ending');
+     assert(!['나의 소중한 학급일지','나의 다정한 학급일지'].includes(await page.locator('#endingTitle').innerText()),
+       'Platonic route must not open romantic endings');
+   }
    const state=await page.evaluate(()=>({
     stored:[...Object.keys(localStorage)].filter(k=>k.includes('diary')||k.includes('class-diary')),
     width:document.documentElement.scrollWidth,viewport:innerWidth
