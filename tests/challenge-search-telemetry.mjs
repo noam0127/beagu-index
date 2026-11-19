@@ -101,6 +101,16 @@ assert.doesNotMatch(read('js/challenge.js'),/supabaseClient\.rpc\('beagu_join_ch
  'No browser-direct ordinal issuance');
 assert.match(read('js/challenge.js'),/X-Beagu-Session/,'Require the existing Level 1 session');
 assert.match(read('js/challenge.js'),/identityCode\.textContent = code/,'Show the issued unique code');
+const codePattern = /^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6})$/;
+assert.equal(codePattern.test('BG26-ABCD-1234-ABCD-1234-ABCD'),true,'Legacy identifiers remain valid');
+assert.equal(codePattern.test('BG26-K7M9Q2-X4T8W3'),true,'Compact identifiers are valid');
+assert.equal(codePattern.test('BG26-K7M9Q2-X4T8W0'),false,'Ambiguous characters are not permitted for new identifiers');
+assert.equal(codePattern.test('BG26-K7M9Q2-X4T8W3-TEST'),false,'Wrong suffix is rejected');
+assert.ok(read('js/challenge.js').includes('BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}'),
+ 'Client validates compact format');
+assert.ok(read('supabase/functions/beagu-challenge-identity/index.ts').includes('BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}'),
+ 'Server validates compact format');
+
 assert.ok(challenge.indexOf('id="identityCode"') > challenge.indexOf('</section>',challenge.indexOf('id="certificate"')),
  'Identity code must be outside the image capture root');
 assert.match(challenge,/data-html2canvas-ignore="true"/,'Private code should never render in generated certificate');
