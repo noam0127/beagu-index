@@ -109,6 +109,24 @@ async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
    difficulty,eligible,missing_years,available_years,source_year:eligible?Math.max(...available_years):null,has_index:eligible};
 }
 
+// Admin identity is derived exclusively from a Supabase Auth bearer JWT.
+ // The service role never trusts any 'admin' flag in a request body.
+async function authenticatedAdmin(req: Request): Promise<{admin:boolean;invalid:boolean}> {
+  const bearer=req.headers.get("authorization");
+  if(!bearer)return {admin:false,invalid:false};
+  if(!/^Bearer [A-Za-z0-9_.-]+$/.test(bearer))return {admin:false,invalid:true};
+  const proof=await fetch(SUPA_URL+"/auth/v1/user",{
+    headers:{"apikey":SERVICE_KEY,"Authorization":bearer},
+  });
+  if(!proof.ok)return {admin:false,invalid:true};
+  const user=await proof.json().catch(()=>({}));
+  if(typeof user.id!=="string"||!/^[0-9a-f-]{36}$/i.test(user.id))
+    return {admin:false,invalid:true};
+  const q=new URLSearchParams({select:"user_id",user_id:"eq."+user.id,enabled:"eq.true",limit:"1"});
+  const rows=await db("beagu_admin_accounts?"+q);
+  return {admin:Array.isArray(rows)&&rows.length>0,invalid:false};
+}
+
 async function ipHash(req: Request): Promise<string> {
   const address = (req.headers.get("cf-connecting-ip")
     || req.headers.get("x-real-ip")
@@ -275,6 +293,27 @@ Deno.serve(async (req:Request)=>{
     if(!isGame(game))return error("invalid_game",400,origin);
     const requestedTier=payload.difficulty===undefined?null:rankTier(payload.difficulty);
     if(payload.difficulty!==undefined&&!requestedTier)return error("invalid_difficulty",400,origin);
+    // Exclude an authenticated administrator at the SERVER write stage.
+    // No arcade_game_sessions or arcade_game_scores row is created for admin play.
+    const actor=await authenticatedAdmin(req);
+    if(actor.invalid)return error("invalid_authentication",401,origin);
+    if(actor.admin){
+      if(payload.action==="start"){
+        const selected=await resolveSchool(payload.school_id);
+        if(!selected)return error("select_school",400,origin);
+        if(!selected.eligible)return error("school_ineligible",409,origin);
+        return json({session:crypto.randomUUID(),school:selected,excluded:true},200,origin);
+      }
+      if(payload.action==="submit"){
+        const [top10,fastestTop10]=await Promise.all([
+          top(game,requestedTier),
+          game==="volleyball_25"?fastest25(requestedTier):Promise.resolve([])
+        ]);
+        return json({ranked:false,rank:0,recorded:false,score:0,top10,
+          excluded:true,...(game==="volleyball_25"?{fastestTop10,timeRanked:false,timeRank:0}:{})},200,origin);
+      }
+      return error("unknown_action",400,origin);
+    }
     const hash=await ipHash(req);
     if(payload.action==="start"){
       const selected=await resolveSchool(payload.school_id);
