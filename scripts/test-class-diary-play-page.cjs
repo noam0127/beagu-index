@@ -29,7 +29,7 @@ assert(play.src.includes("sessionStorage.getItem('beagu-level-session-v1')"));
 assert(play.src.includes("engine.createGame(world,plan"));
 assert(!play.src.includes('engine.restore('));
 assert(!play.src.includes('engine.createSnapshot('));
-assert(play.src.includes("game=engine.advance(game)"));
+assert(play.src.includes("scenario.continueStory(game):engine.advance(game)"));
 assert(play.src.includes("director.decorateEnding(game)"));
 assert(play.src.includes("director.decorateChapter("));
 assert(play.src.includes("director.decorateOutcome(game)"));
