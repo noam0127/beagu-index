@@ -132,6 +132,11 @@ assert.throws(()=>sound.semesterScore(0),/INVALID_SEMESTER_EPISODE/);
 assert.throws(()=>sound.semesterScore(37),/INVALID_SEMESTER_EPISODE/);
 assert.throws(()=>sound.semesterScore(1,{reflection:true,choice:'unknown'}),/INVALID_SEMESTER_CHOICE/);
 const semesterPage=fs.readFileSync(path.join(__dirname,'../teacher-class-diary-play.html'),'utf8');
+for(const key of ['wildflowers','with-these-hands','unraveling','incredulity']){
+ assert(semesterPage.includes('https://www.scottbuckley.com.au/library/'+key+'/'),
+  'New CC BY 4.0 track must have a visible game credit: '+key);
+}
+
 assert(semesterPage.includes('sound.semesterScore(game.episode,'),'Semester screen must use the 36-episode score');
 assert(!semesterPage.includes("sound.dayTrack((game.episode-1)%7+1)"),'Old 7-day cycle must not override semester score');
 assert(semesterPage.includes('sound.setAmbience(score.ambience)'),'Semester ambience must be routed');
