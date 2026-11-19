@@ -362,7 +362,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-student-doyun-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-hq1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
-<link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-ink-2">
+<link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-hud-center1">
 <link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-guest1">
 <link rel="stylesheet" href="styles/class-diary-progress-controls-v1.css?v=20261120-1">
 </head>
@@ -885,14 +885,20 @@ $('vnMore').addEventListener('click',()=>{
  if(vnState.kind==='outcome'){$('nextBtn').hidden=false;$('nextBtn').focus()}
  else journey.openChoice();
 });
+function advanceByScene(){
+ if(!document.body.classList.contains('is-playing')||!$('choiceSection').hidden)return false;
+ const advance=!$('vnMore').hidden?$('vnMore'):!$('nextBtn').hidden?$('nextBtn'):null;
+ if(!advance)return false;
+ advance.click();return true;
+}
 $('sceneArt').addEventListener('click',event=>{
- if(event.target.closest('button,a,input,select,textarea'))return;
- if(document.body.classList.contains('is-playing')&&!$('vnMore').hidden)$('vnMore').click();
+ if(event.target.closest('button,a,input,select,textarea,[role="dialog"]'))return;
+ advanceByScene();
 });
 document.addEventListener('keydown',event=>{
  if(!document.body.classList.contains('is-playing')||!['Enter',' ','ArrowRight'].includes(event.key))return;
- if(event.target.closest('button,a,input,select,textarea'))return;
- if(!$('vnMore').hidden){event.preventDefault();$('vnMore').click();}
+ if(event.target.closest('button,a,input,select,textarea,[role="dialog"]'))return;
+ if(advanceByScene())event.preventDefault();
 });
 $('vnSound').addEventListener('click',()=>$('musicBtn').click());
 $('vnReset').addEventListener('click',()=>$('resetBtn').click());
@@ -1498,7 +1504,7 @@ $('diaryContinueNow').addEventListener('click',async()=>{
 boot();
 })();
 </script>
-<script defer src="js/class-diary-ui-v2.js?v=20261120-semester2"></script>
+<script defer src="js/class-diary-ui-v2.js?v=20261120-hud-toggle1"></script>
 <script defer src="js/class-diary-semester-ui-v1.js?v=20261120-2"></script>
 <script defer src="js/postit-entry-links-v1.js?v=20261120-1"></script>
 </body>
