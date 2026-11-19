@@ -143,6 +143,31 @@ button{font:inherit;cursor:pointer}
  .stat{flex:0 0 90px;scroll-snap-align:start}
  .vn-dialogue{padding:15px}
 }
+/* Stage 7 quick-launch: compact SD novel interface; previous SVG backgrounds stay intact. */
+:root{--diary-ink:#433e4e;--diary-accent:#8e708f}
+.scene-art{height:clamp(270px,47vw,470px);min-height:270px;background:#e9e2dc;border-radius:19px 19px 0 0;overflow:hidden}
+.scene-backdrop{filter:saturate(.82) brightness(1.03)}
+.scene-portrait{height:94%;max-width:55%;width:auto;right:5%;bottom:0;object-fit:contain;object-position:center bottom;transition:opacity .18s ease,transform .18s ease;filter:drop-shadow(0 12px 14px #38334233)}
+.scene-fade{inset:65% 0 0;background:linear-gradient(transparent,#302b3b55)}
+.novel-top{padding:0 22px 24px;background:#f8f4ef}
+.novel-top .scene-art{margin:0 -22px 19px}
+.novel-top .tag{background:#f1e1eb;color:#714a67;font-weight:800}
+.novel-body{margin-top:0;padding-top:16px}
+.character-strip{border-color:#ebdfe5;background:#fffafb;margin-bottom:12px}
+.character-avatar{background:#eadbe6;color:#684b63}
+.vn-dialogue{background:#fffefa;border:1px solid #e5d7d8;border-left:4px solid #ae879c;box-shadow:0 6px 18px #493d4820;padding:22px}
+.choice{border:1px solid #e2d9df;background:#fff;border-radius:12px;margin-bottom:8px;min-height:54px;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+.choice:hover,.choice:focus-visible{background:#faf0f6;border-color:#b78ca7;transform:translateY(-1px)}
+@media(max-width:620px){
+ .scene-art{height:clamp(270px,90vw,390px);min-height:270px}
+ .scene-portrait{height:89%;max-width:76%;right:0;bottom:0;object-position:right bottom}
+ .novel-top{padding:0 16px 20px}
+ .novel-top .scene-art{margin:0 -16px 16px}
+ .novel-body{margin-top:0}
+ .vn-dialogue{padding:18px 16px}
+ .choice{font-size:14px;line-height:1.55}
+}
+@media(prefers-reduced-motion:reduce){.scene-portrait,.choice{transition:none;transform:none}}
 </style>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 </head>
@@ -271,6 +296,7 @@ button{font:inherit;cursor:pointer}
 <script src="js/class-diary-context-v1.js"></script>
 <script src="js/class-diary-sound-v1.js"></script>
 <script src="js/class-diary-visual-v1.js"></script>
+<script src="js/class-diary-sd-v1.js"></script>
 <script src="js/class-diary-scenario-v1.js"></script>
 <script src="js/class-diary-incidents-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
@@ -287,6 +313,7 @@ const scenario=window.BeaguClassDiaryScenario;
 const incidents=window.BeaguClassDiaryIncidents;
 const sound=window.BeaguClassDiarySound;
 const visual=window.BeaguClassDiaryVisual;
+const sd=window.BeaguClassDiarySD;
 let effectsOn=true;
 let soundPreferenceTouched=false;
 const params=new URLSearchParams(location.search);
@@ -313,7 +340,8 @@ function fillParagraphs(id,texts){
 }
 function displayStage(id,who,expression){
  $('sceneBackdrop').style.backgroundImage='url("'+visual.dataUrl(visual.backgroundSvg(id))+'")';
- $('scenePortrait').src=visual.dataUrl(visual.portraitSvg(who,expression||'neutral'));
+ $('scenePortrait').src=visual.dataUrl(sd.portraitSvg(who,expression||'neutral'));
+ $('scenePortrait').setAttribute('data-sd-character',who);
  $('sceneArt').setAttribute('aria-label','가상 한국 초등학교 풍경의 글자 없는 삽화');
 }
 function mood(id){if(sound.isEnabled())sound.setTrack(id).catch(()=>{});}
@@ -336,7 +364,7 @@ function renderNovel(){
  $('statSupport').textContent=game.stats.support;
  $('chapterDay').textContent=game.day+' / 7 · '+view.date+' '+view.weekday;
  $('novelCard').dataset.scene=view.visual.id;
- displayStage(view.visual.id,game.profile.partner,isReflection&&game.lastOutcome&&game.lastOutcome.id==='carry'?'worried':'neutral');
+ displayStage(view.visual.id,game.profile.partner,isReflection?(game.lastOutcome&&game.lastOutcome.id==='carry'?'worried':'smile'):'neutral');
  mood(isReflection?sound.choiceTrack(game.day,game.lastOutcome&&game.lastOutcome.id):sound.dayTrack(game.day));
  
  $('characterAvatar').textContent=view.character.initial;
