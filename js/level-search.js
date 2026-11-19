@@ -484,7 +484,15 @@
         host.append(section);
       } else {
         host.append(make('p','beagu-year-empty',
-          '2026년 학교별 문항 결과는 아직 공개 승인되지 않았습니다. 실시간 원응답은 공개하지 않습니다.'));
+          '2026년 공개된 학교별 조사 결과가 없습니다. 아직 참여하지 않았거나 집계·검수 및 공개 대기 중일 수 있습니다.'));
+        const survey=make('a','beagu-year-survey-link','2026 조사 참여하기');
+        survey.href='https://forms.gle/TPyCakK6Sj2zchRy7';
+        survey.target='_blank';
+        survey.rel='noopener noreferrer';
+        survey.setAttribute('aria-label','2026 배구지수 설문조사 참여하기 (새 창)');
+        host.append(survey);
+        host.append(make('p','beagu-year-survey-help',
+          '이미 참여하셨다면 공개 승인 이후 결과가 표시됩니다.'));
       }
       const reload = make('button','year-2026-button','2026년 승인 결과 새로고침');
       reload.type='button';
