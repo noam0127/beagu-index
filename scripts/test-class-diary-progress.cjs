@@ -11,10 +11,11 @@ const guest=fs.readFileSync(path.join(__dirname,'..','supabase/functions/class-d
 for(const key of ['id="guestResume"','id="guestResumeBtn"','id="guestNewBtn"',
  'id="diarySaveNow"','id="diaryContinueNow"','class-diary-progress-controls-v1.css',
  'class-diary-progress-v1.js','autoSaveProgress();',"progressSession.load()",
- 'result.progressToken',"guestResumeSummary"]){
+ "guestResumeSummary"]){
  assert(html.includes(key),'Missing save UI: '+key);
 }
 assert(!html.includes('id="guestCode"'),'Guest code must only be entered on home');
+assert(html.includes("fail('『나의 OO한 학급일지』는 현재 준비 중입니다."),'Guest handoff must remain locked during maintenance');
 assert(!server.includes('identity_code'),'Progress API must never read/store raw codes');
 assert(guest.includes("p_code:code"),'Verified identity code must be mapped server-side');
 assert(guest.includes('class-diary-progress-v1:'),'Guest and progress endpoints must agree on HMAC purpose');
