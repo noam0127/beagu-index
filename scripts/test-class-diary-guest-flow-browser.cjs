@@ -6,12 +6,13 @@ const assert=require('node:assert/strict');
 const {chromium}=require('playwright');
 const base=process.env.DIARY_BASE||'http://127.0.0.1:8123';
 const api='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-guest-access-v1';
+const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-progress-v1';
 (async()=>{
  const browser=await chromium.launch({headless:true});
  try{
   for(const device of [{name:'mobile',width:390,height:844},{name:'desktop',width:1365,height:850}]){
    const page=await browser.newPage({viewport:{width:device.width,height:device.height},deviceScaleFactor:1});
-   const errors=[];let codeCheck=0,ticketCheck=0;
+   const errors=[];let codeCheck=0,ticketCheck=0,revision=0,latestCheckpoint=null;
    page.on('pageerror',error=>errors.push(error.message));
    await page.route(api,route=>{
     const body=JSON.parse(route.request().postData()||'{}');
@@ -23,9 +24,22 @@ const api='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-gue
     if(body.action==='verify-ticket'){
      ticketCheck++;assert.equal(body.ticket,'v1.fakepayload.fakesignature');
      return route.fulfill({status:200,contentType:'application/json',
-      body:JSON.stringify({ok:true,scope:'class-diary-fictional-guest'})});
+      body:JSON.stringify({ok:true,scope:'class-diary-fictional-guest',progressToken:'p1.abc.xyz'})});
     }
     throw Error('Unexpected guest API action');
+   });
+   await page.route(progressApi,route=>{
+    const body=JSON.parse(route.request().postData()||'{}');
+    assert.equal(body.token,'p1.abc.xyz','Use only the synthetic progress token');
+    if(body.action==='load')return route.fulfill({status:200,contentType:'application/json',
+      body:JSON.stringify({ok:true,progress:latestCheckpoint?{revision,state:latestCheckpoint}:null})});
+    if(body.action==='save'){
+     assert.equal(body.expectedRevision,revision,'Save revisions must advance sequentially');
+     revision++;latestCheckpoint=body.state;
+     return route.fulfill({status:200,contentType:'application/json',
+      body:JSON.stringify({ok:true,revision,updatedAt:'2026-11-20T00:00:00Z'})});
+    }
+    throw Error('Unexpected progress action');
    });
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
    await page.goto(base+'/index.html',{waitUntil:'domcontentloaded'});
@@ -65,6 +79,11 @@ const api='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-gue
     width:innerWidth,btn:document.getElementById('musicBtn').getAttribute('aria-pressed'),
     saved:[...Object.keys(localStorage)].filter(k=>k.includes('class-diary')||k.includes('diary'))
    }));
+   assert.equal(await page.locator('#diarySaveNow').isVisible(),true,'In-game manual save button should be visible');
+   assert.equal(await page.locator('#diaryContinueNow').isVisible(),true,'In-game continue button should be visible');
+   await page.locator('#diarySaveNow').click();
+   await page.waitForFunction(()=>document.querySelector('#vnSaveNotice')?.textContent?.includes('저장 완료'),null,{timeout:5000});
+   assert(latestCheckpoint&&latestCheckpoint.version==='class-diary-semester/v1','Manual save must reach the mock progress API');
    assert(state.scrollHeight<=state.viewport+3,'Game must fit one viewport: '+JSON.stringify(state));
    assert(state.scrollWidth<=state.width+3,'Game must not overflow horizontally');
    assert.equal(state.btn,'true','Music should be enabled by default');
