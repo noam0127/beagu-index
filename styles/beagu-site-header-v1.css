@@ -91,3 +91,34 @@
 @media(prefers-reduced-motion:reduce){
   .beagu-unified-nav > a[href="postit.html"]{transition:none}
 }
+
+
+/* Marker-lettered Post-it navigation: consistent across every shared header. */
+.beagu-unified-header .beagu-unified-nav > a[href="postit.html"]{
+  font-family:"Gaegu","Nanum Pen Script","Apple SD Gothic Neo",sans-serif;
+  font-size:24px;
+  font-weight:700;
+  letter-spacing:-.055em;
+  line-height:1;
+  color:#322c20!important;
+  -webkit-text-stroke:.75px currentColor;
+  text-shadow:.25px .25px 0 currentColor,-.25px -.15px 0 currentColor;
+  transform:rotate(-4deg);
+}
+.beagu-unified-header .beagu-unified-nav > a[href="postit.html"]:hover,
+.beagu-unified-header .beagu-unified-nav > a[href="postit.html"][aria-current="page"]{
+  transform:rotate(-3deg) translateY(-2px);
+  color:#292417!important;
+}
+@media(max-width:760px){
+  .beagu-unified-header .beagu-unified-nav > a[href="postit.html"]{
+    font-size:19px;
+    padding-left:2px;
+    padding-right:2px;
+    transform:rotate(-4deg);
+  }
+  .beagu-unified-header .beagu-unified-nav > a[href="postit.html"]:hover,
+  .beagu-unified-header .beagu-unified-nav > a[href="postit.html"][aria-current="page"]{
+    transform:rotate(-3deg) translateY(-1px);
+  }
+}
