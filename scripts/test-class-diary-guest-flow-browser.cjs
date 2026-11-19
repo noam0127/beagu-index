@@ -27,6 +27,26 @@ const api='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-gue
     }
     throw Error('Unexpected guest API action');
    });
+   // Mock public school search and published-survey check; never touch private data.
+   await page.route('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard**',route=>{
+    const url=new URL(route.request().url());
+    if(url.searchParams.has('schools')){
+     const word=url.searchParams.get('schools')||'';
+     const schools=word.includes('미참여')
+      ?[{school_id:'A123455',school_name:'미참여초등학교',sido_standard:'부산'}]
+      :[{school_id:'A123456',school_name:'행복초등학교',sido_standard:'부산'}];
+     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({schools})});
+    }
+    if(url.searchParams.has('school_id')){
+     const id=url.searchParams.get('school_id');
+     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({school:{
+      school_id:id,school_name:id==='A123455'?'미참여초등학교':'행복초등학교',
+      region:'부산',eligible:id!=='A123455',
+      available_years:id==='A123455'?[]:[2025],missing_years:id==='A123455'?[2023,2024,2025,2026]:[2023,2024,2026]
+     }})});
+    }
+    throw Error('Unexpected school API endpoint');
+   });
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
    await page.goto(base+'/index.html',{waitUntil:'domcontentloaded'});
    await page.locator('#homeDiaryGuestForm').waitFor({state:'visible'});
@@ -45,12 +65,25 @@ const api='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-gue
    await page.locator('.diary-opening-visual').click();
    await page.locator('#setup').waitFor({state:'visible'});
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'1');
-   assert.equal(await page.locator('#playerName').isVisible(),false,'Guest cannot be asked to enter a name');
-   assert.equal(await page.locator('#mbti').isVisible(),false,'Guest cannot be asked to choose MBTI');
-   assert.equal(await page.locator('#experience').isVisible(),false,'Guest cannot be asked for career data');
-   assert.equal(await page.locator('#setupPlayerPreview').innerText(),'새봄 선생님');
+   assert.equal(await page.locator('#playerName').isVisible(),true,'Guest enters a pen name after school');
+   assert.equal(await page.locator('#mbti').isVisible(),false,'Guest should not need MBTI');
+   assert.equal(await page.locator('#experience').isVisible(),false,'Guest should not need career data');
+   assert.equal(await page.locator('#setupSchoolQuery').isVisible(),true,'School search must be visible');
+   assert.equal(await page.evaluate(()=>document.querySelector('#setupSchoolPicker').compareDocumentPosition(document.querySelector('#playerName'))&Node.DOCUMENT_POSITION_FOLLOWING),4,'School search must precede name input');
    assert.equal(await page.locator('#setup').evaluate(el=>el.querySelector('.form-grid').compareDocumentPosition(el.querySelector('.setup-player-stamp'))&Node.DOCUMENT_POSITION_FOLLOWING),4,'Pencil preview must be after form');
-   await page.locator('.guest-setup-poem').click();
+   await page.locator('#setupNext').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'1','School selection is mandatory');
+   await page.locator('#setupSchoolQuery').fill('미참여');
+   await page.locator('.setup-school-result').first().click();
+   await page.locator('#setupSchoolSurvey').waitFor({state:'visible'});
+   await page.locator('#setupNext').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'1','School without published results must stay on first page');
+   await page.locator('#setupSchoolQuery').fill('행복');
+   await page.locator('.setup-school-result').first().click();
+   await page.waitForFunction(()=>document.getElementById('setupSchoolPicker').dataset.ready==='true');
+   await page.locator('#playerName').fill('루다');
+   assert.equal(await page.locator('#setupPlayerPreview').innerText(),'루다 선생님');
+   await page.locator('#setupNext').click();
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'2');
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),3);
