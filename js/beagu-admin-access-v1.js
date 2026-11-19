@@ -54,7 +54,7 @@
     document.querySelectorAll("[data-"+kind+"]").forEach(el=>{
       const k=el.dataset[kind],v=info?.[k];
       el.textContent=kind==="search"&&k==="conversion_rate"?(v==null?"계산 불가":num(v)+"%"):
-        kind==="view"&&k==="total"&&Number(v)===0?"기록 없음":num(v);
+        num(v);
     });
   }
   function keyFor(day){
@@ -87,7 +87,7 @@
     const root=$("adminSchoolRanking");root.replaceChildren();
     if(!dashboard)return;
     const mode=$("adminSchoolRankingMode").value;
-    const rows=mode==="views"?dashboard.school_views?.top:mode==="searched"?dashboard.top_searched:
+    const rows=mode==="views"?dashboard.school_views?.top:mode==="selected"?dashboard.top_selected:mode==="searched"?dashboard.top_searched:
       mode==="detailed"?dashboard.top_detailed:dashboard.game_schools;
     const field=mode==="views"?"views":mode==="played"?"plays":"hits";
     const term=$("adminSchoolRankingSearch").value.trim().toLocaleLowerCase("ko");

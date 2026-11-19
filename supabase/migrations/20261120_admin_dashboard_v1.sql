@@ -16,6 +16,7 @@ declare
   v_search_trend jsonb;
   v_top_searched jsonb;
   v_top_detailed jsonb;
+  v_top_selected jsonb;
   v_school_views jsonb;
   v_games jsonb;
   v_game_trend jsonb;
@@ -85,6 +86,17 @@ begin
       count(*)::bigint as hits
     from public.school_search_events e left join public.schools s on s.school_id=e.school_id
     where e.event_type='detail_viewed' and e.searched_at>=v_start
+    group by e.school_id order by hits desc limit 40) q;
+
+
+  -- Raw, confirmed school selections are a different metric from validated
+  -- one-browser/day view counts. Historical events are never backfilled into views.
+  select coalesce(jsonb_agg(to_jsonb(q) order by q.hits desc,q.school_name),'[]'::jsonb)
+    into v_top_selected from (
+    select e.school_id,coalesce(max(s.school_name),e.school_id) as school_name,
+      count(*)::bigint as hits
+    from public.school_search_events e left join public.schools s on s.school_id=e.school_id
+    where e.event_type='school_selected' and e.searched_at>=v_start
     group by e.school_id order by hits desc limit 40) q;
 
   select pg_catalog.jsonb_build_object(
@@ -173,7 +185,7 @@ begin
     'period',p_period,'as_of',v_now,'timezone','Asia/Seoul',
     'site',v_visit,'visit_trend',v_visit_trend,
     'search',v_search,'search_trend',v_search_trend,
-    'top_searched',v_top_searched,'top_detailed',v_top_detailed,'school_views',v_school_views,
+    'top_searched',v_top_searched,'top_detailed',v_top_detailed,'top_selected',v_top_selected,'school_views',v_school_views,
     'games',v_games,'game_trend',v_game_trend,'game_schools',v_game_schools,
     'game_difficulty',v_game_difficulty,
     'challenge',v_challenge,'levels',v_level,'security',v_security,

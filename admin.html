@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>관리자 · 배구지수</title>
-  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-dashboard1">
+  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-dashboard2">
 </head>
 <body>
   <main class="shell">
@@ -82,11 +82,12 @@
       </section>
 
       <section class="dash-section" aria-labelledby="adminSearchHeading">
-        <div class="section-title"><h3 id="adminSearchHeading">학교 검색 · 조회</h3><small>검색, 상세 진입, 조회수는 서로 다른 지표</small></div>
+        <div class="section-title"><h3 id="adminSearchHeading">학교 검색 · 조회</h3><small>검색·선택 이벤트와 중복 제거 조회수는 서로 다른 지표</small></div>
         <div class="metrics">
           <article><h4>학교 검색 확정</h4><strong data-search="searches">—</strong></article>
+          <article><h4>학교 선택 이벤트</h4><strong data-search="school_selections">—</strong><small>중복 제거 전 · 과거 기록 포함</small></article>
           <article><h4>학교 상세 진입</h4><strong data-search="detail_entries">—</strong></article>
-          <article><h4>학교 조회수 기록</h4><strong data-view="total">—</strong><small>학교·방문자·한국 날짜당 1회</small></article>
+          <article><h4>중복 제거 학교 조회수</h4><strong data-view="total">—</strong><small>검증된 선택 · 학교·방문자·날짜당 1회 · 도입 이후 기록</small></article>
           <article><h4>상세 진입 / 검색 이벤트</h4><strong data-search="conversion_rate">—</strong><small>개인별 전환율은 아님</small></article>
         </div>
         <div class="chart-card"><h4>검색과 상세 진입 추이</h4>
@@ -96,7 +97,8 @@
           <div class="ranking-controls">
             <label for="adminSchoolRankingMode">학교별 순위</label>
             <select id="adminSchoolRankingMode">
-              <option value="views">누적 학교 조회수</option>
+              <option value="views">학교 조회수 · 일별 중복 제거</option>
+              <option value="selected">학교 선택 이벤트 · 원본 횟수</option>
               <option value="searched">학교 검색 횟수</option>
               <option value="detailed">상세페이지 진입</option>
               <option value="played">게임 플레이 학교</option>
@@ -162,6 +164,6 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
-  <script defer src="js/beagu-admin-access-v1.js?v=20261120-dashboard1"></script>
+  <script defer src="js/beagu-admin-access-v1.js?v=20261120-dashboard2"></script>
 </body>
 </html>
