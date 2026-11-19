@@ -337,6 +337,16 @@ function choose(state,world,id){
    if(!Object.prototype.hasOwnProperty.call(result.stats,k))throw Error('UNEXPECTED_STAT');
    result.stats[k]=limit(result.stats[k]+v);
  }
+ /* 같은 일이어도 도움을 받는 문화인지, 서로 탓하는 문화인지에 따라
+    교사가 느끼는 피로와 지지 경험은 달라진다. 가상 게임 지표일 뿐 실제 학교 평가가 아니다. */
+ if(['shared_break','shared_meeting','barbecue'].includes(current.id)){
+   result.stats.support=limit(result.stats.support+7);
+   result.stats.fatigue=limit(result.stats.fatigue-3);
+ }
+ if(['hostile_break','hostile_meeting','friendship_chair'].includes(current.id)){
+   result.stats.support=limit(result.stats.support-7);
+   result.stats.fatigue=limit(result.stats.fatigue+5);
+ }
  result.incidentEvents=Array.isArray(result.incidentEvents)?result.incidentEvents:[];
  result.incidentEvents.push({day:state.day,id:current.id,choiceId:id});
  const name=result.profile.partner==='man'?'현우 선생님':
