@@ -462,15 +462,15 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
  <div class="setup-cast" data-setup-screen="2">
   <div class="setup-section-title"><span class="setup-number">02</span><div><strong>함께할 동료</strong><small>관계에 따라 서로 다른 이야기가 펼쳐집니다.</small></div></div>
   <div class="setup-portrait-grid" role="group" aria-label="동료 캐릭터 선택">
-   <button class="setup-character" type="button" data-partner-choice="woman" aria-pressed="false">
+   <button class="setup-character" type="button" data-partner-choice="woman" aria-pressed="false" aria-label="서지윤 선택">
     <span class="setup-character-art jiyoon"><img id="setupPortraitWoman" alt="" aria-hidden="true"></span>
     <span class="setup-character-name">서지윤</span><span class="setup-character-tag">천천히 가까워지는 호감</span>
    </button>
-   <button class="setup-character" type="button" data-partner-choice="man" aria-pressed="false">
+   <button class="setup-character" type="button" data-partner-choice="man" aria-pressed="false" aria-label="한현우 선택">
     <span class="setup-character-art hyunwoo"><img id="setupPortraitMan" alt="" aria-hidden="true"><span class="setup-hyunwoo-live" id="setupHyunwooLive" hidden aria-hidden="true"></span></span>
     <span class="setup-character-name">한현우</span><span class="setup-character-tag">농담 뒤의 진심</span>
    </button>
-   <button class="setup-character" type="button" data-partner-choice="none" aria-pressed="false">
+   <button class="setup-character" type="button" data-partner-choice="none" aria-pressed="false" aria-label="윤민서 선택">
     <span class="setup-character-art minseo"><img id="setupPortraitNone" alt="" aria-hidden="true"></span>
     <span class="setup-character-name">윤민서</span><span class="setup-character-tag">깊어지는 우정</span>
    </button>
@@ -492,9 +492,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
     </div>
     <p class="setup-supporting-note">모두 가상의 성인 인물로, 추가 연애 경로는 없습니다.</p>
    </div>
-  <label class="setup-partner-label" for="partner">동료 선택 <small>함께할 인물의 그림을 터치하세요</small></label>
-  <select id="partner" required><option value="">동료를 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
-  <p id="partnerDescription" class="setup-character-description" aria-live="polite">함께할 인물을 고르면 이곳에 소개가 나타납니다.</p>
+  <select id="partner" required hidden aria-hidden="true" tabindex="-1"><option value="">동료를 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
   <div class="setup-story-note"><span aria-hidden="true">✧</span><p>2027년 3월 8일–14일 · 7일의 이야기<br><small>21개의 기본 선택과 학교생활 속 다양한 사건</small></p></div>
  </div>
 </div>
@@ -637,6 +635,7 @@ if(!malePhotos||typeof malePhotos.paint!=="function")throw Error("MALE_PHOTOS_MO
 const journey=window.BeaguClassDiaryJourney.init({show,sound});
 
 /* In-memory visual setup only: five original inputs remain authoritative. */
+/* Explanations are carried by the main novel; setup choices use portraits only. */
 const setupDescription=Object.freeze({
  woman:'서지윤 · 30세 · 3학년 담임. 먼저 귀 기울이고 자신의 생각은 분명하게 말합니다. 관계가 가까워지면 조심스러운 호감으로 이어질 수 있습니다.',
  man:'한현우 · 32세 · 3학년 담임. 농담으로 긴장을 풀어 주지만 중요한 순간에는 진심을 전합니다. 서로의 시간을 존중하며 가까워질 수 있습니다.',
@@ -645,12 +644,15 @@ const setupDescription=Object.freeze({
 function syncSetupPartner(){
  const partner=$('partner').value;
  for(const card of document.querySelectorAll('[data-partner-choice]'))card.setAttribute('aria-pressed',String(card.dataset.partnerChoice===partner));
- $('partnerDescription').textContent=setupDescription[partner]||'함께할 인물을 고르면 이곳에 소개가 나타납니다.';
 }
 function syncSetupName(){
  const name=$('playerName').value.trim();
  $('setupPlayerPreview').textContent=name?name+' 선생님':'이름을 입력해 주세요';
 }
+/* Use the unified headshot strip when available; preserve original game art as fallback. */
+const setupPortraitSprite=new Image();
+setupPortraitSprite.onload=()=>{$('setup').classList.add('has-unified-portraits');};
+setupPortraitSprite.src='assets/class-diary/characters/setup-colleagues-20261120.webp';
 for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','man'],['setupPortraitNone','none']]){
  const art=femaleHQ&&femaleHQ.portrait(partner);
  $(id).src=art||visual.dataUrl(sd.portraitSvg(partner,'neutral'));
