@@ -113,7 +113,7 @@ begin
        else game end as game,
        count(*)::bigint as plays,
        count(*) filter(where submitted_at is not null)::bigint as completed,
-       round(avg(extract(epoch from submitted_at-started_at))
+       round((avg(extract(epoch from (submitted_at-started_at)))
           filter(where submitted_at is not null and submitted_at>=started_at))::numeric,1) as average_seconds,
        round(100.0*count(*) filter(where submitted_at is not null)/nullif(count(*),0),1) as completion_rate
     from public.arcade_game_sessions
