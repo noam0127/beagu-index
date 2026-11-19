@@ -201,16 +201,14 @@
       <p class="challenge-identity-note">이전 번호가 없다면 관리자에게 복구를 요청해야 합니다.</p>
     </div>
   </section>
-  <!-- New referral card is NOT part of the certificate PNG. Phase 1 stays locked. -->
-  <section class="challenge-identity" id="challengeReferralPanel" data-html2canvas-ignore="true" aria-labelledby="referralTitle">
+  <!-- The challenge is a stand-alone certificate/share feature, never a Lv2 referral credential. -->
+  <section class="challenge-identity" id="challengeSharePanel" data-html2canvas-ignore="true" aria-labelledby="challengeShareTitle">
     <div class="challenge-identity-head">
-      <h2 id="referralTitle">동료 초대 · 레벨2</h2>
-      <span class="challenge-identity-tag" id="referralLevel">잠금</span>
+      <h2 id="challengeShareTitle">챌린지 공유하기</h2>
     </div>
-    <p class="challenge-identity-note" id="referralProgress">유효 추천 확인 중</p>
-    <button class="action soft" id="copyReferralLink" type="button" disabled>내 초대 링크 복사</button>
-    <p class="challenge-identity-feedback" id="referralFeedback" role="status" aria-live="polite">초대 기능 준비 중</p>
-    <a class="action" href="search-lv2.html" id="referralLv2Link" hidden>레벨2 검색하기</a>
+    <p class="challenge-identity-note">인증 이미지는 위에서 저장할 수 있습니다. 다른 선생님에게 챌린지 참여 화면을 알리고 싶다면 링크를 공유해 주세요.</p>
+    <button class="action soft" id="copyChallengeUrl" type="button">챌린지 링크 복사</button>
+    <p class="challenge-identity-feedback" id="challengeShareFeedback" role="status" aria-live="polite"></p>
   </section>
 
     <section class="beagu-xp" data-beagu-xp data-xp-state="loading" aria-label="2026년 챌린지 목표 달성률">
