@@ -77,7 +77,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  .volley-energy-fill.is-low{background:linear-gradient(90deg,#cf4c55,#ff996f)}
  .volley-team-name{display:inline-flex;align-items:center;gap:7px;min-height:17px}
  .volley-lives{display:inline-block;color:#ffb6c5;font-size:15px;font-weight:900;letter-spacing:2px;white-space:nowrap}
- .volley-round{color:#d5e9fd;font-size:10px;letter-spacing:.04em;margin-top:3px}
  .actions button.sound-toggle{flex:0 0 48px;min-width:45px;background:#264762;color:#f5fbff;font-size:19px;border:1px solid #567c96;padding:6px}
  .actions button.sound-toggle[aria-pressed="true"]{background:#23565c;border-color:#78c9b6}
  @media(max-width:380px){.volley-lives{font-size:12px;letter-spacing:1px}.actions button.sound-toggle{flex-basis:43px;min-width:41px}}
@@ -103,7 +102,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   <div class="scoreboard" aria-label="현재 점수">
     <div class="volley-best-row"><span class="volley-current-chip" aria-label="이번 경기 현재 누적 점수">현재 점수 <strong id="volley-current-score">0</strong></span><span class="volley-best-chip" aria-label="이 기기의 선생님배구 최고 점수">HI-SCORE <strong id="volley-best-label">0</strong></span></div>
     <div class="team"><span class="volley-team-name">나 <span id="volley-lives" class="volley-lives" aria-label="남은 목숨">♥♥</span></span><strong id="player-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="player-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="우리 팀 체력" id="player-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="player-energy-fill"></div></div></div>
-    <div class="center-label">VS<small id="volley-time-label">⏱ 0초</small><small id="volley-round-label" class="volley-round">ROUND 1</small></div>
+    <div class="center-label">VS<small id="volley-time-label">⏱ 0초</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0</strong><div class="volley-energy-meta"><span>체력</span><output id="cpu-energy-number">100/100</output></div><div class="volley-energy-track" role="progressbar" aria-label="상대 팀 체력" id="cpu-energy-progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="volley-energy-fill" id="cpu-energy-fill"></div></div></div>
   </div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
@@ -170,7 +169,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         const tier=school?.difficulty||"hard";
         currentDifficulty=tier;
         state.maxLives=lifeProfiles[tier];state.livesLeft=state.maxLives;
-        state.round=1;state.knockout=false;
+        state.knockout=false;
         energy=energyProfiles[tier]||energyProfiles.hard;
         specialProfile=specialProfiles[tier]||specialProfiles.hard;
         resetEnergy();
@@ -189,7 +188,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null };
-  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false, leftEnergy:100, rightEnergy:100, leftMaxEnergy:100, rightMaxEnergy:100, specialCooldownFrames:0,specialChargeFrames:0, energyTick:0, playFrames:0, maxLives:2, livesLeft:2, round:1, knockout:false, hitStopFrames:0, impactFrames:0, impactX:0, impactY:0, bossWarnFrames:0, bossCooldownFrames:0 };
+  const state = { phase: "ready", leftScore: 0, rightScore: 0, serveLeft: true, pointTicks: 0, flash: 0, winner: "", message: "경기 시작을 눌러주세요!", spikes: 0, aiRecalc:0, aiTargetX:688, aiJump:false, leftEnergy:100, rightEnergy:100, leftMaxEnergy:100, rightMaxEnergy:100, specialCooldownFrames:0,specialChargeFrames:0, energyTick:0, playFrames:0, maxLives:2, livesLeft:2, knockout:false, hitStopFrames:0, impactFrames:0, impactX:0, impactY:0, bossWarnFrames:0, bossCooldownFrames:0 };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
@@ -254,7 +253,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   });
    const currentScoreLabel=document.getElementById("volley-current-score");
    const livesLabel=document.getElementById("volley-lives");
-   const roundLabel=document.getElementById("volley-round-label");
    const energyUi={
     left:{number:document.getElementById("player-energy-number"),fill:document.getElementById("player-energy-fill"),progress:document.getElementById("player-energy-progress")},
     right:{number:document.getElementById("cpu-energy-number"),fill:document.getElementById("cpu-energy-fill"),progress:document.getElementById("cpu-energy-progress")}
@@ -282,7 +280,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     currentScoreLabel.textContent=getFinalScore().toLocaleString("ko-KR");
     livesLabel.textContent="♥".repeat(state.livesLeft)+"♡".repeat(state.maxLives-state.livesLeft);
     livesLabel.setAttribute("aria-label","남은 목숨 "+state.livesLeft+"개 / "+state.maxLives+"개");
-    roundLabel.textContent="ROUND "+state.round;
    }
    function energyFactor(side){
      const fraction=side==="left"?state.leftEnergy/state.leftMaxEnergy:state.rightEnergy/state.rightMaxEnergy;
@@ -350,7 +347,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
     state.maxLives=lifeProfiles[currentDifficulty];state.livesLeft=state.maxLives;
-    state.round=1;state.knockout=false;
+    state.knockout=false;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     releaseKeys();
     state.serveLeft=Math.random()<.5;
@@ -367,7 +364,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
     currentDifficulty="hard";state.maxLives=lifeProfiles.hard;state.livesLeft=state.maxLives;
-    state.round=1;state.knockout=false;
+    state.knockout=false;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     energy=energyProfiles.hard;specialProfile=specialProfiles.hard;resetEnergy();
     schoolPicker.setLocked(false);
@@ -560,12 +557,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       finishMatch(true);
       return true;
     }
-    state.round++;
     state.serveLeft=false;
     resetEnergy();
     resetPositions();
     state.phase="point";state.pointTicks=110;
-    state.message="♥ 목숨 -1 · ROUND "+state.round;
+    state.message="♥ 목숨 -1 · 남은 목숨 "+state.livesLeft+"개";
     setStatus(state.message);
     updateEnergyUI();
     syncUI();
