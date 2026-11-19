@@ -11,11 +11,13 @@ on:
       - 'js/class-diary-context-v1.js'
       - 'js/class-diary-demo-v1.js'
       - 'js/class-diary-scenario-v1.js'
+      - 'js/class-diary-incidents-v1.js'
       - 'scripts/test-class-diary-play.cjs'
       - 'scripts/test-class-diary-director.cjs'
       - 'scripts/test-class-diary-context.cjs'
       - 'scripts/test-class-diary-demo.cjs'
       - 'scripts/test-class-diary-scenario.cjs'
+      - 'scripts/test-class-diary-incidents.cjs'
       - 'scripts/test-class-diary-play-page.cjs'
       - 'teacher-class-diary.html'
       - 'teacher-class-diary-play.html'
@@ -45,6 +47,7 @@ jobs:
           node scripts/test-class-diary-context.cjs
           node scripts/test-class-diary-demo.cjs
           node scripts/test-class-diary-scenario.cjs
+          node scripts/test-class-diary-incidents.cjs
           node scripts/test-class-diary-play-page.cjs
       - name: Confirm the live API rejects missing Lv2 session
         run: |
