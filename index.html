@@ -157,6 +157,29 @@
     .teacher-run-lock-action { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; margin-top: 6px; padding: 10px 18px; border-radius: 12px; background: #7be3ca; color: #12334b; font-size: 14px; font-weight: 850; text-decoration: none; }
     .teacher-run-lock-action:hover { background: #a9f2df; }
     .teacher-run-lock-action:focus-visible { outline: 3px solid white; outline-offset: 3px; }
+    /* Lv.2 teaser: permanently locked until the visual novel is actually implemented. */
+    body.beagu-page-home main.container > .teacher-diary-feature {
+      grid-column: 1 / -1;
+      background: linear-gradient(145deg, #282e55 0%, #18283f 65%, #112239 100%);
+      border-color: #4c557e;
+    }
+    .teacher-diary-feature .teacher-diary-lock {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 11px; min-height: 244px; padding: 28px 18px 32px; margin: 0 15px 15px;
+      text-align: center; border: 1px solid rgba(198, 197, 246, .25);
+      border-radius: 16px; background: radial-gradient(circle at 50% 0%, rgba(170, 166, 240, .13), rgba(10, 26, 48, .3) 70%);
+    }
+    .teacher-diary-lock .teacher-diary-lock-icon { font-size: 37px; line-height: 1.15; }
+    .teacher-diary-lock h3 { margin: 0; color: #f6f8ff; font-size: clamp(18px, 4.7vw, 22px); letter-spacing: -.04em; }
+    .teacher-diary-lock p { margin: 0; color: #d5deef; font-size: 13px; line-height: 1.6; }
+    .teacher-diary-lock .teacher-diary-link {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 42px;
+      margin-top: 5px; padding: 10px 18px; border-radius: 12px;
+      background: #e1e5ff; color: #243358; font-size: 14px; font-weight: 850;
+      text-decoration: none;
+    }
+    .teacher-diary-lock .teacher-diary-link:hover { background: #fff; }
+    .teacher-diary-lock .teacher-diary-link:focus-visible { outline: 3px solid white; outline-offset: 3px; }
     .teacher-run-feature .teacher-game-frame { height: 720px; }
     .teacher-run-feature .teacher-game-footer a { color: #a1fae7; }
     .teacher-run-feature .game-tag { font-size: 11px; padding: 3px 7px; margin-left: 5px; vertical-align: middle; background: #78e2c4; color: #193e4c; border-radius: 6px; font-weight: 850; white-space: nowrap; }
@@ -270,6 +293,19 @@
           loading="lazy"
           allowfullscreen></iframe>
         <div class="teacher-game-footer"><a href="teacher-run.html" target="_blank" rel="noopener noreferrer">↗ 크게 보기</a></div>
+      </div>
+    </section>
+
+    <section id="teacher-diary-feature" class="teacher-game-feature teacher-diary-feature" aria-labelledby="teacher-diary-title">
+      <div class="teacher-game-header">
+        <h2 id="teacher-diary-title">📖 나의 ()교직일지</h2>
+        <span class="teacher-game-access-level teacher-game-access-level--locked" aria-label="레벨 2 전용 게임, 준비 중">Lv.2 전용</span>
+      </div>
+      <div class="teacher-diary-lock" aria-labelledby="teacher-diary-lock-title">
+        <span class="teacher-diary-lock-icon" aria-hidden="true">🔒</span>
+        <h3 id="teacher-diary-lock-title">레벨2 전용 게임 · 준비 중</h3>
+        <p>학교별 조사 결과에 따라 달라지는 나의 교직 일주일.<br>게임이 준비되면 Lv.2 인증 후 이용할 수 있습니다.</p>
+        <a class="teacher-diary-link" href="levels.html">Lv.2 승급 안내</a>
       </div>
     </section>
 
