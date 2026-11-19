@@ -459,7 +459,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
  <span class="setup-eyebrow">프롤로그 <span aria-hidden="true">✦</span> 한 학기의 시작</span>
  <h2>어느 교실에서 시작할까요?</h2>
  <p>프롤로그에서 첫 이야기를 만나고, 학교를 정해 본편으로 이어갑니다.</p>
- <div class="setup-progress" aria-label="게임 준비 과정"><span data-step-label="1">01 · 학교 선택</span><span data-step-label="2">02 · 함께할 동료</span><span data-step-label="3">03 · 첫 등교</span></div>
+ <div class="setup-progress" aria-label="게임 준비 과정"><span data-step-label="1">01 · 학교 선택</span><span data-step-label="2">02 · 알고 싶은 사람</span><span data-step-label="3">03 · 첫 등교</span></div>
 </div>
 <form id="profileForm">
 <div class="setup-layout">
@@ -485,19 +485,19 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
   </div>
  </div>
  <div class="setup-cast" data-setup-screen="2">
-  <div class="setup-section-title"><span class="setup-number">02</span><div><strong>함께할 동료</strong><small>관계에 따라 서로 다른 이야기가 펼쳐집니다.</small></div></div>
-  <div class="setup-portrait-grid" role="group" aria-label="동료 캐릭터 선택">
+  <div class="setup-section-title"><span class="setup-number">02</span><div><strong>알고 싶은 사람</strong><small>그 사람의 시점으로 프롤로그를 읽습니다. 제1화부터는 나의 이야기입니다.</small></div></div>
+  <div class="setup-portrait-grid" role="group" aria-label="프롤로그의 화자, 알고 싶은 사람 선택">
    <button class="setup-character" type="button" data-partner-choice="woman" aria-pressed="false" aria-label="서지윤 선택">
     <span class="setup-character-art jiyoon"><img id="setupPortraitWoman" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">서지윤</span><span class="setup-character-tag">천천히 가까워지는 호감</span>
+    <span class="setup-character-name">서지윤</span><span class="setup-character-tag">조용히 사람을 살피는 시선</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="man" aria-pressed="false" aria-label="한현우 선택">
     <span class="setup-character-art hyunwoo"><img id="setupPortraitMan" alt="" aria-hidden="true"><span class="setup-hyunwoo-live" id="setupHyunwooLive" hidden aria-hidden="true"></span></span>
-    <span class="setup-character-name">한현우</span><span class="setup-character-tag">농담 뒤의 진심</span>
+    <span class="setup-character-name">한현우</span><span class="setup-character-tag">웃음으로 낯섦을 넘기는 시선</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="none" aria-pressed="false" aria-label="윤민서 선택">
     <span class="setup-character-art minseo"><img id="setupPortraitNone" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">윤민서</span><span class="setup-character-tag">깊어지는 우정</span>
+    <span class="setup-character-name">윤민서</span><span class="setup-character-tag">기록부터 먼저 살피는 시선</span>
    </button>
   </div>
   <div class="setup-supporting-cast" aria-label="학교에서 만날 여성 교직원">
@@ -517,7 +517,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
     </div>
     <p class="setup-supporting-note">모두 가상의 성인 인물로, 추가 연애 경로는 없습니다.</p>
    </div>
-  <select id="partner" required hidden aria-hidden="true" tabindex="-1"><option value="">동료를 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
+  <select id="partner" required hidden aria-hidden="true" tabindex="-1"><option value="">알고 싶은 사람을 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
   <div class="setup-story-note"><span aria-hidden="true">✧</span><p>2027년 3월 8일–14일 · 7일의 이야기<br><small>21개의 기본 선택과 학교생활 속 다양한 사건</small></p></div>
  </div>
 </div>
@@ -534,14 +534,14 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <div class="setup-review" data-setup-screen="3">
 <div class="setup-section-title"><span class="setup-number">03</span><div><strong>첫 등교 준비</strong><small>설정을 확인하고 게임을 시작하세요.</small></div></div>
 <div class="setup-review-road" aria-hidden="true">✧　·　·　·　🏫</div>
-<div class="setup-review-fields"><div><small>선택한 학교</small><strong id="setupReviewSchool">—</strong></div><div><small>주인공</small><strong id="setupReviewName">—</strong></div><div><small>교직 경력 · 성별 · MBTI</small><strong id="setupReviewTraits">—</strong></div><div><small>함께할 동료</small><strong id="setupReviewPartner">—</strong></div></div>
+<div class="setup-review-fields"><div><small>선택한 학교</small><strong id="setupReviewSchool">—</strong></div><div><small>주인공</small><strong id="setupReviewName">—</strong></div><div><small>교직 경력 · 성별 · MBTI</small><strong id="setupReviewTraits">—</strong></div><div><small>프롤로그의 화자</small><strong id="setupReviewPartner">—</strong></div></div>
 <p class="setup-review-quote">“이 한 학기를 지나고 나면, 어떤 교실이 남아 있을까.”</p>
 </div>
-<div class="setup-step-actions"><button id="setupBack" type="button" class="secondary" hidden>← 학교 선택</button><button id="setupNext" type="button" class="primary">동료 만나기 →</button></div>
+<div class="setup-step-actions"><button id="setupBack" type="button" class="secondary" hidden>← 학교 선택</button><button id="setupNext" type="button" class="primary">알고 싶은 사람 고르기 →</button></div>
 <div class="setup-end">
  <p id="worldAutoNote" class="muted">학교명·지역·공개된 과거 조사연도만 확인해 배경 정보로 활용합니다. 인물·관계·사건은 모두 허구입니다.</p>
  <p class="privacy">등장인물과 사건은 허구이며, 실제 교직원이나 학생의 언행을 재현하지 않습니다. 확인된 과거 공개 정보 일부만 배경에 참고합니다.</p>
- <div class="actions"><button type="submit" class="primary setup-begin">첫날 열기 <span aria-hidden="true">›</span></button></div>
+ <div class="actions"><button type="submit" class="primary setup-begin">그 사람의 프롤로그 읽기 <span aria-hidden="true">›</span></button></div>
 </div>
 </form>
 </section>
@@ -615,6 +615,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <script src="js/class-diary-narrative-v1.js"></script>
 <script src="js/class-diary-play-v1.js"></script>
 <script src="js/class-diary-semester-v1.js?v=20261120"></script>
+<script src="js/class-diary-narrator-v1.js?v=20261120-pov1"></script>
 <script src="js/class-diary-progress-v1.js?v=20261120-1"></script>
 <script src="js/class-diary-female-semester-v1.js?v=20261120"></script>
 <script src="js/class-diary-character-routes-v1.js"></script>
@@ -648,6 +649,7 @@ const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const semester=window.BeaguClassDiarySemester;
+const narrator=window.BeaguClassDiaryNarrator;
 const literary=window.BeaguClassDiaryLiterary;
 const femaleSemester=window.BeaguClassDiaryFemaleSemester;
 const director=window.BeaguClassDiaryDirector;
@@ -854,6 +856,7 @@ $('diaryLandingStart').addEventListener('click',()=>{
 });
 $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
 let storyMode='semester';
+let prologuePending=false;
 function prepareGuestProfile(){
  // Use a fictional in-story name and neutral defaults; never ask for personal traits.
  $('playerName').value='새봄';
@@ -875,7 +878,7 @@ function progressStatus(kind){
  if(node){node.textContent='가상 이야기 · '+label;node.dataset.saveStatus=kind;}
 }
 function autoSaveProgress(){
- if(isGuest&&storyMode==='semester'&&progressSession&&game)void progressSession.save(game);
+ if(isGuest&&storyMode==='semester'&&!prologuePending&&progressSession&&game)void progressSession.save(game);
 }
 function enterGuestOpening(){
  // Home code authentication has already finished. The first visible screen is the title card.
@@ -1356,6 +1359,37 @@ function renderEnding(){
  status('일주일의 이야기를 마쳤습니다.');
 
 }
+function renderNarratorPrologue(){
+ const view=narrator.prologue(game.profile);
+ show('novel');
+ $('novelCard').dataset.scene=view.scene;
+ $('novelCard').dataset.act='1';
+ $('novelCard').dataset.season='march';
+ const background=seasonalBackground?seasonalBackground.resolve({episode:2,date:'2027-03-08'}):null;
+ displayStage(view.scene,game.profile.partner,'neutral','cold-spring',background);
+ renderSupportingCast(null);
+ mood('daily');sound.setAmbience(null);
+ const profile=director.RELATIONSHIPS[game.profile.partner]||director.RELATIONSHIPS.none;
+ showCharacterFace(game.profile.partner,'neutral',profile.initial);
+ $('characterName').textContent=view.narrator+'의 시점';
+ $('characterBio').textContent='그 사람이 처음 본 나의 모습';
+ $('chapterDay').textContent='프롤로그 · '+view.narrator+'의 시점';
+ $('chapterTitle').textContent=view.title;
+ $('chapterPlace').textContent='2027년 3월 8일 · '+view.place;
+ $('chapterProgress').style.width='0%';
+ $('worldDetail').hidden=true;$('schoolFacts').hidden=true;
+ $('chapterSource').textContent='선택한 인물이 들려주는 허구의 프롤로그입니다. 제1화부터는 주인공이 직접 이야기를 들려줍니다.';
+ $('choiceSection').hidden=true;
+ $('outcome').hidden=false;
+ $('nextBtn').hidden=true;
+ $('nextBtn').setAttribute('aria-label','제1화 · 나의 시점으로 시작하기');
+ $('choiceButtons').replaceChildren();
+ fillParagraphs('chapterText',[]);
+ fillParagraphs('outcomeText',view.paragraphs);
+ $('outcomeLine').textContent='';
+ vnStart(true);
+ status(view.narrator+'의 프롤로그 · 다음 페이지에서 나의 이야기로 전환');
+}
 function renderSemester(){
  literary.mode(true);
  if(game.phase==='semester_ending')return renderSemesterEnding();
@@ -1393,7 +1427,7 @@ function renderSemester(){
  for(const [id,key] of [['statAffection','affection'],['statTrust','trust'],['statAgency','agency'],
   ['statFatigue','fatigue'],['statVoice','voice'],['statBoundary','boundary'],['statSupport','support']])
   $(id).textContent=game.stats[key];
- $('chapterDay').textContent=view.episode+' / 36 · 제'+view.act+'부 '+view.actName;
+ $('chapterDay').textContent=view.episode+' / 36 · 제'+view.act+'부 '+view.actName+' · 나의 시점';
  $('chapterTitle').textContent=view.title;
  $('chapterPlace').textContent=Number(view.date.slice(5,7))+'월 '+Number(view.date.slice(8,10))+'일 · '+(semesterBackground?semesterBackground.label:view.place)+' · '+(game.schoolContext?game.schoolName+' · ':'')+game.profile.name+' 선생님';
  $('chapterProgress').style.width=(view.episode/36*100)+'%';
@@ -1451,6 +1485,7 @@ function render(){
   $('ending').querySelector('.emblem').textContent='2027년 3월 14일 · 마지막 페이지';
   $('ending').querySelector('.credits-roll p:last-child').textContent='일곱 날의 이야기를 함께해 주셔서 고맙습니다.';
  }
+ if(storyMode==='semester'&&prologuePending)return renderNarratorPrologue();
  if(storyMode==='semester')return renderSemester();
  if(game.phase==='ending')return renderEnding();
  if(game.phase==='chapter'&&(incidents.next(game,world)||scenario.scene(game,world)))return renderScenario();
@@ -1527,7 +1562,7 @@ async function boot(){
      ' 이어서 읽을 수 있습니다.';
     $('guestResume').hidden=false;
     $('guestResumeBtn').onclick=()=>{
-     game=saved.state;storyMode='semester';
+     game=saved.state;storyMode='semester';prologuePending=false;
      sound.setEnabled(true);updateMusicButton();guestStartMusic();
      render();status('저장된 학급일지를 불러왔습니다.');
     };
@@ -1599,7 +1634,7 @@ async function loadSchoolWorld(schoolId){
   selectSchoolMode('real',world.basic.name);
   $('semesterStart').click();
   $('diarySchoolSearchDialog').hidden=true;
-  status('학교를 선택했습니다. 함께할 동료를 고를 수 있습니다.');
+  status('학교를 선택했습니다. 프롤로그에서 알고 싶은 사람을 골라 주세요.');
   return true;
  }catch(err){
   $('diarySchoolSearchMessage').textContent=err.message==='LEVEL2_REQUIRED'?
@@ -1653,12 +1688,14 @@ $('profileForm').addEventListener('submit',e=>{
    };
   }
   game=storyMode==='semester'?semester.createGame(baseGame):baseGame;
+  prologuePending=storyMode==='semester';
   sound.note('uiStart');
   render();autoSaveProgress();
  }catch(err){status('이야기 설정을 확인하지 못했습니다. 다시 시도해 주세요.');}
 });
 $('nextBtn').addEventListener('click',()=>{
  sound.note('pageTurn');
+ if(storyMode==='semester'&&prologuePending){prologuePending=false;render();autoSaveProgress();return;}
  if(storyMode==='semester'){game=semester.advance(game);render();autoSaveProgress();return;}
  const incident=game.phase==='chapter'?incidents.next(game,world):null;
  const event=game.phase==='chapter'&&!incident?scenario.scene(game,world):null;
@@ -1683,10 +1720,10 @@ sound.onStatus(message=>{$('musicStatus').textContent=message});
 $('choiceButtons').addEventListener('mouseover',e=>{if(e.target.closest('.choice'))sound.note('hover');});
 $('resetBtn').addEventListener('click',()=>{
  if(!game)return;
- const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;render();autoSaveProgress();
+ const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';render();autoSaveProgress();
 });
 $('againBtn').addEventListener('click',()=>{
- const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;render();autoSaveProgress();
+ const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';render();autoSaveProgress();
 });
 $('diarySaveNow').addEventListener('click',async()=>{
  const control=$('diarySaveNow');
@@ -1706,7 +1743,7 @@ $('diaryContinueNow').addEventListener('click',async()=>{
   const saved=await progressSession.load();
   if(!saved){progressStatus('notfound');return;}
   if(!saved.compatible){progressStatus('invalid');return;}
-  game=saved.state;storyMode='semester';render();progressStatus('loaded');
+  game=saved.state;storyMode='semester';prologuePending=false;render();progressStatus('loaded');
  }catch(_){progressStatus('failed')}
  finally{control.disabled=false;}
 });
