@@ -535,7 +535,7 @@ const helperEnd=volley.indexOf("function moveAI()",helperStart);
 assert.ok(helperStart>0&&helperEnd>helperStart);
 const cloneHitSrc=volley.slice(helperStart,helperEnd);
 const testCloneHit=new Function("hitBall","ally",[
- "const R=48,ballSpeedFactor=()=>1,tone=()=>{};",
+ "const R=48,FLOOR=451,left={x:80},state={rescueUsed:false},ballSpeedFactor=()=>1,tone=()=>{},setStatus=()=>{};",
  cloneHitSrc,"return cloneHit(ally,hitBall);"
 ].join("\n"));
 const testHelper={x:210,y:420,contactFrames:0};
