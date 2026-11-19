@@ -30,7 +30,12 @@ assert(play.src.includes("engine.createGame(world,plan"));
 assert(!play.src.includes('engine.restore('));
 assert(!play.src.includes('engine.createSnapshot('));
 assert(play.src.includes("game=engine.advance(game)"));
-assert(play.src.includes("game.ending.title"));
+assert(play.src.includes("director.decorateEnding(game)"));
+assert(play.src.includes("director.decorateChapter("));
+assert(play.src.includes("director.decorateOutcome(game)"));
+assert(play.src.includes('id="sceneArt"'));
+assert(play.src.includes('id="characterAvatar"'));
+assert(play.src.includes('src="js/class-diary-director-v1.js"'));
 assert(!play.src.includes('type="checkbox"'));
 assert(play.src.includes('기록은 저장되지 않습니다'));
 assert(play.src.includes("localStorage.removeItem(key)"));
@@ -45,4 +50,4 @@ for(const id of ['profileForm','setup','novel','ending','chapterText','choiceBut
 }
 assert(!play.src.includes('id="resumeBox"'));
 assert(!play.src.includes('id="records"'));
-console.log('PASS: Lv2 page syntax, no game persistence, legacy cleanup, non-persistent play, no unsafe HTML insertion');
+console.log('PASS: Lv2 page syntax, no game persistence, legacy cleanup, stage4 director UI, no unsafe HTML insertion');
