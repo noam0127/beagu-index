@@ -74,9 +74,11 @@ test('no production survey or challenge identifiers are linked',()=>{
    assert.ok((ui+sql).includes(required),required);
 });
 console.log('STAGING CONTRACT: static checks only; not a live two-account test.');
-test('edge preview accepts both stripped and gateway URL paths',()=>{
+test('legacy Edge preview is retired in favor of a static web host',()=>{
  const preview=read('test-environment/supabase/functions/beagu-stage-preview/index.ts');
- assert.match(preview,/raw===.\/.|raw\.endsWith/);
- assert.match(preview,/suffixes\.find/);
- assert.match(preview,/beagu-stage-preview/);
+ const vercel=JSON.parse(read('test-web/vercel.json'));
+ assert.match(preview,/text\/plain; charset=utf-8/);
+ assert.match(preview,/이 주소에는 이메일, 비밀번호/);
+ assert.ok(vercel.headers.some(h=>h.headers.some(x=>x.key==='X-Robots-Tag')));
+ assert.ok(vercel.headers.some(h=>h.headers.some(x=>x.key==='X-Content-Type-Options'&&x.value==='nosniff')));
 });
