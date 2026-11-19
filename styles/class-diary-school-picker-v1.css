@@ -1,0 +1,52 @@
+/* Unified school picker: always before the player-name field.
+ * Search results float over the setup, so a short phone screen never needs
+ * document scrolling. The school survey must be publicly approved.
+ */
+#setupSchoolPicker{position:relative;width:100%;margin:8px 0 11px;max-width:680px;min-width:0}
+#setupSchoolPicker>label{display:block;margin:0 0 6px;color:#645267;font-size:12px;font-weight:800}
+.setup-school-search{position:relative}
+#setupSchoolQuery{background:#fff!important;border:1px solid #d9cbd6!important;border-radius:12px!important;width:100%;height:clamp(35px,5.7dvh,44px)!important;font-size:13px!important}
+#setupSchoolQuery[readonly]{background:#fbf8f9!important;color:#645467}
+.setup-school-results{position:absolute;z-index:85;left:0;right:0;top:calc(100% + 5px);
+ max-height:min(29dvh,235px);overflow-y:auto;overscroll-behavior:contain;
+ background:#fffcfe;border:1px solid #e3d2df;border-radius:13px;
+ box-shadow:0 14px 33px #49344728}
+.setup-school-results[hidden]{display:none!important}
+.setup-school-result{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #eee5ed;
+ padding:10px 13px;color:#55405c;background:#fff;font-size:12px;min-height:39px}
+.setup-school-result:last-child{border-bottom:0}
+.setup-school-result:hover,.setup-school-result:focus-visible{background:#f7eaf2;outline-offset:-3px}
+.setup-school-status{font-size:11px;color:#775d75;line-height:1.45;margin:6px 0 0;word-break:keep-all}
+.setup-school-status[hidden]{display:none!important}
+.setup-school-survey-actions{display:flex;gap:8px;flex-wrap:wrap;margin:5px 0 0}
+.setup-school-survey-actions>a,.setup-school-survey-actions>button{
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:32px;border-radius:9px;border:1px solid #bf9bb5;
+ background:#f8eaf2;color:#73526b;font-size:11px;font-weight:800;
+ padding:6px 10px;text-decoration:none;cursor:pointer
+}
+.setup-school-survey-actions>button{background:#fff}
+.setup-school-survey-actions [hidden]{display:none!important}
+
+/* Guest mode: keep only the school picker and pen-name field, before the
+   already-required portrait selection. The gameplay's other profile values
+   are initialized in memory without exposing duplicate controls. */
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player{
+ align-items:stretch;justify-content:flex-start;text-align:left;gap:clamp(5px,1dvh,11px)
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ margin:2px 0!important;gap:0!important
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid>div:not(:first-child){
+ display:none!important
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .guest-setup-poem{display:none!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player-stamp{order:10;margin-top:auto}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player-stamp small{font-size:10px}
+@media(max-height:640px){
+ #setupSchoolPicker{margin:3px 0 5px}
+ .setup-school-status{font-size:10px;line-height:1.3}
+ .setup-school-survey-actions>a,.setup-school-survey-actions>button{min-height:28px;padding:4px 7px}
+ body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player{gap:3px}
+}
