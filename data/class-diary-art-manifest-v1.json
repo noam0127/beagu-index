@@ -57,7 +57,24 @@
         "shy": "planned"
       },
       "identityLock": "same-fictional-adult-actor-across-six-expression-assets",
-      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration"
+      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration",
+      "distinctiveIdentity": {
+        "silhouetteKey": "half-up-hair-soft-oval",
+        "facialStructure": "갸름하지만 각지지 않은 긴 타원형 얼굴, 매끈하게 둥근 턱선, 낮고 부드러운 광대",
+        "eyesBrows": "끝이 아주 살짝 내려가는 긴 눈매, 완만하게 휘는 눈썹, 웃으면 눈꼬리가 먼저 부드러워짐",
+        "noseMouth": "가늘고 곧은 콧대와 둥근 코끝, 입 폭이 작고 왼쪽 입꼬리가 먼저 올라가는 미소",
+        "hairContour": "옅은 밤갈색 긴 머리를 낮지 않게 반묶음, 귀 앞에 잔머리 두 가닥",
+        "signatureDetail": "작은 은색 목걸이와 오른쪽 뺨의 은은한 보조개",
+        "shoulderGesture": "상체를 상대 쪽으로 약간 기울여 경청, 메모지는 두 손으로 살며시 받침",
+        "neutralRead": "입을 다물고 차분히 바라보되 미간에 긴장 없음",
+        "smileRead": "활짝 웃기보다 왼쪽 입꼬리가 먼저 올라가고 눈매가 부드러워짐",
+        "worriedRead": "눈썹 안쪽이 조금 올라가며 미간이 좁아지지만 표정은 절제",
+        "thumbnailCue": "긴 반묶음 머리 실루엣 + 작은 목걸이 + 둥근 턱선"
+      },
+      "distinctFrom": [
+        "hyunwoo",
+        "minseo"
+      ]
     },
     {
       "id": "hyunwoo",
@@ -79,7 +96,24 @@
         "shy": "planned"
       },
       "identityLock": "same-fictional-adult-actor-across-six-expression-assets",
-      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration"
+      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration",
+      "distinctiveIdentity": {
+        "silhouetteKey": "short-tousled-hair-broad-jaw",
+        "facialStructure": "가로 폭이 비교적 넓은 얼굴, 분명한 광대와 부드럽게 각진 턱, 지윤보다 넓은 이마",
+        "eyesBrows": "짙고 거의 일자에 가까운 눈썹, 눈꺼풀이 조금 도톰한 눈매, 한쪽 눈썹이 가볍게 올라가는 습관",
+        "noseMouth": "도톰하고 넓은 콧대와 부드러운 코끝, 입 폭이 넓고 오른쪽 입꼬리가 먼저 올라가는 미소",
+        "hairContour": "짙은 갈색 짧은 머리, 자연스럽게 헝클어진 옆가르마와 이마 위 작은 머리 볼륨",
+        "signatureDetail": "단추 없는 남색 니트의 소매를 약간 걷어 올린 손목, 작은 무표정 속 장난스러운 오른쪽 입꼬리",
+        "shoulderGesture": "어깨를 편 채 한쪽 팔꿈치를 느슨하게 굽힌 자세, 대화할 때 무게중심을 한 발에 둠",
+        "neutralRead": "아주 미세하게 오른쪽 입꼬리가 올라간 편안한 표정",
+        "smileRead": "오른쪽 입꼬리가 먼저 크게 올라가고 눈썹이 살짝 들림",
+        "worriedRead": "입꼬리를 내리고 이마의 장난기가 사라지면서 정면을 응시",
+        "thumbnailCue": "볼륨 있는 짧은 헤어 실루엣 + 넓은 턱 + 남색 니트 소매"
+      },
+      "distinctFrom": [
+        "jiyoon",
+        "minseo"
+      ]
     },
     {
       "id": "minseo",
@@ -101,7 +135,24 @@
         "shy": "planned"
       },
       "identityLock": "same-fictional-adult-actor-across-six-expression-assets",
-      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration"
+      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration",
+      "distinctiveIdentity": {
+        "silhouetteKey": "sharp-blunt-bob-diamond-face",
+        "facialStructure": "광대의 윤곽이 분명한 작은 다이아몬드형 얼굴, 아래로 좁아지는 또렷한 턱선, 지윤보다 짧은 얼굴 길이",
+        "eyesBrows": "또렷하고 곧은 눈썹, 수평에 가까운 집중하는 아몬드형 눈매, 시선을 먼저 고정하는 습관",
+        "noseMouth": "짧고 정돈된 콧대와 약간 둥근 코끝, 작은 입과 선명한 윗입술 윤곽, 웃을 때 입보다 눈이 먼저 움직임",
+        "hairContour": "턱선 아래에서 일자로 끊기는 검은 단발, 한쪽 머리를 귀 뒤로 넣은 단정한 옆가르마",
+        "signatureDetail": "은은한 검정 손목시계, 한 손에 쥔 얇은 무지 메모 수첩과 펜",
+        "shoulderGesture": "어깨가 수평인 반듯한 자세, 메모 수첩을 몸 가까이 들고 종이를 확인한 뒤 시선을 듦",
+        "neutralRead": "말하기 전 한 박자 생각하는 듯 입술을 가볍게 다문 표정",
+        "smileRead": "입을 크게 벌리지 않고 눈가부터 작게 웃음",
+        "worriedRead": "입술을 조금 다물고 수첩을 내려다본 뒤 바로 시선을 올림",
+        "thumbnailCue": "단면이 선명한 검정 단발 + 좁아지는 턱선 + 수첩"
+      },
+      "distinctFrom": [
+        "jiyoon",
+        "hyunwoo"
+      ]
     }
   ],
   "backgrounds": [
@@ -258,6 +309,16 @@
     ],
     "protagonist": "first-person-configurable-no-fixed-portrait",
     "posterReferences": "information-layout-only",
-    "releaseStage": "7-5"
+    "releaseStage": "7-5",
+    "distinctivenessRequirement": "face-and-silhouette-distinguishable-without-labels-colors-or-costumes",
+    "identityContinuityRequirement": "same-actor-face-across-six-expressions-no-drift",
+    "manualArtReview": [
+      "3-way-neutral-contact-sheet",
+      "grayscale-portrait-comparison",
+      "96x128-thumbnail-silhouette-comparison",
+      "six-expression-identity-consistency",
+      "same-lighting-same-crop-no-labels"
+    ],
+    "distinctivenessStatus": "spec-only-manual-image-review-pending"
   }
 }
