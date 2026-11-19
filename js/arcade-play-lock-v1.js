@@ -10,16 +10,25 @@
     if(lock){
       if(previous)return;
       scrollY=window.scrollY||window.pageYOffset||0;
-      // On a standalone survival page, move the canvas (and the teacher near
-      // its bottom) into view before the body becomes immovable.
-      const survivalCanvas=document.querySelector(".stage #game");
-      const viewportH=window.visualViewport?.height||window.innerHeight;
-      if(survivalCanvas&&viewportH){
-        const bottom=survivalCanvas.getBoundingClientRect().bottom;
-        const gap=Math.max(32,Math.min(76,viewportH*.09));
-        if(bottom>viewportH-gap||bottom<viewportH*.43){
-          const maxY=Math.max(0,document.documentElement.scrollHeight-viewportH);
-          scrollY=Math.max(0,Math.min(maxY,scrollY+bottom-(viewportH-gap)));
+      // Center either game in the visible phone area before the page locks.
+      // In a very short survival viewport, prioritize the bottom character.
+      const canvas=document.querySelector(".arcade-game-viewport canvas");
+      const mobile=window.matchMedia?.("(max-width: 768px)").matches;
+      const fullscreen=Boolean(document.fullscreenElement||document.webkitFullscreenElement||
+        document.querySelector(".arcade-fullscreen-fallback"));
+      if(canvas&&mobile&&!fullscreen){
+        const rect=canvas.getBoundingClientRect();
+        const viewport=window.visualViewport;
+        const height=viewport?.height||window.innerHeight;
+        if(height>0&&rect.height>0){
+          const visibleCenter=(viewport?.offsetTop||0)+height/2;
+          let target=scrollY+rect.top+rect.height/2-visibleCenter;
+          if(canvas.closest(".stage")&&rect.height>height-32){
+            target=Math.max(target,scrollY+rect.bottom-(height-24));
+          }
+          const pageHeight=Math.max(document.documentElement.scrollHeight,
+            document.body.scrollHeight);
+          scrollY=Math.max(0,Math.min(Math.max(0,pageHeight-height),target));
           window.scrollTo(0,scrollY);
         }
       }
