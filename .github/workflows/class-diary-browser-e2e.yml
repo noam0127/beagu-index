@@ -12,6 +12,9 @@ on:
       - 'js/class-diary-sound-v1.js'
       - 'js/class-diary-visual-v1.js'
       - 'js/class-diary-sd-v1.js'
+      - 'js/class-diary-ui-v2.js'
+      - 'styles/class-diary-ui-v2.css'
+      - 'styles/class-diary-journey-v1.css'
       - 'scripts/test-class-diary-browser.cjs'
       - '.github/workflows/class-diary-browser-e2e.yml'
   workflow_dispatch:
