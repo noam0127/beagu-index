@@ -5,7 +5,7 @@ const pub=JSON.parse(read('data/public-lv0-percentiles-v1.2.json'));
 const presence=JSON.parse(read('data/public-2023-2025-school-records-v2.json'));
 const versions=[2023,2024,2025];
 const expected=[2807,3284,1458];
-const expectedPresence=[2807,3301,1462];
+const expectedPresence=[2898,3358,1547];
 const actual=versions.map((year,i)=>pub.rows.filter(r=>typeof r.percentiles?.[i]==='number').length);
 assert.deepEqual(actual,expected,'All approved domestic school-year percentiles should appear in the public bundle');
 assert.deepEqual(versions.map(y=>presence.schoolIdsByYear[String(y)].length),expectedPresence);
@@ -24,6 +24,8 @@ for(const row of pub.rows){
   }
  }
 }
+assert.equal(presence.verified_choice_only_20261120.new_school_years,233);
+assert.deepEqual(presence.verified_choice_only_20261120.by_year,{'2023':91,'2024':57,'2025':85});
 assert.equal(pub.restoration_20261120.restored_school_years,588);
 assert.deepEqual(pub.restoration_20261120.by_year,{'2023':212,'2024':290,'2025':86});
 assert.equal(pub.restoration_20261120.new_school_ids,237);
