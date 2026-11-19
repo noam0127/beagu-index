@@ -45,6 +45,6 @@ const invalidMoney={...world,numbers:{...world.numbers,district_housing_price_me
  value:7000,referenceYear:2025,status:'APPROVED'}}};
 assert(!context.forDay(invalidMoney,6).facts.some(f=>f.key==='district_housing_price_mean'));
 assert.deepEqual(context.forDay({...world,publishedYears:[]},3).facts,[]);
-assert(!context.forDay(world,7).passage.includes('성격'));
+assert(context.forDay(world,7).passage.includes('비율은 누군가의 능력이나 성품을 말해 주지 않는다'));
 assert.throws(()=>context.forDay(world,8),/INVALID_STORY_DAY/);
 console.log('PASS: 7 days of approved school variables; withholding, units, person-safe narration, and fictional demo isolation');
