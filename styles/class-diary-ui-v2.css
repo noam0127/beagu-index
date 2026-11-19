@@ -83,3 +83,186 @@ body.is-playing #choiceSection .choice:active{transform:scale(.985)}
 @media(prefers-reduced-motion:reduce){
  .diary-day-progress span,body.is-playing #vnMore,body.is-playing #nextBtn,body.is-playing #choiceSection .choice,body.is-playing #sceneBackdrop,body.is-playing #scenePortrait{transition:none!important}
 }
+
+/* Literary full-page paper dialogue v3 · 2026-11-20
+   Larger, scrollable prose area without replacing the visual-novel controls. */
+body.is-playing #novelCard .vn-bottom{
+ width:min(100%,1100px);
+ align-self:center;
+ height:min(70dvh,660px);
+ max-height:calc(100dvh - 120px);
+ gap:0;
+ justify-content:flex-end;
+ padding:0;
+}
+body.is-playing #novelCard #vnDialogueSlot{
+ flex:1 1 auto;
+ display:flex;
+ flex-direction:column;
+ min-height:0;
+ gap:0;
+ overflow:hidden;
+}
+body.is-playing #novelCard .vn-bottom .character-strip{
+ position:relative;
+ z-index:3;
+ flex:none;
+ align-self:flex-start;
+ max-width:calc(100% - 34px);
+ margin:0 0 -1px clamp(14px,2.8vw,30px);
+ padding:8px 19px;
+ transform:translateY(8px) rotate(-.65deg);
+ border:1px solid #d8adae;
+ border-radius:5px 13px 4px 4px;
+ background:linear-gradient(120deg,rgba(245,219,218,.99),rgba(236,201,202,.99));
+ box-shadow:2px 4px 12px #4b31431d;
+}
+body.is-playing #novelCard .vn-bottom .character-name{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+ font-size:15px;
+ font-weight:700;
+ color:#644654;
+ line-height:1.6;
+}
+body.is-playing #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing #novelCard #vnDialogueSlot .outcome{
+ position:relative;
+ flex:1 1 auto;
+ min-height:0;
+ max-height:none;
+ width:100%;
+ overflow-y:auto;
+ overscroll-behavior:contain;
+ scrollbar-width:thin;
+ scrollbar-color:#bba0a0 transparent;
+ padding:clamp(24px,3.6vw,43px) clamp(22px,4.7vw,54px) clamp(24px,3vw,36px);
+ border:1px solid #e2cfc7;
+ border-top:3px solid #c697a3;
+ border-radius:18px 18px 0 0;
+ background:linear-gradient(154deg,rgba(255,252,246,.98) 0%,rgba(252,245,237,.97) 60%,rgba(246,235,227,.97) 100%);
+ color:#3f3842;
+ backdrop-filter:blur(13px);
+ box-shadow:0 18px 55px #100e205c,inset 0 0 0 5px #fff7;
+}
+body.is-playing #novelCard #vnDialogueSlot .vn-dialogue::before,
+body.is-playing #novelCard #vnDialogueSlot .outcome::before{
+ content:"";
+ display:block;
+ height:1px;
+ width:min(190px,40%);
+ margin:0 0 clamp(20px,3vw,30px);
+ background:linear-gradient(90deg,#be909d7d,#be909d14);
+}
+body.is-playing #novelCard .vn-bottom .prose,
+body.is-playing #novelCard .vn-bottom .outcome .prose{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+ font-weight:400;
+ font-size:clamp(18px,2.1vw,23px);
+ line-height:1.92;
+ letter-spacing:-.018em;
+ word-break:keep-all;
+ overflow-wrap:break-word;
+ color:#41383e;
+ text-shadow:none;
+}
+body.is-playing #novelCard .vn-bottom .prose p,
+body.is-playing #novelCard .vn-bottom .outcome .prose p{
+ margin:0 0 1.3em;
+}
+body.is-playing #novelCard .vn-bottom .prose p:last-child,
+body.is-playing #novelCard .vn-bottom .outcome .prose p:last-child{
+ margin-bottom:0;
+}
+body.is-playing #novelCard .vn-bottom .outcome>strong{color:#8b6072}
+body.is-playing #novelCard .vn-bottom .vn-control-row{
+ flex:0 0 auto;
+ min-height:64px;
+ margin:0;
+ padding:8px clamp(12px,2.6vw,24px);
+ gap:10px;
+ border:1px solid #e2cfc7;
+ border-top:0;
+ border-radius:0 0 18px 18px;
+ background:linear-gradient(100deg,rgba(249,239,231,.98),rgba(255,249,244,.98));
+ box-shadow:0 14px 36px #1613236b;
+}
+body.is-playing #novelCard .vn-bottom .vn-fiction{color:#937d86;text-shadow:none;max-width:none}
+body.is-playing #novelCard .diary-toolbar button{
+ background:#fff9f4;
+ color:#755c69;
+ border-color:#e9d5d6;
+ box-shadow:none;
+}
+body.is-playing #novelCard .diary-toolbar button[aria-pressed="true"]{
+ background:#e7c5d4;
+ color:#513a4d;
+}
+body.is-playing #novelCard #vnMore,
+body.is-playing #novelCard #nextBtn{
+ width:48px;
+ height:48px;
+ min-height:48px;
+ flex-basis:48px;
+ background:#9c718a;
+ color:#fff;
+ border:1px solid #bd9cb0;
+ box-shadow:0 5px 14px #704a6455;
+}
+body.is-playing #novelCard #vnMore:hover,
+body.is-playing #novelCard #nextBtn:hover{
+ background:#875b77;
+ box-shadow:0 0 0 4px #f6dce5ad,0 7px 17px #704a6460;
+}
+body.is-playing #novelCard .vn-bottom .actions #nextBtn{
+ margin-top:6px;
+}
+@media(max-width:620px){
+ body.is-playing #novelCard .vn-bottom{
+  height:min(73dvh,640px);
+  max-height:calc(100dvh - 100px);
+ }
+ body.is-playing #novelCard #vnDialogueSlot .vn-dialogue,
+ body.is-playing #novelCard #vnDialogueSlot .outcome{
+  max-height:none;
+  padding:22px 22px 25px;
+  border-radius:14px 14px 0 0;
+ }
+ body.is-playing #novelCard .vn-bottom .prose,
+ body.is-playing #novelCard .vn-bottom .outcome .prose{
+  font-size:clamp(17px,4.35vw,19px);
+  line-height:1.84;
+  letter-spacing:-.018em;
+ }
+ body.is-playing #novelCard .vn-bottom .character-strip{
+  margin-left:14px;
+  padding:5px 13px;
+ }
+ body.is-playing #novelCard .vn-bottom .character-name{font-size:13px}
+ body.is-playing #novelCard .vn-bottom .vn-control-row{
+  min-height:58px;
+  padding:6px 9px;
+  gap:5px;
+  border-radius:0 0 14px 14px;
+ }
+ body.is-playing #novelCard .vn-bottom .vn-fiction{max-width:68px;font-size:9px}
+ body.is-playing #novelCard .diary-toolbar button{width:38px;min-width:38px;height:42px}
+ body.is-playing #novelCard #vnMore,
+ body.is-playing #novelCard #nextBtn{
+  width:43px;height:43px;min-height:43px;flex-basis:43px;
+ }
+}
+@media(max-width:360px){
+ body.is-playing #novelCard .vn-bottom .vn-fiction{display:none}
+ body.is-playing #novelCard .vn-bottom .vn-control-row{gap:4px}
+ body.is-playing #novelCard #vnDialogueSlot .vn-dialogue,
+ body.is-playing #novelCard #vnDialogueSlot .outcome{padding:18px 17px 22px}
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing #novelCard .vn-bottom{height:66dvh;max-height:calc(100dvh - 85px)}
+ body.is-playing #novelCard #vnDialogueSlot .vn-dialogue,
+ body.is-playing #novelCard #vnDialogueSlot .outcome{padding:14px 22px}
+ body.is-playing #novelCard .vn-bottom .prose{font-size:16px;line-height:1.55}
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing #novelCard .vn-bottom .character-strip{transform:none}
+}
