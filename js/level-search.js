@@ -71,7 +71,7 @@
   let historicalPresenceByYear={};
   const geographyComparisons=new Map(); // approved national/province benchmarks; never school responses
 
-  const historicalPresenceReady=fetch('data/public-2023-2025-school-records-v2.json?v=20261120-overseas1',{cache:'no-cache'})
+  const historicalPresenceReady=fetch('data/public-2023-2025-school-records-v2.json?v=20261120-historyfull2',{cache:'no-cache'})
     .then(r=>{if(!r.ok)throw new Error('과거 조사 기록 파일 조회 실패');return r.json()})
     .then(data=>{
       const years=data?.schoolIdsByYear;
