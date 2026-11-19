@@ -7,6 +7,20 @@
   const identityCopyFeedback = byId('identityCopyFeedback');
   const identityEndpoint = SUPABASE_URL + '/functions/v1/beagu-challenge-identity';
   const levelSessionKey = 'beagu-level-session-v1';
+  const identityRecovery = byId('identityRecovery');
+  const legacyIdentityInput = byId('legacyIdentityInput');
+  const legacyIdentityConfirm = byId('legacyIdentityConfirm');
+  const deviceProofKey = 'beagu-challenge-proof-v1';
+  function deviceProof() {
+    const valid = /^[a-f0-9]{64}$/;
+    let proof = localStorage.getItem(deviceProofKey) || '';
+    if (!valid.test(proof)) {
+      proof = Array.from(crypto.getRandomValues(new Uint8Array(32)),
+        n => n.toString(16).padStart(2, '0')).join('');
+      localStorage.setItem(deviceProofKey, proof);
+    }
+    return proof;
+  }
   const referralEndpoint = SUPABASE_URL + '/functions/v1/beagu-referral-v1';
   const referralProgress = byId('referralProgress');
   const referralLevel = byId('referralLevel');
@@ -77,10 +91,23 @@
         const response = await deadline(fetch(identityEndpoint, {
           method: 'POST', cache: 'no-store',
           headers: { 'Content-Type': 'application/json', 'X-Beagu-Session': sessionToken },
-          body: JSON.stringify({ action: 'issue', visitor: window.beaguVisitor })
+          body: JSON.stringify({
+            action: 'issue', visitor: window.beaguVisitor,
+            deviceProof: deviceProof(),
+            ...(legacyIdentityInput.value.trim()
+              ? {legacyIdentityCode: legacyIdentityInput.value.trim()} : {})
+          })
         }), 15000, '연결이 지연되고 있습니다. 다시 시도해주세요.');
         if (!accessGranted) return;
-        if (response.status === 401 || response.status === 403) throw new Error('레벨1 인증이 만료되었습니다. 다시 인증해 주세요.');
+        if (response.status === 403) {
+          const problem = await response.json().catch(() => ({}));
+          if (problem.error === 'LEGACY_PROOF_REQUIRED') {
+            identityRecovery.hidden = false;
+            throw new Error('기존에 발급한 고유번호를 한 번 확인해 주세요.');
+          }
+        }
+        if (response.status === 401 || response.status === 403)
+          throw new Error('레벨1 인증이 만료되었습니다. 다시 인증해 주세요.');
         if (!response.ok) throw new Error('고유번호 발급에 실패했습니다. 다시 시도해주세요.');
         const data = await response.json();
         if (!accessGranted) return;
@@ -92,6 +119,8 @@
         }
         participant = n;
         personalCode = code;
+        identityRecovery.hidden = true;
+        legacyIdentityInput.value = '';
         void loadReferral();
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
         identityCode.textContent = code;
@@ -165,6 +194,10 @@
       referralFeedback.textContent = '이 브라우저에서는 링크를 복사할 수 없습니다.';
     }
   });
+  legacyIdentityConfirm.addEventListener('click', () => {
+    if (!legacyIdentityInput.value.trim()) return;
+    void prepare();
+  });
   retry.addEventListener('click', prepare);
   // 뒤로가기로 복원되는 페이지에서는 이미지 URL을 유지합니다.
   window.addEventListener('pagehide', event => {
@@ -174,6 +207,8 @@
     accessGranted = false;
     participant = null;
     personalCode = null;
+    identityRecovery.hidden = true;
+    legacyIdentityInput.value = '';
     inviteUrl = null;
     copyReferral.disabled = true;
     lv2Link.hidden = true;
