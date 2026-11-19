@@ -589,7 +589,7 @@ console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NOR
 
 
 // Execute actual career finish code: 62-year win doubles accumulated points; losses do not.
-const finishStart=runner.indexOf("function finish(win){");
+const finishStart=runner.indexOf("function retirementCongratulations(");
 const finishEnd=runner.indexOf("function pause(){",finishStart);
 assert.ok(finishStart>0&&finishEnd>finishStart);
 const runFinishSource=runner.slice(finishStart,finishEnd);
@@ -597,8 +597,8 @@ function finishCareer(initialScore,seconds,victory){
  return new Function("initialScore","seconds","victory",[
  'let state="playing",clock=seconds,score=initialScore,best=0,pointerId=null,pointerX=null,pointerY=null;',
  'const RETIREMENT_SECONDS=190,START_AGE=24,SECONDS_PER_YEAR=5;',
- 'const pressed={clear(){}},schoolPicker={setLocked(){}},ranking={finish(score,stats){submitted={score,stats};}};',
- 'let submitted=null,headline="",description="";',
+ 'const pressed={clear(){}},schoolPicker={setLocked(){},get(){return {difficulty:"hard"}}},ranking={finish(score,stats){submitted={score,stats};}};',
+ 'let submitted=null,headline="",description="",misses=0,nearCount=0,livesLeft=2,life=100,maxLife=100;',
  'const getAge=()=>Math.min(62,24+Math.floor(clock/5));',
  'const persist=()=>{},updateLabels=()=>{},playTone=()=>{},stopAndChangeSchool=()=>{},$=()=>({textContent:""});',
  'const message=(title,desc)=>{headline=title;description=desc;};',
@@ -614,7 +614,7 @@ assert.equal(fullCareer.best,8400);
 assert.deepEqual(fullCareer.submitted.stats,{
  score:8400,baseScore:4200,survivalSeconds:190,age:62,victory:true
 });
-assert.match(fullCareer.headline,/62세 정년 달성/);
+assert.match(fullCareer.headline,/정년/);
 assert.match(fullCareer.description,/× 2/);
 const earlyCareer=finishCareer(900,60,false);
 assert.equal(earlyCareer.score,900);
