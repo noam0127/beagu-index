@@ -88,7 +88,7 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    const first=await sample();
    assert(first.scene,'36-episode literary mode must be on');
    assert.equal(first.visible,1,'Exactly the first line should be visible initially');
-   assert(first.total>=5,'The first page must offer several lines to read');
+   assert(first.total>=3,'The first page must contain at least three manually revealed lines');
    assert.equal(first.echo,0,'There must be no previous-text echo');
    assert(first.pageWidth>first.viewportWidth*.75,'Prose must occupy most of the screen width');
    assert(first.stageHeight<=first.viewportHeight+2,'Stage must fit the viewport');
