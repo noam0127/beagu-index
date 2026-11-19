@@ -196,7 +196,7 @@ function schoolSize(state,world){
 function chosenEvent(state,world){
  if(state.day!==5)return EVENTS[state.day];
  const p=state.profile,scale=schoolSize(state,world);
- if(p.workCulture==='deflecting'&&scale==='large')
+ if(['deflecting','hostile'].includes(p.workCulture)&&scale==='large')
    return {id:'forced_social',title:'친목회장은 누가 하기로 했나요?',tone:'tense',place:'금요일 방과 후 · 학년연구실'};
  if(p.sportsCulture==='pressured')
    return {id:'sports',title:'오늘 배구, 빠지면 안 되죠?',tone:'tense',place:'금요일 방과 후 · 교무실'};
@@ -221,6 +221,42 @@ function schoolContextLines(state,world){
  if(state.day===5&&male&&male.value<=100)
    lines.push('공개된 '+male.year+'년 남교사 비율은 '+male.value+'%였다. 그 숫자만으로 누가 배구를 하거나 친목회장을 맡을지는 알 수 없었다.');
  return lines;
+}
+/* 교직원 간 관계는 교사의 선천적 성격이 아니라 협력·적대·업무 경계의 경험으로 나타낸다. */
+const STAFF_MOOD=Object.freeze({
+ collaborative:{
+  1:'학년연구실에서 “우리 학년 동의서 아직 다 못 걷었죠? 제가 확인한 것 공유할게요”라는 말이 나왔다. 복합기 앞에서 함께 일하니 종이 더미가 조금 작아 보였다.',
+  2:'담당 업무가 겹치자 “업무분장표 같이 펼쳐 봅시다” 하고 누군가 의자를 끌어당겼다. 부탁을 거절해도 관계가 틀어지지 않는다는 것이 마음을 놓이게 했다.',
+  3:'전담시간에 동료가 “모둠 자료 필요하면 제가 출력해 드릴까요?” 하고 물었다. 나도 시간이 날 때 도와줄 수 있었다. 그런 작은 교환이 일주일을 버티게 했다.',
+  4:'보호자 연락을 마치고 학년연구실 문을 열자 동료가 따뜻한 물 한 잔을 내밀었다. “확인할 내용은 같이 정리해요.” 문제가 사라진 것은 아니지만 혼자 버티지는 않아도 됐다.',
+  5:'금요일이면 책상마다 아직 해야 할 일이 있었다. 그런데 옆자리 선생님이 내 주안을 한번 봐 주고, 나는 그 선생님의 활동지를 함께 맞췄다. 함께하는 학교라면 힘든 일주일도 견딜 만했다.'
+ },
+ deflecting:{
+  1:'학년연구실에서는 다들 바빴다. 부탁을 할 때마다 “제가 하는 건 아니어서요”라는 답이 돌아왔다. 미운 마음보다 답답함이 먼저 생겼다.',
+  2:'업무분장표의 빈칸 하나를 두고 누가 맡을지 정하지 못했다. 서로 싫어서라기보다, 한 번 떠맡으면 다음에도 내 일이 될까 봐 누구도 쉽게 손을 들지 않았다.',
+  3:'전담시간에 모둠 활동지를 뽑으려는데 다른 업무가 먼저 넘어왔다. 나는 수업 준비도 업무라는 사실을 누군가에게 설명해야 했다.',
+  4:'상담 처리에 필요한 자료를 묻자 “일단 담임이 해 보세요”라는 답이 나왔다. 담당을 확인하는 데 시간이 더 걸렸다.',
+  5:'학년연구실에서는 남은 일을 보면서 서로 눈치를 봤다. 동료를 돕는 마음과 내 몫을 지켜야 하는 마음이 자꾸 부딪혔다.'
+ },
+ hostile:{
+  1:'학년연구실 문을 열자 웃던 목소리가 끊겼다. “저 반은 왜 벌써 시끄러워요?” 칸막이 너머로 들리는 말에 교실로 돌아가기 전부터 마음이 무거워졌다. 문제가 생길 때 의논할 사람이 없는 분위기가 더 무서웠다.',
+  2:'업무분장표를 펴자 한 선생님이 말했다. “지난번에도 제가 했잖아요. 이번에는 알아서 하세요.” 다른 선생님은 그 말을 듣고도 모니터만 바라봤다. 갈등은 일이 많다는 사실보다 말할 사람이 없을 때 더 커졌다.',
+  3:'전담시간에 학년연구실 복합기를 쓰려 하자 “또 그렇게 늦게 준비하세요?”라는 말이 들렸다. 수업을 준비하는 속도마저 평가받는 기분이었다. 멀쩡한 커피도 삼키기 힘들었다.',
+  4:'보호자 연락 문제를 상의하자 서로 상대 학년의 탓을 했다. “그건 선생님 반 일이잖아요.” 어떤 말은 문제를 해결하기보다 사람 하나를 홀로 남겨 두었다.',
+  5:'금요일까지 이어진 신경전 때문에 학년연구실에 들어서는 것부터 힘이 들었다. 아이들과 있는 교실보다 어른들이 모인 방에서 더 긴장한 자신을 발견했다. 일 자체보다 서로 적대하는 분위기가 사람을 지치게 했다.'
+ }
+});
+const SUPPORT_SHIFTS=Object.freeze({
+ protect:5,restructure:4,endure:-7,clarify:5,offer:3,accept:-6,
+ boundary:5,helpbrief:2,dropwork:-6,process:7,consult:6,solo:-7,
+ reassign:8,sharehelp:8,takeall:-7,
+ sport_join:3,sport_decline:5,sport_change:7,
+ bbq_join:7,bbq_rest:6,bbq_help:8,
+ club_check:5,club_reform:7,club_accept:-8
+});
+function climateParagraph(state){
+ const mode=state&&state.profile&&state.profile.workCulture;
+ return ((STAFF_MOOD[mode]||STAFF_MOOD.collaborative)[state.day])||'';
 }
 function eventProse(state,world){
  const p=state.profile,d=state.day,young=p.age<=32,novice=p.experience==='new';
@@ -331,6 +367,8 @@ function scene(state,world){
  const office=officialContext(world,state.day);
  const colleague=state.profile.partner==='man'?'현우 선생님':state.profile.partner==='woman'?'지윤 선생님':'동학년 선생님';
  const paragraphs=eventProse(state,world).map(x=>x.replace(/\{colleague\}/g,colleague));
+ const climate=climateParagraph(state);
+ if(climate)paragraphs.splice(Math.min(1,paragraphs.length),0,climate);
  paragraphs.push(...schoolContextLines(state,world));
  const last=previousImpact(state);
  if(last)paragraphs.splice(1,0,last);
@@ -371,6 +409,19 @@ function choose(state,id,world){
    next.stats[key]=clamp(next.stats[key]+Number(raw.delta[key]||0));
  for(const [i,key] of ['voice','boundary'].entries())
    next.stats[key]=clamp(next.stats[key]+CULTURE_DELTAS[raw.id][i]);
+ const mode=next.profile.workCulture;
+ const pressure=mode==='hostile'?-4:mode==='deflecting'?-2:2;
+ next.stats.support=clamp(next.stats.support+SUPPORT_SHIFTS[raw.id]+pressure);
+ if(mode==='collaborative'){
+   reply.push('“이건 같이 해요.” {colleague}이 짧게 말하고 내 옆에 앉았다. 해야 할 일은 그대로였지만 혼자 떠안지는 않아도 됐다.');
+ }else if(mode==='hostile'){
+   if(['protect','restructure','clarify','offer','boundary','helpbrief','process','consult','reassign','sharehelp','club_check','club_reform'].includes(raw.id))
+     reply.push('모두가 반가운 표정은 아니었다. 그래도 {colleague}이 한 걸음 다가와 “저도 그 문제 같이 확인해 드릴게요”라고 말했다. 적대적인 분위기 속에서도 손을 내미는 사람이 있다는 것이 중요했다.');
+   else
+     reply.push('교무실에서는 서로의 탓이라는 말이 돌아다녔다. 수업 준비에 쓴 시간보다 그 말을 견딘 시간이 더 길게 느껴졌다. 그렇다고 이 분위기의 책임이 내게 있는 것은 아니었다.');
+ }else{
+   reply.push('업무를 나누는 기준을 다시 의논할 수 있으면 좋겠다고 생각했다. 서로 바쁜 사정을 알면서도 일이 한쪽에 몰리지 않게 하는 일은 필요했다.');
+ }
  next.storyEvents=Array.isArray(next.storyEvents)?next.storyEvents:[];
  next.storyEvents.push({day:next.day,eventId:current.id,choiceId:raw.id});
  next.storyReflection={day:next.day,paragraphs:reply.map(x=>x.replace(/\{colleague\}/g,name)),
@@ -382,7 +433,7 @@ function continueStory(state){
   state.storyReflection.day!==state.day)throw Error('SCENARIO_CONTINUE_INVALID');
  const next=copy(state);next.storyReflection=null;return next;
 }
-const api=Object.freeze({VERSION,DUTIES,EVENTS,CHOICES,SURVEY_THEMES,SPECIAL_CHOICES,officialFacts,scene,choose,continueStory});
+const api=Object.freeze({VERSION,DUTIES,EVENTS,CHOICES,SURVEY_THEMES,SPECIAL_CHOICES,STAFF_MOOD,SUPPORT_SHIFTS,officialFacts,scene,choose,continueStory});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiaryScenario=api;
 })(typeof window!=='undefined'?window:globalThis);
