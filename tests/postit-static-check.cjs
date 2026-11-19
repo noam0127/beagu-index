@@ -129,5 +129,5 @@ assert.ok(accountBridgeSQL.includes('a.disabled is true or l.disabled is true'),
 assert.ok(accountBridgeSQL.includes('from PUBLIC, anon, authenticated')&&
  accountBridgeSQL.includes('to service_role'), 'public users may not call account grant RPC');
 const accountContract=read('docs/postit-verified-account-bridge-20261120.md');
-assert.ok(accountContract.includes('DO NOT APPLY')===false&&accountContract.includes('계정 원장'),'rollout instructions documented');
+assert.ok(accountContract.includes('운영 서비스/데이터베이스에는 새 계정 연동 기능을 출시하지 않는다')&&accountContract.includes('Lv0 계정 생성'),'rollout instructions documented');
 console.log('Post-it static validation passed.');
