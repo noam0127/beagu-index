@@ -10,7 +10,7 @@ function refreshBeagu2026QuestionResults() {
     if(last<0||source.getLastRow()>BEAGU26.maxResponses+1)throw Error('원본 열·행 안전 검사 실패');
     // Never read Q51 or later free-text response cells.
     const values=source.getRange(1,1,Math.max(1,source.getLastRow()),last+1).getDisplayValues();
-    const payload=beagu26BuildResults(values,fetchSchools(),BEAGU26_QUESTION_CATALOG);
+    const {reviewRows, ...payload}=beagu26BuildResults(values,fetchSchools(),BEAGU26_QUESTION_CATALOG);
     payload.snapshot_at=startedAt;
     const master=SpreadsheetApp.openById(BEAGU26.destinationId);
     const tab=master.getSheetByName('2026_문항별_검수대기')||master.insertSheet('2026_문항별_검수대기');
@@ -19,6 +19,10 @@ function refreshBeagu2026QuestionResults() {
     const rows=[];
     payload.schools.forEach(s=>s.questions.forEach(q=>rows.push([s.school_id,q.id,q.row,q.valid,q.invalid,JSON.stringify(q.counts),q.minutes_sum,s.school_match_status,'WITHHELD'])));
     replaceBody(tab,rows,columns.length);
+    const review=master.getSheetByName('2026_전문항_기타_검수대기')||master.insertSheet('2026_전문항_기타_검수대기');
+    const reviewHeaders=['원본행번호','학교ID','문항','하위문항번호','검수유형','집계상태'];
+    review.getRange(1,1,1,reviewHeaders.length).setValues([reviewHeaders]);
+    replaceBody(review,reviewRows,reviewHeaders.length);
     const secret=PropertiesService.getScriptProperties().getProperty('BEAGU_2026_INGEST_TOKEN')||'';
     if(secret.length<32)throw Error('BEAGU_2026_INGEST_TOKEN 설정 필요');
     const response=UrlFetchApp.fetch(BEAGU26.supabaseUrl+'/functions/v1/beagu-2026-results-ingest',{
