@@ -10,6 +10,7 @@ on:
       - 'js/beagu-account-confirm-cleanup-v1.js'
       - 'account-email-confirmed.html'
       - 'account-password-reset.html'
+      - 'supabase/email-templates/account-recovery.html'
       - 'js/beagu-account-password-reset-v1.js'
       - 'tests/account-lifecycle-security-v1.mjs'
       - 'tests/account-auth-private-v1.mjs'
