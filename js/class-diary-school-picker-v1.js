@@ -11,7 +11,7 @@ const host=$('setupSchoolPicker');
 if(!host)return;
 const query=$('setupSchoolQuery'),results=$('setupSchoolResults');
 const status=$('setupSchoolStatus'),survey=$('setupSchoolSurvey');
-const recheck=$('setupSchoolRecheck'),form=$('profileForm');
+const recheck=$('setupSchoolRecheck');
 const params=new URLSearchParams(location.search);
 const demo=params.get('demo')==='1',guest=params.get('guest')==='1';
 const originalSchool=params.get('schoolId')||'';
@@ -39,6 +39,13 @@ async function checkSchool(id,label){
   if(request!==serial)return;
   if(!payload.school||payload.school.school_id!==id)throw Error('INVALID_SCHOOL_RESPONSE');
   const school=payload.school;
+  // Keep the visible choice tied to the canonical result from the server.
+  const canonical=String(school.school_name||'').slice(0,70);
+  const region=String(school.region||'').slice(0,35);
+  if(canonical){
+   chosenLabel=canonical+(region?' · '+region:'');
+   query.value=chosenLabel;
+  }
   const years=(Array.isArray(school.available_years)?school.available_years:[])
     .filter(year=>Number.isInteger(year)&&year>=2023&&year<=2026);
   if(school.eligible===true&&years.length){
