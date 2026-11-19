@@ -3,7 +3,7 @@
 (() => {
   "use strict";
   let rail=null,track=null,thumb=null,config=null,dragId=null;
-  const mobile=()=>window.matchMedia?.("(max-width: 768px)").matches===true;
+  const mobile=()=>window.matchMedia?.("(max-width: 768px), (pointer: coarse)").matches===true;
   const inFullscreen=()=>Boolean(document.fullscreenElement||document.webkitFullscreenElement||
     document.querySelector(".arcade-fullscreen-fallback"));
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
