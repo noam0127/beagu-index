@@ -12,6 +12,8 @@ assert.ok(css.includes('#fff1a0')&&css.includes('#ffccd9')&&css.includes('#b9e5f
 assert.ok(app.includes('encodeURIComponent(comp.selection)'),'compare route');
 assert.ok(app.includes('school-report.html?school_id='),'school report route');
 assert.ok(app.includes('LEVEL_REQUIRED'),'level gate feedback');
+assert.ok(css.includes('postit-breeze-flutter')&&css.includes('postit-corner-flutter')&&css.includes('postit-bookmark-flick'),'scroll wind and folded-corner animation exist');
+assert.ok(app.includes('flutterOnScroll')&&app.includes('previousScrollY')&&app.includes('breezePreference.matches'),'down-scroll only and reduced-motion gating');
 const compare=read('statistics.html'),core=read('js/statistics-compare.js');
 assert.match(compare,/id="copyCompareLink"[\s\S]{0,250}id="comparePostit"/,'compare shortcut next to copy');
 assert.ok(core.includes("postitUrl.searchParams.set('compare',comparison)"),'comparison state transferred');
