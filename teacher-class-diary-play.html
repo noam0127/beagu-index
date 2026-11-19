@@ -310,6 +310,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 @media(prefers-reduced-motion:reduce){.setup-character,.setup-begin{transition:none}.setup-character:hover{transform:none}}
 
 </style>
+<link rel="stylesheet" href="styles/class-diary-journey-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 </head>
 <body>
@@ -347,16 +348,25 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <p id="noticeText" class="muted"></p>
 <div class="actions"><a class="primary" href="teacher-class-diary.html" style="text-decoration:none">학교 다시 선택</a><a class="secondary" href="search-lv2.html" style="text-decoration:none">레벨2 인증</a></div>
 </section>
-<section id="setup" class="panel vn-setup" hidden>
+<section id="opening" class="diary-opening panel" hidden aria-labelledby="openingTitle">
+<div class="diary-opening-visual" aria-hidden="true"><div class="diary-school"><span>▣　▣　▣</span></div></div>
+<div class="diary-opening-body"><span class="setup-eyebrow">PROLOGUE · 2027년 3월</span><h2 id="openingTitle">일곱 날, 다섯 개의 결말</h2>
+<p>새 학기가 시작됐습니다. 교실과 연구실, 복도에서 만난 사람들. 당신의 선택이 일주일의 이야기를 바꿉니다.</p>
+<div class="diary-opening-stat"><div><strong>7일</strong><small>3월 8일–14일</small></div><div><strong>3명</strong><small>서로 다른 동료 이야기</small></div><div><strong>5개</strong><small>서로 다른 결말</small></div></div>
+<div class="diary-opening-days" aria-label="일곱 날의 이야기"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+<p id="openingSchool"></p><p class="diary-opening-note">인물·관계·사건은 허구입니다. 게임 진행은 저장하지 않습니다.</p>
+<button id="openingStart" type="button" class="primary diary-opening-start">나의 첫 페이지 펼치기 →</button>
+</div></section>
+<section id="setup" class="panel vn-setup" data-step="1" hidden>
 <div class="setup-head">
  <span class="setup-eyebrow">PROLOGUE 00 <span aria-hidden="true">✦</span> PLAYER SETUP</span>
  <h2>나의 첫 페이지를 펼치다</h2>
  <p>2027년 3월 8일, 낯선 새 학기. 당신은 어떤 선생님으로 일주일을 시작할까요?</p>
- <div class="setup-progress" aria-label="게임 준비 과정"><span>01 · 나의 이야기</span><span>02 · 함께할 동료</span><span>03 · 첫 등교</span></div>
+ <div class="setup-progress" aria-label="게임 준비 과정"><span data-step-label="1">01 · 나의 이야기</span><span data-step-label="2">02 · 함께할 동료</span><span data-step-label="3">03 · 첫 등교</span></div>
 </div>
 <form id="profileForm">
 <div class="setup-layout">
- <div class="setup-player">
+ <div class="setup-player" data-setup-screen="1">
   <div class="setup-section-title"><span class="setup-number">01</span><div><strong>당신의 프로필</strong><small>모든 설정은 이번 플레이에서만 사용됩니다.</small></div></div>
   <div class="setup-player-stamp"><span class="setup-stamp-mark" aria-hidden="true">✎</span><div><span>MY STORY</span><strong id="setupPlayerPreview">이름을 입력해 주세요</strong><small>나만의 학급일지 · 7일</small></div></div>
   <div class="form-grid">
@@ -368,7 +378,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
   </div>
   <p class="setup-micro">성별·나이·MBTI에 따른 능력이나 점수 차별은 없습니다.</p>
  </div>
- <div class="setup-cast">
+ <div class="setup-cast" data-setup-screen="2">
   <div class="setup-section-title"><span class="setup-number">02</span><div><strong>함께할 동료</strong><small>관계에 따라 서로 다른 이야기가 펼쳐집니다.</small></div></div>
   <div class="setup-portrait-grid" role="group" aria-label="동료 캐릭터 선택">
    <button class="setup-character" type="button" data-partner-choice="woman" aria-pressed="false">
@@ -390,6 +400,13 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
   <div class="setup-story-note"><span aria-hidden="true">✧</span><p>2027년 3월 8일–14일 · 7일의 이야기<br><small>21개의 기본 선택과 학교생활 속 다양한 사건</small></p></div>
  </div>
 </div>
+<div class="setup-review" data-setup-screen="3">
+<div class="setup-section-title"><span class="setup-number">03</span><div><strong>첫 등교 준비</strong><small>설정을 확인하고 게임을 시작하세요.</small></div></div>
+<div class="setup-review-road" aria-hidden="true">✧　·　·　·　🏫</div>
+<div class="setup-review-fields"><div><small>주인공</small><strong id="setupReviewName">—</strong></div><div><small>교직 경력 · 성별 · MBTI</small><strong id="setupReviewTraits">—</strong></div><div><small>함께할 동료</small><strong id="setupReviewPartner">—</strong></div></div>
+<p class="setup-review-quote">“이 일주일을 지나고 나면, 어떤 교실이 남아 있을까.”</p>
+</div>
+<div class="setup-step-actions"><button id="setupBack" type="button" class="secondary" hidden>← 이전</button><button id="setupNext" type="button" class="primary">다음 단계 →</button></div>
 <div class="setup-end">
  <p id="worldAutoNote" class="muted">공개·검증된 과거 학교 자료를 이야기의 배경으로 활용합니다. 실제 교직원이나 개인 업무를 특정하지 않습니다.</p>
  <p class="privacy">모든 인물·관계·사건은 허구입니다. 주인공 설정·선택·진행·결말은 저장되지 않으며 새로고침하면 사라집니다.</p>
@@ -409,7 +426,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 </div>
 <article class="panel novel" id="novelCard" data-scene="morning">
 <div class="novel-top">
-<div class="scene-art" id="sceneArt" role="group" aria-label="가상의 한국 초등학교를 배경으로 한 비주얼노벨 장면"><div id="sceneBackdrop" class="scene-backdrop" aria-hidden="true"></div><img id="scenePortrait" class="scene-portrait" alt="" aria-hidden="true"><div class="scene-fade" aria-hidden="true"></div><div class="vn-overlay" id="vnOverlay"><div class="vn-hud" id="vnHud"><div id="vnHeaderSlot"></div><div class="vn-top-actions"><button type="button" id="vnInfoBtn" aria-label="장면의 가상 정보와 자료 보기" aria-expanded="false">ⓘ</button><button type="button" id="vnSound" aria-label="배경음악 켜기 또는 끄기">♫</button><button type="button" id="vnReset" aria-label="처음부터">↺</button></div></div><div class="vn-info" id="vnInfo" hidden></div><div class="vn-bottom" id="vnBottom"><div id="vnDialogueSlot"></div><div class="vn-control-row"><span class="vn-fiction">가상 이야기 · 저장하지 않음</span><button type="button" id="vnMore">다음 대사 ▸</button></div></div></div></div>
+<div class="scene-art" id="sceneArt" role="group" aria-label="가상의 한국 초등학교를 배경으로 한 비주얼노벨 장면"><div id="sceneBackdrop" class="scene-backdrop" aria-hidden="true"></div><img id="scenePortrait" class="scene-portrait" alt="" aria-hidden="true"><div class="scene-fade" aria-hidden="true"></div><div class="vn-overlay" id="vnOverlay"><div class="vn-hud" id="vnHud"><div id="vnHeaderSlot"></div><div class="vn-top-actions"><button type="button" id="vnInfoBtn" aria-label="장면의 가상 정보와 자료 보기" aria-expanded="false">ⓘ</button><button type="button" id="vnSound" aria-label="배경음악 켜기 또는 끄기">♫</button><button type="button" id="vnReset" aria-label="처음부터">↺</button></div></div><div class="vn-info" id="vnInfo" hidden></div><div class="vn-bottom" id="vnBottom"><div id="vnDialogueSlot"></div><div class="vn-control-row"><span class="vn-fiction">가상 이야기 · 저장하지 않음</span><button type="button" id="vnMore" aria-label="다음 대사" title="다음 대사"><svg class="vn-arrow-mark" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button></div></div></div></div>
 <span class="tag" id="chapterDay">첫째 날</span>
 <h2 id="chapterTitle"></h2>
 <div class="date-place" id="chapterPlace"></div>
@@ -428,9 +445,9 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <div class="prose" id="chapterText"></div>
 </div>
 <p class="muted" id="chapterSource"></p>
-<div id="choiceSection"><div class="option-title">이번 장면에서 어떻게 할까요?</div><div class="choices" id="choiceButtons"></div></div>
-<section class="outcome" id="outcome" hidden><strong>당신의 선택이 남긴 장면</strong><div class="prose" id="outcomeText"></div><p class="dialogue" id="outcomeLine"></p></section>
-<div class="actions"><button type="button" class="primary" id="nextBtn" hidden>다음 날로</button><button type="button" class="secondary" id="resetBtn">처음부터 다시 시작</button></div>
+<div id="choiceSection" role="dialog" aria-modal="true" aria-label="선택지"><div class="option-title">어떻게 하시겠어요?</div><div class="choices" id="choiceButtons"></div></div>
+<section class="outcome" id="outcome" hidden><div class="prose" id="outcomeText"></div><p class="dialogue" id="outcomeLine"></p></section>
+<div class="actions"><button type="button" class="primary" id="nextBtn" hidden aria-label="다음 장면" title="다음 장면"><svg class="vn-arrow-mark" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 5 7 7-7 7"/></svg></button><button type="button" class="secondary" id="resetBtn">처음부터 다시 시작</button></div>
 </div>
 </article>
 </section>
@@ -472,6 +489,7 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <script src="js/class-diary-scenario-v1.js"></script>
 <script src="js/class-diary-incidents-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
+<script src="js/class-diary-journey-v1.js?v=20261120-1"></script>
 <script>
 (function(){
 'use strict';
@@ -486,6 +504,7 @@ const incidents=window.BeaguClassDiaryIncidents;
 const sound=window.BeaguClassDiarySound;
 const visual=window.BeaguClassDiaryVisual;
 const sd=window.BeaguClassDiarySD;
+const journey=window.BeaguClassDiaryJourney.init({show,sound});
 
 /* In-memory visual setup only: six original inputs remain authoritative. */
 const setupDescription=Object.freeze({
@@ -536,7 +555,7 @@ try{
 }catch(e){}
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);return n};
 function status(text){$('status').textContent=text||''}
-function show(id){for(const target of ['notice','setup','novel','ending'])$(target).hidden=target!==id;document.body.classList.toggle('is-playing',id==='novel');window.scrollTo(0,0);}
+function show(id){for(const target of ['notice','opening','setup','novel','ending'])$(target).hidden=target!==id;document.body.classList.toggle('is-playing',id==='novel');document.body.classList.remove('is-choosing');$('choiceSection').hidden=true;window.scrollTo(0,0);}
 function fail(message){show('notice');$('noticeText').textContent=message;status('접근 권한 또는 데이터를 확인하지 못했습니다.');}
 /* Temporary in-memory dialogue pages: no autosave or new APIs. */
 const vnState={pages:[],index:0,kind:'chapter'};
@@ -559,7 +578,7 @@ function vnPresent(){
  $('choiceSection').hidden=true;
  $('nextBtn').hidden=true;
  $('vnMore').hidden=false;
- $('vnMore').textContent=vnState.index<vnState.pages.length-1?'다음 대사 ▸':done?'다음 장면 ▸':'선택지 보기 ▸';
+ $('vnMore').setAttribute('aria-label',vnState.index<vnState.pages.length-1?'다음 대사':done?'다음 장면':'선택지 보기');
 }
 function vnStart(done){
  const source=$(done?'outcomeText':'chapterText');
@@ -575,8 +594,8 @@ $('vnMore').addEventListener('click',()=>{
  sound.note('advance');
  if(vnState.index<vnState.pages.length-1){vnState.index++;vnPresent();return;}
  $('vnMore').hidden=true;
- if(vnState.kind==='outcome')$('nextBtn').hidden=false;
- else $('choiceSection').hidden=false;
+ if(vnState.kind==='outcome'){$('nextBtn').hidden=false;$('nextBtn').focus()}
+ else journey.openChoice();
 });
 $('sceneArt').addEventListener('click',event=>{
  if(event.target.closest('button,a,input,select,textarea'))return;
@@ -594,7 +613,8 @@ stageHud.append($('chapterDay'),$('chapterTitle'),$('chapterPlace'));
 $('vnInfo').append($('novel').querySelector('.statbar'),$('schoolFacts'),$('chapterSource'));
 $('vnInfoBtn').addEventListener('click',()=>{sound.note('uiTap');$('vnInfo').hidden=!$('vnInfo').hidden;$('vnInfoBtn').setAttribute('aria-expanded',String(!$('vnInfo').hidden));});
 stageBody.append($('novelCard').querySelector('.character-strip'),$('novelCard').querySelector('.vn-dialogue'),$('outcome'));
-stageBottom.append($('choiceSection'),$('novelCard').querySelector('.novel-body .actions'));
+stageBottom.append($('novelCard').querySelector('.novel-body .actions'));
+document.body.append($('choiceSection'));
 function fillParagraphs(id,texts){
  const node=$(id);node.replaceChildren();
  for(const sentence of texts)node.append(el('p',sentence));
@@ -651,7 +671,7 @@ function renderNovel(){
  $('choiceSection').hidden=isReflection;
  $('outcome').hidden=!isReflection;
  $('nextBtn').hidden=!isReflection;
- $('nextBtn').textContent=game.day===7?'마지막 페이지 펼치기':'다음 날로';
+ $('nextBtn').setAttribute('aria-label',game.day===7?'마지막 페이지 펼치기':'다음 날로');
  const options=$('choiceButtons');options.replaceChildren();
  if(!isReflection){
   view.choices.forEach((choice,index)=>{
@@ -720,7 +740,7 @@ function renderScenario(){
  $('choiceSection').hidden=done;
  $('outcome').hidden=!done;
  $('nextBtn').hidden=!done;
- $('nextBtn').textContent='다음';
+ $('nextBtn').setAttribute('aria-label','다음');
  const buttons=$('choiceButtons');buttons.replaceChildren();
  if(done){
   fillParagraphs('outcomeText',event.result.paragraphs);
@@ -777,7 +797,8 @@ async function boot(){
   $('accessLabel').textContent='공개 체험판 · 로그인 없이 플레이';
   $('schoolLine').textContent='가상의 초등학교 · 순수 창작 · 실제 학교 자료 사용 안 함';
   document.title='나의 OO한 학급일지 · 무료 체험판';
-  show('setup');
+  $('openingSchool').textContent=$('schoolLine').textContent;
+  show('opening');
   $('worldAutoNote').textContent='체험판은 실제 학교 자료를 사용하지 않습니다. 학교의 규모와 업무·동료 관계는 전부 창작한 설정입니다.';
   status('체험판을 열었습니다. 주인공을 설정하고 바로 시작하세요.');
   return;
@@ -807,20 +828,23 @@ async function boot(){
   plan=window.BeaguClassDiaryNarrative.scenePlan(blueprint,world,signals);
   $('schoolLine').textContent=world.basic.name+' · '+(world.basic.sido||'')+' · 공개 검증된 조사 연도 '+world.publishedYears.join(', ');
   $('worldAutoNote').textContent='학교 규모·주소 및 승인된 과거 설문 문항을 참고해 업무분장과 동료 관계 장면을 구성합니다. 2027년 실제 상황이나 특정 교직원에 대한 판단은 아닙니다.';
-  show('setup');
-  status('학교 세계와 공개 자료를 확인했습니다. 주인공을 설정해 주세요.');
+  $('openingSchool').textContent=$('schoolLine').textContent;
+  show('opening');
+  status('이야기가 준비되었습니다. 오프닝을 확인해 주세요.');
  }catch(err){
   fail(err.message==='LEVEL2_REQUIRED'?
    '레벨2 로그인 또는 유효한 인증 상태가 필요합니다. 다른 기기에서 새로 로그인했다면 이 기기에서도 인증해야 합니다.':
    '학교 세계와 승인된 설문 자료를 불러오지 못했습니다. 다른 학교를 선택하거나 다시 시도해 주세요.');
  }
 }
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&document.body.classList.contains('is-choosing')){event.preventDefault();journey.closeChoice();$('vnMore').hidden=false;$('vnMore').setAttribute('aria-label','선택지 보기');$('vnMore').focus()}});
 for(const a of ['I','E'])for(const b of ['N','S'])for(const c of ['F','T'])for(const d of ['P','J']){
  const mbti=a+b+c+d;
  const option=el('option',mbti);option.value=mbti;$('mbti').append(option);
 }
 $('profileForm').addEventListener('submit',e=>{
  e.preventDefault();
+ if(!journey.ready())return;
  try{
   if(!soundPreferenceTouched)sound.setEnabled(true);updateMusicButton();sound.setMusicVolume(Number($('musicVolume').value)/100);
   game=engine.createGame(world,plan,engine.inferredProfile(world,{
