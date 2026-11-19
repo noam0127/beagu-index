@@ -1,4 +1,4 @@
-/* Stage 7 quick interactive walkthrough. State stays only in memory; no storage, no network. */
+/* Class diary: school → colleague → story, no separate personal questionnaire. */
 (function(root){
 'use strict';
 function init(options){
@@ -6,67 +6,48 @@ function init(options){
  const $=id=>document.getElementById(id);
  const setup=$('setup'),form=$('profileForm');
  let step=1;
- function review(){
-  $('setupReviewSchool').textContent=($('diarySchoolSelected').textContent||'가상의 초등학교').replace(/ · 레벨2 인증 완료$/, '');
-  $('setupReviewName').textContent=($('playerName').value.trim()||'—')+' 선생님';
-  const ex=$('experience'),gender=$('gender'),mbti=$('mbti'),partner=$('partner');
-  $('setupReviewTraits').textContent=[ex.selectedOptions[0]?.textContent,gender.selectedOptions[0]?.textContent,mbti.value].filter(Boolean).join(' · ');
-  $('setupReviewPartner').textContent=partner.selectedOptions[0]?.textContent||'—';
- }
  function go(next){
-  step=Math.max(1,Math.min(3,next));
+  step=Math.max(1,Math.min(2,Number(next)||1));
   setup.dataset.step=String(step);
   $('setupBack').hidden=step===1;
-  $('setupNext').hidden=step===3;
-  $('setupNext').textContent=step===1?'동료 고르기 →':'첫 등교 준비 →';
-  for(const el of document.querySelectorAll('[data-step-label]')){
-   if(Number(el.dataset.stepLabel)===step)el.setAttribute('aria-current','step');
-   else el.removeAttribute('aria-current');
+  $('setupNext').hidden=step===2;
+  $('setupNext').textContent='함께할 동료 만나기 →';
+  for(const item of document.querySelectorAll('[data-step-label]')){
+   if(Number(item.dataset.stepLabel)===step)item.setAttribute('aria-current','step');
+   else item.removeAttribute('aria-current');
   }
-  if(step===3)review();
-  setup.scrollIntoView({block:'start',behavior:'instant'});
+  if(!setup.hidden)setup.scrollIntoView({block:'start',behavior:'instant'});
  }
  function validate(part){
   if(part===1){
    const mode=$('diarySchoolMode');
    if(mode.value==='real'&&mode.dataset.schoolReady!=='true'){
-    $('diarySchoolSearchMessage').textContent='학교를 먼저 선택해 주세요.';
-    $('diarySchoolMode').dispatchEvent(new Event('change'));
+    mode.dispatchEvent(new Event('change'));
     return false;
    }
+   if(!mode.checkValidity()){mode.reportValidity();mode.focus();return false}
   }
-  const ids=part===1?['diarySchoolMode','playerName','experience','gender','mbti']:part===2?['partner']:[];
-  for(const id of ids){
-   const el=$(id);
-   if(!el.checkValidity()){
-    if(id==='partner'){const first=form.querySelector('[data-partner-choice]');if(first)first.focus();}
-    else{el.reportValidity();el.focus();}
-    return false;
-   }
+  if(part===2&&!$('partner').checkValidity()){
+   const first=form.querySelector('[data-partner-choice]');
+   if(first)first.focus();
+   return false;
   }
   return true;
  }
  $('openingStart').addEventListener('click',()=>{sound.note('uiStart');show('setup');go(1)});
- $('setupNext').addEventListener('click',()=>{if(validate(step)){sound.note('uiTap');go(step+1)}});
- $('setupBack').addEventListener('click',()=>{sound.note('uiTap');go(step-1)});
+ $('setupNext').addEventListener('click',()=>{if(validate(1)){sound.note('uiTap');go(2)}});
+ $('setupBack').addEventListener('click',()=>{sound.note('uiTap');go(1)});
  form.noValidate=true;
  go(1);
  return {
-  ready(){
-   if(step!==3)return false;
-   if(!validate(1)){go(1);return false}
-   if(['playerName','experience','gender','mbti'].some(id=>!$(id).checkValidity())){go(1);validate(1);return false}
-   if(!$('partner').checkValidity()){go(2);validate(2);return false}
-   return true;
-  },
+  ready(){if(step!==2)return false;if(!validate(1)){go(1);return false}return validate(2)},
   go,
   openChoice(){
-   const target=$('choiceSection');
-   target.hidden=false;document.body.classList.add('is-choosing');
-   sound.note('uiPick');
+   const target=$('choiceSection');target.hidden=false;
+   document.body.classList.add('is-choosing');sound.note('uiPick');
    const first=target.querySelector('.choice');if(first)first.focus();
   },
-  closeChoice(){ $('choiceSection').hidden=true;document.body.classList.remove('is-choosing') }
+  closeChoice(){$('choiceSection').hidden=true;document.body.classList.remove('is-choosing')}
  };
 }
 root.BeaguClassDiaryJourney=Object.freeze({init});
