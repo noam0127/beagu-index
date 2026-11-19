@@ -35,13 +35,9 @@
   summary.textContent=semester?'3월의 찬바람에서 7월의 방학식까지. 교실에서 내린 작은 결정들이 한 학기를 건너 다시 돌아옵니다.':original.summary;
   replaceText(metrics,semester?[['36화','2027년 3월–7월'],['6부','계절과 함께 변하는 이야기'],['108개','36번의 결정 · 선택지 3개씩']]:
    [['7일','3월 8일–14일'],['3명','서로 다른 동료 이야기'],['5개','서로 다른 결말']]);
-  if(days){days.hidden=semester;}
-  let parts=opening.querySelector('.diary-semester-intro');
-  if(!parts){parts=d.createElement('div');parts.className='diary-semester-intro';parts.setAttribute('aria-label','36화 여섯 부');days?.insertAdjacentElement('afterend',parts);}
-  parts.hidden=!semester;
-  if(semester&&parts.childElementCount===0){
-   for(let i=0;i<6;i++){const s=d.createElement('span'),b=d.createElement('b'),small=d.createElement('small');b.textContent='제'+(i+1)+'부';small.textContent=['3월','4월','5월','6월','6~7월','7월'][i];s.append(b,small);s.title=actNames[i];parts.append(s)}
-  }
+  // Preserve the six-part infographic already authored in main.
+  // The seven-day preview remains a distinct, explicit choice.
+  if(days)days.hidden=!semester;
   if(stamp)stamp.textContent=semester?'나만의 학급일지 · 한 학기':'나만의 학급일지 · 7일';
   if(review)review.textContent=semester?'“3월에 나눈 말을, 7월의 우리는 어떻게 기억할까.”':original.review;
   if(setupIntro)setupIntro.textContent=semester?'2027년 3월부터 7월까지, 한 학기를 함께 보낼 선생님의 이야기입니다.':'2027년 3월 8일, 낯선 새 학기. 당신은 어떤 선생님으로 일주일을 시작할까요?';
