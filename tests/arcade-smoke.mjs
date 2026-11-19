@@ -270,7 +270,7 @@ const timerCase=(phase,now,startedAt=1000,pausedMs=0,pausedAt=0,finishedAt=0)=>
  {phase,startedAt,pausedMs,pausedAt,finishedAt},{now:()=>now});
 assert.deepEqual(timerCase("playing",7050,1000,500),{tenths:56,formatted:"0:05.6"});
 assert.deepEqual(timerCase("paused",99999,1000,500,5100),{tenths:36,formatted:"0:03.6"});
-assert.deepEqual(timerCase("finished",99999,1000,500,7100),{tenths:56,formatted:"0:05.6"});
+assert.deepEqual(timerCase("finished",99999,1000,500,0,7100),{tenths:56,formatted:"0:05.6"});
 assert.deepEqual(timerCase("ready",99999,0),{tenths:0,formatted:"0:00.0"});
 const pointStart=volley.indexOf("function point(leftWins) {");
 const pointEnd=volley.indexOf("function step() {",pointStart);
