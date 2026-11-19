@@ -17,6 +17,13 @@ on:
       - "supabase/migrations/*postit*"
       - "tests/postit-static-check.cjs"
       - ".github/workflows/postit-validation.yml"
+  pull_request:
+    paths:
+      - 'postit.html'
+      - 'js/postit*'
+      - 'styles/postit*'
+      - 'supabase/functions/beagu-postit-api-v1/**'
+      - 'tests/postit-static-check.cjs'
   workflow_dispatch:
 jobs:
   verify:
