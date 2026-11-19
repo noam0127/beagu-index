@@ -427,3 +427,31 @@ body.is-setting #setup[data-step="2"] .setup-step-actions{justify-content:flex-s
  body.is-setting .diary-school-narrative{display:none}
  body.is-setting .diary-school-setup{gap:5px}
 }
+
+
+/* School name is typed directly: one quiet field, no mode dropdown or decorative flow. */
+body.is-setting .diary-school-setup .diary-school-flow,
+body.is-setting .diary-school-setup .diary-school-narrative{display:none!important}
+body.is-setting .diary-school-setup{
+ justify-content:center;gap:clamp(14px,2.6dvh,25px);
+}
+body.is-setting .diary-school-setup #diarySchoolName{
+ display:block;width:100%;height:clamp(48px,7.8dvh,60px);min-height:48px;
+ font-size:clamp(16px,3vmin,20px);font-weight:550;line-height:1.4;
+ border:1px solid #bfa4b8;border-radius:16px;padding:10px 17px;
+ background:#fffdfa;color:#514255;box-shadow:0 6px 24px #5c435019;
+ outline-offset:2px;
+}
+body.is-setting .diary-school-setup #diarySchoolName:focus{
+ border-color:#946a94;outline:2px solid #946a945a;
+}
+body.is-setting .diary-school-setup #diarySchoolName::placeholder{
+ color:#9b8b9b;font-weight:400;
+}
+body.is-setting .diary-school-setup .diary-school-field label{
+ display:block;font-size:clamp(14px,2.4vmin,17px);margin:0 0 12px;font-weight:750;
+}
+body.is-setting .diary-school-setup .form-grid{width:min(100%,610px)}
+@media(max-width:620px){
+ body.is-setting .diary-school-setup #diarySchoolName{min-height:50px;height:50px;font-size:16px}
+}
