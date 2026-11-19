@@ -151,9 +151,10 @@ const difficultyProfiles={
  normal:{specialCooldown:14,specialShield:2.7,specialRadius:205,lives:2,heroSpeed:1.18,heroSize:.93,startingLife:125,damage:.76,enemySpeed:.86,spawnPressure:.82,enemySize:.92,goodChance:.28,heal:1.22,inv:1.6,homing:9,zigzag:.85,label:"교사 우세 · 회복 충분"},
  hard:{specialCooldown:18,specialShield:2.4,specialRadius:185,lives:2,heroSpeed:1,heroSize:1,startingLife:100,damage:1,enemySpeed:1,spawnPressure:1,enemySize:1,goodChance:.20,heal:1,inv:1.3,homing:25,zigzag:1,label:"표준 · 장애물 추격 시작"},
  very_hard:{specialCooldown:23,specialShield:2.0,specialRadius:160,lives:1,heroSpeed:.88,heroSize:1.09,startingLife:90,damage:1.26,enemySpeed:1.18,spawnPressure:1.24,enemySize:1.15,goodChance:.14,heal:.79,inv:1.08,homing:48,zigzag:1.25,label:"교사 약화 · 장애물 추격 강화"},
- extreme:{specialCooldown:28,specialShield:1.6,specialRadius:145,lives:1,heroSpeed:.78,heroSize:1.17,startingLife:78,damage:1.51,enemySpeed:1.38,spawnPressure:1.52,enemySize:1.28,goodChance:.09,heal:.63,inv:.90,homing:78,zigzag:1.5,label:"교사 약화 · 큰 위협·집중 추격"}
+ extreme:{jumpEnabled:false,specialCooldown:28,specialShield:1.6,specialRadius:145,lives:1,heroSpeed:.78,heroSize:1.17,startingLife:78,damage:1.51,enemySpeed:1.38,spawnPressure:1.52,enemySize:1.28,goodChance:.09,heal:.63,inv:.90,homing:78,zigzag:1.5,label:"교사 약화 · 큰 위협·집중 추격"}
 };
 const difficultyName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
+const canPlayerRise=()=>profile.jumpEnabled!==false;
 schoolPicker.onChange=()=>{if(state==="ready"){
   const chosen=schoolPicker.get();
   profile=difficultyProfiles[chosen?.difficulty]||difficultyProfiles.hard;
@@ -211,7 +212,7 @@ function resize(){
  if(oldW>0){player.x=player.x/oldW*W;items.forEach(a=>a.x=a.x/oldW*W);}
  if(oldH>0&&pointerId!==null)player.y=player.y/oldH*H;
  player.x=Math.max(player.r,Math.min(W-player.r,player.x));
- player.y=pointerId===null?H-52:Math.max(76,Math.min(H-52,player.y));
+ player.y=!canPlayerRise()||pointerId===null?H-52:Math.max(76,Math.min(H-52,player.y));
 }
 if(typeof ResizeObserver!=="undefined"){new ResizeObserver(resize).observe(canvas);}else{window.addEventListener("resize",resize);}
 function message(title,desc,choices,symbol="🎒"){
@@ -240,7 +241,7 @@ async function start(){
  state="playing";day=0;dayTime=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
  combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};
  items=[];sparks=[];floats=[];spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;pointerId=null;pointerY=null;
- pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
+ pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 점프 불가":difficultyName[selected.difficulty]+" · 월요일 시작!",2);closeMessage();playTone(500,.13);
 }
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
@@ -391,14 +392,14 @@ function update(dt){
   const flyingSpeed=1300*skill.speed*profile.heroSpeed;
   const dx=pointerX-player.x,dy=pointerY-player.y;
   player.x+=Math.sign(dx)*Math.min(Math.abs(dx),flyingSpeed*dt);
-  player.y+=Math.sign(dy)*Math.min(Math.abs(dy),flyingSpeed*dt);
+  if(canPlayerRise())player.y+=Math.sign(dy)*Math.min(Math.abs(dy),flyingSpeed*dt);
  }else{
   player.x+=dir*speed*dt;
   // Landing: release restores altitude smoothly.
   player.y=Math.min(H-52,player.y+520*dt);
  }
  player.x=Math.max(27,Math.min(W-27,player.x));
- player.y=Math.max(76,Math.min(H-52,player.y));
+ player.y=canPlayerRise()?Math.max(76,Math.min(H-52,player.y)):H-52;
  spawnClock-=dt;
  if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-day*.085-(dayTime>13&&day===4?.2:0))/profile.spawnPressure)*(0.8+Math.random()*.45);}
  for(let i=items.length-1;i>=0;i--){
@@ -540,7 +541,7 @@ function dragPosition(e){
  if(!r.width||!r.height)return null;
  return {
   x:Math.max(27,Math.min(W-27,(e.clientX-r.left)/r.width*W)),
-  y:Math.max(76,Math.min(H-52,(e.clientY-r.top)/r.height*H))
+  y:canPlayerRise()?Math.max(76,Math.min(H-52,(e.clientY-r.top)/r.height*H)):H-52
  };
 }
 function setFlightTarget(e){
