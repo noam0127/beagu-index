@@ -434,3 +434,102 @@ body.is-playing.is-semester-mode #novelCard #nextBtn{
  display:none!important;
 }
 body.is-playing.is-semester-mode #novelCard #vnBottom>.actions{display:none!important}
+
+
+/* 36-episode cumulative line reading v2: stable text size, manual tap/Enter.
+   This block deliberately overrides the former fading previous-line effect.
+   Earlier lines do not move, shrink, dim or scroll while new lines appear. */
+body.is-playing.is-semester-mode .diary-literary-echo{display:none!important}
+body.is-playing.is-semester-mode #novelCard #vnBottom{
+ left:clamp(12px,3vw,48px)!important;
+ right:clamp(12px,3vw,48px)!important;
+ width:auto!important;
+ max-width:none!important;
+ box-sizing:border-box;
+ padding:clamp(12px,2.2vw,30px)!important;
+ background:linear-gradient(100deg,rgba(8,12,22,.53),rgba(17,21,35,.56))!important;
+ border:1px solid rgba(242,229,235,.23)!important;
+ border-radius:13px!important;
+ backdrop-filter:blur(3px)!important;
+ -webkit-backdrop-filter:blur(3px)!important;
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot{
+ width:100%!important;
+ max-width:100%!important;
+ min-height:0!important;
+ flex:1 1 auto!important;
+ align-items:stretch!important;
+ justify-content:flex-start!important;
+ overflow:hidden!important;
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome{
+ display:flex;
+ flex-direction:column;
+ justify-content:flex-start!important;
+ width:100%!important;
+ height:100%!important;
+ flex:1 1 auto!important;
+ padding:4px 6px!important;
+ overflow:hidden!important;
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .vn-dialogue[hidden],
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .outcome[hidden]{display:none!important}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose{
+ width:100%!important;max-width:100%!important;
+ min-height:0!important;flex:0 1 auto;
+ font-size:clamp(18px,2.05vw,26px)!important;
+ line-height:1.65!important;
+ letter-spacing:-.012em!important;
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line{
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+ font-size:inherit!important;
+ line-height:inherit!important;
+ font-weight:inherit!important;
+ opacity:1!important;
+ color:inherit!important;
+ transform:none;
+ max-width:100%!important;
+ white-space:normal;
+ word-break:keep-all;
+ overflow-wrap:anywhere;
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line[hidden]{
+ display:none!important;
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line-enter{
+ animation:diary-literary-new-line .19s ease-out both;
+}
+@keyframes diary-literary-new-line{
+ from{opacity:0;transform:translateY(3px)}
+ to{opacity:1;transform:translateY(0)}
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line-enter:not(:last-child){
+ animation-fill-mode:forwards;
+}
+@media(max-width:620px){
+ body.is-playing.is-semester-mode #novelCard #vnBottom{
+  left:clamp(8px,2.6vw,14px)!important;
+  right:clamp(8px,2.6vw,14px)!important;
+  padding:12px 10px!important;
+ }
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose{
+  font-size:clamp(16px,4.05vw,19px)!important;
+  line-height:1.63!important;
+ }
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing.is-semester-mode #novelCard #vnBottom{padding:6px 10px!important}
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose{
+  font-size:clamp(13px,1.9vw,17px)!important;
+  line-height:1.42!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing.is-semester-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line-enter{
+  animation:none!important;opacity:1!important;transform:none!important;
+ }
+}
