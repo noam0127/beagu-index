@@ -326,7 +326,7 @@ $('resetBtn').addEventListener('click',()=>{
  game=engine.createGame(world,plan,game.profile);runId=freshRunId();save();render();
 });
 $('againBtn').addEventListener('click',()=>{
- game=engine.createGame(world,plan,game.profile);save();render();
+ game=engine.createGame(world,plan,game.profile);runId=freshRunId();save();render();
 });
 $('optSave').addEventListener('change',()=>{
  if(!$('optSave').checked&&game)remove(SAVEKEY);
