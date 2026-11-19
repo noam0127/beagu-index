@@ -86,7 +86,11 @@ const cameoSource=fs.readFileSync(require('node:path').join(__dirname,'../js/cla
 assert(!/localStorage|sessionStorage|indexedDB|sendBeacon|fetch\(/.test(cameoSource));
 const html=fs.readFileSync(require('node:path').join(__dirname,'../teacher-class-diary-play.html'),'utf8');
 assert(html.includes('src="js/class-diary-female-semester-v1.js?v=20261120"'));
-assert(html.includes('renderSupportingCast(semesterArt.guest,semesterArt.season)'));
+assert(
+ html.includes('renderSupportingCast(semesterArt.guest,semesterArt.season)')||
+ html.includes('renderSupportingCast(semesterArt.guest||maleSemester.guestFor(game.episode,reflection),semesterArt.season)'),
+ 'Semester guest can use the female cast or male-supporting fallback'
+);
 assert(html.includes('femaleSemester.artFor({'));
 assert(html.includes('js/class-diary-sd-v1.js?v=20261120-female-sd3'));
 assert(html.includes('sd.portraitSvg(who,expression'));
