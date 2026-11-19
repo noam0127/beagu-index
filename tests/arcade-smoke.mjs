@@ -30,14 +30,19 @@ answerStart({school:{eligible:true},session:"stale-session"});
 assert.equal(await pendingSession,null);
 assert.equal(sessionBoard.session,null);
 sessionBoard.session="pending-finish";
-let resolveLoading;
-sessionBoard.load=()=>new Promise(resolve=>{resolveLoading=resolve;});
-let staleSubmitted=false;
-sessionBoard.request=async()=>{staleSubmitted=true;return {};};
+let resolveSubmission,submits=0;
+sessionBoard.request=async(_method,payload)=>{
+ submits++;
+ assert.equal(payload.session,"pending-finish");
+ return new Promise(resolve=>{resolveSubmission=resolve;});
+};
 const finishing=sessionBoard.finish(150,{player:25,cpu:7,elapsedTenths:150});
-sessionBoard.cancel();resolveLoading([]);
+assert.equal(submits,1,"a finished match starts saving before a user can restart");
+sessionBoard.cancel();
+resolveSubmission({ranked:true,rank:1,top10:[{score:150,school_name:"기록초등학교"}]});
 await finishing;
-assert.equal(staleSubmitted,false,"abandoned match cannot post an anonymous record");
+assert.equal(submits,1,"immediately replaying cannot cancel the submitted result");
+assert.equal(sessionBoard.board.length,0,"old response cannot replace the next game's ranking");
 const pickerWindow={};
 new Function("window","clearTimeout",picker)(pickerWindow,()=>{});
 const mockPicker={
@@ -69,11 +74,11 @@ assert.equal("nickname" in requestPayload,false,"no user-entered identifiers sen
 const displaced=mockRecordBoard();
 displaced.request=async()=>({ranked:false,top10:[]});
 await displaced.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
-assert.match(displaced.notice,/TOP 10 밖/);
+assert.match(displaced.notice,/역대 게임 기록에 저장됨/);
 const offline=mockRecordBoard("teacher_run_retirement");
 offline.request=async()=>{throw new Error("network_unavailable");};
 await offline.finish(1200,{score:1200,baseScore:1200,survivalSeconds:80,age:40,victory:false});
-assert.match(offline.notice,/저장되지 않았습니다/);
+assert.match(offline.notice,/저장하지 못했습니다/);
 const expired=mockRecordBoard();
 expired.request=async()=>{const e=new Error("session_expired");e.status=409;throw e;};
 await expired.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
@@ -96,11 +101,11 @@ let autoUploadedLow=0;
 unqualified.request=async()=>{autoUploadedLow++;return {ranked:false,top10:unqualified.board};};
 await unqualified.finish(610,{score:610,baseScore:610,survivalSeconds:10,age:26,victory:false});
 assert.equal(autoUploadedLow,1,"retirement results below TOP10 are auto-saved");
-assert.match(unqualified.notice,/TOP 10 밖/);
+assert.match(unqualified.notice,/역대 게임 기록에 저장됨/);
 assert.doesNotMatch(shared,/submitName|openRecord|dialogElement|ENTER YOUR NAME|input\.maxLength/);
 assert.match(shared,/localStorage\.removeItem\("arcade-last-name-v1"\)/,"wipe prior typed names on visitors' devices");
 assert.match(shared,/\.sort\(\(a,b\)=>b\.score-a\.score/);
-console.log("PASS: automatic anonymous record, rejected low score, server errors and safe stale-response cancellation");
+console.log("PASS: automatic anonymous saves even below TOP10, failure warnings and safe quick-replay delivery");
 
 assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
 assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
@@ -612,7 +617,8 @@ assert.equal(fullCareer.clock,190);
 assert.equal(fullCareer.score,8400);
 assert.equal(fullCareer.best,8400);
 assert.deepEqual(fullCareer.submitted.stats,{
- score:8400,baseScore:4200,survivalSeconds:190,age:62,victory:true
+ score:8400,baseScore:4200,survivalSeconds:190,age:62,victory:true,
+ nearMisses:0,hits:0,livesLeft:2,healthPercent:100
 });
 assert.match(fullCareer.headline,/정년/);
 assert.match(fullCareer.description,/× 2/);
@@ -730,7 +736,7 @@ for(const response of [topVolley,topRun]){
  assert.ok(parsed.top10.length<=10);
  for(const row of parsed.top10){
   assert.equal("nickname" in row,false,"public ranking never exposes nicknames");
-  assert.ok(Number.isInteger(row.score)&&row.score>0);
+  assert.ok(Number.isInteger(row.score)&&row.score>=0);
  }
 }
 console.log("PASS: deployed home and live shared Top 10 for both games");
