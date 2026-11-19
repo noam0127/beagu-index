@@ -234,6 +234,11 @@ body.is-playing #sceneArt .scene-fade{inset:35% 0 0;background:linear-gradient(1
 .vn-info .school-facts strong,.vn-info .school-facts small{color:#eee}
 .vn-info .school-facts li{background:#ffffff20;color:#fff}
 .vn-info .muted{color:#eee;font-size:12px;margin:0}
+
+body.is-playing #vnInfo .statbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0 0 9px}
+body.is-playing #vnInfo .stat{background:#ffffff12;border-color:#ffffff32;padding:9px 10px}
+body.is-playing #vnInfo .stat small{color:#e8deeb;font-size:11px}
+body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 </style>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 </head>
@@ -453,7 +458,7 @@ $('vnSound').addEventListener('click',()=>$('musicBtn').click());
 $('vnReset').addEventListener('click',()=>$('resetBtn').click());
 const stageHud=$('vnHeaderSlot'),stageBody=$('vnDialogueSlot'),stageBottom=$('vnBottom');
 stageHud.append($('chapterDay'),$('chapterTitle'),$('chapterPlace'));
-$('vnInfo').append($('schoolFacts'),$('chapterSource'));
+$('vnInfo').append($('novel').querySelector('.statbar'),$('schoolFacts'),$('chapterSource'));
 $('vnInfoBtn').addEventListener('click',()=>{$('vnInfo').hidden=!$('vnInfo').hidden;$('vnInfoBtn').setAttribute('aria-expanded',String(!$('vnInfo').hidden));});
 stageBody.append($('novelCard').querySelector('.character-strip'),$('novelCard').querySelector('.vn-dialogue'),$('outcome'));
 stageBottom.append($('choiceSection'),$('novelCard').querySelector('.novel-body .actions'));
