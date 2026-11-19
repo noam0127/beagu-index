@@ -226,3 +226,25 @@ body.is-ending #ending .actions .primary,body.is-ending #ending .actions .second
  body.is-ending #ending .actions .primary,body.is-ending #ending .actions .secondary{padding:7px 10px}
 }
 @media(min-height:561px){body.is-ending #ending .ending-credits-access{display:none}}
+
+/* 2026-11-20: quieter five-second prologue, with the school illustration as the focus. */
+body.is-intro #opening{grid-template-rows:minmax(0,55fr) minmax(0,45fr)}
+body.is-intro .diary-opening-body{gap:clamp(2px,.65vh,7px)}
+body.is-intro .diary-opening-body h2{font-size:clamp(23px,4.2vmin,33px)}
+body.is-intro .diary-intro-line{font-family:"Nanum Myeongjo","Batang",serif;letter-spacing:.025em}
+body.is-intro .diary-opening-stat{width:min(100%,310px);max-width:310px;margin:4px auto;gap:5px}
+body.is-intro .diary-opening-stat>div{padding:3px 2px;background:transparent;border:0;box-shadow:none}
+body.is-intro .diary-opening-stat strong{font-size:clamp(18px,3.5vmin,25px)}
+body.is-intro .diary-opening-stat small{font-size:10px}
+body.is-intro .diary-opening-days{justify-content:center;gap:13px;width:auto;margin:2px auto}
+body.is-intro .diary-opening-days span{display:block;width:8px;height:8px;border:0;border-radius:50%;background:#d8b8c8}
+body.is-intro .diary-opening-days span:first-child,body.is-intro .diary-opening-days span:last-child{background:#85627d}
+body.is-intro .diary-opening-note{font-size:10px!important}
+body.is-intro #opening.intro-autoplay #openingSchool,
+body.is-intro #opening.intro-autoplay .diary-opening-note,
+body.is-intro #opening.intro-autoplay #semesterStart{display:none!important}
+@media(max-height:620px){
+ body.is-intro #opening{grid-template-rows:minmax(0,53fr) minmax(0,47fr)}
+ body.is-intro .diary-opening-stat{margin:2px auto}
+ body.is-intro .diary-opening-days{margin:0 auto}
+}
