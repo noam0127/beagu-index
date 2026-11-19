@@ -6,13 +6,26 @@ const url='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-gue
 const origin='https://baeguindex.com';
 const home=fs.readFileSync('index.html','utf8');
 const play=fs.readFileSync('teacher-class-diary-play.html','utf8');
-assert(home.includes('href="teacher-class-diary-play.html?guest=1"'),'Home entry link missing');
-assert(home.includes('고유번호로 게임 시작하기'),'Home must not show coming soon');
+const homeClient=fs.readFileSync('js/class-diary-home-entry-v1.js','utf8');
+const edge=fs.readFileSync('supabase/functions/class-diary-guest-access-v1/index.ts','utf8');
+assert(home.includes('id="homeDiaryGuestForm"'),'Home must contain the only code form');
+assert(home.includes('id="homeDiaryCode"'),'Home must accept preissued codes');
+assert(home.includes('src="js/class-diary-home-entry-v1.js'),'Home verification script must load');
+assert(!home.includes('href="teacher-class-diary-play.html?guest=1"'),'Home may not bypass server verification with a public link');
+assert(homeClient.includes("action:'verify-code'"),'Home must verify codes server-side');
+assert(homeClient.includes("sessionStorage.setItem(KEY,result.ticket)"),'Home may transfer only the signed ticket');
+assert(!homeClient.includes('sessionStorage.setItem(KEY,code)'),'Identity code may never be saved');
 assert(play.includes("params.get('guest')==='1'"),'Guest requires explicit entry mode');
-assert(play.includes("show('guestAccess')"),'Guest form must be shown before any game starts');
-assert(play.includes('class-diary-guest-access-v1'),'Server code verification not linked');
+assert(play.includes("show('guestAccess')"),'Guest must verify ticket before the game');
+assert(!play.includes('id="guestCode"'),'Guest game must not ask for the code again');
+assert(play.includes("action:'verify-ticket'"),'Guest ticket must be server-verified');
+assert(play.includes("sessionStorage.removeItem(handoffKey)"),'Ticket must be consumed');
 assert(play.includes("result.scope!=='class-diary-fictional-guest'"),'Guest scope guard missing');
-assert(!play.includes('sessionStorage.setItem('),'Temporary code must never be stored');
+assert(!play.includes('sessionStorage.setItem('),'Game must not save code or game state');
+assert(edge.includes("crypto.subtle.verify('HMAC'"),'Ticket must have an unforgeable MAC');
+assert(edge.includes("await issueTicket()"),'Verified code must issue a short-lived ticket');
+assert(!edge.includes("grant_level2"),'Guest route must not elevate any tier');
+
 (async()=>{
  const get=await fetch(url,{method:'GET',headers:{Origin:origin},signal:AbortSignal.timeout(14000)});
  assert.equal(get.status,405,'Guest endpoint must reject GET');
@@ -21,8 +34,15 @@ assert(!play.includes('sessionStorage.setItem('),'Temporary code must never be s
  assert.equal(opt.headers.get('access-control-allow-origin'),origin,'Unexpected allowed origin');
  const invalid=await fetch(url,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({action:'verify-code',code:'AAAAAAAAAA'}),signal:AbortSignal.timeout(14000)});
  assert([401,429].includes(invalid.status),'Unknown/unissued code must not be accepted: '+invalid.status);
+ const badTicket=await fetch(url,{method:'POST',
+   headers:{Origin:origin,'Content-Type':'application/json'},
+   body:JSON.stringify({action:'verify-ticket',ticket:'v1.invalid.invalid'}),
+   signal:AbortSignal.timeout(14000)});
+ assert.equal(badTicket.status,401,'Tampered or fabricated guest ticket must be rejected');
+ const ticketReply=await badTicket.json();
+ assert.equal(ticketReply.error,'INVALID_TICKET');
  const reply=await invalid.json();
  assert(reply.error==='INVALID_CODE'||reply.error==='RATE_LIMITED','Unexpected code validation response');
  assert(!('token' in reply)&&!('identityCode' in reply),'Endpoint must not disclose codes/tokens');
- console.log('PASS guest live: home CTA, fiction-only entry, GET and OPTIONS behavior, invalid code rejected/rate-limited, no code disclosure');
+ console.log('PASS guest live: home code form, signed handoff, GET/CORS, unknown codes/tickets rejected, no stored identity code');
 })().catch(e=>{console.error(e);process.exitCode=1});
