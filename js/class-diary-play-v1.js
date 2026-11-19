@@ -11,7 +11,40 @@ const WEEKDAYS=['월요일','화요일','수요일','목요일','금요일','토
 const clamp=n=>Math.max(0,Math.min(100,Math.round(n)));
 const copy=o=>JSON.parse(JSON.stringify(o));
 const replace=(s,name)=>String(s).replace(/\{colleague\}/g,name);
-const STATS=['affection','trust','agency','fatigue'];
+/* 이 수치는 실제 학교의 배구지수나 교원 개인에 대한 평가가 아닌, 가상 이야기 속 선택의 결과다. */
+const STATS=['affection','trust','agency','fatigue','voice','boundary'];
+const CULTURE_DELTAS=Object.freeze({
+  ask:[5,8],carry:[-5,-11],share:[3,4],
+  reopen:[10,0],private:[4,3],follow:[-4,7],
+  council:[6,-3],trial:[4,2],explain:[0,5],
+  together:[7,8],listen:[5,0],alone:[-5,-10],
+  invite:[1,4],choice:[8,9],rest:[4,10],
+  coffee:[0,4],letter:[2,8],offline:[2,10],
+  promise:[9,5],thanks:[5,5],quiet:[4,10]
+});
+const CULTURE_TRADEOFFS=Object.freeze({
+  ask:'할 일을 명확히 나누는 데 시간이 들었지만, 다음번에 같은 일이 생겨도 담당을 확인할 수 있었다.',
+  carry:'일은 빨리 시작할 수 있었다. 대신 다음에도 혼자 맡아 달라는 부탁을 받을지 모른다는 걱정이 남았다.',
+  share:'학기 초의 부담을 나눠 말하니 마음이 가벼워졌다. 업무분장표는 다음 쉬는 시간에 확인해야 했다.',
+  reopen:'아이들 의견을 들을 길을 만들었다. 회의를 다시 열어야 한다는 부담도 함께 생겼다.',
+  private:'학년에서 의견을 모으기 쉬웠다. 다만 공식 회의 안건으로 이어지려면 다시 누군가 말해야 했다.',
+  follow:'공통 기준을 빠르게 적용할 수 있었다. 반에서 다른 의견이 나오면 고칠 방법을 다시 찾아야 했다.',
+  council:'학급회의에서 아이들의 발언권이 커졌다. 대신 수업 시간이 밀렸고 결정한 규칙을 재검토할 책임도 생겼다.',
+  trial:'급하게 정답을 고르지 않고 시험해 보기로 했다. 다음 주에 결과를 꼭 다시 확인해야 했다.',
+  explain:'안전하게 이동할 이유를 설명했다. 아이들이 규칙 자체를 고칠 수 있는지는 아직 남은 질문이었다.',
+  together:'상담 내용을 함께 확인해 부담을 나눴다. 다만 여러 사람이 관여하는 만큼 기록과 전달은 신중해야 했다.',
+  listen:'서두르지 않고 당사자 말을 들었다. 연락과 확인에 쓸 시간은 더 필요해졌다.',
+  alone:'먼저 연락한 덕분에 지체되지는 않았다. 혼자 책임지려던 일은 결국 학년에서 다시 상의해야 했다.',
+  invite:'동료에게 가까워질 기회를 만들었다. 상대방이 편하게 거절할 수 있는지도 살펴야 했다.',
+  choice:'함께하고 싶은 사람과 쉬고 싶은 사람의 선택을 똑같이 존중했다. 모임은 조금 작아졌다.',
+  rest:'주말의 시간을 지키기로 했다. 급하지 않은 업무 이야기는 월요일에 다시 꺼내면 됐다.',
+  coffee:'학교 밖에서 새로운 대화를 나눴다. 근무 관계와 사적인 관계를 구분하는 배려도 필요했다.',
+  letter:'고마움은 전하고 각자의 주말도 지켰다. 이어질 이야기는 다음 만남에 남겨 두었다.',
+  offline:'쉬는 시간을 온전히 되찾았다. 그동안 못 나눈 이야기는 월요일에 해도 늦지 않았다.',
+  promise:'아이들 발언권을 지키겠다는 약속을 적었다. 실제로 지키려면 다음 주에도 시간을 내야 한다.',
+  thanks:'함께한 동료의 도움을 기억했다. 고마움을 나누면서도 자기 할 일을 상대에게 떠넘기지는 않기로 했다.',
+  quiet:'휴식을 선택했다. 월요일 교실에서 아이들의 말을 다시 들을 힘도 그만큼 남았다.'
+});
 const CHAPTERS=[
 {
  title:'주안부터 챙기는 월요일',
@@ -207,7 +240,7 @@ function createGame(world,plan,inputProfile){
   return {
     version:VERSION,schoolId:world.basic.id,schoolName:name,
     profile,day:1,phase:'chapter',history:[],
-    stats:{affection:35,trust:42,agency:42,fatigue:35},
+    stats:{affection:35,trust:42,agency:42,fatigue:35,voice:45,boundary:48},
     lastOutcome:null,ending:null
   };
 }
@@ -273,9 +306,14 @@ function choose(state,id){
   const found=choices.find(x=>x.id===id);
   if(!found)throw Error('CHOICE_INVALID');
   const next=copy(state),name=partnerName(next.profile);
-  for(const key of STATS)next.stats[key]=clamp(next.stats[key]+Number(found.delta[key]||0));
+  for(const key of STATS){
+    const delta=key==='voice'?CULTURE_DELTAS[id][0]:
+      key==='boundary'?CULTURE_DELTAS[id][1]:Number(found.delta[key]||0);
+    next.stats[key]=clamp(next.stats[key]+delta);
+  }
   next.history.push({day:next.day,choiceId:id});
-  next.lastOutcome={id,paragraphs:found.response.map(s=>replace(s,name)),line:replace(found.line,name)};
+  next.lastOutcome={id,paragraphs:found.response.map(s=>replace(s,name)).concat(CULTURE_TRADEOFFS[id]),
+    line:replace(found.line,name)};
   next.phase='reflection';
   return next;
 }
@@ -299,7 +337,9 @@ function advance(state){
       paragraphs:ending.prose.map(s=>replace(s,partnerName(next.profile))),
       /* 이 점수는 학급과 교직원의 실제 평가 점수가 아니다. */
       affection:next.stats.affection,
-      score:clamp((next.stats.affection*0.55)+(next.stats.trust*0.20)+(next.stats.agency*0.25))
+      /* 호감도보다 학생의 자리·발언권·업무 경계를 함께 존중한 선택에 비중을 둔다. */
+      score:clamp(next.stats.affection*.10+next.stats.trust*.15+
+        next.stats.agency*.25+next.stats.voice*.25+next.stats.boundary*.25)
     };
   }else{next.day+=1;next.phase='chapter';}
   return next;
@@ -314,6 +354,9 @@ function validateStory(){
       if(!c.id||ids.has(c.id)||!c.label||c.response.length<2||!c.line)throw Error('CHOICE_INCOMPLETE');
       ids.add(c.id);
       if(STATS.some(k=>!Number.isFinite(Number(c.delta[k]||0))))throw Error('INVALID_STAT_DELTA');
+      if(!CULTURE_DELTAS[c.id]||CULTURE_DELTAS[c.id].length!==2||
+         CULTURE_DELTAS[c.id].some(x=>!Number.isFinite(x))||
+         !CULTURE_TRADEOFFS[c.id])throw Error('CULTURE_CONSEQUENCE_MISSING');
     }
   }
   return {chapters:CHAPTERS.length,choices:CHAPTERS.reduce((n,x)=>n+x.choices.length,0)};
