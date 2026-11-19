@@ -4,6 +4,8 @@
   "use strict";
   let rail=null,track=null,thumb=null,config=null,dragId=null;
   const mobile=()=>window.matchMedia?.("(max-width: 768px)").matches===true;
+  const inFullscreen=()=>Boolean(document.fullscreenElement||document.webkitFullscreenElement||
+    document.querySelector(".arcade-fullscreen-fallback"));
   const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
   function ensure(){
     if(rail)return;
@@ -80,11 +82,13 @@
       refresh();
     });
     window.addEventListener("resize",refresh);
+    window.addEventListener("fullscreenchange",refresh);
+    window.addEventListener("webkitfullscreenchange",refresh);
     window.visualViewport?.addEventListener?.("resize",refresh);
   }
   function refresh(){
     if(!rail||!config)return;
-    if(!mobile()){rail.hidden=true;return;}
+    if(!mobile()||inFullscreen()){rail.hidden=true;return;}
     const max=Math.max(0,Number(config.max())||0);
     if(max<=20){rail.hidden=true;return;}
     rail.hidden=false;
