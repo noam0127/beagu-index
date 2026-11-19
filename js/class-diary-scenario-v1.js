@@ -165,14 +165,15 @@ function acceptedOfficialFact(world,key){
  const item=world&&world.numbers&&world.numbers[key];
  if(!item||item.status!=='APPROVED'||!Number.isInteger(Number(item.referenceYear))||
     item.value===null||item.value===undefined||!Number.isFinite(Number(item.value))||
-    Number(item.value)<0)return null;
+    Number(item.value)<0||(['junior_teacher_ratio','male_teacher_ratio'].includes(key)&&Number(item.value)>100))return null;
  return {key,year:Number(item.referenceYear),value:Number(item.value)};
 }
 function officialFacts(world){
  const defs=[
   ['students','학생 수','명'],['classes','학급 수','학급'],['teachers','교원 수','명'],
   ['students_per_class','학급당 학생 수','명'],['admin_employees','행정직원 수','명'],
-  ['junior_teacher_ratio','2정교사 비율','%'],['teacher_support_spaces','교직원 지원공간','개']
+  ['junior_teacher_ratio','2정교사 비율','%'],['male_teacher_ratio','남교사 비율','%'],
+  ['teacher_support_spaces','교직원 지원공간','개']
  ];
  return defs.map(([key,label,unit])=>{
    const data=acceptedOfficialFact(world,key);
@@ -345,12 +346,21 @@ function scene(state,world){
   result:reflecting?copy(state.storyReflection):null
  };
 }
-function choose(state,id){
- const current=scene(state,{mode:'public_fiction_demo',numbers:{}}); // Choices independent of school source facts.
+function choose(state,id,world){
+ const current=scene(state,world||{mode:'public_fiction_demo',numbers:{},basic:{scale:state.profile.fictionalSchoolSize}});
  if(!current||current.result)throw Error('SCENARIO_CHOICE_PHASE_REQUIRED');
- const raw=CHOICES[current.id].find(c=>c.id===id);
+ const raw=(SPECIAL_CHOICES[current.id]||CHOICES[current.id]).find(c=>c.id===id);
  if(!raw)throw Error('SCENARIO_CHOICE_INVALID');
  const next=copy(state),reply=copy(raw.reply);
+ if(next.day===4&&raw.id==='solo'){
+  reply.push('시계가 아홉 시를 향하는데도 교실 형광등이 켜져 있었다. 복도로 나가자 교실 문들이 까맣게 닫혀 있었다. 선생님이라도 이렇게 늦은 학교는 조금 무서웠다.');
+  reply.push('야간 당직 선생님이 손전등을 들고 복도 끝에서 말했다. “선생님, 이제 문 잠글 시간이에요. 남은 건 내일 하시고 얼른 들어가세요.”');
+ }else if(next.day===4&&raw.id==='process'){
+  reply.push('동학년 선생님과 역할을 나누고 나니 수업 준비를 마친 뒤에도 해가 남아 있었다. 무리하지 않고 퇴근하는 금요일을 맞을 수 있을 것 같았다.');
+ }
+ if(next.day===5&&raw.id==='takeall'){
+  reply.push('밤이 된 교실에서는 복도 소리 하나에도 고개가 돌아갔다. 아이들이 없어진 학교가 낯설었다. 야간 당직 선생님이 “선생님, 이제 퇴근하셔야죠” 하고 문을 두드렸다.');
+ }
  if(next.day===3&&next.profile.age>32){
    for(let i=0;i<reply.length;i++)reply[i]=reply[i]
      .replace(/내비게이션 업데이트/g,'복합기 인쇄 설정')
