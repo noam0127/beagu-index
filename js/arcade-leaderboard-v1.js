@@ -102,32 +102,32 @@ class ArcadeLeaderboard{
  }
  async finish(score,stats){
   const generation=this.playGeneration;
-  if(!this.session||this.isSubmitting)return;
+  const session=this.session,game=this.game,tier=this.tier;
+  if(!session||this.isSubmitting)return;
   const value=Number(score);
   if(!Number.isFinite(value)||value<0)return;
-  this.score=Math.floor(value);this.stats=stats;
-  try{if(this.pendingStart)await this.pendingStart;}catch(e){}
-  if(generation!==this.playGeneration||!this.session)return;
+  const finalScore=Math.floor(value);
+  // Start the request immediately. Do not first await the TOP 10 fetch:
+  // a player who taps "play again" must not silently lose the finished match.
+  this.session=null;
+  this.score=finalScore;this.stats=stats;
   this.isSubmitting=true;
-  this.notice="익명 기록 자동 확인 중…";this.draw();
+  this.notice="익명 경기 결과 저장 중…";this.draw();
   try{
-   await this.load();
-   if(generation!==this.playGeneration||!this.session)return;
-   // Save all validated completed games, even if they do not reach TOP 10.
-   const data=await this.request("POST",{action:"submit",game:this.game,session:this.session,stats:this.stats,...(this.tier?{difficulty:this.tier}:{})});
-   if(generation!==this.playGeneration)return;
+   const data=await this.request("POST",{action:"submit",game,session,stats,...(tier?{difficulty:tier}:{})});
+   if(generation!==this.playGeneration)return; // Already sent; newer game owns the UI.
    if(!Array.isArray(data.top10)||typeof data.ranked!=="boolean")throw new Error("invalid_response");
-   this.remote=true;this.board=order(data.top10,this.game);this.session=null;
-   if(this.game==="volleyball_25")this.fastestBoard=orderFast(data.fastestTop10||[]);
+   this.remote=true;this.board=order(data.top10,game);
+   if(game==="volleyball_25")this.fastestBoard=orderFast(data.fastestTop10||[]);
    this.notice=data.ranked
-    ?"🏆 점수 TOP "+data.rank+"위 · "+displayScore(this.score)
-    :data.timeRanked?"⏱ 25점 최단시간 TOP "+data.timeRank+"위 · "+displayScore(this.score)
-    :"이번 경기 "+displayScore(this.score)+" · 기록 저장, TOP 10 밖";
+    ?"🏆 점수 TOP "+data.rank+"위 · "+displayScore(finalScore)
+    :data.timeRanked?"⏱ 25점 최단시간 TOP "+data.timeRank+"위 · "+displayScore(finalScore)
+    :"이번 경기 "+displayScore(finalScore)+" · 역대 게임 기록에 저장됨";
   }catch(err){
    if(generation!==this.playGeneration)return;
    this.notice=err.status===409?"경기가 만료되었거나 이미 기록되었습니다":
     err.status===400?"기록 검증 실패 · 다시 플레이해 주세요":
-    "공식 기록 서버 연결 실패 · 기록이 저장되지 않았습니다";
+    "공식 기록 서버 연결 실패 · 기록을 저장하지 못했습니다";
   }finally{
    if(generation===this.playGeneration){this.isSubmitting=false;this.draw();}
   }
