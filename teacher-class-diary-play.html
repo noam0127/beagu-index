@@ -304,6 +304,9 @@ const director=window.BeaguClassDiaryDirector;
 const schoolContext=window.BeaguClassDiaryContext;
 const scenario=window.BeaguClassDiaryScenario;
 const incidents=window.BeaguClassDiaryIncidents;
+const sound=window.BeaguClassDiarySound;
+const visual=window.BeaguClassDiaryVisual;
+let effectsOn=true;
 const params=new URLSearchParams(location.search);
 const isDemo=params.get('demo')==='1';
 const token=isDemo?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
@@ -326,6 +329,17 @@ function fillParagraphs(id,texts){
  const node=$(id);node.replaceChildren();
  for(const sentence of texts)node.append(el('p',sentence));
 }
+function displayStage(id,who,expression){
+ $('sceneBackdrop').style.backgroundImage='url("'+visual.dataUrl(visual.backgroundSvg(id))+'")';
+ $('scenePortrait').src=visual.dataUrl(visual.portraitSvg(who,expression||'neutral'));
+ $('sceneArt').setAttribute('aria-label','가상 한국 초등학교 풍경의 글자 없는 삽화');
+}
+function mood(id){if(sound.isEnabled())sound.setTrack(id).catch(()=>{});}
+function updateMusicButton(){
+ const active=sound.isEnabled();
+ $('musicBtn').textContent=active?'♫ 배경음악 끄기':'♫ 배경음악 켜기';
+ $('musicBtn').setAttribute('aria-pressed',String(active));
+}
 function renderNovel(){
  show('novel');
  const isReflection=game.phase==='reflection';
@@ -340,8 +354,9 @@ function renderNovel(){
  $('statSupport').textContent=game.stats.support;
  $('chapterDay').textContent=game.day+' / 7 · '+view.date+' '+view.weekday;
  $('novelCard').dataset.scene=view.visual.id;
- $('sceneArt').setAttribute('aria-label',view.visual.label+'을 상징하는 추상적인 배경');
- $('sceneSymbol').textContent=({morning:'✧',meeting:'▤',classroom:'◈',hallway:'◇',evening:'☼',weekend:'❀',night:'✦'})[view.visual.id]||'✧';
+ displayStage(view.visual.id,game.profile.partner,isReflection&&game.lastOutcome&&game.lastOutcome.id==='carry'?'worried':'neutral');
+ mood(isReflection?sound.choiceTrack(game.day,game.lastOutcome&&game.lastOutcome.id):sound.dayTrack(game.day));
+ 
  $('characterAvatar').textContent=view.character.initial;
  $('characterName').textContent=view.character.name;
  $('characterBio').textContent=view.character.caption;
@@ -371,7 +386,9 @@ function renderNovel(){
   view.choices.forEach((choice,index)=>{
    const btn=el('button',(index+1)+'. '+choice.label);
    btn.className='choice';btn.type='button';
-   btn.addEventListener('click',()=>{game=engine.choose(game,choice.id);renderNovel();});
+   btn.addEventListener('mouseenter',()=>sound.note('hover'));
+   btn.addEventListener('click',()=>{sound.note('choice');game=engine.choose(game,choice.id);
+    if(game.stats.affection>=62)sound.note('affection');renderNovel();});
    options.append(btn);
   });
  }else{
@@ -390,8 +407,9 @@ function renderScenario(){
  const profile=director.RELATIONSHIPS[game.profile.partner]||director.RELATIONSHIPS.none;
  const tone=(game.day===1?'morning':game.day===2?'meeting':game.day===3?'classroom':game.day===4?'hallway':'evening');
  $('novelCard').dataset.scene=tone;
- $('sceneArt').setAttribute('aria-label',event.place+' 장면의 추상적인 배경');
- $('sceneSymbol').textContent=event.kind==='tense'?'◆':'✧';
+ displayStage(visual.sceneForEvent(event,game.day),game.profile.partner,event.kind==='tense'?'worried':'neutral');
+ mood(sound.sceneTrack(event));
+ 
  $('characterAvatar').textContent=profile.initial;
  $('characterName').textContent=partner;
  $('characterBio').textContent='학교의 역할과 교직문화를 함께 고민하는 동학년 교사';
@@ -420,7 +438,9 @@ function renderScenario(){
    const btn=el('button',(i+1)+'. '+choice.label);
    btn.className='choice';btn.type='button';
    btn.addEventListener('click',()=>{
-    game=incident?incidents.choose(game,world,choice.id):scenario.choose(game,choice.id,world);
+    sound.note('choice');
+     game=incident?incidents.choose(game,world,choice.id):scenario.choose(game,choice.id,world);
+     if(event.kind==='tense')sound.note('tension');
     render();
    });
    buttons.append(btn);
@@ -430,6 +450,7 @@ function renderScenario(){
 }
 function renderEnding(){
  show('ending');
+ mood('ending');
  const ending=director.decorateEnding(game);
  $('endingTitle').textContent=ending.title;
  $('endingHeading').textContent=ending.heading;
@@ -508,6 +529,7 @@ for(const a of ['I','E'])for(const b of ['N','S'])for(const c of ['F','T'])for(c
 $('profileForm').addEventListener('submit',e=>{
  e.preventDefault();
  try{
+  sound.setEnabled(true);updateMusicButton();sound.setMusicVolume(Number($('musicVolume').value)/100);
   game=engine.createGame(world,plan,{age:Number($('age').value),
    gender:$('gender').value,partner:$('partner').value,mbti:$('mbti').value,
    experience:$('experience').value,duty:$('duty').value,
@@ -519,12 +541,27 @@ $('profileForm').addEventListener('submit',e=>{
  }catch(err){status('주인공 설정을 확인해 주세요. 성인 나이와 모든 선택이 필요합니다.');}
 });
 $('nextBtn').addEventListener('click',()=>{
+ sound.note('transition');
  const incident=game.phase==='chapter'?incidents.next(game,world):null;
  const event=game.phase==='chapter'&&!incident?scenario.scene(game,world):null;
  game=incident&&incident.result?incidents.continueStory(game):
   event&&event.result?scenario.continueStory(game):engine.advance(game);
  render();
 });
+$('musicBtn').addEventListener('click',()=>{
+ const next=!sound.isEnabled();sound.setEnabled(next);updateMusicButton();
+ if(next){if(game)render();else sound.setTrack('daily').catch(()=>{});}
+});
+$('musicVolume').addEventListener('input',()=>sound.setMusicVolume(Number($('musicVolume').value)/100));
+$('sfxVolume').addEventListener('input',()=>sound.setSfxVolume(Number($('sfxVolume').value)/100));
+$('effectsBtn').addEventListener('click',()=>{
+ effectsOn=!effectsOn;sound.setEffectsEnabled(effectsOn);
+ $('effectsBtn').textContent=effectsOn?'효과음 켜짐':'효과음 꺼짐';
+ $('effectsBtn').setAttribute('aria-pressed',String(effectsOn));
+ if(effectsOn)sound.note('choice');
+});
+sound.onStatus(message=>{$('musicStatus').textContent=message});
+$('choiceButtons').addEventListener('mouseover',e=>{if(e.target.closest('.choice'))sound.note('hover');});
 $('resetBtn').addEventListener('click',()=>{
  if(!game)return;
  game=engine.createGame(world,plan,game.profile);render();
