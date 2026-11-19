@@ -197,3 +197,26 @@
   .paper-content{font-size:21px;line-height:1.5}
   .paper-tape{width:60px;height:25px}
 }
+
+
+/* Keep the post-it skip link available to keyboard users without showing it by default. */
+body.beagu-postit-page .beagu-skip-link{
+  position:fixed;
+  top:0;
+  left:14px;
+  z-index:2147483600;
+  transform:translateY(calc(-100% - 12px));
+  padding:10px 14px;
+  background:#123c69;
+  color:#fff;
+  border-radius:0 0 10px 10px;
+  font-size:14px;
+  font-weight:700;
+  text-decoration:none;
+}
+body.beagu-postit-page .beagu-skip-link:focus,
+body.beagu-postit-page .beagu-skip-link:focus-visible{
+  transform:translateY(0);
+  outline:3px solid #93c5fd;
+  outline-offset:2px;
+}
