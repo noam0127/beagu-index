@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#14253d">
+<title>나의 OO한 학급일지 | 이야기 플레이</title>
+<style>
+:root{font-family:"Apple SD Gothic Neo",Pretendard,"Malgun Gothic",sans-serif;background:#f4f6fa;color:#182a3c}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0}
+[hidden]{display:none!important}a{color:#255c89}
+main{max-width:870px;margin:auto;padding:0 18px 80px}
+header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:24px 0 22px}
+.brand{text-decoration:none;color:#18324b;font-size:14px;letter-spacing:.11em;font-weight:900}
+.back{font-size:13px;text-decoration:none;color:#556d83}
+.hero{padding:36px 32px;background:linear-gradient(135deg,#14283e,#29435c);color:#fff;border-radius:26px;position:relative;overflow:hidden}
+.hero:before{content:"";width:240px;height:240px;position:absolute;border:1px solid #ffffff28;border-radius:50%;right:-100px;top:-110px}
+.overline{font-size:11px;letter-spacing:.17em;text-transform:uppercase;color:#adc6d7;font-weight:750}
+.hero h1{font-family:"Nanum Myeongjo","Batang",serif;font-weight:700;letter-spacing:-.07em;font-size:clamp(30px,6vw,46px);line-height:1.35;margin:10px 0}
+.hero p{max-width:560px;line-height:1.85;font-size:14px;color:#cbd8e5;margin:0}
+.schoolline{margin-top:20px;font-size:12px;color:#bfd5e9;letter-spacing:.02em}
+.panel{border:1px solid #dce5ee;background:#fff;border-radius:20px;margin-top:20px;padding:28px;box-shadow:0 10px 35px #17345208}
+.panel h2{font-size:20px;letter-spacing:-.04em;margin:0 0 10px}
+.muted{color:#637789;line-height:1.7;font-size:13px}
+.status{margin:20px 0;color:#315e80;font-size:14px;min-height:18px}
+label{display:block;font-size:13px;font-weight:750;margin:0 0 8px;color:#294257}
+input,select{background:#fbfcfe;border:1px solid #bdcdda;border-radius:12px;width:100%;padding:13px;font:inherit;font-size:15px;color:#182a3c}
+input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid #87b6e7;outline-offset:3px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:20px 0 14px}
+.field-note{color:#798797;font-size:12px;margin-top:7px}
+button{font:inherit;cursor:pointer}
+.primary,.secondary,.linklike{border:0;border-radius:12px;padding:14px 19px;font-weight:800}
+.primary{background:#215b86;color:#fff}.primary:hover{background:#164a73}
+.secondary{background:#eaf0f5;color:#25475e}.secondary:hover{background:#dce9f2}
+.linklike{background:transparent;color:#285f8a;padding:12px}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:22px}
+.option-checkbox{display:flex;gap:12px;align-items:flex-start;cursor:pointer;font-size:13px;font-weight:500;line-height:1.7;color:#516c7d}
+.option-checkbox input{width:18px;height:18px;margin:3px 0 0;flex:none}
+.privacy{font-size:12px;color:#75889a;margin:12px 0 0;line-height:1.8}
+.resume{padding:18px;background:#edf4f8;border-radius:12px;margin-top:18px}
+.resume p{margin:2px 0 12px}
+.novel{padding:0;overflow:hidden}
+.novel-top{padding:26px 28px 19px;background:#ecf2f6;border-bottom:1px solid #dfe8ed}
+.novel-top .tag{display:inline-block;background:#dbe9f1;color:#305e7b;padding:6px 11px;border-radius:20px;font-size:12px}
+.novel-top h2{font-family:"Nanum Myeongjo","Batang",serif;font-size:clamp(23px,5vw,32px);line-height:1.45;margin:12px 0 5px}
+.date-place{font-size:12px;color:#668196}
+.track{background:#d0dfe9;height:5px;border-radius:8px;margin-top:18px;overflow:hidden}
+.track span{display:block;height:100%;width:0;background:#477d9d;transition:width .2s}
+.novel-body{padding:26px 31px}
+.prose{font-family:"Nanum Myeongjo","Batang",serif;font-size:clamp(16px,3.4vw,19px);font-weight:400;line-height:2.05;letter-spacing:-.02em;word-break:keep-all}
+.prose p{margin:0 0 22px}
+.option-title{font-size:13px;font-weight:800;margin:36px 0 13px;color:#35536a}
+.choices{display:grid;gap:10px}
+.choice{display:block;width:100%;text-align:left;background:#f7f9fc;color:#1e3b51;border:1px solid #d8e5ee;border-radius:14px;padding:17px 17px;font-size:14px;line-height:1.7;font-weight:650}
+.choice:hover,.choice:focus-visible{background:#eaf3fb;border-color:#89b0d0}
+.outcome{margin-top:26px;padding:23px 22px;background:#f0f5f7;border-left:3px solid #6998a7;border-radius:10px}
+.outcome .prose{font-size:16px}
+.outcome strong{font-size:12px;color:#476e7c}
+.outcome .dialogue{font-family:"Nanum Myeongjo","Batang",serif;font-weight:700;font-size:16px;color:#31506c}
+.statbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 20px}
+.stat{background:#fff;border:1px solid #dce5ec;border-radius:11px;padding:12px 9px}
+.stat small{display:block;font-size:11px;color:#738596;line-height:1.2}
+.stat strong{font-size:20px;color:#2a5269;display:block;margin-top:4px;font-variant-numeric:tabular-nums}
+.footer-note{font-size:12px;color:#718597;line-height:1.9;margin-top:25px}
+.ending{text-align:center;background:linear-gradient(165deg,#fff,#f3f7fa)}
+.ending .emblem{font-family:"Nanum Myeongjo","Batang",serif;font-size:13px;color:#637b90}
+.ending h2{font-family:"Nanum Myeongjo","Batang",serif;font-size:clamp(28px,6vw,42px);margin:20px 0 8px}
+.ending h3{font-size:16px;color:#59768a;font-weight:500}
+.ending .prose{text-align:left;max-width:600px;margin:32px auto}
+.final-score{margin:25px auto;background:#eaf1f6;border-radius:17px;padding:22px;max-width:440px}
+.final-score strong{font-size:36px;display:block;color:#245777}
+.records{margin-top:20px}
+.records ul{padding-left:22px;line-height:1.9;font-size:13px;color:#526e83}
+@media(max-width:620px){main{padding:0 13px 60px}header{padding:18px 0}.hero{padding:28px 23px;border-radius:20px}.panel{padding:21px;margin-top:14px}.form-grid{grid-template-columns:1fr;gap:15px}.novel{padding:0}.novel-top{padding:21px}.novel-body{padding:20px 19px}.statbar{gap:5px}.stat{padding:11px 5px}.stat strong{font-size:17px}.stat small{font-size:10px}.prose{line-height:1.95}}
+</style>
+</head>
+<body>
+<main>
+<header><a class="brand" href="index.html">B · BAEGUINDEX</a><a class="back" href="teacher-class-diary.html">학교 선택으로 돌아가기</a></header>
+<section class="hero">
+<div class="overline">Interactive Korean novel · Level 2</div>
+<h1>나의 OO한 학급일지</h1>
+<p>서류 한 장, 아이들의 질문 한마디, 교무실에서 건네받은 작은 배려. 일주일의 선택이 끝나면, 빈칸에는 당신만의 말이 들어갑니다.</p>
+<div class="schoolline" id="schoolLine">학교 정보를 확인하는 중</div>
+</section>
+<p class="status" id="status" role="status" aria-live="polite">레벨2 접근 권한을 확인하고 있습니다.</p>
+<section id="notice" class="panel" hidden>
+<h2>이야기를 시작할 수 없습니다</h2>
+<p id="noticeText" class="muted"></p>
+<div class="actions"><a class="primary" href="teacher-class-diary.html" style="text-decoration:none">학교 다시 선택</a><a class="secondary" href="search-lv2.html" style="text-decoration:none">레벨2 인증</a></div>
+</section>
+<section id="setup" class="panel" hidden>
+<div class="overline" style="color:#6a859a">CHARACTER</div>
+<h2>주인공 설정</h2>
+<p class="muted">주인공은 성인 초등교사입니다. 등장하는 동료 역시 성인 교사이며 모두 창작 인물입니다. 성별이나 MBTI로 성격·운명을 단정하거나 불이익을 주지 않습니다.</p>
+<form id="profileForm">
+<div class="form-grid">
+<div><label for="age">주인공 나이</label><input id="age" type="number" min="20" max="75" step="1" placeholder="예: 32" required><div class="field-note">성인 주인공만 선택할 수 있습니다.</div></div>
+<div><label for="gender">주인공 성별</label><select id="gender" required><option value="">선택하세요</option><option value="woman">여성</option><option value="man">남성</option><option value="undisclosed">밝히지 않음</option></select></div>
+<div><label for="mbti">주인공 MBTI</label><select id="mbti" required><option value="">선택하세요</option></select><div class="field-note">독백의 뉘앙스에만 일부 반영됩니다.</div></div>
+<div><label for="partner">관계를 쌓을 동료 인물</label><select id="partner" required><option value="">선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">동학년 선생님 · 우정 중심</option></select></div>
+</div>
+<label class="option-checkbox"><input id="optSave" type="checkbox">이 기기에만 진행 상황을 저장하기</label>
+<p class="privacy">선택하지 않아도 플레이할 수 있습니다. 저장을 선택하면 나이·성별·MBTI·선택 경로가 이 브라우저에만 기록됩니다. 서버 기록이나 전국 순위에 전송하지 않습니다. 언제든 삭제할 수 있습니다.</p>
+<div class="actions"><button type="submit" class="primary">첫날의 교실 열기</button><a class="linklike" href="teacher-class-diary.html">학교 변경</a></div>
+</form>
+<div class="resume" id="resumeBox" hidden><p class="muted" id="resumeInfo">이전에 저장된 진행 기록이 있습니다.</p><div class="actions"><button type="button" class="secondary" id="resumeBtn">저장한 이야기 이어하기</button><button type="button" class="linklike" id="clearBtn">이 기기의 기록 삭제</button></div></div>
+</section>
+<section id="novel" hidden>
+<div class="statbar" aria-label="현재 이야기 상태">
+<div class="stat"><small>동료 호감도</small><strong id="statAffection">—</strong></div>
+<div class="stat"><small>서로의 신뢰</small><strong id="statTrust">—</strong></div>
+<div class="stat"><small>학생의 자리</small><strong id="statAgency">—</strong></div>
+<div class="stat"><small>피로도</small><strong id="statFatigue">—</strong></div>
+</div>
+<article class="panel novel">
+<div class="novel-top">
+<span class="tag" id="chapterDay">첫째 날</span>
+<h2 id="chapterTitle"></h2>
+<div class="date-place" id="chapterPlace"></div>
+<div class="track"><span id="chapterProgress"></span></div>
+</div>
+<div class="novel-body">
+<div class="prose" id="chapterText"></div>
+<p class="muted" id="chapterSource"></p>
+<div id="choiceSection"><div class="option-title">이번 장면에서 어떻게 할까요?</div><div class="choices" id="choiceButtons"></div></div>
+<section class="outcome" id="outcome" hidden><strong>당신의 선택이 남긴 장면</strong><div class="prose" id="outcomeText"></div><p class="dialogue" id="outcomeLine"></p></section>
+<div class="actions"><button type="button" class="primary" id="nextBtn" hidden>다음 날로</button><button type="button" class="secondary" id="resetBtn">처음부터 다시 시작</button></div>
+</div>
+</article>
+</section>
+<section id="ending" class="panel ending" hidden>
+<div class="emblem">2027년 3월 14일 · 마지막 페이지</div>
+<h2 id="endingTitle"></h2>
+<h3 id="endingHeading"></h3>
+<div class="prose" id="endingText"></div>
+<div class="final-score"><span class="muted">동료 호감도</span><strong id="endingAffection"></strong><span class="muted" id="endingScore"></span></div>
+<p id="endingSchool" class="muted"></p>
+<p class="muted">게임 속 점수이며 실제 학교의 근무 환경이나 교사 개인에 대한 평가가 아닙니다.</p>
+<div class="actions" style="justify-content:center"><button class="primary" id="againBtn" type="button">다른 선택으로 다시 시작</button><a class="secondary" href="teacher-class-diary.html" style="text-decoration:none">다른 학교 선택</a></div>
+</section>
+<section id="records" class="panel records" hidden><h2>이 기기의 완료 기록</h2><p class="muted">서버와 공유하지 않은 기기 내 개인 기록입니다. 전국 순위는 아직 제공하지 않습니다.</p><ul id="recordsList"></ul><button type="button" class="linklike" id="clearRecordsBtn">기록 모두 삭제</button></section>
+<p class="footer-note">이 작품의 학교 생활과 인물·대화·관계는 허구입니다. 실제 학교의 과거 공개 자료는 배경을 구성하는 참고 자료로만 활용되며, 2027년의 사실이나 특정 교직원의 실제 언행을 뜻하지 않습니다. 학생의 괴로움을 보상이나 재미를 위한 장치로 사용하지 않습니다.</p>
+</main>
+<script src="js/class-diary-world-v1.js"></script>
+<script src="js/2026-questionnaire-options-v1.2.js"></script>
+<script src="js/class-diary-narrative-v1.js"></script>
+<script src="js/class-diary-play-v1.js"></script>
+<script>
+(function(){
+'use strict';
+const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
+const $=id=>document.getElementById(id);
+const engine=window.BeaguClassDiaryPlay;
+const token=sessionStorage.getItem('beagu-level-session-v1')||'';
+const params=new URLSearchParams(location.search);
+const schoolId=params.get('schoolId')||'';
+const SAVEKEY='beagu-class-diary-save-v1:'+schoolId;
+const HISTORYKEY='beagu-class-diary-history-v1';
+let world=null,plan=null,game=null;
+const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);return n};
+function status(text){$('status').textContent=text||''}
+function show(id){for(const target of ['notice','setup','novel','ending'])$(target).hidden=target!==id;window.scrollTo({top:0,behavior:'instant'});}
+function fail(message){show('notice');$('noticeText').textContent=message;status('접근 권한 또는 데이터를 확인하지 못했습니다.');}
+function read(key){try{const s=localStorage.getItem(key);return s?JSON.parse(s):null}catch(e){return null}}
+function remove(key){try{localStorage.removeItem(key)}catch(e){}}
+function save(){
+ if(!game||!$('optSave').checked)return;
+ try{localStorage.setItem(SAVEKEY,JSON.stringify(engine.createSnapshot(game)))}catch(e){status('저장 공간을 사용할 수 없습니다. 현재 탭에서는 계속 플레이할 수 있습니다.')}
+}
+function renderSaved(){
+ const snap=read(SAVEKEY);
+ $('resumeBox').hidden=!snap||snap.schoolId!==schoolId;
+ if(snap&&snap.schoolId===schoolId){
+  $('resumeInfo').textContent=snap.history.length+'일 차까지 선택한 기록이 있습니다. 같은 기기에서 이어 할 수 있습니다.';
+ }
+}
+function renderRecords(){
+ const items=read(HISTORYKEY);
+ const rows=Array.isArray(items)?items.filter(x=>x&&typeof x.title==='string').slice(-12).reverse():[];
+ $('records').hidden=rows.length===0;
+ $('recordsList').replaceChildren();
+ for(const r of rows){$('recordsList').append(el('li',r.schoolName+' · '+r.title+' · 호감도 '+r.affection));}
+}
+function recordEnding(){
+ if(!$('optSave').checked||!game||game.phase!=='ending')return;
+ const ending=game.ending;
+ const signature=schoolId+'|'+game.profile.partner+'|'+game.history.map(x=>x.choiceId).join('.');
+ try{
+  let items=read(HISTORYKEY);if(!Array.isArray(items))items=[];
+  if(!items.some(r=>r.signature===signature)){
+   items.push({signature,schoolName:game.schoolName,schoolId,title:ending.title,
+     affection:ending.affection,score:ending.score,completedAt:new Date().toISOString()});
+   items=items.slice(-50);
+   localStorage.setItem(HISTORYKEY,JSON.stringify(items));
+  }
+  renderRecords();
+ }catch(e){}
+}
+function fillParagraphs(id,texts){
+ const node=$(id);node.replaceChildren();
+ for(const sentence of texts)node.append(el('p',sentence));
+}
+function renderNovel(){
+ show('novel');$('records').hidden=true;
+ const isReflection=game.phase==='reflection';
+ const view=engine.chapter(isReflection?{...game,phase:'chapter'}:game,world,plan);
+ $('statAffection').textContent=game.stats.affection;
+ $('statTrust').textContent=game.stats.trust;
+ $('statAgency').textContent=game.stats.agency;
+ $('statFatigue').textContent=game.stats.fatigue;
+ $('chapterDay').textContent=game.day+' / 7 · '+view.date+' '+view.weekday;
+ $('chapterTitle').textContent=view.title;
+ $('chapterPlace').textContent=view.place+' · '+view.partner;
+ $('chapterProgress').style.width=(game.day/7*100)+'%';
+ fillParagraphs('chapterText',view.paragraphs);
+ $('chapterSource').textContent=view.source==='historical_fiction'?
+  '공개 검증된 과거 조사 경향을 소재로 재구성한 허구입니다.':'일반적인 교실 경험을 소재로 만든 허구입니다.';
+ $('choiceSection').hidden=isReflection;
+ $('outcome').hidden=!isReflection;
+ $('nextBtn').hidden=!isReflection;
+ $('nextBtn').textContent=game.day===7?'마지막 페이지 펼치기':'다음 날로';
+ const options=$('choiceButtons');options.replaceChildren();
+ if(!isReflection){
+  view.choices.forEach((choice,index)=>{
+   const btn=el('button',(index+1)+'. '+choice.label);
+   btn.className='choice';btn.type='button';
+   btn.addEventListener('click',()=>{game=engine.choose(game,choice.id);save();renderNovel();});
+   options.append(btn);
+  });
+ }else{
+  fillParagraphs('outcomeText',game.lastOutcome.paragraphs);
+  $('outcomeLine').textContent=game.lastOutcome.line;
+ }
+ status('소설 속 상황을 살펴보고 선택해 주세요.');
+}
+function renderEnding(){
+ show('ending');
+ $('endingTitle').textContent=game.ending.title;
+ $('endingHeading').textContent=game.ending.heading;
+ fillParagraphs('endingText',game.ending.paragraphs);
+ $('endingAffection').textContent=game.ending.affection+' / 100';
+ $('endingScore').textContent='이야기 점수 '+game.ending.score+' / 100';
+ $('endingSchool').textContent=game.schoolName+'에서 시작된 7일간의 기록';
+ status('일주일의 이야기를 마쳤습니다.');
+ recordEnding();
+}
+function render(){
+ if(game.phase==='ending')renderEnding();else renderNovel();
+}
+async function apiPost(endpoint,body){
+ const response=await fetch(API+endpoint,{
+  method:'POST',cache:'no-store',
+  headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+  body:JSON.stringify(body)
+ });
+ if(response.status===401||response.status===403)throw Error('LEVEL2_REQUIRED');
+ if(!response.ok)throw Error('API_'+response.status);
+ return response.json();
+}
+async function boot(){
+ if(!/^[A-Z0-9]{7}$/.test(schoolId)){fail('먼저 학교를 선택한 뒤 게임을 시작해 주세요.');return;}
+ if(!/^[0-9a-f]{64}$/.test(token)){fail('레벨2 인증이 필요합니다. 같은 브라우저에서 로그인한 뒤 다시 선택해 주세요.');return;}
+ try{
+  const [payload,catalogResponse]=await Promise.all([
+   apiPost('class-diary-world-v1',{schoolId}),
+   fetch('data/public-statistics-question-catalog-v1.json',{cache:'no-store'})
+  ]);
+  if(!catalogResponse.ok)throw Error('CATALOG_UNAVAILABLE');
+  world=window.BeaguClassDiaryWorld.generateWorld(payload);
+  if(!world.eligible||world.basic.id!==schoolId){fail('공개·검증된 배구지수 조사 자료가 없어 이 학교는 아직 플레이할 수 없습니다.');return;}
+  const catalog=await catalogResponse.json();
+  const blueprint=window.BeaguClassDiaryNarrative.createBlueprint(catalog,window.Beagu2026Questionnaire);
+  if(blueprint.coverage.questionCount!==128)throw Error('CATALOG_INCOMPLETE');
+  let signals=[];
+  try{
+   const data=await apiPost('class-diary-story-signals-v1',{schoolId});
+   if(data.schoolId!==schoolId||!Array.isArray(data.historicalSignals))throw Error('SIGNAL_INVALID');
+   signals=data.historicalSignals;
+  }catch(err){
+   if(err.message==='LEVEL2_REQUIRED')throw err;
+   status('문항별 공개 자료가 연결되지 않아 일반 소설 장면으로 진행합니다.');
+  }
+  plan=window.BeaguClassDiaryNarrative.scenePlan(blueprint,world,signals);
+  $('schoolLine').textContent=world.basic.name+' · '+(world.basic.sido||'')+' · 공개 검증된 조사 연도 '+world.publishedYears.join(', ');
+  show('setup');renderSaved();renderRecords();
+  status('학교 세계와 공개 자료를 확인했습니다. 주인공을 설정해 주세요.');
+ }catch(err){
+  fail(err.message==='LEVEL2_REQUIRED'?
+   '레벨2 로그인 또는 유효한 인증 상태가 필요합니다. 다른 기기에서 새로 로그인했다면 이 기기에서도 인증해야 합니다.':
+   '학교 세계와 승인된 설문 자료를 불러오지 못했습니다. 다른 학교를 선택하거나 다시 시도해 주세요.');
+ }
+}
+for(const a of ['I','E'])for(const b of ['N','S'])for(const c of ['F','T'])for(const d of ['P','J']){
+ const mbti=a+b+c+d;
+ const option=el('option',mbti);option.value=mbti;$('mbti').append(option);
+}
+$('profileForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ try{
+  game=engine.createGame(world,plan,{age:Number($('age').value),
+   gender:$('gender').value,partner:$('partner').value,mbti:$('mbti').value});
+  save();render();
+ }catch(err){status('주인공 설정을 확인해 주세요. 성인 나이와 모든 선택이 필요합니다.');}
+});
+$('resumeBtn').addEventListener('click',()=>{
+ try{
+  game=engine.restore(world,plan,read(SAVEKEY));
+  $('optSave').checked=true;
+  render();
+ }catch(err){remove(SAVEKEY);renderSaved();status('저장한 진행 정보가 유효하지 않아 삭제했습니다. 새로 시작할 수 있습니다.');}
+});
+$('clearBtn').addEventListener('click',()=>{
+ remove(SAVEKEY);renderSaved();status('이 기기의 진행 저장을 삭제했습니다.');
+});
+$('clearRecordsBtn').addEventListener('click',()=>{
+ remove(HISTORYKEY);renderRecords();status('이 기기에 저장된 완료 기록을 모두 삭제했습니다.');
+});
+$('nextBtn').addEventListener('click',()=>{game=engine.advance(game);save();render();});
+$('resetBtn').addEventListener('click',()=>{
+ if(!game)return;
+ game=engine.createGame(world,plan,game.profile);save();render();
+});
+$('againBtn').addEventListener('click',()=>{
+ game=engine.createGame(world,plan,game.profile);save();render();
+});
+$('optSave').addEventListener('change',()=>{
+ if(!$('optSave').checked&&game)remove(SAVEKEY);
+ else if($('optSave').checked&&game)save();
+});
+boot();
+})();
+</script>
+</body>
+</html>
