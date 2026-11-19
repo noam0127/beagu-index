@@ -178,4 +178,9 @@ for(const id of ['profileForm','setup','novel','ending','chapterText','choiceBut
 }
 assert(!play.src.includes('id="resumeBox"'));
 assert(!play.src.includes('id="records"'));
+assert(play.ids.has('diaryHomeReturn'),'Home return button must exist in the game HUD');
+assert(play.src.includes('aria-label="배구지수 홈으로 돌아가기"'),'Home control needs a clear accessible name');
+assert(play.src.includes("window.location.assign('https://baeguindex.com/')"),'Home button must lead to Beaguindex');
+assert(play.src.includes("const saved=await progressSession.save(game)"),'Do not leave without attempting a progress save');
+assert(play.src.includes("진행 기록을 저장하지 못했습니다."),'Warn on save failures');
 console.log('PASS: Lv2 page syntax, no game persistence, legacy cleanup, stage4 director UI, no unsafe HTML insertion');

@@ -374,6 +374,31 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-progress-controls-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-background-only-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-actors-natural-v1.css?v=20261120-alpha-1">
+<style id="diary-home-return-style">
+body.is-playing #vnHud>#diaryHomeReturn{
+ position:absolute;left:0;top:0;z-index:22;
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-width:114px;height:42px;padding:0 12px;
+ background:linear-gradient(137deg,rgba(45,35,57,.80),rgba(86,56,79,.78));
+ border:1px solid rgba(255,243,250,.66);border-radius:15px;
+ box-shadow:0 4px 18px rgba(9,7,26,.33);
+ color:#fff9fb;font:700 12px/1.2 "Gowun Batang","Nanum Myeongjo",serif;
+ backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+ white-space:nowrap;cursor:pointer;touch-action:manipulation;
+}
+body.is-playing #vnHud>#diaryHomeReturn span:first-child{font-size:20px;line-height:1}
+body.is-playing #vnHud>#diaryHomeReturn:hover{background:rgba(114,74,105,.95)}
+body.is-playing #vnHud>#diaryHomeReturn:focus-visible{outline:3px solid #f6d5e8;outline-offset:3px}
+body.is-playing #vnHud>#diaryHomeReturn:disabled{opacity:.65;cursor:wait}
+body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
+@media(max-width:620px){
+ body.is-playing #vnHud>#diaryHomeReturn{min-width:100px;height:39px;padding:0 9px;gap:5px;font-size:11px;border-radius:13px}
+ body.is-playing #vnHud>#diaryHomeReturn span:first-child{font-size:18px}
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing #vnHud>#diaryHomeReturn{height:34px;min-width:98px;padding:0 8px}
+}
+</style>
 </head>
 <body>
 <main>
@@ -557,7 +582,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 </div>
 <article class="panel novel" id="novelCard" data-scene="morning">
 <div class="novel-top">
-<div class="scene-art" id="sceneArt" role="group" aria-label="가상의 한국 초등학교를 배경으로 한 비주얼노벨 장면"><div id="sceneBackdrop" class="scene-backdrop" aria-hidden="true"></div><img id="scenePortrait" class="scene-portrait" alt="" aria-hidden="true"><span id="sceneHyunwooLive" class="scene-hyunwoo-live" hidden aria-hidden="true"></span><div id="sceneDoyun" class="scene-student" role="img" aria-label="가상 학생 도윤" hidden><span id="sceneDoyunPhoto" class="scene-student-photo" aria-hidden="true"></span><span class="scene-student-label">도윤<small>3학년 학생</small></span></div><div id="sceneGuest" class="scene-guest" hidden role="group" aria-label="장면에 등장하는 다른 교직원"><img id="sceneGuestPortrait" alt="" aria-hidden="true"><span id="sceneGuestMalePhoto" class="scene-guest-male-photo" aria-hidden="true" hidden></span><div class="scene-guest-label"><strong id="sceneGuestName"></strong><small id="sceneGuestRole"></small></div></div><div class="scene-fade" aria-hidden="true"></div><div class="vn-overlay" id="vnOverlay"><div class="vn-hud" id="vnHud"><div id="vnHeaderSlot"></div><div class="vn-top-actions"><button type="button" id="vnInfoBtn" aria-label="장면의 가상 정보와 자료 보기" aria-expanded="false">ⓘ</button><button type="button" id="vnSound" aria-label="배경음악 켜기 또는 끄기">♫</button></div></div><div class="vn-info" id="vnInfo" hidden></div><div class="vn-bottom" id="vnBottom"><div id="vnDialogueSlot"></div><div class="vn-control-row"><span class="vn-fiction" id="vnSaveNotice" aria-live="polite">가상 이야기 · 저장하지 않음</span><div id="diaryCheckpointControls" hidden role="group" aria-label="학급일지 저장 및 이어하기"><button id="diarySaveNow" type="button" aria-label="현재 이야기 저장하기">저장하기</button><button id="diaryContinueNow" type="button" aria-label="저장한 이야기 이어하기">이어하기</button></div><button type="button" id="vnMore" aria-label="다음 대사" title="다음 대사"><svg class="vn-arrow-mark" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button></div></div></div></div>
+<div class="scene-art" id="sceneArt" role="group" aria-label="가상의 한국 초등학교를 배경으로 한 비주얼노벨 장면"><div id="sceneBackdrop" class="scene-backdrop" aria-hidden="true"></div><img id="scenePortrait" class="scene-portrait" alt="" aria-hidden="true"><span id="sceneHyunwooLive" class="scene-hyunwoo-live" hidden aria-hidden="true"></span><div id="sceneDoyun" class="scene-student" role="img" aria-label="가상 학생 도윤" hidden><span id="sceneDoyunPhoto" class="scene-student-photo" aria-hidden="true"></span><span class="scene-student-label">도윤<small>3학년 학생</small></span></div><div id="sceneGuest" class="scene-guest" hidden role="group" aria-label="장면에 등장하는 다른 교직원"><img id="sceneGuestPortrait" alt="" aria-hidden="true"><span id="sceneGuestMalePhoto" class="scene-guest-male-photo" aria-hidden="true" hidden></span><div class="scene-guest-label"><strong id="sceneGuestName"></strong><small id="sceneGuestRole"></small></div></div><div class="scene-fade" aria-hidden="true"></div><div class="vn-overlay" id="vnOverlay"><div class="vn-hud" id="vnHud"><button type="button" id="diaryHomeReturn" aria-label="배구지수 홈으로 돌아가기" title="배구지수 홈으로 돌아가기"><span aria-hidden="true">⌂</span><span>배구지수 홈</span></button><div id="vnHeaderSlot"></div><div class="vn-top-actions"><button type="button" id="vnInfoBtn" aria-label="장면의 가상 정보와 자료 보기" aria-expanded="false">ⓘ</button><button type="button" id="vnSound" aria-label="배경음악 켜기 또는 끄기">♫</button></div></div><div class="vn-info" id="vnInfo" hidden></div><div class="vn-bottom" id="vnBottom"><div id="vnDialogueSlot"></div><div class="vn-control-row"><span class="vn-fiction" id="vnSaveNotice" aria-live="polite">가상 이야기 · 저장하지 않음</span><div id="diaryCheckpointControls" hidden role="group" aria-label="학급일지 저장 및 이어하기"><button id="diarySaveNow" type="button" aria-label="현재 이야기 저장하기">저장하기</button><button id="diaryContinueNow" type="button" aria-label="저장한 이야기 이어하기">이어하기</button></div><button type="button" id="vnMore" aria-label="다음 대사" title="다음 대사"><svg class="vn-arrow-mark" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 9 7 7 7-7"/></svg></button></div></div></div></div>
 <span class="tag" id="chapterDay">첫째 날</span>
 <h2 id="chapterTitle"></h2>
 <div class="date-place" id="chapterPlace"></div>
@@ -1735,6 +1760,23 @@ $('diaryContinueNow').addEventListener('click',async()=>{
   game=saved.state;storyMode='semester';prologuePending=false;render();progressStatus('loaded');
  }catch(_){progressStatus('failed')}
  finally{control.disabled=false;}
+});
+$('diaryHomeReturn').addEventListener('click',async()=>{
+ const control=$('diaryHomeReturn');
+ if(control.disabled)return;
+ control.disabled=true;
+ try{
+  // Wait for the existing per-code progress queue before leaving the novel.
+  if(isGuest&&storyMode==='semester'&&progressSession&&game){
+   const saved=await progressSession.save(game);
+   if(!saved&&!window.confirm('진행 기록을 저장하지 못했습니다. 그래도 배구지수 홈으로 돌아갈까요?'))return;
+  }
+  window.location.assign('https://baeguindex.com/');
+ }catch(_){
+  if(window.confirm('저장을 확인하지 못했습니다. 그래도 배구지수 홈으로 돌아갈까요?')){
+   window.location.assign('https://baeguindex.com/');
+  }
+ }finally{control.disabled=false;}
 });
 boot();
 })();
