@@ -18,27 +18,26 @@ for(const h of [volley,runner]){
 new Function(shared);
 new Function(picker);
 
-// Regression: an abandoned match must not attach its score to the next school.
+// Anonymous automatic leaderboard: no dialog, no typed nickname, and no stale session.
 const mockWindow={};
 new Function("window",shared)(mockWindow);
-const sessionBoard=new mockWindow.ArcadeLeaderboard("volleyball",null);
+const sessionBoard=new mockWindow.ArcadeLeaderboard("volleyball_25",null);
 let answerStart;
 sessionBoard.request=()=>new Promise(resolve=>{answerStart=resolve;});
 const pendingSession=sessionBoard.start({eligible:true,school_id:"test-old",school_name:"Old School",difficulty:"easy"});
 sessionBoard.cancel();
 answerStart({school:{eligible:true},session:"stale-session"});
-assert.equal(await pendingSession,null,"stale start must be ignored");
-assert.equal(sessionBoard.session,null,"abandoned session must be cleared");
-let resolveLoading;
+assert.equal(await pendingSession,null);
+assert.equal(sessionBoard.session,null);
 sessionBoard.session="pending-finish";
+let resolveLoading;
 sessionBoard.load=()=>new Promise(resolve=>{resolveLoading=resolve;});
-let promptShown=false;
-sessionBoard.openRecord=()=>{promptShown=true;};
-const finishing=sessionBoard.finish(150,{player:7,cpu:1});
+let staleSubmitted=false;
+sessionBoard.request=async()=>{staleSubmitted=true;return {};};
+const finishing=sessionBoard.finish(150,{player:25,cpu:7,elapsedTenths:150});
 sessionBoard.cancel();resolveLoading([]);
 await finishing;
-assert.equal(promptShown,false,"old school record dialog must not reopen");
-
+assert.equal(staleSubmitted,false,"abandoned match cannot post an anonymous record");
 const pickerWindow={};
 new Function("window","clearTimeout",picker)(pickerWindow,()=>{});
 const mockPicker={
@@ -47,48 +46,59 @@ const mockPicker={
 };
 pickerWindow.ArcadeSchoolPicker.prototype.resetForChange.call(mockPicker);
 assert.equal(mockPicker.input.value,"");
-assert.ok(mockPicker.didUnlock&&mockPicker.didClear&&mockPicker.didFocus,"reset enables searching another school");
-console.log("PASS: cancellation prevents stale school records and unlocks a new school search");
+assert.ok(mockPicker.didUnlock&&mockPicker.didClear&&mockPicker.didFocus);
+console.log("PASS: session cancellation prevents stale anonymous records and resets school search");
 
 const recordSchool={school_id:"7023456",school_name:"기록초등학교",difficulty:"extreme"};
-const recordButton={disabled:false},recordMsg={textContent:""};
-function mockRecordBoard(game="volleyball"){
+function mockRecordBoard(game="volleyball_25"){
  const board=new mockWindow.ArcadeLeaderboard(game,null);
- board.session="test-session";board.school={...recordSchool};board.score=1200;
- board.stats={player:7,cpu:1,spikes:2};board.draw=()=>{};board.closeDialog=()=>{};
+ board.session="test-session";board.school={...recordSchool};
+ board.load=async()=>{board.remote=true;board.board=[];return [];};
  return board;
 }
-const uploaded=mockRecordBoard();
-uploaded.request=async()=>({ranked:true,rank:2,top10:[{nickname:"EXAMPLE",score:1200,created_at:"2026-11-18T12:00:00Z",school_name:recordSchool.school_name,difficulty:"extreme"}]});
-await uploaded.submitName("EXAMPLE",recordButton,recordMsg);
+const uploaded=mockRecordBoard();let requestPayload;
+uploaded.request=async(_method,payload)=>{
+ requestPayload=payload;
+ return {ranked:true,rank:2,top10:[{score:1200,created_at:"2026-11-18T12:00:00Z",school_name:recordSchool.school_name,difficulty:"extreme"}]};
+};
+await uploaded.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
 assert.equal(uploaded.session,null);assert.equal(uploaded.remote,true);
-assert.match(uploaded.notice,/TOP 2위/);assert.equal(uploaded.board[0].difficulty,"extreme");
+assert.match(uploaded.notice,/2위/);assert.equal(uploaded.board[0].difficulty,"extreme");
+assert.equal(requestPayload.action,"submit");
+assert.equal("nickname" in requestPayload,false,"no user-entered identifiers sent");
 const displaced=mockRecordBoard();
 displaced.request=async()=>({ranked:false,top10:[]});
-await displaced.submitName("EXAMPLE",recordButton,recordMsg);
-assert.match(displaced.notice,/TOP 10에서 밀렸/);
-const offline=mockRecordBoard("teacher_run");
+await displaced.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
+assert.match(displaced.notice,/진입 실패/);
+const offline=mockRecordBoard("teacher_run_retirement");
 offline.request=async()=>{throw new Error("network_unavailable");};
-await offline.submitName("EXAMPLE",recordButton,recordMsg);
-assert.equal(offline.remote,false);assert.match(offline.notice,/이 기기에만 저장됨/);
-assert.equal(offline.board[0].school_name,recordSchool.school_name);
-const expired=mockRecordBoard();expired.request=async()=>{const e=new Error("session_expired");e.status=409;throw e;};
-await expired.submitName("EXAMPLE",recordButton,recordMsg);
-assert.match(recordMsg.textContent,/만료되었거나 이미 등록/);assert.equal(expired.session,"test-session");
-const duringSave=mockRecordBoard();let respondSave;
-duringSave.request=()=>new Promise(resolve=>respondSave=resolve);
-const saving=duringSave.submitName("EXAMPLE",recordButton,recordMsg);
+await offline.finish(1200,{score:1200,baseScore:1200,survivalSeconds:80,age:40,victory:false});
+assert.match(offline.notice,/저장되지 않았습니다/);
+const expired=mockRecordBoard();
+expired.request=async()=>{const e=new Error("session_expired");e.status=409;throw e;};
+await expired.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
+assert.match(expired.notice,/만료/);
+const duringSave=mockRecordBoard();let respondSave,enteredRequest;
+const savingStarted=new Promise(resolve=>{enteredRequest=resolve;});
+duringSave.request=()=>{enteredRequest();return new Promise(resolve=>{respondSave=resolve;});};
+const saving=duringSave.finish(1200,{player:25,cpu:7,elapsedTenths:1200});
+await savingStarted;
 duringSave.cancel();duringSave.school={school_id:"7099999",school_name:"다음학교",difficulty:"easy"};duringSave.session="next-session";
-respondSave({ranked:true,rank:1,top10:[{nickname:"EXAMPLE",score:1200,created_at:"2026-11-18T12:00:00Z"}]});
+respondSave({ranked:true,rank:1,top10:[{score:1200,created_at:"2026-11-18T12:00:00Z"}]});
 await saving;
 assert.equal(duringSave.school.school_name,"다음학교");assert.equal(duringSave.session,"next-session");
 assert.deepEqual(duringSave.board,[]);
 const unqualified=mockRecordBoard();
-unqualified.remote=true;unqualified.board=Array.from({length:10},(_,i)=>({nickname:"EXAMPLE",score:1000-i*50}));
-unqualified.load=async()=>unqualified.board;unqualified.openRecord=()=>{throw new Error("should not ask for name");};
-await unqualified.finish(100,{player:0,cpu:7,spikes:0});
-assert.match(unqualified.notice,/TOP 10 진입 실패/);
-console.log("PASS: upload success, rank race, offline warning, API expiry, stale async save, below Top10");
+unqualified.remote=true;
+unqualified.board=Array.from({length:10},(_,i)=>({score:5000-i*100}));
+unqualified.load=async()=>unqualified.board;
+unqualified.request=async()=>{throw new Error("must not submit a lower score");};
+await unqualified.finish(610,{player:25,cpu:7,elapsedTenths:610});
+assert.match(unqualified.notice,/기준 미달/);
+assert.doesNotMatch(shared,/submitName|openRecord|dialogElement|ENTER YOUR NAME|input\.maxLength/);
+assert.match(shared,/localStorage\.removeItem\("arcade-last-name-v1"\)/,"wipe prior typed names on visitors' devices");
+assert.match(shared,/\.sort\(\(a,b\)=>b\.score-a\.score/);
+console.log("PASS: automatic anonymous record, rejected low score, server errors and safe stale-response cancellation");
 
 assert.match(picker,/2023~2026년/,"school picker explains 2023–2026 reference period");
 assert.match(picker,/2026년 배구지수 조사 참여하기/,"school picker links required 2026 survey");
@@ -102,7 +112,10 @@ assert.match(backend,/!selected\.eligible/,"server refuses missing years");
 assert.match(backend,/!currentSchool\?\.eligible/,"previously issued sessions are rechecked");
 assert.match(backend,/arcade_game_scores\?on_conflict=session_id&select=created_at/,"unique session key protects record against double submission");
 assert.match(backend,/resolution=ignore-duplicates,return=representation/,"only one score per match");
-assert.match(backend,/e\.created_at===inserted\[0\]\.created_at/,"same nickname and score do not steal another player's rank");
+assert.match(backend,/e\.created_at===inserted\[0\]\.created_at/,"anonymous timestamp and score identify new record placement");
+assert.match(backend,/nickname_not_supported/,"API rejects user-entered nicknames");
+assert.doesNotMatch(backend,/nickname:"ANON"|select:"nickname/,"API neither stores nor exposes nicknames");
+assert.match(backend,/if\(existing\.length>=10 && score<=existing\[9\]\.score\)/,"leaderboard ranks highest points first");
 assert.ok(backend.indexOf('"arcade_game_scores?on_conflict=session_id&select=created_at"')<backend.indexOf('const patchQ=new URLSearchParams({id:"eq."+session.id,submitted_at:"is.null"})'),"score persists before session completion marker");
 
 assert.match(volley,/new window\.ArcadeSchoolPicker/);
@@ -110,6 +123,7 @@ assert.match(runner,/new window\.ArcadeSchoolPicker/);
 assert.match(runner,/difficultyProfiles=\{/,"survival game defines five hero/enemy profiles");
 assert.match(volley,/battleProfiles=\{/,"volleyball defines five ally/CPU profiles");
 assert.match(shared,/arcade-rank-school/);
+assert.doesNotMatch(shared,/ENTER YOUR NAME|nickname:/,"no player names in leaderboard client");
 assert.match(html,/id="teacher-game-title">🏐 선생님배구 1\.0<\/h2>/,"volleyball homepage title should show 1.0");
 assert.match(html,/id="teacher-run-title">🎒 험난한 교직생활 3\.0<\/h2>/,"teacher-run homepage title should show 3.0");
 assert.match(volley,/<title>선생님배구 1\.0 \| 배구지수<\/title>/);
@@ -201,10 +215,26 @@ const scoreFns=new Function("int",javascript+"\nreturn {scoreFromVolleyball,scor
  (v,min,max)=>typeof v==="number"&&Number.isInteger(v)&&v>=min&&v<=max
 );
 assert.equal(scoreFns.scoreFromVolleyball({player:7,cpu:3,spikes:2},100),7*120+2*25+600+(7-3)*30);
-assert.equal(scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:645},65),645);
-assert.throws(()=>scoreFns.scoreFromVolleyball25({player:24,cpu:25,elapsedTenths:645},65),/invalid_stats/);
-assert.throws(()=>scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:100},65),/invalid_duration/);
-assert.throws(()=>scoreFns.scoreFromVolleyball25({player:25,cpu:4,elapsedTenths:800},65),/invalid_duration/);
+// Volleyball server validates score points, defeat penalties and lead multipliers.
+const volleyStats=(player,cpu)=>{
+ const baseScore=Math.max(0,player*100-cpu*50);
+ const victory=player===25&&cpu<25;
+ const multiplier=victory?1+Math.floor((25-cpu)/5):1;
+ return {player,cpu,baseScore,multiplier,finalScore:baseScore*multiplier,victory};
+};
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,0),80),15000,"25–0 win gains 6x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,5),80),11250,"25–5 win gains 5x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,10),80),8000,"25–10 win gains 4x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,15),80),5250,"25–15 win gains 3x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,20),80),3000,"25–20 win gains 2x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(25,24),80),1300,"25–24 win gains 1x");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(24,25),80),1150,"loss can earn base points but never a win bonus");
+assert.equal(scoreFns.scoreFromVolleyball25(volleyStats(3,25),80),0,"penalties cannot make score negative");
+assert.throws(()=>scoreFns.scoreFromVolleyball25(volleyStats(24,24),80),/invalid_match/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25(volleyStats(25,25),80),/invalid_match/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({...volleyStats(25,5),multiplier:6},80),/invalid_score/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25({...volleyStats(25,5),finalScore:9999},80),/invalid_score/);
+assert.throws(()=>scoreFns.scoreFromVolleyball25(volleyStats(25,5),10),/invalid_duration/);
 const win62={score:12000,baseScore:6000,survivalSeconds:190,age:62,victory:true};
 assert.equal(scoreFns.scoreFromRetirement(win62,191),12000);
 assert.throws(()=>scoreFns.scoreFromRetirement({...win62,score:6000},191),/invalid_retirement_score/);
@@ -214,7 +244,7 @@ assert.throws(()=>scoreFns.scoreFromRetirement(win62,150),/invalid_survival_time
 assert.equal(scoreFns.scoreFromRetirement({score:700,baseScore:700,age:44,survivalSeconds:100,victory:false},103),700);
 assert.throws(()=>scoreFns.scoreFromRetirement({score:1400,baseScore:700,age:44,survivalSeconds:100,victory:false},103),/invalid_retirement_score/);
 assert.equal(scoreFns.scoreFromRun({score:1500,day:3,victory:false},100),1500,"old run records remain compatible");
-console.log("PASS: separate 25-point win time and 62-year retirement score verification; legacy records intact");
+console.log("PASS: verified 25-point +100/-50 win-margin scoring and 62-year retirement rules");
 
 // EXTREME disables player ascent in both games without suppressing enemy AI jump.
 assert.match(volley,/const canPlayerJump=\(\)=>currentDifficulty!=="extreme"/,"volleyball player jump gate");
@@ -247,50 +277,64 @@ const runnerPointer=new Function("jumpEnabled",[
 ].join("\n"));
 assert.equal(runnerPointer(false).y,368,"extreme run touch must stay on ground");
 assert.equal(runnerPointer(true).y,76,"other run difficulties still allow rising");
-// Winner-take-first 25-point volleyball rules, loss path and pause-aware timer.
+// 25-point rules and score lead multipliers, never elapsed-time rankings.
 assert.match(volley,/const MATCH_TARGET=25/);
-assert.match(volley,/id="volley-best-label"/);
-assert.match(volley,/FASTEST_KEY="teacherVolleyballFastest25V1"/);
-assert.match(volley,/rememberFastest\(duration\)/);
+assert.match(volley,/const POINT_GAIN=100,POINT_LOSS=50/);
+assert.match(volley,/BEST_SCORE_KEY="teacherVolleyballScore25BestV1"/);
+assert.match(volley,/state\.recordBroken=rememberBestScore\(finalScore\)/);
 assert.match(volley,/new window\.ArcadeLeaderboard\("volleyball_25"/);
 assert.match(runner,/new window\.ArcadeLeaderboard\("teacher_run_retirement"/);
-assert.match(shared,/const timedGame=game=>game==="volleyball_25"/);
-assert.match(shared,/a\.score-b\.score:b\.score-a\.score/,"only time boards are ascending");
-assert.match(shared,/timedGame\(this\.game\)\?this\.score>=this\.board\[9\]\.score/);
+assert.doesNotMatch(volley,/formatTime|getElapsedTenths|updateClockUI|volley-time-label|BEST TIME|⏱/);
+assert.doesNotMatch(shared,/timedGame|fmtTime|openRecord|dialogElement|nickname:/,"no player-entered names or time-rank inputs");
+assert.match(shared,/b\.score-a\.score/,"higher scores rank ahead");
+assert.match(shared,/this\.score<=this\.board\[9\]\.score/,"lower nonqualifying score gets excluded");
 assert.match(volley,/EASY: animated feather wings/);
 assert.match(volley,/p===left&&currentDifficulty==="easy"/);
 assert.match(runner,/profile===difficultyProfiles\.easy/);
-const clockStart=volley.indexOf("const MATCH_TARGET=25");
-const clockEnd=volley.indexOf("const W =",clockStart);
-assert.ok(clockStart>0&&clockEnd>clockStart);
-const clockSrc=volley.slice(clockStart,clockEnd);
-const timerCase=(phase,now,startedAt=1000,pausedMs=0,pausedAt=0,finishedAt=0)=>
- new Function("state","performance",clockSrc+
- "\nreturn {tenths:getElapsedTenths(),formatted:formatTime(getElapsedTenths())};")(
- {phase,startedAt,pausedMs,pausedAt,finishedAt},{now:()=>now});
-assert.deepEqual(timerCase("playing",7050,1000,500),{tenths:56,formatted:"0:05.6"});
-assert.deepEqual(timerCase("paused",99999,1000,500,5100),{tenths:36,formatted:"0:03.6"});
-assert.deepEqual(timerCase("finished",99999,1000,500,0,7100),{tenths:56,formatted:"0:05.6"});
-assert.deepEqual(timerCase("ready",99999,0),{tenths:0,formatted:"0:00.0"});
+const scoringStart=volley.indexOf("const MATCH_TARGET=25");
+const scoringEnd=volley.indexOf("const W =",scoringStart);
+assert.ok(scoringStart>0&&scoringEnd>scoringStart);
+const scoringSrc=volley.slice(scoringStart,scoringEnd);
+const clientScore=new Function(scoringSrc+"return {base:getBaseMatchScore,multiplier:getVictoryMultiplier,final:getMatchScore};")();
+for(const [p,c] of [[0,0],[25,0],[25,5],[25,10],[25,15],[25,20],[25,24],[24,25],[3,25]]){
+ const expected=volleyStats(p,c);
+ assert.equal(clientScore.base(p,c),expected.baseScore);
+ assert.equal(clientScore.multiplier(p,c),expected.multiplier);
+ assert.equal(clientScore.final(p,c),expected.finalScore);
+}
+assert.match(volley,/cheerMilestones=\{/);
+assert.match(volley,/5:"✨/);
+assert.match(volley,/10:"🔥/);
+assert.match(volley,/15:"💪/);
+assert.match(volley,/20:"🚀/);
+assert.match(volley,/23:"🎯/);
+assert.match(volley,/24:"🏁/);
+assert.match(volley,/state\.winStreak\+\+/);
+assert.match(volley,/id="volley-my-progress"/);
+assert.match(volley,/id="volley-cpu-progress"/);
+assert.match(volley,/state\.pointCheer=pointEncouragement/);
 const pointStart=volley.indexOf("function point(leftWins) {");
 const pointEnd=volley.indexOf("function step() {",pointStart);
 assert.ok(pointStart>0&&pointEnd>pointStart);
 const pointSrc=volley.slice(pointStart,pointEnd);
 function pointCase(player,cpu,leftWins){
- const state={phase:"playing",leftScore:player,rightScore:cpu,serveLeft:true};
+ const state={phase:"playing",leftScore:player,rightScore:cpu,serveLeft:true,winStreak:0,bestStreak:0,flash:0};
  return new Function("state","side",[
- 'const MATCH_TARGET=25;',
- 'let finished=0;const setStatus=()=>{},tone=()=>{},syncUI=()=>{};',
- 'const finishMatch=()=>{finished++;state.phase="finished";};',
- pointSrc,"point(side);return {p:state.leftScore,c:state.rightScore,finished,phase:state.phase,serveLeft:state.serveLeft};"
+  'const MATCH_TARGET=25,POINT_GAIN=100,POINT_LOSS=50;',
+  'const cheerMilestones={5:"첫 고비",10:"10점",15:"15점",20:"20점",23:"23점",24:"24점"};',
+  'const pointEncouragement=()=>"+100 또는 -50";',
+  'let finished=0;const setStatus=()=>{},tone=()=>{},syncUI=()=>{};',
+  'const finishMatch=()=>{finished++;state.phase="finished";};',
+  pointSrc,
+  'point(side);return {p:state.leftScore,c:state.rightScore,finished,phase:state.phase,serveLeft:state.serveLeft};'
  ].join("\n"))(state,leftWins);
 }
 assert.deepEqual(pointCase(24,20,true),{p:25,c:20,finished:1,phase:"finished",serveLeft:false});
 assert.deepEqual(pointCase(16,24,false),{p:16,c:25,finished:1,phase:"finished",serveLeft:true});
 assert.deepEqual(pointCase(5,4,true),{p:6,c:4,finished:0,phase:"point",serveLeft:false});
-assert.doesNotMatch(volley,/getSurvivalBonus|loseLife|leftEnergy|rightEnergy/,"old HP/survival score mechanics are removed");
-assert.match(volley,/ranking\?\.finish\(duration,\{player:state\.leftScore,cpu:state\.rightScore,elapsedTenths:duration\}\)/);
-console.log("PASS: 25-point winner/loser, pause-correct race clock, independent shortest time and EASY wings");
+assert.doesNotMatch(volley,/getSurvivalBonus|loseLife|leftEnergy|rightEnergy/);
+assert.match(volley,/ranking\?\.finish\(finalScore,\{/,"final scored result auto-recorded, including nonzero losses");
+console.log("PASS: 25-point high-score competition, victory ×1–×6 lead bonuses, no timer, stage cheers");
 
 // Five-tier ball speed and opposite team cosmetics survive the redesign.
 const netTopMatch=volley.match(/NET_TOP = (\d+), NET_W/);
@@ -402,8 +446,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
-assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-anon25-cheers1/);
+assert.match(html,/teacher-run\.html\?v=20261119-anon25-cheers1/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -526,8 +570,8 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
-assert.match(html,/teacher-run\.html\?v=20261119-vol25-retirement1/);
+assert.match(html,/teacher-volleyball\.html\?v=20261119-anon25-cheers1/);
+assert.match(html,/teacher-run\.html\?v=20261119-anon25-cheers1/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
@@ -565,18 +609,21 @@ assert.equal(earlyCareer.submitted.stats.age,36);
 assert.equal(earlyCareer.submitted.stats.victory,false);
 assert.match(earlyCareer.description,/정년 보너스 없음/);
 assert.doesNotMatch(runner,/월요일|화요일|수요일|목요일|금요일|월 → 금|DAY<\/span>/);
-const timeBoard=new mockWindow.ArcadeLeaderboard("volleyball_25",null);
-timeBoard.session="session-for-time";timeBoard.remote=true;
-timeBoard.board=Array.from({length:10},(_,i)=>({nickname:"FAST",score:500+i*10}));
-timeBoard.load=async()=>timeBoard.board;
-let askedName=false;timeBoard.openRecord=()=>{askedName=true;};
-await timeBoard.finish(610,{player:25,cpu:9,elapsedTenths:610});
-assert.equal(askedName,false,"slowest time rejected from Top 10");
-await timeBoard.finish(499,{player:25,cpu:9,elapsedTenths:499});
-assert.equal(askedName,true,"faster time qualifies");
-assert.match(backend,/order:game==="volleyball_25"\?"score\.asc,created_at\.asc":"score\.desc,created_at\.asc"/);
-assert.match(backend,/game==="volleyball_25"\?score>=existing\[9\]\.score:score<=existing\[9\]\.score/);
-console.log("PASS: actual 62-year finish doubles score, early failure unchanged, shortest volleyball time wins ranking");
+const scoreBoard=new mockWindow.ArcadeLeaderboard("volleyball_25",null);
+scoreBoard.session="score-session";scoreBoard.remote=true;
+scoreBoard.board=Array.from({length:10},(_,i)=>({score:8000-i*300}));
+scoreBoard.load=async()=>scoreBoard.board;
+let calls=0;
+scoreBoard.request=async()=>{calls++;return {ranked:true,rank:1,top10:[{score:11250,school_name:"기록초등학교",difficulty:"easy"}]};};
+await scoreBoard.finish(1300,volleyStats(25,24));
+assert.equal(calls,0,"score below tenth place is not uploaded");
+scoreBoard.session="score-session";
+await scoreBoard.finish(11250,volleyStats(25,5));
+assert.equal(calls,1,"high score uploaded automatically without names");
+assert.match(scoreBoard.notice,/익명 기록 자동 등록/);
+assert.match(backend,/order:"score\.desc,created_at\.asc"/);
+assert.match(backend,/if\(existing\.length>=10 && score<=existing\[9\]\.score\)/);
+console.log("PASS: verified retirement doubling and anonymous highest-score volleyball ranking");
 
 const timeout=(ms=12000)=>AbortSignal.timeout(ms);
 async function requestWithRetry(url,expected=200,options={},times=3){
@@ -597,8 +644,8 @@ async function requestWithRetry(url,expected=200,options={},times=3){
 async function waitForPublishedHome() {
  for(let attempt=0;attempt<20;attempt++){
   const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes("teacher-volleyball.html?v=20261119-vol25-retirement1")&&
-     site.body.includes("teacher-run.html?v=20261119-vol25-retirement1"))return site;
+  if(site.body.includes("teacher-volleyball.html?v=20261119-anon25-cheers1")&&
+     site.body.includes("teacher-run.html?v=20261119-anon25-cheers1"))return site;
   await new Promise(resolve=>setTimeout(resolve,8000));
  }
  throw new Error("Published game iframe versions did not update");
@@ -608,14 +655,14 @@ const [site,topVolley,topRun]=await Promise.all([
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.match(site.body,/teacher-volleyball\.html\?v=20261119-vol25-retirement1/);
-assert.match(site.body,/teacher-run\.html\?v=20261119-vol25-retirement1/);
+assert.match(site.body,/teacher-volleyball\.html\?v=20261119-anon25-cheers1/);
+assert.match(site.body,/teacher-run\.html\?v=20261119-anon25-cheers1/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
  assert.ok(parsed.top10.length<=10);
  for(const row of parsed.top10){
-  assert.match(row.nickname,/^[A-Z]{2,8}$/);
+  assert.equal("nickname" in row,false,"public ranking never exposes nicknames");
   assert.ok(Number.isInteger(row.score)&&row.score>0);
  }
 }
@@ -652,8 +699,8 @@ if(school.eligible){
   method:"POST",headers:origin,
   body:JSON.stringify({action:"submit",game:"volleyball_25",session:started.session,nickname:"123",stats:{player:25,cpu:0,elapsedTenths:500}})
  });
- assert.equal(JSON.parse(invalid.body).error,"invalid_name");
- console.log("PASS: eligible four-year school session and nickname validation");
+ assert.equal(JSON.parse(invalid.body).error,"nickname_not_supported");
+ console.log("PASS: eligible school session and rejection of user-supplied nicknames");
 }else{
  assert.equal(school.difficulty,null,"no provisional middle-tier fallback");
  const refused=await requestWithRetry(api,409,{
@@ -672,7 +719,7 @@ assert.equal(oneYear.eligible,true,"one-year school should play");
 assert.deepEqual(oneYear.available_years,[2024],"2024-only school is grounded");
 assert.ok(["easy","normal","hard","very_hard","extreme"].includes(oneYear.difficulty));
 const oneStart=JSON.parse((await requestWithRetry(api,200,{
- method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"volleyball",school_id:oneYear.school_id})
+ method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"volleyball_25",school_id:oneYear.school_id})
 })).body);
 assert.equal(oneStart.school.eligible,true);
 assert.match(oneStart.session,/^[0-9a-f-]{36}$/i);
@@ -680,7 +727,7 @@ const zeroYear=JSON.parse((await requestWithRetry(api+"?school_id=7003849",200,{
 assert.equal(zeroYear.eligible,false,"zero-year school should not play");
 assert.deepEqual(zeroYear.available_years,[]);
 const zeroDenied=JSON.parse((await requestWithRetry(api,409,{
- method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"teacher_run",school_id:zeroYear.school_id})
+ method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"teacher_run_retirement",school_id:zeroYear.school_id})
 })).body);
 assert.equal(zeroDenied.error,"school_ineligible");
 assert.equal(zeroDenied.survey_url,"https://forms.gle/TPyCakK6Sj2zchRy7");

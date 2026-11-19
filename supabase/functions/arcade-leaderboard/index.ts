@@ -1,14 +1,14 @@
 // Public arcade ranking API. All database access is server-side through the service key.
-// User-entered nicknames are restricted to 2–8 ASCII letters; school names are resolved from canonical directory records.
+// All submitted records are anonymous; no nickname or other name is accepted from clients.
 const SUPA_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const BASE = SUPA_URL + "/rest/v1/";
 const ALLOWED_ORIGINS = new Set(["https://baeguindex.com","https://www.baeguindex.com","https://noam0127.github.io"]);
-const VALID_GAMES = new Set(["volleyball","teacher_run","volleyball_25","teacher_run_retirement"]);
+const VALID_GAMES = new Set(["volleyball_25","teacher_run_retirement"]);
 const encoder = new TextEncoder();
 const CACHE = "no-store";
 type Game = "volleyball" | "teacher_run" | "volleyball_25" | "teacher_run_retirement";
-type Entry = { nickname: string; score: number; created_at: string; school_name?: string | null; difficulty?: string | null };
+type Entry = { score: number; created_at: string; school_name?: string | null; difficulty?: string | null };
 type Session = { id: string; game: Game; ip_hash: string; started_at: string; submitted_at: string | null; school_id?:string; school_name?:string; difficulty?:string };
 
 function json(data: unknown, status = 200, origin = "https://baeguindex.com"): Response {
@@ -41,9 +41,9 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
   const raw=await response.text();return raw?JSON.parse(raw):null;
 }
 async function top(game: Game): Promise<Entry[]> {
-  const q = new URLSearchParams({select:"nickname,score,created_at,school_name,difficulty",game:"eq."+game,order:game==="volleyball_25"?"score.asc,created_at.asc":"score.desc,created_at.asc",limit:"10"});
+  const q = new URLSearchParams({select:"score,created_at,school_name,difficulty",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
   const list = await db("arcade_game_scores?" + q);
-  return list.map((e:Entry)=>({nickname:e.nickname,score:e.score,created_at:e.created_at,school_name:e.school_name??null,difficulty:e.difficulty??null}));
+  return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
 
 type School = { school_id:string; school_name:string; sido_standard:string };
@@ -129,15 +129,22 @@ function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number 
   return p*120+Math.min(60,spikes)*25+
     (!knockout&&p>c?600+Math.max(0,7-c)*30:0)+Math.min(900,seconds*4);
 }
-function scoreFromVolleyball25(result:any, elapsed:number):number {
- const player=result?.player,cpu=result?.cpu,time=result?.elapsedTenths;
- if(player!==25 || !int(cpu,0,24) || !int(time,1,36000))
+function scoreFromVolleyball25(result:any,elapsed:number):number {
+ const player=result?.player,cpu=result?.cpu,base=result?.baseScore,
+       multiplier=result?.multiplier,final=result?.finalScore,victory=result?.victory;
+ if(!int(player,0,25)||!int(cpu,0,25)||!int(base,0,2500)||
+    !int(multiplier,1,6)||!int(final,0,15000)||typeof victory!=="boolean")
    throw new Error("invalid_stats");
- // A match has at least 24 replay gaps (100 frames each). Accept generous
- // network/mobile slack, but reject impossible time claims and future time.
- if(time<Math.max(150,(player+cpu-1)*13)||time>(elapsed+2)*10)
-   throw new Error("invalid_duration");
- return time; // deciseconds; lower values outrank higher values.
+ if((player!==25&&cpu!==25)||(player===25&&cpu===25))
+   throw new Error("invalid_match");
+ if(victory!==(player===25))throw new Error("invalid_victory");
+ // Every completed rally takes game time; time is NOT a ranking factor.
+ if(elapsed<Math.max(4,(player+cpu-1)*1.2))throw new Error("invalid_duration");
+ const expectedBase=Math.max(0,player*100-cpu*50);
+ const expectedMultiplier=player===25?1+Math.floor((25-cpu)/5):1;
+ if(base!==expectedBase||multiplier!==expectedMultiplier||final!==expectedBase*expectedMultiplier)
+   throw new Error("invalid_score");
+ return final;
 }
 function scoreFromRetirement(result:any,elapsed:number):number {
  if(result?.survivalSeconds===undefined)throw new Error("invalid_survival_time");
@@ -200,9 +207,9 @@ Deno.serve(async (req:Request)=>{
       return json({session:rows[0].id,school:selected},200,origin);
     }
     if(payload.action!=="submit")return error("unknown_action",400,origin);
-    const sessionId=payload.session, nickname=payload.nickname;
+    const sessionId=payload.session;
+    if(Object.prototype.hasOwnProperty.call(payload,"nickname"))return error("nickname_not_supported",400,origin);
     if(typeof sessionId!=="string"||!/^[0-9a-f-]{36}$/i.test(sessionId))return error("invalid_session",400,origin);
-    if(typeof nickname!=="string"||!/^[A-Z]{2,8}$/.test(nickname))return error("invalid_name",400,origin);
     const qs=new URLSearchParams({select:"id,game,ip_hash,started_at,submitted_at,school_id,school_name,difficulty",id:"eq."+sessionId,limit:"1"});
     const rows=await db("arcade_game_sessions?"+qs) as Session[];
     const session=rows[0];
@@ -221,7 +228,7 @@ Deno.serve(async (req:Request)=>{
          scoreFromRun(payload.stats,elapsed);
     } catch(e) {return error(e instanceof Error?e.message:"invalid_stats",400,origin);}
     const existing=await top(game);
-    if(existing.length>=10 && (game==="volleyball_25"?score>=existing[9].score:score<=existing[9].score)){
+    if(existing.length>=10 && score<=existing[9].score){
       return json({ranked:false,score,top10:existing},200,origin);
     }
     // Persist the score BEFORE consuming the session. A transient insert failure
@@ -230,7 +237,7 @@ Deno.serve(async (req:Request)=>{
     const inserted=await db(
       "arcade_game_scores?on_conflict=session_id&select=created_at",
       "POST",
-      {session_id:session.id,game,nickname,score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
+      {session_id:session.id,game,score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
       "resolution=ignore-duplicates,return=representation"
     ) as Array<{created_at:string}>;
     if(!inserted?.length)return error("session_expired",409,origin);
@@ -242,8 +249,8 @@ Deno.serve(async (req:Request)=>{
       console.error("arcade_completion_marker_failed");
     }
     const board=await top(game);
-    // Nicknames and scores are not unique; use the database-created timestamp as a tie-breaker.
-    const rank=board.findIndex(e=>e.nickname===nickname&&e.score===score&&e.created_at===inserted[0].created_at)+1;
+    // Anonymous entries are matched using the server-issued timestamp, score and school.
+    const rank=board.findIndex(e=>e.score===score&&e.created_at===inserted[0].created_at&&e.school_name===session.school_name)+1;
     return json({ranked:rank>0,rank,score,top10:board},200,origin);
   }catch(e){
     console.error("arcade_error",e instanceof Error?e.message:"unknown");
