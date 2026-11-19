@@ -343,3 +343,26 @@ body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-messag
   }
 }
 
+/* Approved school basics: value plus its official reference year. */
+body.beagu-page-compare .compare-basic-value{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  align-items:flex-start;
+  min-width:0;
+}
+body.beagu-page-compare .compare-basic-value strong{
+  font-size:13px;
+  line-height:1.5;
+  color:#1c4f8c;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+body.beagu-page-compare .compare-basic-reference{
+  display:block;
+  color:#7689a2;
+  font-size:10px;
+  font-weight:650;
+  line-height:1.4;
+}
+
