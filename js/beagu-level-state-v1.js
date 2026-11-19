@@ -12,12 +12,47 @@
   const getToken=()=>{
     try { return sessionStorage.getItem(KEY)||''; } catch (_) { return ''; }
   };
+  // The same auth card remains in place at Lv.0, Lv.1 and Lv.2.
+  // Use only the server-verified badge event; never upgrade from a typed code alone.
+  const syncLevelCards=(raw,provisional)=>{
+    const tier=/^[012]$/.test(raw)?Number(raw):null;
+    const badgeLabel=tier===0?'미인증':tier===1?'Lv.1 인증됨'
+      :tier===2?(provisional?'Lv.2(임시)':'Lv.2 인증됨')
+      :raw==='checking'?'확인 중':'확인 불가';
+    const buttonLabel=tier===1?'고유번호 인증':tier===2?'인증 완료':'레벨업 인증';
+    const cards=[
+      ['lv1QuickAuth','lv1QuickBadge'],
+      ['loginPanel',null],
+      ['compareLv1AuthPanel','compareLv1Badge'],
+      ['challengeAccessPanel','challengeAccessBadge'],
+      [null,null]
+    ];
+    for(const [id,badgeId] of cards){
+      const card=id?document.getElementById(id):document.querySelector('.beagu-levelup-status');
+      if(!card)continue;
+      card.dataset.authLevel=tier===null?raw:String(tier);
+      card.dataset.provisional=provisional?'true':'false';
+      const badge=badgeId?document.getElementById(badgeId):
+        card.querySelector('.beagu-auth-badge,.tier-pill');
+      if(badge){
+        badge.textContent=badgeLabel;
+        badge.classList.toggle('is-authenticated',tier!==null&&tier>=1);
+      }
+      const action=card.querySelector('.beagu-levelup-trigger[data-beagu-open-levelup]');
+      if(action){
+        action.textContent=buttonLabel;
+        action.disabled=tier===2||raw==='checking';
+        action.classList.toggle('is-complete',tier===2);
+      }
+    }
+  };
   const setState=(level,label,aria,provisional=false)=>{
     indicator.dataset.provisional=provisional?'true':'false';
     indicator.dataset.level=level;
     indicator.textContent=label;
     indicator.setAttribute('aria-label',aria);
     indicator.title=aria;
+    syncLevelCards(level,provisional);
     window.dispatchEvent(new CustomEvent('beagu:level-state-updated', {detail:{level:Number.isInteger(Number(level))?Number(level):null,status:level,provisional}}));
   };
   async function refresh(){
@@ -99,6 +134,13 @@
   let sending=false;
   function openLevelUp(){
     if(sending)return;
+    const upgrading=indicator.dataset.level==='1';
+    overlay.querySelector('#beaguLevelUpTitle').textContent=upgrading?'고유번호 인증':'레벨업 인증';
+    overlay.querySelector('.beagu-levelup-description').textContent=upgrading
+      ?'챌린지에서 받은 고유번호를 입력해 Lv.2(임시)로 인증하세요.'
+      :'2026 참여코드 또는 챌린지 고유번호를 입력하세요.';
+    overlay.querySelector('#beaguLevelUpSubmit').textContent=upgrading?'고유번호 인증':'레벨업하기';
+    codeInput.placeholder=upgrading?'챌린지 고유번호':'참여코드 · 고유번호';
     previousFocus=document.activeElement;
     feedback.textContent='';
     codeInput.value='';
