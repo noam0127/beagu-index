@@ -34,16 +34,46 @@ $('vnOverlay').append(stats);
 const dayTrack=build('div','diary-day-progress');
 dayTrack.setAttribute('aria-label','7일 중 현재 진행 날짜');
 for(let i=0;i<7;i++){const segment=build('span','');segment.setAttribute('aria-hidden','true');dayTrack.append(segment)}
-$('vnHeaderSlot').append(dayTrack);
+const seasonMeta=build('div','diary-semester-meta');
+seasonMeta.id='diarySemesterMeta';seasonMeta.hidden=true;
+const seasonPill=build('span','season-marker'),partPill=build('span','part-marker');
+seasonMeta.append(seasonPill,partPill);
+$('vnHeaderSlot').append(dayTrack,seasonMeta);
+const monthDetails={
+ '03':['march','3월 · 찬바람이 남은 봄'],
+ '04':['april','4월 · 꽃이 피는 봄'],
+ '05':['may','5월 · 늦봄의 햇살'],
+ '06':['june','6월 · 초여름'],
+ '07':['july','7월 · 한여름']
+};
 function refreshStatus(){
  love.replaceChildren(build('span','','♥ 동료 호감'),build('b','', $('statAffection').textContent||'—'));
  fatigue.replaceChildren(build('span','','◷ 피로도'),build('b','', $('statFatigue').textContent||'—'));
- const match=($('chapterDay').textContent||'').match(/^\s*([1-7])\s*\/\s*7/);
- const day=match?Number(match[1]):1;
- [...dayTrack.children].forEach((s,i)=>s.className=i+1===day?'current':i+1<day?'complete':'');
- dayTrack.setAttribute('aria-label','7일 중 '+day+'일째');
+ const heading=($('chapterDay').textContent||'').trim();
+ const semester=heading.match(/^(\d+)\s*\/\s*36\s*·\s*제(\d+)부\s*(.*)$/);
+ const week=heading.match(/^\s*([1-7])\s*\/\s*7/);
+ const episode=semester?Number(semester[1]):week?Number(week[1]):1;
+ const total=semester?6:7;
+ const slot=semester?Math.ceil(episode/6):episode;
+ if(dayTrack.childElementCount!==total){
+  dayTrack.replaceChildren(...Array.from({length:total},()=>{const el=build('span','');el.setAttribute('aria-hidden','true');return el}));
+ }
+ [...dayTrack.children].forEach((item,i)=>item.className=i+1===slot?'current':i+1<slot?'complete':'');
+ if(semester){
+  const month=($('chapterPlace').textContent||'').match(/2027-(0[3-7])-\d{2}/)?.[1]||'03';
+  const [season,label]=monthDetails[month]||monthDetails['03'];
+  document.body.dataset.diarySeason=season;
+  seasonPill.textContent=label;
+  partPill.textContent='제'+semester[2]+'부 · '+semester[3]+' · '+episode+'화 / 36화';
+  seasonMeta.hidden=false;
+  dayTrack.setAttribute('aria-label','전체 6부 중 '+slot+'부 · 총 36화 중 '+episode+'화');
+ }else{
+  seasonMeta.hidden=true;
+  delete document.body.dataset.diarySeason;
+  dayTrack.setAttribute('aria-label','7일 중 '+episode+'일째');
+ }
 }
-for(const id of ['statAffection','statFatigue','chapterDay']){
+for(const id of ['statAffection','statFatigue','chapterDay','chapterPlace']){
  new MutationObserver(refreshStatus).observe($(id),{childList:true,characterData:true,subtree:true});
 }
 refreshStatus();
