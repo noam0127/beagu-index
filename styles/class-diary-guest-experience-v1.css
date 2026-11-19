@@ -122,3 +122,19 @@ body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid{dis
 body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid>div:nth-child(n+3){display:none!important}
 body.is-guest-flow.is-setting #setup[data-step="1"] .guest-setup-poem{display:none!important}
 body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player{justify-content:flex-start;align-items:stretch;text-align:left}
+
+
+/* Two-step school-led prologue: no personal profile or extra opening animation. */
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player{
+ justify-content:center;align-items:stretch;gap:clamp(12px,3dvh,28px);text-align:left;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid{
+ display:grid!important;width:min(100%,570px);margin:clamp(7px,2dvh,18px) auto!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-flow,
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{display:flex!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .guest-setup-poem,
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player-stamp{display:none!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-section-title{align-self:center;width:min(100%,570px)}
+body.is-guest-flow.is-setting #setup[data-step="1"] #setupNext{display:inline-flex!important}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-end{display:none!important}
