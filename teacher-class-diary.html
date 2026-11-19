@@ -46,11 +46,14 @@ footer{font-size:13px;color:#738598}
 <section class="panel"><h2 id="schoolName"></h2><p id="identity" class="muted"></p><div id="tags" class="chips"></div><p id="eligibility"></p></section>
 <section class="panel"><h2>확인된 학교 정보</h2><dl id="facts"></dl></section>
 <section class="panel"><h2>이야기의 재료</h2><p class="muted">아래 항목은 아직 소설 본문이 아닙니다. 실제 장면으로 발전시키기 위한 조건입니다.</p><ol id="hooks" class="hooks"></ol></section>
+<section class="panel" id="storyPanel" hidden><h2>일주일의 이야기 · 2단계 미리보기</h2><p class="muted">2027년 3월 8~14일을 배경으로 한 소설 장면의 씨앗입니다. 과거 설문 결과를 참고하더라도 실제 학교에서 벌어진 사건이나 발언을 뜻하지 않습니다.</p><p id="storyCoverage"></p><ol class="hooks" id="storyScenes"></ol></section>
 <section class="panel"><h2>자료 검증</h2><p id="coverage"></p><p id="issues" class="muted"></p></section>
 </div>
 <footer>이 게임의 사건과 대화는 실제 조사 자료에 착안한 창작입니다. 실제 교직원의 발언이나 2027년 학교 현황을 뜻하지 않습니다.</footer>
 </main>
 <script src="js/class-diary-world-v1.js"></script>
+<script src="js/2026-questionnaire-options-v1.2.js"></script>
+<script src="js/class-diary-narrative-v1.js"></script>
 <script>
 (function(){
 'use strict';
@@ -62,6 +65,7 @@ function node(tag,text){const e=document.createElement(tag);if(text!==undefined)
 function status(text){$('status').textContent=text}
 function render(world){
   $('world').hidden=false;
+  $('storyPanel').hidden=true;
   $('schoolName').textContent=world.basic.name;
   $('identity').textContent=[world.basic.sido,world.basic.office,world.basic.address].filter(Boolean).join(' · ');
   $('tags').replaceChildren();
@@ -97,6 +101,44 @@ function render(world){
   $('issues').textContent='값 충돌 '+conflict+'건 · 누락 '+missing+
     '건. 미확인 지리 특성이나 과거 자료를 현재의 사실로 임의 보충하지 않습니다.';
 }
+async function renderStory(world,schoolId,ticket){
+  if(!world.eligible){return;}
+  try{
+    const [catalogResponse,signalsResponse]=await Promise.all([
+      fetch('data/public-statistics-question-catalog-v1.json',{cache:'no-store'}),
+      fetch(API+'class-diary-story-signals-v1',{
+        method:'POST',cache:'no-store',
+        headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+        body:JSON.stringify({schoolId})
+      })
+    ]);
+    if(ticket!==serial)return;
+    if(!catalogResponse.ok)throw Error('CATALOG_UNAVAILABLE');
+    const catalog=await catalogResponse.json();
+    const blueprint=BeaguClassDiaryNarrative.createBlueprint(catalog,window.Beagu2026Questionnaire);
+    if(blueprint.coverage.questionCount!==128)throw Error('INCOMPLETE_QUESTION_MAPPING');
+    const response=signalsResponse.ok?await signalsResponse.json():null;
+    if(ticket!==serial)return;
+    const signals=response&&response.schoolId===schoolId&&Array.isArray(response.historicalSignals)?
+      response.historicalSignals:[];
+    const plan=BeaguClassDiaryNarrative.scenePlan(blueprint,world,signals);
+    const list=$('storyScenes');list.replaceChildren();
+    for(const scene of plan.scenes){
+      const li=node('li');
+      const title=node('strong',scene.day+'일 차 · '+scene.brief);
+      const body=node('p',scene.passage+' '+scene.dialogue);
+      const source=node('small',scene.basis==='approved_historical_aggregate'?
+        '공개 검증된 과거 조사 경향을 소재로 한 허구':'공통 교직 경험에 착안한 허구');
+      source.className='muted';li.append(title,body,source);list.append(li);
+    }
+    $('storyCoverage').textContent='조사 문항 '+blueprint.coverage.questionCount+
+      '개 · 2026 세부 선택·행 '+blueprint.coverage.subitemCount+
+      '개 · 공개 검증된 과거 경향 반영 '+plan.approvedSignals+'개';
+    $('storyPanel').hidden=false;
+  }catch(e){
+    if(ticket===serial)status('학교 기본정보는 표시했습니다. 이야기 미리보기 자료를 확인하지 못했습니다.');
+  }
+}
 async function choose(record,ticket){
   $('results').replaceChildren();status('레벨2 권한과 승인 자료를 확인하는 중…');
   if(!token){status('레벨2 인증이 필요합니다. 화면 위쪽의 레벨2 인증에서 로그인해 주세요.');return}
@@ -111,6 +153,7 @@ async function choose(record,ticket){
     const world=BeaguClassDiaryWorld.generateWorld(payload);
     if(ticket!==serial)return;
     render(world);status('승인된 학교 정보를 불러왔습니다.');
+    await renderStory(world,record.school_id,ticket);
   }catch(e){if(ticket===serial)status('학교 데이터를 확인하지 못했습니다. 다시 시도해 주세요.')}
 }
 async function search(){
