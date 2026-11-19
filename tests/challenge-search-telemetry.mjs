@@ -205,6 +205,14 @@ assert.match(challenge,/id="challengeProtected" hidden/);
 assert.ok(challenge.indexOf('id="challengeProtected"')<challenge.indexOf('id="certificate"'));
 assert.match(challenge,/js\/challenge-access-v1\.js/);
 assert.match(challenge,/styles\/challenge-access-v1\.css/);
+assert.match(challenge,/styles\/beagu-auth-unified-v1\.css/,'Challenge uses same shared form styles');
+assert.match(challenge,/id="challengeAccessForm" class="beagu-auth-form"/);
+assert.match(challenge,/id="challengeAccessToggle" class="beagu-auth-toggle"/);
+assert.match(challenge,/class="challenge-access-submit beagu-auth-submit"/);
+assert.match(challenge,/class="beagu-auth-field"/);
+assert.match(challenge,/class="beagu-auth-input-wrap"/);
+assert.match(challenge,/class="challenge-access-feedback beagu-auth-message"/);
+assert.match(challenge,/class="challenge-access-help beagu-auth-help"/);
 assert.match(challengeLogic,/beagu:challenge-access-granted/);
 assert.match(challengeLogic,/beagu:challenge-access-revoked/);
 assert.doesNotMatch(challengeLogic,/^\s*prepare\(\);\s*$/m,'Do not join public challenge without Lv1');
@@ -213,9 +221,14 @@ assert.match(challengeGate,/Number\.isInteger\(level\)&&level>=1/,'Level 0 is in
 
 const gateElements=Object.fromEntries([
   'challengeAccessPanel','challengeAccessForm','challengeAccessCode',
-  'challengeAccessSubmit','challengeAccessFeedback','challengeProtected','challengeLogout'
+  'challengeAccessSubmit','challengeAccessFeedback','challengeProtected','challengeLogout',
+  'challengeAccessBadge','challengeAccessToggle'
 ].map(id=>[id,{hidden:id==='challengeProtected'||id==='challengeAccessForm',
-  disabled:false,value:'',textContent:'',listeners:{},addEventListener(type,fn){this.listeners[type]=fn;}}]));
+  disabled:false,value:'',type:id==='challengeAccessCode'?'password':'',textContent:'',
+  attributes:{},className:'',listeners:{},
+  classList:{toggle(_name,_flag){}},
+  setAttribute(name,value){this.attributes[name]=value;},
+  addEventListener(type,fn){this.listeners[type]=fn;}}]));
 const gateEvents=[];
 let returnedLevel=0;
 const gateFetchCalls=[];
@@ -244,7 +257,14 @@ runInNewContext(challengeGate,{
 });
 assert.equal(gateElements.challengeProtected.hidden,true,'Anonymous certificate remains hidden');
 assert.equal(gateElements.challengeAccessForm.hidden,false,'Anonymous users see login form');
+assert.equal(gateElements.challengeAccessBadge.textContent,'미인증','Same badge as search and comparison');
+assert.equal(gateElements.challengeAccessCode.type,'password');
 gateElements.challengeAccessCode.value='samplecode';
+gateElements.challengeAccessToggle.listeners.click();
+assert.equal(gateElements.challengeAccessCode.type,'text','Show code toggle works');
+assert.equal(gateElements.challengeAccessToggle.attributes['aria-pressed'],'true');
+gateElements.challengeAccessToggle.listeners.click();
+assert.equal(gateElements.challengeAccessCode.type,'password','Hide code toggle works');
 await gateElements.challengeAccessForm.listeners.submit({preventDefault(){}});
 assert.equal(gateElements.challengeProtected.hidden,true,'Level 0 cannot enter');
 assert.equal(storedGateToken,'','Do not cache Level 0 token');
@@ -255,8 +275,16 @@ assert.equal(gateElements.challengeProtected.hidden,false,'Level 1 can enter');
 assert.equal(gateElements.challengeAccessPanel.hidden,false,
  'Level 1 keeps the same status panel visible after login');
 assert.equal(gateElements.challengeLogout.hidden,false,'Logout remains in the common card');
+assert.equal(gateElements.challengeAccessBadge.textContent,'Lv.1 인증 완료','Verified Lv1 badge is updated');
+assert.equal(gateElements.challengeAccessPanel.attributes['data-auth-level'],'1','Shared signed-in state styles');
+assert.equal(gateElements.challengeAccessToggle.attributes['aria-pressed'],'false','Reveal is cleared after authentication');
 assert.equal(storedGateToken,'f'.repeat(64),'Share verified session with search');
 assert.ok(gateEvents.includes('beagu:challenge-access-granted'),'Only verified access signals certificate generator');
 assert.equal(gateFetchCalls.filter(x=>x.action==='login').length,2);
+await gateElements.challengeLogout.listeners.click();
+assert.equal(gateElements.challengeAccessBadge.textContent,'미인증','Logout resets common badge');
+assert.equal(gateElements.challengeAccessForm.hidden,false,'Logout restores input form');
+assert.equal(gateElements.challengeProtected.hidden,true,'Logout hides participation certificate');
+assert.equal(storedGateToken,'','Logout forgets the Lv1 session');
 
 console.log('PASS: existing participant ordinal only, 999/1000/1001, error≠0, intentional school events, privacy and original permissions');
