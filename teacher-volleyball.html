@@ -319,6 +319,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     resetEnergy();
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
+    state.maxLives=lifeProfiles[currentDifficulty];state.livesLeft=state.maxLives;
+    state.round=1;state.knockout=false;
     releaseKeys();
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
@@ -333,6 +335,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     releaseKeys();
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
+    currentDifficulty="hard";state.maxLives=lifeProfiles.hard;state.livesLeft=state.maxLives;
+    state.round=1;state.knockout=false;
     energy=energyProfiles.hard;specialProfile=specialProfiles.hard;resetEnergy();
     schoolPicker.setLocked(false);
     schoolPicker.resetForChange();
@@ -464,33 +468,81 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.x = p.x + sign * (reach + R + 1);
     ball.y = Math.min(ball.y, p.y - 22);
     ball.cooldown = 12;
-    if (spike) { state.flash = 9; state.spikes += 1; }
+    if(spike||cpuSmash){
+      ball.shadowFrames=charged?26:18;
+      ball.shadowColor=p.side==="left"?"#244363":"#762b4b";
+      ball.trail.length=0;
+      spikeSound(charged);
+    }else{
+      tone(p.side==="left"?440:390,.07,"triangle",.023);
+    }
+    if (spike) { state.flash=charged?32:9;state.spikes+=1; }
+  }
+  function finishMatch(knockout=false){
+    if(state.phase==="finished")return;
+    state.knockout=Boolean(knockout);
+    state.phase="finished";
+    const won=!knockout&&state.leftScore>state.rightScore;
+    state.winner=knockout?"💔 목숨 소진":won?"🏆 승리!":"다시 도전!";
+    state.message=state.winner;
+    releaseKeys();
+    schoolPicker.setLocked(false);
+    rememberBest(getFinalScore());
+    setStatus(state.winner+" · 기본 "+getBaseScore()+" + 생존 "+getSurvivalSeconds()+"초("+getSurvivalBonus()+") = "+getFinalScore()+"점");
+    if(knockout){tone(320,.23,"sawtooth",.04,0,115);tone(195,.28,"sine",.035,.16,100);}
+    else if(won){tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);}
+    else{tone(240,.20,"triangle",.045,0,150);}
+    const finalScore=getFinalScore();
+    // Zero-point attempts are displayed but not eligible for the public leaderboard.
+    if(finalScore>0)ranking?.finish(finalScore,{
+      player:state.leftScore,cpu:state.rightScore,spikes:state.spikes,
+      survivalSeconds:getSurvivalSeconds(),
+      ...(knockout?{knockout:true,livesLost:state.maxLives}:{})
+    });
+    syncUI();
+  }
+  function loseLife(){
+    if(state.phase!=="playing"&&state.phase!=="point")return false;
+    if(state.leftEnergy>0||state.livesLeft<=0)return false;
+    state.livesLeft--;
+    releaseKeys();
+    tone(300,.18,"sawtooth",.04,0,160);
+    if(state.livesLeft===0){
+      updateEnergyUI();
+      finishMatch(true);
+      return true;
+    }
+    state.round++;
+    state.serveLeft=false;
+    resetEnergy();
+    resetPositions();
+    state.phase="point";state.pointTicks=110;
+    state.message="♥ 목숨 -1 · ROUND "+state.round;
+    setStatus(state.message);
+    updateEnergyUI();
+    syncUI();
+    return true;
   }
   function point(leftWins) {
-    state.phase = "point";
-    state.pointTicks = 100;
-    state.serveLeft = !leftWins;
+    state.phase="point";
+    state.pointTicks=100;
+    state.serveLeft=!leftWins;
     if (leftWins) state.leftScore += 1; else state.rightScore += 1;
     state.message = leftWins ? "득점! +1" : "실점!";
     state.leftEnergy=clamp(state.leftEnergy+(leftWins?7:-9)*energy.allyCost,0,state.leftMaxEnergy);
     state.rightEnergy=clamp(state.rightEnergy+(leftWins?-9:7)*energy.enemyCost,0,state.rightMaxEnergy);
     updateEnergyUI();
     setStatus(state.message);
+    tone(leftWins?760:340,.12,leftWins?"triangle":"sawtooth",.038);
     if ((state.leftScore >= 7 || state.rightScore >= 7) && Math.abs(state.leftScore - state.rightScore) >= 2) {
-      state.phase = "finished";
-      state.winner = state.leftScore > state.rightScore ? "🏆 승리!" : "다시 도전!";
-      state.message = state.winner;
-      setStatus(state.winner+" · 기본 "+getBaseScore()+" + 생존 "+getSurvivalSeconds()+"초("+getSurvivalBonus()+") = "+getFinalScore()+"점");
-      schoolPicker.setLocked(false);
-      rememberBest(getFinalScore());
-      ranking?.finish(getFinalScore(),{
-        player:state.leftScore,cpu:state.rightScore,spikes:state.spikes,survivalSeconds:getSurvivalSeconds()
-      });
+      finishMatch(false);return;
     }
+    if(loseLife())return;
     syncUI();
   }
   function step() {
     if (state.flash > 0) state.flash--;
+    if(state.phase==="playing"&&ball.shadowFrames>0)ball.shadowFrames--;
     if(state.phase==="playing"){
       state.playFrames++;
       if(state.specialCooldownFrames>0)state.specialCooldownFrames--;
@@ -523,6 +575,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
     state.leftEnergy=clamp(state.leftEnergy+
       (activeMove?-left.impactSpeed*.0065*energy.allyCost:energy.allyRest),0,state.leftMaxEnergy);
+    if(loseLife())return;
     moveAI();
     state.rightEnergy=clamp(state.rightEnergy+
       (Math.abs(right.vx)>0.1?-Math.abs(right.vx)*.0065*energy.enemyCost:energy.enemyRest),0,state.rightMaxEnergy);
@@ -548,9 +601,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       }
     }
     playerHit(left);
+    if(loseLife())return;
     playerHit(right);
     ball.trail.push({ x: ball.x, y: ball.y });
-    if (ball.trail.length > 6) ball.trail.shift();
+    if (ball.trail.length > (ball.shadowFrames>0?14:6)) ball.trail.shift();
     if (ball.y + R >= FLOOR) {
       ball.y = FLOOR - R;
       point(ball.x >= NET_X);
