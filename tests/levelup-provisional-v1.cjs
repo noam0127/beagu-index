@@ -11,10 +11,12 @@ assert.match(server,/provisional:Number\(session\.access_level\)>=2&&!session\.i
 assert.match(server,/beagu_consume_login_budget/);
 assert.match(shell,/Lv\.2\(임시\)/,'Use the user-facing temporary Level 2 label');
 assert.doesNotMatch(shell,/Lv\.2\(진\)/,'Retired Level 2 label must not reappear');
-assert.match(shell,/data-beagu-open-levelup/);
-assert.match(shell,/sessionStorage\.setItem\(KEY,result\.token\)/);
-assert.match(shell,/Lv\.1 · 2026 참가/);
-assert.match(shell,/Lv\.2 · 챌린지/);
+assert.doesNotMatch(shell,/data-beagu-open-levelup|beaguLevelUpOverlay|window\.BeaguLevelUp/,
+ 'No identity-code entry modal is injected globally');
+assert.match(shell,/const VERIFY_URL=/,'Level badge still verifies a valid server-side session');
+assert.match(shell,/action:'verify'/,'Level badge remains read-only');
+assert.match(read('levels.html'),/레벨1 인증/);
+assert.match(read('levels.html'),/챌린지 · 고유번호 확인/);
 assert.match(post,/function canWrite\(\)\{return state\.level>=2 && .*?\.dataset\.provisional!=="true"\}/);
 assert.match(post,/const blocked=!canWrite\(\)/);
 assert.match(post,/if\(!canWrite\(\)\)composer\.append/);
