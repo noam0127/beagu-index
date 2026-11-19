@@ -551,3 +551,108 @@ body.beagu-page-lv1 .school-card .beagu-compare-source{
     padding:10px 11px;
   }
 }
+
+/* Binary school choices: original factual "있다/없다" shown as accessible O/X. */
+body.beagu-page-lv1 .school-card .beagu-answer-symbol{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  min-height:36px;
+  border-radius:11px;
+  border:1px solid transparent;
+  font-size:21px;
+  line-height:1;
+  font-weight:900;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-pill.is-yes{
+  background:#dff6ea;
+  color:#11633e;
+  border-color:#a9dec4;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-pill.is-no{
+  background:#ffe9ee;
+  color:#a92745;
+  border-color:#efb4c3;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-pill.is-unknown{
+  background:#edf1f7;
+  color:#55677e;
+  border-color:#d1dae7;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-text{
+  font-size:12px;
+  color:#536981;
+  font-weight:700;
+}
+/* Verified school-level checkbox union, not one artificially selected mode. */
+body.beagu-page-lv1 .school-card .beagu-selected-options{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:7px;
+  list-style:none;
+  padding:0;
+  margin:4px 0 0;
+}
+body.beagu-page-lv1 .school-card .beagu-selected-choice{
+  display:flex;
+  gap:7px;
+  align-items:flex-start;
+  min-width:0;
+  padding:8px 9px;
+  border:1px solid #bbd4f5;
+  border-radius:9px;
+  background:#fff;
+  color:#1e4d81;
+  font-size:12px;
+  font-weight:730;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-selected-mark{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  color:#fff;
+  background:#29805a;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:900;
+}
+body.beagu-page-lv1 .school-card .beagu-checkbox-original-options{
+  margin:14px 0 0;
+  border-top:1px solid #e8eef7;
+  padding-top:10px;
+}
+body.beagu-page-lv1 .school-card .beagu-checkbox-original-options summary{
+  cursor:pointer;
+  width:fit-content;
+  font-size:12px;
+  font-weight:750;
+  color:#56749d;
+  padding:6px 0;
+}
+body.beagu-page-lv1 .school-card .beagu-checkbox-original-options summary:focus-visible{
+  outline:3px solid #93c5fd;
+  outline-offset:2px;
+}
+body.beagu-page-lv1 .school-card .beagu-checkbox-original-options .beagu-options-title{
+  margin-top:8px;
+}
+@media(max-width:480px){
+  body.beagu-page-lv1 .school-card .beagu-selected-options{
+    grid-template-columns:1fr;
+  }
+  body.beagu-page-lv1 .school-card .beagu-selected-choice{
+    font-size:12px;
+  }
+}
