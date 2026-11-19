@@ -24,3 +24,7 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/account-auth-private-v1.mjs
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: deno check supabase/functions/beagu-account-v1/index.ts
