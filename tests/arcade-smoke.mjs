@@ -809,7 +809,7 @@ assert.ok(otherCelebrations.size>=2,"ordinary retirement clear messages vary");
 assert.match(volley,/state\.pointTicks=24/,"point intermission cut to 0.4 seconds");
 assert.match(volley,/const precise=p\.side==="left"&&accuracy/,"precision-based hit timing matters");
 assert.match(volley,/hitBall\.allyCooldown>0/,"teammate cooldown prevents repeated overlap hits");
-assert.match(volley,/Math\.abs\(hitBall\.x-left\.x\)<115/,"helpers stay out when player can receive");
+assert.match(volley,/allyBodyTouchesBall\(ally,hitBall\)/,"helpers assist only with real ball-body contact");
 assert.match(runner,/closestClearance<58/,"near miss verified by real distance");
 assert.doesNotMatch(runner,/!a\.good&&Math\.abs\(a\.x-player\.x\)<83/,"old false near-miss scoring removed");
 assert.doesNotMatch(runner,/addScore\(55\);float\(a\.x,a\.y,"PERFECT \+55"/,"protected collisions no longer grant combo points");
