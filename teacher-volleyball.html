@@ -107,7 +107,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   </div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 드래그 이동 · ⚡ 더블 터치 필살기 · ↔ 방향키</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>✈ 드래그 이동 · ⚡ 더블 터치 필살기 · ↔ 방향키 · EASY/NORMAL 분신 · EXTREME 공 2개·족쇄</div>
   <div id="arcade-top10" aria-label="선생님배구 1.0 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261118-recordfix1"></script>
@@ -152,6 +152,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   // Ball speed scales with school difficulty, independent of player and CPU movement.
   const ballSpeedProfiles={easy:.80,normal:.91,hard:1,very_hard:1.13,extreme:1.27};
   const ballSpeedFactor=()=>ballSpeedProfiles[currentDifficulty]||ballSpeedProfiles.hard;
+  const cloneProfiles={easy:2,normal:1,hard:0,very_hard:0,extreme:0};
   const specialProfiles={
     easy:{cooldown:12,cost:10,chargeFrames:540},
     normal:{cooldown:16,cost:12,chargeFrames:480},
@@ -193,6 +194,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false, contactFrames:0 };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false, contactFrames:0 };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
+  const secondBall={x:685,y:168,vx:-6,vy:-5,spin:0,cooldown:0,trail:[],shadowFrames:0,shadowColor:"#762b4b"};
+  const activeBalls=[ball],clones=[];
+  const volleyShackle={x:156,dir:-1};
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const setStatus = text => { status.textContent = text; };
   const BEST_KEY="teacherVolleyballBestV1";
@@ -310,6 +314,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   function resetPositions() {
     Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, impactSpeed: 0, jumpLock: false, contactFrames:0 });
+    volleyShackle.x=left.x-54;volleyShackle.dir=-1;
     Object.assign(right, { x: 690, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false, contactFrames:0 });
     ball.x = state.serveLeft ? 215 : 685;
     ball.y = 223;
@@ -320,7 +325,23 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.shadowFrames=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;
     state.healFrames=0;
-    ball.trail.length = 0;
+    ball.trail.length=0;
+    activeBalls.length=1;
+    if(currentDifficulty==="extreme"){
+      Object.assign(secondBall,{
+        x:state.serveLeft?685:215,y:168,
+        vx:(state.serveLeft?-5.5:5.5)*ballSpeedFactor(),vy:-5.6*ballSpeedFactor(),
+        spin:0,cooldown:0,shadowFrames:0
+      });
+      secondBall.trail.length=0;
+      activeBalls.push(secondBall);
+    }
+    clones.length=0;
+    const count=cloneProfiles[currentDifficulty]||0;
+    for(let i=0;i<count;i++)clones.push({
+      x:count===2?(i?335:145):315,y:FLOOR-31,vx:0,vy:0,
+      side:"left",contactFrames:0,impactSpeed:0,clone:true
+    });
     state.aiRecalc=0;state.aiJump=false;state.aiTargetX=688;
   }
   async function startMatch() {
@@ -356,7 +377,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
     resetPositions();
-    if(!canPlayerJump())setStatus(school.school_name+" · EXTREME · 점프 불가");
+    if(!canPlayerJump())setStatus(school.school_name+" · EXTREME · 공 2개 · 족쇄 · 점프 불가");
+    else if(currentDifficulty==="easy")setStatus(school.school_name+" · EASY · 분신 2명 지원");
+    else if(currentDifficulty==="normal")setStatus(school.school_name+" · NORMAL · 분신 1명 지원");
     else setStatus(school.school_name+" · "+diffName[school.difficulty]);
     syncUI();canvas.focus();
   }
@@ -458,7 +481,32 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     p.y += p.vy;
     if (p.y > FLOOR - 31) { p.y = FLOOR - 31; p.vy = 0; }
   }
+  function moveClones(){
+    for(const ally of clones){
+      const incoming=activeBalls.filter(b=>b.vx<0&&b.x<NET_X-26&&b.y>120);
+      if(incoming.length){
+        const target=incoming.sort((a,b)=>Math.abs(a.x-ally.x)-Math.abs(b.x-ally.x))[0];
+        const predicted=target.x+target.vx*clamp((FLOOR-60-target.y)/Math.max(3,Math.abs(target.vy)+4),1,10);
+        const oldX=ally.x;
+        ally.x=clamp(ally.x+clamp(predicted-ally.x,-7.8,7.8),58,NET_X-61);
+        ally.vx=ally.x-oldX;
+      }
+      ally.y=FLOOR-31;
+    }
+  }
+  function cloneHit(ally,hitBall){
+    const dx=hitBall.x-(ally.x+29),dy=hitBall.y-(ally.y-15);
+    if(hitBall.cooldown>0||hitBall.vx>=-.5||dx*dx+dy*dy>(R+31)*(R+31))return false;
+    hitBall.vx=(10.7+Math.min(2,Math.abs(hitBall.vx)*.12))*ballSpeedFactor();
+    hitBall.vy=-11.2*ballSpeedFactor();
+    hitBall.cooldown=11;ally.contactFrames=11;
+    hitBall.shadowFrames=10;hitBall.shadowColor="#257d84";
+    tone(540,.09,"triangle",.03);
+    return true;
+  }
   function moveAI() {
+    const ball=activeBalls.find(b=>b.x>NET_X&&b.vx>0)||
+      activeBalls.find(b=>b.x>NET_X)||activeBalls[0];
     // Challenging schools telegraph a boss spike before the CPU can use it.
     const bossTier=currentDifficulty==="very_hard"||currentDifficulty==="extreme";
     if(bossTier&&state.bossWarnFrames===0&&state.bossCooldownFrames===0&&
@@ -485,7 +533,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const move=Math.abs(difference)>battle.enemyDeadzone?Math.sign(difference):0;
     controlPlayer(right,move,state.aiJump,battle.enemySpeed*energyFactor("right"),battle.enemyJumpForce);
   }
-  function playerHit(p) {
+  function playerHit(p,ball=activeBalls[0]) {
     const sign = p.side === "left" ? 1 : -1;
     // Receive near the extended forearms, not the sprite's body center.
     const handX=p.x+sign*29, handY=p.y-15;
@@ -625,9 +673,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if(state.healFrames>0)state.healFrames--;
     if(left.contactFrames>0)left.contactFrames--;
     if(right.contactFrames>0)right.contactFrames--;
+    for(const ally of clones)if(ally.contactFrames>0)ally.contactFrames--;
     if(state.impactFrames>0)state.impactFrames--;
     if (state.flash > 0) state.flash--;
-    if(state.phase==="playing"&&ball.shadowFrames>0)ball.shadowFrames--;
+    if(state.phase==="playing")for(const liveBall of activeBalls)if(liveBall.shadowFrames>0)liveBall.shadowFrames--;
     if(state.phase==="playing"){
       if(state.bossWarnFrames>0)state.bossWarnFrames--;
       if(state.bossCooldownFrames>0)state.bossCooldownFrames--;
@@ -657,15 +706,22 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     } else {
       controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump, 5*SPEED_MULTIPLIER*battle.allySpeed*energyFactor("left"),12.8*battle.allyJump);
     }
+    if(currentDifficulty==="extreme"){
+      if(Math.abs(left.x-beforeMoveX)>.2)volleyShackle.dir=left.x>beforeMoveX?-1:1;
+      const trailing=clamp(left.x+volleyShackle.dir*58,24,NET_X-50);
+      volleyShackle.x+=clamp((trailing-volleyShackle.x)*.19,-8,8);
+    }
     // Only intentional, fast player movement powers up the next ball contact.
     const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || (canPlayerJump()&&keys.jump);
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
     state.leftEnergy=clamp(state.leftEnergy+
       (activeMove?-left.impactSpeed*.0065*energy.allyCost:energy.allyRest),0,state.leftMaxEnergy);
     if(loseLife())return;
-    moveAI();
+    moveAI();moveClones();
     state.rightEnergy=clamp(state.rightEnergy+
       (Math.abs(right.vx)>0.1?-Math.abs(right.vx)*.0065*energy.enemyCost:energy.enemyRest),0,state.rightMaxEnergy);
+    for(const liveBall of activeBalls){
+    const ball=liveBall;
     const previousX = ball.x, previousY = ball.y;
     ball.vy += .30;
     ball.x += ball.vx;
@@ -688,14 +744,17 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         ball.vx = Math.max(2.8, Math.abs(ball.vx) * .85);
       }
     }
-    playerHit(left);
+    playerHit(left,ball);
     if(loseLife())return;
-    playerHit(right);
+    for(const ally of clones)if(cloneHit(ally,ball))break;
+    playerHit(right,ball);
     ball.trail.push({ x: ball.x, y: ball.y });
     if (ball.trail.length > (ball.shadowFrames>0?14:6)) ball.trail.shift();
     if (ball.y + R >= FLOOR) {
       ball.y = FLOOR - R;
       point(ball.x >= NET_X);
+      break; // First grounded ball ends this rally: one point, both balls reset.
+    }
     }
   }
   function rect(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h); }
@@ -823,7 +882,24 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  }
  ctx.restore();
 }
-  function drawBall() {
+  function drawVolleyShackle(){
+    if(currentDifficulty!=="extreme"||state.phase==="ready"||state.phase==="starting")return;
+    const ankleX=left.x+12,ankleY=left.y+25;
+    const weightX=volleyShackle.x,weightY=FLOOR-16+Math.sin(state.playFrames*.23)*1.3;
+    ctx.save();ctx.lineCap="round";
+    ctx.strokeStyle="#394653";ctx.lineWidth=7;
+    ctx.beginPath();ctx.moveTo(ankleX,ankleY);
+    ctx.quadraticCurveTo((ankleX+weightX)/2,FLOOR+1,weightX,weightY);ctx.stroke();
+    ctx.strokeStyle="#aab4c2";ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(ankleX,ankleY);
+    ctx.quadraticCurveTo((ankleX+weightX)/2,FLOOR+1,weightX,weightY);ctx.stroke();
+    oval(weightX,weightY,21,21,"#2b3746");
+    oval(weightX-5,weightY-7,7,6,"#9eacb9");
+    ctx.fillStyle="#4a596c";ctx.fillRect(ankleX-14,ankleY-8,28,13);
+    ctx.fillStyle="#c3d0d9";ctx.fillRect(ankleX-10,ankleY-5,20,4);
+    ctx.restore();
+  }
+  function drawBall(ball=activeBalls[0]) {
     // Spikes leave a dark, fading shadow of the ball plus a short speed streak.
     if(ball.shadowFrames>0){
       const fade=Math.min(1,ball.shadowFrames/18);
@@ -891,7 +967,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       ctx.translate((Math.random()-.5)*2*shake,(Math.random()-.5)*2*shake);
     }
     background();
+    for(const ally of clones){
+      ctx.save();ctx.globalAlpha=.58;
+      drawTeacher(ally,"#50bdb5");
+      ctx.restore();
+      textLabel("분신",ally.x,ally.y-66,13,"#217f85","center",45);
+    }
     drawTeacher(left, "#448bd8");
+    drawVolleyShackle();
     drawTeacher(right, (enemyLooks[currentDifficulty]||enemyLooks.normal).uniform);
     if(state.bossWarnFrames>0){
       const glow=state.bossWarnFrames%10<5?"#ffe57a":"#ff8e70";
@@ -900,7 +983,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       textLabel("⚠",right.x,right.y-91,31,glow,"center",58);
       ctx.restore();
     }
-    drawBall();
+    for(const liveBall of activeBalls)drawBall(liveBall);
     if(state.healFrames>0&&state.healAmount>0){
       ctx.save();ctx.globalAlpha=Math.min(1,state.healFrames/14);
       const rise=(45-state.healFrames)*.55;
