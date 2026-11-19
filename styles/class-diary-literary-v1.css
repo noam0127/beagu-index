@@ -345,3 +345,85 @@ body.is-playing.is-semester-mode #novelCard #vnBottom>.actions #nextBtn{
  }
 }
 
+
+
+/* 2026-11-20 — chapter HUD compact mode and re-centered prose.
+   Hide decorative controls until the reader opens them. */
+body.is-playing #vnHud{position:relative;min-height:44px;overflow:visible;z-index:12}
+body.is-playing #vnHud>.diary-hud-fold{
+ position:absolute;right:0;top:0;z-index:21;
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-width:70px;height:42px;padding:0 12px;
+ background:rgba(33,29,49,.70);
+ color:#fff8f7;border:1px solid rgba(255,248,251,.55);
+ border-radius:16px;box-shadow:0 4px 18px #100f2055;
+ backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+ font-size:12px;font-weight:750;letter-spacing:.01em;
+ cursor:pointer;touch-action:manipulation;
+ transition:background .2s ease,transform .2s ease;
+}
+body.is-playing #vnHud>.diary-hud-fold:hover{background:rgba(67,49,74,.86)}
+body.is-playing #vnHud>.diary-hud-fold:active{transform:scale(.97)}
+body.is-playing #vnHud>.diary-hud-fold:focus-visible{outline:3px solid #ffdbef;outline-offset:3px}
+body.is-playing #vnHud .diary-hud-fold-mark{display:block;font-size:21px;line-height:1;transition:transform .22s ease}
+body.is-playing.diary-hud-open #vnHud .diary-hud-fold-mark{transform:rotate(180deg)}
+body.is-playing.diary-hud-collapsed #vnHeaderSlot,
+body.is-playing.diary-hud-collapsed #diaryHudActions,
+body.is-playing.diary-hud-collapsed #diaryHudStats,
+body.is-playing.diary-hud-collapsed #vnInfo{display:none!important}
+body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{
+ display:block;max-width:calc(100% - 88px);
+ margin:0;padding-right:6px;
+}
+body.is-playing.diary-hud-open #vnHud #diaryHudActions{
+ position:absolute;right:0;top:48px;left:auto;z-index:20;
+ display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px;
+ max-width:min(92vw,270px);margin:0;
+}
+body.is-playing.diary-hud-open #diaryHudStats{
+ display:flex;flex-direction:column;gap:5px;
+ top:clamp(130px,20dvh,195px);right:clamp(12px,3vw,32px);
+ align-items:flex-end;z-index:13;
+}
+body.is-playing.is-semester-mode #novelCard #vnDialogueSlot{
+ display:flex;flex-direction:column;justify-content:center;min-height:0;flex:1 1 auto;
+}
+body.is-playing.is-semester-mode.diary-hud-collapsed #novelCard #vnBottom{
+ top:clamp(62px,10dvh,112px)!important;
+ bottom:calc(env(safe-area-inset-bottom,0px) + 12px)!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ display:flex;flex-direction:column;justify-content:space-between;
+ background:linear-gradient(153deg,rgba(24,25,37,.49),rgba(15,18,31,.58) 72%,rgba(38,28,43,.62));
+ backdrop-filter:blur(4px) saturate(.91);-webkit-backdrop-filter:blur(4px) saturate(.91);
+}
+body.is-playing.is-semester-mode.diary-hud-open #novelCard #vnBottom{
+ top:clamp(195px,31dvh,280px)!important;
+ bottom:calc(env(safe-area-inset-bottom,0px) + 12px)!important;
+ max-height:none!important;height:auto!important;
+}
+@media(max-width:620px){
+ body.is-playing #vnHud{min-height:42px}
+ body.is-playing #vnHud>.diary-hud-fold{right:0;top:0;height:39px;min-width:68px;padding:0 10px;border-radius:13px}
+ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{max-width:calc(100vw - 130px)}
+ body.is-playing.diary-hud-open #vnHud #diaryHudActions{top:45px;right:0;gap:4px}
+ body.is-playing.diary-hud-open #diaryHudStats{top:clamp(140px,23dvh,195px);right:10px}
+ body.is-playing.is-semester-mode.diary-hud-collapsed #novelCard #vnBottom{
+  top:clamp(55px,9dvh,86px)!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 9px)!important;
+  left:clamp(10px,3.5vw,18px)!important;
+  right:clamp(10px,3.5vw,18px)!important;
+  width:auto!important;max-height:none!important;
+ }
+ body.is-playing.is-semester-mode.diary-hud-open #novelCard #vnBottom{
+  top:clamp(190px,31dvh,270px)!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 9px)!important;
+ }
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing.is-semester-mode.diary-hud-collapsed #novelCard #vnBottom{top:53px!important;bottom:5px!important}
+ body.is-playing.is-semester-mode.diary-hud-open #novelCard #vnBottom{top:110px!important;bottom:5px!important}
+ body.is-playing.diary-hud-open #diaryHudStats{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing #vnHud>.diary-hud-fold,body.is-playing #vnHud .diary-hud-fold-mark{transition:none}
+}
