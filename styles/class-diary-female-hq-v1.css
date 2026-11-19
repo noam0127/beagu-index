@@ -1,0 +1,39 @@
+/* Original Korean dramatic portrait art — high detail WebP characters.
+   Image assets never introduce extra scrolling or alter romance routes. */
+.scene-portrait[data-art-quality="hq"]{
+ object-fit:contain;object-position:center bottom;
+ filter:drop-shadow(0 12px 22px rgba(19,20,32,.34));
+ image-rendering:auto;transform:translateZ(0);
+}
+body.is-playing #scenePortrait[data-art-quality="hq"]{
+ height:78%;max-width:57%;right:4%;bottom:22%;
+}
+#sceneGuest[data-art-quality="hq"] img{
+ object-fit:contain;object-position:center bottom;
+ filter:drop-shadow(0 8px 12px rgba(15,20,26,.2));
+}
+.setup-character-art img[data-art-quality="hq"],.setup-supporting-person img[data-art-quality="hq"]{
+ image-rendering:auto;object-fit:contain;object-position:center bottom;
+}
+.character-avatar[data-art-quality="hq"]{
+ background-color:#eee8e6;background-size:cover;background-position:center;
+ border-color:#ffffffd9;color:transparent;font-size:0;
+}
+body.is-playing .vn-bottom .character-avatar[data-art-quality="hq"]{
+ display:block;width:34px;height:34px;min-width:34px;border-width:1px;
+}
+body.is-playing .vn-bottom .character-strip:has(.character-avatar[data-art-quality="hq"]){
+ align-items:center;padding:4px 10px;min-height:37px;
+}
+@media(max-width:620px){
+ body.is-playing #scenePortrait[data-art-quality="hq"]{
+  height:68%;max-width:85%;right:-2%;bottom:29%;
+ }
+ .scene-guest[data-art-quality="hq"] img{max-height:clamp(118px,24vh,180px)}
+ body.is-playing .vn-bottom .character-avatar[data-art-quality="hq"]{
+  width:29px;height:29px;min-width:29px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .scene-portrait[data-art-quality="hq"]{transition:none!important;transform:none}
+}
