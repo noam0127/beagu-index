@@ -180,7 +180,8 @@
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
-<link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261118-gate1">
+<link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-unified-auth1">
+<link rel="stylesheet" href="styles/beagu-auth-unified-v1.css?v=20261119-auth1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261120-levelup1">
 <script defer src="js/beagu-level-state-v1.js?v=20261120-auth-unity1"></script>
 <link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-auth-unity1">
@@ -192,19 +193,24 @@
 <main id="main-content">
   <section id="challengeAccessPanel" class="challenge-access-panel beagu-auth-card beagu-levelup-card" aria-labelledby="challengeAccessTitle">
     <div class="beagu-auth-heading">
-      <h1 id="challengeAccessTitle">레벨업 인증</h1>
+      <h1 id="challengeAccessTitle">Lv.1 인증</h1>
       <div class="beagu-auth-actions">
         <span id="challengeAccessBadge" class="beagu-auth-badge" role="status" aria-live="polite">확인 중</span>
         <button id="challengeLogout" class="beagu-auth-logout" type="button" hidden>로그아웃</button>
       </div>
     </div>
-    <p id="challengeAccessFeedback" class="challenge-access-feedback" role="status" aria-live="polite">인증 상태 확인 중…</p>
-    <form id="challengeAccessForm" autocomplete="off" hidden>
-      <label for="challengeAccessCode">참여코드</label>
-      <input id="challengeAccessCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" placeholder="Lv.1 참여코드" required>
-      <button id="challengeAccessSubmit" type="submit" class="challenge-access-submit">인증하고 입장하기</button>
+    <form id="challengeAccessForm" class="beagu-auth-form" autocomplete="off" hidden>
+      <div class="beagu-auth-field">
+        <label class="beagu-auth-label" for="challengeAccessCode">참여코드</label>
+        <div class="beagu-auth-input-wrap">
+          <input id="challengeAccessCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" placeholder="발급받은 참여코드를 입력하세요" required>
+          <button id="challengeAccessToggle" class="beagu-auth-toggle" type="button" aria-label="참여코드 표시" aria-pressed="false">표시</button>
+        </div>
+      </div>
+      <button id="challengeAccessSubmit" type="submit" class="challenge-access-submit beagu-auth-submit">인증하기</button>
     </form>
-    <p class="challenge-access-help"><a href="survey.html">참여코드 받기 · 조사 참여</a></p>
+    <p id="challengeAccessFeedback" class="challenge-access-feedback beagu-auth-message" role="status" aria-live="polite">인증 상태 확인 중…</p>
+    <p class="challenge-access-help beagu-auth-help">참여코드는 <a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a> 시 발급됩니다.</p>
   </section>
   <div id="challengeProtected" hidden>
   
@@ -269,7 +275,7 @@
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/challenge.js?v=20261119-shortcode2"></script>
-<script src="js/challenge-access-v1.js?v=20261120-visible-card1"></script>
+<script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>
 
