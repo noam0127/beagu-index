@@ -224,6 +224,8 @@ Deno.serve(async (req:Request)=>{
     if(!payload||typeof payload!=="object")return error("invalid_body",400,origin);
     const game=payload.game;
     if(!isGame(game))return error("invalid_game",400,origin);
+    const requestedTier=payload.difficulty===undefined?null:rankTier(payload.difficulty);
+    if(payload.difficulty!==undefined&&!requestedTier)return error("invalid_difficulty",400,origin);
     const hash=await ipHash(req);
     if(payload.action==="start"){
       const selected=await resolveSchool(payload.school_id);
@@ -277,8 +279,6 @@ Deno.serve(async (req:Request)=>{
       // The unique score is safely stored even if the completion marker fails.
       console.error("arcade_completion_marker_failed");
     }
-    const requestedTier=payload.difficulty===undefined?null:rankTier(payload.difficulty);
-    if(payload.difficulty!==undefined&&!requestedTier)return error("invalid_difficulty",400,origin);
     const [board,fastestTop10]=await Promise.all([top(game,requestedTier),
       game==="volleyball_25"?fastest25(requestedTier):Promise.resolve([])]);
     const rank=board.findIndex(e=>e.score===score&&e.created_at===inserted[0].created_at&&e.school_name===session.school_name)+1;
