@@ -27,6 +27,13 @@ function femalePortraitSvg(id,x,season){
   suhyun:{rx:93,ry:101,y:183},sea:{rx:99,ry:98,y:185},
   yuri:{rx:89,ry:103,y:184}
  }[id];
+ const faceSilhouette={
+  woman:'M175 80C119 80 91 119 88 183C88 245 128 286 175 289C225 286 262 244 262 182C259 118 229 80 175 80Z',
+  none:'M175 82C118 82 95 119 97 184L107 232Q129 268 175 283Q221 270 243 232L253 184C255 119 231 82 175 82Z',
+  suhyun:'M175 80C121 80 90 118 92 181L105 236Q130 266 175 289Q220 269 245 237L258 181C260 117 229 80 175 80Z',
+  sea:'M175 86C114 86 77 119 77 185C77 256 115 285 175 286C237 286 272 255 272 184C271 121 235 86 175 86Z',
+  yuri:'M175 79C124 70 86 114 88 174C88 231 114 267 175 290C237 265 262 228 263 173C263 112 226 75 175 79Z'
+ }[id];
  const back={
   woman:'<path d="M82 159Q68 56 174 53Q272 51 278 164L289 329Q260 347 232 319H115Q87 345 66 325Z" fill="#795442" stroke="#634438" stroke-width="4"/><path d="M126 78Q172 45 221 79" stroke="#a57d62" stroke-width="9" fill="none"/><ellipse cx="174" cy="74" rx="28" ry="15" fill="#ac8671"/>',
   none:'<path d="M73 161Q73 59 173 57Q284 61 284 164L289 286Q265 310 238 304H109Q70 315 72 286Z" fill="#34343b" stroke="#24242a" stroke-width="5"/><path d="M88 291H266" stroke="#575962" stroke-width="6"/>',
@@ -41,18 +48,28 @@ function femalePortraitSvg(id,x,season){
   sea:'<path d="M85 161Q82 81 153 76Q231 65 275 143Q233 138 218 110Q174 154 88 163Z" fill="#775446"/><path d="M98 137Q67 217 99 255M258 129Q291 214 258 255" stroke="#775446" stroke-width="18" fill="none"/>',
   yuri:'<path d="M90 162Q82 89 158 74Q215 66 269 138Q225 113 207 93Q172 149 92 163Z" fill="#62483e"/><path d="M107 139Q95 201 105 261" stroke="#62483e" stroke-width="14" fill="none"/>'
  }[id];
- const rx=id==='none'?9:id==='sea'?11:10;
+ const rx=id==='none'?8:id==='suhyun'?7:id==='sea'?11:id==='yuri'?12:10;
+ const eyeHeight=id==='none'||id==='suhyun'?9:id==='yuri'?14:12;
  const iris=id==='none'||id==='suhyun'?'#383941':'#4b3836';
  const eyes=x==='smile'
   ?'<path d="M109 194Q128 175 147 193M201 193Q220 177 240 194" stroke="'+iris+'" stroke-width="7" stroke-linecap="round" fill="none"/>'
   :x==='tired'
   ?'<path d="M112 201Q129 196 148 201M202 201Q220 197 239 201" stroke="'+iris+'" stroke-width="6" stroke-linecap="round" fill="none"/><path d="M115 210Q131 214 146 210M204 210Q222 214 237 210" stroke="#b58d83" stroke-width="2" fill="none"/>'
-  :'<ellipse cx="131" cy="197" rx="'+rx+'" ry="'+(x==='flustered'?16:12)+'" fill="'+iris+'"/><ellipse cx="219" cy="197" rx="'+rx+'" ry="'+(x==='flustered'?16:12)+'" fill="'+iris+'"/><circle cx="134" cy="192" r="3" fill="white"/><circle cx="222" cy="192" r="3" fill="white"/>';
- const brow=x==='worried'?'<path d="M108 174l40-11M201 163l40 11" stroke="#695049" stroke-width="5" fill="none"/>':'<path d="M111 175q18-8 38-2M201 173q20-7 39 2" stroke="#695049" stroke-width="5" fill="none"/>';
+  :'<ellipse cx="131" cy="197" rx="'+rx+'" ry="'+(x==='flustered'?16:eyeHeight)+'" fill="'+iris+'"/><ellipse cx="219" cy="197" rx="'+rx+'" ry="'+(x==='flustered'?16:eyeHeight)+'" fill="'+iris+'"/><circle cx="134" cy="192" r="3" fill="white"/><circle cx="222" cy="192" r="3" fill="white"/>';
+ const brow=x==='worried'
+ ?'<path d="M108 174l40-11M201 163l40 11" stroke="#695049" stroke-width="5" fill="none"/>'
+ :id==='none'||id==='suhyun'
+ ?'<path d="M110 171l38 1M201 172l39-1" stroke="#4e4040" stroke-width="5" stroke-linecap="round" fill="none"/>'
+ :id==='yuri'
+ ?'<path d="M111 170q18-13 37-2M201 172q19-10 40-3" stroke="#695049" stroke-width="5" fill="none"/>'
+ :'<path d="M111 175q18-8 38-2M201 173q20-7 39 2" stroke="#695049" stroke-width="5" fill="none"/>';
  const mouth=x==='smile'?'<path d="M161 245q16 18 30 0" stroke="#b36c70" stroke-width="5" stroke-linecap="round" fill="none"/>':
   x==='worried'?'<path d="M161 250q16-11 30 0" stroke="#aa6b70" stroke-width="4" fill="none"/>':
   x==='flustered'?'<ellipse cx="176" cy="248" rx="8" ry="11" fill="#ad717b"/>':
-  '<path d="M165 245q12 8 25 0" stroke="#aa6b70" stroke-width="4" fill="none"/>';
+  id==='none'||id==='suhyun'?'<path d="M161 247q14 2 30-2" stroke="#975f62" stroke-width="4" fill="none"/>'
+  :id==='sea'?'<path d="M158 240q20 17 37-1" stroke="#a46c6b" stroke-width="4.5" fill="none"/>'
+  :id==='yuri'?'<path d="M159 239q17 18 37-1" stroke="#a7626a" stroke-width="5" fill="none"/>'
+  :'<path d="M165 245q12 8 25 0" stroke="#aa6b70" stroke-width="4" fill="none"/>';
  const cheeks=x==='shy'||x==='flustered'?'<ellipse cx="103" cy="225" rx="18" ry="10" fill="#e99ca8" opacity=".42"/><ellipse cx="247" cy="225" rx="18" ry="10" fill="#e99ca8" opacity=".42"/>':'';
  const glasses=id==='suhyun'?'<g fill="none" stroke="#899099" stroke-width="4"><rect x="98" y="182" width="62" height="39" rx="12"/><rect x="191" y="182" width="62" height="39" rx="12"/><path d="M160 195Q176 188 191 195M98 192L83 186M253 192L267 186"/></g>':'';
  const coatColor=(SEASONAL_COATS[id]&&SEASONAL_COATS[id][season])||c.coat;
@@ -75,7 +92,7 @@ function femalePortraitSvg(id,x,season){
  }[id];
  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 430" aria-hidden="true">'+
  '<ellipse cx="175" cy="418" rx="125" ry="10" fill="#28313d" opacity=".14"/>'+clothes+seasonalDetail+details+back+
- '<ellipse cx="175" cy="'+face.y+'" rx="'+face.rx+'" ry="'+face.ry+'" fill="'+c.skin+'" stroke="#b89283" stroke-width="3"/>'+
+ '<path d="'+faceSilhouette+'" fill="'+c.skin+'" stroke="#b89283" stroke-width="3"/>'+
  '<ellipse cx="86" cy="207" rx="12" ry="16" fill="'+c.skin+'"/><ellipse cx="263" cy="207" rx="12" ry="16" fill="'+c.skin+'"/>'+
  fringe+brow+eyes+glasses+mouth+cheeks+
  '<path d="M174 204l-5 19 8 2" fill="none" stroke="#c6978a" stroke-width="3" stroke-linecap="round"/>'+
