@@ -21,7 +21,6 @@ function goToDay(state,day){
 const happy=make();
 const hostile=make({workCulture:'deflecting'});
 const rural=make({storyRegion:'rural',fictionalSchoolSize:'small'});
-assert(incidents.schedule(happy,demoWorld,1)===undefined?true:true);
 assert(incidents.schedule(happy,demoWorld).includes('parking'));
 assert(incidents.schedule(happy,demoWorld).includes('arrival'));
 assert(incidents.schedule(happy,demoWorld).includes('focus'));
@@ -95,7 +94,7 @@ assert(x.incidentEvents.some(e=>e.id==='barbecue'));
 assert(y.incidentEvents.some(e=>e.id==='hostile_break'));
 assert(y.incidentEvents.some(e=>e.id==='hostile_meeting'));
 assert(y.incidentEvents.some(e=>e.id==='friendship_chair'));
-assert(x.stats.trust>y.stats.trust,'Mutual support should lead to more trust under otherwise equivalent choices');
+assert(x.stats.support>y.stats.support,'Mutual support must translate to a higher sense of support in otherwise similar fictional work');
 assert(x.stats.fatigue<y.stats.fatigue,'Same work, less isolation -> lower narrative fatigue');
 for(const s of [x,y]){
  assert(s.ending.title.startsWith('나의 '));
