@@ -60,6 +60,10 @@ jobs:
               console.log('PASS ' + label + ' HTTP 200 / content');
             }
             const api = process.env.POSTIT_API;
+            const settings = await get(api + '?action=settings');
+            assert.equal(settings.status, 200, 'public settings HTTP');
+            assert.ok(Number.isInteger(JSON.parse(settings.body).minimum_write_level), 'settings level integer');
+            console.log('PASS public settings API / current contract');
             const list = await get(api + '?action=posts');
             assert.equal(list.status, 200, 'public list HTTP');
             const parsed = JSON.parse(list.body);
