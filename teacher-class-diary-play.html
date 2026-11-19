@@ -579,8 +579,8 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
   <div class="diary-player-profile-fields">
    <div class="wide">
     <label for="heroName">이야기 속 내 이름</label>
-    <input id="heroName" type="text" maxlength="12" minlength="1" value="새봄" autocomplete="off" required aria-describedby="heroNameHelp">
-    <small id="heroNameHelp" class="field-note">1~12글자. 다른 등장인물과 구별할 수 있는 이름이나 별명을 써 주세요.</small>
+    <input id="heroName" type="text" maxlength="8" minlength="2" value="새봄" autocomplete="off" required aria-describedby="heroNameHelp">
+    <small id="heroNameHelp" class="field-note">한글 2~8글자로 이름이나 별명을 써 주세요.</small>
    </div>
    <div><label for="heroExperience">교직 경력</label>
     <select id="heroExperience">
@@ -592,8 +592,8 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
    <div><label for="heroGender">나의 성별</label>
     <select id="heroGender">
      <option value="undisclosed" selected>설정하지 않음</option>
-     <option value="female">여성</option>
-     <option value="male">남성</option>
+     <option value="woman">여성</option>
+     <option value="man">남성</option>
     </select>
    </div>
   </div>
@@ -1484,14 +1484,14 @@ $('playerSetupForm').addEventListener('submit',event=>{
  event.preventDefault();
  if(!game||!playerSetupPending||prologuePending||schoolIntroPending)return;
  const name=$('heroName').value.normalize('NFC').trim();
- if(!name||name.length>12||/[<>\r\n{}]/.test(name)){
-  $('heroName').setCustomValidity('1~12글자 이름이나 별명을 써 주세요.');
+ if(!/^[가-힣]{2,8}$/.test(name)){
+  $('heroName').setCustomValidity('한글 2~8글자로 이름이나 별명을 써 주세요.');
   $('heroName').reportValidity();
   return;
  }
  $('heroName').setCustomValidity('');
  const experience=$('heroExperience').value,gender=$('heroGender').value;
- if(!['new','mid','senior'].includes(experience)||!['male','female','undisclosed'].includes(gender))return;
+ if(!['new','mid','senior'].includes(experience)||!['man','woman','undisclosed'].includes(gender))return;
  game={...game,profile:{...game.profile,name,experience,gender}};
  playerSetupPending=false;
  sound.note('pageTurn');
