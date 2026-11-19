@@ -31,18 +31,18 @@ const inferredWorld={
 };
 const namedInput={name:'최윤호',age:32,gender:'man',partner:'woman',mbti:'INFP'};
 const guessed=engine.inferredProfile(inferredWorld,namedInput);
-const early=engine.inferredProfile(inferredWorld,{...namedInput,experienceYears:1});
-const mid=engine.inferredProfile(inferredWorld,{...namedInput,experienceYears:8});
-const senior=engine.inferredProfile(inferredWorld,{...namedInput,experienceYears:18});
+const early=engine.inferredProfile(inferredWorld,{...namedInput,experience:'new'});
+const mid=engine.inferredProfile(inferredWorld,{...namedInput,experience:'mid'});
+const senior=engine.inferredProfile(inferredWorld,{...namedInput,experience:'senior'});
 assert.equal(early.experience,'new');
 assert.equal(mid.experience,'mid');
 assert.equal(senior.experience,'senior');
-assert.throws(()=>engine.inferredProfile(inferredWorld,{...namedInput,experienceYears:50}),/EXPERIENCE_YEARS_INVALID/);
+assert.throws(()=>engine.inferredProfile(inferredWorld,{...namedInput,experience:'unknown'}),/EXPERIENCE_INVALID/);
 const approvedPlan={...plan,schoolId:'TEST001',
  fictionalContext:{source:'approved_historical_aggregate',boundary:'fictional_story_only',
   assignmentCue:'newcomer_assignment_story',cooperationCue:'coordination_story',
   socialCue:'choice_pressure_story'}};
-const informed=engine.inferredProfile(inferredWorld,{...namedInput,experienceYears:2},approvedPlan);
+const informed=engine.inferredProfile(inferredWorld,{...namedInput,experience:'new'},approvedPlan);
 assert.equal(informed.workCulture,'deflecting');
 assert.equal(informed.assignmentPractice,'newcomer_first');
 assert.equal(informed.sportsCulture,'pressured');
