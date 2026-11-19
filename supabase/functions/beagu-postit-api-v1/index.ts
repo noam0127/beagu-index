@@ -175,8 +175,10 @@ Deno.serve(async(req:Request)=>{
   // Mutations require real Supabase Auth, including supported anonymous Auth.
   const user=await userFrom(req);if(!user)return fail(req,"LOGIN_REQUIRED",401);
   const settings=await minimumLevel();
-  if(["create_post","create_comment"].includes(action) &&
-     (await tierFrom(req))<Number(settings.minimum_write_level))return fail(req,"LEVEL_REQUIRED",403);
+  // Read is public at Lv.0. Every user-created interaction is Lv.2 only;
+  // authors may still remove their own content if their level later changes.
+  if(action!=="remove" && (await tierFrom(req))<Number(settings.minimum_write_level))
+    return fail(req,"LEVEL_REQUIRED",403);
   if(action==="create_post"){
    const schoolId=String(body?.school_id||"");
    const content=textCheck(body?.text,200);
