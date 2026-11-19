@@ -417,27 +417,45 @@ function choose(u){
  setNotice(getAge()+"세 · "+careerStages[stage].name+" 시작!",2);
  closeMessage();playTone(610,.16);
 }
+function retirementCongratulations(difficulty,hitCount,nearMisses,remainingLives,lifeRatio,earned,newRecord){
+ if(hitCount===0)return {title:"🌟 무사고 38년, 완벽한 정년!",detail:"공문과 민원을 한 번도 맞지 않고 달려왔습니다.",icon:"🌟"};
+ if(difficulty==="extreme")return {title:"⛓️ 족쇄를 끌고 정년까지!",detail:"가장 어려운 조건에서도 62세까지 살아남았습니다.",icon:"🏆"};
+ if(nearMisses>=12)return {title:"💨 아슬아슬 회피의 달인!",detail:nearMisses+"번의 위기를 스스로 피해 낸 교직 38년!",icon:"💨"};
+ if(remainingLives>=2&&lifeRatio>=.8)return {title:"💚 건강하게 정년 달성!",detail:"수많은 업무 속에서도 체력을 지켜 냈습니다.",icon:"💚"};
+ if(newRecord)return {title:"🏆 정년과 점수 신기록을 함께!",detail:"살아남은 38년이 새로운 최고 점수가 됐습니다.",icon:"🏆"};
+ if(earned>=20000)return {title:"✨ 교직 38년의 전설!",detail:"시간이 지나도 변함없는 회피 실력이 빛났습니다.",icon:"✨"};
+ const cheers=[
+  {title:"🎉 62세 정년, 축하합니다!",detail:"24세에 시작한 도전이 마침내 완성됐습니다.",icon:"🎊"},
+  {title:"🌸 수고 많으셨습니다, 선생님!",detail:"38년 동안 수없이 많은 장애물을 넘었습니다.",icon:"🌸"},
+  {title:"🎓 교직생활 완주 성공!",detail:"지금까지의 경험 하나하나가 빛나는 기록입니다.",icon:"🎓"}
+ ];
+ return cheers[(nearMisses+hitCount+earned)%cheers.length];
+}
 function finish(win){
  if(state==="over")return;
  state="over";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  schoolPicker.setLocked(false);
  if(win)clock=RETIREMENT_SECONDS;
  const survivalSeconds=Math.floor(clock);
- const rawScore=Math.floor(score);
+ const rawScore=Math.max(1,Math.floor(score));
  score=win?rawScore*2:rawScore;
- if(score>best){best=Math.floor(score);persist();}
+ const newRecord=score>best;
+ if(newRecord){best=Math.floor(score);persist();}
  updateLabels();$("bestLabel").textContent=best.toLocaleString("ko-KR");
- if(score>0)ranking?.finish(Math.floor(score),{
+ ranking?.finish(Math.floor(score),{
    score:Math.floor(score),baseScore:rawScore,
    survivalSeconds,age:getAge(),victory:win
  });
+ const celebration=win?retirementCongratulations(schoolPicker.get()?.difficulty,
+   misses,nearCount,livesLeft,life/Math.max(1,maxLife),Math.floor(score),newRecord):null;
  const details=win?
    "24세 임용 → 62세 정년 달성!\n획득 "+rawScore.toLocaleString("ko-KR")+"점 × 2 = "+
      Math.floor(score).toLocaleString("ko-KR")+"점":
    getAge()+"세에 퇴장\n획득 "+rawScore.toLocaleString("ko-KR")+"점 · 정년 보너스 없음";
- message(win?"🎉 62세 정년 달성!":"🫖 교직생활 종료",details,[
+ message(win?celebration.title:"🫖 교직생활 종료",
+  (win?celebration.detail+"\n":"")+details+"\n닉네임 없이 결과를 자동 기록합니다",[
    {label:"↻ 다시 하기",action:()=>start()},
-   {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?"🏆":"🫖");
+   {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?celebration.icon:"🫖");
  playTone(win?950:280,.32);
 }
 function pause(){
