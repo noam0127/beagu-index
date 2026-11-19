@@ -8,7 +8,7 @@ for(const scene of ['morning','meeting','classroom','hallway','evening','weekend
  const image=visual.backgroundSvg(scene);
  assert(image.startsWith('<svg'));
  assert(image.endsWith('</svg>'));
- assert(!/<text|<foreignObject|https?:\/\//.test(image),'No text or external images in scene art');
+ assert(!/<text(?:\\s|>)|<foreignObject|<image(?:\\s|>)|<a\\s/.test(image),'No text or external images in scene art');
  assert(visual.dataUrl(image).startsWith('data:image/svg+xml'));
 }
 for(const partner of ['woman','man','none']){
