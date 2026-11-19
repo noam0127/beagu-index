@@ -1,0 +1,23 @@
+/* Drama-style transitions. Keep all content accessible when motion is reduced. */
+.diary-motion-ghost{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden;animation:diary-motion-dissolve .38s cubic-bezier(.24,.65,.3,1) both;will-change:opacity}
+.diary-motion-ghost-backdrop{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.9) brightness(.84)}
+.diary-motion-ghost-portrait{position:absolute;object-fit:contain;object-position:bottom center}
+@keyframes diary-motion-dissolve{0%{opacity:1}100%{opacity:0}}
+.diary-motion-day{position:absolute;inset:0;z-index:6;pointer-events:none;display:grid;place-items:center;padding:22px;background:linear-gradient(115deg,rgba(20,23,39,.83),rgba(35,27,46,.75));animation:diary-motion-day .85s ease-in-out both}
+.diary-motion-day span{font-family:"Nanum Myeongjo","Batang",serif;color:#fff;font-size:clamp(15px,3vw,25px);font-weight:700;text-align:center;line-height:1.7;letter-spacing:.035em;text-shadow:0 2px 18px #171322;padding:16px 23px;border-block:1px solid #ffffff66}
+@keyframes diary-motion-day{0%{opacity:0}20%,64%{opacity:1}100%{opacity:0}}
+.diary-motion-copy{animation:diary-motion-copy .19s ease-out both}
+@keyframes diary-motion-copy{from{opacity:.35;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.diary-motion-step{animation:diary-motion-step .29s cubic-bezier(.18,.69,.26,1) both}
+@keyframes diary-motion-step{from{opacity:0;transform:translateX(13px)}to{opacity:1;transform:translateX(0)}}
+.diary-motion-ending{animation:diary-motion-ending .68s ease-out both}
+@keyframes diary-motion-ending{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+/* The journey module already centers the choices; stagger buttons rather than adding another overlay. */
+body.is-playing #choiceSection:not([hidden]) .choice:nth-child(2){animation-delay:.045s}
+body.is-playing #choiceSection:not([hidden]) .choice:nth-child(3){animation-delay:.09s}
+body.is-playing #choiceSection:not([hidden]) .choice:nth-child(n+4){animation-delay:.12s}
+@media(prefers-reduced-motion:reduce){
+ .diary-motion-ghost,.diary-motion-day{display:none!important;animation:none!important}
+ .diary-motion-copy,.diary-motion-step,.diary-motion-ending{animation:none!important;transform:none!important}
+ body.is-playing #choiceSection:not([hidden]) .choice{animation-delay:0s!important}
+}
