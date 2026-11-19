@@ -216,7 +216,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     normal:{allySpeed:1.20,allyJump:1.10,allyReach:1.12,allyAttack:1.12,enemySpeed:6.0,enemyReaction:12,enemyLead:3,enemyError:58,enemyDeadzone:17,enemyJumpChance:.27,enemyJumpReach:125,enemyJumpForce:11.5,enemyReach:.91,enemyAttack:.83,enemySmashChance:.08,label:"아군 우세 · 상대 수비 보통"},
     hard:{allySpeed:1,allyJump:1,allyReach:1,allyAttack:1,enemySpeed:7.5,enemyReaction:8,enemyLead:5,enemyError:35,enemyDeadzone:11,enemyJumpChance:.49,enemyJumpReach:148,enemyJumpForce:12.8,enemyReach:1,enemyAttack:1,enemySmashChance:.19,label:"양 팀 균형 · 상대 점프 수비"},
     very_hard:{allySpeed:.89,allyJump:.91,allyReach:.94,allyAttack:.91,enemySpeed:9.2,enemyReaction:5,enemyLead:7,enemyError:18,enemyDeadzone:7,enemyJumpChance:.72,enemyJumpReach:172,enemyJumpForce:13.7,enemyReach:1.10,enemyAttack:1.23,enemySmashChance:.38,label:"아군 약화 · 상대 예측 점프·강타"},
-    extreme:{allySpeed:.79,allyJump:.83,allyReach:.86,allyAttack:.83,enemySpeed:11,enemyReaction:2,enemyLead:9,enemyError:5,enemyDeadzone:3,enemyJumpChance:.96,enemyJumpReach:195,enemyJumpForce:14.8,enemyReach:1.20,enemyAttack:1.48,enemySmashChance:.63,label:"아군 약화 · 상대 초고속 수비·강타"}
+    extreme:{allySpeed:.79,allyJump:.83,allyReach:.86,allyAttack:.83,enemySpeed:11,enemyReaction:2,enemyLead:9,enemyError:5,enemyDeadzone:3,enemyJumpChance:.96,enemyJumpReach:195,enemyJumpForce:14.8,enemyReach:1.20,enemyAttack:1.48,enemySmashChance:.63,label:"아군 약화 · 상대 초고속 수비·강타·작은 부하"}
    };
   // Stronger opponents get distinctive pixel armor, helmets and a boss aura.
   const enemyLooks={
@@ -283,6 +283,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
   const secondBall={x:685,y:168,vx:-6,vy:-5,spin:0,cooldown:0,trail:[],shadowFrames:0,shadowColor:"#762b4b"};
   const activeBalls=[ball],clones=[];
+  // EXTREME: one miniature defender belonging to the opposing team.
+  const enemyMinion={x:810,y:FLOOR-31,vx:0,contactFrames:0,cooldown:0,name:"부하",side:"right",mini:true};
   const volleyShackle={x:156,dir:-1};
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const setStatus = text => { status.textContent = text; };
@@ -443,6 +445,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, impactSpeed: 0, jumpLock: false, contactFrames:0 });
     volleyShackle.x=left.x-54;volleyShackle.dir=-1;
     Object.assign(right, { x: 690, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false, contactFrames:0 });
+    Object.assign(enemyMinion,{x:810,y:FLOOR-31,vx:0,contactFrames:0,cooldown:0});
     ball.x = state.serveLeft ? 215 : 685;
     ball.y = 223;
     state.rescueUsed=false;
@@ -450,6 +453,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.vy = -6.3*ballSpeedFactor();
     ball.cooldown = 0;
     ball.allyCooldown = 0;
+    ball.enemyMinionCooldown = 0;
     ball.spin=0;
     ball.shadowFrames=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;
@@ -459,7 +463,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       Object.assign(secondBall,{
         x:state.serveLeft?685:215,y:168,
         vx:(state.serveLeft?-5.5:5.5)*ballSpeedFactor(),vy:-5.6*ballSpeedFactor(),
-        spin:0,cooldown:0,allyCooldown:0,shadowFrames:0
+        spin:0,cooldown:0,allyCooldown:0,enemyMinionCooldown:0,shadowFrames:0
       });
       secondBall.trail.length=0;
       activeBalls.push(secondBall);
@@ -503,7 +507,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
     resetPositions();
-    if(!canPlayerJump())setStatus(school.school_name+" · EXTREME · 공 2개 · 족쇄 · 점프 불가");
+    if(!canPlayerJump())setStatus(school.school_name+" · EXTREME · 공 2개 · 족쇄 · 점프 불가 · 적 부하");
     else if(currentDifficulty==="easy")setStatus(school.school_name+" · EASY · 날개·동료·관리자 지원");
     else if(currentDifficulty==="normal")setStatus(school.school_name+" · NORMAL · 동료 지원");
     else setStatus(school.school_name+" · "+diffName[school.difficulty]);
@@ -718,6 +722,41 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const move=Math.abs(difference)>battle.enemyDeadzone?Math.sign(difference):0;
     controlPlayer(right,move,state.aiJump,battle.enemySpeed,battle.enemyJumpForce);
   }
+  // Small defender: only chases incoming, descending balls and is slower
+  // than the main CPU player, with one shared collision cooldown.
+  function moveEnemyMinion(){
+    if(currentDifficulty!=="extreme")return;
+    if(enemyMinion.cooldown>0)enemyMinion.cooldown--;
+    const threat=activeBalls.filter(b=>b.x>NET_X+R&&b.vx>0&&b.vy>0)
+      .sort((a,b)=>Math.abs(a.x-enemyMinion.x)-Math.abs(b.x-enemyMinion.x))[0];
+    const target=threat?clamp(threat.x+threat.vx*2.5,NET_X+88,W-42):790;
+    const oldX=enemyMinion.x;
+    enemyMinion.x=clamp(enemyMinion.x+clamp(target-enemyMinion.x,-5.5,5.5),
+      NET_X+88,W-42);
+    enemyMinion.vx=enemyMinion.x-oldX;
+    enemyMinion.y=FLOOR-31;
+  }
+  function enemyMinionHit(hitBall){
+    if(currentDifficulty!=="extreme"||enemyMinion.cooldown>0||
+       hitBall.enemyMinionCooldown>0||hitBall.cooldown>0)return false;
+    // Body collision fits the visibly smaller 58%-scale character.
+    const nearX=clamp(hitBall.x,enemyMinion.x-20,enemyMinion.x+20);
+    const nearY=clamp(hitBall.y,enemyMinion.y-34,enemyMinion.y+20);
+    const dx=hitBall.x-nearX,dy=hitBall.y-nearY;
+    if(dx*dx+dy*dy>R*R)return false;
+    const force=ballSpeedFactor();
+    hitBall.vx=-(8.0+Math.min(2.5,Math.abs(hitBall.vx)*.12))*force;
+    hitBall.vy=-(8.0+Math.min(1.8,Math.abs(hitBall.vy)*.12))*force;
+    hitBall.x=clamp(hitBall.x-9,NET_X+NET_W/2+R+1,W-R);
+    hitBall.y=Math.min(hitBall.y,enemyMinion.y-18);
+    hitBall.cooldown=9;
+    hitBall.enemyMinionCooldown=22;
+    enemyMinion.cooldown=22;
+    enemyMinion.contactFrames=12;
+    hitBall.shadowFrames=12;hitBall.shadowColor="#8e3c70";
+    tone(480,.07,"triangle",.024);
+    return true;
+  }
   function playerHit(p,ball=activeBalls[0]) {
     const sign = p.side === "left" ? 1 : -1;
     // Receive near the extended forearms, not the sprite's body center.
@@ -875,6 +914,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if(state.hitStopFrames>0){state.hitStopFrames--;return;}
     if(left.contactFrames>0)left.contactFrames--;
     if(right.contactFrames>0)right.contactFrames--;
+    if(enemyMinion.contactFrames>0)enemyMinion.contactFrames--;
     for(const ally of clones)if(ally.contactFrames>0)ally.contactFrames--;
     if(state.impactFrames>0)state.impactFrames--;
     if(state.qualityFrames>0)state.qualityFrames--;
@@ -926,7 +966,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     // Only intentional, fast player movement powers up the next ball contact.
     const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || keyboardVertical !== 0 || (canPlayerJump()&&keys.jump);
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
-    moveAI();moveClones();
+    moveAI();moveClones();moveEnemyMinion();
     for(const liveBall of activeBalls){
     const ball=liveBall;
     const previousX = ball.x, previousY = ball.y;
@@ -937,6 +977,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ball.vx *= .999;
     if (ball.cooldown > 0) ball.cooldown--;
     if (ball.allyCooldown > 0) ball.allyCooldown--;
+    if (ball.enemyMinionCooldown > 0) ball.enemyMinionCooldown--;
     if (ball.x - R < 0) { ball.x = R; ball.vx = Math.abs(ball.vx) * .94; }
     if (ball.x + R > W) { ball.x = W - R; ball.vx = -Math.abs(ball.vx) * .94; }
     if (ball.y - R < 25) { ball.y = R + 25; ball.vy = Math.abs(ball.vy) * .85; }
@@ -955,6 +996,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     playerHit(left,ball);
     for(const ally of clones)if(cloneHit(ally,ball))break;
     playerHit(right,ball);
+    enemyMinionHit(ball);
     ball.trail.push({ x: ball.x, y: ball.y });
     if (ball.trail.length > (ball.shadowFrames>0?14:6)) ball.trail.shift();
     if (ball.y + R >= FLOOR) {
@@ -1014,7 +1056,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  const look=mine?null:(enemyLooks[currentDifficulty]||enemyLooks.normal);
  ctx.save();ctx.translate(x,y);
  const px=(a,b,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(a,b,w,h);};
- if(look&&look.aura){
+ if(look&&look.aura&&!p.mini){
    const pulse=.57+.18*Math.sin(state.playFrames*.11);
    ctx.save();ctx.globalAlpha=pulse*(look.aura===2?.75:.48);
    const auraColor=look.aura===2?"#fa9c43":"#b364c7";
@@ -1045,7 +1087,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  px(-26,-9,52,29,uniform);
  px(-23,-6,7,23,mine?"#2b68c5":look.trim);
  px(16,-6,7,23,mine?"#2b68c5":look.trim);
- if(look&&look.armor){
+ if(look&&look.armor&&!p.mini){
    px(-38,-14,19,15,look.trim);px(19,-14,19,15,look.trim);
    px(-10,-7,20,16,look.armor>=2?"#e8c7ae":"#f4a5a1");
    px(-6,-3,12,7,look.armor===3?"#fff0a8":"#a8405a");
@@ -1082,7 +1124,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  px(-5,-24,10,3,"#a85d60");
  // cap / glow highlight
  px(-13,-54,24,3,"rgba(255,255,255,.3)");
- if(look&&look.armor){
+ if(look&&look.armor&&!p.mini){
    px(-20,-56,40,8,look.trim);
    px(-23,-48,7,12,look.trim);px(16,-48,7,12,look.trim);
    px(-12,-34,7,5,look.eyes);px(6,-34,7,5,look.eyes);
@@ -1194,6 +1236,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     drawTeacher(left, "#448bd8");
     drawVolleyShackle();
+    if(currentDifficulty==="extreme"){
+      ctx.save();
+      ctx.translate(enemyMinion.x,enemyMinion.y);
+      ctx.scale(.58,.58);
+      drawTeacher({...enemyMinion,x:0,y:0}, "#b15a82");
+      ctx.restore();
+      textLabel(enemyMinion.name,enemyMinion.x,enemyMinion.y-51,13,
+        "#7d224f","center",55);
+    }
     drawTeacher(right, (enemyLooks[currentDifficulty]||enemyLooks.normal).uniform);
     if(state.bossWarnFrames>0){
       const glow=state.bossWarnFrames%10<5?"#ffe57a":"#ff8e70";
