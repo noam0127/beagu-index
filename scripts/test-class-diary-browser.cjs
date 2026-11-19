@@ -67,6 +67,25 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    assert(stage&&stage.height<=variant.height+1,'VN must fit within viewport');
    assert.equal(await page.locator('#vnMore').isVisible(),true,'Dialogue paging button must be visible');
    assert.equal(await page.locator('#choiceSection').isVisible(),false,'Choices should appear after reading dialogue');
+   // UI v2 controls: accessible, functional and entirely temporary.
+   assert.equal(await page.locator('.diary-toolbar button').count(),3,'Auto, skip and log must be available');
+   assert.equal(await page.locator('#diarySettings').isVisible(),true,'Settings must be available in the HUD');
+   await page.locator('#diarySettings').click();
+   await page.locator('#diaryPanelScrim').waitFor({state:'visible'});
+   assert.equal(await page.locator('#diaryMusicVolume').count(),1,'BGM level should be adjustable');
+   assert.equal(await page.locator('#diaryEffectsVolume').count(),1,'SFX level should be adjustable');
+   await page.locator('.diary-panel-close').click();
+   assert.equal(await page.locator('#diaryPanelScrim').isVisible(),false,'Settings should close');
+   await page.locator('#diaryLog').click();
+   assert.equal(await page.locator('#diaryPanelScrim').isVisible(),true,'Dialogue log should open');
+   assert((await page.locator('.diary-panel-content').innerText()).includes('새로고침'),'Temporary log must disclose no persistence');
+   await page.keyboard.press('Escape');
+   assert.equal(await page.locator('#diaryPanelScrim').isVisible(),false,'Escape should close the log');
+   await page.locator('#diaryAuto').click();
+   assert.equal(await page.locator('#diaryAuto').getAttribute('aria-pressed'),'true','Auto should start on demand');
+   await page.locator('#diaryAuto').click();
+   assert.equal(await page.locator('#diaryAuto').getAttribute('aria-pressed'),'false','Auto should be stoppable');
+
 
    if(variant.name==='desktop')await page.screenshot({path:'artifacts/class-diary/desktop-first-scene.png',fullPage:true});
    else await page.screenshot({path:'artifacts/class-diary/mobile-first-scene.png',fullPage:true});
