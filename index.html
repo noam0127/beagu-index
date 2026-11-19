@@ -141,6 +141,36 @@
       box-shadow: 0 8px 28px rgba(20, 40, 71, .15);
     }
     .teacher-arcade-intro { margin: 28px 0 15px; text-align: center; font-size: clamp(19px, 4.6vw, 25px); font-weight: 850; letter-spacing: -.045em; line-height: 1.4; color: #163453; }
+    /* Home notice stays below the final statistics card across desktop and mobile. */
+    body.beagu-page-home main.container > .beagu-home-notice {
+      grid-column: 1 / -1;
+      width: 100%;
+      min-width: 0;
+      margin: 0;
+      padding: 22px 24px;
+      border: 1px solid #d5e3f3;
+      border-radius: 18px;
+      background: #f1f6fd;
+      color: #173858;
+      box-shadow: 0 3px 14px rgba(22, 53, 88, .04);
+    }
+    .beagu-home-notice h2 {
+      margin: 0 0 10px;
+      font-size: 17px;
+      font-weight: 850;
+      line-height: 1.4;
+      letter-spacing: -.035em;
+    }
+    .beagu-home-notice p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #425d7a;
+      word-break: keep-all;
+    }
+    @media (max-width: 600px) {
+      body.beagu-page-home main.container > .beagu-home-notice { padding: 19px 18px; }
+    }
     .teacher-game-header { padding: 23px 22px 0; }
     .teacher-game-header h2 { margin: 0 0 8px; font-size: 23px; letter-spacing: -.6px; }
     .teacher-game-header p { margin: 0; line-height: 1.55; font-size: 14px; color: #d3e3f5; }
@@ -326,6 +356,11 @@
         <div>월간 방문자<br><strong data-stat="month" aria-live="polite">집계 중</strong></div>
         <div>누적 방문자<br><strong data-stat="total" aria-live="polite">집계 중</strong></div>
       </div>
+    </section>
+
+    <section class="beagu-home-notice" aria-labelledby="home-notice-title">
+      <h2 id="home-notice-title">공지사항</h2>
+      <p><strong>2026년 배구지수 데이터 작업 중입니다.</strong> 학교별 결과를 정리하고 있어 일부 정보는 아직 반영되지 않았을 수 있습니다.</p>
     </section>
   </main>
 
