@@ -85,7 +85,7 @@ assert(play.src.indexOf('id="diarySchoolMode"') < play.src.indexOf('id="playerNa
 assert(play.src.includes('engine.inferredProfile(world,{'));
 assert(play.src.includes("experience:$('experience').value"));
 assert(!play.src.includes('experienceYears'));
-for(const label of ['저경력','중간경력','고경력'])assert(play.src.includes(label));
+assert(setupSection.includes('value="mid" selected'),'Hidden profile defaults to neutral story experience');
 assert(play.src.includes('},plan));'));
 assert(play.src.includes('id="worldAutoNote"'));
 assert(play.src.includes('제작자: 카리브해매너티'));
