@@ -160,6 +160,35 @@ function selectSignals(blueprint,world,records){
   }
   return {signals:accepted,rejectedCount:Object.values(rejected).reduce((a,b)=>a+b,0)};
 }
+/* Interpret only *approved* historical, non-sensitive 2026 questionnaire
+ * modal options. This is a fictional story cue, NEVER a factual diagnosis of a
+ * present-day school, a person, or an employment/assignment decision.
+ * Unknown, neutral and low-confidence responses never trigger adverse cues.
+ */
+function fictionalContextFromSignals(signals){
+ const byId=new Map(signals.filter(s=>s.year===2026).map(s=>[s.questionId,s.modeOption]));
+ const positive=new Set(['그렇다','매우 그렇다']);
+ const negative=new Set(['그렇지 않다','전혀 그렇지 않다']);
+ const is=(id,kind)=>{const value=byId.get(id);return (kind==='high'?positive:negative).has(value)};
+ const allocationConcern=is('Q06','low')||is('Q07','low')||is('Q08','high')||is('Q09','low');
+ // Distinct corroborating question IDs; do not turn a single response into a hostile school.
+ const concerning=['Q04','Q06','Q07','Q08','Q09'].filter(id=>
+  (id==='Q04'||id==='Q08')?is(id,'high'):is(id,'low'));
+ const supportive=['Q04','Q06','Q07','Q08','Q09'].filter(id=>
+  (id==='Q04'||id==='Q08')?is(id,'low'):is(id,'high'));
+ const cooperationCue=concerning.length>=2&&allocationConcern?'coordination_story':
+  supportive.length>=2?'support_story':'neutral';
+ return Object.freeze({
+  source:signals.length?'approved_historical_aggregate':'fictional_general',
+  boundary:'fictional_story_only',
+  // No actual teacher's duty or a factual allegation may be inferred.
+  assignmentCue:is('Q08','high')?'newcomer_assignment_story':'neutral',
+  cooperationCue,
+  socialCue:is('Q01','low')?'choice_pressure_story':'neutral',
+  note:'공개·검증된 과거 설문 최다선택 결과로 창작 장면의 소재만 조정합니다. 현재 학교의 실제 업무분장·갈등·교직원을 단정하지 않습니다.'
+ });
+}
+
 function scenePlan(blueprint,world,approvedSignals){
   const signals=selectSignals(blueprint,world,approvedSignals).signals;
   const scenes=[];
@@ -175,9 +204,10 @@ function scenePlan(blueprint,world,approvedSignals){
       historicalMode:preferred?preferred.modeOption:null,
       note:'2027년 3월 8~14일을 배경으로 한 허구. 과거 통계는 현재 사실이나 특정 인물의 발언이 아님.'});
   }
-  return {schemaVersion:VERSION,schoolId:world.basic.id,scenes,approvedSignals:signals.length};
+  return {schemaVersion:VERSION,schoolId:world.basic.id,scenes,
+      approvedSignals:signals.length,fictionalContext:fictionalContextFromSignals(signals)};
 }
-const api=Object.freeze({VERSION,THEMES,TOPIC_IDS,createBlueprint,selectSignals,scenePlan});
+const api=Object.freeze({VERSION,THEMES,TOPIC_IDS,createBlueprint,selectSignals,fictionalContextFromSignals,scenePlan});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiaryNarrative=api;
 })(typeof window!=='undefined'?window:globalThis);
