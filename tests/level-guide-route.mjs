@@ -17,6 +17,13 @@ assert.match(script,/result\.level>=2\?2:1/,'Show verified Lv2 rather than Lv1')
 assert.match(script,/beagu:level-state-updated/);
 assert.match(guide,/beagu:level-state-updated/);
 assert.match(css,/@media\(max-width:700px\)/);
+assert.equal((page.match(/class="beagu-level-guide-pending-label">준비중<\/span>/g)||[]).length,2,'Both Lv.2 sections visibly marked pending');
+assert.match(page,/data-tier="2" aria-label="레벨 2 소개 — 준비중"/,'Tier 2 card screen-reader label');
+assert.match(page,/class="beagu-level-guide-action" aria-disabled="true">내 고유번호 확인하기/,'Do not present unavailable Lv.2 actions as active');
+assert.match(css,/\.beagu-level-guide-card\[data-tier="2"\] \{/,'Tier 2 disabled gray background');
+assert.match(css,/\.beagu-level-guide-flow \{/,'Lv.2 how-to disabled gray background');
+assert.match(css,/background:#e7e9ee/,'Consistent gray background');
+assert.match(css,/\.beagu-level-guide-pending-label/,'Pending pill design');
 for (const path of ['js/beagu-level-state-v1.js','js/beagu-level-guide-v1.js'])
  assert.doesNotThrow(()=>new Script(read(path),{filename:path}));
 for (const file of [
