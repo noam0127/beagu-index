@@ -237,7 +237,7 @@ Deno.serve(async (req:Request)=>{
     const inserted=await db(
       "arcade_game_scores?on_conflict=session_id&select=created_at",
       "POST",
-      {session_id:session.id,game,nickname:"ANON",score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
+      {session_id:session.id,game,score,school_id:session.school_id,school_name:session.school_name,difficulty:session.difficulty},
       "resolution=ignore-duplicates,return=representation"
     ) as Array<{created_at:string}>;
     if(!inserted?.length)return error("session_expired",409,origin);
