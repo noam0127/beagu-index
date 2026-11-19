@@ -83,6 +83,14 @@ body.beagu-page-home .teacher-game-feature.arcade-host-expanded iframe.teacher-g
 /* Standalone browsers and embedded frames use the same visual fullscreen. */
 html.arcade-fullscreen-document,
 html.arcade-fullscreen-document body{overflow:hidden!important}
+/* The arcade cabinet uses contain:layout, which otherwise traps position:fixed. */
+html.arcade-fullscreen-document .game-shell,
+html.arcade-fullscreen-document .shell{
+ contain:none!important;transform:none!important
+}
+html.arcade-game-host-open .container{
+ contain:none!important;transform:none!important
+}
 .arcade-game-viewport.arcade-fullscreen-fallback{
  position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:0!important;
  inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;
