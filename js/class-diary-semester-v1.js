@@ -14,9 +14,9 @@ const PERSON={
  none:{name:'민서 선생님',beats:['민서는 수첩의 빠진 줄을 찾아내 조용히 손가락으로 짚었다.','민서는 한 번 정한 것은 지켜야 한다고 생각했다. 내가 규칙도 바뀔 수 있지 않느냐고 묻자 수첩을 덮었다.','민서는 일을 정확하게 해내려다 다른 사람까지 지치게 했다는 말을 듣고 한참 아무 말이 없었다.','민서는 확인한 사실과 모르는 사실을 나눴다. 그러나 사람의 마음은 그렇게 나눌 수 없었다.','민서는 “제가 조금 서둘렀나 봐요” 하고 말했다. 그 한마디 뒤에 회의실의 공기가 달라졌다.','민서는 이번 학기 수첩의 마지막 장을 보여 주었다. 함께 했던 일이 작은 글씨로 빼곡했다.'],near:'민서와는 일일이 설명하지 않아도 되는 일이 늘었다. 서로가 어려울 때 먼저 물어볼 수 있는 동료가 생겼다.',distant:'민서는 할 말을 적었다가 지웠다. 우리는 여전히 상대의 속도를 배우고 있었다.',end:'민서와 나 사이에 남은 것은 연애가 아니라 서로 다른 속도를 견디는 우정이었다.'}
 };
 const EFFECTS=[
- {agency:6,voice:5,trust:1,affection:1,fatigue:4,boundary:-1,support:0},
- {agency:3,voice:2,trust:5,affection:3,fatigue:2,boundary:1,support:4},
- {agency:1,voice:0,trust:2,affection:0,fatigue:-4,boundary:5,support:0}
+ {agency:3,voice:3,trust:0,affection:0,fatigue:4,boundary:-2,support:-1},
+ {agency:0,voice:0,trust:2,affection:3,fatigue:1,boundary:0,support:3},
+ {agency:-2,voice:-1,trust:-1,affection:0,fatigue:-4,boundary:3,support:0}
 ];
 const THREADS={
   9:{from:4,lines:['3월에 아이들과 정했던 약속이 있었다. 나는 그 말에 책임을 지고 싶은 마음으로 복도를 바라봤다.','그날 함께 계단을 확인했던 동료가 다시 옆에 섰다.','내일 다시 묻겠다던 날이 오늘이었다. 도윤은 내가 기억하는지 살피고 있었다.']},
@@ -59,7 +59,7 @@ function advance(s){
  if(n.episode<36){n.episode++;n.phase='semester_chapter';return n;}
  const a=n.stats.affection,t=n.stats.trust,c=n.stats.agency,p=PERSON[n.profile.partner]||PERSON.none;
  const romantic=n.profile.partner!=='none';
- const kind=romantic&&a>=76&&t>=72?'warm':t>=70&&c>=70?'parallel':c>=72?'steady':romantic&&a>=64?'tender':'ordinary';
+ const kind=romantic&&a>=78&&t>=75&&c>=50?'warm':t>=70&&c>=70?'parallel':c>=72?'steady':romantic&&a>=64?'tender':'ordinary';
  const names={warm:'소중한',parallel:'든든한',steady:'단단한',tender:'다정한',ordinary:'솔직한'};
  n.ending={id:kind,title:'나의 '+names[kind]+' 학급일지',heading:'방학식이 끝난 뒤',affection:a,score:clamp(a*.10+t*.15+c*.25+n.stats.voice*.25+n.stats.boundary*.25),
  paragraphs:['빈 교실에 남은 햇살은 3월보다 길었다. 처음에는 아무것도 바꿀 수 없을 것 같던 곳에서 우리는 몇 번이나 약속을 새로 썼다.','서아와 도윤의 이름을 적다가 펜을 멈췄다. 두 아이가 내게 남긴 것은 좋은 교사라는 칭찬보다 내일 다시 묻고 싶은 질문이었다.',p.end,kind==='steady'?'완벽하게 지킨 약속은 거의 없었다. 고칠 수 있다는 사실만큼은 잊지 않으려 한다.':kind==='ordinary'?'하지 못한 말들도 있었다. 다음 학기에는 조금 늦더라도 제대로 말해 보고 싶었다.':'교문을 지나면 다시 만날 사람이 있다는 게 이상하게 좋았다.','수첩에 제목을 적고 덮었다. 학교 밖에서는 긴 여름이 시작되고 있었다.']};
