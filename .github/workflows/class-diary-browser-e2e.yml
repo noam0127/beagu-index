@@ -5,6 +5,7 @@ on:
     paths:
       - 'teacher-class-diary-play.html'
       - 'js/class-diary-play-v1.js'
+      - 'js/class-diary-semester-v1.js'
       - 'js/class-diary-scenario-v1.js'
       - 'js/class-diary-director-v1.js'
       - 'js/class-diary-character-routes-v1.js'
@@ -17,6 +18,11 @@ on:
       - 'styles/class-diary-journey-v1.css'
       - 'scripts/test-class-diary-browser.cjs'
       - '.github/workflows/class-diary-browser-e2e.yml'
+  pull_request:
+    paths:
+      - 'teacher-class-diary-play.html'
+      - 'js/class-diary-semester-v1.js'
+      - 'scripts/test-class-diary-browser.cjs'
   workflow_dispatch:
 permissions:
   contents: read
