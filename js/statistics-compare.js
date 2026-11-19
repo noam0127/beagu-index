@@ -9,7 +9,7 @@
     ready:false, selected:[], restored:false, questionCatalog:null,
     public2026:new Map(), public2026Checked:new Set(), public2026Loading:new Set(), public2026Error:new Set(),
     approvedBySchool:new Map(), approvedLoading:new Set(), sessionToken:'',
-    authLevel:0, authEpoch:0 };
+    authLevel:0, authProvisional:false, authEpoch:0 };
   const elements = {
     search:$('searchInput'), suggestions:$('compareSuggestions'),
     selections:$('compareSelections'), table:$('compareTable'),
@@ -49,7 +49,11 @@
     const authenticated=state.authLevel>=1 && !!state.sessionToken;
     elements.authForm.hidden=authenticated;
     elements.authSignedIn.hidden=!authenticated;
-    elements.authBadge.textContent=authenticated ? 'Lv.'+state.authLevel+' 인증됨' : '미인증';
+    elements.authBadge.textContent=authenticated
+      ? state.authLevel>=2
+        ? (state.authProvisional?'Lv.2(임시)':'Lv.2 인증됨')
+        : 'Lv.1 인증됨'
+      : '미인증';
     elements.authBadge.classList.toggle('is-authenticated',authenticated);
     elements.authCard.classList.toggle('is-authenticated',authenticated);
   }
@@ -57,6 +61,7 @@
     state.authEpoch++;
     state.sessionToken='';
     state.authLevel=0;
+    state.authProvisional=false;
     state.approvedBySchool.clear();
     state.approvedLoading.clear();
     if(removeStored){try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}}
@@ -83,9 +88,10 @@
     if(!state.sessionToken||state.authLevel<1)return;
     for(const id of new Set(state.selected.map(x=>x.id)))loadApprovedSchool(id);
   }
-  function activateAuth(token,level) {
+  function activateAuth(token,level,provisional=false) {
     state.sessionToken=token;
     state.authLevel=level;
+    state.authProvisional=level>=2&&provisional===true;
     state.approvedBySchool.clear();
     state.approvedLoading.clear();
     try{sessionStorage.setItem(SESSION_KEY,token)}catch(_){}
@@ -109,7 +115,7 @@
         clearAuth('기존 인증이 유효하지 않습니다. 참여코드를 다시 입력해 주세요.');
         return;
       }
-      activateAuth(token,level);
+      activateAuth(token,level,result.provisional===true);
     }catch(error){
       if(epoch!==state.authEpoch)return;
       if(error.status===401||error.status===403){
