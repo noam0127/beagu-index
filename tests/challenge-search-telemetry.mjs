@@ -252,7 +252,9 @@ returnedLevel=1;
 gateElements.challengeAccessCode.value='samplecode';
 await gateElements.challengeAccessForm.listeners.submit({preventDefault(){}});
 assert.equal(gateElements.challengeProtected.hidden,false,'Level 1 can enter');
-assert.equal(gateElements.challengeAccessPanel.hidden,true);
+assert.equal(gateElements.challengeAccessPanel.hidden,false,
+ 'Level 1 keeps the same status panel visible after login');
+assert.equal(gateElements.challengeLogout.hidden,false,'Logout remains in the common card');
 assert.equal(storedGateToken,'f'.repeat(64),'Share verified session with search');
 assert.ok(gateEvents.includes('beagu:challenge-access-granted'),'Only verified access signals certificate generator');
 assert.equal(gateFetchCalls.filter(x=>x.action==='login').length,2);
