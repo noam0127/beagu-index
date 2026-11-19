@@ -11,6 +11,7 @@ on:
       - 'js/class-diary-incidents-v1.js'
       - 'js/class-diary-sound-v1.js'
       - 'js/class-diary-visual-v1.js'
+      - 'js/class-diary-sd-v1.js'
       - 'scripts/test-class-diary-browser.cjs'
       - '.github/workflows/class-diary-browser-e2e.yml'
   workflow_dispatch:
