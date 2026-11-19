@@ -62,7 +62,14 @@ for(let mask=0;mask<2187;mask++){
  assert(s.stats.agency>=0&&s.stats.agency<=100);
  fingerprints.add(s.ending.id);
 }
-assert(fingerprints.size>=3,'At least three endings should be reachable');
+assert.equal(fingerprints.size,5,'All five named endings must be reachable');
+assert.notDeepEqual(
+ engine.chapter(engine.createGame(world,plan,{...profile,age:26}),world,plan).paragraphs,
+ engine.chapter(engine.createGame(world,plan,{...profile,age:45}),world,plan).paragraphs,
+ 'Age must influence narrator voice, not score');
+const maleProtagonist=engine.createGame(world,plan,{...profile,gender:'man'});
+assert.deepEqual(maleProtagonist.stats,engine.createGame(world,plan,profile).stats,
+ 'Gender must not change starting scores');
 const platonic=engine.createGame(world,plan,{...profile,partner:'none'});
 assert.equal(engine.chapter(platonic,world,plan).partner,'동학년 선생님');
-console.log('PASS: 7 coherent days / 21 options / all 2187 routes / endings / local snapshot replay / Lv2-gated world contract');
+console.log('PASS: 7 coherent days / 21 options / all 2187 routes / five reachable endings / snapshot replay / Lv2-gated world contract');
