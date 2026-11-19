@@ -71,7 +71,7 @@ assert.doesNotMatch(lv0,/school-mbti-v1\.js/);
 for(const page of ['search-lv1.html']){
  const html=read(page);
  assert.match(html,/styles\/school-detail-groups-v1\.css\?v=20261031-groups6/);
- assert.match(html,/js\/school-detail-groups-v1\.js\?v=20261031-groups6/);
+ assert.match(html,/js\/school-detail-groups-v1\.js\?v=20261119-teacher-groups2/);
  assert.ok(html.indexOf('school-detail-groups-v1.js')<html.indexOf(page.includes('lv1')?'js/level-search.js':'js/lv2-edited-search.js'),
   'Group utility must load before tier-specific renderer');
 }
