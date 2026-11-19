@@ -110,8 +110,10 @@ const realPlan={...demoPlan,schoolId:'7972013'};
 const real=make({workCulture:'deflecting'},fakeReal,realPlan);
 const list=incidents.schedule(goToDay(real,5),fakeReal);
 assert(list.includes('friendship_chair'));
+assert(!incidents.next(goToDay(real,5),fakeReal).paragraphs.some(p=>p.includes('{colleague}')),'Dialogue templates must always resolve to real fictional names');
 const fictionalHostility=incidents.next(goToDay(real,5),fakeReal);
-assert(fictionalHostility.paragraphs.join('').includes('실제 친목회 관행을 알려 주는 자료는 아니며'));
+assert(fictionalHostility.fictionLabel.includes('실제 친목회 관행을 알려 주는 자료는 아니며'),'Fiction attribution must remain visible outside prose');
+assert(!fictionalHostility.paragraphs.join('').includes('공개 승인 학생 수'),'No statistical provenance injected into novel narration');
 const withheld={...fakeReal,numbers:{students:{status:'WITHHELD',value:1500,referenceYear:2024}}};
 const noFact=incidents.next(goToDay(real,5),withheld);
 assert(noFact===null||!noFact.paragraphs.join('').includes('공개 승인 학생 수'),
