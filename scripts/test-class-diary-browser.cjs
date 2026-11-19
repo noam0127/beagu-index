@@ -48,7 +48,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await card.click();
    assert.equal(await page.locator('#partner').inputValue(),variant.partner,'Card must update original partner field');
    assert.equal(await card.getAttribute('aria-pressed'),'true','Selected card must be visually announced');
-   assert((await page.locator('#partnerDescription').innerText()).length>25,'Selected cast profile must update');
+   assert.equal(await page.locator('#partnerDescription').count(),0,'Selection cards should not have a duplicate description box');
    for(const id of ['setupPortraitWoman','setupPortraitNone','setupPortraitSuhyun','setupPortraitSea','setupPortraitYuri']){
      assert((await page.locator('#'+id).getAttribute('src')).startsWith('data:image/webp;base64,'),'HQ female art must be bundled: '+id);
    }
