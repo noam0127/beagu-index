@@ -340,7 +340,11 @@ body.is-playing #vnInfo .stat strong{color:#fff;font-size:17px}
 <a href="https://www.scottbuckley.com.au/library/moonlight/">Moonlight</a> ·
 <a href="https://www.scottbuckley.com.au/library/castles-in-the-sky/">Castles in the Sky</a> ·
 <a href="https://www.scottbuckley.com.au/library/felicity/">Felicity</a> ·
-<a href="https://www.scottbuckley.com.au/library/home-was-you/">Home Was You</a>.
+<a href="https://www.scottbuckley.com.au/library/home-was-you/">Home Was You</a> ·
+<a href="https://www.scottbuckley.com.au/library/elementary/">Elementary</a> ·
+<a href="https://www.scottbuckley.com.au/library/quirky-lane/">Quirky Lane</a> ·
+<a href="https://www.scottbuckley.com.au/library/growing-up/">Growing Up</a> ·
+<a href="https://www.scottbuckley.com.au/library/reawakening/">Reawakening</a>.
 </p></div></details></div>
 <p class="status" id="status" role="status" aria-live="polite">레벨2 접근 권한을 확인하고 있습니다.</p>
 <section id="notice" class="panel" hidden>
@@ -539,6 +543,13 @@ syncSetupPartner();syncSetupName();
 
 let effectsOn=true;
 let soundPreferenceTouched=false;
+let lastPhysicalScene='';
+function playSceneDetail(key,place){
+ if(lastPhysicalScene===key)return;
+ lastPhysicalScene=key;
+ const cue=sound.placeCue(place);
+ if(cue)sound.note(cue);
+}
 const params=new URLSearchParams(location.search);
 const isDemo=params.get('demo')==='1';
 const token=isDemo?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
@@ -647,6 +658,7 @@ function renderNovel(){
  $('novelCard').dataset.scene=view.visual.id;
  displayStage(view.visual.id,game.profile.partner,isReflection?(game.lastOutcome&&game.lastOutcome.id==='carry'?'worried':'smile'):'neutral');
  mood(isReflection?sound.choiceTrack(game.day,game.lastOutcome&&game.lastOutcome.id):sound.dayTrack(game.day));
+  if(!isReflection)playSceneDetail('chapter:'+game.day,view.place);
  
  $('characterAvatar').textContent=view.character.initial;
  $('characterName').textContent=view.character.name;
@@ -701,6 +713,7 @@ function renderScenario(){
  $('novelCard').dataset.scene=tone;
  displayStage(visual.sceneForEvent(event,game.day),game.profile.partner,event.kind==='tense'?'worried':'neutral');
  mood(sound.sceneTrack(event));
+  if(!event.result)playSceneDetail('event:'+game.day+':'+event.id,event.place);
  
  $('characterAvatar').textContent=profile.initial;
  $('characterName').textContent=partner;
