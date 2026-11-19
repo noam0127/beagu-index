@@ -10,14 +10,32 @@ permissions:
   contents: read
 jobs:
   static:
+    name: static (${{ matrix.case }})
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+          - 'test environment starts disconnected'
+          - 'all browser handlers refer'
+          - 'private tables use RLS'
+          - 'referral submit is atomic'
+          - 'account identity, verification'
+          - 'no production survey'
+          - 'legacy Edge preview'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/test-web-stage-contract.mjs
+      - run: node --test --test-name-pattern="${{ matrix.case }}" tests/test-web-stage-contract.mjs
+  deno:
+    name: deno (test Edge only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
