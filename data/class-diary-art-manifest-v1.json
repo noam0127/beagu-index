@@ -1,7 +1,7 @@
 {
   "schema": "class-diary-art-manifest/v1",
   "phase": "7-1",
-  "auditCommit": "9976bc6bca5b266b7f0bb4ecbb6ab200b85d1270",
+  "auditCommit": "8938aa14d8c51e388a33388ce4ef09abe5b94e38",
   "fallback": "legacy-svg",
   "baseDimensions": {
     "portrait": {
@@ -55,7 +55,9 @@
         "flustered": "planned",
         "tired": "planned",
         "shy": "planned"
-      }
+      },
+      "identityLock": "same-fictional-adult-actor-across-six-expression-assets",
+      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration"
     },
     {
       "id": "hyunwoo",
@@ -75,7 +77,9 @@
         "flustered": "planned",
         "tired": "planned",
         "shy": "planned"
-      }
+      },
+      "identityLock": "same-fictional-adult-actor-across-six-expression-assets",
+      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration"
     },
     {
       "id": "minseo",
@@ -95,7 +99,9 @@
         "flustered": "planned",
         "tired": "planned",
         "shy": "planned"
-      }
+      },
+      "identityLock": "same-fictional-adult-actor-across-six-expression-assets",
+      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration"
     }
   ],
   "backgrounds": [
@@ -106,7 +112,8 @@
       "light": "morning",
       "time": "07:50~09:00",
       "description": "아침 햇빛, 정돈된 서류와 교사용 책상",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "meeting",
@@ -115,7 +122,8 @@
       "light": "afternoon",
       "time": "15:00~17:00",
       "description": "긴 탁자와 빈 의자, 부드러운 오후광",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "classroom",
@@ -124,7 +132,8 @@
       "light": "daylight",
       "time": "09:00~14:00",
       "description": "빈 교실과 아이들의 흔적, 칠판의 글자 없는 표면",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "hallway",
@@ -133,7 +142,8 @@
       "light": "afternoon",
       "time": "13:00~16:00",
       "description": "멀리 이어지는 복도, 상담 전의 정적",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "evening",
@@ -142,7 +152,8 @@
       "light": "dusk",
       "time": "16:00~18:30",
       "description": "일몰의 사선광, 책상 위 커피잔",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "weekend",
@@ -151,7 +162,8 @@
       "light": "golden-hour",
       "time": "17:00~19:00",
       "description": "학교에서 멀어지는 길, 노을과 가로수",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "night",
@@ -160,7 +172,8 @@
       "light": "night",
       "time": "20:00~23:00",
       "description": "책상 조명과 창밖 밤하늘, 인물 없는 1인칭 시점",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "gate",
@@ -169,7 +182,8 @@
       "light": "morning",
       "time": "07:30~09:00",
       "description": "3월의 교문과 운동장이 한 프레임에 들어오는 구도",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "cafe",
@@ -178,7 +192,8 @@
       "light": "afternoon",
       "time": "12:00~17:00",
       "description": "낮은 채도의 목재, 창가 두 자리",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "consultation",
@@ -187,7 +202,8 @@
       "light": "afternoon",
       "time": "12:00~17:00",
       "description": "안정적인 2인 대화 좌석, 긴장감은 절제",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     },
     {
       "id": "bookstore",
@@ -196,7 +212,8 @@
       "light": "daylight",
       "time": "11:00~18:00",
       "description": "책등은 읽을 수 없는 추상 패턴, 빈 통로와 작은 책상",
-      "status": "planned"
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
     }
   ],
   "rules": {
@@ -206,6 +223,41 @@
     "studentRomanceForbidden": true,
     "noPlayerStateStorage": true,
     "doNotRenderPlannedAssets": true,
-    "visualEffectReducedMotion": true
+    "visualEffectReducedMotion": true,
+    "noRealPersonLikeness": true,
+    "noReferenceFrameReproduction": true,
+    "noFixedProtagonistGender": true,
+    "mustMatchPhotorealisticDirection": true
+  },
+  "artDirection": {
+    "id": "korean-live-action-drama-photorealistic-v1",
+    "rendering": "photorealistic",
+    "format": "fictional-original-adult-cast",
+    "referenceUse": "composition-only-no-identity-copy",
+    "forbiddenStyles": [
+      "anime",
+      "cartoon",
+      "manga",
+      "watercolor",
+      "chibi",
+      "celebrity-likeness",
+      "existing-drama-stills"
+    ],
+    "portraitLight": "soft-natural-studio-or-classroom-light",
+    "backgroundLight": "cinematic-realistic-diegetic-light",
+    "fixedCharacterTraits": [
+      "facial-structure",
+      "eyes",
+      "eyebrows",
+      "nose",
+      "mouth",
+      "hairline",
+      "hairstyle",
+      "clothing",
+      "skin-tone"
+    ],
+    "protagonist": "first-person-configurable-no-fixed-portrait",
+    "posterReferences": "information-layout-only",
+    "releaseStage": "7-5"
   }
 }
