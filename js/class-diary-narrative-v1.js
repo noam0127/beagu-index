@@ -71,7 +71,7 @@ const TOPIC_IDS=Object.freeze({
   }
 });
 const SENSITIVE=new Set([
-  '2023:Q10','2024:Q10','2025:Q06','2025:Q09','2025:Q29','2025:Q30',
+  '2023:Q06','2023:Q10','2024:Q06','2024:Q10','2025:Q06','2025:Q09','2025:Q29','2025:Q30',
   '2026:Q03','2026:Q13','2026:Q31'
 ]);
 const ID=/^Q\d{2}$/;
@@ -133,7 +133,7 @@ function eligibleSignal(record,world,byKey){
   const year=Number(record.surveyYear),id=truncate(record.questionId,8),key=year+':'+id;
   if(!byKey.has(key)||!Array.isArray(world.publishedYears)||!world.publishedYears.includes(year))return false;
   if(record.schoolId!==world.basic.id||record.releaseStatus!=='APPROVED_AGGREGATE_ONLY')return false;
-  if(record.reviewPolicy!=='N10_CELL3_PATTERNS5_STRICT_MATCH'||Number(record.validResponseRows)<10)return false;
+  if(record.reviewPolicy!=='N10_CELL3_PATTERNS5_STRICT_MATCH'||!(record.privacyMinRespondentsMet===true||Number(record.validResponseRows)>=10))return false;
   if(record.annualStatus!=='PUBLISHED'||record.privacyReviewed!==true)return false;
   if(year===2026&&record.manualReleaseApproved!==true)return false;
   if(byKey.get(key).schoolSpecificSensitive)return false;
