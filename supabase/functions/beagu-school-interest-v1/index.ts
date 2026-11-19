@@ -41,7 +41,7 @@ Deno.serve(async (req: Request) => {
     const isSafeSchool = (v: any) => v && /^[0-9]{7}$/.test(String(v.school_id||'')) &&
       typeof v.school_name==='string' && v.school_name.length<=120;
     const keep = (items: unknown) => Array.isArray(items) ? items.filter(isSafeSchool).slice(0,10) : [];
-    return send({rising:keep(data?.rising),window_hours:72,refresh_seconds:3600},200,origin);
+    return send({rising:keep(data?.rising),window_hours:72,refresh_seconds:900},200,origin);
   } catch (error) {
     console.error('school-interest request failure', error instanceof Error ? error.name : 'unknown');
     return send({error:'SERVICE_UNAVAILABLE'},503,origin);
