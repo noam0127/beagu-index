@@ -543,7 +543,7 @@ function finishCareer(initialScore,seconds,victory){
  'const pressed={clear(){}},schoolPicker={setLocked(){}},ranking={finish(score,stats){submitted={score,stats};}};',
  'let submitted=null,headline="",description="";',
  'const getAge=()=>Math.min(62,24+Math.floor(clock/5));',
- 'const persist=()=>{},updateLabels=()=>{},playTone=()=>{},$=()=>({textContent:""});',
+ 'const persist=()=>{},updateLabels=()=>{},playTone=()=>{},stopAndChangeSchool=()=>{},$=()=>({textContent:""});',
  'const message=(title,desc)=>{headline=title;description=desc;};',
  runFinishSource,
  'finish(victory);return {state,score,best,clock,submitted,headline,description};'
