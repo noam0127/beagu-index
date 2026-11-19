@@ -113,6 +113,35 @@ button{font:inherit;cursor:pointer}
 .extended-setup{border:1px solid #dfebf2;background:#f6f9fb;padding:15px 16px;border-radius:14px;margin:18px 0}
 .extended-setup summary{cursor:pointer;font-size:14px;font-weight:750;color:#2f5671;line-height:1.5}
 .extended-setup[open] summary{margin-bottom:8px}
+
+/* Illustrated, independent story-stage layers */
+.scene-art{margin:0 0 15px;min-height:350px;height:min(62vh,560px);display:block;background:#e3d2c3;isolation:isolate}
+.scene-art::before,.scene-art::after{display:none}
+.scene-backdrop{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.95)}
+.scene-portrait{position:absolute;right:1%;bottom:-2%;height:91%;max-width:56%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 9px 22px #3338);z-index:2}
+.scene-fade{position:absolute;inset:55% 0 0;background:linear-gradient(transparent,#2a2d3a65);z-index:3;pointer-events:none}
+.novel-top{background:#f5efeb}
+.novel-body{position:relative;z-index:4;margin-top:-35px;padding-top:0}
+.vn-dialogue{background:rgba(255,250,250,.95);border:1px solid #e1c5cf;border-left:4px solid #c88da4;backdrop-filter:blur(9px);box-shadow:0 12px 32px #563e5030}
+.character-strip{background:rgba(255,255,255,.92);backdrop-filter:blur(9px)}
+.choice{border-color:#e6cad6;background:#fffafa}
+.choice:hover,.choice:focus-visible{background:#fff0f5;border-color:#c38ca3}
+.sound-controls{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center}
+.sound-controls label{display:flex;align-items:center;gap:7px;margin:0;font-size:12px}
+.sound-controls input[type=range]{width:100px;accent-color:#a36c86;padding:0}
+.sound-panel{flex-direction:column;align-items:stretch}
+.credits-list{font-size:11px;line-height:1.85;color:#60758a;margin-top:7px}
+@media(max-width:620px){
+ .scene-art{height:min(52vh,440px);min-height:290px}
+ .scene-portrait{height:88%;max-width:70%;right:-5%}
+ .novel-body{margin-top:-22px}
+ .sound-panel{align-items:stretch}
+ .sound-controls{gap:10px}
+ .sound-controls label{flex:1 1 130px}
+ .statbar{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin}
+ .stat{flex:0 0 90px;scroll-snap-align:start}
+ .vn-dialogue{padding:15px}
+}
 </style>
 </head>
 <body>
@@ -126,9 +155,24 @@ button{font:inherit;cursor:pointer}
 </section>
 <p class="no-save" role="note" id="noSaveNotice">기록은 저장되지 않습니다. 페이지를 나가거나 새로고침하면 진행 상황과 결과가 모두 사라집니다.</p>
 <div class="sound-panel" aria-label="게임 음악 및 효과음">
+<div class="sound-controls">
 <button type="button" id="musicBtn" aria-pressed="false">♫ 배경음악 켜기</button>
-<span id="musicStatus" role="status" aria-live="polite">게임 시작 시 잔잔한 음악이 재생됩니다.</span>
+<label for="musicVolume">BGM <input id="musicVolume" type="range" min="0" max="100" step="1" value="13" aria-label="배경음악 음량"></label>
+<button type="button" id="effectsBtn" aria-pressed="true">효과음 켜짐</button>
+<label for="sfxVolume">효과음 <input id="sfxVolume" type="range" min="0" max="100" step="1" value="17" aria-label="효과음 음량"></label>
 </div>
+<span id="musicStatus" role="status" aria-live="polite">게임을 시작하면 조용한 배경음악을 재생합니다. 소리 설정은 저장되지 않습니다.</span>
+<details class="credits-list"><summary>음악 출처 및 라이선스</summary><div>
+음악: Scott Buckley · CC BY 4.0 · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">라이선스</a><p>
+<a href="https://www.scottbuckley.com.au/library/simplicity/">Simplicity</a> ·
+<a href="https://www.scottbuckley.com.au/library/ice-cream/">Ice Cream</a> ·
+<a href="https://www.scottbuckley.com.au/library/amberlight/">Amberlight</a> ·
+<a href="https://www.scottbuckley.com.au/library/intervention/">Intervention</a> ·
+<a href="https://www.scottbuckley.com.au/library/moonlight/">Moonlight</a> ·
+<a href="https://www.scottbuckley.com.au/library/castles-in-the-sky/">Castles in the Sky</a> ·
+<a href="https://www.scottbuckley.com.au/library/felicity/">Felicity</a> ·
+<a href="https://www.scottbuckley.com.au/library/home-was-you/">Home Was You</a>.
+</p></div></details></div>
 <p class="status" id="status" role="status" aria-live="polite">레벨2 접근 권한을 확인하고 있습니다.</p>
 <section id="notice" class="panel" hidden>
 <h2>이야기를 시작할 수 없습니다</h2>
@@ -190,7 +234,7 @@ button{font:inherit;cursor:pointer}
 </div>
 <article class="panel novel" id="novelCard" data-scene="morning">
 <div class="novel-top">
-<div class="scene-art" id="sceneArt" role="img" aria-label="학교의 하루를 상징하는 추상 배경"><span class="scene-symbol" id="sceneSymbol" aria-hidden="true">✧</span></div>
+<div class="scene-art" id="sceneArt" role="img" aria-label="가상의 한국 초등학교를 그린 배경"><div id="sceneBackdrop" class="scene-backdrop" aria-hidden="true"></div><img id="scenePortrait" class="scene-portrait" alt="" aria-hidden="true"><div class="scene-fade" aria-hidden="true"></div></div>
 <span class="tag" id="chapterDay">첫째 날</span>
 <h2 id="chapterTitle"></h2>
 <div class="date-place" id="chapterPlace"></div>
@@ -246,6 +290,7 @@ button{font:inherit;cursor:pointer}
 <script src="js/class-diary-director-v1.js"></script>
 <script src="js/class-diary-context-v1.js"></script>
 <script src="js/class-diary-sound-v1.js"></script>
+<script src="js/class-diary-visual-v1.js"></script>
 <script src="js/class-diary-scenario-v1.js"></script>
 <script src="js/class-diary-incidents-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
