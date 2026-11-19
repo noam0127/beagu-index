@@ -31,6 +31,8 @@ jobs:
             'js/class-diary-sound-v1.js'
             'js/class-diary-visual-v1.js'
             'js/class-diary-scenario-v1.js'
+            'js/class-diary-incidents-v1.js'
+            'js/class-diary-director-v1.js'
           )
           fail=0
           for file in "${files[@]}"; do
