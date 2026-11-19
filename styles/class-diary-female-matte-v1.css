@@ -1,0 +1,16 @@
+/* Female cast: soft matte finish, no shiny skin or glossy backlighting. */
+#setupPortraitWoman,#setupPortraitNone,#setupPortraitSuhyun,#setupPortraitSea,#setupPortraitYuri{
+ filter:brightness(.97) contrast(.96) saturate(.92);image-rendering:auto;
+}
+body.is-playing #scenePortrait:is([data-sd-character="woman"],[data-sd-character="none"],[data-sd-character="suhyun"],[data-sd-character="sea"],[data-sd-character="yuri"]){
+ filter:brightness(.97) contrast(.96) saturate(.92) drop-shadow(0 12px 24px rgba(18,19,27,.29));
+}
+#sceneGuestPortrait[data-art-quality="hq"]{
+ filter:brightness(.97) contrast(.96) saturate(.92) drop-shadow(0 6px 12px rgba(18,19,27,.22));
+}
+#scenePortrait[data-sd-character="woman"]{transform-origin:47% 100%}
+#scenePortrait[data-sd-character="none"]{transform-origin:52% 100%}
+#scenePortrait[data-sd-character="suhyun"]{transform-origin:50% 100%}
+#scenePortrait[data-sd-character="sea"]{transform-origin:49% 100%}
+#scenePortrait[data-sd-character="yuri"]{transform-origin:53% 100%}
+@media(prefers-reduced-motion:reduce){#scenePortrait{transition:none!important}}
