@@ -232,3 +232,33 @@ body.beagu-page-challenge .challenge-lv2-pending .challenge-lv2-description{
     font-size:19px;
   }
 }
+
+
+/* Compact authenticated upgrade cards: keep the heading and identity CTA together. */
+body.beagu-page-lv1 #searchPanel .beagu-levelup-status,
+body.beagu-page-compare #compareLv1AuthPanel.is-authenticated{
+  min-height:0;
+  height:auto;
+  padding:21px 26px 19px;
+}
+body.beagu-page-lv1 #searchPanel .beagu-levelup-status > .beagu-levelup-heading,
+body.beagu-page-compare #compareLv1AuthPanel.is-authenticated > .beagu-auth-heading{
+  margin-bottom:12px;
+}
+body.beagu-page-lv1 #searchPanel .beagu-levelup-status > .beagu-levelup-trigger,
+body.beagu-page-compare #compareLv1AuthPanel.is-authenticated > .beagu-levelup-trigger{
+  margin:0;
+}
+@media(max-width:720px){
+  body.beagu-page-lv1 #searchPanel .beagu-levelup-status,
+  body.beagu-page-compare #compareLv1AuthPanel.is-authenticated{
+    min-height:0;
+    padding:20px 20px 18px;
+  }
+}
+@media(max-width:370px){
+  body.beagu-page-lv1 #searchPanel .beagu-levelup-status,
+  body.beagu-page-compare #compareLv1AuthPanel.is-authenticated{
+    padding:18px 17px 17px;
+  }
+}
