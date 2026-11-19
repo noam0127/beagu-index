@@ -417,6 +417,67 @@ function help(){
  message("게임 방법","📄 회피 · ☕ 회복 · ⚡ 더블 터치 필살기\nEASY/NORMAL 자동 분필 · EXTREME 족쇄\nPC ← → · 모바일 드래그",[
  {label:wasPlaying?"▶ 게임으로 돌아가기":"확인",action:()=>{if(wasPlaying)resume();else stopToIntro();}}],"❔");
 }
+function fireChalk(dt){
+ // Target dangerous falling objects only; do not harm beneficial recovery items.
+ const config=chalkProfile();
+ if(!config||state!=="playing")return;
+ chalkCooldown=Math.max(0,chalkCooldown-dt);
+ if(chalkCooldown>0||chalkShots.length>=config.maxShots)return;
+ const target=items.filter(a=>!a.good&&a.y>10&&a.y<player.y-36&&
+   Math.hypot(a.x-player.x,a.y-player.y)<config.range&&
+   !chalkShots.some(shot=>shot.target===a)
+ ).sort((a,b)=>Math.abs(a.x-player.x)-Math.abs(b.x-player.x))[0];
+ if(!target)return;
+ chalkShots.push({x:player.x,y:player.y-42,target,life:1.4});
+ chalkCooldown=config.interval;
+}
+function updateChalk(dt){
+ for(let i=chalkShots.length-1;i>=0;i--){
+  const shot=chalkShots[i],target=shot.target;
+  shot.life-=dt;
+  if(!items.includes(target)||shot.life<=0){chalkShots.splice(i,1);continue;}
+  const dx=target.x-shot.x,dy=target.y-shot.y;
+  const distance=Math.hypot(dx,dy),move=Math.min(distance,620*dt);
+  if(distance>0){shot.x+=dx/distance*move;shot.y+=dy/distance*move;}
+  if(Math.hypot(shot.x-target.x,shot.y-target.y)<=target.r+8){
+   const index=items.indexOf(target);
+   if(index>=0&&!target.good){
+    items.splice(index,1);
+    burst(target.x,target.y,"#e6fbff",10);
+    float(target.x,target.y,"분필! +25","#fffbd2");
+    addScore(25);playTone(760,.07,"triangle",.025);
+   }
+   chalkShots.splice(i,1);
+  }
+ }
+}
+function drawChalk(){
+ for(const shot of chalkShots){
+  ctx.save();ctx.strokeStyle="rgba(255,251,228,.42)";ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(shot.x,shot.y+12);ctx.lineTo(shot.x,shot.y+2);ctx.stroke();
+  ctx.translate(shot.x,shot.y);ctx.rotate(-.3);
+  ctx.fillStyle="#ffffff";ctx.fillRect(-5,-12,10,24);
+  ctx.fillStyle="#9ae1ec";ctx.fillRect(-5,-12,10,5);
+  ctx.restore();
+ }
+}
+function drawShackle(){
+ if(profile.jumpEnabled!==false||state==="ready")return;
+ const ankleX=player.x+11*profile.heroSize,ankleY=player.y+28*profile.heroSize;
+ const dragX=shackle.x,dragY=H-22+Math.sin(clock*13)*1.7;
+ ctx.save();ctx.lineCap="round";
+ ctx.strokeStyle="#45515c";ctx.lineWidth=6;
+ ctx.beginPath();ctx.moveTo(ankleX,ankleY);
+ ctx.quadraticCurveTo((ankleX+dragX)/2,Math.max(ankleY,dragY)+11,dragX,dragY);ctx.stroke();
+ ctx.strokeStyle="#bcc2c9";ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(ankleX,ankleY);
+ ctx.quadraticCurveTo((ankleX+dragX)/2,Math.max(ankleY,dragY)+11,dragX,dragY);ctx.stroke();
+ ctx.fillStyle="#364250";ctx.beginPath();ctx.arc(dragX,dragY,19,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#89929b";ctx.beginPath();ctx.arc(dragX-5,dragY-6,6,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#42576c";ctx.fillRect(ankleX-13,ankleY-6,25,11);
+ ctx.fillStyle="#aeb8c3";ctx.fillRect(ankleX-10,ankleY-4,18,3);
+ ctx.restore();
+}
 function update(dt){
  clock+=dt;dayTime+=dt;
  if(eventSeconds>0){eventSeconds=Math.max(0,eventSeconds-dt);if(eventSeconds===0)activeEvent=null;}
@@ -428,6 +489,7 @@ function update(dt){
   shake=Math.max(0,shake-dt);noticeTime=Math.max(0,noticeTime-dt);
  const dir=(pressed.has("right")?1:0)-(pressed.has("left")?1:0);
  const speed=285*skill.speed*profile.heroSpeed;
+ const oldX=player.x;
  if(pointerId!==null&&pointerX!==null&&pointerY!==null){
   // Finger/mouse targets both axes while actively touching the canvas.
   const flyingSpeed=1300*skill.speed*profile.heroSpeed;
@@ -441,6 +503,12 @@ function update(dt){
  }
  player.x=Math.max(27,Math.min(W-27,player.x));
  player.y=canPlayerRise()?Math.max(76,Math.min(H-52,player.y)):H-52;
+ if(profile.jumpEnabled===false){
+  if(Math.abs(player.x-oldX)>.15)shackle.dir=player.x>oldX?-1:1;
+  const targetX=Math.max(21,Math.min(W-21,player.x+shackle.dir*55));
+  shackle.x+=Math.max(-180*dt,Math.min(180*dt,(targetX-shackle.x)*dt*7));
+ }
+ fireChalk(dt);
  spawnClock-=dt;
  if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-day*.085-(dayTime>13&&day===4?.2:0))/profile.spawnPressure)*(0.8+Math.random()*.45)/(activeEvent?.id==="rush"?1.30:1);}
  for(let i=items.length-1;i>=0;i--){
@@ -457,6 +525,7 @@ function update(dt){
    if(!a.good&&Math.abs(a.x-player.x)<83){nearCount++;combo=Math.min(25,combo+1);addScore(35);float(player.x,player.y-52,"아슬아슬! +35","#fff1b1");}
   }
  }
+ updateChalk(dt);
  for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=125*dt;s.life-=dt;if(s.life<=0)sparks.splice(i,1);}
  for(let i=floats.length-1;i>=0;i--){let f=floats[i];f.y-=42*dt;f.life-=dt;if(f.life<=0)floats.splice(i,1);}
  if(dayTime>=23.5)nextDay();
@@ -536,7 +605,7 @@ function drawItems(){
 }
 function draw(){
  ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
- background();drawItems();playerDraw();
+ background();drawItems();drawChalk();drawShackle();playerDraw();
  if(specialFlash>0){
   ctx.save();ctx.strokeStyle="rgba(255,235,117,"+Math.min(1,specialFlash*1.1)+")";
   ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,profile.specialRadius*(1-specialFlash*.1),0,Math.PI*2);ctx.stroke();
