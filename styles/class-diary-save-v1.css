@@ -1,0 +1,80 @@
+/* Class Diary opt-in saves: compact in-scene controls, clear consent and recovery dialog. */
+.diary-save-actions{display:flex;align-items:center;gap:5px;min-width:0;flex:0 1 auto}
+body.is-playing #novelCard .diary-save-action{
+ display:grid;place-items:center;flex:none;min-width:48px;height:43px;
+ padding:3px 5px;border:1px solid #f1d5e492;border-radius:12px;
+ background:linear-gradient(145deg,#37283db8,#65405bba);color:#fff7fa;
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;font-size:10px;font-weight:700;
+ box-shadow:0 3px 12px #08071535;white-space:nowrap;cursor:pointer
+}
+body.is-playing #novelCard .diary-save-action:hover,
+body.is-playing #novelCard .diary-save-action:focus-visible{background:#8c5c79;outline:2px solid #f9e6ee}
+body.is-playing #novelCard .diary-save-action:disabled{opacity:.55;cursor:wait}
+.diary-save-status{
+ position:absolute;right:12px;bottom:72px;z-index:12;
+ width:min(390px,calc(100% - 24px));padding:10px 14px;
+ border:1px solid #f3d8e5b2;border-radius:12px;
+ background:#25202fe9;color:#fff9f5;font-size:12px;
+ box-shadow:0 9px 25px #09081280;line-height:1.5;pointer-events:none
+}
+.diary-opening-continue{
+ display:block;margin:12px auto 0;padding:10px 18px;border-radius:999px;
+ border:1px solid #d0a5bd;background:#fff5fa;color:#81536f;
+ font:700 13px/1.6 "Gowun Batang","Nanum Myeongjo",serif;
+ box-shadow:0 6px 15px #52394f25;cursor:pointer
+}
+.diary-opening-continue[hidden]{display:none!important}
+.diary-save-overlay{
+ position:fixed;inset:0;z-index:250;
+ background:#0c0c1ac2;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+ padding:18px;display:grid;place-items:center
+}
+.diary-save-overlay[hidden]{display:none!important}
+.diary-save-dialog{
+ width:min(100%,540px);max-height:calc(100dvh - 35px);
+ overflow:auto;padding:clamp(20px,4vw,32px);
+ border:1px solid #e8bfcf;border-radius:21px;
+ background:linear-gradient(160deg,#fffdf8,#f9eaf1);
+ color:#4c3b50;box-shadow:0 22px 75px #08081880;
+}
+.diary-save-dialog h2{margin:0 0 14px;font:700 clamp(19px,4vw,26px)/1.45 "Gowun Batang","Nanum Myeongjo",serif}
+.diary-save-dialog p{font-size:13px;line-height:1.7;color:#695768}
+.diary-save-dialog input{
+ display:block;width:100%;max-width:100%;min-height:42px;
+ padding:9px 12px;border:1px solid #d4b9c5;border-radius:10px;
+ background:white;color:#433247;font-size:12px;font-family:ui-monospace,monospace;
+ margin:12px 0;outline-offset:2px
+}
+.diary-save-dialog-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.diary-save-dialog-actions button{
+ padding:10px 7px;border:1px solid #d9bbca;border-radius:10px;
+ background:#fff9fc;color:#61435c;font:700 12px/1.4 "Gowun Batang",serif;cursor:pointer
+}
+.diary-save-dialog-actions button:first-child{background:#936a85;color:white}
+.diary-save-dialog-actions button:disabled{opacity:.6;cursor:wait}
+@media(max-width:620px){
+ .diary-save-actions{gap:3px}
+ body.is-playing #novelCard .diary-save-action{min-width:42px;height:40px;font-size:9px;padding:3px}
+ body.is-playing.is-semester-mode #novelCard .diary-save-action{
+  min-width:40px;width:40px;max-width:40px;height:39px;
+  border-radius:10px;padding:2px;font-size:9px
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .vn-control-row{
+  justify-content:flex-end;gap:4px;overflow:visible
+ }
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar button{
+  width:30px;min-width:30px;height:38px;font-size:8px
+ }
+ body.is-playing.is-semester-mode #novelCard #vnMore{
+  flex-basis:85px!important;width:85px!important;min-width:85px!important;max-width:85px!important;
+ }
+ .diary-save-status{bottom:64px;font-size:11px}
+}
+@media(max-width:360px){
+ body.is-playing.is-semester-mode #novelCard .diary-save-action{min-width:35px;width:35px;max-width:35px;font-size:8px}
+ body.is-playing.is-semester-mode #novelCard .vn-bottom .diary-toolbar button{width:28px;min-width:28px}
+ body.is-playing.is-semester-mode #novelCard #vnMore{flex-basis:77px!important;width:77px!important;min-width:77px!important;max-width:77px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .diary-opening-continue,body.is-playing #novelCard .diary-save-action{animation:none!important;transition:none!important}
+}
