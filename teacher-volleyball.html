@@ -102,10 +102,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="search-lv1.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 <main class="game-shell">
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
-  <div class="scoreboard" aria-label="25점 선착순 경기와 승리 시간">
-    <div class="volley-best-row"><span class="volley-target-chip">🏁 먼저 25점</span><span class="volley-best-chip" aria-label="이 기기의 최단 승리 시간">신기록 <strong id="volley-best-label">—</strong></span></div>
+  <div class="scoreboard" aria-label="25점 선착순 경기와 점수 기록">
+    <div class="volley-best-row"><span class="volley-target-chip">🏁 먼저 25점</span><span class="volley-best-chip" aria-label="이 기기의 최고 점수 신기록">신기록 <strong id="volley-best-label">0점</strong></span></div>
     <div class="team"><span class="volley-team-name">나</span><strong id="player-score">0 / 25</strong></div>
-    <div class="center-label">VS<small id="volley-time-label">⏱ 0:00.0</small></div>
+    <div class="center-label">VS<small id="volley-score-label">0점</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0 / 25</strong></div>
   </div>
   <div class="volley-progress" aria-label="25점 달성 진행 상황">
@@ -117,7 +117,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   </div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 25점 선착순 · 빠른 완주시간이 높은 순위 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·분신 · EXTREME 공 2개·족쇄</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 25점 선착순 · 내 득점 +100점 · 상대 득점 −50점 · 승리 시 점수 차에 따라 ×1~×6 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·분신 · EXTREME 공 2개·족쇄</div>
   <div id="arcade-top10" aria-label="선생님배구 25점 완주 시간 TOP 10 순위"></div>
 </main>
 <script src="js/arcade-leaderboard-v1.js?v=20261119-anon-auto1"></script>
@@ -180,23 +180,20 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const SPEED_MULTIPLIER=2; // horizontal player and AI reaction (5->10, 3.65->7.3)
   const AUTO_SPIKE_SPEED=8; // player-driven displacement per simulation frame
   const MATCH_TARGET=25;
-  const formatTime=tenths=>{
-    const t=Math.max(0,Math.floor(Number(tenths)||0));
-    return Math.floor(t/600)+":"+String(Math.floor(t%600/10)).padStart(2,"0")+"."+(t%10);
-  };
-  const getElapsedTenths=()=>{
-    if(!state.startedAt)return 0;
-    const end=state.phase==="finished"?state.finishedAt:
-      state.phase==="paused"?state.pausedAt:performance.now();
-    return Math.max(0,Math.round((end-state.startedAt-state.pausedMs)/100));
-  };
+  // Opponent score reduces earned points; victory adds a lead-dependent multiplier.
+  // Win by 1-4: ×1, 5-9: ×2, 10-14: ×3, 15-19: ×4,
+  // 20-24: ×5, 25-0 shutout: ×6. Time is not part of any score.
+  const POINT_GAIN=100,POINT_LOSS=50;
+  const getBaseMatchScore=(player,cpu)=>Math.max(0,player*POINT_GAIN-cpu*POINT_LOSS);
+  const getVictoryMultiplier=(player,cpu)=>player===MATCH_TARGET&&cpu<MATCH_TARGET
+    ?1+Math.floor((MATCH_TARGET-cpu)/5):1;
+  const getMatchScore=(player,cpu)=>getBaseMatchScore(player,cpu)*getVictoryMultiplier(player,cpu);
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null };
   const state = { phase:"ready",leftScore:0,rightScore:0,serveLeft:true,pointTicks:0,flash:0,winner:"",
     message:"경기 시작을 눌러주세요!",spikes:0,aiRecalc:0,aiTargetX:688,aiJump:false,
     specialCooldownFrames:0,specialChargeFrames:0,uiTick:0,playFrames:0,
-    startedAt:0,pausedAt:0,pausedMs:0,finishedAt:0,
     hitStopFrames:0,impactFrames:0,impactX:0,impactY:0,bossWarnFrames:0,bossCooldownFrames:0,
     winStreak:0,bestStreak:0,pointCheer:"",recordBroken:false };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false, contactFrames:0 };
@@ -207,18 +204,21 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const volleyShackle={x:156,dir:-1};
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
   const setStatus = text => { status.textContent = text; };
-  const FASTEST_KEY="teacherVolleyballFastest25V2";
-  // Fresh era: purge local historical achievements from prior rule variants.
-  try{localStorage.removeItem("teacherVolleyballFastest25V1");localStorage.removeItem("teacherVolleyballBestV1");}catch(e){}
+  const BEST_SCORE_KEY="teacherVolleyballScore25BestV1";
+  // This score-based season starts fresh, separate from the retired time records.
+  try{
+    for(const key of ["teacherVolleyballFastest25V1","teacherVolleyballFastest25V2",
+      "teacherVolleyballBestV1","arcade-local-top10-v1-volleyball","arcade-local-top10-v1-volleyball_25"])
+      localStorage.removeItem(key);
+  }catch(e){}
   const bestLabel=document.getElementById("volley-best-label");
-  let fastestTenths=0;
-  try{fastestTenths=Math.max(0,Math.floor(Number(localStorage.getItem(FASTEST_KEY))||0));}catch(e){}
-  bestLabel.textContent=fastestTenths?formatTime(fastestTenths):"—";
-  function rememberFastest(tenths){
-    if(!Number.isSafeInteger(tenths)||tenths<=0||(fastestTenths&&tenths>=fastestTenths))return false;
-    fastestTenths=tenths;
-    bestLabel.textContent=formatTime(tenths);
-    try{localStorage.setItem(FASTEST_KEY,String(tenths));}catch(e){}
+  let bestScore=0;
+  try{bestScore=Math.max(0,Math.floor(Number(localStorage.getItem(BEST_SCORE_KEY))||0));}catch(e){}
+  bestLabel.textContent=bestScore.toLocaleString("ko-KR")+"점";
+  function rememberBestScore(value){
+    if(!Number.isSafeInteger(value)||value<=bestScore)return false;
+    bestScore=value;bestLabel.textContent=value.toLocaleString("ko-KR")+"점";
+    try{localStorage.setItem(BEST_SCORE_KEY,String(value));}catch(e){}
     return true;
   }
   const canPlayerJump=()=>currentDifficulty!=="extreme";
@@ -270,10 +270,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function resetPower(){
     state.specialCooldownFrames=0;state.specialChargeFrames=0;
     state.uiTick=0;lastTapAt=0;
-    updateClockUI();
+    updateMatchScoreUI();
   }
-  function updateClockUI(){
-    document.getElementById("volley-time-label").textContent="⏱ "+formatTime(getElapsedTenths());
+  function updateMatchScoreUI(){
+    document.getElementById("volley-score-label").textContent=
+      getBaseMatchScore(state.leftScore,state.rightScore).toLocaleString("ko-KR")+"점";
   }
   function activateSuperSpike(){
     if(state.phase!=="playing"||state.specialCooldownFrames>0||state.specialChargeFrames>0)return false;
@@ -330,7 +331,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point" || state.phase === "starting";
     pauseButton.textContent = state.phase === "paused" ? "▶" : "⏸";
     pauseButton.setAttribute("aria-label",state.phase === "paused"?"계속하기":"일시정지");
-    updateClockUI();
+    updateMatchScoreUI();
   }
   function resetPositions() {
     Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, impactSpeed: 0, jumpLock: false, contactFrames:0 });
@@ -389,12 +390,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
     state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;
-    state.startedAt=0;state.pausedAt=0;state.pausedMs=0;state.finishedAt=0;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     releaseKeys();
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
-    state.startedAt=performance.now();
     resetPositions();
     if(!canPlayerJump())setStatus(school.school_name+" · EXTREME · 공 2개 · 족쇄 · 점프 불가");
     else if(currentDifficulty==="easy")setStatus(school.school_name+" · EASY · 날개와 분신 2명 지원");
@@ -409,7 +408,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
     state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;
-    state.startedAt=0;state.pausedAt=0;state.pausedMs=0;state.finishedAt=0;
     currentDifficulty="hard";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     specialProfile=specialProfiles.hard;resetPower();
@@ -420,17 +418,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     setStatus("게임을 중단했습니다. 다른 학교를 선택해 시작하세요.");
   }
   schoolPicker.onRequestChange=stopForSchoolChange;
-  function pause() {
-    if (state.phase === "playing") {
-      state.pausedAt=performance.now();
-      state.phase="paused";
-      releaseKeys();
-      setStatus("일시정지 · 경기 시간 정지");
-    } else if (state.phase === "paused") {
-      state.pausedMs+=performance.now()-state.pausedAt;
-      state.pausedAt=0;
-      state.phase="playing";
-      setStatus("");
+  function pause(){
+    if(state.phase==="playing"){
+      state.phase="paused";releaseKeys();setStatus("일시정지");
+    }else if(state.phase==="paused"){
+      state.phase="playing";setStatus("");
     }
     syncUI();
   }
@@ -613,23 +605,26 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   function finishMatch(){
     if(state.phase==="finished")return;
-    state.finishedAt=performance.now();
     state.phase="finished";
     const won=state.leftScore>=MATCH_TARGET;
-    const duration=getElapsedTenths();
+    const base=getBaseMatchScore(state.leftScore,state.rightScore);
+    const multiplier=getVictoryMultiplier(state.leftScore,state.rightScore);
+    const finalScore=getMatchScore(state.leftScore,state.rightScore);
     state.winner=won?"🏆 25점 선착순 승리!":"⛔ 컴퓨터 25점 · 패배";
-    state.message=state.winner;
-    releaseKeys();
-    schoolPicker.setLocked(false);
+    state.message=state.winner;releaseKeys();schoolPicker.setLocked(false);
+    state.recordBroken=rememberBestScore(finalScore);
     if(won){
-      state.recordBroken=rememberFastest(duration);
-      setStatus((state.recordBroken?"🎉 신기록! ":"🏆 승리! ")+formatTime(duration)+" · 익명 기록 자동 등록 중");
+      setStatus((state.recordBroken?"🎉 신기록! ":"🏆 승리! ")+
+        base.toLocaleString("ko-KR")+"점 ×"+multiplier+" = "+finalScore.toLocaleString("ko-KR")+"점 · 익명 자동 기록");
       tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);
-      ranking?.finish(duration,{player:state.leftScore,cpu:state.rightScore,elapsedTenths:duration});
     }else{
-      setStatus("25점까지 "+(MATCH_TARGET-state.leftScore)+"점 남겼어요 · 다시 도전해 신기록을 노려보세요!");
+      setStatus("재도전! "+finalScore.toLocaleString("ko-KR")+"점 · 25점을 먼저 달성하면 배수 보너스");
       tone(240,.20,"triangle",.045,0,150);
     }
+    if(finalScore>0)ranking?.finish(finalScore,{
+      player:state.leftScore,cpu:state.rightScore,baseScore:base,
+      multiplier,finalScore,victory:won
+    });
     syncUI();
   }
   function point(leftWins) {
@@ -645,7 +640,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       state.rightScore++;
       state.winStreak=0;
     }
-    state.pointCheer=pointEncouragement(state.leftScore,state.rightScore,state.winStreak,leftWins);
+    state.pointCheer=pointEncouragement(state.leftScore,state.rightScore,state.winStreak,leftWins)+
+      (leftWins?" · +"+POINT_GAIN+"점":" · −"+POINT_LOSS+"점");
     state.message=leftWins?"득점! "+state.leftScore+" / "+MATCH_TARGET:
       "실점! "+state.rightScore+" / "+MATCH_TARGET;
     if(leftWins&&cheerMilestones[state.leftScore]){
@@ -660,7 +656,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     syncUI();
   }
   function step() {
-    if((state.phase==="playing"||state.phase==="point")&&++state.uiTick%6===0)updateClockUI();
     if(state.hitStopFrames>0){state.hitStopFrames--;return;}
     if(left.contactFrames>0)left.contactFrames--;
     if(right.contactFrames>0)right.contactFrames--;
@@ -1001,7 +996,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     else if (state.phase === "paused") overlay("PAUSE", "");
     else if (state.phase === "point") overlay(state.message, state.pointCheer);
-    else if (state.phase === "finished") overlay(state.winner,(state.recordBroken?"🎉 신기록 · ":"")+"기록 "+formatTime(getElapsedTenths()));
+    else if (state.phase === "finished") overlay(state.winner,
+      (state.recordBroken?"🎉 신기록 · ":"")+"최종 "+getMatchScore(state.leftScore,state.rightScore).toLocaleString("ko-KR")+"점"+
+      (state.leftScore===MATCH_TARGET?" · ×"+getVictoryMultiplier(state.leftScore,state.rightScore):""));
     ctx.restore();
   }
   let last = 0, accumulator = 0;
