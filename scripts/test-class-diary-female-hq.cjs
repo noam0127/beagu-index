@@ -41,8 +41,14 @@ const photoHashes=new Set();
 const emotionHashes=new Set();
 for(const id of ids){
  const photoRef=art.portrait(id);
- const photo=webpBytes(photoRef);
- assert(photo.length>8000&&photo.length<150000,'Original photo-style WebP compressed and intact: '+id);
+ const filename='assets/class-diary/characters/female-'+({woman:'jiyoon',none:'minseo',suhyun:'suhyun',sea:'sea',yuri:'yuri'}[id])+'-waistup-v3.webp';
+ assert.equal(photoRef,filename,'Game should use the transparent natural-pose portrait '+id);
+ const photo=fs.readFileSync(path.join(root,photoRef));
+ assert.equal(photo.toString('ascii',0,4),'RIFF');
+ assert.equal(photo.toString('ascii',8,12),'WEBP');
+ assert(photo.includes(Buffer.from('ALPH')),'Portrait must contain a real transparent alpha layer: '+id);
+ assert(photo.length>20000&&photo.length<150000,'Transparent photo-quality portrait budget '+id);
+ assert(webpBytes(art.legacyPortrait(id)).length>8000,'Approved original photo is retained as rollback');
  photoHashes.add(crypto.createHash('sha256').update(photo).digest('hex'));
  for(const mood of moods){
   const face=webpBytes(art.face(id,mood));
@@ -57,21 +63,21 @@ assert.equal(art.face('man','neutral'),null,'No changes to male character emotic
 const page=fs.readFileSync(path.join(root,'teacher-class-diary-play.html'),'utf8');
 const css=fs.readFileSync(path.join(root,'styles/class-diary-female-hq-v1.css'),'utf8');
 for(const name of jsFiles){
- const version=name==='class-diary-female-hq-v1.js'?'20261120-upper-body-1':'20261120-hq1';
+ const version=name==='class-diary-female-hq-v1.js'?'20261120-waistup3':'20261120-hq1';
  assert(page.includes('src="js/'+name+'?v='+version+'"'),'Missing game asset '+name);
 }
 assert(!page.includes('class-diary-female-matte-v1.css'),'Matte illustration filtering must be disabled');
 assert(!page.includes('femaleHQ.prepareMatte('),'No glossy-skin recoloring or matte image substitution');
 assert(!('prepareMatte' in art),'Original photo portraits must load without a matte recoloring step');
 assert(!('MATTE_ASSETS' in art),'Image source must not refer to cartoon/matte assets');
-for(const id of ids)assert(art.portrait(id).startsWith('data:image/webp;base64,'),'Photo-style WebP restored');
+for(const id of ids)assert(art.portrait(id).endsWith('-waistup-v3.webp'),'Real-alpha waist-up art enabled');
 for(const marker of [
  'femaleHQ.portrait(partner)','femaleHQ.portrait(who)','femaleHQ.portrait(guest.id)',
  'femaleHQ.face(who,expression','showCharacterFace(game.profile.partner,semesterArt.expression',
  'renderSupportingCast(chapterGuest)','maleSemester.paint(',
  'femaleHQ.portrait(guest.id)','id="sceneGuestPortrait"','id="scenePortrait"'
 ])assert(page.includes(marker),'Missing screen connection '+marker);
-assert(page.includes('styles/class-diary-female-hq-v1.css?v=20261120-bust1'));
+assert(page.includes('styles/class-diary-female-hq-v1.css?v=20261120-waistup3'));
 assert(page.includes('femaleHQ.prepareBust('),'Five female photo crops should initialize');
 assert(page.includes("dataset.portraitFraming='bust'"),'Visible portrait should update when crop finishes');
 assert(page.includes("femaleHQ.hasBust(who)"),'In-scene female art should use bust variant');
@@ -80,46 +86,11 @@ assert(css.includes('[data-portrait-framing="bust"]'),'Upper-body framing CSS ex
 assert(css.includes('width:min(80vw,355px)'),'Mobile bust scaling exists');
 assert(css.includes('max-width:620px'),'Mobile HQ layout must exist');
 assert(css.includes('data-art-quality="hq"'),'HQ styling must be scoped');
-// Test the exact crop geometry using a synchronous fake browser canvas.
-assert.equal(art.prepareBust(),0,'Node without browser APIs should preserve originals');
-assert.equal(Object.keys(art.BUST_CROP).length,5);
-const cropCalls=[];
-const repaint=[];
-context.Image=class TestImage{
- constructor(){this.naturalWidth=800;this.naturalHeight=1200;}
- set src(url){assert(url.startsWith('data:image/webp;base64,'));this.onload();}
-};
-context.document={createElement(tag){
- assert.equal(tag,'canvas');
- return {
-  width:0,height:0,
-  getContext(kind){
-   assert.equal(kind,'2d');
-   return {drawImage(_img,x,y,w,h,dx,dy,dw,dh){
-    cropCalls.push({x,y,w,h,dx,dy,dw,dh});
-   }};
-  },
-  toDataURL(format,quality){
-   assert.equal(format,'image/webp');
-   assert.equal(quality,.86);
-   return 'data:image/webp;base64,VEVTVA==';
-  }
- };
-}};
-assert.equal(art.prepareBust((id,url)=>repaint.push({id,url})),5,'All five female crops should be generated');
-assert.equal(cropCalls.length,5);
-assert.equal(repaint.length,5);
-for(const id of ids){
- assert(art.hasBust(id),'Prepared bust missing: '+id);
- assert(art.BUST_CROP[id]>=.65&&art.BUST_CROP[id]<=.72,'Keep upper-body only: '+id);
- assert(art.portrait(id).startsWith('data:image/webp;base64,'));
-}
-assert(!art.hasBust('man'),'Male portrait must never be cropped');
-for(const call of cropCalls){
- assert.equal(call.w,800);
- assert.equal(call.dw,800);
- assert.equal(call.dh,call.h);
- assert.equal(call.y,0);
- assert(call.h>=780&&call.h<=864,'Waist-up crop must discard the lower third of body');
-}
-console.log('PASS female bust: five original portraits cropped to upper body, 30 expressions retained, mobile/desktop game integration, no storage');
+// Explicitly check that real-alpha WebP cutouts replace browser Canvas crops.
+assert.equal(art.prepareBust(),0,'No runtime Canvas processing is required');
+assert.equal(Object.keys(art.BUST_ASSETS).length,5,'All five women have original cutouts');
+for(const id of ids)assert(art.hasBust(id),'Missing alpha cutout '+id);
+assert(!art.hasBust('man'),'Do not change male portraits');
+assert(!page.includes('femaleHQ.prepareBust('),'No async photo crop callback remains in setup');
+assert(!/BUST_CACHE|BUST_CROP|canvas\.toDataURL/.test(fs.readFileSync(path.join(root,'js/class-diary-female-hq-v1.js'),'utf8')));
+console.log('PASS female natural poses: five transparent alpha WebPs, 30 facial thumbnails, original photos preserved, mobile/desktop game integration, no storage');

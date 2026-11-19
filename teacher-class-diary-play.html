@@ -367,7 +367,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-supporting-cast-v1.css?v=20261120-men-1">
 <link rel="stylesheet" href="styles/class-diary-male-live-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-student-doyun-v1.css?v=20261120-1">
-<link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-bust1">
+<link rel="stylesheet" href="styles/class-diary-female-hq-v1.css?v=20261120-waistup3">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
 <link rel="stylesheet" href="styles/class-diary-literary-v1.css?v=20261120-hud-center1">
 <link rel="stylesheet" href="styles/class-diary-guest-experience-v1.css?v=20261120-linear-flow2">
@@ -628,7 +628,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <script src="js/class-diary-hq-sea-v1.js?v=20261120-hq1"></script>
 <script src="js/class-diary-hq-yuri-v1.js?v=20261120-hq1"></script>
 <script src="js/class-diary-female-hq-emotions-v1.js?v=20261120-hq1"></script>
-<script src="js/class-diary-female-hq-v1.js?v=20261120-upper-body-1"></script>
+<script src="js/class-diary-female-hq-v1.js?v=20261120-waistup3"></script>
 <script src="js/class-diary-male-photos-v1.js?v=20261120-photo-restore-1"></script>
 <script src="js/class-diary-semester-male-art-v1.js?v=20261120-photo-restore-1"></script>
 <script src="js/class-diary-student-doyun-v1.js?v=20261120-photo-restore-1"></script>
@@ -697,26 +697,8 @@ for(const [id,partner] of [['setupPortraitSuhyun','suhyun'],['setupPortraitSea',
  $(id).dataset.artQuality=art?'hq':'sd';
  $(id).dataset.portraitFraming=art&&femaleHQ.hasBust(partner)?'bust':'original';
 }
-/* Upper-body framing matches the male cast without changing canonical female faces. */
-if(femaleHQ&&typeof femaleHQ.prepareBust==='function')femaleHQ.prepareBust((who,bustUrl)=>{
- const setupMap={woman:'setupPortraitWoman',none:'setupPortraitNone',
-  suhyun:'setupPortraitSuhyun',sea:'setupPortraitSea',yuri:'setupPortraitYuri'};
- const setupImg=$(setupMap[who]);
- if(setupImg&&setupImg.dataset.artQuality==='hq'){
-  setupImg.src=bustUrl;
-  setupImg.dataset.portraitFraming='bust';
- }
- const stageImg=$('scenePortrait');
- if(stageImg&&stageImg.dataset.sdCharacter===who&&stageImg.dataset.artQuality==='hq'){
-  stageImg.src=bustUrl;
-  stageImg.dataset.portraitFraming='bust';
- }
- const guestImg=$('sceneGuestPortrait');
- if(guestImg&&$('sceneGuest').dataset.sdCharacter===who&&guestImg.dataset.artQuality==='hq'){
-  guestImg.src=bustUrl;
-  guestImg.dataset.portraitFraming='bust';
- }
-});
+/* Transparent waist-up WebPs are loaded directly. The portrait elements
+ * already use hasBust() to select matching framing without Canvas delays. */
 for(const [id,person] of [['setupMaleJunseo','junseo'],['setupMaleDohyun','dohyun'],['setupMaleTaesik','taesik']])malePhotos.paint($(id),person);
 maleSemester.preload(()=>{maleSemester.paint($('setupHyunwooLive'),'neutral','cold-spring');$('setupHyunwooLive').hidden=false;$('setupPortraitMan').hidden=true;});
 for(const card of document.querySelectorAll('[data-partner-choice]')){

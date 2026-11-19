@@ -78,3 +78,23 @@ body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bus
   max-height:clamp(115px,24vh,185px);
  }
 }
+
+/* Real alpha waist-up cutouts: never show an image-backed rectangle.
+ * The school's scenic backdrop remains on #sceneBackdrop, independently. */
+#scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"],
+#sceneGuestPortrait[data-art-quality="hq"][data-portrait-framing="bust"],
+#setupPortraitWoman[data-portrait-framing="bust"],
+#setupPortraitNone[data-portrait-framing="bust"],
+#setupPortraitSuhyun[data-portrait-framing="bust"],
+#setupPortraitSea[data-portrait-framing="bust"],
+#setupPortraitYuri[data-portrait-framing="bust"] {
+ background:transparent!important;
+ image-rendering:auto;
+}
+#setup .setup-character-art img[data-art-quality="hq"][data-portrait-framing="bust"],
+#setup .setup-supporting-person img[data-art-quality="hq"][data-portrait-framing="bust"] {
+ object-position:center top;
+}
+body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"] {
+ object-position:center bottom;
+}
