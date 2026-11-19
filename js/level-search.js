@@ -302,7 +302,7 @@
     const details=make('details','beagu-source-note');
     details.append(make('summary','','자료 해석 안내'));
     details.append(make('p','',
-      '학교 고유 결과는 별도 공개 심사를 통과한 경우에만 표시합니다. 그 외에는 학교가 속한 시도 및 전국의 자발적 참여 표본 집계값을 참고값으로 제공합니다. 지역·전국 기준값은 해당 학교의 응답이나 모집단 전체의 대표값이 아닙니다. 응답 건수와 보기별 분포·비율은 표시하지 않습니다. 응답이 하나인 학교에서는 최다 선택값이 그 응답과 같을 수 있습니다.'));
+      '학교 고유 결과는 별도 공개 심사를 통과한 경우에만 표시합니다. 그 외에는 학교가 속한 시도 및 전국의 자발적 참여 표본 집계값을 참고값으로 제공합니다. 지역·전국 기준값은 해당 학교의 응답이나 모집단 전체의 대표값이 아닙니다. 응답 건수와 보기별 분포·비율은 표시하지 않습니다. 2025년 행정업무·학교행사 문항의 체크 목록은 해당 학교 응답에서 확인된 항목의 합집합으로, 모든 응답자가 같은 항목을 선택했다는 뜻은 아닙니다. 응답이 하나인 학교에서는 표시값이 그 응답과 같을 수 있습니다.'));
     section.append(details);
     const all=comparison?.items&&typeof comparison.items==='object'?comparison.items:{};
     const nationalCount=qids.filter(id=>typeof all[id]?.national?.mean==='string'||typeof all[id]?.national?.mode==='string').length;
