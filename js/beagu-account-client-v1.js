@@ -72,9 +72,9 @@
         // Recovery is separately feature-flagged OFF until SMTP/template verified.
         return await call('request-recovery',{email,captchaToken});
       },
-      async deleteAccount({password,confirm}) {
+      async deleteAccount({password,confirm,captchaToken}) {
         // Sensitive, reauthenticated deletion. Only self-owned Auth ID is used.
-        const result=await call('delete-account',{password,confirm},true);
+        const result=await call('delete-account',{password,confirm,captchaToken},true);
         if(result.accountDeleted===true)clear();
         return result;
       },
