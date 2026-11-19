@@ -79,6 +79,11 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#partner').inputValue(),'none');
    assert.equal(await page.locator('#setupNext').isVisible(),true,'Bottom first-day action remains visible');
    await page.locator('#setupNext').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','First-day review appears after colleague selection');
+   assert.equal(await page.locator('#setupReviewSchool').innerText(),'봄빛초등학교','Chosen school is reviewed');
+   assert.equal(await page.locator('#setupReviewPartner').innerText(),'윤민서','Chosen colleague is reviewed');
+   assert.equal(await page.locator('#setupNext').isVisible(),false,'Duplicate next action is hidden on review');
+   await page.locator('.setup-begin').click();
    await page.locator('#novel').waitFor({state:'visible'});
    const state=await page.evaluate(()=>({
     scrollHeight:document.documentElement.scrollHeight,
