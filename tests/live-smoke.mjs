@@ -98,6 +98,21 @@ async function main() {
   const home = responses.get('index.html')||'';
   const level1 = responses.get('js/level-search.js')||'';
   const level2 = responses.get('js/lv2-edited-search.js')||'';
+  check('Lv.0에서 Lv.1 정렬 6종 잠금 · 인증 화면 연결',()=>{
+    const block0=html0.match(/<select id="publicSort"[^>]*>([\s\S]*?)<\/select>/)?.[1]||'';
+    const block1=html1.match(/<select id="regionSort"[^>]*>([\s\S]*?)<\/select>/)?.[1]||'';
+    const publicOptions=[...block0.matchAll(/<option value="([^"]+)"([^>]*)>([^<]*)<\/option>/g)];
+    const level1Options=[...block1.matchAll(/<option value="([^"]+)"([^>]*)>([^<]*)<\/option>/g)];
+    const allowed=['school_name','address'];
+    const restricted=['student_count','beagu_percentile_2025','view_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won'];
+    return publicOptions.length===8&&level1Options.length===8&&
+      publicOptions.every((item,i)=>item[1]===[...allowed,...restricted][i])&&
+      publicOptions.slice(0,2).every(item=>!item[2].includes('disabled'))&&
+      publicOptions.slice(2).every(item=>item[2].includes('disabled')&&item[3].includes('🔒'))&&
+      level1Options.every((item,i)=>item[1]===publicOptions[i][1]&&!item[2].includes('disabled'))&&
+      html0.includes('href="search-lv1.html"')&&
+      html0.includes('id="publicSortLevelHelp"');
+  }());
   const visitStats = responses.get('js/visit-stats.js')||'';
   const mbtiJS = responses.get('js/school-mbti-v1.js')||'';
   const chartJS=responses.get('js/percentile-chart.js')||'';
