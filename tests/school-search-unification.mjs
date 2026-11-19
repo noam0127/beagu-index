@@ -31,7 +31,9 @@ assert.match(publicHtml,/id="lv1QuickCode" type="password"/,'Lv.1 code must be m
 assert.match(publicHtml,/action==='login'\?\{action,code\}/,'Authenticate using server-side login');
 assert.match(publicHtml,/Number\(data\.level\)<1/,'Reject weaker access codes');
 assert.match(publicHtml,/sessionStorage\.setItem\(key,data\.token\)/,'Store only server session token');
-assert.match(publicHtml,/window\.location\.assign\('search-lv1\.html'\)/,'Continue into authenticated search');
+assert.match(publicHtml,/window\.location\.replace\('search-lv1\.html'\)/,'Auto-open Lv.1 search for new and stored verified sessions');
+assert.doesNotMatch(publicHtml,/>Lv\.1 학교 검색하기<\/a>/,'No redundant Lv.1 search button after authentication');
+assert.match(publicHtml,/if\(Number\(data\.level\)>=1 && sessionStorage\.getItem\(key\)===saved\)showAuthenticated\(\)/,'Saved sessions must also redirect only after verification');
 assert.doesNotMatch(publicHtml,/localStorage\.setItem\(.*(?:code|password)/,'Do not store raw access codes');
 const lv0=read('search.html');
 assert.match(lv0,/data\/public-2023-2025-school-records-v2\.json/,'Lv.0 must show 2023-2025 historical presence');
