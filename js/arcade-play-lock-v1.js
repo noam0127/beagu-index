@@ -1,0 +1,52 @@
+/* Keep the visible page stationary while an arcade match is being played.
+   An embedded game asks its trusted same-origin home page to lock scrolling. */
+(() => {
+  "use strict";
+  let active=false, previous=null, scrollY=0;
+  const embedded=window.parent!==window;
+  function standaloneLock(lock){
+    const body=document.body;
+    if(!body)return;
+    if(lock){
+      if(previous)return;
+      scrollY=window.scrollY||window.pageYOffset||0;
+      previous={
+        position:body.style.position,top:body.style.top,left:body.style.left,
+        right:body.style.right,width:body.style.width,overflow:body.style.overflow
+      };
+      Object.assign(body.style,{
+        position:"fixed",top:-scrollY+"px",left:"0",right:"0",width:"100%",overflow:"hidden"
+      });
+    }else if(previous){
+      Object.assign(body.style,previous);
+      previous=null;
+      window.scrollTo(0,scrollY);
+    }
+  }
+  function notifyHost(playing){
+    if(!embedded)return;
+    try{window.parent.postMessage({type:"arcade:play-state",active:playing},window.location.origin);}catch(_){}
+  }
+  function sync(playing){
+    playing=Boolean(playing);
+    if(active===playing)return;
+    active=playing;
+    document.documentElement.classList.toggle("arcade-play-locked",playing);
+    if(embedded)notifyHost(playing);
+    else standaloneLock(playing);
+  }
+  // Safari can scroll the page even when its canvas has touch-action:none.
+  document.addEventListener("touchmove",event=>{
+    if(active&&event.cancelable)event.preventDefault();
+  },{passive:false});
+  document.addEventListener("wheel",event=>{
+    if(active&&event.cancelable)event.preventDefault();
+  },{passive:false});
+  window.addEventListener("pagehide",()=>{
+    if(!active)return;
+    notifyHost(false);
+    standaloneLock(false);
+    active=false;
+  });
+  window.ArcadePlayLock={sync};
+})();
