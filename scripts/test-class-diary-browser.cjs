@@ -171,6 +171,20 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
   await semesterPage.locator('#setupNext').click();
   await semesterPage.locator('#profileForm button[type="submit"]').click();
   await semesterPage.locator('#novel').waitFor({state:'visible'});
+  const proseMode=await semesterPage.evaluate(()=>({
+    semester:document.body.classList.contains('is-semester-mode'),
+    overlayLoaded:typeof window.BeaguClassDiaryLiterary?.present==='function',
+    animationChars:document.querySelectorAll('#chapterText .diary-literary-char').length,
+    season:document.querySelector('#novelCard').dataset.season,
+    paperBackground:getComputedStyle(document.querySelector('.vn-dialogue')).backgroundColor,
+    height:document.querySelector('#novelCard').getBoundingClientRect().height,
+    viewport:innerHeight
+  }));
+  assert(proseMode.semester&&proseMode.overlayLoaded,'The 36-chapter literary presentation must load');
+  assert(proseMode.animationChars>10,'Visible prose must be revealed character by character');
+  assert.equal(proseMode.season,'march','The semester begins in chilly March');
+  assert(proseMode.height<=proseMode.viewport+2,'36-chapter mode must fit the viewport');
+  await semesterPage.screenshot({path:'artifacts/class-diary/semester-literary-first-scene.png',fullPage:true});
   assert.equal(await semesterPage.locator('.diary-day-progress span').count(),6,'Full semester must use six-part progress, not seven-day timeline');
   assert.equal(await semesterPage.locator('#diarySemesterMeta').isVisible(),true,'Season and act status must be visible in game');
   assert((await semesterPage.locator('#diarySemesterMeta').innerText()).includes('3월'),'March season marker missing');
@@ -178,7 +192,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
   assert(gameFrame && gameFrame.height<=844+1,'36-episode novel should remain one mobile viewport');
   const visited=new Set(),months=new Set(),parts=new Set();
   let steps=0;
-  while(await semesterPage.locator('#ending').isHidden()&&steps<850){
+  while(await semesterPage.locator('#ending').isHidden()&&steps<1600){
    steps++;
    const header=await semesterPage.locator('#chapterDay').innerText();
    const match=header.match(/^(\d+) \/ 36/);
