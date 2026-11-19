@@ -21,6 +21,17 @@ for(const p of active){
 for(const p of ['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html']){
  assert.match(read(p),/beagu-unified-nav/,p+' shared navigation');
 }
+const navPages=[...active,'arcade-history.html','levels.html'];
+for(const p of navPages) {
+ const page=read(p),nav=page.match(/<nav class="beagu-unified-nav"[^>]*>([\\s\\S]*?)<\\/nav>/)?.[1]||'';
+ assert.ok(nav,p+' includes unified navigation');
+ assert.match(nav,/<a href="challenge\\.html"[^>]*>챌린지<\\/a>/,p+' menu must say 챌린지');
+ assert.doesNotMatch(nav,/>인증<\\/a>/,p+' old top menu label is absent');
+}
+const levelGuide=read('levels.html');
+assert.match(levelGuide,/<span class="beagu-level-guide-title-line">참여할수록 더<\\/span><span class="beagu-level-guide-title-line">넓어지는 학교정보<\\/span>/,'The level heading keeps exact two-line wording');
+assert.match(read('styles/beagu-level-guide-v1.css'),/\\.beagu-level-guide-title-line\\{display:block;white-space:nowrap/, 'Prevent mid-word wrap on mobile');
+
 const search=read('search.html');
 assert.match(search,/publicSort\.addEventListener\('change'/,'Lv0 sorting must query server');
 assert.match(search,/\.order\(sortColumn,\{ascending,nullsFirst:false\}\)/,'Regional sort must happen before pagination');
