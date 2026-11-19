@@ -65,6 +65,9 @@ assert(play.src.includes('scenario.continueStory(game)'));
 
 assert(play.src.includes('id="characterAvatar"'));
 assert(play.src.includes('src="js/class-diary-director-v1.js"'));
+assert(play.src.includes('src="js/class-diary-character-routes-v1.js"'));
+assert(play.src.includes('민서 선생님 · 우정 중심'));
+assert(play.src.includes('characterRoutes.eventMoment(game,event)'));
 assert(play.src.includes('src="js/class-diary-context-v1.js"'));
 assert(play.src.includes('schoolContext.forDay(world,game.day)'));
 assert(play.src.includes("$('statVoice').textContent"));
