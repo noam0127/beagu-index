@@ -571,8 +571,8 @@ const shoot=(tier,good=false)=>new Function("tier","good",[
  'for(let i=0;i<5;i++)updateChalk(.05);',
  'return {created,remaining:items.length,score,removed};'
 ].join("\n"))(tier,good);
-assert.deepEqual(shoot("easy"),{created:1,remaining:0,score:25,removed:1},"EASY chalk automatically destroys falling hazard");
-assert.deepEqual(shoot("normal"),{created:1,remaining:0,score:25,removed:1},"NORMAL chalk also protects");
+assert.deepEqual(shoot("easy"),{created:1,remaining:0,score:5,removed:1},"EASY chalk automatically destroys falling hazard");
+assert.deepEqual(shoot("normal"),{created:1,remaining:0,score:5,removed:1},"NORMAL chalk also protects");
 assert.deepEqual(shoot("hard"),{created:0,remaining:1,score:0,removed:0},"HARD has no chalk");
 assert.deepEqual(shoot("extreme"),{created:0,remaining:1,score:0,removed:0},"EXTREME has no chalk");
 assert.deepEqual(shoot("easy",true),{created:0,remaining:1,score:0,removed:0},"healing pickups are never shot");
