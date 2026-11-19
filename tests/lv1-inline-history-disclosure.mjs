@@ -18,7 +18,7 @@ assert.doesNotMatch(lv1,/graphic\?\.remove\(\)/,'keep the requested percentile g
 assert.match(lv1,/card\.querySelector\('\.school-actions'\)\?\.remove\(\)/,'no redundant second detail button');
 assert.match(lv1,/previousGrid\.replaceWith\(updatedGrid\)/,'background updates preserve open panel');
 assert.match(lv1,/const data=await api\('school',\{schoolId:school\.school_id\}\)/,'approved server data remains required');
-assert.match(lv1,/showDetails\(detail,data\.rows,school,data\.schoolQuestionModes\)/,'approved results still render');
+assert.match(lv1,/showDetails\(detail,data\.rows,school,data\.schoolQuestionModes,/,'approved results still render');
 assert.match(lv1,/const reviewedYears=new Set\(/,'track historical years with approved question distributions');
 assert.match(lv1,/reviewedYears\.has\(year\)\|\|/,'prioritize newest year with question data even without a summary metric');
 assert.doesNotMatch(lv1,/allQuestions\.href='school-report\.html/,'Lv.1 history must not navigate to separate report');

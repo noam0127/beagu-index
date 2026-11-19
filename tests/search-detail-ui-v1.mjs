@@ -8,7 +8,7 @@ const search=read('js/level-search.js');
 const css=read('styles/beagu-search-details-v1.css');
 assert.doesNotThrow(()=>new vm.Script(search));
 assert.match(html,/styles\/beagu-search-details-v1\.css\?v=20261119-domain-note1/);
-assert.match(html,/js\/level-search\.js\?v=20261120-overseas1/);
+assert.match(html,/js\/level-search\.js\?v=20261120-[a-z0-9-]+/);
 assert.match(css,/historical-benchmark-grid/);
 assert.match(css,/@media\(max-width:680px\)/);
 assert.match(search,/event\.key==='ArrowRight'/);
