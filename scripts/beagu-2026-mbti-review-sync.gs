@@ -41,6 +41,7 @@ function mbti26_region(value){
  return items.find(k=>s.startsWith(k))||null;
 }
 function mbti26_office(value){
+ if(typeof normalizeOffice==="function")return normalizeOffice(value);
  return mbti26_norm(value)
   .replace(/전남광주통합특별시광주|전남광주통합특별시|서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|강원도|충청북도|충청남도|전북특별자치도|전라북도|전라남도|경상북도|경상남도|제주특별자치도/g,"")
   .replace(/교육지원청|교육청/g,"");
@@ -168,7 +169,7 @@ function refreshBeagu2026SchoolCulture(){
     const scores=c.q.map((j)=>mbti26_score(r[j])); // Unknown option throws; existing staging preserved
     if(!grouped.has(id))grouped.set(id,{school,n:[0,0,0,0],sum:[0,0,0,0],rows:0,full:0,typeConflict:false});
     const item=grouped.get(id);
-    item.typeConflict ||= typeConflict;
+    item.typeConflict = item.typeConflict || typeConflict;
     item.rows++;matched++;
     if(scores.every(x=>typeof x==="number"))item.full++;
     scores.forEach((v,j)=>{if(typeof v==="number"){item.n[j]++;item.sum[j]+=v}});

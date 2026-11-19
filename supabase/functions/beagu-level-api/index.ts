@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -426,7 +427,10 @@ Deno.serve(async(req:Request)=>{
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
-  return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,participationYears},200,origin);
+  const {data:released2026,error:results2026Error}=await admin.rpc('beagu_2026_released_question_results',{p_school_id:id});
+  if(results2026Error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
+  const schoolQuestionResults2026=Array.isArray(released2026)?publicQuestionResults(released2026):[];
+  return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
 

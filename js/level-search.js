@@ -468,7 +468,7 @@
     host.append(section);
   }
 
-  function renderYear(host, year, rows, publicValue, schoolId, modes=[], school=null,comparison=null,loadStatus='loading',selections=[]) {
+  function renderYear(host, year, rows, publicValue, schoolId, modes=[], school=null,comparison=null,loadStatus='loading',selections=[],results2026=[]) {
     host.replaceChildren();
     const heading=make('div','beagu-year-header');
     heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
@@ -477,12 +477,13 @@
     // Lv.1 results expand inside the selected search card; no page change.
     if(year === 2026) {
       const vetted = metrics2026(rows);
+      const hasQuestions=window.Beagu2026ApprovedResults?.render(host,results2026);
       if(vetted.length) {
         const section=make('section','beagu-approved-section');
         BeaguDetailGroups.appendGrouped(section,vetted,(body,m)=>addRow(body,m.label,metricValue(m)));
         section.querySelectorAll('.beagu-detail-group').forEach(group=>{group.open=true;});
         host.append(section);
-      } else {
+      } else if(!hasQuestions) {
         host.append(make('p','beagu-year-empty',
           '2026년 공개된 학교별 조사 결과가 없습니다. 아직 참여하지 않았거나 집계·검수 및 공개 대기 중일 수 있습니다.'));
         const survey=make('a','beagu-year-survey-link','2026 조사 참여하기');
@@ -501,7 +502,7 @@
         reload.textContent='승인 결과 확인 중...';
         try {
           const fresh=await api('school',{schoolId:String(schoolId)});
-          renderYear(host,2026,fresh.rows,null,schoolId);
+          renderYear(host,2026,fresh.rows,null,schoolId,fresh.schoolQuestionModes,null,null,'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026);
         } catch(e) {
           if(e.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
           reload.disabled=false;
@@ -626,7 +627,7 @@
       refresh();
     });
   }
-  function showDetails(host,rows,school,modes=[],selections=[]) {
+  function showDetails(host,rows,school,modes=[],selections=[],results2026=[]) {
     host.replaceChildren();
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
@@ -658,7 +659,7 @@
       const draw=(data,status)=>{
         content.removeAttribute('aria-busy');
         renderYear(content,year,rows,vals[year-2023]??null,
-          school.school_id,modes,school,data,status,selections);
+          school.school_id,modes,school,data,status,selections,results2026);
       };
       if(year===2026){draw(null,'ready');return;}
       if(readyByYear.has(year)){draw(readyByYear.get(year),'ready');return;}
@@ -708,6 +709,7 @@
       .filter(item=>/^Q\d{2}$/.test(String(item?.questionId||'')) &&
         typeof item?.modeOption==='string'&&item.modeOption.length>0)
       .map(item=>Number(item.year)));
+    if(results2026.length)reviewedYears.add(2026);
     const firstAvailable=[2026,2025,2024,2023].find(year=>
       reviewedYears.has(year)||
       (Array.isArray(rows)?rows:[]).some(row=>
@@ -780,7 +782,7 @@
           await loaded;
           // The signed-session API enforces access rights and release status.
           if(!detail.isConnected)return;
-          showDetails(detail,data.rows,school,data.schoolQuestionModes,data.schoolQuestionSelections);
+          showDetails(detail,data.rows,school,data.schoolQuestionModes,data.schoolQuestionSelections,data.schoolQuestionResults2026);
           detail.dataset.loaded='1';
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         }catch(error){
@@ -841,7 +843,7 @@
     }
   }
   // Poll ONLY reviewed/approved public data. An on-form-submit event is not
-  // itself a release; server review and the 2026 72-hour cooldown still apply.
+  // itself a release; server review and the 2026 24-hour cooldown still apply.
   // Never poll private Google Sheets or expose school-specific response counts.
   async function refreshApproved2026OnScreen(){
     if(refreshingReleased2026||!session||$('searchPanel').hidden||
@@ -868,7 +870,7 @@
           const tab=detail?.querySelector('.year-tabs button[data-year="2026"][aria-selected="true"]');
           const content=detail?.querySelector('.school-year-details');
           if(!detail||detail.hidden||!tab||!content)return;
-          renderYear(content,2026,fresh.rows,null,id);
+          renderYear(content,2026,fresh.rows,null,id,fresh.schoolQuestionModes,null,null,'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026);
         }catch(error){
           if(error.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
           // Preserve the last server-approved result on transient network errors.

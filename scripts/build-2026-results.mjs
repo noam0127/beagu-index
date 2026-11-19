@@ -1,0 +1,12 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+const context={window:{}};
+vm.runInNewContext(fs.readFileSync('js/2026-questionnaire-options-v1.2.js','utf8'),context);
+const json=JSON.stringify(context.window.Beagu2026Questionnaire);
+fs.writeFileSync('supabase/functions/_shared/questionnaire-2026.mjs','// Generated from js/2026-questionnaire-options-v1.2.js\nexport const catalog='+json+';\n');
+const core=fs.readFileSync('scripts/beagu-2026-results-core.js','utf8');
+const runtime=fs.readFileSync('scripts/beagu-2026-results-runtime.js','utf8');
+const marker='// BEGIN GENERATED 2026 QUESTION RESULTS';
+const target='scripts/beagu-2026-noon-sync.gs';
+const base=fs.readFileSync(target,'utf8').split(marker)[0].trimEnd();
+fs.writeFileSync(target,base+'\n\n'+marker+'\nconst BEAGU26_QUESTION_CATALOG='+json+';\n'+core+'\n'+runtime);

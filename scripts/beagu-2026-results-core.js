@@ -1,0 +1,76 @@
+/* Pure aggregate builder. Input stays in the private spreadsheet runtime.
+ * Output contains school IDs and closed-option counts, never response records. */
+function beagu26CleanOption(value) {
+  return String(value || '').replace(/(^|,\s*)[①-⑳㉑-㉟㊱-㊿]\s*/g, '$1').normalize('NFKC').replace(/\s+/g, ' ').trim();
+}
+function beagu26Selections(value, options, multiple) {
+  const raw=String(value||'').trim();
+  if(!raw)return [];
+  const normalized=beagu26CleanOption(raw);
+  const exact=options.findIndex(v=>beagu26CleanOption(v)===normalized);
+  if(exact>=0)return [exact];
+  if(!multiple)return null;
+  // Google Forms separates checkbox choices by comma+space. Some labels also
+  // contain commas; consume complete whitelist labels, longest match first.
+  let rest=raw, found=[];
+  const candidates=options.map((v,i)=>({i,v:beagu26CleanOption(v)})).sort((a,b)=>b.v.length-a.v.length);
+  while(rest){
+    rest=beagu26CleanOption(rest);
+    const hit=candidates.find(x=>rest===x.v||rest.startsWith(x.v+', '));
+    if(!hit||found.includes(hit.i))return null;
+    found.push(hit.i);rest=rest.slice(hit.v.length).replace(/^,\s*/, '');
+  }
+  return found.sort((a,b)=>a-b);
+}
+function beagu26BuildResults(values, schools, catalog) {
+  const headers=values[0], c=questionColumns(headers), specs=[];
+  for(const id of Object.keys(catalog)){
+    const meta=catalog[id], hits=[];
+    headers.forEach((h,col)=>{if(String(h).startsWith(id+'.'))hits.push(col);});
+    const expected=meta.kind==='grid'?meta.rows.length:1;
+    if(hits.length!==expected)throw Error(id+' column count mismatch');
+    hits.forEach((col,index)=>{
+      if(meta.kind==='grid'){
+        const label=String(headers[col]).match(/\[([^\]]+)\]\s*$/)?.[1];
+        if(beagu26CleanOption(label)!==beagu26CleanOption(meta.rows[index]))throw Error(id+' grid row mismatch');
+      }
+      specs.push({id,row:meta.kind==='grid'?index:-1,col,
+        options:meta.kind==='grid'?meta.columns:meta.options,
+        multiple:meta.kind==='multi'||id==='Q45',time:meta.kind==='time'});
+    });
+  }
+  const groups=new Map(), totals={source_rows:0,official_rows:0,prelaunch_rows:0,unmatched_rows:0,undated_rows:0};
+  for(const r of values.slice(1)){
+    if(!r[0]&&!r[c.school])continue;
+    totals.source_rows++;
+    const day=getSubmittedDay(r[0]);
+    if(!day){totals.undated_rows++;continue;}
+    if(day<'2026-11-01'){totals.prelaunch_rows++;continue;}
+    if(day>'2026-12-31'){totals.undated_rows++;continue;}
+    totals.official_rows++;
+    const match=resolveSchool(r,c,schools);
+    if(!match.school){totals.unmatched_rows++;continue;}
+    const id=String(match.school.school_id);
+    if(!groups.has(id))groups.set(id,{school_id:id,school_response_rows:0,school_match_status:'EXACT_REGION_OFFICE_NAME',
+      questions:specs.map(s=>({id:s.id,row:s.row,valid:0,invalid:0,counts:s.options.map(()=>0),minutes_sum:0}))});
+    const g=groups.get(id);g.school_response_rows++;
+    if(match.typeConflict)g.school_match_status='NEEDS_REVIEW';
+    specs.forEach((s,index)=>{
+      const q=g.questions[index], raw=String(r[s.col]||'').trim();
+      if(!raw)return;
+      if(s.time){
+        const m=/^(?:(오전|오후)\s*)?(\d{1,2}):(\d{2})(?::00)?$/.exec(raw);
+        if(!m){q.invalid++;return;}
+        let hour=Number(m[2]),minute=Number(m[3]);
+        if(minute>59||hour>23||(m[1]&&(hour<1||hour>12))){q.invalid++;return;}
+        if(m[1])hour=hour%12+(m[1]==='오후'?12:0);
+        q.valid++;q.minutes_sum+=hour*60+minute;return;
+      }
+      const selected=beagu26Selections(raw,s.options,s.multiple);
+      if(selected===null){q.invalid++;return;}
+      if(selected.length){q.valid++;selected.forEach(i=>q.counts[i]++);}
+    });
+  }
+  return {source_spreadsheet_id:BEAGU26.sourceId,official_start_day:'2026-11-01',schema_version:1,
+    totals,schools:[...groups.values()].sort((a,b)=>a.school_id.localeCompare(b.school_id))};
+}

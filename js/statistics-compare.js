@@ -225,7 +225,7 @@
     elements.copy.disabled=!state.selected.length;
   }
   // The anonymous API is RLS-restricted to reviewed, manually released
-  // 2026 rows with a 72-hour cooldown. Do not query draft or raw survey data.
+  // 2026 rows with a 24-hour cooldown. Do not query draft or raw survey data.
   async function loadPublic2026(ids) {
     const requested=[...new Set(ids.map(String))].filter(id=>
       /^[A-Z0-9]{7}$/.test(id) &&
@@ -569,6 +569,7 @@
            !validServerText(record.modeOption,180))continue;
         approved.items[year][qid]=String(record.modeOption);
       }
+      Object.assign(approved.items[2026],window.Beagu2026ApprovedResults?.summary(data.schoolQuestionResults2026)||{});
       if(epoch===state.authEpoch && token===state.sessionToken)
         state.approvedBySchool.set(id,approved);
     }catch(error){

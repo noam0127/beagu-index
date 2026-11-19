@@ -1162,6 +1162,7 @@
   }
 }</script>
 <script src="js/2026-questionnaire-options-v1.2.js?v=20261117-original50"></script>
+<script src="js/2026-approved-question-results.js?v=20261119-results1"></script>
 <script src="js/historical-original-questions.js?v=20261117-source-headers"></script>
 <script src="js/historical-questionnaire-choices.js?v=20261117-verified-v1"></script>
 <script src="js/2025-observed-choices.js?v=20261117-observed30"></script>
@@ -1425,6 +1426,7 @@
       const r=await tierCall('school',{schoolId:id});
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id||state.tier!==requested)return;
       state.participationYears=Array.isArray(r.participationYears)?r.participationYears.filter(y=>y===2025):[];
+      state.years['2026'].items={};
       for(const row of Array.isArray(r.rows)?r.rows:[]){
         const year=Number(row.year),level=Number(row.access_level);
         if(![2023,2024,2025,2026].includes(year)||level>requested)continue;
@@ -1461,6 +1463,11 @@
         state.years[String(year)].items[qid]={
           display:d.modeOption,modeOption:d.modeOption,serverApproved:true
         };
+      }
+      const releasedQuestions=window.Beagu2026ApprovedResults?.summary(r.schoolQuestionResults2026)||{};
+      // Replace the previous 2026 answer snapshot, including when withdrawn.
+      for(const [qid,display] of Object.entries(releasedQuestions)){
+        state.years['2026'].items[qid]={display,serverApproved:true};
       }
       if(requested===2){
         try{

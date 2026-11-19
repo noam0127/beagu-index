@@ -22,7 +22,7 @@ assert.match(search,/document\.addEventListener\('visibilitychange'/);
 assert.match(search,/loadPagePercentiles\(visiblePageSchools,requestId\)/);
 assert.match(search,/api\('school',\{schoolId:id\}\)/);
 assert.match(search,/Number\(r\.year\) === 2026/);
-assert.match(search,/renderYear\(content,2026,fresh\.rows,null,id\)/);
+assert.match(search,/renderYear\(content,2026,fresh\.rows,null,id,fresh\.schoolQuestionModes,null,null,\x27ready\x27,fresh\.schoolQuestionSelections,fresh\.schoolQuestionResults2026\)/);
 assert.match(search,/\.querySelector\('\.year-tabs button\[data-year="2026"\]\[aria-selected="true"\]'\)/);
 assert.match(search,/window\.BeaguSchoolMBTI\.invalidateCache\?\.\(\)/);
 assert.match(culture,/function invalidateCache\(\)\{cache\.clear\(\);\}/);

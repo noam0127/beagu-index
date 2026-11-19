@@ -45,10 +45,11 @@ assert.doesNotMatch(js,/from\(['"]beagu_release_metrics_v2/);
 assert.doesNotMatch(js,/service_role|SUPABASE_SERVICE_ROLE/i);
 
 const invoked=[];
+scope.refreshBeagu2026QuestionResults=()=>invoked.push('questions');
 scope.refreshBeagu2026Stats=()=>invoked.push('core');
 scope.refreshBeagu2026SchoolCulture=()=>invoked.push('culture');
 scope.onBeagu2026FormSubmitted({range:{getSheet:()=>({getName:()=> '설문지 응답 시트1'})}});
-assert.deepEqual(invoked,['core','culture'],'One form submission should update both private summaries');
+assert.deepEqual(invoked,['questions','core','culture'],'One form submission should update both private summaries');
 scope.onBeagu2026FormSubmitted({range:{getSheet:()=>({getName:()=> '다른 시트'})}});
-assert.equal(invoked.length,2,'Unrelated sheet must not trigger refresh');
+assert.equal(invoked.length,3,'Unrelated sheet must not trigger refresh');
 console.log('PASS: 2026 one-time trigger path, one official row, school-type review, Q01-Q17 private auto aggregation');
