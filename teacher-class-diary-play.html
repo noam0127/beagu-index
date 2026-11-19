@@ -649,7 +649,7 @@ const isGuest=!isDemo&&params.get('guest')==='1';
 const token=isDemo||isGuest?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
 const schoolId=params.get('schoolId')||'';
 let world=null,plan=null,game=null;
-let guestIntroTimer=null,guestSaveTicket='';
+let guestIntroTimer=null,guestSaveTicket='',guestSaveGrant='';
 $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
 let storyMode='week';
 function prepareGuestProfile(){
@@ -1206,6 +1206,14 @@ async function boot(){
    const result=await response.json();
    if(result.ok!==true||result.scope!=='class-diary-fictional-guest')throw Error('INVALID_SCOPE');
    guestSaveTicket=ticket;ticket='';
+   // The save grant authorizes only creating a fictional story checkpoint (never Lv2 access).
+   void fetch(API+'class-diary-save-v1',{
+    method:'POST',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'permit',ticket:guestSaveTicket})
+   }).then(r=>r.ok?r.json():null).then(v=>{
+    if(v&&v.ok===true&&/^g1\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/.test(v.grant||''))guestSaveGrant=v.grant;
+   }).catch(()=>{});
    const fixture=window.BeaguClassDiaryDemo.createDemo();
    world=fixture.world;plan=fixture.plan;
    prepareGuestProfile();
@@ -1346,7 +1354,7 @@ $('againBtn').addEventListener('click',()=>{
 const checkpoints=window.BeaguClassDiarySave.mount({
  state:()=>({
   mode:storyMode,game,isDemo,isGuest,schoolId,
-  session:token,ticket:guestSaveTicket,
+  session:token,ticket:guestSaveTicket,grant:guestSaveGrant,
   page:game&&game.phase==='semester_ending'?endingState.index:vnState.index
  }),
  restore:snapshot=>{
