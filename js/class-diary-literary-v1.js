@@ -133,8 +133,8 @@ function paginate(paragraphs,source){
  // Use the same prose / paragraph styles as the actual page, offscreen.
  for(const [property,value] of Object.entries({
   position:'absolute',left:'-10000px',top:'0',display:'block',width:text.clientWidth+'px',
-  height:'auto',minHeight:'0',maxHeight:'none',flex:'none',visibility:'hidden',
-  pointerEvents:'none',overflow:'visible',boxSizing:'border-box'
+  height:'auto','min-height':'0','max-height':'none',flex:'none',visibility:'hidden',
+  'pointer-events':'none',overflow:'visible','box-sizing':'border-box'
  }))probe.style.setProperty(property,value,'important');
  reader.append(probe);
  function measureHeight(items){
