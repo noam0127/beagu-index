@@ -376,17 +376,15 @@
         const preferred=m.kind==='most_frequent'||m.kind==='mode'?m.mode||m.mean:m.mean||m.mode;
         return typeof preferred==='string'&&preferred.length<=180?preferred:null;
       };
-      const comparisonLabel=m=>m?.kind==='most_frequent'?'최다 선택':'평균에 해당하는 보기';
       const checkboxQuestion=year===2025&&(id==='Q03'||id==='Q04');
       const checked=checkboxQuestion?selectedOptions.get(id)||null:null;
       const cells=[
-        ['우리 학교',checkboxQuestion?(checked?.length?'확인된 체크 항목':''):vetted.get(id)||null,
-          'school',checkboxQuestion?'응답 기준 · 복수 선택':'검증된 최다 선택'],
-        [region,benchmark(comparisonValues.regional),'region',comparisonLabel(comparisonValues.regional)],
-        ['전국',benchmark(comparisonValues.national),'nation',comparisonLabel(comparisonValues.national)]
+        ['우리 학교',checkboxQuestion?(checked?.length?'확인된 체크 항목':''):vetted.get(id)||null,'school'],
+        [region,benchmark(comparisonValues.regional),'region'],
+        ['전국',benchmark(comparisonValues.national),'nation']
       ];
       const grid=make('div','historical-benchmark-grid');
-      for(const [label,value,role,note] of cells){
+      for(const [label,value,role] of cells){
         const cell=make('div','historical-benchmark-value '+role);
         const top=make('span','beagu-benchmark-label',label);
         const hasValue=typeof value==='string'&&!!value.trim();
