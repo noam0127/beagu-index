@@ -27,13 +27,24 @@ const ticketKeyPromise=crypto.subtle.importKey(
  'raw',new TextEncoder().encode('class-diary-guest-v1:'+key),
  {name:'HMAC',hash:'SHA-256'},false,['sign','verify']
 );
+const progressKeyPromise=crypto.subtle.importKey(
+ 'raw',new TextEncoder().encode('class-diary-progress-v1:'+key),
+ {name:'HMAC',hash:'SHA-256'},false,['sign','verify']
+);
 const encode=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 function decode(value:string){
  if(!/^[A-Za-z0-9_-]{1,512}$/.test(value))throw Error('BAD_ENCODING');
  const bytes=atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4));
  return Uint8Array.from(bytes,c=>c.charCodeAt(0));
 }
-async function issueTicket(){
+async function issueProgressToken(sub:string){
+ const payload={v:1,scope:'class-diary-progress',campaign:'2026',sub,
+  exp:Date.now()+12*60*60_000,nonce:encode(crypto.getRandomValues(new Uint8Array(12))),sub};
+ const body=encode(new TextEncoder().encode(JSON.stringify(payload)));
+ const sig=await crypto.subtle.sign('HMAC',await progressKeyPromise,new TextEncoder().encode('progress.v1.'+body));
+ return 'p1.'+body+'.'+encode(new Uint8Array(sig));
+}
+async function issueTicket(sub:string){
  const payload={v:1,scope:'class-diary-fictional-guest',exp:Date.now()+10*60_000,
   nonce:encode(crypto.getRandomValues(new Uint8Array(12)))};
  const body=encode(new TextEncoder().encode(JSON.stringify(payload)));
@@ -48,7 +59,8 @@ async function validateTicket(ticket:unknown){
   if(parsed?.v!==1||parsed?.scope!=='class-diary-fictional-guest'||
      !Number.isSafeInteger(parsed.exp)||parsed.exp<Date.now()||parsed.exp>Date.now()+10*60_000||
      !/^[A-Za-z0-9_-]{16}$/.test(parsed.nonce))return false;
-  return crypto.subtle.verify('HMAC',await ticketKeyPromise,decode(signature),new TextEncoder().encode('v1.'+body));
+  const valid=await crypto.subtle.verify('HMAC',await ticketKeyPromise,decode(signature),new TextEncoder().encode('v1.'+body));
+  return valid?parsed:false;
  }catch{return false}
 }
 Deno.serve(async req=>{
@@ -81,7 +93,9 @@ Deno.serve(async req=>{
  if(action==='verify-ticket'){
   const valid=await validateTicket('ticket' in body?body.ticket:null);
   return valid
-   ?respond({ok:true,scope:'class-diary-fictional-guest'},200,origin)
+   ?respond({ok:true,scope:'class-diary-fictional-guest',
+      ...(typeof valid.sub==='string'&&/^[0-9a-f-]{36}$/i.test(valid.sub)
+         ?{progressToken:await issueProgressToken(valid.sub),progressExpiresInSeconds:43200}:{})},200,origin)
    :respond({error:'INVALID_TICKET'},401,origin);
  }
  try{
@@ -92,12 +106,12 @@ Deno.serve(async req=>{
   const code='code' in body&&typeof body.code==='string'?body.code.trim().toUpperCase():'';
   const validShape=/^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}|[A-HJ-NP-Z2-9]{10})$/.test(code);
   if(!validShape)return respond({error:'INVALID_CODE'},401,origin);
-  const {data:valid,error}=await admin.rpc('beagu_check_class_diary_guest_code',{p_code:code});
+  const {data:subject,error}=await admin.rpc('beagu_class_diary_progress_subject',{p_code:code});
   if(error)return respond({error:'AUTH_UNAVAILABLE'},503,origin);
-  if(valid!==true)return respond({error:'INVALID_CODE'},401,origin);
+  if(typeof subject!=='string'||!/^[0-9a-f-]{36}$/i.test(subject))return respond({error:'INVALID_CODE'},401,origin);
   // This proves only that the code exists, not the caller's personal identity.
   // Do not send an Lv2 token, school records, participant no, or identity code back.
-  const ticket=await issueTicket();
+  const ticket=await issueTicket(subject);
   return respond({ok:true,scope:'class-diary-fictional-guest',ticket,expiresInSeconds:600},200,origin);
  }catch{return respond({error:'AUTH_UNAVAILABLE'},503,origin);}
 });
