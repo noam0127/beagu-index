@@ -102,7 +102,7 @@ for(let n=0;n<243;n++){
  assert.equal(s.storyEvents.length,5);
  endings.add(s.ending.id);
 }
-for(const name of ['소중한','든든한','씩씩한','설레는','서툰']){
+for(const name of ['소중한','든든한','단단한','다정한','솔직한']){
  assert(Object.values(game.ENDINGS).some(e=>e.title==='나의 '+name+' 학급일지'),'Korean ending missing '+name);
 }
 assert(!JSON.stringify(scenario).includes('localStorage'));
