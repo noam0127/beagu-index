@@ -40,7 +40,7 @@ const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#profileForm button[type="submit"]').click();
    await page.locator('#novel').waitFor({state:'visible'});
    assert.equal(await page.locator('#musicBtn').getAttribute('aria-pressed'),'true','Game start enables music');
-   await page.locator('#musicBtn').click(); // silence background while testing branches
+   await page.locator('#vnSound').click(); // in-scene sound control delegates to hidden settings button
    assert.equal(await page.locator('#musicBtn').getAttribute('aria-pressed'),'false');
    assert((await page.locator('#sceneBackdrop').evaluate(x=>x.style.backgroundImage)).includes('data:image/svg+xml'));
    assert((await page.locator('#scenePortrait').getAttribute('src')).startsWith('data:image/svg+xml'));
