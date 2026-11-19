@@ -5,6 +5,12 @@ const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderbo
 const games=new Set(["volleyball_25","teacher_run_retirement"]);
 const fmt=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString("ko-KR");
 const displayScore=score=>fmt(score)+"점";
+const fmtTime=n=>{const t=Math.max(0,Math.floor(Number(n)||0));return Math.floor(t/600)+":"+String(Math.floor((t%600)/10)).padStart(2,"0")+"."+(t%10);};
+function orderFast(rows){
+ return rows.filter(x=>x&&Number.isSafeInteger(x.timeTenths)&&x.timeTenths>0)
+  .map(x=>({timeTenths:x.timeTenths,created_at:String(x.created_at||""),school_name:String(x.school_name||"학교 미등록"),difficulty:x.difficulty||null}))
+  .sort((a,b)=>a.timeTenths-b.timeTenths||a.created_at.localeCompare(b.created_at)).slice(0,10);
+}
 const levelNames={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
 function el(tag,cls,text){
  const e=document.createElement(tag);
@@ -29,7 +35,7 @@ class ArcadeLeaderboard{
  constructor(game,mount){
   if(!games.has(game))throw new Error("invalid leaderboard game");
   this.game=game;this.mount=typeof mount==="string"?document.querySelector(mount):mount;
-  this.board=[];this.remote=false;this.session=null;this.pendingStart=null;
+  this.board=[];this.fastestBoard=[];this.remote=false;this.session=null;this.pendingStart=null;
   this.pendingLoad=null;this.score=0;this.stats=null;this.school=null;
   this.playGeneration=0;this.isSubmitting=false;this.notice="";
   if(this.mount){this.draw();this.load();}
@@ -50,8 +56,9 @@ class ArcadeLeaderboard{
     const data=await this.request("GET");
     if(!Array.isArray(data.top10))throw new Error("invalid_response");
     this.remote=true;this.board=order(data.top10,this.game);
+    if(this.game==="volleyball_25")this.fastestBoard=orderFast(data.fastestTop10||[]);
    }catch(e){
-    this.remote=false;this.board=[];
+    this.remote=false;this.board=[];this.fastestBoard=[];
    }
    this.draw();return this.board;
   })();
@@ -100,8 +107,7 @@ class ArcadeLeaderboard{
    await this.load();
    if(generation!==this.playGeneration||!this.session)return;
    // Avoid consuming a session for a definitely nonqualifying entry.
-   if(this.remote&&this.board.length===10&&
-      (this.score<=this.board[9].score)){
+   if(this.game!=="volleyball_25"&&this.remote&&this.board.length===10&&this.score<=this.board[9].score){
     this.notice="이번 "+displayScore(this.score)+" · TOP 10 기준 미달";
     this.session=null;this.draw();return;
    }
@@ -109,9 +115,11 @@ class ArcadeLeaderboard{
    if(generation!==this.playGeneration)return;
    if(!Array.isArray(data.top10)||typeof data.ranked!=="boolean")throw new Error("invalid_response");
    this.remote=true;this.board=order(data.top10,this.game);this.session=null;
+   if(this.game==="volleyball_25")this.fastestBoard=orderFast(data.fastestTop10||[]);
    this.notice=data.ranked
-    ?"🏆 익명 기록 자동 등록 · "+data.rank+"위 · "+displayScore(this.score)
-    :"이번 "+displayScore(this.score)+" · TOP 10 진입 실패";
+    ?"🏆 점수 TOP "+data.rank+"위 · "+displayScore(this.score)
+    :data.timeRanked?"⏱ 25점 최단시간 TOP "+data.timeRank+"위 · "+displayScore(this.score)
+    :"이번 경기 "+displayScore(this.score)+" · 기록 저장, TOP 10 밖";
   }catch(err){
    if(generation!==this.playGeneration)return;
    this.notice=err.status===409?"경기가 만료되었거나 이미 기록되었습니다":
@@ -126,23 +134,36 @@ class ArcadeLeaderboard{
   const root=this.mount;root.replaceChildren();root.classList.add("arcade-ranking");
   const header=el("div","arcade-ranking-head");
   header.append(el("strong","",this.game==="volleyball_25"?"🏆 배구 최고 점수 TOP 10":"🏆 정년 생존 점수 TOP 10"),
-   el("small","",this.remote?"공식 기록 · 익명":"공식 서버 확인 중"));
+    el("small","",this.remote?"공식 기록 · 익명":"공식 서버 확인 중"));
   root.append(header);
   if(this.notice){const node=el("p","arcade-rank-feedback",this.notice);node.setAttribute("role","status");root.append(node);}
   const labels=el("div","arcade-rank-grid arcade-rank-label");
-  ["순위","학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));
-  root.append(labels);
-  if(!this.board.length){root.append(el("div","arcade-rank-empty",this.remote?"아직 등록된 기록이 없습니다":"기록을 불러올 수 없습니다"));return;}
-  for(const [i,entry] of this.board.entries()){
-   const row=el("div","arcade-rank-grid arcade-rank-row");
-   const school=el("div","arcade-rank-person");
-   school.append(el("span","arcade-rank-school",entry.school_name),
-    el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
-   row.append(el("span","",String(i+1).padStart(2,"0")),school,
-    el("span","",fmt(entry.score)));
-   root.append(row);
+  ["순위","학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));root.append(labels);
+  if(!this.board.length)root.append(el("div","arcade-rank-empty",
+    this.remote?"아직 등록된 점수 기록이 없습니다":"기록을 불러올 수 없습니다"));
+  else for(const [i,entry] of this.board.entries()){
+   const row=el("div","arcade-rank-grid arcade-rank-row"),school=el("div","arcade-rank-person");
+   school.append(el("span","arcade-rank-school",entry.school_name),el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
+   row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmt(entry.score)));root.append(row);
+  }
+  if(this.game==="volleyball_25"){
+   const headerTime=el("div","arcade-ranking-head");headerTime.style.marginTop="16px";
+   headerTime.append(el("strong","","⏱ 25점 승리 최단시간 TOP 10"),el("small","","25점 승리 경기만 · 빠른 시간순"));
+   root.append(headerTime);
+   const timeLabels=el("div","arcade-rank-grid arcade-rank-label");
+   ["순위","학교 · 난이도","완주 시간"].forEach(x=>timeLabels.append(el("span","",x)));
+   root.append(timeLabels);
+   if(!this.fastestBoard.length)root.append(el("div","arcade-rank-empty",
+     this.remote?"아직 25점 승리 시간 기록이 없습니다":"기록을 불러올 수 없습니다"));
+   else for(const [i,entry] of this.fastestBoard.entries()){
+    const row=el("div","arcade-rank-grid arcade-rank-row"),school=el("div","arcade-rank-person");
+    school.append(el("span","arcade-rank-school",entry.school_name),
+      el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
+    row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmtTime(entry.timeTenths)));root.append(row);
+   }
   }
  }
+
 }
 window.ArcadeLeaderboard=ArcadeLeaderboard;
 })();

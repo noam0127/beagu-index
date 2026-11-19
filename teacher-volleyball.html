@@ -62,7 +62,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  .scoreboard{padding:9px;gap:4px;grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr)}
  .team{font-size:10px}.team strong{font-size:23px}.center-label{font-size:12px}
 }
- .volley-best-row{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:7px;margin:-3px 0 0;min-height:29px}
+ .volley-best-row{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:7px;margin:-3px 0 0;min-height:29px;flex-wrap:wrap}
  .volley-best-chip,.volley-current-chip{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 9px;border:1px solid #587da1;border-radius:9px;background:#183554;color:#bcdcf2;font-size:10px;font-weight:850;letter-spacing:.035em;white-space:nowrap;font-variant-numeric:tabular-nums;min-width:0}
  .volley-current-chip{border-color:#498d98;background:rgba(32,90,106,.43);color:#c8f1f2}
  .volley-current-chip strong{font-size:16px;line-height:1.2;color:#a9f5db;letter-spacing:0}
@@ -103,9 +103,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <main class="game-shell">
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
   <div class="scoreboard" aria-label="25점 선착순 경기와 점수 기록">
-    <div class="volley-best-row"><span class="volley-target-chip">🏁 먼저 25점</span><span class="volley-best-chip" aria-label="이 기기의 최고 점수 신기록">신기록 <strong id="volley-best-label">0점</strong></span></div>
+    <div class="volley-best-row"><span class="volley-target-chip">🏁 먼저 25점</span><span class="volley-best-chip" aria-label="이 기기의 최고 점수 신기록">신기록 <strong id="volley-best-label">0점</strong></span><span class="volley-best-chip" aria-label="내 25점 승리 최단 시간">25점 최단 <strong id="volley-fastest-label">—</strong></span></div>
     <div class="team"><span class="volley-team-name">나</span><strong id="player-score">0 / 25</strong></div>
-    <div class="center-label">VS<small id="volley-score-label">0점</small></div>
+    <div class="center-label">VS<small id="volley-score-label">0점</small><small id="volley-bonus-label">플레이 +0점</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0 / 25</strong></div>
   </div>
   <div class="volley-progress" aria-label="25점 달성 진행 상황">
@@ -117,10 +117,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   </div>
   <div class="court"><canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas></div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 25점 선착순 · 내 득점 +100점 · 상대 득점 −50점 · 승리 시 점수 차에 따라 ×1~×6 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·분신 · EXTREME 공 2개·족쇄</div>
-  <div id="arcade-top10" aria-label="선생님배구 25점 완주 시간 TOP 10 순위"></div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·분신 · EXTREME 공 2개·족쇄</div>
+  <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
-<script src="js/arcade-leaderboard-v1.js?v=20261119-anon-auto1"></script>
+<script src="js/arcade-leaderboard-v1.js?v=20261119-fastestboard1"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261119-picker-top1"></script>
 <script>
 (function () {
@@ -181,21 +181,26 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const AUTO_SPIKE_SPEED=8; // player-driven displacement per simulation frame
   const MATCH_TARGET=25;
   // Opponent score reduces earned points; victory adds a lead-dependent multiplier.
-  // Win by 1-4: ×1, 5-9: ×2, 10-14: ×3, 15-19: ×4,
-  // 20-24: ×5, 25-0 shutout: ×6. Time is not part of any score.
+  // Win by 1-4: ×1, 5-9: ×2, 10-14: ×3, 15-19: ×4, 20-24: ×5, 25-0: ×6.
   const POINT_GAIN=100,POINT_LOSS=50;
   const getBaseMatchScore=(player,cpu)=>Math.max(0,player*POINT_GAIN-cpu*POINT_LOSS);
   const getVictoryMultiplier=(player,cpu)=>player===MATCH_TARGET&&cpu<MATCH_TARGET
     ?1+Math.floor((MATCH_TARGET-cpu)/5):1;
-  const getMatchScore=(player,cpu)=>getBaseMatchScore(player,cpu)*getVictoryMultiplier(player,cpu);
+  const MAX_ACTIVE_SECONDS=900,SECONDS_BONUS=4;
+  const activeTenths=()=>Math.floor(state.activeFrames/6);
+  const getSurvivalBonus=(tenths)=>Math.min(MAX_ACTIVE_SECONDS,Math.floor(tenths/10))*SECONDS_BONUS;
+  const getMatchScore=(player,cpu,tenths=0)=>
+    (getBaseMatchScore(player,cpu)+getSurvivalBonus(tenths))*getVictoryMultiplier(player,cpu);
+  const fmtTime=tenths=>{const t=Math.max(0,Math.floor(Number(tenths)||0));
+    return Math.floor(t/600)+":"+String(Math.floor((t%600)/10)).padStart(2,"0")+"."+(t%10);};
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, jump: false };
   const touchControl = { pointerId: null, targetX: null, targetY: null };
   const state = { phase:"ready",leftScore:0,rightScore:0,serveLeft:true,pointTicks:0,flash:0,winner:"",
     message:"경기 시작을 눌러주세요!",spikes:0,aiRecalc:0,aiTargetX:688,aiJump:false,
-    specialCooldownFrames:0,specialChargeFrames:0,uiTick:0,playFrames:0,
+    specialCooldownFrames:0,specialChargeFrames:0,uiTick:0,playFrames:0,activeFrames:0,
     hitStopFrames:0,impactFrames:0,impactX:0,impactY:0,bossWarnFrames:0,bossCooldownFrames:0,
-    winStreak:0,bestStreak:0,pointCheer:"",recordBroken:false };
+    winStreak:0,bestStreak:0,pointCheer:"",recordBroken:false,timeRecordBroken:false,endedEarly:false };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false, contactFrames:0 };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false, contactFrames:0 };
   const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
@@ -219,6 +224,18 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if(!Number.isSafeInteger(value)||value<=bestScore)return false;
     bestScore=value;bestLabel.textContent=value.toLocaleString("ko-KR")+"점";
     try{localStorage.setItem(BEST_SCORE_KEY,String(value));}catch(e){}
+    return true;
+  }
+  // The personal 25-point speed record is independent of the score leaderboard.
+  const FASTEST_25_KEY="teacherVolleyballFastest25SeparateV1";
+  const fastestLabel=document.getElementById("volley-fastest-label");
+  let fastest25Tenths=0;
+  try{fastest25Tenths=Math.max(0,Math.floor(Number(localStorage.getItem(FASTEST_25_KEY))||0));}catch(e){}
+  fastestLabel.textContent=fastest25Tenths?fmtTime(fastest25Tenths):"—";
+  function rememberFastest25(tenths){
+    if(!Number.isSafeInteger(tenths)||tenths<=0||(fastest25Tenths&&tenths>=fastest25Tenths))return false;
+    fastest25Tenths=tenths;fastestLabel.textContent=fmtTime(tenths);
+    try{localStorage.setItem(FASTEST_25_KEY,String(tenths));}catch(e){}
     return true;
   }
   const canPlayerJump=()=>currentDifficulty!=="extreme";
@@ -273,8 +290,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     updateMatchScoreUI();
   }
   function updateMatchScoreUI(){
+    const bonus=getSurvivalBonus(activeTenths());
     document.getElementById("volley-score-label").textContent=
-      getBaseMatchScore(state.leftScore,state.rightScore).toLocaleString("ko-KR")+"점";
+      (getBaseMatchScore(state.leftScore,state.rightScore)+bonus).toLocaleString("ko-KR")+"점";
+    document.getElementById("volley-bonus-label").textContent="플레이 +"+bonus.toLocaleString("ko-KR")+"점";
   }
   function activateSuperSpike(){
     if(state.phase!=="playing"||state.specialCooldownFrames>0||state.specialChargeFrames>0)return false;
@@ -325,7 +344,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     scoreP.textContent = state.leftScore+" / "+MATCH_TARGET;
     scoreC.textContent = state.rightScore+" / "+MATCH_TARGET;
     updateScoreProgress();
-    startButton.textContent = state.phase === "starting" ? "⏳ 학교 확인 중" : state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "↻ 다시 시작";
+    startButton.textContent = state.phase === "starting" ? "⏳ 학교 확인 중" : state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "⏹ 여기까지 기록";
     startButton.disabled = state.phase === "starting" ||
       ((state.phase === "ready" || state.phase === "finished") && schoolPicker.get()?.eligible !== true);
     pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point" || state.phase === "starting";
@@ -388,8 +407,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     specialProfile=specialProfiles[currentDifficulty]||specialProfiles.hard;
     resetPower();
     schoolPicker.setLocked(true);
-    state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
-    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;
+    state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
+    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     releaseKeys();
     state.serveLeft=Math.random()<.5;
@@ -406,8 +425,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ranking?.cancel();
     releaseKeys();
     state.phase="ready";state.message="";state.winner="";state.flash=0;
-    state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;
-    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;
+    state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
+    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;
     currentDifficulty="hard";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     specialProfile=specialProfiles.hard;resetPower();
@@ -481,7 +500,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   canvas.addEventListener("pointerup", endCourtTouch);
   canvas.addEventListener("pointercancel", endCourtTouch);
   canvas.addEventListener("lostpointercapture", endCourtTouch);
-  startButton.addEventListener("click",()=>{unlockSound();startMatch();});
+  startButton.addEventListener("click",()=>{unlockSound();if(["playing","point","paused"].includes(state.phase))finishMatch(true);else startMatch();});
   pauseButton.addEventListener("click", pause);
   helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
   window.addEventListener("blur", () => { releaseKeys(); if (state.phase === "playing") pause(); });
@@ -603,27 +622,29 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
     if (spike) { state.flash=charged?32:9;state.spikes+=1; }
   }
-  function finishMatch(){
-    if(state.phase==="finished")return;
-    state.phase="finished";
-    const won=state.leftScore>=MATCH_TARGET;
+  function finishMatch(early=false){
+    if(state.phase==="finished"||state.phase==="ready"||state.phase==="starting")return;
+    if(early&&activeTenths()<40){setStatus("4초 이상 플레이하면 기록을 남길 수 있어요");return;}
+    state.phase="finished";state.endedEarly=early;
+    const won=state.leftScore===MATCH_TARGET&&state.rightScore<MATCH_TARGET;
+    const elapsedTenths=activeTenths(),bonus=getSurvivalBonus(elapsedTenths);
     const base=getBaseMatchScore(state.leftScore,state.rightScore);
     const multiplier=getVictoryMultiplier(state.leftScore,state.rightScore);
-    const finalScore=getMatchScore(state.leftScore,state.rightScore);
-    state.winner=won?"🏆 25점 선착순 승리!":"⛔ 컴퓨터 25점 · 패배";
+    const finalScore=getMatchScore(state.leftScore,state.rightScore,elapsedTenths);
+    state.winner=won?"🏆 25점 선착순 승리!":early?"🏁 이번 경기 기록 종료":"⛔ 컴퓨터 25점 · 패배";
     state.message=state.winner;releaseKeys();schoolPicker.setLocked(false);
     state.recordBroken=rememberBestScore(finalScore);
-    if(won){
-      setStatus((state.recordBroken?"🎉 신기록! ":"🏆 승리! ")+
-        base.toLocaleString("ko-KR")+"점 ×"+multiplier+" = "+finalScore.toLocaleString("ko-KR")+"점 · 익명 자동 기록");
-      tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);
-    }else{
-      setStatus("재도전! "+finalScore.toLocaleString("ko-KR")+"점 · 25점을 먼저 달성하면 배수 보너스");
-      tone(240,.20,"triangle",.045,0,150);
-    }
+    state.timeRecordBroken=won&&rememberFastest25(elapsedTenths);
+    const summary=base.toLocaleString("ko-KR")+"점 + 플레이 "+bonus.toLocaleString("ko-KR")+
+      "점"+(won?" ×"+multiplier:"")+" = "+finalScore.toLocaleString("ko-KR")+"점";
+    setStatus((state.recordBroken?"🎉 점수 신기록! ":"")+
+      (state.timeRecordBroken?"⏱ 최단시간 신기록! ":"")+summary);
+    if(won){tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);}
+    else tone(early?470:240,.18,"triangle",.035);
     if(finalScore>0)ranking?.finish(finalScore,{
       player:state.leftScore,cpu:state.rightScore,baseScore:base,
-      multiplier,finalScore,victory:won
+      survivalBonus:bonus,multiplier,finalScore,victory:won,
+      endedEarly:early,activeTenths:elapsedTenths
     });
     syncUI();
   }
@@ -656,6 +677,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     syncUI();
   }
   function step() {
+    if(state.phase==="playing"||state.phase==="point"){
+      state.activeFrames++;
+      if(state.activeFrames%60===0)updateMatchScoreUI();
+    }
     if(state.hitStopFrames>0){state.hitStopFrames--;return;}
     if(left.contactFrames>0)left.contactFrames--;
     if(right.contactFrames>0)right.contactFrames--;
@@ -997,8 +1022,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     else if (state.phase === "paused") overlay("PAUSE", "");
     else if (state.phase === "point") overlay(state.message, state.pointCheer);
     else if (state.phase === "finished") overlay(state.winner,
-      (state.recordBroken?"🎉 신기록 · ":"")+"최종 "+getMatchScore(state.leftScore,state.rightScore).toLocaleString("ko-KR")+"점"+
-      (state.leftScore===MATCH_TARGET?" · ×"+getVictoryMultiplier(state.leftScore,state.rightScore):""));
+      (state.recordBroken?"🎉 점수 신기록 · ":"")+
+      "최종 "+getMatchScore(state.leftScore,state.rightScore,activeTenths()).toLocaleString("ko-KR")+"점"+
+      (state.timeRecordBroken?" · ⏱ 최단 "+fmtTime(activeTenths()):""));
     ctx.restore();
   }
   let last = 0, accumulator = 0;
