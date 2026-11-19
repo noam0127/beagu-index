@@ -21,6 +21,7 @@ on:
       - 'scripts/beagu-2026-mbti-review-sync.gs'
       - 'tests/school-search-unification.mjs'
       - 'tests/lv1-ranked-office-history.mjs'
+      - 'tests/lv1-view-count-sort.mjs'
       - 'tests/overseas-history-presence.mjs'
       - 'data/public-2023-2025-school-records-v2.json'
       - 'tests/search-detail-ui-v1.mjs'
@@ -34,6 +35,7 @@ on:
       - 'supabase/functions/beagu-level-api/index.ts'
       - 'supabase/migrations/20261119_school_checkbox_choices_v1.sql'
       - 'supabase/migrations/20261119_2025_domain_comparisons_v1.sql'
+      - 'supabase/migrations/20261120_lv1_school_sort_view_count.sql'
       - '.github/workflows/school-search-unification.yml'
   workflow_dispatch:
 permissions:
@@ -48,6 +50,7 @@ jobs:
           node-version: '22'
       - run: node tests/school-search-unification.mjs
       - run: node tests/lv1-ranked-office-history.mjs
+      - run: node tests/lv1-view-count-sort.mjs
       - run: node tests/overseas-history-presence.mjs
       - run: node tests/search-detail-ui-v1.mjs
       - run: node tests/lv1-school-faculty-groups.mjs
