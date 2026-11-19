@@ -5,6 +5,7 @@ on:
     paths:
       - 'search.html'
       - 'search-lv1.html'
+      - 'statistics.html'
       - 'search-lv2.html'
       - 'school-report.html'
       - 'js/school-search-card-v1.js'
@@ -16,10 +17,12 @@ on:
       - 'js/school-mbti-v1.js'
       - 'styles/school-search-card-v1.css'
       - 'styles/beagu-search-details-v1.css'
+      - 'styles/beagu-auth-unified-v1.css'
       - 'scripts/beagu-2026-mbti-review-sync.gs'
       - 'tests/school-search-unification.mjs'
       - 'tests/lv1-ranked-office-history.mjs'
       - 'tests/search-detail-ui-v1.mjs'
+      - 'tests/auth-unified-2026-link.mjs'
       - 'tests/school-question-mode-only-privacy.mjs'
       - 'tests/lv1-ox-multiselect-ui.mjs'
       - 'tests/2026-approved-search-refresh.mjs'
@@ -40,6 +43,7 @@ jobs:
       - run: node tests/school-search-unification.mjs
       - run: node tests/lv1-ranked-office-history.mjs
       - run: node tests/search-detail-ui-v1.mjs
+      - run: node tests/auth-unified-2026-link.mjs
       - run: node tests/school-question-mode-only-privacy.mjs
       - run: node tests/lv1-ox-multiselect-ui.mjs
       - run: node tests/2026-approved-search-refresh.mjs
