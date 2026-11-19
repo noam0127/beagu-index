@@ -9,6 +9,7 @@ const html=fs.readFileSync(path.join(__dirname,'..','teacher-class-diary-play.ht
 const server=fs.readFileSync(path.join(__dirname,'..','supabase/functions/class-diary-progress-v1/index.ts'),'utf8');
 const guest=fs.readFileSync(path.join(__dirname,'..','supabase/functions/class-diary-guest-access-v1/index.ts'),'utf8');
 for(const key of ['id="guestResume"','id="guestResumeBtn"','id="guestNewBtn"',
+ 'id="diarySaveNow"','id="diaryContinueNow"','class-diary-progress-controls-v1.css',
  'class-diary-progress-v1.js','autoSaveProgress();',"progressSession.load()",
  'result.progressToken',"guestResumeSummary"]){
  assert(html.includes(key),'Missing save UI: '+key);
@@ -33,7 +34,7 @@ global.fetch=async(url,opts)=>{
  assert(url.endsWith('/class-diary-progress-v1'));
  const body=JSON.parse(opts.body);
  assert(!JSON.stringify(body).includes('BG26-'),'No identity code in save network payload');
- if(body.action==='load')return {ok:true,json:async()=>({ok:true,progress:null})};
+ if(body.action==='load')return {ok:true,json:async()=>({ok:true,progress:revision>0?{revision,state:afterAdvance}:null})};
  if(body.action==='save'){
   saveRequests.push(body);
   if(body.expectedRevision!==revision)return {ok:false,status:409,json:async()=>({error:'SAVE_CONFLICT'})};
@@ -58,5 +59,12 @@ global.fetch=async(url,opts)=>{
  assert.equal(await session.save(afterAdvance),false);
  assert.equal(saveRequests.length,calls);
  assert(status.includes('conflict'));
+ // Explicit continue refreshes the server revision after the user's confirmation.
+ const loaded=await session.load();
+ assert(loaded&&loaded.compatible,'Saved state should load after a conflict');
+ assert.equal(session.getRevision(),5);
+ assert.equal(session.isBlocked(),false);
+ assert.equal(await session.save(afterAdvance),true);
+ assert.equal(session.getRevision(),6);
  console.log('PASS class diary progress: shape, front-end wiring, queued revisions, conflicts, no raw code');
 })().catch(e=>{console.error(e);process.exitCode=1});
