@@ -14,7 +14,7 @@ for(const p of ['js/beagu-level-state-v1.js','js/statistics-compare.js','js/chal
 for(const path of paths){
   assert.ok(pages[path].includes('styles/beagu-auth-journey-v1.css?v=20261120-compact-card1'),
     path+' uses the same auth card stylesheet');
-  assert.ok(pages[path].includes('js/beagu-level-state-v1.js?v=20261120-auth-unity1'),
+  assert.ok(pages[path].includes('js/beagu-level-state-v1.js?v=20261120-lv1-plain1'),
     path+' loads fresh level UI state');
 }
 for(const [path,id] of Object.entries({
@@ -27,8 +27,12 @@ for(const [path,id] of Object.entries({
   assert.ok(pages[path].includes('beagu-levelup-card'),path+' uses the common panel');
 }
 assert.ok(pages['search-lv1.html'].includes('beagu-levelup-status') &&
- pages['search-lv1.html'].includes('data-beagu-open-levelup>고유번호 인증</button>'),
- 'Authenticated search shows Level1 identity-code CTA and shared card');
+ !pages['search-lv1.html'].includes('data-beagu-open-levelup') &&
+ !pages['search-lv1.html'].includes('>고유번호 인증</button>'),
+ 'Authenticated search retains the Level badge but no longer exposes code auth');
+for(const path of paths){
+ assert.ok(pages[path].includes('>레벨1 인증</button>'),path+' uses unified Level1 submit label');
+}
 assert.ok(pages['challenge.html'].includes('id="challengeAccessBadge"') &&
  pages['challenge.html'].includes('id="challengeLogout"') &&
  pages['challenge.html'].includes('id="challengeProtected" hidden'),
@@ -67,49 +71,47 @@ assert.ok(!compact.includes('body.beagu-page-search #lv1QuickAuth'),
 const a=levelJS.indexOf('  const syncLevelCards=');
 const b=levelJS.indexOf('  const setState=',a);
 assert.ok(a>=0 && b>a,'Reusable auth card status updater exists');
-const badges={};
 const cards={};
-const ids=[
- ['lv1QuickAuth','lv1QuickBadge'],
- ['loginPanel',null],
- ['compareLv1AuthPanel','compareLv1Badge'],
- ['challengeAccessPanel','challengeAccessBadge'],
- ['signed',null]
-];
-for(const [cardId,badgeId] of ids){
- const badge={textContent:'',classList:{toggle() {}}};
- const action={textContent:'',disabled:false,classList:{toggle() {}}};
- const card={dataset:{},querySelector(selector){
-  return selector.includes('beagu-levelup-trigger')?action:badge;
- }};
- badges[cardId]=badge;
- cards[cardId]={card,badge,action};
- if(badgeId)badges[badgeId]=badge;
+const badgeIds={
+  lv1QuickAuth:'lv1QuickBadge',
+  loginPanel:null,
+  compareLv1AuthPanel:'compareLv1Badge',
+  challengeAccessPanel:'challengeAccessBadge',
+  signed:null
+};
+for(const [cardId,badgeId] of Object.entries(badgeIds)){
+  const badge={textContent:'',classList:{toggle() {}}};
+  const card={dataset:{},querySelector(){return badge;}};
+  cards[cardId]={card,badge};
+  if(badgeId)cards[badgeId]={card:badge,badge};
 }
 const document={
- getElementById(id){return cards[id]?.card || badges[id] || null;},
- querySelector(selector){return selector==='.beagu-levelup-status'?cards.signed.card:null;}
+  getElementById(id){return cards[id]?.card || null;},
+  querySelector(selector){return selector==='.beagu-levelup-status'?cards.signed.card:null;}
 };
 const sync=runInNewContext('(()=>{'+levelJS.slice(a,b)+'return syncLevelCards;})()', {document});
-for(const [level,provisional,expectedBadge,expectedButton,disabled] of [
-  ['checking',false,'확인 중','레벨업 인증',true],
-  ['0',false,'미인증','레벨업 인증',false],
-  ['1',false,'Lv.1 인증됨','고유번호 인증',false],
-  ['2',true,'Lv.2(임시)','인증 완료',true],
-  ['2',false,'Lv.2 인증됨','인증 완료',true]
+for(const [level,provisional,expectedBadge] of [
+  ['checking',false,'확인 중'],
+  ['0',false,'미인증'],
+  ['1',false,'Lv.1 인증됨'],
+  ['2',true,'Lv.2(임시)'],
+  ['2',false,'Lv.2 인증됨']
 ]){
  sync(level,provisional);
- for(const [id,obj] of Object.entries(cards)){
-  assert.equal(obj.badge.textContent,expectedBadge,id+' badge at level '+level);
-  assert.equal(obj.action.textContent,expectedButton,id+' CTA at level '+level);
-  assert.equal(obj.action.disabled,disabled,id+' button availability at level '+level);
-  assert.equal(obj.card.dataset.provisional,String(provisional),id+' provisional state');
+ for(const id of Object.keys(badgeIds)){
+  const {card,badge}=cards[id];
+  assert.equal(badge.textContent,expectedBadge,id+' badge at level '+level);
+  assert.equal(card.dataset.provisional,String(provisional),id+' provisional status');
  }
 }
 assert.ok(levelJS.includes("result.provisional===true"),
  'Global level label reflects server verified provisional flag');
-assert.ok(levelJS.includes("await refresh();") && levelJS.includes("window.location.reload();"),
- 'Successful identity-code login refreshes and reloads protected views');
+assert.ok(!levelJS.includes('beaguLevelUpOverlay') &&
+ !levelJS.includes('data-beagu-open-levelup') &&
+ !levelJS.includes("form.style.setProperty('display','none'"),
+ 'Global badge never injects code auth or hides native Level1 login forms');
+assert.ok(levelJS.includes("body:JSON.stringify({action:'verify'})"),
+ 'Shared badge only verifies the stored token against the server');
 assert.ok(compareJS.includes('result.provisional===true')&&
  compareJS.includes("state.authProvisional=level>=2&&provisional===true"),
  'Comparison card uses the server provisional flag, not a UI-provided rank');
@@ -120,4 +122,4 @@ assert.ok(gateJS.includes('protectedArea.hidden=true') &&
 assert.ok(gateJS.includes('logoutButton.hidden=true') &&
  gateJS.includes('logoutButton.hidden=false'),
  'Logout visibility follows challenge verified session');
-console.log('PASS: same card size and CTA layout; Lv0, Lv1, provisional Lv2, full Lv2 transitions');
+console.log('PASS: visible Level1 verification forms, hidden identity-code CTA, server-verified Level badges');
