@@ -1,4 +1,4 @@
-/* Class diary: school → colleague → story, no separate personal questionnaire. */
+/* Class diary: school → colleague → first-day review → story. */
 (function(root){
 'use strict';
 function init(options){
@@ -6,12 +6,23 @@ function init(options){
  const $=id=>document.getElementById(id);
  const setup=$('setup'),form=$('profileForm');
  let step=1;
+ const partnerNames=Object.freeze({woman:'서지윤',man:'한현우',none:'윤민서'});
+ function review(){
+  $('setupReviewSchool').textContent=$('diarySchoolName').value.trim()||'가상의 초등학교';
+  $('setupReviewName').textContent=($('playerName').value.trim()||'새봄')+' 선생님';
+  // Neutral internal defaults are not part of the player's chosen profile.
+  const traits=$('setupReviewTraits');
+  if(traits&&traits.parentElement)traits.parentElement.hidden=true;
+  $('setupReviewPartner').textContent=partnerNames[$('partner').value]||'동료를 선택해 주세요';
+ }
  function go(next){
-  step=Math.max(1,Math.min(2,Number(next)||1));
+  step=Math.max(1,Math.min(3,Number(next)||1));
   setup.dataset.step=String(step);
   $('setupBack').hidden=step===1;
-  $('setupNext').hidden=false;
+  $('setupBack').textContent=step===3?'← 동료 선택':'← 학교 선택';
+  $('setupNext').hidden=step===3;
   $('setupNext').textContent=step===1?'함께할 동료 만나기 →':'첫 등교 준비 →';
+  if(step===3)review();
   for(const item of document.querySelectorAll('[data-step-label]')){
    if(Number(item.dataset.stepLabel)===step)item.setAttribute('aria-current','step');
    else item.removeAttribute('aria-current');
@@ -41,13 +52,13 @@ function init(options){
  $('openingStart').addEventListener('click',()=>{sound.note('uiStart');show('setup');go(1)});
  $('setupNext').addEventListener('click',()=>{
   if(step===1){if(validate(1)){sound.note('uiTap');go(2)}return;}
-  if(step===2&&validate(2)){sound.note('uiTap');form.requestSubmit();}
+  if(step===2&&validate(2)){sound.note('uiTap');go(3);}
  });
- $('setupBack').addEventListener('click',()=>{sound.note('uiTap');go(1)});
+ $('setupBack').addEventListener('click',()=>{sound.note('uiTap');go(step===3?2:1)});
  form.noValidate=true;
  go(1);
  return {
-  ready(){if(step!==2)return false;if(!validate(1)){go(1);return false}return validate(2)},
+  ready(){if(step!==3)return false;if(!validate(1)){go(1);return false}if(!validate(2)){go(2);return false}return true},
   go,
   openChoice(){
    const target=$('choiceSection');target.hidden=false;
