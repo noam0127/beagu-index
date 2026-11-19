@@ -1,4 +1,4 @@
-/* Lv.1+ live rising schools: rolling 24h vs prior 24h, refreshed each minute. */
+/* Lv.1+ live rising schools: rolling 72h vs prior 72h, refreshed each minute. */
 (() => {
   'use strict';
   const root=document.getElementById('beaguInterest');
