@@ -52,6 +52,8 @@ body.arcade-body {
 .arcade-rank-empty {padding:12px 4px;text-align:center;color:#a8c3df;font-size:12px}
 .arcade-rank-feedback{margin:0 0 9px;padding:9px 11px;border:1px solid #426c83;border-radius:8px;background:#183754;color:#d2f8ef;font-size:12px;font-weight:750;line-height:1.5;overflow-wrap:anywhere}
 .arcade-rank-row span:nth-child(1){color:#79dfea}
+.arcade-history-link{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 0;padding:12px 14px;background:#1c446c;color:#f3fdff!important;border:1px solid #76bcd6;border-radius:10px;text-decoration:none;font-size:13px;font-weight:900;transition:background .15s}
+.arcade-history-link:hover,.arcade-history-link:focus-visible{background:#275d89;text-decoration:none;outline:2px solid #fff3a4;outline-offset:2px}
 @media(max-width:360px){
  .arcade-ranking{padding:10px}.arcade-rank-grid{grid-template-columns:32px minmax(0,1fr) 78px;gap:5px}
  .arcade-ranking-head strong{font-size:13px}
