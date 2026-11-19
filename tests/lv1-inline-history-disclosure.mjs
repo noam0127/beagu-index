@@ -14,7 +14,7 @@ assert.match(lv1,/historyPanel\.addEventListener\('click',event=>/,'tap anywhere
 assert.match(lv1,/trigger\.setAttribute\('aria-controls',detail\.id\)/,'accessible disclosure target');
 assert.match(lv1,/trigger\.setAttribute\('aria-expanded',String\(opening\)\)/,'accurate expanded state');
 assert.match(lv1,/detail\.hidden=!opening/,'collapse and expand without page navigation');
-assert.match(lv1,/graphic\?\.remove\(\)/,'remove graph between results and MBTI');
+assert.doesNotMatch(lv1,/graphic\?\.remove\(\)/,'keep the requested percentile graph while expanding details');
 assert.match(lv1,/card\.querySelector\('\.school-actions'\)\?\.remove\(\)/,'no redundant second detail button');
 assert.match(lv1,/previousGrid\.replaceWith\(updatedGrid\)/,'background updates preserve open panel');
 assert.match(lv1,/const data=await api\('school',\{schoolId:school\.school_id\}\)/,'approved server data remains required');
@@ -27,7 +27,7 @@ assert.doesNotMatch(lv1,/make\('section', 'school-profile'\)/,'remove repeated s
 assert.doesNotMatch(lv1,/BeaguDetailGroups\.appendGrouped\(section,schoolScale/,'remove repeated official stats');
 assert.match(lv1,/renderHistoricalBenchmarks\(host,year/,'preserve year-by-year vetted comparisons');
 assert.match(lv1,/BeaguDetailGroups\.appendGrouped\(section,releasedMetrics/,'preserve approved historical values');
-assert.match(html,/js\/level-search\.js\?v=20261118-[a-z0-9-]+/);
+assert.match(html,/js\/level-search\.js\?v=20261120-[a-z0-9-]+/);
 assert.match(html,/styles\/beagu-ui-refresh-v2\.css\?v=20261118-[a-z0-9-]+/);
 assert.match(css,/\.lv1-history-trigger\[aria-expanded="true"\]/,'visual collapsed/expanded affordance');
 assert.match(css,/\.lv1-history-disclosure >?\.beagu-mbti-badge|\.lv1-history-disclosure \+ \.beagu-mbti-badge/,'MBTI stays after history box');

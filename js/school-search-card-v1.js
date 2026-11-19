@@ -19,7 +19,7 @@
   if(school.address){
    meta.append(document.createElement('br'),document.createTextNode(String(school.address)));
   }
-  const nameLine=el('div','school-name-row');
+  const nameHeading=el('div','school-name');
   const views=el('span','school-view-count');
   views.dataset.schoolViewCount='';
   views.dataset.schoolId=String(school.school_id);
@@ -28,8 +28,8 @@
   const eye=el('span','school-view-eye','👁');
   eye.setAttribute('aria-hidden','true');
   views.append(eye,el('strong','school-view-number','—'));
-  nameLine.append(el('div','school-name',name),views);
-  card.append(el('span','region-badge',region),nameLine,meta);
+  nameHeading.append(el('span','school-name-text',name),views);
+  card.append(el('span','region-badge',region),nameHeading,meta);
   return card;
  }
  // Explicit display states must not imply a review process when none is recorded.
