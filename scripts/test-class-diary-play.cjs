@@ -5,6 +5,8 @@ const engine=require('../js/class-diary-play-v1.js');
 const storyInfo=engine.validateStory();
 assert.equal(storyInfo.chapters,7);
 assert.equal(storyInfo.choices,21);
+assert.equal(engine.createSnapshot,undefined);
+assert.equal(engine.restore,undefined);
 assert.equal(engine.DAYS.join('|'),
  '2027-03-08|2027-03-09|2027-03-10|2027-03-11|2027-03-12|2027-03-13|2027-03-14');
 const world={
@@ -36,8 +38,6 @@ for(let day=1;day<=7;day++){
  assert.equal(game.history.length,day);
  assert.equal(game.phase,'reflection');
  assert.throws(()=>engine.choose(game,chapter.choices[0].id),/CHOICE_PHASE_REQUIRED/);
- const snap=engine.createSnapshot(game);
- assert.deepEqual(engine.restore(world,plan,snap),game);
  game=engine.advance(game);
  history.push(chapter.choices[0].id);
  if(day<7)assert.equal(game.day,day+1);
@@ -46,8 +46,6 @@ assert.equal(game.phase,'ending');assert.equal(game.history.length,7);
 assert(game.ending.title.startsWith('나의 '));assert(game.ending.title.endsWith(' 학급일지'));
 assert(Number.isInteger(game.ending.affection));
 assert(game.ending.score>=0&&game.ending.score<=100);
-assert.deepEqual(engine.restore(world,plan,engine.createSnapshot(game)),game);
-assert.throws(()=>engine.restore(world,plan,{...engine.createSnapshot(game),history:[{day:1,choiceId:'bad'}]}),/CHOICE_INVALID/);
 const fingerprints=new Set();
 for(let mask=0;mask<2187;mask++){
  let n=mask,s=engine.createGame(world,plan,profile);
@@ -72,4 +70,4 @@ assert.deepEqual(maleProtagonist.stats,engine.createGame(world,plan,profile).sta
  'Gender must not change starting scores');
 const platonic=engine.createGame(world,plan,{...profile,partner:'none'});
 assert.equal(engine.chapter(platonic,world,plan).partner,'동학년 선생님');
-console.log('PASS: 7 coherent days / 21 options / all 2187 routes / five reachable endings / snapshot replay / Lv2-gated world contract');
+console.log('PASS: 7 coherent days / 21 options / all 2187 routes / five reachable endings / ephemeral memory-only state / Lv2-gated world contract');
