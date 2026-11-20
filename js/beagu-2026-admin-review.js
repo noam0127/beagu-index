@@ -62,6 +62,13 @@
     const reasons=Array.isArray(item.review_reasons)?item.review_reasons:[];
     if(reasons.length)row.append(build("p","subtle","남은 검수 항목: "+reasons.join(", ")));
     if(item.last_decision)row.append(build("p","subtle","최근 심사 결정: "+item.last_decision));
+    const basisLabel={
+      NOT_REVIEWED:"근거 미검토",PENDING:"근거 확인 중",REJECTED:"공개 근거 반려",VERIFIED:"별도 검증 완료"
+    }[item.basis_review_status]||"근거 상태 미확인";
+    row.append(build("p","subtle","공개 근거: "+basisLabel+
+      (item.basis_reviewed_at?" · 검토일 "+formatDate(item.basis_reviewed_at):"")));
+    if(role==="owner")row.append(makeBasisForm(item));
+
     if(role==="owner" && item.approval_status!=="WITHHELD" || role==="owner" && item.last_decision!=="WITHHELD"){
       const button=build("button","secondary","보류 사유 기록");
       button.type="button";
@@ -74,6 +81,78 @@
   $("adminReview2026Next").disabled=rows.length<20;
   $("adminReview2026Page").textContent="페이지 "+(page+1);
   notice("비공개 검수 목록 · 공개 승인 기능은 동의 근거 검증 전까지 잠금 상태");
+ }
+ function makeBasisForm(item){
+  const wrap=build("details","beagu-basis-review");
+  const heading=build("summary","","근거 검토 기록 · 공개 승인 불가");
+  wrap.append(heading);
+  const form=build("form","beagu-basis-form");
+  const field=(title,name,type,max)=>{
+    const label=build("label","",title),input=build(type==="textarea"?"textarea":"input");
+    input.name=name;
+    if(type!=="textarea")input.type=type;
+    if(max)input.maxLength=max;
+    input.autocomplete="off";
+    label.append(input);form.append(label);return input;
+  };
+  const typeLabel=build("label","","검토 중인 공개 근거 유형");
+  const basisType=build("select");basisType.name="basis_type";
+  for(const [value,label] of [
+    ["","확인되지 않음"],["EXPLICIT_RESPONDENT_CONSENT","응답자의 명시적 동의"],
+    ["OTHER_DOCUMENTED_LEGAL_BASIS","기타 문서화한 적법한 근거"]
+  ]){
+    const opt=build("option","",label);opt.value=value;basisType.append(opt);
+  }
+  typeLabel.append(basisType);form.append(typeLabel);
+  field("원본 고지·동의 자료의 안전한 참조 링크/문서 ID (선택)","notice_source_ref","text",400);
+  field("자료 SHA-256 해시, 소문자 64자리 (선택)","notice_digest_sha256","text",64);
+  const when=field("실제 고지 효력일 · 원본으로 확인한 경우에만 입력 (선택)","notice_effective_at","date");
+  when.max="2099-12-31";
+  field("해당 고지에서 허용한 공개 범위 (선택)","publication_scope","textarea",500);
+  const notes=field("검토 내용·보류 이유 (필수, 개인정보 입력 금지)","notes","textarea",500);
+  notes.required=true;notes.minLength=12;
+  const checklist=[
+    ["distinct_respondents_reviewed","고유 응답자·중복 검수 완료"],
+    ["personal_data_reviewed","개인정보 및 민감 문항 검수 완료"],
+    ["small_sample_reviewed","소표본 위험 검수 완료"],
+    ["reidentification_reviewed","학교별 재식별 위험 검수 완료"],
+    ["prior_data_combination_reviewed","과거 자료 결합·차분 공격 검수 완료"]
+  ];
+  for(const [name,title] of checklist){
+    const label=build("label","beagu-basis-check"),c=build("input");c.type="checkbox";c.name=name;
+    label.append(c,build("span","",title));form.append(label);
+  }
+  const decisionLabel=build("label","","근거 검토 결정 (공개 승인이 아님)");
+  const decision=build("select");decision.name="decision";
+  for(const [value,label] of [["PENDING","확인 중 · 계속 비공개"],["REJECTED","반려 · 계속 비공개"]]){
+    const option=build("option","",label);option.value=value;decision.append(option);
+  }
+  decisionLabel.append(decision);form.append(decisionLabel);
+  const button=build("button","secondary","비공개 검토 결과 저장");button.type="submit";form.append(button);
+  form.addEventListener("submit",async event=>{
+    event.preventDefault();
+    if(!form.reportValidity())return;
+    if(!window.confirm("이 학교의 공개 근거를 '"+(decision.value==="REJECTED"?"반려":"확인 중")+
+      "'으로 기록합니다. 이 작업은 기존 공개 승인을 철회할 수 있으며 결과를 공개하지 않습니다. 진행할까요?"))return;
+    button.disabled=true;
+    const value={action:"basis_review",school_id:item.school_id,payload_sha256:item.payload_sha256,
+      decision:decision.value,basis_type:basisType.value,
+      notice_source_ref:form.elements.namedItem("notice_source_ref").value.trim(),
+      notice_digest_sha256:form.elements.namedItem("notice_digest_sha256").value.trim(),
+      notice_effective_at:when.value?when.value+"T00:00:00+09:00":null,
+      publication_scope:form.elements.namedItem("publication_scope").value.trim(),
+      notes:notes.value.trim()};
+    for(const [name] of checklist)value[name]=form.elements.namedItem(name).checked;
+    try{
+      await call(value);
+      notice("비공개 근거 검토 기록을 저장했습니다. 공개 승인은 이루어지지 않았습니다.");
+      await refresh();
+    }catch{
+      notice("검토 기록 저장 실패 · 현재 스냅샷과 권한을 다시 확인하세요.");
+    }finally{button.disabled=false;}
+  });
+  wrap.append(form);
+  return wrap;
  }
  async function hold(item,button){
   if(role!=="owner")return;
