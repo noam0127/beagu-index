@@ -67,6 +67,15 @@
     }[item.basis_review_status]||"근거 상태 미확인";
     row.append(build("p","subtle","공개 근거: "+basisLabel+
       (item.basis_reviewed_at?" · 검토일 "+formatDate(item.basis_reviewed_at):"")));
+    const autoLabel={
+      PRECHECK_PENDING:"자동 검수 대기",HOLD_TECHNICAL:"기술 오류 확인 중",
+      HOLD_SMALL_SAMPLE:"소표본 보호 · 자동 비공개",
+      HOLD_INVALID_QUESTION:"문항 검증 실패 · 자동 비공개",
+      HOLD_NOTICE_UNVERIFIED:"공개 고지 근거 미확인 · 자동 비공개",
+      HOLD_REJECTED:"공개 근거 반려 · 자동 비공개",
+      READY_FOR_AUTO_RELEASE:"자동 공개 조건 충족"
+    }[item.automatic_decision]||"자동 검수 상태 미확인";
+    row.append(build("p","subtle","자동 공개 판정: "+autoLabel));
     if(role==="owner")row.append(makeBasisForm(item));
 
     if(role==="owner" && item.approval_status!=="WITHHELD" || role==="owner" && item.last_decision!=="WITHHELD"){
