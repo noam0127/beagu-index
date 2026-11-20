@@ -119,8 +119,8 @@ Deno.serve(async (req) => {
       return json(origin, 503, { error: 'REFERRAL_UNAVAILABLE' });
     }
     if (Number(enrollment?.level) === 2 && (Number(session.access_level) < 2 || !session.identity_visitor_id)) {
-      // The recommendation qualifies for provisional Lv.2 access; a signed-in
-      // Supabase Auth account is still separately required for Post-it writes.
+      // A credited referral grants earned Lv2 without account creation.
+      // The visitor identity binds one pseudonymous Post-it writer across sessions.
       // Bind the verified challenge visitor, not an account identity. This supports
       // stable author quotas without signup and permits immediate revocation.
       const { error: upgradeError } = await db.from('beagu_level_sessions')
