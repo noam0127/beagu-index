@@ -202,7 +202,7 @@
           <button id="challengeAccessToggle" class="beagu-auth-toggle" type="button" aria-label="참여코드 표시" aria-pressed="false">표시</button>
         </div>
       </div>
-      <button id="challengeAccessSubmit" type="submit" class="challenge-access-submit beagu-auth-submit">참여코드 입력</button>
+      <button id="challengeAccessSubmit" type="submit" class="challenge-access-submit beagu-auth-submit">참여코드 확인</button>
     </form>
     <p id="challengeAccessFeedback" class="challenge-access-feedback beagu-auth-message" role="status" aria-live="polite">인증 상태 확인 중…</p>
     <p class="challenge-access-help beagu-auth-help">참여코드는 <a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a> 시 발급됩니다.</p>
@@ -240,10 +240,10 @@
     data-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeReferralTitle">
     <div class="challenge-identity-head">
       <h2 id="challengeReferralTitle">나의 전용 조사 링크</h2>
-      <span class="challenge-identity-tag" id="challengeReferralTag">추천 승급 준비 중</span>
+      <span class="challenge-identity-tag" id="challengeReferralTag">링크 공유하기</span>
     </div>
     <p id="challengeReferralStatus" class="challenge-identity-feedback" role="status" aria-live="polite">
-      전용 링크 발급과 설문 자동 승급 기능을 준비하고 있습니다.
+      전용 조사 링크를 불러오고 있어요.
     </p>
     <div class="challenge-identity-row" style="margin-top:12px">
       <input id="challengeReferralLink" type="text" aria-label="내 전용 조사 링크"
@@ -253,7 +253,7 @@
         disabled hidden>링크 복사</button>
     </div>
     <p id="challengeReferralProgress" class="challenge-identity-feedback" aria-live="polite"></p>
-    <p class="small-note" id="challengeReferralNote">기존 고유번호는 변경되지 않습니다. 설문과 연결되기 전에는 추천 실적이 인정되지 않습니다.</p>
+    <p class="small-note" id="challengeReferralNote">동료 1명의 설문 참여가 확인되면 Lv.2로 승급해요.</p>
   </section>
 
     <section class="beagu-xp" data-beagu-xp data-xp-state="loading" aria-label="2026년 챌린지 목표 달성률">
@@ -288,7 +288,7 @@
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/challenge.js?v=20261121-code-card2"></script>
-<script src="js/challenge-referral-v1.js?v=20261121-code-card2"></script>
+<script src="js/challenge-referral-v1.js?v=20261121-lv2-copy1"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>
