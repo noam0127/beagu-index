@@ -306,3 +306,61 @@ body.is-playing #novelCard #choiceSection .choice:focus-visible{
   transition:none!important;
  }
 }
+
+
+/* Five-colleague lineup: three-column prototype created an unnecessarily
+ * tall two-row grid on desktop. Use one balanced row on wide screens. */
+@media(min-width:761px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]){
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  max-width:1010px!important;
+  gap:clamp(8px,1.3vw,16px)!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]) .setup-character-art{
+  aspect-ratio:4/5!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]) .setup-character-tag{
+  font-size:clamp(10px,.9vw,13px)!important;
+ }
+}
+@media(max-width:760px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]){
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:clamp(5px,1.5vw,10px)!important;
+ }
+}
+@media(max-width:490px) and (max-height:690px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]) .setup-character-art{
+  aspect-ratio:1/1.12!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]) .setup-character-tag{
+  font-size:9px!important;line-height:1.2!important;
+ }
+}
+/* The return path must remain visible after the final chapter as well. */
+body.is-ending #ending{position:relative!important;}
+body.is-ending #ending .diary-ending-home{
+ position:absolute;
+ z-index:5;
+ top:calc(env(safe-area-inset-top,0px) + 10px);
+ right:calc(env(safe-area-inset-right,0px) + 14px);
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:44px;padding:8px 13px;
+ background:#e9d6e3;color:#593c56;
+ border:1px solid #cba7bd;border-radius:999px;
+ text-decoration:none;
+ font:700 12px/1.2 "Gowun Batang","Nanum Myeongjo",serif;
+ box-shadow:0 4px 15px #442e481a;
+}
+body.is-ending #ending .diary-ending-home:hover{background:#dfc5d6}
+body.is-ending #ending .diary-ending-home:focus-visible{outline:3px solid #83537b;outline-offset:2px}
+body.is-ending #ending>.emblem{
+ box-sizing:border-box;
+ padding-right:145px;
+}
+@media(max-width:490px){
+ body.is-ending #ending .diary-ending-home{
+  min-height:40px;font-size:11px;padding:7px 10px;
+ }
+ body.is-ending #ending>.emblem{padding-right:120px}
+}
