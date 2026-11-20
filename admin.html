@@ -210,6 +210,18 @@
           <article><h4>일반 Auth 로그인 실패</h4><strong data-security="auth_failures">미수집</strong></article>
           <article><h4>통계 수집 오류</h4><strong data-security="collector_errors">미수집</strong></article>
         </div>
+        <div class="chart-card" id="adminTelemetryHealthPanel">
+          <div class="chart-title"><h4>방문·접속 통계 수집 보호 상태</h4><small>최근 24시간 · 추가 개인정보 저장 없음</small></div>
+          <div class="metrics">
+            <article><h4>서버 검사 요청</h4><strong data-telemetry="guard_attempts">—</strong></article>
+            <article><h4>정상 통과</h4><strong data-telemetry="guard_allowed">—</strong></article>
+            <article><h4>요청량 초과 차단</h4><strong data-telemetry="guard_source_limited">—</strong></article>
+            <article><h4>신규 ID 급증 차단</h4><strong data-telemetry="guard_id_rotation_limited">—</strong></article>
+            <article><h4>실제 저장된 방문</h4><strong data-telemetry="saved_visits_24h">—</strong></article>
+          </div>
+          <p class="subtle" id="adminTelemetryAsOf">서버 보호 통계를 불러오는 중입니다.</p>
+          <p class="subtle">검사 요청에는 브라우저·자동화 테스트가 포함될 수 있습니다. 집계는 이번 계측 추가 시점부터 시작합니다. 수집 오류율(HTTP 5xx)과 정상 이용자 오탐률은 이 표에서 계산하지 않으며 Supabase Edge Function 로그와 별도로 확인해야 합니다. 서버 검사를 통과한 요청도 이전 이벤트 중복 방지 때문에 방문 기록 수와 다를 수 있습니다.</p>
+        </div>
         <div class="ranking-card"><h4>최근 관리자 감사 기록</h4><div id="adminAudit" class="audit-list"><p class="empty">기록을 불러오는 중입니다.</p></div></div>
         <div class="ranking-card password-card">
           <h4>관리자 비밀번호 변경</h4>
@@ -230,7 +242,7 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
-  <script defer src="js/beagu-admin-access-v1.js?v=20261120-perf1"></script>
+  <script defer src="js/beagu-admin-access-v1.js?v=20261120-telemetryhealth1"></script>
   <script defer src="js/beagu-2026-admin-review.js?v=20261120-review2"></script>
 </body>
 </html>
