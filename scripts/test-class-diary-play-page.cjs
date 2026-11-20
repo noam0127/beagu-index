@@ -128,9 +128,9 @@ assert(play.src.includes('학교명·지역·공개 조사연도'),'Only grounde
 assert(play.src.includes('async function loadSchoolWorld(schoolId)'),'School data loads only after explicit selection');
 const journey=fs.readFileSync('js/class-diary-journey-v1.js','utf8');
 const guestStyle=fs.readFileSync('styles/class-diary-guest-experience-v1.css','utf8');
-assert(journey.includes('Math.min(3,Number(next)||1)'),'Setup must support the third review step');
-assert(journey.includes('go(3)'),'Colleague next button must enter the review screen');
-assert(journey.includes("step!==3"),'Submitting story should only work from first-day review');
+assert(journey.includes('Math.min(4,Number(next)||1)'),'Setup must support the fourth review step');
+assert(journey.includes('go(3)')&&journey.includes('go(4)'),'Colleague selection must lead through the teachers page to review');
+assert(journey.includes("step!==4"),'Submitting story should only work from the fourth review step');
 assert(journey.includes("setupReviewPartner"),'Review must show the actual selected colleague');
 assert(guestStyle.includes('setupPortraitNone'),'Minseo must have a matching photograph scale');
 assert(guestStyle.includes('Gowun Batang'),'Main action buttons should use the diary literary typography');
