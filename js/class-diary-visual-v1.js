@@ -62,20 +62,20 @@ function backgroundSvg(id){
  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 730" role="img" aria-hidden="true"><defs><linearGradient id="a" x2=".7" y2="1"><stop stop-color="'+p[0]+'"/><stop offset=".66" stop-color="'+p[1]+'"/><stop offset="1" stop-color="'+p[2]+'"/></linearGradient><radialGradient id="b"><stop stop-color="#fff6e5" stop-opacity=".8"/><stop offset="1" stop-color="#fff6e5" stop-opacity="0"/></radialGradient></defs><rect width="1200" height="730" fill="url(#a)"/><circle cx="240" cy="90" r="570" fill="url(#b)"/>'+obj(type,p)+'<rect y="620" width="1200" height="110" fill="#6d6980" opacity=".11"/></svg>';
 }
 function portraitSvg(which,expression){
- const id=which==='man'?'man':which==='none'?'none':'woman';
+ const id=['man','man2','man3'].includes(which)?which:which==='none'?'none':'woman';
  const smile=expression==='happy'||expression==='tender'||expression==='warm';
  const worried=expression==='worried'||expression==='tension';
- const hair=id==='man'?'#3d3234':id==='none'?'#34343b':'#645047';
- const coat=id==='man'?'#34465c':id==='none'?'#a9b8a7':'#e7d7c1';
+ const hair=id==='man3'?'#252f36':id==='man2'?'#242332':id==='man'?'#3d3234':id==='none'?'#34343b':'#645047';
+ const coat=id==='man3'?'#37665d':id==='man2'?'#454860':id==='man'?'#34465c':id==='none'?'#a9b8a7':'#e7d7c1';
  const eyes=worried?'<path d="M140 217l28 3m48 0l26-3" stroke="#51413f" stroke-width="5"/>':
  '<path d="M141 220q12 7 25 0m51 0q12 7 25 0" fill="none" stroke="#493e3e" stroke-width="6" stroke-linecap="round"/>';
  const mouth=smile?'<path d="M176 260q18 18 36 0" fill="none" stroke="#b36f6b" stroke-width="4"/>':
  worried?'<path d="M184 267h20" stroke="#b36f6b" stroke-width="4"/>':'<path d="M182 265q13 7 26 0" stroke="#b36f6b" stroke-width="4" fill="none"/>';
- const backHair=id==='man'?'<path d="M122 197Q90 78 190 78Q284 87 261 204L231 180Q178 175 145 182Z" fill="'+hair+'"/>':
+ const backHair=['man','man2','man3'].includes(id)?'<path d="M122 197Q90 78 190 78Q284 87 261 204L231 180Q178 175 145 182Z" fill="'+hair+'"/>':
  '<path d="M100 187Q93 59 191 63Q295 66 287 207L274 344H104Z" fill="'+hair+'"/>';
  const bangs=id==='none'?'<path d="M111 180Q150 137 272 175Q280 111 246 95Q118 66 111 180Z" fill="'+hair+'"/>':
  '<path d="M110 183Q136 94 183 108Q218 133 263 174L273 137Q260 79 185 78Q113 80 110 183Z" fill="'+hair+'"/>';
- return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 540" aria-hidden="true"><defs><linearGradient id="skin" x2="1" y2="1"><stop stop-color="#f7d9bd"/><stop offset="1" stop-color="#d9a895"/></linearGradient></defs><ellipse cx="195" cy="520" rx="162" ry="22" fill="#35475e" opacity=".12"/><path d="M40 540Q40 335 148 334H242Q350 336 350 540Z" fill="'+coat+'"/><path d="M143 336l53 81l55-81l-21 205h-71Z" fill="#fff9f3"/><path d="M174 312h48v68q-23 27-48 0Z" fill="url(#skin)"/>'+backHair+'<ellipse cx="190" cy="215" rx="82" ry="115" fill="url(#skin)"/>'+bangs+eyes+mouth+'<path d="M188 221l-8 27l13 2" stroke="#c99486" stroke-width="3" fill="none"/><circle cx="143" cy="251" r="16" fill="#e6a79f" opacity=".18"/><circle cx="231" cy="251" r="16" fill="#e6a79f" opacity=".18"/><path d="M151 373q44 31 91 0" stroke="#ddd5ce" stroke-width="5" fill="none"/></svg>';
+ return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 540" aria-hidden="true"><defs><linearGradient id="skin" x2="1" y2="1"><stop stop-color="#f7d9bd"/><stop offset="1" stop-color="#d9a895"/></linearGradient></defs><ellipse cx="195" cy="520" rx="162" ry="22" fill="#35475e" opacity=".12"/><path d="M40 540Q40 335 148 334H242Q350 336 350 540Z" fill="'+coat+'"/><path d="M143 336l53 81l55-81l-21 205h-71Z" fill="#fff9f3"/><path d="M174 312h48v68q-23 27-48 0Z" fill="url(#skin)"/>'+backHair+'<ellipse cx="190" cy="215" rx="82" ry="115" fill="url(#skin)"/>'+bangs+eyes+mouth+'<path d="M188 221l-8 27l13 2" stroke="#c99486" stroke-width="3" fill="none"/><circle cx="143" cy="251" r="16" fill="#e6a79f" opacity=".18"/><circle cx="231" cy="251" r="16" fill="#e6a79f" opacity=".18"/><path d="M151 373q44 31 91 0" stroke="#ddd5ce" stroke-width="5" fill="none"/>'+(id==='man3'?'<circle cx="315" cy="453" r="38" fill="#f3f5e8" stroke="#476d79" stroke-width="6"/><path d="M286 425q58 30 45 64m-44-27q47-40 64-19" stroke="#527db0" stroke-width="5" fill="none"/>':id==='man2'?'<path d="M277 467q-20-23 4-38q13-8 30 0q21 14 3 33q-31 20-41-1m-7 11q16-40 52-28" stroke="#e8f4ff" stroke-width="4" fill="none"/>':'')+'</svg>';
 }
 function dataUrl(svg){return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}
 const api=Object.freeze({VERSION,CAST,sceneForEvent,backgroundSvg,portraitSvg,dataUrl});
