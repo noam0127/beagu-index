@@ -23,6 +23,7 @@ assert.match(html, /js\/challenge-referral-v1\.js/);
 assert.match(issued, /beagu:identity-ready/);
 assert.match(ui, /beagu:challenge-access-revoked/);
 assert.match(ui, /REFERRAL_NOT_READY/);
-assert.match(landing, /추천 실적으로 인정되지 않습니다/);
+assert.match(landing, /beagu-referral-pending/, 'referral pages must hide the intermediate screen');
+assert.match(read('r/index.html'), /beagu-referral-form-v1\.js/, 'short links must auto check in');
 assert.match(landing, /forms\/d\/e\//);
 console.log('PASS: referral stage1 JavaScript syntax, feature gates, owner flow, pending notice');

@@ -48,29 +48,53 @@ assert.match(form,/getDestinationId\(\)/);
 assert.match(form,/\.toPrefilledUrl\(\)/);
 assert.doesNotMatch(form,/\.submit\(\)/,'must not insert fake Google Form answers');
 assert.doesNotMatch(form,/getRespondentEmail/,'must not exfiltrate email');
-assert.match(survey,/id="referralConsent"/);
+assert.doesNotMatch(survey,/id="referralConsent"/,'intermediate opt-in card must be removed');
 assert.match(survey,/id="surveyFormLink"/);
 assert.match(survey,/id="backToSchool"/);
 // Owner confirmed the optional Google Form field; the Form entry ID is public metadata.
 assert.match(cfg,/entryName: 'entry\.2096012680'/);
-// A deliberately unconfigured mock must still fall back to the standard form.
-const m={};
-for(const k of ['referralNotice','surveyFormLink','referralOptin','referralConsent','referralJoinForm','referralSubmitFeedback']){
-  m[k]={hidden:k==='referralOptin',textContent:'',disabled:false,
-    addEventListener(event,fn){this[event]=fn;}};
-}
+// A missing Form field must not issue a check-in; show the general survey fallback.
+const m={referralNotice:{hidden:true,textContent:''}};
 const called=[];
 const context={
   window:{BEAGU_REFERRAL_FORM_CONFIG:{entryName:'',formUrl:'https://docs.google.com/forms/d/e/123/viewform'}},
-  document:{getElementById:k=>m[k]},
-  location:{search:'?ref='+'a'.repeat(64)}, URLSearchParams, URL, crypto:crypto.webcrypto,
+  document:{documentElement:{classList:{remove:()=>{}}},getElementById:k=>m[k]||null},
+  location:{pathname:'/survey.html',search:'?ref='+'a'.repeat(64)},
+  URLSearchParams, URL, crypto:crypto.webcrypto,
   localStorage:{getItem:()=>null,setItem:()=>{}},
   fetch:()=>{called.push(1);return Promise.reject(Error('unexpected fetch'));},
-  SUPABASE_URL:'https://example.supabase.co',
 };
 vm.runInNewContext(ui,context);
-assert.equal(m.referralOptin.hidden,true,'do not show opt in before Form field configured');
-assert.equal(called.length,0,'no request when field is unconfigured');
+assert.equal(m.referralNotice.hidden,false,'show fallback when unconfigured');
+assert.equal(called.length,0,'do not request proof without valid Form config');
+assert.match(r('r/index.html'),/beagu-referral-form-v1\.js/,'short links auto check in');
+assert.match(ui,/location\.replace\(form\.toString\(\)\)/,'successful proof opens Form directly');
+// Verify both short and long links prefill the server-signed proof without showing a card.
+const proof='BR1.'+'a'.repeat(64)+'.'+'ab8afb27-c498-42c1-8df6-064b6b8102a4'+'.1795248000.'+'b'.repeat(64);
+const redirectUrls=[];
+for(const [pathname,search,hash] of [
+  ['/r/','','#AbC123_z'],
+  ['/survey.html','?ref='+'a'.repeat(64),''],
+]){
+  const loc={pathname,search,hash,replace:url=>redirectUrls.push(url)};
+  vm.runInNewContext(ui,{
+    window:{BEAGU_REFERRAL_FORM_CONFIG:{entryName:'entry.2096012680',formUrl:'https://docs.google.com/forms/d/e/FORM/viewform'}},
+    document:{documentElement:{classList:{remove:()=>{throw Error('unexpected fallback')}}},getElementById:()=>null},
+    location:loc,URLSearchParams,URL,crypto:crypto.webcrypto,
+    localStorage:{getItem:()=>null,setItem:()=>{}},
+    fetch:async()=>({ok:true,json:async()=>({proof})}),
+  });
+}
+setImmediate(()=>{
+  try {
+    assert.equal(redirectUrls.length,2,'short and long referral links both redirect');
+    for(const target of redirectUrls){
+      const url=new URL(target);
+      assert.equal(url.hostname,'docs.google.com');
+      assert.equal(url.searchParams.get('entry.2096012680'),proof,'Google Form carries signed proof');
+    }
+  }catch(err){console.error(err);process.exitCode=1;}
+});
 // Check public helper and ingest use exactly identical HMAC message derivation.
 const testKey='z'.repeat(48),ref='f'.repeat(64);
 const uuid='ab8afb27-c498-42c1-8df6-064b6b8102a4',exp=1795248000;
@@ -80,4 +104,4 @@ assert.match(prefix+'.'+signed,/^BR1\.([a-f0-9]{64})\.([a-f0-9-]{36})\.(\d{10})\
 assert.ok(checkin.includes('BEAGU_REFERRAL_CHECKIN_V1|'));
 assert.ok(ingest.includes('BEAGU_REFERRAL_CHECKIN_V1|'));
 assert.ok(!survey.includes('service_role') && !cfg.includes('service_role'));
-console.log('PASS: stage2 gates, no fake submissions, Google Form event contract, signed proof and opt-in fallback');
+console.log('PASS: stage2 gates, no fake submissions, Google Form event contract, signed proof and direct Form redirect');
