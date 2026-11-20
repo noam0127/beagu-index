@@ -61,9 +61,12 @@ function beagu26BuildResults(values, schools, catalog) {
       if(!raw)return;
       if(s.time){
         const m=/^(?:(오전|오후)\s*)?(\d{1,2}):(\d{2})(?::00)?$/.exec(raw);
-        if(!m){q.invalid++;return;}
-        let hour=Number(m[2]),minute=Number(m[3]);
-        if(minute>59||hour>23||(m[1]&&(hour<1||hour>12))){q.invalid++;return;}
+        let hour=Number(m?.[2]),minute=Number(m?.[3]);
+        if(!m||minute>59||hour>23||(m[1]&&(hour<1||hour>12))){
+          q.invalid++;
+          reviewRows.push([sourceIndex+1,id,s.id,s.row,'INVALID_TIME','PENDING_REVIEW']);
+          return;
+        }
         if(m[1])hour=hour%12+(m[1]==='오후'?12:0);
         q.valid++;q.minutes_sum+=hour*60+minute;return;
       }

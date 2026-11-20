@@ -6,16 +6,12 @@
  * 데이터를 공개하거나 승인 상태를 변경하지 않습니다.
  */
 const MBTI26_CONFIG=Object.freeze({
- source:"1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4",
- sourceTab:"설문지 응답 시트1",
  master:"1I9SXXmOCnyeWP3RjoBHW5Tfvg0RpgR4RjnEVoxZvpp8",
  target:"MBTI_학교별_검수대기",
  hold:"MBTI_학교매칭_보류",
  log:"MBTI_실행로그",
- url:"https://snvzwrexuqavnfvzgxqj.supabase.co",
  timezone:"Asia/Seoul",
  officialStart:"2026-11-01",
- maxRows:50000,
  version:"2026-Q14Q17-v1.0"
 });
 const MBTI26_NAMES=Object.freeze({
@@ -76,19 +72,7 @@ function mbti26_score(answer){
  if(!Object.prototype.hasOwnProperty.call(opts,v))throw Error("검증되지 않은 Q14~Q17 선택지: "+v.slice(0,70));
  return opts[v];
 }
-function mbti26_fetchSchools(){
- const key=PropertiesService.getScriptProperties().getProperty("SUPABASE_PUBLISHABLE_KEY");
- if(!key)throw Error("프로젝트 설정의 SUPABASE_PUBLISHABLE_KEY(공개키)를 지정하세요");
- const all=[];
- for(let i=0;i<10000;i+=1000){
-  const endpoint=MBTI26_CONFIG.url+"/rest/v1/schools?select=school_id,school_name,sido_standard,support_office,establishment,status&status=eq.%EC%9A%B4%EC%98%81&order=school_id.asc&limit=1000&offset="+i;
-  const res=UrlFetchApp.fetch(endpoint,{headers:{"apikey":key},muteHttpExceptions:true});
-  if(res.getResponseCode()!==200)throw Error("학교 MASTER 조회 실패: "+res.getResponseCode());
-  const chunk=JSON.parse(res.getContentText());
-  if(!Array.isArray(chunk))throw Error("학교 MASTER 결과 형식 오류");
-  all.push(...chunk);
-  if(chunk.length<1000)break;
- }
+function mbti26_indexSchools(all){
  const byKey=new Map();
  for(const s of all){
   if(!/^\d{7}$/.test(String(s.school_id)))continue;
@@ -113,20 +97,15 @@ function mbti26_write(sheet,output,width){
  if(previous>0)sheet.getRange(2,1,previous,width).clearContent();
  if(output.length)sheet.getRange(2,1,output.length,width).setValues(output);
 }
-function refreshBeagu2026SchoolCulture(){
- const lock=LockService.getScriptLock();
- if(!lock.tryLock(30000))throw Error("기존 MBTI 집계가 실행 중입니다");
+function refreshBeagu2026SchoolCulture(snapshot){
+ const lock=snapshot?null:LockService.getScriptLock();
+ if(lock&&!lock.tryLock(30000))throw Error("기존 MBTI 집계가 실행 중입니다");
  let scanned=0,excluded=0,matched=0,held=0,schoolCount=0;
  let destination=null;
  try {
-  const source=SpreadsheetApp.openById(MBTI26_CONFIG.source).getSheetByName(MBTI26_CONFIG.sourceTab);
-  if(!source)throw Error("원본 탭을 찾을 수 없습니다");
-  const last=source.getLastRow();
-  if(last>MBTI26_CONFIG.maxRows+1)throw Error("응답 행수가 허용 범위를 초과합니다");
-  const cCount=Math.min(source.getLastColumn(),41); // A:AO까지; 자유서술 항목 접근 금지
-  const values=source.getRange(1,1,Math.max(last,1),cCount).getDisplayValues();
+  const {values,schools:directory}=snapshot||readBeagu2026SourceSnapshot();
   const c=mbti26_columns(values[0]);
-  const schools=mbti26_fetchSchools();
+  const schools=mbti26_indexSchools(directory);
   destination=SpreadsheetApp.openById(MBTI26_CONFIG.master);
   const reviewSheet=destination.getSheetByName(MBTI26_CONFIG.target);
   const holdSheet=destination.getSheetByName(MBTI26_CONFIG.hold);
@@ -217,5 +196,5 @@ function refreshBeagu2026SchoolCulture(){
     if(log)log.appendRow([Utilities.formatDate(new Date(),MBTI26_CONFIG.timezone,"yyyy-MM-dd HH:mm:ss"),scanned,excluded,matched,held,schoolCount,"ERROR",String(err.message||err).slice(0,250)]);
   }
   throw err;
- }finally{lock.releaseLock();}
+ }finally{if(lock)lock.releaseLock();}
 }

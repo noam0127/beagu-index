@@ -30,4 +30,8 @@ const migration=readFileSync('supabase/migrations/20261119120000_beagu_2026_rele
 assert.match(migration,/manual_release_at <= now\(\) - interval '24 hours'/);
 assert.match(migration,/updated_at <= now\(\) - interval '24 hours'/);
 assert.match(migration,/valid_observation_count >= 1/);
+const approvalMigration=readFileSync('supabase/migrations/20261120020638_beagu_2026_restore_pipeline_contracts.sql','utf8');
+assert.match(approvalMigration,/r\.payload_sha256 is distinct from p_expected_sha256/);
+assert.match(approvalMigration,/jsonb_typeof\(p_evidence->k\) is distinct from 'string'/);
+assert.match(approvalMigration,/revoke all on function public\.beagu_2026_approve_results.*from public,anon,authenticated/);
 console.log('PASS: 2026 approval cooldown 24 hours, privacy review and RLS delay');

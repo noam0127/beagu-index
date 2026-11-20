@@ -38,6 +38,17 @@ const otherRow=[
   fixtureRows[0],['2026-11-19','부산','시범학교','기타','A에 매우 가깝다']
 ];
 assert.equal(context.beagu26BuildResults(otherRow,[],fixtureCatalog).reviewRows[0][4],'OTHER_OPTION');
+const timeCatalog={Q18:{kind:'time',options:[],rows:[],columns:[]}};
+const timeRows=[
+  ['날짜','지역','학교','Q18. 문항'],
+  ['2026-11-19','부산','시범학교','오후 9:20'],
+  ['2026-11-19','부산','시범학교','임의 시간']
+];
+const timeResult=context.beagu26BuildResults(timeRows,[],timeCatalog);
+const [timeQuestion]=timeResult.schools[0].questions;
+assert.deepEqual([timeQuestion.valid,timeQuestion.invalid,timeQuestion.minutes_sum],[1,1,1280]);
+assert.equal(timeResult.reviewRows[0][4],'INVALID_TIME');
+assert.equal(JSON.stringify(timeResult.reviewRows).includes('임의 시간'),false);
 const questions=Object.entries(catalog).flatMap(([id,m])=>(m.kind==='grid'?m.rows:[null]).map((_,i)=>({id,row:m.kind==='grid'?i:-1,valid:0,invalid:0,counts:(m.kind==='grid'?m.columns:m.options).map(()=>0),minutes_sum:0})));
 const payload={source_spreadsheet_id:sourceId,official_start_day:'2026-11-01',schema_version:1,snapshot_at:new Date().toISOString(),totals:{source_rows:2,official_rows:1,prelaunch_rows:1,unmatched_rows:0,undated_rows:0},schools:[{school_id:'1000001',school_response_rows:1,school_match_status:'EXACT_REGION_OFFICE_NAME',questions}]};
 assert.equal(validateSnapshot(payload),payload);

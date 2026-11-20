@@ -42,12 +42,19 @@ function setupDailyNoonTrigger() {
  */
 function refreshBeagu2026AllPrivateStats() {
   if(typeof refreshBeagu2026QuestionResults!=="function")throw Error("최신 Code.gs 설치 필요");
-  refreshBeagu2026QuestionResults();
-  refreshBeagu2026Stats();
-  if(typeof refreshBeagu2026SchoolCulture==="function") {
-    refreshBeagu2026SchoolCulture();
-  } else {
-    Logger.log("Q14~Q17 학교문화 자동 집계 미설치: MBTI 스크립트 파일을 추가하세요.");
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(60000))throw Error("다른 2026 전체 집계가 실행 중입니다.");
+  try {
+    const snapshot=readBeagu2026SourceSnapshot();
+    refreshBeagu2026QuestionResults(snapshot);
+    refreshBeagu2026Stats(snapshot);
+    if(typeof refreshBeagu2026SchoolCulture==="function") {
+      refreshBeagu2026SchoolCulture(snapshot);
+    } else {
+      Logger.log("Q14~Q17 학교문화 자동 집계 미설치: MBTI 스크립트 파일을 추가하세요.");
+    }
+  } finally {
+    lock.releaseLock();
   }
 }
 // Optional near-real-time private aggregation after each genuine Google Form submission.
@@ -327,20 +334,15 @@ function getSubmittedDay(value) {
   if(date.getUTCFullYear()!==year||date.getUTCMonth()!==month-1||date.getUTCDate()!==day)return null;
   return [m[1],m[2].padStart(2,"0"),m[3].padStart(2,"0")].join("-");
 }
-function refreshBeagu2026Stats() {
-  const lock=LockService.getScriptLock();
-  if(!lock.tryLock(30000))throw Error("이미 다른 집계가 실행 중입니다.");
+function refreshBeagu2026Stats(snapshot) {
+  const lock=snapshot?null:LockService.getScriptLock();
+  if(lock&&!lock.tryLock(30000))throw Error("이미 다른 집계가 실행 중입니다.");
   let scanned=0,matched=0,unmatched=0,prelaunch=0,undated=0;
-  const destination=SpreadsheetApp.openById(BEAGU26.destinationId);
+  let destination;
   try{
-    const source=SpreadsheetApp.openById(BEAGU26.sourceId).getSheetByName(BEAGU26.sourceTab);
-    if(!source)throw Error("원본 응답 시트 이름이 변경되었습니다.");
-    const rCount=source.getLastRow();
-    if(rCount>BEAGU26.maxResponses+1)throw Error("응답 행수 안전 한도 초과");
-    // B01/B02/B03 and Q01~Q13 are in the leading columns; avoid loading free-text answers.
-    const values=source.getRange(1,1,Math.max(1,rCount),Math.min(50,source.getLastColumn())).getDisplayValues();
+    destination=SpreadsheetApp.openById(BEAGU26.destinationId);
+    const {values,schools}=snapshot||readBeagu2026SourceSnapshot();
     const columns=questionColumns(values[0]);
-    const schools=fetchSchools(); // 학교 MASTER가 없으면 기존 결과 보존
     const groups=new Map(),holds=[],reviewRows=[];
     for(let i=1;i<values.length;i++){
       const r=values[i];
@@ -410,9 +412,9 @@ function refreshBeagu2026Stats() {
     Logger.log("Updated internal school summary: "+matched+" schools");
   }catch(e){
     const stamp=Utilities.formatDate(new Date(),BEAGU26.timezone,"yyyy-MM-dd HH:mm:ss");
-    destination.getSheetByName(BEAGU26.logTab).appendRow([stamp,scanned,matched,unmatched,"ERROR",("사전응답 제외 "+prelaunch+"건; "+String(e.message||e)).slice(0,300)]);
+    if(destination)destination.getSheetByName(BEAGU26.logTab).appendRow([stamp,scanned,matched,unmatched,"ERROR",("사전응답 제외 "+prelaunch+"건; "+String(e.message||e)).slice(0,300)]);
     throw e;
-  }finally{lock.releaseLock();}
+  }finally{if(lock)lock.releaseLock();}
 }
 
 // BEGIN GENERATED 2026 QUESTION RESULTS
@@ -480,9 +482,12 @@ function beagu26BuildResults(values, schools, catalog) {
       if(!raw)return;
       if(s.time){
         const m=/^(?:(오전|오후)\s*)?(\d{1,2}):(\d{2})(?::00)?$/.exec(raw);
-        if(!m){q.invalid++;return;}
-        let hour=Number(m[2]),minute=Number(m[3]);
-        if(minute>59||hour>23||(m[1]&&(hour<1||hour>12))){q.invalid++;return;}
+        let hour=Number(m?.[2]),minute=Number(m?.[3]);
+        if(!m||minute>59||hour>23||(m[1]&&(hour<1||hour>12))){
+          q.invalid++;
+          reviewRows.push([sourceIndex+1,id,s.id,s.row,'INVALID_TIME','PENDING_REVIEW']);
+          return;
+        }
         if(m[1])hour=hour%12+(m[1]==='오후'?12:0);
         q.valid++;q.minutes_sum+=hour*60+minute;return;
       }
@@ -502,19 +507,26 @@ function beagu26BuildResults(values, schools, catalog) {
     totals,schools:[...groups.values()].sort((a,b)=>a.school_id.localeCompare(b.school_id)),reviewRows};
 }
 
-function refreshBeagu2026QuestionResults() {
-  const lock=LockService.getScriptLock();
-  if(!lock.tryLock(30000))throw Error('질문별 집계 실행 중');
+function readBeagu2026SourceSnapshot() {
+  const startedAt=new Date().toISOString();
+  const source=SpreadsheetApp.openById(BEAGU26.sourceId).getSheetByName(BEAGU26.sourceTab);
+  if(!source)throw Error('원본 응답 탭 없음');
+  const headers=source.getRange(1,1,1,source.getLastColumn()).getDisplayValues()[0];
+  const last=headers.findIndex(h=>/^Q50\./.test(String(h)));
+  const rowCount=source.getLastRow();
+  if(last<0||rowCount>BEAGU26.maxResponses+1)throw Error('원본 열·행 안전 검사 실패');
+  // Never read Q51 or later free-text response cells.
+  const values=source.getRange(1,1,Math.max(1,rowCount),last+1).getDisplayValues();
+  const schools=fetchSchools();
+  if(!schools.length)throw Error('학교 MASTER 비어 있음');
+  return {startedAt,values,schools};
+}
+function refreshBeagu2026QuestionResults(snapshot) {
+  const lock=snapshot?null:LockService.getScriptLock();
+  if(lock&&!lock.tryLock(30000))throw Error('질문별 집계 실행 중');
   try {
-    const startedAt=new Date().toISOString();
-    const source=SpreadsheetApp.openById(BEAGU26.sourceId).getSheetByName(BEAGU26.sourceTab);
-    if(!source)throw Error('원본 응답 탭 없음');
-    const headers=source.getRange(1,1,1,source.getLastColumn()).getDisplayValues()[0];
-    const last=headers.findIndex(h=>/^Q50\./.test(String(h)));
-    if(last<0||source.getLastRow()>BEAGU26.maxResponses+1)throw Error('원본 열·행 안전 검사 실패');
-    // Never read Q51 or later free-text response cells.
-    const values=source.getRange(1,1,Math.max(1,source.getLastRow()),last+1).getDisplayValues();
-    const {reviewRows, ...payload}=beagu26BuildResults(values,fetchSchools(),BEAGU26_QUESTION_CATALOG);
+    const {startedAt,values,schools}=snapshot||readBeagu2026SourceSnapshot();
+    const {reviewRows, ...payload}=beagu26BuildResults(values,schools,BEAGU26_QUESTION_CATALOG);
     payload.snapshot_at=startedAt;
     const master=SpreadsheetApp.openById(BEAGU26.destinationId);
     const tab=master.getSheetByName('2026_문항별_검수대기')||master.insertSheet('2026_문항별_검수대기');
@@ -535,5 +547,5 @@ function refreshBeagu2026QuestionResults() {
     });
     if(response.getResponseCode()!==200)throw Error('비공개 문항 집계 전송 실패 HTTP '+response.getResponseCode());
     Logger.log('비공개 문항 집계 저장: 학교 '+payload.schools.length+'개. 공개 승인은 별도입니다.');
-  } finally {lock.releaseLock();}
+  } finally {if(lock)lock.releaseLock();}
 }
