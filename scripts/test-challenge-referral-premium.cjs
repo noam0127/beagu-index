@@ -6,109 +6,96 @@ const html = fs.readFileSync('challenge.html', 'utf8');
 const js = fs.readFileSync('js/challenge-referral-v1.js', 'utf8');
 const server = fs.readFileSync('supabase/functions/beagu-referral-link-v1/index.ts', 'utf8');
 assert.match(html, /id="challengeReferralPanel"/);
-assert.match(html, /id="challengeReferralTag"/);
-assert.match(html, /id="challengeReferralMore"/);
-assert.match(html, /class="challenge-identity challenge-referral"/);
-assert.match(html, /challenge-referral\.is-lv2/);
+assert.match(html, /id="challengeIdentityPanel"/);
+assert.match(html, /id="challengeIdentityTag"/);
+assert.match(html, /class="challenge-identity challenge-code-card"/);
+assert.match(html, /challenge-code-card\.is-lv2/);
 assert.match(server, /validReferrals:/);
 assert.match(server, /provisional:/);
 assert.doesNotThrow(() => new vm.Script(js));
-
-const ids = ['challengeReferralPanel', 'challengeReferralLink',
-  'copyChallengeReferral', 'challengeReferralStatus', 'challengeReferralProgress',
-  'challengeReferralTitle', 'challengeReferralTag', 'challengeReferralNote',
-  'challengeReferralMore', 'copyChallengeReferralAfter'];
+const ids = [
+  'challengeReferralPanel', 'challengeReferralLink', 'copyChallengeReferral',
+  'challengeReferralStatus', 'challengeReferralProgress', 'challengeReferralTitle',
+  'challengeReferralTag', 'challengeReferralNote',
+  'challengeIdentityPanel', 'challengeIdentityTitle', 'challengeIdentityTag',
+  'challengeIdentityReward', 'copyIdentityCode'
+];
 const el = Object.fromEntries(ids.map(id => [id, {
-  hidden: id === 'challengeReferralMore', value: '', textContent: '', disabled: false,
+  hidden: id === 'challengeIdentityReward', value: '', textContent: '', disabled: false,
   dataset: {}, attributes: {}, listeners: {}, classes: new Set(),
-  classList: { toggle(cls, enabled) {
-    const self = el[id];
-    if (enabled) self.classes.add(cls);
-    else self.classes.delete(cls);
-  } },
-  setAttribute(name, value) { this.attributes[name] = value; },
-  addEventListener(type, cb) { this.listeners[type] = cb; },
-  focus() {}, select() {},
+  classList: {toggle(cls, enabled) {
+    if (enabled) el[id].classes.add(cls); else el[id].classes.delete(cls);
+  }},
+  setAttribute(name,value){this.attributes[name]=value;},
+  addEventListener(type,cb){this.listeners[type]=cb;},
+  focus(){}, select(){}
 }]));
-const listeners = {};
-const page = {
-  addEventListener(type, cb) { (listeners[type] ||= []).push(cb); },
-  dispatchEvent() {},
+const visitor='aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+const code='ABCDEFGHJK';
+const referral='https://baeguindex.com/survey.html?ref='+'a'.repeat(64);
+const shortLink='https://baeguindex.com/r/#aB3_dE-9';
+const session='b'.repeat(64);
+const storage=new Map(), copies=[], listeners={};
+let returned={link:referral,level:1,validReferrals:0,provisional:false};
+const mockWindow={
+  addEventListener(type,cb){(listeners[type]??=[]).push(cb);},
+  dispatchEvent(event){(listeners[event.type]||[]).forEach(cb=>cb(event));}
 };
-const visitor = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
-const code = 'ABCDEFGHJK';
-const referral = 'https://baeguindex.com/survey.html?ref=' + 'a'.repeat(64);
-const session = 'b'.repeat(64);
-const storage = new Map();
-let returned = {link: referral, level: 1, validReferrals: 0, provisional: false};
-const copies = [];
-const windowListeners = {};
-const mockWindow = {
-  addEventListener(type, cb) { (windowListeners[type] ||= []).push(cb); },
-  dispatchEvent(event) { (windowListeners[event.type] || []).forEach(cb => cb(event)); },
-};
-const context = {
-  document: {getElementById: id => el[id], hidden: false, addEventListener: page.addEventListener},
-  window: mockWindow, navigator: {clipboard: {writeText: async v => {copies.push(v);}}},
-  sessionStorage: {getItem: () => session},
-  localStorage: {getItem: k => storage.get(k) || null, setItem: (k,v) => storage.set(k,v)},
-  crypto: crypto.webcrypto, SUPABASE_URL: 'https://example.supabase.co',
-  fetch: async (_url, opts) => {
-    const body = JSON.parse(opts.body);
+vm.runInNewContext(js,{
+  document:{getElementById:id=>el[id],hidden:false,addEventListener(){}},
+  window:mockWindow,navigator:{clipboard:{writeText:async v=>{copies.push(v);}}},
+  sessionStorage:{getItem:()=>session},
+  localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
+  crypto:crypto.webcrypto,SUPABASE_URL:'https://example.supabase.co',
+  fetch:async (_url,opts)=>{
+    const body=JSON.parse(opts.body);
     assert.equal(body.action,'issue');
-    assert.equal(body.identityCode, code);
-    return {ok:true,status:200,json:async()=>returned};
+    assert.equal(body.identityCode,code);
+    return {ok:true,status:200,json:async()=>({...returned})};
   },
-  setInterval: () => 1,
-  Event: class Event {constructor(type){this.type=type;}},
-};
-vm.runInNewContext(js, context);
-const emit = (type, arg={}) => (windowListeners[type] || []).forEach(cb=>cb(arg));
-const tick = () => new Promise(resolve=>setImmediate(resolve));
-(async ()=>{
-  assert.equal(el.challengeReferralPanel.dataset.state, 'pending');
+  setInterval:()=>1,Event:class {constructor(type){this.type=type;}}
+});
+const emit=(type,arg={})=>(listeners[type]||[]).forEach(cb=>cb(arg));
+const tick=()=>new Promise(resolve=>setImmediate(resolve));
+(async()=>{
+  assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
   emit('beagu:challenge-access-granted');
-  emit('beagu:identity-ready', {detail:{visitor,code}});
+  emit('beagu:identity-ready',{detail:{visitor,code}});
   await tick();
-  assert.equal(el.challengeReferralPanel.dataset.state,'pending');
-  assert.equal(el.challengeReferralTitle.textContent,'나의 전용 조사 링크');
+  assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
   assert.equal(el.challengeReferralLink.value,referral);
-  assert.equal(el.copyChallengeReferral.textContent,'링크 복사');
+  assert.equal(el.challengeReferralTitle.textContent,'나의 전용 조사 링크');
 
-  const shortLink='https://baeguindex.com/r/#aB3_dE-9';
   returned.shortLink=shortLink;
-  emit('focus');
-  await tick();
+  emit('focus');await tick();
   assert.equal(el.challengeReferralLink.value,shortLink);
   await el.copyChallengeReferral.listeners.click();
   assert.equal(copies.at(-1),shortLink);
 
-  // A forged or inconsistent level must not trigger a visual promotion.
-  returned = {link: referral, level: 2, validReferrals: 0, provisional: true};
-  emit('focus');
-  await tick();
-  assert.equal(el.challengeReferralPanel.dataset.state,'pending');
+  // A client-supplied "level: 2" alone must not grant premium visuals.
+  returned={link:referral,shortLink,level:2,validReferrals:0,provisional:true};
+  emit('focus');await tick();
+  assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
 
-  // Only the server-confirmed credited referral changes the card.
-  returned = {link: referral, shortLink, level: 2, validReferrals: 1, provisional: true};
-  emit('focus');
-  await tick();
-  assert.equal(el.challengeReferralPanel.dataset.state,'earned');
-  assert.equal(el.challengeReferralTitle.textContent,'Lv2 참여코드');
-  assert.equal(el.challengeReferralLink.value,code);
-  assert.equal(el.copyChallengeReferral.textContent,'코드 복사');
-  assert.equal(el.challengeReferralMore.hidden,false);
-  assert.ok(el.challengeReferralPanel.classes.has('is-lv2'));
-  await el.copyChallengeReferral.listeners.click();
-  await tick();
-  assert.equal(copies.at(-1),code);
-  await el.copyChallengeReferralAfter.listeners.click();
-  await tick();
+  // A server-confirmed credit converts the original personal code card.
+  returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
+  emit('focus');await tick();
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv2 참여코드');
+  assert.equal(el.challengeIdentityTag.textContent,'Lv2(임시) 달성 ✦');
+  assert.equal(el.copyIdentityCode.textContent,'코드 복사');
+  assert.equal(el.challengeIdentityReward.hidden,false);
+  assert.ok(el.challengeIdentityPanel.classes.has('is-lv2'));
+  assert.equal(el.challengeIdentityPanel.dataset.referralState,'earned');
+  assert.equal(el.challengeReferralTitle.textContent,'나의 전용 조사 링크');
+  assert.equal(el.challengeReferralLink.value,shortLink);
+  await el.copyChallengeReferral.listeners.click();await tick();
   assert.equal(copies.at(-1),shortLink);
 
   emit('beagu:challenge-access-revoked');
-  assert.equal(el.challengeReferralPanel.dataset.state,'pending');
+  assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
   assert.equal(el.challengeReferralLink.value,'');
-  assert.ok(!el.challengeReferralPanel.classes.has('is-lv2'));
-  console.log('PASS: earned-only premium card, label, code, link copy and reset');
-})().catch(err => {console.error(err);process.exitCode=1;});
+  assert.equal(el.challengeIdentityReward.hidden,true);
+  console.log('PASS: premium personal code card is gated by verified referral; link retained and logout resets');
+})().catch(err=>{console.error(err);process.exitCode=1;});
