@@ -202,6 +202,32 @@
         </div>
       </section>
 
+      <section class="dash-section" aria-labelledby="adminReferralQualityHeading" id="adminReferralQuality">
+        <div class="section-title">
+          <h3 id="adminReferralQualityHeading">2026 추천 응답 이상 징후 검토</h3>
+          <small>정상 추천 자동 적립 · 의심 추천만 잠정 보류</small>
+        </div>
+        <p class="subtle">추천 응답이 완성되지 않았거나 동일 보기 반복 등 이상 징후가 확인되면 Lv2 승급을 잠정 보류합니다.
+          징후만으로 부정행위가 확정되는 것은 아닙니다. 원본 구글폼의 제출시각을 확인한 뒤 정상 인정 또는 제외를 결정하세요.
+          이름·메일·설문 원문·추천 링크와 추천인의 고유번호는 이 화면에 표시되지 않습니다.</p>
+        <div class="metrics">
+          <article><h4>확인 필요한 추천 건</h4><strong id="adminReferralQualityPending">—</strong></article>
+        </div>
+        <div class="ranking-card">
+          <div class="section-title">
+            <h4>추천 연결 예외 대기열</h4>
+            <button type="button" class="secondary" id="adminReferralQualityReload">다시 확인</button>
+          </div>
+          <p id="adminReferralQualityStatus" class="subtle" role="status" aria-live="polite">최고 관리자 2단계 인증 후 조회할 수 있습니다.</p>
+          <div id="adminReferralQualityList" class="audit-list"></div>
+          <div class="period-tabs">
+            <button type="button" class="secondary" id="adminReferralQualityPrev" disabled>이전</button>
+            <span id="adminReferralQualityPage">—</span>
+            <button type="button" class="secondary" id="adminReferralQualityNext" disabled>다음</button>
+          </div>
+        </div>
+      </section>
+
       <section class="dash-section" aria-labelledby="adminSecurityHeading">
         <div class="section-title"><h3 id="adminSecurityHeading">운영 · 보안</h3><small>민감한 개인정보와 원본 설문 답변은 표시하지 않습니다</small></div>
         <div class="metrics">
@@ -244,6 +270,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
   <script defer src="js/beagu-admin-access-v1.js?v=20261121-hourlymonitor1"></script>
-  <script defer src="js/beagu-2026-admin-review.js?v=20261120-review2"></script>
+  <script defer src="js/beagu-2026-admin-review.js?v=20261121-referral1"></script>
 </body>
 </html>
