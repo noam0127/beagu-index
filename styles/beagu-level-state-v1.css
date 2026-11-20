@@ -84,6 +84,24 @@ body.beagu-levelup-open{overflow:hidden}
   grid-column:3;
   justify-self:end;
 }
+/* Mid-size screens use the same two-row pattern, avoiding compressed menus. */
+@media(max-width:1020px){
+  .beagu-unified-header .beagu-unified-inner{
+    grid-template-columns:minmax(0,1fr) max-content;
+    grid-template-rows:auto auto;
+    row-gap:11px;
+    column-gap:8px;
+    padding-right:0;
+  }
+  .beagu-unified-header .beagu-unified-brand{grid-column:1;grid-row:1;min-width:0;max-width:none;}
+  .beagu-unified-header .beagu-level-state-container{grid-column:2;grid-row:1;justify-self:end;}
+  .beagu-unified-header .beagu-unified-nav{
+    grid-column:1 / -1;
+    grid-row:2;
+    justify-self:stretch;
+    width:100%;
+  }
+}
 /* Mobile: brand and badge are aligned; all five nav entries remain visible below. */
 @media(max-width:760px){
   .beagu-unified-header .beagu-unified-inner{
