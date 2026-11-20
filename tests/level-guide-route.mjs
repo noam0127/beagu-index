@@ -11,7 +11,7 @@ assert.match(page,/href="challenge.html">Lv2 달성하기/,'Earn challenge link 
 assert.match(page,/href="search.html">참여코드 입력/,'Lv1 unified code input route');
 assert.match(page,/회원가입이나 로그인이 필요하지 않아요/);
 assert.doesNotMatch(page,/정식 계정 준비중|정식 계정 생성|Lv\.2\(임시\)|Lv\.2\(진\)/);
-assert.match(css,/pointer-events:auto;cursor:pointer/,'Lv2 challenge link enabled');
+assert.doesNotMatch(css,/pointer-events:none|cursor:not-allowed/,'Lv2 challenge link must remain enabled');
 assert.match(css,/@media\(max-width:700px\)/);
 assert.match(shell,/result\.level>=2\?2:1/,'Never infer level from typed code');
 assert.match(shell,/beagu:level-state-updated/);
