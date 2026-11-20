@@ -8,9 +8,8 @@
   const refresh=()=>{
     const raw=indicator.dataset.level;
     const level=/^[012]$/.test(raw)?Number(raw):null;
-    const provisional=indicator.dataset.provisional==='true';
-    current.textContent=level===null?(raw==='error'?'인증 상태 확인 불가':'인증 확인 중'):level===2?'현재 Lv2':'현재 Lv.'+level;
-    status.textContent=level===null?'레벨 확인 후 이용 가능한 자료가 표시됩니다.':(level===2?(provisional?'Lv2 자료 열람 가능 · 일부 작성 기능은 코드 권한에 따라 제한됩니다.':'확장된 Lv2 상세자료를 이용할 수 있습니다.'):level===1?'인증된 상세자료를 이용할 수 있습니다.':'기본 공개자료를 이용할 수 있습니다.');
+    current.textContent=level===null?(raw==='error'?'인증 상태 확인 불가':'인증 확인 중'):'현재 Lv.'+level;
+    status.textContent=level===null?'레벨 확인 후 이용 가능한 자료가 표시됩니다.':(level===2?'Lv.2 추가 상세자료를 볼 수 있습니다.':level===1?'인증된 상세자료를 이용할 수 있습니다.':'기본 공개자료를 이용할 수 있습니다.');
     cards.forEach(card=>{
       const tier=Number(card.dataset.tier);
       const isCurrent=level===tier;
