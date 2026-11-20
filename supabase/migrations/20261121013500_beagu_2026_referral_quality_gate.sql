@@ -54,13 +54,16 @@ begin
  if p_referral_hash !~ '^[a-f0-9]{64}$' then raise exception 'invalid referral'; end if;
  select exists(
   select 1 from beagu_private.challenge_referral_events e
-  join beagu_private.challenge_referral_quality_cases c
+  left join beagu_private.challenge_referral_quality_cases c
     on c.event_sha256=e.event_sha256
       and c.referral_token_sha256=e.referral_token_sha256
       and c.respondent_sha256=e.respondent_sha256
   where e.campaign='2026' and e.decision='credited'
     and e.referral_token_sha256=p_referral_hash
-    and c.status in ('AUTO_CLEARED','CLEARED')
+    and (c.status in ('AUTO_CLEARED','CLEARED')
+      or (c.event_sha256 is null and e.created_at<
+        (select s.changed_at from beagu_private.challenge_referral_settings s
+         where s.name='quality_gate_enabled' and s.enabled=true)))
  ) into has_valid;
  update beagu_private.challenge_referral_profiles p set
   access_level=case when has_valid then 2 else 1 end,
