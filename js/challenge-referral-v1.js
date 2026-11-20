@@ -46,7 +46,7 @@
     linkField.setAttribute('aria-label', '내 전용 조사 링크');
     copyButton.textContent = '링크 복사';
     note.textContent = upgraded
-      ? '기존 고유번호는 Lv2 참여코드로 표시되며, 전용 조사 링크는 계속 사용할 수 있습니다.'
+      ? '기존 고유번호가 Lv2 참여코드가 되었습니다. 이 코드로 인증하면 회원가입 없이 Lv2 기능을 이용할 수 있습니다.'
       : '기존 고유번호는 변경되지 않습니다. 유효한 추천 설문이 확인되어야 Lv2로 승급합니다.';
   }
   function reset() {
