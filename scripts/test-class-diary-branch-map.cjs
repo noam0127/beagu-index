@@ -30,5 +30,8 @@ const h=Array.from({length:36},(_,i)=>({episode:i+1,choice:i%3}));
 assert.equal(b.branch(h).chosen.length,36);
 assert.equal(b.branch(h).flags.length,36);
 const entry=require('node:fs').readFileSync(require('node:path').join(__dirname,'../teacher-class-diary-play.html'),'utf8');
-assert(!entry.includes('js/class-diary-branch-map-v1.js'),'P0 is a safe opt-in data module until new manuscript and runtime integration ship');
+assert(entry.includes('js/class-diary-branch-map-v1.js'),'Approved school branch data is loaded');
+assert(entry.includes('sceneDirector.forEpisode(game.episode,view.title,plannedEpisode&&plannedEpisode.title)'),
+ 'New chapter direction requires an exact manuscript title match');
+assert(!entry.includes('branchMap.episode(game.episode).choices.forEach('),'New choice labels must stay opt-in until manuscripts are rewritten');
 console.log('PASS: 36 episode maps, 108 choices, '+b.ECHOES.length+' callbacks, approved-only school context, saved history reconstruction');
