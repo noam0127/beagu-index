@@ -75,8 +75,16 @@
    if(action)action.hidden=level>=1;
    if(description)description.hidden=level>=1;
    if(state){
-    state.textContent=text;
+    const challengeLogin=host.id==='challengeAccessPanel'&&level>=2;
+    state.textContent=challengeLogin?'로그인하기':text;
+    state.setAttribute('aria-label',challengeLogin?'정식 계정 로그인 화면 열기':text);
     state.hidden=level<1;
+   }
+   // Only the Challenge's earned Lv2 panel changes into account login.
+   // Other public pages retain the established participation-code interface.
+   if(host.id==='challengeAccessPanel'){
+    const heading=host.querySelector('h1,h2');
+    if(heading)heading.textContent=level>=2?'로그인하기':'참여코드 입력';
    }
   }
   for(const item of document.querySelectorAll('[data-beagu-participation-game-trigger]'))
@@ -108,9 +116,9 @@
    logout.focus();
   }else code.focus();
  }
- const button=(label,className)=>{
+ const button=(label,className,action=open)=>{
   const b=el('button',className,label);b.type='button';
-  b.addEventListener('click',open);
+  b.addEventListener('click',action);
   return b;
  };
  for(const host of hosts){
@@ -127,7 +135,13 @@
   intro.dataset.beaguParticipationDescription='';
   const trigger=button('참여코드 입력','beagu-participation-inline-trigger');
   trigger.dataset.beaguParticipationTrigger='';
-  const status=button('', 'beagu-participation-inline-status');
+  const status=button('', 'beagu-participation-inline-status',
+    host.id==='challengeAccessPanel'
+      ?()=>{
+        if(lastLevel>=2)window.dispatchEvent(
+          new CustomEvent('beagu:challenge-account-open',{detail:{mode:'signin'}}));
+        else open();
+      }:open);
   status.dataset.beaguParticipationStatus='';
   status.hidden=true;
   (legacy||host).before(intro,trigger,status);
