@@ -5,6 +5,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 // is wired and independently verified. No settings are changed by this code.
 const endpoint = Deno.env.get('SUPABASE_URL')!;
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const referralKey = Deno.env.get('BEAGU_REFERRAL_HMAC_KEY') || '';
 const db = createClient(endpoint, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
@@ -38,10 +39,10 @@ const json = (origin: string, status: number, data: unknown) =>
   });
 async function referralToken(visitor: string, code: string) {
   // Deterministic, opaque, site-specific token: no identity code in the URL.
-  // Rotation of SUPABASE_SERVICE_ROLE_KEY invalidates existing token URLs;
-  // before key rotation, introduce a dedicated versioned referral signing key.
+  // Never reuse a database service role key for token signing.
+  // Keep this dedicated key stable; explicit rotation invalidates existing referral URLs.
   const key = await crypto.subtle.importKey(
-    'raw', encoder.encode(serviceKey), { name: 'HMAC', hash: 'SHA-256' },
+    'raw', encoder.encode(referralKey), { name: 'HMAC', hash: 'SHA-256' },
     false, ['sign'],
   );
   const mac = await crypto.subtle.sign(
@@ -72,7 +73,7 @@ Deno.serve(async (req) => {
       return json(origin, 401, { error: 'AUTH_REQUIRED' });
 
     // Rollout gate: do not create device claims while Google Forms attribution is unverified.
-    if (Deno.env.get('BEAGU_REFERRAL_LINK_ENABLED') !== 'true')
+    if (Deno.env.get('BEAGU_REFERRAL_LINK_ENABLED') !== 'true' || referralKey.length < 32)
       return json(origin, 503, { error: 'REFERRAL_NOT_READY' });
 
     const raw = await req.text();
