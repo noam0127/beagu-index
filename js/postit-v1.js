@@ -88,9 +88,9 @@ function updateComposeAccess(){
  state.level=Number.isInteger(level)&&level>=0?level:0;
  const provisional=$("beaguLevelState")?.dataset.provisional==="true";
  const allowed=canWrite();
- $("postitAccess").textContent=provisional?"Lv.2(임시) · 정식 계정 대기":allowed?"Lv.2 · 작성 가능":"🔒 Lv.2부터 작성";
+ $("postitAccess").textContent=provisional?"Lv2 · 읽기 전용":allowed?"Lv.2 · 작성 가능":"🔒 Lv.2부터 작성";
  const lockedText=$("postitLocked")?.querySelector("b");
- if(lockedText)lockedText.textContent=provisional?"정식 Lv.2 계정 생성 후 작성 가능":"Lv.2부터 작성할 수 있습니다";
+ if(lockedText)lockedText.textContent=provisional?"이 참여코드는 작성 권한이 없습니다. 챌린지를 달성한 Lv2 참여코드로 인증해 주세요.":"Lv.2부터 작성할 수 있습니다";
  $("postitLocked").hidden=allowed;
  $("postitWriteForm").hidden=!allowed||!state.subject;
  $("postitSubjectPicker").hidden=state.subject!==""||!allowed;
