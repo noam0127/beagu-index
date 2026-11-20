@@ -116,7 +116,11 @@ function paginateForHeight(sentences,maxHeight,measureHeight){
  return pages.length?pages:[[{text:'…',paragraphEnd:true}]];
 }
 function paginate(paragraphs,source){
- const sentences=paragraphs.flatMap(p=>splitSentences(p).map(text=>({text,paragraphEnd:true})));
+ const sentences=paragraphs.flatMap((paragraph,paragraphIndex)=>{
+  const parts=splitSentences(paragraph);
+  return parts.map((text,index)=>({text,paragraphIndex,
+   paragraphStart:index===0,paragraphEnd:index===parts.length-1}));
+ });
  if(!sentences.length)sentences.push({text:'…',paragraphEnd:true});
  const text=source || $('#chapterText');
  const reader=text&&text.closest('.vn-dialogue,.outcome');
@@ -138,19 +142,16 @@ function paginate(paragraphs,source){
  }))probe.style.setProperty(property,value,'important');
  reader.append(probe);
  function measureHeight(items){
-  probe.replaceChildren(...items.map((item,index)=>{
-   const row=root.document.createElement('p');
-   row.className='diary-literary-line diary-literary-ready';
-   row.textContent=item.text;
-   if(index===items.length-1){
-    const cursor=root.document.createElement('span');
-    cursor.className='diary-reading-cursor';
-    cursor.textContent='▌';
-    cursor.style.animation='none';
-    row.append(cursor);
-   }
-   return row;
-  }));
+  renderPage(probe,items);
+  const lines=probe.querySelectorAll('.diary-literary-line');
+  const last=lines[lines.length-1];
+  if(last){
+   const cursor=root.document.createElement('span');
+   cursor.className='diary-reading-cursor';
+   cursor.textContent='▌';
+   cursor.style.animation='none';
+   last.append(cursor);
+  }
   return probe.getBoundingClientRect().height;
  }
  try{
@@ -172,6 +173,8 @@ function writeSentence(row){
  if(active)for(const cursor of active.querySelectorAll('.diary-reading-cursor'))cursor.remove();
  const text=row.getAttribute('aria-label')||row.textContent||'…';
  row.hidden=false;
+ const paragraph=row.closest('.diary-literary-paragraph');
+ if(paragraph)paragraph.hidden=false;
  row.classList.add('diary-literary-typing');
  row.classList.remove('diary-literary-ready','diary-literary-line-enter');
  const node=root.document.createTextNode('');
@@ -198,16 +201,40 @@ function writeSentence(row){
   if(count>=symbols.length)finishWriting();
  },26);
 }
+function renderPage(target,page){
+ if(!target)return;
+ const fragment=root.document.createDocumentFragment();
+ let paragraph=null,lastIndex=null;
+ for(const item of page){
+  const entry=typeof item==='string'?{text:item}:item;
+  const groupId=entry.paragraphIndex ?? Symbol('paragraph');
+  if(!paragraph||groupId!==lastIndex){
+   paragraph=root.document.createElement('div');
+   paragraph.className='diary-literary-paragraph';
+   paragraph.dataset.paragraphIndex=String(entry.paragraphIndex??'');
+   fragment.append(paragraph);
+   lastIndex=groupId;
+  }
+  const line=root.document.createElement('p');
+  line.className='diary-literary-line';
+  line.textContent=entry.text;
+  line.setAttribute('aria-label',entry.text);
+  paragraph.append(line);
+ }
+ target.replaceChildren(fragment);
+}
 function present(target){
  if(!enabled||!target)return;
  stopWriting();active=target;
- const rows=[...target.querySelectorAll('p')];
+ const rows=[...target.querySelectorAll('p.diary-literary-line')];
  visibleLines=rows.length?1:0;
  rows.forEach((row,index)=>{
-  row.classList.add('diary-literary-line');
   row.setAttribute('aria-label',row.textContent);
   row.hidden=index!==0;
  });
+ for(const paragraph of target.querySelectorAll('.diary-literary-paragraph')){
+  paragraph.hidden=!paragraph.querySelector('p.diary-literary-line:not([hidden])');
+ }
  target.classList.remove('diary-literary-revealed','diary-text-arrive');
  if(rows[0])writeSentence(rows[0]);
 }
@@ -221,7 +248,7 @@ function reveal(){
  return true;
 }
 function isPrinting(){return Boolean(writingRow);}
-const api=Object.freeze({VERSION:'literary/v4',mode,start,paginate,present,reveal,isPrinting,setTypingSound,splitSentences,wrapParagraph,paginateForMetrics,paginateForHeight});
+const api=Object.freeze({VERSION:'literary/v5',mode,start,paginate,renderPage,present,reveal,isPrinting,setTypingSound,splitSentences,wrapParagraph,paginateForMetrics,paginateForHeight});
 root.BeaguClassDiaryLiterary=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
