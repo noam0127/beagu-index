@@ -48,9 +48,21 @@ function validState(state:any):boolean {
   typeof state.schoolName!=='string'||state.schoolName.length>120||
   !state.profile||typeof state.profile!=='object'||
   typeof state.profile.name!=='string'||state.profile.name.length>100||
-  !['woman','man','none'].includes(state.profile.partner)||
+  !['woman','man','none','man2','man3'].includes(state.profile.partner)||
   !state.stats||typeof state.stats!=='object')return false;
  if(!state.history.every((h:any,i:number)=>h&&h.episode===i+1&&Number.isInteger(h.choice)&&h.choice>=0&&h.choice<=2))return false;
+ if(state.scriptEdition!==undefined&&state.scriptEdition!=='class-diary-reconstructed-2027/v1')return false;
+ if(state.journal!==undefined){
+  if(!Array.isArray(state.journal)||state.journal.length>36)return false;
+  let lastEpisode=0;
+  for(const j of state.journal){
+   if(!j||typeof j!=='object'||Array.isArray(j)||Object.keys(j).some(k=>k!=='episode'&&k!=='choice')||
+    !Number.isInteger(j.episode)||j.episode<=lastEpisode||j.episode>state.history.length||
+    !Number.isInteger(j.choice)||j.choice<0||j.choice>2)return false;
+   lastEpisode=j.episode;
+  }
+ }
+
  if((state.phase==='semester_reflection'&&state.history.length!==state.episode)||
    (state.phase==='semester_chapter'&&state.history.length!==state.episode-1)||
    (state.phase==='semester_ending'&&state.history.length!==36))return false;
