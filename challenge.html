@@ -240,6 +240,26 @@
     <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
   </section>
 
+  <section class="challenge-identity" id="challengeReferralPanel"
+    data-html2canvas-ignore="true" aria-labelledby="challengeReferralTitle">
+    <div class="challenge-identity-head">
+      <h2 id="challengeReferralTitle">나의 전용 조사 링크</h2>
+      <span class="challenge-identity-tag">추천 승급 준비 중</span>
+    </div>
+    <p id="challengeReferralStatus" class="challenge-identity-feedback" role="status" aria-live="polite">
+      전용 링크 발급과 설문 자동 승급 기능을 준비하고 있습니다.
+    </p>
+    <div class="challenge-identity-row" style="margin-top:12px">
+      <input id="challengeReferralLink" type="text" aria-label="내 전용 조사 링크"
+        readonly hidden spellcheck="false" autocomplete="off"
+        style="width:100%;min-width:0;flex:1;padding:10px;border:1px solid #dce4ef;border-radius:9px;color:#1d4ed8">
+      <button class="challenge-identity-copy" id="copyChallengeReferral" type="button"
+        disabled hidden>링크 복사</button>
+    </div>
+    <p id="challengeReferralProgress" class="challenge-identity-feedback" aria-live="polite"></p>
+    <p class="small-note">기존 고유번호는 변경되지 않습니다. 설문과 연결되기 전에는 추천 실적이 인정되지 않습니다.</p>
+  </section>
+
   <section class="challenge-lv2-pending" aria-label="정식 Lv.2 계정 안내" data-html2canvas-ignore="true">
     <p class="challenge-lv2-description">기존 Lv.2(임시) 상태는 유지됩니다. 포스트잇 작성은 정식 계정 생성 후 이용할 수 있습니다.</p>
   </section>
@@ -276,6 +296,7 @@
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/challenge.js?v=20261119-shortcode2"></script>
+<script src="js/challenge-referral-v1.js?v=20261120-referral1"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>
