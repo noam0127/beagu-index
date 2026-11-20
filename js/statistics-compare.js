@@ -677,6 +677,12 @@
   window.BeaguStatisticsCompare={ add:addSchool };
   window.addEventListener('beagu:statistics-ready',event=>{
     const detail=event.detail||{};
+    if(detail.snapshotOnly===true){
+      state.snapshot=detail.snapshot instanceof Map?detail.snapshot:new Map();
+      state.snapshotReady=detail.snapshotReady===true;
+      renderTable();
+      return;
+    }
     const schools=Array.isArray(detail.schools)?detail.schools:[];
     state.schools=schools;
     state.directory=new Map(schools.map(s=>[String(s.school_id),s]));
