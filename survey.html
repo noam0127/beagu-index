@@ -38,10 +38,10 @@
 </main></div><script>(()=>{const params=new URLSearchParams(location.search);
 const referral=params.get('ref');
 if(referral){const notice=document.getElementById('referralNotice');notice.hidden=false;
-  if(!/^[a-f0-9]{64}$/.test(referral))notice.textContent='올바르지 않은 추천 링크입니다. 일반 설문만 이용할 수 있습니다.';
+  if(!/^(?:[a-f0-9]{64}|[A-Za-z0-9_-]{8})$/.test(referral))notice.textContent='올바르지 않은 추천 링크입니다. 일반 설문만 이용할 수 있습니다.';
 }
 const id=params.get('school');if(id&&/^[A-Z0-9]{7}$/.test(id)){const a=document.getElementById('backToSchool');a.href='school-report.html?school_id='+encodeURIComponent(id);a.textContent='학교 결과로 돌아가기'}})();</script>
 <script src="js/supabase-config.js"></script>
 <script src="js/beagu-referral-form-config-v1.js?v=20261120-stage2"></script>
-<script src="js/beagu-referral-form-v1.js?v=20261120-stage2"></script>
+<script src="js/beagu-referral-form-v1.js?v=20261121-short"></script>
 </body></html>

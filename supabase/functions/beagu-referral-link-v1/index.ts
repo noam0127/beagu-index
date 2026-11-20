@@ -130,7 +130,13 @@ Deno.serve(async (req) => {
       if (upgradeError)
         return json(origin, 503, { error: 'SESSION_UPGRADE_UNAVAILABLE' });
     }
+    const { data: shortCode, error: shortError } = await db.rpc('beagu_referral_short_issue', {
+      p_hash: await digest(token),
+    });
+    if (shortError || typeof shortCode !== 'string' || !/^[A-Za-z0-9_-]{8}$/.test(shortCode))
+      return json(origin, 503, { error: 'REFERRAL_UNAVAILABLE' });
     return json(origin, 200, {
+      shortLink: 'https://baeguindex.com/r/#' + shortCode,
       link: 'https://baeguindex.com/survey.html?ref=' + token,
       level: Number(enrollment?.level) === 2 ? 2 : 1,
       validReferrals: Number(enrollment?.validReferrals) === 1 ? 1 : 0,

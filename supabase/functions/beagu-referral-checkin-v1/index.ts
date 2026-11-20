@@ -8,6 +8,9 @@ const secret = Deno.env.get('BEAGU_REFERRAL_HMAC_KEY') || '';
 const enc = new TextEncoder();
 const hex = (b: Uint8Array) => [...b].map(x => x.toString(16).padStart(2, '0')).join('');
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const db=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  {auth:{persistSession:false,autoRefreshToken:false}});
+const shortPattern=/^[A-Za-z0-9_-]{8}$/;
 const shaPattern = /^[0-9a-f]{64}$/;
 async function mac(message: string) {
   const key = await crypto.subtle.importKey(
@@ -41,14 +44,22 @@ Deno.serve(async req => {
     body=JSON.parse(raw);
   } catch { return json(origin,400,{error:'INVALID_JSON'}); }
   if (!body || typeof body!=='object' || Array.isArray(body) ||
-      body.action!=='checkin' || typeof body.ref!=='string' || !shaPattern.test(body.ref) ||
+      body.action!=='checkin' || typeof body.ref!=='string' || (!shaPattern.test(body.ref) && !shortPattern.test(body.ref)) ||
       typeof body.respondent!=='string' || !uuid.test(body.respondent))
     return json(origin,400,{error:'INVALID_REQUEST'});
   try {
     // A proof binds a *browser visitor id*, not a verified individual.
     // It is only an anti-replay hint; it does not establish teacher identity.
     const exp=Math.floor(Date.now()/1000)+24*60*60;
-    const ref=body.ref;
+    let ref=body.ref;
+    if (shortPattern.test(ref)) {
+      const {data,error}=await db.rpc('beagu_referral_short_resolve',{p_code:ref}).maybeSingle();
+      if(error) return json(origin,503,{error:'REFERRAL_UNAVAILABLE'});
+      if(!data) return json(origin,404,{error:'REFERRAL_NOT_FOUND'});
+      ref=await mac('BEAGU_REFERRAL_V1|'+data.visitor+'|'+data.identity_code);
+      if(hex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(ref))))!==data.token_hash)
+        return json(origin,503,{error:'REFERRAL_UNAVAILABLE'});
+    }
     const respondent=body.respondent.toLowerCase();
     const payload='BR1.'+ref+'.'+respondent+'.'+exp;
     const proof=payload+'.'+await mac('BEAGU_REFERRAL_CHECKIN_V1|'+payload);
