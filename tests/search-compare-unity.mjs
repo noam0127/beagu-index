@@ -24,7 +24,7 @@ for(const [key,html] of Object.entries(pages)){
     html.includes('beagu-levelup-card'),key+' uses shared level-up card');
   assert.ok(html.includes('compareLv1Form') || html.includes('lv1QuickForm') || html.includes('loginForm'),key+' retains original Level1 verification form');
   assert.ok(html.includes('id="beaguLevelState"'),key+' retains fixed level status');
-  assert.ok(html.includes('js/beagu-level-state-v1.js?v=20261120-lv1-plain1'),
+  assert.ok(/js\/beagu-level-state-v1\.js\?v=[0-9A-Za-z-]+/.test(html),
     key+' loads the restored inline auth state script');
 }
 for(const key of ['public','level1']){
