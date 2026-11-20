@@ -64,7 +64,9 @@ async function progressive(){
         })
       })
     })},
-    fetch:()=>new Promise(resolve=>{completeSnapshot=()=>resolve({ok:true,json:async()=>({})})}),
+    fetch:url=>String(url).includes('public-compare-school-directory-v1.json')?
+      Promise.reject(new Error('simulate unavailable static snapshot')):
+      new Promise(resolve=>{completeSnapshot=()=>resolve({ok:true,json:async()=>({})})}),
     console,Map,Date,Array,Promise,Set
   };
   vm.runInNewContext(compare,sandbox);

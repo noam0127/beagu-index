@@ -21,9 +21,7 @@
       return item.schools;
     }catch(_){return null}
   }
-  async function directory(){
-    const cached=cachedDirectory();
-    if(cached)return cached;
+  async function dbDirectory(){
     if(typeof supabaseClient==='undefined')throw Error('공개 학교목록 연결 코드가 없습니다.');
     const query=(offset,count=false)=>supabaseClient.from('schools')
       .select(fields,count?{count:'exact'}:{})
@@ -50,6 +48,41 @@
     if(map.size!==total)throw Error('학교목록 일부 누락 확인');
     const list=[...map.values()];
     try{sessionStorage.setItem(DIRECTORY_KEY,JSON.stringify({savedAt:Date.now(),schools:list}))}catch(_){}
+    return list;
+  }
+  // Static JSON is generated from public.schools and checked nightly.
+  // If missing, incomplete or older than seven days, use the existing DB loader.
+  async function staticDirectory(){
+    const res=await fetch('data/public-compare-school-directory-v1.json?v=20261120-static1',{cache:'default'});
+    if(!res.ok)throw Error('공개 학교목록 파일 응답 오류');
+    const body=await res.json();
+    const generated=Date.parse(body?.generated_at||'');
+    if(body?.schema_version!==2||body?.source!=='public.schools'||
+       !Array.isArray(body.rows)||body.rows.length<6000||body.rows.length>15000||
+       body.count!==body.rows.length||!Number.isFinite(generated)||
+       generated>Date.now()+2*60*60*1000||Date.now()-generated>7*24*60*60*1000)
+      throw Error('공개 학교목록 파일 검수 또는 갱신 필요');
+    const map=new Map();
+    for(const fields of body.rows){
+      if(!Array.isArray(fields)||fields.length!==5)throw Error('공개 파일 열 개수 오류');
+      const [school_id,school_name,sido_standard,support_office,establishment]=fields;
+      const row={school_id,school_name,sido_standard,support_office,establishment,status:'운영'};
+      if(!valid(row)||map.has(school_id))throw Error('공개 파일 학교 식별 오류');
+      map.set(school_id,row);
+    }
+    if(map.size!==body.count)throw Error('공개 파일 중복 또는 누락');
+    return [...map.values()];
+  }
+  async function directory(){
+    const cached=cachedDirectory();
+    if(cached)return cached;
+    let list;
+    try{list=await staticDirectory();}
+    catch(error){
+      console.warn('공개 학교목록 정적 파일 미사용, DB 연결로 복구합니다.',error);
+      list=await dbDirectory();
+    }
+    try{sessionStorage.setItem(DIRECTORY_KEY,JSON.stringify({savedAt:Date.now(),schools:list}));}catch(_){}
     return list;
   }
   async function snapshot(){
