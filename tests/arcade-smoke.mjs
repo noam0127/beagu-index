@@ -498,11 +498,17 @@ const serveStart=volley.indexOf("function resetPositions()");
 const serveEnd=volley.indexOf("async function startMatch()",serveStart);
 assert.ok(serveStart>0&&serveEnd>serveStart);
 const resetSource=volley.slice(serveStart,serveEnd);
+const ballCreateStart=volley.indexOf("function createMysteryBall(");
+const ballCreateEnd=volley.indexOf("function changeMysteryBalls(",ballCreateStart);
+assert.ok(ballCreateStart>0&&ballCreateEnd>ballCreateStart);
+const createMysteryBallSource=volley.slice(ballCreateStart,ballCreateEnd);
 const serveSpeed=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
  "const ballSpeedProfiles="+speedMatch[1],
  "const ballSpeedFactor=()=>ballSpeedProfiles[tier];",
  "const FLOOR=451,NET_X=450,currentDifficulty=tier,state={serveLeft},left={},right={},ball={trail:[]};",
- "const volleyShackle={x:0,dir:-1},secondBall={trail:[]},activeBalls=[ball],clones=[];",
+ "const volleyShackle={x:0,dir:-1},secondBall={trail:[]},activeBalls=[ball],clones=[],enemyMinion={},bonusFriend={};",
+ "let desiredBalls=tier===\"extreme\"?2:1;",
+ createMysteryBallSource,
  "const cloneProfiles={easy:2,normal:1,hard:0,very_hard:0,extreme:0};",
  resetSource,"resetPositions();return {vx:ball.vx,vy:ball.vy};"
 ].join("\n"))(tier,serveLeft);
@@ -638,8 +644,10 @@ const cloneCounts=new Function("return "+cloneProfileMatch[1])();
 assert.deepEqual(cloneCounts,{easy:2,normal:1,hard:0,very_hard:0,extreme:0});
 const formation=(tier,serveLeft=true)=>new Function("tier","serveLeft",[
  "const currentDifficulty=tier,FLOOR=451,NET_X=450,clamp=(x,a,b)=>Math.max(a,Math.min(b,x));",
- "const volleyShackle={x:0,dir:-1},left={},right={},ball={trail:[]},secondBall={trail:[]};",
+ "const volleyShackle={x:0,dir:-1},left={},right={},ball={trail:[]},secondBall={trail:[]},enemyMinion={},bonusFriend={};",
  "const state={serveLeft},activeBalls=[ball],clones=[],cloneProfiles="+cloneProfileMatch[1],
+ "let desiredBalls=tier===\"extreme\"?2:1;",
+ createMysteryBallSource,
  "const ballSpeedFactor=()=>1;",
  resetSource,"resetPositions();return {balls:activeBalls.map(b=>({x:b.x,y:b.y,vx:b.vx,vy:b.vy})),clones:clones.map(c=>({...c})),shackle:volleyShackle};"
 ].join("\n"))(tier,serveLeft);
@@ -676,7 +684,7 @@ assert.ok(testHelper.contactFrames>0,"helper contact animation runs");
 assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0,allyCooldown:0},testHelper),true,"outgoing ball can receive a controlled redirect");
 assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0,allyCooldown:10},testHelper),false,"helper cooldown prevents repetitive touches");
 assert.match(volley,/function drawVolleyShackle\(\)/);
-assert.match(volley,/currentDifficulty!=="extreme"\|\|state\.phase==="ready"/);
+assert.match(volley,/if\(canPlayerJump\(\)\|\|state\.phase==="ready"/,"shackle drawn only during restricted movement");
 assert.match(volley,/volleyShackle\.dir=left\.x>beforeMoveX\?-1:1/,"volleyball shackle trails movement direction");
 assert.match(volley,/drawTeacher\(left, "#448bd8"\);\s*drawVolleyShackle\(\)/,"volleyball chain drawn on ankle");
 const chalkMatch=runner.match(/const chalkProfiles=(\{[^\n]+\});/);
