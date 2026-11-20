@@ -108,7 +108,10 @@
     try {
       if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('UNAVAILABLE');
       await navigator.clipboard.writeText(personalCode);
-      identityCopyFeedback.textContent = '고유번호를 복사했습니다. 개인적으로 보관해 주세요.';
+      const confirmedLv2 = byId('challengeIdentityPanel')?.dataset.referralState === 'earned';
+      identityCopyFeedback.textContent = confirmedLv2
+        ? 'Lv2 참여코드를 복사했습니다. 개인적으로 보관해 주세요.'
+        : '고유번호를 복사했습니다. 개인적으로 보관해 주세요.';
     } catch (_) {
       identityCopyFeedback.textContent = '복사가 지원되지 않습니다. 번호를 길게 눌러 직접 복사해 주세요.';
     }
