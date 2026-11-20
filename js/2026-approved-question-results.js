@@ -1,4 +1,5 @@
-/* Values are released by the signed API after exact-snapshot review + 24 hours.
+/* Values are released by the signed API after exact-snapshot review.
+ * Lv1 continues to require 24 hours; verified Lv2 may see approved snapshots immediately.
  * Never query the private staging table from the browser. */
 (function(){
   const safe=(result)=>{
@@ -24,7 +25,7 @@
     for(const r of Array.isArray(results)?results:[]){const m=safe(r);if(!m)continue;if(!groups.has(r.questionId))groups.set(r.questionId,[]);groups.get(r.questionId).push(r);}
     if(!groups.size)return false;
     const section=document.createElement('section');section.className='beagu-approved-section';
-    const note=document.createElement('p');note.className='beagu-source-caption';note.textContent='공개 검토·승인 후 24시간이 지난 학교별 집계입니다. 단일선택은 최빈 응답(동률 포함), 복수선택은 선택된 항목, 시각은 평균입니다. 학교 전체 교사의 의견을 대표하지 않습니다.';section.append(note);
+    const note=document.createElement('p');note.className='beagu-source-caption';note.textContent='공개 검토·승인을 완료한 학교별 집계입니다. 단일선택은 최빈 응답(동률 포함), 복수선택은 선택된 항목, 시각은 평균입니다. 학교 전체 교사의 의견을 대표하지 않습니다.';section.append(note);
     for(const [id,answers] of [...groups].sort(([a],[b])=>a.localeCompare(b))){
       const m=window.Beagu2026Questionnaire[id], block=document.createElement('article');block.className='beagu-question-block';
       const heading=document.createElement('h4');heading.textContent=id+'. '+m.question;block.append(heading);
