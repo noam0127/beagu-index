@@ -11,7 +11,7 @@ const validCompare=x=>{
  const a=x.split(",");
  return a.length>=1&&a.length<=5&&a.every(v=>/^[A-Z0-9]{7}:202[3-6]$/.test(v))&&new Set(a).size===a.length;
 };
-const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0};
+const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0};
 function token(){try{return sessionStorage.getItem(key)||""}catch{return ""}}
 function headers(){return {"Content-Type":"application/json","X-Beagu-Level-Session":token()}}
 async function request(action,data,method="GET"){
@@ -33,7 +33,7 @@ function link(url,label,cls){
 function showMessage(error){$("postitMessage").textContent=error||""}
 function readableError(e){
  const m={LEVEL_REQUIRED:"Lv.2 인증이 필요합니다. 오른쪽 위 레벨 표시를 확인하세요.",
- COMMENT_READ_LEVEL_REQUIRED:"🔒 댓글은 Lv.1부터 열람할 수 있습니다.",
+ COMMENT_READ_LEVEL_REQUIRED:"🔒 포스트잇과 댓글은 Lv.2부터 열람할 수 있습니다.",
  WRITER_IDENTITY_REQUIRED:"🔒 Lv.2 계정의 이용자 식별 인증이 필요합니다. 계정 인증 기능이 연결되기 전까지 작성할 수 없습니다.",
  POST_RATE_LIMIT:"오늘의 작성 횟수(3개) 또는 작성 간격 제한에 도달했습니다.",
  COMMENT_RATE_LIMIT:"오늘의 댓글 횟수(12개) 또는 작성 간격 제한에 도달했습니다.",
@@ -81,7 +81,8 @@ async function renderContext(){
  }
  updateComposeAccess();
 }
-function canWrite(){return state.level>=2 && $("beaguLevelState")?.dataset.provisional!=="true"}
+function canRead(){return state.level>=2}
+function canWrite(){return canRead() && $("beaguLevelState")?.dataset.provisional!=="true"}
 function updateComposeAccess(){
  const level=Number($("beaguLevelState")?.dataset.level);
  state.level=Number.isInteger(level)&&level>=0?level:0;
@@ -93,6 +94,8 @@ function updateComposeAccess(){
  $("postitLocked").hidden=allowed;
  $("postitWriteForm").hidden=!allowed||!state.subject;
  $("postitSubjectPicker").hidden=state.subject!==""||!allowed;
+ $("postitBoardContent").hidden=!canRead();
+ $("postitBoardLocked").hidden=canRead();
 }
 function timeSince(value){
  const ms=Date.now()-new Date(value).getTime();
@@ -134,18 +137,19 @@ function buildPost(post){
   topic.append(node("span","paper-chip",comp.schools.length+"개 항목"));
   for(const s of comp.schools.slice(0,3))topic.append(node("span","paper-chip",s));
  }else topic.append(node("b","","연결된 주제"));
+ if(post.comment_match)topic.append(node("span","paper-chip","댓글에서 검색됨"));
  paper.append(topic,node("p","paper-content",post.body));
  const actions=node("div","paper-actions");
  const blocked=!canWrite();
  const like=actionButton((post.liked?"♥":"♡")+" "+post.likes,async()=>{
   await mutation("toggle_like",{target_type:"post",target_id:post.id});
  },{className:post.liked?"active":"",disabled:blocked,title:blocked?"Lv.2부터 공감할 수 있습니다":"공감"});
- const canReadComments=state.level>=1;
- const comment=actionButton(canReadComments?"▤ 댓글 "+post.comments:"🔒 Lv.1 댓글",async()=>{
-  if(state.level<1)return;
+ const canReadComments=canRead();
+ const comment=actionButton(canReadComments?"▤ 댓글 "+post.comments:"🔒 Lv.2 댓글",async()=>{
+  if(!canRead())return;
   if(state.expanded.has(post.id))state.expanded.delete(post.id);else state.expanded.add(post.id);
   await toggleComments(post.id,entry);
- },{disabled:!canReadComments,title:canReadComments?"댓글 열람":"🔒 Lv.1부터 댓글을 열람할 수 있습니다"});
+ },{disabled:!canReadComments,title:canReadComments?"댓글 열람":"🔒 Lv.2부터 댓글을 열람할 수 있습니다"});
  const report=actionButton("⚑ 신고",async()=>{
   if(!confirm("이 포스트잇을 신고하시겠습니까?"))return;
   await mutation("report",{target_type:"post",target_id:post.id});
@@ -170,11 +174,11 @@ async function mutation(action,data){
  catch(e){showMessage(readableError(e))}
 }
 async function fillComments(id,host){
- if(state.level<1){host.replaceChildren();host.hidden=true;return;}
+ if(!canRead()){host.replaceChildren();host.hidden=true;return;}
  host.replaceChildren(node("div","bookmark-comment","댓글을 불러오는 중…"));
  try{
   const {comments}=await request("comments",{post_id:id});
-  if(!host.isConnected||state.level<1){host.replaceChildren();host.hidden=true;return;}
+  if(!host.isConnected||!canRead()){host.replaceChildren();host.hidden=true;return;}
   host.replaceChildren();
   if(!comments.length)host.append(node("div","bookmark-comment","첫 댓글을 남겨보세요."));
   for(const c of comments){
@@ -206,19 +210,33 @@ async function toggleComments(id,entry){
  host.hidden=!state.expanded.has(id);if(!host.hidden)await fillComments(id,host);
 }
 async function loadPosts(newId=""){
- const host=$("postitThread");const previous=new Map();
+ const host=$("postitThread"),ticket=++state.listTicket;
+ if(!canRead()){
+  state.posts=[];host.replaceChildren();
+  $("postitListStatus").textContent="Lv.2 전용";
+  return;
+ }
+ const term=$("postitSearch").value.trim();
+ if(term && [...term].length<2){
+  host.replaceChildren();
+  $("postitListStatus").textContent="검색어를 두 글자 이상 입력하세요.";
+  return;
+ }
+ const previous=new Map();
  for(const el of host.querySelectorAll(".postit-entry")){
   previous.set(el.dataset.postId,el.getBoundingClientRect().top);
  }
  const query={sort:$("postitSort").value};
+ if(term)query.q=term;
  if(state.subject==="school"&&state.schoolId)query.school_id=state.schoolId;
  if(state.subject==="game"&&state.game)query.game_slug=state.game;
  $("postitListStatus").textContent="불러오는 중…";
  try{
   const {posts}=await request("posts",query);
+  if(ticket!==state.listTicket||!canRead())return;
   state.posts=posts;
   const fragment=document.createDocumentFragment();
-  if(!posts.length)fragment.append(node("div","postit-empty","아직 붙은 포스트잇이 없습니다. 첫 이야기를 남겨주세요."));
+  if(!posts.length)fragment.append(node("div","postit-empty",term?"검색 결과가 없습니다. 다른 검색어를 입력해 보세요.":"아직 붙은 포스트잇이 없습니다. 첫 이야기를 남겨주세요."));
   for(const p of posts){
    const el=buildPost(p);if(p.id===newId)el.classList.add("is-new");
    fragment.append(el);
@@ -236,8 +254,9 @@ async function loadPosts(newId=""){
     if(Math.abs(delta)>3)el.animate([{transform:"translateY("+delta+"px)"},{transform:"translateY(0)"}],{duration:710,easing:"cubic-bezier(.22,.85,.24,1)"});
    }
   }
-  $("postitListStatus").textContent=posts.length+"장";
+  $("postitListStatus").textContent=(term?"검색 결과 ":"")+posts.length+"장";
  }catch(e){
+  if(ticket!==state.listTicket||!canRead())return;
   $("postitListStatus").textContent="불러오기 실패";
   host.replaceChildren(node("div","postit-empty","목록을 불러올 수 없습니다. 다시 시도해주세요."));
  }
@@ -246,9 +265,9 @@ function handleLevel(e){
  const level=e?.detail?.level;
  if(Number.isInteger(level))$("beaguLevelState").dataset.level=String(level);
  updateComposeAccess();
- if(state.level<1){
+ if(!canRead()){
   state.expanded.clear();
-  // Previously retrieved comments must not remain visible on downgrade.
+  // Previously retrieved comments and posts must not remain visible on downgrade.
   for(const host of $("postitThread").querySelectorAll(".postit-comments")){
    host.replaceChildren();host.hidden=true;
   }
@@ -280,6 +299,14 @@ window.addEventListener("beagu:level-state-updated",handleLevel);
 $("postitSort").addEventListener("change",()=>void loadPosts());
 $("postitReload").addEventListener("click",()=>void loadPosts());
 $("postitSchoolSearch").addEventListener("input",()=>{void findSchools()});
+let searchDebounce;
+$("postitSearchForm").addEventListener("submit",e=>{
+ e.preventDefault();clearTimeout(searchDebounce);void loadPosts();
+});
+$("postitSearch").addEventListener("input",()=>{
+ clearTimeout(searchDebounce);
+ searchDebounce=setTimeout(()=>void loadPosts(),320);
+});
 $("postitBody").addEventListener("input",()=>{$("postitCounter").textContent=[...$("postitBody").value].length+" / 200"});
 $("postitSubmit").addEventListener("click",async()=>{
  if(state.busy||!state.subject||!canWrite())return;
