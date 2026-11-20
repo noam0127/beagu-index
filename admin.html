@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>관리자 · 배구지수</title>
-  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-live1">
+  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-perf1">
 </head>
 <body>
   <main class="shell">
@@ -87,6 +87,27 @@
             <button type="button" data-scale="month">월간</button>
           </div></div>
           <div class="bar-chart" id="adminVisitChart" role="img" aria-label="기간별 방문 추이"><p class="empty">불러오는 중</p></div>
+        </div>
+      </section>
+
+      <section class="dash-section" aria-labelledby="adminPerfHeading">
+        <div class="section-title"><h3 id="adminPerfHeading">화면별 로딩 속도 · 실패율</h3>
+          <small>브라우저 방문 표본 · 페이지 로딩과 검색/선택 작업을 구분</small></div>
+        <div class="chart-card">
+          <p class="subtle" id="adminPerfAsOf" aria-live="polite">속도 측정 자료를 불러오는 중입니다.</p>
+          <div class="admin-perf-scroll" role="region" tabindex="0" aria-label="화면별 응답시간 표">
+            <table class="admin-perf-table">
+              <caption class="sr-only">화면별 성공 표본의 로딩 시간 백분위와 작업 실패율</caption>
+              <thead><tr><th scope="col">화면</th><th scope="col">측정 대상</th>
+                <th scope="col">표본</th><th scope="col">P50</th><th scope="col">P90</th>
+                <th scope="col">P99</th><th scope="col">실패율</th></tr></thead>
+              <tbody id="adminPerfRows"><tr><td colspan="7" class="empty">측정 자료를 불러오는 중입니다.</td></tr></tbody>
+            </table>
+          </div>
+          <p class="subtle">P50은 중앙값, P90은 느린 10%의 경계, P99는 느린 1%의 경계입니다.
+            속도는 성공한 표본만 사용합니다. 실패율은 학교검색·학교선택·비교목록 작업에 한하며
+            브라우저 페이지 로딩의 실패율은 측정하지 않습니다.
+            20초 중복 방지 표본으로 계산하며, ‘전체’도 최대 최근 30일만 표시합니다.</p>
         </div>
       </section>
 
@@ -173,6 +194,6 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
-  <script defer src="js/beagu-admin-access-v1.js?v=20261120-live1"></script>
+  <script defer src="js/beagu-admin-access-v1.js?v=20261120-perf1"></script>
 </body>
 </html>
