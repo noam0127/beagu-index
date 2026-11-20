@@ -51,11 +51,11 @@ assert.match(css,/@media\(max-width:700px\)/);
 
 const badgeCSS=read('styles/beagu-level-state-v1.css');
 const badgeJS=read('js/beagu-level-state-v1.js');
-assert.match(badgeCSS,/\\.beagu-level-state-container\\{\\s*position:relative;/,'Badge wrapper stays in normal document flow');
-assert.match(badgeCSS,/\\.beagu-level-state-container > \\.beagu-level-state\\{\\s*position:static;/,'Badge anchor is not fixed to the viewport');
-assert.match(badgeCSS,/grid-template-columns:minmax\\(0,1fr\\) max-content/,'Header reserves a dedicated logo/status row');
-assert.match(badgeCSS,/grid-column:1 \\/ -1;\\s*grid-row:2;/,'Mobile navigation occupies its own full-width second row');
-assert.match(badgeJS,/headerInner\\.appendChild\\(badgeContainer\\)/,'Move badge inside the logo header');
+assert.match(badgeCSS,/\.beagu-level-state-container\{\s*position:relative;/,'Badge wrapper stays in normal document flow');
+assert.match(badgeCSS,/\.beagu-level-state-container > \.beagu-level-state\{\s*position:static;/,'Badge anchor is not fixed to the viewport');
+assert.match(badgeCSS,/grid-template-columns:minmax\(0,1fr\) max-content/,'Header reserves a dedicated logo/status row');
+assert.match(badgeCSS,/grid-column:1 \/ -1;\s*grid-row:2;/,'Mobile navigation occupies its own full-width second row');
+assert.match(badgeJS,/headerInner\.appendChild\(badgeContainer\)/,'Move badge inside the logo header');
 for(const page of [...active,'arcade-history.html','postit.html','levels.html']){
   assert.ok(read(page).includes('styles/beagu-level-state-v1.css?v=20261121-logo-grid2'),page+' loads updated header layout');
   assert.ok(read(page).includes('js/beagu-level-state-v1.js?v=20261121-logo-grid2'),page+' loads badge relocation code');
