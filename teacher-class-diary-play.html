@@ -758,6 +758,13 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-branch-map-v1.js?v=20261120-branch1"></script>
 <script src="js/class-diary-scene-direction-v1.js?v=20261120-director1"></script>
 <script src="js/class-diary-daily-journal-v1.js?v=20261120-diary1"></script>
+<script src="js/class-diary-rewritten-act1-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act2-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act3-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act4-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act5-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act6-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-reconstructed-2027-v1.js?v=20261120-reconstructed1"></script>
 <script src="js/class-diary-semester-long-v3.js?v=20261120-lit3"></script>
 <script src="js/class-diary-prologue-scenes-v1.js?v=20261120-lit3"></script>
 <script src="js/class-diary-prologue-lens-woman-v1.js?v=20261120-lit3"></script>
@@ -1992,6 +1999,7 @@ $('profileForm').addEventListener('submit',e=>{
     publishedYears:schoolSelection.years.slice()
    };
   }
+  if(storyMode==='semester')baseGame.scriptEdition='class-diary-reconstructed-2027/v1';
   game=storyMode==='semester'?semester.createGame(baseGame):baseGame;
   prologuePending=storyMode==='semester';
   schoolIntroPending=storyMode==='semester';
@@ -2033,10 +2041,10 @@ sound.onStatus(message=>{$('musicStatus').textContent=message});
 $('choiceButtons').addEventListener('mouseover',e=>{if(e.target.closest('.choice'))sound.note('hover');});
 $('resetBtn').addEventListener('click',()=>{
  if(!game)return;
- const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
+ const base=engine.createGame(world,plan,game.profile);if(storyMode==='semester'&&game.scriptEdition)base.scriptEdition=game.scriptEdition;game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
 });
 $('againBtn').addEventListener('click',()=>{
- const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
+ const base=engine.createGame(world,plan,game.profile);if(storyMode==='semester'&&game.scriptEdition)base.scriptEdition=game.scriptEdition;game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
 });
 $('diarySaveNow').addEventListener('click',async()=>{
  const control=$('diarySaveNow');
