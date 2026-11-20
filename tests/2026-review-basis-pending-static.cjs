@@ -44,6 +44,6 @@ assert.match(view,/notice_effective_at/);
 assert.match(view,/REJECTED/);
 assert.doesNotMatch(view,/action:"approve"/);
 assert.match(html,/2026 설문 비공개 검수/);
-assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261120-review2/);
+assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261121-referral1/);
 assert.match(css,/\.beagu-basis-review/);
 console.log("PASS: 2026 snapshot-bound MFA evidence intake PENDING/REJECTED without approval");
