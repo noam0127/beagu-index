@@ -75,7 +75,7 @@ function mbti26_score(answer){
 function mbti26_indexSchools(all){
  const byKey=new Map();
  for(const s of all){
-  if(!/^\d{7}$/.test(String(s.school_id)))continue;
+  if(!/^[A-Z0-9]{7}$/.test(String(s.school_id)))continue;
   const key=[mbti26_region(s.sido_standard),mbti26_office(s.support_office),mbti26_norm(s.school_name)].join("|");
   if(!byKey.has(key))byKey.set(key,[]);
   byKey.get(key).push(s);

@@ -235,10 +235,10 @@
   }
   // The anonymous API is RLS-restricted to reviewed, manually released
   // 2026 rows with a 24-hour cooldown. Do not query draft or raw survey data.
-  async function loadPublic2026(ids) {
+  async function loadPublic2026(ids, refresh=false) {
     const requested=[...new Set(ids.map(String))].filter(id=>
       /^[A-Z0-9]{7}$/.test(id) &&
-      !state.public2026Checked.has(id) && !state.public2026Loading.has(id));
+      (refresh || !state.public2026Checked.has(id)) && !state.public2026Loading.has(id));
     if(!requested.length || typeof supabaseClient==='undefined')return;
     requested.forEach(id=>state.public2026Loading.add(id));
     renderTable();
@@ -250,6 +250,10 @@
         .eq('publication_status','PUBLISHED')
         .limit(requested.length);
       if(error)throw error;
+      requested.forEach(id=>{
+        state.public2026.delete(id);
+        state.public2026Error.delete(id);
+      });
       for(const row of Array.isArray(data)?data:[]){
         const id=String(row?.school_id||'');
         const raw=row?.percentile;
@@ -562,10 +566,10 @@
     return (typeof value==='string'||typeof value==='number') &&
       String(value).length<=max && !/[\u0000-\u0008]/.test(String(value));
   }
-  async function loadApprovedSchool(id) {
+  async function loadApprovedSchool(id, refresh=false) {
     if(!state.sessionToken || state.authLevel<1 ||
         !/^[A-Z0-9]{7}$/.test(String(id)) ||
-        state.approvedLoading.has(id) || state.approvedBySchool.has(id) ||
+        state.approvedLoading.has(id) || (!refresh && state.approvedBySchool.has(id)) ||
         typeof SUPABASE_URL!=='string') return;
     const epoch=state.authEpoch;
     const token=state.sessionToken;
@@ -662,6 +666,14 @@
     // Suggestions open only through explicit interaction with the search input.
     updateUrl();
   }
+  function refreshVisible2026(){
+    if(document.visibilityState!=='visible')return;
+    const ids=[...new Set(state.selected.filter(item=>item.year===2026).map(item=>item.id))];
+    void loadPublic2026(ids,true);
+    ids.forEach(id=>{void loadApprovedSchool(id,true);});
+  }
+  document.addEventListener('visibilitychange',refreshVisible2026);
+  window.setInterval(refreshVisible2026,60000);
   window.BeaguStatisticsCompare={ add:addSchool };
   window.addEventListener('beagu:statistics-ready',event=>{
     const detail=event.detail||{};

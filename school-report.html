@@ -1336,18 +1336,22 @@
     state.years=buildYears(String(state.school.school_id));
     state.approvedSummary={};state.participationYears=[];state.selected=year;state.reportSerial++;
   }
-  async function publicYearDB(id){
+  async function publicYearDB(id,latestOnly=false){
     if(!client()||!/^[A-Z0-9]{7}$/.test(id))return;
     const serial=state.reportSerial;
     try{
-      const result=await client().from('beagu_school_report_yearly')
+      const request=client().from('beagu_school_report_yearly')
         .select('survey_year,percentile').eq('school_id',id).eq('publication_status','PUBLISHED');
+      const result=await (latestOnly?request.eq('survey_year',2026):request);
       if(result.error)throw result.error;
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
+      state.years['2026'].percentile=null;
+      state.years['2026'].approved=false;
       for(const row of result.data||[]){
         const y=Number(row.survey_year),p=num(row.percentile);
         if([2023,2024,2026].includes(y)&&p!==null&&p>=0&&p<=100){state.years[String(y)].percentile=p;if(y===2026)state.years[String(y)].approved=true;}
       }
+      if(latestOnly){state.yearLookupError=false;render();return}
       const ranked=await client().from('beagu_2025_empirical_percentiles')
         .select('national_percentile').eq('school_id',id).eq('publication_status','PUBLISHED').maybeSingle();
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
@@ -1420,19 +1424,20 @@
     }catch(e){$('tierError').textContent='인증할 수 없습니다. 코드 또는 서버 연결 상태를 확인해 주세요.'}
     finally{button.disabled=false;window.BeaguLoading?.finish(beaguTierLoginTask)}
   }
-  async function protectedReport(id){
-    const beaguLoadingTask=window.BeaguLoading?.start('승인된 학교 상세자료를 불러오는 중…');
+  async function protectedReport(id,latestOnly=false){
+    const beaguLoadingTask=latestOnly?null:window.BeaguLoading?.start('승인된 학교 상세자료를 불러오는 중…');
     try {
     if(!/^[A-Z0-9]{7}$/.test(id)||state.tier===0||!state.authToken)return;
     const serial=state.reportSerial,requested=state.tier;
     try{
       const r=await tierCall('school',{schoolId:id});
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id||state.tier!==requested)return;
-      state.participationYears=Array.isArray(r.participationYears)?r.participationYears.filter(y=>y===2025):[];
+      if(!latestOnly)state.participationYears=Array.isArray(r.participationYears)?r.participationYears.filter(y=>y===2025):[];
       state.years['2026'].items={};
+      state.approvedSummary['2026']=[];
       for(const row of Array.isArray(r.rows)?r.rows:[]){
         const year=Number(row.year),level=Number(row.access_level);
-        if(![2023,2024,2025,2026].includes(year)||level>requested)continue;
+        if(![2023,2024,2025,2026].includes(year)||level>requested||(latestOnly&&year!==2026))continue;
         const metrics=Array.isArray(row.summary?.metrics)?row.summary.metrics:[];
         for(const metric of metrics){
           if(!metric||typeof metric!=='object')continue;
@@ -1456,7 +1461,7 @@
       }
       // Only a reviewed mode is transmitted. Never render a response
       // distribution, percentage, response count, or individual answer.
-      for(const d of Array.isArray(r.schoolQuestionModes)?r.schoolQuestionModes:[]){
+      for(const d of !latestOnly&&Array.isArray(r.schoolQuestionModes)?r.schoolQuestionModes:[]){
         const year=Number(d?.year),qid=String(d?.questionId||'');
         if(![2023,2024,2025].includes(year)||!/^Q\d{2}$/.test(qid)||
            !state.years[String(year)]||
@@ -1472,6 +1477,7 @@
       for(const [qid,display] of Object.entries(releasedQuestions)){
         state.years['2026'].items[qid]={display,serverApproved:true};
       }
+      if(latestOnly){render();return}
       if(requested===2){
         try{
           const editedResponse=await fetch(SUPABASE_URL+'/functions/v1/beagu-edited-api-v1',{
@@ -1513,6 +1519,7 @@
       await fetchHistoricalGeography();
       render();
     }catch(error){
+      if(serial!==state.reportSerial||String(state.school?.school_id)!==id||state.tier!==requested)return;
       if(error.status===401||error.status===403){
         state.authLevel=0;state.authToken='';saveToken('');
         state.tier=0;clearTierItems();tierUI();render();$('tierCodePanel').hidden=false;
@@ -1523,7 +1530,7 @@
       }
     }
     } finally {
-      window.BeaguLoading?.finish(beaguLoadingTask);
+      if(beaguLoadingTask)window.BeaguLoading?.finish(beaguLoadingTask);
     }
   }
   function demoData(){
@@ -1607,6 +1614,16 @@
     $('dialogOkay').addEventListener('click',()=>{$('infoDialog').close()});
     $('infoDialog').addEventListener('click',e=>{if(e.target===$('infoDialog'))$('infoDialog').close()});
     document.addEventListener('click',e=>{if(!e.target.closest('.search-surface'))$('suggestions').hidden=true});
+    let refreshing2026=false;
+    async function refreshVisible2026(){
+      if(refreshing2026||document.visibilityState!=='visible'||state.demo||state.selected!==2026||!state.school)return;
+      refreshing2026=true;
+      const id=String(state.school.school_id);
+      try{await Promise.all([publicYearDB(id,true),protectedReport(id,true)]);}
+      finally{refreshing2026=false}
+    }
+    document.addEventListener('visibilitychange',refreshVisible2026);
+    window.setInterval(refreshVisible2026,60000);
     window.addEventListener('popstate',async()=>{
       const u=new URL(location.href);
       if(u.searchParams.get('demo')==='1'){state.demo=true;const d=demoData();showSchool(d.school,d.years);return}
@@ -1689,10 +1706,13 @@
     $('schoolType').textContent=s.establishment||'설립구분 정보 없음';
     tierUI();
     const current=yearData(2026);
+    const approvedQuestions=state.tier>=1&&Object.values(current.items||{}).some(item=>item?.serverApproved===true);
     const latestMessage=$('latestYearMessage');
     latestMessage.textContent=state.demo
       ? '가상 자료 미리보기이며, 실제 2026년 학교별 응답이나 승인 결과가 아닙니다.'
-      : state.yearLookupError
+      : approvedQuestions
+        ? '2026년 공개 승인 문항을 확인할 수 있습니다.'
+        : state.yearLookupError
         ? '불러오기 실패 · 추가 공개자료 조회에 실패했습니다. 기존에 확인된 승인 기록은 유지됩니다.'
         : current.approved
           ? '2026년 공개 승인 자료를 확인할 수 있습니다. 아래 2026년 카드를 선택하세요.'

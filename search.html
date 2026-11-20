@@ -369,15 +369,47 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
     percentileLoadError=false;
   }
 
+  let visibleSchools=[], public2026=new Map(), refreshing2026=false;
+  async function readPublic2026(schools){
+    const ids=[...new Set(schools.map(s=>String(s.school_id)).filter(id=>/^[A-Z0-9]{7}$/.test(id)))];
+    if(!ids.length)return new Map();
+    const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
+      .select('school_id,percentile').in('school_id',ids).eq('survey_year',2026).eq('publication_status','PUBLISHED');
+    if(error)throw error;
+    return new Map((data||[]).filter(row=>ids.includes(String(row.school_id))&&
+      typeof row.percentile==='number'&&Number.isFinite(row.percentile)&&row.percentile>=0&&row.percentile<=100)
+      .map(row=>[String(row.school_id),row.percentile]));
+  }
   function renderPercentiles(school) {
     const row=percentileIndex.get(String(school.school_id));
+    const value2026=public2026.get(String(school.school_id))??null;
     return BeaguSchoolSearchCard.percentiles({
       publicValues:BeaguPublic.values(row),
       statuses:row?.statuses || [],
       publicError:percentileLoadError,
-      locked:true
+      value2026,
+      locked:value2026===null
     });
   }
+  async function refreshVisible2026(){
+    if(refreshing2026||document.visibilityState!=='visible'||!visibleSchools.length)return;
+    const serial=searchSerial;
+    refreshing2026=true;
+    try{
+      const updated=await readPublic2026(visibleSchools);
+      if(serial!==searchSerial)return;
+      const previous=public2026;
+      public2026=updated;
+      for(const school of visibleSchools){
+        const id=String(school.school_id);
+        if(updated.get(id)===previous.get(id))continue;
+        results.querySelector(`[data-school-id="${id}"] .percentile-panel`)?.replaceWith(renderPercentiles(school));
+      }
+    }catch(error){console.warn('2026년 공개 백분위 조회 실패',error);}
+    finally{refreshing2026=false}
+  }
+  document.addEventListener('visibilitychange',refreshVisible2026);
+  window.setInterval(refreshVisible2026,60000);
 
   function renderSchools(schools,total) {
     results.replaceChildren();
@@ -423,6 +455,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
     const region=mode==='region' ? regionSelect.value : '';
     const office=mode==='region' ? officeSelect.value : '';
     const token=++searchSerial;
+    visibleSchools=[];
     if ((mode==='school' && !keyword) || (mode==='region' && !region)) {
       results.replaceChildren();resultCount.textContent='';pager.hidden=true;return;
     }
@@ -449,9 +482,18 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
       if (error) throw error;
       await Promise.all([percentileReady,participationReady]);
       if (token!==searchSerial) return;
-      try { await recoverPublishedPercentiles(data||[]); }
-      catch(e) { percentileLoadError=true; console.warn('공개 백분위 DB 조회 실패',e); }
+      const [history,latest]=await Promise.allSettled([
+        recoverPublishedPercentiles(data||[]),
+        readPublic2026(data||[])
+      ]);
       if (token!==searchSerial) return;
+      if(history.status==='rejected'){
+        percentileLoadError=true;
+        console.warn('공개 백분위 DB 조회 실패',history.reason);
+      }
+      if(latest.status==='rejected')console.warn('2026년 공개 백분위 조회 실패',latest.reason);
+      public2026=latest.status==='fulfilled'?latest.value:new Map();
+      visibleSchools=data||[];
       if(explicitEnter&&keyword&&count===1&&Array.isArray(data)&&data.length===1)
         window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),0,'search');
       renderSchools(data || [],count || 0);

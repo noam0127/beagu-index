@@ -31,7 +31,7 @@ assert.match(publicHtml,/id="lv1QuickCode" type="password"/,'Lv.1 code must be m
 assert.match(publicHtml,/action==='login'\?\{action,code\}/,'Authenticate using server-side login');
 assert.match(publicHtml,/Number\(data\.level\)<1/,'Reject weaker access codes');
 assert.match(publicHtml,/sessionStorage\.setItem\(key,data\.token\)/,'Store only server session token');
-assert.match(publicHtml,/window\.location\.replace\('search-lv1\.html'\)/,'Auto-open Lv.1 search for new and stored verified sessions');
+assert.match(publicHtml,/window\.location\.replace\('search-lv1\.html(?:\?v=[a-z0-9-]+)?'\)/,'Auto-open Lv.1 search for new and stored verified sessions');
 assert.doesNotMatch(publicHtml,/>Lv\.1 학교 검색하기<\/a>/,'No redundant Lv.1 search button after authentication');
 assert.match(publicHtml,/if\(Number\(data\.level\)>=1 && sessionStorage\.getItem\(key\)===saved\)showAuthenticated\(\)/,'Saved sessions must also redirect only after verification');
 assert.doesNotMatch(publicHtml,/localStorage\.setItem\(.*(?:code|password)/,'Do not store raw access codes');
@@ -214,7 +214,8 @@ assert.equal(groupUI.appendGrouped(new FakeNode('div'),[],()=>{}),0,'Empty sets 
 assert.match(read('styles/school-detail-groups-v1.css'),/min-height:48px/,'Touch target must remain accessible');
 
 const sync=read('scripts/beagu-2026-mbti-review-sync.gs');
-assert.match(sync,/1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4/);
+assert.match(sync,/snapshot\|\|readBeagu2026SourceSnapshot\(\)/);
+assert.match(read('scripts/beagu-2026-noon-sync.gs'),/1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4/);
 assert.match(sync,/2026-11-01/);
 assert.doesNotMatch(sync,/\.from\('beagu_release_metrics_v2'\)/);
 console.log('PASS: 6th priority collapsible grouped approved fields, 2023–2026 order, chart, access gates');
