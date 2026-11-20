@@ -2,6 +2,8 @@
 // Does not log in, mutate data, or expose dashboard results.
 const assert=require("node:assert/strict");
 const base="https://baeguindex.com/admin.html";
+const onPush=process.env.GITHUB_EVENT_NAME==="push";
+const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth1";
 (async()=>{
  let last="";
  for(let attempt=0;attempt<15;attempt++){
@@ -19,7 +21,8 @@ const base="https://baeguindex.com/admin.html";
       html.includes('id="adminReview2026List"')&&
       html.includes('id="adminTelemetryHealthPanel"')&&
       html.includes('id="adminTelemetryAsOf"')&&
-      html.includes('js/beagu-admin-access-v1.js?v=20261120-telemetryhealth1')&&
+      html.includes('js/beagu-admin-access-v1.js?v='+expectedVersion)&&
+      (!onPush || html.includes('id="adminTelemetryHourlyStatus"'))&&
       html.includes('name="robots" content="noindex,nofollow,noarchive"')){
       assert(!/visit-stats\.js|search-telemetry-v1\.js/.test(html));
       const asset=await fetch("https://baeguindex.com/js/beagu-2026-admin-review.js?v=20261120-review2&check="+Date.now(),{
@@ -31,13 +34,14 @@ const base="https://baeguindex.com/admin.html";
          !code.includes("개인정보 입력 금지")){
         last="Published JS has old reviewer implementation";continue;
       }
-      const healthJs=await fetch("https://baeguindex.com/js/beagu-admin-access-v1.js?v=20261120-telemetryhealth1&check="+Date.now(),{
+      const healthJs=await fetch("https://baeguindex.com/js/beagu-admin-access-v1.js?v="+expectedVersion+"&check="+Date.now(),{
         headers:{"Cache-Control":"no-cache"},signal:AbortSignal.timeout(15000)
       });
       if(healthJs.status!==200){last="Health JS HTTP "+healthJs.status;continue;}
       const healthSource=await healthJs.text();
       if(!healthSource.includes("renderTelemetryHealth(payload.telemetry_health)") ||
-         !healthSource.includes("function renderTelemetryHealth(data)")){
+         !healthSource.includes("function renderTelemetryHealth(data)") ||
+         (onPush&&!healthSource.includes('m.status==="warning"'))){
         last="Published admin JS lacks telemetry health renderer";continue;
       }
       console.log("PASS: published admin telemetry health panel and live JS present");
