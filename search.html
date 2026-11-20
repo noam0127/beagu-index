@@ -461,6 +461,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
     }
     resultCount.textContent='검색 중...';pager.hidden=true;
     const loadingTask=window.BeaguLoading?.start('학교 검색 결과를 불러오는 중…');
+    const perfStarted=performance.now();let perfSucceeded=false;
     try {
       let query=supabaseClient.from('schools')
         .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,status',{count:'exact'})
@@ -488,6 +489,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
       if(explicitEnter&&keyword&&count===1&&list.length===1)
         window.BeaguSearchTelemetry?.searchConfirmed(String(list[0].school_id),0,'search');
       renderSchools(list,count||0);
+      perfSucceeded=true;
       void (async()=>{
         const [base,latest]=await Promise.allSettled([
           Promise.all([percentileReady,participationReady]),readPublic2026(list)
@@ -509,6 +511,8 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
       resultCount.textContent='';pager.hidden=true;
       results.innerHTML='<div class="empty">학교 검색 중 오류가 발생했습니다.</div>';
     } finally {
+      if(token===searchSerial)
+        window.BeaguPerf?.record('school_search',performance.now()-perfStarted,perfSucceeded);
       window.BeaguLoading?.finish(loadingTask);
     }
   }
