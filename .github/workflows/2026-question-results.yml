@@ -13,6 +13,19 @@ on:
       - 'js/level-search.js'
       - 'tests/2026-*.mjs'
       - '.github/workflows/2026-question-results.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/beagu-2026-*.gs'
+      - 'scripts/beagu-2026-results-*.js'
+      - 'scripts/build-2026-results.mjs'
+      - 'supabase/functions/_shared/*2026*'
+      - 'supabase/functions/beagu-2026-results-ingest/**'
+      - 'supabase/migrations/*beagu_2026*.sql'
+      - 'js/2026-approved-question-results.js'
+      - 'js/level-search.js'
+      - 'tests/2026-*.mjs'
+      - '.github/workflows/2026-question-results.yml'
   workflow_dispatch:
 permissions:
   contents: read
