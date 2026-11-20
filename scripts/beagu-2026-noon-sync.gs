@@ -196,7 +196,7 @@ function installBeagu2026Sync() {
   Logger.log("초기 비공개 집계 완료. 다음부터 개별 등록 명령 없이 새 설문 제출 때마다 갱신합니다.");
 }
 function normalize(s) {
-  return String(s||"").replace(/[①-⑳]/g,"").normalize("NFKC").replace(/[\s,.'"“”\[\]()/\\\-]/g,"").trim();
+  return String(s||"").replace(/[①-⑳㉑-㉟㊱-㊿]/g,"").normalize("NFKC").replace(/[\s,.'"“”\[\]()/\\\-]/g,"").trim();
 }
 function regionOf(s) {
   const v=normalize(s).replace(/[①②③④⑤⑥⑦⑧⑨⑩]/g,"");
@@ -210,15 +210,17 @@ function regionOf(s) {
   return found ? found[1] : null;
 }
 function normalizeOffice(s) {
-  const value=normalize(s).replace(/^[①-⑳]/,"")
-    .replace(/서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|강원도|충청북도|충청남도|전북특별자치도|전라북도|전라남도|경상북도|경상남도|제주특별자치도/g,"");
-  // normalize() removes parentheses before matching. Form may say '마산교육청'/'진해교육청' while the master stores
-  // '창원교육지원청(마산센터)' or '(진해센터)'. Match the surveyed area,
-  // never collapse all three areas into the single parent office.
-  if(/^창원교육지원청마산센터$/.test(value)||/^마산(?:교육지원청|교육청|센터)?(?:폐지)?$/.test(value))return "마산";
-  if(/^창원교육지원청진해센터$/.test(value)||/^진해(?:교육지원청|교육청|센터)?(?:폐지)?$/.test(value))return "진해";
-  if(/^창원(?:교육지원청|교육청)?(?:본청|폐지)?$/.test(value))return "창원";
-  return value.replace(/교육지원청|교육청/g,"");
+  const raw=normalize(s);
+  // A Form's explicit 'no office (Sejong)' choice and the directory's
+  // Sejong education office name refer to the same *unique* area.
+  if(raw==='교육지원청없음세종'||raw==='세종특별자치시교육청')return '세종';
+  const value=raw.replace(/서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|강원도|충청북도|충청남도|전북특별자치도|전라북도|전라남도|전남광주통합특별시|경상북도|경상남도|제주특별자치도/g,'');
+  // Keep Changwon, Masan and Jinhae distinct. The questionnaire uses
+  // '...권' while the verified school directory uses '...센터'.
+  if(/^창원교육지원청(?:마산센터|마산권)$/.test(value)||/^마산(?:교육지원청|교육청|센터)?(?:폐지)?$/.test(value))return '마산';
+  if(/^창원교육지원청(?:진해센터|진해권)$/.test(value)||/^진해(?:교육지원청|교육청|센터)?(?:폐지)?$/.test(value))return '진해';
+  if(/^창원(?:교육지원청|교육청)?(?:본청|폐지|의창·성산권|의창성산권)?$/.test(value))return '창원';
+  return value.replace(/교육지원청|교육청/g,'');
 }
 function fetchSchools() {
   const key=PropertiesService.getScriptProperties().getProperty("SUPABASE_PUBLISHABLE_KEY");
