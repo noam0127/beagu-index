@@ -1,6 +1,6 @@
 /* One reusable Lv1/Lv2 participation-code control on every public page.
  * Server is authoritative: client-side levels never authorize protected data.
- * No account, login, provider OAuth, or Lv3 feature is introduced here. */
+ * No account, social provider login, or higher-tier control is introduced here. */
 (() => {
  'use strict';
  try { if(window.self !== window.top) return; } catch (_) { return; }
