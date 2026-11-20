@@ -74,7 +74,17 @@ Deno.serve(async req=>{
      typeof body.submittedAt!=='string' || typeof body.proof!=='string' ||
      body.proof.length>300)
     return response(400,{error:'INVALID_SUBMISSION'});
-  const m=proofPattern.exec(body.proof);
+  // Old trigger installations cannot attest quality. They are admitted into
+  // the private review queue but must NOT produce automatic referral rewards.
+  const signals=body.qualitySignals===undefined?[]:body.qualitySignals;
+  if(!Array.isArray(signals)||signals.length>4||
+     signals.some(x=>typeof x!=='string'||![
+       'MISSING_REQUIRED_CORE','STRAIGHTLINE_LIKERT','UNREADABLE_ITEM_RESPONSE'
+     ].includes(x))||
+     (body.qualityVerified!==undefined&&typeof body.qualityVerified!=='boolean'))
+    return response(400,{error:'INVALID_QUALITY_SIGNAL'});
+  const attested=body.qualityVerified===true&&Array.isArray(body.qualitySignals);
+    const m=proofPattern.exec(body.proof);
   if(!m||!uuid.test(m[2]))return response(422,{error:'INVALID_PROOF'});
   const [ ,ref,respondent,expiresString,signature]=m;
   const exp=Number(expiresString);
@@ -97,14 +107,16 @@ Deno.serve(async req=>{
       hmac('BEAGU_REFERRAL_RESPONDENT_V1|'+respondent.toLowerCase()),
     ]);
     const refHash=hex(await sha(ref));
-    const {data,error}=await db.rpc('beagu_referral_credit',{
+    const {data,error}=await db.rpc('beagu_referral_credit_quality_gate',{
       p_event_hash:eventHash,p_referral_hash:refHash,
       p_respondent_hash:respondentHash,p_respondent_uuid:respondent.toLowerCase(),
+      p_quality_attested:attested,p_quality_signals:signals,
     });
     if(error){
       console.error('referral credit unavailable',error.code||'UNKNOWN');
       return response(503,{error:'CREDIT_UNAVAILABLE'});
     }
+    // A pending-quality referral stays at Lv1 until reviewed. No raw answers are stored.
     // Results are never a publish approval, and do not automatically grant
     // a write-capable Auth user account.
     return response(200,{ok:true,credited:data?.credited===true,
