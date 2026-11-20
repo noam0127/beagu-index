@@ -98,7 +98,7 @@
           !/^https:\/\/baeguindex\.com\/survey\.html\?ref=[a-f0-9]{64}$/.test(payload.link))
         throw Error('INVALID_LINK');
       currentLink = typeof payload.shortLink === 'string' &&
-        /^https:\/\/baeguindex\.com\/r\/#\w{8}$/.test(payload.shortLink)
+        /^https:\/\/baeguindex\.com\/r\/#[A-Za-z0-9_-]{8}$/.test(payload.shortLink)
         ? payload.shortLink : payload.link;
       linkField.hidden = false;
       copyButton.hidden = false;
