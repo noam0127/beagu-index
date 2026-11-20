@@ -81,7 +81,7 @@ const raw=fs.readFileSync(require.resolve('../js/class-diary-semester-v1.js'),'u
 for(const banned of ['localStorage.setItem','sessionStorage.setItem','indexedDB','fetch(','XMLHttpRequest','navigator.sendBeacon'])
  assert(!raw.includes(banned),'Story engine must never persist or transmit game data: '+banned);
 const page=fs.readFileSync(require('node:path').join(__dirname,'../teacher-class-diary-play.html'),'utf8');
-for(const marker of ['id="semesterStart"','src="js/class-diary-semester-v1.js?v=20261120"',"semester.createGame(baseGame)","if(storyMode==='semester')return renderSemester()","semester.advance(game)"])
+for(const marker of ['id="semesterStart"','src="js/class-diary-semester-v1.js?v=',"semester.createGame(baseGame)","if(storyMode==='semester')return renderSemester()","semester.advance(game)"])
  assert(page.includes(marker),'Semester UI connection missing '+marker);
 for(const englishLabel of ['PROLOGUE 00','PLAYER SETUP','MY STORY','STORY · 나의 학급일지','END CREDITS'])
  assert(!page.includes(englishLabel),'Untranslated game UI label: '+englishLabel);

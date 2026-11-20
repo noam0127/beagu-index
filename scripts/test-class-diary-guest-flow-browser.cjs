@@ -114,7 +114,16 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#schoolLine').textContent(),'봄빛초등학교 · 부산광역시 · 과거 공개 조사 2025년');
    assert.equal(privateWorldCalls,0,'Private Level2 school API must never be called by owner preview');
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
-   assert.equal(await page.locator('[data-partner-choice]').count(),3);
+   assert.equal(await page.locator('[data-partner-choice]').count(),5,'Current 36-episode cast has five selectable colleagues');
+   const castLayout=await page.locator('.setup-portrait-grid').evaluate(grid=>{
+    const cards=[...grid.querySelectorAll('[data-partner-choice]')].map(el=>{
+     const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};
+    });
+    return {cards,viewport:{w:innerWidth,h:innerHeight},scrollWidth:document.documentElement.scrollWidth};
+   });
+   assert(castLayout.cards.every(r=>r.left>=-1&&r.right<=castLayout.viewport.w+1&&r.bottom<=castLayout.viewport.h+2),
+     'All five cast portraits must fit the width and height of the screen: '+JSON.stringify(castLayout));
+
    await page.locator('[data-partner-choice="none"]').click();
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Photo selects without skipping the first-day action');
    assert.equal(await page.locator('#partner').inputValue(),'none');
@@ -125,6 +134,21 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#setupReviewPartner').innerText(),'윤민서','Chosen colleague is reviewed');
    assert.equal(await page.locator('#setupNext').isVisible(),false,'Duplicate next action is hidden on review');
    await page.locator('.setup-begin').click();
+   await page.locator('#novel').waitFor({state:'visible'});
+   // The current five-colleague story opens with a school fact card and a
+   // colleague-narrated prologue before the player's Chapter 1.
+   await page.locator('#diaryPrologueSchool').waitFor({state:'visible'});
+   await page.locator('#diaryPrologueSchoolContinue').click();
+   await page.waitForFunction(()=>!!document.querySelector('#outcomeText p.diary-literary-line'),null,{timeout:5000});
+   await page.evaluate(()=>{
+    const more=document.getElementById('vnMore'),next=document.getElementById('nextBtn');
+    for(let i=0;i<240&&next.hidden;i++){if(more.hidden)break;more.click();}
+   });
+   await page.waitForFunction(()=>!document.getElementById('nextBtn').hidden,null,{timeout:5000});
+   await page.locator('#nextBtn').click();
+   await page.locator('#playerSetup').waitFor({state:'visible'});
+   await page.locator('#heroName').fill('새봄');
+   await page.locator('#playerSetupForm button[type="submit"]').click();
    await page.locator('#novel').waitFor({state:'visible'});
    assert.equal(await page.locator('#scenePortrait').isVisible(),false,'Story scenes remain background-only without character portraits');
    assert.equal(await page.locator('#sceneGuest').isVisible(),false,'Guest characters are not pictured yet');
@@ -145,6 +169,23 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
     width:innerWidth,btn:document.getElementById('musicBtn').getAttribute('aria-pressed'),
     saved:[...Object.keys(localStorage)].filter(k=>k.includes('class-diary')||k.includes('diary'))
    }));
+   const geometry=await page.evaluate(()=>{
+    const box=selector=>{const el=document.querySelector(selector);if(!el)return null;
+      const r=el.getBoundingClientRect();return {x:r.x,y:r.y,left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
+    const date=box('#diarySceneDate'),home=box('#diaryHomeReturn'),menu=box('#diaryHudFold');
+    const footer=box('#vnBottom .vn-control-row'),stage=box('#vnBottom');
+    const prose=box('#vnDialogueSlot .prose');
+    const arrow=box('#vnBottom .vn-control-row > .diary-inline-turn:not([hidden])');
+    const intersect=(a,b)=>a&&b&&Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))>1&&Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top))>1;
+    return {date,home,menu,footer,stage,prose,arrow,dateHomeOverlap:intersect(date,home),homeMenuOverlap:intersect(home,menu),viewport:{width:innerWidth,height:innerHeight}};
+   });
+   assert(geometry.home&&geometry.menu&&geometry.date&&!geometry.dateHomeOverlap&&!geometry.homeMenuOverlap,
+     'Header date, home and menu must not collide: '+JSON.stringify(geometry));
+   assert(geometry.footer&&geometry.stage&&geometry.footer.right<=geometry.viewport.width+2&&geometry.footer.bottom<=geometry.viewport.height+2,
+     'Footer must remain inside the viewport: '+JSON.stringify(geometry));
+   assert(geometry.arrow&&geometry.arrow.width>=40&&geometry.arrow.bottom<=geometry.viewport.height+2,
+     'An accessible next arrow must be visible inside the footer: '+JSON.stringify(geometry));
+   assert(geometry.prose&&geometry.prose.width<=860,'Reader line length must remain bounded');
    assert.equal(await page.locator('#diarySaveNow').isVisible(),true,'In-game manual save button should be visible');
    assert.equal(await page.locator('#diaryContinueNow').isVisible(),true,'In-game continue button should be visible');
    await page.locator('#diarySaveNow').click();

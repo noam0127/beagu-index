@@ -1,0 +1,366 @@
+/* Class Diary visual hierarchy refinement, 2026-11-20.
+ * A single scoped layer over earlier prototype rules; does not modify story or auth logic.
+ * 1. Header: story date left, home and information actions right, stats below.
+ * 2. Reader: comfortable prose width and reliable contrast.
+ * 3. Footer: save and story controls in one bounded row.
+ * 4. Choices: centered and internally scrollable on short viewports.
+ */
+body.is-playing #novelCard #vnOverlay #vnHud>#diaryHomeReturn{
+ left:auto!important;
+ right:calc(env(safe-area-inset-right,0px) + 80px)!important;
+ top:0!important;
+ height:42px!important;
+ min-width:110px!important;
+ max-width:130px!important;
+ padding:0 10px!important;
+ border-radius:14px!important;
+ font-size:12px!important;
+}
+body.is-playing #novelCard #vnHud>.diary-hud-fold{
+ right:0!important;
+ top:0!important;
+ min-height:42px!important;
+}
+body.is-playing #novelCard #vnOverlay .diary-scene-date{
+ box-sizing:border-box;
+ max-width:calc(100% - 232px)!important;
+ overflow:hidden!important;
+ text-overflow:ellipsis;
+ white-space:nowrap;
+}
+body.is-playing #novelCard #vnOverlay #diaryHudStats,
+body.is-playing.diary-hud-open #novelCard #vnOverlay #diaryHudStats,
+body.is-playing.diary-hud-collapsed #novelCard #vnOverlay #diaryHudStats{
+ top:calc(env(safe-area-inset-top,0px) + 63px)!important;
+ right:calc(env(safe-area-inset-right,0px) + 14px)!important;
+ max-width:calc(100% - 28px)!important;
+}
+body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom,
+body.is-playing.is-literary-mode #novelCard #vnBottom{
+ background:linear-gradient(148deg,rgba(12,16,29,.72),rgba(20,23,38,.68) 54%,rgba(30,25,42,.76))!important;
+ border:1px solid rgba(249,229,242,.31)!important;
+ box-shadow:0 16px 46px rgba(8,10,22,.30),inset 0 1px 0 rgba(255,246,249,.11)!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose{
+ max-width:min(100%,850px)!important;
+ width:100%!important;
+ margin-inline:auto!important;
+ color:#fff9f4!important;
+ text-shadow:0 1px 5px rgba(4,7,19,.72)!important;
+ line-height:1.8!important;
+ letter-spacing:-.014em!important;
+ font-size:clamp(18px,1.9vw,23px)!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line{
+ color:inherit!important;
+ line-height:inherit!important;
+ overflow-wrap:break-word!important;
+}
+body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom{
+ top:clamp(118px,16dvh,153px)!important;
+}
+/* When the story information drawer is expanded, keep its actions away from
+ * scores and move the prose beneath the transient navigation controls. */
+body.is-playing.diary-hud-open #vnHud #diaryHudActions{
+ top:111px!important;
+ right:0!important;
+ max-width:min(100%,280px)!important;
+}
+body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{
+ padding-top:166px!important;
+ padding-right:0!important;
+ max-width:100%!important;
+}
+body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+ top:clamp(250px,34dvh,360px)!important;
+}
+/* Explicit and predictable page-turn control: maintain the original
+ * click listeners and simply place the original buttons in the reader footer. */
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row{
+ display:flex!important;
+ flex-direction:row!important;
+ flex-wrap:nowrap!important;
+ justify-content:flex-end!important;
+ align-items:center!important;
+ gap:5px!important;
+ min-height:56px!important;
+ width:100%!important;
+ padding:8px 2px 1px!important;
+ border-top:1px solid rgba(247,225,237,.22)!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-fiction{
+ order:0;
+ min-width:0;
+ max-width:150px!important;
+ margin-right:auto!important;
+ font-size:10px!important;
+ line-height:1.5!important;
+ text-align:left;
+ color:#f1dae6!important;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ white-space:nowrap;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom #diaryCheckpointControls{
+ order:1;
+ display:flex;
+ flex:0 0 auto;
+ align-items:center;
+ gap:4px;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom #diaryCheckpointControls[hidden]{display:none!important}
+body.is-playing.is-literary-mode #novelCard #vnBottom .diary-toolbar{
+ order:2!important;
+ flex:0 0 auto!important;
+ margin:0!important;
+ align-items:center;
+ gap:4px!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom .diary-toolbar button{
+ min-width:42px!important;
+ width:42px!important;
+ min-height:44px!important;
+ height:44px!important;
+ background:rgba(47,36,59,.8)!important;
+ border:1px solid rgba(246,222,236,.42)!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom #diarySaveNow,
+body.is-playing.is-literary-mode #novelCard #vnBottom #diaryContinueNow{
+ min-height:44px!important;
+ height:44px!important;
+ font-size:10px!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row>#vnMore:not([hidden]),
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row>#nextBtn:not([hidden]){
+ order:3!important;
+ display:inline-flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ flex:0 0 45px!important;
+ min-width:45px!important;
+ width:45px!important;
+ min-height:45px!important;
+ height:45px!important;
+ padding:0!important;
+ margin:0!important;
+ color:#fff8fa!important;
+ background:linear-gradient(125deg,#b47d9c,#855775)!important;
+ border:1px solid rgba(255,232,242,.71)!important;
+ border-radius:50%!important;
+ box-shadow:0 5px 16px rgba(28,13,36,.35)!important;
+ cursor:pointer;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row>#vnMore[hidden],
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row>#nextBtn[hidden]{
+ display:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row>.diary-inline-turn .vn-arrow-mark{
+ width:20px;height:20px;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row>.diary-inline-turn:focus-visible{
+ outline:3px solid #fff5d4!important;
+ outline-offset:2px!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom>.actions{
+ display:none!important;
+}
+/* Choice card must stay within the viewport rather than clipping answers. */
+body.is-playing #novelCard #choiceSection{
+ max-height:100dvh!important;
+ overflow:hidden!important;
+ padding:calc(env(safe-area-inset-top,0px) + 18px) 16px calc(env(safe-area-inset-bottom,0px) + 22px)!important;
+ background:rgba(13,13,28,.77)!important;
+ backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
+}
+body.is-playing #novelCard #choiceSection .option-title{
+ max-width:min(100%,670px);
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;
+ font-size:clamp(17px,2vw,23px)!important;
+ line-height:1.5!important;
+ font-weight:700!important;
+}
+body.is-playing #novelCard #choiceSection .choices{
+ width:min(100%,660px)!important;
+ max-height:min(64dvh,520px)!important;
+ overflow-y:auto!important;
+ overscroll-behavior:contain;
+ padding:3px!important;
+ scrollbar-width:thin;
+}
+body.is-playing #novelCard #choiceSection .choice{
+ min-height:51px!important;
+ padding:clamp(11px,1.4dvh,15px) clamp(12px,2vw,20px)!important;
+ font-size:clamp(15px,1.6vw,18px)!important;
+ line-height:1.55!important;
+ text-wrap:pretty;
+}
+body.is-playing #novelCard #choiceSection .choice:focus-visible{
+ outline:3px solid #df9fc2!important;
+ outline-offset:2px!important;
+}
+@media(max-width:760px){
+ body.is-playing #novelCard #vnOverlay #vnHud>#diaryHomeReturn{
+  right:calc(env(safe-area-inset-right,0px) + 75px)!important;
+  height:42px!important;min-width:106px!important;max-width:116px!important;
+  padding:0 8px!important;font-size:11px!important;
+ }
+ body.is-playing #novelCard #vnHud>.diary-hud-fold{
+  min-height:42px!important;min-width:67px!important;
+ }
+ body.is-playing #novelCard #vnOverlay .diary-scene-date{
+  max-width:calc(100% - 207px)!important;
+  padding:8px 9px!important;
+  font-size:11px!important;
+ }
+ body.is-playing #novelCard #vnOverlay #diaryHudStats,
+ body.is-playing.diary-hud-open #novelCard #vnOverlay #diaryHudStats,
+ body.is-playing.diary-hud-collapsed #novelCard #vnOverlay #diaryHudStats{
+  top:calc(env(safe-area-inset-top,0px) + 61px)!important;
+  right:calc(env(safe-area-inset-right,0px) + 12px)!important;
+ }
+ body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom{
+  top:calc(env(safe-area-inset-top,0px) + clamp(106px,13dvh,128px))!important;
+ }
+ body.is-playing.diary-hud-open #vnHud #diaryHudActions{
+  top:104px!important;right:0!important;
+ }
+ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{
+  padding-top:154px!important;
+ }
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+  top:clamp(248px,36dvh,335px)!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose{
+  font-size:clamp(16.5px,4.2vw,20px)!important;
+  line-height:1.76!important;
+  letter-spacing:-.017em!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row{
+  min-height:60px!important;
+  gap:4px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom .vn-fiction{
+  position:absolute;
+  left:4px;bottom:calc(100% - 2px);
+  width:calc(100% - 8px);
+  max-width:225px!important;
+  margin:0!important;
+  padding:4px 5px!important;
+  font-size:10px!important;
+  color:#f2e0e7!important;
+  pointer-events:none;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row{
+  position:relative;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom #vnDialogueSlot{
+  padding-bottom:16px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom #diaryCheckpointControls button{
+  min-width:43px!important;max-width:43px!important;width:43px!important;
+  height:44px!important;min-height:44px!important;font-size:9px!important;
+  padding:2px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom .diary-toolbar button{
+  min-width:40px!important;width:40px!important;height:44px!important;
+  padding:3px!important;
+ }
+}
+@media(max-width:370px){
+ body.is-playing #novelCard #vnOverlay #vnHud>#diaryHomeReturn{
+  min-width:45px!important;max-width:48px!important;width:48px!important;
+  right:calc(env(safe-area-inset-right,0px) + 73px)!important;
+ }
+ body.is-playing #novelCard #vnOverlay #vnHud>#diaryHomeReturn span:last-child{
+  display:none!important;
+ }
+ body.is-playing #novelCard #vnOverlay .diary-scene-date{
+  max-width:calc(100% - 145px)!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom #diaryCheckpointControls button{
+  min-width:38px!important;max-width:38px!important;width:38px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom .diary-toolbar button{
+  min-width:36px!important;width:36px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row>#vnMore:not([hidden]),
+ body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row>#nextBtn:not([hidden]){
+  min-width:42px!important;width:42px!important;flex-basis:42px!important;
+ }
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom{
+  top:calc(env(safe-area-inset-top,0px) + 88px)!important;
+ }
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+  top:calc(env(safe-area-inset-top,0px) + 155px)!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row{
+  min-height:45px!important;padding-top:2px!important;
+ }
+ body.is-playing #novelCard #choiceSection .choices{max-height:60dvh!important}
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing #novelCard #vnOverlay #vnHud>#diaryHomeReturn,
+ body.is-playing #novelCard #choiceSection .choice{
+  transition:none!important;
+ }
+}
+
+
+/* Five-colleague lineup: three-column prototype created an unnecessarily
+ * tall two-row grid on desktop. Use one balanced row on wide screens. */
+@media(min-width:761px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]){
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  max-width:1010px!important;
+  gap:clamp(8px,1.3vw,16px)!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]) .setup-character-art{
+  aspect-ratio:4/5!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]) .setup-character-tag{
+  font-size:clamp(10px,.9vw,13px)!important;
+ }
+}
+@media(max-width:760px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]){
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:clamp(5px,1.5vw,10px)!important;
+ }
+}
+@media(max-width:490px) and (max-height:690px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]) .setup-character-art{
+  aspect-ratio:1/1.12!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid:has(> [data-partner-choice="man3"]) .setup-character-tag{
+  font-size:9px!important;line-height:1.2!important;
+ }
+}
+/* The return path must remain visible after the final chapter as well. */
+body.is-ending #ending{position:relative!important;}
+body.is-ending #ending .diary-ending-home{
+ position:absolute;
+ z-index:5;
+ top:calc(env(safe-area-inset-top,0px) + 10px);
+ right:calc(env(safe-area-inset-right,0px) + 14px);
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:44px;padding:8px 13px;
+ background:#e9d6e3;color:#593c56;
+ border:1px solid #cba7bd;border-radius:999px;
+ text-decoration:none;
+ font:700 12px/1.2 "Gowun Batang","Nanum Myeongjo",serif;
+ box-shadow:0 4px 15px #442e481a;
+}
+body.is-ending #ending .diary-ending-home:hover{background:#dfc5d6}
+body.is-ending #ending .diary-ending-home:focus-visible{outline:3px solid #83537b;outline-offset:2px}
+body.is-ending #ending>.emblem{
+ box-sizing:border-box;
+ padding-right:145px;
+}
+@media(max-width:490px){
+ body.is-ending #ending .diary-ending-home{
+  min-height:40px;font-size:11px;padding:7px 10px;
+ }
+ body.is-ending #ending>.emblem{padding-right:120px}
+}
