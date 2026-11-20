@@ -1,0 +1,47 @@
+name: Class Diary original-photo cutout QA
+on:
+  push:
+    branches:
+      - chore/class-diary-photo-cutout-review-20261121
+    paths:
+      - 'scripts/class-diary-export-real-pose-cutouts.py'
+      - '.github/workflows/class-diary-original-photo-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  draft-cutouts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install image processing dependencies
+        run: python -m pip install --disable-pip-version-check Pillow numpy opencv-python-headless
+      - name: Produce draft assets from repository's original images
+        run: python scripts/class-diary-export-real-pose-cutouts.py
+      - name: Assert draft assets and manifest exist
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('class-diary-cutout-review')
+          manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
+          assert len(manifest['files'])==25, len(manifest['files'])
+          assert manifest['must_not_deploy_without_visual_approval'] is True
+          for item in manifest['files']:
+              assert Path(item['file']).exists(), item['file']
+              assert Path(item['file']).with_suffix('.webp').exists(), item['file']
+          print('PASS: 24 male pose cutouts + 1 original Jiyoon reference; QA only')
+          PY
+      - name: Upload visual-review files only (not deployed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: class-diary-original-identity-cutouts-DRAFT
+          path: class-diary-cutout-review/
+          retention-days: 14
+          if-no-files-found: error
