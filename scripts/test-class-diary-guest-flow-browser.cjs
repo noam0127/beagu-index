@@ -3,6 +3,7 @@
  */
 'use strict';
 const assert=require('node:assert/strict');
+const {startFirstChapter}=require('./class-diary-first-chapter-browser.cjs');
 const {chromium}=require('playwright');
 const base=process.env.DIARY_BASE||'http://127.0.0.1:8123';
 const api='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-diary-guest-access-v1';
@@ -121,6 +122,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#setupReviewPartner').innerText(),'윤민서','Chosen colleague is reviewed');
    assert.equal(await page.locator('#setupNext').isVisible(),false,'Duplicate next action is hidden on review');
    await page.locator('.setup-begin').click();
+    await startFirstChapter(page,'윤민서','새봄');
    await page.locator('#novel').waitFor({state:'visible'});
    assert.equal(await page.locator('#scenePortrait').isVisible(),false,'Story scenes remain background-only without character portraits');
    assert.equal(await page.locator('#sceneGuest').isVisible(),false,'Guest characters are not pictured yet');
