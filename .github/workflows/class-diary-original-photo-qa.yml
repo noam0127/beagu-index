@@ -14,14 +14,14 @@ permissions:
 jobs:
   draft-cutouts:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - name: Install image processing dependencies
-        run: python -m pip install --disable-pip-version-check Pillow numpy opencv-python-headless
+        run: python -m pip install --disable-pip-version-check Pillow numpy opencv-python-headless 'rembg[cpu]'
       - name: Produce draft assets from repository's original images
         run: python scripts/class-diary-export-real-pose-cutouts.py
       - name: Assert draft assets and manifest exist
@@ -41,7 +41,7 @@ jobs:
       - name: Upload visual-review files only (not deployed)
         uses: actions/upload-artifact@v4
         with:
-          name: class-diary-original-identity-cutouts-DRAFT
+          name: class-diary-original-identity-cutouts-v2-DRAFT
           path: class-diary-cutout-review/
           retention-days: 14
           if-no-files-found: error
