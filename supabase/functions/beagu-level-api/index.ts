@@ -140,24 +140,27 @@ Deno.serve(async(req:Request)=>{
       !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
       (!searchText&&!region)||(!region&&office))
       return send({error:'INVALID_SEARCH_FILTER'},400,origin);
-   const from=pagination*20;
-   const ascending=direction==='asc';
-   const load=async (tableName:string)=>{
-     let query=admin.from(tableName)
+   // Level access is checked above, before any cached school record is fetched.
+   // The RLS-protected cache contains only fields from the approved public sort view.
+   // On cache read errors, preserve the original verified query as the fallback.
+   const rankedQuery=(table:string)=>{
+     let query=admin.from(table)
        .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,housing_price_won,junior_teacher_ratio,male_teacher_ratio,view_count',{count:'exact'});
      if(searchText)query=query.ilike('school_name','%'+searchText.replace(/[%_\\]/g,'')+'%');
      if(region)query=query.eq('sido_standard',region);
      if(office)query=query.eq('support_office',office);
+     const ascending=direction==='asc';
      let sorted=query.order(sort,{ascending,nullsFirst:false});
      if(sort!=='school_name')sorted=sorted.order('school_name',{ascending:true,nullsFirst:false});
-     return sorted.order('school_id',{ascending:true}).range(from,from+19);
+     return sorted.order('school_id',{ascending:true}).range(pagination*20,pagination*20+19);
    };
-   // 6,368 reviewed school rows are precomputed and refreshed every 15 min.
-   // If the cache is unavailable, use the existing approved view as fallback.
-   let listing=await load('beagu_lv1_school_sort_cache');
-   if(listing.error)listing=await load('beagu_lv1_school_sort_index');
-   if(listing.error)return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
-   return send({schools:listing.data||[],total:listing.count||0,page:pagination,sort,direction:ascending?'asc':'desc',nulls:'last'},200,origin);
+   let {data,count,error}=await rankedQuery('beagu_lv1_school_sort_cache_v1');
+   if(error){
+     console.warn('lv1_school_sort_cache_unavailable',error.code||'read_failed');
+     ({data,count,error}=await rankedQuery('beagu_lv1_school_sort_index'));
+   }
+   if(error)return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
+   return send({schools:data||[],total:count||0,page:pagination,sort,direction:ascending?'asc':'desc',nulls:'last'},200,origin);
   }
 
   const id=String(body.schoolId||'');
