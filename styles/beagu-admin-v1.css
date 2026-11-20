@@ -96,3 +96,14 @@ footer{margin-top:48px;color:#98a6ba;font-size:11px}
 .admin-perf-table .perf-page{font-weight:800}
 .admin-perf-table .perf-rate{font-weight:750;color:#234e82}
 @media(max-width:640px){.admin-perf-table th,.admin-perf-table td{padding:11px 8px;font-size:11px}}
+
+/* Private evidence intake: bounded within the admin dashboard, never public. */
+.beagu-basis-review{margin-top:12px;border:1px solid var(--line,#dfe3e8);border-radius:12px;padding:10px 12px;}
+.beagu-basis-review summary{cursor:pointer;font-weight:650;outline-offset:3px;}
+.beagu-basis-form{display:grid;grid-template-columns:1fr;gap:12px;margin-top:13px;}
+.beagu-basis-form label{display:grid;gap:5px;min-width:0;font-size:.91rem;font-weight:550;}
+.beagu-basis-form :is(input:not([type="checkbox"]),textarea,select){box-sizing:border-box;width:100%;min-width:0;max-width:100%;font:inherit;color:inherit;background:var(--panel,#fff);border:1px solid var(--line,#dfe3e8);border-radius:8px;padding:9px 10px;}
+.beagu-basis-form textarea{min-height:70px;resize:vertical;}
+.beagu-basis-form .beagu-basis-check{display:flex;align-items:flex-start;gap:9px;font-weight:400;}
+.beagu-basis-form .beagu-basis-check input{margin-top:3px;flex:none;}
+.beagu-basis-form button{justify-self:start;max-width:100%;}
