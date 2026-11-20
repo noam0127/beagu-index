@@ -680,6 +680,8 @@
     if(detail.snapshotOnly===true){
       state.snapshot=detail.snapshot instanceof Map?detail.snapshot:new Map();
       state.snapshotReady=detail.snapshotReady===true;
+      if(state.snapshotReady&&elements.feedback.textContent==='공개 백분위를 확인할 수 없어 문항 목록만 표시됩니다.')
+        notice('');
       renderTable();
       return;
     }
@@ -692,7 +694,7 @@
     restoreUrl();
     renderSelections();renderTable();
     if(document.activeElement===elements.search)renderSuggestions();
-    if (!state.snapshotReady && state.ready) notice('공개 백분위를 확인할 수 없어 문항 목록만 표시됩니다.');
+    if (!state.snapshotReady && state.ready && !detail.snapshotPending) notice('공개 백분위를 확인할 수 없어 문항 목록만 표시됩니다.');
     loadPublic2026(state.selected.map(x=>x.id));
     refreshApprovedSelections();
   });
