@@ -373,8 +373,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   // EXTREME: always present. VERY HARD: a short intermittent visit.
   const enemyMinion={x:810,y:FLOOR-31,vx:0,contactFrames:0,cooldown:0,
     name:"부하",side:"right",mini:true,active:false,nextSpawnFrame:0,activeUntilFrame:0};
-  const isEnemyMinionActive=()=>currentDifficulty==="extreme"||
-    (currentDifficulty==="very_hard"&&enemyMinion.active);
+  const isEnemyMinionActive=()=>!isMysteryBuff("right","conflict")&&
+    (currentDifficulty==="extreme"||(currentDifficulty==="very_hard"&&enemyMinion.active)
+    ||isMysteryBuff("right","friends"));
   function resetEnemyMinionSchedule(){
     enemyMinion.active=false;
     enemyMinion.activeUntilFrame=0;
@@ -619,6 +620,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     resetEnemyMinionSchedule();
+    resetMystery();
     releaseKeys();
     state.serveLeft=Math.random()<.5;
     state.phase="playing";state.winner="";state.message="";state.flash=0;
@@ -637,6 +639,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
     state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
     currentDifficulty="hard";
+    resetMystery();
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     specialProfile=specialProfiles.hard;resetPower();
     schoolPicker.setLocked(false);
@@ -763,7 +766,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if (p.y > FLOOR - 31) { p.y = FLOOR - 31; p.vy = 0; }
   }
   function moveClones(){
-    for(const ally of clones){
+    for(const ally of activeAllies()){
       const incoming=activeBalls.filter(b=>b.vx<0&&b.x<NET_X-26&&b.y>120);
       if(incoming.length){
         const target=incoming.sort((a,b)=>Math.abs(a.x-ally.x)-Math.abs(b.x-ally.x))[0];
@@ -1032,6 +1035,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if(right.contactFrames>0)right.contactFrames--;
     if(enemyMinion.contactFrames>0)enemyMinion.contactFrames--;
     for(const ally of clones)if(ally.contactFrames>0)ally.contactFrames--;
+    if(bonusFriend.contactFrames>0)bonusFriend.contactFrames--;
     if(state.impactFrames>0)state.impactFrames--;
     if(state.qualityFrames>0)state.qualityFrames--;
     if (state.flash > 0) state.flash--;
@@ -1087,6 +1091,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || keyboardVertical !== 0 || (canPlayerJump()&&keys.jump);
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
     moveAI();moveClones();moveEnemyMinion();
+    updateMystery();
+    if(state.phase!=="playing")return;
     for(const liveBall of activeBalls){
     const ball=liveBall;
     const previousX = ball.x, previousY = ball.y;
@@ -1114,7 +1120,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       }
     }
     playerHit(left,ball);
-    for(const ally of clones)if(cloneHit(ally,ball))break;
+    for(const ally of activeAllies())if(cloneHit(ally,ball))break;
     playerHit(right,ball);
     enemyMinionHit(ball);
     ball.trail.push({ x: ball.x, y: ball.y });
@@ -1348,7 +1354,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       ctx.translate((Math.random()-.5)*2*shake,(Math.random()-.5)*2*shake);
     }
     background();
-    for(const ally of clones){
+    for(const ally of activeAllies()){
       ctx.save();ctx.globalAlpha=.58;
       drawTeacher(ally,ally.name==="관리자"?"#8d9fcd":"#50bdb5");
       ctx.restore();
@@ -1366,6 +1372,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         "#7d224f","center",55);
     }
     drawTeacher(right, (enemyLooks[currentDifficulty]||enemyLooks.normal).uniform);
+    drawMystery();
     if(state.bossWarnFrames>0){
       const glow=state.bossWarnFrames%10<5?"#ffe57a":"#ff8e70";
       ctx.save();ctx.strokeStyle=glow;ctx.lineWidth=5;
