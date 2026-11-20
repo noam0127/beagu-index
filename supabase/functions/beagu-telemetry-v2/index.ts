@@ -73,24 +73,21 @@ async function isActiveAdmin(req: Request) {
     return false;
   }
 }
-function networkSource(req: Request, visitor: string) {
-  // cf-connecting-ip must be overwritten by the trusted ingress to be
-  // security-grade. Otherwise this is a heuristic, not client attestation.
-  const cf=req.headers.get('cf-connecting-ip')||'';
-  const forwarded=(req.headers.get('x-forwarded-for')||'').split(',')
-    .map(s=>s.trim()).filter(Boolean);
-  const candidate=cf||forwarded.at(-1)||'';
-  if (/^[a-f0-9:.]{2,45}$/i.test(candidate)) return 'network:'+candidate;
-  // Degraded mode keeps legitimate visits working when an ingress omits IP.
-  // UUID rotation remains possible in degraded mode.
-  return 'browser-fallback:'+visitor;
+function networkSource(req: Request) {
+  // Only use the Cloudflare-origin header if the hosting ingress overwrites it.
+  // We never trust X-Forwarded-For, which may include client-injected hops.
+  // Do not fall back to browser UUID: that would undo the source rate-limit.
+  const cf=(req.headers.get('cf-connecting-ip')||'').trim().toLowerCase();
+  if (/^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$/.test(cf) ||
+      /^[0-9a-f:]{2,45}$/.test(cf)) return 'network:'+cf;
+  return 'unverified-network';
 }
-async function hashSource(req:Request,visitor:string) {
+async function hashSource(req:Request) {
   const date=new Date().toISOString().slice(0,10);
   const key=await crypto.subtle.importKey('raw',encoder.encode(SERVICE),
     {name:'HMAC',hash:'SHA-256'},false,['sign']);
   const buffer=await crypto.subtle.sign('HMAC',key,
-    encoder.encode('beagu-telemetry-v2|'+date+'|'+networkSource(req,visitor)));
+    encoder.encode('beagu-telemetry-v2|'+date+'|'+networkSource(req)));
   return [...new Uint8Array(buffer)]
     .map(n=>n.toString(16).padStart(2,'0')).join('');
 }
@@ -124,13 +121,14 @@ Deno.serve(async (req:Request) => {
       return reply({...totals,admin_excluded:true},200,origin);
     }
 
-    const sourceHash=await hashSource(req,input.visitor);
+    const sourceHash=await hashSource(req);
     const admitted=await rpc('beagu_telemetry_guard_v2',{
       p_source_hash:sourceHash,p_visitor:input.visitor,p_action:action
     });
     if(admitted!==true) {
-      if(action==='ping') return reply({ok:true,rate_limited:true},200,origin);
-      return reply(await rpc('beagu_telemetry_totals_v2'),200,origin);
+      // Never run a full historical COUNT(DISTINCT) on every rejected request.
+      // A throttled visitor may still use every page; statistics are best-effort.
+      return reply({error:'TELEMETRY_RATE_LIMITED',rate_limited:true},429,origin);
     }
     if(action==='ping') {
       await rpc('beagu_presence_ping_v1',{
