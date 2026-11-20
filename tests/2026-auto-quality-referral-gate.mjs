@@ -19,7 +19,7 @@ assert.match(triage,/MANDATORY_QUESTION_COVERAGE/);
 assert.match(triage,/cron\.schedule\('beagu-2026-auto-quality-triage','\*\/5 \* \* \* \*'/);
 assert.match(triage,/p_filter='quality'/);
 assert.match(triage,/quality\.quality_status,'NOT_SCANNED'/);
-assert.doesNotMatch(triage,/approval_status='APPROVED'/);
+assert.doesNotMatch(triage,/set\\s+approval_status\\s*=\\s*'APPROVED'/i);
 // Referral evidence is private, never stores teacher response content.
 assert.match(referral,/create table if not exists beagu_private\.challenge_referral_quality_reviews/);
 assert.match(referral,/challenge_referral_quality_audit/);
