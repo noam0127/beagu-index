@@ -110,7 +110,9 @@ assert.match(url,/beagu-referral-ingest-v1/);
 assert.ok(options.headers['X-Beagu-Referral-Ingest-Token']);
 const body=JSON.parse(options.payload);
 assert.deepEqual(Object.keys(body).sort(),
-  ['sourceSpreadsheetId','formResponseId','submittedAt','proof'].sort());
+  ['sourceSpreadsheetId','formResponseId','submittedAt','proof','qualitySignals'].sort());
+assert.equal(body.qualitySignals.coreAnswered,0,'unknown/mock Form headers are safely held');
+assert.equal(body.qualitySignals.straightline,false,'unknown/mock Form headers cannot imply fraud');
 assert.equal(body.sourceSpreadsheetId,officialSheet);
 assert.equal(body.proof,proof);
 assert.equal(body.formResponseId,'response_key_123456789');
