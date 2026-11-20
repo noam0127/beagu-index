@@ -27,10 +27,10 @@ assert.ok(ui.includes("action,payload={},token=''"));
 assert.match(ui,/sessionStorage\.setItem\(KEY,result\.token\)/);
 assert.match(ui,/const checked=await request\('verify',\{\},result\.token\)/);
 assert.match(ui,/sessionStorage\.removeItem\(KEY\)/);
-assert.ok(!ui.includes('Lv3'),'No Lv3 UI');
+assert.doesNotMatch(ui,/Lv3 활성화|Lv3 승급|회원가입 유도/,'No Lv3 prompts or account registration UI');
 const css=read('styles/beagu-participation-auth-v2.css');
 assert.match(css,/@media\(max-width:760px\)/);
-assert.match(css,/beagu-participation-host>\.beagu-auth-heading/);
+assert.match(css,/\.beagu-participation-host \.beagu-participation-legacy/);
 assert.ok(!css.includes('display:contents'));
 for(const file of ['js/level-search.js','js/statistics-compare.js','js/challenge-access-v1.js','school-report.html'])
  assert.ok(read(file).includes('beagu:participation-authenticated'),'Page state sync '+file);
