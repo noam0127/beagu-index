@@ -1,0 +1,65 @@
+const fs=require('node:fs');
+const vm=require('node:vm');
+const assert=require('node:assert/strict');
+const r=p=>fs.readFileSync(p,'utf8');
+const sql=r('supabase/migrations/20261121013500_beagu_2026_referral_quality_gate.sql');
+const edge=r('supabase/functions/beagu-referral-ingest-v1/index.ts');
+const form=r('scripts/beagu-2026-referral-integration.gs');
+const adminApi=r('supabase/functions/beagu-2026-review-admin/index.ts');
+const adminJs=r('js/beagu-2026-admin-review.js');
+const adminHtml=r('admin.html');
+new vm.Script(form,{filename:'beagu-2026-referral-integration.gs'});
+new vm.Script(adminJs,{filename:'beagu-2026-admin-review.js'});
+const ctx={};
+vm.runInNewContext(form+'; globalThis.__quality=beaguReferralQualitySignals_;',ctx);
+const response=(answers)=>{
+ const arr=answers.map(([i,v])=>({
+   getItem:()=>({getTitle:()=> 'Q'+String(i).padStart(2,'0')+'. 문항'}),
+   getResponse:()=>v
+ }));
+ return {getItemResponses:()=>arr};
+};
+const full=Array.from({length:13},(_,i)=>[i+1,(i%5===0?'①':'②')+' 실제 선택지']);
+const good=ctx.__quality(response(full));
+assert.equal(good.coreAnswered,13);
+assert.equal(good.straightline,false);
+const same=ctx.__quality(response(Array.from({length:13},(_,i)=>[i+1,'⑥ 판단하기 어렵다'])));
+assert.equal(same.coreAnswered,13);
+assert.equal(same.straightline,true);
+const incomplete=ctx.__quality(response(full.slice(0,9)));
+assert.equal(incomplete.coreAnswered,9);
+assert.equal(incomplete.straightline,false);
+assert.match(form,/qualitySignals:beaguReferralQualitySignals_\(event\.response\)/);
+assert.doesNotMatch(form,/getRespondentEmail/);
+assert.doesNotMatch(form,/payload:JSON\.stringify\([\s\S]{0,200}school_name/i);
+assert.match(edge,/beagu_referral_quality_screen/);
+assert.ok(edge.indexOf("db.rpc('beagu_referral_quality_screen'") <
+    edge.indexOf("db.rpc('beagu_referral_credit'"),'quality screened before credit');
+assert.match(edge,/pending_quality_review/);
+assert.match(edge,/quality_rejected/);
+assert.match(edge,/INVALID_QUALITY_SIGNALS/);
+assert.match(edge,/const coreAnswered=quality \?/);
+assert.match(sql,/challenge_referral_quality_cases/);
+assert.match(sql,/challenge_referral_quality_audit/);
+assert.match(sql,/enable row level security/);
+assert.match(sql,/revoke all on beagu_private\.challenge_referral_quality_cases from public,anon,authenticated/);
+assert.match(sql,/beagu_referral_quality_screen\(/);
+assert.match(sql,/core_answered/);
+assert.match(sql,/p_core_answered is distinct from 13/);
+assert.match(sql,/same_device/);
+assert.match(sql,/PENDING_REVIEW/);
+assert.match(sql,/AUTO_CLEARED/);
+assert.match(sql,/referral_credit_screened\(/);
+assert.match(sql,/beagu_referral_quality_resolve\(/);
+assert.match(sql,/beagu_admin_active_mfa_session\(p_actor,p_session\)/);
+assert.match(sql,/recompute_referral_quality_entitlement/);
+assert.match(sql,/grant execute on function public\.beagu_referral_quality_resolve[\s\S]*?to service_role/);
+assert.match(adminApi,/if\(input\.action==="referral_queue"\)/);
+assert.match(adminApi,/if\(input\.action==="referral_resolve"\)/);
+assert.match(adminApi,/if\(account\.role!=="owner"\)/);
+assert.match(adminApi,/claims\.aal!=="aal2"/);
+assert.match(adminJs,/async function refreshReferralQueue\(/);
+assert.match(adminJs,/action:"referral_resolve"/);
+assert.match(adminHtml,/id="adminReferralQualityList"/);
+assert.match(adminHtml,/js\/beagu-2026-admin-review\.js\?v=20261121-referral1/);
+console.log('PASS: quality signals never reveal answers; cases held; owner-only reversible reward and Lv2 gate');
