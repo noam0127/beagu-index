@@ -47,6 +47,7 @@ function paintMode(next){
   ?'이메일로 계정을 만든 뒤 인증 메일을 확인하세요. Lv2 참여코드는 그대로 유지됩니다.'
   :'정식 계정으로 로그인하세요. Lv2 참여코드는 별도로 인증됩니다.';
  submit.textContent=mode==='signup'?'회원가입':'로그인하기';
+ password.autocomplete=mode==='signup'?'new-password':'current-password';
  switchMode.textContent=mode==='signup'?'이미 계정이 있어요 · 로그인하기':'계정이 없어요 · 회원가입';
  form.hidden=false;
  switchMode.hidden=false;
