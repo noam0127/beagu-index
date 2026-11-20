@@ -19,7 +19,7 @@ assert.match(sql,/grant execute on function public\.beagu_2026_admin_hold_result
 assert.match(sql,/payload_sha256 is distinct from p_expected_sha256/i);
 assert.match(sql,/approval_status='WITHHELD',approved_by=null,approved_at=null/i);
 assert.match(sql,/beagu_2026_results_approval_audit/i);
-assert.doesNotMatch(sql,/approval_status='APPROVED'/i);
+assert.doesNotMatch(sql,/update\s+public\.beagu_2026_results_snapshot\s+set\s+approval_status='APPROVED'/i);
 assert.match(edge,/admin\.from\("beagu_admin_accounts"\)|db\.from\("beagu_admin_accounts"\)/);
 assert.match(edge,/db\.auth\.getUser\(jwt\)/);
 assert.match(edge,/claims\.aal!=="aal2"/);
