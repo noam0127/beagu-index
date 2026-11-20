@@ -63,7 +63,7 @@ const invoked=[];
 const snapshot={values:[],schools:[]};
 let locked=false;
 scope.LockService={getScriptLock:()=>({
-  tryLock:()=>{assert.equal(locked,false);locked=true;return true;},
+  tryLock:timeout=>{assert.equal(timeout,180000);assert.equal(locked,false);locked=true;return true;},
   releaseLock:()=>{assert.equal(locked,true);locked=false;}
 })};
 scope.readBeagu2026SourceSnapshot=()=>{assert.equal(locked,true);invoked.push('read');return snapshot;};
