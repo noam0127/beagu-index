@@ -412,6 +412,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 @media(max-width:700px){.setup-portrait-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}
 @media(max-width:370px){.setup-portrait-grid{gap:5px}.setup-character{padding:4px}.setup-character-name{font-size:12px}.setup-character-tag{font-size:9px}}
 </style>
+<link rel="stylesheet" href="styles/class-diary-cast-photo-retouch-v4.css?v=20261120-portrait-v4">
 </head>
 <body>
 <main>
@@ -835,6 +836,11 @@ function syncSetupName(){
 const setupPortraitSprite=new Image();
 setupPortraitSprite.onload=()=>{$('setup').classList.add('has-unified-portraits');};
 setupPortraitSprite.src='assets/class-diary/characters/setup-colleagues-20261120.webp';
+/* The approved portrait retouch is limited to the three affected setup cards.
+ * Retain the original portrait artwork as a fallback and leave all game-stage art untouched. */
+const retouchedPortraitStrip=new Image();
+retouchedPortraitStrip.onload=()=>{$('setup').classList.add('has-retouched-portraits');};
+retouchedPortraitStrip.src='assets/class-diary/characters/setup-three-portraits-v4.webp';
 for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','man'],['setupPortraitNone','none'],['setupPortraitDogyeom','man2'],['setupPortraitTaeo','man3']]){
  const art=(partner==='man2'||partner==='man3')?null:(femaleHQ&&femaleHQ.portrait(partner));
  $(id).src=art||visual.dataUrl(visual.portraitSvg(partner,'neutral'));
