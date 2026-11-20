@@ -37,7 +37,8 @@ body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-a
 /* Prevent outdated Minseo zoom from cutting off her hair. */
 body.is-setting #setup[data-step="2"] .setup-character-art.minseo img#setupPortraitNone {
   transform: none !important;
-  object-position: center center !important;
+  object-fit: contain !important;
+  object-position: center top !important;
 }
 @media (prefers-reduced-motion: reduce) {
   body.is-setting #setup[data-step="2"] .setup-character-art { transition: none !important; }
