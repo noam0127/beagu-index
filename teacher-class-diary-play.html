@@ -1220,7 +1220,7 @@ $('vnMore').addEventListener('click',()=>{
  if(vnState.index<vnState.pages.length-1){vnState.index++;vnPresent();return;}
  $('vnMore').hidden=true;
  if(vnState.kind==='outcome'){
-  if(storyMode==='semester'&&dailyJournal.selection(game,game.episode)===null)openDailyJournalChoice();
+  if(storyMode==='semester'&&game&&game.phase==='semester_reflection'&&dailyJournal.selection(game,game.episode)===null)openDailyJournalChoice();
   else {$('nextBtn').hidden=false;$('nextBtn').focus()}
  }else journey.openChoice();
 });
