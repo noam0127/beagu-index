@@ -77,20 +77,22 @@ async function searchSchools(raw:string):Promise<School[]>{
 async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
  if(typeof rawId!=="string"||!/^[0-9A-Za-z_-]{4,32}$/.test(rawId))return null;
  const q=new URLSearchParams({select:"school_id,school_name,sido_standard",school_id:"eq."+rawId,school_kind:"eq.초등학교",status:"eq.운영",limit:"1"});
- const rows=await db("schools?"+q) as School[];
- const school=rows[0];if(!school)return null;
- // At least one published, reviewed school percentile (2023–2026) is required.
- // Average only observed years: no missing-year imputation or zero scores.
+ // Fetch school identity and approved yearly metrics concurrently instead of
+ // serial network round-trips. A missing/inactive school is still rejected.
  const years=[2023,2024,2025,2026];
  const p=new URLSearchParams({
    select:"survey_year,percentile",
-   school_id:"eq."+school.school_id,
+   school_id:"eq."+rawId,
    survey_year:"in.(2023,2024,2025,2026)",
    publication_status:"eq.PUBLISHED",
    privacy_reviewed:"eq.true",
    limit:"4"
  });
- const annualRows=await db("beagu_school_report_yearly?"+p) as Array<{survey_year:number;percentile:number|null}>;
+ const [rows,annualRows]=await Promise.all([
+   db("schools?"+q) as Promise<School[]>,
+   db("beagu_school_report_yearly?"+p) as Promise<Array<{survey_year:number;percentile:number|null}>>
+ ]);
+ const school=rows[0];if(!school)return null;
  const percentiles=new Map<number,number>();
  for(const row of annualRows){
    const raw=row.percentile;
