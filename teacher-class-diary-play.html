@@ -401,6 +401,14 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 </style>
 <link rel="stylesheet" href="styles/class-diary-player-flow-v1.css?v=20261120-a1">
 <link rel="stylesheet" href="styles/class-diary-viewport-safe-v1.css?v=20261120-bottom2">
+
+<style id="diary-five-colleagues">
+.setup-portrait-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.setup-character-art.dogyeom{background:linear-gradient(155deg,#e6e7f5,#d5d8e9)}
+.setup-character-art.taeo{background:linear-gradient(155deg,#e0f1e9,#c4dbd9)}
+@media(max-width:700px){.setup-portrait-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}
+@media(max-width:370px){.setup-portrait-grid{gap:5px}.setup-character{padding:4px}.setup-character-name{font-size:12px}.setup-character-tag{font-size:9px}}
+</style>
 </head>
 <body>
 <main>
@@ -536,6 +544,14 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
     <span class="setup-character-art minseo"><img id="setupPortraitNone" alt="" aria-hidden="true"></span>
     <span class="setup-character-name">윤민서</span><span class="setup-character-tag">기록부터 먼저 살피는 시선</span>
    </button>
+   <button class="setup-character" type="button" data-partner-choice="man2" aria-pressed="false" aria-label="차도겸 선택">
+    <span class="setup-character-art dogyeom"><img id="setupPortraitDogyeom" alt="" aria-hidden="true"></span>
+    <span class="setup-character-name">차도겸</span><span class="setup-character-tag">실뜨기 · 말보다 손을 내미는 교사</span>
+   </button>
+   <button class="setup-character" type="button" data-partner-choice="man3" aria-pressed="false" aria-label="백태오 선택">
+    <span class="setup-character-art taeo"><img id="setupPortraitTaeo" alt="" aria-hidden="true"></span>
+    <span class="setup-character-name">백태오</span><span class="setup-character-tag">배구 · 승부보다 협력의 토스</span>
+   </button>
   </div>
   <div class="setup-supporting-cast" aria-label="학교에서 만날 여성 교직원">
    <strong class="setup-supporting-title">학교에서 만날 선생님들</strong>
@@ -554,7 +570,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
     </div>
     <p class="setup-supporting-note">모두 가상의 성인 인물로, 추가 연애 경로는 없습니다.</p>
    </div>
-  <select id="partner" required hidden aria-hidden="true" tabindex="-1"><option value="">알고 싶은 사람을 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option></select>
+  <select id="partner" required hidden aria-hidden="true" tabindex="-1"><option value="">알고 싶은 사람을 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option><option value="man2">도겸 선생님 · 실뜨기</option><option value="man3">태오 선생님 · 배구</option></select>
   <div class="setup-story-note"><span aria-hidden="true">✧</span><p>2027년 3월 8일–14일 · 7일의 이야기<br><small>21개의 기본 선택과 학교생활 속 다양한 사건</small></p></div>
  </div>
 </div>
@@ -697,7 +713,9 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-longform-act4-v2.js?v=20261120-5x1"></script>
 <script src="js/class-diary-longform-act5-v2.js?v=20261120-5x1"></script>
 <script src="js/class-diary-longform-act6-v2.js?v=20261120-5x1"></script>
-<script src="js/class-diary-semester-v1.js?v=20261120"></script>
+<script src="js/class-diary-colleague-dogyeom-v1.js?v=20261120-cast2"></script>
+<script src="js/class-diary-colleague-taeo-v1.js?v=20261120-cast2"></script>
+<script src="js/class-diary-semester-v1.js?v=20261120-cast2"></script>
 <script src="js/class-diary-narrator-v1.js?v=20261120-pov1"></script>
 <script src="js/class-diary-school-brief-v1.js?v=20261120-a1"></script>
 <script src="js/class-diary-progress-v1.js?v=20261120-1"></script>
@@ -763,7 +781,9 @@ const journey=window.BeaguClassDiaryJourney.init({show,sound,validateSchoolName:
 const setupDescription=Object.freeze({
  woman:'서지윤 · 30세 · 3학년 담임. 먼저 귀 기울이고 자신의 생각은 분명하게 말합니다. 관계가 가까워지면 조심스러운 호감으로 이어질 수 있습니다.',
  man:'한현우 · 32세 · 3학년 담임. 농담으로 긴장을 풀어 주지만 중요한 순간에는 진심을 전합니다. 서로의 시간을 존중하며 가까워질 수 있습니다.',
- none:'윤민서 · 29세 · 3학년 담임. 정확한 기록과 협력을 소중히 여깁니다. 이 경로는 연애가 아니라 깊어지는 우정의 이야기입니다.'
+ none:'윤민서 · 29세 · 3학년 담임. 중식요리를 즐기며 기본 개념을 먼저 확인합니다. 이론의 정확성과 학생의 발견이 충돌할 때 고민합니다.',
+  man2:'차도겸 · 31세 · 3학년 담임. 아주 눈에 띄는 미남이지만 실뜨기를 좋아하고 조용합니다. 일부 학생의 외모 중심 관심 속에서도 교사로서의 공평한 거리를 지키려 합니다.',
+  man3:'백태오 · 33세 · 3학년 담임. 동호회 배구를 즐깁니다. 팀워크에 능하지만 승부를 좋아하지 않는 학생에게도 선택권을 주는 법을 배워 갑니다.'
 });
 function syncSetupPartner(){
  const partner=$('partner').value;
@@ -777,9 +797,9 @@ function syncSetupName(){
 const setupPortraitSprite=new Image();
 setupPortraitSprite.onload=()=>{$('setup').classList.add('has-unified-portraits');};
 setupPortraitSprite.src='assets/class-diary/characters/setup-colleagues-20261120.webp';
-for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','man'],['setupPortraitNone','none']]){
- const art=femaleHQ&&femaleHQ.portrait(partner);
- $(id).src=art||visual.dataUrl(sd.portraitSvg(partner,'neutral'));
+for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','man'],['setupPortraitNone','none'],['setupPortraitDogyeom','man2'],['setupPortraitTaeo','man3']]){
+ const art=(partner==='man2'||partner==='man3')?null:(femaleHQ&&femaleHQ.portrait(partner));
+ $(id).src=art||visual.dataUrl(visual.portraitSvg(partner,'neutral'));
  $(id).dataset.artQuality=art?'hq':'sd';
  $(id).dataset.portraitFraming=art&&femaleHQ.hasBust(partner)?'bust':'original';
 }

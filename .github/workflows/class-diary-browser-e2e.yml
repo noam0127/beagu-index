@@ -14,6 +14,8 @@ on:
       - 'js/class-diary-longform-act*-v2.js'
       - 'styles/class-diary-player-flow-v1.css'
       - 'js/class-diary-narrator-v1.js'
+      - 'js/class-diary-colleague-dogyeom-v1.js'
+      - 'js/class-diary-colleague-taeo-v1.js'
       - 'js/class-diary-journey-v1.js'
       - 'js/class-diary-semester-ui-v1.js'
       - 'styles/class-diary-semester-ui-v1.css'

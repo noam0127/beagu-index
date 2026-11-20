@@ -43,7 +43,9 @@ const BRIDGES=Object.freeze({
 const RELATIONSHIPS=Object.freeze({
   woman:{name:'지윤 선생님',initial:'윤',style:'차분하게 귀 기울이는 동학년 동료',caption:'주변을 먼저 살피지만 자기 생각도 분명히 말하는 사람'},
   man:{name:'현우 선생님',initial:'우',style:'사소한 농담으로 긴장을 덜어 주는 동학년 동료',caption:'농담 뒤에 중요한 이야기를 그냥 흘려보내지 않는 사람'},
-  none:{name:'민서 선생님',initial:'민',style:'상대를 서두르지 않고 지켜보는 동학년 동료',caption:'작은 메모를 나누며 가까워지는 우정'}
+  none:{name:'민서 선생님',initial:'민',style:'중식 요리의 순서처럼 수업을 설계하는 동학년 동료',caption:'중식 요리를 좋아하고 교실의 질문을 정확하게 기록하는 교사'},
+  man2:{name:'도겸 선생님',initial:'겸',style:'실뜨기와 섬세한 협업을 좋아하는 동학년 교사',caption:'차도겸 · 잘생긴 외모보다 손으로 만드는 배움을 소중히 여기는 교사'},
+  man3:{name:'태오 선생님',initial:'태',style:'배구를 즐기며 팀의 움직임을 살피는 동학년 교사',caption:'백태오 · 승패에 몰입하다가도 소외된 아이가 참여할 길을 찾는 교사'}
 });
 const VISUAL=Object.freeze([
   {id:'morning',label:'아침의 교무실',theme:'dawn'},
