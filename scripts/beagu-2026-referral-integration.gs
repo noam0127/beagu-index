@@ -46,6 +46,7 @@ function prepareBeaguReferralFormField(){
   props.setProperty('BEAGU_REFERRAL_FORM_ENTRY',match[1]);
   // Logs contain only public Form question metadata, no response data or credentials.
   Logger.log('추천용 Form 문항 준비 완료: '+match[1]);
+  Logger.log('공식 설문 공개 URL: '+form.getPublishedUrl());
   Logger.log('다음: GitHub js/beagu-referral-form-config-v1.js의 entryName을 '+match[1]+'로 입력');
 }
 /** 해당 Form만 정확히 확인하고 Form submit 트리거를 추가합니다. */
