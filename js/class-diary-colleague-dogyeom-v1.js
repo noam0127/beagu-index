@@ -1,4 +1,4 @@
-/* Fourth regular adult colleague: 백도겸.
+/* Fourth regular adult colleague: 차도겸.
  * No romance or personal speculation about pupils; children admire a teacher's
  * visible skills and appearance, and he establishes fair, safe boundaries.
  * All scenes are narrated by the player in the semester.
@@ -7,14 +7,14 @@
  'use strict';
  const VERSION='class-diary-colleague-dogyeom/v1';
  const CHARACTER=Object.freeze({
-  id:'man2',name:'백도겸',age:31,grade:3,role:'3학년 담임교사',
+  id:'man2',name:'차도겸',age:31,grade:3,role:'3학년 담임교사',
   temperament:'눈에 띄는 외모와 달리 주목받는 상황에는 서툴고, 복잡한 일을 실뜨기처럼 순서대로 풀어 가는 사람',
   hobby:'실뜨기',relationship:'romance_optional',
   strengths:['손의 움직임을 통해 개념을 설명한다','학생들에게 공평하게 시간을 배분한다','불편한 주목을 받더라도 아이를 탓하지 않는다'],
   flaws:['도움 요청을 마다하다 혼자 감당한다','바쁜 순간에는 혼자만의 실뜨기로 대화를 피한다','실수를 다시 풀어야 한다는 말로 상대의 상처를 가볍게 보이게 할 때가 있다']
  });
  const BEATS=Object.freeze({
-  1:'학년연구실 문에 다다랐을 때 낯선 남자 교사가 실 한 가닥을 손가락에 걸어 둔 채 자리에서 일어났다. 백도겸이라고 했다. 복도에서 아이 둘이 그를 보고 뛰어오려 하자 그는 손을 내려놓고 교실로 돌아가자고 했다. 나는 실보다 그가 목소리를 낮추던 순간을 먼저 기억했다.',
+  1:'학년연구실 문에 다다랐을 때 낯선 남자 교사가 실 한 가닥을 손가락에 걸어 둔 채 자리에서 일어났다. 차도겸이라고 했다. 복도에서 아이 둘이 그를 보고 뛰어오려 하자 그는 손을 내려놓고 교실로 돌아가자고 했다. 나는 실보다 그가 목소리를 낮추던 순간을 먼저 기억했다.',
   3:'내 농담에 아무도 웃지 않았던 쉬는 시간, 아이들이 도겸 선생님이 만든 실뜨기 별을 보러 우르르 나갔다. 몇몇 여학생은 그 선생님의 얼굴이 잘생겼다고 속삭였다. 도겸은 못 들은 척하지도, 아이들을 놀리지도 않았다. “오늘은 실뜨기 보고 싶은 사람 모두 차례대로요.” 돌아온 아이들이 내게도 별 모양을 만들어 달라고 했을 때, 나는 농담보다 먼저 손을 내밀었다.',
   7:'복도에는 도겸에게 실뜨기를 배우려는 아이들이 줄을 섰다. 특히 몇몇 여학생은 쉬는 시간마다 그의 교실을 찾아왔다. 그는 기다리는 아이들 뒤에 서 있던 남학생을 보고 줄을 다시 정리했다. “선생님이 누구를 더 좋아해서 먼저 가르치는 건 아니에요.” 나는 인기와 편애 사이에 그어진 그 선을 생각했다.',
   8:'지후는 실뜨기 줄의 뒤편에서 혼자 서 있었다. 도겸은 그 아이에게 먼저 묻지 않고 모두에게 참여할 방법을 설명했다. 정작 지후는 오늘은 하고 싶지 않다고 했다. 도겸은 실을 거두어 주었다. 참여할 권리에는 참여하지 않을 권리도 있다는 것을, 나는 그때 처음 똑바로 봤다.',
@@ -33,7 +33,7 @@
   36:'교실을 정리하며 도겸이 남긴 실뜨기 종이에는 첫 번째 그림만 있었다. 나머지 방법은 아이들이 써 놓았다. 도겸이 말했다. “선생님이 보여 준 모양보다 아이들이 바꾼 모양이 많아졌네요.” 나는 그 종이를 다음 교사가 볼 수 있는 자리에 두었다. 실은 끝까지 연결돼 있어야 쓸모가 있는 것이 아니었다. 필요하면 풀고 다시 걸 수 있었다.'
  });
  function moment(episode){return BEATS[episode]||'';}
- function validate(){const required=[1,3,7,8,10,13,15,17,20,22,24,26,29,30,34,35,36];for(const n of required)if(typeof BEATS[n]!=='string'||BEATS[n].length<70)throw Error('DOGYEOM_THREAD_MISSING_'+n);return {colleague:'백도겸',scenes:required.length};}
+ function validate(){const required=[1,3,7,8,10,13,15,17,20,22,24,26,29,30,34,35,36];for(const n of required)if(typeof BEATS[n]!=='string'||BEATS[n].length<70)throw Error('DOGYEOM_THREAD_MISSING_'+n);return {colleague:'차도겸',scenes:required.length};}
  validate();
  const api=Object.freeze({VERSION,CHARACTER,BEATS,moment,validate});
  if(typeof module==='object'&&module.exports)module.exports=api;
