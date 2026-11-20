@@ -126,7 +126,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
       imageHidden:getComputedStyle(element.querySelector('img')).visibility==='hidden'};
     });
    });
-   assert(portraits.length===5&&portraits.every(p=>p.image.includes('class-diary-cast-five-distinct-v5.webp')&&p.imageHidden),
+   assert(portraits.length===5&&portraits.every(p=>p.image.includes('class-diary-cast-hobbies-v6.webp')&&p.imageHidden),
      'All five new portraits must load as independent square crops: '+JSON.stringify(portraits));
    assert(portraits.every(p=>Math.abs(p.ratio-1)<0.08&&p.backgroundSize.includes('500%')),
      'Five portraits must be square and retain original face proportions: '+JSON.stringify(portraits));
