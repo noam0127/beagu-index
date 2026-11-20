@@ -21,3 +21,17 @@ revoke all on function public.beagu_earned_challenge_visitor(text) from public, 
 grant execute on function public.beagu_earned_challenge_visitor(text) to service_role;
 comment on function public.beagu_earned_challenge_visitor(text) is
  'Server-only earned referral check for Lv2 code-based session issuance. Never validates an unearned identity code.';
+
+-- Session revalidation by bound visitor ID. Only the service role can call it.
+create or replace function public.beagu_has_earned_challenge_visitor(p_visitor uuid)
+returns boolean language sql stable security definer set search_path = ''
+as $$
+ select p_visitor is not null and exists(
+   select 1 from beagu_private.challenge_referral_profiles p
+   where p.campaign='2026' and p.visitor_id=p_visitor
+     and p.access_level>=2 and p.valid_referrals>=1
+     and p.upgraded_at is not null and p.disabled=false
+ )
+$$;
+revoke all on function public.beagu_has_earned_challenge_visitor(uuid) from public, anon, authenticated;
+grant execute on function public.beagu_has_earned_challenge_visitor(uuid) to service_role;
