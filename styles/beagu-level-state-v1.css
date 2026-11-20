@@ -41,10 +41,11 @@ body.beagu-levelup-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){.beagu-levelup-overlay{backdrop-filter:none}}
 
 
-/* Keep the level badge inside the logo row, never over the second nav row.
-   Fix the wrapper (rather than the child anchor) for reliable iOS Safari placement. */
+/* Level badge belongs to the top logo row, not the scrolling viewport.
+   Keep it absolute so it cannot cover the Challenge navigation link when scrolling.
+   Position the wrapper (not its child anchor) consistently on mobile Safari. */
 .beagu-level-state-container{
-  position:fixed;
+  position:absolute;
   top:13px;
   right:max(18px,calc(50vw - 580px));
   z-index:1100;
