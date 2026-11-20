@@ -65,10 +65,10 @@ for(const [p,source] of Object.entries({
   'js/postit-v1.js':postitJS,
   'levels.html':levels
 })){
-  assert.ok(source.includes('Lv.2(임시)'),p+' shows provisional Lv2 in Korean');
-  assert.ok(!source.includes('Lv.2(진)'),p+' must not show military-like final marker');
+  assert.ok(!source.includes('Lv.2(진)'),p+' avoids retired final-status label');
+  assert.ok(!source.includes('정식 계정 생성 후'),p+' must not require signup for earned Lv2');
 }
 assert.ok(levelJS.includes("result.provisional===true"),'provisional status remains server-derived');
 assert.ok(postitJS.includes('dataset.provisional!=="true"'),
   'provisional users still lack posting permissions');
-console.log('PASS: unified search/compare UI and temporary Lv.2 naming without changing auth permissions');
+console.log('PASS: unified search/compare UI and earned Lv2 naming while preserving server authorization');
