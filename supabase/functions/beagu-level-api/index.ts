@@ -15,8 +15,16 @@ async function check(req:Request){
  const v=(req.headers.get('X-Beagu-Session')||'').trim();
  if(!/^[a-f0-9]{64}$/.test(v))return null;
  const digest=await hash(v);
- const {data,error}=await admin.from('beagu_level_sessions').select('access_level,expires_at,identity_visitor_id').eq('token_sha256',digest).maybeSingle();
+ const {data,error}=await admin.from('beagu_level_sessions').select('access_level,expires_at,identity_visitor_id,identity_campaign').eq('token_sha256',digest).maybeSingle();
  if(error||!data||(!Number.isFinite(Date.parse(data.expires_at))||Date.parse(data.expires_at)<=Date.now()))return null;
+ // Re-check earned Lv2 authorization on every protected request. Disabling a
+ // referral profile immediately revokes its ability to read protected content.
+ if(data.identity_campaign==='2026'&&data.identity_visitor_id&&Number(data.access_level)>=2){
+   const {data:earned,error:earnedError}=await admin.rpc('beagu_has_earned_challenge_visitor',{
+     p_visitor:data.identity_visitor_id
+   });
+   if(earnedError||earned!==true)return null;
+ }
  return data;
 }
 Deno.serve(async(req:Request)=>{
@@ -41,17 +49,23 @@ Deno.serve(async(req:Request)=>{
    // A challenge identity code is a temporary, server-verified Lv.2 credential.
    // It must never become a full account or a Post-it author identity.
    let level=Number(acc?.access_level)||0;
-   let provisional=false;
+   let visitorId:string|null=null;
    if(!acc){
-     const {data:valid,error:identityError}=await admin.rpc('beagu_check_class_diary_guest_code',{p_code:code});
+     // A merely issued challenge identity code is NOT sufficient.
+     const {data:earnedVisitor,error:identityError}=await admin.rpc('beagu_earned_challenge_visitor',{p_code:code});
      if(identityError)return send({error:'AUTH_UNAVAILABLE'},503,origin);
-     if(valid===true){level=2;provisional=true;}
+     if(typeof earnedVisitor==='string'&&/^[a-f0-9-]{36}$/i.test(earnedVisitor)){
+       visitorId=earnedVisitor;level=2;
+     }
    }
    if(level<1)return send({error:'INVALID_CODE'},401,origin);
-   // Existing legacy Lv.2 codes also have no linked account identity.
-   if(level>=2)provisional=true;
+   // Legacy level codes remain unchanged; earned challenge codes bind one
+   // stable pseudonymous visitor for Post-it quotas without account creation.
+   const provisional=level>=2&&!visitorId;
    const v=token(),expiry=new Date(Date.now()+6*60*60*1000).toISOString();
-   const {error:writeError}=await admin.from('beagu_level_sessions').insert({token_sha256:await hash(v),access_level:level,expires_at:expiry});
+   const record:Record<string,unknown>={token_sha256:await hash(v),access_level:level,expires_at:expiry};
+   if(visitorId){record.identity_campaign='2026';record.identity_visitor_id=visitorId;}
+   const {error:writeError}=await admin.from('beagu_level_sessions').insert(record);
    if(writeError)return send({error:'SESSION_UNAVAILABLE'},503,origin);
    return send({token:v,level,provisional,expires_at:expiry},200,origin);
   }

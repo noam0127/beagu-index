@@ -159,5 +159,16 @@
   window.addEventListener('pageshow',event=>{
     if(event.persisted)void verifyStored();
   });
+  window.addEventListener('beagu:participation-authenticated',event=>{
+    const next=event.detail;
+    if(next&&Number(next.level)>=1&&typeof next.token==='string'){
+      ++requestSerial;
+      unlock(next.token,Number(next.level));
+    }
+  });
+  window.addEventListener('beagu:participation-logged-out',()=>{
+    ++requestSerial;
+    lock('');
+  });
   void verifyStored();
 })();

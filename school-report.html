@@ -213,6 +213,8 @@
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261120-levelup1">
 <script defer src="js/beagu-level-state-v1.js?v=20261120-lv1-plain1"></script>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-unified1">
+<script defer src="js/beagu-participation-auth-v2.js?v=20261121-unified1"></script>
 </head>
 <body class="beagu-ui-page beagu-page-report">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -1402,7 +1404,7 @@
       $('tierError').textContent=state.authLevel>0?
         '현재 코드는 Lv.'+state.authLevel+'까지 열람할 수 있습니다. Lv.'+level+' 코드를 입력하세요.':
         '해당 열람등급의 인증코드를 입력하세요.';
-      $('tierCode').focus();return;
+      window.dispatchEvent(new Event('beagu:participation-open'));return;
     }
     state.tier=level;clearTierItems();tierUI();render();
     const id=String(state.school.school_id);publicYearDB(id);await protectedReport(id);
@@ -1600,6 +1602,18 @@
   function bind(){
     for(const level of [0,1])$('tier'+level).addEventListener('click',()=>chooseTier(level));
     $('tierCodeForm').addEventListener('submit',loginTier);
+    window.addEventListener('beagu:participation-authenticated',event=>{
+      const auth=event.detail;
+      if(!auth||typeof auth.token!=='string'||![1,2].includes(Number(auth.level)))return;
+      state.authLevel=Number(auth.level);state.authToken=auth.token;saveToken(auth.token);
+      if(state.school&&!state.demo&&state.requestedTier>0)
+        void chooseTier(state.requestedTier);
+    });
+    window.addEventListener('beagu:participation-logged-out',()=>{
+      state.authLevel=0;state.authToken='';saveToken('');
+      state.tier=0;state.requestedTier=0;clearTierItems();tierUI();render();
+    });
+
     let timeout;
     $('schoolInput').addEventListener('input',()=>{
       clearTimeout(timeout);

@@ -171,6 +171,16 @@
     }
   });
   $('logoutButton').addEventListener('click', () => loggedOut());
+  window.addEventListener('beagu:participation-authenticated',event=>{
+    const next=event.detail;
+    if(!next||Number(next.level)<level||typeof next.token!=='string')return;
+    session=next.token;
+    geographyComparisons.clear();
+    visiblePageSchools=[];
+    loggedIn();
+    $('searchInput').focus();
+  });
+  window.addEventListener('beagu:participation-logged-out',()=>loggedOut());
   function selectMode(nextMode) {
     mode = nextMode;
     $('schoolPanel').hidden = mode !== 'school';

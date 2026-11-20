@@ -16,8 +16,8 @@
   // Use only the server-verified badge event; never upgrade from a typed code alone.
   const syncLevelCards=(raw,provisional)=>{
     const tier=/^[012]$/.test(raw)?Number(raw):null;
-    const badgeLabel=tier===0?'미인증':tier===1?'Lv.1 인증됨'
-      :tier===2?(provisional?'Lv.2(임시)':'Lv.2 인증됨')
+    const badgeLabel=tier===0?'미인증':tier===1?'✓ Lv1 · 설문 참여 완료'
+      :tier===2?'♛ Lv2 · 챌린지 달성'
       :raw==='checking'?'확인 중':'확인 불가';
     const cards=[
       ['lv1QuickAuth','lv1QuickBadge'],
@@ -80,7 +80,7 @@
         lastValidatedToken=token;
         const tier=result.level>=2?2:1;
         const provisional=tier===2&&result.provisional===true;
-        const label=provisional?'Lv.2(임시)':'Lv.'+tier;
+        const label=tier===2?'♛ Lv2 · 챌린지 달성':'✓ Lv1 · 설문 참여 완료';
         setState(String(tier),label,'현재 '+label+' · 레벨 안내 보기',provisional);
       }else{
         lastValidatedToken='';
@@ -100,8 +100,7 @@
   window.addEventListener('focus',refreshIfVisible);
   document.addEventListener('visibilitychange',refreshIfVisible);
 
-  // Keep the existing inline Lv.1 verification forms visible. No identity-code
-  // verification button or overlay is injected by the global level badge.
-  // Previously issued challenge identity codes and sessions remain unchanged.
+  // Shared Lv1/Lv2 participation dialog observes this server-verified event;
+  // data.provisional is retained for legacy access restrictions.
   void refresh();
 })();

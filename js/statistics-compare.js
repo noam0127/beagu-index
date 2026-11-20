@@ -776,6 +776,14 @@
     elements.authToggle.setAttribute('aria-pressed',String(show));
     elements.authToggle.setAttribute('aria-label',show?'참여코드 숨기기':'참여코드 표시');
   });
+  window.addEventListener('beagu:participation-authenticated',event=>{
+    const next=event.detail;
+    if(next&&Number(next.level)>=1&&typeof next.token==='string')
+      activateAuth(next.token,Number(next.level),next.provisional===true);
+  });
+  window.addEventListener('beagu:participation-logged-out',()=>{
+    clearAuth('참여코드 인증이 해제되었습니다.');
+  });
   updateAuthUI();
   verifyStoredSession();
   renderSelections();
