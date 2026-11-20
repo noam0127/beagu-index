@@ -5,6 +5,7 @@
 const byId=id=>document.getElementById(id);
 const card=byId('challengeIdentityPanel');
 const signup=byId('challengeMemberSignup');
+const signupSection=byId('challengeMemberSignupSection');
 const overlay=byId('challengeMemberOverlay');
 const dialog=byId('challengeMemberDialog');
 const title=byId('challengeMemberTitle');
@@ -19,7 +20,7 @@ const message=byId('challengeMemberMessage');
 const connect=byId('challengeMemberLink');
 const signOut=byId('challengeMemberSignOut');
 const client=window.supabaseClient;
-if(![card,signup,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut].every(Boolean)||!client)return;
+if(![card,signup,signupSection,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut].every(Boolean)||!client)return;
 const SESSION_KEY='beagu-level-session-v1';
 const DEVICE_KEY='beagu-referral-device-secret-v1';
 const LEVEL_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
@@ -35,6 +36,7 @@ function paintTier(){
  const badge=byId('beaguLevelState');
  const token=levelToken();
  tier2=badge?.dataset.level==='2'&&/^[a-f0-9]{64}$/.test(token);
+ signupSection.hidden=!tier2;
  signup.hidden=!tier2;
  if(!tier2)close();
 }
@@ -127,7 +129,7 @@ signup.addEventListener('click',()=>open('signup'));
 window.addEventListener('beagu:challenge-account-open',event=>open(event.detail?.mode||'signin'));
 window.addEventListener('beagu:level-state-updated',paintTier);
 window.addEventListener('beagu:participation-authenticated',()=>queueMicrotask(paintTier));
-window.addEventListener('beagu:participation-logged-out',()=>{tier2=false;signup.hidden=true;close()});
+window.addEventListener('beagu:participation-logged-out',()=>{tier2=false;signupSection.hidden=true;signup.hidden=true;close()});
 closeButton.addEventListener('click',close);
 overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
 switchMode.addEventListener('click',()=>{paintMode(mode==='signup'?'signin':'signup');email.focus()});
