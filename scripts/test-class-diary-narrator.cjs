@@ -7,7 +7,7 @@ const narrator=require('../js/class-diary-narrator-v1.js');
 const semester=require('../js/class-diary-semester-v1.js');
 const entry=fs.readFileSync(path.join(__dirname,'../teacher-class-diary-play.html'),'utf8');
 const journey=fs.readFileSync(path.join(__dirname,'../js/class-diary-journey-v1.js'),'utf8');
-assert.deepEqual(narrator.validate(),{narrators:5,perspective:'colleague'});
+assert.deepEqual(narrator.validate(),{narrators:5,perspective:'colleague',longPrologue:true});
 const cases=[['woman','서지윤'],['man','한현우'],['none','윤민서'],['man2','차도겸'],['man3','백태오']];
 const unique=new Set();
 const base=partner=>({
@@ -24,6 +24,8 @@ for(const [partner,narratorName] of cases){
  assert(!opening.paragraphs.some(p=>p.includes('새봄 선생님')),'The player name must not be assigned before the prologue ends');
  assert(opening.paragraphs.every(p=>!p.includes('{player}')));
  assert(opening.paragraphs.every(p=>p.length>25));
+ assert.equal(opening.paragraphs.length,52,'Five POVs must each have 52 purposeful passages');
+ assert(opening.paragraphs.join('').length>=10000,'The prologue must expand twentyfold');
  unique.add(opening.paragraphs.join(''));
  let state=semester.createGame(base(partner));
  for(let episode=1;episode<=36;episode++){
@@ -38,8 +40,8 @@ for(const [partner,narratorName] of cases){
  assert.equal(state.phase,'semester_ending');
  assert.equal(state.ending.perspective,'player','The ending is player POV');
 }
-assert.equal(unique.size,5,'Three genuinely different prologues are required');
-assert(entry.includes('js/class-diary-narrator-v1.js?v=20261120-pov1'));
+assert.equal(unique.size,5,'Five distinct colleague perspectives must be present');
+assert(entry.includes('js/class-diary-narrator-v1.js?v=20261120-long3'));
 assert(entry.includes('function renderNarratorPrologue()'));
 assert(entry.includes("const view=narrator.prologue(game.profile);"));
 assert(entry.includes("if(storyMode==='semester'&&prologuePending)return renderNarratorPrologue();"));
