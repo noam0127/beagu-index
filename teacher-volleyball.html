@@ -292,6 +292,84 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
   const secondBall={x:685,y:168,vx:-6,vy:-5,spin:0,cooldown:0,trail:[],shadowFrames:0,shadowColor:"#762b4b"};
   const activeBalls=[ball],clones=[];
+  const mystery=window.ArcadeMysteryItems;
+  const mysteryDrops=[],mysteryReveals=[],mysteryBuffs={left:{},right:{}};
+  const mysteryCadence={easy:[15,22],normal:[12,18],hard:[9,14],very_hard:[7,11],extreme:[5,9]};
+  const bonusFriend={x:260,y:FLOOR-31,vx:0,vy:0,side:"left",contactFrames:0,clone:true,name:"친한 동학년"};
+  let nextMystery=0;
+  const isMysteryBuff=(side,key)=>mysteryBuffs[side][key]>state.activeFrames;
+  const activeAllies=()=>isMysteryBuff("left","conflict")?[]:
+    isMysteryBuff("left","friends")?[...clones,bonusFriend]:clones;
+  function scheduleMystery(){
+    const span=mysteryCadence[currentDifficulty]||mysteryCadence.hard;
+    nextMystery=state.activeFrames+Math.round((span[0]+Math.random()*(span[1]-span[0]))*60);
+  }
+  function resetMystery(){
+    mysteryDrops.length=0;mysteryReveals.length=0;
+    mysteryBuffs.left={};mysteryBuffs.right={};scheduleMystery();
+  }
+  function itemPoints(side,delta){
+    const key=side==="left"?"leftScore":"rightScore";
+    state[key]=clamp(state[key]+delta,0,MATCH_TARGET);
+    syncUI();
+    if(state.leftScore>=MATCH_TARGET||state.rightScore>=MATCH_TARGET)finishMatch();
+  }
+  function collectMystery(item,side){
+    const buffs=mysteryBuffs[side],now=state.activeFrames;
+    const dur=(item.id==="friends"||item.id==="conflict"?14:11)*60;
+    switch(item.id){
+      case "shackle":buffs.shackle=now+dur;buffs.wings=0;break;
+      case "complaint":buffs.complaint=now+dur;buffs.letter=0;break;
+      case "bullying":itemPoints(side,-1);break;
+      case "report":itemPoints(side,-10);break;
+      case "conflict":buffs.conflict=now+dur;buffs.friends=0;break;
+      case "wings":buffs.wings=now+dur;buffs.shackle=0;break;
+      case "letter":buffs.letter=now+dur;buffs.complaint=0;break;
+      case "salary":itemPoints(side,1);break;
+      case "friends":buffs.friends=now+dur;buffs.conflict=0;break;
+      case "bonus":itemPoints(side,2);break;
+    }
+    const p=side==="left"?left:right;
+    mysteryReveals.push({item,x:p.x,y:p.y-80,ttl:105});
+    if(mysteryReveals.length>4)mysteryReveals.shift();
+    setStatus((side==="left"?"나":"상대")+" 획득: "+item.icon+" "+item.name);
+    tone(item.good?850:255,.1,item.good?"triangle":"sawtooth",.025);
+  }
+  function updateMystery(){
+    if(state.activeFrames>=nextMystery){
+      if(mysteryDrops.length<3){
+        const side=Math.random()<.5?"left":"right";
+        mysteryDrops.push({x:side==="left"?70+Math.random()*320:515+Math.random()*315,
+          y:36,dy:1.9+Math.random()*.8,ttl:610,side,item:mystery.pick(false)});
+      }
+      scheduleMystery();
+    }
+    for(let i=mysteryDrops.length-1;i>=0;i--){
+      const d=mysteryDrops[i];d.y=Math.min(FLOOR-19,d.y+d.dy);d.ttl--;
+      const players=d.side==="left"?[left,...activeAllies()]:
+        [right,...(isEnemyMinionActive()?[enemyMinion]:[])];
+      if(players.some(p=>Math.hypot(d.x-p.x,d.y-(p.y-23))<49)){
+        mysteryDrops.splice(i,1);collectMystery(d.item,d.side);
+        if(state.phase!=="playing")break;
+      }else if(d.ttl<=0)mysteryDrops.splice(i,1);
+    }
+    for(let i=mysteryReveals.length-1;i>=0;i--)
+      if(--mysteryReveals[i].ttl<=0)mysteryReveals.splice(i,1);
+  }
+  function drawMystery(){
+    for(const d of mysteryDrops)mystery.drawMystery(ctx,d.x,d.y,d.item.good,21,state.activeFrames/60);
+    for(const r of mysteryReveals){
+      ctx.save();ctx.globalAlpha=Math.min(1,r.ttl/24);
+      mystery.drawReveal(ctx,r.item,r.x,r.y-(105-r.ttl)*.42,23);ctx.restore();
+    }
+  }
+  function mysteryBrief(){
+    const buffs=Object.entries(mysteryBuffs.left)
+      .filter(([,v])=>v>state.activeFrames)
+      .map(([k,v])=>k+" "+Math.ceil((v-state.activeFrames)/60)+"초");
+    return diffName[currentDifficulty]+" · "+fmtTime(activeTenths())+
+      (buffs.length?" · "+buffs.join(" / "):"");
+  }
   // EXTREME: always present. VERY HARD: a short intermittent visit.
   const enemyMinion={x:810,y:FLOOR-31,vx:0,contactFrames:0,cooldown:0,
     name:"부하",side:"right",mini:true,active:false,nextSpawnFrame:0,activeUntilFrame:0};
