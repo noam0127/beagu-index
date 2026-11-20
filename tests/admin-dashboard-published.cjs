@@ -17,7 +17,7 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
       html.includes('id="adminSchoolRanking"')&&
       html.includes('id="adminPasswordChangeForm"')&&
       html.includes('id="adminReview2026"')&&
-      /js\\/beagu-2026-admin-review\\.js\\?v=(?:20261120-review2|20261121-auto1)/.test(html)&&
+      (html.includes('js/beagu-2026-admin-review.js?v=20261120-review2')||html.includes('js/beagu-2026-admin-review.js?v=20261121-auto1'))&&
       (!onPush||html.includes('js/beagu-2026-admin-review.js?v=20261121-auto1'))&&
       html.includes('id="adminReview2026List"')&&
       html.includes('id="adminTelemetryHealthPanel"')&&
