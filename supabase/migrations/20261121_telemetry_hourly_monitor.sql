@@ -1,5 +1,5 @@
 -- Hourly, aggregate-only telemetry health checks.
--- No source hash, visitor ID, IP, email, or UA is written here.
+-- The hourly evaluation stores aggregate counters only.
 create table if not exists beagu_private.beagu_telemetry_hourly_checks_v1(
   window_start timestamptz primary key,
   checked_at timestamptz not null default now(),
