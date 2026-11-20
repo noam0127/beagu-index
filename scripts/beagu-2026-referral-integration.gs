@@ -73,6 +73,37 @@ function installBeaguReferralFormSubmitTrigger(){
     props.setProperty('BEAGU_REFERRAL_RECONCILE_FROM_MS',String(Date.now()));
   Logger.log('공식 Form 제출 이벤트 + 매시간 장애 복구 트리거 설치 완료');
 }
+/**
+ * Private, bounded quality indicators derived inside the original Form project.
+ * Never transmit actual item responses, names, school names, or raw answers.
+ * These are REVIEW signals, never proof of deliberate manipulation.
+ */
+function beaguReferralSubmissionQuality_(formResponse){
+  const issues=new Set();
+  const core=new Map();
+  try{
+    for(const response of formResponse.getItemResponses()){
+      const title=String(response.getItem().getTitle()||'');
+      const match=/^Q(0[1-9]|1[0-3])\./.exec(title);
+      if(!match)continue;
+      if(core.has(match[1])){issues.add('UNREADABLE_ITEM_RESPONSE');continue;}
+      const answer=response.getResponse();
+      if(typeof answer!=='string' || !/^[①②③④⑤⑥]/.test(answer.trim())){
+        issues.add('UNREADABLE_ITEM_RESPONSE');
+        continue;
+      }
+      core.set(match[1],answer.trim().charAt(0));
+    }
+  }catch(_){issues.add('UNREADABLE_ITEM_RESPONSE');}
+  if(core.size!==13)issues.add('MISSING_REQUIRED_CORE');
+  // All eleven Likert items with the same option is an ambiguous indicator,
+  // not evidence of misconduct: refer for human review, never reject outright.
+  const likert=Array.from({length:11},(_,i)=>core.get('Q'+String(i+1).padStart(2,'0')));
+  if(likert.every(x=>x&&'①②③④⑤'.includes(x))&&new Set(likert).size===1)
+    issues.add('STRAIGHTLINE_LIKERT');
+  return {qualityVerified:true,qualitySignals:[...issues].sort()};
+}
+
 /** FormTriggerBuilder에서 제공하는 FormResponse만 처리합니다. */
 function onBeaguReferralFormSubmitted(event){
   if(!event || !event.response || !event.source)return;
@@ -96,7 +127,8 @@ function onBeaguReferralFormSubmitted(event){
     headers:{'X-Beagu-Referral-Ingest-Token':secret},
     payload:JSON.stringify({
       sourceSpreadsheetId:BEAGU_REFERRAL_2026.spreadsheetId,
-      formResponseId:responseId,submittedAt:timestamp.toISOString(),proof:proof
+      formResponseId:responseId,submittedAt:timestamp.toISOString(),proof:proof,
+      ...beaguReferralSubmissionQuality_(event.response)
     }),
     muteHttpExceptions:true
   });
