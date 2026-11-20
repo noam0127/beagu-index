@@ -6,7 +6,7 @@ const path=require('node:path');
 const routes=require('../js/class-diary-character-routes-v1.js');
 const engine=require('../js/class-diary-play-v1.js');
 const director=require('../js/class-diary-director-v1.js');
-const kinds=['woman','man','none'],endings=['warm','parallel','steady','tender','ordinary'];
+const kinds=['woman','man','man2','man3','none'],endings=['warm','parallel','steady','tender','ordinary'];
 const world={eligible:true,basic:{id:'7972013',name:'검증된 가상학교',scale:'medium'},publishedYears:[2024],numbers:{},geography:{tags:[]}};
 const plan={schoolId:world.basic.id,scenes:Array.from({length:7},(_,i)=>({day:i+1,basis:'fictional_general'}))};
 function state(kind,day,stats={affection:72,trust:75}){
@@ -29,7 +29,7 @@ for(let day=1;day<=7;day++){
    assert(routes.eventMoment(s,{id:'first_day'}).includes('선생님'),'Personalized school episodes');
   }
  }
- assert.equal(unique.size,3,'All 3 characters must have distinct day '+day+' narrative');
+ assert.equal(unique.size,5,'All 5 characters must have distinct day '+day+' narrative');
 }
 for(const kind of kinds){
  const s=state(kind,4);
@@ -53,4 +53,4 @@ assert.throws(()=>routes.chapterMoment(null),/ROUTE_STATE_REQUIRED/);
 const src=fs.readFileSync(path.join(__dirname,'..','js/class-diary-character-routes-v1.js'),'utf8');
 assert(!/localStorage|sessionStorage|indexedDB|fetch\(|sendBeacon\(|XMLHttpRequest|WebSocket|Math\.random\(/.test(src),
  'Character dialogue engine cannot save, track, or send data');
-console.log('PASS: 3 independent adult characters × 7 days + 5 epilogues, named platonic route, no storage or network');
+console.log('PASS: 5 independent adult characters × 7 days + 5 epilogues, named platonic route, no storage or network');
