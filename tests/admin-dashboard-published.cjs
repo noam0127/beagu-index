@@ -19,7 +19,16 @@ const base="https://baeguindex.com/admin.html";
       html.includes('id="adminReview2026List"')&&
       html.includes('name="robots" content="noindex,nofollow,noarchive"')){
       assert(!/visit-stats\.js|search-telemetry-v1\.js/.test(html));
-      console.log("PASS: published admin login shell contains MFA-only 2026 review queue and no ordinary telemetry");
+      const asset=await fetch("https://baeguindex.com/js/beagu-2026-admin-review.js?v=20261120-review2&check="+Date.now(),{
+        headers:{"Cache-Control":"no-cache"},signal:AbortSignal.timeout(15000)
+      });
+      if(asset.status!==200){last="Review asset HTTP "+asset.status;continue;}
+      const code=await asset.text();
+      if(!code.includes('action:"basis_review"')||!code.includes("makeBasisForm(item)")||
+         !code.includes("개인정보 입력 금지")){
+        last="Published JS has old reviewer implementation";continue;
+      }
+      console.log("PASS: published admin login shell and 2026 private evidence intake JS are current");
       return;
    }
    last="Published HTML has old dashboard revision";
