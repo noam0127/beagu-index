@@ -56,3 +56,9 @@
 @media(prefers-reduced-motion:reduce){
  .challenge-member-overlay{backdrop-filter:none}
 }
+/* Optional SMS consent: never preselect the marketing checkbox. */
+.challenge-member-sms{display:grid;gap:8px;padding:12px;border:1px solid #dce6f3;border-radius:12px;background:#f8fafc}
+.challenge-member-sms label{line-height:1.55}
+.challenge-member-sms-check{display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-weight:500!important}
+.challenge-member-sms-check input{width:18px;height:18px;min-height:18px;margin:2px 0 0;flex:0 0 auto;accent-color:#225bb8}
+.challenge-member-sms p{font-size:11px;color:#60748d;line-height:1.65;margin:0}
