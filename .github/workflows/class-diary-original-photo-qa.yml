@@ -9,6 +9,7 @@ on:
       - 'data/class-diary-character-identity-lock-v1.json'
       - 'qa/class-diary-cutout-review.html'
       - 'scripts/test-class-diary-cutout-review.cjs'
+      - 'scripts/test-class-diary-cutout-review-browser.cjs'
       - '.github/workflows/class-diary-original-photo-qa.yml'
   workflow_dispatch:
 
@@ -47,6 +48,22 @@ jobs:
               assert Path(item['file']).with_suffix('.webp').exists(), item['file']
           print('PASS: 24 male pose cutouts + 1 original Jiyoon reference; QA only')
           PY
+      - name: Install browser QA tools
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Verify interactive image QA at 320, 390, 1365 pixels
+        run: |
+          python3 -m http.server 8127 --bind 127.0.0.1 --directory class-diary-cutout-review >/tmp/diary-art-qa-http.log 2>&1 &
+          node scripts/test-class-diary-cutout-review-browser.cjs
+      - name: Upload browser screenshots (review-only)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: class-diary-art-qa-browser-screenshots
+          path: artifacts/class-diary-cutout-QA/
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Upload visual-review files only (not deployed)
         uses: actions/upload-artifact@v4
         with:
