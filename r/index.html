@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>전용 조사 링크 | 배구지수</title>
+<script>
+const code = location.hash.slice(1);
+location.replace('../survey.html?ref=' + (/^[A-Za-z0-9_-]{8}$/.test(code) ? code : 'invalid'));
+</script></head><body><a href="../survey.html">공식 설문으로 이동</a></body></html>

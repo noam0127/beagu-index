@@ -9,7 +9,7 @@
   const button=document.getElementById('referralJoinForm');
   const feedback=document.getElementById('referralSubmitFeedback');
   const cfg=window.BEAGU_REFERRAL_FORM_CONFIG||{};
-  const goodRef=/^[a-f0-9]{64}$/.test(rawRef);
+  const goodRef=/^(?:[a-f0-9]{64}|[A-Za-z0-9_-]{8})$/.test(rawRef);
   const goodEntry=/^entry\.\d{3,20}$/.test(cfg.entryName||'');
   if(!notice||!normal||!wrapper||!button||!feedback||!consent)return;
   notice.hidden=false;
@@ -17,6 +17,7 @@
   if(!goodRef){notice.textContent='올바르지 않은 추천 링크입니다. 일반 설문만 이용할 수 있습니다.';return;}
   // No pre-fill entry ID from the real Form, so the referral journey must not launch.
   if(!goodEntry)return;
+  notice.textContent='전용 조사 링크로 들어오셨습니다. 추천을 연결하려면 아래에서 동의한 뒤 설문에 참여해 주세요.';
   wrapper.hidden=false;
   function browserVisitor(){
     const key='beagu-visitor-v1';

@@ -75,6 +75,14 @@ const tick = () => new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.challengeReferralLink.value,referral);
   assert.equal(el.copyChallengeReferral.textContent,'링크 복사');
 
+  const shortLink='https://baeguindex.com/r/#aB3_dE-9';
+  returned.shortLink=shortLink;
+  emit('focus');
+  await tick();
+  assert.equal(el.challengeReferralLink.value,shortLink);
+  await el.copyChallengeReferral.listeners.click();
+  assert.equal(copies.at(-1),shortLink);
+
   // A forged or inconsistent level must not trigger a visual promotion.
   returned = {link: referral, level: 2, validReferrals: 0, provisional: true};
   emit('focus');
@@ -82,7 +90,7 @@ const tick = () => new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.challengeReferralPanel.dataset.state,'pending');
 
   // Only the server-confirmed credited referral changes the card.
-  returned = {link: referral, level: 2, validReferrals: 1, provisional: true};
+  returned = {link: referral, shortLink, level: 2, validReferrals: 1, provisional: true};
   emit('focus');
   await tick();
   assert.equal(el.challengeReferralPanel.dataset.state,'earned');
@@ -96,7 +104,7 @@ const tick = () => new Promise(resolve=>setImmediate(resolve));
   assert.equal(copies.at(-1),code);
   await el.copyChallengeReferralAfter.listeners.click();
   await tick();
-  assert.equal(copies.at(-1),referral);
+  assert.equal(copies.at(-1),shortLink);
 
   emit('beagu:challenge-access-revoked');
   assert.equal(el.challengeReferralPanel.dataset.state,'pending');
