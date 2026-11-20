@@ -5,6 +5,7 @@
  "use strict";
  const $=id=>document.getElementById(id);
  let role="",page=0,filter="all",seq=0,ready=false;
+ let referralPage=0,referralSeq=0;
  const endpoint=SUPABASE_URL+"/functions/v1/beagu-2026-review-admin";
  const labels={
   TECHNICAL_CHECK_PASSED:"기술 검수 통과",
@@ -184,14 +185,92 @@
    notice("검수 목록을 불러오지 못했습니다. 관리자 계정, MFA 인증, 서버 설정을 확인하세요.");
   }
  }
+ const referralReasons={
+  CORE_ANSWER_COMPLETENESS_UNVERIFIED:"핵심 문항 응답 완결성 확인 필요",
+  STRAIGHTLINE_SIGNAL_MISSING:"응답 패턴 분석 신호 누락",
+  UNIFORM_CORE_RESPONSE_PATTERN:"동일 보기 반복 의심 — 부정행위 확정 아님"
+ };
+ const referralNotice=message=>{
+   if($("adminReferralQualityStatus"))$("adminReferralQualityStatus").textContent=message;
+ };
+ function renderReferralQueue(data){
+   const list=$("adminReferralQualityList");if(!list)return;
+   $("adminReferralQualityPending").textContent=String(data.pending??"—");
+   list.replaceChildren();
+   const items=Array.isArray(data.items)?data.items:[];
+   if(!items.length)list.append(build("p","empty","현재 검토할 추천 응답이 없습니다."));
+   for(const item of items){
+     const card=build("article","ranking-card");
+     card.append(build("strong","","추천 제출 건 "+String(item.case_label||"")),
+       build("p","subtle","제출시각 "+formatDate(item.submitted_at)));
+     const reasons=Array.isArray(item.reason_codes)?item.reason_codes:[];
+     card.append(build("p","subtle","자동 감지: "+
+       (reasons.map(v=>referralReasons[v]||"검수 항목 확인 필요").join(" · ")||"신호 미확인")));
+     card.append(build("p","subtle","응답한 핵심 문항: "+
+       (Number.isSafeInteger(item.core_answered)?item.core_answered:"미확인")+"/13"));
+     if(role==="owner"){
+       const actions=build("div","period-tabs");
+       for(const [decision,label] of [
+          ["CLEARED","정상 확인 · 적립 복구"],
+          ["REJECTED","부적합 확정 · 적립 취소"]
+       ]){
+         const button=build("button","secondary",label);button.type="button";
+         button.addEventListener("click",()=>resolveReferral(item,decision,button));
+         actions.append(button);
+       }
+       card.append(actions);
+     }
+     list.append(card);
+   }
+   $("adminReferralQualityPrev").disabled=referralPage===0;
+   $("adminReferralQualityNext").disabled=items.length<20;
+   $("adminReferralQualityPage").textContent="페이지 "+(referralPage+1);
+   referralNotice("검토 대기 중인 추천만 표시합니다. 의심만으로 부정행위를 확정하지 않습니다.");
+ }
+ async function resolveReferral(item,decision,button){
+   if(role!=="owner")return;
+   const text=decision==="CLEARED"?"정상 응답 인정":"추천 실적 제외";
+   const reason=window.prompt(text+" 사유를 12자 이상 기록해 주세요. 개인정보·교사 응답 원문은 입력하지 마세요.");
+   if(reason===null)return;
+   if(reason.trim().length<12||reason.trim().length>500||/[<>]/.test(reason)){
+      referralNotice("결정 사유는 12~500자로 입력하고 꺾쇠 기호를 사용하지 마세요.");return;
+   }
+   if(!window.confirm("이 추천 응답에 '"+text+"' 결정을 적용하겠습니까?"+
+      " 상태에 따라 추천인의 Lv2 권한이 복구되거나 즉시 회수될 수 있습니다."))return;
+   button.disabled=true;
+   try{
+     const result=await call({action:"referral_resolve",event_sha256:item.event_sha256,
+       decision,reason:reason.trim()});
+     if(!result.ok)throw Error("not_saved");
+     referralNotice(text+" 결정을 기록했습니다. 추천 적립 및 레벨은 서버에서 다시 검사합니다.");
+     void refreshReferralQueue();
+   }catch{referralNotice("처리하지 못했습니다. 해당 추천 건과 관리자 권한을 다시 확인해 주세요.");}
+   finally{button.disabled=false;}
+ }
+ async function refreshReferralQueue(){
+   if(!ready||role!=="owner"||!$("adminReferralQualityList"))return;
+   const id=++referralSeq;referralNotice("추천 이상 징후를 조회하는 중입니다.");
+   try{
+     const data=await call({action:"referral_queue",page:referralPage});
+     if(id!==referralSeq)return;
+     renderReferralQueue(data);
+   }catch{
+     if(id!==referralSeq)return;
+     referralNotice("추천 대기열을 불러오지 못했습니다. MFA 및 서버 배포 상태를 확인하세요.");
+   }
+ }
  function mount(adminRole){
   role=adminRole==="owner"?"owner":"viewer";
   ready=true;page=0;filter="all";
   $("adminReview2026Filter").value=filter;
   void refresh();
+  void refreshReferralQueue();
  }
  function reset(){
-  ready=false;role="";seq++;page=0;
+  ready=false;role="";seq++;page=0;referralSeq++;referralPage=0;
+  if($("adminReferralQualityList"))$("adminReferralQualityList").replaceChildren();
+  if($("adminReferralQualityPending"))$("adminReferralQualityPending").textContent="—";
+  referralNotice("최고 관리자 2단계 인증 후 조회할 수 있습니다.");
   $("adminReview2026List").replaceChildren();
   $("adminReview2026Total").textContent="—";
   $("adminReview2026Technical").textContent="—";
@@ -204,5 +283,12 @@
  $("adminReview2026Reload").addEventListener("click",()=>{void refresh();});
  $("adminReview2026Prev").addEventListener("click",()=>{if(page>0){page--;void refresh();}});
  $("adminReview2026Next").addEventListener("click",()=>{page++;void refresh();});
+ if($("adminReferralQualityReload"))$("adminReferralQualityReload").addEventListener("click",()=>{void refreshReferralQueue();});
+ if($("adminReferralQualityPrev"))$("adminReferralQualityPrev").addEventListener("click",()=>{
+   if(referralPage>0){referralPage--;void refreshReferralQueue();}
+ });
+ if($("adminReferralQualityNext"))$("adminReferralQualityNext").addEventListener("click",()=>{
+   referralPage++;void refreshReferralQueue();
+ });
  window.Beagu2026ReviewAdmin={mount,reset};
 })();
