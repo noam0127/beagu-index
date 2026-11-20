@@ -13,8 +13,8 @@ assert.ok(app.includes('encodeURIComponent(comp.selection)'),'compare route');
 assert.ok(app.includes('school-report.html?school_id='),'school report route');
 assert.ok(app.includes('LEVEL_REQUIRED'),'level gate feedback');
 assert.ok(app.includes('COMMENT_READ_LEVEL_REQUIRED'),'Lv0 comment feedback');
-assert.ok(app.includes('state.level>=1'),'Lv1 frontend comment-read gate');
-assert.ok(page.includes('댓글은 Lv.1부터'),'clear user-facing comment policy');
+assert.ok(app.includes('function canRead(){return state.level>=2}'),'Lv2 frontend reader gate');
+assert.ok(page.includes('포스트잇과 댓글은 Lv.2부터'),'clear Lv2-only comment policy');
 assert.ok(css.includes('postit-breeze-flutter')&&css.includes('postit-corner-flutter')&&css.includes('postit-bookmark-flick'),'scroll wind and folded-corner animation exist');
 assert.ok(app.includes('flutterOnScroll')&&app.includes('previousScrollY')&&app.includes('breezePreference.matches'),'down-scroll only and reduced-motion gating');
 const compare=read('statistics.html'),core=read('js/statistics-compare.js');
@@ -102,17 +102,25 @@ assert.ok(edge.includes('if(!data.identity_visitor_id)return {level:Number(data.
 assert.ok(edge.includes('if(!user.id)return fail(req,"WRITER_IDENTITY_REQUIRED",403)'),
  'Lv2 writes fail closed until trusted permanent identity is bound');
 assert.ok(app.includes('WRITER_IDENTITY_REQUIRED'), 'client explains pending Lv2 account verification');
-assert.ok(edge.includes('const viewer=await identity(req,1)'), 'Lv1 verified server-side for comment reads');
+assert.ok(edge.includes('const viewer=await identity(req,2)'), 'Lv2 verified server-side for Post-it reads');
 assert.ok(!/\bconst URL\s*=/.test(edge), 'global URL constructor must not be shadowed');
 assert.ok(edge.includes('const SUPABASE_URL = Deno.env.get('), 'Supabase URL configured separately');
 assert.ok(edge.includes('new URL(req.url)'), 'request URL parsing uses built-in constructor');
-assert.ok(edge.includes('COMMENT_READ_LEVEL_REQUIRED'), 'Lv0 comment API denial');
+assert.ok(edge.includes('if(!viewer)return fail(req,"LEVEL_REQUIRED",403)'), 'unauthorized reads fail closed');
 assert.ok(edge.includes('LEVEL_REQUIRED'), 'post author level 2 server gate');
 assert.ok(edge.includes('status:"hidden"'), 'report-hide capability');
 assert.ok(edge.includes('manual_release_approved'), 'release policy preserved');
-assert.ok(edge.includes('school_info'), 'public selected school metadata');
+assert.ok(edge.includes('school_info'), 'Lv2 selected school metadata');
 assert.ok(edge.includes('comparison_selection'), 'compare subject persisted');
 const migration=read('supabase/migrations/20261120_beagu_postit_school_conversations.sql');
 assert.ok(migration.includes('ENABLE ROW LEVEL SECURITY'),'RLS enabled');
 assert.ok(migration.includes('REVOKE ALL'),'direct browser access revoked');
-console.log('Post-it static validation passed.');
+
+// All searching happens behind the same Lv2 server read gate.
+for(const id of ['postitSearch','postitSearchForm','postitBoardLocked','postitBoardContent'])
+ assert.ok(page.includes('id="'+id+'"'), 'postit search/level UI '+id);
+assert.ok(app.includes('query.q=term')&&app.includes('searchDebounce=setTimeout'), 'debounced post search');
+assert.ok(app.includes('state.posts=[];host.replaceChildren()'), 'downgrade purges post content');
+for(const filter of ['body.ilike.','school_id.in.','comparison_selection.ilike.','id.in.','game_slug.in.'])
+ assert.ok(edge.includes(filter), 'server-side search '+filter);
+console.log('Post-it static validation passed (Lv2 search).');

@@ -220,3 +220,14 @@ body.beagu-postit-page .beagu-skip-link:focus-visible{
   outline:3px solid #93c5fd;
   outline-offset:2px;
 }
+
+/* Lv2-only searchable Post-it board. */
+.postit-board-lock{margin:8px 0 22px}
+.postit-search{background:#ffffffd9;border:1px solid #dfe4eb;border-radius:15px;padding:13px 15px;margin:0 0 18px;box-shadow:0 4px 12px #25385808}
+.postit-search label{display:block;font-size:13px;font-weight:800;margin-bottom:7px;color:#3b4f69}
+.postit-search-row{display:flex;align-items:stretch;gap:8px}
+.postit-search input{min-width:0;flex:1;border:1px solid #d4dae3;border-radius:10px;background:#fff;font:inherit;font-size:14px;padding:11px 12px;color:#263044}
+.postit-search input:focus-visible{outline:2px solid #376db4;outline-offset:1px}
+.postit-search button{border:0;border-radius:10px;padding:9px 18px;background:#304c7a;color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.postit-search small{display:block;margin-top:7px;font-size:11px;color:#738095}
+@media(max-width:520px){.postit-search{padding:12px}.postit-search-row{gap:6px}.postit-search button{padding:9px 12px}}

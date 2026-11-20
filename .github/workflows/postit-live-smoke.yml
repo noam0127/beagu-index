@@ -1,20 +1,10 @@
 name: Post-it public live smoke
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - .github/workflows/postit-live-smoke.yml
-      - postit.html
-      - js/postit-v1.js
-      - supabase/functions/beagu-postit-api-v1/index.ts
-  push:
-    branches: [main]
-    paths:
-      - postit.html
-      - js/postit-v1.js
-      - styles/postit-v1.css
-      - supabase/functions/beagu-postit-api-v1/index.ts
-      - .github/workflows/postit-live-smoke.yml
+  # Live smoke follows Pages publish, not PR preview or simultaneous main pushes.
+  workflow_run:
+    workflows: ["Direct GitHub Pages publish (no Vercel)"]
+    types: [completed]
 
 permissions:
   contents: read
@@ -22,6 +12,7 @@ permissions:
 jobs:
   public-smoke:
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     timeout-minutes: 5
     steps:
       - name: Check public website and API (no test content written)
@@ -43,8 +34,8 @@ jobs:
             const origin = process.env.SITE;
             const checks = [
               ['home', '/', 'postit.html'],
-              ['postit', '/postit.html', 'postit-v1.js?v=20261120-tornpaper2'],
-              ['postit-js', '/js/postit-v1.js?v=20261120-tornpaper2', 'WRITER_IDENTITY_REQUIRED'],
+              ['postit', '/postit.html', 'postit-v1.js?v=20261120-lv2-search1'],
+              ['postit-js', '/js/postit-v1.js?v=20261120-lv2-search1', 'WRITER_IDENTITY_REQUIRED'],
               ['wind-css', '/styles/postit-v1.css', 'postit-breeze-flutter'],
               ['school-search', '/search.html', 'postit.html'],
               ['school-search-lv1', '/search-lv1.html', 'postit.html'],
@@ -64,17 +55,18 @@ jobs:
             assert.equal(settings.status, 200, 'public settings HTTP');
             assert.equal(JSON.parse(settings.body).minimum_write_level, 2, 'Lv2 minimum writing policy');
             console.log('PASS postit minimum_write_level=2');
-            const list = await get(api + '?action=posts');
-            assert.equal(list.status, 200, 'public list HTTP');
-            const parsed = JSON.parse(list.body);
-            assert.ok(Array.isArray(parsed.posts), 'posts array');
-            assert.ok(parsed.posts.every(p => !('author_uid' in p) && !('author_id' in p)), 'no internal author identifier');
-            console.log('PASS Lv0 public posts and pseudonym privacy (no contents printed)');
-            const q = '?action=comments&post_id=00000000-0000-4000-8000-000000000001';
-            const denied = await get(api + q);
-            assert.equal(denied.status, 403, 'Lv0 must not read comments');
-            assert.equal(JSON.parse(denied.body).error, 'COMMENT_READ_LEVEL_REQUIRED');
-            console.log('PASS Lv0 server-side comment denial 403');
+            for (const action of [
+              '?action=posts',
+              '?action=posts&q=%ED%95%99%EA%B5%90',
+              '?action=comments&post_id=00000000-0000-4000-8000-000000000001',
+              '?action=schools&q=%ED%95%99%EA%B5%90',
+              '?action=school_info&school_ids=AAAAAAA'
+            ]) {
+              const denied = await get(api + action);
+              assert.equal(denied.status, 403, 'Lv0 must not read Post-it data: ' + action);
+              assert.equal(JSON.parse(denied.body).error, 'LEVEL_REQUIRED');
+            }
+            console.log('PASS Lv0 Post-it read/search/comment denial HTTP 403');
             // A denied POST never creates a moderation or user-data fixture.
             const blockedWrite = await fetch(api, {
               method: 'POST',
@@ -86,7 +78,7 @@ jobs:
             assert.equal((await blockedWrite.json()).error, 'LEVEL_REQUIRED');
             console.log('PASS anonymous create_post denied HTTP 403 (no data written)');
 
-            console.log('Public smoke test passed. Lv1/Lv2 session tests and mobile visuals require separate checks.');
+            console.log('Public smoke test passed. Lv2 authenticated search and mobile visuals require separate checks.');
           }
           run().catch(error => { console.error('FAIL: ' + error.message); process.exitCode = 1; });
           NODE
