@@ -21,3 +21,5 @@
 .postit-account #postitAccountStatus{min-height:20px;color:#335a87}
 .postit-account #postitAccountNoDevice{color:#94552e}
 @media(max-width:460px){.postit-account{padding:12px}.postit-account button{flex:1}}
+
+.postit-account [hidden]{display:none!important}
