@@ -430,8 +430,8 @@ assert.match(shared,/function orderFast\(rows\)/,"fastest wins ranked separately
 assert.match(shared,/b\.score-a\.score/,"higher scores rank ahead");
 assert.doesNotMatch(shared,/this\.score<=this\.board\[9\]\.score/,"retirement results are saved automatically below TOP10");
 assert.match(volley,/EASY: animated feather wings/);
-assert.match(volley,/p===left&&currentDifficulty==="easy"/);
-assert.match(runner,/profile===difficultyProfiles\.easy/);
+assert.match(volley,/p===left&&hasPlayerWings\(\)&&!isMysteryBuff\("left","shackle"\)/,"wings are drawn when EASY or pickup allows flight");
+assert.match(runner,/profile===difficultyProfiles\.easy\|\|isMysteryBuff\("wings"\)/,"survival wings appear on pickup too");
 const scoringStart=volley.indexOf("const MATCH_TARGET=25");
 const scoringEnd=volley.indexOf("const W =",scoringStart);
 assert.ok(scoringStart>0&&scoringEnd>scoringStart);
