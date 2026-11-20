@@ -69,6 +69,6 @@ for(const [p,source] of Object.entries({
   assert.ok(!source.includes('정식 계정 생성 후'),p+' must not require signup for earned Lv2');
 }
 assert.ok(levelJS.includes("result.provisional===true"),'provisional status remains server-derived');
-assert.ok(postitJS.includes('dataset.provisional!=="true"'),
-  'provisional users still lack posting permissions');
+assert.ok(postitJS.includes('state.accountLinked===true'),
+  'only Auth-verified member accounts may post; participation codes remain read-only');
 console.log('PASS: unified search/compare UI and earned Lv2 naming while preserving server authorization');

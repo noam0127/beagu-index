@@ -11,13 +11,18 @@ const validCompare=x=>{
  const a=x.split(",");
  return a.length>=1&&a.length<=5&&a.every(v=>/^[A-Z0-9]{7}:202[3-6]$/.test(v))&&new Set(a).size===a.length;
 };
-const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0};
+const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false};
 function token(){try{return sessionStorage.getItem(key)||""}catch{return ""}}
-function headers(){return {"Content-Type":"application/json","X-Beagu-Level-Session":token()}}
+async function headers(){
+ const bearer=await window.BeaguPostitAccount?.accessToken?.()||"";
+ return {"Content-Type":"application/json","X-Beagu-Level-Session":token(),
+  ...(bearer?{"Authorization":"Bearer "+bearer}:{})};
+}
 async function request(action,data,method="GET"){
  const url=new URL(api);
  if(method==="GET"){url.searchParams.set("action",action);for(const [k,v] of Object.entries(data||{}))if(v!==""&&v!==null)url.searchParams.set(k,String(v))}
- const res=await fetch(url.toString(),{method,cache:"no-store",headers:method==="POST"?headers():{"X-Beagu-Level-Session":token()},
+ const authHeaders=await headers();
+ const res=await fetch(url.toString(),{method,cache:"no-store",headers:authHeaders,
   ...(method==="POST"?{body:JSON.stringify({action,...data})}:{})});
  const json=await res.json().catch(()=>({}));
  if(!res.ok)throw Object.assign(new Error(json.error||"FETCH_FAILED"),{status:res.status});
@@ -34,7 +39,9 @@ function showMessage(error){$("postitMessage").textContent=error||""}
 function readableError(e){
  const m={LEVEL_REQUIRED:"Lv.2 인증이 필요합니다. 오른쪽 위 레벨 표시를 확인하세요.",
  COMMENT_READ_LEVEL_REQUIRED:"🔒 포스트잇과 댓글은 Lv.2부터 열람할 수 있습니다.",
- WRITER_IDENTITY_REQUIRED:"🔒 이 참여코드로는 작성자 식별이 확인되지 않습니다. 챌린지를 달성한 Lv2 참여코드로 인증해 주세요.",
+ WRITER_IDENTITY_REQUIRED:"🔒 정식 계정과 원래 챌린지 기기의 연결을 완료해야 작성할 수 있습니다.",
+ ORIGINAL_DEVICE_REQUIRED:"챌린지를 처음 진행한 기기에서 인증해 주세요.",
+ DEVICE_OWNERSHIP_NOT_VERIFIED:"챌린지 기기 소유 확인에 실패했습니다.",
  POST_RATE_LIMIT:"오늘의 작성 횟수(3개) 또는 작성 간격 제한에 도달했습니다.",
  COMMENT_RATE_LIMIT:"오늘의 댓글 횟수(12개) 또는 작성 간격 제한에 도달했습니다.",
  INVALID_POST:"글을 확인해주세요. 이메일, 전화번호, 링크는 넣지 말아주세요.",
@@ -82,15 +89,16 @@ async function renderContext(){
  updateComposeAccess();
 }
 function canRead(){return state.level>=2}
-function canWrite(){return canRead() && $("beaguLevelState")?.dataset.provisional!=="true"}
+function canWrite(){return canRead() && state.accountLinked===true}
 function updateComposeAccess(){
  const level=Number($("beaguLevelState")?.dataset.level);
  state.level=Number.isInteger(level)&&level>=0?level:0;
- const provisional=$("beaguLevelState")?.dataset.provisional==="true";
  const allowed=canWrite();
- $("postitAccess").textContent=provisional?"Lv2 · 읽기 전용":allowed?"Lv.2 · 작성 가능":"🔒 Lv.2부터 작성";
+ $("postitAccess").textContent=allowed?"Lv2 · 작성 가능":canRead()?"Lv2 · 읽기 전용":"🔒 Lv2 인증 필요";
  const lockedText=$("postitLocked")?.querySelector("b");
- if(lockedText)lockedText.textContent=provisional?"이 참여코드는 작성 권한이 없습니다. 챌린지를 달성한 Lv2 참여코드로 인증해 주세요.":"Lv.2부터 작성할 수 있습니다";
+ if(lockedText)lockedText.textContent=canRead()
+  ?"정식 계정 로그인 후 원래 챌린지 기기에서 계정을 연결하면 작성할 수 있습니다."
+  :"Lv2부터 포스트잇을 열람할 수 있습니다";
  $("postitLocked").hidden=allowed;
  $("postitWriteForm").hidden=!allowed||!state.subject;
  $("postitSubjectPicker").hidden=state.subject!==""||!allowed;
@@ -263,6 +271,7 @@ async function loadPosts(newId=""){
 }
 function handleLevel(e){
  const level=e?.detail?.level;
+ if(level!==2)state.accountLinked=false;
  if(Number.isInteger(level))$("beaguLevelState").dataset.level=String(level);
  updateComposeAccess();
  if(!canRead()){
@@ -296,6 +305,11 @@ else if(gameNames[game])setSubject("game",{game,schoolId:validSchool(schoolId)?s
 else if(validSchool(schoolId))setSubject("school",{schoolId});
 else setSubject("");
 window.addEventListener("beagu:level-state-updated",handleLevel);
+window.addEventListener("beagu:postit-account-status",event=>{
+ state.accountLinked=event?.detail?.linked===true;
+ updateComposeAccess();
+ void loadPosts();
+});
 $("postitSort").addEventListener("change",()=>void loadPosts());
 $("postitReload").addEventListener("click",()=>void loadPosts());
 $("postitSchoolSearch").addEventListener("input",()=>{void findSchools()});
