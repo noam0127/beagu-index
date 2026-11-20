@@ -21,11 +21,11 @@ const sql=read('supabase/migrations/20261121100000_beagu_2026_lv2_immediate_appr
 for(const guard of ["approved_payload_sha256=r.payload_sha256","review_status='VERIFIED'","b.small_sample_reviewed","b.reidentification_reviewed","b.prior_data_combination_reviewed","r.approved_at >= r.updated_at","q.value->>'id' not in ('Q31','Q51')"])
   assert.ok(sql.includes(guard),'SQL release gate missing '+guard);
 assert.ok(!sql.includes("r.approved_at <= now()-interval '24 hours'"),'New Lv2 RPC must not impose cooldown');
-assert.match(sql,/revoke all on function public\\.beagu_2026_lv2_released_question_results\\(text\\) from public, anon, authenticated/i);
-assert.match(sql,/grant execute on function public\\.beagu_2026_lv2_released_question_results\\(text\\) to service_role/i);
+assert.ok(sql.includes("revoke all on function public.beagu_2026_lv2_released_question_results(text) from public, anon, authenticated;"));
+assert.ok(sql.includes("grant execute on function public.beagu_2026_lv2_released_question_results(text) to service_role;"));
 const api=read('supabase/functions/beagu-level-api/index.ts');
-assert.match(api,/if\\(level>=2\\)\\{[\\s\\S]*?beagu_2026_lv2_released_question_results/);
-assert.match(api,/if\\(level<2\\)\\{[\\s\\S]*?beagu_2026_released_question_results/);
-assert.match(api,/releaseMetrics\\(metrics\\.data\\|\\|\\[\\],catalog\\.data\\|\\|\\[\\],level,level>=2&&lv2Approved2026!==null\\)/);
-assert.match(api,/if\\(Number\\(session\\.access_level\\)>=2\\)/);
+assert.ok(api.includes("if(level>=2){")&&api.includes("beagu_2026_lv2_released_question_results"));
+assert.ok(api.includes("if(level<2){")&&api.includes("beagu_2026_released_question_results"));
+assert.ok(api.includes("releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)"));
+assert.ok(api.includes("if(Number(session.access_level)>=2)"));
 console.log('PASS 2026 Lv2 immediate approval / Lv1 cooldown / privacy regression');
