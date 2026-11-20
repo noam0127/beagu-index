@@ -240,13 +240,13 @@ html body .stage:-webkit-full-screen #game{
 .stage.arcade-fullscreen-fallback,
 .stage:fullscreen,
 .stage:-webkit-full-screen{
- --arcade-run-hud-height:clamp(72px,13svh,88px);
+ --arcade-run-hud-height:clamp(84px,13svh,96px);
  grid-template-rows:var(--arcade-run-hud-height) minmax(0,1fr)!important;
 }
 .stage.arcade-fullscreen-fallback > .overlay,
 .stage:fullscreen > .overlay,
 .stage:-webkit-full-screen > .overlay{
- top:var(--arcade-run-hud-height)!important;
+ top:calc(var(--arcade-run-hud-height) + max(8px,env(safe-area-inset-top)))!important;
  right:0!important;bottom:0!important;left:0!important;
  box-sizing:border-box!important;
  z-index:10!important;
