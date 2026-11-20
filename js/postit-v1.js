@@ -11,7 +11,7 @@ const validCompare=x=>{
  const a=x.split(",");
  return a.length>=1&&a.length<=5&&a.every(v=>/^[A-Z0-9]{7}:202[3-6]$/.test(v))&&new Set(a).size===a.length;
 };
-const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false};
+const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false,postAttempt:null,pendingActions:new Set()};
 function token(){try{return sessionStorage.getItem(key)||""}catch{return ""}}
 async function headers(){
  const bearer=await window.BeaguPostitAccount?.accessToken?.()||"";
@@ -113,8 +113,15 @@ function timeSince(value){
  return new Date(value).toLocaleDateString("ko-KR");
 }
 function actionButton(label,cb,opts={}){
- const b=node("button",opts.className||"",label);b.type="button";b.addEventListener("click",cb);
- if(opts.disabled)b.disabled=true;if(opts.title)b.title=opts.title;return b;
+ const b=node("button",opts.className||"",label);b.type="button";
+ if(opts.disabled)b.disabled=true;if(opts.title)b.title=opts.title;
+ b.addEventListener("click",async()=>{
+  if(b.disabled||b.dataset.submitting==="1")return;
+  b.disabled=true;b.dataset.submitting="1";
+  try{await cb()}catch(_){showMessage("작업을 완료하지 못했습니다. 다시 시도해주세요.")}
+  finally{delete b.dataset.submitting;if(b.isConnected)b.disabled=Boolean(opts.disabled)}
+ });
+ return b;
 }
 function schoolChips(p,host){
  if(!p.school)return;
@@ -150,7 +157,7 @@ function buildPost(post){
  const actions=node("div","paper-actions");
  const blocked=!canWrite();
  const like=actionButton((post.liked?"♥":"♡")+" "+post.likes,async()=>{
-  await mutation("toggle_like",{target_type:"post",target_id:post.id});
+  await mutation("set_like",{target_type:"post",target_id:post.id,liked:!post.liked});
  },{className:post.liked?"active":"",disabled:blocked,title:blocked?"Lv.2부터 공감할 수 있습니다":"공감"});
  const canReadComments=canRead();
  const comment=actionButton(canReadComments?"▤ 댓글 "+post.comments:"🔒 Lv.2 댓글",async()=>{
@@ -177,9 +184,16 @@ function buildPost(post){
  return entry;
 }
 async function mutation(action,data){
- if(!canWrite()){showMessage("🔒 정식 Lv.2 계정 생성 후 이용할 수 있습니다.");return;}
- try{await request(action,data,"POST");showMessage("");await loadPosts();}
- catch(e){showMessage(readableError(e))}
+ if(!canWrite()){showMessage("🔒 정식 Lv.2 계정 연결 후 이용할 수 있습니다.");return;}
+ const actionKey=action+":"+String(data.target_type||"")+":"+String(data.target_id||"");
+ if(state.pendingActions.has(actionKey))return;
+ state.pendingActions.add(actionKey);
+ try{
+  await request(action,data,"POST");
+  showMessage("");
+  await loadPosts();
+ }catch(e){showMessage(readableError(e))}
+ finally{state.pendingActions.delete(actionKey)}
 }
 async function fillComments(id,host){
  if(!canRead()){host.replaceChildren();host.hidden=true;return;}
@@ -193,7 +207,7 @@ async function fillComments(id,host){
    const mark=node("div","bookmark-comment"),meta=node("div","comment-meta","익명 · "+timeSince(c.created_at));
    mark.append(meta,node("p","",c.body));
    const row=node("div","");
-   row.append(actionButton((c.liked?"♥":"♡")+" "+c.likes,()=>mutation("toggle_like",{target_type:"comment",target_id:c.id}),{disabled:!canWrite()}));
+   row.append(actionButton((c.liked?"♥":"♡")+" "+c.likes,()=>mutation("set_like",{target_type:"comment",target_id:c.id,liked:!c.liked}),{disabled:!canWrite()}));
    row.append(actionButton("⚑ 신고",async()=>{if(confirm("댓글을 신고하시겠습니까?"))await mutation("report",{target_type:"comment",target_id:c.id})},{disabled:!canWrite()||c.reported}));
    if(c.mine)row.append(actionButton("삭제",async()=>{if(confirm("이 댓글을 삭제할까요?"))await mutation("remove",{target_type:"comment",target_id:c.id})}));
    mark.append(row);host.append(mark);
@@ -204,11 +218,20 @@ async function fillComments(id,host){
    const ta=node("textarea","");ta.maxLength=150;ta.rows=2;ta.placeholder="책갈피처럼 댓글 남기기 (150자)";
    const btn=node("button","","댓글 붙이기");btn.type="submit";
    composer.append(ta,btn);
+   let attempt=null;
    composer.addEventListener("submit",async e=>{
-    e.preventDefault();const text=ta.value.trim();if(!text)return;
+    e.preventDefault();
+    if(btn.disabled||!canWrite())return;
+    const text=ta.value.trim();if(!text)return;
+    if(!attempt||attempt.text!==text)attempt={text,requestId:crypto.randomUUID()};
     btn.disabled=true;
-    try{await request("create_comment",{post_id:id,text},"POST");ta.value="";await loadPosts()}
-    catch(e){showMessage(readableError(e));btn.disabled=false}
+    try{
+     await request("create_comment",{post_id:id,text,request_id:attempt.requestId},"POST");
+     attempt=null;ta.value="";showMessage("");
+     // Recreate only from the server-approved result, keeping this thread open.
+     state.expanded.add(id);
+     await loadPosts();
+    }catch(e){showMessage(readableError(e));btn.disabled=false}
    });
   }host.append(composer);
  }catch(e){host.replaceChildren(node("div","bookmark-comment",readableError(e)))}
@@ -271,7 +294,7 @@ async function loadPosts(newId=""){
 }
 function handleLevel(e){
  const level=e?.detail?.level;
- if(level!==2)state.accountLinked=false;
+ if(level!==2){state.accountLinked=false;state.pendingActions.clear();}
  if(Number.isInteger(level))$("beaguLevelState").dataset.level=String(level);
  updateComposeAccess();
  if(!canRead()){
@@ -331,7 +354,11 @@ $("postitSubmit").addEventListener("click",async()=>{
     ...(state.schoolId?{school_id:state.schoolId}:{}),
     ...(state.game?{game_slug:state.game}:{}),
     ...(state.compare?{comparison_selection:state.compare}:{})};
-  const {id}=await request("create_post",payload,"POST");
+  const signature=JSON.stringify(payload);
+  if(!state.postAttempt||state.postAttempt.signature!==signature)
+   state.postAttempt={signature,requestId:crypto.randomUUID()};
+  const {id}=await request("create_post",{...payload,request_id:state.postAttempt.requestId},"POST");
+  state.postAttempt=null;
   $("postitBody").value="";$("postitCounter").textContent="0 / 200";showMessage("포스트잇을 붙였습니다.");
   await loadPosts(id);
  }catch(e){showMessage(readableError(e))}
