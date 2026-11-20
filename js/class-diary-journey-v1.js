@@ -15,19 +15,31 @@ function init(options){
   if(traits&&traits.parentElement)traits.parentElement.hidden=true;
   $('setupReviewPartner').textContent=partnerNames[$('partner').value]||'알고 싶은 사람을 선택해 주세요';
  }
+ const pageTitles=Object.freeze({
+  1:'어느 교실에서 시작할까요?',
+  2:'누구의 이야기를 먼저 들어볼까요?',
+  3:'어떤 선생님들을 만나게 될까요?',
+  4:'프롤로그를 시작할까요?'
+ });
  function go(next){
-  step=Math.max(1,Math.min(3,Number(next)||1));
+  const upcoming=Math.max(1,Math.min(4,Number(next)||1));
+  const previous=step;
+  if(previous!==upcoming&&!setup.hidden&&root.BeaguClassDiarySetupBook)
+   root.BeaguClassDiarySetupBook.turn(setup,previous,upcoming,pageTitles[previous]);
+  step=upcoming;
   setup.dataset.step=String(step);
+  $('setupTitle').textContent=pageTitles[step];
   $('setupBack').hidden=step===1;
-  $('setupBack').textContent=step===3?'← 알고 싶은 사람':'← 학교 선택';
-  $('setupNext').hidden=step===3;
-  $('setupNext').textContent=step===1?'알고 싶은 사람 고르기 →':'프롤로그 준비 →';
-  if(step===3)review();
+  $('setupBack').textContent=step===4?'← 선생님들':step===3?'← 알고 싶은 사람':'← 학교 선택';
+  $('setupNext').hidden=step===4;
+  $('setupNext').textContent=step===1?'알고 싶은 사람 고르기 →':
+   step===2?'학교에서 만날 선생님들 →':'프롤로그 준비 →';
+  if(step===4)review();
   for(const item of document.querySelectorAll('[data-step-label]')){
    if(Number(item.dataset.stepLabel)===step)item.setAttribute('aria-current','step');
    else item.removeAttribute('aria-current');
   }
-  if(!setup.hidden)setup.scrollIntoView({block:'start',behavior:'instant'});
+  // One viewport throughout: never move the browser document when flipping a page.
  }
  function validate(part){
   if(part===1){
@@ -51,13 +63,14 @@ function init(options){
  $('openingStart').addEventListener('click',()=>{sound.note('uiStart');show('setup');go(1)});
  $('setupNext').addEventListener('click',()=>{
   if(step===1){if(validate(1)){sound.note('uiTap');go(2)}return;}
-  if(step===2&&validate(2)){sound.note('uiTap');go(3);}
+  if(step===2&&validate(2)){sound.note('uiTap');go(3);return;}
+  if(step===3){sound.note('uiTap');go(4);}
  });
- $('setupBack').addEventListener('click',()=>{sound.note('uiTap');go(step===3?2:1)});
+ $('setupBack').addEventListener('click',()=>{sound.note('uiTap');go(Math.max(1,step-1))});
  form.noValidate=true;
  go(1);
  return {
-  ready(){if(step!==3)return false;if(!validate(1)){go(1);return false}if(!validate(2)){go(2);return false}return true},
+  ready(){if(step!==4)return false;if(!validate(1)){go(1);return false}if(!validate(2)){go(2);return false}return true},
   go,
   openChoice(){
    const target=$('choiceSection');target.hidden=false;
