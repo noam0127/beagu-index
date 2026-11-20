@@ -153,15 +153,17 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#scenePortrait').isVisible(),false,'Story scenes remain background-only without character portraits');
    assert.equal(await page.locator('#sceneGuest').isVisible(),false,'Guest characters are not pictured yet');
    assert.equal(await page.locator('#sceneDoyun').isVisible(),false,'Student character artwork is not pictured yet');
-   assert.equal(await page.locator('#chapterText p.diary-literary-line').count(),1,'Show exactly one sentence at a time');
-   await page.waitForFunction(()=>Boolean(document.querySelector('#chapterText p.diary-literary-ready')),{},{timeout:12000});
-   const firstSentence=await page.locator('#chapterText p.diary-literary-line').getAttribute('aria-label');
+   assert.equal(await page.locator('#chapterText p.diary-literary-line:not([hidden])').count(),1,
+    'Exactly one sentence is initially revealed; later sentences remain hidden');
+   await page.waitForFunction(()=>Boolean(document.querySelector('#chapterText p.diary-literary-ready:not([hidden])')),null,{timeout:12000});
+   const firstSentence=await page.locator('#chapterText p.diary-literary-line:not([hidden])').first().getAttribute('aria-label');
    assert(firstSentence&&firstSentence.length>3,'Sentence text should appear fully');
-   assert.equal(await page.locator('#chapterText .diary-reading-cursor').count(),1,'Waiting cursor must be present');
+   assert.equal(await page.locator('#chapterText p.diary-literary-line:not([hidden]) .diary-reading-cursor').count(),1,
+    'Only the current revealed sentence has a waiting cursor');
    await page.locator('#sceneArt').evaluate(node=>node.click());
    await page.waitForFunction(first=>{
-    const row=document.querySelector('#chapterText p.diary-literary-line');
-    return row&&row.getAttribute('aria-label')!==first;
+    const visible=[...document.querySelectorAll('#chapterText p.diary-literary-line:not([hidden])')];
+    return visible.length===2&&visible[0].getAttribute('aria-label')===first;
    },firstSentence,{timeout:5000});
    const state=await page.evaluate(()=>({
     scrollHeight:document.documentElement.scrollHeight,
