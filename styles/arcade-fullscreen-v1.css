@@ -199,3 +199,38 @@ html body .stage:-webkit-full-screen #game{
  align-self:center!important;justify-self:center!important;
  flex:0 1 auto!important;aspect-ratio:auto!important;
 }
+
+/* A compact, readable situation strip sits beneath the fullscreen score/HP.
+   It is part of the fullscreen viewport and never appears twice in-page. */
+.arcade-fullscreen-subline{
+ display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;
+ color:#bdece6;font:700 clamp(10px,2.7vw,12px)/1.3 system-ui,sans-serif;
+ letter-spacing:.01em;text-align:center;white-space:nowrap;
+}
+.court.arcade-fullscreen-fallback,
+.court:fullscreen,
+.court:-webkit-full-screen{
+ padding-top:max(75px,calc(env(safe-area-inset-top) + 67px))!important;
+}
+.court.arcade-fullscreen-fallback .arcade-volley-fullscreen-hud,
+.court:fullscreen .arcade-volley-fullscreen-hud,
+.court:-webkit-full-screen .arcade-volley-fullscreen-hud{
+ flex-wrap:wrap!important;gap:0 4px!important;
+ height:61px!important;align-content:center!important;
+}
+.arcade-volley-fullscreen-hud .arcade-fullscreen-subline{
+ flex-basis:100%;line-height:1.25;margin-top:2px;
+}
+.stage.arcade-fullscreen-fallback,
+.stage:fullscreen,
+.stage:-webkit-full-screen{
+ grid-template-rows:88px minmax(0,1fr)!important;
+}
+.stage.arcade-fullscreen-fallback .arcade-run-fullscreen-hud,
+.stage:fullscreen .arcade-run-fullscreen-hud,
+.stage:-webkit-full-screen .arcade-run-fullscreen-hud{
+ padding:8px 12px!important;
+}
+.arcade-run-fullscreen-hud .arcade-fullscreen-subline{
+ text-align:left;margin-top:5px;
+}
