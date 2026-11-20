@@ -13,6 +13,7 @@
   let active = false;
   let generation = 0;
   let currentLink = '';
+  let lastIdentity = null;
   const reset = () => {
     ++generation;
     currentLink = '';
@@ -39,6 +40,7 @@
     if (!/^[a-f0-9]{64}$/.test(token)) return;
     if (!detail || typeof detail.visitor !== 'string' ||
         typeof detail.code !== 'string') return;
+    lastIdentity = {visitor:detail.visitor,code:detail.code};
     status.textContent = '전용 조사 링크 발급 상태를 확인 중입니다.';
     try {
       const response = await fetch(endpoint, {
@@ -65,6 +67,7 @@
       copyButton.hidden = false;
       copyButton.disabled = false;
       const promoted = Number(payload.level) === 2;
+      if (promoted) window.dispatchEvent(new Event('beagu:level-state-change'));
       progress.textContent = promoted ? '유효한 추천 1건 · 레벨2 자격 획득' : '유효한 추천 0 / 1건';
       status.textContent = promoted
         ? '레벨2 자격이 확인되었습니다. 다른 기기에서는 정식 로그인 계정이 필요합니다.'
@@ -86,7 +89,15 @@
     }
   });
   window.addEventListener('beagu:challenge-access-granted', () => { active = true; });
-  window.addEventListener('beagu:challenge-access-revoked', () => { active = false; reset(); });
+  window.addEventListener('beagu:challenge-access-revoked', () => {
+    active = false; lastIdentity = null; reset();
+  });
   window.addEventListener('beagu:identity-ready', e => { void load(e.detail); });
+  window.addEventListener('focus', () => {
+    if (active && lastIdentity) void load(lastIdentity);
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (active && lastIdentity && !document.hidden) void load(lastIdentity);
+  });
   reset();
 })();
