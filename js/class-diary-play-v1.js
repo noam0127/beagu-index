@@ -263,7 +263,7 @@ function validateProfile(profile){
    const name=profile.name===undefined?'다온':String(profile.name).trim().replace(/\s+/g,'');
    if(!/^[가-힣]{2,8}$/.test(name))throw Error('NAME_INVALID');
   if(!['woman','man','undisclosed'].includes(gender))throw Error('GENDER_INVALID');
-  if(!['woman','man','none','man2'].includes(partner))throw Error('PARTNER_INVALID');
+  if(!['woman','man','none','man2','man3'].includes(partner))throw Error('PARTNER_INVALID');
   if(!MBTI.test(mbti))throw Error('MBTI_INVALID');
   /* 직무·학급·교직문화는 체험을 위해 사용자가 고르는 가상 조건이며 학교 실태 추정값이 아니다. */
   const experience=profile.experience||'mid';
@@ -340,7 +340,7 @@ function playerAddress(state){
  }
  return full+' 선생님';
 }
-function partnerName(profile){return profile.partner==='man'?'현우 선생님':profile.partner==='man2'?'도겸 선생님':profile.partner==='woman'?'지윤 선생님':'민서 선생님';}
+function partnerName(profile){return profile.partner==='man'?'현우 선생님':profile.partner==='man3'?'태오 선생님':profile.partner==='man2'?'도겸 선생님':profile.partner==='woman'?'지윤 선생님':'민서 선생님';}
 function validateWorld(world,plan){
   if(!world||world.eligible!==true||!world.basic||
      !/^[A-Z0-9]{7}$/.test(String(world.basic.id||''))||
