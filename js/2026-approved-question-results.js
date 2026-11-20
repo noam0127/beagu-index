@@ -2,6 +2,7 @@
  * Never query the private staging table from the browser. */
 (function(){
   const safe=(result)=>{
+    if(result?.questionId==='Q31'||result?.questionId==='Q51')return null;
     const m=window.Beagu2026Questionnaire?.[result?.questionId];
     if(!m||!Number.isInteger(result.row)||!Array.isArray(result.values)||!result.values.length)return null;
     if(m.kind==='grid'?(result.row<0||result.row>=m.rows.length):result.row!==-1)return null;

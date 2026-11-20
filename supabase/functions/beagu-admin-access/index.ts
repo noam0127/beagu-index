@@ -76,6 +76,14 @@ Deno.serve(async (request: Request): Promise<Response> => {
       await audit(userId, "admin_mfa_required", "denied");
       return respond({ error: "mfa_required" }, 403, origin);
     }
+    // An AAL2 claim alone is not enough: a terminated Auth session must fail.
+    // Match the stricter policy already used by the dashboard and review APIs.
+    const { data: activeMfa, error: sessionError } = await db.rpc(
+      "beagu_admin_active_mfa_session",
+      { p_user: userId, p_session: claims.session_id }
+    );
+    if (sessionError) return respond({ error: "authorization_unavailable" }, 503, origin);
+    if (activeMfa !== true) return respond({ error: "session_expired" }, 401, origin);
     await audit(userId, "admin_login", "success");
     return respond({ permitted: true, role: account.role, mfa_verified: true }, 200, origin);
   } catch (error) {

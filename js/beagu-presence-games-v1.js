@@ -19,7 +19,7 @@
   async function ping(){
     if(pending||document.visibilityState!=='visible'||typeof supabaseClient==='undefined')return;
     pending=true;
-    try{await supabaseClient.rpc('beagu_presence_ping_v1',{p_visitor:visitor,p_page:page})}
+    try{await supabaseClient.functions.invoke('beagu-telemetry-v2',{body:{action:'ping',visitor,page}})}
     catch(_){/* Telemetry must never block gameplay. */}
     finally{pending=false}
   }
