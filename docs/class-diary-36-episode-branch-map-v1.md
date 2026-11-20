@@ -14,7 +14,7 @@
 5. `settingVariant(world,n)`: 규모별 배경 연출 힌트. 특정 학교의 교직원·학생의 성격, 사고율, 보호자 사정을 예측하지 않음.
 
 ## 단계별 통합
-- **P1** `js/class-diary-prose-act1-v1.js`~`act6-v1.js` 및 장편 원고를 새 36화 구성에 맞춰 재작성한 뒤, `BeaguClassDiarySemester.chapter()`에서 데이터 파일의 선택 문구를 소비한다. 화면 표시 문구와 선택의 효과가 반드시 같아야 한다.
+- **P1 (개발 완료, 운영 미검증)** `js/class-diary-rewritten-act1-v1.js`~`act6-v1.js` 및 장편 원고를 새 36화 구성에 맞춰 재작성한 뒤, `BeaguClassDiarySemester.chapter()`에서 데이터 파일의 선택 문구를 소비한다. 화면 표시 문구와 선택의 효과가 반드시 같아야 한다.
 - **P2** `choose()`의 기존 공통 `EFFECTS`를 회차별 `effect`로 교체한다. 기존 저장 파일은 변경하지 않고 `history`에서 선택을 재구성하며, 기존 버전의 플레이를 이어갈 때 과거 능력치를 함부로 다시 계산하지 않는다.
 - **P3** `BeaguClassDiaryWorld.generateWorld()`의 승인된 지표에 한해 `schoolContext()`를 연결한다. 실제 학교의 평면/안전사고/학생 개인 사정은 절대 추정하지 않는다.
 - **P4** 엔딩은 기존 5종 기본형을 유지한 채 관계별·사건별 회상을 추가한다. 연애 상태는 초기 프로필에서 별도로 설정하여 기존 애인 이야기와 충돌하지 않게 한다.
@@ -48,3 +48,15 @@
 - 전환은 **회차가 새로 시작되는 순간**에만 실행하며, 문장 단위 터치마다 화면을 깜빡이게 하지 않는다. `prefers-reduced-motion`을 존중한다.
 - 현재 운영 원고 제목이 새 36화 분기표의 제목과 다르므로 `sceneDirector.forEpisode()`는 **제목이 일치할 때만** 새 회차 연출을 적용한다. 다음 단계에서 신작 원고가 준비되면 자동으로 해당 연출을 사용한다. 학급일지의 종이 전환과 별도 명조체는 새 원고와 무관하게 동작한다.
 - 검증: `node scripts/test-class-diary-scene-direction.cjs`와 GitHub Actions `Class Diary 36-Episode Branch Validation`.
+
+
+## P1 원고 전면 개작 및 실제 플레이 연동 (2026-11-20)
+
+- 신작 6부 × 6화 = **36화 전체 본문**: `js/class-diary-rewritten-act{1..6}-v1.js` 여섯 파일.
+- `js/class-diary-reconstructed-2027-v1.js`에서 36화 제목·날짜·장면과 배구지수 분기표를 교차 검증.
+- 새 회차에는 7개 이상의 독립 문단, 선택지 3개, 선택별 사건 결과 3개, 하루 마지막 학급일지 선택 3개가 있다. **연출 행동은 화면 자막으로 표시하지 않는다.**
+- `js/class-diary-semester-long-v3.js`는 `state.scriptEdition === 'class-diary-reconstructed-2027/v1'`인 경우에만 새 원고·실제 회차별 선택 효과·16개 장기 복선을 사용한다.
+- **새로 시작한 게임**의 저장에는 `scriptEdition`을 포함한다. 이전 게임 저장에는 이 필드가 없으므로 원래 36화 본문·선택 로직을 유지한다. 기존 저장 포맷 `class-diary-semester/v1`과 `history` 배열 자체는 바꾸지 않는다.
+- 새로운 기본 엔딩 다섯 종류에서는 학급화폐·계약·회의록·강낭콩의 의미를 회수하고 마지막 학급일지 기록 세 개를 함께 보여 준다.
+- 검증은 `scripts/test-class-diary-reconstructed-2027.cjs`에서 전 동료 5종 × 경력 3종 × 36화 = 540회차, 매화 일지 선택/저장/회차 이동, 기존 원고 분리를 모두 실행한다.
+- 실제 운영 자료와 허구 세계 분리를 유지한다. 현재 별도 테스트 브랜치로 운영 사이트 미배포.
