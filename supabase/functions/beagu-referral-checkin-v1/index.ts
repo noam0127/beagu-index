@@ -18,6 +18,23 @@ async function mac(message: string) {
   );
   return hex(new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(message))));
 }
+
+async function shaHex(value: string) {
+  return hex(new Uint8Array(await crypto.subtle.digest('SHA-256',enc.encode(value))));
+}
+const proofPattern=/^BR1\.([a-f0-9]{64})\.([a-f0-9-]{36})\.(\d{10})\.([a-f0-9]{64})$/;
+async function track(ref: string, respondent: string, stage: 'open'|'proof'|'handoff') {
+  try {
+    const [tokenHash,browserHash]=await Promise.all([
+      shaHex(ref),mac('BEAGU_REFERRAL_FUNNEL_BROWSER_V1|'+respondent.toLowerCase())
+    ]);
+    const {error}=await db.rpc('beagu_referral_funnel_record_v1',{
+      p_referral_hash:tokenHash,p_browser_hash:browserHash,p_stage:stage
+    });
+    if(error) console.warn('referral_funnel_unavailable',error.code||'unknown');
+  } catch (_) { console.warn('referral_funnel_unavailable','unexpected'); }
+}
+
 const headersFor = (origin: string) => ({
   'Access-Control-Allow-Origin': originAllowlist.has(origin) ? origin : 'https://baeguindex.com',
   'Access-Control-Allow-Headers':'content-type',
@@ -43,9 +60,26 @@ Deno.serve(async req => {
     if (enc.encode(raw).byteLength>512) return json(origin,413,{error:'TOO_LARGE'});
     body=JSON.parse(raw);
   } catch { return json(origin,400,{error:'INVALID_JSON'}); }
-  if (!body || typeof body!=='object' || Array.isArray(body) ||
-      body.action!=='checkin' || typeof body.ref!=='string' || (!shaPattern.test(body.ref) && !shortPattern.test(body.ref)) ||
-      typeof body.respondent!=='string' || !uuid.test(body.respondent))
+  if (!body || typeof body!=='object' || Array.isArray(body))
+    return json(origin,400,{error:'INVALID_REQUEST'});
+  if (body.action==='handoff') {
+    // Best-effort "attempted redirect" signal, never proof of Google Form load.
+    if(typeof body.proof!=='string')return json(origin,400,{error:'INVALID_REQUEST'});
+    const match=proofPattern.exec(body.proof);
+    if(!match||!uuid.test(match[2]))return json(origin,400,{error:'INVALID_PROOF'});
+    const [,ref,respondent,exp,sig]=match;
+    const expiration=Number(exp),now=Math.floor(Date.now()/1000);
+    if(!Number.isSafeInteger(expiration)||expiration<now||expiration>now+86400+60)
+      return json(origin,422,{error:'PROOF_EXPIRED'});
+    const payload='BR1.'+ref+'.'+respondent+'.'+exp;
+    if(await mac('BEAGU_REFERRAL_CHECKIN_V1|'+payload)!==sig)
+      return json(origin,403,{error:'INVALID_PROOF'});
+    await track(ref,respondent,'handoff');
+    return json(origin,200,{ok:true});
+  }
+  if(body.action!=='checkin'||typeof body.ref!=='string' ||
+     (!shaPattern.test(body.ref)&&!shortPattern.test(body.ref)) ||
+     typeof body.respondent!=='string'||!uuid.test(body.respondent))
     return json(origin,400,{error:'INVALID_REQUEST'});
   try {
     // A proof binds a *browser visitor id*, not a verified individual.
@@ -61,8 +95,10 @@ Deno.serve(async req => {
         return json(origin,503,{error:'REFERRAL_UNAVAILABLE'});
     }
     const respondent=body.respondent.toLowerCase();
+    await track(ref,respondent,'open');
     const payload='BR1.'+ref+'.'+respondent+'.'+exp;
     const proof=payload+'.'+await mac('BEAGU_REFERRAL_CHECKIN_V1|'+payload);
+    await track(ref,respondent,'proof');
     return json(origin,200,{proof,expires_at:new Date(exp*1000).toISOString()});
   } catch (e) {
     console.error('referral check-in failed',e instanceof Error?e.name:'Error');
