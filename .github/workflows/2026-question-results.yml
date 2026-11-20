@@ -9,6 +9,11 @@ on:
       - 'supabase/functions/_shared/*2026*'
       - 'supabase/functions/beagu-2026-results-ingest/**'
       - 'supabase/migrations/*beagu_2026*.sql'
+      - 'scripts/beagu-2026-referral-integration.gs'
+      - 'supabase/functions/beagu-referral-ingest-v1/**'
+      - 'supabase/functions/beagu-2026-review-admin/**'
+      - 'js/beagu-2026-admin-review.js'
+      - 'admin.html'
       - 'js/2026-approved-question-results.js'
       - 'js/level-search.js'
       - 'tests/2026-*.mjs'
@@ -22,6 +27,11 @@ on:
       - 'supabase/functions/_shared/*2026*'
       - 'supabase/functions/beagu-2026-results-ingest/**'
       - 'supabase/migrations/*beagu_2026*.sql'
+      - 'scripts/beagu-2026-referral-integration.gs'
+      - 'supabase/functions/beagu-referral-ingest-v1/**'
+      - 'supabase/functions/beagu-2026-review-admin/**'
+      - 'js/beagu-2026-admin-review.js'
+      - 'admin.html'
       - 'js/2026-approved-question-results.js'
       - 'js/level-search.js'
       - 'tests/2026-*.mjs'
@@ -47,4 +57,6 @@ jobs:
           node tests/school-question-mode-only-privacy.mjs
           node tests/three-day-release.mjs
           node tests/2026-release-consent-gate.mjs
+          node tests/2026-auto-quality-referral-gate.mjs
+          node scripts/test-challenge-referral-stage2.cjs
           node tests/lv1-percentile-chart-parity.mjs

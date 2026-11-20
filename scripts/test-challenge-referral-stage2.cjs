@@ -21,16 +21,19 @@ assert.ok(checkin.indexOf("BEAGU_REFERRAL_CHECKIN_ENABLED") <
   checkin.indexOf("const exp=Math.floor(Date.now()"),'proof minting gated');
 assert.ok(ingest.includes("BEAGU_REFERRAL_INGEST_ENABLED"),'private ingestion gate');
 assert.ok(ingest.indexOf("BEAGU_REFERRAL_INGEST_ENABLED") <
-  ingest.indexOf("db.rpc('beagu_referral_credit'"),'credit cannot precede gate');
+  ingest.indexOf("db.rpc('beagu_referral_credit_quality_gate'"),'credit cannot precede gate');
 assert.match(ingest,/formResponseId/);
 assert.match(ingest,/sourceSpreadsheetId/);
 assert.match(ingest,/PROOF_OUT_OF_WINDOW/);
 assert.match(ingest,/body\.action==='preflight'/);
+assert.match(ingest,/p_quality_attested:attested/);
+assert.match(ingest,/p_quality_signals:signals/);
+assert.match(form,/beaguReferralSubmissionQuality_\(event.response\)/);
 assert.match(ingest,/Object\.keys\(body\)\.length===1/);
 assert.ok(ingest.indexOf("BEAGU_REFERRAL_INGEST_SECRET") <
  ingest.indexOf("body.action==='preflight'"),'preflight checks secret before accepting request');
 assert.ok(ingest.indexOf("body.action==='preflight'") <
- ingest.indexOf("db.rpc('beagu_referral_credit'"),'preflight must not mutate referral data');
+ ingest.indexOf("db.rpc('beagu_referral_credit_quality_gate'"),'preflight must not mutate referral data');
 assert.match(form,/function testBeaguReferralConnection\(/);
 assert.match(form,/payload:JSON\.stringify\(\{action:'preflight'\}\)/);
 

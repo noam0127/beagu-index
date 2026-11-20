@@ -40,7 +40,7 @@ Deno.serve(async(request:Request)=>{
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(input.action!=="queue"&&input.action!=="hold"&&input.action!=="basis_review")return send(origin,400,{error:"invalid_action"});
+ if(!["queue","hold","basis_review","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -64,6 +64,24 @@ Deno.serve(async(request:Request)=>{
   }
   // Review decisions may only be made by the owner, never a viewer or editor.
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
+  if(input.action==="referral_quality_queue"){
+    const {data,error}=await db.rpc("beagu_referral_quality_queue");
+    if(error||!data)return send(origin,503,{error:"referral_quality_queue_unavailable"});
+    return send(origin,200,data);
+  }
+  if(input.action==="referral_quality_resolve"){
+    const hash=typeof input.event_hash==="string"?input.event_hash:"";
+    const decision=typeof input.decision==="string"?input.decision:"";
+    const reason=typeof input.reason==="string"?input.reason.trim():"";
+    if(!/^[a-f0-9]{64}$/.test(hash)||!["APPROVE","REJECT"].includes(decision)||
+       reason.length<12||reason.length>500||/[<>]/.test(reason))
+      return send(origin,400,{error:"invalid_referral_review"});
+    const {data,error}=await db.rpc("beagu_referral_quality_resolve",{
+       p_event_hash:hash,p_actor:actor,p_session:claims.session_id,
+       p_decision:decision,p_reason:reason});
+    if(error)return send(origin,409,{error:"review_denied_or_changed"});
+    return send(origin,200,data||{ok:true,decision});
+  }
   if(input.action==="basis_review"){
     const id=typeof input.school_id==="string"?input.school_id:"";
     const sha=typeof input.payload_sha256==="string"?input.payload_sha256:"";
