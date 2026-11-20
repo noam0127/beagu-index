@@ -1,0 +1,56 @@
+/* Male-only original photographic cast, 3 adult teachers x 8 real poses.
+   Female character art and background-only fallback remain untouched. */
+#setup .setup-character-art.dogyeom{
+ background-image:url("../assets/class-diary/characters/dogyeom-poses-v2.webp");
+ background-size:800% auto;background-repeat:no-repeat;background-position:0% 3%;
+ background-color:#e7e3e2;
+}
+#setup .setup-character-art.taeo{
+ background-image:url("../assets/class-diary/characters/taeo-poses-v2.webp");
+ background-size:800% auto;background-repeat:no-repeat;background-position:0% 3%;
+ background-color:#dfe8e4;
+}
+#setup .setup-character-art.dogyeom img,
+#setup .setup-character-art.taeo img{visibility:hidden}
+body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"]{
+ z-index:3;width:auto!important;height:clamp(190px,67%,440px)!important;
+ max-height:calc(100% - 100px);
+ right:clamp(8px,8%,55px)!important;bottom:clamp(94px,22%,195px)!important;
+ aspect-ratio:356 / 537!important;border:0!important;border-radius:0!important;
+ box-shadow:none!important;background-color:transparent!important;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 84%,transparent 100%)!important;
+ filter:drop-shadow(0 8px 17px #20223255);
+ transform-origin:50% 100%;
+ animation:diary-male-arrive-v2 .4s cubic-bezier(.24,.72,.3,1) both;
+}
+body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"][data-male-actor="man2"],
+body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"][data-male-actor="man3"]{
+ aspect-ratio:186 / 506!important;right:clamp(15px,10%,74px)!important;
+}
+body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"][data-pose="thinking"],
+body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"][data-pose="listening"]{
+ transform:translateY(2px);
+}
+body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"][data-pose="greeting"],
+body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"][data-pose="smile"]{
+ transform:translateY(-2px);
+}
+@keyframes diary-male-arrive-v2{
+ from{opacity:0;translate:0 10px}to{opacity:1;translate:0 0}
+}
+@media(max-width:620px){
+ body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"]{
+  height:clamp(150px,53%,325px)!important;right:2%!important;
+  bottom:clamp(135px,31%,245px)!important;
+  max-height:calc(100% - 190px);
+ }
+ body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"][data-male-actor="man2"],
+ body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"][data-male-actor="man3"]{
+  right:6%!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing #sceneArt #sceneHyunwooLive[data-male-atlas="v2"]{
+  animation:none!important;transition:none!important;translate:none!important;transform:none!important;
+ }
+}
