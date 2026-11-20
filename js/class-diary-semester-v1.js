@@ -21,6 +21,31 @@ const PROSE_ACTS=(typeof module==='object'&&module.exports&&typeof require==='fu
 if(PROSE_ACTS.some((act,i)=>!act||act.part!==i+1||!Array.isArray(act.entries)||act.entries.length!==6))
  throw Error('COMPLETE_36_CHAPTER_NOVEL_REQUIRED');
 const REWRITTEN=Object.freeze(PROSE_ACTS.flatMap(act=>act.entries));
+const FICTIONAL_COLLEAGUES=(typeof module==='object'&&module.exports&&typeof require==='function')?
+ [require('./class-diary-colleague-dogyeom-v1.js'),require('./class-diary-colleague-taeo-v1.js')]:
+ [root.BeaguClassDiaryDogyeom,root.BeaguClassDiaryTaeo];
+if(FICTIONAL_COLLEAGUES.some(x=>!x||typeof x.moment!=='function'||typeof x.validate!=='function'))
+ throw Error('TWO_NEW_COLLEAGUE_STORIES_REQUIRED');
+FICTIONAL_COLLEAGUES.forEach(x=>x.validate());
+
+const NEW_FOCAL=Object.freeze({
+ man2:[
+  '도겸은 첫 학기의 서툰 인사를 기억한다고 했다. 실을 손가락에 걸었다가 내게도 한 가닥을 건넸다. 나는 당장 멋진 모양을 만들지 못해도 괜찮다는 사실을 알았다.',
+  '4월 서점에서 도겸은 실뜨기 책을 샀다. 왜 손을 바쁘게 움직이느냐고 묻자 기다리는 시간에 마음이 먼저 달아나지 않게 하려고 시작했다고 했다.',
+  '도겸은 아이들이 서로 다른 손으로 실을 잡는 모습을 오래 바라봤다. 나는 그가 잘생긴 외모로 받는 관심보다 조용한 시간을 더 좋아한다는 걸 조금 알았다.',
+  '안전사고 뒤 도겸은 자신이 보지 못한 장면은 끝까지 보지 못했다고 말했다. 그 신중함 때문에 우리는 함부로 누군가를 탓하지 않았다.',
+  '도겸의 손에서 실이 한 번 빠졌다. 그는 아무도 웃지 않는 곳에서도 다시 실을 걸었다. 나는 그것이 실패를 숨기지 않는 사람의 태도라고 생각했다.',
+  '방학식 날 도겸은 내가 만든 새로운 모양을 보고 웃었다. 실이 풀려도 다시 걸 수 있다는 말을 둘 다 오래 기억할 것 같았다.'
+ ],
+ man3:[
+  '태오는 배구 가방을 내려놓으며 내일 체육관에서 친선 경기를 한다고 했다. 나는 먼저 갈 수 있는지 물었고, 그는 오지 않아도 된다고 덧붙였다.',
+  '태오는 운동장에서 승부욕을 드러내다가도 마지막까지 공을 받지 못한 사람을 살폈다. 그 두 모습이 같은 사람에게 있었다.',
+  '비가 오던 날 태오는 배구 이야기를 하다가 내 표정을 보고 멈췄다. 쉬고 싶은 사람에게 운동이 늘 위로는 아니란 사실을 그도 배웠다.',
+  '안전사고 뒤 태오는 부상자를 섣불리 움직이지 않고 보건실을 불렀다. 경기장에서도 한 사람의 몸은 승패보다 먼저였다.',
+  '공개수업을 보던 태오는 윤아가 손을 내리는 순간을 기억했다. 그는 잘하는 사람에게 공이 몰리는 경기를 이제 재미없다고 말했다.',
+  '마지막 날 태오는 다음에 배구를 하더라도 서로 원하는지 먼저 묻겠다고 했다. 나는 그 말이 처음 들어왔을 때 비켜 주던 통로만큼 오래 남았다.'
+ ]
+});
 const RECALLS=Object.freeze({
  9:{from:4,lines:[
  '3월에 아이들에게 두 가지 방법을 시험해 보자고 했던 약속이 떠올랐다. 이번에는 시간만 재지 않으려고 기록지를 고쳤다.',
@@ -131,6 +156,8 @@ const PERSON={
  man:{name:'현우 선생님',beats:['현우는 고장 난 복합기에 대고 “오늘은 제가 이깁니다” 하고 말했다. 우리는 결국 종이를 다시 넣었다.','현우는 농담을 하다가도 교실 이야기가 시작되면 의자를 바로 당겨 앉았다.','현우가 한 농담에 아무도 웃지 않았다. 그는 웃는 얼굴을 거두고 자기 말이 어땠는지 물었다.','현우는 말을 꺼내려다 멈췄다. “오늘은 웃길 자신이 없네요.”','현우는 자기가 잘못했던 일부터 이야기했다. 나는 괜찮다는 말을 서두르지 않았다.','현우는 마지막 날에도 웃겼다. 다만 웃음이 끝나고 오래 머무는 사람이 되었다.'],near:'현우가 농담을 하려다 그만뒀다. “그냥 같이 있고 싶었어요.” 그런 말을 할 때는 늘 시선을 피했다.',distant:'현우는 침묵이 찾아오자 손목시계를 만졌다. 그가 농담을 꺼내지 않은 것은 처음이었다.',end:'현우의 농담보다 오래 남은 건 그가 웃음을 멈추고 내 말을 끝까지 들었던 순간이었다.'},
  none:{name:'민서 선생님',beats:['민서는 수첩의 빠진 줄을 찾아내 조용히 손가락으로 짚었다.','민서는 한 번 정한 것은 지켜야 한다고 생각했다. 내가 규칙도 바뀔 수 있지 않느냐고 묻자 수첩을 덮었다.','민서는 일을 정확하게 해내려다 다른 사람까지 지치게 했다는 말을 듣고 한참 아무 말이 없었다.','민서는 확인한 사실과 모르는 사실을 나눴다. 그러나 사람의 마음은 그렇게 나눌 수 없었다.','민서는 “제가 조금 서둘렀나 봐요” 하고 말했다. 그 한마디 뒤에 회의실의 공기가 달라졌다.','민서는 이번 학기 수첩의 마지막 장을 보여 주었다. 함께 했던 일이 작은 글씨로 빼곡했다.'],near:'민서와는 일일이 설명하지 않아도 되는 일이 늘었다. 서로가 어려울 때 먼저 물어볼 수 있는 동료가 생겼다.',distant:'민서는 할 말을 적었다가 지웠다. 우리는 여전히 상대의 속도를 배우고 있었다.',end:'민서와 나 사이에 남은 것은 연애가 아니라 서로 다른 속도를 견디는 우정이었다.'}
 };
+PERSON.man2={name:'도겸 선생님',beats:NEW_FOCAL.man2,near:'도겸이 먼저 실을 한 가닥 건넸다. 나는 서두르지 않고 그 손의 움직임을 따라 해 보았다.',distant:'도겸은 실을 거두고 내게 필요한 시간을 물었다. 서로 모르는 것을 함부로 짐작하지 않는 사이였다.',end:'도겸과의 관계는 서두르지 않고 실패한 모양을 다시 풀던 시간 속에서 달라졌다.'};
+PERSON.man3={name:'태오 선생님',beats:NEW_FOCAL.man3,near:'태오는 내게 배구를 하자고 청했다가 지금은 쉬어도 좋다고 했다. 그 말이 초대만큼 반가웠다.',distant:'태오는 공을 건네기 전에 내가 받을 준비가 되어 있는지 물었다. 우리 사이의 거리를 그가 존중한다는 걸 알았다.',end:'태오의 배구공은 결국 우리에게 함께하는 일의 조건을 묻게 했다. 원할 때 건네고 원치 않으면 기다리는 것.'};
 const EFFECTS=[
  {agency:3,voice:3,trust:0,affection:0,fatigue:4,boundary:-2,support:-1},
  {agency:0,voice:0,trust:2,affection:3,fatigue:1,boundary:0,support:3},
@@ -164,9 +191,12 @@ function chapter(s){
   if(record)paragraphs.splice(Math.min(4,paragraphs.length),0,callback.lines[record.choice]);
  }
  if(s.episode%6===0){
-  const emphasis=FOCAL_MOMENTS[s.profile.partner]||FOCAL_MOMENTS.none;
+  const emphasis=FOCAL_MOMENTS[s.profile.partner]||NEW_FOCAL[s.profile.partner]||FOCAL_MOMENTS.none;
   paragraphs.push(emphasis[act]);
  }
+ const sportMoments=FICTIONAL_COLLEAGUES.map(colleague=>colleague.moment(s.episode)).filter(Boolean);
+ if(sportMoments.length)paragraphs.splice(Math.min(5,paragraphs.length),0,...sportMoments);
+
  return {perspective:'player',narrator:'player',episode:s.episode,total:36,act:act+1,
   actName:ACTS[act],date:'2027-'+e[0],title:e[1],
   place:PLACE_OVERRIDES[s.episode]||PLACE_NAMES[e[2]]||'학교',visual:e[2],
@@ -204,7 +234,7 @@ function validate(){if(SCENES.length!==36||REWRITTEN.length!==36)throw Error('EP
    entry.lines.some(x=>typeof x!=='string'||x.length<35))throw Error('NOVEL_EPISODE_INCOMPLETE_'+(i+1));
  });SCENES.forEach((e,i)=>{if(e.length!==11||e.slice(3).some(x=>typeof x!=='string'||x.length<7)||!PLACE_NAMES[e[2]])throw Error('BAD_EPISODE_'+i);});return {episodes:36,acts:6,choices:108,endingTypes:5};}
 validate();
-const api=Object.freeze({VERSION,ACTS,SCENES,PERSON,THREADS,REWRITTEN,RECALLS,createGame,chapter,choose,advance,validate});
+const api=Object.freeze({VERSION,ACTS,SCENES,PERSON,THREADS,REWRITTEN,RECALLS,FICTIONAL_COLLEAGUES,createGame,chapter,choose,advance,validate});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiarySemester=api;
 })(typeof window!=='undefined'?window:globalThis);
