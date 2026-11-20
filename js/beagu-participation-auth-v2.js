@@ -37,7 +37,7 @@
        spellcheck="false" required>
     <button type="button" id="beaguParticipationToggle" aria-pressed="false">표시</button>
    </div>
-   <button type="submit" id="beaguParticipationSubmit">참여코드 확인</button>
+   <button type="submit" id="beaguParticipationSubmit">레벨1 인증</button>
   </form>
   <p id="beaguParticipationMessage" role="status" aria-live="polite"></p>
   <nav class="beagu-participation-links" aria-label="참여 및 승급">
