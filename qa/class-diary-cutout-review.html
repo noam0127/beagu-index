@@ -13,6 +13,7 @@ body{margin:0;padding:18px}header,.tools,.meta,.grid{max-width:1200px;margin:0 a
 <label class="control">포즈<select id="posePick"></select></label>
 <label class="control">선택 후 반응<select id="responsePick"><option value="no">기본 장면</option><option value="1">선택 1</option><option value="2">선택 2</option><option value="3">선택 3</option></select></label>
 <label class="control">화면 배경<select id="backPick"><option value="school">학급 배경 예시</option><option value="alpha">체커보드</option><option value="dark">어두운 배경</option></select></label>
+<label class="control">투명 컷 확대<select id="zoomPick"><option value="1">100% · 실제 출력</option><option value="1.2">120%</option><option value="1.4">140%</option><option value="1.6">160%</option></select></label>
 <button id="screenPick" type="button" aria-pressed="false">모바일 390px 비교</button>
 <button id="downloadQA" type="button">검수 기록 JSON 저장</button>
 </section>
@@ -39,7 +40,7 @@ function fillPoses(){const actor=cast[$('actorPick').value];$('posePick').replac
 function onChapter(){ $('posePick').value=String(choosePose());render(); }
 function render(){const id=$('actorPick').value,actor=cast[id],index=Number($('posePick').value),pose=actor.poses[index],x=index%actor.columns,y=Math.floor(index/actor.columns),status=actor.quality[pose],name=actor.name;
  const path='source_atlases/'+actor.file,src=$('sourceActor');src.style.backgroundImage='url("'+path+'")';src.style.backgroundSize=(actor.columns*100)+'% '+(actor.rows*100)+'%';src.style.backgroundPosition=(actor.columns===1?0:100*x/(actor.columns-1))+'% '+(actor.rows===1?0:100*y/(actor.rows-1))+'%';
- $('cutoutActor').src=id+'/'+pose+'.webp';$('cutoutActor').onerror=()=>{$('candidateHint').textContent='이미지를 읽을 수 없습니다. 원본을 유지하고 ZIP 안의 파일 존재 여부를 확인하세요.'};$('cutoutActor').onload=()=>{$('candidateHint').textContent='원본 얼굴은 유지됩니다. 머리카락·손·소품·몸통과 테두리를 반드시 검수하세요.'};
+ $('cutoutActor').src=id+'/'+pose+'.webp';$('cutoutActor').style.transform='scale('+$('zoomPick').value+')';$('cutoutActor').style.transformOrigin='center 65%';$('cutoutActor').onerror=()=>{$('candidateHint').textContent='이미지를 읽을 수 없습니다. 원본을 유지하고 ZIP 안의 파일 존재 여부를 확인하세요.'};$('cutoutActor').onload=()=>{$('candidateHint').textContent='원본 얼굴은 유지됩니다. 머리카락·손·소품·몸통과 테두리를 반드시 검수하세요.'};
  $('sourceName').textContent=$('cutoutName').textContent=name;$('sourceLine').textContent=$('cutoutLine').textContent=lines[id];
  $('status').replaceChildren();const strong=document.createElement('strong');strong.textContent='현재: '+name+' · '+$('chapterPick').value+'화 · '+pose+' / ';$('status').append(strong);
  const badge=document.createElement('strong');badge.textContent=status==='candidate'?'기술 검수 후보 (최종 미승인)':status==='retouch'?'손·소품/경계 보정 필요':'현 상태 사용 금지';badge.className=status==='candidate'?'good':status==='retouch'?'qa':'warn';$('status').append(badge);
@@ -49,7 +50,7 @@ function render(){const id=$('actorPick').value,actor=cast[id],index=Number($('p
 $('actorPick').addEventListener('change',fillPoses);$('chapterPick').addEventListener('change',onChapter);$('responsePick').addEventListener('change',onChapter);$('posePick').addEventListener('change',render);
 $('reviewNote').addEventListener('input',()=>{notes.set(currentKey(),$('reviewNote').value)});
 $('screenPick').addEventListener('click',e=>{const pressed=e.currentTarget.getAttribute('aria-pressed')==='true';e.currentTarget.setAttribute('aria-pressed',String(!pressed));document.body.classList.toggle('mobile',!pressed);e.currentTarget.textContent=pressed?'모바일 390px 비교':'데스크톱 화면 비교';});
-$('backPick').addEventListener('change',()=>{for(const stage of document.querySelectorAll('.stage')){stage.classList.remove('is-alpha','is-dark');if($('backPick').value!=='school')stage.classList.add('is-'+$('backPick').value)}});
+$('zoomPick').addEventListener('change',render);$('backPick').addEventListener('change',()=>{for(const stage of document.querySelectorAll('.stage')){stage.classList.remove('is-alpha','is-dark');if($('backPick').value!=='school')stage.classList.add('is-'+$('backPick').value)}});
 $('downloadQA').addEventListener('click',()=>{const report={kind:'class-diary-art-qa-not-approval',date:new Date().toISOString(),qa: [...notes.entries()].map(([key,note])=>({key,note})),disclaimer:'No images are approved or deployed by this file.'};const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='class-diary-manual-qa.json';link.click();URL.revokeObjectURL(url)});
 fillPoses();
 </script></body></html>
