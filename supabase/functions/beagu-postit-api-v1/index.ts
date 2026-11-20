@@ -198,7 +198,7 @@ Deno.serve(async(req:Request)=>{
     if(schoolId&&!SCHOOL_ID.test(schoolId))return fail(req,"INVALID_SCHOOL");
     const rawTerm=(url.searchParams.get("q")||"").trim().slice(0,40);
     // Restrict syntax before passing a value into PostgREST's OR filter.
-    const term=rawTerm.normalize("NFC").replace(/[^\\p{L}\\p{N}\\s]/gu," ").replace(/\\s+/g," ").trim();
+    const term=rawTerm.normalize("NFC").replace(/[^\p{L}\p{N}\s]/gu," ").replace(/\s+/g," ").trim();
     if(rawTerm&&term.length<2)return respond(req,{posts:[]});
     let matchedComments=new Set<string>();
     let query=db.from("beagu_postit_posts").select("id,school_id,subject_type,game_slug,comparison_selection,body,author_uid,created_at")
