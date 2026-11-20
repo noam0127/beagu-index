@@ -11,7 +11,7 @@
   const sections = ["adminLogin","adminMfa","adminDashboard"];
   let activeFactorId = "";
   let pending = false;
-  let period='7d',scale='day',dashboard=null,requestSeq=0;
+  let period='7d',scale='day',dashboard=null,requestSeq=0,liveSeq=0,liveTimer=null;
 
   function show(section, message, error = false) {
     for (const id of sections) $(id).hidden = id !== section;
@@ -154,6 +154,47 @@
       root.append(line);
     });
   }
+  function showLiveTraffic(data){
+    const count=Number(data?.active_browsers_5m);
+    $("adminOnlineCount").textContent=Number.isSafeInteger(count)&&count>=0?num(count)+"명":"집계 확인 불가";
+    const root=$("adminHourlyChart");root.replaceChildren();
+    const slots=new Map((Array.isArray(data?.hourly_visits)?data.hourly_visits:[]).map(row=>[Number(row.hour),Number(row.views)||0]));
+    const max=Math.max(1,...slots.values());
+    for(let hour=0;hour<24;hour++){
+      const views=Math.max(0,slots.get(hour)||0);
+      const col=make("div","bar-col");
+      const rect=make("div","bar-rect");
+      rect.style.height=(views?Math.max(2,Math.round(views/max*116)):0)+"px";
+      const label=make("small","hour-label",String(hour).padStart(2,"0"));
+      col.title=hour+"시–"+(hour+1)+"시 · "+num(views)+"회";
+      col.setAttribute("aria-label",col.title);
+      col.append(rect,label);root.append(col);
+    }
+    const when=data?.as_of?new Date(data.as_of).toLocaleTimeString("ko-KR",{timeZone:"Asia/Seoul",hour12:false}):"시각 확인 불가";
+    $("adminLiveAsOf").textContent="최근 갱신 "+when+" · 30초마다 자동 확인 · 동시 접속은 5분 활동 기준 추정치";
+  }
+  async function refreshLiveTraffic(){
+    if(document.hidden||$("adminDashboard").hidden)return;
+    const seq=++liveSeq,requestedPeriod=period;
+    const {data,error}=await auth.getSession();
+    if(error||!data?.session?.access_token)throw Error("session_required");
+    const response=await fetch(SUPABASE_URL+"/functions/v1/beagu-admin-dashboard-v1",{
+      method:"POST",cache:"no-store",
+      headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY,
+               "Authorization":"Bearer "+data.session.access_token},
+      body:JSON.stringify({action:"live_traffic",period:requestedPeriod})
+    });
+    const payload=await response.json().catch(()=>({}));
+    if(!response.ok||!payload.traffic)throw Error("traffic_unavailable");
+    if(seq!==liveSeq||requestedPeriod!==period)return;
+    showLiveTraffic(payload.traffic);
+  }
+  function refreshLiveSafely(){
+    void refreshLiveTraffic().catch(()=>{
+      $("adminLiveAsOf").textContent="실시간 통계를 갱신하지 못했습니다. 연결과 관리자 인증을 확인하세요.";
+      $("adminOnlineCount").textContent="확인 불가";
+    });
+  }
   function displayDashboard(data){
     dashboard=data;
     for(const [name,object] of [["site",data.site],["search",data.search],["view",data.school_views],
@@ -179,6 +220,7 @@
     if(seq!==requestSeq)return;
     if(!payload.analytics||typeof payload.analytics!=="object")throw Error("invalid_response");
     displayDashboard(payload.analytics);
+    refreshLiveSafely();
   }
   document.querySelectorAll("[data-period]").forEach(button=>button.addEventListener("click",async()=>{
     period=button.dataset.period;
@@ -203,7 +245,13 @@
     $("adminTotp").value = "";
     show("adminDashboard", "관리자 인증 완료 · 권한: " + proof.role);
     await loadMetrics();
+    if(liveTimer===null)liveTimer=window.setInterval(()=>{
+      if(!document.hidden&&!$("adminDashboard").hidden)refreshLiveSafely();
+    },30000);
   }
+  document.addEventListener("visibilitychange",()=>{
+    if(!document.hidden&&!$("adminDashboard").hidden)refreshLiveSafely();
+  });
   async function chooseFactor() {
     const {data, error} = await auth.mfa.listFactors();
     if (error) throw error;

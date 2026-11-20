@@ -33,6 +33,28 @@
     ? rawPage
     : ['search-lv1','search-lv2','school-report','statistics'].includes(rawPage) ? 'search' : 'index';
 
+  // Passive site presence. Browser UUID already exists for anonymous visit counting.
+  // A heartbeat is sent at most once per minute while the page is visible;
+  // failures never delay page content, search, or the existing visit counter.
+  let presencePending=false;
+  const presencePage=/^[a-z0-9-]{1,48}$/.test(rawPage)?rawPage:'other';
+  async function presencePing(){
+    if(presencePending || document.visibilityState!=='visible' ||
+       typeof supabaseClient==='undefined')return;
+    presencePending=true;
+    try{
+      await supabaseClient.rpc('beagu_presence_ping_v1',{
+        p_visitor:visitor,p_page:presencePage
+      });
+    }catch(_){ /* nonblocking; telemetry is best effort */ }
+    finally{presencePending=false}
+  }
+  window.setTimeout(()=>{void presencePing()},1800);
+  window.setInterval(()=>{void presencePing()},60000);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')void presencePing();
+  });
+
   const display = raw => {
     const result = Array.isArray(raw) ? raw[0] : raw;
     if (!result || typeof result !== 'object') return false;

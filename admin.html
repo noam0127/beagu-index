@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>관리자 · 배구지수</title>
-  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-dashboard2">
+  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-live1">
 </head>
 <body>
   <main class="shell">
@@ -70,6 +70,15 @@
           <article><h4>추정 고유 방문자</h4><strong data-site="estimated_unique_visitors">—</strong></article>
           <article><h4>신규 Auth 가입자</h4><strong data-site="new_accounts">—</strong></article>
           <article><h4>활성 가입자</h4><strong data-site="active_registered_users">미수집</strong></article>
+        </div>
+        <div class="metrics admin-live-metrics" aria-live="polite">
+          <article><h4>현재 접속 중 · 추정</h4><strong id="adminOnlineCount">집계 준비 중</strong>
+            <small>최근 5분 이내 활동한 고유 브라우저 수 · 동일 브라우저의 여러 탭은 1개</small></article>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title"><h4>시간대별 방문 수</h4><small>한국시간 · 선택한 조회 기간 기준</small></div>
+          <div class="bar-chart hourly-chart" id="adminHourlyChart" role="img" aria-label="0시부터 23시까지 시간대별 방문 수"><p class="empty">시간대별 통계를 불러오는 중입니다.</p></div>
+          <p class="subtle" id="adminLiveAsOf">실시간 접속 정보를 불러오는 중입니다.</p>
         </div>
         <div class="chart-card">
           <div class="chart-title"><h4>방문 추이</h4><div class="mini-tabs" id="adminTrendScale">
@@ -164,6 +173,6 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
-  <script defer src="js/beagu-admin-access-v1.js?v=20261120-dashboard2"></script>
+  <script defer src="js/beagu-admin-access-v1.js?v=20261120-live1"></script>
 </body>
 </html>
