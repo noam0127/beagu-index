@@ -1586,7 +1586,7 @@ function renderSemester(){
  displayStage(view.visual,game.profile.partner,semesterArt.expression,semesterArt.season,semesterBackground);
  const actualGuest=semesterArt.guest||maleSemester.guestFor(game.episode,reflection);
  renderSupportingCast(semesterArt.guest||maleSemester.guestFor(game.episode,reflection),semesterArt.season);
- studentDoyun.hide($("sceneDoyun")); // No character artwork in the story scene.
+ studentDoyun.render($('sceneDoyun'),game.episode,reflection,Boolean(actualGuest));
  // The semester follows its own 36-chapter score; the 7-day demo keeps its original soundtrack.
  const score=sound.semesterScore(game.episode,{
   reflection,
