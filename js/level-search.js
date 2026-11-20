@@ -503,7 +503,7 @@
     host.append(section);
   }
 
-  function renderYear(host, year, rows, publicValue, schoolId, modes=[], school=null,comparison=null,loadStatus='loading',selections=[],results2026=[]) {
+  function renderYear(host, year, rows, publicValue, schoolId, modes=[], school=null,comparison=null,loadStatus='loading',selections=[],results2026=[],viewerTier=1) {
     host.replaceChildren();
     const heading=make('div','beagu-year-header');
     heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
@@ -511,11 +511,14 @@
     host.append(heading);
     // Lv.1 results expand inside the selected search card; no page change.
     if(year === 2026) {
-      const vetted = metrics2026(rows);
-      const hasQuestions=window.Beagu2026ApprovedResults?.render(host,results2026);
+      const vetted = metrics2026(rows,viewerTier);
+      const hasQuestions=window.Beagu2026ApprovedResults?.render(host,results2026,{level:viewerTier});
       if(vetted.length) {
         const section=make('section','beagu-approved-section');
-        BeaguDetailGroups.appendGrouped(section,vetted,(body,m)=>addRow(body,m.label,metricValue(m)));
+        BeaguDetailGroups.appendGrouped(section,vetted,(body,m)=>{
+          if(Number(viewerTier)>=2 && window.Beagu2026Lv2Bars?.appendMetric?.(body,m))return;
+          addRow(body,m.label,metricValue(m));
+        });
         section.querySelectorAll('.beagu-detail-group').forEach(group=>{group.open=true;});
         host.append(section);
       } else if(!hasQuestions) {
@@ -537,7 +540,7 @@
         reload.textContent='승인 결과 확인 중...';
         try {
           const fresh=await api('school',{schoolId:String(schoolId)});
-          renderYear(host,2026,fresh.rows,null,schoolId,fresh.schoolQuestionModes,null,null,'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026);
+          renderYear(host,2026,fresh.rows,null,schoolId,fresh.schoolQuestionModes,null,null,'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026,Number(fresh.level));
         } catch(e) {
           if(e.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
           reload.disabled=false;
@@ -596,8 +599,8 @@
   }
 
 
-  function metrics2026(rows) {
-    return (Array.isArray(rows) ? rows : []).filter(r => Number(r.year) === 2026 && Number(r.access_level) === 1)
+  function metrics2026(rows,viewerTier=1) {
+    return (Array.isArray(rows) ? rows : []).filter(r => Number(r.year) === 2026 && Number(r.access_level)>=1 && Number(r.access_level)<=Number(viewerTier))
       .flatMap(r => Array.isArray(r.summary?.metrics) ? r.summary.metrics : [])
       .filter(m => typeof m?.label === 'string' && (typeof m.value === 'number' || typeof m.value === 'string') && !/응답|관측|표본|횟수|회수/i.test(m.label));
   }
@@ -671,7 +674,7 @@
       refresh();
     });
   }
-  function showDetails(host,rows,school,modes=[],selections=[],results2026=[]) {
+  function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
     host.replaceChildren();
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
@@ -703,7 +706,7 @@
       const draw=(data,status)=>{
         content.removeAttribute('aria-busy');
         renderYear(content,year,rows,vals[year-2023]??null,
-          school.school_id,modes,school,data,status,selections,results2026);
+          school.school_id,modes,school,data,status,selections,results2026,viewerTier);
       };
       if(year===2026){draw(null,'ready');return;}
       if(readyByYear.has(year)){draw(readyByYear.get(year),'ready');return;}
@@ -826,7 +829,7 @@
           await loaded;
           // The signed-session API enforces access rights and release status.
           if(!detail.isConnected)return;
-          showDetails(detail,data.rows,school,data.schoolQuestionModes,data.schoolQuestionSelections,data.schoolQuestionResults2026);
+          showDetails(detail,data.rows,school,data.schoolQuestionModes,data.schoolQuestionSelections,data.schoolQuestionResults2026,Number(data.level));
           detail.dataset.loaded='1';
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         }catch(error){
@@ -935,7 +938,7 @@
           const tab=detail?.querySelector('.year-tabs button[data-year="2026"][aria-selected="true"]');
           const content=detail?.querySelector('.school-year-details');
           if(!detail||detail.hidden||!tab||!content)return;
-          renderYear(content,2026,fresh.rows,null,id,fresh.schoolQuestionModes,null,null,'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026);
+          renderYear(content,2026,fresh.rows,null,id,fresh.schoolQuestionModes,null,null,'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026,Number(fresh.level));
         }catch(error){
           if(error.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
           // Preserve the last server-approved result on transient network errors.
