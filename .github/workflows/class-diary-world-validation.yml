@@ -9,6 +9,15 @@ on:
       - 'js/class-diary-play-v1.js'
       - 'js/class-diary-semester-v1.js'
       - 'js/class-diary-narrator-v1.js'
+      - 'js/class-diary-prose-act1-v1.js'
+      - 'js/class-diary-prose-act2-v1.js'
+      - 'js/class-diary-prose-act3-v1.js'
+      - 'js/class-diary-prose-act4-v1.js'
+      - 'js/class-diary-prose-act5-v1.js'
+      - 'js/class-diary-prose-act6-v1.js'
+      - 'js/class-diary-school-brief-v1.js'
+      - 'styles/class-diary-player-flow-v1.css'
+      - 'scripts/test-class-diary-school-brief.cjs'
       - 'scripts/test-class-diary-narrator.cjs'
       - 'js/class-diary-progress-v1.js'
       - 'scripts/test-class-diary-progress.cjs'
@@ -53,6 +62,15 @@ on:
       - 'scripts/test-class-diary-world.cjs'
       - 'js/class-diary-semester-v1.js'
       - 'js/class-diary-narrator-v1.js'
+      - 'js/class-diary-prose-act1-v1.js'
+      - 'js/class-diary-prose-act2-v1.js'
+      - 'js/class-diary-prose-act3-v1.js'
+      - 'js/class-diary-prose-act4-v1.js'
+      - 'js/class-diary-prose-act5-v1.js'
+      - 'js/class-diary-prose-act6-v1.js'
+      - 'js/class-diary-school-brief-v1.js'
+      - 'styles/class-diary-player-flow-v1.css'
+      - 'scripts/test-class-diary-school-brief.cjs'
       - 'scripts/test-class-diary-narrator.cjs'
       - 'js/class-diary-literary-v1.js'
       - 'styles/class-diary-literary-v1.css'
@@ -74,6 +92,7 @@ jobs:
           node scripts/test-class-diary-play.cjs
           node scripts/test-class-diary-semester.cjs
           node scripts/test-class-diary-narrator.cjs
+          node scripts/test-class-diary-school-brief.cjs
           node scripts/test-class-diary-progress.cjs
           node scripts/test-class-diary-semester-ui.cjs
           node scripts/test-class-diary-director.cjs
