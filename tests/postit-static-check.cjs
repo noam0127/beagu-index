@@ -76,13 +76,11 @@ for(const id of ['challengeAccessPanel','challengeProtected','certificate','part
 }
 assert.ok(challenge.includes('data-html2canvas-ignore="true"'),
  'Private identity remains outside exported certificate');
-assert.ok(challenge.includes('class="challenge-lv2-pending"'),
- 'The permanent-account explanation remains below the certificate');
+assert.ok(!challenge.includes('기존 Lv.2(임시) 상태는 유지됩니다.'),
+ 'Removed redundant temporary-level note from Challenge');
+assert.ok(!challenge.includes('class="challenge-lv2-pending"'),
+ 'Do not render an empty account-explanation card');
 assert.ok(!challenge.includes('Lv.2(진)'), 'Retired Level 2 label is absent');
-assert.ok(challenge.includes('aria-label="정식 Lv.2 계정 안내"'),
- 'The separate note is informational, not a duplicate upgrade form');
-assert.ok(challenge.includes('class="challenge-lv2-description"'),
- 'Account-ownership boundary is still explained');
 assert.ok(challenge.includes('id="challengeAccessPanel"') &&
  challenge.includes('id="challengeAccessBadge"') &&
  challenge.includes('id="challengeLogout"'),
