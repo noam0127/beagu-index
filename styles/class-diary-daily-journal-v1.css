@@ -1,12 +1,33 @@
-/* A journal entry closes every fictional school day. */
-.daily-journal{margin:1.25rem 0;padding:1.15rem;background:linear-gradient(165deg,#fffaf0,#f3e9d8);border:1px solid #d7c4a5;border-radius:14px;color:#332a21;box-shadow:0 5px 16px rgba(48,38,25,.08)}
-.daily-journal[hidden]{display:none!important}
-.daily-journal-kicker{font-size:.78rem;color:#785e3f;letter-spacing:.06em;font-weight:700}
-.daily-journal h3{margin:.25rem 0 .55rem;font-size:1.12rem;line-height:1.4}
-.daily-journal .daily-journal-guide{font-size:.86rem;color:#6c5744;line-height:1.6;margin:.2rem 0 1rem}
-.daily-journal-options{display:grid;gap:.65rem}
-.daily-journal-option{display:block;width:100%;font:inherit;text-align:left;padding:.82rem .9rem;background:#fffdf7;color:#32271e;border:1px solid #d9c6aa;border-radius:10px;cursor:pointer;line-height:1.6;white-space:normal;overflow-wrap:anywhere;transition:border-color .16s,background .16s}
-.daily-journal-option:hover,.daily-journal-option:focus-visible{border-color:#9d7340;outline:2px solid transparent;background:#fff5df}
-.daily-journal-option[aria-pressed="true"]{border:2px solid #805b32;background:#fbe8be;font-weight:650}
-.daily-journal-chosen{margin:.75rem 0 0;color:#705237;font-size:.84rem;line-height:1.55}
-@media (max-width:620px){.daily-journal{padding:.95rem}.daily-journal-option{padding:.9rem .8rem;min-height:3.1rem}}
+/* The diary is a dedicated paper-like choice overlay after the last outcome sentence. */
+body.is-choosing #choiceSection.daily-journal-dialog{
+ background:linear-gradient(160deg,#fffaf1,#f1e3ca)!important;
+ border:2px solid #b99e76!important;
+ color:#342a21!important;
+ border-radius:18px!important;
+ box-shadow:0 18px 60px rgba(28,23,19,.32)!important;
+}
+body.is-choosing #choiceSection.daily-journal-dialog .option-title{
+ color:#463321!important;
+ font-family:inherit;
+ font-size:clamp(17px,2.7vw,22px);
+ line-height:1.5;
+ margin-bottom:14px;
+}
+body.is-choosing #choiceSection.daily-journal-dialog .option-title::before{
+ content:"2027 · 오늘의 기록";display:block;font-size:.72em;
+ font-weight:600;letter-spacing:.08em;color:#806647;margin-bottom:.4rem;
+}
+body.is-choosing #choiceSection.daily-journal-dialog button.choice{
+ background:#fffdf8!important;color:#32281e!important;border:1px solid #d4ba94!important;
+ border-radius:11px!important;text-align:left!important;white-space:normal!important;
+ padding:14px 17px!important;line-height:1.65!important;font-weight:500!important;
+ box-shadow:0 3px 9px rgba(74,52,23,.07)!important;
+}
+body.is-choosing #choiceSection.daily-journal-dialog button.choice:hover,
+body.is-choosing #choiceSection.daily-journal-dialog button.choice:focus-visible{
+ background:#f7e5c5!important;border-color:#947043!important;color:#24180f!important;
+}
+@media(max-width:620px){
+ body.is-choosing #choiceSection.daily-journal-dialog{padding:17px!important;width:min(94vw,520px)!important}
+ body.is-choosing #choiceSection.daily-journal-dialog button.choice{font-size:14px!important;padding:12px 13px!important}
+}
