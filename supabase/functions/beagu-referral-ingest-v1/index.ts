@@ -31,9 +31,10 @@ async function matches(a:string,b:string) {
 }
 Deno.serve(async req=>{
   if(req.method!=='POST')return response(405,{error:'METHOD_NOT_ALLOWED'});
-  if(Deno.env.get('BEAGU_REFERRAL_INGEST_ENABLED')!=='true' ||
-     hmacKey.length<32 || ingestKey.length<32)
-    return response(503,{error:'REFERRAL_INGEST_NOT_READY'});
+  // Credentials can be checked with a read-only preflight even while live credit
+  // remains disabled. This lets the Form owner verify the shared secret safely.
+  if(hmacKey.length<32 || ingestKey.length<32)
+    return response(503,{error:'REFERRAL_SECRETS_UNAVAILABLE'});
   if((Number(req.headers.get('content-length'))||0)>2048)
     return response(413,{error:'TOO_LARGE'});
   const provided=req.headers.get('X-Beagu-Referral-Ingest-Token')||'';
@@ -45,6 +46,16 @@ Deno.serve(async req=>{
     if(enc.encode(raw).byteLength>2048)return response(413,{error:'TOO_LARGE'});
     body=JSON.parse(raw);
   }catch{return response(400,{error:'INVALID_JSON'});}
+  // Strictly authenticated and side-effect free. Preflight never touches
+  // beagu_referral_credit or accepts teacher answers.
+  if(body && !Array.isArray(body) && typeof body==='object' &&
+     body.action==='preflight' && Object.keys(body).length===1)
+    return response(200,{
+      ok:true,checks:'secrets_match_and_signature_key_present',
+      enabled:Deno.env.get('BEAGU_REFERRAL_INGEST_ENABLED')==='true',
+    });
+  if(Deno.env.get('BEAGU_REFERRAL_INGEST_ENABLED')!=='true')
+    return response(503,{error:'REFERRAL_INGEST_NOT_READY'});
   if(!body || typeof body!=='object' || Array.isArray(body) ||
      body.sourceSpreadsheetId!=='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4' ||
      typeof body.formResponseId!=='string' || !eventPattern.test(body.formResponseId) ||
