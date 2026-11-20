@@ -37,7 +37,7 @@ assert.doesNotMatch(index,/1,000명 달성 시 2026 배구지수 자료를 공�
 assert.doesNotMatch(index,/class="data-access-link" href="challenge\.html"/,'Do not add a standalone challenge CTA');
 assert.match(index,/https:\/\/forms\.gle\/TPyCakK6Sj2zchRy7/);
 const challenge=read('challenge.html');
-assert.match(challenge,/challenge-lv2-pending[\s\S]*?정식 계정 생성 후 이용/,'Challenge distinguishes pending permanent accounts');
+assert.doesNotMatch(challenge,/기존 Lv\.2\(임시\) 상태는 유지됩니다\./,'Removed redundant challenge announcement');
 assert.doesNotMatch(challenge,/step-3|Lv\.2\(진\)/,'Outdated promotion controls stay absent from the challenge');
 assert.match(challenge,/id="capture"/);
 assert.match(challenge,/id="loungeLink"/);
