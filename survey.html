@@ -25,7 +25,15 @@
 <p id="referralNotice" role="status" hidden style="color:#6f4d12;background:#fff8e7;border:1px solid #ead7a7;border-radius:12px;padding:12px 14px">추천인 링크를 통한 레벨2 자동 승급은 현재 연동 준비 중입니다. 지금 제출하는 설문은 추천 실적으로 인정되지 않습니다.</p>
 
 <details class="beagu-inline-disclosure"><summary>자료 보호</summary><p>설문 응답은 연결된 공식 설문에서 수집합니다. 이 페이지에서는 응답을 저장하지 않습니다.</p></details>
-<div class="survey-actions"><a href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 공식 설문 참여하기 ↗</a>
+<div id="referralOptin" hidden style="margin-top:17px;padding:16px;border:1px solid #dce5f1;border-radius:12px">
+  <label style="display:flex;gap:10px;align-items:flex-start;line-height:1.6">
+    <input type="checkbox" id="referralConsent" style="margin-top:5px;flex-shrink:0">
+    <span>추천 실적 연결을 위해 브라우저별 임의 구분값이 추천 확인코드로 처리되는 데 동의합니다. 설문 답변 내용과 연결된 공개 정보로 쓰이지 않습니다. 동의하지 않아도 일반 설문에는 참여할 수 있습니다.</span>
+  </label>
+  <button type="button" id="referralJoinForm" disabled style="margin-top:12px;width:100%;background:#2563eb;color:#fff;border:0;border-radius:12px;min-height:46px;font-weight:800">추천 인증 후 설문 참여하기</button>
+  <p id="referralSubmitFeedback" role="status" aria-live="polite"></p>
+</div>
+<div class="survey-actions"><a id="surveyFormLink" href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 공식 설문 참여하기 ↗</a>
 <a class="secondary" id="backToSchool" href="search.html">학교 검색으로 돌아가기</a></div>
 </main></div><script>(()=>{const params=new URLSearchParams(location.search);
 const referral=params.get('ref');
@@ -33,4 +41,7 @@ if(referral){const notice=document.getElementById('referralNotice');notice.hidde
   if(!/^[a-f0-9]{64}$/.test(referral))notice.textContent='올바르지 않은 추천 링크입니다. 일반 설문만 이용할 수 있습니다.';
 }
 const id=params.get('school');if(id&&/^[A-Z0-9]{7}$/.test(id)){const a=document.getElementById('backToSchool');a.href='school-report.html?school_id='+encodeURIComponent(id);a.textContent='학교 결과로 돌아가기'}})();</script>
+<script src="js/supabase-config.js"></script>
+<script src="js/beagu-referral-form-config-v1.js?v=20261120-stage2"></script>
+<script src="js/beagu-referral-form-v1.js?v=20261120-stage2"></script>
 </body></html>
