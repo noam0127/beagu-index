@@ -120,7 +120,7 @@ Deno.serve(async req=>{
       console.error('referral quality gate unavailable',screenError.code||'UNKNOWN');
       return response(503,{error:'QUALITY_GATE_UNAVAILABLE'});
     }
-    if(screen?.status!=='AUTO_CLEARED' && screen?.status!=='CLEARED'){
+    if(!['AUTO_CLEARED','CLEARED','LEGACY_COMPATIBLE'].includes(screen?.status)){
       return response(200,{ok:true,credited:false,
         decision:screen?.status==='REJECTED'?'quality_rejected':'pending_quality_review'});
     }
