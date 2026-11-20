@@ -8,7 +8,7 @@ on:
       - 'scripts/build-2026-results.mjs'
       - 'supabase/functions/_shared/*2026*'
       - 'supabase/functions/beagu-2026-results-ingest/**'
-      - 'supabase/migrations/20261119170000_beagu_2026_question_results.sql'
+      - 'supabase/migrations/*beagu_2026*.sql'
       - 'js/2026-approved-question-results.js'
       - 'js/level-search.js'
       - 'tests/2026-*.mjs'

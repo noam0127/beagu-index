@@ -72,4 +72,8 @@ assert.ok(!gs.includes('||='));
 const browser={window:{Beagu2026Questionnaire:catalog}};vm.createContext(browser);vm.runInContext(fs.readFileSync('js/2026-approved-question-results.js','utf8'),browser);
 assert.equal(browser.window.Beagu2026ApprovedResults.summary([{questionId:'Q01',row:-1,values:['보통이다']}]).Q01,'보통이다');
 assert.equal(Object.keys(browser.window.Beagu2026ApprovedResults.summary([{questionId:'Q51',row:-1,values:['secret']}])).length,0);
+const replacement=fs.readFileSync('supabase/migrations/20261120023327_beagu_2026_set_based_snapshot.sql','utf8');
+assert.match(replacement,/where existing\.payload_sha256 is distinct from excluded\.payload_sha256/);
+assert.match(replacement,/approval_status='WITHHELD',approved_by=null,approved_at=null/);
+assert.match(replacement,/snapshot_time<previous_time/);
 console.log('2026 aggregation, strict payload validation, private/public projection and Apps Script syntax: PASS');
