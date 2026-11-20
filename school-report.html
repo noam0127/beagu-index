@@ -1168,7 +1168,7 @@
   }
 }</script>
 <script src="js/2026-questionnaire-options-v1.2.js?v=20261117-original50"></script>
-<script src="js/2026-approved-question-results.js?v=20261119-results1"></script>
+<script src="js/2026-approved-question-results.js?v=20261121-lv2-approved-instant"></script>
 <script src="js/historical-original-questions.js?v=20261117-source-headers"></script>
 <script src="js/historical-questionnaire-choices.js?v=20261117-verified-v1"></script>
 <script src="js/2025-observed-choices.js?v=20261117-observed30"></script>
@@ -1234,8 +1234,7 @@
   }
   function tierUI(){
     for(const level of [0,1])$('tier'+level).setAttribute('aria-pressed',String(state.tier===level));
-    // One code entrypoint across pages: the legacy tier-specific form is retired.
-    $('tierCodePanel').hidden=true;
+    $('tierCodePanel').hidden=state.requestedTier===0 || state.tier===state.requestedTier;
     $('accessTag').textContent=state.demo?'가상 자료 · 시연':'Lv.'+state.tier+(state.tier===0?' 공개 정보':' 인증된 승인 통계');
   }
 
@@ -1401,8 +1400,11 @@
       catch{state.authToken='';state.authLevel=0;saveToken('')}
     }
     if(!state.authToken||state.authLevel<level){
-      window.dispatchEvent(new Event('beagu:participation-open'));
-      return;
+      $('tierCodePanel').hidden=false;
+      $('tierError').textContent=state.authLevel>0?
+        '현재 코드는 Lv.'+state.authLevel+'까지 열람할 수 있습니다. Lv.'+level+' 코드를 입력하세요.':
+        '해당 열람등급의 인증코드를 입력하세요.';
+      window.dispatchEvent(new Event('beagu:participation-open'));return;
     }
     state.tier=level;clearTierItems();tierUI();render();
     const id=String(state.school.school_id);publicYearDB(id);await protectedReport(id);
@@ -1599,20 +1601,19 @@
   }
   function bind(){
     for(const level of [0,1])$('tier'+level).addEventListener('click',()=>chooseTier(level));
-    // Legacy per-tier form is no longer an authentication entrypoint.
-    $('tierCodeForm').hidden=true;
-    $('tierCodeForm').inert=true;
-    window.addEventListener('beagu:participation-authenticated',async event=>{
-      const access=event.detail;
-      if(!access||Number(access.level)<1||typeof access.token!=='string')return;
-      state.authLevel=Number(access.level);
-      state.authToken=access.token;
-      if(state.school&&!state.demo)await chooseTier(1);
+    $('tierCodeForm').addEventListener('submit',loginTier);
+    window.addEventListener('beagu:participation-authenticated',event=>{
+      const auth=event.detail;
+      if(!auth||typeof auth.token!=='string'||![1,2].includes(Number(auth.level)))return;
+      state.authLevel=Number(auth.level);state.authToken=auth.token;saveToken(auth.token);
+      if(state.school&&!state.demo&&state.requestedTier>0)
+        void chooseTier(state.requestedTier);
     });
     window.addEventListener('beagu:participation-logged-out',()=>{
-      state.authLevel=0;state.authToken='';state.tier=0;state.requestedTier=0;
-      clearTierItems();tierUI();render();
+      state.authLevel=0;state.authToken='';saveToken('');
+      state.tier=0;state.requestedTier=0;clearTierItems();tierUI();render();
     });
+
     let timeout;
     $('schoolInput').addEventListener('input',()=>{
       clearTimeout(timeout);
