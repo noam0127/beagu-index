@@ -24,7 +24,7 @@ declare
 begin
   if p_actor is null or p_request_id is null or p_body is null
      or pg_catalog.char_length(pg_catalog.btrim(p_body)) not between 1 and 200
-     or p_subject_type not in ('school','game','comparison') then
+     or p_subject_type is null or p_subject_type not in ('school','game','comparison') then
     return pg_catalog.jsonb_build_object('error','INVALID_POST');
   end if;
   -- One transaction at a time for each writer across devices/tabs. The
