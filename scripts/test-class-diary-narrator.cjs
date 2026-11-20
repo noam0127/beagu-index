@@ -7,8 +7,8 @@ const narrator=require('../js/class-diary-narrator-v1.js');
 const semester=require('../js/class-diary-semester-v1.js');
 const entry=fs.readFileSync(path.join(__dirname,'../teacher-class-diary-play.html'),'utf8');
 const journey=fs.readFileSync(path.join(__dirname,'../js/class-diary-journey-v1.js'),'utf8');
-assert.deepEqual(narrator.validate(),{narrators:3,perspective:'colleague'});
-const cases=[['woman','서지윤'],['man','한현우'],['none','윤민서']];
+assert.deepEqual(narrator.validate(),{narrators:5,perspective:'colleague'});
+const cases=[['woman','서지윤'],['man','한현우'],['none','윤민서'],['man2','차도겸'],['man3','백태오']];
 const unique=new Set();
 const base=partner=>({
  schoolName:'가상의 초등학교',
@@ -38,7 +38,7 @@ for(const [partner,narratorName] of cases){
  assert.equal(state.phase,'semester_ending');
  assert.equal(state.ending.perspective,'player','The ending is player POV');
 }
-assert.equal(unique.size,3,'Three genuinely different prologues are required');
+assert.equal(unique.size,5,'Three genuinely different prologues are required');
 assert(entry.includes('js/class-diary-narrator-v1.js?v=20261120-pov1'));
 assert(entry.includes('function renderNarratorPrologue()'));
 assert(entry.includes("const view=narrator.prologue(game.profile);"));
@@ -54,4 +54,4 @@ assert(entry.includes('<small>프롤로그의 화자</small>'),'Review label');
 assert(entry.includes('그 사람의 프롤로그 읽기'),'Submit button');
 assert(!entry.includes('<strong>함께할 동료</strong>'),'Retired label must not remain');
 assert(journey.includes('알고 싶은 사람 고르기'),'Dynamic step button');
-console.log('PASS: 3 colleague narrators, 36 first-person player chapters per route, reflections, endings, and UI transition');
+console.log('PASS: 5 colleague narrators, 36 first-person player chapters per route, reflections, endings, and UI transition');
