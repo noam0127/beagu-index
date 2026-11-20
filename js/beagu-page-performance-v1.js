@@ -48,14 +48,18 @@
   }
   window.BeaguPerf=Object.freeze({record});
   function navigationSample(){
-    const nav=performance.getEntriesByType?.('navigation')?.[0];
-    const old=performance.timing;
-    const elapsed=Number(nav?.loadEventEnd)||(old?.loadEventEnd&&old?.navigationStart
-      ?old.loadEventEnd-old.navigationStart:0);
-    if(Number.isFinite(elapsed)&&elapsed>0){
-      // Allow content, animations and search to finish before a background ping.
-      window.setTimeout(()=>record('navigation',elapsed,true),2200);
-    }
+    // NavigationTiming.loadEventEnd may still be 0 INSIDE a window.load handler.
+    // Read it in the next task, after the load event has completely finished.
+    window.setTimeout(()=>{
+      const nav=performance.getEntriesByType?.('navigation')?.[0];
+      const old=performance.timing;
+      const elapsed=Number(nav?.loadEventEnd)||(old?.loadEventEnd&&old?.navigationStart
+        ?old.loadEventEnd-old.navigationStart:0);
+      if(Number.isFinite(elapsed)&&elapsed>0){
+        // Measurement collection never delays the interactive page.
+        window.setTimeout(()=>record('navigation',elapsed,true),1700);
+      }
+    },120);
   }
   if(document.readyState==='complete')navigationSample();
   else window.addEventListener('load',navigationSample,{once:true});
