@@ -29,3 +29,13 @@ jobs:
       - run: node tests/admin-live-traffic-static.cjs
       - run: node tests/admin-page-performance-static.cjs
       - run: node tests/admin-dashboard-static.cjs
+      - name: Verify deployed admin endpoint still blocks unauthorized requests
+        run: |
+          set -euo pipefail
+          endpoint='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-admin-dashboard-v1'
+          code="$(curl --silent --show-error --max-time 20 --output /tmp/telemetry-admin-denial.json --write-out '%{http_code}' -X POST -H 'content-type: application/json' -H 'origin: https://baeguindex.com' --data '{"action":"live_traffic","period":"today"}' "$endpoint")"
+          test "$code" = "401"
+          grep -q 'authentication_required' /tmp/telemetry-admin-denial.json
+          code="$(curl --silent --show-error --max-time 20 --output /tmp/telemetry-admin-origin.json --write-out '%{http_code}' -X POST -H 'content-type: application/json' -H 'origin: https://untrusted.example' --data '{"action":"live_traffic","period":"today"}' "$endpoint")"
+          test "$code" = "403"
+          grep -q 'origin_not_allowed' /tmp/telemetry-admin-origin.json
