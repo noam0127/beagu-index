@@ -34,8 +34,10 @@ jobs:
             const origin = process.env.SITE;
             const checks = [
               ['home', '/', 'postit.html'],
-              ['postit', '/postit.html', 'postit-v1.js?v=20261120-lv2-search1'],
-              ['postit-js', '/js/postit-v1.js?v=20261120-lv2-search1', 'WRITER_IDENTITY_REQUIRED'],
+              ['postit', '/postit.html', 'postit-account-v1.js?v=20261121-member1'],
+              ['postit-js', '/js/postit-v1.js?v=20261121-member1', 'WRITER_IDENTITY_REQUIRED'],
+              ['postit-account-js','/js/postit-account-v1.js?v=20261121-member1','signInWithPassword'],
+              ['postit-account-css','/styles/postit-account-v1.css?v=20261121-member1','postit-account'],
               ['wind-css', '/styles/postit-v1.css', 'postit-breeze-flutter'],
               ['school-search', '/search.html', 'postit.html'],
               ['school-search-lv1', '/search-lv1.html', 'postit.html'],
