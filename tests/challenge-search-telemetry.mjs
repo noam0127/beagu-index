@@ -122,7 +122,7 @@ assert.ok(challenge.indexOf('id="challengeAccessCode"')<challenge.indexOf('id="c
 assert.match(read('js/challenge.js'),/BeaguChallengeProgress\.refresh/);
 assert.match(read('js/visit-stats.js'),/beagu-telemetry-v2/,'Preserve preexisting visit accounting via Edge');
 assert.match(read('js/visit-stats.js'),/sessionStorage/,'Browser session fallback');
-assert.match(read('js/visit-stats.js'),/p_event:event/,'Reuse one event for retries');
+assert.match(read('js/visit-stats.js'),/body:\{action:'visit',visitor,event,page\}/,'Reuse one event for retries');
 assert.match(read('js/visit-stats.js'),/Number.isSafeInteger/,'Do not invent visit totals');
 assert.match(read('js/challenge.js'),/participantNo\.textContent = '순번 조회 실패'/,'Show a retryable ordinal error');
 assert.match(read('index.html'),/방문한 선생님/);
