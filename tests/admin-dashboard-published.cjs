@@ -3,7 +3,12 @@
 const assert=require("node:assert/strict");
 const base="https://baeguindex.com/admin.html";
 const onPush=process.env.GITHUB_EVENT_NAME==="push";
-const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth1";
+const expectedVersion="20261121-hourlymonitor1";
+// PR smoke reads the CURRENT published asset; push must verify the new release.
+const publishedVersion=html=>{
+ const m=html.match(/js\\/beagu-admin-access-v1\\.js\\?v=([a-zA-Z0-9-]+)/);
+ return m?.[1]||"";
+};
 (async()=>{
  let last="";
  for(let attempt=0;attempt<15;attempt++){
@@ -22,7 +27,8 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
       html.includes('id="adminReview2026List"')&&
       html.includes('id="adminTelemetryHealthPanel"')&&
       html.includes('id="adminTelemetryAsOf"')&&
-      html.includes('js/beagu-admin-access-v1.js?v='+expectedVersion)&&
+      publishedVersion(html)!==""&&
+      (!onPush||publishedVersion(html)===expectedVersion)&&
       (!onPush || html.includes('id="adminTelemetryHourlyStatus"'))&&
       html.includes('name="robots" content="noindex,nofollow,noarchive"')){
       assert(!/visit-stats\.js|search-telemetry-v1\.js/.test(html));
@@ -38,7 +44,7 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
          (onPush&&!code.includes("자동 공개 판정"))){
         last="Published JS has old reviewer implementation";continue;
       }
-      const healthJs=await fetch("https://baeguindex.com/js/beagu-admin-access-v1.js?v="+expectedVersion+"&check="+Date.now(),{
+      const healthJs=await fetch("https://baeguindex.com/js/beagu-admin-access-v1.js?v="+publishedVersion(html)+"&check="+Date.now(),{
         headers:{"Cache-Control":"no-cache"},signal:AbortSignal.timeout(15000)
       });
       if(healthJs.status!==200){last="Health JS HTTP "+healthJs.status;continue;}
