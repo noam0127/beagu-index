@@ -21,7 +21,7 @@ for(const item of manifest.canonical){
  assert(item.file.endsWith(known[item.id]),'unexpected original source '+item.file);
  assert(item.approvedSource && !item.independentGeneratedImagesApproved);
  const image=fs.readFileSync(path.join(root,item.file));
- const prefix=Buffer.from('blob '+image.length+'\\0'); // Git blob SHA is content-addressed.
+ const prefix=Buffer.concat([Buffer.from('blob '+image.length+' '),Buffer.from([0])]); // Git blob header ends with NUL.
  const sha=crypto.createHash('sha1').update(prefix).update(image).digest('hex');
  assert.equal(sha,item.gitBlobSha,'canonical source changed; require manual identity review: '+item.id);
 }
