@@ -95,7 +95,7 @@ assert.match(gs,/if\(same\.length!==1\)/);
 // Independent 2026 Q01–Q13 scoring contract: an incorrect reversal or
 // silently scored 'other' response must fail CI before deployment.
 const scoringStart=gs.indexOf('function questionScore(');
-const scoringEnd=gs.indexOf('// Record a source-row pointer',scoringStart);
+const scoringEnd=gs.indexOf('function resolveSchool(',scoringStart);
 assert.ok(scoringStart>=0&&scoringEnd>scoringStart,'2026 scoring function must exist');
 const scoreContext={};vm.createContext(scoreContext);
 vm.runInContext(gs.slice(scoringStart,scoringEnd),scoreContext);
