@@ -96,7 +96,7 @@ function beaguReferralQualitySignals_(formResponse){
   const frequency={};let normal=0;
   for(let i=1;i<=11;i++){
     const key=String(i).padStart(2,"0");
-    const match=/^[①②③④⑤]/.exec(core.get(key)||"");
+    const match=/^[①②③④⑤⑥]/.exec(core.get(key)||"");
     if(!match)continue;
     const option=match[0];frequency[option]=(frequency[option]||0)+1;normal++;
   }
