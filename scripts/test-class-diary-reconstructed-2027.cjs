@@ -42,7 +42,7 @@ for(const partner of stages)for(const experience of ['new','mid','senior']){
   assert.equal(scene.visual,novel.scene(n).visual);
   for(let c=0;c<3;c++)assert.equal(scene.choices[c].label,globalThis.BeaguClassDiaryBranchMap.episode(n).choices[c].label);
   assert(scene.paragraphs.join('').length>=300,'Scene is not substantial enough');
-  assert(!scene.paragraphs.some(x=>/^\\s*\\[(BGM|SFX|전환|연출|행동)/.test(x)),
+  assert(!scene.paragraphs.some(x=>['[BGM','[SFX','[전환','[연출','[행동'].some(prefix=>x.trimStart().startsWith(prefix))),
    'Stage directions must not appear as subtitles');
   state=engine.choose(state,String((n+1)%3));
   assert.equal(state.phase,'semester_reflection');
