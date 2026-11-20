@@ -253,3 +253,21 @@ html body .stage:-webkit-full-screen #game{
  padding:8px!important;
  overflow:auto!important;
 }
+
+/* Fullscreen-only survival pause button beside the expand/shrink control. */
+.arcade-fullscreen-pause{display:none}
+.stage.arcade-fullscreen-fallback > .arcade-fullscreen-pause,
+.stage:fullscreen > .arcade-fullscreen-pause,
+.stage:-webkit-full-screen > .arcade-fullscreen-pause{
+ display:flex!important;position:absolute!important;
+ top:calc(max(8px,env(safe-area-inset-top)) + 43px)!important;
+ right:max(12px,env(safe-area-inset-right))!important;
+ z-index:31!important;
+ align-items:center;justify-content:center;
+ width:40px;height:35px;padding:0;
+ border:1px solid rgba(231,249,255,.9);border-radius:11px;
+ background:rgba(11,31,52,.9);color:#fff;font:900 18px/1 system-ui,sans-serif;
+ cursor:pointer;touch-action:manipulation;
+}
+.stage .arcade-fullscreen-pause:disabled{opacity:.48;cursor:not-allowed}
+.stage .arcade-fullscreen-pause:focus-visible{outline:3px solid #b1ffed;outline-offset:2px}
