@@ -20,7 +20,7 @@ for(const name of ['beagu-auth-card','beagu-auth-heading','beagu-auth-badge',
   assert.ok(html.includes(name),'Challenge uses common authentication class '+name);
   assert.ok(shared.includes(name)||journey.includes(name),'Shared CSS owns '+name);
 }
-assert.match(html,/<h1 id="challengeAccessTitle">Lv\.1 인증<\/h1>/);
+assert.match(html,/<h1 id="challengeAccessTitle">참여코드 입력<\/h1>/);
 assert.match(html,/id="challengeAccessForm" class="beagu-auth-form"[^>]*hidden/);
 assert.match(html,/id="challengeProtected" hidden/);
 assert.match(html,/id="challengeAccessToggle"[^>]*type="button"[^>]*aria-pressed="false"/);
