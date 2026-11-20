@@ -187,7 +187,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       </div>
     </div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행)</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
   <a class="postit-arcade-link postit-lv2-link" data-postit-game="teacher-volleyball" target="_top" href="postit.html?game=teacher-volleyball">▤ 이 게임 포스트잇</a>
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
@@ -297,7 +297,29 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const mysteryDrops=[],mysteryReveals=[],mysteryBuffs={left:{},right:{}};
   const mysteryCadence={easy:[15,22],normal:[12,18],hard:[9,14],very_hard:[7,11],extreme:[5,9]};
   const bonusFriend={x:260,y:FLOOR-31,vx:0,vy:0,side:"left",contactFrames:0,clone:true,name:"친한 동학년"};
-  let nextMystery=0;
+  let nextMystery=0,desiredBalls=1;
+  const MAX_MYSTERY_BALLS=5;
+  function createMysteryBall(index){
+    const serveFromLeft=index%2===0?state.serveLeft:!state.serveLeft;
+    return {
+      x:serveFromLeft?215+Math.min(index*21,85):685-Math.min(index*21,85),
+      y:Math.max(112,223-index*28),
+      vx:(serveFromLeft?5.4:-5.4)*ballSpeedFactor(),
+      vy:-(5.2+index*.24)*ballSpeedFactor(),
+      spin:0,cooldown:0,allyCooldown:0,enemyMinionCooldown:0,
+      trail:[],shadowFrames:0,shadowColor:index%2?"#762b4b":"#203f65"
+    };
+  }
+  function changeMysteryBalls(delta){
+    const target=clamp(desiredBalls+delta,1,MAX_MYSTERY_BALLS);
+    if(target===desiredBalls)return false;
+    desiredBalls=target;
+    while(activeBalls.length>desiredBalls)activeBalls.pop();
+    while(activeBalls.length<desiredBalls)
+      activeBalls.push(createMysteryBall(activeBalls.length));
+    syncUI();
+    return true;
+  }
   const isMysteryBuff=(side,key)=>mysteryBuffs[side][key]>state.activeFrames;
   const activeAllies=()=>isMysteryBuff("left","conflict")?[]:
     isMysteryBuff("left","friends")?[...clones,bonusFriend]:clones;
@@ -329,6 +351,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       case "salary":itemPoints(side,1);break;
       case "friends":buffs.friends=now+dur;buffs.conflict=0;break;
       case "bonus":itemPoints(side,2);break;
+      case "ball_add":changeMysteryBalls(1);break;
+      case "ball_remove":changeMysteryBalls(-1);break;
     }
     const p=side==="left"?left:right;
     mysteryReveals.push({item,x:p.x,y:p.y-80,ttl:105});
@@ -341,7 +365,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       if(mysteryDrops.length<3){
         const side=Math.random()<.5?"left":"right";
         mysteryDrops.push({x:side==="left"?70+Math.random()*320:515+Math.random()*315,
-          y:36,dy:1.9+Math.random()*.8,ttl:610,side,item:mystery.pick(false)});
+          y:36,dy:1.9+Math.random()*.8,ttl:610,side,item:mystery.pick(false,null,true)});
       }
       scheduleMystery();
     }
@@ -369,6 +393,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       .filter(([,v])=>v>state.activeFrames)
       .map(([k,v])=>k+" "+Math.ceil((v-state.activeFrames)/60)+"초");
     return diffName[currentDifficulty]+" · "+fmtTime(activeTenths())+
+      " · 공 "+activeBalls.length+"개"+
       (buffs.length?" · "+buffs.join(" / "):"");
   }
   // EXTREME: always present. VERY HARD: a short intermittent visit.
@@ -578,15 +603,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;
     ball.trail.length=0;
     activeBalls.length=1;
-    if(currentDifficulty==="extreme"){
-      Object.assign(secondBall,{
-        x:state.serveLeft?685:215,y:168,
-        vx:(state.serveLeft?-5.5:5.5)*ballSpeedFactor(),vy:-5.6*ballSpeedFactor(),
-        spin:0,cooldown:0,allyCooldown:0,enemyMinionCooldown:0,shadowFrames:0
-      });
-      secondBall.trail.length=0;
-      activeBalls.push(secondBall);
-    }
+    // Pickups carry the changed ball count across every rally this match.
+    while(activeBalls.length<desiredBalls)
+      activeBalls.push(createMysteryBall(activeBalls.length));
     clones.length=0;
     const count=cloneProfiles[currentDifficulty]||0;
     for(let i=0;i<count;i++)clones.push({
@@ -618,6 +637,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     battle=battleProfiles[currentDifficulty]||battleProfiles.hard;
     specialProfile=specialProfiles[currentDifficulty]||specialProfiles.hard;
     resetPower();
+    desiredBalls=currentDifficulty==="extreme"?2:1;
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
     state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
@@ -642,6 +662,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
     state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
     currentDifficulty="hard";
+    desiredBalls=1;
     resetMystery();
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     specialProfile=specialProfiles.hard;resetPower();
