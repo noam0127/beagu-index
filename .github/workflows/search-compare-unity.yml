@@ -14,6 +14,16 @@ on:
       - 'js/postit-v1.js'
       - 'tests/search-compare-unity.mjs'
       - '.github/workflows/search-compare-unity.yml'
+  pull_request:
+    paths:
+      - 'tests/search-compare-unity.mjs'
+      - '.github/workflows/search-compare-unity.yml'
+      - 'search.html'
+      - 'search-lv1.html'
+      - 'statistics.html'
+      - 'js/beagu-participation-auth-v2.js'
+      - 'js/beagu-level-state-v1.js'
+      - 'js/postit-v1.js'
   workflow_dispatch:
 permissions:
   contents: read
