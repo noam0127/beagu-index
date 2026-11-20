@@ -6,7 +6,7 @@
 (() => {
   'use strict';
   const $=id=>document.getElementById(id);
-  const DIRECTORY_KEY='beagu-public-compare-directory-v3';
+  const DIRECTORY_KEY='beagu-public-compare-directory-v4';
   const DIRECTORY_TTL_MS=20*60*1000;
   const PAGE_SIZE=1000;
   const fields='school_id,school_name,sido_standard,support_office,establishment,status';
@@ -21,9 +21,41 @@
       return item.schools;
     }catch(_){return null}
   }
+  async function staticDirectory(){
+    // This JSON is generated from public.schools using the public publishable key.
+    // No survey answers, access tokens, or school-level private metrics are included.
+    const response=await fetch('data/public-comparison-school-directory-v1.json?v=20261120-compact1',
+      {cache:'default'});
+    if(!response.ok)throw Error('정적 학교목록 응답 실패: '+response.status);
+    const payload=await response.json();
+    const expected=['school_id','school_name','sido_standard','support_office','establishment'];
+    if(payload?.version!==1||!Array.isArray(payload.fields)||
+       JSON.stringify(payload.fields)!==JSON.stringify(expected)||
+       !Array.isArray(payload.rows)||payload.rows.length!==payload.count||
+       payload.rows.length<6000||payload.rows.length>12000)
+      throw Error('정적 학교목록 무결성 검증 실패');
+    const seen=new Set(),list=[];
+    for(const row of payload.rows){
+      if(!Array.isArray(row)||row.length!==expected.length)throw Error('학교목록 형식 오류');
+      const [school_id,school_name,sido_standard,support_office,establishment]=row;
+      const school={school_id,school_name,sido_standard,support_office,establishment,status:'운영'};
+      if(!valid(school)||seen.has(school_id))throw Error('학교목록 중복 또는 유효하지 않은 학교');
+      seen.add(school_id);list.push(school);
+    }
+    return list;
+  }
   async function directory(){
     const cached=cachedDirectory();
     if(cached)return cached;
+    try{
+      const list=await staticDirectory();
+      try{sessionStorage.setItem(DIRECTORY_KEY,JSON.stringify({savedAt:Date.now(),schools:list}))}catch(_){}
+      return list;
+    }catch(error){
+      // Stale CDN or unavailable static file: retain the existing live,
+      // paginated database route as a nonblocking recovery path.
+      console.warn('정적 학교목록 미응답, 실시간 공개 학교목록으로 복구',error);
+    }
     if(typeof supabaseClient==='undefined')throw Error('공개 학교목록 연결 코드가 없습니다.');
     const query=(offset,count=false)=>supabaseClient.from('schools')
       .select(fields,count?{count:'exact'}:{})
