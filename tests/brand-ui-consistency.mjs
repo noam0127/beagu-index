@@ -51,7 +51,13 @@ assert.match(css,/@media\(max-width:700px\)/);
 
 const badgeCSS=read('styles/beagu-level-state-v1.css');
 const badgeJS=read('js/beagu-level-state-v1.js');
-assert.match(badgeCSS,/\.beagu-level-state\{[^}]*position:fixed/s,'Badge remains fixed to viewport');
+assert.match(badgeCSS,/\\.beagu-level-state-container\\{[\\s\\S]*?position:fixed;/,'Badge wrapper remains fixed to viewport');
+assert.ok(badgeCSS.includes('.beagu-level-state-container > .beagu-level-state{') &&
+ badgeCSS.includes('position:relative;'),'The link is positioned relative to fixed wrapper');
+assert.ok(badgeCSS.includes('top:calc(env(safe-area-inset-top,0px) + 12px)'),'Badge aligns with first mobile logo row');
+for(const page of [...active,'challenge.html','postit.html','levels.html']){
+  assert.ok(read(page).includes('styles/beagu-level-state-v1.css?v=20261121-logo-row1'),page+' invalidates stale mobile badge CSS');
+}
 assert.match(badgeCSS,/@media\(max-width:760px\)/,'Badge does not overlap mobile navigation');
 assert.match(badgeCSS,/\.beagu-embedded \.beagu-level-state\{display:none!important\}/,'No duplicate badge in embedded games');
 assert.doesNotThrow(()=>new Script(badgeJS),'Level indicator syntax');
