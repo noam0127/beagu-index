@@ -25,6 +25,7 @@ const form={
   getId:()=>formId,
   getDestinationId:()=>officialSheet,
   getPublishedUrl:()=> 'https://docs.google.com/forms/d/e/abc/viewform',
+  getResponses:()=>[],
   getItems:()=>items,
   addTextItem:()=>{items.push(item);return item;},
   getItemById:id=>id===fieldId?item:null,
@@ -49,6 +50,8 @@ const env={
     newTrigger:handler=>({
       forForm(f){assert.equal(f,form);return this;},
       onFormSubmit(){return this;},
+      timeBased(){return this;},
+      everyHours(n){assert.equal(n,1);return this;},
       create(){triggers.push({getHandlerFunction:()=>handler});},
     }),
   },
@@ -77,7 +80,8 @@ assert.equal(threw,true,'install requires owner configured server secret');
 props.set('BEAGU_REFERRAL_INGEST_SECRET','t'.repeat(48));
 env.installBeaguReferralFormSubmitTrigger();
 env.installBeaguReferralFormSubmitTrigger();
-assert.equal(triggers.length,1,'trigger installer replaces duplicates');
+assert.equal(triggers.length,2,'trigger installer replaces duplicates and retains recovery');
+assert.ok(Number.isSafeInteger(Number(props.get('BEAGU_REFERRAL_RECONCILE_FROM_MS'))));
 
 const proof='BR1.'+'a'.repeat(64)+'.ab8afb27-c498-42c1-8df6-064b6b8102a4.1795248000.'+'f'.repeat(64);
 const event={
@@ -88,7 +92,7 @@ const event={
       {getItem:()=>({getId:()=>fieldId}),getResponse:()=>proof},
     ],
     getId:()=> 'response_key_123456789',
-    getTimestamp:()=>new Date('2026-11-20T12:00:00Z'),
+    getTimestamp:()=>new Date(Date.now()-60*1000),
   },
 };
 env.onBeaguReferralFormSubmitted({...event,source:{getId:()=> 'wrong-form'}});
@@ -109,8 +113,22 @@ assert.deepEqual(Object.keys(body).sort(),
 assert.equal(body.sourceSpreadsheetId,officialSheet);
 assert.equal(body.proof,proof);
 assert.equal(body.formResponseId,'response_key_123456789');
-assert.equal(body.submittedAt,'2026-11-20T12:00:00.000Z');
+assert.equal(body.submittedAt,event.response.getTimestamp().toISOString());
 assert.ok(!options.payload.includes('PRIVATE-SURVEY-ANSWER'),
   'actual teacher answers must not leave Google Forms');
 assert.ok(!logs.join('|').includes(proof),'proof must not appear in logs');
+form.getResponses=since=>{
+  assert.ok(since instanceof Date,'recovery scans Form API with date checkpoint');
+  return [event.response];
+};
+env.reconcileBeaguReferralResponses();
+assert.equal(outgoing.length,2,'backup sends missed event again for server-side dedup');
+assert.equal(JSON.parse(outgoing[1].options.payload).formResponseId,body.formResponseId);
+const checkpointAfter=Number(props.get('BEAGU_REFERRAL_RECONCILE_FROM_MS'));
+assert.ok(checkpointAfter>=Number(body.submittedAt),'recovery checkpoint advanced after successful scan');
+// If backend is temporarily unavailable, the checkpoint must not advance.
+env.UrlFetchApp.fetch=()=>{throw Error('TRANSIENT_OUTAGE');};
+assert.throws(()=>env.reconcileBeaguReferralResponses(),/TRANSIENT_OUTAGE/);
+assert.equal(Number(props.get('BEAGU_REFERRAL_RECONCILE_FROM_MS')),checkpointAfter);
+
 console.log('PASS: owner-only field install, idempotency, trigger, rejection, minimal response metadata');
