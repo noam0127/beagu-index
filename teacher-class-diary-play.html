@@ -416,6 +416,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <link rel="stylesheet" href="styles/class-diary-cast-photo-retouch-v4.css?v=20261120-portrait-v4">
 <link rel="stylesheet" href="styles/class-diary-cast-distinct-v5.css?v=20261120-hyunwoo-hair-v3">
 <link rel="stylesheet" href="styles/class-diary-cast-profiles-v6.css?v=20261120-cast-hobbies-hyunwoo-v3">
+<link rel="stylesheet" href="styles/class-diary-setup-book-v1.css?v=20261120-book4a">
 </head>
 <body>
 <main>
@@ -503,9 +504,9 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <section id="setup" class="panel vn-setup" data-step="1" hidden>
 <div class="setup-head">
  <span class="setup-eyebrow">프롤로그 <span aria-hidden="true">✦</span> 한 학기의 시작</span>
- <h2>어느 교실에서 시작할까요?</h2>
+ <h2 id="setupTitle" tabindex="-1">어느 교실에서 시작할까요?</h2>
  <p>학교를 정하고 알고 싶은 사람을 고르면, 그 사람의 프롤로그를 읽은 뒤 나의 이야기가 시작됩니다.</p>
- <div class="setup-progress" aria-label="게임 준비 과정"><span data-step-label="1">01 · 학교 선택</span><span data-step-label="2">02 · 알고 싶은 사람</span><span data-step-label="3">03 · 프롤로그 준비</span></div>
+ <div class="setup-progress" aria-label="게임 준비 과정"><span data-step-label="1">01 · 학교</span><span data-step-label="2">02 · 동료</span><span data-step-label="3">03 · 선생님들</span><span data-step-label="4">04 · 시작</span></div>
 </div>
 <form id="profileForm">
 <div class="setup-layout">
@@ -560,7 +561,13 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
     <span class="setup-character-name">백태오</span><span class="setup-character-tag">배구 · 승부보다 함께한 날을 기억한다</span>
    </button>
   </div>
-  <div class="setup-supporting-cast" aria-label="학교에서 만날 여성 교직원">
+  <select id="partner" required hidden aria-hidden="true" tabindex="-1"><option value="">알고 싶은 사람을 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option><option value="man2">도겸 선생님 · 실뜨기</option><option value="man3">태오 선생님 · 배구</option></select>
+
+ </div>
+</div>
+<div class="setup-supporting-page" data-setup-screen="3" aria-label="학교에서 만날 선생님들">
+ <div class="setup-section-title"><span class="setup-number">03</span><div><strong>학교에서 만날 선생님들</strong><small>이 교실의 이야기를 함께 채울 인물들을 살펴보세요.</small></div></div>
+<div class="setup-supporting-cast" aria-label="학교에서 만날 여성 교직원">
    <strong class="setup-supporting-title">학교에서 만날 선생님들</strong>
    <div class="setup-supporting-grid">
     <div class="setup-supporting-person"><img id="setupPortraitSuhyun" alt="" aria-hidden="true"><span>박수현<small>3학년 부장</small></span></div>
@@ -577,9 +584,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
     </div>
     <p class="setup-supporting-note">모두 가상의 성인 인물로, 추가 연애 경로는 없습니다.</p>
    </div>
-  <select id="partner" required hidden aria-hidden="true" tabindex="-1"><option value="">알고 싶은 사람을 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option><option value="man2">도겸 선생님 · 실뜨기</option><option value="man3">태오 선생님 · 배구</option></select>
-  <div class="setup-story-note"><span aria-hidden="true">✧</span><p>2027년 3월 2일–7월 · 36화의 이야기<br><small>21개의 기본 선택과 학교생활 속 다양한 사건</small></p></div>
- </div>
+<div class="setup-story-note"><span aria-hidden="true">✧</span><p>2027년 3월 2일–7월 · 36화의 이야기<br><small>21개의 기본 선택과 학교생활 속 다양한 사건</small></p></div>
 </div>
 <div id="diarySchoolSearchDialog" class="diary-school-search-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="diarySchoolSearchTitle">
  <div class="diary-school-search-card">
@@ -591,8 +596,8 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
   
  </div>
 </div>
-<div class="setup-review" data-setup-screen="3">
-<div class="setup-section-title"><span class="setup-number">03</span><div><strong>프롤로그 준비</strong><small>누구의 눈으로 첫날을 바라볼지 확인하세요.</small></div></div>
+<div class="setup-review" data-setup-screen="4">
+<div class="setup-section-title"><span class="setup-number">04</span><div><strong>프롤로그 준비</strong><small>누구의 눈으로 첫날을 바라볼지 확인하세요.</small></div></div>
 <div class="setup-review-road" aria-hidden="true">✧　·　·　·　🏫</div>
 <div class="setup-review-fields"><div><small>선택한 학교</small><strong id="setupReviewSchool">—</strong></div><div><small>주인공</small><strong id="setupReviewName">—</strong></div><div><small>교직 경력 · 성별 · MBTI</small><strong id="setupReviewTraits">—</strong></div><div><small>프롤로그의 화자</small><strong id="setupReviewPartner">—</strong></div></div>
 <p class="setup-review-quote">“이 한 학기를 지나고 나면, 어떤 교실이 남아 있을까.”</p>
@@ -781,6 +786,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-scenario-v1.js"></script>
 <script src="js/class-diary-incidents-v1.js"></script>
 <script src="js/class-diary-demo-v1.js"></script>
+<script src="js/class-diary-setup-book-v1.js?v=20261120-book4a"></script>
 <script src="js/class-diary-journey-v1.js?v=20261120-school-name-input7"></script>
 <script src="js/class-diary-motion-v1.js?v=20261120-no-glow2"></script>
 <script src="js/class-diary-literary-v1.js?v=20261120-paragraph5"></script>
