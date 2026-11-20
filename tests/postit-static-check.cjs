@@ -89,8 +89,8 @@ assert.ok(challenge.includes('id="challengeAccessPanel"') &&
  'Verification, server level and logout are in the same visible panel');
 assert.ok(!challenge.includes('data-beagu-open-levelup>레벨업 인증</button>'),
  'A second upgrade button must not appear below the private code');
-assert.ok(read('js/beagu-level-state-v1.js').includes("'#challengeAccessForm'"),
- 'The global upgrade modal still attaches to the preserved challenge form');
+assert.ok(read('js/challenge-access-v1.js').includes("getElementById('challengeAccessForm')"),
+ 'The challenge access script attaches to the preserved challenge form');
 assert.ok(challenge.includes('.step-card {')&&challenge.includes('border-radius: 16px;'),
  'Challenge retains rounded standard cards');
 

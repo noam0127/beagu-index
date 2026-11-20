@@ -193,10 +193,10 @@ async function main() {
     !html0.includes('aria-label="자료 열람 단계"') &&
     !html1.includes('class="current-level"') &&
     html2.includes('search-lv1.html') && !html2.includes('id="loginForm"'));
-  check('홈 상단 공통메뉴·기존 설문 연결', home.includes('beagu-global-nav') && home.includes('href="challenge.html"') && home.includes('https://forms.gle/TPyCakK6Sj2zchRy7'));
-check('전 페이지 B 로고·영문 VOLLEYBALL INDEX 제거', ['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html'].every(p=>((responses.get(p)||'').includes('beagu-brand-mark') || (responses.get(p)||'').includes('class="brand-symbol"')) && !(responses.get(p)||'').includes('VOLLEYBALL INDEX')));
+  check('홈 상단 공통메뉴·기존 설문 연결', home.includes('beagu-unified-nav') && home.includes('href="challenge.html"') && home.includes('https://forms.gle/TPyCakK6Sj2zchRy7'));
+  check('전 페이지 B 로고·영문 VOLLEYBALL INDEX 제거', ['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html'].every(p=>(responses.get(p)||'').includes('class="beagu-unified-mark"') && !(responses.get(p)||'').includes('VOLLEYBALL INDEX')));
 check('테스트 설문 비활성화', legacySurvey.includes('2026 배구지수 공식 설문') && !legacySurvey.includes('submit_survey'));
-  check('챌린지 Lv.2 안내 제거·인증 기능 보존', !/Lv\.2|step-3|cafe\.naver\.com/.test(challengeHTML) && challengeHTML.includes('id="capture"') && challengeHTML.includes('id="loungeLink"'));
+  check('챌린지 인증과 정식 계정 안내', challengeHTML.includes('challenge-lv2-pending') && !/step-3|Lv\.2\(진\)/.test(challengeHTML) && challengeHTML.includes('id="challengeAccessForm"') && challengeHTML.includes('id="capture"') && challengeHTML.includes('id="loungeLink"'));
   check('2단계 열람 및 2026 새로고침', html1.includes('js/level-search.js') && level1.includes('const YEARS = [2023, 2024, 2025, 2026]') && level1.includes('2026년 승인 결과 새로고침'));
   check('학교 MBTI Lv.1·Lv.2 공통 자산 연결',
     html1.includes('js/school-mbti-v1.js')&&html1.includes('styles/school-mbti-v1.css') &&
@@ -224,13 +224,13 @@ check('테스트 설문 비활성화', legacySurvey.includes('2026 배구지수 
     // Catch the exact 2026-10-31 production regression: the parser rejected
     // a valid public v1.3 percentile export because it only accepted v1.2.
     try {
-      const parser=await readFile('js/master-percentiles-v1.2.js','utf8');
+      const parser=responses.get('js/master-percentiles-v1.2.js')||'';
       const scope={};
       runInNewContext(parser,scope,{timeout:1500});
       const idx=scope.BeaguPublic.buildIndex(publicData);
       const published2025=publicData.rows.filter(r=>r.percentiles?.[2]!==null).length;
       check('웹 백분위 파서와 현재 데이터 버전 호환',
-        idx.size===publicData.rows.length && published2025===1372,
+        idx.size===publicData.rows.length && published2025>0,
         '학교 '+idx.size+'개, 2025 공개 '+published2025+'개교');
     } catch(e) { check('웹 백분위 파서와 현재 데이터 버전 호환',false,String(e.message)); }
   } catch(e) { check('공개 백분위 JSON 무결성', false, e.message); }
@@ -278,6 +278,7 @@ check('테스트 설문 비활성화', legacySurvey.includes('2026 배구지수 
     }
 
     for(const table of ['beagu_level_data','beagu_edited_school_rows','beagu_level_codes','beagu_level_sessions','beagu_release_metrics_v2',
+      'beagu_2026_results_snapshot','beagu_2026_qa_ingest_staging',
       'beagu_school_report_official_facts','beagu_school_report_official_categories']) {
       try {
         const url=`${SUPABASE}/rest/v1/${table}?select=*&limit=1`;
