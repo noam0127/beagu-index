@@ -17,7 +17,7 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
       html.includes('id="adminSchoolRanking"')&&
       html.includes('id="adminPasswordChangeForm"')&&
       html.includes('id="adminReview2026"')&&
-      html.includes('js/beagu-2026-admin-review.js?v=20261120-review2')&&
+      html.includes('js/beagu-2026-admin-review.js?v=20261121-referral1')&&
       html.includes('id="adminReview2026List"')&&
       html.includes('id="adminTelemetryHealthPanel"')&&
       html.includes('id="adminTelemetryAsOf"')&&
@@ -25,7 +25,7 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
       (!onPush || html.includes('id="adminTelemetryHourlyStatus"'))&&
       html.includes('name="robots" content="noindex,nofollow,noarchive"')){
       assert(!/visit-stats\.js|search-telemetry-v1\.js/.test(html));
-      const asset=await fetch("https://baeguindex.com/js/beagu-2026-admin-review.js?v=20261120-review2&check="+Date.now(),{
+      const asset=await fetch("https://baeguindex.com/js/beagu-2026-admin-review.js?v=20261121-referral1&check="+Date.now(),{
         headers:{"Cache-Control":"no-cache"},signal:AbortSignal.timeout(15000)
       });
       if(asset.status!==200){last="Review asset HTTP "+asset.status;continue;}
