@@ -42,7 +42,7 @@ assert.match(search,/sortDirection=sortDirection==='asc'\?'desc':'asc'/,'Lv.1 di
 assert.match(search,/value}_\$\{sortDirection\}/,'Lv.1 must send the selected direction to full-dataset API');
 assert.doesNotMatch(html,/학교명순 ↑|학교명순 ↓|주소순 ↑|주소순 ↓/,'Sort criteria must not embed arrows');
 assert.ok(search.includes("const sort=sortValue.replace(/_(?:asc|desc)$/,'')"),'Full metric field must be forwarded to the API');
-assert.match(search,/render\(data \|\| \[\], count \|\| 0, sortValue\)/,'Render selected sorted metric');
+assert.match(search,/render\(data,\s*count,\s*sortValue\)/,'Render selected sorted metric with server pagination');
 assert.match(api,/beagu_percentile_2025/,'2025 percentile is a verified server sort');
 assert.match(api,/student_count/,'Student count is a verified server sort');
 assert.match(api,/housing_price_won/,'Housing price is a verified server sort');
