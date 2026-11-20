@@ -1546,7 +1546,9 @@ function renderNarratorPrologue(){
  const background=seasonalBackground?seasonalBackground.resolve({episode:2,date:'2027-03-08'}):null;
  displayStage(view.scene,game.profile.partner,'neutral','cold-spring',background);
  renderSupportingCast(null);
- mood('daily');sound.setAmbience(null);
+ // School introduction precedes the story; the prologue music starts when narration begins.
+ if(!schoolIntroPending)mood(sound.prologueTrack(game.profile.partner));
+ sound.setAmbience(null);
  const profile=director.RELATIONSHIPS[game.profile.partner]||director.RELATIONSHIPS.none;
  showCharacterFace(game.profile.partner,'neutral',profile.initial);
  $('characterName').textContent=view.narrator+'의 시점';

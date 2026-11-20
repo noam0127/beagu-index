@@ -14,6 +14,14 @@ for(const key of names){
  assert(t.url.endsWith('.mp3'));
 }
 assert.equal(sound.TRACKS.ending.name,'Home Was You');
+const narratorTracks={woman:'wildflowers',man:'intimate',none:'withhands',man2:'restful',man3:'heartfelt'};
+assert.deepEqual(sound.PROLOGUE_TRACKS,narratorTracks);
+for(const [narrator,track] of Object.entries(narratorTracks)){
+ assert.equal(sound.prologueTrack(narrator),track,'Character prologue music: '+narrator);
+ assert(sound.TRACKS[track],'Missing licensed track for prologue: '+narrator);
+ assert.notEqual(track,'daily','Prologue must differ from landing BGM');
+}
+assert.equal(sound.prologueTrack('unlisted'),'wildflowers','Safe narrator fallback');
 assert.equal(sound.dayTrack(1),'quiet');
 assert.equal(sound.dayTrack(2),'tension');
 assert.equal(sound.dayTrack(7),'intimate');
@@ -138,6 +146,14 @@ for(const key of ['wildflowers','with-these-hands','unraveling','incredulity']){
 }
 
 assert(semesterPage.includes('sound.semesterScore(game.episode,'),'Semester screen must use the 36-episode score');
+assert(semesterPage.includes('if(!schoolIntroPending)mood(sound.prologueTrack(game.profile.partner));'),
+ 'Narrated prologue must change BGM after (not during) the school introduction');
+assert(semesterPage.includes("if(storyMode==='semester'&&schoolIntroPending)return renderPrologueSchoolIntroduction();"),
+ 'School introduction must precede the narrated prologue');
+assert(semesterPage.includes("if(storyMode==='semester'&&prologuePending)return renderNarratorPrologue();"),
+ 'Prologue must precede the 36-episode story');
+assert(semesterPage.includes("if(storyMode==='semester')return renderSemester();"),
+ 'Semester chapter music must replace prologue music on entry');
 assert(!semesterPage.includes("sound.dayTrack((game.episode-1)%7+1)"),'Old 7-day cycle must not override semester score');
 assert(semesterPage.includes('sound.setAmbience(score.ambience)'),'Semester ambience must be routed');
 assert(semesterPage.includes("sound.setAmbience(null);\n const ending=game.ending;"),'Semester ending ambience must be silent');
