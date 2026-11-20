@@ -413,6 +413,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 @media(max-width:370px){.setup-portrait-grid{gap:5px}.setup-character{padding:4px}.setup-character-name{font-size:12px}.setup-character-tag{font-size:9px}}
 </style>
 <link rel="stylesheet" href="styles/class-diary-cast-photo-retouch-v4.css?v=20261120-portrait-v4">
+<link rel="stylesheet" href="styles/class-diary-cast-distinct-v5.css?v=20261120-cast-v5">
 </head>
 <body>
 <main>
@@ -538,23 +539,23 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
   <div class="setup-portrait-grid" role="group" aria-label="프롤로그의 화자, 알고 싶은 사람 선택">
    <button class="setup-character" type="button" data-partner-choice="woman" aria-pressed="false" aria-label="서지윤 선택">
     <span class="setup-character-art jiyoon"><img id="setupPortraitWoman" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">서지윤</span><span class="setup-character-tag">조용히 사람을 살피는 시선</span>
+    <span class="setup-character-name">서지윤</span><span class="setup-character-tag">시집 · 고요 속에서 마음을 읽는다</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="man" aria-pressed="false" aria-label="한현우 선택">
     <span class="setup-character-art hyunwoo"><img id="setupPortraitMan" alt="" aria-hidden="true"><span class="setup-hyunwoo-live" id="setupHyunwooLive" hidden aria-hidden="true"></span></span>
-    <span class="setup-character-name">한현우</span><span class="setup-character-tag">웃음으로 낯섦을 넘기는 시선</span>
+    <span class="setup-character-name">한현우</span><span class="setup-character-tag">논어·시경 · 웃음 뒤에 시를 품는다</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="none" aria-pressed="false" aria-label="윤민서 선택">
     <span class="setup-character-art minseo"><img id="setupPortraitNone" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">윤민서</span><span class="setup-character-tag">기록부터 먼저 살피는 시선</span>
+    <span class="setup-character-name">윤민서</span><span class="setup-character-tag">일기 · 지나간 표정까지 적어 둔다</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="man2" aria-pressed="false" aria-label="차도겸 선택">
     <span class="setup-character-art dogyeom"><img id="setupPortraitDogyeom" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">차도겸</span><span class="setup-character-tag">실뜨기 · 말보다 손을 내미는 교사</span>
+    <span class="setup-character-name">차도겸</span><span class="setup-character-tag">실뜨기 · 얽힌 마음을 천천히 푼다</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="man3" aria-pressed="false" aria-label="백태오 선택">
     <span class="setup-character-art taeo"><img id="setupPortraitTaeo" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">백태오</span><span class="setup-character-tag">배구 · 승부보다 협력의 토스</span>
+    <span class="setup-character-name">백태오</span><span class="setup-character-tag">배구 · 승부보다 동료를 먼저 본다</span>
    </button>
   </div>
   <div class="setup-supporting-cast" aria-label="학교에서 만날 여성 교직원">
@@ -841,6 +842,11 @@ setupPortraitSprite.src='assets/class-diary/characters/setup-colleagues-20261120
 const retouchedPortraitStrip=new Image();
 retouchedPortraitStrip.onload=()=>{$('setup').classList.add('has-retouched-portraits');};
 retouchedPortraitStrip.src='assets/class-diary/characters/setup-three-portraits-v4.webp';
+/* All five setup-only portraits are pre-cropped as exact squares; let the
+ * old art remain visible until the new five-panel image is fully loaded. */
+const distinctCastPortraits=new Image();
+distinctCastPortraits.onload=()=>{$('setup').classList.add('has-distinct-cast-v5');};
+distinctCastPortraits.src='assets/class-diary/characters/class-diary-cast-five-distinct-v5.webp';
 for(const [id,partner] of [['setupPortraitWoman','woman'],['setupPortraitMan','man'],['setupPortraitNone','none'],['setupPortraitDogyeom','man2'],['setupPortraitTaeo','man3']]){
  const art=(partner==='man2'||partner==='man3')?null:(femaleHQ&&femaleHQ.portrait(partner));
  $(id).src=art||visual.dataUrl(visual.portraitSvg(partner,'neutral'));
