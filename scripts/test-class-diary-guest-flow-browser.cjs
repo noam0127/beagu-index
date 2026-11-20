@@ -136,10 +136,12 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
      'Four other colleagues retain their individual hobbies portraits: '+JSON.stringify(shortPortraits));
    assert(hyunwooPortrait?.image.startsWith('url("data:image/webp;base64,')&&hyunwooPortrait.imageHidden,
      'Hyunwoo retains the approved Kian84 hairstyle image: '+JSON.stringify(shortPortraits));
-   assert(portraits.every(p=>Math.abs(p.ratio-1)<0.08)&&
+   const frameRatio=portraits[0]?.ratio;
+   assert(frameRatio>=.76&&frameRatio<=1.06&&
+     portraits.every(p=>Math.abs(p.ratio-frameRatio)<.08)&&
      regularPortraits.every(p=>p.backgroundSize.includes('500%'))&&
      hyunwooPortrait.backgroundSize.includes('400%'),
-     'All portraits remain square, with approved image-specific crop grids: '+JSON.stringify(shortPortraits));
+     'The five photo frames must share the same aspect ratio on mobile and desktop: '+JSON.stringify(shortPortraits));
    assert(new Set(regularPortraits.map(p=>p.position)).size===4,
      'Unchanged cast retain unique crop positions: '+JSON.stringify(shortPortraits));
    const castLayout=await page.locator('.setup-portrait-grid').evaluate(grid=>{
