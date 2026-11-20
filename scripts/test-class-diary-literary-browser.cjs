@@ -2,6 +2,7 @@
  * Only the public fictional demo is used; no account or school-data access. */
 'use strict';
 const assert=require('node:assert/strict');
+const {startFirstChapter}=require('./class-diary-first-chapter-browser.cjs');
 const {chromium}=require('playwright');
 const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
 (async()=>{
@@ -63,6 +64,7 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#setupNext').click();
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','One 36-chapter story uses a first-day confirmation');
    await page.locator('.setup-begin').click();
+    await startFirstChapter(page,'서지윤','새봄');
    await page.waitForTimeout(300);
    if(await page.locator('#novel').isHidden()){
     const state=await page.evaluate(()=>({
