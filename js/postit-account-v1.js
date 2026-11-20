@@ -9,7 +9,8 @@ const client=window.supabaseClient;
 const base='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1';
 const levelKey='beagu-level-session-v1',deviceKey='beagu-referral-device-secret-v1';
 const section=$('postitAccount'),status=$('postitAccountStatus'),form=$('postitAccountForm');
-if(!client||!section||!status||!form)return;
+const smsPhone=$('postitSmsPhone'),smsConsent=$('postitSmsConsent'),smsUnsubscribe=$('postitSmsUnsubscribe');
+if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsUnsubscribe)return;
 let linked=false,busy=false,generation=0;
 const levelToken=()=>{try{return sessionStorage.getItem(levelKey)||''}catch{return ''}};
 function setLinked(next){
@@ -41,6 +42,7 @@ function render(user){
  form.hidden=signedIn;
  $('postitAccountGoogle').hidden=signedIn;
  $('postitAccountSignOut').hidden=!signedIn;
+ smsUnsubscribe.hidden=!signedIn||user?.user_metadata?.beagu_sms_opt_in!==true;
  const canClaim=signedIn&&validatedLevel()&&!linked&&Boolean(originalDevice());
  $('postitAccountLink').hidden=!canClaim;
  $('postitAccountNoDevice').hidden=!signedIn||!validatedLevel()||linked||Boolean(originalDevice());
@@ -76,11 +78,17 @@ async function executeAuth(action){
  }
  busy=true;
  try{
+  const wantsSms=action==='signup'&&smsConsent.checked;
+  const mobile=smsPhone.value.replace(/\\D/g,'');
+  if(wantsSms&&!/^010[0-9]{8}$/.test(mobile)){
+   message('문자 수신을 원하시면 010으로 시작하는 11자리 번호를 입력해 주세요.');return;
+  }
   const {error}=action==='signup'
-   ?await client.auth.signUp({email,password})
+   ?await client.auth.signUp({email,password,options:{data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}})
    :await client.auth.signInWithPassword({email,password});
   if(error)throw error;
   $('postitAccountPassword').value='';
+  smsPhone.value='';smsConsent.checked=false;
   if(action==='signup')message('인증 메일을 확인한 뒤 이 화면에서 로그인하세요.');
   else await refresh();
  }catch(error){
@@ -117,6 +125,17 @@ $('postitAccountLink').addEventListener('click',async()=>{
    ?'이미 다른 계정에 연결된 챌린지 권한입니다. 관리자에게 문의해 주세요.'
    :'원래 기기 증명 또는 Lv2 권한을 확인하지 못했습니다. 연결되지 않았습니다.');
  }finally{busy=false;$('postitAccountLink').disabled=false}
+});
+smsUnsubscribe.addEventListener('click',async()=>{
+ if(busy)return;
+ busy=true;smsUnsubscribe.disabled=true;
+ try{
+  const {error}=await client.auth.updateUser({data:{beagu_sms_opt_in:false,beagu_sms_phone:null}});
+  if(error)throw error;
+  smsUnsubscribe.hidden=true;
+  message('문자 안내 수신 동의를 철회했습니다. 발송용 휴대폰번호도 삭제됩니다.');
+ }catch{message('수신 동의 철회에 실패했습니다. 다시 시도해 주세요.')}
+ finally{busy=false;smsUnsubscribe.disabled=false}
 });
 $('postitAccountSignOut').addEventListener('click',async()=>{
  if(busy)return;busy=true;setLinked(false);
