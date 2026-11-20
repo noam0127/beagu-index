@@ -66,6 +66,15 @@ async function login(page,code){
     deviceScaleFactor:1,hasTouch:cfg.mobile
    });
    const page=await ctx.newPage();
+   // Keep this browser E2E fully offline with respect to real account Auth.
+   // Only a local mock client is needed to render the Lv2 dialog; no signup is sent.
+   await page.addInitScript(()=>{
+    window.supabase={createClient:()=>({auth:{
+      getSession:async()=>({data:{session:null},error:null}),
+      getUser:async()=>({data:{user:null},error:null}),
+      onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})
+    }})};
+   });
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    const tracker={level:0,token:''};
    await fixture(page,tracker);
@@ -74,25 +83,33 @@ async function login(page,code){
    await page.locator('#beaguParticipationCode').fill('INVALIDCODE12');
    await page.locator('#beaguParticipationSubmit').click();
    assert.match(await page.locator('#beaguParticipationMessage').innerText(),/참여코드/);
-   assert.equal(await page.locator('#beaguLevelState').innerText(),'참여코드 입력');
+   assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.0');
    await page.locator('[data-beagu-close]').click();
    await login(page,LV1);
-   assert.equal(await page.locator('#beaguLevelState').innerText(),'✓ Lv1 · 설문 참여 완료');
+   assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.1');
    await view(page,'statistics.html');
    await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.dataset.level==='1');
-   assert.equal(await page.locator('#beaguLevelState').innerText(),'✓ Lv1 · 설문 참여 완료');
+   assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.1');
    await open(page);
    assert.equal(await page.locator('#beaguParticipationDetail').isVisible(),true);
    await page.locator('#beaguParticipationLogout').click();
    await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.dataset.level==='0');
-   assert.equal(await page.locator('#beaguLevelState').innerText(),'참여코드 입력');
+   assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.0');
    await login(page,LV2);
-   assert.equal(await page.locator('#beaguLevelState').innerText(),'♛ Lv2 · 챌린지 달성');
+   assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.2');
    await view(page,'postit.html');
    await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.dataset.level==='2');
-   assert.equal(await page.locator('#beaguLevelState').innerText(),'♛ Lv2 · 챌린지 달성');
+   assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.2');
    await view(page,'challenge.html');
    await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.dataset.level==='2');
+   // Lv2 alone upgrades the Challenge action into account login.
+   await page.waitForFunction(()=>document.querySelector('#challengeAccessPanel [data-beagu-participation-status]')?.textContent==='로그인하기');
+   await page.locator('#challengeAccessPanel [data-beagu-participation-status]').click();
+   await page.locator('#challengeMemberOverlay').waitFor({state:'visible',timeout:10000});
+   assert.equal(await page.locator('#challengeMemberTitle').innerText(),'Lv2 로그인');
+   const memberFit=await page.locator('#challengeMemberDialog').boundingBox();
+   assert(memberFit&&memberFit.x>=-1&&memberFit.x+memberFit.width<=cfg.width+1,'Member login modal fits mobile width');
+   await page.locator('#challengeMemberClose').click();
    await page.locator('#beaguLevelState').click();
    await page.locator('#beaguParticipationOverlay').waitFor({state:'visible'});
    await page.screenshot({path:'artifacts/participation-auth/'+cfg.name+'-lv2.png',fullPage:false});
