@@ -125,7 +125,7 @@ env.reconcileBeaguReferralResponses();
 assert.equal(outgoing.length,2,'backup sends missed event again for server-side dedup');
 assert.equal(JSON.parse(outgoing[1].options.payload).formResponseId,body.formResponseId);
 const checkpointAfter=Number(props.get('BEAGU_REFERRAL_RECONCILE_FROM_MS'));
-assert.ok(checkpointAfter>=Number(body.submittedAt),'recovery checkpoint advanced after successful scan');
+assert.ok(checkpointAfter>=Date.parse(body.submittedAt),'recovery checkpoint advanced after successful scan');
 // If backend is temporarily unavailable, the checkpoint must not advance.
 env.UrlFetchApp.fetch=()=>{throw Error('TRANSIENT_OUTAGE');};
 assert.throws(()=>env.reconcileBeaguReferralResponses(),/TRANSIENT_OUTAGE/);
