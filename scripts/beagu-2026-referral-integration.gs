@@ -144,3 +144,28 @@ function reconcileBeaguReferralResponses(){
   props.setProperty('BEAGU_REFERRAL_RECONCILE_FROM_MS',String(start));
   Logger.log('추천 제출 장애 복구 스캔 완료 · 개인정보 또는 제출 원문 비기록');
 }
+
+/**
+ * 안전한 연결 점검: Google Form 응답은 읽지도 제출하지도 않습니다.
+ * 서버 및 스크립트 속성에 동일한 ingest key가 구성되어 있는지만 확인합니다.
+ * 서버의 실제 추천 승인 기능은 활성화하지 않습니다.
+ */
+function testBeaguReferralConnection(){
+  const secret=String(PropertiesService.getScriptProperties()
+    .getProperty('BEAGU_REFERRAL_INGEST_SECRET')||'');
+  if(secret.length<32)throw Error('스크립트 속성에 추천 전송 비밀키가 설정되지 않았습니다.');
+  const response=UrlFetchApp.fetch(BEAGU_REFERRAL_2026.endpoint,{
+    method:'post', contentType:'application/json',
+    headers:{'X-Beagu-Referral-Ingest-Token':secret},
+    payload:JSON.stringify({action:'preflight'}),
+    muteHttpExceptions:true
+  });
+  const status=response.getResponseCode();
+  let result={};
+  try {result=JSON.parse(response.getContentText());}catch(_){}
+  if(status!==200 || result.ok!==true)
+    throw Error('추천 연결 실패: HTTP '+status+' (서버 설정 및 비밀키 일치 여부 확인)');
+  Logger.log('추천 연결 정상: 비밀키 일치 확인, 유효한 Google Form 응답 전송 없음');
+  Logger.log('실제 추천 실적 처리 서버: '+
+    (result.enabled===true?'함수 게이트 켜짐':'함수 게이트 아직 꺼짐'));
+}
