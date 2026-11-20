@@ -3,6 +3,14 @@
 "use strict";
 const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard";
 const difficultyLabels={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
+const requestCache=new Map(); // public suggestions and server-approved difficulty only
+function cachedRequest(path){
+ const item=requestCache.get(path);
+ if(item&&item.expires>Date.now())return item.promise;
+ if(item)requestCache.delete(path);
+ return null;
+}
+
 const isSafe=s=>typeof s==="string" && s.length>0;
 function make(tag,cls,label){const el=document.createElement(tag);if(cls)el.className=cls;if(label!==undefined)el.textContent=label;return el;}
 class ArcadeSchoolPicker{
@@ -48,9 +56,20 @@ class ArcadeSchoolPicker{
  }
  setLocked(value){this.locked=Boolean(value);this.input.disabled=this.locked;this.results.hidden=this.locked;this.changeButton.textContent=this.locked?"⏹ 학교 변경":"🏫 학교 변경";}
  async request(path){
-  const r=await fetch(API+path,{cache:"no-store",headers:{"Accept":"application/json"}});
-  if(!r.ok)throw new Error("school_api_"+r.status);
-  return await r.json();
+  const cached=cachedRequest(path);
+  if(cached)return cached;
+  // Cache is a display optimization only. Game start and scoring always
+  // revalidate eligibility server-side; no protected survey rows are stored.
+  const ttl=path.startsWith("?schools=")?90000:30000;
+  const promise=fetch(API+path,{cache:"no-store",headers:{"Accept":"application/json"}})
+   .then(async response=>{
+    if(!response.ok)throw new Error("school_api_"+response.status);
+    return response.json();
+   });
+  requestCache.set(path,{expires:Date.now()+ttl,promise});
+  if(requestCache.size>50)requestCache.delete(requestCache.keys().next().value);
+  try{return await promise}
+  catch(error){requestCache.delete(path);throw error}
  }
  async search(){
   if(this.locked)return;
@@ -67,7 +86,22 @@ class ArcadeSchoolPicker{
    for(const school of schools){
     if(!isSafe(school.school_id)||!isSafe(school.school_name))continue;
     const btn=make("button","arcade-school-option",school.school_name+" · "+(school.sido_standard||""));
-    btn.type="button";btn.addEventListener("click",()=>this.select(school));
+    btn.type="button";
+    // Desktop hover/keyboard focus can warm a single possible choice;
+    // the subsequent click reuses the same in-flight request.
+    let prefetchTimer=null;
+    const prefetch=()=>{
+      clearTimeout(prefetchTimer);
+      prefetchTimer=setTimeout(()=>{
+        if(!this.locked&&ticket===this.serial)
+          void this.request("?school_id="+encodeURIComponent(school.school_id)).catch(()=>{});
+      },180);
+    };
+    btn.addEventListener("pointerenter",prefetch);
+    btn.addEventListener("focus",prefetch);
+    btn.addEventListener("pointerleave",()=>clearTimeout(prefetchTimer));
+    btn.addEventListener("blur",()=>clearTimeout(prefetchTimer));
+    btn.addEventListener("click",()=>this.select(school));
     this.results.append(btn);
    }
   }catch(e){if(ticket===this.serial)this.status.textContent="학교 검색 연결에 실패했습니다. 다시 검색해 주세요.";}
