@@ -1,0 +1,40 @@
+name: 2026 Referral Quality Credit Gate
+on:
+  pull_request:
+    paths:
+      - 'scripts/beagu-2026-referral-integration.gs'
+      - 'supabase/functions/beagu-referral-ingest-v1/**'
+      - 'supabase/functions/beagu-2026-review-admin/**'
+      - 'supabase/migrations/*referral_quality_gate.sql'
+      - 'js/beagu-2026-admin-review.js'
+      - 'admin.html'
+      - 'tests/2026-referral-quality-gate.cjs'
+      - '.github/workflows/2026-referral-quality-gate.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/beagu-2026-referral-integration.gs'
+      - 'supabase/functions/beagu-referral-ingest-v1/**'
+      - 'supabase/functions/beagu-2026-review-admin/**'
+      - 'supabase/migrations/*referral_quality_gate.sql'
+      - 'js/beagu-2026-admin-review.js'
+      - 'admin.html'
+      - 'tests/2026-referral-quality-gate.cjs'
+      - '.github/workflows/2026-referral-quality-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node tests/2026-referral-quality-gate.cjs
+          node scripts/test-challenge-referral-stage2.cjs
+          node scripts/test-challenge-referral-gas.cjs
+          node tests/2026-review-admin-static.cjs
+          node tests/2026-review-basis-pending-static.cjs
