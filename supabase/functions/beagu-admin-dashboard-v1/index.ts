@@ -56,12 +56,18 @@ Deno.serve(async(req:Request)=>{
   if(live!==true)return send({error:"session_expired"},401,origin);
   // Lightweight, MFA-gated polling endpoint: no raw visitor data is returned.
   if(input.action==="live_traffic"){
-   const {data:traffic,error:trafficError}=await admin.rpc("beagu_admin_live_traffic_v1",{p_period:period});
+   const [trafficResult,performanceResult]=await Promise.all([
+    admin.rpc("beagu_admin_live_traffic_v1",{p_period:period}),
+    admin.rpc("beagu_admin_page_perf_v1",{p_period:period})
+   ]);
+   const {data:traffic,error:trafficError}=trafficResult;
    if(trafficError||!traffic){
     console.error("admin_live_traffic_error",trafficError?.code||"unknown");
     return send({error:"metrics_unavailable"},503,origin);
    }
-   return send({traffic},200,origin);
+   if(performanceResult.error)
+    console.error("admin_page_perf_error",performanceResult.error.code||"unknown");
+   return send({traffic,performance:performanceResult.error?null:performanceResult.data},200,origin);
   }
   const {data,error}=await admin.rpc("beagu_admin_dashboard_v1",{p_period:period});
   if(error||!data){console.error("dashboard_aggregate_error",error?.code||"unknown");
