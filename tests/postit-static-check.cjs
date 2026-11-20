@@ -14,7 +14,7 @@ assert.ok(app.includes('school-report.html?school_id='),'school report route');
 assert.ok(app.includes('LEVEL_REQUIRED'),'level gate feedback');
 assert.ok(app.includes('COMMENT_READ_LEVEL_REQUIRED'),'Lv0 comment feedback');
 assert.ok(app.includes('function canRead(){return state.level>=2}'),'Lv2 frontend reader gate');
-assert.ok(page.includes('포스트잇과 댓글은 Lv.2부터'),'clear Lv2-only comment policy');
+assert.ok(page.includes('정식 계정 연결 후 글과 댓글을 작성할 수 있습니다.'),'Lv2 reading and member-only writing explained');
 assert.ok(css.includes('postit-breeze-flutter')&&css.includes('postit-corner-flutter')&&css.includes('postit-bookmark-flick'),'scroll wind and folded-corner animation exist');
 assert.ok(app.includes('flutterOnScroll')&&app.includes('previousScrollY')&&app.includes('breezePreference.matches'),'down-scroll only and reduced-motion gating');
 const compare=read('statistics.html'),core=read('js/statistics-compare.js');
