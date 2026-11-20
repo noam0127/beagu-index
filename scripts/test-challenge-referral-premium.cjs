@@ -82,7 +82,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
   emit('focus');await tick();
   assert.equal(el.challengeIdentityTitle.textContent,'Lv2 참여코드');
-  assert.equal(el.challengeIdentityTag.textContent,'Lv2(임시) 달성 ✦');
+  assert.equal(el.challengeIdentityTag.textContent,'Lv.2 달성 ✦');
   assert.equal(el.copyIdentityCode.textContent,'코드 복사');
   assert.equal(el.challengeIdentityReward.hidden,false);
   assert.ok(el.challengeIdentityPanel.classes.has('is-lv2'));
