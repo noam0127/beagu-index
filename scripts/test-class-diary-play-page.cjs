@@ -82,6 +82,14 @@ for(const id of ['setupPlayerPreview','setupPortraitWoman','setupPortraitMan','s
 for(const key of ['woman','man','none','man2','man3']){
  assert(play.src.includes('data-partner-choice="'+key+'"'),'Character card missing: '+key);
 }
+const castRetouchCss=fs.readFileSync('styles/class-diary-cast-photo-retouch-v4.css','utf8');
+const castRetouchWebp=fs.readFileSync('assets/class-diary/characters/setup-three-portraits-v4.webp');
+assert(castRetouchWebp.length>2000&&castRetouchWebp.subarray(0,4).toString('ascii')==='RIFF','Retouched photo strip must be a real WebP');
+assert(play.src.includes("retouchedPortraitStrip.src='assets/class-diary/characters/setup-three-portraits-v4.webp'"),'The three-card photo strip must be preloaded');
+assert(castRetouchCss.includes('background-size: 300% 100%'),'Three natural portrait photographs must be segmented correctly');
+assert(castRetouchCss.includes('.setup-character-art.minseo'),'Minseo crop fix must be present');
+assert(castRetouchCss.includes('.setup-character-art.dogyeom'),'Dogyeom background fix must be present');
+assert(castRetouchCss.includes('.setup-character-art.taeo'),'Taeo background fix must be present');
 assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a cast card should play a cue');
 assert(play.src.includes("sound.note('uiStart')"),'Beginning the novel should play a cue');
 assert(play.src.includes("setupDescription"),'Selecting cast should update story introduction');
