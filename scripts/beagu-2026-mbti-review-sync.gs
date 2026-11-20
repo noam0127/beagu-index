@@ -98,6 +98,8 @@ function mbti26_write(sheet,output,width){
  if(output.length)sheet.getRange(2,1,output.length,width).setValues(output);
 }
 function refreshBeagu2026SchoolCulture(snapshot){
+ // An older standalone clock trigger passes an Apps Script event argument.
+ if(!snapshot?.values)snapshot=null;
  const lock=snapshot?null:LockService.getScriptLock();
  if(lock&&!lock.tryLock(30000))throw Error("기존 MBTI 집계가 실행 중입니다");
  let scanned=0,excluded=0,matched=0,held=0,schoolCount=0;

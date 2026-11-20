@@ -335,6 +335,7 @@ function getSubmittedDay(value) {
   return [m[1],m[2].padStart(2,"0"),m[3].padStart(2,"0")].join("-");
 }
 function refreshBeagu2026Stats(snapshot) {
+  if(!snapshot?.values)snapshot=null;
   const lock=snapshot?null:LockService.getScriptLock();
   if(lock&&!lock.tryLock(30000))throw Error("이미 다른 집계가 실행 중입니다.");
   let scanned=0,matched=0,unmatched=0,prelaunch=0,undated=0;
