@@ -1,6 +1,7 @@
 /* Real browser E2E: public fictional demo only, never touches real school data. */
 'use strict';
 const assert=require('node:assert/strict');
+const {startFirstChapter}=require('./class-diary-first-chapter-browser.cjs');
 const {chromium}=require('playwright');
 const fs=require('node:fs/promises');
 const URL=process.env.DIARY_BASE||'http://127.0.0.1:8123';
@@ -191,7 +192,7 @@ async function advanceColleaguePrologue(page,expectedNarrator){
   await semesterDesktop.locator('#setupNext').click();
   await semesterDesktop.locator('#profileForm button[type="submit"]').click();
   await semesterDesktop.locator('#novel').waitFor({state:'visible'});
-  await advanceColleaguePrologue(semesterDesktop,'한현우');
+  await startFirstChapter(semesterDesktop,'한현우','한가람');
   assert.equal(await semesterDesktop.locator('.diary-day-progress span').count(),6,'Desktop semester must show six-act progress');
   assert.equal(await semesterDesktop.locator('#diarySemesterMeta').isVisible(),true,'Desktop semester seasonal HUD must be visible');
   const desktopRect=await semesterDesktop.locator('#novelCard').boundingBox();
@@ -220,7 +221,7 @@ async function advanceColleaguePrologue(page,expectedNarrator){
   await semesterPage.locator('#setupNext').click();
   await semesterPage.locator('#profileForm button[type="submit"]').click();
   await semesterPage.locator('#novel').waitFor({state:'visible'});
-  await advanceColleaguePrologue(semesterPage,'서지윤');
+  await startFirstChapter(semesterPage,'서지윤','한가람');
   const proseMode=await semesterPage.evaluate(()=>({
     semester:document.body.classList.contains('is-semester-mode'),
     overlayLoaded:typeof window.BeaguClassDiaryLiterary?.present==='function',
