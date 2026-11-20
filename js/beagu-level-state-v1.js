@@ -4,6 +4,12 @@
   try { if (window.self !== window.top) return; } catch (_) { return; }
   const indicator=document.getElementById('beaguLevelState');
   if (!indicator) return;
+  // Move the existing badge inside the shared header; no duplicate badge or authentication.
+  // CSS grid aligns it with the logo, while menu links occupy their own mobile row.
+  const badgeContainer=indicator.closest('.beagu-level-state-container');
+  const headerInner=document.querySelector('.beagu-unified-header .beagu-unified-inner');
+  if(badgeContainer&&headerInner&&badgeContainer.parentElement!==headerInner)
+    headerInner.appendChild(badgeContainer);
   indicator.setAttribute('href','levels.html');
   const KEY='beagu-level-session-v1';
   const VERIFY_URL='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
