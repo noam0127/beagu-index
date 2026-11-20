@@ -147,7 +147,7 @@ assert.match(publicSearch,/count===1&&list\.length===1/);
 assert.match(publicSearch,/id="searchInput"/,'Lv.0 public search restored');
 assert.match(lv1,/if\(action\)window\.BeaguSearchTelemetry\?\.detailViewed/);
 assert.match(lv2,/if\(loaded&&action\)window\.BeaguSearchTelemetry\?\.detailViewed/);
-assert.match(lv1,/showDetails\(detail,\s*data\.rows,\s*school,\s*data\.schoolQuestionModes,\s*data\.schoolQuestionSelections,\s*data\.schoolQuestionResults2026\)/,'Approved school question results must reach level 1 detail');
+assert.match(lv1,/showDetails\(detail,\s*data\.rows,\s*school,\s*data\.schoolQuestionModes,\s*data\.schoolQuestionSelections,\s*data\.schoolQuestionResults2026,\s*Number\(data\.level\)\)/,'Approved school question results must reach the detail with the server-verified tier');
 assert.match(lv2,/loaded=await showDetail\(detail,s\)/);
 assert.match(read('school-report.html'),/if\(!state\.demo\)\{[^}]*window\.BeaguSearchTelemetry\?\.detailViewed/);
 assert.doesNotMatch(publicSearch,/school-mbti-v1\.js/,'No Lv1 MBTI in Lv0');
