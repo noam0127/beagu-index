@@ -729,7 +729,10 @@ assert.match(runner,/function drawChalkHelpers\(\)/);
 assert.match(runner,/x:helper\.role==="관리자"\?W-38:38,y:H-52/);
 assert.match(runner,/function drawShackle\(\)/);
 assert.match(runner,/if\(canPlayerRise\(\)\|\|state==="ready"\)return/);
-assert.match(runner,/if\(profile\.jumpEnabled===false\)\{/,"runner shackle only follows EXTREME steps");
+assert.match(runner,/const canPlayerRise=\(\)=>!isMysteryBuff\("shackle"\)/,
+ "movement respects the mystery-item shackle");
+assert.match(runner,/if\(!canPlayerRise\(\)\)\{/,
+ "runner shackle follows grounded steps including EXTREME and temporary shackles");
 assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawMystery\(\);drawPatternHazards\(\);drawChalkHelpers\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
