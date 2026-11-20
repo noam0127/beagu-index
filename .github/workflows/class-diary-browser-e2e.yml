@@ -29,8 +29,6 @@ on:
       - 'js/class-diary-sound-v1.js'
       - 'js/class-diary-visual-v1.js'
       - 'js/class-diary-motion-v1.js'
-      - 'js/class-diary-setup-book-v1.js'
-      - 'styles/class-diary-setup-book-v1.css'
       - 'js/class-diary-literary-v1.js'
       - 'styles/class-diary-literary-v1.css'
       - 'styles/class-diary-motion-v1.css'
