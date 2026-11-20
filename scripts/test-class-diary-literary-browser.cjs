@@ -7,7 +7,7 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
 (async()=>{
  const browser=await chromium.launch({headless:true});
  try{
-  for(const device of [{name:'mobile',width:390,height:844},{name:'desktop',width:1365,height:850}]){
+  for(const device of [{name:'iphone-compact',width:354,height:578},{name:'mobile',width:390,height:844},{name:'desktop',width:1365,height:850}]){
    for(const story of ['semester','week']){
    const page=await browser.newPage({viewport:{width:device.width,height:device.height}});
    const errors=[];
@@ -105,6 +105,11 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      width:readerRect.width,viewport:innerWidth,
      stageHeight:document.getElementById('sceneArt').getBoundingClientRect().height,
      viewportHeight:innerHeight,
+     visualHeight:window.visualViewport?.height||innerHeight,
+     dialogueBottom:document.getElementById('vnBottom').getBoundingClientRect().bottom,
+     controlsBottom:document.querySelector('#vnBottom .vn-control-row').getBoundingClientRect().bottom,
+     controlsHeight:document.querySelector('#vnBottom .vn-control-row').getBoundingClientRect().height,
+     bottomSafeHeight:getComputedStyle(document.documentElement).getPropertyValue('--diary-visible-height').trim(),
      season:document.body.classList.contains('is-semester-mode'),
      literary:document.body.classList.contains('is-literary-mode'),
      choosing:document.body.classList.contains('is-choosing'),
@@ -140,7 +145,11 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    assert(first.cursorBlink.includes('diary-sentence-cursor-blink'),'The waiting cursor blinks');
    assert.equal(first.echo,0,'No previous sentence may appear as an echo');
    assert(first.width>first.viewport*.75,'The prose box must use the scene width');
-   assert(first.stageHeight<=first.viewportHeight+2,'The scene must stay within the viewport');
+   assert(first.stageHeight<=Math.min(first.viewportHeight,first.visualHeight)+2,'The scene must stay within the Safari visible viewport');
+   assert(first.controlsBottom<=Math.min(first.viewportHeight,first.visualHeight)-12,
+     'Bottom game buttons must remain at least 12px above the visible Safari viewport edge: '+JSON.stringify(first));
+   assert(first.controlsHeight>30,'The bottom control row must retain a usable height');
+   assert(first.bottomSafeHeight.endsWith('px'),'The browser-safe viewport height must be initialized');
 
    // A single touch adds one entire sentence without changing the first.
    await page.locator('#sceneArt').click({position:{x:Math.round(device.width*.45),y:Math.round(device.height*.48)}});
@@ -177,6 +186,8 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      break;
     }
     assert(after.lastBottom<=after.readerBottom+7,'Visible prose must remain in the text box');
+    assert(after.controlsBottom<=Math.min(after.viewportHeight,after.visualHeight)-12,
+     'Controls must remain clear of the Safari bottom toolbar while reading');
     assert(after.scrollHeight<=after.readerHeight+8,'Text must not require inner scrolling');
    }
    assert(turned,'The text box should fill, then reveal a new page or choices');
