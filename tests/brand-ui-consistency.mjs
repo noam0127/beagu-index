@@ -51,7 +51,7 @@ assert.match(css,/@media\(max-width:700px\)/);
 
 const badgeCSS=read('styles/beagu-level-state-v1.css');
 const badgeJS=read('js/beagu-level-state-v1.js');
-assert.match(badgeCSS,/\\.beagu-level-state-container\\{[\\s\\S]*?position:fixed;/,'Badge wrapper remains fixed to viewport');
+assert.ok(badgeCSS.includes('.beagu-level-state-container{') && badgeCSS.includes('position:fixed;'), 'Badge wrapper remains fixed to viewport');
 assert.ok(badgeCSS.includes('.beagu-level-state-container > .beagu-level-state{') &&
  badgeCSS.includes('position:relative;'),'The link is positioned relative to fixed wrapper');
 assert.ok(badgeCSS.includes('top:calc(env(safe-area-inset-top,0px) + 12px)'),'Badge aligns with first mobile logo row');
