@@ -20,8 +20,8 @@ assert(css.includes('top:calc(env(safe-area-inset-top,0px) + 48px)!important'),'
 assert(css.includes('top:var(--diary-open-reader-top'),'Reader offset must follow measured title and controls');
 assert(css.includes('body.is-playing #novelCard #vnMore')&&css.includes('body.is-playing #novelCard #nextBtn'));
 assert(css.includes('display:none!important;')&&css.includes('pointer-events:none!important;'),'Next buttons must not remain clickable or visible');
-assert(js.includes("reader.addEventListener('click'"),'Clicking prose must advance');
-assert(js.includes('stage.click()'),'Reuse original scene turn event handlers');
+assert(!js.includes("reader.addEventListener('click'"),'Avoid duplicate nested click handlers');
+assert(html.includes("$('sceneArt').addEventListener('click'"),'Use the original scene click handler for prose taps');
 assert(js.includes("setProperty('--diary-open-reader-top'"),'Avoid hardcoded expanded reader gaps');
 assert(js.includes("setAttribute('aria-hidden','true')"),'Removed buttons must be hidden from screen readers');
 assert(!/localStorage|sessionStorage|indexedDB|fetch\(/.test(js),'UI layout must not store or transmit player data');
