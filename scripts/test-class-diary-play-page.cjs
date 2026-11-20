@@ -96,7 +96,7 @@ assert(newCastPhoto.length>14000&&newCastPhoto.subarray(0,4).toString('ascii')==
 assert(newCastCss.includes('background-size:500% 100%'),'Five same-size square photographs must not be squeezed');
 for(const item of ['jiyoon','hyunwoo','minseo','dogyeom','taeo'])assert(newCastCss.includes('.setup-character-art.'+item),'Distinct colleague photo is missing: '+item);
 assert(play.src.includes("distinctCastPortraits.src='assets/class-diary/characters/class-diary-cast-five-distinct-v5.webp'"),'New five-person strip must be preloaded before replacing fallback art');
-assert(play.src.includes('styles/class-diary-cast-distinct-v5.css?v=20261120-cast-v5'),'Cache-busting stylesheet must be linked');
+assert(play.src.includes('styles/class-diary-cast-distinct-v5.css?v=20261120-cast-v5b'),'Cache-busting stylesheet must be linked');
 for(const text of ['시집 · 고요 속에서 마음을 읽는다','논어·시경 · 웃음 뒤에 시를 품는다','일기 · 지나간 표정까지 적어 둔다','실뜨기 · 얽힌 마음을 천천히 푼다','배구 · 승부보다 동료를 먼저 본다'])assert(play.src.includes(text),'New hobby/personality text missing: '+text);
 
 assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a cast card should play a cue');
