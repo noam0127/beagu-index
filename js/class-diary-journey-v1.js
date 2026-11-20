@@ -6,7 +6,7 @@ function init(options){
  const $=id=>document.getElementById(id);
  const setup=$('setup'),form=$('profileForm');
  let step=1;
- const partnerNames=Object.freeze({woman:'서지윤',man:'한현우',none:'윤민서'});
+ const partnerNames=Object.freeze({woman:'서지윤',man:'한현우',none:'윤민서',man2:'차도겸'});
  function review(){
   $('setupReviewSchool').textContent=$('diarySchoolName').value.trim()||'가상의 초등학교';
   $('setupReviewName').textContent=($('playerName').value.trim()||'새봄')+' 선생님';
