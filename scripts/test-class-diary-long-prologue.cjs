@@ -16,7 +16,7 @@ assert.equal(pedagogy.validate().scenes,16);
 const roles=[
  {id:'woman',name:'서지윤',hobby:'베이스'},
  {id:'man',name:'한현우',hobby:'논어'},
- {id:'none',name:'윤민서',hobby:'중식'},
+ {id:'none',name:'윤민서',hobby:'마파두부'},
  {id:'man2',name:'차도겸',hobby:'실뜨기'},
  {id:'man3',name:'백태오',hobby:'배구'}
 ];
