@@ -42,8 +42,9 @@ assert.doesNotMatch(form,/getRespondentEmail/,'must not exfiltrate email');
 assert.match(survey,/id="referralConsent"/);
 assert.match(survey,/id="surveyFormLink"/);
 assert.match(survey,/id="backToSchool"/);
-// Future setup depends on the official Form item ID; blank by default.
-assert.match(cfg,/entryName: ''/);
+// Owner confirmed the optional Google Form field; the Form entry ID is public metadata.
+assert.match(cfg,/entryName: 'entry\.2096012680'/);
+// A deliberately unconfigured mock must still fall back to the standard form.
 const m={};
 for(const k of ['referralNotice','surveyFormLink','referralOptin','referralConsent','referralJoinForm','referralSubmitFeedback']){
   m[k]={hidden:k==='referralOptin',textContent:'',disabled:false,
