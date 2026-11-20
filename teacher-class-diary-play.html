@@ -404,6 +404,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <link rel="stylesheet" href="styles/class-diary-viewport-safe-v1.css?v=20261120-bottom2">
 <link rel="stylesheet" href="styles/class-diary-interface-rebalance-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-hud-tidy-v1.css?v=20261120-1">
+<link rel="stylesheet" href="styles/class-diary-paragraph-v1.css?v=20261120-1">
 
 <style id="diary-five-colleagues">
 .setup-portrait-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
@@ -780,7 +781,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-demo-v1.js"></script>
 <script src="js/class-diary-journey-v1.js?v=20261120-school-name-input7"></script>
 <script src="js/class-diary-motion-v1.js"></script>
-<script src="js/class-diary-literary-v1.js?v=20261120-sentence-fill4"></script>
+<script src="js/class-diary-literary-v1.js?v=20261120-paragraph5"></script>
 <script src="js/class-diary-mobile-safe-v1.js?v=20261120-bottom1"></script>
 <script>
 (function(){
@@ -1152,9 +1153,10 @@ function vnFitPage(reader,target){
 }
 function vnPresent(){
  const done=vnState.kind==='outcome',target=$(done?'outcomeText':'chapterText');
- target.replaceChildren(...(vnState.pages[vnState.index]||['…']).map(line=>el('p',typeof line==='string'?line:line.text)));
+ const currentPage=vnState.pages[vnState.index]||['…'];
+ if(document.body.classList.contains('is-literary-mode'))literary.renderPage(target,currentPage);
+ else target.replaceChildren(...currentPage.map(line=>el('p',typeof line==='string'?line:line.text)));
  literary.present(target);
- target.classList.remove('diary-text-arrive');void target.offsetWidth;target.classList.add('diary-text-arrive');
  const reader=document.querySelector(done?'#outcome':'#vnDialogueSlot .vn-dialogue');
  if(reader){reader.scrollTop=0;if(!document.body.classList.contains('is-literary-mode'))requestAnimationFrame(()=>{if(!reader.hidden)vnFitPage(reader,target)})}
  $('vnDialogueSlot').querySelector('.vn-dialogue').hidden=done;
@@ -1500,7 +1502,8 @@ function renderScenario(){
 const endingState={pages:[],index:0};
 function endingPresent(){
  const text=$('endingText'),page=endingState.pages[endingState.index]||['…'];
- text.replaceChildren(...page.map(p=>el('p',typeof p==='string'?p:p.text)));
+ if(document.body.classList.contains('is-literary-mode'))literary.renderPage(text,page);
+ else text.replaceChildren(...page.map(p=>el('p',typeof p==='string'?p:p.text)));
  literary.present(text);
  $('endingMore').hidden=endingState.index>=endingState.pages.length-1;
  $('endingPageLabel').textContent=(endingState.index+1)+' / '+endingState.pages.length;
@@ -1521,7 +1524,7 @@ function renderEnding(){
  const ending=director.decorateEnding(game);
  $('endingTitle').textContent=ending.title;
  $('endingHeading').textContent=ending.heading;
- endingState.pages=vnPages(ending.paragraphs).map(page=>page.map(p=>typeof p==='string'?p:p.text));endingState.index=0;endingPresent();
+ endingState.pages=literary.paginate(ending.paragraphs,$('endingText'));endingState.index=0;endingPresent();
  $('endingAffection').textContent=game.ending.affection+' / 100';
  $('endingScore').textContent='이야기 점수 '+game.ending.score+' / 100';
  $('endingSchool').textContent=game.schoolName+'에서 시작된 7일간의 기록';
@@ -1686,7 +1689,7 @@ function renderSemesterEnding(){
  $('endingHeading').textContent=ending.heading;
  $('ending').querySelector('.emblem').textContent='2027년 7월 16일 · 36화의 마지막 페이지';
  $('ending').querySelector('.credits-roll p:last-child').textContent='한 학기의 이야기를 함께해 주셔서 고맙습니다.';
- endingState.pages=vnPages(ending.paragraphs).map(page=>page.map(p=>typeof p==='string'?p:p.text));endingState.index=0;endingPresent();
+ endingState.pages=literary.paginate(ending.paragraphs,$('endingText'));endingState.index=0;endingPresent();
  $('endingAffection').textContent=ending.affection+' / 100';
  $('endingScore').textContent='이야기 점수 '+ending.score+' / 100';
  $('endingSchool').textContent=game.schoolName+' · 2027년 3월–7월, 36화의 기록';
