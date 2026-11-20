@@ -5,6 +5,8 @@
  * Form의 선택 문항을 추가하거나 트리거를 설치한다.
  *
  * 설문 원문, 답변, 학교명, 이메일/이름은 Supabase에 전달하지 않는다.
+ * Q01~Q13 완결성과 Q01~Q11 반복 선택 패턴만 boolean/int로 전송한다.
+ * 의심 응답은 추천 적립 대기이며, 허위 응답으로 단정하지 않는다.
  */
 const BEAGU_REFERRAL_2026 = Object.freeze({
   spreadsheetId:'1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4',
@@ -73,6 +75,38 @@ function installBeaguReferralFormSubmitTrigger(){
     props.setProperty('BEAGU_REFERRAL_RECONCILE_FROM_MS',String(Date.now()));
   Logger.log('공식 Form 제출 이벤트 + 매시간 장애 복구 트리거 설치 완료');
 }
+/**
+ * Only behavioral summaries leave this Form, never answers or form IDs.
+ * Uniform answers are a REVIEW SIGNAL, not a finding of misconduct.
+ * The 13 official core questions are required; missing/unreadable titles
+ * make the case pending instead of approving from an incomplete scan.
+ */
+function beaguReferralQualitySignals_(formResponse){
+  const answers=formResponse.getItemResponses();
+  const core=new Map();
+  answers.forEach(entry=>{
+    const title=String(entry.getItem().getTitle()||"").trim();
+    const found=/^Q(0[1-9]|1[0-3])(?:\\.|[\\s:：．])/.exec(title);
+    if(!found)return;
+    const result=entry.getResponse();
+    const value=typeof result==="string"?result.trim():"";
+    if(value)core.set(found[1],value);
+  });
+  const coreAnswered=core.size;
+  const frequency={};let normal=0;
+  for(let i=1;i<=11;i++){
+    const key=String(i).padStart(2,"0");
+    const match=/^[①②③④⑤]/.exec(core.get(key)||"");
+    if(!match)continue;
+    const option=match[0];frequency[option]=(frequency[option]||0)+1;normal++;
+  }
+  const highest=Math.max(0,...Object.values(frequency));
+  // A conservative soft flag; all such responses remain reviewable.
+  // Answering consistently is not proof of careless or fraudulent responding.
+  const straightline=normal>=10 && highest>=10;
+  return {coreAnswered,straightline};
+}
+
 /** FormTriggerBuilder에서 제공하는 FormResponse만 처리합니다. */
 function onBeaguReferralFormSubmitted(event){
   if(!event || !event.response || !event.source)return;
@@ -96,7 +130,8 @@ function onBeaguReferralFormSubmitted(event){
     headers:{'X-Beagu-Referral-Ingest-Token':secret},
     payload:JSON.stringify({
       sourceSpreadsheetId:BEAGU_REFERRAL_2026.spreadsheetId,
-      formResponseId:responseId,submittedAt:timestamp.toISOString(),proof:proof
+      formResponseId:responseId,submittedAt:timestamp.toISOString(),proof:proof,
+      qualitySignals:beaguReferralQualitySignals_(event.response)
     }),
     muteHttpExceptions:true
   });
