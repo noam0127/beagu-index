@@ -14,4 +14,13 @@
  // Preserve access to the action even if the UI controller changes visibility.
  next.setAttribute('title','다음 장면');
  more.setAttribute('title','다음 문장');
+ const ending=document.getElementById('ending');
+ if(ending&&!ending.querySelector('.diary-ending-home')){
+  const home=document.createElement('a');
+  home.className='diary-ending-home';
+  home.href='https://baeguindex.com/';
+  home.textContent='⌂ 배구지수 홈';
+  home.setAttribute('aria-label','배구지수 홈으로 돌아가기');
+  ending.prepend(home);
+ }
 })();
