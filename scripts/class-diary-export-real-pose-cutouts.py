@@ -81,6 +81,7 @@ def main():
             checker.alpha_composite(picture,((260-picture.width)//2,(365-picture.height)//2))
             board.paste(checker.convert('RGB'),(x,y));draw.text((x+8,y+372),label,fill=(30,30,30))
         board.save(OUT/f'contact_{1+i//25}.jpg',quality=85)
+    shutil.copy2('qa/class-diary-cutout-review.html',OUT/'preview.html')
     (OUT/'manifest.json').write_text(json.dumps({'status':'draft_qa_only_model_based_v2','must_not_deploy_without_visual_approval':True,'source_blob_sha':hashes,'files':rows},ensure_ascii=False,indent=2),encoding='utf-8')
     print(f'Generated {len(rows)} original-identity transparent draft cutouts')
 if __name__=='__main__':main()
