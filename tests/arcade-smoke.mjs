@@ -705,6 +705,8 @@ function shoot(tier,good=false,hitRoll=.1){
  const mockMath=Object.create(Math);mockMath.random=()=>hitRoll;
  return new Function("tier","good","Math",[
   "const chalkProfiles="+chalkMatch[1],
+  "const schoolPicker={get:()=>({difficulty:tier})};",
+  "const isMysteryBuff=()=>false;",
   "const chalkProfile=()=>chalkProfiles[tier]||null;",
   'const W=600,H=420,state="playing";',
   'let items=[{x:300,y:260,good,r:23}],chalkShots=[],chalkHelpers=[],score=0,removed=0;',
