@@ -113,7 +113,15 @@ assert(hairSource.includes('function spriteSource(partner)'),'Card and stage use
 assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a cast card should play a cue');
 assert(play.src.includes("sound.note('uiStart')"),'Beginning the novel should play a cue');
 assert(play.src.includes("setupDescription"),'Selecting cast should update story introduction');
-assert(play.src.includes('role="group" aria-label="프롤로그의 화자, 알고 싶은 사람 선택"'),'Card chooser should be accessible');
+assert(play.src.includes('role="group" aria-label="프롤로그의 화자 다섯 명 중 한 사람 고르기"'),'Updated five-person chooser should be accessible');
+const peopleCss=fs.readFileSync('styles/class-diary-know-people-v7.css','utf8');
+assert(play.src.includes('<strong>알고 싶은 사람 고르기</strong>'),'Choice title must match updated screen');
+assert(play.src.includes('class-diary-know-people-v7.css?v=20261120-people-v7a'),'Updated profile styling should bypass cached CSS');
+assert((play.src.match(/class="setup-character-hobby"/g)||[]).length===5,'All five profiles need visible hobbies');
+for(const hobby of ['기타','논어','기록','실뜨기','배구'])assert(play.src.includes('class="setup-character-hobby">'+hobby),'Missing character-specific hobby: '+hobby);
+assert(peopleCss.includes('[aria-pressed="true"]'),'Selected portrait needs visible emphasis');
+assert(peopleCss.includes('aspect-ratio:1/1'),'Portraits must retain square framing');
+
 assert(!play.ids.has('partnerDescription'),'Redundant character-description box must be removed');
 assert(play.src.includes('<select id="partner" required hidden'),'Legacy partner data remains in a hidden form control');
 assert(play.ids.has('diarySchoolSurveyLink'),'Schools without published results offer a 2026 survey link');
