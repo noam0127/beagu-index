@@ -76,4 +76,20 @@ const replacement=fs.readFileSync('supabase/migrations/20261120023327_beagu_2026
 assert.match(replacement,/where existing\.payload_sha256 is distinct from excluded\.payload_sha256/);
 assert.match(replacement,/approval_status='WITHHELD',approved_by=null,approved_at=null/);
 assert.match(replacement,/snapshot_time<previous_time/);
+// 2026 school-office aliases must preserve strict region + office + name matching.
+const matcherSource=gs.slice(gs.indexOf('function normalize(s)'),gs.indexOf('function fetchSchools()'));
+assert.ok(matcherSource.startsWith('function normalize(s)')&&matcherSource.includes('function normalizeOffice'));
+const matchContext={};vm.createContext(matchContext);vm.runInContext(matcherSource,matchContext);
+const office=matchContext.normalizeOffice;
+assert.equal(office('㉕ 화성오산교육지원청'),office('경기도화성오산교육지원청'));
+assert.equal(office('㉓ 평택교육지원청'),office('경기도평택교육지원청'));
+assert.equal(office('㉒ 파주교육지원청'),office('경기도파주교육지원청'));
+assert.equal(office('① 교육지원청 없음(세종)'),office('세종특별자치시교육청'));
+assert.equal(office('⑧ 목포교육지원청'),office('전남광주통합특별시목포교육지원청'));
+assert.equal(office('⑬ 창원교육지원청(의창·성산권)'),office('창원교육지원청'));
+assert.equal(office('⑭ 창원교육지원청(마산권)'),office('창원교육지원청(마산센터)'));
+assert.equal(office('⑮ 창원교육지원청(진해권)'),office('창원교육지원청(진해센터)'));
+assert.notEqual(office('⑭ 창원교육지원청(마산권)'),office('⑮ 창원교육지원청(진해권)'));
+assert.match(gs,/normalizeOffice\(s\.support_office\)===office/);
+assert.match(gs,/if\(same\.length!==1\)/);
 console.log('2026 aggregation, strict payload validation, private/public projection and Apps Script syntax: PASS');
