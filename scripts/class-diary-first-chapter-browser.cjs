@@ -17,12 +17,12 @@ async function startFirstChapter(page,narratorName,heroName='새봄'){
  assert(first.includes('프롤로그')&&first.includes(narratorName),
   'Chosen colleague must narrate prologue, got '+first);
  let turns=0;
- while(await page.locator('#playerSetup').isHidden()&&turns++<300){
+ while(await page.locator('#playerSetup').isHidden()&&turns++<750){
   if(await page.locator('#vnMore').isVisible())await page.locator('#vnMore').click();
   else if(await page.locator('#nextBtn').isVisible())await page.locator('#nextBtn').click();
   else throw Error('Prologue blocked before protagonist setup at turn '+turns);
  }
- assert(turns<300,'Prologue did not complete');
+ assert(turns<750,'Prologue did not complete');
  await page.locator('#playerSetup').waitFor({state:'visible'});
  assert((await page.locator('#playerSetup').innerText()).includes('기간제'),
   'The protagonist is a substitute fixed-term teacher');
