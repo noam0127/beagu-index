@@ -1,3 +1,15 @@
+-- New inspection mode starts in backwards-compatible form: the new Form
+-- signal envelope turns strict screening on automatically when first observed
+-- from the authenticated official trigger. Old live Forms do not stop earning.
+alter table beagu_private.challenge_referral_settings
+ drop constraint if exists challenge_referral_settings_name_check;
+alter table beagu_private.challenge_referral_settings
+ add constraint challenge_referral_settings_name_check
+ check(name in ('public_enabled','ingest_enabled','login_enabled','quality_gate_enabled'));
+insert into beagu_private.challenge_referral_settings(name,enabled)
+ values('quality_gate_enabled',false)
+ on conflict(name) do nothing;
+
 -- Form-linked referral quality gate: clean responses credit automatically;
 -- suspicious signals are held for owner review, with live Lv2 entitlement recalculated.
 -- Raw answers, Form response IDs, teacher names, emails, and proof URLs are never persisted.
@@ -80,6 +92,18 @@ begin
    or p_submitted_at>now()+interval '5 minutes'
    or (p_core_answered is not null and p_core_answered not between 0 and 13)
  then raise exception 'invalid quality signal'; end if;
+ -- Existing owner-installed Form trigger may still send only metadata.
+ -- In that case preserve its original behavior until the updated trusted
+ -- trigger sends the first complete, nonidentifying signal envelope.
+ if (p_core_answered is null or p_straightline is null)
+   and not coalesce((select enabled from beagu_private.challenge_referral_settings
+                     where name='quality_gate_enabled'),false)
+ then return jsonb_build_object('status','LEGACY_COMPATIBLE'); end if;
+ if p_core_answered is not null and p_straightline is not null then
+   update beagu_private.challenge_referral_settings
+      set enabled=true,changed_at=now()
+    where name='quality_gate_enabled' and enabled=false;
+ end if;
  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext(p_event_hash),2602);
  select exists(select 1 from beagu_private.challenge_referral_profiles p
    where p.campaign='2026' and p.referral_token_sha256=p_referral_hash
@@ -181,6 +205,10 @@ create or replace function public.beagu_referral_credit(
 ) returns jsonb language plpgsql security definer set search_path='' as $fn$
 declare is_self boolean;
         c_same boolean;
+        gated boolean;
+        p beagu_private.challenge_referral_profiles%rowtype;
+        old_event beagu_private.challenge_referral_events%rowtype;
+        outcome text;
 begin
  if p_respondent_uuid is null or p_event_hash !~ '^[a-f0-9]{64}$'
    or p_referral_hash !~ '^[a-f0-9]{64}$' or p_respondent_hash !~ '^[a-f0-9]{64}$'
@@ -192,9 +220,43 @@ begin
    where c.event_sha256=p_event_hash
      and c.referral_token_sha256=p_referral_hash
      and c.respondent_sha256=p_respondent_hash;
- if c_same is not null and c_same is distinct from is_self
- then raise exception 'screened respondent mismatch'; end if;
- return beagu_private.referral_credit_screened(p_event_hash,p_referral_hash,p_respondent_hash);
+ select coalesce((select enabled from beagu_private.challenge_referral_settings
+                   where name='quality_gate_enabled'),false) into gated;
+ if c_same is not null or gated then
+   if c_same is not null and c_same is distinct from is_self
+   then raise exception 'screened respondent mismatch'; end if;
+   return beagu_private.referral_credit_screened(p_event_hash,p_referral_hash,p_respondent_hash);
+ end if;
+ -- Compatibility path for the older, already-installed Form trigger.
+ -- Stops running as soon as a verified modern signal enables the gate.
+ if coalesce((select enabled from beagu_private.challenge_referral_settings
+              where name='ingest_enabled'),false)=false
+ then raise exception 'ingest disabled' using errcode='42501'; end if;
+ perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext(p_event_hash),2602);
+ select * into old_event from beagu_private.challenge_referral_events
+  where event_sha256=p_event_hash;
+ if found then return jsonb_build_object('credited',false,'decision','duplicate_event'); end if;
+ select * into p from beagu_private.challenge_referral_profiles
+   where referral_token_sha256=p_referral_hash and campaign='2026' for update;
+ if not found or p.disabled then outcome:='invalid_link';
+ elsif p.visitor_id=p_respondent_uuid then outcome:='same_device';
+ elsif p.access_level=2 then outcome:='already_upgraded';
+ else
+   perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtext(p_respondent_hash),2603);
+   if exists(select 1 from beagu_private.challenge_referral_events
+      where campaign='2026' and respondent_sha256=p_respondent_hash and decision='credited')
+   then outcome:='duplicate_respondent'; else outcome:='credited'; end if;
+ end if;
+ insert into beagu_private.challenge_referral_events
+  (event_sha256,campaign,referral_token_sha256,respondent_sha256,referrer_visitor_id,decision)
+ values(p_event_hash,'2026',p_referral_hash,p_respondent_hash,
+   case when p.visitor_id is null then null else p.visitor_id end,outcome);
+ if outcome='credited' then
+   update beagu_private.challenge_referral_profiles
+      set access_level=2,valid_referrals=1,upgraded_at=now()
+      where campaign='2026' and visitor_id=p.visitor_id and access_level=1;
+ end if;
+ return jsonb_build_object('credited',outcome='credited','decision',outcome);
 end $fn$;
 revoke all on function public.beagu_referral_credit(text,text,text,uuid) from public,anon,authenticated;
 grant execute on function public.beagu_referral_credit(text,text,text,uuid) to service_role;
