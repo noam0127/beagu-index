@@ -50,15 +50,40 @@ async function identity(req:Request,minLevel=2){
  // A session token is a rotating credential, not an enduring person ID.
  // Readers may use Lv1 sessions without a bound identity, but writers must not
  // gain a new author persona on every login or regain like/report quotas.
- if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null};
+ if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null,visitor:null};
  const seed=String(data.identity_visitor_id);
  const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(ROLE_KEY),
    {name:"HMAC",hash:"SHA-256"},false,["sign"]);
  const mac=new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode("postit:"+seed)));
  mac[6]=(mac[6]&15)|64;mac[8]=(mac[8]&63)|128;
  const h=Array.from(mac.slice(0,16),v=>v.toString(16).padStart(2,"0")).join("");
- return {level:Number(data.access_level),id:h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20,32)};
+ return {level:Number(data.access_level),id:h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20,32),visitor:seed};
 }
+// Account and participation code are two independent proofs of membership.
+// A transferable Lv2 code never grants writer privileges on its own.
+async function authenticatedUser(req:Request){
+ const authorization=req.headers.get("Authorization")||"";
+ if(!/^Bearer [A-Za-z0-9_.-]{20,8000}$/.test(authorization))return null;
+ const jwt=authorization.slice(7);
+ const {data,error}=await db.auth.getUser(jwt);
+ const user=data?.user;
+ if(error||!user||user.is_anonymous||!user.email_confirmed_at)return null;
+ return user;
+}
+async function verifiedMember(req:Request,viewer:any){
+ if(!viewer||viewer.level<2||!viewer.visitor||!viewer.id)return null;
+ const account=await authenticatedUser(req);
+ if(!account)return null;
+ const {data,error}=await db.from("beagu_postit_member_accounts")
+   .select("author_uid,identity_visitor_id,status")
+   .eq("auth_user_id",account.id).eq("identity_visitor_id",viewer.visitor)
+   .eq("status","active").maybeSingle();
+ if(error||!data||data.author_uid!==viewer.id)return null;
+ return {level:viewer.level,id:data.author_uid,visitor:viewer.visitor,authId:account.id};
+}
+const sha256=async(value:string)=>Array.from(
+ new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value))),
+ byte=>byte.toString(16).padStart(2,"0")).join("");
 async function minimumLevel(){
  const {data,error}=await db.from("beagu_postit_settings").select("minimum_write_level,max_daily_posts,max_daily_comments").eq("id",1).single();
  if(error)throw error;
@@ -183,6 +208,8 @@ Deno.serve(async(req:Request)=>{
    // All Post-it reads (including search, comments, and school previews) are Lv2-only.
    const viewer=await identity(req,2);
    if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
+   const member=await verifiedMember(req,viewer);
+   if(action==="writer_status")return respond(req,{linked:Boolean(member)});
    if(action==="school_info"){
     const ids=(url.searchParams.get("school_ids")||"").split(",").filter(Boolean);
     if(ids.length<1||ids.length>5||ids.some(x=>!SCHOOL_ID.test(x)))
@@ -235,7 +262,7 @@ Deno.serve(async(req:Request)=>{
       query=query.or(filters.join(","));
     }
     const {data,error}=await query;if(error)throw error;
-    let posts=await enrich(data||[],"post",viewer.id);
+    let posts=await enrich(data||[],"post",member?.id||null);
     if(term)posts=posts.map(p=>({...p,comment_match:matchedComments.has(p.id)}));
     if(sort==="popular")posts=posts.sort((a,b)=>b.likes-a.likes||b.created_at.localeCompare(a.created_at)).slice(0,30);
     return respond(req,{posts});
@@ -249,14 +276,30 @@ Deno.serve(async(req:Request)=>{
     const {data,error}=await db.from("beagu_postit_comments").select("id,body,author_uid,created_at")
      .eq("post_id",id).eq("status","published").order("created_at",{ascending:true}).limit(80);
     if(error)throw error;
-    const comments=await enrich(data||[],"comment",viewer.id);
+    const comments=await enrich(data||[],"comment",member?.id||null);
     return respond(req,{comments});
    }
    return fail(req,"UNKNOWN_ACTION");
   }
-  // All mutations require an active server-issued Lv2 session.
-  const user=await identity(req);if(!user)return fail(req,"LEVEL_REQUIRED",403);
-  if(!user.id)return fail(req,"WRITER_IDENTITY_REQUIRED",403);
+  // Both the server-issued earned Lv2 session and independently verified Auth
+  // account are mandatory. Claiming a code alone cannot authorize mutations.
+  const viewer=await identity(req,2);
+  if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
+  if(action==="link_member"){
+   const deviceSecret=typeof body?.deviceSecret==="string"?body.deviceSecret:"";
+   if(!/^[a-f0-9]{64}$/.test(deviceSecret))return fail(req,"ORIGINAL_DEVICE_REQUIRED",403);
+   const account=await authenticatedUser(req);
+   if(!account||!viewer.visitor||!viewer.id)return fail(req,"ACCOUNT_AUTH_REQUIRED",403);
+   const {data:actor,error}=await db.rpc("beagu_postit_bind_verified_member",{
+      p_user:account.id,p_visitor:viewer.visitor,
+      p_device_hash:await sha256(deviceSecret),p_actor:viewer.id
+   });
+   if(error?.code==="23505")return fail(req,"MEMBERSHIP_ALREADY_CLAIMED",409);
+   if(error||!actor||actor!==viewer.id)return fail(req,"DEVICE_OWNERSHIP_NOT_VERIFIED",403);
+   return respond(req,{linked:true});
+  }
+  const user=await verifiedMember(req,viewer);
+  if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403);
   const settings=await minimumLevel();
   if(user.level<Math.max(2,Number(settings.minimum_write_level)))
     return fail(req,"LEVEL_REQUIRED",403);
