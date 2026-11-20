@@ -92,4 +92,43 @@ assert.equal(office('⑮ 창원교육지원청(진해권)'),office('창원교육
 assert.notEqual(office('⑭ 창원교육지원청(마산권)'),office('⑮ 창원교육지원청(진해권)'));
 assert.match(gs,/normalizeOffice\(s\.support_office\)===office/);
 assert.match(gs,/if\(same\.length!==1\)/);
+// Independent 2026 Q01–Q13 scoring contract: an incorrect reversal or
+// silently scored 'other' response must fail CI before deployment.
+const scoringStart=gs.indexOf('function questionScore(');
+const scoringEnd=gs.indexOf('// Record a source-row pointer',scoringStart);
+assert.ok(scoringStart>=0&&scoringEnd>scoringStart,'2026 scoring function must exist');
+const scoreContext={};vm.createContext(scoreContext);
+vm.runInContext(gs.slice(scoringStart,scoringEnd),scoreContext);
+const score=scoreContext.questionScore;
+const regular=['전혀 그렇지 않다','그렇지 않다','보통이다','그렇다','매우 그렇다','판단하기 어렵다'];
+const positive=new Set([1,6,7,9,10,11]);
+const reversed=new Set([2,3,4,5,8]);
+for(let n=1;n<=11;n++){
+  const id='Q'+String(n).padStart(2,'0');
+  assert.equal(catalog[id].options.join('|'),regular.join('|'),id+' questionnaire options changed');
+  assert.ok(positive.has(n)||reversed.has(n),id+' scoring orientation missing');
+  for(let i=0;i<regular.length;i++){
+    const response=['①','②','③','④','⑤','⑥'][i]+' '+regular[i];
+    const expected=i===5?null:positive.has(n)?i*25:(4-i)*25;
+    assert.equal(score(n,response),expected,id+' incorrect reversal or missing value');
+  }
+  assert.throws(()=>score(n,'알 수 없는 선택값'),/보기/,id+' unapproved values must not be scored');
+}
+for(const [n,expected] of [
+  [12,[100,100,50,0,null]],
+  [13,[100,100,25,0,null]]
+]){
+  const id='Q'+n;
+  assert.equal(catalog[id].options.length,6,id+' expected five closed choices plus 기타');
+  assert.equal(catalog[id].options[5],'기타',id+' unknown option must be reviewed');
+  for(let i=0;i<5;i++)
+    assert.equal(score(n,['①','②','③','④','⑤'][i]+' '+catalog[id].options[i]),expected[i],id+' mismatched category score '+i);
+  assert.throws(()=>score(n,'⑥ 기타'),/보기/,id+' 기타 may never be scored');
+  assert.throws(()=>score(n,'기타: 응답자 입력 내용'),/보기/,id+' free text may never be scored');
+}
+const reviewStore=[];
+assert.equal(scoreContext.beagu26ScoreOrReview(12,'기타: 임의 입력',17,'0000001',reviewStore),null);
+assert.equal(reviewStore.length,1);
+assert.deepEqual(Array.from(reviewStore[0].slice(0,4)),[17,'0000001','Q12','OTHER_OR_UNKNOWN']);
+assert.equal(JSON.stringify(reviewStore).includes('임의 입력'),false,'Private review records must contain pointers only');
 console.log('2026 aggregation, strict payload validation, private/public projection and Apps Script syntax: PASS');
