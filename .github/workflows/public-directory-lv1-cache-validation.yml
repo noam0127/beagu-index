@@ -1,0 +1,25 @@
+name: Public comparison directory and Lv1 sort cache checks
+on:
+  pull_request:
+    paths:
+      - 'js/statistics-directory-v2.js'
+      - 'statistics.html'
+      - 'data/public-comparison-school-directory-v1.json'
+      - 'supabase/functions/beagu-level-api/index.ts'
+      - 'supabase/migrations/20261120_lv1_sort_cache_v1.sql'
+      - 'scripts/build-public-comparison-directory.cjs'
+      - 'tests/public-directory-lv1-cache.cjs'
+      - '.github/workflows/refresh-public-school-directory.yml'
+      - '.github/workflows/public-directory-lv1-cache-validation.yml'
+  push:
+    branches: [main]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate public snapshot, access control and progressive rendering
+        run: node tests/public-directory-lv1-cache.cjs
