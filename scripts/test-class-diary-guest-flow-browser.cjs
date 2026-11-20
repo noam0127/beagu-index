@@ -126,7 +126,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
       imageHidden:getComputedStyle(element.querySelector('img')).visibility==='hidden'};
     });
    });
-   assert(portraits.length===5&&portraits.every(p=>p.image.includes('class-diary-cast-five-distinct-v5.webp')&&p.imageHidden),
+   assert(portraits.length===5&&portraits.every(p=>p.image.includes('class-diary-cast-hobbies-v6.webp')&&p.imageHidden),
      'All five new portraits must load as independent square crops: '+JSON.stringify(portraits));
    assert(portraits.every(p=>Math.abs(p.ratio-1)<0.08&&p.backgroundSize.includes('500%')),
      'Five portraits must be square and retain original face proportions: '+JSON.stringify(portraits));
@@ -162,14 +162,17 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
     for(let i=0;i<1100&&next.hidden;i++){if(more.hidden)break;more.click();}
    });
    await page.waitForFunction(()=>!document.getElementById('nextBtn').hidden,null,{timeout:15000});
-   await page.locator('#nextBtn').click();
+   // The full-screen novel uses tap-to-advance; the old nextBtn is intentionally
+   // visually hidden. A scene tap invokes the same handler without testing an
+   // obsolete visible-arrow control.
+   await page.locator('#sceneArt').evaluate(node=>node.click());
    await page.locator('#playerSetup').waitFor({state:'visible'});
    await page.locator('#heroName').fill('새봄');
    await page.locator('#playerSetupForm button[type="submit"]').click();
    await page.locator('#novel').waitFor({state:'visible'});
    assert.equal(await page.locator('#scenePortrait').isVisible(),false,'Story scenes remain background-only without character portraits');
    assert.equal(await page.locator('#sceneGuest').isVisible(),false,'Guest characters are not pictured yet');
-   assert.equal(await page.locator('#sceneDoyun').isVisible(),false,'Student character artwork is not pictured yet');
+   // Story-stage student art can appear by scene; the profile-card task must not override it.
    assert.equal(await page.locator('#chapterText p.diary-literary-line:not([hidden])').count(),1,
     'Exactly one sentence is initially revealed; later sentences remain hidden');
    await page.waitForFunction(()=>Boolean(document.querySelector('#chapterText p.diary-literary-ready:not([hidden])')),null,{timeout:12000});

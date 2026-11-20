@@ -97,7 +97,13 @@ assert(newCastCss.includes('background-size:500% 100%'),'Five same-size square p
 for(const item of ['jiyoon','hyunwoo','minseo','dogyeom','taeo'])assert(newCastCss.includes('.setup-character-art.'+item),'Distinct colleague photo is missing: '+item);
 assert(play.src.includes("distinctCastPortraits.src='assets/class-diary/characters/class-diary-cast-five-distinct-v5.webp'"),'New five-person strip must be preloaded before replacing fallback art');
 assert(play.src.includes('styles/class-diary-cast-distinct-v5.css?v=20261120-cast-v5b'),'Cache-busting stylesheet must be linked');
-for(const text of ['시집 · 고요 속에서 마음을 읽는다','논어·시경 · 웃음 뒤에 시를 품는다','일기 · 지나간 표정까지 적어 둔다','실뜨기 · 얽힌 마음을 천천히 푼다','배구 · 승부보다 동료를 먼저 본다'])assert(play.src.includes(text),'New hobby/personality text missing: '+text);
+const v6Css=fs.readFileSync('styles/class-diary-cast-profiles-v6.css','utf8');
+const v6Image=fs.readFileSync('assets/class-diary/characters/class-diary-cast-hobbies-v6.webp');
+assert(v6Image.length>4000&&v6Image.subarray(0,4).toString('ascii')==='RIFF','Hobby-themed WebP strip must exist and be valid');
+assert(v6Css.includes('background-size:500% 100%'),'Hobby-themed photographs must be separate square crops');
+assert(play.src.includes("hobbyCastPortraits.src='assets/class-diary/characters/class-diary-cast-hobbies-v6.webp'"),'Hobby photo strip must be loaded with v5 fallback');
+assert(play.src.includes('styles/class-diary-cast-profiles-v6.css?v=20261120-cast-hobbies-v6a'),'Portrait CSS must be cache busted');
+for(const text of ['기타 · 낮은 선율로 마음을 건넨다','논어 · 웃음 뒤에 생각을 남긴다','기록 · 지나간 표정을 오래 헤아린다','실뜨기 · 얽힌 마음을 찬찬히 푼다','배구 · 승부보다 함께한 날을 기억한다'])assert(play.src.includes(text),'Hobby/personality label missing: '+text);
 
 assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a cast card should play a cue');
 assert(play.src.includes("sound.note('uiStart')"),'Beginning the novel should play a cue');
