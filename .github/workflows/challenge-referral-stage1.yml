@@ -28,3 +28,4 @@ jobs:
           node-version: '22'
       - run: node scripts/test-challenge-referral-stage1.cjs
       - run: node scripts/test-challenge-referral-stage2.cjs
+      - run: node scripts/test-challenge-referral-premium.cjs
