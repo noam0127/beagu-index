@@ -132,4 +132,14 @@ env.UrlFetchApp.fetch=()=>{throw Error('TRANSIENT_OUTAGE');};
 assert.throws(()=>env.reconcileBeaguReferralResponses(),/TRANSIENT_OUTAGE/);
 assert.equal(Number(props.get('BEAGU_REFERRAL_RECONCILE_FROM_MS')),checkpointAfter);
 
+
+env.UrlFetchApp.fetch=(endpoint,options)=>{
+  assert.match(endpoint,/beagu-referral-ingest-v1/);
+  assert.deepEqual(JSON.parse(options.payload),{action:'preflight'});
+  assert.equal(options.headers['X-Beagu-Referral-Ingest-Token'],'t'.repeat(48));
+  assert.ok(!options.payload.includes('PRIVATE-SURVEY-ANSWER'));
+  return {getResponseCode:()=>200,getContentText:()=>JSON.stringify({ok:true,enabled:false})};
+};
+env.testBeaguReferralConnection();
+assert.ok(logs.some(s=>s.includes('비밀키 일치 확인')),'preflight connects to server without a survey');
 console.log('PASS: owner-only field install, idempotency, trigger, rejection, minimal response metadata');
