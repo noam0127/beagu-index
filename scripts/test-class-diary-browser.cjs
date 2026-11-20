@@ -85,6 +85,8 @@ async function advanceColleaguePrologue(page,expectedNarrator){
    await page.locator('#partner').selectOption(variant.partner);
    await page.locator('#setupNext').click();
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'3');
+   await page.locator('#setupNext').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'4');
    assert(!(await page.locator('#setupReviewName').innerText()).includes('세'),'Review must not show player age');
    assert((await page.locator('#setupReviewPartner').innerText()).includes(variant.partner==='woman'?'지윤':variant.partner==='man'?'현우':'민서'));
    await page.locator('#profileForm button[type="submit"]').click();
