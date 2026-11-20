@@ -110,11 +110,13 @@ assert.match(url,/beagu-referral-ingest-v1/);
 assert.ok(options.headers['X-Beagu-Referral-Ingest-Token']);
 const body=JSON.parse(options.payload);
 assert.deepEqual(Object.keys(body).sort(),
-  ['sourceSpreadsheetId','formResponseId','submittedAt','proof'].sort());
+  ['sourceSpreadsheetId','formResponseId','submittedAt','proof','qualityVerified','qualitySignals'].sort());
 assert.equal(body.sourceSpreadsheetId,officialSheet);
 assert.equal(body.proof,proof);
 assert.equal(body.formResponseId,'response_key_123456789');
 assert.equal(body.submittedAt,event.response.getTimestamp().toISOString());
+assert.equal(body.qualityVerified,true);
+assert.ok(body.qualitySignals.includes('MISSING_REQUIRED_CORE'),'missing mandatory items must require review');
 assert.ok(!options.payload.includes('PRIVATE-SURVEY-ANSWER'),
   'actual teacher answers must not leave Google Forms');
 assert.ok(!logs.join('|').includes(proof),'proof must not appear in logs');
