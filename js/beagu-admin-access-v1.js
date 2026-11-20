@@ -228,13 +228,40 @@
       if(el)el.textContent=data&&data[field]!=null?num(data[field]):"확인 불가";
     }
     const status=$("adminTelemetryAsOf");
-    if(!data){status.textContent="보호 통계를 가져올 수 없습니다. 다음 갱신에서 재시도합니다.";return;}
+    const monitor=$("adminTelemetryHourlyStatus");
+    if(!data){
+      status.textContent="보호 통계를 가져올 수 없습니다. 다음 갱신에서 재시도합니다.";
+      monitor.textContent="자동 점검 상태 확인 불가 · 실시간 접속과는 별도로 확인이 필요합니다.";
+      return;
+    }
     const attempts=Number(data.guard_attempts);
     const last=data.latest_saved_visit?
       new Date(data.latest_saved_visit).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",hour12:false}):
       "지난 24시간 방문 저장 기록 없음";
     const sample=Number.isSafeInteger(attempts)&&attempts>=30?"":" · 아직 적은 계측 표본";
     status.textContent="최근 저장 방문: "+last+" · 24시간 검사 합계"+sample;
+    const m=data.hourly_monitor;
+    if(!m||!m.checked_at){
+      monitor.textContent="자동 점검 예정 · 완료된 시간대의 첫 평가를 기다립니다.";
+      return;
+    }
+    const elapsed=Date.now()-Date.parse(m.checked_at);
+    const when=new Date(m.window_start).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",hour12:false});
+    if(!Number.isFinite(elapsed)||elapsed>150*60000){
+      monitor.textContent="자동 점검 지연 · 마지막 검사 "+when+" 시작 시간대";
+      return;
+    }
+    const types=Array.isArray(m.alert_codes)?m.alert_codes:[];
+    if(m.status==="warning"){
+      const reasons=[];
+      if(types.includes("rejections"))reasons.push("요청 제한 비율 증가");
+      if(types.includes("visit_gap_suspected"))reasons.push("통과한 방문 대비 저장 기록 누락 의심");
+      monitor.textContent="확인 필요 · "+(reasons.join(" · ")||"통계 이상")+" · "+when+" 시작 시간대 (확정된 장애나 오탐은 아님)";
+    }else if(m.status==="normal"){
+      monitor.textContent="표본 기준 내 이상 신호 없음 · "+when+" 시작 시간대 · HTTP 5xx는 별도 점검";
+    }else{
+      monitor.textContent="표본 부족 · "+when+" 시작 시간대 · 장애 없음으로 확정하지 않음";
+    }
   }
   async function refreshLiveTraffic(){
     if(document.hidden||$("adminDashboard").hidden)return;
