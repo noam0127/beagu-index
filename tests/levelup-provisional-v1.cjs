@@ -17,7 +17,8 @@ assert.match(shell,/const VERIFY_URL=/,'Level badge still verifies a valid serve
 assert.match(shell,/action:'verify'/,'Level badge remains read-only');
 assert.match(read('levels.html'),/레벨1 인증/);
 assert.match(read('levels.html'),/챌린지 · 고유번호 확인/);
-assert.match(post,/function canWrite\(\)\{return state\.level>=2 && .*?\.dataset\.provisional!=="true"\}/);
+assert.match(post,/function canRead\(\)\{return state\.level>=2\}/);
+assert.match(post,/function canWrite\(\)\{return canRead\(\) && .*?\.dataset\.provisional!=="true"\}/);
 assert.match(post,/const blocked=!canWrite\(\)/);
 assert.match(post,/if\(!canWrite\(\)\)composer\.append/);
 assert.match(post,/if\(state\.busy\|\|!state\.subject\|\|!canWrite\(\)\)return/);
