@@ -4,7 +4,20 @@
  */
 (function(root){
  'use strict';
- const VERSION='class-diary-narrator/v2';
+ const VERSION='class-diary-narrator/v3-long';
+ const inNode=typeof module==='object'&&module.exports&&typeof require==='function';
+ const SCENE_ENGINE=inNode?require('./class-diary-prologue-scenes-v1.js'):root.BeaguClassDiaryPrologueScenes;
+ const LENSES=Object.freeze({
+  woman:inNode?require('./class-diary-prologue-lens-woman-v1.js'):root.BeaguClassDiaryLensWoman,
+  man:inNode?require('./class-diary-prologue-lens-man-v1.js'):root.BeaguClassDiaryLensMan,
+  none:inNode?require('./class-diary-prologue-lens-none-v1.js'):root.BeaguClassDiaryLensNone,
+  man2:inNode?require('./class-diary-prologue-lens-man2-v1.js'):root.BeaguClassDiaryLensMan2,
+  man3:inNode?require('./class-diary-prologue-lens-man3-v1.js'):root.BeaguClassDiaryLensMan3
+ });
+ if(!SCENE_ENGINE||SCENE_ENGINE.validate().scenes!==12)throw Error('PROLOGUE_SPINE_REQUIRED');
+ for(const key of Object.keys(LENSES))
+  if(!LENSES[key]||LENSES[key].PARTNER!==key||LENSES[key].LENS.length!==12)
+   throw Error('PROLOGUE_LENS_REQUIRED_'+key);
 /* The new teacher enters on March 8 after an unexpected short-notice contract placement.
  * A teacher's urgent family-care leave is a fictional premise, not a fact about a real school.
  */
@@ -79,7 +92,9 @@
   return Object.freeze({
    perspective:'colleague',narrator:source.narrator,scene:'morning',
    title:source.title,place:source.place,
-   paragraphs:Object.freeze(source.lines.slice())
+   paragraphs:Object.freeze(SCENE_ENGINE.SCENES.flatMap((shared,i)=>[
+    ...shared,LENSES[id].LENS[i]
+   ]).concat(SCENE_ENGINE.CODA))
   });
  }
  function validate(){
@@ -87,9 +102,9 @@
   if(keys.join(',')!=='woman,man,none,man2,man3')throw Error('FIVE_NARRATORS_REQUIRED');
   for(const key of keys){
    const scene=prologue({partner:key,name:'새봄'});
-   if(scene.paragraphs.length<5||scene.paragraphs.some(x=>x.length<25||x.includes('{player}')))throw Error('INCOMPLETE_PROLOGUE_'+key);
+   if(scene.paragraphs.length!==52||scene.paragraphs.join('').length<9600||scene.paragraphs.some(x=>x.length<25||x.includes('{player}')))throw Error('INCOMPLETE_PROLOGUE_'+key);
   }
-  return {narrators:5,perspective:'colleague'};
+  return {narrators:5,perspective:'colleague',longPrologue:true};
  }
  validate();
  const api=Object.freeze({VERSION,PROLOGUES,prologue,validate});
