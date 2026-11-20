@@ -177,16 +177,15 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
     const date=box('#diarySceneDate'),home=box('#diaryHomeReturn'),menu=box('#diaryHudFold');
     const footer=box('#vnBottom .vn-control-row'),stage=box('#vnBottom');
     const prose=box('#vnDialogueSlot .prose');
-    const arrow=box('#vnBottom .vn-control-row > .diary-inline-turn:not([hidden])');
+    const noArrow=['vnMore','nextBtn'].every(id=>getComputedStyle(document.getElementById(id)).display==='none');
     const intersect=(a,b)=>a&&b&&Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))>1&&Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top))>1;
-    return {date,home,menu,footer,stage,prose,arrow,dateHomeOverlap:intersect(date,home),homeMenuOverlap:intersect(home,menu),viewport:{width:innerWidth,height:innerHeight}};
+    return {date,home,menu,footer,stage,prose,noArrow,dateHomeOverlap:intersect(date,home),homeMenuOverlap:intersect(home,menu),viewport:{width:innerWidth,height:innerHeight}};
    });
    assert(geometry.home&&geometry.menu&&geometry.date&&!geometry.dateHomeOverlap&&!geometry.homeMenuOverlap,
      'Header date, home and menu must not collide: '+JSON.stringify(geometry));
    assert(geometry.footer&&geometry.stage&&geometry.footer.right<=geometry.viewport.width+2&&geometry.footer.bottom<=geometry.viewport.height+2,
      'Footer must remain inside the viewport: '+JSON.stringify(geometry));
-   assert(geometry.arrow&&geometry.arrow.width>=40&&geometry.arrow.bottom<=geometry.viewport.height+2,
-     'An accessible next arrow must be visible inside the footer: '+JSON.stringify(geometry));
+   assert(geometry.noArrow,'Next arrow should be hidden: '+JSON.stringify(geometry));
    assert(geometry.prose&&geometry.prose.width<=860,'Reader line length must remain bounded');
    assert.equal(await page.locator('#diarySaveNow').isVisible(),true,'In-game manual save button should be visible');
    assert.equal(await page.locator('#diaryContinueNow').isVisible(),true,'In-game continue button should be visible');
