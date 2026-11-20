@@ -16,14 +16,10 @@
  });
  // The prior next button was the only clickable target in some scenes.
  // Touching the prose must continue to invoke the same registered handlers.
- reader.addEventListener('click',event=>{
-  if(!document.body.classList.contains('is-playing')||
-     document.body.classList.contains('is-choosing')||
-     document.body.classList.contains('diary-panel-open'))return;
-  if(event.target.closest('button,a,input,select,textarea,summary,[role="dialog"]'))return;
-  if(!$('choiceSection')?.hidden)return;
-  stage.click();
- });
+ // #vnBottom is already inside #sceneArt. Its click bubbles to the
+ // original scene handler, so forwarding stage.click() here would advance twice.
+ // No extra reader click listener is needed.
+
  let pending=false;
  const shown=node=>node&&node.isConnected&&getComputedStyle(node).display!=='none'&&
    getComputedStyle(node).visibility!=='hidden';
