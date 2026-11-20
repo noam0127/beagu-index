@@ -418,6 +418,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <link rel="stylesheet" href="styles/class-diary-cast-profiles-v6.css?v=20261120-cast-hobbies-hyunwoo-v3">
 <link rel="stylesheet" href="styles/class-diary-setup-book-v1.css?v=20261120-book4a">
 <link rel="stylesheet" href="styles/class-diary-know-people-v7.css?v=20261120-people-v7a">
+<link rel="stylesheet" href="styles/class-diary-daily-journal-v1.css?v=20261120-diary1">
 </head>
 <body>
 <main>
@@ -692,6 +693,13 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <p class="muted" id="chapterSource"></p>
 <div id="choiceSection" role="dialog" aria-modal="true" aria-label="선택지"><div class="option-title">어떻게 하시겠어요?</div><div class="choices" id="choiceButtons"></div></div>
 <section class="outcome" id="outcome" hidden><div class="prose" id="outcomeText"></div><p class="dialogue" id="outcomeLine"></p></section>
+<section id="dailyJournal" class="daily-journal" hidden aria-labelledby="dailyJournalTitle">
+ <div class="daily-journal-kicker">하루가 끝나면 남기는 한 문장</div>
+ <h3 id="dailyJournalTitle">오늘의 학급일지 · 무엇을 기억할까요?</h3>
+ <p class="daily-journal-guide">오늘 있었던 일을 바꾸지 않습니다. 나는 어떤 의미로 오늘을 기억할지 선택합니다.</p>
+ <div id="dailyJournalOptions" class="daily-journal-options" role="group" aria-label="학급일지에 남길 한 문장"></div>
+ <p id="dailyJournalChosen" class="daily-journal-chosen" aria-live="polite"></p>
+</section>
 <div class="actions"><button type="button" class="primary" id="nextBtn" hidden aria-label="다음 장면" title="다음 장면"><svg class="vn-arrow-mark" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m8 5 7 7-7 7"/></svg></button><button type="button" class="secondary" id="resetBtn">처음부터 다시 시작</button></div>
 </div>
 </article>
@@ -754,6 +762,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-philosophy-v1.js?v=20261120-lit3"></script>
 <script src="js/class-diary-pedagogy-v1.js?v=20261120-lit3"></script>
 <script src="js/class-diary-endings-v3.js?v=20261120-lit3"></script>
+<script src="js/class-diary-daily-journal-v1.js?v=20261120-diary1"></script>
 <script src="js/class-diary-semester-long-v3.js?v=20261120-lit3"></script>
 <script src="js/class-diary-prologue-scenes-v1.js?v=20261120-lit3"></script>
 <script src="js/class-diary-prologue-lens-woman-v1.js?v=20261120-lit3"></script>
@@ -799,6 +808,7 @@ const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const semester=window.BeaguClassDiarySemester;
+const dailyJournal=window.BeaguClassDiaryDailyJournal;
 const narrator=window.BeaguClassDiaryNarrator;
 const schoolBrief=window.BeaguClassDiarySchoolBrief;
 const literary=window.BeaguClassDiaryLiterary;
@@ -1641,6 +1651,35 @@ $('playerSetupForm').addEventListener('submit',event=>{
  render();autoSaveProgress();
 });
 $('heroName').addEventListener('input',()=>$('heroName').setCustomValidity(''));
+function renderDailyJournal(){
+ const panel=$('dailyJournal');
+ if(!panel||storyMode!=='semester'||!game||game.phase!=='semester_reflection'){
+  if(panel)panel.hidden=true;
+  return;
+ }
+ panel.hidden=false;
+ const list=$('dailyJournalOptions');list.replaceChildren();
+ const selected=dailyJournal.selection(game,game.episode);
+ const prompts=dailyJournal.choices(game.episode)||[];
+ for(const choice of prompts){
+  const button=el('button',choice.label);
+  button.type='button';button.className='daily-journal-option';
+  button.setAttribute('aria-pressed',String(selected===Number(choice.id)));
+  button.addEventListener('click',()=>{
+   game=dailyJournal.choose(game,choice.id);
+   sound.note('choice');
+   renderDailyJournal();
+   autoSaveProgress();
+  });
+  list.append(button);
+ }
+ const memory=dailyJournal.note(game,game.episode);
+ $('dailyJournalChosen').textContent=memory?
+  '오늘의 기록을 남겼습니다. 다른 문장으로 수정하거나 다음 이야기로 넘어갈 수 있습니다.':
+  '학급일지에 남길 한 문장을 선택해야 다음 이야기로 넘어갑니다.';
+ $('nextBtn').hidden=selected===null;
+}
+
 function renderSemester(){
  literary.mode(true);
  if(game.phase==='semester_ending')return renderSemesterEnding();
@@ -1709,6 +1748,7 @@ function renderSemester(){
   fillParagraphs('outcomeText',game.lastOutcome.paragraphs);
   $('outcomeLine').textContent=game.lastOutcome.line;
  }
+ renderDailyJournal();
  vnStart(reflection);
  status('제'+view.act+'부 · '+view.episode+'화 / 36화');
 }
@@ -1719,7 +1759,12 @@ function renderSemesterEnding(){
  $('endingHeading').textContent=ending.heading;
  $('ending').querySelector('.emblem').textContent='2027년 7월 16일 · 36화의 마지막 페이지';
  $('ending').querySelector('.credits-roll p:last-child').textContent='한 학기의 이야기를 함께해 주셔서 고맙습니다.';
- endingState.pages=literary.paginate(ending.paragraphs,$('endingText'));endingState.index=0;endingPresent();
+ const selectedNotes=dailyJournal.entries(game);
+ const remembered=selectedNotes.length?[
+  '나는 학급일지에 남겼던 문장들을 다시 펼쳐 보았다.',
+  ...selectedNotes.slice(-3).map(record=>'제'+record.episode+'화의 기록. '+record.text)
+ ]:[];
+ endingState.pages=literary.paginate(ending.paragraphs.concat(remembered),$('endingText'));endingState.index=0;endingPresent();
  $('endingAffection').textContent=ending.affection+' / 100';
  $('endingScore').textContent='이야기 점수 '+ending.score+' / 100';
  $('endingSchool').textContent=game.schoolName+' · 2027년 3월–7월, 36화의 기록';
@@ -1729,6 +1774,7 @@ function renderSemesterEnding(){
 function render(){
  literary.mode(true,storyMode==='semester');
  document.body.dataset.diaryStory=storyMode;
+ if(storyMode!=='semester')$('dailyJournal').hidden=true;
  if(storyMode!=='semester'){
   $('novelCard').removeAttribute('data-act');
   $('novelCard').removeAttribute('data-season');
@@ -1951,7 +1997,13 @@ $('profileForm').addEventListener('submit',e=>{
 $('nextBtn').addEventListener('click',()=>{
  sound.note('pageTurn');
  if(storyMode==='semester'&&prologuePending){prologuePending=false;playerSetupPending=true;render();return;}
- if(storyMode==='semester'){game=semester.advance(game);render();autoSaveProgress();return;}
+ if(storyMode==='semester'){
+  if(game.phase==='semester_reflection'&&dailyJournal.selection(game,game.episode)===null){
+   status('오늘의 학급일지에 남길 한 문장을 먼저 선택해 주세요.');
+   renderDailyJournal();return;
+  }
+  game=semester.advance(game);render();autoSaveProgress();return;
+ }
  const incident=game.phase==='chapter'?incidents.next(game,world):null;
  const event=game.phase==='chapter'&&!incident?scenario.scene(game,world):null;
  game=incident&&incident.result?incidents.continueStory(game):
