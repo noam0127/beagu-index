@@ -32,4 +32,19 @@ assert.match(policy,/approved2026ReleaseIsOldEnough\(r\.approved_at\)/);
 assert.match(policy,/RELEASE_DELAY_MS=24\*60\*60\*1000/);
 assert.doesNotMatch(search,/beagu_2026_school_coverage|beagu_school_question_aggregates_v2|forms\/d\/e\//,
   'Client refresh must not fetch private form or raw school responses');
+const publicSearch=read('search.html');
+const report=read('school-report.html');
+const compare=read('js/statistics-compare.js');
+for(const frontend of [publicSearch,report,compare]){
+  assert.match(frontend,/window\.setInterval\(refreshVisible2026,60000\)/);
+  assert.match(frontend,/document\.visibilityState!=='visible'/);
+  assert.match(frontend,/from\('beagu_school_report_yearly'\)/);
+}
+assert.match(publicSearch,/\.select\('school_id,percentile'\).*\.eq\('survey_year',2026\)/);
+assert.match(publicSearch,/locked:value2026===null/);
+assert.match(report,/state\.years\['2026'\]\.approved=false/);
+assert.match(report,/state\.years\['2026'\]\.items=\{\}/);
+assert.match(report,/state\.tier>=1&&Object\.values\(current\.items/);
+assert.match(compare,/state\.public2026\.delete\(id\)/);
+assert.match(compare,/void loadApprovedSchool\(id,true\)/);
 console.log('PASS: legacy Lv2 redirects; visible unified search refreshes 2026 approved-only releases every minute');
