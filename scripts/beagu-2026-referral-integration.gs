@@ -85,8 +85,9 @@ function beaguReferralQualitySignals_(formResponse){
   const answers=formResponse.getItemResponses();
   const core=new Map();
   answers.forEach(entry=>{
-    const title=String(entry.getItem().getTitle()||"").trim();
-    const found=/^Q(0[1-9]|1[0-3])(?:\\.|[\\s:：．])/.exec(title);
+    const item=entry.getItem();
+    const title=String(item&&typeof item.getTitle==="function"?item.getTitle():"").trim();
+    const found=/^Q(0[1-9]|1[0-3])(?:\.|[\s:：．])/.exec(title);
     if(!found)return;
     const result=entry.getResponse();
     const value=typeof result==="string"?result.trim():"";
