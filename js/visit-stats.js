@@ -43,8 +43,8 @@
        typeof supabaseClient==='undefined')return;
     presencePending=true;
     try{
-      await supabaseClient.rpc('beagu_presence_ping_v1',{
-        p_visitor:visitor,p_page:presencePage
+      await supabaseClient.functions.invoke('beagu-telemetry-v2',{
+        body:{action:'ping',visitor,page:presencePage}
       });
     }catch(_){ /* nonblocking; telemetry is best effort */ }
     finally{presencePending=false}
@@ -80,7 +80,7 @@
       try {
         if (typeof supabaseClient === 'undefined') throw new Error('CLIENT_UNAVAILABLE');
         // Reuse the same event UUID on retries, preventing duplicate visit events.
-        const {data,error} = await supabaseClient.rpc('beagu_record_visit', {p_visitor:visitor,p_event:event,p_page:page});
+        const {data,error} = await supabaseClient.functions.invoke('beagu-telemetry-v2', {body:{action:'visit',visitor,event,page}});
         if (error) throw error;
         if (display(data)) return data;
         throw new Error('INVALID_VISIT_STATS');
