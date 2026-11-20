@@ -25,4 +25,41 @@ for(let n=1;n<=36;n++){
  assert.equal(directions.forEpisode(n,row.title,globalThis.BeaguClassDiaryBranchMap.episode(n).title)?.episode,n,
   'All reconstructed episodes activate their direction metadata');
 }
+const engine=require('../js/class-diary-semester-long-v3.js');
+const journal=require('../js/class-diary-daily-journal-v1.js');
+const baseStats={affection:35,trust:42,agency:42,fatigue:35,voice:45,boundary:48,support:67};
+const stages=['woman','man','none','man2','man3'];
+for(const partner of stages)for(const experience of ['new','mid','senior']){
+ const stateBase={schoolName:'허구초등학교',profile:{name:'새봄',partner,experience,pedagogy:'field',gender:'undisclosed'},
+  stats:baseStats,scriptEdition:novel.VERSION};
+ let state=engine.createGame(stateBase);
+ for(let n=1;n<=36;n++){
+  const scene=engine.chapter(state);
+  assert.equal(scene.title,novel.scene(n).title,'Reconstructed title must be live');
+  assert.equal(scene.date,'2027-'+novel.scene(n).date);
+  assert.equal(scene.choices.length,3);
+  assert(scene.paragraphs.length>=7);
+  assert.equal(scene.visual,novel.scene(n).visual);
+  for(let c=0;c<3;c++)assert.equal(scene.choices[c].label,globalThis.BeaguClassDiaryBranchMap.episode(n).choices[c].label);
+  assert(scene.paragraphs.join('').length>=300,'Scene is not substantial enough');
+  assert(!scene.paragraphs.some(x=>/^\\s*\\[(BGM|SFX|전환|연출|행동)/.test(x)),
+   'Stage directions must not appear as subtitles');
+  state=engine.choose(state,String((n+1)%3));
+  assert.equal(state.phase,'semester_reflection');
+  assert.equal(state.lastOutcome.paragraphs.length,2);
+  assert.equal(state.history.length,n);
+  state=journal.choose(state,n%3);
+  assert.equal(state.journal.length,n);
+  state=engine.advance(state);
+ }
+ assert.equal(state.phase,'semester_ending');
+ assert.equal(state.journal.length,36);
+ assert(state.ending.paragraphs.some(p=>p.includes('강낭콩')));
+}
+const original=engine.createGame({schoolName:'허구초등학교',
+ profile:{name:'새봄',partner:'woman',experience:'mid',pedagogy:'field'},
+ stats:baseStats});
+assert.equal(engine.chapter(original).title,'장미반의 낯선 이름',
+ 'Older saved stories must keep original narrative edition');
+
 console.log('PASS: new 36-episode manuscript, 108 outcomes, branch titles, audio direction, legacy-save edition separation');
