@@ -38,7 +38,9 @@ for(const screen of [{name:'mobile-320',width:320,height:720},{name:'mobile-390'
   assert(state.stage>200&&state.cutout>100,'images too small '+person);
  }
  await page.selectOption('#actorPick','dogyeom');await page.selectOption('#chapterPick','3');
- await page.selectOption('#backPick','alpha');await page.locator('#screenPick').click();
+ await page.selectOption('#backPick','alpha');await page.selectOption('#zoomPick','1.2');
+ assert.equal(await page.locator('#cutoutActor').evaluate(el=>el.style.transform),'scale(1.2)','manual cutout zoom');
+ await page.locator('#screenPick').click();
  assert.equal(await page.locator('#screenPick').getAttribute('aria-pressed'),'true');
  await page.locator('#reviewNote').fill('QA: string and finger edges');
  await page.screenshot({path:path.join(out,screen.name+'-dogyeom.png'),fullPage:true});
