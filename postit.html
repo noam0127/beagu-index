@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>포스트잇 | 배구지수</title>
-<meta name="description" content="선생님들이 학교와 게임에 남긴 익명 포스트잇. 누구나 읽고 Lv.2부터 참여합니다.">
+<meta name="description" content="레벨2 전용 익명 포스트잇에서 학교정보, 게임, 비교 결과를 검색하고 의견을 나눕니다.">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css">
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261120-levelup1">
-<link rel="stylesheet" href="styles/postit-v1.css?v=20261120-skipfocus1">
+<link rel="stylesheet" href="styles/postit-v1.css?v=20261120-lv2-search1">
 <script defer src="js/beagu-level-state-v1.js?v=20261120-lv1-plain1"></script>
 </head>
 <body class="beagu-ui-page beagu-postit-page">
@@ -39,15 +39,27 @@
 <div class="postit-form-footer"><small id="postitCounter">0 / 200</small><button type="button" id="postitSubmit">포스트잇 붙이기</button></div>
 </div>
 <div id="postitLocked" class="postit-lock" hidden><span aria-hidden="true">🔒</span>
-<b>Lv.2부터 작성할 수 있습니다</b><span>포스트잇은 Lv.0부터, 댓글은 Lv.1부터 열람할 수 있습니다.</span>
+<b>Lv.2 전용 포스트잇</b><span>포스트잇과 댓글은 Lv.2부터 열람·작성할 수 있습니다.</span>
 <a href="levels.html">레벨 안내 보기</a></div>
 <div id="postitMessage" class="postit-message" role="status" aria-live="polite"></div>
 </section>
-<section class="postit-board" aria-labelledby="boardTitle"><div class="postit-board-heading"><h2 id="boardTitle">이어지는 이야기</h2><p id="postitListStatus" role="status">포스트잇을 불러오는 중…</p></div>
+<section class="postit-board" aria-labelledby="boardTitle">
+<div class="postit-board-heading"><h2 id="boardTitle">이어지는 이야기</h2><p id="postitListStatus" role="status" aria-live="polite">등급 확인 중…</p></div>
+<div id="postitBoardLocked" class="postit-lock postit-board-lock" hidden>
+<b>🔒 Lv.2 전용 공간입니다</b><span>게시글·댓글 검색과 열람은 Lv.2에서 이용할 수 있습니다.</span><a href="levels.html">레벨 안내 보기</a>
+</div>
+<div id="postitBoardContent" hidden>
+<form id="postitSearchForm" class="postit-search" role="search" autocomplete="off">
+<label for="postitSearch">포스트잇 검색</label>
+<div class="postit-search-row"><input id="postitSearch" name="q" type="search" placeholder="학교명 · 게임 · 본문 · 댓글 검색" maxlength="40" enterkeyhint="search" aria-describedby="postitSearchHelp">
+<button id="postitSearchSubmit" type="submit">검색</button></div>
+<small id="postitSearchHelp">두 글자 이상 입력하세요. 정렬과 검색을 함께 사용할 수 있습니다.</small>
+</form>
 <div class="postit-thread" id="postitThread" aria-live="polite"></div>
 <button id="postitReload" class="postit-reload" type="button">다시 불러오기</button>
+</div>
 </section>
 <footer class="postit-footer">익명 게시글은 개인의 경험과 의견이며 학교 전체의 평가가 아닙니다. 개인·학생을 특정하거나 비방하는 글은 삼가주세요.</footer>
 </main>
-<script src="js/postit-v1.js?v=20261120-lv2-imsi2" defer></script>
+<script src="js/postit-v1.js?v=20261120-lv2-search1" defer></script>
 </body></html>
