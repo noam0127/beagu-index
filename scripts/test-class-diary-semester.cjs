@@ -19,7 +19,11 @@ function run(partner,pick){
   assert.equal(view.episode,i);
   assert.equal(view.total,36);
   assert.equal(view.choices.length,3);
-  assert(view.paragraphs.length>=3);
+  assert.equal(view.perspective,'player');
+  assert.equal(state.profile.employment,'fixed_term');
+  assert(view.paragraphs.length>=7,'Novel chapter needs at least seven paragraphs');
+  assert(view.paragraphs.join('').length>=780,'Chapter '+i+' must exceed five times the old outline');
+  for(const colleague of ['지윤','현우','민서'])assert(view.paragraphs.join('').includes(colleague),'All three colleagues present: '+i+' '+colleague);
   assert(view.paragraphs.every(s=>s.length>15));
   assert(view.date.startsWith('2027-'));
   assert(/[가-힣]/.test(view.place)&&!/^[a-z]+$/.test(view.place),
@@ -81,7 +85,7 @@ const raw=fs.readFileSync(require.resolve('../js/class-diary-semester-v1.js'),'u
 for(const banned of ['localStorage.setItem','sessionStorage.setItem','indexedDB','fetch(','XMLHttpRequest','navigator.sendBeacon'])
  assert(!raw.includes(banned),'Story engine must never persist or transmit game data: '+banned);
 const page=fs.readFileSync(require('node:path').join(__dirname,'../teacher-class-diary-play.html'),'utf8');
-for(const marker of ['id="semesterStart"','src="js/class-diary-semester-v1.js?v=20261120"',"semester.createGame(baseGame)","if(storyMode==='semester')return renderSemester()","semester.advance(game)"])
+for(const marker of ['id="semesterStart"','src="js/class-diary-semester-v1.js?v=20261120-novel2"',"semester.createGame(baseGame)","if(storyMode==='semester')return renderSemester()","semester.advance(game)"])
  assert(page.includes(marker),'Semester UI connection missing '+marker);
 for(const englishLabel of ['PROLOGUE 00','PLAYER SETUP','MY STORY','STORY · 나의 학급일지','END CREDITS'])
  assert(!page.includes(englishLabel),'Untranslated game UI label: '+englishLabel);
