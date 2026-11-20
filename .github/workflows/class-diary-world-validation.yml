@@ -45,6 +45,7 @@ on:
       - 'scripts/test-class-diary-play.cjs'
       - 'scripts/test-class-diary-director.cjs'
       - 'scripts/test-class-diary-character-routes.cjs'
+      - 'scripts/test-class-diary-new-colleagues.cjs'
       - 'scripts/test-class-diary-context.cjs'
       - 'scripts/test-class-diary-demo.cjs'
       - 'scripts/test-class-diary-scenario.cjs'
@@ -101,6 +102,7 @@ jobs:
           node scripts/test-class-diary-semester-ui.cjs
           node scripts/test-class-diary-director.cjs
           node scripts/test-class-diary-character-routes.cjs
+          node scripts/test-class-diary-new-colleagues.cjs
           node scripts/test-class-diary-context.cjs
           node scripts/test-class-diary-demo.cjs
           node scripts/test-class-diary-scenario.cjs
