@@ -93,11 +93,11 @@ assert.ok(challenge.includes('.step-card {')&&challenge.includes('border-radius:
  'Challenge retains rounded standard cards');
 
 const edge=read('supabase/functions/beagu-postit-api-v1/index.ts');
-assert.ok(edge.includes('const user=await identity(req)'), 'writes authenticated');
+assert.ok(edge.includes('const user=await verifiedMember(req,viewer)'), 'mutations require independent verified Auth account');
 assert.ok(!edge.includes('identity_visitor_id||hash'), 'session token hash must not become rotating writer identity');
-assert.ok(edge.includes('if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null}'),
+assert.ok(edge.includes('if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null,visitor:null}'),
  'Lv1 can read without identity but no actor UUID is synthesized');
-assert.ok(edge.includes('if(!user.id)return fail(req,"WRITER_IDENTITY_REQUIRED",403)'),
+assert.ok(edge.includes('if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403)'),
  'Lv2 writes fail closed until trusted permanent identity is bound');
 assert.ok(app.includes('WRITER_IDENTITY_REQUIRED'), 'client explains pending Lv2 account verification');
 assert.ok(edge.includes('const viewer=await identity(req,2)'), 'Lv2 verified server-side for Post-it reads');
