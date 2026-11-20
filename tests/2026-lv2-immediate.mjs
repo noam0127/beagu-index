@@ -18,7 +18,7 @@ assert.equal(releaseMetrics([{...row,approval_status:'WITHHELD'}],catalog,2,true
 assert.equal(releaseMetrics([{...row,identity_reviewed:false}],catalog,2,true).length,0,'identity gate unchanged');
 assert.equal(releaseMetrics([{...row,question_id:'Q51'}],[{...catalog[0],question_id:'Q51'}],2,true).length,0,'Q51 stays private');
 const sql=read('supabase/migrations/20261121100000_beagu_2026_lv2_immediate_approved.sql');
-for(const guard of ['approved_payload_sha256=r.payload_sha256','review_status=\\'VERIFIED\\'','b.small_sample_reviewed','b.reidentification_reviewed','b.prior_data_combination_reviewed','r.approved_at >= r.updated_at','q.value->>\\'id\\' not in (\\'Q31\\',\\'Q51\\')'])
+for(const guard of ["approved_payload_sha256=r.payload_sha256","review_status='VERIFIED'","b.small_sample_reviewed","b.reidentification_reviewed","b.prior_data_combination_reviewed","r.approved_at >= r.updated_at","q.value->>'id' not in ('Q31','Q51')"])
   assert.ok(sql.includes(guard),'SQL release gate missing '+guard);
 assert.ok(!sql.includes("r.approved_at <= now()-interval '24 hours'"),'New Lv2 RPC must not impose cooldown');
 assert.match(sql,/revoke all on function public\\.beagu_2026_lv2_released_question_results\\(text\\) from public, anon, authenticated/i);
