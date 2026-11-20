@@ -326,9 +326,13 @@ function resize(){
   const sx=W/oldW;
   player.x*=sx;shackle.x*=sx;
   items.forEach(a=>a.x*=sx);
-  chalkShots.forEach(b=>b.x*=sx);
+  chalkShots.forEach(b=>{b.x*=sx;if(Number.isFinite(b.missX))b.missX*=sx;});
   sideStudents.forEach(a=>{a.x*=sx;a.stopX*=sx;});
   paperBullets.forEach(a=>{a.x*=sx;a.vx*=sx;});
+  mysteryDrops.forEach(a=>a.x*=sx);
+  mysteryReveals.forEach(a=>a.x*=sx);
+  sparks.forEach(a=>{a.x*=sx;a.vx*=sx;});
+  floats.forEach(a=>a.x*=sx);
   if(paperTarget)paperTarget.x*=sx;
   if(pointerX!==null)pointerX*=sx;
  }
@@ -336,9 +340,13 @@ function resize(){
   const sy=H/oldH;
   player.y*=sy;
   items.forEach(a=>a.y*=sy);
-  chalkShots.forEach(a=>a.y*=sy);
+  chalkShots.forEach(a=>{a.y*=sy;if(Number.isFinite(a.missY))a.missY*=sy;});
   sideStudents.forEach(a=>a.y*=sy);
   paperBullets.forEach(a=>{a.y*=sy;a.vy*=sy;});
+  mysteryDrops.forEach(a=>{a.y*=sy;a.startY*=sy;a.targetY*=sy;});
+  mysteryReveals.forEach(a=>a.y*=sy);
+  sparks.forEach(a=>{a.y*=sy;a.vy*=sy;});
+  floats.forEach(a=>a.y*=sy);
   if(paperTarget)paperTarget.y*=sy;
   if(pointerY!==null)pointerY*=sy;
  }
@@ -945,7 +953,7 @@ function update(dt){
  }
  player.x=Math.max(27,Math.min(W-27,player.x));
  player.y=canPlayerRise()?Math.max(76,Math.min(H-52,player.y)):H-52;
- if(profile.jumpEnabled===false){
+ if(!canPlayerRise()){
   if(Math.abs(player.x-oldX)>.15)shackle.dir=player.x>oldX?-1:1;
   const targetX=Math.max(21,Math.min(W-21,player.x+shackle.dir*55));
   shackle.x+=Math.max(-180*dt,Math.min(180*dt,(targetX-shackle.x)*dt*7));
