@@ -1,0 +1,31 @@
+name: Class Diary 36-Episode Branch Validation
+on:
+  pull_request:
+    paths:
+      - 'teacher-class-diary-play.html'
+      - 'js/class-diary-branch-map-v1.js'
+      - 'js/class-diary-daily-journal-v1.js'
+      - 'scripts/test-class-diary-branch-map.cjs'
+      - 'scripts/test-class-diary-daily-journal.cjs'
+      - 'styles/class-diary-daily-journal-v1.css'
+      - '.github/workflows/class-diary-branch-validation.yml'
+  workflow_dispatch:
+jobs:
+  branch-and-journal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check js/class-diary-branch-map-v1.js
+          node --check js/class-diary-daily-journal-v1.js
+          node --check scripts/test-class-diary-branch-map.cjs
+          node --check scripts/test-class-diary-daily-journal.cjs
+      - name: Run 36-episode narrative and journal tests
+        run: |
+          node scripts/test-class-diary-branch-map.cjs
+          node scripts/test-class-diary-daily-journal.cjs
