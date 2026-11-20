@@ -121,7 +121,11 @@ grant execute on function public.beagu_2026_approve_results(text,text,text,jsonb
 -- verified-basis registry. Revoking the registry immediately removes access.
 create or replace function public.beagu_2026_released_question_results(p_school_id text)
 returns jsonb language sql stable security definer set search_path='' as $$
-  select r.questions from public.beagu_2026_results_snapshot r
+  select (
+    select coalesce(jsonb_agg(q.value),'[]'::jsonb)
+    from jsonb_array_elements(r.questions) q(value)
+    where q.value->>'id' not in ('Q31','Q51')
+  ) from public.beagu_2026_results_snapshot r
   where r.school_id=p_school_id
     and r.approval_status='APPROVED'
     and r.approved_payload_sha256=r.payload_sha256
