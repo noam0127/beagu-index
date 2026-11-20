@@ -5,7 +5,7 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const client=window.supabaseClient;
+const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
 const base='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1';
 const levelKey='beagu-level-session-v1',deviceKey='beagu-referral-device-secret-v1';
 const section=$('postitAccount'),status=$('postitAccountStatus'),form=$('postitAccountForm');
@@ -79,7 +79,7 @@ async function executeAuth(action){
  busy=true;
  try{
   const wantsSms=action==='signup'&&smsConsent.checked;
-  const mobile=smsPhone.value.replace(/\\D/g,'');
+  const mobile=smsPhone.value.replace(/[^0-9]/g,'');
   if(wantsSms&&!/^010[0-9]{8}$/.test(mobile)){
    message('문자 수신을 원하시면 010으로 시작하는 11자리 번호를 입력해 주세요.');return;
   }
