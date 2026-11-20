@@ -67,12 +67,14 @@ assert.match(gameGate,/window\.dispatchEvent\(new Event\('beagu:level-state-chan
  };
  win.parent=win;
  new Function("window","document","Event",fullscreenSource)(win,doc,class MockEvent{});
- assert.equal(button.textContent,"🔳");
+ const initialIcon=button.innerHTML;
+ assert.match(initialIcon,/<svg /,"fullscreen uses SVG icon");
  buttonHandlers.click();await new Promise(resolve=>setImmediate(resolve));
- assert.equal(button.textContent,"🔽","iOS fallback enters expanded mode");
+ assert.match(button.innerHTML,/<svg /);
+ assert.notEqual(button.innerHTML,initialIcon,"expand icon changes");
  assert.ok(states.has("arcade-fullscreen-fallback"),"the game stage becomes fixed fullscreen");
  buttonHandlers.click();await new Promise(resolve=>setImmediate(resolve));
- assert.equal(button.textContent,"🔳","the shrink button exits iOS fallback");
+ assert.equal(button.innerHTML,initialIcon,"shrink restores original icon");
  assert.ok(!states.has("arcade-fullscreen-fallback"));
 }
 {
@@ -97,14 +99,17 @@ assert.match(gameGate,/window\.dispatchEvent\(new Event\('beagu:level-state-chan
  };
  const win={parent,location:{origin:base},addEventListener(name,fn){listeners[name]=fn;},dispatchEvent(){}};
  new Function("window","document","Event",fullscreenSource)(win,doc,class MockEvent{});
+ const embeddedIcon=button.innerHTML;
+ assert.match(embeddedIcon,/<svg /);
  handlers.click();
  assert.equal(messages.at(-1).active,true);
  assert.ok(areaStates.has("arcade-fullscreen-fallback"));
- assert.equal(button.textContent,"🔽");
+ assert.match(button.innerHTML,/<svg /);
+ assert.notEqual(button.innerHTML,embeddedIcon);
  handlers.click();
  assert.equal(messages.at(-1).active,false);
  assert.ok(!areaStates.has("arcade-fullscreen-fallback"));
- assert.equal(button.textContent,"🔳");
+ assert.equal(button.innerHTML,embeddedIcon);
 }
 const hostFullscreenScript=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
  .map(match=>match[1]).find(src=>src.includes("arcade:fullscreen-request"));
