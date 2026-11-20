@@ -10,12 +10,14 @@ export function approved2026ReleaseIsOldEnough(approvedAt,nowMs=Date.now()){
   const time=Date.parse(approvedAt);
   return Number.isFinite(time)&&time<=nowMs-RELEASE_DELAY_MS;
 }
-export function releaseMetrics(rows,catalog,level){
+export function releaseMetrics(rows,catalog,level,approvedLv2Instant2026=false){
   if(![1,2].includes(level))return [];
   const definitions=new Map(catalog.filter(c=>c.verified===true).map(c=>[`${c.survey_year}:${c.question_id}`,c]));
   const candidates=rows.flatMap(r=>{
     if(r.survey_year===2026&&/^Q51(?:$|[._-])/.test(r.question_id))return [];
-    if(r.survey_year===2026&&!approved2026ReleaseIsOldEnough(r.approved_at))return [];
+    // Only the Lv2 server route may pass true, after a separate approved exact-snapshot
+    // RPC has confirmed the independent legal/privacy review. Default stays 24h.
+    if(r.survey_year===2026&&!approvedLv2Instant2026&&!approved2026ReleaseIsOldEnough(r.approved_at))return [];
     const d=definitions.get(`${r.survey_year}:${r.question_id}`);
     if(!d||r.approval_status!=='APPROVED'||r.privacy_status!=='PASSED'||!r.identity_reviewed||!r.question_reviewed||!r.small_cell_reviewed||!r.differencing_reviewed||!r.approved_at||!r.approved_by||!r.approval_evidence)return [];
     const min=r.survey_year===2026&&(r.question_id==='percentile'||isVI(r.question_id))?1:2;
