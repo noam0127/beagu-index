@@ -1,7 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 // Server-to-server endpoint: ONLY a Google Apps Script installable form-submit
 // trigger may send validated form-response metadata to this function.
-// No raw school answers, names, email addresses, free text, or IPs are accepted.
+// Only derived core-answer completeness and response-pattern flags may be
+// accepted. No raw school answers, names, emails, free text, or IPs.
 const url=Deno.env.get('SUPABASE_URL')!;
 const dbKey=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const hmacKey=Deno.env.get('BEAGU_REFERRAL_HMAC_KEY')||'';
@@ -97,6 +98,32 @@ Deno.serve(async req=>{
       hmac('BEAGU_REFERRAL_RESPONDENT_V1|'+respondent.toLowerCase()),
     ]);
     const refHash=hex(await sha(ref));
+    // Only the owner-installed Google Forms trigger can submit these summary
+    // quality signals. Missing metrics fail closed instead of assuming clean.
+    const quality=body.qualitySignals;
+    if(quality!==undefined && (
+       !quality || typeof quality!=='object'||Array.isArray(quality)||
+       !Number.isSafeInteger((quality as Record<string,unknown>).coreAnswered)||
+       Number((quality as Record<string,unknown>).coreAnswered)<0||
+       Number((quality as Record<string,unknown>).coreAnswered)>13||
+       typeof (quality as Record<string,unknown>).straightline!=='boolean'
+    ))return response(400,{error:'INVALID_QUALITY_SIGNALS'});
+    const coreAnswered=quality ? (quality as Record<string,unknown>).coreAnswered as number : null;
+    const straightline=quality ? (quality as Record<string,unknown>).straightline as boolean : null;
+    const {data:screen,error:screenError}=await db.rpc('beagu_referral_quality_screen',{
+      p_event_hash:eventHash,p_referral_hash:refHash,
+      p_respondent_hash:respondentHash,p_respondent_uuid:respondent.toLowerCase(),
+      p_core_answered:coreAnswered,p_straightline:straightline,
+      p_submitted_at:body.submittedAt
+    });
+    if(screenError){
+      console.error('referral quality gate unavailable',screenError.code||'UNKNOWN');
+      return response(503,{error:'QUALITY_GATE_UNAVAILABLE'});
+    }
+    if(screen?.status!=='AUTO_CLEARED' && screen?.status!=='CLEARED'){
+      return response(200,{ok:true,credited:false,
+        decision:screen?.status==='REJECTED'?'quality_rejected':'pending_quality_review'});
+    }
     const {data,error}=await db.rpc('beagu_referral_credit',{
       p_event_hash:eventHash,p_referral_hash:refHash,
       p_respondent_hash:respondentHash,p_respondent_uuid:respondent.toLowerCase(),
