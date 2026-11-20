@@ -1,0 +1,23 @@
+name: Referral stage1 safety checks
+on:
+  pull_request:
+    paths:
+      - 'challenge.html'
+      - 'survey.html'
+      - 'js/challenge.js'
+      - 'js/challenge-referral-v1.js'
+      - 'supabase/functions/beagu-referral-link-v1/**'
+      - 'scripts/test-challenge-referral-stage1.cjs'
+      - '.github/workflows/challenge-referral-stage1.yml'
+  workflow_dispatch:
+jobs:
+  referral-static:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/test-challenge-referral-stage1.cjs
