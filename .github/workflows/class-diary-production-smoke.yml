@@ -28,6 +28,8 @@ on:
       - 'styles/class-diary-motion-v1.css'
       - 'js/class-diary-ui-v2.js'
       - 'styles/class-diary-ui-v2.css'
+      - 'styles/class-diary-cast-profiles-v6.css'
+      - 'assets/class-diary/characters/class-diary-cast-hobbies-v6.webp'
       - '.github/workflows/class-diary-production-smoke.yml'
   workflow_dispatch:
 permissions:
@@ -70,6 +72,8 @@ jobs:
             'styles/class-diary-motion-v1.css'
             'js/class-diary-ui-v2.js'
             'styles/class-diary-ui-v2.css'
+            'styles/class-diary-cast-profiles-v6.css'
+            'assets/class-diary/characters/class-diary-cast-hobbies-v6.webp'
             'js/class-diary-scenario-v1.js'
             'js/class-diary-incidents-v1.js'
             'js/class-diary-director-v1.js'
