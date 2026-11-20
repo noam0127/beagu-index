@@ -21,6 +21,8 @@ const PROSE_ACTS=(typeof module==='object'&&module.exports&&typeof require==='fu
 if(PROSE_ACTS.some((act,i)=>!act||act.part!==i+1||!Array.isArray(act.entries)||act.entries.length!==6))
  throw Error('COMPLETE_36_CHAPTER_NOVEL_REQUIRED');
 const REWRITTEN=Object.freeze(PROSE_ACTS.flatMap(act=>act.entries));
+const PEDAGOGY=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./class-diary-pedagogy-v1.js'):root.BeaguClassDiaryPedagogy;
+if(!PEDAGOGY||PEDAGOGY.validate().scenes!==16)throw Error('PEDAGOGY_ARC_REQUIRED');
 const FICTIONAL_COLLEAGUES=(typeof module==='object'&&module.exports&&typeof require==='function')?
  [require('./class-diary-colleague-dogyeom-v1.js'),require('./class-diary-colleague-taeo-v1.js')]:
  [root.BeaguClassDiaryDogyeom,root.BeaguClassDiaryTaeo];
@@ -180,6 +182,8 @@ function chapter(s){
  if(s.phase!=='semester_chapter'||s.episode<1||s.episode>36)throw Error('SEMESTER_CHAPTER_REQUIRED');
  const e=SCENES[s.episode-1],act=Math.floor((s.episode-1)/6),story=REWRITTEN[s.episode-1],p=PERSON[s.profile.partner]||PERSON.none;
  const paragraphs=story.lines.slice();
+ const pedagogicalScene=PEDAGOGY.moment(s.episode);
+ if(pedagogicalScene)paragraphs.splice(Math.min(3,paragraphs.length),0,pedagogicalScene);
  if(s.episode===1){
  const call=s.profile.experience==='new'?
  '3월 1일 오후, 임용시험 공부를 하던 내게 교감의 전화가 왔다. 교감은 장미반 담임 자리가 갑자기 비었다며 내일부터 올 수 있느냐고 물었다. 수험서 위에 놓은 연필이 굴러갔다. 나는 아직 정규 임용시험을 준비하는 사람인데 내일 아침에는 누군가의 담임이 되는 것이었다.':
@@ -237,7 +241,7 @@ function validate(){if(SCENES.length!==36||REWRITTEN.length!==36)throw Error('EP
    entry.lines.some(x=>typeof x!=='string'||x.length<35))throw Error('NOVEL_EPISODE_INCOMPLETE_'+(i+1));
  });SCENES.forEach((e,i)=>{if(e.length!==11||e.slice(3).some(x=>typeof x!=='string'||x.length<7)||!PLACE_NAMES[e[2]])throw Error('BAD_EPISODE_'+i);});return {episodes:36,acts:6,choices:108,endingTypes:5};}
 validate();
-const api=Object.freeze({VERSION,ACTS,SCENES,PERSON,THREADS,REWRITTEN,RECALLS,FICTIONAL_COLLEAGUES,createGame,chapter,choose,advance,validate});
+const api=Object.freeze({VERSION,ACTS,SCENES,PERSON,THREADS,REWRITTEN,RECALLS,FICTIONAL_COLLEAGUES,PEDAGOGY,createGame,chapter,choose,advance,validate});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiarySemester=api;
 })(typeof window!=='undefined'?window:globalThis);
