@@ -115,6 +115,11 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(privateWorldCalls,0,'Private Level2 school API must never be called by owner preview');
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),5,'Current 36-episode cast has five selectable colleagues');
+   assert.equal(await page.locator('.setup-character-hobby').count(),5,'Five hobby labels are shown');
+   assert.equal((await page.locator('.setup-section-title strong').filter({hasText:'알고 싶은 사람 고르기'}).count()),1,'Updated title is visible');
+   const hobbies=await page.locator('.setup-character-hobby').allTextContents();
+   assert.deepEqual(hobbies.map(x=>x.split(' · ')[0]),['기타','논어','기록','실뜨기','배구']);
+
    await page.waitForFunction(()=>document.getElementById('setup').classList.contains('has-distinct-cast-v5'),
     null,{timeout:8000});
    const portraits=await page.locator('.setup-portrait-grid').evaluate(grid=>{
