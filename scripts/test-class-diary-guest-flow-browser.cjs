@@ -115,6 +115,15 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(privateWorldCalls,0,'Private Level2 school API must never be called by owner preview');
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),5,'Current 36-episode cast has five selectable colleagues');
+   const castLayout=await page.locator('.setup-portrait-grid').evaluate(grid=>{
+    const cards=[...grid.querySelectorAll('[data-partner-choice]')].map(el=>{
+     const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};
+    });
+    return {cards,viewport:{w:innerWidth,h:innerHeight},scrollWidth:document.documentElement.scrollWidth};
+   });
+   assert(castLayout.cards.every(r=>r.left>=-1&&r.right<=castLayout.viewport.w+1&&r.bottom<=castLayout.viewport.h+2),
+     'All five cast portraits must fit the width and height of the screen: '+JSON.stringify(castLayout));
+
    await page.locator('[data-partner-choice="none"]').click();
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Photo selects without skipping the first-day action');
    assert.equal(await page.locator('#partner').inputValue(),'none');
