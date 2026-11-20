@@ -457,7 +457,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   const hasPlayerWings=()=>currentDifficulty==="easy"||isMysteryBuff("left","wings");
   const canPlayerJump=()=>!isMysteryBuff("left","shackle")&&(currentDifficulty!=="extreme"||hasPlayerWings());
-  const playerCeiling=()=>hasPlayerWings()?86:NET_TOP+56;
+  // Player's pixel-art head begins about 55px above the actor's y position.
+  // At NET_TOP+37, the head reaches 18px above the net, but cannot fly away.
+  const playerCeiling=()=>hasPlayerWings()?86:NET_TOP+37;
   const soundButton=document.getElementById("sound");
   const SOUND_KEY="teacherVolleyballSoundV1";
   let soundOn=true,audioContext=null;
@@ -871,7 +873,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const fast=isMysteryBuff("right","letter")?1.35:1;
     const shackle=isMysteryBuff("right","shackle");
     controlPlayer(right,move,!shackle&&state.aiJump,battle.enemySpeed*slow*fast,battle.enemyJumpForce);
-    const cpuCeiling=isMysteryBuff("right","wings")?86:NET_TOP+56;
+    const cpuCeiling=isMysteryBuff("right","wings")?86:
+      (["normal","hard","very_hard"].includes(currentDifficulty)?NET_TOP+37:NET_TOP+56);
     if(shackle){right.y=FLOOR-31;right.vy=0;}
     else if(isMysteryBuff("right","wings")){
       const target=ball.x>NET_X?clamp(ball.y,86,FLOOR-31):FLOOR-31;
