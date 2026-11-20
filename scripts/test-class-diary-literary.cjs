@@ -57,4 +57,19 @@ assert(packed[0].length>1,'A page must retain multiple sentences rather than rep
 assert.equal(typeof api.setTypingSound,'function','Sound hook must respect existing SFX controls');
 assert(implementation.includes("className='diary-reading-cursor'"),'A blinking cursor must appear while waiting');
 assert(implementation.includes('writingTimer=root.setInterval'),'Letters should appear with a brief typewriter animation');
+const motion=fs.readFileSync(path.join(__dirname,'../js/class-diary-motion-v1.js'),'utf8');
+const glowCss=fs.readFileSync(path.join(__dirname,'../styles/class-diary-paragraph-v1.css'),'utf8');
+assert(!motion.includes("restartAnimation(target,'diary-motion-copy')"),
+ 'Sentence additions must never restart an animation on the entire text area');
+assert(motion.includes("restartAnimation(screens[step],'diary-motion-step')"),
+ 'Keep actual setup scene transitions');
+assert(glowCss.includes('-webkit-tap-highlight-color: transparent'),
+ 'Disable browser tap highlight over the manuscript');
+assert(glowCss.includes('#chapterText.diary-motion-copy') &&
+ glowCss.includes('animation:none!important'),
+ 'Prevent stale motion-copy classes from flashing prose');
+assert(scene.includes('class-diary-motion-v1.js?v=20261120-no-glow2') &&
+ scene.includes('class-diary-paragraph-v1.css?v=20261120-no-glow2'),
+ 'The game must load the updated assets rather than cached glow styles');
+
 console.log('PASS literary v5: punctuation, natural paragraphs, single-advance taps, no screen flicker and typing cursor');

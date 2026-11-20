@@ -81,3 +81,21 @@ body.is-ending #endingText .diary-literary-paragraph p.diary-literary-typing {
   transition:none!important;
  }
 }
+
+/* Steady manuscript surface: tapping to reveal a sentence must never flash the entire text panel. */
+body.is-playing #sceneArt,
+body.is-playing #novelCard #vnBottom,
+body.is-playing #novelCard #vnDialogueSlot,
+body.is-playing #novelCard #chapterText,
+body.is-playing #novelCard #outcomeText,
+body.is-playing #novelCard .diary-literary-paragraph {
+ -webkit-tap-highlight-color: transparent;
+}
+body.is-playing.is-literary-mode #novelCard #chapterText.diary-motion-copy,
+body.is-playing.is-literary-mode #novelCard #outcomeText.diary-motion-copy,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose.diary-motion-copy {
+ animation:none!important;
+ transition:none!important;
+ filter:none!important;
+ opacity:1!important;
+}
