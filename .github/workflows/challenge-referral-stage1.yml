@@ -9,6 +9,7 @@ on:
       - 'supabase/functions/beagu-referral-link-v1/**'
       - 'scripts/test-challenge-referral-stage1.cjs'
       - 'scripts/test-challenge-referral-stage2.cjs'
+      - 'scripts/test-challenge-referral-gas.cjs'
       - 'scripts/beagu-2026-referral-integration.gs'
       - 'js/beagu-referral-form-config-v1.js'
       - 'js/beagu-referral-form-v1.js'
@@ -28,4 +29,5 @@ jobs:
           node-version: '22'
       - run: node scripts/test-challenge-referral-stage1.cjs
       - run: node scripts/test-challenge-referral-stage2.cjs
+      - run: node scripts/test-challenge-referral-gas.cjs
       - run: node scripts/test-challenge-referral-premium.cjs
