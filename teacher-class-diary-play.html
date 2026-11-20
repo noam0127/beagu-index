@@ -1607,6 +1607,9 @@ $('diaryPrologueSchoolContinue').addEventListener('click',()=>{
 });
 function renderPlayerSetup(){
  show('playerSetup');
+ // The prologue has ended; the player chooses their own perspective in a distinct screen.
+ mood(sound.PLAYER_SETUP_TRACK);
+ sound.setAmbience(null);
  $('heroName').value=game.profile.name||'새봄';
  $('heroExperience').value=['new','mid','senior'].includes(game.profile.experience)?game.profile.experience:'mid';
  $('heroGender').value=['woman','man','undisclosed'].includes(game.profile.gender)?game.profile.gender:'undisclosed';
