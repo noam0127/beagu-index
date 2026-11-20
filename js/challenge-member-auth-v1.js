@@ -19,9 +19,13 @@ const closeButton=byId('challengeMemberClose');
 const message=byId('challengeMemberMessage');
 const connect=byId('challengeMemberLink');
 const signOut=byId('challengeMemberSignOut');
+const smsFields=byId('challengeMemberSmsFields');
+const smsPhone=byId('challengeMemberSmsPhone');
+const smsConsent=byId('challengeMemberSmsConsent');
+const smsUnsubscribe=byId('challengeMemberSmsUnsubscribe');
 // supabase-config.js declares a top-level lexical const, not a window property.
 const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
-if(![card,signup,signupSection,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut].every(Boolean)||!client)return;
+if(![card,signup,signupSection,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut,smsFields,smsPhone,smsConsent,smsUnsubscribe].every(Boolean)||!client)return;
 const SESSION_KEY='beagu-level-session-v1';
 const DEVICE_KEY='beagu-referral-device-secret-v1';
 const LEVEL_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
@@ -49,10 +53,12 @@ function paintMode(next){
   :'정식 계정으로 로그인하세요. Lv2 참여코드는 별도로 인증됩니다.';
  submit.textContent=mode==='signup'?'회원가입':'로그인하기';
  password.autocomplete=mode==='signup'?'new-password':'current-password';
+ smsFields.hidden=mode!=='signup';
+ if(mode!=='signup'){smsPhone.value='';smsConsent.checked=false;}
  switchMode.textContent=mode==='signup'?'이미 계정이 있어요 · 로그인하기':'계정이 없어요 · 회원가입';
  form.hidden=false;
  switchMode.hidden=false;
- connect.hidden=true;signOut.hidden=true;
+ connect.hidden=true;signOut.hidden=true;smsUnsubscribe.hidden=true;
  message.textContent='';
 }
 async function serverLevel(){
@@ -87,6 +93,7 @@ async function showAccountStatus(){
  if(overlay.hidden||!tier2)return;
  if(!person)return;
  form.hidden=true;switchMode.hidden=true;signOut.hidden=false;
+ smsUnsubscribe.hidden=person.user.user_metadata?.beagu_sms_opt_in!==true;
  const linked=await linkedStatus(person.token).catch(()=>false);
  if(overlay.hidden||!tier2)return;
  if(linked){
@@ -157,8 +164,15 @@ form.addEventListener('submit',async event=>{
  try{
   if(!await serverLevel())throw Error('LEVEL_REQUIRED');
   if(mode==='signup'){
+   const wantsSms=smsConsent.checked;
+   const mobile=smsPhone.value.replace(/\\D/g,'');
+   if(wantsSms&&!/^010[0-9]{8}$/.test(mobile)){
+    message.textContent='문자 수신을 원하시면 010으로 시작하는 11자리 번호를 입력해 주세요.';
+    return;
+   }
    const {error}=await client.auth.signUp({email:address,password:secret,
-    options:{emailRedirectTo:new URL('challenge.html',location.href).href}});
+    options:{emailRedirectTo:new URL('challenge.html',location.href).href,
+     data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}});
    if(error)throw error;
    password.value='';
    message.textContent='회원가입 요청을 완료했습니다. 이메일 인증 후 로그인해 주세요.';
@@ -198,6 +212,17 @@ connect.addEventListener('click',async()=>{
    ?'이미 다른 계정에 연결된 챌린지 권한입니다.'
    :'Lv2 챌린지 기기 확인에 실패했습니다. 원래 기기에서 다시 시도해 주세요.';
  }finally{busy=false;connect.disabled=false}
+});
+smsUnsubscribe.addEventListener('click',async()=>{
+ if(busy)return;
+ busy=true;smsUnsubscribe.disabled=true;
+ try{
+  const {error}=await client.auth.updateUser({data:{beagu_sms_opt_in:false,beagu_sms_phone:null}});
+  if(error)throw error;
+  smsUnsubscribe.hidden=true;
+  message.textContent='문자 수신 동의를 철회했습니다. 저장된 발송용 번호도 삭제됩니다.';
+ }catch{message.textContent='수신 동의를 철회하지 못했습니다. 다시 시도해 주세요.'}
+ finally{busy=false;smsUnsubscribe.disabled=false}
 });
 signOut.addEventListener('click',async()=>{
  if(busy)return;
