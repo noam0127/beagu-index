@@ -22,6 +22,8 @@ if(PROSE_ACTS.some((act,i)=>!act||act.part!==i+1||!Array.isArray(act.entries)||a
  throw Error('COMPLETE_36_CHAPTER_NOVEL_REQUIRED');
 const REWRITTEN=Object.freeze(PROSE_ACTS.flatMap(act=>act.entries));
 const LITERARY=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./class-diary-literary-v3.js'):root.BeaguClassDiaryLiteraryV3;
+const ENDINGS=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./class-diary-endings-v3.js'):root.BeaguClassDiaryEndingsV3;
+if(!ENDINGS||ENDINGS.validate().types!==5)throw Error('FIVE_COMPLETE_ENDINGS_REQUIRED');
 const PHILOSOPHY=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./class-diary-philosophy-v1.js'):root.BeaguClassDiaryPhilosophy;
 if(!LITERARY||LITERARY.validate().episodes!==36||!PHILOSOPHY||PHILOSOPHY.validate().branches!==14)throw Error('NEW_LITERARY_EDITION_REQUIRED');
 const PEDAGOGY=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./class-diary-pedagogy-v1.js'):root.BeaguClassDiaryPedagogy;
@@ -239,8 +241,9 @@ function advance(s){
  const romantic=n.profile.partner!=='none';
  const kind=romantic&&a>=78&&t>=75&&c>=50?'warm':t>=70&&c>=70?'parallel':c>=72?'steady':romantic&&a>=64?'tender':'ordinary';
  const names={warm:'소중한',parallel:'든든한',steady:'단단한',tender:'다정한',ordinary:'솔직한'};
- n.ending={perspective:'player',id:kind,title:'나의 '+names[kind]+' 학급일지',heading:'방학식이 끝난 뒤',affection:a,score:clamp(a*.10+t*.15+c*.25+n.stats.voice*.25+n.stats.boundary*.25),
- paragraphs:['빈 교실에 남은 햇살은 3월보다 길었다. 처음에는 아무것도 바꿀 수 없을 것 같던 곳에서 우리는 몇 번이나 약속을 새로 썼다.','서아와 도윤의 이름을 적다가 펜을 멈췄다. 두 아이가 내게 남긴 것은 좋은 교사라는 칭찬보다 내일 다시 묻고 싶은 질문이었다.',p.end,kind==='steady'?'완벽하게 지킨 약속은 거의 없었다. 고칠 수 있다는 사실만큼은 잊지 않으려 한다.':kind==='ordinary'?'하지 못한 말들도 있었다. 다음 학기에는 조금 늦더라도 제대로 말해 보고 싶었다.':'교문을 지나면 다시 만날 사람이 있다는 게 이상하게 좋았다.','수첩에 제목을 적고 덮었다. 학교 밖에서는 긴 여름이 시작되고 있었다.']};
+ n.ending={perspective:'player',id:kind,title:'나의 '+names[kind]+' 학급일지',heading:'계약이 끝난 뒤',
+ affection:a,score:clamp(a*.10+t*.15+c*.25+n.stats.voice*.25+n.stats.boundary*.25),
+ paragraphs:ENDINGS.compose(kind,n.profile,n.history)};
  n.phase='semester_ending';return n;
 }
 function validate(){if(SCENES.length!==36||REWRITTEN.length!==36)throw Error('EPISODE_COUNT');
@@ -251,7 +254,7 @@ function validate(){if(SCENES.length!==36||REWRITTEN.length!==36)throw Error('EP
    entry.lines.some(x=>typeof x!=='string'||x.length<35))throw Error('NOVEL_EPISODE_INCOMPLETE_'+(i+1));
  });SCENES.forEach((e,i)=>{if(e.length!==11||e.slice(3).some(x=>typeof x!=='string'||x.length<7)||!PLACE_NAMES[e[2]])throw Error('BAD_EPISODE_'+i);});return {episodes:36,acts:6,choices:108,endingTypes:5};}
 validate();
-const api=Object.freeze({VERSION,ACTS,SCENES,PERSON,THREADS,REWRITTEN,RECALLS,FICTIONAL_COLLEAGUES,PEDAGOGY,LITERARY,PHILOSOPHY,createGame,chapter,choose,advance,validate});
+const api=Object.freeze({VERSION,ACTS,SCENES,PERSON,THREADS,REWRITTEN,RECALLS,FICTIONAL_COLLEAGUES,PEDAGOGY,LITERARY,PHILOSOPHY,ENDINGS,createGame,chapter,choose,advance,validate});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiarySemester=api;
 })(typeof window!=='undefined'?window:globalThis);
