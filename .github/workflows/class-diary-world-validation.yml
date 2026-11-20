@@ -10,11 +10,15 @@ on:
       - 'js/class-diary-semester-v1.js'
       - 'js/class-diary-school-brief-v1.js'
       - 'js/class-diary-narrator-v1.js'
+      - 'js/class-diary-colleague-dogyeom-v1.js'
+      - 'js/class-diary-colleague-taeo-v1.js'
       - 'scripts/test-class-diary-school-brief.cjs'
       - 'scripts/test-class-diary-longform-v2.cjs'
       - 'styles/class-diary-player-flow-v1.css'
       - 'js/class-diary-longform-act*-v2.js'
       - 'js/class-diary-narrator-v1.js'
+      - 'js/class-diary-colleague-dogyeom-v1.js'
+      - 'js/class-diary-colleague-taeo-v1.js'
       - 'scripts/test-class-diary-narrator.cjs'
       - 'js/class-diary-progress-v1.js'
       - 'scripts/test-class-diary-progress.cjs'
@@ -40,6 +44,7 @@ on:
       - 'scripts/test-class-diary-play.cjs'
       - 'scripts/test-class-diary-director.cjs'
       - 'scripts/test-class-diary-character-routes.cjs'
+      - 'scripts/test-class-diary-new-colleagues.cjs'
       - 'scripts/test-class-diary-context.cjs'
       - 'scripts/test-class-diary-demo.cjs'
       - 'scripts/test-class-diary-scenario.cjs'
@@ -60,11 +65,15 @@ on:
       - 'js/class-diary-semester-v1.js'
       - 'js/class-diary-school-brief-v1.js'
       - 'js/class-diary-narrator-v1.js'
+      - 'js/class-diary-colleague-dogyeom-v1.js'
+      - 'js/class-diary-colleague-taeo-v1.js'
       - 'scripts/test-class-diary-school-brief.cjs'
       - 'scripts/test-class-diary-longform-v2.cjs'
       - 'styles/class-diary-player-flow-v1.css'
       - 'js/class-diary-longform-act*-v2.js'
       - 'js/class-diary-narrator-v1.js'
+      - 'js/class-diary-colleague-dogyeom-v1.js'
+      - 'js/class-diary-colleague-taeo-v1.js'
       - 'scripts/test-class-diary-narrator.cjs'
       - 'js/class-diary-literary-v1.js'
       - 'styles/class-diary-literary-v1.css'
@@ -93,6 +102,7 @@ jobs:
           node scripts/test-class-diary-semester-ui.cjs
           node scripts/test-class-diary-director.cjs
           node scripts/test-class-diary-character-routes.cjs
+          node scripts/test-class-diary-new-colleagues.cjs
           node scripts/test-class-diary-context.cjs
           node scripts/test-class-diary-demo.cjs
           node scripts/test-class-diary-scenario.cjs
