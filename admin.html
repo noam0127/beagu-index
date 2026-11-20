@@ -166,6 +166,43 @@
         <p class="subtle">레벨 세션 수는 사용자 수가 아닙니다. 레벨0의 고유 계정 수는 별도로 수집하지 않습니다.</p>
       </section>
 
+      <section class="dash-section" id="adminReferralFunnel" aria-labelledby="adminReferralFunnelHeading">
+        <div class="section-title">
+          <h3 id="adminReferralFunnelHeading">전용 조사 링크 · 단계별 현황</h3>
+          <small>전용코드별 추정 접속·설문 이동·유효 추천</small>
+        </div>
+        <div class="ranking-card">
+          <div class="ranking-controls">
+            <label for="adminReferralCodeSearch">전용코드 찾기</label>
+            <input id="adminReferralCodeSearch" type="search" placeholder="예: iQbnIaqI" autocomplete="off" maxlength="8">
+            <button id="adminReferralFunnelReload" type="button" class="secondary">새로고침</button>
+          </div>
+          <p id="adminReferralFunnelStatus" role="status" class="subtle" aria-live="polite">관리자 인증 후 링크별 현황을 불러옵니다.</p>
+          <div class="admin-perf-scroll" role="region" tabindex="0" aria-label="전용 링크별 참여 단계 집계">
+            <table class="admin-perf-table">
+              <caption class="sr-only">전용 링크별 접속 요청, 인증 성공, 설문 이동 시도, 유효 응답 건수</caption>
+              <thead><tr>
+                <th scope="col">전용코드</th>
+                <th scope="col">링크 진입</th>
+                <th scope="col">추천 인증 성공</th>
+                <th scope="col">설문 이동 시도</th>
+                <th scope="col">유효 추천</th>
+                <th scope="col">설문 처리 이벤트</th>
+                <th scope="col">누적 유효 추천</th>
+              </tr></thead>
+              <tbody id="adminReferralFunnelRows">
+                <tr><td colspan="7" class="empty">인증 후 표시됩니다.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="subtle">진입·인증·이동 시도는 같은 브라우저와 날짜 기준 하루 1건으로 중복 제거한 추정치입니다.
+            설문 이동 시도는 브라우저의 신호이며 Google 설문이 실제로 열린 사실을 보장하지 않습니다.
+            유효 추천은 서버가 Google Forms 제출을 검증한 건수입니다.
+            접속 계측은 2026년 11월 21일 설치 이후부터, 최대 최근 30일까지만 제공됩니다.
+            ‘전체’ 선택 시에도 접속 단계는 최근 30일 기준이며, 과거 링크 방문 수는 복원할 수 없습니다.</p>
+        </div>
+      </section>
+
       <section class="dash-section" aria-labelledby="adminReview2026Heading" id="adminReview2026">
         <div class="section-title">
           <h3 id="adminReview2026Heading">2026 설문 비공개 검수</h3>
@@ -255,7 +292,7 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
-  <script defer src="js/beagu-admin-access-v1.js?v=20261121-hourlymonitor1"></script>
+  <script defer src="js/beagu-admin-access-v1.js?v=20261121-referral-funnel1"></script>
   <script defer src="js/beagu-2026-admin-review.js?v=20261121-quality1"></script>
 </body>
 </html>

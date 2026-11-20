@@ -3,7 +3,9 @@
 const assert=require("node:assert/strict");
 const base="https://baeguindex.com/admin.html";
 const onPush=process.env.GITHUB_EVENT_NAME==="push";
-const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth1";
+const currentHtml=require('node:fs').readFileSync('admin.html','utf8');
+const expectedVersion=currentHtml.match(/js\/beagu-admin-access-v1\.js\?v=([a-z0-9-]+)/)?.[1];
+if(!expectedVersion)throw Error('Local admin asset version not found');
 (async()=>{
  let last="";
  for(let attempt=0;attempt<15;attempt++){
@@ -13,6 +15,7 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
    });
    if(res.status!==200){last="HTTP "+res.status;continue;}
    const html=await res.text();
+   const deployedVersion=html.match(/js\/beagu-admin-access-v1\.js\?v=([a-z0-9-]+)/)?.[1];
    if(html.includes('id="adminSiteHeading"')&&
       html.includes('id="adminSchoolRanking"')&&
       html.includes('id="adminPasswordChangeForm"')&&
@@ -21,7 +24,7 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
       html.includes('id="adminReview2026List"')&&
       html.includes('id="adminTelemetryHealthPanel"')&&
       html.includes('id="adminTelemetryAsOf"')&&
-      html.includes('js/beagu-admin-access-v1.js?v='+expectedVersion)&&
+      deployedVersion && (!onPush || deployedVersion===expectedVersion) &&
       (!onPush || html.includes('id="adminTelemetryHourlyStatus"'))&&
       html.includes('name="robots" content="noindex,nofollow,noarchive"')){
       assert(!/visit-stats\.js|search-telemetry-v1\.js/.test(html));
@@ -34,16 +37,18 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
          !code.includes("개인정보 입력 금지")){
         last="Published JS has old reviewer implementation";continue;
       }
-      const healthJs=await fetch("https://baeguindex.com/js/beagu-admin-access-v1.js?v="+expectedVersion+"&check="+Date.now(),{
+      const healthJs=await fetch("https://baeguindex.com/js/beagu-admin-access-v1.js?v="+deployedVersion+"&check="+Date.now(),{
         headers:{"Cache-Control":"no-cache"},signal:AbortSignal.timeout(15000)
       });
       if(healthJs.status!==200){last="Health JS HTTP "+healthJs.status;continue;}
       const healthSource=await healthJs.text();
       if(!healthSource.includes("renderTelemetryHealth(payload.telemetry_health)") ||
          !healthSource.includes("function renderTelemetryHealth(data)") ||
-         (onPush&&!healthSource.includes('m.status==="warning"'))){
+         (onPush&&!healthSource.includes('m.status==="warning"')) ||
+         (onPush&&!healthSource.includes('renderReferralFunnel(data.referral_funnel)'))){
         last="Published admin JS lacks telemetry health renderer";continue;
       }
+      if(onPush)assert(html.includes('id="adminReferralFunnelRows"'),"Deployed funnel panel is missing");
       console.log("PASS: published admin telemetry health panel and live JS present");
       console.log("PASS: published admin login shell and 2026 private evidence intake JS are current");
       return;

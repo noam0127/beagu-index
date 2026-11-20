@@ -76,6 +76,12 @@ Deno.serve(async(req:Request)=>{
   const {data,error}=await admin.rpc("beagu_admin_dashboard_v1",{p_period:period});
   if(error||!data){console.error("dashboard_aggregate_error",error?.code||"unknown");
    return send({error:"metrics_unavailable"},503,origin);}
+  // Private, aggregated referral funnel; the MFA+allowlist gate above is mandatory.
+  // If funnel telemetry is unavailable, other administrator statistics still render.
+  const {data:referralFunnel,error:referralError}=await admin.rpc(
+    "beagu_admin_referral_funnel_v1",{p_period:period}
+  );
+  if(referralError)console.error("admin_referral_funnel_unavailable",referralError.code||"unknown");
   // Only retained Top-100-ranked anonymous score rows, no session/IP hash or player identity.
   const {data:recentScores,error:scoresError}=await admin.from("arcade_game_scores")
     .select("game,score,created_at,school_name,difficulty").order("created_at",{ascending:false}).limit(100);
@@ -86,7 +92,7 @@ Deno.serve(async(req:Request)=>{
   });
   if(auditError){console.error("admin_dashboard_audit_error",auditError.code);
    return send({error:"audit_unavailable"},503,origin);}
-  return send({analytics:{...data,retained_game_scores:recentScores||[]}},200,origin);
+  return send({analytics:{...data,retained_game_scores:recentScores||[],referral_funnel:referralError?null:referralFunnel}},200,origin);
  }catch(e){
   console.error("admin_dashboard_unavailable",e instanceof Error?e.name:"unknown");
   return send({error:"service_unavailable"},503,origin);

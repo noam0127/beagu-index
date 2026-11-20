@@ -289,6 +289,38 @@
       renderTelemetryHealth(null);
     });
   }
+  function renderReferralFunnel(data){
+    const root=$("adminReferralFunnelRows");
+    root.replaceChildren();
+    const status=$("adminReferralFunnelStatus");
+    if(!data||!Array.isArray(data.rows)){
+      const tr=make("tr"),td=make("td","empty","추천 링크 통계 조회 실패 · 다시 확인해 주세요.");
+      td.colSpan=7;tr.append(td);root.append(tr);
+      status.textContent="추천 링크 통계 서버를 확인하지 못했습니다.";
+      return;
+    }
+    const term=$("adminReferralCodeSearch").value.trim().toLowerCase();
+    const rows=data.rows.filter(x=>x&&typeof x.code==="string"&&
+      x.code.toLowerCase().includes(term));
+    if(!rows.length){
+      const tr=make("tr"),td=make("td","empty",
+        term?"해당하는 전용코드가 없습니다.":"전용 링크 발급 기록이 없습니다.");
+      td.colSpan=7;tr.append(td);root.append(tr);
+    }
+    for(const x of rows){
+      const tr=make("tr");
+      for(const value of [
+        x.code, num(x.opened),num(x.proof_issued),num(x.handoffs),
+        num(x.credited),num(x.form_events),num(x.lifetime_valid)
+      ])tr.append(make("td","",value));
+      root.append(tr);
+    }
+    const when=data.as_of?new Date(data.as_of).toLocaleString("ko-KR",
+      {timeZone:"Asia/Seoul",hour12:false}):"시각 확인 불가";
+    const note=data.period==="all"?" · 접속 기록은 최근 30일만":"";
+    status.textContent="집계 "+when+" · "+num(rows.length)+"개 코드 표시"+note+
+      " · 과거 링크 접속 이력은 소급하지 않습니다.";
+  }
   function displayDashboard(data){
     dashboard=data;
     for(const [name,object] of [["site",data.site],["search",data.search],["view",data.school_views],
@@ -296,7 +328,7 @@
     renderChart("adminVisitChart",data.visit_trend,"views");
     renderChart("adminSearchChart",data.search_trend,"searches");
     renderChart("adminGameChart",data.game_trend,"plays");
-    renderRanks();renderGames();renderScores();renderAudit();
+    renderRanks();renderGames();renderScores();renderAudit();renderReferralFunnel(data.referral_funnel);
     $("adminDataAsOf").textContent="집계 시각: "+new Date(data.as_of).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",hour12:false})+" · 개인정보 비표시";
   }
   async function loadMetrics(){
@@ -332,6 +364,13 @@
   }));
   $("adminSchoolRankingMode").addEventListener("change",renderRanks);
   $("adminSchoolRankingSearch").addEventListener("input",renderRanks);
+  $("adminReferralCodeSearch").addEventListener("input",()=>{
+    if(dashboard)renderReferralFunnel(dashboard.referral_funnel);
+  });
+  $("adminReferralFunnelReload").addEventListener("click",()=>{
+    void loadMetrics().catch(()=>{$("adminReferralFunnelStatus").textContent=
+      "새로고침 실패 · 관리자 인증 또는 서버 연결을 확인해 주세요.";});
+  });
   async function authorized() {
     const proof = await gate("verify");
     if (!proof.permitted || !proof.mfa_verified) throw new Error("mfa_required");
@@ -461,6 +500,9 @@
       await auth.signOut();
       activeFactorId = "";
       dashboard=null;requestSeq++;
+      $("adminReferralFunnelRows").replaceChildren();
+      $("adminReferralFunnelStatus").textContent="인증 후 표시됩니다.";
+      $("adminReferralCodeSearch").value="";
       window.Beagu2026ReviewAdmin?.reset();
       $("adminPassword").value = "";
       $("adminTotp").value = "";
