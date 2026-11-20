@@ -71,6 +71,10 @@ Deno.serve(async (req) => {
         Date.parse(session.expires_at) <= Date.now())
       return json(origin, 401, { error: 'AUTH_REQUIRED' });
 
+    // Rollout gate: do not create device claims while Google Forms attribution is unverified.
+    if (Deno.env.get('BEAGU_REFERRAL_LINK_ENABLED') !== 'true')
+      return json(origin, 503, { error: 'REFERRAL_NOT_READY' });
+
     const raw = await req.text();
     if (encoder.encode(raw).byteLength > 2048)
       return json(origin, 413, { error: 'TOO_LARGE' });
