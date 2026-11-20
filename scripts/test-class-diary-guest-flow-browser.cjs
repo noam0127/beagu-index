@@ -126,12 +126,22 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
       imageHidden:getComputedStyle(element.querySelector('img')).visibility==='hidden'};
     });
    });
-   assert(portraits.length===5&&portraits.every(p=>p.image.includes('class-diary-cast-hobbies-v6.webp')&&p.imageHidden),
-     'All five new portraits must load as independent square crops: '+JSON.stringify(portraits));
-   assert(portraits.every(p=>Math.abs(p.ratio-1)<0.08&&p.backgroundSize.includes('500%')),
-     'Five portraits must be square and retain original face proportions: '+JSON.stringify(portraits));
-   assert(new Set(portraits.map(p=>p.position)).size===5,
-     'Each character must have a different crop, never a duplicate portrait: '+JSON.stringify(portraits));
+   const regularPortraits=portraits.filter(p=>p.selector!=='.hyunwoo');
+   const hyunwooPortrait=portraits.find(p=>p.selector==='.hyunwoo');
+   const shortPortraits=portraits.map(p=>({
+    ...p,image:p.image.startsWith('url("data:')?'inline WebP image':p.image
+   }));
+   assert(portraits.length===5&&regularPortraits.every(p=>
+     p.image.includes('class-diary-cast-hobbies-v6.webp')&&p.imageHidden),
+     'Four other colleagues retain their individual hobbies portraits: '+JSON.stringify(shortPortraits));
+   assert(hyunwooPortrait?.image.startsWith('url("data:image/webp;base64,')&&hyunwooPortrait.imageHidden,
+     'Hyunwoo retains the approved Kian84 hairstyle image: '+JSON.stringify(shortPortraits));
+   assert(portraits.every(p=>Math.abs(p.ratio-1)<0.08)&&
+     regularPortraits.every(p=>p.backgroundSize.includes('500%'))&&
+     hyunwooPortrait.backgroundSize.includes('400%'),
+     'All portraits remain square, with approved image-specific crop grids: '+JSON.stringify(shortPortraits));
+   assert(new Set(regularPortraits.map(p=>p.position)).size===4,
+     'Unchanged cast retain unique crop positions: '+JSON.stringify(shortPortraits));
    const castLayout=await page.locator('.setup-portrait-grid').evaluate(grid=>{
     const cards=[...grid.querySelectorAll('[data-partner-choice]')].map(el=>{
      const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};
