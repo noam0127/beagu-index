@@ -32,7 +32,7 @@ jobs:
           node --check js/class-diary-daily-journal-v1.js
           node --check js/class-diary-scene-direction-v1.js
           node --check js/class-diary-reconstructed-2027-v1.js
-          for f in js/class-diary-rewritten-act{1..6}-v1.js; do node --check \"$f\"; done
+          for f in js/class-diary-rewritten-act{1..6}-v1.js; do node --check $f; done
           node --check js/class-diary-semester-long-v3.js
           node --check js/class-diary-sound-v1.js
           node --check scripts/test-class-diary-branch-map.cjs
