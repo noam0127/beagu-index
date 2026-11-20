@@ -585,7 +585,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <section id="playerSetup" class="panel diary-player-config" hidden aria-labelledby="playerSetupTitle">
  <span class="diary-prologue-overline">프롤로그를 마치며 · 제1화 이전</span>
  <h2 id="playerSetupTitle">이제, 나의 이야기를 시작할 차례</h2>
- <p><strong>나의 배역: 3학년 옆 반에 새로 투입된 기간제 담임교사.</strong> 전임 담임의 부재를 메우기 위해 7월까지 아이들의 교실을 맡습니다. 경력은 그전까지의 교직 경험을 선택하는 항목입니다.</p>
+ <p><strong>나의 배역: 3학년 장미반에 새로 투입된 기간제 담임교사.</strong> 3월 1일 교감의 전화를 받고, 3월 2일 첫 등교합니다. 7월까지 장미반을 맡습니다. 그 전의 삶을 선택하세요.</p>
  <p>그 사람의 눈에 비친 첫날을 읽었습니다. 이제 이 교실에서 살아갈 <strong>나</strong>를 정해 주세요. 실명 대신 이야기 속 이름을 사용해도 됩니다.</p>
  <form id="playerSetupForm">
   <div class="diary-player-profile-fields">
@@ -596,9 +596,9 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
    </div>
    <div><label for="heroExperience">교직 경력</label>
     <select id="heroExperience">
-     <option value="new">신규·저경력 교사</option>
-     <option value="mid" selected>중간경력 교사</option>
-     <option value="senior">고경력 교사</option>
+     <option value="new">저경력 · 임용시험 준비 중</option>
+     <option value="mid" selected>중경력 · 육아 중</option>
+     <option value="senior">고경력 · 명예퇴직 후 여행 중</option>
     </select>
    </div>
    <div><label for="heroGender">나의 성별</label>
@@ -700,7 +700,13 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-colleague-dogyeom-v1.js?v=20261120-cast2"></script>
 <script src="js/class-diary-colleague-taeo-v1.js?v=20261120-cast2"></script>
 <script src="js/class-diary-semester-v1.js?v=20261120-novel2"></script>
-<script src="js/class-diary-narrator-v1.js?v=20261120-pov1"></script>
+<script src="js/class-diary-prologue-scenes-v1.js?v=20261120-long1"></script>
+<script src="js/class-diary-prologue-lens-woman-v1.js?v=20261120-long1"></script>
+<script src="js/class-diary-prologue-lens-man-v1.js?v=20261120-long1"></script>
+<script src="js/class-diary-prologue-lens-none-v1.js?v=20261120-long1"></script>
+<script src="js/class-diary-prologue-lens-man2-v1.js?v=20261120-long1"></script>
+<script src="js/class-diary-prologue-lens-man3-v1.js?v=20261120-long1"></script>
+<script src="js/class-diary-narrator-v1.js?v=20261120-long3"></script>
 <script src="js/class-diary-school-brief-v1.js?v=20261120-a1"></script>
 <script src="js/class-diary-progress-v1.js?v=20261120-1"></script>
 <script src="js/class-diary-female-semester-v1.js?v=20261120"></script>
@@ -1447,7 +1453,7 @@ function renderNarratorPrologue(){
  $('novelCard').dataset.scene=view.scene;
  $('novelCard').dataset.act='1';
  $('novelCard').dataset.season='march';
- const background=seasonalBackground?seasonalBackground.resolve({episode:2,date:'2027-03-08'}):null;
+ const background=seasonalBackground?seasonalBackground.resolve({episode:2,date:'2027-03-02'}):null;
  displayStage(view.scene,game.profile.partner,'neutral','cold-spring',background);
  renderSupportingCast(null);
  mood('daily');sound.setAmbience(null);
@@ -1457,7 +1463,7 @@ function renderNarratorPrologue(){
  $('characterBio').textContent='그 사람이 처음 본 나의 모습';
  $('chapterDay').textContent='프롤로그 · '+view.narrator+'의 시점';
  $('chapterTitle').textContent=view.title;
- $('chapterPlace').textContent='2027년 3월 8일 · '+view.place;
+ $('chapterPlace').textContent='2027년 3월 2일 · '+view.place;
  $('chapterProgress').style.width='0%';
  $('worldDetail').hidden=true;$('schoolFacts').hidden=true;
  $('chapterSource').textContent='선택한 인물이 들려주는 허구의 프롤로그입니다. 제1화부터는 주인공이 직접 이야기를 들려줍니다.';
