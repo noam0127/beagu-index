@@ -202,6 +202,7 @@ async function advanceColleaguePrologue(page,expectedNarrator){
   await semesterDesktop.locator('#setupNext').click();
   await semesterDesktop.locator('[data-partner-choice="man"]').click();
   await semesterDesktop.locator('#setupNext').click();
+  await semesterDesktop.locator('#setupNext').click();
   await semesterDesktop.locator('#profileForm button[type="submit"]').click();
   await semesterDesktop.locator('#novel').waitFor({state:'visible'});
   await advanceColleaguePrologue(semesterDesktop,'한현우');
@@ -230,6 +231,7 @@ async function advanceColleaguePrologue(page,expectedNarrator){
   await semesterPage.locator('#mbti').selectOption('INFP');
   await semesterPage.locator('#setupNext').click();
   await semesterPage.locator('[data-partner-choice="woman"]').click();
+  await semesterPage.locator('#setupNext').click();
   await semesterPage.locator('#setupNext').click();
   await semesterPage.locator('#profileForm button[type="submit"]').click();
   await semesterPage.locator('#novel').waitFor({state:'visible'});
