@@ -31,3 +31,63 @@ body.is-choosing #choiceSection.daily-journal-dialog button.choice:focus-visible
  body.is-choosing #choiceSection.daily-journal-dialog{padding:17px!important;width:min(94vw,520px)!important}
  body.is-choosing #choiceSection.daily-journal-dialog button.choice{font-size:14px!important;padding:12px 13px!important}
 }
+
+/* The daily journal is written in a bookish Korean serif instead of the novel's dialogue typeface.
+ * No external font download: native Korean serif stacks keep offline and mobile fallback safe. */
+body.is-choosing #choiceSection.daily-journal-dialog,
+body.is-choosing #choiceSection.daily-journal-dialog .option-title,
+body.is-choosing #choiceSection.daily-journal-dialog button.choice{
+ font-family:"Nanum Myeongjo","Noto Serif KR","AppleMyungjo","Batang",serif!important;
+ letter-spacing:.018em;
+}
+body.is-choosing #choiceSection.daily-journal-dialog button.choice{
+ font-size:clamp(15px,2vw,18px)!important;
+ font-weight:500!important;
+ line-height:1.76!important;
+}
+body.is-choosing #choiceSection.daily-journal-dialog .option-title{
+ font-weight:750!important;
+ letter-spacing:.02em;
+}
+/* Non-verbal, reduced-motion aware chapter transitions; never insert action text. */
+#sceneArt .diary-stage-transition{
+ position:absolute;inset:0;z-index:8;pointer-events:none;
+ opacity:0;will-change:opacity,transform;
+ animation-duration:.45s;animation-iteration-count:1;animation-fill-mode:forwards;
+}
+#sceneArt .diary-stage-transition--fade{
+ background:linear-gradient(120deg,rgba(17,24,35,.11),rgba(17,24,35,.22));
+ animation-name:diary-director-fade;
+}
+#sceneArt .diary-stage-transition--slide{
+ background:linear-gradient(95deg,transparent 20%,rgba(12,20,30,.19) 52%,transparent 85%);
+ animation-name:diary-director-slide;
+}
+#sceneArt .diary-stage-transition--page{
+ background:linear-gradient(100deg,transparent 7%,rgba(241,227,204,.21) 52%,transparent 88%);
+ animation-name:diary-director-page;
+}
+#sceneArt .diary-stage-transition--cut{
+ background:rgba(9,17,31,.13);
+ animation-name:diary-director-cut;
+ animation-duration:.23s;
+}
+@keyframes diary-director-fade{
+ 0%{opacity:0}24%{opacity:.7}100%{opacity:0}
+}
+@keyframes diary-director-slide{
+ 0%{opacity:0;transform:translateX(-10%)}
+ 36%{opacity:.68}
+ 100%{opacity:0;transform:translateX(10%)}
+}
+@keyframes diary-director-page{
+ 0%{opacity:0;transform:translateX(-8%)}
+ 40%{opacity:.74}
+ 100%{opacity:0;transform:translateX(8%)}
+}
+@keyframes diary-director-cut{
+ 0%{opacity:.25}100%{opacity:0}
+}
+@media(prefers-reduced-motion:reduce){
+ #sceneArt .diary-stage-transition{animation:none!important;display:none!important}
+}
