@@ -73,3 +73,11 @@ footer{margin-top:48px;color:#98a6ba;font-size:11px}
 .audit-line .event{font-weight:700}.audit-line .muted{color:#8594aa}
 @media(max-width:800px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.game-analytics{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.chart-card,.ranking-card{padding:14px}.ranking-controls{grid-template-columns:1fr}.ranking-controls label{margin-top:0}.metrics{grid-template-columns:1fr 1fr}.metrics article{min-height:99px;padding:12px}.game-analytics{grid-template-columns:1fr}.section-title small{display:block}.period-tabs{width:100%;justify-content:space-between}.period-tabs button{padding:9px 13px}}
+
+/* Private traffic observability: short-lived browser presence, hourly visits. */
+.admin-live-metrics{grid-template-columns:minmax(0,1fr);margin:12px 0}
+.admin-live-metrics article{min-height:90px}
+.hourly-chart{min-height:166px;height:166px}
+.hourly-chart .bar-col{min-width:17px;flex:1 0 17px;height:100%;justify-content:flex-end}
+.hourly-chart .bar-rect{min-height:0}
+.hourly-chart .hour-label{display:block;font-size:9px;line-height:14px;color:#6d7e95;white-space:nowrap;font-variant-numeric:tabular-nums}
