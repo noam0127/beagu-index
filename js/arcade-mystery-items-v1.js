@@ -7,7 +7,8 @@
   {id:"complaint",good:false,name:"악성민원",icon:"☎️",detail:"이동 속도 감소"},
   {id:"bullying",good:false,name:"학폭",icon:"⚠️",detail:"점수 -1"},
   {id:"report",good:false,name:"무고성 아동학대 신고",icon:"🚨",detail:"점수 -10"},
-  {id:"conflict",good:false,name:"교직원 갈등",icon:"💢",detail:"동료 일시 퇴장"}
+  {id:"conflict",good:false,name:"교직원 갈등",icon:"💢",detail:"동료 일시 퇴장"},
+  {id:"ball_add",good:false,name:"공 추가",icon:"🏐",detail:"경기 중 공 1개 증가"}
  ];
  const good=[
   {id:"wings",good:true,name:"날개",icon:"🪽",detail:"족쇄 해제·비행"},
@@ -15,12 +16,16 @@
   {id:"salary",good:true,name:"월급",icon:"💵",detail:"점수 +1"},
   {id:"friends",good:true,name:"친한 동학년",icon:"🤝",detail:"동료 일시 증가"},
   {id:"bonus",good:true,name:"성과금",icon:"🏅",detail:"점수 +2"},
-  {id:"chalk",good:true,name:"분필탄환",icon:"🖍️",detail:"분필 지원 활성화"}
+  {id:"chalk",good:true,name:"분필탄환",icon:"🖍️",detail:"분필 지원 활성화"},
+  {id:"ball_remove",good:true,name:"공 삭제",icon:"🏐",detail:"공 1개 제거 · 최소 1개 유지"}
  ];
  const pools={bad,good};
- function pick(includeChalk=false,forceGood=null){
+ function pick(includeChalk=false,forceGood=null,includeBalls=false){
   const positive=forceGood===null?Math.random()<.51:Boolean(forceGood);
-  const pool=positive?(includeChalk?good:good.slice(0,5)):bad;
+  // Ball-count effects belong to volleyball only, not the survival runner.
+  const pool=positive
+    ?(includeBalls?[...good.slice(0,5),good[6]]:includeChalk?good.slice(0,6):good.slice(0,5))
+    :(includeBalls?bad:bad.slice(0,5));
   return {...pool[Math.floor(Math.random()*pool.length)]};
  }
  // Crisp vector pickup badge: broad double silhouette and a visible large ?.
@@ -59,6 +64,14 @@
   ctx.shadowBlur=0;
   ctx.font=Math.floor(r*1.35)+"px Apple Color Emoji,Segoe UI Emoji,sans-serif";
   ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(item.icon,0,0,r*1.75);
+  if(item.id==="ball_add"||item.id==="ball_remove"){
+    ctx.fillStyle=item.good?"#17639e":"#b63045";
+    ctx.strokeStyle="#fff";ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(r*.63,r*.65,r*.43,0,Math.PI*2);
+    ctx.fill();ctx.stroke();
+    ctx.fillStyle="#fff";ctx.font="900 "+Math.floor(r*.7)+"px system-ui,sans-serif";
+    ctx.fillText(item.id==="ball_add"?"+":"−",r*.63,r*.64);
+  }
   ctx.restore();
  }
  window.ArcadeMysteryItems={bad,good,pools,pick,drawMystery,drawReveal};
