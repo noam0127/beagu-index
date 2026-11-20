@@ -6,8 +6,10 @@ const onPush=process.env.GITHUB_EVENT_NAME==="push";
 const expectedVersion="20261121-hourlymonitor1";
 // PR smoke reads the CURRENT published asset; push must verify the new release.
 const publishedVersion=html=>{
- const m=html.match(/js\\/beagu-admin-access-v1\\.js\\?v=([a-zA-Z0-9-]+)/);
- return m?.[1]||"";
+ const marker="js/beagu-admin-access-v1.js?v=";
+ const i=html.indexOf(marker);
+ if(i<0)return "";
+ return html.slice(i+marker.length).split(/["'&<>\\s]/)[0];
 };
 (async()=>{
  let last="";
