@@ -46,7 +46,7 @@ assert.ok(!pages.level1.includes('data-beagu-open-levelup') && !pages.level1.inc
 assert.ok(pages.level1.includes('id="logoutButton"'),'Lv1 logout intact');
 assert.ok(pages.public.includes('id="lv1QuickForm"'),'public auth form intact');
 assert.ok(pages.level1.includes('id="loginForm"'),'Lv1 form intact');
-for(const html of Object.values(pages)) assert.ok(html.includes('>레벨1 인증</button>'),'Native Lv1 form has consistent button label');
+for(const html of Object.values(pages)) assert.ok(html.includes('>참여코드 입력</button>'),'Legacy forms retain unified participation-code button label');
 assert.ok(pages.comparison.includes('id="compareLv1Form"'),'compare form intact');
 assert.ok(pages.comparison.includes('beagu-auth-card beagu-levelup-card'),
   'comparison uses the same verification card');
