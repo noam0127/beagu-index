@@ -14,9 +14,12 @@ const base="https://baeguindex.com/admin.html";
    if(html.includes('id="adminSiteHeading"')&&
       html.includes('id="adminSchoolRanking"')&&
       html.includes('id="adminPasswordChangeForm"')&&
+      html.includes('id="adminReview2026"')&&
+      html.includes('js/beagu-2026-admin-review.js')&&
+      html.includes('id="adminReview2026List"')&&
       html.includes('name="robots" content="noindex,nofollow,noarchive"')){
       assert(!/visit-stats\.js|search-telemetry-v1\.js/.test(html));
-      console.log("PASS: published admin login shell has new dashboard and no ordinary telemetry");
+      console.log("PASS: published admin login shell contains MFA-only 2026 review queue and no ordinary telemetry");
       return;
    }
    last="Published HTML has old dashboard revision";
