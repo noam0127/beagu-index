@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
 <link rel="stylesheet" href="styles/postit-v1.css?v=20261120-lv2-search1">
-<link rel="stylesheet" href="styles/postit-account-v1.css?v=20261121-member1">
+<link rel="stylesheet" href="styles/postit-account-v1.css?v=20261121-sms1">
 <script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
@@ -36,6 +36,12 @@
 <input id="postitAccountEmail" type="email" autocomplete="email" placeholder="이메일 주소" maxlength="254" required>
 <label class="sr-only" for="postitAccountPassword">비밀번호</label>
 <input id="postitAccountPassword" type="password" autocomplete="current-password" placeholder="비밀번호 (10자 이상)" minlength="10" maxlength="128" required>
+<div class="postit-sms-consent">
+<label for="postitSmsPhone">휴대폰번호 (선택 · 회원가입 시 문자 안내용)</label>
+<input id="postitSmsPhone" type="tel" autocomplete="tel-national" inputmode="tel" maxlength="13" placeholder="010-1234-5678">
+<label class="postit-sms-check" for="postitSmsConsent"><input id="postitSmsConsent" type="checkbox"><span>(선택) 배구지수 설문·서비스 소식 및 광고성 안내를 SMS/LMS로 받겠습니다.</span></label>
+<small>수집 항목: 휴대폰번호 · 목적: 배구지수 소식과 서비스 안내(광고 포함) · 보유: 동의 철회 또는 회원탈퇴 시까지. 미동의해도 가입 가능하며, 번호 확인 전에는 발송하지 않습니다.</small>
+</div>
 <div class="postit-account-actions">
 <button type="submit" id="postitAccountLogin">이메일 로그인</button>
 <button type="button" id="postitAccountSignup">새 계정 만들기</button>
@@ -44,6 +50,7 @@
 <div class="postit-account-actions">
 <button type="button" id="postitAccountGoogle">Google로 로그인</button>
 <button type="button" id="postitAccountLink" hidden>원래 기기 인증 · Lv2 연결</button>
+<button type="button" id="postitSmsUnsubscribe" hidden>문자 수신 동의 철회</button>
 <button type="button" id="postitAccountSignOut" hidden>계정 로그아웃</button>
 </div>
 <p id="postitAccountNoDevice" hidden>챌린지 발급 기기의 비밀값이 필요합니다. 다른 기기의 참여코드만으로는 연결할 수 없습니다.</p>
@@ -87,6 +94,6 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
-<script src="js/postit-account-v1.js?v=20261121-member1" defer></script>
+<script src="js/postit-account-v1.js?v=20261121-sms1" defer></script>
 <script src="js/postit-v1.js?v=20261121-stage4-atomic1" defer></script>
 </body></html>
