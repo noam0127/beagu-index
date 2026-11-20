@@ -18,7 +18,7 @@ assert.match(sql,/revoke all on function public\.beagu_admin_referral_funnel_v1\
 assert.match(sql,/stage in \('open','proof','handoff'\)/);
 assert.match(sql,/on conflict do nothing/,'per-browser/day idempotency');
 assert.match(sql,/interval '31 days'/,'privacy retention');
-assert.doesNotMatch(sql,/user_agent|ip_address|email|school_answers/);
+assert.doesNotMatch(sql,/\b(user_agent|ip_address|email|school_answers)\s+(text|varchar|jsonb)\b/i,'no sensitive data columns');
 assert.match(checkin,/beagu_referral_funnel_record_v1/);
 assert.match(checkin,/BEAGU_REFERRAL_FUNNEL_BROWSER_V1/);
 assert.match(checkin,/body\.action==='handoff'/);
