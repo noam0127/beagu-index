@@ -38,8 +38,20 @@ Deno.serve(async req=>{
   if((Number(req.headers.get('content-length'))||0)>2048)
     return response(413,{error:'TOO_LARGE'});
   const provided=req.headers.get('X-Beagu-Referral-Ingest-Token')||'';
-  if(provided.length<32 || provided.length>256 || !await matches(provided,ingestKey))
+  if(provided.length<32 || provided.length>256 || !await matches(provided,ingestKey)){
+    // Private operational diagnostics. Never log the secret itself, its digest,
+    // any request payload, headers, personally identifying data, or school answers.
+    console.warn('beagu_referral_ingest_auth_diagnostic',JSON.stringify({
+      headerPresent:provided.length>0,
+      providedLength:provided.length,
+      serverLength:ingestKey.length,
+      providedHex64:/^[0-9a-f]{64}$/i.test(provided),
+      serverHex64:/^[0-9a-f]{64}$/i.test(ingestKey),
+      providedNoOuterWhitespace:provided===provided.trim(),
+      serverNoOuterWhitespace:ingestKey===ingestKey.trim(),
+    }));
     return response(401,{error:'AUTH_REQUIRED'});
+  }
   let body:Record<string,unknown>;
   try{
     const raw=await req.text();
