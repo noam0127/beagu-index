@@ -35,7 +35,7 @@ export function validateSnapshot(data,now=Date.now()) {
 // and modes only; never return distributions, counts, source rows, or evidence.
 export function publicQuestionResults(questions) {
   return questions.flatMap(q=>{
-    const m=catalog[q.id];if(!m||q.invalid||!q.valid)return [];
+    const m=catalog[q.id];if(!m||q.id==='Q31'||q.id==='Q51'||q.invalid||!q.valid)return [];
     const options=q.row>=0?m.columns:m.options;
     let values=[];
     if(m.kind==='time'){

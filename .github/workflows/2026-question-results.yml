@@ -46,4 +46,5 @@ jobs:
           node tests/2026-school-empty-survey-cta.mjs
           node tests/school-question-mode-only-privacy.mjs
           node tests/three-day-release.mjs
+          node tests/2026-release-consent-gate.mjs
           node tests/lv1-percentile-chart-parity.mjs
