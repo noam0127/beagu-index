@@ -165,17 +165,25 @@ async function enrich(items:any[],type:"post"|"comment",self:string|null){
    mine:Boolean(self&&self===x.author_uid)}
  }));
 }
-async function countToday(table:string,userId:string,limit:number){
- const kstDay=new Date(Date.now()+9*3600000).toISOString().slice(0,10);
- const start=new Date(kstDay+"T00:00:00+09:00").toISOString();
- const {count,error}=await db.from(table).select("id",{count:"exact",head:true}).eq("author_uid",userId).gte("created_at",start);
- if(error)throw error;
- return (count||0)<limit;
-}
-async function tooSoon(table:string,userId:string,seconds:number){
- const {data,error}=await db.from(table).select("created_at").eq("author_uid",userId).order("created_at",{ascending:false}).limit(1);
- if(error)throw error;
- return Boolean(data?.length&&Date.now()-new Date(data[0].created_at).getTime()<seconds*1000);
+// Quotas and duplicate handling are serialized inside Postgres RPCs, not
+// in independent client-side count/insert queries that race across tabs.
+async function boundedJSON(req:Request){
+ const reader=req.body?.getReader();
+ if(!reader)throw Error("INVALID_BODY");
+ const decoder=new TextDecoder();
+ let raw="",bytes=0;
+ for(;;){
+  const chunk=await reader.read();
+  if(chunk.done)break;
+  bytes+=chunk.value.byteLength;
+  if(bytes>2048){await reader.cancel();throw Error("BODY_TOO_LARGE");}
+  raw+=decoder.decode(chunk.value,{stream:true});
+ }
+ raw+=decoder.decode();
+ let parsed:unknown;
+ try{parsed=JSON.parse(raw)}catch{throw Error("INVALID_BODY")}
+ if(!parsed||typeof parsed!=="object"||Array.isArray(parsed))throw Error("INVALID_BODY");
+ return parsed as Record<string,unknown>;
 }
 async function target(type:string,id:string){
  if(!["post","comment"].includes(type)||!UUID.test(id))return null;
@@ -198,7 +206,12 @@ Deno.serve(async(req:Request)=>{
  if(!SUPABASE_URL||!ROLE_KEY)return fail(req,"SERVER_NOT_CONFIGURED",503);
  try{
   const url=new URL(req.url);
-  const body=req.method==="POST"?await req.json().catch(()=>null):null;
+  let body:Record<string,unknown>|null=null;
+  if(req.method==="POST"){
+   try{body=await boundedJSON(req)}
+   catch(error){return fail(req,error instanceof Error&&error.message==="BODY_TOO_LARGE"
+      ?"BODY_TOO_LARGE":"INVALID_BODY",error instanceof Error&&error.message==="BODY_TOO_LARGE"?413:400)}
+  }
   const action=req.method==="GET"?(url.searchParams.get("action")||"posts"):String(body?.action||"");
   if(req.method==="GET"){
    if(action==="settings"){
@@ -327,28 +340,38 @@ Deno.serve(async(req:Request)=>{
      if(new Set((data||[]).map(x=>x.school_id)).size!==new Set(ids).size)
        return fail(req,"SCHOOL_NOT_FOUND",404);
    }
-   if(!await countToday("beagu_postit_posts",user.id,settings.max_daily_posts)||await tooSoon("beagu_postit_posts",user.id,90))
-     return fail(req,"POST_RATE_LIMIT",429);
-   const {data,error}=await db.from("beagu_postit_posts").insert({
-     school_id:subject==="comparison"||!schoolId?null:schoolId,
-     subject_type:subject,
-     game_slug:subject==="game"?gameSlug:null,
-     comparison_selection:subject==="comparison"?compare:null,
-     author_uid:user.id,body:content
-   }).select("id").single();
-   if(error)throw error;return respond(req,{id:data.id},201);
+   // Requests from updated clients include a stable per-submission nonce.
+   // Legacy cached clients are accepted; the database still enforces quotas.
+   const suppliedId=typeof body?.request_id==="string"?body.request_id:"";
+   if(suppliedId&&!UUID.test(suppliedId))return fail(req,"INVALID_REQUEST_ID");
+   const {data:created,error}=await db.rpc("beagu_postit_create_post_v2",{
+     p_actor:user.id,p_request_id:suppliedId||crypto.randomUUID(),
+     p_subject_type:subject,p_school_id:subject==="comparison"||!schoolId?null:schoolId,
+     p_game_slug:subject==="game"?gameSlug:null,
+     p_comparison_selection:subject==="comparison"?compare:null,p_body:content
+   });
+   if(error)throw error;
+   if(created?.error)return fail(req,String(created.error),created.error==="POST_RATE_LIMIT"?429:400);
+   if(!UUID.test(String(created?.id||"")))throw Error("INVALID_POST_CREATE_RESULT");
+   return respond(req,{id:created.id,replayed:created.replayed===true},created.replayed?200:201);
   }
   if(action==="create_comment"){
    const postId=String(body?.post_id||"");
    const content=textCheck(body?.text,150);
    if(!UUID.test(postId)||!content)return fail(req,"INVALID_COMMENT");
-   if(!await target("post",postId))return fail(req,"POST_UNAVAILABLE",404);
-   if(!await countToday("beagu_postit_comments",user.id,settings.max_daily_comments)||await tooSoon("beagu_postit_comments",user.id,30))
-     return fail(req,"COMMENT_RATE_LIMIT",429);
-   const {data,error}=await db.from("beagu_postit_comments").insert({post_id:postId,author_uid:user.id,body:content}).select("id").single();
-   if(error)throw error;return respond(req,{id:data.id},201);
+   const suppliedId=typeof body?.request_id==="string"?body.request_id:"";
+   if(suppliedId&&!UUID.test(suppliedId))return fail(req,"INVALID_REQUEST_ID");
+   const {data:created,error}=await db.rpc("beagu_postit_create_comment_v2",{
+     p_actor:user.id,p_request_id:suppliedId||crypto.randomUUID(),
+     p_post_id:postId,p_body:content
+   });
+   if(error)throw error;
+   if(created?.error)return fail(req,String(created.error),
+     created.error==="COMMENT_RATE_LIMIT"?429:created.error==="POST_UNAVAILABLE"?404:400);
+   if(!UUID.test(String(created?.id||"")))throw Error("INVALID_COMMENT_CREATE_RESULT");
+   return respond(req,{id:created.id,replayed:created.replayed===true},created.replayed?200:201);
   }
-  if(action==="toggle_like"||action==="report"||action==="remove"){
+  if(action==="toggle_like"||action==="set_like"||action==="report"||action==="remove"){
    const type=String(body?.target_type||""),id=String(body?.target_id||"");
    const t=await target(type,id);if(!t)return fail(req,"TARGET_UNAVAILABLE",404);
    const table=type==="post"?"beagu_postit_posts":"beagu_postit_comments";
@@ -358,16 +381,22 @@ Deno.serve(async(req:Request)=>{
     if(error)throw error;return respond(req,{removed:true});
    }
    if(action==="report"&&t.author_uid===user.id)return fail(req,"CANNOT_REPORT_OWN");
-   const kind=action==="toggle_like"?"like":"report";
+   if(action==="set_like"&&typeof body?.liked!=="boolean")
+     return fail(req,"INVALID_LIKE_STATE");
+   const kind=action==="report"?"report":"like";
    const filter=()=>db.from("beagu_postit_reactions").select("id").eq("author_uid",user.id)
      .eq("target_type",type).eq("target_id",id).eq("kind",kind).maybeSingle();
    const {data:existing}=await filter();
    if(existing){
     if(kind==="report")return respond(req,{already_reported:true});
-    const {error}=await db.from("beagu_postit_reactions").delete().eq("id",existing.id).eq("author_uid",user.id);
-    if(error)throw error;
-   }else{
-    const {error}=await db.from("beagu_postit_reactions").insert({author_uid:user.id,target_type:type,target_id:id,kind});
+    if(action!=="set_like"||body?.liked===false){
+     const {error}=await db.from("beagu_postit_reactions").delete()
+       .eq("id",existing.id).eq("author_uid",user.id);
+     if(error)throw error;
+    }
+   }else if(action!=="set_like"||body?.liked===true){
+    const {error}=await db.from("beagu_postit_reactions")
+      .insert({author_uid:user.id,target_type:type,target_id:id,kind});
     if(error&&error.code!=="23505")throw error;
    }
    // Temporary hidden status, not deletion. Manual restoration is possible.
