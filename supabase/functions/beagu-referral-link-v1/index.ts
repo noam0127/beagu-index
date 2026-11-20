@@ -121,10 +121,10 @@ Deno.serve(async (req) => {
     if (Number(enrollment?.level) === 2 && Number(session.access_level) < 2) {
       // The recommendation qualifies for provisional Lv.2 access; a signed-in
       // Supabase Auth account is still separately required for Post-it writes.
-      // Leave identity_visitor_id NULL: beagu-level-api uses it to distinguish
-      // provisional, non-account sessions from account-bound access.
+      // Bind the verified challenge visitor, not an account identity. This supports
+      // stable author quotas without signup and permits immediate revocation.
       const { error: upgradeError } = await db.from('beagu_level_sessions')
-        .update({ access_level: 2 })
+        .update({ access_level: 2, identity_campaign: '2026', identity_visitor_id: visitor })
         .eq('token_sha256', await digest(sessionToken))
         .eq('access_level', 1);
       if (upgradeError)
