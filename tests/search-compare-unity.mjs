@@ -46,7 +46,7 @@ assert.ok(!pages.level1.includes('data-beagu-open-levelup') && !pages.level1.inc
 assert.ok(pages.level1.includes('id="logoutButton"'),'Lv1 logout intact');
 assert.ok(pages.public.includes('id="lv1QuickForm"'),'public auth form intact');
 assert.ok(pages.level1.includes('id="loginForm"'),'Lv1 form intact');
-for(const html of Object.values(pages)) assert.ok(html.includes('>레벨1 인증</button>'),'Native Lv1 form has consistent button label');
+for(const html of Object.values(pages)) assert.ok(html.includes('>참여코드 입력</button>'),'Legacy button labels harmonize with the shared code UI');
 assert.ok(pages.comparison.includes('id="compareLv1Form"'),'compare form intact');
 assert.ok(pages.comparison.includes('beagu-auth-card beagu-levelup-card'),
   'comparison uses the same verification card');
@@ -65,10 +65,12 @@ for(const [p,source] of Object.entries({
   'js/postit-v1.js':postitJS,
   'levels.html':levels
 })){
-  assert.ok(source.includes('Lv.2(임시)'),p+' shows provisional Lv2 in Korean');
-  assert.ok(!source.includes('Lv.2(진)'),p+' must not show military-like final marker');
+  assert.ok(!source.includes('Lv.2(진)'),p+' must not use retired final marker');
+  assert.ok(!source.includes('정식 계정 생성 후'),p+' must not advertise account onboarding');
 }
+assert.ok(levelJS.includes('♛ Lv2 · 챌린지 달성'),'Header badges use clear earned labels');
+assert.ok(levels.includes('유효한 추천 설문 1건'),'Guide describes the actual Lv2 condition');
 assert.ok(levelJS.includes("result.provisional===true"),'provisional status remains server-derived');
 assert.ok(postitJS.includes('dataset.provisional!=="true"'),
   'provisional users still lack posting permissions');
-console.log('PASS: unified search/compare UI and temporary Lv.2 naming without changing auth permissions');
+console.log('PASS: unified search/compare UI and earned Lv2 naming with preserved auth permissions');
