@@ -103,7 +103,7 @@ assert(v6Image.length>4000&&v6Image.subarray(0,4).toString('ascii')==='RIFF','Ho
 assert(v6Css.includes('background-size:500% 100%'),'Hobby-themed photographs must be separate square crops');
 assert(play.src.includes("hobbyCastPortraits.src='assets/class-diary/characters/class-diary-cast-hobbies-v6.webp'"),'Hobby photo strip must be loaded with v5 fallback');
 assert(play.src.includes('styles/class-diary-cast-profiles-v6.css?v=20261120-cast-hobbies-hyunwoo-v3'),'Portrait CSS must be cache busted');
-for(const text of ['기타 · 낮은 선율로 마음을 건넨다','논어 · 웃음 뒤에 생각을 남긴다','기록 · 지나간 표정을 오래 헤아린다','실뜨기 · 얽힌 마음을 찬찬히 푼다','배구 · 승부보다 함께한 날을 기억한다'])assert(play.src.includes(text),'Hobby/personality label missing: '+text);
+for(const text of ['기타의 여운처럼 다정함이 오래 머무는 사람','웃음 뒤에 논어 한 구절을 품고 사는 사람','스쳐 간 표정을 일기장에 오래 남기는 사람','실 한 올로도 누군가의 마음을 잇는 사람','함께 뛰는 순간에 가장 환하게 웃는 사람'])assert(play.src.includes(text),'Hobby/personality label missing: '+text);
 
 assert(play.src.includes('has-hyunwoo-hair-v3'),'Hyunwoo profile should apply the same hair treatment as the novel');
 assert(v6Css.includes('--diary-hyunwoo-hair-image'),'Only Hyunwoo card may override hobby photos');
