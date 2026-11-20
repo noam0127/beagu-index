@@ -21,7 +21,9 @@ async function page(offset){
   url.searchParams.set('select',fields.join(','));
   url.searchParams.set('status','eq.운영');
   url.searchParams.set('order','school_id.asc');
-  const result=await fetch(url,{headers:{apikey:key,Accept:'application/json',Range:offset+'-'+(offset+PAGE-1)},signal:AbortSignal.timeout(20000)});
+  url.searchParams.set('limit',String(PAGE));
+  url.searchParams.set('offset',String(offset));
+  const result=await fetch(url,{headers:{apikey:key,Accept:'application/json'},signal:AbortSignal.timeout(20000)});
   if(!result.ok)throw new Error('Public school directory fetch '+offset+' failed: '+result.status);
   const rows=await result.json();
   if(!Array.isArray(rows)||rows.length>PAGE)throw new Error('Unexpected response shape');
