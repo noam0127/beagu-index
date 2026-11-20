@@ -172,7 +172,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('#novel').waitFor({state:'visible'});
    assert.equal(await page.locator('#scenePortrait').isVisible(),false,'Story scenes remain background-only without character portraits');
    assert.equal(await page.locator('#sceneGuest').isVisible(),false,'Guest characters are not pictured yet');
-   assert.equal(await page.locator('#sceneDoyun').isVisible(),false,'Student character artwork is not pictured yet');
+   // Story-stage student art can appear by scene; the profile-card task must not override it.
    assert.equal(await page.locator('#chapterText p.diary-literary-line:not([hidden])').count(),1,
     'Exactly one sentence is initially revealed; later sentences remain hidden');
    await page.waitForFunction(()=>Boolean(document.querySelector('#chapterText p.diary-literary-ready:not([hidden])')),null,{timeout:12000});
