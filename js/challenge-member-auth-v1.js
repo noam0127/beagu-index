@@ -19,7 +19,8 @@ const closeButton=byId('challengeMemberClose');
 const message=byId('challengeMemberMessage');
 const connect=byId('challengeMemberLink');
 const signOut=byId('challengeMemberSignOut');
-const client=window.supabaseClient;
+// supabase-config.js declares a top-level lexical const, not a window property.
+const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
 if(![card,signup,signupSection,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut].every(Boolean)||!client)return;
 const SESSION_KEY='beagu-level-session-v1';
 const DEVICE_KEY='beagu-referral-device-secret-v1';
