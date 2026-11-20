@@ -1,5 +1,12 @@
 name: Live admin dashboard publication smoke
 on:
+  pull_request:
+    paths:
+      - 'admin.html'
+      - 'js/beagu-admin-access-v1.js'
+      - 'js/beagu-2026-admin-review.js'
+      - 'tests/admin-dashboard-published.cjs'
+      - '.github/workflows/admin-dashboard-published.yml'
   push:
     branches: [main]
     paths:
