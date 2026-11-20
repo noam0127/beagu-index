@@ -2,6 +2,8 @@ const assert=require('node:assert/strict');
 const url='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-review-admin';
 const request=(body,headers={})=>fetch(url,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(body),signal:AbortSignal.timeout(15000)});
 (async()=>{
+ const basis=await request({action:'basis_review',school_id:'0000000',payload_sha256:'0'.repeat(64),decision:'PENDING',notes:'unauthorized verification test only'});
+ assert.equal(basis.status,401,'Anonymous evidence review must deny writes');
  const q=await request({action:'queue',filter:'all',page:0});
  assert.equal(q.status,401,'Anonymous review queue must deny read');
  const hold=await request({action:'hold',school_id:'0000000',payload_sha256:'0'.repeat(64),reason:'unauthorized hold attempt'});

@@ -15,7 +15,7 @@ const base="https://baeguindex.com/admin.html";
       html.includes('id="adminSchoolRanking"')&&
       html.includes('id="adminPasswordChangeForm"')&&
       html.includes('id="adminReview2026"')&&
-      html.includes('js/beagu-2026-admin-review.js')&&
+      html.includes('js/beagu-2026-admin-review.js?v=20261120-review2')&&
       html.includes('id="adminReview2026List"')&&
       html.includes('name="robots" content="noindex,nofollow,noarchive"')){
       assert(!/visit-stats\.js|search-telemetry-v1\.js/.test(html));
