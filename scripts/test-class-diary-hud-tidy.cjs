@@ -12,9 +12,10 @@ assert(html.includes('styles/class-diary-hud-tidy-v1.css?v=20261120-1'),'HUD CSS
 assert(html.includes('js/class-diary-hud-tidy-v1.js?v=20261120-1'),'HUD behavior script must load');
 assert(html.indexOf('class-diary-hud-tidy-v1.css')>html.indexOf('class-diary-interface-rebalance-v1.css'),'Latest HUD CSS should win cascade');
 assert(html.indexOf('class-diary-hud-tidy-v1.js')>html.indexOf('class-diary-ui-v2.js'),'HUD script runs after UI assembly');
-for(const id of ['vnHeaderSlot','vnBottom','vnHud','vnMore','nextBtn','diaryHudFold','diaryHomeReturn','diarySaveNow','diaryContinueNow']){
+for(const id of ['vnHeaderSlot','vnBottom','vnHud','vnMore','nextBtn','diaryHomeReturn','diarySaveNow','diaryContinueNow']){
  assert(html.includes('id="'+id+'"'),'Do not delete a functional game control: '+id);
 }
+assert(read('js/class-diary-ui-v2.js').includes("hudFold.id='diaryHudFold'"),'Info fold button must be created by UI assembly');
 assert(css.includes('top:calc(env(safe-area-inset-top,0px) + 48px)!important'),'Opened left title must anchor near top');
 assert(css.includes('top:var(--diary-open-reader-top'),'Reader offset must follow measured title and controls');
 assert(css.includes('body.is-playing #novelCard #vnMore')&&css.includes('body.is-playing #novelCard #nextBtn'));
