@@ -86,13 +86,13 @@ function beaguReferralSubmissionQuality_(formResponse){
       const title=String(response.getItem().getTitle()||'');
       const match=/^Q(0[1-9]|1[0-3])\./.exec(title);
       if(!match)continue;
-      if(core.has(match[1])){issues.add('UNREADABLE_ITEM_RESPONSE');continue;}
+      if(core.has('Q'+match[1])){issues.add('UNREADABLE_ITEM_RESPONSE');continue;}
       const answer=response.getResponse();
       if(typeof answer!=='string' || !/^[①②③④⑤⑥]/.test(answer.trim())){
         issues.add('UNREADABLE_ITEM_RESPONSE');
         continue;
       }
-      core.set(match[1],answer.trim().charAt(0));
+      core.set('Q'+match[1],answer.trim().charAt(0));
     }
   }catch(_){issues.add('UNREADABLE_ITEM_RESPONSE');}
   if(core.size!==13)issues.add('MISSING_REQUIRED_CORE');
