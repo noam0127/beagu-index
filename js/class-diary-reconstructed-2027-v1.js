@@ -12,7 +12,7 @@ const parts=[root.BeaguClassDiaryRewrittenAct1,root.BeaguClassDiaryRewrittenAct2
  root.BeaguClassDiaryRewrittenAct5,root.BeaguClassDiaryRewrittenAct6];
 const MAP=root.BeaguClassDiaryBranchMap;
 if(parts.some(x=>!Array.isArray(x))||!MAP)throw Error('RECONSTRUCTED_ACT_DEPENDENCY_MISSING');
-const SCENES=Object.freeze(parts.flat().map(x=>Object.freeze(x)));
+const SCENES=Object.freeze(parts.flat().map(x=>Object.freeze({...x,title:MAP.episode(x.n)?.title||''})));
 function scene(episode){return SCENES[Number(episode)-1]||null;}
 function validate(){
  if(SCENES.length!==36||new Set(SCENES.map(s=>s.n)).size!==36)throw Error('INVALID_SCENE_COUNT');
