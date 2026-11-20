@@ -67,6 +67,10 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#setupNext').click();
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','One 36-chapter story uses a first-day confirmation');
    await page.locator('.setup-begin').click();
+   // A 36-episode playthrough now introduces the selected school's basic facts
+   // before the narrator prologue. Close this gate as an actual player would.
+   if(await page.locator('#diaryPrologueSchoolContinue').isVisible())
+    await page.locator('#diaryPrologueSchoolContinue').click();
    await page.waitForTimeout(300);
    if(await page.locator('#novel').isHidden()){
     const state=await page.evaluate(()=>({
