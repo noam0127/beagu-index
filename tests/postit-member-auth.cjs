@@ -1,0 +1,53 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const read=f=>fs.readFileSync(f,'utf8');
+const sql=read('supabase/migrations/20261121103000_beagu_postit_member_auth.sql');
+const api=read('supabase/functions/beagu-postit-api-v1/index.ts');
+const js=read('js/postit-v1.js');
+const account=read('js/postit-account-v1.js');
+const html=read('postit.html');
+const style=read('styles/postit-account-v1.css');
+assert.doesNotThrow(()=>new vm.Script(js));
+assert.doesNotThrow(()=>new vm.Script(account));
+assert.match(sql,/references auth\.users\(id\) on delete cascade/i,'Real Auth principal foreign key');
+assert.match(sql,/identity_visitor_id uuid not null unique/i,'One challenge visitor per account');
+assert.match(sql,/author_uid uuid not null unique/i,'Stable private pseudonym');
+assert.match(sql,/enable row level security/i);
+assert.match(sql,/revoke all on public\.beagu_postit_member_accounts from public,anon,authenticated/i);
+assert.match(sql,/from public,anon,authenticated/i);
+assert.match(sql,/grant execute on function public\.beagu_postit_bind_verified_member\(uuid,uuid,text,uuid\)/i);
+assert.match(sql,/to service_role/i);
+for(const guard of ['d.device_secret_sha256=p_device_hash','r.valid_referrals>=1','r.upgraded_at is not null','r.disabled=false','m.identity_visitor_id=p_visitor','m.author_uid=p_actor'])
+ assert.ok(sql.includes(guard),'Required membership validation: '+guard);
+assert.ok(!sql.includes('grant select on public.beagu_postit_member_accounts to authenticated'));
+assert.match(api,/db\.auth\.getUser\(jwt\)/,'JWT validated at Auth server');
+assert.match(api,/user\.is_anonymous/,'Anonymous account denied');
+assert.match(api,/user\.email_confirmed_at/,'Unverified email denied');
+assert.match(api,/verifiedMember\(req,viewer\)/,'Writer account checked');
+assert.match(api,/if\(!user\)return fail\(req,"WRITER_IDENTITY_REQUIRED",403\)/);
+assert.match(api,/if\(action==="link_member"\)/);
+assert.match(api,/if\(action==="writer_status"\)return respond\(req,\{linked:Boolean\(member\)\}\)/);
+assert.match(api,/beagu_postit_bind_verified_member/,'Device-bound database function');
+assert.match(api,/p_device_hash:await sha256\(deviceSecret\)/);
+assert.match(api,/beagu_has_earned_challenge_visitor/,'Referral revocation rechecked');
+assert.ok(!api.includes('user.user_metadata'), 'Mutable metadata must not authorize writers');
+assert.match(js,/function canWrite\(\)\{return canRead\(\) && state\.accountLinked===true\}/);
+assert.match(js,/BeaguPostitAccount\?\.accessToken/);
+assert.match(js,/beagu:postit-account-status/);
+assert.match(account,/signUp\(\{email,password\}\)/);
+assert.match(account,/signInWithPassword\(\{email,password\}\)/);
+assert.match(account,/signInWithOAuth\(\{provider:'google'/,'Google OAuth is wired only through Supabase Auth');
+assert.match(account,/localStorage\.getItem\(deviceKey\)/);
+assert.ok(!account.includes('localStorage.setItem(deviceKey'),'Missing device proof must never be minted by the membership UI');
+assert.match(account,/action:'link_member',deviceSecret/);
+for(const id of ['postitAccount','postitAccountEmail','postitAccountPassword','postitAccountLogin',
+ 'postitAccountSignup','postitAccountGoogle','postitAccountLink','postitAccountSignOut',
+ 'postitAccountStatus','postitAccountNoDevice'])
+ assert.ok(html.includes('id="'+id+'"'),'Account UI '+id);
+assert.ok(html.includes('styles/postit-account-v1.css?v='));
+assert.ok(html.includes('js/postit-account-v1.js?v='));
+assert.match(style,/max-width:460px/);
+assert.match(api,/if\(!viewer\)return fail\(req,"LEVEL_REQUIRED",403\)/);
+assert.match(sql,/on conflict\(auth_user_id\) do nothing/i,'Avoid unwanted reassignment');
+console.log('PASS verified Lv2 account + original device proof + private author identity');
