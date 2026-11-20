@@ -21,6 +21,9 @@ const PROSE_ACTS=(typeof module==='object'&&module.exports&&typeof require==='fu
 if(PROSE_ACTS.some((act,i)=>!act||act.part!==i+1||!Array.isArray(act.entries)||act.entries.length!==6))
  throw Error('COMPLETE_36_CHAPTER_NOVEL_REQUIRED');
 const REWRITTEN=Object.freeze(PROSE_ACTS.flatMap(act=>act.entries));
+const LITERARY=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./class-diary-literary-v3.js'):root.BeaguClassDiaryLiteraryV3;
+const PHILOSOPHY=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./class-diary-philosophy-v1.js'):root.BeaguClassDiaryPhilosophy;
+if(!LITERARY||LITERARY.validate().episodes!==36||!PHILOSOPHY||PHILOSOPHY.validate().branches!==14)throw Error('NEW_LITERARY_EDITION_REQUIRED');
 const PEDAGOGY=(typeof module==='object'&&module.exports&&typeof require==='function')?require('./class-diary-pedagogy-v1.js'):root.BeaguClassDiaryPedagogy;
 if(!PEDAGOGY||PEDAGOGY.validate().scenes!==16)throw Error('PEDAGOGY_ARC_REQUIRED');
 const FICTIONAL_COLLEAGUES=(typeof module==='object'&&module.exports&&typeof require==='function')?
@@ -182,6 +185,13 @@ function chapter(s){
  if(s.phase!=='semester_chapter'||s.episode<1||s.episode>36)throw Error('SEMESTER_CHAPTER_REQUIRED');
  const e=SCENES[s.episode-1],act=Math.floor((s.episode-1)/6),story=REWRITTEN[s.episode-1],p=PERSON[s.profile.partner]||PERSON.none;
  const paragraphs=story.lines.slice();
+ const v3=LITERARY.get(s.episode);
+ // The new prose preserves the original chapter's causal spine while moving the scene forward through physical action, dialogue and consequence.
+ paragraphs.splice(Math.min(2,paragraphs.length),0,v3.lines[0]);
+ paragraphs.splice(Math.min(5,paragraphs.length),0,v3.lines[1]);
+ paragraphs.splice(Math.max(0,paragraphs.length-1),0,v3.lines[2]);
+ const philosophicalMoment=PHILOSOPHY.moment(s.episode,s.profile.pedagogy);
+ if(philosophicalMoment)paragraphs.splice(Math.min(4,paragraphs.length),0,philosophicalMoment);
  const pedagogicalScene=PEDAGOGY.moment(s.episode);
  if(pedagogicalScene)paragraphs.splice(Math.min(3,paragraphs.length),0,pedagogicalScene);
  if(s.episode===1){
@@ -241,7 +251,7 @@ function validate(){if(SCENES.length!==36||REWRITTEN.length!==36)throw Error('EP
    entry.lines.some(x=>typeof x!=='string'||x.length<35))throw Error('NOVEL_EPISODE_INCOMPLETE_'+(i+1));
  });SCENES.forEach((e,i)=>{if(e.length!==11||e.slice(3).some(x=>typeof x!=='string'||x.length<7)||!PLACE_NAMES[e[2]])throw Error('BAD_EPISODE_'+i);});return {episodes:36,acts:6,choices:108,endingTypes:5};}
 validate();
-const api=Object.freeze({VERSION,ACTS,SCENES,PERSON,THREADS,REWRITTEN,RECALLS,FICTIONAL_COLLEAGUES,PEDAGOGY,createGame,chapter,choose,advance,validate});
+const api=Object.freeze({VERSION,ACTS,SCENES,PERSON,THREADS,REWRITTEN,RECALLS,FICTIONAL_COLLEAGUES,PEDAGOGY,LITERARY,PHILOSOPHY,createGame,chapter,choose,advance,validate});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiarySemester=api;
 })(typeof window!=='undefined'?window:globalThis);
