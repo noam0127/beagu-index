@@ -32,6 +32,8 @@ as $function$
 declare
   v_min integer;
   v_hour integer;
+  v_limit_min integer;
+  v_limit_hour integer;
   v_5m bigint;
   v_1h bigint;
   v_now timestamptz := now();
@@ -55,9 +57,11 @@ begin
     do update set hits=beagu_private.beagu_telemetry_source_windows_v2.hits+1
   returning hits into v_hour;
 
-  if v_min > case p_action when 'visit' then 240 else 500 end
-     or v_hour > case p_action when 'visit' then 2000 else 6000 end
-  then return false; end if;
+  v_limit_min := case when p_action='visit' then 240 else 500 end;
+  v_limit_hour := case when p_action='visit' then 2000 else 6000 end;
+  if v_min > v_limit_min or v_hour > v_limit_hour then
+    return false;
+  end if;
 
   insert into beagu_private.beagu_telemetry_source_visitors_v2
     (source_hash,visitor_id,first_seen_at,last_seen_at)
