@@ -160,7 +160,7 @@ Deno.serve(async(req:Request)=>{
      ({data,count,error}=await rankedQuery('beagu_lv1_school_sort_index'));
    }
    if(error)return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
-   return send({schools:data||[],total:count||0,page:pagination,sort,direction:ascending?'asc':'desc',nulls:'last'},200,origin);
+   return send({schools:data||[],total:count||0,page:pagination,sort,direction,nulls:'last'},200,origin);
   }
 
   const id=String(body.schoolId||'');
