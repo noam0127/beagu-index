@@ -24,7 +24,7 @@ assert(html.includes('js/class-diary-daily-journal-v1.js'));
 assert(html.includes('function openDailyJournalChoice()'));
 assert(html.includes('daily-journal-dialog'));
 assert(html.includes("if(vnState.kind==='outcome')"));
-assert(html.includes('if(storyMode===\'semester\'&&dailyJournal.selection(game,game.episode)===null)openDailyJournalChoice()'));
+assert(html.includes('if(storyMode===\'semester\'&&game&&game.phase===\'semester_reflection\'&&dailyJournal.selection(game,game.episode)===null)openDailyJournalChoice()'),'Diary overlay must never interrupt prologue');
 assert(html.includes('dailyJournal.choose(game,choice.id)'));
 assert(html.includes('dailyJournal.selection(game,game.episode)'));
 console.log('PASS: 36 daily journal prompts, 108 diary options, reselect, legacy state, page wiring');
