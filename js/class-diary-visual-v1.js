@@ -8,7 +8,8 @@ const VERSION='class-diary-visual/v1';
 const CAST=Object.freeze({
  woman:Object.freeze({name:'서지윤',age:30,role:'3학년 담임',hair:'밤색 반묶음 머리',outfit:'크림색 가디건, 흰 셔츠',temperament:'조용한 배려와 분명한 의견',value:'학생의 말이 끝날 때까지 기다리기',weakness:'도움을 쉽게 청하지 못함'}),
  man:Object.freeze({name:'한현우',alias:'현우 선생님',age:32,role:'3학년 동학년 담임',hair:'짧고 부드러운 갈색 머리',outfit:'남색 니트, 하늘색 셔츠',temperament:'농담 뒤에 책임을 남기는 태도',value:'동료의 시간 존중',weakness:'갈등을 농담으로 피할 때가 있음'}),
- none:Object.freeze({name:'윤민서',age:29,role:'동학년 담임',hair:'검정색 단발',outfit:'연두색 카디건',temperament:'신중하고 꼼꼼함',value:'아이와 교사의 안전',weakness:'완벽하게 준비하려 애씀'})
+ none:Object.freeze({name:'윤민서',age:29,role:'동학년 담임',hair:'검정색 단발',outfit:'연두색 카디건',temperament:'신중하고 꼼꼼함',value:'아이와 교사의 안전',weakness:'완벽하게 준비하려 애씀'}),
+  man2:Object.freeze({name:'차도겸',age:31,role:'동학년 담임',hair:'정돈된 검은 머리',outfit:'짙은 회색 셔츠와 짙은 청색 니트',temperament:'외모는 화려하지만 조용하고 신중함',value:'실뜨기로 참여를 유도하고 경계를 지키기',weakness:'관심을 받으면 친절을 거절하지 못하는 경향'})
 });
 const MAP={
  morning:'office',meeting:'meeting',classroom:'classroom',hallway:'hallway',
