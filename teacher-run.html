@@ -832,7 +832,7 @@ function collectMystery(item,x,y){
   case "complaint":mysteryBuffs.complaint=t+dur;mysteryBuffs.letter=0;break;
   case "bullying":score=Math.max(0,score-1);break;
   case "report":score=Math.max(0,score-10);break;
-  case "conflict":mysteryBuffs.conflict=t+dur;mysteryBuffs.friends=0;break;
+  case "conflict":mysteryBuffs.conflict=t+dur;mysteryBuffs.friends=0;chalkShots=[];break;
   case "wings":mysteryBuffs.wings=t+dur;mysteryBuffs.shackle=0;break;
   case "letter":mysteryBuffs.letter=t+dur;mysteryBuffs.complaint=0;break;
   case "salary":score+=1;break;
@@ -888,7 +888,10 @@ function drawMystery(){
 }
 function mysterySituation(){
  const buffs=Object.entries(mysteryBuffs).filter(([,t])=>t>clock)
-  .map(([k,t])=>k+" "+Math.ceil(t-clock)+"초").slice(0,2);
+  .map(([k,t])=>{
+   const found=[...mystery.good,...mystery.bad].find(item=>item.id===k);
+   return (found?.name||k)+" "+Math.ceil(t-clock)+"초";
+  }).slice(0,2);
  return getAge()+"세 · "+Math.floor(score).toLocaleString("ko-KR")+"점 · "+
   Math.floor(clock)+"초"+(buffs.length?" · "+buffs.join(" / "):"");
 }
@@ -1019,7 +1022,7 @@ function background(){
 }
 function playerDraw(){
  ctx.save();ctx.translate(Math.round(player.x),Math.round(player.y));ctx.scale(profile.heroSize,profile.heroSize);
- if(profile===difficultyProfiles.easy){
+ if(canPlayerRise()&&(profile===difficultyProfiles.easy||isMysteryBuff("wings"))){
   // EASY: animated wings show why the teacher is light and quick.
   const flap=Math.sin(clock*10)*8;
   ctx.fillStyle="#ffffff";
