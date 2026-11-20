@@ -11,6 +11,10 @@ on:
       - 'supabase/migrations/*beagu_2026*.sql'
       - 'js/2026-approved-question-results.js'
       - 'js/level-search.js'
+      - 'js/2026-national-trends.js'
+      - 'js/beagu-2026-admin-review.js'
+      - 'index.html'
+      - 'admin.html'
       - 'tests/2026-*.mjs'
       - '.github/workflows/2026-question-results.yml'
   pull_request:
@@ -24,6 +28,10 @@ on:
       - 'supabase/migrations/*beagu_2026*.sql'
       - 'js/2026-approved-question-results.js'
       - 'js/level-search.js'
+      - 'js/2026-national-trends.js'
+      - 'js/beagu-2026-admin-review.js'
+      - 'index.html'
+      - 'admin.html'
       - 'tests/2026-*.mjs'
       - '.github/workflows/2026-question-results.yml'
   workflow_dispatch:
@@ -47,4 +55,5 @@ jobs:
           node tests/school-question-mode-only-privacy.mjs
           node tests/three-day-release.mjs
           node tests/2026-release-consent-gate.mjs
+          node tests/2026-unattended-publication.mjs
           node tests/lv1-percentile-chart-parity.mjs

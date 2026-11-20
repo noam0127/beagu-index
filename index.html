@@ -131,6 +131,16 @@
       .logo { margin-bottom: 22px; }
       .description { margin-bottom: 22px; }
     }
+    /* Only high-sample nationwide 2026 survey modes; never a school disclosure. */
+    .beagu-2026-national{margin:0 0 22px;padding:20px;border:1px solid #d8e3ef;border-radius:20px;background:#fff}
+    .beagu-2026-national h2{margin:0 0 6px;color:#15385f;font-size:19px;line-height:1.4}
+    .beagu-2026-national>p{margin:0 0 12px;color:#61718a;font-size:12px;line-height:1.6}
+    .beagu-2026-national-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .beagu-2026-national-item{min-width:0;padding:12px;border:1px solid #e2eaf4;border-radius:13px;background:#f8fbff}
+    .beagu-2026-national-item strong{display:block;color:#183960;font-size:12px;line-height:1.5;margin-bottom:8px;font-weight:650}
+    .beagu-2026-national-item span{display:block;color:#205e9d;font-size:15px;font-weight:850;line-height:1.4}
+    .beagu-2026-national-status{color:#61718a;font-size:12px;line-height:1.5}
+    @media(max-width:500px){.beagu-2026-national{padding:16px}.beagu-2026-national-grid{grid-template-columns:1fr}}
     /* 원래 홈 요소와 격리된 게임 섹션 */
     .teacher-game-feature {
       margin-top: 22px;
@@ -320,6 +330,14 @@
       </div>
     </dl>
 
+    <section class="beagu-2026-national" aria-labelledby="beagu-2026-national-title">
+      <h2 id="beagu-2026-national-title">2026 전국 응답 경향</h2>
+      <p>자발적 참여 응답을 전국 단위로 합산한 대표 응답입니다. 전국 교사 전체를 대표하는 통계나 학교별 평가가 아닙니다.</p>
+      <div id="beagu2026NationalTrends" class="beagu-2026-national-grid" aria-live="polite">
+        <p class="beagu-2026-national-status">안전한 전국 집계 결과를 확인하는 중입니다.</p>
+      </div>
+    </section>
+
     <section class="beagu-xp" data-beagu-xp data-xp-state="loading" aria-label="2026년 챌린지 목표 달성률">
       <div class="beagu-xp-head"><h2>2026 챌린지 · 목표 1,000명</h2><strong class="beagu-xp-number" data-xp-number aria-live="polite">순번 확인 중</strong></div>
       <div class="beagu-xp-track"><div class="beagu-xp-fill" data-xp-progress role="progressbar" aria-label="챌린지 진행률" aria-valuemin="0" aria-valuemax="1000"></div></div>
@@ -417,6 +435,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
+ <script src="js/2026-questionnaire-options-v1.2.js"></script>
+ <script src="js/2026-national-trends.js?v=20261121-autonomous1"></script>
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
  <script src="js/home-cumulative-stats.js?v=20261118-live1"></script>
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
