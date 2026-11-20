@@ -374,6 +374,7 @@ body.is-playing #sceneArt[data-season="summer"] #sceneBackdrop[data-asset="hd-we
 <link rel="stylesheet" href="styles/class-diary-progress-controls-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-background-only-v1.css?v=20261120-1">
 <link rel="stylesheet" href="styles/class-diary-actors-natural-v1.css?v=20261120-alpha-1">
+<link rel="stylesheet" href="styles/class-diary-male-natural-v2.css?v=20261120-pose8">
 <style id="diary-home-return-style">
 body.is-playing #vnHud>#diaryHomeReturn{
  position:absolute;left:0;top:0;z-index:22;
@@ -737,6 +738,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-female-hq-v1.js?v=20261120-thigh4"></script>
 <script src="js/class-diary-male-photos-v1.js?v=20261120-alpha-1"></script>
 <script src="js/class-diary-semester-male-art-v1.js?v=20261120-alpha-1"></script>
+<script src="js/class-diary-male-natural-v2.js?v=20261120-pose8"></script>
 <script src="js/class-diary-student-doyun-v1.js?v=20261120-alpha-1"></script>
 <script src="js/class-diary-supporting-cast-v1.js?v=20261120-men-1"></script>
 <script src="js/class-diary-scenario-v1.js"></script>
@@ -772,6 +774,8 @@ const femaleHQ=window.BeaguClassDiaryFemaleHQ;
 const supportingCast=window.BeaguClassDiarySupportingCast;
 const malePhotos=window.BeaguClassDiaryMalePhotos;
 const maleSemester=window.BeaguClassDiarySemesterMaleArt;
+const maleNatural=window.BeaguClassDiaryMaleNatural;
+if(!maleNatural||typeof maleNatural.paint!=="function")throw Error("MALE_NATURAL_ASSET_REQUIRED");
 const studentDoyun=window.BeaguClassDiaryStudentDoyun;
 if(!studentDoyun||typeof studentDoyun.render!=="function")throw Error("DOYUN_ART_REQUIRED");
 if(!maleSemester||typeof maleSemester.expressionFor!=="function")throw Error("MALE_SEMESTER_ASSET_REQUIRED");
@@ -1208,11 +1212,27 @@ function displayStage(id,who,expression,season,semesterBackground){
    preload.src=imagePath;
   }
  }
- // Background-only story phase: character artwork remains unrendered.
- ++maleFrameSerial;
+ // Only the selected adult male colleague appears; female presentation stays unchanged.
+ const maleFrame=++maleFrameSerial;
  $('scenePortrait').hidden=true;
  $('scenePortrait').removeAttribute('src');
  $('sceneHyunwooLive').hidden=true;
+ if(maleNatural.cast(who)){
+  const episode=game&&Number.isInteger(game.episode)?game.episode:
+   (game&&Number.isInteger(game.day)?game.day:1);
+  const reflection=!!(game&&String(game.phase||'').includes('reflection'));
+  if(who==='man'){
+   const fallback=maleSemester.expressionFor(episode,reflection,game&&game.lastOutcome&&game.lastOutcome.id);
+   maleSemester.paint($('sceneHyunwooLive'),fallback,season);
+   $('sceneHyunwooLive').hidden=false;
+  }
+  maleNatural.preload(who,()=>{
+   if(maleFrame!==maleFrameSerial)return;
+   maleNatural.paint($('sceneHyunwooLive'),who,episode,reflection,
+    game&&game.lastOutcome&&game.lastOutcome.id,season);
+   $('sceneHyunwooLive').hidden=false;
+  });
+ }
  return;
  const highRes=femaleHQ&&femaleHQ.portrait(who);
  $('scenePortrait').src=highRes||visual.dataUrl(sd.portraitSvg(who,expression||'neutral',season));
@@ -1236,10 +1256,20 @@ function displayStage(id,who,expression,season,semesterBackground){
  }
 }
 function renderSupportingCast(moment,season){
- // Character illustrations are on hold; prose and dialogue are preserved.
- $('sceneGuest').hidden=true;
+ // Male school supporting cast only; the female cast remains background-only.
+ const described=supportingCast.describe(moment);
+ const maleGuest=described&&malePhotos.PEOPLE[described.id]?described:null;
+ $('sceneGuest').hidden=!maleGuest;
  $('sceneGuestPortrait').removeAttribute('src');
- $('sceneGuestMalePhoto').hidden=true;
+ $('sceneGuestPortrait').hidden=true;
+ $('sceneGuestMalePhoto').hidden=!maleGuest;
+ if(maleGuest){
+  malePhotos.paint($('sceneGuestMalePhoto'),maleGuest.id);
+  $('sceneGuestName').textContent=maleGuest.name;
+  $('sceneGuestRole').textContent=maleGuest.role;
+  $('sceneGuest').dataset.sdCharacter=maleGuest.id;
+  $('sceneGuest').setAttribute('aria-label',maleGuest.name+' · '+maleGuest.role);
+ }
  return;
  const guest=supportingCast.describe(moment)||(moment&&femaleSemester.WOMEN[moment.id]?moment:null);
  const node=$('sceneGuest');
