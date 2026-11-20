@@ -55,6 +55,12 @@
           <p class="help">서버에서 관리자 권한과 2단계 인증을 확인한 뒤 통계를 불러옵니다.</p></div>
         <button id="adminLogout" type="button" class="secondary">로그아웃</button>
       </div>
+      <section id="webReleases" class="panel" hidden aria-labelledby="webReleaseTitle">
+        <h2 id="webReleaseTitle">업데이트 관리</h2>
+        <p id="releaseStatus" role="status"></p>
+        <button id="releaseRefresh" type="button" class="secondary">새로고침</button>
+        <div id="releaseContent"></div>
+      </section>
       <nav class="period-tabs" aria-label="통계 조회 기간" id="adminPeriods">
         <button type="button" data-period="today">오늘</button>
         <button type="button" data-period="7d" aria-pressed="true">7일</button>
@@ -257,5 +263,6 @@
   <script src="js/supabase-config.js"></script>
   <script defer src="js/beagu-admin-access-v1.js?v=20261121-hourlymonitor1"></script>
   <script defer src="js/beagu-2026-admin-review.js?v=20261121-quality1"></script>
+  <script defer src="js/web-release-admin.js"></script>
 </body>
 </html>

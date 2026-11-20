@@ -1,0 +1,61 @@
+name: Test and stage a web release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: web-release-preview
+  cancel-in-progress: false
+jobs:
+  stage:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: web-release-staging
+    timeout-minutes: 20
+    env:
+      RELEASE_API: ${{ vars.RELEASE_API }}
+      INITIAL_PRODUCTION_SHA: ${{ vars.INITIAL_PRODUCTION_SHA }}
+      PREVIEW_URL: ${{ vars.PREVIEW_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Register immutable candidate
+        id: register
+        env:
+          RELEASE_SECRET: ${{ secrets.RELEASE_CANDIDATE_SECRET }}
+        run: python release/ci.py register
+      - name: Run offline feature checks
+        run: python release/check.py
+      - name: Build and archive once
+        env:
+          STAGE_PUBLISHABLE_KEY: ${{ vars.STAGE_PUBLISHABLE_KEY }}
+        run: |
+          python release/build.py dist
+          tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -cf website.tar -C dist .
+      - name: Publish protected preview
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config release/preview/wrangler.jsonc
+      - name: Check access, integrity and staging routes
+        env:
+          PREVIEW_PASSWORD: ${{ secrets.PREVIEW_PASSWORD }}
+        run: |
+          python release/verify_host.py preview
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node release/browser.cjs
+      - name: Record test results and retain archive
+        if: always() && steps.register.outcome == 'success'
+        env:
+          JOB_STATUS: ${{ job.status }}
+          RELEASE_SECRET: ${{ secrets.RELEASE_CANDIDATE_SECRET }}
+        run: python release/ci.py tested
