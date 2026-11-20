@@ -166,7 +166,12 @@
     if(stored()===token){try{sessionStorage.removeItem(KEY)}catch(_){}}
     window.dispatchEvent(new Event('beagu:level-state-change'));
    }
-   if(!modal.hidden){paint(0);message.textContent='인증 정보를 확인하지 못했습니다. 다시 입력해 주세요.'}
+   if(!modal.hidden){
+    if(e.status===401||e.status===403)paint(0);
+    message.textContent=e.status===401||e.status===403?
+      '인증이 만료되었거나 해제되었습니다. 참여코드를 다시 입력해 주세요.':
+      '서버 연결이 원활하지 않습니다. 기존 인증을 유지한 채 다시 확인해 주세요.';
+   }
   }
  }
  badge.setAttribute('role','button');
