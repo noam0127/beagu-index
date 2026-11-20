@@ -36,6 +36,8 @@ const api=read('supabase/functions/beagu-level-api/index.ts');
 assert.match(api,/if\(Number\(session.access_level\)<1\)return send\(\{error:'ACCESS_DENIED'/);
 assert.match(api,/rankedQuery\('beagu_lv1_school_sort_cache_v1'\)/);
 assert.match(api,/rankedQuery\('beagu_lv1_school_sort_index'\)/);
+assert.match(api,/direction,nulls:'last'/);
+assert.doesNotMatch(api,/direction:ascending\?'asc':'desc'/);
 assert.match(api,/count:'exact'/);
 const workflow=read('.github/workflows/refresh-public-school-directory.yml');
 assert.match(workflow,/workflow_dispatch:/);
