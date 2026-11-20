@@ -1,0 +1,194 @@
+/* Class Diary four-page setup book, 2026-11-20.
+ * Isolated from game scenes, accounts and story state.
+ */
+body.is-setting #setup{perspective:1300px;isolation:isolate}
+body.is-setting #setup .setup-progress{
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:clamp(3px,1.2vw,9px)!important;
+ width:min(100%,750px);
+ margin-inline:auto;
+}
+body.is-setting #setup .setup-progress [data-step-label]{
+ display:flex;align-items:center;justify-content:center;
+ padding:clamp(5px,.85dvh,9px) 2px!important;
+ min-width:0;white-space:nowrap;
+ font-size:clamp(9px,1.5vw,12px)!important;
+ line-height:1.25;letter-spacing:-.055em;
+ border-radius:11px;text-align:center;
+}
+body.is-setting #setup .setup-progress [aria-current="step"]{
+ background:#74546f!important;color:#fff!important;
+ box-shadow:0 3px 10px #74546f26;
+}
+body.is-setting #setup[data-step="3"] #profileForm .setup-layout,
+body.is-setting #setup[data-step="4"] #profileForm .setup-layout{display:none!important}
+body.is-setting #setup[data-step="4"] [data-setup-screen]:not([data-setup-screen="4"]),
+body.is-setting #setup[data-step="3"] [data-setup-screen]:not([data-setup-screen="3"]){display:none!important}
+body.is-setting #setup:not([data-step="3"]) #profileForm .setup-supporting-page,
+body.is-setting #setup:not([data-step="4"]) #profileForm .setup-review{
+ display:none!important;
+}
+body.is-setting #setup[data-step="3"] #profileForm .setup-supporting-page{
+ display:flex!important;flex-direction:column;justify-content:center;
+ flex:1 1 auto;min-height:0;max-height:100%;
+ width:min(100%,780px);margin:auto;
+ padding:clamp(9px,1.6dvh,20px) clamp(13px,4vw,30px);
+ gap:clamp(8px,1.8dvh,17px);
+ overflow:hidden;
+ box-sizing:border-box;
+}
+body.is-setting #setup[data-step="3"] #profileForm .setup-supporting-page .setup-section-title{
+ flex:0 0 auto;margin:0;
+}
+body.is-setting #setup[data-step="3"] #profileForm .setup-supporting-page .setup-supporting-cast,
+body.is-guest-flow.is-setting #setup[data-step="3"] #profileForm .setup-supporting-page .setup-supporting-cast{
+ display:block!important;visibility:visible!important;
+ padding:clamp(6px,1dvh,13px);
+ margin:0;
+ min-height:0;
+ border:1px solid #eadbe5;
+ border-radius:15px;
+ background:#fffdfa;
+}
+body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-title{
+ display:block;margin:0 0 7px;
+}
+body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-grid{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:clamp(4px,1vw,9px);
+}
+body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person{
+ min-width:0;box-sizing:border-box;padding:clamp(4px,.9dvh,8px);
+ gap:clamp(3px,.8vw,8px);
+}
+body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person img,
+body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person .setup-supporting-photo{
+ flex:0 0 auto;width:clamp(31px,5.8dvh,52px);
+ height:clamp(38px,8.3dvh,71px);object-fit:contain;
+}
+body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person span{
+ min-width:0;overflow-wrap:anywhere;font-size:clamp(10px,1.7vmin,13px);
+}
+body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person small{
+ font-size:clamp(9px,1.4vmin,11px);
+}
+body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-note{
+ margin:5px 0 0;font-size:10px;
+}
+body.is-setting #setup[data-step="3"] #profileForm .setup-supporting-page .setup-story-note{
+ display:flex!important;flex:0 0 auto;margin:0;
+}
+body.is-setting #setup[data-step="4"] #profileForm .setup-review{
+ display:flex!important;flex-direction:column;justify-content:center;
+ flex:1 1 auto;min-height:0;max-height:100%;
+ overflow:hidden;
+}
+body.is-setting #setup[data-step="4"] #profileForm .setup-review-fields{
+ min-height:0;
+}
+body.is-setting #setup[data-step="4"] #profileForm .setup-review-fields>div[hidden]{display:none!important}
+body.is-setting #setup[data-step="1"] #profileForm .setup-end,
+body.is-setting #setup[data-step="2"] #profileForm .setup-end,
+body.is-setting #setup[data-step="3"] #profileForm .setup-end{display:none!important}
+body.is-setting #setup[data-step="4"] #profileForm .setup-end{
+ display:block!important;flex:0 0 auto;
+}
+body.is-setting #setup[data-step="4"] #profileForm .setup-end .actions{
+ display:flex!important;justify-content:center;margin:6px 0!important;
+}
+body.is-setting #setup[data-step="1"] #setupNext,
+body.is-setting #setup[data-step="2"] #setupNext,
+body.is-setting #setup[data-step="3"] #setupNext{
+ display:inline-flex!important;align-items:center;justify-content:center;
+}
+body.is-setting #setup[data-step="4"] #setupNext{display:none!important}
+body.is-setting #setup[data-step="3"] .setup-step-actions{
+ display:flex!important;justify-content:space-between!important;
+}
+/* The paper effect is decorative, non-interactive, and never blocks clicks. */
+#setup .diary-paper-turn-sheet{
+ position:absolute;
+ inset:clamp(86px,15dvh,165px) clamp(11px,3vw,37px) clamp(63px,12dvh,96px);
+ z-index:30;
+ pointer-events:none!important;user-select:none;
+ transform-style:preserve-3d;
+ transform-origin:left center;
+ border:1px solid #dac6ce;
+ border-radius:5px 20px 20px 5px;
+ background:
+  repeating-linear-gradient(180deg,transparent 0 34px,#bcb0bc2a 35px 36px),
+  linear-gradient(110deg,#fffefa 0%,#fcf7f1 74%,#e9d9dd 97%,#cbb7c3 100%);
+ box-shadow:15px 10px 30px #2b243b3d,inset -16px 0 23px #a897aa29;
+ backface-visibility:hidden;
+ animation:diary-setup-paper-next .56s cubic-bezier(.2,.72,.35,1) forwards;
+}
+#setup .diary-paper-turn-sheet[data-direction="back"]{
+ transform-origin:right center;
+ background:linear-gradient(100deg,#d6c5d2,#faf7f1 18%,#fffefa 90%);
+ animation-name:diary-setup-paper-back;
+}
+#setup .diary-paper-turn-sheet .diary-paper-turn-title{
+ position:absolute;left:8%;right:8%;top:17%;
+ color:#87697d;
+ font:700 clamp(15px,3.4vw,27px)/1.4 "Gowun Batang","Nanum Myeongjo",serif;
+ letter-spacing:-.02em;
+}
+#setup .diary-paper-turn-sheet::after{
+ content:"";position:absolute;right:0;top:0;bottom:0;width:17%;
+ background:linear-gradient(90deg,transparent,#b8a0ab49);
+ border-radius:0 20px 20px 0;
+}
+@keyframes diary-setup-paper-next{
+ 0%{opacity:0;transform:perspective(1200px) rotateY(0deg) translateX(3px)}
+ 10%{opacity:.94}
+ 66%{opacity:.82}
+ 100%{opacity:0;transform:perspective(1200px) rotateY(-172deg) translateX(0)}
+}
+@keyframes diary-setup-paper-back{
+ 0%{opacity:0;transform:perspective(1200px) rotateY(0deg) translateX(-3px)}
+ 10%{opacity:.94}
+ 66%{opacity:.82}
+ 100%{opacity:0;transform:perspective(1200px) rotateY(172deg) translateX(0)}
+}
+body.is-setting #setup .diary-paper-new-page{
+ animation:diary-setup-page-arrival .38s ease-out both!important;
+}
+@keyframes diary-setup-page-arrival{
+ 0%{opacity:.32;transform:translateX(9px)}
+ 100%{opacity:1;transform:none}
+}
+@media(max-width:620px){
+ body.is-setting #setup .setup-progress [data-step-label]{font-size:10px!important;padding:6px 1px!important}
+ body.is-setting #setup[data-step="3"] #profileForm .setup-supporting-page{
+  padding:clamp(5px,1.5dvh,13px) 12px;gap:clamp(5px,1.2dvh,11px);
+ }
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person{
+  flex-direction:column;text-align:center;gap:2px;padding:5px 2px;
+ }
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person img,
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person .setup-supporting-photo{
+  width:clamp(33px,7dvh,58px);height:clamp(40px,9dvh,74px);
+ }
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person span{
+  font-size:11px;
+ }
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person small{
+  font-size:9px;
+ }
+ #setup .diary-paper-turn-sheet{inset:clamp(76px,15dvh,125px) 12px 70px}
+}
+@media(max-height:590px){
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-note,
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-story-note{display:none!important}
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-title{font-size:11px}
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person img,
+ body.is-setting #setup[data-step="3"] .setup-supporting-page .setup-supporting-person .setup-supporting-photo{
+  height:clamp(31px,7dvh,46px);width:33px
+ }
+ body.is-setting #setup[data-step="4"] #profileForm .setup-review{padding-block:6px}
+}
+@media(prefers-reduced-motion:reduce){
+ #setup .diary-paper-turn-sheet{display:none!important;animation:none!important}
+ body.is-setting #setup .diary-paper-new-page{animation:none!important;transform:none!important}
+}
