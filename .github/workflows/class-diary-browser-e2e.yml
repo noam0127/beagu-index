@@ -8,6 +8,7 @@ on:
       - 'js/class-diary-home-entry-v1.js'
       - 'styles/class-diary-guest-experience-v1.css'
       - 'scripts/test-class-diary-guest-flow-browser.cjs'
+      - 'scripts/test-class-diary-setup-book.cjs'
       - 'js/class-diary-play-v1.js'
       - 'js/class-diary-semester-v1.js'
       - 'js/class-diary-school-brief-v1.js'
@@ -65,6 +66,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify four paper pages and setup transition contract
+        run: node scripts/test-class-diary-setup-book.cjs
       - name: Verify line layout without browser
         run: node scripts/test-class-diary-literary.cjs
       - name: Install browser test dependencies
