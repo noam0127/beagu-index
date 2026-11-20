@@ -7,7 +7,10 @@ on:
       - 'js/beagu-2026-admin-review.js'
       - 'supabase/functions/beagu-2026-review-admin/**'
       - 'supabase/migrations/*beagu_2026_admin_private_review_queue.sql'
+      - 'supabase/migrations/*beagu_2026_basis_pending_review_audit.sql'
       - 'tests/2026-review-admin-static.cjs'
+      - 'tests/2026-review-basis-pending-static.cjs'
+      - 'styles/beagu-admin-v1.css'
       - '.github/workflows/2026-review-admin-validation.yml'
   push:
     branches: [main]
@@ -17,7 +20,10 @@ on:
       - 'js/beagu-2026-admin-review.js'
       - 'supabase/functions/beagu-2026-review-admin/**'
       - 'supabase/migrations/*beagu_2026_admin_private_review_queue.sql'
+      - 'supabase/migrations/*beagu_2026_basis_pending_review_audit.sql'
       - 'tests/2026-review-admin-static.cjs'
+      - 'tests/2026-review-basis-pending-static.cjs'
+      - 'styles/beagu-admin-v1.css'
       - '.github/workflows/2026-review-admin-validation.yml'
   workflow_dispatch:
 permissions:
@@ -32,6 +38,7 @@ jobs:
           node-version: '22'
       - run: |
           node tests/2026-review-admin-static.cjs
+          node tests/2026-review-basis-pending-static.cjs
           node tests/admin-dashboard-static.cjs
           node tests/2026-question-results-pipeline.mjs
           node tests/three-day-release.mjs
