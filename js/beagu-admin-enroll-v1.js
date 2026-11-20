@@ -1,4 +1,4 @@
-/* A one-time verified-email owner onboarding flow.
+/* Verified-email owner onboarding flow with explicit manual authorization.
  * This file contains no approved email, code, service key, or owner UUID.
  * Only Supabase Auth handles passwords. No analytics scripts run on this page.
  */
@@ -19,7 +19,7 @@
   }
   function showAuthenticated(hasSession){
     for(const name of panels)$(name).hidden=hasSession?name!=='enrollClaimPanel':name==='enrollClaimPanel';
-    if(hasSession)notice('로그인되었습니다. 메일로 받은 관리자 초대코드를 입력하세요.');
+    if(hasSession)notice('로그인되었습니다. 이메일 인증까지 마쳤다면 관리자 권한 연결을 요청하세요.');
     else notice('이메일 계정 생성·확인을 진행하거나, 이미 가입했다면 로그인하세요.');
   }
   async function restore(){
@@ -49,7 +49,7 @@
       $('enrollLoginEmail').value=email;
       if(data?.session){
         showAuthenticated(true);
-        notice('계정이 생성되었습니다. 별도 관리자 초대코드가 있어야 권한을 활성화할 수 있습니다.');
+        notice('계정이 생성되었습니다. 이메일 인증 완료 후 관리자 권한 연결이 필요합니다.');
       }else{
         notice('계정 요청이 접수되었습니다. 메일함에서 가입 확인 링크를 완료한 뒤 2단계 로그인으로 진행하세요.');
       }
@@ -72,26 +72,6 @@
     }catch(_){
       $('enrollLoginPassword').value='';
       notice('로그인할 수 없습니다. 이메일 인증 완료 여부와 비밀번호를 확인하세요.',true);
-    }finally{pending(false);}
-  });
-  $('enrollClaimForm').addEventListener('submit',async event=>{
-    event.preventDefault();if(busy)return;
-    const code=$('enrollInviteCode').value.trim().replace(/[\s-]/g,'').toLowerCase();
-    if(!/^[0-9a-f]{32}$/.test(code)){
-      notice('메일로 받은 32자리 관리자 초대코드를 확인하세요.',true);return;
-    }
-    pending(true);
-    try{
-      const {data:session,error:sessionError}=await auth.getSession();
-      if(sessionError||!session?.session?.user?.id)throw Error('not_signed_in');
-      const {data,error}=await supabaseClient.rpc('beagu_admin_claim_invite_v1',{p_code:code});
-      $('enrollInviteCode').value='';
-      if(error||data!==true)throw Error('claim_rejected');
-      notice('관리자 권한이 활성화되었습니다. 2단계 인증을 설정합니다.');
-      location.assign('admin.html');
-    }catch(_){
-      $('enrollInviteCode').value='';
-      notice('활성화되지 않았습니다. 이메일 확인 완료 여부·코드 유효기간을 확인하세요. 반복 실패 시 코드가 잠깁니다.',true);
     }finally{pending(false);}
   });
   $('enrollSignOut').addEventListener('click',async()=>{
