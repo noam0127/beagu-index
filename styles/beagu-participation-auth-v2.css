@@ -87,3 +87,14 @@ body.beagu-participation-open{overflow:hidden}
  .beagu-participation-host .beagu-participation-inline-trigger{max-width:100%}
 }
 @media(prefers-reduced-motion:reduce){.beagu-participation-overlay{backdrop-filter:none}}
+
+/* Keep one visible authentication action or status per existing host. */
+.beagu-participation-host>.beagu-auth-heading{display:none!important}
+.beagu-participation-host[data-beagu-participation-level="1"],
+.beagu-participation-host[data-beagu-participation-level="2"]{
+ padding:12px 15px!important;min-height:0!important;
+}
+.beagu-participation-host[data-beagu-participation-level="1"] .beagu-participation-inline-status,
+.beagu-participation-host[data-beagu-participation-level="2"] .beagu-participation-inline-status{
+ width:100%;min-height:38px;text-align:center;
+}
