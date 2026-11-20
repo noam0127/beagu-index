@@ -22,6 +22,10 @@ for(const [narrator,track] of Object.entries(narratorTracks)){
  assert.notEqual(track,'daily','Prologue must differ from landing BGM');
 }
 assert.equal(sound.prologueTrack('unlisted'),'wildflowers','Safe narrator fallback');
+assert.equal(sound.PLAYER_SETUP_TRACK,'bright','Post-prologue setup has a dedicated theme');
+assert(sound.TRACKS[sound.PLAYER_SETUP_TRACK]);
+for(const track of Object.values(sound.PROLOGUE_TRACKS))assert.notEqual(track,sound.PLAYER_SETUP_TRACK,'No prologue may reuse the player setup theme');
+assert.notEqual(sound.PLAYER_SETUP_TRACK,sound.semesterScore(1).track,'Episode 1 uses a different theme');
 assert.equal(sound.dayTrack(1),'quiet');
 assert.equal(sound.dayTrack(2),'tension');
 assert.equal(sound.dayTrack(7),'intimate');
@@ -146,6 +150,9 @@ for(const key of ['wildflowers','with-these-hands','unraveling','incredulity']){
 }
 
 assert(semesterPage.includes('sound.semesterScore(game.episode,'),'Semester screen must use the 36-episode score');
+assert(semesterPage.includes("function renderPlayerSetup(){\n show('playerSetup');"),'Prologue and player setup must be separate screens');
+assert(semesterPage.includes('mood(sound.PLAYER_SETUP_TRACK);'),'Player setup must change music on entry');
+assert(semesterPage.includes("mood(sound.PLAYER_SETUP_TRACK);\n sound.setAmbience(null);"),'Player setup must not retain prologue ambience');
 assert(semesterPage.includes('if(!schoolIntroPending)mood(sound.prologueTrack(game.profile.partner));'),
  'Narrated prologue must change BGM after (not during) the school introduction');
 assert(semesterPage.includes("if(storyMode==='semester'&&schoolIntroPending)return renderPrologueSchoolIntroduction();"),
