@@ -59,13 +59,19 @@ function installBeaguReferralFormSubmitTrigger(){
   const item=form.getItemById(Number(itemId));
   if(!item || item.getTitle()!==BEAGU_REFERRAL_2026.questionTitle)
     throw Error('추천용 Google Forms 문항 ID가 올바르지 않습니다.');
-  const name='onBeaguReferralFormSubmitted';
-  ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()===name)
+  const handlers=['onBeaguReferralFormSubmitted','reconcileBeaguReferralResponses'];
+  ScriptApp.getProjectTriggers().filter(t=>handlers.includes(t.getHandlerFunction()))
     .forEach(t=>ScriptApp.deleteTrigger(t));
-  ScriptApp.newTrigger(name).forForm(form).onFormSubmit().create();
-  if(!ScriptApp.getProjectTriggers().some(t=>t.getHandlerFunction()===name))
-    throw Error('추천 트리거 설치 확인에 실패했습니다.');
-  Logger.log('공식 Form 제출 이벤트 → 비공개 추천 검사 트리거 설치 완료');
+  ScriptApp.newTrigger(handlers[0]).forForm(form).onFormSubmit().create();
+  // Recovery after transient network failure. Backend event IDs make replay idempotent.
+  ScriptApp.newTrigger(handlers[1]).timeBased().everyHours(1).create();
+  const installed=new Set(ScriptApp.getProjectTriggers().map(t=>t.getHandlerFunction()));
+  if(!handlers.every(name=>installed.has(name)))
+    throw Error('추천 제출·복구 트리거 설치 확인에 실패했습니다.');
+  // A first-time installation must not retroactively credit old survey responses.
+  if(!props.getProperty('BEAGU_REFERRAL_RECONCILE_FROM_MS'))
+    props.setProperty('BEAGU_REFERRAL_RECONCILE_FROM_MS',String(Date.now()));
+  Logger.log('공식 Form 제출 이벤트 + 매시간 장애 복구 트리거 설치 완료');
 }
 /** FormTriggerBuilder에서 제공하는 FormResponse만 처리합니다. */
 function onBeaguReferralFormSubmitted(event){
@@ -100,4 +106,41 @@ function onBeaguReferralFormSubmitted(event){
   if(parsed.ok!==true)throw Error('추천 검사 서버 결과 이상');
   // Never log response ID, proof, respondent UUID or survey data.
   Logger.log('추천 검사 완료: '+String(parsed.decision));
+}
+
+
+/**
+ * Recovery scan: if a network error prevented crediting a real submitted form
+ * response, retry from the last completed checkpoint with a 5-minute overlap.
+ * The backend makes the same Form response ID idempotent.
+ *
+ * Reading is limited to the exact response Form and its referral item. This
+ * does NOT replicate other teacher answers to a new sheet or the web.
+ * Run hourly using the owner-installed time trigger, not a public endpoint.
+ */
+function reconcileBeaguReferralResponses(){
+  const props=PropertiesService.getScriptProperties();
+  const checkpoint=Number(props.getProperty('BEAGU_REFERRAL_RECONCILE_FROM_MS'));
+  if(!Number.isSafeInteger(checkpoint)||checkpoint<=0)
+    throw Error('복구 기준 시점이 없습니다. 먼저 소유자가 추천 트리거를 설치해야 합니다.');
+  const start=Date.now();
+  if(checkpoint>start+5*60*1000)
+    throw Error('복구 기준 시점이 현재보다 미래입니다. 수동 점검이 필요합니다.');
+  const form=beaguReferralFindOfficialForm_();
+  const from=new Date(Math.max(
+    Date.parse('2026-11-01T00:00:00+09:00'),checkpoint-5*60*1000
+  ));
+  const responses=form.getResponses(from);
+  if(responses.length>2000)
+    throw Error('복구 대상 응답이 2,000건을 초과해 자동 처리를 보류했습니다.');
+  // Only now submitted rows are processed in the form trigger itself.
+  // Here, the existing handler is called with the verified Form object.
+  for(const response of responses){
+    const time=response.getTimestamp();
+    if(!(time instanceof Date)||time.getTime()>start+5*60*1000)
+      continue;
+    onBeaguReferralFormSubmitted({source:form,response});
+  }
+  props.setProperty('BEAGU_REFERRAL_RECONCILE_FROM_MS',String(start));
+  Logger.log('추천 제출 장애 복구 스캔 완료 · 개인정보 또는 제출 원문 비기록');
 }
