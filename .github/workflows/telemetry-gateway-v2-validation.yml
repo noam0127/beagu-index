@@ -32,3 +32,4 @@ jobs:
       - run: node tests/telemetry-abuse-guard-static.cjs
       - run: node tests/admin-live-traffic-static.cjs
       - run: node tests/telemetry-gateway-client-smoke.cjs
+      - run: node tests/challenge-search-telemetry.mjs
