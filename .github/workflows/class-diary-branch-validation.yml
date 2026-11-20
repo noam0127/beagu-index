@@ -6,10 +6,14 @@ on:
       - 'js/class-diary-branch-map-v1.js'
       - 'js/class-diary-daily-journal-v1.js'
       - 'js/class-diary-scene-direction-v1.js'
+      - 'js/class-diary-reconstructed-2027-v1.js'
+      - 'js/class-diary-rewritten-act*-v1.js'
+      - 'js/class-diary-semester-long-v3.js'
       - 'js/class-diary-sound-v1.js'
       - 'scripts/test-class-diary-branch-map.cjs'
       - 'scripts/test-class-diary-daily-journal.cjs'
       - 'scripts/test-class-diary-scene-direction.cjs'
+      - 'scripts/test-class-diary-reconstructed-2027.cjs'
       - 'styles/class-diary-daily-journal-v1.css'
       - '.github/workflows/class-diary-branch-validation.yml'
   workflow_dispatch:
@@ -27,12 +31,17 @@ jobs:
           node --check js/class-diary-branch-map-v1.js
           node --check js/class-diary-daily-journal-v1.js
           node --check js/class-diary-scene-direction-v1.js
+          node --check js/class-diary-reconstructed-2027-v1.js
+          for f in js/class-diary-rewritten-act{1..6}-v1.js; do node --check \"$f\"; done
+          node --check js/class-diary-semester-long-v3.js
           node --check js/class-diary-sound-v1.js
           node --check scripts/test-class-diary-branch-map.cjs
           node --check scripts/test-class-diary-daily-journal.cjs
           node --check scripts/test-class-diary-scene-direction.cjs
+          node --check scripts/test-class-diary-reconstructed-2027.cjs
       - name: Run 36-episode narrative and journal tests
         run: |
           node scripts/test-class-diary-branch-map.cjs
           node scripts/test-class-diary-daily-journal.cjs
           node scripts/test-class-diary-scene-direction.cjs
+          node scripts/test-class-diary-reconstructed-2027.cjs
