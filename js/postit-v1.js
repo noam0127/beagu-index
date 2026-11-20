@@ -97,7 +97,7 @@ function updateComposeAccess(){
  $("postitAccess").textContent=allowed?"Lv2 · 작성 가능":canRead()?"Lv2 · 읽기 전용":"🔒 Lv2 인증 필요";
  const lockedText=$("postitLocked")?.querySelector("b");
  if(lockedText)lockedText.textContent=canRead()
-  ?"정식 계정 로그인 후 원래 챌린지 기기에서 계정을 연결하면 작성할 수 있습니다."
+  ?"글쓰기 준비 중"
   :"Lv2부터 포스트잇을 열람할 수 있습니다";
  $("postitLocked").hidden=allowed;
  $("postitWriteForm").hidden=!allowed||!state.subject;
