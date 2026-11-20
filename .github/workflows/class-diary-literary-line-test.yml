@@ -6,6 +6,8 @@ on:
       - 'teacher-class-diary-play.html'
       - 'js/class-diary-literary-v1.js'
       - 'styles/class-diary-literary-v1.css'
+      - 'styles/class-diary-viewport-safe-v1.css'
+      - 'js/class-diary-mobile-safe-v1.js'
       - 'scripts/test-class-diary-literary.cjs'
       - 'scripts/test-class-diary-literary-browser.cjs'
       - '.github/workflows/class-diary-literary-line-test.yml'
