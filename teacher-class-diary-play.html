@@ -755,6 +755,8 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-philosophy-v1.js?v=20261120-lit3"></script>
 <script src="js/class-diary-pedagogy-v1.js?v=20261120-lit3"></script>
 <script src="js/class-diary-endings-v3.js?v=20261120-lit3"></script>
+<script src="js/class-diary-branch-map-v1.js?v=20261120-branch1"></script>
+<script src="js/class-diary-scene-direction-v1.js?v=20261120-director1"></script>
 <script src="js/class-diary-daily-journal-v1.js?v=20261120-diary1"></script>
 <script src="js/class-diary-semester-long-v3.js?v=20261120-lit3"></script>
 <script src="js/class-diary-prologue-scenes-v1.js?v=20261120-lit3"></script>
@@ -802,6 +804,8 @@ const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const semester=window.BeaguClassDiarySemester;
 const dailyJournal=window.BeaguClassDiaryDailyJournal;
+const branchMap=window.BeaguClassDiaryBranchMap;
+const sceneDirector=window.BeaguClassDiarySceneDirection;
 const narrator=window.BeaguClassDiaryNarrator;
 const schoolBrief=window.BeaguClassDiarySchoolBrief;
 const literary=window.BeaguClassDiaryLiterary;
@@ -1652,6 +1656,9 @@ function openDailyJournalChoice(){
  $('choiceSection').classList.add('daily-journal-dialog');
  $('choiceSection').setAttribute('aria-label','오늘의 학급일지 기록 선택');
  $('choiceSection').querySelector('.option-title').textContent='오늘의 학급일지 · 무엇을 남길까요?';
+ // The page-turn is purely visual and audible. It is never added to paragraphs or subtitle captions.
+ sceneDirector.stage($('sceneArt'),'page');
+ sound.note('paper');
  for(const choice of dailyJournal.choices(game.episode)||[]){
   const button=el('button',choice.label);
   button.type='button';button.className='choice';
@@ -1690,16 +1697,25 @@ function renderSemester(){
  renderSupportingCast(semesterArt.guest||maleSemester.guestFor(game.episode,reflection),semesterArt.season);
  studentDoyun.render($('sceneDoyun'),game.episode,reflection,Boolean(actualGuest));
  // The semester follows its own 36-chapter score; the 7-day demo keeps its original soundtrack.
- const score=sound.semesterScore(game.episode,{
+ // Rewritten chapter directions are activated only when the displayed manuscript
+ // title matches the new 36-episode map; never play new-scene effects over legacy prose.
+ const plannedEpisode=branchMap.episode(game.episode);
+ const direction=sceneDirector.forEpisode(game.episode,view.title,plannedEpisode&&plannedEpisode.title);
+ const score=direction?{
+  track:reflection?direction.journalMusic:direction.music,
+  ambience:reflection?null:direction.ambience,
+  cue:reflection?null:direction.sfx
+ }:sound.semesterScore(game.episode,{
   reflection,
   choice:reflection&&game.lastOutcome?game.lastOutcome.id:null,
   partner:game.profile.partner
  });
  mood(score.track);
  sound.setAmbience(score.ambience);
- if(!reflection&&score.cue&&lastPhysicalScene!=='semester:'+game.episode){
+ if(!reflection&&lastPhysicalScene!=='semester:'+game.episode){
   lastPhysicalScene='semester:'+game.episode;
-  sound.note(score.cue);
+  if(direction)sceneDirector.stage($('sceneArt'),direction.transition);
+  if(score.cue)sound.note(score.cue);
  }
  showCharacterFace(game.profile.partner,semesterArt.expression,profile.initial);
  $('characterName').textContent=profile.name;
