@@ -43,7 +43,8 @@ function setupDailyNoonTrigger() {
 function refreshBeagu2026AllPrivateStats() {
   if(typeof refreshBeagu2026QuestionResults!=="function")throw Error("최신 Code.gs 설치 필요");
   const lock=LockService.getScriptLock();
-  if(!lock.tryLock(60000))throw Error("다른 2026 전체 집계가 실행 중입니다.");
+  // A few closely spaced submissions may queue behind a complete private refresh.
+  if(!lock.tryLock(180000))throw Error("다른 2026 전체 집계가 실행 중입니다.");
   try {
     const snapshot=readBeagu2026SourceSnapshot();
     refreshBeagu2026QuestionResults(snapshot);
