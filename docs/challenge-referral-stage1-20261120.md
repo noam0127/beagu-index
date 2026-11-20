@@ -39,7 +39,7 @@
 ### 소유자 설치 순서 (아직 실행 안 됨)
 1. 원본 [2026 공식 설문 응답 시트](https://docs.google.com/spreadsheets/d/1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4/edit)와 Forms 원본을 백업.
 2. 응답 시트의 확장 프로그램 → Apps Script에 `scripts/beagu-2026-referral-integration.gs`를 새 별도 파일로 추가.
-3. `prepareBeaguReferralFormField()`를 소유자가 수동 실행하고 권한 승인. 로그의 `entry.<숫자>`를 `js/beagu-referral-form-config-v1.js`의 `entryName`에 반영. 새 Form 문항이 일반 응답자에게는 **선택 항목**이며 기존 답변을 훼손하지 않음을 확인.
+3. `prepareBeaguReferralFormField()`를 소유자가 수동 실행하고 권한 승인. 로그의 `entry.<숫자>`를 `js/beagu-referral-form-config-v1.js`의 `entryName`에 반영하고, 로그의 공식 Form 공개 URL이 `formUrl`과 동일한 설문인지 확인·수정. 새 Form 문항이 일반 응답자에게는 **선택 항목**이며 기존 답변을 훼손하지 않음을 확인.
 4. `BEAGU_REFERRAL_HMAC_KEY`(별도 서명키 32자 이상)을 링크·체크인·잉제스트 3개 함수에 동일하게 설정; `BEAGU_REFERRAL_INGEST_SECRET`(32자 이상 비밀키)을 Supabase 잉제스트와 Apps Script 속성에 동일하게 설정. 비밀키를 GitHub 코드, 대화, 외부 로그에 쓰지 않음.
 5. 소유자가 `installBeaguReferralFormSubmitTrigger()`를 실행하여 Form 전용 제출 이벤트 연결 (기존 스프레드시트 트리거는 보존). 실행 로그에서 오류 없음 검증.
 6. 안전한 별도 테스트 폼/프로젝트에서 동일 로직으로 정상 제출, 중복 제출, 자기 추천, 수정된 Proof, 재처리, 만료, 비동의 경로를 검증. 실제 본조사에 가짜 응답을 제출하지 않음.
