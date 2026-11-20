@@ -25,7 +25,7 @@ Deno.serve(async(request:Request)=>{
  if(request.method==="OPTIONS")return new Response(null,{status:204,headers:headers(origin)});
  if(request.method!=="POST")return send(origin,405,{error:"method_not_allowed"});
  if(origin&&!origins.has(origin))return send(origin,403,{error:"origin_not_allowed"});
- if(Number(request.headers.get("content-length")||0)>2048)return send(origin,413,{error:"request_too_large"});
+ if(Number(request.headers.get("content-length")||0)>4096)return send(origin,413,{error:"request_too_large"});
  const match=/^Bearer ([A-Za-z0-9._-]+)$/.exec(request.headers.get("authorization")||"");
  if(!match)return send(origin,401,{error:"authentication_required"});
  const jwt=match[1];
@@ -36,11 +36,11 @@ Deno.serve(async(request:Request)=>{
   return send(origin,401,{error:"authentication_required"});
  let input:Record<string,unknown>;
  try{
-  const text=await request.text();if(text.length>2048)throw Error();
+  const text=await request.text();if(text.length>4096)throw Error();
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(input.action!=="queue"&&input.action!=="hold")return send(origin,400,{error:"invalid_action"});
+ if(input.action!=="queue"&&input.action!=="hold"&&input.action!=="basis_review")return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -64,6 +64,43 @@ Deno.serve(async(request:Request)=>{
   }
   // Review decisions may only be made by the owner, never a viewer or editor.
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
+  if(input.action==="basis_review"){
+    const id=typeof input.school_id==="string"?input.school_id:"";
+    const sha=typeof input.payload_sha256==="string"?input.payload_sha256:"";
+    const decision=typeof input.decision==="string"?input.decision:"";
+    const type=typeof input.basis_type==="string"&&input.basis_type?input.basis_type:null;
+    const ref=typeof input.notice_source_ref==="string"?input.notice_source_ref.trim():"";
+    const digest=typeof input.notice_digest_sha256==="string"&&input.notice_digest_sha256?
+      input.notice_digest_sha256:null;
+    const effective=typeof input.notice_effective_at==="string"&&input.notice_effective_at?
+      input.notice_effective_at:null;
+    const scope=typeof input.publication_scope==="string"?input.publication_scope.trim():"";
+    const notes=typeof input.notes==="string"?input.notes.trim():"";
+    const reviewChecks=["distinct_respondents_reviewed","personal_data_reviewed",
+      "small_sample_reviewed","reidentification_reviewed","prior_data_combination_reviewed"];
+    if(!/^[A-Z0-9]{7}$/.test(id)||!/^[a-f0-9]{64}$/.test(sha)||
+       !["PENDING","REJECTED"].includes(decision)||
+       (type!==null&&!["EXPLICIT_RESPONDENT_CONSENT","OTHER_DOCUMENTED_LEGAL_BASIS"].includes(type))||
+       ref.length>400||scope.length>500||notes.length<12||notes.length>500||
+       /[<>\\r\\n]/.test(ref+scope)||/[<>]/.test(notes)||
+       (digest!==null&&!/^[a-f0-9]{64}$/.test(digest))||
+       (effective!==null&&(!/^20\\d\\d-\\d\\d-\\d\\dT/.test(effective)||!Number.isFinite(Date.parse(effective))))||
+       reviewChecks.some(k=>input[k]!==undefined&&typeof input[k]!=="boolean"))
+      return send(origin,400,{error:"invalid_basis_review"});
+    const params:Record<string,unknown>={
+      p_school_id:id,p_expected_sha256:sha,p_actor:actor,
+      p_session:claims.session_id,p_decision:decision,p_basis_type:type,
+      p_notice_ref:ref||null,p_notice_digest:digest,p_notice_effective_at:effective,
+      p_scope:scope||null,p_notes:notes
+    };
+    for(const key of reviewChecks)params["p_"+key]=input[key]===true;
+    const {error}=await db.rpc("beagu_2026_admin_record_basis_review",params);
+    if(error){
+      console.error("basis_review_write_failed",error.code||"unknown");
+      return send(origin,409,{error:"basis_review_failed_or_snapshot_changed"});
+    }
+    return send(origin,200,{ok:true,school_id:id,decision,publication_approved:false});
+  }
   const schoolId=typeof input.school_id==="string"?input.school_id:"";
   const sha=typeof input.payload_sha256==="string"?input.payload_sha256:"";
   const reason=typeof input.reason==="string"?input.reason.trim():"";
