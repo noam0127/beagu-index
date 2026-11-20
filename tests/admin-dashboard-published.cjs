@@ -17,7 +17,8 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
       html.includes('id="adminSchoolRanking"')&&
       html.includes('id="adminPasswordChangeForm"')&&
       html.includes('id="adminReview2026"')&&
-      html.includes('js/beagu-2026-admin-review.js?v=20261120-review2')&&
+      /js\\/beagu-2026-admin-review\\.js\\?v=(?:20261120-review2|20261121-auto1)/.test(html)&&
+      (!onPush||html.includes('js/beagu-2026-admin-review.js?v=20261121-auto1'))&&
       html.includes('id="adminReview2026List"')&&
       html.includes('id="adminTelemetryHealthPanel"')&&
       html.includes('id="adminTelemetryAsOf"')&&
@@ -25,13 +26,16 @@ const expectedVersion=onPush?"20261121-hourlymonitor1":"20261120-telemetryhealth
       (!onPush || html.includes('id="adminTelemetryHourlyStatus"'))&&
       html.includes('name="robots" content="noindex,nofollow,noarchive"')){
       assert(!/visit-stats\.js|search-telemetry-v1\.js/.test(html));
-      const asset=await fetch("https://baeguindex.com/js/beagu-2026-admin-review.js?v=20261120-review2&check="+Date.now(),{
+      const reviewVersion=html.includes("js/beagu-2026-admin-review.js?v=20261121-auto1")?
+        "20261121-auto1":"20261120-review2";
+      const asset=await fetch("https://baeguindex.com/js/beagu-2026-admin-review.js?v="+reviewVersion+"&check="+Date.now(),{
         headers:{"Cache-Control":"no-cache"},signal:AbortSignal.timeout(15000)
       });
       if(asset.status!==200){last="Review asset HTTP "+asset.status;continue;}
       const code=await asset.text();
       if(!code.includes('action:"basis_review"')||!code.includes("makeBasisForm(item)")||
-         !code.includes("개인정보 입력 금지")){
+         !code.includes("개인정보 입력 금지")||
+         (onPush&&!code.includes("자동 공개 판정"))){
         last="Published JS has old reviewer implementation";continue;
       }
       const healthJs=await fetch("https://baeguindex.com/js/beagu-admin-access-v1.js?v="+expectedVersion+"&check="+Date.now(),{
