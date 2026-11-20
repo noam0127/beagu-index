@@ -14,6 +14,7 @@ create table if not exists beagu_private.challenge_referral_quality_reviews (
  quality_status text not null check(quality_status in
    ('AUTO_PASS','REVIEW_REQUIRED','MANUALLY_APPROVED','REJECTED')),
  signals text[] not null default '{}',
+ form_quality_attested boolean not null default false,
  reviewer_user_id uuid references auth.users(id),
  reviewed_at timestamptz,
  notes text,
@@ -113,7 +114,8 @@ begin
      case when previous.quality_status='MANUALLY_APPROVED' then 'already_reviewed' else 'rejected_quality' end);
  end if;
  issues:=coalesce(p_quality_signals,'{}');
- if not p_quality_attested then issues:=array_append(issues,'QUALITY_ATTESTATION_MISSING'); end if;
+ -- Missing optional per-item signals are NOT themselves a fraud indicator.
+ -- The legacy form path still gets cryptographic proof/self-referral/duplicate checks.
  if exists(select 1 from beagu_private.challenge_referral_events e
      where e.campaign='2026' and e.respondent_sha256=p_respondent_hash
        and e.event_sha256<>p_event_hash)
@@ -128,11 +130,11 @@ begin
    where campaign='2026' and referral_token_sha256=p_referral_hash for update;
  status:=case when cardinality(issues)=0 then 'AUTO_PASS' else 'REVIEW_REQUIRED' end;
  insert into beagu_private.challenge_referral_quality_reviews(
-   event_sha256,respondent_visitor_id,quality_status,signals,checked_at)
+   event_sha256,respondent_visitor_id,quality_status,signals,form_quality_attested,checked_at)
  values(p_event_hash,p_respondent_uuid,status,
-   array(select distinct x from unnest(issues) x),now())
+   array(select distinct x from unnest(issues) x),p_quality_attested,now())
  on conflict(event_sha256) do update set quality_status=excluded.quality_status,
-   signals=excluded.signals,checked_at=now();
+   signals=excluded.signals,form_quality_attested=excluded.form_quality_attested,checked_at=now();
 
  if status='REVIEW_REQUIRED' then
    if not found then null; end if;
