@@ -183,8 +183,72 @@ function createGame(base){
  if(!base||!base.profile||!base.stats||!base.schoolName)throw Error('VERIFIED_GAME_REQUIRED');
  return {...copy(base),profile:{...copy(base.profile),employment:'fixed_term',grade:3},phase:'semester_chapter',episode:1,history:[],lastOutcome:null,ending:null,version:VERSION};
 }
+const RECONSTRUCTED_VERSION='class-diary-reconstructed-2027/v1';
+function isReconstructed(s){return !!s&&s.scriptEdition===RECONSTRUCTED_VERSION;}
+function reconstructedDependencies(){
+ const story=root.BeaguClassDiaryReconstructed,branches=root.BeaguClassDiaryBranchMap;
+ if(!story||!branches||story.VERSION!==RECONSTRUCTED_VERSION)throw Error('RECONSTRUCTED_STORY_DEPENDENCIES_REQUIRED');
+ return {story,branches};
+}
+function reconstructedChapter(s){
+ const {story,branches}=reconstructedDependencies();
+ const scene=story.scene(s.episode),branch=branches.episode(s.episode),act=Math.floor((s.episode-1)/6);
+ if(!scene||!branch||scene.title!==branch.title)throw Error('RECONSTRUCTED_CHAPTER_MISSING');
+ const paragraphs=scene.lines.slice();
+ if(s.episode===1){
+  const origin=s.profile.experience==='new'?
+   '3월 1일 오후, 나는 임용시험 책을 펴 놓고 있었다. 교감의 전화를 받자 내일은 누군가의 담임이 된다는 사실이 믿기지 않았다.':
+   s.profile.experience==='senior'?
+   '3월 1일 오후, 명예퇴직하고 떠난 여행지에서 교감의 전화를 받았다. 학교에서 다시 시작하자는 말에 가방을 내려놓았다.':
+   '3월 1일 오후, 육아에 지쳐 잠깐 숨을 돌리던 내게 교감의 전화가 왔다. 내일부터 다시 교실에 서야 한다는 말에 시계를 바라봤다.';
+  paragraphs.unshift(origin);
+ }
+ const callbacks=branches.memories(s.history,s.episode);
+ if(callbacks.length)paragraphs.splice(Math.min(4,paragraphs.length),0,...callbacks.slice(0,2).map(x=>x.text));
+ // Supporting character relationships are optional adult bonds, never inferred from school data.
+ if(s.episode%6===0){
+  const p=PERSON[s.profile.partner]||PERSON.none;
+  paragraphs.push(p.name+'이 오늘 기억에 남는 한 장면을 물었다. 나는 정답 대신 아이들과 나누었던 말을 들려주었다. 우리는 잠시 같은 교실을 떠올렸다.');
+ }
+ return {perspective:'player',narrator:'player',episode:s.episode,total:36,act:act+1,
+  actName:story.ACTS[act],date:'2027-'+scene.date,title:scene.title,place:scene.place,
+  visual:scene.visual,paragraphs,partner:(PERSON[s.profile.partner]||PERSON.none).name,
+  choices:branch.choices.map(x=>({id:x.id,label:x.label}))};
+}
+function reconstructedChoose(s,id){
+ const {story,branches}=reconstructedDependencies(),choice=Number(id);
+ const scene=story.scene(s.episode),branch=branches.episode(s.episode),n=copy(s);
+ const delta=branch.choices[choice].effect;
+ for(const [key,value] of Object.entries(delta))if(typeof n.stats[key]==='number')n.stats[key]=clamp(n.stats[key]+value);
+ n.history.push({episode:n.episode,choice});
+ const response=scene.outcomes[choice],cut=response.indexOf('. ');
+ if(cut<0)throw Error('RECONSTRUCTED_OUTCOME_SPLIT_REQUIRED_'+s.episode);
+ n.lastOutcome={perspective:'player',id:String(id),paragraphs:[response.slice(0,cut+1),response.slice(cut+2)],line:''};
+ n.phase='semester_reflection';
+ return n;
+}
+function reconstructedEnding(kind,n){
+ const p=PERSON[n.profile.partner]||PERSON.none;
+ const highlights={
+  warm:'소중한 것은 극적인 고백보다 곁에서 서로를 알아본 오후들이었다.',
+  parallel:'동료들과 아이들이 함께 결정을 고칠 수 있는 교실이 되었다.',
+  steady:'내가 모든 일을 책임질 수는 없었다. 그러나 지켜야 할 경계를 분명하게 배웠다.',
+  tender:'아이와 동료의 작은 마음을 놓치지 않으려 한 시간들이 남았다.',
+  ordinary:'실수와 후회가 많았지만 잘못을 인정하고 다시 배우는 교사로 남았다.'
+ };
+ return [
+  '방학식이 끝난 장미반에서 나는 사물함 뒤 매트에 잠시 누웠다. 처음에는 나를 위해 만든 자리였다.',
+  '장미반 학생들은 케이크를 스물한 조각으로 나누어 달라던 날과 운동장에서 가방을 맡기던 날을 기억했다.',
+  '우리는 다트 회사의 계약서를 고쳤고, 학급회의의 전원 동의라는 말을 지웠다. 학생들은 자신의 말을 기록하기 시작했다.',
+  highlights[kind],
+  p.name+'이 내게 한 학기 어땠느냐고 물었다. 나는 오래 생각하고도 쉬운 대답을 찾지 못했다.',
+  '집에 돌아와 강낭콩에 물을 주었다. 강낭콩은 자랐다. 나도 조금은 자랐기를 바랐다.',
+  '학급일지의 마지막 칸은 완전히 채우지 않았다. 내일도 배울 것이 있을 테니까.'
+ ];
+}
 function chapter(s){
  if(s.phase!=='semester_chapter'||s.episode<1||s.episode>36)throw Error('SEMESTER_CHAPTER_REQUIRED');
+ if(isReconstructed(s))return reconstructedChapter(s);
  const e=SCENES[s.episode-1],act=Math.floor((s.episode-1)/6),story=REWRITTEN[s.episode-1],p=PERSON[s.profile.partner]||PERSON.none;
  const paragraphs=story.lines.slice();
  const v3=LITERARY.get(s.episode);
@@ -223,6 +287,7 @@ function chapter(s){
 }
 function choose(s,id){
  if(s.phase!=='semester_chapter'||!CHOICES.includes(Number(id))||!/^[012]$/.test(String(id)))throw Error('SEMESTER_CHOICE_REQUIRED');
+ if(isReconstructed(s))return reconstructedChoose(s,id);
  const choice=Number(id),n=copy(s),d=EFFECTS[choice],story=REWRITTEN[s.episode-1];
  for(const [key,value] of Object.entries(d))if(typeof n.stats[key]==='number')n.stats[key]=clamp(n.stats[key]+value);
  n.history.push({episode:n.episode,choice});
@@ -243,7 +308,7 @@ function advance(s){
  const names={warm:'소중한',parallel:'든든한',steady:'단단한',tender:'다정한',ordinary:'솔직한'};
  n.ending={perspective:'player',id:kind,title:'나의 '+names[kind]+' 학급일지',heading:'계약이 끝난 뒤',
  affection:a,score:clamp(a*.10+t*.15+c*.25+n.stats.voice*.25+n.stats.boundary*.25),
- paragraphs:ENDINGS.compose(kind,n.profile,n.history)};
+ paragraphs:isReconstructed(n)?reconstructedEnding(kind,n):ENDINGS.compose(kind,n.profile,n.history)};
  n.phase='semester_ending';return n;
 }
 function validate(){if(SCENES.length!==36||REWRITTEN.length!==36)throw Error('EPISODE_COUNT');
