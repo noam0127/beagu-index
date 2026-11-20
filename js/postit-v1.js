@@ -34,7 +34,7 @@ function showMessage(error){$("postitMessage").textContent=error||""}
 function readableError(e){
  const m={LEVEL_REQUIRED:"Lv.2 인증이 필요합니다. 오른쪽 위 레벨 표시를 확인하세요.",
  COMMENT_READ_LEVEL_REQUIRED:"🔒 포스트잇과 댓글은 Lv.2부터 열람할 수 있습니다.",
- WRITER_IDENTITY_REQUIRED:"🔒 Lv.2 계정의 이용자 식별 인증이 필요합니다. 계정 인증 기능이 연결되기 전까지 작성할 수 없습니다.",
+ WRITER_IDENTITY_REQUIRED:"🔒 이 참여코드로는 작성자 식별이 확인되지 않습니다. 챌린지를 달성한 Lv2 참여코드로 인증해 주세요.",
  POST_RATE_LIMIT:"오늘의 작성 횟수(3개) 또는 작성 간격 제한에 도달했습니다.",
  COMMENT_RATE_LIMIT:"오늘의 댓글 횟수(12개) 또는 작성 간격 제한에 도달했습니다.",
  INVALID_POST:"글을 확인해주세요. 이메일, 전화번호, 링크는 넣지 말아주세요.",
