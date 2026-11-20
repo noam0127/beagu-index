@@ -4,7 +4,7 @@
 (()=>{
  "use strict";
  const $=id=>document.getElementById(id);
- let role="",page=0,filter="all",seq=0,ready=false;
+ let role="",page=0,filter="quality",seq=0,ready=false;
  const endpoint=SUPABASE_URL+"/functions/v1/beagu-2026-review-admin";
  const labels={
   TECHNICAL_CHECK_PASSED:"기술 검수 통과",
@@ -46,7 +46,7 @@
   $("adminReview2026Approved").textContent=String(data.summary?.approved??"—");
   const root=$("adminReview2026List");root.replaceChildren();
   const rows=Array.isArray(data.items)?data.items:[];
-  if(!rows.length)root.append(build("p","empty","이 조건에 해당하는 학교가 없습니다."));
+  if(!rows.length)root.append(build("p","empty","현재 자동 검수에서 추가 확인이 필요한 학교가 없습니다."));
   for(const item of rows){
     const row=build("article","ranking-card");
     const headline=build("div","rank-line");
@@ -59,6 +59,12 @@
       " · 관리자 전용 원본 응답행 "+String(item.private_response_rows??"미확인")+
       " · 자료갱신 "+formatDate(item.updated_at));
     row.append(headline,detail);
+    const qualityReasons=Array.isArray(item.quality_reasons)?item.quality_reasons:[];
+    row.append(build("p","subtle","자동 품질 검수: "+(
+      item.quality_status==="AUTO_PASS"?"기초 정합성 통과 · 공개 승인과 별개":
+      item.quality_status==="REVIEW_REQUIRED"?"추가 확인 필요":"분류 대기")));
+    if(item.quality_status==="REVIEW_REQUIRED"&&qualityReasons.length)
+      row.append(build("p","subtle","확인할 사항: "+qualityReasons.join(", ")));
     const reasons=Array.isArray(item.review_reasons)?item.review_reasons:[];
     if(reasons.length)row.append(build("p","subtle","남은 검수 항목: "+reasons.join(", ")));
     if(item.last_decision)row.append(build("p","subtle","최근 심사 결정: "+item.last_decision));
@@ -80,7 +86,7 @@
   $("adminReview2026Prev").disabled=page===0;
   $("adminReview2026Next").disabled=rows.length<20;
   $("adminReview2026Page").textContent="페이지 "+(page+1);
-  notice("비공개 검수 목록 · 공개 승인 기능은 동의 근거 검증 전까지 잠금 상태");
+  notice("자동 품질 검수 · 이상 징후가 없는 자료는 관리자 확인 목록에서 제외 · 공개 승인과 별개");
  }
  function makeBasisForm(item){
   const wrap=build("details","beagu-basis-review");
@@ -184,14 +190,67 @@
    notice("검수 목록을 불러오지 못했습니다. 관리자 계정, MFA 인증, 서버 설정을 확인하세요.");
   }
  }
+ async function refreshReferralRisks(){
+  const card=$("adminReferralRiskCard");
+  if(role!=="owner"||!ready){card.hidden=true;return;}
+  card.hidden=false;
+  const root=$("adminReferralRiskList");
+  $("adminReferralRiskStatus").textContent="추천 연결 응답 검토 대기 목록 확인 중";
+  try{
+    const data=await call({action:"referral_quality_queue"});
+    if(!ready||role!=="owner")return;
+    $("adminReferralRiskCount").textContent="추가 확인 필요 "+String(data.total??0)+"건";
+    root.replaceChildren();
+    const items=Array.isArray(data.items)?data.items:[];
+    if(!items.length)root.append(build("p","empty","추천 연결 의심 응답이 없습니다."));
+    for(const item of items){
+      if(!/^[a-f0-9]{64}$/.test(String(item.event_sha256||"")))continue;
+      const row=build("article","ranking-card");
+      row.append(build("strong","","추천 제출 "+String(item.event_sha256).slice(0,10)+"…"));
+      row.append(build("p","subtle","위험 신호: "+
+         (Array.isArray(item.signals)?item.signals.join(", "):"품질 증빙 확인 필요")));
+      row.append(build("p","subtle","확인 시각 "+formatDate(item.checked_at)+
+        (item.linked_to_referrer?" · 추천인 연결됨":" · 추천인 연결 미확인")));
+      const buttons=build("div","period-tabs");
+      for(const [decision,textLabel] of [["APPROVE","정상 추천으로 인정"],["REJECT","추천 실적 반려"]]){
+        const button=build("button","secondary",textLabel);button.type="button";
+        button.addEventListener("click",async()=>{
+          const msg=window.prompt("검토 사유를 12~500자로 기록하세요. 개인정보나 설문 원문은 입력하지 마세요.");
+          if(msg===null)return;
+          const reason=msg.trim();
+          if(reason.length<12||reason.length>500||/[<>]/.test(reason)){
+            $("adminReferralRiskStatus").textContent="검토 사유는 12~500자로 입력해야 합니다.";return;
+          }
+          if(!window.confirm("추천 실적 "+(decision==="APPROVE"?"정상 인정":"반려")+"을 확정하시겠습니까?"))return;
+          button.disabled=true;
+          try{
+            await call({action:"referral_quality_resolve",event_hash:item.event_sha256,decision,reason});
+            await refreshReferralRisks();
+            $("adminReferralRiskStatus").textContent="검토 결과가 저장됐습니다.";
+          }catch{
+            $("adminReferralRiskStatus").textContent="기록에 실패했습니다. 사건의 최신 상태와 관리자 MFA를 확인하세요.";
+          }finally{button.disabled=false;}
+        });
+        buttons.append(button);
+      }
+      row.append(buttons);root.append(row);
+    }
+    $("adminReferralRiskStatus").textContent="관리자 검토용 · 추천인에게 구체적인 위험 신호를 공개하지 않음";
+  }catch{
+    $("adminReferralRiskStatus").textContent="추천 의심 응답 목록을 불러오지 못했습니다.";
+  }
+ }
  function mount(adminRole){
   role=adminRole==="owner"?"owner":"viewer";
-  ready=true;page=0;filter="all";
+  ready=true;page=0;filter="quality";
   $("adminReview2026Filter").value=filter;
   void refresh();
+  if(role==="owner")void refreshReferralRisks();
  }
  function reset(){
   ready=false;role="";seq++;page=0;
+  $("adminReferralRiskCard").hidden=true;
+  $("adminReferralRiskList").replaceChildren();
   $("adminReview2026List").replaceChildren();
   $("adminReview2026Total").textContent="—";
   $("adminReview2026Technical").textContent="—";
@@ -202,6 +261,7 @@
   filter=event.target.value;page=0;void refresh();
  });
  $("adminReview2026Reload").addEventListener("click",()=>{void refresh();});
+ $("adminReferralRiskReload").addEventListener("click",()=>{void refreshReferralRisks();});
  $("adminReview2026Prev").addEventListener("click",()=>{if(page>0){page--;void refresh();}});
  $("adminReview2026Next").addEventListener("click",()=>{page++;void refresh();});
  window.Beagu2026ReviewAdmin={mount,reset};
