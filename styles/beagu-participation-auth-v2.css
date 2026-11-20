@@ -56,7 +56,8 @@ body.beagu-participation-open{overflow:hidden}
 .beagu-participation-dialog a:focus-visible,.beagu-participation-inline-trigger:focus-visible,
 .beagu-participation-inline-status:focus-visible{outline:3px solid #93baf7;outline-offset:3px}
 .beagu-participation-host .beagu-participation-legacy,
-[data-game-lv1-form].beagu-participation-legacy{display:none!important}
+[data-game-lv1-form].beagu-participation-legacy,
+#tierCodeForm.beagu-participation-legacy{display:none!important}
 .beagu-participation-host .beagu-auth-help,
 .beagu-participation-host .beagu-auth-logout,
 .beagu-participation-host #compareLv1SignedIn,
