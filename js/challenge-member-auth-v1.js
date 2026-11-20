@@ -165,7 +165,7 @@ form.addEventListener('submit',async event=>{
   if(!await serverLevel())throw Error('LEVEL_REQUIRED');
   if(mode==='signup'){
    const wantsSms=smsConsent.checked;
-   const mobile=smsPhone.value.replace(/\\D/g,'');
+   const mobile=smsPhone.value.replace(/[^0-9]/g,'');
    if(wantsSms&&!/^010[0-9]{8}$/.test(mobile)){
     message.textContent='문자 수신을 원하시면 010으로 시작하는 11자리 번호를 입력해 주세요.';
     return;
