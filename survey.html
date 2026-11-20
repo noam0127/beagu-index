@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex,follow"><meta name="theme-color" content="#f7f8fc">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><meta name="theme-color" content="#f7f8fc">
 <title>공식 설문 안내 | 배구지수</title><link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <style>body{margin:0;background:#f6f8fc;color:#162642;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
 .survey-shell{max-width:700px;margin:auto;padding:38px 20px 65px}.survey-panel{background:#fff;border:1px solid #dce5f1;border-radius:22px;padding:30px 28px;box-shadow:0 10px 30px rgba(30,58,101,.06)}
@@ -22,9 +22,15 @@
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div><div class="survey-shell">
 
 <main class="survey-panel" id="main-content"><h1>2026 배구지수 공식 설문</h1>
+<p id="referralNotice" role="status" hidden style="color:#6f4d12;background:#fff8e7;border:1px solid #ead7a7;border-radius:12px;padding:12px 14px">추천인 링크를 통한 레벨2 자동 승급은 현재 연동 준비 중입니다. 지금 제출하는 설문은 추천 실적으로 인정되지 않습니다.</p>
 
 <details class="beagu-inline-disclosure"><summary>자료 보호</summary><p>설문 응답은 연결된 공식 설문에서 수집합니다. 이 페이지에서는 응답을 저장하지 않습니다.</p></details>
 <div class="survey-actions"><a href="https://docs.google.com/forms/d/e/1FAIpQLSf3fY3b4amMyIpBLpU4tK69Bf3ZNVQ2r7eH2vBUUn0gxz7lYQ/viewform" target="_blank" rel="noopener noreferrer">2026 공식 설문 참여하기 ↗</a>
 <a class="secondary" id="backToSchool" href="search.html">학교 검색으로 돌아가기</a></div>
-</main></div><script>(()=>{const id=new URLSearchParams(location.search).get('school');if(id&&/^[A-Z0-9]{7}$/.test(id)){const a=document.getElementById('backToSchool');a.href='school-report.html?school_id='+encodeURIComponent(id);a.textContent='학교 결과로 돌아가기'}})();</script>
+</main></div><script>(()=>{const params=new URLSearchParams(location.search);
+const referral=params.get('ref');
+if(referral){const notice=document.getElementById('referralNotice');notice.hidden=false;
+  if(!/^[a-f0-9]{64}$/.test(referral))notice.textContent='올바르지 않은 추천 링크입니다. 일반 설문만 이용할 수 있습니다.';
+}
+const id=params.get('school');if(id&&/^[A-Z0-9]{7}$/.test(id)){const a=document.getElementById('backToSchool');a.href='school-report.html?school_id='+encodeURIComponent(id);a.textContent='학교 결과로 돌아가기'}})();</script>
 </body></html>
