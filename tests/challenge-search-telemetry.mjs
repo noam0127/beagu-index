@@ -117,7 +117,7 @@ assert.ok(read('supabase/functions/beagu-challenge-identity/index.ts').includes(
 assert.ok(challenge.indexOf('id="identityCode"') > challenge.indexOf('</section>',challenge.indexOf('id="certificate"')),
  'Identity code must be outside the image capture root');
 assert.match(challenge,/data-html2canvas-ignore="true"/,'Private code should never render in generated certificate');
-assert.match(challenge,/class="challenge-identity-tag">개인 보관<\/span>/,'Private identity code is labeled for private keeping');
+assert.match(challenge,/class="challenge-identity-tag"[^>]*>개인 보관<\/span>/,'Private identity code is labeled for private keeping');
 assert.ok(challenge.indexOf('id="challengeAccessCode"')<challenge.indexOf('id="challengeProtected"'),'Level 1 entry uses a separate field from the identity code');
 assert.match(read('js/challenge.js'),/BeaguChallengeProgress\.refresh/);
 assert.match(read('js/visit-stats.js'),/beagu-telemetry-v2/,'Preserve preexisting visit accounting via Edge');
