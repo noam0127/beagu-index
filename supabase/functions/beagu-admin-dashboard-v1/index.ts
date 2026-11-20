@@ -56,9 +56,10 @@ Deno.serve(async(req:Request)=>{
   if(live!==true)return send({error:"session_expired"},401,origin);
   // Lightweight, MFA-gated polling endpoint: no raw visitor data is returned.
   if(input.action==="live_traffic"){
-   const [trafficResult,performanceResult]=await Promise.all([
+   const [trafficResult,performanceResult,telemetryResult]=await Promise.all([
     admin.rpc("beagu_admin_live_traffic_v1",{p_period:period}),
-    admin.rpc("beagu_admin_page_perf_v1",{p_period:period})
+    admin.rpc("beagu_admin_page_perf_v1",{p_period:period}),
+    admin.rpc("beagu_admin_telemetry_health_v2")
    ]);
    const {data:traffic,error:trafficError}=trafficResult;
    if(trafficError||!traffic){
@@ -67,7 +68,10 @@ Deno.serve(async(req:Request)=>{
    }
    if(performanceResult.error)
     console.error("admin_page_perf_error",performanceResult.error.code||"unknown");
-   return send({traffic,performance:performanceResult.error?null:performanceResult.data},200,origin);
+   if(telemetryResult.error)
+    console.error("admin_telemetry_health_error",telemetryResult.error.code||"unknown");
+   return send({traffic,performance:performanceResult.error?null:performanceResult.data,
+    telemetry_health:telemetryResult.error?null:telemetryResult.data},200,origin);
   }
   const {data,error}=await admin.rpc("beagu_admin_dashboard_v1",{p_period:period});
   if(error||!data){console.error("dashboard_aggregate_error",error?.code||"unknown");
