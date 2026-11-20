@@ -20,7 +20,7 @@
     }
     return Object.fromEntries(Object.entries(out).map(([id,lines])=>[id,lines.join(' / ')]));
   }
-  function render(host,results){
+  function render(host,results,{level=1}={}){
     const groups=new Map();
     for(const r of Array.isArray(results)?results:[]){const m=safe(r);if(!m)continue;if(!groups.has(r.questionId))groups.set(r.questionId,[]);groups.get(r.questionId).push(r);}
     if(!groups.size)return false;
@@ -29,7 +29,14 @@
     for(const [id,answers] of [...groups].sort(([a],[b])=>a.localeCompare(b))){
       const m=window.Beagu2026Questionnaire[id], block=document.createElement('article');block.className='beagu-question-block';
       const heading=document.createElement('h4');heading.textContent=id+'. '+m.question;block.append(heading);
-      for(const r of answers){const line=document.createElement('p');line.textContent=(r.row>=0?m.rows[r.row]+' — ':'')+r.values.join(' · ');block.append(line);}
+      for(const r of answers){
+        // A signed school response supplies the actual Lv2 tier. Never infer it
+        // from page markup or a user-controlled code field.
+        if(Number(level)>=2&&window.Beagu2026Lv2Bars?.appendChoices?.(block,r,m))continue;
+        const line=document.createElement('p');
+        line.textContent=(r.row>=0?m.rows[r.row]+' — ':'')+r.values.join(' · ');
+        block.append(line);
+      }
       section.append(block);
     }
     host.append(section);return true;
