@@ -51,6 +51,10 @@ jobs:
           grep -q 'INVALID_INPUT' /tmp/telemetry-response.json
           check_status 403 -X POST -H 'origin: https://untrusted.example' -H 'content-type: application/json' -d '{}'
           grep -q 'ORIGIN_NOT_ALLOWED' /tmp/telemetry-response.json
+          # A single synthetic presence ping tests the privileged DB path.
+          # The fixed test UUID is removed from production immediately after verification.
+          check_status 200 -X POST -H 'origin: https://baeguindex.com' -H 'content-type: application/json' -d '{"action":"ping","visitor":"bf6a7ea3-703f-47e5-908d-111111111112","page":"index"}'
+          grep -q '"ok":true' /tmp/telemetry-response.json
 
 
       - name: Live gateway non-writing HTTP contract
