@@ -163,8 +163,18 @@ function testBeaguReferralConnection(){
   const status=response.getResponseCode();
   let result={};
   try {result=JSON.parse(response.getContentText());}catch(_){}
-  if(status!==200 || result.ok!==true)
-    throw Error('추천 연결 실패: HTTP '+status+' (서버 설정 및 비밀키 일치 여부 확인)');
+  if(status!==200 || result.ok!==true){
+    const errorCode=typeof result.error==='string'?result.error:'UNKNOWN_ERROR';
+    // Preserve the safe public error code but never print submitted secrets.
+    const hints={
+      REFERRAL_SECRETS_UNAVAILABLE:'Supabase Edge Functions > Secrets의 HMAC_KEY 및 INGEST_SECRET 등록·길이 확인',
+      AUTH_REQUIRED:'Apps Script INGEST_SECRET 값과 Supabase INGEST_SECRET 값 일치 확인',
+      REFERRAL_INGEST_NOT_READY:'서버 진단 함수 배포 상태 확인',
+      UNKNOWN_ERROR:'Supabase 함수 상태·접속 확인'
+    };
+    throw Error('추천 연결 실패: HTTP '+status+' ['+errorCode+'] · '+
+      (hints[errorCode]||hints.UNKNOWN_ERROR));
+  }
   Logger.log('추천 연결 정상: 비밀키 일치 확인, 유효한 Google Form 응답 전송 없음');
   Logger.log('실제 추천 실적 처리 서버: '+
     (result.enabled===true?'함수 게이트 켜짐':'함수 게이트 아직 꺼짐'));
