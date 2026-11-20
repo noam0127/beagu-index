@@ -97,3 +97,24 @@ body.beagu-page-levels [hidden] {display:none!important}
  .beagu-level-guide-cards {margin-top:36px}
  .beagu-level-guide-flow {margin-top:55px}
 }
+
+/* Lv2 is available with a server-verified earned challenge participation code. */
+body.beagu-page-levels .beagu-level-guide-cards{margin-top:24px}
+body.beagu-page-levels .beagu-level-guide-card[data-tier="2"]{
+ background:#fff;border-color:#cfc8f0;box-shadow:0 8px 30px rgba(85,70,154,.07);color:#263d60
+}
+body.beagu-page-levels .beagu-level-guide-card[data-tier="2"] :is(h2,.beagu-level-guide-tier){color:#6352b7}
+body.beagu-page-levels .beagu-level-guide-card[data-tier="2"] .beagu-level-guide-sentence,
+body.beagu-page-levels .beagu-level-guide-card[data-tier="2"] .beagu-level-guide-list li{color:#455974}
+body.beagu-page-levels .beagu-level-guide-card[data-tier="2"] .beagu-level-guide-action{
+ pointer-events:auto;cursor:pointer;background:#f1efff;border-color:#cfc8ef;color:#5140a4!important
+}
+body.beagu-page-levels .beagu-level-guide-card[data-tier="2"] .beagu-level-guide-action:hover{background:#e9e4ff}
+body.beagu-page-levels .beagu-level-guide-flow{
+ background:#fff;border-color:#dfe8f4;color:#344b68;
+ box-shadow:0 5px 22px rgba(20,48,83,.03);margin-top:26px
+}
+body.beagu-page-levels .beagu-level-guide-flow :is(h2,.beagu-level-guide-step strong){color:#263d60}
+body.beagu-page-levels .beagu-level-guide-flow :is(.beagu-level-guide-step,.beagu-level-guide-disclaimer){color:#526680}
+body.beagu-page-levels .beagu-level-guide-step-number{background:#eaf2ff;color:#2361cc}
+@media(max-width:700px){body.beagu-page-levels .beagu-level-guide-flow{margin-top:18px}}
