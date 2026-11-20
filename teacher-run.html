@@ -372,7 +372,7 @@ async function start(){
  combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;resetChalkHelpers();
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;
- resetPatternHazards();
+ resetPatternHazards();resetMystery();
  shackle={x:player.x-52,dir:-1};pointerId=null;pointerY=null;
  pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 족쇄 · 점프 불가":
   selected.difficulty==="easy"?"EASY · 날개·동료·관리자 지원 (분필 명중률 50%)":
@@ -382,7 +382,7 @@ async function start(){
 function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
- items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;resetPatternHazards();
+ items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;resetPatternHazards();resetMystery();
  score=0;stage=0;clock=0;combo=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
@@ -707,6 +707,7 @@ function drawChalk(){
  }
 }
 function drawChalkHelpers(){
+ if(isMysteryBuff("conflict"))return;
  for(const helper of chalkHelpers){
   const {x,y}=helperPosition(helper);
   ctx.save();ctx.translate(Math.round(x),Math.round(y));
@@ -820,6 +821,74 @@ function updatePatternHazards(dt){
    if(state!=="playing")return;
   }
  }
+}
+// Red/blue mystery drops rise from the floor at random places, wait, then vanish.
+function collectMystery(item,x,y){
+ const t=clock,dur=item.id==="friends"||item.id==="conflict"?16:12;
+ switch(item.id){
+  case "shackle":mysteryBuffs.shackle=t+dur;mysteryBuffs.wings=0;player.y=H-52;break;
+  case "complaint":mysteryBuffs.complaint=t+dur;mysteryBuffs.letter=0;break;
+  case "bullying":score=Math.max(0,score-1);break;
+  case "report":score=Math.max(0,score-10);break;
+  case "conflict":mysteryBuffs.conflict=t+dur;mysteryBuffs.friends=0;break;
+  case "wings":mysteryBuffs.wings=t+dur;mysteryBuffs.shackle=0;break;
+  case "letter":mysteryBuffs.letter=t+dur;mysteryBuffs.complaint=0;break;
+  case "salary":score+=1;break;
+  case "friends":mysteryBuffs.friends=t+dur;mysteryBuffs.conflict=0;break;
+  case "bonus":score+=2;break;
+  case "chalk":mysteryBuffs.chalk=t+dur;break;
+ }
+ if(chalkHelpers.length!==(chalkProfile()?.maxShots||0))resetChalkHelpers();
+ mysteryReveals.push({item,x,y,life:1.6});
+ if(mysteryReveals.length>4)mysteryReveals.shift();
+ setNotice((item.good?"🔵":"🔴")+" "+item.name+" · "+item.detail,2.2);
+ float(player.x,Math.max(70,player.y-50),item.icon+" "+item.name,item.good?"#b8f6ff":"#ffb8be");
+ burst(x,y,item.good?"#9bd9ff":"#ff8189",12);
+ playTone(item.good?810:255,.15,"triangle");
+ updateLabels();
+}
+function updateMystery(dt){
+ if(clock>=nextMysteryAt){
+  if(mysteryDrops.length<3){
+   const x=37+Math.random()*Math.max(1,W-74);
+   const nearGround=profile.jumpEnabled===false&&!isMysteryBuff("wings");
+   const targetY=nearGround?H-52:
+     (Math.random()<.62?H-52:Math.max(120,Math.min(H-85,110+Math.random()*(H-205))));
+   mysteryDrops.push({x,y:H+26,startY:H+26,targetY,
+    rise:0,wait:5.5+Math.random()*3.0,item:mystery.pick(true)});
+  }
+  scheduleMystery();
+ }
+ for(let i=mysteryDrops.length-1;i>=0;i--){
+  const p=mysteryDrops[i];
+  if(p.rise<.7){
+   p.rise=Math.min(.7,p.rise+dt);
+   const f=p.rise/.7;
+   p.y=p.startY+(p.targetY-p.startY)*(1-Math.pow(1-f,3));
+  }else{
+   p.wait-=dt;
+  }
+  if(Math.hypot(player.x-p.x,player.y-p.y)<
+       player.r*.78*profile.heroSize+24){
+   mysteryDrops.splice(i,1);collectMystery(p.item,p.x,p.y);continue;
+  }
+  if(p.wait<=0)mysteryDrops.splice(i,1);
+ }
+ for(let i=mysteryReveals.length-1;i>=0;i--)
+  if((mysteryReveals[i].life-=dt)<=0)mysteryReveals.splice(i,1);
+}
+function drawMystery(){
+ for(const p of mysteryDrops)mystery.drawMystery(ctx,p.x,p.y,p.item.good,21,clock);
+ for(const r of mysteryReveals){
+  ctx.save();ctx.globalAlpha=Math.min(1,r.life/.35);
+  mystery.drawReveal(ctx,r.item,r.x,r.y-(1.6-r.life)*30,23);ctx.restore();
+ }
+}
+function mysterySituation(){
+ const buffs=Object.entries(mysteryBuffs).filter(([,t])=>t>clock)
+  .map(([k,t])=>k+" "+Math.ceil(t-clock)+"초").slice(0,2);
+ return getAge()+"세 · "+Math.floor(score).toLocaleString("ko-KR")+"점 · "+
+  Math.floor(clock)+"초"+(buffs.length?" · "+buffs.join(" / "):"");
 }
 function update(dt){
  clock=Math.min(RETIREMENT_SECONDS,clock+dt);
