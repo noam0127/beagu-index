@@ -120,7 +120,7 @@ assert.match(challenge,/data-html2canvas-ignore="true"/,'Private code should nev
 assert.match(challenge,/class="challenge-identity-tag">개인 보관<\/span>/,'Private identity code is labeled for private keeping');
 assert.ok(challenge.indexOf('id="challengeAccessCode"')<challenge.indexOf('id="challengeProtected"'),'Level 1 entry uses a separate field from the identity code');
 assert.match(read('js/challenge.js'),/BeaguChallengeProgress\.refresh/);
-assert.match(read('js/visit-stats.js'),/beagu_record_visit/,'Preserve preexisting visit accounting');
+assert.match(read('js/visit-stats.js'),/beagu-telemetry-v2/,'Preserve preexisting visit accounting via Edge');
 assert.match(read('js/visit-stats.js'),/sessionStorage/,'Browser session fallback');
 assert.match(read('js/visit-stats.js'),/p_event:event/,'Reuse one event for retries');
 assert.match(read('js/visit-stats.js'),/Number.isSafeInteger/,'Do not invent visit totals');
@@ -173,23 +173,23 @@ const counts=['today','month','total'].map(stat=>({dataset:{stat},textContent:'�
 const storedVisitor='11111111-1111-4111-8111-111111111111';
 const visitCalls=[];
 const visitScope={
- window:{},
- document:{querySelectorAll:()=>counts},
+ window:{setTimeout:()=>0,setInterval:()=>0},
+ document:{querySelectorAll:()=>counts,addEventListener:()=>{},visibilityState:'visible'},
  localStorage:{getItem:()=>storedVisitor,setItem:()=>{}},
  sessionStorage:{getItem:()=>null,setItem:()=>{}},
  crypto:{randomUUID:()=> '22222222-2222-4222-8222-222222222222'},
  location:{pathname:'/'},
- supabaseClient:{rpc:async(name,args)=>{
-  visitCalls.push({name,args});
+ supabaseClient:{functions:{invoke:async(name,{body})=>{
+  visitCalls.push({name,args:body});
   return {data:{today:'7',month:91,total:'1000'},error:null};
- }}
+ }}}
 };
 runInNewContext(visitSource,visitScope);
 await visitScope.window.beaguVisitReady;
 assert.equal(visitScope.window.beaguVisitor,storedVisitor);
 assert.equal(visitCalls.length,1);
-assert.equal(visitCalls[0].name,'beagu_record_visit');
-assert.equal(visitCalls[0].args.p_page,'index');
+assert.equal(visitCalls[0].name,'beagu-telemetry-v2');
+assert.equal(visitCalls[0].args.page,'index');
 assert.equal(counts[0].textContent,'7');
 assert.equal(counts[1].textContent,'91');
 assert.equal(counts[2].textContent,'1,000');
