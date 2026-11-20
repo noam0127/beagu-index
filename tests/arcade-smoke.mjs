@@ -265,7 +265,8 @@ assert.match(volley,/touchControl\.targetY/,"volleyball touch flight has vertica
 assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is implemented");
 assert.match(runner,/pointerY=target\.y/,"survival game tracks 2D touch target");
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically except EXTREME");
-assert.match(runner,/enemySize:1\.28/,"extreme hazards have larger collision size");
+assert.match(runner,/extreme:[^\n]*enemySize:0\.78/,"extreme uses smaller hazards");
+assert.match(runner,/function updatePatternHazards\(dt\)/,"survival wave hazards remain active");
 assert.match(runner,/trackSpeed\*dt/,"career-stage tracking hazards follow the player");
 assert.match(runner,/profile\.heroSpeed/,"hero mobility scales by difficulty");
 assert.match(runner,/profile\.startingLife/,"hero starting health scales by difficulty");
@@ -383,27 +384,28 @@ assert.equal(scoreFns.scoreFromRun({score:1500,day:3,victory:false},100),1500,"o
 console.log("PASS: verified 25-point +100/-50 win-margin scoring and 62-year retirement rules");
 
 // EXTREME disables player ascent in both games without suppressing enemy AI jump.
-assert.match(volley,/const canPlayerJump=\(\)=>currentDifficulty!=="extreme"/,"volleyball player jump gate");
+assert.match(volley,/const hasPlayerWings=\(\)=>currentDifficulty==="easy"\|\|isMysteryBuff/,"EASY and wing pickups permit flight");
+assert.match(volley,/const playerCeiling=\(\)=>hasPlayerWings\(\)\?86:NET_TOP\+56/,"other difficulties cannot pass net height");
 assert.match(volley,/controlPlayer\(left, keyboardDirection, canPlayerJump\(\)&&keys\.jump/,"keyboard jump gated");
-assert.match(volley,/left\.y = canPlayerJump\(\) \? clamp\(left\.y, 86, FLOOR - 31\) : FLOOR - 31/,"volleyball flight clamped to floor in EXTREME");
-assert.match(volley,/controlPlayer\(right,move,state\.aiJump/,"CPU retains jump in EXTREME");
+assert.match(volley,/left\.y = canPlayerJump\(\) \? clamp\(left\.y, playerCeiling\(\), FLOOR - 31\) : FLOOR - 31/,"player flight limited by item/net ceiling");
+assert.match(volley,/controlPlayer\(right,move,!shackle&&state\.aiJump/,"CPU jumps unless affected by shackle");
 assert.match(runner,/extreme:\{jumpEnabled:false,/,"runner disables aerial control in EXTREME");
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"runner upward drag gated by difficulty");
 assert.match(runner,/player\.y=canPlayerRise\(\)\?Math\.max\(76,Math\.min\(H-52,player\.y\)\):H-52/,"runner grounded on each frame");
-assert.match(runner,/player\.y=!canPlayerRise\(\)\|\|pointerId===null\?H-52/,"runner remains grounded on resize");
+assert.match(runner,/player\.y=canPlayerRise\(\)\?Math\.max\(76,Math\.min\(H-52,player\.y\)\):H-52/,"survival resize follows active wings/shackle");
 const volleyPointerSource=volley.slice(volley.indexOf('function targetFromPointer(e)'),volley.indexOf('canvas.addEventListener("pointerdown"'));
 const volleyPointer=new Function("difficulty", [
  'const W=900,H=500,FLOOR=451,NET_X=450,NET_W=14;',
  'const touchControl={targetX:null,targetY:null};',
  'const canvas={getBoundingClientRect:()=>({left:0,top:0,width:450,height:250})};',
  'const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));',
- 'const canPlayerJump=()=>difficulty!=="extreme";',
+ 'const canPlayerJump=()=>difficulty!=="extreme";const playerCeiling=()=>difficulty==="easy"?86:398;',
  volleyPointerSource,
  'targetFromPointer({clientX:100,clientY:0});',
  'return touchControl;'
 ].join("\n"));
 assert.equal(volleyPointer("extreme").targetY,420,"extreme volleyball touch must stay on court floor");
-assert.equal(volleyPointer("hard").targetY,86,"other volleyball difficulties may fly upward");
+assert.equal(volleyPointer("hard").targetY,398,"other tiers stay below net without wings");
 const runnerPointerSource=runner.slice(runner.indexOf('function dragPosition(e)'),runner.indexOf('function setFlightTarget(e)'));
 const runnerPointer=new Function("jumpEnabled",[
  'const profile={jumpEnabled},canPlayerRise=()=>profile.jumpEnabled!==false,W=600,H=420;',
@@ -490,7 +492,7 @@ for(let i=1;i<levels.length;i++){
  assert.ok(looks[levels[i]].armor>=looks[levels[i-1]].armor);
 }
 assert.match(volley,/drawTeacher\(right, \(enemyLooks\[currentDifficulty\]\|\|enemyLooks\.normal\)\.uniform\)/);
-assert.match(volley,/if\(look&&look\.armor\)/);
+assert.match(volley,/if\(look&&look\.armor&&!p\.mini\)/);
 assert.match(volley,/ball\.vx=\(sign\*attack\+clamp\(p\.vx,-12,12\)\*\.16\+\(precise\?1\.9:0\)\)\*ballSpeedFactor\(\)/);
 const serveStart=volley.indexOf("function resetPositions()");
 const serveEnd=volley.indexOf("async function startMatch()",serveStart);
@@ -716,10 +718,10 @@ assert.match(runner,/const willHit=Math\.random\(\)<\.5/);
 assert.match(runner,/function drawChalkHelpers\(\)/);
 assert.match(runner,/x:helper\.role==="관리자"\?W-38:38,y:H-52/);
 assert.match(runner,/function drawShackle\(\)/);
-assert.match(runner,/if\(profile\.jumpEnabled!==false\|\|state==="ready"\)return/);
+assert.match(runner,/if\(canPlayerRise\(\)\|\|state==="ready"\)return/);
 assert.match(runner,/if\(profile\.jumpEnabled===false\)\{/,"runner shackle only follows EXTREME steps");
 assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
-assert.match(runner,/drawItems\(\);drawChalkHelpers\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
+assert.match(runner,/drawItems\(\);drawMystery\(\);drawPatternHazards\(\);drawChalkHelpers\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
 assert.match(html,/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/);
