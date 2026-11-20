@@ -12,9 +12,9 @@
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261120-levelup1">
-<link rel="stylesheet" href="styles/beagu-level-guide-v1.css?v=20261119-level2-pending1">
+<link rel="stylesheet" href="styles/beagu-level-guide-v1.css?v=20261121-lv2-live1">
 <script defer src="js/beagu-level-state-v1.js?v=20261120-lv1-plain1"></script>
-<script defer src="js/beagu-level-guide-v1.js?v=20261120-lv2-imsi2"></script>
+<script defer src="js/beagu-level-guide-v1.js?v=20261121-lv2-live1"></script>
 </head>
 <body class="beagu-ui-page beagu-page-levels">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -29,7 +29,7 @@
  <div class="beagu-level-guide-hero">
   <span class="beagu-level-guide-eyebrow">BAEGUINDEX LEVELS</span>
   <h1 aria-label="참여할수록 더 넓어지는 학교정보"><span class="beagu-level-guide-title-line">참여할수록 더</span><span class="beagu-level-guide-title-line">넓어지는 학교정보</span></h1>
-  <p>레벨에 따라 열람할 수 있는 정보가 달라집니다.</p>
+  <p>참여할수록 더 많은 학교정보를 볼 수 있어요.</p>
  </div>
  <div class="beagu-level-guide-status" role="status" aria-live="polite">
   <strong id="levelGuideCurrent" class="beagu-level-guide-current">인증 확인 중</strong>
@@ -39,7 +39,7 @@
   <article class="beagu-level-guide-card" data-tier="0">
    <div class="beagu-level-guide-card-head"><span class="beagu-level-guide-tier">LEVEL 0</span><span class="beagu-level-guide-state" hidden></span></div>
    <h2>둘러보기</h2>
-   <p class="beagu-level-guide-sentence">인증 없이 누구나 시작할 수 있어요.</p>
+   <p class="beagu-level-guide-sentence">인증 없이 공개자료를 볼 수 있어요.</p>
    <ul class="beagu-level-guide-list">
     <li>학교 검색과 공개 백분위 확인</li>
     <li>공개된 학교 기본 정보 열람</li>
@@ -50,36 +50,34 @@
   <article class="beagu-level-guide-card" data-tier="1">
    <div class="beagu-level-guide-card-head"><span class="beagu-level-guide-tier">LEVEL 1</span><span class="beagu-level-guide-state" hidden></span></div>
    <h2>깊이 보기</h2>
-   <p class="beagu-level-guide-sentence">2026 설문 참여로 받은 참여코드로 인증해요.</p>
+   <p class="beagu-level-guide-sentence">2026 설문 참여 후 받은 코드로 인증해요.</p>
    <ul class="beagu-level-guide-list">
     <li>학교별 상세 조사 결과 열람</li>
     <li>학교별 정보와 조사 결과 비교</li>
     <li>Lv.1 전용 게임 및 챌린지 이용</li>
    </ul>
-   <a class="beagu-level-guide-action" href="search.html">레벨1 인증</a>
+   <a class="beagu-level-guide-action" href="search.html">Lv.1 자료 보기</a>
   </article>
-  <article class="beagu-level-guide-card" data-tier="2" aria-label="레벨 2 임시 인증 및 정식 계정 안내">
-   <span class="beagu-level-guide-pending-label">정식 계정 준비중</span>
+  <article class="beagu-level-guide-card" data-tier="2" aria-label="레벨 2 혜택과 승급 방법">
    <div class="beagu-level-guide-card-head"><span class="beagu-level-guide-tier">LEVEL 2</span><span class="beagu-level-guide-state" hidden></span></div>
    <h2>함께 넓히기</h2>
-   <p class="beagu-level-guide-sentence">챌린지 고유번호는 그대로 보관됩니다. 정식 Lv.2 계정은 준비 중입니다.</p>
+   <p class="beagu-level-guide-sentence">내 링크로 동료 1명이 설문에 참여하면 Lv.2로 승급해요.</p>
    <ul class="beagu-level-guide-list">
-    <li>Lv.1에서 볼 수 있는 정보 모두</li>
-    <li>승인된 확장 상세자료 열람</li>
-    <li>기존 Lv.2(임시) 인증 상태 유지</li><li>포스트잇 작성: 정식 Lv.2 계정 생성 후 가능</li>
+    <li>Lv.1 자료 모두 열람</li>
+    <li>추가 상세자료 열람</li>
+    <li>기존 고유번호로 Lv.2 인증</li>
    </ul>
-   <a class="beagu-level-guide-action" href="challenge.html">챌린지 · 고유번호 확인</a>
+   <a class="beagu-level-guide-action" href="challenge.html">챌린지에서 링크 공유</a>
   </article>
  </section>
- <section class="beagu-level-guide-flow" aria-labelledby="levelGuideHowTitle" aria-label="레벨2 이용 안내">
-  <span class="beagu-level-guide-pending-label">정식 인증 준비중</span>
-  <h2 id="levelGuideHowTitle">레벨2 이용 안내</h2>
+ <section class="beagu-level-guide-flow" aria-labelledby="levelGuideHowTitle" aria-label="Lv.2 되는 방법">
+  <h2 id="levelGuideHowTitle">Lv.2 되는 방법</h2>
   <div class="beagu-level-guide-steps">
-   <div class="beagu-level-guide-step"><span class="beagu-level-guide-step-number">1</span><span><strong>설문에 참여하고</strong>레벨1 인증을 완료해요.</span></div>
-   <div class="beagu-level-guide-step"><span class="beagu-level-guide-step-number">2</span><span><strong>챌린지에서 고유번호를 확인해요.</strong>발급받은 번호는 개인적으로 보관해요.</span></div>
-   <div class="beagu-level-guide-step"><span class="beagu-level-guide-step-number">3</span><span><strong>정식 레벨2 인증은 준비 중이에요.</strong>기존 인증 상태와 발급 번호는 유지됩니다.</span></div>
+   <div class="beagu-level-guide-step"><span class="beagu-level-guide-step-number">1</span><span><strong>설문 참여</strong>Lv.1 참여코드를 받아요.</span></div>
+   <div class="beagu-level-guide-step"><span class="beagu-level-guide-step-number">2</span><span><strong>전용 링크 공유</strong>챌린지 링크를 동료에게 보내요.</span></div>
+   <div class="beagu-level-guide-step"><span class="beagu-level-guide-step-number">3</span><span><strong>동료 1명 설문 완료</strong>기존 고유번호가 Lv.2 참여코드가 돼요.</span></div>
   </div>
-  <p class="beagu-level-guide-disclaimer">기존 Lv.2(임시) 상태는 계정 소유권이나 작성 권한을 증명하지 않습니다. 포스트잇 작성은 정식 계정이 만들어지고 검증된 후 이용할 수 있습니다.</p>
+  <p class="beagu-level-guide-disclaimer">포스트잇 글쓰기는 계정 기능 도입 후 이용할 수 있어요.</p>
  </section>
  <nav class="beagu-level-guide-footer" aria-label="레벨 안내 관련 메뉴">
   <a href="survey.html">2026 설문 참여</a>
