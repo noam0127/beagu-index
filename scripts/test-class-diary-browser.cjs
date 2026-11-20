@@ -60,7 +60,7 @@ async function advanceColleaguePrologue(page,expectedNarrator){
    await page.locator('#setupNext').click();
    assert.equal(await page.locator('#setup').getAttribute('data-step'),'2');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+2),true,'Setting screens must not scroll');
-   assert.equal(await page.locator('[data-partner-choice]').count(),3,'All three date-sim character cards must render');
+   assert.equal(await page.locator('[data-partner-choice]').count(),5,'All five colleague narrator cards must render');
    const card=page.locator('[data-partner-choice="'+variant.partner+'"]');
    await card.click();
    assert.equal(await page.locator('#partner').inputValue(),variant.partner,'Card must update original partner field');
