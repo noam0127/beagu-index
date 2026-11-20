@@ -57,7 +57,7 @@
  const closeButton=modal.querySelector('[data-beagu-close]');
  const logout=modal.querySelector('#beaguParticipationLogout');
  const hosts=[...document.querySelectorAll('#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel')];
- const gameForms=[...document.querySelectorAll('[data-game-lv1-form]')];
+ const gameForms=[...document.querySelectorAll('[data-game-lv1-form],#tierCodeForm')];
  const labelFor=n=>n>=2?'♛ Lv2 · 챌린지 달성':n>=1?'✓ Lv1 · 설문 참여 완료':'참여코드 입력';
  function stored(){try{return sessionStorage.getItem(KEY)||''}catch(_){return ''}}
  function paint(level){
