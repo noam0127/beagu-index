@@ -37,3 +37,14 @@
 - 36화 엔딩에 마지막으로 선택한 학급일지 기록 3개를 다시 보여 줌.
 - 저장 전환 검사: 기존 Supabase `class-diary-progress-v1`은 추가 `journal` 필드를 명시적으로 거절하지 않음. 다만 **운영 End-to-End 저장/불러오기 테스트는 추가로 필요**.
 - 기록 선택 UI의 세 가지는 정답/오답 점수로 매기지 않는다.
+
+
+## 36화 비가시적 연출 지시 및 학급일지 서체
+
+- `js/class-diary-scene-direction-v1.js`: 각 회차별 `music`, `ambience`, `sfx`, `transition`, `action`, `journalMusic`를 정한 **36개 연출 지시**.
+- `action` 값은 **내부 연출 메타데이터**다. 자막·대사·`paragraphs`·접근성용 대사 텍스트로 출력하지 않는다. 사용자에게 보이는 것은 이미 작성된 소설 본문과 그날의 학급일지 선택지뿐이다.
+- `js/class-diary-sound-v1.js`: 기존 라이선스 음원을 재사용하며 동전·종·호루라기, 짧은 유리·빗소리 질감은 로컬 오디오 합성으로 재생. 학생의 두려움이나 사고에 호감도 효과음을 붙이지 않는다.
+- `styles/class-diary-daily-journal-v1.css`: 학급일지 선택 화면은 따뜻한 종이 색과 시스템 한글 명조체(`AppleMyungjo`, `Batang` 등)를 사용하여 본문 대사와 구별.
+- 전환은 **회차가 새로 시작되는 순간**에만 실행하며, 문장 단위 터치마다 화면을 깜빡이게 하지 않는다. `prefers-reduced-motion`을 존중한다.
+- 현재 운영 원고 제목이 새 36화 분기표의 제목과 다르므로 `sceneDirector.forEpisode()`는 **제목이 일치할 때만** 새 회차 연출을 적용한다. 다음 단계에서 신작 원고가 준비되면 자동으로 해당 연출을 사용한다. 학급일지의 종이 전환과 별도 명조체는 새 원고와 무관하게 동작한다.
+- 검증: `node scripts/test-class-diary-scene-direction.cjs`와 GitHub Actions `Class Diary 36-Episode Branch Validation`.
