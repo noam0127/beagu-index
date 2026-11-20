@@ -234,3 +234,22 @@ html body .stage:-webkit-full-screen #game{
 .arcade-run-fullscreen-hud .arcade-fullscreen-subline{
  text-align:left;margin-top:5px;
 }
+
+/* Survival fullscreen: protect the HP/status header during pause overlays.
+   Use a shorter header in landscape so the lower player stays on-screen. */
+.stage.arcade-fullscreen-fallback,
+.stage:fullscreen,
+.stage:-webkit-full-screen{
+ --arcade-run-hud-height:clamp(72px,13svh,88px);
+ grid-template-rows:var(--arcade-run-hud-height) minmax(0,1fr)!important;
+}
+.stage.arcade-fullscreen-fallback > .overlay,
+.stage:fullscreen > .overlay,
+.stage:-webkit-full-screen > .overlay{
+ top:var(--arcade-run-hud-height)!important;
+ right:0!important;bottom:0!important;left:0!important;
+ box-sizing:border-box!important;
+ z-index:10!important;
+ padding:8px!important;
+ overflow:auto!important;
+}
