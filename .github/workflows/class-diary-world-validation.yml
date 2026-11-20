@@ -16,6 +16,16 @@ on:
       - 'js/class-diary-prologue-lens-man2-v1.js'
       - 'js/class-diary-prologue-lens-man3-v1.js'
       - 'js/class-diary-pedagogy-v1.js'
+      - 'js/class-diary-literary-revision-act1-v1.js'
+      - 'js/class-diary-literary-revision-act2-v1.js'
+      - 'js/class-diary-literary-revision-act3-v1.js'
+      - 'js/class-diary-literary-revision-act4-v1.js'
+      - 'js/class-diary-literary-revision-act5-v1.js'
+      - 'js/class-diary-literary-revision-act6-v1.js'
+      - 'js/class-diary-literary-v3.js'
+      - 'js/class-diary-philosophy-v1.js'
+      - 'js/class-diary-endings-v3.js'
+      - 'scripts/test-class-diary-literary-v3.cjs'
       - 'scripts/test-class-diary-long-prologue.cjs'
       - 'js/class-diary-colleague-dogyeom-v1.js'
       - 'js/class-diary-colleague-taeo-v1.js'
@@ -80,6 +90,16 @@ on:
       - 'js/class-diary-prologue-lens-man2-v1.js'
       - 'js/class-diary-prologue-lens-man3-v1.js'
       - 'js/class-diary-pedagogy-v1.js'
+      - 'js/class-diary-literary-revision-act1-v1.js'
+      - 'js/class-diary-literary-revision-act2-v1.js'
+      - 'js/class-diary-literary-revision-act3-v1.js'
+      - 'js/class-diary-literary-revision-act4-v1.js'
+      - 'js/class-diary-literary-revision-act5-v1.js'
+      - 'js/class-diary-literary-revision-act6-v1.js'
+      - 'js/class-diary-literary-v3.js'
+      - 'js/class-diary-philosophy-v1.js'
+      - 'js/class-diary-endings-v3.js'
+      - 'scripts/test-class-diary-literary-v3.cjs'
       - 'scripts/test-class-diary-long-prologue.cjs'
       - 'js/class-diary-colleague-dogyeom-v1.js'
       - 'js/class-diary-colleague-taeo-v1.js'
@@ -114,6 +134,7 @@ jobs:
           node scripts/test-class-diary-semester.cjs
           node scripts/test-class-diary-narrator.cjs
           node scripts/test-class-diary-long-prologue.cjs
+          node scripts/test-class-diary-literary-v3.cjs
           node scripts/test-class-diary-school-brief.cjs
           node scripts/test-class-diary-progress.cjs
           node scripts/test-class-diary-semester-ui.cjs
