@@ -53,7 +53,7 @@
     return list;
   }
   async function snapshot(){
-    const res=await fetch('data/public-lv0-percentiles-v1.2.json?v=20261120-all-regions1',{cache:'force-cache'});
+    const res=await fetch('data/public-lv0-percentiles-v1.2.json?v=20261120-all-regions1',{cache:'default'});
     if(!res.ok)throw Error('공개 백분위 로드 실패');
     if(!window.BeaguPublic?.buildIndex)throw Error('공개 백분위 검증 함수가 없습니다.');
     const index=window.BeaguPublic.buildIndex(await res.json());
@@ -74,7 +74,7 @@
     });
     try{
       const schools=await directory();
-      dispatch({schools,snapshot:new Map(),snapshotReady:false});
+      dispatch({schools,snapshot:new Map(),snapshotReady:false,snapshotPending:true});
       if(progress&&progress.textContent==='학교 목록을 불러오는 중…')progress.textContent='';
     }catch(error){
       console.error('공개 학교목록 조회 실패',error);
