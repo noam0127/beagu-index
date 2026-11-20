@@ -141,7 +141,7 @@ for(const source of [publicSearch,lv1,lv2]){
  assert.match(source,/addEventListener\('keydown'/);
  assert.match(source,/\.selected\(/);
 }
-assert.match(publicSearch,/count===1&&Array\.isArray\(data\)&&data\.length===1/);
+assert.match(publicSearch,/count===1&&list\.length===1/);
 assert.match(publicSearch,/id="searchInput"/,'Lv.0 public search restored');
 assert.match(lv1,/if\(action\)window\.BeaguSearchTelemetry\?\.detailViewed/);
 assert.match(lv2,/if\(loaded&&action\)window\.BeaguSearchTelemetry\?\.detailViewed/);
