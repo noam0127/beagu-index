@@ -84,6 +84,7 @@ assert.equal(triggers.length,2,'trigger installer replaces duplicates and retain
 assert.ok(Number.isSafeInteger(Number(props.get('BEAGU_REFERRAL_RECONCILE_FROM_MS'))));
 
 const proof='BR1.'+'a'.repeat(64)+'.ab8afb27-c498-42c1-8df6-064b6b8102a4.1795248000.'+'f'.repeat(64);
+const mockSubmittedAt=new Date(Date.now()-60*1000);
 const event={
   source:form,
   response:{
@@ -92,7 +93,7 @@ const event={
       {getItem:()=>({getId:()=>fieldId}),getResponse:()=>proof},
     ],
     getId:()=> 'response_key_123456789',
-    getTimestamp:()=>new Date(Date.now()-60*1000),
+    getTimestamp:()=>mockSubmittedAt,
   },
 };
 env.onBeaguReferralFormSubmitted({...event,source:{getId:()=> 'wrong-form'}});
