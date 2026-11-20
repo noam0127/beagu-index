@@ -4,7 +4,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='class-diary-sound/v7';
+const VERSION='class-diary-sound/v8';
 const LICENSE='https://creativecommons.org/licenses/by/4.0/';
 const HOST='https://www.scottbuckley.com.au/library/';
 const FILES={
@@ -167,6 +167,8 @@ const PROLOGUE_TRACKS=Object.freeze({
  man2:'restful',      // 차도겸 · quietly contemplative
  man3:'heartfelt'     // 백태오 · warm and energetic
 });
+/* Post-prologue character setup: new beginning, distinct from all narrator themes and Chapter 1. */
+const PLAYER_SETUP_TRACK='bright';
 function prologueTrack(partner){
  return Object.prototype.hasOwnProperty.call(PROLOGUE_TRACKS,partner)?
   PROLOGUE_TRACKS[partner]:'wildflowers';
@@ -365,7 +367,7 @@ function credit(){
  credit:'Music by Scott Buckley — CC BY 4.0. www.scottbuckley.com.au',
  recordings:[...Object.values(AMBIENCE),...Object.values(FOLEY)].map(({name,creator,page,license})=>({name,creator,page,license}))};
 }
-const api=Object.freeze({VERSION,TRACKS,AMBIENCE,FOLEY,SEMESTER_SCORE,SEMESTER_REFLECTIONS,PROLOGUE_TRACKS,prologueTrack,semesterScore,dayTrack,choiceTrack,sceneTrack,placeCue,ambienceFor,setAmbience,note,setTrack,setEnabled,
+const api=Object.freeze({VERSION,TRACKS,AMBIENCE,FOLEY,SEMESTER_SCORE,SEMESTER_REFLECTIONS,PROLOGUE_TRACKS,PLAYER_SETUP_TRACK,prologueTrack,semesterScore,dayTrack,choiceTrack,sceneTrack,placeCue,ambienceFor,setAmbience,note,setTrack,setEnabled,
  isEnabled,setMusicVolume,setSfxVolume,musicLevel,sfxLevel,setEffectsEnabled,stop,credit,
  onStatus(fn){onStatus=typeof fn==='function'?fn:()=>{}}});
 if(typeof module==='object'&&module.exports)module.exports=api;
