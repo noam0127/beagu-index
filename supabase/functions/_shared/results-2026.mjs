@@ -14,7 +14,7 @@ export function validateSnapshot(data,now=Date.now()) {
   const ids=new Set();let total=0;
   for(const school of data.schools){
     if(!keys(school,['school_id','school_response_rows','school_match_status','questions'])||
-      !/^\d{7}$/.test(school.school_id)||ids.has(school.school_id)||!integer(school.school_response_rows,50000)||school.school_response_rows<1||
+      !/^[A-Z0-9]{7}$/.test(school.school_id)||ids.has(school.school_id)||!integer(school.school_response_rows,50000)||school.school_response_rows<1||
       !['EXACT_REGION_OFFICE_NAME','NEEDS_REVIEW'].includes(school.school_match_status)||
       !Array.isArray(school.questions)||school.questions.length!==specs.length)throw Error('INVALID_SCHOOL');
     ids.add(school.school_id);total+=school.school_response_rows;

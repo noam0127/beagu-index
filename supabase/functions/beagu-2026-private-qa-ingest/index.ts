@@ -42,7 +42,7 @@ Deno.serve(async(req:Request)=>{
   for(const s of items){
     const id=s?.school_id,n=s?.school_response_rows,c=s?.core_valid_counts;
     if(!s||typeof s!=='object'||Array.isArray(s)||typeof id!=='string'||
-       !/^[0-9]{7}$/.test(id)||unique.has(id)||
+       !/^[A-Z0-9]{7}$/.test(id)||unique.has(id)||
        !Number.isSafeInteger(n)||n<1||n>50000||
        !['EXACT_REGION_OFFICE_NAME','NEEDS_REVIEW'].includes(s.school_match_status)||
        !c||typeof c!=='object'||Array.isArray(c)||

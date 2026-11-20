@@ -52,6 +52,11 @@ assert.equal(JSON.stringify(timeResult.reviewRows).includes('임의 시간'),fal
 const questions=Object.entries(catalog).flatMap(([id,m])=>(m.kind==='grid'?m.rows:[null]).map((_,i)=>({id,row:m.kind==='grid'?i:-1,valid:0,invalid:0,counts:(m.kind==='grid'?m.columns:m.options).map(()=>0),minutes_sum:0})));
 const payload={source_spreadsheet_id:sourceId,official_start_day:'2026-11-01',schema_version:1,snapshot_at:new Date().toISOString(),totals:{source_rows:2,official_rows:1,prelaunch_rows:1,unmatched_rows:0,undated_rows:0},schools:[{school_id:'1000001',school_response_rows:1,school_match_status:'EXACT_REGION_OFFICE_NAME',questions}]};
 assert.equal(validateSnapshot(payload),payload);
+const alphanumericSchool=structuredClone(payload);
+alphanumericSchool.schools[0].school_id='A000001';
+assert.equal(validateSnapshot(alphanumericSchool),alphanumericSchool);
+alphanumericSchool.schools[0].school_id='A00000!';
+assert.throws(()=>validateSnapshot(alphanumericSchool));
 for(const change of [p=>p.schools[0].raw_answers=['secret'],p=>p.totals.official_rows=2,p=>p.schools.push(p.schools[0]),p=>p.schools[0].questions[0].counts[0]=2,p=>p.schools[0].questions[0].id='Q51',p=>p.snapshot_at='2026-01-01']){const copy=structuredClone(payload);change(copy);assert.throws(()=>validateSnapshot(copy));}
 questions[0].valid=1;questions[0].counts[2]=1;
 assert.deepEqual(publicQuestionResults(questions),[{questionId:'Q01',row:-1,values:['보통이다']}]);
