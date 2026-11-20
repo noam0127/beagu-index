@@ -35,7 +35,7 @@ let game=semester.createGame(base);
 game={...game,profile:{...game.profile,name:'가람',experience:'new',gender:'female'}};
 const view=semester.chapter(game);
 assert.equal(game.episode,1);assert.equal(game.profile.name,'가람');
-assert(view.paragraphs[0].includes('기간제 교사로 첫 학급'),'Chosen low-career experience must affect Chapter 1');
+assert(view.paragraphs[0].includes('임용시험 공부'),'Low-career branch must start with the March 1 principal call during teacher recruitment studies');
 assert.equal(game.profile.employment,'fixed_term');
 const html=fs.readFileSync(path.join(__dirname,'../teacher-class-diary-play.html'),'utf8');
 const css=fs.readFileSync(path.join(__dirname,'../styles/class-diary-player-flow-v1.css'),'utf8');
