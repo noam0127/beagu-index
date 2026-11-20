@@ -142,9 +142,9 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.waitForFunction(()=>!!document.querySelector('#outcomeText p.diary-literary-line'),null,{timeout:5000});
    await page.evaluate(()=>{
     const more=document.getElementById('vnMore'),next=document.getElementById('nextBtn');
-    for(let i=0;i<240&&next.hidden;i++){if(more.hidden)break;more.click();}
+    for(let i=0;i<1100&&next.hidden;i++){if(more.hidden)break;more.click();}
    });
-   await page.waitForFunction(()=>!document.getElementById('nextBtn').hidden,null,{timeout:5000});
+   await page.waitForFunction(()=>!document.getElementById('nextBtn').hidden,null,{timeout:15000});
    await page.locator('#nextBtn').click();
    await page.locator('#playerSetup').waitFor({state:'visible'});
    await page.locator('#heroName').fill('새봄');
