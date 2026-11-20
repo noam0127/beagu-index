@@ -1,0 +1,175 @@
+/* Class diary UI cleanup: fixed upper-left chapter details and no lower-right next arrow.
+ * The open reader offset is measured from actual HUD element bounds by the
+ * companion script; no arbitrary 150px/260px push-down on mobile.
+ */
+body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot{
+ position:absolute!important;
+ inset:auto auto auto 0!important;
+ top:calc(env(safe-area-inset-top,0px) + 48px)!important;
+ left:0!important;
+ width:min(62%,calc(100% - 192px))!important;
+ min-width:0!important;
+ max-width:740px!important;
+ padding:0!important;
+ margin:0!important;
+ box-sizing:border-box!important;
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ justify-content:flex-start!important;
+ gap:3px!important;
+ transform:none!important;
+}
+body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot #chapterDay{
+ display:block;
+ max-width:100%;
+ margin:0!important;
+ padding:6px 10px!important;
+ white-space:nowrap!important;
+ text-overflow:ellipsis!important;
+ overflow:hidden!important;
+ font-size:clamp(10px,1.15vw,12px)!important;
+ line-height:1.25!important;
+}
+body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot #chapterTitle{
+ display:-webkit-box!important;
+ -webkit-box-orient:vertical;
+ -webkit-line-clamp:2;
+ overflow:hidden!important;
+ overflow-wrap:break-word!important;
+ max-width:100%!important;
+ max-height:2.6em!important;
+ padding:0!important;
+ margin:3px 0 0!important;
+ font-family:"Gowun Batang","Nanum Myeongjo",serif!important;
+ font-size:clamp(19px,2.35vw,30px)!important;
+ line-height:1.27!important;
+ color:#fff9fb!important;
+ text-shadow:0 2px 9px rgba(8,8,20,.68)!important;
+}
+body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot #chapterPlace{
+ display:block;
+ max-width:100%!important;
+ margin:0!important;
+ overflow:hidden!important;
+ white-space:nowrap!important;
+ text-overflow:ellipsis!important;
+ font-size:clamp(10px,1vw,12px)!important;
+ line-height:1.45!important;
+}
+body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot .track{
+ max-width:100%!important;
+ width:100%!important;
+ height:3px!important;
+ margin-top:5px!important;
+ opacity:.7;
+}
+body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot .diary-day-progress,
+body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot .diary-semester-meta{
+ display:none!important; /* Already conveyed by the chapter badge and progress */
+}
+/* Right-hand utilities keep their own lane. Do not move the chapter headline. */
+body.is-playing.diary-hud-open #novelCard #vnHud #diaryHudActions{
+ top:105px!important;
+ right:0!important;
+ left:auto!important;
+ width:max-content!important;
+ max-width: min(47%,232px)!important;
+ display:flex!important;
+ align-items:flex-start!important;
+ justify-content:flex-end!important;
+ flex-wrap:wrap!important;
+ gap:5px!important;
+ margin:0!important;
+}
+body.is-playing.diary-hud-open #novelCard #vnOverlay #diaryHudStats{
+ top:calc(env(safe-area-inset-top,0px) + 62px)!important;
+ right:calc(env(safe-area-inset-right,0px) + 12px)!important;
+ left:auto!important;
+ max-width:calc(50% - 6px)!important;
+}
+body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+ top:var(--diary-open-reader-top,190px)!important;
+ min-height:0!important;
+ max-height:none!important;
+}
+/* The page advances by scene/reader tap or Enter/Right Arrow, not a floating
+ * next button. Keep the existing button nodes for engine & auto-play handlers. */
+body.is-playing #novelCard #vnMore,
+body.is-playing #novelCard #nextBtn,
+body.is-playing #novelCard #vnBottom .vn-control-row>#vnMore:not([hidden]),
+body.is-playing #novelCard #vnBottom .vn-control-row>#nextBtn:not([hidden]){
+ display:none!important;
+ visibility:hidden!important;
+ pointer-events:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row{
+ justify-content:flex-end!important;
+ gap:6px!important;
+ padding-inline:0!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row .diary-toolbar{
+ margin-left:0!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom #vnDialogueSlot{
+ cursor:pointer;
+}
+@media(max-width:760px){
+ body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot{
+  top:calc(env(safe-area-inset-top,0px) + 48px)!important;
+  width:calc(100% - 180px)!important;
+  max-width:calc(100% - 180px)!important;
+ }
+ body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot #chapterTitle{
+  font-size:clamp(18px,4.6vw,23px)!important;
+  line-height:1.22!important;
+ }
+ body.is-playing.diary-hud-open #novelCard #vnHud #diaryHudActions{
+  top:105px!important;
+  max-width:46%!important;
+ }
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+  top:var(--diary-open-reader-top,188px)!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row{
+  min-height:48px!important;
+  gap:4px!important;
+ }
+}
+@media(max-width:370px){
+ body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot{
+  width:calc(100% - 150px)!important;
+  max-width:calc(100% - 150px)!important;
+ }
+ body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot #chapterTitle{
+  font-size:18px!important;
+ }
+ body.is-playing.diary-hud-open #novelCard #vnHud #diaryHudActions{
+  max-width:45%!important;
+ }
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot{
+  top:calc(env(safe-area-inset-top,0px) + 41px)!important;
+  width:58%!important;
+  max-width:58%!important;
+ }
+ body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot #chapterTitle{
+  -webkit-line-clamp:1;
+  max-height:1.4em!important;
+  font-size:17px!important;
+ }
+ body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot #chapterPlace{display:none!important}
+ body.is-playing.diary-hud-open #novelCard #vnHud #diaryHudActions{top:49px!important}
+ body.is-playing.diary-hud-open #novelCard #vnOverlay #diaryHudStats{
+  top:calc(env(safe-area-inset-top,0px) + 48px)!important;
+ }
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+  top:var(--diary-open-reader-top,127px)!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing.diary-hud-open #novelCard #vnHud #vnHeaderSlot{
+  transition:none!important;
+ }
+}
