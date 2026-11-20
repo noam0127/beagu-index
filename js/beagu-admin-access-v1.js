@@ -221,6 +221,21 @@
       " · 측정 표본 "+num(rows.reduce((sum,item)=>sum+Number(item.samples),0))+
       "건 · 적은 표본의 P99는 참고용";
   }
+  function renderTelemetryHealth(data){
+    const fields=["guard_attempts","guard_allowed","guard_source_limited","guard_id_rotation_limited","saved_visits_24h"];
+    for(const field of fields){
+      const el=document.querySelector('[data-telemetry="'+field+'"]');
+      if(el)el.textContent=data&&data[field]!=null?num(data[field]):"확인 불가";
+    }
+    const status=$("adminTelemetryAsOf");
+    if(!data){status.textContent="보호 통계를 가져올 수 없습니다. 다음 갱신에서 재시도합니다.";return;}
+    const attempts=Number(data.guard_attempts);
+    const last=data.latest_saved_visit?
+      new Date(data.latest_saved_visit).toLocaleString("ko-KR",{timeZone:"Asia/Seoul",hour12:false}):
+      "지난 24시간 방문 저장 기록 없음";
+    const sample=Number.isSafeInteger(attempts)&&attempts>=30?"":" · 아직 적은 계측 표본";
+    status.textContent="최근 저장 방문: "+last+" · 24시간 검사 합계"+sample;
+  }
   async function refreshLiveTraffic(){
     if(document.hidden||$("adminDashboard").hidden)return;
     const seq=++liveSeq,requestedPeriod=period;
@@ -237,12 +252,14 @@
     if(seq!==liveSeq||requestedPeriod!==period)return;
     showLiveTraffic(payload.traffic);
     renderPerformance(payload.performance);
+    renderTelemetryHealth(payload.telemetry_health);
   }
   function refreshLiveSafely(){
     void refreshLiveTraffic().catch(()=>{
       $("adminLiveAsOf").textContent="실시간 통계를 갱신하지 못했습니다. 연결과 관리자 인증을 확인하세요.";
       $("adminOnlineCount").textContent="확인 불가";
       $("adminPerfAsOf").textContent="속도 통계를 갱신하지 못했습니다. 다음 갱신에서 재시도합니다.";
+      renderTelemetryHealth(null);
     });
   }
   function displayDashboard(data){
