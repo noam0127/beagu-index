@@ -79,7 +79,7 @@ assert(play.src.includes('class="panel vn-setup"'),'Dating-sim setup should repl
 for(const id of ['setupPlayerPreview','setupPortraitWoman','setupPortraitMan','setupPortraitNone']){
  assert(play.ids.has(id),'Setup portrait/preview missing: '+id);
 }
-for(const key of ['woman','man','none']){
+for(const key of ['woman','man','none','man2','man3']){
  assert(play.src.includes('data-partner-choice="'+key+'"'),'Character card missing: '+key);
 }
 assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a cast card should play a cue');
