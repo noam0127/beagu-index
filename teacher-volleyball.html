@@ -562,6 +562,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     volleyShackle.x=left.x-54;volleyShackle.dir=-1;
     Object.assign(right, { x: 690, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false, contactFrames:0 });
     Object.assign(enemyMinion,{x:810,y:FLOOR-31,vx:0,contactFrames:0,cooldown:0});
+    Object.assign(bonusFriend,{x:260,y:FLOOR-31,vx:0,vy:0,contactFrames:0});
     ball.x = state.serveLeft ? 215 : 685;
     ball.y = 223;
     state.rescueUsed=false;
@@ -837,9 +838,23 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         ball.y>right.y-battle.enemyJumpReach && ball.y<right.y+22 && ball.vy>-4;
       state.aiJump=near&&Math.random()<battle.enemyJumpChance;
     }
+    const pickup=mysteryDrops.filter(d=>d.side==="right"&&d.y>FLOOR-180)
+      .sort((a,b)=>b.y-a.y)[0];
+    if(pickup&&(ball.x<NET_X||Math.abs(ball.x-right.x)>215))
+      state.aiTargetX=pickup.x;
     const difference=state.aiTargetX-right.x;
     const move=Math.abs(difference)>battle.enemyDeadzone?Math.sign(difference):0;
-    controlPlayer(right,move,state.aiJump,battle.enemySpeed,battle.enemyJumpForce);
+    const slow=isMysteryBuff("right","complaint")?.65:1;
+    const fast=isMysteryBuff("right","letter")?1.35:1;
+    const shackle=isMysteryBuff("right","shackle");
+    controlPlayer(right,move,!shackle&&state.aiJump,battle.enemySpeed*slow*fast,battle.enemyJumpForce);
+    const cpuCeiling=isMysteryBuff("right","wings")?86:NET_TOP+56;
+    if(shackle){right.y=FLOOR-31;right.vy=0;}
+    else if(isMysteryBuff("right","wings")){
+      const target=ball.x>NET_X?clamp(ball.y,86,FLOOR-31):FLOOR-31;
+      right.y=clamp(right.y+clamp(target-right.y,-10,10),86,FLOOR-31);
+      right.vy=0;
+    }else if(right.y<cpuCeiling){right.y=cpuCeiling;right.vy=Math.max(0,right.vy);}
   }
   // Small defender: only chases incoming, descending balls and is slower
   // than the main CPU player, with one shared collision cooldown.
@@ -1056,10 +1071,13 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const keyboardDirection = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
     const keyboardVertical = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
     const beforeMoveX = left.x, beforeMoveY = left.y;
+    const itemSlow=isMysteryBuff("left","complaint")?.65:1;
+    const itemFast=isMysteryBuff("left","letter")?1.35:1;
+    const itemSpeed=itemSlow*itemFast;
     if (touchControl.pointerId !== null && touchControl.targetX !== null && touchControl.targetY !== null) {
       // Responsive, smoothed 2-axis flight; remain within the player's half-court.
       const oldX = left.x, oldY = left.y;
-      const flightStep = 24 * SPEED_MULTIPLIER * battle.allySpeed;
+      const flightStep = 24 * SPEED_MULTIPLIER * battle.allySpeed*itemSpeed;
       left.x += clamp(touchControl.targetX - left.x, -flightStep, flightStep);
       left.y += canPlayerJump() ? clamp(touchControl.targetY - left.y, -flightStep, flightStep) : 0;
       left.x = clamp(left.x, 35, NET_X - NET_W / 2 - 36);
@@ -1070,7 +1088,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     } else if(canPlayerJump() && keyboardVertical!==0){
       // Match mobile two-axis flight controls; release restores gravity.
       const oldX=left.x, oldY=left.y;
-      const keyboardStep=10*SPEED_MULTIPLIER*battle.allySpeed;
+      const keyboardStep=10*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
       left.x=clamp(left.x+keyboardDirection*keyboardStep,35,NET_X-NET_W/2-36);
       left.y=clamp(left.y+keyboardVertical*keyboardStep,playerCeiling(),FLOOR-31);
       left.vx=left.x-oldX;
@@ -1078,7 +1096,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       left.jumpLock=false;
     } else {
       controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump,
-       5*SPEED_MULTIPLIER*battle.allySpeed,12.8*battle.allyJump);
+       5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed,12.8*battle.allyJump);
        if(!canPlayerJump()){left.y=FLOOR-31;left.vy=0;}
        else if(left.y<playerCeiling()){left.y=playerCeiling();left.vy=Math.max(0,left.vy);}
     }
