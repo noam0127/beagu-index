@@ -196,7 +196,7 @@ async function main() {
   check('홈 상단 공통메뉴·기존 설문 연결', home.includes('beagu-unified-nav') && home.includes('href="challenge.html"') && home.includes('https://forms.gle/TPyCakK6Sj2zchRy7'));
   check('전 페이지 B 로고·영문 VOLLEYBALL INDEX 제거', ['index.html','search.html','search-lv1.html','school-report.html','statistics.html','challenge.html'].every(p=>(responses.get(p)||'').includes('class="beagu-unified-mark"') && !(responses.get(p)||'').includes('VOLLEYBALL INDEX')));
 check('테스트 설문 비활성화', legacySurvey.includes('2026 배구지수 공식 설문') && !legacySurvey.includes('submit_survey'));
-  check('챌린지 인증과 정식 계정 안내', challengeHTML.includes('challenge-lv2-pending') && !/step-3|Lv\.2\(진\)/.test(challengeHTML) && challengeHTML.includes('id="challengeAccessForm"') && challengeHTML.includes('id="capture"') && challengeHTML.includes('id="loungeLink"'));
+  check('챌린지 인증과 고유번호 화면', !challengeHTML.includes('class="challenge-lv2-pending"') && !/step-3|Lv\.2\(진\)/.test(challengeHTML) && challengeHTML.includes('id="challengeAccessForm"') && challengeHTML.includes('id="capture"') && challengeHTML.includes('id="loungeLink"'));
   check('2단계 열람 및 2026 새로고침', html1.includes('js/level-search.js') && level1.includes('const YEARS = [2023, 2024, 2025, 2026]') && level1.includes('2026년 승인 결과 새로고침'));
   check('학교 MBTI Lv.1·Lv.2 공통 자산 연결',
     html1.includes('js/school-mbti-v1.js')&&html1.includes('styles/school-mbti-v1.css') &&
