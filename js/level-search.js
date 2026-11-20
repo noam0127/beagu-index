@@ -71,7 +71,7 @@
   let historicalPresenceByYear={};
   const geographyComparisons=new Map(); // approved national/province benchmarks; never school responses
 
-  const historicalPresenceReady=fetch('data/public-2023-2025-school-records-v2.json?v=20261120-historyfull2',{cache:'no-cache'})
+  const historicalPresenceReady=fetch('data/public-2023-2025-school-records-v2.json?v=20261120-historyfull2',{cache:'default'})
     .then(r=>{if(!r.ok)throw new Error('과거 조사 기록 파일 조회 실패');return r.json()})
     .then(data=>{
       const years=data?.schoolIdsByYear;
@@ -81,7 +81,7 @@
         ['2023','2024','2025'].map(y=>[y,new Set(years[y])]));
     }).catch(e=>{console.warn('조사 기록이 표시되지 않아도 기존 검색은 유지됩니다.',e)});
 
-  const loaded = fetch('data/public-lv0-percentiles-v1.2.json?v=20261120-all-regions1', {cache:'no-cache'})
+  const loaded = fetch('data/public-lv0-percentiles-v1.2.json?v=20261120-all-regions1', {cache:'default'})
     .then(r => { if (!r.ok) throw new Error('PUBLIC_DATA_UNAVAILABLE'); return r.json(); })
     .then(data => { publicIndex = BeaguPublic.buildIndex(data); publicStaticAvailable = true; })
     .catch(error => { console.warn('공개 백분위 파일 미응답, 승인 DB를 사용합니다.', error); });
@@ -867,14 +867,22 @@
       const data=Array.isArray(response.schools)?response.schools:[];
       const count=Number(response.total)||0;
       if (request !== serial) return;
-      await Promise.all([loaded,historicalPresenceReady]);
-      if (request !== serial) return;
-      try { await recoverPublicIndex(data||[]); }
-      catch(e){ publicLoadError=true; console.warn('Lv.1 백분위 DB 재조회 실패',e); }
-      if (request !== serial) return;
-      if(explicitEnter&&q&&count===1&&Array.isArray(data)&&data.length===1)
+      if(explicitEnter&&q&&count===1&&data.length===1)
         window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),1,'search-lv1');
-      render(data || [], count || 0, sortValue);
+      // Do not wait for 750KB public snapshot before drawing the selected schools.
+      render(data,count,sortValue);
+      void (async()=>{
+        await Promise.all([loaded,historicalPresenceReady]);
+        if(request!==serial)return;
+        if(!publicStaticAvailable){
+          try{await recoverPublicIndex(data)}
+          catch(e){publicLoadError=true;console.warn('Lv.1 백분위 DB 재조회 실패',e)}
+        }
+        if(request!==serial)return;
+        // Never close a detail the teacher already expanded while auxiliary data loaded.
+        if($('results').querySelector('.lv1-history-trigger[aria-expanded="true"]'))return;
+        render(data,count,sortValue);
+      })().catch(error=>console.warn('레벨1 공개 보조자료 표시 실패',error));
     } catch (error) {
       if (request !== serial) return;
       if(error.unauthorized){loggedOut('인증이 만료되었습니다. 참여코드로 다시 로그인해주세요.');return;}
