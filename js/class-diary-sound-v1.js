@@ -4,7 +4,7 @@
  */
 (function(root){
 'use strict';
-const VERSION='class-diary-sound/v6';
+const VERSION='class-diary-sound/v7';
 const LICENSE='https://creativecommons.org/licenses/by/4.0/';
 const HOST='https://www.scottbuckley.com.au/library/';
 const FILES={
@@ -156,6 +156,20 @@ function semesterScore(episode,options={}){
  let track=SEMESTER_REFLECTIONS[episode-1][Number(choice)];
  if(noRomance)track=friendshipTrack(track,episode,choice);
  return {track,ambience:null,cue:null};
+}
+/* Narrator-specific background music starts with the written prologue, not its school preface.
+ * No new audio assets: existing credited tracks and the normal crossfade remain in use.
+ */
+const PROLOGUE_TRACKS=Object.freeze({
+ woman:'wildflowers', // 서지윤 · curious and thoughtful
+ man:'intimate',      // 한현우 · reflective literature
+ none:'withhands',    // 윤민서 · grounded friendship
+ man2:'restful',      // 차도겸 · quietly contemplative
+ man3:'heartfelt'     // 백태오 · warm and energetic
+});
+function prologueTrack(partner){
+ return Object.prototype.hasOwnProperty.call(PROLOGUE_TRACKS,partner)?
+  PROLOGUE_TRACKS[partner]:'wildflowers';
 }
 const DAYS=Object.freeze(['quiet','tension','heartfelt','tension','playful','restful','intimate']);
 let enabled=false,current=null,currentId=null,request=0,fadeTimer=null,ambience=null,ambienceId=null;
@@ -351,7 +365,7 @@ function credit(){
  credit:'Music by Scott Buckley — CC BY 4.0. www.scottbuckley.com.au',
  recordings:[...Object.values(AMBIENCE),...Object.values(FOLEY)].map(({name,creator,page,license})=>({name,creator,page,license}))};
 }
-const api=Object.freeze({VERSION,TRACKS,AMBIENCE,FOLEY,SEMESTER_SCORE,SEMESTER_REFLECTIONS,semesterScore,dayTrack,choiceTrack,sceneTrack,placeCue,ambienceFor,setAmbience,note,setTrack,setEnabled,
+const api=Object.freeze({VERSION,TRACKS,AMBIENCE,FOLEY,SEMESTER_SCORE,SEMESTER_REFLECTIONS,PROLOGUE_TRACKS,prologueTrack,semesterScore,dayTrack,choiceTrack,sceneTrack,placeCue,ambienceFor,setAmbience,note,setTrack,setEnabled,
  isEnabled,setMusicVolume,setSfxVolume,musicLevel,sfxLevel,setEffectsEnabled,stop,credit,
  onStatus(fn){onStatus=typeof fn==='function'?fn:()=>{}}});
 if(typeof module==='object'&&module.exports)module.exports=api;
