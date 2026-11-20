@@ -162,7 +162,10 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
     for(let i=0;i<1100&&next.hidden;i++){if(more.hidden)break;more.click();}
    });
    await page.waitForFunction(()=>!document.getElementById('nextBtn').hidden,null,{timeout:15000});
-   await page.locator('#nextBtn').click();
+   // The full-screen novel uses tap-to-advance; the old nextBtn is intentionally
+   // visually hidden. A scene tap invokes the same handler without testing an
+   // obsolete visible-arrow control.
+   await page.locator('#sceneArt').evaluate(node=>node.click());
    await page.locator('#playerSetup').waitFor({state:'visible'});
    await page.locator('#heroName').fill('새봄');
    await page.locator('#playerSetupForm button[type="submit"]').click();
