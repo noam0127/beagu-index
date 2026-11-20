@@ -35,7 +35,7 @@ jobs:
             const checks = [
               ['home', '/', 'postit.html'],
               ['postit', '/postit.html', 'postit-account-v1.js?v=20261121-member1'],
-              ['postit-js', '/js/postit-v1.js?v=20261121-member1', 'WRITER_IDENTITY_REQUIRED'],
+              ['postit-js', '/js/postit-v1.js?v=20261121-stage4-atomic1', 'state.postAttempt'],
               ['postit-account-js','/js/postit-account-v1.js?v=20261121-member1','signInWithPassword'],
               ['postit-account-css','/styles/postit-account-v1.css?v=20261121-member1','postit-account'],
               ['wind-css', '/styles/postit-v1.css', 'postit-breeze-flutter'],
@@ -79,6 +79,22 @@ jobs:
             assert.equal(blockedWrite.status, 403, 'anonymous writes must fail closed');
             assert.equal((await blockedWrite.json()).error, 'LEVEL_REQUIRED');
             console.log('PASS anonymous create_post denied HTTP 403 (no data written)');
+            // Never create real content. Every attempted mutation must fail
+            // before target lookup when no earned Lv2+Auth membership exists.
+            for (const action of [
+              { action:'create_comment', post_id:'00000000-0000-4000-8000-000000000001', text:'테스트' },
+              { action:'set_like', target_type:'post', target_id:'00000000-0000-4000-8000-000000000001', liked:true },
+              { action:'toggle_like', target_type:'post', target_id:'00000000-0000-4000-8000-000000000001' },
+              { action:'report', target_type:'post', target_id:'00000000-0000-4000-8000-000000000001' },
+              { action:'remove', target_type:'post', target_id:'00000000-0000-4000-8000-000000000001' }
+            ]) {
+              const denied = await fetch(api, { method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(action),signal:AbortSignal.timeout(18000) });
+              assert.equal(denied.status,403,action.action+' must reject Lv0');
+              assert.equal((await denied.json()).error,'LEVEL_REQUIRED');
+            }
+            console.log('PASS anonymous comment/like/report/remove denied HTTP 403');
 
             console.log('Public smoke test passed. Lv2 authenticated search and mobile visuals require separate checks.');
           }
