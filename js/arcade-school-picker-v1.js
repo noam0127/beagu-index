@@ -76,11 +76,13 @@ class ArcadeSchoolPicker{
   const q=this.input.value.trim();const ticket=++this.serial;
   if(q.length<2){this.results.replaceChildren();return;}
   this.status.textContent="학교 검색 중…";
+  const perfStarted=performance.now();let perfSucceeded=false;
   try{
    const data=await this.request("?schools="+encodeURIComponent(q));
    if(ticket!==this.serial||this.locked)return;
    this.results.replaceChildren();
    const schools=Array.isArray(data.schools)?data.schools:[];
+   perfSucceeded=true;
    if(!schools.length){this.status.textContent="검색 결과가 없습니다. 학교명을 다시 확인해 주세요.";return;}
    this.status.textContent="";
    for(const school of schools){
@@ -105,11 +107,14 @@ class ArcadeSchoolPicker{
     this.results.append(btn);
    }
   }catch(e){if(ticket===this.serial)this.status.textContent="학교 검색 연결에 실패했습니다. 다시 검색해 주세요.";}
+  finally{if(ticket===this.serial&&!this.locked)
+   window.BeaguPerf?.record('school_search',performance.now()-perfStarted,perfSucceeded);}
  }
  async select(record){
   if(this.locked)return;
   const ticket=++this.serial;
   this.status.textContent="학교의 게임 난이도 확인 중…";
+  const perfStarted=performance.now();let perfSucceeded=false;
   try{
    const data=await this.request("?school_id="+encodeURIComponent(record.school_id));
    if(ticket!==this.serial||this.locked)return;
@@ -128,7 +133,10 @@ class ArcadeSchoolPicker{
     this.status.textContent="🔒 조사 자료 없음 · 2026 조사 참여";
    }
    if(typeof this.onChange==="function")this.onChange(school);
+   perfSucceeded=true;
   }catch(e){if(ticket===this.serial)this.status.textContent="학교 확인 실패. 다시 선택해 주세요.";}
+  finally{if(ticket===this.serial&&!this.locked)
+   window.BeaguPerf?.record('school_selection',performance.now()-perfStarted,perfSucceeded);}
  }
  get(){return this.selected;}
 }

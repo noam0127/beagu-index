@@ -23,8 +23,8 @@ assert.match(compare,/Promise.all\(Array.from/);
 assert.match(compare,/snapshotOnly:true/);
 assert.match(comparison,/detail.snapshotOnly===true/);
 assert.match(comparison,/!detail.snapshotPending/);
-assert.match(publicSearch,/renderSchools\(list,count\|\|0\);\s*void \(async\(\)=>/);
-assert.match(lv1,/render\(data,count,sortValue\);\s*void \(async\(\)=>/);
+assert.match(publicSearch,/renderSchools\(list,count\|\|0\);\s*(?:perfSucceeded=true;\s*)?void \(async\(\)=>/);
+assert.match(lv1,/render\(data,count,sortValue\);\s*(?:perfSucceeded=true;\s*)?void \(async\(\)=>/);
 assert.match(lv1,/\.lv1-history-trigger\[aria-expanded="true"\]/);
 assert.match(backend,/const \[rows,annualRows\]=await Promise.all\(\[/);
 assert.match(picker,/const requestCache=new Map\(\)/);
@@ -69,6 +69,7 @@ async function progressive(){
       new Promise(resolve=>{completeSnapshot=()=>resolve({ok:true,json:async()=>({})})}),
     console,Map,Date,Array,Promise,Set
   };
+  sandbox.performance={now:()=>100};
   vm.runInNewContext(compare,sandbox);
   for(let i=0;i<12;i++)await Promise.resolve();
   assert.equal(events.length,1);

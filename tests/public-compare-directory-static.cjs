@@ -63,6 +63,7 @@ async function staticProgressive(){
      new Promise(resolve=>{releasePercentiles=()=>resolve({ok:true,json:async()=>({})})}),
    console,Map,Date,Array,Promise,Set
  };
+ sandbox.performance={now:()=>100};
  vm.runInNewContext(src,sandbox);
  for(let i=0;i<20;i++)await Promise.resolve();
  assert.equal(events.length,1);

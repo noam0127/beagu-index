@@ -97,6 +97,7 @@
     window.dispatchEvent(new CustomEvent('beagu:statistics-ready',{detail}));
   }
   async function start(){
+    const perfStarted=performance.now();let perfSucceeded=false;
     const loading=window.BeaguLoading?.start('비교할 학교 목록을 불러오는 중…');
     const progress=$('compareFeedback');
     if(progress)progress.textContent='학교 목록을 불러오는 중…';
@@ -108,12 +109,16 @@
     try{
       const schools=await directory();
       dispatch({schools,snapshot:new Map(),snapshotReady:false,snapshotPending:true});
+      perfSucceeded=true;
       if(progress&&progress.textContent==='학교 목록을 불러오는 중…')progress.textContent='';
     }catch(error){
       console.error('공개 학교목록 조회 실패',error);
       if(progress)progress.textContent='학교 목록을 불러오지 못했습니다. 새로고침해 주세요.';
       return;
-    }finally{window.BeaguLoading?.finish(loading)}
+    }finally{
+      window.BeaguPerf?.record('compare_directory',performance.now()-perfStarted,perfSucceeded);
+      window.BeaguLoading?.finish(loading);
+    }
     const snap=await snapshotTask;
     dispatch({snapshotOnly:true,snapshot:snap.index,snapshotReady:snap.ready});
     if(!snap.ready&&progress&&!progress.textContent)

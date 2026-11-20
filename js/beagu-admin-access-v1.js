@@ -173,6 +173,54 @@
     const when=data?.as_of?new Date(data.as_of).toLocaleTimeString("ko-KR",{timeZone:"Asia/Seoul",hour12:false}):"시각 확인 불가";
     $("adminLiveAsOf").textContent="최근 갱신 "+when+" · 30초마다 자동 확인 · 동시 접속은 5분 활동 기준 추정치";
   }
+  const perfPages={
+    'index':'홈','search':'학교검색 Lv.0','search-lv1':'학교검색 Lv.1',
+    'statistics':'학교비교','school-report':'학교 상세','result':'조사결과',
+    'challenge':'챌린지','volleyball':'선생님배구','teacher-run':'험난한 교직생활'
+  };
+  const perfActions={
+    'navigation':'페이지 로딩','school_search':'학교 검색',
+    'school_selection':'학교 선택','compare_directory':'비교 목록'
+  };
+  function renderPerformance(data){
+    const root=$("adminPerfRows");
+    root.replaceChildren();
+    if(!data||!Array.isArray(data.rows)){
+      const line=make("tr"),cell=make("td","empty","측정 자료를 가져오지 못했습니다.");
+      cell.colSpan=7;line.append(cell);root.append(line);
+      $("adminPerfAsOf").textContent="속도 통계 확인 불가 · 다음 자동 갱신에서 재시도합니다.";
+      return;
+    }
+    const rows=data.rows.filter(item=>item && typeof item.page==='string' &&
+      typeof item.operation==='string' && Number.isSafeInteger(Number(item.samples)) &&
+      Number(item.samples)>0);
+    if(!rows.length){
+      const line=make("tr"),cell=make("td","empty","아직 수집된 성능 표본이 없습니다.");
+      cell.colSpan=7;line.append(cell);root.append(line);
+    }
+    const ms=value=>Number.isFinite(Number(value))&&value!=null?
+      Math.round(Number(value)).toLocaleString("ko-KR")+"ms":"—";
+    rows.sort((a,b)=>String(a.page).localeCompare(String(b.page))||
+      String(a.operation).localeCompare(String(b.operation)));
+    for(const item of rows){
+      const row=make("tr");
+      row.append(make("td","perf-page",perfPages[item.page]||item.page),
+        make("td","",perfActions[item.operation]||item.operation),
+        make("td","",num(item.samples)),
+        make("td","",ms(item.p50_ms)),
+        make("td","",ms(item.p90_ms)),
+        make("td","",ms(item.p99_ms)));
+      const rate=item.operation==='navigation'?"측정 안 함":
+        (Number.isFinite(Number(item.failure_rate))?Number(item.failure_rate).toFixed(1)+"%":"—");
+      row.append(make("td","perf-rate",rate));
+      root.append(row);
+    }
+    const when=data.as_of?new Date(data.as_of).toLocaleTimeString("ko-KR",
+      {timeZone:"Asia/Seoul",hour12:false}):"시각 확인 불가";
+    $("adminPerfAsOf").textContent="최근 측정 갱신 "+when+
+      " · 측정 표본 "+num(rows.reduce((sum,item)=>sum+Number(item.samples),0))+
+      "건 · 적은 표본의 P99는 참고용";
+  }
   async function refreshLiveTraffic(){
     if(document.hidden||$("adminDashboard").hidden)return;
     const seq=++liveSeq,requestedPeriod=period;
@@ -188,11 +236,13 @@
     if(!response.ok||!payload.traffic)throw Error("traffic_unavailable");
     if(seq!==liveSeq||requestedPeriod!==period)return;
     showLiveTraffic(payload.traffic);
+    renderPerformance(payload.performance);
   }
   function refreshLiveSafely(){
     void refreshLiveTraffic().catch(()=>{
       $("adminLiveAsOf").textContent="실시간 통계를 갱신하지 못했습니다. 연결과 관리자 인증을 확인하세요.";
       $("adminOnlineCount").textContent="확인 불가";
+      $("adminPerfAsOf").textContent="속도 통계를 갱신하지 못했습니다. 다음 갱신에서 재시도합니다.";
     });
   }
   function displayDashboard(data){

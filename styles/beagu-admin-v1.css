@@ -81,3 +81,18 @@ footer{margin-top:48px;color:#98a6ba;font-size:11px}
 .hourly-chart .bar-col{min-width:17px;flex:1 0 17px;height:100%;justify-content:flex-end}
 .hourly-chart .bar-rect{min-height:0}
 .hourly-chart .hour-label{display:block;font-size:9px;line-height:14px;color:#6d7e95;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* Private Real User Monitoring: compact responsive table, no decorative status colors. */
+.admin-perf-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain}
+.admin-perf-scroll:focus-visible{outline:2px solid #3673cb;outline-offset:3px;border-radius:8px}
+.admin-perf-table{border-collapse:collapse;table-layout:auto;width:100%;min-width:680px;
+  color:#203b5d;font-size:12px;font-variant-numeric:tabular-nums}
+.admin-perf-table th,.admin-perf-table td{padding:12px 10px;border-bottom:1px solid #e7edf5;
+  text-align:right;white-space:nowrap}
+.admin-perf-table th:first-child,.admin-perf-table td:first-child,
+.admin-perf-table th:nth-child(2),.admin-perf-table td:nth-child(2){text-align:left}
+.admin-perf-table th{font-weight:800;color:#62758d;background:#f6f9fd}
+.admin-perf-table tbody tr:last-child td{border-bottom:0}
+.admin-perf-table .perf-page{font-weight:800}
+.admin-perf-table .perf-rate{font-weight:750;color:#234e82}
+@media(max-width:640px){.admin-perf-table th,.admin-perf-table td{padding:11px 8px;font-size:11px}}
