@@ -135,6 +135,21 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#setupNext').isVisible(),false,'Duplicate next action is hidden on review');
    await page.locator('.setup-begin').click();
    await page.locator('#novel').waitFor({state:'visible'});
+   // The current five-colleague story opens with a school fact card and a
+   // colleague-narrated prologue before the player's Chapter 1.
+   await page.locator('#diaryPrologueSchool').waitFor({state:'visible'});
+   await page.locator('#diaryPrologueSchoolContinue').click();
+   await page.waitForFunction(()=>!!document.querySelector('#outcomeText p.diary-literary-line'),null,{timeout:5000});
+   await page.evaluate(()=>{
+    const more=document.getElementById('vnMore'),next=document.getElementById('nextBtn');
+    for(let i=0;i<240&&next.hidden;i++){if(more.hidden)break;more.click();}
+   });
+   await page.waitForFunction(()=>!document.getElementById('nextBtn').hidden,null,{timeout:5000});
+   await page.locator('#nextBtn').click();
+   await page.locator('#playerSetup').waitFor({state:'visible'});
+   await page.locator('#heroName').fill('새봄');
+   await page.locator('#playerSetupForm button[type="submit"]').click();
+   await page.locator('#novel').waitFor({state:'visible'});
    assert.equal(await page.locator('#scenePortrait').isVisible(),false,'Story scenes remain background-only without character portraits');
    assert.equal(await page.locator('#sceneGuest').isVisible(),false,'Guest characters are not pictured yet');
    assert.equal(await page.locator('#sceneDoyun').isVisible(),false,'Student character artwork is not pictured yet');
