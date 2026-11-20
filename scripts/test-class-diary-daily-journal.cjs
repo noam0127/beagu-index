@@ -21,7 +21,10 @@ assert.equal(diary.selection({phase:'semester_reflection',episode:16,history:[]}
 const fs=require('node:fs'),path=require('node:path');
 const html=fs.readFileSync(path.join(__dirname,'../teacher-class-diary-play.html'),'utf8');
 assert(html.includes('js/class-diary-daily-journal-v1.js'));
-assert(html.includes('id="dailyJournal"'));
+assert(html.includes('function openDailyJournalChoice()'));
+assert(html.includes('daily-journal-dialog'));
+assert(html.includes("if(vnState.kind==='outcome')"));
+assert(html.includes('if(storyMode===\'semester\'&&dailyJournal.selection(game,game.episode)===null)openDailyJournalChoice()'));
 assert(html.includes('dailyJournal.choose(game,choice.id)'));
 assert(html.includes('dailyJournal.selection(game,game.episode)'));
 console.log('PASS: 36 daily journal prompts, 108 diary options, reselect, legacy state, page wiring');
