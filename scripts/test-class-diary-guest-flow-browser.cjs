@@ -146,10 +146,22 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#partner').inputValue(),'none');
    assert.equal(await page.locator('#setupNext').isVisible(),true,'Bottom first-day action remains visible');
    await page.locator('#setupNext').click();
-   assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','First-day review appears after colleague selection');
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','Supporting teachers receive their own page');
+   assert.equal(await page.locator('[data-setup-screen="3"]').isVisible(),true);
+   assert.equal(await page.locator('[data-setup-screen="2"]').isVisible(),false);
+   assert.equal(await page.locator('[data-setup-screen="3"] .setup-supporting-person').count(),6);
+   assert.equal(await page.locator('#setupNext').isVisible(),true);
+   assert.equal(await page.locator('.diary-paper-turn-sheet').count(),1,'Forward page-turn effect must run');
+   await page.locator('#setupBack').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'2','Back page-turn returns to character choice');
+   assert.equal(await page.locator('#partner').inputValue(),'none','Chosen colleague survives back navigation');
+   await page.locator('#setupNext').click();
+   await page.locator('#setupNext').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'4','Final review is the fourth page');
    assert.equal(await page.locator('#setupReviewSchool').innerText(),'봄빛초등학교','Chosen school is reviewed');
    assert.equal(await page.locator('#setupReviewPartner').innerText(),'윤민서','Chosen colleague is reviewed');
-   assert.equal(await page.locator('#setupNext').isVisible(),false,'Duplicate next action is hidden on review');
+   assert.equal(await page.locator('#setupNext').isVisible(),false,'No duplicate next action on final review');
+   assert.equal(await page.locator('.setup-begin').isVisible(),true,'Fourth page contains start action');
    await page.locator('.setup-begin').click();
    await page.locator('#novel').waitFor({state:'visible'});
    // The current five-colleague story opens with a school fact card and a
