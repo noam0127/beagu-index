@@ -166,6 +166,42 @@
         <p class="subtle">레벨 세션 수는 사용자 수가 아닙니다. 레벨0의 고유 계정 수는 별도로 수집하지 않습니다.</p>
       </section>
 
+      <section class="dash-section" aria-labelledby="adminReview2026Heading" id="adminReview2026">
+        <div class="section-title">
+          <h3 id="adminReview2026Heading">2026 설문 비공개 검수</h3>
+          <small>원본 응답·자유서술 미표시 · 개인정보 심사 없이 공개 불가</small>
+        </div>
+        <p class="subtle">기술 검수 통과는 공개 승인이 아닙니다. 동의 근거가 확보되지 않아 승인 버튼은 제공하지 않습니다.
+          학교별 자료는 승인 후에도 24시간 대기하며, 현재는 보류 결정만 기록할 수 있습니다.</p>
+        <div class="metrics" id="adminReview2026Metrics">
+          <article><h4>비공개 학교별 집계</h4><strong id="adminReview2026Total">—</strong></article>
+          <article><h4>기술 검수 통과</h4><strong id="adminReview2026Technical">—</strong></article>
+          <article><h4>공개 승인</h4><strong id="adminReview2026Approved">—</strong></article>
+        </div>
+        <div class="ranking-card">
+          <div class="section-title">
+            <label for="adminReview2026Filter">검수 상태 필터</label>
+            <select id="adminReview2026Filter">
+              <option value="all">전체 학교</option>
+              <option value="technical">기술 검수 통과</option>
+              <option value="question">문항 검수 필요</option>
+              <option value="school">학교 매칭 확인</option>
+              <option value="prelaunch">사전조사 제외</option>
+              <option value="approved">승인됨</option>
+              <option value="held">공개 보류</option>
+            </select>
+            <button type="button" class="secondary" id="adminReview2026Reload">다시 확인</button>
+          </div>
+          <p id="adminReview2026Status" class="subtle" role="status" aria-live="polite">관리자 인증 후 목록을 불러옵니다.</p>
+          <div id="adminReview2026List" class="audit-list" aria-live="polite"></div>
+          <div class="period-tabs">
+            <button type="button" class="secondary" id="adminReview2026Prev" disabled>이전</button>
+            <span id="adminReview2026Page">—</span>
+            <button type="button" class="secondary" id="adminReview2026Next" disabled>다음</button>
+          </div>
+        </div>
+      </section>
+
       <section class="dash-section" aria-labelledby="adminSecurityHeading">
         <div class="section-title"><h3 id="adminSecurityHeading">운영 · 보안</h3><small>민감한 개인정보와 원본 설문 답변은 표시하지 않습니다</small></div>
         <div class="metrics">
@@ -195,5 +231,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
   <script defer src="js/beagu-admin-access-v1.js?v=20261120-perf1"></script>
+  <script defer src="js/beagu-2026-admin-review.js?v=20261120-review1"></script>
 </body>
 </html>
