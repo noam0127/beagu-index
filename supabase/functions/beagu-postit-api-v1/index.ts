@@ -1,7 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.0";
 
 // Post-it's data and author identities never become directly queryable with
-// the browser's publishable key. Public requests receive curated projections.
+// the browser's publishable key. Even curated projections require Lv2 authorization.
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const db = createClient(SUPABASE_URL, ROLE_KEY, { auth: { persistSession:false, autoRefreshToken:false }});
@@ -172,6 +172,9 @@ Deno.serve(async(req:Request)=>{
     const settings=await minimumLevel();
     return respond(req,{minimum_write_level:settings.minimum_write_level});
    }
+   // All Post-it reads (including search, comments, and school previews) are Lv2-only.
+   const viewer=await identity(req,2);
+   if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
    if(action==="school_info"){
     const ids=(url.searchParams.get("school_ids")||"").split(",").filter(Boolean);
     if(ids.length<1||ids.length>5||ids.some(x=>!SCHOOL_ID.test(x)))
@@ -193,21 +196,44 @@ Deno.serve(async(req:Request)=>{
     if(gameSlug&&!GAMES[gameSlug])return fail(req,"INVALID_GAME");
     const sort=url.searchParams.get("sort")==="popular"?"popular":"recent";
     if(schoolId&&!SCHOOL_ID.test(schoolId))return fail(req,"INVALID_SCHOOL");
+    const rawTerm=(url.searchParams.get("q")||"").trim().slice(0,40);
+    // Restrict syntax before passing a value into PostgREST's OR filter.
+    const term=rawTerm.normalize("NFC").replace(/[^\\p{L}\\p{N}\\s]/gu," ").replace(/\\s+/g," ").trim();
+    if(rawTerm&&term.length<2)return respond(req,{posts:[]});
+    let matchedComments=new Set<string>();
     let query=db.from("beagu_postit_posts").select("id,school_id,subject_type,game_slug,comparison_selection,body,author_uid,created_at")
      .eq("status","published").order("created_at",{ascending:false}).limit(sort==="popular"?100:30);
     if(schoolId)query=query.eq("school_id",schoolId);
     if(gameSlug)query=query.eq("game_slug",gameSlug);
+    if(term){
+      const [schoolMatches,commentMatches]=await Promise.all([
+        db.from("schools").select("school_id").ilike("school_name",`%${term}%`).limit(25),
+        db.from("beagu_postit_comments").select("post_id").eq("status","published")
+          .ilike("body",`%${term}%`).limit(100)
+      ]);
+      if(schoolMatches.error)throw schoolMatches.error;
+      if(commentMatches.error)throw commentMatches.error;
+      const ids=[...new Set((schoolMatches.data||[]).map(x=>x.school_id).filter(x=>SCHOOL_ID.test(x)))];
+      matchedComments=new Set((commentMatches.data||[]).map(x=>x.post_id));
+      const filters=[`body.ilike.%${term}%`];
+      if(ids.length){
+        filters.push(`school_id.in.(${ids.join(",")})`);
+        for(const id of ids)filters.push(`comparison_selection.ilike.%${id}%`);
+      }
+      if(matchedComments.size)filters.push(`id.in.(${[...matchedComments].join(",")})`);
+      const gameMatches=Object.entries(GAMES).filter(([slug,name])=>
+        name.toLowerCase().includes(term.toLowerCase())||slug.includes(term.toLowerCase())).map(([slug])=>slug);
+      if(gameMatches.length)filters.push(`game_slug.in.(${gameMatches.join(",")})`);
+      query=query.or(filters.join(","));
+    }
     const {data,error}=await query;if(error)throw error;
-    const self=(await identity(req))?.id||null;
-    let posts=await enrich(data||[],"post",self);
+    let posts=await enrich(data||[],"post",viewer.id);
+    if(term)posts=posts.map(p=>({...p,comment_match:matchedComments.has(p.id)}));
     if(sort==="popular")posts=posts.sort((a,b)=>b.likes-a.likes||b.created_at.localeCompare(a.created_at)).slice(0,30);
     return respond(req,{posts});
    }
    if(action==="comments"){
-    // A valid server-issued Lv1+ session is required to read any comment.
-    // This check precedes even the post existence check to avoid disclosure.
-    const viewer=await identity(req,1);
-    if(!viewer)return fail(req,"COMMENT_READ_LEVEL_REQUIRED",403);
+    // The Lv2 check above also guards comment reads before post lookup.
     const id=url.searchParams.get("post_id")||"";
     if(!UUID.test(id))return fail(req,"INVALID_POST");
     const exists=await target("post",id);
