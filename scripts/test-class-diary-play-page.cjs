@@ -103,7 +103,7 @@ assert(v6Image.length>4000&&v6Image.subarray(0,4).toString('ascii')==='RIFF','Ho
 assert(v6Css.includes('background-size:500% 100%'),'Hobby-themed photographs must be separate square crops');
 assert(play.src.includes("hobbyCastPortraits.src='assets/class-diary/characters/class-diary-cast-hobbies-v6.webp'"),'Hobby photo strip must be loaded with v5 fallback');
 assert(play.src.includes('styles/class-diary-cast-profiles-v6.css?v=20261120-cast-hobbies-hyunwoo-v3'),'Portrait CSS must be cache busted');
-for(const text of ['기타 · 낮은 선율로 마음을 건넨다','논어 · 웃음 뒤에 생각을 남긴다','기록 · 지나간 표정을 오래 헤아린다','실뜨기 · 얽힌 마음을 찬찬히 푼다','배구 · 승부보다 함께한 날을 기억한다'])assert(play.src.includes(text),'Hobby/personality label missing: '+text);
+for(const text of ['기타의 여운처럼 다정함이 오래 머무는 사람','웃음 뒤에 논어 한 구절을 품고 사는 사람','스쳐 간 표정을 일기장에 오래 남기는 사람','실 한 올로도 누군가의 마음을 잇는 사람','함께 뛰는 순간에 가장 환하게 웃는 사람'])assert(play.src.includes(text),'Hobby/personality label missing: '+text);
 
 assert(play.src.includes('has-hyunwoo-hair-v3'),'Hyunwoo profile should apply the same hair treatment as the novel');
 assert(v6Css.includes('--diary-hyunwoo-hair-image'),'Only Hyunwoo card may override hobby photos');
@@ -113,7 +113,15 @@ assert(hairSource.includes('function spriteSource(partner)'),'Card and stage use
 assert(play.src.includes("syncSetupPartner();sound.note('uiPick')"),'Selecting a cast card should play a cue');
 assert(play.src.includes("sound.note('uiStart')"),'Beginning the novel should play a cue');
 assert(play.src.includes("setupDescription"),'Selecting cast should update story introduction');
-assert(play.src.includes('role="group" aria-label="프롤로그의 화자, 알고 싶은 사람 선택"'),'Card chooser should be accessible');
+assert(play.src.includes('role="group" aria-label="프롤로그의 화자 다섯 명 중 한 사람 고르기"'),'Updated five-person chooser should be accessible');
+const peopleCss=fs.readFileSync('styles/class-diary-know-people-v7.css','utf8');
+assert(play.src.includes('<strong>알고 싶은 사람 고르기</strong>'),'Choice title must match updated screen');
+assert(play.src.includes('class-diary-know-people-v7.css?v=20261120-people-v7a'),'Updated profile styling should bypass cached CSS');
+assert((play.src.match(/class="setup-character-hobby"/g)||[]).length===5,'All five profiles need visible hobbies');
+for(const hobby of ['기타','논어','기록','실뜨기','배구'])assert(play.src.includes('class="setup-character-hobby">'+hobby),'Missing character-specific hobby: '+hobby);
+assert(peopleCss.includes('[aria-pressed="true"]'),'Selected portrait needs visible emphasis');
+assert(peopleCss.includes('aspect-ratio:1/1'),'Portraits must retain square framing');
+
 assert(!play.ids.has('partnerDescription'),'Redundant character-description box must be removed');
 assert(play.src.includes('<select id="partner" required hidden'),'Legacy partner data remains in a hidden form control');
 assert(play.ids.has('diarySchoolSurveyLink'),'Schools without published results offer a 2026 survey link');

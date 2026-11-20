@@ -48,8 +48,8 @@ assert(entry.includes("if(storyMode==='semester'&&playerSetupPending)return rend
 assert(entry.includes("if(storyMode==='semester'&&schoolIntroPending)return renderPrologueSchoolIntroduction();"));
 assert(entry.includes("prologuePending=storyMode==='semester';"));
 assert(entry.includes("prologuePending=false;schoolIntroPending=false;playerSetupPending=false;render();progressStatus('loaded')"),'Restored sessions should not replay prologue or setup');
-assert(entry.includes('<strong>알고 싶은 사람</strong>'),'Selection header');
-assert(entry.includes('02 · 알고 싶은 사람'),'Step progress');
+assert(entry.includes('<strong>알고 싶은 사람 고르기</strong>'),'Selection header');
+assert(entry.includes('02 · 동료'),'Compact step progress');
 assert(entry.includes('<small>프롤로그의 화자</small>'),'Review label');
 assert(entry.includes('그 사람의 프롤로그 읽기'),'Submit button');
 assert(!entry.includes('<strong>함께할 동료</strong>'),'Retired label must not remain');

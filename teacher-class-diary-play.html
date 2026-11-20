@@ -417,6 +417,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <link rel="stylesheet" href="styles/class-diary-cast-distinct-v5.css?v=20261120-hyunwoo-hair-v3">
 <link rel="stylesheet" href="styles/class-diary-cast-profiles-v6.css?v=20261120-cast-hobbies-hyunwoo-v3">
 <link rel="stylesheet" href="styles/class-diary-setup-book-v1.css?v=20261120-book4a">
+<link rel="stylesheet" href="styles/class-diary-know-people-v7.css?v=20261120-people-v7a">
 </head>
 <body>
 <main>
@@ -538,27 +539,27 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
   </div>
  </div>
  <div class="setup-cast" data-setup-screen="2">
-  <div class="setup-section-title"><span class="setup-number">02</span><div><strong>알고 싶은 사람</strong><small>그 사람의 시점으로 프롤로그를 읽습니다. 제1화부터는 나의 이야기입니다.</small></div></div>
-  <div class="setup-portrait-grid" role="group" aria-label="프롤로그의 화자, 알고 싶은 사람 선택">
+  <div class="setup-section-title"><span class="setup-number">02</span><div><strong>알고 싶은 사람 고르기</strong><small>한 사람의 눈으로 프롤로그를 엽니다. 제1화부터는 나의 이야기입니다.</small></div></div>
+  <div class="setup-portrait-grid" role="group" aria-label="프롤로그의 화자 다섯 명 중 한 사람 고르기">
    <button class="setup-character" type="button" data-partner-choice="woman" aria-pressed="false" aria-label="서지윤 선택">
     <span class="setup-character-art jiyoon"><img id="setupPortraitWoman" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">서지윤</span><span class="setup-character-tag">기타 · 낮은 선율로 마음을 건넨다</span>
+    <span class="setup-character-name">서지윤</span><span class="setup-character-hobby">기타 · 보라빛 머리칼</span><span class="setup-character-tag">기타의 여운처럼 다정함이 오래 머무는 사람</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="man" aria-pressed="false" aria-label="한현우 선택">
     <span class="setup-character-art hyunwoo"><img id="setupPortraitMan" alt="" aria-hidden="true"><span class="setup-hyunwoo-live" id="setupHyunwooLive" hidden aria-hidden="true"></span></span>
-    <span class="setup-character-name">한현우</span><span class="setup-character-tag">논어 · 웃음 뒤에 생각을 남긴다</span>
+    <span class="setup-character-name">한현우</span><span class="setup-character-hobby">논어 · 헝클어진 머리</span><span class="setup-character-tag">웃음 뒤에 논어 한 구절을 품고 사는 사람</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="none" aria-pressed="false" aria-label="윤민서 선택">
     <span class="setup-character-art minseo"><img id="setupPortraitNone" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">윤민서</span><span class="setup-character-tag">기록 · 지나간 표정을 오래 헤아린다</span>
+    <span class="setup-character-name">윤민서</span><span class="setup-character-hobby">기록 · 단정한 단발</span><span class="setup-character-tag">스쳐 간 표정을 일기장에 오래 남기는 사람</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="man2" aria-pressed="false" aria-label="차도겸 선택">
     <span class="setup-character-art dogyeom"><img id="setupPortraitDogyeom" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">차도겸</span><span class="setup-character-tag">실뜨기 · 얽힌 마음을 찬찬히 푼다</span>
+    <span class="setup-character-name">차도겸</span><span class="setup-character-hobby">실뜨기 · 섬세한 손길</span><span class="setup-character-tag">실 한 올로도 누군가의 마음을 잇는 사람</span>
    </button>
    <button class="setup-character" type="button" data-partner-choice="man3" aria-pressed="false" aria-label="백태오 선택">
     <span class="setup-character-art taeo"><img id="setupPortraitTaeo" alt="" aria-hidden="true"></span>
-    <span class="setup-character-name">백태오</span><span class="setup-character-tag">배구 · 승부보다 함께한 날을 기억한다</span>
+    <span class="setup-character-name">백태오</span><span class="setup-character-hobby">배구 · 짧은 모히칸</span><span class="setup-character-tag">함께 뛰는 순간에 가장 환하게 웃는 사람</span>
    </button>
   </div>
   <select id="partner" required hidden aria-hidden="true" tabindex="-1"><option value="">알고 싶은 사람을 선택하세요</option><option value="woman">지윤 선생님 · 여성 동료</option><option value="man">현우 선생님 · 남성 동료</option><option value="none">민서 선생님 · 우정 중심</option><option value="man2">도겸 선생님 · 실뜨기</option><option value="man3">태오 선생님 · 배구</option></select>
