@@ -20,6 +20,7 @@ function run(partner,pick){
   assert.equal(view.total,36);
   assert.equal(view.choices.length,3);
   assert.equal(view.perspective,'player');
+  if([1,3,13,26,29,30,34,35,36].includes(i))for(const person of ['도겸','태오'])assert(view.paragraphs.join('').includes(person),'New colleague '+person+' missing in chapter '+i);
   assert.equal(state.profile.employment,'fixed_term');
   assert(view.paragraphs.length>=7,'Novel chapter needs at least seven paragraphs');
   assert(view.paragraphs.join('').length>=780,'Chapter '+i+' must exceed five times the old outline');
@@ -60,7 +61,7 @@ for(const [expected,pick] of Object.entries(patterns)){
  types.add(story.ending.id);
 }
 assert.equal(types.size,5);
-for(const partner of ['man','none']){
+for(const partner of ['man','man2','man3','none']){
  for(const pick of [patterns.steady,patterns.warm,patterns.ordinary]){
   const story=run(partner,pick);
   if(partner==='none')assert(!['warm','tender'].includes(story.ending.id));
