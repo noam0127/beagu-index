@@ -11,6 +11,10 @@ on:
       - 'supabase/migrations/20261120_admin_mfa_session_collector_guard.sql'
       - 'tests/admin-dashboard-static.cjs'
       - 'tests/admin-dashboard-live.cjs'
+      - 'supabase/functions/beagu-admin-access/**'
+      - 'supabase/functions/beagu-2026-review-admin/**'
+      - 'tests/admin-auth-authorization-static.cjs'
+      - 'tests/admin-auth-authorization-live.cjs'
       - '.github/workflows/admin-dashboard-security.yml'
   pull_request:
     paths:
@@ -22,6 +26,10 @@ on:
       - 'supabase/migrations/20261120_admin_mfa_session_collector_guard.sql'
       - 'tests/admin-dashboard-static.cjs'
       - 'tests/admin-dashboard-live.cjs'
+      - 'supabase/functions/beagu-admin-access/**'
+      - 'supabase/functions/beagu-2026-review-admin/**'
+      - 'tests/admin-auth-authorization-static.cjs'
+      - 'tests/admin-auth-authorization-live.cjs'
       - '.github/workflows/admin-dashboard-security.yml'
 jobs:
   gate:
@@ -34,3 +42,5 @@ jobs:
           node-version: '22'
       - run: node tests/admin-dashboard-static.cjs
       - run: node tests/admin-dashboard-live.cjs
+      - run: node tests/admin-auth-authorization-static.cjs
+      - run: node tests/admin-auth-authorization-live.cjs
