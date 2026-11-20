@@ -102,6 +102,9 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
      ready:!!current?.classList.contains('diary-literary-ready'),
      allSizes:shown.map(row=>getComputedStyle(row).fontSize),
      allOpacity:shown.map(row=>getComputedStyle(row).opacity),
+     lineDisplays:shown.map(row=>getComputedStyle(row).display),
+     lineAnimations:shown.map(row=>getComputedStyle(row).animationName),
+     paragraphCount:document.querySelectorAll('#'+activeId+' .diary-literary-paragraph').length,
      cursorCount:shown.reduce((count,row)=>count+row.querySelectorAll('.diary-reading-cursor').length,0),
      cursorBlink:cursor?getComputedStyle(cursor).animationName:'',
      lastBottom:lastRect?.bottom||0,readerBottom:readerRect.bottom,
@@ -164,6 +167,10 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    assert.equal(second.allSizes[0],first.allSizes[0],'Previously shown text must never shrink');
    assert(second.allSizes.every(size=>size===first.allSizes[0]),'All sentences use one font size');
    assert.equal(second.cursorCount,1,'Older sentences must not keep duplicate cursors');
+   assert(second.lineDisplays.every(display=>display==='inline'),'Sentences should stay inline within a source paragraph');
+   assert(second.lineAnimations.every(name=>name==='none'),'New sentences must not flash, fade or jump');
+   assert(second.paragraphCount>0,'At least one source paragraph should be present');
+   assert.equal(second.allOpacity[0],first.allOpacity[0],'Previously printed text must not flicker');
 
    // Enter has the same one-sentence progression as tapping.
    await page.evaluate(()=>document.activeElement?.blur());
