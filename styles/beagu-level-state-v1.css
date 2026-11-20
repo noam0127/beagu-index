@@ -41,42 +41,84 @@ body.beagu-levelup-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){.beagu-levelup-overlay{backdrop-filter:none}}
 
 
-/* Level badge belongs to the top logo row, not the scrolling viewport.
-   Keep it absolute so it cannot cover the Challenge navigation link when scrolling.
-   Position the wrapper (not its child anchor) consistently on mobile Safari. */
+/* The badge is a real child of the header: logo and Lv badge share the FIRST row.
+   The navigation gets a separate full-width SECOND row on mobile.
+   No fixed/absolute positioning: never overlay a menu item at any viewport width. */
 .beagu-level-state-container{
-  position:absolute;
-  top:13px;
-  right:max(18px,calc(50vw - 580px));
-  z-index:1100;
-  display:block;
-  width:max-content;
-  max-width:calc(100vw - 32px);
-  pointer-events:none;
-}
-.beagu-level-state-container > .beagu-level-state{
   position:relative;
   top:auto;
   right:auto;
-  pointer-events:auto;
+  z-index:auto;
+  display:block;
+  width:max-content;
+  max-width:100%;
   margin:0;
+  pointer-events:auto;
 }
+.beagu-level-state-container > .beagu-level-state{
+  position:static;
+  top:auto;
+  right:auto;
+  margin:0;
+  pointer-events:auto;
+}
+/* Desktop: logo | navigation | level status. */
+.beagu-unified-header .beagu-unified-inner{
+  display:grid;
+  grid-template-columns:max-content minmax(0,1fr) max-content;
+  align-items:center;
+  column-gap:18px;
+  padding-right:0;
+}
+.beagu-unified-header .beagu-unified-brand{
+  grid-column:1;
+  min-width:0;
+  max-width:none;
+}
+.beagu-unified-header .beagu-unified-nav{
+  grid-column:2;
+  min-width:0;
+  justify-self:end;
+}
+.beagu-unified-header .beagu-level-state-container{
+  grid-column:3;
+  justify-self:end;
+}
+/* Mobile: brand and badge are aligned; all five nav entries remain visible below. */
 @media(max-width:760px){
-  .beagu-level-state-container{
-    top:calc(env(safe-area-inset-top,0px) + 12px);
-    right:14px;
-    max-width:calc(100vw - 28px);
+  .beagu-unified-header .beagu-unified-inner{
+    grid-template-columns:minmax(0,1fr) max-content;
+    grid-template-rows:auto auto;
+    column-gap:8px;
+    row-gap:11px;
+    padding-right:0;
   }
-  .beagu-level-state-container > .beagu-level-state{
+  .beagu-unified-header .beagu-unified-brand{
+    grid-column:1;
+    grid-row:1;
+    min-width:0;
+    max-width:none;
+  }
+  .beagu-unified-header .beagu-level-state-container{
+    grid-column:2;
+    grid-row:1;
+    justify-self:end;
+  }
+  .beagu-unified-header .beagu-level-state-container > .beagu-level-state{
     min-height:35px;
+    min-width:70px;
     padding:7px 10px;
     font-size:12px;
     box-shadow:0 3px 12px rgba(18,45,83,.08);
   }
-  .beagu-unified-inner{padding-right:0;}
-  .beagu-unified-brand{max-width:calc(100% - 130px);}
+  .beagu-unified-header .beagu-unified-nav{
+    grid-column:1 / -1;
+    grid-row:2;
+    justify-self:stretch;
+    width:100%;
+  }
 }
 @media(max-width:390px){
-  .beagu-level-state-container{right:11px;}
-  .beagu-unified-brand{max-width:calc(100% - 124px);}
+  .beagu-unified-header .beagu-unified-brand{gap:8px;font-size:15px;}
+  .beagu-unified-header .beagu-level-state-container > .beagu-level-state{min-width:65px;padding:7px 8px;}
 }
