@@ -36,9 +36,17 @@ async function identity(req:Request,minLevel=2){
  const token=(req.headers.get("x-beagu-level-session")||"").trim();
  if(!/^[a-f0-9]{64}$/.test(token))return null;
  const hash=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(token))),v=>v.toString(16).padStart(2,"0")).join("");
- const {data,error}=await db.from("beagu_level_sessions").select("access_level,identity_visitor_id")
+ const {data,error}=await db.from("beagu_level_sessions").select("access_level,identity_visitor_id,identity_campaign")
    .eq("token_sha256",hash).gt("expires_at",new Date().toISOString()).maybeSingle();
  if(error||!data||Number(data.access_level)<minLevel)return null;
+ // An earned challenge identity is revocable: each request must still have
+ // an active, verified referral credit. Never trust the client-side badge.
+ if(data.identity_campaign==="2026"&&data.identity_visitor_id){
+  const {data:earned,error:earnedError}=await db.rpc("beagu_has_earned_challenge_visitor",{
+   p_visitor:data.identity_visitor_id
+  });
+  if(earnedError||earned!==true)return null;
+ }
  // A session token is a rotating credential, not an enduring person ID.
  // Readers may use Lv1 sessions without a bound identity, but writers must not
  // gain a new author persona on every login or regain like/report quotas.
