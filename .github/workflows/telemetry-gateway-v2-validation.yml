@@ -50,3 +50,15 @@ jobs:
             -X POST "$endpoint" -H 'origin: https://invalid.example' \
             -H 'content-type: application/json' --data '{}')"
           test "$code" = "403"
+
+      - name: ONE-TIME canary presence path (remove after test)
+        run: |
+          set -euo pipefail
+          endpoint="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-telemetry-v2"
+          code="$(curl --connect-timeout 8 --max-time 20 --silent --show-error \
+            -o /tmp/beagu-telemetry-canary.json -w '%{http_code}' \
+            -X POST "$endpoint" -H 'content-type: application/json' \
+            --data '{"action":"ping","visitor":"99990000-0000-4000-8000-000000000001","page":"other"}')"
+          cat /tmp/beagu-telemetry-canary.json
+          test "$code" = "200"
+          grep -q '"ok":true' /tmp/beagu-telemetry-canary.json
