@@ -118,14 +118,14 @@ async function exercise(level){
  });
  new Script(ui).runInContext(context);
  assert.equal(appended,modal);
- assert.equal(badge.textContent,'참여코드 입력');
+ assert.equal(badge.textContent,'Lv.0');
  await nodes.get('#beaguParticipationForm').dispatch('submit',{preventDefault(){}});
  // Empty codes are always rejected locally.
  assert.equal(storage.size,0);
  nodes.get('#beaguParticipationCode').value='ABCDEF123456';
  await nodes.get('#beaguParticipationForm').dispatch('submit',{preventDefault(){}});
  assert.equal(storage.get('beagu-level-session-v1'),token);
- assert.equal(badge.textContent,level===2?'♛ Lv2 · 챌린지 달성':'✓ Lv1 · 설문 참여 완료');
+ assert.equal(badge.textContent,'Lv.'+level);
  assert.ok(events.includes('beagu:participation-authenticated'));
  await nodes.get('#beaguParticipationLogout').dispatch('click');
  assert.equal(storage.size,0);
