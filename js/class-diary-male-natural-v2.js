@@ -24,6 +24,61 @@ const DEFAULTS=Object.freeze({
  man3:Object.freeze([0,2,6,3,5,1,4,7])
 });
 const status=Object.create(null);
+
+/* Apply a same-origin, hair-only photographic adjustment once per eight-pose atlas.
+   Canvas failure leaves the original photo untouched. No new storage or network calls. */
+const hairSources=Object.create(null);
+function restyleHyunwoo(image){
+ try{
+  const doc=root.document;
+  if(!doc||typeof doc.createElement!=='function')return null;
+  const width=image.naturalWidth||image.width,height=image.naturalHeight||image.height;
+  if(!width||!height||width<400||height<250)return null;
+  const canvas=doc.createElement('canvas');canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  if(!ctx)return null;
+  ctx.drawImage(image,0,0,width,height);
+  const frame=ctx.getImageData(0,0,width,height),data=frame.data;
+  const cw=width/4,ch=height/2;
+  for(let pose=0;pose<8;pose++){
+   const x0=(pose%4)*cw,y0=Math.floor(pose/4)*ch;
+   // Darken only hair-toned pixels in the upper head region, never the skin below.
+   for(let y=Math.floor(y0+ch*.015);y<Math.ceil(y0+ch*.235);y++)
+    for(let x=Math.floor(x0+cw*.17);x<Math.ceil(x0+cw*.83);x++){
+     const i=(y*width+x)*4,r=data[i],g=data[i+1],b=data[i+2];
+     if(r>20&&r<162&&g<146&&b<145&&r>=g*.95&&r>=b*.92){
+      data[i]=Math.round(r*.73);
+      data[i+1]=Math.round(g*.76);
+      data[i+2]=Math.round(b*.87);
+     }
+    }
+  }
+  ctx.putImageData(frame,0,0);
+  for(let pose=0;pose<8;pose++){
+   const x0=(pose%4)*cw,y0=Math.floor(pose/4)*ch;
+   // Light, asymmetrical fringes in the hair zone rather than a flat fringe sticker.
+   for(let strand=0;strand<9;strand++){
+    const x=x0+cw*(.31+strand*.043);
+    const top=y0+ch*(.114+(strand%3)*.006);
+    const tip=y0+ch*(.190+(strand%4)*.006);
+    const half=cw*(strand%3===0?.012:.008);
+    ctx.beginPath();
+    ctx.moveTo(x-half,top);
+    ctx.quadraticCurveTo(x+cw*.015,top+ch*.042,x-cw*.014,tip);
+    ctx.quadraticCurveTo(x+half,tip-ch*.021,x+half,top);
+    ctx.closePath();
+    ctx.fillStyle='rgba(29,27,32,'+(strand%3===0?.35:.22)+')';
+    ctx.fill();
+   }
+  }
+  return canvas.toDataURL('image/webp',.86);
+ }catch(_){return null}
+}
+function spriteSource(partner){
+ const asset=cast(partner);
+ return asset?(hairSources[partner]||asset.src):null;
+}
+
 function cast(partner){return Object.prototype.hasOwnProperty.call(ASSETS,partner)?ASSETS[partner]:null}
 function poseIndex(partner,episode,reflection,choiceId){
  if(!cast(partner))return 0;
@@ -41,7 +96,7 @@ function paint(node,partner,episode,reflection,choiceId,season){
  if(!asset)throw Error('MALE_POSE_UNKNOWN_ACTOR');
  const ix=poseIndex(partner,episode,reflection,choiceId);
  const x=ix%asset.columns,y=Math.floor(ix/asset.columns);
- node.style.backgroundImage='url("'+asset.src+'")';
+ node.style.backgroundImage='url("'+spriteSource(partner)+'")';
  node.style.backgroundRepeat='no-repeat';
  node.style.backgroundSize=(asset.columns*100)+'% '+(asset.rows*100)+'%';
  node.style.backgroundPosition=(asset.columns===1?0:100*x/(asset.columns-1))+'% '+(asset.rows===1?0:100*y/(asset.rows-1))+'%';
@@ -62,13 +117,14 @@ function preload(partner,callback){
  const state=status[partner]={state:'loading',callbacks:[callback]};
  const image=new Image();image.decoding='async';
  image.onload=function(){
+  if(partner==='man')hairSources.man=restyleHyunwoo(image)||asset.src;
   state.state='ready';const callbacks=state.callbacks.splice(0);
   callbacks.forEach(function(fn){fn()});
  };
  image.onerror=function(){state.state='failed';state.callbacks.length=0};
  image.src=asset.src;return true;
 }
-const api=Object.freeze({VERSION,POSES,ASSETS,SPECIAL,cast,poseIndex,poseFor,paint,preload});
+const api=Object.freeze({VERSION,POSES,ASSETS,SPECIAL,cast,poseIndex,poseFor,paint,preload,spriteSource});
 if(typeof module==='object'&&module.exports)module.exports=api;
 root.BeaguClassDiaryMaleNatural=api;
 })(typeof window!=='undefined'?window:globalThis);

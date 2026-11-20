@@ -62,3 +62,10 @@ body.is-setting #setup[data-step="2"] .setup-character{
 @media(prefers-reduced-motion:reduce){
  body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art{transition:none!important}
 }
+
+/* The updated Han Hyunwoo sprite is cropped, never stretched, into his setup card. */
+body.is-setting #setup.has-distinct-cast-v5.has-hyunwoo-hair-v3[data-step="2"] .setup-character-art.hyunwoo{
+ background-image:var(--diary-hyunwoo-hair-image)!important;
+ background-size:400% 300%!important;
+ background-position:0% 0%!important;
+}
