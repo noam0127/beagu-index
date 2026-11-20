@@ -294,6 +294,7 @@
     $("adminPassword").value = "";
     $("adminTotp").value = "";
     show("adminDashboard", "관리자 인증 완료 · 권한: " + proof.role);
+    window.Beagu2026ReviewAdmin?.mount(proof.role);
     await loadMetrics();
     if(liveTimer===null)liveTimer=window.setInterval(()=>{
       if(!document.hidden&&!$("adminDashboard").hidden)refreshLiveSafely();
@@ -416,6 +417,7 @@
       await auth.signOut();
       activeFactorId = "";
       dashboard=null;requestSeq++;
+      window.Beagu2026ReviewAdmin?.reset();
       $("adminPassword").value = "";
       $("adminTotp").value = "";
       $("adminQrWrap").hidden = true;
