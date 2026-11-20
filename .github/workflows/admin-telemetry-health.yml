@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'supabase/migrations/20261120_telemetry_guard_decision_monitoring.sql'
+      - 'supabase/migrations/20261121_telemetry_hourly_monitor.sql'
       - 'supabase/functions/beagu-admin-dashboard-v1/**'
       - 'admin.html'
       - 'js/beagu-admin-access-v1.js'
