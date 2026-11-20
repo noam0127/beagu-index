@@ -116,48 +116,37 @@
   .challenge-identity-value { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #1d4ed8; font-size: clamp(13px, 2.9vw, 17px); letter-spacing: .025em; font-weight: 800; font-variant-numeric: tabular-nums; user-select: text; }
   .challenge-identity-copy { flex-shrink: 0; background: #eff6ff; color: #1d4ed8; border: 1px solid #cbdcf9; padding: 9px 13px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; }
   .challenge-identity-copy:disabled { opacity: .55; cursor: not-allowed; }
-  /* An earned referral changes only this card, never the certificate or secret value. */
-  .challenge-referral { position: relative; overflow: hidden; transition: background .35s ease, border-color .35s ease, box-shadow .35s ease; }
-  .challenge-referral.is-lv2 {
-    background: linear-gradient(124deg, #12253d 0%, #213e61 62%, #304a6c 100%);
-    color: #faf7ee; border: 1px solid #bda478;
-    box-shadow: 0 16px 38px rgba(20,38,67,.21), inset 0 1px rgba(255,255,255,.13);
+  /* Verified referrals upgrade the PERSONAL CODE card; the invitation link stays shareable. */
+  .challenge-code-card { position:relative; overflow:hidden; transition:background .35s ease,border-color .35s ease,box-shadow .35s ease; }
+  .challenge-code-card.is-lv2 {
+    background:linear-gradient(125deg,#13273e,#213d5d 65%,#304767);
+    color:#fff7e7; border:1px solid #c6a875;
+    box-shadow:0 15px 38px rgba(15,32,57,.2),inset 0 1px rgba(255,255,255,.13);
   }
-  .challenge-referral.is-lv2::before {
-    content: ""; pointer-events: none; position: absolute; top: -90px; right: -65px;
-    width: 210px; height: 210px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(226,194,135,.21), transparent 69%);
+  .challenge-code-card.is-lv2::before {
+    content:""; position:absolute; pointer-events:none; top:-80px;right:-65px;
+    width:220px;height:220px;border-radius:50%;
+    background:radial-gradient(circle,rgba(235,199,133,.22),transparent 70%);
   }
-  .challenge-referral.is-lv2::after {
-    content: "✦"; position: absolute; right: 21px; bottom: 9px;
-    font-size: 50px; color: rgba(232,207,156,.14); pointer-events: none;
+  .challenge-code-card.is-lv2::after {
+    content:"✦";position:absolute;right:22px;bottom:7px;pointer-events:none;
+    color:rgba(236,212,166,.13);font-size:46px;
   }
-  .challenge-referral.is-lv2 .challenge-identity-head { position: relative; z-index: 1; }
-  .challenge-referral.is-lv2 h2 { color: #f5e5c2; letter-spacing: -.025em; }
-  .challenge-referral.is-lv2 .challenge-identity-tag {
-    background: rgba(236,209,155,.13); color: #f2d6a2;
-    border: 1px solid rgba(236,209,155,.38);
+  .challenge-code-card.is-lv2 .challenge-identity-head,
+  .challenge-code-card.is-lv2 .challenge-identity-row,
+  .challenge-code-card.is-lv2 .challenge-identity-feedback { position:relative;z-index:1; }
+  .challenge-code-card.is-lv2 h2 {color:#f6e3ba;letter-spacing:-.025em;}
+  .challenge-code-card.is-lv2 .challenge-identity-tag {
+    background:rgba(232,202,147,.15);color:#f6dca4;border:1px solid rgba(233,200,141,.4);
   }
-  .challenge-referral.is-lv2 #challengeReferralLink {
-    background: rgba(8,20,36,.33) !important; color: #fff5d9 !important;
-    border-color: rgba(239,217,173,.38) !important;
-    font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .06em;
+  .challenge-code-card.is-lv2 .challenge-identity-value {
+    color:#fff3d0;font-size:clamp(17px,3.6vw,21px);letter-spacing:.065em;
   }
-  .challenge-referral.is-lv2 #copyChallengeReferral {
-    background: linear-gradient(135deg, #f2ddb0, #c9a466);
-    border-color: #d6bc89; color: #1e2b3c;
+  .challenge-code-card.is-lv2 .challenge-identity-copy {
+    background:linear-gradient(135deg,#f3dfb6,#cba565);color:#16283d;border-color:#d6b679;
   }
-  .challenge-referral.is-lv2 .challenge-identity-feedback { color: #e7d8ba; }
-  .challenge-referral.is-lv2 .small-note { color: #c7d1e0; }
-  .challenge-referral-more { display: flex; justify-content: flex-end; margin-top: 11px; }
-  .challenge-referral-share {
-    position: relative; z-index: 1; padding: 7px 0; font: inherit; font-size: 12px;
-    font-weight: 650; color: #f2d6a2; background: transparent; border: 0;
-    text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .challenge-referral { transition: none; }
-  }
+  .challenge-code-card.is-lv2 .challenge-identity-feedback {color:#e8d6b1;}
+  @media (prefers-reduced-motion:reduce) {.challenge-code-card {transition:none;}}
   .challenge-lv2-pending {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -270,19 +259,20 @@
   </section>
 
   <!-- NOT inside #certificate: excluded from the site's certificate PNG export. -->
-  <section class="challenge-identity" id="challengeIdentityPanel" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
+  <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
     <div class="challenge-identity-head">
       <h2 id="challengeIdentityTitle">나의 고유번호</h2>
-      <span class="challenge-identity-tag">개인 보관</span>
+      <span class="challenge-identity-tag" id="challengeIdentityTag">개인 보관</span>
     </div>
     <div class="challenge-identity-row">
       <strong class="challenge-identity-value" id="identityCode" aria-live="polite">고유번호 확인 중</strong>
       <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled>번호 복사</button>
     </div>
     <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
+    <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
   </section>
 
-  <section class="challenge-identity challenge-referral" id="challengeReferralPanel"
+  <section class="challenge-identity" id="challengeReferralPanel"
     data-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeReferralTitle">
     <div class="challenge-identity-head">
       <h2 id="challengeReferralTitle">나의 전용 조사 링크</h2>
@@ -297,9 +287,6 @@
         style="width:100%;min-width:0;flex:1;padding:10px;border:1px solid #dce4ef;border-radius:9px;color:#1d4ed8">
       <button class="challenge-identity-copy" id="copyChallengeReferral" type="button"
         disabled hidden>링크 복사</button>
-    </div>
-    <div class="challenge-referral-more" id="challengeReferralMore" hidden>
-      <button type="button" class="challenge-referral-share" id="copyChallengeReferralAfter">전용 조사 링크 다시 복사</button>
     </div>
     <p id="challengeReferralProgress" class="challenge-identity-feedback" aria-live="polite"></p>
     <p class="small-note" id="challengeReferralNote">기존 고유번호는 변경되지 않습니다. 설문과 연결되기 전에는 추천 실적이 인정되지 않습니다.</p>
@@ -340,8 +327,8 @@
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="js/challenge.js?v=20261119-shortcode2"></script>
-<script src="js/challenge-referral-v1.js?v=20261121-short"></script>
+<script src="js/challenge.js?v=20261121-code-card2"></script>
+<script src="js/challenge-referral-v1.js?v=20261121-code-card2"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>
