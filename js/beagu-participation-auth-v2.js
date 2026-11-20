@@ -63,7 +63,7 @@
  function paint(level){
   lastLevel=level;
   const text=labelFor(level);
-  badge.textContent=text;
+  badge.textContent='Lv.'+level;
   badge.setAttribute('aria-label',level?'인증 정보 및 해제 · '+text:'참여코드 입력');
   badge.title=level?'인증 정보 확인 및 인증 해제':'참여코드 입력';
   badge.classList.toggle('beagu-participation-earned',level>=2);

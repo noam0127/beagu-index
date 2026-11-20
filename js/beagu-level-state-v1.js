@@ -80,7 +80,7 @@
         lastValidatedToken=token;
         const tier=result.level>=2?2:1;
         const provisional=tier===2&&result.provisional===true;
-        const label=tier===2?'♛ Lv2 · 챌린지 달성':'✓ Lv1 · 설문 참여 완료';
+        const label='Lv.'+tier;
         setState(String(tier),label,'현재 '+label+' · 레벨 안내 보기',provisional);
       }else{
         lastValidatedToken='';
