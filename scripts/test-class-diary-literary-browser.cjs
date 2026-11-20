@@ -65,7 +65,9 @@ const url=process.env.DIARY_BASE||'http://127.0.0.1:8123';
    await page.locator('#setupNext').click();
    await page.locator('[data-partner-choice="woman"]').click();
    await page.locator('#setupNext').click();
-   assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','One 36-chapter story uses a first-day confirmation');
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'3','Supporting teachers are shown separately');
+   await page.locator('#setupNext').click();
+   assert.equal(await page.locator('#setup').getAttribute('data-step'),'4','Final review is the fourth paper page');
    await page.locator('.setup-begin').click();
    // A 36-episode playthrough now introduces the selected school's basic facts
    // before the narrator prologue. Close this gate as an actual player would.
