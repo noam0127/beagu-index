@@ -67,12 +67,9 @@ function init(){
    void node.offsetWidth;
    node.classList.add(animationClass);
  }
- for(const id of ['chapterText','outcomeText']){
-   const target=doc.getElementById(id);
-   if(!target)continue;
-   const observer=new root.MutationObserver(()=>restartAnimation(target,'diary-motion-copy'));
-   observer.observe(target,{childList:true});
- }
+ // Dialogue now reveals sentences inline. Never restart an animation on the
+ // complete prose container when a sentence is added: it makes the entire text
+ // box pulse on every touch. Scene/day/setup transitions remain unchanged.
  let previousDay='';
  function dayChanged(){
    const raw=(day.textContent||'').trim();
