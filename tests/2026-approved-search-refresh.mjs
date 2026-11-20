@@ -26,7 +26,8 @@ assert.match(search,/renderYear\(content,2026,fresh\.rows,null,id,fresh\.schoolQ
 assert.match(search,/\.querySelector\('\.year-tabs button\[data-year="2026"\]\[aria-selected="true"\]'\)/);
 assert.match(search,/window\.BeaguSchoolMBTI\.invalidateCache\?\.\(\)/);
 assert.match(culture,/function invalidateCache\(\)\{cache\.clear\(\);\}/);
-assert.match(api,/releaseMetrics\(metrics\.data\|\|\[\],catalog\.data\|\|\[\],level\)/);
+assert.ok(api.includes('releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)'), 'Lv2 2026 immediate release must depend on separately verified snapshot');
+assert.ok(api.includes("admin.rpc('beagu_2026_lv2_released_question_results'"), 'Lv2 exact snapshot review gate must be server-only');
 assert.match(api,/rows\.push\(\{year,access_level:year===2026\?1:2/);
 assert.match(policy,/approved2026ReleaseIsOldEnough\(r\.approved_at\)/);
 assert.match(policy,/RELEASE_DELAY_MS=24\*60\*60\*1000/);
