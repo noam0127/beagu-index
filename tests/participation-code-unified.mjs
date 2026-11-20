@@ -15,7 +15,7 @@ for(const page of pages){
 }
 const ui=read('js/beagu-participation-auth-v2.js');
 assert.doesNotThrow(()=>new Script(ui),'Shared auth module parses');
-for(const phrase of ['참여코드 입력','참여코드 확인',
+for(const phrase of ['참여코드 입력','레벨1 인증',
  '발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.',
  '참여코드를 입력하세요','Lv2 달성하기 — 챌린지',
  '✓ Lv1 · 설문 참여 완료','♛ Lv2 · 챌린지 달성']){
@@ -32,6 +32,9 @@ const css=read('styles/beagu-participation-auth-v2.css');
 assert.match(css,/@media\(max-width:760px\)/);
 assert.match(css,/\.beagu-participation-host \.beagu-participation-legacy/);
 assert.ok(!css.includes('display:contents'));
+assert.ok(css.includes('#tierCodeForm.beagu-participation-legacy'), 'School report legacy form hidden behind the shared dialog');
+assert.ok(!ui.includes('고유번호 인증')&&!ui.includes('beaguLevelUpOverlay'), 'No retired identity-code button or overlay');
+assert.match(read('school-report.html'),/id="tierSubmit" type="submit">레벨1 인증<\/button>/, 'School report fallback label is consistent');
 for(const file of ['js/level-search.js','js/statistics-compare.js','js/challenge-access-v1.js','school-report.html'])
  assert.ok(read(file).includes('beagu:participation-authenticated'),'Page state sync '+file);
 
