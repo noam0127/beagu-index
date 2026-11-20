@@ -179,7 +179,8 @@ function choose(s,id){
  n.history.push({episode:n.episode,choice});
  const response=story.outcomes[choice];
  const cut=response.indexOf('. ');
- const outcome=cut>=0?[response.slice(0,cut+1),response.slice(cut+2)]:[response,'나는 이 일을 끝난 것으로 적지 않고 다음에 무엇을 확인할지 남겨 두었다.'];
+ if(cut<0)throw Error('EPISODE_OUTCOME_NEEDS_TWO_SENTENCES_'+s.episode);
+ const outcome=[response.slice(0,cut+1),response.slice(cut+2)];
  n.lastOutcome={perspective:'player',id:String(id),paragraphs:outcome,line:''};
  n.phase='semester_reflection';return n;
 }
@@ -199,6 +200,7 @@ function validate(){if(SCENES.length!==36||REWRITTEN.length!==36)throw Error('EP
  REWRITTEN.forEach((entry,i)=>{
   if(entry.n!==i+1||entry.lines.length<7||entry.lines.join('').length<780||
    entry.choices.length!==3||entry.outcomes.length!==3||
+   entry.outcomes.some(x=>typeof x!=='string'||x.indexOf('. ')<0)||
    entry.lines.some(x=>typeof x!=='string'||x.length<35))throw Error('NOVEL_EPISODE_INCOMPLETE_'+(i+1));
  });SCENES.forEach((e,i)=>{if(e.length!==11||e.slice(3).some(x=>typeof x!=='string'||x.length<7)||!PLACE_NAMES[e[2]])throw Error('BAD_EPISODE_'+i);});return {episodes:36,acts:6,choices:108,endingTypes:5};}
 validate();
