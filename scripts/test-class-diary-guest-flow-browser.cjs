@@ -115,6 +115,21 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(privateWorldCalls,0,'Private Level2 school API must never be called by owner preview');
    assert.equal(await page.locator('#partner').isVisible(),false,'No redundant dropdown below portraits');
    assert.equal(await page.locator('[data-partner-choice]').count(),5,'Current 36-episode cast has five selectable colleagues');
+   await page.waitForFunction(()=>document.getElementById('setup').classList.contains('has-retouched-portraits'),
+    null,{timeout:5000});
+   const portraits=await page.locator('.setup-portrait-grid').evaluate(grid=>{
+    return ['.minseo','.dogyeom','.taeo'].map(selector=>{
+     const element=grid.querySelector('.setup-character-art'+selector);
+     const style=getComputedStyle(element),rect=element.getBoundingClientRect();
+     return {selector,image:style.backgroundImage,ratio:rect.width/rect.height,
+      backgroundSize:style.backgroundSize,position:style.backgroundPosition,
+      imageHidden:getComputedStyle(element.querySelector('img')).visibility==='hidden'};
+    });
+   });
+   assert(portraits.every(p=>p.image.includes('setup-three-portraits-v4.webp')&&p.imageHidden),
+     'All three retouched headshots must use the new natural backgrounds: '+JSON.stringify(portraits));
+   assert(portraits.every(p=>Math.abs(p.ratio-1)<0.08),
+     'All repaired portraits must be square with uncut hair: '+JSON.stringify(portraits));
    const castLayout=await page.locator('.setup-portrait-grid').evaluate(grid=>{
     const cards=[...grid.querySelectorAll('[data-partner-choice]')].map(el=>{
      const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};
