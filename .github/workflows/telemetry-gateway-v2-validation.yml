@@ -4,6 +4,7 @@ on:
     paths:
       - 'supabase/functions/beagu-telemetry-v2/**'
       - 'supabase/migrations/20261120_telemetry_gateway_v2.sql'
+      - 'supabase/migrations/20261120_telemetry_gateway_v2_cutover.sql'
       - 'js/visit-stats.js'
       - 'js/beagu-presence-games-v1.js'
       - 'tests/**'
@@ -33,37 +34,6 @@ jobs:
       - run: node tests/admin-live-traffic-static.cjs
       - run: node tests/telemetry-gateway-client-smoke.cjs
       - run: node tests/challenge-search-telemetry.mjs
-      - name: Check deployed Edge gateway HTTP contract (no visit writes)
-        run: |
-          set -euo pipefail
-          url="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-telemetry-v2"
-          check_status() {
-            expected="$1"; shift
-            actual="$(curl --silent --show-error --max-time 20 --output /tmp/telemetry-response.json --write-out '%{http_code}' "$@" "$url")"
-            if [ "$actual" != "$expected" ]; then
-              cat /tmp/telemetry-response.json
-              echo "Expected HTTP $expected, got HTTP $actual"; exit 1
-            fi
-          }
-          check_status 200
-          grep -q '"version":2' /tmp/telemetry-response.json
-          check_status 400 -X POST -H 'origin: https://baeguindex.com' -H 'content-type: application/json' -d '{"action":"ping","visitor":"invalid","page":"index"}'
-          grep -q 'INVALID_INPUT' /tmp/telemetry-response.json
-          check_status 403 -X POST -H 'origin: https://untrusted.example' -H 'content-type: application/json' -d '{}'
-          grep -q 'ORIGIN_NOT_ALLOWED' /tmp/telemetry-response.json
-          # A single synthetic presence ping tests the privileged DB path.
-          # The fixed test UUID is removed from production immediately after verification.
-          check_status 200 -X POST -H 'origin: https://baeguindex.com' -H 'content-type: application/json' -d '{"action":"ping","visitor":"bf6a7ea3-703f-47e5-908d-111111111112","page":"index"}'
-          grep -q '"ok":true' /tmp/telemetry-response.json
-          # Verify whether infrastructure rejects forged client-IP headers.
-          # 198.51.100.0/24 is a reserved documentation IP range.
-          for forged in 198.51.100.60 198.51.100.61; do
-            code="$(curl --silent --show-error --max-time 20 --output /tmp/telemetry-forged.json --write-out '%{http_code}' -X POST -H 'origin: https://baeguindex.com' -H "cf-connecting-ip: $forged" -H 'content-type: application/json' -d '{"action":"ping","visitor":"bf6a7ea3-703f-47e5-908d-111111111112","page":"index"}' "$url")"
-            echo "Forged IP header request HTTP $code"
-            test "$code" = "200" -o "$code" = "403" -o "$code" = "400"
-          done
-
-
       - name: Live gateway non-writing HTTP contract
         run: |
           set -euo pipefail
