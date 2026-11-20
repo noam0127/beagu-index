@@ -207,6 +207,14 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#vnSound').isVisible(),false,'Music toggle must live inside settings only');
    await page.locator('#diaryHudFold').click();
    assert.equal(await page.locator('#diarySettings').isVisible(),true);
+   await page.waitForFunction(()=>Boolean(document.getElementById('novelCard').style.getPropertyValue('--diary-open-reader-top')),null,{timeout:5000});
+   const expanded=await page.evaluate(()=>{
+    const a=document.getElementById('vnHeaderSlot').getBoundingClientRect();
+    const b=document.getElementById('vnBottom').getBoundingClientRect();
+    return {headingTop:a.top,headingBottom:a.bottom,readerTop:b.top,height:innerHeight};
+   });
+   assert(expanded.headingTop<=120,'Expanded heading stays near the upper-left: '+JSON.stringify(expanded));
+   assert(expanded.readerTop>=expanded.headingBottom-4,'Text should not cover the expanded heading: '+JSON.stringify(expanded));
    await page.locator('#diarySettings').click();
    assert.equal(await page.locator('#diaryMusicVolume').isVisible(),true,'Volume slider must live in settings');
    assert.equal(await page.locator('#diaryEffectsVolume').isVisible(),true);
