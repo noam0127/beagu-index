@@ -34,10 +34,27 @@ assert.deepEqual(api.splitSentences('“여기야. 괜찮아?” 그는 물었�
  'Preserve sentences inside quotations until the closing quote, even without punctuation');
 const expected=original.flatMap(api.splitSentences);
 assert.deepEqual(api.paginate(original).flat().map(x=>x.text),expected,'Each tap yields one complete sentence in order');
+const paragraphItems=api.paginate(original).flat();
+assert.deepEqual(paragraphItems.map(item=>item.paragraphIndex),[0,0,1,1,2],
+ 'Two sentences in one original paragraph must stay in the same group');
+assert.deepEqual(paragraphItems.map(item=>item.paragraphStart),[true,false,true,false,true],
+ 'Only the start of a source paragraph may start a new paragraph block');
+assert.deepEqual(paragraphItems.map(item=>item.paragraphEnd),[false,true,false,true,true],
+ 'Only the end of a source paragraph should trigger paragraph spacing');
+const scene=fs.readFileSync(path.join(__dirname,'../teacher-class-diary-play.html'),'utf8');
+assert(scene.includes("literary.renderPage(target,currentPage)"),'Story reader must render original paragraph groups');
+assert(scene.includes("literary.renderPage(text,page)"),'Ending pages must retain natural paragraph breaks');
+assert(!scene.includes('void target.offsetWidth'),'A forced reflow must not restart a screen-wide fade');
+const tidy=fs.readFileSync(path.join(__dirname,'../js/class-diary-hud-tidy-v1.js'),'utf8');
+assert(!tidy.includes("reader.addEventListener('click'"),'Text click must not advance twice through nested handlers');
+const style=fs.readFileSync(path.join(__dirname,'../styles/class-diary-paragraph-v1.css'),'utf8');
+assert(style.includes('p.diary-literary-line:not(:first-child)::before'), 'Adjacent sentences need a normal space, not a line break');
+assert(style.includes('animation:none!important'), 'The paragraph layer must suppress per-tap animation');
+
 const packed=api.paginateForHeight(expected.map(text=>({text,paragraphEnd:true})),101,items=>items.length*33);
 assert.deepEqual(packed.map(page=>page.length),[3,2],'Sentences should fill each page to capacity without adding or losing any');
 assert(packed[0].length>1,'A page must retain multiple sentences rather than replacing them');
 assert.equal(typeof api.setTypingSound,'function','Sound hook must respect existing SFX controls');
 assert(implementation.includes("className='diary-reading-cursor'"),'A blinking cursor must appear while waiting');
 assert(implementation.includes('writingTimer=root.setInterval'),'Letters should appear with a brief typewriter animation');
-console.log('PASS literary v4: punctuation/quote splitting, page capacity packing, full sentences and typing cursor');
+console.log('PASS literary v5: punctuation, natural paragraphs, single-advance taps, no screen flicker and typing cursor');
