@@ -51,6 +51,10 @@
         identityCode.textContent = code;
         copyIdentityCode.disabled = false;
         identityCopyFeedback.textContent = '';
+        // Referral display is separate from the certificate PNG and requires a validated session.
+        window.dispatchEvent(new CustomEvent('beagu:identity-ready', {
+          detail: { visitor: window.beaguVisitor, code: personalCode }
+        }));
         if (window.BeaguChallengeProgress) void window.BeaguChallengeProgress.refresh();
       }
       if (!accessGranted) return;
