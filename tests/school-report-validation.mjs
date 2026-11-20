@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 const html=fs.readFileSync('school-report.html','utf8');
-const scripts=[...html.matchAll(/<script(?:\s+[^>]*)?>([\s\S]*?)<\/script>/g)];
+const scripts=[...html.matchAll(/<script(?![^>]*\bsrc\s*=)(?:\s+[^>]*)?>([\s\S]*?)<\/script>/g)];
 assert.ok(scripts.length>=2,'Expected catalog and application scripts');
 const src=scripts.at(-1)[1];
 const temp=join(tmpdir(),'beagu-school-report-syntax-'+process.pid+'.mjs');
