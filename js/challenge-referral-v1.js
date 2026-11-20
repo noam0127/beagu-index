@@ -31,23 +31,23 @@
     identityPanel.classList.toggle('is-lv2', upgraded);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
     identityTitle.textContent = upgraded ? 'Lv2 참여코드' : '나의 고유번호';
-    identityTag.textContent = upgraded ? 'Lv2(임시) 달성 ✦' : '개인 보관';
+    identityTag.textContent = upgraded ? 'Lv.2 달성 ✦' : '개인 보관';
     identityReward.hidden = !upgraded;
     identityReward.textContent = upgraded
-      ? '유효한 추천 설문 1건 확인 · Lv2 자격을 획득했습니다. 정식 계정 및 포스트잇 작성 권한은 별도입니다.'
+      ? 'Lv.2 달성! 위 코드를 참여코드로 사용하세요.'
       : '';
     copyIdentityCode.textContent = upgraded ? '코드 복사' : '번호 복사';
 
     // Invitation links must remain visible and copyable after promotion.
     title.textContent = '나의 전용 조사 링크';
-    tag.textContent = upgraded ? '추천 1건 인정' : '추천 대기';
+    tag.textContent = upgraded ? '추천 1건 확인' : '링크 공유하기';
     panel.dataset.state = upgraded ? 'earned' : 'pending';
     linkField.value = currentLink;
     linkField.setAttribute('aria-label', '내 전용 조사 링크');
     copyButton.textContent = '링크 복사';
     note.textContent = upgraded
-      ? '기존 고유번호가 Lv2 참여코드가 되었습니다. 이 코드로 인증하면 회원가입 없이 Lv2 기능을 이용할 수 있습니다.'
-      : '기존 고유번호는 변경되지 않습니다. 유효한 추천 설문이 확인되어야 Lv2로 승급합니다.';
+      ? '번호는 그대로 유지돼요. 전용 링크도 계속 공유할 수 있어요.'
+      : '유효한 추천 1건이 확인되면 기존 번호가 Lv.2 참여코드로 바뀝니다.';
   }
   function reset() {
     ++generation;
@@ -58,7 +58,7 @@
     copyButton.disabled = true;
     progress.textContent = '';
     renderState(false);
-    status.textContent = '전용 조사 링크 상태를 확인하고 있습니다.';
+    status.textContent = '전용 조사 링크를 불러오고 있어요.';
   }
   function deviceSecret() {
     const existing = localStorage.getItem(deviceKey);
@@ -77,7 +77,7 @@
     if (!detail || typeof detail.visitor !== 'string' ||
         typeof detail.code !== 'string') return;
     lastIdentity = {visitor: detail.visitor, code: detail.code};
-    if (!upgraded) status.textContent = '추천 참여 확인 중입니다.';
+    if (!upgraded) status.textContent = '추천 현황 확인 중이에요.';
     try {
       const response = await fetch(endpoint, {
         method: 'POST', cache: 'no-store',
@@ -90,7 +90,7 @@
       if (!active || seq !== generation) return;
       const payload = await response.json().catch(() => ({}));
       if (response.status === 503 && payload.error === 'REFERRAL_NOT_READY') {
-        if (!upgraded) status.textContent = '전용 조사 링크의 설문 연동을 확인 중입니다.';
+        if (!upgraded) status.textContent = '설문 연결을 확인 중이에요.';
         return;
       }
       if (!response.ok) throw Error(payload.error || 'UNAVAILABLE');
@@ -113,8 +113,8 @@
       if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
       progress.textContent = promoted ? '유효한 추천 1 / 1건 · Lv2 승급 완료' : '유효한 추천 0 / 1건';
       status.textContent = promoted
-        ? '추천 설문 참여가 확인되었습니다. 위의 고유번호가 Lv2 참여코드로 전환되었습니다.'
-        : '전용 조사 링크가 준비되었습니다. 동료에게 공유할 수 있습니다.';
+        ? 'Lv.2 달성! 기존 고유번호를 참여코드로 사용하세요.'
+        : '동료에게 링크를 보내세요. 설문 참여 1건이 확인되면 Lv.2!';
     } catch (_) {
       if (!active || seq !== generation) return;
       if (!upgraded) status.textContent = '추천 정보를 확인하지 못했습니다. 다시 열거나 소유자 인증을 확인해 주세요.';
