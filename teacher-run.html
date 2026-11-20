@@ -155,7 +155,7 @@ canvas{height:400px;cursor:default}
   </section>
   <div class="stage arcade-game-viewport" data-arcade-fullscreen>
     <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="전체화면으로 확대" title="전체화면으로"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 3h6v6M21 3l-7 7M3 21l7-7M9 21H3v-6"/></svg></button>
-    <div class="arcade-fullscreen-hud arcade-run-fullscreen-hud" aria-label="전체화면 교사 체력">
+    <div class="arcade-fullscreen-hud arcade-run-fullscreen-hud" aria-label="전체화면 교사 체력 및 게임 현황">
       <div class="arcade-run-fullscreen-heading">
         <span>♥ 체력 <strong id="run-fullscreen-health-numbers">100 / 100</strong></span>
         <span id="run-fullscreen-lives">♥♥</span>
@@ -163,6 +163,7 @@ canvas{height:400px;cursor:default}
       <div class="arcade-run-fullscreen-track" id="run-fullscreen-health-progress" role="progressbar" aria-label="전체화면 교사 체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
         <div class="arcade-run-fullscreen-fill" id="run-fullscreen-health-fill"></div>
       </div>
+      <div class="arcade-fullscreen-subline" id="run-fullscreen-situation">24세 · 0점 · 0초</div>
     </div>
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 3.0 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
@@ -424,6 +425,7 @@ function updateLabels(){
  $("run-fullscreen-health-progress").setAttribute("aria-valuemax",String(maxLife));
  $("run-fullscreen-health-progress").setAttribute("aria-valuenow",String(Math.ceil(hp)));
  $("run-fullscreen-lives").textContent="♥".repeat(livesLeft)+"♡".repeat(maxLives-livesLeft);
+ $("run-fullscreen-situation").textContent=mysterySituation();
  $("run-lives").textContent="♥".repeat(livesLeft)+"♡".repeat(maxLives-livesLeft);
  $("run-lives").setAttribute("aria-label","남은 목숨 "+livesLeft+"개 / "+maxLives+"개");
  $("run-life-tier").textContent=difficultyName[schoolPicker.get()?.difficulty]||"—";
@@ -644,7 +646,7 @@ function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing",wasPaused=state==="paused";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\n난이도가 높을수록 옆에서 돌진 학생 증가 · 느린 공문 탄막 증가\nEASY 날개·동료·관리자 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
+ message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\n난이도가 높을수록 옆에서 돌진 학생 증가 · 느린 공문 탄막 증가\n랜덤 물음표 아이템: 빨강 불이익 / 파랑 도움 · 잠시 후 소멸\nEASY 날개·동료·관리자 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
   {label:wasPlaying?"▶ 게임으로 돌아가기":wasPaused?"⏸ 일시정지 메뉴":"확인",
    action:()=>{if(wasPlaying)resume();else if(wasPaused){state="playing";pause();}else stopToIntro();}}
  ],"❔");
@@ -975,6 +977,9 @@ function update(dt){
  updateChalk(dt);
  updatePatternHazards(dt);
  if(state!=="playing")return;
+ if(chalkHelpers.length!==(chalkProfile()?.maxShots||0))resetChalkHelpers();
+ updateMystery(dt);
+ if(state!=="playing")return;
  for(let i=sparks.length-1;i>=0;i--){let s=sparks[i];s.x+=s.vx*dt;s.y+=s.vy*dt;s.vy+=125*dt;s.life-=dt;if(s.life<=0)sparks.splice(i,1);}
  for(let i=floats.length-1;i>=0;i--){let f=floats[i];f.y-=42*dt;f.life-=dt;if(f.life<=0)floats.splice(i,1);}
  updateLabels();
@@ -1110,7 +1115,7 @@ function drawPatternHazards(){
 }
 function draw(){
  ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
- background();drawItems();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();
+ background();drawItems();drawMystery();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();
  if(specialFlash>0){
   ctx.save();ctx.strokeStyle="rgba(255,235,117,"+Math.min(1,specialFlash*1.1)+")";
   ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,profile.specialRadius*(1-specialFlash*.1),0,Math.PI*2);ctx.stroke();
