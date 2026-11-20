@@ -17,6 +17,9 @@ const base="https://baeguindex.com/admin.html";
       html.includes('id="adminReview2026"')&&
       html.includes('js/beagu-2026-admin-review.js?v=20261120-review2')&&
       html.includes('id="adminReview2026List"')&&
+      html.includes('id="adminTelemetryHealthPanel"')&&
+      html.includes('id="adminTelemetryAsOf"')&&
+      html.includes('js/beagu-admin-access-v1.js?v=20261120-telemetryhealth1')&&
       html.includes('name="robots" content="noindex,nofollow,noarchive"')){
       assert(!/visit-stats\.js|search-telemetry-v1\.js/.test(html));
       const asset=await fetch("https://baeguindex.com/js/beagu-2026-admin-review.js?v=20261120-review2&check="+Date.now(),{
@@ -28,6 +31,16 @@ const base="https://baeguindex.com/admin.html";
          !code.includes("개인정보 입력 금지")){
         last="Published JS has old reviewer implementation";continue;
       }
+      const healthJs=await fetch("https://baeguindex.com/js/beagu-admin-access-v1.js?v=20261120-telemetryhealth1&check="+Date.now(),{
+        headers:{"Cache-Control":"no-cache"},signal:AbortSignal.timeout(15000)
+      });
+      if(healthJs.status!==200){last="Health JS HTTP "+healthJs.status;continue;}
+      const healthSource=await healthJs.text();
+      if(!healthSource.includes("renderTelemetryHealth(payload.telemetry_health)") ||
+         !healthSource.includes("function renderTelemetryHealth(data)")){
+        last="Published admin JS lacks telemetry health renderer";continue;
+      }
+      console.log("PASS: published admin telemetry health panel and live JS present");
       console.log("PASS: published admin login shell and 2026 private evidence intake JS are current");
       return;
    }
