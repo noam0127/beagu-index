@@ -859,6 +859,7 @@
     }
     $('resultCount').textContent = '검색 중...';
     const searchTask=window.BeaguLoading?.start('학교 검색 결과를 불러오는 중…');
+    const perfStarted=performance.now();let perfSucceeded=false;
     try {
       const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?`${$('regionSort').value}_${sortDirection}`:'school_name_asc';
       const sort=sortValue.replace(/_(?:asc|desc)$/,'');
@@ -871,6 +872,7 @@
         window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),1,'search-lv1');
       // Do not wait for 750KB public snapshot before drawing the selected schools.
       render(data,count,sortValue);
+      perfSucceeded=true;
       void (async()=>{
         await Promise.all([loaded,historicalPresenceReady]);
         if(request!==serial)return;
@@ -890,6 +892,8 @@
       $('resultCount').textContent = '';
       $('results').replaceChildren(make('div', 'empty', '검색에 실패했습니다.'));
     } finally {
+      if(request===serial)
+        window.BeaguPerf?.record('school_search',performance.now()-perfStarted,perfSucceeded);
       window.BeaguLoading?.finish(searchTask);
     }
   }
