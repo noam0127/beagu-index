@@ -25,6 +25,15 @@ assert.ok(ingest.indexOf("BEAGU_REFERRAL_INGEST_ENABLED") <
 assert.match(ingest,/formResponseId/);
 assert.match(ingest,/sourceSpreadsheetId/);
 assert.match(ingest,/PROOF_OUT_OF_WINDOW/);
+assert.match(ingest,/body\.action==='preflight'/);
+assert.match(ingest,/Object\.keys\(body\)\.length===1/);
+assert.ok(ingest.indexOf("BEAGU_REFERRAL_INGEST_SECRET") <
+ ingest.indexOf("body.action==='preflight'"),'preflight checks secret before accepting request');
+assert.ok(ingest.indexOf("body.action==='preflight'") <
+ ingest.indexOf("db.rpc('beagu_referral_credit'"),'preflight must not mutate referral data');
+assert.match(form,/function testBeaguReferralConnection\(/);
+assert.match(form,/payload:JSON\.stringify\(\{action:'preflight'\}\)/);
+
 assert.match(ingest,/respondent\.toLowerCase\(\)/);
 assert.match(ingest,/p_respondent_hash/);
 assert.match(ingest,/decision/);
