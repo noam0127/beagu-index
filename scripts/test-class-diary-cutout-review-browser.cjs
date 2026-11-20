@@ -39,7 +39,9 @@ for(const screen of [{name:'mobile-320',width:320,height:720},{name:'mobile-390'
  }
  await page.selectOption('#actorPick','dogyeom');await page.selectOption('#chapterPick','3');
  await page.selectOption('#backPick','alpha');await page.selectOption('#zoomPick','1.2');
- assert.equal(await page.locator('#cutoutActor').evaluate(el=>el.style.transform),'scale(1.2)','manual cutout zoom');
+ assert.equal(await page.locator('#cutoutActor').evaluate(el=>el.style.transform),'translateX(-50%) scale(1.2)','manual cutout zoom');
+ const centers=await page.evaluate(()=>{const portrait=document.getElementById('cutoutActor').getBoundingClientRect(),stage=document.getElementById('candidateStage').getBoundingClientRect();return {portrait:(portrait.left+portrait.right)/2,stage:(stage.left+stage.right)/2}});
+ assert(Math.abs(centers.portrait-centers.stage)<=2,'enlarged portrait drifts off center: '+JSON.stringify(centers));
  await page.locator('#screenPick').click();
  assert.equal(await page.locator('#screenPick').getAttribute('aria-pressed'),'true');
  await page.locator('#reviewNote').fill('QA: string and finger edges');
