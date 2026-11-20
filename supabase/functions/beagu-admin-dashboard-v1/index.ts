@@ -40,7 +40,7 @@ Deno.serve(async(req:Request)=>{
   return send({error:"authentication_required"},401,origin);
  let input:Record<string,unknown>;
  try{input=await req.json()}catch{return send({error:"invalid_request"},400,origin);}
- if(input?.action!=="dashboard")return send({error:"invalid_action"},400,origin);
+ if(input?.action!=="dashboard" && input?.action!=="live_traffic")return send({error:"invalid_action"},400,origin);
  const period=input?.period;
  if(typeof period!=="string"||!["today","7d","30d","all"].includes(period))
   return send({error:"invalid_period"},400,origin);
@@ -54,6 +54,15 @@ Deno.serve(async(req:Request)=>{
    {p_user:actor,p_session:claims.session_id});
   if(liveError)return send({error:"authorization_unavailable"},503,origin);
   if(live!==true)return send({error:"session_expired"},401,origin);
+  // Lightweight, MFA-gated polling endpoint: no raw visitor data is returned.
+  if(input.action==="live_traffic"){
+   const {data:traffic,error:trafficError}=await admin.rpc("beagu_admin_live_traffic_v1",{p_period:period});
+   if(trafficError||!traffic){
+    console.error("admin_live_traffic_error",trafficError?.code||"unknown");
+    return send({error:"metrics_unavailable"},503,origin);
+   }
+   return send({traffic},200,origin);
+  }
   const {data,error}=await admin.rpc("beagu_admin_dashboard_v1",{p_period:period});
   if(error||!data){console.error("dashboard_aggregate_error",error?.code||"unknown");
    return send({error:"metrics_unavailable"},503,origin);}
