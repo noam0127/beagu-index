@@ -601,6 +601,13 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
      <option value="senior">고경력 · 명예퇴직 후 여행 중</option>
     </select>
    </div>
+   <div class="wide"><label for="heroPedagogy">나의 교육관</label>
+    <select id="heroPedagogy" aria-describedby="heroPedagogyHelp">
+     <option value="field" selected>현장·체험을 통해 배우는 교육</option>
+     <option value="theory">학교에서 개념과 원리를 익히는 교육</option>
+    </select>
+    <small id="heroPedagogyHelp" class="field-note">정답은 없습니다. 학생과 부딪히는 순간, 선택한 교육관의 가능성과 한계를 모두 경험합니다.</small>
+   </div>
    <div><label for="heroGender">나의 성별</label>
     <select id="heroGender">
      <option value="undisclosed" selected>설정하지 않음</option>
@@ -609,7 +616,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
     </select>
    </div>
   </div>
-  <p class="field-note">성별은 선택하지 않아도 됩니다. 경력 설정은 일부 장면의 독백에 반영되며, 학교와 인물의 실제 상황을 나타내지 않습니다.</p>
+  <p class="field-note">성별은 선택하지 않아도 됩니다. 경력과 교육관 선택은 이야기 속 갈등과 선택 이후의 독백에 반영됩니다. 실제 학교나 교사에 대한 진술이 아닙니다.</p>
   <div class="actions"><button type="submit" class="primary">제1화 · 나의 시점으로 시작하기 <span aria-hidden="true">›</span></button></div>
  </form>
 </section>
@@ -1506,8 +1513,9 @@ function renderPlayerSetup(){
  show('playerSetup');
  $('heroName').value=game.profile.name||'새봄';
  $('heroExperience').value=['new','mid','senior'].includes(game.profile.experience)?game.profile.experience:'mid';
- $('heroGender').value=['female','male','undisclosed'].includes(game.profile.gender)?game.profile.gender:'undisclosed';
- status('프롤로그를 읽었습니다. 제1화부터는 옆 반에 투입된 기간제 담임인 나의 시점으로 진행합니다.');
+ $('heroGender').value=['woman','man','undisclosed'].includes(game.profile.gender)?game.profile.gender:'undisclosed';
+ $('heroPedagogy').value=['field','theory'].includes(game.profile.pedagogy)?game.profile.pedagogy:'field';
+ status('프롤로그를 읽었습니다. 제1화부터는 장미반 기간제 담임인 나의 시점으로 진행합니다.');
 }
 $('playerSetupForm').addEventListener('submit',event=>{
  event.preventDefault();
@@ -1519,9 +1527,9 @@ $('playerSetupForm').addEventListener('submit',event=>{
   return;
  }
  $('heroName').setCustomValidity('');
- const experience=$('heroExperience').value,gender=$('heroGender').value;
- if(!['new','mid','senior'].includes(experience)||!['man','woman','undisclosed'].includes(gender))return;
- game={...game,profile:{...game.profile,name,experience,gender,employment:'fixed_term',grade:3}};
+ const experience=$('heroExperience').value,gender=$('heroGender').value,pedagogy=$('heroPedagogy').value;
+ if(!['new','mid','senior'].includes(experience)||!['man','woman','undisclosed'].includes(gender)||!['field','theory'].includes(pedagogy))return;
+ game={...game,profile:{...game.profile,name,experience,gender,pedagogy,employment:'fixed_term',grade:3}};
  playerSetupPending=false;
  sound.note('pageTurn');
  render();autoSaveProgress();
