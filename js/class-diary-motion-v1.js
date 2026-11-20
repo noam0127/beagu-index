@@ -93,7 +93,8 @@ function init(){
 
  const screens={1:setup.querySelector('[data-setup-screen="1"]'),
                 2:setup.querySelector('[data-setup-screen="2"]'),
-                3:setup.querySelector('[data-setup-screen="3"]')};
+                3:setup.querySelector('[data-setup-screen="3"]'),
+                4:setup.querySelector('[data-setup-screen="4"]')};
  let lastStep=setup.dataset.step;
  function stepChanged(){
    const step=setup.dataset.step;
