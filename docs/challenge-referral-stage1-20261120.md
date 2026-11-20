@@ -66,3 +66,12 @@
 - GitHub PR #134 자동 검사와 기존 포스트잇·2026 결과 파이프라인 검사를 통과했다. **이 테스트는 가상 이벤트이며 실제 Google Forms 제출 이벤트 설치와 end-to-end 성공을 증명하지 않는다.**
 - `BEAGU_REFERRAL_RECONCILE_FROM_MS`는 초기 설치 때의 시각이며 소유자가 임의로 지우거나 미래 시각으로 바꾸면 복구가 중단된다.
 - Google Forms의 `getResponses(timestamp)`는 해당 시각 이후 응답만 가져오며, 실제 운영에서는 보관 기간·응답량과 재시도 시간을 모니터링해야 한다.
+
+
+## 비밀키 연결 사전점검 (2026-11-20)
+
+- 공식 설문 응답 시트의 헤더를 실제 연결 도구로 확인하여 `배구지수 추천 확인코드 (전용 링크 자동입력 · 수정하지 마세요)` 문항이 추가된 것을 검증했다. 사용자가 확인한 사전입력 필드 `entry.2096012680`는 JS 설정에 반영했다.
+- Supabase `beagu-referral-ingest-v1` v3에 **인증된 읽기 전용 `action:'preflight'`** 경로를 추가했다. 이 호출은 Apps Script의 전송 비밀키와 서버의 비밀키를 비교하고 HMAC 키 존재 여부를 확인한다. DB 승급 게이트를 열거나 설문 응답을 전송하지 않는다.
+- `scripts/beagu-2026-referral-integration.gs`의 `testBeaguReferralConnection()`을 Google Apps Script 소유자가 수동 실행해 연결 로그를 확인할 수 있다. 반환 데이터에는 비밀키 원문이 없다. 기존 Google Forms 트리거와 자동 집계는 수정하지 않는다.
+- Supabase DB 내부에서 **예외 서브트랜잭션을 통한 완전 롤백** 상태로 고유번호 발급·기기 결속·추천 프로필 등록·유효 1건 승급·동일 이벤트 중복 방지를 검증했다. 예외 처리 후 실데이터 `challenge_referral_profiles` 및 `challenge_referral_events`는 각각 0건이며 추천 공개·적립·로그인 설정은 모두 `false`이다. 테스트는 실제 외부 Form 제출의 성공을 보장하지 않는다.
+- 사용자가 Supabase 비밀키와 Apps Script 속성 설정·트리거 실행을 완료했다고 알렸지만, **원격 도구로 해당 트리거 설치 상태·서버 환경변수 키의 값은 직접 읽을 수 없다.** `testBeaguReferralConnection()` 실행 로그를 확인하기 전에는 설정 성공을 추정하지 않는다.
