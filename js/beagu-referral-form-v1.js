@@ -48,6 +48,19 @@
         throw Error('FORM_CONFIG_INVALID');
       form.searchParams.set('usp', 'pp_url');
       form.searchParams.set(cfg.entryName, data.proof);
+      // Best-effort signal immediately before handing off to Google Forms.
+      // Does NOT establish that the Form loaded or that an answer was submitted.
+      const handoff = JSON.stringify({action:'handoff',proof:data.proof});
+      try {
+        if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+          navigator.sendBeacon(CHECKIN_URL,new Blob([handoff],{type:'text/plain'}));
+        } else {
+          void fetch(CHECKIN_URL,{
+            method:'POST',cache:'no-store',keepalive:true,
+            headers:{'Content-Type':'text/plain'},body:handoff
+          }).catch(()=>{});
+        }
+      } catch (_) { /* A failed tracking ping must not block the survey. */ }
       location.replace(form.toString());
     } catch (_) {
       failure('추천 인증을 연결하지 못했습니다. 다시 시도하거나 일반 설문에 참여해 주세요.');
