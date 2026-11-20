@@ -4,7 +4,7 @@
 - 공식 2026년 Google Form의 추천 토큰 문항 및 원본 응답 트리거 연동은 **아직 확인되지 않았다**.
 - 이 단계는 **준비용 PR**이다. 사용자가 실제 링크를 공유하도록 권유하지 않는다.
 - `beagu_private.challenge_referral_settings`: `public_enabled`, `ingest_enabled`, `login_enabled` 모두 **false** 유지.
-- `BEAGU_REFERRAL_LINK_ENABLED` 함수 환경변수가 문자 `true`가 아니면 `REFERRAL_NOT_READY`를 반환하고 기기증명·DB 승인 기록을 변경하지 않는다.
+- `BEAGU_REFERRAL_LINK_ENABLED` 함수 환경변수가 문자 `true`가 아니거나 `BEAGU_REFERRAL_HMAC_KEY` 서버 비밀키가 32자 미만이면 `REFERRAL_NOT_READY`를 반환하고 기기증명·DB 승인 기록을 변경하지 않는다.
 - 기존 313개 `beagu_private.challenge_identity_codes` 기록은 변경하지 않는다.
 
 ## 관련 구현
@@ -18,12 +18,12 @@
 3. 설문 제출 이벤트와 연결된 Apps Script 트리거 설치 확인. 제출 시도 실패 시 기존 정오 집계 및 학교별 24시간 공개 파이프라인이 중단되지 않도록 분리.
 4. 실제 응답 1회는 테스트 환경에서 재현하고, 중복 이벤트 재처리·동일기기·다른 추천인·다른 브라우저·악성 위조 링크·Lv1/Lv2 계정상태 테스트. 운영 설문에 허위 응답 생성 금지.
 5. `survey.html`을 정식 Google Form 사전 입력 링크로 안전하게 연결하고 end-to-end 응답 귀속을 입증.
-6. 전용 HMAC 비밀키 관리·회전 정책을 구성한 뒤 순서대로 발급 게이트, `public_enabled`, `ingest_enabled` 활성화. 최종 계정 등록과 타 기기 사용 시 고유번호만으로 접근 허용하지 않도록 분리.
+6. 별도 `BEAGU_REFERRAL_HMAC_KEY` (최소 32자) 비밀키 관리·회전 정책을 구성한 뒤 순서대로 발급 게이트, `public_enabled`, `ingest_enabled` 활성화. 최종 계정 등록과 타 기기 사용 시 고유번호만으로 접근 허용하지 않도록 분리.
 7. 운영 페이지와 DB에 승급이 실제 반영되는지 보고서로 검증.
 
 ## 안전 주의
 - 추천 링크 URL은 개인 고유번호 자체가 아니라 불투명 토큰을 담는다.
-- HMAC에 현재 서비스 역할 키를 사용하므로 해당 키가 회전하면 기존 링크 토큰이 달라진다. 정식 출시 전 독립된 서버 전용 서명 비밀키로 분리해야 한다.
+- HMAC은 서버 전용 `BEAGU_REFERRAL_HMAC_KEY`만 사용하며 서비스 역할 키와 분리되어 있다. 서명키가 바뀌면 기존 링크 토큰이 달라지므로 회전 전 마이그레이션이 필요하다.
 - 기존 `beagu-challenge-identity` 발급 API가 **클라이언트 방문자 UUID**를 단독 신뢰하는 부분은 별도 보안 부채이며 레거시 313건의 복구·소유 검증 경로를 확보한 뒤 교체해야 한다.
 - 현재 단계의 기기증명은 추천 링크 발급 동작에만 적용된다. 정식 Lv2 로그인 계정은 별도의 소유자 확인이 필요하다.
 - Google Forms 사전 입력 토큰은 응답자가 조작할 수 있다. 따라서 사전 입력 값만으로 승급시키면 안 된다.
