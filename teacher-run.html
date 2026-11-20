@@ -184,6 +184,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-school-picker-v1.js?v=20261119-picker-top1"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=20261120-rightscroll1"></script>
 <script src="js/arcade-play-lock-v1.js?v=20261120-rightscroll1"></script>
+<script src="js/arcade-mystery-items-v1.js?v=20261120-items1"></script>
 <script>
 (function(){
 "use strict";
@@ -199,7 +200,7 @@ const difficultyProfiles={
  extreme:{jumpEnabled:false,specialCooldown:28,specialShield:1.6,specialRadius:145,lives:1,heroSpeed:1.02,heroSize:0.8,startingLife:78,damage:1.51,enemySpeed:1.38,spawnPressure:1.52,enemySize:0.78,goodChance:.09,heal:.63,inv:.90,homing:78,zigzag:1.5,label:"돌진 학생 5명 · 공문 탄막 폭풍"}
 };
 const difficultyName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
-const canPlayerRise=()=>profile.jumpEnabled!==false;
+const canPlayerRise=()=>!isMysteryBuff("shackle")&&(profile.jumpEnabled!==false||isMysteryBuff("wings"));
 const chaosProfiles={
  easy:{students:0,rushEvery:999,papers:0,paperEvery:999},
  normal:{students:1,rushEvery:24,papers:4,paperEvery:26},
@@ -209,7 +210,13 @@ const chaosProfiles={
 };
 const chaosProfile=()=>chaosProfiles[schoolPicker.get()?.difficulty]||chaosProfiles.hard;
 const chalkProfiles={easy:{interval:1.1,maxShots:2,range:470},normal:{interval:1.4,maxShots:1,range:410}};
-const chalkProfile=()=>chalkProfiles[schoolPicker.get()?.difficulty]||null;
+const chalkProfile=()=>{
+ const base=chalkProfiles[schoolPicker.get()?.difficulty]||null;
+ if(isMysteryBuff("conflict"))return null;
+ const extras=(isMysteryBuff("friends")?1:0)+(isMysteryBuff("chalk")?1:0);
+ if(!extras)return base;
+ return {interval:Math.min(base?.interval||1,.85),range:490,maxShots:(base?.maxShots||0)+extras};
+};
 function helperPosition(helper){
  // Fixed corner positions are based on canvas size, never on the moving player.
  return {x:helper.role==="관리자"?W-38:38,y:H-52};
@@ -217,7 +224,10 @@ function helperPosition(helper){
 function resetChalkHelpers(){
  const count=chalkProfile()?.maxShots||0;
  chalkHelpers=Array.from({length:count},(_,i)=>({
-  role:i===0?"동료":"관리자",cooldown:.35+i*.26
+  role:i<(chalkProfiles[schoolPicker.get()?.difficulty]?.maxShots||0)?
+      (i===0?"동료":"관리자"):i===(chalkProfiles[schoolPicker.get()?.difficulty]?.maxShots||0)?
+      (isMysteryBuff("friends")?"친한 동학년":"분필 지원"):"분필 지원",
+    cooldown:.35+i*.26
  }));
 }
 schoolPicker.onChange=()=>{if(state==="ready"){
@@ -269,6 +279,17 @@ const careerEvents=[
 let W=600,H=420,dpr=1,state="ready",stage=0,clock=0,score=0,best=0,life=100,maxLife=100,livesLeft=2,maxLives=2;
 let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill={speed:1,guard:0,heal:1};
 let sideStudents=[],paperBullets=[],paperTarget=null,sideRushClock=999,paperStormClock=999;
+let mysteryDrops=[],mysteryReveals=[],mysteryBuffs={},nextMysteryAt=0;
+const mystery=window.ArcadeMysteryItems;
+const isMysteryBuff=key=>Number(mysteryBuffs[key]||0)>clock;
+const mysteryCadence={easy:[18,25],normal:[14,21],hard:[11,17],very_hard:[8,13],extreme:[6,10]};
+function scheduleMystery(){
+ const span=mysteryCadence[schoolPicker.get()?.difficulty]||mysteryCadence.hard;
+ nextMysteryAt=clock+span[0]+Math.random()*(span[1]-span[0]);
+}
+function resetMystery(){
+ mysteryDrops=[];mysteryReveals=[];mysteryBuffs={};scheduleMystery();
+}
 let chalkShots=[],chalkHelpers=[],chalkCooldown=0,shackle={x:245,dir:-1};
 let activeEvent=null,eventSeconds=0,lastEventCycle=-1,retirementRushAnnounced=false,earlyMilestones=new Set(),lastSafeLane=-1;
 let player={x:300,y:360,r:22,inv:0},pointerId=null,pointerX=null,pointerY=null,pressed=new Set();
@@ -706,7 +727,7 @@ function drawChalkHelpers(){
  }
 }
 function drawShackle(){
- if(profile.jumpEnabled!==false||state==="ready")return;
+ if(canPlayerRise()||state==="ready")return;
  const ankleX=player.x+11*profile.heroSize,ankleY=player.y+28*profile.heroSize;
  const dragX=shackle.x,dragY=H-22+Math.sin(clock*13)*1.7;
  ctx.save();ctx.lineCap="round";
@@ -833,7 +854,8 @@ function update(dt){
  specialCooldown=Math.max(0,specialCooldown-dt);specialFlash=Math.max(0,specialFlash-dt);player.inv=Math.max(0,player.inv-dt);
   shake=Math.max(0,shake-dt);noticeTime=Math.max(0,noticeTime-dt);
  const dir=(pressed.has("right")?1:0)-(pressed.has("left")?1:0);
- const speed=285*skill.speed*profile.heroSpeed;
+ const itemSpeed=(isMysteryBuff("complaint")?.65:1)*(isMysteryBuff("letter")?1.35:1);
+ const speed=285*skill.speed*profile.heroSpeed*itemSpeed;
  const oldX=player.x;
  if(pointerId!==null&&pointerX!==null&&pointerY!==null){
   // Finger/mouse targets both axes while actively touching the canvas.
