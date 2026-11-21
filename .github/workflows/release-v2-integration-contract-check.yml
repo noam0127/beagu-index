@@ -1,0 +1,25 @@
+name: Release v2 integration design contract (read-only)
+on:
+  pull_request:
+    paths:
+      - 'docs/releases/release-v2-integration-contract-20261122.json'
+      - 'docs/releases/v2-step4-integration-plan-20261122.md'
+      - 'tests/release-v2-integration-contract.test.mjs'
+      - '.github/workflows/release-v2-integration-contract-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract-check:
+    name: Verify observed PR contract and freeze requirements
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate design contract (no deploy, no database access)
+        run: node --test tests/release-v2-integration-contract.test.mjs
