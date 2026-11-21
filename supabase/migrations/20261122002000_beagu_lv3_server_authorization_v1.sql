@@ -24,6 +24,11 @@ grant select on beagu_private.lv3_release_control_v1 to service_role;
 -- Do not grant UPDATE to the Edge service role: only a separately approved
 -- SQL release process can enable Lv3 after all launch gates are verified.
 
+-- PostgreSQL composite foreign keys require a corresponding unique key, even
+-- if both member columns are individually unique in the stage-18 ledger.
+create unique index if not exists member_lv3_account_visitor_pair_v1
+ on beagu_private.member_lv3_identity_links_v1(auth_user_id,visitor_id);
+
 create table if not exists beagu_private.lv3_member_sessions_v1 (
  token_sha256 text primary key check(token_sha256 ~ '^[a-f0-9]{64}$'),
  auth_user_id uuid not null references auth.users(id) on delete cascade,
