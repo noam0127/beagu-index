@@ -29,7 +29,8 @@ const DEVICE_KEY='beagu-referral-device-secret-v1';
 const LEVEL_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
 const POSTIT_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1';
 let tier2=false,mode='signin',busy=false,focusReturn=null,serial=0;
-if(!window.BeaguAccountMode?.create)return;
+if(!window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set)return;
+const setAccountState=state=>window.BeaguAccountStatus.set(message,state);
 const accountMode=window.BeaguAccountMode.create({
  form,title,description,password,submit,switchButton:switchMode,
  smsFields,smsPhone,smsConsent,forgot:byId('challengeMemberForgot')
@@ -51,7 +52,7 @@ function paintMode(next){
  form.hidden=false;
  switchMode.hidden=false;
  connect.hidden=true;signOut.hidden=true;smsUnsubscribe.hidden=true;
- message.textContent='';
+ setAccountState(mode==='signup'?'signup-ready':'signin-required');
 }
 
 async function serverLevel(){
@@ -65,12 +66,16 @@ async function serverLevel(){
   return r.ok&&Number(data.level)===2&&levelToken()===token;
  }catch{return false}
 }
-async function userSession(){
+async function sessionIdentity(){
  const {data,error}=await client.auth.getSession();
  if(error||!data?.session?.access_token)return null;
  const {data:checked,error:checkError}=await client.auth.getUser();
- if(checkError||!checked?.user||checked.user.is_anonymous||!checked.user.email_confirmed_at)return null;
+ if(checkError||!checked?.user||checked.user.is_anonymous)return null;
  return {user:checked.user,token:data.session.access_token};
+}
+async function userSession(){
+ const person=await sessionIdentity();
+ return person?.user.email_confirmed_at?person:null;
 }
 async function linkedStatus(accessToken){
  const response=await fetch(POSTIT_API+'?action=writer_status',{
@@ -82,24 +87,28 @@ async function linkedStatus(accessToken){
  return response.ok&&result.linked===true;
 }
 async function showAccountStatus(){
- const person=await userSession();
- if(overlay.hidden||!tier2)return;
- if(!person)return;
+ const person=await sessionIdentity();
+ if(overlay.hidden||!tier2||!person)return;
  form.hidden=true;switchMode.hidden=true;signOut.hidden=false;
  const forgot=byId('challengeMemberForgot');
  if(forgot)forgot.hidden=true;
+ if(!person.user.email_confirmed_at){
+  connect.hidden=true;smsUnsubscribe.hidden=true;
+  setAccountState('email-pending');
+  return;
+ }
  smsUnsubscribe.hidden=person.user.user_metadata?.beagu_sms_opt_in!==true;
  const linked=await linkedStatus(person.token).catch(()=>false);
  if(overlay.hidden||!tier2)return;
  if(linked){
   connect.hidden=true;
-  message.textContent='로그인 완료 · Lv2 정식 계정 연결이 확인되었습니다.';
+  setAccountState('linked');
  }else if(deviceProof()){
   connect.hidden=false;
-  message.textContent='로그인 완료. 챌린지 발급 기기 확인을 눌러 작성 권한을 연결하세요.';
+  setAccountState('link-ready');
  }else{
   connect.hidden=true;
-  message.textContent='로그인 완료. 작성 권한 연결은 챌린지를 진행한 원래 기기에서 할 수 있습니다.';
+  setAccountState('device-required');
  }
 }
 function close(){
@@ -173,15 +182,16 @@ form.addEventListener('submit',async event=>{
      data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}});
    if(error)throw error;
    password.value='';
-   message.textContent='회원가입 요청을 완료했습니다. 이메일 인증 후 로그인해 주세요.';
+   setAccountState('signup-requested');
    return;
   }
   const {error}=await client.auth.signInWithPassword({email:address,password:secret});
   if(error)throw error;
   password.value='';
-  message.textContent='계정 로그인을 확인하고 있습니다.';
+  setAccountState('checking');
   await showAccountStatus();
  }catch(error){
+  message.dataset.state='error';
   message.textContent=error?.message==='LEVEL_REQUIRED'
    ?'Lv2 참여코드를 다시 인증해 주세요.'
    :mode==='signup'
@@ -204,7 +214,7 @@ connect.addEventListener('click',async()=>{
   const answer=await response.json().catch(()=>({}));
   if(!response.ok||answer.linked!==true)throw Error(answer.error||'LINK_FAILED');
   connect.hidden=true;
-  message.textContent='Lv2 계정 연결 완료. 포스트잇 등 계정 기능을 이용할 수 있습니다.';
+  setAccountState('linked');
  }catch(error){
   message.textContent=error.message==='MEMBERSHIP_ALREADY_CLAIMED'
    ?'이미 다른 계정에 연결된 챌린지 권한입니다.'
@@ -228,7 +238,7 @@ signOut.addEventListener('click',async()=>{
  try{await client.auth.signOut()}catch(_){}
  finally{busy=false;signOut.disabled=false}
  paintMode('signin');
- message.textContent='정식 계정에서 로그아웃했습니다. Lv2 참여코드 인증은 유지됩니다.';
+ setAccountState('signed-out');
 });
 client.auth.onAuthStateChange(()=>{if(!overlay.hidden)queueMicrotask(()=>{void showAccountStatus()})});
 paintTier();
