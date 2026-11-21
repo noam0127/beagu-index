@@ -9,9 +9,11 @@ const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseC
 const base='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1';
 const levelKey='beagu-level-session-v1',deviceKey='beagu-referral-device-secret-v1';
 const section=$('postitAccount'),status=$('postitAccountStatus'),form=$('postitAccountForm');
-const smsPhone=$('postitSmsPhone'),smsConsent=$('postitSmsConsent'),smsUnsubscribe=$('postitSmsUnsubscribe');
-if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsUnsubscribe||
-   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show)return;
+const smsPhone=$('postitSmsPhone'),smsConsent=$('postitSmsConsent'),smsCollectionConsent=$('postitSmsCollectionConsent'),smsUnsubscribe=$('postitSmsUnsubscribe');
+if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsCollectionConsent||!smsUnsubscribe||
+   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show||!window.BeaguSmsConsent?.create)return;
+const smsPrivacy=window.BeaguSmsConsent.create({phone:smsPhone,
+ collectionConsent:smsCollectionConsent,marketingConsent:smsConsent});
 const accountMode=window.BeaguAccountMode.create({
  form,
  title:$('postitAccountHeading'),
@@ -19,7 +21,7 @@ const accountMode=window.BeaguAccountMode.create({
  password:$('postitAccountPassword'),
  submit:$('postitAccountLogin'),
  switchButton:$('postitAccountSignup'),
- smsFields:$('postitSmsFields'),smsPhone,smsConsent,
+ smsFields:$('postitSmsFields'),smsPhone,smsConsent,smsCollectionConsent,
  forgot:$('postitAccountForgot'),
  google:$('postitAccountGoogle')
 });
@@ -108,17 +110,17 @@ async function executeAuth(action){
  form.dataset.busy='true';form.setAttribute?.('aria-busy','true');
  showState('checking');
  try{
-  const wantsSms=action==='signup'&&smsConsent.checked;
-  const mobile=smsPhone.value.replace(/[^0-9]/g,'');
-  if(wantsSms&&!/^010[0-9]{8}$/.test(mobile)){
-   showInputError('phone-input');return;
+  const selection=action==='signup'?smsPrivacy.payload():null;
+  if(selection&&!selection.ok){
+   showInputError(selection.reason==='phone-input'?'phone-input':'sms-consent-incomplete');
+   return;
   }
   const {error}=action==='signup'
-   ?await client.auth.signUp({email,password,options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('postit'),data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}})
+   ?await client.auth.signUp({email,password,options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('postit'),data:selection.consent}})
    :await client.auth.signInWithPassword({email,password});
   if(error)throw error;
   $('postitAccountPassword').value='';
-  smsPhone.value='';smsConsent.checked=false;
+  smsPrivacy.clear();
   if(action==='signup')showState('signup-requested');
   else {showState('checking');await refresh();}
  }catch(error){
@@ -172,7 +174,7 @@ smsUnsubscribe.addEventListener('click',async()=>{
  if(busy)return;
  busy=true;smsUnsubscribe.disabled=true;
  try{
-  const {error}=await client.auth.updateUser({data:{beagu_sms_opt_in:false,beagu_sms_phone:null}});
+  const {error}=await client.auth.updateUser({data:{beagu_sms_opt_in:false,beagu_phone_collection_opt_in:false,beagu_sms_phone:null}});
   if(error)throw error;
   smsUnsubscribe.hidden=true;
   message('문자 안내 수신 동의를 철회했습니다. 발송용 휴대폰번호도 삭제됩니다.');
