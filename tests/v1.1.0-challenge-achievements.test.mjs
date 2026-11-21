@@ -96,7 +96,7 @@ test('29: page displays all three stages above participation-code form and outsi
  assert.match(markup,/data-achievement-status/);
  assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
  assert.match(css,/@media\(max-width:540px\)/);
- assert.match(css,/prefers-reduced-motion|transition/).doesNotThrow;
+ assert.match(css,/\.challenge-achievements-item\[data-achieved="true"\]/);
  assert.doesNotMatch(ui,/localStorage\.setItem|sessionStorage\.setItem|fetch\s*\(|Lv3_TOKEN|supabase\.auth/);
 });
 
