@@ -70,6 +70,33 @@ revoke all on beagu_private.lv3_official_school_facts_2026_v1
 grant usage on schema beagu_private to service_role;
 grant select on beagu_private.lv3_official_school_facts_2026_v1 to service_role;
 
+-- Any source/amount/location mutation must reopen review, even when an
+-- administrator forgets to adjust updated_at. Do not inherit old sign-off.
+create or replace function beagu_private.lv3_2026_facts_revision_guard_v1()
+returns trigger language plpgsql set search_path='' as $fn$
+begin
+ if (pg_catalog.to_jsonb(new)-'review_status'-'reviewer_user_id'
+      -'reviewed_at'-'updated_at')
+    is distinct from
+    (pg_catalog.to_jsonb(old)-'review_status'-'reviewer_user_id'
+      -'reviewed_at'-'updated_at')
+ then
+   new.review_status:='PENDING';
+   new.reviewer_user_id:=null;
+   new.reviewed_at:=null;
+   new.updated_at:=now();
+ end if;
+ return new;
+end;
+$fn$;
+revoke all on function beagu_private.lv3_2026_facts_revision_guard_v1()
+ from public,anon,authenticated;
+drop trigger if exists lv3_2026_source_change_reopens_review_v1
+ on beagu_private.lv3_official_school_facts_2026_v1;
+create trigger lv3_2026_source_change_reopens_review_v1
+ before update on beagu_private.lv3_official_school_facts_2026_v1
+ for each row execute function beagu_private.lv3_2026_facts_revision_guard_v1();
+
 -- A SECURITY INVOKER view is a narrow service-only projection.
 -- It never calls the 2026 survey source or a user-editable profile.
 -- Every published row requires current authorized owner and global Lv3 ON;
