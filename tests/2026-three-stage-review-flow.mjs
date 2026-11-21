@@ -16,7 +16,7 @@ assert.match(html,/id="adminPipelineBasis"/);
 assert.match(html,/id="adminPipelineStatus"/);
 assert.match(html,/일반 설문 전체의 개별 응답 신뢰성 검사는 아직 연결되지 않았습니다/);
 assert.match(html,/집계 정상 판정은 응답의 진실성이나 웹 공개 허가가 아닙니다/);
-assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261122-pipeline1/);
+assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261122-n1review1/);
 assert.match(css,/\.admin-pipeline-stages/);
 assert.match(css,/@media\(max-width:950px\)/);
 assert.doesNotThrow(()=>new vm.Script(js,{filename:'beagu-2026-admin-review.js'}));
