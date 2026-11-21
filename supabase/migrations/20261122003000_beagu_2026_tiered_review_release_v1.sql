@@ -1,8 +1,7 @@
 -- Stage 21 — CODE + DISPOSABLE CI ONLY; never deploy or modify live review.
--- 2026 publication requires exact-snapshot, signed Owner MFA approval
--- (upstream), independently VERIFIED legal/privacy basis and cohort risk
--- review. Time NEVER implies permission to publish.
--- Lv1: 24h after approval/update. Lv2: 6h. Lv3: after approval only.
+-- The approval workflow must verify an exact source snapshot, Owner MFA,
+-- independent legal publication basis, school matching and reidentification.
+-- Time alone NEVER grants permission. Lv1=24h, Lv2=6h, Lv3=after approval.
 begin;
 
 create or replace function public.beagu_2026_tiered_released_question_results_v1(
@@ -41,67 +40,12 @@ language sql stable security definer set search_path='' as $fn$
    and pg_catalog.jsonb_typeof(r.questions)='array'
    and not exists (
      select 1 from pg_catalog.jsonb_array_elements(r.questions) q
-     where coalesce(q->>'invalid','') !~ '^[0-9]+
-   )
-   and exists (
-     select 1
-     from beagu_private.beagu_2026_publication_basis_review b
-     where b.school_id=r.school_id
-       and b.payload_sha256=r.payload_sha256
-       and b.review_status='VERIFIED'
-       and b.reviewer_user_id::text=r.approved_by
-       and b.reviewed_at>=r.source_snapshot_at
-       and b.notice_effective_at<=r.source_snapshot_at
-       and b.basis_type in (
-         'EXPLICIT_RESPONDENT_CONSENT',
-         'OTHER_DOCUMENTED_LEGAL_BASIS'
-       )
-       and pg_catalog.length(pg_catalog.btrim(b.notice_source_ref))>=12
-       and b.notice_digest_sha256 ~ '^[a-f0-9]{64}$'
-       and pg_catalog.length(pg_catalog.btrim(b.publication_scope))>=20
-       and b.distinct_respondents_reviewed is true
-       and b.personal_data_reviewed is true
-       and b.small_sample_reviewed is true
-       and b.reidentification_reviewed is true
-       and b.prior_data_combination_reviewed is true
-   )
-$fn$;
-
-revoke all on function
- public.beagu_2026_tiered_released_question_results_v1(text,smallint)
- from public,anon,authenticated;
-grant execute on function
- public.beagu_2026_tiered_released_question_results_v1(text,smallint)
- to service_role;
-
--- CRITICAL: close the existing Lv2 "instant" bypass. Old Lv2 endpoints
--- still call this function, therefore it MUST delegate to 6h release gate.
-create or replace function public.beagu_2026_lv2_released_question_results(
- p_school_id text
-) returns jsonb language sql stable security definer set search_path='' as $fn$
- select public.beagu_2026_tiered_released_question_results_v1(
-   p_school_id,2::smallint
- )
-$fn$;
-revoke all on function
- public.beagu_2026_lv2_released_question_results(text)
- from public,anon,authenticated;
-grant execute on function
- public.beagu_2026_lv2_released_question_results(text) to service_role;
-
-comment on function public.beagu_2026_tiered_released_question_results_v1(text,smallint) is
- 'Stage21 exact-snapshot release RPC. Tier3 immediate means immediate only AFTER owner MFA and independent verified publication/privacy basis; no raw responses, Q31 or Q51. RPC service-role only.';
-comment on function public.beagu_2026_lv2_released_question_results(text) is
- 'Stage21 bridge: all legacy Lv2 2026 release paths now require a 6-hour interval after exact approved snapshot; never bypass reviewer/basis/risk validation.';
-
-commit;
-
+     where coalesce(q->>'invalid','') !~ '^[0-9]+$'
        or q->>'invalid'<>'0'
-       or coalesce(q->>'valid','') !~ '^[0-9]+
+       or coalesce(q->>'valid','') !~ '^[0-9]+$'
    )
    and exists (
-     select 1
-     from beagu_private.beagu_2026_publication_basis_review b
+     select 1 from beagu_private.beagu_2026_publication_basis_review b
      where b.school_id=r.school_id
        and b.payload_sha256=r.payload_sha256
        and b.review_status='VERIFIED'
@@ -122,7 +66,6 @@ commit;
        and b.prior_data_combination_reviewed is true
    )
 $fn$;
-
 revoke all on function
  public.beagu_2026_tiered_released_question_results_v1(text,smallint)
  from public,anon,authenticated;
@@ -130,8 +73,9 @@ grant execute on function
  public.beagu_2026_tiered_released_question_results_v1(text,smallint)
  to service_role;
 
--- CRITICAL: close the existing Lv2 "instant" bypass. Old Lv2 endpoints
--- still call this function, therefore it MUST delegate to 6h release gate.
+-- Bridge: close the pre-existing "Lv2 immediately after approval" bypass.
+-- Every existing Lv2 endpoint already invokes this RPC, which now enforces
+-- the verified 6-hour delay without changing its public signature.
 create or replace function public.beagu_2026_lv2_released_question_results(
  p_school_id text
 ) returns jsonb language sql stable security definer set search_path='' as $fn$
@@ -146,62 +90,8 @@ grant execute on function
  public.beagu_2026_lv2_released_question_results(text) to service_role;
 
 comment on function public.beagu_2026_tiered_released_question_results_v1(text,smallint) is
- 'Stage21 exact-snapshot release RPC. Tier3 immediate means immediate only AFTER owner MFA and independent verified publication/privacy basis; no raw responses, Q31 or Q51. RPC service-role only.';
+ 'Stage21 exact-snapshot release RPC. Tier3 immediate means after Owner approval and independently VERIFIED publication/privacy basis. Q31/Q51 never returned. Service-role only.';
 comment on function public.beagu_2026_lv2_released_question_results(text) is
- 'Stage21 bridge: all legacy Lv2 2026 release paths now require a 6-hour interval after exact approved snapshot; never bypass reviewer/basis/risk validation.';
-
-commit;
-
-   )
-   and exists (
-     select 1
-     from beagu_private.beagu_2026_publication_basis_review b
-     where b.school_id=r.school_id
-       and b.payload_sha256=r.payload_sha256
-       and b.review_status='VERIFIED'
-       and b.reviewer_user_id::text=r.approved_by
-       and b.reviewed_at>=r.source_snapshot_at
-       and b.notice_effective_at<=r.source_snapshot_at
-       and b.basis_type in (
-         'EXPLICIT_RESPONDENT_CONSENT',
-         'OTHER_DOCUMENTED_LEGAL_BASIS'
-       )
-       and pg_catalog.length(pg_catalog.btrim(b.notice_source_ref))>=12
-       and b.notice_digest_sha256 ~ '^[a-f0-9]{64}$'
-       and pg_catalog.length(pg_catalog.btrim(b.publication_scope))>=20
-       and b.distinct_respondents_reviewed is true
-       and b.personal_data_reviewed is true
-       and b.small_sample_reviewed is true
-       and b.reidentification_reviewed is true
-       and b.prior_data_combination_reviewed is true
-   )
-$fn$;
-
-revoke all on function
- public.beagu_2026_tiered_released_question_results_v1(text,smallint)
- from public,anon,authenticated;
-grant execute on function
- public.beagu_2026_tiered_released_question_results_v1(text,smallint)
- to service_role;
-
--- CRITICAL: close the existing Lv2 "instant" bypass. Old Lv2 endpoints
--- still call this function, therefore it MUST delegate to 6h release gate.
-create or replace function public.beagu_2026_lv2_released_question_results(
- p_school_id text
-) returns jsonb language sql stable security definer set search_path='' as $fn$
- select public.beagu_2026_tiered_released_question_results_v1(
-   p_school_id,2::smallint
- )
-$fn$;
-revoke all on function
- public.beagu_2026_lv2_released_question_results(text)
- from public,anon,authenticated;
-grant execute on function
- public.beagu_2026_lv2_released_question_results(text) to service_role;
-
-comment on function public.beagu_2026_tiered_released_question_results_v1(text,smallint) is
- 'Stage21 exact-snapshot release RPC. Tier3 immediate means immediate only AFTER owner MFA and independent verified publication/privacy basis; no raw responses, Q31 or Q51. RPC service-role only.';
-comment on function public.beagu_2026_lv2_released_question_results(text) is
- 'Stage21 bridge: all legacy Lv2 2026 release paths now require a 6-hour interval after exact approved snapshot; never bypass reviewer/basis/risk validation.';
+ 'Stage21 bridge: legacy Lv2 2026 release requires verified six hours after exact snapshot approval and intact privacy basis.';
 
 commit;
