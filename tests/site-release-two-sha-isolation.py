@@ -42,6 +42,10 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     put(repo, "school-report.html",
         "<html><head></head><body>PROD_REPORT</body></html>")
     put(repo, "js/site.js", "window.mock='PROD_JS';")
+    # A realistic preview package always contains the public Supabase config.
+    # The release worker must replace production refs only in the preview copy.
+    put(repo, "js/supabase-config.js",
+        "window.mockSupabase='https://snvzwrexuqavnfvzgxqj.supabase.co';")
     put(repo, "data/public-compare-school-directory-v1.json",
         '{"version":"OLD_APPROVED_DIRECTORY"}')
     git(repo, "add", ".")
@@ -90,6 +94,14 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert 'src="/js/site.js"' in prod_html
     assert "STAGE_JS" in (out / "_preview/js/site.js").read_text(encoding="utf-8")
     assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
+    # Newer workers enforce strict backend isolation; verify without weakening
+    # the old worker's two-commit artifact checks.
+    if hasattr(worker, "isolate_preview_backend"):
+        live_config = (out / "js/supabase-config.js").read_text(encoding="utf-8")
+        preview_config = (out / "_preview/js/supabase-config.js").read_text(encoding="utf-8")
+        assert "snvzwrexuqavnfvzgxqj" in live_config
+        assert "ycwuugggqbunlbwuzvbx" in preview_config
+        assert "snvzwrexuqavnfvzgxqj" not in preview_config
     assert "STAGE_REPORT" in (out / "_preview/school-report.html").read_text(encoding="utf-8")
     assert "PROD_REPORT" in (out / "school-report.html").read_text(encoding="utf-8")
     assert (out / "CNAME").read_text().strip() == "baeguindex.com"
