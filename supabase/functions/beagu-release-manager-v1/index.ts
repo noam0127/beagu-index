@@ -6,6 +6,7 @@ import {collectGitHubWorkInbox} from "./github-work-inbox.mjs";
 import {annotateWorkDependencies} from "./release-work-dependencies.mjs";
 import {inspectReleaseWorkInbox} from "./release-impact-evidence.mjs";
 import {preflightReleaseConflicts} from "./release-conflict-preflight.mjs";
+import {evaluateReleaseVersionGate} from "./release-version-gate.mjs";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"",{
   auth:{persistSession:false,autoRefreshToken:false}
@@ -16,6 +17,14 @@ const trusted=new Set(["https://baeguindex.com","https://www.baeguindex.com"]);
 // v2 fail-closed interlock: only a reviewed code change may enable production.
 // Neither client flags nor environment variables may override this policy.
 const PRODUCTION_RELEASES_PAUSED=true;
+// v2 step 12: no immutable release version or fresh staging apply before
+// main ancestry, CI, isolated DB/RLS/Auth/browser tests and owner approval.
+const RELEASE_VERSION_CREATION_PAUSED=true;
+const REVIEWED_MAIN_SHA="0a16b4cc41df76d37d3f70e3f0edb909cafe8cc3";
+const RELEASE_REVIEW_PR=223;
+// Until independently verified SHA-bound server evidence is implemented, fail closed.
+const RELEASE_QA_EVIDENCE=Object.freeze({});
+
 const jwks=createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
 const SHA=/^[0-9a-f]{40}$/;
 const allowedVersion=/^[0-9A-Za-z][0-9A-Za-z._-]{0,31}$/;
@@ -143,6 +152,11 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  // Block direct admin commands even after valid owner MFA.
  if(PRODUCTION_RELEASES_PAUSED&&(action==="prod_apply"||action==="prod_rollback"))
   return error("production_release_paused",423,origin);
+ // A client can bypass disabled buttons and call Edge APIs directly, so the
+ // server must refuse ALL new version/draft/staging creation paths.
+ if(RELEASE_VERSION_CREATION_PAUSED&&
+    ["create_version","register","stage_apply"].includes(action))
+  return error("release_version_gate_blocked",423,origin);
  const s=await state();
  const current=await activeJob();
  if(action==="status"){
@@ -197,8 +211,31 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
     }
    }catch{commitScanError="github_main_unavailable";}
   }
+  // Read-only release preflight, based on server-owned pinned review SHA and
+  // GitHub data. No browser evidence flags and no database writes are trusted.
+  let candidate:unknown=null,workflowRuns:unknown=null;
+  if(input.check_latest===true){
+   try{
+    candidate=await github("/pulls/"+RELEASE_REVIEW_PR);
+    const candidateSha=(candidate as {head?:{sha?:unknown}})?.head?.sha;
+    if(typeof candidateSha==="string"&&SHA.test(candidateSha))
+     workflowRuns=await github("/actions/runs?head_sha="+candidateSha+"&per_page=100");
+   }catch{candidate=null;workflowRuns=null;}
+  }
+  const candidatePR=candidate as {number?:number;state?:string;merged_at?:string|null;
+   draft?:boolean;head?:{sha?:string}}|null;
+  const versionGate=evaluateReleaseVersionGate({
+   candidate:candidatePR?{number:candidatePR.number,state:candidatePR.state,
+    merged_at:candidatePR.merged_at,draft:candidatePR.draft,
+    head_sha:candidatePR.head?.sha}:null,
+   expected_pr:RELEASE_REVIEW_PR,expected_sha:REVIEWED_MAIN_SHA,
+   main_sha:head,workflow_runs:workflowRuns,
+   evidence:RELEASE_QA_EVIDENCE,active_release_job:!!current,
+   server_creation_paused:RELEASE_VERSION_CREATION_PAUSED
+  });
   return respond({state:s,job:current,head_sha:head,suggested_draft,
     pending,work_in_progress:workInProgress,work_inbox:workInbox,commit_scan_error:commitScanError,
+    release_version_gate:versionGate,
     versions:versionCatalog,staging_history:stageHistory,
     production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",
     production_url:"https://baeguindex.com/"},200,origin);

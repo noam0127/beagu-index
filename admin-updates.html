@@ -87,6 +87,12 @@
     <section class="release-draft" aria-labelledby="releaseDraftHeading">
       <div class="release-section-head"><h2 id="releaseDraftHeading">새 버전 생성 · 수동</h2>
         <p>위 자동 수집 작업을 하나의 변경 불가능한 코드 버전으로 저장합니다. 버전 생성만으로 시험·실제 웹은 바뀌지 않습니다.</p></div>
+      <section aria-labelledby="releaseVersionGateHeading">
+        <h3 id="releaseVersionGateHeading">통합 검증·버전 확정 안전 점검</h3>
+        <p id="releaseVersionGateStatus" class="subtle" role="status" aria-live="polite">검증 증빙을 확인하기 전까지 버전 생성은 잠겨 있습니다.</p>
+        <ul id="releaseVersionGateReasons" class="release-file-summary" aria-label="버전 생성 차단 사유"></ul>
+        <p id="releaseVersionGateSha" class="subtle">통합 후보 SHA와 최신 main을 확인하지 않았습니다.</p>
+      </section>
       <form id="releaseDraftForm">
         <div class="release-meta-row">
           <div><label for="releaseVersionInput">업데이트 버전</label>
@@ -95,7 +101,7 @@
             <textarea id="releaseSummaryInput" rows="3" maxlength="500" minlength="3" required placeholder="예: 관리자 공지사항 수정 기능, 레벨 표시 정렬 개선"></textarea></div>
         </div>
         <div class="release-register-actions">
-          <button type="submit" id="releaseRegister" class="primary">버전 생성</button>
+          <button type="submit" id="releaseRegister" class="primary" disabled>검증 완료 후 버전 생성</button>
           <span id="releaseDraftInfo" class="subtle" aria-live="polite">GitHub main의 변경사항이 최신 생성 버전 이후에 있는지 확인합니다.</span>
         </div>
       </form>

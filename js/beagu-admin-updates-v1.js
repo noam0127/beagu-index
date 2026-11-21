@@ -15,7 +15,7 @@
  let busy=false,model=null,timer=null,latestHead=null,pending=null;
  // v2 step 10 safety lock: frontend controls cannot promote or rollback production.
  const PRODUCTION_RELEASES_PAUSED=true;
- let versions=[],recentSuggestion=null,workInProgress=[],workInbox=null,commitScanError=null;
+ let versions=[],recentSuggestion=null,workInProgress=[],workInbox=null,commitScanError=null,versionGate=null;
  const msg=(text,problem=false)=>{
   const p=el("releaseStatus");p.textContent=text;
   p.classList.toggle("release-status-error",problem);
@@ -33,6 +33,7 @@
   if(!response.ok){
    const messages={
     production_release_paused:"운영 배포·롤백이 안전성 검증 중이라 비활성화되어 있습니다.",
+    release_version_gate_blocked:"통합 코드·DB·인증·브라우저 검증과 승인 완료 전에는 버전 생성 및 시험 적용이 제한됩니다.",
     release_in_progress:"다른 배포가 진행 중입니다. 완료 후 다시 시도하세요.",
     version_already_exists:"이미 사용한 버전명 또는 동일한 코드입니다. 새 버전명과 새로운 변경사항이 필요합니다.",
     version_not_found:"선택한 버전을 찾지 못했습니다. 새로고침하세요.",
@@ -61,6 +62,48 @@
   node.textContent=text;
   if(className)node.className=className;
   parent.append(node);return node;
+ }
+ const releaseGateReasonLabels={
+  candidate_pr_not_verified:"통합 PR을 확인하지 못했습니다",
+  unexpected_candidate_pr:"선택된 통합 PR이 고정 검토 대상과 다릅니다",
+  candidate_pr_not_merged:"검토한 통합 PR이 main에 병합되지 않았습니다",
+  candidate_pr_draft:"통합 PR이 아직 초안 상태입니다",
+  candidate_sha_invalid:"통합 PR 코드 SHA를 확인할 수 없습니다",
+  main_sha_unavailable:"최신 main SHA를 확인하지 못했습니다",
+  expected_sha_unavailable:"검토 기준 main SHA가 지정되지 않았습니다",
+  main_moved_since_review:"검토 이후 main이 바뀌어 재통합 검사가 필요합니다",
+  candidate_not_equal_to_current_main:"통합 후보 SHA와 현재 main SHA가 다릅니다",
+  workflow_evidence_unavailable:"전체 CI 실행 목록을 확인하지 못했습니다",
+  required_workflow_not_verified:"통합 후보 SHA의 필수 CI 성공 증빙이 부족합니다",
+  required_isolated_staging_db_unverified:"독립 시험 DB의 준비가 검증되지 않았습니다",
+  required_staging_rls_unverified:"시험 DB RLS 권한 검사가 미완료입니다",
+  required_authenticated_api_runtime_unverified:"인증된 API 런타임 검사가 미완료입니다",
+  required_candidate_browser_e2e_unverified:"이번 통합 후보의 브라우저 E2E가 미완료입니다",
+  required_owner_release_approval_unverified:"별도의 관리자 승인 증빙이 없습니다",
+  release_queue_busy:"이전 배포 요청이 아직 진행 중입니다",
+  release_creation_paused:"릴리스 생성 서버 안전 잠금이 활성화되어 있습니다"
+ };
+ function renderVersionGate(){
+  const root=el("releaseVersionGateReasons");root.replaceChildren();
+  const status=el("releaseVersionGateStatus"),sha=el("releaseVersionGateSha");
+  const g=versionGate;
+  if(!g){
+   status.textContent="검증 미실행 · 버전 생성 차단";
+   sha.textContent="통합 PR과 최신 main SHA의 일치 여부를 확인해야 합니다.";
+   return;
+  }
+  status.textContent=g.allow_create_version===true?
+   "검증 증빙 확인됨 · 서버 최종 재검증 필요":
+   "버전 생성 보류 · 차단 사유 "+(g.reasons||[]).length+"건";
+  sha.textContent="검토 main "+short(g.reviewed_main_sha)+" · 최신 main "+
+   short(g.main_sha)+" · 통합 PR #"+(g.candidate_pr||"미확인")+
+   " · 후보 "+short(g.candidate_sha);
+  const reasons=Array.isArray(g.reasons)?g.reasons:[];
+  for(const reason of reasons){
+   addText(root,"li",releaseGateReasonLabels[reason]||"검증 미완료: "+reason);
+  }
+  if(!reasons.length&&g.allow_create_version!==true)
+   addText(root,"li","서버의 검증 허용 상태를 확인하지 못했습니다.");
  }
  function renderHistory(id,rows){
   const root=el(id);root.replaceChildren();
@@ -292,7 +335,7 @@
   const s=model.state||{},job=!!model.job;
   const staging=versions.find(v=>v.id===el("releaseStageSelect").value);
   const production=versions.find(v=>v.id===el("releaseProdSelect").value);
-  el("releaseStageApply").disabled=busy||job||!staging||staging.sha===s.staging_sha||!s.production_sha;
+  el("releaseStageApply").disabled=versionGate?.allow_create_version!==true||busy||job||!staging||staging.sha===s.staging_sha||!s.production_sha;
   el("releaseProdApply").disabled=PRODUCTION_RELEASES_PAUSED||busy||job||
    !production||!production.tested||production.sha===s.production_sha;
   const stageH=model.staging_history||[],prodH=model.production_history||[];
@@ -302,7 +345,7 @@
   const lastCodeRelease=prodH.find(h=>h.action!=="data_refresh");
   el("releaseProdRollback").disabled=PRODUCTION_RELEASES_PAUSED||busy||job||
    !lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
-  el("releaseRegister").disabled=busy||job||!pending||!(pending.files||[]).length;
+  el("releaseRegister").disabled=versionGate?.allow_create_version!==true||busy||job||!pending||!(pending.files||[]).length;
   el("releaseRefresh").disabled=busy;
   el("releaseInspectPRs").disabled=busy||!workInbox||workInbox.status==="error";
  }
@@ -316,6 +359,7 @@
    workInbox=data.work_inbox||null;
    workInProgress=workInbox?.open||data.work_in_progress||[];
    commitScanError=data.commit_scan_error||null;
+   versionGate=data.release_version_gate||null;
    if(recentSuggestion){
     if(!el("releaseVersionInput").dataset.edited)
      el("releaseVersionInput").value=recentSuggestion.version;
@@ -329,15 +373,15 @@
   el("releaseProdVersion").textContent=s.production_sha?(s.production_version||"버전 미입력"):"최초 배포 준비 중";
   el("releaseStageSha").textContent=s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹 업데이트 기록 없음";
   el("releaseProdSha").textContent=s.production_sha?"코드 "+short(s.production_sha):"운영 버전 확인 중";
-  el("releaseDraftInfo").textContent=pending?
-   "현재 "+(pending.files||[]).length+"개 파일의 변경사항을 새 버전으로 묶을 수 있습니다.":
-   "새 작업이 생기면 버전 생성이 활성화됩니다.";
+  el("releaseDraftInfo").textContent=versionGate?.allow_create_version===true?
+   "검증 조건을 확인했습니다. 서버에서 최신 SHA를 다시 검증합니다.":
+   "검증 완료 전에는 버전 생성이 차단됩니다. 위 차단 사유를 먼저 해결하세요.";
   el("releaseQueueText").textContent=job?
    ((job.status==="running"?"배포 중":"배포 대기")+" · "+job.version+
     " · "+(job.target==="staging"?"시험 웹":"실제 웹")+
     " · 요청 시각 "+date(job.created_at)):
    "현재 진행 중인 배포가 없습니다.";
-  renderWorkInProgress();renderPending();renderCatalog();
+  renderVersionGate();renderWorkInProgress();renderPending();renderCatalog();
   renderHistory("releaseStageHistory",data.staging_history||[]);
   renderHistory("releaseProdHistory",data.production_history||[]);
   fillSelect("releaseStageSelect",versions,s.staging_sha);
@@ -360,6 +404,9 @@
    return;
   }
   if(busy||!model)return;
+  if(action==="stage_apply"&&versionGate?.allow_create_version!==true){
+   msg("통합 검증이 완료되기 전에는 시험 웹 새 버전 적용도 제한됩니다.",true);return;
+  }
   const selected=action==="stage_apply"?
    versions.find(v=>v.id===el("releaseStageSelect").value):
    action==="prod_apply"?versions.find(v=>v.id===el("releaseProdSelect").value):null;
@@ -382,7 +429,12 @@
   finally{busy=false;await refresh(true);}
  }
  async function createVersion(event){
-  event.preventDefault();if(busy||!pending)return;
+  event.preventDefault();
+  if(versionGate?.allow_create_version!==true){
+   msg("최신 main·통합 QA·승인 증빙을 확인하기 전에는 버전을 생성할 수 없습니다.",true);
+   return;
+  }
+  if(busy||!pending)return;
   const version=el("releaseVersionInput").value.trim();
   const summary=el("releaseSummaryInput").value.trim();
   if(!version||summary.length<3)return;
