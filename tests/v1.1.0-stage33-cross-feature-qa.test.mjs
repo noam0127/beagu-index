@@ -98,7 +98,7 @@ function harness(startToken=TOKEN_A){
     await flush();
   };
   return {
-    badge,homeHost,challengeHost,nodes,requests,reply,flush,
+    badge,homeHost,challengeHost,nodes,requests,reply,flush,dispatch,
     changeToken(next){token=next},
     trigger(type,detail){dispatch({type,detail})},
     homeStates:()=>homeCards.map(x=>x.item.dataset.tierState),
@@ -202,8 +202,14 @@ test('stage33: signout resets all status without waiting for old server calls',a
   assert.equal(h.requests.length,1);
   assert.equal(h.badge.dataset.level,'0');
   assert.equal(h.badge.dataset.memberLevel,'');
+  // Logout event runs the UI's deliberate invalidate-after-verify handler
+  // and therefore remains unknown until a fresh unauthenticated event.
+  assert.equal(h.homeHost.dataset.currentTier,'unknown');
+  assert.equal(h.challengeHost.dataset.verifiedTier,'unknown');
+  h.trigger('beagu:level-state-change');
   assert.equal(h.homeHost.dataset.currentTier,'0');
   assert.equal(h.challengeHost.dataset.verifiedTier,'0');
+  assert.deepEqual(h.challengeStates(),['미달성','미달성','미달성']);
 });
 
 test('stage33: login redirects are exact, staging separate and remote settings still unverified',()=>{
