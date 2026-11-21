@@ -19,6 +19,8 @@ on:
       - 'tests/member-privacy-verify.sql'
       - 'tests/v1.1.0-account-privacy.test.mjs'
       - 'tests/v1.1.0-legacy-password.test.mjs'
+      - 'tests/v1.1.0-session-restore.test.mjs'
+      - 'tests/v1.1.0-sms-private-consent.test.mjs'
       - 'tests/v1.1.0-account-status.test.mjs'
       - 'tests/v1.1.0-auth-error-ux.test.mjs'
       - 'tests/challenge-lv2-account-entry.mjs'
