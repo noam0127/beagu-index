@@ -73,8 +73,13 @@ async function executeAuth(action){
  if(busy)return;
  const email=$('postitAccountEmail').value.trim();
  const password=$('postitAccountPassword').value;
- if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||password.length<10){
-  message('유효한 이메일과 10자 이상의 비밀번호를 입력하세요.');return;
+ // Do not require existing members to meet a NEW signup minimum.
+ // The Supabase Auth server still validates password correctness and account state.
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!password||
+    (action==='signup'&&password.length<10)){
+  message(action==='signup'
+    ?'유효한 이메일과 10자 이상의 새 비밀번호를 입력하세요.'
+    :'유효한 이메일과 기존 비밀번호를 입력하세요.');return;
  }
  busy=true;
  try{
