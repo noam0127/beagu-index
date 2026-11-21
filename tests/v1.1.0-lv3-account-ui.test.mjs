@@ -169,3 +169,50 @@ test('Level 3 benefits remain planned until server data release review and never
  assert.match(api,/beagu_lv3_verify_session_v1/);
  assert.doesNotMatch(html,/data-lv3-token=|data-vip-secret=|window\.lv3Auth=true/);
 });
+
+test('shared header restores Lv2 badge immediately when Lv3 expires, without changing participation tier',async()=>{
+ const listeners=new Map();
+ const evt=(type,detail={})=>({type,detail});
+ const indicator={
+  dataset:{level:'checking'},textContent:'확인 중',title:'',
+  setAttribute(k,v){this[k]=v},
+  closest(){return null}
+ };
+ const document={
+  hidden:false,
+  getElementById:k=>k==='beaguLevelState'?indicator:null,
+  querySelector:()=>null,
+  addEventListener(t,fn){(listeners.get(t)||listeners.set(t,[]).get(t)).push(fn)}
+ };
+ const window={
+  addEventListener(t,fn){(listeners.get(t)||listeners.set(t,[]).get(t)).push(fn)},
+  dispatchEvent(e){for(const fn of listeners.get(e.type)||[])fn(e)}
+ };
+ window.self=window;window.top=window;
+ let currentToken='a'.repeat(64);
+ const sessionStorage={
+  getItem:()=>currentToken,
+  removeItem:()=>{currentToken=''}
+ };
+ const CustomEvent=class{constructor(type,{detail}){this.type=type;this.detail=detail}};
+ vm.runInNewContext(levelState,{
+  window,document,sessionStorage,CustomEvent,
+  async fetch(){return {ok:true,status:200,async json(){return {level:2,provisional:false}}}}
+ },{timeout:1000});
+ await flush();
+ assert.equal(indicator.dataset.level,'2');
+ assert.equal(indicator.textContent,'Lv.2');
+ window.dispatchEvent(evt('beagu:lv3-session-verification',{verified:true}));
+ assert.equal(indicator.dataset.memberLevel,'3');
+ assert.equal(indicator.dataset.level,'2');
+ assert.equal(indicator.textContent,'Lv.3');
+ window.dispatchEvent(evt('beagu:lv3-session-verification',{verified:false}));
+ assert.equal(indicator.dataset.memberLevel,'');
+ assert.equal(indicator.dataset.level,'2');
+ assert.equal(indicator.textContent,'Lv.2');
+ currentToken='';
+ window.dispatchEvent(evt('beagu:level-state-change'));
+ await flush();
+ assert.equal(indicator.dataset.level,'0');
+ assert.equal(indicator.textContent,'Lv.0');
+});
