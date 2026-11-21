@@ -3,6 +3,8 @@
  * Pure data normalization and pagination: no credentials, database writes or deployments.
  * Node and Supabase Edge Function can import this module unchanged.
  */
+import {extractDeclaredDependencies} from "./release-work-dependencies.mjs";
+
 const SHA=/^[0-9a-f]{40}$/;
 const SAFE_REPOSITORY=/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
 
@@ -32,6 +34,7 @@ export function normalizeWorkPull(raw,repository="noam0127/beagu-index"){
   head_ref:String(raw.head?.ref||"").slice(0,160),
   head_sha:headSha,
   merge_sha:SHA.test(mergeCommit)?mergeCommit:null,
+  declared_dependencies:extractDeclaredDependencies(raw.body),
   updated_at:typeof raw.updated_at==="string"&&Number.isFinite(Date.parse(raw.updated_at))?
     raw.updated_at:null,
   merged_at:mergedAt
@@ -92,6 +95,7 @@ export async function collectGitHubWorkInbox(fetchPage,options={}){
   closed_unmerged_count:ignored,
   open,
   recently_merged:merged.slice(0,40),
-  merged_elsewhere:mergedElsewhere.slice(0,15)
+  merged_elsewhere:mergedElsewhere.slice(0,40),
+  closed_unmerged:all.filter(x=>x.status==="closed_unmerged").slice(0,60)
  };
 }
