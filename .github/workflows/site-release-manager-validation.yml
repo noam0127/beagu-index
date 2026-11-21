@@ -15,6 +15,7 @@ on:
       - 'tests/site-release-center.mjs'
       - 'tests/release-github-work-inbox.mjs'
       - 'tests/release-work-dependencies.mjs'
+      - 'tests/release-impact-evidence.mjs'
   workflow_dispatch:
 jobs:
   check:
@@ -37,4 +38,5 @@ jobs:
           node --test tests/site-release-center.mjs
           node --test tests/release-github-work-inbox.mjs
           node --test tests/release-work-dependencies.mjs
+          node --test tests/release-impact-evidence.mjs
           python3 tests/site-release-packaging.py
