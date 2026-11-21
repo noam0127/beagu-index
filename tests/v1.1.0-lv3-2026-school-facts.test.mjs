@@ -99,11 +99,15 @@ test('Lv1 housing sort is rejected on server and disabled in UI, Lv2 retains old
  assert.match(browser,/if\(locked&&select\.value==='housing_price_won'\)/);
  assert.doesNotThrow(()=>new vm.Script(browser));
 });
-test('Stage22 separate endpoint is not loaded in production HTML, release switch remains OFF',()=>{
+test('Stage22 private source endpoint stays off on public pages; Stage24 adds only authorized opt-in client',()=>{
  const release=read('supabase/migrations/20261122002000_beagu_lv3_server_authorization_v1.sql');
  assert.match(release,/enabled boolean not null default false/);
- for(const page of ['search.html','search-lv1.html','challenge.html','levels.html'])
+ for(const page of ['search.html','challenge.html','levels.html'])
   assert.ok(!read(page).includes('beagu-lv3-school-facts-v1'),page);
+ const gatedSearch=read('search-lv1.html');
+ assert.match(gatedSearch,/src="js\/beagu-lv3-school-facts-v1\.js/);
+ assert.match(gatedSearch,/src="js\/beagu-lv3-session-v1\.js/);
+ assert.doesNotMatch(gatedSearch,/functions\/v1\/beagu-lv3-school-facts-v1/);
  assert.match(edge,/if\(origin&&!allowed\.has\(origin\)\)/);
  assert.match(edge,/Cache-Control":"private, no-store/);
  assert.match(edge,/Referrer-Policy":"no-referrer/);
