@@ -77,11 +77,12 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.ok(el.challengeIdentityReward.textContent.includes('Lv.1 인증 가능'));
   assert.equal(el.copyIdentityCode.textContent,'코드 복사');
 
+  // The first verified long link remains copyable even when a short alias appears later.
   returned.shortLink=shortLink;
   emit('focus');await tick();
-  assert.equal(el.challengeReferralLink.value,shortLink);
+  assert.equal(el.challengeReferralLink.value,referral,'first verified URL must be kept');
   await el.copyChallengeReferral.listeners.click();
-  assert.equal(copies.at(-1),shortLink);
+  assert.equal(copies.at(-1),referral);
 
   // A client-supplied "level: 2" alone must not grant premium visuals.
   returned={link:referral,shortLink,level:2,ownResponseVerified:false,
@@ -101,9 +102,9 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.ok(el.challengeIdentityPanel.classes.has('is-lv2'));
   assert.equal(el.challengeIdentityPanel.dataset.referralState,'earned');
   assert.equal(el.challengeReferralTitle.textContent,'나의 전용 조사 링크');
-  assert.equal(el.challengeReferralLink.value,shortLink);
+  assert.equal(el.challengeReferralLink.value,referral);
   await el.copyChallengeReferral.listeners.click();await tick();
-  assert.equal(copies.at(-1),shortLink);
+  assert.equal(copies.at(-1),referral);
 
   // A quality-review downgrade restores Lv1 access label without reissuing code.
   returned={link:referral,shortLink,level:1,ownResponseVerified:true,
@@ -112,7 +113,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.challengeIdentityTitle.textContent,'Lv2 참여코드(비활성)');
   assert.equal(el.challengeIdentityPanel.dataset.referralState,'inactive');
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
-  assert.equal(el.challengeReferralLink.value,shortLink);
+  assert.equal(el.challengeReferralLink.value,referral);
 
   emit('beagu:challenge-access-revoked');
   assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
