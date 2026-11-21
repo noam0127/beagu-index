@@ -1,0 +1,91 @@
+name: v1.1.0 — server-authorized Lv3 membership (release OFF by default)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-lv3-server-authorization.yml'
+      - 'supabase/migrations/20261122002000_beagu_lv3_server_authorization_v1.sql'
+      - 'supabase/functions/beagu-lv3-member-api-v1/index.ts'
+      - 'js/beagu-lv3-session-v1.js'
+      - 'tests/lv3-server-authorization-verify.sql'
+      - 'tests/v1.1.0-lv3-server-authorization.test.mjs'
+      - 'tests/lv3-verified-account-link-verify.sql'
+      - 'supabase/migrations/20261122001000_beagu_lv3_verified_account_link_v1.sql'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lv3-auth:
+    name: Verify fail-closed Lv3 release, short-lived sessions, legacy regression (NO LIVE DB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: isolated_lv3_auth
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d isolated_lv3_auth"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGDATABASE: isolated_lv3_auth
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check Stage 19 protected Edge API and isolated client syntax
+        run: |
+          deno check supabase/functions/beagu-lv3-member-api-v1/index.ts
+          node --check js/beagu-lv3-session-v1.js
+      - name: Member Lv3 server/dual proof mock tests and existing Lv2 member regressions
+        run: |
+          node --test tests/v1.1.0-lv3-server-authorization.test.mjs tests/v1.1.0-lv3-exclusive-account-link.test.mjs tests/v1.1.0-account-status.test.mjs
+          node tests/postit-member-auth.cjs
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/participation-code-unified.mjs
+          node tests/levelup-provisional-v1.cjs
+          node scripts/test-challenge-referral-premium.cjs
+          node tests/2026-auto-quality-referral-gate.mjs
+      - name: Install disposable test database client
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
+      - name: Create synthetic 2026 identity/quality source (no live database)
+        run: psql -v ON_ERROR_STOP=1 -f tests/challenge-2026-code-level-fixture.sql
+      - name: Add fake Auth sessions and original device (no real users)
+        run: psql -v ON_ERROR_STOP=1 -f tests/lv3-verified-account-link-fixture.sql
+      - name: Apply stable Post-it author migration in disposable Postgres
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121103000_beagu_postit_member_auth.sql
+      - name: Apply Stage16 private Auth session guard in disposable Postgres
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121234500_beagu_member_privacy_requests_v1.sql
+      - name: Apply Stage17 verified Google Form/quality authorization in disposable Postgres
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121235500_beagu_2026_verified_code_levels_v1.sql
+      - name: Apply Stage18 exclusive original-owner Auth link in disposable Postgres
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261122001000_beagu_lv3_verified_account_link_v1.sql
+      - name: Verify Stage18 account theft, author identity stability and revocation baseline
+        run: psql -v ON_ERROR_STOP=1 -f tests/lv3-verified-account-link-verify.sql
+      - name: Apply Stage19 release OFF membership authorization and token schema
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261122002000_beagu_lv3_server_authorization_v1.sql
+      - name: Verify release OFF, fake approval, account cross-use, TTL, suspension and kill switch
+        run: psql -v ON_ERROR_STOP=1 -f tests/lv3-server-authorization-verify.sql
+      - name: Verify preview does not reuse production Supabase or Forms
+        run: python3 tests/preview-db-isolation.py
