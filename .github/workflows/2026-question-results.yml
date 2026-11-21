@@ -58,5 +58,6 @@ jobs:
           node tests/three-day-release.mjs
           node tests/2026-release-consent-gate.mjs
           node tests/2026-auto-quality-referral-gate.mjs
+          node tests/2026-three-stage-review-flow.mjs
           node scripts/test-challenge-referral-stage2.cjs
           node tests/lv1-percentile-chart-parity.mjs
