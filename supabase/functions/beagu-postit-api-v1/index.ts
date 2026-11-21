@@ -68,6 +68,21 @@ async function authenticatedUser(req:Request){
  const {data,error}=await db.auth.getUser(jwt);
  const user=data?.user;
  if(error||!user||user.is_anonymous||!user.email_confirmed_at)return null;
+ // Auth getUser validates the JWT signature; check its exact session_id
+ // against auth.sessions so a revoked login cannot link or write.
+ let sid="";
+ try{
+   const part=jwt.split(".")[1]||"";
+   const claims=JSON.parse(atob(part.replace(/-/g,"+").replace(/_/g,"/")
+     .padEnd(Math.ceil(part.length/4)*4,"=")));
+   if(typeof claims.session_id==="string"&&UUID.test(claims.session_id))
+     sid=claims.session_id;
+ }catch(_){return null;}
+ if(!sid)return null;
+ const {data:live,error:liveError}=await db.rpc("beagu_member_live_session_v1",{
+   p_user:user.id,p_session:sid
+ });
+ if(liveError||live!==true)return null;
  return user;
 }
 async function verifiedMember(req:Request,viewer:any){
@@ -222,7 +237,16 @@ Deno.serve(async(req:Request)=>{
    const viewer=await identity(req,2);
    if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
    const member=await verifiedMember(req,viewer);
-   if(action==="writer_status")return respond(req,{linked:Boolean(member)});
+   if(action==="writer_status"){
+    // Existing Post-it authors remain intact; the future Lv3 eligibility
+    // link is separately checked and does not itself grant Lv3.
+    if(!member)return respond(req,{linked:false,lv3LinkReady:false});
+    const {data:ready,error:readyError}=await db.rpc("beagu_lv3_link_status_v1",{
+      p_user:member.authId,p_visitor:member.visitor,p_actor:member.id
+    });
+    if(readyError)return fail(req,"LINK_STATUS_UNAVAILABLE",503);
+    return respond(req,{linked:true,lv3LinkReady:ready===true});
+   }
    if(action==="school_info"){
     const ids=(url.searchParams.get("school_ids")||"").split(",").filter(Boolean);
     if(ids.length<1||ids.length>5||ids.some(x=>!SCHOOL_ID.test(x)))
@@ -309,7 +333,14 @@ Deno.serve(async(req:Request)=>{
    });
    if(error?.code==="23505")return fail(req,"MEMBERSHIP_ALREADY_CLAIMED",409);
    if(error||!actor||actor!==viewer.id)return fail(req,"DEVICE_OWNERSHIP_NOT_VERIFIED",403);
-   return respond(req,{linked:true});
+   // Database atomically writes the stable Post-it identity and a separate
+   // exclusive Lv3-link candidate. An authenticated account still stays Lv2
+   // until the later account policy is implemented and approved.
+   const {data:ready,error:statusError}=await db.rpc("beagu_lv3_link_status_v1",{
+     p_user:account.id,p_visitor:viewer.visitor,p_actor:viewer.id
+   });
+   if(statusError||ready!==true)return fail(req,"LINK_STATUS_UNAVAILABLE",503);
+   return respond(req,{linked:true,lv3LinkReady:true});
   }
   const user=await verifiedMember(req,viewer);
   if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403);
