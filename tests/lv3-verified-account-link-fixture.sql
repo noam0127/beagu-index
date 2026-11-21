@@ -43,3 +43,9 @@ grant usage on schema auth,beagu_private to service_role;
 grant select on auth.users,auth.sessions to service_role;
 grant select on public.beagu_admin_accounts to service_role;
 grant select on beagu_private.challenge_device_claims to service_role;
+
+-- Synthetic test event generation only; production private data remains restricted.
+grant usage on schema extensions to service_role;
+grant insert on beagu_private.challenge_referral_profiles,
+ beagu_private.challenge_referral_events,
+ beagu_private.challenge_referral_quality_reviews to service_role;
