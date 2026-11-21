@@ -17,6 +17,8 @@ on:
       - 'tests/release-work-dependencies.mjs'
       - 'tests/release-impact-evidence.mjs'
       - 'tests/release-conflict-preflight.mjs'
+      - 'tests/release-step9-merge-tree.mjs'
+      - 'docs/releases/v2-step9-integration-manifest.json'
   workflow_dispatch:
 jobs:
   check:
@@ -41,4 +43,5 @@ jobs:
           node --test tests/release-work-dependencies.mjs
           node --test tests/release-impact-evidence.mjs
           node --test tests/release-conflict-preflight.mjs
+          node --test tests/release-step9-merge-tree.mjs
           python3 tests/site-release-packaging.py
