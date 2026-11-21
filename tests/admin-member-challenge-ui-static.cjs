@@ -1,0 +1,12 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const js = fs.readFileSync("js/beagu-admin-members-v1.js","utf8");
+assert.match(js,/2026 챌린지 연결 정보/);
+assert.match(js,/if \(!challenge\)/);
+assert.match(js,/else if \(!challenge.linked\)/);
+assert.match(js,/조회 API 미적용/);
+assert.match(js,/유효 추천 수/);
+assert.match(js,/Number.isSafeInteger\(ordinal\)/);
+assert.match(js,/Number.isSafeInteger\(referrals\)/);
+assert.doesNotMatch(js,/challenge\.identity_code|challenge\.visitor_id|challenge\.device_secret/);
+console.log("PASS: admin member challenge detail UI static contract");
