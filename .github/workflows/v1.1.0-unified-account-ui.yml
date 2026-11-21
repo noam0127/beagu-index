@@ -1,0 +1,51 @@
+name: v1.1.0 — unified member account screen
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-unified-account-ui.yml'
+      - 'js/beagu-account-mode-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'styles/beagu-account-mode-v1.css'
+      - 'challenge.html'
+      - 'postit.html'
+      - 'tests/v1.1.0-unified-account-mode.test.mjs'
+      - 'tests/v1.1.0-legacy-password.test.mjs'
+      - 'tests/challenge-lv2-account-entry.mjs'
+      - 'tests/postit-member-auth.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unified-account-mode:
+    name: Verify login/signup mode, Lv2 permission, legacy login and preview isolation
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax-check all account scripts
+        run: |
+          node --check js/beagu-account-mode-v1.js
+          node --check js/challenge-member-auth-v1.js
+          node --check js/postit-account-v1.js
+      - name: Run shared UX and legacy-password mock Auth tests
+        run: node --test tests/v1.1.0-unified-account-mode.test.mjs tests/v1.1.0-legacy-password.test.mjs
+      - name: Run original Challenge / Post-it / admin permission regressions
+        run: |
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/postit-member-auth.cjs
+          node tests/admin-verified-email-enrollment-static.cjs
+          node scripts/test-admin-access.cjs
+      - name: Verify preview build never writes to live Supabase or survey
+        run: python3 tests/preview-db-isolation.py
