@@ -331,11 +331,14 @@
       return;
     }
     const term=$("adminReferralCodeSearch").value.trim().toLowerCase();
+    // Stage34 audit: the server's v1 RPC returns ONLY the top 200 codes;
+    // this is not a global search. Bound DOM size even on malformed or
+    // future oversized responses. Never claim "no such code" globally.
     const rows=data.rows.filter(x=>x&&typeof x.code==="string"&&
-      x.code.toLowerCase().includes(term));
+      x.code.toLowerCase().includes(term)).slice(0,200);
     if(!rows.length){
       const tr=make("tr"),td=make("td","empty",
-        term?"해당하는 전용코드가 없습니다.":"전용 링크 발급 기록이 없습니다.");
+        term?"서버 상위 최대 200개 목록에 일치 코드가 없습니다. 전체 코드 검색은 아직 지원하지 않습니다.":"상위 목록에 표시할 전용 링크가 없습니다.");
       td.colSpan=7;tr.append(td);root.append(tr);
     }
     for(const x of rows){
@@ -350,7 +353,7 @@
       {timeZone:"Asia/Seoul",hour12:false}):"시각 확인 불가";
     const note=data.period==="all"?" · 접속 기록은 최근 30일만":"";
     status.textContent="집계 "+when+" · "+num(rows.length)+"개 코드 표시"+note+
-      " · 과거 링크 접속 이력은 소급하지 않습니다.";
+      " · 상위 최대 200개 코드 목록 한정(전체 코드 검색 아님) · 과거 링크 접속 이력은 소급하지 않습니다.";
   }
   function displayDashboard(data){
     dashboard=data;
