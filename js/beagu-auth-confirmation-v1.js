@@ -8,7 +8,7 @@
   if (!status) return;
   const params = new URLSearchParams(window.location.search || '');
   const fragment = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
-  const callbackKeys = ['code', 'error', 'error_code', 'token_hash', 'access_token', 'refresh_token'];
+  const callbackKeys = ['code', 'error', 'error_code', 'error_description', 'token_hash', 'access_token', 'refresh_token'];
   const isCallback = callbackKeys.some(key => params.has(key) || fragment.has(key));
   if (!isCallback) return;
 
@@ -39,7 +39,8 @@
       }
       // All Auth-related fragments contain bearer credentials or error details.
       // Never preserve them or echo them into the document.
-      if (hasTokens || fragment.has('error') || fragment.has('error_code') ||
+      if (hasTokens || fragment.has('code') || fragment.has('error') ||
+          fragment.has('error_code') || fragment.has('error_description') ||
           fragment.has('token_hash') || fragment.has('type')) {
         url.hash = '';
       }
