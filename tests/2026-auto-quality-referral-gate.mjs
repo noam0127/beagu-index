@@ -51,7 +51,7 @@ assert.match(ui,/referral_quality_queue/);
 assert.match(ui,/referral_quality_resolve/);
 assert.match(html,/adminReferralRiskCard/);
 assert.match(html,/value="quality"/);
-assert.match(html,/20261121-quality1/);
+assert.match(html,/20261122-pipeline1/);
 const ctx={};
 vm.createContext(ctx);
 vm.runInContext(form,ctx);
