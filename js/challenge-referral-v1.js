@@ -23,6 +23,7 @@
   let active = false;
   let generation = 0;
   let currentLink = '';
+  let canonicalLink = '';
   let lastIdentity = null;
   let upgraded = false;
   let ownResponseVerified = false;
@@ -63,6 +64,8 @@
   function reset() {
     ++generation;
     currentLink = '';
+    canonicalLink = '';
+    lastIdentity = null;
     ownResponseVerified = false;
     linkField.value = '';
     linkField.hidden = true;
@@ -93,11 +96,19 @@
   }
   async function load(detail) {
     if (!active) return;
-    const seq = ++generation;
-    const token = sessionStorage.getItem(sessionKey) || '';
-    if (!/^[a-f0-9]{64}$/.test(token)) return;
     if (!detail || typeof detail.visitor !== 'string' ||
         typeof detail.code !== 'string') return;
+    // A different owner/code must never inherit another owner's
+    // referral URL, even while the new request is still in flight.
+    if (lastIdentity &&
+        (lastIdentity.visitor !== detail.visitor || lastIdentity.code !== detail.code))
+      reset();
+    const seq = ++generation;
+    const token = sessionStorage.getItem(sessionKey) || '';
+    if (!/^[a-f0-9]{64}$/.test(token)) {
+      unknownVerification('참여 세션을 확인할 수 없습니다. 다시 인증해 주세요.');
+      return;
+    }
     lastIdentity = {visitor: detail.visitor, code: detail.code};
     status.textContent = '본인 참여 및 추천 승인 상태를 서버에서 확인 중이에요.';
     try {
@@ -109,8 +120,11 @@
           deviceSecret: deviceSecret()
         })
       });
-      if (!active || seq !== generation) return;
+      if (!active || seq !== generation ||
+          sessionStorage.getItem(sessionKey) !== token) return;
       const payload = await response.json().catch(() => ({}));
+      if (!active || seq !== generation ||
+          sessionStorage.getItem(sessionKey) !== token) return;
       if (response.status === 503 && payload.error === 'REFERRAL_NOT_READY') {
         unknownVerification('참여코드 확인 기능이 준비 중입니다. 확인 전에는 Lv2 달성으로 표시하지 않습니다.');
         return;
@@ -119,9 +133,18 @@
       if (typeof payload.link !== 'string' ||
           !/^https:\/\/baeguindex\.com\/survey\.html\?ref=[a-f0-9]{64}$/.test(payload.link))
         throw Error('INVALID_LINK');
-      currentLink = typeof payload.shortLink === 'string' &&
-        /^https:\/\/baeguindex\.com\/r\/#[A-Za-z0-9_-]{8}$/.test(payload.shortLink)
-        ? payload.shortLink : payload.link;
+      // A quality-reviewed Lv2 promotion changes permissions, not the
+      // original invitation. Preserve the FIRST verified URL for this owner,
+      // even if a later response omits the optional short-code alias.
+      // A different canonical HMAC URL indicates a server inconsistency:
+      // never silently replace the link that the teacher already shared.
+      if (canonicalLink && canonicalLink !== payload.link)
+        throw Error('REFERRAL_URL_CHANGED');
+      if (!canonicalLink) canonicalLink = payload.link;
+      if (!currentLink)
+        currentLink = typeof payload.shortLink === 'string' &&
+          /^https:\\/\\/baeguindex\\.com\\/r\\/#[A-Za-z0-9_-]{8}$/.test(payload.shortLink)
+          ? payload.shortLink : payload.link;
       linkField.hidden = false;
       copyButton.hidden = false;
       copyButton.disabled = false;
@@ -153,11 +176,17 @@
     }
   }
   copyButton.addEventListener('click', async () => {
-    if (!currentLink) return;
+    if (!active || copyButton.disabled || !currentLink) return;
+    const requestedLink = currentLink;
+    const seq = generation;
     try {
-      await navigator.clipboard.writeText(currentLink);
-      status.textContent = '전용 조사 링크를 복사했습니다.';
+      await navigator.clipboard.writeText(requestedLink);
+      if (active && seq === generation && currentLink === requestedLink)
+        status.textContent = '전용 조사 링크를 복사했습니다.';
     } catch (_) {
+      // An async clipboard failure after logout must not reopen or focus
+      // the previous owner's private invitation field.
+      if (!active || seq !== generation || currentLink !== requestedLink) return;
       linkField.focus();
       linkField.select();
       status.textContent = '링크를 선택했습니다. 직접 복사해 주세요.';
