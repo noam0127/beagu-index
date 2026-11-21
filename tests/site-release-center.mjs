@@ -5,6 +5,7 @@ import {readFileSync} from "node:fs";
 import "./release-github-work-inbox.mjs";
 import "./release-work-dependencies.mjs";
 import "./release-impact-evidence.mjs";
+import "./release-conflict-preflight.mjs";
 const source=path=>readFileSync(path,"utf8");
 
 test("release center includes all 4 buttons and two independent histories",()=>{
