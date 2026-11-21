@@ -1,0 +1,38 @@
+{
+  "version": "v1.1.0",
+  "configuration_status": "DESIRED_ONLY__NOT_VERIFIED_IN_SUPABASE",
+  "policy": "exact paths only; no wildcards, no localhost and no cross-project redirect",
+  "source": "https://supabase.com/docs/guides/auth/redirect-urls",
+  "projects": {
+    "production": {
+      "ref": "snvzwrexuqavnfvzgxqj",
+      "site_url": "https://baeguindex.com/",
+      "allowed_redirect_urls": [
+        "https://baeguindex.com/challenge.html",
+        "https://baeguindex.com/postit.html",
+        "https://baeguindex.com/admin-enroll.html"
+      ],
+      "dashboard": "https://supabase.com/dashboard/project/snvzwrexuqavnfvzgxqj/auth/url-configuration",
+      "configured_verified": false
+    },
+    "staging": {
+      "ref": "ycwuugggqbunlbwuzvbx",
+      "site_url": "https://baeguindex.com/_preview/",
+      "allowed_redirect_urls": [
+        "https://baeguindex.com/_preview/challenge.html",
+        "https://baeguindex.com/_preview/postit.html",
+        "https://baeguindex.com/_preview/admin-enroll.html"
+      ],
+      "dashboard": "https://supabase.com/dashboard/project/ycwuugggqbunlbwuzvbx/auth/url-configuration",
+      "configured_verified": false
+    }
+  },
+  "additional_checks": [
+    "Email templates must honor RedirectTo when customized rather than hardcode SiteURL.",
+    "Any callback route added in stage 6 requires matching exact allowlist URL and separate review.",
+    "Do not enable wildcard redirect URLs for the production project.",
+    "Staging on the same host must use separate Supabase project ID and controlled isolated browser testing."
+  ],
+  "operational_change_performed": false,
+  "backup_gate": "No Supabase Auth settings mutation until independently verified encrypted backup and isolated restore."
+}
