@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "status": "design_only_no_deployment",
+  "observed_date": "2026-11-22",
+  "repository": "noam0127/beagu-index",
+  "baseline_main_sha": "cdc249b384095ca62df8c964c0ab9ea2c540db16",
+  "source_prs": [
+    {
+      "number": 193,
+      "branch": "feat/release-snapshots-dropdown-20261121",
+      "head_sha": "26f05b9cf0a8c5ce1d136a2fa091329af72f6f67",
+      "purpose": "immutable_version_catalog_and_admin_inbox",
+      "required": true
+    },
+    {
+      "number": 198,
+      "branch": "fix/admin-v2-production-release-guard",
+      "head_sha": "fb5905ba9a3ec023578daad3096a96e9676b3f0e",
+      "purpose": "frontend_production_button_pause",
+      "required": true
+    },
+    {
+      "number": 199,
+      "branch": "fix/release-v2-step3-production-freeze-20261122",
+      "head_sha": "d7e6a7ca3dcf7d390e8340f525afbfe3fa973147",
+      "purpose": "server_worker_pause_and_pinned_public_data",
+      "required": true
+    },
+    {
+      "number": 195,
+      "branch": "develop/v1.1.0-lv3",
+      "head_sha": "811a596826f70090814af4bf10847f3de706b2e4",
+      "purpose": "preview_supabase_isolation_in_progress",
+      "required": false
+    }
+  ],
+  "overlap_matrix": [
+    {
+      "prs": [
+        193,
+        198
+      ],
+      "paths": [
+        "js/beagu-admin-updates-v1.js"
+      ],
+      "risk": "ui_write_overlap"
+    },
+    {
+      "prs": [
+        193,
+        199
+      ],
+      "paths": [
+        "supabase/functions/beagu-release-manager-v1/index.ts",
+        "tests/site-release-center.mjs"
+      ],
+      "risk": "api_and_test_overlap"
+    },
+    {
+      "prs": [
+        195,
+        199
+      ],
+      "paths": [
+        "scripts/release-manager/worker.py",
+        "tests/site-release-packaging.py"
+      ],
+      "risk": "staging_package_overlap"
+    }
+  ],
+  "mandatory_invariants": [
+    "No production deployment or production Supabase writes during development",
+    "Production API rejects prod_apply and prod_rollback even for authenticated owner while paused",
+    "Worker cannot claim or complete production releases while paused",
+    "Automatic data_refresh cannot publish production content during pause",
+    "Preview backend must not use production Supabase or send production writes",
+    "A release must reference an immutable reviewed commit and exact selected work",
+    "Only staging-verified artifact may be considered for separately approved production promotion",
+    "UI disabled controls cannot substitute for server authorization",
+    "Merged PR is not equivalent to approved deployment"
+  ],
+  "required_integration_outcomes": [
+    "Single combined release-manager Edge Function preserving both v1 snapshot catalog and v2 freeze",
+    "Single admin-updates script preserving PR inbox and production UI pause",
+    "Single worker preserving both pinning/production pause and isolated preview backend",
+    "Unified tests from all sources including operational allow/deny cases",
+    "Explicit release candidate selection with source PR hashes, conflict results, and dependency manifest",
+    "Verified staging project provisioning without touching production"
+  ],
+  "next_actions": [
+    "Re-read latest main and all source PR heads before merging",
+    "Create disposable integration branch; do not merge to main",
+    "Integrate release catalog with server and UI pause; resolve overlapping tests",
+    "Unify worker with preview backend isolation and independently verify no live endpoints",
+    "Validate PR-selected candidate SHA and stage artifacts locally or in read-only CI",
+    "Obtain separate explicit authorization before any production change"
+  ]
+}
