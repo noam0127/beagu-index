@@ -11,7 +11,11 @@ const catalog=[{survey_year:2026,question_id:'Q20',access_level:2,verified:true,
   label:'Approved test metric',value_type:'number',minimum:0,maximum:100,unit:'점',
   meaning:'approved metric',interpretation:'approved metric',direction:'higher',spatial_scope:'school'}];
 assert.equal(releaseMetrics([row],catalog,2).length,0,'default delay remains');
-assert.equal(releaseMetrics([row],catalog,2,true).length,1,'approved Lv2 may skip time only');
+assert.equal(releaseMetrics([row],catalog,2,true).length,0,'Lv2 cannot see newly approved 2026 data before six hours');
+const reviewedSixHour={...row,approved_at:new Date(Date.now()-7*60*60*1000).toISOString()};
+assert.equal(releaseMetrics([reviewedSixHour],catalog,2,true).length,1,'Lv2 sees approved 2026 data after six hours and independent snapshot review');
+assert.equal(releaseMetrics([reviewedSixHour],catalog,2).length,0,'Lv2 needs independently approved snapshot for early access');
+assert.equal(releaseMetrics([reviewedSixHour],catalog,1,true).length,0,'Lv1 must wait 24h even if Lv2 approval is present');
 assert.equal(releaseMetrics([row],catalog,1,true).length,0,'Lv1 cannot see Lv2 metric even with flag');
 assert.equal(releaseMetrics([{...row,privacy_status:'REVIEW_PENDING'}],catalog,2,true).length,0,'privacy gate unchanged');
 assert.equal(releaseMetrics([{...row,approval_status:'WITHHELD'}],catalog,2,true).length,0,'approval gate unchanged');
@@ -28,4 +32,8 @@ assert.ok(api.includes("if(level>=2){")&&api.includes("beagu_2026_lv2_released_q
 assert.ok(api.includes("if(level<2){")&&api.includes("beagu_2026_released_question_results"));
 assert.ok(api.includes("releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)"));
 assert.ok(api.includes("if(Number(session.access_level)>=2)"));
-console.log('PASS 2026 Lv2 immediate approval / Lv1 cooldown / privacy regression');
+const tiered=read('supabase/migrations/20261122003000_beagu_2026_tiered_review_release_v1.sql');
+assert.match(tiered,/when 1 then interval '24 hours'/);
+assert.match(tiered,/when 2 then interval '6 hours'/);
+assert.match(tiered,/public.beagu_2026_tiered_released_question_results_v1\(\s*p_school_id,2::smallint/);
+console.log('PASS: Lv1 24h, Lv2 6h with owner review + privacy basis, legacy Lv2 bypass removed');
