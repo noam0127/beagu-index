@@ -48,6 +48,8 @@ function paintMode(next){
   ?'이메일로 계정을 만든 뒤 인증 메일을 확인하세요. Lv2 참여코드는 그대로 유지됩니다.'
   :'정식 계정으로 로그인하세요. Lv2 참여코드는 별도로 인증됩니다.';
  submit.textContent=mode==='signup'?'회원가입':'로그인하기';
+ const forgot=byId('challengeMemberForgot');
+ if(forgot)forgot.hidden=mode!=='signin';
  password.autocomplete=mode==='signup'?'new-password':'current-password';
  // Existing users may have credentials shorter than today's signup policy.
  // Apply minimum length only to NEW account creation; server checks all logins.
@@ -93,6 +95,8 @@ async function showAccountStatus(){
  if(overlay.hidden||!tier2)return;
  if(!person)return;
  form.hidden=true;switchMode.hidden=true;signOut.hidden=false;
+ const forgot=byId('challengeMemberForgot');
+ if(forgot)forgot.hidden=true;
  smsUnsubscribe.hidden=person.user.user_metadata?.beagu_sms_opt_in!==true;
  const linked=await linkedStatus(person.token).catch(()=>false);
  if(overlay.hidden||!tier2)return;
@@ -145,7 +149,7 @@ document.addEventListener('keydown',event=>{
  if(overlay.hidden)return;
  if(event.key==='Escape'){event.preventDefault();close();return}
  if(event.key!=='Tab')return;
- const options=[...dialog.querySelectorAll('button:not(:disabled), input:not(:disabled)')]
+ const options=[...dialog.querySelectorAll('button:not(:disabled), input:not(:disabled), a[href]')]
   .filter(element=>!element.hidden&&!element.closest('[hidden]')&&element.getClientRects().length>0);
  if(options.length===0)return;
  const first=options[0],last=options[options.length-1];
