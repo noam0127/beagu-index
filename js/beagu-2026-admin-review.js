@@ -4,13 +4,24 @@
 (()=>{
  "use strict";
  const $=id=>document.getElementById(id);
- let role="",page=0,filter="quality",seq=0,ready=false;
+ let role="",page=0,filter="quality",seq=0,ready=false,pipelineSeq=0;
  const endpoint=SUPABASE_URL+"/functions/v1/beagu-2026-review-admin";
  const labels={
-  TECHNICAL_CHECK_PASSED:"기술 검수 통과",
-  NEEDS_QUESTION_CHECK:"문항 검수 필요",
-  NEEDS_SCHOOL_CHECK:"학교 매칭 확인",
-  PRELAUNCH_EXCLUDED:"사전조사 제외",NOT_CHECKED:"검수 미실행"
+  TECHNICAL_CHECK_PASSED:"전체 문항 기술검사 통과",
+  NEEDS_QUESTION_CHECK:"전체 문항 구조 확인 필요",
+  NEEDS_SCHOOL_CHECK:"학교 정보 일치 확인 필요",
+  PRELAUNCH_EXCLUDED:"사전조사 제외",NOT_CHECKED:"전체 문항 기술검사 미완료"
+ };
+ const qualityReasonsMap={
+  SCHOOL_MATCH_UNRESOLVED:"학교 정보 일치 확인 필요",
+  MANDATORY_QUESTION_COVERAGE:"필수 문항 집계 건수 확인 필요",
+  UNRECOGNIZED_MANDATORY_ANSWER:"필수 문항 보기값 해석 확인 필요",
+  QUALITY_SCAN_PENDING:"기초 집계 검사 미실행"
+ };
+ const technicalReasons={
+  QA_NOT_AVAILABLE:"전체 문항 기술검사 미실행",
+  MISSING_QA_EVIDENCE:"문항별 검증 근거 확인 필요",
+  QUESTION_MISMATCH:"문항 구조 불일치"
  };
  const build=(tag,cls,text)=>{
   const el=document.createElement(tag);
@@ -34,6 +45,46 @@
   if(!res.ok)throw Error(result?.error||"review_api_error");
   return result;
  }
+ const setCount=(id,value)=>{
+   const el=$(id);if(el)el.textContent=value===null||value===undefined?"—":String(value);
+ };
+ const renderPipeline=payload=>{
+   const response=payload?.response_trust||{};
+   const aggregate=payload?.aggregation_accuracy||{};
+   const publication=payload?.publication_eligibility||{};
+   setCount("adminPipelineReferralEvents",response.referral_events);
+   setCount("adminPipelineReferralPending",response.referral_review_required);
+   setCount("adminPipelineAggregateAuto",aggregate.basic_auto_pass);
+   setCount("adminPipelineAggregateReview",aggregate.basic_review_required);
+   setCount("adminPipelineTechnicalPass",aggregate.full_technical_pass);
+   setCount("adminPipelineBasis",publication.basis_verified);
+   setCount("adminPipelineApproved",publication.approved);
+   setCount("adminPipelineSingle",publication.single_response_schools);
+   if($("adminPipelineTrustStatus"))
+     $("adminPipelineTrustStatus").textContent=
+       response.scope==="REFERRAL_ONLY"?"추천 연결 응답만 부분 검사":"검사 범위 확인 필요";
+   if($("adminPipelinePublicationStatus"))
+     $("adminPipelinePublicationStatus").textContent=
+       Number(publication.approved)>0?"일부 자료 승인됨":"공개 적격성 확인 중 · 자동 공개 안 함";
+   const when=aggregate.snapshot_at?formatDate(aggregate.snapshot_at):"미확인";
+   $("adminPipelineStatus").textContent="비공개 운영 데이터 기준 · 최신 집계 "+when+
+     " · 기초 정합성 통과와 개별 응답 신뢰성·공개 승인은 서로 다른 판단입니다.";
+ };
+ async function refreshPipeline(){
+   if(!ready)return;
+   const token=++pipelineSeq;
+   if($("adminPipelineStatus"))$("adminPipelineStatus").textContent="3단계 운영 상태를 확인 중입니다.";
+   try{
+     const data=await call({action:"pipeline"});
+     if(token!==pipelineSeq||!ready)return;
+     if(!data?.status||data.status.year!==2026)throw Error("unexpected_status");
+     renderPipeline(data.status);
+   }catch{
+     if(token!==pipelineSeq||!ready)return;
+     if($("adminPipelineStatus"))$("adminPipelineStatus").textContent=
+       "단계별 수치를 가져오지 못했습니다. 관리자 세션과 서버 업데이트 상태를 확인하세요.";
+   }
+ }
  const formatDate=v=>{
   if(!v)return "없음";
   const date=new Date(v);
@@ -46,7 +97,7 @@
   $("adminReview2026Approved").textContent=String(data.summary?.approved??"—");
   const root=$("adminReview2026List");root.replaceChildren();
   const rows=Array.isArray(data.items)?data.items:[];
-  if(!rows.length)root.append(build("p","empty","현재 자동 검수에서 추가 확인이 필요한 학교가 없습니다."));
+  if(!rows.length)root.append(build("p","empty","현재 선택된 조건에 해당하는 학교가 없습니다."));
   for(const item of rows){
     const row=build("article","ranking-card");
     const headline=build("div","rank-line");
@@ -60,18 +111,18 @@
       " · 자료갱신 "+formatDate(item.updated_at));
     row.append(headline,detail);
     const qualityReasons=Array.isArray(item.quality_reasons)?item.quality_reasons:[];
-    row.append(build("p","subtle","자동 품질 검수: "+(
-      item.quality_status==="AUTO_PASS"?"기초 정합성 통과 · 공개 승인과 별개":
-      item.quality_status==="REVIEW_REQUIRED"?"추가 확인 필요":"분류 대기")));
+    row.append(build("p","subtle","집계 정확성 · 기초 정합성: "+(
+      item.quality_status==="AUTO_PASS"?"자동 통과 · 공개 승인과 별개":
+      item.quality_status==="REVIEW_REQUIRED"?"관리자 추가 확인 필요":"자동 검사 대기")));
     if(item.quality_status==="REVIEW_REQUIRED"&&qualityReasons.length)
-      row.append(build("p","subtle","확인할 사항: "+qualityReasons.join(", ")));
+      row.append(build("p","subtle","기초 집계 확인 항목: "+qualityReasons.map(v=>qualityReasonsMap[v]||v).join(", ")));
     const reasons=Array.isArray(item.review_reasons)?item.review_reasons:[];
-    if(reasons.length)row.append(build("p","subtle","남은 검수 항목: "+reasons.join(", ")));
+    if(reasons.length)row.append(build("p","subtle","전체 문항 기술검사 항목: "+reasons.map(v=>technicalReasons[v]||v).join(", ")));
     if(item.last_decision)row.append(build("p","subtle","최근 심사 결정: "+item.last_decision));
     const basisLabel={
       NOT_REVIEWED:"근거 미검토",PENDING:"근거 확인 중",REJECTED:"공개 근거 반려",VERIFIED:"별도 검증 완료"
     }[item.basis_review_status]||"근거 상태 미확인";
-    row.append(build("p","subtle","공개 근거: "+basisLabel+
+    row.append(build("p","subtle","공개 적격성 · 근거: "+basisLabel+
       (item.basis_reviewed_at?" · 검토일 "+formatDate(item.basis_reviewed_at):"")));
     if(role==="owner")row.append(makeBasisForm(item));
 
@@ -86,7 +137,7 @@
   $("adminReview2026Prev").disabled=page===0;
   $("adminReview2026Next").disabled=rows.length<20;
   $("adminReview2026Page").textContent="페이지 "+(page+1);
-  notice("자동 품질 검수 · 이상 징후가 없는 자료는 관리자 확인 목록에서 제외 · 공개 승인과 별개");
+  notice("집계 정확성 검사 · 기초 정합성 예외만 기본 표시 · 응답 신뢰성 검사 및 공개 적격성 검사와 구분");
  }
  function makeBasisForm(item){
   const wrap=build("details","beagu-basis-review");
@@ -245,22 +296,24 @@
   ready=true;page=0;filter="quality";
   $("adminReview2026Filter").value=filter;
   void refresh();
+  void refreshPipeline();
   if(role==="owner")void refreshReferralRisks();
  }
  function reset(){
-  ready=false;role="";seq++;page=0;
+  ready=false;role="";seq++;page=0;pipelineSeq++;
   $("adminReferralRiskCard").hidden=true;
   $("adminReferralRiskList").replaceChildren();
   $("adminReview2026List").replaceChildren();
   $("adminReview2026Total").textContent="—";
   $("adminReview2026Technical").textContent="—";
   $("adminReview2026Approved").textContent="—";
-  notice("관리자 인증 후 검수 목록을 불러옵니다.");
+  notice("관리자 인증 후 집계 정확성 검수 목록을 불러옵니다.");
+  if($("adminPipelineStatus"))$("adminPipelineStatus").textContent="관리자 인증 후 단계별 상태를 확인합니다.";
  }
  $("adminReview2026Filter").addEventListener("change",event=>{
   filter=event.target.value;page=0;void refresh();
  });
- $("adminReview2026Reload").addEventListener("click",()=>{void refresh();});
+ $("adminReview2026Reload").addEventListener("click",()=>{void refresh();void refreshPipeline();});
  $("adminReferralRiskReload").addEventListener("click",()=>{void refreshReferralRisks();});
  $("adminReview2026Prev").addEventListener("click",()=>{if(page>0){page--;void refresh();}});
  $("adminReview2026Next").addEventListener("click",()=>{page++;void refresh();});
