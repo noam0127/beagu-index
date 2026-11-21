@@ -72,6 +72,36 @@ async function latestManifest(){
   return {version,summary};
  }catch{return null;}
 }
+
+type ReleaseSnapshot={id:string;version:string;sha:string;summary:string;changed_count:number;changes:unknown[];created_at:string};
+async function releaseVersions():Promise<ReleaseSnapshot[]>{
+ const {data,error}=await db.from("beagu_site_release_versions_v1")
+  .select("id,version,sha,summary,changed_count,changes,created_at")
+  .order("created_at",{ascending:false}).limit(100);
+ if(error)throw Error("catalog_unavailable");
+ return (data||[]) as ReleaseSnapshot[];
+}
+async function releaseVersion(id:string):Promise<ReleaseSnapshot|null>{
+ if(!/^[a-f0-9-]{36}$/.test(id))return null;
+ const {data,error}=await db.from("beagu_site_release_versions_v1")
+  .select("id,version,sha,summary,changed_count,changes,created_at")
+  .eq("id",id).maybeSingle();
+ if(error)throw Error("catalog_unavailable");
+ return data as ReleaseSnapshot|null;
+}
+async function pendingChanges(base:string,head:string){
+ if(!SHA.test(base)||!SHA.test(head)||base===head)
+  return {files:[] as string[],commits:[] as {sha:string;message:string}[],total_commits:0,status:"identical"};
+ const diff=await github("/compare/"+base+"..."+head);
+ if(diff.status!=="ahead")throw Error("non_linear_release_history");
+ const files=(diff.files||[]).map((f:{filename?:string})=>f.filename||"")
+  .filter((path:string)=>path&&path!=="release-candidate.json");
+ const commits=(diff.commits||[]).slice(-100).map((c:{sha?:string;commit?:{message?:string}})=>({
+  sha:String(c.sha||"").slice(0,12),
+  message:String(c.commit?.message||"").split("\n")[0].slice(0,180)
+ }));
+ return {files,commits,total_commits:diff.total_commits||commits.length,status:diff.status};
+}
 async function changedFiles(from:string,to:string){
  if(!SHA.test(from)||!SHA.test(to)||from===to)return [];
  const diff=await github("/compare/"+from+"..."+to);
@@ -107,21 +137,59 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  const current=await activeJob();
  if(action==="status"){
   const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
-  let head=null,suggested_draft=null;
+  let head=null,suggested_draft=null,pending=null;
+  const catalog=await releaseVersions();
+  const testedSha=new Set(stageHistory.map(h=>h.to_sha).filter(Boolean));
+  const versionCatalog=catalog.map(v=>({...v,tested:testedSha.has(v.sha),
+   on_staging:v.sha===s.staging_sha,on_production:v.sha===s.production_sha}));
   if(input.check_latest===true)try{
    const latest=await github("/commits/main");
    head=typeof latest.sha==="string"?latest.sha:null;
-   if(head&&head!==s.production_sha){
+   const baseline=catalog[0]?.sha||s.production_sha;
+   if(head&&baseline&&head!==baseline){
+    const changes=await pendingChanges(baseline,head);
     const proposal=await latestManifest();
     if(proposal)suggested_draft={...proposal,sha:head};
+    pending={base_sha:baseline,head_sha:head,version_hint:proposal?.version||"",
+     summary_hint:proposal?.summary||"",...changes};
    }
   }catch{ /* The release state and history remain available during GitHub outages. */ }
-  return respond({state:s,job:current,head_sha:head,suggested_draft,staging_history:stageHistory,
+  return respond({state:s,job:current,head_sha:head,suggested_draft,
+    pending,versions:versionCatalog,staging_history:stageHistory,
     production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",
     production_url:"https://baeguindex.com/"},200,origin);
  }
  if(current)return error("release_in_progress",409,origin);
  if(!s.production_sha)return error("release_bootstrap_pending",409,origin);
+ if(action==="create_version"){
+  const version=String(input.version||"").trim();
+  const summary=String(input.summary||"").trim();
+  if(!allowedVersion.test(version)||summary.length<3||summary.length>500)
+   return error("invalid_release_metadata",400,origin);
+  const existing=await releaseVersions();
+  if(existing.some(item=>item.version===version))return error("version_already_exists",409,origin);
+  const main=await github("/commits/main");
+  if(!SHA.test(String(main.sha||"")))return error("github_unavailable",503,origin);
+  const base=existing[0]?.sha||s.production_sha;
+  if(!base||!SHA.test(base))return error("release_bootstrap_pending",409,origin);
+  if(main.sha===base)return error("no_changes_since_last_version",409,origin);
+  let changes:Awaited<ReturnType<typeof pendingChanges>>;
+  try{changes=await pendingChanges(base,main.sha);}
+  catch{return error("release_history_diverged",409,origin);}
+  if(!changes.files.length)return error("no_changes_since_last_version",409,origin);
+  const {data,error:e}=await db.from("beagu_site_release_versions_v1").insert({
+   version,sha:main.sha,summary,changed_count:changes.files.length,
+   changes:changes.commits,created_by:userId
+  }).select("id,version,sha,summary,created_at").single();
+  if(e){if(e.code==="23505")return error("version_already_exists",409,origin);
+   throw Error("catalog_write_unavailable");}
+  await db.from("beagu_admin_audit_events").insert({
+   actor_user_id:userId,event_type:"site_release_create_version",outcome:"success",
+   details:{id:data.id,version,sha:data.sha,changed_count:changes.files.length}
+  });
+  return respond({created:true,release:data,changed_count:changes.files.length,
+    changed_files:changes.files.slice(0,100)},201,origin);
+ }
  if(action==="register"){
   const version=String(input.version||"").trim();
   const summary=String(input.summary||"").trim();
@@ -140,7 +208,13 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
     changed_files:files.slice(0,25)},200,origin);
  }
  let job:null|{action:string;target:string;to_sha:string|null;from_sha:string|null;version:string;summary:string;created_by:string}=null;
- if(action==="stage_apply"){
+ if(action==="stage_apply"&&typeof input.version_id==="string"){
+  const selected=await releaseVersion(input.version_id);
+  if(!selected)return error("version_not_found",404,origin);
+  if(selected.sha===s.staging_sha)return error("already_on_staging",409,origin);
+  job={action,target:"staging",from_sha:s.staging_sha,to_sha:selected.sha,
+   version:selected.version,summary:selected.summary,created_by:userId};
+ }else if(action==="stage_apply"){
   let candidateSha=s.draft_sha,candidateVersion=s.draft_version,candidateSummary=s.draft_summary;
   // ChatGPT can commit a release-candidate.json alongside changes.
   // Clicking the stage button then registers that version automatically.
@@ -168,11 +242,24 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   job={action,target:"staging",from_sha:s.staging_sha,to_sha:prev.from_sha,
    version:"이전 시험 버전",summary:"시험 웹 이전 배포 복원",created_by:userId};
  }else if(action==="prod_apply"){
-  if(!s.staging_sha||!SHA.test(s.staging_sha))return error("staging_required",409,origin);
-  if(s.staging_sha===s.production_sha)return error("already_on_production",409,origin);
   if(input.confirmed_tested!==true)return error("test_confirmation_required",400,origin);
-  job={action,target:"production",from_sha:s.production_sha,to_sha:s.staging_sha,
-   version:s.staging_version||"시험 승인 버전",summary:"관리자 시험 웹 확인 후 운영 적용",created_by:userId};
+  if(typeof input.version_id==="string"){
+   const selected=await releaseVersion(input.version_id);
+   if(!selected)return error("version_not_found",404,origin);
+   const {data:tested,error:testedError}=await db.from("beagu_site_release_history_v1")
+    .select("id").eq("target","staging").eq("to_sha",selected.sha)
+    .order("deployed_at",{ascending:false}).limit(1).maybeSingle();
+   if(testedError)throw Error("history_unavailable");
+   if(!tested)return error("staging_required",409,origin);
+   if(selected.sha===s.production_sha)return error("already_on_production",409,origin);
+   job={action,target:"production",from_sha:s.production_sha,to_sha:selected.sha,
+    version:selected.version,summary:selected.summary,created_by:userId};
+  }else{
+   if(!s.staging_sha||!SHA.test(s.staging_sha))return error("staging_required",409,origin);
+   if(s.staging_sha===s.production_sha)return error("already_on_production",409,origin);
+   job={action,target:"production",from_sha:s.production_sha,to_sha:s.staging_sha,
+    version:s.staging_version||"시험 승인 버전",summary:"관리자 시험 웹 확인 후 운영 적용",created_by:userId};
+  }
  }else if(action==="prod_rollback"){
   const {data:recentRollbackTarget,error:previousError}=await db.from("beagu_site_release_history_v1")
    .select("from_sha,to_sha").eq("target","production").neq("action","data_refresh")
