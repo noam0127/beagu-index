@@ -22,19 +22,24 @@ const smsPhone=byId('challengeMemberSmsPhone');
 const smsConsent=byId('challengeMemberSmsConsent');
 const smsCollectionConsent=byId('challengeMemberSmsCollectionConsent');
 const smsUnsubscribe=byId('challengeMemberSmsUnsubscribe');
+const smsSave=byId('challengeMemberSmsSave'),smsStatus=byId('challengeMemberSmsStatus');
 // supabase-config.js declares a top-level lexical const, not a window property.
 const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
-if(![card,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut,smsFields,smsPhone,smsConsent,smsCollectionConsent,smsUnsubscribe].every(Boolean)||!client)return;
+if(![card,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut,smsFields,smsPhone,smsConsent,smsCollectionConsent,smsUnsubscribe,smsSave,smsStatus].every(Boolean)||!client)return;
 const SESSION_KEY='beagu-level-session-v1';
 const DEVICE_KEY='beagu-referral-device-secret-v1';
 const LEVEL_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
 const POSTIT_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1';
 let tier2=false,mode='signin',busy=false,focusReturn=null,serial=0;
-if(!window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show||!window.BeaguSmsConsent?.create)return;
+if(!window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show||!window.BeaguSmsConsent?.create||!window.BeaguSmsAccountSettings?.create)return;
 const setAccountState=state=>window.BeaguAccountStatus.set(message,state);
 const showInputError=kind=>window.BeaguAuthErrorUI.show(message,kind);
 const smsPrivacy=window.BeaguSmsConsent.create({phone:smsPhone,
  collectionConsent:smsCollectionConsent,marketingConsent:smsConsent});
+const smsAccount=window.BeaguSmsAccountSettings.create({
+ client,container:smsFields,save:smsSave,withdraw:smsUnsubscribe,
+ status:smsStatus,consent:smsPrivacy
+});
 const accountMode=window.BeaguAccountMode.create({
  form,title,description,password,submit,switchButton:switchMode,
  smsFields,smsPhone,smsConsent,smsCollectionConsent,forgot:byId('challengeMemberForgot')
@@ -56,7 +61,7 @@ function paintMode(next){
  mode=accountMode.setMode(next);
  form.hidden=false;
  switchMode.hidden=false;
- connect.hidden=true;signOut.hidden=true;smsUnsubscribe.hidden=true;
+ connect.hidden=true;signOut.hidden=true;smsAccount.hide();
  setAccountState(mode==='signup'?'signup-ready':'signin-required');
 }
 
@@ -86,7 +91,7 @@ async function showAccountStatus(){
   // A previously restored session can expire while this modal is open.
   // Re-enable the form instead of trapping the user behind a hidden login.
   form.hidden=false;switchMode.hidden=false;signOut.hidden=true;
-  connect.hidden=true;smsUnsubscribe.hidden=true;
+  connect.hidden=true;smsAccount.hide();
   const forgot=byId('challengeMemberForgot');
   if(forgot)forgot.hidden=mode!=='signin';
   if(mode==='signin')setAccountState('signin-required');
@@ -96,11 +101,11 @@ async function showAccountStatus(){
  const forgot=byId('challengeMemberForgot');
  if(forgot)forgot.hidden=true;
  if(!person.user.email_confirmed_at){
-  connect.hidden=true;smsUnsubscribe.hidden=true;
+  connect.hidden=true;smsAccount.hide();
   setAccountState('email-pending');
   return;
  }
- smsUnsubscribe.hidden=person.user.user_metadata?.beagu_sms_opt_in!==true;
+ void smsAccount.showFor(person);
  const levelStillValid=await serverLevel();
  if(overlay.hidden||!tier2)return;
  if(!levelStillValid){
@@ -123,7 +128,7 @@ async function showAccountStatus(){
 }
 function close(){
  if(overlay.hidden)return;
- overlay.hidden=true;
+ overlay.hidden=true;smsAccount.hide();
  document.body.classList.remove('challenge-member-open');
  password.value='';
  const returnTo=focusReturn;
@@ -182,14 +187,10 @@ form.addEventListener('submit',async event=>{
  try{
   if(!await serverLevel())throw Error('LEVEL_REQUIRED');
   if(mode==='signup'){
-   const selection=smsPrivacy.payload();
-   if(!selection.ok){
-    showInputError(selection.reason==='phone-input'?'phone-input':'sms-consent-incomplete');
-    return;
-   }
+   // No raw phone or marketing consent is sent to user-editable Auth metadata.
+   // Explicit reconsent is available ONLY after verified login via the private API.
    const {error}=await client.auth.signUp({email:address,password:secret,
-    options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('challenge'),
-     data:selection.consent}});
+    options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('challenge')}});
    if(error)throw error;
    password.value='';smsPrivacy.clear();
    setAccountState('signup-requested');
@@ -230,22 +231,12 @@ connect.addEventListener('click',async()=>{
    :'Lv2 챌린지 기기 확인에 실패했습니다. 원래 기기에서 다시 시도해 주세요.';
  }finally{busy=false;connect.disabled=false}
 });
-smsUnsubscribe.addEventListener('click',async()=>{
- if(busy)return;
- busy=true;smsUnsubscribe.disabled=true;
- try{
-  const {error}=await client.auth.updateUser({data:{beagu_sms_opt_in:false,beagu_phone_collection_opt_in:false,beagu_sms_phone:null}});
-  if(error)throw error;
-  smsUnsubscribe.hidden=true;
-  message.textContent='문자 수신 동의를 철회했습니다. 저장된 발송용 번호도 삭제됩니다.';
- }catch{message.textContent='수신 동의를 철회하지 못했습니다. 다시 시도해 주세요.'}
- finally{busy=false;smsUnsubscribe.disabled=false}
-});
 signOut.addEventListener('click',async()=>{
  if(busy)return;
  busy=true;signOut.disabled=true;
  try{await client.auth.signOut()}catch(_){}
  finally{busy=false;signOut.disabled=false}
+ smsAccount.hide();
  paintMode('signin');
  setAccountState('signed-out');
 });
