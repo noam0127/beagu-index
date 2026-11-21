@@ -135,6 +135,7 @@ assert.equal(typeof synchronize,'function','Actual search detail must register a
 synchronize(withheldResponse,false);
 assert.ok(!visibleText(detail).includes(choice),'Withheld Q01 must disappear');
 tab2025.events.click();
+await new Promise(resolve=>setImmediate(resolve)); // geography comparison resolves asynchronously
 assert.ok(visibleText(detail).includes('2025년 이전 검증 자료'));
 tab2026.events.click();
 assert.ok(!visibleText(detail).includes(choice),'Tab switch must not resurrect a withdrawn answer');
