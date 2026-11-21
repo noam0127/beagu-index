@@ -8,6 +8,9 @@ on:
       - 'admin.html'
       - 'js/beagu-admin-members-v1.js'
       - 'js/beagu-admin-access-v1.js'
+      - 'js/beagu-admin-chart-integrity-v1.js'
+      - 'styles/beagu-admin-section-index-v1.css'
+      - 'tests/v1.1.0-admin-navigation-chart-integrity.test.mjs'
       - 'supabase/functions/beagu-admin-members-v1/index.ts'
       - 'supabase/functions/_shared/beagu-member-management-v2.ts'
       - 'supabase/migrations/20261121233000_beagu_admin_member_management_v2.sql'
@@ -61,16 +64,21 @@ jobs:
       - name: Check administrator browser JavaScript and Edge function TypeScript
         run: |
           node --check js/beagu-admin-members-v1.js
+          node --check js/beagu-admin-access-v1.js
+          node --check js/beagu-admin-chart-integrity-v1.js
           deno check supabase/functions/beagu-admin-members-v1/index.ts
       - name: Deno moderation validation and owner MFA / audit-before-ban source checks
         run: deno test --allow-read tests/v1.1.0-admin-member-moderation.test.ts
       - name: Browser owner-only member search and moderation interaction
-        run: node --test tests/v1.1.0-admin-members-ui.test.mjs
+        run: node --test tests/v1.1.0-admin-members-ui.test.mjs tests/v1.1.0-admin-navigation-chart-integrity.test.mjs
       - name: Existing administrator MFA and member permission regressions
         run: |
           node tests/admin-members-static.cjs
           node tests/admin-verified-email-enrollment-static.cjs
           node scripts/test-admin-access.cjs
+          node tests/admin-dashboard-static.cjs
+          node tests/admin-page-performance-static.cjs
+          node tests/admin-telemetry-health-static.cjs
           node tests/postit-member-auth.cjs
       - name: Install PostgreSQL client when needed
         run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
