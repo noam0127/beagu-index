@@ -5,6 +5,7 @@ import vm from 'node:vm';
 
 const text=path=>fs.readFileSync(path,'utf8');
 const statusSource=text('js/beagu-account-status-v1.js');
+const restoreSource=text('js/beagu-session-restore-v1.js');
 const modeSource=text('js/beagu-account-mode-v1.js');
 const postitSource=text('js/postit-account-v1.js');
 const challengeSource=text('js/challenge-member-auth-v1.js');
@@ -50,6 +51,9 @@ function postitHarness({user=null,level=true,linked=false}={}) {
   URL,URLSearchParams,queueMicrotask,
   async fetch(url,options){
    const address=String(url);
+   if(address.includes('/beagu-level-api')){
+    return {ok:true,async json(){return {level:2}}};
+   }
    if(address.includes('writer_status')){
     calls.writerStatus++;
     return {ok:true,async json(){return {linked}}};
@@ -60,6 +64,7 @@ function postitHarness({user=null,level=true,linked=false}={}) {
  };
  vm.runInNewContext(modeSource,browser,{timeout:1500});
  vm.runInNewContext(statusSource,browser,{timeout:1500});
+ vm.runInNewContext(restoreSource,browser,{timeout:1500});
  vm.runInNewContext(postitSource,browser,{timeout:2000});
  return {get,status,calls,window};
 }
