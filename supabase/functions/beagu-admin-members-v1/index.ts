@@ -67,6 +67,12 @@ async function adminMap(): Promise<Map<string, { role: string; enabled: boolean 
     role: String(a.role), enabled: a.enabled === true,
   }]));
 }
+function maskedEmail(value: string | null | undefined): string {
+  const email = String(value || "");
+  const at = email.lastIndexOf("@");
+  if (at < 1) return "";
+  return email.slice(0, 1) + "***" + email.slice(at);
+}
 async function decorate(users: AuthUser[], admins: Map<string, { role: string; enabled: boolean }>) {
   const ids = users.map(user => user.id);
   let linked = new Map<string, { status: string; linked_at: string | null }>();
@@ -94,7 +100,7 @@ async function decorate(users: AuthUser[], admins: Map<string, { role: string; e
     const until = user.banned_until || null;
     return {
       id: user.id,
-      email: user.email || "",
+      email: maskedEmail(user.email),
       email_confirmed: Boolean(user.email_confirmed_at),
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at || null,
@@ -127,7 +133,10 @@ async function allUsers(): Promise<{ users: AuthUser[]; truncated: boolean }> {
 }
 async function listMembers(input: Record<string, unknown>) {
   const search = typeof input.search === "string" ? input.search.trim().slice(0, 100) : "";
-  const page = Math.min(1000000, Math.max(1, Math.floor(Number(input.page) || 1)));
+  const requestedPage = Number(input.page ?? 1);
+  if (!Number.isSafeInteger(requestedPage) || requestedPage < 1 || requestedPage > 1000000)
+    throw new HttpError(400, "invalid_page");
+  const page = requestedPage;
   const status = ["all","confirmed","unconfirmed","suspended"].includes(String(input.status))
     ? String(input.status) : "all";
   const sort = ["newest","oldest","email"].includes(String(input.sort))

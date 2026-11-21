@@ -25,7 +25,11 @@ begin
        or (p_status='unconfirmed' and u.email_confirmed_at is null)
        or (p_status='suspended' and u.banned_until>now()))
  ), page_rows as (
-   select * from matched
+   select *, row_number() over (order by
+     case when p_sort='newest' then created_at end desc nulls last,
+     case when p_sort='oldest' then created_at end asc nulls last,
+     case when p_sort='email' then lower(email) end asc nulls last,
+     id asc) as page_ordinal from matched
    order by
      case when p_sort='newest' then created_at end desc nulls last,
      case when p_sort='oldest' then created_at end asc nulls last,
@@ -34,7 +38,7 @@ begin
    limit p_size offset (p_page-1)*p_size
  )
  select jsonb_build_object(
-   'rows',coalesce((select jsonb_agg(to_jsonb(p)) from page_rows p),'[]'::jsonb),
+   'rows',coalesce((select jsonb_agg(to_jsonb(p) - 'page_ordinal' order by p.page_ordinal) from page_rows p),'[]'::jsonb),
    'total_matches',(select count(*) from matched),
    'total_users_scanned',(select count(*) from auth.users),
    'total_admins_scanned',(select count(*) from auth.users u where exists(select 1 from public.beagu_admin_accounts a where a.user_id=u.id)),
