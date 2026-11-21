@@ -202,15 +202,21 @@ async function boundedJSON(req:Request){
 }
 async function target(type:string,id:string){
  if(!["post","comment"].includes(type)||!UUID.test(id))return null;
- const table=type==="post"?"beagu_postit_posts":"beagu_postit_comments";
- const fields=type==="comment"?"id,author_uid,status,post_id":"id,author_uid,status";
- const {data}=await db.from(table).select(fields).eq("id",id).maybeSingle();
- if(!data||data.status!=="published")return null;
+ // Distinct literal PostgREST selects avoid dynamic-column parse errors
+ // and fetch no unnecessary PII, even under service_role privileges.
  if(type==="comment"){
-  const {data:p}=await db.from("beagu_postit_posts").select("status").eq("id",data.post_id).maybeSingle();
-  if(p?.status!=="published")return null;
+  const {data,error}=await db.from("beagu_postit_comments")
+    .select("id,author_uid,status,post_id").eq("id",id).maybeSingle();
+  if(error||!data||data.status!=="published")return null;
+  const {data:p,error:parentError}=await db.from("beagu_postit_posts")
+    .select("status").eq("id",data.post_id).maybeSingle();
+  if(parentError||p?.status!=="published")return null;
+  return {id:data.id,author_uid:data.author_uid,status:data.status,post_id:data.post_id};
  }
- return data;
+ const {data,error}=await db.from("beagu_postit_posts")
+   .select("id,author_uid,status").eq("id",id).maybeSingle();
+ if(error||!data||data.status!=="published")return null;
+ return {id:data.id,author_uid:data.author_uid,status:data.status};
 }
 Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors(req)});
