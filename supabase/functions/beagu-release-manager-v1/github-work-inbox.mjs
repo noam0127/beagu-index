@@ -82,8 +82,8 @@ export async function collectGitHubWorkInbox(fetchPage,options={}){
  const mergedElsewhere=all.filter(x=>x.status==="merged_other_base");
  const ignored=all.filter(x=>x.status==="closed_unmerged").length;
  return {
-  status:partial?(fetchedPages?"partial":"error"):truncated?"partial":"ok",
-  reason:reason||(truncated?"results_truncated":null),
+  status:partial?(fetchedPages?"partial":"error"):(truncated||skipped>0)?"partial":"ok",
+  reason:reason||(truncated?"results_truncated":skipped>0?"invalid_pr_metadata":null),
   fetched_pages:fetchedPages,
   page_size:perPage,
   truncated,
