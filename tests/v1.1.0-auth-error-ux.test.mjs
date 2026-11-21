@@ -77,7 +77,8 @@ function browser(path,{error={code:'invalid_credentials',message:'secret=DO_NOT_
  };
  for(const file of ['js/beagu-account-mode-v1.js','js/beagu-account-status-v1.js',
   'js/beagu-auth-errors-v1.js','js/beagu-session-restore-v1.js',
-   'js/beagu-sms-consent-v1.js','js/beagu-sms-account-settings-v2.js',path]){
+   'js/beagu-sms-consent-v1.js','js/beagu-sms-account-settings-v2.js',
+   'js/beagu-account-privacy-v1.js',path]){
   vm.runInNewContext(read(file),context,{timeout:1500});
  }
  return {get,window,listeners,calls,auth,
