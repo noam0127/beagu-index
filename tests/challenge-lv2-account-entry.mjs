@@ -98,6 +98,7 @@ vm.runInNewContext(read('js/beagu-session-restore-v1.js'),browser);
 vm.runInNewContext(read('js/beagu-auth-errors-v1.js'),browser);
 vm.runInNewContext(read('js/beagu-sms-consent-v1.js'),browser);
 vm.runInNewContext(read('js/beagu-sms-account-settings-v2.js'),browser);
+vm.runInNewContext(read('js/beagu-account-privacy-v1.js'),browser);
 vm.runInNewContext(member,browser);
 assert.equal(elements.challengeMemberOverlay.hidden,true,'Lv1 starts with modal hidden');
 elements.beaguLevelState.dataset.level='2';
