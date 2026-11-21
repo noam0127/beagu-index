@@ -113,42 +113,50 @@ async function decorate(users: AuthUser[], admins: Map<string, { role: string; e
     };
   });
 }
-async function allUsers(): Promise<{ users: AuthUser[]; truncated: boolean }> {
-  const result: AuthUser[] = [];
-  const perPage = 200;
-  const maximumPages = 20;
-  for (let page = 1; page <= maximumPages; page++) {
-    const { data, error } = await db.auth.admin.listUsers({ page, perPage });
-    if (error) throw new HttpError(503, "auth_list_unavailable");
-    const batch = (data?.users || []) as AuthUser[];
-    result.push(...batch);
-    if (batch.length < perPage) return { users: result, truncated: false };
-  }
-  return { users: result, truncated: true };
-}
+// Stage34: a single server-side DB query pages ALL Auth users, without
+// copying the first 4,000 Auth Admin API records into Edge memory.
+// The SQL RPC is service_role-only and called only after Owner/AAL2 gate.
 async function listMembers(input: Record<string, unknown>) {
-  const search = typeof input.search === "string" ? input.search.trim().slice(0, 100) : "";
-  const page = Math.min(200, Math.max(1, Math.floor(Number(input.page) || 1)));
+  const p = input.page === undefined ? 1 : Number(input.page);
+  if(!Number.isSafeInteger(p)||p<1||p>100000)
+    throw new HttpError(400,"invalid_page");
+  if(input.search !== undefined && typeof input.search !== "string")
+    throw new HttpError(400,"invalid_search");
+  const search = (input.search as string || "").trim();
+  if(search.length>100)throw new HttpError(400,"invalid_search");
   const filter = selectMemberStatus(input.filter);
-  const admins = await adminMap();
-  const { users, truncated } = await allUsers();
-  const ordered = users.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
-  const q = search.toLocaleLowerCase("ko-KR");
-  const filtered = ordered.filter(u =>
-    memberStatusMatches(u,filter,Date.now()) &&
-    (!q||(u.email || "").toLocaleLowerCase("ko-KR").includes(q) ||
-      u.id.toLowerCase().includes(q)));
-  const pageSize = 20;
-  const selected = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const [{data,error},admins] = await Promise.all([
+    db.rpc("beagu_admin_member_directory_v3",{
+      p_page:p,p_filter:filter,p_search:search
+    }),
+    adminMap()
+  ]);
+  // No silent fallback to allUsers() or legacy 4,000-person truncation.
+  // The migration is a hard prerequisite before publishing this Edge API.
+  if(error||!data||typeof data!=="object"||Array.isArray(data))
+    throw new HttpError(503,"member_directory_unavailable");
+  const raw=data as Record<string,unknown>;
+  const totals=[
+    raw.total_matches,raw.total_users_scanned,raw.total_admins_scanned,
+    raw.unconfirmed_scanned,raw.suspended_scanned
+  ];
+  if(raw.page!==p||raw.page_size!==20||raw.filter!==filter||
+     raw.truncated!==false||!Array.isArray(raw.rows)||
+     raw.rows.length>20||
+     !totals.every(n=>typeof n==="number"&&Number.isSafeInteger(n)&&n>=0)||
+     (raw.total_matches as number)>(raw.total_users_scanned as number)||
+     raw.rows.some((u:unknown)=>!u||typeof u!=="object"||
+       !validUUID((u as Record<string,unknown>).id)))
+    throw new HttpError(503,"invalid_member_directory");
   return {
-    rows: await decorate(selected, admins),
-    total_matches: filtered.length,
-    page, page_size: pageSize, filter,
-    total_users_scanned: users.length,
-    total_admins_scanned: users.filter(u => admins.has(u.id)).length,
-    unconfirmed_scanned: users.filter(u => !u.email_confirmed_at).length,
-    suspended_scanned: users.filter(u => u.banned_until && Date.parse(u.banned_until) > Date.now()).length,
-    truncated,
+    rows:await decorate(raw.rows as AuthUser[],admins),
+    total_matches:raw.total_matches,
+    page:p,page_size:20,filter,
+    total_users_scanned:raw.total_users_scanned,
+    total_admins_scanned:raw.total_admins_scanned,
+    unconfirmed_scanned:raw.unconfirmed_scanned,
+    suspended_scanned:raw.suspended_scanned,
+    truncated:false
   };
 }
 async function details(input: Record<string, unknown>) {
