@@ -1,0 +1,30 @@
+name: v1.1.0 — immutable rollback dry-run
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-rollback-dryrun.yml'
+      - 'tests/release-rollback-dryrun.py'
+      - 'docs/releases/v1.1.0-rollback-baseline.json'
+      - 'scripts/release-manager/worker.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  code-rollback:
+    name: Verify pre-change Git SHAs and read-only rollback packaging
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile offline rollback test
+        run: python3 -m py_compile tests/release-rollback-dryrun.py scripts/release-manager/worker.py
+      - name: Rebuild pinned deployed snapshot, simulate rollback, test fail-closed inputs
+        run: python3 tests/release-rollback-dryrun.py
