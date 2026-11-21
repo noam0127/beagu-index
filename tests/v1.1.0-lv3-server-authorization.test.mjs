@@ -154,5 +154,7 @@ test('existing Lv0/Lv1/Lv2 API still has no code-only level 3',()=>{
  const badge=read('js/beagu-level-state-v1.js');
  assert.match(badge,/const tier=\/\^\[012\]\$\//);
  assert.ok(!badge.includes('BeaguLv3Session'), 'Stage20 handles status integration');
- assert.ok(!read('challenge.html').includes('js/beagu-lv3-session-v1.js'));
+ assert.match(read('challenge.html'),/js\/beagu-lv3-session-v1\.js/);
+ assert.match(read('challenge.html'),/js\/beagu-lv3-account-ui-v1\.js/);
+ assert.match(read('js/challenge-member-auth-v1.js'),/BeaguLv3AccountUI/);
 });
