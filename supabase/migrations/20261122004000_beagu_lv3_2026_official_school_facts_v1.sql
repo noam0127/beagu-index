@@ -67,6 +67,7 @@ create table if not exists beagu_private.lv3_official_school_facts_2026_v1(
 alter table beagu_private.lv3_official_school_facts_2026_v1 enable row level security;
 revoke all on beagu_private.lv3_official_school_facts_2026_v1
  from public,anon,authenticated;
+grant usage on schema beagu_private to service_role;
 grant select on beagu_private.lv3_official_school_facts_2026_v1 to service_role;
 
 -- A SECURITY INVOKER view is a narrow service-only projection.
@@ -80,12 +81,12 @@ select f.school_id,f.school_name,f.sido_standard,f.support_office,
  f.address,f.establishment,f.school_kind,f.status,
  2026::integer as reference_year,
  f.neis_as_of,
- case when f.school_info_reviewed then f.student_count end as student_count,
- case when f.school_info_reviewed then f.school_info_as_of end as student_reference_date,
- case when f.school_info_reviewed then f.junior_teacher_ratio end as junior_teacher_ratio,
- case when f.school_info_reviewed then f.male_teacher_ratio end as male_teacher_ratio,
- case when f.housing_reviewed then f.housing_price_won end as housing_price_won,
- case when f.housing_reviewed then f.housing_as_of end as housing_reference_date,
+ case when f.school_info_reviewed and f.school_info_as_of<=current_date then f.student_count end as student_count,
+ case when f.school_info_reviewed and f.school_info_as_of<=current_date then f.school_info_as_of end as student_reference_date,
+ case when f.school_info_reviewed and f.school_info_as_of<=current_date then f.junior_teacher_ratio end as junior_teacher_ratio,
+ case when f.school_info_reviewed and f.school_info_as_of<=current_date then f.male_teacher_ratio end as male_teacher_ratio,
+ case when f.housing_reviewed and f.housing_as_of<=current_date then f.housing_price_won end as housing_price_won,
+ case when f.housing_reviewed and f.housing_as_of<=current_date then f.housing_as_of end as housing_reference_date,
  h.beagu_percentile_2025,
  h.view_count
 from beagu_private.lv3_official_school_facts_2026_v1 f
@@ -97,6 +98,8 @@ where f.reference_year=2026
  and f.reidentification_reviewed
  and f.prior_data_combination_reviewed
  and f.reviewed_at>=f.updated_at
+ and f.reviewed_at<=now()
+ and f.neis_as_of<=current_date
  and exists(select 1 from public.beagu_admin_accounts a
    where a.user_id=f.reviewer_user_id and a.role='owner' and a.enabled=true)
  and exists(select 1 from beagu_private.lv3_release_control_v1 gate
