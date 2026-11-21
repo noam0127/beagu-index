@@ -1,0 +1,55 @@
+name: v1.1.0 — optional phone and SMS consent
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-optional-sms-consent.yml'
+      - 'js/beagu-sms-consent-v1.js'
+      - 'js/beagu-account-mode-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'js/beagu-auth-errors-v1.js'
+      - 'challenge.html'
+      - 'postit.html'
+      - 'tests/v1.1.0-optional-sms-consent.test.mjs'
+      - 'tests/v1.1.0-unified-account-mode.test.mjs'
+      - 'tests/v1.1.0-legacy-password.test.mjs'
+      - 'tests/challenge-lv2-account-entry.mjs'
+      - 'tests/postit-member-auth.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  optional-sms-consent:
+    name: Separate opt-in defaults and no phone sent without both (offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check account and consent scripts
+        run: |
+          node --check js/beagu-sms-consent-v1.js
+          node --check js/beagu-account-mode-v1.js
+          node --check js/challenge-member-auth-v1.js
+          node --check js/postit-account-v1.js
+      - name: New SMS consent and existing auth mocked regressions
+        run: |
+          node --test tests/v1.1.0-optional-sms-consent.test.mjs tests/v1.1.0-unified-account-mode.test.mjs tests/v1.1.0-legacy-password.test.mjs tests/v1.1.0-auth-error-ux.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-session-restore.test.mjs
+      - name: Verify Challenge, Post-it writer and admin account security
+        run: |
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/postit-member-auth.cjs
+          node tests/admin-verified-email-enrollment-static.cjs
+          node scripts/test-admin-access.cjs
+      - name: Verify preview does not connect to production Supabase
+        run: python3 tests/preview-db-isolation.py
