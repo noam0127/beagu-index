@@ -127,11 +127,7 @@ async function allUsers(): Promise<{ users: AuthUser[]; truncated: boolean }> {
 }
 async function listMembers(input: Record<string, unknown>) {
   const search = typeof input.search === "string" ? input.search.trim().slice(0, 100) : "";
-  const page = Math.min(200, Math.max(1, Math.floor(Number(input.page) || 1)));
-  const status = ["all","confirmed","unconfirmed","suspended"].includes(String(input.status))
-    ? String(input.status) : "all";
-  const sort = ["newest","oldest","email"].includes(String(input.sort))
-    ? String(input.sort) : "newest";
+  const page = Math.min(1000000, Math.max(1, Math.floor(Number(input.page) || 1)));
   const status = ["all","confirmed","unconfirmed","suspended"].includes(String(input.status))
     ? String(input.status) : "all";
   const sort = ["newest","oldest","email"].includes(String(input.sort))
