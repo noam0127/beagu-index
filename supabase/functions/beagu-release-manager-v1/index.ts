@@ -3,6 +3,7 @@
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.58.0";
 import {createRemoteJWKSet,jwtVerify} from "https://esm.sh/jose@5.10.0";
 import {collectGitHubWorkInbox} from "./github-work-inbox.mjs";
+import {annotateWorkDependencies} from "./release-work-dependencies.mjs";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"",{
   auth:{persistSession:false,autoRefreshToken:false}
@@ -153,9 +154,9 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
    // GitHub open and merged PRs are read-only metadata, never an approved release.
    // Incomplete pages/errors must be visible in the UI, not reported as zero work.
    try{
-    workInbox=await collectGitHubWorkInbox(
+    workInbox=annotateWorkDependencies(await collectGitHubWorkInbox(
      (page:number,perPage:number)=>github("/pulls?state=all&sort=updated&direction=desc&per_page="+perPage+"&page="+page),
-     {repository:repo,perPage:100,maxPages:3});
+     {repository:repo,perPage:100,maxPages:3}));
     workInProgress=(workInbox as {open:unknown[]}).open;
    }catch{
     workInbox={status:"error",reason:"github_inbox_unavailable",open:[],recently_merged:[],merged_elsewhere:[]};
