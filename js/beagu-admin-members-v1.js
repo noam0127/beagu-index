@@ -3,7 +3,7 @@
   "use strict";
   const api = SUPABASE_URL + "/functions/v1/beagu-admin-members-v1";
   const $ = id => document.getElementById(id);
-  let ready = false, role = "", search = "", page = 1;
+  let ready = false, role = "", search = "", filter = "all", page = 1;
   let total = 0, pageSize = 20, selectedId = "", serial = 0, pending = false;
   const text = (id, value) => { $(id).textContent = value; };
   const node = (tag, cls, value) => {
@@ -76,14 +76,14 @@
     }
   }
   async function refresh() {
-    if (!role) return;
+    if (role !== "owner") return;
     const seq = ++serial;
     status("회원 목록을 불러오는 중입니다.");
     $("adminMembersPrev").disabled = true;
     $("adminMembersNext").disabled = true;
     try {
-      const data = await request("list", {page,search});
-      if (seq !== serial || !role) return;
+      const data = await request("list", {page,search,filter});
+      if (seq !== serial || role !== "owner") return;
       total = data.total_matches;
       pageSize = data.page_size;
       text("adminMembersTotal", Number(data.total_users_scanned).toLocaleString("ko-KR"));
@@ -100,7 +100,7 @@
         (data.truncated ? " · 대량 계정의 일부만 검색됨" : "") +
         " · 참여코드 발급자 수와는 다릅니다.");
     } catch {
-      if (seq !== serial || !role) return;
+      if (seq !== serial || role !== "owner") return;
       showRows([]);
       status("회원 목록을 불러오지 못했습니다. 관리자 인증 상태 또는 연결을 확인해 주세요.", true);
     }
@@ -127,14 +127,19 @@
       row("문자 안내", smsStatus(member))
     );
     root.append(dl);
-    const logTitle = node("h5","","최근 회원 관리 기록");
+    const logTitle = node("h5","","최근 회원 관리 기록 · 조치 전후 감사 기록");
     root.append(logTitle);
     const history = info.moderation_history || [];
     if (!history.length) root.append(node("p","subtle","기록 없음"));
     else for (const event of history) {
       const details = event.details || {};
       root.append(node("p","admin-member-history",
-        date(event.occurred_at) + " · " + event.event_type +
+        date(event.occurred_at) + " · " +
+        ({"member_moderation_requested":"조치 요청",
+          "member_moderation_succeeded":"조치 완료",
+          "member_moderation_failed":"조치 실패"}[event.event_type] || event.event_type) +
+        " · " + (event.outcome === "pending" ? "결과 미확정" :
+          event.outcome === "success" ? "완료" : "실패/거부") +
         (typeof details.reason === "string" ? " · 사유: " + details.reason : "")));
     }
     const canModerate = role === "owner" && !member.is_admin;
@@ -162,24 +167,43 @@
   }
   async function moderate(operation) {
     if (pending || role !== "owner" || !selectedId) return;
+    const target = selectedId;
     const reason = $("adminMemberReason").value.trim();
-    if (reason.length < 8 || reason.length > 200) {
-      text("adminMemberActionStatus","처리 사유를 8~200자로 입력해 주세요.");return;
+    if (reason.length < 8 || reason.length > 200 ||
+      /(?:[\w.+-]+@[\w.-]+\.[a-z]{2,}|01[016789][- ]?\d{3,4}[- ]?\d{4}|https?:\/\/|Bearer\s|[A-Za-z0-9._-]{50,})/i.test(reason)) {
+      text("adminMemberActionStatus","사유를 8~200자로 입력하고 이메일·전화번호·토큰을 제거해 주세요.");
+      return;
     }
     const label = operation === "suspend_24h" ? "24시간 정지" :
       operation === "suspend_7d" ? "7일 정지" : "정지 해제";
-    if (!window.confirm("선택한 회원에 대해 '" + label + "' 작업을 실행할까요?")) return;
+    if (!["suspend_24h","suspend_7d","restore"].includes(operation)) return;
+    if (!window.confirm("회원 ID " + target + " · " + label +
+      "\n조치 전에 감사 기록을 남깁니다. 기존 세션·참여코드는 즉시 차단되지 않을 수 있습니다. 계속할까요?")) return;
+    const requestId = window.crypto?.randomUUID?.();
+    if (!requestId) {
+      text("adminMemberActionStatus","보안 요청 ID를 생성하지 못했습니다. 브라우저를 확인해 주세요.");
+      return;
+    }
     pending = true;
     for (const button of document.querySelectorAll("[data-member-operation]")) button.disabled = true;
-    text("adminMemberActionStatus",label + " 처리 중입니다.");
+    text("adminMemberActionStatus",label + " 요청 및 감사 기록 확인 중입니다.");
     try {
-      await request("moderate", {user_id:selectedId,operation,reason});
+      const result = await request("moderate", {
+        user_id:target,operation,reason,request_id:requestId
+      });
+      if (!result?.updated || result.request_id !== requestId)
+        throw Error("unverified_moderation_response");
+      if (role !== "owner") return;
       $("adminMemberReason").value = "";
-      await showDetail(selectedId);
+      if (selectedId === target) await showDetail(target);
       await refresh();
-      text("adminMemberActionStatus",label + " 처리 완료 · 감사 기록 저장");
-    } catch {
-      text("adminMemberActionStatus","처리를 확인하지 못했습니다. 상태 및 감사 기록을 다시 조회해 주세요.");
+      if (selectedId === target && role === "owner")
+        text("adminMemberActionStatus",label+" 완료 · 요청·성공 감사 기록 확인");
+    } catch (error) {
+      if (role !== "owner") return;
+      text("adminMemberActionStatus",error?.status === 409
+        ? "이미 처리 중이거나 완료된 요청입니다. 회원 상세·감사 이력을 새로 확인해 주세요."
+        : "조치 결과를 확정할 수 없습니다. 동일 작업을 반복하지 말고 회원 상세·감사 기록을 조회해 주세요.");
     } finally {
       pending = false;
       for (const button of document.querySelectorAll("[data-member-operation]")) button.disabled = false;
@@ -189,12 +213,12 @@
     if (ready) return;
     ready = true;
     $("adminMembersSearchForm").addEventListener("submit", event => {
-      event.preventDefault();search = $("adminMembersSearch").value.trim();page = 1;
+      event.preventDefault();search = $("adminMembersSearch").value.trim();filter = $("adminMembersFilter").value;page = 1;
       selectedId = "";$("adminMemberDetailPanel").hidden = true;
       void refresh();
     });
     $("adminMembersClear").addEventListener("click", () => {
-      $("adminMembersSearch").value = "";search = "";page = 1;
+      $("adminMembersSearch").value = "";search = "";filter = "all";$("adminMembersFilter").value="all";page = 1;
       selectedId = "";$("adminMemberDetailPanel").hidden = true;
       void refresh();
     });
@@ -213,20 +237,35 @@
     });
   }
   function mount(adminRole) {
+    reset();
     role = String(adminRole || "");
+    if (role !== "owner") return;
+    $("adminMemberManagement").hidden = false;
+    $("adminMemberNavLink").hidden = false;
     prepareListeners();
-    page = 1;search = "";selectedId = "";
+    page = 1;search = "";filter = "all";selectedId = "";
     $("adminMembersSearch").value = "";
+    $("adminMembersFilter").value = "all";
     $("adminMemberDetailPanel").hidden = true;
     void refresh();
   }
   function reset() {
-    role = "";serial++;selectedId = "";page = 1;search = "";total = 0;
+    role = "";serial++;selectedId = "";page = 1;search = "";filter = "all";total = 0;
+    $("adminMemberManagement").hidden = true;
+    $("adminMemberNavLink").hidden = true;
     $("adminMemberDetailPanel").hidden = true;
+    $("adminMemberDetail").replaceChildren();
+    $("adminMemberReason").value = "";
+    $("adminMembersSearch").value = "";
+    $("adminMembersFilter").value = "all";
     $("adminMembersRows").replaceChildren();
+    $("adminMembersPage").textContent = "1 / 1";
+    $("adminMembersPrev").disabled = true;
+    $("adminMembersNext").disabled = true;
+    text("adminMemberActionStatus","");
     for (const id of ["adminMembersTotal","adminMembersAdminCount",
       "adminMembersUnconfirmed","adminMembersSuspended"]) text(id,"—");
-    status("관리자 인증 후 표시됩니다.");
+    status("최고 관리자 인증 후 표시됩니다.");
   }
   window.BeaguMembersAdmin = {mount,reset};
 })();
