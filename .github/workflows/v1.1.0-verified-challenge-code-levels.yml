@@ -13,6 +13,8 @@ on:
       - 'js/challenge-referral-v1.js'
       - 'js/challenge.js'
       - 'tests/v1.1.0-challenge-code-status-ui.test.mjs'
+      - 'tests/v1.1.0-referral-link-preservation.test.mjs'
+      - 'supabase/migrations/20261121000100_referral_short_codes.sql'
       - 'scripts/test-challenge-lv2-card.cjs'
       - 'tests/challenge-2026-code-level-fixture.sql'
       - 'tests/challenge-2026-code-level-verify.sql'
@@ -71,7 +73,7 @@ jobs:
       - name: Node and compatibility tests for all three issued-code formats
         run: |
           node --check js/challenge-referral-v1.js
-          node --test tests/v1.1.0-participation-code-levels.test.mjs tests/v1.1.0-challenge-code-status-ui.test.mjs
+          node --test tests/v1.1.0-participation-code-levels.test.mjs tests/v1.1.0-challenge-code-status-ui.test.mjs tests/v1.1.0-referral-link-preservation.test.mjs
           node scripts/test-challenge-lv2-card.cjs
           node tests/v1.1.0-survey-closing-referral-notice.cjs
           node scripts/test-challenge-referral-gas.cjs
