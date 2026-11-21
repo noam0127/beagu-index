@@ -174,6 +174,7 @@ test('25: server authorization remains independent from the card, no mutation of
  assert.match(referralApi,/beagu_2026_verified_visitor_level_v1/);
  assert.match(referralApi,/ownResponseVerified: tier>=1/);
  assert.match(referralApi,/provisional: tier===2/);
+ assert.match(referralApi,/validReferrals: tier===2 \? 1 : 0/);
  assert.match(migration,/e\.decision='credited'/);
  assert.match(migration,/p\.disabled=false/);
  assert.match(cardJs,/payload\.ownResponseVerified === true/);
