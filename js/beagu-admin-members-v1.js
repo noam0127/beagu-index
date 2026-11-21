@@ -3,7 +3,7 @@
   "use strict";
   const api = SUPABASE_URL + "/functions/v1/beagu-admin-members-v1";
   const $ = id => document.getElementById(id);
-  let ready = false, role = "", search = "", page = 1;
+  let ready = false, role = "", search = "", page = 1, memberStatus = "all", memberSort = "newest";
   let total = 0, pageSize = 20, selectedId = "", serial = 0, pending = false;
   const text = (id, value) => { $(id).textContent = value; };
   const node = (tag, cls, value) => {
@@ -82,7 +82,7 @@
     $("adminMembersPrev").disabled = true;
     $("adminMembersNext").disabled = true;
     try {
-      const data = await request("list", {page,search});
+      const data = await request("list", {page,search,status:memberStatus,sort:memberSort});
       if (seq !== serial || !role) return;
       total = data.total_matches;
       pageSize = data.page_size;
@@ -97,7 +97,7 @@
       $("adminMembersNext").disabled = page >= pages;
       const scanned = Number(data.total_users_scanned).toLocaleString("ko-KR");
       status(total.toLocaleString("ko-KR") + "명 검색됨 · 인증 계정 " + scanned + "개 조회" +
-        (data.truncated ? " · 대량 계정의 일부만 검색됨" : "") +
+        (data.truncated ? " · 최대 4,000개 계정 내 검색 · 전체 회원 통계 아님" : "") +
         " · 참여코드 발급자 수와는 다릅니다.");
     } catch {
       if (seq !== serial || !role) return;
@@ -126,7 +126,26 @@
       row("Lv2 계정 연결", member.lv2_account_linked ? "연결 완료 · " + date(member.lv2_linked_at) : "연결 기록 없음"),
       row("문자 안내", smsStatus(member))
     );
-    root.append(dl);
+    const challenge = info.challenge;
+    const challengeTitle = node("h5","","2026 챌린지 연결 정보");
+    root.append(dl, challengeTitle);
+    const challengeDetails = node("dl","admin-member-details");
+    if (!challenge) {
+      challengeDetails.append(row("조회 상태","조회 API 미적용 · 서버 업데이트 후 확인"));
+    } else if (!challenge.linked) {
+      challengeDetails.append(row("연결 상태","미연결 또는 유효한 Lv2 자격 없음"));
+    } else {
+      const ordinal = Number(challenge.participant_no);
+      const referrals = Number(challenge.valid_referrals);
+      const level = Number(challenge.access_level);
+      challengeDetails.append(
+        row("연결 상태","검증된 Lv2 계정"),
+        row("챌린지 순번",Number.isSafeInteger(ordinal) && ordinal > 0 ? ordinal.toLocaleString("ko-KR") + "번" : "확인 불가"),
+        row("추천 접근 레벨",Number.isInteger(level) && level >= 2 ? "Lv." + level : "확인 불가"),
+        row("유효 추천 수",Number.isSafeInteger(referrals) && referrals >= 0 ? referrals.toLocaleString("ko-KR") + "건" : "확인 불가")
+      );
+    }
+    root.append(challengeDetails);
     const logTitle = node("h5","","최근 회원 관리 기록");
     root.append(logTitle);
     const history = info.moderation_history || [];
@@ -188,6 +207,12 @@
   function prepareListeners() {
     if (ready) return;
     ready = true;
+    $("adminMembersFilter").addEventListener("change", () => {
+      memberStatus = $("adminMembersFilter").value;page = 1;void refresh();
+    });
+    $("adminMembersSort").addEventListener("change", () => {
+      memberSort = $("adminMembersSort").value;page = 1;void refresh();
+    });
     $("adminMembersSearchForm").addEventListener("submit", event => {
       event.preventDefault();search = $("adminMembersSearch").value.trim();page = 1;
       selectedId = "";$("adminMemberDetailPanel").hidden = true;
@@ -195,6 +220,9 @@
     });
     $("adminMembersClear").addEventListener("click", () => {
       $("adminMembersSearch").value = "";search = "";page = 1;
+      memberStatus = "all";memberSort = "newest";
+      $("adminMembersFilter").value = memberStatus;
+      $("adminMembersSort").value = memberSort;
       selectedId = "";$("adminMemberDetailPanel").hidden = true;
       void refresh();
     });
@@ -215,7 +243,9 @@
   function mount(adminRole) {
     role = String(adminRole || "");
     prepareListeners();
-    page = 1;search = "";selectedId = "";
+    page = 1;search = "";memberStatus = "all";memberSort = "newest";selectedId = "";
+    $("adminMembersFilter").value = memberStatus;
+    $("adminMembersSort").value = memberSort;
     $("adminMembersSearch").value = "";
     $("adminMemberDetailPanel").hidden = true;
     void refresh();
