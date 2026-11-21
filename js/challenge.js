@@ -8,6 +8,7 @@
   const identityEndpoint = SUPABASE_URL + '/functions/v1/beagu-challenge-identity';
   const levelSessionKey = 'beagu-level-session-v1';
   let imageUrl = null, participant = null, personalCode = null, busy = false, accessGranted = false;
+  let prepareGeneration = 0;
   const deadline = (promise, ms, message) => {
     let timer;
     return Promise.race([Promise.resolve(promise), new Promise((_, reject) => {
@@ -18,6 +19,8 @@
   async function prepare() {
     if (!accessGranted || busy) return;
     busy = true;
+    const generation = ++prepareGeneration;
+    const stillCurrent = () => accessGranted && generation === prepareGeneration;
     capture.disabled = true;
     retry.hidden = true;
     retry.disabled = true;
@@ -29,16 +32,21 @@
         let sessionToken = '';
         try { sessionToken = sessionStorage.getItem(levelSessionKey) || ''; } catch (_) {}
         if (!sessionToken) throw new Error('레벨1 인증이 필요합니다. 다시 인증해 주세요.');
+        const visitor = window.beaguVisitor;
+        const sessionMatches = () => {
+          try { return sessionStorage.getItem(levelSessionKey) === sessionToken &&
+            window.beaguVisitor === visitor; } catch (_) { return false; }
+        };
         const response = await deadline(fetch(identityEndpoint, {
           method: 'POST', cache: 'no-store',
           headers: { 'Content-Type': 'application/json', 'X-Beagu-Session': sessionToken },
-          body: JSON.stringify({ action: 'issue', visitor: window.beaguVisitor })
+          body: JSON.stringify({ action: 'issue', visitor })
         }), 15000, '연결이 지연되고 있습니다. 다시 시도해주세요.');
-        if (!accessGranted) return;
+        if (!stillCurrent() || !sessionMatches()) return;
         if (response.status === 401 || response.status === 403) throw new Error('레벨1 인증이 만료되었습니다. 다시 인증해 주세요.');
         if (!response.ok) throw new Error('고유번호 발급에 실패했습니다. 다시 시도해주세요.');
         const data = await response.json();
-        if (!accessGranted) return;
+        if (!stillCurrent() || !sessionMatches()) return;
         const n = Number(data.participantNo);
         const code = data.identityCode;
         if (!Number.isSafeInteger(n) || n < 1 ||
@@ -48,6 +56,10 @@
         participant = n;
         personalCode = code;
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
+        // Stage30: special ordinal is a *visual* reward, never an auth tier.
+        // This is the already checked server-issued participantNo, not the
+        // public total count or a visitor-supplied URL/query parameter.
+        window.BeaguChallengeMilestones?.show(n);
         identityCode.textContent = code;
         copyIdentityCode.disabled = false;
         identityCopyFeedback.textContent = '';
@@ -57,22 +69,27 @@
         }));
         if (window.BeaguChallengeProgress) void window.BeaguChallengeProgress.refresh();
       }
-      if (!accessGranted) return;
+      if (!stillCurrent()) return;
       status.textContent = '인증 이미지를 준비하고 있습니다.';
       if (typeof html2canvas !== 'function') throw new Error('이미지 기능을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
       if (document.fonts) await deadline(document.fonts.ready, 10000, '글꼴 로딩이 지연되고 있습니다. 다시 시도해주세요.');
+      if (!stillCurrent()) return;
       const canvas = await deadline(html2canvas(byId('certificate'), {
         scale: 2, backgroundColor: '#ffffff', logging: false
       }), 20000, '이미지 생성이 지연되고 있습니다. 다시 시도해주세요.');
       const blob = await deadline(new Promise(resolve => canvas.toBlob(resolve, 'image/png')), 10000, '이미지 변환에 실패했습니다. 다시 시도해주세요.');
       if (!blob) throw new Error('이미지를 생성하지 못했습니다. 다시 시도해주세요.');
-      if (!accessGranted) return;
+      if (!stillCurrent()) return;
       if (imageUrl) URL.revokeObjectURL(imageUrl);
       imageUrl = URL.createObjectURL(blob);
       capture.disabled = false;
       status.textContent = '';
     } catch (error) {
-      if (participant === null) participantNo.textContent = '순번 조회 실패';
+      if (!stillCurrent()) return;
+      if (participant === null) {
+        participantNo.textContent = '순번 조회 실패';
+        window.BeaguChallengeMilestones?.clear();
+      }
       if (personalCode === null) {
         identityCode.textContent = '고유번호 발급 실패';
         copyIdentityCode.disabled = true;
@@ -82,8 +99,10 @@
         : error.message || '처리하지 못했습니다. 다시 시도해주세요.';
       retry.hidden = false;
     } finally {
-      busy = false;
-      retry.disabled = false;
+      if (generation === prepareGeneration) {
+        busy = false;
+        retry.disabled = false;
+      }
     }
   }
 
@@ -127,6 +146,9 @@
   });
   window.addEventListener('beagu:challenge-access-revoked', () => {
     accessGranted = false;
+    ++prepareGeneration;
+    busy = false;
+    window.BeaguChallengeMilestones?.clear();
     participant = null;
     personalCode = null;
     identityCode.textContent = '고유번호 확인 중';
