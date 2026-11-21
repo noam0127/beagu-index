@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "purpose": "dedicated independent QA hosting plan; not an actual deployment",
+  "provider": "cloudflare_pages_direct_upload",
+  "proposed_qa_project": "beagu-v2-isolated-qa",
+  "prohibited_cloudflare_projects": [
+    "beagu-index"
+  ],
+  "production_site_domain": "baeguindex.com",
+  "production_site_branch": "main",
+  "qa_branch_prefix": "qa-v2-",
+  "dedicated_project_required": true,
+  "cloudflare_access_policy_required": true,
+  "access_policy_verified": false,
+  "qa_pages_project_created": false,
+  "qa_credentials_configured": false,
+  "qa_environment_protection_verified": false,
+  "candidate_sha_pinned": false,
+  "independent_qa_domain_verified": false,
+  "user_approval_to_publish": false,
+  "actual_external_deployment_enabled": false,
+  "public_site_deployed": false,
+  "documentation_link": "docs/releases/v2-step14-independent-qa-hosting.md",
+  "release_gate": "blocked",
+  "notes": [
+    "This is a proposed independent project name; no project existence or domain registration is asserted.",
+    "Cloudflare Pages previews are publicly accessible by default unless a Cloudflare Access policy is configured.",
+    "The current repository wrangler.jsonc targets beagu-index and must not be used to deploy candidate QA.",
+    "The QA hosting workflow cannot run deployment jobs while the hard-coded publication lock is true.",
+    "Any future activation requires an explicit user approval, separate QA project setup, protected credentials, and reviewed code change."
+  ]
+}
