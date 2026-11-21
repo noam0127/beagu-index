@@ -64,10 +64,15 @@
       <p id="releasePendingStatus" class="subtle" aria-live="polite">GitHub 변경사항을 확인하는 중입니다.</p>
       <p id="releaseGitHubWorkStatus" class="subtle" role="status" aria-live="polite">GitHub 작업 목록을 확인하는 중입니다.</p>
       <div class="release-buttons">
-        <button type="button" id="releaseInspectPRs" class="secondary">PR 수정 파일·테스트 증빙 분석</button>
+        <button type="button" id="releaseInspectPRs" class="secondary">PR 수정 파일·충돌 위험 사전 검사</button>
         <span class="subtle">운영 데이터 수정 없이 최근 열린 PR 최대 6개의 코드 변경 영향과 CI 기록을 조회합니다.</span>
       </div>
       <p id="releaseImpactStatus" class="subtle" role="status" aria-live="polite">분석 버튼을 누르면 PR별 변경 영역을 확인합니다.</p>
+      <section class="release-impact-panel" aria-labelledby="releaseConflictHeading">
+        <h3 id="releaseConflictHeading">PR 간 충돌 위험 사전 검사</h3>
+        <p id="releaseConflictStatus" class="subtle" role="status" aria-live="polite">위 분석 버튼으로 검사를 실행하세요. 실제 병합 가능 여부는 후속 통합 검증에서 확인합니다.</p>
+        <div id="releaseConflictPairs" class="release-pending-log"></div>
+      </section>
       <h3 class="release-inbox-subtitle">개발 중인 작업 · 아직 버전에 포함되지 않음</h3>
       <div id="releaseOpenPullRequests" class="release-pending-log"></div>
       <h3 class="release-inbox-subtitle">최근 main 병합 PR · 버전 생성과 별개</h3>
