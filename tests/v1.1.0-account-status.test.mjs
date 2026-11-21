@@ -147,6 +147,18 @@ test('only confirmed Auth plus valid Lv2 plus server-linked member displays link
  assert.equal(h.window.BeaguPostitAccount.canWrite(),true);
  assert.equal(h.get('postitAccountLink').hidden,true);
 });
+test('verified Lv2 owner/device/Auth binding shows eligibility without granting Lv3',async()=>{
+ const h=postitHarness({user:verified,linked:true,lv3LinkReady:true});
+ await tick();
+ assert.equal(h.status.dataset.state,'lv3-link-ready');
+ assert.match(h.status.textContent,/실제 Lv3 등급은 아직 적용되지/);
+ assert.equal(h.window.BeaguPostitAccount.canWrite(),true);
+ const helper=statusHarness();
+ const span={dataset:{},textContent:''};
+ helper.set(span,'lv3-link-ready');
+ assert.doesNotMatch(span.textContent,/Lv3 (승급|완료|권한이 부여)/);
+});
+
 test('shared status helper loads before both account scripts, with accessible live feedback',()=>{
  for(const [page,client] of [
   ['challenge.html','js/challenge-member-auth-v1.js'],
