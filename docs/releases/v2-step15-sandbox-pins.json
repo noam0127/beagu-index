@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "stage": "15/20",
+  "observed_date": "2026-11-22",
+  "admin_v2": {
+    "pr": 240,
+    "head_branch": "integration/admin-v2-release-candidate",
+    "head_sha": "a00a9a4af67069b45277cde28f199de4f4733acc",
+    "base": "main",
+    "integration": "read_only_pinned_checkout_only",
+    "merged_into_release_branch": false
+  },
+  "release": {
+    "base_pr": 241,
+    "base_sha": "1641b8c48e0e161e0bf9005b2ccb5822e587511d",
+    "observed_main_sha": "0ea26679515c0e6a88d123e478c955e2c49fd737",
+    "source_publication_code_unchanged": true
+  },
+  "staging": {
+    "project_id": "ycwuugggqbunlbwuzvbx",
+    "public_business_tables_observed": 0,
+    "private_tables_observed": 1,
+    "admin_members_api_present": false,
+    "status": "blocked_no_staging_business_schema"
+  },
+  "baseline_version_status": "production_unchanged",
+  "verification": {
+    "disposable_postgres_qa": "pending_ci",
+    "actual_staging_db_migrations": "not_performed",
+    "actual_staging_rls_auth_e2e": "not_performed",
+    "production_migration": "not_performed",
+    "service_role_rpc_execution": "pending_ci_synthetic",
+    "owner_aal2_jwt_e2e": "not_performed",
+    "browser_2026_question_publication_e2e": "not_performed"
+  },
+  "release_gate": "blocked",
+  "invariant": "No member administration change may approve, materialize or publish 2026 survey responses."
+}
