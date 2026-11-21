@@ -54,7 +54,7 @@ Deno.serve(async(request:Request)=>{
   if(input.action==="queue"){
    const status=typeof input.filter==="string"?input.filter:"all";
    const page=Number(input.page??0);
-   if(!["all","quality","technical","question","school","prelaunch","approved","held"].includes(status)||
+   if(!["all","quality","technical","question","school","prelaunch","approved","held","single","single_technical","awaiting_basis"].includes(status)||
      !Number.isSafeInteger(page)||page<0||page>500)return send(origin,400,{error:"invalid_filters"});
    const {data,error}=await db.rpc("beagu_2026_admin_review_queue",
      {p_filter:status,p_limit:20,p_offset:page*20});
