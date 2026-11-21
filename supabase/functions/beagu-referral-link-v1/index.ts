@@ -145,7 +145,11 @@ Deno.serve(async (req) => {
       link: 'https://baeguindex.com/survey.html?ref=' + token,
       level: tier,
       ownResponseVerified: tier>=1,
-      validReferrals: Number(enrollment?.validReferrals) === 1 ? 1 : 0,
+      // A-04: one canonical, quality-reviewed resolver determines both
+      // displayed referral success and Lv2 permission. The enrollment RPC's
+      // raw count may be stale or >1; never use it as separate authorization.
+      // Expose only a 0/1 achieved indicator, not the internal raw count.
+      validReferrals: tier===2 ? 1 : 0,
       provisional: tier===2,
     });
   } catch (err) {
