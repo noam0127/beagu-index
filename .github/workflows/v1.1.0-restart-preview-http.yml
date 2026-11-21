@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/workflows/v1.1.0-restart-preview-http.yml'
       - 'tests/staging-http-smoke.py'
+      - 'tests/site-release-packaging.py'
+      - 'scripts/release-manager/worker.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,6 +21,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Validate immutable production snapshot and isolated Supabase preview (offline)
+        run: python3 tests/site-release-packaging.py
       - name: Validate production and preview HTTP 200, HTML, and local assets
         env:
           BEAGU_SITE_ORIGIN: https://baeguindex.com
