@@ -13,7 +13,7 @@ create table if not exists beagu_private.member_sms_subscriptions_v1 (
   phone_verified_at timestamptz,
   updated_at timestamptz not null default now(),
   constraint member_sms_contact_valid check (
-    (sms_consent and phone_e164 ~ '^[+]8210[0-9]{8} and consented_at is not null)
+    (sms_consent and phone_e164 ~ '^[+]8210[0-9]{8}$' and consented_at is not null)
     or (not sms_consent and phone_e164 is null)
   )
 );
