@@ -36,7 +36,7 @@ const referral='https://baeguindex.com/survey.html?ref='+'a'.repeat(64);
 const shortLink='https://baeguindex.com/r/#aB3_dE-9';
 const session='b'.repeat(64);
 const storage=new Map(), copies=[], listeners={};
-let returned={link:referral,level:1,validReferrals:0,provisional:false};
+let returned={link:referral,level:0,ownResponseVerified:false,validReferrals:0,provisional:false};
 const mockWindow={
   addEventListener(type,cb){(listeners[type]??=[]).push(cb);},
   dispatchEvent(event){(listeners[event.type]||[]).forEach(cb=>cb(event));}
@@ -66,6 +66,14 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.challengeReferralLink.value,referral);
   assert.equal(el.challengeReferralTitle.textContent,'나의 전용 조사 링크');
 
+  // A server-verified own 2026 survey turns the same issued code into Lv1.
+  returned={link:referral,shortLink,level:1,ownResponseVerified:true,
+    validReferrals:0,provisional:false};
+  emit('focus');await tick();
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv1 참여코드');
+  assert.equal(el.challengeIdentityTag.textContent,'Lv.1 참여 확인');
+  assert.equal(el.copyIdentityCode.textContent,'코드 복사');
+
   returned.shortLink=shortLink;
   emit('focus');await tick();
   assert.equal(el.challengeReferralLink.value,shortLink);
@@ -73,13 +81,15 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(copies.at(-1),shortLink);
 
   // A client-supplied "level: 2" alone must not grant premium visuals.
-  returned={link:referral,shortLink,level:2,validReferrals:0,provisional:true};
+  returned={link:referral,shortLink,level:2,ownResponseVerified:false,
+    validReferrals:0,provisional:true};
   emit('focus');await tick();
   assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
 
   // A server-confirmed credit converts the original personal code card.
-  returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
+  returned={link:referral,shortLink,level:2,ownResponseVerified:true,
+    validReferrals:1,provisional:true};
   emit('focus');await tick();
   assert.equal(el.challengeIdentityTitle.textContent,'Lv2 참여코드');
   assert.equal(el.challengeIdentityTag.textContent,'Lv.2 달성 ✦');
