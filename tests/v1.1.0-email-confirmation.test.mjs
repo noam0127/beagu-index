@@ -116,3 +116,16 @@ test('all email/OAuth landing pages include status, correct script order and saf
   assert.doesNotMatch(script,/innerHTML\s*=/);
   assert.doesNotMatch(script,/localStorage\s*\.\s*setItem/);
 });
+
+test('password recovery links landing on signup page never claim email verification',async()=>{
+  for(const href of [root+'/challenge.html?code=fake&type=recovery',
+                     root+'/_preview/postit.html#error=expired&type=recovery']){
+    const r=await render(href);
+    assert.equal(r.status.dataset.state,'error');
+    assert.match(r.status.textContent,/비밀번호 재설정/);
+    assert.equal(r.logs.getSession,0);
+    assert.equal(r.logs.getUser,0);
+    assert.equal(r.logs.events.length,0);
+    assert.ok(r.logs.history.at(-1)?.startsWith(new URL(href).pathname));
+  }
+});
