@@ -128,6 +128,7 @@
   }
 
   function loggedOut(message = '') {
+    window.BeaguLv3SchoolFacts?.clear();
     session = '';
     verifiedTier=0;
     updateSortAccess();
