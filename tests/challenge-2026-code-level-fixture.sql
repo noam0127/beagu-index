@@ -1,7 +1,10 @@
 -- Disposable PostgreSQL 16 test data only. Never connect production.
 create role anon nologin;
 create role authenticated nologin;
-create role service_role nologin;
+create role service_role nologin bypassrls;
+-- Supabase service_role is privileged; this disposable fixture grants only
+-- the synthetic tables needed for direct assertions and review transitions.
+-- The production migration itself adds no browser-accessible private grants.
 create schema if not exists extensions;
 create extension if not exists pgcrypto with schema extensions;
 create schema if not exists beagu_private;
@@ -65,3 +68,9 @@ insert into beagu_private.challenge_referral_events(
 insert into beagu_private.challenge_referral_quality_reviews(
  event_sha256,quality_status,form_quality_attested
 ) values(repeat('b',64),'AUTO_PASS',true);
+
+-- Test-only catalog transitions made by a simulated service role.
+grant usage on schema beagu_private to service_role;
+grant select on beagu_private.challenge_identity_codes to service_role;
+grant select,update on beagu_private.challenge_referral_profiles to service_role;
+grant select,update on beagu_private.challenge_referral_quality_reviews to service_role;
