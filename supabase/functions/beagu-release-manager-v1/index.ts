@@ -2,6 +2,7 @@
 // GitHub Actions worker operations require a signed GitHub OIDC token restricted to this repo/workflow.
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.58.0";
 import {createRemoteJWKSet,jwtVerify} from "https://esm.sh/jose@5.10.0";
+import {collectGitHubWorkInbox} from "./github-work-inbox.mjs";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"",{
   auth:{persistSession:false,autoRefreshToken:false}
@@ -138,7 +139,9 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  if(action==="status"){
   const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
   let head=null,suggested_draft=null,pending=null;
-  let workInProgress:{number:number;title:string;url:string;updated_at:string;draft:boolean}[]=[];
+  let workInProgress:unknown[]=[];
+  let workInbox:unknown={status:"not_checked",open:[],recently_merged:[],merged_elsewhere:[]};
+  let commitScanError:string|null=null;
   const catalog=await releaseVersions();
   const {data:testHistory,error:testError}=await db.from("beagu_site_release_history_v1")
    .select("to_sha").eq("target","staging").order("deployed_at",{ascending:false}).limit(1000);
@@ -146,30 +149,35 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   const testedSha=new Set((testHistory||[]).map(h=>h.to_sha).filter(Boolean));
   const versionCatalog=catalog.map(v=>({...v,tested:testedSha.has(v.sha),
    on_staging:v.sha===s.staging_sha,on_production:v.sha===s.production_sha}));
-  if(input.check_latest===true)try{
-   const latest=await github("/commits/main");
-   head=typeof latest.sha==="string"?latest.sha:null;
-   // Open ChatGPT PRs are visible in the development inbox even before merge,
-   // but they are never falsely described as being included in a saved version.
+  if(input.check_latest===true){
+   // GitHub open and merged PRs are read-only metadata, never an approved release.
+   // Incomplete pages/errors must be visible in the UI, not reported as zero work.
    try{
-    const prs=await github("/pulls?state=open&per_page=30");
-    if(Array.isArray(prs))workInProgress=prs.map((p:{number?:number;title?:string;html_url?:string;updated_at?:string;draft?:boolean})=>({
-     number:Number(p.number)||0,title:String(p.title||"").slice(0,180),
-     url:String(p.html_url||""),updated_at:String(p.updated_at||""),
-     draft:p.draft===true
-    })).filter(p=>p.number>0&&p.url.startsWith("https://github.com/"+repo+"/pull/"));
-   }catch{ /* GitHub PR list is supplementary. */ }
-   const baseline=catalog[0]?.sha||s.production_sha;
-   if(head&&baseline&&head!==baseline){
-    const changes=await pendingChanges(baseline,head);
-    const proposal=await latestManifest();
-    if(proposal)suggested_draft={...proposal,sha:head};
-    pending={base_sha:baseline,head_sha:head,version_hint:proposal?.version||"",
-     summary_hint:proposal?.summary||"",...changes};
+    workInbox=await collectGitHubWorkInbox(
+     (page:number,perPage:number)=>github("/pulls?state=all&sort=updated&direction=desc&per_page="+perPage+"&page="+page),
+     {repository:repo,perPage:100,maxPages:3});
+    workInProgress=(workInbox as {open:unknown[]}).open;
+   }catch{
+    workInbox={status:"error",reason:"github_inbox_unavailable",open:[],recently_merged:[],merged_elsewhere:[]};
    }
-  }catch{ /* The release state and history remain available during GitHub outages. */ }
+   try{
+    const latest=await github("/commits/main");
+    head=typeof latest.sha==="string"&&SHA.test(latest.sha)?latest.sha:null;
+    const baseline=catalog[0]?.sha||s.production_sha;
+    if(head&&baseline&&head!==baseline){
+     try{
+      const changes=await pendingChanges(baseline,head);
+      const proposal=await latestManifest();
+      if(proposal)suggested_draft={...proposal,sha:head};
+      pending={base_sha:baseline,head_sha:head,version_hint:proposal?.version||"",
+       summary_hint:proposal?.summary||"",...changes};
+     }catch{commitScanError="github_compare_unavailable";}
+    }
+   }catch{commitScanError="github_main_unavailable";}
+  }
   return respond({state:s,job:current,head_sha:head,suggested_draft,
-    pending,work_in_progress:workInProgress,versions:versionCatalog,staging_history:stageHistory,
+    pending,work_in_progress:workInProgress,work_inbox:workInbox,commit_scan_error:commitScanError,
+    versions:versionCatalog,staging_history:stageHistory,
     production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",
     production_url:"https://baeguindex.com/"},200,origin);
  }
