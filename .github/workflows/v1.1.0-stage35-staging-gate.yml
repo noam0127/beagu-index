@@ -20,3 +20,18 @@ jobs:
         run: |
           echo "No production requests, user creation, database writes, or secrets."
           echo "Passing this check is NOT completion of stage 35."
+
+  admin-only-negative-control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify real staging admin API denies anonymous call
+        run: |
+          python3 - <<'PY'
+          import runpy
+          t=runpy.run_path('tests/v1.1.0-stage35-staging-deny.py',run_name='staging_security_library')
+          assert t['probe'](*t['PROBES'][2]), 'Staging admin endpoint must deny unauthenticated request'
+          PY
+      - name: Security scope notice
+        run: echo "Anonymous denial only; never infer valid admin MFA or cross-account permission success."
