@@ -1,0 +1,98 @@
+name: v1.1.0 — self-service member privacy and deletion request review
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-member-privacy.yml'
+      - 'account-privacy.html'
+      - 'challenge.html'
+      - 'postit.html'
+      - 'index.html'
+      - 'js/beagu-account-privacy-v1.js'
+      - 'js/beagu-account-privacy-page-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'supabase/functions/beagu-member-privacy-api-v1/index.ts'
+      - 'supabase/migrations/20261121234500_beagu_member_privacy_requests_v1.sql'
+      - 'tests/member-privacy-fixture.sql'
+      - 'tests/member-privacy-verify.sql'
+      - 'tests/v1.1.0-account-privacy.test.mjs'
+      - 'tests/v1.1.0-legacy-password.test.mjs'
+      - 'tests/v1.1.0-account-status.test.mjs'
+      - 'tests/v1.1.0-auth-error-ux.test.mjs'
+      - 'tests/challenge-lv2-account-entry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  privacy-rights:
+    name: No instant deletion; test account access request/erasure review offline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      pg:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_USER: postgres
+          POSTGRES_DB: isolated_privacy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d isolated_privacy_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-ci-only
+      PGDATABASE: isolated_privacy_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: JavaScript syntax and privacy Edge TypeScript check
+        run: |
+          node --check js/beagu-account-privacy-v1.js
+          node --check js/beagu-account-privacy-page-v1.js
+          node --check js/challenge-member-auth-v1.js
+          node --check js/postit-account-v1.js
+          deno check supabase/functions/beagu-member-privacy-api-v1/index.ts
+      - name: Auth self-service requests and existing account regression tests
+        run: |
+          node --test tests/v1.1.0-account-privacy.test.mjs tests/v1.1.0-sms-private-consent.test.mjs tests/v1.1.0-optional-sms-consent.test.mjs tests/v1.1.0-legacy-password.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-auth-error-ux.test.mjs tests/v1.1.0-session-restore.test.mjs tests/v1.1.0-unified-account-mode.test.mjs
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/postit-member-auth.cjs
+          node tests/admin-verified-email-enrollment-static.cjs
+          node scripts/test-admin-access.cjs
+      - name: Install PostgreSQL client when needed
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
+      - name: Create disposable Auth and SMS schema, never connect production
+        run: psql -v ON_ERROR_STOP=1 -f tests/sms-private-ledger-fixture.sql
+      - name: Apply stage-14 private SMS migration on isolated PostgreSQL only
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121230000_beagu_member_sms_consent_secure_v2.sql
+      - name: Create stage-15 audit fixture and apply its migration on isolated DB only
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/admin-member-moderation-fixture.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121233000_beagu_admin_member_management_v2.sql
+      - name: Set up artificial session and owner, no real user data
+        run: psql -v ON_ERROR_STOP=1 -f tests/member-privacy-fixture.sql
+      - name: Apply stage-16 private self-service request migration to disposable database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121234500_beagu_member_privacy_requests_v1.sql
+      - name: Verify request idempotency, privacy/RLS, cancellation, admin exclusion, no Auth deletion
+        run: psql -v ON_ERROR_STOP=1 -f tests/member-privacy-verify.sql
+      - name: Verify stage-16 preview release remains isolated from production
+        run: python3 tests/preview-db-isolation.py
