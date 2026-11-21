@@ -82,7 +82,7 @@ async function decorate(users: AuthUser[], admins: Map<string, { role: string; e
     linked = new Map((links.data || []).map(row => [String(row.auth_user_id), {
       status: String(row.status), linked_at: row.linked_at,
     }]));
-    sms = new Map((consent.data || []).map(row => [String(row.user_id), {
+    sms = new Map((consent.data || []).map((row:{user_id:string;sms_consent:boolean;phone_verified:boolean;withdrawn_at:string|null}) => [String(row.user_id), {
       sms_consent: row.sms_consent === true, phone_verified: row.phone_verified === true,
       withdrawn_at: row.withdrawn_at,
     }]));
