@@ -75,7 +75,7 @@ language plpgsql security definer set search_path='' as $fn$
 declare
  id uuid;
 begin
- if p_user is null or p_request is null or p_kind not in ('access','deletion')
+ if p_user is null or p_request is null or p_kind is null or p_kind not in ('access','deletion')
  then return jsonb_build_object('ok',false,'code','INVALID_REQUEST');end if;
  if not exists (
    select 1 from auth.users u where u.id=p_user
@@ -86,6 +86,10 @@ begin
  if exists(select 1 from public.beagu_admin_accounts a
     where a.user_id=p_user)
  then return jsonb_build_object('ok',false,'code','ADMIN_REVIEW_REQUIRED');end if;
+ if (select count(*) from beagu_private.member_privacy_requests_v1
+     where user_id=p_user and kind=p_kind
+       and requested_at>now()-interval '24 hours')>=5
+ then return jsonb_build_object('ok',false,'code','TOO_MANY_REQUESTS');end if;
  insert into beagu_private.member_privacy_requests_v1(
    request_id,user_id,kind,status
  ) values(p_request,p_user,p_kind,'pending')
@@ -110,7 +114,7 @@ language plpgsql security definer set search_path='' as $fn$
 declare
  updated_count int;
 begin
- if p_user is null or p_kind not in ('access','deletion')
+ if p_user is null or p_kind is null or p_kind not in ('access','deletion')
  then return jsonb_build_object('ok',false,'code','INVALID_REQUEST');end if;
  update beagu_private.member_privacy_requests_v1
   set status='cancelled',updated_at=now(),resolved_at=now()
