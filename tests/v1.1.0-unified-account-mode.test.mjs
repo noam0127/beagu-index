@@ -19,10 +19,11 @@ function create(options={}){
   form:field(),title:field(),description:field(),
   password:field('old-password'),submit:field(),
   switchButton:field(),smsFields:field(),
-  smsPhone:field('01012345678'),smsConsent:field(),
+  smsPhone:field('01012345678'),smsConsent:field(),smsCollectionConsent:field(),
   forgot:field(),google:field()
  };
  elements.smsConsent.checked=true;
+ elements.smsCollectionConsent.checked=true;
  const ui=window.BeaguAccountMode.create({...elements,...options});
  return {window,elements,ui};
 }
@@ -40,6 +41,8 @@ test('sign-in is initially one consistent screen and does not demand a new passw
  assert.equal(e.password.placeholder,'기존 비밀번호');
  assert.equal(e.smsFields.hidden,true);
  assert.equal(e.smsConsent.checked,false);
+ assert.equal(e.smsCollectionConsent.checked,false);
+ assert.equal(e.smsPhone.disabled,true);
  assert.equal(e.smsPhone.value,'');
  assert.equal(e.forgot.hidden,false);
  assert.equal(e.google.hidden,false);
@@ -50,6 +53,7 @@ test('signup uses the same form, a 10-char minimum and exposes optional unchecke
  ui.setMode('signin');
  e.password.value='old-user-secret';
  e.smsConsent.checked=true;
+ e.smsCollectionConsent.checked=true;
  e.smsPhone.value='01012345678';
  assert.equal(ui.toggle(),'signup');
  assert.equal(ui.mode(),'signup');
@@ -63,6 +67,8 @@ test('signup uses the same form, a 10-char minimum and exposes optional unchecke
  assert.equal(e.password.value,'');
  assert.equal(e.smsPhone.value,'');
  assert.equal(e.smsConsent.checked,false);
+ assert.equal(e.smsCollectionConsent.checked,false);
+ assert.equal(e.smsPhone.disabled,true);
  assert.equal(e.smsFields.hidden,false);
  assert.equal(e.forgot.hidden,true);
  assert.equal(e.google.hidden,true);
@@ -73,11 +79,14 @@ test('returning to sign-in clears signup password, phone and marketing opt-in',(
  ui.setMode('signup');
  e.password.value='my-very-long-signup-secret';
  e.smsConsent.checked=true;
+ e.smsCollectionConsent.checked=true;
  e.smsPhone.value='01012345678';
  assert.equal(ui.toggle(),'signin');
  assert.equal(e.password.value,'');
  assert.equal(e.smsPhone.value,'');
  assert.equal(e.smsConsent.checked,false);
+ assert.equal(e.smsCollectionConsent.checked,false);
+ assert.equal(e.smsPhone.disabled,true);
  assert.equal(e.smsFields.hidden,true);
  assert.equal(e.password.minLength,1);
  assert.equal(e.google.hidden,false);
@@ -116,7 +125,7 @@ test('Post-it uses one submit action and a mode switch without auto signup from 
  const html=read('postit.html');
  assert.match(html,/id="postitAccountHeading">Lv2 로그인/);
  assert.match(html,/id="postitAccountDescription"/);
- assert.match(html,/id="postitSmsFields" hidden/);
+ assert.match(html,/id="postitSmsFields"[^>]*hidden/);
  assert.match(html,/id="postitAccountLogin">로그인하기/);
  assert.match(html,/type="button" id="postitAccountSignup">계정이 없어요/);
  const code=read('js/postit-account-v1.js');
