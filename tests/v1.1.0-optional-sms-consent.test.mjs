@@ -121,16 +121,20 @@ test('both signup pages clearly disclose collection, marketing and withdrawal se
     html.indexOf(page==='challenge.html'?'js/challenge-member-auth-v1.js':'js/postit-account-v1.js'));
  }
 });
-test('signup handlers use shared consent payload and clear both choices on unsubscribe',()=>{
+test('signup routes no longer expose phone through Auth metadata; verified account settings own consent',()=>{
  for(const path of ['js/challenge-member-auth-v1.js','js/postit-account-v1.js']){
   const js=read(path);
   assert.match(js,/window\.BeaguSmsConsent\.create/);
-  assert.match(js,/smsPrivacy\.payload\(\)/);
-  assert.match(js,/data:selection\.consent/);
-  assert.match(js,/smsPrivacy\.clear\(\)/);
-  assert.match(js,/beagu_phone_collection_opt_in:false,beagu_sms_phone:null/);
+  assert.match(js,/window\.BeaguSmsAccountSettings\.create/);
+  assert.doesNotMatch(js,/data:selection\.consent/);
   assert.doesNotMatch(js,/beagu_sms_phone:wantsSms\?mobile:null/);
+  assert.doesNotMatch(js,/auth\.updateUser\(\{data:\{beagu_sms_opt_in:false/);
  }
+ const client=read('js/beagu-sms-account-settings-v2.js');
+ assert.match(client,/consent\.payload\(\)/);
+ assert.match(client,/api\('opt_in'/);
+ assert.match(client,/api\('withdraw'/);
+ assert.doesNotMatch(client,/localStorage|sessionStorage/);
  assert.doesNotMatch(code,/localStorage|sessionStorage|console\.log|innerHTML/);
 });
 test('one incomplete opt-in has safe actionable feedback and does not imply signup rejection',()=>{
