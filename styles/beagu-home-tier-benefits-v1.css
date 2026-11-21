@@ -1,0 +1,25 @@
+/* Stage31: optional, informational home journey. Never gate website data
+ * with CSS; protected endpoints continue checking permissions server-side. */
+.beagu-home-tier{grid-column:1/-1;min-width:0;margin:12px 0 4px;padding:19px 20px;
+  border:1px solid #dbe3ed;border-radius:20px;background:#fff;color:#1b304c;
+  box-shadow:0 3px 15px rgba(17,40,68,.035)}
+.beagu-home-tier-head{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:7px 16px}
+.beagu-home-tier-head h2{margin:0;font-size:18px;line-height:1.35;letter-spacing:-.04em}
+.beagu-home-tier-summary{font-size:12px;font-weight:800;color:#536882}
+.beagu-home-tier-detail{font-size:13px;line-height:1.6;color:#53647b;margin:9px 0 15px}
+.beagu-home-tier-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;list-style:none;padding:0;margin:0}
+.beagu-home-tier-card{min-width:0;border:1px solid #dfe6f0;border-radius:12px;padding:12px 11px;background:#fafbfc}
+.beagu-home-tier-card strong{display:block;font-weight:850;font-size:16px;line-height:1.3;letter-spacing:-.02em}
+.beagu-home-tier-card p{font-size:11px;line-height:1.55;margin:7px 0;color:#64748b}
+.beagu-home-tier-card [data-home-tier-state]{display:block;margin-top:9px;font-size:11px;font-weight:750;color:#64748b}
+.beagu-home-tier-card[data-tier-state="current"]{background:#eef4fd;border:2px solid #8db3ec;padding:11px 10px}
+.beagu-home-tier-card[data-tier-state="current"] [data-home-tier-state]{color:#2059b1}
+.beagu-home-tier-card[data-tier-state="available"]{background:#fff;border-color:#a7c1e0}
+.beagu-home-tier-card[data-tier-state="locked"]{opacity:.77}
+.beagu-home-tier-card[data-tier-state="pending"]{opacity:.8}
+.beagu-home-tier-links{display:flex;gap:8px 18px;flex-wrap:wrap;margin-top:15px;font-size:12px;font-weight:750}
+.beagu-home-tier-links a{color:#2458ad;text-underline-offset:3px}
+.beagu-home-tier-links a:focus-visible{outline:3px solid #92bbfa;outline-offset:3px}
+.beagu-home-tier[data-verification="error"] .beagu-home-tier-summary{color:#99551f}
+@media(max-width:700px){.beagu-home-tier{padding:16px 15px}.beagu-home-tier-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:390px){.beagu-home-tier{padding:13px 12px}.beagu-home-tier-grid{gap:7px}.beagu-home-tier-card{padding:10px 8px}.beagu-home-tier-card[data-tier-state="current"]{padding:9px 7px}.beagu-home-tier-card strong{font-size:14px}.beagu-home-tier-head h2{font-size:17px}}
