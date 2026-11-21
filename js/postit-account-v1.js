@@ -39,13 +39,14 @@ const accountMode=window.BeaguAccountMode.create({
  google:$('postitAccountGoogle')
 });
 accountMode.setMode('signin');
-let linked=false,busy=false,generation=0;
+let linked=false,lv3LinkReady=false,busy=false,generation=0;
 const levelToken=()=>{try{return sessionStorage.getItem(levelKey)||''}catch{return ''}};
 const restored=window.BeaguSessionRestore.create({client,getLevelToken:levelToken,
  levelUrl:'https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api',
  request:(...args)=>fetch(...args)});
-function setLinked(next){
+function setLinked(next,ready=false){
  linked=next===true;
+ lv3LinkReady=linked&&ready===true;
  window.dispatchEvent(new CustomEvent('beagu:postit-account-status',{detail:{linked}}));
 }
 function message(value){status.dataset.state='info';status.textContent=value;}
@@ -80,7 +81,7 @@ function render(user,serverLevelVerified=false){
  if(!signedIn)showState('signin-required');
  else if(!emailVerified)showState('email-pending');
  else if(!serverLevelVerified)showState('level-required');
- else if(linked)showState('linked');
+ else if(linked)showState(lv3LinkReady?'lv3-link-ready':'linked');
  else if(!originalDevice())showState('device-required');
  else showState('link-ready');
 }
@@ -107,7 +108,7 @@ async function refresh(){
   }});
   if(id!==generation)return;
   const body=await response.json().catch(()=>({}));
-  setLinked(response.ok&&body.linked===true);
+  setLinked(response.ok&&body.linked===true,response.ok&&body.lv3LinkReady===true);
  }catch{if(id===generation)setLinked(false)}
  if(id===generation)render(user,true);
 }
