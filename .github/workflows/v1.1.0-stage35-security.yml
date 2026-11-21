@@ -1,0 +1,32 @@
+name: v1.1.0 stage35 security boundaries (read-only)
+on:
+  pull_request:
+    paths:
+      - 'tests/v1.1.0-stage35-security-static.mjs'
+      - 'supabase/functions/beagu-level-api/**'
+      - 'supabase/functions/beagu-postit-api-v1/**'
+      - 'supabase/functions/beagu-admin-members-v1/**'
+      - 'scripts/release-manager/worker.py'
+      - 'js/**'
+      - '*.html'
+      - '.github/workflows/v1.1.0-stage35-security.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  security-static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify API auth gates and no browser secrets
+        run: node tests/v1.1.0-stage35-security-static.mjs
+      - name: Check isolated preview artifact contract
+        run: python3 tests/site-release-packaging.py
+      - name: Scope and safety
+        run: |
+          echo 'Read-only source checks. No live database queries, writes, or deployments.'
+          echo 'Staging Lv3 cross-account/RLS/HTTP E2E remains a separate blocking gate.'
