@@ -1,0 +1,47 @@
+/* Shared Lv2 account mode design — a single form switches sign-in/signup.
+ * Each page retains its own layout; no membership authorization is implied.
+ */
+.beagu-account-unified-form[data-mode="signup"]{
+  --beagu-auth-accent:#245fa7;
+}
+.beagu-account-unified-form[data-mode="signin"]{
+  --beagu-auth-accent:#315a86;
+}
+.beagu-account-unified-form button[type="submit"]{
+  min-height:44px;
+  font-weight:750;
+  border-radius:10px;
+  transition:filter .15s ease;
+}
+.beagu-account-unified-form button[type="submit"]:hover{
+  filter:brightness(.97);
+}
+.beagu-account-unified-form [type="password"]{
+  min-height:44px;
+}
+.postit-account .beagu-account-unified-form .postit-account-actions{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:7px;
+}
+.postit-account .beagu-account-unified-form #postitAccountLogin{
+  background:#225bb8;color:#fff;border-color:#225bb8;
+  font-size:13px;
+}
+.postit-account .beagu-account-unified-form #postitAccountSignup{
+  background:#fff;color:#22518c;border-color:#c7d8ec;
+  font-size:13px;
+}
+.postit-account .beagu-account-unified-form #postitAccountForgot{
+  justify-self:center;
+  margin:0 0 2px;
+}
+.postit-account #postitAccountDescription{
+  color:#66788f;line-height:1.65;font-size:13px;
+}
+.challenge-member-dialog .beagu-account-unified-form #challengeMemberSubmit{
+  width:100%;
+}
+@media(prefers-reduced-motion:reduce){
+ .beagu-account-unified-form button[type="submit"]{transition:none}
+}
