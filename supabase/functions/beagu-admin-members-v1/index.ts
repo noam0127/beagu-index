@@ -128,12 +128,27 @@ async function allUsers(): Promise<{ users: AuthUser[]; truncated: boolean }> {
 async function listMembers(input: Record<string, unknown>) {
   const search = typeof input.search === "string" ? input.search.trim().slice(0, 100) : "";
   const page = Math.min(200, Math.max(1, Math.floor(Number(input.page) || 1)));
+  const status = ["all","confirmed","unconfirmed","suspended"].includes(String(input.status))
+    ? String(input.status) : "all";
+  const sort = ["newest","oldest","email"].includes(String(input.sort))
+    ? String(input.sort) : "newest";
   const admins = await adminMap();
   const { users, truncated } = await allUsers();
-  const ordered = users.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+  const now = Date.now();
   const q = search.toLocaleLowerCase("ko-KR");
-  const filtered = q ? ordered.filter(u => (u.email || "").toLocaleLowerCase("ko-KR").includes(q) ||
-    u.id.toLowerCase().includes(q)) : ordered;
+  const filtered = users.filter(u => {
+    if (q && !(u.email || "").toLocaleLowerCase("ko-KR").includes(q) &&
+      !u.id.toLowerCase().includes(q)) return false;
+    if (status === "confirmed" && !u.email_confirmed_at) return false;
+    if (status === "unconfirmed" && u.email_confirmed_at) return false;
+    if (status === "suspended" &&
+      !(u.banned_until && Date.parse(u.banned_until) > now)) return false;
+    return true;
+  });
+  filtered.sort((a,b) => sort === "email"
+    ? (a.email || "").localeCompare(b.email || "", "ko-KR") || a.id.localeCompare(b.id)
+    : (sort === "oldest" ? 1 : -1) *
+      ((a.created_at || "").localeCompare(b.created_at || "") || a.id.localeCompare(b.id)));
   const pageSize = 20;
   const selected = filtered.slice((page - 1) * pageSize, page * pageSize);
   return {
@@ -145,6 +160,7 @@ async function listMembers(input: Record<string, unknown>) {
     unconfirmed_scanned: users.filter(u => !u.email_confirmed_at).length,
     suspended_scanned: users.filter(u => u.banned_until && Date.parse(u.banned_until) > Date.now()).length,
     truncated,
+    search_scope: truncated ? "partial" : "complete",
   };
 }
 // Server-only lookup. The RPC returns no identity code, visitor ID, or referral token.

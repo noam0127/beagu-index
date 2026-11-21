@@ -1,0 +1,13 @@
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const html=fs.readFileSync("admin.html","utf8");
+const browser=fs.readFileSync("js/beagu-admin-members-v1.js","utf8");
+const server=fs.readFileSync("supabase/functions/beagu-admin-members-v1/index.ts","utf8");
+for(const id of ["adminMembersFilter","adminMembersSort"])assert.ok(html.includes('id="'+id+'"'));
+assert.match(browser,/status:memberStatus,sort:memberSort/);
+assert.match(browser,/최대 4,000개 계정 내 검색/);
+assert.match(server,/status === "unconfirmed"/);
+assert.match(server,/status === "suspended"/);
+assert.match(server,/sort === "email"/);
+assert.match(server,/search_scope: truncated \? "partial" : "complete"/);
+console.log("PASS: member filters and bounded-search warning static contract");
