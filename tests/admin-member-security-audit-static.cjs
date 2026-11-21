@@ -1,0 +1,13 @@
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const api=fs.readFileSync("supabase/functions/beagu-admin-members-v1/index.ts","utf8");
+const ui=fs.readFileSync("js/beagu-admin-members-v1.js","utf8");
+assert.match(api,/claims\.aal !== "aal2"/);
+assert.match(api,/beagu_admin_active_mfa_session/);
+assert.match(api,/actor\.role !== "owner"/);
+assert.match(api,/cannot_moderate_admin/);
+assert.match(api,/moderation_history = \(events \|\| \[\]\)\.map/);
+assert.match(api,/audit_recorded: false/);
+assert.match(ui,/result\.audit_recorded === true/);
+assert.match(ui,/감사 기록 저장 실패/);
+console.log("PASS: member security static assertions");
