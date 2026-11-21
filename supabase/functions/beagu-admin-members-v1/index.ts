@@ -154,7 +154,7 @@ async function challengeSummary(id: string) {
   });
   if (error) throw new HttpError(503, "challenge_summary_unavailable");
   const row = Array.isArray(data) ? data[0] : data;
-  if (!row || row.link_status !== "active") {
+  if (!row || row.link_status !== "active" || row.participant_no == null) {
     return { linked: false, participant_no: null, access_level: null, valid_referrals: null };
   }
   return {
