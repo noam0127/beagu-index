@@ -1,0 +1,32 @@
+/* Accessible account progress: status is information, never a permission grant. */
+.beagu-account-steps{
+ display:block;
+ margin:8px 0 12px;
+ font-size:11px;
+ line-height:1.65;
+ color:#5e7189;
+}
+.beagu-account-status{
+ display:block;
+ padding:10px 12px;
+ border:1px solid #d9e2ee;
+ border-radius:10px;
+ background:transparent;
+ color:#354f70;
+ font-size:12px;
+ line-height:1.65;
+ white-space:normal;
+ overflow-wrap:anywhere;
+}
+.beagu-account-status[data-state="email-pending"],
+.beagu-account-status[data-state="level-required"]{
+ border-style:dashed;
+}
+.beagu-account-status[data-state="error"],
+.beagu-account-status[data-state="signin-failed"],
+.beagu-account-status[data-state="signup-failed"]{
+ border-style:dotted;
+}
+.challenge-member-dialog .beagu-account-steps{margin:10px 0 8px}
+.postit-account .beagu-account-steps{margin:10px 0 14px}
+.postit-account .beagu-account-status{min-height:20px}
