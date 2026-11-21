@@ -22,19 +22,33 @@ PROBES = [
     ("admin-members", "beagu-admin-members-v1", "POST", b'{"action":"list","page":1}'),
 ]
 
+# Deterministic dummy token 0*64 was inserted in the isolated test database
+# with expires_at in the past; it contains no member or school information.
+# The 1*64 token is not present in the test DB. These two negative controls
+# cannot establish correct handling of *valid* sessions or Lv3 authorization.
+SESSION_NEGATIVE_PROBES = [
+    ("expired-level-session", "beagu-level-api", "POST", b'{"action":"verify"}',
+     {"X-Beagu-Session": "0" * 64}),
+    ("forged-level-session", "beagu-level-api", "POST", b'{"action":"verify"}',
+     {"X-Beagu-Session": "1" * 64}),
+    ("invalid-token-format", "beagu-level-api", "POST", b'{"action":"verify"}',
+     {"X-Beagu-Session": "0" * 63}),
+]
+
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         raise urllib.error.HTTPError(req.full_url, code, "REDIRECT_BLOCKED", headers, fp)
 
 
-def probe(name, path, method, body):
+def probe(name, path, method, body, additional_headers=None):
     url = BASE + path
     request = urllib.request.Request(
         url,
         data=body,
         method=method,
-        headers={"Content-Type": "application/json", "Accept": "application/json"},
+        headers={"Content-Type": "application/json", "Accept": "application/json",
+                 **(additional_headers or {})},
     )
     opener = urllib.request.build_opener(NoRedirect)
     try:
@@ -52,7 +66,7 @@ def probe(name, path, method, body):
     except (ValueError, UnicodeDecodeError):
         payload = {}
     if status in (401, 403):
-        print(f"PASS anonymous-denial {name}: HTTP {status} (business authorization still unverified)")
+        print(f"PASS access-denial {name}: HTTP {status} (valid-session authorization unverified)")
         return True
     if status == 404:
         print(f"BLOCKED {name}: function not provisioned (HTTP 404)")
@@ -68,8 +82,8 @@ def probe(name, path, method, body):
 
 
 if __name__ == "__main__":
-    passed = [probe(*item) for item in PROBES]
+    passed = [probe(*item) for item in PROBES + SESSION_NEGATIVE_PROBES]
     if not all(passed):
         print("STAGE35_BLOCKED: complete staging schema/function provisioning and re-run.")
         sys.exit(1)
-    print("STAGE35_PARTIAL: anonymous endpoint denial passed; Lv1-Lv3 and cross-account E2E remain mandatory.")
+    print("STAGE35_PARTIAL: anonymous, expired, forged and malformed credentials denied; Lv1-Lv3 and cross-account E2E remain mandatory.")
