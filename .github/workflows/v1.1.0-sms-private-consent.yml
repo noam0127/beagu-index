@@ -1,0 +1,87 @@
+name: v1.1.0 — private SMS consent storage and erasure (draft verification)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-sms-private-consent.yml'
+      - 'supabase/migrations/20261121230000_beagu_member_sms_consent_secure_v2.sql'
+      - 'supabase/functions/beagu-member-sms-api-v2/index.ts'
+      - 'tests/sms-private-ledger-fixture.sql'
+      - 'tests/sms-private-ledger-verify.sql'
+      - 'tests/v1.1.0-sms-private-consent.test.mjs'
+      - 'js/beagu-sms-account-settings-v2.js'
+      - 'js/beagu-sms-consent-v1.js'
+      - 'js/beagu-account-mode-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'challenge.html'
+      - 'postit.html'
+      - 'tests/v1.1.0-optional-sms-consent.test.mjs'
+      - 'tests/v1.1.0-legacy-password.test.mjs'
+      - 'tests/v1.1.0-account-status.test.mjs'
+      - 'tests/v1.1.0-auth-error-ux.test.mjs'
+      - 'tests/challenge-lv2-account-entry.mjs'
+      - 'tests/postit-member-auth.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  private-sms-qa:
+    name: Test isolated PostgreSQL RLS, consent audit and erasure (NO PROD DB ACCESS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      pg:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_USER: postgres
+          POSTGRES_DB: isolated_sms_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d isolated_sms_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-ci-only
+      PGDATABASE: isolated_sms_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check JavaScript account code syntax
+        run: |
+          node --check js/beagu-sms-account-settings-v2.js
+          node --check js/beagu-sms-consent-v1.js
+          node --check js/challenge-member-auth-v1.js
+          node --check js/postit-account-v1.js
+      - name: Run post-verification consent and existing membership regression
+        run: |
+          node --test tests/v1.1.0-sms-private-consent.test.mjs tests/v1.1.0-optional-sms-consent.test.mjs tests/v1.1.0-legacy-password.test.mjs tests/v1.1.0-unified-account-mode.test.mjs tests/v1.1.0-auth-error-ux.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-session-restore.test.mjs
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/postit-member-auth.cjs
+          node tests/admin-verified-email-enrollment-static.cjs
+          node scripts/test-admin-access.cjs
+      - name: Install PostgreSQL client only if unavailable
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
+      - name: Build empty isolated Auth and private consent schema
+        run: psql -v ON_ERROR_STOP=1 -f tests/sms-private-ledger-fixture.sql
+      - name: Apply draft SMS migration to disposable database ONLY
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121230000_beagu_member_sms_consent_secure_v2.sql
+      - name: Assert no public RLS access, reconsent security, deletion and event audit
+        run: psql -v ON_ERROR_STOP=1 -f tests/sms-private-ledger-verify.sql
+      - name: Confirm preview release stays isolated from real services
+        run: python3 tests/preview-db-isolation.py
