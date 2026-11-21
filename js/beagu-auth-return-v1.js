@@ -8,7 +8,8 @@
   const supportedPages = Object.freeze({
     challenge: 'challenge.html',
     postit: 'postit.html',
-    adminEnroll: 'admin-enroll.html'
+    adminEnroll: 'admin-enroll.html',
+    passwordReset: 'password-reset.html'
   });
   function resolve(page) {
     if (!Object.prototype.hasOwnProperty.call(supportedPages, page))
