@@ -79,30 +79,49 @@
     if (role !== "owner") return;
     const seq = ++serial;
     status("회원 목록을 불러오는 중입니다.");
+    // Do not leave old filtered members/PII on screen during an in-flight
+    // query, account switch, or token-expiration verification.
+    $("adminMembersRows").replaceChildren();
     $("adminMembersPrev").disabled = true;
     $("adminMembersNext").disabled = true;
     try {
       const data = await request("list", {page,search,filter});
       if (seq !== serial || role !== "owner") return;
+      // Stage34: never present a partial 4,000-user legacy listing as the
+      // complete member population. Missing counts, oversized responses and
+      // stale pages fail closed instead of manufacturing a "0" statistic.
+      const counts = ["total_matches","total_users_scanned",
+        "total_admins_scanned","unconfirmed_scanned","suspended_scanned"];
+      if(!data||!Array.isArray(data.rows)||data.rows.length>20||
+        data.truncated!==false||data.page!==page||data.page_size!==20||
+        !counts.every(name=>Number.isSafeInteger(data[name])&&data[name]>=0)||
+        data.total_matches>data.total_users_scanned)
+        throw Error("invalid_member_directory");
       total = data.total_matches;
       pageSize = data.page_size;
+      const pages=Math.max(1,Math.ceil(total/pageSize));
+      if(page>pages){page=pages;void refresh();return;}
       text("adminMembersTotal", Number(data.total_users_scanned).toLocaleString("ko-KR"));
       text("adminMembersAdminCount", Number(data.total_admins_scanned).toLocaleString("ko-KR"));
       text("adminMembersUnconfirmed", Number(data.unconfirmed_scanned).toLocaleString("ko-KR"));
       text("adminMembersSuspended", Number(data.suspended_scanned).toLocaleString("ko-KR"));
       showRows(data.rows || []);
-      const pages = Math.max(1, Math.ceil(total / pageSize));
       text("adminMembersPage", page + " / " + pages);
       $("adminMembersPrev").disabled = page <= 1;
       $("adminMembersNext").disabled = page >= pages;
       const scanned = Number(data.total_users_scanned).toLocaleString("ko-KR");
-      status(total.toLocaleString("ko-KR") + "명 검색됨 · 인증 계정 " + scanned + "개 조회" +
-        (data.truncated ? " · 대량 계정의 일부만 검색됨" : "") +
-        " · 참여코드 발급자 수와는 다릅니다.");
+      status(total.toLocaleString("ko-KR") + "명 검색됨 · 전체 인증 계정 " + scanned +
+        "개 집계 · 한 페이지에 최대 20명만 조회 · 참여코드 발급자 수와는 다릅니다.");
     } catch (error) {
       if (seq !== serial || role !== "owner") return;
       if (error?.status === 401 || error?.status === 403) {reset();return;}
-      showRows([]);
+      total=0;pageSize=20;
+      for(const id of ["adminMembersTotal","adminMembersAdminCount",
+        "adminMembersUnconfirmed","adminMembersSuspended"]) text(id,"—");
+      text("adminMembersPage","조회 불가");
+      const tbody=$("adminMembersRows"),tr=node("tr");
+      const td=node("td","empty","회원 목록 조회 실패 · 이전 자료를 표시하지 않습니다.");
+      td.colSpan=6;tr.append(td);tbody.replaceChildren(tr);
       status("회원 목록을 불러오지 못했습니다. 관리자 인증 상태 또는 연결을 확인해 주세요.", true);
     }
   }
