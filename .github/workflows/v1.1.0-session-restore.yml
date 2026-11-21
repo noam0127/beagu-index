@@ -1,0 +1,50 @@
+name: v1.1.0 — server-verified session restoration
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-session-restore.yml'
+      - 'js/beagu-session-restore-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'challenge.html'
+      - 'postit.html'
+      - 'tests/v1.1.0-session-restore.test.mjs'
+      - 'tests/v1.1.0-account-status.test.mjs'
+      - 'tests/v1.1.0-legacy-password.test.mjs'
+      - 'tests/challenge-lv2-account-entry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  session-restore:
+    name: Restore Auth session and recheck Lv2 on each visit — fake accounts only
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check session restore and account script syntax
+        run: |
+          node --check js/beagu-session-restore-v1.js
+          node --check js/challenge-member-auth-v1.js
+          node --check js/postit-account-v1.js
+      - name: Run session, account state and legacy-password regression tests
+        run: node --test tests/v1.1.0-session-restore.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-legacy-password.test.mjs tests/v1.1.0-unified-account-mode.test.mjs
+      - name: Run account entry, Post-it writer and admin security regressions
+        run: |
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/postit-member-auth.cjs
+          node tests/admin-verified-email-enrollment-static.cjs
+          node scripts/test-admin-access.cjs
+      - name: Confirm preview packaged site is isolated from production DB
+        run: python3 tests/preview-db-isolation.py
