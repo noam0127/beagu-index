@@ -100,6 +100,18 @@
       text("adminMembersAdminCount", Number(data.total_admins_scanned).toLocaleString("ko-KR"));
       text("adminMembersUnconfirmed", Number(data.unconfirmed_scanned).toLocaleString("ko-KR"));
       text("adminMembersSuspended", Number(data.suspended_scanned).toLocaleString("ko-KR"));
+      for (const [id, field] of [
+        ["adminMembersConfirmed","confirmed_scanned"],
+        ["adminMembersRecentLogin","recent_login_30d"],
+        ["adminMembersLinked","linked_member_accounts"],
+        ["adminChallengeCodes","challenge_2026_codes"],
+        ["adminReferralProfiles","challenge_2026_referral_profiles"],
+        ["adminVerifiedReferrers","challenge_2026_verified_referrers"],
+      ]) {
+        const value = data[field];
+        text(id, Number.isSafeInteger(Number(value)) && value != null && Number(value) >= 0
+          ? Number(value).toLocaleString("ko-KR") : "—");
+      }
       showRows(data.rows || []);
       const pages = Math.max(1, Math.ceil(total / pageSize));
       text("adminMembersPage", page + " / " + pages);
@@ -267,7 +279,9 @@
     $("adminMemberDetailPanel").hidden = true;
     $("adminMembersRows").replaceChildren();
     for (const id of ["adminMembersTotal","adminMembersAdminCount",
-      "adminMembersUnconfirmed","adminMembersSuspended"]) text(id,"—");
+      "adminMembersUnconfirmed","adminMembersSuspended",
+      "adminMembersConfirmed","adminMembersRecentLogin","adminMembersLinked",
+      "adminChallengeCodes","adminReferralProfiles","adminVerifiedReferrers"]) text(id,"—");
     status("관리자 인증 후 표시됩니다.");
   }
   window.BeaguMembersAdmin = {mount,reset};
