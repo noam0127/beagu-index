@@ -1,0 +1,81 @@
+name: v1.1.0 stage34 — 10,001 synthetic member scaling (NO DEPLOY)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-stage34-member-capacity.yml'
+      - 'supabase/functions/beagu-admin-members-v1/index.ts'
+      - 'supabase/functions/_shared/beagu-member-management-v2.ts'
+      - 'supabase/migrations/20261122041000_beagu_admin_member_directory_paged_v3.sql'
+      - 'tests/stage34-member-directory-10001-fixture.sql'
+      - 'tests/stage34-member-directory-10001-verify.sql'
+      - 'tests/v1.1.0-stage34-large-member-directory.test.mjs'
+      - 'tests/v1.1.0-admin-members-ui.test.mjs'
+      - 'tests/admin-members-static.cjs'
+      - 'admin.html'
+      - 'js/beagu-admin-members-v1.js'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-directory:
+    name: 4,001 and 10,001 synthetic users; Owner+AAL2 and 20-record pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    services:
+      pg:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: synthetic-stage34-only
+          POSTGRES_DB: stage34_isolated
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d stage34_isolated"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: synthetic-stage34-only
+      PGDATABASE: stage34_isolated
+      BEAGU_ALLOW_PRODUCTION_WRITES: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Parse browser and private Edge modules
+        run: |
+          node --check js/beagu-admin-members-v1.js
+          deno check supabase/functions/beagu-admin-members-v1/index.ts
+      - name: Run 4,001 / 10,001 mock browser pagination and existing privacy regressions
+        run: |
+          node --test tests/v1.1.0-stage34-large-member-directory.test.mjs tests/v1.1.0-admin-members-ui.test.mjs
+          node tests/admin-members-static.cjs
+          node scripts/test-admin-access.cjs
+      - name: Keep previous Owner-only moderation / audit-before-ban tests
+        run: deno test --allow-read tests/v1.1.0-admin-member-moderation.test.ts
+      - name: Prepare PostgreSQL client
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
+      - name: Create isolated 10,001 synthetic Auth profiles, no real credentials
+        run: psql -v ON_ERROR_STOP=1 -f tests/stage34-member-directory-10001-fixture.sql
+      - name: Apply draft service-role-only member pagination to disposable PostgreSQL
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261122041000_beagu_admin_member_directory_paged_v3.sql
+      - name: Verify exact pagination, filters, access restrictions at 4,001st and 10,001st users
+        run: psql -v ON_ERROR_STOP=1 -f tests/stage34-member-directory-10001-verify.sql
+      - name: No production DB, Forms or external login exposure in isolated preview build
+        run: python3 tests/preview-db-isolation.py
