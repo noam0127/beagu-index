@@ -51,3 +51,7 @@
 .release-catalog-item p{font-size:12px;margin:7px 0 0;color:#48617f}
 .release-catalog-changes{color:#7688a0!important;line-height:1.55;max-height:62px;overflow:auto}
 @media(max-width:700px){.release-pending-item{flex-direction:column;gap:3px}.release-pending-log{max-height:300px}}
+
+.release-inbox-subtitle{font-size:14px;margin:19px 0 9px;color:#3a5275}
+.release-pr-link{font-size:13px;font-weight:680;text-decoration:underline;text-underline-offset:3px;line-height:1.5}
+.release-pr-status{font-size:11px;white-space:nowrap;color:#637895}
