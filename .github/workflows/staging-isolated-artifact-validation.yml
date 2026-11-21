@@ -1,0 +1,53 @@
+name: Isolated staging artifact validation (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/release-manager/build-isolated-staging.py'
+      - 'tests/release-step13-standalone-staging.py'
+      - '.github/workflows/staging-isolated-artifact-validation.yml'
+      - '.github/workflows/beagu-release-controller.yml'
+      - 'js/**'
+      - 'styles/**'
+      - '*.html'
+      - 'data/**'
+permissions:
+  contents: read
+jobs:
+  standalone-stage-build:
+    # Never execute code from a fork or use deployment privileges.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify standalone isolation and unsafe origin handling
+        run: python3 tests/release-step13-standalone-staging.py
+      - name: Create audit-only standalone artifact (fake offline origin)
+        env:
+          STAGING_OFFLINE_ORIGIN: https://preview-build.invalid
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          python3 scripts/release-manager/build-isolated-staging.py \
+            --sha "$SHA" \
+            --origin "$STAGING_OFFLINE_ORIGIN" \
+            --output "$RUNNER_TEMP/beagu-isolated-staging"
+          test ! -e "$RUNNER_TEMP/beagu-isolated-staging/CNAME"
+          test ! -e "$RUNNER_TEMP/beagu-isolated-staging/_preview"
+          test -f "$RUNNER_TEMP/beagu-isolated-staging/robots.txt"
+      - name: Preserve isolated HTML for manual security inspection only
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolated-staging-audit-${{ github.event.pull_request.number }}
+          path: ${{ runner.temp }}/beagu-isolated-staging/
+          retention-days: 1
+          if-no-files-found: error
+# INTENTIONALLY NO pages:write, id-token:write, deploy-pages,
+# Supabase service-role tokens, SSH, publishing or network write commands.

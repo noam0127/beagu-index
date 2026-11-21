@@ -23,6 +23,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   approved-release:
+    # v2 step 13: shared Pages artifact republishes the production root.
+    # Paused until a separately reviewed independent-hosting migration.
+    if: ${{ false }}
     name: Publish only admin-requested, approved SHA
     runs-on: ubuntu-latest
     timeout-minutes: 14
