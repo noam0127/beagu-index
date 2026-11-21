@@ -96,7 +96,7 @@ test('Lv1 housing sort is rejected on server and disabled in UI, Lv2 retains old
  assert.match(browser,/opt\.disabled=locked/);
  assert.match(browser,/verifiedTier=Number\(data\.level\)\|\|0/);
  assert.match(browser,/verifiedTier=Number\(state\.level\)\|\|0/);
- assert.match(browser,/if\(opt\.disabled&&\$\('regionSort'\)\.value==='housing_price_won'\)/);
+ assert.match(browser,/if\(locked&&select\.value==='housing_price_won'\)/);
  assert.doesNotThrow(()=>new vm.Script(browser));
 });
 test('Stage22 separate endpoint is not loaded in production HTML, release switch remains OFF',()=>{
