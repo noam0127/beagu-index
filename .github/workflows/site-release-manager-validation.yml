@@ -12,6 +12,7 @@ on:
       - 'supabase/migrations/20261121_site_release_manager.sql'
       - 'supabase/functions/beagu-release-manager-v1/**'
       - 'tests/site-release-center.mjs'
+      - 'tests/site-release-two-sha-isolation.py'
   workflow_dispatch:
 jobs:
   check:
@@ -33,3 +34,4 @@ jobs:
         run: |
           node --test tests/site-release-center.mjs
           python3 tests/site-release-packaging.py
+          python3 tests/site-release-two-sha-isolation.py
