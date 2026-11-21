@@ -109,11 +109,12 @@ test("server enforces freeze before any release write and does not consume brows
  const s=readFileSync("supabase/functions/beagu-release-manager-v1/index.ts","utf8");
  assert.match(s,/import \{evaluateReleaseSnapshotGate\} from "\.\/release-snapshot-gate\.mjs"/);
  assert.match(s,/const VERSION_FINALIZATION_PAUSED=true;/);
- const before=s.slice(s.indexOf("async function adminAction("),s.indexOf(" const s=await state();",s.indexOf("async function adminAction(")));
+ const before=s.slice(s.indexOf("async function adminAction("),s.indexOf(' if(action==="status"){',s.indexOf("async function adminAction(")));
  for(const action of ["create_version","register","stage_apply"])assert.ok(before.includes('"'+action+'"'));
  assert.match(before,/github\("\/commits\/main"\)/);
  assert.match(before,/integratedSha:null/);
  assert.match(before,/evidence:null/);
+ assert.match(before,/job:current/);
  assert.match(before,/ownerApproved:false/);
  assert.match(before,/error:"version_snapshot_blocked"/);
  assert.doesNotMatch(before,/input\.evidence|input\.ownerApproved|input\.ci_passed/);
