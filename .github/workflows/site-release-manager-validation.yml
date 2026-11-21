@@ -10,6 +10,7 @@ on:
       - '.github/workflows/deploy-github-pages-direct.yml'
       - 'scripts/release-manager/**'
       - 'supabase/migrations/20261121_site_release_manager.sql'
+      - 'supabase/migrations/20261121_site_release_version_catalog.sql'
       - 'supabase/functions/beagu-release-manager-v1/**'
       - 'tests/site-release-center.mjs'
   workflow_dispatch:
