@@ -1,0 +1,44 @@
+/* Stage32: grouped operator navigation; never an authorization boundary. */
+.admin-section-index{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+ margin:14px 0 21px;padding:0;align-items:stretch;
+}
+.admin-section-index-group{
+ min-width:0;background:#fff;border:1px solid #dbe5f1;
+ border-radius:15px;padding:15px 16px;
+}
+.admin-section-index-group h3{
+ margin:0 0 9px;font-size:13px;letter-spacing:-.02em;
+ color:#334f78;font-weight:850;
+}
+.admin-section-index-links{display:flex;gap:6px;flex-wrap:wrap}
+.admin-section-index-links a{
+ min-height:32px;max-width:100%;padding:7px 10px;
+ display:inline-flex;align-items:center;justify-content:center;
+ font-size:12px;font-weight:750;line-height:1.4;text-align:center;
+ text-decoration:none;word-break:keep-all;overflow-wrap:anywhere;
+ border-radius:9px;border:1px solid #d7e4f7;
+ color:#1b4f97;background:#f6f9ff;
+}
+.admin-section-index-links a:hover{
+ background:#e8f2ff;border-color:#afcbed;
+}
+.admin-section-index-links a:focus-visible{
+ outline:3px solid #90bbf5;outline-offset:2px;
+}
+.admin-section-index-links a[hidden]{display:none!important}
+#adminSiteHeading,#adminPerfHeading,#adminSearchHeading,
+#adminGamesHeading,#adminLevelHeading,#adminMemberManagement,
+#adminReferralFunnel,#adminReview2026,#adminSecurityHeading{
+ scroll-margin-top:22px;
+}
+@media(max-width:840px){
+ .admin-section-index{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .admin-section-index-group:last-child{grid-column:1/-1}
+}
+@media(max-width:560px){
+ .admin-section-index{grid-template-columns:1fr;gap:8px}
+ .admin-section-index-group:last-child{grid-column:auto}
+ .admin-section-index-group{padding:12px 13px}
+ .admin-section-index-links a{font-size:12px}
+}
