@@ -1,0 +1,12 @@
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const js=fs.readFileSync("js/beagu-admin-members-v1.js","utf8");
+const html=fs.readFileSync("admin.html","utf8");
+assert.match(js,/email\.slice\(1, at\) === "\*\*\*"/);
+assert.match(js,/챌린지 계정 연결/);
+assert.match(js,/Lv1 여부는 별도 인증 기록 확인 필요/);
+assert.match(js,/유효 추천으로 Lv2 확인/);
+assert.match(js,/selectedId = "";/);
+assert.match(html,/계정 연결<\/th>/);
+assert.doesNotMatch(html,/Lv2 연결<\/th>/);
+console.log("PASS: member UX clarity contract");
