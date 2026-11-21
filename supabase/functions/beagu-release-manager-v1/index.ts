@@ -5,6 +5,7 @@ import {createRemoteJWKSet,jwtVerify} from "https://esm.sh/jose@5.10.0";
 import {collectGitHubWorkInbox} from "./github-work-inbox.mjs";
 import {annotateWorkDependencies} from "./release-work-dependencies.mjs";
 import {inspectReleaseWorkInbox} from "./release-impact-evidence.mjs";
+import {preflightReleaseConflicts} from "./release-conflict-preflight.mjs";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"",{
   auth:{persistSession:false,autoRefreshToken:false}
@@ -167,6 +168,9 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
       fetchChecks:(sha:string)=>
        github("/commits/"+sha+"/check-runs?per_page=100")
      },{maxPRs:6,maxPages:3});
+     // Advisory-only: no Git merge, no version creation, no deployment.
+     const conflictReport=preflightReleaseConflicts(workInbox as {open:unknown[]});
+     workInbox={...(workInbox as Record<string,unknown>),conflict_preflight:conflictReport};
     }
     workInProgress=(workInbox as {open:unknown[]}).open;
    }catch{
