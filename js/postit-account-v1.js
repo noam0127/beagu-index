@@ -11,7 +11,7 @@ const levelKey='beagu-level-session-v1',deviceKey='beagu-referral-device-secret-
 const section=$('postitAccount'),status=$('postitAccountStatus'),form=$('postitAccountForm');
 const smsPhone=$('postitSmsPhone'),smsConsent=$('postitSmsConsent'),smsUnsubscribe=$('postitSmsUnsubscribe');
 if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsUnsubscribe||
-   !window.BeaguAccountMode?.create)return;
+   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set)return;
 const accountMode=window.BeaguAccountMode.create({
  form,
  title:$('postitAccountHeading'),
@@ -30,7 +30,8 @@ function setLinked(next){
  linked=next===true;
  window.dispatchEvent(new CustomEvent('beagu:postit-account-status',{detail:{linked}}));
 }
-function message(value){status.textContent=value;}
+function message(value){status.dataset.state='info';status.textContent=value;}
+const showState=state=>window.BeaguAccountStatus.set(status,state);
 async function authSession(){
  const {data,error}=await client.auth.getSession();
  if(error)return null;
@@ -52,25 +53,28 @@ function validatedLevel(){
 }
 function render(user){
  const signedIn=Boolean(user);
+ const emailVerified=signedIn&&Boolean(user.email_confirmed_at)&&user.is_anonymous!==true;
  form.hidden=signedIn;
  $('postitAccountGoogle').hidden=signedIn;
  $('postitAccountSignOut').hidden=!signedIn;
  smsUnsubscribe.hidden=!signedIn||user?.user_metadata?.beagu_sms_opt_in!==true;
- const canClaim=signedIn&&validatedLevel()&&!linked&&Boolean(originalDevice());
+ const canClaim=emailVerified&&validatedLevel()&&!linked&&Boolean(originalDevice());
  $('postitAccountLink').hidden=!canClaim;
- $('postitAccountNoDevice').hidden=!signedIn||!validatedLevel()||linked||Boolean(originalDevice());
- if(!signedIn)message('Lv2 참여코드로 열람할 수 있습니다. 글과 댓글을 쓰려면 정식 계정으로 로그인하세요.');
- else if(linked)message('정식 Lv2 계정이 인증되었습니다. 익명으로 글과 댓글을 작성할 수 있습니다.');
- else if(!validatedLevel())message('계정 로그인 완료. 챌린지를 달성한 Lv2 참여코드도 인증해 주세요.');
- else if(!user.email_confirmed_at)message('이메일 주소 확인 후 로그인해야 작성 권한을 연결할 수 있습니다.');
- else if(!originalDevice())message('Lv2 챌린지에 처음 참여한 기기에서 계정을 연결해 주세요.');
- else message('원래 기기 확인을 눌러 Lv2 계정과 익명 작성자 ID를 연결하세요.');
+ $('postitAccountNoDevice').hidden=!emailVerified||!validatedLevel()||linked||Boolean(originalDevice());
+ if(!signedIn)showState('signin-required');
+ else if(!emailVerified)showState('email-pending');
+ else if(!validatedLevel())showState('level-required');
+ else if(linked)showState('linked');
+ else if(!originalDevice())showState('device-required');
+ else showState('link-ready');
 }
 async function refresh(){
  const id=++generation;
  const user=await accountUser();
  if(id!==generation)return;
- if(!user||!validatedLevel()){setLinked(false);render(user);return}
+ if(!user||!user.email_confirmed_at||user.is_anonymous===true||!validatedLevel()){
+  setLinked(false);render(user);return;
+ }
  const bearer=await accessToken();
  try{
   const response=await fetch(base+'?action=writer_status',{cache:'no-store',headers:{
@@ -107,10 +111,10 @@ async function executeAuth(action){
   if(error)throw error;
   $('postitAccountPassword').value='';
   smsPhone.value='';smsConsent.checked=false;
-  if(action==='signup')message('인증 메일을 확인한 뒤 이 화면에서 로그인하세요.');
-  else await refresh();
+  if(action==='signup')showState('signup-requested');
+  else {showState('checking');await refresh();}
  }catch(error){
-  message(action==='signup'?'계정 생성이 완료되지 않았습니다. 이메일 인증 설정을 확인해 주세요.':'로그인에 실패했습니다. 이메일 인증 여부와 비밀번호를 확인해 주세요.');
+  showState(action==='signup'?'signup-failed':'signin-failed');
  }finally{busy=false}
 }
 form.addEventListener('submit',e=>{e.preventDefault();void executeAuth(accountMode.mode())});
