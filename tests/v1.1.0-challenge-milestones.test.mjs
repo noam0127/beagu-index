@@ -39,6 +39,7 @@ function fixture({queued=false,issued=777,identity=code}={}){
   fonts:{ready:Promise.resolve()},body:{appendChild(){}},
   createElement:()=>({style:{},click(){},remove(){}})};
  const ctx={
+  SUPABASE_URL:'https://synthetic.supabase.co',
   window:win,document:doc,
   CustomEvent:class {constructor(type,{detail}){this.type=type;this.detail=detail}},
   sessionStorage:{getItem:key=>key==='beagu-level-session-v1'?currentSession:null},
