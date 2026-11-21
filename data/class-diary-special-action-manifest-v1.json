@@ -1,0 +1,196 @@
+{
+  "schema": "class-diary-special-action-assets/v1",
+  "scope": "review_only",
+  "canonicalSources": "data/class-diary-character-identity-lock-v1.json",
+  "releaseGate": "visual-identity-and-scene-approval-required",
+  "productionEnabled": false,
+  "artDirection": {
+    "ratio": "3:4",
+    "alpha": "transparent",
+    "minimumReference": "head_to_mid_thigh",
+    "reuse": "One approved action frame reused where action is genuinely shown; do not generate all default cyclic poses",
+    "stringColor": "blue",
+    "notes": "Scenario says blue string; older source photo shows light-pink/red. Prefer scenario continuity; keep original photo unchanged until equivalent-face edit approved"
+  },
+  "cuts": [
+    {
+      "id": "dogyeom_string_star",
+      "character": "dogyeom",
+      "priority": "P0",
+      "action": "실뜨기 별·도안 시연",
+      "episodes": [
+        3,
+        7,
+        13,
+        26
+      ],
+      "evidence": [
+        {
+          "source": "js/class-diary-colleague-dogyeom-v1.js",
+          "episode": 3,
+          "needle": "실뜨기 별"
+        },
+        {
+          "source": "js/class-diary-colleague-dogyeom-v1.js",
+          "episode": 7,
+          "needle": "실뜨기"
+        },
+        {
+          "source": "js/class-diary-colleague-dogyeom-v1.js",
+          "episode": 13,
+          "needle": "실뜨기 도안"
+        },
+        {
+          "source": "js/class-diary-colleague-dogyeom-v1.js",
+          "episode": 26,
+          "needle": "실뜨기 고리"
+        }
+      ],
+      "canonical": "assets/class-diary/characters/dogyeom-poses-v2.webp",
+      "candidate": "chat-export:dogyeom_blue_thread_FACE_REVIEW_ONLY.png",
+      "candidateStatus": "face_mismatch_rejected_for_production",
+      "needs": "원본 얼굴 유지·손가락·파란 실 연결 자연스러움",
+      "approve": false
+    },
+    {
+      "id": "dogyeom_release_string",
+      "character": "dogyeom",
+      "priority": "P1",
+      "action": "실을 거두거나 푸는 손동작",
+      "episodes": [
+        8,
+        10,
+        17,
+        34
+      ],
+      "evidence": [
+        {
+          "source": "js/class-diary-colleague-dogyeom-v1.js",
+          "episode": 8,
+          "needle": "실을 거두어"
+        },
+        {
+          "source": "js/class-diary-colleague-dogyeom-v1.js",
+          "episode": 10,
+          "needle": "실을 풀었다"
+        },
+        {
+          "source": "js/class-diary-colleague-dogyeom-v1.js",
+          "episode": 17,
+          "needle": "실이 빠졌다"
+        },
+        {
+          "source": "js/class-diary-colleague-dogyeom-v1.js",
+          "episode": 34,
+          "needle": "느슨하게 놓았다"
+        }
+      ],
+      "canonical": "assets/class-diary/characters/dogyeom-poses-v2.webp",
+      "candidate": null,
+      "candidateStatus": "not_created",
+      "needs": "같은 인물의 파란 실 긴장이 풀리는 동작, 원본 얼굴 및 양손 보존",
+      "approve": false
+    },
+    {
+      "id": "taeo_show_volleyball",
+      "character": "taeo",
+      "priority": "P0",
+      "action": "배구공 이음새를 보여주기",
+      "episodes": [
+        3,
+        12
+      ],
+      "evidence": [
+        {
+          "source": "js/class-diary-colleague-taeo-v1.js",
+          "episode": 3,
+          "needle": "공의 이음새"
+        },
+        {
+          "source": "docs/class-diary-36-episode-rewrite.md",
+          "episode": 12,
+          "needle": "태오의 배구"
+        }
+      ],
+      "canonical": "assets/class-diary/characters/taeo-poses-v2.webp",
+      "candidate": "chat-export:taeo-volleyball-DRAFT.png",
+      "candidateStatus": "face_mismatch_rejected_for_production",
+      "needs": "배구공을 정확히 잡은 손·팔, 원본 얼굴 일치",
+      "approve": false
+    },
+    {
+      "id": "taeo_put_away_volleyball",
+      "character": "taeo",
+      "priority": "P1",
+      "action": "배구공 바람을 빼거나 가방에 넣기",
+      "episodes": [
+        34,
+        36
+      ],
+      "evidence": [
+        {
+          "source": "js/class-diary-colleague-taeo-v1.js",
+          "episode": 34,
+          "needle": "배구공의 바람을 조금 빼며"
+        },
+        {
+          "source": "js/class-diary-colleague-taeo-v1.js",
+          "episode": 36,
+          "needle": "공을 가방에 넣으면서"
+        }
+      ],
+      "canonical": "assets/class-diary/characters/taeo-poses-v2.webp",
+      "candidate": null,
+      "candidateStatus": "not_created",
+      "needs": "공·가방의 위치가 회차에 맞는 2개 소품 클로즈업 또는 1개 보완 원화, 원본 얼굴 일치",
+      "approve": false
+    },
+    {
+      "id": "hyunwoo_read_analects",
+      "character": "hyunwoo",
+      "priority": "P0",
+      "action": "『논어』 독서",
+      "episodes": [
+        12
+      ],
+      "evidence": [
+        {
+          "source": "docs/class-diary-36-episode-rewrite.md",
+          "episode": 12,
+          "needle": "현우의 『논어』"
+        }
+      ],
+      "canonical": "assets/class-diary/characters/hyunwoo-poses-v2.webp",
+      "candidate": null,
+      "candidateStatus": "needs_identity_preserving_book_variant",
+      "needs": "책 표지의 한문 표기 간결, 원본 얼굴, 손가락, 『논어』만",
+      "approve": false
+    },
+    {
+      "id": "jiyoon_bass_guitar",
+      "character": "jiyoon",
+      "priority": "P0",
+      "action": "베이스기타 취미 드러내기",
+      "episodes": [
+        12
+      ],
+      "evidence": [
+        {
+          "source": "docs/class-diary-36-episode-rewrite.md",
+          "episode": 12,
+          "needle": "지윤의 베이스"
+        }
+      ],
+      "canonical": "assets/class-diary/characters/female-jiyoon-thigh-v4.webp",
+      "candidate": "chat-export:jiyoon_guitar_case_DRAFT.png",
+      "candidateStatus": "face_mismatch_and_instrument_mismatch",
+      "needs": "4현 베이스기타(일반 기타·어쿠스틱 기타 아님), 자연스러운 기존 외모와 보라색 부분 염색",
+      "approve": false
+    }
+  ],
+  "excluded": {
+    "avatarsAsPublished": false,
+    "defaultCyclicPoseCount": 69,
+    "note": "Do not infer new art necessity from default 8-pose rotation."
+  }
+}
