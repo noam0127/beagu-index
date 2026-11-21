@@ -147,6 +147,23 @@ async function listMembers(input: Record<string, unknown>) {
     truncated,
   };
 }
+// Server-only lookup. The RPC returns no identity code, visitor ID, or referral token.
+async function challengeSummary(id: string) {
+  const { data, error } = await db.rpc("beagu_admin_member_challenge_summary_v1", {
+    p_user: id,
+  });
+  if (error) throw new HttpError(503, "challenge_summary_unavailable");
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || row.link_status !== "active" || row.participant_no == null) {
+    return { linked: false, participant_no: null, access_level: null, valid_referrals: null };
+  }
+  return {
+    linked: true,
+    participant_no: row.participant_no,
+    access_level: row.access_level,
+    valid_referrals: row.valid_referrals,
+  };
+}
 async function details(input: Record<string, unknown>) {
   const id = String(input.user_id || "");
   if (!uuid.test(id)) throw new HttpError(400, "invalid_user");
@@ -160,7 +177,8 @@ async function details(input: Record<string, unknown>) {
     .contains("details", { target_user_id: id })
     .order("occurred_at", { ascending: false }).limit(10);
   if (auditError) throw new HttpError(503, "audit_unavailable");
-  return { profile, moderation_history: events || [] };
+  const challenge = await challengeSummary(id);
+  return { profile, challenge, moderation_history: events || [] };
 }
 async function audit(actor: string, event: string, target: string, reason: string, duration: string) {
   const { error } = await db.from("beagu_admin_audit_events").insert({

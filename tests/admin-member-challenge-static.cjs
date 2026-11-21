@@ -1,0 +1,16 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const edge = fs.readFileSync("supabase/functions/beagu-admin-members-v1/index.ts","utf8");
+const sql = fs.readFileSync("supabase/migrations/20261122010000_admin_member_challenge_summary_v1.sql","utf8");
+assert.match(edge,/await checkAdmin\(request\)/);
+assert.match(edge,/await challengeSummary\(id\)/);
+assert.match(edge,/row\.participant_no == null/);
+assert.match(sql,/where m\.auth_user_id=p_user/i);
+assert.match(sql,/i\.campaign='2026'/i);
+assert.match(sql,/r\.campaign='2026'/i);
+assert.match(sql,/coalesce\(r\.disabled,true\)=false/);
+assert.match(sql,/r\.valid_referrals>=1/);
+assert.match(sql,/revoke all on function public\.beagu_admin_member_challenge_summary_v1\(uuid\)/i);
+assert.match(sql,/grant execute on function public\.beagu_admin_member_challenge_summary_v1\(uuid\)\s+to service_role/i);
+assert.doesNotMatch(sql,/identity_code\s+as/i);
+console.log("PASS: member challenge API security/static contract");
