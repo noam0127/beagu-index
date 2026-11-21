@@ -7,7 +7,12 @@ on:
       - '.github/workflows/v1.1.0-2026-tiered-release.yml'
       - 'supabase/functions/beagu-2026-tiered-results-v1/index.ts'
       - 'supabase/functions/_shared/release-policy.mjs'
+      - 'supabase/functions/_shared/2026-public-question-policy.mjs'
+      - 'supabase/functions/_shared/results-2026.mjs'
       - 'supabase/migrations/20261122003000_beagu_2026_tiered_review_release_v1.sql'
+      - 'supabase/migrations/20261122031000_beagu_2026_nonpublic_question_api_guard_v1.sql'
+      - 'tests/2026-nonpublic-question-api-verify.sql'
+      - 'tests/v1.1.0-private-2026-question-boundary.test.mjs'
       - 'tests/2026-tiered-review-release-fixture.sql'
       - 'tests/2026-tiered-review-release-verify.sql'
       - 'tests/v1.1.0-2026-tiered-review-release.test.mjs'
@@ -57,9 +62,11 @@ jobs:
         run: |
           deno check supabase/functions/beagu-2026-tiered-results-v1/index.ts
           node --check supabase/functions/_shared/release-policy.mjs
+          node --check supabase/functions/_shared/results-2026.mjs
+          node --check supabase/functions/_shared/2026-public-question-policy.mjs
       - name: Tiered 2026 release and previous Lv1/Lv2 authorization regression
         run: |
-          node --test tests/v1.1.0-2026-tiered-review-release.test.mjs
+          node --test tests/v1.1.0-2026-tiered-review-release.test.mjs tests/v1.1.0-private-2026-question-boundary.test.mjs
           node tests/2026-lv2-immediate.mjs
           node tests/2026-release-consent-gate.mjs
           node tests/2026-question-results-pipeline.mjs
@@ -75,5 +82,9 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261122003000_beagu_2026_tiered_review_release_v1.sql
       - name: Verify server-only release 24h/6h/after-approval and consent-risk revocations
         run: psql -v ON_ERROR_STOP=1 -f tests/2026-tiered-review-release-verify.sql
+      - name: Apply B-01 forward-only private question API protections in disposable database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261122031000_beagu_2026_nonpublic_question_api_guard_v1.sql
+      - name: Validate no private questions escape any 2026 public read path
+        run: psql -v ON_ERROR_STOP=1 -f tests/2026-nonpublic-question-api-verify.sql
       - name: Confirm preview production database and Google survey remain isolated
         run: python3 tests/preview-db-isolation.py
