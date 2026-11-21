@@ -24,7 +24,7 @@ function getElement(id) {
   handler(name){return handlers.get(name)},
   focus(){},style:{},getClientRects(){return [1]},isConnected:true};
 }
-function postitHarness({user=null,level=true,linked=false}={}) {
+function postitHarness({user=null,level=true,linked=false,lv3LinkReady=false}={}) {
  const elements=new Map();
  const get=id=>{
   if(!elements.has(id))elements.set(id,getElement(id));
