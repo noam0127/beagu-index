@@ -88,7 +88,11 @@ async function linkedStatus(accessToken){
 }
 async function showAccountStatus(){
  const person=await sessionIdentity();
- if(overlay.hidden||!tier2||!person)return;
+ if(overlay.hidden||!tier2)return;
+ if(!person){
+  if(mode==='signin')setAccountState('signin-required');
+  return;
+ }
  form.hidden=true;switchMode.hidden=true;signOut.hidden=false;
  const forgot=byId('challengeMemberForgot');
  if(forgot)forgot.hidden=true;
