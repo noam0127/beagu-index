@@ -177,7 +177,12 @@ $('postitAccountSignOut').addEventListener('click',async()=>{
  busy=false;void refresh();
 });
 window.addEventListener('beagu:level-state-updated',()=>void refresh());
-client.auth.onAuthStateChange(()=>{Promise.resolve().then(()=>refresh())});
+client.auth.onAuthStateChange(event=>{
+ // Never keep stale writer privileges between an Auth logout and the next
+ // asynchronous session check.
+ if(event==='SIGNED_OUT')setLinked(false);
+ Promise.resolve().then(()=>refresh());
+});
 window.BeaguPostitAccount={accessToken,refresh,canWrite:()=>linked};
 void refresh();
 })();
