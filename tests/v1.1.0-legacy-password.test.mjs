@@ -67,6 +67,7 @@ function harness(filename,{level=false}={}){
   vm.runInNewContext(getSource('js/beagu-account-status-v1.js'),scope,{timeout:1500});
   vm.runInNewContext(getSource('js/beagu-session-restore-v1.js'),scope,{timeout:1500});
   vm.runInNewContext(getSource('js/beagu-auth-errors-v1.js'),scope,{timeout:1500});
+  vm.runInNewContext(getSource('js/beagu-sms-consent-v1.js'),scope,{timeout:1500});
   vm.runInNewContext(getSource(filename),scope,{timeout:1500});
   return {byId,auth,calls,listeners,window};
 }
