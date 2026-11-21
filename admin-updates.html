@@ -40,7 +40,7 @@
         <label for="releaseStageSelect" class="release-select-label">시험 웹에 적용할 버전</label>
         <select id="releaseStageSelect" class="release-select" aria-label="시험 웹 버전 선택"><option value="">버전을 선택하세요</option></select>
         <div class="release-buttons">
-          <button type="button" id="releaseStageApply" class="primary" disabled>시험 웹 적용</button>
+          <button type="button" id="releaseStageApply" class="primary" disabled>시험 웹 적용 (검증 대기)</button>
           <button type="button" id="releaseStageRollback" class="secondary" disabled>전 버전으로 되돌리기</button>
         </div>
       </article>
@@ -86,7 +86,8 @@
     </section>
     <section class="release-draft" aria-labelledby="releaseDraftHeading">
       <div class="release-section-head"><h2 id="releaseDraftHeading">새 버전 생성 · 수동</h2>
-        <p>위 자동 수집 작업을 하나의 변경 불가능한 코드 버전으로 저장합니다. 버전 생성만으로 시험·실제 웹은 바뀌지 않습니다.</p></div>
+        <p>변경 불가능한 코드 버전은 최신 main, 통합 CI, 시험 DB·권한·인증, 실제 후보 E2E 검증이 끝난 뒤에만 생성할 수 있습니다.</p></div>
+      <p id="releaseFreezeStatus" class="release-caution" role="status" aria-live="polite">출시 검증 전 · 새 버전 생성 및 새 시험 배포는 잠겨 있습니다.</p>
       <form id="releaseDraftForm">
         <div class="release-meta-row">
           <div><label for="releaseVersionInput">업데이트 버전</label>
@@ -95,7 +96,7 @@
             <textarea id="releaseSummaryInput" rows="3" maxlength="500" minlength="3" required placeholder="예: 관리자 공지사항 수정 기능, 레벨 표시 정렬 개선"></textarea></div>
         </div>
         <div class="release-register-actions">
-          <button type="submit" id="releaseRegister" class="primary">버전 생성</button>
+          <button type="submit" id="releaseRegister" class="primary" disabled>버전 생성 (검증 대기)</button>
           <span id="releaseDraftInfo" class="subtle" aria-live="polite">GitHub main의 변경사항이 최신 생성 버전 이후에 있는지 확인합니다.</span>
         </div>
       </form>
