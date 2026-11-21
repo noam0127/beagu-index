@@ -66,15 +66,15 @@ test('2026 reviewed release SQL encodes exact post-approval tier delays with no 
 });
 test('previous direct Lv2 immediate RPC now delegates to 6h gate, not to old insecure code',()=>{
  assert.match(sql,/create or replace function public\.beagu_2026_lv2_released_question_results/);
- assert.match(sql,/public\.beagu_2026_tiered_released_question_results_v1\(\s*p_school_id,2::smallint/);
+ assert.match(sql,/public\.beagu_2026_tiered_released_question_results_v1\(\s*p_school_id,2/);
  assert.match(legacy,/beagu_2026_lv2_released_question_results/);
  assert.match(legacy,/releaseMetrics\(metrics\.data\|\|\[\],catalog\.data\|\|\[\],level,level>=2&&lv2Approved2026!==null\)/);
  assert.match(timing,/approved2026Lv2ReleaseIsOldEnough/);
  assert.match(timing,/level===2 && approvedLv2Instant2026/);
 });
 test('public callable roles cannot bypass server-owned review or supply arbitrary tier',()=>{
- assert.match(sql,/revoke all on function\s+public\.beagu_2026_tiered_released_question_results_v1\(text,smallint\)\s+from public,anon,authenticated/);
- assert.match(sql,/grant execute on function\s+public\.beagu_2026_tiered_released_question_results_v1\(text,smallint\)\s+to service_role/);
+ assert.match(sql,/revoke all on function\s+public\.beagu_2026_tiered_released_question_results_v1\(text,integer\)\s+from public,anon,authenticated/);
+ assert.match(sql,/grant execute on function\s+public\.beagu_2026_tiered_released_question_results_v1\(text,integer\)\s+to service_role/);
  assert.match(edge,/beagu_2026_verified_visitor_level_v1/);
  assert.match(edge,/session\.identity_campaign!=="2026"/);
  assert.match(edge,/!\[1,2\]\.includes\(level\)/);
