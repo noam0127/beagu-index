@@ -11,7 +11,8 @@ execFileSync(process.execPath,["--check","js/beagu-admin-members-v1.js"],{stdio:
 execFileSync(process.execPath,["--check","js/beagu-admin-access-v1.js"],{stdio:"inherit"});
 for (const id of [
   "adminMemberManagement","adminMembersSearch","adminMembersRows","adminMembersPrev",
-  "adminMembersNext","adminMembersFilter","adminMemberNavLink","adminMemberDetailPanel","adminMemberReason","adminMemberSuspend24",
+  "adminMembersNext","adminMembersFilter","adminMemberNavLink",
+  "adminPrivacyQueueRows","adminPrivacyQueueReload","adminMemberDetailPanel","adminMemberReason","adminMemberSuspend24",
   "adminMemberSuspend7","adminMemberRestore","adminMemberActionStatus"
 ]) assert(html.includes('id="'+id+'"'),"Missing member UI "+id);
 assert.match(html,/js\/beagu-admin-members-v1\.js\?v=/);
@@ -26,6 +27,8 @@ assert.match(backend,/auth\.admin\.listUsers/);
 assert.match(backend,/auth\.admin\.updateUserById/);
 assert.match(backend,/beagu_admin_audit_events/);
 assert.match(backend,/beagu_admin_member_sms_status_v2/);
+assert.match(backend,/beagu_admin_privacy_queue_v1/);
+assert.match(browser,/request\("privacy_queue"\)/);
 assert.match(backend,/await audit\(actor\.id,"member_moderation_requested"/);
 assert.match(backend,/requestId/);
 assert.match(backend,/if\(actor\.role!=="owner"\)/);
