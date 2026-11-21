@@ -89,10 +89,61 @@
   not_merged_to_main:"다른 브랜치 병합 · main 반영 미확인",
   closed_no_merge:"병합 없이 종료"
  };
+ const conflictLabels={
+  same_file_changed:"동일 파일 수정",
+  shared_edge_function:"동일 Edge Function 영향",
+  parallel_db_migrations:"DB 변경 병행",
+  parallel_deployment_ci_changes:"배포·CI 설정 변경 병행",
+  parallel_published_data:"공개 데이터 변경 병행",
+  same_head_sha:"동일 코드 SHA",
+  incomplete_file_inventory:"파일 분석 미완료"
+ };
+ function renderConflictPreflight(){
+  const root=el("releaseConflictPairs");root.replaceChildren();
+  const status=el("releaseConflictStatus");
+  const report=workInbox?.conflict_preflight;
+  if(!report){
+   status.textContent="PR 간 충돌 사전 검사는 실행 전입니다. 결과가 없다는 뜻이 아닙니다.";
+   return;
+  }
+  if(report.status==="insufficient_prs"){
+   status.textContent="비교 가능한 PR이 2개 미만입니다. 실제 병합 검사는 아직 수행하지 않았습니다.";
+   return;
+  }
+  status.textContent="검사 "+report.inspected_prs+"개 PR · "+report.pair_count+"쌍 · "+
+   "검토 필요 "+report.review_required_pairs+"쌍 · 조회 불완전 "+
+   report.incomplete_pairs+"쌍 · 파일/영역 중복 미발견 "+
+   report.no_observed_overlap_pairs+"쌍"+
+   (report.status==="partial"?" · 전체 작업 일부만 분석":"")+
+   " · 실제 Git 병합·통합 테스트 미실행";
+  const concerned=(report.pairs||[]).filter(x=>x.status!=="no_observed_overlap");
+  if(!concerned.length){
+   addText(root,"p","분석한 범위에서 명백한 파일·영역 중복 위험을 발견하지 못했습니다. "+
+    "실제 코드 병합·DB·브라우저 테스트 없이 안전한 버전이라고 판단할 수 없습니다.","subtle");
+   return;
+  }
+  for(const pair of concerned){
+   const item=document.createElement("article");item.className="release-pending-item";
+   addText(item,"strong","#"+pair.prs[0]+" ↔ #"+pair.prs[1]);
+   addText(item,"span",pair.status==="inspection_incomplete"?
+    "검사 불완전 · 판단 보류":"통합 전 검토 필요","release-pr-status");
+   if(pair.stacked_relationship)addText(item,"p","선행 PR을 기반으로 한 작업 관계 가능성","subtle");
+   for(const risk of (pair.risks||[]).slice(0,8)){
+    addText(item,"div",(conflictLabels[risk.code]||"변경 영향")+" · "+
+     (risk.level==="high"?"중요 변경":"검토 필요"),"release-pr-status");
+    if(Array.isArray(risk.paths)&&risk.paths.length)
+     addText(item,"p","관련 파일: "+risk.paths.slice(0,8).join(", "),"subtle");
+    if(risk.message)addText(item,"p",risk.message,"subtle");
+   }
+   addText(item,"p","실제 병합·통합 테스트: 미실행 · 버전 생성 승인: 없음","subtle");
+   root.append(item);
+  }
+ }
  function renderWorkInProgress(){
   const root=el("releaseOpenPullRequests");root.replaceChildren();
   const merged=el("releaseRecentlyMergedPullRequests");merged.replaceChildren();
   const status=el("releaseGitHubWorkStatus");
+  renderConflictPreflight();
   if(!workInbox||workInbox.status==="not_checked"){
    status.textContent="GitHub 작업 목록을 아직 조회하지 않았습니다.";return;
   }
