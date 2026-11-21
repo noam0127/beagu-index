@@ -164,3 +164,14 @@ test('admin logout purges email/IDs and moderation reason from in-memory DOM',as
  assert.equal(h.get('adminMemberNavLink').hidden,true);
  assert.equal(h.get('adminMembersPrev').disabled,true);
 });
+
+test('revoked Auth session immediately hides and clears member directory even if client still says owner',async()=>{
+ const h=fixture({verified:false});
+ h.ui.mount('owner');
+ await tick();
+ assert.equal(h.get('adminMemberManagement').hidden,true);
+ assert.equal(h.get('adminMemberNavLink').hidden,true);
+ assert.equal(h.get('adminMembersRows').children.length,0);
+ assert.equal(h.get('adminMemberDetail').children.length,0);
+ assert.equal(h.requests.length,0);
+});
