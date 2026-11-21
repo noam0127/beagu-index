@@ -175,5 +175,6 @@ test('Post-it checks email verification before calling server writer status',()=
  assert.match(postitSource,/showState\('signup-requested'\)/);
  assert.match(postitSource,/showState\('linked'\)/);
  assert.match(postitSource,/showState\('level-required'\)/);
- assert.match(postitSource,/setLinked\(false\);render\(user\);return;/);
+ assert.match(postitSource,/setLinked\(false\);\s*const identity=await restored\.identity\(\)/);
+ assert.match(postitSource,/if\(!verifiedLevel\)\{render\(user,false\);return\}/);
 });
