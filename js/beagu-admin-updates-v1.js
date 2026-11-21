@@ -13,7 +13,7 @@
   return Number.isFinite(d.getTime())?d.toLocaleString("ko-KR"):"—";};
  const short=value=>value?String(value).slice(0,8):"—";
  let busy=false,model=null,timer=null,latestHead=null,pending=null;
- let versions=[],recentSuggestion=null,workInProgress=[];
+ let versions=[],recentSuggestion=null,workInProgress=[],workInbox=null,commitScanError=null;
  const msg=(text,problem=false)=>{
   const p=el("releaseStatus");p.textContent=text;
   p.classList.toggle("release-status-error",problem);
@@ -76,15 +76,44 @@
  }
  function renderWorkInProgress(){
   const root=el("releaseOpenPullRequests");root.replaceChildren();
-  if(!workInProgress.length){addText(root,"p","현재 확인된 개발 중 PR이 없습니다.","subtle");return;}
+  const merged=el("releaseRecentlyMergedPullRequests");merged.replaceChildren();
+  const status=el("releaseGitHubWorkStatus");
+  if(!workInbox||workInbox.status==="not_checked"){
+   status.textContent="GitHub 작업 목록을 아직 조회하지 않았습니다.";return;
+  }
+  if(workInbox.status==="error"){
+   status.textContent="GitHub PR 조회 실패 · 빈 작업함으로 간주하지 않습니다. 새로고침하여 재검사하세요.";
+   return;
+  }
+  const partial=workInbox.status==="partial";
+  status.textContent="GitHub PR "+(workInbox.total_seen||0)+"개 확인 · 진행 중 "+
+   (workInbox.open_count||0)+"개 · main 병합 이력 "+(workInbox.merged_to_main_count||0)+"개"+
+   (partial?" · 일부 자료만 확인됨(조회 누락 가능)":"");
+  if(!workInProgress.length)addText(root,"p",
+    partial?"일부 조회만 성공했습니다. 작업이 없다고 단정할 수 없습니다.":"열린 PR이 없습니다.","subtle");
   for(const pr of workInProgress){
    const item=document.createElement("article");item.className="release-pending-item";
    const link=document.createElement("a");link.href=pr.url;
    link.target="_blank";link.rel="noopener noreferrer";link.className="release-pr-link";
    link.textContent="#"+pr.number+" · "+pr.title;
    item.append(link);
-   addText(item,"span",pr.draft?"개발 중":"병합 대기","release-pr-status");
+   addText(item,"span",pr.status==="draft"?"개발 중":"병합 대기","release-pr-status");
+   addText(item,"div","대상 "+(pr.base_ref||"확인 불가")+" · SHA "+short(pr.head_sha)+
+    " · 수정 "+date(pr.updated_at),"subtle");
    root.append(item);
+  }
+  const mergedPrs=Array.isArray(workInbox.recently_merged)?workInbox.recently_merged:[];
+  if(!mergedPrs.length)addText(merged,"p",
+   partial?"일부 조회만 성공했습니다. 병합 작업이 없다고 단정할 수 없습니다.":"최근 main 병합 PR이 없습니다.","subtle");
+  for(const pr of mergedPrs){
+   const item=document.createElement("article");item.className="release-pending-item";
+   const link=document.createElement("a");link.href=pr.url;
+   link.target="_blank";link.rel="noopener noreferrer";link.className="release-pr-link";
+   link.textContent="#"+pr.number+" · "+pr.title;
+   item.append(link);
+   addText(item,"span","main 병합 · 버전 포함 여부 별도 확인","release-pr-status");
+   addText(item,"div","병합 "+date(pr.merged_at)+" · 코드 "+short(pr.merge_sha||pr.head_sha),"subtle");
+   merged.append(item);
   }
  }
  function renderPending(){
@@ -92,7 +121,9 @@
   const files=el("releasePendingFileNames");files.replaceChildren();
   const status=el("releasePendingStatus");
   if(!pending){
-   status.textContent="새로운 GitHub 작업이 없습니다. 새 개발 내용을 main에 반영하면 이 목록에 자동으로 쌓입니다.";
+   status.textContent=commitScanError?
+    "GitHub 커밋 비교 실패 · 새 작업이 없다고 판단할 수 없습니다.("+commitScanError+")":
+    "현재 확인된 신규 main 커밋은 없습니다. 병합 PR은 별도 표시되며 버전에 포함된 것은 아닙니다.";
    el("releasePendingFiles").hidden=true;return;
   }
   const changes=pending.commits||[];
@@ -165,7 +196,9 @@
    latestHead=data.head_sha||null;
    recentSuggestion=data.suggested_draft||null;
    pending=data.pending||null;
-   workInProgress=data.work_in_progress||[];
+   workInbox=data.work_inbox||null;
+   workInProgress=workInbox?.open||data.work_in_progress||[];
+   commitScanError=data.commit_scan_error||null;
    if(recentSuggestion){
     if(!el("releaseVersionInput").dataset.edited)
      el("releaseVersionInput").value=recentSuggestion.version;

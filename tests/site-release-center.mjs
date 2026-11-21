@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+// Run v2 GitHub PR inbox tests under the existing release-manager CI workflow.
+import "./release-github-work-inbox.mjs";
 const source=path=>readFileSync(path,"utf8");
 
 test("release center includes all 4 buttons and two independent histories",()=>{
@@ -95,7 +97,7 @@ test("release UI separates automatic work log from manual immutable versions",()
 test("unmerged PRs are only an inbox, and version creation verifies reviewed HEAD",()=>{
  const edge=source("supabase/functions/beagu-release-manager-v1/index.ts");
  const js=source("js/beagu-admin-updates-v1.js");
- assert.match(edge,/pulls\?state=open&per_page=30/);
+ assert.match(edge,/pulls\?state=all&sort=updated&direction=desc&per_page=/);
  assert.match(edge,/new_changes_detected/);
  assert.match(edge,/input\.expected_sha!==main\.sha/);
  assert.match(js,/expected_sha:pending\.head_sha/);
