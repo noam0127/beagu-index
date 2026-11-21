@@ -94,6 +94,7 @@ const browser={
 };
 vm.runInNewContext(read('js/beagu-account-mode-v1.js'),browser);
 vm.runInNewContext(read('js/beagu-account-status-v1.js'),browser);
+vm.runInNewContext(read('js/beagu-session-restore-v1.js'),browser);
 vm.runInNewContext(member,browser);
 assert.equal(elements.challengeMemberOverlay.hidden,true,'Lv1 starts with modal hidden');
 elements.beaguLevelState.dataset.level='2';
