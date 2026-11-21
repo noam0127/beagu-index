@@ -50,6 +50,14 @@
   letter-spacing:-.035em;line-height:1.45;
 }
 .challenge-milestone-detail{display:block;font-size:12px;margin-top:5px;color:#795027}
+.certificate[data-milestone="100"]{border-color:#eca88c;background:linear-gradient(145deg,#fff7f3,#fff,#fff0e3)}
+.certificate[data-milestone="100"] .rank{background:#fff0e6;border-color:#f3c7b5}
+.certificate[data-milestone="100"] .rank strong{color:#ad553a}
+.certificate[data-milestone="100"] .challenge-milestone{
+  background:linear-gradient(125deg,#fff0dd,#fff,#ffe9df);border-color:#eab69e;color:#914b31;
+}
+.certificate[data-milestone="100"] .challenge-milestone-symbol{background:linear-gradient(135deg,#db886c,#b95b48)}
+.certificate[data-milestone="100"] .challenge-milestone-detail{color:#985a42}
 .certificate[data-milestone="111"]{border-color:#b4a4d9;background:linear-gradient(145deg,#fcfaff,#fff,#f4eeff)}
 .certificate[data-milestone="111"] .rank{background:#f5eeff;border-color:#d9c5f0}
 .certificate[data-milestone="111"] .rank strong{color:#6a40a8}
