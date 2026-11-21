@@ -13,6 +13,8 @@
   return Number.isFinite(d.getTime())?d.toLocaleString("ko-KR"):"—";};
  const short=value=>value?String(value).slice(0,8):"—";
  let busy=false,model=null,timer=null,latestHead=null,pending=null;
+ // v2 step 10 safety lock: frontend controls cannot promote or rollback production.
+ const PRODUCTION_RELEASES_PAUSED=true;
  let versions=[],recentSuggestion=null,workInProgress=[],workInbox=null,commitScanError=null;
  const msg=(text,problem=false)=>{
   const p=el("releaseStatus");p.textContent=text;
@@ -30,6 +32,7 @@
   const result=await response.json().catch(()=>({}));
   if(!response.ok){
    const messages={
+    production_release_paused:"운영 배포·롤백이 안전성 검증 중이라 비활성화되어 있습니다.",
     release_in_progress:"다른 배포가 진행 중입니다. 완료 후 다시 시도하세요.",
     version_already_exists:"이미 사용한 버전명 또는 동일한 코드입니다. 새 버전명과 새로운 변경사항이 필요합니다.",
     version_not_found:"선택한 버전을 찾지 못했습니다. 새로고침하세요.",
@@ -290,14 +293,15 @@
   const staging=versions.find(v=>v.id===el("releaseStageSelect").value);
   const production=versions.find(v=>v.id===el("releaseProdSelect").value);
   el("releaseStageApply").disabled=busy||job||!staging||staging.sha===s.staging_sha||!s.production_sha;
-  el("releaseProdApply").disabled=busy||job||!production||!production.tested||
-   production.sha===s.production_sha;
+  el("releaseProdApply").disabled=PRODUCTION_RELEASES_PAUSED||busy||job||
+   !production||!production.tested||production.sha===s.production_sha;
   const stageH=model.staging_history||[],prodH=model.production_history||[];
   el("releaseStageRollback").disabled=busy||job||!stageH.length||
+   !/^[0-9a-f]{40}$/.test(String(stageH[0].from_sha||""))||
    stageH[0].from_sha===s.staging_sha;
   const lastCodeRelease=prodH.find(h=>h.action!=="data_refresh");
-  el("releaseProdRollback").disabled=busy||job||!lastCodeRelease||
-   !lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
+  el("releaseProdRollback").disabled=PRODUCTION_RELEASES_PAUSED||busy||job||
+   !lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||job||!pending||!(pending.files||[]).length;
   el("releaseRefresh").disabled=busy;
   el("releaseInspectPRs").disabled=busy||!workInbox||workInbox.status==="error";
@@ -351,6 +355,10 @@
   }catch(err){if(!quiet)msg("업데이트 조회 실패: "+(err.message||String(err)),true);}
  }
  async function command(action){
+  if(PRODUCTION_RELEASES_PAUSED&&["prod_apply","prod_rollback"].includes(action)){
+   msg("운영 배포 및 롤백은 통합 검증과 별도 승인 전까지 비활성화됩니다.",true);
+   return;
+  }
   if(busy||!model)return;
   const selected=action==="stage_apply"?
    versions.find(v=>v.id===el("releaseStageSelect").value):
