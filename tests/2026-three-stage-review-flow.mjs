@@ -44,5 +44,5 @@ assert.match(sql,/e\.campaign='2026'/);
 assert.match(sql,/q\.payload_sha256=r\.payload_sha256/);
 assert.match(sql,/t\.checked_at>=r\.source_snapshot_at/);
 assert.match(sql,/b\.payload_sha256=r\.payload_sha256/);
-assert.doesNotMatch(sql,/update\s+public\.beagu_2026_results_snapshot|approval_status\s*=\s*'APPROVED'|create policy|grant.*to anon/i);
+assert.doesNotMatch(sql,/update\s+public\.beagu_2026_results_snapshot|insert\s+into\s+public\.beagu_2026_results_snapshot|create policy|grant.*to anon/i);
 console.log('PASS: distinct, private, no auto-release three-stage review and valid quality exception filter');
