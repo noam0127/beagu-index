@@ -215,6 +215,31 @@ async function moderate(input: Record<string, unknown>, actor: { id: string; rol
     operation,requestId,"success");
   return {updated:true,user_id:id,operation,request_id:requestId};
 }
+async function limitedRequest(request:Request):Promise<Record<string,unknown>>{
+  if(!request.headers.get("content-type")?.toLowerCase().startsWith("application/json"))
+    throw new HttpError(400,"invalid_request");
+  if(Number(request.headers.get("content-length")||0)>3072)
+    throw new HttpError(413,"body_too_large");
+  const reader=request.body?.getReader();
+  if(!reader)throw new HttpError(400,"invalid_request");
+  let size=0,raw="";const decoder=new TextDecoder();
+  for(;;){
+    const {value,done}=await reader.read();
+    if(done)break;
+    size+=value?.byteLength||0;
+    if(size>3072){
+      await reader.cancel();
+      throw new HttpError(413,"body_too_large");
+    }
+    raw+=decoder.decode(value,{stream:true});
+  }
+  raw+=decoder.decode();
+  let body:unknown;
+  try{body=JSON.parse(raw)}catch{throw new HttpError(400,"invalid_request")}
+  if(!body||typeof body!=="object"||Array.isArray(body))
+    throw new HttpError(400,"invalid_request");
+  return body as Record<string,unknown>;
+}
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("Origin") || "";
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
@@ -222,10 +247,8 @@ Deno.serve(async (request: Request) => {
   if (origin && !origins.has(origin)) return reply(origin, 403, { error: "origin_not_allowed" });
   try {
     const actor = await checkAdmin(request);
-    let input: Record<string, unknown>;
-    try { input = await request.json(); } catch { throw new HttpError(400, "invalid_request"); }
-    if (!input || typeof input !== "object" || Array.isArray(input)) throw new HttpError(400, "invalid_request");
     if(actor.role!=="owner")throw new HttpError(403,"owner_required");
+    const input=await limitedRequest(request);
     const action = String(input.action || "");
     const data = action === "list" ? await listMembers(input) :
       action === "detail" ? await details(input) :
