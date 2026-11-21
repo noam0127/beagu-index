@@ -49,6 +49,61 @@ function prepareBeaguReferralFormField(){
   Logger.log('공식 설문 공개 URL: '+form.getPublishedUrl());
   Logger.log('다음: GitHub js/beagu-referral-form-config-v1.js의 entryName을 '+match[1]+'로 입력');
 }
+/**
+ * 2026 설문 마지막의 추천 안내(A-02).
+ * Layout-only section header: no new response column or required answer.
+ * We deliberately do not replace the Form-wide confirmation message.
+ */
+const BEAGU_REFERRAL_CLOSING_2026=Object.freeze({
+  title:'링크를 알려주신 선생님께 선물을 보내주세요!',
+  description:'전용 조사 링크로 오셨다면 자동 입력된 추천 확인코드는 수정하지 않고 설문을 제출해 주세요. 설문 제출과 추천의 유효성이 확인된 경우에만 링크를 알려주신 선생님의 Lv.2 활성화에 반영됩니다. 일반 설문으로 참여하셨다면 추천 확인코드는 비워 두어도 됩니다. 본인의 2026 설문 참여가 확인되면 발급받은 Lv2 참여코드(비활성)로 Lv.1 인증이 가능합니다. 나의 전용 조사 링크는 배구지수 챌린지에서 확인할 수 있습니다.'
+});
+function beaguReferralClosingPlan_(){
+  const form=beaguReferralFindOfficialForm_();
+  const all=form.getItems();
+  const codes=form.getItems(FormApp.ItemType.TEXT)
+    .filter(item=>item.getTitle()===BEAGU_REFERRAL_2026.questionTitle);
+  if(codes.length!==1)
+    throw Error('추천 확인코드 문항이 정확히 1개인지 확인하세요. 설문은 수정하지 않았습니다.');
+  const code=codes[0];
+  if(code.getIndex()!==all.length-1)
+    throw Error('추천 확인코드가 마지막 문항이 아닙니다. 문항 순서를 수동 점검하세요.');
+  const notices=form.getItems(FormApp.ItemType.SECTION_HEADER)
+    .filter(item=>item.getTitle()===BEAGU_REFERRAL_CLOSING_2026.title);
+  if(notices.length>1)
+    throw Error('추천 안내 머리말이 중복되었습니다. 수동 점검하세요.');
+  if(notices.length===1&&notices[0].getIndex()!==code.getIndex()-1)
+    throw Error('기존 추천 안내 위치가 달라서 자동으로 이동하지 않습니다.');
+  return {form,code,notice:notices.length?notices[0]:null};
+}
+/** 읽기 전용 검증. 실제 설문은 전혀 수정하지 않습니다. */
+function previewBeaguReferralFormClosingNotice(){
+  const plan=beaguReferralClosingPlan_();
+  Logger.log('2026 설문 마지막 추천 안내 점검: '+
+    (plan.notice?'기존 안내 점검 대상':'새 안내 배치 가능')+
+    ' · 선택 추천 확인코드 뒤로 항목을 추가하지 않음');
+  return {ready:true,exists:!!plan.notice,questionId:plan.code.getId()};
+}
+/**
+ * 소유자가 사전 백업·실제 설문 화면 확인 후 수동 실행할 때만 수정.
+ * 인증코드 문항 ID/entry 번호, 원문 응답, 필수 항목, 분기는 보존.
+ */
+function prepareBeaguReferralFormClosingNotice(){
+  const plan=beaguReferralClosingPlan_();
+  const notice=plan.notice||plan.form.addSectionHeaderItem();
+  notice.setTitle(BEAGU_REFERRAL_CLOSING_2026.title);
+  notice.setHelpText(BEAGU_REFERRAL_CLOSING_2026.description);
+  // Newly created header is appended after the optional code question.
+  // Put it immediately before the existing last code question, without
+  // moving or recreating any data-bearing question.
+  if(!plan.notice)plan.form.moveItem(notice,plan.code.getIndex());
+  const all=plan.form.getItems();
+  if(all[all.length-1].getId()!==plan.code.getId()||
+     all[all.length-2].getId()!==notice.getId())
+    throw Error('마지막 안내 순서를 검증하지 못했습니다. 설문을 수동 확인하세요.');
+  Logger.log('2026 설문 마지막 추천 안내 배치 점검 완료 · 원본 질문 ID 변경 없음');
+}
+
 /** 해당 Form만 정확히 확인하고 Form submit 트리거를 추가합니다. */
 function installBeaguReferralFormSubmitTrigger(){
   const form=beaguReferralFindOfficialForm_();
