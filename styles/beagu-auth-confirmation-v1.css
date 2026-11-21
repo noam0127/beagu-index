@@ -1,0 +1,15 @@
+/* Neutral Auth confirmation status. Nothing here is an authorization badge. */
+.beagu-auth-callback-status {
+  box-sizing:border-box;
+  width:min(960px, calc(100% - 28px));
+  margin:14px auto;
+  border:1px solid #d5dce6;
+  background:#f9fafb;
+  border-radius:12px;
+  padding:13px 16px;
+  color:#24344c;
+  font:500 14px/1.6 system-ui, "Apple SD Gothic Neo", sans-serif;
+}
+.beagu-auth-callback-status[data-state="error"] { border-style:dashed; }
+.beagu-auth-callback-status[data-state="verified"] { font-weight:600; }
+.beagu-auth-callback-status[hidden] { display:none !important; }
