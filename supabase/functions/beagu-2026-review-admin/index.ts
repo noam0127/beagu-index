@@ -40,7 +40,7 @@ Deno.serve(async(request:Request)=>{
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(!["queue","hold","basis_review","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
+ if(!["queue","pipeline","hold","basis_review","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -54,13 +54,23 @@ Deno.serve(async(request:Request)=>{
   if(input.action==="queue"){
    const status=typeof input.filter==="string"?input.filter:"all";
    const page=Number(input.page??0);
-   if(!["all","technical","question","school","prelaunch","approved","held"].includes(status)||
+   if(!["all","quality","technical","question","school","prelaunch","approved","held"].includes(status)||
      !Number.isSafeInteger(page)||page<0||page>500)return send(origin,400,{error:"invalid_filters"});
    const {data,error}=await db.rpc("beagu_2026_admin_review_queue",
      {p_filter:status,p_limit:20,p_offset:page*20});
    if(error||!data){console.error("review_queue_unavailable",error?.code||"unknown");
      return send(origin,503,{error:"review_queue_unavailable"});}
    return send(origin,200,{...data,page,filter:status});
+  }
+  if(input.action==="pipeline"){
+    // The status contains bounded counts only. No school-level details,
+    // raw response text, event hashes, or public approval side effects.
+    const {data,error}=await db.rpc("beagu_2026_admin_pipeline_status");
+    if(error||!data){
+      console.error("pipeline_status_unavailable",error?.code||"unknown");
+      return send(origin,503,{error:"pipeline_status_unavailable"});
+    }
+    return send(origin,200,{status:data});
   }
   // Review decisions may only be made by the owner, never a viewer or editor.
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
