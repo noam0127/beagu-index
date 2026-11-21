@@ -29,6 +29,11 @@ const DEVICE_KEY='beagu-referral-device-secret-v1';
 const LEVEL_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
 const POSTIT_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1';
 let tier2=false,mode='signin',busy=false,focusReturn=null,serial=0;
+if(!window.BeaguAccountMode?.create)return;
+const accountMode=window.BeaguAccountMode.create({
+ form,title,description,password,submit,switchButton:switchMode,
+ smsFields,smsPhone,smsConsent,forgot:byId('challengeMemberForgot')
+});
 const levelToken=()=>{try{return sessionStorage.getItem(SESSION_KEY)||''}catch{return ''}};
 const deviceProof=()=>{
  try{const v=localStorage.getItem(DEVICE_KEY)||'';return /^[a-f0-9]{64}$/.test(v)?v:''}
@@ -42,27 +47,13 @@ function paintTier(){
  if(!tier2)close();
 }
 function paintMode(next){
- mode=next==='signup'?'signup':'signin';
- title.textContent=mode==='signup'?'Lv2 회원가입':'Lv2 로그인';
- description.textContent=mode==='signup'
-  ?'이메일로 계정을 만든 뒤 인증 메일을 확인하세요. Lv2 참여코드는 그대로 유지됩니다.'
-  :'정식 계정으로 로그인하세요. Lv2 참여코드는 별도로 인증됩니다.';
- submit.textContent=mode==='signup'?'회원가입':'로그인하기';
- const forgot=byId('challengeMemberForgot');
- if(forgot)forgot.hidden=mode!=='signin';
- password.autocomplete=mode==='signup'?'new-password':'current-password';
- // Existing users may have credentials shorter than today's signup policy.
- // Apply minimum length only to NEW account creation; server checks all logins.
- password.minLength=mode==='signup'?10:1;
- password.placeholder=mode==='signup'?'새 비밀번호 (10자 이상)':'기존 비밀번호';
- smsFields.hidden=mode!=='signup';
- if(mode!=='signup'){smsPhone.value='';smsConsent.checked=false;}
- switchMode.textContent=mode==='signup'?'이미 계정이 있어요 · 로그인하기':'계정이 없어요 · 회원가입';
+ mode=accountMode.setMode(next);
  form.hidden=false;
  switchMode.hidden=false;
  connect.hidden=true;signOut.hidden=true;smsUnsubscribe.hidden=true;
  message.textContent='';
 }
+
 async function serverLevel(){
  const token=levelToken();
  if(!tier2||!/^[a-f0-9]{64}$/.test(token))return false;
