@@ -209,7 +209,7 @@ def verify_isolated_preview(target):
         source = file.read_text(encoding="utf-8")
         if PRODUCTION_PROJECT in source or PRODUCTION_PUBLIC_KEY in source:
             raise RuntimeError("Live Supabase reference in preview: " + str(file))
-            r"""https://(?:forms\.gle/|docs\.google\.com/forms/)[^\s"\'<>]*""",
+        if re.search(r"""https://(?:forms\.gle/|docs\.google\.com/forms/)""", source, re.I):
             raise RuntimeError("Real Google Form reference in preview: " + str(file))
         if file.suffix.lower() in {".html", ".htm"}:
             html_count += 1
