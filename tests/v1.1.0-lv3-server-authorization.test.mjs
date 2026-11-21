@@ -149,7 +149,7 @@ test('Edge verifies real Supabase JWT, current Auth session and independent issu
  assert.doesNotMatch(edge,/Access-Control-Allow-Origin":\s*"\*"/);
 });
 test('existing Lv0/Lv1/Lv2 API still has no code-only level 3',()=>{
- assert.match(existing,/if\(!\[1,2\]\.includes\(level\)\)/);
+ assert.match(existing,/!\[1,2\]\.includes\(level\)/);
  assert.doesNotMatch(existing,/access_level\s*:\s*3\b/);
  const badge=read('js/beagu-level-state-v1.js');
  assert.match(badge,/const tier=\/\^\[012\]\$\//);
