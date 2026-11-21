@@ -143,7 +143,7 @@
       if (!canonicalLink) canonicalLink = payload.link;
       if (!currentLink)
         currentLink = typeof payload.shortLink === 'string' &&
-          /^https:\\/\\/baeguindex\\.com\\/r\\/#[A-Za-z0-9_-]{8}$/.test(payload.shortLink)
+          /^https:\/\/baeguindex\.com\/r\/#[A-Za-z0-9_-]{8}$/.test(payload.shortLink)
           ? payload.shortLink : payload.link;
       linkField.hidden = false;
       copyButton.hidden = false;
