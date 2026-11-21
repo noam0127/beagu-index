@@ -1,0 +1,52 @@
+name: v1.1.0 — account error feedback and privacy
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-auth-error-ux.yml'
+      - 'js/beagu-auth-errors-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'challenge.html'
+      - 'postit.html'
+      - 'tests/v1.1.0-auth-error-ux.test.mjs'
+      - 'tests/v1.1.0-session-restore.test.mjs'
+      - 'tests/v1.1.0-account-status.test.mjs'
+      - 'tests/challenge-lv2-account-entry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  safe-auth-feedback:
+    name: No account enumeration or secrets in errors; no duplicate sign-in
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax checks
+        run: |
+          node --check js/beagu-auth-errors-v1.js
+          node --check js/challenge-member-auth-v1.js
+          node --check js/postit-account-v1.js
+          node --check tests/v1.1.0-auth-error-ux.test.mjs
+      - name: Run privacy and account regression tests with fake Auth only
+        run: |
+          node --test tests/v1.1.0-auth-error-ux.test.mjs tests/v1.1.0-session-restore.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-legacy-password.test.mjs tests/v1.1.0-unified-account-mode.test.mjs
+      - name: Original Challenge Post-it and Admin authorization regressions
+        run: |
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/postit-member-auth.cjs
+          node tests/admin-verified-email-enrollment-static.cjs
+          node scripts/test-admin-access.cjs
+      - name: Preview must not expose live Supabase or forms
+        run: python3 tests/preview-db-isolation.py
