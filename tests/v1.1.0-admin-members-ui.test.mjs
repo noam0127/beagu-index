@@ -70,6 +70,13 @@ function fixture({verified=true,moderationFailure=false,role='owner'}={}){
     return {ok:true,status:200,json:async()=>({ok:true,data:{
      profile,moderation_history:[]
     }})};
+   if(body.action==='privacy_queue')
+    return {ok:true,status:200,json:async()=>({ok:true,data:{rows:[{
+     request_id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+     user_id:fakeUser,
+     kind:'deletion',status:'pending',
+     requested_at:'2026-11-21T10:00:00Z'
+    }]}})};
    if(body.action==='list')return {ok:true,status:200,json:async()=>({ok:true,data:list})};
    throw Error('unexpected action');
   }
@@ -78,6 +85,19 @@ function fixture({verified=true,moderationFailure=false,role='owner'}={}){
  return {ui:win.BeaguMembersAdmin,get,forms,requests,role};
 }
 
+test('owner only sees private queued deletion review; no delete or approval action',async()=>{
+ const x=fixture();
+ x.ui.mount('owner');
+ await tick();
+ assert.ok(x.requests.some(v=>v.body.action==='privacy_queue'));
+ assert.equal(x.get('adminPrivacyQueueRows').children.length,1);
+ const row=x.get('adminPrivacyQueueRows').children[0];
+ assert.equal(row.children[1].textContent,'탈퇴 검토');
+ assert.equal(row.children[2].textContent,'접수 대기');
+ assert.ok(x.requests.every(v=>!['delete_user','complete_deletion'].includes(v.body.action)));
+ x.ui.reset();
+ assert.equal(x.get('adminPrivacyQueueRows').children.length,0);
+});
 test('non-owner never sees member directory or makes requests',async()=>{
  const h=fixture({role:'operator'});
  h.ui.mount('operator');
