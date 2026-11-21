@@ -1,4 +1,6 @@
 name: BAEGU release controller (admin approval)
+# GitHub push wake-up for the queued admin-approved staging release.
+# The worker still claims only server-authorized jobs and cannot promote to production.
 on:
   schedule:
     - cron: '*/5 * * * *'
