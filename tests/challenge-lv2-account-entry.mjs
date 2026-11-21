@@ -11,7 +11,8 @@ assert.doesNotThrow(()=>new vm.Script(ui));
 for(const id of ['challengeMemberSignupSection','challengeMemberSignup','challengeMemberOverlay',
   'challengeMemberDialog','challengeMemberTitle','challengeMemberDescription','challengeMemberForm',
   'challengeMemberEmail','challengeMemberPassword','challengeMemberSubmit','challengeMemberSwitch',
-  'challengeMemberClose','challengeMemberMessage','challengeMemberLink','challengeMemberSignOut'])
+  'challengeMemberClose','challengeMemberMessage','challengeMemberLink','challengeMemberSignOut',
+  'challengeMemberSmsFields','challengeMemberSmsPhone','challengeMemberSmsConsent','challengeMemberSmsUnsubscribe'])
  assert.ok(html.includes('id="'+id+'"'),'Missing actual account UI element '+id);
 assert.ok(html.indexOf('id="certificate"')<html.indexOf('id="challengeMemberSignupSection"'));
 assert.ok(html.indexOf('id="challengeMemberSignupSection"')>html.indexOf('id="identityCode"'));
@@ -40,7 +41,7 @@ assert.match(css,/@media\(max-width:440px\)/);
 class Fake {
  constructor(id){
   this.id=id;this.dataset={};this.hidden=true;this.disabled=false;
-  this.textContent='';this.value='';this.listeners={};this.isConnected=true;
+  this.textContent='';this.value='';this.checked=false;this.listeners={};this.isConnected=true;
   this.classList={add:()=>{},remove:()=>{}};
   this.focusCount=0;
  }
@@ -56,18 +57,19 @@ const ids=['challengeIdentityPanel','challengeMemberSignup','challengeMemberSign
  'challengeMemberDescription','challengeMemberForm','challengeMemberEmail',
  'challengeMemberPassword','challengeMemberSubmit','challengeMemberSwitch',
  'challengeMemberClose','challengeMemberMessage','challengeMemberLink',
- 'challengeMemberSignOut','beaguLevelState'];
+ 'challengeMemberSignOut','challengeMemberSmsFields','challengeMemberSmsPhone',
+ 'challengeMemberSmsConsent','challengeMemberSmsUnsubscribe','beaguLevelState'];
 const elements=Object.fromEntries(ids.map(id=>[id,new Fake(id)]));
 elements.beaguLevelState.dataset.level='1';
 const events={},localEvents={};
 const token='a'.repeat(64),device='b'.repeat(64);
 const levelStore={getItem:key=>key==='beagu-level-session-v1'?token:null};
 const localStore={getItem:key=>key==='beagu-referral-device-secret-v1'?device:null};
-let auth=false,signups=0,signins=0,links=0,logouts=0;
+let auth=false,signups=0,signins=0,links=0,logouts=0,lastSignup=null;
 const client={auth:{
  async getSession(){return {data:{session:auth?{access_token:'bearer-test'}:null},error:null}},
  async getUser(){return {data:{user:auth?{id:'user',email_confirmed_at:'2026-11-21'}:null},error:null}},
- async signUp(){signups++;return {error:null}},
+ async signUp(payload){signups++;lastSignup=payload;return {error:null}},
  async signInWithPassword(){signins++;auth=true;return {error:null}},
  async signOut(){logouts++;auth=false;return {error:null}},
  onAuthStateChange(){return {data:{subscription:{unsubscribe(){}}}}}
@@ -103,6 +105,16 @@ elements.challengeMemberPassword.value='safe-password-test';
 await Promise.resolve();await Promise.resolve();await Promise.resolve();
 await elements.challengeMemberForm.fire('submit',{preventDefault(){}});
 assert.equal(signups,1,'Signup uses Supabase Auth instead of fake success');
+assert.equal(lastSignup.options.data.beagu_sms_opt_in,false,'Unchecked is genuinely opt-out');
+assert.equal(lastSignup.options.data.beagu_sms_phone,null,'No phone collected without consent');
+assert.equal(elements.challengeMemberSmsConsent.checked,false,'Consent must default unchecked');
+elements.challengeMemberPassword.value='safe-password-test';
+elements.challengeMemberSmsConsent.checked=true;
+elements.challengeMemberSmsPhone.value='010-1234-5678';
+await elements.challengeMemberForm.fire('submit',{preventDefault(){}});
+assert.equal(signups,2,'Explicit opt-in also signs up');
+assert.equal(lastSignup.options.data.beagu_sms_opt_in,true);
+assert.equal(lastSignup.options.data.beagu_sms_phone,'01012345678');
 assert.match(elements.challengeMemberMessage.textContent,/이메일 인증/);
 await elements.challengeMemberClose.fire('click');
 assert.equal(elements.challengeMemberOverlay.hidden,true);
