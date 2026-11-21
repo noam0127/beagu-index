@@ -117,11 +117,7 @@ test('Lv3 and Lv2 early access still requires exact independent legal/privacy an
  assert.match(sql,/basis_type in \(\s*'EXPLICIT_RESPONDENT_CONSENT',\s*'OTHER_DOCUMENTED_LEGAL_BASIS'/);
  assert.match(sql,/notice_digest_sha256 ~ '\^\[a-f0-9\]\{64\}\$'/);
  assert.match(sql,/reviewer_user_id::text=r\.approved_by/);
- assert.ok(sql.includes("coalesce(q->>'invalid','') !~ '^[0-9]+
- assert.ok(!sql.includes('grant select on public.beagu_2026_results_snapshot to anon'));
- assert.ok(!sql.includes('grant select on beagu_private.beagu_2026_publication_basis_review to authenticated'));
-});
-"),'Malformed or missing invalid counts must never pass');
+ assert.ok(sql.includes("coalesce(q->>'invalid','') !~ '^[0-9]+$'"),'Malformed or missing invalid counts must not pass');
  assert.ok(!sql.includes('grant select on public.beagu_2026_results_snapshot to anon'));
  assert.ok(!sql.includes('grant select on beagu_private.beagu_2026_publication_basis_review to authenticated'));
 });
