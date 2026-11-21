@@ -10,11 +10,15 @@ function create({client,panel,button,status,levelToken,request}){
   throw Error('LV3_ACCOUNT_UI_UNAVAILABLE');
  const session=window.BeaguLv3Session.create({client,levelToken,
   ...(request?{request}:{})});
- let eligible=false,busy=false,serial=0;
+ let eligible=false,busy=false,serial=0,lastNotified=false;
  function notify(verified){
-  // Cosmetic event only. Every real protected endpoint must reverify via SQL.
+  // Cosmetic event only. Never re-dispatch unchanged state: the header's
+  // participating badge listeners also refresh account state.
+  const next=verified===true&&eligible;
+  if(next===lastNotified)return;
+  lastNotified=next;
   window.dispatchEvent(new CustomEvent('beagu:lv3-session-verification',{
-   detail:{verified:verified===true&&eligible}
+   detail:{verified:next}
   }));
  }
  function visibleState(verified){
