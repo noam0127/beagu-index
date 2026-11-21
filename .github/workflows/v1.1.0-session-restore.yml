@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/v1.1.0-session-restore.yml'
       - 'js/beagu-session-restore-v1.js'
+      - 'js/supabase-config.js'
       - 'js/challenge-member-auth-v1.js'
       - 'js/postit-account-v1.js'
       - 'challenge.html'
