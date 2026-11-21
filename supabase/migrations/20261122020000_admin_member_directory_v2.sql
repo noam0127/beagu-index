@@ -6,6 +6,9 @@ create or replace function public.beagu_admin_member_directory_v2(
 set search_path = '' as $$
 declare result jsonb;
 begin
+ if p_search is null or p_status is null or p_sort is null then
+   raise exception 'invalid_directory_parameters';
+ end if;
  if p_status not in ('all','confirmed','unconfirmed','suspended')
     or p_sort not in ('newest','oldest','email')
     or p_page not between 1 and 1000000 or p_size not between 1 and 100
@@ -15,8 +18,8 @@ begin
  with matched as (
    select u.id,u.email,u.email_confirmed_at,u.created_at,u.last_sign_in_at,u.banned_until
    from auth.users u
-   where (coalesce(p_search,'')='' or u.email ilike '%'||replace(replace(replace(p_search,'\\','\\\\'),'%','\\%'),'_','\\_')||'%' escape '\'
-     or u.id::text ilike '%'||p_search||'%')
+   where (coalesce(p_search,'')='' or strpos(lower(coalesce(u.email,'')),lower(p_search))>0
+     or strpos(u.id::text,lower(p_search))>0)
      and (p_status='all'
        or (p_status='confirmed' and u.email_confirmed_at is not null)
        or (p_status='unconfirmed' and u.email_confirmed_at is null)
