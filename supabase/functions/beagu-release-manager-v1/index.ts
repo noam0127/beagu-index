@@ -159,7 +159,8 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
    actualMain=typeof main.sha==="string"&&SHA.test(main.sha)?main.sha:null;
   }catch{/* GitHub unavailable means fail closed. */}
   const releaseGate=evaluateReleaseSnapshotGate({
-   mainSha:actualMain,reviewedSha:input.expected_sha,
+   mainSha:actualMain,
+   reviewedSha:typeof input.expected_sha==="string"?input.expected_sha:null,
    candidateSha:actualMain,integratedSha:null,
    evidence:null,job:current,ownerApproved:false,
    freezeActive:VERSION_FINALIZATION_PAUSED
