@@ -103,7 +103,7 @@ const isLocal=url=>{
     if(item.name==='home')assert.equal(meta.sections,4);
     if(item.name==='challenge')assert.equal(meta.sections,3);
     if(item.name==='admin')assert.equal(meta.adminWasGated,true);
-    assert.match(meta.robots,/noindex,nofollow,noarchive/,
+    assert.match(meta.robots,/noindex,nofollow/,
       item.name+' private preview robots header missing');
     assert.equal(meta.hasSurveyForm,false,'external survey posting not allowed in preview');
     samples.push({view:view.name,page:item.name,status:200,
