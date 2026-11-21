@@ -1,0 +1,28 @@
+name: v1.1.0 phase 1 — production and preview HTTPS smoke (read-only)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-phase1-preview-http.yml'
+      - 'tests/staging-http-smoke.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staging-http:
+    name: Preview URL, HTML, and CSS/JS assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify current production and preview URLs (read-only)
+        env:
+          BEAGU_SITE_ORIGIN: https://baeguindex.com
+          BEAGU_SMOKE_ATTEMPTS: '3'
+          BEAGU_SMOKE_TIMEOUT: '12'
+          BEAGU_SMOKE_RETRY_SECONDS: '2'
+        run: python3 tests/staging-http-smoke.py
