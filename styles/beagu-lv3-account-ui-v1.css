@@ -1,0 +1,22 @@
+/* Stage 20: status is informational, never a browser-side access check. */
+.beagu-lv3-member-panel{margin:15px 0;padding:15px;border:1px solid #c7d1e4;background:#f8faff;border-radius:13px;color:#293d5b;font-size:12px;line-height:1.65}
+.beagu-lv3-member-panel[hidden]{display:none!important}
+.beagu-lv3-panel-heading{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-bottom:8px}
+.beagu-lv3-panel-heading strong{font-size:14px;color:#26365b}
+.beagu-lv3-chip{display:inline-block;border-radius:999px;background:#ebeffb;border:1px solid #d2dbef;color:#38508d;padding:3px 9px;font-size:10px;font-weight:750}
+.beagu-lv3-member-panel p{font-size:12px;margin:7px 0 10px;line-height:1.7;color:#536985}
+.beagu-lv3-member-panel button{border-radius:10px;border:1px solid #c1cbea;background:#365bba;color:#fff;padding:11px 14px;min-height:44px;font:750 13px/1.4 inherit;cursor:pointer;max-width:100%}
+.beagu-lv3-member-panel button:disabled{opacity:.58;cursor:wait}
+.beagu-lv3-member-panel button:focus-visible,.beagu-lv3-member-panel a:focus-visible{outline:3px solid #8b9edd;outline-offset:3px}
+.beagu-lv3-member-panel a{display:inline-block;font-size:12px;color:#355bbb;margin-top:4px}
+.beagu-lv3-member-panel #challengeLv3Status,.beagu-lv3-member-panel #postitLv3Status{font-weight:600}
+.beagu-lv3-member-panel[data-lv3-verified="true"]{border-color:#9bb8e6;background:#eff5ff}
+.beagu-lv3-member-panel[data-lv3-verified="true"] .beagu-lv3-chip{background:#2c59bd;color:#fff}
+.beagu-level-state[data-member-level="3"]{background:#eaf0ff;border-color:#a9c4ed;color:#244c9a}
+.beagu-level-state[data-member-level="3"]::before{background:#426bd2}
+.beagu-level-guide-card[data-tier="3"]{border-color:#ccdbec}
+.beagu-level-guide-card[data-tier="3"] .beagu-level-guide-tier{color:#3157a4}
+.beagu-level-guide-card[data-tier="3"] .beagu-level-guide-list li::before{color:#4769af}
+.beagu-level-guide-card[data-tier="3"] .beagu-level-guide-action{background:#eef3fc}
+.beagu-level-guide-card[data-tier="3"] .beagu-level-guide-action:focus-visible{outline:3px solid #8b9edd}
+@media(max-width:390px){.beagu-lv3-member-panel{padding:12px}.beagu-lv3-member-panel button{width:100%}}
