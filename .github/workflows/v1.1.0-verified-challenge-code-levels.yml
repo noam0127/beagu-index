@@ -11,6 +11,9 @@ on:
       - 'supabase/functions/beagu-referral-link-v1/index.ts'
       - 'supabase/functions/beagu-postit-api-v1/index.ts'
       - 'js/challenge-referral-v1.js'
+      - 'js/challenge.js'
+      - 'tests/v1.1.0-challenge-code-status-ui.test.mjs'
+      - 'scripts/test-challenge-lv2-card.cjs'
       - 'tests/challenge-2026-code-level-fixture.sql'
       - 'tests/challenge-2026-code-level-verify.sql'
       - 'tests/v1.1.0-participation-code-levels.test.mjs'
@@ -66,7 +69,8 @@ jobs:
       - name: Node and compatibility tests for all three issued-code formats
         run: |
           node --check js/challenge-referral-v1.js
-          node --test tests/v1.1.0-participation-code-levels.test.mjs
+          node --test tests/v1.1.0-participation-code-levels.test.mjs tests/v1.1.0-challenge-code-status-ui.test.mjs
+          node scripts/test-challenge-lv2-card.cjs
           node tests/participation-code-unified.mjs
           node tests/levelup-provisional-v1.cjs
           node scripts/test-challenge-referral-premium.cjs
