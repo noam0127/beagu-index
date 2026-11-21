@@ -59,7 +59,7 @@ test("no reliance on client passed=true or generic checks green",()=>{
  const x=evaluateReleaseSnapshotGate({...ready(),evidence:{passed:true,green:true,ci:true}});
  assert.equal(x.eligible,false);
  assert.equal(x.verified_evidence_count,0);
- assert.ok(x.reason_codes.includes("integrated_merge_unverified"));
+ assert.ok(x.reason_codes.includes("integration_merge_unverified"));
 });
 test("each independently required evidence category blocks on omission",()=>{
  for(const [key,contract] of Object.entries(REQUIRED_SNAPSHOT_EVIDENCE)){
