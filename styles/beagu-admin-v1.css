@@ -107,3 +107,38 @@ footer{margin-top:48px;color:#98a6ba;font-size:11px}
 .beagu-basis-form .beagu-basis-check{display:flex;align-items:flex-start;gap:9px;font-weight:400;}
 .beagu-basis-form .beagu-basis-check input{margin-top:3px;flex:none;}
 .beagu-basis-form button{justify-self:start;max-width:100%;}
+
+
+/* MFA-only member management */
+.admin-members-search{display:flex;flex-wrap:wrap;align-items:end;gap:8px;margin-bottom:12px}
+.admin-members-search label{width:100%;margin:0}
+.admin-members-search input{flex:1 1 220px;min-width:155px;min-height:43px;font-size:14px}
+.admin-members-search .primary,.admin-members-search .secondary{margin:0}
+.admin-members-scroll{width:100%;overflow-x:auto;border:1px solid #e0e8f3;border-radius:11px}
+.admin-members-table{width:100%;min-width:665px;border-collapse:collapse;font-size:12px}
+.admin-members-table th{text-align:left;color:#607797;background:#f4f7fc;font-weight:800}
+.admin-members-table th,.admin-members-table td{padding:12px 10px;vertical-align:middle;border-bottom:1px solid #e7eef7}
+.admin-members-table tbody tr:last-child td{border-bottom:0}
+.admin-members-table strong.member-email{display:block;max-width:270px;overflow-wrap:anywhere}
+.admin-members-table small.member-id{display:block;color:#8193a9;margin-top:5px;font-size:10px;overflow-wrap:anywhere}
+.member-mini-action{min-height:32px;border-radius:8px;font-size:12px;padding:5px 10px}
+.admin-members-pagination{display:flex;gap:16px;align-items:center;justify-content:center;margin-top:14px;font-size:12px;font-weight:700;color:#547092}
+.admin-members-pagination button{min-height:36px}
+.admin-members-error{color:#b63144}
+.admin-member-details{margin:14px 0 16px;display:grid;grid-template-columns:1fr;gap:0}
+.admin-member-detail-line{display:grid;grid-template-columns:minmax(100px,140px) minmax(0,1fr);gap:12px;padding:11px 0;border-bottom:1px solid #edf1f6;font-size:13px}
+.admin-member-detail-line dt{color:#7287a1;font-weight:750}
+.admin-member-detail-line dd{margin:0;color:#193658;overflow-wrap:anywhere}
+#adminMemberDetail h5{margin:18px 0 7px;font-size:13px}
+.admin-member-history{font-size:12px;line-height:1.6;padding:9px 0;border-bottom:1px solid #eef3fa;overflow-wrap:anywhere}
+.admin-member-moderation{margin-top:18px;display:grid;gap:8px}
+.admin-member-moderation label{margin:0}
+.admin-member-moderation textarea{width:100%;font:inherit;font-size:14px;resize:vertical;min-height:82px;color:#183654;background:#fff;border:1px solid #bdcce0;padding:12px 13px;border-radius:11px}
+.admin-member-moderation textarea:focus-visible{outline:3px solid #c5dafd;border-color:#3170d7}
+.admin-members-actions{display:flex;gap:8px;flex-wrap:wrap}
+.admin-members-actions button{min-height:40px}
+@media(max-width:560px){
+ .admin-members-search button{flex:1 1 auto}
+ .admin-member-detail-line{grid-template-columns:100px minmax(0,1fr)}
+ .admin-member-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
