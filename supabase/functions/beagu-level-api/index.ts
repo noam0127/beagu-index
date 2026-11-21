@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
+import {public2026BatchPercentiles} from '../_shared/2026-batch-percentiles.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -130,12 +131,18 @@ Deno.serve(async(req:Request)=>{
      if(reviewed.some(r=>r.error))return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
      for(const r of reviewed)if(Array.isArray(r.data))recentIds.add(r.schoolId);
    }
-   const out:Record<string,number>={};
-   for(const id of ids){
-    const approved=releaseMetrics((metrics.data||[]).filter((m:any)=>m.school_id===id),catalog.data||[],1,recentIds.has(id))
-     .filter((m:any)=>m.year===2026&&m.key==='percentile'&&typeof m.value==='number'&&m.value>=0&&m.value<=100);
-    if(approved.length)out[id]=approved[0].value;
-   }
+   // Stage35: previously this hard-coded level=1, so verified Lv2 users
+   // never received a six-hour-approved 2026 percentile in batch requests
+   // even when the school detail RPC correctly released it.
+   // Trust ONLY the already-verified session and independently reviewed
+   // school IDs from the server-side exact-snapshot RPC above.
+   const out=public2026BatchPercentiles({
+     schoolIds:ids,
+     metrics:metrics.data||[],
+     catalog:catalog.data||[],
+     verifiedLevel:Number(session.access_level)>=2?2:1,
+     reviewedEarlySchoolIds:recentIds
+   });
    return send({values:out},200,origin);
   }
 
