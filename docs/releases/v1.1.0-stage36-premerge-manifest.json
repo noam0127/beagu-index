@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "goal": "Stage36 read-only conflict evidence for Stage37; not approval to merge or deploy",
+  "captured_on": "2026-11-22",
+  "repository": "noam0127/beagu-index",
+  "anchor": {
+    "main_sha": "0ea26679515c0e6a88d123e478c955e2c49fd737",
+    "phase_sha": "8ea55f5d05e3748f0893ae0ccca01851bb99b1f0"
+  },
+  "candidates": [
+    {
+      "pr": 240,
+      "sha": "a00a9a4af67069b45277cde28f199de4f4733acc",
+      "area": "owner_member_management",
+      "known_shared_files": [
+        "admin.html",
+        "js/beagu-admin-members-v1.js",
+        "supabase/functions/beagu-admin-members-v1/index.ts"
+      ]
+    },
+    {
+      "pr": 241,
+      "sha": "1641b8c48e0e161e0bf9005b2ccb5822e587511d",
+      "area": "release_manager_and_browser_qa",
+      "known_shared_files": []
+    },
+    {
+      "pr": 193,
+      "sha": "26f05b9cf0a8c5ce1d136a2fa091329af72f6f67",
+      "area": "legacy_immutable_updates",
+      "known_shared_files": []
+    }
+  ],
+  "explicitly_excluded": [
+    216
+  ],
+  "must_preserve_main": [
+    "supabase/migrations/20261122002000_beagu_2026_admin_three_stage_pipeline.sql",
+    "supabase/migrations/20261122013000_beagu_2026_nonscorable_core_coverage.sql",
+    "supabase/migrations/20261122022000_beagu_2026_one_response_review_scope.sql"
+  ],
+  "release_conditions": {
+    "auto_merge": false,
+    "production_deploy": false,
+    "staging_deploy": false,
+    "real_auth_e2e_verified": false,
+    "isolated_staging_db_ready": false,
+    "remote_redirects_verified": false,
+    "independent_db_restore_verified": false,
+    "owner_aal2_release_approval": false,
+    "legal_publication_basis_verified": false
+  }
+}
