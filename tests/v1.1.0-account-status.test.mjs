@@ -81,7 +81,7 @@ const unverified={...verified,email_confirmed_at:null};
 test('status messages are complete, accessible and never authorize Lv3',()=>{
  const api=statusHarness();
  for(const state of ['signin-required','signup-ready','signup-requested','checking','email-pending',
-   'level-required','login-verified','link-ready','device-required','linked',
+   'level-required','login-verified','link-ready','device-required','linked','lv3-link-ready',
    'signed-out','signup-failed','signin-failed','error']){
   const node={dataset:{},textContent:''};
   assert.equal(api.set(node,state),state);
