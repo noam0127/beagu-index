@@ -8,7 +8,7 @@ assert.match(html,/id="challengeIdentityPanel"[^>]*data-referral-state="pending"
 assert.match(html,/id="challengeIdentityTag"/);
 assert.match(html,/id="challengeIdentityReward"/);
 assert.match(html,/data-html2canvas-ignore="true"/);
-assert.match(identity,/confirmedLv2/);
+assert.match(identity,/codeStatus/);
 assert.doesNotMatch(source,/localStorage\.setItem\([^\n]*upgrade/i);
 function fakeNode(){
   const classes=new Set();
@@ -23,7 +23,7 @@ const ids=['challengeReferralPanel','challengeReferralLink','copyChallengeReferr
   'challengeIdentityReward','copyIdentityCode'];
 const nodes=Object.fromEntries(ids.map(k=>[k,fakeNode()]));
 const events={};
-const payload={level:1,validReferrals:0,provisional:false,
+const payload={level:1,ownResponseVerified:true,validReferrals:0,provisional:false,
   link:'https://baeguindex.com/survey.html?ref='+'f'.repeat(64),
   shortLink:'https://baeguindex.com/r/#ABCDEFGH'};
 const visitor='01234567-89ab-cdef-0123-456789abcdef', code='K7M9Q2X4T8';
@@ -43,14 +43,16 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   events['beagu:challenge-access-granted']();
   events['beagu:identity-ready']({detail:{visitor,code}});
   await flush();
-  assert.equal(nodes.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(nodes.challengeIdentityTitle.textContent,'Lv2 참여코드(비활성)');
+  assert.equal(nodes.challengeIdentityPanel.dataset.referralState,'inactive');
   assert.equal(nodes.challengeIdentityPanel.classList.contains('is-lv2'),false);
   assert.equal(nodes.challengeReferralLink.value,payload.shortLink);
   assert.equal(nodes.challengeReferralTitle.textContent,'나의 전용 조사 링크');
   // Level 2 alone cannot trigger a code promotion without a credited respondent.
   payload.level=2;payload.provisional=true;payload.validReferrals=0;
   events.focus();await flush();
-  assert.equal(nodes.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(nodes.challengeIdentityTitle.textContent,'Lv2 참여코드(비활성)');
+  assert.equal(nodes.challengeIdentityPanel.dataset.referralState,'inactive');
   payload.validReferrals=1;
   events.focus();await flush();
   assert.equal(nodes.challengeIdentityTitle.textContent,'Lv2 참여코드');
