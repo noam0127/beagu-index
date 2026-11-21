@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0",
+  "purpose": "release-v2 step9 isolated multi-PR integration rehearsal",
+  "created_date": "2026-11-22",
+  "repository": "noam0127/beagu-index",
+  "main_snapshot_sha": "6467b42a14fde343326b40cb251add91e05e2cec",
+  "common_ancestor_sha": "6353087cc5dc42c2304624ed5d3bbf33486cd5b5",
+  "source_stack_head_sha": "596af4f41bb9e302b13c16f1037189a3a09be064",
+  "merged_commit_sha": "f1b0527962052d7b6d2477d7f872d3f2d5c35f00",
+  "merged_tree_sha": "57f2c1f86966269bde25580b5a35d54d24a1bdfb",
+  "integration_branch": "integration/release-v2-step9-safe-stack-20261122",
+  "review_base_branch": "integration/release-v2-step9-base-20261122",
+  "pr_stack": [
+    {
+      "number": 193,
+      "sha": "26f05b9cf0a8c5ce1d136a2fa091329af72f6f67",
+      "role": "catalog_and_admin_ui"
+    },
+    {
+      "number": 201,
+      "sha": "95542881b7189bbf9d8f2a3f7def0cdc1849ce69",
+      "role": "github_pr_inbox"
+    },
+    {
+      "number": 205,
+      "sha": "d485c167b966bc81101ed240863af7a5140960a1",
+      "role": "dependencies"
+    },
+    {
+      "number": 208,
+      "sha": "b7a3faf8ec99d8301367d50b4ecd928f269cb64e",
+      "role": "impact_and_ci_evidence"
+    },
+    {
+      "number": 211,
+      "sha": "596af4f41bb9e302b13c16f1037189a3a09be064",
+      "role": "conflict_preflight"
+    }
+  ],
+  "changed_files": [
+    ".github/workflows/site-release-manager-validation.yml",
+    "admin-updates.html",
+    "docs/release-workflow.md",
+    "docs/releases/v2-step5-work-inbox.md",
+    "docs/releases/v2-step6-work-dependencies.md",
+    "docs/releases/v2-step7-impact-evidence.md",
+    "docs/releases/v2-step8-conflict-preflight.md",
+    "js/beagu-admin-updates-v1.js",
+    "styles/beagu-admin-updates-v1.css",
+    "supabase/functions/beagu-release-manager-v1/github-work-inbox.mjs",
+    "supabase/functions/beagu-release-manager-v1/index.ts",
+    "supabase/functions/beagu-release-manager-v1/release-conflict-preflight.mjs",
+    "supabase/functions/beagu-release-manager-v1/release-impact-evidence.mjs",
+    "supabase/functions/beagu-release-manager-v1/release-work-dependencies.mjs",
+    "supabase/migrations/20261121_site_release_version_catalog.sql",
+    "tests/release-conflict-preflight.mjs",
+    "tests/release-github-work-inbox.mjs",
+    "tests/release-impact-evidence.mjs",
+    "tests/release-work-dependencies.mjs",
+    "tests/site-release-center.mjs"
+  ],
+  "disjoint_path_count": 20,
+  "modified_main_files_preserved": true,
+  "merge_method": "two_parent_commit_overlay_of_disjoint_paths",
+  "git_merge_conflict_resolution": "not_needed_for_selected_disjoint_stack",
+  "semantic_integration_tests": "not_verified",
+  "sql_migrations_applied": false,
+  "edge_functions_deployed": false,
+  "staging_deployed": false,
+  "production_deployed": false,
+  "release_version_created": false,
+  "main_merged": false,
+  "deferred_prs": [
+    {
+      "number": 198,
+      "sha": "fb5905ba9a3ec023578daad3096a96e9676b3f0e",
+      "conflicts_with": [
+        193
+      ],
+      "reason": "same admin-update JS file"
+    },
+    {
+      "number": 199,
+      "sha": "d7e6a7ca3dcf7d390e8340f525afbfe3fa973147",
+      "conflicts_with": [
+        193
+      ],
+      "reason": "same Edge release API and release tests"
+    },
+    {
+      "number": 195,
+      "sha": "811a596826f70090814af4bf10847f3de706b2e4",
+      "conflicts_with": [
+        199
+      ],
+      "reason": "same release worker and packaging test"
+    }
+  ],
+  "approval_requirements": [
+    "Review and resolve #198/#199/#195 against selected stack in isolated integration branch",
+    "Test production-release freeze guard and staging backend isolation together",
+    "Verify SQL migration on nonproduction database including permissions",
+    "Run merged-tree CI and browser smoke tests",
+    "Obtain manual release approval only after all evidence is complete"
+  ]
+}
