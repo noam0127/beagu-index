@@ -41,23 +41,30 @@ for(const file of ['js/level-search.js','js/statistics-compare.js','js/challenge
 const server=read('supabase/functions/beagu-level-api/index.ts');
 const referral=read('supabase/functions/beagu-referral-link-v1/index.ts');
 const postit=read('supabase/functions/beagu-postit-api-v1/index.ts');
-const migration=read('supabase/migrations/20261121_earned_challenge_participation_auth.sql');
-assert.ok(server.includes("admin.rpc('beagu_earned_challenge_visitor'"),
- 'Lv2 identity must be earned');
+const migration=read('supabase/migrations/20261121235500_beagu_2026_verified_code_levels_v1.sql');
+assert.ok(server.includes("beagu_2026_verified_code_level_v1"),
+ 'An issued 2026 code must require server-verified own survey evidence');
+assert.ok(server.includes("beagu_2026_verified_visitor_level_v1"),
+ 'Every protected 2026 session must revalidate own-survey proof and current referral');
 assert.ok(!server.includes("admin.rpc('beagu_check_class_diary_guest_code'"),
- 'Preissued unearned challenge code must not unlock Lv2');
-assert.ok(server.includes("record.identity_campaign='2026'")&&server.includes("record.identity_visitor_id=visitorId"));
-assert.ok(server.includes("admin.rpc('beagu_has_earned_challenge_visitor'"),
- 'Every protected request must confirm current credit');
+ 'Preissued or unearned diary code must not unlock Lv2');
+assert.ok(server.includes("record.identity_campaign='2026'")&&server.includes("record.identity_visitor_id=visitorId"),
+ 'Each valid 2026 level session must bind the same pseudonymous visitor');
+assert.ok(server.includes("known=verified?.known===true") &&
+ server.includes("if(!visitorId||![1,2].includes(level))"),
+ 'Issued 2026 codes without personal survey evidence cannot fall through to legacy codes');
 assert.ok(postit.includes('beagu_has_earned_challenge_visitor'),
- 'Post-it reads and writes must fail closed on disabled referrals');
-assert.ok(referral.includes("identity_campaign: '2026', identity_visitor_id: visitor"),
- 'Referral-triggered session upgrades bind stable identity');
-assert.ok(migration.includes('p.valid_referrals>=1')&&migration.includes('p.upgraded_at is not null')
- &&migration.includes('p.disabled=false'),'Credential checks real earned credit');
-assert.ok(migration.includes('to service_role'),'RPCs are service-role only');
+ 'Post-it reads and writes must revalidate the trusted earned Lv2 RPC');
+assert.ok(referral.includes("beagu_2026_verified_visitor_level_v1") &&
+ referral.includes("identity_visitor_id:visitor"),
+ 'Referral-triggered session upgrade requires own survey proof');
+for(const phrase of ['p.valid_referrals>=1','p.upgraded_at is not null',
+ 'p.disabled=false','q.quality_status=\'MANUALLY_APPROVED\'',
+ "e.decision='credited'", "v.verification_status='approved'"])
+ assert.ok(migration.includes(phrase),'Server-owned code gate '+phrase);
+assert.ok(migration.includes('to service_role'),'Private RPC only');
 assert.ok(server.includes("beagu_2026_lv2_released_question_results"),
- 'Preserve newer immediate reviewed-release feature');
+ 'Preserve independently reviewed Lv2 content release');
 assert.ok(read('levels.html').includes('서버에서 유효한 추천 참여가 확인된 코드'));
 assert.doesNotMatch(read('levels.html'),/정식 계정 준비중|Lv\.2\(임시\)|Lv\.2\(진\)/);
 
