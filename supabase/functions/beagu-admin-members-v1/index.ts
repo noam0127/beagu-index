@@ -1,5 +1,7 @@
 // Member administration API: separate from challenge participant codes.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { createClient } from "npm:@supabase/supabase-js@2.57.0";
+import { moderationInput, moderationAuditDetails, selectMemberStatus,
+  memberStatusMatches, validUUID } from "../_shared/beagu-member-management-v2.ts";
 
 const endpoint = Deno.env.get("SUPABASE_URL") || "";
 const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -54,7 +56,6 @@ async function checkAdmin(request: Request): Promise<{ id: string; role: string 
   if (active !== true) throw new HttpError(401, "session_expired");
   return { id, role: String(account.role) };
 }
-const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 type AuthUser = {
   id: string; email?: string | null; email_confirmed_at?: string | null;
   created_at: string; last_sign_in_at?: string | null; banned_until?: string | null;
@@ -75,7 +76,7 @@ async function decorate(users: AuthUser[], admins: Map<string, { role: string; e
     const [links, consent] = await Promise.all([
       db.from("beagu_postit_member_accounts")
         .select("auth_user_id,status,linked_at").in("auth_user_id", ids),
-      db.rpc("beagu_admin_member_sms_status_v1", { p_ids: ids }),
+      db.rpc("beagu_admin_member_sms_status_v2", { p_ids: ids }),
     ]);
     if (links.error || consent.error) throw new HttpError(503, "member_status_unavailable");
     linked = new Map((links.data || []).map(row => [String(row.auth_user_id), {
@@ -128,18 +129,21 @@ async function allUsers(): Promise<{ users: AuthUser[]; truncated: boolean }> {
 async function listMembers(input: Record<string, unknown>) {
   const search = typeof input.search === "string" ? input.search.trim().slice(0, 100) : "";
   const page = Math.min(200, Math.max(1, Math.floor(Number(input.page) || 1)));
+  const filter = selectMemberStatus(input.filter);
   const admins = await adminMap();
   const { users, truncated } = await allUsers();
   const ordered = users.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
   const q = search.toLocaleLowerCase("ko-KR");
-  const filtered = q ? ordered.filter(u => (u.email || "").toLocaleLowerCase("ko-KR").includes(q) ||
-    u.id.toLowerCase().includes(q)) : ordered;
+  const filtered = ordered.filter(u =>
+    memberStatusMatches(u,filter,Date.now()) &&
+    (!q||(u.email || "").toLocaleLowerCase("ko-KR").includes(q) ||
+      u.id.toLowerCase().includes(q)));
   const pageSize = 20;
   const selected = filtered.slice((page - 1) * pageSize, page * pageSize);
   return {
     rows: await decorate(selected, admins),
     total_matches: filtered.length,
-    page, page_size: pageSize,
+    page, page_size: pageSize, filter,
     total_users_scanned: users.length,
     total_admins_scanned: users.filter(u => admins.has(u.id)).length,
     unconfirmed_scanned: users.filter(u => !u.email_confirmed_at).length,
@@ -149,7 +153,7 @@ async function listMembers(input: Record<string, unknown>) {
 }
 async function details(input: Record<string, unknown>) {
   const id = String(input.user_id || "");
-  if (!uuid.test(id)) throw new HttpError(400, "invalid_user");
+  if (!validUUID(id)) throw new HttpError(400, "invalid_user");
   const [{ data, error }, admins] = await Promise.all([
     db.auth.admin.getUserById(id), adminMap(),
   ]);
@@ -162,36 +166,54 @@ async function details(input: Record<string, unknown>) {
   if (auditError) throw new HttpError(503, "audit_unavailable");
   return { profile, moderation_history: events || [] };
 }
-async function audit(actor: string, event: string, target: string, reason: string, duration: string) {
-  const { error } = await db.from("beagu_admin_audit_events").insert({
-    actor_user_id: actor, event_type: event, outcome: "success",
-    details: { target_user_id: target, reason, duration },
+async function audit(actor: string, event: string, target: string,
+  reason: string, duration: string, operation: string, requestId: string,
+  outcome: "pending"|"success"|"error") {
+  const {error}=await db.from("beagu_admin_audit_events").insert({
+    actor_user_id:actor,event_type:event,outcome,
+    details:moderationAuditDetails(target,reason,
+      operation as "suspend_24h"|"suspend_7d"|"restore",requestId,duration),
   });
-  if (error) {
-    console.error("member_moderation_audit_failed", error.code);
-    throw new HttpError(503, "audit_unavailable");
+  if(error){
+    // 23505: requested action already recorded. The browser must reload
+    // audit history rather than repeat a potentially completed user ban.
+    if(error.code==="23505"&&outcome==="pending")
+      throw new HttpError(409,"duplicate_request");
+    console.error("member_moderation_audit_failed",error.code||"unknown");
+    throw new HttpError(503,"audit_unavailable");
   }
 }
 async function moderate(input: Record<string, unknown>, actor: { id: string; role: string }) {
-  if (actor.role !== "owner") throw new HttpError(403, "owner_required");
-  const id = String(input.user_id || "");
-  const operation = String(input.operation || "");
-  const reason = typeof input.reason === "string" ? input.reason.trim() : "";
-  if (!uuid.test(id) || !["suspend_24h", "suspend_7d", "restore"].includes(operation) ||
-      reason.length < 8 || reason.length > 200) throw new HttpError(400, "invalid_moderation_request");
-  if (id === actor.id) throw new HttpError(403, "cannot_moderate_self");
-  const admins = await adminMap();
-  if (admins.has(id)) throw new HttpError(403, "cannot_moderate_admin");
-  const { data: found, error: findError } = await db.auth.admin.getUserById(id);
-  if (findError || !found?.user) throw new HttpError(404, "member_not_found");
-  const duration = operation === "suspend_24h" ? "24h" :
-    operation === "suspend_7d" ? "168h" : "none";
-  const { error: updateError } = await db.auth.admin.updateUserById(id, {
-    ban_duration: duration,
+  if(actor.role!=="owner")throw new HttpError(403,"owner_required");
+  const parsed=moderationInput(input);
+  if(!parsed)throw new HttpError(400,"invalid_moderation_request");
+  const {userId:id,operation,reason,requestId,duration}=parsed;
+  if(id===actor.id)throw new HttpError(403,"cannot_moderate_self");
+  const admins=await adminMap();
+  if(admins.has(id))throw new HttpError(403,"cannot_moderate_admin");
+  const {data:found,error:findError}=await db.auth.admin.getUserById(id);
+  if(findError||!found?.user)throw new HttpError(404,"member_not_found");
+
+  // Fail closed BEFORE touching an Auth account. The unique request-id index
+  // installed by the gated stage-15 migration makes concurrent retries safe.
+  await audit(actor.id,"member_moderation_requested",id,reason,duration,
+    operation,requestId,"pending");
+  const {error:updateError}=await db.auth.admin.updateUserById(id,{
+    ban_duration:duration,
   });
-  if (updateError) throw new HttpError(503, "moderation_failed");
-  await audit(actor.id, "member_" + operation, id, reason, duration);
-  return { updated: true, user_id: id, operation };
+  if(updateError){
+    try{
+      await audit(actor.id,"member_moderation_failed",id,reason,duration,
+        operation,requestId,"error");
+    }catch(_){
+      // Original pending audit is already durable: do not lose evidence.
+    }
+    throw new HttpError(503,"moderation_failed");
+  }
+  // A success after this point is not claimed unless the audit confirms it.
+  await audit(actor.id,"member_moderation_succeeded",id,reason,duration,
+    operation,requestId,"success");
+  return {updated:true,user_id:id,operation,request_id:requestId};
 }
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("Origin") || "";
@@ -203,6 +225,7 @@ Deno.serve(async (request: Request) => {
     let input: Record<string, unknown>;
     try { input = await request.json(); } catch { throw new HttpError(400, "invalid_request"); }
     if (!input || typeof input !== "object" || Array.isArray(input)) throw new HttpError(400, "invalid_request");
+    if(actor.role!=="owner")throw new HttpError(403,"owner_required");
     const action = String(input.action || "");
     const data = action === "list" ? await listMembers(input) :
       action === "detail" ? await details(input) :
