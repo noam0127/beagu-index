@@ -896,6 +896,8 @@
     const searchTask=window.BeaguLoading?.start('학교 검색 결과를 불러오는 중…');
     const perfStarted=performance.now();let perfSucceeded=false;
     try {
+      // Re-check the currently verified tier before every ranked search.
+      updateSortAccess();
       const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?`${$('regionSort').value}_${sortDirection}`:'school_name_asc';
       const sort=sortValue.replace(/_(?:asc|desc)$/,'');
       const direction=sortValue.endsWith('_desc')?'desc':'asc';
