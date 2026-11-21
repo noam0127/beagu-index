@@ -64,6 +64,7 @@ function harness(filename,{level=false}={}){
     fetch:async()=>{calls.fetch++;return {ok:true,status:200,async json(){return {level:2}}}}
   };
   vm.runInNewContext(getSource('js/beagu-account-mode-v1.js'),scope,{timeout:1500});
+  vm.runInNewContext(getSource('js/beagu-account-status-v1.js'),scope,{timeout:1500});
   vm.runInNewContext(getSource(filename),scope,{timeout:1500});
   return {byId,auth,calls,listeners,window};
 }
