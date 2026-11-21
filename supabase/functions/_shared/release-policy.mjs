@@ -1,3 +1,4 @@
+import {isPublic2026MetricKey} from './2026-public-question-policy.mjs';
 export const isVI = key => /^Q(0[1-9]|1[0-3])$/.test(key);
 const text = (v,max=240) => typeof v==='string' && v.length<=max && !/[<>\r\n]/.test(v);
 const forbidden = /응답.*(수|횟|건)|관측|표본|소표본|원자료|자유서술|respondent|observation|sample|raw_row|n_valid|count/i;
@@ -23,7 +24,10 @@ export function releaseMetrics(rows,catalog,level,approvedLv2Instant2026=false){
   if(![1,2].includes(level))return [];
   const definitions=new Map(catalog.filter(c=>c.verified===true).map(c=>[`${c.survey_year}:${c.question_id}`,c]));
   const candidates=rows.flatMap(r=>{
-    if(r.survey_year===2026&&/^Q51(?:$|[._-])/.test(r.question_id))return [];
+    // Nonpublic respondent/teacher-harm questions and unknown 2026 labels
+    // must never cross the public metric API, even if a catalogue row is
+    // erroneously marked verified and a release record says APPROVED.
+    if(r.survey_year===2026&&!isPublic2026MetricKey(r.question_id))return [];
     // Only a server-verified Lv2 route may pass true, after a separate
     // approved exact-snapshot RPC confirms privacy review AND 6h cooldown.
     // Lv1 still waits 24h; flags never authorize earlier publication.
