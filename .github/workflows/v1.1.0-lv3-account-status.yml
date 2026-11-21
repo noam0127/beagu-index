@@ -17,6 +17,8 @@ on:
       - 'styles/beagu-level-guide-v1.css'
       - 'styles/beagu-lv3-account-ui-v1.css'
       - 'tests/v1.1.0-lv3-account-ui.test.mjs'
+      - 'tests/v1.1.0-lv3-server-authorization.test.mjs'
+      - 'tests/v1.1.0-session-restore.test.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,7 +47,7 @@ jobs:
           node --check js/postit-account-v1.js
       - name: Verify Lv3 UI and Stage19 server access protection
         run: |
-          node --test tests/v1.1.0-lv3-account-ui.test.mjs tests/v1.1.0-lv3-server-authorization.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-lv3-exclusive-account-link.test.mjs
+          node --test tests/v1.1.0-lv3-account-ui.test.mjs tests/v1.1.0-lv3-server-authorization.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-lv3-exclusive-account-link.test.mjs tests/v1.1.0-session-restore.test.mjs
       - name: Verify legacy login/participant Lv2 and app UI are not regressed
         run: |
           node tests/level-guide-route.mjs
