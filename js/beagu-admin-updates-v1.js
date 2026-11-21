@@ -90,9 +90,10 @@
   el("releaseStageApply").disabled=busy||active||!s.production_sha||
     (!candidate&&(!s.draft_sha||s.draft_sha===s.staging_sha));
   el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
-  el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
+  // v2 safety gate: production promotion remains unavailable until the approved pipeline is audited.
+  el("releaseProdApply").disabled=true;
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
-  el("releaseProdRollback").disabled=busy||active||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
+  el("releaseProdRollback").disabled=true;
   el("releaseRegister").disabled=busy||active||!s.production_sha;
   el("releaseRefresh").disabled=busy;
   renderHistory("releaseStageHistory",stageHist);
@@ -110,6 +111,10 @@
   }
  }
  async function command(action){
+  if(action==="prod_apply"||action==="prod_rollback"){
+   message("운영 배포·롤백은 v2.0 안전성 검증과 별도 승인 전까지 비활성화되어 있습니다.",true);
+   return;
+  }
   if(busy)return;
   const wording={
    stage_apply:"등록된 버전을 시험 웹에 적용하시겠습니까?",
