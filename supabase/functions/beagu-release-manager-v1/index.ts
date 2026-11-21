@@ -6,6 +6,7 @@ import {collectGitHubWorkInbox} from "./github-work-inbox.mjs";
 import {annotateWorkDependencies} from "./release-work-dependencies.mjs";
 import {inspectReleaseWorkInbox} from "./release-impact-evidence.mjs";
 import {preflightReleaseConflicts} from "./release-conflict-preflight.mjs";
+import {evaluateReleaseSnapshotGate} from "./release-snapshot-gate.mjs";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"",{
   auth:{persistSession:false,autoRefreshToken:false}
@@ -16,6 +17,9 @@ const trusted=new Set(["https://baeguindex.com","https://www.baeguindex.com"]);
 // v2 fail-closed interlock: only a reviewed code change may enable production.
 // Neither client flags nor environment variables may override this policy.
 const PRODUCTION_RELEASES_PAUSED=true;
+// Release snapshots must never be finalized from partial CI, sandbox or browser evidence.
+// Clearing this hold requires a separate reviewed source-code change.
+const VERSION_FINALIZATION_PAUSED=true;
 const jwks=createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
 const SHA=/^[0-9a-f]{40}$/;
 const allowedVersion=/^[0-9A-Za-z][0-9A-Za-z._-]{0,31}$/;
@@ -145,6 +149,26 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   return error("production_release_paused",423,origin);
  const s=await state();
  const current=await activeJob();
+ // Protect every legacy path capable of creating a snapshot or selecting a
+ // release for staging, including register and stage_apply without version_id.
+ // Browser-sent "test passed" or "approved" flags are never evidence.
+ if(["create_version","register","stage_apply"].includes(action)){
+  let actualMain:string|null=null;
+  try{
+   const main=await github("/commits/main");
+   actualMain=typeof main.sha==="string"&&SHA.test(main.sha)?main.sha:null;
+  }catch{/* GitHub unavailable means fail closed. */}
+  const releaseGate=evaluateReleaseSnapshotGate({
+   mainSha:actualMain,
+   reviewedSha:typeof input.expected_sha==="string"?input.expected_sha:null,
+   candidateSha:actualMain,integratedSha:null,
+   evidence:null,job:current,ownerApproved:false,
+   freezeActive:VERSION_FINALIZATION_PAUSED
+  });
+  if(!releaseGate.eligible)return respond({
+   error:"version_snapshot_blocked",release_gate:releaseGate
+  },423,origin);
+ }
  if(action==="status"){
   const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
   let head=null,suggested_draft=null,pending=null;
@@ -197,7 +221,15 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
     }
    }catch{commitScanError="github_main_unavailable";}
   }
-  return respond({state:s,job:current,head_sha:head,suggested_draft,
+  // A green PR CI and a published historical preview are not a verified
+  // integrated snapshot. No readiness flags are accepted from the browser.
+  const releaseGate=evaluateReleaseSnapshotGate({
+   mainSha:head,reviewedSha:null,candidateSha:head,integratedSha:null,
+   evidence:null,job:current,ownerApproved:false,
+   freezeActive:VERSION_FINALIZATION_PAUSED
+  });
+  return respond({state:s,job:current,release_gate:releaseGate,
+    head_sha:head,suggested_draft,
     pending,work_in_progress:workInProgress,work_inbox:workInbox,commit_scan_error:commitScanError,
     versions:versionCatalog,staging_history:stageHistory,
     production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",

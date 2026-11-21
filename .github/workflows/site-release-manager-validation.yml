@@ -21,6 +21,7 @@ on:
       - 'tests/release-step10-security-invariants.mjs'
       - 'tests/release-step11-offline-integration.py'
       - 'tests/release-step11-readiness.mjs'
+      - 'tests/release-snapshot-gate.mjs'
       - 'docs/releases/v2-step11-readiness-observation.json'
       - 'tests/staging-http-smoke.py'
       - 'docs/releases/v2-step9-integration-manifest.json'
@@ -56,6 +57,7 @@ jobs:
           node --test tests/release-step9-merge-tree.mjs
           node --test tests/release-step10-security-invariants.mjs
           node --test tests/release-step11-readiness.mjs
+          node --test tests/release-snapshot-gate.mjs
           python3 tests/site-release-packaging.py
           python3 tests/release-step11-offline-integration.py
       - name: Read-only HTTP smoke of currently published site and preview (not this PR)

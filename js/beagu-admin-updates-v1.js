@@ -15,6 +15,8 @@
  let busy=false,model=null,timer=null,latestHead=null,pending=null;
  // v2 step 10 safety lock: frontend controls cannot promote or rollback production.
  const PRODUCTION_RELEASES_PAUSED=true;
+ // Server release_gate is authoritative; a missing response must fail closed.
+ let releaseGate=null;
  let versions=[],recentSuggestion=null,workInProgress=[],workInbox=null,commitScanError=null;
  const msg=(text,problem=false)=>{
   const p=el("releaseStatus");p.textContent=text;
@@ -33,6 +35,7 @@
   if(!response.ok){
    const messages={
     production_release_paused:"운영 배포·롤백이 안전성 검증 중이라 비활성화되어 있습니다.",
+    version_snapshot_blocked:"새 버전 생성과 시험 적용은 통합 QA 증빙을 모두 확인한 뒤 사용할 수 있습니다.",
     release_in_progress:"다른 배포가 진행 중입니다. 완료 후 다시 시도하세요.",
     version_already_exists:"이미 사용한 버전명 또는 동일한 코드입니다. 새 버전명과 새로운 변경사항이 필요합니다.",
     version_not_found:"선택한 버전을 찾지 못했습니다. 새로고침하세요.",
@@ -287,12 +290,47 @@
   else select.value="";
   select.disabled=busy||!!model?.job||!items.length;
  }
+ const freezeLabels={
+  version_finalization_frozen:"버전 생성 안전 잠금",
+  main_sha_unavailable:"최신 main 조회 실패",
+  main_sha_changed:"main 코드가 검토 후 변경됨",
+  reviewed_sha_missing:"검토한 코드 SHA 미확인",
+  candidate_sha_missing:"통합 후보 SHA 미확인",
+  integrated_sha_unverified:"통합 브랜치 포함 검증 미완료",
+  candidate_not_current_main:"통합 후보가 최신 main에 없음",
+  integrated_snapshot_mismatch:"검증 코드와 후보 코드 불일치",
+  pending_release_job:"기존 배포 작업 처리 필요",
+  unsafe_staging_rollback_queued:"복원 대상 없는 롤백 작업 존재",
+  owner_approval_missing:"관리자 최종 승인 미완료",
+  integration_merge_unverified:"실제 병합 증빙 미확인",
+  dependency_review_unverified:"선행 작업 검토 미완료",
+  integrated_ci_unverified:"통합 코드 CI 미검증",
+  sandbox_db_unverified:"시험 DB 마이그레이션 미검증",
+  sandbox_rls_unverified:"시험 권한 RLS 미검증",
+  sandbox_auth_unverified:"시험 인증 기능 미검증",
+  candidate_browser_unverified:"통합 후보 브라우저 E2E 미검증",
+  independent_staging_unverified:"독립 시험 환경 검증 미완료"
+ };
+ function updateReleaseGate(){
+  const status=el("releaseFreezeStatus");
+  const blockers=Array.isArray(releaseGate?.reason_codes)?
+    releaseGate.reason_codes:[];
+  if(releaseGate?.eligible===true&&releaseGate.status==="ready_for_snapshot"){
+   status.textContent="통합 검증 조건 충족 · 관리자 확인 후 버전 생성 가능";
+   return;
+  }
+  const visible=blockers.slice(0,7).map(key=>freezeLabels[key]||"검증 미완료").join(" · ");
+  status.textContent="버전 확정 보류 · "+(visible||"서버 검증 결과 미확인")+
+   (blockers.length>7?" · 추가 "+(blockers.length-7)+"개 차단 사유":"")+
+   ". 현재 릴리스 코드로 시험·운영 웹에 적용하지 않았습니다.";
+ }
  function updateControls(){
   if(!model)return;
   const s=model.state||{},job=!!model.job;
   const staging=versions.find(v=>v.id===el("releaseStageSelect").value);
   const production=versions.find(v=>v.id===el("releaseProdSelect").value);
-  el("releaseStageApply").disabled=busy||job||!staging||staging.sha===s.staging_sha||!s.production_sha;
+  el("releaseStageApply").disabled=busy||job||releaseGate?.eligible!==true||
+   !staging||staging.sha===s.staging_sha||!s.production_sha;
   el("releaseProdApply").disabled=PRODUCTION_RELEASES_PAUSED||busy||job||
    !production||!production.tested||production.sha===s.production_sha;
   const stageH=model.staging_history||[],prodH=model.production_history||[];
@@ -302,12 +340,15 @@
   const lastCodeRelease=prodH.find(h=>h.action!=="data_refresh");
   el("releaseProdRollback").disabled=PRODUCTION_RELEASES_PAUSED||busy||job||
    !lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
-  el("releaseRegister").disabled=busy||job||!pending||!(pending.files||[]).length;
+  el("releaseRegister").disabled=busy||job||releaseGate?.eligible!==true||
+   !pending||!(pending.files||[]).length;
   el("releaseRefresh").disabled=busy;
   el("releaseInspectPRs").disabled=busy||!workInbox||workInbox.status==="error";
  }
  function render(data,checked=false){
   model=data;versions=data.versions||[];
+  releaseGate=data.release_gate||null;
+  updateReleaseGate();
   const s=data.state||{},job=data.job;
   if(checked){
    latestHead=data.head_sha||null;
@@ -329,8 +370,9 @@
   el("releaseProdVersion").textContent=s.production_sha?(s.production_version||"버전 미입력"):"최초 배포 준비 중";
   el("releaseStageSha").textContent=s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹 업데이트 기록 없음";
   el("releaseProdSha").textContent=s.production_sha?"코드 "+short(s.production_sha):"운영 버전 확인 중";
-  el("releaseDraftInfo").textContent=pending?
-   "현재 "+(pending.files||[]).length+"개 파일의 변경사항을 새 버전으로 묶을 수 있습니다.":
+  el("releaseDraftInfo").textContent=releaseGate?.eligible!==true?
+   "통합 CI·시험 DB·RLS·인증·브라우저 검증이 끝나기 전까지 새 버전을 확정할 수 없습니다.":
+   pending?"현재 "+(pending.files||[]).length+"개 파일을 검증된 버전으로 묶을 수 있습니다.":
    "새 작업이 생기면 버전 생성이 활성화됩니다.";
   el("releaseQueueText").textContent=job?
    ((job.status==="running"?"배포 중":"배포 대기")+" · "+job.version+
@@ -355,6 +397,9 @@
   }catch(err){if(!quiet)msg("업데이트 조회 실패: "+(err.message||String(err)),true);}
  }
  async function command(action){
+  if(action==="stage_apply"&&releaseGate?.eligible!==true){
+   msg("통합 검증 미완료: 새 시험 배포는 중지되어 있습니다.",true);return;
+  }
   if(PRODUCTION_RELEASES_PAUSED&&["prod_apply","prod_rollback"].includes(action)){
    msg("운영 배포 및 롤백은 통합 검증과 별도 승인 전까지 비활성화됩니다.",true);
    return;
@@ -382,7 +427,11 @@
   finally{busy=false;await refresh(true);}
  }
  async function createVersion(event){
-  event.preventDefault();if(busy||!pending)return;
+  event.preventDefault();
+  if(releaseGate?.eligible!==true){
+   msg("버전 확정 보류: 통합 QA·DB·인증·브라우저 검증이 필요합니다.",true);return;
+  }
+  if(busy||!pending)return;
   const version=el("releaseVersionInput").value.trim();
   const summary=el("releaseSummaryInput").value.trim();
   if(!version||summary.length<3)return;
