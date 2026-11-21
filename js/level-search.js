@@ -879,6 +879,9 @@
           recorded.join(' · ')+'년 조사 기록 있음 · 백분위 공개와 별개'));
       }
       host.append(card);
+      // A separate explicitly requested Lv3 view; existing survey cards and
+      // previous-year values are never overwritten or upgraded by this path.
+      window.BeaguLv3SchoolFacts?.attachCard(card,school,()=>verifiedTier);
     }
     loadPagePercentiles(list,serial);
     if (window.BeaguSchoolMBTI) void BeaguSchoolMBTI.decorateCards(host,session);
