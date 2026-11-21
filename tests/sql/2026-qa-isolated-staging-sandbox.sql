@@ -5,7 +5,6 @@
 -- replacing only explicitly-qualified table/function schemas with sandbox.
 -- It is NOT the production schema; it is a realistic SQL execution test.
 -- STOP if schema exists to prevent accidentally changing prior test runs.
-BEGIN;
 DO $guard$
 BEGIN
  IF EXISTS (SELECT 1 FROM pg_namespace WHERE nspname='qa2026_sandbox') THEN
@@ -287,11 +286,3 @@ BEGIN
  IF examples<>10 THEN RAISE EXCEPTION 'Incomplete synthetic case count: %',examples; END IF;
 END
 $verify$;
-COMMIT;
-
--- Read-only per-case results, no real teachers or school identifiers.
-SELECT f.scenario,t.technical_status,q.quality_status,t.publication_status
-FROM qa2026_sandbox.fixture_cases f
-JOIN qa2026_sandbox.beagu_2026_auto_review_status t ON t.school_id=f.school_id
-JOIN qa2026_sandbox.beagu_2026_quality_reviews q ON q.school_id=f.school_id
-ORDER BY f.scenario;
