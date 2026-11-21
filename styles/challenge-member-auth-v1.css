@@ -62,3 +62,7 @@
 .challenge-member-sms-check{display:flex;align-items:flex-start;gap:9px;cursor:pointer;font-weight:500!important}
 .challenge-member-sms-check input{width:18px;height:18px;min-height:18px;margin:2px 0 0;flex:0 0 auto;accent-color:#225bb8}
 .challenge-member-sms p{font-size:11px;color:#60748d;line-height:1.65;margin:0}
+
+.challenge-member-dialog .beagu-forgot-link{display:block;text-align:center;margin:11px 0 2px;color:#335e99;font-size:12px;text-decoration:underline;text-underline-offset:3px}
+.challenge-member-dialog .beagu-forgot-link:focus-visible{outline:2px solid #225bb8;outline-offset:3px}
+.challenge-member-dialog .beagu-forgot-link[hidden]{display:none!important}
