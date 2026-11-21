@@ -1,0 +1,117 @@
+name: v1.1.0 stage36 — isolated Chromium + pinned PR premerge audit (NO DEPLOY)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-stage36-integration-mobile-qa.yml'
+      - 'scripts/release-manager/stage36-readonly-integration-audit.mjs'
+      - 'scripts/release-manager/stage36-build-isolated-preview.py'
+      - 'scripts/release-manager/stage36-browser-mobile-smoke.cjs'
+      - 'docs/releases/v1.1.0-stage36-premerge-manifest.json'
+      - 'tests/v1.1.0-stage33-cross-feature-qa.test.mjs'
+      - 'tests/v1.1.0-stage35-batch-percentiles.test.mjs'
+      - 'js/beagu-level-state-v1.js'
+      - 'js/beagu-home-tier-benefits-v1.js'
+      - 'js/challenge-achievements-v1.js'
+      - 'styles/beagu-home-tier-benefits-v1.css'
+      - 'styles/challenge-achievements-v1.css'
+      - 'admin.html'
+      - 'index.html'
+      - 'challenge.html'
+      - 'scripts/release-manager/worker.py'
+      - 'tests/preview-db-isolation.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-readonly:
+    name: Pinned main and PR240/241/193 collisions — NO MERGE
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      BEAGU_ALLOW_PRODUCTION_WRITES: 'false'
+      BEAGU_ALLOW_STAGING_WRITES: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch exact public commits for read-only comparison
+        run: |
+          git fetch --no-tags origin main refs/pull/240/head refs/pull/241/head refs/pull/193/head
+          node --check scripts/release-manager/stage36-readonly-integration-audit.mjs
+      - name: Audit dry-run merge-tree and file-level overlaps
+        env:
+          BEAGU_STAGE36_REPORT: ${{ runner.temp }}/stage36-premerge.json
+        run: |
+          node scripts/release-manager/stage36-readonly-integration-audit.mjs
+          node -e 'const r=require(process.env.BEAGU_STAGE36_REPORT);if(r.release_ready||r.merge_performed||r.deploy_performed||r.real_db_access||!r.included_workstreams.find(p=>p.pr===240&&p.overlap_count>=3))process.exit(1)'
+      - name: Save only commit hashes and path-risk evidence, no service data
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage36-pinned-conflict-evidence
+          path: ${{ runner.temp }}/stage36-premerge.json
+          retention-days: 1
+          if-no-files-found: error
+  chromium-local:
+    name: Chromium 1365px/390px/360px isolated candidate — ZERO remote requests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      BEAGU_ALLOW_PRODUCTION_WRITES: 'false'
+      BEAGU_ALLOW_STAGING_WRITES: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build isolated local staging artifact, NO deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/release-manager/stage36-build-isolated-preview.py \
+            --sha "$(git rev-parse HEAD)" \
+            --output "${RUNNER_TEMP}/stage36-isolated"
+          test -f "${RUNNER_TEMP}/stage36-isolated/artifact/_preview/index.html"
+          test ! -f "${RUNNER_TEMP}/stage36-isolated/artifact/_preview/CNAME"
+          test ! -d "${RUNNER_TEMP}/stage36-isolated/artifact/_preview/supabase"
+      - name: Install test-only Chromium
+        run: |
+          npm install --no-save --no-package-lock --ignore-scripts playwright@1.56.1
+          npx playwright install --with-deps chromium --only-shell
+      - name: Desktop/mobile QA over loopback; abort every external browser request
+        shell: bash
+        env:
+          BEAGU_STAGE36_LOCAL_ORIGIN: http://127.0.0.1:8136
+          BEAGU_STAGE36_BROWSER_REPORT: ${{ runner.temp }}/stage36-browser.json
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8136 --bind 127.0.0.1 \
+            --directory "${RUNNER_TEMP}/stage36-isolated/artifact" \
+            >"${RUNNER_TEMP}/stage36-http.log" 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          sleep 2
+          node scripts/release-manager/stage36-browser-mobile-smoke.cjs
+          node -e 'const r=require(process.env.BEAGU_STAGE36_BROWSER_REPORT);if(r.sample_count!==15||r.external_network_requests_forwarded!==0||r.production_db_modified||r.preview_uploaded||r.release_ready)process.exit(1)'
+      - name: Existing offline membership, publication and preview safety regressions
+        run: |
+          node --test tests/v1.1.0-stage33-cross-feature-qa.test.mjs tests/v1.1.0-stage35-batch-percentiles.test.mjs
+          python3 tests/preview-db-isolation.py
+      - name: Save non-personal browser layout evidence only
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage36-local-browser-evidence
+          path: ${{ runner.temp }}/stage36-browser.json
+          retention-days: 1
+          if-no-files-found: error
