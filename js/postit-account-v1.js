@@ -11,13 +11,21 @@ const levelKey='beagu-level-session-v1',deviceKey='beagu-referral-device-secret-
 const section=$('postitAccount'),status=$('postitAccountStatus'),form=$('postitAccountForm');
 const smsPhone=$('postitSmsPhone'),smsConsent=$('postitSmsConsent'),smsCollectionConsent=$('postitSmsCollectionConsent'),smsUnsubscribe=$('postitSmsUnsubscribe');
 const smsFields=$('postitSmsFields'),smsSave=$('postitSmsSave'),smsStatus=$('postitSmsStatus');
-if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsCollectionConsent||!smsUnsubscribe||!smsFields||!smsSave||!smsStatus||
-   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show||!window.BeaguSmsConsent?.create||!window.BeaguSmsAccountSettings?.create)return;
+const privacyPanel=$('postitPrivacyPanel');
+if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsCollectionConsent||!smsUnsubscribe||!smsFields||!smsSave||!smsStatus||!privacyPanel||
+   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show||!window.BeaguSmsConsent?.create||!window.BeaguSmsAccountSettings?.create||!window.BeaguAccountPrivacy?.create)return;
 const smsPrivacy=window.BeaguSmsConsent.create({phone:smsPhone,
  collectionConsent:smsCollectionConsent,marketingConsent:smsConsent});
 const smsAccount=window.BeaguSmsAccountSettings.create({
  client,container:smsFields,save:smsSave,withdraw:smsUnsubscribe,
  status:smsStatus,consent:smsPrivacy
+});
+const accountPrivacy=window.BeaguAccountPrivacy.create({
+ client,panel:$('postitPrivacyPanel'),summary:$('postitPrivacySummary'),
+ status:$('postitPrivacyStatus'),requestAccess:$('postitPrivacyAccess'),
+ cancelAccess:$('postitPrivacyCancelAccess'),requestDeletion:$('postitPrivacyRequestDeletion'),
+ cancelDeletion:$('postitPrivacyCancelDeletion'),
+ confirmEmail:$('postitPrivacyConfirmEmail'),confirmPhrase:$('postitPrivacyConfirmPhrase')
 });
 const accountMode=window.BeaguAccountMode.create({
  form,
@@ -82,8 +90,10 @@ async function refresh(){
  setLinked(false);
  const identity=await restored.identity();
  if(id!==generation)return;
- if(identity?.emailVerified)void smsAccount.showFor(identity);
- else smsAccount.hide();
+ if(identity?.emailVerified){
+  void smsAccount.showFor(identity);
+  void accountPrivacy.showFor(identity);
+ }else{smsAccount.hide();accountPrivacy.hide();}
  const user=identity?.user||null;
  if(!identity?.emailVerified||!validatedLevel()){
   render(user,false);return;
@@ -175,7 +185,7 @@ $('postitAccountLink').addEventListener('click',async()=>{
  }finally{busy=false;$('postitAccountLink').disabled=false}
 });
 $('postitAccountSignOut').addEventListener('click',async()=>{
- if(busy)return;busy=true;setLinked(false);smsAccount.hide();
+ if(busy)return;busy=true;setLinked(false);smsAccount.hide();accountPrivacy.hide();
  await client.auth.signOut().catch(()=>{});
  busy=false;void refresh();
 });
@@ -183,7 +193,7 @@ window.addEventListener('beagu:level-state-updated',()=>void refresh());
 client.auth.onAuthStateChange(event=>{
  // Never keep stale writer privileges between an Auth logout and the next
  // asynchronous session check.
- if(event==='SIGNED_OUT')setLinked(false);
+ if(event==='SIGNED_OUT'){setLinked(false);smsAccount.hide();accountPrivacy.hide();}
  Promise.resolve().then(()=>refresh());
 });
 window.BeaguPostitAccount={accessToken,refresh,canWrite:()=>linked};
