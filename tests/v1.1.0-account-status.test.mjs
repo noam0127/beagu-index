@@ -65,6 +65,7 @@ function postitHarness({user=null,level=true,linked=false}={}) {
  vm.runInNewContext(modeSource,browser,{timeout:1500});
  vm.runInNewContext(statusSource,browser,{timeout:1500});
  vm.runInNewContext(restoreSource,browser,{timeout:1500});
+ vm.runInNewContext(text('js/beagu-auth-errors-v1.js'),browser,{timeout:1500});
  vm.runInNewContext(postitSource,browser,{timeout:2000});
  return {get,status,calls,window};
 }
