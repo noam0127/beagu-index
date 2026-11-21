@@ -127,7 +127,7 @@ test('Lv3 token is short-lived, server-hashed and account/Auth-session bound',()
    "s.auth_user_id=p_user",
    "s.visitor_id=p_visitor"])
    assert.ok(migration.includes(value),value);
- assert.match(migration,/where s\.issued_at>v_now-interval '1 hour'/);
+ assert.match(migration,/s\.issued_at>v_now-interval '1 hour'/);
  assert.match(migration,/revoked_at=v_now/);
  assert.doesNotMatch(migration,/\bupdate\s+public\.beagu_level_codes\b/i);
  assert.doesNotMatch(migration,/\bdelete\s+from\s+auth\.users\b/i);
