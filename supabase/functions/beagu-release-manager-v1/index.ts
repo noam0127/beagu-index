@@ -13,6 +13,9 @@ const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SE
 const repo="noam0127/beagu-index";
 const mainApi="https://api.github.com/repos/"+repo;
 const trusted=new Set(["https://baeguindex.com","https://www.baeguindex.com"]);
+// v2 fail-closed interlock: only a reviewed code change may enable production.
+// Neither client flags nor environment variables may override this policy.
+const PRODUCTION_RELEASES_PAUSED=true;
 const jwks=createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
 const SHA=/^[0-9a-f]{40}$/;
 const allowedVersion=/^[0-9A-Za-z][0-9A-Za-z._-]{0,31}$/;
@@ -137,6 +140,9 @@ async function enqueue(job:{action:string;target:string;to_sha:string|null;from_
 }
 async function adminAction(input:Record<string,unknown>,userId:string,origin:string):Promise<Response>{
  const action=String(input.action||"");
+ // Block direct admin commands even after valid owner MFA.
+ if(PRODUCTION_RELEASES_PAUSED&&(action==="prod_apply"||action==="prod_rollback"))
+  return error("production_release_paused",423,origin);
  const s=await state();
  const current=await activeJob();
  if(action==="status"){
@@ -279,7 +285,9 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
    version:candidateVersion,summary:candidateSummary,created_by:userId};
  }else if(action==="stage_rollback"){
   const prev=(await history("staging"))[0];
-  if(!prev||prev.from_sha===s.staging_sha)return error("no_staging_rollback",409,origin);
+  // First staging deployment has from_sha=null: never queue an "empty restore".
+  if(!prev||!SHA.test(String(prev.from_sha||""))||prev.from_sha===s.staging_sha)
+   return error("no_staging_rollback",409,origin);
   job={action,target:"staging",from_sha:s.staging_sha,to_sha:prev.from_sha,
    version:"이전 시험 버전",summary:"시험 웹 이전 배포 복원",created_by:userId};
  }else if(action==="prod_apply"){
@@ -333,7 +341,23 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   let job=await activeJob();
   const publicDataBlob=String(input.data_blob_sha||"");
   if(!SHA.test(publicDataBlob))return error("invalid_public_data_blob",400,origin);
-  if(!job&&!s.production_sha){
+  if(PRODUCTION_RELEASES_PAUSED&&job?.target==="production")
+   return respond({has_job:false,paused_reason:"production_release_paused"},200,origin);
+  // Invalid older first-stage rollbacks must be failed, not silently erase _preview.
+  if(job?.target==="staging"&&job?.action==="stage_rollback"&&
+     !SHA.test(String(job.to_sha||""))){
+   const {error:rollbackError}=await db.from("beagu_site_release_jobs_v1").update({
+    status:"failed",error_code:"no_staging_rollback",finished_at:new Date().toISOString()
+   }).eq("id",job.id).eq("status","queued");
+   if(rollbackError)throw Error("rollback_queue_unavailable");
+   return respond({has_job:false,blocked_reason:"no_staging_rollback"},200,origin);
+  }
+  if(PRODUCTION_RELEASES_PAUSED&&!job&&!s.production_sha)
+   return respond({has_job:false,paused_reason:"production_bootstrap_paused"},200,origin);
+  const approvedPublicDataBlob=PRODUCTION_RELEASES_PAUSED?
+   (SHA.test(String(s.public_data_blob_sha||""))?String(s.public_data_blob_sha):null):
+   publicDataBlob;
+  if(!PRODUCTION_RELEASES_PAUSED&&!job&&!s.production_sha){
    const initial=String(input.head_sha||"");
    if(!SHA.test(initial))return error("invalid_bootstrap_sha",400,origin);
    const {data, error:e}=await db.from("beagu_site_release_jobs_v1").insert({
@@ -343,7 +367,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
    }).select("*").single();
    if(e)throw Error("bootstrap_unavailable");job=data;
   }
-  if(!job&&s.production_sha&&s.public_data_blob_sha!==publicDataBlob){
+  if(!PRODUCTION_RELEASES_PAUSED&&!job&&s.production_sha&&s.public_data_blob_sha!==publicDataBlob){
    const {data,error:e}=await db.from("beagu_site_release_jobs_v1").insert({
     action:"data_refresh",target:"production",to_sha:s.production_sha,from_sha:s.production_sha,
     version:s.production_version||"운영 데이터",summary:"공개 학교 목록 자동 갱신",
@@ -356,7 +380,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   if(job.status!=="queued")return respond({has_job:false,already_running:true},200,origin);
   const {data:claimed,error:e}=await db.from("beagu_site_release_jobs_v1")
    .update({status:"running",started_at:new Date().toISOString(),
-    public_data_blob_sha:publicDataBlob})
+    public_data_blob_sha:approvedPublicDataBlob})
    .eq("id",job.id).eq("status","queued").select("*").maybeSingle();
   if(e)throw Error("claim_unavailable");
   if(!claimed)return respond({has_job:false},200,origin);
@@ -366,7 +390,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
    return error("invalid_release_pointer",503,origin);
   return respond({has_job:true,job_id:claimed.id,action:claimed.action,
    target:claimed.target,production_sha:productionSha,staging_sha:stagingSha||null,
-   version:claimed.version},200,origin);
+   version:claimed.version,public_data_blob_sha:approvedPublicDataBlob},200,origin);
  }
  if(action==="worker_complete"||action==="worker_fail"){
   const id=String(input.job_id||"");
@@ -374,6 +398,8 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   const {data:job,error:e}=await db.from("beagu_site_release_jobs_v1")
     .select("*").eq("id",id).maybeSingle();
   if(e||!job)return error("job_not_found",404,origin);
+  if(PRODUCTION_RELEASES_PAUSED&&action==="worker_complete"&&job.target==="production")
+   return error("production_release_paused",423,origin);
   if(job.status!=="running")return error("job_not_running",409,origin);
   if(action==="worker_fail"){
    await db.from("beagu_site_release_jobs_v1").update({
