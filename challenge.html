@@ -167,6 +167,7 @@
   }
 </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
+  <link rel="stylesheet" href="styles/challenge-achievements-v1.css?v=20261122-stage29">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
@@ -193,6 +194,31 @@
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="postit.html">포스트잇</a><a href="challenge.html" aria-current="page">챌린지</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 <main id="main-content">
+  <section class="challenge-achievements" id="challengeLevelAchievements" role="region"
+    aria-labelledby="challengeAchievementsTitle" data-verified-tier="unknown" data-status="checking">
+    <div class="challenge-achievements-head">
+      <h2 id="challengeAchievementsTitle">챌린지 달성 현황</h2>
+      <span class="challenge-achievements-summary" id="challengeAchievementsSummary"
+        role="status" aria-live="polite">서버 인증 현황 확인 중</span>
+    </div>
+    <ol class="challenge-achievements-list" aria-label="Lv.1부터 Lv.3까지 달성 단계">
+      <li class="challenge-achievements-item" data-challenge-achievement="1" data-achieved="false">
+        <strong>Lv.1</strong><span class="challenge-achievement-status"
+          data-achievement-status>확인 중</span>
+        <p>본인 2026 설문 참여 인증</p>
+      </li>
+      <li class="challenge-achievements-item" data-challenge-achievement="2" data-achieved="false">
+        <strong>Lv.2</strong><span class="challenge-achievement-status"
+          data-achievement-status>확인 중</span>
+        <p>유효한 추천 참여 인증</p>
+      </li>
+      <li class="challenge-achievements-item" data-challenge-achievement="3" data-achieved="false">
+        <strong>Lv.3</strong><span class="challenge-achievement-status"
+          data-achievement-status>확인 중</span>
+        <p>이메일 인증·계정 연결·서버 인증</p>
+      </li>
+    </ol>
+  </section>
   <section id="challengeAccessPanel" class="challenge-access-panel beagu-auth-card beagu-levelup-card" aria-labelledby="challengeAccessTitle">
     <div class="beagu-auth-heading">
       <h1 id="challengeAccessTitle">참여코드 입력</h1>
@@ -384,6 +410,7 @@
 <script src="js/challenge-referral-v1.js?v=20261121-lv2-copy1"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 <script src="js/challenge-member-auth-v1.js?v=20261121-sms1"></script>
+<script src="js/challenge-achievements-v1.js?v=20261122-stage29"></script>
 </body>
 </html>
 
