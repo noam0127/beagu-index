@@ -56,7 +56,7 @@ function postitHarness({user=null,level=true,linked=false,lv3LinkReady=false}={}
    }
    if(address.includes('writer_status')){
     calls.writerStatus++;
-    return {ok:true,async json(){return {linked}}};
+    return {ok:true,async json(){return {linked,lv3LinkReady}}};
    }
    calls.link++;
    return {ok:false,async json(){return {error:'DENIED'}}};
