@@ -1,0 +1,22 @@
+name: v1.1.0 stage35 staging-only anonymous-denial gate
+on:
+  pull_request:
+    paths:
+      - 'tests/v1.1.0-stage35-staging-deny.py'
+      - '.github/workflows/v1.1.0-stage35-staging-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staging-anonymous-denial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read-only unauthorized requests to isolated staging only
+        run: python3 tests/v1.1.0-stage35-staging-deny.py
+      - name: Coverage warning
+        if: always()
+        run: |
+          echo "No production requests, user creation, database writes, or secrets."
+          echo "Passing this check is NOT completion of stage 35."
