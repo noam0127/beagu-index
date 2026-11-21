@@ -187,7 +187,9 @@ Deno.serve(async(req:Request)=>{
    const direction=typeof body.direction==='string'?body.direction:(sort==='school_name'||sort==='address'?'asc':'desc');
    const pagination=Number(body.page);
    const sorts=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count']);
-   if(!sorts.has(sort)||!['asc','desc'].includes(direction)||!Number.isSafeInteger(pagination)||pagination<0||pagination>500||
+   if(sort==='housing_price_won'&&Number(session.access_level)<2)
+      return send({error:'LV2_REQUIRED_FOR_HOUSING_SORT'},403,origin);
+    if(!sorts.has(sort)||!['asc','desc'].includes(direction)||!Number.isSafeInteger(pagination)||pagination<0||pagination>500||
       searchText.length>80||region.length>24||office.length>100||
       !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
       (!searchText&&!region)||(!region&&office))
