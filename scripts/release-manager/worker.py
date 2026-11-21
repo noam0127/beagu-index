@@ -78,12 +78,18 @@ def archive(sha, destination):
         raise RuntimeError("Website build is missing index.html")
 
 
-def overlay_approved_directory(target):
-    # Only this previously approved public JSON artifact may bypass code-release approval.
-    # Never overlay JS, HTML, workflows, or SQL from an unapproved main commit.
-    subprocess.run(["bash", "-eo", "pipefail", "-c",
-      "git archive --format=tar HEAD data/public-compare-school-directory-v1.json | "
-      "tar -xf - -C " + str(target)], cwd=ROOT, check=True)
+def overlay_approved_directory(target, blob_sha):
+    """Pin the only approved public JSON artifact; never use unapproved HEAD."""
+    if not blob_sha:
+        return  # Legacy snapshot retains the immutable archived data.
+    if not isinstance(blob_sha, str) or not SHA.fullmatch(blob_sha):
+        raise ValueError("Invalid approved public data blob SHA")
+    content = subprocess.check_output(
+        ["git", "cat-file", "blob", blob_sha], cwd=ROOT
+    )
+    destination = target / "data" / "public-compare-school-directory-v1.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(content)
 
 
 def make_preview_banner(target):
@@ -92,7 +98,7 @@ def make_preview_banner(target):
         'style="position:fixed;bottom:10px;right:10px;z-index:2147483600;'
         'background:#152943;color:#fff;border-radius:12px;'
         'padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">'
-        '시험 웹 · 운영 데이터 연결 주의</div>'
+        '시험 웹 · 시험 데이터 연결</div>'
     )
     for file in target.rglob("*.html"):
         source = file.read_text(encoding="utf-8", errors="replace")
@@ -107,23 +113,69 @@ def make_preview_banner(target):
         file.write_text(source, encoding="utf-8")
 
 
+def isolate_preview_backend(preview_dir):
+    """Fail closed: preview must never write to the live Supabase project.
+
+    Modify only the packaging output; the immutable source and production
+    snapshot remain untouched. Replace hard-coded production URLs in page
+    scripts and HTML as well as the public publishable key in the shared
+    Supabase configuration. Test schemas/functions must be provisioned
+    separately before enabling member E2E.
+    """
+    live_ref = "snvzwrexuqavnfvzgxqj"
+    stage_ref = "ycwuugggqbunlbwuzvbx"
+    live_key = "sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2"
+    stage_key = "sb_publishable_c8h7TaIYONfP56Zc05K0Sw_SxyT3lZU"
+    config = preview_dir / "js" / "supabase-config.js"
+    if not config.is_file():
+        raise RuntimeError("Preview Supabase config is missing")
+    if live_ref not in config.read_text(encoding="utf-8"):
+        raise RuntimeError("Unexpected live Supabase configuration; review manually")
+    changed = 0
+    for file in preview_dir.rglob("*"):
+        if not file.is_file() or file.suffix.lower() not in (".js", ".html", ".mjs"):
+            continue
+        body = file.read_text(encoding="utf-8")
+        modified = body.replace(live_ref, stage_ref).replace(live_key, stage_key)
+        if modified != body:
+            file.write_text(modified, encoding="utf-8")
+            changed += 1
+    if stage_ref not in config.read_text(encoding="utf-8") or changed < 1:
+        raise RuntimeError("Staging Supabase URL rewrite did not complete")
+    for file in preview_dir.rglob("*"):
+        if file.is_file() and file.suffix.lower() in (".js", ".html", ".mjs"):
+            if live_ref in file.read_text(encoding="utf-8"):
+                raise RuntimeError("Production Supabase URL leaked into preview: " + str(file))
+    print("Preview isolated to staging Supabase; rewritten files:", changed)
+
+
 def build():
     plan = read_plan()
+    # PR #199: reject production jobs, including queued stale jobs.
+    if plan.get("target") != "staging" or plan.get("action") not in (
+        "stage_apply", "stage_rollback"
+    ):
+        raise RuntimeError("Production publication is paused in v2 step 3")
     production = plan.get("production_sha")
     staging = plan.get("staging_sha")
+    approved_blob = plan.get("public_data_blob_sha")
+    # Critical first-staging rollback guard: a null SHA is not a prior version.
+    if not isinstance(staging, str) or not SHA.fullmatch(staging):
+        raise RuntimeError("Invalid staging release SHA; empty rollback forbidden")
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
     archive(production, OUTPUT)
-    overlay_approved_directory(OUTPUT)
-    if staging:
-        preview_dir = OUTPUT / "_preview"
-        archive(staging, preview_dir)
-        overlay_approved_directory(preview_dir)
-        nested_cname = preview_dir / "CNAME"
-        if nested_cname.exists():
-            nested_cname.unlink()
-        make_preview_banner(preview_dir)
-        (preview_dir / ".nojekyll").touch()
+    overlay_approved_directory(OUTPUT, approved_blob)
+    preview_dir = OUTPUT / "_preview"
+    archive(staging, preview_dir)
+    overlay_approved_directory(preview_dir, approved_blob)
+    nested_cname = preview_dir / "CNAME"
+    if nested_cname.exists():
+        nested_cname.unlink()
+    make_preview_banner(preview_dir)
+    # PR #195: rewrite all embedded production Supabase URLs in preview only.
+    isolate_preview_backend(preview_dir)
+    (preview_dir / ".nojekyll").touch()
     if (OUTPUT / "CNAME").read_text(encoding="utf8").strip() != "baeguindex.com":
         raise RuntimeError("Production domain mismatch")
     (OUTPUT / ".nojekyll").touch()
