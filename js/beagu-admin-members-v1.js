@@ -27,7 +27,7 @@
   }
   async function request(action, args = {}) {
     const {data, error} = await supabaseClient.auth.getSession();
-    if (error || !data?.session?.access_token) throw new Error("session_required");
+    if (error || !data?.session?.access_token) throw Object.assign(new Error("session_required"),{status:401});
     const response = await fetch(api, {
       method:"POST", cache:"no-store",
       headers: {
@@ -99,8 +99,9 @@
       status(total.toLocaleString("ko-KR") + "명 검색됨 · 인증 계정 " + scanned + "개 조회" +
         (data.truncated ? " · 대량 계정의 일부만 검색됨" : "") +
         " · 참여코드 발급자 수와는 다릅니다.");
-    } catch {
+    } catch (error) {
       if (seq !== serial || role !== "owner") return;
+      if (error?.status === 401 || error?.status === 403) {reset();return;}
       showRows([]);
       status("회원 목록을 불러오지 못했습니다. 관리자 인증 상태 또는 연결을 확인해 주세요.", true);
     }
@@ -160,7 +161,8 @@
       const info = await request("detail",{user_id:id});
       if (!role || selectedId !== id) return;
       populateDetails(info);
-    } catch {
+    } catch (error) {
+      if (error?.status === 401 || error?.status === 403) {reset();return;}
       if (selectedId === id)
         text("adminMemberActionStatus","상세 정보를 불러오지 못했습니다. 다시 시도해 주세요.");
     }
@@ -201,6 +203,7 @@
         text("adminMemberActionStatus",label+" 완료 · 요청·성공 감사 기록 확인");
     } catch (error) {
       if (role !== "owner") return;
+      if (error?.status === 401 || error?.status === 403) {reset();return;}
       text("adminMemberActionStatus",error?.status === 409
         ? "이미 처리 중이거나 완료된 요청입니다. 회원 상세·감사 이력을 새로 확인해 주세요."
         : "조치 결과를 확정할 수 없습니다. 동일 작업을 반복하지 말고 회원 상세·감사 기록을 조회해 주세요.");
