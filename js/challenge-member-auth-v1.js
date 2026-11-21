@@ -79,6 +79,12 @@ async function showAccountStatus(){
  const person=await sessionIdentity();
  if(overlay.hidden||!tier2)return;
  if(!person){
+  // A previously restored session can expire while this modal is open.
+  // Re-enable the form instead of trapping the user behind a hidden login.
+  form.hidden=false;switchMode.hidden=false;signOut.hidden=true;
+  connect.hidden=true;smsUnsubscribe.hidden=true;
+  const forgot=byId('challengeMemberForgot');
+  if(forgot)forgot.hidden=mode!=='signin';
   if(mode==='signin')setAccountState('signin-required');
   return;
  }
