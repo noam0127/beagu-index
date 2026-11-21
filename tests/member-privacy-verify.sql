@@ -18,6 +18,10 @@ begin
     and table_name='member_privacy_requests_v1'
     and column_name in ('email','phone','phone_e164','password','jwt','token','ip_address','body'))
  then raise exception 'Sensitive original data column found in privacy queue';end if;
+ if has_function_privilege('anon','public.beagu_admin_privacy_queue_v1(int)','EXECUTE')
+    or has_function_privilege('authenticated','public.beagu_admin_privacy_queue_v1(int)','EXECUTE')
+    or not has_function_privilege('service_role','public.beagu_admin_privacy_queue_v1(int)','EXECUTE')
+ then raise exception 'Owner privacy queue RPC incorrectly exposed';end if;
  if not exists(select 1 from pg_indexes
   where schemaname='beagu_private' and tablename='member_privacy_requests_v1'
     and indexname='member_privacy_active_one_v1')
@@ -53,6 +57,10 @@ begin
   'deletion','cccccccc-cccc-4ccc-8ccc-cccccccccccc');
  if request2->>'status'<>'already_pending'
  then raise exception 'Duplicate delete request not idempotent';end if;
+ if not exists(select 1 from public.beagu_admin_privacy_queue_v1(30)
+   where user_id='11111111-1111-4111-8111-111111111111' and kind='deletion'
+     and status='pending')
+ then raise exception 'Owner privacy inbox does not show pending request';end if;
  current_status := public.beagu_member_privacy_status_v1(
   '11111111-1111-4111-8111-111111111111');
  if current_status->'deletion'->>'status'<>'pending'
