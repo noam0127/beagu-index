@@ -1,0 +1,33 @@
+name: v1.1.0 — Supabase Auth return URL safety
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-auth-redirects.yml'
+      - 'docs/releases/v1.1.0-auth-redirect-matrix.json'
+      - 'js/beagu-auth-return-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/beagu-admin-enroll-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'challenge.html'
+      - 'postit.html'
+      - 'admin-enroll.html'
+      - 'tests/v1.1.0-auth-redirects.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  redirect-config:
+    name: Validate allowlisted Auth redirect URLs (no Supabase writes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run offline safety and routing tests
+        run: node --test tests/v1.1.0-auth-redirects.test.mjs
