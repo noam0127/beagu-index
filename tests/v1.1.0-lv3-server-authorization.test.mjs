@@ -69,7 +69,7 @@ test('successful issue demands a second server verification, not merely a token'
   assert.equal(call.options.cache,'no-store');
   assert.equal(call.options.referrerPolicy,'no-referrer');
  }
- assert.equal(x.activity.some(q=>q.body.code==='c'.repeat(64)),false);
+ assert.equal(x.activity.some(q=>q.body?.code==='c'.repeat(64)),false);
 });
 test('issue fails closed when server release switch is disabled',async()=>{
  const x=harness({issue:false});
