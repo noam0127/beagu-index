@@ -107,3 +107,49 @@ test('Stage22 separate endpoint is not loaded in production HTML, release switch
  assert.match(edge,/Cache-Control":"private, no-store/);
  assert.match(edge,/Referrer-Policy":"no-referrer/);
 });
+
+
+test('Stage23: housing-price sort locks for Lv0/Lv1, unlocks for verified Lv2/Lv3, and re-locks after downgrade',()=>{
+ const script=read('js/level-search.js');
+ const match=script.match(/  const updateSortAccess=\(\)=>\{[\s\S]*?\n  \};/);
+ assert.ok(match,'sort access UI function must exist');
+ const simulate=(tier,selected)=>{
+  const option={disabled:true,textContent:'',title:''};
+  const select={value:selected,querySelector:(selector)=>selector==='option[value="housing_price_won"]'?option:null};
+  return vm.runInNewContext(`
+    const verifiedTier=${tier};
+    const $=id=>id==='regionSort'?select:null;
+    ${match[0]}
+    updateSortAccess();
+    ({disabled:option.disabled,label:option.textContent,value:select.value});
+  `,{option,select});
+ };
+ for(const tier of [0,1]){
+  const state=simulate(tier,'housing_price_won');
+  assert.equal(state.disabled,true,'tier '+tier+' must be locked');
+  assert.match(state.label,/🔒.*Lv\.2/);
+  assert.equal(state.value,'school_name');
+ }
+ for(const tier of [2,3]){
+  const state=simulate(tier,'housing_price_won');
+  assert.equal(state.disabled,false,'tier '+tier+' must unlock');
+  assert.equal(state.label,'공시지가');
+  assert.equal(state.value,'housing_price_won');
+ }
+ const html=read('search-lv1.html');
+ assert.match(html,/<option value="housing_price_won"[^>]*disabled[^>]*>공시지가 🔒 \(Lv\.2부터\)<\/option>/);
+ assert.match(script,/if\(response\.status === 403 && data\.error === 'LV2_REQUIRED_FOR_HOUSING_SORT'\)/);
+ assert.match(script,/if\(error\.sortLocked\)\{[\s\S]*?verifiedTier=1;[\s\S]*?updateSortAccess\(\)/);
+ assert.match(script,/\/\/ Re-check the currently verified tier before every ranked search\.\s+updateSortAccess\(\)/);
+});
+
+test('Stage23: ranked-search authorization checks current verified session before querying cached facts',()=>{
+ const sessionCheck=legacy.indexOf('const session=await check(req);');
+ const sortBranch=legacy.indexOf("if(sort==='housing_price_won'&&Number(session.access_level)<2)");
+ const firstCacheQuery=legacy.indexOf("rankedQuery('beagu_lv1_school_sort_cache_v1')");
+ assert.ok(sessionCheck>=0 && sessionCheck<sortBranch);
+ assert.ok(sortBranch>=0 && sortBranch<firstCacheQuery);
+ assert.match(legacy,/beagu_2026_verified_visitor_level_v1/);
+ assert.match(legacy,/if\(level!==Number\(data\.access_level\)\)/);
+ assert.match(legacy,/return send\(\{error:'LV2_REQUIRED_FOR_HOUSING_SORT'\},403,origin\)/);
+});
