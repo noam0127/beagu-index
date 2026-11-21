@@ -88,7 +88,7 @@ def make_preview_banner(target):
     )
     for file in target.rglob("*.html"):
         source = file.read_text(encoding="utf-8", errors="replace")
-        source = re.sub(r"(?i)<body(\\s[^>]*)?>",
+        source = re.sub(r"(?i)<body(\s[^>]*)?>",
                         lambda match: match.group(0) + banner,
                         source, count=1)
         source = source.replace("<head>", '<head><meta name="robots" content="noindex,nofollow">', 1)
