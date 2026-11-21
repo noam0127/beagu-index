@@ -23,11 +23,14 @@
   const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count']);
   let sortDirection='asc';
   const updateSortAccess=()=>{
-    const opt=$('regionSort')?.querySelector('option[value="housing_price_won"]');
+    const select=$('regionSort');
+    const opt=select?.querySelector('option[value="housing_price_won"]');
     if(!opt)return;
-    opt.disabled=verifiedTier<2;
-    opt.title=verifiedTier<2?'Lv.2 이상에서 이용할 수 있습니다.':'승인된 공시지가 정렬';
-    if(opt.disabled&&$('regionSort').value==='housing_price_won')$('regionSort').value='school_name';
+    const locked=verifiedTier<2;
+    opt.disabled=locked;
+    opt.textContent=locked?'공시지가 🔒 (Lv.2부터)':'공시지가';
+    opt.title=locked?'Lv.2 이상에서 이용할 수 있습니다.':'승인된 공시지가 정렬';
+    if(locked&&select.value==='housing_price_won')select.value='school_name';
   };
   const updateSortDirection=()=>{
     const button=$('regionSortDirection');
