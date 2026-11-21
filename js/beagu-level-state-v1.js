@@ -16,6 +16,7 @@
   let generation=0;
   let lastValidatedToken='';
   let lv3Verified=false;
+  let participationLabel='Lv.0',participationAria='현재 Lv.0 · 레벨 안내 보기';
   const getToken=()=>{
     try { return sessionStorage.getItem(KEY)||''; } catch (_) { return ''; }
   };
@@ -56,11 +57,18 @@
       indicator.textContent='Lv.3';
       indicator.setAttribute('aria-label','현재 Lv.3 · 서버 인증된 회원 · 레벨 안내 보기');
       indicator.title='현재 Lv.3 · 서버 인증된 회원 · 레벨 안내 보기';
+    }else{
+      // Revoke only the Lv3 display. Keep verified Lv2 participation code.
+      indicator.textContent=participationLabel;
+      indicator.setAttribute('aria-label',participationAria);
+      indicator.title=participationAria;
     }
   };
   const setState=(level,label,aria,provisional=false)=>{
     indicator.dataset.provisional=provisional?'true':'false';
     indicator.dataset.level=level;
+    participationLabel=label;
+    participationAria=aria;
     indicator.textContent=label;
     indicator.setAttribute('aria-label',aria);
     indicator.title=aria;
