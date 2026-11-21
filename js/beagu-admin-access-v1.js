@@ -306,7 +306,14 @@
     renderTelemetryHealth(payload.telemetry_health);
   }
   function refreshLiveSafely(){
+    const expectedSeq=liveSeq+1;
     void refreshLiveTraffic().catch(()=>{
+      // Old failed live-traffic requests must not erase newer data.
+      if(liveSeq!==expectedSeq||$("adminDashboard").hidden)return;
+      const hourly=$("adminHourlyChart");
+      hourly.replaceChildren();
+      hourly.dataset.dataState="unavailable";
+      hourly.append(make("p","empty",CHART_EMPTY.unavailable));
       $("adminLiveAsOf").textContent="실시간 통계를 갱신하지 못했습니다. 연결과 관리자 인증을 확인하세요.";
       $("adminOnlineCount").textContent="확인 불가";
       $("adminPerfAsOf").textContent="속도 통계를 갱신하지 못했습니다. 다음 갱신에서 재시도합니다.";
@@ -375,12 +382,15 @@
   }
   function invalidateChartData(){
     dashboard=null;
-    for(const id of ["adminVisitChart","adminSearchChart","adminGameChart"]){
+    ++liveSeq;
+    for(const id of ["adminVisitChart","adminSearchChart","adminGameChart","adminHourlyChart"]){
       const root=$(id);root.replaceChildren();
       root.dataset.dataState="unavailable";
       root.append(make("p","empty","새 조회 기간의 서버 집계를 확인하는 중입니다."));
     }
     for(const type of ["site","search","view","level","challenge","security"])fill(type,null);
+    $("adminOnlineCount").textContent="집계 확인 중";
+    $("adminLiveAsOf").textContent="새 조회 기간 실시간 자료 확인 중";
     $("adminDataAsOf").textContent="새 조회 기간 집계 확인 중 · 이전 기간 수치는 재사용하지 않습니다.";
   }
   document.querySelectorAll("[data-period]").forEach(button=>button.addEventListener("click",async()=>{
