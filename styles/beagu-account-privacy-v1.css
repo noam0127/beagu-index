@@ -1,0 +1,33 @@
+/* Member privacy, visible only after Auth verification. */
+.account-privacy-summary{overflow-wrap:anywhere;font-size:12px;line-height:1.6;color:#234766}
+.account-privacy-help{font-size:12px;line-height:1.65;color:#536f8f}
+.account-privacy-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.account-privacy-actions button{font:inherit;font-size:12px;min-height:42px;padding:10px 13px;border:1px solid #b4cbe6;background:#f2f7ff;color:#244f85;border-radius:9px;cursor:pointer}
+.account-privacy-actions button:disabled{opacity:.58;cursor:wait}
+.account-privacy-actions button:focus-visible,
+.account-privacy-delete summary:focus-visible,
+.account-privacy-delete input:focus-visible{outline:3px solid #83b7ee;outline-offset:2px}
+.account-privacy-delete{border-top:1px solid #dce5ef;padding:12px 0;font-size:12px;line-height:1.65;color:#49627d}
+.account-privacy-delete summary{cursor:pointer;font-size:12px;font-weight:750;color:#304f70}
+.account-privacy-delete label{display:block;font-size:12px;font-weight:650;margin:9px 0 5px}
+.account-privacy-delete input{box-sizing:border-box;font:inherit;font-size:13px;width:100%;padding:11px;border:1px solid #c4d6e9;border-radius:8px;color:#173858;background:#fff}
+.challenge-member-privacy,.postit-privacy,.self-privacy{
+  border:1px solid #d4e1f0;border-radius:12px;background:#f8fbff;
+  padding:14px;margin:13px 0;min-width:0
+}
+.challenge-member-privacy h3,.postit-privacy h3,.self-privacy h3{font-size:15px;margin:0 0 10px;color:#213d61}
+.challenge-member-privacy #challengePrivacyStatus,.postit-privacy #postitPrivacyStatus,
+.self-privacy #selfPrivacyStatus{font-size:12px;line-height:1.55;color:#31587b}
+.challenge-member-privacy [hidden],.postit-privacy [hidden],.self-privacy [hidden]{display:none!important}
+.account-privacy-standalone{
+ font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;max-width:700px;
+ margin:32px auto;padding:0 18px 45px;color:#183552
+}
+.account-privacy-standalone header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.account-privacy-standalone .card{padding:19px;border-radius:14px;border:1px solid #d5e2f0;margin:15px 0;background:#fff}
+.account-privacy-standalone .login-form{display:grid;gap:10px;max-width:420px}
+.account-privacy-standalone .login-form input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #bbcede;border-radius:9px;font-size:15px}
+.account-privacy-standalone .login-form button,.account-privacy-standalone #selfSignOut,
+.account-privacy-standalone #selfSmsWithdraw{padding:12px;border:1px solid #a8c2df;border-radius:9px;background:#f2f7ff;color:#235188;cursor:pointer}
+.account-privacy-standalone button:focus-visible{outline:3px solid #83b7ee;outline-offset:2px}
+@media(max-width:460px){.account-privacy-actions button{width:100%}}
