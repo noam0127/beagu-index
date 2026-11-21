@@ -1,0 +1,41 @@
+name: v1.1.0 stage36 static regression (read-only)
+on:
+  pull_request:
+    paths:
+      - 'challenge.html'
+      - 'search.html'
+      - 'search-lv1.html'
+      - 'statistics.html'
+      - 'school-report.html'
+      - 'admin.html'
+      - 'admin-updates.html'
+      - 'js/**'
+      - 'styles/**'
+      - 'tests/**'
+      - '.github/workflows/v1.1.0-stage36-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Authentication, challenge, school browsing, and layout contracts
+        run: |
+          node tests/auth-journey-states.mjs
+          node tests/challenge-auth-ui.mjs
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/school-search-unification.mjs
+          node tests/search-compare-unity.mjs
+          node tests/admin-page-performance-static.cjs
+      - name: Release packaging and isolation contracts
+        run: |
+          python3 tests/site-release-packaging.py
+      - name: Scope notice
+        run: |
+          echo 'Static checks only. Does not prove live DB/RLS, browser UX, latency, or production readiness.'
