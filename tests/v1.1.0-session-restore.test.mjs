@@ -147,5 +147,5 @@ test('expired Challenge session re-enables login rather than leaving modal locke
 test('Post-it revokes linked writer status immediately on Auth signout',()=>{
  const script=fs.readFileSync('js/postit-account-v1.js','utf8');
  assert.match(script,/onAuthStateChange\(event=>\{/);
- assert.match(script,/if\(event==='SIGNED_OUT'\)setLinked\(false\)/);
+ assert.match(script,/if\(event==='SIGNED_OUT'\)\{setLinked\(false\);smsAccount\.hide\(\);accountPrivacy\.hide\(\)\}/);
 });
