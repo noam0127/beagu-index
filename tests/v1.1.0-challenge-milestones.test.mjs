@@ -86,7 +86,7 @@ test('Stage30: six and ONLY six numbered milestones have individual visual theme
   assert.equal(f.nodes.challengeMilestone.hidden,false);
   assert.equal(f.nodes.certificate.dataset.milestone,String(n));
   assert.ok(f.nodes.challengeMilestoneSymbol.textContent.length);
-  assert.ok(f.nodes.challengeMilestoneTitle.textContent.includes(String(n)));
+  assert.ok(f.nodes.challengeMilestoneTitle.textContent.includes(n.toLocaleString('ko-KR')));
   assert.ok(f.nodes.challengeMilestoneDetail.textContent.length>5);
   assert.ok(style.includes('data-milestone="'+n+'"'));
  }
