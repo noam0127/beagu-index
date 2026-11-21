@@ -85,7 +85,45 @@ function create({client,request=fetch,levelToken=()=>{
   if(event==='SIGNED_OUT'||event==='USER_DELETED')reset();
   else if(event==='SIGNED_IN'||event==='TOKEN_REFRESHED')verified=false;
  });
- return Object.freeze({issue,verify,logout,reset,getState});
+ // Stage24 narrow school-facts transport: the Lv3 bearer stays in this
+ // closure and is never placed in URL, DOM, persistent storage or events.
+ // Every request is freshly verified; the Edge Function independently checks
+ // Auth + current Lv2 referral + Lv3 token + approved 2026 evidence.
+ async function schoolFacts(schoolId){
+  if(!/^[A-Z0-9]{7}$/.test(String(schoolId||'')))
+   throw Error('INVALID_SCHOOL_ID');
+  if(!await verify())throw Error('LV3_NOT_VERIFIED');
+  const version=generation;
+  const issued=secret;
+  const code=String(levelToken()||'');
+  const {data,error}=await client.auth.getSession();
+  const jwt=error?'':String(data?.session?.access_token||'');
+  if(!jwt||!/^[a-f0-9]{64}$/.test(code)||!verified||
+     !/^[a-f0-9]{64}$/.test(issued))throw Error('DUAL_PROOF_REQUIRED');
+  const endpoint=ENDPOINT.replace(/beagu-lv3-member-api-v1$/,'beagu-lv3-school-facts-v1');
+  const response=await request(endpoint,{
+   method:'POST',cache:'no-store',referrerPolicy:'no-referrer',
+   headers:{
+    'Content-Type':'application/json',
+    'Authorization':'Bearer '+jwt,
+    'X-Beagu-Level-Session':code,
+    'X-Beagu-Lv3-Token':issued
+   },
+   body:JSON.stringify({action:'school',schoolId})
+  });
+  if(response.status===401||response.status===403)reset();
+  const body=await response.json().catch(()=>({}));
+  if(version!==generation||!verified)throw Error('LV3_REVOKED');
+  if(!response.ok)throw Error('SCHOOL_FACTS_UNAVAILABLE');
+  if(body?.referenceYear!==2026||
+     !['verified','not_verified'].includes(body.status))
+   throw Error('UNVERIFIED_SOURCE');
+  if(body.status==='verified'&&
+     (body.school?.school_id!==schoolId||body.school?.reference_year!==2026))
+   throw Error('MISMATCHED_SCHOOL');
+  return body;
+ }
+ return Object.freeze({issue,verify,logout,reset,getState,schoolFacts});
 }
 Object.defineProperty(window,'BeaguLv3Session',{
  configurable:false,enumerable:false,writable:false,value:Object.freeze({create})
