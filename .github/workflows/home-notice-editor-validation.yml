@@ -1,0 +1,29 @@
+name: Home notice editor validation
+on:
+  pull_request:
+    paths:
+      - 'admin.html'
+      - 'index.html'
+      - 'js/beagu-admin-access-v1.js'
+      - 'js/beagu-home-notice-*.js'
+      - 'styles/beagu-home-notice-admin-v1.css'
+      - 'supabase/migrations/20261121_home_notice_admin_editor.sql'
+      - 'supabase/functions/beagu-home-notice-v1/**'
+      - 'scripts/validate-home-notice-editor.mjs'
+      - '.github/workflows/home-notice-editor-validation.yml'
+  workflow_dispatch:
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check js/beagu-home-notice-public-v1.js
+          node --check js/beagu-home-notice-admin-v1.js
+          node --check js/beagu-admin-access-v1.js
+          node --test scripts/validate-home-notice-editor.mjs
