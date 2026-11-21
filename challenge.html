@@ -179,6 +179,7 @@
 <link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
 <link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
 <link rel="stylesheet" href="styles/challenge-member-auth-v1.css?v=20261121-sms1">
+<link rel="stylesheet" href="styles/beagu-account-mode-v1.css?v=20261121-mode1">
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-challenge-member-login1"></script>
 <link rel="stylesheet" href="styles/beagu-auth-confirmation-v1.css?v=20261121">
@@ -291,7 +292,7 @@
     <div class="challenge-member-eyebrow">BAEGU INDEX · Lv2 MEMBER</div>
     <h2 id="challengeMemberTitle">Lv2 로그인</h2>
     <p id="challengeMemberDescription" class="challenge-member-description">정식 계정으로 로그인하세요.</p>
-    <form id="challengeMemberForm" class="challenge-member-form" autocomplete="on">
+    <form id="challengeMemberForm" class="challenge-member-form beagu-account-unified-form" data-mode="signin" autocomplete="on">
       <label for="challengeMemberEmail">이메일</label>
       <input id="challengeMemberEmail" type="email" autocomplete="email" placeholder="이메일 주소" maxlength="254" required>
       <label for="challengeMemberPassword">비밀번호</label>
@@ -320,6 +321,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/beagu-auth-return-v1.js?v=20261121-url1"></script>
+<script src="js/beagu-account-mode-v1.js?v=20261121-mode1"></script>
 <script src="js/beagu-auth-confirmation-v1.js?v=20261121-callback1"></script>
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
