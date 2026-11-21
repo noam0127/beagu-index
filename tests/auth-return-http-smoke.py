@@ -41,7 +41,11 @@ def main():
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     for stage in ("production", "staging"):
         project = manifest["projects"][stage]
-        urls = project["allowed_redirect_urls"]
+        # The new password-reset.html route is development-only until the
+        # approved staging/production release. Keep live HTTP smoke scoped to
+        # the three already-deployed return pages; test the fourth offline.
+        urls = [u for u in project["allowed_redirect_urls"]
+                if u.rsplit("/", 1)[-1] in ("challenge.html", "postit.html", "admin-enroll.html")]
         assert len(urls) == 3
         for url in urls:
             try:
@@ -50,7 +54,7 @@ def main():
                 print("FAIL:", stage, url, error, file=sys.stderr)
                 return 1
     print("PASS: six deployed Auth return pages are reachable and correctly rooted.")
-    print("NOT TESTED: dashboard URL allowlists, confirmation emails, Auth tokens, or actual callbacks.")
+    print("NOT TESTED: new password-reset.html until released; dashboard URL allowlists, confirmation emails, Auth tokens or actual callbacks.")
     return 0
 
 
