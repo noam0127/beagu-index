@@ -4,7 +4,7 @@
   const api = SUPABASE_URL + "/functions/v1/beagu-admin-members-v1";
   const $ = id => document.getElementById(id);
   let ready = false, role = "", search = "", filter = "all", page = 1;
-  let total = 0, pageSize = 20, selectedId = "", serial = 0, pending = false;
+  let total = 0, pageSize = 20, selectedId = "", serial = 0, queueSeq = 0, pending = false;
   const text = (id, value) => { $(id).textContent = value; };
   const node = (tag, cls, value) => {
     const e = document.createElement(tag);
@@ -212,6 +212,42 @@
       for (const button of document.querySelectorAll("[data-member-operation]")) button.disabled = false;
     }
   }
+  async function refreshPrivacyQueue(){
+    if(role!=="owner")return;
+    const seq=++queueSeq;
+    const root=$("adminPrivacyQueueRows");
+    root.replaceChildren();
+    text("adminPrivacyQueueStatus","개인정보 요청을 확인하는 중입니다.");
+    try{
+      const data=await request("privacy_queue");
+      if(role!=="owner"||seq!==queueSeq)return;
+      const rows=Array.isArray(data?.rows)?data.rows:[];
+      if(!rows.length){
+        const tr=node("tr"),td=node("td","empty","대기 중인 개인정보 요청이 없습니다.");
+        td.colSpan=5;tr.append(td);root.append(tr);
+      }
+      for(const item of rows){
+        const tr=node("tr");
+        const userCell=node("td");
+        const open=node("button","secondary member-mini-action",item.user_id);
+        open.type="button";
+        open.addEventListener("click",()=>{void showDetail(item.user_id);});
+        userCell.append(open);
+        tr.append(node("td","",date(item.requested_at)),
+          node("td","",item.kind==="deletion"?"탈퇴 검토":"추가 열람"),
+          node("td","",item.status==="processing"?"검토 중":"접수 대기"),
+          userCell,node("td","",item.request_id));
+        root.append(tr);
+      }
+      text("adminPrivacyQueueStatus",rows.length+
+        "건 표시 · 요청 접수만 조회합니다. 탈퇴 처리·완료 승인 기능은 없습니다.");
+    }catch(error){
+      if(role!=="owner"||seq!==queueSeq)return;
+      root.replaceChildren();
+      if(error?.status===401||error?.status===403){reset();return;}
+      text("adminPrivacyQueueStatus","요청 목록을 확인할 수 없습니다. 관리자 인증·연결을 확인해 주세요.");
+    }
+  }
   function prepareListeners() {
     if (ready) return;
     ready = true;
@@ -226,6 +262,7 @@
       void refresh();
     });
     $("adminMembersReload").addEventListener("click",() => {void refresh();});
+    $("adminPrivacyQueueReload").addEventListener("click",()=>{void refreshPrivacyQueue();});
     $("adminMembersPrev").addEventListener("click",() => {
       if (page <= 1) return;page--;void refresh();
     });
@@ -251,13 +288,16 @@
     $("adminMembersFilter").value = "all";
     $("adminMemberDetailPanel").hidden = true;
     void refresh();
+    void refreshPrivacyQueue();
   }
   function reset() {
-    role = "";serial++;selectedId = "";page = 1;search = "";filter = "all";total = 0;
+    role = "";serial++;queueSeq++;selectedId = "";page = 1;search = "";filter = "all";total = 0;
     $("adminMemberManagement").hidden = true;
     $("adminMemberNavLink").hidden = true;
     $("adminMemberDetailPanel").hidden = true;
     $("adminMemberDetail").replaceChildren();
+    $("adminPrivacyQueueRows").replaceChildren();
+    text("adminPrivacyQueueStatus","최고 관리자 인증 후 표시됩니다.");
     $("adminMemberReason").value = "";
     $("adminMembersSearch").value = "";
     $("adminMembersFilter").value = "all";
