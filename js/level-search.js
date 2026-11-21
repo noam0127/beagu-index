@@ -10,6 +10,7 @@
   const $ = id => document.getElementById(id);
   const key = 'beagu-level-session-v1';
   let session = sessionStorage.getItem(key) || '';
+  let verifiedTier=0;
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
   const YEARS = [2023, 2024, 2025, 2026];
@@ -21,6 +22,13 @@
   let officeLoadSerial=0;
   const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count']);
   let sortDirection='asc';
+  const updateSortAccess=()=>{
+    const opt=$('regionSort')?.querySelector('option[value="housing_price_won"]');
+    if(!opt)return;
+    opt.disabled=verifiedTier<2;
+    opt.title=verifiedTier<2?'Lv.2 이상에서 이용할 수 있습니다.':'승인된 공시지가 정렬';
+    if(opt.disabled&&$('regionSort').value==='housing_price_won')$('regionSort').value='school_name';
+  };
   const updateSortDirection=()=>{
     const button=$('regionSortDirection');
     const ascending=sortDirection==='asc';
@@ -118,6 +126,8 @@
 
   function loggedOut(message = '') {
     session = '';
+    verifiedTier=0;
+    updateSortAccess();
     geographyComparisons.clear();
     visiblePageSchools=[];
     sessionStorage.removeItem(key);
@@ -158,6 +168,8 @@
         return;
       }
       session = data.token;
+      verifiedTier=Number(data.level)||0;
+      updateSortAccess();
       geographyComparisons.clear();
       sessionStorage.setItem(key, session);
       $('levelCode').value = '';
@@ -961,7 +973,11 @@
     if (!session) { loggedOut(); return; }
     try {
       const state = await api('verify');
-      if (state.level >= level) loggedIn();
+      if (state.level >= level) {
+        verifiedTier=Number(state.level)||0;
+        updateSortAccess();
+        loggedIn();
+      }
       else loggedOut('현재 코드가 이 등급에 미달합니다.');
     } catch (_) { loggedOut('인증을 다시 진행해주세요.'); }
   })();
