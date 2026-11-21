@@ -14,6 +14,7 @@ on:
       - 'postit.html'
       - 'admin-enroll.html'
       - 'tests/v1.1.0-auth-redirects.test.mjs'
+      - 'tests/auth-return-http-smoke.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,3 +32,8 @@ jobs:
           node-version: '22'
       - name: Run offline safety and routing tests
         run: node --test tests/v1.1.0-auth-redirects.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read-only HTTP check for six deployed Auth return pages
+        run: python3 tests/auth-return-http-smoke.py
