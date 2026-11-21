@@ -85,9 +85,10 @@
       setState('0','Lv.0','현재 Lv.0 · 레벨 안내 보기');
       return;
     }
-    if(token!==lastValidatedToken){
-      setState('checking','확인 중','인증 상태를 확인하는 중');
-    }
+    // Stage33: cached participation/Lv3 status is not a valid result for
+    // an in-flight network recheck. Fail closed immediately on every focus,
+    // page restore, login/session change and access-revoked event.
+    setState('checking','확인 중','인증 상태를 확인하는 중');
     try{
       const response=await fetch(VERIFY_URL,{
         method:'POST',cache:'no-store',
