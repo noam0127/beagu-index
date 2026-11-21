@@ -171,7 +171,7 @@ def isolate_preview(target):
             modified = modified.replace(k, "beagu-preview-" + k[len("beagu-"):])
         # Real Google Forms are never reachable from the staging snapshot.
         modified = re.sub(
-            r"https://(?:forms\\.gle/|docs\\.google\\.com/forms/)[^\\s\\\"'<>]*",
+            r"""https://(?:forms\.gle/|docs\.google\.com/forms/)[^\s"\'<>]*""",
             PREVIEW_SURVEY_DISABLED, modified, flags=re.IGNORECASE
         )
         if modified != source:
@@ -190,7 +190,7 @@ def isolate_preview(target):
             '<script defer src="/_preview/js/beagu-preview-navigation-guard.js"></script>'
         )
         patched, replacements = re.subn(
-            r"<head(\\s[^>]*)?>", lambda m: m.group(0) + content,
+            r"<head(\s[^>]*)?>", lambda m: m.group(0) + content,
             source, count=1, flags=re.IGNORECASE
         )
         if replacements != 1:
@@ -209,7 +209,7 @@ def verify_isolated_preview(target):
         source = file.read_text(encoding="utf-8")
         if PRODUCTION_PROJECT in source or PRODUCTION_PUBLIC_KEY in source:
             raise RuntimeError("Live Supabase reference in preview: " + str(file))
-        if re.search(r"https://(?:forms\\.gle/|docs\\.google\\.com/forms/)", source, re.I):
+            r"""https://(?:forms\.gle/|docs\.google\.com/forms/)[^\s"\'<>]*""",
             raise RuntimeError("Real Google Form reference in preview: " + str(file))
         if file.suffix.lower() in {".html", ".htm"}:
             html_count += 1
