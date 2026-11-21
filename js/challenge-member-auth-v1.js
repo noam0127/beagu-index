@@ -166,7 +166,7 @@ form.addEventListener('submit',async event=>{
     return;
    }
    const {error}=await client.auth.signUp({email:address,password:secret,
-    options:{emailRedirectTo:new URL('challenge.html',location.href).href,
+    options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('challenge'),
      data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}});
    if(error)throw error;
    password.value='';
