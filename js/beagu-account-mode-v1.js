@@ -21,7 +21,7 @@
    },
    signup:{
     title:'Lv2 회원가입',
-    description:'이메일로 계정을 만들고 인증 메일을 확인하세요. Lv2 참여코드는 유지됩니다.',
+    description:'이메일로 계정을 만들고 인증 메일을 확인하세요. 문자 수신 신청은 인증 후 로그인하여 진행합니다.',
     submit:'회원가입',
     switch:'이미 계정이 있어요 · 로그인하기'
    }
@@ -41,7 +41,9 @@
    password.autocomplete=next===MODES.SIGNUP?'new-password':'current-password';
    password.minLength=next===MODES.SIGNUP?MIN_NEW_PASSWORD:1;
    password.placeholder=next===MODES.SIGNUP?'새 비밀번호 (10자 이상)':'기존 비밀번호';
-   smsFields.hidden=next!==MODES.SIGNUP;
+   // The phone form is only available AFTER email-verified login.
+   // Unverified signup metadata must not become authoritative consent.
+   smsFields.hidden=true;
    if(forgot)forgot.hidden=next!==MODES.SIGNIN;
    if(google)google.hidden=next!==MODES.SIGNIN;
    if(changed) {
