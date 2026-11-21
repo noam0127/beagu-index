@@ -74,7 +74,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.challengeIdentityTag.textContent,'Lv.1 인증 가능');
   assert.equal(el.challengeIdentityPanel.dataset.referralState,'inactive');
   assert.equal(el.challengeIdentityReward.hidden,false);
-  assert.match(el.challengeIdentityReward.textContent,/Lv\\.1 인증 가능/);
+  assert.ok(el.challengeIdentityReward.textContent.includes('Lv.1 인증 가능'));
   assert.equal(el.copyIdentityCode.textContent,'코드 복사');
 
   returned.shortLink=shortLink;
