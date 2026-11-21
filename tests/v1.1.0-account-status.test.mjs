@@ -169,7 +169,8 @@ test('Challenge session handler surfaces unverified email before linked state',(
            challengeSource.indexOf('linkedStatus(person.token)'));
 });
 test('Post-it checks email verification before calling server writer status',()=>{
- assert.match(postitSource,/!user\.email_confirmed_at\|\|user\.is_anonymous===true/);
+ assert.match(postitSource,/!identity\?\.emailVerified\|\|!validatedLevel\(\)/);
+ assert.match(postitSource,/const verifiedLevel=await restored\.level\(\)/);
  assert.match(postitSource,/showState\('email-pending'\)/);
  assert.match(postitSource,/showState\('signup-requested'\)/);
  assert.match(postitSource,/showState\('linked'\)/);
