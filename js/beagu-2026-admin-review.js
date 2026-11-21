@@ -60,6 +60,8 @@
    setCount("adminPipelineBasis",publication.basis_verified);
    setCount("adminPipelineApproved",publication.approved);
    setCount("adminPipelineSingle",publication.single_response_schools);
+   setCount("adminPipelineSingleTechnical",publication.single_technical_pass);
+   setCount("adminPipelineSingleReview",publication.single_technical_review_needed);
    if($("adminPipelineTrustStatus"))
      $("adminPipelineTrustStatus").textContent=
        response.scope==="REFERRAL_ONLY"?"추천 연결 응답만 부분 검사":"검사 범위 확인 필요";

@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>관리자 · 배구지수</title>
-  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261122-pipeline1">
+  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261122-n1review1">
 </head>
 <body>
   <main class="shell">
@@ -302,7 +302,8 @@
             <strong id="adminPipelinePublicationStatus">공개 조건 확인 중</strong>
             <p class="subtle">공개 근거, 소표본·재식별 위험, 민감 문항, 최신 스냅샷 승인 상태를 별도로 확인합니다.</p>
             <p class="admin-pipeline-detail">근거 검증 완료 <b id="adminPipelineBasis">—</b>개교 · 승인 <b id="adminPipelineApproved">—</b>개교</p>
-            <p class="admin-pipeline-detail">응답 1건인 학교 <b id="adminPipelineSingle">—</b>개교 (개인 식별 위험 별도 검토)</p>
+            <p class="admin-pipeline-detail">응답 1건 학교 <b id="adminPipelineSingle">—</b>개교 · 기술검사 통과 <b id="adminPipelineSingleTechnical">—</b>개교 · 추가 확인 <b id="adminPipelineSingleReview">—</b>개교</p>
+            <p class="admin-pipeline-footnote">응답 1건도 공개 심사 대상입니다. 단, 공개 근거와 재식별 위험 검증 및 최종 승인 없이는 학교별 결과를 공개하지 않습니다.</p>
             <p class="admin-pipeline-footnote">자동 공개는 적격성 확인 후에만 가능하며, 현재 검수 통과만으로 활성화되지 않습니다.</p>
           </article>
         </div>
@@ -318,6 +319,9 @@
             <select id="adminReview2026Filter">
               <option value="quality">집계 정확성 · 기초 확인 필요만</option>
               <option value="all">전체 학교</option>
+              <option value="single">응답 1건 학교 · 전체</option>
+              <option value="single_technical">응답 1건 학교 · 기술검사 통과</option>
+              <option value="awaiting_basis">기술검사 통과 · 공개 근거 검토 대기</option>
               <option value="technical">전체 문항 기술검사 통과</option>
               <option value="question">전체 문항 구조 확인 필요</option>
               <option value="school">학교 정보 일치 확인 필요</option>
@@ -390,7 +394,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
   <script defer src="js/beagu-admin-access-v1.js?v=20261121-members1"></script>
-  <script defer src="js/beagu-2026-admin-review.js?v=20261122-pipeline1"></script>
+  <script defer src="js/beagu-2026-admin-review.js?v=20261122-n1review1"></script>
   <script defer src="js/beagu-admin-members-v1.js?v=20261121-members1"></script>
 </body>
 </html>
