@@ -7,7 +7,7 @@
   <meta name="referrer" content="no-referrer">
   <title>업데이트 관리 · 배구지수 관리자</title>
   <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-review2">
-  <link rel="stylesheet" href="styles/beagu-admin-updates-v1.css?v=20261121-1">
+  <link rel="stylesheet" href="styles/beagu-admin-updates-v1.css?v=20261121-2">
 </head>
 <body>
 <main class="shell release-shell">
@@ -18,7 +18,7 @@
   <section class="hero">
     <p class="eyebrow">OPERATIONS / RELEASE CENTER</p>
     <h1>업데이트 관리</h1>
-    <p>ChatGPT에서 변경사항을 개발하고 버전을 등록한 뒤, 여기서 시험 웹에 먼저 적용하세요. 시험 웹을 직접 확인한 후에만 실제 웹에 적용할 수 있습니다.</p>
+    <p>ChatGPT 개발 내역은 자동으로 모읍니다. '버전 생성'으로 묶은 다음, 시험·실제 웹에 적용할 버전을 각각 선택합니다.</p>
   </section>
   <p id="releaseStatus" class="notice" role="status" aria-live="polite">관리자 인증을 확인하는 중입니다.</p>
   <section class="release-login" id="releaseLogin" hidden>
@@ -37,6 +37,8 @@
         <p id="releaseStageVersion" class="release-version">배포 전</p>
         <p id="releaseStageSha" class="subtle">—</p>
         <a href="https://baeguindex.com/_preview/" target="_blank" rel="noopener noreferrer" class="release-site-link">시험 웹 열기 <span aria-hidden="true">↗</span></a>
+        <label for="releaseStageSelect" class="release-select-label">시험 웹에 적용할 버전</label>
+        <select id="releaseStageSelect" class="release-select" aria-label="시험 웹 버전 선택"><option value="">버전을 선택하세요</option></select>
         <div class="release-buttons">
           <button type="button" id="releaseStageApply" class="primary" disabled>시험 웹 적용</button>
           <button type="button" id="releaseStageRollback" class="secondary" disabled>전 버전으로 되돌리기</button>
@@ -48,15 +50,43 @@
         <p id="releaseProdVersion" class="release-version">확인 중</p>
         <p id="releaseProdSha" class="subtle">—</p>
         <a href="https://baeguindex.com/" target="_blank" rel="noopener noreferrer" class="release-site-link">실제 웹 열기 <span aria-hidden="true">↗</span></a>
+        <label for="releaseProdSelect" class="release-select-label">실제 웹에 적용할 검증된 버전</label>
+        <select id="releaseProdSelect" class="release-select" aria-label="실제 웹 버전 선택"><option value="">시험 적용 완료 버전만 선택 가능</option></select>
         <div class="release-buttons">
           <button type="button" id="releaseProdApply" class="primary" disabled>실제 웹 적용</button>
           <button type="button" id="releaseProdRollback" class="secondary" disabled>전 버전으로 되돌리기</button>
         </div>
       </article>
     </section>
+    <section class="release-draft" aria-labelledby="releaseAutoHeading">
+      <div class="release-section-head"><h2 id="releaseAutoHeading">ChatGPT 개발 작업 내역 · 자동 수집</h2>
+        <p>GitHub main에 실제 반영된 코드 변경만 자동 기록합니다. 채팅에서 말만 한 작업은 기록되지 않습니다. 목록은 마지막으로 생성한 버전 이후 작업입니다.</p></div>
+      <p id="releasePendingStatus" class="subtle" aria-live="polite">GitHub 변경사항을 확인하는 중입니다.</p>
+      <p id="releaseGitHubWorkStatus" class="subtle" role="status" aria-live="polite">GitHub 작업 목록을 확인하는 중입니다.</p>
+      <div class="release-buttons">
+        <button type="button" id="releaseInspectPRs" class="secondary">PR 수정 파일·충돌 위험 사전 검사</button>
+        <span class="subtle">운영 데이터 수정 없이 최근 열린 PR 최대 6개의 코드 변경 영향과 CI 기록을 조회합니다.</span>
+      </div>
+      <p id="releaseImpactStatus" class="subtle" role="status" aria-live="polite">분석 버튼을 누르면 PR별 변경 영역을 확인합니다.</p>
+      <section class="release-impact-panel" aria-labelledby="releaseConflictHeading">
+        <h3 id="releaseConflictHeading">PR 간 충돌 위험 사전 검사</h3>
+        <p id="releaseConflictStatus" class="subtle" role="status" aria-live="polite">위 분석 버튼으로 검사를 실행하세요. 실제 병합 가능 여부는 후속 통합 검증에서 확인합니다.</p>
+        <div id="releaseConflictPairs" class="release-pending-log"></div>
+      </section>
+      <h3 class="release-inbox-subtitle">개발 중인 작업 · 아직 버전에 포함되지 않음</h3>
+      <div id="releaseOpenPullRequests" class="release-pending-log"></div>
+      <h3 class="release-inbox-subtitle">최근 main 병합 PR · 버전 생성과 별개</h3>
+      <div id="releaseRecentlyMergedPullRequests" class="release-pending-log"></div>
+      <h3 class="release-inbox-subtitle">main에서 확인된 새 커밋 · 버전 후보</h3>
+      <div id="releasePendingLog" class="release-pending-log" aria-live="polite"></div>
+      <div id="releasePendingFiles" class="release-file-summary" hidden>
+        <strong>새 작업 변경 파일</strong>
+        <ul id="releasePendingFileNames"></ul>
+      </div>
+    </section>
     <section class="release-draft" aria-labelledby="releaseDraftHeading">
-      <div class="release-section-head"><h2 id="releaseDraftHeading">업데이트 버전</h2>
-        <p>ChatGPT가 변경 파일과 버전을 등록했다면 위의 <strong>시험 웹 적용</strong>만 누르세요. 직접 작성하고 싶을 때는 아래 입력창을 이용할 수 있습니다.</p></div>
+      <div class="release-section-head"><h2 id="releaseDraftHeading">새 버전 생성 · 수동</h2>
+        <p>위 자동 수집 작업을 하나의 변경 불가능한 코드 버전으로 저장합니다. 버전 생성만으로 시험·실제 웹은 바뀌지 않습니다.</p></div>
       <form id="releaseDraftForm">
         <div class="release-meta-row">
           <div><label for="releaseVersionInput">업데이트 버전</label>
@@ -65,14 +95,18 @@
             <textarea id="releaseSummaryInput" rows="3" maxlength="500" minlength="3" required placeholder="예: 관리자 공지사항 수정 기능, 레벨 표시 정렬 개선"></textarea></div>
         </div>
         <div class="release-register-actions">
-          <button type="submit" id="releaseRegister" class="secondary">변경사항 등록</button>
-          <span id="releaseDraftInfo" class="subtle" aria-live="polite">변경한 코드가 GitHub main에 있는지 검사합니다.</span>
+          <button type="submit" id="releaseRegister" class="primary">버전 생성</button>
+          <span id="releaseDraftInfo" class="subtle" aria-live="polite">GitHub main의 변경사항이 최신 생성 버전 이후에 있는지 확인합니다.</span>
         </div>
       </form>
       <div id="releaseFileSummary" class="release-file-summary" hidden>
         <strong>이번 업데이트에서 바뀐 파일</strong>
         <ul id="releaseChangedFiles"></ul>
       </div>
+    </section>
+    <section class="release-queue" aria-labelledby="releaseCatalogHeading">
+      <h2 id="releaseCatalogHeading">생성한 버전 목록 · 자동 누적</h2>
+      <div id="releaseVersionCatalog" class="release-version-catalog"><p class="subtle">생성한 버전이 없습니다.</p></div>
     </section>
     <section class="release-queue" aria-live="polite">
       <h2>현재 배포 진행 상태</h2>
@@ -97,6 +131,6 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
-<script defer src="js/beagu-admin-updates-v1.js?v=20261121-1"></script>
+<script defer src="js/beagu-admin-updates-v1.js?v=20261121-2"></script>
 </body>
 </html>
