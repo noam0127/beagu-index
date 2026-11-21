@@ -30,7 +30,7 @@ assert.match(js,/filter="quality"/);
 assert.match(js,/qualityReasonsMap/);
 assert.match(api,/if\(input\.action==="pipeline"\)/);
 assert.match(api,/if\(input\.action==="queue"\)/);
-assert.match(api,/\["all","quality","technical","question","school","prelaunch","approved","held"\]/);
+assert.match(api,/\["all","quality","technical","question","school","prelaunch","approved","held","single","single_technical","awaiting_basis"\]/);
 assert.ok(api.indexOf('if(claims.aal!=="aal2")')<api.indexOf('if(input.action==="pipeline")'),'AAL2 checks before status read');
 assert.ok(api.indexOf('beagu_admin_active_mfa_session')<api.indexOf('if(input.action==="pipeline")'),'live MFA verified');
 assert.match(api,/db\.rpc\("beagu_2026_admin_pipeline_status"\)/);
