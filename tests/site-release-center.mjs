@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 // Run v2 GitHub PR inbox tests under the existing release-manager CI workflow.
 import "./release-github-work-inbox.mjs";
+import "./release-work-dependencies.mjs";
 const source=path=>readFileSync(path,"utf8");
 
 test("release center includes all 4 buttons and two independent histories",()=>{
