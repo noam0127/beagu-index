@@ -60,6 +60,24 @@ async function github(path:string){
  if(!response.ok)throw Error("github_unavailable");
  return response.json();
 }
+async function latestManifest(){
+ try{
+  const doc=await github("/contents/release-candidate.json?ref=main");
+  if(typeof doc?.content!=="string")return null;
+  const decoded=atob(doc.content.replace(/\\s/g,""));
+  const value=JSON.parse(new TextDecoder().decode(Uint8Array.from(decoded,ch=>ch.charCodeAt(0))));
+  const version=typeof value?.version==="string"?value.version.trim():"";
+  const summary=typeof value?.summary==="string"?value.summary.trim():"";
+  if(!allowedVersion.test(version)||summary.length<3||summary.length>500)return null;
+  return {version,summary};
+ }catch{return null;}
+}
+async function changedFiles(from:string,to:string){
+ if(!SHA.test(from)||!SHA.test(to)||from===to)return [];
+ const diff=await github("/compare/"+from+"..."+to);
+ return (diff.files||[]).map((f:{filename?:string})=>f.filename||"")
+  .filter((path:string)=>path&&path!=="release-candidate.json");
+}
 async function state(){
  const {data,error}=await db.from("beagu_site_release_state_v1").select("*").eq("id",1).single();
  if(error||!data)throw Error("state_unavailable");return data;
@@ -89,12 +107,16 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  const current=await activeJob();
  if(action==="status"){
   const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
-  let head=null;
+  let head=null,suggested_draft=null;
   try{
    const latest=await github("/commits/main");
    head=typeof latest.sha==="string"?latest.sha:null;
+   if(head&&head!==s.production_sha){
+    const proposal=await latestManifest();
+    if(proposal)suggested_draft={...proposal,sha:head};
+   }
   }catch{ /* The release state and history remain available during GitHub outages. */ }
-  return respond({state:s,job:current,head_sha:head,staging_history:stageHistory,
+  return respond({state:s,job:current,head_sha:head,suggested_draft,staging_history:stageHistory,
     production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",
     production_url:"https://baeguindex.com/"},200,origin);
  }
@@ -108,8 +130,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   const main=await github("/commits/main");
   if(!SHA.test(String(main.sha||"")))return error("github_unavailable",503,origin);
   if(main.sha===s.production_sha)return error("no_changes_since_production",409,origin);
-  const compared=await github("/compare/"+s.production_sha+"..."+main.sha);
-  const files=(compared.files||[]).map((f:{filename?:string})=>f.filename||"").filter(Boolean);
+  const files=await changedFiles(s.production_sha,main.sha);
   if(!files.length)return error("no_changes_since_production",409,origin);
   const {error:e}=await db.from("beagu_site_release_state_v1").update({
     draft_sha:main.sha,draft_version:version,draft_summary:summary,updated_at:new Date().toISOString()
@@ -120,11 +141,27 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  }
  let job:null|{action:string;target:string;to_sha:string|null;from_sha:string|null;version:string;summary:string;created_by:string}=null;
  if(action==="stage_apply"){
-  if(!s.draft_sha||!SHA.test(s.draft_sha)||!s.draft_version||!s.draft_summary)
+  let candidateSha=s.draft_sha,candidateVersion=s.draft_version,candidateSummary=s.draft_summary;
+  // ChatGPT can commit a release-candidate.json alongside changes.
+  // Clicking the stage button then registers that version automatically.
+  const latest=await github("/commits/main");
+  const proposed=await latestManifest();
+  if(proposed&&SHA.test(String(latest?.sha||""))&&latest.sha!==s.production_sha
+     &&latest.sha!==s.draft_sha){
+   const files=await changedFiles(s.production_sha,latest.sha);
+   if(!files.length)return error("no_changes_since_production",409,origin);
+   candidateSha=latest.sha;candidateVersion=proposed.version;candidateSummary=proposed.summary;
+   const {error:draftErr}=await db.from("beagu_site_release_state_v1").update({
+    draft_sha:candidateSha,draft_version:candidateVersion,draft_summary:candidateSummary,
+    updated_at:new Date().toISOString()
+   }).eq("id",1);
+   if(draftErr)throw Error("save_unavailable");
+  }
+  if(!candidateSha||!SHA.test(candidateSha)||!candidateVersion||!candidateSummary)
    return error("register_version_first",409,origin);
-  if(s.draft_sha===s.staging_sha)return error("already_on_staging",409,origin);
-  job={action,target:"staging",from_sha:s.staging_sha,to_sha:s.draft_sha,
-   version:s.draft_version,summary:s.draft_summary,created_by:userId};
+  if(candidateSha===s.staging_sha)return error("already_on_staging",409,origin);
+  job={action,target:"staging",from_sha:s.staging_sha,to_sha:candidateSha,
+   version:candidateVersion,summary:candidateSummary,created_by:userId};
  }else if(action==="stage_rollback"){
   const prev=(await history("staging"))[0];
   if(!prev||prev.from_sha===s.staging_sha)return error("no_staging_rollback",409,origin);
