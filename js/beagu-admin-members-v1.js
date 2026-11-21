@@ -18,6 +18,13 @@
     return Number.isNaN(parsed.valueOf()) ? "기록 없음" :
       parsed.toLocaleString("ko-KR", {timeZone:"Asia/Seoul",hour12:false});
   };
+  // Display-only masking; server authorization is enforced separately.
+  function maskEmail(value) {
+    const email = String(value || "");
+    const at = email.lastIndexOf("@");
+    if (at < 1) return "이메일 없음";
+    return email.slice(0, 1) + "***" + email.slice(at);
+  }
   function smsStatus(item) {
     if (item.sms_status === "consented")
       return item.sms_phone_verified ? "수신 동의 · 번호 확인" : "수신 동의 · 번호 미인증";
@@ -60,8 +67,8 @@
     for (const member of rows) {
       const tr = node("tr");
       const email = node("td");
-      email.append(node("strong", "member-email", member.email || "이메일 없음"),
-        node("small", "member-id", member.id));
+      email.append(node("strong", "member-email", maskEmail(member.email)),
+        node("small", "member-id", "회원 식별번호 비공개"));
       const memberType = member.is_admin ? "관리자" : "일반 회원";
       tr.append(email, node("td", "", memberType),
         node("td", "", member.email_confirmed ? "인증 완료" : "이메일 미인증"),
@@ -116,8 +123,8 @@
     const member = info.profile;
     const dl = node("dl","admin-member-details");
     dl.append(
-      row("이메일", member.email || "기록 없음"),
-      row("회원 ID", member.id),
+      row("이메일", maskEmail(member.email)),
+      row("회원 ID", "개인정보 보호를 위해 숨김"),
       row("계정 유형", member.is_admin ? "관리자 · " + member.admin_role : "일반 회원"),
       row("이메일 인증", member.email_confirmed ? "완료" : "미완료"),
       row("계정 생성", date(member.created_at)),
