@@ -1,4 +1,5 @@
 name: BAEGU release controller (admin approval)
+# Explicit staging-only request 2026-11-22: wake existing signed OIDC release worker; production SHA remains pinned.
 # GitHub push wake-up for the queued admin-approved staging release.
 # The worker still claims only server-authorized jobs and cannot promote to production.
 on:
