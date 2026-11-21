@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
 <link rel="stylesheet" href="styles/beagu-auth-confirmation-v1.css?v=20261121">
+<link rel="stylesheet" href="styles/beagu-account-status-v1.css?v=20261121-status1">
 </head>
 <body class="beagu-ui-page beagu-postit-page">
 <p id="beaguAuthCallbackStatus" class="beagu-auth-callback-status" role="status" aria-live="polite" hidden></p>
@@ -58,7 +59,8 @@
 <button type="button" id="postitAccountSignOut" hidden>계정 로그아웃</button>
 </div>
 <p id="postitAccountNoDevice" hidden>챌린지 발급 기기의 비밀값이 필요합니다. 다른 기기의 참여코드만으로는 연결할 수 없습니다.</p>
-<p id="postitAccountStatus" role="status" aria-live="polite">계정 인증 상태 확인 중…</p>
+<p id="postitAccountStatus" class="beagu-account-status" role="status" aria-live="polite" aria-atomic="true" data-state="checking">계정 로그인·이메일 인증 상태 확인 중…</p>
+    <p class="beagu-account-steps" aria-label="계정 인증 진행 순서">진행 순서: 회원가입 요청 → 이메일 인증 → 로그인 → Lv2 참여코드·기기 연결. Lv3는 별도 서버 검증 후 적용됩니다.</p>
 </section>
 <section class="postit-compose" aria-labelledby="composeTitle">
 <div class="compose-head"><h2 id="composeTitle">새 포스트잇 붙이기</h2><span id="postitAccess" class="access-tag">등급 확인 중</span></div>
@@ -100,6 +102,7 @@
 <script src="js/supabase-config.js"></script>
 <script src="js/beagu-auth-return-v1.js?v=20261121-url1"></script>
 <script src="js/beagu-account-mode-v1.js?v=20261121-mode1"></script>
+<script src="js/beagu-account-status-v1.js?v=20261121-status1"></script>
 <script src="js/beagu-auth-confirmation-v1.js?v=20261121-callback1"></script>
 <script src="js/postit-account-v1.js?v=20261121-sms1" defer></script>
 <script src="js/postit-v1.js?v=20261121-stage4-atomic1" defer></script>
