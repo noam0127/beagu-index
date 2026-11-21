@@ -41,12 +41,17 @@ const accountMode=window.BeaguAccountMode.create({
 accountMode.setMode('signin');
 let linked=false,lv3LinkReady=false,busy=false,generation=0;
 const levelToken=()=>{try{return sessionStorage.getItem(levelKey)||''}catch{return ''}};
+const lv3=window.BeaguLv3AccountUI?.create?window.BeaguLv3AccountUI.create({
+ client,panel:$('postitLv3Panel'),button:$('postitLv3Verify'),
+ status:$('postitLv3Status'),levelToken
+}):{setEligible(){},reset(){}};
 const restored=window.BeaguSessionRestore.create({client,getLevelToken:levelToken,
  levelUrl:'https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api',
  request:(...args)=>fetch(...args)});
 function setLinked(next,ready=false){
  linked=next===true;
  lv3LinkReady=linked&&ready===true;
+ lv3.setEligible(lv3LinkReady);
  window.dispatchEvent(new CustomEvent('beagu:postit-account-status',{detail:{linked}}));
 }
 function message(value){status.dataset.state='info';status.textContent=value;}
@@ -194,7 +199,7 @@ window.addEventListener('beagu:level-state-updated',()=>void refresh());
 client.auth.onAuthStateChange(event=>{
  // Never keep stale writer privileges between an Auth logout and the next
  // asynchronous session check.
- if(event==='SIGNED_OUT'){setLinked(false);smsAccount.hide();accountPrivacy.hide();}
+ if(event==='SIGNED_OUT'){setLinked(false);smsAccount.hide();accountPrivacy.hide();lv3.reset();}
  Promise.resolve().then(()=>refresh());
 });
 window.BeaguPostitAccount={accessToken,refresh,canWrite:()=>linked};
