@@ -1,0 +1,12 @@
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const js=fs.readFileSync("js/beagu-admin-members-v1.js","utf8");
+assert.match(js,/function maskEmail\(/);
+assert.match(js,/member-email", maskEmail\(member.email\)/);
+assert.match(js,/member-id", "회원 식별번호 비공개"/);
+assert.match(js,/row\("이메일", maskEmail\(member.email\)\)/);
+assert.match(js,/row\("회원 ID", "개인정보 보호를 위해 숨김"\)/);
+assert.match(js,/adminMembersFilter/);
+assert.match(js,/adminMembersSort/);
+assert.match(js,/2026 챌린지 연결 정보/);
+console.log("PASS: integrated privacy and member UI static contract");
