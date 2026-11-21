@@ -1,0 +1,82 @@
+{
+  "schema": "class-diary-character-identity-lock/v1",
+  "scope": "draft-review-only",
+  "productionAssetChangesAllowed": false,
+  "canonical": [
+    {
+      "id": "jiyoon",
+      "name": "서지윤",
+      "file": "assets/class-diary/characters/female-jiyoon-thigh-v4.webp",
+      "gitBlobSha": "b9d1a7f53f2d6d477a724256d59e04f130658691",
+      "cols": 1,
+      "rows": 1,
+      "approvedSource": true,
+      "independentGeneratedImagesApproved": false
+    },
+    {
+      "id": "hyunwoo",
+      "name": "한현우",
+      "file": "assets/class-diary/characters/hyunwoo-poses-v2.webp",
+      "gitBlobSha": "d790a64161779917a665993fe85de25f5b985650",
+      "cols": 4,
+      "rows": 2,
+      "approvedSource": true,
+      "independentGeneratedImagesApproved": false,
+      "sourceDerivedCandidates": [
+        "neutral",
+        "smile",
+        "shy",
+        "explaining",
+        "notebook"
+      ]
+    },
+    {
+      "id": "dogyeom",
+      "name": "차도겸",
+      "file": "assets/class-diary/characters/dogyeom-poses-v2.webp",
+      "gitBlobSha": "3d6b56f272f27873648de6e18bca7b76a3b079f8",
+      "cols": 8,
+      "rows": 1,
+      "approvedSource": true,
+      "independentGeneratedImagesApproved": false
+    },
+    {
+      "id": "taeo",
+      "name": "백태오",
+      "file": "assets/class-diary/characters/taeo-poses-v2.webp",
+      "gitBlobSha": "506fe2d347ee6dde5fdc71b2421e69621609b128",
+      "cols": 8,
+      "rows": 1,
+      "approvedSource": true,
+      "independentGeneratedImagesApproved": false
+    }
+  ],
+  "reviewArtifacts": [
+    {
+      "id": "jiyoon-guitar-pick",
+      "status": "face-drift-unapproved",
+      "notInRepo": true
+    },
+    {
+      "id": "dogyeom-string-game",
+      "status": "face-drift-unapproved",
+      "notInRepo": true
+    },
+    {
+      "id": "taeo-volleyball",
+      "status": "face-drift-unapproved",
+      "notInRepo": true
+    }
+  ],
+  "qaPolicy": {
+    "faceIdentity": "canonical pixels or reviewed human-confirmed visual equivalence",
+    "notPermitted": [
+      "silent-face-replacement",
+      "new-pose-auto-approval",
+      "relabel-upscaled-as-native-HD"
+    ],
+    "fallback": "original-game-assets",
+    "releaseGate": "explicit-human-visual-review",
+    "releaseStatus": "blocked"
+  }
+}

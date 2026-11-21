@@ -1,0 +1,79 @@
+name: Class Diary original-photo cutout QA
+on:
+  push:
+    branches:
+      - chore/class-diary-photo-cutout-review-20261121
+    paths:
+      - 'scripts/class-diary-export-real-pose-cutouts.py'
+      - 'scripts/test-class-diary-character-identity-lock.cjs'
+      - 'data/class-diary-character-identity-lock-v1.json'
+      - 'qa/class-diary-cutout-review.html'
+      - 'scripts/test-class-diary-cutout-review.cjs'
+      - 'scripts/test-class-diary-cutout-review-browser.cjs'
+      - 'scripts/test-class-diary-special-action-manifest.cjs'
+      - 'data/class-diary-special-action-manifest-v1.json'
+      - '.github/workflows/class-diary-original-photo-qa.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  draft-cutouts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check canonical character identity fingerprints
+        run: node scripts/test-class-diary-character-identity-lock.cjs
+      - name: Validate 36-episode portrait QA viewer
+        run: node scripts/test-class-diary-cutout-review.cjs
+      - name: Validate six source-evidenced special-action scenes
+        run: node scripts/test-class-diary-special-action-manifest.cjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install image processing dependencies
+        run: python -m pip install --disable-pip-version-check Pillow numpy opencv-python-headless 'rembg[cpu]'
+      - name: Produce draft assets from repository's original images
+        run: python scripts/class-diary-export-real-pose-cutouts.py
+      - name: Assert draft assets and manifest exist
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('class-diary-cutout-review')
+          manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
+          assert len(manifest['files'])==25, len(manifest['files'])
+          assert (root/'preview.html').is_file(), 'offline QA viewer missing'
+          assert (root/'scene-action-manifest.json').is_file(), 'special action manifest missing'
+          assert (root/'scene-action-usage.csv').is_file(), 'scene action CSV missing'
+          assert manifest['must_not_deploy_without_visual_approval'] is True
+          for item in manifest['files']:
+              assert Path(item['file']).exists(), item['file']
+              assert Path(item['file']).with_suffix('.webp').exists(), item['file']
+          print('PASS: 24 male pose cutouts + 1 original Jiyoon reference; QA only')
+          PY
+      - name: Install browser QA tools
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Verify interactive image QA at 320, 390, 1365 pixels
+        run: |
+          python3 -m http.server 8127 --bind 127.0.0.1 --directory class-diary-cutout-review >/tmp/diary-art-qa-http.log 2>&1 &
+          node scripts/test-class-diary-cutout-review-browser.cjs
+      - name: Upload browser screenshots (review-only)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: class-diary-art-qa-browser-screenshots
+          path: artifacts/class-diary-cutout-QA/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Upload visual-review files only (not deployed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: class-diary-original-identity-cutouts-v2-DRAFT
+          path: class-diary-cutout-review/
+          retention-days: 14
+          if-no-files-found: error

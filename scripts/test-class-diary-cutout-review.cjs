@@ -1,0 +1,17 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const html=fs.readFileSync(path.join(__dirname,'../qa/class-diary-cutout-review.html'),'utf8');
+const js=html.match(/<script>([\s\S]*?)<\/script>/);
+assert(js,'QA interactive logic missing');
+new vm.Script(js[1],{filename:'class-diary-cutout-review.inline.js'});
+for(const id of ['jiyoon','hyunwoo','dogyeom','taeo'])assert(html.includes(id+':{'),'missing cast '+id);
+for(const id of ['actorPick','posePick','chapterPick','responsePick','sourceActor','cutoutActor'])assert(html.includes('id="'+id+'"'),'missing UI '+id);
+assert(html.includes('n<=36'),'must include all 36 episodes');
+assert(html.includes('is-alpha')&&html.includes('is-dark')&&html.includes('mobile'),'missing UI contrast/viewport');
+assert(html.includes('not-approval'),'review report must not claim final approval');
+assert(!/localStorage|sessionStorage|indexedDB|sendBeacon|XMLHttpRequest/.test(js[1]),'no local persistence');
+assert(!/\/api\/|supabase|service_role|Bearer/i.test(js[1]),'offline-only reviewer');
+console.log('PASS cast QA viewer: 4 actors x 36 episodes, 8-pose mapping, no persistence');

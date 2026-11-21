@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>학급일지 36화 캐릭터 원본·투명 컷아웃 비교</title>
+<style>
+:root{font-family:system-ui,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#182333;background:#f1f4f7}*{box-sizing:border-box}
+body{margin:0;padding:18px}header,.tools,.meta,.grid{max-width:1200px;margin:0 auto 16px}h1{font-size:clamp(22px,3vw,32px);margin:0 0 8px}.sub{color:#506075;line-height:1.55;margin:0 0 14px}.tools{display:flex;align-items:end;flex-wrap:wrap;gap:10px;padding:14px;background:white;border-radius:13px;border:1px solid #d7dfe8}.control{display:grid;gap:5px;color:#40536a;font-size:12px;font-weight:650}.control select,.control input,.tools button{border:1px solid #bdcbd7;padding:8px 10px;background:#f8fafc;border-radius:8px;font:inherit;color:#243347}.tools button{cursor:pointer;min-height:38px}.tools button:hover{background:#eaf1fa}.controls-inline{display:flex;gap:8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.panel{background:white;border:1px solid #d8e0e8;border-radius:14px;padding:12px;min-width:0}.panel h2{font-size:16px;margin:2px 0 10px}.status{font-size:13px;font-weight:700;color:#6e4b1d}.stage{height:360px;width:100%;position:relative;overflow:hidden;border-radius:10px;background:linear-gradient(115deg,#bac6cd 0 30%,#f4ebda 31% 58%,#9ab6ca 60% 75%,#d3d8d7 77%);border:1px solid #cbd2d7}.stage::before{content:'';position:absolute;inset:0 0 20%;background:linear-gradient(90deg,transparent 66%,#e9eef1b8 67%,transparent 70%);pointer-events:none}.stage.is-alpha{background-color:#fff;background-image:conic-gradient(#e1e5e9 25%,transparent 0 50%,#e1e5e9 0 75%,transparent 0);background-size:24px 24px}.stage.is-dark{background:#27313f}.actor-original,.actor-cutout{position:absolute;bottom:78px;left:50%;transform:translateX(-50%);height:74%;width:50%;background-repeat:no-repeat;background-color:transparent;background-position:center bottom}.actor-cutout{object-fit:contain;object-position:bottom center;width:75%;pointer-events:none}.dialogue{position:absolute;bottom:11px;left:3%;width:94%;min-height:88px;background:#182435e8;color:#f5f7fb;border:1px solid #788aa1;border-radius:11px;padding:11px 14px;z-index:2}.dialogue b{color:#f4cf93;font-size:13px}.dialogue p{font-size:13px;line-height:1.55;margin:6px 0 0}.hint{font-size:12px;color:#596a7e;line-height:1.5;margin:8px 0 0}.meta{background:white;border:1px solid #d8e0e8;border-radius:12px;padding:15px;font-size:14px;line-height:1.65}.meta strong{color:#1d4059}.mobile .grid{max-width:760px}.mobile .stage{height:575px}.mobile .actor-original{height:69%;width:75%;bottom:97px}.mobile .actor-cutout{height:69%;width:92%;bottom:97px}.mobile .dialogue{min-height:112px;bottom:13px}.mobile .dialogue p{font-size:14px}.pill{display:inline-block;border-radius:30px;background:#eef0f3;color:#445368;font-size:12px;padding:2px 9px;margin:0 5px}.warn{color:#9e3428!important}.good{color:#226046!important}.qa{color:#79551f!important}@media(max-width:750px){.grid{grid-template-columns:1fr}.stage{height:340px}.mobile .grid{max-width:390px}.mobile .stage{height:540px}}
+</style></head>
+<body>
+<header><h1>『나의 OO한 학급일지』 36화 캐릭터 검수</h1><p class="sub">기존 게임 원본 사진과 <b>원본 픽셀 기반 자동 투명 컷</b>을 같은 장면에서 비교합니다. 새 얼굴은 생성하지 않았습니다. 이 화면의 모든 투명 이미지는 최종 승인 전 검수용입니다.</p></header>
+<section class="tools" aria-label="검수 제어">
+<label class="control">등장인물<select id="actorPick"></select></label>
+<label class="control">회차<select id="chapterPick"></select></label>
+<label class="control">포즈<select id="posePick"></select></label>
+<label class="control">선택 후 반응<select id="responsePick"><option value="no">기본 장면</option><option value="1">선택 1</option><option value="2">선택 2</option><option value="3">선택 3</option></select></label>
+<label class="control">화면 배경<select id="backPick"><option value="school">학급 배경 예시</option><option value="alpha">체커보드</option><option value="dark">어두운 배경</option></select></label>
+<label class="control">투명 컷 확대<select id="zoomPick"><option value="1">100% · 실제 출력</option><option value="1.2">120%</option><option value="1.4">140%</option><option value="1.6">160%</option></select></label>
+<button id="screenPick" type="button" aria-pressed="false">모바일 390px 비교</button>
+<button id="downloadQA" type="button">검수 기록 JSON 저장</button>
+</section>
+<div class="grid">
+<article class="panel"><h2>① 기존 게임 원본 <span class="pill">동일 인물 기준</span></h2><div class="stage" id="sourceStage"><div class="actor-original" id="sourceActor"></div><div class="dialogue"><b id="sourceName"></b><p id="sourceLine"></p></div></div><p class="hint">GitHub 원본 8포즈 WebP에서 해당 프레임을 그대로 표시합니다. 원본의 배경·잘린 팔도 그대로 보입니다.</p></article>
+<article class="panel"><h2>② 투명 컷아웃 <span class="pill">AI 마스크 적용 · 미승인</span></h2><div class="stage" id="candidateStage"><img class="actor-cutout" id="cutoutActor" alt="투명화 시안"><div class="dialogue"><b id="cutoutName"></b><p id="cutoutLine"></p></div></div><p class="hint" id="candidateHint">사람의 얼굴을 새로 그리지 않은 자동 마스크 결과입니다.</p></article>
+</div>
+<div class="meta"><div id="status"></div><div id="explain"></div><div style="margin-top:10px"><label class="control">검수 메모 (이 브라우저 세션에만 보관)<input id="reviewNote" placeholder="예: 실뜨기 줄의 오른쪽 끝이 끊김"></label></div></div>
+<script>
+'use strict';
+const cast={
+ jiyoon:{name:'서지윤',file:'female-jiyoon-thigh-v4.webp',columns:1,rows:1,poses:['neutral_existing'],quality:{neutral_existing:'retouch'},special:{},defaults:[0]},
+ hyunwoo:{name:'한현우',file:'hyunwoo-poses-v2.webp',columns:4,rows:2,poses:['neutral','smile','shy','explaining','thinking','tired','listening','notebook'],quality:{neutral:'candidate',smile:'candidate',shy:'candidate',explaining:'candidate',notebook:'candidate',thinking:'retouch',listening:'retouch',tired:'reject'},special:{1:0,3:3,6:2,12:2,16:6,17:4,19:5,20:5,23:5,29:6,30:1,34:2,35:1,36:7},defaults:[0,1,6,3,4,2,5,7]},
+ dogyeom:{name:'차도겸',file:'dogyeom-poses-v2.webp',columns:8,rows:1,poses:['greeting','string-game','preparing','listening','thinking','demonstrating','smiling','bashful'],quality:{greeting:'retouch','string-game':'retouch',smiling:'retouch',bashful:'retouch',preparing:'reject',listening:'reject',thinking:'reject',demonstrating:'reject'},special:{1:0,3:1,4:5,7:2,16:3,19:4,22:3,27:5,29:3,34:1,35:6,36:7},defaults:[0,3,4,1,5,2,6,7]},
+ taeo:{name:'백태오',file:'taeo-poses-v2.webp',columns:8,rows:1,poses:['greeting','volleyball','explaining','clipboard','awkward','thinking','listening','relaxed'],quality:{greeting:'retouch',volleyball:'retouch',explaining:'retouch',clipboard:'retouch',awkward:'retouch',relaxed:'retouch',thinking:'reject',listening:'reject'},special:{1:0,3:2,6:1,9:5,16:2,19:3,22:5,27:1,29:3,30:6,34:7,35:1,36:7},defaults:[0,2,6,3,5,1,4,7]}
+};
+const lines={jiyoon:'아이들이 직접 보고 느낀 것을 먼저 들어 보려고 해요.',hyunwoo:'말을 끝까지 듣는 일도 가르침의 일부겠지요.',dogyeom:'실을 잡고 싶지 않은 아이에게도 선택할 자리가 있어요.',taeo:'공을 못 받는 아이부터 먼저 살펴보려고요.'};
+const $=id=>document.getElementById(id);const q=Object.keys(cast);const notes=new Map();
+for(const id of q) $('actorPick').add(new Option(cast[id].name,id));
+for(let n=1;n<=36;n++) $('chapterPick').add(new Option(n+'화',String(n)));
+function currentKey(){return $('actorPick').value+'|'+$('chapterPick').value+'|'+$('posePick').value;}
+function choosePose(){const actor=cast[$('actorPick').value],chapter=Number($('chapterPick').value),reaction=$('responsePick').value;return reaction!=='no'&&actor.poses.length===8?(reaction==='1'?6:reaction==='2'?5:7):(Object.hasOwn(actor.special,chapter)?actor.special[chapter]:actor.defaults[(chapter-1)%actor.defaults.length]);}
+function fillPoses(){const actor=cast[$('actorPick').value];$('posePick').replaceChildren(...actor.poses.map((pose,index)=>new Option(pose,String(index))));$('posePick').value=String(choosePose());render();}
+function onChapter(){ $('posePick').value=String(choosePose());render(); }
+function render(){const id=$('actorPick').value,actor=cast[id],index=Number($('posePick').value),pose=actor.poses[index],x=index%actor.columns,y=Math.floor(index/actor.columns),status=actor.quality[pose],name=actor.name;
+ const path='source_atlases/'+actor.file,src=$('sourceActor');src.style.backgroundImage='url("'+path+'")';src.style.backgroundSize=(actor.columns*100)+'% '+(actor.rows*100)+'%';src.style.backgroundPosition=(actor.columns===1?0:100*x/(actor.columns-1))+'% '+(actor.rows===1?0:100*y/(actor.rows-1))+'%';
+ $('cutoutActor').src=id+'/'+pose+'.webp';$('cutoutActor').style.transform='translateX(-50%) scale('+$('zoomPick').value+')';$('cutoutActor').style.transformOrigin='center 65%';$('cutoutActor').onerror=()=>{$('candidateHint').textContent='이미지를 읽을 수 없습니다. 원본을 유지하고 ZIP 안의 파일 존재 여부를 확인하세요.'};$('cutoutActor').onload=()=>{$('candidateHint').textContent='원본 얼굴은 유지됩니다. 머리카락·손·소품·몸통과 테두리를 반드시 검수하세요.'};
+ $('sourceName').textContent=$('cutoutName').textContent=name;$('sourceLine').textContent=$('cutoutLine').textContent=lines[id];
+ $('status').replaceChildren();const strong=document.createElement('strong');strong.textContent='현재: '+name+' · '+$('chapterPick').value+'화 · '+pose+' / ';$('status').append(strong);
+ const badge=document.createElement('strong');badge.textContent=status==='candidate'?'기술 검수 후보 (최종 미승인)':status==='retouch'?'손·소품/경계 보정 필요':'현 상태 사용 금지';badge.className=status==='candidate'?'good':status==='retouch'?'qa':'warn';$('status').append(badge);
+ $('explain').textContent=status==='candidate'?'원본 얼굴을 재생성하지 않은 컷입니다. 실제 화면에서 크롭·알파 가장자리 검수 후 승인해야 합니다.':status==='retouch'?'인물은 원본 그대로지만 팔·배경·소품 누락 또는 설정 불일치가 남아 있습니다.':'검수상 현 상태로 게임 배포하기 부적합합니다. 원본 게임 사진을 유지하세요.';
+ $('reviewNote').value=notes.get(currentKey())||'';
+}
+$('actorPick').addEventListener('change',fillPoses);$('chapterPick').addEventListener('change',onChapter);$('responsePick').addEventListener('change',onChapter);$('posePick').addEventListener('change',render);
+$('reviewNote').addEventListener('input',()=>{notes.set(currentKey(),$('reviewNote').value)});
+$('screenPick').addEventListener('click',e=>{const pressed=e.currentTarget.getAttribute('aria-pressed')==='true';e.currentTarget.setAttribute('aria-pressed',String(!pressed));document.body.classList.toggle('mobile',!pressed);e.currentTarget.textContent=pressed?'모바일 390px 비교':'데스크톱 화면 비교';});
+$('zoomPick').addEventListener('change',render);$('backPick').addEventListener('change',()=>{for(const stage of document.querySelectorAll('.stage')){stage.classList.remove('is-alpha','is-dark');if($('backPick').value!=='school')stage.classList.add('is-'+$('backPick').value)}});
+$('downloadQA').addEventListener('click',()=>{const report={kind:'class-diary-art-qa-not-approval',date:new Date().toISOString(),qa: [...notes.entries()].map(([key,note])=>({key,note})),disclaimer:'No images are approved or deployed by this file.'};const blob=new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='class-diary-manual-qa.json';link.click();URL.revokeObjectURL(url)});
+fillPoses();
+</script></body></html>
