@@ -50,6 +50,7 @@ test("referral API never upgrades from a bare profile-level hint",()=>{
  assert.match(referral,/beagu_2026_verified_visitor_level_v1/);
  assert.match(referral,/tier>=1/);
  assert.match(referral,/provisional: tier===2/);
+ assert.match(referral,/validReferrals: tier===2 \? 1 : 0/);
  assert.match(referral,/ownResponseVerified: tier>=1/);
  assert.doesNotMatch(referral,/Number\(enrollment\?\.level\) === 2 &&/);
  assert.match(referral,/beagu_issue_challenge_identity_bound/);
