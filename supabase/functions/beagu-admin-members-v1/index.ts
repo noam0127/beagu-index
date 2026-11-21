@@ -180,7 +180,14 @@ async function details(input: Record<string, unknown>) {
     .order("occurred_at", { ascending: false }).limit(10);
   if (auditError) throw new HttpError(503, "audit_unavailable");
   const challenge = await challengeSummary(id);
-  return { profile, challenge, moderation_history: events || [] };
+  const moderation_history = (events || []).map(event => ({
+    event_type: event.event_type,
+    outcome: event.outcome,
+    occurred_at: event.occurred_at,
+    details: { reason: typeof event.details?.reason === "string"
+      ? event.details.reason.slice(0, 200) : "" },
+  }));
+  return { profile, challenge, moderation_history };
 }
 async function audit(actor: string, event: string, target: string, reason: string, duration: string) {
   const { error } = await db.from("beagu_admin_audit_events").insert({
@@ -210,8 +217,14 @@ async function moderate(input: Record<string, unknown>, actor: { id: string; rol
     ban_duration: duration,
   });
   if (updateError) throw new HttpError(503, "moderation_failed");
-  await audit(actor.id, "member_" + operation, id, reason, duration);
-  return { updated: true, user_id: id, operation };
+  try {
+    await audit(actor.id, "member_" + operation, id, reason, duration);
+  } catch {
+    // Do not report a failed moderation action after Auth has already changed.
+    // Operator must reconcile the missing audit record before another action.
+    return { updated: true, user_id: id, operation, audit_recorded: false };
+  }
+  return { updated: true, user_id: id, operation, audit_recorded: true };
 }
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("Origin") || "";
