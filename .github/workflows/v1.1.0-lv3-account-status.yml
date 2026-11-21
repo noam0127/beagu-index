@@ -1,0 +1,60 @@
+name: v1.1.0 — Lv3 account UI and gated benefits status
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-lv3-account-status.yml'
+      - 'js/beagu-lv3-account-ui-v1.js'
+      - 'js/beagu-lv3-session-v1.js'
+      - 'js/beagu-level-state-v1.js'
+      - 'js/beagu-level-guide-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'levels.html'
+      - 'challenge.html'
+      - 'postit.html'
+      - 'styles/beagu-level-guide-v1.css'
+      - 'styles/beagu-lv3-account-ui-v1.css'
+      - 'tests/v1.1.0-lv3-account-ui.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lv3-ui:
+    name: Server-confirmed Lv3 display and existing Lv2 workflow regression (NO DEPLOY)
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser modules parse
+        run: |
+          node --check js/beagu-lv3-account-ui-v1.js
+          node --check js/beagu-lv3-session-v1.js
+          node --check js/beagu-level-state-v1.js
+          node --check js/beagu-level-guide-v1.js
+          node --check js/challenge-member-auth-v1.js
+          node --check js/postit-account-v1.js
+      - name: Verify Lv3 UI and Stage19 server access protection
+        run: |
+          node --test tests/v1.1.0-lv3-account-ui.test.mjs tests/v1.1.0-lv3-server-authorization.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-lv3-exclusive-account-link.test.mjs
+      - name: Verify legacy login/participant Lv2 and app UI are not regressed
+        run: |
+          node tests/level-guide-route.mjs
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/postit-member-auth.cjs
+          node tests/participation-code-unified.mjs
+          node tests/levelup-provisional-v1.cjs
+          node scripts/test-challenge-referral-premium.cjs
+          node tests/auth-unified-2026-link.mjs
+          node tests/admin-verified-email-enrollment-static.cjs
+      - name: Confirm preview cannot expose live Supabase and official Forms
+        run: python3 tests/preview-db-isolation.py
