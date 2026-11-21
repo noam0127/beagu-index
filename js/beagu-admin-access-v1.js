@@ -65,22 +65,35 @@
     d.setUTCDate(d.getUTCDate()-(d.getUTCDay()+6)%7);
     return d.toISOString().slice(0,10);
   }
+  // Stage32: missing/invalid data are never coerced to zero. This renders
+  // display-only approved aggregates; the Edge endpoint enforces AAL2.
+  const CHART_EMPTY=Object.freeze({
+    unavailable:"집계 자료를 불러오지 못했습니다. 서버 상태를 확인해 주세요.",
+    invalid:"집계 값 확인 불가 · 원본 수집 상태를 확인해 주세요.",
+    empty:"해당 기간에 저장된 집계 기록이 없습니다.",
+    zero:"집계 기록은 있지만 관측값이 모두 0건입니다."
+  });
   function renderChart(id,rows,metric){
     const root=$(id);root.replaceChildren();
-    const groups=new Map();
-    for(const d of rows||[]){
-      const day=String(d.day||"");
-      if(!/^\d{4}-\d{2}-\d{2}$/.test(day))continue;
-      const k=keyFor(day);groups.set(k,(groups.get(k)||0)+(Number(d[metric])||0));
+    const output=window.BeaguAdminChartIntegrity?.daily(rows,metric,scale)||
+      {status:"unavailable",points:[]};
+    root.dataset.dataState=output.status;
+    if(output.status!=="ready"){
+      root.append(make("p","empty",CHART_EMPTY[output.status]||CHART_EMPTY.invalid));
+      return;
     }
-    const values=[...groups].sort((a,b)=>a[0].localeCompare(b[0])).slice(-60);
-    if(!values.length){root.append(make("p","empty","해당 기간의 기록이 없습니다."));return;}
-    const max=Math.max(1,...values.map(x=>x[1]));
-    for(const [day,count] of values){
-      const col=make("div","bar-col"),bar=make("div","bar-rect");
-      bar.style.height=Math.max(2,Math.round(count/max*120))+"px";
-      col.title=day+" · "+num(count)+"건";col.setAttribute("aria-label",col.title);
-      col.append(bar);root.append(col);
+    const max=Math.max(...output.points.map(point=>point.value),1);
+    for(const {key:day,value:count} of output.points){
+      const col=make("div","bar-col");
+      col.title=day+" · "+num(count)+"건";
+      col.setAttribute("aria-label",col.title);
+      // Zero inside a nonempty series has no bar, not a fake 2px minimum.
+      if(count>0){
+        const bar=make("div","bar-rect");
+        bar.style.height=Math.max(2,Math.round(count/max*120))+"px";
+        col.append(bar);
+      }
+      root.append(col);
     }
   }
   function renderRanks(){
@@ -155,20 +168,31 @@
     });
   }
   function showLiveTraffic(data){
-    const count=Number(data?.active_browsers_5m);
-    $("adminOnlineCount").textContent=Number.isSafeInteger(count)&&count>=0?num(count)+"명":"집계 확인 불가";
+    const raw=data?.active_browsers_5m;
+    const count=raw===null||raw===undefined||raw===""?null:Number(raw);
+    $("adminOnlineCount").textContent=Number.isSafeInteger(count)&&count>=0
+      ?num(count)+"명":"집계 확인 불가";
     const root=$("adminHourlyChart");root.replaceChildren();
-    const slots=new Map((Array.isArray(data?.hourly_visits)?data.hourly_visits:[]).map(row=>[Number(row.hour),Number(row.views)||0]));
-    const max=Math.max(1,...slots.values());
-    for(let hour=0;hour<24;hour++){
-      const views=Math.max(0,slots.get(hour)||0);
-      const col=make("div","bar-col");
-      const rect=make("div","bar-rect");
-      rect.style.height=(views?Math.max(2,Math.round(views/max*116)):0)+"px";
-      const label=make("small","hour-label",String(hour).padStart(2,"0"));
-      col.title=hour+"시–"+(hour+1)+"시 · "+num(views)+"회";
-      col.setAttribute("aria-label",col.title);
-      col.append(rect,label);root.append(col);
+    const output=window.BeaguAdminChartIntegrity?.hourly(data?.hourly_visits)||
+      {status:"unavailable",points:[]};
+    root.dataset.dataState=output.status;
+    if(output.status!=="ready"){
+      root.append(make("p","empty",CHART_EMPTY[output.status]||CHART_EMPTY.invalid));
+    }else{
+      const max=Math.max(...output.points.map(p=>p.value||0),1);
+      for(const {hour,value:views} of output.points){
+        const col=make("div","bar-col");
+        const label=make("small","hour-label",String(hour).padStart(2,"0"));
+        col.title=hour+"시–"+(hour+1)+"시 · "+
+          (views===null?"미집계":num(views)+"회");
+        col.setAttribute("aria-label",col.title);
+        if(views>0){
+          const rect=make("div","bar-rect");
+          rect.style.height=Math.max(2,Math.round(views/max*116))+"px";
+          col.append(rect);
+        }
+        col.append(label);root.append(col);
+      }
     }
     const when=data?.as_of?new Date(data.as_of).toLocaleTimeString("ko-KR",{timeZone:"Asia/Seoul",hour12:false}):"시각 확인 불가";
     $("adminLiveAsOf").textContent="최근 갱신 "+when+" · 30초마다 자동 확인 · 동시 접속은 5분 활동 기준 추정치";
@@ -344,12 +368,24 @@
     const payload=await response.json().catch(()=>({}));
     if(!response.ok){const ex=new Error(payload.error||"dashboard_unavailable");ex.status=response.status;throw ex;}
     if(seq!==requestSeq)return;
-    if(!payload.analytics||typeof payload.analytics!=="object")throw Error("invalid_response");
+    if(!payload.analytics||typeof payload.analytics!=="object"||
+       Array.isArray(payload.analytics))throw Error("invalid_response");
     displayDashboard(payload.analytics);
     refreshLiveSafely();
   }
+  function invalidateChartData(){
+    dashboard=null;
+    for(const id of ["adminVisitChart","adminSearchChart","adminGameChart"]){
+      const root=$(id);root.replaceChildren();
+      root.dataset.dataState="unavailable";
+      root.append(make("p","empty","새 조회 기간의 서버 집계를 확인하는 중입니다."));
+    }
+    for(const type of ["site","search","view","level","challenge","security"])fill(type,null);
+    $("adminDataAsOf").textContent="새 조회 기간 집계 확인 중 · 이전 기간 수치는 재사용하지 않습니다.";
+  }
   document.querySelectorAll("[data-period]").forEach(button=>button.addEventListener("click",async()=>{
     period=button.dataset.period;
+    invalidateChartData();
     document.querySelectorAll("[data-period]").forEach(btn=>btn.setAttribute("aria-pressed",String(btn===button)));
     try{await loadMetrics()}catch{warn(errMessage);}
   }));
