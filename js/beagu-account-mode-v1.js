@@ -8,9 +8,9 @@
  const MIN_NEW_PASSWORD=10;
  function create(options) {
   const {form,title,description,password,submit,switchButton,smsFields,
-         smsPhone,smsConsent,forgot,google}=options||{};
+         smsPhone,smsConsent,smsCollectionConsent,forgot,google}=options||{};
   if (![form,title,description,password,submit,switchButton,smsFields,
-         smsPhone,smsConsent].every(Boolean))
+         smsPhone,smsConsent,smsCollectionConsent].every(Boolean))
    throw new Error('ACCOUNT_UI_MISSING_ELEMENT');
   const labels={
    signin:{
@@ -49,6 +49,8 @@
     password.value='';
     smsPhone.value='';
     smsConsent.checked=false;
+    smsCollectionConsent.checked=false;
+    smsPhone.disabled=true;
    }
    return next;
   }
