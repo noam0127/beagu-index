@@ -20,6 +20,8 @@ on:
       - 'tests/participation-code-unified.mjs'
       - 'tests/levelup-provisional-v1.cjs'
       - 'scripts/test-challenge-referral-premium.cjs'
+      - 'scripts/beagu-2026-referral-integration.gs'
+      - 'tests/v1.1.0-survey-closing-referral-notice.cjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -71,6 +73,8 @@ jobs:
           node --check js/challenge-referral-v1.js
           node --test tests/v1.1.0-participation-code-levels.test.mjs tests/v1.1.0-challenge-code-status-ui.test.mjs
           node scripts/test-challenge-lv2-card.cjs
+          node tests/v1.1.0-survey-closing-referral-notice.cjs
+          node scripts/test-challenge-referral-gas.cjs
           node tests/participation-code-unified.mjs
           node tests/levelup-provisional-v1.cjs
           node scripts/test-challenge-referral-premium.cjs
