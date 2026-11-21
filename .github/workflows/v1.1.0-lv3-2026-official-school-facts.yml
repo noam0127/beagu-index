@@ -1,0 +1,79 @@
+name: v1.1.0 — Lv3 2026 official school facts and verified sorting
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-lv3-2026-official-school-facts.yml'
+      - 'supabase/migrations/20261122004000_beagu_lv3_2026_official_school_facts_v1.sql'
+      - 'supabase/functions/beagu-lv3-school-facts-v1/index.ts'
+      - 'supabase/functions/beagu-level-api/index.ts'
+      - 'js/level-search.js'
+      - 'tests/lv3-2026-school-facts-fixture.sql'
+      - 'tests/lv3-2026-school-facts-verify.sql'
+      - 'tests/v1.1.0-lv3-2026-school-facts.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verified-2026-facts:
+    name: Private 2026 source review, Lv3 Auth gate and Lv2 legacy isolation (NO DEPLOY)
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: isolated_2026_school_facts
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d isolated_2026_school_facts"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGDATABASE: isolated_2026_school_facts
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Validate Edge TS and browser school-sort parsing
+        run: |
+          deno check supabase/functions/beagu-lv3-school-facts-v1/index.ts
+          deno check supabase/functions/beagu-level-api/index.ts
+          node --check js/level-search.js
+          node --check tests/v1.1.0-lv3-2026-school-facts.test.mjs
+      - name: Verify 2026 source provenance and legacy member tier checks
+        run: |
+          node --test tests/v1.1.0-lv3-2026-school-facts.test.mjs tests/v1.1.0-lv3-server-authorization.test.mjs tests/v1.1.0-2026-tiered-review-release.test.mjs
+          node tests/2026-lv2-immediate.mjs
+          node tests/2026-approved-search-refresh.mjs
+          node tests/school-search-unification.mjs
+          node tests/level-guide-route.mjs
+          node tests/participation-code-unified.mjs
+      - name: Install disposable database psql
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
+      - name: Seed synthetic NEIS-school facts + fake owner + disabled release control
+        run: psql -v ON_ERROR_STOP=1 -f tests/lv3-2026-school-facts-fixture.sql
+      - name: Apply Stage22 reviewed 2026 official school facts only to disposable Postgres
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261122004000_beagu_lv3_2026_official_school_facts_v1.sql
+      - name: Test owner revocation, source date, missing source, stale approval and release OFF
+        run: psql -v ON_ERROR_STOP=1 -f tests/lv3-2026-school-facts-verify.sql
+      - name: Preserve preview isolation from production Supabase and official Forms
+        run: python3 tests/preview-db-isolation.py
