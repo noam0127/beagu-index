@@ -78,6 +78,14 @@ def archive(sha, destination):
         raise RuntimeError("Website build is missing index.html")
 
 
+def overlay_approved_directory(target):
+    # Only this previously approved public JSON artifact may bypass code-release approval.
+    # Never overlay JS, HTML, workflows, or SQL from an unapproved main commit.
+    subprocess.run(["bash", "-eo", "pipefail", "-c",
+      "git archive --format=tar HEAD data/public-compare-school-directory-v1.json | "
+      "tar -xf - -C " + str(target)], cwd=ROOT, check=True)
+
+
 def make_preview_banner(target):
     banner = (
         '<div id="beagu-preview-watermark" role="note" '
@@ -106,9 +114,11 @@ def build():
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
     archive(production, OUTPUT)
+    overlay_approved_directory(OUTPUT)
     if staging:
         preview_dir = OUTPUT / "_preview"
         archive(staging, preview_dir)
+        overlay_approved_directory(preview_dir)
         nested_cname = preview_dir / "CNAME"
         if nested_cname.exists():
             nested_cname.unlink()
@@ -127,7 +137,12 @@ def main():
         sha = os.environ["GITHUB_SHA"]
         if not SHA.fullmatch(sha):
             raise ValueError("Untrusted GitHub SHA")
-        plan = api("worker_next", head_sha=sha)
+        data_blob = subprocess.check_output([
+            "git", "rev-parse", "HEAD:data/public-compare-school-directory-v1.json"],
+            cwd=ROOT, text=True).strip()
+        if not SHA.fullmatch(data_blob):
+            raise RuntimeError("Approved public directory is missing")
+        plan = api("worker_next", head_sha=sha, data_blob_sha=data_blob)
         PLAN.write_text(json.dumps(plan), encoding="utf8")
         output("has_job", "true" if plan.get("has_job") else "false")
         if plan.get("has_job"):
