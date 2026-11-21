@@ -68,3 +68,28 @@ test("anonymous admin commands are denied by server",async()=>{
  assert.equal(await request("prod_apply"),401);
  assert.equal(await request("prod_rollback"),401);
 });
+
+test("v2 step 3: production promotion and rollback are denied by the server itself",()=>{
+ const sourceCode=source("supabase/functions/beagu-release-manager-v1/index.ts");
+ assert.match(sourceCode,/const PRODUCTION_RELEASES_PAUSED=true;/);
+ const admin=sourceCode.slice(sourceCode.indexOf("async function adminAction("),
+   sourceCode.indexOf("async function workerAction("));
+ assert.match(admin,/if\(PRODUCTION_RELEASES_PAUSED && \(action==="prod_apply"\|\|action==="prod_rollback"\)\)/);
+ assert.match(admin,/return error\("production_release_paused",423,origin\)/);
+ assert.ok(admin.indexOf('return error("production_release_paused"') <
+   admin.indexOf("const s=await state();"));
+});
+
+test("v2 step 3: OIDC worker cannot claim queued production jobs or auto-refresh public data",()=>{
+ const sourceCode=source("supabase/functions/beagu-release-manager-v1/index.ts");
+ const worker=sourceCode.slice(sourceCode.indexOf("async function workerAction("));
+ assert.match(worker,/PRODUCTION_RELEASES_PAUSED && job\?\.target==="production"/);
+ assert.match(worker,/!PRODUCTION_RELEASES_PAUSED && !job&&s\.production_sha&&s\.public_data_blob_sha!==publicDataBlob/);
+ assert.match(worker,/!PRODUCTION_RELEASES_PAUSED && !job&&!s\.production_sha/);
+ assert.match(worker,/action==="worker_complete" && job\.target==="production"/);
+ assert.match(worker,/public_data_blob_sha:approvedPublicDataBlob/);
+ const python=source("scripts/release-manager/worker.py");
+ assert.match(python,/if plan\.get\("target"\) != "staging"/);
+ assert.match(python,/\["git", "cat-file", "blob", blob_sha\]/);
+ assert.doesNotMatch(python,/git archive --format=tar HEAD data\/public-compare-school-directory-v1\.json/);
+});

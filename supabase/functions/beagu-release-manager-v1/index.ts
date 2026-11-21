@@ -9,6 +9,9 @@ const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SE
 const repo="noam0127/beagu-index";
 const mainApi="https://api.github.com/repos/"+repo;
 const trusted=new Set(["https://baeguindex.com","https://www.baeguindex.com"]);
+// v2 step 3 safety interlock: cannot be overridden by a browser or environment secret.
+// Production promotion requires an explicitly reviewed follow-up code change.
+const PRODUCTION_RELEASES_PAUSED=true;
 const jwks=createRemoteJWKSet(new URL("https://token.actions.githubusercontent.com/.well-known/jwks"));
 const SHA=/^[0-9a-f]{40}$/;
 const allowedVersion=/^[0-9A-Za-z][0-9A-Za-z._-]{0,31}$/;
@@ -103,6 +106,9 @@ async function enqueue(job:{action:string;target:string;to_sha:string|null;from_
 }
 async function adminAction(input:Record<string,unknown>,userId:string,origin:string):Promise<Response>{
  const action=String(input.action||"");
+ // Deny production commands even after owner MFA succeeds.
+ if(PRODUCTION_RELEASES_PAUSED && (action==="prod_apply"||action==="prod_rollback"))
+  return error("production_release_paused",423,origin);
  const s=await state();
  const current=await activeJob();
  if(action==="status"){
@@ -205,7 +211,14 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   let job=await activeJob();
   const publicDataBlob=String(input.data_blob_sha||"");
   if(!SHA.test(publicDataBlob))return error("invalid_public_data_blob",400,origin);
-  if(!job&&!s.production_sha){
+  if(PRODUCTION_RELEASES_PAUSED && job?.target==="production")
+   return respond({has_job:false,paused_reason:"production_release_paused"},200,origin);
+  if(PRODUCTION_RELEASES_PAUSED && !job && !s.production_sha)
+   return respond({has_job:false,paused_reason:"production_bootstrap_paused"},200,origin);
+  // The current main HEAD must never silently replace published public data.
+  const approvedPublicDataBlob=PRODUCTION_RELEASES_PAUSED ?
+   (SHA.test(String(s.public_data_blob_sha||""))?String(s.public_data_blob_sha):null):publicDataBlob;
+  if(!PRODUCTION_RELEASES_PAUSED && !job&&!s.production_sha){
    const initial=String(input.head_sha||"");
    if(!SHA.test(initial))return error("invalid_bootstrap_sha",400,origin);
    const {data, error:e}=await db.from("beagu_site_release_jobs_v1").insert({
@@ -215,7 +228,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
    }).select("*").single();
    if(e)throw Error("bootstrap_unavailable");job=data;
   }
-  if(!job&&s.production_sha&&s.public_data_blob_sha!==publicDataBlob){
+  if(!PRODUCTION_RELEASES_PAUSED && !job&&s.production_sha&&s.public_data_blob_sha!==publicDataBlob){
    const {data,error:e}=await db.from("beagu_site_release_jobs_v1").insert({
     action:"data_refresh",target:"production",to_sha:s.production_sha,from_sha:s.production_sha,
     version:s.production_version||"운영 데이터",summary:"공개 학교 목록 자동 갱신",
@@ -228,7 +241,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   if(job.status!=="queued")return respond({has_job:false,already_running:true},200,origin);
   const {data:claimed,error:e}=await db.from("beagu_site_release_jobs_v1")
    .update({status:"running",started_at:new Date().toISOString(),
-    public_data_blob_sha:publicDataBlob})
+    public_data_blob_sha:approvedPublicDataBlob})
    .eq("id",job.id).eq("status","queued").select("*").maybeSingle();
   if(e)throw Error("claim_unavailable");
   if(!claimed)return respond({has_job:false},200,origin);
@@ -238,7 +251,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
    return error("invalid_release_pointer",503,origin);
   return respond({has_job:true,job_id:claimed.id,action:claimed.action,
    target:claimed.target,production_sha:productionSha,staging_sha:stagingSha||null,
-   version:claimed.version},200,origin);
+   version:claimed.version,public_data_blob_sha:approvedPublicDataBlob},200,origin);
  }
  if(action==="worker_complete"||action==="worker_fail"){
   const id=String(input.job_id||"");
@@ -246,6 +259,8 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   const {data:job,error:e}=await db.from("beagu_site_release_jobs_v1")
     .select("*").eq("id",id).maybeSingle();
   if(e||!job)return error("job_not_found",404,origin);
+  if(PRODUCTION_RELEASES_PAUSED && action==="worker_complete" && job.target==="production")
+   return error("production_release_paused",423,origin);
   if(job.status!=="running")return error("job_not_running",409,origin);
   if(action==="worker_fail"){
    await db.from("beagu_site_release_jobs_v1").update({
