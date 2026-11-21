@@ -3,7 +3,7 @@
   "use strict";
   const api = SUPABASE_URL + "/functions/v1/beagu-admin-members-v1";
   const $ = id => document.getElementById(id);
-  let ready = false, role = "", search = "", page = 1;
+  let ready = false, role = "", search = "", page = 1, memberStatus = "all", memberSort = "newest";
   let total = 0, pageSize = 20, selectedId = "", serial = 0, pending = false;
   const text = (id, value) => { $(id).textContent = value; };
   const node = (tag, cls, value) => {
@@ -82,7 +82,7 @@
     $("adminMembersPrev").disabled = true;
     $("adminMembersNext").disabled = true;
     try {
-      const data = await request("list", {page,search});
+      const data = await request("list", {page,search,status:memberStatus,sort:memberSort});
       if (seq !== serial || !role) return;
       total = data.total_matches;
       pageSize = data.page_size;
@@ -97,7 +97,7 @@
       $("adminMembersNext").disabled = page >= pages;
       const scanned = Number(data.total_users_scanned).toLocaleString("ko-KR");
       status(total.toLocaleString("ko-KR") + "명 검색됨 · 인증 계정 " + scanned + "개 조회" +
-        (data.truncated ? " · 대량 계정의 일부만 검색됨" : "") +
+        (data.truncated ? " · 최대 4,000개 계정 내 검색 · 전체 회원 통계 아님" : "") +
         " · 참여코드 발급자 수와는 다릅니다.");
     } catch {
       if (seq !== serial || !role) return;
@@ -207,6 +207,12 @@
   function prepareListeners() {
     if (ready) return;
     ready = true;
+    $("adminMembersFilter").addEventListener("change", () => {
+      memberStatus = $("adminMembersFilter").value;page = 1;void refresh();
+    });
+    $("adminMembersSort").addEventListener("change", () => {
+      memberSort = $("adminMembersSort").value;page = 1;void refresh();
+    });
     $("adminMembersSearchForm").addEventListener("submit", event => {
       event.preventDefault();search = $("adminMembersSearch").value.trim();page = 1;
       selectedId = "";$("adminMemberDetailPanel").hidden = true;
@@ -214,6 +220,9 @@
     });
     $("adminMembersClear").addEventListener("click", () => {
       $("adminMembersSearch").value = "";search = "";page = 1;
+      memberStatus = "all";memberSort = "newest";
+      $("adminMembersFilter").value = memberStatus;
+      $("adminMembersSort").value = memberSort;
       selectedId = "";$("adminMemberDetailPanel").hidden = true;
       void refresh();
     });
@@ -234,7 +243,9 @@
   function mount(adminRole) {
     role = String(adminRole || "");
     prepareListeners();
-    page = 1;search = "";selectedId = "";
+    page = 1;search = "";memberStatus = "all";memberSort = "newest";selectedId = "";
+    $("adminMembersFilter").value = memberStatus;
+    $("adminMembersSort").value = memberSort;
     $("adminMembersSearch").value = "";
     $("adminMemberDetailPanel").hidden = true;
     void refresh();
