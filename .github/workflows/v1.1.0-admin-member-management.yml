@@ -19,6 +19,9 @@ on:
       - 'tests/admin-member-moderation-fixture.sql'
       - 'tests/admin-member-moderation-verify.sql'
       - 'tests/admin-members-static.cjs'
+      - 'tests/admin-dashboard-static.cjs'
+      - 'tests/admin-page-performance-static.cjs'
+      - 'tests/admin-telemetry-health-static.cjs'
   workflow_dispatch:
 permissions:
   contents: read
