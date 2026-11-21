@@ -10,10 +10,15 @@ const base='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-a
 const levelKey='beagu-level-session-v1',deviceKey='beagu-referral-device-secret-v1';
 const section=$('postitAccount'),status=$('postitAccountStatus'),form=$('postitAccountForm');
 const smsPhone=$('postitSmsPhone'),smsConsent=$('postitSmsConsent'),smsCollectionConsent=$('postitSmsCollectionConsent'),smsUnsubscribe=$('postitSmsUnsubscribe');
-if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsCollectionConsent||!smsUnsubscribe||
-   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show||!window.BeaguSmsConsent?.create)return;
+const smsFields=$('postitSmsFields'),smsSave=$('postitSmsSave'),smsStatus=$('postitSmsStatus');
+if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsCollectionConsent||!smsUnsubscribe||!smsFields||!smsSave||!smsStatus||
+   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show||!window.BeaguSmsConsent?.create||!window.BeaguSmsAccountSettings?.create)return;
 const smsPrivacy=window.BeaguSmsConsent.create({phone:smsPhone,
  collectionConsent:smsCollectionConsent,marketingConsent:smsConsent});
+const smsAccount=window.BeaguSmsAccountSettings.create({
+ client,container:smsFields,save:smsSave,withdraw:smsUnsubscribe,
+ status:smsStatus,consent:smsPrivacy
+});
 const accountMode=window.BeaguAccountMode.create({
  form,
  title:$('postitAccountHeading'),
@@ -60,7 +65,7 @@ function render(user,serverLevelVerified=false){
  form.hidden=signedIn;
  $('postitAccountGoogle').hidden=signedIn;
  $('postitAccountSignOut').hidden=!signedIn;
- smsUnsubscribe.hidden=!signedIn||user?.user_metadata?.beagu_sms_opt_in!==true;
+ // SMS subscription is never inferred from editable Auth user_metadata.
  const canClaim=emailVerified&&serverLevelVerified&&!linked&&Boolean(originalDevice());
  $('postitAccountLink').hidden=!canClaim;
  $('postitAccountNoDevice').hidden=!emailVerified||!serverLevelVerified||linked||Boolean(originalDevice());
@@ -77,6 +82,8 @@ async function refresh(){
  setLinked(false);
  const identity=await restored.identity();
  if(id!==generation)return;
+ if(identity?.emailVerified)void smsAccount.showFor(identity);
+ else smsAccount.hide();
  const user=identity?.user||null;
  if(!identity?.emailVerified||!validatedLevel()){
   render(user,false);return;
@@ -110,13 +117,10 @@ async function executeAuth(action){
  form.dataset.busy='true';form.setAttribute?.('aria-busy','true');
  showState('checking');
  try{
-  const selection=action==='signup'?smsPrivacy.payload():null;
-  if(selection&&!selection.ok){
-   showInputError(selection.reason==='phone-input'?'phone-input':'sms-consent-incomplete');
-   return;
-  }
+  // Editable Auth metadata must not contain phone numbers or act as consent.
+  // The independent, verified-user SMS endpoint captures explicit opt-in.
   const {error}=action==='signup'
-   ?await client.auth.signUp({email,password,options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('postit'),data:selection.consent}})
+   ?await client.auth.signUp({email,password,options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('postit')}})
    :await client.auth.signInWithPassword({email,password});
   if(error)throw error;
   $('postitAccountPassword').value='';
@@ -170,19 +174,8 @@ $('postitAccountLink').addEventListener('click',async()=>{
    :'원래 기기 증명 또는 Lv2 권한을 확인하지 못했습니다. 연결되지 않았습니다.');
  }finally{busy=false;$('postitAccountLink').disabled=false}
 });
-smsUnsubscribe.addEventListener('click',async()=>{
- if(busy)return;
- busy=true;smsUnsubscribe.disabled=true;
- try{
-  const {error}=await client.auth.updateUser({data:{beagu_sms_opt_in:false,beagu_phone_collection_opt_in:false,beagu_sms_phone:null}});
-  if(error)throw error;
-  smsUnsubscribe.hidden=true;
-  message('문자 안내 수신 동의를 철회했습니다. 발송용 휴대폰번호도 삭제됩니다.');
- }catch{message('수신 동의 철회에 실패했습니다. 다시 시도해 주세요.')}
- finally{busy=false;smsUnsubscribe.disabled=false}
-});
 $('postitAccountSignOut').addEventListener('click',async()=>{
- if(busy)return;busy=true;setLinked(false);
+ if(busy)return;busy=true;setLinked(false);smsAccount.hide();
  await client.auth.signOut().catch(()=>{});
  busy=false;void refresh();
 });
