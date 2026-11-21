@@ -23,15 +23,16 @@ const smsConsent=byId('challengeMemberSmsConsent');
 const smsCollectionConsent=byId('challengeMemberSmsCollectionConsent');
 const smsUnsubscribe=byId('challengeMemberSmsUnsubscribe');
 const smsSave=byId('challengeMemberSmsSave'),smsStatus=byId('challengeMemberSmsStatus');
+const privacyPanel=byId('challengePrivacyPanel');
 // supabase-config.js declares a top-level lexical const, not a window property.
 const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
-if(![card,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut,smsFields,smsPhone,smsConsent,smsCollectionConsent,smsUnsubscribe,smsSave,smsStatus].every(Boolean)||!client)return;
+if(![card,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut,smsFields,smsPhone,smsConsent,smsCollectionConsent,smsUnsubscribe,smsSave,smsStatus,privacyPanel].every(Boolean)||!client)return;
 const SESSION_KEY='beagu-level-session-v1';
 const DEVICE_KEY='beagu-referral-device-secret-v1';
 const LEVEL_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
 const POSTIT_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1';
 let tier2=false,mode='signin',busy=false,focusReturn=null,serial=0;
-if(!window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show||!window.BeaguSmsConsent?.create||!window.BeaguSmsAccountSettings?.create)return;
+if(!window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show||!window.BeaguSmsConsent?.create||!window.BeaguSmsAccountSettings?.create||!window.BeaguAccountPrivacy?.create)return;
 const setAccountState=state=>window.BeaguAccountStatus.set(message,state);
 const showInputError=kind=>window.BeaguAuthErrorUI.show(message,kind);
 const smsPrivacy=window.BeaguSmsConsent.create({phone:smsPhone,
@@ -39,6 +40,13 @@ const smsPrivacy=window.BeaguSmsConsent.create({phone:smsPhone,
 const smsAccount=window.BeaguSmsAccountSettings.create({
  client,container:smsFields,save:smsSave,withdraw:smsUnsubscribe,
  status:smsStatus,consent:smsPrivacy
+});
+const accountPrivacy=window.BeaguAccountPrivacy.create({
+ client,panel:byId('challengePrivacyPanel'),summary:byId('challengePrivacySummary'),
+ status:byId('challengePrivacyStatus'),requestAccess:byId('challengePrivacyAccess'),
+ cancelAccess:byId('challengePrivacyCancelAccess'),requestDeletion:byId('challengePrivacyRequestDeletion'),
+ cancelDeletion:byId('challengePrivacyCancelDeletion'),
+ confirmEmail:byId('challengePrivacyConfirmEmail'),confirmPhrase:byId('challengePrivacyConfirmPhrase')
 });
 const accountMode=window.BeaguAccountMode.create({
  form,title,description,password,submit,switchButton:switchMode,
@@ -61,7 +69,7 @@ function paintMode(next){
  mode=accountMode.setMode(next);
  form.hidden=false;
  switchMode.hidden=false;
- connect.hidden=true;signOut.hidden=true;smsAccount.hide();
+ connect.hidden=true;signOut.hidden=true;smsAccount.hide();accountPrivacy.hide();
  setAccountState(mode==='signup'?'signup-ready':'signin-required');
 }
 
@@ -91,7 +99,7 @@ async function showAccountStatus(){
   // A previously restored session can expire while this modal is open.
   // Re-enable the form instead of trapping the user behind a hidden login.
   form.hidden=false;switchMode.hidden=false;signOut.hidden=true;
-  connect.hidden=true;smsAccount.hide();
+  connect.hidden=true;smsAccount.hide();accountPrivacy.hide();
   const forgot=byId('challengeMemberForgot');
   if(forgot)forgot.hidden=mode!=='signin';
   if(mode==='signin')setAccountState('signin-required');
@@ -101,11 +109,12 @@ async function showAccountStatus(){
  const forgot=byId('challengeMemberForgot');
  if(forgot)forgot.hidden=true;
  if(!person.user.email_confirmed_at){
-  connect.hidden=true;smsAccount.hide();
+  connect.hidden=true;smsAccount.hide();accountPrivacy.hide();
   setAccountState('email-pending');
   return;
  }
  void smsAccount.showFor(person);
+ void accountPrivacy.showFor(person);
  const levelStillValid=await serverLevel();
  if(overlay.hidden||!tier2)return;
  if(!levelStillValid){
@@ -128,7 +137,7 @@ async function showAccountStatus(){
 }
 function close(){
  if(overlay.hidden)return;
- overlay.hidden=true;smsAccount.hide();
+ overlay.hidden=true;smsAccount.hide();accountPrivacy.hide();
  document.body.classList.remove('challenge-member-open');
  password.value='';
  const returnTo=focusReturn;
