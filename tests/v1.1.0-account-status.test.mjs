@@ -68,6 +68,7 @@ function postitHarness({user=null,level=true,linked=false}={}) {
  vm.runInNewContext(text('js/beagu-auth-errors-v1.js'),browser,{timeout:1500});
  vm.runInNewContext(text('js/beagu-sms-consent-v1.js'),browser,{timeout:1500});
  vm.runInNewContext(text('js/beagu-sms-account-settings-v2.js'),browser,{timeout:1500});
+ vm.runInNewContext(text('js/beagu-account-privacy-v1.js'),browser,{timeout:1500});
  vm.runInNewContext(postitSource,browser,{timeout:2000});
  return {get,status,calls,window};
 }
