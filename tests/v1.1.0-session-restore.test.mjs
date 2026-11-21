@@ -131,3 +131,21 @@ test('Post-it rechecks Lv2 before writer status and refuses stale linked rights'
  assert.match(script,/if\(!verifiedLevel\)\{render\(user,false\);return\}/);
  assert.match(script,/if\(busy\|\|!validatedLevel\(\)\|\|!await restored\.level\(\)\)return/);
 });
+
+test('Supabase client explicitly persists sessions and refreshes access tokens',()=>{
+ const config=fs.readFileSync('js/supabase-config.js','utf8');
+ assert.match(config,/persistSession:\s*true/);
+ assert.match(config,/autoRefreshToken:\s*true/);
+ assert.match(config,/detectSessionInUrl:\s*true/);
+ assert.doesNotMatch(config,/service_role|sb_secret_/);
+});
+test('expired Challenge session re-enables login rather than leaving modal locked',()=>{
+ const script=fs.readFileSync('js/challenge-member-auth-v1.js','utf8');
+ assert.match(script,/if\(!person\)\{[\s\S]*?form\.hidden=false;switchMode\.hidden=false;signOut\.hidden=true/);
+ assert.match(script,/if\(mode==='signin'\)setAccountState\('signin-required'\)/);
+});
+test('Post-it revokes linked writer status immediately on Auth signout',()=>{
+ const script=fs.readFileSync('js/postit-account-v1.js','utf8');
+ assert.match(script,/onAuthStateChange\(event=>\{/);
+ assert.match(script,/if\(event==='SIGNED_OUT'\)setLinked\(false\)/);
+});
