@@ -1367,7 +1367,13 @@
     }catch(e){
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
       state.yearLookupError=true;
-      console.warn('공개 DB 미응답, 기존 검증 백분위 유지',e);
+      if(latestOnly){
+        // A withdrawn 2026 publication must not remain on screen because
+        // the public approval source became temporarily unavailable.
+        state.years['2026'].percentile=null;
+        state.years['2026'].approved=false;
+      }
+      console.warn('공개 DB 미응답 · 2026 최신 상태 확인 실패',e);
       render();
     }
   }
@@ -1528,8 +1534,13 @@
         state.tier=0;clearTierItems();tierUI();render();$('tierCodePanel').hidden=false;
         $('tierError').textContent='인증 유효기간이 끝났습니다. 코드를 다시 입력해 주세요.';
       }else{
-        console.warn('인증된 집계 DB 조회 실패',error);
-        $('tierError').textContent='추가 통계 조회에 실패했습니다. 잠긴 데이터는 표시되지 않습니다.';
+        // Fail closed: the old school-level answers might have been revoked
+        // since they were first displayed. Leave older verified years intact.
+        state.years['2026'].items={};
+        state.approvedSummary['2026']=[];
+        render();
+        console.warn('인증된 집계 DB 조회 실패 · 2026 결과 숨김',error);
+        $('tierError').textContent='최신 승인 상태를 확인할 수 없어 2026년 학교별 결과를 숨겼습니다. 다시 조회해 주세요.';
       }
     }
     } finally {
