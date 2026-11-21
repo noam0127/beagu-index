@@ -92,7 +92,8 @@ test('Lv1 housing sort is rejected on server and disabled in UI, Lv2 retains old
  assert.match(legacy,/LV2_REQUIRED_FOR_HOUSING_SORT/);
  assert.match(legacy,/beagu_lv1_school_sort_cache_v1/);
  assert.match(legacy,/beagu_lv1_school_sort_index/);
- assert.match(browser,/opt\.disabled=verifiedTier<2/);
+ assert.match(browser,/const locked=verifiedTier<2/);
+ assert.match(browser,/opt\.disabled=locked/);
  assert.match(browser,/verifiedTier=Number\(data\.level\)\|\|0/);
  assert.match(browser,/verifiedTier=Number\(state\.level\)\|\|0/);
  assert.match(browser,/if\(opt\.disabled&&\$\('regionSort'\)\.value==='housing_price_won'\)/);
