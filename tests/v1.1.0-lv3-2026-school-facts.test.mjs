@@ -139,7 +139,7 @@ test('Stage23: housing-price sort locks for Lv0/Lv1, unlocks for verified Lv2/Lv
  }
  const html=read('search-lv1.html');
  assert.match(html,/<option value="housing_price_won"[^>]*disabled[^>]*>공시지가 🔒 \(Lv\.2부터\)<\/option>/);
- assert.match(script,/if\(response\.status === 403 && data\.error === 'LV2_REQUIRED_FOR_HOUSING_SORT'\)/);
+ assert.match(script,/if\s*\(response\.status === 403 && data\.error === 'LV2_REQUIRED_FOR_HOUSING_SORT'\)/);
  assert.match(script,/if\(error\.sortLocked\)\{[\s\S]*?verifiedTier=1;[\s\S]*?updateSortAccess\(\)/);
  assert.match(script,/\/\/ Re-check the currently verified tier before every ranked search\.\s+updateSortAccess\(\)/);
 });
