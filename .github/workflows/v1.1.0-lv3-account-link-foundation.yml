@@ -1,0 +1,92 @@
+name: v1.1.0 — exclusive Lv2 owner device to verified Auth link (Lv3 foundation)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-lv3-account-link-foundation.yml'
+      - 'supabase/migrations/20261122001000_beagu_lv3_verified_account_link_v1.sql'
+      - 'supabase/functions/beagu-postit-api-v1/index.ts'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'js/beagu-account-status-v1.js'
+      - 'tests/lv3-verified-account-link-fixture.sql'
+      - 'tests/lv3-verified-account-link-verify.sql'
+      - 'tests/v1.1.0-lv3-exclusive-account-link.test.mjs'
+      - 'tests/v1.1.0-account-status.test.mjs'
+      - 'tests/postit-member-auth.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exclusive-auth-link:
+    name: Isolated PostgreSQL 16, real Auth-session guard and fake-device anti-theft (NO PROD)
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: isolated_lv3_links
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d isolated_lv3_links"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGDATABASE: isolated_lv3_links
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Deno Post-it API and JavaScript syntax
+        run: |
+          deno check supabase/functions/beagu-postit-api-v1/index.ts
+          node --check js/challenge-member-auth-v1.js
+          node --check js/postit-account-v1.js
+          node --check js/beagu-account-status-v1.js
+      - name: Auth/ownership security and existing app regression
+        run: |
+          node --test tests/v1.1.0-lv3-exclusive-account-link.test.mjs tests/v1.1.0-account-status.test.mjs
+          node tests/postit-member-auth.cjs
+          node tests/challenge-lv2-account-entry.mjs
+          node scripts/test-challenge-referral-premium.cjs
+          node tests/participation-code-unified.mjs
+          node tests/levelup-provisional-v1.cjs
+          node tests/admin-verified-email-enrollment-static.cjs
+          node tests/2026-auto-quality-referral-gate.mjs
+      - name: Install disposable database psql client
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
+      - name: Create synthetic 2026 identity and quality source
+        run: psql -v ON_ERROR_STOP=1 -f tests/challenge-2026-code-level-fixture.sql
+      - name: Add fake Auth, expired session and original device claims
+        run: psql -v ON_ERROR_STOP=1 -f tests/lv3-verified-account-link-fixture.sql
+      - name: Apply existing Post-it member backend migration in test DB
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121103000_beagu_postit_member_auth.sql
+      - name: Apply stage-16 live Auth session verification migration in test DB
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121234500_beagu_member_privacy_requests_v1.sql
+      - name: Apply stage-17 2026 personal response and fraud-review quality guard in test DB
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121235500_beagu_2026_verified_code_levels_v1.sql
+      - name: Apply stage-18 private exclusive Auth and Lv2 claim migration in test DB
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261122001000_beagu_lv3_verified_account_link_v1.sql
+      - name: Test collision/claim theft, verified email, active session and revocation in test DB
+        run: psql -v ON_ERROR_STOP=1 -f tests/lv3-verified-account-link-verify.sql
+      - name: Confirm preview has no production database writes or form references
+        run: python3 tests/preview-db-isolation.py
