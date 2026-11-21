@@ -104,8 +104,8 @@ test('owner mounts member directory after Auth and filters account status server
  assert.equal(h.requests.at(-1).body.search,'teacher');
 });
 test('member table escapes unexpected email strings by textContent, no HTML assignment',()=>{
- assert.match(code,/\\.textContent\\s*=\\s*String\\(value\\)/);
- assert.doesNotMatch(code,/\\.innerHTML\\s*=/);
+ assert.match(code,/\.textContent\s*=\s*String\(value\)/);
+ assert.doesNotMatch(code,/\.innerHTML\s*=/);
 });
 test('owner moderation passes unique request ID and never confuses client data with permissions',async()=>{
  const h=fixture();
@@ -137,7 +137,7 @@ test('PII in moderation reasons is rejected before sending to server',async()=>{
  h.get('adminMemberSuspend24').dataset.memberOperation='suspend_24h';
  h.get('adminMemberSuspend24').emit('click');await tick();
  assert.equal(h.forms.changes.length,0);
- assert.match(h.get('adminMemberActionStatus').textContent,/개인정보/);
+ assert.match(h.get('adminMemberActionStatus').textContent,/이메일|전화번호/);
 });
 test('duplicate moderation request is not falsely reported as success',async()=>{
  const h=fixture({moderationFailure:true});
