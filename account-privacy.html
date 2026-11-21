@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <meta name="robots" content="noindex,nofollow">
+ <meta name="referrer" content="no-referrer">
+ <title>내 계정·개인정보 | 배구지수</title>
+ <meta name="description" content="본인 계정정보 확인, 문자 수신 동의 철회, 개인정보 열람 및 탈퇴 요청">
+ <link rel="stylesheet" href="styles/beagu-account-privacy-v1.css?v=20261121-stage16">
+</head>
+<body>
+<main class="account-privacy-standalone">
+ <header><a href="index.html">배구지수 홈</a><small>본인 인증 전용</small></header>
+ <h1>내 계정 · 개인정보</h1>
+ <p>계정 정보 열람과 문자 수신 동의 철회, 탈퇴 검토 요청을 처리합니다. Lv2 챌린지 참여코드 인증과는 별개의 계정 서비스입니다.</p>
+ <section class="card" aria-labelledby="selfLoginHeading" id="selfLoginSection">
+  <h2 id="selfLoginHeading">계정 로그인</h2>
+  <p>가입한 이메일과 기존 비밀번호를 입력하세요. <strong>기존 비밀번호에 신규 가입 길이 기준을 적용하지 않습니다.</strong></p>
+  <form id="selfLoginForm" class="login-form" autocomplete="on">
+   <label for="selfLoginEmail">이메일 주소</label>
+   <input type="email" id="selfLoginEmail" autocomplete="email" maxlength="254" required>
+   <label for="selfLoginPassword">기존 비밀번호</label>
+   <input type="password" id="selfLoginPassword" autocomplete="current-password" minlength="1" maxlength="128" required>
+   <button type="submit" id="selfLoginButton">로그인</button>
+  </form>
+  <a href="password-reset.html">비밀번호를 잊으셨나요?</a>
+  <p id="selfLoginStatus" role="status" aria-live="polite">이메일 인증을 완료한 계정만 개인정보 메뉴를 이용할 수 있습니다.</p>
+ </section>
+ <section class="card" id="selfLoggedInSection" hidden>
+  <button type="button" id="selfSignOut">계정 로그아웃</button>
+  <p>연락처 원문이나 인증 토큰은 이 화면에 표시하지 않습니다.</p>
+  <button type="button" id="selfSmsWithdraw">문자 수신 동의 철회 및 연락처 삭제 요청</button>
+  <p id="selfSmsStatus" role="status" aria-live="polite">문자 수신 여부는 서버에서 확인됩니다.</p>
+  <section id="selfPrivacyPanel" class="self-privacy" role="region" aria-labelledby="selfPrivacyHeading" hidden>
+   <h3 id="selfPrivacyHeading">본인 계정정보</h3>
+   <p id="selfPrivacySummary" class="account-privacy-summary"></p>
+   <p class="account-privacy-help">본인 계정 요약을 확인할 수 있습니다. 포스트잇 및 추가 자료의 상세 열람은 별도 요청으로 접수합니다.</p>
+   <div class="account-privacy-actions">
+    <button type="button" id="selfPrivacyAccess">내 정보 추가 열람 요청</button>
+    <button type="button" id="selfPrivacyCancelAccess" hidden>열람 요청 취소</button>
+   </div>
+   <details class="account-privacy-delete">
+    <summary>계정 탈퇴 검토 요청</summary>
+    <p>이 버튼은 즉시 계정을 삭제하지 않습니다. 기존 포스트잇 작성자·챌린지·설문·감사 기록에 영향을 줄 수 있으므로 연계자료 및 보존 의무를 확인한 뒤 처리합니다.</p>
+    <label for="selfPrivacyConfirmEmail">가입 이메일 주소 다시 입력</label>
+    <input id="selfPrivacyConfirmEmail" type="email" maxlength="254" autocomplete="off">
+    <label for="selfPrivacyConfirmPhrase">‘계정 탈퇴 요청’이라고 정확히 입력</label>
+    <input id="selfPrivacyConfirmPhrase" type="text" maxlength="20" autocomplete="off" spellcheck="false" placeholder="계정 탈퇴 요청">
+    <div class="account-privacy-actions">
+     <button type="button" id="selfPrivacyRequestDeletion">탈퇴 검토 요청 접수</button>
+     <button type="button" id="selfPrivacyCancelDeletion" hidden>탈퇴 요청 취소</button>
+    </div>
+   </details>
+   <p id="selfPrivacyStatus" role="status" aria-live="polite" aria-atomic="true"></p>
+  </section>
+ </section>
+ <p>서비스 내 개인정보 처리에 관한 문의가 있는 경우 운영자에게 별도로 요청할 수 있습니다.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/beagu-account-privacy-v1.js?v=20261121-stage16"></script>
+<script src="js/beagu-account-privacy-page-v1.js?v=20261121-stage16"></script>
+</body>
+</html>
