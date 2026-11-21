@@ -1,0 +1,38 @@
+/* Stage24: isolated, opt-in Lv3 2026 official school facts. */
+.beagu-lv3-school-panel{
+ margin:12px 0 2px;border:1px solid #cfdaf0;border-radius:14px;
+ background:linear-gradient(130deg,#f8faff,#fff);overflow:hidden
+}
+.beagu-lv3-school-summary{
+ display:list-item;list-style:disclosure-closed inside;cursor:pointer;
+ padding:12px 14px;color:#243c72;font-size:13px;font-weight:800
+}
+.beagu-lv3-school-panel[open]>.beagu-lv3-school-summary{
+ list-style:disclosure-open inside;border-bottom:1px solid #e2eaf6
+}
+.beagu-lv3-school-body{padding:12px 14px 14px}
+.beagu-lv3-status,.beagu-lv3-note,.beagu-lv3-empty,.beagu-lv3-source-date{
+ margin:0 0 10px;font-size:12px;line-height:1.65;color:#526481;word-break:keep-all
+}
+.beagu-lv3-fetch-button{
+ border:0;border-radius:10px;background:#2f4f8f;color:#fff;
+ font-size:12px;font-weight:800;padding:10px 14px;cursor:pointer
+}
+.beagu-lv3-fetch-button:focus-visible,.beagu-lv3-account-link:focus-visible{
+ outline:3px solid #86b4ff;outline-offset:2px
+}
+.beagu-lv3-fetch-button:disabled{opacity:.56;cursor:wait}
+.beagu-lv3-account-link{
+ display:inline-block;margin-left:10px;font-size:12px;color:#3156a2;
+ text-underline-offset:3px
+}
+.beagu-lv3-school-result{margin-top:12px}
+.beagu-lv3-title{font-size:14px;font-weight:850;color:#253c66;margin:0 0 5px}
+.beagu-lv3-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0}
+.beagu-lv3-fact{min-width:0;background:#fff;border:1px solid #e3eaf7;border-radius:10px;padding:9px 10px}
+.beagu-lv3-fact dt{color:#64748b;font-size:11px;font-weight:700;margin-bottom:4px}
+.beagu-lv3-fact dd{color:#253c66;font-size:13px;font-weight:800;margin:0;overflow-wrap:anywhere}
+@media(max-width:520px){
+ .beagu-lv3-facts{grid-template-columns:1fr}
+ .beagu-lv3-account-link{margin-left:0;margin-top:10px;display:block}
+}
