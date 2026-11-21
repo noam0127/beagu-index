@@ -111,6 +111,16 @@
       cleanLink();
     }
   }
+  // Attach before error-link early returns: an expired link must still let
+  // the user request a fresh recovery email without a page reload.
+  if(correctDestination){
+    restart.addEventListener('click',()=>{
+      if(busy)return;
+      showRequest();
+      paint('info','새 재설정 메일을 요청할 수 있습니다.');
+      email.focus();
+    });
+  }
   if(!correctDestination){
     showExpired();
     cleanLink();
@@ -159,12 +169,6 @@
     }finally{
       busy=false;requestButton.disabled=false;
     }
-  });
-  restart.addEventListener('click',()=>{
-    if(busy)return;
-    showRequest();
-    paint('info','새 재설정 메일을 요청할 수 있습니다.');
-    email.focus();
   });
   resetForm.addEventListener('submit',async event=>{
     event.preventDefault();
