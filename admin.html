@@ -7,6 +7,7 @@
   <meta name="referrer" content="no-referrer">
   <title>관리자 · 배구지수</title>
   <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261121-members1">
+  <link rel="stylesheet" href="styles/beagu-admin-section-index-v1.css?v=20261122-stage32">
 </head>
 <body>
   <main class="shell">
@@ -54,11 +55,38 @@
         <div><p class="eyebrow">OPERATIONS · PRIVATE</p><h2>운영 통계</h2>
           <p class="help">서버에서 관리자 권한과 2단계 인증을 확인한 뒤 통계를 불러옵니다.</p></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
-          <a class="secondary" id="adminMemberNavLink" href="#adminMemberManagement" style="display:inline-flex;align-items:center" hidden>회원관리</a>
-          <a class="secondary" href="admin-updates.html" style="display:inline-flex;align-items:center">업데이트 관리</a>
           <button id="adminLogout" type="button" class="secondary">로그아웃</button>
         </div>
       </div>
+      <!-- Native links only in MFA-gated dashboard; owner-only member link
+           is revealed by the existing server-authenticated member module. -->
+      <nav class="admin-section-index" id="adminSectionIndex" aria-label="관리자 기능 빠른 이동">
+        <div class="admin-section-index-group">
+          <h3>사이트·활동</h3>
+          <div class="admin-section-index-links">
+            <a href="#adminSiteHeading">방문 통계</a>
+            <a href="#adminPerfHeading">속도·실패율</a>
+            <a href="#adminSearchHeading">학교검색</a>
+            <a href="#adminGamesHeading">게임</a>
+          </div>
+        </div>
+        <div class="admin-section-index-group">
+          <h3>회원·설문</h3>
+          <div class="admin-section-index-links">
+            <a href="#adminLevelHeading">챌린지·레벨</a>
+            <a id="adminMemberNavLink" href="#adminMemberManagement" hidden>회원관리</a>
+            <a href="#adminReferralFunnel">추천 현황</a>
+            <a href="#adminReview2026">2026 비공개 검수</a>
+          </div>
+        </div>
+        <div class="admin-section-index-group">
+          <h3>운영·배포</h3>
+          <div class="admin-section-index-links">
+            <a href="#adminSecurityHeading">보안·감사</a>
+            <a href="admin-updates.html">업데이트 관리</a>
+          </div>
+        </div>
+      </nav>
       <nav class="period-tabs" aria-label="통계 조회 기간" id="adminPeriods">
         <button type="button" data-period="today">오늘</button>
         <button type="button" data-period="7d" aria-pressed="true">7일</button>
@@ -387,7 +415,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
-  <script defer src="js/beagu-admin-access-v1.js?v=20261121-members1"></script>
+  <script defer src="js/beagu-admin-chart-integrity-v1.js?v=20261122-stage32"></script>
+  <script defer src="js/beagu-admin-access-v1.js?v=20261122-stage32"></script>
   <script defer src="js/beagu-2026-admin-review.js?v=20261121-quality1"></script>
   <script defer src="js/beagu-admin-members-v1.js?v=20261121-members1"></script>
 </body>
