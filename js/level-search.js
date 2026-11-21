@@ -932,6 +932,7 @@
       if(error.sortLocked){
         // Server may have downgraded a Lv2 referral since the last verification.
         verifiedTier=1;
+        window.BeaguLv3SchoolFacts?.clear();
         updateSortAccess();
         $('resultCount').textContent='공시지가 정렬은 Lv.2부터 이용할 수 있습니다.';
         return;
