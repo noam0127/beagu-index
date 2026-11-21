@@ -35,6 +35,7 @@
     version_not_found:"선택한 버전을 찾지 못했습니다. 새로고침하세요.",
     no_changes_since_last_version:"최신 버전을 만든 뒤 새 코드 변경사항이 없습니다.",
     release_history_diverged:"최신 코드와 이전 버전의 기록이 달라 수동 점검이 필요합니다.",
+    new_changes_detected:"다른 ChatGPT 작업이 추가되었습니다. 목록을 다시 확인한 뒤 버전을 생성하세요.",
     release_bootstrap_pending:"최초 배포 설정을 확인한 뒤 다시 시도하세요.",
     staging_required:"이 버전은 시험 웹 배포 기록이 없습니다. 먼저 시험 웹에 적용하세요.",
     already_on_staging:"이미 시험 웹에 적용된 버전입니다.",
@@ -220,7 +221,7 @@
   busy=true;updateControls();msg("GitHub 최신 코드의 변경 내용을 버전으로 저장 중입니다.");
   let newId="";
   try{
-   const result=await request("create_version",{version,summary});
+   const result=await request("create_version",{version,summary,expected_sha:pending.head_sha});
    newId=result.release?.id||"";
    msg("버전 "+version+" 생성 완료 · 변경 파일 "+result.changed_count+"개. 드롭다운에서 선택해 시험 웹에 적용하세요.");
    delete el("releaseVersionInput").dataset.edited;
