@@ -216,11 +216,13 @@
     for (const button of document.querySelectorAll("[data-member-operation]")) button.disabled = true;
     text("adminMemberActionStatus",label + " 처리 중입니다.");
     try {
-      await request("moderate", {user_id:selectedId,operation,reason});
+      const result = await request("moderate", {user_id:selectedId,operation,reason});
       $("adminMemberReason").value = "";
       await showDetail(selectedId);
       await refresh();
-      text("adminMemberActionStatus",label + " 처리 완료 · 감사 기록 저장");
+      text("adminMemberActionStatus",result.audit_recorded === true
+        ? label + " 처리 완료 · 감사 기록 저장"
+        : label + " 적용됨 · 감사 기록 저장 실패: 추가 조치 전 관리자 점검 필요");
     } catch {
       text("adminMemberActionStatus","처리를 확인하지 못했습니다. 상태 및 감사 기록을 다시 조회해 주세요.");
     } finally {
