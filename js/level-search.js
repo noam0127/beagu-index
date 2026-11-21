@@ -789,6 +789,7 @@
   }
 
   function render(list, total, sortValue='school_name_asc') {
+    window.BeaguLv3SchoolFacts?.clear();
     current2026=new Map();
     visiblePageSchools=Array.isArray(list)?list:[];
     const host = $('results'); host.replaceChildren();
