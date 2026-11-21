@@ -10,6 +10,8 @@ on:
       - 'qa/class-diary-cutout-review.html'
       - 'scripts/test-class-diary-cutout-review.cjs'
       - 'scripts/test-class-diary-cutout-review-browser.cjs'
+      - 'scripts/test-class-diary-special-action-manifest.cjs'
+      - 'data/class-diary-special-action-manifest-v1.json'
       - '.github/workflows/class-diary-original-photo-qa.yml'
   workflow_dispatch:
 
@@ -26,6 +28,8 @@ jobs:
         run: node scripts/test-class-diary-character-identity-lock.cjs
       - name: Validate 36-episode portrait QA viewer
         run: node scripts/test-class-diary-cutout-review.cjs
+      - name: Validate six source-evidenced special-action scenes
+        run: node scripts/test-class-diary-special-action-manifest.cjs
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -42,6 +46,8 @@ jobs:
           manifest=json.loads((root/'manifest.json').read_text(encoding='utf-8'))
           assert len(manifest['files'])==25, len(manifest['files'])
           assert (root/'preview.html').is_file(), 'offline QA viewer missing'
+          assert (root/'scene-action-manifest.json').is_file(), 'special action manifest missing'
+          assert (root/'scene-action-usage.csv').is_file(), 'scene action CSV missing'
           assert manifest['must_not_deploy_without_visual_approval'] is True
           for item in manifest['files']:
               assert Path(item['file']).exists(), item['file']
