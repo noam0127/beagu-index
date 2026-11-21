@@ -2,13 +2,13 @@
 do $test$
 begin
  if has_function_privilege('anon',
-   'public.beagu_2026_tiered_released_question_results_v1(text,smallint)','EXECUTE')
+   'public.beagu_2026_tiered_released_question_results_v1(text,integer)','EXECUTE')
  or has_function_privilege('authenticated',
-   'public.beagu_2026_tiered_released_question_results_v1(text,smallint)','EXECUTE')
+   'public.beagu_2026_tiered_released_question_results_v1(text,integer)','EXECUTE')
  or has_function_privilege('anon',
    'public.beagu_2026_lv2_released_question_results(text)','EXECUTE')
  or not has_function_privilege('service_role',
-   'public.beagu_2026_tiered_released_question_results_v1(text,smallint)','EXECUTE')
+   'public.beagu_2026_tiered_released_question_results_v1(text,integer)','EXECUTE')
  then raise exception 'Server release gate exposed to client RPC';end if;
  if has_table_privilege('anon','public.beagu_2026_results_snapshot','SELECT')
  or has_table_privilege('authenticated',
@@ -47,7 +47,7 @@ begin
  if pg_catalog.jsonb_array_length(q)<>1 or q->0->>'id'<>'Q01'
  then raise exception 'Q31/Q51 privacy exclusions missing';end if;
  for i in 0..4 loop
-  if public.beagu_2026_tiered_released_question_results_v1('A000003',i::smallint)
+  if public.beagu_2026_tiered_released_question_results_v1('A000003',i)
     is not null and i not in(1,2,3)
   then raise exception 'Unknown tier bypass';end if;
  end loop;
@@ -71,7 +71,7 @@ begin
  foreach id in array array['A000004','A000005','A000006'] loop
   for tier in 1..3 loop
    if public.beagu_2026_tiered_released_question_results_v1(
-      id,tier::smallint) is not null
+      id,tier) is not null
    then raise exception 'Invalid basis/hash/privacy leaked % Lv%',id,tier;end if;
   end loop;
  end loop;
