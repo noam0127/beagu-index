@@ -5,7 +5,7 @@
 begin;
 
 create or replace function public.beagu_2026_tiered_released_question_results_v1(
- p_school_id text,p_level smallint
+ p_school_id text,p_level integer
 ) returns jsonb
 language sql stable security definer set search_path='' as $fn$
  select (
@@ -67,10 +67,10 @@ language sql stable security definer set search_path='' as $fn$
    )
 $fn$;
 revoke all on function
- public.beagu_2026_tiered_released_question_results_v1(text,smallint)
+ public.beagu_2026_tiered_released_question_results_v1(text,integer)
  from public,anon,authenticated;
 grant execute on function
- public.beagu_2026_tiered_released_question_results_v1(text,smallint)
+ public.beagu_2026_tiered_released_question_results_v1(text,integer)
  to service_role;
 
 -- Bridge: close the pre-existing "Lv2 immediately after approval" bypass.
@@ -80,7 +80,7 @@ create or replace function public.beagu_2026_lv2_released_question_results(
  p_school_id text
 ) returns jsonb language sql stable security definer set search_path='' as $fn$
  select public.beagu_2026_tiered_released_question_results_v1(
-   p_school_id,2::smallint
+   p_school_id,2
  )
 $fn$;
 revoke all on function
@@ -89,7 +89,7 @@ revoke all on function
 grant execute on function
  public.beagu_2026_lv2_released_question_results(text) to service_role;
 
-comment on function public.beagu_2026_tiered_released_question_results_v1(text,smallint) is
+comment on function public.beagu_2026_tiered_released_question_results_v1(text,integer) is
  'Stage21 exact-snapshot release RPC. Tier3 immediate means after Owner approval and independently VERIFIED publication/privacy basis. Q31/Q51 never returned. Service-role only.';
 comment on function public.beagu_2026_lv2_released_question_results(text) is
  'Stage21 bridge: legacy Lv2 2026 release requires verified six hours after exact snapshot approval and intact privacy basis.';
