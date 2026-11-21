@@ -1,4 +1,5 @@
 import {catalog} from './questionnaire-2026.mjs';
+import {isPublic2026QuestionId} from './2026-public-question-policy.mjs';
 export const sourceId='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4';
 const integer=(v,max)=>Number.isSafeInteger(v)&&v>=0&&v<=max;
 const keys=(v,expected)=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join('|')===[...expected].sort().join('|');
@@ -34,19 +35,41 @@ export function validateSnapshot(data,now=Date.now()) {
 // Called only after the DB's evidence/hash/24-hour gate. Return whitelist labels
 // and modes only; never return distributions, counts, source rows, or evidence.
 export function publicQuestionResults(questions) {
+  // Even a privileged review RPC can supply malformed or newly introduced
+  // JSON fields. Expose only closed, catalogued selections on the vetted
+  // exact-snapshot path; never serialize the raw question object itself.
+  if(!Array.isArray(questions))return [];
   return questions.flatMap(q=>{
-    const m=catalog[q.id];if(!m||q.id==='Q31'||q.id==='Q51'||q.invalid||!q.valid)return [];
-    const options=q.row>=0?m.columns:m.options;
+    if(!q||typeof q!=='object'||Array.isArray(q)||
+      !isPublic2026QuestionId(q.id))return [];
+    const m=catalog[q.id];
+    if(!m||!Number.isSafeInteger(q.row)||
+      (m.kind==='grid'
+        ? q.row<0||q.row>=m.rows.length
+        : q.row!==-1)||
+      !Number.isSafeInteger(q.valid)||q.valid<1||
+      !Number.isSafeInteger(q.invalid)||q.invalid!==0)return [];
+    const options=m.kind==='grid'?m.columns:m.options;
+    if(!Array.isArray(options)||!Array.isArray(q.counts)||
+      q.counts.length!==options.length||
+      !q.counts.every(c=>Number.isSafeInteger(c)&&c>=0&&c<=q.valid))return [];
+    const sum=q.counts.reduce((a,b)=>a+b,0);
+    const multiple=m.kind==='multi'||q.id==='Q45';
+    if(m.kind!=='time'&&(multiple?sum<q.valid:sum!==q.valid))return [];
     let values=[];
     if(m.kind==='time'){
+      if(!Number.isSafeInteger(q.minutes_sum)||
+        q.minutes_sum<0||q.minutes_sum>1439*q.valid)return [];
       const minutes=Math.round(q.minutes_sum/q.valid);
       values=[String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0')];
-    }else if(m.kind==='multi'||q.id==='Q45'){
+    }else if(multiple){
       values=options.filter((_,i)=>q.counts[i]>0);
     }else{
       const max=Math.max(...q.counts);
       values=options.filter((_,i)=>q.counts[i]===max);
     }
+    // Labels come exclusively from the fixed questionnaire catalogue.
+    if(!values.length||values.some(v=>typeof v!=='string'))return [];
     return [{questionId:q.id,row:q.row,values}];
   });
 }
