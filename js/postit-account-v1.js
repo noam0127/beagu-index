@@ -10,7 +10,20 @@ const base='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-a
 const levelKey='beagu-level-session-v1',deviceKey='beagu-referral-device-secret-v1';
 const section=$('postitAccount'),status=$('postitAccountStatus'),form=$('postitAccountForm');
 const smsPhone=$('postitSmsPhone'),smsConsent=$('postitSmsConsent'),smsUnsubscribe=$('postitSmsUnsubscribe');
-if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsUnsubscribe)return;
+if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsUnsubscribe||
+   !window.BeaguAccountMode?.create)return;
+const accountMode=window.BeaguAccountMode.create({
+ form,
+ title:$('postitAccountHeading'),
+ description:$('postitAccountDescription'),
+ password:$('postitAccountPassword'),
+ submit:$('postitAccountLogin'),
+ switchButton:$('postitAccountSignup'),
+ smsFields:$('postitSmsFields'),smsPhone,smsConsent,
+ forgot:$('postitAccountForgot'),
+ google:$('postitAccountGoogle')
+});
+accountMode.setMode('signin');
 let linked=false,busy=false,generation=0;
 const levelToken=()=>{try{return sessionStorage.getItem(levelKey)||''}catch{return ''}};
 function setLinked(next){
@@ -100,8 +113,15 @@ async function executeAuth(action){
   message(action==='signup'?'계정 생성이 완료되지 않았습니다. 이메일 인증 설정을 확인해 주세요.':'로그인에 실패했습니다. 이메일 인증 여부와 비밀번호를 확인해 주세요.');
  }finally{busy=false}
 }
-form.addEventListener('submit',e=>{e.preventDefault();void executeAuth('signin')});
-$('postitAccountSignup').addEventListener('click',()=>void executeAuth('signup'));
+form.addEventListener('submit',e=>{e.preventDefault();void executeAuth(accountMode.mode())});
+$('postitAccountSignup').addEventListener('click',()=>{
+ if(busy)return;
+ const next=accountMode.toggle();
+ message(next==='signup'
+  ?'새 계정은 10자 이상의 비밀번호가 필요합니다. 인증 메일을 확인해 주세요.'
+  :'기존 계정으로 로그인하세요. 이전에 설정한 짧은 비밀번호도 입력할 수 있습니다.');
+ $('postitAccountPassword').focus();
+});
 $('postitAccountGoogle').addEventListener('click',async()=>{
  if(busy)return;
  busy=true;
