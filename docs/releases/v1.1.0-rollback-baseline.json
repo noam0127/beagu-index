@@ -40,9 +40,9 @@
   },
   "checks": {
     "source_sha_pins_verified": true,
-    "code_restore_test": "pending-CI",
-    "staging_restore_test": "pending-CI",
-    "database_data_restore_test": "NOT_VERIFIED"
+    "code_restore_test": "PASS: GitHub Actions #44902905133 (2026-11-21), prod artifact byte-for-byte after rollback",
+    "staging_restore_test": "PASS: GitHub Actions #44902905133, staging isolated preview artifact build",
+    "database_data_restore_test": "NOT_VERIFIED: organization free plan, no verified offsite logical export"
   },
   "restrictions": [
     "Do not write production or staging database schema/data before encrypted off-site logical backup is independently verified",
