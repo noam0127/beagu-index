@@ -13,7 +13,7 @@
   return Number.isFinite(d.getTime())?d.toLocaleString("ko-KR"):"—";};
  const short=value=>value?String(value).slice(0,8):"—";
  let busy=false,model=null,timer=null,latestHead=null,pending=null;
- let versions=[],recentSuggestion=null;
+ let versions=[],recentSuggestion=null,workInProgress=[];
  const msg=(text,problem=false)=>{
   const p=el("releaseStatus");p.textContent=text;
   p.classList.toggle("release-status-error",problem);
@@ -72,6 +72,19 @@
    addText(wrap,"p",item.summary||"변경 내용 없음");
    addText(wrap,"code",short(item.from_sha)+" → "+short(item.to_sha));
    root.append(wrap);
+  }
+ }
+ function renderWorkInProgress(){
+  const root=el("releaseOpenPullRequests");root.replaceChildren();
+  if(!workInProgress.length){addText(root,"p","현재 확인된 개발 중 PR이 없습니다.","subtle");return;}
+  for(const pr of workInProgress){
+   const item=document.createElement("article");item.className="release-pending-item";
+   const link=document.createElement("a");link.href=pr.url;
+   link.target="_blank";link.rel="noopener noreferrer";link.className="release-pr-link";
+   link.textContent="#"+pr.number+" · "+pr.title;
+   item.append(link);
+   addText(item,"span",pr.draft?"개발 중":"병합 대기","release-pr-status");
+   root.append(item);
   }
  }
  function renderPending(){
@@ -152,6 +165,7 @@
    latestHead=data.head_sha||null;
    recentSuggestion=data.suggested_draft||null;
    pending=data.pending||null;
+   workInProgress=data.work_in_progress||[];
    if(recentSuggestion){
     if(!el("releaseVersionInput").dataset.edited)
      el("releaseVersionInput").value=recentSuggestion.version;
@@ -173,7 +187,7 @@
     " · "+(job.target==="staging"?"시험 웹":"실제 웹")+
     " · 요청 시각 "+date(job.created_at)):
    "현재 진행 중인 배포가 없습니다.";
-  renderPending();renderCatalog();
+  renderWorkInProgress();renderPending();renderCatalog();
   renderHistory("releaseStageHistory",data.staging_history||[]);
   renderHistory("releaseProdHistory",data.production_history||[]);
   fillSelect("releaseStageSelect",versions,s.staging_sha);
@@ -249,7 +263,14 @@
    if(!proof.permitted||!proof.mfa_verified||proof.role!=="owner")
     throw Error("최고 관리자 권한과 2단계 인증이 필요합니다.");
    await refresh(false);
-   timer=setInterval(()=>{if(!document.hidden)void refresh(false)},60000);
+   // Read cached admin DB state frequently but GitHub only every 5 minutes.
+   // This avoids exhausting GitHub's unauthenticated REST rate limits.
+   let refreshTick=0;
+   timer=setInterval(()=>{
+    if(!document.hidden){refreshTick++;
+     void refresh(refreshTick%20!==0);
+    }
+   },15000);
   }catch(err){denied("관리자 인증 필요: "+err.message);}
  })();
  window.addEventListener("pagehide",()=>{if(timer)clearInterval(timer);});
