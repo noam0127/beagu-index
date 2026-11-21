@@ -54,6 +54,10 @@ const accountMode=window.BeaguAccountMode.create({
 });
 const restored=window.BeaguSessionRestore.create({client,getLevelToken:()=>levelToken(),levelUrl:LEVEL_API,request:(...args)=>fetch(...args)});
 const levelToken=()=>{try{return sessionStorage.getItem(SESSION_KEY)||''}catch{return ''}};
+const lv3=window.BeaguLv3AccountUI?.create?window.BeaguLv3AccountUI.create({
+ client,panel:byId('challengeLv3Panel'),button:byId('challengeLv3Verify'),
+ status:byId('challengeLv3Status'),levelToken:()=>levelToken()
+}):{setEligible(){},reset(){}};
 const deviceProof=()=>{
  try{const v=localStorage.getItem(DEVICE_KEY)||'';return /^[a-f0-9]{64}$/.test(v)?v:''}
  catch{return ''}
@@ -69,7 +73,7 @@ function paintMode(next){
  mode=accountMode.setMode(next);
  form.hidden=false;
  switchMode.hidden=false;
- connect.hidden=true;signOut.hidden=true;smsAccount.hide();accountPrivacy.hide();
+ connect.hidden=true;signOut.hidden=true;smsAccount.hide();accountPrivacy.hide();lv3.reset();
  setAccountState(mode==='signup'?'signup-ready':'signin-required');
 }
 
@@ -100,7 +104,7 @@ async function showAccountStatus(){
   // A previously restored session can expire while this modal is open.
   // Re-enable the form instead of trapping the user behind a hidden login.
   form.hidden=false;switchMode.hidden=false;signOut.hidden=true;
-  connect.hidden=true;smsAccount.hide();accountPrivacy.hide();
+  connect.hidden=true;smsAccount.hide();accountPrivacy.hide();lv3.reset();
   const forgot=byId('challengeMemberForgot');
   if(forgot)forgot.hidden=mode!=='signin';
   if(mode==='signin')setAccountState('signin-required');
@@ -110,7 +114,7 @@ async function showAccountStatus(){
  const forgot=byId('challengeMemberForgot');
  if(forgot)forgot.hidden=true;
  if(!person.user.email_confirmed_at){
-  connect.hidden=true;smsAccount.hide();accountPrivacy.hide();
+  connect.hidden=true;smsAccount.hide();accountPrivacy.hide();lv3.reset();
   setAccountState('email-pending');
   return;
  }
@@ -119,12 +123,13 @@ async function showAccountStatus(){
  const levelStillValid=await serverLevel();
  if(overlay.hidden||!tier2)return;
  if(!levelStillValid){
-  connect.hidden=true;
+  connect.hidden=true;lv3.setEligible(false);
   setAccountState('level-required');
   return;
  }
  const linked=await linkedStatus(person.token).catch(()=>({linked:false,lv3LinkReady:false}));
  if(overlay.hidden||!tier2)return;
+ lv3.setEligible(linked.linked&&linked.lv3LinkReady===true);
  if(linked.linked){
   connect.hidden=true;
   if(linked.lv3LinkReady)setAccountState('lv3-link-ready');
@@ -138,6 +143,7 @@ async function showAccountStatus(){
  }
 }
 function close(){
+ lv3.reset();
  if(overlay.hidden)return;
  overlay.hidden=true;smsAccount.hide();accountPrivacy.hide();
  document.body.classList.remove('challenge-member-open');
@@ -167,7 +173,7 @@ function open(next='signin'){
 window.addEventListener('beagu:challenge-account-open',event=>open(event.detail?.mode||'signin'));
 window.addEventListener('beagu:level-state-updated',paintTier);
 window.addEventListener('beagu:participation-authenticated',()=>queueMicrotask(paintTier));
-window.addEventListener('beagu:participation-logged-out',()=>{tier2=false;close()});
+window.addEventListener('beagu:participation-logged-out',()=>{tier2=false;lv3.reset();close()});
 closeButton.addEventListener('click',close);
 overlay.addEventListener('click',event=>{if(event.target===overlay)close()});
 switchMode.addEventListener('click',()=>{paintMode(mode==='signup'?'signin':'signup');email.focus()});
@@ -235,6 +241,7 @@ connect.addEventListener('click',async()=>{
   const answer=await response.json().catch(()=>({}));
   if(!response.ok||answer.linked!==true)throw Error(answer.error||'LINK_FAILED');
   connect.hidden=true;
+  lv3.setEligible(answer.lv3LinkReady===true);
   setAccountState(answer.lv3LinkReady===true?'lv3-link-ready':'linked');
  }catch(error){
   message.textContent=error.message==='MEMBERSHIP_ALREADY_CLAIMED'
@@ -247,7 +254,7 @@ signOut.addEventListener('click',async()=>{
  busy=true;signOut.disabled=true;
  try{await client.auth.signOut()}catch(_){}
  finally{busy=false;signOut.disabled=false}
- smsAccount.hide();
+ smsAccount.hide();lv3.reset();
  paintMode('signin');
  setAccountState('signed-out');
 });
