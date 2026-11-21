@@ -105,7 +105,11 @@ test('B-01: malicious catalogue approval cannot release private/unknown 2026 num
   assert.deepEqual(res,[],id);
  }
  assert.deepEqual(releaseMetrics([metric('Q20')],[definition('Q20')],2,false).map(x=>x.key),['Q20']);
- assert.deepEqual(releaseMetrics([metric('percentile')],[definition('percentile')],2,false).map(x=>x.key),['percentile']);
+ // Percentile is Lv1-only; a fabricated Lv2 entry cannot override it.
+ assert.deepEqual(releaseMetrics(
+  [{...metric('percentile'),access_level:1}],
+  [{...definition('percentile'),access_level:1}],1,false
+ ).map(x=>x.key),['percentile']);
  // This B-01 policy applies to 2026 only, never retroactively recodes
  // the 2023–2025 historical question identifiers.
  assert.deepEqual(releaseMetrics([metric('Q31',2025)],[definition('Q31',2025)],2,false).map(x=>x.key),['Q31']);
@@ -118,7 +122,7 @@ test('B-01: all 2026 school API variants use redaction before JSON serialization
  assert.match(policy,/!isPublic2026MetricKey\(r\.question_id\)/);
  assert.doesNotMatch(edge,/questions:\s*data|JSON\.stringify\(data\)|console\.log/);
  assert.match(migration,/q\.value->>'id' not in \('Q31','Q51'\)/);
- assert.match(migration,/q\.value->>'id' ~ '\^Q\(0\[1-9\]\|\[1-4\]\[0-9\]\|50\)\$'/);
+ assert.ok(migration.includes("q.value->>'id' ~ '^Q(0[1-9]|[1-4][0-9]|50)$'"));
  assert.match(migration,/create or replace function public\.beagu_2026_released_question_results/);
  assert.match(migration,/select public\.beagu_2026_tiered_released_question_results_v1\(p_school_id,1\)/);
  assert.match(migration,/select public\.beagu_2026_tiered_released_question_results_v1\(p_school_id,2\)/);
