@@ -9,7 +9,8 @@
   const params = new URLSearchParams(window.location.search || '');
   const fragment = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
   const callbackKeys = ['code', 'error', 'error_code', 'error_description', 'token_hash', 'access_token', 'refresh_token'];
-  const isCallback = callbackKeys.some(key => params.has(key) || fragment.has(key));
+  const isRecovery = params.get('type') === 'recovery' || fragment.get('type') === 'recovery';
+  const isCallback = isRecovery || callbackKeys.some(key => params.has(key) || fragment.has(key));
   if (!isCallback) return;
 
   const client = typeof supabaseClient !== 'undefined'
@@ -49,6 +50,13 @@
   }
   if (origin !== 'https://baeguindex.com' || !allowedPath) {
     paint('error', '허용되지 않은 인증 복귀 주소입니다. 배구지수 공식 사이트에서 다시 로그인해 주세요.');
+    scrub();
+    return;
+  }
+  // A password recovery callback sent to a signup/login page is not email
+  // verification. Never report success or assign a level for that link.
+  if (isRecovery) {
+    paint('error', '비밀번호 재설정 링크는 전용 화면에서 처리합니다. 비밀번호 재설정 화면에서 새 링크를 요청해 주세요.');
     scrub();
     return;
   }
