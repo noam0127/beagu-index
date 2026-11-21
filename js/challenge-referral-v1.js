@@ -30,14 +30,20 @@
     upgraded = earned === true;
     // A name change never mints a new code. The existing personal code stays unchanged.
     identityPanel.classList.toggle('is-lv2', upgraded);
-    identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
+    identityPanel.dataset.referralState = upgraded ? 'earned'
+      : ownResponseVerified ? 'inactive' : 'pending';
+    // A-04: The same pre-issued Lv2 code can authenticate at Lv1 if
+    // its owner's 2026 survey response is server-verified. Referral approval
+    // elevates only the permission, not the code string.
     identityTitle.textContent = upgraded ? 'Lv2 참여코드'
-      : ownResponseVerified ? 'Lv1 참여코드' : '나의 고유번호';
+      : ownResponseVerified ? 'Lv2 참여코드(비활성)' : '나의 고유번호';
     identityTag.textContent = upgraded ? 'Lv.2 달성 ✦'
-      : ownResponseVerified ? 'Lv.1 참여 확인' : '인증 대기';
-    identityReward.hidden = !upgraded;
+      : ownResponseVerified ? 'Lv.1 인증 가능' : '인증 대기';
+    identityReward.hidden = !upgraded && !ownResponseVerified;
     identityReward.textContent = upgraded
-      ? 'Lv.2 달성! 위 코드를 참여코드로 사용하세요.'
+      ? 'Lv.2 인증 가능 · 기존 번호 그대로 사용하세요.'
+      : ownResponseVerified
+      ? '현재 Lv.1 인증 가능 · 유효한 추천 참여가 승인되면 같은 번호로 Lv.2가 됩니다.'
       : '';
     copyIdentityCode.textContent = upgraded || ownResponseVerified ? '코드 복사' : '번호 복사';
 
@@ -51,7 +57,7 @@
     note.textContent = upgraded
       ? '번호는 그대로 유지돼요. 전용 링크도 계속 공유할 수 있어요.'
       : ownResponseVerified
-      ? '2026 본인 설문 참여가 확인되었습니다. 유효한 추천 1건이면 같은 번호로 Lv2가 됩니다.'
+      ? '2026 본인 설문 참여가 확인되었습니다. 이 Lv2 참여코드(비활성)도 Lv1 인증에 사용할 수 있고, 유효한 추천 1건이면 같은 번호로 Lv2가 됩니다.'
       : '이 번호는 발급되었지만 2026 본인 설문 응답 확인 전에는 레벨 인증에 사용할 수 없습니다.';
   }
   function reset() {
@@ -65,6 +71,16 @@
     progress.textContent = '';
     renderState(false);
     status.textContent = '전용 조사 링크를 불러오고 있어요.';
+  }
+  function unknownVerification(reason) {
+    // A transport error or backend pause must not leave stale premium
+    // visuals. The independent server continues to authorize all access.
+    const prior = upgraded || ownResponseVerified;
+    ownResponseVerified = false;
+    renderState(false);
+    if (prior) window.dispatchEvent(new Event('beagu:level-state-change'));
+    status.textContent = reason;
+    progress.textContent = '추천·참여코드 상태 확인 불가';
   }
   function deviceSecret() {
     const existing = localStorage.getItem(deviceKey);
@@ -83,7 +99,7 @@
     if (!detail || typeof detail.visitor !== 'string' ||
         typeof detail.code !== 'string') return;
     lastIdentity = {visitor: detail.visitor, code: detail.code};
-    if (!upgraded) status.textContent = '추천 현황 확인 중이에요.';
+    status.textContent = '본인 참여 및 추천 승인 상태를 서버에서 확인 중이에요.';
     try {
       const response = await fetch(endpoint, {
         method: 'POST', cache: 'no-store',
@@ -96,7 +112,7 @@
       if (!active || seq !== generation) return;
       const payload = await response.json().catch(() => ({}));
       if (response.status === 503 && payload.error === 'REFERRAL_NOT_READY') {
-        if (!upgraded) status.textContent = '설문 연결을 확인 중이에요.';
+        unknownVerification('참여코드 확인 기능이 준비 중입니다. 확인 전에는 Lv2 달성으로 표시하지 않습니다.');
         return;
       }
       if (!response.ok) throw Error(payload.error || 'UNAVAILABLE');
@@ -116,22 +132,24 @@
         [1,2].includes(Number(payload.level));
       const promoted = certified && Number(payload.level) === 2 &&
         Number(payload.validReferrals) >= 1 && payload.provisional === true;
-      const newlyPromoted = promoted && !upgraded;
-      const newlyCertified = certified && !ownResponseVerified;
+      const previousTier = upgraded ? 2 : ownResponseVerified ? 1 : 0;
+      const nextTier = promoted ? 2 : certified ? 1 : 0;
       ownResponseVerified = certified;
       renderState(promoted);
-      if (newlyCertified) window.dispatchEvent(new Event('beagu:level-state-change'));
-      if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
-      progress.textContent = promoted ? '유효한 추천 1 / 1건 · Lv2 승급 완료'
-        : Number(payload.validReferrals)>=1 ? '유효한 추천 1 / 1건 · 본인 응답 확인 대기'
-        : '유효한 추천 0 / 1건';
+      // Referrals can be revoked; the independent server-verified badge
+      // needs a refresh after both promotion and downgrade.
+      if (previousTier !== nextTier)
+        window.dispatchEvent(new Event('beagu:level-state-change'));
+      progress.textContent = promoted ? '유효한 추천 확인 · Lv2 활성화'
+        : !certified ? '본인 설문 참여 확인 전'
+        : '유효한 추천 확인 전 · Lv1 인증 가능';
       status.textContent = promoted
-        ? 'Lv.2 달성! 기존 고유번호를 참여코드로 사용하세요.'
-        : certified ? '본인 설문 참여 확인! 이 번호는 Lv1 참여코드로 이용할 수 있습니다.'
-        : '본인 2026 설문 참여가 서버에서 확인되면 Lv1 코드가 활성화됩니다.';
+        ? 'Lv.2 달성! 기존 번호를 Lv2 참여코드로 사용하세요.'
+        : certified ? '본인 2026 설문 참여 확인 · Lv2 참여코드(비활성), 현재 Lv1 인증 가능'
+        : '본인 2026 설문 참여가 서버에서 확인되면 Lv1 인증이 가능합니다.';
     } catch (_) {
       if (!active || seq !== generation) return;
-      if (!upgraded) status.textContent = '추천 정보를 확인하지 못했습니다. 다시 열거나 소유자 인증을 확인해 주세요.';
+      unknownVerification('참여코드·추천 상태를 서버에서 확인하지 못했습니다. 다시 열거나 소유자 인증을 확인해 주세요.');
     }
   }
   copyButton.addEventListener('click', async () => {
@@ -157,7 +175,9 @@
     if (active && lastIdentity && !document.hidden) void load(lastIdentity);
   });
   setInterval(() => {
-    if (active && !upgraded && lastIdentity && !document.hidden) void load(lastIdentity);
+    // Continue polling even after promotion, so a revoked referral
+    // cannot leave a stale Lv2 premium badge indefinitely.
+    if (active && lastIdentity && !document.hidden) void load(lastIdentity);
   }, 60000);
   reset();
 })();
