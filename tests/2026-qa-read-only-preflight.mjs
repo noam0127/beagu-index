@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const sql=readFileSync('scripts/qa-2026-nonscorable-preflight.sql','utf8');
+const clean=sql.replace(/^--.*$/gm,'').trim();
+assert.match(clean,/^WITH\s+/i,'must be a read-only common-table expression');
+assert.equal((clean.match(/;/g)||[]).length,1,'one SQL statement only');
+assert.doesNotMatch(clean,/\b(?:INSERT\s+INTO|UPDATE\s+\S+\s+SET|DELETE\s+FROM|CREATE\s+\w+|DROP\s+\w+|ALTER\s+\w+|GRANT\s+\w+|REVOKE\s+\w+|TRUNCATE\s+\w+|CALL\s+\w+|DO\s+\$)\b/i);
+assert.match(clean,/jsonb_build_object\(/);
+assert.match(clean,/nonblank_response_rows>=0/,'zero count is allowed for valid unscored answers');
+assert.match(clean,/core_slots_in_qa<>13/);
+assert.match(clean,/core_slots_in_snapshot<>13/);
+assert.match(clean,/unrecognized_core_items>0/,'unknown answer still needs review');
+assert.match(clean,/impossible_qa_counts>0/);
+assert.match(clean,/school_match_status<>'EXACT_REGION_OFFICE_NAME'/);
+assert.match(clean,/approval_status='APPROVED'/,'reports only existing approvals');
+assert.match(clean,/'operation','READ_ONLY_NO_APPROVAL'/);
+assert.doesNotMatch(clean,/RAW_ANSWER|SUPABASE_SERVICE_ROLE_KEY|SECRET|row_to_json\(r\)/);
+console.log('PASS: read-only 2026 QA preflight reports revisions without changing survey data or publication approvals');
