@@ -54,7 +54,7 @@
         <div><p class="eyebrow">OPERATIONS · PRIVATE</p><h2>운영 통계</h2>
           <p class="help">서버에서 관리자 권한과 2단계 인증을 확인한 뒤 통계를 불러옵니다.</p></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px">
-          <a class="secondary" href="#adminMemberManagement" style="display:inline-flex;align-items:center">회원관리</a>
+          <a class="secondary" id="adminMemberNavLink" href="#adminMemberManagement" style="display:inline-flex;align-items:center" hidden>회원관리</a>
           <a class="secondary" href="admin-updates.html" style="display:inline-flex;align-items:center">업데이트 관리</a>
           <button id="adminLogout" type="button" class="secondary">로그아웃</button>
         </div>
@@ -171,10 +171,10 @@
       </section>
 
 
-      <section class="dash-section" id="adminMemberManagement" aria-labelledby="adminMemberHeading">
+      <section class="dash-section" id="adminMemberManagement" aria-labelledby="adminMemberHeading" hidden>
         <div class="section-title">
           <h3 id="adminMemberHeading">회원관리</h3>
-          <small>관리자 2단계 인증 전용 · 계정과 챌린지 참여자를 구분합니다</small>
+          <small>최고 관리자(Owner) · 2단계 인증 필수 · Auth 계정과 챌린지 참여코드 구분</small>
         </div>
         <div class="metrics admin-member-metrics">
           <article><h4>조회된 Auth 계정</h4><strong id="adminMembersTotal">—</strong></article>
@@ -186,7 +186,15 @@
           <form id="adminMembersSearchForm" class="admin-members-search">
             <label for="adminMembersSearch">회원 검색</label>
             <input id="adminMembersSearch" type="search" maxlength="100"
-              placeholder="이메일 또는 회원 ID" autocomplete="off">
+              placeholder="이메일 또는 회원 ID" autocomplete="off" spellcheck="false">
+            <label for="adminMembersFilter">계정 상태</label>
+            <select id="adminMembersFilter" aria-label="회원 상태로 필터링">
+              <option value="all">전체</option>
+              <option value="confirmed">이메일 인증</option>
+              <option value="unconfirmed">이메일 미인증</option>
+              <option value="active">이용 정상</option>
+              <option value="suspended">이용 정지</option>
+            </select>
             <button type="submit" class="primary">검색</button>
             <button type="button" class="secondary" id="adminMembersClear">초기화</button>
             <button type="button" class="secondary" id="adminMembersReload">새로고침</button>
@@ -217,7 +225,7 @@
           </div>
           <div id="adminMemberDetail"></div>
           <div class="admin-member-moderation" id="adminMemberModeration" hidden>
-            <label for="adminMemberReason">계정 상태 변경 사유 · 8자 이상</label>
+            <label for="adminMemberReason">계정 상태 변경 사유 · 8~200자 · 이메일·전화번호 등 개인정보 기재 금지</label>
             <textarea id="adminMemberReason" maxlength="200" minlength="8" rows="3"
               placeholder="조치 사유를 구체적으로 기록해 주세요."></textarea>
             <div class="admin-members-actions">
@@ -231,7 +239,7 @@
           </div>
           <p id="adminMemberActionStatus" class="subtle" role="status" aria-live="polite"></p>
         </div>
-        <p class="subtle">문자 수신 동의는 서버 기록에 근거해 표시하며, 전화번호 자체는 제공하지 않습니다. 이용 정지는 새 로그인에 적용되지만 기존 로그인 세션이나 참여코드의 즉시 차단을 보장하지 않습니다.</p>
+        <p class="subtle">최고 관리자만 이메일·회원 ID를 조회할 수 있습니다. 문자 수신 동의는 서버가 검증한 기록으로만 표시하며 전화번호는 제공하지 않습니다. 정지·복구 요청은 사전 감사 기록과 요청 ID로 중복 실행을 차단합니다. 계정 정지는 새 로그인에 적용되지만 기존 세션·참여코드의 즉시 무효화를 보장하지 않습니다.</p>
       </section>
 
       <section class="dash-section" id="adminReferralFunnel" aria-labelledby="adminReferralFunnelHeading">
