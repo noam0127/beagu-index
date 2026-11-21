@@ -34,7 +34,7 @@ BLOCKED_SEGMENTS = {
 BLOCKED_ROOT = {"CNAME", "release-candidate.json", "package.json", "package-lock.json"}
 CSP = (
     "connect-src 'self' https://" + STAGE_REF + ".supabase.co; "
-    "form-action 'self'; base-uri 'self'"
+    "form-action 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'"
 )
 
 def validate_origin(value):
