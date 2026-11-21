@@ -163,7 +163,7 @@ test('29: sign-out, expired code and bfcache navigation cannot retain stale achi
  expectAchieved(h,[false,false,false]);
  h.badge.dataset.level='2';h.badge.dataset.memberLevel='3';
  h.trigger('beagu:level-state-updated',{level:2});
- h.trigger('pageshow',{persisted:true});
+ h.dispatch({type:'pageshow',persisted:true});
  assert.equal(h.host.dataset.verifiedTier,'unknown');
 });
 
