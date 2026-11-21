@@ -156,7 +156,8 @@ test('admin enrollment: new signup retains its independent 16-character policy',
 test('HTML browser validation cannot pre-block existing 10-char-or-less passwords',()=>{
   for(const [file,id] of [['challenge.html','challengeMemberPassword'],
                            ['postit.html','postitAccountPassword'],
-                           ['admin-enroll.html','enrollLoginPassword']]){
+                           ['admin-enroll.html','enrollLoginPassword'],
+                           ['admin.html','adminPassword']]){
     const html=getSource(file);
     const tag=html.match(new RegExp('<input\\b[^>]*id="'+id+'"[^>]*>', 's'))?.[0];
     assert.ok(tag, id);
@@ -171,6 +172,8 @@ test('HTML browser validation cannot pre-block existing 10-char-or-less password
   assert.match(postit,/action==='signup'&&password\.length<10/);
   const admin=getSource('admin-enroll.html');
   assert.match(admin,/id="enrollRegisterPassword"[^>]*minlength="16"/);
+  assert.match(getSource('admin.html'),/id="adminNewPassword"[^>]*minlength="16"/);
+  assert.match(getSource('js/beagu-admin-access-v1.js'),/auth\.signInWithPassword\(\{email,password\}\)/);
 });
 
 test('empty passwords are still blocked in user signup/login flows',async()=>{
