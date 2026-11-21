@@ -12,11 +12,10 @@ language sql stable security definer set search_path='' as $fn$
  select (
    select coalesce(pg_catalog.jsonb_agg(q.value),'[]'::jsonb)
    from pg_catalog.jsonb_array_elements(r.questions) q(value)
-   -- B-01: explicit closed-form allowlist: Q01..Q50 except Q31.
-   -- Q51, custom suffixes (Q31.1), identities and free-answer columns
-   -- are never emitted, even when approved data carries extra fields.
+   -- B-01: only closed-choice public 2026 IDs (Q01..Q50, except Q31).
+   -- Other IDs, arbitrary suffixes and the Q51 free-text column are private.
    where q.value->>'id' not in ('Q31','Q51')
-     and q.value->>'id' ~ '^Q(0[1-9]|[1-4][0-9]|50)
+     and q.value->>'id' ~ '^Q(0[1-9]|[1-4][0-9]|50)$'
  ) from public.beagu_2026_results_snapshot r
  where p_school_id ~ '^[A-Z0-9]{7}$'
    and p_level in (1,2,3)
@@ -71,62 +70,6 @@ language sql stable security definer set search_path='' as $fn$
        and b.prior_data_combination_reviewed is true
    )
 $fn$;
-
- ) from public.beagu_2026_results_snapshot r
- where p_school_id ~ '^[A-Z0-9]{7}$'
-   and p_level in (1,2,3)
-   and r.school_id=p_school_id
-   and r.approval_status='APPROVED'
-   and r.approved_payload_sha256=r.payload_sha256
-   and r.approved_at is not null
-   and r.approved_at<=now()
-   and r.approved_at>=r.updated_at
-   and r.approved_at <= now() - case p_level
-     when 1 then interval '24 hours'
-     when 2 then interval '6 hours'
-     else interval '0 hours'
-   end
-   and r.school_match_status='EXACT_REGION_OFFICE_NAME'
-   and pg_catalog.length(pg_catalog.btrim(r.approved_by))>=2
-   and r.approval_evidence->>'decision'='APPROVE_EXACT_SNAPSHOT'
-   and not exists(
-     select 1 from pg_catalog.unnest(array[
-       'source_scoring','school_identity','duplicate_responses',
-       'consent','small_sample','reidentification','prior_data_combination'
-     ]) k
-     where pg_catalog.length(pg_catalog.btrim(coalesce(
-       r.approval_evidence->>k,'')))<10
-   )
-   and pg_catalog.jsonb_typeof(r.questions)='array'
-   and not exists (
-     select 1 from pg_catalog.jsonb_array_elements(r.questions) q
-     where coalesce(q->>'invalid','') !~ '^[0-9]+$'
-       or q->>'invalid'<>'0'
-       or coalesce(q->>'valid','') !~ '^[0-9]+$'
-   )
-   and exists (
-     select 1 from beagu_private.beagu_2026_publication_basis_review b
-     where b.school_id=r.school_id
-       and b.payload_sha256=r.payload_sha256
-       and b.review_status='VERIFIED'
-       and b.reviewer_user_id::text=r.approved_by
-       and b.reviewed_at>=r.source_snapshot_at
-       and b.notice_effective_at<=r.source_snapshot_at
-       and b.basis_type in (
-         'EXPLICIT_RESPONDENT_CONSENT',
-         'OTHER_DOCUMENTED_LEGAL_BASIS'
-       )
-       and pg_catalog.length(pg_catalog.btrim(b.notice_source_ref))>=12
-       and b.notice_digest_sha256 ~ '^[a-f0-9]{64}$'
-       and pg_catalog.length(pg_catalog.btrim(b.publication_scope))>=20
-       and b.distinct_respondents_reviewed is true
-       and b.personal_data_reviewed is true
-       and b.small_sample_reviewed is true
-       and b.reidentification_reviewed is true
-       and b.prior_data_combination_reviewed is true
-   )
-$fn$;
-
 -- The privileged internal RPC never serves an unreviewed snapshot.
 revoke all on function public.beagu_2026_tiered_released_question_results_v1(text,integer)
  from public,anon,authenticated;
