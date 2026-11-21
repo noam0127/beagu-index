@@ -35,7 +35,7 @@ test('Lv3 facts are only published when owner, private review and global release
   'f.personal_data_reviewed',
   'f.reidentification_reviewed',
   'f.prior_data_combination_reviewed',
-  'a.role=\\'owner\\'',
+  "a.role='owner'",
   'a.enabled=true',
   'gate.singleton and gate.enabled',
   'f.reviewed_at>=f.updated_at'
