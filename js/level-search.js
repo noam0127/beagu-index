@@ -68,6 +68,8 @@
   // Only signed API-approved 2026 values can refresh on an active search page.
   let visiblePageSchools=[];
   let refreshingReleased2026=false;
+  // 2026 result snapshots must be invalidated whenever a live recheck fails.
+  const approved2026Views=new WeakMap();
   let historicalPresenceByYear={};
   const geographyComparisons=new Map(); // approved national/province benchmarks; never school responses
 
@@ -509,6 +511,30 @@
     heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
     heading.append(make('span','beagu-year-caption',year===2026?'승인된 최신 자료':'문항·학교정보 비교'));
     host.append(heading);
+    // Fail closed on refresh errors. Never preserve an old 2026 school answer
+    // after the signed API cannot re-confirm that the exact version is approved.
+    if(year===2026 && loadStatus==='error'){
+      host.append(make('p','beagu-year-error',
+        '최신 공개 승인 상태를 확인하지 못했습니다. 2026년 학교별 결과를 숨기고 다시 확인할 수 있습니다.'));
+      const retry=make('button','year-2026-button','2026년 승인 결과 다시 확인');
+      retry.type='button';
+      retry.addEventListener('click',async()=>{
+        retry.disabled=true;
+        try{
+          const fresh=await api('school',{schoolId:String(schoolId)});
+          const owner=host.closest('.school-detail');
+          const sync=owner&&approved2026Views.get(owner);
+          if(sync)sync(fresh,false);
+          else renderYear(host,2026,fresh.rows,null,schoolId,fresh.schoolQuestionModes,null,null,
+            'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026,Number(fresh.level));
+        }catch(e){
+          if(e.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
+          retry.disabled=false;
+        }
+      });
+      host.append(retry);
+      return;
+    }
     // Lv.1 results expand inside the selected search card; no page change.
     if(year === 2026) {
       const vetted = metrics2026(rows,viewerTier);
@@ -540,12 +566,17 @@
         reload.textContent='승인 결과 확인 중...';
         try {
           const fresh=await api('school',{schoolId:String(schoolId)});
-          renderYear(host,2026,fresh.rows,null,schoolId,fresh.schoolQuestionModes,null,null,'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026,Number(fresh.level));
+          const owner=host.closest('.school-detail');
+          const sync=owner&&approved2026Views.get(owner);
+          if(sync)sync(fresh,false);
+          else renderYear(host,2026,fresh.rows,null,schoolId,fresh.schoolQuestionModes,null,null,
+            'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026,Number(fresh.level));
         } catch(e) {
           if(e.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
-          reload.disabled=false;
-          reload.textContent='다시 조회하기';
-          host.append(make('p','beagu-year-error','연결 오류로 최신 승인 결과를 확인하지 못했습니다.'));
+          const owner=host.closest('.school-detail');
+          const sync=owner&&approved2026Views.get(owner);
+          if(sync)sync(null,true);
+          else renderYear(host,2026,[],null,schoolId,[],null,null,'error',[],[],viewerTier);
         }
       });
       host.append(reload);
@@ -688,6 +719,7 @@
     content.setAttribute('role','tabpanel');
     content.tabIndex=0;
     let currentYear=null;
+    let latest2026Status='ready';
     const readyByYear=new Map();
     function markSelectedYear(year){
       const card=host.closest('.school-card');
@@ -708,7 +740,7 @@
         renderYear(content,year,rows,vals[year-2023]??null,
           school.school_id,modes,school,data,status,selections,results2026,viewerTier);
       };
-      if(year===2026){draw(null,'ready');return;}
+      if(year===2026){draw(null,latest2026Status);return;}
       if(readyByYear.has(year)){draw(readyByYear.get(year),'ready');return;}
       const region=String(school.sido_standard||school.sido||'');
       content.setAttribute('aria-busy','true');
@@ -749,6 +781,21 @@
     }
     section.append(tabs,content);
     host.append(section);
+    approved2026Views.set(host,(fresh,failed)=>{
+      if(failed){
+        rows=(Array.isArray(rows)?rows:[]).filter(row=>Number(row.year)!==2026);
+        results2026=[];
+        latest2026Status='error';
+      }else{
+        rows=Array.isArray(fresh?.rows)?fresh.rows:[];
+        modes=Array.isArray(fresh?.schoolQuestionModes)?fresh.schoolQuestionModes:[];
+        selections=Array.isArray(fresh?.schoolQuestionSelections)?fresh.schoolQuestionSelections:[];
+        results2026=Array.isArray(fresh?.schoolQuestionResults2026)?fresh.schoolQuestionResults2026:[];
+        viewerTier=Number(fresh?.level)||viewerTier;
+        latest2026Status='ready';
+      }
+      if(currentYear===2026)choose(2026);
+    });
     // A school can have approved historical question distributions even when
     // it has no separately released summary metrics or percentile.
     // Select its most recent available survey year instead of a blank 2025 tab.
@@ -938,11 +985,18 @@
           const tab=detail?.querySelector('.year-tabs button[data-year="2026"][aria-selected="true"]');
           const content=detail?.querySelector('.school-year-details');
           if(!detail||detail.hidden||!tab||!content)return;
-          renderYear(content,2026,fresh.rows,null,id,fresh.schoolQuestionModes,null,null,'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026,Number(fresh.level));
+          const sync=approved2026Views.get(detail);
+          if(sync)sync(fresh,false);
+          else renderYear(content,2026,fresh.rows,null,id,fresh.schoolQuestionModes,null,null,
+            'ready',fresh.schoolQuestionSelections,fresh.schoolQuestionResults2026,Number(fresh.level));
         }catch(error){
           if(error.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
-          // Preserve the last server-approved result on transient network errors.
-          console.warn('2026 공개 승인값 자동 확인 실패',error);
+          if(serial!==requestId||!card.isConnected||!session)return;
+          // A network failure may coincide with a withdrawn school release.
+          // Clear the in-memory 2026 snapshot, including tab-switch reuse.
+          const detail=card.querySelector('.school-detail');
+          approved2026Views.get(detail)?.(null,true);
+          console.warn('2026 승인 상태 재확인 실패 · 과거 승인값 숨김',error);
         }
       }));
       if(serial===requestId&&session&&window.BeaguSchoolMBTI){
