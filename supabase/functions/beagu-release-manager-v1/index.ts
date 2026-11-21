@@ -147,6 +147,8 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  // Block direct admin commands even after valid owner MFA.
  if(PRODUCTION_RELEASES_PAUSED&&(action==="prod_apply"||action==="prod_rollback"))
   return error("production_release_paused",423,origin);
+ const s=await state();
+ const current=await activeJob();
  // Protect every legacy path capable of creating a snapshot or selecting a
  // release for staging, including register and stage_apply without version_id.
  // Browser-sent "test passed" or "approved" flags are never evidence.
@@ -159,15 +161,13 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   const releaseGate=evaluateReleaseSnapshotGate({
    mainSha:actualMain,reviewedSha:input.expected_sha,
    candidateSha:actualMain,integratedSha:null,
-   evidence:null,job:null,ownerApproved:false,
+   evidence:null,job:current,ownerApproved:false,
    freezeActive:VERSION_FINALIZATION_PAUSED
   });
   if(!releaseGate.eligible)return respond({
    error:"version_snapshot_blocked",release_gate:releaseGate
   },423,origin);
  }
- const s=await state();
- const current=await activeJob();
  if(action==="status"){
   const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
   let head=null,suggested_draft=null,pending=null;
