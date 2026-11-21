@@ -7,6 +7,8 @@ on:
       - '.github/workflows/v1.1.0-2026-tiered-release.yml'
       - 'supabase/functions/beagu-2026-tiered-results-v1/index.ts'
       - 'supabase/functions/_shared/release-policy.mjs'
+      - 'supabase/functions/_shared/2026-batch-percentiles.mjs'
+      - 'supabase/functions/beagu-level-api/index.ts'
       - 'supabase/functions/_shared/2026-public-question-policy.mjs'
       - 'supabase/functions/_shared/results-2026.mjs'
       - 'supabase/migrations/20261122003000_beagu_2026_tiered_review_release_v1.sql'
@@ -16,6 +18,7 @@ on:
       - 'tests/2026-tiered-review-release-fixture.sql'
       - 'tests/2026-tiered-review-release-verify.sql'
       - 'tests/v1.1.0-2026-tiered-review-release.test.mjs'
+      - 'tests/v1.1.0-stage35-batch-percentiles.test.mjs'
       - 'tests/2026-lv2-immediate.mjs'
   workflow_dispatch:
 permissions:
@@ -61,12 +64,14 @@ jobs:
       - name: Check review-only 2026 Edge API and shared release-policy module
         run: |
           deno check supabase/functions/beagu-2026-tiered-results-v1/index.ts
+          deno check supabase/functions/beagu-level-api/index.ts
+          node --check supabase/functions/_shared/2026-batch-percentiles.mjs
           node --check supabase/functions/_shared/release-policy.mjs
           node --check supabase/functions/_shared/results-2026.mjs
           node --check supabase/functions/_shared/2026-public-question-policy.mjs
       - name: Tiered 2026 release and previous Lv1/Lv2 authorization regression
         run: |
-          node --test tests/v1.1.0-2026-tiered-review-release.test.mjs tests/v1.1.0-private-2026-question-boundary.test.mjs
+          node --test tests/v1.1.0-2026-tiered-review-release.test.mjs tests/v1.1.0-private-2026-question-boundary.test.mjs tests/v1.1.0-stage35-batch-percentiles.test.mjs
           node tests/2026-lv2-immediate.mjs
           node tests/2026-release-consent-gate.mjs
           node tests/2026-question-results-pipeline.mjs
