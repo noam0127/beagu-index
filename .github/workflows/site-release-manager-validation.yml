@@ -18,6 +18,8 @@ on:
       - 'tests/release-impact-evidence.mjs'
       - 'tests/release-conflict-preflight.mjs'
       - 'tests/release-step9-merge-tree.mjs'
+      - 'tests/release-step10-security-invariants.mjs'
+      - 'tests/staging-http-smoke.py'
       - 'docs/releases/v2-step9-integration-manifest.json'
   workflow_dispatch:
 jobs:
@@ -35,7 +37,7 @@ jobs:
       - name: Syntax validation
         run: |
           node --check js/beagu-admin-updates-v1.js
-          python3 -m py_compile scripts/release-manager/worker.py
+          python3 -m py_compile scripts/release-manager/worker.py tests/staging-http-smoke.py
       - name: Test approval and security invariants
         run: |
           node --test tests/site-release-center.mjs
@@ -44,4 +46,5 @@ jobs:
           node --test tests/release-impact-evidence.mjs
           node --test tests/release-conflict-preflight.mjs
           node --test tests/release-step9-merge-tree.mjs
+          node --test tests/release-step10-security-invariants.mjs
           python3 tests/site-release-packaging.py
