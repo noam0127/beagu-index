@@ -32,7 +32,7 @@ function fixture({verified=true,moderationFailure=false,role='owner'}={}){
   lv2_account_linked:false,lv2_linked_at:null,sms_status:'not_consented',
   sms_phone_verified:false
  };
- const list={total_matches:1,page_size:20,total_users_scanned:1,
+ const list={page:1,total_matches:1,page_size:20,total_users_scanned:1,
   total_admins_scanned:0,unconfirmed_scanned:0,suspended_scanned:0,
   truncated:false,rows:[profile]};
  const requests=forms.requests;
@@ -77,7 +77,7 @@ function fixture({verified=true,moderationFailure=false,role='owner'}={}){
      kind:'deletion',status:'pending',
      requested_at:'2026-11-21T10:00:00Z'
     }]}})};
-   if(body.action==='list')return {ok:true,status:200,json:async()=>({ok:true,data:list})};
+   if(body.action==='list')return {ok:true,status:200,json:async()=>({ok:true,data:{...list,page:body.page}})};
    throw Error('unexpected action');
   }
  };
