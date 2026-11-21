@@ -12,7 +12,7 @@ for(const id of ['challengeMemberOverlay',
   'challengeMemberDialog','challengeMemberTitle','challengeMemberDescription','challengeMemberForm',
   'challengeMemberEmail','challengeMemberPassword','challengeMemberSubmit','challengeMemberSwitch',
   'challengeMemberClose','challengeMemberMessage','challengeMemberLink','challengeMemberSignOut',
-  'challengeMemberSmsFields','challengeMemberSmsPhone','challengeMemberSmsConsent','challengeMemberSmsUnsubscribe'])
+  'challengeMemberSmsFields','challengeMemberSmsPhone','challengeMemberSmsConsent','challengeMemberSmsCollectionConsent','challengeMemberSmsUnsubscribe'])
  assert.ok(html.includes('id="'+id+'"'),'Missing actual account UI element '+id);
 assert.ok(!html.includes('id="challengeMemberSignupSection"'),'Removed signup card must not remain');
 assert.ok(!html.includes('Lv2 달성 · 정식 계정으로 기능 확장'));
@@ -58,7 +58,7 @@ const ids=['challengeIdentityPanel',
  'challengeMemberPassword','challengeMemberSubmit','challengeMemberSwitch',
  'challengeMemberClose','challengeMemberMessage','challengeMemberLink',
  'challengeMemberSignOut','challengeMemberSmsFields','challengeMemberSmsPhone',
- 'challengeMemberSmsConsent','challengeMemberSmsUnsubscribe','beaguLevelState'];
+ 'challengeMemberSmsConsent','challengeMemberSmsCollectionConsent','challengeMemberSmsUnsubscribe','beaguLevelState'];
 const elements=Object.fromEntries(ids.map(id=>[id,new Fake(id)]));
 elements.beaguLevelState.dataset.level='1';
 const events={},localEvents={};
@@ -110,14 +110,18 @@ await Promise.resolve();await Promise.resolve();await Promise.resolve();
 await elements.challengeMemberForm.fire('submit',{preventDefault(){}});
 assert.equal(signups,1,'Signup uses Supabase Auth instead of fake success');
 assert.equal(lastSignup.options.data.beagu_sms_opt_in,false,'Unchecked is genuinely opt-out');
+assert.equal(lastSignup.options.data.beagu_phone_collection_opt_in,false,'No implicit phone collection consent');
 assert.equal(lastSignup.options.data.beagu_sms_phone,null,'No phone collected without consent');
 assert.equal(elements.challengeMemberSmsConsent.checked,false,'Consent must default unchecked');
+assert.equal(elements.challengeMemberSmsCollectionConsent.checked,false,'Collection consent also defaults unchecked');
 elements.challengeMemberPassword.value='safe-password-test';
+elements.challengeMemberSmsCollectionConsent.checked=true;
 elements.challengeMemberSmsConsent.checked=true;
 elements.challengeMemberSmsPhone.value='010-1234-5678';
 await elements.challengeMemberForm.fire('submit',{preventDefault(){}});
 assert.equal(signups,2,'Explicit opt-in also signs up');
 assert.equal(lastSignup.options.data.beagu_sms_opt_in,true);
+assert.equal(lastSignup.options.data.beagu_phone_collection_opt_in,true);
 assert.equal(lastSignup.options.data.beagu_sms_phone,'01012345678');
 assert.match(elements.challengeMemberMessage.textContent,/이메일 인증/);
 await elements.challengeMemberClose.fire('click');
