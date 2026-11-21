@@ -138,6 +138,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  if(action==="status"){
   const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
   let head=null,suggested_draft=null,pending=null;
+  let workInProgress:{number:number;title:string;url:string;updated_at:string;draft:boolean}[]=[];
   const catalog=await releaseVersions();
   const {data:testHistory,error:testError}=await db.from("beagu_site_release_history_v1")
    .select("to_sha").eq("target","staging").order("deployed_at",{ascending:false}).limit(1000);
@@ -148,6 +149,16 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   if(input.check_latest===true)try{
    const latest=await github("/commits/main");
    head=typeof latest.sha==="string"?latest.sha:null;
+   // Open ChatGPT PRs are visible in the development inbox even before merge,
+   // but they are never falsely described as being included in a saved version.
+   try{
+    const prs=await github("/pulls?state=open&per_page=30");
+    if(Array.isArray(prs))workInProgress=prs.map((p:{number?:number;title?:string;html_url?:string;updated_at?:string;draft?:boolean})=>({
+     number:Number(p.number)||0,title:String(p.title||"").slice(0,180),
+     url:String(p.html_url||""),updated_at:String(p.updated_at||""),
+     draft:p.draft===true
+    })).filter(p=>p.number>0&&p.url.startsWith("https://github.com/"+repo+"/pull/"));
+   }catch{ /* GitHub PR list is supplementary. */ }
    const baseline=catalog[0]?.sha||s.production_sha;
    if(head&&baseline&&head!==baseline){
     const changes=await pendingChanges(baseline,head);
@@ -158,7 +169,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
    }
   }catch{ /* The release state and history remain available during GitHub outages. */ }
   return respond({state:s,job:current,head_sha:head,suggested_draft,
-    pending,versions:versionCatalog,staging_history:stageHistory,
+    pending,work_in_progress:workInProgress,versions:versionCatalog,staging_history:stageHistory,
     production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",
     production_url:"https://baeguindex.com/"},200,origin);
  }
