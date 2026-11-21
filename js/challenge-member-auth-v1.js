@@ -29,8 +29,9 @@ const DEVICE_KEY='beagu-referral-device-secret-v1';
 const LEVEL_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
 const POSTIT_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1';
 let tier2=false,mode='signin',busy=false,focusReturn=null,serial=0;
-if(!window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create)return;
+if(!window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show)return;
 const setAccountState=state=>window.BeaguAccountStatus.set(message,state);
+const showInputError=kind=>window.BeaguAuthErrorUI.show(message,kind);
 const accountMode=window.BeaguAccountMode.create({
  form,title,description,password,submit,switchButton:switchMode,
  smsFields,smsPhone,smsConsent,forgot:byId('challengeMemberForgot')
@@ -168,19 +169,20 @@ form.addEventListener('submit',async event=>{
  const address=email.value.trim(),secret=password.value;
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)||!secret||
     (mode==='signup'&&secret.length<10)){
-  message.textContent=mode==='signup'
-   ?'이메일 주소와 10자 이상의 새 비밀번호를 입력해 주세요.'
-   :'이메일 주소와 기존 비밀번호를 입력해 주세요.';
+  showInputError(mode==='signup'?'signup-input':'signin-input');
   return;
  }
- busy=true;submit.disabled=true;
+ busy=true;submit.disabled=true;switchMode.disabled=true;
+ form.dataset.busy='true';
+ form.setAttribute?.('aria-busy','true');
+ setAccountState('checking');
  try{
   if(!await serverLevel())throw Error('LEVEL_REQUIRED');
   if(mode==='signup'){
    const wantsSms=smsConsent.checked;
    const mobile=smsPhone.value.replace(/[^0-9]/g,'');
    if(wantsSms&&!/^010[0-9]{8}$/.test(mobile)){
-    message.textContent='문자 수신을 원하시면 010으로 시작하는 11자리 번호를 입력해 주세요.';
+    showInputError('phone-input');
     return;
    }
    const {error}=await client.auth.signUp({email:address,password:secret,
@@ -197,13 +199,12 @@ form.addEventListener('submit',async event=>{
   setAccountState('checking');
   await showAccountStatus();
  }catch(error){
-  message.dataset.state='error';
-  message.textContent=error?.message==='LEVEL_REQUIRED'
-   ?'Lv2 참여코드를 다시 인증해 주세요.'
-   :mode==='signup'
-    ?'회원가입을 완료하지 못했습니다. 이메일 또는 인증 설정을 확인해 주세요.'
-    :'로그인에 실패했습니다. 이메일·비밀번호·인증 여부를 확인해 주세요.';
- }finally{busy=false;submit.disabled=false}
+  if(error?.message==='LEVEL_REQUIRED')showInputError('level-required');
+  else window.BeaguAuthErrorUI.fromError(message,error,mode);
+ }finally{
+  busy=false;submit.disabled=false;switchMode.disabled=false;
+  form.dataset.busy='false';form.setAttribute?.('aria-busy','false');
+ }
 });
 connect.addEventListener('click',async()=>{
  if(busy)return;
