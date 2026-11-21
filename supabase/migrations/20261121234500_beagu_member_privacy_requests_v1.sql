@@ -134,6 +134,22 @@ revoke all on function public.beagu_member_privacy_cancel_v1(uuid,text)
 grant execute on function public.beagu_member_privacy_cancel_v1(uuid,text)
  to service_role;
 
+-- A read-only, service-role-only view for the verified Owner MFA dashboard.
+-- No email, phone, token, content or confirmation secret is returned.
+create or replace function public.beagu_admin_privacy_queue_v1(p_limit int default 30)
+returns table(
+ request_id uuid,user_id uuid,kind text,status text,requested_at timestamptz
+) language sql stable security definer set search_path='' as $fn$
+ select r.request_id,r.user_id,r.kind,r.status,r.requested_at
+ from beagu_private.member_privacy_requests_v1 r
+ where r.status in ('pending','processing')
+ order by r.requested_at asc
+ limit least(greatest(coalesce(p_limit,30),1),50)
+$fn$;
+revoke all on function public.beagu_admin_privacy_queue_v1(int)
+ from public,anon,authenticated;
+grant execute on function public.beagu_admin_privacy_queue_v1(int) to service_role;
+
 comment on table beagu_private.member_privacy_requests_v1 is
  'Server-verified account access/deletion request queue; no phone, email, raw JWT, password or content; no automatic Auth user deletion.';
 comment on function public.beagu_member_privacy_request_v1(uuid,text,uuid) is
