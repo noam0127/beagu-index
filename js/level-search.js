@@ -238,6 +238,8 @@
   // 지역 찾기만 선택형 정렬을 사용합니다. 서버는 페이지 나누기 전에 정렬합니다.
   $('regionSort').addEventListener('change',()=>{
     if(!SORTS.has($('regionSort').value))return;
+    // Defend even against programmatic changes to a native disabled option.
+    if($('regionSort').value==='housing_price_won'&&verifiedTier<2)updateSortAccess();
     // "조회수" defaults to most viewed first; the arrow still toggles either direction.
     if($('regionSort').value==='view_count'){
       sortDirection='desc';
