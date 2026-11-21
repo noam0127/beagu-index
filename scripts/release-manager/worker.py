@@ -78,12 +78,21 @@ def archive(sha, destination):
         raise RuntimeError("Website build is missing index.html")
 
 
-def overlay_approved_directory(target):
-    # Only this previously approved public JSON artifact may bypass code-release approval.
-    # Never overlay JS, HTML, workflows, or SQL from an unapproved main commit.
-    subprocess.run(["bash", "-eo", "pipefail", "-c",
-      "git archive --format=tar HEAD data/public-compare-school-directory-v1.json | "
-      "tar -xf - -C " + str(target)], cwd=ROOT, check=True)
+def overlay_approved_directory(target, blob_sha):
+    """Restore only the public JSON blob recorded in the last approved release.
+
+    HEAD can contain unapproved data refreshes. It is not a publication source.
+    """
+    if not blob_sha:
+        return  # Older releases may not have a pinned data blob.
+    if not isinstance(blob_sha, str) or not SHA.fullmatch(blob_sha):
+        raise ValueError("Invalid approved public data blob SHA")
+    content = subprocess.check_output(
+        ["git", "cat-file", "blob", blob_sha], cwd=ROOT
+    )
+    destination = target / "data" / "public-compare-school-directory-v1.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(content)
 
 
 def make_preview_banner(target):
@@ -109,16 +118,23 @@ def make_preview_banner(target):
 
 def build():
     plan = read_plan()
+    # Until the reviewed release policy is enabled, no production-target job
+    # may build a Pages artifact, including an old queued or stale job.
+    if plan.get("target") != "staging" or plan.get("action") not in (
+        "stage_apply", "stage_rollback"
+    ):
+        raise RuntimeError("Production publication is paused in v2 step 3")
     production = plan.get("production_sha")
     staging = plan.get("staging_sha")
+    approved_blob = plan.get("public_data_blob_sha")
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
     archive(production, OUTPUT)
-    overlay_approved_directory(OUTPUT)
+    overlay_approved_directory(OUTPUT, approved_blob)
     if staging:
         preview_dir = OUTPUT / "_preview"
         archive(staging, preview_dir)
-        overlay_approved_directory(preview_dir)
+        overlay_approved_directory(preview_dir, approved_blob)
         nested_cname = preview_dir / "CNAME"
         if nested_cname.exists():
             nested_cname.unlink()
