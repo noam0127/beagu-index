@@ -90,7 +90,8 @@ async function linkedStatus(accessToken){
   }
  });
  const result=await response.json().catch(()=>({}));
- return response.ok&&result.linked===true;
+ return {linked:response.ok&&result.linked===true,
+   lv3LinkReady:response.ok&&result.linked===true&&result.lv3LinkReady===true};
 }
 async function showAccountStatus(){
  const person=await sessionIdentity();
@@ -122,11 +123,12 @@ async function showAccountStatus(){
   setAccountState('level-required');
   return;
  }
- const linked=await linkedStatus(person.token).catch(()=>false);
+ const linked=await linkedStatus(person.token).catch(()=>({linked:false,lv3LinkReady:false}));
  if(overlay.hidden||!tier2)return;
- if(linked){
+ if(linked.linked){
   connect.hidden=true;
-  setAccountState('linked');
+  if(linked.lv3LinkReady)setAccountState('lv3-link-ready');
+  else setAccountState('linked');
  }else if(deviceProof()){
   connect.hidden=false;
   setAccountState('link-ready');
@@ -233,7 +235,7 @@ connect.addEventListener('click',async()=>{
   const answer=await response.json().catch(()=>({}));
   if(!response.ok||answer.linked!==true)throw Error(answer.error||'LINK_FAILED');
   connect.hidden=true;
-  setAccountState('linked');
+  setAccountState(answer.lv3LinkReady===true?'lv3-link-ready':'linked');
  }catch(error){
   message.textContent=error.message==='MEMBERSHIP_ALREADY_CLAIMED'
    ?'이미 다른 계정에 연결된 챌린지 권한입니다.'
