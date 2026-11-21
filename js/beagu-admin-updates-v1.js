@@ -7,7 +7,7 @@
  const auth=supabaseClient.auth;
  const api=SUPABASE_URL+"/functions/v1/beagu-release-manager-v1";
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
- let busy=false,model=null,timer=null;
+ let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null;
  const date=value=>{if(!value)return "—";const d=new Date(value);
    return Number.isFinite(d.getTime())?d.toLocaleString("ko-KR"):"—";};
  const short=value=>value?String(value).slice(0,8):"—";
@@ -65,12 +65,18 @@
  function render(data){
   model=data;
   const s=data.state||{},job=data.job,stageHist=data.staging_history||[],prodHist=data.production_history||[];
+  if(data.head_sha)cachedHead=data.head_sha;
+  if(data.suggested_draft)cachedProposal=data.suggested_draft;
+  if(cachedProposal?.sha===s.production_sha)cachedProposal=null;
   write("releaseStageVersion",s.staging_sha?(s.staging_version||"버전 미입력"):"아직 시험 웹 미배포");
   write("releaseProdVersion",s.production_sha?(s.production_version||"버전 미입력"):"최초 배포 준비 중");
   write("releaseStageSha",s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹에 아직 업데이트가 없습니다");
   write("releaseProdSha",s.production_sha?"코드 "+short(s.production_sha):"초기 배포 후 표시됩니다");
-  write("releaseHead",data.head_sha?"GitHub 최신 코드: "+short(data.head_sha):"GitHub 최신 코드를 확인하지 못했습니다.");
-  write("releaseDraftInfo",s.draft_sha?"등록된 업데이트: "+s.draft_version+" ("+short(s.draft_sha)+")":"새 버전을 등록하세요.");
+  write("releaseHead",cachedHead?"GitHub 최신 코드: "+short(cachedHead):"새로고침하면 GitHub 최신 코드를 확인합니다.");
+  const candidate=cachedProposal&&cachedProposal.sha!==s.staging_sha?cachedProposal:null;
+  write("releaseDraftInfo",candidate?
+    "ChatGPT 입력 버전 "+candidate.version+" · 시험 웹 적용 버튼으로 바로 배포 가능":
+    s.draft_sha?"등록된 업데이트: "+s.draft_version+" ("+short(s.draft_sha)+")":"새 버전을 등록하세요.");
   if(s.draft_sha){
    if(document.activeElement!==el("releaseVersionInput"))el("releaseVersionInput").value=s.draft_version||"";
    if(document.activeElement!==el("releaseSummaryInput"))el("releaseSummaryInput").value=s.draft_summary||"";
@@ -81,7 +87,8 @@
      " · "+(job.target==="staging"?"시험 웹":"실제 웹")+
      " · 요청 시각 "+date(job.created_at)):
     "현재 진행 중인 배포가 없습니다.");
-  el("releaseStageApply").disabled=busy||active||!s.draft_sha||s.draft_sha===s.staging_sha||!s.production_sha;
+  el("releaseStageApply").disabled=busy||active||!s.production_sha||
+    (!candidate&&(!s.draft_sha||s.draft_sha===s.staging_sha));
   el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
   el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
@@ -94,7 +101,7 @@
  async function refresh(quiet=false){
   if(busy)return;
   try{
-   const data=await request("status");
+   const data=await request("status",{check_latest:!quiet});
    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
    render(data);
    if(!quiet)message("업데이트 관리 연결 완료 · 서버 확인 상태");
