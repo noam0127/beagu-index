@@ -37,5 +37,5 @@ assert.match(review,/action:"queue"/);
 assert.match(review,/action:"hold"/);
 assert.match(review,/payload_sha256:item\.payload_sha256/);
 assert.doesNotMatch(review,/approve_results|action:"approve"|localStorage\./i);
-assert.match(page,/2026 설문 비공개 검수/);
+assert.match(page,/2026 조사자료 자동 검증 · 공개 흐름/);
 console.log('PASS: 2026 owner-only MFA review queue and exact-version hold never approve publication');
