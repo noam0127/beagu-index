@@ -11,7 +11,7 @@ const levelKey='beagu-level-session-v1',deviceKey='beagu-referral-device-secret-
 const section=$('postitAccount'),status=$('postitAccountStatus'),form=$('postitAccountForm');
 const smsPhone=$('postitSmsPhone'),smsConsent=$('postitSmsConsent'),smsUnsubscribe=$('postitSmsUnsubscribe');
 if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsUnsubscribe||
-   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create)return;
+   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create||!window.BeaguAuthErrorUI?.show)return;
 const accountMode=window.BeaguAccountMode.create({
  form,
  title:$('postitAccountHeading'),
@@ -35,6 +35,7 @@ function setLinked(next){
 }
 function message(value){status.dataset.state='info';status.textContent=value;}
 const showState=state=>window.BeaguAccountStatus.set(status,state);
+const showInputError=kind=>window.BeaguAuthErrorUI.show(status,kind);
 async function authSession(){
  const {data,error}=await client.auth.getSession();
  if(error)return null;
@@ -99,16 +100,18 @@ async function executeAuth(action){
  // The Supabase Auth server still validates password correctness and account state.
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||!password||
     (action==='signup'&&password.length<10)){
-  message(action==='signup'
-    ?'유효한 이메일과 10자 이상의 새 비밀번호를 입력하세요.'
-    :'유효한 이메일과 기존 비밀번호를 입력하세요.');return;
+  showInputError(action==='signup'?'signup-input':'signin-input');return;
  }
  busy=true;
+ $('postitAccountLogin').disabled=true;
+ $('postitAccountSignup').disabled=true;
+ form.dataset.busy='true';form.setAttribute?.('aria-busy','true');
+ showState('checking');
  try{
   const wantsSms=action==='signup'&&smsConsent.checked;
   const mobile=smsPhone.value.replace(/[^0-9]/g,'');
   if(wantsSms&&!/^010[0-9]{8}$/.test(mobile)){
-   message('문자 수신을 원하시면 010으로 시작하는 11자리 번호를 입력해 주세요.');return;
+   showInputError('phone-input');return;
   }
   const {error}=action==='signup'
    ?await client.auth.signUp({email,password,options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('postit'),data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}})
@@ -119,8 +122,13 @@ async function executeAuth(action){
   if(action==='signup')showState('signup-requested');
   else {showState('checking');await refresh();}
  }catch(error){
-  showState(action==='signup'?'signup-failed':'signin-failed');
- }finally{busy=false}
+  window.BeaguAuthErrorUI.fromError(status,error,action);
+ }finally{
+  busy=false;
+  $('postitAccountLogin').disabled=false;
+  $('postitAccountSignup').disabled=false;
+  form.dataset.busy='false';form.setAttribute?.('aria-busy','false');
+ }
 }
 form.addEventListener('submit',e=>{e.preventDefault();void executeAuth(accountMode.mode())});
 $('postitAccountSignup').addEventListener('click',()=>{
@@ -138,7 +146,7 @@ $('postitAccountGoogle').addEventListener('click',async()=>{
   const {error}=await client.auth.signInWithOAuth({provider:'google',
    options:{redirectTo:window.BEAGU_AUTH_RETURN.resolve('postit')}});
   if(error)throw error;
- }catch{message('Google 제공자 설정이나 리디렉션 주소를 확인해 주세요. 이메일 계정 로그인도 이용할 수 있습니다.')}
+ }catch(error){window.BeaguAuthErrorUI.fromError(status,error,'oauth')}
  finally{busy=false}
 });
 $('postitAccountLink').addEventListener('click',async()=>{
