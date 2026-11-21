@@ -1,0 +1,58 @@
+name: v1.1.0 — Stage24 verified Lv3 school facts UI (NO DEPLOY)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-lv3-school-facts-ui.yml'
+      - 'js/beagu-lv3-session-v1.js'
+      - 'js/beagu-lv3-school-facts-v1.js'
+      - 'js/level-search.js'
+      - 'search-lv1.html'
+      - 'styles/beagu-lv3-school-facts-v1.css'
+      - 'tests/v1.1.0-lv3-school-facts-ui.test.mjs'
+      - 'tests/v1.1.0-lv3-2026-school-facts.test.mjs'
+      - 'supabase/functions/beagu-lv3-school-facts-v1/index.ts'
+      - 'supabase/migrations/20261122004000_beagu_lv3_2026_official_school_facts_v1.sql'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ui-and-dual-auth:
+    name: Stage24 browser transport, Lv3 server-gate and no-2025 fallback checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check client JS and confidential server TypeScript syntax
+        run: |
+          node --check js/beagu-lv3-session-v1.js
+          node --check js/beagu-lv3-school-facts-v1.js
+          node --check js/level-search.js
+          node --check tests/v1.1.0-lv3-school-facts-ui.test.mjs
+          deno check supabase/functions/beagu-lv3-school-facts-v1/index.ts
+      - name: Exercise verified Lv3 bearer transport, source restrictions and existing tier regressions
+        run: |
+          node --test tests/v1.1.0-lv3-school-facts-ui.test.mjs tests/v1.1.0-lv3-2026-school-facts.test.mjs tests/v1.1.0-lv3-server-authorization.test.mjs
+          node tests/school-search-unification.mjs
+          node tests/participation-code-unified.mjs
+      - name: Assert preview does not use production backend or raw official form
+        run: python3 tests/preview-db-isolation.py
+      - name: Confirm no publish commands or production DB writes are used
+        run: |
+          if grep -Eq 'supabase (db push|functions deploy)|wrangler publish|gh release create|git push|pg_dump|psql ' .github/workflows/v1.1.0-lv3-school-facts-ui.yml; then
+            echo 'Stage24 is read-only: publishing or database manipulation forbidden' >&2
+            exit 1
+          fi
+          echo 'PASS: Stage24 isolated code checks only'
