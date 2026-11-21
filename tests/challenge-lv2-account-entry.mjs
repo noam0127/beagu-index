@@ -58,7 +58,11 @@ const ids=['challengeIdentityPanel',
  'challengeMemberPassword','challengeMemberSubmit','challengeMemberSwitch',
  'challengeMemberClose','challengeMemberMessage','challengeMemberLink',
  'challengeMemberSignOut','challengeMemberSmsFields','challengeMemberSmsPhone',
- 'challengeMemberSmsConsent','challengeMemberSmsCollectionConsent','challengeMemberSmsUnsubscribe','challengeMemberSmsSave','challengeMemberSmsStatus','beaguLevelState'];
+ 'challengeMemberSmsConsent','challengeMemberSmsCollectionConsent','challengeMemberSmsUnsubscribe','challengeMemberSmsSave','challengeMemberSmsStatus',
+ 'challengePrivacyPanel','challengePrivacySummary','challengePrivacyStatus',
+ 'challengePrivacyAccess','challengePrivacyCancelAccess',
+ 'challengePrivacyRequestDeletion','challengePrivacyCancelDeletion',
+ 'challengePrivacyConfirmEmail','challengePrivacyConfirmPhrase','beaguLevelState'];
 const elements=Object.fromEntries(ids.map(id=>[id,new Fake(id)]));
 elements.beaguLevelState.dataset.level='1';
 const events={},localEvents={};
