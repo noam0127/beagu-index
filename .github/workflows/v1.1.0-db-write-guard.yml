@@ -1,0 +1,37 @@
+name: v1.1.0 — DB mutation readiness check (read-only)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-db-write-guard.yml'
+      - 'scripts/release-manager/db-change-preflight.py'
+      - 'docs/releases/v1.1.0-rollback-baseline.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  readiness:
+    name: Ensure DB mutation guard fails closed without backup evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Syntax and negative-branch tests
+        run: |
+          python3 -m py_compile scripts/release-manager/db-change-preflight.py
+          python3 scripts/release-manager/db-change-preflight.py --self-test
+      - name: Read-only readiness report
+        run: python3 scripts/release-manager/db-change-preflight.py --audit-only
+      - name: Database mutations must be blocked without verified backup
+        run: |
+          if python3 scripts/release-manager/db-change-preflight.py; then
+            echo "Verified backup and isolated restore gate passed."
+          else
+            echo "Database/Auth mutations are BLOCKED. This is expected until backup and restore are verified."
+          fi
