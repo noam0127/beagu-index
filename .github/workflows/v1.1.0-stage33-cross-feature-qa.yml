@@ -1,0 +1,92 @@
+name: v1.1.0 stage33 — cross-feature synthetic QA (NO DEPLOY)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-stage33-cross-feature-qa.yml'
+      - 'tests/v1.1.0-stage33-cross-feature-qa.test.mjs'
+      - 'js/beagu-level-state-v1.js'
+      - 'js/challenge-achievements-v1.js'
+      - 'js/beagu-home-tier-benefits-v1.js'
+      - 'js/beagu-auth-return-v1.js'
+      - 'docs/releases/v1.1.0-auth-redirect-matrix.json'
+      - 'docs/releases/v1.1.0-rollback-baseline.json'
+      - 'admin.html'
+      - 'js/beagu-admin-access-v1.js'
+      - 'js/beagu-admin-members-v1.js'
+      - 'js/beagu-admin-updates-v1.js'
+      - 'supabase/functions/_shared/2026-public-question-policy.mjs'
+      - 'supabase/functions/beagu-2026-tiered-results-v1/index.ts'
+      - 'tests/preview-db-isolation.py'
+      - 'scripts/release-manager/worker.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-cross-feature:
+    name: Offline Auth, tiers, account, admin, release and preview safety
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    env:
+      BEAGU_LIVE_WRITE_ALLOWED: 'false'
+      BEAGU_RELEASE_PUBLISH_ALLOWED: 'false'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Parse cross-feature UI, permission, Auth return and 2026 shared modules
+        run: |
+          node --check js/beagu-level-state-v1.js
+          node --check js/challenge-achievements-v1.js
+          node --check js/beagu-home-tier-benefits-v1.js
+          node --check js/beagu-auth-return-v1.js
+          node --check js/beagu-admin-access-v1.js
+          node --check js/beagu-admin-updates-v1.js
+          node --check js/beagu-admin-members-v1.js
+          node --check supabase/functions/_shared/2026-public-question-policy.mjs
+      - name: Run connected synthetic login, level, review, admin and 2026 access matrix
+        run: |
+          node --test \
+            tests/v1.1.0-stage33-cross-feature-qa.test.mjs \
+            tests/v1.1.0-auth-redirects.test.mjs \
+            tests/v1.1.0-auth-error-ux.test.mjs \
+            tests/v1.1.0-session-restore.test.mjs \
+            tests/v1.1.0-home-tier-benefits.test.mjs \
+            tests/v1.1.0-challenge-achievements.test.mjs \
+            tests/v1.1.0-lv3-account-ui.test.mjs \
+            tests/v1.1.0-lv3-server-authorization.test.mjs \
+            tests/v1.1.0-admin-members-ui.test.mjs \
+            tests/v1.1.0-admin-navigation-chart-integrity.test.mjs \
+            tests/v1.1.0-private-2026-question-boundary.test.mjs \
+            tests/v1.1.0-2026-tiered-review-release.test.mjs \
+            tests/v1.1.0-referral-link-preservation.test.mjs
+      - name: Maintain legacy protected logins and Owner-only access contracts
+        run: |
+          node scripts/test-admin-access.cjs
+          node tests/admin-dashboard-static.cjs
+          node tests/admin-telemetry-health-static.cjs
+          node tests/postit-member-auth.cjs
+          node tests/participation-code-unified.mjs
+          node scripts/test-challenge-referral-premium.cjs
+      - name: Build immutable synthetic preview offline and fail closed on mixed live URLs
+        run: python3 tests/preview-db-isolation.py
+      - name: Assert actual cloud auth, database restore and release approval remain BLOCKED
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          cfg=json.loads(Path("docs/releases/v1.1.0-auth-redirect-matrix.json").read_text())
+          backup=json.loads(Path("docs/releases/v1.1.0-rollback-baseline.json").read_text())
+          assert cfg["operational_change_performed"] is False
+          assert all(not p["configured_verified"] for p in cfg["projects"].values())
+          assert backup["database"]["recovery_export_verified"] is False
+          print("PASS: Stage33 only verified offline; remote Auth redirects, DB restore, email callback, live deploy blocked")
+          PY
