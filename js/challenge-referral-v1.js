@@ -25,18 +25,21 @@
   let currentLink = '';
   let lastIdentity = null;
   let upgraded = false;
+  let ownResponseVerified = false;
   function renderState(earned) {
     upgraded = earned === true;
     // A name change never mints a new code. The existing personal code stays unchanged.
     identityPanel.classList.toggle('is-lv2', upgraded);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
-    identityTitle.textContent = upgraded ? 'Lv2 참여코드' : '나의 고유번호';
-    identityTag.textContent = upgraded ? 'Lv.2 달성 ✦' : '개인 보관';
+    identityTitle.textContent = upgraded ? 'Lv2 참여코드'
+      : ownResponseVerified ? 'Lv1 참여코드' : '나의 고유번호';
+    identityTag.textContent = upgraded ? 'Lv.2 달성 ✦'
+      : ownResponseVerified ? 'Lv.1 참여 확인' : '인증 대기';
     identityReward.hidden = !upgraded;
     identityReward.textContent = upgraded
       ? 'Lv.2 달성! 위 코드를 참여코드로 사용하세요.'
       : '';
-    copyIdentityCode.textContent = upgraded ? '코드 복사' : '번호 복사';
+    copyIdentityCode.textContent = upgraded || ownResponseVerified ? '코드 복사' : '번호 복사';
 
     // Invitation links must remain visible and copyable after promotion.
     title.textContent = '나의 전용 조사 링크';
@@ -47,11 +50,14 @@
     copyButton.textContent = '링크 복사';
     note.textContent = upgraded
       ? '번호는 그대로 유지돼요. 전용 링크도 계속 공유할 수 있어요.'
-      : '유효한 추천 1건이 확인되면 기존 번호가 Lv.2 참여코드로 바뀝니다.';
+      : ownResponseVerified
+      ? '2026 본인 설문 참여가 확인되었습니다. 유효한 추천 1건이면 같은 번호로 Lv2가 됩니다.'
+      : '이 번호는 발급되었지만 2026 본인 설문 응답 확인 전에는 레벨 인증에 사용할 수 없습니다.';
   }
   function reset() {
     ++generation;
     currentLink = '';
+    ownResponseVerified = false;
     linkField.value = '';
     linkField.hidden = true;
     copyButton.hidden = true;
@@ -106,15 +112,23 @@
 
       // Only a server-approved, credited referral can upgrade the PERSONAL CODE.
       // A link visit, self-declared level, or incomplete payload cannot do so.
-      const promoted = Number(payload.level) === 2 &&
+      const certified = payload.ownResponseVerified === true &&
+        [1,2].includes(Number(payload.level));
+      const promoted = certified && Number(payload.level) === 2 &&
         Number(payload.validReferrals) >= 1 && payload.provisional === true;
       const newlyPromoted = promoted && !upgraded;
+      const newlyCertified = certified && !ownResponseVerified;
+      ownResponseVerified = certified;
       renderState(promoted);
+      if (newlyCertified) window.dispatchEvent(new Event('beagu:level-state-change'));
       if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
-      progress.textContent = promoted ? '유효한 추천 1 / 1건 · Lv2 승급 완료' : '유효한 추천 0 / 1건';
+      progress.textContent = promoted ? '유효한 추천 1 / 1건 · Lv2 승급 완료'
+        : Number(payload.validReferrals)>=1 ? '유효한 추천 1 / 1건 · 본인 응답 확인 대기'
+        : '유효한 추천 0 / 1건';
       status.textContent = promoted
         ? 'Lv.2 달성! 기존 고유번호를 참여코드로 사용하세요.'
-        : '동료에게 링크를 보내세요. 설문 참여 1건이 확인되면 Lv.2!';
+        : certified ? '본인 설문 참여 확인! 이 번호는 Lv1 참여코드로 이용할 수 있습니다.'
+        : '본인 2026 설문 참여가 서버에서 확인되면 Lv1 코드가 활성화됩니다.';
     } catch (_) {
       if (!active || seq !== generation) return;
       if (!upgraded) status.textContent = '추천 정보를 확인하지 못했습니다. 다시 열거나 소유자 인증을 확인해 주세요.';
