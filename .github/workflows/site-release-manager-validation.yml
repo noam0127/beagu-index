@@ -24,6 +24,12 @@ on:
       - 'tests/release-snapshot-gate.mjs'
       - 'scripts/release-manager/build-isolated-candidate.py'
       - 'tests/release-step13-isolated-preview.py'
+      - 'scripts/release-manager/qa-browser-smoke.cjs'
+      - 'scripts/release-manager/qa-hosting-preflight.py'
+      - 'tests/release-step14-hosting-plan.py'
+      - '.github/workflows/release-v2-browser-qa.yml'
+      - '.github/workflows/release-v2-independent-qa-hosting.yml'
+      - 'docs/releases/v2-step14-qa-hosting-policy.json'
       - '.github/workflows/release-v2-isolated-candidate-qa.yml'
       - 'docs/releases/v2-step11-readiness-observation.json'
       - 'tests/staging-http-smoke.py'
@@ -49,6 +55,8 @@ jobs:
       - name: Syntax validation
         run: |
           node --check js/beagu-admin-updates-v1.js
+          node --check scripts/release-manager/qa-browser-smoke.cjs
+          python3 -m py_compile scripts/release-manager/qa-hosting-preflight.py
           python3 -m py_compile scripts/release-manager/worker.py tests/staging-http-smoke.py
       - name: Test approval and security invariants
         run: |
@@ -64,6 +72,7 @@ jobs:
           python3 tests/site-release-packaging.py
           python3 tests/release-step11-offline-integration.py
           python3 tests/release-step13-isolated-preview.py
+          python3 tests/release-step14-hosting-plan.py
       - name: Read-only HTTP smoke of currently published site and preview (not this PR)
         env:
           BEAGU_SITE_ORIGIN: https://baeguindex.com

@@ -1,0 +1,81 @@
+name: Independent QA Cloudflare Pages plan (PUBLISH LOCKED)
+
+# Manual dispatch only. No push/PR/schedule trigger can publish anything.
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: 'Exact immutable 40-character candidate HEAD SHA'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  inspection-only:
+    name: Offline plan inspection, no hosting credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Validate commit pin
+        env:
+          EXPECTED_SHA: ${{ inputs.candidate_sha }}
+        run: |
+          set -euo pipefail
+          test "${#EXPECTED_SHA}" -eq 40
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Inspect independent candidate hosting plan ONLY
+        run: |
+          set -euo pipefail
+          TARGET="${RUNNER_TEMP}/beagu-qa-publish-plan"
+          python3 scripts/release-manager/build-isolated-candidate.py \
+            --sha "$(git rev-parse HEAD)" --output "$TARGET"
+          python3 scripts/release-manager/qa-hosting-preflight.py \
+            --sha "$(git rev-parse HEAD)" --candidate-dir "$TARGET"
+          echo "Publication remains locked; no Cloudflare credentials were used."
+
+  # This job is intentionally not runnable in step 14, even with a manual
+  # workflow dispatch. Separate OWNER approval and a reviewed code change
+  # plus Cloudflare Access configuration are required to activate it.
+  publish-to-separate-qa-project:
+    if: ${{ false }}
+    needs: inspection-only
+    runs-on: ubuntu-latest
+    environment: beagu-v2-qa-protected
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Build QA assets from pinned SHA ONLY
+        run: |
+          python3 scripts/release-manager/build-isolated-candidate.py \
+            --sha "$(git rev-parse HEAD)" --output "${RUNNER_TEMP}/beagu-v2-qa-only"
+      - name: Upload ONLY to separately provisioned QA Pages project
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.QA_CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.QA_CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          CANDIDATE_SHA="$(git rev-parse HEAD)"
+          test "$CANDIDATE_SHA" = "${{ inputs.candidate_sha }}"
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test ! -f "${RUNNER_TEMP}/beagu-v2-qa-only/CNAME"
+          test ! -d "${RUNNER_TEMP}/beagu-v2-qa-only/supabase"
+          # Never read or use root wrangler.jsonc whose name is beagu-index.
+          cd "${RUNNER_TEMP}"
+          npx --yes wrangler@4 pages deploy \
+            "${RUNNER_TEMP}/beagu-v2-qa-only" \
+            --project-name=beagu-v2-isolated-qa \
+            --branch=qa-v2-${CANDIDATE_SHA:0:12} \
+            --commit-hash=${{ inputs.candidate_sha }}

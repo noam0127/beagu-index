@@ -1,0 +1,85 @@
+name: Release v2 candidate Chromium QA (LOCAL ONLY)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/release-v2-browser-qa.yml'
+      - 'scripts/release-manager/qa-browser-smoke.cjs'
+      - 'scripts/release-manager/build-isolated-candidate.py'
+      - 'scripts/release-manager/worker.py'
+      - 'js/**'
+      - 'styles/**'
+      - 'assets/**'
+      - 'data/**'
+      - '*.html'
+  workflow_dispatch:
+
+# No Pages/Cloudflare/Vercel credentials, no deployment permissions.
+permissions:
+  contents: read
+
+jobs:
+  chromium-qa-only:
+    name: Chromium desktop/mobile local-only preview
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify the exact pull request commit
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "${#EXPECTED_HEAD}" -eq 40
+      - name: Install isolated Chromium test runtime
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium --only-shell
+      - name: Build and browser-test immutable candidate WITHOUT external network writes
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA="$(git rev-parse HEAD)"
+          export BEAGU_QA_CANDIDATE_SHA="$SHA"
+          export BEAGU_QA_SITE_DIR="${RUNNER_TEMP}/beagu-chromium-${SHA:0:12}"
+          export BEAGU_QA_EVIDENCE_DIR="${RUNNER_TEMP}/beagu-browser-evidence"
+          export BEAGU_QA_ORIGIN="http://127.0.0.1:8134"
+          python3 scripts/release-manager/build-isolated-candidate.py \
+            --sha "$SHA" --output "$BEAGU_QA_SITE_DIR"
+          test ! -f "$BEAGU_QA_SITE_DIR/CNAME"
+          test ! -d "$BEAGU_QA_SITE_DIR/supabase"
+          python3 -m http.server 8134 --bind 127.0.0.1 \
+            --directory "$BEAGU_QA_SITE_DIR" >"${RUNNER_TEMP}/beagu-chromium-http.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          sleep 1
+          node scripts/release-manager/qa-browser-smoke.cjs
+          python3 - <<'PY'
+          import os,json,pathlib
+          p=pathlib.Path(os.environ["BEAGU_QA_EVIDENCE_DIR"])/"browser-manifest.json"
+          e=json.loads(p.read_text())
+          assert e["candidate_sha"]==os.environ["BEAGU_QA_CANDIDATE_SHA"]
+          assert e["prod_supabase_requested"] is False
+          assert e["public_url_created"] is False
+          assert e["browser_functional_e2e"]=="not_performed"
+          assert e["release_gate"]=="blocked"
+          PY
+          # No site upload. Only the minimal browser evidence JSON is exported.
+      - name: Save small browser evidence only (not screenshots, files or school data)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: step14-chromium-evidence
+          path: ${{ runner.temp }}/beagu-browser-evidence/browser-manifest.json
+          retention-days: 1
+          if-no-files-found: error
