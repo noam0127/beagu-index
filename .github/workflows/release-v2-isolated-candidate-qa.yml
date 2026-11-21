@@ -1,0 +1,69 @@
+name: Release v2 isolated candidate QA (NO DEPLOY)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/release-v2-isolated-candidate-qa.yml'
+      - 'scripts/release-manager/build-isolated-candidate.py'
+      - 'scripts/release-manager/worker.py'
+      - 'tests/release-step13-isolated-preview.py'
+      - 'js/**'
+      - 'styles/**'
+      - 'assets/**'
+      - 'data/**'
+      - '*.html'
+  workflow_dispatch:
+
+# Strictly read-only: NO pages:write, id-token:write, deploy credentials,
+# GitHub deployment environment, or Supabase service role.
+permissions:
+  contents: read
+
+jobs:
+  qa-only:
+    name: Local candidate validation, no publishing
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact candidate HEAD
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          test "${#EXPECTED_HEAD}" -eq 40
+      - name: Validate isolated offline preview and local HTTP
+        run: |
+          python3 -m py_compile scripts/release-manager/build-isolated-candidate.py
+          python3 tests/release-step13-isolated-preview.py
+      - name: Rebuild only a local unhosted candidate and export a tiny evidence manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          CANDIDATE_SHA="$(git rev-parse HEAD)"
+          TARGET="${RUNNER_TEMP}/beagu-step13-${CANDIDATE_SHA:0:12}"
+          python3 scripts/release-manager/build-isolated-candidate.py \
+            --sha "$CANDIDATE_SHA" --output "$TARGET"
+          test ! -f "$TARGET/CNAME"
+          test ! -d "$TARGET/supabase"
+          test ! -d "$TARGET/.github"
+          test ! -d "$TARGET/scripts"
+          mkdir -p "${RUNNER_TEMP}/step13-evidence"
+          cp "$TARGET/.qa-candidate-manifest.json" \
+             "${RUNNER_TEMP}/step13-evidence/manifest.json"
+          # NO website upload and NO deployment. Web sources and school data
+          # stay inside this short-lived runner only.
+      - name: Save proof manifest only (not website or school data)
+        uses: actions/upload-artifact@v4
+        with:
+          name: step13-local-qa-evidence
+          path: ${{ runner.temp }}/step13-evidence/manifest.json
+          if-no-files-found: error
+          retention-days: 1
