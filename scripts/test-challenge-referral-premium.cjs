@@ -70,8 +70,11 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   returned={link:referral,shortLink,level:1,ownResponseVerified:true,
     validReferrals:0,provisional:false};
   emit('focus');await tick();
-  assert.equal(el.challengeIdentityTitle.textContent,'Lv1 참여코드');
-  assert.equal(el.challengeIdentityTag.textContent,'Lv.1 참여 확인');
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv2 참여코드(비활성)');
+  assert.equal(el.challengeIdentityTag.textContent,'Lv.1 인증 가능');
+  assert.equal(el.challengeIdentityPanel.dataset.referralState,'inactive');
+  assert.equal(el.challengeIdentityReward.hidden,false);
+  assert.match(el.challengeIdentityReward.textContent,/Lv\\.1 인증 가능/);
   assert.equal(el.copyIdentityCode.textContent,'코드 복사');
 
   returned.shortLink=shortLink;
@@ -101,6 +104,15 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.challengeReferralLink.value,shortLink);
   await el.copyChallengeReferral.listeners.click();await tick();
   assert.equal(copies.at(-1),shortLink);
+
+  // A quality-review downgrade restores Lv1 access label without reissuing code.
+  returned={link:referral,shortLink,level:1,ownResponseVerified:true,
+    validReferrals:0,provisional:false};
+  emit('focus');await tick();
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv2 참여코드(비활성)');
+  assert.equal(el.challengeIdentityPanel.dataset.referralState,'inactive');
+  assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
+  assert.equal(el.challengeReferralLink.value,shortLink);
 
   emit('beagu:challenge-access-revoked');
   assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
