@@ -1,0 +1,120 @@
+/* Stage30: festive but self-contained verified-ordinal graphics.
+ * The certificate PNG captures these decorative elements; personal codes
+ * remain outside the certificate root. */
+.certificate[data-milestone]{
+  position:relative;isolation:isolate;overflow:hidden;
+  border:2px solid #d1b45f;
+  background:linear-gradient(165deg,#fffcf3 0%,#ffffff 45%,#fff4dc 100%);
+  box-shadow:0 10px 34px rgba(150,104,31,.15),0 0 0 4px rgba(242,207,117,.16);
+}
+.certificate[data-milestone]::before,
+.certificate[data-milestone]::after{
+  content:"";position:absolute;pointer-events:none;z-index:-1;
+}
+.certificate[data-milestone]::before{
+  width:220px;height:220px;top:-108px;left:-92px;
+  background:radial-gradient(circle,#fff0b9 0%,rgba(252,216,125,.35) 38%,transparent 72%);
+}
+.certificate[data-milestone]::after{
+  width:240px;height:240px;right:-94px;bottom:-126px;
+  background:radial-gradient(circle,#e8defe 0%,rgba(193,169,247,.22) 42%,transparent 72%);
+}
+.certificate[data-milestone] .rank{
+  background:linear-gradient(130deg,#fff0c4,#fff8e9);
+  border:1px solid rgba(197,148,57,.3);
+}
+.certificate[data-milestone] .rank strong{
+  color:#985719;text-shadow:0 1px 0 rgba(255,255,255,.75);
+}
+.challenge-milestone{
+  position:relative;margin:15px auto 18px;max-width:440px;
+  padding:15px 20px 13px;overflow:hidden;
+  border-radius:18px;border:1px solid #e8bd62;
+  background:linear-gradient(120deg,#fff4cd,#fffaf0 58%,#ffe4ae);
+  box-shadow:0 5px 20px rgba(149,94,28,.15),inset 0 1px 0 rgba(255,255,255,.9);
+  color:#63360d;line-height:1.5;
+}
+.challenge-milestone::before{
+  content:"✦ · ✧ · ✦ · ✧ · ✦";
+  display:block;font-size:17px;color:#bd8d42;
+  letter-spacing:.38em;margin-bottom:3px;
+}
+.challenge-milestone-symbol{
+  width:40px;height:40px;display:grid;place-items:center;
+  font-size:25px;line-height:1;margin:0 auto 6px;
+  color:#fff;background:linear-gradient(135deg,#bd8230,#9d5c24);
+  border-radius:50%;box-shadow:0 2px 6px rgba(121,77,31,.25);
+}
+.challenge-milestone-title{
+  display:block;font-size:clamp(16px,4vw,21px);font-weight:900;
+  letter-spacing:-.035em;line-height:1.45;
+}
+.challenge-milestone-detail{display:block;font-size:12px;margin-top:5px;color:#795027}
+.certificate[data-milestone="111"]{border-color:#b4a4d9;background:linear-gradient(145deg,#fcfaff,#fff,#f4eeff)}
+.certificate[data-milestone="111"] .rank{background:#f5eeff;border-color:#d9c5f0}
+.certificate[data-milestone="111"] .rank strong{color:#6a40a8}
+.certificate[data-milestone="111"] .challenge-milestone{
+  background:linear-gradient(125deg,#f3eafe,#fff,#e7e3ff);border-color:#c9b7e7;color:#5b3587;
+}
+.certificate[data-milestone="111"] .challenge-milestone-symbol{background:linear-gradient(135deg,#a377dc,#6342ac)}
+.certificate[data-milestone="111"] .challenge-milestone-detail{color:#765698}
+.certificate[data-milestone="222"]{border-color:#87c1cd;background:linear-gradient(145deg,#f1fdff,#fff,#e8f8fc)}
+.certificate[data-milestone="222"] .rank{background:#e9f8fb;border-color:#b5dae2}
+.certificate[data-milestone="222"] .rank strong{color:#116f81}
+.certificate[data-milestone="222"] .challenge-milestone{
+  background:linear-gradient(125deg,#daf7fa,#fff,#edfbf8);border-color:#8bc9d4;color:#165d69;
+}
+.certificate[data-milestone="222"] .challenge-milestone-symbol{background:linear-gradient(135deg,#50b7c8,#187b94)}
+.certificate[data-milestone="222"] .challenge-milestone-detail{color:#426b75}
+.certificate[data-milestone="500"]{border-color:#92bd8e;background:linear-gradient(145deg,#f6fff2,#fff,#eaf8e6)}
+.certificate[data-milestone="500"] .rank{background:#e9f7e5;border-color:#b5d6ac}
+.certificate[data-milestone="500"] .rank strong{color:#267545}
+.certificate[data-milestone="500"] .challenge-milestone{
+  background:linear-gradient(125deg,#dcf5d2,#fff,#f6ffe8);border-color:#a8ce98;color:#28663b;
+}
+.certificate[data-milestone="500"] .challenge-milestone-symbol{background:linear-gradient(135deg,#70b878,#2f8855)}
+.certificate[data-milestone="500"] .challenge-milestone-detail{color:#4e7050}
+.certificate[data-milestone="777"]{
+  border:3px solid #d2a447;
+  background:linear-gradient(145deg,#162b45,#243752 45%,#112a40);
+  box-shadow:0 13px 38px rgba(20,42,68,.27),0 0 0 4px #eddfb8;
+}
+.certificate[data-milestone="777"] h1{color:#fff5d7}
+.certificate[data-milestone="777"] .rank{
+  background:linear-gradient(115deg,#f2d993,#fff4ce,#dab675);
+  border-color:#e9cf96;
+}
+.certificate[data-milestone="777"] .rank-label{color:#6f481d}
+.certificate[data-milestone="777"] .rank strong{color:#744112;font-size:clamp(34px,9vw,46px)}
+.certificate[data-milestone="777"] .site-link{color:#f5db9b}
+.certificate[data-milestone="777"] .challenge-milestone{
+  background:linear-gradient(115deg,#fff6d5,#f9e2a1 55%,#fff9e8);
+  border:2px solid #e9c779;box-shadow:0 7px 23px rgba(9,20,39,.28);color:#58370f;
+}
+.certificate[data-milestone="777"] .challenge-milestone-symbol{
+  width:52px;height:52px;font-size:32px;
+  background:linear-gradient(135deg,#d9a142,#96601c);
+}
+.certificate[data-milestone="1000"]{
+  border:3px solid #e0b64b;background:linear-gradient(145deg,#fff9e4,#fff,#ffe6a3);
+  box-shadow:0 12px 38px rgba(145,95,22,.24),0 0 0 5px #faefd4;
+}
+.certificate[data-milestone="1000"] .rank{
+  background:linear-gradient(90deg,#f4d678,#fff5c9,#f4d678);
+}
+.certificate[data-milestone="1000"] .rank strong{color:#915516;font-size:clamp(34px,9vw,48px)}
+.certificate[data-milestone="1000"] .challenge-milestone{
+  background:linear-gradient(115deg,#ffefd0,#fffaf0 50%,#ffe5a8);
+  border:2px solid #d6a448;
+}
+.certificate[data-milestone="1000"] .challenge-milestone-symbol{
+  width:52px;height:52px;background:linear-gradient(135deg,#dcb044,#a97019);font-size:31px;
+}
+/* Static print/download graphics are always complete without motion. */
+@media(max-width:440px){
+  .challenge-milestone{padding:13px 9px}
+  .challenge-milestone::before{font-size:13px;letter-spacing:.25em}
+}
+@media(prefers-reduced-motion:reduce){
+  .certificate[data-milestone],.challenge-milestone{animation:none;transition:none}
+}
