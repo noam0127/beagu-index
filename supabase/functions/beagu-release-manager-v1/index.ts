@@ -64,7 +64,7 @@ async function latestManifest(){
  try{
   const doc=await github("/contents/release-candidate.json?ref=main");
   if(typeof doc?.content!=="string")return null;
-  const decoded=atob(doc.content.replace(/\\s/g,""));
+  const decoded=atob(doc.content.replace(/\s/g,""));
   const value=JSON.parse(new TextDecoder().decode(Uint8Array.from(decoded,ch=>ch.charCodeAt(0))));
   const version=typeof value?.version==="string"?value.version.trim():"";
   const summary=typeof value?.summary==="string"?value.summary.trim():"";
@@ -108,7 +108,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  if(action==="status"){
   const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
   let head=null,suggested_draft=null;
-  try{
+  if(input.check_latest===true)try{
    const latest=await github("/commits/main");
    head=typeof latest.sha==="string"?latest.sha:null;
    if(head&&head!==s.production_sha){
