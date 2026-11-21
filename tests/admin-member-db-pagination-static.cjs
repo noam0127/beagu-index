@@ -1,0 +1,14 @@
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const edge=fs.readFileSync("supabase/functions/beagu-admin-members-v1/index.ts","utf8");
+const sql=fs.readFileSync("supabase/migrations/20261122020000_admin_member_directory_v2.sql","utf8");
+const fn=edge.slice(edge.indexOf("async function listMembers("),edge.indexOf("// Server-only lookup."));
+assert.match(fn,/beagu_admin_member_directory_v2/);
+assert.doesNotMatch(fn,/allUsers\(/);
+assert.match(sql,/from auth\.users u/);
+assert.match(sql,/limit p_size offset \(p_page-1\)\*p_size/);
+assert.match(sql,/strpos\(lower\(coalesce\(u\.email,''\)\),lower\(p_search\)\)>0/);
+assert.match(sql,/revoke all on function public\.beagu_admin_member_directory_v2/i);
+assert.match(sql,/to service_role/i);
+assert.match(sql,/truncated',false/);
+console.log("PASS: member database pagination static contract");
