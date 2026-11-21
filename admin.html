@@ -53,7 +53,10 @@
       <div class="dashboard-head">
         <div><p class="eyebrow">OPERATIONS · PRIVATE</p><h2>운영 통계</h2>
           <p class="help">서버에서 관리자 권한과 2단계 인증을 확인한 뒤 통계를 불러옵니다.</p></div>
-        <button id="adminLogout" type="button" class="secondary">로그아웃</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <a class="secondary" href="admin-updates.html" style="display:inline-flex;align-items:center">업데이트 관리</a>
+          <button id="adminLogout" type="button" class="secondary">로그아웃</button>
+        </div>
       </div>
       <nav class="period-tabs" aria-label="통계 조회 기간" id="adminPeriods">
         <button type="button" data-period="today">오늘</button>

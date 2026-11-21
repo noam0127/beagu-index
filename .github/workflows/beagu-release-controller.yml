@@ -1,0 +1,68 @@
+name: BAEGU release controller (admin approval)
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/beagu-release-controller.yml'
+      - '.github/workflows/deploy-github-pages-direct.yml'
+      - 'scripts/release-manager/worker.py'
+      - 'admin-updates.html'
+      - 'js/beagu-admin-updates-v1.js'
+      - 'data/public-compare-school-directory-v1.json'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages-direct
+  cancel-in-progress: false
+jobs:
+  approved-release:
+    name: Publish only admin-requested, approved SHA
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Claim signed release job (GitHub Actions OIDC)
+        id: job
+        run: python3 scripts/release-manager/worker.py next
+      - name: Build immutable production and optional preview snapshots
+        if: steps.job.outputs.has_job == 'true'
+        run: |
+          python3 scripts/release-manager/worker.py build
+          cd _release_site
+          test -f index.html
+          test -f CNAME
+          test "$(cat CNAME)" = "baeguindex.com"
+          test -f teacher-class-diary-play.html
+          node scripts/test-class-diary-progress.cjs
+          node scripts/test-class-diary-play-page.cjs
+          node scripts/test-class-diary-semester.cjs
+      - uses: actions/configure-pages@v5
+        if: steps.job.outputs.has_job == 'true'
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.job.outputs.has_job == 'true'
+        with:
+          path: _release_site
+      - name: Publish tested release artifact
+        if: steps.job.outputs.has_job == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Store successful release and history
+        if: success() && steps.job.outputs.has_job == 'true'
+        run: python3 scripts/release-manager/worker.py complete
+      - name: Record deployment failure
+        if: failure() && steps.job.outputs.has_job == 'true'
+        run: python3 scripts/release-manager/worker.py fail

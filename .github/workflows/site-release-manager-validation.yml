@@ -1,0 +1,35 @@
+name: Site release manager checks
+on:
+  pull_request:
+    paths:
+      - 'admin.html'
+      - 'admin-updates.html'
+      - 'styles/beagu-admin-updates-v1.css'
+      - 'js/beagu-admin-updates-v1.js'
+      - '.github/workflows/beagu-release-controller.yml'
+      - '.github/workflows/deploy-github-pages-direct.yml'
+      - 'scripts/release-manager/**'
+      - 'supabase/migrations/20261121_site_release_manager.sql'
+      - 'supabase/functions/beagu-release-manager-v1/**'
+      - 'tests/site-release-center.mjs'
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation
+        run: |
+          node --check js/beagu-admin-updates-v1.js
+          python3 -m py_compile scripts/release-manager/worker.py
+      - name: Test approval and security invariants
+        run: |
+          node --test tests/site-release-center.mjs
+          python3 tests/site-release-packaging.py
