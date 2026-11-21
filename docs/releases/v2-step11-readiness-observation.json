@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "scope": "release-v2-step11-readiness-observation",
+  "observed_local_date": "2026-11-22",
+  "baseline_pr": 219,
+  "baseline_commit_sha": "6d75cc08a95e713cfddec6b8114d2785dc6217f8",
+  "source": "Read-only Supabase catalog inspection and GitHub PR state",
+  "staging_project": "ycwuugggqbunlbwuzvbx",
+  "staging_metadata": {
+    "public_tables_observed": 0,
+    "auth_tables_observed": 27,
+    "storage_tables_observed": 10,
+    "edge_function_slugs_observed": [
+      "beagu-test-v1",
+      "beagu-stage-preview"
+    ],
+    "release_manager_edge_function_present": false
+  },
+  "candidate": {
+    "running_from": "integration/release-v2-step11-readonly-integration-qa-20261122",
+    "code_integrity": "check_via_ci",
+    "offline_preview_packaging": "check_via_ci",
+    "edge_types": "check_via_ci",
+    "existing_deployed_preview_http": "check_via_ci_read_only_existing_version",
+    "sandbox_db_migrations": "blocked_no_staging_business_schema",
+    "sandbox_rls": "blocked_no_staging_business_schema",
+    "sandbox_auth_integration": "blocked_no_staging_business_schema",
+    "deployed_candidate_browser_e2e": "not_performed",
+    "staging_candidate_deployed": false,
+    "production_candidate_deployed": false,
+    "owner_approval": false
+  },
+  "release_gate": "blocked",
+  "blocker_codes": [
+    "staging_public_schema_missing",
+    "staging_release_edge_function_missing",
+    "sandbox_migration_and_rls_unverified",
+    "candidate_not_deployed_to_isolated_preview",
+    "auth_and_browser_e2e_unverified",
+    "owner_approval_missing"
+  ],
+  "evidence_warning": "This JSON is advisory and must never be trusted as an authorization token or deployed status. Fresh server-side evidence is required."
+}

@@ -19,6 +19,9 @@ on:
       - 'tests/release-conflict-preflight.mjs'
       - 'tests/release-step9-merge-tree.mjs'
       - 'tests/release-step10-security-invariants.mjs'
+      - 'tests/release-step11-offline-integration.py'
+      - 'tests/release-step11-readiness.mjs'
+      - 'docs/releases/v2-step11-readiness-observation.json'
       - 'tests/staging-http-smoke.py'
       - 'docs/releases/v2-step9-integration-manifest.json'
   workflow_dispatch:
@@ -34,6 +37,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check integrated Edge API and dependency graph
+        run: deno check supabase/functions/beagu-release-manager-v1/index.ts
       - name: Syntax validation
         run: |
           node --check js/beagu-admin-updates-v1.js
@@ -47,4 +55,13 @@ jobs:
           node --test tests/release-conflict-preflight.mjs
           node --test tests/release-step9-merge-tree.mjs
           node --test tests/release-step10-security-invariants.mjs
+          node --test tests/release-step11-readiness.mjs
           python3 tests/site-release-packaging.py
+          python3 tests/release-step11-offline-integration.py
+      - name: Read-only HTTP smoke of currently published site and preview (not this PR)
+        env:
+          BEAGU_SITE_ORIGIN: https://baeguindex.com
+          BEAGU_SMOKE_ATTEMPTS: '1'
+          BEAGU_SMOKE_TIMEOUT: '9'
+          BEAGU_SMOKE_RETRY_SECONDS: '0'
+        run: python3 tests/staging-http-smoke.py
