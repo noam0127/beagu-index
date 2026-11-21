@@ -1,0 +1,30 @@
+name: v1.1.0 — email confirmation callback QA
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-email-confirmation.yml'
+      - 'js/beagu-auth-confirmation-v1.js'
+      - 'styles/beagu-auth-confirmation-v1.css'
+      - 'tests/v1.1.0-email-confirmation.test.mjs'
+      - 'challenge.html'
+      - 'postit.html'
+      - 'admin-enroll.html'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  email-confirmation:
+    name: Auth callback handling with local server fakes (no remote accounts)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run callback security and UX regression tests
+        run: node --test tests/v1.1.0-email-confirmation.test.mjs
