@@ -61,5 +61,6 @@ jobs:
           node tests/2026-three-stage-review-flow.mjs
           node tests/2026-nonscorable-core-coverage.mjs
           node tests/2026-qa-read-only-preflight.mjs
+          node tests/2026-staging-sandbox-static.mjs
           node scripts/test-challenge-referral-stage2.cjs
           node tests/lv1-percentile-chart-parity.mjs
