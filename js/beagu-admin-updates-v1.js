@@ -126,7 +126,11 @@
       dep.state==="merged_other_base"?"다른 브랜치 병합":"진행 중")+")");
     addText(item,"div","선행 작업: "+parts.join(", "),"subtle");
    }
-   addText(item,"div","버전 포함·시험 완료·운영 반영: 미검증","subtle");
+   const evidenceUnverified=pr.release_inclusion==="unverified"&&
+    pr.staging_verification==="not_checked"&&pr.production_verification==="not_checked";
+   addText(item,"div",evidenceUnverified?
+    "버전 포함·시험 완료·운영 반영: 미검증":
+    "릴리스·배포 상태는 검증 가능한 별도 증빙이 필요합니다.","subtle");
    root.append(item);
   }
   const mergedPrs=Array.isArray(workInbox.recently_merged)?workInbox.recently_merged:[];
