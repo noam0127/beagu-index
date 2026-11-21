@@ -10,7 +10,8 @@
       "allowed_redirect_urls": [
         "https://baeguindex.com/challenge.html",
         "https://baeguindex.com/postit.html",
-        "https://baeguindex.com/admin-enroll.html"
+        "https://baeguindex.com/admin-enroll.html",
+        "https://baeguindex.com/password-reset.html"
       ],
       "dashboard": "https://supabase.com/dashboard/project/snvzwrexuqavnfvzgxqj/auth/url-configuration",
       "configured_verified": false
@@ -21,7 +22,8 @@
       "allowed_redirect_urls": [
         "https://baeguindex.com/_preview/challenge.html",
         "https://baeguindex.com/_preview/postit.html",
-        "https://baeguindex.com/_preview/admin-enroll.html"
+        "https://baeguindex.com/_preview/admin-enroll.html",
+        "https://baeguindex.com/_preview/password-reset.html"
       ],
       "dashboard": "https://supabase.com/dashboard/project/ycwuugggqbunlbwuzvbx/auth/url-configuration",
       "configured_verified": false
@@ -31,7 +33,8 @@
     "Email templates must honor RedirectTo when customized rather than hardcode SiteURL.",
     "Any callback route added in stage 6 requires matching exact allowlist URL and separate review.",
     "Do not enable wildcard redirect URLs for the production project.",
-    "Staging on the same host must use separate Supabase project ID and controlled isolated browser testing."
+    "Staging on the same host must use separate Supabase project ID and controlled isolated browser testing.",
+    "Password recovery redirect route added in stage 8 is code-only until Supabase dashboard configuration is verified."
   ],
   "operational_change_performed": false,
   "backup_gate": "No Supabase Auth settings mutation until independently verified encrypted backup and isolated restore."
