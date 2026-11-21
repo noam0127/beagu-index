@@ -118,17 +118,22 @@ Deno.serve(async (req) => {
         return json(origin, 503, { error: 'REFERRAL_NOT_READY' });
       return json(origin, 503, { error: 'REFERRAL_UNAVAILABLE' });
     }
-    if (Number(enrollment?.level) === 2 && (Number(session.access_level) < 2 || !session.identity_visitor_id)) {
-      // A credited referral grants earned Lv2 without account creation.
-      // The visitor identity binds one pseudonymous Post-it writer across sessions.
-      // Bind the verified challenge visitor, not an account identity. This supports
-      // stable author quotas without signup and permits immediate revocation.
-      const { error: upgradeError } = await db.from('beagu_level_sessions')
-        .update({ access_level: 2, identity_campaign: '2026', identity_visitor_id: visitor })
-        .eq('token_sha256', await digest(sessionToken))
-        .lte('access_level', 2);
-      if (upgradeError)
-        return json(origin, 503, { error: 'SESSION_UPGRADE_UNAVAILABLE' });
+    // Referral credit alone MUST NOT activate Lv2. Own 2026 form response
+    // attestation and the current quality-approved referral event are
+    // independently evaluated by the server-only canonical resolver.
+    const {data:verifiedLevel,error:levelError}=await db.rpc(
+      'beagu_2026_verified_visitor_level_v1',{p_visitor:visitor});
+    if(levelError)return json(origin,503,{error:'VERIFICATION_UNAVAILABLE'});
+    const tier=[1,2].includes(Number(verifiedLevel))?Number(verifiedLevel):0;
+    if(tier>=1&&
+      (Number(session.access_level)!==tier||!session.identity_visitor_id)) {
+      const {error:upgradeError}=await db.from('beagu_level_sessions')
+        .update({access_level:tier,identity_campaign:'2026',
+          identity_visitor_id:visitor})
+        .eq('token_sha256',await digest(sessionToken))
+        .lte('access_level',2);
+      if(upgradeError)
+        return json(origin,503,{error:'SESSION_UPGRADE_UNAVAILABLE'});
     }
     const { data: shortCode, error: shortError } = await db.rpc('beagu_referral_short_issue', {
       p_hash: await digest(token),
@@ -138,9 +143,10 @@ Deno.serve(async (req) => {
     return json(origin, 200, {
       shortLink: 'https://baeguindex.com/r/#' + shortCode,
       link: 'https://baeguindex.com/survey.html?ref=' + token,
-      level: Number(enrollment?.level) === 2 ? 2 : 1,
+      level: tier,
+      ownResponseVerified: tier>=1,
       validReferrals: Number(enrollment?.validReferrals) === 1 ? 1 : 0,
-      provisional: Number(enrollment?.level) === 2,
+      provisional: tier===2,
     });
   } catch (err) {
     console.error('referral link unexpected error', err instanceof Error ? err.name : 'Unknown');
