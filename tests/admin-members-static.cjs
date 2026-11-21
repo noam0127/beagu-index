@@ -19,7 +19,7 @@ assert.match(access,/BeaguMembersAdmin\?\.mount\(proof\.role\)/);
 assert.match(access,/BeaguMembersAdmin\?\.reset\(\)/);
 assert.match(backend,/beagu_admin_active_mfa_session/);
 assert.match(backend,/db\.auth\.getUser\(token\)/);
-assert.match(backend,/actor\.role !== "owner"/);
+assert.match(backend,/actor\.role\s*!==\s*"owner"/);
 assert.match(backend,/cannot_moderate_admin/);
 assert.match(backend,/cannot_moderate_self/);
 assert.match(backend,/auth\.admin\.listUsers/);
