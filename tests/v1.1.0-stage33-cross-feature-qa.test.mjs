@@ -184,7 +184,7 @@ test('stage33: server 500 and browser back-forward cache fail closed across the 
   await h.reply(0,{level:2});
   h.trigger('beagu:lv3-session-verification',{verified:true});
   assert.equal(h.homeHost.dataset.currentTier,'3');
-  h.trigger('pageshow',{persisted:true});
+  h.dispatch({type:'pageshow',persisted:true});
   assertUnknown(h);
   await h.reply(1,{error:'fail'},500);
   assert.equal(h.homeHost.dataset.currentTier,'unknown');
