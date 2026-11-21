@@ -1,0 +1,53 @@
+{
+  "release": "v1.1.0",
+  "captured_date": "2026-11-21",
+  "scope": "pre-change source/artifact rollback baseline; not a database data backup",
+  "repo": "noam0127/beagu-index",
+  "production": {
+    "version": "관리자 배포 시스템 1.0",
+    "sha": "5950755c8174788d7bb1fa879be73a15f25d9ae2",
+    "ref": "backup/v1.1.0-pre-production-20261121",
+    "url": "https://baeguindex.com/"
+  },
+  "staging": {
+    "version": "1.0.1",
+    "sha": "4daf9d6f7d30baba2224f12688959dbb5a15d178",
+    "ref": "backup/v1.1.0-pre-staging-20261121",
+    "url": "https://baeguindex.com/_preview/"
+  },
+  "database": {
+    "production_ref": "snvzwrexuqavnfvzgxqj",
+    "staging_ref": "ycwuugggqbunlbwuzvbx",
+    "organization_plan": "free",
+    "recovery_export_verified": false,
+    "supabase_managed_backup_verified": false,
+    "pitr_verified": false,
+    "writes_blocked_until_backup_verified": true,
+    "production_schema": {
+      "public_base_tables": 49,
+      "private_base_tables": 48,
+      "auth_user_count": 3,
+      "columns_md5": "d9464a16290839e44dfe8746ffa0f07a",
+      "policies_md5": "5b87f07ab03d2076afbd2f581ea64c69"
+    },
+    "staging_schema": {
+      "public_base_tables": 0,
+      "private_base_tables": 1,
+      "auth_user_count": 0,
+      "columns_md5": "31555cfaeb9aa24bcb39687dfc308d88",
+      "policies_md5": null
+    }
+  },
+  "checks": {
+    "source_sha_pins_verified": true,
+    "code_restore_test": "pending-CI",
+    "staging_restore_test": "pending-CI",
+    "database_data_restore_test": "NOT_VERIFIED"
+  },
+  "restrictions": [
+    "Do not write production or staging database schema/data before encrypted off-site logical backup is independently verified",
+    "Do not publish this manifest as proof of a restorable data backup",
+    "Production release and any rollback require explicit administrator approval",
+    "Git SHA rollback does not roll back Supabase schema, Auth, or other user data"
+  ]
+}
