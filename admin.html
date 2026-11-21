@@ -182,11 +182,30 @@
           <article><h4>이메일 미인증</h4><strong id="adminMembersUnconfirmed">—</strong></article>
           <article><h4>이용 정지</h4><strong id="adminMembersSuspended">—</strong></article>
         </div>
+        <div class="metrics admin-member-metrics" aria-label="회원 및 챌린지 집계">
+          <article><h4>이메일 인증 계정</h4><strong id="adminMembersConfirmed">—</strong></article>
+          <article><h4>최근 30일 로그인 계정</h4><strong id="adminMembersRecentLogin">—</strong></article>
+          <article><h4>활성 회원 연결 기록</h4><strong id="adminMembersLinked">—</strong></article>
+          <article><h4>2026 챌린지 코드</h4><strong id="adminChallengeCodes">—</strong></article>
+          <article><h4>2026 추천 프로필</h4><strong id="adminReferralProfiles">—</strong></article>
+          <article><h4>유효 추천 조건 충족 프로필</h4><strong id="adminVerifiedReferrers">—</strong></article>
+        </div>
+        <p class="subtle">집계 단위가 다릅니다. 로그인은 최근 30일 접속 기록이며 현재 접속 중인 사용자 수가 아닙니다. 코드·추천 프로필 수는 회원 수가 아니며, 추천 프로필의 유효 여부는 조회 시점 기준입니다.</p>
         <div class="ranking-card">
           <form id="adminMembersSearchForm" class="admin-members-search">
             <label for="adminMembersSearch">회원 검색</label>
             <input id="adminMembersSearch" type="search" maxlength="100"
               placeholder="이메일 또는 회원 ID" autocomplete="off">
+            <label for="adminMembersFilter">상태</label>
+            <select id="adminMembersFilter" aria-label="회원 상태 필터">
+              <option value="all">전체</option><option value="confirmed">이메일 인증</option>
+              <option value="unconfirmed">이메일 미인증</option><option value="suspended">이용 정지</option>
+            </select>
+            <label for="adminMembersSort">정렬</label>
+            <select id="adminMembersSort" aria-label="회원 정렬">
+              <option value="newest">최신 가입순</option><option value="oldest">오래된 가입순</option>
+              <option value="email">이메일순</option>
+            </select>
             <button type="submit" class="primary">검색</button>
             <button type="button" class="secondary" id="adminMembersClear">초기화</button>
             <button type="button" class="secondary" id="adminMembersReload">새로고침</button>
@@ -195,8 +214,8 @@
           <div class="admin-members-scroll" role="region" aria-label="회원 목록" tabindex="0">
             <table class="admin-members-table">
               <thead><tr>
-                <th scope="col">이메일 · ID</th><th scope="col">유형</th>
-                <th scope="col">인증</th><th scope="col">Lv2 연결</th>
+                <th scope="col">이메일(일부 숨김)</th><th scope="col">유형</th>
+                <th scope="col">인증</th><th scope="col">계정 연결</th>
                 <th scope="col">상태</th><th scope="col">조회</th>
               </tr></thead>
               <tbody id="adminMembersRows">
