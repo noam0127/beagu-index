@@ -29,6 +29,17 @@ const MAX_EVIDENCE_AGE_MS=2*60*60*1000;
  * Data provenance must be verified by the server BEFORE constructing this object.
  * A caller setting fields to "passed" cannot itself confer permission.
  */
+/**
+ * @typedef {{state?:string,source?:string,head_sha?:string,verified_at?:string}} ReleaseProof
+ * @typedef {{
+ *  mainSha?:string|null,reviewedSha?:string|null,
+ *  candidateSha?:string|null,integratedSha?:string|null,
+ *  evidence?:Record<string,ReleaseProof>|null,
+ *  job?:{status?:string,action?:string,to_sha?:string|null}|null,
+ *  ownerApproved?:boolean,freezeActive?:boolean,now?:number
+ * }} ReleaseGateInput
+ * @param {ReleaseGateInput} [options]
+ */
 export function evaluateReleaseSnapshotGate({
  mainSha=null,reviewedSha=null,candidateSha=null,integratedSha=null,
  evidence=null,job=null,ownerApproved=false,freezeActive=true,
