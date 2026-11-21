@@ -378,6 +378,7 @@
     $("adminTotp").value = "";
     show("adminDashboard", "관리자 인증 완료 · 권한: " + proof.role);
     window.Beagu2026ReviewAdmin?.mount(proof.role);
+    void window.BeaguHomeNoticeAdmin?.mount();
     await loadMetrics();
     if(liveTimer===null)liveTimer=window.setInterval(()=>{
       if(!document.hidden&&!$("adminDashboard").hidden)refreshLiveSafely();
@@ -504,6 +505,7 @@
       $("adminReferralFunnelStatus").textContent="인증 후 표시됩니다.";
       $("adminReferralCodeSearch").value="";
       window.Beagu2026ReviewAdmin?.reset();
+      window.BeaguHomeNoticeAdmin?.reset();
       $("adminPassword").value = "";
       $("adminTotp").value = "";
       $("adminQrWrap").hidden = true;
