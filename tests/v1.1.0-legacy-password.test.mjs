@@ -63,6 +63,7 @@ function harness(filename,{level=false}={}){
     Event:class{constructor(type){this.type=type}},queueMicrotask,
     fetch:async()=>{calls.fetch++;return {ok:true,status:200,async json(){return {level:2}}}}
   };
+  vm.runInNewContext(getSource('js/beagu-account-mode-v1.js'),scope,{timeout:1500});
   vm.runInNewContext(getSource(filename),scope,{timeout:1500});
   return {byId,auth,calls,listeners,window};
 }
@@ -119,12 +120,15 @@ test('postit: signup rejects legacy-short passwords and permits 10+ password',as
   await flush(); // prevent initial UI render from overwriting validation feedback
   h.byId('postitAccountEmail').value='user@example.test';
   h.byId('postitAccountPassword').value=existingPassword;
-  await h.byId('postitAccountSignup').listener('click')();
+  h.byId('postitAccountSignup').listener('click')();
+  await flush();
+  assert.equal(h.calls.signUp.length,0);
+  await submit(h.byId('postitAccountForm').listener('submit'));
   await flush();
   assert.equal(h.calls.signUp.length,0);
   assert.match(h.byId('postitAccountStatus').textContent,/10자 이상의 새 비밀번호/);
   h.byId('postitAccountPassword').value=signupPassword;
-  await h.byId('postitAccountSignup').listener('click')();
+  await submit(h.byId('postitAccountForm').listener('submit'));
   await flush();
   assert.equal(h.calls.signUp.length,1);
   assert.equal(h.calls.signUp[0].password,signupPassword);
@@ -166,7 +170,8 @@ test('HTML browser validation cannot pre-block existing 10-char-or-less password
     assert.match(tag,/required/);
   }
   const challenge=getSource('js/challenge-member-auth-v1.js');
-  assert.match(challenge,/password\.minLength=mode==='signup'\?10:1/);
+  assert.match(getSource('js/beagu-account-mode-v1.js'),/password\.minLength=next===MODES\.SIGNUP\?MIN_NEW_PASSWORD:1/);
+  assert.match(challenge,/accountMode\.setMode\(next\)/);
   assert.doesNotMatch(challenge,/secret\.length<10\)\s*\{/);
   const postit=getSource('js/postit-account-v1.js');
   assert.match(postit,/action==='signup'&&password\.length<10/);
