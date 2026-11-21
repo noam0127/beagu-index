@@ -105,6 +105,7 @@ test('challenge: new signup still rejects short passwords, accepts 10+ only',asy
 
 test('postit: existing short password is passed to Supabase Auth',async()=>{
   const h=harness('js/postit-account-v1.js',{level:false});
+  await flush(); // finish initial account status refresh before user input
   h.byId('postitAccountEmail').value='user@example.test';
   h.byId('postitAccountPassword').value=existingPassword;
   await submit(h.byId('postitAccountForm').listener('submit'));
@@ -115,6 +116,7 @@ test('postit: existing short password is passed to Supabase Auth',async()=>{
 
 test('postit: signup rejects legacy-short passwords and permits 10+ password',async()=>{
   const h=harness('js/postit-account-v1.js');
+  await flush(); // prevent initial UI render from overwriting validation feedback
   h.byId('postitAccountEmail').value='user@example.test';
   h.byId('postitAccountPassword').value=existingPassword;
   await h.byId('postitAccountSignup').listener('click')();
@@ -131,6 +133,7 @@ test('postit: signup rejects legacy-short passwords and permits 10+ password',as
 
 test('admin enrollment: legacy-short login has no new-signup policy check',async()=>{
   const h=harness('js/beagu-admin-enroll-v1.js');
+  await flush(); // await initial restore() message before submitting login
   h.byId('enrollLoginEmail').value='owner@example.test';
   h.byId('enrollLoginPassword').value=existingPassword;
   await submit(h.byId('enrollLoginForm').listener('submit'));
@@ -141,6 +144,7 @@ test('admin enrollment: legacy-short login has no new-signup policy check',async
 
 test('admin enrollment: new signup retains its independent 16-character policy',async()=>{
   const h=harness('js/beagu-admin-enroll-v1.js');
+  await flush(); // await initial restore() message before signup validation
   h.byId('enrollRegisterEmail').value='owner@example.test';
   h.byId('enrollRegisterPassword').value=signupPassword;
   h.byId('enrollRegisterConfirm').value=signupPassword;
