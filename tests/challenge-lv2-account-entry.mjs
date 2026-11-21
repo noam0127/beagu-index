@@ -8,16 +8,16 @@ const member=read('js/challenge-member-auth-v1.js');
 const css=read('styles/challenge-member-auth-v1.css');
 assert.doesNotThrow(()=>new vm.Script(member));
 assert.doesNotThrow(()=>new vm.Script(ui));
-for(const id of ['challengeMemberSignupSection','challengeMemberSignup','challengeMemberOverlay',
+for(const id of ['challengeMemberOverlay',
   'challengeMemberDialog','challengeMemberTitle','challengeMemberDescription','challengeMemberForm',
   'challengeMemberEmail','challengeMemberPassword','challengeMemberSubmit','challengeMemberSwitch',
   'challengeMemberClose','challengeMemberMessage','challengeMemberLink','challengeMemberSignOut',
   'challengeMemberSmsFields','challengeMemberSmsPhone','challengeMemberSmsConsent','challengeMemberSmsUnsubscribe'])
  assert.ok(html.includes('id="'+id+'"'),'Missing actual account UI element '+id);
-assert.ok(html.indexOf('id="certificate"')<html.indexOf('id="challengeMemberSignupSection"'));
-assert.ok(html.indexOf('id="challengeMemberSignupSection"')>html.indexOf('id="identityCode"'));
+assert.ok(!html.includes('id="challengeMemberSignupSection"'),'Removed signup card must not remain');
+assert.ok(!html.includes('Lv2 달성 · 정식 계정으로 기능 확장'));
+assert.ok(!html.includes('id="challengeMemberSignup"'));
 assert.ok(html.includes('data-html2canvas-ignore="true"'),'Private member controls outside certificate capture');
-assert.match(html,/id="challengeMemberSignupSection"[^>]*hidden/);
 assert.match(html,/id="challengeMemberOverlay"[^>]*hidden/);
 assert.match(html,/js\/challenge-member-auth-v1\.js\?v=/);
 assert.match(html,/styles\/challenge-member-auth-v1\.css\?v=/);
@@ -32,7 +32,7 @@ assert.match(member,/client\.auth\.getUser\(\)/);
 assert.match(member,/writer_status/);
 assert.match(member,/action:'link_member',deviceSecret:original/);
 assert.match(member,/await serverLevel\(\)/);
-assert.match(member,/signupSection\.hidden=!tier2/);
+assert.ok(!member.includes('signupSection'),'Signup card script references removed');
 assert.match(member,/badge\?\.dataset\.level==='2'/);
 assert.ok(!member.includes('localStorage.setItem(DEVICE_KEY'),'Never mint a new device credential');
 assert.match(css,/\[hidden\]\{display:none!important\}/);
@@ -52,7 +52,7 @@ class Fake {
  querySelectorAll(){return []}
  closest(){return null}
 }
-const ids=['challengeIdentityPanel','challengeMemberSignup','challengeMemberSignupSection',
+const ids=['challengeIdentityPanel',
  'challengeMemberOverlay','challengeMemberDialog','challengeMemberTitle',
  'challengeMemberDescription','challengeMemberForm','challengeMemberEmail',
  'challengeMemberPassword','challengeMemberSubmit','challengeMemberSwitch',
@@ -77,7 +77,7 @@ const client={auth:{
 const browser={
  window:{supabaseClient:client,addEventListener:(name,fn)=>{events[name]=fn},
   dispatchEvent:e=>events[e.type]?.(e)},
- document:{getElementById:id=>elements[id]||null,activeElement:elements.challengeMemberSignup,
+ document:{getElementById:id=>elements[id]||null,activeElement:elements.challengeIdentityPanel,
   body:{classList:{add(){},remove(){}}},
   addEventListener:(name,fn)=>{localEvents[name]=fn}},
  sessionStorage:levelStore,localStorage:localStore,
@@ -93,12 +93,11 @@ const browser={
  }
 };
 vm.runInNewContext(member,browser);
-assert.equal(elements.challengeMemberSignupSection.hidden,true,'Lv1 must not see signup');
+assert.equal(elements.challengeMemberOverlay.hidden,true,'Lv1 starts with modal hidden');
 elements.beaguLevelState.dataset.level='2';
 events['beagu:level-state-updated']?.({detail:{level:2}});
-assert.equal(elements.challengeMemberSignupSection.hidden,false,'Verified Lv2 shows signup below code');
-await elements.challengeMemberSignup.fire('click');
-assert.equal(elements.challengeMemberOverlay.hidden,false,'Signup click must open actual modal');
+events['beagu:challenge-account-open']?.({detail:{mode:'signup'}});
+assert.equal(elements.challengeMemberOverlay.hidden,false,'Existing account event must open actual modal');
 assert.equal(elements.challengeMemberTitle.textContent,'Lv2 회원가입');
 elements.challengeMemberEmail.value='teacher@example.com';
 elements.challengeMemberPassword.value='safe-password-test';
@@ -135,6 +134,5 @@ await elements.challengeMemberSignOut.fire('click');
 assert.equal(logouts,1);
 elements.beaguLevelState.dataset.level='0';
 events['beagu:level-state-updated']?.({detail:{level:0}});
-assert.equal(elements.challengeMemberSignupSection.hidden,true,'Revoked level hides signup');
 assert.equal(elements.challengeMemberOverlay.hidden,true,'Revoked level closes login dialog');
-console.log('PASS: Lv2-only signup under code; real login modal/Auth calls and original-device linking');
+console.log('PASS: signup CTA removed; Lv2 account modal/Auth calls and original-device linking preserved');
