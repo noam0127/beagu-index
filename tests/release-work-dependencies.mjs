@@ -122,6 +122,19 @@ test("truncated GitHub PR list cannot be considered fully integration-ready",asy
  assert.equal(graph.dependency_summary.inspection_complete,false);
 });
 
+test("invalid PR records make the graph incomplete, never a false green status",async()=>{
+ const collected=await collectGitHubWorkInbox(async()=>[
+  raw(1),
+  {...raw(2),head:{sha:"not-a-valid-sha",ref:"invalid"}}
+ ]);
+ const graph=annotateWorkDependencies(collected);
+ assert.equal(graph.status,"partial");
+ assert.equal(graph.reason,"invalid_pr_metadata");
+ assert.equal(graph.skipped_invalid,1);
+ assert.equal(get(graph,1).integration_gate,"cannot_verify_full_inbox");
+ assert.equal(graph.dependency_summary.inspection_complete,false);
+});
+
 test("normalizer does not retain untrusted PR body text or incidental references",async()=>{
  const input=raw(42,{body:"A text that may contain private details.\nDepends on: #13"});
  const i=await inbox(input);
