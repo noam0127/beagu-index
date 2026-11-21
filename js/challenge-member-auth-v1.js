@@ -29,12 +29,13 @@ const DEVICE_KEY='beagu-referral-device-secret-v1';
 const LEVEL_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
 const POSTIT_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-postit-api-v1';
 let tier2=false,mode='signin',busy=false,focusReturn=null,serial=0;
-if(!window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set)return;
+if(!window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create)return;
 const setAccountState=state=>window.BeaguAccountStatus.set(message,state);
 const accountMode=window.BeaguAccountMode.create({
  form,title,description,password,submit,switchButton:switchMode,
  smsFields,smsPhone,smsConsent,forgot:byId('challengeMemberForgot')
 });
+const restored=window.BeaguSessionRestore.create({client,getLevelToken:()=>levelToken(),levelUrl:LEVEL_API,request:(...args)=>fetch(...args)});
 const levelToken=()=>{try{return sessionStorage.getItem(SESSION_KEY)||''}catch{return ''}};
 const deviceProof=()=>{
  try{const v=localStorage.getItem(DEVICE_KEY)||'';return /^[a-f0-9]{64}$/.test(v)?v:''}
@@ -56,22 +57,10 @@ function paintMode(next){
 }
 
 async function serverLevel(){
- const token=levelToken();
- if(!tier2||!/^[a-f0-9]{64}$/.test(token))return false;
- try{
-  const r=await fetch(LEVEL_API,{method:'POST',cache:'no-store',
-   headers:{'Content-Type':'application/json','X-Beagu-Session':token},
-   body:JSON.stringify({action:'verify'})});
-  const data=await r.json().catch(()=>({}));
-  return r.ok&&Number(data.level)===2&&levelToken()===token;
- }catch{return false}
+ return tier2&&await restored.level();
 }
 async function sessionIdentity(){
- const {data,error}=await client.auth.getSession();
- if(error||!data?.session?.access_token)return null;
- const {data:checked,error:checkError}=await client.auth.getUser();
- if(checkError||!checked?.user||checked.user.is_anonymous)return null;
- return {user:checked.user,token:data.session.access_token};
+ return restored.identity();
 }
 async function userSession(){
  const person=await sessionIdentity();
@@ -102,6 +91,13 @@ async function showAccountStatus(){
   return;
  }
  smsUnsubscribe.hidden=person.user.user_metadata?.beagu_sms_opt_in!==true;
+ const levelStillValid=await serverLevel();
+ if(overlay.hidden||!tier2)return;
+ if(!levelStillValid){
+  connect.hidden=true;
+  setAccountState('level-required');
+  return;
+ }
  const linked=await linkedStatus(person.token).catch(()=>false);
  if(overlay.hidden||!tier2)return;
  if(linked){
