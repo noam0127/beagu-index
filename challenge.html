@@ -299,7 +299,10 @@
       <label for="challengeMemberPassword">비밀번호</label>
       <input id="challengeMemberPassword" type="password" autocomplete="current-password" placeholder="기존 비밀번호"
         minlength="1" maxlength="128" required>
-      <div id="challengeMemberSmsFields" class="challenge-member-sms" role="group"
+      
+      <button id="challengeMemberSubmit" class="challenge-member-primary" type="submit">로그인하기</button>
+    </form>
+<div id="challengeMemberSmsFields" class="challenge-member-sms" role="group"
          aria-labelledby="challengeMemberSmsHeading" hidden>
         <strong id="challengeMemberSmsHeading">문자 소식 안내 (선택)</strong>
         <label class="challenge-member-sms-check" for="challengeMemberSmsCollectionConsent">
@@ -314,9 +317,11 @@
         <input id="challengeMemberSmsPhone" type="tel" inputmode="numeric" autocomplete="off"
           placeholder="010-1234-5678" maxlength="13" aria-describedby="challengeMemberSmsNotice" disabled>
         <p id="challengeMemberSmsNotice">수집 항목: 휴대폰번호 · 이용 목적: 배구지수 설문·서비스 소식 및 광고성 문자 발송 · 보유 기간: 수신 동의 철회 또는 회원탈퇴 시까지. 두 항목 모두 동의해야 번호를 입력할 수 있습니다. 동의하지 않아도 회원가입·서비스 이용에 불이익이 없습니다. 로그인 후 동의를 철회할 수 있습니다. 번호 확인 전에는 문자를 발송하지 않습니다.</p>
-      </div>
-      <button id="challengeMemberSubmit" class="challenge-member-primary" type="submit">로그인하기</button>
-    </form>
+      
+<button id="challengeMemberSmsSave" type="button">문자 수신 신청하기</button>
+<p id="challengeMemberSmsStatus" role="status" aria-live="polite">이메일 인증 후 로그인하면 문자 수신을 신청할 수 있습니다.</p>
+</div>
+
     <button id="challengeMemberSwitch" class="challenge-member-secondary" type="button">계정이 없어요 · 회원가입</button>
     <a id="challengeMemberForgot" href="password-reset.html" class="beagu-forgot-link">비밀번호를 잊으셨나요?</a>
     <button id="challengeMemberLink" class="challenge-member-secondary" type="button" hidden>원래 기기 인증 · Lv2 연결</button>
