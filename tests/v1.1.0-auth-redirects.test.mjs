@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const source=fs.readFileSync('js/beagu-auth-return-v1.js','utf8');
 const matrix=JSON.parse(fs.readFileSync('docs/releases/v1.1.0-auth-redirect-matrix.json','utf8'));
 const APP='https://baeguindex.com';
-const names={challenge:'challenge.html',postit:'postit.html',adminEnroll:'admin-enroll.html'};
+const names={challenge:'challenge.html',postit:'postit.html',adminEnroll:'admin-enroll.html',passwordReset:'password-reset.html'};
 const htmls={
  challenge:['challenge.html','js/challenge-member-auth-v1.js'],
  postit:['postit.html','js/postit-account-v1.js'],
@@ -29,7 +29,7 @@ test('production redirect URLs and staging paths agree exactly with required Sup
   const helper=loadHelper(origin+'challenge.html');
   const resolved=Object.entries(names).map(([name])=>helper.resolve(name));
   assert.deepEqual(resolved,target.allowed_redirect_urls);
-  assert.equal(new Set(resolved).size,3);
+  assert.equal(new Set(resolved).size,4);
   for(const url of resolved) {
    const parsed=new URL(url);
    assert.equal(parsed.origin,APP);
