@@ -126,7 +126,26 @@
       row("Lv2 계정 연결", member.lv2_account_linked ? "연결 완료 · " + date(member.lv2_linked_at) : "연결 기록 없음"),
       row("문자 안내", smsStatus(member))
     );
-    root.append(dl);
+    const challenge = info.challenge;
+    const challengeTitle = node("h5","","2026 챌린지 연결 정보");
+    root.append(dl, challengeTitle);
+    const challengeDetails = node("dl","admin-member-details");
+    if (!challenge) {
+      challengeDetails.append(row("조회 상태","조회 API 미적용 · 서버 업데이트 후 확인"));
+    } else if (!challenge.linked) {
+      challengeDetails.append(row("연결 상태","미연결 또는 유효한 Lv2 자격 없음"));
+    } else {
+      const ordinal = Number(challenge.participant_no);
+      const referrals = Number(challenge.valid_referrals);
+      const level = Number(challenge.access_level);
+      challengeDetails.append(
+        row("연결 상태","검증된 Lv2 계정"),
+        row("챌린지 순번",Number.isSafeInteger(ordinal) && ordinal > 0 ? ordinal.toLocaleString("ko-KR") + "번" : "확인 불가"),
+        row("추천 접근 레벨",Number.isInteger(level) && level >= 2 ? "Lv." + level : "확인 불가"),
+        row("유효 추천 수",Number.isSafeInteger(referrals) && referrals >= 0 ? referrals.toLocaleString("ko-KR") + "건" : "확인 불가")
+      );
+    }
+    root.append(challengeDetails);
     const logTitle = node("h5","","최근 회원 관리 기록");
     root.append(logTitle);
     const history = info.moderation_history || [];
