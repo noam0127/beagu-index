@@ -321,7 +321,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
    version:"이전 운영 버전",summary:"관리자 요청에 따라 직전 운영 배포 복원",created_by:userId};
  }else return error("invalid_action",400,origin);
  const queued=await enqueue(job);
- if("error" in queued)return error(queued.error,queued.status,origin);
+ if("error" in queued)return error(queued.error||"release_in_progress",queued.status||409,origin);
  await db.from("beagu_admin_audit_events").insert({
   actor_user_id:userId,event_type:"site_release_"+action,outcome:"success",
   details:{job_id:queued.id,target:job.target,from_sha:job.from_sha,to_sha:job.to_sha,version:job.version}
