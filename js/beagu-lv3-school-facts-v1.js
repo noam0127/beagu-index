@@ -100,7 +100,7 @@ async function load(entry){
   }
  }finally{
   entry.busy=false;
-  if(task===epoch)entry.button.disabled=false;
+  entry.button.disabled=false;
  }
 }
 function attachCard(card,school,getTier){
