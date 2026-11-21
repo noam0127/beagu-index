@@ -84,7 +84,8 @@
   el("releaseStageApply").disabled=busy||active||!s.draft_sha||s.draft_sha===s.staging_sha||!s.production_sha;
   el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
   el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
-  el("releaseProdRollback").disabled=busy||active||!prodHist.length||!prodHist[0].from_sha||prodHist[0].from_sha===s.production_sha;
+  const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
+  el("releaseProdRollback").disabled=busy||active||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||active||!s.production_sha;
   el("releaseRefresh").disabled=busy;
   renderHistory("releaseStageHistory",stageHist);
