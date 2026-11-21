@@ -48,7 +48,7 @@ test('sign-in is initially one consistent screen and does not demand a new passw
  assert.equal(e.google.hidden,false);
 });
 
-test('signup uses the same form, a 10-char minimum and exposes optional unchecked SMS',()=>{
+test('signup uses one form, retains password policy, and defers SMS to verified login',()=>{
  const {elements:e,ui}=create();
  ui.setMode('signin');
  e.password.value='old-user-secret';
@@ -69,7 +69,7 @@ test('signup uses the same form, a 10-char minimum and exposes optional unchecke
  assert.equal(e.smsConsent.checked,false);
  assert.equal(e.smsCollectionConsent.checked,false);
  assert.equal(e.smsPhone.disabled,true);
- assert.equal(e.smsFields.hidden,false);
+ assert.equal(e.smsFields.hidden,true);
  assert.equal(e.forgot.hidden,true);
  assert.equal(e.google.hidden,true);
 });
