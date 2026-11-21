@@ -11,6 +11,7 @@ on:
       - 'scripts/release-manager/worker.py'
       - 'admin-updates.html'
       - 'js/beagu-admin-updates-v1.js'
+      - 'data/public-compare-school-directory-v1.json'
 permissions:
   contents: read
   pages: write
