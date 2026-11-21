@@ -183,6 +183,7 @@
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-challenge-member-login1"></script>
 <link rel="stylesheet" href="styles/beagu-auth-confirmation-v1.css?v=20261121">
+<link rel="stylesheet" href="styles/beagu-account-status-v1.css?v=20261121-status1">
 </head>
 <body class="beagu-ui-page beagu-page-challenge">
 <p id="beaguAuthCallbackStatus" class="beagu-auth-callback-status" role="status" aria-live="polite" hidden></p>
@@ -315,13 +316,15 @@
     <button id="challengeMemberLink" class="challenge-member-secondary" type="button" hidden>원래 기기 인증 · Lv2 연결</button>
     <button id="challengeMemberSmsUnsubscribe" class="challenge-member-secondary" type="button" hidden>문자 안내 수신 동의 철회</button>
     <button id="challengeMemberSignOut" class="challenge-member-secondary" type="button" hidden>정식 계정 로그아웃</button>
-    <p id="challengeMemberMessage" class="challenge-member-message" role="status" aria-live="polite"></p>
+    <p id="challengeMemberMessage" class="challenge-member-message beagu-account-status" role="status" aria-live="polite" aria-atomic="true" data-state="signin-required"></p>
+    <p class="beagu-account-steps" aria-label="계정 인증 진행 순서">진행 순서: 회원가입 요청 → 이메일 인증 → 로그인 → Lv2 참여코드·기기 연결. Lv3는 별도 서버 검증 후 적용됩니다.</p>
   </section>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/beagu-auth-return-v1.js?v=20261121-url1"></script>
 <script src="js/beagu-account-mode-v1.js?v=20261121-mode1"></script>
+<script src="js/beagu-account-status-v1.js?v=20261121-status1"></script>
 <script src="js/beagu-auth-confirmation-v1.js?v=20261121-callback1"></script>
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
