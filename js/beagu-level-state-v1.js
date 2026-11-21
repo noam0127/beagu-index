@@ -15,6 +15,7 @@
   const VERIFY_URL='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
   let generation=0;
   let lastValidatedToken='';
+  let lv3Verified=false;
   const getToken=()=>{
     try { return sessionStorage.getItem(KEY)||''; } catch (_) { return ''; }
   };
@@ -46,17 +47,30 @@
 
     }
   };
+  const applyMemberLabel=()=>{
+    // Participation tier remains in data-level (0-2) for existing Lv2
+    // gates; an independently server-verified account can show Lv3.
+    const displayLv3=lv3Verified&&indicator.dataset.level==='2';
+    indicator.dataset.memberLevel=displayLv3?'3':'';
+    if(displayLv3){
+      indicator.textContent='Lv.3';
+      indicator.setAttribute('aria-label','현재 Lv.3 · 서버 인증된 회원 · 레벨 안내 보기');
+      indicator.title='현재 Lv.3 · 서버 인증된 회원 · 레벨 안내 보기';
+    }
+  };
   const setState=(level,label,aria,provisional=false)=>{
     indicator.dataset.provisional=provisional?'true':'false';
     indicator.dataset.level=level;
     indicator.textContent=label;
     indicator.setAttribute('aria-label',aria);
     indicator.title=aria;
+    applyMemberLabel();
     syncLevelCards(level,provisional);
     window.dispatchEvent(new CustomEvent('beagu:level-state-updated', {detail:{level:Number.isInteger(Number(level))?Number(level):null,status:level,provisional}}));
   };
   async function refresh(){
     const seq=++generation;
+    lv3Verified=false;
     const token=getToken();
     if(!token){
       lastValidatedToken='';
@@ -98,6 +112,15 @@
       setState('error','확인 불가','인증 상태 확인 불가 · 레벨 안내 보기');
     }
   }
+  window.addEventListener('beagu:lv3-session-verification',event=>{
+    // This only changes cosmetic text, never authorization or underlying
+    // participation level. Protected APIs require server-issued Lv3 token.
+    lv3Verified=event?.detail?.verified===true&&indicator.dataset.level==='2';
+    applyMemberLabel();
+    window.dispatchEvent(new CustomEvent('beagu:lv3-display-updated',{
+      detail:{verified:lv3Verified}
+    }));
+  });
   const refreshIfVisible=()=>{if(!document.hidden)void refresh();};
   window.addEventListener('beagu:level-state-change',refresh);
   window.addEventListener('beagu:challenge-access-granted',refresh);
