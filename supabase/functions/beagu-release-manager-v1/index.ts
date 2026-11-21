@@ -4,6 +4,7 @@ import {createClient} from "https://esm.sh/@supabase/supabase-js@2.58.0";
 import {createRemoteJWKSet,jwtVerify} from "https://esm.sh/jose@5.10.0";
 import {collectGitHubWorkInbox} from "./github-work-inbox.mjs";
 import {annotateWorkDependencies} from "./release-work-dependencies.mjs";
+import {inspectReleaseWorkInbox} from "./release-impact-evidence.mjs";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"",{
   auth:{persistSession:false,autoRefreshToken:false}
@@ -157,6 +158,16 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
     workInbox=annotateWorkDependencies(await collectGitHubWorkInbox(
      (page:number,perPage:number)=>github("/pulls?state=all&sort=updated&direction=desc&per_page="+perPage+"&page="+page),
      {repository:repo,perPage:100,maxPages:3}));
+    // Explicit owner-triggered impact inspection only; do not spend 15s polling
+    // requests on dozens of GitHub file and check-run API calls.
+    if(input.inspect_work===true && (workInbox as {status:string}).status!=="error"){
+     workInbox=await inspectReleaseWorkInbox(workInbox as {open:unknown[]}, {
+      fetchFiles:(pr:number,page:number,perPage:number)=>
+       github("/pulls/"+pr+"/files?per_page="+perPage+"&page="+page),
+      fetchChecks:(sha:string)=>
+       github("/commits/"+sha+"/check-runs?per_page=100")
+     },{maxPRs:6,maxPages:3});
+    }
     workInProgress=(workInbox as {open:unknown[]}).open;
    }catch{
     workInbox={status:"error",reason:"github_inbox_unavailable",open:[],recently_merged:[],merged_elsewhere:[]};

@@ -102,6 +102,13 @@
   }
   const partial=workInbox.status==="partial";
   const graph=workInbox.dependency_summary||{};
+  const impact=workInbox.impact_summary;
+  const impactStatus=el("releaseImpactStatus");
+  impactStatus.textContent=impact?
+   "수정 파일 분석 "+impact.inspected_count+"/"+impact.total_open+"개 · 완전 조회 "+
+   impact.complete+"개 · 부분/오류 "+(impact.partial+impact.error)+"개 · 미검사 "+
+   impact.not_scanned+"개 · PR 단위 CI 조회는 전체 통합 검증이 아닙니다.":
+   "변경 파일 분석은 별도 실행 전입니다. PR 수정 파일·테스트 증빙 분석 버튼을 누르세요.";
   status.textContent="GitHub PR "+(workInbox.total_seen||0)+"개 확인 · 진행 중 "+
    (workInbox.open_count||0)+"개 · main 병합 이력 "+(workInbox.merged_to_main_count||0)+"개"+
    " · 선행 작업 대기/차단 "+(graph.blocked_count||0)+"개"+
@@ -119,6 +126,29 @@
    addText(item,"span",workGateLabels[pr.integration_gate]||"의존 상태 미확인","release-pr-status");
    addText(item,"div","대상 "+(pr.base_ref||"확인 불가")+" · SHA "+short(pr.head_sha)+
     " · 수정 "+date(pr.updated_at),"subtle");
+   if(pr.impact){
+    if(pr.impact.status==="complete"||pr.impact.status==="partial"){
+     const cat=pr.impact.category_counts||{};
+     const categories=Object.entries(cat).map(([key,num])=>key+" "+num+"개");
+     addText(item,"div","변경 파일 "+pr.impact.file_count+"개 · "+
+       (categories.join(" · ")||"분류 없음")+
+       (pr.impact.status==="partial"?" · 일부만 확인됨":""),"subtle");
+     if(pr.impact.risk_flags?.length)
+      addText(item,"div","통합 검사 필요: "+pr.impact.risk_flags.join(", "),"release-pr-status");
+     if(pr.impact.tests_changed?.length)
+      addText(item,"div","테스트 파일 변경: "+pr.impact.tests_changed.slice(0,5).join(", "),"subtle");
+    }else{
+     addText(item,"div","수정 파일 분석 불가: "+(pr.impact.reason||pr.impact.status),"subtle");
+    }
+   }
+   if(pr.checks){
+    const checks=pr.checks;
+    addText(item,"div",checks.status==="observed"?
+     "해당 코드의 CI 기록: 성공 "+(checks.succeeded||0)+" · 실패 "+
+      (checks.failed||0)+" · 진행 중 "+(checks.pending||0)+
+      " (전체 기능 통합 테스트와 별개)":
+     "CI 확인: "+(checks.reason||"미확인")+" · 통합 성공으로 간주하지 않음","subtle");
+   }
    if(Array.isArray(pr.dependencies)&&pr.dependencies.length){
     const parts=pr.dependencies.map(dep=>"#"+dep.number+" ("+
      (dep.state==="merged_to_main"?"main 병합·포함 검증 필요":
@@ -219,6 +249,7 @@
    !lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||job||!pending||!(pending.files||[]).length;
   el("releaseRefresh").disabled=busy;
+  el("releaseInspectPRs").disabled=busy||!workInbox||workInbox.status==="error";
  }
  function render(data,checked=false){
   model=data;versions=data.versions||[];
@@ -258,13 +289,14 @@
   fillSelect("releaseProdSelect",versions.filter(v=>v.tested),s.production_sha);
   updateControls();
  }
- async function refresh(quiet=false){
+ async function refresh(quiet=false,inspect=false){
   if(busy)return;
   try{
-   const data=await request("status",{check_latest:!quiet});
+   if(inspect)msg("GitHub PR 수정 파일과 CI 기록을 읽기 전용으로 분석하는 중입니다.");
+   const data=await request("status",{check_latest:!quiet,inspect_work:inspect});
    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
    render(data,!quiet);
-   if(!quiet)msg("버전 목록과 자동 수집 작업을 최신 상태로 확인했습니다.");
+   if(!quiet)msg(inspect?"PR 변경 영향 분석이 끝났습니다. 불확실한 조회는 미검증으로 표시합니다.":"버전 목록과 자동 수집 작업을 최신 상태로 확인했습니다.");
   }catch(err){if(!quiet)msg("업데이트 조회 실패: "+(err.message||String(err)),true);}
  }
  async function command(action){
@@ -321,6 +353,7 @@
   ["releaseProdApply","prod_apply"],["releaseProdRollback","prod_rollback"]])
   el(id).addEventListener("click",()=>void command(action));
  el("releaseRefresh").addEventListener("click",()=>void refresh(false));
+ el("releaseInspectPRs").addEventListener("click",()=>void refresh(false,true));
  (async()=>{
   try{
    const proof=await request("verify",{},gate);
