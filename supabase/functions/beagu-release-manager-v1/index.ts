@@ -139,7 +139,10 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
   let head=null,suggested_draft=null,pending=null;
   const catalog=await releaseVersions();
-  const testedSha=new Set(stageHistory.map(h=>h.to_sha).filter(Boolean));
+  const {data:testHistory,error:testError}=await db.from("beagu_site_release_history_v1")
+   .select("to_sha").eq("target","staging").order("deployed_at",{ascending:false}).limit(1000);
+  if(testError)throw Error("history_unavailable");
+  const testedSha=new Set((testHistory||[]).map(h=>h.to_sha).filter(Boolean));
   const versionCatalog=catalog.map(v=>({...v,tested:testedSha.has(v.sha),
    on_staging:v.sha===s.staging_sha,on_production:v.sha===s.production_sha}));
   if(input.check_latest===true)try{
@@ -170,6 +173,9 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   if(existing.some(item=>item.version===version))return error("version_already_exists",409,origin);
   const main=await github("/commits/main");
   if(!SHA.test(String(main.sha||"")))return error("github_unavailable",503,origin);
+  // Fail closed when another ChatGPT session merged new work after the
+  // administrator reviewed the inbox. Never include unseen work silently.
+  if(input.expected_sha!==main.sha)return error("new_changes_detected",409,origin);
   const base=existing[0]?.sha||s.production_sha;
   if(!base||!SHA.test(base))return error("release_bootstrap_pending",409,origin);
   if(main.sha===base)return error("no_changes_since_last_version",409,origin);
