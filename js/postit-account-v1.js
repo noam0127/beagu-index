@@ -84,7 +84,7 @@ async function executeAuth(action){
    message('문자 수신을 원하시면 010으로 시작하는 11자리 번호를 입력해 주세요.');return;
   }
   const {error}=action==='signup'
-   ?await client.auth.signUp({email,password,options:{data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}})
+   ?await client.auth.signUp({email,password,options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('postit'),data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}})
    :await client.auth.signInWithPassword({email,password});
   if(error)throw error;
   $('postitAccountPassword').value='';
@@ -102,7 +102,7 @@ $('postitAccountGoogle').addEventListener('click',async()=>{
  busy=true;
  try{
   const {error}=await client.auth.signInWithOAuth({provider:'google',
-   options:{redirectTo:new URL('postit.html',location.href).href}});
+   options:{redirectTo:window.BEAGU_AUTH_RETURN.resolve('postit')}});
   if(error)throw error;
  }catch{message('Google 제공자 설정이나 리디렉션 주소를 확인해 주세요. 이메일 계정 로그인도 이용할 수 있습니다.')}
  finally{busy=false}
