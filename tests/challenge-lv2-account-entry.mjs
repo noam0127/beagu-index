@@ -28,7 +28,7 @@ assert.ok(ui.includes("if(lastLevel>=2)"));
 assert.match(ui,/else open\(\);/);
 assert.match(member,/client\.auth\.signUp\(/);
 assert.match(member,/client\.auth\.signInWithPassword\(/);
-assert.match(member,/client\.auth\.getUser\(\)/);
+assert.match(read('js/beagu-session-restore-v1.js'),/client\.auth\.getUser\(\)/);
 assert.match(member,/writer_status/);
 assert.match(member,/action:'link_member',deviceSecret:original/);
 assert.match(member,/await serverLevel\(\)/);
