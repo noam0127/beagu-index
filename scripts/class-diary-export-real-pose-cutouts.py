@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draft cutouts from exact in-repository character pose atlases; human QA mandatory."""
 from pathlib import Path
-import json, hashlib, shutil
+import json, hashlib, shutil, csv
 import numpy as np
 import cv2
 from rembg import remove, new_session
@@ -82,6 +82,14 @@ def main():
             board.paste(checker.convert('RGB'),(x,y));draw.text((x+8,y+372),label,fill=(30,30,30))
         board.save(OUT/f'contact_{1+i//25}.jpg',quality=85)
     shutil.copy2('qa/class-diary-cutout-review.html',OUT/'preview.html')
+    action_plan=json.loads(Path('data/class-diary-special-action-manifest-v1.json').read_text(encoding='utf-8'))
+    shutil.copy2('data/class-diary-special-action-manifest-v1.json',OUT/'scene-action-manifest.json')
+    with (OUT/'scene-action-usage.csv').open('w',encoding='utf-8-sig',newline='') as fp:
+        writer=csv.writer(fp)
+        writer.writerow(['character','art_id','priority','episode','action','candidate_status','approved'])
+        for item in action_plan['cuts']:
+            for episode in item['episodes']:
+                writer.writerow([item['character'],item['id'],item['priority'],episode,item['action'],item['candidateStatus'],item['approve']])
     (OUT/'manifest.json').write_text(json.dumps({'status':'draft_qa_only_model_based_v2','must_not_deploy_without_visual_approval':True,'source_blob_sha':hashes,'files':rows},ensure_ascii=False,indent=2),encoding='utf-8')
     print(f'Generated {len(rows)} original-identity transparent draft cutouts')
 if __name__=='__main__':main()
