@@ -1,0 +1,88 @@
+name: v1.1.0 — owner member management and audited moderation
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-admin-member-management.yml'
+      - 'admin.html'
+      - 'js/beagu-admin-members-v1.js'
+      - 'js/beagu-admin-access-v1.js'
+      - 'supabase/functions/beagu-admin-members-v1/index.ts'
+      - 'supabase/functions/_shared/beagu-member-management-v2.ts'
+      - 'supabase/migrations/20261121233000_beagu_admin_member_management_v2.sql'
+      - 'tests/v1.1.0-admin-member-moderation.test.ts'
+      - 'tests/v1.1.0-admin-members-ui.test.mjs'
+      - 'tests/admin-member-moderation-fixture.sql'
+      - 'tests/admin-member-moderation-verify.sql'
+      - 'tests/admin-members-static.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owner-members:
+    name: Test owner-only member access, audit-before-ban, SMS consent projection
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    services:
+      pg:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_USER: postgres
+          POSTGRES_DB: isolated_admin_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d isolated_admin_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-ci-only
+      PGDATABASE: isolated_admin_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check administrator browser JavaScript and Edge function TypeScript
+        run: |
+          node --check js/beagu-admin-members-v1.js
+          deno check supabase/functions/beagu-admin-members-v1/index.ts
+      - name: Deno moderation validation and owner MFA / audit-before-ban source checks
+        run: deno test --allow-read tests/v1.1.0-admin-member-moderation.test.ts
+      - name: Browser owner-only member search and moderation interaction
+        run: node --test tests/v1.1.0-admin-members-ui.test.mjs
+      - name: Existing administrator MFA and member permission regressions
+        run: |
+          node tests/admin-members-static.cjs
+          node tests/admin-verified-email-enrollment-static.cjs
+          node scripts/test-admin-access.cjs
+          node tests/postit-member-auth.cjs
+      - name: Install PostgreSQL client when needed
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
+      - name: Provision isolated synthetic Auth and SMS fixture
+        run: psql -v ON_ERROR_STOP=1 -f tests/sms-private-ledger-fixture.sql
+      - name: Apply stage-14 private consent migration in disposable test database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121230000_beagu_member_sms_consent_secure_v2.sql
+      - name: Provision synthetic member audit log
+        run: psql -v ON_ERROR_STOP=1 -f tests/admin-member-moderation-fixture.sql
+      - name: Apply stage-15 audit and SMS-projection migration in disposable test database
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121233000_beagu_admin_member_management_v2.sql
+      - name: Verify audit uniqueness and owner-only SMS privacy projection
+        run: psql -v ON_ERROR_STOP=1 -f tests/admin-member-moderation-verify.sql
+      - name: Verify preview remains isolated from real Supabase services
+        run: python3 tests/preview-db-isolation.py
