@@ -1,0 +1,79 @@
+name: v1.1.0 — 2026 exact-review tiered release (Lv1 24h, Lv2 6h, Lv3 approved)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-2026-tiered-release.yml'
+      - 'supabase/functions/beagu-2026-tiered-results-v1/index.ts'
+      - 'supabase/functions/_shared/release-policy.mjs'
+      - 'supabase/migrations/20261122003000_beagu_2026_tiered_review_release_v1.sql'
+      - 'tests/2026-tiered-review-release-fixture.sql'
+      - 'tests/2026-tiered-review-release-verify.sql'
+      - 'tests/v1.1.0-2026-tiered-review-release.test.mjs'
+      - 'tests/2026-lv2-immediate.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reviewed-tiered-release:
+    name: Live-release never touched — isolated Postgres16 2h/7h/25h and privacy revocation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: isolated_tiered_release
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d isolated_tiered_release"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGDATABASE: isolated_tiered_release
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check review-only 2026 Edge API and shared release-policy module
+        run: |
+          deno check supabase/functions/beagu-2026-tiered-results-v1/index.ts
+          node --check supabase/functions/_shared/release-policy.mjs
+      - name: Tiered 2026 release and previous Lv1/Lv2 authorization regression
+        run: |
+          node --test tests/v1.1.0-2026-tiered-review-release.test.mjs
+          node tests/2026-lv2-immediate.mjs
+          node tests/2026-release-consent-gate.mjs
+          node tests/2026-question-results-pipeline.mjs
+          node tests/2026-approved-search-refresh.mjs
+          node tests/2026-auto-quality-referral-gate.mjs
+          node tests/participation-code-unified.mjs
+          node --test tests/v1.1.0-lv3-server-authorization.test.mjs tests/v1.1.0-lv3-account-ui.test.mjs
+      - name: Prepare disposable PostgreSQL client
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
+      - name: Seed synthetic 2026 Owner-verified and privacy-reviewed test snapshots
+        run: psql -v ON_ERROR_STOP=1 -f tests/2026-tiered-review-release-fixture.sql
+      - name: Apply tiered exact-review release and retire old Lv2 instant gateway only in CI
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261122003000_beagu_2026_tiered_review_release_v1.sql
+      - name: Verify server-only release 24h/6h/after-approval and consent-risk revocations
+        run: psql -v ON_ERROR_STOP=1 -f tests/2026-tiered-review-release-verify.sql
+      - name: Confirm preview production database and Google survey remain isolated
+        run: python3 tests/preview-db-isolation.py
