@@ -35,7 +35,7 @@ assert.ok(!api.includes('user.user_metadata'), 'Mutable metadata must not author
 assert.match(js,/function canWrite\(\)\{return canRead\(\) && state\.accountLinked===true\}/);
 assert.match(js,/BeaguPostitAccount\?\.accessToken/);
 assert.match(js,/beagu:postit-account-status/);
-assert.match(account,/signUp\(\{email,password\}\)/);
+assert.ok(account.includes('signUp({email,password,options:{data:{beagu_sms_opt_in:wantsSms'), 'Signup must send explicit SMS choice');
 assert.match(account,/signInWithPassword\(\{email,password\}\)/);
 assert.match(account,/signInWithOAuth\(\{provider:'google'/,'Google OAuth is wired only through Supabase Auth');
 assert.match(account,/localStorage\.getItem\(deviceKey\)/);

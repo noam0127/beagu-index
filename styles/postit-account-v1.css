@@ -23,3 +23,9 @@
 @media(max-width:460px){.postit-account{padding:12px}.postit-account button{flex:1}}
 
 .postit-account [hidden]{display:none!important}
+
+.postit-sms-consent{display:grid;gap:7px;padding:12px;border:1px solid #dce5ee;border-radius:10px}
+.postit-sms-consent>label{font-size:12px;font-weight:700}
+.postit-sms-check{display:flex;align-items:flex-start;gap:7px;cursor:pointer;font-weight:500!important}
+.postit-sms-check input{flex:0 0 auto;min-height:17px!important;width:17px!important;margin:2px 0 0}
+.postit-sms-consent small{font-size:11px;line-height:1.65;color:#64748b}
