@@ -151,6 +151,11 @@
       body: JSON.stringify({action, ...payload})
     });
     const data = await response.json().catch(() => ({}));
+    if (response.status === 403 && data.error === 'LV2_REQUIRED_FOR_HOUSING_SORT') {
+      const error = new Error('공시지가 정렬은 Lv.2부터 이용할 수 있습니다.');
+      error.sortLocked = true;
+      throw error;
+    }
     if (response.status === 401 || response.status === 403) {
       const error = new Error('인증 만료'); error.unauthorized = true; throw error;
     }
