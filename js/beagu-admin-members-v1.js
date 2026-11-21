@@ -23,6 +23,7 @@
     const email = String(value || "");
     const at = email.lastIndexOf("@");
     if (at < 1) return "이메일 없음";
+    if (email.slice(1, at) === "***") return email;
     return email.slice(0, 1) + "***" + email.slice(at);
   }
   function smsStatus(item) {
@@ -72,7 +73,7 @@
       const memberType = member.is_admin ? "관리자" : "일반 회원";
       tr.append(email, node("td", "", memberType),
         node("td", "", member.email_confirmed ? "인증 완료" : "이메일 미인증"),
-        node("td", "", member.lv2_account_linked ? "연결됨" : "미연결"),
+        node("td", "", member.lv2_account_linked ? "계정 연결됨" : "연결 기록 없음"),
         node("td", "", member.is_suspended ? "이용 정지" : "정상"));
       const action = node("td");
       const button = node("button", "secondary member-mini-action", "상세");
@@ -88,6 +89,8 @@
     status("회원 목록을 불러오는 중입니다.");
     $("adminMembersPrev").disabled = true;
     $("adminMembersNext").disabled = true;
+    $("adminMemberDetailPanel").hidden = true;
+    selectedId = "";
     try {
       const data = await request("list", {page,search,status:memberStatus,sort:memberSort});
       if (seq !== serial || !role) return;
@@ -109,6 +112,8 @@
     } catch {
       if (seq !== serial || !role) return;
       showRows([]);
+      total = 0;
+      text("adminMembersPage", "— / —");
       status("회원 목록을 불러오지 못했습니다. 관리자 인증 상태 또는 연결을 확인해 주세요.", true);
     }
   }
@@ -130,7 +135,7 @@
       row("계정 생성", date(member.created_at)),
       row("최근 로그인", date(member.last_sign_in_at)),
       row("계정 상태", member.is_suspended ? "이용 정지 · " + date(member.banned_until) + "까지" : "정상"),
-      row("Lv2 계정 연결", member.lv2_account_linked ? "연결 완료 · " + date(member.lv2_linked_at) : "연결 기록 없음"),
+      row("챌린지 계정 연결", member.lv2_account_linked ? "계정 연결됨 · " + date(member.lv2_linked_at) : "연결 기록 없음"),
       row("문자 안내", smsStatus(member))
     );
     const challenge = info.challenge;
@@ -140,13 +145,13 @@
     if (!challenge) {
       challengeDetails.append(row("조회 상태","조회 API 미적용 · 서버 업데이트 후 확인"));
     } else if (!challenge.linked) {
-      challengeDetails.append(row("연결 상태","미연결 또는 유효한 Lv2 자격 없음"));
+      challengeDetails.append(row("추천 권한 검증","Lv2 확인 불가 · Lv1 여부는 별도 인증 기록 확인 필요"));
     } else {
       const ordinal = Number(challenge.participant_no);
       const referrals = Number(challenge.valid_referrals);
       const level = Number(challenge.access_level);
       challengeDetails.append(
-        row("연결 상태","검증된 Lv2 계정"),
+        row("추천 권한 검증","유효 추천으로 Lv2 확인"),
         row("챌린지 순번",Number.isSafeInteger(ordinal) && ordinal > 0 ? ordinal.toLocaleString("ko-KR") + "번" : "확인 불가"),
         row("추천 접근 레벨",Number.isInteger(level) && level >= 2 ? "Lv." + level : "확인 불가"),
         row("유효 추천 수",Number.isSafeInteger(referrals) && referrals >= 0 ? referrals.toLocaleString("ko-KR") + "건" : "확인 불가")
