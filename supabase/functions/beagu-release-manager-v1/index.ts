@@ -137,7 +137,11 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   job={action,target:"production",from_sha:s.production_sha,to_sha:s.staging_sha,
    version:s.staging_version||"시험 승인 버전",summary:"관리자 시험 웹 확인 후 운영 적용",created_by:userId};
  }else if(action==="prod_rollback"){
-  const prev=(await history("production"))[0];
+  const {data:recentRollbackTarget,error:previousError}=await db.from("beagu_site_release_history_v1")
+   .select("from_sha,to_sha").eq("target","production").neq("action","data_refresh")
+   .order("deployed_at",{ascending:false}).limit(1).maybeSingle();
+  if(previousError)throw Error("history_unavailable");
+  const prev=recentRollbackTarget;
   if(!prev||!prev.from_sha||prev.from_sha===s.production_sha)
    return error("no_production_rollback",409,origin);
   job={action,target:"production",from_sha:s.production_sha,to_sha:prev.from_sha,
@@ -162,19 +166,32 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
    .update({status:"failed",error_code:"worker_timeout",finished_at:new Date().toISOString()})
    .eq("id",row.id).eq("status","running");
   let job=await activeJob();
+  const publicDataBlob=String(input.data_blob_sha||"");
+  if(!SHA.test(publicDataBlob))return error("invalid_public_data_blob",400,origin);
   if(!job&&!s.production_sha){
    const initial=String(input.head_sha||"");
    if(!SHA.test(initial))return error("invalid_bootstrap_sha",400,origin);
    const {data, error:e}=await db.from("beagu_site_release_jobs_v1").insert({
     action:"bootstrap",target:"production",to_sha:initial,from_sha:null,
-    version:"관리자 배포 시스템 1.0",summary:"관리자 업데이트 페이지 최초 설치",status:"queued"
+    version:"관리자 배포 시스템 1.0",summary:"관리자 업데이트 페이지 최초 설치",status:"queued",
+    public_data_blob_sha:publicDataBlob
    }).select("*").single();
    if(e)throw Error("bootstrap_unavailable");job=data;
+  }
+  if(!job&&s.production_sha&&s.public_data_blob_sha!==publicDataBlob){
+   const {data,error:e}=await db.from("beagu_site_release_jobs_v1").insert({
+    action:"data_refresh",target:"production",to_sha:s.production_sha,from_sha:s.production_sha,
+    version:s.production_version||"운영 데이터",summary:"공개 학교 목록 자동 갱신",
+    status:"queued",public_data_blob_sha:publicDataBlob
+   }).select("*").single();
+   if(e)throw Error("auto_data_refresh_unavailable");
+   job=data;
   }
   if(!job)return respond({has_job:false},200,origin);
   if(job.status!=="queued")return respond({has_job:false,already_running:true},200,origin);
   const {data:claimed,error:e}=await db.from("beagu_site_release_jobs_v1")
-   .update({status:"running",started_at:new Date().toISOString()})
+   .update({status:"running",started_at:new Date().toISOString(),
+    public_data_blob_sha:publicDataBlob})
    .eq("id",job.id).eq("status","queued").select("*").maybeSingle();
   if(e)throw Error("claim_unavailable");
   if(!claimed)return respond({has_job:false},200,origin);
@@ -199,9 +216,16 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
    }).eq("id",id).eq("status","running");
    return respond({ok:true},200,origin);
   }
-  const update=job.target==="staging"?
-   {staging_sha:job.to_sha,staging_version:job.version,updated_at:new Date().toISOString()}:
-   {production_sha:job.to_sha,production_version:job.version,updated_at:new Date().toISOString()};
+  const current=await state();
+  const update=job.action==="data_refresh"?
+   {public_data_blob_sha:job.public_data_blob_sha,updated_at:new Date().toISOString()}:
+   job.target==="staging"?
+   {staging_sha:job.to_sha,staging_version:job.version,
+    public_data_blob_sha:job.public_data_blob_sha||current.public_data_blob_sha,
+    updated_at:new Date().toISOString()}:
+   {production_sha:job.to_sha,production_version:job.version,
+    public_data_blob_sha:job.public_data_blob_sha||current.public_data_blob_sha,
+    updated_at:new Date().toISOString()};
   const {error:stErr}=await db.from("beagu_site_release_state_v1").update(update).eq("id",1);
   if(stErr)throw Error("commit_unavailable");
   const deployedUrl=job.target==="staging"?"https://baeguindex.com/_preview/":"https://baeguindex.com/";
