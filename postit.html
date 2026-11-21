@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
 <link rel="stylesheet" href="styles/beagu-auth-confirmation-v1.css?v=20261121">
+<link rel="stylesheet" href="styles/beagu-lv3-account-ui-v1.css?v=20261122-stage20">
 <link rel="stylesheet" href="styles/beagu-account-status-v1.css?v=20261121-status1">
 </head>
 <body class="beagu-ui-page beagu-postit-page">
@@ -82,6 +83,13 @@
   </details>
   <p id="postitPrivacyStatus" role="status" aria-live="polite" aria-atomic="true"></p>
 </section>
+<section id="postitLv3Panel" class="beagu-lv3-member-panel" role="region" aria-labelledby="postitLv3Title" hidden>
+  <div class="beagu-lv3-panel-heading"><strong id="postitLv3Title">Lv3 정식 회원 인증</strong><span class="beagu-lv3-chip">서버 검증</span></div>
+  <p>Lv2 참여코드·원래 기기·이메일 인증 계정을 연결한 후 서버가 Lv3 자격을 재확인합니다. 별도의 공개 승인 전에는 혜택이 열리지 않습니다.</p>
+  <button id="postitLv3Verify" type="button">Lv3 서버 인증 확인</button>
+  <p id="postitLv3Status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <a href="levels.html">Lv3 혜택과 인증 단계 보기</a>
+</section>
 <div class="postit-account-actions">
 <button type="button" id="postitAccountGoogle">Google로 로그인</button>
 <button type="button" id="postitAccountLink" hidden>원래 기기 인증 · Lv2 연결</button>
@@ -137,6 +145,8 @@
 <script src="js/beagu-sms-account-settings-v2.js?v=20261121-v2"></script>
 <script src="js/beagu-account-privacy-v1.js?v=20261121-stage16"></script>
 <script src="js/beagu-account-status-v1.js?v=20261121-status1"></script>
+<script src="js/beagu-lv3-session-v1.js?v=20261122-stage20"></script>
+<script src="js/beagu-lv3-account-ui-v1.js?v=20261122-stage20"></script>
 <script src="js/beagu-auth-errors-v1.js?v=20261121-errors1"></script>
 <script src="js/beagu-session-restore-v1.js?v=20261121-session1"></script>
 <script src="js/beagu-auth-confirmation-v1.js?v=20261121-callback1"></script>
