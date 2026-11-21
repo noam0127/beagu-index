@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-22",
+  "purpose": "Standalone staging migration safety readiness (advisory snapshot, NOT authorization)",
+  "staging_project_ref": "ycwuugggqbunlbwuzvbx",
+  "staging_public_business_tables_observed": 0,
+  "staging_active_edge_functions_observed": [
+    "beagu-test-v1",
+    "beagu-stage-preview"
+  ],
+  "staging_release_manager_edge_function_verified": false,
+  "independent_staging_host_configured": false,
+  "production_pages_job_disabled_in_development_code": true,
+  "production_pages_job_disabled_in_live_main": false,
+  "staging_artifact_builder_available_in_development_code": true,
+  "staging_artifact_hosted": false,
+  "staging_auth_rds_rls_e2e_verified": false,
+  "browser_network_isolation_verified": false,
+  "approval_to_publish": false,
+  "readiness": "blocked",
+  "blocking_reasons": [
+    "independent_staging_host_not_configured",
+    "staging_public_schema_missing",
+    "required_staging_edge_functions_missing",
+    "staging_auth_and_rls_unverified",
+    "candidate_browser_network_isolation_not_verified",
+    "manual_publishing_approval_missing"
+  ],
+  "non_authoritative_note": "This file is checked into source for documentation only; CI or runtime must not accept it as a deployment authorization token."
+}
