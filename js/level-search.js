@@ -924,6 +924,13 @@
       })().catch(error=>console.warn('레벨1 공개 보조자료 표시 실패',error));
     } catch (error) {
       if (request !== serial) return;
+      if(error.sortLocked){
+        // Server may have downgraded a Lv2 referral since the last verification.
+        verifiedTier=1;
+        updateSortAccess();
+        $('resultCount').textContent='공시지가 정렬은 Lv.2부터 이용할 수 있습니다.';
+        return;
+      }
       if(error.unauthorized){loggedOut('인증이 만료되었습니다. 참여코드로 다시 로그인해주세요.');return;}
       console.error(error);
       $('resultCount').textContent = '';
