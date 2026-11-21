@@ -95,7 +95,7 @@ begin
    )
  ) then raise exception 'nonallowlisted Auth key in 20-record projection';end if;
  raise notice 'Stage34 synthetic: 10,001 Auth user directory and filters verified in % ms',
-   1000*pg_catalog.extract(epoch from (pg_catalog.clock_timestamp()-started));
+   1000*pg_catalog.date_part('epoch',(pg_catalog.clock_timestamp()-started));
 end $qa$;
 reset role;
 
