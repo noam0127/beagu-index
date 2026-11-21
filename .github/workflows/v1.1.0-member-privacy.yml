@@ -5,6 +5,11 @@ on:
       - develop/v1.1.0-phase1-20261121
     paths:
       - '.github/workflows/v1.1.0-member-privacy.yml'
+      - 'admin.html'
+      - 'js/beagu-admin-members-v1.js'
+      - 'supabase/functions/beagu-admin-members-v1/index.ts'
+      - 'tests/v1.1.0-admin-members-ui.test.mjs'
+      - 'tests/admin-members-static.cjs'
       - 'account-privacy.html'
       - 'challenge.html'
       - 'postit.html'
@@ -68,6 +73,8 @@ jobs:
           deno-version: v2.x
       - name: JavaScript syntax and privacy Edge TypeScript check
         run: |
+          node --check js/beagu-admin-members-v1.js
+          deno check supabase/functions/beagu-admin-members-v1/index.ts
           node --check js/beagu-account-privacy-v1.js
           node --check js/beagu-account-privacy-page-v1.js
           node --check js/challenge-member-auth-v1.js
@@ -76,6 +83,8 @@ jobs:
       - name: Auth self-service requests and existing account regression tests
         run: |
           node --test tests/v1.1.0-account-privacy.test.mjs tests/v1.1.0-sms-private-consent.test.mjs tests/v1.1.0-optional-sms-consent.test.mjs tests/v1.1.0-legacy-password.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-auth-error-ux.test.mjs tests/v1.1.0-session-restore.test.mjs tests/v1.1.0-unified-account-mode.test.mjs
+          node --test tests/v1.1.0-admin-members-ui.test.mjs
+          node tests/admin-members-static.cjs
           node tests/challenge-lv2-account-entry.mjs
           node tests/postit-member-auth.cjs
           node tests/admin-verified-email-enrollment-static.cjs
