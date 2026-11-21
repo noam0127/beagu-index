@@ -92,7 +92,7 @@ def make_preview_banner(target):
         'style="position:fixed;bottom:10px;right:10px;z-index:2147483600;'
         'background:#152943;color:#fff;border-radius:12px;'
         'padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">'
-        '시험 웹 · 운영 데이터 연결 주의</div>'
+        '시험 웹 · 시험 데이터 연결</div>'
     )
     for file in target.rglob("*.html"):
         source = file.read_text(encoding="utf-8", errors="replace")
