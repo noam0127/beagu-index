@@ -62,6 +62,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check Edge Function TypeScript types against pinned Supabase JS import
+        run: deno check supabase/functions/beagu-member-sms-api-v2/index.ts
       - name: Check JavaScript account code syntax
         run: |
           node --check js/beagu-sms-account-settings-v2.js
