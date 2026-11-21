@@ -11,7 +11,7 @@ const levelKey='beagu-level-session-v1',deviceKey='beagu-referral-device-secret-
 const section=$('postitAccount'),status=$('postitAccountStatus'),form=$('postitAccountForm');
 const smsPhone=$('postitSmsPhone'),smsConsent=$('postitSmsConsent'),smsUnsubscribe=$('postitSmsUnsubscribe');
 if(!client||!section||!status||!form||!smsPhone||!smsConsent||!smsUnsubscribe||
-   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set)return;
+   !window.BeaguAccountMode?.create||!window.BeaguAccountStatus?.set||!window.BeaguSessionRestore?.create)return;
 const accountMode=window.BeaguAccountMode.create({
  form,
  title:$('postitAccountHeading'),
@@ -26,6 +26,9 @@ const accountMode=window.BeaguAccountMode.create({
 accountMode.setMode('signin');
 let linked=false,busy=false,generation=0;
 const levelToken=()=>{try{return sessionStorage.getItem(levelKey)||''}catch{return ''}};
+const restored=window.BeaguSessionRestore.create({client,getLevelToken:levelToken,
+ levelUrl:'https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api',
+ request:(...args)=>fetch(...args)});
 function setLinked(next){
  linked=next===true;
  window.dispatchEvent(new CustomEvent('beagu:postit-account-status',{detail:{linked}}));
@@ -43,48 +46,50 @@ function originalDevice(){
  catch{return ''}
 }
 async function accountUser(){
- const session=await authSession();
- if(!session)return null;
- const {data,error}=await client.auth.getUser();
- return error?null:data?.user||null;
+ return (await restored.identity())?.user||null;
 }
 function validatedLevel(){
  return $('beaguLevelState')?.dataset.level==='2'&&/^[a-f0-9]{64}$/.test(levelToken());
 }
-function render(user){
+function render(user,serverLevelVerified=false){
  const signedIn=Boolean(user);
  const emailVerified=signedIn&&Boolean(user.email_confirmed_at)&&user.is_anonymous!==true;
  form.hidden=signedIn;
  $('postitAccountGoogle').hidden=signedIn;
  $('postitAccountSignOut').hidden=!signedIn;
  smsUnsubscribe.hidden=!signedIn||user?.user_metadata?.beagu_sms_opt_in!==true;
- const canClaim=emailVerified&&validatedLevel()&&!linked&&Boolean(originalDevice());
+ const canClaim=emailVerified&&serverLevelVerified&&!linked&&Boolean(originalDevice());
  $('postitAccountLink').hidden=!canClaim;
- $('postitAccountNoDevice').hidden=!emailVerified||!validatedLevel()||linked||Boolean(originalDevice());
+ $('postitAccountNoDevice').hidden=!emailVerified||!serverLevelVerified||linked||Boolean(originalDevice());
  if(!signedIn)showState('signin-required');
  else if(!emailVerified)showState('email-pending');
- else if(!validatedLevel())showState('level-required');
+ else if(!serverLevelVerified)showState('level-required');
  else if(linked)showState('linked');
  else if(!originalDevice())showState('device-required');
  else showState('link-ready');
 }
 async function refresh(){
  const id=++generation;
- const user=await accountUser();
+ // Revocation/logout must immediately clear previously displayed write access.
+ setLinked(false);
+ const identity=await restored.identity();
  if(id!==generation)return;
- if(!user||!user.email_confirmed_at||user.is_anonymous===true||!validatedLevel()){
-  setLinked(false);render(user);return;
+ const user=identity?.user||null;
+ if(!identity?.emailVerified||!validatedLevel()){
+  render(user,false);return;
  }
- const bearer=await accessToken();
+ const verifiedLevel=await restored.level();
+ if(id!==generation)return;
+ if(!verifiedLevel){render(user,false);return}
  try{
   const response=await fetch(base+'?action=writer_status',{cache:'no-store',headers:{
-    'X-Beagu-Level-Session':levelToken(),'Authorization':'Bearer '+bearer
+    'X-Beagu-Level-Session':levelToken(),'Authorization':'Bearer '+identity.token
   }});
   if(id!==generation)return;
   const body=await response.json().catch(()=>({}));
   setLinked(response.ok&&body.linked===true);
  }catch{if(id===generation)setLinked(false)}
- if(id===generation)render(user);
+ if(id===generation)render(user,true);
 }
 async function executeAuth(action){
  if(busy)return;
@@ -137,7 +142,7 @@ $('postitAccountGoogle').addEventListener('click',async()=>{
  finally{busy=false}
 });
 $('postitAccountLink').addEventListener('click',async()=>{
- if(busy||!validatedLevel())return;
+ if(busy||!validatedLevel()||!await restored.level())return;
  const deviceSecret=originalDevice();const bearer=await accessToken();
  if(!deviceSecret||!bearer){message('원래 기기 및 로그인 상태를 다시 확인해 주세요.');return}
  busy=true;$('postitAccountLink').disabled=true;
