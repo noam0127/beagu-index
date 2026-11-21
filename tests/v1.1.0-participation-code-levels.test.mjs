@@ -80,8 +80,8 @@ test("UI reports Lv1 only from server own-response verification, Lv2 only after 
  assert.match(card,/Number\(payload\.level\) === 2/);
  assert.match(card,/Number\(payload\.validReferrals\) >= 1/);
  assert.match(card,/identityTitle\.textContent = upgraded \? 'Lv2 참여코드'/);
- assert.match(card,/ownResponseVerified \? 'Lv2 참여코드\\(비활성\\)'/);
- assert.match(card,/Lv\\.1 인증 가능/);
+ assert.ok(card.includes("ownResponseVerified ? 'Lv2 참여코드(비활성)'"));
+ assert.ok(card.includes('Lv.1 인증 가능'));
  assert.match(card,/previousTier !== nextTier/);
  assert.match(card,/unknownVerification/);
  assert.match(card,/인증 대기/);
