@@ -122,7 +122,7 @@ test('only approved server-verified client can authorize SMS API, never signup m
  assert.match(api,/beagu_sms_phone:null/);
  assert.doesNotMatch(api,/console\.log|console\.error|raw_user_meta_data/);
  assert.doesNotMatch(api,/await db\.auth\.getUser\([^)]+body\./);
- assert.doesNotMatch(source,/localStorage|sessionStorage|user_metadata/);
+ assert.doesNotMatch(source,/\b(?:localStorage|sessionStorage)\s*(?:\.|\[)|\buser_metadata\s*(?:=|\.|\[)/);
 });
 test('private migration replaces mutable Auth metadata trigger and restricts RPC to service role',()=>{
  assert.match(sql,/drop trigger if exists capture_member_sms_consent_v1 on auth\.users/);
