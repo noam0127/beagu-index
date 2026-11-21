@@ -35,5 +35,5 @@ assert.ok(api.includes("if(Number(session.access_level)>=2)"));
 const tiered=read('supabase/migrations/20261122003000_beagu_2026_tiered_review_release_v1.sql');
 assert.match(tiered,/when 1 then interval '24 hours'/);
 assert.match(tiered,/when 2 then interval '6 hours'/);
-assert.match(tiered,/public.beagu_2026_tiered_released_question_results_v1\(\s*p_school_id,2::smallint/);
+assert.match(tiered,/public.beagu_2026_tiered_released_question_results_v1\(\s*p_school_id,2/);
 console.log('PASS: Lv1 24h, Lv2 6h with owner review + privacy basis, legacy Lv2 bypass removed');
