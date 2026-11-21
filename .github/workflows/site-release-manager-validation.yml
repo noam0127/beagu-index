@@ -19,6 +19,7 @@ on:
       - 'tests/release-conflict-preflight.mjs'
       - 'tests/release-step9-merge-tree.mjs'
       - 'tests/release-step10-security-invariants.mjs'
+      - 'tests/release-step11-offline-integration.py'
       - 'tests/staging-http-smoke.py'
       - 'docs/releases/v2-step9-integration-manifest.json'
   workflow_dispatch:
@@ -34,6 +35,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check integrated Edge API and dependency graph
+        run: deno check supabase/functions/beagu-release-manager-v1/index.ts
       - name: Syntax validation
         run: |
           node --check js/beagu-admin-updates-v1.js
@@ -48,3 +54,4 @@ jobs:
           node --test tests/release-step9-merge-tree.mjs
           node --test tests/release-step10-security-invariants.mjs
           python3 tests/site-release-packaging.py
+          python3 tests/release-step11-offline-integration.py
