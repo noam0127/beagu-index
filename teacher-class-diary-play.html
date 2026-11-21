@@ -418,6 +418,7 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <link rel="stylesheet" href="styles/class-diary-cast-profiles-v6.css?v=20261120-cast-hobbies-hyunwoo-v3">
 <link rel="stylesheet" href="styles/class-diary-setup-book-v1.css?v=20261120-book4a">
 <link rel="stylesheet" href="styles/class-diary-know-people-v7.css?v=20261120-people-v7a">
+<link rel="stylesheet" href="styles/class-diary-daily-journal-v1.css?v=20261120-diary1">
 </head>
 <body>
 <main>
@@ -754,6 +755,16 @@ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{padding-top:46px!important}
 <script src="js/class-diary-philosophy-v1.js?v=20261120-lit3"></script>
 <script src="js/class-diary-pedagogy-v1.js?v=20261120-lit3"></script>
 <script src="js/class-diary-endings-v3.js?v=20261120-lit3"></script>
+<script src="js/class-diary-branch-map-v1.js?v=20261120-branch1"></script>
+<script src="js/class-diary-scene-direction-v1.js?v=20261120-director1"></script>
+<script src="js/class-diary-daily-journal-v1.js?v=20261120-diary1"></script>
+<script src="js/class-diary-rewritten-act1-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act2-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act3-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act4-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act5-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-rewritten-act6-v1.js?v=20261120-reconstructed1"></script>
+<script src="js/class-diary-reconstructed-2027-v1.js?v=20261120-reconstructed1"></script>
 <script src="js/class-diary-semester-long-v3.js?v=20261120-lit3"></script>
 <script src="js/class-diary-prologue-scenes-v1.js?v=20261120-lit3"></script>
 <script src="js/class-diary-prologue-lens-woman-v1.js?v=20261120-lit3"></script>
@@ -799,6 +810,9 @@ const API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
 const $=id=>document.getElementById(id);
 const engine=window.BeaguClassDiaryPlay;
 const semester=window.BeaguClassDiarySemester;
+const dailyJournal=window.BeaguClassDiaryDailyJournal;
+const branchMap=window.BeaguClassDiaryBranchMap;
+const sceneDirector=window.BeaguClassDiarySceneDirection;
 const narrator=window.BeaguClassDiaryNarrator;
 const schoolBrief=window.BeaguClassDiarySchoolBrief;
 const literary=window.BeaguClassDiaryLiterary;
@@ -1212,8 +1226,10 @@ $('vnMore').addEventListener('click',()=>{
  sound.note('advance');
  if(vnState.index<vnState.pages.length-1){vnState.index++;vnPresent();return;}
  $('vnMore').hidden=true;
- if(vnState.kind==='outcome'){$('nextBtn').hidden=false;$('nextBtn').focus()}
- else journey.openChoice();
+ if(vnState.kind==='outcome'){
+  if(storyMode==='semester'&&game&&game.phase==='semester_reflection'&&dailyJournal.selection(game,game.episode)===null)openDailyJournalChoice();
+  else {$('nextBtn').hidden=false;$('nextBtn').focus()}
+ }else journey.openChoice();
 });
 function advanceByScene(){
  if(!document.body.classList.contains('is-playing')||!$('choiceSection').hidden)return false;
@@ -1641,6 +1657,33 @@ $('playerSetupForm').addEventListener('submit',event=>{
  render();autoSaveProgress();
 });
 $('heroName').addEventListener('input',()=>$('heroName').setCustomValidity(''));
+function openDailyJournalChoice(){
+ if(storyMode!=='semester'||!game||game.phase!=='semester_reflection')return;
+ const options=$('choiceButtons');options.replaceChildren();
+ $('choiceSection').classList.add('daily-journal-dialog');
+ $('choiceSection').setAttribute('aria-label','오늘의 학급일지 기록 선택');
+ $('choiceSection').querySelector('.option-title').textContent='오늘의 학급일지 · 무엇을 남길까요?';
+ // The page-turn is purely visual and audible. It is never added to paragraphs or subtitle captions.
+ sceneDirector.stage($('sceneArt'),'page');
+ sound.note('paper');
+ for(const choice of dailyJournal.choices(game.episode)||[]){
+  const button=el('button',choice.label);
+  button.type='button';button.className='choice';
+  button.addEventListener('click',()=>{
+   game=dailyJournal.choose(game,choice.id);
+   sound.note('choice');
+   journey.closeChoice();
+   $('choiceSection').classList.remove('daily-journal-dialog');
+   $('nextBtn').hidden=false;
+   $('nextBtn').focus();
+   status('오늘의 학급일지를 기록했습니다. 다음 회차로 넘어갈 수 있습니다.');
+   autoSaveProgress();
+  });
+  options.append(button);
+ }
+ journey.openChoice();
+}
+
 function renderSemester(){
  literary.mode(true);
  if(game.phase==='semester_ending')return renderSemesterEnding();
@@ -1661,16 +1704,25 @@ function renderSemester(){
  renderSupportingCast(semesterArt.guest||maleSemester.guestFor(game.episode,reflection),semesterArt.season);
  studentDoyun.render($('sceneDoyun'),game.episode,reflection,Boolean(actualGuest));
  // The semester follows its own 36-chapter score; the 7-day demo keeps its original soundtrack.
- const score=sound.semesterScore(game.episode,{
+ // Rewritten chapter directions are activated only when the displayed manuscript
+ // title matches the new 36-episode map; never play new-scene effects over legacy prose.
+ const plannedEpisode=branchMap.episode(game.episode);
+ const direction=sceneDirector.forEpisode(game.episode,view.title,plannedEpisode&&plannedEpisode.title);
+ const score=direction?{
+  track:reflection?direction.journalMusic:direction.music,
+  ambience:reflection?null:direction.ambience,
+  cue:reflection?null:direction.sfx
+ }:sound.semesterScore(game.episode,{
   reflection,
   choice:reflection&&game.lastOutcome?game.lastOutcome.id:null,
   partner:game.profile.partner
  });
  mood(score.track);
  sound.setAmbience(score.ambience);
- if(!reflection&&score.cue&&lastPhysicalScene!=='semester:'+game.episode){
+ if(!reflection&&lastPhysicalScene!=='semester:'+game.episode){
   lastPhysicalScene='semester:'+game.episode;
-  sound.note(score.cue);
+  if(direction)sceneDirector.stage($('sceneArt'),direction.transition);
+  if(score.cue)sound.note(score.cue);
  }
  showCharacterFace(game.profile.partner,semesterArt.expression,profile.initial);
  $('characterName').textContent=profile.name;
@@ -1689,6 +1741,8 @@ function renderSemester(){
   '년을 배경 정보로만 참고합니다. 등장인물·대화·사건은 모두 허구입니다.':
   '2027년 가상의 교실에서 벌어지는 허구의 사건입니다. 실제 교직원이나 학생을 재현하지 않습니다.';
  $('choiceSection').hidden=reflection;
+ $('choiceSection').classList.remove('daily-journal-dialog');
+ $('choiceSection').setAttribute('aria-label','선택지');
  $('choiceSection').querySelector('.option-title').textContent='제'+view.act+'부 · '+view.episode+'화, 어떻게 하시겠어요?';
  $('outcome').hidden=!reflection;
  $('nextBtn').hidden=!reflection;
@@ -1719,7 +1773,12 @@ function renderSemesterEnding(){
  $('endingHeading').textContent=ending.heading;
  $('ending').querySelector('.emblem').textContent='2027년 7월 16일 · 36화의 마지막 페이지';
  $('ending').querySelector('.credits-roll p:last-child').textContent='한 학기의 이야기를 함께해 주셔서 고맙습니다.';
- endingState.pages=literary.paginate(ending.paragraphs,$('endingText'));endingState.index=0;endingPresent();
+ const selectedNotes=dailyJournal.entries(game);
+ const remembered=selectedNotes.length?[
+  '나는 학급일지에 남겼던 문장들을 다시 펼쳐 보았다.',
+  ...selectedNotes.slice(-3).map(record=>'제'+record.episode+'화의 기록. '+record.text)
+ ]:[];
+ endingState.pages=literary.paginate(ending.paragraphs.concat(remembered),$('endingText'));endingState.index=0;endingPresent();
  $('endingAffection').textContent=ending.affection+' / 100';
  $('endingScore').textContent='이야기 점수 '+ending.score+' / 100';
  $('endingSchool').textContent=game.schoolName+' · 2027년 3월–7월, 36화의 기록';
@@ -1940,6 +1999,7 @@ $('profileForm').addEventListener('submit',e=>{
     publishedYears:schoolSelection.years.slice()
    };
   }
+  if(storyMode==='semester')baseGame.scriptEdition='class-diary-reconstructed-2027/v1';
   game=storyMode==='semester'?semester.createGame(baseGame):baseGame;
   prologuePending=storyMode==='semester';
   schoolIntroPending=storyMode==='semester';
@@ -1951,7 +2011,13 @@ $('profileForm').addEventListener('submit',e=>{
 $('nextBtn').addEventListener('click',()=>{
  sound.note('pageTurn');
  if(storyMode==='semester'&&prologuePending){prologuePending=false;playerSetupPending=true;render();return;}
- if(storyMode==='semester'){game=semester.advance(game);render();autoSaveProgress();return;}
+ if(storyMode==='semester'){
+  if(game.phase==='semester_reflection'&&dailyJournal.selection(game,game.episode)===null){
+   status('오늘의 학급일지에 남길 한 문장을 먼저 선택해 주세요.');
+   openDailyJournalChoice();return;
+  }
+  game=semester.advance(game);render();autoSaveProgress();return;
+ }
  const incident=game.phase==='chapter'?incidents.next(game,world):null;
  const event=game.phase==='chapter'&&!incident?scenario.scene(game,world):null;
  game=incident&&incident.result?incidents.continueStory(game):
@@ -1975,10 +2041,10 @@ sound.onStatus(message=>{$('musicStatus').textContent=message});
 $('choiceButtons').addEventListener('mouseover',e=>{if(e.target.closest('.choice'))sound.note('hover');});
 $('resetBtn').addEventListener('click',()=>{
  if(!game)return;
- const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
+ const base=engine.createGame(world,plan,game.profile);if(storyMode==='semester'&&game.scriptEdition)base.scriptEdition=game.scriptEdition;game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
 });
 $('againBtn').addEventListener('click',()=>{
- const base=engine.createGame(world,plan,game.profile);game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
+ const base=engine.createGame(world,plan,game.profile);if(storyMode==='semester'&&game.scriptEdition)base.scriptEdition=game.scriptEdition;game=storyMode==='semester'?semester.createGame(base):base;prologuePending=storyMode==='semester';schoolIntroPending=storyMode==='semester';playerSetupPending=false;render();autoSaveProgress();
 });
 $('diarySaveNow').addEventListener('click',async()=>{
  const control=$('diarySaveNow');

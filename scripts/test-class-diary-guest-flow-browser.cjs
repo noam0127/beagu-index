@@ -270,8 +270,47 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#diaryMusicVolume').isVisible(),true,'Volume slider must live in settings');
    assert.equal(await page.locator('#diaryEffectsVolume').isVisible(),true);
    await page.locator('.diary-panel-close').click();
+   // Complete the first chapter as an actual player: story choice → outcome →
+   // mandatory three-option diary note. No developer-only state shortcuts.
+   const flushText=async (phase)=>{
+    const state=await page.evaluate(()=>{
+     const more=document.getElementById('vnMore');
+     let clicks=0;
+     for(;clicks<1800&&!document.body.classList.contains('is-choosing');clicks++){
+      if(more.hidden)break;
+      more.click();
+     }
+     return {clicks,choosing:document.body.classList.contains('is-choosing'),
+      nextHidden:document.getElementById('nextBtn').hidden};
+    });
+    assert(state.choosing,phase+' must reveal a choice overlay after the final sentence: '+JSON.stringify(state));
+   };
+   await flushText('Chapter 1 narrative');
+   assert.equal(await page.locator('#choiceSection .choice').count(),3,'Chapter action has three options');
+   assert.equal(await page.locator('#choiceSection').evaluate(el=>el.classList.contains('daily-journal-dialog')),false,
+    'Story action and daily journal must be separate screens');
+   await page.locator('#choiceSection .choice').first().click();
+   assert.equal(await page.locator('#choiceSection').isVisible(),false,'Outcome comes before the diary');
+   await flushText('Chapter 1 outcome');
+   assert.equal(await page.locator('#choiceSection').evaluate(el=>el.classList.contains('daily-journal-dialog')),true,
+    'Daily journal paper should open at the end of the day');
+   assert.equal(await page.locator('#choiceSection .choice').count(),3,'One of three journal memories is required');
+   const typeface=await page.locator('#choiceSection .choice').first().evaluate(el=>getComputedStyle(el).fontFamily);
+   assert(/Myeongjo|Myungjo|Batang|Serif|serif/.test(typeface),'Diary typeface must differ from standard dialogue: '+typeface);
+   assert.equal(await page.locator('#nextBtn').evaluate(el=>el.hidden),true,'Cannot skip daily journal');
+   const noteText=await page.locator('#choiceSection .choice').nth(1).innerText();
+   await page.locator('#choiceSection .choice').nth(1).click();
+   assert.equal(await page.locator('#nextBtn').evaluate(el=>el.hidden),false,'After diary selection, next chapter becomes available');
+   await page.evaluate(()=>document.getElementById('nextBtn').click());
+   await page.waitForFunction(()=>document.getElementById('chapterDay')?.textContent?.includes('2 / 36'),null,{timeout:8000});
+   await page.waitForFunction(()=>document.querySelector('#vnSaveNotice')?.textContent?.includes('자동 저장됨'),null,{timeout:8000});
+   assert(latestCheckpoint&&latestCheckpoint.history.length===1&&latestCheckpoint.journal.length===1,
+    'Action and journal are saved independently');
+   assert.deepEqual(latestCheckpoint.journal[0],{episode:1,choice:1});
+   assert.equal(latestCheckpoint.version,'class-diary-semester/v1','Legacy checkpoint version must be preserved');
+   assert(noteText.length>15,'Diary must save substantive story memory');
    assert.equal(errors.length,0,'Browser errors: '+errors.join('; '));
-   console.log('PASS mocked guest '+device.name+': home code → title → school → colleague → story, saved progress and settings');
+   console.log('PASS mocked guest '+device.name+': home code → title → school → colleague → first chapter → diary reflection → save/next, settings');
    await page.close();
   }
   const legacy=await browser.newPage({viewport:{width:390,height:844}});
