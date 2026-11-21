@@ -62,9 +62,12 @@
       <div class="release-section-head"><h2 id="releaseAutoHeading">ChatGPT 개발 작업 내역 · 자동 수집</h2>
         <p>GitHub main에 실제 반영된 코드 변경만 자동 기록합니다. 채팅에서 말만 한 작업은 기록되지 않습니다. 목록은 마지막으로 생성한 버전 이후 작업입니다.</p></div>
       <p id="releasePendingStatus" class="subtle" aria-live="polite">GitHub 변경사항을 확인하는 중입니다.</p>
+      <p id="releaseGitHubWorkStatus" class="subtle" role="status" aria-live="polite">GitHub 작업 목록을 확인하는 중입니다.</p>
       <h3 class="release-inbox-subtitle">개발 중인 작업 · 아직 버전에 포함되지 않음</h3>
       <div id="releaseOpenPullRequests" class="release-pending-log"></div>
-      <h3 class="release-inbox-subtitle">완료되어 버전 생성 가능한 작업</h3>
+      <h3 class="release-inbox-subtitle">최근 main 병합 PR · 버전 생성과 별개</h3>
+      <div id="releaseRecentlyMergedPullRequests" class="release-pending-log"></div>
+      <h3 class="release-inbox-subtitle">main에서 확인된 새 커밋 · 버전 후보</h3>
       <div id="releasePendingLog" class="release-pending-log" aria-live="polite"></div>
       <div id="releasePendingFiles" class="release-file-summary" hidden>
         <strong>새 작업 변경 파일</strong>
