@@ -1,0 +1,86 @@
+name: v1.1.0 — verified 2026 response Lv1 and credited referral Lv2
+on:
+  push:
+    branches:
+      - develop/v1.1.0-phase1-20261121
+    paths:
+      - '.github/workflows/v1.1.0-verified-challenge-code-levels.yml'
+      - 'supabase/migrations/20261121235500_beagu_2026_verified_code_levels_v1.sql'
+      - 'supabase/functions/beagu-2026-participation-ingest-v1/index.ts'
+      - 'supabase/functions/beagu-level-api/index.ts'
+      - 'supabase/functions/beagu-referral-link-v1/index.ts'
+      - 'supabase/functions/beagu-postit-api-v1/index.ts'
+      - 'js/challenge-referral-v1.js'
+      - 'tests/challenge-2026-code-level-fixture.sql'
+      - 'tests/challenge-2026-code-level-verify.sql'
+      - 'tests/v1.1.0-participation-code-levels.test.mjs'
+      - 'tests/participation-code-unified.mjs'
+      - 'tests/levelup-provisional-v1.cjs'
+      - 'scripts/test-challenge-referral-premium.cjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  challenge-code-levels:
+    name: Isolated 2026 source attestation and Lv1/Lv2 authorization contract (NO LIVE DB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: isolated-test-only
+          POSTGRES_DB: isolated_code_tiers
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d isolated_code_tiers"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGDATABASE: isolated_code_tiers
+      PGUSER: postgres
+      PGPASSWORD: isolated-test-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Verify Edge TypeScript for level login, referral and trusted 2026 ingest
+        run: |
+          deno check supabase/functions/beagu-level-api/index.ts
+          deno check supabase/functions/beagu-referral-link-v1/index.ts
+          deno check supabase/functions/beagu-2026-participation-ingest-v1/index.ts
+      - name: Node and compatibility tests for all three issued-code formats
+        run: |
+          node --check js/challenge-referral-v1.js
+          node --test tests/v1.1.0-participation-code-levels.test.mjs
+          node tests/participation-code-unified.mjs
+          node tests/levelup-provisional-v1.cjs
+          node scripts/test-challenge-referral-premium.cjs
+          node tests/level-guide-route.mjs
+          node tests/auth-unified-2026-link.mjs
+          node tests/postit-member-auth.cjs
+          node tests/2026-auto-quality-referral-gate.mjs
+      - name: Install disposable Postgres client
+        run: command -v psql >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y postgresql-client)
+      - name: Create isolated anonymous synthetic challenge/quality source tables
+        run: psql -v ON_ERROR_STOP=1 -f tests/challenge-2026-code-level-fixture.sql
+      - name: Apply stage-17 verification migration in disposable Postgres only
+        run: psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261121235500_beagu_2026_verified_code_levels_v1.sql
+      - name: Assert own response Lv1, quality-credited referral Lv2, revoked -> Lv0/1
+        run: psql -v ON_ERROR_STOP=1 -f tests/challenge-2026-code-level-verify.sql
+      - name: Verify preview build never connects production survey or Supabase
+        run: python3 tests/preview-db-isolation.py
