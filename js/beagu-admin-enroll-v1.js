@@ -41,7 +41,7 @@
       // Supabase sends the standard confirmation email. The recipient must
       // confirm and log in before the independent invite code is accepted.
       const {data,error}=await auth.signUp({
-        email,password,options:{emailRedirectTo:new URL('admin-enroll.html',location.href).href}
+        email,password,options:{emailRedirectTo:window.BEAGU_AUTH_RETURN.resolve('adminEnroll')}
       });
       if(error)throw error;
       $('enrollRegisterPassword').value='';
