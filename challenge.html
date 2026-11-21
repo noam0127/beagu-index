@@ -167,6 +167,7 @@
   }
 </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
+  <link rel="stylesheet" href="styles/challenge-milestones-v1.css?v=20261122-stage30">
   <link rel="stylesheet" href="styles/challenge-achievements-v1.css?v=20261122-stage29">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -251,6 +252,13 @@
     <div class="rank">
       <span class="rank-label">2026년 챌린지 참여 순번</span>
       <strong id="participantNo" aria-live="polite">순번 확인 중</strong>
+    </div>
+    <!-- Only an exact server-issued ordinal triggers these PNG-safe graphics. -->
+    <div id="challengeMilestone" class="challenge-milestone" role="status"
+      aria-label="특별 챌린지 순번 축하" hidden>
+      <span id="challengeMilestoneSymbol" class="challenge-milestone-symbol" aria-hidden="true"></span>
+      <strong id="challengeMilestoneTitle" class="challenge-milestone-title"></strong>
+      <span id="challengeMilestoneDetail" class="challenge-milestone-detail"></span>
     </div>
     <a class="site-link" href="https://baeguindex.com/">baeguindex.com</a>
   </section>
@@ -406,7 +414,8 @@
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="js/challenge.js?v=20261121-code-card2"></script>
+<script src="js/challenge-milestones-v1.js?v=20261122-stage30"></script>
+<script src="js/challenge.js?v=20261122-stage30"></script>
 <script src="js/challenge-referral-v1.js?v=20261121-lv2-copy1"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 <script src="js/challenge-member-auth-v1.js?v=20261121-sms1"></script>
