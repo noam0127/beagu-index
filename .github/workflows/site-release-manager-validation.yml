@@ -22,6 +22,9 @@ on:
       - 'tests/release-step11-offline-integration.py'
       - 'tests/release-step11-readiness.mjs'
       - 'tests/release-snapshot-gate.mjs'
+      - 'scripts/release-manager/build-isolated-candidate.py'
+      - 'tests/release-step13-isolated-preview.py'
+      - '.github/workflows/release-v2-isolated-candidate-qa.yml'
       - 'docs/releases/v2-step11-readiness-observation.json'
       - 'tests/staging-http-smoke.py'
       - 'docs/releases/v2-step9-integration-manifest.json'
@@ -60,6 +63,7 @@ jobs:
           node --test tests/release-snapshot-gate.mjs
           python3 tests/site-release-packaging.py
           python3 tests/release-step11-offline-integration.py
+          python3 tests/release-step13-isolated-preview.py
       - name: Read-only HTTP smoke of currently published site and preview (not this PR)
         env:
           BEAGU_SITE_ORIGIN: https://baeguindex.com
