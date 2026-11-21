@@ -75,8 +75,8 @@ const client={auth:{
  onAuthStateChange(){return {data:{subscription:{unsubscribe(){}}}}}
 }};
 const browser={
- window:{supabaseClient:client,addEventListener:(name,fn)=>{events[name]=fn},
-  dispatchEvent:e=>events[e.type]?.(e)},
+ window:{supabaseClient:client,BEAGU_AUTH_RETURN:{resolve:page=>`https://baeguindex.com/${page}.html`},
+  addEventListener:(name,fn)=>{events[name]=fn},dispatchEvent:e=>events[e.type]?.(e)},
  document:{getElementById:id=>elements[id]||null,activeElement:elements.challengeIdentityPanel,
   body:{classList:{add(){},remove(){}}},
   addEventListener:(name,fn)=>{localEvents[name]=fn}},
