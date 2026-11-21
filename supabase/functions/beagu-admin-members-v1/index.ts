@@ -215,6 +215,20 @@ async function moderate(input: Record<string, unknown>, actor: { id: string; rol
     operation,requestId,"success");
   return {updated:true,user_id:id,operation,request_id:requestId};
 }
+async function privacyQueue(){
+  // Caller has passed server-side owner + active MFA session verification.
+  const {data,error}=await db.rpc("beagu_admin_privacy_queue_v1",{p_limit:30});
+  if(error)throw new HttpError(503,"privacy_queue_unavailable");
+  return {rows:(data||[]).map((item:{
+    request_id:string;user_id:string;kind:string;status:string;requested_at:string;
+  })=>({
+    request_id:item.request_id,
+    user_id:item.user_id,
+    kind:item.kind,
+    status:item.status,
+    requested_at:item.requested_at
+  }))};
+}
 async function limitedRequest(request:Request):Promise<Record<string,unknown>>{
   if(!request.headers.get("content-type")?.toLowerCase().startsWith("application/json"))
     throw new HttpError(400,"invalid_request");
@@ -252,7 +266,8 @@ Deno.serve(async (request: Request) => {
     const action = String(input.action || "");
     const data = action === "list" ? await listMembers(input) :
       action === "detail" ? await details(input) :
-      action === "moderate" ? await moderate(input, actor) : null;
+      action === "moderate" ? await moderate(input, actor) :
+      action === "privacy_queue" ? await privacyQueue() : null;
     if (data === null) throw new HttpError(400, "invalid_action");
     return reply(origin, 200, { ok: true, data, role: actor.role });
   } catch (error) {
