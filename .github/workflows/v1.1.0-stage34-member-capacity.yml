@@ -15,6 +15,9 @@ on:
       - 'tests/admin-members-static.cjs'
       - 'admin.html'
       - 'js/beagu-admin-members-v1.js'
+      - 'js/beagu-admin-access-v1.js'
+      - 'tests/v1.1.0-stage34-referral-render-cap.test.mjs'
+      - 'supabase/migrations/20261121093000_referral_funnel_private_v1.sql'
   workflow_dispatch:
 permissions:
   contents: read
@@ -61,11 +64,13 @@ jobs:
       - name: Parse browser and private Edge modules
         run: |
           node --check js/beagu-admin-members-v1.js
+          node --check js/beagu-admin-access-v1.js
           deno check supabase/functions/beagu-admin-members-v1/index.ts
       - name: Run 4,001 / 10,001 mock browser pagination and existing privacy regressions
         run: |
-          node --test tests/v1.1.0-stage34-large-member-directory.test.mjs tests/v1.1.0-admin-members-ui.test.mjs
+          node --test tests/v1.1.0-stage34-large-member-directory.test.mjs tests/v1.1.0-stage34-referral-render-cap.test.mjs tests/v1.1.0-admin-members-ui.test.mjs
           node tests/admin-members-static.cjs
+          node tests/admin-dashboard-static.cjs
           node scripts/test-admin-access.cjs
       - name: Keep previous Owner-only moderation / audit-before-ban tests
         run: deno test --allow-read tests/v1.1.0-admin-member-moderation.test.ts
