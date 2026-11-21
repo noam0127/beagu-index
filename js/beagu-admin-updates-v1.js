@@ -74,6 +74,21 @@
    root.append(wrap);
   }
  }
+ const workGateLabels={
+  in_development:"개발 중 · 코드 통합 미검증",
+  ready_for_validation:"선행 작업 충족 · 통합 검사 필요",
+  waiting_for_dependency:"선행 PR 완료 대기",
+  blocked_unknown_dependency:"선행 PR 조회되지 않음 · 통합 보류",
+  blocked_abandoned_dependency:"선행 PR 미병합 · 통합 보류",
+  blocked_cycle:"PR 의존성 순환 · 통합 보류",
+  blocked_ambiguous_base:"선행 브랜치 중복 · 수동 확인",
+  requires_base_review:"기준 브랜치 확인 필요",
+  requires_ancestry_review:"선행 PR 병합됨 · 커밋 포함 여부 검증 필요",
+  cannot_verify_full_inbox:"PR 조회 불완전 · 통합 판정 보류",
+  merged_snapshot_unverified:"main 병합됨 · 버전 포함 미검증",
+  not_merged_to_main:"다른 브랜치 병합 · main 반영 미확인",
+  closed_no_merge:"병합 없이 종료"
+ };
  function renderWorkInProgress(){
   const root=el("releaseOpenPullRequests");root.replaceChildren();
   const merged=el("releaseRecentlyMergedPullRequests");merged.replaceChildren();
@@ -86,9 +101,12 @@
    return;
   }
   const partial=workInbox.status==="partial";
+  const graph=workInbox.dependency_summary||{};
   status.textContent="GitHub PR "+(workInbox.total_seen||0)+"개 확인 · 진행 중 "+
    (workInbox.open_count||0)+"개 · main 병합 이력 "+(workInbox.merged_to_main_count||0)+"개"+
-   (partial?" · 일부 자료만 확인됨(조회 누락 가능)":"");
+   " · 선행 작업 대기/차단 "+(graph.blocked_count||0)+"개"+
+   (partial?" · 일부 자료만 확인됨(조회 누락 가능)":"")+
+   " · 통합 테스트·시험/운영 배포는 별도 검증";
   if(!workInProgress.length)addText(root,"p",
     partial?"일부 조회만 성공했습니다. 작업이 없다고 단정할 수 없습니다.":"열린 PR이 없습니다.","subtle");
   for(const pr of workInProgress){
@@ -98,8 +116,21 @@
    link.textContent="#"+pr.number+" · "+pr.title;
    item.append(link);
    addText(item,"span",pr.status==="draft"?"개발 중":"병합 대기","release-pr-status");
+   addText(item,"span",workGateLabels[pr.integration_gate]||"의존 상태 미확인","release-pr-status");
    addText(item,"div","대상 "+(pr.base_ref||"확인 불가")+" · SHA "+short(pr.head_sha)+
     " · 수정 "+date(pr.updated_at),"subtle");
+   if(Array.isArray(pr.dependencies)&&pr.dependencies.length){
+    const parts=pr.dependencies.map(dep=>"#"+dep.number+" ("+
+     (dep.state==="merged_to_main"?"main 병합·포함 검증 필요":
+      dep.state==="not_in_snapshot"?"조회 누락 가능":dep.state==="closed_unmerged"?"미병합 종료":
+      dep.state==="merged_other_base"?"다른 브랜치 병합":"진행 중")+")");
+    addText(item,"div","선행 작업: "+parts.join(", "),"subtle");
+   }
+   const evidenceUnverified=pr.release_inclusion==="unverified"&&
+    pr.staging_verification==="not_checked"&&pr.production_verification==="not_checked";
+   addText(item,"div",evidenceUnverified?
+    "버전 포함·시험 완료·운영 반영: 미검증":
+    "릴리스·배포 상태는 검증 가능한 별도 증빙이 필요합니다.","subtle");
    root.append(item);
   }
   const mergedPrs=Array.isArray(workInbox.recently_merged)?workInbox.recently_merged:[];
@@ -111,7 +142,7 @@
    link.target="_blank";link.rel="noopener noreferrer";link.className="release-pr-link";
    link.textContent="#"+pr.number+" · "+pr.title;
    item.append(link);
-   addText(item,"span","main 병합 · 버전 포함 여부 별도 확인","release-pr-status");
+   addText(item,"span",workGateLabels[pr.integration_gate]||"main 병합 · 버전 포함 미검증","release-pr-status");
    addText(item,"div","병합 "+date(pr.merged_at)+" · 코드 "+short(pr.merge_sha||pr.head_sha),"subtle");
    merged.append(item);
   }

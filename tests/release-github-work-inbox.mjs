@@ -115,6 +115,6 @@ test("read-only server and UI wiring exposes failures and merged items",()=>{
  for(const id of ["releaseGitHubWorkStatus","releaseRecentlyMergedPullRequests"])
   assert.ok(html.includes('id="'+id+'"'),id);
  assert.match(ui,/GitHub PR 조회 실패/);
- assert.match(ui,/main 병합 · 버전 포함 여부 별도 확인/);
+ assert.match(ui,/main 병합됨 · 버전 포함 미검증/);
  assert.doesNotMatch(ui,/innerHTML\s*=/);
 });

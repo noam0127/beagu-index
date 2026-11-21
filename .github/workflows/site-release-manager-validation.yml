@@ -14,6 +14,7 @@ on:
       - 'supabase/functions/beagu-release-manager-v1/**'
       - 'tests/site-release-center.mjs'
       - 'tests/release-github-work-inbox.mjs'
+      - 'tests/release-work-dependencies.mjs'
   workflow_dispatch:
 jobs:
   check:
@@ -35,4 +36,5 @@ jobs:
         run: |
           node --test tests/site-release-center.mjs
           node --test tests/release-github-work-inbox.mjs
+          node --test tests/release-work-dependencies.mjs
           python3 tests/site-release-packaging.py
