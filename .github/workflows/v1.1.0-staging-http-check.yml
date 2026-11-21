@@ -1,0 +1,27 @@
+name: v1.1.0 staging HTTP diagnostics (read-only)
+on:
+  push:
+    branches:
+      - develop/v1.1.0-lv3
+    paths:
+      - '.github/workflows/v1.1.0-staging-http-check.yml'
+      - 'tests/staging-http-smoke.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staging-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test published production and preview URLs (no writes)
+        env:
+          BEAGU_SITE_ORIGIN: https://baeguindex.com
+          BEAGU_SMOKE_ATTEMPTS: '3'
+          BEAGU_SMOKE_TIMEOUT: '12'
+          BEAGU_SMOKE_RETRY_SECONDS: '2'
+        run: python3 tests/staging-http-smoke.py
