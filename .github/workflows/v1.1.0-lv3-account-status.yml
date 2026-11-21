@@ -8,6 +8,9 @@ on:
       - 'js/beagu-lv3-account-ui-v1.js'
       - 'js/beagu-lv3-session-v1.js'
       - 'js/beagu-level-state-v1.js'
+      - 'js/challenge-achievements-v1.js'
+      - 'styles/challenge-achievements-v1.css'
+      - 'tests/v1.1.0-challenge-achievements.test.mjs'
       - 'js/beagu-level-guide-v1.js'
       - 'js/challenge-member-auth-v1.js'
       - 'js/postit-account-v1.js'
@@ -42,12 +45,13 @@ jobs:
           node --check js/beagu-lv3-account-ui-v1.js
           node --check js/beagu-lv3-session-v1.js
           node --check js/beagu-level-state-v1.js
+          node --check js/challenge-achievements-v1.js
           node --check js/beagu-level-guide-v1.js
           node --check js/challenge-member-auth-v1.js
           node --check js/postit-account-v1.js
       - name: Verify Lv3 UI and Stage19 server access protection
         run: |
-          node --test tests/v1.1.0-lv3-account-ui.test.mjs tests/v1.1.0-lv3-server-authorization.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-lv3-exclusive-account-link.test.mjs tests/v1.1.0-session-restore.test.mjs
+          node --test tests/v1.1.0-challenge-achievements.test.mjs tests/v1.1.0-lv3-account-ui.test.mjs tests/v1.1.0-lv3-server-authorization.test.mjs tests/v1.1.0-account-status.test.mjs tests/v1.1.0-lv3-exclusive-account-link.test.mjs tests/v1.1.0-session-restore.test.mjs
       - name: Verify legacy login/participant Lv2 and app UI are not regressed
         run: |
           node tests/level-guide-route.mjs
