@@ -1015,7 +1015,9 @@ function validScoringResult(result){
    !Number.isInteger(result.score)||result.score<0||result.score>MAX_STORED_SCORE||
    result.perfect<0||result.good<0||result.miss<0||
    result.perfect+result.good!==result.hits||
-   result.hits+result.miss!==result.judged)return false;
+   result.hits+result.miss!==result.judged||
+   result.score<result.perfect*1000+result.good*600||
+   result.score>result.perfect*1500+result.good*900)return false;
  return true;
 }
 function scoreForHit(judgement,comboValue){
