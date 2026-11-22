@@ -12,6 +12,25 @@ if(!/^[a-f0-9]{40}$/.test(sha||""))throw Error("GITHUB_SHA_40_HEX_REQUIRED");
 if(process.env.GITHUB_REPOSITORY&&process.env.GITHUB_REPOSITORY!==repo)throw Error("WRONG_REPO");
 if(process.env.GITHUB_REF_NAME&&process.env.GITHUB_REF_NAME!=="schoolband-playtest")throw Error("NOT_TEST_BRANCH");
 const root="https://raw.githack.com/"+repo+"/"+sha+"/games/nangam-schoolband-v08/";
+async function acceptExternalHtmlNotice(page,label){
+ const title=await page.title();
+ const heading=await page.locator("h1").first().innerText().catch(()=>"");
+ if(/External Content Notice|rawgit\.hack/i.test(title+" "+heading)&&
+   !/난감한 스쿨밴드/.test(heading)){
+  const button=page.getByRole("button",{name:"Open the page",exact:true});
+  if(await button.count()!==1){
+   console.error("STAGE029_NOTICE_BUTTON_MISSING",JSON.stringify({
+    label,url:page.url(),title,heading,body:(await page.locator("body").innerText()).slice(0,650)
+   }));
+   throw Error("external_html_confirmation_required");
+  }
+  await button.click();
+  await page.waitForLoadState("domcontentloaded");
+  await page.waitForFunction(()=>document.querySelector("h1")?.textContent?.includes("난감한 스쿨밴드"),null,{timeout:20000});
+  return true;
+ }
+ return false;
+}
 async function verify(){
  let browser;
  const findings=[];
@@ -34,6 +53,8 @@ async function verify(){
    });
    let response=await page.goto(root+"preview/index.html",{waitUntil:"domcontentloaded",timeout:25000});
    assert.equal(response?.status(),200,"preview landing HTTP must be 200");
+   const noticeShown=await acceptExternalHtmlNotice(page,"preview landing");
+   if(noticeShown)console.log("STAGE029_HTML_NOTICE_ACKNOWLEDGED",view.label,"landing");
    const heading=await page.locator("h1").first().innerText();
    if(!/난감한 스쿨밴드/.test(heading)){
     console.error("STAGE029_EXTERNAL_BROWSER_DIAGNOSTIC",JSON.stringify({
@@ -48,6 +69,8 @@ async function verify(){
    assert.match(await anchor.getAttribute("href"),/\.\.\/index\.html/);
    await anchor.click();
    await page.waitForURL("**/games/nangam-schoolband-v08/index.html",{timeout:20000});
+   const gameNoticeShown=await acceptExternalHtmlNotice(page,"game html");
+   if(gameNoticeShown)console.log("STAGE029_HTML_NOTICE_ACKNOWLEDGED",view.label,"game");
    assert.match(await page.title(),/난감한 스쿨밴드/);
    await page.waitForFunction(()=>!!window.nangamSchoolbandV08);
    assert.equal(await page.locator("#start").isDisabled(),true,"no selected school");
