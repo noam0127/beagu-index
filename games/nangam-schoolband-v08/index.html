@@ -738,6 +738,40 @@ function nameTier(){return LABELS[tierIdx()]}
 function selectedRecord(){return school && school.school_id ? school : null}
 function readBest(){if(!school)return null;try{const n=Number(localStorage.getItem("nangam-band-v08:"+school.school_id+":"+instrument+":"+tier));return Number.isFinite(n)&&n>0?n:null}catch(_){return null}}
 function showBest(){const n=readBest();safeText("best",n===null?"—":n.toLocaleString("ko-KR"))}
+// A single guided route over three complete accessible panels: no elements are
+// hidden, ensuring that keyboard users can always return and change instruments.
+const UX_STEPS=Object.freeze(["school","instrument","play"]);
+let currentUxStep="school";
+function stepAvailability(){
+ return {school:true,instrument:!!school,play:!!school};
+}
+function syncStepNav(){
+ const valid=stepAvailability();
+ document.body.dataset.uxStep=currentUxStep;
+ document.querySelectorAll("#stepNav [data-step-target]").forEach(btn=>{
+  const step=btn.dataset.stepTarget,available=valid[step];
+  btn.setAttribute("aria-current",step===currentUxStep?"step":"false");
+  btn.setAttribute("aria-disabled",String(!available||playing&&step!=="play"));
+  btn.disabled=playing&&step!=="play";
+ });
+ const copy={school:"1단계 학교 선택",instrument:"2단계 악기 선택",play:"3단계 연주"};
+ safeText("stepStatus",copy[currentUxStep]);
+}
+function goToStep(next,{scroll=true,focus=true}={}){
+ if(!UX_STEPS.includes(next))return false;
+ if(!stepAvailability()[next]||playing&&next!=="play"){
+  if(!school){safeText("schoolStatus","먼저 학교를 선택하세요.");}
+  return false;
+ }
+ currentUxStep=next;syncStepNav();
+ const panel=$("step"+next[0].toUpperCase()+next.slice(1));
+ if(scroll)panel.scrollIntoView({behavior:"instant",block:"start"});
+ if(focus)panel.focus({preventScroll:true});
+ return true;
+}
+document.querySelectorAll("#stepNav [data-step-target]").forEach(btn=>{
+ btn.addEventListener("click",()=>goToStep(btn.dataset.stepTarget));
+});
 function showSchool(){
  const s=selectedRecord();
  if(!s){safeText("schoolTitle","학교를 선택해 주세요");safeText("schoolTier","학교별 난이도는 학교 선택 후 표시됩니다.");$("start").disabled=true;showBest();return}
@@ -750,7 +784,7 @@ function showSchool(){
  status(s.eligible?"학교 선택 완료. 연주를 시작하세요.":"공식 난이도 정보가 없어 NORMAL 연습으로 진행합니다.");
  draw();
 }
-function setSchool(s){if(playing)return;school=s;showSchool();$("searchResults").replaceChildren()}
+function setSchool(s){if(playing)return;school=s;showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
 async function getJson(url){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw Error("school_api_"+r.status);return r.json()}
 $("schoolSearch").addEventListener("input",()=>{
  if(playing)return;
@@ -799,6 +833,7 @@ document.querySelectorAll("[data-inst]").forEach(b=>b.onclick=()=>{
  updateControlsHint();
  if(school)showSchool();
  renderPads();draw();
+ if(school)goToStep("play");
 });
 
 function updateControlsHint(){
@@ -1130,6 +1165,7 @@ function loadGeneratedTrial(catalog,targetInstrument="guitar",difficulty="normal
  tier=difficulty;showSchool();renderPads();
  document.querySelectorAll("[data-inst]").forEach(el=>el.setAttribute("aria-pressed",String(el.dataset.inst===instrument)));
  status("내부 QA 차트 "+catalog.chartVersion+" · "+notes.length+"노트. 운영 곡 등록이 아닙니다.");
+ goToStep("play");
  return true;
 }
 function clearGeneratedTrial(){
@@ -1337,7 +1373,7 @@ async function start(){
  }
  startPending=false;
  if(playing)return;
- playing=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;syncPauseControl();
+ playing=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;currentUxStep="play";syncStepNav();syncPauseControl();
  score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;soundEvents.length=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
@@ -1354,7 +1390,7 @@ async function start(){
 function finish(interrupted){
  if(!playing)return;
  playing=false;paused=false;pauseReason=null;pauseBusy=false;pausePromise=null;lastFrameWall=null;lastFrameSong=null;clearInterval(timer);cancelAnimationFrame(raf);particles=[];lanePulse.fill(0);clearFxFeedback();
- void releaseAudioEngine("finish");syncPauseControl();
+ void releaseAudioEngine("finish");syncStepNav();syncPauseControl();
  $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
  $("offsetRange").disabled=false;$("offsetReset").disabled=false;
  document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);
@@ -1473,7 +1509,7 @@ window.addEventListener("pageshow",e=>{
  }
 });
 window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,pitch:n.pitch??null,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),loadGeneratedTrial,
- clearGeneratedTrial,getGeneratedTrial:()=>generatedTrial?({songId:generatedTrial.catalog.songId,
+ clearGeneratedTrial,getUxStep:()=>currentUxStep,goToUxStep:goToStep,getUxAvailability:stepAvailability,getGeneratedTrial:()=>generatedTrial?({songId:generatedTrial.catalog.songId,
   chartVersion:generatedTrial.catalog.chartVersion,mode:"internal-private-qa",
   notes:generatedTrial.notes.length,autoplayEvents:generatedTrial.autoEvents.length}):null,getMixLevels:()=>({...MIX_LEVELS}),getAudioLifetime:()=>({...audioLife,activeVoices:liveAudioVoices.size,muted,volumePercent,masterGain:desiredMasterGain(),pendingStart:startPending,hasContext:!!ctx}),getHarmonyByBar:()=>CHORD_ROOTS.map((_,bar)=>harmonyAtBar(bar)),getMelodyHarmonyAudit:()=>checkMelodyHarmony(),getPlaybackState:()=>({playing,paused,pauseReason,transitioning:pauseBusy,audioState:ctx?.state||"none",songTime:ctx?nowSong():null,schedulerStep:step,remainingNotes:chart.filter(n=>!n.done).length}),getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
 $("offsetRange").addEventListener("input",()=>{if(playing)return;inputOffsetMs=clampOffsetMs($("offsetRange").value);saveOffset()});
@@ -1481,7 +1517,7 @@ $("offsetReset").addEventListener("click",()=>{if(playing)return;inputOffsetMs=0
 $("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
 $("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
 if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
-renderPads();syncFxSettings();syncOffsetUI();syncVolume();syncPauseControl();hud();
+renderPads();syncFxSettings();syncOffsetUI();syncVolume();syncPauseControl();syncStepNav();hud();
 })();
 </script>
 </body>
