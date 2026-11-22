@@ -19,7 +19,7 @@ function loadModel(html){
  // Exclude explanatory comments; inspect executable code for forbidden side effects.
  const executable=code.split("\n").filter(line=>!line.trim().startsWith("//")).join("\n");
  for(const name of ["Date.now","performance.now","requestAnimationFrame","window.","document.","AudioContext","setTimeout"])assert(!executable.includes(name),"impure model contains "+name);
- return vm.runInNewContext(code+"\n({BEAT,BARS,SONG_BEATS,WIDTHS,PERFECT,NOTE_PREVIEW_SECONDS,NOTE_TRAVEL_PX,NOTE_HEIGHT_PX,noteTimeSeconds,noteDeltaSeconds,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed})",Object.create(null),{timeout:1000});
+ return vm.runInNewContext(code+"\n({BEAT,BARS,SONG_BEATS,WIDTHS,PERFECT,NOTE_PREVIEW_SECONDS,NOTE_TRAVEL_PX,NOTE_HEIGHT_PX,noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed})",Object.create(null),{timeout:1000});
 }
 function verifyBoundaries(m){
  let count=0;const rows=[];
@@ -58,6 +58,19 @@ function verifyGeometry(m){
    almost(y,m.noteYForDelta(ahead,293),"coordinate shared",1e-8);checks+=3;
   }
  }
+ for(const noteAt of [0,2,10]){
+  const spawn=noteAt-1.16;
+  almost(m.noteSpawnTimeSeconds(noteAt),spawn,"note spawns one preview before");
+  assert.equal(m.noteIsInDrawingWindow(noteAt,spawn-EPS),false,"too early to spawn");
+  assert.equal(m.noteIsInDrawingWindow(noteAt,spawn),true,"visible exactly at spawn");
+  assert.equal(m.noteIsInDrawingWindow(noteAt,noteAt),true,"visible at hitline");
+  assert.equal(m.noteIsInDrawingWindow(noteAt,noteAt+.199),true,"late note tail still visible");
+  assert.equal(m.noteIsInDrawingWindow(noteAt,noteAt+.201),false,"past draw tail");
+  checks+=6;
+ }
+ assert.equal(m.noteIsInDrawingWindow(NaN,1),false);
+ assert.equal(m.noteIsInDrawingWindow(1,NaN),false);
+ checks+=2;
  const spacing=(beat/4)/1.16*240;
  almost(m.noteStepSpacing(),spacing,"note spacing");assert(spacing-24>=4);checks+=2;
  return {checks,note_height_px:24,step_spacing_px:spacing,gap_px:spacing-24};
@@ -104,7 +117,7 @@ async function browserProof(){
        d:m.judgementForOffset(w,i),f:m.judgementForOffset(w+e,i),
        missAt:m.isNoteMissed(0,w,i),missBeyond:m.isNoteMissed(0,w+e,i)};
     });
-    return {tiers,y:m.noteYAtAudioTime(.5,0,293),spacing:m.noteStepSpacing()};
+    return {tiers,y:m.noteYAtAudioTime(.5,0,293),spacing:m.noteStepSpacing(),spawn:m.noteSpawnTimeSeconds(2),spawnVisible:m.noteIsInDrawingWindow(2,.84)};
    });
    assert.equal(test.tiers.length,5);
    for(const t of test.tiers){
@@ -112,7 +125,7 @@ async function browserProof(){
      assert.equal(t[prop],expected,name+" boundary "+prop);
     }
    }
-   almost(test.y,293-.5/1.16*240,"browser geometry");almost(test.spacing,(60/108/4)/1.16*240,"browser spacing");
+   almost(test.y,293-.5/1.16*240,"browser geometry");almost(test.spacing,(60/108/4)/1.16*240,"browser spacing");almost(test.spawn,2-1.16,"browser spawn");assert.equal(test.spawnVisible,true,"browser spawn visible");
    await page.locator("#demoSchool").click();
    await page.locator("#start").click();
    const clocks=await page.evaluate(async()=>{
