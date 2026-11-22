@@ -2,17 +2,18 @@
 
 ## Verified evidence
 - Isolated Supabase project: `ycwuugggqbunlbwuzvbx`; production project `snvzwrexuqavnfvzgxqj` must not be modified.
-- Direct read-only SQL count: `public.schools=0`, `public.beagu_school_report_yearly=0`, `public.beagu_admin_accounts=0`, `public.beagu_admin_audit_events=0`.
+- Latest direct read-only staging SQL counts: `public.schools=1` (fictional school only), `public.beagu_school_report_yearly=1` (2026 `PENDING`, not privacy-reviewed), `public.beagu_admin_accounts=0`, `public.beagu_admin_audit_events=0`, `auth.users=0`, `auth.sessions=0`. The earlier zero-school observation is superseded by the isolated synthetic fixture.
 - Live staging admin Edge Function v2 denies anonymous and forged bearer requests with HTTP 401 (GitHub Actions run 45003564875).
 - Forbidden browser origins are rejected with HTTP 403, local OPTIONS receives 204 (run 45003707914).
+- Staging Auth `/auth/v1/health` and `/auth/v1/settings` both returned HTTP 200 with the project publishable API key (run 45007594357). Five CI checks for commit `133814b4` passed. A negative password-login / forged-token HTTP test was added subsequently and must not be represented as passed before its run completes.
 - Static RC packaging and CI checks passed; no hosted preview browser E2E performed.
 
 ## Release blocker
-**BLOCKED_NO_STAGING_E2E_FIXTURES**: a zero-account, zero-school staging database cannot prove valid admin MFA login, member moderation audit lifecycle, school search, or postit school context. An HTTP negative test cannot replace authenticated browser E2E.
+**BLOCKED_NO_STAGING_E2E_AUTH_SESSIONS_AND_HOSTED_PREVIEW**: the staging database now contains one fictional school, but it still has zero genuine Auth users, sessions and admin accounts. This cannot prove valid admin MFA login or member moderation. A staging-only SQL school fixture and negative HTTP tests do not replace authenticated hosted browser E2E.
 
 ## Safe unblock procedure
 1. Keep production Supabase, production GitHub branch and production website unchanged. Do not copy production personal data, authentication secrets or member records.
-2. Create a dedicated *synthetic* staging school and report with non-identifying values, staging-only test users (one owner MFA AAL2, one ordinary member, one non-MFA admin) through approved Supabase Auth methods. Ensure their IDs and credentials are test-only.
+2. The non-identifying fictional school and pending report already exist. Provision staging-only test users (one owner MFA AAL2, one ordinary member, one non-MFA admin) through approved Supabase Auth methods, not direct `auth.users` / `auth.sessions` SQL. Ensure IDs and credentials are test-only.
 3. Validate staging RLS and MFA with real signed sessions; test member list, owner-only moderation, intent-first audit record, failure recovery, and postit school context. Verify no audit/member data is exposed to anonymous clients.
 4. Provide an independently hosted review URL for the pinned RC SHA; run actual browser tests with isolated cookies and network checks that no production Supabase reference is used.
 5. Remove or disable test users and synthetic fixtures after testing; preserve redacted evidence. No release approval until E2E succeeds.
