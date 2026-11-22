@@ -35,6 +35,22 @@ function simulate(action,songId,date="2026-11-23"){
  return {action,from:entry.stage,to:next.stage,songId,queue:verdict,
   fallback,notPublishedToOperatingSite:true};
 }
+function draftDecision(action,songId,date="2026-11-23"){
+ const allowed=["start_review","approve_private","reject","withdraw","release_trial"];
+ if(!allowed.includes(action))throw Error("action_disallowed");
+ const {registry,queue}=load();
+ const record=queue.records.find(x=>x.song_id===songId);
+ if(!record)throw Error("song_not_registered");
+ const next=Q.advance(record,action,registry,date);
+ const updated={...queue,records:queue.records.map(x=>x.song_id===songId?next:x)};
+ Q.validateQueue(updated,registry);
+ const dir=path.join(ROOT,"artifacts/schoolband-stage023");
+ fs.mkdirSync(dir,{recursive:true});
+ const target=path.join(dir,"draft-song-queue.v1.json");
+ fs.writeFileSync(target,JSON.stringify(updated,null,2)+"\\n",{encoding:"utf8",flag:"w"});
+ return {draft_path:path.relative(ROOT,target),song_id:songId,new_stage:next.stage,
+  submitted_to_live_system:false,production_deployed:false,requires_separate_review:true};
+}
 if(require.main===module){
  try{
   const [mode,id,date]=process.argv.slice(2);
@@ -43,7 +59,9 @@ if(require.main===module){
     selectedSchoolAnthem:Q.resolvePlaytestSong(r.queue,r.registry,"1234567","anthem")}));
   }else if(mode==="--simulate-withdraw"&&id&&process.argv.length<=5){
    console.log(JSON.stringify(simulate("withdraw",id,date)));
-  }else throw Error("usage: --verify OR --simulate-withdraw <registered-song-id> [YYYY-MM-DD]");
+  }else if(mode==="--draft-decision"&&id&&date&&process.argv.length<=6){
+   console.log(JSON.stringify(draftDecision(id,date,process.argv[5]||"2026-11-23")));
+  }else throw Error("usage: --verify | --simulate-withdraw <song_id> [date] | --draft-decision <action> <song_id> [date]");
  }catch(e){console.error("STAGE023_REJECTED: "+String(e.code||e.message));process.exitCode=1}
 }
-module.exports={load,simulate};
+module.exports={load,simulate,draftDecision};
