@@ -114,6 +114,19 @@ jobs:
         run: node tests/stage38-staging-release-readonly-contract.cjs
       - name: Validate ephemeral OIDC Auth+MFA test's security and cleanup contract
         run: node tests/stage38-staging-auth-mfa-oidc-contract.cjs
+      - name: Check one-time staging Auth test runner is permanently disabled
+        run: |
+          status=$(curl --silent --show-error --max-time 15 \
+            --output /tmp/stage38-disabled.json --write-out '%{http_code}' \
+            https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage38-auth-mfa-once)
+          test "$status" = 410
+          python3 - <<'PY'
+          import json
+          body=json.load(open('/tmp/stage38-disabled.json',encoding='utf-8'))
+          assert body.get('status')=='DISABLED'
+          assert body.get('reason')=='STAGE38_AUTH_MFA_QA_COMPLETE'
+          print('PASS: staging one-time Auth+MFA runner disabled with HTTP 410')
+          PY
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
@@ -348,47 +361,3 @@ jobs:
           test "$status" = 403
           if grep -qi '^access-control-allow-origin:' "$headers"; then echo "FAIL: forbidden preflight approved"; exit 1; fi
           echo "PASS: production release preflight denied (403)"
-
-  staging-real-auth-mfa-oidc-once:
-    # Same-repository PR #244 only; the OIDC verifier pins the exact PR merge ref.
-    # Remove this temporary job after the run (or on any failure).
-    if: github.event_name == 'pull_request' && github.event.pull_request.number == 244 && github.event.pull_request.head.repo.full_name == 'noam0127/beagu-index' && github.event.pull_request.head.ref == 'hotfix/v1.1.0-preview-backend-isolation'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 6
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Run legitimate staging-only Auth password and MFA journey with GitHub OIDC
-        shell: bash
-        env:
-          STAGING_FUNCTION_URL: https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage38-auth-mfa-once
-        run: |
-          set -euo pipefail
-          test -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}"
-          test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}"
-          # Never echo, persist or upload the OIDC bearer; it grants access to
-          # a temporary privileged runner on the isolated staging backend.
-          oidc=$(curl --fail --silent --show-error --max-time 20 \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=beagu-stage38-e2e-test" \
-            | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')
-          status=$(curl --silent --show-error --max-time 180 \
-            -H "Authorization: Bearer $oidc" \
-            -H "Content-Type: application/json" \
-            -o stage38-auth-result.json -w '%{http_code}' \
-            --data '{}' "$STAGING_FUNCTION_URL")
-          unset oidc
-          python3 - "$status" <<'PY'
-          import json,sys
-          x=json.load(open("stage38-auth-result.json",encoding="utf-8"))
-          safe={"status":int(sys.argv[1]),"passed":x.get("passed"),"checks":x.get("checks",[]),
-                "cleanup":x.get("cleanup",{}),"error_code":x.get("error_code")}
-          print("STAGE38_AUTH_MFA_RESULT="+json.dumps(safe,ensure_ascii=False))
-          assert int(sys.argv[1])==200 and x.get("passed") is True, "Real MFA journey failed"
-          assert x.get("cleanup",{}).get("auth_user_removed") is True, "Test user leaked"
-          assert x.get("cleanup",{}).get("account_removed") is True, "Admin account leaked"
-          assert "real_totp_challenge_verified_aal2" in x.get("checks",[]), "No authentic MFA"
-          assert "aal2_release_writes_and_worker_denied" in x.get("checks",[]), "Release gate unproven"
-          PY
-          rm -f stage38-auth-result.json
