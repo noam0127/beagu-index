@@ -867,7 +867,7 @@ function normalizePublicSchool(record,expectedId){
   source_year:validYear?year:null,publication_state:state};
 }
 function schoolIdentityText(s){
- return s.school_name+[s.region,s.district,s.school_code?"학교코드 "+s.school_code:"",s.school_id?"ID "+s.school_id:""].filter(Boolean).join(" · ").replace(/^(.+?)((?: · .+)*)$/,(_,name,rest)=>name+rest);
+ return [s.school_name,s.region,s.district,s.school_code?"학교코드 "+s.school_code:"",s.school_id?"ID "+s.school_id:""].filter(Boolean).join(" · ");
 }
 function showSchool(){
  const s=selectedRecord();
