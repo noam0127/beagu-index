@@ -85,6 +85,8 @@ def build() -> dict:
     OUTPUT.mkdir()
     with tarfile.open(fileobj=io.BytesIO(archive), mode="r:") as tar:
         for item in tar:
+            if item.isdir():
+                continue
             if not item.isfile() or not selected(item.name):
                 raise RuntimeError("Unsafe site archive entry: " + item.name)
             target = OUTPUT / item.name
