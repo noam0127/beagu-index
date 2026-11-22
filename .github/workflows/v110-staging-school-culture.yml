@@ -1,0 +1,29 @@
+name: v1.1.0 school culture staging runtime deny tests
+on:
+  push:
+    branches:
+      - fix/v110-staging-edited-api-recovery-20261123
+    paths:
+      - 'scripts/staging/recovered-beagu-school-culture-v1/**'
+      - 'tests/staging-school-culture-contract.test.py'
+      - 'tests/staging-school-culture-http-negative.test.py'
+      - '.github/workflows/v110-staging-school-culture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage-school-culture-denials:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Inspect source-only guard contracts
+        run: python3 tests/staging-school-culture-contract.test.py
+      - name: Exercise real staging HTTP without authentication
+        run: python3 tests/staging-school-culture-http-negative.test.py
+      - name: Assert production remains untouched by CI
+        run: |
+          test ! -e supabase/functions/beagu-school-culture-v1/qa-generated.ts
+          echo "Only QA HTTP reads; no deploy/DB/write credentials configured"
