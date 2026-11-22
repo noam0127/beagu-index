@@ -116,7 +116,14 @@
   el("releaseStageApply").disabled=busy||active||!s.production_sha||
     (!candidate&&(!s.draft_sha||s.draft_sha===s.staging_sha));
   el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
-  el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
+  // Show the same fail-closed rule enforced by the server: a registered
+  // RC must never be promoted by the "actual website" button.
+  const blockedRc=(s.staging_sha===rc.sha)||
+    /^v\d+\.\d+\.\d+-rc\.[1-9]\d*$/.test(String(s.staging_version||""));
+  el("releaseProdApply").disabled=busy||active||blockedRc||
+    !s.staging_sha||s.staging_sha===s.production_sha;
+  el("releaseProdApply").title=blockedRc?
+    "릴리스 후보는 운영 웹에 적용할 수 없습니다. 정식 승인 이후 새 버전이 필요합니다.":"";
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
   el("releaseProdRollback").disabled=busy||active||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||active||!s.production_sha;
