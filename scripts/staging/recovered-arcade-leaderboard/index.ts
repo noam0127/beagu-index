@@ -45,7 +45,11 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
     method, headers: restHeaders(prefer), body: body === undefined ? undefined : JSON.stringify(body)
   });
   if (!response.ok) {
-    console.error("arcade_db", method, response.status);
+    // Stage-only diagnostic: record PostgREST error code, never body or credentials.
+    const detail = await response.text().catch(()=>"");
+    let errorCode = "UNKNOWN";
+    try { const parsed = JSON.parse(detail); errorCode = typeof parsed.code === "string" ? parsed.code : "UNKNOWN"; } catch {}
+    console.error("arcade_db", method, response.status, errorCode);
     throw new Error("database_unavailable");
   }
   if(response.status===204)return null;
