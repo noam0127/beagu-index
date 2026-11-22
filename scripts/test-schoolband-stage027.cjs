@@ -18,6 +18,32 @@ assert(GAME.includes('window.addEventListener("orientationchange",scheduleRespon
 assert(GAME.includes('b.setAttribute("aria-label",lane[0]+" 연주, 키보드 "+lane[1])'));
 assert(GAME.includes('getMobileUiState:()=>({activePointers:activePadPointers.size'));
 assert(GAME.includes('getLaneCount:()=>INST[instrument].lanes.length'));
+// Exercise the game's actual event handlers with stubbed hit/flash, NEVER audio.
+const pointerStart=source.indexOf("const activePadPointers=new Map();");
+const pointerEnd=source.indexOf("function renderPads(){",pointerStart);
+assert(pointerStart>=0&&pointerEnd>pointerStart,"actual game pointer block present");
+const recorded={hits:[],flashes:[],captures:[]};
+const pointerContext=vm.createContext({
+ hit:lane=>recorded.hits.push(lane),flash:lane=>recorded.flashes.push(lane)
+});
+vm.runInContext(source.slice(pointerStart,pointerEnd)+
+ ";globalThis.pointerQA={down:padPointerDown,end:padPointerEnd,clear:clearActiveTouches,count:()=>activePadPointers.size};",
+ pointerContext);
+const P=pointerContext.pointerQA;
+function event(id,trusted=true){
+ return {pointerId:id,isTrusted:trusted,currentTarget:{setPointerCapture:x=>recorded.captures.push(x)},
+  preventDefault:()=>{}};
+}
+P.down(event(101),0);assert.equal(P.count(),1);
+P.down(event(101),0);assert.equal(recorded.hits.length,1,"same finger cannot hit twice");
+P.down(event(102),1);assert.equal(P.count(),2,"two distinct fingers remain independent");
+assert.deepEqual(recorded.hits,[0,1],"two lanes correctly routed");
+assert.deepEqual(recorded.captures,[101,102],"pointer capture per finger");
+P.end(event(101));assert.equal(P.count(),1,"first pointer released");
+P.end(event(102));assert.equal(P.count(),0,"all pointers released");
+P.down(event(0,false),2);assert.equal(P.count(),0,"untrusted input cannot retain pointer");
+assert.deepEqual(recorded.hits,[0,1,2],"synthetic input only one hit");
+P.down(event(103),1);P.clear();assert.equal(P.count(),0,"resize/rotation clears stale touch");
 console.log("PASS stage027 static mobile/keyboard event wiring and JS parse (no sound)");
 if(process.argv.includes("--browser"))(async()=>{
  const {chromium,webkit}=require("playwright");
