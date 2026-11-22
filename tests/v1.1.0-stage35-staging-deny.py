@@ -87,7 +87,7 @@ def probe_direct_rest_privilege():
     """Use the site's staging publishable key; never any service role key."""
     worker = pathlib.Path(__file__).resolve().parents[1] / "scripts/release-manager/worker.py"
     source = worker.read_text(encoding="utf8")
-    matches = re.findall(r'stage_key\\s*=\\s*"(sb_publishable_[A-Za-z0-9_-]+)"', source)
+    matches = re.findall(r'stage_key\s*=\s*"(sb_publishable_[A-Za-z0-9_-]+)"', source)
     if len(matches) != 1:
         print("BLOCKED rest-rls: staging public key not identifiable")
         return False
