@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111829">
-<title>난감한 스쿨밴드 · 학교 선택 → 악기 선택 → 연주</title>
+<title>난감한 스쿨밴드 · 학교 선택 → 곡 선택 → 악기 선택 → 연주</title>
 <style>
 :root{font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color-scheme:dark;--bg:#111827;--panel:#1e293b;--fg:#f8fafc;--muted:#b8c7da;--line:#42516b;--point:#a5b4fc}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--fg);line-height:1.45}
@@ -173,6 +173,14 @@ html[data-low-power-fx="true"] .judgement.animate,html[data-low-power-fx="true"]
 html[data-low-power-fx="true"] .judgement.animate{transform:translate(-50%,0) scale(1)}
 html[data-low-power-fx="true"] .lane-event.animate{transform:none}
 @media(max-width:360px){.fx-options{gap:3px 9px}.fx-options label{font-size:11px}}
+/* Stage020: song choice is separate from school index tier and music licensing. */
+.song-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:9px 0}
+.song-choice{min-width:0;text-align:left;min-height:98px;background:#182941;border:2px solid #50627e;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.song-choice strong{font-size:14px}.song-choice small{font-size:11px;line-height:1.45;color:#ccd9ed}
+.song-choice[aria-pressed=true]{border-color:#b3a7ff;background:#393464}
+.song-choice:disabled{opacity:.55;background:#1a2435}
+#songState{font-size:12px;line-height:1.55;color:#d7e7fb;margin:7px 0}
+@media(max-width:360px){.song-choice{padding:9px 7px}.song-choice strong{font-size:12px}}
 </style>
 </head>
 <body>
@@ -194,8 +202,14 @@ html[data-low-power-fx="true"] .lane-event.animate{transform:none}
 <div class="school-line"><p id="schoolStatus" role="status" aria-live="polite">학교 검색 또는 가상 학교 체험</p><button type="button" id="demoSchool">가상 학교 체험</button></div>
 <div class="picked"><strong id="schoolTitle">학교를 선택해 주세요</strong><small id="schoolTier">학교별 난이도 표시</small></div>
 </section>
-<section id="stepInstrument" class="card ux-step-card" data-step-panel="instrument" aria-label="악기 선택" tabindex="-1">
-<h2>② 악기 선택</h2>
+<section id="stepInstrument" class="card ux-step-card" data-step-panel="instrument" aria-label="곡과 악기 선택" tabindex="-1">
+<h2>② 곡 선택</h2>
+<div class="song-choices" id="songChoices" role="group" aria-label="연주곡 선택">
+<button id="songVolleyball" class="song-choice" type="button" data-song="volleyball" aria-pressed="true"><strong>🏐 배구 테마 연습곡</strong><small>항상 연주 가능 · 기존 창작 연습곡</small></button>
+<button id="songAnthem" class="song-choice" type="button" data-song="anthem" aria-pressed="false" disabled><strong>🏫 우리 학교 교가</strong><small id="anthemAvailability">게임용 교가 미등록 · 준비 중</small></button>
+</div>
+<p id="songState" role="status" aria-live="polite">배구 테마 연습곡이 선택되었습니다.</p>
+<h2>③ 악기 선택</h2>
 <div id="instruments" class="instrument-grid">
 <button type="button" class="instrument" data-inst="guitar" aria-pressed="true"><span class="inst-emoji">🎸</span><span class="inst-title">일렉기타</span><span class="inst-count">4레인</span></button>
 <button type="button" class="instrument" data-inst="drums" aria-pressed="false"><span class="inst-emoji">🥁</span><span class="inst-title">드럼</span><span class="inst-count">4레인</span></button>
@@ -203,7 +217,7 @@ html[data-low-power-fx="true"] .lane-event.animate{transform:none}
 <button type="button" class="instrument" data-inst="keys" aria-pressed="false"><span class="inst-emoji">🎹</span><span class="inst-title">키보드</span><span class="inst-count">5레인</span></button>
 </div>
 <p id="instCaption">일렉기타 · 4레인 · D F J K</p>
-<div class="song">🎵 <span>빛나는 우리 학교</span> · 창작 연습곡 (약 18초)</div>
+<div class="song">🎵 <span id="currentSongName">배구 테마 연습곡</span> · 기존 창작 멜로디 (약 18초)</div>
 </section>
 <section id="stepPlay" class="card ux-step-card" data-step-panel="play" aria-label="연주" tabindex="-1">
 <div class="play-head"><div id="laneInfo">일렉기타 · 4레인</div><p id="playTitle">일렉기타 · 4레인 · NORMAL</p></div>
@@ -219,7 +233,7 @@ html[data-low-power-fx="true"] .lane-event.animate{transform:none}
 <div class="hud"><div><small>점수</small><b id="score">0</b></div><div><small>콤보</small><b id="combo">0</b></div><div><small>정확도</small><b id="accuracy">—</b></div><div><small>최고</small><b id="best">—</b></div></div>
 <p id="result">노트가 판정선에 오면 해당 레인 키나 터치 버튼을 누르세요.</p>
 </section>
-<p class="note">내부 시험용 창작곡입니다. 선택한 학교의 실제 교가 음원이 아닙니다.</p>
+<p class="note">배구 테마 연습곡은 기존에 제작한 창작곡을 사용하는 시험용 선택지입니다. 실제 학교 교가가 아니며, 교가 선택은 권리 확인과 게임용 차트 등록 후 열립니다.</p>
 </main>
 <script>
 (function(){
@@ -740,7 +754,7 @@ function saveOffset(){
  try{localStorage.setItem(OFFSET_STORAGE_KEY,String(inputOffsetMs))}catch(_){}
  syncOffsetUI();
 }
-let school=null, instrument="guitar",playing=false,paused=false,pauseBusy=false,pauseReason=null,pausePromise=null,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
+let school=null, selectedSong="volleyball", instrument="guitar",playing=false,paused=false,pauseBusy=false,pauseReason=null,pausePromise=null,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
 let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0,lastMissAnnouncement=-Infinity,lastFrameWall=null,lastFrameSong=null;
 const MIX_LEVELS=Object.freeze({master:.80,melody:.96,ensemble:.46,hit:.80});
 let masterBus=null,melodyBus=null,ensembleBus=null,hitBus=null,compressor=null,noiseBuffer=null;
@@ -799,8 +813,38 @@ function safeText(id,text){$(id).textContent=String(text)}
 function status(text){safeText("feedback",text)}
 function tierIdx(){return Math.max(0,TIERS.indexOf(tier))}
 function nameTier(){return LABELS[tierIdx()]}
+// The anthem registry is deliberately empty until stage021-023 have verified
+// identity, score/chart/audio integrity and publication rights for real schools.
+// A metadata URL or YouTube video alone must never unlock game playback.
+const REGISTERED_ANTHEMS=Object.freeze({});
+function songAvailability(record){
+ const item=record&&REGISTERED_ANTHEMS[record.school_id];
+ const ready=!!(item&&item.publicApproved===true&&item.rightsApproved===true&&
+  item.chartValidated===true&&item.schoolId===record.school_id&&item.playable===true);
+ return {volleyball:true,anthem:ready,reason:ready?"교가 게임용 등록 완료":"게임용 교가 미등록 · 준비 중"};
+}
+function syncSongChoice(){
+ const available=songAvailability(school);
+ if(selectedSong==="anthem"&&!available.anthem)selectedSong="volleyball";
+ $("songVolleyball").setAttribute("aria-pressed",String(selectedSong==="volleyball"));
+ $("songAnthem").setAttribute("aria-pressed",String(selectedSong==="anthem"));
+ $("songAnthem").disabled=!available.anthem||playing||startPending;
+ $("songVolleyball").disabled=playing||startPending;
+ safeText("anthemAvailability",available.reason);
+ safeText("songState",selectedSong==="anthem"?"학교 교가 선택됨":"배구 테마 연습곡 선택됨 · 실제 교가 음원 아님");
+ safeText("currentSongName",selectedSong==="anthem"?"우리 학교 교가":"배구 테마 연습곡");
+}
+function chooseSong(song){
+ if(playing||startPending||!school||!["volleyball","anthem"].includes(song))return false;
+ if(song==="anthem"&&!songAvailability(school).anthem){
+  syncSongChoice();return false;
+ }
+ selectedSong=song;syncSongChoice();showBest();return true;
+}
+$("songVolleyball").addEventListener("click",()=>chooseSong("volleyball"));
+$("songAnthem").addEventListener("click",()=>chooseSong("anthem"));
 function selectedRecord(){return school && school.school_id ? school : null}
-function readBest(){if(!school)return null;try{const n=Number(localStorage.getItem("nangam-band-v08:"+school.school_id+":"+instrument+":"+tier));return Number.isFinite(n)&&n>0?n:null}catch(_){return null}}
+function readBest(){if(!school)return null;try{const n=Number(localStorage.getItem("nangam-band-v08:"+school.school_id+":"+selectedSong+":"+instrument+":"+tier));return Number.isFinite(n)&&n>0?n:null}catch(_){return null}}
 function showBest(){const n=readBest();safeText("best",n===null?"—":n.toLocaleString("ko-KR"))}
 // A single guided route over three complete accessible panels: no elements are
 // hidden, ensuring that keyboard users can always return and change instruments.
@@ -870,6 +914,7 @@ function schoolIdentityText(s){
  return [s.school_name,s.region,s.district,s.school_code?"학교코드 "+s.school_code:"",s.school_id?"ID "+s.school_id:""].filter(Boolean).join(" · ");
 }
 function showSchool(){
+ syncSongChoice();
  const s=selectedRecord();
  if(!s){safeText("schoolTitle","학교를 선택해 주세요");safeText("schoolTier","학교별 난이도는 학교 선택 후 표시됩니다.");$("start").disabled=true;showBest();return}
  tier=(s.eligible&&TIERS.includes(s.difficulty))?s.difficulty:"normal";
@@ -883,7 +928,7 @@ function showSchool(){
  status(s.eligible?"학교 선택 완료. 연주를 시작하세요.":"공개된 학교 난이도가 없어 NORMAL 연습으로 진행합니다.");
  draw();
 }
-function setSchool(s){if(playing)return;school=s;showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
+function setSchool(s){if(playing)return;school=s;selectedSong="volleyball";syncSongChoice();showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
 async function getJson(url){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw Error("school_api_"+r.status);return r.json()}
 $("schoolSearch").addEventListener("input",()=>{
  if(playing)return;
@@ -1476,6 +1521,8 @@ function animate(){
 }
 async function start(){
  if(playing||startPending||!school)return;
+ // Never substitute the practice melody while claiming to play a real anthem.
+ if(selectedSong==="anthem"&&!songAvailability(school).anthem){status("게임용 교가가 등록되지 않았습니다. 배구 테마 연습곡을 선택하세요.");return;}
  const audit=validateChartCatalog(PARTS,INST,CHART_VERSION);
  if(!audit.valid){
   status("차트 데이터 검증에 실패했습니다. 이 버전의 연주를 시작할 수 없습니다.");
@@ -1505,7 +1552,7 @@ async function start(){
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
  $("offsetRange").disabled=true;$("offsetReset").disabled=true;
- document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=true);
+ document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=true);syncSongChoice();
  $("progress").style.width="0%";safeText("result","연주 중 · 선택한 악기의 노트만 누르세요.");
  status("준비… 1초 뒤 시작!");hud();
  clearInterval(timer);cancelAnimationFrame(raf);
@@ -1520,14 +1567,14 @@ function finish(interrupted){
  void releaseAudioEngine("finish");syncStepNav();syncPauseControl();
  $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
  $("offsetRange").disabled=false;$("offsetReset").disabled=false;
- document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);
+ document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);syncSongChoice();
  if(interrupted){status("연주를 중단했습니다.");safeText("result","다시 시작할 수 있습니다.");}
  else{
  const acc=chart.length?Math.round(hits/chart.length*100):0;
  status("공연 종료! "+(acc>=85?"훌륭한 연주!":acc>=60?"좋은 연주!":"다시 도전해 보세요."));
  safeText("result","정확도 "+acc+"% · PERFECT "+perfect+" · GOOD "+good+" · MISS "+miss+" · 최대 콤보 "+bestCombo+" · 빈 입력 "+emptyPresses+"회 · 노트 "+chart.length+"개");
  const prior=readBest()||0;
- if(score>prior){try{localStorage.setItem("nangam-band-v08:"+school.school_id+":"+instrument+":"+tier,String(score))}catch(_){}}
+ if(score>prior){try{localStorage.setItem("nangam-band-v08:"+school.school_id+":"+selectedSong+":"+instrument+":"+tier,String(score))}catch(_){}}
  showBest();$("progress").style.width="100%";
  }
  draw();
@@ -1646,7 +1693,7 @@ window.nangamSchoolbandV08={getPerformanceFx:()=>({...FX_PERF,mode:perfFxMode(),
  fullscreen:!!document.fullscreenElement,fullscreenAvailable:!!$("stepPlay").requestFullscreen,
  padRects:[...$("pads").querySelectorAll(".taphit")].map(b=>({lane:Number(b.dataset.lane),x:b.getBoundingClientRect().left,
  y:b.getBoundingClientRect().top,w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height}))}),
-getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,pitch:n.pitch??null,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),loadGeneratedTrial,
+getSelected:()=>school?{...school}:null,getSong:()=>selectedSong,getSongAvailability:()=>songAvailability(school),chooseSong,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,pitch:n.pitch??null,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),loadGeneratedTrial,
  clearGeneratedTrial,getUxStep:()=>currentUxStep,goToUxStep:goToStep,getUxAvailability:stepAvailability,getGeneratedTrial:()=>generatedTrial?({songId:generatedTrial.catalog.songId,
   chartVersion:generatedTrial.catalog.chartVersion,mode:"internal-private-qa",
   notes:generatedTrial.notes.length,autoplayEvents:generatedTrial.autoEvents.length}):null,getMixLevels:()=>({...MIX_LEVELS}),getAudioLifetime:()=>({...audioLife,activeVoices:liveAudioVoices.size,muted,volumePercent,masterGain:desiredMasterGain(),pendingStart:startPending,hasContext:!!ctx}),getHarmonyByBar:()=>CHORD_ROOTS.map((_,bar)=>harmonyAtBar(bar)),getMelodyHarmonyAudit:()=>checkMelodyHarmony(),getPlaybackState:()=>({playing,paused,pauseReason,transitioning:pauseBusy,audioState:ctx?.state||"none",songTime:ctx?nowSong():null,schedulerStep:step,remainingNotes:chart.filter(n=>!n.done).length}),getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
@@ -1710,7 +1757,7 @@ document.addEventListener("fullscreenchange",()=>{syncFullscreen();scheduleRespo
 document.addEventListener("fullscreenerror",()=>{
  safeText("screenModeStatus","전체화면 전환에 실패했습니다. 일반 화면에서 연주할 수 있습니다.");syncFullscreen();
 });
-renderPads();syncFxSettings();syncOffsetUI();syncVolume();syncPauseControl();syncStepNav();updateOrientation();hud();
+renderPads();syncFxSettings();syncOffsetUI();syncVolume();syncPauseControl();syncStepNav();syncSongChoice();updateOrientation();hud();
 })();
 </script>
 </body>
