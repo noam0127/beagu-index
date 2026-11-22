@@ -350,8 +350,9 @@ jobs:
           echo "PASS: production release preflight denied (403)"
 
   staging-real-auth-mfa-oidc-once:
-    # One explicit, uniquely marked push only. All later commits skip this job.
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[stage38-auth-e2e]')
+    # Same-repository PR #244 only; the OIDC verifier pins the exact PR merge ref.
+    # Remove this temporary job after the run (or on any failure).
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 244 && github.event.pull_request.head.repo.full_name == 'noam0127/beagu-index' && github.event.pull_request.head.ref == 'hotfix/v1.1.0-preview-backend-isolation'
     runs-on: ubuntu-24.04
     timeout-minutes: 6
     permissions:
