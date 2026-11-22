@@ -518,7 +518,7 @@ const WIDTHS=[.20,.17,.14,.11,.075],PERFECT=[.09,.075,.06,.05,.036];
 const $=id=>document.getElementById(id);
 const canvas=$("track"),g=canvas.getContext("2d");
 let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
-let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0;
+let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0,lastMissAnnouncement=-Infinity;
 let masterBus=null,compressor=null,noiseBuffer=null;
 let particles=[],lanePulse=[0,0,0,0,0],lastImpactAt=0,impactStrength=0,impactLane=0;
 const LANE_GLOW_MS=175,PARTICLE_LIMIT=60;
@@ -843,7 +843,7 @@ function animate(){
  const now=nowSong(),cut=WIDTHS[tierIdx()];
  let missedThisFrame=0;
  for(const n of chart){if(!n.done && now-n.t>cut){n.done=true;judged++;miss++;combo=0;missedThisFrame++;laneFeedback(n.lane,"miss");}}
- if(missedThisFrame)status("MISS · 놓친 노트 "+missedThisFrame+"개");
+ if(missedThisFrame&&now-lastMissAnnouncement>.8){status("MISS · 놓친 노트 "+missedThisFrame+"개");lastMissAnnouncement=now;}
  if(now>=SONG_BEATS*BEAT+.28){finish(false);return}
  $("progress").style.width=Math.max(0,Math.min(100,100*(now/(SONG_BEATS*BEAT))))+"%";
  hud();draw();raf=requestAnimationFrame(animate);
@@ -854,7 +854,7 @@ async function start(){
  try{await a.resume()}catch(e){status("오디오 시작에 실패했습니다.");return}
  if(playing)return;
  playing=true;
- score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;step=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();
+ score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
  document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=true);
