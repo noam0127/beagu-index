@@ -30,6 +30,7 @@ assert.ok(levelGuards.length >= 2, "Post-it reads and writes must independently 
 assert.match(postit, /const member=await verifiedMember\(req,viewer\);/, "Post-it member state must be validated");
 assert.match(postit, /if\(!user\)return fail\(req,"WRITER_IDENTITY_REQUIRED",403\)/, "Post-it writes require verified member");
 assert.match(postit, /const \{data,error\}=await db\.auth\.getUser\(jwt\)/, "Post-it account proof uses Supabase Auth");
+assert.match(postit, /if\(error\|\|!eligiblePostitAuthUser\(user\)\)return null/, "Post-it must reject banned, deleted and unconfirmed users");
 assert.match(postit, /DEVICE_OWNERSHIP_NOT_VERIFIED/, "Post-it ownership proof must be enforced");
 
 assert.match(admin, /await db\.auth\.getUser\(token\)/, "Admin bearer must be verified");
