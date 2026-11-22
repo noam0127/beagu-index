@@ -38,7 +38,7 @@ assert.match(api,/\.from\('beagu_postit_member_accounts'\)/,'Eligibility must us
 assert.match(api,/\.eq\('auth_user_id',account\.id\)/);
 assert.match(api,/\.eq\('identity_visitor_id',session\.identity_visitor_id\)/);
 assert.match(api,/return isVerifiedLv3Member\(session,account,member,eligiblePostitAuthUser\)\?3:level/);
-assert.match(api,/const actualLevel=await verifiedMemberTier\(req,session\)/);
+assert.match(api,/const effectiveLevel=await verifiedMemberTier\(req,session\)/);
 assert.doesNotMatch(api,/body\.(?:level|is_admin|role)\s*===?\s*3/);
 const ui=readFileSync('js/beagu-level-state-v1.js','utf8');
 assert.match(ui,/const tier=\/\^\[0123\]\$\//);
