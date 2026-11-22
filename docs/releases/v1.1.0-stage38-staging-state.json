@@ -1,0 +1,37 @@
+{
+  "stage": 38,
+  "version": "v1.1.0-rc.1",
+  "date": "2026-11-22",
+  "rc_sha": "5c95aadad971901a8222f83c52e93bf901a3aeb7",
+  "rc_branch": "release/v1.1.0-rc.1",
+  "published_staging_sha": "41fa2fe4c68cf533f9183806ac3e16f31f662612",
+  "published_staging_version": "1.1.0-qa.20261122",
+  "published_production_sha": "5950755c8174788d7bb1fa879be73a15f25d9ae2",
+  "deployment_status": "BLOCKED_NOT_DEPLOYED",
+  "offline_package": {
+    "github_run": 44972879069,
+    "artifact_id": 14734447202,
+    "artifact_name": "beagu-v1.1.0-rc.1-offline-preview",
+    "digest": "sha256:55ced17f33f964d1dc082f7590581cac4ae9b803c496b8259e0adbbf287499c5",
+    "passed": true,
+    "online": false
+  },
+  "admin_release_api": {
+    "candidate_register_implemented_on": "develop/v1.1.0-lv3",
+    "live_deployed": false,
+    "requires_owner_aal2": true,
+    "exact_sha_verified_on_registration": true,
+    "prod_rc_promotion_blocked_in_dev": true
+  },
+  "effective_stage_url": "https://baeguindex.com/_preview/",
+  "live_stage_matches_rc": false,
+  "staging_release_complete": false,
+  "production_release_allowed": false,
+  "pending": [
+    "Owner must approve stage-only registration in an active AAL2 session",
+    "New candidate registration API must be safely rolled out; current live API can only register main SHA",
+    "Owner must initiate staging application via Updates page and wait for signed GitHub worker",
+    "Verify actual deployed staging SHA and release job history, then HTTP preview routes",
+    "Do not promote to production; earlier stage36 NO-GO gates remain blocked"
+  ]
+}
