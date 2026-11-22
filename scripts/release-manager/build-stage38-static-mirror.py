@@ -78,10 +78,10 @@ def write_mirror():
         after = re.sub(r'(?i)(href|src|action)=(["\\\'])/(?!/)',
                        lambda m: m.group(1) + "=" + m.group(2) + base,
                        before)
-        after = re.sub(r"(?i)<head(?:\\s[^>]*)?>",
+        after = re.sub(r"(?i)<head(?:\s[^>]*)?>",
                        lambda m: m.group(0) + CSP + GUARD,
                        after, count=1)
-        after = re.sub(r"(?i)<body(?:\\s[^>]*)?>",
+        after = re.sub(r"(?i)<body(?:\s[^>]*)?>",
                        lambda m: m.group(0) + NOTICE,
                        after, count=1)
         if after == before or "stage38-public-static-warning" not in after:
