@@ -375,3 +375,16 @@
 - **직접 실행 증거:** 최신 게임 점수·저장 함수 자체를 연결 JS 환경에서 동적으로 평가한 **40개 체크 PASS**, 게임 및 테스트 스크립트 문법 PASS. 전체 Node/Chromium/GitHub Actions 실행 결과는 **미확인**; 024 최종 종료 아님.
 - 제외 준수: 교가 저작권 허락 요청, 유료 API/결제, 연주감·음향 검증 모두 수행하지 않음. `main`, `baeguindex.com`, 운영 Supabase 변경 없음.
 - 025/030 독립 개발 가능; 최종 릴리스 전 #245~#249 검증 게이트 필요.
+
+## 025/030 — 결과 화면·로컬 기록 이상 감지·서버 순위표 보류 (2026-11-23)
+
+상태: **IMPLEMENTED / NODE·BROWSER CI PENDING**, 미확인 항목: [GitHub Issue #250](https://github.com/noam0127/beagu-index/issues/250).
+
+- 실제 기존 30단계 계획 025의 핵심인 '선택적 순위표 / 비정상 기록 / 결과 화면'을 구현. 서버 전국 순위표는 **미채택**: localStorage 기록은 사용자 위조가 가능하고 계정·닉네임·학생·학교별 점수를 서버에 수집할 필요가 없으며, 인증·RLS·속도 제한·부정행위 검증을 적용하지 않은 상태에서 공정한 순위를 주장하면 안 된다. 개인정보 서버 전송·추가 과금·순위 API 구현하지 않음.
+- 게임 `games/nangam-schoolband-v08/index.html`: 결과 카드 `#concertSummary`, 점수/정확도/최대콤보(3개 주요 수치), PERFECT/GOOD/MISS 세부 판정, 중단/완료/검증실패별 문구와 로컬 기록 안내. 학교·곡·악기 다시 선택하거나 재시작 시 결과 숨김.
+- `concertSummaryModel` 추가: 점수·판정·콤보 상한 및 정수 검사, `perfect+good=hits`, `hits+miss=judged`, `judged<=total`, 누락/불가능한 연주 점수 차단. 미완주 결과는 참고만 허용하고 기록 저장 금지, 비정상 결과는 점수 숨김. 기존 024 검증·저장 함수 연계.
+- 테스트 `scripts/test-schoolband-stage025.cjs` 및 CI `.github/workflows/schoolband-stage025.yml`: 실제 게임 순수 모델 정상·중단·이상 판정 테스트, 1280/320 DOM 요약 화면, 서버 쓰기 없음 검증. 테스트 전용 함수 주입만 하고 음악 시작 버튼을 누르지 않음.
+- **직접 수행 검증**: 실제 게임 결과 모델과 결과 UI 렌더 함수를 연결 JS 실행 환경에서 검사하여 **15개 PASS**, 실제 게임/테스트 JS 문법 검사 PASS. 전체 Node·Playwright·GitHub Actions 실행 결과 **미확인**이므로 025 최종 종료 선언 아님.
+- 7개 전문가별 근거와 순위표 보류 사유: `docs/schoolband-stage025-local-results-leaderboard-decision.md`.
+- 사용자 제외 준수: 교가 편곡/배포 허락 요청 없음, 유료 API/결제 없음, 청음/연주감·음향 테스트 없음. 운영 `main`, `baeguindex.com`, 운영 Supabase DB 변경 없음.
+- 다음 026/030은 자동 회귀 체계. 019~025의 미확인 외부 CI/실제 브라우저 성과는 개별 이슈로 추적하며 최종 릴리스 이전에 정리해야 한다.
