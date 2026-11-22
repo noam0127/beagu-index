@@ -4,38 +4,38 @@
 
 ## 실행 계약
 
-- 게임 코드: \`games/nangam-schoolband-v08/index.html\` (001 기준 blob \`88d5ed2089498fc67c7e951a2af8cf1b6fb01635\`).
-- 테스트: \`scripts/test-schoolband-stage002.cjs\`.
-- 명령: 종속성 설치 이후 \`node scripts/test-schoolband-stage002.cjs\` 한 번으로 정적 검증 + 고의 실패 감지 + Playwright Chromium DOM 테스트 + JSON 계측 수행.
-- 사전 설치 (CI에서 자동 수행): \`npm install --no-save --no-package-lock playwright\`, \`npx playwright install --with-deps chromium --only-shell\`. 테스트 명령은 운영 네트워크를 호출하지 않고 자체 HTTP 서버를 임시 포트로 띄운다.
-- CI: \`.github/workflows/schoolband-stage002-test.yml\` (시험 브랜치 전용, 운영 브랜치 제외).
-- 산출물: \`artifacts/schoolband-stage002/metrics.json\` 및 desktop/mobile320 스크린샷 (GitHub Actions artifact 보관). JSON은 실행 결과이며 실행 전 샘플 수치로 채우지 않는다.
+- 게임 코드: `games/nangam-schoolband-v08/index.html` (001 기준 blob `88d5ed2089498fc67c7e951a2af8cf1b6fb01635`).
+- 테스트: `scripts/test-schoolband-stage002.cjs`.
+- 명령: 종속성 설치 이후 `node scripts/test-schoolband-stage002.cjs` 한 번으로 정적 검증 + 고의 실패 감지 + Playwright Chromium DOM 테스트 + JSON 계측 수행.
+- 사전 설치 (CI에서 자동 수행): `npm install --no-save --no-package-lock playwright`, `npx playwright install --with-deps chromium --only-shell`. 테스트 명령은 운영 네트워크를 호출하지 않고 자체 HTTP 서버를 임시 포트로 띄운다.
+- CI: `.github/workflows/schoolband-stage002-test.yml` (시험 브랜치 전용, 운영 브랜치 제외).
+- 산출물: `artifacts/schoolband-stage002/metrics.json` 및 desktop/mobile320 스크린샷 (GitHub Actions artifact 보관). JSON은 실행 결과이며 실행 전 샘플 수치로 채우지 않는다.
 
 ## 검증 항목과 판정 규칙
 
 | 구분 | 구체적 자동 확인 | 실패 시 |
 | --- | --- | --- |
-| JS 문법 | HTML에서 인라인 JS 추출, Node \`vm.Script\` 컴파일 | FAIL |
+| JS 문법 | HTML에서 인라인 JS 추출, Node `vm.Script` 컴파일 | FAIL |
 | 음악/패턴 | 자작곡 28음/8마디, 24px 노트, 4악기×5난이도, 레인 범위·누락, 예상 밀도 | FAIL |
 | 고의 실패 검출 | 구문 오류, 24→20px 노트 훼손, 레인 번호 100 변조 후 검사기 **반드시 오류 감지** | 미검출 시 FAIL |
 | DOM 스모크 | Chromium 1280×900과 모바일 320×640, 가상 학교 조회/선택, 악기 4개, 패드 3~5개, 20조합 생성, 시작·중지 | FAIL |
-| 데이터 격리 | Edge Function 대신 route.fulfill로 가상 \`school_id\` 응답. 일부러 포함시킨 \`NEVER_PRINT_PRIVATE_002\` 필드가 화면에 표시되지 않아야 함 | FAIL |
+| 데이터 격리 | Edge Function 대신 route.fulfill로 가상 `school_id` 응답. 일부러 포함시킨 `NEVER_PRINT_PRIVATE_002` 필드가 화면에 표시되지 않아야 함 | FAIL |
 | UI 오류 | JavaScript pageerror 없어야 함 | FAIL |
 | 계측 | 악기 전환 JS 처리 시간, 입력 이벤트 발생→동기 핸들러 종료, next requestAnimationFrame, 44프레임 간격을 320px/데스크톱에서 수집 | JSON 기록 |
 
 ### 개인정보 및 외부 API 경계 (읽기 전용 소스 검사)
 
-Supabase \`schoolband-school-read-v1\` ACTIVE v1을 다시 조회했다. 이 API는 GET/OPTIONS만 허용하며, 학교 목록 응답은 \`school_id\`, \`school_name\`, \`sido_standard\`만 통과시킨다. 세부 응답은 \`school_id\`, \`school_name\`, \`region\`, \`difficulty\`, \`eligible\`, \`source_year\`로 화이트리스트를 구성하고, 값의 자료형/길이·난이도 후보를 확인한다. 함수 소스에 service_role 접근 키는 발견되지 않았다.
+Supabase `schoolband-school-read-v1` ACTIVE v1을 다시 조회했다. 이 API는 GET/OPTIONS만 허용하며, 학교 목록 응답은 `school_id`, `school_name`, `sido_standard`만 통과시킨다. 세부 응답은 `school_id`, `school_name`, `region`, `difficulty`, `eligible`, `source_year`로 화이트리스트를 구성하고, 값의 자료형/길이·난이도 후보를 확인한다. 함수 소스에 service_role 접근 키는 발견되지 않았다.
 
 이것은 **코드 수준의 공개 필드 검증**이며, 실제 운영 RLS, 업스트림 익명 접근 권한, 외부 응답 캐싱, 부하, 네트워크 수집 전체에 대한 완전한 침투 검증이 아니다. 테스트는 생명력 있는 사설 응답을 조회하지 않는다.
 
 ### 성능/입력 지연 측정 원칙
 
 - 측정 장소: GitHub Actions ubuntu-24.04 / Chromium headless. 실행마다 CPU 및 부하가 달라지므로 절대 품질 인증값으로 해석하지 않는다.
-- \`instrument_switch_ms\`: \`performance.now\` 앞뒤에서 악기 클릭→동기 DOM 업데이트 완료를 측정. 20샘플/화면.
-- \`input_dispatch_to_handler_ms\`: 합주 시작 후 12회 합성 PointerEvent 생성→핸들러 반환 측정.
-- \`dispatch_to_next_raf_ms\`: 위 이벤트 뒤 다음 rAF까지 대기 12회.
-- \`frame_interval_ms\`: 연속 45 rAF 스탬프의 44개 간격.
+- `instrument_switch_ms`: `performance.now` 앞뒤에서 악기 클릭→동기 DOM 업데이트 완료를 측정. 20샘플/화면.
+- `input_dispatch_to_handler_ms`: 합주 시작 후 12회 합성 PointerEvent 생성→핸들러 반환 측정.
+- `dispatch_to_next_raf_ms`: 위 이벤트 뒤 다음 rAF까지 대기 12회.
+- `frame_interval_ms`: 연속 45 rAF 스탬프의 44개 간격.
 - 자료는 median, p95, max(ms)와 표본수 n을 기록한다. 실제 터치 하드웨어 지연이나 귀에 들리는 소리의 오디오 출력 지연을 측정하는 것은 **아니다**. 이 둘은 단계 006·027에서 별도 수행한다.
 - 단계 002는 기준선 기록을 목표로 하며 성능 합격 임계치 설정/튜닝은 단계 018·028에서 진행한다.
 
@@ -53,4 +53,32 @@ Supabase \`schoolband-school-read-v1\` ACTIVE v1을 다시 조회했다. 이 API
 
 ## 실행 결과 기록 (CI 검증 후 이 절만 갱신)
 
-- **상태:** PENDING — GitHub Actions 결과를 본 뒤 기록한다. 성공 이전에 002단계종료 선언하지 않는다.
+- **상태:** PASS — GitHub Actions run `44983129465`, test source SHA `cacd5bc757f23f5cffdeff50e36064cd0faed13a`.
+- CI 로그: https://github.com/noam0127/beagu-index/actions/runs/44983129465
+- 정적 JS 구문, 28음, 노트 24px, 전 조합 20/20 통과.
+- 고의 실패 3/3 감지: invalid-JS-syntax / notes-24-to-20px / chart-lane-out-of-range.
+- 브라우저: desktop (1280×900) **20/20** PASS, mobile320 (320×640, Chromium 터치 에뮬레이션) **20/20** PASS. 가상 학교 조회 각각 10회, 예상 밖 API 0건, JS pageerror 0건.
+- 프라이버시 카나리 `NEVER_PRINT_PRIVATE_002`: 양쪽 화면 모두 **비표시**. 실시간 RLS 검사로 과장하지 않는다.
+- 증거 ZIP: https://github.com/noam0127/beagu-index/actions/runs/44983129465/artifacts/14738313962 (`metrics.json`, desktop-final.png, mobile320-final.png). 스크린샷은 실제 CI 브라우저에서 캡처.
+- 002 단계의 세부 검증은 통과했으나, RawGitHack 첫 방문 확인 화면(SB-007), 실기 청음·손가락 입력과 출력 지연은 후속 단계 미검증 항목으로 유지한다.
+
+### 측정 기준표 (Github Actions / Headless Chromium; 단위: ms)
+
+| 측정 항목 | 데스크톱 n / median / p95 / max | 모바일320 n / median / p95 / max |
+| --- | --- | --- |
+| 악기 전환 동기 JS | 20 / 0.5 / 1.0 / 1.0 | 20 / 0.5 / 1.1 / 1.3 |
+| 가상 PointerEvent → 핸들러 종료 | 12 / 0.1 / 0.3 / 0.3 | 12 / 0.0 / 0.4 / 0.4 |
+| 가상 입력 → 다음 rAF | 12 / 16.6 / 16.7 / 16.7 | 12 / 16.6 / 16.9 / 16.9 |
+| 연속 프레임 간격 | 44 / 16.7 / 16.8 / 16.8 | 44 / 16.7 / 16.8 / 16.8 |
+
+정적 소스/데이터 검증 5.411ms (1회). 장치 측정/소리 출력 지연이 **아닌** CI 환경 수치다. 모든 표본과 반증 결과는 GitHub artifact의 `metrics.json`에서 재계산 가능하다.
+
+### 실제 검증에 따른 7관점 합의
+
+1. 리듬게임: 20/20 차트 구성 검증은 유효. 판정 시각 정확성은 미검증으로 남김.
+2. 오디오: 브라우저 시작/중단은 실행했지만 청음·클리핑을 PASS로 선언하지 않음.
+3. 연출: 24→20px 회귀를 고의 변조로 탐지. 실제 이펙트 밀도/광과민성은 다음 단계.
+4. 모바일: 320px 스크린샷과 터치 이벤트 검증. 실기 Android로 과장하지 않음.
+5. 보안: 비공개 필드 카나리 미노출, 읽기 API 응답 화이트리스트 확인. 운영 RLS는 별도 감사.
+6. 권리: 창작 28음만 검사, 실제 교가 권리 취득 사실이 없으므로 등록 완료로 표시하지 않음.
+7. QA: 음성 없는 자동 DOM 통과와 실제 기기 재생을 구분; 3종 실패 검출, 2화면 20조합, 원본 운영 격리를 확정.
