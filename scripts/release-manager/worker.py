@@ -236,6 +236,30 @@ def minimize_independent_preview(target):
         if extras:
             raise RuntimeError("Unreviewed public data assets: " + ", ".join(sorted(extras)))
 
+    # Fail closed on a new executable, archive, backup, or config extension
+    # hidden under an otherwise approved public directory. This allowlist
+    # reflects the immutable pinned RC tree, not arbitrary future HEAD files.
+    allowed_extensions = {
+        "assets": {".webp"},
+        "data": {".json", ".csv"},
+        "js": {".js", ".html"},
+        "r": {".html"},
+        "styles": {".css"},
+        "\u200bcss": {".css"},
+    }
+    for directory, extensions in allowed_extensions.items():
+        root = target / directory
+        if not root.exists():
+            continue
+        for item in root.rglob("*"):
+            if item.is_symlink():
+                raise RuntimeError("Symlink in public preview asset: " + str(item))
+            if not item.is_file():
+                continue
+            if (item.suffix.lower() not in extensions or
+                    any(part.startswith(".") for part in item.relative_to(root).parts)):
+                raise RuntimeError("Unreviewed public preview file: " + str(item))
+
     # Deliberately narrow rewrites: preserve canonical SEO URLs and the
     # explicit "actual website" admin link, but never silently redirect
     # a QA visitor to production from ordinary home navigation.
