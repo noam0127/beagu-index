@@ -29,7 +29,7 @@ function checkPure(){
  expected.forEach(x=>assert(GAME.includes(x),"missing "+x));
  const roles={
   riff:GAME.includes('if(lane===0){ // riff'),
-  power:GAME.includes('}else if(lane===1){ // power chord'),
+  power:GAME.includes('}else if(lane===1){ // root-fifth-octave power chord'),
   upstroke:GAME.includes('}else if(lane===2){ // upward strum'),
   high:GAME.includes('}else{ // high riff'),
   kick:GAME.includes('if(kind==="kick")'),
