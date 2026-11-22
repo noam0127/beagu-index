@@ -1,0 +1,30 @@
+name: v1.1.0 stage35 cross-account owner decision
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-cross-account-decision.mjs'
+      - '.github/workflows/v1.1.0-stage35-cross-account-decision.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/_shared/postit-member-ownership.mjs'
+      - 'supabase/functions/beagu-postit-api-v1/index.ts'
+      - 'tests/v1.1.0-stage35-cross-account-decision.mjs'
+      - '.github/workflows/v1.1.0-stage35-cross-account-decision.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cross-account-decision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute Post-it owner decision on fictional A/B accounts
+        run: node tests/v1.1.0-stage35-cross-account-decision.mjs
+      - name: Scope
+        run: |
+          echo "No staging Auth users provisioned; HTTP IDOR remains untested."
