@@ -1,0 +1,33 @@
+name: v1.1.0 stage35 verified Lv3 eligibility
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-lv3-member.mjs'
+      - '.github/workflows/v1.1.0-stage35-lv3-member.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/_shared/member-tier-v1.mjs'
+      - 'supabase/functions/_shared/postit-member-ownership.mjs'
+      - 'supabase/functions/beagu-level-api/index.ts'
+      - 'js/beagu-level-state-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/postit-account-v1.js'
+      - 'tests/v1.1.0-stage35-lv3-member.mjs'
+      - '.github/workflows/v1.1.0-stage35-lv3-member.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  member-level-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify linked Auth Lv3 security and UI state
+        run: node tests/v1.1.0-stage35-lv3-member.mjs
+      - name: Scope
+        run: echo 'Read-only Lv3 proof; real accounts, 2026 release entitlement and MFA still require E2E.'
