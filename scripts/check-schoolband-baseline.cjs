@@ -60,7 +60,14 @@ if(process.argv.includes("--browser")){
       assert(response?.ok(),kind+" HTTP status="+response?.status());
       const type=response.headers()["content-type"]||"";
       assert(/text\/html/i.test(type),kind+" must serve HTML, received: "+type);
-      assert.equal(await page.locator("canvas#track").count(),1,kind+" canvas");
+      const canvasCount=await page.locator("canvas#track").count();
+      if(canvasCount!==1){
+        const text=await page.locator("body").innerText().catch(()=>"(body unavailable)");
+        console.error("HOST_DIAG",JSON.stringify({kind,finalUrl:page.url(),status:response.status(),contentType:type,title:await page.title(),body:text.slice(0,900)}));
+        fs.writeFileSync(path.join(output,kind+"-unexpected.html"),(await page.content()).slice(0,30000));
+        await page.screenshot({path:path.join(output,kind+"-unexpected.png"),fullPage:true});
+      }
+      assert.equal(canvasCount,1,kind+" canvas");
       await page.locator("#demoSchool").click();
       assert.equal(await page.locator("#start").isDisabled(),false,"play enabled with demo school");
       for(const [inst,count] of [["guitar",4],["drums",4],["bass",3],["keys",5]]){
@@ -84,8 +91,13 @@ if(process.argv.includes("--browser")){
     try{
       await pageCheck("http://127.0.0.1:8123/games/nangam-schoolband-v08/index.html","local-desktop",{width:1280,height:900});
       await pageCheck("http://127.0.0.1:8123/games/nangam-schoolband-v08/index.html","local-mobile320",{width:320,height:640});
-      await pageCheck("https://raw.githack.com/noam0127/beagu-index/schoolband-playtest/games/nangam-schoolband-v08/index.html","rawgithack",{width:390,height:844});
-      await pageCheck("https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/schoolband-playtest-v02","supabase-redirect",{width:390,height:844});
+      const failures=[];
+      for(const [url,kind] of [
+        ["https://raw.githack.com/noam0127/beagu-index/schoolband-playtest/games/nangam-schoolband-v08/index.html","rawgithack"],
+        ["https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/schoolband-playtest-v02","supabase-redirect"]
+      ]){try{await pageCheck(url,kind,{width:390,height:844});}
+        catch(e){console.error("HOST_FAIL",kind,String(e));failures.push(kind+" "+String(e.message||e));}}
+      if(failures.length)throw Error("Hosted baseline not verified: "+failures.join("; "));
     }finally{await browser.close()}
   })().catch(e=>{console.error("FAIL browser:",e.stack||String(e));process.exitCode=1});
 }
