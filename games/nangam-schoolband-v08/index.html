@@ -651,7 +651,8 @@ function saveOffset(){
 }
 let school=null, instrument="guitar",playing=false,paused=false,pauseBusy=false,pauseReason=null,pausePromise=null,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
 let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0,lastMissAnnouncement=-Infinity,lastFrameWall=null,lastFrameSong=null;
-let masterBus=null,compressor=null,noiseBuffer=null;
+const MIX_LEVELS=Object.freeze({master:.80,melody:.96,ensemble:.46,hit:.80});
+let masterBus=null,melodyBus=null,ensembleBus=null,hitBus=null,compressor=null,noiseBuffer=null;
 let particles=[],lanePulse=[0,0,0,0,0],lastImpactAt=0,impactStrength=0,impactLane=0;
 const LANE_GLOW_MS=175,PARTICLE_LIMIT=60;
 const systemMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")||null;
@@ -784,30 +785,35 @@ function audioContext(){
     if(playing&&!paused&&(ctx.state==="suspended"||ctx.state==="interrupted"))void pauseGame("audio");
    });
   masterBus=ctx.createGain();
-  masterBus.gain.value=muted?0:.82;
+  masterBus.gain.value=muted?0:MIX_LEVELS.master;
+  melodyBus=ctx.createGain();ensembleBus=ctx.createGain();hitBus=ctx.createGain();
+  melodyBus.gain.value=MIX_LEVELS.melody;
+  ensembleBus.gain.value=MIX_LEVELS.ensemble;
+  hitBus.gain.value=MIX_LEVELS.hit;
+  melodyBus.connect(masterBus);ensembleBus.connect(masterBus);hitBus.connect(masterBus);
   if(ctx.createDynamicsCompressor){
     compressor=ctx.createDynamicsCompressor();
-    compressor.threshold.value=-16;
-    compressor.knee.value=12;
-    compressor.ratio.value=6;
-    compressor.attack.value=.003;
-    compressor.release.value=.18;
+    compressor.threshold.value=-19;
+    compressor.knee.value=14;
+    compressor.ratio.value=7;
+    compressor.attack.value=.004;
+    compressor.release.value=.20;
     masterBus.connect(compressor);compressor.connect(ctx.destination);
   }else masterBus.connect(ctx.destination);
   return ctx;
  }catch(_){status("오디오를 시작할 수 없습니다.");return null}
 }
-function oscillator(freq,when,dur,type,vol){
+function oscillator(freq,when,dur,type,vol,bus=null){
  if(!ctx||muted)return;
  const o=ctx.createOscillator(),v=ctx.createGain();
  o.type=type;o.frequency.setValueAtTime(Math.max(25,freq),when);
  v.gain.setValueAtTime(.0001,when);
  v.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),when+.008);
  v.gain.exponentialRampToValueAtTime(.0001,when+Math.max(.035,dur));
- o.connect(v);v.connect(masterBus||ctx.destination);o.start(when);o.stop(when+Math.max(.04,dur)+.02);
+ o.connect(v);v.connect(bus||masterBus||ctx.destination);o.start(when);o.stop(when+Math.max(.04,dur)+.02);
 }
 
-function playNoise(when,duration,level,frequency){
+function playNoise(when,duration,level,frequency,bus=null){
  if(!ctx||muted||!ctx.createBuffer||!ctx.createBufferSource||!ctx.createBiquadFilter)return;
  if(!noiseBuffer){
   const length=Math.max(1,Math.floor(ctx.sampleRate*.18));
@@ -820,26 +826,26 @@ function playNoise(when,duration,level,frequency){
  const v=ctx.createGain();v.gain.setValueAtTime(.0001,when);
  v.gain.exponentialRampToValueAtTime(level,when+.004);
  v.gain.exponentialRampToValueAtTime(.0001,when+duration);
- source.connect(filter);filter.connect(v);v.connect(masterBus||ctx.destination);
+ source.connect(filter);filter.connect(v);v.connect(bus||masterBus||ctx.destination);
  source.start(when);source.stop(when+duration+.01);
 }
-function drum(when,kind){
+function drum(when,kind,bus=null){
  if(!ctx||muted)return;
  if(kind==="kick"){
  const o=ctx.createOscillator(),v=ctx.createGain();o.type="sine";
  o.frequency.setValueAtTime(135,when);o.frequency.exponentialRampToValueAtTime(45,when+.12);
  v.gain.setValueAtTime(.22,when);v.gain.exponentialRampToValueAtTime(.0001,when+.17);
- o.connect(v);v.connect(masterBus||ctx.destination);o.start(when);o.stop(when+.18);
+ o.connect(v);v.connect(bus||masterBus||ctx.destination);o.start(when);o.stop(when+.18);
  }else if(kind==="tom"){
   // Tom: dropping pitch, lower tone and longer tail than the snare.
   const o=ctx.createOscillator(),v=ctx.createGain();
   o.type="triangle";o.frequency.setValueAtTime(235,when);
   o.frequency.exponentialRampToValueAtTime(96,when+.16);
   v.gain.setValueAtTime(.08,when);v.gain.exponentialRampToValueAtTime(.0001,when+.23);
-  o.connect(v);v.connect(masterBus||ctx.destination);o.start(when);o.stop(when+.24);
- }else if(kind==="hat"){playNoise(when,.045,.035,4200)}
+  o.connect(v);v.connect(bus||masterBus||ctx.destination);o.start(when);o.stop(when+.24);
+ }else if(kind==="hat"){playNoise(when,.045,.035,4200,bus)}
  else{ // snare: short body plus noise burst
-  oscillator(200,when,.075,"triangle",.033);playNoise(when,.11,.12,1400);
+  oscillator(200,when,.075,"triangle",.033,bus);playNoise(when,.11,.12,1400,bus);
  }
 
 }
@@ -872,22 +878,41 @@ function autoPartsAtStep(step,selected){
  return parts;
 }
 const CHORD_ROOTS=[130.81,130.81,98.00,98.00,110.00,110.00,87.31,130.81];
-function rootAt(beat){return CHORD_ROOTS[Math.min(7,Math.max(0,Math.floor(beat/4)))]}
+const CHORD_SYMBOLS=Object.freeze(["C","C","G","G","Am","Am","F","C"]);
+const CHORD_ROOT_PCS=Object.freeze([0,0,7,7,9,9,5,0]);
+const CHORD_MINOR=Object.freeze([false,false,false,false,true,true,false,false]);
+function chordBar(beat){return Math.min(7,Math.max(0,Math.floor(beat/4)))}
+function rootAt(beat){return CHORD_ROOTS[chordBar(beat)]}
+function chordThirdRatio(beat){return Math.pow(2,(CHORD_MINOR[chordBar(beat)]?3:4)/12)}
+function chordFifthRatio(){return Math.pow(2,7/12)}
+// At the Am bars use C natural, NOT C#; melody notes B and G are intentional tensions.
+function harmonyAtBar(bar){
+ if(!Number.isInteger(bar)||bar<0||bar>=8)return null;
+ const root=CHORD_ROOT_PCS[bar],minor=CHORD_MINOR[bar];
+ return {bar,symbol:CHORD_SYMBOLS[bar],rootPc:root,thirdPc:(root+(minor?3:4))%12,fifthPc:(root+7)%12,
+  minor,rootHz:CHORD_ROOTS[bar]};
+}
+function checkMelodyHarmony(){
+ return MELODY.map(([step,pitch,duration])=>{
+  const bar=Math.floor(step/16),chord=harmonyAtBar(bar),pc=pitch%12;
+  return {bar,step,pitch,duration,chord:chord.symbol,pc,chordTone:[chord.rootPc,chord.thirdPc,chord.fifthPc].includes(pc)};
+ });
+}
 function melodyVoice(pitch,when,duration){
  logAudioEvent("auto","melody",-1,when,"original-melody");
  const hz=440*Math.pow(2,(pitch-69)/12),dur=Math.max(.12,duration-.032);
- oscillator(hz,when,dur,"triangle",.086);
- oscillator(hz/2,when,dur,"sine",.036);
- oscillator(hz*2,when,Math.min(dur,.20),"sine",.009);
+ oscillator(hz,when,dur,"triangle",.086,melodyBus);
+ oscillator(hz/2,when,dur,"sine",.036,melodyBus);
+ oscillator(hz*2,when,Math.min(dur,.20),"sine",.009,melodyBus);
 }
 function voice(inst,beat,when,lane=0,source="auto"){
  if(!INST[inst]||!INST[inst].lanes[lane])return;
  logAudioEvent(source,inst,lane,when,INST[inst].lanes[lane][0]);
- const root=rootAt(beat);
- if(inst==="drums"){drum(when,["kick","snare","hat","tom"][lane]||"kick");return}
+ const root=rootAt(beat),bus=source==="hit"?hitBus:ensembleBus;
+ if(inst==="drums"){drum(when,["kick","snare","hat","tom"][lane]||"kick",bus);return}
  if(inst==="bass"){
   const freqs=[root/2,root*3/4,root];
-  oscillator(freqs[lane]||root/2,when,.24,"triangle",.065);return;
+  oscillator(freqs[lane]||root/2,when,.24,"triangle",.065,bus);return;
  }
  if(inst==="guitar"){
   const r=[root*2,root*2.5,root*3,root*4][lane]||root*2;
