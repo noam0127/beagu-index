@@ -1,0 +1,303 @@
+// STAGING-ONLY one-use fixture runner. NO request-controlled user identifiers.
+// Deploy exclusively to ycwuugggqbunlbwuzvbx, then replace with HTTP 410.
+// Generated passwords and access tokens never leave this Edge Function.
+import { createClient } from "npm:@supabase/supabase-js@2.57.0";
+
+const STAGE = "ycwuugggqbunlbwuzvbx";
+const PROJECT_URL = "https://" + STAGE + ".supabase.co";
+const URL = Deno.env.get("SUPABASE_URL") || "";
+const SECRET = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const db = createClient(URL, SECRET, {
+  auth:{persistSession:false,autoRefreshToken:false}
+});
+const enc=new TextEncoder();
+const hex=bytes=>Array.from(bytes,x=>x.toString(16).padStart(2,"0")).join("");
+const sha256=async value=>hex(new Uint8Array(
+  await crypto.subtle.digest("SHA-256",enc.encode(value))));
+async function authorUid(visitor){
+ const key=await crypto.subtle.importKey("raw",enc.encode(SECRET),
+      {name:"HMAC",hash:"SHA-256"},false,["sign"]);
+ const mac=new Uint8Array(await crypto.subtle.sign("HMAC",key,enc.encode("postit:"+visitor)));
+ mac[6]=(mac[6]&15)|64;mac[8]=(mac[8]&63)|128;
+ const h=hex(mac.slice(0,16));
+ return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20,32);
+}
+function result(status,data){
+ return new Response(JSON.stringify(data),{status,headers:{
+  "Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store",
+  "X-Content-Type-Options":"nosniff"
+ }});
+}
+Deno.serve(async(req)=>{
+ if(req.method!=="POST")return result(405,{status:"METHOD_NOT_ALLOWED"});
+ // The endpoint never accepts input or provides Auth credentials.
+ if(URL!==PROJECT_URL||SECRET.length<30)
+  return result(503,{status:"STAGING_ISOLATION_FAILED"});
+ const lock=await db.rpc("stage35_claim_final_gates_once");
+ if(lock.error||lock.data!==true)
+   return result(409,{status:"STAGE35_ONE_TIME_ALREADY_USED"});
+ const users=[], tokenDigests=[], qaSchools=["TST0001","TST0002","TST0003","TST0004","TST0005","TST0006"];
+ let checks=0,blocked="NONE", cleaned=false;
+ try {
+  const nonce=crypto.randomUUID().replaceAll("-","");
+  const actors=[];
+  for(const label of ["a","b"]){
+   const email="stage35-auth-qa-"+label+"-"+nonce+"@baeguindex.com";
+   const password=hex(crypto.getRandomValues(new Uint8Array(32)))+"Aa1!";
+   const created=await db.auth.admin.createUser({email,password,email_confirm:true});
+   if(created.error||!created.data?.user?.id){
+     blocked="AUTH_CREATE_"+(created.error?.code||"UNKNOWN");
+     break;
+   }
+   const userId=created.data.user.id;
+   users.push(userId);
+   const login=await fetch(PROJECT_URL+"/auth/v1/token?grant_type=password",{
+     method:"POST",headers:{"apikey":SECRET,"Content-Type":"application/json"},
+     body:JSON.stringify({email,password})
+   });
+   const signed=await login.json().catch(()=>({}));
+   if(!login.ok||typeof signed.access_token!=="string"){
+     blocked="AUTH_LOGIN_"+(signed.error_code||login.status);
+     break;
+   }
+   const visitor=crypto.randomUUID();
+   const actor=await authorUid(visitor);
+   const token=hex(crypto.getRandomValues(new Uint8Array(32)));
+   const digest=await sha256(token);
+   tokenDigests.push(digest);
+   const session=await db.from("beagu_level_sessions").insert({
+     token_sha256:digest,access_level:2,identity_visitor_id:visitor,
+     identity_campaign:"2026",created_at:new Date().toISOString(),
+     expires_at:new Date(Date.now()+5*60*1000).toISOString()
+   });
+   if(session.error){blocked="STAGING_LEVEL_SESSION_FAILED";break}
+   const member=await db.from("beagu_postit_member_accounts").insert({
+     auth_user_id:userId,identity_visitor_id:visitor,
+     author_uid:actor,status:"active"
+   });
+   if(member.error){blocked="STAGING_MEMBER_BIND_FAILED";break}
+   actors.push({jwt:signed.access_token,token,userId});
+  }
+  if(actors.length===2){
+    async function writerStatus(a,b){
+      const res=await fetch(PROJECT_URL+"/functions/v1/beagu-postit-api-v1?action=writer_status",{
+       method:"GET",headers:{"Authorization":"Bearer "+a.jwt,
+        "x-beagu-level-session":b.token}
+      });
+      const data=await res.json().catch(()=>({}));
+      return res.status===200&&typeof data.linked==="boolean" ? data.linked : null;
+    }
+    for(const [i,j,expected] of [[0,0,true],[1,1,true],[0,1,false],[1,0,false]]){
+     const actual=await writerStatus(actors[i],actors[j]);
+     if(actual!==expected){blocked="CROSS_ACCOUNT_WRITER_STATUS";break}
+     checks++;
+    }
+    if(blocked==="NONE"){
+      for(const [i,j] of [[0,1],[1,0]]){
+       const res=await fetch(PROJECT_URL+"/functions/v1/beagu-postit-api-v1",{
+        method:"POST",headers:{"Authorization":"Bearer "+actors[i].jwt,
+         "x-beagu-level-session":actors[j].token,
+         "Content-Type":"application/json"},
+        body:JSON.stringify({action:"create_post",subject_type:"school",
+         school_id:"TST0001",text:"qa-only"})
+       });
+       const body=await res.json().catch(()=>({}));
+       if(res.status!==403||body.error!=="WRITER_IDENTITY_REQUIRED"){
+         blocked="CROSS_ACCOUNT_WRITE_DENIAL";break;
+       }
+       checks++;
+      }
+    }
+    if(blocked==="NONE"){
+      for(const a of actors){
+       const res=await fetch(PROJECT_URL+"/functions/v1/beagu-admin-members-v1",{
+        method:"POST",headers:{"Authorization":"Bearer "+a.jwt,
+        "Content-Type":"application/json"},body:JSON.stringify({action:"list"})
+       });
+       const body=await res.json().catch(()=>({}));
+       if(res.status!==403||body.error!=="access_denied"){
+         blocked="NONADMIN_MEMBERSHIP_DENIAL";break;
+       }
+       checks++;
+      }
+    }
+
+    // Seed only fictitious reviewed metrics and exact-snapshot approvals.
+    // No actual school record, raw survey response, respondent count,
+    // email recipient, or production database is used.
+    const hoursBefore=[1,7,25,1,1,1];
+    const at=age=>new Date(Date.now()-age*3600000).toISOString();
+    const cat=await db.from("beagu_metric_catalog").upsert({
+      survey_year:2026,question_id:"percentile",access_level:1,verified:true,
+      value_type:"number",minimum:0,maximum:100,
+      label:"가상 검토 점수",meaning:"가상 학교",
+      interpretation:"시험 데이터",direction:"higher",unit:"%",
+      spatial_scope:"가상 학교"
+    },{onConflict:"survey_year,question_id"});
+    if(cat.error)blocked="METRIC_CATALOG_FIXTURE";
+    if(blocked==="NONE"){
+      const metrics=qaSchools.map((id,i)=>({
+        school_id:id,survey_year:2026,question_id:"percentile",access_level:1,
+        value:"42.5",release_version:"stage35-final-qa-only",
+        approval_status:"APPROVED",privacy_status:"PASSED",
+        identity_reviewed:true,question_reviewed:true,
+        small_cell_reviewed:i!==4,differencing_reviewed:true,
+        approved_at:at(hoursBefore[i]),approved_by:"synthetic-reviewer",
+        approval_evidence:"fake-audit-fixture"
+      }));
+      const m=await db.from("beagu_release_metrics_v2").insert(metrics);
+      if(m.error)blocked="METRIC_ROWS_FIXTURE";
+    }
+    if(blocked==="NONE"){
+      const snapshots=qaSchools.map((id,i)=>({
+        school_id:id,approved_at:at(hoursBefore[i]),
+        approval_status:i===5?"PENDING":"APPROVED",
+        privacy_reviewed:i!==3,
+        questions:[{id:"Q01",valid:1,invalid:0}]
+      }));
+      const m=await db.from("beagu_2026_results_snapshot").insert(snapshots);
+      if(m.error)blocked="EXACT_SNAPSHOT_FIXTURE";
+    }
+    let lv1token="";
+    if(blocked==="NONE"){
+      lv1token=hex(crypto.getRandomValues(new Uint8Array(32)));
+      const digest=await sha256(lv1token);
+      tokenDigests.push(digest);
+      const m=await db.from("beagu_level_sessions").insert({
+        token_sha256:digest,access_level:1,
+        expires_at:new Date(Date.now()+5*60*1000).toISOString(),
+        created_at:new Date().toISOString()
+      });
+      if(m.error)blocked="LEVEL1_SESSION_FIXTURE";
+    }
+    // The new account-tier proof runs on the real staged beagu-level-api v4.
+    // JWT alone or a transferred Lv2 session must never grant Lv3.
+    if(blocked==="NONE"){
+      async function verifyTier(token,accessToken){
+       const headers={"Content-Type":"application/json","X-Beagu-Session":token};
+       if(accessToken)headers["Authorization"]="Bearer "+accessToken;
+       const res=await fetch(PROJECT_URL+"/functions/v1/beagu-level-api",{
+         method:"POST",headers,
+         body:JSON.stringify({action:"verify",level:3,is_admin:true})
+       });
+       const body=await res.json().catch(()=>({}));
+       return res.status===200&&Number.isInteger(body.level)?body.level:null;
+      }
+      const cases=[
+       [actors[0].token,actors[0].jwt,3],
+       [actors[1].token,actors[1].jwt,3],
+       [actors[0].token,actors[1].jwt,2],
+       [actors[1].token,actors[0].jwt,2],
+       [actors[0].token,null,2],
+       [actors[1].token,null,2]
+      ];
+      for(const [code,auth,expected] of cases){
+       const actual=await verifyTier(code,auth);
+       if(actual!==expected){blocked="LV3_VERIFIED_MEMBER_TIER";break;}
+       checks++;
+      }
+
+      // Genuine Lv1, Lv2 and Lv3 HTTP calls must expose EXACTLY the reviewed,
+      // age-eligible percentile values. Caller-provided level/role are ignored.
+      if(blocked==="NONE"){
+        async function percentiles(token,jwt){
+          const headers={"Content-Type":"application/json","X-Beagu-Session":token};
+          if(jwt)headers.Authorization="Bearer "+jwt;
+          const response=await fetch(PROJECT_URL+"/functions/v1/beagu-level-api",{
+            method:"POST",headers,body:JSON.stringify({
+              action:"percentiles",schoolIds:qaSchools,level:3,is_admin:true
+            })
+          });
+          const value=await response.json().catch(()=>({}));
+          return response.status===200&&value.values&&typeof value.values==="object"
+            ?value.values:null;
+        }
+        const cases=[
+          [actors[0].token,actors[0].jwt,["TST0001","TST0002","TST0003"]],
+          [actors[0].token,actors[1].jwt,["TST0002","TST0003"]],
+          [actors[0].token,null,["TST0002","TST0003"]],
+          [lv1token,null,["TST0003"]],
+          [lv1token,actors[0].jwt,["TST0003"]],
+          [actors[1].token,actors[1].jwt,["TST0001","TST0002","TST0003"]],
+          [actors[1].token,actors[0].jwt,["TST0002","TST0003"]]
+        ];
+        for(const [token,jwt,expected] of cases){
+          const received=await percentiles(token,jwt);
+          if(!received||
+            JSON.stringify(Object.keys(received).sort())!==JSON.stringify([...expected].sort())||
+            Object.values(received).some(v=>v!==42.5)){
+            blocked="LV3_2026_ACTUAL_HTTP_VISIBILITY";break;
+          }
+          checks++;
+        }
+      }
+      if(blocked==="NONE"){
+        const changed=await db.from("beagu_postit_member_accounts")
+          .update({status:"suspended"}).eq("auth_user_id",actors[0].userId);
+        if(changed.error)blocked="SUSPEND_TEST_FIXTURE";
+        else{
+          const level=await verifyTier(actors[0].token,actors[0].jwt);
+          if(level!==2)blocked="SUSPENDED_ACCOUNT_LV3_LEAK";
+          else checks++;
+        }
+      }
+
+      // Admin AAL1 must be denied even if the Auth user is provisioned as
+      // an enabled owner. No TOTP secret or valid AAL2 session is fabricated.
+      if(blocked==="NONE"){
+        const adminRow=await db.from("beagu_admin_accounts").insert({
+          user_id:actors[1].userId,role:"owner",enabled:true
+        });
+        if(adminRow.error)blocked="MFA_ADMIN_FIXTURE";
+        else {
+          const response=await fetch(PROJECT_URL+"/functions/v1/beagu-admin-members-v1",{
+            method:"POST",headers:{
+              Authorization:"Bearer "+actors[1].jwt,
+              "Content-Type":"application/json"},
+            body:JSON.stringify({action:"list"})
+          });
+          const data=await response.json().catch(()=>({}));
+          if(response.status!==403||data.error!=="mfa_required")
+            blocked="AAL1_ADMIN_MFA_BYPASS";
+          else checks++;
+        }
+      }
+    }
+  }
+ }catch(error){
+   blocked=blocked==="NONE" ? "TEST_RUN_EXCEPTION_"+(error instanceof Error?error.name:"UNKNOWN"):blocked;
+ }finally{
+  let cleanupOK=true;
+
+  // Delete simulated approvals, fake school rows and admin account before
+  // removing the temporary Auth identities. Preserve the run lock.
+  const deletions=[
+    db.from("beagu_release_metrics_v2").delete().in("school_id",qaSchools),
+    db.from("beagu_2026_results_snapshot").delete().in("school_id",qaSchools),
+    db.from("beagu_metric_catalog").delete().eq("survey_year",2026).eq("question_id","percentile")
+  ];
+  if(users.length){
+    deletions.push(db.from("beagu_admin_accounts").delete().in("user_id",users));
+  }
+  const settled=await Promise.all(deletions);
+  if(settled.some(r=>r.error))cleanupOK=false;
+  if(tokenDigests.length){
+    const d=await db.from("beagu_level_sessions").delete().in("token_sha256",tokenDigests);
+    if(d.error)cleanupOK=false;
+  }
+  if(users.length){
+    const m=await db.from("beagu_postit_member_accounts").delete().in("auth_user_id",users);
+    if(m.error)cleanupOK=false;
+    for(const id of users){
+      const del=await db.auth.admin.deleteUser(id);
+      if(del.error)cleanupOK=false;
+    }
+  }
+  cleaned=cleanupOK;
+ }
+ const status=blocked==="NONE"&&checks===23&&cleaned?"PASS":"BLOCKED";
+ return result(status==="PASS"?200:503,{
+  status,checks_passed:checks,reason:status==="PASS"?"NONE":blocked,cleanup_ok:cleaned,
+  scope:"staging Lv1-3 approved 2026 data HTTP + AAL1 admin denial; no production records or AAL2 positive proof"
+ });
+});
