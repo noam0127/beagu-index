@@ -1,5 +1,10 @@
 name: v1.1.0 stage36 static regression (read-only)
 on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - '.github/workflows/v1.1.0-stage36-regression.yml'
+      - 'tests/v1.1.0-stage36-release-gates.mjs'
   pull_request:
     paths:
       - 'challenge.html'
@@ -36,6 +41,15 @@ jobs:
       - name: Release packaging and isolation contracts
         run: |
           python3 tests/site-release-packaging.py
+      - name: Stage35 security and release-policy regressions
+        run: |
+          node tests/v1.1.0-stage35-2026-release-policy.mjs
+          node tests/v1.1.0-stage35-lv3-member.mjs
+          node tests/v1.1.0-stage35-member-admin-ownership.mjs
+          node tests/v1.1.0-stage35-moderation-audit.mjs
+          node tests/v1.1.0-stage35-cross-account-decision.mjs
+      - name: Stage36 hard release gates
+        run: node tests/v1.1.0-stage36-release-gates.mjs
       - name: Scope notice
         run: |
           echo 'Static checks only. Does not prove live DB/RLS, browser UX, latency, or production readiness.'
