@@ -75,14 +75,21 @@ function validateQueue(queue,registry){
 }
 function resolvePlaytestSong(queue,registry,schoolId,requestedSong){
  validateQueue(queue,registry);
- // No real-school anthem has a reviewed, supported runtime chart in this version.
- // Even a synthetic external approved record NEVER becomes the built-in original.
- if(requestedSong==="anthem")return {song:"volleyball",reason:"real_school_chart_unavailable",requestedSchoolId:schoolId??null,schoolAnthemPlayable:false};
+ // A withdrawn/denied original must NEVER continue playing via fallback.
  const primary=queue.records.find(r=>r.song_id===ORIGINAL_LIVE_ID);
- if(primary&&primary.stage==="trial_available"&&isTrustedOriginal(primary,registry)&&
-   primary.chart_id===ORIGINAL_LIVE_CHART){
-  return {song:"volleyball",songId:ORIGINAL_LIVE_ID,reason:"original_trial_available",schoolAnthemPlayable:false};
+ const creativeReady=!!(primary&&primary.stage==="trial_available"&&
+   isTrustedOriginal(primary,registry)&&primary.chart_id===ORIGINAL_LIVE_CHART);
+ if(requestedSong==="anthem"){
+  return {song:creativeReady?"volleyball":null,
+   songId:creativeReady?ORIGINAL_LIVE_ID:null,
+   reason:creativeReady?"real_school_chart_unavailable":"no_available_original_song",
+   requestedSchoolId:schoolId??null,schoolAnthemPlayable:false};
  }
+ if(requestedSong!=="volleyball")return {
+  song:null,reason:"unknown_song_choice",schoolAnthemPlayable:false
+ };
+ if(creativeReady)return {song:"volleyball",songId:ORIGINAL_LIVE_ID,
+  reason:"original_trial_available",schoolAnthemPlayable:false};
  return {song:null,reason:"no_available_original_song",schoolAnthemPlayable:false};
 }
 module.exports={EVENTS,QueueError,isTrustedOriginal,advance,replayAudit,validateQueue,resolvePlaytestSong};
