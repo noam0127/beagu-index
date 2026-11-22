@@ -333,3 +333,17 @@
 - 확인한 증거: 최신 게임 JavaScript 구문 검사 및 홈페이지만 대상인 **13개 정적 검사 통과**. GitHub Actions/실제 Node·Playwright 실행, 본 시험 웹에서 JSON 정상 로드는 아직 미확인. 실패한 검증을 성공으로 표시하지 않는다.
 - 사용자 범위 제외: **교가 편곡·배포 허락 요청 금지, 유료 API·결제 금지, 청음/연주감 평가 금지**. 출처에 게시됐다는 이유만으로 음악 파일 다운로드·편곡·게임 공개를 하지 않으며 교가 게임 버튼은 승인된 플레이용 자산이 없으면 잠금 유지. 이후 022는 권리 허락 요청 대신 승인된/자체 창작 자산을 기계적으로 분리·차단하는 작업으로 조정.
 - 운영 `main`, `baeguindex.com`, 운영 Supabase DB/function을 변경하지 않았다.
+
+## 022/030 — 기존 권리 자료만의 비공개 입력 게이트 (2026-11-23)
+
+상태: **IMPLEMENTED / NODE·CI PENDING**. 최종 검증 추적: [GitHub Issue #247](https://github.com/noam0127/beagu-index/issues/247).
+
+- 사용자 명시 제외: **학교 교가 편곡·배포 허락 요청을 하지 않는다. 유료 API·결제하지 않는다. 연주감·음향 확인하지 않는다.**
+- 기존 내부 창작 2곡 `original-shining-our-school`과 `original-meter-shift-exercise-014`의 원본 경로 및 Git blob SHA-1를 관리자 관리 파일 `games/nangam-schoolband-v08/charts/song-intake-rights.v1.json`에 등록. 외부 학교 교가 0건.
+- `scripts/schoolband-rights-policy-v1.cjs`: school_id, 소스 원본 해시/경로, 별도 등록 상태, 4개 권리 요소, 이용 범위·만료·철회·증빙 유무를 검사. 없는 자료는 차단. 공개 등록 금지.
+- `scripts/schoolband-stage022-intake.cjs`: 저장소 로컬 원본에 대해서만 서명격 Git blob 해시 확인, MIDI/MusicXML/PDF 형식 헤더 확인, 미구현 포맷 변환 분리. 기존 내부 창작곡만 4악기×5난이도 비공개 차트 변환 후보로 허용. 데이터 처리이며 오디오/청음 시험을 수행하지 않음.
+- 과거 편곡 및 MIDI/XML 도구가 사용자가 스스로 입력한 `approved`와 `permissionRecordId`만으로 외부 학교 곡을 받아들이는 경로는 차단.
+- `scripts/test-schoolband-stage022.cjs`와 `.github/workflows/schoolband-stage022.yml`에 승인·미승인·만료·철회·ID 불일치·해시 위조·공개 금지·MIDI/XML/PDF 메타데이터 테스트 추가.
+- 확인된 검증: 순수 정책 함수를 실제 연결 도구에서 실행해 **18개 단언 PASS**, 관련 6개 파일 JS/JSON 문법 PASS. 정확한 Node 전체 테스트, 20개 프라이빗 차트 생성과 CI 실행 결과는 미확인. 성공으로 가장하지 않음.
+- 7개 전문가별 근거 및 방법: `docs/schoolband-stage022-trusted-intake.md`. 단계 진행 중 운영 웹·운영 데이터베이스에 쓰기 없음.
+- 다음 독립 작업은 023/030으로 진행 가능하나, 019(#245), 021(#246), 022(#247)의 릴리스 게이트를 029/030 전 해결해야 한다.
