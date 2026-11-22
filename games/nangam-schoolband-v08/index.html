@@ -19,6 +19,7 @@ input[type=search]{width:100%;background:#0f172a;color:var(--fg);border:1px soli
 .schools button{text-align:left;padding:10px}
 .school-line{display:flex;align-items:center;gap:9px;justify-content:space-between;flex-wrap:wrap}
 #schoolStatus{min-height:0;margin:7px 0;font-size:12px;color:var(--muted)}
+#retrySchool:not([hidden]){border-color:#b8b1fe;font-size:12px}
 #demoSchool{padding:7px 10px;font-size:12px;min-height:36px}
 .picked{border:1px solid #475569;border-radius:11px;background:#0f172a;margin-top:10px;padding:10px 12px}
 .picked strong{font-size:14px;display:block}.picked small{font-size:12px;color:var(--muted);display:block}
@@ -199,7 +200,7 @@ html[data-low-power-fx="true"] .lane-event.animate{transform:none}
 <h2>① 학교 선택</h2>
 <input id="schoolSearch" type="search" inputmode="search" enterkeyhint="search" aria-label="초등학교명 검색" aria-controls="searchResults" maxlength="30" autocomplete="off" placeholder="학교 이름 (2글자 이상)">
 <div id="searchResults" class="schools"></div>
-<div class="school-line"><p id="schoolStatus" role="status" aria-live="polite">학교 검색 또는 가상 학교 체험</p><button type="button" id="demoSchool">가상 학교 체험</button></div>
+<div class="school-line"><p id="schoolStatus" role="status" aria-live="polite">학교 검색 또는 가상 학교 체험</p><button type="button" id="retrySchool" hidden>검색 재시도</button><button type="button" id="demoSchool">가상 학교 체험</button></div>
 <div class="picked"><strong id="schoolTitle">학교를 선택해 주세요</strong><small id="schoolTier">학교별 난이도 표시</small></div>
 </section>
 <section id="stepInstrument" class="card ux-step-card" data-step-panel="instrument" aria-label="곡과 악기 선택" tabindex="-1">
@@ -929,10 +930,12 @@ function showSchool(){
  draw();
 }
 function setSchool(s){if(playing)return;school=s;selectedSong="volleyball";syncSongChoice();showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
-async function getJson(url){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw Error("school_api_"+r.status);return r.json()}
+async function getJson(url){const r=await fetch(url,{cache:"no-store",signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error("school_api_"+r.status);return r.json()}
+$("retrySchool").addEventListener("click",()=>{$("retrySchool").hidden=true;$("schoolSearch").dispatchEvent(new Event("input",{bubbles:true}))});
 $("schoolSearch").addEventListener("input",()=>{
  if(playing)return;
  const q=$("schoolSearch").value.trim(),ticket=++querySeq;
+ $("retrySchool").hidden=true;
  clearTimeout(searchTimer);
  $("searchResults").replaceChildren();
  if(q.length<2){safeText("schoolStatus","학교명 2글자 이상 입력해 주세요.");return}
@@ -955,16 +958,16 @@ $("schoolSearch").addEventListener("input",()=>{
  if(!d.school)throw Error("empty");
  setSchool(normalizePublicSchool(d.school,s.school_id));
  safeText("schoolStatus","선택 완료");
- }catch(e){if(querySeq===my)safeText("schoolStatus","학교 조회 실패. 다시 선택해 주세요.")}
+ }catch(e){if(querySeq===my){safeText("schoolStatus","학교 조회 실패. 검색 재시도 또는 가상 학교 체험을 선택하세요.");$("retrySchool").hidden=false}}
  };
  $("searchResults").append(b);
  }
- }catch(e){if(querySeq===ticket)safeText("schoolStatus","검색 연결 실패. 아래 가상 학교로도 시험할 수 있습니다.")}
+ }catch(e){if(querySeq===ticket){safeText("schoolStatus","검색 연결 실패. 검색 재시도 또는 가상 학교 체험을 선택하세요.");$("retrySchool").hidden=false}}
  },260);
 });
 $("demoSchool").onclick=()=>{
  if(playing)return;
- ++querySeq;clearTimeout(searchTimer);$("searchResults").replaceChildren();
+ ++querySeq;clearTimeout(searchTimer);$("searchResults").replaceChildren();$("retrySchool").hidden=true;
  $("schoolSearch").value="";
  safeText("schoolStatus","가상 학교 연습 모드 (배구지수 실제 학교가 아닙니다)");
  setSchool({school_id:"demo-school",school_name:"가상 연습초",region:"데모",eligible:false,difficulty:null,source_year:null,publication_state:"unrated"});
