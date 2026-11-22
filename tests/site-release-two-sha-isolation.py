@@ -41,7 +41,8 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
         '<script src="/js/site.js"></script></body></html>')
     put(repo, "school-report.html",
         "<html><head></head><body>PROD_REPORT</body></html>")
-    put(repo, "js/site.js", "window.mock='PROD_JS';")
+    put(repo, "js/site.js", "window.mock='PROD_JS'; window.backend='https://snvzwrexuqavnfvzgxqj.supabase.co';")
+    put(repo, "js/supabase-config.js", "window.SUPABASE_URL='https://snvzwrexuqavnfvzgxqj.supabase.co';")
     put(repo, "data/public-compare-school-directory-v1.json",
         '{"version":"OLD_APPROVED_DIRECTORY"}')
     git(repo, "add", ".")
@@ -56,7 +57,7 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
         '<script src="/js/site.js"></script></body></html>')
     put(repo, "school-report.html",
         "<html><head></head><body>STAGE_REPORT</body></html>")
-    put(repo, "js/site.js", "window.mock='STAGE_JS';")
+    put(repo, "js/site.js", "window.mock='STAGE_JS'; window.backend='https://snvzwrexuqavnfvzgxqj.supabase.co';")
     put(repo, "data/public-compare-school-directory-v1.json",
         '{"version":"LATEST_ALLOWED_DIRECTORY"}')
     git(repo, "add", ".")
@@ -90,6 +91,15 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert 'src="/js/site.js"' in prod_html
     assert "STAGE_JS" in (out / "_preview/js/site.js").read_text(encoding="utf-8")
     assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
+    # Live backend URLs and public keys MUST be rewritten only in preview.
+    assert "snvzwrexuqavnfvzgxqj" in (out / "js/supabase-config.js").read_text(encoding="utf-8")
+    assert "ycwuugggqbunlbwuzvbx" not in (out / "js/supabase-config.js").read_text(encoding="utf-8")
+    assert "ycwuugggqbunlbwuzvbx" in (out / "_preview/js/supabase-config.js").read_text(encoding="utf-8")
+    for asset in (out / "_preview").rglob("*"):
+        if asset.is_file() and asset.suffix.lower() in (".js", ".mjs", ".html"):
+            assert "snvzwrexuqavnfvzgxqj" not in asset.read_text(encoding="utf-8"), asset
+    assert "snvzwrexuqavnfvzgxqj" in (out / "js/site.js").read_text(encoding="utf-8")
+    assert "ycwuugggqbunlbwuzvbx" in (out / "_preview/js/site.js").read_text(encoding="utf-8")
     assert "STAGE_REPORT" in (out / "_preview/school-report.html").read_text(encoding="utf-8")
     assert "PROD_REPORT" in (out / "school-report.html").read_text(encoding="utf-8")
     assert (out / "CNAME").read_text().strip() == "baeguindex.com"
@@ -112,5 +122,16 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
     assert (out / "CNAME").read_text().strip() == "baeguindex.com"
 
+# A missing or unexpected preview config must abort before it can be deployed.
+with tempfile.TemporaryDirectory(prefix="beagu-preview-negative-") as root_dir:
+    empty = pathlib.Path(root_dir)
+    try:
+        worker.isolate_preview_backend(empty)
+    except RuntimeError as exc:
+        assert "missing" in str(exc).lower()
+    else:
+        raise AssertionError("Preview without Supabase config must fail closed")
+
 print("PASS: two immutable SHAs isolate approved production from marked preview")
+print("PASS: candidate preview uses staging Supabase only, denies missing config")
 print("PASS: empty staging rollback removes preview only; no live deployment performed")
