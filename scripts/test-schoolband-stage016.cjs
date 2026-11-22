@@ -75,7 +75,9 @@ async function browserTests(){
     let st=await state();assert.equal(st.step,"school");assert.equal(st.active,"school");
     assert.equal(st.availability.instrument,false);assert.equal(st.availability.play,false);
     assert.equal(st.horizontalOverflow,false);assert(st.nav.every(x=>x.h>=40));
-    await page.locator('[data-step-target="play"]').click();
+    assert.equal(st.nav[2].disabled,"true","play nav is accessibility-disabled until school chosen");
+    const skipped=await page.evaluate(()=>window.nangamSchoolbandV08.goToUxStep("play"));
+    assert.equal(skipped,false,"cannot skip school");
     st=await state();assert.equal(st.step,"school","cannot skip school");
     await page.locator("#stepSchool").screenshot({path:path.join(OUT,cfg.name+"-step1-school.png")});
     res.screenshots.push(cfg.name+"-step1-school.png");
