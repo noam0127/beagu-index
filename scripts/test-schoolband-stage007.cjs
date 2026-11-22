@@ -74,7 +74,7 @@ function pure(){
  const required=["function pauseGame(reason=","async function resumeGame()","document.addEventListener(\"visibilitychange\"",
   "window.addEventListener(\"pagehide\"","window.addEventListener(\"pageshow\"",
   "ctx.suspend()","ctx.resume()","schedulerStep:step","pauseBusy",
-  "lastFrameWall!==null","songNow-lastFrameSong>.65"];
+  "lastFrameWall!==null","songNow-lastFrameSong>.65",'ctx.state==="interrupted"'];
  for(const t of required)assert(HTML.includes(t),"missing lifecycle feature "+t);
  report.unit={passed:true,fps_simulations:tests,frame_clock_negative_detected:true,
   corrupted_frame_based_example:corrupt,exact_coordinate_comparisons:coords,source_contracts:required.length};
