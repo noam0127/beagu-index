@@ -1,4 +1,13 @@
 export const isVI = key => /^Q(0[1-9]|1[0-3])$/.test(key);
+
+// Server-authoritative tier restriction for the ranked-school API.
+ // UI-only hiding does not prevent callers from crafting their own sort query.
+export function canSortRankedSchools(level, sort) {
+  const tier=Number(level);
+  return Number.isInteger(tier) && tier>=1 &&
+    (sort!=='housing_price_won' || tier>=2);
+}
+
 const text = (v,max=240) => typeof v==='string' && v.length<=max && !/[<>\r\n]/.test(v);
 const forbidden = /응답.*(수|횟|건)|관측|표본|소표본|원자료|자유서술|respondent|observation|sample|raw_row|n_valid|count/i;
 // Results are never returned immediately following their 2026 release approval.
