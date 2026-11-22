@@ -5,6 +5,7 @@ on:
     paths:
       - 'games/nangam-schoolband-v08/index.html'
       - 'scripts/test-schoolband-stage019.cjs'
+      - 'scripts/test-schoolband-stage019-public-api.cjs'
       - '.github/workflows/schoolband-stage019.yml'
   workflow_dispatch:
 permissions:
@@ -19,6 +20,8 @@ jobs:
         with: {node-version: '22'}
       - name: Validate approval, school ID and 20/40/60/80 boundaries
         run: node scripts/test-schoolband-stage019.cjs
+      - name: Verify public school API GET-only whitelist and tier boundaries
+        run: node scripts/test-schoolband-stage019-public-api.cjs
       - name: Install Chromium for existing school-search UI regression
         run: |
           npm install --no-save --no-package-lock playwright
