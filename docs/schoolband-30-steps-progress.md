@@ -388,3 +388,16 @@
 - 7개 전문가별 근거와 순위표 보류 사유: `docs/schoolband-stage025-local-results-leaderboard-decision.md`.
 - 사용자 제외 준수: 교가 편곡/배포 허락 요청 없음, 유료 API/결제 없음, 청음/연주감·음향 테스트 없음. 운영 `main`, `baeguindex.com`, 운영 Supabase DB 변경 없음.
 - 다음 026/030은 자동 회귀 체계. 019~025의 미확인 외부 CI/실제 브라우저 성과는 개별 이슈로 추적하며 최종 릴리스 이전에 정리해야 한다.
+
+## 026/030 — 노트·판정·학교/곡/브라우저 통합 회귀 자동화 (2026-11-23)
+
+상태: **IMPLEMENTED / NODE·BROWSER CI PENDING / SOUND TESTS USER-EXCLUDED**, 검증 기록: [GitHub Issue #251](https://github.com/noam0127/beagu-index/issues/251).
+
+- 기존 30단계 계획의 026은 20조합 차트·노트·판정·음악·브라우저 전수 회귀. **사용자가 연주감·음향 확인을 명시적으로 금지했으므로 실음악 재생, 오디오 예약/음소거의 실제 청각 테스트, 물리 기기 청음은 실행하지 않으며 제외/검증 불가로 표시**. 실제 연주 시작 버튼도 브라우저 자동테스트에서 누르지 않는다.
+- `scripts/test-schoolband-stage026.cjs`: 현재 실제 게임 소스의 4악기·5난이도 차트와 `makeChart`·시각/판정 순수 모델을 추출해 20 조합의 박자·시간·레인·동시 노트·난이도 밀도·중복 노트·완주 점수 처리·60/90/120Hz의 동일 시점 판정 불변성을 코드만으로 검사.
+- 20 조합의 생성 노트 누적 **1,568개**. 기타 [40,56,72,88,144], 드럼 [32,48,72,112,168], 베이스 [32,48,64,80,128], 건반 [40,56,64,80,144]. 원본 `validateChartCatalog`가 유효로 보고함.
+- PC 1280px / 모바일 320px Playwright UI는 공개 DB 대신 모의 GET API를 사용하여 학교 검색→곡 잠금/창작연습곡 선택→4악기 선택·레인·곡별 로컬 기록 키→API 오류/재시도/가상학교 fallback을 검증하도록 구성. `AudioContext` 생성 시 강제로 실패하도록 만들며 노래를 재생하지 않음. 서버에 점수/개인정보 쓰기 없음 검사.
+- `.github/workflows/schoolband-stage026.yml`: 026 + 024(점수·최고 기록) + 025(결과 화면·개인정보) Node 및 Chromium UI 자동회귀 구성. 새 유료 API·음악 수집·결제 없음.
+- 현재 대화에서 **최신 게임 소스의 순수 함수 검증을 직접 실행**하여 20차트/1,568개 노트의 정합성과 입력 판정 경계 등 **주요 검사 18개 PASS**, 신규 Node 테스트 JavaScript 문법 검사 PASS. **실제 Node 전체 테스트·GitHub Actions 성공·Chromium 1280/320px 성공은 미확인**.
+- GitHub 커밋 상태 검사에서 시험 브랜치 `be6d65f90327b392b448fd5e2e5433a1c9ed9bf1`의 Vercel 미리보기 빌드가 **빌드 횟수 제한으로 실패**했다. Pro 유료 업그레이드는 하지 않으며 029단계에서 별도 무료 시험 호스팅을 검토해야 함. 운영 웹 업데이트로 간주하지 않는다.
+- 설계와 7개 AI 역할별 리뷰: `docs/schoolband-stage026-regression-no-audio.md`. 운영 `main`, `baeguindex.com`, 운영 Supabase 변경 없음. 027단계는 접근성·모바일 UI/성능 등 남은 마스터 계획 확인 후 이어 진행.
