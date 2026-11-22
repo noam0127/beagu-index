@@ -16,6 +16,11 @@ const deny = reason => ({ok:false,reason});
 // This serialization is explicitly versioned and length-safe (no delimiter ambiguity).
 function normalized(event) {
   if (!event || typeof event !== "object" || Array.isArray(event)) return null;
+  const keys=Object.keys(event).sort();
+  const allowed=["formId","formResponseId","participantCode","sourceSpreadsheetId","submittedAt"];
+  if (JSON.stringify(keys)!==JSON.stringify(allowed)) return null;
+  // No survey answers, participant names, emails, school fields or free text
+  // may be supplied to the attestation process, even as ignored extra fields.
   const {sourceSpreadsheetId,formId,formResponseId,submittedAt,participantCode} = event;
   if (![sourceSpreadsheetId,formId,formResponseId,submittedAt,participantCode].every(x => typeof x === "string")) return null;
   if (!ID_FORMAT.test(sourceSpreadsheetId) || !ID_FORMAT.test(formId) || !ID_FORMAT.test(formResponseId)) return null;
