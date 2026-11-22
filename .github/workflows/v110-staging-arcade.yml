@@ -23,4 +23,5 @@ jobs:
       - name: Live staging HTTP read/negative checks
         run: python3 tests/staging-arcade-http-smoke.test.py
       - name: No data mutations or production credentials in CI
-        run: echo 'PASS: only HEAD/GET and deliberately invalid POST to isolated staging'
+        run: |
+          echo 'PASS: only HEAD/GET and deliberately invalid POST to isolated staging'
