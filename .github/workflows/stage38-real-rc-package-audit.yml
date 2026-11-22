@@ -29,7 +29,7 @@ jobs:
       - name: Confirm immutable release candidate commit available
         run: |
           git cat-file -t 5c95aadad971901a8222f83c52e93bf901a3aeb7
-          git rev-parse release/v1.1.0-rc.1
+          test "$(git rev-parse refs/remotes/origin/release/v1.1.0-rc.1)" = "5c95aadad971901a8222f83c52e93bf901a3aeb7"
       - name: Package real RC with staging backend and audit (offline)
         run: python3 tests/stage38-real-rc-packaging.py
       - name: No publication or release controller action
