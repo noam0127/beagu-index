@@ -880,7 +880,7 @@ function validAnthemMedia(item,selectedSchoolId){
    typeof item.video_id!=="string"||!/^[A-Za-z0-9_-]{11}$/.test(item.video_id)||
    typeof item.title!=="string"||!item.title.trim()||
    typeof item.channel!=="string"||!item.channel.trim()||
-   typeof item.checked_at!=="string"||!/^\\d{4}-\\d{2}-\\d{2}$/.test(item.checked_at))return false;
+   typeof item.checked_at!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(item.checked_at))return false;
  return true;
 }
 function closeAnthemMedia(){
