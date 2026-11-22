@@ -117,7 +117,7 @@ async function browserProof(){
        d:m.judgementForOffset(w,i),f:m.judgementForOffset(w+e,i),
        missAt:m.isNoteMissed(0,w,i),missBeyond:m.isNoteMissed(0,w+e,i)};
     });
-    return {tiers,y:m.noteYAtAudioTime(.5,0,293),spacing:m.noteStepSpacing(),spawn:m.noteSpawnTimeSeconds(2),spawnVisible:m.noteIsInDrawingWindow(2,.84)};
+    return {tiers,y:m.noteYAtAudioTime(.5,0,293),spacing:m.noteStepSpacing(),spawn:m.noteSpawnTimeSeconds(2),spawnVisible:m.noteIsInDrawingWindow(2,m.noteSpawnTimeSeconds(2))};
    });
    assert.equal(test.tiers.length,5);
    for(const t of test.tiers){
