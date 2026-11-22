@@ -136,7 +136,7 @@ function corruptCases(){
  a=x();a.melody[1].startTick=a.melody[0].startTick+240;R("overlap-melody",a,"overlapping");
  a=x();a.melody[1].pitch=130;R("invalid-pitch",a,"unsupported_melody_pitch");
  a=x();a.melody[1].startTick=481;R("off-grid-melody",a,"invalid_melody_grid");
- a=x();a.melody.at(-1).durationTicks=9999;R("past-song-boundary",a,"overlapping_or_out");
+ a=x();a.melody.at(-1).durationTicks=10080;R("past-song-boundary",a,"overlapping_or_out");
  a=x();a.harmony[3].quality="diminished";R("unsupported-chord-quality",a,"unsupported_harmony_quality");
  a=x();a.harmony.pop();R("missing-harmony",a,"harmony_bar_count");
  a=x();a.harmony[0].rootMidi=0;R("harmonic-root-outside-range",a,"missing_or_invalid_harmony");
