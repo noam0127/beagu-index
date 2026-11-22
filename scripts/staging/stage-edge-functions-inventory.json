@@ -2,8 +2,14 @@
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
   "verified_on": "2026-11-22",
-  "source": "Supabase staging Edge Functions inventory, reverified after isolated beagu-edited-api-v1 v1 recovery (2026-11-23 KST)",
+  "source": "Supabase staging Edge Function inventory, manually read-only verified after 2 QA-only deployments 2026-11-23 KST",
   "functions": [
+    {
+      "slug": "arcade-leaderboard",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
     {
       "slug": "beagu-admin-access",
       "version": 1,
@@ -42,6 +48,12 @@
     },
     {
       "slug": "beagu-release-manager-v1",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-school-culture-v1",
       "version": 1,
       "status": "ACTIVE",
       "verify_jwt": false
