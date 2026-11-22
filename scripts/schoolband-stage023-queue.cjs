@@ -28,7 +28,14 @@ function isTrustedOriginal(rec,rightsRegistry){
   m.public_approved===false&&m.components?.composition==="original_owned"&&
   Array.isArray(m.scopes)&&m.scopes.includes("internal_playtest");
 }
-function advance(record,event,registry,date="2026-11-23"){
+function isLiveClearance(rec,registry,now=new Date().toISOString().slice(0,10)){
+ if(!isTrustedOriginal(rec,registry))return false;
+ const evidence=registry.records.find(x=>x.song_id===rec.song_id);
+ return typeof evidence.valid_from==="string"&&evidence.valid_from<=now&&
+  (evidence.valid_until==null||evidence.valid_until>=now)&&
+  (evidence.revoked_at==null||evidence.revoked_at>now);
+}
+function advance(record,event,registry,date="2026-11-23",replay=false){
  need(record&&typeof record==="object"&&!Array.isArray(record),"invalid_record");
  need(typeof date==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(date),"invalid_event_date");
  const from=record.stage||"none",to=EVENTS[event]?.[from];
@@ -36,6 +43,7 @@ function advance(record,event,registry,date="2026-11-23"){
  // Only an independent, pre-existing offline trust record may enter private/chart-ready states.
  if(event==="approve_private"||event==="release_trial"){
   need(isTrustedOriginal(record,registry),"trusted_original_required");
+  if(!replay)need(isLiveClearance(record,registry,date),"rights_expired_or_revoked");
   need(record.review?.data_checked===true,"data_review_required");
  }
  if(event==="release_trial"){
@@ -52,7 +60,7 @@ function replayAudit(rec,registry){
  let state={...rec,stage:"none",audit:[]};
  for(const [i,item] of rec.audit.entries()){
   need(item&&item.seq===i+1&&typeof item.event==="string","audit_sequence_invalid");
-  state=advance(state,item.event,registry,item.date);
+  state=advance(state,item.event,registry,item.date,true);
  }
  need(state.stage===rec.stage,"stage_audit_mismatch");
  return state.stage;
@@ -78,7 +86,7 @@ function resolvePlaytestSong(queue,registry,schoolId,requestedSong){
  // A withdrawn/denied original must NEVER continue playing via fallback.
  const primary=queue.records.find(r=>r.song_id===ORIGINAL_LIVE_ID);
  const creativeReady=!!(primary&&primary.stage==="trial_available"&&
-   isTrustedOriginal(primary,registry)&&primary.chart_id===ORIGINAL_LIVE_CHART);
+   isLiveClearance(primary,registry)&&primary.chart_id===ORIGINAL_LIVE_CHART);
  if(requestedSong==="anthem"){
   return {song:creativeReady?"volleyball":null,
    songId:creativeReady?ORIGINAL_LIVE_ID:null,
@@ -92,4 +100,4 @@ function resolvePlaytestSong(queue,registry,schoolId,requestedSong){
   reason:"original_trial_available",schoolAnthemPlayable:false};
  return {song:null,reason:"no_available_original_song",schoolAnthemPlayable:false};
 }
-module.exports={EVENTS,QueueError,isTrustedOriginal,advance,replayAudit,validateQueue,resolvePlaytestSong};
+module.exports={EVENTS,QueueError,isTrustedOriginal,isLiveClearance,advance,replayAudit,validateQueue,resolvePlaytestSong};
