@@ -14,7 +14,12 @@
       const host = parsed.hostname.toLowerCase();
       const releaseAction = host === STAGE_SUPABASE &&
         /^\/functions\/v1\/beagu-release-(?:manager|worker)(?:-v[0-9]+)?(?:\/|$)/.test(parsed.pathname);
-      return PROD_HOSTS.has(host) || releaseAction ||
+      // A staging visitor must never reach the real survey by navigating
+      // to a Google Forms short link or by receiving a server-supplied URL.
+      // This does not block Google OAuth (accounts.google.com).
+      const liveSurvey = host === "forms.gle" || host === "forms.google.com" ||
+        (host === "docs.google.com" && /^\/forms(?:\/|$)/.test(parsed.pathname));
+      return PROD_HOSTS.has(host) || releaseAction || liveSurvey ||
         (host.endsWith(".supabase.co") && host !== STAGE_SUPABASE);
     } catch (_error) {
       return false;

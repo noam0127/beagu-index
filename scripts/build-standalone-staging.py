@@ -20,6 +20,9 @@ LIVE_REF = "snvzwrexuqavnfvzgxqj"
 STAGE_REF = "ycwuugggqbunlbwuzvbx"
 LIVE_KEY = "sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2"
 STAGE_KEY = "sb_publishable_c8h7TaIYONfP56Zc05K0Sw_SxyT3lZU"
+# Replace the LIVE Google survey URL only in the isolated build output.
+LIVE_SURVEY_URL = "https://forms.gle/TPyCakK6Sj2zchRy7"
+STAGE_SURVEY_PATH = "/staging-survey-unavailable.html"
 TEXT_EXT = {".html", ".js", ".mjs", ".css", ".json", ".csv", ".txt", ".svg"}
 ASSET_EXT = TEXT_EXT | {".webp", ".jpg", ".jpeg", ".png", ".gif", ".ico", ".woff2", ".woff"}
 STATIC_PREFIXES = ("js/", "styles/", "assets/", "data/", "r/")
@@ -94,13 +97,27 @@ def build() -> dict:
     if release_client.is_file():
         release_client.unlink()
 
+    # The production Google Form must never be reachable from test UI.
+    # This page and every replacement originate from the same trusted SHA.
+    disabled_survey = subprocess.check_output(
+        ["git", "show", sha + ":scripts/staging-survey-unavailable.html"],
+        cwd=ROOT
+    ).decode("utf-8")
+    if "운영 설문" not in disabled_survey or LIVE_SURVEY_URL in disabled_survey:
+        raise RuntimeError("Standalone survey page must not link to the live form")
+    (OUTPUT / STAGE_SURVEY_PATH.lstrip("/")).write_text(
+        disabled_survey, encoding="utf-8"
+    )
+
     html_files = 0
     modified = 0
     for file in OUTPUT.rglob("*"):
         if not file.is_file() or file.suffix.lower() not in TEXT_EXT:
             continue
         content = file.read_text(encoding="utf-8")
-        replaced = content.replace(LIVE_REF, STAGE_REF).replace(LIVE_KEY, STAGE_KEY)
+        replaced = (content.replace(LIVE_REF, STAGE_REF)
+                    .replace(LIVE_KEY, STAGE_KEY)
+                    .replace(LIVE_SURVEY_URL, STAGE_SURVEY_PATH))
         if file.suffix.lower() == ".html":
             if not re.search(r"<body\b", replaced, re.IGNORECASE):
                 raise RuntimeError("HTML missing body: " + str(file))
@@ -132,7 +149,7 @@ def build() -> dict:
     guard = subprocess.check_output(
         ["git", "show", sha + ":scripts/staging-runtime-guard.js"], cwd=ROOT
     ).decode("utf-8")
-    if ("STAGE_SUPABASE" not in guard or "sendBeacon" not in guard):
+    if ("STAGE_SUPABASE" not in guard or "sendBeacon" not in guard or "forms.gle" not in guard):
         raise RuntimeError("Staging runtime isolation guard is incomplete")
     (OUTPUT / "beagu-staging-navigation-guard.js").write_text(guard, encoding="utf-8")
     (OUTPUT / "beagu-preview-health.json").write_text(
@@ -145,7 +162,8 @@ def build() -> dict:
     if (OUTPUT / "CNAME").exists():
         raise RuntimeError("Production CNAME leaked into staging")
     summary = {"sha": sha, "html_pages": html_files,
-               "rewritten_files": modified, "published_files": len(public) + 3}
+               "rewritten_files": modified,
+               "published_files": sum(1 for item in OUTPUT.rglob("*") if item.is_file())}
     print("STANDALONE STAGING READY: " + json.dumps(summary, sort_keys=True))
     return summary
 

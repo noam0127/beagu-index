@@ -9,7 +9,8 @@ const {chromium}=require("playwright");
 const ORIGIN="http://127.0.0.1:8132";
 const LIVE_HOSTS=new Set([
   "baeguindex.com","www.baeguindex.com",
-  "snvzwrexuqavnfvzgxqj.supabase.co"
+  "snvzwrexuqavnfvzgxqj.supabase.co",
+  "forms.gle", "forms.google.com", "docs.google.com"
 ]);
 const PAGES=[
   {path:"/",title:"배구"},
@@ -17,7 +18,8 @@ const PAGES=[
   {path:"/challenge.html",title:"참여"},
   {path:"/statistics.html",title:"학교"},
   {path:"/school-report.html",title:"학교"},
-  {path:"/admin-updates.html",title:"업데이트"}
+  {path:"/admin-updates.html",title:"업데이트"},
+  {path:"/staging-survey-unavailable.html",title:"시험 웹"}
 ];
 const viewports=[
   {name:"desktop",width:1366,height:900,mobile:false},
@@ -114,6 +116,45 @@ async function main(){
      });
      assert.equal(prevented.result,false,"Prod form dispatch was not prevented");
      assert.equal(prevented.prevented,true);
+     const surveyIsolation=await page.evaluate(async ()=>{
+       const LIVE_SURVEY="https://forms.gle/TPyCakK6Sj2zchRy7";
+       const out={};
+       const testLink=document.createElement("a");
+       testLink.href=LIVE_SURVEY;
+       testLink.textContent="2026 운영 조사";
+       document.body.append(testLink);
+       const before=location.href;
+       testLink.click();
+       out.link=location.href===before;
+       out.popup=window.open(LIVE_SURVEY,"_blank")===null;
+       try{
+         await fetch(LIVE_SURVEY,{method:"POST",body:"test"});
+         out.fetch=false;
+       }catch(e){out.fetch=e instanceof TypeError;}
+       try{
+         const xhr=new XMLHttpRequest();
+         xhr.open("GET",LIVE_SURVEY);
+         out.xhr=false;
+       }catch(e){out.xhr=e?.name==="SecurityError";}
+       const form=document.createElement("form");
+       form.action="https://docs.google.com/forms/d/e/example/viewform";
+       document.body.append(form);
+       const event=new Event("submit",{bubbles:true,cancelable:true});
+       form.dispatchEvent(event);
+       out.form=event.defaultPrevented;
+       return out;
+     });
+     assert.deepEqual(surveyIsolation,
+       {link:true,popup:true,fetch:true,xhr:true,form:true},
+       "The staging UI must not open the real Google Form through any route");
+     if(item.path==="/"){
+       assert.equal(await page.locator(
+         'a.survey-access-link').getAttribute("href"),
+         "/staging-survey-unavailable.html");
+     }
+     if(item.path==="/staging-survey-unavailable.html"){
+       assert.match(await page.locator("h1").innerText(),/운영 설문은 시험 웹에서 연결하지 않습니다/);
+     }
      // Navigation-only filtering is insufficient: exercise JavaScript APIs
      // that can issue direct production requests or submit forms without events.
      const blocked=await page.evaluate(async ()=>{

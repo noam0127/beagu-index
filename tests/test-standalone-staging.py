@@ -65,6 +65,14 @@ for privileged in [
     assert privileged not in read_only_release, privileged
 assert "<form" not in read_only_release and "<button" not in read_only_release
 assert "beagu-release-" in guard and "STAGE_SUPABASE" in guard
+assert '"forms.gle"' in guard
+assert '"forms.google.com"' in guard
+assert '"docs.google.com"' in guard
+survey_page = stage / "staging-survey-unavailable.html"
+assert survey_page.is_file(), "A same-origin staging survey notice is required"
+assert "운영 설문은 시험 웹에서 연결하지 않습니다" in survey_page.read_text(encoding="utf-8")
+assert "/staging-survey-unavailable.html" in (stage / "index.html").read_text(encoding="utf-8")
+assert "/staging-survey-unavailable.html" in (stage / "challenge.html").read_text(encoding="utf-8")
 print("PASS: standalone release center is read-only; privileged JS and API calls disabled")
 
 texts = (".html", ".js", ".mjs", ".css", ".json", ".csv", ".txt", ".svg")
@@ -72,6 +80,7 @@ for file in stage.rglob("*"):
     if file.is_file() and file.suffix.lower() in texts:
         contents = file.read_text(encoding="utf-8")
         assert "snvzwrexuqavnfvzgxqj" not in contents, file
+        assert "https://forms.gle/TPyCakK6Sj2zchRy7" not in contents, file
         assert "sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2" not in contents, file
 
 blueprint = (root / "render.yaml").read_text(encoding="utf-8")
