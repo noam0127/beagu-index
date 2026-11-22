@@ -1007,7 +1007,7 @@ function scoreAccuracy(hits,total){
   Math.round(100*hits/total):null;
 }
 function validScoringResult(result){
- if(!result||result.interrupted!==false||result.song==="anthem"||
+ if(!result||result.interrupted!==false||result.song!=="volleyball"||
    !Number.isInteger(result.total)||result.total<=0||
    !Number.isInteger(result.judged)||result.judged!==result.total||
    !Number.isInteger(result.perfect)||!Number.isInteger(result.good)||
