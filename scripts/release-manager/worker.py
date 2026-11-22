@@ -302,7 +302,7 @@ def minimize_independent_preview(target):
 
     # Fail closed if a later RC adds any new link to the production website.
     # This check is scoped only to the independent QA distribution.
-    production_site = re.compile(r"https://(?:www\\.)?baeguindex\\.com", re.IGNORECASE)
+    production_site = re.compile(r"https://(?:www\.)?baeguindex\.com", re.IGNORECASE)
     for file in target.rglob("*"):
         if not file.is_file() or file.suffix.lower() not in {
             ".html", ".js", ".mjs", ".css", ".json", ".webmanifest", ".xml", ".svg"
