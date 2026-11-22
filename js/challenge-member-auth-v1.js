@@ -202,7 +202,7 @@ connect.addEventListener('click',async()=>{
   if(!response.ok||answer.linked!==true)throw Error(answer.error||'LINK_FAILED');
   connect.hidden=true;
   message.textContent='정식 회원 연결 완료. Lv3 인증과 포스트잇 기능을 확인해 주세요.';
-  window.dispatchEvent(new Event('beagu:member-linked'));
+  window.dispatchEvent(new CustomEvent('beagu:member-linked'));
  }catch(error){
   message.textContent=error.message==='MEMBERSHIP_ALREADY_CLAIMED'
    ?'이미 다른 계정에 연결된 챌린지 권한입니다.'
