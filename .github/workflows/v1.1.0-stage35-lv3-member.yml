@@ -29,5 +29,11 @@ jobs:
           node-version: '22'
       - name: Verify linked Auth Lv3 security and UI state
         run: node tests/v1.1.0-stage35-lv3-member.mjs
+      - name: Preserve existing Lv1/Lv2 and account-journey behavior
+        run: |
+          node tests/levelup-provisional-v1.cjs
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/auth-journey-states.mjs
+          node tests/postit-member-auth.cjs
       - name: Scope
         run: echo 'Read-only Lv3 proof; real accounts, 2026 release entitlement and MFA still require E2E.'
