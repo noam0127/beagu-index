@@ -96,7 +96,7 @@
     "등록된 RC와 시험 웹 코드 SHA 일치 · 실제 HTTP 검증 대기":
     exactDraft?"고정 RC 등록 완료 · 시험 웹 적용은 별도 관리자 승인이 필요":
     "RC 후보가 현재 시험 웹에 적용된 상태가 아닙니다. 관리자 인증 후 고정 SHA 등록 필요");
-  const progress=window.BeaguReleaseProgress.snapshot(job,data.last_job);
+  const progress=window.BeaguReleaseProgress.snapshot(job,data.last_job,s);
   const panel=el("releaseProgressPanel"),bar=el("releaseProgressBar");
   panel.hidden=!progress.visible;
   if(progress.visible){
