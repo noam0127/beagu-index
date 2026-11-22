@@ -83,6 +83,7 @@ jobs:
           set -euo pipefail
           base="https://ycwuugggqbunlbwuzvbx.supabase.co/auth/v1"
           status=$(curl --silent --show-error --max-time 15 --output health.json --write-out '%{http_code}' "$base/health")
+          echo "Auth health HTTP $status"
           test "$status" = 200
           python3 - <<'PY'
           import json
@@ -91,6 +92,7 @@ jobs:
           print('PASS: staging Auth health 200')
           PY
           status=$(curl --silent --show-error --max-time 15 --output settings.json --write-out '%{http_code}' "$base/settings")
+          echo "Auth settings HTTP $status"
           test "$status" = 200
           python3 - <<'PY'
           import json
