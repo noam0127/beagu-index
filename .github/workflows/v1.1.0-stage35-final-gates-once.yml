@@ -1,0 +1,22 @@
+name: v1.1.0 stage35 final 2026 release and AAL1 MFA HTTP
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-final-gates-once.py'
+      - '.github/workflows/v1.1.0-stage35-final-gates-once.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-release-and-mfa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run genuine Auth Lv1/Lv2/Lv3 approved snapshot and denied AAL1 MFA
+        run: python3 tests/v1.1.0-stage35-final-gates-once.py
+      - name: Cleanup scope
+        if: always()
+        run: |
+          echo "One-use staging QA only. Confirm no synthetic users, sessions, metrics or snapshots remain."
+          echo "Disable the one-time QA Edge Function after execution; no production deployment."
