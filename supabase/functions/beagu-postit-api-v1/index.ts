@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.0";
+import { resolveVerifiedPostitOwner } from "../_shared/postit-member-ownership.mjs";
 
 // Post-it's data and author identities never become directly queryable with
 // the browser's publishable key. Even curated projections require Lv2 authorization.
@@ -75,11 +76,13 @@ async function verifiedMember(req:Request,viewer:any){
  const account=await authenticatedUser(req);
  if(!account)return null;
  const {data,error}=await db.from("beagu_postit_member_accounts")
-   .select("author_uid,identity_visitor_id,status")
+   .select("auth_user_id,author_uid,identity_visitor_id,status")
    .eq("auth_user_id",account.id).eq("identity_visitor_id",viewer.visitor)
    .eq("status","active").maybeSingle();
- if(error||!data||data.author_uid!==viewer.id)return null;
- return {level:viewer.level,id:data.author_uid,visitor:viewer.visitor,authId:account.id};
+ if(error)return null;
+ // Reconfirm ALL ownership keys from returned data, even if query filters
+ // were modified later. Never use a client-supplied author_uid or role.
+ return resolveVerifiedPostitOwner(account,viewer,data);
 }
 const sha256=async(value:string)=>Array.from(
  new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value))),
