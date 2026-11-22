@@ -66,7 +66,7 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     for child in out.iterdir():
         assert (child.is_file() and child.suffix.lower() in (".html", ".htm")) or (
             child.is_dir() and child.name in approved_roots
-        ) or child.name == ".nojekyll", "unexpected published root file: " + child.name
+        ) or child.name in {".nojekyll", "stage38-release-manifest.json"}, "unexpected published root file: " + child.name
     homepage_nav = (out / "teacher-class-diary-play.html").read_text(encoding="utf-8")
     assert "window.location.assign('https://baeguindex.com/')" not in homepage_nav
     assert "window.location.assign('/')" in homepage_nav
