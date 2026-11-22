@@ -169,5 +169,22 @@
 - 단위 테스트 첫 위치 추출 문제, 키보드 화음 1번 레인의 선행 노트 시각 정렬 문제, 2개 뷰포트 hit 총계 변수의 범위 문제를 각각 수정. 성공 전 종료 선언하지 않았음.
 - 다음 단계 **011/030 — 합주 음향 개선 II: 화성·헤드룸**.
 
-## 011/030 — pending
-베이스 루트·5도·옥타브와 기타 코드의 화성 충돌 검사, 키보드 화음/멜로디 마스킹 방지, 실제 오디오 마스터 버스 피크·클리핑·최대 동시타격 검증 및 믹싱 개선.
+## 011/030 — 합주 음향 개선 II: 화성·헤드룸 (2026-11-22)
+
+상태: **COMPLETE — 8마디 화성/코드·28음 멜로디 전수 검증, PC·모바일 Web Audio 4개 음량 버스 확인, 48개 OfflineAudioContext PCM 계측에서 최대 피크 −8.11dBFS·클리핑 0 및 010/009/008/005 회귀 PASS.**
+
+- 시작 시험 브랜치 `0ea97b8c7e611bb8e867518cb2ea1ce828025013`. 운영 `main`, `baeguindex.com`, Supabase 운영 DB·Edge Functions·기존 게임 미변경.
+- 변경 파일: `games/nangam-schoolband-v08/index.html`, `scripts/test-schoolband-stage011.cjs`, `.github/workflows/schoolband-stage011.yml`, `docs/schoolband-stage011-harmony-headroom.md`; 010단계 회귀검사 `scripts/test-schoolband-stage010.cjs`의 파워코드 설명 주석 검사도 현재 음정 구조에 맞게 갱신.
+- 창작 교가의 8마디 진행은 **C–C–G–G–Am–Am–F–C**. 기타 파워코드 토닉+완전5도+옥타브, 업스트럼 토닉·조성에 맞는 3도·5도, 키보드 화음 3도 등에서 **Am의 C자연음**을 사용하여 A 장3도 C# 충돌 제거. 원본 28음 멜로디를 유지하며 코드 구성음 19음·의도된 비화성음 9음으로 검증·문서화. 베이스 루트·5도·옥타브 유지.
+- **오디오 버스 4개:** master=0.80 / melody=0.96 / ensemble=0.46 / hit=0.80. 3개 파트 버스→마스터→DynamicsCompressor(−19dB, knee14dB, ratio7:1, attack4ms, release200ms). 소스 `oscillator`, `playNoise`, `drum`, `melodyVoice`, `voice`가 실제 악기/멜로디별 출력 버스를 사용. 음소거 게인 상수도 일원화.
+- **GitHub Actions [run 45004834448](https://github.com/noam0127/beagu-index/actions/runs/45004834448) 전체 SUCCESS**, 검증 대상 코드 커밋 `a0905b2e5e39973ae7ad5dae31bf3a9b1e923660`. 원곡 소스 함수 자체를 추출해 `OfflineAudioContext`에서 합주 32개(4악기×8마디, 최대 2노트 동시타격), 멜로디/반주 stem 16개(8마디×2), **총 48개 PCM 파형** 생성.
+- **측정:** 32개 합주 최고 피크 **0.39312652 (−8.10935 dBFS)**, 클리핑 샘플 **0**, NaN/Inf 샘플 **0**, 모든 조합 충분한 RMS. 8마디의 멜로디/자동반주 RMS 비 **2.06~2.71**. 이는 디지털 PCM 수치일 뿐 실제 스마트폰 출력·사람의 체감 음량까지 측정한 것은 아니다.
+- 실제 Chromium PC 1280px 및 320px 모바일에서 마스터/멜로디/자동반주/타격 버스 `AudioParam` 게인 4개를 직접 검증. 브라우저의 Float32 반올림 차이는 `1e-5` 이하 오차로 확인. 56개 일반 차트 노트와 정상 레이아웃·오류 0건.
+- 기존 010단계 PC/모바일 32개 실제 Web Audio hit·무음 MISS·음소거·업스트럼 17/34ms, 009단계 정식 JSON Schema·손상 차트 차단, 008단계 20조합 레인 계약, 005단계 판정 시간축 모두 **같은 CI에서 PASS**.
+- [실제 결과 JSON 및 PC/모바일 캡처 2장](https://github.com/noam0127/beagu-index/actions/runs/45004834448/artifacts/14747316170) ZIP을 내려받아 `32 full + 8 stems 비교(16개 출력)`와 최고 피크·클리핑 수치, 2개 게임 화면을 확인.
+- 오디오/편곡/리듬/모바일/보안/저작권/QA의 **7개 AI 관점별 비판적 검토 및 수치 판단**: `docs/schoolband-stage011-harmony-headroom.md`. 외부 인간 음악가의 청음, 물리 기기의 스피커 출력, 오디오 노드 완전 해제는 검증하지 않았음.
+- 남은 핵심 위험: 예약 Web Audio 노드 정지·중단·재시작 유령 소리·메모리 해제(012), 실제 사람과 Android/iOS 하드웨어 청음·입력 지연(027), 권리 확인된 실제 교가 확보/편곡(022~023), 시험 웹 최초 방문 문제 SB-007(029).
+- 다음 단계 **012/030 — 오디오 정지·메모리·재생 안정성**.
+
+## 012/030 — pending
+일시정지/중단/재시작 시 이미 예약된 Web Audio 오실레이터와 노이즈 노드를 정리·취소하고, 마스터 버스 컴프레서·AudioContext 수명·오디오 권한·실패 복귀를 실제 브라우저에서 검증.
