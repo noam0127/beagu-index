@@ -37,20 +37,20 @@ export function validateStage39Evidence(record) {
   assert.equal(url.pathname, "/");
   assert.equal(url.search, "");
   assert.equal(url.hash, "");
-  assert.match(url.hostname, /^[a-z0-9-]+\\.vercel\\.app$/);
+  assert.match(url.hostname, /^[a-z0-9-]+\.vercel\.app$/);
   assert.notEqual(url.hostname, "baegu-index-test.vercel.app", "Preview cannot be a mutable shared alias");
   assert.notEqual(url.hostname, "beagu-index.vercel.app");
   assert.ok(typeof record.deployment_id === "string" && /^dpl_[a-zA-Z0-9]+$/.test(record.deployment_id));
   assert.ok(typeof record.github_actions_url === "string");
   const ci = new URL(record.github_actions_url);
   assert.equal(ci.hostname, "github.com");
-  assert.match(ci.pathname, /^\\/noam0127\\/beagu-index\\/actions\\/runs\\/[0-9]+\\/?$/);
+  assert.match(ci.pathname, /^\/noam0127\/beagu-index\/actions\/runs\/[0-9]+\/?$/);
   return true;
 }
 
 if (process.argv[1] && import.meta.url === new URL("file://" + process.argv[1]).href) {
   if (process.argv.length !== 3) {
-    process.stderr.write("Usage: node stage39-hosted-rc-evidence.mjs verified-evidence.json\\n");
+    process.stderr.write("Usage: node stage39-hosted-rc-evidence.mjs verified-evidence.json\n");
     process.exitCode = 2;
   } else {
     try {
