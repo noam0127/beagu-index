@@ -122,5 +122,21 @@
 - [실제 JSON/PC·320px 일시정지 화면 ZIP](https://github.com/noam0127/beagu-index/actions/runs/44995247146/artifacts/14743408309) 실물 확인.
 - 후속 미검증: 실제 Android/iOS 잠금·오디오 인터럽트·물리 출력 지연(027), WebAudio 예약 노드 취소(012), 하드웨어 120Hz(018/028), 시험 호스트 첫 방문 확인(SB-007, 029). 다음은 **008/030 — 기타·드럼·베이스·키보드 입력 계약 고정**.
 
-## 008/030 — pending
-4악기(4·4·3·5레인)·5난이도 20개 조합의 PC 키/모바일 패드·노트/입력 일관성 실브라우저 회귀와 계약 문서화.
+## 008/030 — 기타·드럼·베이스·키보드 입력 계약 고정 (2026-11-22)
+
+상태: **COMPLETE — PC·320px Chromium 각 20조합, 총 40개의 연주 및 종료, PC 키 160회·터치 160회·Enter 40회 전수 PASS.**
+
+- 시작 시험 브랜치 HEAD: `37cecc237d4cf296eec4f77e8cd9038905f6fb3f`. 수정한 GitHub 브랜치는 `schoolband-playtest`뿐. 운영 `main`, `baeguindex.com`, 운영 Supabase DB/Edge Functions/기존 게임 미변경.
+- 원본 008/030(원본 031~035) 명세에 맞춰 **일렉기타 4레인(D/F/J/K), 드럼 4레인(D/F/J/K), 베이스 3레인(F/Space/J), 키보드 5레인(A/S/D/J/K)**를 재대조. 기타 표시명 '파워'→'파워코드', '고음'→'고음 리프'로 수정, Canvas 접근성 aria-label에 현재 레인 전체 이름/키 동기화, 키보드로 패드에 포커스해 Enter/Space 활성화 시 detail=0 click 처리. 실제 포인터 click(detail>0) 중복 채점 방지.
+- 수정·추가 파일: `games/nangam-schoolband-v08/index.html`, `scripts/test-schoolband-stage008.cjs`, `.github/workflows/schoolband-stage008.yml`, `docs/schoolband-stage008-lane-contract.md`, 이 진행 기록.
+- 정적 실제 차트 **4악기×5난이도 20/20조합**, 80개 레인-난이도 짝에 최소 1개 유효 노트 확인. 8마디 차트의 노트 수 EASY→EXTREME: 기타 40→144, 드럼 32→168, 베이스 32→128, 키보드 40→144. 고의 오류 3종(쉬움 특정 레인 누락·키 중복·범위 밖 노트) 감지.
+- **GitHub Actions SUCCESS**: [run 44995835685](https://github.com/noam0127/beagu-index/actions/runs/44995835685), 테스트 대상 소스 SHA `620d2d8a3da306b00a27fafd9fd1f28446a552a3`.
+- **브라우저 40회 완주/입력 실증**: PC 및 320px 모바일 각각 20조합에서 각 레인 첫 마디 키 입력·둘째 마디 touch pointerdown·셋째 마디 Enter로 적중; **키 이벤트 160·터치 이벤트 160·Enter 40개** 독립 정타 및 chart.done·점수·완주·100% 진행률·재시작 가능. 악기별 그리드 수·버튼·키 안내·실제 Canvas 텍스트·aria-label 매핑·터치 영역 32×68 CSS px 이상·가로 오버플로 없음 모두 PASS.
+- **검증 제약**: 테스트 전용 Web Audio 시계를 가속·음소거하여 *입력 연결과 완주 흐름*을 검증. 40회의 물리 악기 청음/실시간 인간 연주가 아니므로 오디오 출력·실기 입력지연은 010~012·017·027에서 별도 확인. 실제 교가 저작물 미사용·가상 학교 API fixture만 사용.
+- **회귀**: 동 CI에서 005단계의 판정 경계 및 노트 위치 수치, 007단계의 60/90/120Hz 시뮬레이션, 002단계의 PC·모바일 20조합·비공개 데이터 경계 전부 PASS. 신규 HTML 수정 후 003/004 회귀도 별도 CI PASS.
+- **첫 검사 오류 처리**: 가속 시계에서 지나간 다른 노트가 MISS를 표시하는 순간 배지 경쟁이 발생하였으나 실제 타격/노트 consumed는 정확했다. 단계008의 입력 계약 검사를 순간 FX 문구 대신 hit 증가 + 실제 chart.done로 검증하도록 조정. 실시간 FX 자체는 앞선 004회귀에 계속 남겨 검증한다.
+- **실제 [results.json + PC/모바일 8개 Canvas 이미지](https://github.com/noam0127/beagu-index/actions/runs/44995835685/artifacts/14743803098)**를 내려받아 총 9개 파일과 PC/모바일 40회·각 80키/80터치/20Enter, JavaScript 오류 0을 확인. [7개 독립 AI 관점 기록](./schoolband-stage008-lane-contract.md).
+- 다음 단계 **009/030 — 악기별 리듬 패턴·차트 데이터 검증**.
+
+## 009/030 — pending
+난이도 증가에 따른 음악적 밀도·복잡도와 악기별 차이를 실제 PARTS에서 검증하고, 동시노트·롱노트 채택 여부와 JSON 스키마·차트 버전·오염 차트 거절을 구현.
