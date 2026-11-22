@@ -886,8 +886,8 @@ function schoolHomepageUrl(record){
   const parsed=new URL(value);
   if(!["http:","https:"].includes(parsed.protocol)||parsed.username||parsed.password||
      !/^[a-z0-9.-]+$/i.test(parsed.hostname)||!parsed.hostname.includes(".")||
-     /^(localhost|127\\.|10\\.|192\\.168\\.|169\\.254\\.)/i.test(parsed.hostname)||
-     /^172\\.(1[6-9]|2\\d|3[01])\\./.test(parsed.hostname))return null;
+     /^(localhost|127\.|10\.|192\.168\.|169\.254\.)/i.test(parsed.hostname)||
+     /^172\.(1[6-9]|2\d|3[01])\./.test(parsed.hostname))return null;
   return parsed.href;
  }catch(_){return null}
 }
