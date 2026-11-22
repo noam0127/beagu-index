@@ -43,8 +43,11 @@ async function run() {
   const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
   try {
     const attemptedForbidden = [];
+    // raw.githack displays an explicit first-visit External Content Notice.
+    // Use one isolated browser context so the review consent applies only to
+    // this temporary CI session. No credentials or backend requests are sent.
+    const context = await browser.newContext({ serviceWorkers: "block" });
     for (const file of pages) {
-      const context = await browser.newContext({ serviceWorkers: "block" });
       const page = await context.newPage();
       page.on("request", req => {
         const host = new URL(req.url()).hostname.toLowerCase();
@@ -65,13 +68,24 @@ async function run() {
       assert.equal(new URL(page.url()).origin, new URL(base).origin,
         "Page redirected outside external preview origin: " + file);
       const ctype = response.headers()["content-type"] || "(none)";
-      const readyHtml = await page.content();
-      console.log("DIAG: remote=" + file + ", content_type=" + ctype +
-        ", title=" + JSON.stringify(await page.title()) +
-        ", has_safety_marker=" + readyHtml.includes("stage38-public-static-warning") +
-        ", body_start=" + JSON.stringify((await page.locator("body").innerText()).slice(0,160)));
+      if ((await page.title()).includes("External Content Notice")) {
+        const buttons = await page.locator("a,button").evaluateAll(nodes =>
+          nodes.map(x => ({text:(x.textContent||"").trim().slice(0,75),
+            href:x.getAttribute("href")||""})).filter(x => x.text).slice(0,12));
+        console.log("NOTICE: raw.githack requires explicit first-visit review confirmation " +
+          JSON.stringify(buttons));
+        const proceed = page.locator("a,button").filter({ hasText: /Open the page/i }).first();
+        assert.equal(await proceed.count(), 1,
+          "RawGit external notice did not provide an explicit review action");
+        await proceed.click({ timeout: 12000 });
+        await page.waitForLoadState("domcontentloaded", { timeout: 25000 });
+        console.log("PASS: raw.githack external content notice acknowledged in disposable Chromium context");
+      }
+      console.log("DIAG: hosted " + file + " content_type=" + ctype +
+        " title=" + JSON.stringify(await page.title()) +
+        " preview_marker=" + (await page.content()).includes("stage38-public-static-warning"));
       await page.locator("#stage38-public-static-warning").waitFor({
-        state: "visible", timeout: 6000,
+        state: "visible", timeout: 16000,
       });
       const warning = (await page.locator("#stage38-public-static-warning").innerText()).trim();
       assert.match(warning, /로그인\/개인정보 입력 금지/);
@@ -91,8 +105,9 @@ async function run() {
       assert.ok(txt.length >= 30, "Hosted page has no body content: " + file);
       console.log("PASS: hosted Chromium " + file +
         " visible, password-disabled, API-blocked; chars=" + txt.length);
-      await context.close();
+      await page.close();
     }
+    await context.close();
     assert.deepEqual(attemptedForbidden, [], "External static preview attempted forbidden servers");
     console.log("PASS: hosted Chromium made 0 production/staging Supabase network requests");
     console.log("NOTICE: This is STATIC hosted smoke only, not MFA browser E2E or release approval");
