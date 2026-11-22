@@ -798,7 +798,7 @@ function clearFxFeedback(){
 function triggerImpact(lane,isPerfect){
  const when=performance.now();impactLane=lane;lastImpactAt=when;impactStrength=isPerfect?1:.72;
  lanePulse[lane]=when+LANE_GLOW_MS;
- if(!motionReduced){
+ if(!motionReduced()){
   const n=INST[instrument].lanes.length, margin=9,gap=4;
   const w=(canvas.width-2*margin-gap*(n-1))/n;
   const x=margin+lane*(w+gap)+w/2,y=canvas.height-72;
@@ -814,16 +814,12 @@ function triggerImpact(lane,isPerfect){
  }
  const text=$("judgeFx"),ring=$("impactRing");
  text.textContent=isPerfect?"PERFECT!":"GOOD!";
- text.className="judgement "+(isPerfect?"perfect":"good");
  ring.style.left=(100*(lane+.5)/INST[instrument].lanes.length)+"%";
- ring.className="impact-ring";
- // Explicitly cancel prior CSS animations before restarting on every accepted hit.
- // Both simultaneous lanes and 139ms sixteenth-note runs need fresh feedback.
- for(const fx of text.getAnimations())fx.cancel();
- for(const fx of ring.getAnimations())fx.cancel();
- void text.offsetWidth;void ring.offsetWidth;
- text.className+=" animate";ring.className+=" animate";
- if(window.navigator?.vibrate && !motionReduced)try{window.navigator.vibrate(isPerfect?12:7)}catch(_){}
+ restartFx(text,"judgement "+(isPerfect?"perfect":"good"),motionReduced()?260:510);
+ if(!motionReduced())restartFx(ring,"impact-ring",360);
+ laneFeedback(lane,isPerfect?"perfect":"good");
+ comboFeedback();
+ if(vibrationEnabled&&!motionReduced()&&window.navigator?.vibrate)try{window.navigator.vibrate(isPerfect?12:7)}catch(_){}
 }
 function hit(lane){
  if(!playing||!ctx||lane<0||lane>=INST[instrument].lanes.length)return;
@@ -834,7 +830,7 @@ function hit(lane){
   const d=Math.abs(n.t-now);
   if(d<dist&&d<=windowS){dist=d;closest=n}
  }
- if(!closest){status(INST[instrument].lanes[lane][0]+" · 다음 노트를 기다리세요.");return}
+ if(!closest){emptyPresses++;laneFeedback(lane,"empty");status(INST[instrument].lanes[lane][0]+" · 지금 누를 노트가 없습니다.");return}
  closest.done=true;hits++;judged++;combo++;bestCombo=Math.max(bestCombo,combo);
  if(dist<=PERFECT[tierIdx()]){score+=1000+Math.min(100,combo)*5;perfect++;status("PERFECT ✦ "+INST[instrument].lanes[lane][0])}
  else{score+=600+Math.min(100,combo)*3;good++;status("GOOD! "+INST[instrument].lanes[lane][0])}
@@ -845,7 +841,9 @@ function hit(lane){
 function animate(){
  if(!playing)return;
  const now=nowSong(),cut=WIDTHS[tierIdx()];
- for(const n of chart){if(!n.done && now-n.t>cut){n.done=true;judged++;miss++;combo=0;}}
+ let missedThisFrame=0;
+ for(const n of chart){if(!n.done && now-n.t>cut){n.done=true;judged++;miss++;combo=0;missedThisFrame++;laneFeedback(n.lane,"miss");}}
+ if(missedThisFrame)status("MISS · 놓친 노트 "+missedThisFrame+"개");
  if(now>=SONG_BEATS*BEAT+.28){finish(false);return}
  $("progress").style.width=Math.max(0,Math.min(100,100*(now/(SONG_BEATS*BEAT))))+"%";
  hud();draw();raf=requestAnimationFrame(animate);
@@ -856,7 +854,7 @@ async function start(){
  try{await a.resume()}catch(e){status("오디오 시작에 실패했습니다.");return}
  if(playing)return;
  playing=true;
- score=combo=bestCombo=hits=judged=perfect=good=miss=0;step=0;makeChart();particles=[];lanePulse.fill(0);
+ score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;step=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
  document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=true);
@@ -870,14 +868,14 @@ async function start(){
 }
 function finish(interrupted){
  if(!playing)return;
- playing=false;clearInterval(timer);cancelAnimationFrame(raf);particles=[];lanePulse.fill(0);
+ playing=false;clearInterval(timer);cancelAnimationFrame(raf);particles=[];lanePulse.fill(0);clearFxFeedback();
  $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
  document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);
  if(interrupted){status("연주를 중단했습니다.");safeText("result","다시 시작할 수 있습니다.");}
  else{
  const acc=chart.length?Math.round(hits/chart.length*100):0;
  status("공연 종료! "+(acc>=85?"훌륭한 연주!":acc>=60?"좋은 연주!":"다시 도전해 보세요."));
- safeText("result","정확도 "+acc+"% · PERFECT "+perfect+" · GOOD "+good+" · MISS "+miss+" · 최대 콤보 "+bestCombo+" · 노트 "+chart.length+"개");
+ safeText("result","정확도 "+acc+"% · PERFECT "+perfect+" · GOOD "+good+" · MISS "+miss+" · 최대 콤보 "+bestCombo+" · 빈 입력 "+emptyPresses+"회 · 노트 "+chart.length+"개");
  const prior=readBest()||0;
  if(score>prior){try{localStorage.setItem("nangam-band-v08:"+school.school_id+":"+instrument+":"+tier,String(score))}catch(_){}}
  showBest();$("progress").style.width="100%";
@@ -893,7 +891,7 @@ function draw(){
  const margin=9,gap=4,lw=(W-2*margin-gap*(N-1))/N;
  const colors=IMPACT_COLORS;
  const fxAge=performance.now()-lastImpactAt;
- const shake=(!motionReduced&&fxAge>=0&&fxAge<85)?(1-fxAge/85)*impactStrength*2:0;
+ const shake=(!motionReduced()&&fxAge>=0&&fxAge<85)?(1-fxAge/85)*impactStrength*.85:0;
  g.save();
  g.clearRect(0,0,W,H);
  if(shake)g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
@@ -905,9 +903,9 @@ function draw(){
   g.fillStyle=colors[i];g.fillRect(x,12,lw,5);
   const glowLeft=lanePulse[i]-performance.now();
   if(glowLeft>0){
-    g.fillStyle=colors[i];g.globalAlpha=.08+.32*Math.min(1,glowLeft/LANE_GLOW_MS);
+    g.fillStyle=colors[i];g.globalAlpha=motionReduced()?.10:.08+.20*Math.min(1,glowLeft/LANE_GLOW_MS);
     g.fillRect(x,12,lw,H-24);g.globalAlpha=1;
-    g.fillStyle="#fff";g.globalAlpha=.35*Math.min(1,glowLeft/LANE_GLOW_MS);
+    g.fillStyle="#fff";g.globalAlpha=motionReduced()?.08:.22*Math.min(1,glowLeft/LANE_GLOW_MS);
     g.fillRect(x+3,H-84,lw-6,5);g.globalAlpha=1;
   }
   g.fillStyle="#eff5ff";g.font="800 17px system-ui";g.textAlign="center";g.fillText(lanes[i][1],x+lw/2,38);
@@ -930,7 +928,7 @@ function draw(){
   g.fillStyle="#ffffffa8";rounded(x+10,y-9,Math.max(4,lw-20),4,2);g.fill();
  }
  const frameTime=performance.now();
- if(!motionReduced&&particles.length){
+ if(!motionReduced()&&particles.length){
   particles=particles.filter(p=>frameTime-p.start<p.life);
   for(const p of particles){
    const age=frameTime-p.start,seconds=age/1000,f=age/p.life;
@@ -970,8 +968,11 @@ document.addEventListener("keydown",e=>{
  e.preventDefault();hit(index);flash(index);
 });
 window.addEventListener("pagehide",()=>{if(playing)finish(true)});
-window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate")}),getPlayhead:()=>playing?nowSong():null};
-renderPads();draw();hud();
+window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged,combo,bestCombo,miss,emptyPresses}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null};
+$("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
+$("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
+if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
+renderPads();syncFxSettings();hud();
 })();
 </script>
 </body>
