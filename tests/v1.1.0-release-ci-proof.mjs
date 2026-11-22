@@ -51,9 +51,11 @@ function fixture(){
   }
   throw Error("unexpected GitHub API path");
  }
- return {runs,jobs,githubGet,calls,check:()=>verifyProductionReadiness({
-  githubGet,sha:SHA,stagingDeployedAt:STAGED,now:NOW
- })};
+ const result={runs,jobs,githubGet,calls};
+ result.check=()=>verifyProductionReadiness({
+  githubGet:result.githubGet,sha:SHA,stagingDeployedAt:STAGED,now:NOW
+ });
+ return result;
 }
 function negative(name,mutate,code){
  test(name,async()=>{
