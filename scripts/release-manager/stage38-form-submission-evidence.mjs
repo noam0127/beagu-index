@@ -61,25 +61,38 @@ export function verifyTrustedSubmissionEvent(event,{
     codeDigest:sha256(e.participantCode),
     campaign:"2026",
     evidenceStatus:"PENDING_ISSUANCE_AND_OWNER_BINDING",
+    // Private integrity seal; callers cannot fabricate an evidence receipt
+    // without the server's attestation secret. Not a public bearer token.
+    receiptMac:hmac(secret,JSON.stringify(["BEAGU_ST38_RECEIPT_V1",
+      hmac(secret,"BEAGU_ST38_EVENT_V1|"+e.formId+"|"+e.formResponseId),
+      sha256(e.participantCode),"2026"])),
     // Official form/response metadata alone CANNOT authorize Lv1 or Lv2.
     authorizedLevel:0
   };
 }
 
 export function evaluateTierFromPrivateEvidence({
-  receipt,codeDigestFromIssuedLedger,ownerBindingVerified=false,
+  secret,receipt,codeDigestFromIssuedLedger,ownerBindingVerified=false,
+  submissionUniquenessConfirmed=false,
   referralHashMatched=false,validReferrals=0,upgradedAt=null,
-  disabled=false,submissionAlreadyReused=false
+  disabled=false
 }={}) {
-  if (!receipt || receipt.ok!==true ||
+  if (typeof secret!=="string" || secret.length<32 ||
+      !receipt || receipt.ok!==true ||
       receipt.schema!=="beagu-stage38-own-submission-evidence-v1" ||
       receipt.evidenceStatus!=="PENDING_ISSUANCE_AND_OWNER_BINDING" ||
+      receipt.campaign!=="2026" || receipt.authorizedLevel!==0 ||
       !MAC_FORMAT.test(receipt.codeDigest??"") ||
       !MAC_FORMAT.test(receipt.eventDigest??"") ||
+      !MAC_FORMAT.test(receipt.receiptMac??"") ||
       !MAC_FORMAT.test(codeDigestFromIssuedLedger??"") ||
       receipt.codeDigest!==codeDigestFromIssuedLedger ||
       ownerBindingVerified!==true || disabled===true ||
-      submissionAlreadyReused===true)
+      submissionUniquenessConfirmed!==true)
+    return 0;
+  const expected=hmac(secret,JSON.stringify(["BEAGU_ST38_RECEIPT_V1",
+    receipt.eventDigest,receipt.codeDigest,"2026"]));
+  if (!timingSafeEqual(Buffer.from(receipt.receiptMac,"hex"),Buffer.from(expected,"hex")))
     return 0;
   // A verified Form submission + matching issued-code ownership permits Lv1.
   // A recommendation needs its OWN independent, reviewed credit ledger.
