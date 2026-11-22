@@ -70,7 +70,11 @@ test("all three distinct workflows attest same staged SHA after real staging dep
  assert.equal(f.calls.length,6);
 });
 negative("no CI runs",f=>f.runs.set(RELEASE_CI_POLICY[0].file,[]),"ci_attestation_missing");
-negative("incomplete run result",f=>f.runs.set(RELEASE_CI_POLICY[0].file,null),"ci_runs_invalid");
+negative("incomplete run result",f=>{
+ const origin=f.githubGet;
+ f.githubGet=async p=>p.includes("/actions/workflows/")?
+   {workflow_runs:null,total_count:1}:origin(p);
+},"ci_runs_invalid");
 negative("a run with no matching SHA cannot be trusted",f=>f.runs.get(RELEASE_CI_POLICY[0].file)[0].head_sha="a".repeat(40),"ci_attestation_missing");
 negative("CI for branch other than main is rejected",f=>f.runs.get(RELEASE_CI_POLICY[0].file)[0].head_branch="feature","ci_attestation_missing");
 negative("attacker fork run is rejected",f=>f.runs.get(RELEASE_CI_POLICY[0].file)[0].head_repository.full_name="attacker/beagu-index","ci_attestation_missing");
@@ -105,6 +109,7 @@ negative("truncated job list is rejected",f=>{
 negative("a duplicate workflow run id in required suites is rejected",f=>{
  const p=RELEASE_CI_POLICY[1].file;
  f.runs.get(p)[0].id=401;
+ f.jobs.get(401).push({...f.jobs.get(402)[0],run_id:401});
 },"ci_duplicate_workflow_proof");
 test("missing staging confirmation is denied",async()=>{
  const f=fixture();
