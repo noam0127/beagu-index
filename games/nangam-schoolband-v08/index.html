@@ -117,6 +117,53 @@ body[data-ux-step=school] #stepSchool,body[data-ux-step=instrument] #stepInstrum
  .ux-step-card{scroll-margin-top:61px}
  #schoolSearch{padding:10px}
 }
+
+/* 017 mobile touch target layout and explicit non-color lane labels */
+.play-surface{min-width:0}
+#pads{touch-action:none}
+.taphit{touch-action:none;overflow-wrap:anywhere;overflow:hidden;white-space:normal}
+.taphit strong,.taphit small{max-width:100%;overflow-wrap:anywhere;line-height:1.25}
+.taphit:focus-visible{outline:3px solid #fff5b4;outline-offset:-3px}
+.mobile-controls{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin:10px 0 6px}
+.mobile-controls label{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:6px 7px;font-size:13px}
+.mobile-controls input{width:19px;height:19px;accent-color:#c4b5fd}
+#fullscreenBtn{min-height:44px;min-width:110px;font-size:13px;background:#293c5c}
+#stepPlay:fullscreen{overflow-y:auto;width:100%;height:100%;margin:0;background:#111827;padding:12px;box-sizing:border-box}
+#stepPlay:fullscreen .play-surface{max-width:min(680px,96vw);margin:auto}
+html[data-large-text=true] #pads .taphit strong{font-size:clamp(13px,3.6vw,19px);font-weight:900}
+html[data-large-text=true] #pads .taphit small{font-size:clamp(12px,3vw,16px)}
+html[data-large-text=true] #keyHint{font-size:14px;line-height:1.5}
+html[data-large-text=true] #laneInfo{font-size:clamp(20px,5vw,27px)}
+html[data-large-text=true] #feedback{font-size:16px}
+html[data-large-text=true] .taphit{min-height:78px}
+html[data-high-contrast=true] .taphit{background:#000;color:#fff;border:3px solid #fff}
+html[data-high-contrast=true] .taphit small{color:#ffe985}
+html[data-high-contrast=true] .pad-grid[data-instrument=drums] .taphit,html[data-high-contrast=true] .pad-grid[data-instrument=bass] .taphit,html[data-high-contrast=true] .pad-grid[data-instrument=keys] .taphit{background:#000;color:#fff;border-color:#fff}
+html[data-high-contrast=true] .taphit.pressed{background:#6f3300;outline:3px solid #ffe985}
+html[data-high-contrast=true] canvas{border:3px solid #fff}
+html[data-high-contrast=true] #keyHint,html[data-high-contrast=true] #playTitle{color:#fff}
+@media(prefers-contrast:more){
+ .taphit{border:3px solid #fff;color:#fff;background:#080808!important}
+ .taphit small{color:#ffe985}
+ canvas{border:3px solid #fff}
+}
+@media(orientation:landscape) and (max-height:500px) and (min-width:550px){
+ .play-surface{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(0,.88fr);align-items:center;gap:10px}
+ .stage-wrap{width:100%;min-width:0}
+ .pad-grid{min-width:0;align-items:stretch;margin:0}
+ .taphit{min-height:90px;padding:6px 1px}
+ .play-head{margin-bottom:4px}
+ .mobile-controls{margin:4px 0}
+ #stepPlay{padding:9px}
+ #keyHint{margin:5px 0}
+}
+@media(max-width:360px){
+ .mobile-controls{gap:5px}
+ .mobile-controls label{font-size:12px;padding:5px 3px}
+ #fullscreenBtn{min-width:95px;padding:7px 4px}
+ .taphit strong{font-size:11px}
+ html[data-large-text=true] .taphit strong{font-size:13px}
+}
 </style>
 </head>
 <body>
@@ -151,9 +198,11 @@ body[data-ux-step=school] #stepSchool,body[data-ux-step=instrument] #stepInstrum
 </section>
 <section id="stepPlay" class="card ux-step-card" data-step-panel="play" aria-label="연주" tabindex="-1">
 <div class="play-head"><div id="laneInfo">일렉기타 · 4레인</div><p id="playTitle">일렉기타 · 4레인 · NORMAL</p></div>
-<div class="stage-wrap"><canvas id="track" width="380" height="365" role="img" aria-label="악기에 따라 3~5개 레인이 표시되는 리듬게임 화면"></canvas><div class="judgement" id="judgeFx" aria-hidden="true"></div><div class="impact-ring" id="impactRing" aria-hidden="true"></div><div id="laneFx" class="lane-fx-layer" aria-hidden="true"></div><div id="comboFx" class="combo-fx" aria-hidden="true"></div></div>
-<div id="pads" class="pad-grid" aria-label="모바일 연주 버튼"></div>
+<div id="playSurface" class="play-surface"><div class="stage-wrap"><canvas id="track" width="380" height="365" role="img" aria-label="악기에 따라 3~5개 레인이 표시되는 리듬게임 화면"></canvas><div class="judgement" id="judgeFx" aria-hidden="true"></div><div class="impact-ring" id="impactRing" aria-hidden="true"></div><div id="laneFx" class="lane-fx-layer" aria-hidden="true"></div><div id="comboFx" class="combo-fx" aria-hidden="true"></div></div>
+<div id="pads" class="pad-grid" role="group" aria-label="모바일 동시 연주 버튼"></div></div>
 <p id="keyHint">D 리프 · F 파워코드 · J 업스트럼 · K 고음 리프</p>
+<div id="mobileControls" class="mobile-controls" role="group" aria-label="연주 화면 보기 설정"><label><input type="checkbox" id="largeText"> 큰 글씨</label><label><input type="checkbox" id="highContrast"> 고대비</label><button type="button" id="fullscreenBtn" aria-pressed="false">⛶ 전체화면</button></div>
+<p id="screenModeStatus" class="visually-hidden" role="status" aria-live="polite"></p>
 <details class="timing-tuner" id="timingTuner"><summary>판정 보정 <output id="offsetSummary" for="offsetRange">0 ms</output></summary><div class="timing-controls"><label for="offsetRange">입력 판정 보정</label><input type="range" id="offsetRange" min="-150" max="150" step="5" value="0" aria-describedby="offsetHelp"><output id="offsetValue" for="offsetRange">0 ms</output><button type="button" id="offsetReset">초기화</button></div><p class="timing-help" id="offsetHelp">기기에서 소리가 들리는 시점보다 터치 입력이 늦게 인식되면 + 방향, 너무 이르게 인식되면 − 방향으로 조절하세요. +100 ms는 늦게 입력된 100 ms를 판정에서 보상합니다. 판정 화면과 반주는 그대로이며 게임 시작 전에 설정합니다. 실제 기기 오디오·입력 지연을 자동 측정하는 기능은 아닙니다.</p></details><div class="timing-controls volume-controls" role="group" aria-label="음향 음량 설정"><label for="volumeRange">음량</label><input type="range" id="volumeRange" min="0" max="100" step="5" value="100" aria-label="게임 전체 음량" aria-describedby="volumeHelp"><output id="volumeValue" for="volumeRange">100%</output><span id="volumeHelp" class="visually-hidden">0퍼센트는 완전 무음이며 음소거 버튼과 독립적으로 음량을 조절합니다.</span></div><div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label></div>
 <div class="actions"><button type="button" id="start" disabled>▶ 연주 시작</button><button type="button" id="pause" aria-pressed="false" disabled>Ⅱ 일시정지</button><button type="button" id="stop" disabled>■ 중단</button><button type="button" id="mute">♫ 소리</button></div>
 <div id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
