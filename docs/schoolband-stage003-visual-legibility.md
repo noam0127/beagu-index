@@ -39,4 +39,12 @@
 
 ## 실제 검증 결과
 
-- 실행 중. GitHub Actions와 스크린샷 결과를 확인하여 PASS/FAIL과 커밋 SHA를 보충한다. 미실행 테스트를 PASS라고 표시하지 않는다.
+- **003 자동 검증 PASS**. GitHub Actions [run 44987172112](https://github.com/noam0127/beagu-index/actions/runs/44987172112), 검증된 코드 커밋 `3e26edb33f652b7e3174ca7ba8e235c054c39c68`.
+- 아티팩트: [before/after 4장 + rapid-hit 1장 + results.json](https://github.com/noam0127/beagu-index/actions/runs/44987172112/artifacts/14740332848). 실제 Chromium에서 생성한 이미지를 열어 비교·검수했다.
+- 원본 1.40초 미리보기에서 16분음표 간격 **23.81px(24px 노트와 -0.19px 중첩)**. 변경된 1.16초 미리보기에서 **28.74px(+4.74px 간격)**. 108 BPM, 실제 음악 데이터·판정 시계 불변.
+- Chromium 1280×850와 320×640 브라우저 레이아웃 각각 전·후 비교 PASS: 5개 키보드 패드 모두 폭 32px 이상/높이 68px 이상, 터치 영역 겹침 0건, 수평 오버플로 0건. 320px 장치의 실제 캔버스 CSS 폭은 **282px**, 24 내부 px 노트의 환산 높이 약 **17.8 CSS px**. 작은 화면의 신체적 접근성은 실기 검증 필요.
+- Canvas 현재 픽셀 검사 PASS: 5레인 note 중심점 `rgba(177,247,205,255)` (PC·모바일 동일 내부 캔버스 좌표), 테스트의 명암 기준 통과.
+- EXTREME 드럼 16분음표 하이햇 3개 연속 입력 PASS: 실제 AudioContext 기준 t=0.139/0.278/0.417초, 판정 결과 **PERFECT 3회, 점수 3,030점**; 세 타격 모두 별개 CSSAnimation 객체로 새로 시작, 각 레인 발광시간이 다시 175ms로 초기화됨. 파편 개수는 11→22→31개로 60개 제한 준수.
+- 초기 실행에서는 `CSSAnimation.startTime`이 headless Chrome에서 `null`로 조회되는 문제가 있었고, 이를 애니메이션 객체의 정체성·상태 검증으로 수정했다. 실제 게임 코드에서도 CSS 애니메이션을 취소한 뒤 새로 만드는 방식을 추가했다. 테스트 기준을 낮춰 통과 처리한 것이 아니라 실제 재시작 객체 생성을 검증했다.
+- 기존 001/002 회귀: stage002 20조합 검증 [run 44987077478](https://github.com/noam0127/beagu-index/actions/runs/44987077478) PASS; stage001 리다이렉트 포함 스모크 [run 44986934152](https://github.com/noam0127/beagu-index/actions/runs/44986934152) PASS. 독립 시험 호스트는 첫 방문 확인 화면(SB-007)이 남아 있음.
+- 제한: Android/iOS 실기 미검증, 실제 오디오 출력 지연·배터리/광과민 감수는 아직 수행하지 않음(후속 004·027·028). 중앙 PERFECT/GOOD 표시의 동시타격 구분은 004단계로 인계.
