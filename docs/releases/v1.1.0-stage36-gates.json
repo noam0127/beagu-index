@@ -47,8 +47,9 @@
     },
     {
       "id": "live_preview_http",
-      "status": "PENDING",
-      "scope": "read-only staging smoke pending"
+      "status": "PASS",
+      "scope": "Read-only 200 on current production and published preview; 8 CSS/JS assets. Does not prove v1.1.0 build deployed.",
+      "run": 44971883588
     },
     {
       "id": "manual_production_approval",
