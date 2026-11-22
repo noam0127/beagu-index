@@ -1,0 +1,43 @@
+name: Schoolband 015 generated 20 charts and private registration QA
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/schoolband-chart-generator-v1.cjs'
+      - 'scripts/test-schoolband-stage015.cjs'
+      - '.github/workflows/schoolband-stage015.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-accurate-charts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Source-to-score timing, 40 charts and 20 bad-registration rejection tests
+        run: node scripts/test-schoolband-stage015.cjs
+      - name: Install real Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Play all original-song 4 instruments × 5 tiers × 2 viewports in actual game
+        run: node scripts/test-schoolband-stage015.cjs --browser
+      - name: Preserve prior rhythm generation and N-lane chart contracts
+        run: |
+          node scripts/test-schoolband-stage014.cjs
+          node scripts/test-schoolband-stage008.cjs
+          node scripts/test-schoolband-stage005.cjs
+      - name: Upload two private 20-chart catalogs, audit trail and playthrough evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage015-chart-registration-proof
+          path: artifacts/schoolband-stage015/
+          if-no-files-found: error
