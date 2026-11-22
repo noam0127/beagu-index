@@ -1,0 +1,47 @@
+name: Schoolband 018 FX settings and low-power scoring performance
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage018.cjs'
+      - '.github/workflows/schoolband-stage018.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  low-power-and-accessibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Ensure rendering is throttled but judgement and audio clocks are not
+        run: node scripts/test-schoolband-stage018.cjs
+      - name: Install real browser and CPU throttling
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Compare settings and 4x CPU throttle scores on 1280px and 320px
+        run: node scripts/test-schoolband-stage018.cjs --browser
+      - name: Preserve accessibility and real two-finger landscape rotation
+        run: node scripts/test-schoolband-stage017.cjs --browser
+      - name: Preserve 3-screen school and all keyboard/touch lanes
+        run: node scripts/test-schoolband-stage016.cjs --browser
+      - name: Preserve 20 combinations and 40 original-game playthroughs
+        run: node scripts/test-schoolband-stage008.cjs --browser
+      - name: Preserve timing and audio pause judgement
+        run: |
+          node scripts/test-schoolband-stage005.cjs
+          node scripts/test-schoolband-stage007.cjs
+      - name: Save performance JSON and full/low/reduced PC mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage018-fx-performance-proof
+          path: artifacts/schoolband-stage018/
+          if-no-files-found: error
