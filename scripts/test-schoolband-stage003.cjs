@@ -138,6 +138,8 @@ async function smoke(){
         const before=api.getStatus().hits;
         document.querySelector('[data-lane="2"]').dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true}));
         const after=api.getStatus().hits,fx=api.getEffectState();
+        // A newly created CSS animation receives its startTime on the next animation frame.
+        await new Promise(requestAnimationFrame);
         const animation=document.getElementById("judgeFx").getAnimations()[0];
         results.push({t:note.t,playhead:api.getPlayhead(),before,after,
           fx:fx.particleCount,glow:fx.pulseRemainingMs[2],judgement:fx.judgement,animated:fx.judgeAnimate,
@@ -150,6 +152,7 @@ async function smoke(){
     assert(hits.results.every(x=>x.glow>0&&x.glow<=175),"glow failed: "+json(hits));
     assert(hits.results.every(x=>x.fx>=1&&x.fx<=60),"particle cap: "+json(hits));
     assert(hits.results.every(x=>x.animated&&x.judgement==="PERFECT!"),"judge restart: "+json(hits));
+    console.log("HIT_TRACE",json(hits));
     const starts=hits.results.map(x=>x.animationStart);
     assert(starts.every(x=>Number.isFinite(x))&&starts[2]>starts[0],"animation did not restart");
     report.browser.rapidHit={...hits,passed:true};
