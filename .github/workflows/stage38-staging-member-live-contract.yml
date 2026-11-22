@@ -15,6 +15,8 @@ on:
       - 'tests/stage38-staging-telemetry-health-contract.cjs'
       - 'tests/stage38-staging-referral-funnel-contract.cjs'
       - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
+      - 'tests/stage38-staging-release-readonly-contract.cjs'
+      - 'tests/fixtures/stage38-staging-release-manager-readonly-v1/**'
       - 'tests/stage38-staging-dashboard-aggregate-regression.sql'
       - 'tests/fixtures/stage38-staging-dashboard-rpc.sql'
       - 'tests/fixtures/stage38-staging-dashboard-tables.sql'
@@ -51,6 +53,8 @@ on:
       - 'tests/stage38-staging-telemetry-health-contract.cjs'
       - 'tests/stage38-staging-referral-funnel-contract.cjs'
       - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
+      - 'tests/stage38-staging-release-readonly-contract.cjs'
+      - 'tests/fixtures/stage38-staging-release-manager-readonly-v1/**'
       - 'tests/stage38-staging-dashboard-aggregate-regression.sql'
       - 'tests/fixtures/stage38-staging-dashboard-rpc.sql'
       - 'tests/fixtures/stage38-staging-dashboard-tables.sql'
@@ -102,6 +106,8 @@ jobs:
         run: node tests/stage38-staging-referral-funnel-contract.cjs
       - name: Verify isolated comprehensive dashboard SQL and privacy contract
         run: node tests/stage38-staging-dashboard-aggregate-contract.cjs
+      - name: Verify isolated release manager is strictly read-only and owner AAL2-gated
+        run: node tests/stage38-staging-release-readonly-contract.cjs
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
@@ -284,3 +290,55 @@ jobs:
           test "$status" = 204
           grep -qi '^access-control-allow-origin: http://127.0.0.1:38738' "$headers"
           echo "PASS: dashboard local QA preflight 204"
+
+  release-manager-readonly-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify staging release API denies anonymous, forged and production browser requests
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-release-manager-v1"
+          for scenario in anonymous_status forged_status anonymous_stage anonymous_prod anonymous_worker forbidden_origin; do
+            headers=$(mktemp)
+            case "$scenario" in
+              anonymous_status)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+              forged_status)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Authorization: Bearer invalid.stage38.token' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+              anonymous_stage)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"stage_apply"}' "$url");;
+              anonymous_prod)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"prod_rollback"}' "$url");;
+              anonymous_worker)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"worker_next"}' "$url");;
+              forbidden_origin)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: https://baeguindex.com' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+            esac
+            case "$scenario:$status" in
+              anonymous_status:401|forged_status:401|anonymous_stage:401|anonymous_prod:401|anonymous_worker:401|forbidden_origin:403)
+                echo "PASS: staging release $scenario denied ($status)";;
+              *) echo "FAIL: unexpected release API response: $scenario $status"; exit 1;;
+            esac
+            if [ "$scenario" = forbidden_origin ] && grep -qi '^access-control-allow-origin:' "$headers"; then
+              echo "FAIL: production origin received preview CORS"; exit 1
+            fi
+            python3 - <<'PY'
+          import json
+          data=json.load(open("response.json",encoding="utf-8"))
+          assert "error" in data
+          assert not any(x in data for x in ("state","job","queued","production_sha","access_token"))
+          PY
+            rm -f "$headers" response.json
+          done
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: http://127.0.0.1:38738' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: http://127.0.0.1:38738' "$headers"
+          echo "PASS: staging localhost release preflight allowed (204)"
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: https://baeguindex.com' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 403
+          if grep -qi '^access-control-allow-origin:' "$headers"; then echo "FAIL: forbidden preflight approved"; exit 1; fi
+          echo "PASS: production release preflight denied (403)"
