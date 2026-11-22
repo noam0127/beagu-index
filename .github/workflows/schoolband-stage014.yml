@@ -1,0 +1,46 @@
+name: Schoolband 014 changing meter tempo deterministic rock arrangement
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'scripts/schoolband-rock-arranger-v1.cjs'
+      - 'scripts/test-schoolband-stage014.cjs'
+      - 'games/nangam-schoolband-v08/charts/original-variable-meter-exercise.input.v1.json'
+      - 'games/nangam-schoolband-v08/charts/original-anthem.music-events.v1.json'
+      - '.github/workflows/schoolband-stage014.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  arranger:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 19
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Two works variable-meter/tempo, melody invariant and corrupt-input proof
+        run: node scripts/test-schoolband-stage014.cjs
+      - name: Install Chromium and MusicXML parser for prior regression
+        run: |
+          npm install --no-save --no-package-lock playwright fast-xml-parser@5
+          npx playwright install --with-deps chromium --only-shell
+      - name: Render full previews using Chromium OfflineAudioContext PCM
+        run: node scripts/test-schoolband-stage014.cjs --browser
+      - name: Preserve 28-note MIDI/MusicXML conversion and license checks
+        run: node scripts/test-schoolband-stage013.cjs
+      - name: Preserve existing game chord harmony and audio node cleanup
+        run: |
+          node scripts/test-schoolband-stage012.cjs
+          node scripts/test-schoolband-stage010.cjs
+          node scripts/test-schoolband-stage005.cjs
+      - name: Upload two full arrangement JSONs, input demo, timing and PCM evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage014-variable-meter-arrangement-proof
+          path: artifacts/schoolband-stage014/
+          if-no-files-found: error
