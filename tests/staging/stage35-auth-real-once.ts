@@ -43,7 +43,7 @@ Deno.serve(async(req)=>{
   const actors=[];
   for(const label of ["a","b"]){
    const email="stage35-auth-qa-"+label+"-"+nonce+"@baeguindex.com";
-   const password=hex(crypto.getRandomValues(new Uint8Array(36)))+"Aa1!";
+   const password=hex(crypto.getRandomValues(new Uint8Array(32)))+"Aa1!";
    const created=await db.auth.admin.createUser({email,password,email_confirm:true});
    if(created.error||!created.data?.user?.id){
      blocked="AUTH_CREATE_"+(created.error?.code||"UNKNOWN");
