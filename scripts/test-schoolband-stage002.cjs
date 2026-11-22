@@ -146,7 +146,7 @@ async function browserSuite(){
         await page.locator("#schoolSearch").fill("검증초");
         await page.locator("#searchResults button").first().waitFor({state:"visible",timeout:10000});
         await page.locator("#searchResults button").first().click();
-        await page.locator("#schoolTitle").getByText("검증초등학교",{exact:false}).waitFor({state:"visible",timeout:10000});
+        await page.waitForFunction(()=>document.querySelector("#schoolTitle")?.textContent?.includes("검증초등학교"),null,{timeout:10000});
         assert((await page.locator("#schoolTier").innerText()).includes(["EASY","NORMAL","HARD","VERY HARD","EXTREME"][diff]),"tier label");
         for(const [inst,numLanes] of Object.entries(LANES)){
           const ms=await page.evaluate(key=>{
