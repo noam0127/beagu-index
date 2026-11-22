@@ -30,7 +30,7 @@ function isTrustedOriginal(rec,rightsRegistry){
 }
 function advance(record,event,registry,date="2026-11-23"){
  need(record&&typeof record==="object"&&!Array.isArray(record),"invalid_record");
- need(typeof date==="string"&&/^\\d{4}-\\d{2}-\\d{2}$/.test(date),"invalid_event_date");
+ need(typeof date==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(date),"invalid_event_date");
  const from=record.stage||"none",to=EVENTS[event]?.[from];
  need(!!to,"invalid_state_transition");
  // Only an independent, pre-existing offline trust record may enter private/chart-ready states.
