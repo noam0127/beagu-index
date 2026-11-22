@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
-const workflow = readFileSync(".github/workflows/stage38-approved-vercel-preview.yml", "utf8");
+const activePath=".github/workflows/stage38-approved-vercel-preview.yml";
+assert.equal(existsSync(activePath), false,
+  "Stage38 deployment workflow must remain inactive until separate owner-reviewed activation");
+const workflow = readFileSync("docs/releases/templates/stage38-approved-vercel-preview.yml", "utf8");
 const releaseSha = "5c95aadad971901a8222f83c52e93bf901a3aeb7";
 const digest = "d757a24a1b2541bb52f8eaeb5b1af71706d8e7d1f4bcfee02512e9aa68ea7f70";
 
@@ -56,4 +59,4 @@ assert.match(workflow, /hostname==="baeguindex\.com"/);
 // Workflow can only be reviewed in PR until merged to protected main.
 // No GitHub Actions dispatch or Vercel invocation is made by this test.
 console.log("PASS: Stage38 deployment job remains dispatch-only; PR checks have no deployment permission, token or protected environment.");
-console.log("NOTE: repository owner must configure required reviewers and isolated Vercel token/version before dispatch; this static test cannot verify GitHub environment policy.");
+console.log("NOTE: workflow is a NON-EXECUTABLE template. Separate owner approval and deployment environment verification are required before installing it.");
