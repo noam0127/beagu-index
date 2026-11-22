@@ -46,7 +46,7 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
         "window.supabaseUrl='https://snvzwrexuqavnfvzgxqj.supabase.co'; "
         "window.supabaseKey='sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2';")
     put(repo, "styles/api.css", '/* production ref snvzwrexuqavnfvzgxqj */')
-    put(repo, "data/endpoints.json",
+    put(repo, "assets/endpoints.json",
         '{"api":"https://snvzwrexuqavnfvzgxqj.supabase.co"}')
     put(repo, "data/public-compare-school-directory-v1.json",
         '{"version":"OLD_APPROVED_DIRECTORY"}')
@@ -116,8 +116,8 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert live_ref not in stage_config and live_key not in stage_config
     assert live_ref in (out / "styles/api.css").read_text()
     assert stage_ref in (out / "_preview/styles/api.css").read_text()
-    assert live_ref in (out / "data/endpoints.json").read_text()
-    assert stage_ref in (out / "_preview/data/endpoints.json").read_text()
+    assert live_ref in (out / "assets/endpoints.json").read_text()
+    assert stage_ref in (out / "_preview/assets/endpoints.json").read_text()
     for published in (out / "_preview").rglob("*"):
         if published.is_file() and published.suffix.lower() in (
             ".html", ".js", ".mjs", ".json", ".css", ".webmanifest", ".xml", ".svg"
