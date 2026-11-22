@@ -16,6 +16,8 @@ on:
       - 'tests/stage38-staging-referral-funnel-contract.cjs'
       - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
       - 'tests/stage38-staging-release-readonly-contract.cjs'
+      - 'tests/stage38-staging-auth-mfa-oidc-contract.cjs'
+      - 'tests/fixtures/stage38-staging-auth-mfa-oidc-once/**'
       - 'tests/fixtures/stage38-staging-release-manager-readonly-v1/**'
       - 'tests/stage38-staging-dashboard-aggregate-regression.sql'
       - 'tests/fixtures/stage38-staging-dashboard-rpc.sql'
@@ -54,6 +56,8 @@ on:
       - 'tests/stage38-staging-referral-funnel-contract.cjs'
       - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
       - 'tests/stage38-staging-release-readonly-contract.cjs'
+      - 'tests/stage38-staging-auth-mfa-oidc-contract.cjs'
+      - 'tests/fixtures/stage38-staging-auth-mfa-oidc-once/**'
       - 'tests/fixtures/stage38-staging-release-manager-readonly-v1/**'
       - 'tests/stage38-staging-dashboard-aggregate-regression.sql'
       - 'tests/fixtures/stage38-staging-dashboard-rpc.sql'
@@ -108,6 +112,8 @@ jobs:
         run: node tests/stage38-staging-dashboard-aggregate-contract.cjs
       - name: Verify isolated release manager is strictly read-only and owner AAL2-gated
         run: node tests/stage38-staging-release-readonly-contract.cjs
+      - name: Validate ephemeral OIDC Auth+MFA test's security and cleanup contract
+        run: node tests/stage38-staging-auth-mfa-oidc-contract.cjs
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
@@ -342,3 +348,46 @@ jobs:
           test "$status" = 403
           if grep -qi '^access-control-allow-origin:' "$headers"; then echo "FAIL: forbidden preflight approved"; exit 1; fi
           echo "PASS: production release preflight denied (403)"
+
+  staging-real-auth-mfa-oidc-once:
+    # One explicit, uniquely marked push only. All later commits skip this job.
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[stage38-auth-e2e]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Run legitimate staging-only Auth password and MFA journey with GitHub OIDC
+        shell: bash
+        env:
+          STAGING_FUNCTION_URL: https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage38-auth-mfa-once
+        run: |
+          set -euo pipefail
+          test -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}"
+          test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}"
+          # Never echo, persist or upload the OIDC bearer; it grants access to
+          # a temporary privileged runner on the isolated staging backend.
+          oidc=$(curl --fail --silent --show-error --max-time 20 \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=beagu-stage38-e2e-test" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')
+          status=$(curl --silent --show-error --max-time 180 \
+            -H "Authorization: Bearer $oidc" \
+            -H "Content-Type: application/json" \
+            -o stage38-auth-result.json -w '%{http_code}' \
+            --data '{}' "$STAGING_FUNCTION_URL")
+          unset oidc
+          python3 - "$status" <<'PY'
+          import json,sys
+          x=json.load(open("stage38-auth-result.json",encoding="utf-8"))
+          safe={"status":int(sys.argv[1]),"passed":x.get("passed"),"checks":x.get("checks",[]),
+                "cleanup":x.get("cleanup",{}),"error_code":x.get("error_code")}
+          print("STAGE38_AUTH_MFA_RESULT="+json.dumps(safe,ensure_ascii=False))
+          assert int(sys.argv[1])==200 and x.get("passed") is True, "Real MFA journey failed"
+          assert x.get("cleanup",{}).get("auth_user_removed") is True, "Test user leaked"
+          assert x.get("cleanup",{}).get("account_removed") is True, "Admin account leaked"
+          assert "real_totp_challenge_verified_aal2" in x.get("checks",[]), "No authentic MFA"
+          assert "aal2_release_writes_and_worker_denied" in x.get("checks",[]), "Release gate unproven"
+          PY
+          rm -f stage38-auth-result.json
