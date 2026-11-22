@@ -1043,16 +1043,19 @@ function validScoringResult(result){
 // Stage025: concise, privacy-preserving local result. No remote leaderboard.
 function concertSummaryModel(result){
  if(!result||typeof result!=="object"||typeof result.interrupted!=="boolean"||
+    result.song!=="volleyball"||
     !Number.isSafeInteger(result.score)||result.score<0||result.score>MAX_STORED_SCORE||
     !Number.isSafeInteger(result.bestCombo)||result.bestCombo<0||
     !Number.isSafeInteger(result.judged)||result.judged<0||
     !Number.isSafeInteger(result.hits)||result.hits<0||result.hits>result.judged||
-    !Number.isSafeInteger(result.total)||result.total<0||
+    !Number.isSafeInteger(result.total)||result.total<=0||
     result.judged>result.total||result.bestCombo>result.hits||
     !Number.isSafeInteger(result.perfect)||!Number.isSafeInteger(result.good)||
     !Number.isSafeInteger(result.miss)||result.perfect<0||result.good<0||
     result.miss<0||result.perfect+result.good!==result.hits||
-    result.hits+result.miss!==result.judged)return {
+    result.hits+result.miss!==result.judged||
+    result.score<result.perfect*1000+result.good*600||
+    result.score>result.perfect*1500+result.good*900)return {
       state:"invalid",score:null,accuracy:null,bestCombo:null,
       breakdown:"결과 데이터가 일치하지 않습니다.",persistable:false
     };
