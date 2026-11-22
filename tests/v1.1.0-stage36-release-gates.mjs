@@ -36,7 +36,7 @@ assert.match(level,/const effectiveLevel=await verifiedMemberTier\(req,session\)
 assert.match(level,/canUse2026TierSnapshot\(approval\?\.approved_at,level\)/);
 assert.match(level,/canUse2026TierSnapshot\(x\.approved_at,effectiveLevel\)/);
 assert.match(release,/level===3\?0:LV2_RELEASE_DELAY_MS/);
-assert.match(release,/qid==='Q31'\|\|qid==='Q51'/);
+assert.match(release,/\^Q\(\?:31\|51\)\(\?:\$\|\[\._-\]\)/);
 assert.match(admin,/claims\.aal !== "aal2"/);
 assert.match(admin,/beagu_admin_active_mfa_session/);
 assert.match(admin,/await applyModerationWithAudit\(/);
