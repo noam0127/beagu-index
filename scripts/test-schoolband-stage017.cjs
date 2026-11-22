@@ -165,6 +165,19 @@ async function contexts(){
      assert(chord&&chord.ns.length>=2,"key arrangement must have one simultaneous chord");
      const pair=[...new Map(chord.ns.map(n=>[n.lane,n])).values()].slice(0,2);
      await page.locator("#pads").scrollIntoViewIfNeeded();
+     await page.evaluate(()=>{
+      window.__stage017PointerTrace=[];
+      for(const type of ["pointerdown","pointerup","pointercancel","lostpointercapture"]){
+       document.getElementById("pads").addEventListener(type,e=>{
+        window.__stage017PointerTrace.push({type,id:e.pointerId,trusted:e.isTrusted,pointerType:e.pointerType,
+          lane:e.target.closest(".taphit")?.dataset.lane||null,
+          active:window.nangamSchoolbandV08.getMobileUiState().activePointers});
+       },true);
+      }
+      window.addEventListener("resize",()=>{
+       window.__stage017PointerTrace.push({type:"resize",active:window.nangamSchoolbandV08.getMobileUiState().activePointers});
+      });
+     });
      const g=await rects(page);const a=point(g.pads[pair[0].lane],71),b=point(g.pads[pair[1].lane],72);
      assert(a.y>=0&&a.y<viewport.height&&b.y>=0&&b.y<viewport.height,"touch pads must be visible");
      await page.evaluate(t=>{window.__stage017Clock=1.05+t},chord.t);
@@ -173,8 +186,12 @@ async function contexts(){
      const entered=await page.evaluate(()=>({
       hit:window.nangamSchoolbandV08.getStatus().hits,
       pointer:window.nangamSchoolbandV08.getMobileUiState().activePointers,
-      sound:window.nangamSchoolbandV08.getAudioEvents().filter(e=>e.source==="hit").map(e=>e.lane)
+      sound:window.nangamSchoolbandV08.getAudioEvents().filter(e=>e.source==="hit").map(e=>e.lane),
+      trace:window.__stage017PointerTrace
      }));
+     PROOF.touchDiagnostic={mode,hitsBefore,entered,pair:pair.map(x=>({lane:x.lane,t:x.t})),points:[a,b],size:{vw:g.vw,vh:g.vh}};
+     save();
+     console.log("CDP_TOUCH_TRACE "+JSON.stringify(PROOF.touchDiagnostic));
      assert.equal(entered.pointer,2,"both real CDP touch pointers must be independently tracked");
      assert.equal(entered.hit-hitsBefore,2,"simultaneous real touch must hit 2 chord notes");
      const soundLanes=entered.sound.slice(-2).sort((a,b)=>a-b);
