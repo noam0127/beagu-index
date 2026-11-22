@@ -1,0 +1,45 @@
+name: Schoolband 011 harmony and full-band digital peak audit
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage011.cjs'
+      - '.github/workflows/schoolband-stage011.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audio-mix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate eight-bar harmony and melody priority mix contracts
+        run: node scripts/test-schoolband-stage011.cjs
+      - name: Install Chromium and original chart validator
+        run: |
+          npm install --no-save --no-package-lock playwright ajv@8
+          npx playwright install --with-deps chromium --only-shell
+      - name: Render 48 real offline Web Audio mixes, measure peaks and test gain routing
+        run: node scripts/test-schoolband-stage011.cjs --browser
+      - name: Preserve guitar/drum voices and silent MISS, prior stage 010
+        run: node scripts/test-schoolband-stage010.cjs --browser
+      - name: Preserve strict song chart, per-instrument input and timing
+        run: |
+          node scripts/test-schoolband-stage009.cjs
+          node scripts/test-schoolband-stage008.cjs
+          node scripts/test-schoolband-stage005.cjs
+      - name: Upload digital PCM peak and harmony report with browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage011-harmony-peak-proof
+          path: artifacts/schoolband-stage011/
+          if-no-files-found: error
