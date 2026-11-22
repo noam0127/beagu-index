@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111829">
-<title>난감한 스쿨밴드 v0.8 · 노트 시인성 강화</title>
+<title>난감한 스쿨밴드 · 학교 선택 → 악기 선택 → 연주</title>
 <style>
 :root{font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color-scheme:dark;--bg:#111827;--panel:#1e293b;--fg:#f8fafc;--muted:#b8c7da;--line:#42516b;--point:#a5b4fc}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--fg);line-height:1.45}
@@ -95,22 +95,50 @@ html[data-reduced-fx="true"] .judgement.animate,html[data-reduced-fx="true"] .la
 html[data-reduced-fx="true"] .judgement.animate,html[data-reduced-fx="true"] .lane-event.animate{transform:none}
 html[data-reduced-fx="true"] .combo-fx.animate{transform:translateX(-50%)}
 html[data-reduced-fx="true"] .impact-ring{display:none}
+
+/* Stage016: three-step focus without removing the legacy controls needed for practice. */
+.step-nav{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:8px 0 10px;background:linear-gradient(180deg,#111827 84%,#111827e0);margin-bottom:12px}
+.step-nav button{min-height:44px;min-width:0;padding:8px 5px;border:1px solid #60708c;border-radius:12px;font-size:clamp(12px,3.4vw,14px);font-weight:760;color:#dae5f5;background:#27364d}
+.step-nav button[aria-current=step]{background:#554c94;border-color:#d5c9ff;box-shadow:inset 0 0 0 1px #bca7ff;color:white}
+.step-nav button[aria-disabled=true]{opacity:.60}
+.ux-step-card{scroll-margin-top:70px}
+.ux-step-card:focus{outline:none}
+.ux-step-card h2{letter-spacing:-.02em}
+body[data-ux-step=school] #stepSchool,body[data-ux-step=instrument] #stepInstrument,body[data-ux-step=play] #stepPlay{border-color:#887be4}
+#schoolSearch{font-size:16px;min-height:50px}
+#searchResults:not(:empty){border:1px solid #3d526e;border-radius:11px;padding:5px;background:#111d30}
+#searchResults button{min-height:44px;background:#23334a}
+#instCaption{margin:8px 0 1px;color:#d5dff3;font-size:12px}
+.song{line-height:1.35;flex-wrap:wrap}
+#stepSchool .school-line{gap:6px}
+@media(max-width:360px){
+ .step-nav{padding-top:5px;padding-bottom:7px}
+ .step-nav button{font-size:12px;min-height:44px;padding:7px 2px}
+ .ux-step-card{scroll-margin-top:61px}
+ #schoolSearch{padding:10px}
+}
 </style>
 </head>
 <body>
 <main>
 <header>
 <h1>🎸 난감한 스쿨밴드</h1>
-<p>학교 선택 → 악기 선택 → 바로 연주</p>
+<p>학교 고르고 · 악기 고르고 · 연주!</p>
 </header>
-<section class="card" aria-label="학교 선택">
+<nav id="stepNav" class="step-nav" aria-label="연주 단계">
+<button type="button" data-step-target="school" aria-current="step">1 학교</button>
+<button type="button" data-step-target="instrument" aria-disabled="true">2 악기</button>
+<button type="button" data-step-target="play" aria-disabled="true">3 연주</button>
+</nav>
+<p id="stepStatus" class="visually-hidden" aria-live="polite">1단계 학교 선택</p>
+<section id="stepSchool" class="card ux-step-card" data-step-panel="school" aria-label="학교 선택" tabindex="-1">
 <h2>① 학교 선택</h2>
-<input id="schoolSearch" type="search" maxlength="30" autocomplete="off" placeholder="학교명을 검색하세요">
+<input id="schoolSearch" type="search" inputmode="search" enterkeyhint="search" aria-label="초등학교명 검색" aria-controls="searchResults" maxlength="30" autocomplete="off" placeholder="학교 이름 (2글자 이상)">
 <div id="searchResults" class="schools"></div>
 <div class="school-line"><p id="schoolStatus" role="status" aria-live="polite">학교 검색 또는 가상 학교 체험</p><button type="button" id="demoSchool">가상 학교 체험</button></div>
 <div class="picked"><strong id="schoolTitle">학교를 선택해 주세요</strong><small id="schoolTier">학교별 난이도 표시</small></div>
 </section>
-<section class="card" aria-label="악기 선택">
+<section id="stepInstrument" class="card ux-step-card" data-step-panel="instrument" aria-label="악기 선택" tabindex="-1">
 <h2>② 악기 선택</h2>
 <div id="instruments" class="instrument-grid">
 <button type="button" class="instrument" data-inst="guitar" aria-pressed="true"><span class="inst-emoji">🎸</span><span class="inst-title">일렉기타</span><span class="inst-count">4레인</span></button>
@@ -118,10 +146,10 @@ html[data-reduced-fx="true"] .impact-ring{display:none}
 <button type="button" class="instrument" data-inst="bass" aria-pressed="false"><span class="inst-emoji">🎸</span><span class="inst-title">베이스</span><span class="inst-count">3레인</span></button>
 <button type="button" class="instrument" data-inst="keys" aria-pressed="false"><span class="inst-emoji">🎹</span><span class="inst-title">키보드</span><span class="inst-count">5레인</span></button>
 </div>
-<p id="instCaption">일렉기타의 리프·파워코드·업스트럼·고음 리프를 연주합니다.</p>
-<div class="song">🎵 <span>빛나는 우리 학교</span> · 가상 연습초 창작 교가 · 록밴드 편곡 · 약 18초</div>
+<p id="instCaption">일렉기타 · 4레인 · D F J K</p>
+<div class="song">🎵 <span>빛나는 우리 학교</span> · 창작 연습곡 (약 18초)</div>
 </section>
-<section class="card" aria-label="게임">
+<section id="stepPlay" class="card ux-step-card" data-step-panel="play" aria-label="연주" tabindex="-1">
 <div class="play-head"><div id="laneInfo">일렉기타 · 4레인</div><p id="playTitle">일렉기타 · 4레인 · NORMAL</p></div>
 <div class="stage-wrap"><canvas id="track" width="380" height="365" role="img" aria-label="악기에 따라 3~5개 레인이 표시되는 리듬게임 화면"></canvas><div class="judgement" id="judgeFx" aria-hidden="true"></div><div class="impact-ring" id="impactRing" aria-hidden="true"></div><div id="laneFx" class="lane-fx-layer" aria-hidden="true"></div><div id="comboFx" class="combo-fx" aria-hidden="true"></div></div>
 <div id="pads" class="pad-grid" aria-label="모바일 연주 버튼"></div>
@@ -131,9 +159,9 @@ html[data-reduced-fx="true"] .impact-ring{display:none}
 <div id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
 <div class="progress"><div id="progress"></div></div>
 <div class="hud"><div><small>점수</small><b id="score">0</b></div><div><small>콤보</small><b id="combo">0</b></div><div><small>정확도</small><b id="accuracy">—</b></div><div><small>최고</small><b id="best">—</b></div></div>
-<p id="result">레인이 맞는 노트를 터치하거나 해당 키를 누르세요.</p>
+<p id="result">노트가 판정선에 오면 해당 레인 키나 터치 버튼을 누르세요.</p>
 </section>
-<p class="note">v0.8 시험판 · 창작 교가 「빛나는 우리 학교」의 록밴드 버전입니다. 실제 학교 교가는 아직 연결되지 않았습니다.</p>
+<p class="note">내부 시험용 창작곡입니다. 선택한 학교의 실제 교가 음원이 아닙니다.</p>
 </main>
 <script>
 (function(){
