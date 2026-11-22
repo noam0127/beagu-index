@@ -26,6 +26,23 @@ jobs:
           node-version: '22'
       - name: Verify live staging API security contract snapshot
         run: node tests/stage38-staging-member-live-contract.cjs
+      - name: Validate preflight and forbidden browser origins on isolated staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-admin-members-v1"
+          for origin in "https://baeguindex.com" "https://attacker.invalid"; do
+            headers=$(mktemp)
+            status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X POST -H "Origin: $origin" -H 'Content-Type: application/json' --data '{"action":"list"}' "$url")
+            test "$status" = 403
+            if grep -qi '^access-control-allow-origin:' "$headers"; then echo "FAIL: forbidden origin received CORS approval"; exit 1; fi
+            echo "PASS: forbidden origin $origin denied (403)"
+          done
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: http://localhost:8000' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: http://localhost:8000' "$headers"
+          echo "PASS: localhost preflight allowed (204)"
       - name: Confirm no deployment
         run: echo "Static test only. No Supabase deploy or production changes."
 
