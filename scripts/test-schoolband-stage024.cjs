@@ -39,7 +39,8 @@ eq(M.parseStoredScore("1500"),1500,"score readable");
 eq(M.parseStoredScore("0"),0,"zero readable");
 for(const invalid of ["",null,"null","NaN","Infinity","1.5","1e8","00123","-10","10000001","99999999999999999999999"," 1","1 "])
  eq(M.parseStoredScore(invalid),null,"reject saved "+String(invalid));
-const complete={interrupted:false,song:"volleyball",total:3,judged:3,hits:2,perfect:1,good:1,miss:1,score:1608};
+const complete={interrupted:false,song:"volleyball",total:3,judged:3,hits:2,perfect:1,good:1,miss:1,score:1611};
+eq(M.scoreForHit("perfect",1)+M.scoreForHit("good",2),1611,"expected 2-note combo score");
 eq(M.validScoringResult(complete),true,"complete good with miss");
 eq(M.validScoringResult({...complete,interrupted:true}),false,"interruption denied");
 eq(M.validScoringResult({...complete,song:"anthem"}),false,"unimplemented anthem denied");
@@ -71,8 +72,8 @@ function makeStore(throwing=false){
 }
 const saved=makeStore();
 eq(saved.save(complete).saved,true,"new best stored");
-eq(saved.storage.getItem(key),"1608","best value");
-eq(saved.save({...complete,score:1500}).saved,false,"lower never overwrites");
+eq(saved.storage.getItem(key),"1611","best value");
+eq(saved.save({...complete,score:1608}).reason,"no_improvement","lower never overwrites");
 eq(saved.save(complete).saved,false,"ties never overwrite");
 eq(saved.save({...complete,interrupted:true,score:1700}).saved,false,"interrupted higher denied");
 eq(saved.save({...complete,score:1700}).saved,true,"higher best stored");
