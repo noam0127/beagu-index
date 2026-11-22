@@ -451,3 +451,16 @@
 - 실제 브라우저 E2E는 분리: [#45057135791](https://github.com/noam0127/beagu-index/actions/runs/45057135791) Chromium에서 무료 RawGitHack의 `External Content Notice` 안내 화면이 먼저 나와 게임 제목 확인 실패. 이는 소스 무결성 실패가 아니라 제3자 HTML 안전 확인 흐름이다. `scripts/test-schoolband-stage029-browser.cjs`에 `Open the page` 승인 버튼을 명시적으로 클릭하는 자동 시험 추가. 재검증 결과 **PENDING**.
 - 이용자는 RawGitHack 안내 화면이 뜨면 무료 사이트의 `Open the page`를 눌러야 할 수 있다. 이 동작은 유료 API·저작권 허락·음향 확인과 무관하며 운영 웹 설정을 변경하지 않는다.
 - **029 최종 종료 여부:** 정적 콘텐츠 배포 경로/HTTPS/해시는 검증 완료, 실제 PC·모바일 웹 UI E2E 및 모든 이전 릴리스 게이트는 아직 미완료. 실기/음향 테스트 수행했다고 말하지 않는다.
+
+### 029 최종 검증 완료 — 이전 미확인 기록을 최종 갱신 (2026-11-23)
+
+**상태: 029단계종료 (무료 독립 시험 웹·HTTP·브라우저 한정).** [GitHub issue #254](https://github.com/noam0127/beagu-index/issues/254) **closed**.
+
+- 실제 검증 커밋: `ec87fd1ef4e4a02c53c9a3d6b920a8eb60a2a6bd`. GitHub Actions [#45057723202](https://github.com/noam0127/beagu-index/actions/runs/45057723202) `immutable-static-preview` 전체 job SUCCESS, commit status `schoolband/029-static-preview-http=success`.
+- 독립 무료 외부 미리보기(고정 SHA): `https://raw.githack.com/noam0127/beagu-index/ec87fd1ef4e4a02c53c9a3d6b920a8eb60a2a6bd/games/nangam-schoolband-v08/preview/index.html`. GitHack 보안 안내가 나오면 **Open the page** 클릭 필요. 서비스 지속성 SLA는 없다.
+- 외부 HTTPS `preview/index.html`·게임 `index.html`·6,288개 학교 홈페이지 JSON **각 HTTP 200, 올바른 MIME 및 SHA-256 원본 일치**. localhost HTTP, CNAME 없는 3개 파일 static ZIP과 2개 Chromium 브라우저 스크린샷 artifact 생성 PASS.
+- **PC Chromium 1280×800 + 모바일 에뮬레이션 Chromium 390×844**: 실제 해당 CDN URL에 접속해 보안 확인 후 게임 로드, 가상 학교, 4개 악기/3~5레인, 교가 잠금, 곡·차트별 기록키, 큰글씨/고대비, 화면 가로 넘침 없음, AudioContext 생성 없이 통과. 실제 물리 Android/iPhone/PC 실기 검증을 대체하지 않는다.
+- **실제 학교 선택 검증**: PC Chromium에서 운영 Supabase의 기존 **공개 읽기 전용** 학교 검색 API에 접속하여 학교명 검색→상세 선택 SUCCESS, DB 변경·학생자료 접근 없음.
+- 게임은 점수/학생정보/식별정보의 서버 POST 없음. 다만 **제3자 호스팅 자체**에서 보안확인 POST 및 Cloudflare RUM 텔레메트리 요청이 존재하므로 사용자에게 '외부 전송 자체가 0'이라고 잘못 주장하지 않음.
+- Vercel 새 Preview 배포 시도는 무료 요청 한도 HTTP402로 실패, 유료 Pro 업그레이드 없음. Pages CNAME·운영 main·baeguindex.com·운영 DB 수정 없음. **029는 Vercel 출시가 아니라 고정 SHA의 무료 공개 시험 미리보기 확보/검증 성과다.**
+- 교가 허락 요청·유료 API·결제·실음향/청음·연주감 평가를 하지 않음. 다음 `030/030`은 운영 웹 배포를 자동 진행하는 단계가 아니라 019~029 릴리스 증거, 위험, 차단 조건 및 사용자의 수동 승인 여부를 점검하는 최종 단계. 실제 운영 변경 금지 지시를 계속 유지.
