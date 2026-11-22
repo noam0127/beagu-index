@@ -716,7 +716,7 @@ function audioContext(){
  try{
   ctx=new Cls();
    if(ctx.addEventListener)ctx.addEventListener("statechange",()=>{
-    if(playing&&!paused&&ctx.state==="suspended")void pauseGame("audio");
+    if(playing&&!paused&&(ctx.state==="suspended"||ctx.state==="interrupted"))void pauseGame("audio");
    });
   masterBus=ctx.createGain();
   masterBus.gain.value=muted?0:.82;
