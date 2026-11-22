@@ -34,9 +34,9 @@ for(const sql of [migration,staging]){
 // The public-data SHA describes what the PRODUCTION site actually serves.
 // Staging-only apply/rollback must NEVER update that global release pointer.
 for(const sql of [migration,staging]){
- const stageBranch=sql.split("ELSIF j.target='staging' THEN")[1]?.split("\\n  ELSE")[0];
+ const stageBranch=sql.split("ELSIF j.target='staging' THEN")[1]?.split("  ELSE")[0];
  assert.ok(stageBranch,"Staging release branch must exist");
- assert.doesNotMatch(stageBranch,/public_data_blob_sha\\s*=/i,
+ assert.ok(!stageBranch.includes("public_data_blob_sha="),
   "Staging release must not mutate production public-data blob pointer");
 }
 assert.match(regression,/Stage apply corrupted production data pointer/);
