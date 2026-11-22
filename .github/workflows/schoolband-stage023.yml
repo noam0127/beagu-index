@@ -8,6 +8,8 @@ on:
       - 'scripts/test-schoolband-stage023.cjs'
       - 'games/nangam-schoolband-v08/charts/song-queue-stage023.v1.json'
       - 'games/nangam-schoolband-v08/charts/song-intake-rights.v1.json'
+      - 'scripts/schoolband-stage022-intake.cjs'
+      - 'scripts/schoolband-rights-policy-v1.cjs'
       - 'games/nangam-schoolband-v08/index.html'
       - '.github/workflows/schoolband-stage023.yml'
   workflow_dispatch:
@@ -30,5 +32,7 @@ jobs:
         run: |
           node scripts/schoolband-stage023-queue-runner.cjs --simulate-withdraw original-shining-our-school
           node scripts/schoolband-stage023-queue-runner.cjs --simulate-withdraw original-meter-shift-exercise-014
+      - name: Prepare a reviewer rejection draft without publishing
+        run: node scripts/schoolband-stage023-queue-runner.cjs --draft-decision reject original-meter-shift-exercise-014
       - name: Check stage022 trust policy regression without browser or audio
         run: node scripts/test-schoolband-stage022.cjs
