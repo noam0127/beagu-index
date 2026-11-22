@@ -1,0 +1,45 @@
+name: Schoolband 013 MIDI MusicXML event conversion and rights gate
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'games/nangam-schoolband-v08/charts/original-anthem.music-events.v1.json'
+      - 'scripts/schoolband-music-events-v1.cjs'
+      - 'scripts/test-schoolband-stage013.cjs'
+      - '.github/workflows/schoolband-stage013.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  music-interchange:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install audited MusicXML parser and Chromium
+        run: |
+          npm install --no-save --no-package-lock fast-xml-parser@5 playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: MIDI and MusicXML 28-note conversion, rights, CLI and negative tests
+        run: node scripts/test-schoolband-stage013.cjs
+      - name: Check real Web Audio original tune schedule on desktop and mobile
+        run: node scripts/test-schoolband-stage013.cjs --browser
+      - name: Preserve original song chart and no unsafe formats
+        run: |
+          node scripts/test-schoolband-stage012.cjs
+          node scripts/test-schoolband-stage010.cjs
+          node scripts/test-schoolband-stage005.cjs
+      - name: Upload generated internal-demo MIDI, MusicXML, converted JSON and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage013-music-interchange-proof
+          path: artifacts/schoolband-stage013/
+          if-no-files-found: error
