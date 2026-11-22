@@ -187,7 +187,16 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert response_headers["X-Frame-Options"] == "DENY"
     assert manifest["deployment_status"] == "unverified"
     assert manifest["supabase_project_ref"] == "ycwuugggqbunlbwuzvbx"
-    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js", "vercel.json", "data/public-compare-school-directory-v1.json"}
+    assert {"index.html", "js/supabase-config.js", "vercel.json",
+            "data/public-compare-school-directory-v1.json"}.issubset(manifest["files_sha256"])
+    assert ".nojekyll" in manifest["files_sha256"]
+    published_files = {
+        item.relative_to(standalone).as_posix()
+        for item in standalone.rglob("*")
+        if item.is_file() and item.name != "stage38-release-manifest.json"
+    }
+    assert set(manifest["files_sha256"]) == published_files
+    assert all(not item.is_symlink() for item in standalone.rglob("*"))
     assert all(len(value) == 64 for value in manifest["files_sha256"].values())
     assert "snvzwrexuqavnfvzgxqj" not in json.dumps(manifest)
 
