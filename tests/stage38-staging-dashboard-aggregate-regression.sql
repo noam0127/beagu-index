@@ -2,6 +2,8 @@
 -- Isolated test project ycwuugggqbunlbwuzvbx only.
 -- NEVER execute against production snvzwrexuqavnfvzgxqj.
 -- All hashes, users, school visits and scores below are fictional, rolled back.
+-- Existing staging level sessions are not deleted, modified, or assumed absent;
+-- assert the baseline active-Lv1 count plus exactly one synthetic session.
 BEGIN;
 DO $guard$
 DECLARE baseline jsonb;
@@ -12,13 +14,13 @@ BEGIN
    OR (SELECT count(*) FROM public.school_search_events)<>0
    OR (SELECT count(*) FROM public.arcade_game_sessions)<>0
    OR (SELECT count(*) FROM public.arcade_game_scores)<>0
-   OR (SELECT count(*) FROM public.beagu_level_sessions)<>0
    OR (SELECT count(*) FROM beagu_private.visits)<>0
  THEN RAISE EXCEPTION 'Refuse synthetic test against nonempty staging baseline'; END IF;
  IF has_function_privilege('anon','public.beagu_admin_dashboard_v1(text)','EXECUTE')
    OR has_function_privilege('authenticated','public.beagu_admin_dashboard_v1(text)','EXECUTE')
    OR NOT has_function_privilege('service_role','public.beagu_admin_dashboard_v1(text)','EXECUTE')
  THEN RAISE EXCEPTION 'Dashboard RPC access privilege regression'; END IF;
+ PERFORM set_config('stage38.level1_baseline', (SELECT count(*) FROM public.beagu_level_sessions WHERE access_level=1 AND expires_at>now())::text, true);
  FOR baseline IN SELECT public.beagu_admin_dashboard_v1('7d') LOOP
    IF (baseline->'site'->>'page_views')::int<>0
      OR (baseline->'search'->>'searches')::int<>0
@@ -73,7 +75,7 @@ BEGIN
    OR (d->'search'->>'conversion_rate')::numeric<>100.0
    OR (d->'school_views'->>'total')::int<>1
    OR (d->'challenge'->>'participants')::int<>1
-   OR (d->'levels'->>'level_1_sessions')::int<>1
+   OR (d->'levels'->>'level_1_sessions')::int<>(current_setting('stage38.level1_baseline'))::int+1
  THEN RAISE EXCEPTION 'Dashboard aggregate counts failed: %',d; END IF;
  IF jsonb_array_length(d->'games')<>2
    OR jsonb_array_length(d->'game_trend')<>1
