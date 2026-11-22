@@ -108,6 +108,10 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert '<meta name="robots" content="noindex,nofollow">' not in prod_html
     assert (out / ".nojekyll").exists()
     assert (out / "_preview/.nojekyll").exists()
+    health = json.loads((out / "_preview/beagu-preview-health.json").read_text(encoding="utf-8"))
+    assert health == {"schema": 1, "kind": "staging", "staging_sha": staging,
+                      "supabase_ref": "ycwuugggqbunlbwuzvbx"}
+    assert not (out / "beagu-preview-health.json").exists(), "No stage proof in live root"
     for prefix in (out, out / "_preview"):
         assert (prefix / "data/public-compare-school-directory-v1.json").read_text(
             encoding="utf-8"
@@ -118,6 +122,7 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     # currently queued in the real release manager and must NOT be forced.
     build_with(None)
     assert not (out / "_preview").exists()
+    assert not (out / "beagu-preview-health.json").exists()
     assert "PRODUCTION_SAFE" in (out / "index.html").read_text(encoding="utf-8")
     assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
     assert (out / "CNAME").read_text().strip() == "baeguindex.com"
