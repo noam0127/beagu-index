@@ -46,6 +46,17 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     assert not (out / "CNAME").exists()
     assert not (out / "_preview").exists()
     assert (out / ".nojekyll").exists()
+    for private in (".github", "tests", "docs", "supabase", "scripts/release-manager"):
+        assert not (out / private).exists(), "non-web sources leaked: " + private
+    homepage_nav = (out / "teacher-class-diary-play.html").read_text(encoding="utf-8")
+    assert "window.location.assign('https://baeguindex.com/')" not in homepage_nav
+    assert "window.location.assign('/')" in homepage_nav
+    assert "home.href='https://baeguindex.com/'" not in (
+        out / "js/class-diary-interface-rebalance-v1.js"
+    ).read_text(encoding="utf-8")
+    assert 'href="https://baeguindex.com/_preview/"' not in (
+        out / "admin-updates.html"
+    ).read_text(encoding="utf-8")
 
     config = (out / "js/supabase-config.js").read_text(encoding="utf-8")
     assert STAGING_REF in config and STAGING_KEY in config
