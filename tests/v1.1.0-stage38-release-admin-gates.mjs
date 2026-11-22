@@ -1,12 +1,25 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {execFileSync} from "node:child_process";
-import {validStagingCandidate,stageCandidateMatchesRef} from "../supabase/functions/_shared/staging-release-candidate.mjs";
+import {validStagingCandidate,stageCandidateMatchesRef,isReleaseCandidateVersion,productionCandidateLocked,shouldAutoRegisterMainDraft} from "../supabase/functions/_shared/staging-release-candidate.mjs";
 const sha="5c95aadad971901a8222f83c52e93bf901a3aeb7";
 const rc={ref:"release/v1.1.0-rc.1",sha,version:"v1.1.0-rc.1",summary:"후보 버전 시험 웹 전용 적용"};
 const gitRef={ref:"refs/heads/release/v1.1.0-rc.1",object:{type:"commit",sha}};
 assert.equal(validStagingCandidate(rc),true);
 assert.equal(stageCandidateMatchesRef(rc,gitRef),true);
+assert.equal(isReleaseCandidateVersion(rc.version),true);
+assert.equal(productionCandidateLocked(sha,rc.version),true,"RC must never be published as production");
+assert.equal(productionCandidateLocked(sha,"이전 시험 버전"),true,
+  "Rollback version label cannot bypass immutable RC source lock");
+assert.equal(productionCandidateLocked("1".repeat(40),"v1.1.0-rc.2"),true,
+  "Any explicitly labelled RC is blocked");
+assert.equal(productionCandidateLocked("1".repeat(40),"v1.1.0"),false);
+assert.equal(shouldAutoRegisterMainDraft(sha,"1".repeat(40),rc.version),false);
+assert.equal(shouldAutoRegisterMainDraft(sha,sha,rc.version),false,
+  "An already deployed RC must never be silently replaced with main");
+assert.equal(shouldAutoRegisterMainDraft(null,"1".repeat(40),null),true);
+assert.equal(shouldAutoRegisterMainDraft("1".repeat(40),"1".repeat(40),"1.0.1"),true);
+
 for(const mismatch of [
   {...rc,sha:"0".repeat(40)},
   {...rc,ref:"release/v1.1.0-rc.2"},
@@ -49,8 +62,19 @@ assert.match(api,/validStagingCandidate\(candidate\)/);
 assert.match(api,/github\("\/git\/ref\/heads\/"\+candidate\.ref\)/);
 assert.match(api,/stageCandidateMatchesRef\(candidate,remote\)/);
 assert.match(api,/draft_sha:candidate\.sha/);
-assert.match(api,/if\(\(!candidateSha\|\|candidateSha===s\.staging_sha\)&&proposed/);
-assert.match(api,/if\(\/\^v\\d\+\\\.\\d\+\\\.\\d\+-rc/);
+assert.match(api,/shouldAutoRegisterMainDraft\(candidateSha,s\.staging_sha,candidateVersion\)/);
+assert.match(api,/if\(isReleaseCandidateVersion\(candidateVersion\)\)/,
+  "Verify pinned GitHub branch again at stage-apply time");
+assert.match(api,/stageCandidateMatchesRef\(candidate,remote\)/);
+assert.match(api,/productionCandidateLocked\(s\.staging_sha,s\.staging_version\)/,
+  "Prevent production promotion even after staging rollback relabels RC");
+assert.match(api,/\.eq\("target","staging"\)\.eq\("to_sha",s\.staging_sha\)/,
+  "Historical RC source must remain blocked across versions");
+assert.match(api,/\.like\("version","v%-rc\.%"\)/,
+  "Historical RC blocking query must be explicit");
+assert.match(api,/if\(rcLookupError\|\|priorRcs\?\.length\)/,
+  "RC history lookup error must fail closed");
+assert.match(api,/release_candidate_production_locked/);
 assert.match(api,/release_candidate_production_locked/);
 assert.match(api,/last_job:previousJob/);
 assert.match(api,/\.select\("id,status,action,target,version,to_sha,created_at,started_at,finished_at,error_code"\)/);
