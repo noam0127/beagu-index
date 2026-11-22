@@ -4,6 +4,7 @@
 -- Real GitHub deploy/rollback and releases are NOT executed by this test.
 BEGIN;
 DO $regress$
+<<fixture>>
 DECLARE
   base text:=repeat('1',40);
   candidate text:=repeat('2',40);
@@ -137,7 +138,7 @@ BEGIN
    OR (SELECT staging_sha FROM public.beagu_site_release_state_v1 WHERE id=1) <> base
    OR (SELECT status FROM public.beagu_site_release_jobs_v1 WHERE id=job_id) <> 'running'
   THEN RAISE EXCEPTION 'History insert error left a half-applied release'; END IF;
-  DELETE FROM public.beagu_site_release_history_v1 WHERE job_id=job_id;
+  DELETE FROM public.beagu_site_release_history_v1 AS h WHERE h.job_id=fixture.job_id;
   PERFORM public.beagu_site_release_finalize_v1(job_id,'failed');
   IF (SELECT count(*) FROM public.beagu_site_release_history_v1) <> 4
   THEN RAISE EXCEPTION 'DB fault injection polluted history'; END IF;
