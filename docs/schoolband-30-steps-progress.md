@@ -106,5 +106,21 @@
 - 남은 위험: 물리 출력/입력 지연 및 멀티터치(017/027), 60/90/120Hz 앱 전환과 시계 정지(007), 예약 Web Audio 중단(012), 최고점 기록 공정성(024), 최초 시험 웹 안내 화면(SB-007, 029).
 - 다음 단계 **007/030 — 주사율·탭 전환·오디오 일시정지·복귀 종합 검증**.
 
-## 007/030 — pending
-60/90/120Hz 판정 일치와 앱 비활성·오디오 중지·재개 시 노트·음향 동기화 테스트.
+## 007/030 — 주사율·앱 전환·오디오 일시정지·복귀 종합 검증 (2026-11-22)
+
+상태: **COMPLETE — 60·90·120Hz 수치 시뮬레이션과 PC·모바일 Chromium 일시정지/재개·외부 오디오 중단·중장시간 화면 정체 회귀검사 PASS.** 실제 스마트폰 화면 잠금 실기는 미검증.
+
+- 시작 시험 브랜치 SHA: `6b95fdb8d63773442df0943c6d8384d43797b61c`. 운영 `main`, `baeguindex.com`, 운영 Supabase는 미변경.
+- 게임 코드 `games/nangam-schoolband-v08/index.html`에 `Ⅱ 일시정지`/ `▶ 이어하기` 버튼, 320px 2×2 액션 그리드, `AudioContext.suspend()/resume()` 사용한 공통 곡 시계 일시정지, `document.visibilitychange`/bfcache `pagehide/pageshow`, 오디오의 `suspended` 및 `interrupted` 자동 정지 감지, 사용자가 직접 이어하기 누르기 전 자동 재생 금지, 1,500ms+오디오 650ms 이상 비예고 시간 점프 시 일괄 MISS 대신 안전 중단을 추가.
+- 새 검사: `scripts/test-schoolband-stage007.cjs`, `.github/workflows/schoolband-stage007.yml`, 상세 7개 전문 AI 관점 검토 `docs/schoolband-stage007-fps-lifecycle.md`. 검증 대상 코드 SHA `963a6eeaada9badeac5c72500afb044296e735d9`.
+- GitHub Actions [run 44995247146](https://github.com/noam0127/beagu-index/actions/runs/44995247146) **SUCCESS**. 프레임 수가 121/181/241로 달라도 5개 입력 판정이 `PERFECT×4 + GOOD×1`, 미입력 `MISS×1`로 완전 일치. 프레임 번호를 음악 시계로 잘못 사용하는 고의 훼손 테스트에서 정상 판정과 달라지는 것을 검출. 같은 곡 시각 좌표 15개 검증.
+- PC 1280px 및 모바일320 Chromium: 750ms 정지 시 오디오 시계 0초 변화, 점수/MISS/완료 노트/스케줄 커서 모두 불변, 이어하기 후 약 0.241초/0.229초 정상 진행. 멈춘 상태의 입력으로 점수 조작 불가.
+- 실제 AudioContext를 외부에서 suspend한 테스트에서 자동 일시정지, 수동 이어하기 PASS. `pagehide(persisted=true)`/복귀를 합성한 생명주기 대리테스트도 PASS.
+- 탭 활성화를 실제로 변경했으나 Playwright headless의 포커스 에뮬레이션 탓에 `document.hidden` 네이티브 변화가 관찰되지 않아 해당 부분은 **합성 visibilitychange**를 사용해 검사. 실제 스마트폰 잠금 화면/실제 브라우저의 자연 탭 숨김 검증으로 주장하지 않는다(실기 027).
+- 1,850ms 비예고 주 스레드 정체에서는 MISS가 `1→1`로 일괄 발생하지 않고 안전 중단 후 처음부터 재시작하도록 처리. final stop 시 예약 오디오 노드 완전 해제는 012 단계 잔여 위험.
+- 기존 Stage001·002·003·004·005·006 회귀 GitHub Actions **PASS** (같은 최신 게임 코드 기준 별도 실행 포함). 주요 기능·학교 공개 조회·음색·노트 계약 변경 없음.
+- [실제 JSON/PC·320px 일시정지 화면 ZIP](https://github.com/noam0127/beagu-index/actions/runs/44995247146/artifacts/14743408309) 실물 확인.
+- 후속 미검증: 실제 Android/iOS 잠금·오디오 인터럽트·물리 출력 지연(027), WebAudio 예약 노드 취소(012), 하드웨어 120Hz(018/028), 시험 호스트 첫 방문 확인(SB-007, 029). 다음은 **008/030 — 기타·드럼·베이스·키보드 입력 계약 고정**.
+
+## 008/030 — pending
+4악기(4·4·3·5레인)·5난이도 20개 조합의 PC 키/모바일 패드·노트/입력 일관성 실브라우저 회귀와 계약 문서화.
