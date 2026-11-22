@@ -166,6 +166,16 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert "ycwuugggqbunlbwuzvbx.supabase.co" in standalone_html
     assert not (standalone / "CNAME").exists()
     assert (standalone / ".nojekyll").exists()
+
+    manifest = json.loads((standalone / "stage38-release-manifest.json").read_text(encoding="utf-8"))
+    assert manifest["source_sha"] == staging
+    assert manifest["environment"] == "isolated-test-package"
+    assert manifest["deployment_status"] == "unverified"
+    assert manifest["supabase_project_ref"] == "ycwuugggqbunlbwuzvbx"
+    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js"}
+    assert all(len(value) == 64 for value in manifest["files_sha256"].values())
+    assert "snvzwrexuqavnfvzgxqj" not in json.dumps(manifest)
+
     assert (standalone / "data/public-compare-school-directory-v1.json").read_text(
         encoding="utf-8") == '{"version":"LATEST_ALLOWED_DIRECTORY"}'
     assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
