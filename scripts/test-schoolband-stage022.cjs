@@ -60,7 +60,9 @@ bad(()=>allow({...synthetic,records:[{...pre,evidence_ref:"self-declared"}]},rec
 bad(()=>allow({...synthetic,records:[{...pre,valid_until:null}]},received),"existing_clearance_evidence_required");
 bad(()=>allow({...synthetic,records:[{...pre,revoked_at:"2026-01-01"}]},received),"approval_revoked");
 bad(()=>allow({...synthetic,records:[{...pre,components:{...pre.components,arrangement:"unknown"}}]},received),"component_uncleared_arrangement");
-good(()=>assert.equal(I.validateSourceFormat(Buffer.from("MThd\\x00\\x00\\x00\\x06\\x00\\x00\\x00\\x01\\x01\\xe0".replace(/\\x([0-9a-f]{2})/gi,(_,h)=>String.fromCharCode(parseInt(h,16)),"binary"),"binary"),"midi","games/nangam-schoolband-v08/charts/a.mid"),true),"MIDI header");
+const midi=Buffer.alloc(14);midi.write("MThd",0,4,"ascii");
+midi.writeUInt32BE(6,4);midi.writeUInt16BE(0,8);midi.writeUInt16BE(1,10);midi.writeUInt16BE(480,12);
+good(()=>assert.equal(I.validateSourceFormat(midi,"midi","games/nangam-schoolband-v08/charts/a.mid"),true),"MIDI header");
 assert.throws(()=>I.validateSourceFormat(Buffer.from("not-midi"),"midi","games/nangam-schoolband-v08/charts/a.mid"),/invalid_midi_header/);checked++;
 good(()=>assert.equal(I.validateSourceFormat(Buffer.from('<score-partwise version="4.0"></score-partwise>'),"musicxml","games/nangam-schoolband-v08/charts/test.musicxml"),true),"MusicXML header");
 assert.throws(()=>I.validateSourceFormat(Buffer.from('<!DOCTYPE html><score-partwise/>'),"musicxml","games/nangam-schoolband-v08/charts/test.musicxml"),/invalid_musicxml_header/);checked++;
