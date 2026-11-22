@@ -153,5 +153,21 @@
 - 7개 전문 AI 관점 독립 검토, 악기별 음악성 및 룰 결정, 저작권·아티팩트 한계: `docs/schoolband-stage009-chart-contract.md`. 운영 버전 반영·실제 학교 교가 편곡/권리 승인 미실행. 입력 품질 개선은 010~012/017/027; 차트 버전별 기록 키 분리는 024단계.
 - 다음 단계 **010/030 — 실시간 합주·악기 음색 개선 I**.
 
-## 010/030 — pending
-기타 리프·파워코드, 드럼 킥·스네어·하이햇·탐의 실시간 타격음과 자동반주를 4악기 전체에서 구분 가능한 오디오 이벤트 로그로 검증·개선하고 오디오 엔진 전문 관점의 단기 합주 최적화를 시행.
+## 010/030 — 악기별 실시간 합주·음색 개선 I (2026-11-22)
+
+상태: **COMPLETE — PC·320px Chromium, 4악기 합계 16개 레인 ×2 = 실제 Web Audio 32번 적중 및 자동반주/원곡 멜로디/무음 MISS/음소거 이벤트 기록, 전체 CI PASS.**
+
+- 시작 시험 브랜치 HEAD: `55d60377655f63fa77881dd704e0b69d7f10191d`. `main`·실제 운영 웹·운영 Supabase/학교 자료 무변경.
+- 게임 소스 `games/nangam-schoolband-v08/index.html`: `autoPartsAtStep`가 선택한 악기 파트를 자동 반주에서 제외하고 창작곡 28개 선율과 나머지 3개 악기의 반주를 유지. `voice()` 호출에 `source=auto/hit` 구분 추가. `hit()` 성공 시 사용자 파트 발음, `animate()` MISS 시에는 사용자 파트 발음 없이 무음 MISS 로그만 남김.
+- 음색: 기타 리프 짧은 sawtooth 1음, 파워코드 sawtooth 2개 + triangle 옥타브 1개, 업스트럼 sawtooth 3음 0/17/34ms 순차 발음, 고음 리프 sawtooth+triangle; 드럼 킥 sine pitch sweep, 스네어 triangle+filtered noise, 하이햇 고역 noise, 탐 triangle pitch 235→96Hz. 기존 베이스 triangle·키보드 sine와 창작 교가의 박자·28개 선율 유지.
+- 디버그 이벤트 `logAudioEvent`/`getAudioEvents`는 `source: auto|hit|miss`, part, lane, when, detail, audible 정보를 **브라우저 메모리에 최대 384건**만 보존. 학교명/사용자/성적을 저장·전송하지 않음. 별도 `getAudioPlan`로 악기별 자동 반주 목록 검증.
+- 추가 코드: `scripts/test-schoolband-stage010.cjs`, `.github/workflows/schoolband-stage010.yml`, 7개 전문가 역할 검토 `docs/schoolband-stage010-live-ensemble.md`. **GitHub Actions [run 45003955597](https://github.com/noam0127/beagu-index/actions/runs/45003955597) SUCCESS**, 실제 검증 대상 게임+테스트 SHA `64b29736c696d61ed08b300087f7d2a4ccab058b`.
+- **실제 브라우저 32개 레인 hit**: PC 및 mobile320에서 기타 4/드럼 4/베이스 3/키보드 5 각각 실제 곡 시간에 타격해 해당 Web Audio oscillator/noise `start`와 노트 적중 1:1 확인. 기타 4·드럼 4 각 레인 노드 파형 개수 비교 PASS; 실제 업스트럼 노드 시작 간격 17/34ms 검사 PASS. 멜로디와 선택하지 않은 3악기 자동 반주 이벤트 정상, 선택 악기 자동 반주 이벤트 0, 각 악기에서 놓친 노트의 사용자 파트 소리는 생성하지 않음.
+- **음소거 두 환경**: 점수는 정상 오르되 신규 오디오 노드 생성은 0, 이벤트 `audible:false`. 384건 로그 상한 PASS. 고의적인 선택 파트 자동 연주를 소리 이벤트로 잘못 기록하지 않도록 확인.
+- **전체 회귀**: 009단계 차트 JSON Schema·invalid chart 실제 브라우저 차단, 008단계의 20조합 정적 계약, 004단계 콤보/GOOD/MISS/접근성 실브라우저, 005단계 98+121+28 타이밍 수치 전부 동 CI PASS.
+- **증거 [결과 JSON+4개 악기 스크린샷(기타/드럼 PC/모바일)](https://github.com/noam0127/beagu-index/actions/runs/45003955597/artifacts/14746838912)** ZIP 5개 파일 실제 다운로드·검증. 외부 실제 청음 참여가 아닌 Web Audio 이벤트·노드 예약 자동검사이며, 기기별 출력·화성·헤드룸/클리핑(011), 예약 노드 중단(012), 모바일 물리 청음/터치(027)는 미검증.
+- 단위 테스트 첫 위치 추출 문제, 키보드 화음 1번 레인의 선행 노트 시각 정렬 문제, 2개 뷰포트 hit 총계 변수의 범위 문제를 각각 수정. 성공 전 종료 선언하지 않았음.
+- 다음 단계 **011/030 — 합주 음향 개선 II: 화성·헤드룸**.
+
+## 011/030 — pending
+베이스 루트·5도·옥타브와 기타 코드의 화성 충돌 검사, 키보드 화음/멜로디 마스킹 방지, 실제 오디오 마스터 버스 피크·클리핑·최대 동시타격 검증 및 믹싱 개선.
