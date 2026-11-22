@@ -48,3 +48,12 @@ FROM results
 WHERE to_regnamespace('stage_private') IS NOT NULL
   AND to_regclass('stage_private.fake_schools') IS NOT NULL
 ORDER BY path;
+
+-- Extra fail-closed checks: table existence alone does not mean school data is available.
+-- An empty school catalog cannot be counted as a functional school-context pass.
+SELECT 'postit_school_context_data' AS path,
+ CASE WHEN to_regclass('public.schools') IS NULL
+    OR to_regclass('public.beagu_school_report_yearly') IS NULL
+    OR to_regclass('public.beagu_lv1_school_sort_index') IS NULL
+ THEN 'BLOCKED_MISSING_DEPENDENCIES'
+ ELSE 'METADATA_PRESENT_DATA_AND_E2E_UNVERIFIED' END AS readiness;
