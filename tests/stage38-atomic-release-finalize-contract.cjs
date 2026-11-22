@@ -31,6 +31,16 @@ for(const sql of [migration,staging]){
  assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.beagu_site_release_finalize_v1\(uuid,text,text\)\s+TO service_role/i);
  assert.doesNotMatch(sql,/\bcron\.schedule\(|\bGRANT\s+EXECUTE\s+.*?\bTO\s+(?:anon|authenticated)\b/i);
 }
+// The public-data SHA describes what the PRODUCTION site actually serves.
+// Staging-only apply/rollback must NEVER update that global release pointer.
+for(const sql of [migration,staging]){
+ const stageBranch=sql.split("ELSIF j.target='staging' THEN")[1]?.split("\\n  ELSE")[0];
+ assert.ok(stageBranch,"Staging release branch must exist");
+ assert.doesNotMatch(stageBranch,/public_data_blob_sha\\s*=/i,
+  "Staging release must not mutate production public-data blob pointer");
+}
+assert.match(regression,/Stage apply corrupted production data pointer/);
+assert.match(regression,/Staging rollback changed production public data pointer/);
 assert.match(migration,/DO NOT APPLY TO PRODUCTION WITHOUT/);
 assert.match(staging,/ycwuugggqbunlbwuzvbx/);
 assert.match(staging,/snvzwrexuqavnfvzgxqj/);
