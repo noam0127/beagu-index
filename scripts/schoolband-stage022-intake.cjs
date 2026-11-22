@@ -23,6 +23,23 @@ function readTrustedSource(sourcePath){
  if(!stat.isFile()||stat.size<1||stat.size>600000)throw Error("source_size_or_type_invalid");
  return fs.readFileSync(real);
 }
+function validateSourceFormat(buffer,kind,sourcePath){
+ const lower=sourcePath.toLowerCase();
+ if(kind==="events_json"){
+  if(!lower.endsWith(".json"))throw Error("events_json_extension_required");
+  try{JSON.parse(buffer.toString("utf8"));}catch(_){throw Error("invalid_music_events_json");}
+ }else if(kind==="midi"){
+  if(!/\\.midi?$/.test(lower)||buffer.length<14||buffer.subarray(0,4).toString("ascii")!=="MThd"||
+     buffer.readUInt32BE(4)!==6)throw Error("invalid_midi_header");
+ }else if(kind==="musicxml"){
+  const head=buffer.subarray(0,4096).toString("utf8");
+  if(!/\\.(?:musicxml|xml)$/.test(lower)||!/<score-(?:partwise|timewise)\\b/.test(head)||
+     /<!DOCTYPE|<!ENTITY/i.test(head))throw Error("invalid_musicxml_header");
+ }else if(kind==="score_pdf"){
+  if(!lower.endsWith(".pdf")||buffer.subarray(0,5).toString("ascii")!=="%PDF-")throw Error("invalid_score_pdf_header");
+ }else throw Error("unsupported_source_kind");
+ return true;
+}
 function createPrivatePlan(songId,{generate=false}={}){
  const trust=JSON.parse(fs.readFileSync(TRUST_FILE,"utf8"));
  if(!Array.isArray(trust.records))throw Error("trust_manifest_invalid");
@@ -32,6 +49,7 @@ function createPrivatePlan(songId,{generate=false}={}){
  const req={song_id:songId,school_id:record.school_id??null,source_kind:record.source_kind,
   source_path:record.source_path,source_git_blob_sha1:gitBlobSha1(buffer),public_release:false};
  const verdict=policy.authorizePrivateIntake(trust,req,new Date().toISOString().slice(0,10));
+ validateSourceFormat(buffer,record.source_kind,record.source_path);
  if(record.source_kind!=="events_json"){
   return {...verdict,generated:false,reason:"parser_or_score_review_not_implemented"};
  }
@@ -61,4 +79,4 @@ if(require.main===module){
   console.log(JSON.stringify(createPrivatePlan(args[1],{generate:args.includes("--generate-private")})));
  }catch(e){console.error("STAGE022_INTAKE_REJECTED: "+String(e.code||e.message));process.exitCode=1;}
 }
-module.exports={gitBlobSha1,readTrustedSource,createPrivatePlan};
+module.exports={gitBlobSha1,readTrustedSource,validateSourceFormat,createPrivatePlan};
