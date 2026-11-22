@@ -20,6 +20,8 @@ on:
       - 'scripts/check-standalone-assets.py'
       - 'scripts/verify-render-preview.py'
       - 'tests/test-render-preview-readiness.py'
+      - 'tests/postit-auth-redirect-stage.cjs'
+      - 'tests/postit-member-auth.cjs'
       - 'render.yaml'
       - '.github/workflows/v110-standalone-staging.yml'
   workflow_dispatch:
@@ -53,6 +55,11 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
+      - name: Post-it staging email confirmation and OAuth redirect regression
+        run: |
+          node tests/postit-member-auth.cjs
+          node tests/postit-auth-redirect-stage.cjs
+          node tests/challenge-lv2-account-entry.mjs
       - name: Check isolation guard syntax before packaging
         run: node --check scripts/staging-runtime-guard.js
       - name: Install headless Chromium only
