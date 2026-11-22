@@ -17,9 +17,9 @@ function rightsGate(source){
  need(Array.isArray(r.scopes)&&r.scopes.includes("convert_to_game"),"conversion_scope_required");
  if(r.status==="demo_original")need(DEMOS.has(source.songId),"unknown_demo_source");
  else if(r.status==="approved"){
-  need(typeof r.permissionRecordId==="string"&&r.permissionRecordId.length>=8,"approval_evidence_required");
-  need(typeof r.validUntil==="string"&&/^\d{4}-\d\d-\d\d$/.test(r.validUntil)&&
-    Date.parse(r.validUntil+"T23:59:59Z")>=Date.now(),"approval_expired");
+  // Stage022: user-supplied approval flags/record IDs are NOT independent proof.
+  // External songs are quarantined until a separate trusted-record integration.
+  throw new ArrangementError("external_requires_stage022_trusted_registry");
  }else throw new ArrangementError("unapproved_source");
  return {sourceId:r.sourceId,status:r.status,publicRelease:false,scope:"convert_to_game"};
 }
