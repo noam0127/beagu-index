@@ -170,9 +170,17 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     manifest = json.loads((standalone / "stage38-release-manifest.json").read_text(encoding="utf-8"))
     assert manifest["source_sha"] == staging
     assert manifest["environment"] == "isolated-test-package"
+    vercel = json.loads((standalone / "vercel.json").read_text(encoding="utf-8"))
+    response_headers = {h["key"]: h["value"] for h in vercel["headers"][0]["headers"]}
+    assert vercel["headers"][0]["source"] == "/(.*)"
+    assert "ycwuugggqbunlbwuzvbx.supabase.co" in response_headers["Content-Security-Policy"]
+    assert "snvzwrexuqavnfvzgxqj" not in response_headers["Content-Security-Policy"]
+    assert "frame-ancestors 'none'" in response_headers["Content-Security-Policy"]
+    assert response_headers["X-Robots-Tag"].startswith("noindex")
+    assert response_headers["X-Frame-Options"] == "DENY"
     assert manifest["deployment_status"] == "unverified"
     assert manifest["supabase_project_ref"] == "ycwuugggqbunlbwuzvbx"
-    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js"}
+    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js", "vercel.json"}
     assert all(len(value) == 64 for value in manifest["files_sha256"].values())
     assert "snvzwrexuqavnfvzgxqj" not in json.dumps(manifest)
 
