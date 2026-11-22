@@ -128,7 +128,56 @@ END;
 $cases$;
 RESET ROLE;
 
-SELECT 'PASS: atomic synthetic one-time claim / replay / cross-code / malformed reject' AS result;
+-- The first trusted Form proof was consumed above. A later sign-in
+-- should query the durable enrollment without attempting to consume it again.
+-- The synthetic issuing authority adds exactly one matching activated code.
+INSERT INTO public.beagu_level_codes(name,access_level,code_sha256,active)
+VALUES ('ST38_SYNTHETIC_ENROLLED_ONLY',1,
+  encode(sha256(convert_to('ST38-synthetic-code-a','UTF8')),'hex'),true);
+
+SET ROLE service_role;
+DO $resume_check$
+DECLARE
+  code_a text:=encode(sha256(convert_to('ST38-synthetic-code-a','UTF8')),'hex');
+  code_b text:=encode(sha256(convert_to('ST38-synthetic-code-b','UTF8')),'hex');
+  unclaimed text:=encode(sha256(convert_to('stage38-ephemeral-lv2-only','UTF8')),'hex');
+  n integer;
+BEGIN
+  FOR n IN 1..3 LOOP
+    IF stage38_claim_fixture.has_active_enrollment(code_a) IS DISTINCT FROM true
+    THEN RAISE EXCEPTION 'Repeated check rejected previously enrolled code';
+    END IF;
+  END LOOP;
+  IF stage38_claim_fixture.has_active_enrollment(code_b) IS DISTINCT FROM false
+    OR stage38_claim_fixture.has_active_enrollment(unclaimed) IS DISTINCT FROM false
+    OR stage38_claim_fixture.has_active_enrollment('BAD') IS DISTINCT FROM false
+    OR stage38_claim_fixture.has_active_enrollment(NULL) IS DISTINCT FROM false
+  THEN RAISE EXCEPTION 'Missing claim or invalid code unexpectedly enrolled';
+  END IF;
+  IF (SELECT COUNT(*) FROM stage38_claim_fixture.submission_claims)<>2
+  THEN RAISE EXCEPTION 'Read-only repeated enrollment check modified claim ledger';
+  END IF;
+END;
+$resume_check$;
+RESET ROLE;
+
+-- Revocation is applied by this disposable fixture's privileged authority.
+UPDATE public.beagu_level_codes SET active=false
+WHERE name='ST38_SYNTHETIC_ENROLLED_ONLY';
+
+SET ROLE service_role;
+DO $revoked_check$
+BEGIN
+  IF stage38_claim_fixture.has_active_enrollment(
+    encode(sha256(convert_to('ST38-synthetic-code-a','UTF8')),'hex')
+  ) IS DISTINCT FROM false
+  THEN RAISE EXCEPTION 'Revoked enrollment still returned active';
+  END IF;
+END;
+$revoked_check$;
+RESET ROLE;
+
+SELECT 'PASS: one-time synthetic Form claim, repeated enrollment status reads, revoked-code rejection' AS result;
  THEN EXISTS (
     SELECT 1 FROM stage38_claim_fixture.submission_claims c
     JOIN public.beagu_level_codes issued ON issued.code_sha256=c.code_digest
