@@ -1,0 +1,51 @@
+name: v1.1.0 staging Render exact-origin CORS contract (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'supabase/functions/_shared/staging-origin.ts'
+      - 'supabase/functions/beagu-level-api/index.ts'
+      - 'supabase/functions/beagu-postit-api-v1/index.ts'
+      - 'supabase/functions/beagu-admin-access/index.ts'
+      - 'supabase/functions/beagu-admin-dashboard-v1/index.ts'
+      - 'supabase/functions/beagu-admin-members-v1/index.ts'
+      - 'supabase/functions/beagu-telemetry-v2/index.ts'
+      - 'tests/staging-origin-cors.test.ts'
+      - 'tests/staging-origin-source.cjs'
+      - '.github/workflows/v110-staging-render-cors.yml'
+  push:
+    branches: [fix/v1.1.0-preview-isolation-gate-20261123]
+    paths:
+      - 'supabase/functions/_shared/staging-origin.ts'
+      - 'supabase/functions/beagu-level-api/index.ts'
+      - 'supabase/functions/beagu-postit-api-v1/index.ts'
+      - 'supabase/functions/beagu-admin-access/index.ts'
+      - 'supabase/functions/beagu-admin-dashboard-v1/index.ts'
+      - 'supabase/functions/beagu-admin-members-v1/index.ts'
+      - 'supabase/functions/beagu-telemetry-v2/index.ts'
+      - 'tests/staging-origin-cors.test.ts'
+      - 'tests/staging-origin-source.cjs'
+      - '.github/workflows/v110-staging-render-cors.yml'
+permissions:
+  contents: read
+jobs:
+  verify-isolation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check shared origin isolation policy
+        run: deno check supabase/functions/_shared/staging-origin.ts
+      - name: Test staging-only exact origin and fail-closed production guards
+        run: deno test --allow-env=SUPABASE_URL,BEAGU_STAGING_ALLOWED_ORIGIN tests/staging-origin-cors.test.ts
+      - name: Check six Edge Functions use common policy
+        run: node tests/staging-origin-source.cjs
+      - name: Confirm no production or test backend deployments
+        run: echo 'PASS static unit tests only; no Supabase deployments, no Render and no Vercel'
