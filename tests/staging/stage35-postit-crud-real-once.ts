@@ -123,6 +123,76 @@ Deno.serve(async(req)=>{
       }
     }
   }
+
+  // Actual Post-it CRUD through the deployed staging API using two genuine JWTs.
+  if(actors.length===2&&blocked==="NONE"){
+   const entries=[],notes=[];
+   const call=async (i,body)=>{
+    const response=await fetch(PROJECT_URL+"/functions/v1/beagu-postit-api-v1",{
+     method:"POST",headers:{"Authorization":"Bearer "+actors[i].jwt,
+      "x-beagu-level-session":actors[i].token,
+      "Content-Type":"application/json"},body:JSON.stringify(body)});
+    return {status:response.status,body:await response.json().catch(()=>({}))};
+   };
+   for(let i=0;i<2;i++){
+    const r=await call(i,{action:"create_post",subject_type:"game",
+      game_slug:"teacher-volleyball",text:"Staging-only synthetic post"});
+    if(r.status!==201||typeof r.body?.id!=="string"){
+      blocked="OWN_POST_CREATE";break;
+    }
+    entries[i]=r.body.id;checks++;
+   }
+   if(blocked==="NONE"){
+    for(let i=0;i<2;i++){
+     const r=await call(i,{action:"create_comment",post_id:entries[1-i],
+        text:"Staging-only synthetic cross-post comment"});
+     if(r.status!==201||typeof r.body?.id!=="string"){
+      blocked="OWN_COMMENT_CREATE";break;
+     }
+     notes[i]=r.body.id;checks++;
+    }
+   }
+   if(blocked==="NONE"){
+    for(let i=0;i<2;i++){
+     const r=await call(i,{action:"remove",target_type:"post",
+       target_id:entries[1-i],role:"owner",author_uid:actors[i].userId});
+     if(r.status!==403||r.body?.error!=="NOT_OWNER"){
+       blocked="FOREIGN_POST_REMOVE";break;
+     }
+     checks++;
+    }
+   }
+   if(blocked==="NONE"){
+    for(let i=0;i<2;i++){
+     const r=await call(i,{action:"remove",target_type:"comment",
+       target_id:notes[1-i],role:"owner",author_uid:actors[i].userId});
+     if(r.status!==403||r.body?.error!=="NOT_OWNER"){
+       blocked="FOREIGN_COMMENT_REMOVE";break;
+     }
+     checks++;
+    }
+   }
+   if(blocked==="NONE"){
+    for(let i=0;i<2;i++){
+     const r=await call(i,{action:"remove",target_type:"comment",
+       target_id:notes[i]});
+     if(r.status!==200||r.body?.removed!==true){
+       blocked="OWN_COMMENT_REMOVE";break;
+     }
+     checks++;
+    }
+   }
+   if(blocked==="NONE"){
+    for(let i=0;i<2;i++){
+     const r=await call(i,{action:"remove",target_type:"post",
+       target_id:entries[i]});
+     if(r.status!==200||r.body?.removed!==true){
+       blocked="OWN_POST_REMOVE";break;
+     }
+     checks++;
+    }
+   }
+  }
  }catch(error){
    blocked=blocked==="NONE" ? "TEST_RUN_EXCEPTION_"+(error instanceof Error?error.name:"UNKNOWN"):blocked;
  }finally{
