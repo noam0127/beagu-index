@@ -26,6 +26,7 @@ on:
       - 'tests/stage38-staging-column-parity.mjs'
       - 'docs/releases/templates/stage38-staging-login-foundation.sql'
       - 'tests/stage38-staging-login-foundation.mjs'
+      - 'tests/stage38-staging-login-foundation-smoke.sh'
       - 'docs/releases/templates/stage38-approved-vercel-preview.yml'
   workflow_dispatch:
 jobs:
@@ -58,3 +59,34 @@ jobs:
           ruby -ryaml -e 'YAML.parse_file(ARGV.fetch(0))' docs/releases/templates/stage38-approved-vercel-preview.yml
           python3 tests/site-release-packaging.py
           python3 tests/site-release-two-sha-isolation.py
+
+  stage38-login-fixture:
+    name: Stage38 isolated PostgreSQL login DDL smoke (NO SUPABASE ACCESS)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_PASSWORD: fixture-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify local PostgreSQL client
+        run: psql --version
+      - name: Test template guard, RLS and 60/minute budget on disposable DB
+        env:
+          STAGE38_PG_FIXTURE_ONLY: ephemeral-ci
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGDATABASE: postgres
+          PGUSER: postgres
+          PGPASSWORD: fixture-only
+        run: bash tests/stage38-staging-login-foundation-smoke.sh
