@@ -81,6 +81,9 @@ AS $resume$
      OR has_function_privilege('anon','stage38_claim_fixture.try_claim(text,text)','EXECUTE')
      OR has_function_privilege('authenticated','stage38_claim_fixture.try_claim(text,text)','EXECUTE')
      OR NOT has_function_privilege('service_role','stage38_claim_fixture.try_claim(text,text)','EXECUTE')
+     OR has_function_privilege('anon','stage38_claim_fixture.has_active_enrollment(text)','EXECUTE')
+     OR has_function_privilege('authenticated','stage38_claim_fixture.has_active_enrollment(text)','EXECUTE')
+     OR NOT has_function_privilege('service_role','stage38_claim_fixture.has_active_enrollment(text)','EXECUTE')
   THEN RAISE EXCEPTION 'STAGE38_CLAIM_LEDGER_PRIVILEGES_UNSAFE';
   END IF;
 END;
