@@ -8,10 +8,13 @@
  const api=SUPABASE_URL+"/functions/v1/beagu-release-manager-v1";
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
  let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,statusVerified=false;
+ let previewProbeId=0;
  const actionIds=["releaseStageApply","releaseStageRollback","releaseProdApply",
    "releaseProdRollback","releaseRegister"];
  function lockReleaseControls(){
   statusVerified=false;cachedHead=null;cachedProposal=null;
+  previewProbeId++;
+  setPreviewLink(false,"시험 웹 연결 확인 필요");
   for(const id of actionIds)el(id).disabled=true;
   el("releaseRefresh").disabled=false;
  }
@@ -78,6 +81,44 @@
   return result;
  }
  function write(id,value){el(id).textContent=value;}
+ function setPreviewLink(ready,label){
+  const link=el("releaseStageLink");
+  link.removeAttribute("href");
+  link.setAttribute("aria-disabled","true");
+  link.setAttribute("tabindex","-1");
+  if(ready){
+   link.setAttribute("href","https://baeguindex.com/_preview/");
+   link.removeAttribute("aria-disabled");
+   link.removeAttribute("tabindex");
+  }
+  write("releaseStageLinkLabel",label);
+  write("releaseStageHealth",ready?"게시 확인 완료 · 요청 버전과 일치":
+    label==="시험 웹 미배포"?"시험 웹에 아직 게시된 코드가 없습니다.":
+    label==="시험 웹 확인 중"?"게시된 코드와 시험 DB 연결 정보를 확인합니다.":
+    "시험 웹을 열 수 없습니다. 배포 기록과 실제 게시 상태를 점검하세요.");
+ }
+ async function verifyPreview(sha,probeId){
+  if(!/^[a-f0-9]{40}$/.test(sha)){
+   if(probeId===previewProbeId)setPreviewLink(false,"시험 웹 버전 오류");
+   return;
+  }
+  let verified=false;
+  try{
+   const response=await fetch("/_preview/beagu-preview-health.json?sha="+sha,{
+    method:"GET",cache:"no-store",credentials:"omit"
+   });
+   if(response.ok){
+    const proof=await response.json();
+    verified=proof?.schema===1&&proof?.kind==="staging"&&
+     proof?.staging_sha===sha&&proof?.supabase_ref==="ycwuugggqbunlbwuzvbx";
+   }
+  }catch(_error){ /* Static preview may be absent, disconnected or stale. */ }
+  if(probeId!==previewProbeId||!statusVerified||model?.state?.staging_sha!==sha)return;
+  setPreviewLink(verified,verified?"시험 웹 열기":"시험 웹 게시 확인 실패");
+  const s=model.state;
+  el("releaseProdApply").disabled=!verified||busy||!!model.job||
+    !s.production_sha||sha===s.production_sha;
+ }
  function renderHistory(id,rows){
   const root=el(id);root.replaceChildren();
   if(!rows?.length){const p=document.createElement("p");p.className="subtle";
@@ -102,16 +143,9 @@
   write("releaseStageVersion",s.staging_sha?(s.staging_version||"버전 미입력"):"아직 시험 웹 미배포");
   write("releaseProdVersion",s.production_sha?(s.production_version||"버전 미입력"):"최초 배포 준비 중");
   write("releaseStageSha",s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹에 아직 업데이트가 없습니다");
-  // Prevent the test link from opening a missing preview before deployment succeeds.
-  const previewLink=el("releaseStageLink");
-  write("releaseStageLinkLabel",s.staging_sha?"시험 웹 열기":"시험 웹 미배포");
-  if(s.staging_sha){
-   previewLink.setAttribute("href","https://baeguindex.com/_preview/");
-   previewLink.removeAttribute("aria-disabled");previewLink.removeAttribute("tabindex");
-  }else{
-   previewLink.removeAttribute("href");previewLink.setAttribute("aria-disabled","true");
-   previewLink.setAttribute("tabindex","-1");
-  }
+  // State alone is not publication proof. Check the immutable preview build marker.
+  const probeId=++previewProbeId;
+  setPreviewLink(false,s.staging_sha?"시험 웹 확인 중":"시험 웹 미배포");
   write("releaseProdSha",s.production_sha?"코드 "+short(s.production_sha):"초기 배포 후 표시됩니다");
   write("releaseHead",cachedHead?"GitHub 최신 코드: "+short(cachedHead):"새로고침하면 GitHub 최신 코드를 확인합니다.");
   const candidate=cachedProposal&&cachedProposal.sha!==s.staging_sha?cachedProposal:null;
@@ -131,7 +165,7 @@
   el("releaseStageApply").disabled=busy||active||!s.production_sha||
     (!candidate&&(!s.draft_sha||s.draft_sha===s.staging_sha));
   el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
-  el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
+  el("releaseProdApply").disabled=true; // Enabled only after SHA-bound static GET.
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
   el("releaseProdRollback").disabled=busy||active||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||active||!s.production_sha;
@@ -139,6 +173,7 @@
   renderHistory("releaseStageHistory",stageHist);
   renderHistory("releaseProdHistory",prodHist);
   statusVerified=true;
+  if(s.staging_sha)void verifyPreview(s.staging_sha,probeId);
  }
  async function refresh(quiet=false){
   if(busy)return;
