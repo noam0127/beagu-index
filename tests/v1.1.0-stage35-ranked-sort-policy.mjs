@@ -33,5 +33,16 @@ assert.ok(portion.indexOf("if(!canSortRankedSchools(")>
   'Reject invalid sorts before checking tier authorization');
 assert.ok(!portion.includes("admin.from("),
   'Tier gate must precede any privileged database reads');
+const ui=readFileSync('js/level-search.js','utf8');
+assert.match(ui,/let verifiedLevel=0;/,'UI must start in locked state');
+assert.match(ui,/option\.disabled=!unlocked/,'Lv1 option must be disabled');
+assert.match(ui,/verifiedLevel>=2/,'UI can unlock for validated Lv2 credentials');
+assert.match(ui,/selectedSort==='housing_price_won'&&verifiedLevel<2/,
+ 'UI must not submit the locked sort even if selected by scripting');
+assert.match(ui,/if\(response\.status===403\)throw new Error/,
+ 'A tier-denied request must not log out a valid Lv1 session');
+assert.match(ui,/verifiedLevel=Number\(state\.level\)\|\|0; syncSortAccess\(\)/,
+ 'Initial search load must use server-verified level');
+
 console.log('PASS: Lv1 cannot request land-price ranking, Lv2+ can, and backend gate precedes data access.');
 console.log('NOT TESTED: full Lv3 server session, cross-account access or release policy.');
