@@ -18,6 +18,9 @@ API = "https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-release-manag
 PUBLIC_KEY = "sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2"
 PLAN = ROOT / ".release-job.json"
 OUTPUT = ROOT / "_release_site"
+# Standalone staging artifact for a separately approved, independent host.
+# Building this directory does NOT publish it anywhere.
+INDEPENDENT_OUTPUT = ROOT / "_preview_standalone_site"
 SHA = re.compile(r"^[0-9a-f]{40}$")
 AUDIENCE = "beagu-release-worker"
 
@@ -86,13 +89,16 @@ def overlay_approved_directory(target):
       "tar -xf - -C " + str(target)], cwd=ROOT, check=True)
 
 
-def make_preview_banner(target):
+def make_preview_banner(target, independent=False):
+    # Existing path-based preview stays unchanged. A standalone host must use
+    # root-relative navigation, not /_preview/-prefixed navigation.
     banner = (
         '<div id="beagu-preview-watermark" role="note" '
         'style="position:fixed;bottom:10px;right:10px;z-index:2147483600;'
         'background:#152943;color:#fff;border-radius:12px;'
         'padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">'
-        '시험 웹 · 운영 웹과 브라우저 저장공간 공유 · 실제 계정 사용 금지</div>'
+        + ('독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>'
+           if independent else '시험 웹 · 운영 웹과 브라우저 저장공간 공유 · 실제 계정 사용 금지</div>')
     )
     for file in target.rglob("*.html"):
         source = file.read_text(encoding="utf-8", errors="replace")
@@ -118,10 +124,12 @@ def make_preview_banner(target):
         )
         if count != 1:
             raise RuntimeError("Preview HTML is missing <head>; cannot enforce CSP")
-        # Root-absolute navigation should stay in the selected candidate snapshot.
-        source = re.sub(r'(?i)(href|src)=(["\\\'])/(?!/|_preview/)',
-                        lambda match: match.group(1) + "=" + match.group(2) + "/_preview/",
-                        source)
+        # Only path-based previews need a /_preview/ prefix. A standalone
+        # site must keep / links rooted at its own independent hostname.
+        if not independent:
+            source = re.sub(r'(?i)(href|src)=(["\\\'])/(?!/|_preview/)',
+                            lambda match: match.group(1) + "=" + match.group(2) + "/_preview/",
+                            source)
         file.write_text(source, encoding="utf-8")
 
 
@@ -187,6 +195,35 @@ def build():
     (OUTPUT / ".nojekyll").touch()
     print("Build ready:", str(OUTPUT), "prod", production[:8],
           "staging", staging[:8] if staging else "none")
+
+
+
+def package_independent_preview():
+    """Package ONLY the signed job's approved staging SHA for a separate host.
+
+    This is an offline artifact builder. It does not call GitHub Pages,
+    modify the public site, enqueue a release, or deploy to a host.
+    Deployment requires a separately approved origin and hosting workflow.
+    """
+    plan = read_plan()
+    staging = plan.get("staging_sha")
+    if not isinstance(staging, str) or not SHA.fullmatch(staging):
+        raise RuntimeError("Approved immutable staging SHA required")
+    if INDEPENDENT_OUTPUT.exists():
+        shutil.rmtree(INDEPENDENT_OUTPUT)
+    archive(staging, INDEPENDENT_OUTPUT)
+    overlay_approved_directory(INDEPENDENT_OUTPUT)
+    # Never ship the live site's custom domain or Pages deployment markers.
+    live_cname = INDEPENDENT_OUTPUT / "CNAME"
+    if live_cname.exists():
+        live_cname.unlink()
+    make_preview_banner(INDEPENDENT_OUTPUT, independent=True)
+    isolate_preview_backend(INDEPENDENT_OUTPUT)
+    (INDEPENDENT_OUTPUT / ".nojekyll").touch()
+    if (INDEPENDENT_OUTPUT / "CNAME").exists():
+        raise RuntimeError("Production custom domain leaked into standalone preview")
+    print("Standalone preview artifact ready (NOT deployed):", INDEPENDENT_OUTPUT,
+          staging[:8])
 
 
 def main():
