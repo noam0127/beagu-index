@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
-import { releaseMetrics, legacyRows, canSortRankedSchools, canUse2026Lv2Snapshot } from '../_shared/release-policy.mjs';
+import { releaseMetrics, legacyRows, canSortRankedSchools, canUse2026TierSnapshot } from '../_shared/release-policy.mjs';
 import { eligiblePostitAuthUser } from '../_shared/postit-member-ownership.mjs';
 import { isVerifiedLv3Member } from '../_shared/member-tier-v1.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
@@ -95,13 +95,14 @@ Deno.serve(async(req:Request)=>{
   if(body.action!=='verify'&&body.action!=='school'&&body.action!=='logout'&&body.action!=='percentiles'&&body.action!=='offices'&&body.action!=='ranked_schools'&&body.action!=='survey_comparisons')return send({error:'UNKNOWN_ACTION'},400,origin);
   const session=await check(req);
   if(!session)return send({error:'AUTH_REQUIRED'},401,origin);
+  // Server-verified Lv3 identity applies to every protected read, not only the badge.
+  const effectiveLevel=await verifiedMemberTier(req,session);
   if(body.action==='logout'){
    const {error}=await admin.from('beagu_level_sessions').delete().eq('token_sha256',await hash((req.headers.get('X-Beagu-Session')||'').trim()));
    return send(error?{error:'LOGOUT_UNAVAILABLE'}:{ok:true},error?503:200,origin);
   }
   if(body.action==='verify'){
-    const actualLevel=await verifiedMemberTier(req,session);
-    return send({level:actualLevel,provisional:actualLevel===2&&!session.identity_visitor_id,expires_at:session.expires_at},200,origin);
+    return send({level:effectiveLevel,provisional:effectiveLevel===2&&!session.identity_visitor_id,expires_at:session.expires_at},200,origin);
    }
   if(body.action==='percentiles'){
    // Batch only a vetted 2026 percentile, never raw survey rows, counts or metadata.
@@ -121,7 +122,7 @@ Deno.serve(async(req:Request)=>{
    // Only recently approved Lv2 percentiles need the independent snapshot gate.
    // Avoid extra RPC calls for the normal 24-hour release path.
    const recentIds=new Set<string>();
-   if(Number(session.access_level)>=2){
+   if(effectiveLevel>=2){
      const pendingIds=[...new Set((metrics.data||[]).filter((m:any)=>
        m.approved_at&&Date.parse(m.approved_at)>Date.now()-24*60*60*1000)
        .map((m:any)=>String(m.school_id)))];
@@ -133,7 +134,7 @@ Deno.serve(async(req:Request)=>{
          .in('school_id',pendingIds).eq('approval_status','APPROVED').limit(20);
        if(snapshotError)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
        const eligibleIds=(snapshots||[]).filter((x:any)=>
-         canUse2026Lv2Snapshot(x.approved_at)).map((x:any)=>String(x.school_id));
+         canUse2026TierSnapshot(x.approved_at,effectiveLevel)).map((x:any)=>String(x.school_id));
        const reviewed=await Promise.all(eligibleIds.map(async (schoolId:string)=>({
          schoolId,...await admin.rpc('beagu_2026_lv2_released_question_results',{p_school_id:schoolId})
        })));
@@ -143,7 +144,7 @@ Deno.serve(async(req:Request)=>{
    }
    const out:Record<string,number>={};
    for(const id of ids){
-    const approved=releaseMetrics((metrics.data||[]).filter((m:any)=>m.school_id===id),catalog.data||[],Number(session.access_level),recentIds.has(id))
+    const approved=releaseMetrics((metrics.data||[]).filter((m:any)=>m.school_id===id),catalog.data||[],effectiveLevel,recentIds.has(id))
      .filter((m:any)=>m.year===2026&&m.key==='percentile'&&typeof m.value==='number'&&m.value>=0&&m.value<=100);
     if(approved.length)out[id]=approved[0].value;
    }
@@ -153,7 +154,7 @@ Deno.serve(async(req:Request)=>{
 
 
   if(body.action==='survey_comparisons'){
-    if(Number(session.access_level)<1)return send({error:'ACCESS_DENIED'},403,origin);
+    if(effectiveLevel<1)return send({error:'ACCESS_DENIED'},403,origin);
     const year=Number(body.year);
     const region=typeof body.region==='string'?body.region.trim():'';
     if(![2023,2024,2025].includes(year)||!/^[가-힣A-Za-z·\s]{2,24}$/.test(region))
@@ -181,7 +182,7 @@ Deno.serve(async(req:Request)=>{
   }
 
   if(body.action==='offices'){
-   if(Number(session.access_level)<1)return send({error:'ACCESS_DENIED'},403,origin);
+   if(effectiveLevel<1)return send({error:'ACCESS_DENIED'},403,origin);
    const region=typeof body.region==='string'?body.region.trim():'';
    if(!/^[가-힣A-Za-z·\s]{2,24}$/.test(region))return send({error:'INVALID_REGION'},400,origin);
    const {data,error}=await admin.from('beagu_lv1_office_directory')
@@ -190,7 +191,7 @@ Deno.serve(async(req:Request)=>{
    return send({offices:(data||[]).map((x:any)=>String(x.support_office)).filter((v:string)=>v.length>0&&v.length<=100)},200,origin);
   }
   if(body.action==='ranked_schools'){
-   if(Number(session.access_level)<1)return send({error:'ACCESS_DENIED'},403,origin);
+   if(effectiveLevel<1)return send({error:'ACCESS_DENIED'},403,origin);
    const searchText=typeof body.searchText==='string'?body.searchText.trim():'';
    const region=typeof body.region==='string'?body.region.trim():'';
    const office=typeof body.office==='string'?body.office.trim():'';
@@ -205,7 +206,7 @@ Deno.serve(async(req:Request)=>{
       return send({error:'INVALID_SEARCH_FILTER'},400,origin);
    // Lv1 may see previously released school facts but must not sort by
    // the Lv2-only housing-price criterion. Enforce before any DB read.
-   if(!canSortRankedSchools(Number(session.access_level),sort))
+   if(!canSortRankedSchools(effectiveLevel,sort))
      return send({error:'ACCESS_DENIED'},403,origin);
    // Level access is checked above, before any cached school record is fetched.
    // The RLS-protected cache contains only fields from the approved public sort view.
@@ -232,7 +233,7 @@ Deno.serve(async(req:Request)=>{
 
   const id=String(body.schoolId||'');
   if(!/^[A-Z0-9]{7}$/.test(id))return send({error:'INVALID_SCHOOL'},400,origin);
-  const level=Number(session.access_level);
+  const level=effectiveLevel;
   if(level<1)return send({error:'ACCESS_DENIED'},403,origin);
   // Separate Lv2 access from the existing public/Lv1 24-hour release path.
   // A null result means the exact snapshot failed independent publication review.
@@ -244,14 +245,14 @@ Deno.serve(async(req:Request)=>{
       .from('beagu_2026_results_snapshot').select('approved_at')
       .eq('school_id',id).eq('approval_status','APPROVED').maybeSingle();
     if(approvalError)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
-    if(canUse2026Lv2Snapshot(approval?.approved_at)){
+    if(canUse2026TierSnapshot(approval?.approved_at,level)){
       const {data,error}=await admin.rpc('beagu_2026_lv2_released_question_results',{p_school_id:id});
       if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
       if(Array.isArray(data)&&data.length>0)lv2Approved2026=data;
     }
   }
   const [legacy,metrics,catalog,curated2025]=await Promise.all([
-   level===2?admin.from('beagu_level_data').select('survey_year,access_level,summary,release_status').eq('school_id',id).eq('release_status','approved').lt('survey_year',2026).order('survey_year').limit(20):Promise.resolve({data:[],error:null}),
+   level>=2?admin.from('beagu_level_data').select('survey_year,access_level,summary,release_status').eq('school_id',id).eq('release_status','approved').lt('survey_year',2026).order('survey_year').limit(20):Promise.resolve({data:[],error:null}),
    admin.from('beagu_release_metrics_v2').select('survey_year,question_id,access_level,value,release_version,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence').eq('school_id',id).eq('approval_status','APPROVED').lte('access_level',level).order('release_version',{ascending:false}).limit(1000),
    admin.from('beagu_metric_catalog').select('*').eq('verified',true).limit(1000),
    admin.from('beagu_level_data').select('survey_year,access_level,respondents,summary,release_status')
