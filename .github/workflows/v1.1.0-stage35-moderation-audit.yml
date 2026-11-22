@@ -1,0 +1,30 @@
+name: v1.1.0 stage35 moderation pre-action audit
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-moderation-audit.mjs'
+      - '.github/workflows/v1.1.0-stage35-moderation-audit.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/_shared/moderation-audit.mjs'
+      - 'supabase/functions/beagu-admin-members-v1/index.ts'
+      - 'tests/v1.1.0-stage35-moderation-audit.mjs'
+      - '.github/workflows/v1.1.0-stage35-moderation-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  moderation-intent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify member moderation audit must precede Auth mutation
+        run: node tests/v1.1.0-stage35-moderation-audit.mjs
+      - name: Coverage warning
+        run: |
+          echo "Simulated failure scenarios only; no actual user bans or production writes."
