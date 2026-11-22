@@ -6,6 +6,11 @@ on:
       - '.github/workflows/stage38-isolated-file-rollback.yml'
       - 'scripts/release-manager/stage38-sandbox-rollout.py'
       - 'tests/stage38-hosted-lifecycle-rollback.cjs'
+  pull_request:
+    paths:
+      - '.github/workflows/stage38-isolated-file-rollback.yml'
+      - 'scripts/release-manager/stage38-sandbox-rollout.py'
+      - 'tests/stage38-hosted-lifecycle-rollback.cjs'
   workflow_dispatch:
 permissions:
   contents: write
@@ -14,7 +19,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish-sandbox-and-prove-rollback:
-    if: github.repository == 'noam0127/beagu-index' && github.ref == 'refs/heads/hotfix/v1.1.0-preview-backend-isolation'
+    if: github.repository == 'noam0127/beagu-index' && (github.ref == 'refs/heads/hotfix/v1.1.0-preview-backend-isolation' || (github.event_name == 'pull_request' && github.event.pull_request.number == 244 && github.event.pull_request.head.repo.full_name == 'noam0127/beagu-index' && github.event.pull_request.head.ref == 'hotfix/v1.1.0-preview-backend-isolation'))
     runs-on: ubuntu-24.04
     timeout-minutes: 18
     steps:
