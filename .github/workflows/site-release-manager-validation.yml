@@ -14,6 +14,7 @@ on:
       - 'tests/site-release-center.mjs'
       - 'tests/site-release-two-sha-isolation.py'
       - 'tests/stage38-preview-origin-gate.mjs'
+      - 'tests/stage38-published-http-check.mjs'
   workflow_dispatch:
 jobs:
   check:
@@ -35,5 +36,6 @@ jobs:
         run: |
           node --test tests/site-release-center.mjs
           node tests/stage38-preview-origin-gate.mjs
+          node tests/stage38-published-http-check.mjs
           python3 tests/site-release-packaging.py
           python3 tests/site-release-two-sha-isolation.py
