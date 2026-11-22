@@ -73,6 +73,7 @@ async function browserTests(){
  try{
   browser=await chromium.launch({headless:true,args:["--no-sandbox","--autoplay-policy=no-user-gesture-required"]});
   const origin="http://127.0.0.1:"+server.address().port+"/";
+  let hitTotal=0;
   for(const mode of ["desktop","mobile320"]){
    const mobile=mode==="mobile320";
    const context=await browser.newContext({viewport:mobile?{width:320,height:640}:{width:1280,height:850},
@@ -95,7 +96,6 @@ async function browserTests(){
    });
    const page=await context.newPage(),pageErrors=[];
    page.on("pageerror",e=>pageErrors.push(e.message));
-   let hitTotal=0;
    try{
     assert((await page.goto(origin,{waitUntil:"domcontentloaded"})).ok());
     await page.locator("#demoSchool").click();
@@ -143,6 +143,7 @@ async function browserTests(){
       assert(observation.logSize<=384,"audio events must stay bounded");
       actual[lane]={lane,timingErrorMs:Math.round((observation.playhead-observation.targetTime)*1000),
        nodes:observation.nodes.map(x=>x.kind==="noise"?"noise":x.type),
+       nodeStartTimes:observation.nodes.map(x=>x.when),
        event:observation.hitSound,autoEnsemble:[...new Set(observation.background)].sort()};
       hitTotal++;
      }
@@ -151,6 +152,8 @@ async function browserTests(){
       assert.deepEqual(actual[0].nodes,["sawtooth"],"guitar riff one pick");
       assert.deepEqual(actual[1].nodes,["sawtooth","sawtooth","triangle"],"power chord has fifth + octave");
       assert.deepEqual(actual[2].nodes,["sawtooth","sawtooth","sawtooth"],"upward strum staggered");
+      assert(Math.abs((actual[2].nodeStartTimes[1]-actual[2].nodeStartTimes[0])-.017)<.0001,"strum second string 17ms later");
+      assert(Math.abs((actual[2].nodeStartTimes[2]-actual[2].nodeStartTimes[0])-.034)<.0001,"strum third string 34ms later");
       assert.deepEqual(actual[3].nodes,["sawtooth","triangle"],"high riff overtone");
      }
      if(instrument==="drums"){
