@@ -49,6 +49,7 @@ if(process.argv.includes("--browser"))(async()=>{
    });
    await page.goto("http://127.0.0.1:"+server.address().port);
    async function choose(){
+    await page.locator("#schoolSearch").fill("");
     await page.locator("#schoolSearch").fill("동명");
     await page.waitForFunction(()=>document.querySelectorAll("#searchResults button").length===2);
     assert.match(await page.locator("#searchResults button").first().textContent(),/ID ID2026/);
