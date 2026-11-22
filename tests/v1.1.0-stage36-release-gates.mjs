@@ -16,9 +16,11 @@ for(const id of ['security_release_synthetic','cross_account_postit','cross_acco
 for(const id of ['admin_aal2_positive','approved_2026_real_pipeline','email_delivery','manual_production_approval']){
   assert.equal(checks[id]?.status,'BLOCKED','Do not convert missing real-world evidence into an unsupported PASS: '+id);
 }
-assert.ok(['PENDING','BLOCKED'].includes(checks.live_preview_http?.status));
+assert.equal(checks.live_preview_http?.status,'PASS',
+  'Live and published preview HTTP GET must be checked before stage36 closes');
+assert.ok(Number.isSafeInteger(checks.live_preview_http?.run),'Published preview GET requires a CI evidence run');
 const blockers=state.checks.filter(x=>x.status!=='PASS');
-assert.ok(blockers.length>=5,'No-go requires explicit unresolved gates');
+assert.ok(blockers.length>=4,'No-go requires explicit unresolved gates');
 assert.ok(blockers.every(x=>typeof x.scope==='string'&&x.scope.length>12));
 
 const doc=read('docs/releases/v1.1.0-stage36-regression-and-go-no-go.md');
