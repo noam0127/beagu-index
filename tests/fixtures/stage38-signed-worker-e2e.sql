@@ -84,8 +84,13 @@ BEGIN
        (jobs>2 OR histories>2)
     THEN RAISE EXCEPTION 'unsafe_fixture_cleanup_rejected' USING ERRCODE='23514';
     END IF;
-    DELETE FROM public.beagu_site_release_history_v1;
-    DELETE FROM public.beagu_site_release_jobs_v1;
+    -- PostgREST's safe-update guard rejects unqualified DELETE. Only clean
+    -- independently validated fictional staging release rows; never wildcard
+    -- an unrelated production or staging job.
+    DELETE FROM public.beagu_site_release_history_v1
+      WHERE target='staging' AND version IN ('STAGE38-FAKE-B','STAGE38-FAKE-A');
+    DELETE FROM public.beagu_site_release_jobs_v1
+      WHERE target='staging' AND version IN ('STAGE38-FAKE-B','STAGE38-FAKE-A');
     UPDATE public.beagu_site_release_state_v1
       SET staging_sha=NULL,staging_version=NULL,draft_sha=NULL,
           draft_version=NULL,draft_summary=NULL,updated_at=clock_timestamp()
