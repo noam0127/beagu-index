@@ -78,8 +78,16 @@ async function run() {
         assert.equal(await proceed.count(), 1,
           "RawGit external notice did not provide an explicit review action");
         await proceed.click({ timeout: 12000 });
-        await page.waitForLoadState("domcontentloaded", { timeout: 25000 });
-        console.log("PASS: raw.githack external content notice acknowledged in disposable Chromium context");
+        // The raw.githack consent UI asynchronously replaces its own document.
+        // A second waitForLoadState after click can hang after a navigation
+        // event already fired, so wait for our own visible safety marker.
+        await page.waitForTimeout(1100);
+        let afterConsent = "";
+        try { afterConsent = (await page.title()) + " / " +
+          (await page.locator("body").innerText()).slice(0,110); }
+        catch { afterConsent = "navigation_in_progress"; }
+        console.log("NOTICE: post-consent state=" + JSON.stringify(afterConsent));
+        console.log("NOTICE: raw.githack external content notice acknowledged in disposable Chromium context");
       }
       console.log("DIAG: hosted " + file + " content_type=" + ctype +
         " title=" + JSON.stringify(await page.title()) +
