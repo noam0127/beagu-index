@@ -22,6 +22,12 @@ async function open(browser,cfg,model){
  page.on("dialog",d=>void d.accept());
  await page.route("**/*",route=>{
   const req=route.request(),url=req.url();
+  if(url.startsWith(HOST+"/_preview/beagu-preview-health.json")){
+   if(model.previewNotFound)return route.fulfill({status:404,contentType:"text/plain",body:"not found"});
+   return asJson(route,200,{schema:1,kind:"staging",
+    staging_sha:model.previewSha||SHAS.stage,
+    supabase_ref:model.previewRef||"ycwuugggqbunlbwuzvbx"});
+  }
   if(url.startsWith(HOST+"/"))return route.continue();
   if(url.startsWith("https://cdn.jsdelivr.net/"))
    return route.fulfill({status:200,contentType:"application/javascript",body:stub});
@@ -111,6 +117,7 @@ async function run(){
     const {ctx,page,errors}=await open(browser,cfg,model);
     await page.locator("#releaseDashboard").waitFor({state:"visible"});
     await fit(page,cfg.width);
+    await page.locator("#releaseStageHealth").getByText(/게시 확인 완료/).waitFor();
     assert(await page.locator("#releaseProdApply").isEnabled());
     assert(await page.locator("#releaseStageApply").isDisabled());
     assert.equal(await page.locator("#releaseStageLink").getAttribute("href"),"https://baeguindex.com/_preview/");
@@ -123,6 +130,28 @@ async function run(){
     const attempts=model.calls.filter(c=>c.action==="prod_apply");
     assert.equal(attempts.length,1);
     assert.equal(attempts[0].confirmed_tested,true);
+    assert.deepEqual(errors,[]);
+    await ctx.close();
+   }
+   // A staging SHA in admin DB never proves the site is actually published.
+   // HTTP 404, wrong SHA or wrong backend must keep the link and production locked.
+   for(const defect of [
+     {name:"missing-preview",previewNotFound:true},
+     {name:"different-code",previewSha:SHAS.new},
+     {name:"production-backend-leak",previewRef:"snvzwrexuqavnfvzgxqj"}
+   ]){
+    const model={calls:[],proof:{permitted:true,mfa_verified:true,role:"owner"},
+      current:snapshot(state({staging_sha:SHAS.stage,staging_version:"1.1.0",
+                              draft_sha:SHAS.stage})),...defect};
+    const {ctx,page,errors}=await open(browser,cfg,model);
+    await page.locator("#releaseDashboard").waitFor({state:"visible"});
+    await page.locator("#releaseStageHealth").getByText(/게시 확인 실패/).waitFor();
+    assert.equal(await page.locator("#releaseStageLink").getAttribute("href"),null,
+      defect.name+" must not open stale/missing preview");
+    assert.equal(await page.locator("#releaseStageLink").getAttribute("aria-disabled"),"true");
+    assert(await page.locator("#releaseProdApply").isDisabled(),
+      defect.name+" must not allow production request");
+    assert(!model.calls.some(c=>c.action==="prod_apply"));
     assert.deepEqual(errors,[]);
     await ctx.close();
    }
