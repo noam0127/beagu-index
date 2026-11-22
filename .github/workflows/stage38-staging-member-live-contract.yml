@@ -11,6 +11,15 @@ on:
       - 'tests/stage38-staging-admin-dashboard-contract.cjs'
       - '.github/workflows/stage38-staging-admin-http-negative.yml'
       - 'tests/stage38-page-perf-contract.cjs'
+      - 'tests/stage38-staging-live-traffic-contract.cjs'
+      - 'tests/stage38-staging-live-presence-regression.sql'
+      - 'tests/stage38-staging-admin-live-traffic-regression.sql'
+      - 'supabase/migrations/stage38_staging_live_presence_foundation.sql'
+      - 'supabase/migrations/stage38_staging_visits_and_admin_live_traffic.sql'
+      - 'supabase/migrations/20261120_admin_hourly_live_presence.sql'
+      - 'supabase/migrations/20261120_admin_visit_search_exclusion.sql'
+      - 'supabase/migrations/20261120_telemetry_visit_presence_guard.sql'
+      - 'supabase/migrations/20261120_telemetry_v2_public_rpc_cutover.sql'
       - 'tests/stage38-staging-admin-page-perf-regression.sql'
       - 'supabase/migrations/stage38_staging_admin_page_perf_rpc.sql'
       - 'supabase/migrations/20261120_admin_page_perf_v1.sql'
@@ -24,6 +33,15 @@ on:
       - 'tests/fixtures/stage38-staging-admin-dashboard-v1/**'
       - 'tests/stage38-staging-admin-dashboard-contract.cjs'
       - 'tests/stage38-page-perf-contract.cjs'
+      - 'tests/stage38-staging-live-traffic-contract.cjs'
+      - 'tests/stage38-staging-live-presence-regression.sql'
+      - 'tests/stage38-staging-admin-live-traffic-regression.sql'
+      - 'supabase/migrations/stage38_staging_live_presence_foundation.sql'
+      - 'supabase/migrations/stage38_staging_visits_and_admin_live_traffic.sql'
+      - 'supabase/migrations/20261120_admin_hourly_live_presence.sql'
+      - 'supabase/migrations/20261120_admin_visit_search_exclusion.sql'
+      - 'supabase/migrations/20261120_telemetry_visit_presence_guard.sql'
+      - 'supabase/migrations/20261120_telemetry_v2_public_rpc_cutover.sql'
       - 'tests/stage38-staging-admin-page-perf-regression.sql'
       - 'supabase/migrations/stage38_staging_admin_page_perf_rpc.sql'
       - 'supabase/migrations/20261120_admin_page_perf_v1.sql'
@@ -48,6 +66,8 @@ jobs:
         run: node tests/stage38-staging-admin-dashboard-contract.cjs
       - name: Verify pinned staging page-performance RPC and isolated regression
         run: node tests/stage38-page-perf-contract.cjs
+      - name: Verify original live presence and live-traffic RPC with privacy controls
+        run: node tests/stage38-staging-live-traffic-contract.cjs
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
