@@ -1,0 +1,21 @@
+name: v1.1.0 stage35 one-time 2026 release HTTP E2E
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-2026-http-once.py'
+      - '.github/workflows/v1.1.0-stage35-2026-http-once.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-2026-visibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test Lv1 24h and Lv2 6h against independent staging only
+        run: python3 tests/v1.1.0-stage35-2026-http-once.py
+      - name: Cleanup reminder
+        if: always()
+        run: echo "Immediately run tests/staging/stage35-2026-http-fixture-cleanup.sql against staging only."
