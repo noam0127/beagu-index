@@ -12,6 +12,8 @@ assert.match(source,/pg_get_function_result\(exact_oid\)/);
 assert.match(source,/p\.prosecdef/);
 assert.match(source,/has_function_privilege\('anon',exact_oid,'EXECUTE'\)/);
 assert.match(source,/has_function_privilege\('authenticated',exact_oid,'EXECUTE'\)/);
+assert.match(source,/has_function_privilege\('service_role',exact_oid,'EXECUTE'\)/);
+assert.match(source,/has_schema_privilege\('service_role',p\.pronamespace,'USAGE'\)/);
 const body=source.split("\n").filter(x=>!x.trimStart().startsWith("--")).join("\n");
 assert.match(body,/^\s*WITH expected\(/);
 assert.ok(body.trimEnd().endsWith(";"));
@@ -37,10 +39,12 @@ for(const name of [
 assert.match(body,/BLOCKED_MISSING_NAME/);
 assert.match(body,/BLOCKED_SIGNATURE_MISMATCH/);
 assert.match(body,/BLOCKED_RETURN_MISMATCH/);
+assert.match(body,/BLOCKED_SERVICE_ROLE_RPC_EXECUTE/);
+assert.match(body,/BLOCKED_SERVICE_ROLE_SCHEMA_USAGE/);
 assert.match(body,/REVIEW_SECURITY_MODE_DIFFERENCE/);
 assert.match(body,/PRESENT_SIGNATURE_PARITY/);
 assert.doesNotMatch(body,/(?:pg_get_functiondef|prosrc|auth\.users|service_role_key|password_hash)/i,
   "Do not read source bodies, user records or secrets in this preflight");
 
-console.log("PASS: 10 stage-only RPC signatures, return contracts, privilege flags and invoker/definer modes audited read-only.");
+console.log("PASS: 10 stage-only RPC contracts audited: signature, return, definer mode, service_role EXECUTE and schema USAGE; metadata-only.");
 console.log("NOTE: this static CI check does not prove that live staging is ready, authorized or deployed.");
