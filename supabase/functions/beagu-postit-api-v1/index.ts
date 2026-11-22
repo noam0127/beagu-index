@@ -1,5 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.0";
-import { resolveVerifiedPostitOwner } from "../_shared/postit-member-ownership.mjs";
+import { resolveVerifiedPostitOwner, eligiblePostitAuthUser } from "../_shared/postit-member-ownership.mjs";
 
 // Post-it's data and author identities never become directly queryable with
 // the browser's publishable key. Even curated projections require Lv2 authorization.
@@ -68,7 +68,7 @@ async function authenticatedUser(req:Request){
  const jwt=authorization.slice(7);
  const {data,error}=await db.auth.getUser(jwt);
  const user=data?.user;
- if(error||!user||user.is_anonymous||!user.email_confirmed_at)return null;
+ if(error||!eligiblePostitAuthUser(user))return null;
  return user;
 }
 async function verifiedMember(req:Request,viewer:any){
