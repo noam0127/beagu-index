@@ -361,3 +361,17 @@
 - 수행 검증: 연결 도구에서 실제 큐 정책 모듈을 실행해 **12건 PASS**, 이후 철회/만료와 이력 처리 추가 **8건 PASS**, 게임/관련 테스트 JavaScript 파싱 확인. **GitHub Actions·전체 Node 파일 해시 검증 및 CI 성공은 미확인**이므로 023단계종료 선언 보류.
 - 상세 설계·7개 역할 검토: `docs/schoolband-stage023-queue-review-withdrawal.md`. 운영 `main` 및 `baeguindex.com`, 운영 Supabase 수정 없음.
 - 향후 024/030은 곡 ID·버전별 최고 기록과 점수 공정성 검사로 진행. 019(#245), 021(#246), 022(#247), 023(#248) 검증 게이트는 최종 릴리스 이전에 해결해야 한다.
+
+## 024/030 — 점수·차트 버전별 최고 기록·오염 차단 (2026-11-23)
+
+상태: **IMPLEMENTED / NODE·BROWSER CI PENDING**, 기록: [GitHub Issue #249](https://github.com/noam0127/beagu-index/issues/249).
+
+- 실제 소스 `games/nangam-schoolband-v08/index.html` 수정: **PERFECT 1000+5×min(combo,100) / GOOD 600+3×min(combo,100) / MISS 0·combo 0**. 입력 오프셋 판정과 기존 악기별 차트 구조 유지. 빈 입력은 판정 점수에 반영하지 않는다.
+- `SCHOOLBAND_SCORE_V2` 순수 산식 및 조건: 완결 판정 수·PERFECT/GOOD/MISS 계수 합 일치, 정수·이론상 점수 상하한, 미완주/중단/미등록 교가 결과 최고 기록 불허.
+- 새 로컬 키 `nangam-schoolband-best-v2:{schoolId}:{songId}:{chartVersion}:{instrument}:{difficulty}`. 이전 `nangam-band-v08:` 기록은 구분 불명으로 자동 이전·삭제하지 않음. 내부 생성 차트도 생성 버전으로 분리.
+- 브라우저 저장소 접근 실패에서도 연주·완료 가능, 손상된 값 무시, 더 높은 점수만 갱신. ‘이 조합의 최고 기록 초기화’ 버튼은 해당 키만 삭제; 다른 학교·곡·악기·난이도·차트 버전 건드리지 않는다.
+- 연주 시작 대기/진행 중 학교·악기 변경 차단, 진행 중 초기화 버튼 비활성화. 전역 순위는 로컬 위조가 쉬워 공정한 기록이라고 주장하지 않음.
+- 7개 역할 리뷰 및 점수 산식 설명: `docs/schoolband-stage024-scoring-and-records.md`. 테스트: `scripts/test-schoolband-stage024.cjs`의 Node 점수 및 로컬스토리지 검사 + PC 1280px/모바일 320px UI 선택·키 분리·초기화. 워크플로 `.github/workflows/schoolband-stage024.yml`.
+- **직접 실행 증거:** 최신 게임 점수·저장 함수 자체를 연결 JS 환경에서 동적으로 평가한 **40개 체크 PASS**, 게임 및 테스트 스크립트 문법 PASS. 전체 Node/Chromium/GitHub Actions 실행 결과는 **미확인**; 024 최종 종료 아님.
+- 제외 준수: 교가 저작권 허락 요청, 유료 API/결제, 연주감·음향 검증 모두 수행하지 않음. `main`, `baeguindex.com`, 운영 Supabase 변경 없음.
+- 025/030 독립 개발 가능; 최종 릴리스 전 #245~#249 검증 게이트 필요.
