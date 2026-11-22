@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head><meta http-equiv="Content-Security-Policy" content="connect-src 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow,noarchive"><script id="stage38-cdn-static-guard">document.addEventListener("submit",e=>{e.preventDefault();e.stopImmediatePropagation();},true);document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input[type=password],input[type=email]").forEach(x=>{x.disabled=true;x.value="";});}, {once:true});</script><meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"><meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>역대 게임 기록 · 상위 100위 | 배구지수</title>
+<meta name="description" content="배구지수 선생님배구·험난한 교직생활의 역대 경기 결과를 날짜순으로 확인하세요. 개인 닉네임은 표시하지 않습니다.">
+<link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
+<link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
+<link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
+<link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
+<script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
+<style>
+:root{font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#192d43;background:#f6f8fb}
+*{box-sizing:border-box}body{margin:0;background:#f6f8fb;color:#192d43;line-height:1.55}
+.history-shell{max-width:1000px;margin:0 auto;padding:28px 16px 88px}
+.history-back{display:inline-flex;margin:0 0 24px;color:#285982;text-decoration:none;font-weight:750;font-size:13px}
+.history-back:hover{text-decoration:underline}
+.history-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:21px}
+.history-kicker{font-size:12px;font-weight:900;letter-spacing:.15em;color:#4a6d93}
+.history-title{margin:5px 0;font-size:clamp(24px,5vw,34px);line-height:1.25;letter-spacing:-.035em}
+.history-intro{margin:5px 0 0;color:#63778c;font-size:14px}
+.history-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:19px}
+.history-tab{border-radius:11px;padding:11px 17px;font-size:13px;font-weight:850;background:#fff;border:1px solid #cfdae6;color:#344b68;text-decoration:none}
+.history-tab[aria-current=page]{color:#fff;background:#194d80;border-color:#194d80}
+.history-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;background:#fff;border:1px solid #dbe5ee;border-radius:13px;padding:12px 15px;margin-bottom:16px}
+.history-toolbar label{font-size:12px;font-weight:850;color:#4f6984}
+.history-toolbar select{min-width:150px;padding:9px 32px 9px 11px;border:1px solid #bccfdf;background:#f9fbff;color:#243f58;font-size:13px;border-radius:9px}
+.history-note{font-size:11px;color:#647a8e}
+.history-list{display:grid;gap:10px}
+.history-record{background:#fff;border:1px solid #dce5ef;border-radius:14px;padding:16px 17px;box-shadow:0 3px 12px rgba(32,64,93,.03)}
+.history-record-head{display:flex;align-items:flex-start;gap:12px;justify-content:space-between}
+.history-school{font-size:15px;font-weight:900;color:#1b3048;margin:0 0 2px}
+.history-meta{font-size:12px;color:#718297;display:flex;gap:8px;flex-wrap:wrap}
+.history-score{font-size:20px;font-weight:900;font-variant-numeric:tabular-nums;color:#164f87;white-space:nowrap;text-align:right}
+.history-status{display:inline-block;font-size:11px;font-weight:800;border-radius:7px;padding:4px 8px;background:#e8f3f5;color:#196e73;margin-top:8px}
+.history-status.loss{background:#f3f0f0;color:#755963}
+.history-record details{margin-top:14px;border-top:1px solid #edf1f6;padding-top:11px}
+.history-record summary{font-size:12px;font-weight:800;color:#375c7d;cursor:pointer;list-style-position:inside}
+.history-details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}
+.history-stat{padding:9px 11px;background:#f6f9fc;border-radius:9px;min-width:0}
+.history-stat span{font-size:11px;color:#718297;display:block;margin-bottom:4px}
+.history-stat strong{font-size:13px;display:block;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.history-empty{text-align:center;background:#fff;border:1px dashed #c4d6e4;border-radius:15px;padding:35px 15px;color:#617b92;font-size:13px}
+.history-pages{display:flex;align-items:center;justify-content:center;gap:13px;margin-top:21px}
+.history-pages button{border:1px solid #bad0e0;background:#fff;border-radius:9px;min-width:88px;padding:10px 16px;color:#254a71;font-weight:800;cursor:pointer}
+.history-pages button:disabled{opacity:.38;cursor:not-allowed}
+.history-pages span{font-size:13px;font-weight:900;color:#365774;font-variant-numeric:tabular-nums}
+.history-privacy{margin-top:19px;font-size:12px;color:#748697}
+button:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid #e2a23f;outline-offset:3px}
+@media(max-width:570px){.history-shell{padding:16px 12px 56px}.history-record{padding:13px}.history-score{font-size:17px}.history-school{font-size:14px}.history-details{grid-template-columns:repeat(2,minmax(0,1fr))}.history-toolbar{align-items:flex-start}.history-note{width:100%}}
+</style>
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
+<script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
+</head>
+<body class="beagu-ui-page"><div id="stage38-public-static-warning" role="alert" style="z-index:2147483646;position:fixed;top:0;left:0;right:0;text-align:center;padding:10px;background:#7f1d1d;color:white;font:700 13px system-ui">외부 정적 화면 미리보기 · 로그인/개인정보 입력 금지 · 인증과 API 통신 차단</div><div id="beagu-preview-watermark" role="note" style="position:fixed;bottom:10px;right:10px;z-index:2147483600;background:#152943;color:#fff;border-radius:12px;padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>
+<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="postit.html">포스트잇</a><a href="challenge.html">챌린지</a></nav></div></header>
+<div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
+<main class="history-shell">
+<a href="index.html" class="history-back">‹ 게임 화면으로 돌아가기</a>
+<div class="history-head"><div><div class="history-kicker">BAEGUINDEX ARCADE</div><h1 class="history-title" id="historyTitle">역대 게임 기록</h1><p class="history-intro">각 게임의 점수 상위 100개를 높은 점수순으로 보여줍니다.</p></div></div>
+<nav class="history-tabs" aria-label="게임 선택">
+<a id="tabVolley" class="history-tab" href="arcade-history.html?game=volleyball_25">🏐 선생님배구</a>
+<a id="tabRun" class="history-tab" href="arcade-history.html?game=teacher_run_retirement">🎒 험난한 교직생활 3.0</a>
+</nav>
+<div class="history-toolbar"><div><label for="difficulty">난이도</label> <select id="difficulty"><option value="">전체 난이도</option><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option><option value="very_hard">VERY HARD</option><option value="extreme">EXTREME</option></select></div><span class="history-note">점수 높은 순 · 최대 100위 · 30개씩 보기</span></div>
+<section id="recordList" class="history-list" aria-live="polite" aria-label="역대 경기 결과"></section>
+<nav class="history-pages" aria-label="기록 페이지 이동"><button type="button" id="older" disabled>이전</button><span id="pageInfo">1 페이지</span><button type="button" id="newer" disabled>다음</button></nav>
+<p class="history-privacy">TOP 100에서 밀려난 게임 기록은 유지되지 않습니다. 배구의 25점 최단시간 TOP 10은 별도 보존합니다. 닉네임·방문자 및 세션 식별정보는 공개하지 않습니다. 이전 버전의 세부 정보는 제공되지 않을 수 있습니다.</p>
+</main>
+<script src="js/arcade-history-v1.js?v=20261119-history1001"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+/* Native accessible mobile-first <details> groups, for approved fields only. */
+.beagu-detail-group{background:#fff;border:1px solid #dfe7f1;border-radius:12px;margin:10px 0;overflow:hidden;min-width:0}
+.beagu-detail-group[open]{border-color:#b9d0f7;background:#fff}
+.beagu-detail-summary{display:flex;align-items:center;gap:9px;min-height:48px;padding:12px 14px;cursor:pointer;list-style:none;user-select:none;touch-action:manipulation}
+.beagu-detail-summary::-webkit-details-marker{display:none}
+.beagu-detail-summary::marker{content:""}
+.beagu-detail-summary:hover{background:#f8fbff}
+.beagu-detail-summary:focus-visible{outline:3px solid #93c5fd;outline-offset:-3px;border-radius:10px}
+.beagu-detail-summary-title{font-size:14px;line-height:1.4;font-weight:800;color:#1e3a8a;flex:1;min-width:0}
+.beagu-detail-count{font-size:11px;color:#64748b;white-space:nowrap;letter-spacing:0}
+.beagu-detail-chevron{font-size:18px;color:#64748b;transition:transform .15s ease}
+.beagu-detail-group[open] .beagu-detail-chevron{transform:rotate(180deg)}
+.beagu-detail-body{padding:3px 14px 13px;border-top:1px solid #edf2f7;min-width:0}
+.beagu-detail-body .data-row,.beagu-detail-body .item{min-width:0;overflow-wrap:anywhere}
+.beagu-detail-body .data-row:first-child,.beagu-detail-body .item:first-child{border-top:0}
+.beagu-detail-body .beagu-detail-source{display:block;margin:4px 0;color:#64748b;font-size:11px;line-height:1.5}
+.beagu-detail-group .beagu-detail-note{color:#64748b;font-size:12px;line-height:1.55}
+@media(max-width:480px){
+  .beagu-detail-summary{padding:12px;min-height:48px}
+  .beagu-detail-summary-title{font-size:13px}
+  .beagu-detail-count{font-size:10px}
+  .beagu-detail-body{padding:4px 12px 12px}
+  .beagu-detail-body .data-row{flex-wrap:wrap;gap:3px}
+  .beagu-detail-body .data-row span,.beagu-detail-body .data-row strong{flex:1 1 100%;text-align:left}
+  .beagu-detail-body .item{grid-template-columns:1fr;gap:5px}
+}
+@media(prefers-reduced-motion:reduce){.beagu-detail-chevron{transition:none}}

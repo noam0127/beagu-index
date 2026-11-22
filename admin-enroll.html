@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head><meta http-equiv="Content-Security-Policy" content="connect-src 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow,noarchive"><script id="stage38-cdn-static-guard">document.addEventListener("submit",e=>{e.preventDefault();e.stopImmediatePropagation();},true);document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input[type=password],input[type=email]").forEach(x=>{x.disabled=true;x.value="";});}, {once:true});</script><meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"><meta name="robots" content="noindex,nofollow">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>관리자 계정 등록 · 배구지수</title>
+  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-perf1">
+  <style>
+    .enroll-shell{max-width:560px;margin:0 auto}
+    .enroll-shell .panel{max-width:none;margin:18px 0}
+    .enroll-shell .panel h2{margin-bottom:8px}
+    .enroll-shell .panel p{line-height:1.7}
+    .enroll-shell .primary{width:100%}
+    .enroll-shell .secondary{width:100%;margin-top:10px}
+    .enroll-shell .help{margin-top:10px}
+    .enroll-status{overflow-wrap:anywhere}
+    .enroll-fields{display:grid;gap:8px}
+    .enroll-fields input{min-width:0}
+    .enroll-note{font-size:12px;color:#667c96;margin-top:15px;line-height:1.65}
+  </style>
+</head>
+<body><div id="stage38-public-static-warning" role="alert" style="z-index:2147483646;position:fixed;top:0;left:0;right:0;text-align:center;padding:10px;background:#7f1d1d;color:white;font:700 13px system-ui">외부 정적 화면 미리보기 · 로그인/개인정보 입력 금지 · 인증과 API 통신 차단</div><div id="beagu-preview-watermark" role="note" style="position:fixed;bottom:10px;right:10px;z-index:2147483600;background:#152943;color:#fff;border-radius:12px;padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>
+<main class="shell enroll-shell">
+  <header class="top">
+    <a class="brand" href="index.html" aria-label="배구지수 홈">
+      <span class="mark">B</span><strong>BAEGUINDEX</strong></a>
+    <span class="admin-tag">계정 소유 확인</span>
+  </header>
+  <section class="hero" aria-labelledby="enrollTitle">
+    <p class="eyebrow">PRIVATE ADMIN ENROLLMENT</p>
+    <h1 id="enrollTitle">관리자 계정 등록</h1>
+    <p>미리 승인된 이메일의 소유자만 관리자 권한을 활성화할 수 있습니다.</p>
+  </section>
+  <p class="notice enroll-status" id="enrollStatus" role="status" aria-live="polite">
+    계정 상태를 확인하는 중입니다.</p>
+
+  <section class="panel" id="enrollRegisterPanel">
+    <h2>1. 계정 만들기</h2>
+    <p class="help">승인된 이메일 주소로 직접 비밀번호를 등록합니다.
+      이메일 인증 후 이 페이지로 돌아와 로그인하세요.</p>
+    <form id="enrollRegisterForm" class="enroll-fields">
+      <label for="enrollRegisterEmail">승인된 이메일</label>
+      <input id="enrollRegisterEmail" type="email" autocomplete="username" maxlength="254" required>
+      <label for="enrollRegisterPassword">새 비밀번호 (16자 이상)</label>
+      <input id="enrollRegisterPassword" type="password" minlength="16" maxlength="128"
+        autocomplete="new-password" required>
+      <label for="enrollRegisterConfirm">비밀번호 확인</label>
+      <input id="enrollRegisterConfirm" type="password" minlength="16" maxlength="128"
+        autocomplete="new-password" required>
+      <button type="submit" class="primary">이메일 인증 요청 및 계정 생성</button>
+    </form>
+  </section>
+
+  <section class="panel" id="enrollLoginPanel">
+    <h2>2. 이메일 확인 후 로그인</h2>
+    <p class="help">메일함의 Supabase 계정 인증을 완료한 뒤, 등록한 비밀번호로 로그인합니다.</p>
+    <form id="enrollLoginForm" class="enroll-fields">
+      <label for="enrollLoginEmail">이메일</label>
+      <input id="enrollLoginEmail" type="email" autocomplete="username" maxlength="254" required>
+      <label for="enrollLoginPassword">비밀번호</label>
+      <input id="enrollLoginPassword" type="password" autocomplete="current-password" required>
+      <button type="submit" class="secondary">로그인하고 인증코드 입력하기</button>
+    </form>
+  </section>
+
+  <section class="panel" id="enrollClaimPanel" hidden>
+    <h2>3. 관리자 권한 연결</h2>
+    <p class="help">로그인되었습니다. 이메일 인증까지 마쳤다면,
+      ChatGPT 대화에서 ‘관리자 가입 완료’라고 알려 주세요.
+      인증 완료 계정과 사전 승인된 이메일 주소가 일치하는지 확인한 뒤
+      관리자 권한을 연결합니다. 비밀번호는 전달하지 않아도 됩니다.</p>
+    <p><a class="secondary" href="admin.html">관리자 로그인 화면으로 이동</a></p>
+    <button type="button" class="secondary" id="enrollSignOut">다른 계정으로 로그인</button>
+  </section>
+  <p class="enroll-note">안내: 관리자 계정은 기존 레벨0·1·2 참여 인증과 분리되어 있습니다.
+    가입 비밀번호나 이메일 인증 링크를 ChatGPT 대화에 입력하지 마세요.
+    관리자 권한 연결 후 관리자 화면에서 인증 앱(TOTP) 2단계 인증을 설정해야 합니다.</p>
+  <p><a href="admin.html">이미 관리자 계정을 등록했다면 로그인으로 이동</a></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script defer src="js/beagu-admin-enroll-v1.js?v=20261120-verified1"></script>
+</body>
+</html>

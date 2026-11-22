@@ -1,0 +1,13 @@
+/* School, comparison and arcade Post-it shortcuts; their Lv2 lock is visual only.
+   The server enforces actual creation permissions independently. */
+.postit-quick-link,.postit-compare-button,.postit-arcade-link{display:inline-flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;font:inherit;font-size:13px;font-weight:700;line-height:1.4;letter-spacing:-.025em;border:1px solid #d4bc86;background:#fff7c7;color:#504326;border-radius:10px;padding:10px 13px;cursor:pointer}
+.postit-quick-link{min-height:38px;flex:1 1 145px}
+.postit-compare-button{min-height:36px}
+.postit-arcade-link{margin:8px 0 0}
+.postit-quick-link:hover,.postit-compare-button:hover,.postit-arcade-link:hover{background:#fff0a8}
+.postit-compare-button:disabled{opacity:.45;cursor:not-allowed}
+body:not(:has(#beaguLevelState[data-level="2"])) .postit-lv2-link::after{content:" 🔒 Lv.2";font-size:11px;color:#7a6951;white-space:nowrap}
+@media(max-width:520px){.postit-compare-button{padding:9px 10px;font-size:12px}.postit-quick-link{flex-basis:100%}}
+
+/* Five navigation destinations fit on one mobile row without a dangling second line. */
+@media(max-width:760px){.beagu-unified-nav:has(a[href="postit.html"]){grid-template-columns:repeat(5,minmax(0,1fr))}.beagu-unified-nav:has(a[href="postit.html"]) a{font-size:12px;padding-left:1px;padding-right:1px}}

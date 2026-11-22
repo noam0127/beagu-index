@@ -1,0 +1,39 @@
+/* School introduction (before the chosen colleague's prologue) and player creation (after it). */
+.diary-prologue-school-screen[hidden],.diary-player-config[hidden]{display:none!important}
+.diary-prologue-school-screen{
+ position:fixed;inset:0;z-index:200;display:grid;place-items:center;overflow-y:auto;
+ padding:clamp(18px,4vw,36px);background:linear-gradient(140deg,rgba(18,31,50,.97),rgba(38,51,69,.97));
+ color:#25364a;
+}
+.diary-prologue-school-card{
+ width:min(100%,560px);background:#fffaf1;border:1px solid #e5d9c3;
+ border-radius:18px;padding:clamp(24px,5vw,40px);
+ box-shadow:0 20px 70px rgba(0,0,0,.2);line-height:1.65;
+}
+.diary-prologue-overline{font-size:12px;font-weight:800;letter-spacing:.14em;color:#8d765c}
+.diary-prologue-school-card h2{font-family:"Nanum Myeongjo","Batang",serif;word-break:keep-all;font-size:clamp(24px,6vw,34px);margin:12px 0 22px}
+.diary-prologue-facts{display:grid;grid-template-columns:minmax(95px,1fr) minmax(0,2fr);gap:10px 15px;margin:0}
+.diary-prologue-facts dt{font-size:13px;font-weight:800;color:#706755}
+.diary-prologue-facts dd{font-size:14px;font-weight:650;color:#26374a;margin:0;word-break:keep-all;overflow-wrap:anywhere}
+.diary-prologue-facts dd small{font-size:11px;color:#737e8b;font-weight:400;margin-left:5px}
+.diary-prologue-disclaimer{font-size:12px;color:#665e52;margin:18px 0 24px;line-height:1.8}
+.diary-prologue-school-card .primary{width:100%;border-radius:12px;min-height:52px}
+.diary-player-config{
+ max-width:640px;margin:clamp(24px,6vh,65px) auto;
+ border-radius:22px;border:1px solid #ded7cb!important;
+ background:linear-gradient(150deg,#fffdf9,#f4eee3)!important;padding:clamp(23px,5vw,42px)!important;
+ box-shadow:0 15px 60px rgba(32,45,55,.09);
+}
+.diary-player-config h2{font-family:"Nanum Myeongjo","Batang",serif;font-size:clamp(25px,6vw,35px);margin:9px 0 15px;color:#263c51}
+.diary-player-config p{color:#5f6a70;line-height:1.8;font-size:14px}
+.diary-player-profile-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:23px}
+.diary-player-profile-fields .wide{grid-column:1 / -1}
+.diary-player-profile-fields label{color:#364c5b}
+.diary-player-config input,.diary-player-config select{background:#fff!important;color:#223b4f}
+.diary-player-config .actions{margin-top:24px}
+.diary-player-config .actions button{width:100%;min-height:51px}
+@media(max-width:490px){
+ .diary-player-profile-fields{grid-template-columns:1fr}
+ .diary-player-profile-fields .wide{grid-column:auto}
+ .diary-prologue-school-card{margin:auto}
+}

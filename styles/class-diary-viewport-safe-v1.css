@@ -1,0 +1,84 @@
+/* Class Diary: mobile browser bottom-safe stage and dialogue layout.
+ * Keeps controls and last prose line inside the visible viewport, including iOS Safari.
+ * Separate from story/cast/scene logic so concurrent changes do not conflict.
+ */
+body.is-playing.is-literary-mode {
+  --diary-bottom-breathing-room: clamp(22px, 3dvh, 34px);
+}
+body.is-playing.is-literary-mode #novel,
+body.is-playing.is-literary-mode #novelCard {
+  height: min(100dvh, var(--diary-visible-height, 100dvh)) !important;
+  max-height: min(100dvh, var(--diary-visible-height, 100dvh)) !important;
+  min-height: 0 !important;
+}
+body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom,
+body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom,
+body.is-playing.is-literary-mode #novelCard #vnBottom {
+  box-sizing: border-box !important;
+  min-height: 0 !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--diary-bottom-breathing-room)) !important;
+  padding-bottom: 13px !important;
+  overflow: hidden !important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot {
+  display: flex !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome {
+  box-sizing: border-box !important;
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose {
+  min-height: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+body.is-playing.is-literary-mode #novelCard .vn-bottom .vn-control-row {
+  box-sizing: border-box !important;
+  flex: 0 0 auto !important;
+  min-height: 54px !important;
+  padding-bottom: 4px !important;
+  overflow: visible !important;
+}
+body.is-playing.is-literary-mode #novelCard #vnMore,
+body.is-playing.is-literary-mode #novelCard #nextBtn,
+body.is-playing.is-literary-mode #novelCard .diary-toolbar button {
+  flex-shrink: 0 !important;
+}
+@media (max-width: 760px) {
+  body.is-playing.is-literary-mode {
+    --diary-bottom-breathing-room: 24px;
+  }
+  body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom,
+  body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom,
+  body.is-playing.is-literary-mode #novelCard #vnBottom {
+    padding-top: 12px !important;
+    padding-bottom: 14px !important;
+  }
+  body.is-playing.is-literary-mode #novelCard .vn-bottom .vn-control-row {
+    min-height: 58px !important;
+    padding-bottom: 3px !important;
+  }
+}
+@media (max-height: 540px) and (orientation: landscape) {
+  body.is-playing.is-literary-mode {
+    --diary-bottom-breathing-room: 12px;
+  }
+  body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom,
+  body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom,
+  body.is-playing.is-literary-mode #novelCard #vnBottom {
+    padding-top: 5px !important;
+    padding-bottom: 6px !important;
+  }
+  body.is-playing.is-literary-mode #novelCard .vn-bottom .vn-control-row {
+    min-height: 38px !important;
+    padding-bottom: 0 !important;
+  }
+}

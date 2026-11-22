@@ -1,0 +1,264 @@
+/* Shared verification state card: search (Lv.0 / Lv.1), comparison, challenge.
+   Auth level is supplied by existing server-verified session, never by this CSS. */
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge){
+  --beagu-auth-card-border:#dbe5f0;
+  --beagu-auth-card-shadow:0 7px 23px rgba(19,52,96,.055);
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status){
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  min-height:220px;
+  max-width:none;
+  width:100%;
+  margin:0 0 22px;
+  padding:25px 28px 23px;
+  background:#fff;
+  border:1px solid var(--beagu-auth-card-border);
+  border-radius:21px;
+  box-shadow:var(--beagu-auth-card-shadow);
+  clip-path:none;
+  filter:none;
+  transform:none;
+  isolation:isolate;
+  overflow:hidden;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status)::before{
+  content:"";
+  display:block;
+  position:absolute;
+  z-index:1;
+  left:0;top:25px;bottom:25px;
+  width:5px;height:auto;
+  border:0;
+  border-radius:0 6px 6px 0;
+  background:linear-gradient(180deg,#3477e7,#86b7ef);
+  box-shadow:none;
+  clip-path:none;
+  transform:none;
+  pointer-events:none;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status)>.beagu-auth-heading,
+body.beagu-page-lv1 .beagu-levelup-status>.beagu-levelup-heading{
+  flex:0 0 auto;
+  display:flex;
+  width:100%;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px 15px;
+  margin:0 0 15px;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status) :is(h1,h2){
+  margin:0;
+  padding:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  color:#193454;
+  font-size:22px;
+  font-weight:850;
+  line-height:1.32;
+  letter-spacing:-.04em;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status) .beagu-auth-actions,
+body.beagu-page-lv1 .beagu-levelup-status .auth-status{
+  box-sizing:border-box;
+  display:flex;
+  width:auto;
+  flex:0 1 auto;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status) :is(.beagu-auth-badge,.tier-pill){
+  box-sizing:border-box;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 auto;
+  min-height:35px;
+  padding:7px 12px;
+  border:1px solid #d9e2ed;
+  border-radius:999px;
+  background:#f0f5fa;
+  color:#506882;
+  font-size:12px;
+  font-weight:800;
+  line-height:1.35;
+  white-space:nowrap;
+  letter-spacing:-.01em;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status) :is(.beagu-auth-badge,.tier-pill).is-authenticated{
+  border-color:#c8e8d8;
+  background:#eaf8f0;
+  color:#1d7658;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status)[data-provisional="true"] :is(.beagu-auth-badge,.tier-pill){
+  background:#f4edfc;
+  border-color:#dbc9f2;
+  color:#65438e;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status) :is(.beagu-auth-logout,.compare-auth-logout,.text-button){
+  display:inline-flex;
+  box-sizing:border-box;
+  align-items:center;
+  justify-content:center;
+  min-height:40px;
+  padding:9px 13px;
+  border:1px solid #d6e0ec;
+  border-radius:11px;
+  background:#fff;
+  color:#536780;
+  font-size:13px;
+  font-weight:750;
+  line-height:1.3;
+  cursor:pointer;
+  white-space:nowrap;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status) :is(.beagu-auth-logout,.compare-auth-logout,.text-button):hover{
+  background:#f1f6fb;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status)>.beagu-levelup-trigger{
+  box-sizing:border-box;
+  display:flex;
+  width:100%;
+  max-width:none;
+  min-width:0;
+  min-height:54px;
+  margin:auto 0 0;
+  padding:13px 18px;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#3275df,#2858ba);
+  border:0;
+  border-radius:13px;
+  box-shadow:0 6px 15px rgba(33,92,186,.17);
+  color:#fff;
+  font-size:15px;
+  font-weight:850;
+  line-height:1.3;
+  text-align:center;
+  cursor:pointer;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status)>.beagu-levelup-trigger:not(:disabled):hover{
+  background:linear-gradient(135deg,#245fc9,#194a9f);
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status)>.beagu-levelup-trigger.is-complete{
+  background:#ecf6f1;
+  border:1px solid #c8e8d8;
+  box-shadow:none;
+  color:#287556;
+  opacity:1;
+  cursor:default;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status) :is(.beagu-auth-help,.challenge-access-help){
+  flex:0 0 auto;
+  width:100%;
+  margin:12px 0 0;
+  font-size:12px;
+  line-height:1.65;
+  color:#647893;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status)[data-auth-level="1"] :is(.beagu-auth-help,.challenge-access-help),
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status)[data-auth-level="2"] :is(.beagu-auth-help,.challenge-access-help){
+  display:none;
+}
+body.beagu-page-challenge #challengeAccessPanel .challenge-access-feedback{
+  margin:0 0 9px;
+  min-height:0;
+  font-size:12px;
+  color:#61748c;
+  line-height:1.5;
+}
+body.beagu-page-challenge #challengeAccessPanel .challenge-access-feedback:empty{display:none;}
+body.beagu-page-challenge #challengeAccessPanel .challenge-access-feedback:not(:empty){
+  margin-bottom:11px;
+}
+body.beagu-page-challenge #challengeProtected{
+  width:100%;
+}
+body.beagu-page-challenge #challengeProtected>#certificate{
+  margin-top:6px;
+}
+body.beagu-page-challenge .challenge-lv2-pending{
+  padding:15px 22px;
+  min-height:0;
+  margin:17px auto 20px;
+  border-radius:14px;
+}
+body.beagu-page-challenge .challenge-lv2-pending .challenge-lv2-description{
+  margin:0;
+  font-size:12px;
+  line-height:1.65;
+}
+/* Keep all three authentication cards on the same horizontal grid. */
+@media(max-width:720px){
+  body:is(.beagu-page-search,.beagu-page-lv1) main.container,
+  body.beagu-page-compare main.shell,
+  body.beagu-page-challenge main#main-content{
+    box-sizing:border-box;
+    width:calc(100% - 28px);
+    max-width:none;
+    margin:0 auto;
+    padding:18px 0 60px;
+  }
+  body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status){
+    min-height:218px;
+    padding:22px 21px 20px;
+    margin-bottom:20px;
+    border-radius:21px;
+  }
+  body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status) :is(h1,h2){
+    font-size:21px;
+  }
+  body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status)>.beagu-levelup-trigger{
+    width:100%;
+    min-height:54px;
+    margin:auto 0 0;
+  }
+}
+@media(max-width:370px){
+  body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status){
+    padding:20px 17px;
+  }
+  body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-challenge) :is(#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel,.beagu-levelup-status) :is(h1,h2){
+    font-size:19px;
+  }
+}
+
+
+/* Compact authenticated upgrade cards: keep the heading and identity CTA together. */
+body.beagu-page-lv1 #searchPanel .beagu-levelup-status,
+body.beagu-page-compare #compareLv1AuthPanel.is-authenticated{
+  min-height:0;
+  height:auto;
+  padding:21px 26px 19px;
+}
+body.beagu-page-lv1 #searchPanel .beagu-levelup-status > .beagu-levelup-heading,
+body.beagu-page-compare #compareLv1AuthPanel.is-authenticated > .beagu-auth-heading{
+  margin-bottom:12px;
+}
+body.beagu-page-lv1 #searchPanel .beagu-levelup-status > .beagu-levelup-trigger,
+body.beagu-page-compare #compareLv1AuthPanel.is-authenticated > .beagu-levelup-trigger{
+  margin:0;
+}
+@media(max-width:720px){
+  body.beagu-page-lv1 #searchPanel .beagu-levelup-status,
+  body.beagu-page-compare #compareLv1AuthPanel.is-authenticated{
+    min-height:0;
+    padding:20px 20px 18px;
+  }
+}
+@media(max-width:370px){
+  body.beagu-page-lv1 #searchPanel .beagu-levelup-status,
+  body.beagu-page-compare #compareLv1AuthPanel.is-authenticated{
+    padding:18px 17px 17px;
+  }
+}

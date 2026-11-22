@@ -1,0 +1,120 @@
+/* Original Korean dramatic portrait art — high detail WebP characters.
+   Image assets never introduce extra scrolling or alter romance routes. */
+.scene-portrait[data-art-quality="hq"]{
+ object-fit:contain;object-position:center bottom;
+ filter:drop-shadow(0 12px 22px rgba(19,20,32,.34));
+ image-rendering:auto;transform:translateZ(0);
+}
+body.is-playing #scenePortrait[data-art-quality="hq"]{
+ height:78%;max-width:57%;right:4%;bottom:22%;
+}
+#sceneGuest[data-art-quality="hq"] img{
+ object-fit:contain;object-position:center bottom;
+ filter:drop-shadow(0 8px 12px rgba(15,20,26,.2));
+}
+.setup-character-art img[data-art-quality="hq"],.setup-supporting-person img[data-art-quality="hq"]{
+ image-rendering:auto;object-fit:contain;object-position:center bottom;
+}
+.character-avatar[data-art-quality="hq"]{
+ background-color:#eee8e6;background-size:cover;background-position:center;
+ border-color:#ffffffd9;color:transparent;font-size:0;
+}
+body.is-playing .vn-bottom .character-avatar[data-art-quality="hq"]{
+ display:block;width:34px;height:34px;min-width:34px;border-width:1px;
+}
+body.is-playing .vn-bottom .character-strip:has(.character-avatar[data-art-quality="hq"]){
+ align-items:center;padding:4px 10px;min-height:37px;
+}
+@media(max-width:620px){
+ body.is-playing #scenePortrait[data-art-quality="hq"]{
+  height:68%;max-width:85%;right:-2%;bottom:29%;
+ }
+ .scene-guest[data-art-quality="hq"] img{max-height:clamp(118px,24vh,180px)}
+ body.is-playing .vn-bottom .character-avatar[data-art-quality="hq"]{
+  width:29px;height:29px;min-width:29px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .scene-portrait[data-art-quality="hq"]{transition:none!important;transform:none}
+}
+
+/* Female half-body framing (same head-and-torso scale as the male photo cast).
+ * Keep the existing original Korean-drama-style faces; no matte/cartoon filter.
+ * Portraits are cropped in memory, not stretched or regenerated. */
+#setup .setup-character-art img[data-portrait-framing="bust"][data-art-quality="hq"]{
+ width:100%;height:100%;
+ object-fit:cover;object-position:center 10%;
+}
+#setup .setup-supporting-person img[data-portrait-framing="bust"][data-art-quality="hq"]{
+ object-fit:cover;object-position:center 8%;
+ border-radius:7px;
+}
+body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+ width:min(46vw,490px);
+ height:auto;
+ max-width:70%;
+ max-height:72%;
+ right:5%;
+ bottom:24%;
+ object-fit:contain;
+ object-position:center bottom;
+}
+#sceneGuestPortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+ width:100%;height:auto;
+ max-height:clamp(140px,31vh,285px);
+ object-fit:contain;object-position:center bottom;
+}
+@media(max-width:620px){
+ body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+  width:min(80vw,355px);
+  height:auto;
+  max-width:90%;
+  max-height:63%;
+  right:-1%;
+  bottom:30%;
+  object-fit:contain;
+ }
+ #sceneGuestPortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+  max-height:clamp(115px,24vh,185px);
+ }
+}
+
+/* Real alpha waist-up cutouts: never show an image-backed rectangle.
+ * The school's scenic backdrop remains on #sceneBackdrop, independently. */
+#scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"],
+#sceneGuestPortrait[data-art-quality="hq"][data-portrait-framing="bust"],
+#setupPortraitWoman[data-portrait-framing="bust"],
+#setupPortraitNone[data-portrait-framing="bust"],
+#setupPortraitSuhyun[data-portrait-framing="bust"],
+#setupPortraitSea[data-portrait-framing="bust"],
+#setupPortraitYuri[data-portrait-framing="bust"] {
+ background:transparent!important;
+ image-rendering:auto;
+}
+#setup .setup-character-art img[data-art-quality="hq"][data-portrait-framing="bust"],
+#setup .setup-supporting-person img[data-art-quality="hq"][data-portrait-framing="bust"] {
+ object-position:center top;
+}
+body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"] {
+ object-position:center bottom;
+}
+
+/* Female 3/4 portraits (head to mid-thigh). Retain the historical 'bust'
+   data attribute for compatibility with other school-game screens. */
+body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+ width:min(49vw,540px);height:80%;max-height:80%;max-width:65%;
+ right:3%;bottom:17%;object-fit:contain;object-position:center bottom;
+}
+#setup .setup-character-art img[data-portrait-framing="bust"][data-art-quality="hq"],
+#setup .setup-supporting-person img[data-portrait-framing="bust"][data-art-quality="hq"]{
+ object-fit:contain;object-position:center bottom;
+}
+#sceneGuestPortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+ object-fit:contain;object-position:center bottom;
+}
+@media(max-width:620px){
+ body.is-playing #scenePortrait[data-art-quality="hq"][data-portrait-framing="bust"]{
+  width:min(86vw,370px);height:74%;max-height:74%;max-width:92%;
+  right:-1%;bottom:24%;object-fit:contain;object-position:center bottom;
+ }
+}

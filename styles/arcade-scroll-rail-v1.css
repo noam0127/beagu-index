@@ -1,0 +1,28 @@
+/* Thin right-edge scrollbar for touchscreen gameplay. Hidden off-mobile. */
+.arcade-mobile-scroll-rail[hidden]{display:none!important}
+.arcade-mobile-scroll-rail{
+ position:fixed;top:50%;right:max(3px,env(safe-area-inset-right));
+ transform:translateY(-50%);z-index:2147483647;
+ width:35px;height:min(60svh,470px);
+ display:flex;flex-direction:column;align-items:center;gap:4px;
+ padding:5px 6px;border:1px solid rgba(204,235,252,.48);
+ border-radius:18px;background:rgba(15,39,62,.76);
+ box-shadow:0 3px 15px rgba(0,0,0,.3);
+ touch-action:none;user-select:none;-webkit-user-select:none;
+ -webkit-tap-highlight-color:transparent;cursor:ns-resize;
+}
+.arcade-mobile-scroll-arrow{
+ display:flex;align-items:center;justify-content:center;flex:0 0 16px;
+ font:900 19px/1 system-ui,sans-serif;color:#e9f8ff;pointer-events:none
+}
+.arcade-mobile-scroll-track{
+ position:relative;flex:1;align-self:stretch;min-height:30px;
+ border-radius:999px;background:rgba(213,233,249,.18);pointer-events:none
+}
+.arcade-mobile-scroll-thumb{
+ position:absolute;top:0;left:0;width:100%;min-height:36px;
+ border-radius:999px;background:#d2f7f0;border:1px solid #f6fffd;
+ box-shadow:0 0 7px rgba(174,246,234,.6);will-change:transform
+}
+.arcade-mobile-scroll-rail:focus-visible{outline:3px solid #fff7ad;outline-offset:2px}
+@media(min-width:769px) and (pointer:fine){.arcade-mobile-scroll-rail{display:none!important}}

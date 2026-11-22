@@ -1,0 +1,42 @@
+/* School-interest ranking: Lv.0 locked, Lv.1 verified. */
+.beagu-interest{margin:20px 0 24px;padding:19px 18px;background:#fff;border:1px solid #d7e2f1;border-radius:18px;box-shadow:0 5px 18px rgba(15,43,82,.045);min-width:0}
+.beagu-interest-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 13px}
+.beagu-interest-head h2{font-size:18px;line-height:1.35;letter-spacing:-.035em;margin:0;color:#172f4e;font-weight:850}
+.beagu-interest-badge{flex:0 0 auto;padding:5px 9px;border-radius:999px;background:#eef3fb;color:#385985;font-size:11px;font-weight:800;white-space:nowrap}
+.beagu-interest-lock{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:19px 12px 12px;border-radius:13px;border:1px dashed #c9d5e4;background:#f5f7fa;color:#4a607a}
+.beagu-interest-lock-icon{font-size:26px;line-height:1}
+.beagu-interest-lock strong{color:#203a5b;font-size:15px}
+.beagu-interest-lock p{font-size:13px;margin:0;line-height:1.55}
+.beagu-interest-lock a{margin-top:4px;display:inline-flex;align-items:center;justify-content:center;background:#2563eb;border-radius:10px;color:#fff;text-decoration:none;padding:10px 14px;font-size:13px;font-weight:800;min-height:40px}
+.beagu-interest-more:focus-visible,.beagu-interest-item button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.beagu-interest-list{margin:0;padding:0;list-style:none}
+.beagu-interest-item{border-bottom:1px solid #eef1f6}
+.beagu-interest-item:last-child{border-bottom:0}
+.beagu-interest-item button{display:flex;align-items:center;gap:12px;width:100%;min-width:0;text-align:left;background:transparent;border:0;border-radius:8px;padding:13px 6px;cursor:pointer;color:#172c48}
+.beagu-interest-item button:hover{background:#f2f6fc}
+.beagu-interest-rank{flex:0 0 22px;text-align:center;font-size:16px;font-weight:850;color:#61748d}
+.beagu-interest-item:nth-child(-n+3) .beagu-interest-rank{color:#2563eb}
+.beagu-interest-school{flex:1;display:flex;flex-direction:column;min-width:0;gap:3px}
+.beagu-interest-school strong{font-size:14px;line-height:1.35;overflow-wrap:anywhere}
+.beagu-interest-school small{font-size:11px;color:#71839a}
+.beagu-interest-number{flex:0 0 auto;font-size:12px;color:#3a597d;font-weight:750;white-space:nowrap}
+.beagu-interest-status{padding:21px 6px;text-align:center;color:#64748b;font-size:13px;line-height:1.6;margin:0}
+.beagu-interest-more{display:block;width:100%;padding:11px 12px;margin:12px 0 0;background:#f1f5fb;border:1px solid #d9e4f3;border-radius:10px;color:#20549b;font-weight:800;font-size:13px;cursor:pointer}
+.beagu-interest-note{font-size:11px;line-height:1.55;color:#8290a1;margin:12px 0 0}
+@media(max-width:410px){.beagu-interest{padding:16px 13px}.beagu-interest-head h2{font-size:16px}.beagu-interest-item button{gap:7px}.beagu-interest-number{font-size:11px}}
+
+
+/* v2: own card directly under the search field, no longer inside the field panel. */
+.beagu-interest[hidden]{display:none!important}
+.beagu-interest--standalone{
+  clear:both;display:block;margin:18px 0 28px;padding:20px 18px;
+  border:1px solid #cbdbee;border-radius:18px;background:#fff;
+  box-shadow:0 6px 24px rgba(15,47,90,.055);
+}
+.beagu-interest--standalone .beagu-interest-head{margin-bottom:5px}
+.beagu-interest-badge--live{display:inline-flex;align-items:center;gap:6px;color:#186b60;background:#e9f8f4}
+.beagu-interest-live-dot{width:7px;height:7px;display:inline-block;border-radius:50%;background:#1aa784}
+.beagu-interest-description{margin:0 0 13px;font-size:12px;color:#657790;line-height:1.55}
+.beagu-interest-number{color:#087c66;font-weight:800}
+.beagu-interest-updated{margin:5px 0 0;color:#8a99ad;font-size:11px;text-align:right}
+@media(max-width:410px){.beagu-interest--standalone{margin-top:16px;padding:17px 14px}.beagu-interest-description{font-size:11px}}

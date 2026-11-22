@@ -1,0 +1,14 @@
+/* Five fictional male characters now share the female cast's illustrated Korean webtoon style. */
+.setup-hyunwoo-live,
+.setup-supporting-photo,
+.scene-hyunwoo-live,
+.scene-guest-male-photo,
+.scene-student-photo {background-repeat:no-repeat;background-color:#e9e5e5}
+.scene-hyunwoo-live[data-expression="worried"],
+.scene-hyunwoo-live[data-expression="tired"],
+.scene-student[data-emotion="worried"] .scene-student-photo {filter:saturate(.82) brightness(.91)}
+.scene-hyunwoo-live[data-expression="shy"] {filter:saturate(1.05) sepia(.08)}
+.scene-hyunwoo-live[data-expression="smile"],
+.scene-student[data-emotion="smile"] .scene-student-photo {filter:saturate(1.06) brightness(1.04)}
+.scene-guest-male-photo{border:1px solid #ffffff24}
+.setup-hyunwoo-live{height:100%;width:100%}

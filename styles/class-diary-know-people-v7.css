@@ -1,0 +1,93 @@
+/* 『나의 OO한 학급일지』 — 알고 싶은 사람 고르기 / five refreshed profiles.
+ * Preserve the latest approved hobby portraits and their original square crop;
+ * these profile-only styles do not alter the visual novel's in-scene sprites.
+ */
+body.is-setting #setup[data-step="2"] .setup-section-title strong{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+ letter-spacing:-.04em;
+}
+body.is-setting #setup[data-step="2"] .setup-portrait-grid{
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:clamp(8px,1.55vw,19px)!important;
+ align-items:stretch!important;
+ width:min(100%,900px);
+ margin:0 auto;
+}
+body.is-setting #setup[data-step="2"] .setup-character{
+ position:relative;isolation:isolate;
+ display:flex!important;flex-direction:column!important;
+ align-items:center!important;justify-content:flex-start!important;
+ gap:0!important;
+ height:100%;min-width:0;
+ border:1.5px solid #e4d6e3!important;
+ background:linear-gradient(155deg,#fffdfd,#fffafc)!important;
+ border-radius:clamp(14px,2vw,22px)!important;
+ padding:clamp(6px,1.45vw,13px)!important;
+ box-shadow:0 5px 15px #60466d0d!important;
+ text-align:center!important;touch-action:manipulation;
+ transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character[aria-pressed="true"]{
+ border-color:#97718e!important;
+ background:#fff8fc!important;
+ box-shadow:0 0 0 2px #e5d1e2,0 8px 24px #5c3d6420!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character[aria-pressed="true"]::after{
+ content:"✓";display:grid;place-items:center;
+ position:absolute;z-index:2;top:11px;right:11px;
+ width:22px;height:22px;border-radius:50%;
+ color:#fff;background:#8b6087;
+ font:800 13px/1 sans-serif;
+ box-shadow:0 2px 8px #573c4f45;
+}
+body.is-setting #setup[data-step="2"] .setup-character-art{
+ display:block!important;overflow:hidden!important;
+ width:100%!important;height:auto!important;min-height:0!important;
+ aspect-ratio:1/1!important;flex:0 0 auto!important;
+ border-radius:clamp(9px,1.6vw,15px)!important;
+ box-shadow:none!important;filter:none!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character-name{
+ margin:clamp(6px,1dvh,11px) 0 0!important;
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif!important;
+ font-size:clamp(13px,2.55vmin,21px)!important;
+ line-height:1.25!important;font-weight:800!important;
+ letter-spacing:-.045em;
+ color:#3f3447;
+}
+body.is-setting #setup[data-step="2"] .setup-character-hobby{
+ display:block;max-width:100%;
+ margin:6px 0 0;padding:3px clamp(5px,1vw,10px);
+ border-radius:999px;
+ color:#896a80;background:#f7edf4;
+ font:700 clamp(9px,1.65vmin,12px)/1.5 "Gowun Batang","Nanum Myeongjo",serif;
+ letter-spacing:-.04em;white-space:normal;
+ word-break:keep-all;
+}
+body.is-setting #setup[data-step="2"] .setup-character-tag{
+ display:block!important;max-width:100%;
+ height:auto!important;min-height:0!important;
+ margin:7px 0 0!important;padding:0 1px 2px;
+ color:#796c78!important;
+ font:400 clamp(10px,1.85vmin,13px)/1.52 "Gowun Batang","Nanum Myeongjo",serif!important;
+ letter-spacing:-.045em!important;
+ word-break:keep-all!important;overflow-wrap:break-word!important;
+ text-align:center;
+}
+@media(max-width:410px){
+ body.is-setting #setup[data-step="2"] .setup-portrait-grid{gap:7px!important}
+ body.is-setting #setup[data-step="2"] .setup-character{padding:6px!important}
+ body.is-setting #setup[data-step="2"] .setup-character-hobby{
+  padding:2px 4px;font-size:9px;line-height:1.4;
+ }
+ body.is-setting #setup[data-step="2"] .setup-character-tag{
+  font-size:9.5px!important;line-height:1.42!important;
+ }
+ body.is-setting #setup[data-step="2"] .setup-character[aria-pressed="true"]::after{
+  width:18px;height:18px;top:8px;right:8px;font-size:11px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-setting #setup[data-step="2"] .setup-character{transition:none!important}
+}

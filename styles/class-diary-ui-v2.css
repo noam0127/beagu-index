@@ -1,0 +1,268 @@
+/* Class Diary UI v2: unobtrusive controls, quick status, accessible overlays.
+   Extends class-diary-journey-v1.css without replacing the narrative engine. */
+body.is-playing #novelCard{width:min(100%,1240px);height:min(100dvh,790px);box-shadow:0 24px 65px #080c1960}
+body.is-playing #sceneArt{background:#b9aeb0}
+body.is-playing #sceneBackdrop{transition:filter .28s ease,opacity .28s ease}
+body.is-playing #scenePortrait{transition:opacity .22s ease,transform .28s ease}
+body.is-playing #vnHeaderSlot{min-width:0;max-width:calc(100% - 202px)}
+body.is-playing #vnHeaderSlot .tag{font-size:11px;letter-spacing:.015em}
+body.is-playing .vn-hud h2{font-size:clamp(17px,2.25vw,24px);line-height:1.3;max-width:420px}
+body.is-playing .vn-top-actions{gap:6px}
+body.is-playing .vn-top-actions button{width:40px;height:40px;min-width:40px;min-height:40px;display:grid;place-items:center;touch-action:manipulation}
+body.is-playing .vn-top-actions button:focus-visible,
+body.is-playing .diary-toolbar button:focus-visible,
+.diary-panel button:focus-visible,
+.diary-panel input:focus-visible{outline:3px solid #fff1a9;outline-offset:3px}
+body.is-playing #vnHud{position:relative}
+.diary-day-progress{display:flex;align-items:center;gap:5px;margin-top:9px;max-width:210px}
+.diary-day-progress span{width:19px;height:3px;flex:1;border-radius:9px;background:#ffffff62;transition:background .2s ease}
+.diary-day-progress span.current{background:#fff0ad;box-shadow:0 0 8px #ffeab855}
+.diary-day-progress span.complete{background:#f5a9c6}
+.diary-quickstats{position:absolute;top:66px;right:clamp(12px,3vw,32px);display:flex;gap:6px;justify-content:flex-end;pointer-events:none}
+.diary-quickstats span{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #ffffff4c;border-radius:999px;background:#1c1f32a8;box-shadow:0 2px 12px #0002;color:#fff;font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;backdrop-filter:blur(7px)}
+.diary-quickstats b{color:#ffe3ed;font-size:12px;font-weight:900}
+body.is-playing .vn-bottom .vn-dialogue,
+body.is-playing .vn-bottom .outcome{border:1px solid #ffeef290;background:linear-gradient(115deg,#22263adf,#2d293add);box-shadow:0 16px 34px #0c102e75}
+body.is-playing .vn-bottom .character-strip{background:#2c283bdc;border-color:#ffffff65}
+body.is-playing .vn-bottom .vn-control-row{justify-content:flex-end;gap:9px}
+body.is-playing .vn-bottom .vn-fiction{margin-right:auto;max-width:130px}
+.diary-toolbar{display:flex;gap:5px;align-items:center;justify-content:flex-end}
+.diary-toolbar button{display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:3px 2px;border:1px solid #ffffff76;border-radius:11px;background:#1e2139b3;color:#fff;backdrop-filter:blur(6px);font:750 10px/1.1 "Apple SD Gothic Neo",Pretendard,sans-serif;touch-action:manipulation}
+.diary-toolbar button .diary-tool-icon{font-size:18px;line-height:1;display:block;margin-bottom:4px}
+.diary-toolbar button[aria-pressed="true"]{background:#f3d9e6;color:#52394f;border-color:#ffeaf5}
+.diary-toolbar button:hover{background:#fff4f137}
+.diary-toolbar button[aria-pressed="true"]:hover{background:#f3d9e6}
+body.is-playing #vnMore,body.is-playing #nextBtn{flex:0 0 44px;transition:background .18s,box-shadow .18s}
+body.is-playing #vnMore:hover,body.is-playing #nextBtn:hover{background:#fff;box-shadow:0 0 0 4px #fff3,0 5px 20px #0005}
+body.is-playing #choiceSection{padding-left:clamp(16px,5vw,32px);padding-right:clamp(16px,5vw,32px);background:#101221b3}
+body.is-playing #choiceSection .choice{min-height:56px;border-radius:13px;transition:transform .16s,background .16s}
+body.is-playing #choiceSection .choice:active{transform:scale(.985)}
+.diary-panel-scrim{position:fixed;inset:0;z-index:210;display:grid;place-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px));background:#090d1cc5;backdrop-filter:blur(5px)}
+.diary-panel{width:min(100%,470px);max-height:calc(100dvh - 56px);display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(150deg,#fffafa,#f4eef5);border:1px solid #fff8;border-radius:21px;box-shadow:0 25px 90px #0007;color:#49394f}
+.diary-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:19px 21px 13px;border-bottom:1px solid #eadce5}
+.diary-panel-head h2{font:750 19px/1.3 "Apple SD Gothic Neo",Pretendard,sans-serif;margin:0;color:#493b50}
+.diary-panel-close{display:grid;place-items:center;border:1px solid #e2d4e0;border-radius:10px;width:39px;height:39px;font-size:22px;background:#fff;color:#64536c}
+.diary-panel-content{overflow:auto;overscroll-behavior:contain;padding:17px 21px 22px}
+.diary-panel-note{font-size:12px;color:#817286;line-height:1.7;margin:0 0 14px}
+.diary-log-entry{margin:0 0 10px;border:1px solid #eadddf;border-radius:12px;background:#fff;padding:11px 12px;line-height:1.65}
+.diary-log-entry small{display:block;font-size:11px;color:#886985;margin-bottom:5px;font-weight:800}
+.diary-log-entry p{margin:0;color:#4d4150;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.diary-panel-setting{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 17px}
+.diary-panel-setting label{display:block;width:100%;font-weight:750;color:#5c4761;font-size:13px;margin:0}
+.diary-panel-setting input{flex:1 1 200px;accent-color:#936a8c;padding:0;margin:0;min-height:34px}
+.diary-panel-setting button{flex:0 0 auto;border:1px solid #cdb6c6;border-radius:10px;padding:10px;background:#fff;color:#523b53;font-size:12px;font-weight:800}
+.diary-panel-rule{border:0;border-top:1px solid #e5d9e4;margin:14px 0}
+.diary-log-empty{background:#f3edf3;padding:15px;border-radius:12px;color:#6f6072;font-size:13px}
+@media(max-width:620px){
+ body.is-playing #novelCard{height:100dvh;border-radius:0;box-shadow:none}
+ body.is-playing #vnHud{display:block}
+ body.is-playing #vnHeaderSlot{max-width:100%;padding-top:47px}
+ body.is-playing #vnHeaderSlot .tag{font-size:10px;padding:6px 9px}
+ body.is-playing .vn-hud h2{font-size:19px;max-width:90vw;margin-top:6px}
+ body.is-playing .vn-top-actions{position:absolute;top:1px;right:0;gap:5px}
+ body.is-playing .vn-top-actions button{width:37px;height:37px;min-width:37px;min-height:37px;font-size:16px}
+ .diary-quickstats{top:126px;right:12px}
+ .diary-quickstats span{padding:5px 8px;font-size:10px}
+ .diary-day-progress{margin-top:6px;max-width:145px}
+ body.is-playing .vn-bottom .vn-dialogue,body.is-playing .vn-bottom .outcome{max-height:min(29dvh,190px);padding:15px}
+ body.is-playing .vn-bottom .vn-control-row{gap:5px}
+ body.is-playing .vn-bottom .vn-fiction{font-size:9px;max-width:70px}
+ .diary-toolbar{gap:4px}
+ .diary-toolbar button{width:39px;height:44px;min-width:39px;font-size:9px}
+ .diary-toolbar button .diary-tool-icon{font-size:17px}
+ body.is-playing #choiceSection .choice{font-size:14px;min-height:50px;padding:13px 14px}
+ .diary-panel-head{padding:15px 16px 10px}
+ .diary-panel-content{padding:15px 16px 21px}
+}
+@media(max-width:360px){
+ .diary-quickstats{display:none}
+ body.is-playing .vn-bottom .vn-fiction{max-width:52px;font-size:8px}
+ .diary-toolbar button{width:37px;min-width:37px}
+ body.is-playing #vnMore,body.is-playing #nextBtn{width:40px;height:40px;min-height:40px;flex-basis:40px}
+}
+@media(prefers-reduced-motion:reduce){
+ .diary-day-progress span,body.is-playing #vnMore,body.is-playing #nextBtn,body.is-playing #choiceSection .choice,body.is-playing #sceneBackdrop,body.is-playing #scenePortrait{transition:none!important}
+}
+
+/* Literary full-page paper dialogue v3 · 2026-11-20
+   Larger, scrollable prose area without replacing the visual-novel controls. */
+body.is-playing #novelCard .vn-bottom{
+ width:min(100%,1100px);
+ align-self:center;
+ height:min(70dvh,660px);
+ max-height:calc(100dvh - 120px);
+ gap:0;
+ justify-content:flex-end;
+ padding:0;
+}
+body.is-playing #novelCard #vnDialogueSlot{
+ flex:1 1 auto;
+ display:flex;
+ flex-direction:column;
+ min-height:0;
+ gap:0;
+ overflow:hidden;
+}
+body.is-playing #novelCard .vn-bottom .character-strip{
+ position:relative;
+ z-index:3;
+ flex:none;
+ align-self:flex-start;
+ max-width:calc(100% - 34px);
+ margin:0 0 -1px clamp(14px,2.8vw,30px);
+ padding:8px 19px;
+ transform:translateY(8px) rotate(-.65deg);
+ border:1px solid #d8adae;
+ border-radius:5px 13px 4px 4px;
+ background:linear-gradient(120deg,rgba(245,219,218,.99),rgba(236,201,202,.99));
+ box-shadow:2px 4px 12px #4b31431d;
+}
+body.is-playing #novelCard .vn-bottom .character-name{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+ font-size:15px;
+ font-weight:700;
+ color:#644654;
+ line-height:1.6;
+}
+body.is-playing #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing #novelCard #vnDialogueSlot .outcome{
+ position:relative;
+ flex:1 1 auto;
+ min-height:0;
+ max-height:none;
+ width:100%;
+ overflow-y:auto;
+ overscroll-behavior:contain;
+ scrollbar-width:thin;
+ scrollbar-color:#bba0a0 transparent;
+ padding:clamp(24px,3.6vw,43px) clamp(22px,4.7vw,54px) clamp(24px,3vw,36px);
+ border:1px solid #e2cfc7;
+ border-top:3px solid #c697a3;
+ border-radius:18px 18px 0 0;
+ background:linear-gradient(154deg,rgba(255,252,246,.98) 0%,rgba(252,245,237,.97) 60%,rgba(246,235,227,.97) 100%);
+ color:#3f3842;
+ backdrop-filter:blur(13px);
+ box-shadow:0 18px 55px #100e205c,inset 0 0 0 5px #fff7;
+}
+body.is-playing #novelCard #vnDialogueSlot .vn-dialogue::before,
+body.is-playing #novelCard #vnDialogueSlot .outcome::before{
+ content:"";
+ display:block;
+ height:1px;
+ width:min(190px,40%);
+ margin:0 0 clamp(20px,3vw,30px);
+ background:linear-gradient(90deg,#be909d7d,#be909d14);
+}
+body.is-playing #novelCard .vn-bottom .prose,
+body.is-playing #novelCard .vn-bottom .outcome .prose{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+ font-weight:400;
+ font-size:clamp(18px,2.1vw,23px);
+ line-height:1.92;
+ letter-spacing:-.018em;
+ word-break:keep-all;
+ overflow-wrap:break-word;
+ color:#41383e;
+ text-shadow:none;
+}
+body.is-playing #novelCard .vn-bottom .prose p,
+body.is-playing #novelCard .vn-bottom .outcome .prose p{
+ margin:0 0 1.3em;
+}
+body.is-playing #novelCard .vn-bottom .prose p:last-child,
+body.is-playing #novelCard .vn-bottom .outcome .prose p:last-child{
+ margin-bottom:0;
+}
+body.is-playing #novelCard .vn-bottom .outcome>strong{color:#8b6072}
+body.is-playing #novelCard .vn-bottom .vn-control-row{
+ flex:0 0 auto;
+ min-height:64px;
+ margin:0;
+ padding:8px clamp(12px,2.6vw,24px);
+ gap:10px;
+ border:1px solid #e2cfc7;
+ border-top:0;
+ border-radius:0 0 18px 18px;
+ background:linear-gradient(100deg,rgba(249,239,231,.98),rgba(255,249,244,.98));
+ box-shadow:0 14px 36px #1613236b;
+}
+body.is-playing #novelCard .vn-bottom .vn-fiction{color:#937d86;text-shadow:none;max-width:none}
+body.is-playing #novelCard .diary-toolbar button{
+ background:#fff9f4;
+ color:#755c69;
+ border-color:#e9d5d6;
+ box-shadow:none;
+}
+body.is-playing #novelCard .diary-toolbar button[aria-pressed="true"]{
+ background:#e7c5d4;
+ color:#513a4d;
+}
+body.is-playing #novelCard #vnMore,
+body.is-playing #novelCard #nextBtn{
+ width:48px;
+ height:48px;
+ min-height:48px;
+ flex-basis:48px;
+ background:#9c718a;
+ color:#fff;
+ border:1px solid #bd9cb0;
+ box-shadow:0 5px 14px #704a6455;
+}
+body.is-playing #novelCard #vnMore:hover,
+body.is-playing #novelCard #nextBtn:hover{
+ background:#875b77;
+ box-shadow:0 0 0 4px #f6dce5ad,0 7px 17px #704a6460;
+}
+body.is-playing #novelCard .vn-bottom .actions #nextBtn{
+ margin-top:6px;
+}
+@media(max-width:620px){
+ body.is-playing #novelCard .vn-bottom{
+  height:min(73dvh,640px);
+  max-height:calc(100dvh - 100px);
+ }
+ body.is-playing #novelCard #vnDialogueSlot .vn-dialogue,
+ body.is-playing #novelCard #vnDialogueSlot .outcome{
+  max-height:none;
+  padding:22px 22px 25px;
+  border-radius:14px 14px 0 0;
+ }
+ body.is-playing #novelCard .vn-bottom .prose,
+ body.is-playing #novelCard .vn-bottom .outcome .prose{
+  font-size:clamp(17px,4.35vw,19px);
+  line-height:1.84;
+  letter-spacing:-.018em;
+ }
+ body.is-playing #novelCard .vn-bottom .character-strip{
+  margin-left:14px;
+  padding:5px 13px;
+ }
+ body.is-playing #novelCard .vn-bottom .character-name{font-size:13px}
+ body.is-playing #novelCard .vn-bottom .vn-control-row{
+  min-height:58px;
+  padding:6px 9px;
+  gap:5px;
+  border-radius:0 0 14px 14px;
+ }
+ body.is-playing #novelCard .vn-bottom .vn-fiction{max-width:68px;font-size:9px}
+ body.is-playing #novelCard .diary-toolbar button{width:38px;min-width:38px;height:42px}
+ body.is-playing #novelCard #vnMore,
+ body.is-playing #novelCard #nextBtn{
+  width:43px;height:43px;min-height:43px;flex-basis:43px;
+ }
+}
+@media(max-width:360px){
+ body.is-playing #novelCard .vn-bottom .vn-fiction{display:none}
+ body.is-playing #novelCard .vn-bottom .vn-control-row{gap:4px}
+ body.is-playing #novelCard #vnDialogueSlot .vn-dialogue,
+ body.is-playing #novelCard #vnDialogueSlot .outcome{padding:18px 17px 22px}
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing #novelCard .vn-bottom{height:66dvh;max-height:calc(100dvh - 85px)}
+ body.is-playing #novelCard #vnDialogueSlot .vn-dialogue,
+ body.is-playing #novelCard #vnDialogueSlot .outcome{padding:14px 22px}
+ body.is-playing #novelCard .vn-bottom .prose{font-size:16px;line-height:1.55}
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing #novelCard .vn-bottom .character-strip{transform:none}
+}

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head><meta http-equiv="Content-Security-Policy" content="connect-src 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow,noarchive"><script id="stage38-cdn-static-guard">document.addEventListener("submit",e=>{e.preventDefault();e.stopImmediatePropagation();},true);document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input[type=password],input[type=email]").forEach(x=>{x.disabled=true;x.value="";});}, {once:true});</script><meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"><meta name="robots" content="noindex,nofollow">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="referrer" content="no-referrer">
+  <title>업데이트 관리 · 배구지수 관리자</title>
+  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-review2">
+  <link rel="stylesheet" href="styles/beagu-admin-updates-v1.css?v=20261121-1">
+</head>
+<body><div id="stage38-public-static-warning" role="alert" style="z-index:2147483646;position:fixed;top:0;left:0;right:0;text-align:center;padding:10px;background:#7f1d1d;color:white;font:700 13px system-ui">외부 정적 화면 미리보기 · 로그인/개인정보 입력 금지 · 인증과 API 통신 차단</div><div id="beagu-preview-watermark" role="note" style="position:fixed;bottom:10px;right:10px;z-index:2147483600;background:#152943;color:#fff;border-radius:12px;padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>
+<main class="shell release-shell">
+  <header class="top">
+    <a class="brand" href="index.html" aria-label="배구지수 홈"><span class="mark">B</span><strong>BAEGUINDEX</strong></a>
+    <a class="secondary release-back" href="admin.html">관리자 대시보드로</a>
+  </header>
+  <section class="hero">
+    <p class="eyebrow">OPERATIONS / RELEASE CENTER</p>
+    <h1>업데이트 관리</h1>
+    <p>ChatGPT에서 변경사항을 개발하고 버전을 등록한 뒤, 여기서 시험 웹에 먼저 적용하세요. 시험 웹을 직접 확인한 후에만 실제 웹에 적용할 수 있습니다.</p>
+  </section>
+  <p id="releaseStatus" class="notice" role="status" aria-live="polite">관리자 인증을 확인하는 중입니다.</p>
+  <section class="release-login" id="releaseLogin" hidden>
+    <p>관리자 로그인과 2단계 인증을 완료한 계정만 업데이트할 수 있습니다.</p>
+    <a class="primary release-link" href="admin.html">관리자 로그인하기</a>
+  </section>
+  <div id="releaseDashboard" hidden>
+    <div class="release-top-actions">
+      <span id="releaseHead" class="subtle">최신 GitHub 버전을 확인하는 중입니다.</span>
+      <button type="button" id="releaseRefresh" class="secondary">상태 새로고침</button>
+    </div>
+    <section class="release-grid" aria-label="배포 환경">
+      <article class="release-surface">
+        <p class="eyebrow">TEST / PREVIEW</p>
+        <h2>시험 웹</h2>
+        <p id="releaseStageVersion" class="release-version">배포 전</p>
+        <p id="releaseStageSha" class="subtle">—</p>
+        <a href="./" target="_blank" rel="noopener noreferrer" class="release-site-link">시험 웹 열기 <span aria-hidden="true">↗</span></a>
+        <div class="release-buttons">
+          <button type="button" id="releaseStageApply" class="primary" disabled>시험 웹 적용</button>
+          <button type="button" id="releaseStageRollback" class="secondary" disabled>전 버전으로 되돌리기</button>
+        </div>
+      </article>
+      <article class="release-surface">
+        <p class="eyebrow">LIVE / PRODUCTION</p>
+        <h2>실제 웹</h2>
+        <p id="releaseProdVersion" class="release-version">확인 중</p>
+        <p id="releaseProdSha" class="subtle">—</p>
+        <span class="release-site-link" aria-disabled="true" title="독립 시험 후보에서는 운영 웹 이동이 차단됩니다">운영 웹 열기 비활성화</span>
+        <div class="release-buttons">
+          <button type="button" id="releaseProdApply" class="primary" disabled>실제 웹 적용</button>
+          <button type="button" id="releaseProdRollback" class="secondary" disabled>전 버전으로 되돌리기</button>
+        </div>
+      </article>
+    </section>
+    <section class="release-draft" aria-labelledby="releaseDraftHeading">
+      <div class="release-section-head"><h2 id="releaseDraftHeading">업데이트 버전</h2>
+        <p>ChatGPT가 변경 파일과 버전을 등록했다면 위의 <strong>시험 웹 적용</strong>만 누르세요. 직접 작성하고 싶을 때는 아래 입력창을 이용할 수 있습니다.</p></div>
+      <form id="releaseDraftForm">
+        <div class="release-meta-row">
+          <div><label for="releaseVersionInput">업데이트 버전</label>
+            <input id="releaseVersionInput" maxlength="32" pattern="[0-9A-Za-z][0-9A-Za-z._-]{0,31}" required placeholder="예: 1.1.0" autocomplete="off"></div>
+          <div><label for="releaseSummaryInput">무엇이 바뀌었나요?</label>
+            <textarea id="releaseSummaryInput" rows="3" maxlength="500" minlength="3" required placeholder="예: 관리자 공지사항 수정 기능, 레벨 표시 정렬 개선"></textarea></div>
+        </div>
+        <div class="release-register-actions">
+          <button type="submit" id="releaseRegister" class="secondary">변경사항 등록</button>
+          <span id="releaseDraftInfo" class="subtle" aria-live="polite">변경한 코드가 GitHub main에 있는지 검사합니다.</span>
+        </div>
+      </form>
+      <div id="releaseFileSummary" class="release-file-summary" hidden>
+        <strong>이번 업데이트에서 바뀐 파일</strong>
+        <ul id="releaseChangedFiles"></ul>
+      </div>
+    </section>
+    <section class="release-queue" aria-live="polite">
+      <h2>현재 배포 진행 상태</h2>
+      <p id="releaseQueueText">대기 중인 업데이트를 확인합니다.</p>
+      <p class="subtle">버튼을 누르면 배포 요청이 등록됩니다. GitHub Actions가 주기적으로 처리하며, 실제 게시에 성공해야 배포 완료로 기록됩니다.</p>
+    </section>
+    <section class="release-history" aria-labelledby="releaseHistoryHeading">
+      <h2 id="releaseHistoryHeading">버전 기록</h2>
+      <div class="release-grid">
+        <div class="release-history-panel">
+          <h3>시험 웹 기록</h3>
+          <div id="releaseStageHistory" class="release-history-list"><p>배포 기록 없음</p></div>
+        </div>
+        <div class="release-history-panel">
+          <h3>실제 웹 기록</h3>
+          <div id="releaseProdHistory" class="release-history-list"><p>배포 기록 없음</p></div>
+        </div>
+      </div>
+    </section>
+    <p class="release-caution"><strong>시험 웹 주의:</strong> 현재 시험 웹은 같은 도메인의 별도 경로에 배포됩니다. 일부 기능은 운영 Supabase 데이터에 연결되므로 시험 중 실제 설문·글쓰기·관리자 데이터 변경은 주의하세요. 시험 웹에 데이터까지 완전히 격리된 것은 아닙니다.</p>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script defer src="js/beagu-admin-updates-v1.js?v=20261121-1"></script>
+</body>
+</html>

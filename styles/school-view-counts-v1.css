@@ -1,0 +1,8 @@
+/* Quiet view counts for both search levels and the report hero. */
+.school-card .school-name{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.school-card .school-name-text{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.school-view-count{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;color:#718096;font-size:11px;font-weight:650;letter-spacing:0;white-space:nowrap;font-variant-numeric:tabular-nums}
+.school-view-count .school-view-eye{display:inline-block;flex:0 0 14px;width:14px;height:14px;background:currentColor;opacity:.78;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2.5 12c2.5-3.8 5.7-5.7 9.5-5.7s7 1.9 9.5 5.7c-2.5 3.8-5.7 5.7-9.5 5.7S5 15.8 2.5 12Z' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='12' r='2.1' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E") center / contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2.5 12c2.5-3.8 5.7-5.7 9.5-5.7s7 1.9 9.5 5.7c-2.5 3.8-5.7 5.7-9.5 5.7S5 15.8 2.5 12Z' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='12' r='2.1' fill='none' stroke='black' stroke-width='1.7'/%3E%3C/svg%3E") center / contain no-repeat}
+.school-view-count .school-view-number{font:inherit;font-weight:700}
+.school-hero .hero-foot .school-view-count{margin-right:auto}
+@media(max-width:420px){.school-card .school-name{gap:8px}.school-view-count{font-size:10px}}

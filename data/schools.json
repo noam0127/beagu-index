@@ -1,0 +1,35 @@
+[
+  {
+    "school_id": "TEST001",
+    "school_code": null,
+    "school_name": "서울개원초등학교",
+    "sido": "서울",
+    "support_office": "강남서초",
+    "establishment": "공립",
+    "address": "서울특별시 강남구 선릉로 29",
+    "homepage": "https://gaewon.sen.es.kr",
+    "status": "운영"
+  },
+  {
+    "school_id": "TEST002",
+    "school_code": null,
+    "school_name": "서울개일초등학교",
+    "sido": "서울",
+    "support_office": "강남서초",
+    "establishment": "공립",
+    "address": "서울특별시 강남구 개포로 401",
+    "homepage": "http://gaeil.sen.es.kr",
+    "status": "운영"
+  },
+  {
+    "school_id": "TEST003",
+    "school_code": null,
+    "school_name": "서울개포초등학교",
+    "sido": "서울",
+    "support_office": "강남서초",
+    "establishment": "공립",
+    "address": "서울특별시 강남구 삼성로4길 30",
+    "homepage": "https://gaepo.sen.es.kr",
+    "status": "운영"
+  }
+]

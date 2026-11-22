@@ -1,0 +1,61 @@
+/* 배구지수 레벨 안내: read-only UI, shared visual language */
+body.beagu-page-levels { margin:0; background:#f5f7fb; color:#172a43; }
+body.beagu-page-levels [hidden] {display:none!important}
+.beagu-level-guide {width:min(100% - 36px,1040px);margin:0 auto;padding:44px 0 84px}
+.beagu-level-guide a {text-decoration:none}
+.beagu-level-guide-hero {text-align:center;margin:0 auto 25px;max-width:760px}
+.beagu-level-guide-eyebrow {display:inline-flex;align-items:center;gap:8px;color:#275dc3;font-size:12px;font-weight:850;letter-spacing:.08em}
+.beagu-level-guide-title-line{display:block;white-space:nowrap;word-break:keep-all}
+.beagu-level-guide-hero h1 {font-size:clamp(29px,4.8vw,43px);font-weight:880;line-height:1.25;letter-spacing:-.055em;margin:13px 0 12px}
+.beagu-level-guide-hero p {font-size:clamp(14px,2.4vw,16px);color:#5f718a;line-height:1.65;margin:0}
+.beagu-level-guide-status {display:flex;justify-content:center;align-items:center;gap:10px;min-height:53px;margin:28px auto 24px;padding:10px 18px;width:fit-content;max-width:100%;background:#fff;border:1px solid #dae5f4;box-shadow:0 5px 20px rgba(17,47,82,.04);border-radius:999px;font-size:13px;color:#51647e}
+.beagu-level-guide-current {font-weight:850;color:#2057ba}
+.beagu-level-guide-cards {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:16px}
+.beagu-level-guide-card {display:flex;flex-direction:column;min-width:0;padding:24px 23px 22px;border-radius:23px;border:1px solid #e0e8f4;background:#fff;box-shadow:0 8px 30px rgba(20,48,83,.04)}
+.beagu-level-guide-card[data-tier="1"] {border-color:#c6d9fb;box-shadow:0 8px 32px rgba(36,99,235,.075)}
+.beagu-level-guide-card.is-current {outline:2px solid #2d65d8;outline-offset:-2px}
+.beagu-level-guide-card-head {display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:31px}
+.beagu-level-guide-tier {font-size:12px;font-weight:850;letter-spacing:.025em;color:#59708f}
+.beagu-level-guide-card[data-tier="1"] .beagu-level-guide-tier {color:#205ec7}
+.beagu-level-guide-card[data-tier="2"] .beagu-level-guide-tier {color:#6352b7}
+.beagu-level-guide-state {font-size:11px;font-weight:800;color:#2459ba;background:#ebf3ff;border-radius:999px;padding:5px 9px;white-space:nowrap}
+.beagu-level-guide-card h2 {font-size:clamp(22px,2.6vw,26px);font-weight:850;letter-spacing:-.05em;margin:14px 0 7px}
+.beagu-level-guide-sentence {font-size:13px;line-height:1.62;color:#61718a;margin:0 0 18px;min-height:41px}
+.beagu-level-guide-list {list-style:none;padding:16px 0 18px;margin:0 0 auto;border-top:1px solid #edf1f8}
+.beagu-level-guide-list li {display:flex;gap:9px;margin:0 0 12px;font-size:13px;line-height:1.65;font-weight:650;color:#354a68;word-break:keep-all}
+.beagu-level-guide-list li::before {content:"✓";color:#2767d6;font-weight:900;flex:none}
+.beagu-level-guide-card[data-tier="2"] .beagu-level-guide-list li::before {color:#6552b7}
+.beagu-level-guide-action {display:flex;align-items:center;justify-content:center;min-height:46px;text-align:center;border-radius:12px;padding:11px 14px;font-size:14px;font-weight:850;background:#edf4ff;color:#1d57b7!important;border:1px solid #d7e5fd}
+.beagu-level-guide-action:hover {background:#e2edff}
+.beagu-level-guide-card[data-tier="1"] .beagu-level-guide-action {background:#2563eb;color:#fff!important;border-color:#2563eb}
+.beagu-level-guide-card[data-tier="1"] .beagu-level-guide-action:hover {background:#1d4ed8}
+.beagu-level-guide-note {font-size:11px;color:#728198;line-height:1.65;margin:10px 0 0;text-align:center}
+.beagu-level-guide-flow {background:#fff;border:1px solid #dfe8f4;border-radius:20px;padding:25px;margin-top:26px;box-shadow:0 5px 22px rgba(20,48,83,.03)}
+.beagu-level-guide-flow h2 {font-size:19px;margin:0 0 17px;letter-spacing:-.04em}
+.beagu-level-guide-steps {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.beagu-level-guide-step {display:flex;align-items:flex-start;gap:11px;font-size:13px;color:#455974;line-height:1.65}
+.beagu-level-guide-step-number {display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:9px;background:#eaf2ff;color:#2361cc;font-size:13px;font-weight:850}
+.beagu-level-guide-step strong {display:block;color:#263d60;font-size:13px;margin-bottom:1px}
+.beagu-level-guide-disclaimer {margin:17px 0 0;font-size:12px;line-height:1.65;color:#74839a}
+.beagu-level-guide-footer {display:flex;align-items:center;justify-content:center;gap:20px;margin-top:29px;font-size:13px;font-weight:700}
+.beagu-level-guide-footer a {color:#4b668a!important}
+.beagu-level-guide-footer a:hover {color:#2057ba!important}
+@media(max-width:860px) {
+ .beagu-level-guide-cards {gap:11px}
+ .beagu-level-guide-card {padding:20px 16px}
+ .beagu-level-guide-flow {padding:22px 18px}
+}
+@media(max-width:700px) {
+ .beagu-level-guide {width:min(100% - 28px,560px);padding:31px 0 65px}
+ .beagu-level-guide-hero {text-align:left}
+ .beagu-level-guide-status {margin:22px 0 20px}
+ .beagu-level-guide-cards {grid-template-columns:1fr;gap:12px}
+ .beagu-level-guide-card {padding:21px}
+ .beagu-level-guide-card h2 {font-size:23px}
+ .beagu-level-guide-sentence {min-height:0}
+ .beagu-level-guide-list {padding:13px 0 9px}
+ .beagu-level-guide-flow {padding:21px;margin-top:18px}
+ .beagu-level-guide-steps {grid-template-columns:1fr;gap:15px}
+ .beagu-level-guide-footer {margin-top:24px}
+}
+@media(prefers-reduced-motion:reduce){.beagu-level-guide *{scroll-behavior:auto}}

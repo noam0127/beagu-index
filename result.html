@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head><meta http-equiv="Content-Security-Policy" content="connect-src 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow,noarchive"><script id="stage38-cdn-static-guard">document.addEventListener("submit",e=>{e.preventDefault();e.stopImmediatePropagation();},true);document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input[type=password],input[type=email]").forEach(x=>{x.disabled=true;x.value="";});}, {once:true});</script><meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"><meta name="robots" content="noindex,nofollow">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,follow">
+  <meta name="theme-color" content="#f7f8fa">
+  <title>학교 결과 새 주소 안내 | 배구지수</title>
+  
+  <style>
+    :root{color-scheme:light;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+    *{box-sizing:border-box}
+    body{background:#f7f8fa;color:#17233a;display:grid;min-height:100dvh;place-items:center;margin:0;padding:24px}
+    main{width:min(100%,510px);background:white;border:1px solid #dfe6f0;border-radius:18px;padding:30px;box-shadow:0 8px 22px #1235650d}
+    h1{font-size:24px;margin:0 0 15px}
+    p{font-size:15px;line-height:1.75;color:#526079}
+    a{color:#1d4ed8;font-weight:700}
+    a:focus-visible{outline:3px solid #93c5fd;outline-offset:4px}
+    .button{display:block;margin-top:22px;padding:14px;border-radius:12px;background:#2563eb;color:white;text-align:center;text-decoration:none}
+  </style>
+<link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
+</head>
+<body><div id="stage38-public-static-warning" role="alert" style="z-index:2147483646;position:fixed;top:0;left:0;right:0;text-align:center;padding:10px;background:#7f1d1d;color:white;font:700 13px system-ui">외부 정적 화면 미리보기 · 로그인/개인정보 입력 금지 · 인증과 API 통신 차단</div><div id="beagu-preview-watermark" role="note" style="position:fixed;bottom:10px;right:10px;z-index:2147483600;background:#152943;color:#fff;border-radius:12px;padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>
+  <main>
+    <h1>학교 결과 화면이 통합되었습니다</h1>
+    <p>현재 학교별 조사 기록은 새로운 상세화면에서 제공합니다. 이전 주소로 접속하셨다면 동일한 학교의 최신 공개 화면으로 이동합니다.</p>
+    <p>Lv.1·Lv.2 자료는 기존처럼 해당 화면에서 별도 인증이 필요하며, 승인되지 않은 데이터는 공개하지 않습니다.</p>
+    <a id="continueLink" class="button" href="school-report.html">현재 학교 상세화면으로 이동</a>
+    <p><small>자동 이동하지 않는 경우 위 버튼을 눌러 주세요.</small></p>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+<script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
+  <script src="js/visit-stats.js?v=20261120-gateway2"></script>
+  <script>
+  (()=>{
+    'use strict';
+    const params=new URLSearchParams(location.search);
+    const school=params.get('school_id')||params.get('school');
+    const destination=new URL('school-report.html',location.href);
+    if(school&&/^[A-Z0-9]{7}$/.test(school))destination.searchParams.set('school_id',school);
+    const year=params.get('year');
+    if(year&&['2023','2024','2025','2026'].includes(year))destination.searchParams.set('year',year);
+    const target=destination.pathname+destination.search;
+    document.getElementById('continueLink').href=target;
+    // Keep legacy /result.html visit statistics before navigating if possible;
+    // never block visitors if the optional visit RPC is unavailable.
+    const tracked=window.beaguVisitReady||Promise.resolve();
+    Promise.race([tracked,new Promise(resolve=>setTimeout(resolve,650))])
+      .catch(()=>{}).then(()=>location.replace(target));
+  })();
+  </script>
+</body>
+</html>

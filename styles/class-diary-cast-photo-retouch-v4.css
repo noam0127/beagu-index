@@ -1,0 +1,45 @@
+/* Photo-only retouch for the five-card '알고 싶은 사람' selection.
+ * New 3-panel portrait strip order: Minseo, Dogyeom, Taeo.
+ * The former SVG/HQ portraits stay available when the strip cannot load.
+ * Gameplay artwork, cast identities, accessibility and character choices remain unchanged. */
+body.is-setting #setup[data-step="2"] .setup-character-art,
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art {
+  aspect-ratio: 1 / 1 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  width: 100%;
+  overflow: hidden;
+  border-radius: clamp(9px, 1.8vw, 17px) !important;
+}
+body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-art.minseo,
+body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-art.dogyeom,
+body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-art.taeo {
+  background-image: url("../assets/class-diary/characters/setup-three-portraits-v4.webp") !important;
+  background-repeat: no-repeat !important;
+  background-color: #ecece9 !important;
+  background-size: 300% 100% !important;
+}
+body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-art.minseo {
+  background-position: 0% 50% !important;
+}
+body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-art.dogyeom {
+  background-position: 50% 50% !important;
+}
+body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-art.taeo {
+  background-position: 100% 50% !important;
+}
+body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-art.minseo > img,
+body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-art.dogyeom > img,
+body.is-setting #setup.has-retouched-portraits[data-step="2"] .setup-character-art.taeo > img {
+  visibility: hidden !important;
+  transform: none !important;
+}
+/* Prevent outdated Minseo zoom from cutting off her hair. */
+body.is-setting #setup[data-step="2"] .setup-character-art.minseo img#setupPortraitNone {
+  transform: none !important;
+  object-fit: contain !important;
+  object-position: center top !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  body.is-setting #setup[data-step="2"] .setup-character-art { transition: none !important; }
+}

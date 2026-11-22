@@ -1,0 +1,745 @@
+/* Baeguindex: authenticated school-search detail UI, 2026-11-18.
+ * Scoped to the consolidated Lv.1/Lv.2 screen. Presentation only.
+ * School values, regional/national benchmarks and release rules remain server-owned.
+ */
+body.beagu-page-lv1 .school-card{
+  overflow:visible;
+}
+body.beagu-page-lv1 .school-card .region-badge{
+  margin-bottom:8px;
+  padding:5px 10px;
+  background:#eaf2ff;
+  color:#2456a9;
+  font-size:11px;
+  letter-spacing:.015em;
+}
+body.beagu-page-lv1 .school-card .school-name{
+  margin:0 0 7px;
+  color:#17304f;
+  font-size:clamp(19px,2.5vw,23px);
+  letter-spacing:-.035em;
+  line-height:1.4;
+}
+body.beagu-page-lv1 .school-card .school-meta{
+  color:#60758f;
+  font-size:13px;
+  line-height:1.65;
+}
+body.beagu-page-lv1 .school-card .sort-result{
+  display:inline-flex;
+  align-items:center;
+  max-width:100%;
+  margin:13px 0 0;
+  padding:7px 11px;
+  border:1px solid #cbdcf4;
+  border-radius:9px;
+  background:#f1f6ff;
+  color:#2557a6;
+  font-size:12px;
+  font-weight:780;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure{
+  margin-top:14px;
+  border-radius:16px;
+  border-color:#cbdcf1;
+  background:#fbfdff;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure.is-expanded{
+  border-color:#8fb1e5;
+  background:#fff;
+  box-shadow:0 12px 24px rgba(22,57,102,.06);
+}
+body.beagu-page-lv1 .school-card .lv1-history-trigger{
+  color:#1b3a63;
+  font-size:16px;
+  min-height:47px;
+}
+body.beagu-page-lv1 .school-card .lv1-history-trigger:focus-visible{
+  outline:3px solid #93c5fd;
+  outline-offset:3px;
+  border-radius:8px;
+}
+body.beagu-page-lv1 .school-card .percentile-cell{
+  border:1px solid #e6edf7;
+  background:#f3f7fc;
+  transition:background .16s ease,border-color .16s ease;
+}
+body.beagu-page-lv1 .school-card .percentile-cell.is-current-year{
+  border-color:#7ea8ed;
+  background:#e9f2ff;
+  box-shadow:inset 0 0 0 1px #bfd4f7;
+}
+body.beagu-page-lv1 .school-card .percentile-cell.is-current-year .percentile-year{
+  color:#1f57a8;
+  font-weight:850;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure>.school-detail{
+  border-top:1px solid #dce8f8;
+  margin-top:15px;
+  padding-top:17px;
+}
+body.beagu-page-lv1 .school-card .beagu-history-detail{
+  margin:0;
+  border:0;
+  padding:0;
+}
+body.beagu-page-lv1 .school-card .school-history-heading{
+  margin:0 0 13px;
+  color:#253f62;
+  font-size:15px;
+  font-weight:850;
+}
+body.beagu-page-lv1 .school-card .year-tabs{
+  position:sticky;
+  top:0;
+  z-index:2;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px;
+  margin:0 0 17px;
+  padding:8px;
+  border:1px solid #e2eaf5;
+  border-radius:13px;
+  background:rgba(249,251,255,.98);
+  box-shadow:0 4px 11px rgba(27,57,101,.035);
+}
+body.beagu-page-lv1 .school-card .year-tabs button{
+  min-height:44px;
+  border:1px solid transparent;
+  border-radius:9px;
+  padding:8px 4px;
+  background:transparent;
+  color:#58718f;
+  font-size:13px;
+  font-weight:770;
+  line-height:1.4;
+  cursor:pointer;
+}
+body.beagu-page-lv1 .school-card .year-tabs button:hover{
+  background:#edf4ff;
+  color:#2453a0;
+}
+body.beagu-page-lv1 .school-card .year-tabs button[aria-selected="true"]{
+  background:#245dd9;
+  border-color:#245dd9;
+  color:#fff;
+  box-shadow:0 4px 10px rgba(36,93,217,.13);
+}
+body.beagu-page-lv1 .school-card .year-tabs button:focus-visible{
+  outline:3px solid #83b5ff;
+  outline-offset:2px;
+}
+body.beagu-page-lv1 .school-card .school-year-details{
+  min-width:0;
+  outline-offset:3px;
+}
+body.beagu-page-lv1 .school-card .beagu-year-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  flex-wrap:wrap;
+  padding:0 0 9px;
+  border-bottom:1px solid #e7edf6;
+}
+body.beagu-page-lv1 .school-card .beagu-year-title{
+  margin:0;
+  color:#182f4d;
+  font-size:16px;
+  font-weight:850;
+  letter-spacing:-.02em;
+}
+body.beagu-page-lv1 .school-card .beagu-year-caption{
+  color:#657992;
+  font-size:11px;
+  font-weight:700;
+}
+body.beagu-page-lv1 .school-card .beagu-approved-section{
+  margin:18px 0 20px;
+}
+body.beagu-page-lv1 .school-card .beagu-approved-section>h4{
+  margin:0 0 12px;
+  color:#24446c;
+  font-size:14px;
+  font-weight:850;
+}
+body.beagu-page-lv1 .school-card .beagu-approved-section .beagu-detail-group{
+  margin:8px 0;
+  border-color:#dbe6f3;
+  border-radius:11px;
+  background:#fbfdff;
+}
+body.beagu-page-lv1 .school-card .beagu-approved-section .beagu-detail-summary{
+  min-height:45px;
+}
+body.beagu-page-lv1 .school-card .beagu-approved-section .data-row{
+  gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid #ebf0f7;
+}
+body.beagu-page-lv1 .school-card .beagu-approved-section .data-row:last-child{
+  border-bottom:0;
+}
+body.beagu-page-lv1 .school-card .beagu-source-caption,
+body.beagu-page-lv1 .school-card .beagu-question-intro{
+  margin:9px 0 13px;
+  color:#667b94;
+  font-size:12px;
+  line-height:1.65;
+  word-break:keep-all;
+}
+body.beagu-page-lv1 .school-card .beagu-question-section{
+  margin:20px 0 0;
+  padding-top:18px;
+  border-top:1px solid #e4ecf7;
+}
+body.beagu-page-lv1 .school-card .beagu-questions-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+body.beagu-page-lv1 .school-card .beagu-questions-header h4{
+  margin:0;
+  font-size:16px;
+  font-weight:850;
+  color:#1b3a61;
+}
+body.beagu-page-lv1 .school-card .beagu-question-count{
+  border:1px solid #d7e4f7;
+  border-radius:999px;
+  padding:3px 8px;
+  background:#f1f6ff;
+  color:#38629c;
+  font-size:11px;
+  font-weight:730;
+}
+body.beagu-page-lv1 .school-card .beagu-source-note{
+  margin:8px 0 12px;
+  color:#6d7e95;
+  font-size:12px;
+}
+body.beagu-page-lv1 .school-card .beagu-source-note summary{
+  width:fit-content;
+  padding:4px 0;
+  color:#54739e;
+  cursor:pointer;
+  font-weight:700;
+}
+body.beagu-page-lv1 .school-card .beagu-source-note summary:focus-visible{
+  outline:3px solid #93c5fd;
+  outline-offset:2px;
+}
+body.beagu-page-lv1 .school-card .beagu-source-note p{
+  margin:6px 0;
+  max-width:70ch;
+  line-height:1.7;
+}
+body.beagu-page-lv1 .school-card .beagu-comparison-status{
+  margin:8px 0 14px;
+  color:#537096;
+  font-size:12px;
+  font-weight:740;
+  line-height:1.5;
+}
+body.beagu-page-lv1 .school-card .beagu-question-finder{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin:14px 0;
+}
+body.beagu-page-lv1 .school-card .beagu-question-input{
+  flex:1;
+  min-width:0;
+  min-height:43px;
+  padding:10px 12px;
+  border:1px solid #cbdaf0;
+  border-radius:10px;
+  background:#fff;
+  color:#203a5c;
+  font-size:13px;
+}
+body.beagu-page-lv1 .school-card .beagu-question-input:focus-visible{
+  outline:3px solid #a4c6ff;
+  outline-offset:1px;
+}
+body.beagu-page-lv1 .school-card .beagu-question-match{
+  flex:none;
+  color:#637c9b;
+  font-size:11px;
+  font-weight:750;
+}
+body.beagu-page-lv1 .school-card .beagu-question-empty{
+  padding:18px 8px;
+  text-align:center;
+  color:#64748b;
+  font-size:13px;
+}
+body.beagu-page-lv1 .school-card .historical-question-row{
+  margin:10px 0;
+  padding:17px 16px;
+  border:1px solid #dce6f3;
+  border-radius:13px;
+  background:#fff;
+  box-shadow:0 2px 9px rgba(22,54,91,.018);
+}
+body.beagu-page-lv1 .school-card .historical-question-row[hidden],
+body.beagu-page-lv1 .school-card .beagu-question-empty[hidden]{display:none!important}
+body.beagu-page-lv1 .school-card .beagu-question-title{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  margin:0 0 13px;
+  color:#1b3557;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.55;
+  word-break:keep-all;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-question-number{
+  flex:none;
+  border-radius:6px;
+  padding:3px 6px;
+  background:#eaf2ff;
+  color:#2461bb;
+  font-size:11px;
+  font-weight:850;
+  line-height:1.5;
+}
+body.beagu-page-lv1 .school-card .historical-benchmark-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+body.beagu-page-lv1 .school-card .historical-benchmark-value{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+  padding:12px 11px;
+  border:1px solid #e3eaf4;
+  border-radius:10px;
+  background:#f8fafd;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .historical-benchmark-value.school{
+  border-color:#bdd4f7;
+  background:#eef5ff;
+}
+body.beagu-page-lv1 .school-card .beagu-benchmark-label{
+  color:#4d6788;
+  font-size:11px;
+  font-weight:830;
+}
+body.beagu-page-lv1 .school-card .beagu-benchmark-result{
+  flex:1;
+  color:#203958;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.5;
+}
+body.beagu-page-lv1 .school-card .historical-benchmark-value.school .beagu-benchmark-result{color:#194d9b}
+body.beagu-page-lv1 .school-card .historical-benchmark-value.is-unavailable .beagu-benchmark-result{
+  color:#7b899d;
+  font-weight:600;
+}
+body.beagu-page-lv1 .school-card .beagu-benchmark-kind{
+  color:#8594a7;
+  font-size:10px;
+  line-height:1.5;
+}
+body.beagu-page-lv1 .school-card .beagu-question-distribution{
+  margin-top:14px;
+  border-top:1px solid #e8eef6;
+  padding-top:12px;
+}
+body.beagu-page-lv1 .school-card .beagu-distribution-title,
+body.beagu-page-lv1 .school-card .beagu-options-title{
+  margin:0 0 8px;
+  color:#456184;
+  font-size:12px;
+  font-weight:850;
+  line-height:1.45;
+}
+body.beagu-page-lv1 .school-card .beagu-distribution-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:5px 10px;
+  margin:9px 0 12px;
+}
+body.beagu-page-lv1 .school-card .beagu-distribution-label{
+  color:#405978;
+  font-size:12px;
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-distribution-percent{
+  color:#245bb1;
+  font-size:12px;
+  font-weight:850;
+  white-space:nowrap;
+}
+body.beagu-page-lv1 .school-card .beagu-distribution-track{
+  grid-column:1/-1;
+  height:7px;
+  border-radius:8px;
+  background:#e9eef7;
+  overflow:hidden;
+}
+body.beagu-page-lv1 .school-card .beagu-distribution-fill{
+  height:100%;
+  border-radius:8px;
+  background:#407be0;
+}
+body.beagu-page-lv1 .school-card .beagu-options-title{
+  margin-top:15px;
+}
+body.beagu-page-lv1 .school-card .historical-answer-choices{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:6px;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+body.beagu-page-lv1 .school-card .historical-answer-choices li{
+  margin:0;
+  min-width:0;
+  padding:7px 10px;
+  border:1px solid #e9edf3;
+  border-radius:8px;
+  background:#f8fafd;
+  color:#596d85;
+  font-size:12px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-options-empty{
+  margin:11px 0 0;
+  color:#8391a4;
+  font-size:12px;
+}
+body.beagu-page-lv1 .school-card .beagu-year-empty,
+body.beagu-page-lv1 .school-card .beagu-year-error,
+body.beagu-page-lv1 .school-card .beagu-detail-feedback{
+  margin:10px 0 15px;
+  padding:14px 16px;
+  border:1px solid #e1eaf5;
+  border-radius:11px;
+  background:#f6f9fd;
+  color:#627790;
+  font-size:13px;
+  line-height:1.65;
+}
+body.beagu-page-lv1 .school-card .beagu-year-error,
+body.beagu-page-lv1 .school-card .beagu-detail-feedback.is-error{
+  color:#995039;
+  border-color:#f0d9d1;
+  background:#fff8f5;
+}
+body.beagu-page-lv1 .school-card .year-2026-button{
+  width:auto;
+  min-height:42px;
+  margin:14px 0 0;
+  padding:10px 15px;
+  border:1px solid #bdd1ee;
+  border-radius:10px;
+  background:#f2f7ff;
+  color:#2558aa;
+  font-size:12px;
+  font-weight:800;
+}
+body.beagu-page-lv1 .school-card .year-2026-button:hover{background:#e7f0ff}
+body.beagu-page-lv1 .school-card .year-2026-button:disabled{opacity:.55;cursor:wait}
+@media(max-width:680px){
+  body.beagu-page-lv1 .school-card .historical-benchmark-grid{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  body.beagu-page-lv1 .school-card .historical-benchmark-value{
+    display:grid;
+    grid-template-columns:minmax(90px,28%) minmax(0,1fr);
+    align-items:start;
+    gap:3px 8px;
+    padding:10px 11px;
+  }
+  body.beagu-page-lv1 .school-card .beagu-benchmark-kind{
+    grid-column:2;
+  }
+  body.beagu-page-lv1 .school-card .historical-answer-choices{
+    grid-template-columns:1fr;
+  }
+}
+@media(max-width:420px){
+  body.beagu-page-lv1 .school-card .lv1-history-disclosure{padding:11px}
+  body.beagu-page-lv1 .school-card .year-tabs{gap:4px;padding:5px}
+  body.beagu-page-lv1 .school-card .year-tabs button{font-size:12px;padding:9px 2px}
+  body.beagu-page-lv1 .school-card .historical-question-row{padding:13px 11px}
+  body.beagu-page-lv1 .school-card .beagu-question-title{font-size:13px}
+  body.beagu-page-lv1 .school-card .beagu-year-caption{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  body.beagu-page-lv1 .school-card .percentile-cell{transition:none}
+}
+
+/* Verified official metrics: same three-part comparison language as questions. */
+body.beagu-page-lv1 .school-card .beagu-comparison-row{
+  display:block;
+  padding:13px 0;
+  border-bottom:1px solid #e7edf5;
+}
+body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-label{
+  margin:0 0 9px;
+  color:#263f5d;
+  font-size:13px;
+  font-weight:850;
+  line-height:1.55;
+}
+body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  width:100%;
+}
+body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-value{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  min-width:0;
+  padding:12px 10px;
+  border:1px solid #e4eaf4;
+  border-radius:10px;
+  background:#f8fafd;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-value.school{
+  border-color:#bdd4f7;
+  background:#eef5ff;
+}
+body.beagu-page-lv1 .school-card .compare-value-label{
+  color:#637b98;
+  font-size:11px;
+  font-weight:750;
+}
+body.beagu-page-lv1 .school-card .compare-value-text{
+  color:#1d385c;
+  font-size:14px;
+  font-weight:850;
+  line-height:1.5;
+}
+body.beagu-page-lv1 .school-card .compare-value.school .compare-value-text{color:#1a51a0}
+body.beagu-page-lv1 .school-card .beagu-compare-source{
+  display:block;
+  margin-top:7px;
+  color:#8492a4;
+  font-size:10px;
+  line-height:1.5;
+}
+@media(max-width:680px){
+  body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-grid{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  body.beagu-page-lv1 .school-card .beagu-comparison-row .compare-value{
+    display:grid;
+    grid-template-columns:minmax(90px,28%) minmax(0,1fr);
+    gap:7px;
+    align-items:start;
+    padding:10px 11px;
+  }
+}
+
+/* Binary school choices: original factual "있다/없다" shown as accessible O/X. */
+body.beagu-page-lv1 .school-card .beagu-answer-symbol{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  flex-wrap:wrap;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  min-height:36px;
+  border-radius:11px;
+  border:1px solid transparent;
+  font-size:21px;
+  line-height:1;
+  font-weight:900;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-pill.is-yes{
+  background:#dff6ea;
+  color:#11633e;
+  border-color:#a9dec4;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-pill.is-no{
+  background:#ffe9ee;
+  color:#a92745;
+  border-color:#efb4c3;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-pill.is-unknown{
+  background:#edf1f7;
+  color:#55677e;
+  border-color:#d1dae7;
+}
+body.beagu-page-lv1 .school-card .beagu-ox-text{
+  font-size:12px;
+  color:#536981;
+  font-weight:700;
+}
+/* Verified school-level checkbox union, not one artificially selected mode. */
+body.beagu-page-lv1 .school-card .beagu-selected-options{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:7px;
+  list-style:none;
+  padding:0;
+  margin:4px 0 0;
+}
+body.beagu-page-lv1 .school-card .beagu-selected-choice{
+  display:flex;
+  gap:7px;
+  align-items:flex-start;
+  min-width:0;
+  padding:8px 9px;
+  border:1px solid #bbd4f5;
+  border-radius:9px;
+  background:#fff;
+  color:#1e4d81;
+  font-size:12px;
+  font-weight:730;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-selected-mark{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  color:#fff;
+  background:#29805a;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:900;
+}
+body.beagu-page-lv1 .school-card .beagu-checkbox-original-options{
+  margin:14px 0 0;
+  border-top:1px solid #e8eef7;
+  padding-top:10px;
+}
+body.beagu-page-lv1 .school-card .beagu-checkbox-original-options summary{
+  cursor:pointer;
+  width:fit-content;
+  font-size:12px;
+  font-weight:750;
+  color:#56749d;
+  padding:6px 0;
+}
+body.beagu-page-lv1 .school-card .beagu-checkbox-original-options summary:focus-visible{
+  outline:3px solid #93c5fd;
+  outline-offset:2px;
+}
+body.beagu-page-lv1 .school-card .beagu-checkbox-original-options .beagu-options-title{
+  margin-top:8px;
+}
+@media(max-width:480px){
+  body.beagu-page-lv1 .school-card .beagu-selected-options{
+    grid-template-columns:1fr;
+  }
+  body.beagu-page-lv1 .school-card .beagu-selected-choice{
+    font-size:12px;
+  }
+}
+
+/* School-only binary/factual rows: never display regional or national placeholders. */
+body.beagu-page-lv1 .school-card .beagu-school-only-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:12px;
+  padding:13px 0;
+  border-bottom:1px solid #e7edf5;
+}
+body.beagu-page-lv1 .school-card .beagu-school-only-label{
+  font-size:13px;
+  font-weight:800;
+  line-height:1.6;
+  color:#263f5d;
+  min-width:0;
+  flex:1 1 150px;
+}
+body.beagu-page-lv1 .school-card .beagu-school-only-value{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  flex:0 1 auto;
+  font-size:14px;
+  line-height:1.5;
+  font-weight:830;
+  color:#1c4d89;
+  overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-school-only-meaning{
+  color:#637790;
+  font-size:12px;
+  font-weight:700;
+}
+@media(max-width:480px){
+  body.beagu-page-lv1 .school-card .beagu-school-only-row{align-items:center;flex-direction:row;}
+  body.beagu-page-lv1 .school-card .beagu-school-only-value{justify-content:flex-start;}
+}
+/* The comparison order is explicitly school, region, then nation. */
+
+/* 2026 empty-state invitation: visible only when no approved results are present. */
+body.beagu-page-lv1 .school-card .beagu-year-survey-link{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  min-height:48px;
+  box-sizing:border-box;
+  margin:12px 0 0;
+  padding:12px 16px;
+  border:1px solid #2b61d5;
+  border-radius:11px;
+  background:#2b61d5;
+  color:#fff;
+  font-size:14px;
+  font-weight:800;
+  line-height:1.5;
+  text-decoration:none;
+  text-align:center;
+}
+body.beagu-page-lv1 .school-card .beagu-year-survey-link:hover{
+  background:#1e50b2;
+  border-color:#1e50b2;
+  color:#fff;
+}
+body.beagu-page-lv1 .school-card .beagu-year-survey-link:focus-visible{
+  outline:3px solid #93c5fd;
+  outline-offset:3px;
+}
+body.beagu-page-lv1 .school-card .beagu-year-survey-help{
+  margin:8px 2px 0;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.65;
+}
+
+/* Clarifies the direction of the approved teacher-burden domain scores. */
+body.beagu-page-lv1 .school-card .beagu-domain-score-note{
+  margin:2px 0 13px;
+  color:#718096;
+  font-size:11px;
+  font-weight:500;
+  line-height:1.6;
+  word-break:keep-all;
+}
