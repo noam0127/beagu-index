@@ -13,8 +13,7 @@ const otherSecret="synthetic-other-signing-key-never-used-in-production-yyyy";
 const sourceSpreadsheetId="1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4";
 const formId="SYNTHETIC_OFFICIAL_FORM_00001";
 const now=Date.parse("2026-11-22T05:00:00.000Z");
-const code="K7M9Q2X4T8"; // 11? deliberate? use actual allowed 10-symbol example below
-const participantCode="K7M9Q2X4T"; // 10 Base32 symbols, 50-bit format
+const participantCode="K7M9Q2X4T8"; // 10 Base32 symbols, 50-bit format
 const event={
   sourceSpreadsheetId,formId,
   formResponseId:"SYNTHETIC_RESPONSE_ID_123456",
