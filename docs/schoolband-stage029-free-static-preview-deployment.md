@@ -1,6 +1,6 @@
 # 『난감한 스쿨밴드』 029/030 — 무료 독립 시험 미리보기 및 커밋 검증
 
-2026-11-23 · `schoolband-playtest` 브랜치 · **소스/시험 패키지 구현 / 외부 HTTP 200·해시 검증 PASS / 브라우저 E2E 진행 중**
+2026-11-23 · `schoolband-playtest` 브랜치 · **외부 HTTP·SHA256·실제 PC/모바일 Chromium·공개 학교 검색 통과 / 독립 정적 미리보기 검증 완료**
 
 ## 0. 변경 금지 범위
 
@@ -87,3 +87,21 @@
 - 정적 파일 ZIP artifact도 GitHub Actions에 정상 생성됨(사용자 계정의 Actions 페이지에서 접근). 원본 ZIP를 이 대화의 sandbox에서 직접 내려받은 것은 아님.
 - **브라우저 UI 별도 결과:** [Run #45057135791](https://github.com/noam0127/beagu-index/actions/runs/45057135791)에서 CDN HTML에 대한 Chromium 테스트가 **제공자의 External Content Notice** 때문에 실패. GitHack의 HTML 열기 확인 안내로 인한 것으로 공식 서비스 문서에서 확인. 이용자가 `Open the page`를 눌러야 한다. 현재 `scripts/test-schoolband-stage029-browser.cjs`의 브라우저 테스트에서 해당 확인 절차를 명시적으로 처리하도록 수정함. **수정 버전 Chromium 성공은 별도 확인 대기**.
 - 정리: **파일 전송/무결성 PASS**와 **사용자 브라우저 기능 E2E 미확인**은 서로 별개의 게이트다. 후자가 성공하기 전에는 029 최종 종료를 선언하지 않는다.
+
+## 최종 검증 갱신 — 029단계 시험 웹 완료 (2026-11-23)
+
+**최종 고정 테스트 커밋**: `ec87fd1ef4e4a02c53c9a3d6b920a8eb60a2a6bd`.
+
+**동작 확인된 무료 독립 시험 URL**
+`https://raw.githack.com/noam0127/beagu-index/ec87fd1ef4e4a02c53c9a3d6b920a8eb60a2a6bd/games/nangam-schoolband-v08/preview/index.html`
+
+- GitHub Actions [Run #45057723202](https://github.com/noam0127/beagu-index/actions/runs/45057723202) 작업 `immutable-static-preview`의 **모든 단계 SUCCESS**, 별도 시험 브랜치 커밋 상태 `schoolband/029-static-preview-http=success`.
+- 로컬 HTTP 및 외부 HTTPS의 3개 파일 `preview/index.html`, `index.html`, `charts/school-homepages.v1.json` 각각 **200 + 정확한 MIME + 원본 SHA256 검증 성공**. 정적 ZIP artifact와 브라우저 스크린샷 2개가 GitHub Actions에 생성.
+- 실제 외부 서비스에 Chromium PC **1280×800** 및 모바일 에뮬레이션 **390×844**으로 접속하여 HTML 외부 콘텐츠 보안 확인 `Open the page`을 통과한 후 게임 진입. 가상 학교·4개 악기 레인 수·미등록 교가 잠금·점수 저장 키·고대비/큰글씨·가로 오버플로 검사 성공. 시작 버튼을 누르거나 음향/청음 검사를 수행하지 않음.
+- PC 환경에서는 실제 `schoolband-school-read-v1` **공개 GET 학교명 검색과 학교 상세 선택**도 성공(`realPublicSchoolLookup=true`). 운영 DB에 쓰기 없음.
+- 게임은 점수/학생/개인정보를 서버에 POST하지 않았음. 그러나 외부 프록시가 **안전 확인 POST/Cloudflare RUM 텔레메트리 POST**를 발생시킴. 제3자 서비스 로그/일반 네트워크 정보는 개발자가 통제하지 않으므로 외부 접속을 '제3자 전송 0'으로 포장하지 않는다.
+- `raw.githack.com`은 **무료 제3자 정적 미리보기**이며 운영 배포나 고가용성 SLA를 보장하지 않는다. 브라우저 첫 진입 시 **Open the page** 수동 클릭이 필요할 수 있다. HTTPS/PC/모바일 헤드리스 에뮬레이션 검증만 수행했으며 사용자 실제 기기 접근·오디오 검증을 하지 않았다.
+- Vercel 시험 API의 402/운영 웹·DB 미변경 상태는 그대로다. 운영 배포·기존 019~028 미검증 회귀 게이트는 **030 이후 별도 확인 필요**.
+- [Issue #254](https://github.com/noam0127/beagu-index/issues/254)는 독립 시험 웹 검증 범위 한정으로 **closed (completed)** 처리. 이전의 '외부 HTTP 미확인', '브라우저 E2E 미확인' 표기는 이 최종 갱신 내용으로 대체한다.
+
+**029단계종료 — 시험 미리보기·HTTP·PC/모바일·공개 GET 범위.**
