@@ -163,7 +163,8 @@ async function browser(){
    assert.equal(testPersist.summary,"+120 ms");
    await page.reload({waitUntil:"domcontentloaded"});
    assert.equal(await page.locator("#offsetRange").inputValue(),"120","offset survives reload");
-   await page.locator("#timingTuner summary").click();
+   // Chromium can restore the <details> state after reload: open deterministically.
+   await page.locator("#timingTuner").evaluate(el=>{el.open=true});
    await selectExtremeDrums(page);
    await page.locator("#start").click();
    assert.equal(await page.locator("#offsetRange").isDisabled(),true,"locked during game");
@@ -193,7 +194,8 @@ async function browser(){
    assert.equal(await page.locator("#offsetRange").isEnabled(),true);
    assert.equal(await page.locator("#offsetReset").isEnabled(),true);
    // The late input at +0.12s without calibration must NOT score note t=0 (EXTREME ±.075s).
-   const reset=await page.locator("#offsetReset").click();
+   await page.locator("#timingTuner").evaluate(el=>{el.open=true});
+   await page.locator("#offsetReset").click();
    assert.equal(await page.locator("#offsetRange").inputValue(),"0");
    assert.equal(await page.locator("#offsetValue").textContent(),"0 ms");
    assert.equal(await page.evaluate(()=>localStorage.getItem("nangam-band-input-offset-ms-v1")),"0");
