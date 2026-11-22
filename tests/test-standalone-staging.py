@@ -33,6 +33,17 @@ assert "Disallow: /" in (stage / "robots.txt").read_text()
 guard = (stage / "beagu-staging-navigation-guard.js").read_text()
 assert "baeguindex.com" in guard
 assert "preventDefault" in guard
+assert "XMLHttpRequest.prototype.open" in guard
+assert "sendBeacon" in guard
+assert "window.fetch" in guard
+assert "WebSocket" in guard and "EventSource" in guard
+assert "HTMLFormElement.prototype.submit" in guard
+assert "different-project.supabase.co" not in guard
+source_guard = subprocess.check_output(
+    ["git", "show", sha + ":scripts/staging-runtime-guard.js"],
+    cwd=root
+).decode("utf-8")
+assert guard == source_guard, "Runtime guard must originate from the immutable commit"
 
 pages = list(stage.rglob("*.html"))
 assert len(pages) >= 10
