@@ -492,6 +492,10 @@ const PARTS={
  ]
 };
 const BEAT=60/108,BARS=8,SONG_BEATS=BARS*4;
+// At 108 BPM a sixteenth lasts 138.89 ms. 24px notes need >24px travel per step.
+const NOTE_PREVIEW_SECONDS=1.16,NOTE_TRAVEL_PX=240,NOTE_HEIGHT_PX=24;
+function noteYForDelta(dt,line){return line-dt/NOTE_PREVIEW_SECONDS*NOTE_TRAVEL_PX}
+function noteStepSpacing(){return NOTE_TRAVEL_PX/NOTE_PREVIEW_SECONDS*BEAT/4}
 const WIDTHS=[.20,.17,.14,.11,.075],PERFECT=[.09,.075,.06,.05,.036];
 const $=id=>document.getElementById(id);
 const canvas=$("track"),g=canvas.getContext("2d");
@@ -499,6 +503,7 @@ let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="no
 let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0;
 let masterBus=null,compressor=null,noiseBuffer=null;
 let particles=[],lanePulse=[0,0,0,0,0],lastImpactAt=0,impactStrength=0,impactLane=0;
+const LANE_GLOW_MS=175,PARTICLE_LIMIT=60;
 const motionReduced=Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
 const IMPACT_COLORS=["#8bcaff","#ffc68f","#b1f7cd","#dfbaff","#ffe7a0"];
 function safeText(id,text){$(id).textContent=String(text)}
@@ -727,8 +732,8 @@ function hud(){
 }
 
 function triggerImpact(lane,isPerfect){
- const when=Date.now();impactLane=lane;lastImpactAt=when;impactStrength=isPerfect?1:.72;
- lanePulse[lane]=1;
+ const when=performance.now();impactLane=lane;lastImpactAt=when;impactStrength=isPerfect?1:.72;
+ lanePulse[lane]=when+LANE_GLOW_MS;
  if(!motionReduced){
   const n=INST[instrument].lanes.length, margin=9,gap=4;
   const w=(canvas.width-2*margin-gap*(n-1))/n;
@@ -741,7 +746,7 @@ function triggerImpact(lane,isPerfect){
       start:when,life:240+Math.random()*280,size:2+Math.random()*4,
       color:IMPACT_COLORS[lane]});
   }
-  if(particles.length>60)particles=particles.slice(-60);
+  if(particles.length>PARTICLE_LIMIT)particles=particles.slice(-PARTICLE_LIMIT);
  }
  const text=$("judgeFx"),ring=$("impactRing");
  text.textContent=isPerfect?"PERFECT!":"GOOD!";
@@ -816,11 +821,11 @@ function rounded(x,y,w,h,r){
  g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();
 }
 function draw(){
- const W=canvas.width,H=canvas.height,line=H-72,preview=1.40;
+ const W=canvas.width,H=canvas.height,line=H-72;
  const lanes=INST[instrument].lanes,N=lanes.length;
  const margin=9,gap=4,lw=(W-2*margin-gap*(N-1))/N;
  const colors=IMPACT_COLORS;
- const fxAge=Date.now()-lastImpactAt;
+ const fxAge=performance.now()-lastImpactAt;
  const shake=(!motionReduced&&fxAge>=0&&fxAge<85)?(1-fxAge/85)*impactStrength*2:0;
  g.save();
  g.clearRect(0,0,W,H);
@@ -831,13 +836,15 @@ function draw(){
   const x=margin+i*(lw+gap);
   g.fillStyle=i%2===0?"#172341":"#203054";g.fillRect(x,12,lw,H-24);
   g.fillStyle=colors[i];g.fillRect(x,12,lw,5);
-  if(lanePulse[i]>0){
-    g.fillStyle=colors[i];g.globalAlpha=Math.min(.44,lanePulse[i]*.4);
+  const glowLeft=lanePulse[i]-performance.now();
+  if(glowLeft>0){
+    g.fillStyle=colors[i];g.globalAlpha=.08+.32*Math.min(1,glowLeft/LANE_GLOW_MS);
     g.fillRect(x,12,lw,H-24);g.globalAlpha=1;
-    lanePulse[i]=Math.max(0,lanePulse[i]-.075);
+    g.fillStyle="#fff";g.globalAlpha=.35*Math.min(1,glowLeft/LANE_GLOW_MS);
+    g.fillRect(x+3,H-84,lw-6,5);g.globalAlpha=1;
   }
-  g.fillStyle="#e2e9fd";g.font="800 16px system-ui";g.textAlign="center";g.fillText(lanes[i][1],x+lw/2,38);
-  g.fillStyle="#c6d0e8";g.font=N===5?"11px system-ui":"12px system-ui";
+  g.fillStyle="#eff5ff";g.font="800 17px system-ui";g.textAlign="center";g.fillText(lanes[i][1],x+lw/2,38);
+  g.fillStyle="#e1eafa";g.font=N===5?"13px system-ui":"14px system-ui";
   g.fillText(lanes[i][0],x+lw/2,H-23);
  }
  g.strokeStyle="#f5efff";g.lineWidth=4;g.beginPath();g.moveTo(margin,line);g.lineTo(W-margin,line);g.stroke();
@@ -845,14 +852,17 @@ function draw(){
  for(const n of chart){
   if(n.done)continue;
   const dt=n.t-now;
-  if(dt>preview||dt<-.2)continue;
-  const x=margin+n.lane*(lw+gap),y=line-dt/preview*240;
-  g.fillStyle=colors[n.lane];g.shadowColor=colors[n.lane];g.shadowBlur=9;
+  if(dt>NOTE_PREVIEW_SECONDS||dt<-.2)continue;
+  const x=margin+n.lane*(lw+gap),y=noteYForDelta(dt,line);
+  // A 24px tall note keeps a >4px internal gap at each sixteenth step (108 BPM).
+  const fill=g.createLinearGradient(x,y-12,x,y+12);
+  fill.addColorStop(0,"#ffffff");fill.addColorStop(.22,colors[n.lane]);fill.addColorStop(1,colors[n.lane]);
+  g.fillStyle=fill;g.shadowColor=colors[n.lane];g.shadowBlur=6;
   rounded(x+4,y-12,lw-8,24,7);g.fill();
-  g.shadowBlur=0;g.strokeStyle="#ffffff77";g.lineWidth=1.15;g.stroke();
-  g.fillStyle="#ffffff55";rounded(x+10,y-8,Math.max(4,lw-20),4,2);g.fill();
+  g.shadowBlur=0;g.strokeStyle="#ffffffd9";g.lineWidth=1.4;g.stroke();
+  g.fillStyle="#ffffffa8";rounded(x+10,y-9,Math.max(4,lw-20),4,2);g.fill();
  }
- const frameTime=Date.now();
+ const frameTime=performance.now();
  if(!motionReduced&&particles.length){
   particles=particles.filter(p=>frameTime-p.start<p.life);
   for(const p of particles){
@@ -893,7 +903,7 @@ document.addEventListener("keydown",e=>{
  e.preventDefault();hit(index);flash(index);
 });
 window.addEventListener("pagehide",()=>{if(playing)finish(true)});
-window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code}))};
+window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate")})};
 renderPads();draw();hud();
 })();
 </script>
