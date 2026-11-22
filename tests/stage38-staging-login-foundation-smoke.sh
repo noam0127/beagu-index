@@ -198,6 +198,13 @@ echo "PASS: ephemeral PostgreSQL executes Stage38 staging-only schema; bad targe
 # The remaining fixture only uses disposable codes/tokens; no user credentials.
 # See the shell's PGHOST/PGPORT/PGDATABASE/PGUSER guard above.
 test -f tests/stage38-staging-synthetic-login-cases.sql
+if psql -v ON_ERROR_STOP=1 -f tests/stage38-staging-synthetic-login-cases.sql \
+    > /tmp/stage38-unapproved-fixture.stdout 2>&1; then
+  echo "INVALID: synthetic test data inserted without CI fixture marker" >&2
+  exit 1
+fi
+grep -q "STAGE38_EPHEMERAL_PG_FIXTURE_ONLY" \
+  /tmp/stage38-unapproved-fixture.stdout
 psql -v ON_ERROR_STOP=1 <<'SQL'
 SET app.stage38_fixture_only = 'ephemeral-ci';
 \i tests/stage38-staging-synthetic-login-cases.sql
