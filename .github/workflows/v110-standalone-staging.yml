@@ -1,0 +1,46 @@
+name: v1.1.0 standalone staging artifact (NO VERCEL, NO DEPLOY)
+on:
+  push:
+    branches:
+      - ci/v1.1.0-standalone-test-bundle-20261123
+      - fix/v1.1.0-preview-isolation-gate-20261123
+  pull_request:
+    paths:
+      - 'scripts/build-standalone-staging.py'
+      - 'tests/test-standalone-staging.py'
+      - 'render.yaml'
+      - '.github/workflows/v110-standalone-staging.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-safe-staging:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout selected Git SHA without stored credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Python syntax gate
+        run: |
+          python3 -m py_compile scripts/build-standalone-staging.py
+          python3 -m py_compile tests/test-standalone-staging.py
+      - name: Build test-only static bundle from exact checkout
+        run: python3 scripts/build-standalone-staging.py
+      - name: Audit test-only bundle and production isolation
+        run: python3 tests/test-standalone-staging.py
+      - name: Verify production domain and deployment workers never included
+        run: |
+          test ! -e _standalone_staging/CNAME
+          test ! -e _standalone_staging/.github
+          test ! -e _standalone_staging/supabase
+          test ! -e _release_site
+          echo 'PASS: Vercel-free artifact only; no live site, DB, or deployment writes'
+      - name: Upload reviewable staging-only site (not published)
+        uses: actions/upload-artifact@v4
+        with:
+          name: baegu-v110-standalone-staging
+          path: _standalone_staging/
+          retention-days: 7
+          if-no-files-found: error
