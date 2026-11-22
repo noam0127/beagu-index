@@ -22,6 +22,18 @@ async function open(browser,cfg,model){
  page.on("dialog",d=>void d.accept());
  await page.route("**/*",route=>{
   const req=route.request(),url=req.url();
+  if(url.startsWith(HOST+"/js/beagu-independent-preview-target-v1.js")){
+   return route.fulfill({status:200,contentType:"application/javascript",
+    body:"window.BEAGU_INDEPENDENT_PREVIEW={origin:"+
+      JSON.stringify(model.independentOrigin||"")+"};"});
+  }
+  if(url.startsWith("https://beagu-v110-sandbox.onrender.com/beagu-preview-health.json")){
+   if(model.independentMissing)return asJson(route,404,{error:"not_found"});
+   return asJson(route,200,model.independentHealth||{
+     schema:1,kind:"standalone-staging",hosting:"independent-static",
+     supabase_ref:"ycwuugggqbunlbwuzvbx",staging_sha:SHAS.new
+   });
+  }
   if(url.startsWith(HOST+"/_preview/beagu-preview-health.json")){
    if(model.previewNotFound)return route.fulfill({status:404,contentType:"text/plain",body:"not found"});
    return asJson(route,200,{schema:1,kind:"staging",
@@ -228,6 +240,60 @@ async function run(){
     assert(await page.locator("#releaseDashboard").isHidden());
     assert.match(await page.locator("#releaseStatus").innerText(),/관리자 인증 필요/);
     assert(!model.calls.some(c=>c.action==="stage_apply"||c.action==="prod_apply"));
+    assert.deepEqual(errors,[]);
+    await ctx.close();
+   }
+   // Render sandbox is read-only and must never imply production deployment rights.
+   {
+    const model={calls:[],proof:{permitted:true,mfa_verified:true,role:"owner"},
+      current:snapshot(state()),independentOrigin:"https://beagu-v110-sandbox.onrender.com"};
+    const {ctx,page,errors}=await open(browser,cfg,model);
+    await page.locator("#releaseDashboard").waitFor({state:"visible"});
+    await page.locator("#releaseIndependentStatus")
+      .getByText(/독립 호스팅 게시 확인/).waitFor();
+    assert.equal(await page.locator("#releaseIndependentLink").getAttribute("href"),
+      "https://beagu-v110-sandbox.onrender.com/");
+    assert.equal(await page.locator("#releaseIndependentLink").getAttribute("aria-disabled"),null);
+    assert.match(await page.locator("#releaseIndependentStatus").innerText(),
+      /운영 배포 승인은 별도/);
+    assert(await page.locator("#releaseProdApply").isDisabled(),
+      "Read-only Render sandbox must never unlock production");
+    assert(!model.calls.some(x=>x.action==="prod_apply"));
+    assert.deepEqual(errors,[]);
+    await ctx.close();
+   }
+   for(const defect of [
+     {independentMissing:true},
+     {independentHealth:{schema:1,kind:"staging",hosting:"independent-static",
+       supabase_ref:"ycwuugggqbunlbwuzvbx",staging_sha:SHAS.new}},
+     {independentHealth:{schema:1,kind:"standalone-staging",hosting:"independent-static",
+       supabase_ref:"snvzwrexuqavnfvzgxqj",staging_sha:SHAS.new}},
+     {independentHealth:{schema:1,kind:"standalone-staging",hosting:"independent-static",
+       supabase_ref:"ycwuugggqbunlbwuzvbx",staging_sha:"invalid"}}
+   ]){
+    const model={calls:[],proof:{permitted:true,mfa_verified:true,role:"owner"},
+      current:snapshot(state()),independentOrigin:"https://beagu-v110-sandbox.onrender.com",
+      ...defect};
+    const {ctx,page,errors}=await open(browser,cfg,model);
+    await page.locator("#releaseIndependentLink")
+      .getByText(/독립 시험 웹 게시 확인 실패/).waitFor();
+    assert.equal(await page.locator("#releaseIndependentLink").getAttribute("href"),null);
+    assert(await page.locator("#releaseProdApply").isDisabled());
+    assert.deepEqual(errors,[]);
+    await ctx.close();
+   }
+   // Only an explicitly configured Render subdomain can be probed.
+   for(const badHost of ["https://baeguindex.com",
+                         "https://beagu-v110-sandbox.onrender.com.evil.com",
+                         "http://beagu-v110-sandbox.onrender.com",
+                         "https://beagu-v110-sandbox.onrender.com/path"]){
+    const model={calls:[],proof:{permitted:true,mfa_verified:true,role:"owner"},
+      current:snapshot(state()),independentOrigin:badHost};
+    const {ctx,page,errors}=await open(browser,cfg,model);
+    await page.locator("#releaseIndependentLink")
+      .getByText(/독립 시험 웹 미연결/).waitFor();
+    assert.equal(await page.locator("#releaseIndependentLink").getAttribute("href"),null);
+    assert(await page.locator("#releaseProdApply").isDisabled());
     assert.deepEqual(errors,[]);
     await ctx.close();
    }
