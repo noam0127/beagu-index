@@ -1,0 +1,37 @@
+name: Schoolband 003 note legibility and hit FX proof
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage003.cjs'
+      - '.github/workflows/schoolband-stage003.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  note-legibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium for visual and FX tests
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Run actual baseline-vs-optimized comparison and rapid hits
+        run: node scripts/test-schoolband-stage003.cjs
+      - name: Upload screenshot pairs, rapid hits, and raw measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage003-visual-evidence
+          path: artifacts/schoolband-stage003/
+          if-no-files-found: error
