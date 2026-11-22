@@ -1,0 +1,378 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schoolband/chart-v1.schema.json",
+  "title": "Original school anthem chart V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "chartVersion",
+    "songId",
+    "songTitle",
+    "origin",
+    "bpm",
+    "beatsPerBar",
+    "barCount",
+    "subdivisionsPerBar",
+    "supportedTiers",
+    "noteTypes",
+    "longNotesEnabled",
+    "instruments",
+    "patterns"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "chartVersion": {
+      "type": "string",
+      "pattern": "^creative-anthem-rhythm-v[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "songId": {
+      "const": "original-shining-our-school"
+    },
+    "songTitle": {
+      "const": "빛나는 우리 학교"
+    },
+    "origin": {
+      "const": "original-composition"
+    },
+    "bpm": {
+      "const": 108
+    },
+    "beatsPerBar": {
+      "const": 4
+    },
+    "barCount": {
+      "const": 8
+    },
+    "subdivisionsPerBar": {
+      "const": 16
+    },
+    "supportedTiers": {
+      "const": [
+        "easy",
+        "normal",
+        "hard",
+        "very_hard",
+        "extreme"
+      ]
+    },
+    "noteTypes": {
+      "const": [
+        "tap"
+      ]
+    },
+    "longNotesEnabled": {
+      "const": false
+    },
+    "instruments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "guitar",
+        "drums",
+        "bass",
+        "keys"
+      ],
+      "properties": {
+        "guitar": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "lanes"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "lanes": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "label",
+                  "displayKey",
+                  "code"
+                ],
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  "displayKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 8
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^(Key[A-Z]|Space)$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "drums": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "lanes"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "lanes": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "label",
+                  "displayKey",
+                  "code"
+                ],
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  "displayKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 8
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^(Key[A-Z]|Space)$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "bass": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "lanes"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "lanes": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "label",
+                  "displayKey",
+                  "code"
+                ],
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  "displayKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 8
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^(Key[A-Z]|Space)$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "keys": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "lanes"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "lanes": {
+              "type": "array",
+              "minItems": 5,
+              "maxItems": 5,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "label",
+                  "displayKey",
+                  "code"
+                ],
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 32
+                  },
+                  "displayKey": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 8
+                  },
+                  "code": {
+                    "type": "string",
+                    "pattern": "^(Key[A-Z]|Space)$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "patterns": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "guitar",
+        "drums",
+        "bass",
+        "keys"
+      ],
+      "properties": {
+        "guitar": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              }
+            ],
+            "items": false,
+            "minItems": 3,
+            "maxItems": 3
+          }
+        },
+        "drums": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              }
+            ],
+            "items": false,
+            "minItems": 3,
+            "maxItems": 3
+          }
+        },
+        "bass": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              }
+            ],
+            "items": false,
+            "minItems": 3,
+            "maxItems": 3
+          }
+        },
+        "keys": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4
+              }
+            ],
+            "items": false,
+            "minItems": 3,
+            "maxItems": 3
+          }
+        }
+      }
+    }
+  }
+}
