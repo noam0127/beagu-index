@@ -308,3 +308,16 @@
 - 두 Stage019 Node 테스트 스크립트의 JavaScript 구문 파싱 검사는 PASS. 단 본 실행 환경에서는 GitHub 도메인 DNS 접근이 차단돼 직접 Node/Playwright 및 HTTP 실서버 검증 불가. GitHub 커넥터는 push-triggered GitHub Actions run 결과를 보여주지 않았다. 최신 관찰된 Vercel 실패는 `upgradeToPro=build-rate-limit`로 표시된 빌드 제한이며, Stage019 기능 테스트 실패로 볼 근거가 없다.
 - **종료 판정:** Stage019 실제 소스·테스트·CI 정의는 시험 브랜치에 반영했지만 외부 실행 성공 증거가 없어 **구현 완료 / 최종 검증 BLOCKED**이다. 검증 미확인 사항을 [GitHub Issue #245](https://github.com/noam0127/beagu-index/issues/245)에 등록했다. 019는 최종 릴리스 게이트로 남기되, 독립적인 다음 개발 단계 020의 착수를 막지 않는다.
 - 다음 개발 단계: **020/030 — 자료 누락·교가 등록 상태·오류 대응**. 최종 출시 전 #245의 019 검증을 반드시 해결한다.
+
+## 020/030 — 교가 또는 배구 테마곡 선택·누락/장애 복구 (2026-11-23)
+
+상태: **IMPLEMENTED / CI PENDING**. 019 검증 이슈 #245 유지.
+
+- 사용자 요구: 학교 검색 → 교가/배구 테마곡 선택 → 악기 선택 → 연주.
+- 2곡 선택 UI 및 승인되지 않은 교가 선택 잠금: commit 66848100cb4d47221c4d0dbe619c8dd1d1b933d5.
+- 9초 API 요청 제한, 검색 재시도 및 가상 학교 대체: commit c25efb1ea321e72d129e7df2afa4e34336444e75.
+- 교가 게임용 승인 카탈로그는 아직 비어 있음. 기존 자체 창작 연습곡을 배구 테마 임시 연습곡으로 재사용하고 새 곡이라고 주장하지 않음.
+- 공개 지수 난이도와 게임용 교가 등록은 별개 상태. 선택 곡별 최고점 기록 저장 키 분리.
+- 신규 테스트: scripts/test-schoolband-stage020.cjs, CI .github/workflows/schoolband-stage020.yml. 기존 016/008/005 회귀 연동.
+- 7개 AI 전문 역할 검토 및 향후 021~030 반영: docs/schoolband-stage020-song-selection.md.
+- 검증: JS 구문/정적 계약 14건 PASS. 브라우저 실행·GitHub Actions CI 통과 및 물리 기기 청음은 미확인. 020단계 완료 선언 보류.
