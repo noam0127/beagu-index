@@ -78,6 +78,7 @@ async function run(href){
  await flush();
  assert.equal(lastOAuth.provider,"google");
  assert.equal(lastOAuth.options.redirectTo,expected);
+ $('postitAccountPassword').value="example-password-123";
  $('postitAccountForm').fire("submit",{preventDefault(){}});
  await flush();
  assert.equal(signinCount,1,"existing password login is unchanged");
