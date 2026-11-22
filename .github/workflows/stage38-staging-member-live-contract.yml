@@ -5,6 +5,7 @@ on:
     paths:
       - 'tests/fixtures/stage38-staging-admin-members-live-v2/**'
       - 'tests/stage38-staging-member-live-contract.cjs'
+      - '.github/workflows/stage38-staging-admin-http-negative.yml'
       - '.github/workflows/stage38-staging-member-live-contract.yml'
   pull_request:
     paths:
@@ -27,3 +28,30 @@ jobs:
         run: node tests/stage38-staging-member-live-contract.cjs
       - name: Confirm no deployment
         run: echo "Static test only. No Supabase deploy or production changes."
+
+  anonymous-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check isolated staging admin API denies unauthenticated requests
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-admin-members-v1"
+          for scenario in anonymous forged; do
+            if [ "$scenario" = anonymous ]; then
+              status=$(curl --silent --show-error --max-time 15 --output response.json --write-out '%{http_code}' -H 'Content-Type: application/json' --data '{"action":"list"}' "$url")
+            else
+              status=$(curl --silent --show-error --max-time 15 --output response.json --write-out '%{http_code}' -H 'Content-Type: application/json' -H 'Authorization: Bearer invalid.stage38.token' --data '{"action":"list"}' "$url")
+            fi
+            case "$status" in 401|403) echo "PASS: $scenario rejected ($status)";; *) echo "FAIL: $scenario HTTP $status"; exit 1;; esac
+            python3 - <<'PY'
+          import json
+          body=open("response.json",encoding="utf-8").read()
+          try:
+              data=json.loads(body)
+          except json.JSONDecodeError:
+              data={}
+          assert not any(k in data for k in ("members","users","phone","email","data"))
+          PY
+          done
