@@ -278,5 +278,19 @@
 - **한계:** 실제 Android/iOS 물리 터치패널 및 방향센서, iOS Safari·TalkBack/VoiceOver·실제 사람 청음·OS 고대비·전체화면의 실기 검증은 027단계까지 남아 있음. CDP Chromium 디지털 합성 터치와 물리 실기라는 증거를 구별하여 기록. 실제 학교 교가 권한/유튜브 음원은 사용하지 않음.
 - 다음 단계 **018/030 — 사용자 연출·진동 설정 및 저사양 최적화**.
 
-## 018/030 — pending
-모션 감소·진동 끄기·음량 조절·저성능 이펙트 모드를 고도화하고, 낮은 성능·배터리에서도 판정 시계가 유지되도록 설정 조합별 UI/성능 스모크 테스트와 실제 캡처·실측 기록을 남긴다.
+## 018/030 — 사용자 연출·진동 설정·저사양 최적화 (2026-11-22)
+
+상태: **COMPLETE — PC1280·모바일320 Chromium 3개 효과 설정×2 = 6개 시나리오에서 CPU4× 스로틀 상태의 동일 노트 PERFECT 1,005점 일치, 저사양 Canvas 그리기 19/39회(48.7%) 절감, 기존 017·016·008·005·007 전체 회귀 PASS.** 물리 기기 배터리/실제 진동 출력은 별도 027/030 확인.
+
+- 원본 `nangam-schoolband_30-step_master_prompt_v1.md` **018/030(원본 068~070)**에 따라 `schoolband-playtest` 시험 브랜치의 게임 HTML만 수정. 운영 `main` (작업 개시 HEAD `0ca283cd09cd63520d9ce8e37463bed8d2f65541`)·`baeguindex.com`·운영 Supabase DB/Edge Functions/기존 게임 미변경.
+- 게임 HTML에 `lowPowerFx` 체크·효과 프로필 상태 `fxModeStatus`, 영속 선호 `nangam-band-fx-v1`, 읽기 전용 실제 성능 카운터 `getPerformanceFx` 추가. 기존 모션 최소화 `reduceFx`, 진동 `vibrationFx`, 음량/음소거와 함께 동작. 저사양에서 그라데이션·그림자 대신 선명한 24px 단색 노트·흰 테두리, Canvas 렌더링을 최소 **32ms 간격(목표 최고 약 30fps)**으로 제한, PERFECT/GOOD 파편 3/2개·전체 상한 12개, 화면 흔들림/강한 링/진동 억제. OS 모션 감소는 진동 및 파편을 완전히 끔.
+- **판정 공정성:** `requestAnimationFrame(animate)` 모든 틱에서 `AudioContext.currentTime` 기반으로 HIT/MISS 판정하며 Canvas `draw()`만 건너뜀. 기존 `setInterval(scheduleAhead,30)` 오디오 반주 예약·자동 진행·입력 채점/점수/노트 두께·레인 계약 불변.
+- **실제 성능 측정(650ms):** PC 기본 판정41/렌더41/건너뜀0, 저사양 판정39/렌더20/건너뜀19, 모션 감소 판정39/렌더39/건너뜀0. 모바일320 기본 판정40/렌더40/건너뜀0, 저사양39/20/19, 모션 감소39/39/0. 저사양 Canvas draw 스킵 비중 **19/39=48.7%**. CPU4× 디버거 슬로다운 뒤 같은 노트를 실제 키보드 입력하면 PC/모바일 **6개 조건 모두 정확히 1회 PERFECT·1,005점**, 소리 hit 이벤트 1건씩 PASS.
+- **실제 가시/접근성:** 기본 PERFECT 파편11·진동 호출1, 저사양 파편3·진동0, 모션감소 파편0·진동0을 2개 뷰포트에서 검증. 저사양에서 실제 진동 비활성이었지만 ‘진동 사용’ 체크가 남아 있던 문제를 **체크 해제+비활성 UI**로 수정하고 모바일 캡처에서 확인. 기본 모드 복귀 시 저장된 진동 선택 복구. 저사양 모드+음량45% 설정 및 새로고침 후 양쪽 복원 PASS.
+- **CI:** [run 45023445834](https://github.com/noam0127/beagu-index/actions/runs/45023445834) **completed/success**, 실제 최종 코드 검증 SHA `7fe3a96de1f9e768f25042d8afbb957fdf904482`. 새 Stage018 테스트+실제 Chromium CPU 스로틀 6개 시나리오, Stage017 실제 CDP 두 손가락/화면 회전, Stage016 학교→악기→연주, Stage008 PC·모바일 40게임·키160/터치160/Enter40, Stage005 판정 경계98/좌표121/FPS28, Stage007 판정·일시정지 전부 PASS.
+- **증거:** [GitHub Actions 아티팩트](https://github.com/noam0127/beagu-index/actions/runs/45023445834/artifacts/14753904418) ZIP 427,935바이트 실제 다운로드 및 확인: `results.json`과 PC·모바일 각각 기본/저사양/모션감소 **총 6개 화면 PNG**, 합계 7파일. `unit.passed=true,browser.length=6`, 각 `passed=true`, `failure` 필드 없음. 결과 보고서 `docs/schoolband-stage018-fx-low-power.md`의 **7개 AI 전문가 역할 관점별 문제→수정→실검사→남은 위험** 참조.
+- **남은 한계:** 4× CPU 속도 제한은 Chromium 디버거 모사이며, 실제 폰의 배터리 절감 와트·발열·Android/iOS haptic 하드웨어·물리 터치 패널/실제 청음/스크린리더를 측정하지 않았다(027). 설정이 데이터 수집·운영 DB 수정으로 이어지지 않음. 기본 60fps·저사양 약30fps는 목표 상한이며 저성능 기기에서 보장하지 않음.
+- 다음 단계 **019/030 — 학교 검색·실제 난이도 연동 안전화**. 학교 ID·동명이교·2026 학교값 공개 승인·백분위 임계값20/40/60/80을 실제 공개 조회 API와 비교 검증할 예정.
+
+## 019/030 — pending
+`school_id` 중심 전국 초등학교 검색, 동명이교·지역/학교 코드 구분, 공개 승인된 자료만으로 `easy/normal/hard/very_hard/extreme` 5난이도와 임계값 20/40/60/80을 계산하고 미승인/미산정 학교는 분리 처리한다.
