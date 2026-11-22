@@ -103,6 +103,9 @@ jobs:
           import json
           data=json.load(open('settings.json',encoding='utf-8'))
           assert isinstance(data,dict) and 'external' in data
+          flags={k:data.get(k, 'not_advertised') for k in ('disable_signup','mailer_autoconfirm','phone_autoconfirm')}
+          flags['email_provider']=data.get('external',{}).get('email','not_advertised')
+          print('STAGING_AUTH_PUBLIC_FLAGS:', json.dumps(flags, sort_keys=True))
           print('PASS: staging Auth settings reachable; no account or session created')
           PY
       - name: Reject invalid password login and forged user token (no signup)
