@@ -1,0 +1,36 @@
+name: v1.1.0 stage37 rc.1 immutable SHA and packaging
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'docs/releases/v1.1.0-rc.1.json'
+      - 'docs/releases/v1.1.0-rc.1.md'
+      - 'tests/v1.1.0-stage37-rc-freeze.py'
+      - '.github/workflows/v1.1.0-stage37-rc-freeze.yml'
+  pull_request:
+    paths:
+      - 'docs/releases/v1.1.0-rc.1.json'
+      - 'docs/releases/v1.1.0-rc.1.md'
+      - 'tests/v1.1.0-stage37-rc-freeze.py'
+      - '.github/workflows/v1.1.0-stage37-rc-freeze.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  candidate-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate pinned RC SHA, registry, release NO-GO and isolated packaging
+        run: python3 tests/v1.1.0-stage37-rc-freeze.py
+      - name: Explain safe scope
+        run: |
+          echo "Release candidate source recorded at exact commit SHA."
+          echo "No git push/tag overwrite, Supabase write, live or staging site deployment."
+          echo "Production approval remains NO-GO, PR #195 stays draft."
