@@ -269,13 +269,45 @@ def minimize_independent_preview(target):
             file.write_text(new, encoding="utf-8")
 
 
+def write_independent_vercel_config(target):
+    """Ship response headers with the isolated, root-hosted Vercel site.
+
+    The file is included in the reviewed artifact, not applied to an existing
+    Vercel project or any live deployment by this packaging operation.
+    """
+    policy = (
+        "connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co "
+        "wss://ycwuugggqbunlbwuzvbx.supabase.co; "
+        "form-action 'self'; frame-ancestors 'none'; base-uri 'self'"
+    )
+    config = {
+        "version": 2,
+        "cleanUrls": False,
+        "headers": [{
+            "source": "/(.*)",
+            "headers": [
+                {"key": "Content-Security-Policy", "value": policy},
+                {"key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive"},
+                {"key": "X-Content-Type-Options", "value": "nosniff"},
+                {"key": "Referrer-Policy", "value": "no-referrer"},
+                {"key": "X-Frame-Options", "value": "DENY"},
+                {"key": "Cache-Control", "value": "no-store"}
+            ]
+        }]
+    }
+    (target / "vercel.json").write_text(
+        json.dumps(config, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8"
+    )
+
+
 def write_independent_release_manifest(target, staging_sha):
     """Deterministic public provenance for HTTP smoke checks after deployment.
 
     Include immutable content hashes, not user identity, auth data, or a
     declaration that live deployment or administrator approval happened.
     """
-    required = ("index.html", "js/supabase-config.js")
+    required = ("index.html", "js/supabase-config.js", "vercel.json")
     sha256 = {}
     for relative in required:
         item = target / relative
@@ -320,6 +352,7 @@ def package_independent_preview():
     make_preview_banner(INDEPENDENT_OUTPUT, independent=True)
     isolate_preview_backend(INDEPENDENT_OUTPUT)
     minimize_independent_preview(INDEPENDENT_OUTPUT)
+    write_independent_vercel_config(INDEPENDENT_OUTPUT)
     (INDEPENDENT_OUTPUT / ".nojekyll").touch()
     if (INDEPENDENT_OUTPUT / "CNAME").exists():
         raise RuntimeError("Production custom domain leaked into standalone preview")
