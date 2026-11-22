@@ -1,0 +1,43 @@
+name: Schoolband 001 baseline static and hosted-browser audit
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - '.github/workflows/schoolband-stage001-baseline.yml'
+      - 'scripts/check-schoolband-baseline.cjs'
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'docs/schoolband-stage001-baseline-audit.md'
+      - 'docs/schoolband-30-steps-progress.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Static contracts + local/remote Chromium smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static schoolband v0.8 baseline contract
+        run: node scripts/check-schoolband-baseline.cjs
+      - name: Install Chromium for actual DOM/audio-start validation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Serve branch source and test live hosted URLs in Chromium
+        run: |
+          python3 -m http.server 8123 --bind 127.0.0.1 >/tmp/schoolband-stage001-http.log 2>&1 &
+          node scripts/check-schoolband-baseline.cjs --browser
+      - name: Preserve screenshots for baseline evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: schoolband-stage001-screenshots
+          path: artifacts/schoolband-stage001/
+          if-no-files-found: ignore
