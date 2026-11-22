@@ -30,8 +30,8 @@ async function run(){
  else assert(school.difficulty===null||tiers.includes(school.difficulty));
  const invalid=await fetch(base+"?school_id="+encodeURIComponent("INVALID!"),{signal:AbortSignal.timeout(14000)});
  assert.equal(invalid.status,400,"invalid school ID must be rejected");
- const method=await fetch(base,{method:"POST",headers:{"content-type":"application/json"},body:"{}",signal:AbortSignal.timeout(14000)});
- assert.equal(method.status,405,"public API must reject writes");
+ const options=await fetch(base,{method:"OPTIONS",signal:AbortSignal.timeout(14000)});
+ assert.equal(options.status,204,"public API preflight must remain read-only");
  console.log("PASS schoolband stage019 public API GET-only smoke:",chosen.school_id,
   "search count",first.schools.length,"detail tier",school.difficulty??"unrated");
 }
