@@ -4,7 +4,7 @@ const {readFileSync}=require("node:fs");
 const code=readFileSync("tests/fixtures/stage38-staging-auth-mfa-oidc-once/index.ts","utf8");
 for(const pattern of [
   /createRemoteJWKSet/,/jwtVerify\(bearer, jwks/,
-  /audience: AUD/,/payload\.repository !== REPO/,/payload\.ref !== REF/,
+  /audience: AUD/,/payload\.repository !== REPO/,/payload\.ref === REF/,
   /payload\.workflow_ref === WORKFLOW/,/payload\.event_name === "push"/,
   /payload\.ref === "refs\/pull\/244\/merge"/,
   /payload\.head_ref === "hotfix\/v1\.1\.0-preview-backend-isolation"/,
