@@ -15,6 +15,7 @@ const matrix = [
   ["fragment token in URL", "https://stage.example.net/#token=test", false, "invalid_preview_https_url"],
   ["localhost not a hosted independent site", "https://localhost:3000/", false, "invalid_preview_https_url"],
   ["ip address not a reviewed host", "https://192.0.2.10/", false, "ip_address_not_reviewed_host"],
+  ["independent host but path-based deployment", "https://staging.example.net/_preview/", false, "preview_not_site_root"],
   ["independent synthetic host", "https://staging.example.net/", true, null],
   ["independent synthetic project host", "https://beagu-preview.pages.dev/", true, null],
 ];
