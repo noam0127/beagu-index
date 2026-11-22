@@ -38,7 +38,7 @@ function checkPure(){
   tom:GAME.includes('o.frequency.exponentialRampToValueAtTime(96,when+.16)'),
  };
  Object.entries(roles).forEach(([k,v])=>assert(v,"missing distinct sound role "+k));
- const before=GAME.indexOf("function autoPartsAtStep("),end=GAME.indexOf("function audioContext(){");
+ const before=GAME.indexOf("function autoPartsAtStep("),end=GAME.indexOf("\n}",before);
  assert(before>=0&&end>before,"audio source order");
  const pureBlock=GAME.slice(before,GAME.indexOf("\n}",before)+2);
  const plan=vm.runInNewContext("const MELODY_BY_STEP=new Map([[0,1],[4,1],[8,1]]);\n"+pureBlock+"\nautoPartsAtStep",{}, {timeout:1000});
