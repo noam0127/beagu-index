@@ -1,6 +1,31 @@
 -- DISPOSABLE POSTGRESQL CI FIXTURE ONLY. This is NOT a Supabase migration.
 -- Nothing in this file may run against a real user or staging database.
 -- All code/token strings below are fixtures, never production credentials.
+-- The following marker is supplied only within the disposable local CI session.
+-- This is defense-in-depth against accidentally executing this fixture on
+-- any real Supabase database. A custom setting is not cryptographic identity.
+DO $fixture_only_guard$
+BEGIN
+  IF current_setting('app.stage38_fixture_only',true)
+       IS DISTINCT FROM 'ephemeral-ci'
+     OR current_database() <> 'postgres'
+     OR to_regclass('stage_private.fake_schools') IS NULL
+     OR to_regclass('stage_private.members') IS NULL
+     OR to_regclass('public.beagu_site_release_state_v1') IS NOT NULL
+     OR to_regclass('beagu_private.challenge_identity_codes') IS NOT NULL
+     OR to_regclass('public.beagu_level_codes') IS NULL
+     OR to_regclass('public.beagu_level_sessions') IS NULL
+  THEN
+    RAISE EXCEPTION 'STAGE38_EPHEMERAL_PG_FIXTURE_ONLY';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.beagu_level_codes)
+     OR EXISTS (SELECT 1 FROM public.beagu_level_sessions)
+  THEN
+    RAISE EXCEPTION 'STAGE38_FIXTURE_MUST_START_EMPTY';
+  END IF;
+END;
+$fixture_only_guard$;
+
 DO $fixture$
 DECLARE
   duplicate_blocked boolean := false;
