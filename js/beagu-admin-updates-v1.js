@@ -145,8 +145,9 @@
   try{
    const data=await request("status",{check_latest:!quiet});
    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
+   const recovered=!statusVerified;
    render(data);
-   if(!quiet)message("업데이트 관리 연결 완료 · 서버 확인 상태");
+   if(!quiet||recovered)message("업데이트 관리 연결 완료 · 서버 확인 상태");
   }catch(err){
    lockReleaseControls();
    if(err?.status===401||err?.status===403||err?.code==="admin_mfa_required"){
