@@ -13,6 +13,10 @@ on:
       - 'tests/stage38-page-perf-contract.cjs'
       - 'tests/stage38-staging-live-traffic-contract.cjs'
       - 'tests/stage38-staging-telemetry-health-contract.cjs'
+      - 'tests/stage38-staging-referral-funnel-contract.cjs'
+      - 'tests/stage38-staging-referral-funnel-regression.sql'
+      - 'supabase/migrations/stage38_staging_referral_funnel_rpc.sql'
+      - 'supabase/migrations/20261121093000_referral_funnel_private_v1.sql'
       - 'tests/stage38-staging-telemetry-health-regression.sql'
       - 'supabase/migrations/stage38_staging_admin_telemetry_health_rpc.sql'
       - 'supabase/migrations/20261120_telemetry_gateway_v2.sql'
@@ -40,6 +44,10 @@ on:
       - 'tests/stage38-page-perf-contract.cjs'
       - 'tests/stage38-staging-live-traffic-contract.cjs'
       - 'tests/stage38-staging-telemetry-health-contract.cjs'
+      - 'tests/stage38-staging-referral-funnel-contract.cjs'
+      - 'tests/stage38-staging-referral-funnel-regression.sql'
+      - 'supabase/migrations/stage38_staging_referral_funnel_rpc.sql'
+      - 'supabase/migrations/20261121093000_referral_funnel_private_v1.sql'
       - 'tests/stage38-staging-telemetry-health-regression.sql'
       - 'supabase/migrations/stage38_staging_admin_telemetry_health_rpc.sql'
       - 'supabase/migrations/20261120_telemetry_gateway_v2.sql'
@@ -80,6 +88,8 @@ jobs:
         run: node tests/stage38-staging-live-traffic-contract.cjs
       - name: Verify staging telemetry-health aggregates, access and source parity
         run: node tests/stage38-staging-telemetry-health-contract.cjs
+      - name: Verify original referral funnel SQL, private grants and fixture rollback contract
+        run: node tests/stage38-staging-referral-funnel-contract.cjs
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
