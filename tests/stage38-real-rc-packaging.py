@@ -85,6 +85,27 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
         if link_count:
             production_link_files[str(file.relative_to(out))] = link_count
     assert html_count >= 1 and static_count >= html_count
+    # Three remaining references are deliberate only: one visibly labelled
+    # "actual web" admin link, plus two SEO canonical URLs in noindex pages.
+    # Unexpected new production-domain navigation fails the RC audit.
+    expected_production_links = {
+        "admin-updates.html": 1,
+        "js/challenge.html": 1,
+        "result.html": 1,
+    }
+    assert production_link_files == expected_production_links, (
+        "Unreviewed production-domain links in standalone RC: " +
+        repr(production_link_files)
+    )
+    assert 'href="https://baeguindex.com/"' in (
+        out / "admin-updates.html"
+    ).read_text(encoding="utf-8")
+    assert '<link rel="canonical" href="https://baeguindex.com/challenge.html">' in (
+        out / "js/challenge.html"
+    ).read_text(encoding="utf-8")
+    assert '<link rel="canonical" href="https://baeguindex.com/school-report.html">' in (
+        out / "result.html"
+    ).read_text(encoding="utf-8")
 
     # Report rather than conceal navigation out of the staging host.
     # Nonzero links are a separate security review gate, not clearance.
