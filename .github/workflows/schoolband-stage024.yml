@@ -1,0 +1,28 @@
+name: Schoolband 024 scoring & versioned record safety (no audio)
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage024.cjs'
+      - '.github/workflows/schoolband-stage024.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scoring:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pure data scoring, completeness, record corruption, reset tests
+        run: node scripts/test-schoolband-stage024.cjs
+      - name: Install Playwright Chromium for visual UI identity checks only
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Browser verify school/chart/instrument isolation and reset (NO audio or listening)
+        run: node scripts/test-schoolband-stage024.cjs --browser
