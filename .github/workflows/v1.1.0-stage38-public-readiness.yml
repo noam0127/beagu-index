@@ -1,0 +1,32 @@
+name: v1.1.0 stage38 final public preflight NO-GO
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage38-public-readiness.py'
+      - '.github/workflows/v1.1.0-stage38-public-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read-only-public-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Confirm public preview, release manager UI and SHA mismatch
+        run: python3 tests/v1.1.0-stage38-public-readiness.py
+      - name: Store evidence without publishing a website
+        uses: actions/upload-artifact@v4
+        with:
+          name: beagu-stage38-readonly-readiness
+          path: stage38-readiness.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Clear release verdict
+        run: |
+          echo "Stage38 preview RC not deployed; no live AAL2 owner approval."
+          echo "No live RC registration or production release is authorized by this check."
