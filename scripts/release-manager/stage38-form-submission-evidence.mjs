@@ -239,3 +239,59 @@ export function evaluateTierFromRotatingEvidence({
     ...trustedServerChecks,receipt,secret:rotatingSecret(entry)
   });
 }
+
+
+// REVIEW-ONLY, server-internal enrollment lookup: unlike callback-signing
+// keys, this distinct master key remains stable across routine Form-signature
+// rotations. Use a separate, secret-managed random 256-bit key, never one
+// of the keyring secrets. A lookup HMAC is NOT a password or login session.
+const ENROLLMENT_LOOKUP_DOMAIN="BEAGU_ST38_ENROLLMENT_LOOKUP_V1";
+
+export function deriveStableEnrollmentLookup(participantCode,{
+  lookupSecret,lookupKeyId
+}={}) {
+  if (typeof participantCode!=="string" || !CODE_FORMAT.test(participantCode) ||
+      typeof lookupSecret!=="string" || lookupSecret.length<32 ||
+      typeof lookupKeyId!=="string" || !KEY_ID_FORMAT.test(lookupKeyId))
+    throw Error("INVALID_ENROLLMENT_LOOKUP_INPUT");
+  return {
+    campaign:"2026",
+    lookupKeyId,
+    codeLookupDigest:hmac(lookupSecret,JSON.stringify([
+      ENROLLMENT_LOOKUP_DOMAIN,"2026",participantCode
+    ]))
+  };
+}
+
+// A private, verified ledger row is required for READ-ONLY login eligibility.
+// The server must additionally validate possession, rate limits and any
+// account/device rules; this helper never issues or renews a session.
+// A past callback signing key being retired does not itself revoke a
+// legitimate enrollment, but suspected key compromise requires independent
+// fraud review / record revocation.
+export function isActiveEnrollmentFromPrivateLedger(participantCode,{
+  lookupSecret,lookupKeyId,ledgerRow
+}={}) {
+  let expected;
+  try {
+    expected=deriveStableEnrollmentLookup(participantCode,{
+      lookupSecret,lookupKeyId
+    });
+  } catch {
+    return false;
+  }
+  if (!ledgerRow || typeof ledgerRow!=="object" ||
+      Array.isArray(ledgerRow) ||
+      ledgerRow.campaign!=="2026" ||
+      ledgerRow.lookupKeyId!==expected.lookupKeyId ||
+      ledgerRow.proofState!=="claimed" ||
+      ledgerRow.evidenceOrigin!=="official-signed-form" ||
+      ledgerRow.ownerBindingState!=="verified" ||
+      ledgerRow.active!==true ||
+      ledgerRow.revokedAt!==null ||
+      typeof ledgerRow.codeLookupDigest!=="string" ||
+      !MAC_FORMAT.test(ledgerRow.codeLookupDigest))
+    return false;
+  return timingSafeEqual(Buffer.from(expected.codeLookupDigest,"hex"),
+                         Buffer.from(ledgerRow.codeLookupDigest,"hex"));
+}
