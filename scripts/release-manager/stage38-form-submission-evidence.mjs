@@ -9,7 +9,6 @@ const MAC_FORMAT = /^[a-f0-9]{64}$/;
 const MAX_EVENT_AGE_MS = 48 * 60 * 60 * 1000;
 const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
 const EARLIEST_2026 = Date.parse("2026-11-01T00:00:00+09:00");
-const sha256 = value => createHash("sha256").update(value).digest("hex");
 const hmac = (secret,message) => createHmac("sha256",secret).update(message).digest("hex");
 const signingInput = e => JSON.stringify(["BEAGU_ST38_FORM_V1",
   e.sourceSpreadsheetId,e.formId,e.formResponseId,e.submittedAt,e.participantCode]);
@@ -110,4 +109,133 @@ export function evaluateTierFromPrivateEvidence({
       Number.isFinite(Date.parse(upgradedAt)))
     return 2;
   return 1;
+}
+
+
+// REVIEW-ONLY rotation contract. Neither these key records nor the secrets
+// belong in browser bundles, publicly exposed settings, or CI environments.
+// Authorized backends must source high-entropy keys from secret management.
+const KEY_ID_FORMAT=/^[a-z][a-z0-9_-]{1,31}$/;
+const ROTATION_VERSION=2;
+const ROTATING_SIGNATURE_CONTEXT="BEAGU_ST38_FORM_SIG_V2";
+const ROTATING_DERIVE_CONTEXT="BEAGU_ST38_OWNER_SECRET_V2";
+
+function validKeyRing(ring) {
+  if (!ring || typeof ring!=="object" || Array.isArray(ring) ||
+      typeof ring.activeKeyId!=="string" ||
+      !ring.keys || typeof ring.keys!=="object" || Array.isArray(ring.keys))
+    return false;
+  const ids=Object.keys(ring.keys);
+  if (ids.length===0 || ids.length>8 ||
+      ids.filter(id=>ring.keys[id]?.status==="active").length!==1 ||
+      !Object.hasOwn(ring.keys,ring.activeKeyId))
+    return false;
+  const secrets=new Set();
+  for (const id of ids) {
+    if (!KEY_ID_FORMAT.test(id)) return false;
+    const entry=ring.keys[id];
+    if (!entry || typeof entry!=="object" || Array.isArray(entry) ||
+        typeof entry.secret!=="string" || entry.secret.length<32 ||
+        !["active","verify-only","revoked"].includes(entry.status) ||
+        (entry.status==="verify-only" && (
+          !Number.isSafeInteger(entry.verifyUntilMs) || entry.verifyUntilMs<=0
+        )) ||
+        (entry.status!=="verify-only" && entry.verifyUntilMs!==undefined) ||
+        secrets.has(entry.secret))
+      return false;
+    secrets.add(entry.secret);
+  }
+  return ring.keys[ring.activeKeyId].status==="active";
+}
+
+function allowedKey(ring,id,nowMs,forNewSignature=false) {
+  if (!validKeyRing(ring) || !KEY_ID_FORMAT.test(id??"") ||
+      !Number.isSafeInteger(nowMs) || nowMs<=0 ||
+      !Object.hasOwn(ring.keys,id)) return null;
+  const entry=ring.keys[id];
+  if (entry.status==="revoked") return null;
+  if (forNewSignature && (id!==ring.activeKeyId || entry.status!=="active"))
+    return null;
+  if (!forNewSignature && entry.status==="verify-only" &&
+      nowMs>entry.verifyUntilMs) return null;
+  return entry;
+}
+
+// Unique HMAC derivation context for this reference protocol version.
+// Signing metadata and proof digests continue to have separate domain tags
+// inside the version-1 signer; unrelated deployment keys must not be reused.
+function rotatingSecret(entry) {
+  return hmac(entry.secret,ROTATING_DERIVE_CONTEXT);
+}
+function rotatingMac(secret,keyId,innerSignature) {
+  return hmac(secret,JSON.stringify([ROTATING_SIGNATURE_CONTEXT,keyId,
+    innerSignature]));
+}
+
+// Only the single ACTIVE key can create new signed Form callbacks.
+// The public envelope never includes any key or a private proof receipt.
+export function signVersionedTrustedSubmissionEvent(event,{
+  keyring,nowMs=Date.now()
+}={}) {
+  if (!validKeyRing(keyring)) throw Error("TRUSTED_KEYRING_REQUIRED");
+  const keyId=keyring.activeKeyId;
+  const entry=allowedKey(keyring,keyId,nowMs,true);
+  if (!entry) throw Error("NO_ACTIVE_SIGNING_KEY");
+  const derived=rotatingSecret(entry);
+  const inner=signTrustedSubmissionEvent(event,{secret:derived});
+  return {version:ROTATION_VERSION,keyId,
+    signature:rotatingMac(derived,keyId,inner)};
+}
+
+// Old verify-only keys may validate *newly received* callbacks only until
+// their explicit grace deadline. Unknown, revoked, expired and downgraded
+// identifiers are not tried against any other key.
+export function verifyVersionedTrustedSubmissionEvent(event,{
+  keyring,envelope,expectedSpreadsheetId,expectedFormId,nowMs=Date.now()
+}={}) {
+  if (!validKeyRing(keyring)) return deny("TRUSTED_KEYRING_REQUIRED");
+  if (!envelope || typeof envelope!=="object" ||
+      Array.isArray(envelope) ||
+      JSON.stringify(Object.keys(envelope).sort())!==
+        JSON.stringify(["keyId","signature","version"]) ||
+      envelope.version!==ROTATION_VERSION ||
+      typeof envelope.keyId!=="string" ||
+      !MAC_FORMAT.test(envelope.signature??""))
+    return deny("INVALID_KEYED_ENVELOPE");
+  const entry=allowedKey(keyring,envelope.keyId,nowMs,false);
+  if (!entry) return deny("UNTRUSTED_OR_RETIRED_KEY");
+  const derived=rotatingSecret(entry);
+  let inner;
+  try {
+    inner=signTrustedSubmissionEvent(event,{secret:derived});
+  } catch {
+    return deny("INVALID_SUBMISSION_METADATA");
+  }
+  const expected=rotatingMac(derived,envelope.keyId,inner);
+  if (!timingSafeEqual(Buffer.from(envelope.signature,"hex"),
+                      Buffer.from(expected,"hex")))
+    return deny("SIGNATURE_MISMATCH");
+  const receipt=verifyTrustedSubmissionEvent(event,{
+    secret:derived,signature:inner,
+    expectedSpreadsheetId,expectedFormId,nowMs
+  });
+  if (!receipt.ok) return receipt;
+  return {...receipt,cryptoVersion:ROTATION_VERSION,
+    cryptoKeyId:envelope.keyId};
+}
+
+// Only a trusted server, never the caller, may supply ledger ownership and
+// submission uniqueness proofs. It is still only a pure *reference* policy
+// and does not grant a real session or mutate a DB.
+export function evaluateTierFromRotatingEvidence({
+  keyring,receipt,nowMs=Date.now(),...trustedServerChecks
+}={}) {
+  if (!receipt || receipt.cryptoVersion!==ROTATION_VERSION ||
+      typeof receipt.cryptoKeyId!=="string")
+    return 0;
+  const entry=allowedKey(keyring,receipt.cryptoKeyId,nowMs,false);
+  if (!entry) return 0;
+  return evaluateTierFromPrivateEvidence({
+    ...trustedServerChecks,receipt,secret:rotatingSecret(entry)
+  });
 }
