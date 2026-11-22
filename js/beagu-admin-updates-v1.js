@@ -144,6 +144,10 @@
   if(busy)return;
   try{
    const data=await request("status",{check_latest:!quiet});
+   if(!data||!data.state||typeof data.state!=="object"||
+      !Object.hasOwn(data.state,"production_sha")||
+      !Array.isArray(data.staging_history)||!Array.isArray(data.production_history))
+     throw Error("배포 상태 응답 형식이 올바르지 않습니다.");
    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
    const recovered=!statusVerified;
    render(data);
@@ -154,6 +158,8 @@
     denied("관리자 인증 필요: "+(err.message||String(err)));
     if(timer){clearInterval(timer);timer=null;}
    }else{
+    // Keep a read-only retry route visible when the initial status fetch fails.
+    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
     message("배포 상태 조회 실패 · 안전을 위해 배포 버튼을 잠갔습니다. "+
      "상태 새로고침으로 연결을 다시 확인하세요. ("+(err.message||String(err))+")",true);
    }
