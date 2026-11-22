@@ -65,7 +65,18 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     assert manifest["supabase_project_ref"] == STAGING_REF
     assert manifest["environment"] == "isolated-test-package"
     assert manifest["deployment_status"] == "unverified"
-    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js", "vercel.json"}
+    # git hash-object compares the checked-out RC dataset with a packaged
+    # candidate. A newer HEAD dataset must never override this pinned source.
+    rc_data = subprocess.check_output(
+        ["git", "show", RC_SHA + ":data/public-compare-school-directory-v1.json"],
+        cwd=ROOT
+    )
+    packaged_data = (out / "data/public-compare-school-directory-v1.json").read_bytes()
+    assert packaged_data == rc_data, "Unapproved HEAD data overlaid pinned RC"
+    assert manifest["files_sha256"]["data/public-compare-school-directory-v1.json"] == hashlib.sha256(
+        packaged_data
+    ).hexdigest()
+    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js", "vercel.json", "data/public-compare-school-directory-v1.json"}
     for path, digest in manifest["files_sha256"].items():
         assert re.fullmatch("[0-9a-f]{64}", digest)
         assert __import__("hashlib").sha256((out / path).read_bytes()).hexdigest() == digest
