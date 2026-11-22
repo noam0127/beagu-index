@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
-import { releaseMetrics, legacyRows, canSortRankedSchools } from '../_shared/release-policy.mjs';
+import { releaseMetrics, legacyRows, canSortRankedSchools, canUse2026Lv2Snapshot } from '../_shared/release-policy.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -99,15 +99,25 @@ Deno.serve(async(req:Request)=>{
      const pendingIds=[...new Set((metrics.data||[]).filter((m:any)=>
        m.approved_at&&Date.parse(m.approved_at)>Date.now()-24*60*60*1000)
        .map((m:any)=>String(m.school_id)))];
-     const reviewed=await Promise.all(pendingIds.map(async (schoolId:string)=>({
-       schoolId,...await admin.rpc('beagu_2026_lv2_released_question_results',{p_school_id:schoolId})
-     })));
-     if(reviewed.some(r=>r.error))return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
-     for(const r of reviewed)if(Array.isArray(r.data))recentIds.add(r.schoolId);
+     if(pendingIds.length){
+       // A reviewed snapshot is not immediately visible to Lv2. A separate
+       // six-hour approval cutoff must pass before consulting its secure RPC.
+       const {data:snapshots,error:snapshotError}=await admin
+         .from('beagu_2026_results_snapshot').select('school_id,approved_at')
+         .in('school_id',pendingIds).eq('approval_status','APPROVED').limit(20);
+       if(snapshotError)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
+       const eligibleIds=(snapshots||[]).filter((x:any)=>
+         canUse2026Lv2Snapshot(x.approved_at)).map((x:any)=>String(x.school_id));
+       const reviewed=await Promise.all(eligibleIds.map(async (schoolId:string)=>({
+         schoolId,...await admin.rpc('beagu_2026_lv2_released_question_results',{p_school_id:schoolId})
+       })));
+       if(reviewed.some(r=>r.error))return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
+       for(const r of reviewed)if(Array.isArray(r.data)&&r.data.length>0)recentIds.add(r.schoolId);
+     }
    }
    const out:Record<string,number>={};
    for(const id of ids){
-    const approved=releaseMetrics((metrics.data||[]).filter((m:any)=>m.school_id===id),catalog.data||[],1,recentIds.has(id))
+    const approved=releaseMetrics((metrics.data||[]).filter((m:any)=>m.school_id===id),catalog.data||[],Number(session.access_level),recentIds.has(id))
      .filter((m:any)=>m.year===2026&&m.key==='percentile'&&typeof m.value==='number'&&m.value>=0&&m.value<=100);
     if(approved.length)out[id]=approved[0].value;
    }
@@ -202,9 +212,17 @@ Deno.serve(async(req:Request)=>{
   // A null result means the exact snapshot failed independent publication review.
   let lv2Approved2026:null|unknown[]=null;
   if(level>=2){
-    const {data,error}=await admin.rpc('beagu_2026_lv2_released_question_results',{p_school_id:id});
-    if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
-    if(Array.isArray(data))lv2Approved2026=data;
+    // The trusted service role may query approvals, but must not disclose
+    // a newly approved exact snapshot before Lv2's six-hour cooldown.
+    const {data:approval,error:approvalError}=await admin
+      .from('beagu_2026_results_snapshot').select('approved_at')
+      .eq('school_id',id).eq('approval_status','APPROVED').maybeSingle();
+    if(approvalError)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
+    if(canUse2026Lv2Snapshot(approval?.approved_at)){
+      const {data,error}=await admin.rpc('beagu_2026_lv2_released_question_results',{p_school_id:id});
+      if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
+      if(Array.isArray(data)&&data.length>0)lv2Approved2026=data;
+    }
   }
   const [legacy,metrics,catalog,curated2025]=await Promise.all([
    level===2?admin.from('beagu_level_data').select('survey_year,access_level,summary,release_status').eq('school_id',id).eq('release_status','approved').lt('survey_year',2026).order('survey_year').limit(20):Promise.resolve({data:[],error:null}),
