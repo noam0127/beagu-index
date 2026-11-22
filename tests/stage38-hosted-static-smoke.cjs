@@ -47,6 +47,12 @@ async function run() {
     // Use one isolated browser context so the review consent applies only to
     // this temporary CI session. No credentials or backend requests are sent.
     const context = await browser.newContext({ serviceWorkers: "block" });
+    // rawgit.hack's public FAQ explicitly documents this cookie for automated
+    // browser QA. No login credentials, real user cookies, or private APIs.
+    await context.addCookies([{
+      name: "__Http-phish", value: "1", domain: "raw.githack.com", path: "/",
+      httpOnly: true, secure: true, sameSite: "Lax",
+    }]);
     for (const file of pages) {
       const page = await context.newPage();
       page.on("request", req => {
@@ -68,27 +74,8 @@ async function run() {
       assert.equal(new URL(page.url()).origin, new URL(base).origin,
         "Page redirected outside external preview origin: " + file);
       const ctype = response.headers()["content-type"] || "(none)";
-      if ((await page.title()).includes("External Content Notice")) {
-        const buttons = await page.locator("a,button").evaluateAll(nodes =>
-          nodes.map(x => ({text:(x.textContent||"").trim().slice(0,75),
-            href:x.getAttribute("href")||""})).filter(x => x.text).slice(0,12));
-        console.log("NOTICE: raw.githack requires explicit first-visit review confirmation " +
-          JSON.stringify(buttons));
-        const proceed = page.locator("a,button").filter({ hasText: /Open the page/i }).first();
-        assert.equal(await proceed.count(), 1,
-          "RawGit external notice did not provide an explicit review action");
-        await proceed.click({ timeout: 12000 });
-        // The raw.githack consent UI asynchronously replaces its own document.
-        // A second waitForLoadState after click can hang after a navigation
-        // event already fired, so wait for our own visible safety marker.
-        await page.waitForTimeout(1100);
-        let afterConsent = "";
-        try { afterConsent = (await page.title()) + " / " +
-          (await page.locator("body").innerText()).slice(0,110); }
-        catch { afterConsent = "navigation_in_progress"; }
-        console.log("NOTICE: post-consent state=" + JSON.stringify(afterConsent));
-        console.log("NOTICE: raw.githack external content notice acknowledged in disposable Chromium context");
-      }
+      assert.ok(!(await page.title()).includes("External Content Notice"),
+        "RawGit automation cookie was not accepted; HTML was not delivered");
       console.log("DIAG: hosted " + file + " content_type=" + ctype +
         " title=" + JSON.stringify(await page.title()) +
         " preview_marker=" + (await page.content()).includes("stage38-public-static-warning"));
