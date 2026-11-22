@@ -892,8 +892,13 @@ function schoolHomepageUrl(record){
  }catch(_){return null}
 }
 function syncHomepageDiscovery(){
- const link=$("anthemSchoolHomepage"),note=$("anthemHomepageStatus");
+ const link=$("anthemSchoolHomepage");
  const site=schoolHomepageUrl(school);
+ if(!school){
+  link.hidden=true;link.removeAttribute("href");
+  safeText("anthemHomepageStatus","학교를 선택하면 기록된 홈페이지 주소를 확인할 수 있습니다.");
+  return;
+ }
  if(site){
   link.href=site;link.hidden=false;
   safeText("anthemHomepageStatus","학교 DB에 기록된 홈페이지 주소입니다. 실제 교가와 접속 여부는 확인되지 않았습니다.");
