@@ -90,6 +90,9 @@ def build() -> dict:
     if not release_path.is_file():
         raise RuntimeError("Admin release entrypoint is missing")
     release_path.write_text(read_only_page, encoding="utf-8")
+    release_client = OUTPUT / "js/beagu-admin-updates-v1.js"
+    if release_client.is_file():
+        release_client.unlink()
 
     html_files = 0
     modified = 0
