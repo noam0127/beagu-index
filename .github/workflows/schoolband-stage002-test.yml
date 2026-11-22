@@ -1,0 +1,36 @@
+name: Schoolband 002 one-command regression and measurement
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - '.github/workflows/schoolband-stage002-test.yml'
+      - 'scripts/test-schoolband-stage002.cjs'
+      - 'games/nangam-schoolband-v08/index.html'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser dependency
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Stage 002 one-command test
+        run: node scripts/test-schoolband-stage002.cjs
+      - name: Upload browser screenshots and performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: schoolband-stage002-evidence
+          path: artifacts/schoolband-stage002/
+          if-no-files-found: error
