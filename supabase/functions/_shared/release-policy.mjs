@@ -10,23 +10,36 @@ export function canSortRankedSchools(level, sort) {
 
 const text = (v,max=240) => typeof v==='string' && v.length<=max && !/[<>\r\n]/.test(v);
 const forbidden = /응답.*(수|횟|건)|관측|표본|소표본|원자료|자유서술|respondent|observation|sample|raw_row|n_valid|count/i;
-// Results are never returned immediately following their 2026 release approval.
-// An approval happens after data collection, so this also guarantees at least
-// 24 hours elapsed since submission. Privacy review remains mandatory.
+// 2026 releases are tier-delayed AFTER independent publication approval.
+// Historical survey releases are not affected by these delays.
 export const RELEASE_DELAY_MS=24*60*60*1000;
-export function approved2026ReleaseIsOldEnough(approvedAt,nowMs=Date.now()){
-  if(typeof approvedAt!=='string')return false;
+export const LV2_RELEASE_DELAY_MS=6*60*60*1000;
+export function approved2026ReleaseIsOldEnough(approvedAt,nowMs=Date.now(),delayMs=RELEASE_DELAY_MS){
+  if(typeof approvedAt!=='string'||!Number.isFinite(nowMs)||
+     !Number.isFinite(delayMs)||delayMs<0)return false;
   const time=Date.parse(approvedAt);
-  return Number.isFinite(time)&&time<=nowMs-RELEASE_DELAY_MS;
+  return Number.isFinite(time)&&time<=nowMs-delayMs;
 }
-export function releaseMetrics(rows,catalog,level,approvedLv2Instant2026=false){
+// An independently reviewed exact-snapshot RPC is STILL required. Age alone
+// must never authorize reading survey results.
+export function canUse2026Lv2Snapshot(approvedAt,nowMs=Date.now()){
+  return approved2026ReleaseIsOldEnough(approvedAt,nowMs,LV2_RELEASE_DELAY_MS);
+}
+export function releaseMetrics(rows,catalog,level,approvedLv2Snapshot=false){
   if(![1,2].includes(level))return [];
   const definitions=new Map(catalog.filter(c=>c.verified===true).map(c=>[`${c.survey_year}:${c.question_id}`,c]));
   const candidates=rows.flatMap(r=>{
-    if(r.survey_year===2026&&/^Q51(?:$|[._-])/.test(r.question_id))return [];
-    // Only the Lv2 server route may pass true, after a separate approved exact-snapshot
-    // RPC has confirmed the independent legal/privacy review. Default stays 24h.
-    if(r.survey_year===2026&&!approvedLv2Instant2026&&!approved2026ReleaseIsOldEnough(r.approved_at))return [];
+    // Q31 is a school-level sensitive incident question explicitly excluded
+    // from publication; Q51 is also never a public school metric.
+    if(r.survey_year===2026&&/^Q(?:31|51)(?:$|[._-])/.test(r.question_id))return [];
+    // Lv1: 24h. Lv2: 6h only after a separate exact-snapshot review RPC.
+    // Always apply the delay to EACH metric's own approval, not merely the
+    // snapshot timestamp: a newly approved metric must not ride an older snapshot.
+    if(r.survey_year===2026){
+      const early=level>=2&&approvedLv2Snapshot===true;
+      const delay=early?LV2_RELEASE_DELAY_MS:RELEASE_DELAY_MS;
+      if(!approved2026ReleaseIsOldEnough(r.approved_at,Date.now(),delay))return [];
+    }
     const d=definitions.get(`${r.survey_year}:${r.question_id}`);
     if(!d||r.approval_status!=='APPROVED'||r.privacy_status!=='PASSED'||!r.identity_reviewed||!r.question_reviewed||!r.small_cell_reviewed||!r.differencing_reviewed||!r.approved_at||!r.approved_by||!r.approval_evidence)return [];
     const min=r.survey_year===2026&&(r.question_id==='percentile'||isVI(r.question_id))?1:2;
