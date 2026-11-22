@@ -1,0 +1,30 @@
+name: Schoolband 025 result summary privacy and leaderboard decision
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage025.cjs'
+      - '.github/workflows/schoolband-stage025.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-results:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check valid and abnormal results without network or audio
+        run: node scripts/test-schoolband-stage025.cjs
+      - name: Check stage024 scoring and record compatibility
+        run: node scripts/test-schoolband-stage024.cjs
+      - name: Install Chromium for DOM-only and network-write assertions
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Verify PC and mobile summary, no scoreboard POST, without sound
+        run: node scripts/test-schoolband-stage025.cjs --browser
