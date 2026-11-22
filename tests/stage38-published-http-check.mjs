@@ -9,12 +9,16 @@ const stage="ycwuugggqbunlbwuzvbx";
 const index="<html><head></head><body>Preview RC only</body></html>";
 const config="const SUPABASE_URL='https://ycwuugggqbunlbwuzvbx.supabase.co';";
 const directory='{"version":"PINNED_RC_DIRECTORY"}';
+const extraJs="window.stage38=true;";
+const tinyImage=new Uint8Array([82,73,70,70,1,2,3,4,87,69,66,80]);
 const hash=value=>createHash("sha256").update(value).digest("hex");
 const fileHashes={
   "index.html":hash(index),
   "js/supabase-config.js":hash(config),
   "vercel.json":hash('{"review":"headers-only"}'),
-  "data/public-compare-school-directory-v1.json":hash(directory)
+  "data/public-compare-school-directory-v1.json":hash(directory),
+  "js/extra-safe.js":hash(extraJs),
+  "assets/picture.webp":hash(tinyImage)
 };
 const manifest={
   schema:"beagu-independent-preview-package-v1",
@@ -44,7 +48,9 @@ const routes={
   "/stage38-release-manifest.json":JSON.stringify(manifest),
   "/index.html":index,
   "/js/supabase-config.js":config,
-  "/data/public-compare-school-directory-v1.json":directory
+  "/data/public-compare-school-directory-v1.json":directory,
+  "/js/extra-safe.js":extraJs,
+  "/assets/picture.webp":tinyImage
 };
 function mocked({routeOverrides={},headerOverrides={},statusOverrides={}}={}){
   const calls=[];
@@ -65,8 +71,9 @@ function mocked({routeOverrides={},headerOverrides={},statusOverrides={}}={}){
   assert.equal(result.realAccountReady,false);
   assert.equal(result.productionReleaseReady,false);
   assert.equal(result.pinnedSha,pinned);
-  assert.equal(calls.length,4);
-  assert.equal(result.checkedAssets,4);
+  assert.equal(calls.length,6);
+  assert.equal(result.checkedAssets,6);
+  assert.equal(result.totalManifestFiles,6);
   assert.ok(calls.every(x=>x.opts.method==="GET"&&x.opts.redirect==="manual"));
   assert.ok(calls.every(x=>x.url.startsWith(site)));
 }
@@ -107,6 +114,26 @@ for (const status of [401,403]) {
   // A newer unapproved directory must not pass even when RC HTML/JS match.
   const {fetcher}=mocked({routeOverrides:{"/data/public-compare-school-directory-v1.json":'{"version":"UNAPPROVED_NEW_DIRECTORY"}'}});
   assert.equal((await inspect(site,{fetcher})).reason,"deployed_file_hash_mismatch");
+}
+{
+  // Changing a secondary JS file must fail even when index/config/data match.
+  const {fetcher}=mocked({routeOverrides:{"/js/extra-safe.js":"window.stage38=false;"}});
+  const result=await inspect(site,{fetcher});
+  assert.equal(result.reason,"deployed_file_hash_mismatch");
+  assert.equal(result.detail,"js/extra-safe.js");
+}
+{
+  // Binary assets are hashed byte-for-byte, not via UTF-8 text conversion.
+  const {fetcher}=mocked({routeOverrides:{"/assets/picture.webp":new Uint8Array([82,73,70,70,9])}});
+  const result=await inspect(site,{fetcher});
+  assert.equal(result.reason,"deployed_file_hash_mismatch");
+  assert.equal(result.detail,"assets/picture.webp");
+}
+{
+  const traversal=JSON.stringify({...manifest,files_sha256:{...fileHashes,"../supabase/config.json":hash("bad")}});
+  const {fetcher}=mocked({routeOverrides:{"/stage38-release-manifest.json":traversal}});
+  const result=await inspect(site,{fetcher,expectedManifestSha256:hash(traversal)});
+  assert.equal(result.reason,"invalid_rc_asset_inventory");
 }
 {
   const bad=JSON.stringify({...manifest,files_sha256:{"index.html":fileHashes["index.html"]}});
