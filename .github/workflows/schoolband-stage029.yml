@@ -7,6 +7,7 @@ on:
       - 'games/nangam-schoolband-v08/preview/index.html'
       - 'games/nangam-schoolband-v08/charts/school-homepages.v1.json'
       - 'scripts/test-schoolband-stage029.cjs'
+      - 'scripts/test-schoolband-stage029-browser.cjs'
       - '.github/workflows/schoolband-stage029.yml'
   workflow_dispatch:
 permissions:
@@ -37,6 +38,20 @@ jobs:
           retention-days: 7
       - name: Verify independent free CDN at exact commit (external HTTP)
         run: node scripts/test-schoolband-stage029.cjs --external
+      - name: Install Chromium for NO-AUDIO external page DOM smoke
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Open actual immutable preview URL and check PC/mobile controls without music
+        run: node scripts/test-schoolband-stage029-browser.cjs
+      - name: Save anonymized PC/mobile test screenshots as evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-029-external-browser-${{ github.sha }}
+          path: artifacts/schoolband-stage029/browser/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Explicitly confirm NO paid deployment or production promotion
         run: |
           test ! -f artifacts/schoolband-stage029/site/CNAME
