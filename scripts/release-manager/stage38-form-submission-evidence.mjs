@@ -11,6 +11,8 @@ const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;
 const EARLIEST_2026 = Date.parse("2026-11-01T00:00:00+09:00");
 const sha256 = value => createHash("sha256").update(value).digest("hex");
 const hmac = (secret,message) => createHmac("sha256",secret).update(message).digest("hex");
+const signingInput = e => JSON.stringify(["BEAGU_ST38_FORM_V1",
+  e.sourceSpreadsheetId,e.formId,e.formResponseId,e.submittedAt,e.participantCode]);
 const deny = reason => ({ok:false,reason});
 
 // This serialization is explicitly versioned and length-safe (no delimiter ambiguity).
@@ -36,7 +38,7 @@ export function signTrustedSubmissionEvent(event,{secret}={}) {
   if (typeof secret !== "string" || secret.length < 32) throw Error("TRUSTED_TRIGGER_SECRET_REQUIRED");
   const e = normalized(event);
   if (!e) throw Error("INVALID_TRUSTED_FORM_EVENT");
-  return hmac(secret,JSON.stringify(["BEAGU_ST38_FORM_V1",e.sourceSpreadsheetId,e.formId,e.formResponseId,e.submittedAt,e.participantCode]));
+  return hmac(secret,signingInput(e));
 }
 
 export function verifyTrustedSubmissionEvent(event,{
@@ -53,7 +55,7 @@ export function verifyTrustedSubmissionEvent(event,{
       e.submittedAtMs>nowMs+MAX_FUTURE_SKEW_MS ||
       nowMs-e.submittedAtMs>MAX_EVENT_AGE_MS)
     return deny("SUBMISSION_OUT_OF_WINDOW");
-  const expected=signTrustedSubmissionEvent(e,{secret});
+  const expected=hmac(secret,signingInput(e));
   if (!timingSafeEqual(Buffer.from(signature,"hex"),Buffer.from(expected,"hex")))
     return deny("SIGNATURE_MISMATCH");
   // The digest identifies an official Form response only inside this private
