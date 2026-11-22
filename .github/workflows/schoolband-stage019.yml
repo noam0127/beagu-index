@@ -1,0 +1,31 @@
+name: Schoolband 019 published school identity and difficulty safety
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage019.cjs'
+      - '.github/workflows/schoolband-stage019.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  published-school-tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Validate approval, school ID and 20/40/60/80 boundaries
+        run: node scripts/test-schoolband-stage019.cjs
+      - name: Install Chromium for existing school-search UI regression
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Recheck real school-search mock and 3-screen flow on desktop and mobile
+        run: node scripts/test-schoolband-stage016.cjs --browser
+      - name: Recheck 20 charts and timing boundaries
+        run: |
+          node scripts/test-schoolband-stage008.cjs
+          node scripts/test-schoolband-stage005.cjs
