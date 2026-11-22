@@ -14,6 +14,11 @@ on:
       - 'tests/stage38-staging-live-traffic-contract.cjs'
       - 'tests/stage38-staging-telemetry-health-contract.cjs'
       - 'tests/stage38-staging-referral-funnel-contract.cjs'
+      - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
+      - 'tests/stage38-staging-dashboard-aggregate-regression.sql'
+      - 'tests/fixtures/stage38-staging-dashboard-rpc.sql'
+      - 'tests/fixtures/stage38-staging-dashboard-tables.sql'
+      - 'supabase/migrations/20261120_admin_dashboard_v1.sql'
       - 'tests/stage38-staging-referral-funnel-regression.sql'
       - 'supabase/migrations/stage38_staging_referral_funnel_rpc.sql'
       - 'supabase/migrations/20261121093000_referral_funnel_private_v1.sql'
@@ -45,6 +50,11 @@ on:
       - 'tests/stage38-staging-live-traffic-contract.cjs'
       - 'tests/stage38-staging-telemetry-health-contract.cjs'
       - 'tests/stage38-staging-referral-funnel-contract.cjs'
+      - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
+      - 'tests/stage38-staging-dashboard-aggregate-regression.sql'
+      - 'tests/fixtures/stage38-staging-dashboard-rpc.sql'
+      - 'tests/fixtures/stage38-staging-dashboard-tables.sql'
+      - 'supabase/migrations/20261120_admin_dashboard_v1.sql'
       - 'tests/stage38-staging-referral-funnel-regression.sql'
       - 'supabase/migrations/stage38_staging_referral_funnel_rpc.sql'
       - 'supabase/migrations/20261121093000_referral_funnel_private_v1.sql'
@@ -90,6 +100,8 @@ jobs:
         run: node tests/stage38-staging-telemetry-health-contract.cjs
       - name: Verify original referral funnel SQL, private grants and fixture rollback contract
         run: node tests/stage38-staging-referral-funnel-contract.cjs
+      - name: Verify isolated comprehensive dashboard SQL and privacy contract
+        run: node tests/stage38-staging-dashboard-aggregate-contract.cjs
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
