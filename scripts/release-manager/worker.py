@@ -92,14 +92,32 @@ def make_preview_banner(target):
         'style="position:fixed;bottom:10px;right:10px;z-index:2147483600;'
         'background:#152943;color:#fff;border-radius:12px;'
         'padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">'
-        '시험 웹 · 시험 데이터 연결</div>'
+        '시험 웹 · 운영 웹과 브라우저 저장공간 공유 · 실제 계정 사용 금지</div>'
     )
     for file in target.rglob("*.html"):
         source = file.read_text(encoding="utf-8", errors="replace")
         source = re.sub(r"(?i)<body(\s[^>]*)?>",
                         lambda match: match.group(0) + banner,
                         source, count=1)
-        source = source.replace("<head>", '<head><meta name="robots" content="noindex,nofollow">', 1)
+        # Browser-side defense in depth.  URL/key rewrites are not sufficient:
+        # preview pages share a browser origin with production.  Restrict
+        # API connections to the independent staging Supabase backend and
+        # prohibit external form submissions while testing.
+        csp = (
+            "connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co "
+            "wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"
+        )
+        meta = (
+            '<meta http-equiv="Content-Security-Policy" content="' + csp + '">'
+            '<meta name="robots" content="noindex,nofollow">'
+        )
+        source, count = re.subn(
+            r"(?i)<head(?:\s[^>]*)?>",
+            lambda match: match.group(0) + meta,
+            source, count=1
+        )
+        if count != 1:
+            raise RuntimeError("Preview HTML is missing <head>; cannot enforce CSP")
         # Root-absolute navigation should stay in the selected candidate snapshot.
         source = re.sub(r'(?i)(href|src)=(["\\\'])/(?!/|_preview/)',
                         lambda match: match.group(1) + "=" + match.group(2) + "/_preview/",
