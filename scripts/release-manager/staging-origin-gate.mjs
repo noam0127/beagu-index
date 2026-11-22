@@ -32,6 +32,9 @@ export function inspectPreviewOrigin(productionUrl, previewUrl) {
   if (!prod) errors.push("invalid_production_https_url");
   if (!preview) errors.push("invalid_preview_https_url");
   if (prod && preview) {
+    // Standalone artifact is built for an origin root, not a /_preview/
+    // subpath. An unrelated hostname with a subpath is still not ready.
+    if (preview.pathname !== "/") errors.push("preview_not_site_root");
     if (prod.origin === preview.origin) errors.push("same_origin");
     const base = prod.hostname.replace(/^www\./, "");
     if (preview.hostname === base || preview.hostname.endsWith("." + base))
