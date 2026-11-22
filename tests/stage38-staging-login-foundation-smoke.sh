@@ -208,3 +208,20 @@ SQL
 echo "PASS: synthetic private Form event atomically claimed once; duplicate event, cross-code replay and two concurrent sessions rejected."
 
 
+# No real Supabase database is touched. This file proves that a previously
+# issued bearer cannot keep reading after the enrollment code is revoked.
+test -f tests/stage38-synthetic-session-revocation-db.sql
+if psql -v ON_ERROR_STOP=1 -f tests/stage38-synthetic-session-revocation-db.sql \
+    > /tmp/stage38-unapproved-session.stdout 2>&1; then
+  echo "INVALID: protected session fixture ran without the ephemeral CI marker" >&2
+  exit 1
+fi
+grep -q "STAGE38_EPHEMERAL_SESSION_ONLY" /tmp/stage38-unapproved-session.stdout
+psql -v ON_ERROR_STOP=1 <<'SQL'
+SET app.stage38_fixture_only = 'ephemeral-ci';
+\i tests/stage38-synthetic-session-revocation-db.sql
+SQL
+echo "PASS: disposable DB next-request checks deny revoked code, withdrawn earned Lv2, expired token and downgraded session."
+
+
+
