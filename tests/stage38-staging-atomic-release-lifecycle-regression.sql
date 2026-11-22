@@ -114,7 +114,7 @@ BEGIN
   THEN RAISE EXCEPTION 'Production rollback improperly changed staging'; END IF;
 
   INSERT INTO public.beagu_site_release_jobs_v1
-    (action,target,from_sha,to_sha,version,summary,status)
+    (action,target,from_sha,to_sha,version,summary,status,public_data_blob_sha)
   VALUES('stage_rollback','staging',candidate,base,'SIM-BASE','Synthetic test rollback','running',new_blob)
   RETURNING id INTO job_id;
   PERFORM public.beagu_site_release_finalize_v1(job_id,'deployed','https://staging.example.invalid/restored');
