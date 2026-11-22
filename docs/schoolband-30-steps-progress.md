@@ -321,3 +321,15 @@
 - 신규 테스트: scripts/test-schoolband-stage020.cjs, CI .github/workflows/schoolband-stage020.yml. 기존 016/008/005 회귀 연동.
 - 7개 AI 전문 역할 검토 및 향후 021~030 반영: docs/schoolband-stage020-song-selection.md.
 - 검증: JS 구문/정적 계약 14건 PASS. 브라우저 실행·GitHub Actions CI 통과 및 물리 기기 청음은 미확인. 020단계 완료 선언 보류.
+
+## 021/030 — 학교별 홈페이지 기반 교가 탐색·영상 메타데이터 (2026-11-23)
+
+상태: **IMPLEMENTED / CI PENDING**. 릴리스 게이트는 [GitHub Issue #246](https://github.com/noam0127/beagu-index/issues/246), 019 게이트는 #245.
+
+- 021 기본 구현: 학교별 교가 관련 공식 사이트 검색/YouTube 검색 이동, 검수된 유튜브 메타데이터만 외부 공식 임베드로 감상하는 선택적 영역. 실제 교가를 플레이하는 게임 데이터와는 엄격히 분리.
+- 운영 Supabase에 **읽기 전용** 질의로 운영 초등학교 6,335교 중 홈페이지 문자열 6,306개를 확인. 웹주소 정규화·검증 후 **6,288개**를 `games/nangam-schoolband-v08/charts/school-homepages.v1.json`에 school_id 기준으로 수록, 18개 형식 불량은 보류. *실제 사이트 생존·소유권·교가 존재는 미확인*.
+- 코드: 학교 선택 후 같은 school_id에 해당하는 기록된 홈페이지 링크가 있으면 표시하며 해당 호스트 내 교가 검색 링크를 제공. 없거나 카탈로그 로드 실패 시 학교명 검색으로 대체하고 창작 연습곡 정상 플레이 유지.
+- 테스트: `scripts/test-schoolband-stage021.cjs` (기존 영상 메타데이터 게이트), `scripts/test-schoolband-stage021-homepages.cjs` (목록 무결성·안전 링크·1280/320 브라우저 ID 일치 및 누락 대체 경로), `.github/workflows/schoolband-stage021.yml` 실행 정의.
+- 확인한 증거: 최신 게임 JavaScript 구문 검사 및 홈페이지만 대상인 **13개 정적 검사 통과**. GitHub Actions/실제 Node·Playwright 실행, 본 시험 웹에서 JSON 정상 로드는 아직 미확인. 실패한 검증을 성공으로 표시하지 않는다.
+- 사용자 범위 제외: **교가 편곡·배포 허락 요청 금지, 유료 API·결제 금지, 청음/연주감 평가 금지**. 출처에 게시됐다는 이유만으로 음악 파일 다운로드·편곡·게임 공개를 하지 않으며 교가 게임 버튼은 승인된 플레이용 자산이 없으면 잠금 유지. 이후 022는 권리 허락 요청 대신 승인된/자체 창작 자산을 기계적으로 분리·차단하는 작업으로 조정.
+- 운영 `main`, `baeguindex.com`, 운영 Supabase DB/function을 변경하지 않았다.
