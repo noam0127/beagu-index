@@ -1,0 +1,45 @@
+name: Schoolband 009 rhythm chart schema and instrument signatures
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'games/nangam-schoolband-v08/charts/**'
+      - 'scripts/test-schoolband-stage009.cjs'
+      - '.github/workflows/schoolband-stage009.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chart-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install schema validator and real Chromium
+        run: |
+          npm install --no-save --no-package-lock ajv@8 playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: JSON Schema 2020 and chart corruption fail-closed contract
+        run: node scripts/test-schoolband-stage009.cjs
+      - name: Real WebAudio instrument traces and browser invalid-chart rejection
+        run: node scripts/test-schoolband-stage009.cjs --browser
+      - name: Preserve all 20 chart combinations and N-lane input wiring
+        run: node scripts/test-schoolband-stage008.cjs --browser
+      - name: Preserve 5-tier timing and 60/90/120Hz score contracts
+        run: |
+          node scripts/test-schoolband-stage005.cjs
+          node scripts/test-schoolband-stage007.cjs
+      - name: Upload chart metrics, corruption tests and instrument screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage009-chart-validation
+          path: artifacts/schoolband-stage009/
+          if-no-files-found: error
