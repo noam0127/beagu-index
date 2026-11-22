@@ -164,6 +164,15 @@ html[data-high-contrast=true] #keyHint,html[data-high-contrast=true] #playTitle{
  .taphit strong{font-size:11px}
  html[data-large-text=true] .taphit strong{font-size:13px}
 }
+/* 018 performance modes never alter the audio clock or hit judgement */
+.fx-options{gap:8px 14px;align-items:center}
+.fx-options label{min-height:44px;padding:5px 3px}
+.fx-mode-status{font-size:11px;line-height:1.4;text-align:center;color:#d1d9eb;margin:3px 0 6px}
+html[data-low-power-fx="true"] .impact-ring,html[data-low-power-fx="true"] .combo-fx{display:none}
+html[data-low-power-fx="true"] .judgement.animate,html[data-low-power-fx="true"] .lane-event.animate{animation:none;opacity:1}
+html[data-low-power-fx="true"] .judgement.animate{transform:translate(-50%,0) scale(1)}
+html[data-low-power-fx="true"] .lane-event.animate{transform:none}
+@media(max-width:360px){.fx-options{gap:3px 9px}.fx-options label{font-size:11px}}
 </style>
 </head>
 <body>
@@ -203,7 +212,7 @@ html[data-high-contrast=true] #keyHint,html[data-high-contrast=true] #playTitle{
 <p id="keyHint">D 리프 · F 파워코드 · J 업스트럼 · K 고음 리프</p>
 <div id="mobileControls" class="mobile-controls" role="group" aria-label="연주 화면 보기 설정"><label><input type="checkbox" id="largeText"> 큰 글씨</label><label><input type="checkbox" id="highContrast"> 고대비</label><button type="button" id="fullscreenBtn" aria-pressed="false">⛶ 전체화면</button></div>
 <p id="screenModeStatus" class="visually-hidden" role="status" aria-live="polite"></p>
-<details class="timing-tuner" id="timingTuner"><summary>판정 보정 <output id="offsetSummary" for="offsetRange">0 ms</output></summary><div class="timing-controls"><label for="offsetRange">입력 판정 보정</label><input type="range" id="offsetRange" min="-150" max="150" step="5" value="0" aria-describedby="offsetHelp"><output id="offsetValue" for="offsetRange">0 ms</output><button type="button" id="offsetReset">초기화</button></div><p class="timing-help" id="offsetHelp">기기에서 소리가 들리는 시점보다 터치 입력이 늦게 인식되면 + 방향, 너무 이르게 인식되면 − 방향으로 조절하세요. +100 ms는 늦게 입력된 100 ms를 판정에서 보상합니다. 판정 화면과 반주는 그대로이며 게임 시작 전에 설정합니다. 실제 기기 오디오·입력 지연을 자동 측정하는 기능은 아닙니다.</p></details><div class="timing-controls volume-controls" role="group" aria-label="음향 음량 설정"><label for="volumeRange">음량</label><input type="range" id="volumeRange" min="0" max="100" step="5" value="100" aria-label="게임 전체 음량" aria-describedby="volumeHelp"><output id="volumeValue" for="volumeRange">100%</output><span id="volumeHelp" class="visually-hidden">0퍼센트는 완전 무음이며 음소거 버튼과 독립적으로 음량을 조절합니다.</span></div><div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label></div>
+<details class="timing-tuner" id="timingTuner"><summary>판정 보정 <output id="offsetSummary" for="offsetRange">0 ms</output></summary><div class="timing-controls"><label for="offsetRange">입력 판정 보정</label><input type="range" id="offsetRange" min="-150" max="150" step="5" value="0" aria-describedby="offsetHelp"><output id="offsetValue" for="offsetRange">0 ms</output><button type="button" id="offsetReset">초기화</button></div><p class="timing-help" id="offsetHelp">기기에서 소리가 들리는 시점보다 터치 입력이 늦게 인식되면 + 방향, 너무 이르게 인식되면 − 방향으로 조절하세요. +100 ms는 늦게 입력된 100 ms를 판정에서 보상합니다. 판정 화면과 반주는 그대로이며 게임 시작 전에 설정합니다. 실제 기기 오디오·입력 지연을 자동 측정하는 기능은 아닙니다.</p></details><div class="timing-controls volume-controls" role="group" aria-label="음향 음량 설정"><label for="volumeRange">음량</label><input type="range" id="volumeRange" min="0" max="100" step="5" value="100" aria-label="게임 전체 음량" aria-describedby="volumeHelp"><output id="volumeValue" for="volumeRange">100%</output><span id="volumeHelp" class="visually-hidden">0퍼센트는 완전 무음이며 음소거 버튼과 독립적으로 음량을 조절합니다.</span></div><div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label><label><input type="checkbox" id="lowPowerFx"> 저사양 모드</label></div><p id="fxModeStatus" class="fx-mode-status" role="status" aria-live="polite">기본 연출 · 60fps 목표</p>
 <div class="actions"><button type="button" id="start" disabled>▶ 연주 시작</button><button type="button" id="pause" aria-pressed="false" disabled>Ⅱ 일시정지</button><button type="button" id="stop" disabled>■ 중단</button><button type="button" id="mute">♫ 소리</button></div>
 <div id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
 <div class="progress"><div id="progress"></div></div>
@@ -767,16 +776,22 @@ let particles=[],lanePulse=[0,0,0,0,0],lastImpactAt=0,impactStrength=0,impactLan
 const LANE_GLOW_MS=175,PARTICLE_LIMIT=60;
 const systemMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")||null;
 const FX_PREF_KEY="nangam-band-fx-v1";
-let userReducedMotion=false,vibrationEnabled=false;
-try{const saved=JSON.parse(localStorage.getItem(FX_PREF_KEY)||"{}");userReducedMotion=saved.reduce===true;vibrationEnabled=saved.vibration===true}catch(_){/* private mode: session settings only */}
+let userReducedMotion=false,vibrationEnabled=false,lowPowerFx=false;
+const FX_PERF={judgementFrames:0,renderedFrames:0,skippedVisualFrames:0,lastDrawWall:0,modeChanges:0};
+try{const saved=JSON.parse(localStorage.getItem(FX_PREF_KEY)||"{}");userReducedMotion=saved.reduce===true;vibrationEnabled=saved.vibration===true;lowPowerFx=saved.lowPower===true}catch(_){/* private mode */ }
 function motionReduced(){return Boolean(systemMotion?.matches||userReducedMotion)}
-function persistFxSettings(){try{localStorage.setItem(FX_PREF_KEY,JSON.stringify({reduce:userReducedMotion,vibration:vibrationEnabled}))}catch(_){}}
+function perfFxMode(){return motionReduced()?"reduced":lowPowerFx?"low":"full"}
+function persistFxSettings(){try{localStorage.setItem(FX_PREF_KEY,JSON.stringify({reduce:userReducedMotion,vibration:vibrationEnabled,lowPower:lowPowerFx}))}catch(_){}}
 function syncFxSettings(){
- const reduced=motionReduced();
+ const reduced=motionReduced(),mode=perfFxMode();
  document.documentElement.dataset.reducedFx=String(reduced);
+ document.documentElement.dataset.lowPowerFx=String(lowPowerFx);
  $("reduceFx").checked=reduced;$("reduceFx").disabled=Boolean(systemMotion?.matches);
  $("vibrationFx").checked=!reduced&&vibrationEnabled;$("vibrationFx").disabled=reduced;
- if(reduced){particles=[];lastImpactAt=0;lanePulse.fill(0);$("impactRing").className="impact-ring"}
+ $("lowPowerFx").checked=lowPowerFx;
+ safeText("fxModeStatus",mode==="reduced"?"움직임 최소화 · 진동과 파편 없음":lowPowerFx?"저사양 모드 · 화면 최대 30fps · 판정과 소리는 동일":"기본 연출 · 60fps 목표");
+ if(reduced||lowPowerFx){particles=[];lastImpactAt=0;lanePulse.fill(0);$("impactRing").className="impact-ring";clearFxFeedback()}
+ FX_PERF.modeChanges++;FX_PERF.lastDrawWall=0;
  draw();
 }
 const IMPACT_COLORS=["#8bcaff","#ffc68f","#b1f7cd","#dfbaff","#ffe7a0"];
@@ -1315,7 +1330,7 @@ function triggerImpact(lane,isPerfect){
   const n=INST[instrument].lanes.length, margin=9,gap=4;
   const w=(canvas.width-2*margin-gap*(n-1))/n;
   const x=margin+lane*(w+gap)+w/2,y=canvas.height-72;
-  const count=isPerfect?11:6;
+  const count=lowPowerFx?(isPerfect?3:2):(isPerfect?11:6);
   for(let i=0;i<count;i++){
    const angle=(i/count)*Math.PI*2+(Math.random()-.5)*.4;
    const speed=60+Math.random()*90;
@@ -1323,16 +1338,17 @@ function triggerImpact(lane,isPerfect){
       start:when,life:240+Math.random()*280,size:2+Math.random()*4,
       color:IMPACT_COLORS[lane]});
   }
-  if(particles.length>PARTICLE_LIMIT)particles=particles.slice(-PARTICLE_LIMIT);
+  const cap=lowPowerFx?12:PARTICLE_LIMIT;
+  if(particles.length>cap)particles=particles.slice(-cap);
  }
  const text=$("judgeFx"),ring=$("impactRing");
  text.textContent=isPerfect?"PERFECT!":"GOOD!";
  ring.style.left=(100*(lane+.5)/INST[instrument].lanes.length)+"%";
  restartFx(text,"judgement "+(isPerfect?"perfect":"good"),motionReduced()?260:510);
- if(!motionReduced())restartFx(ring,"impact-ring",360);
+ if(!motionReduced()&&!lowPowerFx)restartFx(ring,"impact-ring",360);
  laneFeedback(lane,isPerfect?"perfect":"good");
  comboFeedback();
- if(vibrationEnabled&&!motionReduced()&&window.navigator?.vibrate)try{window.navigator.vibrate(isPerfect?12:7)}catch(_){}
+ if(vibrationEnabled&&!motionReduced()&&!lowPowerFx&&window.navigator?.vibrate)try{window.navigator.vibrate(isPerfect?12:7)}catch(_){}
 }
 function hit(lane){
  if(!playing||paused||!ctx||ctx.state!=="running"||lane<0||lane>=INST[instrument].lanes.length)return;
@@ -1408,7 +1424,7 @@ function animate(){
   status("오랜 화면 정지로 연주 시간이 건너뛰어 안전하게 중단했습니다. 처음부터 다시 시작해 주세요.");
   return;
  }
- lastFrameWall=frameWall;lastFrameSong=songNow;
+ lastFrameWall=frameWall;lastFrameSong=songNow;FX_PERF.judgementFrames++;
  const now=songNow,idx=tierIdx(),correctedNow=correctedInputTime(now,inputOffsetMs);
  let missedThisFrame=0;
  for(const n of chart){if(!n.done && isNoteMissed(n.t,correctedNow,idx)){n.done=true;judged++;miss++;combo=0;missedThisFrame++;logAudioEvent("miss",instrument,n.lane,ctx.currentTime,"no-hit-sound");laneFeedback(n.lane,"miss");}}
@@ -1416,7 +1432,12 @@ function animate(){
  const trackLength=generatedTrial?generatedTrial.trackSeconds:SONG_BEATS*BEAT;
  if(now>=trackLength+.28){finish(false);return}
  $("progress").style.width=Math.max(0,Math.min(100,100*(now/trackLength)))+"%";
- hud();draw();raf=requestAnimationFrame(animate);
+ hud();
+ // Low-power mode throttles rendering ONLY; judgement runs on each rAF.
+ if(!lowPowerFx||frameWall-FX_PERF.lastDrawWall>=32){
+  draw();FX_PERF.lastDrawWall=frameWall;FX_PERF.renderedFrames++;
+ }else FX_PERF.skippedVisualFrames++;
+ raf=requestAnimationFrame(animate);
 }
 async function start(){
  if(playing||startPending||!school)return;
@@ -1445,7 +1466,7 @@ async function start(){
  startPending=false;
  if(playing)return;
  playing=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;currentUxStep="play";syncStepNav();syncPauseControl();
- score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;soundEvents.length=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();
+ score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;soundEvents.length=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();FX_PERF.judgementFrames=0;FX_PERF.renderedFrames=0;FX_PERF.skippedVisualFrames=0;FX_PERF.lastDrawWall=0;
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
  $("offsetRange").disabled=true;$("offsetReset").disabled=true;
@@ -1485,7 +1506,7 @@ function draw(){
  const margin=9,gap=4,lw=(W-2*margin-gap*(N-1))/N;
  const colors=IMPACT_COLORS;
  const fxAge=performance.now()-lastImpactAt;
- const shake=(!motionReduced()&&fxAge>=0&&fxAge<85)?(1-fxAge/85)*impactStrength*.85:0;
+ const shake=(!motionReduced()&&!lowPowerFx&&fxAge>=0&&fxAge<85)?(1-fxAge/85)*impactStrength*.85:0;
  g.save();
  g.clearRect(0,0,W,H);
  if(shake)g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
@@ -1513,12 +1534,18 @@ function draw(){
   if(!noteIsInDrawingWindow(n.t,now))continue;
   const x=margin+n.lane*(lw+gap),y=noteYAtAudioTime(n.t,now,line);
   // A 24px tall note keeps a >4px internal gap at each sixteenth step (108 BPM).
-  const fill=g.createLinearGradient(x,y-12,x,y+12);
-  fill.addColorStop(0,"#ffffff");fill.addColorStop(.22,colors[n.lane]);fill.addColorStop(1,colors[n.lane]);
-  g.fillStyle=fill;g.shadowColor=colors[n.lane];g.shadowBlur=6;
-  rounded(x+4,y-12,lw-8,24,7);g.fill();
-  g.shadowBlur=0;g.strokeStyle="#ffffffd9";g.lineWidth=1.4;g.stroke();
-  g.fillStyle="#ffffffa8";rounded(x+10,y-9,Math.max(4,lw-20),4,2);g.fill();
+  if(lowPowerFx){
+   g.fillStyle=colors[n.lane];g.shadowBlur=0;
+   rounded(x+4,y-12,lw-8,24,7);g.fill();
+   g.strokeStyle="#fff";g.lineWidth=2;g.stroke();
+  }else{
+   const fill=g.createLinearGradient(x,y-12,x,y+12);
+   fill.addColorStop(0,"#ffffff");fill.addColorStop(.22,colors[n.lane]);fill.addColorStop(1,colors[n.lane]);
+   g.fillStyle=fill;g.shadowColor=colors[n.lane];g.shadowBlur=6;
+   rounded(x+4,y-12,lw-8,24,7);g.fill();
+   g.shadowBlur=0;g.strokeStyle="#ffffffd9";g.lineWidth=1.4;g.stroke();
+   g.fillStyle="#ffffffa8";rounded(x+10,y-9,Math.max(4,lw-20),4,2);g.fill();
+  }
  }
  const frameTime=performance.now();
  if(!motionReduced()&&particles.length){
@@ -1579,7 +1606,7 @@ window.addEventListener("pageshow",e=>{
   status("복귀했습니다. ▶ 이어하기를 눌러 연주를 재개하세요.");
  }
 });
-window.nangamSchoolbandV08={getMobileUiState:()=>({activePointers:activePadPointers.size,orientation:lastScreenOrientation,resizeCount:screenResizeCount,
+window.nangamSchoolbandV08={getPerformanceFx:()=>({...FX_PERF,mode:perfFxMode(),motionReduced:motionReduced(),lowPower:lowPowerFx,vibrationEnabled:vibrationEnabled&&!motionReduced()&&!lowPowerFx,volumePercent,particleCount:particles.length,maxParticles:lowPowerFx?12:PARTICLE_LIMIT,clockSource:"AudioContext.currentTime"}),getMobileUiState:()=>({activePointers:activePadPointers.size,orientation:lastScreenOrientation,resizeCount:screenResizeCount,
  largeText:document.documentElement.dataset.largeText==="true",highContrast:document.documentElement.dataset.highContrast==="true",
  fullscreen:!!document.fullscreenElement,fullscreenAvailable:!!$("stepPlay").requestFullscreen,
  padRects:[...$("pads").querySelectorAll(".taphit")].map(b=>({lane:Number(b.dataset.lane),x:b.getBoundingClientRect().left,
@@ -1592,6 +1619,7 @@ $("offsetRange").addEventListener("input",()=>{if(playing)return;inputOffsetMs=c
 $("offsetReset").addEventListener("click",()=>{if(playing)return;inputOffsetMs=0;saveOffset()});
 $("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
 $("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
+$("lowPowerFx").addEventListener("change",()=>{lowPowerFx=$("lowPowerFx").checked;persistFxSettings();syncFxSettings()});
 if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
 function updateOrientation(){
  // Rotation can cancel OS touches without delivering pointerup. Never carry a
