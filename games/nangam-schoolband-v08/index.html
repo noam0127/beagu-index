@@ -855,6 +855,7 @@ function trackAudioSource(source,nodes){
    audioLife.disconnected++;
   }
  };
+ entry.dispose=dispose;
  source.addEventListener?.("ended",dispose,{once:true});
  return entry;
 }
@@ -863,6 +864,7 @@ function stopTrackedAudio(){
   entry.active=false;liveAudioVoices.delete(entry);
   audioLife.cancelled++;
   try{entry.source.stop(0)}catch(_){}
+  try{entry.source.removeEventListener?.("ended",entry.dispose)}catch(_){}
   try{entry.source.onended=null}catch(_){}
   for(const node of entry.nodes){try{node.disconnect()}catch(_){}audioLife.disconnected++;}
  }
