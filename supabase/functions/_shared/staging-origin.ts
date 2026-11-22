@@ -25,12 +25,30 @@ export function exactStagingOriginAllowed(
   );
 }
 
+/** Only existing, explicitly local developer origins survive on staging. */
+export function originAllowedForProject(
+  origin: string,
+  existing: ReadonlySet<string>,
+  supabaseUrl: string,
+  configuredOrigin: string,
+): boolean {
+  if (supabaseUrl === STAGING_PROJECT_URL) {
+    const localOrigin = /^http:\/\/(?:localhost|127\.0\.0\.1):(?:8000|8788|38738)$/.test(origin);
+    return (localOrigin && existing.has(origin)) ||
+      exactStagingOriginAllowed(origin, supabaseUrl, configuredOrigin);
+  }
+  // Production's existing allowlist remains unchanged, and an accidental
+  // BEAGU_STAGING_ALLOWED_ORIGIN setting must NEVER widen production CORS.
+  return existing.has(origin);
+}
+
 export function isBrowserOriginAllowed(
   origin: string,
   existing: ReadonlySet<string>,
 ): boolean {
-  return existing.has(origin) || exactStagingOriginAllowed(
+  return originAllowedForProject(
     origin,
+    existing,
     Deno.env.get("SUPABASE_URL") || "",
     Deno.env.get("BEAGU_STAGING_ALLOWED_ORIGIN") || "",
   );
