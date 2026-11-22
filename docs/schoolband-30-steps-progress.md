@@ -444,3 +444,10 @@
 - 후보 미검증 URL: `https://raw.githack.com/noam0127/beagu-index/schoolband-playtest/games/nangam-schoolband-v08/preview/index.html` (HTTP 실제 동작 미확인).
 - 7개 역할 검토 및 롤백·CNAME/프로젝트 격리 계획: `docs/schoolband-stage029-free-static-preview-deployment.md`. 사이트 실제 접속·최신 커밋·학교 검색이 검증될 때까지 029 최종 종료 보류.
 - **030/030**은 이전 019~029 검증 증거와 최종 승인/운영 배포 여부를 확인하는 단계. 승인/증거 없이 운영 사이트 자동 적용을 절대 하지 않음.
+
+### 029 검증 갱신 (2026-11-23, 앞선 HTTP 미확인 기록을 대체)
+
+- **독립 미리보기의 정적 파일 HTTPS 전송은 실제 검증 완료:** GitHub Actions [#45056985770](https://github.com/noam0127/beagu-index/actions/runs/45056985770) **SUCCESS**. commit `f675c26d8d8e5170cd41873d27de1efb8630600b`에 대해 `preview/index.html`, `index.html`, `charts/school-homepages.v1.json` 외부 GET **HTTP 200 / HTML·JSON 정상 Content-Type / 기대 SHA-256 전체 일치**, 별도 localhost HTTP·무CNAME 및 정적 ZIP 아티팩트 생성도 통과.
+- 실제 브라우저 E2E는 분리: [#45057135791](https://github.com/noam0127/beagu-index/actions/runs/45057135791) Chromium에서 무료 RawGitHack의 `External Content Notice` 안내 화면이 먼저 나와 게임 제목 확인 실패. 이는 소스 무결성 실패가 아니라 제3자 HTML 안전 확인 흐름이다. `scripts/test-schoolband-stage029-browser.cjs`에 `Open the page` 승인 버튼을 명시적으로 클릭하는 자동 시험 추가. 재검증 결과 **PENDING**.
+- 이용자는 RawGitHack 안내 화면이 뜨면 무료 사이트의 `Open the page`를 눌러야 할 수 있다. 이 동작은 유료 API·저작권 허락·음향 확인과 무관하며 운영 웹 설정을 변경하지 않는다.
+- **029 최종 종료 여부:** 정적 콘텐츠 배포 경로/HTTPS/해시는 검증 완료, 실제 PC·모바일 웹 UI E2E 및 모든 이전 릴리스 게이트는 아직 미완료. 실기/음향 테스트 수행했다고 말하지 않는다.
