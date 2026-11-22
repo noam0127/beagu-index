@@ -22,8 +22,12 @@ for(const guard of ['d.device_secret_sha256=p_device_hash','r.valid_referrals>=1
  assert.ok(sql.includes(guard),'Required membership validation: '+guard);
 assert.ok(!sql.includes('grant select on public.beagu_postit_member_accounts to authenticated'));
 assert.match(api,/db\.auth\.getUser\(jwt\)/,'JWT validated at Auth server');
-assert.match(api,/user\.is_anonymous/,'Anonymous account denied');
-assert.match(api,/user\.email_confirmed_at/,'Unverified email denied');
+const eligibility=read('supabase/functions/_shared/postit-member-ownership.mjs');
+assert.match(api,/eligiblePostitAuthUser\(user\)/,'Server Auth checks shared user eligibility');
+assert.match(eligibility,/account\.is_anonymous===true/,'Anonymous account denied');
+assert.match(eligibility,/!account\.email_confirmed_at/,'Unverified email denied');
+assert.match(eligibility,/account\.deleted_at/,'Deleted account denied');
+assert.match(eligibility,/account\.banned_until/,'Suspended account denied');
 assert.match(api,/verifiedMember\(req,viewer\)/,'Writer account checked');
 assert.match(api,/if\(!user\)return fail\(req,"WRITER_IDENTITY_REQUIRED",403\)/);
 assert.match(api,/if\(action==="link_member"\)/);
