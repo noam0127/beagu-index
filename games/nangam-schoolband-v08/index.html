@@ -137,7 +137,7 @@ const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/schoolband-scho
 const TIERS=["easy","normal","hard","very_hard","extreme"];
 const LABELS=["EASY","NORMAL","HARD","VERY HARD","EXTREME"];
 const INST={
- guitar:{name:"일렉기타",icon:"🎸",note:"리프·파워코드·업스트럼·고음 리프",lanes:[["리프","D","KeyD"],["파워","F","KeyF"],["업스트럼","J","KeyJ"],["고음","K","KeyK"]]},
+ guitar:{name:"일렉기타",icon:"🎸",note:"리프·파워코드·업스트럼·고음 리프",lanes:[["리프","D","KeyD"],["파워코드","F","KeyF"],["업스트럼","J","KeyJ"],["고음 리프","K","KeyK"]]},
  drums:{name:"드럼",icon:"🥁",note:"킥·스네어·하이햇·탐",lanes:[["킥","D","KeyD"],["스네어","F","KeyF"],["하이햇","J","KeyJ"],["탐","K","KeyK"]]},
  bass:{name:"베이스",icon:"🎸",note:"루트·5도·옥타브",lanes:[["루트","F","KeyF"],["5도","SPACE","Space"],["옥타브","J","KeyJ"]]},
  keys:{name:"키보드",icon:"🎹",note:"저음·화음·멜로디·고음",lanes:[["저음","A","KeyA"],["화음1","S","KeyS"],["화음2","D","KeyD"],["멜로디","J","KeyJ"],["고음","K","KeyK"]]}
@@ -684,6 +684,7 @@ function updateControlsHint(){
 }
 function renderPads(){
  const pad=$("pads");pad.replaceChildren();pad.style.setProperty("--lane-count",INST[instrument].lanes.length);pad.dataset.instrument=instrument;
+ canvas.setAttribute("aria-label",INST[instrument].name+" · "+INST[instrument].lanes.length+"레인 리듬게임. "+INST[instrument].lanes.map(x=>x[0]+" "+x[1]).join(", "));
  const fx=$("laneFx");fx.replaceChildren();fx.style.setProperty("--fx-lanes",INST[instrument].lanes.length);
  for(let i=0;i<INST[instrument].lanes.length;i++){
   const laneEl=document.createElement("div");laneEl.className="lane-fx";laneEl.dataset.lane=String(i);
@@ -696,6 +697,9 @@ function renderPads(){
   const key=document.createElement("small");key.textContent=lane[1];
   b.append(name,key);
   b.addEventListener("pointerdown",e=>{e.preventDefault();hit(i);flash(i)});
+  // Keyboard activation of a focused pad produces click(detail=0).
+  // Pointer clicks (detail>0) are already handled by pointerdown.
+  b.addEventListener("click",e=>{if(e.detail===0){hit(i);flash(i)}});
   pad.append(b);
  }
  updateControlsHint();
