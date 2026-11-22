@@ -2,9 +2,26 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 
 const activePath=".github/workflows/stage38-approved-vercel-preview.yml";
-assert.equal(existsSync(activePath), false,
-  "Stage38 deployment workflow must remain inactive until separate owner-reviewed activation");
-const workflow = readFileSync("docs/releases/templates/stage38-approved-vercel-preview.yml", "utf8");
+const templatePath="docs/releases/templates/stage38-approved-vercel-preview.yml";
+const workflow=readFileSync(templatePath,"utf8");
+
+// Review on the draft branch must pass without an executable deploy workflow.
+// After a SEPARATE approved activation PR, validation must continue to pass
+// only when the active workflow is byte-for-byte identical to the reviewed
+// template; otherwise fail closed. This check is not owner approval.
+function reviewActivatedWorkflow(candidate, approvedTemplate) {
+  assert.equal(candidate, approvedTemplate,
+    "Active Stage38 deployment workflow differs from reviewed template; separate security review required");
+}
+if (existsSync(activePath)) {
+  reviewActivatedWorkflow(readFileSync(activePath,"utf8"),workflow);
+}
+// Exercise both code paths without creating or activating a real workflow.
+assert.doesNotThrow(() => reviewActivatedWorkflow(workflow,workflow));
+assert.throws(() => reviewActivatedWorkflow(
+  workflow.replace("vercel deploy --yes","vercel deploy --yes --prod"),workflow),
+  /differs from reviewed template/
+);
 const releaseSha = "5c95aadad971901a8222f83c52e93bf901a3aeb7";
 const digest = "d757a24a1b2541bb52f8eaeb5b1af71706d8e7d1f4bcfee02512e9aa68ea7f70";
 
@@ -75,5 +92,6 @@ assert.match(workflow,/hostname==="baeguindex\.com"/);
 
 // Only a separate owner review can activate the draft. This test does not
 // dispatch, access credentials, or change existing Vercel deployments.
-console.log("PASS: Stage38 deployment template is structurally reviewed and inactive; duplicate deploy and malformed version checks are rejected.");
-console.log("NOTE: GitHub environment approvals and exact host deployment remain unverified.");
+console.log("PASS: Stage38 template structure reviewed; approved activation can be byte-identical while altered active workflow fails closed.");
+console.log("ACTIVE WORKFLOW PRESENT:", existsSync(activePath));
+console.log("NOTE: current tests do not approve activation, verify GitHub required reviewers, or publish a Vercel site.");
