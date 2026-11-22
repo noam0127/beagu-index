@@ -7,7 +7,7 @@
   <meta name="referrer" content="no-referrer">
   <title>업데이트 관리 · 배구지수 관리자</title>
   <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261120-review2">
-  <link rel="stylesheet" href="styles/beagu-admin-updates-v1.css?v=20261121-1">
+  <link rel="stylesheet" href="styles/beagu-admin-updates-v1.css?v=20261123-preview-sha1">
 </head>
 <body>
 <main class="shell release-shell">
@@ -36,7 +36,8 @@
         <h2>시험 웹</h2>
         <p id="releaseStageVersion" class="release-version">배포 전</p>
         <p id="releaseStageSha" class="subtle">—</p>
-        <a id="releaseStageLink" href="https://baeguindex.com/_preview/" target="_blank" rel="noopener noreferrer" class="release-site-link"><span id="releaseStageLinkLabel">시험 웹 열기</span> <span aria-hidden="true">↗</span></a>
+        <a id="releaseStageLink" aria-disabled="true" tabindex="-1" target="_blank" rel="noopener noreferrer" class="release-site-link"><span id="releaseStageLinkLabel">시험 웹 확인 중</span> <span aria-hidden="true">↗</span></a>
+        <p id="releaseStageHealth" class="subtle" role="status" aria-live="polite">시험 웹의 실제 게시 여부를 확인합니다.</p>
         <div class="release-buttons">
           <button type="button" id="releaseStageApply" class="primary" disabled>시험 웹 적용</button>
           <button type="button" id="releaseStageRollback" class="secondary" disabled>전 버전으로 되돌리기</button>
@@ -97,6 +98,6 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
-<script defer src="js/beagu-admin-updates-v1.js?v=20261121-1"></script>
+<script defer src="js/beagu-admin-updates-v1.js?v=20261123-preview-sha1"></script>
 </body>
 </html>
