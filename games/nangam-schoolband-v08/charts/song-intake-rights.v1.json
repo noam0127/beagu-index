@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "policy": "deny_by_default",
+  "scope": "offline_private_validation_only",
+  "public_release_enabled": false,
+  "allow_external_permission_requests": false,
+  "commercial_api_enabled": false,
+  "records": [
+    {
+      "song_id": "original-shining-our-school",
+      "school_id": null,
+      "source_kind": "events_json",
+      "source_path": "games/nangam-schoolband-v08/charts/original-anthem.music-events.v1.json",
+      "source_git_blob_sha1": "68fee4141a048df7e421af32775827d4a5482c64",
+      "review_state": "approved_internal",
+      "evidence_ref": "repo:schoolband:original-anthem-v1",
+      "components": {
+        "composition": "original_owned",
+        "lyrics": "not_used",
+        "arrangement": "original_owned",
+        "sound_recording": "not_used"
+      },
+      "scopes": [
+        "convert_to_game",
+        "internal_playtest"
+      ],
+      "valid_from": "2026-01-01",
+      "valid_until": null,
+      "revoked_at": null,
+      "public_approved": false
+    },
+    {
+      "song_id": "original-meter-shift-exercise-014",
+      "school_id": null,
+      "source_kind": "events_json",
+      "source_path": "games/nangam-schoolband-v08/charts/original-variable-meter-exercise.input.v1.json",
+      "source_git_blob_sha1": "f638dcda79eadad65dead8318a94dfaa16f4817d",
+      "review_state": "approved_internal",
+      "evidence_ref": "repo:schoolband:original-meter-shift-014",
+      "components": {
+        "composition": "original_owned",
+        "lyrics": "not_used",
+        "arrangement": "original_owned",
+        "sound_recording": "not_used"
+      },
+      "scopes": [
+        "convert_to_game",
+        "internal_playtest"
+      ],
+      "valid_from": "2026-01-01",
+      "valid_until": null,
+      "revoked_at": null,
+      "public_approved": false
+    }
+  ]
+}
