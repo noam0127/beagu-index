@@ -89,6 +89,28 @@ async function verify(){
     const key=await page.evaluate(()=>window.nangamSchoolbandV08.getBestRecordKey());
     assert(key?.includes(":"+name+":"),"versioned record key "+name);
    }
+   let realPublicSchoolLookup=false;
+   if(view.label==="pc"){
+    // Public GET-only discovery from the pre-existing read endpoint;
+    // never write to production Supabase or upload any student/score data.
+    const failedRequests=[];
+    page.on("requestfailed",r=>failedRequests.push(r.url()+" "+(r.failure()?.errorText||"")));
+    await page.locator("#schoolSearch").fill("부산교육");
+    try{
+     await page.waitForFunction(()=>document.querySelectorAll("#searchResults button").length>0,null,{timeout:13000});
+     await page.locator("#searchResults button").first().click();
+     await page.waitForFunction(()=>window.nangamSchoolbandV08.getSelected()?.school_id!=="demo-school",null,{timeout:13000});
+     const target=await page.evaluate(()=>window.nangamSchoolbandV08.getSelected());
+     assert(target&&target.school_name,"public school GET must resolve a school");
+     realPublicSchoolLookup=true;
+    }catch(e){
+     console.error("STAGE029_PUBLIC_SCHOOL_GET_FAILED",JSON.stringify({
+       status:await page.locator("#schoolStatus").innerText(),
+       errors:failedRequests.slice(-4),reason:e.message
+     }));
+     throw e;
+    }
+   }
    await page.locator("#largeText").check();
    await page.locator("#highContrast").check();
    const state=await page.evaluate(()=>({
@@ -114,7 +136,8 @@ async function verify(){
    await page.screenshot({path:shot,fullPage:true});
    findings.push({viewport:view.label,px:view.width+"x"+view.height,previewHttp:200,sourceCommit:sha,
     schoolDemo:true,instrumentsVerified:4,schoolAnthemPlayable:false,
-    realAudioPlayed:false,scoreUpload:false,thirdPartyHostWrites:hostTelemetryWrites.length,
+    realAudioPlayed:false,scoreUpload:false,realPublicSchoolLookup,
+    thirdPartyHostWrites:hostTelemetryWrites.length,
     screenCapture:path.basename(shot)});
    await context.close();
   }
