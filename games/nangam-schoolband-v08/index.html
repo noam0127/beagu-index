@@ -1863,9 +1863,15 @@ function finish(interrupted){
   renderConcertSummary(outcome,{saved:false,reason:"interrupted"});
  }
  else{
- const acc=scoreAccuracy(hits,chart.length)??0;
- status("공연 종료! "+(acc>=85?"훌륭한 연주!":acc>=60?"좋은 연주!":"다시 도전해 보세요."));
- safeText("result","정확도 "+acc+"% · PERFECT "+perfect+" · GOOD "+good+" · MISS "+miss+" · 최대 콤보 "+bestCombo+" · 빈 입력 "+emptyPresses+"회 · 노트 "+chart.length+"개");
+ const model=concertSummaryModel(outcome);
+ if(model.state==="complete"){
+  const acc=model.accuracy;
+  status("공연 종료! "+(acc>=85?"훌륭한 연주!":acc>=60?"좋은 연주!":"다시 도전해 보세요."));
+  safeText("result","정확도 "+acc+"% · PERFECT "+perfect+" · GOOD "+good+" · MISS "+miss+" · 최대 콤보 "+bestCombo+" · 빈 입력 "+emptyPresses+"회 · 노트 "+chart.length+"개");
+ }else{
+  status("판정 정보 검증 실패 · 기록 저장을 차단했습니다.");
+  safeText("result","결과 데이터가 올바르지 않아 점수 및 정확도를 표시하지 않습니다.");
+ }
  const saved=saveCompletedBest(outcome);
  renderConcertSummary(outcome,saved);
  safeText("recordStatus",saved.saved?"새 최고 기록 저장 완료":saved.reason==="storage_unavailable"?
