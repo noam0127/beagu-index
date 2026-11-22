@@ -65,3 +65,12 @@ expired = module.check(calls, inventory, date(2026, 12, 10))
 assert expired["snapshot_stale"] is True
 assert expired["ready_for_real_e2e"] is False
 print("PASS: wrong project, duplicate entries and stale evidence fail closed")
+
+# This test runs AFTER the CI builds the exact Git SHA preview.
+actual = module.audit(today=date(2026, 11, 23))
+assert "beagu-telemetry-v2" in actual["missing_with_repo_source"]
+assert actual["missing_without_repo_source"] == ["beagu-edited-api-v1"]
+assert len(actual["missing"]) == 11
+assert actual["ready_for_real_e2e"] is False
+assert actual["production_deployment_permitted"] is False
+print("PASS: 11 real missing stage endpoints, 10 have sources and 1 has no source")
