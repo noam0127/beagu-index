@@ -20,6 +20,7 @@
   // Exact education office names come from the verified schools table.
   let officeLoadSerial=0;
   const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count']);
+  let verifiedLevel=0;
   let sortDirection='asc';
   const updateSortDirection=()=>{
     const button=$('regionSortDirection');
@@ -28,6 +29,24 @@
     button.setAttribute('aria-label',ascending?'현재 오름차순, 내림차순으로 전환':'현재 내림차순, 오름차순으로 전환');
     button.title=ascending?'현재 오름차순 · 클릭하면 내림차순':'현재 내림차순 · 클릭하면 오름차순';
   };
+
+  // Visual lock is for clarity only: the level API enforces this same rule.
+  // Set to 0 on first paint; unlock solely after server verification.
+  function syncSortAccess(){
+    const select=$('regionSort');
+    const option=select?.querySelector('option[value="housing_price_won"]');
+    if(!option)return;
+    const unlocked=verifiedLevel>=2;
+    option.disabled=!unlocked;
+    option.textContent=unlocked?'공시지가':'공시지가 (Lv.2 잠금)';
+    option.title=unlocked?'행정구역 공동주택 평균 공시가격':'Lv.2 이상에서 공시지가 정렬 이용 가능';
+    if(!unlocked&&select.value==='housing_price_won'){
+      select.value='school_name';
+      sortDirection='asc';
+      updateSortDirection();
+    }
+  }
+  syncSortAccess();
   // Only the visible name is shortened. The option value remains the verified
   // exact school-support office string used for server-side filtering.
   const shortOfficeName=(full,region)=>{
@@ -117,6 +136,8 @@
   }
 
   function loggedOut(message = '') {
+    verifiedLevel=0;
+    syncSortAccess();
     session = '';
     geographyComparisons.clear();
     visiblePageSchools=[];
@@ -138,9 +159,11 @@
       body: JSON.stringify({action, ...payload})
     });
     const data = await response.json().catch(() => ({}));
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       const error = new Error('인증 만료'); error.unauthorized = true; throw error;
     }
+    // A valid Lv1 credential asking for an Lv2-only sort is not an expired login.
+    if(response.status===403)throw new Error(data.error||'현재 레벨에서 이용할 수 없는 기능입니다.');
     if (!response.ok) throw new Error(data.error || '서버 오류');
     return data;
   }
@@ -158,6 +181,8 @@
         return;
       }
       session = data.token;
+      verifiedLevel=Number(data.level)||0;
+      syncSortAccess();
       geographyComparisons.clear();
       sessionStorage.setItem(key, session);
       $('levelCode').value = '';
@@ -175,6 +200,8 @@
     const next=event.detail;
     if(!next||Number(next.level)<level||typeof next.token!=='string')return;
     session=next.token;
+    verifiedLevel=Number(next.level)||0;
+    syncSortAccess();
     geographyComparisons.clear();
     visiblePageSchools=[];
     loggedIn();
@@ -874,7 +901,9 @@
     const searchTask=window.BeaguLoading?.start('학교 검색 결과를 불러오는 중…');
     const perfStarted=performance.now();let perfSucceeded=false;
     try {
-      const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?`${$('regionSort').value}_${sortDirection}`:'school_name_asc';
+      const selectedSort=$('regionSort').value;
+      const tierSafeSort=(selectedSort==='housing_price_won'&&verifiedLevel<2)?'school_name':selectedSort;
+      const sortValue=mode==='region'&&SORTS.has(tierSafeSort)?`${tierSafeSort}_${sortDirection}`:'school_name_asc';
       const sort=sortValue.replace(/_(?:asc|desc)$/,'');
       const direction=sortValue.endsWith('_desc')?'desc':'asc';
       const response=await api('ranked_schools',{searchText:q,region,office,sort,direction,page});
@@ -961,7 +990,7 @@
     if (!session) { loggedOut(); return; }
     try {
       const state = await api('verify');
-      if (state.level >= level) loggedIn();
+      if (state.level >= level) { verifiedLevel=Number(state.level)||0; syncSortAccess(); loggedIn(); }
       else loggedOut('현재 코드가 이 등급에 미달합니다.');
     } catch (_) { loggedOut('인증을 다시 진행해주세요.'); }
   })();
