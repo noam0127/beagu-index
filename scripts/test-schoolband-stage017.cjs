@@ -164,7 +164,7 @@ async function contexts(){
      });
      assert(chord&&chord.ns.length>=2,"key arrangement must have one simultaneous chord");
      const pair=[...new Map(chord.ns.map(n=>[n.lane,n])).values()].slice(0,2);
-     await page.locator("#pads").scrollIntoViewIfNeeded();
+     await page.locator("#pads").evaluate(el=>el.scrollIntoView({block:"center",behavior:"instant"}));
      await page.evaluate(()=>{
       window.__stage017PointerTrace=[];
       for(const type of ["pointerdown","pointerup","pointercancel","lostpointercapture"]){
@@ -179,7 +179,9 @@ async function contexts(){
       });
      });
      const g=await rects(page);const a=point(g.pads[pair[0].lane],71),b=point(g.pads[pair[1].lane],72);
-     assert(a.y>=0&&a.y<viewport.height&&b.y>=0&&b.y<viewport.height,"touch pads must be visible");
+     assert(a.y>=80&&a.y<viewport.height-20&&b.y>=80&&b.y<viewport.height-20,"touch pads must be clear of sticky nav");
+     const targetLanes=await page.evaluate(pts=>pts.map(p=>document.elementFromPoint(p.x,p.y)?.closest(".taphit")?.dataset.lane??null),[a,b]);
+     assert.deepEqual(targetLanes,pair.map(n=>String(n.lane)),"CDP input coordinates must hit actual pads, not sticky step-nav");
      await page.evaluate(t=>{window.__stage017Clock=1.05+t},chord.t);
      const hitsBefore=await page.evaluate(()=>window.nangamSchoolbandV08.getStatus().hits);
      await useTouch(cdp,"touchStart",[a,b]);
