@@ -57,5 +57,20 @@
 - 미검증/후속: 실제 Android/iOS 디바이스, 출력 오디오 지연, 극단적 동시타격 피드백 구분/광과민성, RawGitHack 첫 방문 확인 화면(SB-007).
 - 다음 단계: **004/030** 콤보·MISS·동시타격·접근성 연출.
 
-## 004/030 — pending
-콤보, MISS, 오입력 및 다중 레인 시각 효과와 모션 감소·진동 설정 검증.
+## 004/030 — 콤보·미스·동시타격·접근성 연출 완성 (2026-11-22)
+
+상태: **COMPLETE — 독립 Stage 004 CI PASS, 기존 20/20 조합 회귀 PASS, 7개 전문 관점 기록**.
+
+- 시작 test HEAD `90b6557cbc873ed682054eb0b98e142b34c8a70f`; `schoolband-playtest` 외 운영 `main`/DB/Edge Functions 변경 없음.
+- 실제 추가·수정: `games/nangam-schoolband-v08/index.html`, `scripts/test-schoolband-stage004.cjs`, `.github/workflows/schoolband-stage004.yml`, 003단계 테스트의 패드 선택자 충돌 수정, `docs/schoolband-stage004-combo-miss-accessibility.md`, 이 기록.
+- 독립 레인 판정 오버레이 PERFECT/GOOD/MISS/NO NOTE(터치 비간섭), 콤보 3·5 및 5의 배수에만 배지, 빈 입력과 노트 MISS를 다른 집계로 표시. 오타·연타가 다른 레인의 노트를 지우거나 빈 입력이 MISS로 집계되지 않도록 분리. 화면 흔들림과 밝기 제한, 연달아 발생하는 MISS의 `aria-live` 중복 안내 억제.
+- 효과 줄이기(시스템 `prefers-reduced-motion` 우선)와 진동 사용(기본 OFF·명시적 opt-in) 체크박스 구현. 로컬 저장소에는 FX 불리언만 저장. 감소 모드 파편·화면 흔들림·진동·링 없음, 260ms 뒤 판정 표시 제거(기존 정적 고착 버그 SB-003 해결).
+- CI 검사 대상 SHA `ed5722991232fea3578f8f71afa7beaffb1a582d`; [GitHub Actions run 44991368437](https://github.com/noam0127/beagu-index/actions/runs/44991368437) **PASS**.
+- 실제 브라우저 시나리오: 3연타 콤보 3 → 같은 시각 2레인 적중으로 콤보 5, 독립 배지 2개가 서로 겹치지 않음; 빈 입력 `NO NOTE` 1회(콤보·MISS 불변); 실제 `MISS` 2개; GOOD/ PERFECT 시각 구별; 320px OS reduced-motion에서 파편·진동 0, 310ms 뒤 중앙 판정 사라짐; 사용자 효과 감소 설정 reload 복원, 사용자가 활성화한 진동 API 1회 호출. 기존 002단계 20개 조합 양쪽 화면 모두 PASS.
+- [증거 ZIP (결과 JSON·실제 화면 3장)](https://github.com/noam0127/beagu-index/actions/runs/44991368437/artifacts/14741702428).
+- 각 관점의 검토·근거·잔여 위험: `docs/schoolband-stage004-combo-miss-accessibility.md`.
+- 남은 위험: 실제 iOS/Android 물리 진동·청음·스크린리더는 별도 검증이 필요. 호스팅 첫 방문 안내(SB-007), 320px에서 긴 연주 시작 버튼 줄 바꿈, 오디오 시간축/경계·동시 노트 초정밀 판정은 후속 단계.
+- 다음 단계: **005/030** 공통 AudioContext 시간축·PERFECT/GOOD/MISS 판정 경계·노트 좌표 독립 검사.
+
+## 005/030 — pending
+공통 오디오 시간축·판정 경계 수치 및 노트 위치 순수함수 분리·검증.
