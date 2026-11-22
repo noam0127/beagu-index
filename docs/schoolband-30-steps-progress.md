@@ -401,3 +401,16 @@
 - 현재 대화에서 **최신 게임 소스의 순수 함수 검증을 직접 실행**하여 20차트/1,568개 노트의 정합성과 입력 판정 경계 등 **주요 검사 18개 PASS**, 신규 Node 테스트 JavaScript 문법 검사 PASS. **실제 Node 전체 테스트·GitHub Actions 성공·Chromium 1280/320px 성공은 미확인**.
 - GitHub 커밋 상태 검사에서 시험 브랜치 `be6d65f90327b392b448fd5e2e5433a1c9ed9bf1`의 Vercel 미리보기 빌드가 **빌드 횟수 제한으로 실패**했다. Pro 유료 업그레이드는 하지 않으며 029단계에서 별도 무료 시험 호스팅을 검토해야 함. 운영 웹 업데이트로 간주하지 않는다.
 - 설계와 7개 AI 역할별 리뷰: `docs/schoolband-stage026-regression-no-audio.md`. 운영 `main`, `baeguindex.com`, 운영 Supabase 변경 없음. 027단계는 Android/iOS/PC 실제 기기 입력·음향 실증 단계이지만 사용자 요청에 따라 청음·음향·연주감 확인은 제외하고, 접근 가능한 비음향 입력/UI 증거만 확보한다. 실제 기기에 접근할 수 없으면 미검증/BLOCKED로 남긴다.
+
+## 027/030 — Android/iOS/PC 입력 경로·화면 검증 (2026-11-23)
+
+상태: **IMPLEMENTED / PHYSICAL DEVICES BLOCKED / NODE·BROWSER CI PENDING**. 검증 이슈: [GitHub #252](https://github.com/noam0127/beagu-index/issues/252).
+
+- 원래 027은 Android Chrome/iPhone Safari/PC Chrome·Edge **실제 기기**의 입력과 음향 실증. 실제 Android/iPhone/PC 기기에 접근하지 못했으므로 실기 검증을 했다고 주장하지 않음. Playwright 에뮬레이션과 물리 기기는 구분한다.
+- 사용자의 제한(교가 저작권 허락 요청 금지, 유료 API·결제 금지, 연주감·청음·음향 확인 금지)을 그대로 유지하고, UI·포인터 입력 기계 검사만 수행. 자동 테스트에서도 AudioContext 생성 시 예외를 발생시키며 연주 시작을 누르지 않음.
+- `games/nangam-schoolband-v08/index.html`: `.taphit` 터치 버튼만 `touch-action:none`으로 변경하여 터치 중 화면 제스처 방해를 피함. 페이지 다른 곳의 일반 스크롤은 유지.
+- `scripts/test-schoolband-stage027.cjs`: 실제 게임 포인터 함수(정적 추출) 기반 멀티 터치 ID·중복 포인터·릴리스·화면 회전 초기화 검증. PC Chromium/Android 유사 Chromium/iPhone 유사 WebKit의 1280/393/390 화면·키보드·터치·레인·ARIA·회전·큰글씨·고대비·학교 검색·교가 잠금·무전송 자동화 시나리오 구현. **실제 기기 실행 근거는 아님**.
+- `.github/workflows/schoolband-stage027.yml`: 026 데이터 회귀 + 027 정적/Chromium·WebKit DOM 모의 검사. 장치 청음·유료 서비스 없음.
+- **직접 검증:** 현재 게임 소스에서 추출한 포인터 함수의 **7개 테스트 PASS**, 실제 HTML/Node 스크립트 JS 구문 검사 PASS. GitHub Actions 실행 및 Playwright 성공 여부는 아직 미확인. 실제 Android/iPhone/PC 기기, 음향·연주감 관련 요구는 BLOCKED/USER EXCLUDED.
+- 7개 전문가 역할 검토·검증 매트릭스: `docs/schoolband-stage027-device-input-no-audio.md`. 운영 `main`, `baeguindex.com`, 운영 Supabase DB 변경 없음.
+- 028은 성능·접근성·출시 전 결함 제로 게이트. 027은 실기 미검증 및 CI 미완료 때문에 최종 종료 선언 보류.
