@@ -28,10 +28,20 @@
   "staging_release_complete": false,
   "production_release_allowed": false,
   "pending": [
-    "Owner must approve stage-only registration in an active AAL2 session",
-    "New candidate registration API must be safely rolled out; current live API can only register main SHA",
-    "Owner must initiate staging application via Updates page and wait for signed GitHub worker",
-    "Verify actual deployed staging SHA and release job history, then HTTP preview routes",
-    "Do not promote to production; earlier stage36 NO-GO gates remain blocked"
-  ]
+    "Review and explicitly approve minimal release-controller API/UI update separately from the RC (requires privileged operator and controlled deployment)",
+    "Obtain a real owner Auth AAL2 session; neither tools nor synthetic credentials may substitute for it",
+    "Once compatible controller is live, register exact RC branch/SHA, then manually approve stage_apply",
+    "Wait for signed GitHub Actions release controller to finish; verify staging_sha, job status, and staging deployment history",
+    "Verify actual /_preview/ HTTP, assets, stage Supabase isolation and key interactions with no production writes",
+    "Keep all production release paths blocked until stage36 real AAL2/data/email/manual approval gates pass"
+  ],
+  "read_only_live_preflight": {
+    "github_run": 44974176876,
+    "artifact_id": 14734573959,
+    "results": "PASS",
+    "published_admin_client_rc_registration": false,
+    "published_staging_matches_rc": false,
+    "method": "HTTP GET only; no Auth, GitHub Pages publish, DB mutation or release queue",
+    "note": "Website HTTP 200 and preview banner do not prove RC is deployed"
+  }
 }
