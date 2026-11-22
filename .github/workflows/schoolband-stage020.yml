@@ -1,0 +1,33 @@
+name: Schoolband 020 song choice and resilient fallback
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage020.cjs'
+      - '.github/workflows/schoolband-stage020.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  song-choice:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Test song registration gate, UI wiring, JS parse
+        run: node scripts/test-schoolband-stage020.cjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Test song choice, school lookup, offline fallback on desktop and mobile
+        run: node scripts/test-schoolband-stage020.cjs --browser
+      - name: Preserve existing school and instrument screens
+        run: node scripts/test-schoolband-stage016.cjs --browser
+      - name: Check scoring and timing regression
+        run: |
+          node scripts/test-schoolband-stage008.cjs
+          node scripts/test-schoolband-stage005.cjs
