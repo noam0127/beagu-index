@@ -19,3 +19,12 @@
 - Provide a separate reviewed, allowlisted school-homepage read path (or generate a public sanitized build-time catalogue in the playtest branch), with no private survey/identity fields.
 - Avoid exposing internal Supabase secrets or uploading private 2024 workbook. Only the verified public homepage strings are potential game metadata.
 - Tests must cover blank homepage, missing URI scheme, misleading/nonofficial domains, redirects, duplicates and mismatched school ID.
+
+## Implementation update — 2026-11-23
+- The school homepage catalogue is stored at `games/nangam-schoolband-v08/charts/school-homepages.v1.json` on `schoolband-playtest` only.
+- Read-only source: 6,335 operating elementary schools; 6,306 nonblank homepage values. 6,288 usable external HTTP(S) links keyed by `school_id` after syntax/scheme/hostname checks; 18 incomplete or unsupported links excluded. This does **not** prove site ownership, site availability, or the existence of an anthem.
+- The game loads the catalogue as a **same-origin static JSON file** and only opens a selected school's recorded homepage after a click. Search links are narrowed to the recorded hostname when available; fallback is school-name search. No crawling, automatic audio extraction, remote-code execution or third-party API.
+- Unknown/mismatched school IDs cannot borrow another school's link. Missing links are hidden and school-name search remains available; original creative volleyball practice remains playable.
+- New static/data/browser test: `scripts/test-schoolband-stage021-homepages.cjs`, included in `.github/workflows/schoolband-stage021.yml`. Source syntax and 13 static contract checks passed in connector-side analysis; full Node/Playwright + GitHub Actions results not yet verified.
+- User restrictions: **no requests for copyright permissions, no paid APIs or purchases, and no subjective playfeel or audio checking.** Real school anthem game playback stays disabled unless already-cleared, properly registered song assets exist; no workaround violating copyright.
+- No writes to production Supabase / `main` / `baeguindex.com`.
