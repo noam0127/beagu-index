@@ -5,7 +5,10 @@ const code=readFileSync("tests/fixtures/stage38-staging-auth-mfa-oidc-once/index
 for(const pattern of [
   /createRemoteJWKSet/,/jwtVerify\(bearer, jwks/,
   /audience: AUD/,/payload\.repository !== REPO/,/payload\.ref !== REF/,
-  /payload\.workflow_ref !== WORKFLOW/,/payload\.event_name !== "push"/,
+  /payload\.workflow_ref === WORKFLOW/,/payload\.event_name === "push"/,
+  /payload\.ref === "refs\/pull\/244\/merge"/,
+  /payload\.head_ref === "hotfix\/v1\.1\.0-preview-backend-isolation"/,
+  /payload\.base_ref === "main"/,
   /req\.headers\.has\("Origin"\)/,/SUPABASE_SERVICE_ROLE_KEY/,
   /url\.includes\(PROD_REF\)/,
   /auth\.admin\.createUser\(/,/email_confirm: true/,
