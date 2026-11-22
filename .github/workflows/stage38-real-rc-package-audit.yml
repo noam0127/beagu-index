@@ -41,6 +41,8 @@ jobs:
           name: beagu-v1.1.0-rc.1-independent-preview-review
           path: _preview_standalone_site/
           if-no-files-found: error
+          # Upload-artifact excludes dotfiles by default; .nojekyll is in the signed manifest.
+          include-hidden-files: true
           retention-days: 7
       - name: No publication or release controller action
         run: echo "This test used an isolated synthetic plan in a temp directory and did not deploy."
