@@ -1,0 +1,59 @@
+{
+  "version": "1.1.0",
+  "stage": 36,
+  "assessment_date": "2026-11-22",
+  "branch": "develop/v1.1.0-lv3",
+  "pull_request": 195,
+  "production_release": "NO_GO",
+  "checks": [
+    {
+      "id": "security_release_synthetic",
+      "status": "PASS",
+      "run": 44971404999,
+      "scope": "staging synthetic approvals only"
+    },
+    {
+      "id": "cross_account_postit",
+      "status": "PASS",
+      "run": 44970020726,
+      "scope": "two genuine Auth JWTs, synthetic members"
+    },
+    {
+      "id": "cross_account_lv3",
+      "status": "PASS",
+      "run": 44970740689,
+      "scope": "two real Auth test JWTs"
+    },
+    {
+      "id": "static_security_regression",
+      "status": "PASS",
+      "run": 44971548677,
+      "scope": "static and policy regression"
+    },
+    {
+      "id": "admin_aal2_positive",
+      "status": "BLOCKED",
+      "scope": "no actual AAL2 owner MFA plus moderation/audit E2E"
+    },
+    {
+      "id": "approved_2026_real_pipeline",
+      "status": "BLOCKED",
+      "scope": "real approved 2026 basis and safe public release not tested"
+    },
+    {
+      "id": "email_delivery",
+      "status": "BLOCKED",
+      "scope": "actual email ownership and confirmation delivery not tested"
+    },
+    {
+      "id": "live_preview_http",
+      "status": "PENDING",
+      "scope": "read-only staging smoke pending"
+    },
+    {
+      "id": "manual_production_approval",
+      "status": "BLOCKED",
+      "scope": "no authorization, no production deploy"
+    }
+  ]
+}
