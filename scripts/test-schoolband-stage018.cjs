@@ -56,13 +56,15 @@ async function browserTest(){
     for(const fx of ["full","low","reduced"]){
      await p.locator("#reduceFx").setChecked(fx==="reduced");
      await p.locator("#lowPowerFx").setChecked(fx==="low");
-     if(fx!=="reduced")await p.locator("#vibrationFx").check();
+     if(fx==="full")await p.locator("#vibrationFx").check();
      const state=await p.evaluate(()=>({
       fx:window.nangamSchoolbandV08.getPerformanceFx(),
       prefs:JSON.parse(localStorage.getItem("nangam-band-fx-v1"))}));
      assert.equal(state.fx.mode,fx);
      assert.equal(state.fx.maxParticles,fx==="low"?12:60);
      assert.equal(state.fx.vibrationEnabled,fx==="full");
+     assert.equal(await p.locator("#vibrationFx").isChecked(),fx==="full");
+     assert.equal(await p.locator("#vibrationFx").isDisabled(),fx!=="full");
      assert.equal(state.prefs.lowPower,fx==="low");
      await p.evaluate(()=>{window.__testClock=0;window.__vibes.length=0});
      await p.locator("#start").click();
