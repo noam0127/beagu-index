@@ -284,7 +284,8 @@ def write_independent_release_manifest(target, staging_sha):
         sha256[relative] = hashlib.sha256(item.read_bytes()).hexdigest()
     manifest = {
         "schema": "beagu-independent-preview-package-v1",
-        "rc_version": "v1.1.0-rc.1",
+        "rc_version": ("v1.1.0-rc.1" if staging_sha ==
+                       "5c95aadad971901a8222f83c52e93bf901a3aeb7" else None),
         "source_sha": staging_sha,
         "supabase_project_ref": "ycwuugggqbunlbwuzvbx",
         "environment": "isolated-test-package",
