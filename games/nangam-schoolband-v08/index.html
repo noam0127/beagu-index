@@ -192,7 +192,7 @@ html[data-low-power-fx="true"] .lane-event.animate{transform:none}
 </header>
 <nav id="stepNav" class="step-nav" aria-label="연주 단계">
 <button type="button" data-step-target="school" aria-current="step">1 학교</button>
-<button type="button" data-step-target="instrument" aria-disabled="true">2 악기</button>
+<button type="button" data-step-target="instrument" aria-disabled="true">2 곡·악기</button>
 <button type="button" data-step-target="play" aria-disabled="true">3 연주</button>
 </nav>
 <p id="stepStatus" class="visually-hidden" aria-live="polite">1단계 학교 선택</p>
@@ -863,7 +863,7 @@ function syncStepNav(){
   btn.setAttribute("aria-disabled",String(!available||playing&&step!=="play"));
   btn.disabled=playing&&step!=="play";
  });
- const copy={school:"1단계 학교 선택",instrument:"2단계 악기 선택",play:"3단계 연주"};
+ const copy={school:"1단계 학교 선택",instrument:"2단계 곡과 악기 선택",play:"3단계 연주"};
  safeText("stepStatus",copy[currentUxStep]);
 }
 function goToStep(next,{scroll=true,focus=true}={}){
