@@ -77,6 +77,20 @@ def build() -> dict:
                 raise RuntimeError("Archive read failed")
             target.write_bytes(stream.read())
 
+    # A standalone preview is never a release manager. Replace the full
+    # interactive screen with a static read-only page from the same Git SHA.
+    # Nothing in this page loads the privileged release-manager client.
+    read_only_page = subprocess.check_output(
+        ["git", "show", sha + ":scripts/standalone-admin-release-disabled.html"],
+        cwd=ROOT
+    ).decode("utf-8")
+    if "읽기 전용" not in read_only_page or "beagu-release-manager-v1" in read_only_page:
+        raise RuntimeError("Independent release screen is not read-only")
+    release_path = OUTPUT / "admin-updates.html"
+    if not release_path.is_file():
+        raise RuntimeError("Admin release entrypoint is missing")
+    release_path.write_text(read_only_page, encoding="utf-8")
+
     html_files = 0
     modified = 0
     for file in OUTPUT.rglob("*"):
