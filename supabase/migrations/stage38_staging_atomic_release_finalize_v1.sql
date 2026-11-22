@@ -14,7 +14,7 @@ DECLARE
   j public.beagu_site_release_jobs_v1%ROWTYPE;
   s public.beagu_site_release_state_v1%ROWTYPE;
   expected text;
-  job_now text;
+  rows_updated bigint;
 BEGIN
   IF p_job_id IS NULL OR p_outcome NOT IN ('deployed','failed') THEN
     RAISE EXCEPTION 'invalid_finalize_arguments' USING ERRCODE='22023';
@@ -93,8 +93,8 @@ BEGIN
     SET status='deployed',finished_at=clock_timestamp(),
         deployed_url=p_deployed_url
     WHERE id=j.id AND status='running';
-  GET DIAGNOSTICS job_now = ROW_COUNT;
-  IF job_now <> '1' THEN
+  GET DIAGNOSTICS rows_updated = ROW_COUNT;
+  IF rows_updated <> 1 THEN
     RAISE EXCEPTION 'release_job_finalize_lost' USING ERRCODE='40001';
   END IF;
   RETURN jsonb_build_object('ok',true,'status','deployed','job_id',j.id,'target',j.target);
