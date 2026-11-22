@@ -50,6 +50,18 @@ for file in stage.rglob("*"):
         assert "snvzwrexuqavnfvzgxqj" not in contents, file
         assert "sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2" not in contents, file
 
+blueprint = (root / "render.yaml").read_text(encoding="utf-8")
+assert "runtime: static" in blueprint
+assert "autoDeployTrigger: off" in blueprint
+assert "branch: fix/v1.1.0-preview-isolation-gate-20261123" in blueprint
+assert "staticPublishPath: ./_standalone_staging" in blueprint
+assert "https://ycwuugggqbunlbwuzvbx.supabase.co" in blueprint
+assert "snvzwrexuqavnfvzgxqj" not in blueprint
+assert "https://baeguindex.com" not in blueprint
+assert "X-Robots-Tag" in blueprint
+assert "Content-Security-Policy" in blueprint
+print("PASS: Render uses manual staging-only deployment and no production hostname")
+
 print("PASS: " + str(len(pages)) + " marked pages; immutable SHA; no production Supabase refs")
 print("PASS: preview bundle has no CNAME, deployment scripts, SQL migrations or secrets")
 print("PASS: staging-only config, public artifacts, blocked production link navigation")
