@@ -22,7 +22,17 @@ CREATE TABLE stage_private.fake_schools(id bigint);
 CREATE TABLE stage_private.members(id uuid);
 -- Match the isolated staging session columns and constraints exactly.
 CREATE TABLE public.beagu_level_sessions (
-  token_sha256 text PRIMARY KEY CHECK (token_sha256 ~ '^[a-f0-9]{64}
+  token_sha256 text PRIMARY KEY CHECK (token_sha256 ~ '^[a-f0-9]{64}$'),
+  access_level smallint NOT NULL CHECK (access_level IN (1,2)),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL,
+  identity_campaign text,
+  identity_visitor_id uuid,
+  CHECK (expires_at > created_at)
+);
+ALTER TABLE public.beagu_level_sessions ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.beagu_level_sessions FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, DELETE ON TABLE public.beagu_level_sessions TO service_role;
 SQL
 
 # Accidental production/incorrect target must fail without creating anything.
