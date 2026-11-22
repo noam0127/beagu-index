@@ -1,0 +1,73 @@
+name: Stage38 isolated REAL static file deploy and rollback (NO PRODUCTION)
+on:
+  push:
+    branches: ['hotfix/v1.1.0-preview-backend-isolation']
+    paths:
+      - '.github/workflows/stage38-isolated-file-rollback.yml'
+      - 'scripts/release-manager/stage38-sandbox-rollout.py'
+      - 'tests/stage38-hosted-lifecycle-rollback.cjs'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: stage38-isolated-file-deploy-rollback
+  cancel-in-progress: false
+jobs:
+  publish-sandbox-and-prove-rollback:
+    if: github.repository == 'noam0127/beagu-index' && github.ref == 'refs/heads/hotfix/v1.1.0-preview-backend-isolation'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Assert immutable v1.1.0 RC and never touch GitHub Pages
+        run: |
+          set -euo pipefail
+          test "$(git cat-file -t 5c95aadad971901a8222f83c52e93bf901a3aeb7)" = commit
+          test "$(git rev-parse refs/remotes/origin/release/v1.1.0-rc.1)" = 5c95aadad971901a8222f83c52e93bf901a3aeb7
+          test -f scripts/release-manager/stage38-sandbox-rollout.py
+          test -f tests/stage38-hosted-lifecycle-rollback.cjs
+          echo 'Only a separate stage38-lifecycle-sandbox branch may receive commits.'
+      - name: Rebuild pinned RC and pass offline isolation audit
+        run: |
+          python3 tests/stage38-real-rc-packaging.py
+          python3 scripts/release-manager/build-offline-rc-bundle.py
+          python3 scripts/release-manager/build-stage38-static-mirror.py
+          test ! -f _preview_standalone_site/CNAME
+      - name: Actually push file versions A, B and rollback A on isolated branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGE38_LIFECYCLE_PROOF: ${{ runner.temp }}/stage38-file-rollout-proof.json
+        run: |
+          set -euo pipefail
+          python3 scripts/release-manager/stage38-sandbox-rollout.py
+          python3 - <<'PY'
+          import os,json
+          proof=json.load(open(os.environ['STAGE38_LIFECYCLE_PROOF']))
+          assert proof['rollback_tree_matches_initial'] is True
+          assert len({proof['first_deploy_sha'],proof['update_sha'],proof['rollback_sha']})==3
+          assert proof['production_site_touched'] is False
+          assert proof['login_enabled'] is False
+          print('PASS: three distinct real isolated Git publication commits and exact initial tree restoration')
+          PY
+          echo "STAGE38_LIFECYCLE_PROOF=$STAGE38_LIFECYCLE_PROOF" >> "$GITHUB_ENV"
+      - name: Install temporary Chromium for real remote hosted-file tests
+        run: |
+          npm install --prefix .stage38-browser-deps --no-save --no-package-lock playwright@1.56.1
+          .stage38-browser-deps/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify external static CDN rendered published A, updated B and restored A
+        env:
+          NODE_PATH: .stage38-browser-deps/node_modules
+        run: node tests/stage38-hosted-lifecycle-rollback.cjs
+      - name: Verify there were no production release operations
+        run: |
+          set -euo pipefail
+          echo 'PASS: no Vercel or GitHub Pages workflow invoked.'
+          echo 'PASS: source main and production Supabase never used as deployment targets.'
+          echo 'PASS: review branch stage38-lifecycle-sandbox-rc-5c95aad is static-only.'
+          echo 'LIMITATION: real production release-worker and trusted Auth host E2E remain unverified.'
