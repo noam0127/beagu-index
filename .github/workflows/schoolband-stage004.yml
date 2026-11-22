@@ -1,0 +1,38 @@
+name: Schoolband 004 combo miss simultaneous reduced-motion audit
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage004.cjs'
+      - '.github/workflows/schoolband-stage004.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visual-accessibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright and real Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Repeat 20-combination baseline regressions
+        run: node scripts/test-schoolband-stage002.cjs
+      - name: Verify simultaneous notes, combo, miss, GOOD and reduced motion
+        run: node scripts/test-schoolband-stage004.cjs
+      - name: Preserve screenshots and machine-readable results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage004-accessibility-proof
+          path: artifacts/schoolband-stage004/
+          if-no-files-found: error
