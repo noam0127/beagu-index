@@ -29,11 +29,11 @@ function validateSourceFormat(buffer,kind,sourcePath){
   if(!lower.endsWith(".json"))throw Error("events_json_extension_required");
   try{JSON.parse(buffer.toString("utf8"));}catch(_){throw Error("invalid_music_events_json");}
  }else if(kind==="midi"){
-  if(!/\\.midi?$/.test(lower)||buffer.length<14||buffer.subarray(0,4).toString("ascii")!=="MThd"||
+  if(!/\.midi?$/.test(lower)||buffer.length<14||buffer.subarray(0,4).toString("ascii")!=="MThd"||
      buffer.readUInt32BE(4)!==6)throw Error("invalid_midi_header");
  }else if(kind==="musicxml"){
   const head=buffer.subarray(0,4096).toString("utf8");
-  if(!/\\.(?:musicxml|xml)$/.test(lower)||!/<score-(?:partwise|timewise)\\b/.test(head)||
+  if(!/\.(?:musicxml|xml)$/.test(lower)||!/<score-(?:partwise|timewise)\b/.test(head)||
      /<!DOCTYPE|<!ENTITY/i.test(head))throw Error("invalid_musicxml_header");
  }else if(kind==="score_pdf"){
   if(!lower.endsWith(".pdf")||buffer.subarray(0,5).toString("ascii")!=="%PDF-")throw Error("invalid_score_pdf_header");
