@@ -149,6 +149,39 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     else:
         raise AssertionError("headless preview must fail CSP packaging")
 
+    # A separate host must receive its own root-hosted, pinned staging-only
+    # artifact, not /_preview/-prefixed links or production HTML/JS/CNAME.
+    worker.INDEPENDENT_OUTPUT = scratch / "standalone-stage"
+    worker.package_independent_preview()
+    standalone = worker.INDEPENDENT_OUTPUT
+    standalone_html = (standalone / "index.html").read_text(encoding="utf-8")
+    assert "STAGING_NEW" in standalone_html
+    assert "PRODUCTION_SAFE" not in standalone_html
+    assert 'href="/school-report.html"' in standalone_html
+    assert 'src="/js/site.js"' in standalone_html
+    assert 'href="/_preview/school-report.html"' not in standalone_html
+    assert "독립 시험 후보" in standalone_html
+    assert "브라우저 저장공간 공유" not in standalone_html
+    assert 'http-equiv="Content-Security-Policy"' in standalone_html
+    assert "ycwuugggqbunlbwuzvbx.supabase.co" in standalone_html
+    assert not (standalone / "CNAME").exists()
+    assert (standalone / ".nojekyll").exists()
+    assert (standalone / "data/public-compare-school-directory-v1.json").read_text(
+        encoding="utf-8") == '{"version":"LATEST_ALLOWED_DIRECTORY"}'
+    assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
+    assert "STAGE_JS" in (standalone / "js/site.js").read_text(encoding="utf-8")
+    assert live_ref in (out / "js/supabase-config.js").read_text(encoding="utf-8")
+    assert stage_ref in (standalone / "js/supabase-config.js").read_text(encoding="utf-8")
+    # Signed release job precondition: never fabricate a standalone artifact
+    # from a missing/invalid staging SHA.
+    worker.PLAN.write_text(json.dumps({"has_job": True, "staging_sha": None}), encoding="utf-8")
+    try:
+        worker.package_independent_preview()
+    except RuntimeError as exc:
+        assert "immutable staging SHA" in str(exc)
+    else:
+        raise AssertionError("standalone packaging requires approved immutable staging SHA")
+
     # A rollback to a null staging SHA removes preview, without replacing the
     # previously approved production HTML or JavaScript. Such a rollback is
     # currently queued in the real release manager and must NOT be forced.
