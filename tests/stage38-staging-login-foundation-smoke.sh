@@ -190,8 +190,9 @@ SQL
 claim_pid_b=$!
 wait "$claim_pid_a"
 wait "$claim_pid_b"
-if [[ "$(grep -hxc CLAIMED "$claim_tmp/a" "$claim_tmp/b" || true)" != 1 ||
-      "$(grep -hxc REPLAY_DENIED "$claim_tmp/a" "$claim_tmp/b" || true)" != 1 ]]; then
+claim_count="$(cat "$claim_tmp/a" "$claim_tmp/b" | grep -xc CLAIMED || true)"
+deny_count="$(cat "$claim_tmp/a" "$claim_tmp/b" | grep -xc REPLAY_DENIED || true)"
+if [[ "$claim_count" != 1 || "$deny_count" != 1 ]]; then
   echo "STAGE38_CONCURRENT_CLAIM_UNIQUE_CONSTRAINT_FAILED" >&2
   exit 1
 fi
