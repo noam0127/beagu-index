@@ -2,10 +2,11 @@
 /**
  * Read-only Stage 38 acceptance probe for a separately hosted, static RC.
  * Requires an independent, owner-reviewed SHA-256 for the RC manifest.
- * Requests 4 public files (including the pinned school directory) with GET
- * and checks exact content hashes and
- * response security headers. No credentials, cookies, authentication, writes,
- * deployment, promotion or release-manager commands are used.
+ * Requests every published static file with read-only GET and compares
+ * exact content hashes plus response security headers. An optional short-lived
+ * Vercel Trusted Sources OIDC token is sent ONLY to the pinned test project's
+ * known hosts. Never logs or embeds the token in a URL or release manifest.
+ * No cookies, application authentication, writes, deployment or promotion.
  *
  * Passing is ONLY static-host verification; full QA and owner AAL2 approval
  * remain separately required.
@@ -25,6 +26,10 @@ const REQUIRED_FILES = [
 ];
 const BUILD_ONLY_FILES = new Set(["vercel.json", ".nojekyll"]);
 const SCHEMA = "beagu-independent-preview-package-v1";
+// Authenticated same-project PREVIEW requests are allowed only on these
+// exact project-owned hostname shapes. Never forward OIDC to arbitrary
+// vercel.app subdomains, production, or an unreviewed custom domain.
+const ALLOWED_VERCEL_HOST = /^(?:baegu-index-test\.vercel\.app|baegu-index-test-[a-z0-9-]+-ibelieveyou365-4134\.vercel\.app)$/;
 const MAX_LISTED_ASSETS = 1500;
 const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const sha256 = value => createHash("sha256").update(value).digest("hex");
@@ -44,7 +49,8 @@ const auditableTextAsset = path =>
   /\.(?:html?|js|mjs|css|json|webmanifest|xml|svg|csv)$/i.test(path);
 
 export async function inspectPublishedStaticPreview(
-  siteUrl, {fetcher=globalThis.fetch, productionUrl="https://baeguindex.com/", expectedManifestSha256}={}
+  siteUrl, {fetcher=globalThis.fetch, productionUrl="https://baeguindex.com/",
+    expectedManifestSha256, vercelTrustedOidcToken}={}
 ) {
   const scope = inspectPreviewOrigin(productionUrl, siteUrl);
   if (!scope.pass) return failure("invalid_isolation_origin",scope.errors);
@@ -52,11 +58,20 @@ export async function inspectPublishedStaticPreview(
     return failure("trusted_manifest_digest_required");
   if (typeof fetcher !== "function") return failure("no_http_client");
   const origin = scope.preview_origin;
+  const hasOidcToken = typeof vercelTrustedOidcToken === "string" &&
+    vercelTrustedOidcToken.length > 0;
+  if (vercelTrustedOidcToken !== undefined && !hasOidcToken)
+    return failure("invalid_vercel_oidc_token");
+  if (hasOidcToken && !ALLOWED_VERCEL_HOST.test(new URL(origin).hostname))
+    return failure("oidc_token_host_not_approved");
   const readFile = async path => {
     let response;
     try {
       response = await fetcher(new URL("/"+path, origin).href, {
-        method:"GET", redirect:"manual", cache:"no-store"
+        method:"GET", redirect:"manual", cache:"no-store",
+        ...(hasOidcToken ? {headers:{
+          "x-vercel-trusted-oidc-idp-token":vercelTrustedOidcToken
+        }} : {})
       });
     } catch {
       return {error:failure("network_unavailable",path)};
@@ -158,7 +173,14 @@ if (process.argv[1] && fileURLToPath(import.meta.url)===resolve(process.argv[1])
     console.error("Usage: node scripts/release-manager/check-published-stage38.mjs https://independent-preview-host/ <trusted-manifest-sha256-from-approved-CI>");
     process.exitCode=2;
   } else {
-    const result=await inspectPublishedStaticPreview(process.argv[2], {expectedManifestSha256:process.argv[3]});
+    // vc env run injects a short-lived token into the process environment.
+    // Its value must never be printed, committed, cached, or added to a URL.
+    const result=await inspectPublishedStaticPreview(process.argv[2], {
+      expectedManifestSha256:process.argv[3],
+      ...(process.env.VERCEL_OIDC_TOKEN
+        ? {vercelTrustedOidcToken:process.env.VERCEL_OIDC_TOKEN}
+        : {})
+    });
     process.stdout.write(JSON.stringify(result,null,2)+"\n");
     if (!result.staticReady) process.exitCode=1;
   }
