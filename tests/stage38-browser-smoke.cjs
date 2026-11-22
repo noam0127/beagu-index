@@ -10,7 +10,7 @@ const { chromium } = require("playwright");
 
 const root = path.resolve("_preview_standalone_site");
 const origin = "http://127.0.0.1:38738";
-const routes = ["/index.html", "/admin-updates.html", "/result.html", "/js/challenge.html"];
+const routes = ["/index.html", "/admin.html", "/admin-updates.html", "/result.html", "/js/challenge.html"];
 const productionHosts = new Set([
   "baeguindex.com",
   "www.baeguindex.com",
@@ -65,6 +65,34 @@ async function main() {
       const content = (await page.locator("body").innerText({ timeout: 10000 })).trim();
       assert.ok(content.length > 10, "Page body empty or unrendered: " + file);
       console.log("PASS: browser rendered " + file + " (visible text chars: " + content.length + ")");
+      if (file === "/admin.html") {
+        await page.locator("#adminLogin").waitFor({ state: "visible", timeout: 12000 });
+        assert.equal(await page.locator("#adminMfa").isVisible(), false,
+          "Unauthenticated user reached MFA screen");
+        assert.equal(await page.locator("#adminDashboard").isVisible(), false,
+          "Unauthenticated user reached admin dashboard");
+        await page.locator("#adminEmail").fill("stage38-nonexistent@example.invalid");
+        await page.locator("#adminPassword").fill("nonexistent-stage38-password");
+        await page.locator("#adminLoginForm button[type=submit]").click();
+        await page.waitForFunction(
+          () => (document.getElementById("adminNotice")?.textContent || "").includes("이메일 또는 비밀번호를 확인해 주세요."),
+          null, { timeout: 15000 }
+        );
+        assert.equal(await page.locator("#adminDashboard").isVisible(), false);
+        assert.equal(await page.locator("#adminPassword").inputValue(), "",
+          "Failed password was not erased from login form");
+        console.log("PASS: real browser invalid login denied, dashboard/MFA hidden, password cleared");
+      }
+      if (file === "/admin-updates.html") {
+        await page.locator("#releaseLogin").waitFor({ state: "visible", timeout: 12000 });
+        assert.equal(await page.locator("#releaseDashboard").isVisible(), false,
+          "Unauthenticated user reached release controls");
+        for (const id of ["releaseStageApply", "releaseProdApply", "releaseStageRollback", "releaseProdRollback"]) {
+          assert.equal(await page.locator("#" + id).isEnabled(), false,
+            "Unauthenticated release button was enabled: " + id);
+        }
+        console.log("PASS: real browser release center access denied; deploy/rollback controls hidden and disabled");
+      }
       if (pageErrors.length) {
         console.log("WARN: browser JS errors on " + file + " (count: " + pageErrors.length + ")");
       }
