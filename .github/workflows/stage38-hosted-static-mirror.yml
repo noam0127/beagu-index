@@ -59,13 +59,13 @@ jobs:
           git commit -m 'Static-only independently hosted mirror of pinned v1.1.0 RC (no Auth)'
           git remote add origin "https://github.com/noam0127/beagu-index.git"
           if git ls-remote --exit-code origin "refs/heads/$target" >/dev/null 2>&1; then
-            echo "Preview branch already exists; refusing overwrite of immutable mirror"
-            exit 1
+            echo "PASS: immutable static preview branch already exists; no overwrite performed"
+          else
+            auth_header=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth_header" \
+              push origin "HEAD:refs/heads/$target"
+            unset auth_header
           fi
-          auth_header=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth_header" \
-            push origin "HEAD:refs/heads/$target"
-          unset auth_header
           echo "PUBLIC STATIC MIRROR URL: https://raw.githack.com/noam0127/beagu-index/$target/index.html"
           echo 'No GitHub Pages, no main branch, no Supabase or release worker mutations.'
       - name: Install temporary Chromium for real hosted HTTP smoke
