@@ -46,6 +46,18 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     assert not (out / "CNAME").exists()
     assert not (out / "_preview").exists()
     assert (out / ".nojekyll").exists()
+
+    manifest = json.loads((out / "stage38-release-manifest.json").read_text(encoding="utf-8"))
+    assert manifest["source_sha"] == RC_SHA
+    assert manifest["rc_version"] == "v1.1.0-rc.1"
+    assert manifest["supabase_project_ref"] == STAGING_REF
+    assert manifest["environment"] == "isolated-test-package"
+    assert manifest["deployment_status"] == "unverified"
+    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js"}
+    for path, digest in manifest["files_sha256"].items():
+        assert re.fullmatch("[0-9a-f]{64}", digest)
+        assert __import__("hashlib").sha256((out / path).read_bytes()).hexdigest() == digest
+
     for private in (".github", "tests", "docs", "supabase", "scripts",
                     "README.md", "wrangler.jsonc", "release-candidate.json",
                     "beagu_challenge_redesign.zip", "lv2-edited-column-schema.json"):
