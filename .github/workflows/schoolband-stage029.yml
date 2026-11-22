@@ -11,6 +11,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  statuses: write
 concurrency:
   group: schoolband-stage029-${{ github.ref }}
   cancel-in-progress: true
@@ -40,3 +41,32 @@ jobs:
         run: |
           test ! -f artifacts/schoolband-stage029/site/CNAME
           echo "Static-only preview; GitHub Pages/Vercel settings and operating domain unchanged."
+
+      - name: Publish exact-preview HTTP verification result to TEST branch commit status
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERDICT: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          if [ "$VERDICT" = "success" ]; then
+            STATE=success
+            DESCRIPTION="External HTTP, MIME and SHA256 checks passed for exact commit"
+          else
+            STATE=failure
+            DESCRIPTION="External preview HTTP not verified or other 029 gate failed"
+          fi
+          export STATE DESCRIPTION
+          PAYLOAD="$(node -e 'process.stdout.write(JSON.stringify({
+            state:process.env.STATE,
+            context:"schoolband/029-static-preview-http",
+            description:process.env.DESCRIPTION,
+            target_url:"https://github.com/"+process.env.GITHUB_REPOSITORY+
+              "/actions/runs/"+process.env.GITHUB_RUN_ID
+          }))')"
+          curl --fail --silent --show-error --retry 2 -X POST \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            --data "$PAYLOAD" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" >/dev/null
