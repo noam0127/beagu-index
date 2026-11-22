@@ -78,6 +78,62 @@ function mocked({routeOverrides={},headerOverrides={},statusOverrides={}}={}){
   assert.ok(calls.every(x=>x.url.startsWith(site)));
 }
 {
+  // Vercel Trusted Sources: a short-lived caller token may be used to read
+  // a protected PREVIEW in the approved test project, but no other host.
+  const shortLivedToken="test-oidc-secret-do-not-print-62419";
+  const {fetcher,calls}=mocked();
+  const result=await inspect(site,{fetcher,vercelTrustedOidcToken:shortLivedToken});
+  assert.equal(result.status,"STATIC_HTTP_VERIFIED");
+  assert.equal(result.realAccountReady,false);
+  assert.equal(result.productionReleaseReady,false);
+  assert.equal(calls.length,6);
+  assert.ok(calls.every(x=>new URL(x.url).hostname==="baegu-index-test.vercel.app"));
+  assert.ok(calls.every(x=>x.opts.redirect==="manual"));
+  assert.ok(calls.every(x=>x.opts.headers?.["x-vercel-trusted-oidc-idp-token"]===shortLivedToken));
+  assert.ok(!JSON.stringify(result).includes(shortLivedToken));
+}
+{
+  // An unaliased deployment must retain the test project's known team-owned
+  // Vercel hostname structure. A sibling Vercel project is never trusted.
+  const shortLivedToken="test-oidc-secret-do-not-print-62419";
+  const verifiedHost="https://baegu-index-test-rc123-ibelieveyou365-4134.vercel.app/";
+  const {fetcher,calls}=mocked();
+  assert.equal((await inspect(verifiedHost,{fetcher,vercelTrustedOidcToken:shortLivedToken})).status,
+    "STATIC_HTTP_VERIFIED");
+  assert.ok(calls.every(x=>x.url.startsWith(verifiedHost)));
+}
+for (const unapproved of [
+  "https://attacker.vercel.app/",
+  "https://beagu-index-latest-ibelieveyou365-4134.vercel.app/",
+  "https://preview-other-example.net/",
+  "https://baegu-index-test-rc123-otherteam.vercel.app/"
+]) {
+  let called=false;
+  const token="private-oidc-never-echo-123456";
+  const result=await inspect(unapproved,{
+    vercelTrustedOidcToken:token,
+    fetcher:async()=>{called=true;throw Error("must not send OIDC")}
+  });
+  assert.equal(result.reason,"oidc_token_host_not_approved");
+  assert.equal(called,false);
+  assert.ok(!JSON.stringify(result).includes(token));
+}
+{
+  let called=false;
+  const result=await inspect(site,{
+    vercelTrustedOidcToken:"",
+    fetcher:async()=>{called=true;throw Error("invalid token must stop")}
+  });
+  assert.equal(result.reason,"invalid_vercel_oidc_token");
+  assert.equal(called,false);
+}
+{
+  const {fetcher,calls}=mocked();
+  const result=await inspect(site,{fetcher});
+  assert.equal(result.status,"STATIC_HTTP_VERIFIED");
+  assert.ok(calls.every(x=>!x.opts.headers));
+}
+{
   let called=false;
   const result=await inspect(
     "https://baeguindex.com/_preview/",
@@ -175,4 +231,5 @@ for (const status of [401,403]) {
   assert.equal((await inspect(site,{fetcher})).reason,"independent_manifest_digest_mismatch");
 }
 console.log("PASS: Stage 38 HTTP acceptance rejects same-origin, SSO, redirects, stale or altered RC, live backend references and missing security headers.");
+console.log("PASS: approved test-host OIDC is forwarded only to the exact host; unapproved hosts receive no requests or secrets.");
 console.log("No network was used; all GETs exercised against an in-process mock.");
