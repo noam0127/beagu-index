@@ -509,12 +509,32 @@ const PARTS={
   ]
  ]
 };
+// BEGIN SCHOOLBAND_TIMING_MODEL_V1 — pure music/time/geometry rules, no DOM or wall clock.
 const BEAT=60/108,BARS=8,SONG_BEATS=BARS*4;
 // At 108 BPM a sixteenth lasts 138.89 ms. 24px notes need >24px travel per step.
 const NOTE_PREVIEW_SECONDS=1.16,NOTE_TRAVEL_PX=240,NOTE_HEIGHT_PX=24;
-function noteYForDelta(dt,line){return line-dt/NOTE_PREVIEW_SECONDS*NOTE_TRAVEL_PX}
-function noteStepSpacing(){return NOTE_TRAVEL_PX/NOTE_PREVIEW_SECONDS*BEAT/4}
 const WIDTHS=[.20,.17,.14,.11,.075],PERFECT=[.09,.075,.06,.05,.036];
+// Each chart note is anchored to seconds relative to the shared AudioContext start time.
+function noteTimeSeconds(bar,sixteenth){return (bar*4+sixteenth/4)*BEAT}
+function noteDeltaSeconds(noteTime,songTime){return noteTime-songTime}
+function noteYForDelta(dt,line){return line-dt/NOTE_PREVIEW_SECONDS*NOTE_TRAVEL_PX}
+function noteYAtAudioTime(noteTime,songTime,line){return noteYForDelta(noteDeltaSeconds(noteTime,songTime),line)}
+function noteStepSpacing(){return NOTE_TRAVEL_PX/NOTE_PREVIEW_SECONDS*BEAT/4}
+// The thresholds are inclusive: |offset| <= PERFECT -> perfect,
+// PERFECT < |offset| <= WIDTHS -> good, outside WIDTHS -> no hit.
+// Negative offsets (early hits) and positive offsets (late hits) are symmetric.
+function judgementForOffset(offset,tierIndex){
+ if(!Number.isFinite(offset)||!Number.isInteger(tierIndex)||tierIndex<0||tierIndex>=WIDTHS.length)return "outside";
+ const distance=Math.abs(offset);
+ return distance<=PERFECT[tierIndex]?"perfect":distance<=WIDTHS[tierIndex]?"good":"outside";
+}
+// Exactly at the late boundary a note is still hittable; only strictly later is MISS.
+function isNoteMissed(noteTime,songTime,tierIndex){
+ return Number.isFinite(noteTime)&&Number.isFinite(songTime)&&
+  Number.isInteger(tierIndex)&&tierIndex>=0&&tierIndex<WIDTHS.length&&
+  songTime-noteTime>WIDTHS[tierIndex];
+}
+// END SCHOOLBAND_TIMING_MODEL_V1
 const $=id=>document.getElementById(id);
 const canvas=$("track"),g=canvas.getContext("2d");
 let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
@@ -747,15 +767,15 @@ function scheduleStep(n,when){
 }
 function scheduleAhead(){
  if(!playing||!ctx)return;
- while(step<SONG_BEATS*4 && beginning+(step/4)*BEAT<ctx.currentTime+.22){
- scheduleStep(step,beginning+(step/4)*BEAT);step++;
+ while(step<SONG_BEATS*4 && beginning+noteTimeSeconds(0,step)<ctx.currentTime+.22){
+ scheduleStep(step,beginning+noteTimeSeconds(0,step));step++;
  }
 }
 function makeChart(){
  chart=[];
  const points=PARTS[instrument].filter(p=>p[2]<=tierIdx());
  for(let bar=0;bar<BARS;bar++)for(const [step,lane] of points){
-  chart.push({t:(bar*4+step/4)*BEAT,beat:bar*4+step/4,lane,done:false});
+  chart.push({t:noteTimeSeconds(bar,step),beat:bar*4+step/4,lane,done:false});
  }
  chart.sort((a,b)=>a.t-b.t||a.lane-b.lane);
  return chart;
@@ -823,26 +843,28 @@ function triggerImpact(lane,isPerfect){
 }
 function hit(lane){
  if(!playing||!ctx||lane<0||lane>=INST[instrument].lanes.length)return;
- const now=nowSong(),windowS=WIDTHS[tierIdx()];
- let closest=null,dist=Infinity;
+ const now=nowSong(),idx=tierIdx();
+ let closest=null,dist=Infinity,judgement="outside";
  for(const n of chart){
   if(n.done||n.lane!==lane)continue;
-  const d=Math.abs(n.t-now);
-  if(d<dist&&d<=windowS){dist=d;closest=n}
+  const offset=noteDeltaSeconds(n.t,now),result=judgementForOffset(offset,idx);
+  if(result==="outside")continue;
+  const d=Math.abs(offset);
+  if(d<dist){dist=d;closest=n;judgement=result}
  }
  if(!closest){emptyPresses++;laneFeedback(lane,"empty");status(INST[instrument].lanes[lane][0]+" · 지금 누를 노트가 없습니다.");return}
  closest.done=true;hits++;judged++;combo++;bestCombo=Math.max(bestCombo,combo);
- if(dist<=PERFECT[tierIdx()]){score+=1000+Math.min(100,combo)*5;perfect++;status("PERFECT ✦ "+INST[instrument].lanes[lane][0])}
+ if(judgement==="perfect"){score+=1000+Math.min(100,combo)*5;perfect++;status("PERFECT ✦ "+INST[instrument].lanes[lane][0])}
  else{score+=600+Math.min(100,combo)*3;good++;status("GOOD! "+INST[instrument].lanes[lane][0])}
  voice(instrument,closest.beat,ctx.currentTime,lane);
- triggerImpact(lane,dist<=PERFECT[tierIdx()]);
+ triggerImpact(lane,judgement==="perfect");
  hud();draw();
 }
 function animate(){
  if(!playing)return;
- const now=nowSong(),cut=WIDTHS[tierIdx()];
+ const now=nowSong(),idx=tierIdx();
  let missedThisFrame=0;
- for(const n of chart){if(!n.done && now-n.t>cut){n.done=true;judged++;miss++;combo=0;missedThisFrame++;laneFeedback(n.lane,"miss");}}
+ for(const n of chart){if(!n.done && isNoteMissed(n.t,now,idx)){n.done=true;judged++;miss++;combo=0;missedThisFrame++;laneFeedback(n.lane,"miss");}}
  if(missedThisFrame&&now-lastMissAnnouncement>.8){status("MISS · 놓친 노트 "+missedThisFrame+"개");lastMissAnnouncement=now;}
  if(now>=SONG_BEATS*BEAT+.28){finish(false);return}
  $("progress").style.width=Math.max(0,Math.min(100,100*(now/(SONG_BEATS*BEAT))))+"%";
@@ -916,9 +938,9 @@ function draw(){
  const now=playing?nowSong():-.6;
  for(const n of chart){
   if(n.done)continue;
-  const dt=n.t-now;
+  const dt=noteDeltaSeconds(n.t,now);
   if(dt>NOTE_PREVIEW_SECONDS||dt<-.2)continue;
-  const x=margin+n.lane*(lw+gap),y=noteYForDelta(dt,line);
+  const x=margin+n.lane*(lw+gap),y=noteYAtAudioTime(n.t,now,line);
   // A 24px tall note keeps a >4px internal gap at each sixteenth step (108 BPM).
   const fill=g.createLinearGradient(x,y-12,x,y+12);
   fill.addColorStop(0,"#ffffff");fill.addColorStop(.22,colors[n.lane]);fill.addColorStop(1,colors[n.lane]);
@@ -968,7 +990,7 @@ document.addEventListener("keydown",e=>{
  e.preventDefault();hit(index);flash(index);
 });
 window.addEventListener("pagehide",()=>{if(playing)finish(true)});
-window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged,combo,bestCombo,miss,emptyPresses}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null};
+window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged,combo,bestCombo,miss,emptyPresses}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteYForDelta,noteYAtAudioTime,judgementForOffset,isNoteMissed})};
 $("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
 $("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
 if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
