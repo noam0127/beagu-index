@@ -120,7 +120,7 @@ $('postitAccountLink').addEventListener('click',async()=>{
   const body=await response.json().catch(()=>({}));
   if(!response.ok||body.linked!==true)throw Error(body.error||'LINK_FAILED');
   await refresh();
-  window.dispatchEvent(new Event('beagu:member-linked'));
+  window.dispatchEvent(new CustomEvent('beagu:member-linked'));
  }catch(error){
   message(error.message==='MEMBERSHIP_ALREADY_CLAIMED'
    ?'이미 다른 계정에 연결된 챌린지 권한입니다. 관리자에게 문의해 주세요.'
