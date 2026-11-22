@@ -1,7 +1,7 @@
 # 배구지수 v1.1.0 — 시험 Supabase Edge Function 실배포 현황
 
 2026년 11월 23일(한국 시간) **시험 프로젝트**
-`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **31개**
+`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **32개**
 Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전의 스냅샷은
 `scripts/staging/stage-edge-functions-inventory.json`에 있다.
 
@@ -22,9 +22,9 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 
 2026-11-23 기준 시험 웹 빌드 산출물(HTML 24개 및 JS·CSS 포함)에서
 정적 URL 또는 SDK 호출로 참조하는 Edge Function은 **16개**이고,
-시험 Supabase 실제 목록에는 이 중 **5개**만 있다.
+시험 Supabase 실제 목록에는 이 중 **6개**가 배포되어 있다.
 
-아래 11개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
+아래 10개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
 
 | 구분 | 시험 프로젝트에 없는 함수 | 정적 호출 파일 |
 |---|---|---|
@@ -32,7 +32,6 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 | 추천 응답 | `beagu-referral-checkin-v1` | `js/beagu-referral-form-v1.js` |
 | 추천 링크 | `beagu-referral-link-v1` | `js/challenge-referral-v1.js` |
 | 관리자 검토 | `beagu-2026-review-admin` | `js/beagu-2026-admin-review.js` |
-| 학교 정보 | `beagu-edited-api-v1` | `school-report.html` |
 | 학교 문화 | `beagu-school-culture-v1` | `js/school-mbti-v1.js` |
 | 관심학교 | `beagu-school-interest-v1` | `js/beagu-school-interest-v1.js` |
 | 게임 순위 | `arcade-leaderboard` | `js/arcade-leaderboard-v1.js` 외 2개 |
@@ -40,13 +39,12 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 | 학급일지 접근 | `class-diary-guest-access-v1` | `js/class-diary-home-entry-v1.js` |
 | 학급일지 진행 | `class-diary-progress-v1` | `js/class-diary-progress-v1.js` |
 
-**소스 준비 상태:** 누락된 11개 중 10개는 GitHub 개발 브랜치의
+**소스 준비 상태:** 누락된 10개는 모두 GitHub 개발 브랜치의
 `supabase/functions/<함수명>/index.ts`가 존재한다. 이는 **시험 배포 가능성
 검토 대상**이라는 뜻이지, SQL 의존성·권한·보안·요금 검증이 끝났다는 뜻은
-아니다. 나머지 **`beagu-edited-api-v1`에는 현재 함수 소스가 없다.**
+아니다. **`beagu-edited-api-v1`은 운영 배포본에서 소스를 읽기 전용으로 확보한 뒤 시험 전용으로 복구하여 시험 Supabase v1로 배포하였다.**
 `school-report.html`에서는 Lv2 추가 편집본 정보를 불러올 때 해당 API를
-선택적으로 호출하고, 실패 시 추가 항목을 생략한다. 따라서 이 기능은 단순
-배포가 아니라 기존 API 대체 여부 또는 소스 복구를 검토해야 한다.
+선택적으로 호출하고, 실패 시 추가 항목을 생략한다. 복구본은 운영 프로젝트를 거부하고, 승인된 시험 Origin만 허용한다. 시험 DB의 누락된 공식 분류 테이블을 **빈 구조**로 생성하고 RLS·익명 접근 차단을 확인하였다. 브라우저·Lv2 실세션 E2E는 아직 완료되지 않았다.
 
 이것은 정적 코드에서 발견한 함수 참조 현황이다. 모든 해당 코드가
 모든 화면에서 실제 실행되는 것은 아니며, 동적으로 계산한 함수명은
