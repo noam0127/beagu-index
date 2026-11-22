@@ -197,6 +197,15 @@ html[data-low-power-fx="true"] .lane-event.animate{transform:none}
 #anthemPlayer{width:100%;aspect-ratio:16/9;border:0;border-radius:8px;margin:6px 0}
 #anthemPlayer[hidden],#closeAnthemPlayer[hidden]{display:none}
 .record-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:6px 0 12px}.record-controls button{padding:8px 10px;font-size:12px;min-height:40px}.record-controls small{font-size:11px;color:#c9d5f1}
+.concert-summary{margin:12px 0;border:1px solid #7484a2;border-radius:14px;background:#1b293f;padding:12px}
+.concert-summary[hidden]{display:none}
+.concert-summary h3{margin:0 0 10px;font-size:16px}
+.concert-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.concert-metrics>div{min-width:0;background:#111c30;border-radius:10px;padding:9px 7px;text-align:center}
+.concert-metrics small{display:block;font-size:11px;color:#cad5e4}
+.concert-metrics strong{font-variant-numeric:tabular-nums;display:block;font-size:clamp(15px,4.3vw,23px);white-space:nowrap}
+#summaryBreakdown,#summaryNotice{font-size:12px;margin:9px 0 0}
+#summaryPrivacy{display:block;font-size:11px;color:#bdcde1;margin-top:7px}
 </style>
 </head>
 <body>
@@ -263,6 +272,17 @@ html[data-low-power-fx="true"] .lane-event.animate{transform:none}
 <div class="hud"><div><small>점수</small><b id="score">0</b></div><div><small>콤보</small><b id="combo">0</b></div><div><small>정확도</small><b id="accuracy">—</b></div><div><small>최고</small><b id="best">—</b></div></div>
 <div class="record-controls"><button id="resetBest" type="button">이 조합의 최고 기록 초기화</button><small id="recordStatus" role="status" aria-live="polite">학교·곡·악기·난이도·차트 버전별로 별도 저장됩니다.</small></div>
 <p id="result">노트가 판정선에 오면 해당 레인 키나 터치 버튼을 누르세요.</p>
+<section id="concertSummary" class="concert-summary" aria-label="공연 결과" aria-live="polite" hidden>
+ <h3 id="summaryHeading">공연 결과</h3>
+ <div class="concert-metrics">
+  <div><small>이번 점수</small><strong id="summaryScore">—</strong></div>
+  <div><small>정확도</small><strong id="summaryAccuracy">—</strong></div>
+  <div><small>최대 콤보</small><strong id="summaryCombo">—</strong></div>
+ </div>
+ <p id="summaryBreakdown">판정 정보는 공연이 끝나면 표시됩니다.</p>
+ <p id="summaryNotice">기록은 이 브라우저에만 보관됩니다.</p>
+ <small id="summaryPrivacy">전국 순위표 미사용 · 서버에 점수·닉네임·학생정보를 전송하지 않습니다.</small>
+</section>
 </section>
 <p class="note">배구 테마 연습곡은 기존에 제작한 창작곡을 사용하는 시험용 선택지입니다. 실제 학교 교가가 아니며, 교가 선택은 권리 확인과 게임용 차트 등록 후 열립니다.</p>
 </main>
@@ -882,7 +902,7 @@ function chooseSong(song){
  if(song==="anthem"&&!songAvailability(school).anthem){
   syncSongChoice();return false;
  }
- selectedSong=song;syncSongChoice();showBest();return true;
+ selectedSong=song;clearConcertSummary();syncSongChoice();showBest();return true;
 }
 $("songVolleyball").addEventListener("click",()=>chooseSong("volleyball"));
 $("songAnthem").addEventListener("click",()=>chooseSong("anthem"));
@@ -1020,6 +1040,36 @@ function validScoringResult(result){
    result.score>result.perfect*1500+result.good*900)return false;
  return true;
 }
+// Stage025: concise, privacy-preserving local result. No remote leaderboard.
+function concertSummaryModel(result){
+ if(!result||typeof result!=="object"||typeof result.interrupted!=="boolean"||
+    !Number.isSafeInteger(result.score)||result.score<0||result.score>MAX_STORED_SCORE||
+    !Number.isSafeInteger(result.bestCombo)||result.bestCombo<0||
+    !Number.isSafeInteger(result.judged)||result.judged<0||
+    !Number.isSafeInteger(result.hits)||result.hits<0||result.hits>result.judged||
+    !Number.isSafeInteger(result.total)||result.total<0||
+    result.judged>result.total||result.bestCombo>result.hits||
+    !Number.isSafeInteger(result.perfect)||!Number.isSafeInteger(result.good)||
+    !Number.isSafeInteger(result.miss)||result.perfect<0||result.good<0||
+    result.miss<0||result.perfect+result.good!==result.hits||
+    result.hits+result.miss!==result.judged)return {
+      state:"invalid",score:null,accuracy:null,bestCombo:null,
+      breakdown:"결과 데이터가 일치하지 않습니다.",persistable:false
+    };
+ if(result.interrupted===true){
+  return {state:"interrupted",score:result.score,
+   accuracy:scoreAccuracy(result.hits,result.judged),bestCombo:result.bestCombo,
+   breakdown:"중단 시점의 판정만 표시합니다.",persistable:false};
+ }
+ if(!validScoringResult(result))return {
+  state:"invalid",score:null,accuracy:null,bestCombo:null,
+  breakdown:"완주 기록이 유효하지 않아 저장하지 않았습니다.",persistable:false
+ };
+ return {state:"complete",score:result.score,accuracy:scoreAccuracy(result.hits,result.total),
+  bestCombo:result.bestCombo,
+  breakdown:"PERFECT "+result.perfect+" · GOOD "+result.good+" · MISS "+result.miss,
+  persistable:true};
+}
 function scoreForHit(judgement,comboValue){
  if(!Number.isInteger(comboValue)||comboValue<1||!["perfect","good"].includes(judgement))return null;
  const bonus=Math.min(100,comboValue);
@@ -1047,6 +1097,26 @@ function saveCompletedBest(result){
   localStorage.setItem(key,String(result.score));
   return {saved:true,reason:"new_best"};
  }catch(_){return {saved:false,reason:"storage_unavailable"}}
+}
+function renderConcertSummary(result,saved){
+ const model=concertSummaryModel(result);
+ const summary=$("concertSummary");summary.hidden=false;
+ safeText("summaryHeading",model.state==="complete"?"공연 완료":
+  model.state==="interrupted"?"연주 중단":"결과 검증 실패");
+ safeText("summaryScore",model.score===null?"—":model.score.toLocaleString("ko-KR"));
+ safeText("summaryAccuracy",model.accuracy===null?"—":model.accuracy+"%");
+ safeText("summaryCombo",model.bestCombo===null?"—":model.bestCombo);
+ safeText("summaryBreakdown",model.breakdown);
+ safeText("summaryNotice",model.state==="interrupted"?"중단한 연주는 최고 기록에 저장하지 않습니다.":
+  model.state==="invalid"?"비정상 또는 미완료 결과입니다. 점수 저장을 차단했습니다.":
+  saved?.saved?"이번 조합의 새 최고 기록입니다.":saved?.reason==="storage_unavailable"?
+   "기록 저장을 사용할 수 없습니다. 공연 결과는 이 화면에서만 확인하세요.":
+   "이번 결과는 최고 기록을 넘지 못했거나 저장할 수 없습니다.");
+ return model;
+}
+function clearConcertSummary(){
+ $("concertSummary").hidden=true;
+ safeText("summaryHeading","공연 결과");
 }
 function resetCurrentBest(){
  if(playing||startPending)return false;
@@ -1137,7 +1207,7 @@ function showSchool(){
  status(s.eligible?"학교 선택 완료. 연주를 시작하세요.":"공개된 학교 난이도가 없어 NORMAL 연습으로 진행합니다.");
  draw();
 }
-function setSchool(s){if(playing||startPending)return;school=s;selectedSong="volleyball";syncSongChoice();renderAnthemDiscovery();showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
+function setSchool(s){if(playing||startPending)return;clearConcertSummary();school=s;selectedSong="volleyball";syncSongChoice();renderAnthemDiscovery();showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
 async function getJson(url){const r=await fetch(url,{cache:"no-store",signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error("school_api_"+r.status);return r.json()}
 $("retrySchool").addEventListener("click",()=>{$("retrySchool").hidden=true;$("schoolSearch").dispatchEvent(new Event("input",{bubbles:true}))});
 $("schoolSearch").addEventListener("input",()=>{
@@ -1182,7 +1252,7 @@ $("demoSchool").onclick=()=>{
 };
 document.querySelectorAll("[data-inst]").forEach(b=>b.onclick=()=>{
  if(playing||startPending)return;
- instrument=b.dataset.inst;
+ instrument=b.dataset.inst;clearConcertSummary();
  document.querySelectorAll("[data-inst]").forEach(el=>el.setAttribute("aria-pressed",String(el===b)));
  safeText("instCaption",INST[instrument].name+"의 "+INST[instrument].note+" 타이밍을 연주합니다.");
  updateControlsHint();
@@ -1762,7 +1832,7 @@ async function start(){
  }
  startPending=false;
  if(playing)return;
- playing=true;$("resetBest").disabled=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;currentUxStep="play";syncStepNav();syncPauseControl();
+ playing=true;clearConcertSummary();$("resetBest").disabled=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;currentUxStep="play";syncStepNav();syncPauseControl();
  score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;soundEvents.length=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();FX_PERF.judgementFrames=0;FX_PERF.renderedFrames=0;FX_PERF.skippedVisualFrames=0;FX_PERF.lastDrawWall=0;
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
@@ -1783,13 +1853,18 @@ function finish(interrupted){
  $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
  $("offsetRange").disabled=false;$("offsetReset").disabled=false;
  document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);$("resetBest").disabled=false;syncSongChoice();
- if(interrupted){status("연주를 중단했습니다.");safeText("result","다시 시작할 수 있습니다.");}
+ const outcome={interrupted:!!interrupted,song:selectedSong,total:chart.length,
+  judged,hits,perfect,good,miss,score,bestCombo};
+ if(interrupted){
+  status("연주를 중단했습니다.");safeText("result","다시 시작할 수 있습니다.");
+  renderConcertSummary(outcome,{saved:false,reason:"interrupted"});
+ }
  else{
  const acc=scoreAccuracy(hits,chart.length)??0;
  status("공연 종료! "+(acc>=85?"훌륭한 연주!":acc>=60?"좋은 연주!":"다시 도전해 보세요."));
  safeText("result","정확도 "+acc+"% · PERFECT "+perfect+" · GOOD "+good+" · MISS "+miss+" · 최대 콤보 "+bestCombo+" · 빈 입력 "+emptyPresses+"회 · 노트 "+chart.length+"개");
- const saved=saveCompletedBest({interrupted:false,song:selectedSong,total:chart.length,
-  judged,hits,perfect,good,miss,score});
+ const saved=saveCompletedBest(outcome);
+ renderConcertSummary(outcome,saved);
  safeText("recordStatus",saved.saved?"새 최고 기록 저장 완료":saved.reason==="storage_unavailable"?
   "저장소 사용 불가 · 이번 연주는 정상 종료했습니다.":saved.reason==="incomplete_or_invalid"?
   "노트 판정이 완결되지 않아 최고 기록을 저장하지 않았습니다.":
