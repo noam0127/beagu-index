@@ -53,6 +53,19 @@ for page in pages:
     assert 'name="robots" content="noindex,nofollow,noarchive"' in body, page
     assert 'src="/beagu-staging-navigation-guard.js"' in body, page
 assert "ycwuugggqbunlbwuzvbx" in (stage / "js/supabase-config.js").read_text()
+read_only_release = (stage / "admin-updates.html").read_text(encoding="utf-8")
+assert "업데이트 관리 · 읽기 전용" in read_only_release
+assert "배포 명령 비활성화" in read_only_release
+assert not (stage / "js/beagu-admin-updates-v1.js").exists()
+for privileged in [
+    "releaseStageApply", "releaseProdApply", "releaseProdRollback",
+    "releaseRegister", "releaseDraftForm", "beagu-release-manager-v1",
+    "beagu-admin-updates-v1.js",
+]:
+    assert privileged not in read_only_release, privileged
+assert "<form" not in read_only_release and "<button" not in read_only_release
+assert "/functions/v1/beagu-release-" in guard
+print("PASS: standalone release center is read-only; privileged JS and API calls disabled")
 
 texts = (".html", ".js", ".mjs", ".css", ".json", ".csv", ".txt", ".svg")
 for file in stage.rglob("*"):
