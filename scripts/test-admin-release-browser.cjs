@@ -81,8 +81,9 @@ async function run(){
     assert(await page.locator("#releaseProdApply").isDisabled());
     assert(await page.locator("#releaseProdRollback").isDisabled());
     assert(await page.locator("#releaseRegister").isEnabled());
-    assert.equal(await page.locator(".release-site-link").first().getAttribute("href"),
-      "https://baeguindex.com/_preview/");
+    assert.equal(await page.locator("#releaseStageLink").getAttribute("href"),null);
+    assert.equal(await page.locator("#releaseStageLink").getAttribute("aria-disabled"),"true");
+    assert.match(await page.locator("#releaseStageLinkLabel").innerText(),/시험 웹 미배포/);
     await page.locator("#releaseStageApply").click();
     await page.getByText(/배포 요청 등록 완료/).waitFor();
     await page.locator("#releaseQueueText").getByText(/배포 대기/).waitFor();
@@ -107,6 +108,8 @@ async function run(){
     await fit(page,cfg.width);
     assert(await page.locator("#releaseProdApply").isEnabled());
     assert(await page.locator("#releaseStageApply").isDisabled());
+    assert.equal(await page.locator("#releaseStageLink").getAttribute("href"),"https://baeguindex.com/_preview/");
+    assert.equal(await page.locator("#releaseStageLink").getAttribute("aria-disabled"),null);
     assert.equal(await page.locator("#releaseStageHistory img").count(),0);
     assert.equal(await page.evaluate(()=>Boolean(window.__releaseXss)),false);
     await page.locator("#releaseProdApply").click();
