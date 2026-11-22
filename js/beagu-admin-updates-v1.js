@@ -7,7 +7,14 @@
  const auth=supabaseClient.auth;
  const api=SUPABASE_URL+"/functions/v1/beagu-release-manager-v1";
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
- let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null;
+ let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,statusVerified=false;
+ const actionIds=["releaseStageApply","releaseStageRollback","releaseProdApply",
+   "releaseProdRollback","releaseRegister"];
+ function lockReleaseControls(){
+  statusVerified=false;cachedHead=null;cachedProposal=null;
+  for(const id of actionIds)el(id).disabled=true;
+  el("releaseRefresh").disabled=false;
+ }
  const date=value=>{if(!value)return "—";const d=new Date(value);
    return Number.isFinite(d.getTime())?d.toLocaleString("ko-KR"):"—";};
  const short=value=>value?String(value).slice(0,8):"—";
@@ -16,12 +23,15 @@
   p.classList.toggle("release-status-error",isError);
  }
  function denied(text){
+  lockReleaseControls();
   el("releaseLogin").hidden=false;el("releaseDashboard").hidden=true;
   message(text,true);
  }
  async function request(action,payload={},endpoint=api){
   const {data,error}=await auth.getSession();
-  if(error||!data?.session?.access_token)throw Error("관리자 세션이 만료되었습니다.");
+  if(error||!data?.session?.access_token){
+   const fault=Error("관리자 세션이 만료되었습니다.");fault.status=401;throw fault;
+  }
   const response=await fetch(endpoint,{method:"POST",cache:"no-store",
    headers:{"Authorization":"Bearer "+data.session.access_token,
     "apikey":SUPABASE_PUBLISHABLE_KEY,"Content-Type":"application/json"},
@@ -61,7 +71,9 @@
     release_ci_evidence_required:"서버에서 모든 필수 자동시험의 실제 통과를 확인해야 운영 배포할 수 있습니다.",
     release_service_unavailable:"배포 서버가 응답하지 않습니다. 잠시 후 다시 확인하세요."
    };
-   throw Error(messages[result.error]||"요청 실패 ("+(result.error||response.status)+")");
+   const fault=Error(messages[result.error]||"요청 실패 ("+(result.error||response.status)+")");
+   fault.status=response.status;fault.code=result.error||"";
+   throw fault;
   }
   return result;
  }
@@ -126,20 +138,35 @@
   el("releaseRefresh").disabled=busy;
   renderHistory("releaseStageHistory",stageHist);
   renderHistory("releaseProdHistory",prodHist);
+  statusVerified=true;
  }
  async function refresh(quiet=false){
   if(busy)return;
   try{
    const data=await request("status",{check_latest:!quiet});
+   if(!data||!data.state||typeof data.state!=="object"||
+      !Object.hasOwn(data.state,"production_sha")||
+      !Array.isArray(data.staging_history)||!Array.isArray(data.production_history))
+     throw Error("배포 상태 응답 형식이 올바르지 않습니다.");
    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
+   const recovered=!statusVerified;
    render(data);
-   if(!quiet)message("업데이트 관리 연결 완료 · 서버 확인 상태");
+   if(!quiet||recovered)message("업데이트 관리 연결 완료 · 서버 확인 상태");
   }catch(err){
-   if(!quiet)message("배포 상태 조회 실패: "+(err.message||String(err)),true);
+   lockReleaseControls();
+   if(err?.status===401||err?.status===403||err?.code==="admin_mfa_required"){
+    denied("관리자 인증 필요: "+(err.message||String(err)));
+    if(timer){clearInterval(timer);timer=null;}
+   }else{
+    // Keep a read-only retry route visible when the initial status fetch fails.
+    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
+    message("배포 상태 조회 실패 · 안전을 위해 배포 버튼을 잠갔습니다. "+
+     "상태 새로고침으로 연결을 다시 확인하세요. ("+(err.message||String(err))+")",true);
+   }
   }
  }
  async function command(action){
-  if(busy)return;
+  if(busy||!statusVerified)return;
   const wording={
    stage_apply:"등록된 버전을 시험 웹에 적용하시겠습니까?",
    stage_rollback:"시험 웹을 바로 이전 버전으로 되돌리시겠습니까?",
@@ -155,7 +182,7 @@
   finally{busy=false;await refresh(true);}
  }
  async function register(event){
-  event.preventDefault();if(busy)return;
+  event.preventDefault();if(busy||!statusVerified)return;
   const version=el("releaseVersionInput").value.trim();
   const summary=el("releaseSummaryInput").value.trim();
   if(!version||summary.length<3)return;

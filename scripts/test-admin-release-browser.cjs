@@ -32,7 +32,12 @@ async function open(browser,cfg,model){
   if(url.endsWith("/beagu-admin-access")&&input.action==="verify")
     return asJson(route,200,model.proof);
   if(url.endsWith("/beagu-release-manager-v1")){
-   if(input.action==="status")return asJson(route,200,model.current);
+   if(input.action==="status"){
+    if(model.statusMalformed)return asJson(route,200,{});
+    if(model.statusError)return asJson(route,model.statusError,{error: model.statusError===401?
+       "admin_mfa_required":"release_service_unavailable"});
+    return asJson(route,200,model.current);
+   }
    if(input.action==="stage_apply"){
     model.current=snapshot(model.current.state,{job:{status:"queued",version:"1.1.0",
       target:"staging",created_at:"2026-11-23T02:00:00Z"}});
@@ -118,6 +123,81 @@ async function run(){
     const attempts=model.calls.filter(c=>c.action==="prod_apply");
     assert.equal(attempts.length,1);
     assert.equal(attempts[0].confirmed_tested,true);
+    assert.deepEqual(errors,[]);
+    await ctx.close();
+   }
+   // A previously authorized page must lock every mutation when refresh fails.
+   // A later successful refresh restores the controls and connected indicator.
+   {
+    const model={calls:[],proof:{permitted:true,mfa_verified:true,role:"owner"},
+                 current:snapshot(state()),statusError:null};
+    const {ctx,page,errors}=await open(browser,cfg,model);
+    await page.locator("#releaseDashboard").waitFor({state:"visible"});
+    assert(await page.locator("#releaseStageApply").isEnabled());
+    model.statusError=503;
+    await page.locator("#releaseRefresh").click();
+    await page.getByText(/안전을 위해 배포 버튼을 잠갔습니다/).waitFor();
+    for(const id of ["releaseStageApply","releaseStageRollback","releaseProdApply",
+                     "releaseProdRollback","releaseRegister"])
+      assert(await page.locator("#"+id).isDisabled(),id+" should be locked");
+    assert(await page.locator("#releaseRefresh").isEnabled());
+    const n=model.calls.length;
+    await page.locator("#releaseStageApply").evaluate(button=>button.click());
+    assert.equal(model.calls.length,n,"stale-state attempts must never reach the API");
+    model.statusError=null;
+    await page.locator("#releaseRefresh").click();
+    await page.getByText(/업데이트 관리 연결 완료/).waitFor();
+    assert(await page.locator("#releaseStageApply").isEnabled());
+    assert.deepEqual(errors,[]);
+    await ctx.close();
+   }
+   // Even the very first status request can fail. Owner can retry, never deploy.
+   {
+    const model={calls:[],proof:{permitted:true,mfa_verified:true,role:"owner"},
+                 current:snapshot(state()),statusError:503};
+    const {ctx,page,errors}=await open(browser,cfg,model);
+    await page.locator("#releaseDashboard").waitFor({state:"visible"});
+    await page.getByText(/안전을 위해 배포 버튼을 잠갔습니다/).waitFor();
+    assert(await page.locator("#releaseStageApply").isDisabled());
+    assert(await page.locator("#releaseRegister").isDisabled());
+    assert(await page.locator("#releaseRefresh").isEnabled());
+    model.statusError=null;
+    await page.locator("#releaseRefresh").click();
+    await page.getByText(/업데이트 관리 연결 완료/).waitFor();
+    assert(await page.locator("#releaseStageApply").isEnabled());
+    assert.deepEqual(errors,[]);
+    await ctx.close();
+   }
+   // A malformed success response must not pass as a verified release state.
+   {
+    const model={calls:[],proof:{permitted:true,mfa_verified:true,role:"owner"},
+                 current:snapshot(state()),statusMalformed:false};
+    const {ctx,page,errors}=await open(browser,cfg,model);
+    await page.locator("#releaseDashboard").waitFor({state:"visible"});
+    model.statusMalformed=true;
+    await page.locator("#releaseRefresh").click();
+    await page.getByText(/응답 형식이 올바르지 않습니다/).waitFor();
+    assert(await page.locator("#releaseStageApply").isDisabled());
+    assert(await page.locator("#releaseRegister").isDisabled());
+    model.statusMalformed=false;
+    await page.locator("#releaseRefresh").click();
+    await page.getByText(/업데이트 관리 연결 완료/).waitFor();
+    assert(await page.locator("#releaseStageApply").isEnabled());
+    assert.deepEqual(errors,[]);
+    await ctx.close();
+   }
+   // Server-side owner/MFA revocation hides privileged controls immediately.
+   {
+    const model={calls:[],proof:{permitted:true,mfa_verified:true,role:"owner"},
+                 current:snapshot(state()),statusError:null};
+    const {ctx,page,errors}=await open(browser,cfg,model);
+    await page.locator("#releaseDashboard").waitFor({state:"visible"});
+    model.statusError=401;
+    await page.locator("#releaseRefresh").click();
+    await page.locator("#releaseLogin").waitFor({state:"visible"});
+    assert(await page.locator("#releaseDashboard").isHidden());
+    assert.match(await page.locator("#releaseStatus").innerText(),/관리자 인증 필요/);
+    assert(!model.calls.some(c=>c.action==="stage_apply"||c.action==="prod_apply"));
     assert.deepEqual(errors,[]);
     await ctx.close();
    }
