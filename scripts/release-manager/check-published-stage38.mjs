@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Read-only Stage 38 acceptance probe for a separately hosted, static RC.
+ * Requires an independent, owner-reviewed SHA-256 for the RC manifest.
  * Requests 3 public files with GET and checks exact content hashes and
  * response security headers. No credentials, cookies, authentication, writes,
  * deployment, promotion or release-manager commands are used.
@@ -27,10 +28,12 @@ const failure = (reason, detail) => ({
 });
 
 export async function inspectPublishedStaticPreview(
-  siteUrl, {fetcher=globalThis.fetch, productionUrl="https://baeguindex.com/"}={}
+  siteUrl, {fetcher=globalThis.fetch, productionUrl="https://baeguindex.com/", expectedManifestSha256}={}
 ) {
   const scope=inspectPreviewOrigin(productionUrl,siteUrl);
   if (!scope.pass) return failure("invalid_isolation_origin",scope.errors);
+  if (typeof expectedManifestSha256!=="string" || !/^[0-9a-f]{64}$/.test(expectedManifestSha256))
+    return failure("trusted_manifest_digest_required");
   if (typeof fetcher!=="function") return failure("no_http_client");
   const origin=scope.preview_origin;
   const responses={};
@@ -52,6 +55,8 @@ export async function inspectPublishedStaticPreview(
     responses[path]={body,headers:response.headers};
   }
   const manifestText=responses["stage38-release-manifest.json"].body;
+  if (sha256(manifestText)!==expectedManifestSha256)
+    return failure("independent_manifest_digest_mismatch");
   let manifest;
   try { manifest=JSON.parse(manifestText); }
   catch { return failure("invalid_rc_manifest"); }
@@ -92,17 +97,18 @@ export async function inspectPublishedStaticPreview(
   return {
     status:"STATIC_HTTP_VERIFIED",
     staticReady:true,realAccountReady:false,productionReleaseReady:false,
-    checkedOrigin:origin,pinnedSha:PINNED_SHA,checkedAssets:3,
+    checkedOrigin:origin,pinnedSha:PINNED_SHA,
+    trustedManifestSha256:expectedManifestSha256,checkedAssets:3,
     remaining:"Owner approval, real-browser storage separation, staging Auth/RLS and E2E QA"
   };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url)===resolve(process.argv[1])) {
-  if (process.argv.length!==3) {
-    console.error("Usage: node scripts/release-manager/check-published-stage38.mjs https://independent-preview-host/");
+  if (process.argv.length!==4) {
+    console.error("Usage: node scripts/release-manager/check-published-stage38.mjs https://independent-preview-host/ <trusted-manifest-sha256-from-approved-CI>");
     process.exitCode=2;
   } else {
-    const result=await inspectPublishedStaticPreview(process.argv[2]);
+    const result=await inspectPublishedStaticPreview(process.argv[2], {expectedManifestSha256:process.argv[3]});
     process.stdout.write(JSON.stringify(result,null,2)+"\n");
     if (!result.staticReady) process.exitCode=1;
   }
