@@ -5,6 +5,8 @@ on:
     paths:
       - 'tests/fixtures/stage38-staging-admin-members-live-v2/**'
       - 'tests/stage38-staging-member-live-contract.cjs'
+      - 'tests/fixtures/stage38-staging-admin-access-v1/**'
+      - 'tests/stage38-staging-admin-access-contract.cjs'
       - '.github/workflows/stage38-staging-admin-http-negative.yml'
       - '.github/workflows/stage38-staging-member-live-contract.yml'
   pull_request:
@@ -26,6 +28,8 @@ jobs:
           node-version: '22'
       - name: Verify live staging API security contract snapshot
         run: node tests/stage38-staging-member-live-contract.cjs
+      - name: Verify staging admin access authentication contract
+        run: node tests/stage38-staging-admin-access-contract.cjs
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
@@ -125,3 +129,43 @@ jobs:
           assert not any(k in d for k in ('access_token','refresh_token','user','session','email','phone'))
           print('PASS: forged token returned no user profile')
           PY
+
+  admin-access-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify isolated staging admin Auth gate negative HTTP paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-admin-access"
+          for scenario in anonymous forged forbidden_origin; do
+            headers=$(mktemp)
+            case "$scenario" in
+              anonymous)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+              forged)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' -H 'Authorization: Bearer invalid.stage38.token' --data '{"action":"verify"}' "$url");;
+              forbidden_origin)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: https://baeguindex.com' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+            esac
+            case "$scenario:$status" in
+              anonymous:401|forged:401|forbidden_origin:403) echo "PASS: $scenario denied ($status)";;
+              *) echo "FAIL: $scenario unexpectedly HTTP $status"; exit 1;;
+            esac
+            if [ "$scenario" = forbidden_origin ]; then
+              if grep -qi '^access-control-allow-origin:' "$headers"; then
+                echo "FAIL: production origin received CORS approval"; exit 1
+              fi
+            fi
+            python3 - <<'PY'
+          import json
+          data=json.load(open("response.json",encoding="utf-8"))
+          assert not any(key in data for key in ("permitted","role","mfa_verified","members","user","access_token"))
+          PY
+          done
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: http://localhost:8000' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: http://localhost:8000' "$headers"
+          echo "PASS: staging localhost preflight allowed (204)"
