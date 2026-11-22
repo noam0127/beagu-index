@@ -64,7 +64,7 @@ for privileged in [
 ]:
     assert privileged not in read_only_release, privileged
 assert "<form" not in read_only_release and "<button" not in read_only_release
-assert "/functions/v1/beagu-release-" in guard
+assert "beagu-release-" in guard and "STAGE_SUPABASE" in guard
 print("PASS: standalone release center is read-only; privileged JS and API calls disabled")
 
 texts = (".html", ".js", ".mjs", ".css", ".json", ".csv", ".txt", ".svg")
