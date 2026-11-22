@@ -7,7 +7,16 @@ const digest = "d757a24a1b2541bb52f8eaeb5b1af71706d8e7d1f4bcfee02512e9aa68ea7f70
 
 assert.match(workflow, /^on:\n  workflow_dispatch:/m);
 const trigger = workflow.split("\npermissions:")[0];
-assert.doesNotMatch(trigger, /^\s+(push|pull_request|schedule):/m);
+assert.doesNotMatch(trigger, /^\s+(push|schedule):/m);
+assert.match(trigger, /^  pull_request:\s*$/m);
+assert.match(trigger, /stage38-approved-vercel-preview\.yml/);
+assert.match(workflow, /validate-pr-no-deployment:\s*\n    if: github\.event_name == 'pull_request'/);
+const prOnly = workflow.split("  validate-pr-no-deployment:")[1]?.split("  manual-preview:")[0];
+assert.ok(prOnly, "A non-secret PR validation job is required");
+assert.ok(prOnly.includes("node tests/stage38-manual-vercel-gate.mjs"));
+assert.doesNotMatch(prOnly, /\bvercel deploy\b|\bsecrets\.|\benvironment:/);
+const sensitive = workflow.split("  manual-preview:")[1];
+assert.match(sensitive, /if: github\.event_name == 'workflow_dispatch' && github\.ref == 'refs\/heads\/main'/);
 assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
 assert.match(workflow, /github\.event_name == 'workflow_dispatch'/);
 assert.match(workflow, /name: beagu-stage38-vercel-preview-approved/);
@@ -46,5 +55,5 @@ assert.match(workflow, /hostname==="baeguindex\.com"/);
 
 // Workflow can only be reviewed in PR until merged to protected main.
 // No GitHub Actions dispatch or Vercel invocation is made by this test.
-console.log("PASS: manual Stage38 Vercel workflow is fixed-target, sha-pinned, reviewer-environment gated, and not a production release.");
+console.log("PASS: Stage38 deployment job remains dispatch-only; PR checks have no deployment permission, token or protected environment.");
 console.log("NOTE: repository owner must configure required reviewers and isolated Vercel token/version before dispatch; this static test cannot verify GitHub environment policy.");
