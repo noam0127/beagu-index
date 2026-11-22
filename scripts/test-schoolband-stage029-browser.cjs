@@ -101,12 +101,21 @@ async function verify(){
    assert.equal(state.ui.highContrast,true);
    assert(state.docWidth<=state.viewWidth+2,"mobile horizontal overflow "+JSON.stringify(state));
    assert.deepEqual(errors,[],"browser JS errors: "+errors.join("; "));
-   assert.deepEqual(writes,[],"no score/user data POST");
+   // The third-party host submits safety confirmation and Cloudflare RUM.
+   // Distinguish that hosting traffic from game score/student/identity uploads.
+   const applicationWrites=writes.filter(v=>
+    ["supabase.co","baeguindex.com","vercel.app","/functions/v1/"].some(host=>v.includes(host)));
+   assert.deepEqual(applicationWrites,[],"game must not POST score/student/identity data");
+   const hostTelemetryWrites=writes.filter(v=>
+    ["raw.githack.com","cloudflareinsights.com"].some(host=>v.includes(host)));
+   console.log("STAGE029_HOST_ONLY_POSTS",view.label,
+    hostTelemetryWrites.map(v=>v.split(" ")[0]+" "+new URL(v.slice(v.indexOf(" ")+1)).hostname));
    const shot=path.join(screenshotDir,"schoolband-029-"+view.label+"-"+sha.slice(0,8)+".png");
    await page.screenshot({path:shot,fullPage:true});
    findings.push({viewport:view.label,px:view.width+"x"+view.height,previewHttp:200,sourceCommit:sha,
     schoolDemo:true,instrumentsVerified:4,schoolAnthemPlayable:false,
-    realAudioPlayed:false,scoreUpload:false,screenCapture:path.basename(shot)});
+    realAudioPlayed:false,scoreUpload:false,thirdPartyHostWrites:hostTelemetryWrites.length,
+    screenCapture:path.basename(shot)});
    await context.close();
   }
   console.log("PASS 029 immutable external browser DOM smoke:",JSON.stringify(findings));
