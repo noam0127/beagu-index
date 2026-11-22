@@ -1,5 +1,10 @@
 name: Site release manager checks
 on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/site-release-two-sha-isolation.py'
+      - '.github/workflows/site-release-manager-validation.yml'
   pull_request:
     paths:
       - 'admin.html'
