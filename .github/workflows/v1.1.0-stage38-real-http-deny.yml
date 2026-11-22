@@ -1,0 +1,22 @@
+name: v1.1.0 stage38 real HTTP release authorization negative tests
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage38-real-http-deny.py'
+      - '.github/workflows/v1.1.0-stage38-real-http-deny.yml'
+permissions:
+  contents: read
+jobs:
+  isolated-release-auth-denials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify unauthorized HTTP requests cannot register, apply, promote or impersonate worker
+        run: python3 tests/v1.1.0-stage38-real-http-deny.py
+      - name: Scope
+        if: always()
+        run: |
+          echo "Staging test function rejects all writes, even for a valid owner or signed worker."
+          echo "Disable test function after execution; never deploy an RC or production website here."
