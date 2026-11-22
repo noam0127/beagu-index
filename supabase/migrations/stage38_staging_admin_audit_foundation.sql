@@ -15,3 +15,6 @@ REVOKE ALL ON public.beagu_admin_audit_events FROM PUBLIC,anon,authenticated;
 GRANT SELECT,INSERT ON public.beagu_admin_audit_events TO service_role;
 REVOKE ALL ON SEQUENCE public.beagu_admin_audit_events_id_seq FROM PUBLIC,anon,authenticated;
 GRANT USAGE ON SEQUENCE public.beagu_admin_audit_events_id_seq TO service_role;
+
+-- Existing staging default grants may be broader than expected.
+REVOKE UPDATE,DELETE,TRUNCATE ON public.beagu_admin_audit_events FROM service_role;
