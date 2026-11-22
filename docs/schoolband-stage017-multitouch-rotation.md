@@ -31,4 +31,13 @@ PC 1280px 및 모바일 320·375px Chromium에서 4악기 레인 이름/키·실
 
 ## 최종 CI·증거
 
-**PENDING** — 실제 새 Chromium 다중터치 검사 및 회귀 CI가 성공하고 결과 아티팩트를 검증하기 전까지 완료로 기록하지 않는다.
+**PASS — 017/030 검증 완료.**
+
+- **최종 CI:** [GitHub Actions run 45022379933](https://github.com/noam0127/beagu-index/actions/runs/45022379933) **completed/success**. 검증 대상 게임·테스트 소스 커밋 **ff6f8faa099c247defc59427e1c7588daef93612**. 새로운 Stage017 브라우저 테스트, Stage016 PC/320/375 학교→악기→연주, Stage008 데스크톱·320px **40회 실제 게임 완주**, 실제 PC 키 **160회**, 터치 **160회**, native Enter **40회**, Stage005 시간 경계 98/좌표121/FPS28·Stage007 공통 오디오 시계 60/90/120Hz 전부 **PASS**.
+- **실제 두 손가락 Chromium 입력:** 모바일 320px·375px 각각 Chrome DevTools Protocol `Input.dispatchTouchEvent(touchStart)`로 **정확히 동시에 두 손가락**을 다른 키보드 레인 **0·1**에 터치했다. 실제 EXTREME 내부 창작곡 노트가 동시에 도착하는 0초에서 **1+1=2개 적중**, 두 개 실제 신뢰할 수 있는 `pointerdown` 이벤트의 고유 ID 추적(브라우저 2,3), 오디오 `source:hit` 레인 0·1, 손가락 유지 `touchMove`에서 추가 정타 0, `touchEnd` 후 등록 포인터 0, 후속 `touchCancel` 후 포인터 0. 실제 물리 Android 화면에서 시험한 것은 아님.
+- **가로/세로 회전:** 320×640과 375×812 두 모바일 에뮬레이션 각각 **640×320으로 가로 전환 → 원래 세로로 복귀**한 상태에서 음악 재생 유지, 맞힌 노트 **2개 적중 기록 보존**, 활성 포인터 0, 화면 수평 오버플로 0, **중단→재시작→중단** PASS. 가로 모드 실제 측정은 노트 캔버스 **273px 너비**, 키보드 5개 버튼 각각 최소 **50.59375px 너비/87.5px 높이**. 3/4/5레인 버튼 이름+PC 키 표기, 겹침 없는 배치 전수 검사.
+- **고대비·큰 글자·전체화면 실패 복구:** 320px에서는 레인 이름 실제 글씨 **13px**, 흰 테두리 **3px**·검정 배경 `rgb(0,0,0)`, 375px 글씨 **13.5px**, 데스크톱 1280px **19px**; 큰 글씨+고대비 로컬 저장 후 새로고침에도 유지. Fullscreen API를 `NotAllowedError`로 거절시켜 버튼 `aria-pressed=false`로 남고 실패 안내를 제공하는지 세 뷰포트 PASS. OS 실제 전체화면 또는 물리 하드웨어의 확대·스크린리더를 검증한 것은 아니다.
+- **실제 증거:** [GitHub Actions 아티팩트 schoolband-stage017-multitouch-orientation-proof](https://github.com/noam0127/beagu-index/actions/runs/45022379933/artifacts/14754343012) **391,444바이트 ZIP**을 내려받아 **7개 파일**(`results.json`과 PC/320/375의 세로 고대비 화면 3장·가로 연주 화면 3장)을 확인. `results.json`에서 정적 `passed:true`, 3개 브라우저 `errors:[]`, 모바일 2개 모두 실제 CDP 멀티터치 `hits:2,tracked:2,doubleHitPrevented:true,released:true`, 취소 후 0·회전 복귀·점수 유지·재시작 `true`, `failure` 없음. 320px 가로 캡처에서 레인 이름 세로 과도 분할을 발견하고 CSS 그리드를 1:1로 재조정해 **동일 CI 전체 재검증 후 최종 화면**을 확인.
+- **초기 QA 실패와 해결:** 처음 CDP 두 손가락 좌표가 sticky 3단계 내비게이션 아래 y=53px에 잡혀 `pointerdown` 자체가 발생하지 않아 실패. 각 실제 터치 대상 버튼을 viewport 중앙에 배치하고 **`elementFromPoint`가 목표 레인 버튼과 일치하는지 먼저 검증**하도록 시험 수정. 실제 pointer trace를 남겨 `trusted:true`인 두 서로 다른 손가락 이벤트를 확인한 뒤 성공. 코드·테스트의 처음 실패를 성공으로 숨기지 않았다.
+- **독립 전문가 7역할의 종합판단:** 리듬게임·오디오·연출·모바일접근성·학교 데이터·저작권·QA 관점에서 브라우저 다중터치와 회전 중 판정시계 안정성은 증명했다. 다만 실제 안드로이드 다중 손가락 디지타이저, iOS Safari, OS 방향 잠금, 물리 기기의 접근성 서비스(VoiceOver/TalkBack), 폰/블루투스에서 실제 소리의 입력 지연은 별도 인간 실기 검토가 필요하다(027단계). 웹 운영·Supabase·실교가 미변경.
+- **다음 단계 018/030:** 사용자별 연출/진동 조절과 저사양 프레임 최적화, 설정 조합별 성능·스크린샷 검증.
