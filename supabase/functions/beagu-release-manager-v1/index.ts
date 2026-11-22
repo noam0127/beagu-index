@@ -230,43 +230,21 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   let job=await activeJob();
   const publicDataBlob=String(input.data_blob_sha||"");
   if(!SHA.test(publicDataBlob))return error("invalid_public_data_blob",400,origin);
+  // Fail closed BEFORE inserting an automatic production job.
   if(!job&&!s.production_sha){
-   const initial=String(input.head_sha||"");
-   if(!SHA.test(initial))return error("invalid_bootstrap_sha",400,origin);
-   const {data, error:e}=await db.from("beagu_site_release_jobs_v1").insert({
-    action:"bootstrap",target:"production",to_sha:initial,from_sha:null,
-    version:"관리자 배포 시스템 1.0",summary:"관리자 업데이트 페이지 최초 설치",status:"queued",
-    public_data_blob_sha:publicDataBlob
-   }).select("*").single();
-   if(e)throw Error("bootstrap_unavailable");job=data;
-  }
-  if(!job&&s.production_sha&&s.public_data_blob_sha!==publicDataBlob){
-   const {data,error:e}=await db.from("beagu_site_release_jobs_v1").insert({
-    action:"data_refresh",target:"production",to_sha:s.production_sha,from_sha:s.production_sha,
-    version:s.production_version||"운영 데이터",summary:"공개 학교 목록 자동 갱신",
-    status:"queued",public_data_blob_sha:publicDataBlob
-   }).select("*").single();
-   if(e)throw Error("auto_data_refresh_unavailable");
-   job=data;
-  }
-  if(!job&&!s.production_sha){
-   // Never initialize a public deployment from worker-supplied head_sha.
-   // Bootstrap needs its own owner-reviewed, signed acceptance path.
    return respond({has_job:false,release_blocked:"release_bootstrap_ci_required"},200,origin);
   }
   if(!job&&s.production_sha&&s.public_data_blob_sha!==publicDataBlob){
-   // An automatic public data refresh is a public-data release, not a safe
-   // workaround for the human privacy and CI acceptance gates.
    return respond({has_job:false,release_blocked:"release_data_refresh_ci_required"},200,origin);
   }
-  if(job?.target==="production"){
-   if(job.action!=="prod_rollback"){
-    if(job.action!=="prod_apply")
-     return respond({has_job:false,release_blocked:"release_action_ci_required"},200,origin);
-    const verified=await productionProof(String(job.to_sha||""),String(job.version||""));
-    if(!verified.ok)
-     return respond({has_job:false,release_blocked:verified.code},200,origin);
-   }
+  // A signed worker must independently revalidate a queued production release.
+  // A forged job row or stale browser confirmation cannot bypass the CI gate.
+  if(job?.target==="production"&&job.action!=="prod_rollback"){
+   if(job.action!=="prod_apply")
+    return respond({has_job:false,release_blocked:"release_action_ci_required"},200,origin);
+   const verified=await productionProof(String(job.to_sha||""),String(job.version||""));
+   if(!verified.ok)
+    return respond({has_job:false,release_blocked:verified.code},200,origin);
   }
   if(!job)return respond({has_job:false},200,origin);
   if(job.status!=="queued")return respond({has_job:false,already_running:true},200,origin);
@@ -291,6 +269,14 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
     .select("*").eq("id",id).maybeSingle();
   if(e||!job)return error("job_not_found",404,origin);
   if(job.status!=="running")return error("job_not_running",409,origin);
+  // Defence in depth for jobs that were already running during an upgrade.
+  // No recording of a new production version without independently verified CI.
+  if(job.target==="production"&&job.action!=="prod_rollback"){
+   if(job.action!=="prod_apply")
+    return error("release_action_ci_required",409,origin);
+   const verified=await productionProof(String(job.to_sha||""),String(job.version||""));
+   if(!verified.ok)return error(verified.code||"release_ci_evidence_required",409,origin);
+  }
   if(action==="worker_fail"){
    await db.from("beagu_site_release_jobs_v1").update({
     status:"failed",finished_at:new Date().toISOString(),error_code:"deployment_failed"
