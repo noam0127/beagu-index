@@ -50,10 +50,18 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     manifest = json.loads((out / "stage38-release-manifest.json").read_text(encoding="utf-8"))
     assert manifest["source_sha"] == RC_SHA
     assert manifest["rc_version"] == "v1.1.0-rc.1"
+    vercel = json.loads((out / "vercel.json").read_text(encoding="utf-8"))
+    response_headers = {h["key"]: h["value"] for h in vercel["headers"][0]["headers"]}
+    assert vercel["headers"][0]["source"] == "/(.*)"
+    assert "ycwuugggqbunlbwuzvbx.supabase.co" in response_headers["Content-Security-Policy"]
+    assert "snvzwrexuqavnfvzgxqj" not in response_headers["Content-Security-Policy"]
+    assert "frame-ancestors 'none'" in response_headers["Content-Security-Policy"]
+    assert response_headers["X-Robots-Tag"].startswith("noindex")
+    assert response_headers["X-Frame-Options"] == "DENY"
     assert manifest["supabase_project_ref"] == STAGING_REF
     assert manifest["environment"] == "isolated-test-package"
     assert manifest["deployment_status"] == "unverified"
-    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js"}
+    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js", "vercel.json"}
     for path, digest in manifest["files_sha256"].items():
         assert re.fullmatch("[0-9a-f]{64}", digest)
         assert __import__("hashlib").sha256((out / path).read_bytes()).hexdigest() == digest
@@ -66,7 +74,7 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     for child in out.iterdir():
         assert (child.is_file() and child.suffix.lower() in (".html", ".htm")) or (
             child.is_dir() and child.name in approved_roots
-        ) or child.name in {".nojekyll", "stage38-release-manifest.json"}, "unexpected published root file: " + child.name
+        ) or child.name in {".nojekyll", "stage38-release-manifest.json", "vercel.json"}, "unexpected published root file: " + child.name
     homepage_nav = (out / "teacher-class-diary-play.html").read_text(encoding="utf-8")
     assert "window.location.assign('https://baeguindex.com/')" not in homepage_nav
     assert "window.location.assign('/')" in homepage_nav
