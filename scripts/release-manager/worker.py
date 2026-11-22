@@ -204,11 +204,36 @@ def minimize_independent_preview(target):
     This applies ONLY to the standalone candidate build; it does not touch
     the immutable RC tree, GitHub Pages preview, or production release.
     """
-    for relative in (".github", "tests", "docs", "supabase",
-                     "scripts/release-manager"):
-        unwanted = target / relative
-        if unwanted.is_dir():
-            shutil.rmtree(unwanted)
+    # The immutable RC repository includes build scripts, CI fixtures, a
+    # source archive and configuration files not intended for public hosting.
+    # Fail closed to an explicitly enumerated static-site distribution.
+    static_dirs = {"assets", "data", "js", "r", "styles", "\u200bcss"}
+    for child in list(target.iterdir()):
+        if child.is_dir():
+            if child.name not in static_dirs:
+                shutil.rmtree(child)
+        elif child.is_file():
+            if child.suffix.lower() not in {".html", ".htm"}:
+                child.unlink()
+    # Only the already-published, non-personal school-directory payloads are
+    # allowed from data/. Unknown new files must receive separate review.
+    approved_data_files = {
+        "class-diary-art-manifest-v1.json",
+        "percentiles-2023-2025.json",
+        "public-2023-2025-school-records-v2.json",
+        "public-2025-participation-v1.json",
+        "public-compare-school-directory-v1.json",
+        "public-lv0-percentiles-v1.2.json",
+        "public-school-reports-v1.json",
+        "public-statistics-question-catalog-v1.json",
+        "schools.json",
+        "sejong-school-legal-dong-2025.csv",
+    }
+    data_dir = target / "data"
+    if data_dir.is_dir():
+        extras = {p.name for p in data_dir.iterdir()} - approved_data_files
+        if extras:
+            raise RuntimeError("Unreviewed public data assets: " + ", ".join(sorted(extras)))
 
     # Deliberately narrow rewrites: preserve canonical SEO URLs and the
     # explicit "actual website" admin link, but never silently redirect
