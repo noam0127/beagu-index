@@ -7,6 +7,8 @@ on:
       - 'tests/stage38-staging-member-live-contract.cjs'
       - 'tests/fixtures/stage38-staging-admin-access-v1/**'
       - 'tests/stage38-staging-admin-access-contract.cjs'
+      - 'tests/fixtures/stage38-staging-admin-dashboard-v1/**'
+      - 'tests/stage38-staging-admin-dashboard-contract.cjs'
       - '.github/workflows/stage38-staging-admin-http-negative.yml'
       - '.github/workflows/stage38-staging-member-live-contract.yml'
   pull_request:
@@ -30,6 +32,8 @@ jobs:
         run: node tests/stage38-staging-member-live-contract.cjs
       - name: Verify staging admin access authentication contract
         run: node tests/stage38-staging-admin-access-contract.cjs
+      - name: Verify staging dashboard authentication contract
+        run: node tests/stage38-staging-admin-dashboard-contract.cjs
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
@@ -172,3 +176,43 @@ jobs:
           test "$status" = 204
           grep -qi '^access-control-allow-origin: http://localhost:8000' "$headers"
           echo "PASS: staging localhost preflight allowed (204)"
+
+  admin-dashboard-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify isolated staging dashboard anonymous and invalid session rejection
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-admin-dashboard-v1"
+          for scenario in anonymous forged forbidden_origin; do
+            headers=$(mktemp)
+            case "$scenario" in
+              anonymous)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"dashboard","period":"7d"}' "$url");;
+              forged)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' -H 'Authorization: Bearer invalid.stage38.token' --data '{"action":"live_traffic","period":"today"}' "$url");;
+              forbidden_origin)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: https://baeguindex.com' -H 'Content-Type: application/json' --data '{"action":"dashboard","period":"all"}' "$url");;
+            esac
+            case "$scenario:$status" in
+              anonymous:401|forged:401|forbidden_origin:403) echo "PASS: dashboard $scenario rejected ($status)";;
+              *) echo "FAIL: dashboard $scenario status $status"; exit 1;;
+            esac
+            if [ "$scenario" = forbidden_origin ]; then
+              if grep -qi '^access-control-allow-origin:' "$headers"; then
+                echo "FAIL: production origin received dashboard CORS approval"; exit 1
+              fi
+            fi
+            python3 - <<'PY'
+          import json
+          d=json.load(open("response.json",encoding="utf-8"))
+          assert not any(key in d for key in ("analytics","traffic","performance","telemetry_health","access_token","user"))
+          PY
+          done
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: http://127.0.0.1:38738' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: http://127.0.0.1:38738' "$headers"
+          echo "PASS: dashboard local QA preflight 204"
