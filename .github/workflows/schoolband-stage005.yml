@@ -1,0 +1,40 @@
+name: Schoolband 005 pure audio clock and timing boundaries
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage005.cjs'
+      - '.github/workflows/schoolband-stage005.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  timing-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove exact numerical timing boundaries without a browser
+        run: node scripts/test-schoolband-stage005.cjs
+      - name: Install headless Chromium for real audio clock checks
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Prove browser timing rules and common AudioContext clock
+        run: node scripts/test-schoolband-stage005.cjs --browser
+      - name: Check prior rhythm and school data regressions
+        run: node scripts/test-schoolband-stage002.cjs
+      - name: Upload time-boundary JSON evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage005-timing-evidence
+          path: artifacts/schoolband-stage005/
+          if-no-files-found: error
