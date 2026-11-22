@@ -1,0 +1,27 @@
+name: v1.1.0 stage38 owner handoff gate
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'docs/releases/v1.1.0-stage38-operator-handoff.md'
+      - 'docs/releases/v1.1.0-stage38-staging-state.json'
+      - 'tests/v1.1.0-stage38-operator-handoff.mjs'
+      - '.github/workflows/v1.1.0-stage38-operator-handoff.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  owner-approval-handoff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check release NO-GO and precise manual AAL2 bootstrap steps
+        run: node tests/v1.1.0-stage38-operator-handoff.mjs
+      - name: Scope
+        run: |
+          echo "PR #243 remains draft; do not automatically merge, replace Edge API, enqueue release jobs or deploy web."
+          echo "38단계 requires actual owner AAL2 plus independent change approval for a live controller bootstrap."
