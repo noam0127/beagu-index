@@ -1,0 +1,158 @@
+# REVIEW-ONLY TEMPLATE: Not executable while under docs/.
+# Owner must verify protected environment reviewers, independent approver digest,
+# Vercel scoped token, and CI safety before activating through a separate PR.
+# NEVER move to .github/workflows automatically as part of an unapproved merge.
+name: Stage38 isolated Vercel PREVIEW (manual only)
+on:
+  workflow_dispatch:
+    inputs:
+      trusted_manifest_sha256:
+        description: "Approved SHA256 from pinned RC packaging CI"
+        required: true
+        type: string
+  pull_request:
+    paths:
+      - '.github/workflows/stage38-approved-vercel-preview.yml'
+      - 'tests/stage38-manual-vercel-gate.mjs'
+permissions:
+  contents: read
+concurrency:
+  group: beagu-stage38-approved-preview
+  cancel-in-progress: false
+jobs:
+  validate-pr-no-deployment:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    # No protected environment, Vercel token, or deployment permissions.
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Check that sensitive deployment stays dispatch and main only
+        run: node tests/stage38-manual-vercel-gate.mjs
+  manual-preview:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Must be created with REQUIRED OWNER REVIEWERS before activation.
+    environment:
+      name: beagu-stage38-vercel-preview-approved
+    env:
+      VERCEL_ORG_ID: team_bSH5LPm82iDkTvE4ly21mrDg
+      VERCEL_PROJECT_ID: prj_AfPd5IvdT6DlIJkTuSfGxu2PaVVA
+      RC_SHA: 5c95aadad971901a8222f83c52e93bf901a3aeb7
+      TRUSTED_SHA: d757a24a1b2541bb52f8eaeb5b1af71706d8e7d1f4bcfee02512e9aa68ea7f70
+    steps:
+      - name: Check explicit operator input
+        env:
+          INPUT_SHA: ${{ inputs.trusted_manifest_sha256 }}
+        run: |
+          set -euo pipefail
+          test "$INPUT_SHA" = "$TRUSTED_SHA"
+          test "$VERCEL_PROJECT_ID" = "prj_AfPd5IvdT6DlIJkTuSfGxu2PaVVA"
+          test "$VERCEL_ORG_ID" = "team_bSH5LPm82iDkTvE4ly21mrDg"
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Rebuild pinned RC and verify independent security invariants
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse refs/remotes/origin/release/v1.1.0-rc.1)" = "$RC_SHA"
+          python3 tests/stage38-real-rc-packaging.py
+          python3 tests/site-release-two-sha-isolation.py
+          python3 scripts/release-manager/build-offline-rc-bundle.py
+          test "$(sha256sum _preview_standalone_site/stage38-release-manifest.json | cut -d' ' -f1)" = "$TRUSTED_SHA"
+          test ! -e _preview_standalone_site/CNAME
+          node scripts/release-manager/staging-origin-gate.mjs https://baeguindex.com/ https://baegu-index-test.vercel.app/
+      - name: Confirm separate explicit owner approval for pinned RC
+        env:
+          APPROVED_RC_MANIFEST_SHA256: ${{ secrets.STAGE38_APPROVED_MANIFEST_SHA256 }}
+        run: |
+          set -euo pipefail
+          test -n "$APPROVED_RC_MANIFEST_SHA256" ||
+            { echo "Missing separate owner-approved RC manifest SHA"; exit 1; }
+          test "$APPROVED_RC_MANIFEST_SHA256" = "$TRUSTED_SHA" ||
+            { echo "Owner approval does not match pinned RC manifest"; exit 1; }
+      - name: Verify protected Vercel credentials and exact CLI version
+        env:
+          VERCEL_TOKEN: ${{ secrets.STAGE38_VERCEL_TOKEN }}
+          CLI_VERSION: ${{ vars.STAGE38_VERCEL_CLI_VERSION }}
+        run: |
+          set -euo pipefail
+          test -n "$VERCEL_TOKEN" || { echo "Protected token not configured"; exit 1; }
+          printf '%s' "$CLI_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+
+      - name: Install reviewed CLI without passing secrets
+        env:
+          CLI_VERSION: ${{ vars.STAGE38_VERCEL_CLI_VERSION }}
+        run: npm install --global "vercel@$CLI_VERSION"
+      - name: Bind only to existing isolated test project
+        run: |
+          set -euo pipefail
+          mkdir -p _preview_standalone_site/.vercel
+          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > _preview_standalone_site/.vercel/project.json
+      - name: Create unaliased preview, never production
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.STAGE38_VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd _preview_standalone_site
+          url="$(vercel deploy --yes)"
+          DEPLOY_URL="$url" node -e '
+            const value=process.env.DEPLOY_URL;
+            const url=new URL(value);
+            if(url.protocol!=="https:" ||
+               !url.hostname.endsWith(".vercel.app") ||
+               url.hostname==="baegu-index-test.vercel.app" ||
+               url.hostname==="baeguindex.com" || url.pathname!=="/")
+              process.exit(1);
+          '
+          printf 'url=%s\n' "$url" >> "$GITHUB_OUTPUT"
+      - name: Report protected test URL
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          echo "Approved preview URL: $PREVIEW_URL"
+          echo "No domain promotion, production release or real-account QA was performed."
+
+      - name: Install reviewed CLI without passing secrets
+        env:
+          CLI_VERSION: ${{ vars.STAGE38_VERCEL_CLI_VERSION }}
+        run: npm install --global "vercel@$CLI_VERSION"
+      - name: Bind only to existing isolated test project
+        run: |
+          set -euo pipefail
+          mkdir -p _preview_standalone_site/.vercel
+          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > _preview_standalone_site/.vercel/project.json
+      - name: Create unaliased preview, never production
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.STAGE38_VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd _preview_standalone_site
+          url="$(vercel deploy --yes)"
+          DEPLOY_URL="$url" node -e '
+            const value=process.env.DEPLOY_URL;
+            const url=new URL(value);
+            if(url.protocol!=="https:" ||
+               !url.hostname.endsWith(".vercel.app") ||
+               url.hostname==="baegu-index-test.vercel.app" ||
+               url.hostname==="baeguindex.com" || url.pathname!=="/")
+              process.exit(1);
+          '
+          printf 'url=%s\n' "$url" >> "$GITHUB_OUTPUT"
+      - name: Report protected test URL
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          echo "Approved preview URL: $PREVIEW_URL"
+          echo "No domain promotion, production release or real-account QA was performed."
