@@ -1,3 +1,4 @@
+import { isBrowserOriginAllowed } from "../_shared/staging-origin.ts";
 // No admin dashboard data is sent unless live Supabase Auth MFA (AAL2) and
 // a server-managed allowlist are BOTH verified for every request.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
@@ -6,7 +7,7 @@ const key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
 const allowed=new Set(["https://baeguindex.com","https://www.baeguindex.com"]);
 const headers=(origin:string)=>({
- "Access-Control-Allow-Origin":allowed.has(origin)?origin:"https://baeguindex.com",
+ "Access-Control-Allow-Origin":isBrowserOriginAllowed(origin, allowed)?origin:"https://baeguindex.com",
  "Access-Control-Allow-Methods":"POST,OPTIONS",
  "Access-Control-Allow-Headers":"authorization,apikey,content-type",
  "Access-Control-Max-Age":"3600",
@@ -28,7 +29,7 @@ Deno.serve(async(req:Request)=>{
  const origin=req.headers.get("origin")||"";
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:headers(origin)});
  if(req.method!=="POST")return send({error:"method_not_allowed"},405,origin);
- if(origin&&!allowed.has(origin))return send({error:"origin_not_allowed"},403,origin);
+ if(origin&&!isBrowserOriginAllowed(origin, allowed))return send({error:"origin_not_allowed"},403,origin);
  if(Number(req.headers.get("content-length")||"0")>2048)return send({error:"invalid_request"},413,origin);
  const bearer=/^Bearer ([A-Za-z0-9._-]+)$/.exec(req.headers.get("authorization")||"");
  if(!bearer)return send({error:"authentication_required"},401,origin);
