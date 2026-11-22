@@ -1,0 +1,45 @@
+name: Schoolband 010 live ensemble and timbre proof
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage010.cjs'
+      - '.github/workflows/schoolband-stage010.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-audio-ensemble:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 19
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check audio event contracts, selected part and all 8 distinctive voices
+        run: node scripts/test-schoolband-stage010.cjs
+      - name: Install Chromium and AJV chart validator
+        run: |
+          npm install --no-save --no-package-lock playwright ajv@8
+          npx playwright install --with-deps chromium --only-shell
+      - name: Real AudioContext auto-ensemble, all 16 lanes and silent MISS
+        run: node scripts/test-schoolband-stage010.cjs --browser
+      - name: Preserve strict chart metadata and original melody contracts
+        run: node scripts/test-schoolband-stage009.cjs --browser
+      - name: Preserve prior input, effects and timing
+        run: |
+          node scripts/test-schoolband-stage008.cjs
+          node scripts/test-schoolband-stage004.cjs
+          node scripts/test-schoolband-stage005.cjs
+      - name: Upload acoustic event logs and playable screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage010-live-ensemble-proof
+          path: artifacts/schoolband-stage010/
+          if-no-files-found: error
