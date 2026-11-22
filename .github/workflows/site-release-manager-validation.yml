@@ -31,6 +31,7 @@ on:
       - 'scripts/release-manager/stage38-form-submission-evidence.mjs'
       - 'tests/stage38-form-submission-evidence.mjs'
       - 'tests/stage38-synthetic-referral-proof-cases.sql'
+      - 'tests/stage38-synthetic-submission-claim-cases.sql'
       - 'docs/releases/templates/stage38-approved-vercel-preview.yml'
   workflow_dispatch:
 jobs:
