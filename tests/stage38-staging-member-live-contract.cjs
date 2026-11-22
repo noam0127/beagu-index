@@ -1,0 +1,26 @@
+// Stage38 staging API snapshot contract; run with node tests/stage38-staging-member-live-contract.cjs
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const root = path.join(__dirname,"fixtures/stage38-staging-admin-members-live-v2");
+const code = fs.readFileSync(path.join(root,"index.ts"),"utf8");
+const helper = fs.readFileSync(path.join(root,"_shared/moderation-audit.mjs"),"utf8");
+assert.match(code,/const origins = new Set\(\["http:\/\/localhost:8000", "http:\/\/127\.0\.0\.1:8000"\]\)/);
+assert.doesNotMatch(code,/https:\/\/baeguindex\.com/);
+assert.match(code,/db\.auth\.getUser\(token\)/);
+assert.match(code,/claims\.aal !== "aal2"/);
+assert.match(code,/beagu_admin_active_mfa_session/);
+assert.match(code,/actor\.role !== "owner"/);
+assert.match(code,/cannot_moderate_self/);
+assert.match(code,/cannot_moderate_admin/);
+assert.match(code,/applyModerationWithAudit\(/);
+assert.match(code,/operationId = crypto\.randomUUID\(\)/);
+assert.match(code,/phase === "intent"/);
+assert.match(code,/ban_duration: duration/);
+const intent=helper.indexOf('await recordPhase("intent")');
+const action=helper.indexOf('await performAction()');
+const success=helper.indexOf('await recordPhase("success")');
+assert(intent>=0 && action>intent && success>action,"Audit intent must precede Auth moderation");
+assert.match(helper,/await recordPhase\("error"\)/);
+assert.doesNotMatch(code,/phone_e164/);
+console.log("PASS_STAGE38_STAGING_ADMIN_LIVE_SNAPSHOT_SECURITY_CONTRACT");
