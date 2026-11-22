@@ -6,10 +6,11 @@
 - Live staging admin Edge Function v2 denies anonymous and forged bearer requests with HTTP 401 (GitHub Actions run 45003564875).
 - Forbidden browser origins are rejected with HTTP 403, local OPTIONS receives 204 (run 45003707914).
 - Staging Auth `/auth/v1/health` and `/auth/v1/settings` both returned HTTP 200 with the project publishable API key (run 45007594357). Five CI checks for commit `133814b4` passed. A real Auth negative-path HTTP test passed in Actions run `45020219118`: nonexistent password credentials were rejected with HTTP 400 and forged bearer `/user` was rejected with HTTP 403; neither response exposed a session/token or user profile. All five workflows on commit `e5f64f0` succeeded.
-- Static RC packaging and CI checks passed; no hosted preview browser E2E performed.
+- Real headless Chromium smoke against the **pinned, standalone RC served locally** passed for `/index.html`, `/admin-updates.html`, `/result.html`, and `/js/challenge.html`. All returned HTTP 200 and visible body text; no browser network requests to the production web domain or production Supabase host were observed (GitHub Actions run `45020770481`). Three explicit production-site links remain in package source; the smoke test does not click them. This is a browser render/isolation smoke test, **not** authenticated E2E or a hosted preview test.
+- All five CI checks for commit `ccc685d57` completed successfully. The RC was **not deployed**.
 
 ## Release blocker
-**BLOCKED_NO_STAGING_E2E_AUTH_SESSIONS_AND_HOSTED_PREVIEW**: the staging database now contains one fictional school, but it still has zero genuine Auth users, sessions and admin accounts. This cannot prove valid admin MFA login or member moderation. A staging-only SQL school fixture and negative HTTP tests do not replace authenticated hosted browser E2E.
+**BLOCKED_NO_STAGING_E2E_AUTH_SESSIONS_AND_HOSTED_PREVIEW**: the staging database contains one fictional school but has zero genuine Auth users, sessions and admin accounts. Local Chromium smoke succeeded but cannot prove valid admin MFA login, member moderation or real hosted browser E2E. Production-site links in the RC require separate intentional-navigation review.
 
 ## Safe unblock procedure
 1. Keep production Supabase, production GitHub branch and production website unchanged. Do not copy production personal data, authentication secrets or member records.
