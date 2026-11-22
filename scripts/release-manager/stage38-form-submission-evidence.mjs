@@ -1,4 +1,4 @@
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 // REVIEW ONLY, not wired to any deployed Edge Function or Google Form.
 // The official Form's owner-installed trigger must sign the exact callback.
@@ -58,21 +58,23 @@ export function verifyTrustedSubmissionEvent(event,{
   const expected=hmac(secret,signingInput(e));
   if (!timingSafeEqual(Buffer.from(signature,"hex"),Buffer.from(expected,"hex")))
     return deny("SIGNATURE_MISMATCH");
-  // The digest identifies an official Form response only inside this private
-  // attestation process. There is no raw Form response ID or submitted code in
-  // the output or logs.
+  // Domain-separated keyed digests: 2026 short codes can contain as few
+  // as 50 bits of entropy. Plain SHA-256 would enable offline guessing after
+  // a ledger leak; do NOT store or publish that SHA as an identity proof.
+  const eventDigest=hmac(secret,"BEAGU_ST38_EVENT_V1|"+e.formId+"|"+e.formResponseId);
+  const codeDigest=hmac(secret,"BEAGU_ST38_CODE_V1|"+e.participantCode);
+  // No raw Form response ID or submitted code in the returned record.
   return {
     ok:true,
     schema:"beagu-stage38-own-submission-evidence-v1",
-    eventDigest:hmac(secret,"BEAGU_ST38_EVENT_V1|"+e.formId+"|"+e.formResponseId),
-    codeDigest:sha256(e.participantCode),
+    eventDigest,
+    codeDigest,
     campaign:"2026",
     evidenceStatus:"PENDING_ISSUANCE_AND_OWNER_BINDING",
     // Private integrity seal; callers cannot fabricate an evidence receipt
     // without the server's attestation secret. Not a public bearer token.
     receiptMac:hmac(secret,JSON.stringify(["BEAGU_ST38_RECEIPT_V1",
-      hmac(secret,"BEAGU_ST38_EVENT_V1|"+e.formId+"|"+e.formResponseId),
-      sha256(e.participantCode),"2026"])),
+      eventDigest,codeDigest,"2026"])),
     // Official form/response metadata alone CANNOT authorize Lv1 or Lv2.
     authorizedLevel:0
   };
