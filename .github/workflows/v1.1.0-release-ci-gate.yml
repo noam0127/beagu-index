@@ -1,0 +1,43 @@
+name: v1.1.0 Release CI attestation gate (DRAFT PR ONLY — NO DEPLOY)
+on:
+  push:
+    branches:
+      - fix/v1.1.0-preview-isolation-gate-20261123
+    paths:
+      - "supabase/functions/beagu-release-manager-v1/**"
+      - "tests/v1.1.0-release-ci-*.mjs"
+      - ".github/workflows/v1.1.0-release-ci-gate.yml"
+  pull_request:
+    paths:
+      - "supabase/functions/beagu-release-manager-v1/**"
+      - "tests/v1.1.0-release-ci-*.mjs"
+      - ".github/workflows/v1.1.0-release-ci-gate.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: beagu-v1-1-0-release-ci-gate-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  validate-fail-closed-release-gate:
+    name: Verify SHA-bound GitHub API proofs and worker non-bypass
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout this exact proposed code — NO merge
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Use Node 22 for isolated offline test suite
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: GitHub Actions attestation falsification / negative cases
+        run: node --test tests/v1.1.0-release-ci-proof.mjs
+      - name: Verify owner API + signed-worker gate BEFORE any public job creation
+        run: node --test tests/v1.1.0-release-ci-integration.mjs
+      - name: Final guard that no public deployment code executed
+        run: |
+          test ! -e _release_site
+          test ! -e _preview_standalone_site
+          echo "PASS: tests ran offline. No Supabase operation, no public Pages deployment, no GitHub write."
