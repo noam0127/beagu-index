@@ -87,10 +87,22 @@ def audit(preview: Path = PREVIEW, manifest: Path = INVENTORY,
     if not calls:
         raise AssertionError("No API calls found: unsupported bundle or scanner regression")
     result = check(calls, json.loads(manifest.read_text(encoding="utf-8")), today)
+    # Separate missing functions that have a reviewable repository source from
+    # legacy endpoint names with no function source to safely deploy.
+    result["missing_with_repo_source"] = sorted(
+        slug for slug in result["missing"]
+        if (ROOT / "supabase/functions" / slug / "index.ts").is_file()
+    )
+    result["missing_without_repo_source"] = sorted(
+        slug for slug in result["missing"]
+        if not (ROOT / "supabase/functions" / slug / "index.ts").is_file()
+    )
     for slug, used in calls.items():
         label = "MISSING" if slug in result["missing"] else "PRESENT"
         print(f"{label} {slug} <- {', '.join(used[:7])}" +
               (f" (+{len(used)-7} more)" if len(used)>7 else ""))
+    for slug in result["missing_without_repo_source"]:
+        print("NO_SOURCE "+slug+" <- missing Supabase function source in GitHub")
     if result["snapshot_stale"]:
         print("WARNING: inventory older than 7 days; refresh from test Supabase")
     print("EDGE_FUNCTION_READINESS "+json.dumps(result, ensure_ascii=False,
