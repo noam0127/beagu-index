@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#11152a">
-<title>난감한 스쿨밴드 — 학교별 교가 록밴드 리듬게임 시험판 v0.3</title>
+<title>난감한 스쿨밴드 — 학교별 교가 록밴드 리듬게임 시험판 v0.4</title>
 <style>
 :root{font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color-scheme:dark;--bg:#0d1122;--panel:#1b2340;--accent:#9d9bff;--text:#f6f7ff;--sub:#b5bfdb}
 *{box-sizing:border-box}
@@ -44,8 +44,14 @@ button:disabled{opacity:.45;cursor:default}
 .hud b{display:block;font-size:clamp(16px,3vw,25px);font-variant-numeric:tabular-nums}
 .hud small{font-size:10px;color:#b2c5dd}
 canvas{width:100%;display:block;height:auto;background:#0d142a;border-radius:14px;border:1px solid #46547e}
-.taphit{width:100%;margin:10px 0;background:linear-gradient(95deg,#4259a2,#7e58a7);border:2px solid #b4a9fa;min-height:86px;font-size:23px;font-weight:900;letter-spacing:.02em;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.pad-grid{display:grid;grid-template-columns:repeat(var(--lane-count,4),minmax(0,1fr));gap:5px;margin:10px 0}
+.taphit{background:linear-gradient(160deg,#303f6c,#4b3a74);border:2px solid #736fa9;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:9px 2px;touch-action:manipulation;user-select:none;-webkit-user-select:none;min-width:0}
+.taphit strong{font-size:clamp(13px,2.6vw,18px)}.taphit small{font-size:10px;color:#e1dcff}
 .taphit:active,.taphit.pressed{transform:translateY(2px);filter:brightness(1.28)}
+.taphit[aria-label]{outline-offset:2px}
+.pad-grid[data-instrument="drums"] .taphit{background:linear-gradient(160deg,#45435a,#3d355c)}
+.pad-grid[data-instrument="bass"] .taphit{background:linear-gradient(160deg,#28566a,#24445e)}
+.pad-grid[data-instrument="keys"] .taphit{background:linear-gradient(160deg,#435275,#253d59)}
 .actions{display:grid;grid-template-columns:1.5fr 1fr .9fr;gap:8px}
 .actions button{padding:12px 5px}
 .feedback{height:auto;min-height:48px;font-size:14px;font-weight:750;color:#ffe1ae;text-align:center;display:grid;place-items:center}
@@ -53,7 +59,7 @@ canvas{width:100%;display:block;height:auto;background:#0d142a;border-radius:14p
 .progress div{height:100%;width:0;background:linear-gradient(90deg,#8be1e2,#b3a2fc)}
 #result{font-size:13px;color:#d7dff4}
 footer{margin-top:16px;text-align:center;color:#9da9c9;font-size:12px}
-@media(max-width:700px){main{padding:13px 10px 35px}.layout{grid-template-columns:1fr;gap:11px}.panel{padding:15px;border-radius:15px}.instrument{min-height:58px}.hud{margin:8px 0}.actions{grid-template-columns:1.5fr 1fr .8fr}.taphit{min-height:76px}}
+@media(max-width:700px){main{padding:13px 10px 35px}.layout{grid-template-columns:1fr;gap:11px}.panel{padding:15px;border-radius:15px}.instrument{min-height:58px}.hud{margin:8px 0}.actions{grid-template-columns:1.5fr 1fr .8fr} .taphit{min-height:68px;padding:7px 2px}.taphit small{font-size:10px}}
 </style>
 </head>
 <body>
@@ -61,7 +67,7 @@ footer{margin-top:16px;text-align:center;color:#9da9c9;font-size:12px}
 <header>
 <div class="kicker">BAEGUINDEX GAME · SIMPLE ROCK RHYTHM</div>
 <h1>🎸 난감한 스쿨밴드</h1>
-<p class="sub">학교를 고르고, 악기 하나를 선택해서, 딱 그 악기의 리듬만 연주하세요.</p>
+<p class="sub">학교를 고르고, 악기 하나를 선택하면, 악기별 3~5개 레인으로 연주합니다.</p>
 </header>
 <p class="note">현재는 <b>창작 록 데모곡</b>으로 시험합니다. 실제 학교 교가 음원·록 편곡은 아직 연결되지 않았습니다. 학교별 5단계는 기존 배구지수의 공개 승인 자료로 산정합니다.</p>
 <div class="layout">
@@ -100,8 +106,9 @@ footer{margin-top:16px;text-align:center;color:#9da9c9;font-size:12px}
 <div><small>정확도</small><b id="accuracy">—</b></div>
 <div><small>최고 기록</small><b id="best">—</b></div>
 </div>
-<canvas id="track" width="380" height="365" role="img" aria-label="아래로 내려오는 노트를 판정선에 맞춰 한 번 누르는 단일 레인 리듬게임"></canvas>
-<button type="button" id="tap" class="taphit">🎸 연주! · SPACE</button>
+<canvas id="track" width="380" height="365" role="img" aria-label="선택한 악기에 맞춰 세 개에서 다섯 개로 바뀌는 리듬게임 레인"></canvas>
+<div id="pads" class="pad-grid" aria-label="악기별 터치 연주 버튼"></div>
+<p class="mini" id="keyHint">각 레인의 노트를 해당 버튼이나 키보드로 연주하세요.</p>
 <div class="actions">
 <button type="button" class="primary" id="start" disabled>▶ 연주 시작</button>
 <button type="button" id="stop" disabled>■ 중단</button>
@@ -109,10 +116,10 @@ footer{margin-top:16px;text-align:center;color:#9da9c9;font-size:12px}
 </div>
 <div class="feedback" id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
 <div class="progress"><div id="progress"></div></div>
-<p id="result">판정선에 노트가 도착할 때 SPACE 또는 연주 버튼을 누르세요.</p>
+<p id="result">각 레인의 노트가 판정선에 도착하면 해당 키 또는 터치 버튼을 누르세요.</p>
 </section>
 </div>
-<footer>v0.3 독립 시험판 · 학교 난이도만 공개 API 사용 · 점수는 이 기기에만 저장 · 배구지수 운영 웹 변경 없음</footer>
+<footer>v0.4 독립 시험판 · 학교 난이도만 공개 API 사용 · 점수는 이 기기에만 저장 · 배구지수 운영 웹 변경 없음</footer>
 </main>
 <script>
 (function(){
@@ -120,25 +127,31 @@ footer{margin-top:16px;text-align:center;color:#9da9c9;font-size:12px}
 const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/schoolband-school-read-v1";
 const TIERS=["easy","normal","hard","very_hard","extreme"];
 const LABELS=["EASY","NORMAL","HARD","VERY HARD","EXTREME"];
-const INST={guitar:{name:"일렉기타",icon:"🎸",note:"코드 스트로크"},drums:{name:"드럼",icon:"🥁",note:"킥·스네어·하이햇"},bass:{name:"베이스",icon:"🎸",note:"베이스 라인"},keys:{name:"키보드",icon:"🎹",note:"화음과 반주"}};
-const PATTERNS={
-guitar:[[0,8],[0,4,8,12],[0,3,4,7,8,11,12,15],[0,2,3,4,6,8,10,11,12,14],[0,1,2,3,4,6,7,8,9,10,11,12,14,15]],
-drums:[[0,8],[0,4,8,12],[0,2,4,6,8,10,12,14],[0,2,3,4,6,8,10,11,12,14],[0,1,2,3,4,5,6,8,9,10,11,12,13,14,15]],
-bass:[[0,8],[0,4,8,12],[0,4,6,8,12,14],[0,2,4,6,8,10,12,14],[0,1,2,4,5,6,8,9,10,12,13,14,15]],
-keys:[[0,8],[0,6,8,14],[0,4,6,8,12,14],[0,2,4,6,8,10,12,14],[0,1,3,4,6,7,8,9,11,12,14,15]]
+const INST={
+ guitar:{name:"일렉기타",icon:"🎸",note:"리프·파워코드·업스트럼·고음 리프",lanes:[["리프","D","KeyD"],["파워","F","KeyF"],["업스트럼","J","KeyJ"],["고음","K","KeyK"]]},
+ drums:{name:"드럼",icon:"🥁",note:"킥·스네어·하이햇·탐",lanes:[["킥","D","KeyD"],["스네어","F","KeyF"],["하이햇","J","KeyJ"],["탐","K","KeyK"]]},
+ bass:{name:"베이스",icon:"🎸",note:"루트·5도·옥타브",lanes:[["루트","F","KeyF"],["5도","SPACE","Space"],["옥타브","J","KeyJ"]]},
+ keys:{name:"키보드",icon:"🎹",note:"저음·화음·멜로디·고음",lanes:[["저음","A","KeyA"],["화음1","S","KeyS"],["화음2","D","KeyD"],["멜로디","J","KeyJ"],["고음","K","KeyK"]]}
+};
+// [한 마디 안의 16분음표 위치, 악기 내 레인 인덱스, 최소 등장 난이도]
+const PARTS={
+ guitar:[[0,0,0],[8,0,0],[4,1,1],[12,1,1],[6,2,2],[14,3,2],[2,2,3],[10,3,3],[0,1,3],[8,1,3],[1,2,4],[3,3,4],[5,2,4],[7,3,4],[9,2,4],[11,3,4],[13,2,4],[15,3,4]],
+ drums:[[0,0,0],[8,0,0],[4,1,1],[12,1,1],[2,2,2],[6,2,2],[10,2,2],[14,2,2],[0,2,3],[4,2,3],[8,2,3],[12,2,3],[7,3,3],[15,3,3],[1,2,4],[3,2,4],[5,2,4],[9,2,4],[11,2,4],[13,2,4],[15,2,4]],
+ bass:[[0,0,0],[8,0,0],[4,1,1],[12,2,1],[2,0,2],[10,1,2],[6,2,3],[14,0,3],[1,0,4],[3,1,4],[5,2,4],[7,0,4],[9,0,4],[11,1,4],[13,2,4],[15,0,4]],
+ keys:[[0,1,0],[8,3,0],[4,2,1],[12,4,1],[2,0,2],[10,3,2],[6,2,3],[14,4,3],[0,0,3],[8,1,3],[1,3,4],[3,4,4],[5,2,4],[7,3,4],[9,4,4],[11,2,4],[13,3,4],[15,4,4]]
 };
 const BEAT=60/108,BARS=8,SONG_BEATS=BARS*4;
 const WIDTHS=[.20,.17,.14,.11,.075],PERFECT=[.09,.075,.06,.05,.036];
 const $=id=>document.getElementById(id);
 const canvas=$("track"),g=canvas.getContext("2d");
-let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="normal",chart=[],cursor=0,score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,runId=0;
-let beginning=0,timer=0,raf=0,step=0,lastMessage="",querySeq=0,searchTimer=0;
+let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0;
+let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0;
 function safeText(id,text){$(id).textContent=String(text)}
 function status(text){safeText("feedback",text)}
 function tierIdx(){return Math.max(0,TIERS.indexOf(tier))}
 function nameTier(){return LABELS[tierIdx()]}
 function selectedRecord(){return school && school.school_id ? school : null}
-function readBest(){if(!school)return null;try{const n=Number(localStorage.getItem("nangam-band-v03:"+school.school_id+":"+instrument+":"+tier));return Number.isFinite(n)&&n>0?n:null}catch(_){return null}}
+function readBest(){if(!school)return null;try{const n=Number(localStorage.getItem("nangam-band-v04:"+school.school_id+":"+instrument+":"+tier));return Number.isFinite(n)&&n>0?n:null}catch(_){return null}}
 function showBest(){const n=readBest();safeText("best",n===null?"—":n.toLocaleString("ko-KR"))}
 function showSchool(){
  const s=selectedRecord();
@@ -198,10 +211,35 @@ document.querySelectorAll("[data-inst]").forEach(b=>b.onclick=()=>{
  instrument=b.dataset.inst;
  document.querySelectorAll("[data-inst]").forEach(el=>el.setAttribute("aria-pressed",String(el===b)));
  safeText("instCaption",INST[instrument].name+"의 "+INST[instrument].note+" 타이밍을 연주합니다.");
- $("tap").textContent=INST[instrument].icon+" 연주! · SPACE";
+ updateControlsHint();
  if(school)showSchool();
- draw();
+ renderPads();draw();
 });
+
+function updateControlsHint(){
+ const lanes=INST[instrument].lanes;
+ safeText("keyHint",lanes.map(x=>x[1]+" "+x[0]).join(" · ")+" — 누를 키와 레인을 맞춰 주세요.");
+}
+function renderPads(){
+ const pad=$("pads");pad.replaceChildren();pad.style.setProperty("--lane-count",INST[instrument].lanes.length);pad.dataset.instrument=instrument;
+ for(const [i,lane] of INST[instrument].lanes.entries()){
+  const b=document.createElement("button");b.type="button";b.className="taphit";b.dataset.lane=String(i);
+  b.setAttribute("aria-label",lane[0]+" 연주, 키보드 "+lane[1]);
+  const name=document.createElement("strong");name.textContent=lane[0];
+  const key=document.createElement("small");key.textContent=lane[1];
+  b.append(name,key);
+  b.addEventListener("pointerdown",e=>{e.preventDefault();hit(i);flash(i)});
+  pad.append(b);
+ }
+ updateControlsHint();
+}
+function flash(lane){
+ const pad=$("pads").querySelector('[data-lane="'+lane+'"]');
+ if(!pad)return;
+ pad.classList.add("pressed");clearTimeout(pad._flash);
+ pad._flash=setTimeout(()=>pad.classList.remove("pressed"),120);
+}
+
 function audioContext(){
  if(ctx)return ctx;
  const Cls=window.AudioContext||window.webkitAudioContext;
@@ -224,19 +262,28 @@ function drum(when,kind){
  o.frequency.setValueAtTime(135,when);o.frequency.exponentialRampToValueAtTime(45,when+.12);
  v.gain.setValueAtTime(.22,when);v.gain.exponentialRampToValueAtTime(.0001,when+.17);
  o.connect(v);v.connect(ctx.destination);o.start(when);o.stop(when+.18);
- }else{oscillator(kind==="snare"?200:450,when,kind==="snare"?.09:.035,kind==="snare"?"triangle":"square",kind==="snare"?.045:.012)}
+ }else if(kind==="tom"){oscillator(145,when,.19,"triangle",.065)}else{oscillator(kind==="snare"?200:450,when,kind==="snare"?.09:.035,kind==="snare"?"triangle":"square",kind==="snare"?.045:.012)}
 }
 const roots=[130.81,98,110,87.31];
 function rootAt(beat){return roots[Math.floor(beat/8)%roots.length]}
-function voice(inst,beat,when){
+function voice(inst,beat,when,lane=0){
  const root=rootAt(beat);
- if(inst==="bass")oscillator(root/2,when,.25,"triangle",.065);
- else if(inst==="guitar"){
- oscillator(root*2,when,.16,"sawtooth",.019);
- oscillator(root*2.5,when,.16,"sawtooth",.014);
- oscillator(root*3,when,.16,"sawtooth",.011);
- }else if(inst==="keys"){oscillator(root*2,when,.33,"sine",.031);oscillator(root*2.5,when,.33,"sine",.017)}
- else if(inst==="drums")drum(when,Math.floor(beat)%2===0?"kick":"snare");
+ if(inst==="drums"){drum(when,["kick","snare","hat","tom"][lane]||"kick");return}
+ if(inst==="bass"){
+  const freqs=[root/2,root*3/4,root];
+  oscillator(freqs[lane]||root/2,when,.24,"triangle",.065);return;
+ }
+ if(inst==="guitar"){
+  const r=[root*2,root*2.5,root*3,root*4][lane]||root*2;
+  oscillator(r,when,.14,"sawtooth",.028);
+  if(lane===1||lane===2)oscillator(r*1.5,when,.13,"sawtooth",.017);
+  return;
+ }
+ if(inst==="keys"){
+  const tones=[root,root*2,root*2.5,root*3,root*4];
+  oscillator(tones[lane]||root*2,when,.32,"sine",.036);
+  if(lane===1||lane===2)oscillator((tones[lane]||root*2)*1.5,when,.27,"sine",.016);
+ }
 }
 function scheduleStep(n,when){
  const beat=n/4;
@@ -253,8 +300,11 @@ function scheduleAhead(){
 }
 function makeChart(){
  chart=[];
- const pattern=PATTERNS[instrument][tierIdx()];
- for(let bar=0;bar<BARS;bar++)for(const off of pattern)chart.push({t:(bar*4+off/4)*BEAT,beat:bar*4+off/4,done:false});
+ const points=PARTS[instrument].filter(p=>p[2]<=tierIdx());
+ for(let bar=0;bar<BARS;bar++)for(const [step,lane] of points){
+  chart.push({t:(bar*4+step/4)*BEAT,beat:bar*4+step/4,lane,done:false});
+ }
+ chart.sort((a,b)=>a.t-b.t||a.lane-b.lane);
  return chart;
 }
 function nowSong(){return ctx?ctx.currentTime-beginning:-1}
@@ -263,16 +313,20 @@ function hud(){
  safeText("combo",combo);
  safeText("accuracy",judged?Math.round(100*hits/judged)+"%":"—");
 }
-function hit(){
- if(!playing||!ctx)return;
+function hit(lane){
+ if(!playing||!ctx||lane<0||lane>=INST[instrument].lanes.length)return;
  const now=nowSong(),windowS=WIDTHS[tierIdx()];
  let closest=null,dist=Infinity;
- for(const n of chart){if(n.done)continue;const d=Math.abs(n.t-now);if(d<dist && d<=windowS){dist=d;closest=n}}
- if(!closest){status("다음 노트를 기다리세요.");return}
+ for(const n of chart){
+  if(n.done||n.lane!==lane)continue;
+  const d=Math.abs(n.t-now);
+  if(d<dist&&d<=windowS){dist=d;closest=n}
+ }
+ if(!closest){status(INST[instrument].lanes[lane][0]+" · 다음 노트를 기다리세요.");return}
  closest.done=true;hits++;judged++;combo++;bestCombo=Math.max(bestCombo,combo);
- if(dist<=PERFECT[tierIdx()]){score+=1000+Math.min(100,combo)*5;perfect++;status("PERFECT ✦")}
- else{score+=600+Math.min(100,combo)*3;good++;status("GOOD!")}
- voice(instrument,closest.beat,ctx.currentTime);
+ if(dist<=PERFECT[tierIdx()]){score+=1000+Math.min(100,combo)*5;perfect++;status("PERFECT ✦ "+INST[instrument].lanes[lane][0])}
+ else{score+=600+Math.min(100,combo)*3;good++;status("GOOD! "+INST[instrument].lanes[lane][0])}
+ voice(instrument,closest.beat,ctx.currentTime,lane);
  hud();draw();
 }
 function animate(){
@@ -288,7 +342,7 @@ async function start(){
  const a=audioContext();if(!a)return;
  try{await a.resume()}catch(e){status("오디오 시작에 실패했습니다.");return}
  if(playing)return;
- playing=true;runId++;
+ playing=true;
  score=combo=bestCombo=hits=judged=perfect=good=miss=0;step=0;makeChart();
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
@@ -298,8 +352,8 @@ async function start(){
  clearInterval(timer);cancelAnimationFrame(raf);
  timer=setInterval(scheduleAhead,30);
  scheduleAhead();raf=requestAnimationFrame(animate);
- // Space should work immediately after clicking start on desktop.
- $("tap").focus({preventScroll:true});
+ // Keyboard controls should not accidentally activate the start button.
+ canvas.tabIndex=0;canvas.focus({preventScroll:true});
 }
 function finish(interrupted){
  if(!playing)return;
@@ -312,7 +366,7 @@ function finish(interrupted){
  status("공연 종료! "+(acc>=85?"훌륭한 연주!":acc>=60?"좋은 연주!":"다시 도전해 보세요."));
  safeText("result","정확도 "+acc+"% · PERFECT "+perfect+" · GOOD "+good+" · MISS "+miss+" · 최대 콤보 "+bestCombo+" · 노트 "+chart.length+"개");
  const prior=readBest()||0;
- if(score>prior){try{localStorage.setItem("nangam-band-v03:"+school.school_id+":"+instrument+":"+tier,String(score))}catch(_){}}
+ if(score>prior){try{localStorage.setItem("nangam-band-v04:"+school.school_id+":"+instrument+":"+tier,String(score))}catch(_){}}
  showBest();$("progress").style.width="100%";
  }
  draw();
@@ -321,44 +375,52 @@ function rounded(x,y,w,h,r){
  g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();
 }
 function draw(){
- const W=canvas.width,H=canvas.height,center=W/2,line=H-72,preview=1.65;
- g.clearRect(0,0,W,H);
- g.fillStyle="#0d1429";g.fillRect(0,0,W,H);
- for(let j=0;j<8;j++){g.fillStyle=j%2===0?"#172341":"#1b2c4d";g.fillRect(57,j*53,266,53)}
- g.strokeStyle="#526481";g.lineWidth=1;g.globalAlpha=.4;for(let j=0;j<7;j++){let y=25+j*41;g.beginPath();g.moveTo(57,y);g.lineTo(323,y);g.stroke()}g.globalAlpha=1;
- g.strokeStyle="#f5efff";g.lineWidth=5;g.beginPath();g.moveTo(58,line);g.lineTo(322,line);g.stroke();
- g.fillStyle="#cfd9fc";g.textAlign="center";g.font="700 16px system-ui";g.fillText(INST[instrument].name+" · "+nameTier(),center,30);
+ const W=canvas.width,H=canvas.height,line=H-72,preview=1.65;
+ const lanes=INST[instrument].lanes,N=lanes.length;
+ const margin=9,gap=4,lw=(W-2*margin-gap*(N-1))/N;
+ const colors=["#70b6ff","#f1af78","#9de0b8","#dd9bff","#f4dc91"];
+ g.clearRect(0,0,W,H);g.fillStyle="#0d1429";g.fillRect(0,0,W,H);
+ for(let i=0;i<N;i++){
+  const x=margin+i*(lw+gap);
+  g.fillStyle=i%2===0?"#172341":"#203054";g.fillRect(x,12,lw,H-24);
+  g.fillStyle=colors[i];g.fillRect(x,12,lw,5);
+  g.fillStyle="#e2e9fd";g.font="800 16px system-ui";g.textAlign="center";g.fillText(lanes[i][1],x+lw/2,38);
+  g.fillStyle="#c6d0e8";g.font=N===5?"11px system-ui":"12px system-ui";
+  g.fillText(lanes[i][0],x+lw/2,H-23);
+ }
+ g.strokeStyle="#f5efff";g.lineWidth=4;g.beginPath();g.moveTo(margin,line);g.lineTo(W-margin,line);g.stroke();
  const now=playing?nowSong():-.6;
  for(const n of chart){
- if(n.done)continue;
- const dt=n.t-now;
- if(dt>preview || dt<-.2)continue;
- const y=line-(dt/preview)*225;
- g.fillStyle="#a994ff";g.shadowColor="#ad9aff";g.shadowBlur=13;
- rounded(105,y-11,170,22,9);g.fill();g.shadowBlur=0;
- g.fillStyle="#ded8ff";rounded(114,y-7,152,5,3);g.fill();
+  if(n.done)continue;
+  const dt=n.t-now;
+  if(dt>preview||dt<-.2)continue;
+  const x=margin+n.lane*(lw+gap),y=line-dt/preview*220;
+  g.fillStyle=colors[n.lane];g.shadowColor=colors[n.lane];g.shadowBlur=9;
+  rounded(x+5,y-10,lw-10,20,5);g.fill();g.shadowBlur=0;
  }
  if(!playing){
- g.fillStyle="#0e172bdc";g.fillRect(58,65,264,210);
- g.fillStyle="#f4edff";g.font="800 22px system-ui";g.fillText(school?"연주할 준비 완료!":"학교를 먼저 선택하세요",center,155);
- g.font="14px system-ui";g.fillStyle="#c9d5f1";g.fillText("한 레인 · SPACE 또는 터치",center,190);
+  g.fillStyle="#0e172be8";g.fillRect(margin,75,W-2*margin,160);
+  g.fillStyle="#f4edff";g.font="800 21px system-ui";g.textAlign="center";
+  g.fillText(school?"연주 준비 완료!":"학교를 선택해 주세요",W/2,149);
+  g.font="13px system-ui";g.fillStyle="#c9d5f1";
+  g.fillText(INST[instrument].name+" · "+N+"레인",W/2,184);
  }else if(now<0){
- g.font="800 36px system-ui";g.fillStyle="#fff2b8";g.fillText("READY",center,174);
+  g.font="800 35px system-ui";g.fillStyle="#fff2b8";g.textAlign="center";g.fillText("READY",W/2,175);
  }
- g.fillStyle="#aebddd";g.textAlign="center";g.font="12px system-ui";g.fillText("판정선",center,H-27);
 }
 $("start").onclick=start;
 $("stop").onclick=()=>finish(true);
 $("mute").onclick=()=>{muted=!muted;$("mute").textContent=muted?"🔇 꺼짐":"♫ 켜짐"};
-$("tap").addEventListener("pointerdown",e=>{e.preventDefault();hit();$("tap").classList.add("pressed");setTimeout(()=>$("tap").classList.remove("pressed"),110)});
 document.addEventListener("keydown",e=>{
- if(e.repeat||!playing||!["Space","Enter"].includes(e.code))return;
- if(e.target instanceof HTMLElement && (e.target.matches('input,select,textarea') || (e.target.closest("button") && e.target.id!=="tap")))return;
- e.preventDefault();hit();
+ if(e.repeat||!playing||e.isComposing)return;
+ if(e.target instanceof HTMLElement && e.target.matches("input,select,textarea"))return;
+ const index=INST[instrument].lanes.findIndex(x=>x[2]===e.code);
+ if(index<0)return;
+ e.preventDefault();hit(index);flash(index);
 });
 window.addEventListener("pagehide",()=>{if(playing)finish(true)});
-window.nangamSchoolbandV03={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,done:n.done})),getStatus:()=>({playing,score,hits,judged}),getTierCount:()=>TIERS.length};
-draw();hud();
+window.nangamSchoolbandV03={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code}))};
+renderPads();draw();hud();
 })();
 </script>
 </body>
