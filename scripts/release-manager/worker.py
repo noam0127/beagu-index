@@ -260,12 +260,20 @@ def minimize_independent_preview(target):
                     any(part.startswith(".") for part in item.relative_to(root).parts)):
                 raise RuntimeError("Unreviewed public preview file: " + str(item))
 
-    # Deliberately narrow rewrites: preserve canonical SEO URLs and the
-    # explicit "actual website" admin link, but never silently redirect
-    # a QA visitor to production from ordinary home navigation.
+    # Standalone QA must never navigate visitors to production, even by
+    # clicking an explicit production link. Noindex preview pages do not
+    # need canonical links to the production domain.
     replacements = {
         "admin-updates.html": [
-            ('href="https://baeguindex.com/_preview/"', 'href="/"')
+            ('href="https://baeguindex.com/_preview/"', 'href="/"'),
+            ('<a href="https://baeguindex.com/" target="_blank" rel="noopener noreferrer" class="release-site-link">실제 웹 열기 <span aria-hidden="true">↗</span></a>',
+             '<span class="release-site-link" aria-disabled="true" title="독립 시험 후보에서는 운영 웹 이동이 차단됩니다">운영 웹 열기 비활성화</span>')
+        ],
+        "js/challenge.html": [
+            ('<link rel="canonical" href="https://baeguindex.com/challenge.html">', '')
+        ],
+        "result.html": [
+            ('<link rel="canonical" href="https://baeguindex.com/school-report.html">', '')
         ],
         "challenge.html": [
             ('class="site-link" href="https://baeguindex.com/"',
@@ -291,6 +299,19 @@ def minimize_independent_preview(target):
             new = new.replace(original, replacement)
         if new != old:
             file.write_text(new, encoding="utf-8")
+
+    # Fail closed if a later RC adds any new link to the production website.
+    # This check is scoped only to the independent QA distribution.
+    production_site = re.compile(r"https://(?:www\\.)?baeguindex\\.com", re.IGNORECASE)
+    for file in target.rglob("*"):
+        if not file.is_file() or file.suffix.lower() not in {
+            ".html", ".js", ".mjs", ".css", ".json", ".webmanifest", ".xml", ".svg"
+        }:
+            continue
+        if production_site.search(file.read_text(encoding="utf-8")):
+            raise RuntimeError(
+                "Production website link leaked into independent preview: " + str(file)
+            )
 
 
 def write_independent_vercel_config(target):
