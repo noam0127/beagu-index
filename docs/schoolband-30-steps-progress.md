@@ -138,5 +138,20 @@
 - **실제 [results.json + PC/모바일 8개 Canvas 이미지](https://github.com/noam0127/beagu-index/actions/runs/44995835685/artifacts/14743803098)**를 내려받아 총 9개 파일과 PC/모바일 40회·각 80키/80터치/20Enter, JavaScript 오류 0을 확인. [7개 독립 AI 관점 기록](./schoolband-stage008-lane-contract.md).
 - 다음 단계 **009/030 — 악기별 리듬 패턴·차트 데이터 검증**.
 
-## 009/030 — pending
-난이도 증가에 따른 음악적 밀도·복잡도와 악기별 차이를 실제 PARTS에서 검증하고, 동시노트·롱노트 채택 여부와 JSON 스키마·차트 버전·오염 차트 거절을 구현.
+## 009/030 — 악기별 리듬 패턴·차트 데이터 유효성 완성 (2026-11-22)
+
+상태: **COMPLETE — 20조합·80개 레인 품질 게이트, JSON Schema Draft 2020-12, 잘못된 차트 E2E 차단, 악기별 Web Audio 이벤트, 008·005·007 회귀 PASS**.
+
+- 시작 브랜치 HEAD `b498c8dcda3c4b967b56dcbee6ae8be5c9674348`. 수정은 `schoolband-playtest`에만 한정. 운영 `main`·`baeguindex.com`·운영 Supabase 변경 없음.
+- 차트 스키마·버전 추가: `games/nangam-schoolband-v08/charts/creative-school-anthem.chart.v1.json`, `charts/schoolband-chart.schema.json`. 창작 「빛나는 우리 학교」 108BPM·8마디·16분 분할·4악기 3~5레인·5난이도와 원본 내장 `PARTS` 완전 일치 확인. 차트 버전 `creative-anthem-rhythm-v1.0.0`, 스키마 1, 지원 타입 `tap`만.
+- 새 순수 검증기 `validateChartCatalog`를 `games/nangam-schoolband-v08/index.html`에 구현. 시작 전 버전/노트 구조/중복/미유효 레인/밀도 증가/악기별 동시노트/베이스 단일 저음선/드럼 하이햇/극한 16분음을 확인. 손상 차트는 연주 시작 전 오류 안내와 함께 차단.
+- 난이도별 한 마디당 노트 수 EASY→EXTREME: 기타 `5/7/9/11/18`, 드럼 `4/6/9/14/21`, 베이스 `4/6/8/10/16`, 키보드 `5/7/8/10/18`. 전 악기에서 엄격하게 증가하며 각 레인의 노트가 존재. 기타 HARD·드럼 VERY HARD·키보드 VERY HARD부터 2레인 동시타격을 활용하며 **베이스 동시노트와 롱노트는 v1 차트 미지원**(추후 별도 타입·키 홀드/릴리즈 판정 필요).
+- 테스트/CI: `scripts/test-schoolband-stage009.cjs`, `.github/workflows/schoolband-stage009.yml`. JSON Schema 고의 오류 **12종**, 리듬 차트 고의 오류 **10종** 각각 거절 PASS. 손상 버전/중복 노트를 삽입한 브라우저 실제 시작 **PC·모바일 총 4건 재생 차단** PASS.
+- **CI [run 45002366388](https://github.com/noam0127/beagu-index/actions/runs/45002366388) SUCCESS**, 검증된 코드 SHA `973f42516f574942f56c4cde9a4a143b322c94a9`. PC 1280×850·320px Chromium에서 4악기 레인별 Canvas·차트 통계·AudioContext 오실레이터 생성 기록(기타 sawtooth/드럼 sine/베이스 triangle/키보드 sine×2) PASS. 실제 인간 청음은 아님.
+- 이전 Stage008의 **40/40 자동 연주 완주, 160회 키·160회 터치·40회 Enter**, Stage005의 98+121+28개 타이밍 수치, Stage007의 60/90/120Hz 가상 시계 검사 동일 CI에서 전부 PASS.
+- [실제 증거 JSON·4악기 PNG 아티팩트](https://github.com/noam0127/beagu-index/actions/runs/45002366388/artifacts/14746801136) ZIP 5개 파일 확인. 초기 첫 CI에서 게임 전용 아이콘/안내 텍스트와 외부 차트의 공통 필드를 혼동한 테스트 비교 범위를 바로잡은 후 전체 검사 PASS.
+- 7개 전문 AI 관점 독립 검토, 악기별 음악성 및 룰 결정, 저작권·아티팩트 한계: `docs/schoolband-stage009-chart-contract.md`. 운영 버전 반영·실제 학교 교가 편곡/권리 승인 미실행. 입력 품질 개선은 010~012/017/027; 차트 버전별 기록 키 분리는 024단계.
+- 다음 단계 **010/030 — 실시간 합주·악기 음색 개선 I**.
+
+## 010/030 — pending
+기타 리프·파워코드, 드럼 킥·스네어·하이햇·탐의 실시간 타격음과 자동반주를 4악기 전체에서 구분 가능한 오디오 이벤트 로그로 검증·개선하고 오디오 엔진 전문 관점의 단기 합주 최적화를 시행.
