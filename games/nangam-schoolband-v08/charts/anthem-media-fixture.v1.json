@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "purpose": "metadata_fixture_only",
+  "production_enabled": false,
+  "entries": [
+    {
+      "school_id": "fixture-seoul-midong",
+      "school_name": "서울미동초등학교",
+      "region": "서울",
+      "title": "학교歌 좋다 - 미동초 교가 제작 이야기",
+      "source_type": "youtube",
+      "video_id": "fE_bXSBuHB4",
+      "channel": "서울시교육청TV",
+      "source_url": "https://www.youtube.com/watch?v=fE_bXSBuHB4",
+      "review_status": "reviewed",
+      "checked_at": "2026-11-23",
+      "verified_scope": "video about school's adapted anthem and performance; not verified complete standalone anthem audio",
+      "embed_availability": "not_verified",
+      "game_playback_approved": false,
+      "rights_status": "unverified_for_game",
+      "test_only": true
+    }
+  ]
+}
