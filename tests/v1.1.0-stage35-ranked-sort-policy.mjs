@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {canSortRankedSchools} from '../supabase/functions/_shared/release-policy.mjs';
 
 const allowed=['school_name','address','beagu_percentile_2025',
@@ -33,6 +34,7 @@ assert.ok(portion.indexOf("if(!canSortRankedSchools(")>
   'Reject invalid sorts before checking tier authorization');
 assert.ok(!portion.includes("admin.from("),
   'Tier gate must precede any privileged database reads');
+execFileSync(process.execPath,['--check','js/level-search.js'],{stdio:'inherit'});
 const ui=readFileSync('js/level-search.js','utf8');
 assert.match(ui,/let verifiedLevel=0;/,'UI must start in locked state');
 assert.match(ui,/option\.disabled=!unlocked/,'Lv1 option must be disabled');
