@@ -19,6 +19,19 @@ assert.ok(workflow.includes(digest));
 assert.ok(workflow.includes('test "$INPUT_SHA" = "$TRUSTED_SHA"'));
 assert.ok(workflow.includes('test "$(sha256sum _preview_standalone_site/stage38-release-manifest.json | cut'));
 assert.match(workflow, /environment:\s*\n\s+name: beagu-stage38-vercel-preview-approved/);
+assert.match(workflow, /secrets\.STAGE38_APPROVED_MANIFEST_SHA256/);
+assert.match(workflow, /test -n "\$APPROVED_RC_MANIFEST_SHA256"/);
+assert.match(workflow, /test "\$APPROVED_RC_MANIFEST_SHA256" = "\$TRUSTED_SHA"/);
+assert.ok(
+  workflow.indexOf("Confirm separate explicit owner approval") <
+  workflow.indexOf("Create unaliased preview, never production"),
+  "Owner approval must execute before deployment"
+);
+assert.ok(
+  workflow.indexOf("Rebuild pinned RC and verify independent security invariants") <
+  workflow.indexOf("Confirm separate explicit owner approval"),
+  "RC and artifact identity must be checked before owner-release approval"
+);
 assert.match(workflow, /secrets\.STAGE38_VERCEL_TOKEN/);
 assert.match(workflow, /vars\.STAGE38_VERCEL_CLI_VERSION/);
 assert.match(workflow, /persist-credentials: false/);
