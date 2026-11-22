@@ -163,7 +163,12 @@ test("GitHub fetch errors fail closed", async () => {
 });
 
 test("a reused run ID cannot prove three independent workflows", async () => {
-  const result = await verify(evidence({run: () => ({id: 1001})}).githubGet);
+  const result = await verify(evidence({
+    run: () => ({id: 1001}),
+    jobs: (job) => RELEASE_CI_POLICY.map((spec, i) => ({
+      ...job, id: 3001 + i, name: spec.job
+    }))
+  }).githubGet);
   assert.equal(result.code, "ci_duplicate_workflow_proof");
 });
 
