@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createHash } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import {
   signTrustedSubmissionEvent, verifyTrustedSubmissionEvent,
   evaluateTierFromPrivateEvidence
@@ -28,7 +28,7 @@ const accepted=(overrides={},overrideOpts={})=>{
     expectedFormId:formId,nowMs:now,...overrideOpts
   });
 };
-const digest=val=>createHash("sha256").update(val).digest("hex");
+const digest=val=>createHmac("sha256",secret).update("BEAGU_ST38_CODE_V1|"+val).digest("hex");
 
 test("official signed synthetic response gives private evidence, not login",()=>{
   const evidence=accepted();
@@ -38,6 +38,10 @@ test("official signed synthetic response gives private evidence, not login",()=>
   assert.equal(evidence.authorizedLevel,0);
   assert.equal(evidence.campaign,"2026");
   assert.equal(evidence.codeDigest,digest(participantCode));
+  // HMAC prevents offline guessing of 50-bit short codes from the ledger.
+  assert.notEqual(evidence.codeDigest,createHash("sha256").update(participantCode).digest("hex"));
+  assert.notEqual(evidence.codeDigest,
+    createHmac("sha256",otherSecret).update("BEAGU_ST38_CODE_V1|"+participantCode).digest("hex"));
   assert.match(evidence.eventDigest,/^[a-f0-9]{64}$/);
   assert.match(evidence.receiptMac,/^[a-f0-9]{64}$/);
   const serialized=JSON.stringify(evidence);
