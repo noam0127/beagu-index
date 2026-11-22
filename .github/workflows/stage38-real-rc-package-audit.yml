@@ -1,0 +1,36 @@
+name: Stage38 actual pinned RC packaging audit (NO DEPLOY)
+on:
+  push:
+    branches: ['hotfix/v1.1.0-preview-backend-isolation']
+    paths:
+      - 'scripts/release-manager/worker.py'
+      - 'tests/stage38-real-rc-packaging.py'
+      - '.github/workflows/stage38-real-rc-package-audit.yml'
+  pull_request:
+    paths:
+      - 'scripts/release-manager/worker.py'
+      - 'tests/stage38-real-rc-packaging.py'
+      - '.github/workflows/stage38-real-rc-package-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fixed-rc-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Confirm immutable release candidate commit available
+        run: |
+          git cat-file -t 5c95aadad971901a8222f83c52e93bf901a3aeb7
+          git rev-parse release/v1.1.0-rc.1
+      - name: Package real RC with staging backend and audit (offline)
+        run: python3 tests/stage38-real-rc-packaging.py
+      - name: No publication or release controller action
+        run: echo "This test used an isolated synthetic plan in a temp directory and did not deploy."
