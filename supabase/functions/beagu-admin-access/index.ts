@@ -1,3 +1,4 @@
+import { isBrowserOriginAllowed } from "../_shared/staging-origin.ts";
 // Standalone administrative authorization gate; no site statistics are exposed here.
 // Admin authority is an allowlist checked with service_role after verification by Supabase Auth.
 // MFA is MANDATORY for privileged access; client-supplied role/level data are ignored.
@@ -8,7 +9,7 @@ const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const db = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
 const origins = new Set(["https://baeguindex.com", "https://www.baeguindex.com"]);
 const cors = (origin: string) => ({
-  "Access-Control-Allow-Origin": origins.has(origin) ? origin : "https://baeguindex.com",
+  "Access-Control-Allow-Origin": isBrowserOriginAllowed(origin, origins) ? origin : "https://baeguindex.com",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
   "Access-Control-Max-Age": "3600",
@@ -40,7 +41,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   const origin = request.headers.get("Origin") || "";
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
   if (request.method !== "POST") return respond({ error: "method_not_allowed" }, 405, origin);
-  if (origin && !origins.has(origin)) return respond({ error: "origin_not_allowed" }, 403, origin);
+  if (origin && !isBrowserOriginAllowed(origin, origins)) return respond({ error: "origin_not_allowed" }, 403, origin);
   const auth = request.headers.get("Authorization") || "";
   const match = /^Bearer ([A-Za-z0-9._-]+)$/.exec(auth);
   if (!match) return respond({ error: "authentication_required" }, 401, origin);

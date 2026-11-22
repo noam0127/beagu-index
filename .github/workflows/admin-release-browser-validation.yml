@@ -1,0 +1,50 @@
+name: v1.1.0 admin release browser E2E (mocked APIs, NO DEPLOY)
+on:
+  push:
+    branches:
+      - test/v1.1.0-admin-release-browser-20261123
+    paths:
+      - 'scripts/test-admin-release-browser.cjs'
+      - '.github/workflows/admin-release-browser-validation.yml'
+      - 'admin-updates.html'
+      - 'js/beagu-admin-updates-v1.js'
+      - 'styles/beagu-admin-updates-v1.css'
+  pull_request:
+    paths:
+      - 'scripts/test-admin-release-browser.cjs'
+      - '.github/workflows/admin-release-browser-validation.yml'
+      - 'admin-updates.html'
+      - 'js/beagu-admin-updates-v1.js'
+      - 'styles/beagu-admin-updates-v1.css'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact code without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Syntax gate
+        run: node --check scripts/test-admin-release-browser.cjs
+      - name: Install isolated Chromium runner
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Desktop/mobile auth and release journey with all APIs mocked
+        run: |
+          python3 -m http.server 8126 --bind 127.0.0.1 >/tmp/beagu-release-ui-test.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node scripts/test-admin-release-browser.cjs
+      - name: Prevent accidental release artifact generation
+        run: |
+          test ! -e _release_site
+          echo 'PASS: Mocked-only browser validation. No deployment or Supabase data write.'

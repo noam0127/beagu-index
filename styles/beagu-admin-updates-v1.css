@@ -37,3 +37,10 @@
 .release-login{padding:18px 0}
 .release-login p{line-height:1.6;font-size:14px}
 @media(max-width:700px){.release-grid,.release-meta-row{grid-template-columns:1fr}.release-surface,.release-draft,.release-queue,.release-history-panel{padding:17px}.release-top-actions{flex-direction:column;align-items:stretch}.release-version{font-size:21px}}
+
+.release-site-link[aria-disabled="true"]{opacity:.55;cursor:not-allowed;text-decoration:none;pointer-events:none}
+
+.release-independent{margin:16px 0;padding:14px;border:1px solid #dbe6f5;border-radius:12px;background:#f7faff}
+.release-independent>strong{display:block;font-size:13px;color:#18365a}
+.release-independent .release-site-link{margin:5px 0}
+.release-independent .subtle{margin:5px 0 0;font-size:12px;line-height:1.55;overflow-wrap:anywhere}

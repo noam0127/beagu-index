@@ -1,3 +1,4 @@
+import { isBrowserOriginAllowed } from "../_shared/staging-origin.ts";
 // Member administration API: separate from challenge participant codes.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
 
@@ -8,7 +9,7 @@ const db = createClient(endpoint, secret, {
 });
 const origins = new Set(["https://baeguindex.com", "https://www.baeguindex.com"]);
 const cors = (origin: string) => ({
-  "Access-Control-Allow-Origin": origins.has(origin) ? origin : "https://baeguindex.com",
+  "Access-Control-Allow-Origin": isBrowserOriginAllowed(origin, origins) ? origin : "https://baeguindex.com",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
   "Access-Control-Max-Age": "3600",
@@ -197,7 +198,7 @@ Deno.serve(async (request: Request) => {
   const origin = request.headers.get("Origin") || "";
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
   if (request.method !== "POST") return reply(origin, 405, { error: "method_not_allowed" });
-  if (origin && !origins.has(origin)) return reply(origin, 403, { error: "origin_not_allowed" });
+  if (origin && !isBrowserOriginAllowed(origin, origins)) return reply(origin, 403, { error: "origin_not_allowed" });
   try {
     const actor = await checkAdmin(request);
     let input: Record<string, unknown>;

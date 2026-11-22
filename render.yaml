@@ -1,0 +1,34 @@
+# Vercel-free, independently hosted testing site only.
+# This Blueprint must never use the real production domain or main branch.
+services:
+  - type: web
+    runtime: static
+    name: baegu-index-v110-sandbox
+    repo: https://github.com/noam0127/beagu-index
+    branch: fix/v1.1.0-preview-isolation-gate-20261123
+    autoDeployTrigger: off
+    buildCommand: python3 scripts/build-standalone-staging.py && python3 tests/test-standalone-staging.py
+    staticPublishPath: ./_standalone_staging
+    headers:
+      # Public SHA marker: readable across origins, but never contains secrets.
+      - path: /beagu-preview-health.json
+        name: Access-Control-Allow-Origin
+        value: "*"
+      - path: /beagu-preview-health.json
+        name: Cache-Control
+        value: no-store, max-age=0
+      - path: /*
+        name: X-Robots-Tag
+        value: noindex, nofollow, noarchive, nosnippet
+      - path: /*
+        name: Referrer-Policy
+        value: no-referrer
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; form-action 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"

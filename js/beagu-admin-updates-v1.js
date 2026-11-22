@@ -7,7 +7,19 @@
  const auth=supabaseClient.auth;
  const api=SUPABASE_URL+"/functions/v1/beagu-release-manager-v1";
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
- let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null;
+ let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,statusVerified=false;
+ let previewProbeId=0, independentProbeId=0;
+ const actionIds=["releaseStageApply","releaseStageRollback","releaseProdApply",
+   "releaseProdRollback","releaseRegister"];
+ function lockReleaseControls(){
+  statusVerified=false;cachedHead=null;cachedProposal=null;
+  previewProbeId++;
+  independentProbeId++;
+  setPreviewLink(false,"시험 웹 연결 확인 필요");
+  setIndependentLink(false,"독립 시험 웹 연결 확인 필요");
+  for(const id of actionIds)el(id).disabled=true;
+  el("releaseRefresh").disabled=false;
+ }
  const date=value=>{if(!value)return "—";const d=new Date(value);
    return Number.isFinite(d.getTime())?d.toLocaleString("ko-KR"):"—";};
  const short=value=>value?String(value).slice(0,8):"—";
@@ -16,12 +28,15 @@
   p.classList.toggle("release-status-error",isError);
  }
  function denied(text){
+  lockReleaseControls();
   el("releaseLogin").hidden=false;el("releaseDashboard").hidden=true;
   message(text,true);
  }
  async function request(action,payload={},endpoint=api){
   const {data,error}=await auth.getSession();
-  if(error||!data?.session?.access_token)throw Error("관리자 세션이 만료되었습니다.");
+  if(error||!data?.session?.access_token){
+   const fault=Error("관리자 세션이 만료되었습니다.");fault.status=401;throw fault;
+  }
   const response=await fetch(endpoint,{method:"POST",cache:"no-store",
    headers:{"Authorization":"Bearer "+data.session.access_token,
     "apikey":SUPABASE_PUBLISHABLE_KEY,"Content-Type":"application/json"},
@@ -40,13 +55,129 @@
     no_production_rollback:"되돌릴 수 있는 이전 운영 버전이 없습니다.",
     admin_mfa_required:"관리자 2단계 인증이 필요합니다. 다시 로그인하세요.",
     github_unavailable:"GitHub 버전을 확인할 수 없습니다. 잠시 후 다시 시도하세요.",
+    ci_github_unavailable:"GitHub 자동시험 결과를 서버에서 확인할 수 없습니다. 운영 배포를 보류합니다.",
+    ci_candidate_invalid:"운영 적용 후보 코드가 올바른 버전으로 식별되지 않았습니다.",
+    ci_candidate_not_main_head:"시험 버전과 GitHub main 최신 코드가 다릅니다. 다시 시험하고 확인하세요.",
+    ci_stage_evidence_missing:"동일 코드에 대한 실제 시험 웹 배포 이력이 확인되지 않았습니다.",
+    ci_stage_evidence_missing_or_expired:"시험 웹 배포 기록이 없거나 7일이 지나 재검증이 필요합니다.",
+    ci_inputs_invalid:"자동시험 검증 요청을 처리할 수 없습니다. 운영 배포를 보류합니다.",
+    ci_runs_invalid:"GitHub 자동시험 결과의 형식을 검증할 수 없습니다.",
+    ci_attestation_missing:"이 코드에 필요한 3개 독립 자동시험 결과가 아직 없습니다.",
+    ci_attestation_stale:"자동시험이 시험 웹 배포 이전이거나 검증 유효기간이 지났습니다.",
+    ci_attestation_not_successful:"필수 자동시험이 진행 중이거나 실패했습니다. 운영 배포할 수 없습니다.",
+    ci_jobs_incomplete:"자동시험 세부 검증 작업이 누락됐습니다.",
+    ci_jobs_not_successful:"자동시험 중 실패·건너뜀 또는 미완료된 작업이 있습니다.",
+    ci_required_job_missing:"필수 검증 작업이 실행된 증거가 없습니다.",
+    ci_test_steps_incomplete:"필수 검증 작업에서 통과하지 않은 시험 항목이 발견됐습니다.",
+    ci_duplicate_workflow_proof:"독립 자동시험 결과를 구분할 수 없습니다.",
+    release_bootstrap_ci_required:"최초 운영 배포를 자동으로 진행할 수 없습니다. 검증과 승인이 필요합니다.",
+    release_data_refresh_ci_required:"공개자료 자동 갱신에는 별도 개인정보·시험 검증이 필요합니다.",
+    release_action_ci_required:"검증되지 않은 운영 배포 작업은 차단됩니다.",
+    release_ci_evidence_required:"서버에서 모든 필수 자동시험의 실제 통과를 확인해야 운영 배포할 수 있습니다.",
     release_service_unavailable:"배포 서버가 응답하지 않습니다. 잠시 후 다시 확인하세요."
    };
-   throw Error(messages[result.error]||"요청 실패 ("+(result.error||response.status)+")");
+   const fault=Error(messages[result.error]||"요청 실패 ("+(result.error||response.status)+")");
+   fault.status=response.status;fault.code=result.error||"";
+   throw fault;
   }
   return result;
  }
  function write(id,value){el(id).textContent=value;}
+ function setPreviewLink(ready,label){
+  const link=el("releaseStageLink");
+  link.removeAttribute("href");
+  link.setAttribute("aria-disabled","true");
+  link.setAttribute("tabindex","-1");
+  if(ready){
+   link.setAttribute("href","https://baeguindex.com/_preview/");
+   link.removeAttribute("aria-disabled");
+   link.removeAttribute("tabindex");
+  }
+  write("releaseStageLinkLabel",label);
+  write("releaseStageHealth",ready?"게시 확인 완료 · 요청 버전과 일치":
+    label==="시험 웹 미배포"?"시험 웹에 아직 게시된 코드가 없습니다.":
+    label==="시험 웹 확인 중"?"게시된 코드와 시험 DB 연결 정보를 확인합니다.":
+    "시험 웹을 열 수 없습니다. 배포 기록과 실제 게시 상태를 점검하세요.");
+ }
+ async function verifyPreview(sha,probeId){
+  if(!/^[a-f0-9]{40}$/.test(sha)){
+   if(probeId===previewProbeId)setPreviewLink(false,"시험 웹 버전 오류");
+   return;
+  }
+  let verified=false;
+  try{
+   const response=await fetch("/_preview/beagu-preview-health.json?sha="+sha,{
+    method:"GET",cache:"no-store",credentials:"omit"
+   });
+   if(response.ok){
+    const proof=await response.json();
+    verified=proof?.schema===1&&proof?.kind==="staging"&&
+     proof?.staging_sha===sha&&proof?.supabase_ref==="ycwuugggqbunlbwuzvbx";
+   }
+  }catch(_error){ /* Static preview may be absent, disconnected or stale. */ }
+  if(probeId!==previewProbeId||!statusVerified||model?.state?.staging_sha!==sha)return;
+  setPreviewLink(verified,verified?"시험 웹 열기":"시험 웹 게시 확인 실패");
+  const s=model.state;
+  el("releaseProdApply").disabled=!verified||busy||!!model.job||
+    !s.production_sha||sha===s.production_sha;
+ }
+ // Independent Render sandbox is read-only and never authorizes prod_apply.
+ // No user-supplied URLs, query parameters or server data choose this origin.
+ function independentOrigin(){
+  const raw=window.BEAGU_INDEPENDENT_PREVIEW?.origin;
+  if(typeof raw!=="string"||!raw.trim())return null;
+  try{
+   const u=new URL(raw);
+   if(u.protocol!=="https:"||!u.hostname.endsWith(".onrender.com")||
+      u.hostname==="onrender.com"||u.port||u.username||u.password||
+      u.pathname!=="/"||u.search||u.hash)return null;
+   return u.origin;
+  }catch(_err){return null;}
+ }
+ function setIndependentLink(ready,label,sha=""){
+  const link=el("releaseIndependentLink");
+  link.removeAttribute("href");
+  link.setAttribute("aria-disabled","true");
+  link.setAttribute("tabindex","-1");
+  const origin=independentOrigin();
+  if(ready&&origin){
+   link.href=origin+"/";
+   link.removeAttribute("aria-disabled");
+   link.removeAttribute("tabindex");
+  }
+  link.textContent=label;
+  el("releaseIndependentStatus").textContent=ready?
+   "독립 호스팅 게시 확인 · 코드 "+short(sha)+
+   " · 시험 DB 전용 · 운영 배포 승인은 별도":
+   label==="독립 시험 웹 미연결"?
+    "호스팅 연결 전에는 시험 웹 주소를 사용할 수 없습니다.":
+    "독립 시험 웹 배포 증명이 없거나 주소·환경이 일치하지 않습니다.";
+ }
+ async function verifyIndependentPreview(probeId){
+  const origin=independentOrigin();
+  if(!origin){
+   if(probeId===independentProbeId)setIndependentLink(false,"독립 시험 웹 미연결");
+   return;
+  }
+  let verified=false,actualSha="";
+  try{
+   const res=await fetch(origin+"/beagu-preview-health.json",{
+    method:"GET",mode:"cors",redirect:"error",cache:"no-store",credentials:"omit"
+   });
+   if(res.ok){
+    const proof=await res.json();
+    verified=proof?.schema===1&&proof?.kind==="standalone-staging"&&
+     proof?.hosting==="independent-static"&&
+     proof?.supabase_ref==="ycwuugggqbunlbwuzvbx"&&
+     typeof proof.staging_sha==="string"&&/^[0-9a-f]{40}$/.test(proof.staging_sha);
+    if(verified)actualSha=proof.staging_sha;
+   }
+  }catch(_err){ /* A missing, stale or inaccessible site remains disabled. */ }
+  if(probeId!==independentProbeId||!statusVerified)return;
+  setIndependentLink(verified,verified?"독립 시험 웹 열기":"독립 시험 웹 게시 확인 실패",actualSha);
+  // Deliberately DO NOT touch releaseProdApply: it requires the managed
+  // GitHub Pages staging proof and server-side independent CI attestations.
+ }
  function renderHistory(id,rows){
   const root=el(id);root.replaceChildren();
   if(!rows?.length){const p=document.createElement("p");p.className="subtle";
@@ -71,6 +202,9 @@
   write("releaseStageVersion",s.staging_sha?(s.staging_version||"버전 미입력"):"아직 시험 웹 미배포");
   write("releaseProdVersion",s.production_sha?(s.production_version||"버전 미입력"):"최초 배포 준비 중");
   write("releaseStageSha",s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹에 아직 업데이트가 없습니다");
+  // State alone is not publication proof. Check the immutable preview build marker.
+  const probeId=++previewProbeId;
+  setPreviewLink(false,s.staging_sha?"시험 웹 확인 중":"시험 웹 미배포");
   write("releaseProdSha",s.production_sha?"코드 "+short(s.production_sha):"초기 배포 후 표시됩니다");
   write("releaseHead",cachedHead?"GitHub 최신 코드: "+short(cachedHead):"새로고침하면 GitHub 최신 코드를 확인합니다.");
   const candidate=cachedProposal&&cachedProposal.sha!==s.staging_sha?cachedProposal:null;
@@ -90,27 +224,46 @@
   el("releaseStageApply").disabled=busy||active||!s.production_sha||
     (!candidate&&(!s.draft_sha||s.draft_sha===s.staging_sha));
   el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
-  el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
+  el("releaseProdApply").disabled=true; // Enabled only after SHA-bound static GET.
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
   el("releaseProdRollback").disabled=busy||active||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||active||!s.production_sha;
   el("releaseRefresh").disabled=busy;
   renderHistory("releaseStageHistory",stageHist);
   renderHistory("releaseProdHistory",prodHist);
+  statusVerified=true;
+  if(s.staging_sha)void verifyPreview(s.staging_sha,probeId);
+  setIndependentLink(false,"독립 시험 웹 확인 중");
+  const independentId=++independentProbeId;
+  void verifyIndependentPreview(independentId);
  }
  async function refresh(quiet=false){
   if(busy)return;
   try{
    const data=await request("status",{check_latest:!quiet});
+   if(!data||!data.state||typeof data.state!=="object"||
+      !Object.hasOwn(data.state,"production_sha")||
+      !Array.isArray(data.staging_history)||!Array.isArray(data.production_history))
+     throw Error("배포 상태 응답 형식이 올바르지 않습니다.");
    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
+   const recovered=!statusVerified;
    render(data);
-   if(!quiet)message("업데이트 관리 연결 완료 · 서버 확인 상태");
+   if(!quiet||recovered)message("업데이트 관리 연결 완료 · 서버 확인 상태");
   }catch(err){
-   if(!quiet)message("배포 상태 조회 실패: "+(err.message||String(err)),true);
+   lockReleaseControls();
+   if(err?.status===401||err?.status===403||err?.code==="admin_mfa_required"){
+    denied("관리자 인증 필요: "+(err.message||String(err)));
+    if(timer){clearInterval(timer);timer=null;}
+   }else{
+    // Keep a read-only retry route visible when the initial status fetch fails.
+    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
+    message("배포 상태 조회 실패 · 안전을 위해 배포 버튼을 잠갔습니다. "+
+     "상태 새로고침으로 연결을 다시 확인하세요. ("+(err.message||String(err))+")",true);
+   }
   }
  }
  async function command(action){
-  if(busy)return;
+  if(busy||!statusVerified)return;
   const wording={
    stage_apply:"등록된 버전을 시험 웹에 적용하시겠습니까?",
    stage_rollback:"시험 웹을 바로 이전 버전으로 되돌리시겠습니까?",
@@ -126,7 +279,7 @@
   finally{busy=false;await refresh(true);}
  }
  async function register(event){
-  event.preventDefault();if(busy)return;
+  event.preventDefault();if(busy||!statusVerified)return;
   const version=el("releaseVersionInput").value.trim();
   const summary=el("releaseSummaryInput").value.trim();
   if(!version||summary.length<3)return;

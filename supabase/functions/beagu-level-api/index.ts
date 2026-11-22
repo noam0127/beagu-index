@@ -1,3 +1,4 @@
+import { isBrowserOriginAllowed } from "../_shared/staging-origin.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
@@ -9,7 +10,7 @@ const bytes=new TextEncoder();
 const hex=(buf:Uint8Array)=>Array.from(buf,b=>b.toString(16).padStart(2,'0')).join('');
 const hash=async(s:string)=>hex(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes.encode(s))));
 const token=()=>hex(crypto.getRandomValues(new Uint8Array(32)));
-const cors=(origin:string)=>({'Access-Control-Allow-Origin':allowed.has(origin)?origin:'https://baeguindex.com','Access-Control-Allow-Headers':'content-type, x-beagu-session, apikey, authorization','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Max-Age':'86400','Vary':'Origin'});
+const cors=(origin:string)=>({'Access-Control-Allow-Origin':isBrowserOriginAllowed(origin, allowed)?origin:'https://baeguindex.com','Access-Control-Allow-Headers':'content-type, x-beagu-session, apikey, authorization','Access-Control-Allow-Methods':'POST, OPTIONS','Access-Control-Max-Age':'86400','Vary':'Origin'});
 const send=(body:unknown,status:number,origin:string)=>new Response(JSON.stringify(body),{status,headers:{...cors(origin),'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 async function check(req:Request){
  const v=(req.headers.get('X-Beagu-Session')||'').trim();
@@ -31,7 +32,7 @@ Deno.serve(async(req:Request)=>{
  const origin=req.headers.get('Origin')||'';
  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:cors(origin)});
  if(req.method!=='POST')return send({error:'METHOD_NOT_ALLOWED'},405,origin);
- if(origin&&!allowed.has(origin))return send({error:'ORIGIN_NOT_ALLOWED'},403,origin);
+ if(origin&&!isBrowserOriginAllowed(origin, allowed))return send({error:'ORIGIN_NOT_ALLOWED'},403,origin);
  if((Number(req.headers.get('Content-Length'))||0)>1024)return send({error:'TOO_LARGE'},413,origin);
  let body:Record<string,unknown>;
  try{const reader=req.body?.getReader();if(!reader)throw Error();let size=0,raw='';const decoder=new TextDecoder();while(true){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>1024){await reader.cancel();return send({error:'TOO_LARGE'},413,origin);}raw+=decoder.decode(part.value,{stream:true});}body=JSON.parse(raw+decoder.decode());}catch{return send({error:'INVALID_JSON'},400,origin);}

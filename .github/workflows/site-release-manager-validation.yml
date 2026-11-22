@@ -13,6 +13,8 @@ on:
       - 'supabase/functions/beagu-release-manager-v1/**'
       - 'tests/site-release-center.mjs'
       - 'tests/site-release-two-sha-isolation.py'
+      - 'tests/admin-dashboard-published.cjs'
+      - 'tests/admin-publication-diagnostics*.cjs'
   workflow_dispatch:
 jobs:
   check:
@@ -33,5 +35,6 @@ jobs:
       - name: Test approval and security invariants
         run: |
           node --test tests/site-release-center.mjs
+          node --test tests/admin-publication-diagnostics.test.cjs
           python3 tests/site-release-packaging.py
           python3 tests/site-release-two-sha-isolation.py

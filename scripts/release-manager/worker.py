@@ -92,7 +92,7 @@ def make_preview_banner(target):
         'style="position:fixed;bottom:10px;right:10px;z-index:2147483600;'
         'background:#152943;color:#fff;border-radius:12px;'
         'padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">'
-        '시험 웹 · 운영 데이터 연결 주의</div>'
+        '시험 웹 · 시험 데이터 연결</div>'
     )
     for file in target.rglob("*.html"):
         source = file.read_text(encoding="utf-8", errors="replace")
@@ -105,6 +105,42 @@ def make_preview_banner(target):
                         lambda match: match.group(1) + "=" + match.group(2) + "/_preview/",
                         source)
         file.write_text(source, encoding="utf-8")
+
+
+def isolate_preview_backend(preview_dir):
+    """Fail closed: preview must never write to the live Supabase project.
+
+    Modify only the packaging output; the immutable source and production
+    snapshot remain untouched. Replace hard-coded production URLs in page
+    scripts and HTML as well as the public publishable key in the shared
+    Supabase configuration. Test schemas/functions must be provisioned
+    separately before enabling member E2E.
+    """
+    live_ref = "snvzwrexuqavnfvzgxqj"
+    stage_ref = "ycwuugggqbunlbwuzvbx"
+    live_key = "sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2"
+    stage_key = "sb_publishable_c8h7TaIYONfP56Zc05K0Sw_SxyT3lZU"
+    config = preview_dir / "js" / "supabase-config.js"
+    if not config.is_file():
+        raise RuntimeError("Preview Supabase config is missing")
+    if live_ref not in config.read_text(encoding="utf-8"):
+        raise RuntimeError("Unexpected live Supabase configuration; review manually")
+    changed = 0
+    for file in preview_dir.rglob("*"):
+        if not file.is_file() or file.suffix.lower() not in (".js", ".html", ".mjs"):
+            continue
+        body = file.read_text(encoding="utf-8")
+        modified = body.replace(live_ref, stage_ref).replace(live_key, stage_key)
+        if modified != body:
+            file.write_text(modified, encoding="utf-8")
+            changed += 1
+    if stage_ref not in config.read_text(encoding="utf-8") or changed < 1:
+        raise RuntimeError("Staging Supabase URL rewrite did not complete")
+    for file in preview_dir.rglob("*"):
+        if file.is_file() and file.suffix.lower() in (".js", ".html", ".mjs"):
+            if live_ref in file.read_text(encoding="utf-8"):
+                raise RuntimeError("Production Supabase URL leaked into preview: " + str(file))
+    print("Preview isolated to staging Supabase; rewritten files:", changed)
 
 
 def build():
@@ -123,6 +159,13 @@ def build():
         if nested_cname.exists():
             nested_cname.unlink()
         make_preview_banner(preview_dir)
+        isolate_preview_backend(preview_dir)
+        # Public, immutable proof of the SHA actually packaged for this preview.
+        # This is written after isolation; do not accept a candidate-provided file.
+        health = {"schema": 1, "kind": "staging", "staging_sha": staging,
+                  "supabase_ref": "ycwuugggqbunlbwuzvbx"}
+        (preview_dir / "beagu-preview-health.json").write_text(
+            json.dumps(health, sort_keys=True) + "\n", encoding="utf-8")
         (preview_dir / ".nojekyll").touch()
     if (OUTPUT / "CNAME").read_text(encoding="utf8").strip() != "baeguindex.com":
         raise RuntimeError("Production domain mismatch")

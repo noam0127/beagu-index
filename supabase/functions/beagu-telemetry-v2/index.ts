@@ -1,3 +1,4 @@
+import { isBrowserOriginAllowed } from "../_shared/staging-origin.ts";
 // Visit and live-presence telemetry gateway.
 // All privileged credentials stay in the hosted Edge Function environment.
 // IPs are never returned or logged; the database stores only daily HMACs.
@@ -16,7 +17,7 @@ const pingPages = new Set(['index','search','search-lv1','search-lv2','school-re
   'teacher-run','teacher-class-diary','other']);
 function headers(origin: string) {
   return {
-    'Access-Control-Allow-Origin': allowed.has(origin) ? origin : 'https://baeguindex.com',
+    'Access-Control-Allow-Origin': isBrowserOriginAllowed(origin, allowed) ? origin : 'https://baeguindex.com',
     'Access-Control-Allow-Methods':'POST, OPTIONS',
     'Access-Control-Allow-Headers':'content-type, authorization, apikey, x-client-info',
     'Access-Control-Max-Age':'600',
@@ -93,7 +94,7 @@ async function hashSource(req:Request) {
 }
 Deno.serve(async (req:Request) => {
   const origin=req.headers.get('origin')||'';
-  if(origin && !allowed.has(origin)) return reply({error:'ORIGIN_NOT_ALLOWED'},403,origin);
+  if(origin && !isBrowserOriginAllowed(origin, allowed)) return reply({error:'ORIGIN_NOT_ALLOWED'},403,origin);
   if(req.method==='OPTIONS') return new Response(null,{status:204,headers:headers(origin)});
   if(req.method==='GET') return reply({status:'ready',version:2},200,origin);
   if(req.method!=='POST') return reply({error:'METHOD_NOT_ALLOWED'},405,origin);

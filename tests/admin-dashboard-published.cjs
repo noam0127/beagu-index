@@ -1,6 +1,7 @@
 // Verifies actual published admin login shell, not just repository files.
 // Does not log in, mutate data, or expose dashboard results.
 const assert=require("node:assert/strict");
+const {inspectAdminShell}=require("./admin-publication-diagnostics.cjs");
 const base="https://baeguindex.com/admin.html";
 const onPush=process.env.GITHUB_EVENT_NAME==="push";
 const currentHtml=require('node:fs').readFileSync('admin.html','utf8');
@@ -15,6 +16,7 @@ if(!expectedVersion)throw Error('Local admin asset version not found');
    });
    if(res.status!==200){last="HTTP "+res.status;continue;}
    const html=await res.text();
+   const inspection=inspectAdminShell(html,{expectedVersion,onPush});
    const deployedVersion=html.match(/js\/beagu-admin-access-v1\.js\?v=([a-z0-9-]+)/)?.[1];
    if(html.includes('id="adminSiteHeading"')&&
       html.includes('id="adminSchoolRanking"')&&
@@ -53,7 +55,7 @@ if(!expectedVersion)throw Error('Local admin asset version not found');
       console.log("PASS: published admin login shell and 2026 private evidence intake JS are current");
       return;
    }
-   last="Published HTML has old dashboard revision";
+   last=inspection.ok?"게시 HTML 구성 추가 검증 실패":inspection.reason;
   }catch(e){last=e?.message||String(e)}
   await new Promise(done=>setTimeout(done,6000));
  }
