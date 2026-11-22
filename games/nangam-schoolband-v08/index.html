@@ -753,7 +753,10 @@ function triggerImpact(lane,isPerfect){
  text.className="judgement "+(isPerfect?"perfect":"good");
  ring.style.left=(100*(lane+.5)/INST[instrument].lanes.length)+"%";
  ring.className="impact-ring";
- // Restart the transitions for consecutive, rapidly hit notes.
+ // Explicitly cancel prior CSS animations before restarting on every accepted hit.
+ // Both simultaneous lanes and 139ms sixteenth-note runs need fresh feedback.
+ for(const fx of text.getAnimations())fx.cancel();
+ for(const fx of ring.getAnimations())fx.cancel();
  void text.offsetWidth;void ring.offsetWidth;
  text.className+=" animate";ring.className+=" animate";
  if(window.navigator?.vibrate && !motionReduced)try{window.navigator.vibrate(isPerfect?12:7)}catch(_){}
