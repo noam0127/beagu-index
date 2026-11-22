@@ -1,0 +1,32 @@
+name: Schoolband 021 verified YouTube media discovery and embed
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'games/nangam-schoolband-v08/charts/anthem-media-fixture.v1.json'
+      - 'scripts/test-schoolband-stage021.cjs'
+      - '.github/workflows/schoolband-stage021.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  school-anthem-media:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Validate discovery metadata ID/review safety and source syntax
+        run: node scripts/test-schoolband-stage021.cjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Verify video discovery, test-only preview and game licensing gate
+        run: node scripts/test-schoolband-stage021.cjs --browser
+      - name: Preserve song choice and existing school search
+        run: |
+          node scripts/test-schoolband-stage020.cjs
+          node scripts/test-schoolband-stage019.cjs
