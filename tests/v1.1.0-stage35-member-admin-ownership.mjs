@@ -45,6 +45,15 @@ contains(postit,/if\(t\.author_uid!==user\.id\)return fail\(req,"NOT_OWNER",403\
   'Removing a Post-it requires verified record ownership');
 contains(postit,/\.eq\("id",id\)\.eq\("author_uid",user\.id\)/,
   'Delete/update operation must bind the original author ID');
+contains(postit,/\.eq\("author_uid",user\.id\)\.eq\("status","published"\)/,
+  'Removal must require that the record is still published at update time');
+contains(postit,/\.select\("id"\)\.maybeSingle\(\)/,
+  'Removal must check the actual affected row');
+contains(postit,/if\(!removed\)return fail\(req,"TARGET_UNAVAILABLE",404\)/,
+  'No affected row must not be reported as successful removal');
+ordered(postit,'if(!removed)return fail(req,"TARGET_UNAVAILABLE",404);',
+  'return respond(req,{removed:true});',
+  'Return removal success only after confirming the row changed');
 
 // Admin claims are never taken from the request body or unverified user metadata.
 contains(admin,/await db\.auth\.getUser\(token\)/,
@@ -78,4 +87,4 @@ for(const [name,source] of [['Post-it',postit],['Admin',admin],['Level',level]])
     name+' must not use user-editable metadata for authorization');
 }
 console.log('PASS: writer account-visitor-author binding, owner-only mutation, verified administrator MFA.');
-console.log('SCOPE: static contracts only; staging Auth accounts absent, A-vs-B IDOR E2E pending.');
+console.log('SCOPE: static contracts; prior A/B Auth binding HTTP passed, but actual post deletion HTTP E2E remains pending.');
