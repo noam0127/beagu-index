@@ -40,6 +40,14 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 | 학급일지 접근 | `class-diary-guest-access-v1` | `js/class-diary-home-entry-v1.js` |
 | 학급일지 진행 | `class-diary-progress-v1` | `js/class-diary-progress-v1.js` |
 
+**소스 준비 상태:** 누락된 11개 중 10개는 GitHub 개발 브랜치의
+`supabase/functions/<함수명>/index.ts`가 존재한다. 이는 **시험 배포 가능성
+검토 대상**이라는 뜻이지, SQL 의존성·권한·보안·요금 검증이 끝났다는 뜻은
+아니다. 나머지 **`beagu-edited-api-v1`에는 현재 함수 소스가 없다.**
+`school-report.html`에서는 Lv2 추가 편집본 정보를 불러올 때 해당 API를
+선택적으로 호출하고, 실패 시 추가 항목을 생략한다. 따라서 이 기능은 단순
+배포가 아니라 기존 API 대체 여부 또는 소스 복구를 검토해야 한다.
+
 이것은 정적 코드에서 발견한 함수 참조 현황이다. 모든 해당 코드가
 모든 화면에서 실제 실행되는 것은 아니며, 동적으로 계산한 함수명은
 정적 분석에서 누락될 수 있다. **API가 없다는 사실만 확인했으며**
