@@ -23,6 +23,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium --only-shell
+      - name: Verify approval and mismatch at 1280px and 320px
+        run: node scripts/test-schoolband-stage019.cjs --browser
       - name: Recheck real school-search mock and 3-screen flow on desktop and mobile
         run: node scripts/test-schoolband-stage016.cjs --browser
       - name: Recheck 20 charts and timing boundaries
