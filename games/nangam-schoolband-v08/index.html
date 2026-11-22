@@ -845,11 +845,23 @@ function nameTier(){return LABELS[tierIdx()]}
 // The anthem registry is deliberately empty until stage021-023 have verified
 // identity, score/chart/audio integrity and publication rights for real schools.
 // A metadata URL or YouTube video alone must never unlock game playback.
+// Stage023: Game playback is implemented ONLY for the bundled original chart.
+// A school anthem needs a genuine school-specific rhythm chart/engine mapping;
+// review metadata alone must never cause the original practice tune to masquerade
+// as a school anthem. This empty registry remains an intentional fail-closed gate.
 const REGISTERED_ANTHEMS=Object.freeze({});
+const PLAYABLE_SCHOOL_CHARTS=Object.freeze({});
+const INTERNAL_PLAYTEST_SONG=Object.freeze({
+ song_id:"original-shining-our-school",chart_version:"creative-anthem-rhythm-v1.0.0",
+ source:"built_in_original",school_id:null
+});
 function songAvailability(record){
  const item=record&&REGISTERED_ANTHEMS[record.school_id];
- const ready=!!(item&&item.publicApproved===true&&item.rightsApproved===true&&
-  item.chartValidated===true&&item.schoolId===record.school_id&&item.playable===true);
+ const actual=record&&PLAYABLE_SCHOOL_CHARTS[record.school_id];
+ const ready=!!(item&&actual&&item.publicApproved===true&&item.rightsApproved===true&&
+  item.chartValidated===true&&item.schoolId===record.school_id&&item.playable===true&&
+  actual.school_id===record.school_id&&actual.song_id===item.songId&&
+  actual.runtimeReady===true);
  return {volleyball:true,anthem:ready,reason:ready?"교가 게임용 등록 완료":"게임용 교가 미등록 · 준비 중"};
 }
 function syncSongChoice(){
@@ -1652,8 +1664,12 @@ function animate(){
 }
 async function start(){
  if(playing||startPending||!school)return;
- // Never substitute the practice melody while claiming to play a real anthem.
- if(selectedSong==="anthem"&&!songAvailability(school).anthem){status("게임용 교가가 등록되지 않았습니다. 배구 테마 연습곡을 선택하세요.");return;}
+ // The runtime has only the bundled original song. An "approved" metadata
+ // object cannot unlock an unimplemented school-specific rhythm chart.
+ if(selectedSong!=="volleyball"){
+  status("이 버전에는 학교 교가의 실제 차트가 연결되지 않았습니다. 창작 연습곡을 선택하세요.");
+  return;
+ }
  const audit=validateChartCatalog(PARTS,INST,CHART_VERSION);
  if(!audit.valid){
   status("차트 데이터 검증에 실패했습니다. 이 버전의 연주를 시작할 수 없습니다.");
@@ -1824,7 +1840,7 @@ window.nangamSchoolbandV08={getPerformanceFx:()=>({...FX_PERF,mode:perfFxMode(),
  fullscreen:!!document.fullscreenElement,fullscreenAvailable:!!$("stepPlay").requestFullscreen,
  padRects:[...$("pads").querySelectorAll(".taphit")].map(b=>({lane:Number(b.dataset.lane),x:b.getBoundingClientRect().left,
  y:b.getBoundingClientRect().top,w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height}))}),
-getSelected:()=>school?{...school}:null,getAnthemMediaCount:()=>Array.isArray(VERIFIED_ANTHEM_MEDIA[school?.school_id])?VERIFIED_ANTHEM_MEDIA[school.school_id].filter(m=>validAnthemMedia(m,school.school_id)).length:0,getSong:()=>selectedSong,getSongAvailability:()=>songAvailability(school),chooseSong,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,pitch:n.pitch??null,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),loadGeneratedTrial,
+getSelected:()=>school?{...school}:null,getResolvedSongId:()=>selectedSong==="volleyball"?INTERNAL_PLAYTEST_SONG.song_id:null,getAnthemMediaCount:()=>Array.isArray(VERIFIED_ANTHEM_MEDIA[school?.school_id])?VERIFIED_ANTHEM_MEDIA[school.school_id].filter(m=>validAnthemMedia(m,school.school_id)).length:0,getSong:()=>selectedSong,getSongAvailability:()=>songAvailability(school),chooseSong,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,pitch:n.pitch??null,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),loadGeneratedTrial,
  clearGeneratedTrial,getUxStep:()=>currentUxStep,goToUxStep:goToStep,getUxAvailability:stepAvailability,getGeneratedTrial:()=>generatedTrial?({songId:generatedTrial.catalog.songId,
   chartVersion:generatedTrial.catalog.chartVersion,mode:"internal-private-qa",
   notes:generatedTrial.notes.length,autoplayEvents:generatedTrial.autoEvents.length}):null,getMixLevels:()=>({...MIX_LEVELS}),getAudioLifetime:()=>({...audioLife,activeVoices:liveAudioVoices.size,muted,volumePercent,masterGain:desiredMasterGain(),pendingStart:startPending,hasContext:!!ctx}),getHarmonyByBar:()=>CHORD_ROOTS.map((_,bar)=>harmonyAtBar(bar)),getMelodyHarmonyAudit:()=>checkMelodyHarmony(),getPlaybackState:()=>({playing,paused,pauseReason,transitioning:pauseBusy,audioState:ctx?.state||"none",songTime:ctx?nowSong():null,schedulerStep:step,remainingNotes:chart.filter(n=>!n.done).length}),getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
