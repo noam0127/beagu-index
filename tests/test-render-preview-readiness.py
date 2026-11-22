@@ -68,7 +68,7 @@ assert_fails("missing pages",
     lambda q:q.__setitem__("/challenge.html",(404,q["/challenge.html"][1],"not found")),
     "not deployed")
 assert_fails("missing production isolation header",
-    lambda q:q["/index.html"][1].pop("content-security-policy"),
+    lambda q:q["/"][1].pop("content-security-policy"),
     "CSP")
 assert_fails("production backend leak",
     lambda q:q.__setitem__("/js/supabase-config.js",(200,
