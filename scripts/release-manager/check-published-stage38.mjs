@@ -2,7 +2,8 @@
 /**
  * Read-only Stage 38 acceptance probe for a separately hosted, static RC.
  * Requires an independent, owner-reviewed SHA-256 for the RC manifest.
- * Requests 3 public files with GET and checks exact content hashes and
+ * Requests 4 public files (including the pinned school directory) with GET
+ * and checks exact content hashes and
  * response security headers. No credentials, cookies, authentication, writes,
  * deployment, promotion or release-manager commands are used.
  *
@@ -18,7 +19,7 @@ const PINNED_SHA = "5c95aadad971901a8222f83c52e93bf901a3aeb7";
 const STAGING_REF = "ycwuugggqbunlbwuzvbx";
 const LIVE_REF = "snvzwrexuqavnfvzgxqj";
 const LIVE_KEY = "sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2";
-const DIGEST_PATHS = ["index.html", "js/supabase-config.js", "vercel.json"];
+const DIGEST_PATHS = ["index.html", "js/supabase-config.js", "vercel.json", "data/public-compare-school-directory-v1.json"];
 const SCHEMA = "beagu-independent-preview-package-v1";
 
 const sha256 = value => createHash("sha256").update(value).digest("hex");
@@ -37,7 +38,7 @@ export async function inspectPublishedStaticPreview(
   if (typeof fetcher!=="function") return failure("no_http_client");
   const origin=scope.preview_origin;
   const responses={};
-  for (const path of ["stage38-release-manifest.json","index.html","js/supabase-config.js"]) {
+  for (const path of ["stage38-release-manifest.json","index.html","js/supabase-config.js","data/public-compare-school-directory-v1.json"]) {
     const url=new URL("/"+path,origin).href;
     let response;
     try {
@@ -74,8 +75,10 @@ export async function inspectPublishedStaticPreview(
   }
   const html=responses["index.html"].body;
   const config=responses["js/supabase-config.js"].body;
+  const publicDirectory=responses["data/public-compare-school-directory-v1.json"].body;
   if (sha256(html)!==manifest.files_sha256["index.html"] ||
-      sha256(config)!==manifest.files_sha256["js/supabase-config.js"])
+      sha256(config)!==manifest.files_sha256["js/supabase-config.js"] ||
+      sha256(publicDirectory)!==manifest.files_sha256["data/public-compare-school-directory-v1.json"])
     return failure("deployed_file_hash_mismatch");
   if (!config.includes(STAGING_REF) || !config.includes("ycwuugggqbunlbwuzvbx.supabase.co") ||
       config.includes(LIVE_REF) || config.includes(LIVE_KEY) ||
@@ -98,7 +101,7 @@ export async function inspectPublishedStaticPreview(
     status:"STATIC_HTTP_VERIFIED",
     staticReady:true,realAccountReady:false,productionReleaseReady:false,
     checkedOrigin:origin,pinnedSha:PINNED_SHA,
-    trustedManifestSha256:expectedManifestSha256,checkedAssets:3,
+    trustedManifestSha256:expectedManifestSha256,checkedAssets:4,
     remaining:"Owner approval, real-browser storage separation, staging Auth/RLS and E2E QA"
   };
 }
