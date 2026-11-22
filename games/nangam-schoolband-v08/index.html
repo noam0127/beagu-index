@@ -554,6 +554,10 @@ function correctedInputTime(songTime,offsetMs){
  if(!Number.isFinite(songTime)||!Number.isFinite(offsetMs))return NaN;
  return songTime-offsetMs/1000;
 }
+function clampOffsetMs(value){
+ const n=Number(value);
+ return Number.isFinite(n)?Math.max(-150,Math.min(150,Math.round(n/5)*5)):0;
+}
 // Pure, lane-local nearest-note selector. Never mutates a note or another lane.
 function selectPendingNoteIndex(notes,lane,correctedTime,tierIndex){
  if(!Array.isArray(notes)||!Number.isInteger(lane)||lane<0||!Number.isFinite(correctedTime))return -1;
@@ -570,6 +574,19 @@ function selectPendingNoteIndex(notes,lane,correctedTime,tierIndex){
 // END SCHOOLBAND_TIMING_MODEL_V1
 const $=id=>document.getElementById(id);
 const canvas=$("track"),g=canvas.getContext("2d");
+const OFFSET_STORAGE_KEY="nangam-band-input-offset-ms-v1";
+let inputOffsetMs=0;
+try{inputOffsetMs=clampOffsetMs(localStorage.getItem(OFFSET_STORAGE_KEY))}catch(_){/* private-mode storage may be blocked */ }
+function offsetDisplay(ms){return (ms>0?"+":"")+ms+" ms"}
+function syncOffsetUI(){
+ $("offsetRange").value=String(inputOffsetMs);
+ safeText("offsetValue",offsetDisplay(inputOffsetMs));
+ safeText("offsetSummary",offsetDisplay(inputOffsetMs));
+}
+function saveOffset(){
+ try{localStorage.setItem(OFFSET_STORAGE_KEY,String(inputOffsetMs))}catch(_){}
+ syncOffsetUI();
+}
 let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
 let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0,lastMissAnnouncement=-Infinity;
 let masterBus=null,compressor=null,noiseBuffer=null;
@@ -876,16 +893,10 @@ function triggerImpact(lane,isPerfect){
 }
 function hit(lane){
  if(!playing||!ctx||lane<0||lane>=INST[instrument].lanes.length)return;
- const now=nowSong(),idx=tierIdx();
- let closest=null,dist=Infinity,judgement="outside";
- for(const n of chart){
-  if(n.done||n.lane!==lane)continue;
-  const offset=noteDeltaSeconds(n.t,now),result=judgementForOffset(offset,idx);
-  if(result==="outside")continue;
-  const d=Math.abs(offset);
-  if(d<dist){dist=d;closest=n;judgement=result}
- }
- if(!closest){emptyPresses++;laneFeedback(lane,"empty");status(INST[instrument].lanes[lane][0]+" · 지금 누를 노트가 없습니다.");return}
+ const now=correctedInputTime(nowSong(),inputOffsetMs),idx=tierIdx();
+ const chosen=selectPendingNoteIndex(chart,lane,now,idx);
+ if(chosen<0){emptyPresses++;laneFeedback(lane,"empty");status(INST[instrument].lanes[lane][0]+" · 지금 누를 노트가 없습니다.");return}
+ const closest=chart[chosen],judgement=judgementForOffset(noteDeltaSeconds(closest.t,now),idx);
  closest.done=true;hits++;judged++;combo++;bestCombo=Math.max(bestCombo,combo);
  if(judgement==="perfect"){score+=1000+Math.min(100,combo)*5;perfect++;status("PERFECT ✦ "+INST[instrument].lanes[lane][0])}
  else{score+=600+Math.min(100,combo)*3;good++;status("GOOD! "+INST[instrument].lanes[lane][0])}
@@ -895,9 +906,9 @@ function hit(lane){
 }
 function animate(){
  if(!playing)return;
- const now=nowSong(),idx=tierIdx();
+ const now=nowSong(),idx=tierIdx(),correctedNow=correctedInputTime(now,inputOffsetMs);
  let missedThisFrame=0;
- for(const n of chart){if(!n.done && isNoteMissed(n.t,now,idx)){n.done=true;judged++;miss++;combo=0;missedThisFrame++;laneFeedback(n.lane,"miss");}}
+ for(const n of chart){if(!n.done && isNoteMissed(n.t,correctedNow,idx)){n.done=true;judged++;miss++;combo=0;missedThisFrame++;laneFeedback(n.lane,"miss");}}
  if(missedThisFrame&&now-lastMissAnnouncement>.8){status("MISS · 놓친 노트 "+missedThisFrame+"개");lastMissAnnouncement=now;}
  if(now>=SONG_BEATS*BEAT+.28){finish(false);return}
  $("progress").style.width=Math.max(0,Math.min(100,100*(now/(SONG_BEATS*BEAT))))+"%";
@@ -912,6 +923,7 @@ async function start(){
  score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
+ $("offsetRange").disabled=true;$("offsetReset").disabled=true;
  document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=true);
  $("progress").style.width="0%";safeText("result","연주 중 · 선택한 악기의 노트만 누르세요.");
  status("준비… 1초 뒤 시작!");hud();
@@ -925,6 +937,7 @@ function finish(interrupted){
  if(!playing)return;
  playing=false;clearInterval(timer);cancelAnimationFrame(raf);particles=[];lanePulse.fill(0);clearFxFeedback();
  $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
+ $("offsetRange").disabled=false;$("offsetReset").disabled=false;
  document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);
  if(interrupted){status("연주를 중단했습니다.");safeText("result","다시 시작할 수 있습니다.");}
  else{
@@ -1022,11 +1035,13 @@ document.addEventListener("keydown",e=>{
  e.preventDefault();hit(index);flash(index);
 });
 window.addEventListener("pagehide",()=>{if(playing)finish(true)});
-window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged,combo,bestCombo,miss,emptyPresses}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed})};
+window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
+$("offsetRange").addEventListener("input",()=>{if(playing)return;inputOffsetMs=clampOffsetMs($("offsetRange").value);saveOffset()});
+$("offsetReset").addEventListener("click",()=>{if(playing)return;inputOffsetMs=0;saveOffset()});
 $("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
 $("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
 if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
-renderPads();syncFxSettings();hud();
+renderPads();syncFxSettings();syncOffsetUI();hud();
 })();
 </script>
 </body>
