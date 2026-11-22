@@ -173,7 +173,10 @@ async function browser(){
      return {mix:a.getMixLevels(),gains:window.__stage011Gains.slice(0,4).map(x=>x.gain.value),
       chart:a.getChart(),overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+2};
     });
-    assert.deepEqual(r.gains,[r.mix.master,r.mix.melody,r.mix.ensemble,r.mix.hit]);
+    const expectedGains=[r.mix.master,r.mix.melody,r.mix.ensemble,r.mix.hit];
+    assert.equal(r.gains.length,expectedGains.length,"four gain buses");
+    r.gains.forEach((g,i)=>assert(Math.abs(g-expectedGains[i])<0.00001,
+      "actual WebAudio AudioParam Float32 gain "+i+" expected "+expectedGains[i]+" got "+g));
     assert(r.chart.length>0&&!r.overflow,"original chart or mobile layout broken");
     await p.locator(".stage-wrap").screenshot({path:path.join(OUT,mode+"-harmony-mix.png")});
     await p.locator("#stop").click();assert.deepEqual(errs,[]);
