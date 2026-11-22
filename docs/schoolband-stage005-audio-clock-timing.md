@@ -9,6 +9,7 @@
 - `// BEGIN SCHOOLBAND_TIMING_MODEL_V1`와 `// END SCHOOLBAND_TIMING_MODEL_V1` 구간을 독립 JS 순수 모델로 분리했다. 내부에 DOM, `window`, `AudioContext`, `Date.now`, `performance.now`, `requestAnimationFrame`, 타이머는 존재하지 않는다.
 - `noteTimeSeconds(bar,sixteenth)`: `(bar*4 + sixteenth/4)*BEAT`; 원본 108BPM 8마디와 16분음표를 초 단위로 계산. 차트 노트와 오디오 스케줄러가 **동일 함수**를 사용한다.
 - `noteDeltaSeconds(noteTime,songTime)`: 기준 초 차이. `nowSong()`은 기존과 동일하게 `ctx.currentTime-beginning`을 반환한다.
+- `noteSpawnTimeSeconds(noteTime)`: `noteTime-1.16초`를 반환한다. `noteIsInDrawingWindow(noteTime,songTime)`은 스폰 직전·정확한 스폰 시각·판정선 이후 0.20초까지의 표시 여부를 단일 곡 시각으로 계산한다. 프레임이 몇 번 그려졌는지는 계산에 영향을 미치지 않는다.
 - `noteYForDelta` 및 `noteYAtAudioTime`: 화면 프레임 간격이 아닌 노트 시간과 현재 AudioContext 곡 시간을 입력받아 좌표를 계산한다. 1.16초 프리뷰·240 canvas px 이동·24px 노트 두께의 기존 003단계 개선 값 유지.
 - `judgementForOffset(offset,tierIndex)`: 절댓값 `<= PERFECT`면 `perfect`, PERFECT 초과하면서 `<= WIDTHS`면 `good`, WIDTHS 초과면 `outside`. 노트를 누르는 `hit` 함수는 이 모델의 결과만 사용한다.
 - `isNoteMissed(noteTime,songTime,tierIndex)`: `songTime-noteTime > WIDTHS`인 경우만 MISS. 즉 GOOD 최후 경계에서 정확히 누르면 여전히 GOOD 가능하며 1µs라도 지나면 MISS 영역으로 분류.
@@ -30,6 +31,7 @@
 
 - 단일 명령: `node scripts/test-schoolband-stage005.cjs` — 게임 HTML 인라인 JavaScript 구문 컴파일, 순수 모델 추출·부작용 금지, 전체 난이도의 PERFECT/GOOD/MISS 임계값 + 1µs 앞뒤, 비정상 값·음수·양수 입력, 8마디 차트 시각·노트 좌표·108BPM, 30/60/90/120Hz에서 같은 음악 시각의 일관성 검사.
 - 고의 실패 검출: `EASY GOOD` 0.200초를 0.195초로 바꾼 **메모리상의 테스트 사본**이 반드시 실패해야 한다. 게임 파일 자체는 손상시키지 않는다.
+- 스폰 경계: `-1µs`는 화면 밖, 정확한 `noteSpawnTimeSeconds`에서 화면 등장, 타격선에서는 표시, 판정선 0.199초 이후까지 잔상, 0.201초 이후에는 표시하지 않는지 노트 시각 0초·2초·10초에서 검사한다.
 - Chromium 실브라우저 추가: `node scripts/test-schoolband-stage005.cjs --browser` — PC 1280×900 및 모바일 320×640, 게임에 배포된 실제 순수 함수의 5난이도 판정 경계, Canvas 좌표, 실제 `AudioContext.currentTime` 기반 재생 진행 240ms 안팎, JavaScript 오류 0건.
 - CI 워크플로 `.github/workflows/schoolband-stage005.yml`: 순수 단위→Chromium→기존 20조합 회귀 순서. 이전 003·004 워크플로도 게임 파일 변경 트리거로 자동 재실행.
 - 결과: `artifacts/schoolband-stage005/timing-boundary-results.json`에 수치/브라우저 로그·한계 기록. 이 JSON은 GitHub Actions artifact로 보존한다.
