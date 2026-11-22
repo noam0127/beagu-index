@@ -1,0 +1,55 @@
+name: Stage38 signed worker E2E proof and disabled-runner guard (NO DEPLOY)
+# The only signed worker test passed in GitHub Actions run 45030302748.
+# Its privileged staging-only runner has been replaced by HTTP 410, and the
+# temporary fixture RPC has been dropped. Keep this workflow read-only.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/stage38-signed-worker-e2e.yml'
+      - 'tests/stage38-signed-worker-e2e.py'
+      - 'tests/fixtures/stage38-signed-worker-once/**'
+      - 'tests/fixtures/stage38-signed-worker-e2e.sql'
+permissions:
+  contents: read
+jobs:
+  signed-worker-qa-disabled:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check historic signed OIDC worker remains staging-only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          a=Path('tests/fixtures/stage38-signed-worker-once/index.ts').read_text()
+          q=Path('tests/fixtures/stage38-signed-worker-e2e.sql').read_text()
+          assert 'ycwuugggqbunlbwuzvbx' in a and 'ycwuugggqbunlbwuzvbx' in q
+          assert 'snvzwrexuqavnfvzgxqj' in q
+          assert 'payload.workflow_ref!==WORKFLOW' in a
+          assert 'payload.event_name!=="pull_request"' in a
+          assert 'payload.head_ref!==BRANCH' in a
+          assert 'jwtVerify(bearer,trustedJWKS' in a
+          assert 'beagu_site_release_finalize_v1' in a
+          assert 'beagu_stage38_signed_worker_fixture_v1' in a
+          assert "WHERE target='staging' AND version IN ('STAGE38-FAKE-B','STAGE38-FAKE-A')" in q
+          assert 'GRANT EXECUTE ON FUNCTION public.beagu_stage38_signed_worker_fixture_v1' in q
+          print('PASS: historical signed-worker source restricted to isolated fictional staging releases')
+          PY
+      - name: Confirm privileged one-time worker is disabled permanently (HTTP 410)
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage38-signed-worker-once'
+          status=$(curl --silent --show-error --max-time 20 --output /tmp/worker-disabled.json \
+            --write-out '%{http_code}' --data '{"action":"prepare"}' \
+            -H 'Content-Type: application/json' "$url")
+          test "$status" = 410
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/worker-disabled.json',encoding='utf-8'))
+          assert x.get('status')=='DISABLED'
+          assert x.get('reason')=='STAGE38_SIGNED_WORKER_E2E_COMPLETE'
+          print('PASS: signed staging worker test API permanently disabled with HTTP 410')
+          PY

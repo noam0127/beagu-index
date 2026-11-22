@@ -1,0 +1,375 @@
+name: Stage38 staging member API snapshot contract (NO DEPLOY)
+on:
+  push:
+    branches: ['hotfix/v1.1.0-preview-backend-isolation']
+    paths:
+      - 'tests/fixtures/stage38-staging-admin-members-live-v2/**'
+      - 'tests/stage38-staging-member-live-contract.cjs'
+      - 'tests/fixtures/stage38-staging-admin-access-v1/**'
+      - 'tests/stage38-staging-admin-access-contract.cjs'
+      - 'tests/fixtures/stage38-staging-admin-dashboard-v1/**'
+      - 'tests/stage38-staging-admin-dashboard-contract.cjs'
+      - '.github/workflows/stage38-staging-admin-http-negative.yml'
+      - 'tests/stage38-page-perf-contract.cjs'
+      - 'tests/stage38-staging-live-traffic-contract.cjs'
+      - 'tests/stage38-staging-telemetry-health-contract.cjs'
+      - 'tests/stage38-staging-referral-funnel-contract.cjs'
+      - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
+      - 'tests/stage38-atomic-release-finalize-contract.cjs'
+      - 'tests/stage38-staging-atomic-release-lifecycle-regression.sql'
+      - 'supabase/migrations/stage38_staging_atomic_release_finalize_v1.sql'
+      - 'supabase/migrations/20261122_release_finalization_atomic_v1.sql'
+      - 'supabase/functions/beagu-release-manager-v1/index.ts'
+      - 'tests/stage38-staging-release-readonly-contract.cjs'
+      - 'tests/stage38-staging-auth-mfa-oidc-contract.cjs'
+      - 'tests/fixtures/stage38-staging-auth-mfa-oidc-once/**'
+      - 'tests/fixtures/stage38-staging-release-manager-readonly-v1/**'
+      - 'tests/stage38-staging-dashboard-aggregate-regression.sql'
+      - 'tests/fixtures/stage38-staging-dashboard-rpc.sql'
+      - 'tests/fixtures/stage38-staging-dashboard-tables.sql'
+      - 'supabase/migrations/20261120_admin_dashboard_v1.sql'
+      - 'tests/stage38-staging-referral-funnel-regression.sql'
+      - 'supabase/migrations/stage38_staging_referral_funnel_rpc.sql'
+      - 'supabase/migrations/20261121093000_referral_funnel_private_v1.sql'
+      - 'tests/stage38-staging-telemetry-health-regression.sql'
+      - 'supabase/migrations/stage38_staging_admin_telemetry_health_rpc.sql'
+      - 'supabase/migrations/20261120_telemetry_gateway_v2.sql'
+      - 'supabase/migrations/20261120_telemetry_guard_decision_monitoring.sql'
+      - 'tests/stage38-staging-live-presence-regression.sql'
+      - 'tests/stage38-staging-admin-live-traffic-regression.sql'
+      - 'supabase/migrations/stage38_staging_live_presence_foundation.sql'
+      - 'supabase/migrations/stage38_staging_visits_and_admin_live_traffic.sql'
+      - 'supabase/migrations/20261120_admin_hourly_live_presence.sql'
+      - 'supabase/migrations/20261120_admin_visit_search_exclusion.sql'
+      - 'supabase/migrations/20261120_telemetry_visit_presence_guard.sql'
+      - 'supabase/migrations/20261120_telemetry_v2_public_rpc_cutover.sql'
+      - 'tests/stage38-staging-admin-page-perf-regression.sql'
+      - 'supabase/migrations/stage38_staging_admin_page_perf_rpc.sql'
+      - 'supabase/migrations/20261120_admin_page_perf_v1.sql'
+      - '.github/workflows/stage38-staging-member-live-contract.yml'
+  pull_request:
+    paths:
+      - 'tests/fixtures/stage38-staging-admin-members-live-v2/**'
+      - 'tests/stage38-staging-member-live-contract.cjs'
+      - 'tests/fixtures/stage38-staging-admin-access-v1/**'
+      - 'tests/stage38-staging-admin-access-contract.cjs'
+      - 'tests/fixtures/stage38-staging-admin-dashboard-v1/**'
+      - 'tests/stage38-staging-admin-dashboard-contract.cjs'
+      - 'tests/stage38-page-perf-contract.cjs'
+      - 'tests/stage38-staging-live-traffic-contract.cjs'
+      - 'tests/stage38-staging-telemetry-health-contract.cjs'
+      - 'tests/stage38-staging-referral-funnel-contract.cjs'
+      - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
+      - 'tests/stage38-atomic-release-finalize-contract.cjs'
+      - 'tests/stage38-staging-atomic-release-lifecycle-regression.sql'
+      - 'supabase/migrations/stage38_staging_atomic_release_finalize_v1.sql'
+      - 'supabase/migrations/20261122_release_finalization_atomic_v1.sql'
+      - 'supabase/functions/beagu-release-manager-v1/index.ts'
+      - 'tests/stage38-staging-release-readonly-contract.cjs'
+      - 'tests/stage38-staging-auth-mfa-oidc-contract.cjs'
+      - 'tests/fixtures/stage38-staging-auth-mfa-oidc-once/**'
+      - 'tests/fixtures/stage38-staging-release-manager-readonly-v1/**'
+      - 'tests/stage38-staging-dashboard-aggregate-regression.sql'
+      - 'tests/fixtures/stage38-staging-dashboard-rpc.sql'
+      - 'tests/fixtures/stage38-staging-dashboard-tables.sql'
+      - 'supabase/migrations/20261120_admin_dashboard_v1.sql'
+      - 'tests/stage38-staging-referral-funnel-regression.sql'
+      - 'supabase/migrations/stage38_staging_referral_funnel_rpc.sql'
+      - 'supabase/migrations/20261121093000_referral_funnel_private_v1.sql'
+      - 'tests/stage38-staging-telemetry-health-regression.sql'
+      - 'supabase/migrations/stage38_staging_admin_telemetry_health_rpc.sql'
+      - 'supabase/migrations/20261120_telemetry_gateway_v2.sql'
+      - 'supabase/migrations/20261120_telemetry_guard_decision_monitoring.sql'
+      - 'tests/stage38-staging-live-presence-regression.sql'
+      - 'tests/stage38-staging-admin-live-traffic-regression.sql'
+      - 'supabase/migrations/stage38_staging_live_presence_foundation.sql'
+      - 'supabase/migrations/stage38_staging_visits_and_admin_live_traffic.sql'
+      - 'supabase/migrations/20261120_admin_hourly_live_presence.sql'
+      - 'supabase/migrations/20261120_admin_visit_search_exclusion.sql'
+      - 'supabase/migrations/20261120_telemetry_visit_presence_guard.sql'
+      - 'supabase/migrations/20261120_telemetry_v2_public_rpc_cutover.sql'
+      - 'tests/stage38-staging-admin-page-perf-regression.sql'
+      - 'supabase/migrations/stage38_staging_admin_page_perf_rpc.sql'
+      - 'supabase/migrations/20261120_admin_page_perf_v1.sql'
+      - '.github/workflows/stage38-staging-member-live-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify live staging API security contract snapshot
+        run: node tests/stage38-staging-member-live-contract.cjs
+      - name: Verify staging admin access authentication contract
+        run: node tests/stage38-staging-admin-access-contract.cjs
+      - name: Verify staging dashboard authentication contract
+        run: node tests/stage38-staging-admin-dashboard-contract.cjs
+      - name: Verify pinned staging page-performance RPC and isolated regression
+        run: node tests/stage38-page-perf-contract.cjs
+      - name: Verify original live presence and live-traffic RPC with privacy controls
+        run: node tests/stage38-staging-live-traffic-contract.cjs
+      - name: Verify staging telemetry-health aggregates, access and source parity
+        run: node tests/stage38-staging-telemetry-health-contract.cjs
+      - name: Verify original referral funnel SQL, private grants and fixture rollback contract
+        run: node tests/stage38-staging-referral-funnel-contract.cjs
+      - name: Verify isolated comprehensive dashboard SQL and privacy contract
+        run: node tests/stage38-staging-dashboard-aggregate-contract.cjs
+      - name: Verify isolated release manager is strictly read-only and owner AAL2-gated
+        run: node tests/stage38-staging-release-readonly-contract.cjs
+      - name: Enforce atomic release worker and staging-tested SQL crash consistency
+        run: node tests/stage38-atomic-release-finalize-contract.cjs
+      - name: Validate ephemeral OIDC Auth+MFA test's security and cleanup contract
+        run: node tests/stage38-staging-auth-mfa-oidc-contract.cjs
+      - name: Check one-time staging Auth test runner is permanently disabled
+        run: |
+          status=$(curl --silent --show-error --max-time 15 \
+            --output /tmp/stage38-disabled.json --write-out '%{http_code}' \
+            https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage38-auth-mfa-once)
+          test "$status" = 410
+          python3 - <<'PY'
+          import json
+          body=json.load(open('/tmp/stage38-disabled.json',encoding='utf-8'))
+          assert body.get('status')=='DISABLED'
+          assert body.get('reason')=='STAGE38_AUTH_MFA_QA_COMPLETE'
+          print('PASS: staging one-time Auth+MFA runner disabled with HTTP 410')
+          PY
+      - name: Validate preflight and forbidden browser origins on isolated staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-admin-members-v1"
+          for origin in "https://baeguindex.com" "https://attacker.invalid"; do
+            headers=$(mktemp)
+            status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X POST -H "Origin: $origin" -H 'Content-Type: application/json' --data '{"action":"list"}' "$url")
+            test "$status" = 403
+            if grep -qi '^access-control-allow-origin:' "$headers"; then echo "FAIL: forbidden origin received CORS approval"; exit 1; fi
+            echo "PASS: forbidden origin $origin denied (403)"
+          done
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: http://localhost:8000' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: http://localhost:8000' "$headers"
+          echo "PASS: localhost preflight allowed (204)"
+      - name: Confirm no deployment
+        run: echo "Static test only. No Supabase deploy or production changes."
+
+  anonymous-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check isolated staging admin API denies unauthenticated requests
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-admin-members-v1"
+          for scenario in anonymous forged; do
+            if [ "$scenario" = anonymous ]; then
+              status=$(curl --silent --show-error --max-time 15 --output response.json --write-out '%{http_code}' -H 'Content-Type: application/json' --data '{"action":"list"}' "$url")
+            else
+              status=$(curl --silent --show-error --max-time 15 --output response.json --write-out '%{http_code}' -H 'Content-Type: application/json' -H 'Authorization: Bearer invalid.stage38.token' --data '{"action":"list"}' "$url")
+            fi
+            case "$status" in 401|403) echo "PASS: $scenario rejected ($status)";; *) echo "FAIL: $scenario HTTP $status"; exit 1;; esac
+            python3 - <<'PY'
+          import json
+          body=open("response.json",encoding="utf-8").read()
+          try:
+              data=json.loads(body)
+          except json.JSONDecodeError:
+              data={}
+          assert not any(k in data for k in ("members","users","phone","email","data"))
+          PY
+          done
+
+  staging-auth-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Check isolated staging Auth service availability (no user creation)
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://ycwuugggqbunlbwuzvbx.supabase.co/auth/v1"
+          publishable_key="sb_publishable_c8h7TaIYONfP56Zc05K0Sw_SxyT3lZU"
+          status=$(curl --silent --show-error --max-time 15 --output health.json --write-out '%{http_code}' -H "apikey: $publishable_key" "$base/health")
+          echo "Auth health HTTP $status"
+          test "$status" = 200
+          python3 - <<'PY'
+          import json
+          data=json.load(open('health.json',encoding='utf-8'))
+          assert isinstance(data,dict)
+          print('PASS: staging Auth health 200')
+          PY
+          status=$(curl --silent --show-error --max-time 15 --output settings.json --write-out '%{http_code}' -H "apikey: $publishable_key" "$base/settings")
+          echo "Auth settings HTTP $status"
+          test "$status" = 200
+          python3 - <<'PY'
+          import json
+          data=json.load(open('settings.json',encoding='utf-8'))
+          assert isinstance(data,dict) and 'external' in data
+          flags={k:data.get(k, 'not_advertised') for k in ('disable_signup','mailer_autoconfirm','phone_autoconfirm')}
+          flags['email_provider']=data.get('external',{}).get('email','not_advertised')
+          print('STAGING_AUTH_PUBLIC_FLAGS:', json.dumps(flags, sort_keys=True))
+          print('PASS: staging Auth settings reachable; no account or session created')
+          PY
+      - name: Reject invalid password login and forged user token (no signup)
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://ycwuugggqbunlbwuzvbx.supabase.co/auth/v1"
+          publishable_key="sb_publishable_c8h7TaIYONfP56Zc05K0Sw_SxyT3lZU"
+          status=$(curl --silent --show-error --max-time 15 --output login-negative.json --write-out '%{http_code}' -H "apikey: $publishable_key" -H 'Content-Type: application/json' --data '{"email":"stage38-nonexistent@example.invalid","password":"nonexistent-stage38-password"}' "$base/token?grant_type=password")
+          case "$status" in 400|401|422) echo "PASS: nonexistent credential rejected ($status)";; *) echo "FAIL: unexpected login status $status"; exit 1;; esac
+          python3 - <<'PY'
+          import json
+          d=json.load(open('login-negative.json',encoding='utf-8'))
+          assert isinstance(d,dict)
+          assert not any(k in d for k in ('access_token','refresh_token','user','session'))
+          print('PASS: rejected login did not return session or tokens')
+          PY
+          status=$(curl --silent --show-error --max-time 15 --output user-negative.json --write-out '%{http_code}' -H "apikey: $publishable_key" -H 'Authorization: Bearer invalid.stage38.token' "$base/user")
+          case "$status" in 401|403) echo "PASS: forged access token rejected ($status)";; *) echo "FAIL: unexpected /user status $status"; exit 1;; esac
+          python3 - <<'PY'
+          import json
+          d=json.load(open('user-negative.json',encoding='utf-8'))
+          assert isinstance(d,dict)
+          assert not any(k in d for k in ('access_token','refresh_token','user','session','email','phone'))
+          print('PASS: forged token returned no user profile')
+          PY
+
+  admin-access-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify isolated staging admin Auth gate negative HTTP paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-admin-access"
+          for scenario in anonymous forged forbidden_origin; do
+            headers=$(mktemp)
+            case "$scenario" in
+              anonymous)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+              forged)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' -H 'Authorization: Bearer invalid.stage38.token' --data '{"action":"verify"}' "$url");;
+              forbidden_origin)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: https://baeguindex.com' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+            esac
+            case "$scenario:$status" in
+              anonymous:401|forged:401|forbidden_origin:403) echo "PASS: $scenario denied ($status)";;
+              *) echo "FAIL: $scenario unexpectedly HTTP $status"; exit 1;;
+            esac
+            if [ "$scenario" = forbidden_origin ]; then
+              if grep -qi '^access-control-allow-origin:' "$headers"; then
+                echo "FAIL: production origin received CORS approval"; exit 1
+              fi
+            fi
+            python3 - <<'PY'
+          import json
+          data=json.load(open("response.json",encoding="utf-8"))
+          assert not any(key in data for key in ("permitted","role","mfa_verified","members","user","access_token"))
+          PY
+          done
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: http://localhost:8000' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: http://localhost:8000' "$headers"
+          echo "PASS: staging localhost preflight allowed (204)"
+
+  admin-dashboard-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify isolated staging dashboard anonymous and invalid session rejection
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-admin-dashboard-v1"
+          for scenario in anonymous forged forbidden_origin; do
+            headers=$(mktemp)
+            case "$scenario" in
+              anonymous)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"dashboard","period":"7d"}' "$url");;
+              forged)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' -H 'Authorization: Bearer invalid.stage38.token' --data '{"action":"live_traffic","period":"today"}' "$url");;
+              forbidden_origin)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: https://baeguindex.com' -H 'Content-Type: application/json' --data '{"action":"dashboard","period":"all"}' "$url");;
+            esac
+            case "$scenario:$status" in
+              anonymous:401|forged:401|forbidden_origin:403) echo "PASS: dashboard $scenario rejected ($status)";;
+              *) echo "FAIL: dashboard $scenario status $status"; exit 1;;
+            esac
+            if [ "$scenario" = forbidden_origin ]; then
+              if grep -qi '^access-control-allow-origin:' "$headers"; then
+                echo "FAIL: production origin received dashboard CORS approval"; exit 1
+              fi
+            fi
+            python3 - <<'PY'
+          import json
+          d=json.load(open("response.json",encoding="utf-8"))
+          assert not any(key in d for key in ("analytics","traffic","performance","telemetry_health","access_token","user"))
+          PY
+          done
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: http://127.0.0.1:38738' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: http://127.0.0.1:38738' "$headers"
+          echo "PASS: dashboard local QA preflight 204"
+
+  release-manager-readonly-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify staging release API denies anonymous, forged and production browser requests
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-release-manager-v1"
+          for scenario in anonymous_status forged_status anonymous_stage anonymous_prod anonymous_worker forbidden_origin; do
+            headers=$(mktemp)
+            case "$scenario" in
+              anonymous_status)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+              forged_status)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Authorization: Bearer invalid.stage38.token' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+              anonymous_stage)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"stage_apply"}' "$url");;
+              anonymous_prod)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"prod_rollback"}' "$url");;
+              anonymous_worker)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: http://localhost:8000' -H 'Content-Type: application/json' --data '{"action":"worker_next"}' "$url");;
+              forbidden_origin)
+                status=$(curl --silent --show-error --max-time 15 --output response.json --dump-header "$headers" --write-out '%{http_code}' -H 'Origin: https://baeguindex.com' -H 'Content-Type: application/json' --data '{"action":"status"}' "$url");;
+            esac
+            case "$scenario:$status" in
+              anonymous_status:401|forged_status:401|anonymous_stage:401|anonymous_prod:401|anonymous_worker:401|forbidden_origin:403)
+                echo "PASS: staging release $scenario denied ($status)";;
+              *) echo "FAIL: unexpected release API response: $scenario $status"; exit 1;;
+            esac
+            if [ "$scenario" = forbidden_origin ] && grep -qi '^access-control-allow-origin:' "$headers"; then
+              echo "FAIL: production origin received preview CORS"; exit 1
+            fi
+            python3 - <<'PY'
+          import json
+          data=json.load(open("response.json",encoding="utf-8"))
+          assert "error" in data
+          assert not any(x in data for x in ("state","job","queued","production_sha","access_token"))
+          PY
+            rm -f "$headers" response.json
+          done
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: http://127.0.0.1:38738' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 204
+          grep -qi '^access-control-allow-origin: http://127.0.0.1:38738' "$headers"
+          echo "PASS: staging localhost release preflight allowed (204)"
+          headers=$(mktemp)
+          status=$(curl --silent --show-error --max-time 15 --output /dev/null --dump-header "$headers" --write-out '%{http_code}' -X OPTIONS -H 'Origin: https://baeguindex.com' -H 'Access-Control-Request-Method: POST' "$url")
+          test "$status" = 403
+          if grep -qi '^access-control-allow-origin:' "$headers"; then echo "FAIL: forbidden preflight approved"; exit 1; fi
+          echo "PASS: production release preflight denied (403)"

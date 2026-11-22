@@ -1,0 +1,43 @@
+name: Stage38 staging member API unauthenticated HTTP checks (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/stage38-staging-admin-http-negative.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unauthenticated-http:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm staging URL is not production
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "ycwuugggqbunlbwuzvbx" != "snvzwrexuqavnfvzgxqj"
+      - name: Anonymous request must not return privileged data
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-admin-members-v1"
+          for scenario in anonymous invalid_token; do
+            if [ "$scenario" = anonymous ]; then
+              status=$(curl --silent --show-error --location --max-time 15 --output response.json --write-out '%{http_code}' -H 'Content-Type: application/json' --data '{"action":"list"}' "$url")
+            else
+              status=$(curl --silent --show-error --location --max-time 15 --output response.json --write-out '%{http_code}' -H 'Content-Type: application/json' -H 'Authorization: Bearer invalid.stage38.token' --data '{"action":"list"}' "$url")
+            fi
+            case "$status" in 401|403) ;; *) echo "Unexpected HTTP status for $scenario: $status"; exit 1;; esac
+            python3 - <<'PY'
+import json
+body=open("response.json",encoding="utf-8").read()
+try:
+  data=json.loads(body)
+except json.JSONDecodeError:
+  data={}
+assert not any(key in data for key in ("members","users","phone","email","data")), "Sensitive data in rejected response"
+PY
+            echo "PASS $scenario denied ($status)"
+          done
+      - name: No deploy
+        run: echo "Staging anonymous negative HTTP checks only; no database mutations, no production access."

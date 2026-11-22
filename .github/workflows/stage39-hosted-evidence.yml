@@ -1,0 +1,39 @@
+name: Stage39 hosted RC evidence gate (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - 'scripts/release-manager/stage39-hosted-rc-evidence.mjs'
+      - 'tests/stage39-hosted-rc-evidence.test.mjs'
+      - '.github/workflows/stage39-hosted-evidence.yml'
+  push:
+    branches:
+      - 'hotfix/v1.1.0-preview-backend-isolation'
+    paths:
+      - 'scripts/release-manager/stage39-hosted-rc-evidence.mjs'
+      - 'tests/stage39-hosted-rc-evidence.test.mjs'
+      - '.github/workflows/stage39-hosted-evidence.yml'
+permissions:
+  contents: read
+jobs:
+  prove-no-go-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+      - run: node --test tests/stage39-hosted-rc-evidence.test.mjs
+      - name: Refuse to equate old test deployment with release candidate
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import {validateStage39Evidence} from './scripts/release-manager/stage39-hosted-rc-evidence.mjs';
+          const current={project_id:'prj_AfPd5IvdT6DlIJkTuSfGxu2PaVVA',target:'production',state:'READY',source_sha:'d746bf18f4cadce77f516243939b1b5c352f8f29'};
+          let refused=false;
+          try {validateStage39Evidence(current)} catch {refused=true}
+          if(!refused) throw new Error('Old test deployment incorrectly accepted');
+          console.log('PASS: mismatched hosted RC refuses stage39 closure');
+          JS

@@ -25,4 +25,16 @@ with tempfile.TemporaryDirectory() as temp:
     assert 'beagu-preview-watermark' in source
     assert '시험 웹' in source
     assert (worker.OUTPUT / "CNAME").read_text().strip()=="baeguindex.com"
-print("PASS: immutable production snapshot + marked preview")
+    live = "snvzwrexuqavnfvzgxqj"
+    stage = "ycwuugggqbunlbwuzvbx"
+    prod_config = (worker.OUTPUT / "js/supabase-config.js").read_text()
+    stage_config = (worker.OUTPUT / "_preview/js/supabase-config.js").read_text()
+    assert live in prod_config
+    assert live not in stage_config
+    assert stage in stage_config
+    for file in (worker.OUTPUT / "_preview").rglob("*"):
+        if file.is_file() and file.suffix in (".html", ".js", ".mjs"):
+            assert live not in file.read_text(encoding="utf-8"), file
+    assert live in (worker.OUTPUT / "js/beagu-level-state-v1.js").read_text()
+    assert stage in (worker.OUTPUT / "_preview/js/beagu-level-state-v1.js").read_text()
+print("PASS: immutable production snapshot + marked, isolated preview")

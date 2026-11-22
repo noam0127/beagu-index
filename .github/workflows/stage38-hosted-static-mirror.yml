@@ -1,0 +1,78 @@
+name: Stage38 public STATIC RC mirror (NO AUTH, NO GITHUB PAGES)
+on:
+  push:
+    branches: ['hotfix/v1.1.0-preview-backend-isolation']
+    paths:
+      - 'scripts/release-manager/build-stage38-static-mirror.py'
+      - 'tests/stage38-hosted-static-smoke.cjs'
+      - '.github/workflows/stage38-hosted-static-mirror.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+
+concurrency:
+  group: stage38-immutable-static-mirror
+  cancel-in-progress: false
+
+jobs:
+  prepare-and-verify-static-mirror:
+    # This is explicitly NOT GitHub Pages, the release-controller, or a deploy job.
+    if: github.repository == 'noam0127/beagu-index'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify RC branch and immutable SHA
+        run: |
+          test "$(git rev-parse refs/remotes/origin/release/v1.1.0-rc.1)" = 5c95aadad971901a8222f83c52e93bf901a3aeb7
+          test "$(git cat-file -t 5c95aadad971901a8222f83c52e93bf901a3aeb7)" = commit
+      - name: Build pinned isolated RC and audit source
+        run: |
+          python3 tests/stage38-real-rc-packaging.py
+          python3 scripts/release-manager/build-offline-rc-bundle.py
+      - name: Strip credentials and all network APIs from external static mirror
+        run: |
+          python3 scripts/release-manager/build-stage38-static-mirror.py
+          test ! -f _preview_standalone_site/CNAME
+          test -f _preview_standalone_site/stage38-static-mirror.json
+      - name: Push STATIC-only tree onto a unique non-production Git branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=stage38-static-review-rc-5c95aad
+          output="$RUNNER_TEMP/stage38-static-mirror"
+          mkdir -p "$output"
+          cp -a _preview_standalone_site/. "$output/"
+          cd "$output"
+          git init --initial-branch="$target"
+          git config user.name 'beagu-stage38-static-review[bot]'
+          git config user.email 'no-reply-stage38@users.noreply.github.com'
+          git add -A
+          git commit -m 'Static-only independently hosted mirror of pinned v1.1.0 RC (no Auth)'
+          git remote add origin "https://github.com/noam0127/beagu-index.git"
+          if git ls-remote --exit-code origin "refs/heads/$target" >/dev/null 2>&1; then
+            echo "PASS: immutable static preview branch already exists; no overwrite performed"
+          else
+            auth_header=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth_header" \
+              push origin "HEAD:refs/heads/$target"
+            unset auth_header
+          fi
+          echo "PUBLIC STATIC MIRROR URL: https://raw.githack.com/noam0127/beagu-index/$target/index.html"
+          echo 'No GitHub Pages, no main branch, no Supabase or release worker mutations.'
+      - name: Install temporary Chromium for real hosted HTTP smoke
+        run: |
+          npm install --prefix .stage38-browser-deps --no-save --no-package-lock playwright@1.56.1
+          .stage38-browser-deps/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify five EXTERNAL hosted static RC pages in Chromium
+        env:
+          NODE_PATH: .stage38-browser-deps/node_modules
+        run: node tests/stage38-hosted-static-smoke.cjs

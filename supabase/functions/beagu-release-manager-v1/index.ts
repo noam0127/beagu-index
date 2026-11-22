@@ -247,34 +247,23 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
     .select("*").eq("id",id).maybeSingle();
   if(e||!job)return error("job_not_found",404,origin);
   if(job.status!=="running")return error("job_not_running",409,origin);
+  // One PostgreSQL transaction must own pointer, immutable history and job
+  // completion. Independent Data API updates risk half-applied releases if
+  // a history insert or job completion fails after the pointer moves.
+  // Migration 20261122_release_finalization_atomic_v1.sql must be verified
+  // and deployed before this worker API version is activated in production.
   if(action==="worker_fail"){
-   await db.from("beagu_site_release_jobs_v1").update({
-    status:"failed",finished_at:new Date().toISOString(),error_code:"deployment_failed"
-   }).eq("id",id).eq("status","running");
+   const {data:failed,error:failure}=await db.rpc("beagu_site_release_finalize_v1",{
+    p_job_id:id,p_outcome:"failed",p_deployed_url:null
+   });
+   if(failure||failed?.ok!==true)throw Error("atomic_release_fail_unavailable");
    return respond({ok:true},200,origin);
   }
-  const current=await state();
-  const update=job.action==="data_refresh"?
-   {public_data_blob_sha:job.public_data_blob_sha,updated_at:new Date().toISOString()}:
-   job.target==="staging"?
-   {staging_sha:job.to_sha,staging_version:job.version,
-    public_data_blob_sha:job.public_data_blob_sha||current.public_data_blob_sha,
-    updated_at:new Date().toISOString()}:
-   {production_sha:job.to_sha,production_version:job.version,
-    public_data_blob_sha:job.public_data_blob_sha||current.public_data_blob_sha,
-    updated_at:new Date().toISOString()};
-  const {error:stErr}=await db.from("beagu_site_release_state_v1").update(update).eq("id",1);
-  if(stErr)throw Error("commit_unavailable");
   const deployedUrl=job.target==="staging"?"https://baeguindex.com/_preview/":"https://baeguindex.com/";
-  const {error:histErr}=await db.from("beagu_site_release_history_v1").insert({
-   job_id:id,target:job.target,action:job.action,version:job.version,summary:job.summary,
-   from_sha:job.from_sha,to_sha:job.to_sha,deployed_url:deployedUrl
+  const {data:committed,error:commitError}=await db.rpc("beagu_site_release_finalize_v1",{
+   p_job_id:id,p_outcome:"deployed",p_deployed_url:deployedUrl
   });
-  if(histErr&&histErr.code!=="23505")throw Error("history_unavailable");
-  const {error:jobErr}=await db.from("beagu_site_release_jobs_v1").update({
-   status:"deployed",finished_at:new Date().toISOString(),deployed_url:deployedUrl
-  }).eq("id",id).eq("status","running");
-  if(jobErr)throw Error("finalize_unavailable");
+  if(commitError||committed?.ok!==true)throw Error("atomic_release_commit_unavailable");
   return respond({ok:true,version:job.version,url:deployedUrl},200,origin);
  }
  return error("invalid_action",400,origin);

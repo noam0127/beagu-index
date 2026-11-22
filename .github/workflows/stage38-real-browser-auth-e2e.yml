@@ -1,0 +1,51 @@
+name: Stage38 real Chromium Auth UI E2E proof (ONE-SHOT RUN COMPLETED)
+# Historical real-browser test passed in Actions 45027770567.
+# Temporary credential provisioner has been disabled at Supabase HTTP 410.
+# This workflow is now read-only: never create accounts or elevate privileges.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/stage38-real-browser-auth-e2e.yml'
+      - 'tests/stage38-real-browser-auth-mfa.cjs'
+      - 'tests/fixtures/stage38-browser-auth-oidc-once/**'
+permissions:
+  contents: read
+jobs:
+  assert-ephemeral-auth-provider-disabled:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify historic signed-run browser test code remains scoped to staging
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          browser=Path('tests/stage38-real-browser-auth-mfa.cjs').read_text()
+          fixture=Path('tests/fixtures/stage38-browser-auth-oidc-once/index.ts').read_text()
+          assert '5c95aadad971901a8222f83c52e93bf901a3aeb7' in browser
+          assert 'ycwuugggqbunlbwuzvbx' in browser and 'ycwuugggqbunlbwuzvbx' in fixture
+          assert 'snvzwrexuqavnfvzgxqj' in browser
+          assert 'refs/pull/244/merge' in fixture and 'event_name==="pull_request"' in fixture
+          assert 'auth.admin.deleteUser' in fixture or 'client.auth.admin.deleteUser' in fixture
+          assert 'finally' in browser
+          print('PASS: historic real-browser Auth E2E source bound to pinned RC and test-only identities')
+          PY
+      - name: Confirm temporary Auth fixture endpoint no longer creates accounts
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint='https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage38-browser-auth-once'
+          status=$(curl --silent --show-error --max-time 15 \
+            -o /tmp/stage38-browser-fixture-disabled.json \
+            -w '%{http_code}' --data '{"action":"create"}' \
+            -H 'Content-Type: application/json' "$endpoint")
+          test "$status" = 410
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/stage38-browser-fixture-disabled.json',encoding='utf-8'))
+          assert x.get('status')=='DISABLED'
+          assert x.get('reason')=='STAGE38_BROWSER_AUTH_QA_COMPLETE'
+          print('PASS: temporary staging Auth fixture provider disabled (HTTP 410); no credential minting')
+          PY
