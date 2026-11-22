@@ -65,3 +65,12 @@ test("the existing release center never contains service-role credentials or pus
  assert.doesNotMatch(ui,/github_pat|GITHUB_TOKEN/i);
  assert.doesNotMatch(ui,/deploy-pages|workflow_dispatch/);
 });
+
+test("admin UI explains exact missing evidence without promising a deployment",()=>{
+ for(const name of ["ci_attestation_missing","ci_attestation_stale",
+  "ci_jobs_incomplete","ci_github_unavailable","ci_candidate_not_main_head",
+  "release_bootstrap_ci_required","release_data_refresh_ci_required"]){
+  assert(ui.includes(name+":"),name+" must have a human-readable error");
+ }
+ assert.match(ui,/완료되면 아래 버전 기록이 바뀝니다/);
+});
