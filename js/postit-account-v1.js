@@ -84,7 +84,7 @@ async function executeAuth(action){
    message('문자 수신을 원하시면 010으로 시작하는 11자리 번호를 입력해 주세요.');return;
   }
   const {error}=action==='signup'
-   ?await client.auth.signUp({email,password,options:{data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}})
+   ?await client.auth.signUp({email,password,options:{emailRedirectTo:new URL('postit.html',location.href).href,data:{beagu_sms_opt_in:wantsSms,beagu_sms_phone:wantsSms?mobile:null}}})
    :await client.auth.signInWithPassword({email,password});
   if(error)throw error;
   $('postitAccountPassword').value='';
