@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "version": "v1.1.0-rc.1",
+  "kind": "release_candidate",
+  "status": "REGISTERED_NOT_DEPLOYED",
+  "registered_on": "2026-11-22",
+  "source": {
+    "repository": "noam0127/beagu-index",
+    "branch": "develop/v1.1.0-lv3",
+    "commit_sha": "5c95aadad971901a8222f83c52e93bf901a3aeb7",
+    "pr_number": 195,
+    "pr_state": "draft"
+  },
+  "immutable_candidate": {
+    "branch": "release/v1.1.0-rc.1",
+    "commit_sha": "5c95aadad971901a8222f83c52e93bf901a3aeb7",
+    "ref_policy": "SHA_PINNED_BRANCH_ALIAS_NO_FORCE_MOVE"
+  },
+  "changes": {
+    "scope": "42-step v1.1.0 integrated development through step 36",
+    "changed_files_at_snapshot": 94,
+    "pr_commits_at_snapshot": 191,
+    "summary": [
+      "Lv1/Lv2/Lv3 인증과 참여자-정식계정 연동, 회원 소유권 검증",
+      "2026 결과 공개시점 분리(24시간/6시간/검증된 Lv3 즉시) 및 민감문항 차단",
+      "포스트잇 본인 작성·수정·삭제 경계, 관리자 MFA·감사기록 강화",
+      "시험/운영 SHA 분리, 시험 배포 분리·회귀 테스트 및 HTTP 진단"
+    ]
+  },
+  "evidence": {
+    "stage35_security": 44971548677,
+    "stage36_static_and_http": 44971985581,
+    "member_ab_http": 44970020726,
+    "lv3_ab_http": 44970740689,
+    "release_policy_http": 44971404999
+  },
+  "deployment": {
+    "staging_web_applied": false,
+    "production_applied": false,
+    "production_authorized": false,
+    "production_release": "NO_GO",
+    "note": "Only GitHub source snapshot; published /_preview still points to existing code"
+  },
+  "blocks": [
+    "real administrator AAL2 session/MFA positive moderation and audit E2E",
+    "real 2026 approved publication pipeline and re-identification safety review",
+    "actual signup email ownership confirmation and delivery E2E",
+    "manual release approval, trial deployment and rollback proof"
+  ],
+  "integration": {
+    "merge_to_main": false,
+    "base_main_divergence_at_capture": {
+      "ahead_commits": 191,
+      "behind_commits": 10
+    },
+    "requires_rebase_or_conflict_review": true
+  },
+  "candidate_sha_is_authority": true
+}
