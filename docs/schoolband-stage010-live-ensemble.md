@@ -65,4 +65,13 @@ API `getAudioEvents()`는 이벤트 사본을 반환, `getAudioPlan(step)`은 �
 
 ## 실제 검증 결과
 
-**PENDING:** 테스트 전체 CI PASS 및 아티팩트 재확인 후에만 `010단계종료`로 기록한다.
+**PASS — 010/030 단계 자동검증과 실제 브라우저 32개 레인 합주·타격음 기록 완료.**
+
+- **CI:** [GitHub Actions run 45003955597](https://github.com/noam0127/beagu-index/actions/runs/45003955597) `completed/success`, 검증 대상 실제 코드 커밋 **`64b29736c696d61ed08b300087f7d2a4ccab058b`**. 테스트 도구에서 첫 시도에 순수 오디오 함수를 소스 앞부분으로 잘못 추출한 문제, 두 번째에 키보드가 1번 화음 레인부터 시작하는 실제 노트 순서를 반영하지 못한 문제, 세 번째에 2개 뷰포트 합계 카운트 변수가 함수 안에 선언된 문제를 모두 고쳐 최종 통과했다. 이는 단위 테스트 검사 누락을 숨기지 않고 수정한 과정이다.
+- **실제 리듬게임·오디오 검증:** PC 1280px와 모바일 320px Chromium에서 **기타 4·드럼 4·베이스 3·키보드 5 = 16개 레인 × 2뷰포트 = 32개 hit** 모두 실제 차트의 해당 노트 시각에 점수 1회 증가, 브라우저 Web Audio 오실레이터/노이즈 소스 `start()` 호출 확인, 악기별 구조화 `source:"hit"` 이벤트 1개 확인. 자동 반주에는 선택한 악기의 `source:"auto"`가 0건이며, 창작곡 선율 `part:"melody"` 및 선택하지 않은 악기의 `source:"auto"`는 계속 생성된다.
+- **기타 음색:** 리프 sawtooth 1발음, 파워코드 sawtooth 2 + triangle 1, 업스트럼 sawtooth 3개(`0/17/34 ms` 간격 실제 Web Audio 예약 시간 차이 확인), 고음 리프 sawtooth+triangle 2발음. **드럼 음색:** 킥 sine, 스네어 triangle+noise, 하이햇 noise, 탐 triangle + 독립적 하강 주파수 엔벌로프 구현. 베이스 triangle·키보드 sine 악기별 기존 발음 보존.
+- **MISS와 음소거:** 각 악기/각 뷰포트에서 미적중 노트가 `source:"miss", audible:false`로 기록되며 선택 파트의 자동연주가 생기지 않음을 확인. 각 뷰포트의 음소거 상태에서 실제 기타 첫 타격은 점수 **1회 증가**하되 신규 Web Audio 발음 소스 **0개** 생성, 로그 `audible:false` 확인. 이벤트 로그는 개인정보·학교명·원점수 없이 최대 384건으로 제한.
+- **원본 차트·판정 회귀:** 동일 CI에서 009단계 정식 JSON Schema/차트 20조합과 손상 차트 브라우저 차단, 008단계 차트/레인 순수 계약, 004단계 콤보 3→5·동시노트·MISS·GOOD/OS reduced motion·진동 옵트인, 005단계 PERFECT/GOOD/MISS 수치 98건·좌표 121건·가상 FPS 28건 모두 PASS. 모든 단계 실패 없이 실행됨.
+- **실제 아티팩트:** [schoolband-stage010-live-ensemble-proof](https://github.com/noam0127/beagu-index/actions/runs/45003955597/artifacts/14746838912) (136,406 bytes). ZIP을 내려받아 `results.json`, `desktop-guitar-ensemble.png`, `desktop-drums-ensemble.png`, `mobile320-guitar-ensemble.png`, `mobile320-drums-ensemble.png` **총 5개 파일**을 확인. JSON에서 8개 악기·뷰포트 조합과 음소거 2회가 모두 `passed:true`, 오류가 없고 업스트럼 발음이 실제 `1.8924263 / 1.9094263 / 1.9264263`초 시작으로 17ms·34ms 차이남을 확인.
+- **7개 전문가 역할 최종 판단:** 실제 Web Audio 노드 생성과 채점 분리는 검증했지만 인간의 실제 귀로 청음한 리뷰가 아니므로 음질·음량 밸런스·Clipping 회피·스피커에서 두 파트가 함께 *들리는 경험*까지 입증된 것은 아니다. 기타/드럼 사운드와 원곡 28음의 정해진 초 단위 예약이 동시 발생한다는 객관적 증거는 확보했다. 실제 오디오 출력·화성·헤드룸 피크는 **011단계**, 예약 노드 해제와 재생 중단은 **012단계**, 실기 모바일 청음은 **027단계** 과제다.
+- **운영 미배포:** 변경한 코드는 `schoolband-playtest` 시험 브랜치에만 존재한다. 운영 `main`, `baeguindex.com`, 운영 Supabase DB/Edge Functions, 실제 학교 교가 다운로드/사용은 수행하지 않았다.
