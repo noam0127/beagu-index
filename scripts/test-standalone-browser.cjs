@@ -74,7 +74,7 @@ async function main(){
      });
      assert.equal(inStage.before,inStage.after,
        "Production navigation must be suppressed: "+item.path);
-     assert.match(inStage.notice,/운영 웹 링크로 이동하지 않습니다/);
+     assert.match(inStage.notice,/운영 웹·운영 DB 접근이 차단됩니다/);
      const prevented=await page.evaluate(()=>{
        const form=document.createElement("form");
        form.action="https://baeguindex.com/survey.html";
@@ -85,6 +85,54 @@ async function main(){
      });
      assert.equal(prevented.result,false,"Prod form dispatch was not prevented");
      assert.equal(prevented.prevented,true);
+     // Navigation-only filtering is insufficient: exercise JavaScript APIs
+     // that can issue direct production requests or submit forms without events.
+     const blocked=await page.evaluate(async ()=>{
+       const out={};
+       const prod="https://baeguindex.com";
+       const otherSupabase="https://different-project.supabase.co";
+       try {
+         await fetch(prod+"/challenge.html",{method:"POST",body:"mock"});
+         out.fetch=false;
+       } catch(e) {
+         out.fetch=e instanceof TypeError;
+       }
+       try {
+         const xhr=new XMLHttpRequest();
+         xhr.open("POST",prod+"/api/not-allowed");
+         out.xhr=false;
+       } catch(e) {
+         out.xhr=e?.name==="SecurityError";
+       }
+       out.beacon=navigator.sendBeacon(prod+"/record","mock")===false;
+       out.popup=window.open(prod+"/challenge.html","_blank")===null;
+       const form=document.createElement("form");
+       form.action=prod+"/survey.html";
+       document.body.append(form);
+       try {
+         form.submit();
+         out.directSubmit=false;
+       }catch(e){
+         out.directSubmit=e?.name==="SecurityError";
+       }
+       try {
+         new WebSocket("wss://different-project.supabase.co/realtime/v1/websocket");
+         out.websocket=false;
+       }catch(e) {
+         out.websocket=e?.name==="SecurityError";
+       }
+       try {
+         new EventSource(otherSupabase+"/rest/v1/private");
+         out.eventsource=false;
+       }catch(e) {
+         out.eventsource=e?.name==="SecurityError";
+       }
+       return out;
+     });
+     assert.deepEqual(blocked,{
+       fetch:true,xhr:true,beacon:true,popup:true,
+       directSubmit:true,websocket:true,eventsource:true
+     },"Runtime network guard failure in "+viewport.name+" "+item.path);
      assert.equal(await page.evaluate(()=>document.querySelector(
        'script[src="/beagu-staging-navigation-guard.js"]')!==null),true);
      assert.equal(await page.locator("body").isVisible(),true);

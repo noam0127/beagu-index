@@ -24,25 +24,6 @@ TEXT_EXT = {".html", ".js", ".mjs", ".css", ".json", ".csv", ".txt", ".svg"}
 ASSET_EXT = TEXT_EXT | {".webp", ".jpg", ".jpeg", ".png", ".gif", ".ico", ".woff2", ".woff"}
 STATIC_PREFIXES = ("js/", "styles/", "assets/", "data/", "r/")
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
-GUARD = r"""(function () {
-  "use strict";
-  const PROD_HOSTS = new Set(["baeguindex.com", "www.baeguindex.com"]);
-  document.addEventListener("click", function (event) {
-    const a = event.target instanceof Element && event.target.closest("a[href]");
-    if (!a) return;
-    try {
-      if (!PROD_HOSTS.has(new URL(a.href).hostname)) return;
-      event.preventDefault();
-      const notice = document.getElementById("beagu-staging-navigation-warning");
-      if (notice) notice.textContent = "시험 환경에서는 운영 웹 링크로 이동하지 않습니다.";
-    } catch (_error) {}
-  }, true);
-  document.addEventListener("submit", function (event) {
-    try {
-      if (PROD_HOSTS.has(new URL(event.target.action).hostname)) event.preventDefault();
-    } catch (_error) {}
-  }, true);
-}());"""
 BANNER = (
     '<div id="beagu-staging-watermark" role="note" '
     'style="position:fixed;bottom:8px;right:8px;z-index:2147483640;'
@@ -129,7 +110,14 @@ def build() -> dict:
         raise RuntimeError("Staging client config not applied")
     if not html_files or not modified:
         raise RuntimeError("Staging isolation produced no modified pages")
-    (OUTPUT / "beagu-staging-navigation-guard.js").write_text(GUARD + "\n", encoding="utf-8")
+    # The guard is loaded from the same immutable SHA as every page.
+    # It is not copied from an untracked or concurrently edited working file.
+    guard = subprocess.check_output(
+        ["git", "show", sha + ":scripts/staging-runtime-guard.js"], cwd=ROOT
+    ).decode("utf-8")
+    if ("STAGE_SUPABASE" not in guard or "sendBeacon" not in guard):
+        raise RuntimeError("Staging runtime isolation guard is incomplete")
+    (OUTPUT / "beagu-staging-navigation-guard.js").write_text(guard, encoding="utf-8")
     (OUTPUT / "beagu-preview-health.json").write_text(
         json.dumps({
             "schema": 1, "kind": "standalone-staging", "staging_sha": sha,
