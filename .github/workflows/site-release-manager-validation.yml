@@ -27,6 +27,7 @@ on:
       - 'docs/releases/templates/stage38-staging-login-foundation.sql'
       - 'tests/stage38-staging-login-foundation.mjs'
       - 'tests/stage38-staging-login-foundation-smoke.sh'
+      - 'tests/stage38-staging-synthetic-login-cases.sql'
       - 'docs/releases/templates/stage38-approved-vercel-preview.yml'
   workflow_dispatch:
 jobs:
