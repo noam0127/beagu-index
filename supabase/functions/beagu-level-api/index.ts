@@ -1,6 +1,8 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows, canSortRankedSchools, canUse2026Lv2Snapshot } from '../_shared/release-policy.mjs';
+import { eligiblePostitAuthUser } from '../_shared/postit-member-ownership.mjs';
+import { isVerifiedLv3Member } from '../_shared/member-tier-v1.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -26,6 +28,27 @@ async function check(req:Request){
    if(earnedError||earned!==true)return null;
  }
  return data;
+}
+// Read-only Lv3 proof. The Auth JWT and the earned Lv2 session must
+// separately validate; merely registering an unrelated email is insufficient.
+// No identifier, email or account PII is returned to the caller.
+async function verifiedMemberTier(req:Request,session:any):Promise<number>{
+ const level=Number(session?.access_level)||0;
+ if(level!==2||session.identity_campaign!=='2026'||
+    !session.identity_visitor_id)return level;
+ const match=/^Bearer ([A-Za-z0-9_.-]{40,4096})$/.exec(
+   req.headers.get('Authorization')||'');
+ if(!match)return level;
+ const {data:verified,error:authError}=await admin.auth.getUser(match[1]);
+ const account=verified?.user;
+ if(authError||!eligiblePostitAuthUser(account))return level;
+ const {data:member,error:memberError}=await admin
+   .from('beagu_postit_member_accounts')
+   .select('auth_user_id,identity_visitor_id,author_uid,status')
+   .eq('auth_user_id',account.id)
+   .eq('identity_visitor_id',session.identity_visitor_id).maybeSingle();
+ if(memberError)return level;
+ return isVerifiedLv3Member(session,account,member,eligiblePostitAuthUser)?3:level;
 }
 Deno.serve(async(req:Request)=>{
  const origin=req.headers.get('Origin')||'';
@@ -76,7 +99,10 @@ Deno.serve(async(req:Request)=>{
    const {error}=await admin.from('beagu_level_sessions').delete().eq('token_sha256',await hash((req.headers.get('X-Beagu-Session')||'').trim()));
    return send(error?{error:'LOGOUT_UNAVAILABLE'}:{ok:true},error?503:200,origin);
   }
-  if(body.action==='verify')return send({level:session.access_level,provisional:Number(session.access_level)>=2&&!session.identity_visitor_id,expires_at:session.expires_at},200,origin);
+  if(body.action==='verify'){
+    const actualLevel=await verifiedMemberTier(req,session);
+    return send({level:actualLevel,provisional:actualLevel===2&&!session.identity_visitor_id,expires_at:session.expires_at},200,origin);
+   }
   if(body.action==='percentiles'){
    // Batch only a vetted 2026 percentile, never raw survey rows, counts or metadata.
    const ids=body.schoolIds;
