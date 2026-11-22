@@ -25,8 +25,16 @@ export function approved2026ReleaseIsOldEnough(approvedAt,nowMs=Date.now(),delay
 export function canUse2026Lv2Snapshot(approvedAt,nowMs=Date.now()){
   return approved2026ReleaseIsOldEnough(approvedAt,nowMs,LV2_RELEASE_DELAY_MS);
 }
-export function releaseMetrics(rows,catalog,level,approvedLv2Snapshot=false){
-  if(![1,2].includes(level))return [];
+// The caller MUST independently verify the genuine Lv3 Auth user and
+// exact approved publication snapshot before requesting a zero-delay release.
+// No tier may publish an approval dated in the future.
+export function canUse2026TierSnapshot(approvedAt,level,nowMs=Date.now()){
+  if(level===3)return approved2026ReleaseIsOldEnough(approvedAt,nowMs,0);
+  if(level===2)return canUse2026Lv2Snapshot(approvedAt,nowMs);
+  return false;
+}
+export function releaseMetrics(rows,catalog,level,approvedSnapshot=false){
+  if(![1,2,3].includes(level))return [];
   const definitions=new Map(catalog.filter(c=>c.verified===true).map(c=>[`${c.survey_year}:${c.question_id}`,c]));
   const candidates=rows.flatMap(r=>{
     // Q31 is a school-level sensitive incident question explicitly excluded
@@ -36,8 +44,8 @@ export function releaseMetrics(rows,catalog,level,approvedLv2Snapshot=false){
     // Always apply the delay to EACH metric's own approval, not merely the
     // snapshot timestamp: a newly approved metric must not ride an older snapshot.
     if(r.survey_year===2026){
-      const early=level>=2&&approvedLv2Snapshot===true;
-      const delay=early?LV2_RELEASE_DELAY_MS:RELEASE_DELAY_MS;
+      const verifiedEarly=level>=2&&approvedSnapshot===true;
+      const delay=verifiedEarly?(level===3?0:LV2_RELEASE_DELAY_MS):RELEASE_DELAY_MS;
       if(!approved2026ReleaseIsOldEnough(r.approved_at,Date.now(),delay))return [];
     }
     const d=definitions.get(`${r.survey_year}:${r.question_id}`);
@@ -61,7 +69,7 @@ export function releaseMetrics(rows,catalog,level,approvedLv2Snapshot=false){
   return [...unique.values()];
 }
 export function legacyRows(rows,level){
-  if(level!==2)return [];
+  if(level!==2&&level!==3)return [];
   // 2025 survey domain scores have no confirmed unique respondent counts. Do not release legacy n<5 or unverified aggregates.
   return rows.filter(r=>[2023,2024].includes(r.survey_year)&&r.release_status==='approved').map(r=>({year:r.survey_year,access_level:2,summary:{metrics:(r.summary?.public_release_v1?.metrics||[]).filter(m=>text(m?.label,50)&&text(m?.value,70)&&!forbidden.test(m.label)).map(m=>({label:m.label,value:m.value}))}}));
 }
