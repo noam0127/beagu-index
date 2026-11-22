@@ -307,16 +307,25 @@ def write_independent_release_manifest(target, staging_sha):
     Include immutable content hashes, not user identity, auth data, or a
     declaration that live deployment or administrator approval happened.
     """
-    required = (
+    required = {
         "index.html", "js/supabase-config.js", "vercel.json",
         "data/public-compare-school-directory-v1.json",
-    )
+    }
     sha256 = {}
-    for relative in required:
-        item = target / relative
+    for item in sorted(target.rglob("*")):
+        if item.is_symlink():
+            raise RuntimeError("Symlink is forbidden in staging distribution: " + str(item))
         if not item.is_file():
-            raise RuntimeError("Required test distribution asset missing: " + relative)
+            continue
+        relative = item.relative_to(target).as_posix()
+        if relative == "stage38-release-manifest.json":
+            raise RuntimeError("Unexpected stale staging release manifest")
         sha256[relative] = hashlib.sha256(item.read_bytes()).hexdigest()
+    missing = required.difference(sha256)
+    if missing:
+        raise RuntimeError("Required test distribution asset missing: " + ", ".join(sorted(missing)))
+    if not sha256:
+        raise RuntimeError("Empty standalone RC release artifact")
     manifest = {
         "schema": "beagu-independent-preview-package-v1",
         "rc_version": ("v1.1.0-rc.1" if staging_sha ==
