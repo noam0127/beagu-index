@@ -72,5 +72,22 @@
 - 남은 위험: 실제 iOS/Android 물리 진동·청음·스크린리더는 별도 검증이 필요. 호스팅 첫 방문 안내(SB-007), 320px에서 긴 연주 시작 버튼 줄 바꿈, 오디오 시간축/경계·동시 노트 초정밀 판정은 후속 단계.
 - 다음 단계: **005/030** 공통 AudioContext 시간축·PERFECT/GOOD/MISS 판정 경계·노트 좌표 독립 검사.
 
-## 005/030 — pending
-공통 오디오 시간축·판정 경계 수치 및 노트 위치 순수함수 분리·검증.
+## 005/030 — 공통 오디오 시간축과 판정 경계 확정 (2026-11-22)
+
+상태: **COMPLETE — 순수 시간 모델 98+121+28개 수치 검증, PC·320px 모바일 실제 Web Audio 검증, CI 회귀 PASS**.
+
+- 시작 test HEAD: `7b7f522e86398dfda3ec78768e443ad0bd6088ec`. 수정 범위는 `schoolband-playtest` 시험 브랜치뿐; 운영 `main`, DB, Edge Functions 변경 없음.
+- 게임 수정: `games/nangam-schoolband-v08/index.html` 내 `SCHOOLBAND_TIMING_MODEL_V1` 순수 시간 모델 분리. `noteTimeSeconds`, `noteDeltaSeconds`, `noteSpawnTimeSeconds`, `noteIsInDrawingWindow`, `noteYAtAudioTime`, `judgementForOffset`, `isNoteMissed` 등. 오디오 스케줄러·차트·좌표·입력·미스의 시간식 일원화.
+- 실제 판정 임계치는 원본 보존: PERFECT `.09/.075/.06/.05/.036s`, GOOD 최대 `.20/.17/.14/.11/.075s`. ±입력 경계 정확히 포함하고, 늦은 경계 초과 시에만 MISS.
+- 실제 신규 테스트: `scripts/test-schoolband-stage005.cjs`, `.github/workflows/schoolband-stage005.yml`; 상세 설명과 역할별 독립 7관점 리뷰 `docs/schoolband-stage005-audio-clock-timing.md`.
+- **CI SUCCESS** [run 44993812039](https://github.com/noam0127/beagu-index/actions/runs/44993812039), 코드 커밋 SHA `5f85cbcb01913ded396754e8fd393a5079e9c200`.
+- 실제 수치: 98개 EXACT 경계·유효성 조건, 121개 8마디·노트 스폰·좌표, 30/60/90/120Hz 동일 시각 함수 좌표 28개 모두 PASS. EASY GOOD 임계치 `.200→.195` 고의 훼손 검출.
+- 실브라우저 PC 1280×900 및 mobile320 320×640 Chromium에서 각 5난이도 경계와 좌표 PASS. 240ms 대기 시 AudioContext 곡 시간 +`0.240907s`씩 진행; 정상 NORMAL 56개 차트 확인.
+- 002단계 20조합·고의 실패·개인정보 카나리 회귀 CI PASS. 원곡 28음, 악기/학교/점수 정책 불변.
+- [증거 JSON 아티팩트](https://github.com/noam0127/beagu-index/actions/runs/44993812039/artifacts/14742124362) 실물 확인.
+- 테스트 코드 오류 2건 수정: 순수 모델 주석 구간 추출 및 `0.84`와 실제 `2-1.16`의 부동소수점 차이. 실제 게임 판정 임계값은 완화하지 않음.
+- 미검증: 물리 오디오/터치 지연, 기기 오프셋·동시 노트 미세 판정(006), 실제 주사율/앱 전환(007), 오디오 노드 중지(012), 실기 청음(027), 호스팅 처음 방문 interstitial(029).
+- 다음 단계: **006/030 — 오입력·동시노트·기기별 오프셋 보정**.
+
+## 006/030 — pending
+다른 레인의 노트를 잘못 소실하지 않는 판정과 동시노트 독립 처리, 오디오/입력 지연 보정 UI 및 수치 검증.
