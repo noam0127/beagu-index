@@ -306,5 +306,5 @@
 - 연결 도구 V8 샌드박스에서 실제 최신 소스 함수·테스트 파일·워크플로 내용을 다시 읽어 **31개 독립 단언 통과**. GitHub Actions의 워크플로 실행 이력은 연결된 GitHub 도구가 push-triggered run을 열람할 수 없어 성공 여부 미확인. 외부 API HTTP 호출도 이 환경에서 검증하지 못했다. 이 31건을 정식 Node/Playwright CI PASS로 오인하지 않는다.
 - 2026-11-23 재검증: 읽기 전용 HTTP 스모크 `scripts/test-schoolband-stage019-public-api.cjs`를 추가. 실제 공개 학교 검색 GET(최대12건, 신원 필드 whitelist), 선택 학교 GET(ID·공개 난이도·기준연도 whitelist), 잘못된 ID GET 400, OPTIONS 204만 검사하며 쓰기 요청·개인정보 조회는 수행하지 않는다. CI workflow에 스모크 추가: 커밋 `14f0546c12b5a958a09aee6c58c5b904d2bbdef4`.
 - 두 Stage019 Node 테스트 스크립트의 JavaScript 구문 파싱 검사는 PASS. 단 본 실행 환경에서는 GitHub 도메인 DNS 접근이 차단돼 직접 Node/Playwright 및 HTTP 실서버 검증 불가. GitHub 커넥터는 push-triggered GitHub Actions run 결과를 보여주지 않았다. 최신 관찰된 Vercel 실패는 `upgradeToPro=build-rate-limit`로 표시된 빌드 제한이며, Stage019 기능 테스트 실패로 볼 근거가 없다.
-- **종료 판정:** Stage019 실제 소스·테스트·CI 정의는 시험 브랜치에 반영, 외부 실행 성공 증거 미확보로 **검증 대기**. 이것을 019단계종료 또는 020 착수 완료로 기록하지 않는다.
-- 다음 조치: GitHub Actions Stage019 성공 및 실서버 안전 응답을 확인한 뒤 019 완료 표시. 이후 020/030 진행.
+- **종료 판정:** Stage019 실제 소스·테스트·CI 정의는 시험 브랜치에 반영했지만 외부 실행 성공 증거가 없어 **구현 완료 / 최종 검증 BLOCKED**이다. 검증 미확인 사항을 [GitHub Issue #245](https://github.com/noam0127/beagu-index/issues/245)에 등록했다. 019는 최종 릴리스 게이트로 남기되, 독립적인 다음 개발 단계 020의 착수를 막지 않는다.
+- 다음 개발 단계: **020/030 — 자료 누락·교가 등록 상태·오류 대응**. 최종 출시 전 #245의 019 검증을 반드시 해결한다.
