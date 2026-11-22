@@ -1,0 +1,21 @@
+name: v1.1.0 stage35 one-time concurrent telemetry cap
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-perf-budget-concurrent-once.py'
+      - '.github/workflows/v1.1.0-stage35-perf-budget-concurrent-once.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  global-cap-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Concurrent public RPC calls with 16 unrelated temporary visitor IDs
+        run: python3 tests/v1.1.0-stage35-perf-budget-concurrent-once.py
+      - name: Scope
+        run: |
+          echo "Only isolated staging; clean dummy telemetry rows after this one-time run."
