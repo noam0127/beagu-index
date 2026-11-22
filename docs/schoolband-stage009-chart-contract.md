@@ -43,4 +43,14 @@
 
 ## 실제 GitHub 검증 결과
 
-**PENDING** — 자동화 전체 성공·기록 파일·데이터 통합이 확인되기 전에는 009단계 완료라고 표시하지 않는다.
+**PASS — 차트 스키마·런타임 품질 게이트·Web Audio 악기별 파형 생성·20조합 회귀 검증 완료.**
+
+- GitHub Actions [run 45002366388](https://github.com/noam0127/beagu-index/actions/runs/45002366388): **completed/success**, 실제 시험한 소스 커밋 SHA `973f42516f574942f56c4cde9a4a143b322c94a9`. 첫 실행에서 테스트가 외부 JSON에 없는 게임 전용 `icon`·`note` 표시 필드까지 동일 비교한 실수가 있어 테스트를 수정했다. 기존 파트/판정 코드를 변경하거나 오류를 무시한 것이 아니며 최종 테스트가 성공했다.
+- **정식 JSON Schema Draft 2020-12**: 실차트 1개 정합성 PASS, 잘못된 메타데이터·홀드 노트·누락 악기·추가 필드 등의 **12개 실패 시나리오 정상 거절**.
+- **런타임 차트 검사**: 4악기×5난이도 **20/20조합**과 80개 레인-난이도 연결에서 유효 노트 확인, 악기별 밀도 완전 증가·오프비트 유지·16분 확장·2레인 동시노트 경계 PASS. 잘못된 차트 **10종**을 각각 오류 코드로 거부. 게임 HTML 내 `PARTS`와 별도 `charts/creative-school-anthem.chart.v1.json`이 완전히 동일함 확인.
+- **실제 Chromium PC 1280px / 모바일 320px**: 두 환경 모두 guitar·drums·bass·keys 4악기의 차트 버전·레인 이름·음악적 수치와 수평 오버플로 없음을 확인. 실제 Web Audio의 타격 직후 생성 소스 기록: 기타 `sawtooth`, 드럼 킥 `sine`, 베이스 `triangle`, 키보드 화음 레인 `sine` 2개. **실제 스피커 청음 시험은 아님**.
+- **실제 시작 차단 E2E**: PC·모바일 각각 차트 버전 오류와 동일 레인/시각 중복 노트 오류가 있는 HTML에 `시작`을 눌렀으나 **4건 모두 playing=false**, 오류 문구 출력, 정상 점수 기록 없이 정지. 손상 데이터의 재생/게시를 잘못 허용하지 않음을 확인.
+- **원본 이전 단계 회귀**: 같은 CI에서 008단계 **PC+모바일 40회 전부 완주**, 160회 키 입력 + 160회 터치 + 40회 Enter 입력, Stage005 PERFECT/GOOD/MISS 98개 경계, 121개 좌표, 28개 FPS 정합성, Stage007 60/90/120Hz 수치 시뮬레이션 전부 PASS.
+- **다운로드 가능한 증거**: [GitHub 아티팩트 — results.json + 네 악기 차트 캔버스 PNG 4장](https://github.com/noam0127/beagu-index/actions/runs/45002366388/artifacts/14746801136). 해당 ZIP을 직접 확인하여 5개 파일, `schema.passed:true`, `unit.passed:true`, PC·모바일 각각 `passed:true`, 손상 차트 2종씩 차단, 콘솔 페이지 오류 0건 및 악기별 소스 파형 기록을 대조했다. 실제 캡처에서 드럼 4레인 D/F/J/K 및 킥·스네어·하이햇·탐 이름을 확인했다.
+- **한계/후속**: 장치별 음질·타격감의 주관적 청음은 수행하지 않았고 010~012/027단계 대상. 미지원 롱노트를 실제 구현했다고 주장하지 않는다. `chartVersion` 단위의 최고점 기록 분리는 024단계에서 실행. 실제 학교 교가 이용 허락·편곡 파이프라인은 022·023단계에서 별도 권리 검증.
+- **운영 격리**: 모든 게임 파일·JSON·CI·문서는 `schoolband-playtest`에만 반영. `main`, `baeguindex.com`, 운영 Supabase DB/Edge Function 및 실제 학교 교가 미변경.
