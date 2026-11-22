@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {resolveVerifiedPostitOwner as authorize} from '../supabase/functions/_shared/postit-member-ownership.mjs';
+import {resolveVerifiedPostitOwner as authorize, eligiblePostitAuthUser} from '../supabase/functions/_shared/postit-member-ownership.mjs';
 
 // Entirely fictitious IDs: no staging or production Auth accounts are created.
 // Exercise the actual pure authorization function used by the Post-it API,
@@ -57,13 +57,30 @@ const variants=[
 for(const [account,viewer,record] of variants){
  assert.equal(authorize(account,viewer,record),null,'Spoofed, unverified or suspended proof rejected');
 }
+const now=Date.UTC(2026,10,22,12,0,0);
+const future=new Date(now+60000).toISOString();
+const past=new Date(now-60000).toISOString();
+const account=actors[0].account;
+assert.equal(eligiblePostitAuthUser({...account,banned_until:future},now),false,
+  'Temporarily banned user cannot post with existing token');
+assert.equal(eligiblePostitAuthUser({...account,banned_until:past},now),true,
+  'Past temporary ban must expire');
+assert.equal(eligiblePostitAuthUser({...account,banned_until:'malformed'},now),false,
+  'Malformed ban metadata must fail closed');
+assert.equal(eligiblePostitAuthUser({...account,deleted_at:'2026-11-22T00:00:00Z'},now),false,
+  'Soft-deleted user cannot post');
+assert.equal(eligiblePostitAuthUser({...account,email_confirmed_at:null},now),false);
+assert.equal(eligiblePostitAuthUser({...account,is_anonymous:true},now),false);
+assert.equal(authorize({...account,banned_until:'2999-01-01T00:00:00Z'},actors[0].viewer,actors[0].record),null,
+  'Valid owner linkage cannot bypass a ban');
+
 const postit=readFileSync('supabase/functions/beagu-postit-api-v1/index.ts','utf8');
-assert.match(postit,/import \{ resolveVerifiedPostitOwner \} from "\.\.\/_shared\/postit-member-ownership\.mjs";/);
+assert.match(postit,/import \{ resolveVerifiedPostitOwner, eligiblePostitAuthUser \} from "\.\.\/_shared\/postit-member-ownership\.mjs";/);
 assert.match(postit,/\.select\("auth_user_id,author_uid,identity_visitor_id,status"\)/);
 assert.match(postit,/\.eq\("auth_user_id",account\.id\)\.eq\("identity_visitor_id",viewer\.visitor\)/);
 assert.match(postit,/return resolveVerifiedPostitOwner\(account,viewer,data\)/);
 assert.match(postit,/if\(!user\)return fail\(req,"WRITER_IDENTITY_REQUIRED",403\)/);
 assert.match(postit,/if\(t\.author_uid!==user\.id\)return fail\(req,"NOT_OWNER",403\)/);
 
-console.log('PASS: 2 authenticated fake identities, 8 A/B combinations (2 valid, 6 denied) and 16 spoof/disabled proofs fail closed.');
+console.log('PASS: 2 fictional identities; 6 cross-owner combinations blocked; 16 spoofed proofs and active bans denied.');
 console.log('SCOPE: execution of production-used pure authorization; NOT real Supabase two-account Auth HTTP E2E.');
