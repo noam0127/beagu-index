@@ -2,7 +2,7 @@
 """Stage35 one-time real Supabase Auth signup/login probe, isolated staging only.
 
 Uses ONLY a public staging publishable key. Each account has a freshly
-generated high-entropy password and reserved .invalid email; never log either.
+generated high-entropy password and reserved example.com email; never log either.
 No service-role key, no production records, no Post-it mutations.
 Clean up all stage35-auth-qa-* synthetic users after the CI run.
 """
@@ -57,7 +57,7 @@ def main():
     run_id = uuid.uuid4().hex[:16]
     sessions = []
     for actor in ("a", "b"):
-        email = f"stage35-auth-qa-{run_id}-{actor}@example.invalid"
+        email = f"stage35-auth-qa-{run_id}-{actor}@example.com"
         password = secrets.token_urlsafe(40) + "A1!"
         status, signup = request("/auth/v1/signup", {"email":email,"password":password,
                                                      "data":{"qa_stage35":True}})
