@@ -39,4 +39,12 @@
 
 ## 실제 검증 기록
 
-- **상태:** PENDING — 독립 GitHub Actions 결과 확인 후 이 문단을 갱신한다. CI가 실패하면 오류 수정 전까지 004를 종료로 표시하지 않는다.
+- **상태: PASS — 실제 Chromium 검증 완료.** GitHub Actions [run 44991368437](https://github.com/noam0127/beagu-index/actions/runs/44991368437), 검사 대상 커밋 `ed5722991232fea3578f8f71afa7beaffb1a582d`. 별도 Stage 002 회귀까지 전체 작업 성공.
+- [증거 ZIP: JSON 결과와 실제 화면 3장](https://github.com/noam0127/beagu-index/actions/runs/44991368437/artifacts/14741702428) (`results.json`, `simultaneous-lanes.png`, `miss-badge.png`, `system-reduced-hit.png`). 다운로드하여 결과 JSON과 이미지 3장을 직접 확인했다.
+- 연속 드럼 하이햇 3회: 음원 시계 `0.1400s / 0.2822s / 0.4129s`, 점수 `1005 → 2015 → 3030`, **콤보 1→2→3**. 이어 0.5556초 동시 노트 2개 각각 적중하여 **콤보 5**, 두 레인 판정 모두 PERFECT. 배지 가로 영역 `x=117..193`, `x=197..273`으로 4px 이상 떨어져 가리지 않음. 연출 레이어의 포인터 이벤트 차단 없음.
+- 빈 레인 1회 입력: `emptyPresses=1`, `NO NOTE` 표시, **MISS와 콤보 모두 불변**. 독립 미타격 시나리오는 `MISS 2개`, `emptyPresses=0` 및 MISS 배지 표시 확인.
+- EASY의 PERFECT 시간 구간 밖에서 입력: 음원 시계 `0.1313s`, 독립 **GOOD** 판정 및 레인 배지 확인.
+- OS `prefers-reduced-motion:reduce` 및 320px 에뮬레이션: 발광 링 없음, 파편 **0개**, 진동 함수 호출 **0회**, 310ms 뒤 중앙 판정이 사라지고 불투명도 **0**. UI에서 OS 감소 설정 해제 불가.
+- 수동 효과 줄이기: 체크 후 `localStorage` 저장 및 reload 복원 확인. 진동 초기값 OFF; 명시적으로 체크한 뒤의 Web Vibration API **1회 호출**만 계측. 이는 진동 API 호출 검증이지 물리 모터 작동 검증은 아님.
+- 기존 4악기×5난이도 **20조합 PC·320px 모바일 모두 PASS**, 3종 고의 오류 감지와 학교 비공개 카나리 미노출을 Stage 002 검증 도구로 재실행하여 모두 PASS.
+- 남은 위험: 실제 iOS/Android/스크린리더·물리 진동 미검증, 별도 첫 방문 시험 호스팅 안내(SB-007), 세밀한 판정 경계·주사율 변동은 005~007단계 대상. 모바일 320px 스크린샷의 시작 버튼 문구가 길게 줄 바꿈되는 문제는 추후 모바일 UI 검증 단계에서 조정할 필요가 있음.
