@@ -10,11 +10,23 @@ on:
       - 'tests/fixtures/stage38-staging-admin-dashboard-v1/**'
       - 'tests/stage38-staging-admin-dashboard-contract.cjs'
       - '.github/workflows/stage38-staging-admin-http-negative.yml'
+      - 'tests/stage38-page-perf-contract.cjs'
+      - 'tests/stage38-staging-admin-page-perf-regression.sql'
+      - 'supabase/migrations/stage38_staging_admin_page_perf_rpc.sql'
+      - 'supabase/migrations/20261120_admin_page_perf_v1.sql'
       - '.github/workflows/stage38-staging-member-live-contract.yml'
   pull_request:
     paths:
       - 'tests/fixtures/stage38-staging-admin-members-live-v2/**'
       - 'tests/stage38-staging-member-live-contract.cjs'
+      - 'tests/fixtures/stage38-staging-admin-access-v1/**'
+      - 'tests/stage38-staging-admin-access-contract.cjs'
+      - 'tests/fixtures/stage38-staging-admin-dashboard-v1/**'
+      - 'tests/stage38-staging-admin-dashboard-contract.cjs'
+      - 'tests/stage38-page-perf-contract.cjs'
+      - 'tests/stage38-staging-admin-page-perf-regression.sql'
+      - 'supabase/migrations/stage38_staging_admin_page_perf_rpc.sql'
+      - 'supabase/migrations/20261120_admin_page_perf_v1.sql'
       - '.github/workflows/stage38-staging-member-live-contract.yml'
   workflow_dispatch:
 permissions:
@@ -34,6 +46,8 @@ jobs:
         run: node tests/stage38-staging-admin-access-contract.cjs
       - name: Verify staging dashboard authentication contract
         run: node tests/stage38-staging-admin-dashboard-contract.cjs
+      - name: Verify pinned staging page-performance RPC and isolated regression
+        run: node tests/stage38-page-perf-contract.cjs
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
