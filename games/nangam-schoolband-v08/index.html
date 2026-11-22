@@ -55,6 +55,19 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:380/365;border:1px soli
 @media(max-width:360px){main{padding:10px 7px 25px}.card{padding:11px}.instrument-grid{gap:4px}.instrument{min-height:71px}.instrument .inst-title{font-size:10px}.actions button{font-size:12px}}
 
 .stage-wrap{position:relative;isolation:isolate;overflow:hidden;border-radius:12px}
+.fx-options{display:flex;justify-content:center;flex-wrap:wrap;gap:16px;margin:3px 0 10px;color:#dae4f6;font-size:12px}
+.fx-options label{display:inline-flex;align-items:center;gap:5px;min-height:28px;cursor:pointer}
+.fx-options input{accent-color:#c4b5fd;width:17px;height:17px}
+.fx-options input:disabled{opacity:.6;cursor:not-allowed}
+.lane-fx-layer{position:absolute;inset:0;pointer-events:none;display:grid;grid-template-columns:repeat(var(--fx-lanes,4),minmax(0,1fr));gap:4px;padding:0 9px;z-index:4}
+.lane-fx{position:relative;min-width:0;pointer-events:none}
+.lane-event{position:absolute;top:66%;left:0;right:0;text-align:center;font-size:clamp(11px,3.5vw,13px);font-weight:900;letter-spacing:-.04em;text-shadow:0 1px 3px #000b;white-space:nowrap;color:#fff3c4;opacity:0;pointer-events:none}
+.lane-event.good{color:#ccefff}.lane-event.miss{color:#ffd6cf}.lane-event.empty{color:#c3cbd9}
+.lane-event.animate{animation:laneResult .36s ease-out both}
+.combo-fx{position:absolute;top:13%;left:50%;font-size:clamp(16px,4.8vw,23px);font-weight:900;letter-spacing:-.04em;color:#f8ebb7;text-shadow:0 2px 4px #0009;transform:translateX(-50%);opacity:0;white-space:nowrap;z-index:4;pointer-events:none}
+.combo-fx.animate{animation:comboRise .46s ease-out both}
+@keyframes laneResult{0%{opacity:0;transform:translateY(7px)}22%{opacity:1;transform:translateY(0)}78%{opacity:1}100%{opacity:0;transform:translateY(-5px)}}
+@keyframes comboRise{0%{opacity:0;transform:translate(-50%,5px) scale(.94)}18%{opacity:1;transform:translate(-50%,0) scale(1.05)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-7px)}}
 .judgement{position:absolute;left:50%;top:45%;transform:translate(-50%,0) scale(.82);font-size:clamp(24px,7vw,39px);line-height:1.1;font-weight:950;letter-spacing:-.06em;text-align:center;white-space:nowrap;color:#fdf2b4;text-shadow:0 2px 3px #0009,0 0 16px #d7c2ffaa;pointer-events:none;opacity:0;z-index:3}
 .judgement.good{color:#d4f5ff;text-shadow:0 0 15px #79ddff99}
 .judgement.animate{animation:judgeRise .49s cubic-bezier(.2,.8,.25,1) both}
@@ -62,7 +75,11 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:380/365;border:1px soli
 .impact-ring.animate{animation:ringBurst .33s ease-out both}
 @keyframes judgeRise{0%{opacity:0;transform:translate(-50%,16px) scale(.65)}16%{opacity:1;transform:translate(-50%,-6px) scale(1.18)}55%{opacity:1;transform:translate(-50%,-15px) scale(1)}100%{opacity:0;transform:translate(-50%,-26px) scale(.96)}}
 @keyframes ringBurst{0%{opacity:.95;transform:translate(-50%,-50%) scale(.25)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.8)}}
-@media(prefers-reduced-motion:reduce){.judgement.animate,.impact-ring.animate{animation:none;opacity:.95}.judgement{transition:opacity .15s}.impact-ring{display:none}}
+@media(prefers-reduced-motion:reduce){.judgement.animate,.impact-ring.animate,.lane-event.animate,.combo-fx.animate{animation:none;opacity:1}.judgement.animate,.lane-event.animate{transform:none}.combo-fx.animate{transform:translateX(-50%)}.impact-ring{display:none}}
+html[data-reduced-fx="true"] .judgement.animate,html[data-reduced-fx="true"] .lane-event.animate,html[data-reduced-fx="true"] .combo-fx.animate{animation:none;opacity:1}
+html[data-reduced-fx="true"] .judgement.animate,html[data-reduced-fx="true"] .lane-event.animate{transform:none}
+html[data-reduced-fx="true"] .combo-fx.animate{transform:translateX(-50%)}
+html[data-reduced-fx="true"] .impact-ring{display:none}
 </style>
 </head>
 <body>
@@ -91,9 +108,10 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:380/365;border:1px soli
 </section>
 <section class="card" aria-label="게임">
 <div class="play-head"><div id="laneInfo">일렉기타 · 4레인</div><p id="playTitle">일렉기타 · 4레인 · NORMAL</p></div>
-<div class="stage-wrap"><canvas id="track" width="380" height="365" role="img" aria-label="악기에 따라 3~5개 레인이 표시되는 리듬게임 화면"></canvas><div class="judgement" id="judgeFx" aria-hidden="true"></div><div class="impact-ring" id="impactRing" aria-hidden="true"></div></div>
+<div class="stage-wrap"><canvas id="track" width="380" height="365" role="img" aria-label="악기에 따라 3~5개 레인이 표시되는 리듬게임 화면"></canvas><div class="judgement" id="judgeFx" aria-hidden="true"></div><div class="impact-ring" id="impactRing" aria-hidden="true"></div><div id="laneFx" class="lane-fx-layer" aria-hidden="true"></div><div id="comboFx" class="combo-fx" aria-hidden="true"></div></div>
 <div id="pads" class="pad-grid" aria-label="모바일 연주 버튼"></div>
 <p id="keyHint">D 리프 · F 파워 · J 업스트럼 · K 고음</p>
+<div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label></div>
 <div class="actions"><button type="button" id="start" disabled>▶ 교가 연주 · 음악 켜기</button><button type="button" id="stop" disabled>■ 중단</button><button type="button" id="mute">♫ 소리</button></div>
 <div id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
 <div class="progress"><div id="progress"></div></div>
