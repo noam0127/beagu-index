@@ -4,6 +4,9 @@
 -- Production metadata below is a reviewed signature reference, not a migration.
 -- WARNING: SECURITY DEFINER mismatches require human review. NEVER auto-copy
 -- privileged function bodies or GRANT permissions into staging.
+-- This metadata check also confirms the server-side service_role can
+-- execute existing RPC signatures and has USAGE on the containing schema.
+-- Positive privileges are necessary, NOT sufficient, for safe runtime QA.
 WITH expected(component, function_name, expected_arguments, expected_return, expected_security_definer) AS (
   VALUES
     ('level-api', 'beagu_2026_lv2_released_question_results', 'p_school_id text', 'jsonb', true),
@@ -45,10 +48,22 @@ SELECT component,function_name,expected_arguments,expected_return,
        CASE WHEN exact_oid IS NULL THEN NULL
          ELSE has_function_privilege('authenticated',exact_oid,'EXECUTE')
        END AS authenticated_execute,
+       CASE WHEN exact_oid IS NULL THEN NULL
+         ELSE has_function_privilege('service_role',exact_oid,'EXECUTE')
+       END AS service_role_execute,
+       CASE WHEN exact_oid IS NULL THEN NULL ELSE
+         (SELECT has_schema_privilege('service_role',p.pronamespace,'USAGE')
+          FROM pg_proc p WHERE p.oid=exact_oid)
+       END AS service_role_schema_usage,
        CASE
          WHEN name_overloads=0 THEN 'BLOCKED_MISSING_NAME'
          WHEN exact_oid IS NULL THEN 'BLOCKED_SIGNATURE_MISMATCH'
          WHEN pg_get_function_result(exact_oid)<>expected_return THEN 'BLOCKED_RETURN_MISMATCH'
+         WHEN NOT has_function_privilege('service_role',exact_oid,'EXECUTE')
+           THEN 'BLOCKED_SERVICE_ROLE_RPC_EXECUTE'
+         WHEN NOT (SELECT has_schema_privilege('service_role',p.pronamespace,'USAGE')
+                   FROM pg_proc p WHERE p.oid=exact_oid)
+           THEN 'BLOCKED_SERVICE_ROLE_SCHEMA_USAGE'
          WHEN (SELECT p.prosecdef FROM pg_proc p WHERE p.oid=exact_oid)
               IS DISTINCT FROM expected_security_definer
               THEN 'REVIEW_SECURITY_MODE_DIFFERENCE'
