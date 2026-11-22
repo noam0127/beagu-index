@@ -5,6 +5,7 @@ The plan below is *synthetic* and only used for a local CI packaging test.
 It is not an authorized release job, does not call Supabase, and does not
 deploy or modify main, the RC commit, or any website.
 """
+import hashlib
 import importlib.util
 import json
 import pathlib
@@ -49,6 +50,9 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
 
     manifest = json.loads((out / "stage38-release-manifest.json").read_text(encoding="utf-8"))
     assert manifest["source_sha"] == RC_SHA
+    manifest_sha256 = hashlib.sha256(
+        (out / "stage38-release-manifest.json").read_bytes()
+    ).hexdigest()
     assert manifest["rc_version"] == "v1.1.0-rc.1"
     vercel = json.loads((out / "vercel.json").read_text(encoding="utf-8"))
     response_headers = {h["key"]: h["value"] for h in vercel["headers"][0]["headers"]}
@@ -138,6 +142,8 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     # Nonzero links are a separate security review gate, not clearance.
     print("PASS: real immutable RC standalone bundle packaged entirely offline")
     print("Source pinned RC:", RC_SHA)
+    print("TRUSTED_STAGE38_MANIFEST_SHA256:", manifest_sha256)
+    print("Operator must obtain this digest from approved CI, never from the deployed website.")
     print("HTML files:", html_count, "audited text files:", static_count)
     print("Remaining explicit production-site URL references:", links_to_production)
     for rel, count in sorted(production_link_files.items()):
