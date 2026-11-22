@@ -18,6 +18,37 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 - 사전 준비한 `staging-origin.ts` 공통 정책은 GitHub에만 있으며,
   실제 시험 Supabase에 아직 배포되지 않았다.
 
+## 시험 웹 정적 호출과 배포 함수 대조 결과
+
+2026-11-23 기준 시험 웹 빌드 산출물(HTML 24개 및 JS·CSS 포함)에서
+정적 URL 또는 SDK 호출로 참조하는 Edge Function은 **16개**이고,
+시험 Supabase 실제 목록에는 이 중 **5개**만 있다.
+
+아래 11개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
+
+| 구분 | 시험 프로젝트에 없는 함수 | 정적 호출 파일 |
+|---|---|---|
+| 챌린지 신원 | `beagu-challenge-identity` | `js/challenge.js` |
+| 추천 응답 | `beagu-referral-checkin-v1` | `js/beagu-referral-form-v1.js` |
+| 추천 링크 | `beagu-referral-link-v1` | `js/challenge-referral-v1.js` |
+| 관리자 검토 | `beagu-2026-review-admin` | `js/beagu-2026-admin-review.js` |
+| 학교 정보 | `beagu-edited-api-v1` | `school-report.html` |
+| 학교 문화 | `beagu-school-culture-v1` | `js/school-mbti-v1.js` |
+| 관심학교 | `beagu-school-interest-v1` | `js/beagu-school-interest-v1.js` |
+| 게임 순위 | `arcade-leaderboard` | `js/arcade-leaderboard-v1.js` 외 2개 |
+| 방문 계측 | `beagu-telemetry-v2` | `js/visit-stats.js`, `js/beagu-presence-games-v1.js` |
+| 학급일지 접근 | `class-diary-guest-access-v1` | `js/class-diary-home-entry-v1.js` |
+| 학급일지 진행 | `class-diary-progress-v1` | `js/class-diary-progress-v1.js` |
+
+이것은 정적 코드에서 발견한 함수 참조 현황이다. 모든 해당 코드가
+모든 화면에서 실제 실행되는 것은 아니며, 동적으로 계산한 함수명은
+정적 분석에서 누락될 수 있다. **API가 없다는 사실만 확인했으며**
+실행 시의 오류 수나 실제 사용자 영향 범위는 아직 E2E 미검증이다.
+
+실제 시험 함수 배포를 시작할 때는 각 함수의 소스·인증 정책·의존 SQL
+및 제3자 API/비용을 독립 검증하고, 시험 프로젝트에만 순차 배포한다.
+운영 DB에서 데이터를 복사하거나 함수 원본을 무조건 덮어쓰지 않는다.
+
 ## 자동 검사
 
 ```sh
