@@ -70,9 +70,11 @@ BEGIN
   ELSIF j.target='staging' THEN
     IF j.to_sha IS NULL THEN
       RAISE EXCEPTION 'empty_staging_target' USING ERRCODE='23514'; END IF;
+    -- A staging-only release MUST NOT advance the production public-data
+    -- blob pointer. The production site still serves its previous directory
+    -- until a successful prod_apply/data_refresh commits that artifact.
     UPDATE public.beagu_site_release_state_v1
       SET staging_sha=j.to_sha,staging_version=j.version,
-          public_data_blob_sha=COALESCE(j.public_data_blob_sha,s.public_data_blob_sha),
           updated_at=clock_timestamp()
       WHERE id=1;
   ELSE
