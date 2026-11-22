@@ -428,3 +428,19 @@
 - 실제 Android/iPhone/PC에서 연주 중 FPS/CPU/메모리·기기 조작감은 증거가 없으므로 **BLOCKED**, 실음향·청음·소음은 사용자가 제외. **치명·높음 결함 0건이라고 선언 불가.** 019~027 미확인 CI/실기 게이트도 OPEN 유지.
 - 상세 심각도별 결함 목록, 완료 기준 및 7개 가상 전문가 관점 검토: `docs/schoolband-stage028-visual-performance-accessibility-release-gate.md`.
 - 운영 `main`, `baeguindex.com`, 운영 Supabase 변경 없음. 다음은 029/030 독립 시험 웹 HTTP/커밋 일치/롤백·운영격리 증명.
+
+## 029/030 — 무료 독립 정적 미리보기·커밋별 접속 검증 (2026-11-23)
+
+상태: **SOURCE/TEST BUNDLE IMPLEMENTED / REAL EXTERNAL HTTP UNVERIFIED / RELEASE GATE OPEN**. 이슈: [GitHub #254](https://github.com/noam0127/beagu-index/issues/254).
+
+- 사용자 제외: 교가 편곡·배포 허락 요청 없음, 유료 API/결제/업그레이드 없음, 청음·실음향·연주감 검사 없음. 운영 `main`, `baeguindex.com`, 운영 Supabase DB/Edge Functions 변경 없음.
+- 저장소는 public이지만 루트 `CNAME`이 `baeguindex.com`이므로 GitHub Pages를 이 저장소에서 새로 켜거나 변경하면 운영 도메인 충돌 위험. **GitHub Pages 설정은 변경하지 않음.**
+- Vercel 기존 **별도 시험 프로젝트** `baegu-index-test`의 옛 배포는 READY이나 최신 스쿨밴드 게임이 아님. 새 TEST PREVIEW API 배포 시도에서 target 값 오류(HTTP 400) 정정 후 **HTTP 402 `api-deployments-free-per-day`(하루 >100회) 제한** 확인. 배포 생성 실패, 추가 업그레이드 및 결제하지 않음. 운영 프로젝트는 건드리지 않음.
+- GitHub 공개 시험 브랜치의 정적 HTML만 제공하는 무료 제3자 원본 프록시 `raw.githack.com`을 후보로 선택. 이는 CDN/파일 표시 방식이며 GitHub Pages/Vercel 실배포가 아님. 사용 가능성·가용성 보장 없음.
+- `games/nangam-schoolband-v08/preview/index.html`: 운영 웹과 다른 '독립 시험용' 안내와 게임 링크, 교가 미등록/권리/음향 제외 설명. 정식 서비스 전환, 사용자 데이터 업로드 없음.
+- `scripts/test-schoolband-stage029.cjs`: allowlist 정적 게임 HTML·학교 홈페이지 JSON·미리보기 HTML만 패키징해 SHA-256·정확한 `GITHUB_SHA` manifest 생성. CDN/HTTP 로컬 200 MIME/해시 검사 코드, 루트 CNAME 없음을 검사하고 운영 변경을 차단.
+- `.github/workflows/schoolband-stage029.yml`: 독립 시험 브랜치만 사용한 Node 22 로컬 localhost HTTP 검사·GitHub Actions 무료 아티팩트 7일 보존·고정 커밋 `raw.githack.com` HTML/JSON 외부 HTTP200/SHA-256 검사 정의. pages:write, id-token:write, Vercel 토큰, 결제 권한 없음.
+- **직접 확인:** 게임 소스·미리보기 HTML·검증 스크립트·workflow는 GitHub에 실제 반영됐고 JavaScript 구문 검사 PASS. Vercel 402 증거 확보. **GitHub Actions 성공, 다운로드 가능한 zip 아티팩트, 실제 로컬/공개 CDN HTTP 검사 결과는 아직 확인되지 않음**. 현재 도구로 raw.githack.com 연결 확인이 실패했고 컨테이너에서 외부 DNS도 되지 않아 '시험 웹 배포 완료'라고 하지 않는다.
+- 후보 미검증 URL: `https://raw.githack.com/noam0127/beagu-index/schoolband-playtest/games/nangam-schoolband-v08/preview/index.html` (HTTP 실제 동작 미확인).
+- 7개 역할 검토 및 롤백·CNAME/프로젝트 격리 계획: `docs/schoolband-stage029-free-static-preview-deployment.md`. 사이트 실제 접속·최신 커밋·학교 검색이 검증될 때까지 029 최종 종료 보류.
+- **030/030**은 이전 019~029 검증 증거와 최종 승인/운영 배포 여부를 확인하는 단계. 승인/증거 없이 운영 사이트 자동 적용을 절대 하지 않음.
