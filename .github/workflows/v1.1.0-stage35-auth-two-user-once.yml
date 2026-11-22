@@ -1,0 +1,23 @@
+name: v1.1.0 stage35 one-time two-user Auth staging probe
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-auth-two-user-once.py'
+      - '.github/workflows/v1.1.0-stage35-auth-two-user-once.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  two-real-staging-users:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe genuine staging signup and password login
+        run: python3 tests/v1.1.0-stage35-auth-two-user-once.py
+      - name: Safety and cleanup notice
+        if: always()
+        run: |
+          echo 'No production data or credentials. All synthetic stage35-auth-qa-* users must be deleted in staging.'
+          echo 'Email confirmation may block the probe; do not interpret a blocked run as verified Auth.'
