@@ -6,6 +6,7 @@ on:
     paths:
       - 'scripts/staging/recovered-beagu-edited-api-v1/**'
       - 'tests/staging-edited-api-contract.test.py'
+      - 'tests/staging-edited-api-http-negative.test.py'
       - '.github/workflows/v110-staging-edited-api-recovery.yml'
   workflow_dispatch:
 permissions:
@@ -20,6 +21,8 @@ jobs:
           persist-credentials: false
       - name: Recovered source static contract
         run: python3 tests/staging-edited-api-contract.test.py
+      - name: Real staging HTTP denial probes (no secrets, no user data)
+        run: python3 tests/staging-edited-api-http-negative.test.py
       - name: Verify no deploy permissions or production source path
         run: |
           test -f scripts/staging/recovered-beagu-edited-api-v1/index.ts
