@@ -23,7 +23,7 @@ assert.throws(() => reviewActivatedWorkflow(
   /differs from reviewed template/
 );
 const releaseSha = "5c95aadad971901a8222f83c52e93bf901a3aeb7";
-const digest = "8d17ca34fe811f415cf1849c3b76723de408e43c09d11abf1b87e9a4dfc95754";
+const digest = "75fc154504bc291c3ef58c6b1cbc2c92bee24a1694b412746e4ab9de8d427559";
 
 assert.match(workflow, /^on:\n  workflow_dispatch:/m);
 const trigger = workflow.split("\npermissions:")[0];
