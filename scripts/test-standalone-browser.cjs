@@ -55,6 +55,35 @@ async function main(){
        item.path+" must return an actual HTML page (not an SPA fallback)");
      const title=await page.title();
      assert(title.includes(item.title),item.path+" page title mismatch: "+title);
+     if(item.path==="/admin-updates.html"){
+       const visible=await page.locator("h1").innerText();
+       assert.match(visible,/업데이트 관리 · 읽기 전용/);
+       for(const selector of [
+         "#releaseStageApply","#releaseProdApply","#releaseProdRollback",
+         "#releaseRegister","#releaseDraftForm"
+       ])assert.equal(await page.locator(selector).count(),0,
+         selector+" must not appear in independently hosted staging");
+       assert.equal(await page.locator("script[src*='beagu-admin-updates-v1']").count(),0);
+       const networkBefore=attempted.length;
+       const blockedStageRelease=await page.evaluate(async ()=>{
+         const endpoint="https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-release-manager-v1";
+         const result={};
+         try{
+           await fetch(endpoint,{method:"POST",body:'{"action":"prod_apply"}'});
+           result.fetch=false;
+         }catch(err){result.fetch=err instanceof TypeError;}
+         try{
+           const xhr=new XMLHttpRequest();xhr.open("POST",endpoint);
+           result.xhr=false;
+         }catch(err){result.xhr=err?.name==="SecurityError";}
+         result.beacon=navigator.sendBeacon(endpoint,"{}")===false;
+         return result;
+       });
+       assert.deepEqual(blockedStageRelease,{fetch:true,xhr:true,beacon:true},
+         "Staging release-manager endpoint must remain uncallable");
+       assert.equal(attempted.length,networkBefore,
+         "Staging release-manager requests must be rejected before network");
+     }
      await page.locator("#beagu-staging-watermark").waitFor({
        state:"visible",timeout:15000
      });
