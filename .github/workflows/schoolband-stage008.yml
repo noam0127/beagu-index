@@ -1,0 +1,44 @@
+name: Schoolband 008 instrument lane keyboard and touch matrix
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage008.cjs'
+      - '.github/workflows/schoolband-stage008.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  matrix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check four instruments, five tiers and invalid fixture detection
+        run: node scripts/test-schoolband-stage008.cjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Browser 40 instrument-tier completions with every lane key and pointer
+        run: node scripts/test-schoolband-stage008.cjs --browser
+      - name: Preserve previous timing and pause regressions
+        run: |
+          node scripts/test-schoolband-stage005.cjs
+          node scripts/test-schoolband-stage007.cjs
+      - name: Preserve prior complete chart and privacy invariants
+        run: node scripts/test-schoolband-stage002.cjs
+      - name: Upload contract matrix and eight viewport screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage008-input-matrix
+          path: artifacts/schoolband-stage008/
+          if-no-files-found: error
