@@ -11,7 +11,9 @@ const catalog=[{survey_year:2026,question_id:'Q20',access_level:2,verified:true,
   label:'Approved test metric',value_type:'number',minimum:0,maximum:100,unit:'점',
   meaning:'approved metric',interpretation:'approved metric',direction:'higher',spatial_scope:'school'}];
 assert.equal(releaseMetrics([row],catalog,2).length,0,'default delay remains');
-assert.equal(releaseMetrics([row],catalog,2,true).length,1,'approved Lv2 may skip time only');
+assert.equal(releaseMetrics([row],catalog,2,true).length,0,'Lv2 six-hour cutoff must remain enforced even after approval');
+assert.equal(releaseMetrics([{...row,approved_at:new Date(Date.now()-7*60*60*1000).toISOString()}],catalog,2,true).length,1,'approved Lv2 may view after six hours with exact-snapshot review');
+assert.equal(releaseMetrics([row],catalog,3,true).length,1,'independently verified Lv3 may access recently approved data without delay');
 assert.equal(releaseMetrics([row],catalog,1,true).length,0,'Lv1 cannot see Lv2 metric even with flag');
 assert.equal(releaseMetrics([{...row,privacy_status:'REVIEW_PENDING'}],catalog,2,true).length,0,'privacy gate unchanged');
 assert.equal(releaseMetrics([{...row,approval_status:'WITHHELD'}],catalog,2,true).length,0,'approval gate unchanged');
