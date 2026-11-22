@@ -93,7 +93,7 @@ for (const status of [401,403]) {
 {
   const malicious=JSON.stringify({...manifest,source_sha:"0".repeat(40)});
   const {fetcher}=mocked({routeOverrides:{"/stage38-release-manifest.json":malicious}});
-  assert.equal((await inspect(site,{fetcher})).reason,"rc_provenance_mismatch");
+  assert.equal((await inspect(site,{fetcher,expectedManifestSha256:hash(malicious)})).reason,"rc_provenance_mismatch");
 }
 {
   const {fetcher}=mocked({routeOverrides:{"/index.html":"tampered static page"}});
@@ -102,7 +102,7 @@ for (const status of [401,403]) {
 {
   const bad=JSON.stringify({...manifest,files_sha256:{"index.html":fileHashes["index.html"]}});
   const {fetcher}=mocked({routeOverrides:{"/stage38-release-manifest.json":bad}});
-  assert.equal((await inspect(site,{fetcher})).reason,"missing_file_integrity");
+  assert.equal((await inspect(site,{fetcher,expectedManifestSha256:hash(bad)})).reason,"missing_file_integrity");
 }
 {
   const {fetcher}=mocked({headerOverrides:{"content-security-policy":"default-src *"}});
