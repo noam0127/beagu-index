@@ -1,0 +1,41 @@
+name: Schoolband 026 all-chart input and no-audio UI regression
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage026.cjs'
+      - 'scripts/test-schoolband-stage024.cjs'
+      - 'scripts/test-schoolband-stage025.cjs'
+      - '.github/workflows/schoolband-stage026.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: schoolband-stage026-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  no-audio-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 4 instruments x 5 difficulty chart integrity and deterministic judgement
+        run: node scripts/test-schoolband-stage026.cjs
+      - name: Versioned score/local persistence regression (data only)
+        run: node scripts/test-schoolband-stage024.cjs
+      - name: Complete/aborted/invalid result and privacy regression (data only)
+        run: node scripts/test-schoolband-stage025.cjs
+      - name: Install Chromium for no-audio UI smoke
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: PC 1280 and mobile 320 school/instrument/fallback UI, NEVER start audio
+        run: node scripts/test-schoolband-stage026.cjs --browser
+      - name: PC and mobile score key / reset UI, NO audio
+        run: node scripts/test-schoolband-stage024.cjs --browser
+      - name: PC/mobile results DOM-only and no server score writes
+        run: node scripts/test-schoolband-stage025.cjs --browser
