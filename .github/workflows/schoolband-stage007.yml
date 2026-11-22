@@ -1,0 +1,44 @@
+name: Schoolband 007 refresh rate and lifecycle recovery
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage007.cjs'
+      - '.github/workflows/schoolband-stage007.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage007:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: FPS simulation and deliberately broken frame-clock negative control
+        run: node scripts/test-schoolband-stage007.cjs
+      - name: Install Chromium for actual tab and Web Audio suspension tests
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Browser lifecycle, tab hide, resume and unannounced gap
+        run: node scripts/test-schoolband-stage007.cjs --browser
+      - name: Preserve 5-tier timing and chart invariants
+        run: |
+          node scripts/test-schoolband-stage005.cjs
+          node scripts/test-schoolband-stage002.cjs
+      - name: Preserve independent chords, latency offsets and manual controls
+        run: node scripts/test-schoolband-stage006.cjs --browser
+      - name: Upload lifecycle JSON and visual artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage007-lifecycle-proof
+          path: artifacts/schoolband-stage007/
+          if-no-files-found: error
