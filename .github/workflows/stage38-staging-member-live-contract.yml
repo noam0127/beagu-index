@@ -15,6 +15,11 @@ on:
       - 'tests/stage38-staging-telemetry-health-contract.cjs'
       - 'tests/stage38-staging-referral-funnel-contract.cjs'
       - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
+      - 'tests/stage38-atomic-release-finalize-contract.cjs'
+      - 'tests/stage38-staging-atomic-release-lifecycle-regression.sql'
+      - 'supabase/migrations/stage38_staging_atomic_release_finalize_v1.sql'
+      - 'supabase/migrations/20261122_release_finalization_atomic_v1.sql'
+      - 'supabase/functions/beagu-release-manager-v1/index.ts'
       - 'tests/stage38-staging-release-readonly-contract.cjs'
       - 'tests/stage38-staging-auth-mfa-oidc-contract.cjs'
       - 'tests/fixtures/stage38-staging-auth-mfa-oidc-once/**'
@@ -55,6 +60,11 @@ on:
       - 'tests/stage38-staging-telemetry-health-contract.cjs'
       - 'tests/stage38-staging-referral-funnel-contract.cjs'
       - 'tests/stage38-staging-dashboard-aggregate-contract.cjs'
+      - 'tests/stage38-atomic-release-finalize-contract.cjs'
+      - 'tests/stage38-staging-atomic-release-lifecycle-regression.sql'
+      - 'supabase/migrations/stage38_staging_atomic_release_finalize_v1.sql'
+      - 'supabase/migrations/20261122_release_finalization_atomic_v1.sql'
+      - 'supabase/functions/beagu-release-manager-v1/index.ts'
       - 'tests/stage38-staging-release-readonly-contract.cjs'
       - 'tests/stage38-staging-auth-mfa-oidc-contract.cjs'
       - 'tests/fixtures/stage38-staging-auth-mfa-oidc-once/**'
@@ -112,6 +122,8 @@ jobs:
         run: node tests/stage38-staging-dashboard-aggregate-contract.cjs
       - name: Verify isolated release manager is strictly read-only and owner AAL2-gated
         run: node tests/stage38-staging-release-readonly-contract.cjs
+      - name: Enforce atomic release worker and staging-tested SQL crash consistency
+        run: node tests/stage38-atomic-release-finalize-contract.cjs
       - name: Validate ephemeral OIDC Auth+MFA test's security and cleanup contract
         run: node tests/stage38-staging-auth-mfa-oidc-contract.cjs
       - name: Check one-time staging Auth test runner is permanently disabled
