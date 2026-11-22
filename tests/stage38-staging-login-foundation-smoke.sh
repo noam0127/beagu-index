@@ -147,3 +147,63 @@ SET app.stage38_fixture_only = 'ephemeral-ci';
 SQL
 echo "PASS: synthetic survey-verification gate denies issued-only codes, supports Lv1/earned Lv2 and revocation without production data."
 
+
+# The official Form attestation reference uses a PRIVATE event digest.
+# Prove that neither a replay nor cross-code assignment can reuse one event.
+test -f tests/stage38-synthetic-submission-claim-cases.sql
+if psql -v ON_ERROR_STOP=1 -f tests/stage38-synthetic-submission-claim-cases.sql \
+     > /tmp/stage38-unapproved-claim.stdout 2>&1; then
+  echo "INVALID: submission claim fixture ran outside ephemeral CI marker" >&2
+  exit 1
+fi
+grep -q "STAGE38_EPHEMERAL_CLAIM_ONLY" \
+  /tmp/stage38-unapproved-claim.stdout
+psql -v ON_ERROR_STOP=1 <<'SQL'
+SET app.stage38_fixture_only = 'ephemeral-ci';
+\i tests/stage38-synthetic-submission-claim-cases.sql
+SQL
+
+# Two independent PostgreSQL sessions claim the SAME synthetic event at once.
+# Exactly one may win: the UNIQUE indexes, not an application boolean,
+# determine whether a proof was previously consumed.
+claim_tmp="$(mktemp -d)"
+trap 'rm -rf "$claim_tmp"' EXIT
+(
+  psql -v ON_ERROR_STOP=1 -At <<'SQL' > "$claim_tmp/a"
+SET ROLE service_role;
+SELECT CASE WHEN stage38_claim_fixture.try_claim(
+  encode(sha256(convert_to('ST38-concurrent-event','UTF8')),'hex'),
+  encode(sha256(convert_to('ST38-concurrent-code','UTF8')),'hex')
+) THEN 'CLAIMED' ELSE 'REPLAY_DENIED' END;
+SQL
+) &
+claim_pid_a=$!
+(
+  psql -v ON_ERROR_STOP=1 -At <<'SQL' > "$claim_tmp/b"
+SET ROLE service_role;
+SELECT CASE WHEN stage38_claim_fixture.try_claim(
+  encode(sha256(convert_to('ST38-concurrent-event','UTF8')),'hex'),
+  encode(sha256(convert_to('ST38-concurrent-code','UTF8')),'hex')
+) THEN 'CLAIMED' ELSE 'REPLAY_DENIED' END;
+SQL
+) &
+claim_pid_b=$!
+wait "$claim_pid_a"
+wait "$claim_pid_b"
+if [[ "$(grep -hxc CLAIMED "$claim_tmp/a" "$claim_tmp/b" || true)" != 1 ||
+      "$(grep -hxc REPLAY_DENIED "$claim_tmp/a" "$claim_tmp/b" || true)" != 1 ]]; then
+  echo "STAGE38_CONCURRENT_CLAIM_UNIQUE_CONSTRAINT_FAILED" >&2
+  exit 1
+fi
+psql -v ON_ERROR_STOP=1 <<'SQL'
+DO $validation$
+BEGIN
+  IF (SELECT COUNT(*) FROM stage38_claim_fixture.submission_claims)<>3
+  THEN RAISE EXCEPTION 'Synthetic one-time evidence replay wrote extra records';
+  END IF;
+END;
+$validation$;
+SQL
+echo "PASS: synthetic private Form event atomically claimed once; duplicate event, cross-code replay and two concurrent sessions rejected."
+
+
