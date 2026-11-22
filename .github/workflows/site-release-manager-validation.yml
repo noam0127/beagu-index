@@ -18,6 +18,8 @@ on:
       - 'tests/stage38-manual-vercel-gate.mjs'
       - 'tests/stage38-staging-db-contract.sql'
       - 'tests/stage38-staging-db-contract.mjs'
+      - 'tests/stage38-staging-rpc-parity.sql'
+      - 'tests/stage38-staging-rpc-parity.mjs'
       - 'docs/releases/templates/stage38-approved-vercel-preview.yml'
   workflow_dispatch:
 jobs:
@@ -43,6 +45,7 @@ jobs:
           node tests/stage38-published-http-check.mjs
           node tests/stage38-manual-vercel-gate.mjs
           node tests/stage38-staging-db-contract.mjs
+          node tests/stage38-staging-rpc-parity.mjs
           ruby -ryaml -e 'YAML.parse_file(ARGV.fetch(0))' docs/releases/templates/stage38-approved-vercel-preview.yml
           python3 tests/site-release-packaging.py
           python3 tests/site-release-two-sha-isolation.py
