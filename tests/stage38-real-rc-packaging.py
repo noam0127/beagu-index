@@ -55,6 +55,7 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     html_count = 0
     static_count = 0
     links_to_production = 0
+    production_link_files = {}
     for file in out.rglob("*"):
         if not file.is_file() or file.suffix.lower() not in TEXT_EXTENSIONS:
             continue
@@ -68,7 +69,10 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
             assert 'http-equiv="Content-Security-Policy"' in body, str(file.relative_to(out))
             assert "ycwuugggqbunlbwuzvbx.supabase.co" in body, str(file.relative_to(out))
             assert "https://snvzwrexuqavnfvzgxqj.supabase.co" not in body
-        links_to_production += len(re.findall(r"https://(?:www\.)?baeguindex\.com", body))
+        link_count = len(re.findall(r"https://(?:www\.)?baeguindex\.com", body))
+        links_to_production += link_count
+        if link_count:
+            production_link_files[str(file.relative_to(out))] = link_count
     assert html_count >= 1 and static_count >= html_count
 
     # Report rather than conceal navigation out of the staging host.
@@ -77,5 +81,8 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     print("Source pinned RC:", RC_SHA)
     print("HTML files:", html_count, "audited text files:", static_count)
     print("Remaining explicit production-site URL references:", links_to_production)
+    for rel, count in sorted(production_link_files.items()):
+        # Paths and counts only: never print URL query tokens or page source.
+        print("PRODUCTION_LINK_REFERENCE:", rel, "count:", count)
     print("NOTE: production-domain links require manual triage before live account QA.")
     print("NOTE: this synthetic plan is NOT a deploy approval and no website was published.")
