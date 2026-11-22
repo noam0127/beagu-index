@@ -90,6 +90,13 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert "STAGING_NEW" in stage_html and "PRODUCTION_SAFE" not in stage_html
     assert "beagu-preview-watermark" not in prod_html
     assert "beagu-preview-watermark" in stage_html
+    assert "운영 웹과 브라우저 저장공간 공유" in stage_html
+    assert "실제 계정 사용 금지" in stage_html
+    assert 'http-equiv="Content-Security-Policy"' in stage_html
+    assert "connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co" in stage_html
+    assert "wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'" in stage_html
+    assert "https://snvzwrexuqavnfvzgxqj.supabase.co;" not in stage_html
+    assert "Content-Security-Policy" not in prod_html
     assert 'href="/_preview/school-report.html"' in stage_html
     assert 'src="/_preview/js/site.js"' in stage_html
     assert 'href="/school-report.html"' in prod_html
@@ -129,6 +136,18 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
         assert (prefix / "data/public-compare-school-directory-v1.json").read_text(
             encoding="utf-8"
         ) == '{"version":"LATEST_ALLOWED_DIRECTORY"}'
+
+    # Fail closed: any page lacking an explicit head must not receive a
+    # preview that silently drops the connect-src policy.
+    no_head = scratch / "no_head"
+    no_head.mkdir()
+    put(no_head, "broken.html", "<html><body>NO_HEAD</body></html>")
+    try:
+        worker.make_preview_banner(no_head)
+    except RuntimeError as exc:
+        assert "missing <head>" in str(exc)
+    else:
+        raise AssertionError("headless preview must fail CSP packaging")
 
     # A rollback to a null staging SHA removes preview, without replacing the
     # previously approved production HTML or JavaScript. Such a rollback is
