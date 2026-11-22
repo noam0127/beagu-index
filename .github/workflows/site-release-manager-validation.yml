@@ -16,7 +16,7 @@ on:
       - 'tests/stage38-preview-origin-gate.mjs'
       - 'tests/stage38-published-http-check.mjs'
       - 'tests/stage38-manual-vercel-gate.mjs'
-      - '.github/workflows/stage38-approved-vercel-preview.yml'
+      - 'docs/releases/templates/stage38-approved-vercel-preview.yml'
   workflow_dispatch:
 jobs:
   check:
