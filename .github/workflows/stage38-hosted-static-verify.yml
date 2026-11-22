@@ -1,0 +1,42 @@
+name: Stage38 external STATIC preview Chromium audit (NO AUTH)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/stage38-hosted-static-verify.yml'
+      - 'tests/stage38-hosted-static-smoke.cjs'
+      - 'scripts/release-manager/build-stage38-static-mirror.py'
+permissions:
+  contents: read
+jobs:
+  external-static-browser:
+    if: github.repository == 'noam0127/beagu-index'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify hosted RC meta over real external HTTP
+        run: |
+          set -euo pipefail
+          url='https://raw.githack.com/noam0127/beagu-index/stage38-static-review-rc-5c95aad/stage38-static-mirror.json'
+          curl --fail --silent --show-error --location --retry 8 --retry-delay 4 --retry-all-errors --max-time 120 \
+            -o /tmp/stage38-hosted-static-mirror.json "$url"
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/stage38-hosted-static-mirror.json',encoding='utf-8'))
+          assert x['source_sha']=='5c95aadad971901a8222f83c52e93bf901a3aeb7'
+          assert x['staging_ref']=='ycwuugggqbunlbwuzvbx'
+          assert x['login_enabled'] is False
+          assert x['api_calls_enabled'] is False
+          assert x['production_release_approved'] is False
+          print('PASS: external HTTP independent RC static mirror; auth/API disabled')
+          PY
+      - name: Install isolated headless Chromium for hosted-only smoke
+        run: |
+          npm install --prefix .stage38-browser-deps --no-save --no-package-lock playwright@1.56.1
+          .stage38-browser-deps/node_modules/.bin/playwright install --with-deps chromium
+      - name: Verify remote five-page static mirror without credentials or API requests
+        env:
+          NODE_PATH: .stage38-browser-deps/node_modules
+        run: node tests/stage38-hosted-static-smoke.cjs
