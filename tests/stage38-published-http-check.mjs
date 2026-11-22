@@ -8,11 +8,13 @@ const pinned="5c95aadad971901a8222f83c52e93bf901a3aeb7";
 const stage="ycwuugggqbunlbwuzvbx";
 const index="<html><head></head><body>Preview RC only</body></html>";
 const config="const SUPABASE_URL='https://ycwuugggqbunlbwuzvbx.supabase.co';";
+const directory='{"version":"PINNED_RC_DIRECTORY"}';
 const hash=value=>createHash("sha256").update(value).digest("hex");
 const fileHashes={
   "index.html":hash(index),
   "js/supabase-config.js":hash(config),
-  "vercel.json":hash('{"review":"headers-only"}')
+  "vercel.json":hash('{"review":"headers-only"}'),
+  "data/public-compare-school-directory-v1.json":hash(directory)
 };
 const manifest={
   schema:"beagu-independent-preview-package-v1",
@@ -41,7 +43,8 @@ assert.equal((await inspectPublishedStaticPreview(site,{expectedManifestSha256:"
 const routes={
   "/stage38-release-manifest.json":JSON.stringify(manifest),
   "/index.html":index,
-  "/js/supabase-config.js":config
+  "/js/supabase-config.js":config,
+  "/data/public-compare-school-directory-v1.json":directory
 };
 function mocked({routeOverrides={},headerOverrides={},statusOverrides={}}={}){
   const calls=[];
@@ -62,7 +65,8 @@ function mocked({routeOverrides={},headerOverrides={},statusOverrides={}}={}){
   assert.equal(result.realAccountReady,false);
   assert.equal(result.productionReleaseReady,false);
   assert.equal(result.pinnedSha,pinned);
-  assert.equal(calls.length,3);
+  assert.equal(calls.length,4);
+  assert.equal(result.checkedAssets,4);
   assert.ok(calls.every(x=>x.opts.method==="GET"&&x.opts.redirect==="manual"));
   assert.ok(calls.every(x=>x.url.startsWith(site)));
 }
@@ -97,6 +101,11 @@ for (const status of [401,403]) {
 }
 {
   const {fetcher}=mocked({routeOverrides:{"/index.html":"tampered static page"}});
+  assert.equal((await inspect(site,{fetcher})).reason,"deployed_file_hash_mismatch");
+}
+{
+  // A newer unapproved directory must not pass even when RC HTML/JS match.
+  const {fetcher}=mocked({routeOverrides:{"/data/public-compare-school-directory-v1.json":'{"version":"UNAPPROVED_NEW_DIRECTORY"}'}});
   assert.equal((await inspect(site,{fetcher})).reason,"deployed_file_hash_mismatch");
 }
 {
