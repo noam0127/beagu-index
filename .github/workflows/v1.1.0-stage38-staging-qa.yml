@@ -1,0 +1,56 @@
+name: v1.1.0 stage38 staging RC pre-deploy checks
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'supabase/functions/_shared/staging-release-candidate.mjs'
+      - 'supabase/functions/beagu-release-manager-v1/index.ts'
+      - 'js/beagu-release-progress-v1.js'
+      - 'js/beagu-admin-updates-v1.js'
+      - 'admin-updates.html'
+      - 'styles/beagu-admin-updates-v1.css'
+      - 'tests/v1.1.0-stage38-release-admin-gates.mjs'
+      - 'tests/v1.1.0-stage38-package-preview.py'
+      - '.github/workflows/v1.1.0-stage38-staging-qa.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/_shared/staging-release-candidate.mjs'
+      - 'supabase/functions/beagu-release-manager-v1/index.ts'
+      - 'js/beagu-admin-updates-v1.js'
+      - 'tests/v1.1.0-stage38-release-admin-gates.mjs'
+      - '.github/workflows/v1.1.0-stage38-staging-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage38-candidate-preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify owner-AAL2 registration, pinned SHA and real job-status UI
+        run: node tests/v1.1.0-stage38-release-admin-gates.mjs
+      - name: Verify frozen rc.1 commit and worker isolation
+        run: python3 tests/v1.1.0-stage37-rc-freeze.py
+      - name: Assemble offline RC preview with isolated staging backend
+        run: python3 tests/v1.1.0-stage38-package-preview.py
+      - name: Save preview package for administrator inspection, do NOT publish
+        uses: actions/upload-artifact@v4
+        with:
+          name: beagu-v1.1.0-rc.1-offline-preview
+          path: _stage38_site/_preview/
+          retention-days: 7
+          if-no-files-found: error
+      - name: Explicit deployment state
+        run: |
+          echo "Staging deployment: BLOCKED until owner AAL2 registers fixed candidate and release API supports it."
+          echo "Production deployment: forbidden."
+          echo "No GitHub Pages publish, no signed OIDC worker action, no Supabase writes."
