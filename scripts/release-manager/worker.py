@@ -307,7 +307,10 @@ def write_independent_release_manifest(target, staging_sha):
     Include immutable content hashes, not user identity, auth data, or a
     declaration that live deployment or administrator approval happened.
     """
-    required = ("index.html", "js/supabase-config.js", "vercel.json")
+    required = (
+        "index.html", "js/supabase-config.js", "vercel.json",
+        "data/public-compare-school-directory-v1.json",
+    )
     sha256 = {}
     for relative in required:
         item = target / relative
@@ -344,7 +347,10 @@ def package_independent_preview():
     if INDEPENDENT_OUTPUT.exists():
         shutil.rmtree(INDEPENDENT_OUTPUT)
     archive(staging, INDEPENDENT_OUTPUT)
-    overlay_approved_directory(INDEPENDENT_OUTPUT)
+    # Standalone RC builds must be reproducible from their declared source SHA.
+    # Unlike the existing Pages production/path-preview builder, do NOT
+    # overlay HEAD data: even a "public" directory can change between builds
+    # while the RC SHA remains fixed. Preserve the current Pages behavior.
     # Never ship the live site's custom domain or Pages deployment markers.
     live_cname = INDEPENDENT_OUTPUT / "CNAME"
     if live_cname.exists():
