@@ -42,6 +42,12 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     put(repo, "school-report.html",
         "<html><head></head><body>PROD_REPORT</body></html>")
     put(repo, "js/site.js", "window.mock='PROD_JS';")
+    put(repo, "js/supabase-config.js",
+        "window.supabaseUrl='https://snvzwrexuqavnfvzgxqj.supabase.co'; "
+        "window.supabaseKey='sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2';")
+    put(repo, "styles/api.css", '/* production ref snvzwrexuqavnfvzgxqj */')
+    put(repo, "data/endpoints.json",
+        '{"api":"https://snvzwrexuqavnfvzgxqj.supabase.co"}')
     put(repo, "data/public-compare-school-directory-v1.json",
         '{"version":"OLD_APPROVED_DIRECTORY"}')
     git(repo, "add", ".")
@@ -90,6 +96,27 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert 'src="/js/site.js"' in prod_html
     assert "STAGE_JS" in (out / "_preview/js/site.js").read_text(encoding="utf-8")
     assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
+    # A pinned staging SHA must not inherit production API endpoints or keys.
+    # The published production snapshot must remain byte-for-byte as before.
+    live_ref = "snvzwrexuqavnfvzgxqj"
+    stage_ref = "ycwuugggqbunlbwuzvbx"
+    live_key = "sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2"
+    stage_key = "sb_publishable_c8h7TaIYONfP56Zc05K0Sw_SxyT3lZU"
+    prod_config = (out / "js/supabase-config.js").read_text()
+    stage_config = (out / "_preview/js/supabase-config.js").read_text()
+    assert live_ref in prod_config and live_key in prod_config
+    assert stage_ref in stage_config and stage_key in stage_config
+    assert live_ref not in stage_config and live_key not in stage_config
+    assert live_ref in (out / "styles/api.css").read_text()
+    assert stage_ref in (out / "_preview/styles/api.css").read_text()
+    assert live_ref in (out / "data/endpoints.json").read_text()
+    assert stage_ref in (out / "_preview/data/endpoints.json").read_text()
+    for published in (out / "_preview").rglob("*"):
+        if published.is_file() and published.suffix.lower() in (
+            ".html", ".js", ".mjs", ".json", ".css", ".webmanifest", ".xml", ".svg"
+        ):
+            body = published.read_text(encoding="utf-8")
+            assert live_ref not in body and live_key not in body, published
     assert "STAGE_REPORT" in (out / "_preview/school-report.html").read_text(encoding="utf-8")
     assert "PROD_REPORT" in (out / "school-report.html").read_text(encoding="utf-8")
     assert (out / "CNAME").read_text().strip() == "baeguindex.com"
