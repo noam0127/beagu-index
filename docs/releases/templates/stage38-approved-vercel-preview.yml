@@ -42,7 +42,7 @@ jobs:
       VERCEL_ORG_ID: team_bSH5LPm82iDkTvE4ly21mrDg
       VERCEL_PROJECT_ID: prj_AfPd5IvdT6DlIJkTuSfGxu2PaVVA
       RC_SHA: 5c95aadad971901a8222f83c52e93bf901a3aeb7
-      TRUSTED_SHA: 8d17ca34fe811f415cf1849c3b76723de408e43c09d11abf1b87e9a4dfc95754
+      TRUSTED_SHA: 75fc154504bc291c3ef58c6b1cbc2c92bee24a1694b412746e4ab9de8d427559
     steps:
       - name: Check explicit operator input
         env:
