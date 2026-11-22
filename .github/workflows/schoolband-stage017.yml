@@ -1,0 +1,45 @@
+name: Schoolband 017 multitouch orientation accessible full-screen proof
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage017.cjs'
+      - '.github/workflows/schoolband-stage017.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-touch-rotation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Static script and pointer lifecycle contracts
+        run: node scripts/test-schoolband-stage017.cjs
+      - name: Install Chromium with CDP touchscreen emulation
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Real browser two-finger chords, touch cancel, rotate mid-song, high contrast and fullscreen fallback
+        run: node scripts/test-schoolband-stage017.cjs --browser
+      - name: Preserve 016 guided three-screen UX school and instrument navigation
+        run: node scripts/test-schoolband-stage016.cjs --browser
+      - name: Preserve 008 N-lane keyboard touch and Enter through 40 live games
+        run: node scripts/test-schoolband-stage008.cjs --browser
+      - name: Preserve 005 timing and 007 audio pause contracts
+        run: |
+          node scripts/test-schoolband-stage005.cjs
+          node scripts/test-schoolband-stage007.cjs
+      - name: Save mobile portrait landscape high-contrast shots and touch proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage017-multitouch-orientation-proof
+          path: artifacts/schoolband-stage017/
+          if-no-files-found: error
