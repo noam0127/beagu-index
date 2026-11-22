@@ -10,7 +10,7 @@ assert.match(server,/beagu_earned_challenge_visitor/);
 assert.doesNotMatch(server,/admin\.rpc\('beagu_check_class_diary_guest_code'/,'An unearned challenge identity MUST NOT authenticate at Lv2');
 assert.match(server,/beagu_has_earned_challenge_visitor/,'Earned session rechecked for revocation');
 assert.match(server,/identity_campaign='2026'/);
-assert.match(server,/provisional:actualLevel===2&&!session\.identity_visitor_id/);
+assert.match(server,/provisional:effectiveLevel===2&&!session\.identity_visitor_id/);
 assert.match(server,/const actualLevel=await verifiedMemberTier\(req,session\)/);
 assert.match(server,/beagu_consume_login_budget/,'Global rate limiting preserved');
 assert.match(migration,/p\.valid_referrals>=1/);
