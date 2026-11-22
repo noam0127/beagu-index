@@ -1,6 +1,6 @@
 # 『난감한 스쿨밴드』 029/030 — 무료 독립 시험 미리보기 및 커밋 검증
 
-2026-11-23 · `schoolband-playtest` 브랜치 · **소스/시험 패키지 구현 / 공개 HTTP 접속 미검증 / 출시 게이트 미완료**
+2026-11-23 · `schoolband-playtest` 브랜치 · **소스/시험 패키지 구현 / 외부 HTTP 200·해시 검증 PASS / 브라우저 E2E 진행 중**
 
 ## 0. 변경 금지 범위
 
@@ -74,3 +74,16 @@
 ## 6. 다음 단계
 
 030/030에서는 실제 시험 웹의 검증/운영 배포 최종 승인 여부를 판단한다. **029는 아직 완료되지 않았다**. 019–028 미확인 GitHub Actions/브라우저 검사·실기 검증도 계속 열린 상태다. 사용자가 명시적으로 금지한 3개 업무는 030에서도 절대 재개하지 않는다.
+
+## 검증 증거 갱신 — 정확한 외부 파일은 이미 확인됨 (2026-11-23)
+
+- **검증된 커밋:** `f675c26d8d8e5170cd41873d27de1efb8630600b`.
+- **실제 GitHub Actions 성공:** [Run #45056985770](https://github.com/noam0127/beagu-index/actions/runs/45056985770), Job `immutable-static-preview` SUCCESS, commit status `schoolband/029-static-preview-http=success`.
+- **로컬 HTTP:** 게임 HTML, 홈페이지 JSON, 미리보기 HTML·manifest HTTP 200/정확한 SHA-256; `CNAME` 없음.
+- **외부 HTTPS:** `raw.githack.com`에서 실제 GET 결과 아래 3개가 전부 **HTTP 200, 정상 MIME, 기대 SHA-256 해시 일치** (GitHub Actions 로그 확인).
+  - `preview/index.html` SHA256 `cdd70dd14e4c03f8a43c08ff8e50c0b5773255bcec74c86d20a6fdb7b796693e`.
+  - `index.html` SHA256 `807bc3bc02a327b25dac570dcb5e748943841c12bc3d4f31cdcd696c63dca856`.
+  - `charts/school-homepages.v1.json` SHA256 `a24f38b5f093c30704ef83d46ef7313c43517b07a0a83fbe348e4492428fd0e0`.
+- 정적 파일 ZIP artifact도 GitHub Actions에 정상 생성됨(사용자 계정의 Actions 페이지에서 접근). 원본 ZIP를 이 대화의 sandbox에서 직접 내려받은 것은 아님.
+- **브라우저 UI 별도 결과:** [Run #45057135791](https://github.com/noam0127/beagu-index/actions/runs/45057135791)에서 CDN HTML에 대한 Chromium 테스트가 **제공자의 External Content Notice** 때문에 실패. GitHack의 HTML 열기 확인 안내로 인한 것으로 공식 서비스 문서에서 확인. 이용자가 `Open the page`를 눌러야 한다. 현재 `scripts/test-schoolband-stage029-browser.cjs`의 브라우저 테스트에서 해당 확인 절차를 명시적으로 처리하도록 수정함. **수정 버전 Chromium 성공은 별도 확인 대기**.
+- 정리: **파일 전송/무결성 PASS**와 **사용자 브라우저 기능 E2E 미확인**은 서로 별개의 게이트다. 후자가 성공하기 전에는 029 최종 종료를 선언하지 않는다.
