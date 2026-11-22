@@ -8,6 +8,7 @@ on:
     paths:
       - 'scripts/build-standalone-staging.py'
       - 'tests/test-standalone-staging.py'
+      - 'scripts/test-standalone-browser.cjs'
       - 'render.yaml'
       - '.github/workflows/v110-standalone-staging.yml'
   workflow_dispatch:
@@ -16,7 +17,7 @@ permissions:
 jobs:
   build-safe-staging:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - name: Checkout selected Git SHA without stored credentials
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -30,6 +31,20 @@ jobs:
         run: python3 scripts/build-standalone-staging.py
       - name: Audit test-only bundle and production isolation
         run: python3 tests/test-standalone-staging.py
+      - name: Setup Node 22 for isolated browser checks
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - name: Install headless Chromium only
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: PC/mobile browser and no-live-requests regression
+        run: |
+          python3 -m http.server 8132 --directory _standalone_staging --bind 127.0.0.1 >/tmp/beagu-standalone-browser.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node scripts/test-standalone-browser.cjs
       - name: Verify production domain and deployment workers never included
         run: |
           test ! -e _standalone_staging/CNAME
