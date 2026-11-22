@@ -1,0 +1,33 @@
+name: Schoolband 027 device-input DOM emulation without audio
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage027.cjs'
+      - '.github/workflows/schoolband-stage027.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: schoolband-stage027-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  input-browser-emulation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static pointer, keyboard and screen rotation code gates
+        run: node scripts/test-schoolband-stage027.cjs
+      - name: Verify 20-chart game data separately, without audio
+        run: node scripts/test-schoolband-stage026.cjs
+      - name: Install Chromium and WebKit (browser emulation only)
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium webkit
+      - name: Emulate desktop keyboard, Android touch and iPhone WebKit UI
+        run: node scripts/test-schoolband-stage027.cjs --browser
