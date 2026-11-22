@@ -77,6 +77,15 @@ no(()=>Q.advance({...approved,review:{data_checked:false,approved_for_trial:true
 const oldRights=clone(rights);
 oldRights.records[0].public_approved=true;
 no(()=>Q.validateQueue(queue,oldRights),"source_not_trusted");
+// Rights revocation or expiration overrides an old trial-release record.
+const revokedLedger=clone(rights);
+revokedLedger.records[0].revoked_at="2026-11-01";
+yes(()=>assert.equal(Q.validateQueue(queue,revokedLedger).valid,true),"historical audit remains readable");
+yes(()=>assert.equal(Q.resolvePlaytestSong(queue,revokedLedger,"7004971","volleyball").song,null),"revoked rights stop original");
+no(()=>Q.advance({...root,stage:"reviewing"},"approve_private",revokedLedger,"2026-11-23"),"rights_expired_or_revoked");
+const expiredLedger=clone(rights);
+expiredLedger.records[0].valid_until="2026-11-01";
+yes(()=>assert.equal(Q.resolvePlaytestSong(queue,expiredLedger,"7004971","anthem").song,null),"expired original is not a fallback");
 const missingRights=clone(rights);
 missingRights.records=missingRights.records.slice(1);
 no(()=>Q.validateQueue(queue,missingRights),"source_not_trusted");
@@ -84,6 +93,12 @@ const runner=R.load();
 yes(()=>assert.equal(runner.result.valid,true),"runner sha verification and queue validated");
 yes(()=>assert.equal(R.simulate("withdraw",root.song_id).fallback.song,null),"runner withdrawal simulation");
 yes(()=>assert.equal(R.simulate("withdraw",second.song_id).fallback.song,"volleyball"),"runner alternate withdrawal");
+const decision=R.draftDecision("reject",second.song_id);
+yes(()=>assert.equal(decision.new_stage,"rejected"),"offline rejection draft");
+yes(()=>assert.equal(decision.production_deployed,false),"draft never deploys");
+const draftFile=path.join(ROOT,decision.draft_path);
+yes(()=>assert.equal(JSON.parse(fs.readFileSync(draftFile,"utf8")).records[1].stage,"rejected"),"draft saved only under artifacts");
+fs.unlinkSync(draftFile);
 const script=GAME.match(/<script>([\s\S]*?)<\/script>/)?.[1];
 assert(script);new vm.Script(script);passed++;
 yes(()=>assert(GAME.includes('const REGISTERED_ANTHEMS=Object.freeze({});')),"no live school registry");
