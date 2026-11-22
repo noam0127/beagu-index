@@ -103,7 +103,7 @@ html[data-reduced-fx="true"] .impact-ring{display:none}
 .step-nav button[aria-current=step]{background:#554c94;border-color:#d5c9ff;box-shadow:inset 0 0 0 1px #bca7ff;color:white}
 .step-nav button[aria-disabled=true]{opacity:.60}
 .ux-step-card{scroll-margin-top:70px}
-.ux-step-card:focus{outline:none}
+.ux-step-card:focus{outline:2px solid #d5c9ff;outline-offset:3px}
 .ux-step-card h2{letter-spacing:-.02em}
 body[data-ux-step=school] #stepSchool,body[data-ux-step=instrument] #stepInstrument,body[data-ux-step=play] #stepPlay{border-color:#887be4}
 #schoolSearch{font-size:16px;min-height:50px}
@@ -173,6 +173,8 @@ html[data-low-power-fx="true"] .impact-ring,html[data-low-power-fx="true"] .comb
 html[data-low-power-fx="true"] .judgement.animate,html[data-low-power-fx="true"] .lane-event.animate{animation:none;opacity:1}
 html[data-low-power-fx="true"] .judgement.animate{transform:translate(-50%,0) scale(1)}
 html[data-low-power-fx="true"] .lane-event.animate{transform:none}
+html[data-low-power-fx="true"] .taphit.pressed,html[data-reduced-fx="true"] .taphit.pressed{transform:none}
+@media(prefers-reduced-motion:reduce){.taphit.pressed{transform:none}}
 @media(max-width:360px){.fx-options{gap:3px 9px}.fx-options label{font-size:11px}}
 /* Stage020: song choice is separate from school index tier and music licensing. */
 .song-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:9px 0}
@@ -842,6 +844,46 @@ const LANE_GLOW_MS=175,PARTICLE_LIMIT=60;
 const systemMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")||null;
 const FX_PREF_KEY="nangam-band-fx-v1";
 let userReducedMotion=false,vibrationEnabled=false,lowPowerFx=false;
+// Stage028: rendering-throttle choices are pure and NEVER modify note timing.
+const LOW_POWER_VISUAL_BUDGET_MS=32;
+function visualFrameEligible(lowPower,wall,lastWall){
+ if(!lowPower)return true;
+ return Number.isFinite(wall)&&Number.isFinite(lastWall)&&
+   wall-lastWall>=LOW_POWER_VISUAL_BUDGET_MS;
+}
+function visualSampleStats(samples){
+ if(!Array.isArray(samples)||!samples.length)return null;
+ const nums=samples.filter(v=>Number.isFinite(v)&&v>=0&&v<=10000).sort((a,b)=>a-b);
+ if(!nums.length)return null;
+ const sum=nums.reduce((a,b)=>a+b,0);
+ return {samples:nums.length,avgMs:Math.round(sum/nums.length*100)/100,
+  p95Ms:Math.round(nums[Math.ceil(nums.length*.95)-1]*100)/100,
+  maxMs:Math.round(nums[nums.length-1]*100)/100};
+}
+const VISUAL_SAMPLES_MAX=120;
+const visualDrawSamples=[];
+function recordVisualDraw(durationMs){
+ if(!Number.isFinite(durationMs)||durationMs<0)return;
+ visualDrawSamples.push(durationMs);
+ if(visualDrawSamples.length>VISUAL_SAMPLES_MAX)visualDrawSamples.shift();
+}
+function sampledDraw(){
+ const before=performance.now();draw();
+ recordVisualDraw(performance.now()-before);
+}
+function staticVisualBenchmark(count=30){
+ // This is a purely visual in-memory canvas drawing benchmark.
+ // NEVER creates or resumes AudioContext or changes judgement/scoring.
+ if(playing||startPending||!school)return {available:false,reason:"requires_selected_school_idle"};
+ const n=Math.min(60,Math.max(1,Number.isInteger(count)?count:30));
+ const durations=[];
+ for(let i=0;i<n;i++){
+  const before=performance.now();draw();
+  const elapsed=performance.now()-before;
+  durations.push(elapsed);recordVisualDraw(elapsed);
+ }
+ return {available:true,kind:"static_canvas_draw_only",...visualSampleStats(durations)};
+}
 const FX_PERF={judgementFrames:0,renderedFrames:0,skippedVisualFrames:0,lastDrawWall:0,modeChanges:0};
 try{const saved=JSON.parse(localStorage.getItem(FX_PREF_KEY)||"{}");userReducedMotion=saved.reduce===true;vibrationEnabled=saved.vibration===true;lowPowerFx=saved.lowPower===true}catch(_){/* private mode */ }
 function motionReduced(){return Boolean(systemMotion?.matches||userReducedMotion)}
@@ -854,7 +896,7 @@ function syncFxSettings(){
  $("reduceFx").checked=reduced;$("reduceFx").disabled=Boolean(systemMotion?.matches);
  $("vibrationFx").checked=!reduced&&!lowPowerFx&&vibrationEnabled;$("vibrationFx").disabled=reduced||lowPowerFx;
  $("lowPowerFx").checked=lowPowerFx;
- safeText("fxModeStatus",mode==="reduced"?"움직임 최소화 · 진동과 파편 없음":lowPowerFx?"저사양 모드 · 화면 최대 30fps · 판정과 소리는 동일":"기본 연출 · 60fps 목표");
+ safeText("fxModeStatus",mode==="reduced"?"움직임 최소화 · 진동과 파편 없음":lowPowerFx?"저사양 모드 · 화면 최대 30fps · 판정 계산 유지":"기본 연출 · 60fps 목표");
  if(reduced||lowPowerFx){particles=[];lastImpactAt=0;lanePulse.fill(0);$("impactRing").className="impact-ring";clearFxFeedback()}
  FX_PERF.modeChanges++;FX_PERF.lastDrawWall=0;
  draw();
@@ -1800,8 +1842,8 @@ function animate(){
  $("progress").style.width=Math.max(0,Math.min(100,100*(now/trackLength)))+"%";
  hud();
  // Low-power mode throttles rendering ONLY; judgement runs on each rAF.
- if(!lowPowerFx||frameWall-FX_PERF.lastDrawWall>=32){
-  draw();FX_PERF.lastDrawWall=frameWall;FX_PERF.renderedFrames++;
+ if(visualFrameEligible(lowPowerFx,frameWall,FX_PERF.lastDrawWall)){
+  sampledDraw();FX_PERF.lastDrawWall=frameWall;FX_PERF.renderedFrames++;
  }else FX_PERF.skippedVisualFrames++;
  raf=requestAnimationFrame(animate);
 }
@@ -1993,7 +2035,7 @@ window.addEventListener("pageshow",e=>{
   status("복귀했습니다. ▶ 이어하기를 눌러 연주를 재개하세요.");
  }
 });
-window.nangamSchoolbandV08={getPerformanceFx:()=>({...FX_PERF,mode:perfFxMode(),motionReduced:motionReduced(),lowPower:lowPowerFx,vibrationEnabled:vibrationEnabled&&!motionReduced()&&!lowPowerFx,volumePercent,particleCount:particles.length,maxParticles:lowPowerFx?12:PARTICLE_LIMIT,clockSource:"AudioContext.currentTime"}),getMobileUiState:()=>({activePointers:activePadPointers.size,orientation:lastScreenOrientation,resizeCount:screenResizeCount,
+window.nangamSchoolbandV08={getStaticVisualBenchmark:staticVisualBenchmark,getVisualTimingStats:()=>visualSampleStats(visualDrawSamples),getPerformanceFx:()=>({...FX_PERF,mode:perfFxMode(),motionReduced:motionReduced(),lowPower:lowPowerFx,vibrationEnabled:vibrationEnabled&&!motionReduced()&&!lowPowerFx,volumePercent,particleCount:particles.length,maxParticles:lowPowerFx?12:PARTICLE_LIMIT,clockSource:"AudioContext.currentTime"}),getMobileUiState:()=>({activePointers:activePadPointers.size,orientation:lastScreenOrientation,resizeCount:screenResizeCount,
  largeText:document.documentElement.dataset.largeText==="true",highContrast:document.documentElement.dataset.highContrast==="true",
  fullscreen:!!document.fullscreenElement,fullscreenAvailable:!!$("stepPlay").requestFullscreen,
  padRects:[...$("pads").querySelectorAll(".taphit")].map(b=>({lane:Number(b.dataset.lane),x:b.getBoundingClientRect().left,
