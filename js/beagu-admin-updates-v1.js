@@ -90,6 +90,16 @@
   write("releaseStageVersion",s.staging_sha?(s.staging_version||"버전 미입력"):"아직 시험 웹 미배포");
   write("releaseProdVersion",s.production_sha?(s.production_version||"버전 미입력"):"최초 배포 준비 중");
   write("releaseStageSha",s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹에 아직 업데이트가 없습니다");
+  // Prevent the test link from opening a missing preview before deployment succeeds.
+  const previewLink=el("releaseStageLink");
+  write("releaseStageLinkLabel",s.staging_sha?"시험 웹 열기":"시험 웹 미배포");
+  if(s.staging_sha){
+   previewLink.setAttribute("href","https://baeguindex.com/_preview/");
+   previewLink.removeAttribute("aria-disabled");previewLink.removeAttribute("tabindex");
+  }else{
+   previewLink.removeAttribute("href");previewLink.setAttribute("aria-disabled","true");
+   previewLink.setAttribute("tabindex","-1");
+  }
   write("releaseProdSha",s.production_sha?"코드 "+short(s.production_sha):"초기 배포 후 표시됩니다");
   write("releaseHead",cachedHead?"GitHub 최신 코드: "+short(cachedHead):"새로고침하면 GitHub 최신 코드를 확인합니다.");
   const candidate=cachedProposal&&cachedProposal.sha!==s.staging_sha?cachedProposal:null;
