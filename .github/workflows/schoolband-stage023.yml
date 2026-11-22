@@ -1,0 +1,34 @@
+name: Schoolband 023 private creative song queue and withdrawal tests
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'scripts/schoolband-stage023-queue.cjs'
+      - 'scripts/schoolband-stage023-queue-runner.cjs'
+      - 'scripts/test-schoolband-stage023.cjs'
+      - 'games/nangam-schoolband-v08/charts/song-queue-stage023.v1.json'
+      - 'games/nangam-schoolband-v08/charts/song-intake-rights.v1.json'
+      - 'games/nangam-schoolband-v08/index.html'
+      - '.github/workflows/schoolband-stage023.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  creative-song-queue:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Review approve reject withdrawal and fallback data-only tests
+        run: node scripts/test-schoolband-stage023.cjs
+      - name: Check two original song sources match independent trusted hashes
+        run: node scripts/schoolband-stage023-queue-runner.cjs --verify
+      - name: Simulate trial song withdrawal without altering sources
+        run: |
+          node scripts/schoolband-stage023-queue-runner.cjs --simulate-withdraw original-shining-our-school
+          node scripts/schoolband-stage023-queue-runner.cjs --simulate-withdraw original-meter-shift-exercise-014
+      - name: Check stage022 trust policy regression without browser or audio
+        run: node scripts/test-schoolband-stage022.cjs
