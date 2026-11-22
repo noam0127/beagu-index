@@ -151,7 +151,14 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
 
     # A separate host must receive its own root-hosted, pinned staging-only
     # artifact, not /_preview/-prefixed links or production HTML/JS/CNAME.
+    # Simulate a mutable branch changing after the RC SHA was pinned.
+    # The standalone RC must NOT silently import this newer HEAD dataset.
     worker.INDEPENDENT_OUTPUT = scratch / "standalone-stage"
+    put(repo, "data/public-compare-school-directory-v1.json",
+        '{"version":"UNAPPROVED_POST_RC_DIRECTORY"}')
+    git(repo, "add", "data/public-compare-school-directory-v1.json")
+    git(repo, "commit", "-qm", "synthetic unapproved post-RC directory drift")
+    assert git(repo, "rev-parse", "HEAD") != staging
     worker.package_independent_preview()
     standalone = worker.INDEPENDENT_OUTPUT
     standalone_html = (standalone / "index.html").read_text(encoding="utf-8")
@@ -180,12 +187,15 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
     assert response_headers["X-Frame-Options"] == "DENY"
     assert manifest["deployment_status"] == "unverified"
     assert manifest["supabase_project_ref"] == "ycwuugggqbunlbwuzvbx"
-    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js", "vercel.json"}
+    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js", "vercel.json", "data/public-compare-school-directory-v1.json"}
     assert all(len(value) == 64 for value in manifest["files_sha256"].values())
     assert "snvzwrexuqavnfvzgxqj" not in json.dumps(manifest)
 
     assert (standalone / "data/public-compare-school-directory-v1.json").read_text(
         encoding="utf-8") == '{"version":"LATEST_ALLOWED_DIRECTORY"}'
+    assert "UNAPPROVED_POST_RC_DIRECTORY" not in (
+        standalone / "data/public-compare-school-directory-v1.json"
+    ).read_text(encoding="utf-8")
     assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
     assert "STAGE_JS" in (standalone / "js/site.js").read_text(encoding="utf-8")
     assert live_ref in (out / "js/supabase-config.js").read_text(encoding="utf-8")
