@@ -1,272 +1,365 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>난감한 스쿨밴드 — 개발 시험판 0.2</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#11152a">
+<title>난감한 스쿨밴드 — 학교별 교가 록밴드 리듬게임 시험판 v0.3</title>
 <style>
-:root{color-scheme:dark;--bg:#0c1020;--panel:#171c32;--soft:#222a42;--line:#343e5a;--text:#f4f5ff;--sub:#abb4cf;--a:#8db0ff;--b:#ffb782;--c:#9cdec2;--d:#d0b1ff;--e:#f5d278;--hot:#ff7795;--gold:#ffdd8c}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0,#28234d 0,transparent 35%),radial-gradient(circle at 0 60%,#153847 0,transparent 35%),var(--bg);font-family:system-ui,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--text);line-height:1.55}
-.wrap{width:min(1160px,calc(100% - 28px));margin:0 auto}header{padding:32px 0 19px}.eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#e3c8ff;font-weight:800}.hero{font-size:clamp(31px,5.5vw,62px);line-height:1.13;margin:8px 0 12px;letter-spacing:-.05em;font-weight:900}.gradient{background:linear-gradient(95deg,#b1c7ff,#ffd1a5,#d9aaff);color:transparent;background-clip:text}header p{max-width:750px;color:var(--sub);margin:0}.topmeta{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0}.tag{border:1px solid #4b5275;color:#d4dbf4;background:#272c46;padding:5px 9px;border-radius:40px;font-size:12px}.notice{padding:11px 14px;background:#333049;border:1px solid #5a526d;border-radius:12px;font-size:13px;color:#e6dcf5}
-main{padding-bottom:65px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}.panel{border:1px solid #36415d;background:linear-gradient(155deg,#202740e8,#131b32f2);border-radius:22px;padding:19px;min-width:0;box-shadow:0 14px 35px #0002}h2{font-size:20px;letter-spacing:-.03em;margin:0 0 6px}h3{font-size:15px;margin:10px 0 5px}.muted{color:var(--sub);font-size:13px;margin:0 0 13px}button,select,input{font:inherit}button,select{cursor:pointer}button{border:1px solid #647095;border-radius:11px;padding:10px 13px;background:#303b5c;color:#fff;font-weight:700}button:hover:not(:disabled){filter:brightness(1.13)}button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #c2d1ff;outline-offset:2px}button:disabled{opacity:.46;cursor:default}.primary{background:linear-gradient(95deg,#7596f2,#a37bea);border-color:#a5a7f6}.schoolChoices{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.schoolChoice{min-height:118px;text-align:left;padding:10px;background:#252e49}.schoolChoice strong{display:block;font-size:14px}.schoolChoice small{display:block;color:#b9c5df;font-size:11px;line-height:1.5;margin-top:5px}.schoolChoice.active{outline:2px solid #b7a8ff;background:#403a67}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.stat{padding:9px;background:#111a30;border:1px solid #2d3754;border-radius:12px}.stat b{display:block;font-size:18px;color:#e1e8ff}.stat span{font-size:11px;color:#b2bbd4}.choice{border:1px solid #3e4c6c;border-radius:12px;padding:10px;margin:8px 0;background:#151f38}.choice label{cursor:pointer;display:flex;gap:9px;align-items:flex-start;font-size:14px}.choice input{accent-color:#aa94ff;margin-top:4px}.choice p{padding-left:24px;font-size:12px;color:#b8c4db;margin:5px 0 0}.band{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}.member{border:1px solid #46516d;border-radius:13px;background:#12192f;padding:10px 7px;text-align:center}.member .emoji{font-size:30px;display:block}.member strong{font-size:13px;display:block;margin:5px 0 0}.member small{color:#bec8e1;font-size:11px}.visual{position:relative;background:#0c1123;border:1px solid #435175;border-radius:17px;overflow:hidden;margin-top:10px}canvas{display:block;width:100%;height:auto;touch-action:none}.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}.hud>div{background:#0c152c;border:1px solid #364363;border-radius:11px;padding:10px 9px;text-align:center}.hud span{display:block;color:var(--sub);font-size:11px}.hud b{font-size:clamp(17px,3vw,25px);font-variant-numeric:tabular-nums}.controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:8px 0}.pad{padding:16px 2px;touch-action:manipulation;font-weight:850;font-size:15px;user-select:none;-webkit-user-select:none}.pad[data-lane="0"]{background:#294366;border-color:#8db0ff}.pad[data-lane="1"]{background:#604331;border-color:#ffb782}.pad[data-lane="2"]{background:#514822;border-color:#f5d278}.pad[data-lane="3"]{background:#25564b;border-color:#9cdec2}.pad[data-lane="4"]{background:#504068;border-color:#d0b1ff}.pad.on{transform:translateY(2px);filter:brightness(1.6)}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{flex:1}.feedback{min-height:27px;color:var(--gold);font-weight:750;text-align:center;margin:8px 0}.progress{height:7px;border-radius:9px;background:#283150;margin:12px 0;overflow:hidden}.progress>div{height:100%;width:0;background:linear-gradient(90deg,#a4d1ff,#e9a5e5);transition:width .12s}.footnote{font-size:12px;color:var(--sub);margin:8px 0 0}.full{grid-column:1/-1}details{border:1px solid #3b4868;background:#121b31;border-radius:13px;padding:12px;margin:8px 0}summary{cursor:pointer;font-weight:750}.miniGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.miniGrid span{display:block;border:1px solid #38435e;padding:8px;border-radius:9px;background:#1c2740;font-size:11px}.miniGrid b{display:block;font-size:14px;color:#cad7ff}.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.row>*{max-width:100%}select,input[type="search"]{background:#161e36;color:#f7f8ff;border:1px solid #596487;border-radius:10px;padding:10px}select{min-width:130px}input[type="search"]{flex:1;min-width:200px}.catalog{max-height:320px;overflow:auto;border:1px solid #39415a;border-radius:13px}.record{display:grid;grid-template-columns:75px minmax(0,1fr) 75px;gap:8px;align-items:center;padding:9px 11px;border-bottom:1px solid #283451;font-size:13px}.record small{color:#aabce4}.record b{font-size:11px;color:#d8c1ff}.note{font-size:12px;color:#c2cbe2}.empty{padding:25px;text-align:center;color:#bdc8e0}@media(max-width:800px){.cols{grid-template-columns:1fr}.schoolChoices{grid-template-columns:1fr 1fr 1fr}.band{grid-template-columns:repeat(5,minmax(0,1fr))}.panel{padding:14px}.record{grid-template-columns:72px 1fr 57px}.miniGrid{grid-template-columns:1fr 1fr}}@media(max-width:450px){.schoolChoice{min-height:112px;padding:7px}.schoolChoice strong{font-size:12px}.schoolChoice small{font-size:10px}.stat b{font-size:15px}.member .emoji{font-size:22px}.member strong{font-size:11px}.member small{font-size:9px}.member{padding:7px 3px}.pad{font-size:11px;padding:13px 1px}.tag{font-size:10px}}
-.managerNote{border:1px solid #806b42;background:#332f28;border-radius:12px;padding:10px 12px;margin-top:13px;font-size:12px;color:#e7d8ad}.managerNote p{margin:5px 0 9px}.managerNote label{font-weight:700}.managerNote select{padding:5px 10px;min-width:80px;color:#ffefba;background:#262940}@media(max-width:380px){.pad{font-size:10px}.member .emoji{font-size:20px}}
+:root{font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color-scheme:dark;--bg:#0d1122;--panel:#1b2340;--accent:#9d9bff;--text:#f6f7ff;--sub:#b5bfdb}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 10% 0%,#342650 0,transparent 35%),radial-gradient(circle at 95% 25%,#173b43 0,transparent 43%),var(--bg);color:var(--text);line-height:1.5}
+main{max-width:1010px;margin:auto;padding:22px 15px 65px}
+header{padding:14px 0 22px}
+h1{font-size:clamp(31px,6vw,54px);letter-spacing:-.06em;margin:3px 0 2px}
+h2{font-size:19px;margin:0 0 11px}
+p{margin:8px 0}
+.kicker{font-size:11px;font-weight:800;color:#c4beff;letter-spacing:.17em}
+.sub{font-size:13px;color:var(--sub)}
+.note{font-size:12px;color:#f3dcb3;background:#41372e;border:1px solid #756041;border-radius:11px;padding:11px 12px}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.panel{padding:20px;background:linear-gradient(160deg,#222946ed,#161e36fa);border:1px solid #3e496c;border-radius:20px;box-shadow:0 16px 36px #02081733;min-width:0}
+.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+input,button{font:inherit}
+input[type="search"]{width:100%;padding:13px;border-radius:11px;background:#0d1630;color:#fff;border:1px solid #617092;outline-offset:2px}
+button{border:1px solid #65719d;border-radius:11px;color:#fff;background:#334266;padding:11px 13px;font-weight:750;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #cfc9ff;outline-offset:3px}
+button:disabled{opacity:.45;cursor:default}
+.primary{background:linear-gradient(110deg,#687cdd,#9366bf);border-color:#a7a9fa}
+.school-list{max-height:174px;overflow:auto;margin-top:8px;display:grid;gap:5px}
+.school-list button{text-align:left;width:100%;background:#263453;padding:9px 12px}
+.school-picked{border:1px solid #5c637f;background:#121c34;padding:13px;border-radius:12px;margin-top:9px;min-height:66px}
+.school-picked strong{display:block;font-size:16px}
+.school-picked small{font-size:12px;color:#b9c7e1}
+.section-label{font-size:12px;font-weight:800;letter-spacing:.08em;color:#cad6ff;margin:22px 0 9px}
+.instrument-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.instrument{display:flex;align-items:center;justify-content:center;gap:9px;padding:13px 6px;background:#232e4b;min-height:65px}
+.instrument b{font-size:14px}
+.instrument span{font-size:23px}
+.instrument[aria-pressed="true"]{outline:2px solid #e4d9ff;background:#4b4577;box-shadow:inset 0 0 0 1px #aca0ff}
+.instrument:disabled{opacity:.6}
+.mini{font-size:12px;color:#b8c8df}
+.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:12px 0}
+.hud div{background:#10192e;border:1px solid #344468;border-radius:10px;padding:8px 4px;text-align:center}
+.hud b{display:block;font-size:clamp(16px,3vw,25px);font-variant-numeric:tabular-nums}
+.hud small{font-size:10px;color:#b2c5dd}
+canvas{width:100%;display:block;height:auto;background:#0d142a;border-radius:14px;border:1px solid #46547e}
+.taphit{width:100%;margin:10px 0;background:linear-gradient(95deg,#4259a2,#7e58a7);border:2px solid #b4a9fa;min-height:86px;font-size:23px;font-weight:900;letter-spacing:.02em;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.taphit:active,.taphit.pressed{transform:translateY(2px);filter:brightness(1.28)}
+.actions{display:grid;grid-template-columns:1.5fr 1fr .9fr;gap:8px}
+.actions button{padding:12px 5px}
+.feedback{height:auto;min-height:48px;font-size:14px;font-weight:750;color:#ffe1ae;text-align:center;display:grid;place-items:center}
+.progress{height:7px;border-radius:10px;background:#303854;overflow:hidden}
+.progress div{height:100%;width:0;background:linear-gradient(90deg,#8be1e2,#b3a2fc)}
+#result{font-size:13px;color:#d7dff4}
+footer{margin-top:16px;text-align:center;color:#9da9c9;font-size:12px}
+@media(max-width:700px){main{padding:13px 10px 35px}.layout{grid-template-columns:1fr;gap:11px}.panel{padding:15px;border-radius:15px}.instrument{min-height:58px}.hud{margin:8px 0}.actions{grid-template-columns:1.5fr 1fr .8fr}.taphit{min-height:76px}}
 </style>
 </head>
-<body><div class="wrap">
-<header><div class="eyebrow">PUBLIC PLAYTEST · v0.2 · FICTIONAL DATA</div><div class="hero">난감한 <span class="gradient">스쿨밴드</span></div>
-<p>학생 · 동료교사 · 관리자 · 학부모 · 교사가 한 곡을 함께 완성하는 5레인 리듬게임. 학교의 정보는 악기 실력이 아닌 <b>무대·사건·편곡</b>을 바꿉니다.</p>
-<div class="topmeta"><span class="tag">5인 합주</span><span class="tag">PC D·F·Space·J·K</span><span class="tag">모바일 터치</span><span class="tag">원작 자체 제작 리듬·음향</span><span class="tag">학교 변수 사전 12+12+10+9축</span><span class="tag">설문 문항 128개</span></div>
-<div class="notice">🧪 이 버전의 학교·인물·통계는 모두 <b>가상 예시</b>입니다. 실제 배구지수 서비스와 연결하거나 실제 학교를 평가하지 않습니다. 음악은 기기에서 생성하는 오리지널 전자음입니다.</div></header>
-<main class="cols">
-<section class="panel"><h2>01 · 학교가 곡의 무대가 된다</h2><p class="muted">규모, 공간, 지역 환경이 다른 가상 학교 중 하나를 선택하세요.</p><div class="schoolChoices" id="schools"></div><div class="stats" id="stats"></div><p class="footnote" id="schoolDetail"></p>
-<h3>합주 방식 선택</h3><div id="arrangements">
-<div class="choice"><label><input type="radio" name="arrange" value="voluntary" checked/><b>자율 합주</b></label><p>참여 방식을 존중합니다. 학생·학부모 파트의 응답형 패턴이 많아집니다.</p></div>
-<div class="choice"><label><input type="radio" name="arrange" value="compact"/><b>짧고 선명한 합주</b></label><p>퇴근 전 짧은 연습. 12마디로 핵심 주제만 편곡합니다.</p></div>
-<div class="choice"><label><input type="radio" name="arrange" value="distributed"/><b>각자 연습 후 합주</b></label><p>파트별 솔로를 지나 후반부에 다섯 악기가 하나로 만납니다.</p></div></div>
-<h3>밴드 멤버</h3><div class="band"><div class="member"><span class="emoji">🎤</span><strong style="color:var(--a)">학생</strong><small>보컬 · D</small></div><div class="member"><span class="emoji">🥁</span><strong style="color:var(--b)">동료교사</strong><small>드럼 · F</small></div><div class="member"><span class="emoji">🎹</span><strong style="color:var(--e)">관리자</strong><small>신스 · Space</small></div><div class="member"><span class="emoji">🎸</span><strong style="color:var(--c)">학부모</strong><small>베이스 · J</small></div><div class="member"><span class="emoji">🎸</span><strong style="color:var(--d)">플레이어 교사</strong><small>기타 · K</small></div></div>
-<div class="managerNote"><strong>관리자 파트 추가</strong><p>교장 또는 교감 역할의 <b>가상 관리자</b>가 연습 일정 조정·공간 지원·합의 재검토라는 학교 운영의 소리를 신시사이저로 표현합니다. 다른 구성원과 동등하게 연주하며, 실제 학교 관리자의 성향을 추정하지 않습니다.</p><label for="adminRole">관리자 캐릭터 설정</label> <select id="adminRole"><option value="vice">교감</option><option value="principal">교장</option></select></div>
-<p class="footnote">악기는 고정 능력이 아니라 합주 역할을 나타냅니다. 이후에는 역할 교환도 허용하도록 설계합니다.</p></section>
-<section class="panel"><h2>02 · 실제 리듬을 연주하세요</h2><p class="muted" id="stageCaption">무대: 가상 A초 · 교실 어쿠스틱 합주</p><div class="hud"><div><span>점수</span><b id="score">0</b></div><div><span>콤보</span><b id="combo">0</b></div><div><span>정확도</span><b id="accuracy">—</b></div><div><span>하모니</span><b id="harmony">0%</b></div></div>
-<div class="visual"><canvas id="game" width="680" height="480" role="img" aria-label="노트가 내려오는 다섯 개의 리듬 레인. 아래의 터치 버튼이나 키보드 D F 스페이스 J K로 조작합니다."></canvas></div>
-<div class="controls"><button class="pad" data-lane="0" aria-label="학생 보컬 레인 D">D · 학생</button><button class="pad" data-lane="1" aria-label="동료 드럼 레인 F">F · 동료</button><button class="pad" data-lane="2" aria-label="관리자 신시사이저 레인 스페이스">Space · 관리자</button><button class="pad" data-lane="3" aria-label="학부모 베이스 레인 J">J · 학부모</button><button class="pad" data-lane="4" aria-label="교사 기타 레인 K">K · 교사</button></div>
-<div class="feedback" id="feedback" aria-live="polite">연주를 시작하면 노트가 내려옵니다.</div><div class="progress"><div id="progress"></div></div><div class="actions"><button class="primary" id="startBtn">▶ 연주 시작</button><button id="stopBtn" disabled>■ 중단</button><button id="soundBtn" aria-pressed="true">♫ 소리 켜짐</button></div>
-<p class="footnote">노트가 흰 판정선에 닿을 때 키를 누르세요. 실제 노트 정확도는 음악 타이밍으로만 판정하며 학교의 특성으로 불이익을 주지 않습니다.</p></section>
-<section class="panel full"><h2>03 · 학교의 모든 변수를 수용하는 사전</h2><p class="muted">학교 세계 12축, 서사 12축, 지역 10유형, 게임 내부 상태 9개를 연결합니다. 개별 문항은 게임 사건의 <b>소재</b>이며 실제 학교의 사건을 확정하지 않습니다.</p><div class="miniGrid" id="registryStats"></div>
-<details><summary>W01~W12 · 학교 세계 12축</summary><div class="miniGrid" id="worldAxes"></div></details>
-<details><summary>V01~V12 · 설문 기반 서사 12축</summary><div class="miniGrid" id="storyAxes"></div></details>
-<details><summary>지역 유형 10개 · 무대 음색과 배경</summary><div class="miniGrid" id="regionAxes"></div></details>
-<details><summary>게임 내부 상태 9개 · 가상 수치</summary><div class="miniGrid" id="stateAxes"></div></details>
-<details><summary>공식 학교 수치 18개·범주 3개와 식별정보</summary><div class="miniGrid" id="factsAxes"></div><p class="note">원본 세계 생성기 설계 기준. 학교별 승인 여부, 출처·연도·결측·충돌을 별도로 검증해야 합니다.</p></details>
-<h3>원본 설문 항목 전체 보기</h3><div class="row"><select id="yearFilter" aria-label="연도 선택"><option value="all">전체 연도</option><option>2023</option><option>2024</option><option>2025</option><option>2026</option></select><input id="search" type="search" placeholder="문항·내용·서사 축 검색" aria-label="설문 문항 검색"/></div><p class="footnote" id="count"></p><div class="catalog" id="catalog"></div>
-<p class="footnote">문항명 출처: <a style="color:#becbff" href="https://github.com/noam0127/beagu-index/blob/main/data/public-statistics-question-catalog-v1.json" target="_blank" rel="noopener">배구지수 공개 문항 카탈로그</a>. V축 배정은 이 시제품에서 제안한 규칙 기반 매핑으로, 원자료의 공식 분류와는 다릅니다. 2026년 미승인 집계는 반영하지 않습니다.</p>
+<body>
+<main>
+<header>
+<div class="kicker">BAEGUINDEX GAME · SIMPLE ROCK RHYTHM</div>
+<h1>🎸 난감한 스쿨밴드</h1>
+<p class="sub">학교를 고르고, 악기 하나를 선택해서, 딱 그 악기의 리듬만 연주하세요.</p>
+</header>
+<p class="note">현재는 <b>창작 록 데모곡</b>으로 시험합니다. 실제 학교 교가 음원·록 편곡은 아직 연결되지 않았습니다. 학교별 5단계는 기존 배구지수의 공개 승인 자료로 산정합니다.</p>
+<div class="layout">
+<section class="panel" aria-label="게임 준비">
+<h2>01 · 학교 선택</h2>
+<label for="schoolSearch" class="sub">학교명 2글자 이상 입력</label>
+<input id="schoolSearch" type="search" maxlength="30" autocomplete="off" placeholder="예: 가남초">
+<div id="searchResults" class="school-list"></div>
+<p id="schoolStatus" class="sub" role="status" aria-live="polite">학교를 검색하거나 아래 연습용 학교를 선택하세요.</p>
+<button id="demoSchool" type="button">🏫 가상 학교로 시험하기</button>
+<div class="school-picked" aria-live="polite">
+<strong id="schoolTitle">학교를 선택해 주세요</strong>
+<small id="schoolTier">학교별 난이도는 학교 선택 후 표시됩니다.</small>
+</div>
+<div class="section-label">02 · 자신 있는 악기 하나 선택</div>
+<div class="instrument-grid" id="instruments">
+<button type="button" class="instrument" data-inst="guitar" aria-pressed="true"><span>🎸</span><b>일렉기타</b></button>
+<button type="button" class="instrument" data-inst="drums" aria-pressed="false"><span>🥁</span><b>드럼</b></button>
+<button type="button" class="instrument" data-inst="bass" aria-pressed="false"><span>🎸</span><b>베이스</b></button>
+<button type="button" class="instrument" data-inst="keys" aria-pressed="false"><span>🎹</span><b>키보드</b></button>
+</div>
+<p class="mini" id="instCaption">일렉기타의 코드 스트로크 타이밍을 연주합니다.</p>
+<div class="section-label">곡 선택</div>
+<div class="school-picked">
+<strong>🎵 스쿨밴드 록 데모</strong>
+<small>자체 생성한 합주 · 약 19초 · 교가 미연결</small>
+</div>
+<p class="mini">선택하지 않은 나머지 악기는 자동 연주됩니다. 실수하더라도 곡은 끝까지 재생됩니다.</p>
 </section>
-<section class="panel full"><h2>04 · 다음 개발 연결점</h2><div class="miniGrid"><span><b>학교 세계 어댑터</b>기존 레벨2 세계 생성기 응답을 검증해 공식 사실만 주입</span><span><b>설문 데이터 게이트</b>연도별 PUBLISHED·privacy_reviewed·2026 수동승인 확인</span><span><b>사건 카드 엔진</b>128개 문항을 V01~V12 주제에 연결하고 편곡을 조건부 변경</span><span><b>서사 분기</b>주인공·학생·동료·학부모의 가상 선택과 관계 변화 누적</span><span><b>곡 확장</b>오리지널 음원, 난이도, 접근성 옵션 및 저장 기능</span><span><b>운영 분리</b>기존 배구지수 웹과 운영 DB는 수정하지 않음</span></div></section>
-</main></div>
+<section class="panel" aria-label="게임 플레이">
+<h2>03 · 리듬게임</h2>
+<p id="playTitle" class="sub">악기: 일렉기타 · 시작 전</p>
+<div class="hud">
+<div><small>점수</small><b id="score">0</b></div>
+<div><small>콤보</small><b id="combo">0</b></div>
+<div><small>정확도</small><b id="accuracy">—</b></div>
+<div><small>최고 기록</small><b id="best">—</b></div>
+</div>
+<canvas id="track" width="380" height="365" role="img" aria-label="아래로 내려오는 노트를 판정선에 맞춰 한 번 누르는 단일 레인 리듬게임"></canvas>
+<button type="button" id="tap" class="taphit">🎸 연주! · SPACE</button>
+<div class="actions">
+<button type="button" class="primary" id="start" disabled>▶ 연주 시작</button>
+<button type="button" id="stop" disabled>■ 중단</button>
+<button type="button" id="mute">♫ 켜짐</button>
+</div>
+<div class="feedback" id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
+<div class="progress"><div id="progress"></div></div>
+<p id="result">판정선에 노트가 도착할 때 SPACE 또는 연주 버튼을 누르세요.</p>
+</section>
+</div>
+<footer>v0.3 독립 시험판 · 학교 난이도만 공개 API 사용 · 점수는 이 기기에만 저장 · 배구지수 운영 웹 변경 없음</footer>
+</main>
 <script>
-'use strict';
-// Public questionnaire titles (only) transcribed from the existing repository catalog.
-const RAW={
-2023:`Q01|교직원 배구 활동
-Q04|친목회 운영
-Q06|성별·나이별 비공식업무
-Q12|교직원 갈등
-Q02|방학 중 담임교사 근무
-Q03|조퇴 시 관리자 구두보고
-Q05|다과·간식비 교사 부담
-Q07|학교행사
-Q08|CCTV·예산 품의 등 업무
-Q09|저연차 교사 고강도 업무분장
-Q13|월평균 기안 공문량
-Q14|주당 수업시수
-Q10|학생·학부모로 인한 교권침해 및 병가
-Q11|교사의 휴식공간`,
-2024:`Q01|스포츠활동 강제 참여
-Q02|조퇴 시 구두보고
-Q03|교사 개인 휴대전화번호 공개
-Q04|친목회 참여
-Q05|교원 다과비 예산
-Q06|성별·나이별 비공식 업무
-Q07|학교행사
-Q08|교사 행정업무
-Q09|저연차·전입교사 업무분장
-Q13|월평균 공문 기안량
-Q14|주간 수업시수
-Q10|교권침해 관련 병가·퇴직
-Q11|교사 휴식 공간
-Q12|학생 분리 장소와 실행`,
-2025:`Q01|조퇴 구두보고 강제 여부
-Q02|교외체험학습 횟수
-Q03|교사 담당 행정업무(복수선택)
-Q04|학교행사(복수선택)
-Q05|방학 중 근무
-Q07|담임교사 주당 평균 수업시수
-Q08|연간 통지표 횟수
-Q12|새 학기 준비 출근일수
-Q15|월평균 공문 기안량
-Q16|관리자 결재 소요시간
-Q22|연간 전체회의 횟수
-Q23|월간 부장회의 횟수
-Q10|행정실·공무직 업무협조
-Q11|비합리적 업무분장
-Q13|친목회 강제 여부
-Q17|학교 만족도
-Q19|학기말 협의 결과 반영
-Q21|회의에서의 발언 분위기
-Q24|성별·나이에 따른 비공식 업무
-Q25|스포츠활동 강제성
-Q26|교직원 갈등
-Q28|교직원 인사 태도
-Q06|교권침해 관련 병가·퇴직
-Q09|아동학대 신고 횟수
-Q14|문제학생 분리
-Q27|학생 인사 태도
-Q29|교사 병가 사용 가능성
-Q30|다음 학년도 기피 학년
-Q18|교원 다과비 예산·부담
-Q20|교사 휴식여건
-Q31|수학여행·숙박형 체험학습
-Q32|주간학습안내 관리자 결재
-Q33|교통·주차 지도
-Q34|졸업앨범 교사 사진
-Q35|IB 등 공모사업
-Q36|연구실 정수기
-Q37|교직원 화장실
-Q38|우유급식
-Q39|교실급식
-Q40|상담주간
-Q41|녹색학부모회
-Q42|조퇴결재 학년부장 포함
-Q43|학습준비물실
-Q44|친목회
-Q45|늘봄실장
-Q46|토요일 방과후 근무
-Q47|저경력 교사의 학년교육과정 담당
-Q48|민원대응팀
-Q49|업무전담팀
-Q50|학생 체육부`,
-2026:`Q01|친목·체육·회식 불참이 받아들여지는가
-Q02|연가·조퇴 시 관리자 대면보고
-Q03|병가 사용을 위한 추가 허락·사용 자제 요구
-Q04|다른 의견을 말할 때 불이익·압박 우려
-Q05|수업·평가·학급 운영에서 기존 관행을 따르라는 요구
-Q06|업무·보직 배정 기준 공유
-Q07|업무·보직 배정 기준의 일관성
-Q08|신규·전입·저연차 교사에게 특정 업무 우선 배정
-Q09|업무·학교운영 결정에 대한 조정·재검토
-Q10|심각한 학부모 민원 시 학교 공동 대응
-Q11|교사 혼자 어려운 학생지도 문제 시 학교 공동 대응
-Q12|방학 중 근무조·당번 운영
-Q13|성별·나이별 비공식 업무
-Q14|구성원 관계의 범위
-Q15|의사결정 방식
-Q16|새로운 방식 도입 태도
-Q17|수업·학급 운영 방식
-Q18|새 학년 준비 지정 출근일수
-Q19|통상 출근시각
-Q20|통상 퇴근시각
-Q21|퇴근 후·휴일 업무연락일수
-Q22|장기재직휴가 사용·승인 분위기(3항목)
-Q23|담임 주당 정규 수업시수
-Q24|담임 월간 공문 수
-Q25|연간 정기 성적표 안내 횟수
-Q26|교사 담당 행정업무(복수선택)
-Q27|업무·복무 관행(5항목)
-Q28|학부모 민원 최초 대응자
-Q29|하이톡 사용 방식
-Q30|수업 중 학생분리 대응
-Q31|교권침해 관련 병가·퇴직
-Q32|학교 조직·운영 체계(7항목)
-Q33|학생 지원 조직·프로그램(3항목)
-Q34|담임학급 교외체험학습 횟수
-Q35|학생·학부모 대상 행사(복수선택)
-Q36|교직원 행사·모임(복수선택)
-Q37|교직원 스포츠활동 종목(복수선택)
-Q38|업무 중 잠시 휴식 가능 여부
-Q39|출근 시 주차 여건
-Q40|급식·복지·관행(5항목)
-Q41|학교 제공 개인 업무물품(4항목)
-Q42|교직원 공간·복지시설(15항목)
-Q43|교실 배치 기기
-Q44|냉난방·화장실 온수
-Q45|비품·통신시설 이용 공간(13항목)
-Q46|다음 학년도 예정 변경(7항목)
-Q47|다음 학년도 학교규모 변화(3항목)
-Q48|다음 학년도 지정·운영 사업(4항목)
-Q49|학교 만족도·근무 지속 의향(2항목)
-Q50|학교 만족도·잔류 의향 결정 요인`};
-const WORLD=['학교 식별 및 설립','학교 규모','수업 공간','지역·지리','시설·체육 공간','급식 환경','교직원·지원인력','학생 지원·접근성','디지털 환경','학교 활동','시간·학교 변화','서사의 지속성'];
-const STORY=['참여의 자율성','발언권·재검토','업무배정의 경계','근무시간·복무','수업 판단·협업','학생 행사·참여','소통·민원 체계','학생 지원','시설·공간','복지·일상 환경','문화의 다양성','다음 학년도 변화'];
-const REGIONS=['신도시·대규모 아파트','기존 도시 주거지역','재개발·재건축','산업단지 인근','농촌·산촌·어촌','인구감소지역','관광지역','도서지역','접경지역','학교 신설·이전·통폐합 예정지역'];
-const STATES=['공간 여유','학급 규모','지원 인력 가용성','업무 부담','수업 자율성','의사결정 개방성','학교 지원 접근성','시설 이용 편의성','지역 변화 압력'];
-const FACTS=['admin_employees · 행정직원 수','cafeterias · 학생식당 수','classes · 학급 수','classrooms · 일반교실 수','district_housing_price_mean · 행정구역 공동주택 평균 공시가격','gym_spaces · 체육집회공간 수','junior_teacher_ratio · 2급 정교사 비율','land_area · 교사대지 면적','lead_teachers · 수석교사 수','male_teacher_ratio · 남교사 비율','playground_area · 운동장 면적','school_employees · 공무직원 수','september_participation_rate · 9·4 참여율','students · 학생 수','students_per_class · 학급당 학생 수','teacher_support_spaces · 교원지원공간 수','teachers · 교원 수','vice_principals · 교감 수','establishment_type · 설립구분','meal_place · 급식장소','milk_lunch · 우유급식'];
-const IDENTITY=['school_id','school_code','school_name','sido','sido_standard','education_office','education_office_code','support_office','address','establishment','school_kind','status','homepage','source','last_synced_at','updated_at'];
-// Rule-based narrative tags are original game design, not the historical catalog's groups.
-function mapStory(label){
- const rules=[
- [12,/다음 학년도|학년도 학교규모|예정 변경|잔류 의향|근무 지속|기피 학년/],
- [8,/학생분리|학생 분리|문제학생|학생 지원|아동학대|생활지도|교권침해|교권|민원대응팀/],
- [7,/학부모 민원|민원|하이톡|휴대전화번호|상담주간|녹색학부모/],
- [10,/휴식|다과|간식|정수기|화장실|우유급식|교실급식|급식|냉난방|주차|비품|물품|공간·복지시설/],
- [9,/교실 배치|학습준비물실|체육공간|장소|통신시설/],
- [6,/학교행사|행사|체육부|교외체험|수학여행|졸업앨범|교통·주차 지도/],
- [2,/발언|협의 결과|재검토|결정 방식|불이익·압박 우려/],
- [3,/업무분장|업무·보직|특정 업무|업무전담팀|행정업무|비공식 업무|비공식업무|담당|업무협조/],
- [4,/조퇴|연가|병가 사용|방학 중|수업시수|출근|퇴근|근무|공문|결재|성적표|통지표|회의 횟수|부장회의|업무연락|당번|휴가|토요일/],
- [1,/강제|참여|불참|친목회|스포츠활동|체육·회식/],
- [5,/수업·평가|학년교육과정|수업·학급|새로운 방식|IB 등 공모사업/],
- [11,/갈등|인사 태도|학교 만족도|구성원 관계|학교문화|문화|분위기/]
- ];
- return (rules.find(([v,re])=>re.test(label))||[11])[0];
+(function(){
+"use strict";
+const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/schoolband-school-read-v1";
+const TIERS=["easy","normal","hard","very_hard","extreme"];
+const LABELS=["EASY","NORMAL","HARD","VERY HARD","EXTREME"];
+const INST={guitar:{name:"일렉기타",icon:"🎸",note:"코드 스트로크"},drums:{name:"드럼",icon:"🥁",note:"킥·스네어·하이햇"},bass:{name:"베이스",icon:"🎸",note:"베이스 라인"},keys:{name:"키보드",icon:"🎹",note:"화음과 반주"}};
+const PATTERNS={
+guitar:[[0,8],[0,4,8,12],[0,3,4,7,8,11,12,15],[0,2,3,4,6,8,10,11,12,14],[0,1,2,3,4,6,7,8,9,10,11,12,14,15]],
+drums:[[0,8],[0,4,8,12],[0,2,4,6,8,10,12,14],[0,2,3,4,6,8,10,11,12,14],[0,1,2,3,4,5,6,8,9,10,11,12,13,14,15]],
+bass:[[0,8],[0,4,8,12],[0,4,6,8,12,14],[0,2,4,6,8,10,12,14],[0,1,2,4,5,6,8,9,10,12,13,14,15]],
+keys:[[0,8],[0,6,8,14],[0,4,6,8,12,14],[0,2,4,6,8,10,12,14],[0,1,3,4,6,7,8,9,11,12,14,15]]
+};
+const BEAT=60/108,BARS=8,SONG_BEATS=BARS*4;
+const WIDTHS=[.20,.17,.14,.11,.075],PERFECT=[.09,.075,.06,.05,.036];
+const $=id=>document.getElementById(id);
+const canvas=$("track"),g=canvas.getContext("2d");
+let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="normal",chart=[],cursor=0,score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,runId=0;
+let beginning=0,timer=0,raf=0,step=0,lastMessage="",querySeq=0,searchTimer=0;
+function safeText(id,text){$(id).textContent=String(text)}
+function status(text){safeText("feedback",text)}
+function tierIdx(){return Math.max(0,TIERS.indexOf(tier))}
+function nameTier(){return LABELS[tierIdx()]}
+function selectedRecord(){return school && school.school_id ? school : null}
+function readBest(){if(!school)return null;try{const n=Number(localStorage.getItem("nangam-band-v03:"+school.school_id+":"+instrument+":"+tier));return Number.isFinite(n)&&n>0?n:null}catch(_){return null}}
+function showBest(){const n=readBest();safeText("best",n===null?"—":n.toLocaleString("ko-KR"))}
+function showSchool(){
+ const s=selectedRecord();
+ if(!s){safeText("schoolTitle","학교를 선택해 주세요");safeText("schoolTier","학교별 난이도는 학교 선택 후 표시됩니다.");$("start").disabled=true;showBest();return}
+ tier=(s.eligible&&TIERS.includes(s.difficulty))?s.difficulty:"normal";
+ safeText("schoolTitle",s.school_name+(s.region?" · "+s.region:""));
+ safeText("schoolTier",s.eligible?nameTier()+" · 공개 자료 "+(s.source_year||"기준연도 확인 중")+"년":"공식 난이도 미산정 · NORMAL 연습용");
+ safeText("playTitle",s.school_name+" · "+INST[instrument].name+" · "+nameTier());
+ $("start").disabled=playing;
+ showBest();
+ status(s.eligible?"학교 선택 완료. 연주를 시작하세요.":"공식 난이도 정보가 없어 NORMAL 연습으로 진행합니다.");
+ draw();
 }
-const CATALOG=Object.entries(RAW).flatMap(([year,text])=>text.trim().split('\n').map(line=>{const p=line.indexOf('|'),id=line.slice(0,p),label=line.slice(p+1);return {key:year+'-'+id,year,id,label,v:mapStory(label)}}));
-if(CATALOG.length!==128 || Object.values(RAW).some(t=>t.trim().split('\n').length===0))throw Error('문항 카탈로그 128개 검증 실패');
-const SCHOOLS=[
- {name:'가상 A초',size:'소규모',students:95,classes:6,teachers:11,region:'농촌',space:'교실 소규모 공연',color:'#8db0ff',w:'소규모 공간에서 서로의 소리를 들으며 연주',fact:'학생 95명 · 6학급 · 교원 11명',stage:'교실 어쿠스틱 합주'},
- {name:'가상 B초',size:'중규모',students:480,classes:20,teachers:31,region:'도시',space:'강당 팀별 합주',color:'#9cdec2',w:'여러 팀이 서로 응답하는 교차 합주',fact:'학생 480명 · 20학급 · 교원 31명',stage:'강당 콜 앤 리스폰스'},
- {name:'가상 C초',size:'대규모',students:1050,classes:40,teachers:62,region:'신도시',space:'다중 파트 무대',color:'#d0b1ff',w:'파트가 순서대로 합류하는 합동 공연',fact:'학생 1,050명 · 40학급 · 교원 62명',stage:'축제 대형 합주'}
-];
-const $=id=>document.getElementById(id);let schoolIdx=0,playing=false,soundOn=true,ctx=null,notes=[],elapsed=0,startStamp=0,lastBeat=-1,frame=0,score=0,combo=0,maxCombo=0,judged=0,hits=0,perf=0,good=0,miss=0,harmony=0,totalTime=0,arrangement='voluntary',feedbackTimeout=0;
-const canvas=$('game'),g=canvas.getContext('2d');const COLORS=['#8db0ff','#ffb782','#f5d278','#9cdec2','#d0b1ff'];
-function addItems(id,values,prefix){$(id).innerHTML=values.map((v,i)=>`<span><b>${prefix?prefix+String(i+1).padStart(2,'0'):''}</b>${v}</span>`).join('')}
-addItems('worldAxes',WORLD,'W');addItems('storyAxes',STORY,'V');addItems('regionAxes',REGIONS,'R');addItems('stateAxes',STATES,'S');addItems('factsAxes',FACTS.concat(IDENTITY.map(x=>'식별 · '+x)),'');
-$('registryStats').innerHTML=[['12','학교 세계 축'],['12','서사 축'],['10','지역 유형'],['9','내부 상태'],['21','공식 수치·범주'],['128','연도별 설문 문항']].map(([n,t])=>`<span><b>${n}</b>${t}</span>`).join('');
-function showSchools(){ $('schools').innerHTML=SCHOOLS.map((s,i)=>`<button class="schoolChoice ${i===schoolIdx?'active':''}" data-school="${i}" aria-pressed="${i===schoolIdx}"><strong>${s.name}</strong><small>${s.size} · ${s.region}<br>${s.stage}</small></button>`).join('');$('schools').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(playing)return;schoolIdx=Number(b.dataset.school);showSchools()});let s=SCHOOLS[schoolIdx];$('stats').innerHTML=[['학생 수',s.students.toLocaleString()+'명'],['학급 수',s.classes+'학급'],['교원 수',s.teachers+'명']].map(([k,v])=>`<div class="stat"><span>${k}</span><b>${v}</b></div>`).join('');$('schoolDetail').textContent=`${s.w} · 선택한 학교는 실제 학교가 아닙니다.`;$('stageCaption').textContent=`무대: ${s.name} · ${s.stage}`;draw()}
-function showCatalog(){const yr=$('yearFilter').value;const q=$('search').value.trim().toLowerCase();const found=CATALOG.filter(x=>(yr==='all'||x.year===yr)&&(`${x.year} ${x.id} ${x.label} V${String(x.v).padStart(2,'0')} ${STORY[x.v-1]}`).toLowerCase().includes(q));$('count').textContent=`${found.length}개 표시 / 전체 128개 · 2023:14 · 2024:14 · 2025:50 · 2026:50`;$('catalog').innerHTML=found.length?found.map(x=>`<div class="record"><small>${x.year} · ${x.id}</small><span>${escapeHtml(x.label)}</span><b title="제안된 게임 서사 태그">V${String(x.v).padStart(2,'0')}</b></div>`).join(''):'<div class="empty">조건에 맞는 문항이 없습니다.</div>'}
-function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-$('yearFilter').onchange=showCatalog;$('search').oninput=showCatalog;showCatalog();
-function setupAudio(){if(ctx||!soundOn)return;try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){soundOn=false;$('soundBtn').textContent='음향 미지원'}}
-function tone(freq,duration=.12,type='sine',gain=.04){if(!ctx||!soundOn)return;try{const o=ctx.createOscillator(),v=ctx.createGain(),now=ctx.currentTime;o.type=type;o.frequency.setValueAtTime(freq,now);v.gain.setValueAtTime(0.0001,now);v.gain.exponentialRampToValueAtTime(Math.max(gain,0.0002),now+.009);v.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(v).connect(ctx.destination);o.start(now);o.stop(now+duration+.01)}catch(e){}}
-function playBeat(beat){const roots=[130.81,174.61,110,196];const root=roots[Math.floor(beat/4)%4];tone(root,.2,'sine',.027);if(beat%4===0)tone(65,.11,'triangle',.065);else if(beat%2===0)tone(200,.04,'square',.009)}
-function playLane(lane){const intervals=[392,164.81,261.63,130.81,523.25];tone(intervals[lane],lane===3?.22:.12, lane===1?'triangle':lane===3?'sine':lane===2?'sawtooth':'square',lane===1?.08:lane===2?.025:.05)}
-function updateHud(){ $('score').textContent=score.toLocaleString();$('combo').textContent=combo;$('accuracy').textContent=judged?Math.round(hits/judged*100)+'%':'—';$('harmony').textContent=Math.round(harmony)+'%' }
-function say(msg){$('feedback').textContent=msg}
-function prepareChart(){ arrangement=document.querySelector('input[name="arrange"]:checked').value;const bars=arrangement==='compact'?12:16; const beatMs=60000/108; totalTime=bars*4*beatMs+1900;notes=[];const startOffset=1100; // playable for all schools; profiles change arrangement, not intrinsic difficulty.
- for(let bar=0;bar<bars;bar++){for(let beat=0;beat<4;beat++){const t=startOffset+(bar*4+beat)*beatMs;let lane;
- if(arrangement==='distributed' && bar<4)lane=Math.floor(bar/1)%5;
- else if(arrangement==='voluntary')lane=(bar+beat+(bar%4===3?1:0))%5;
- else lane=(beat+(bar%2))%5;
- if(schoolIdx===1)lane=(lane+(bar%2))%5;
- if(schoolIdx===2)lane=(lane+Math.floor(bar/4))%5;
- notes.push({t,lane,done:false,hit:false});
- if(beat===1||beat===3){const second=(lane+(schoolIdx+1)+(bar%2))%5;notes.push({t:t+beatMs/2,lane:second,done:false,hit:false})}
- }}totalTime+=startOffset;
+function setSchool(s){if(playing)return;school=s;showSchool();$("searchResults").replaceChildren()}
+async function getJson(url){const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw Error("school_api_"+r.status);return r.json()}
+$("schoolSearch").addEventListener("input",()=>{
+ if(playing)return;
+ const q=$("schoolSearch").value.trim(),ticket=++querySeq;
+ clearTimeout(searchTimer);
+ $("searchResults").replaceChildren();
+ if(q.length<2){safeText("schoolStatus","학교명 2글자 이상 입력해 주세요.");return}
+ safeText("schoolStatus","학교 검색 중…");
+ searchTimer=setTimeout(async()=>{
+ try{
+ const data=await getJson(API+"?schools="+encodeURIComponent(q));
+ if(querySeq!==ticket)return;
+ const list=Array.isArray(data.schools)?data.schools:[];
+ safeText("schoolStatus",list.length?list.length+"개 학교가 검색됐습니다.":"검색 결과가 없습니다.");
+ for(const s of list){
+ if(!s.school_id||!s.school_name)continue;
+ const b=document.createElement("button");b.type="button";
+ b.textContent=s.school_name+(s.sido_standard?" · "+s.sido_standard:"");
+ b.onclick=async()=>{
+ const my=++querySeq;safeText("schoolStatus","학교 난이도 확인 중…");$("searchResults").replaceChildren();
+ try{
+ const d=await getJson(API+"?school_id="+encodeURIComponent(s.school_id));
+ if(querySeq!==my)return;
+ if(!d.school)throw Error("empty");
+ setSchool(d.school);
+ safeText("schoolStatus","선택 완료");
+ }catch(e){if(querySeq===my)safeText("schoolStatus","학교 조회 실패. 다시 선택해 주세요.")}
+ };
+ $("searchResults").append(b);
+ }
+ }catch(e){if(querySeq===ticket)safeText("schoolStatus","검색 연결 실패. 아래 가상 학교로도 시험할 수 있습니다.")}
+ },260);
+});
+$("demoSchool").onclick=()=>{
+ if(playing)return;
+ ++querySeq;clearTimeout(searchTimer);$("searchResults").replaceChildren();
+ $("schoolSearch").value="";
+ safeText("schoolStatus","가상 학교 연습 모드 (배구지수 실제 학교가 아닙니다)");
+ setSchool({school_id:"demo-school",school_name:"가상 연습초",region:"데모",eligible:false,difficulty:null,source_year:null});
+};
+document.querySelectorAll("[data-inst]").forEach(b=>b.onclick=()=>{
+ if(playing)return;
+ instrument=b.dataset.inst;
+ document.querySelectorAll("[data-inst]").forEach(el=>el.setAttribute("aria-pressed",String(el===b)));
+ safeText("instCaption",INST[instrument].name+"의 "+INST[instrument].note+" 타이밍을 연주합니다.");
+ $("tap").textContent=INST[instrument].icon+" 연주! · SPACE";
+ if(school)showSchool();
+ draw();
+});
+function audioContext(){
+ if(ctx)return ctx;
+ const Cls=window.AudioContext||window.webkitAudioContext;
+ if(!Cls){status("오디오 기능을 지원하지 않는 브라우저입니다.");return null}
+ try{ctx=new Cls();return ctx}catch(_){status("오디오를 시작할 수 없습니다.");return null}
 }
-function lockSetup(lock){document.querySelectorAll('.schoolChoice,input[name="arrange"],#adminRole').forEach(e=>e.disabled=lock)}
-function start(){if(playing)return;setupAudio();if(ctx?.state==='suspended')ctx.resume();prepareChart();playing=true;elapsed=0;startStamp=performance.now();score=0;combo=0;maxCombo=0;judged=0;hits=0;perf=0;good=0;miss=0;harmony=25;lastBeat=-1;lockSetup(true);$('startBtn').disabled=true;$('stopBtn').disabled=false;$('progress').style.width='0%';say('서로의 박자를 들어보세요!');updateHud();cancelAnimationFrame(frame);frame=requestAnimationFrame(tick)}
-function finish(interrupted=false){if(!playing)return;playing=false;cancelAnimationFrame(frame);lockSetup(false);$('startBtn').disabled=false;$('stopBtn').disabled=true;$('startBtn').textContent='↻ 다시 연주';$('progress').style.width=interrupted?'0%':'100%';if(interrupted){say('연주를 중단했습니다. 다시 시작할 수 있습니다.')}else{const accuracy=judged?Math.round(hits/judged*100):0;const result=accuracy>=85?'훌륭한 합주!':accuracy>=60?'서로의 소리가 이어졌어요.':'다음 합주에서는 더 많이 맞춰 보세요.';say(`${result} 정확도 ${accuracy}% · PERFECT ${perf} · GOOD ${good} · MISS ${miss} · 최고 콤보 ${maxCombo}`)}draw()}
-function hit(lane){if(!playing)return;const candidates=notes.filter(n=>!n.done&&n.lane===lane&&Math.abs(n.t-elapsed)<=170).sort((a,b)=>Math.abs(a.t-elapsed)-Math.abs(b.t-elapsed));const n=candidates[0];if(!n){say('쉼표 · 다음 박자를 들어보세요');return}const delta=Math.abs(n.t-elapsed);n.done=true;n.hit=true;judged++;hits++;combo++;maxCombo=Math.max(maxCombo,combo);if(delta<70){score+=1000+Math.min(combo,60)*5;perf++;harmony=Math.min(100,harmony+.65);say('PERFECT ✦ 함께 맞춘 박자!')}else{score+=600+Math.min(combo,60)*3;good++;harmony=Math.min(100,harmony+.3);say('GOOD · 좋은 합주!')}playLane(lane);updateHud();draw()}
-function tick(now){if(!playing)return;elapsed=now-startStamp; const beatMs=60000/108;const beat=Math.floor(Math.max(0,elapsed-1100)/beatMs);if(elapsed>=1100&&beat!==lastBeat){lastBeat=beat;playBeat(beat)}for(const n of notes){if(!n.done&&elapsed-n.t>180){n.done=true;miss++;judged++;combo=0;harmony=Math.max(0,harmony-1);updateHud()}}$('progress').style.width=Math.min(100,100*elapsed/totalTime)+'%';draw();if(elapsed>totalTime){finish();return}frame=requestAnimationFrame(tick)}
+function oscillator(freq,when,dur,type,vol){
+ if(!ctx||muted)return;
+ const o=ctx.createOscillator(),v=ctx.createGain();
+ o.type=type;o.frequency.setValueAtTime(Math.max(25,freq),when);
+ v.gain.setValueAtTime(.0001,when);
+ v.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),when+.008);
+ v.gain.exponentialRampToValueAtTime(.0001,when+Math.max(.035,dur));
+ o.connect(v);v.connect(ctx.destination);o.start(when);o.stop(when+Math.max(.04,dur)+.02);
+}
+function drum(when,kind){
+ if(!ctx||muted)return;
+ if(kind==="kick"){
+ const o=ctx.createOscillator(),v=ctx.createGain();o.type="sine";
+ o.frequency.setValueAtTime(135,when);o.frequency.exponentialRampToValueAtTime(45,when+.12);
+ v.gain.setValueAtTime(.22,when);v.gain.exponentialRampToValueAtTime(.0001,when+.17);
+ o.connect(v);v.connect(ctx.destination);o.start(when);o.stop(when+.18);
+ }else{oscillator(kind==="snare"?200:450,when,kind==="snare"?.09:.035,kind==="snare"?"triangle":"square",kind==="snare"?.045:.012)}
+}
+const roots=[130.81,98,110,87.31];
+function rootAt(beat){return roots[Math.floor(beat/8)%roots.length]}
+function voice(inst,beat,when){
+ const root=rootAt(beat);
+ if(inst==="bass")oscillator(root/2,when,.25,"triangle",.065);
+ else if(inst==="guitar"){
+ oscillator(root*2,when,.16,"sawtooth",.019);
+ oscillator(root*2.5,when,.16,"sawtooth",.014);
+ oscillator(root*3,when,.16,"sawtooth",.011);
+ }else if(inst==="keys"){oscillator(root*2,when,.33,"sine",.031);oscillator(root*2.5,when,.33,"sine",.017)}
+ else if(inst==="drums")drum(when,Math.floor(beat)%2===0?"kick":"snare");
+}
+function scheduleStep(n,when){
+ const beat=n/4;
+ if(instrument!=="drums" && n%2===0)drum(when,n%4===0?(n%16===0?"kick":"snare"):"hat");
+ if(instrument!=="bass" && n%4===0)voice("bass",beat,when);
+ if(instrument!=="guitar" && n%8===0)voice("guitar",beat,when);
+ if(instrument!=="keys" && n%8===0)voice("keys",beat,when);
+}
+function scheduleAhead(){
+ if(!playing||!ctx)return;
+ while(step<SONG_BEATS*4 && beginning+(step/4)*BEAT<ctx.currentTime+.22){
+ scheduleStep(step,beginning+(step/4)*BEAT);step++;
+ }
+}
+function makeChart(){
+ chart=[];
+ const pattern=PATTERNS[instrument][tierIdx()];
+ for(let bar=0;bar<BARS;bar++)for(const off of pattern)chart.push({t:(bar*4+off/4)*BEAT,beat:bar*4+off/4,done:false});
+ return chart;
+}
+function nowSong(){return ctx?ctx.currentTime-beginning:-1}
+function hud(){
+ safeText("score",score.toLocaleString("ko-KR"));
+ safeText("combo",combo);
+ safeText("accuracy",judged?Math.round(100*hits/judged)+"%":"—");
+}
+function hit(){
+ if(!playing||!ctx)return;
+ const now=nowSong(),windowS=WIDTHS[tierIdx()];
+ let closest=null,dist=Infinity;
+ for(const n of chart){if(n.done)continue;const d=Math.abs(n.t-now);if(d<dist && d<=windowS){dist=d;closest=n}}
+ if(!closest){status("다음 노트를 기다리세요.");return}
+ closest.done=true;hits++;judged++;combo++;bestCombo=Math.max(bestCombo,combo);
+ if(dist<=PERFECT[tierIdx()]){score+=1000+Math.min(100,combo)*5;perfect++;status("PERFECT ✦")}
+ else{score+=600+Math.min(100,combo)*3;good++;status("GOOD!")}
+ voice(instrument,closest.beat,ctx.currentTime);
+ hud();draw();
+}
+function animate(){
+ if(!playing)return;
+ const now=nowSong(),cut=WIDTHS[tierIdx()];
+ for(const n of chart){if(!n.done && now-n.t>cut){n.done=true;judged++;miss++;combo=0;}}
+ if(now>=SONG_BEATS*BEAT+.28){finish(false);return}
+ $("progress").style.width=Math.max(0,Math.min(100,100*(now/(SONG_BEATS*BEAT))))+"%";
+ hud();draw();raf=requestAnimationFrame(animate);
+}
+async function start(){
+ if(playing||!school)return;
+ const a=audioContext();if(!a)return;
+ try{await a.resume()}catch(e){status("오디오 시작에 실패했습니다.");return}
+ if(playing)return;
+ playing=true;runId++;
+ score=combo=bestCombo=hits=judged=perfect=good=miss=0;step=0;makeChart();
+ beginning=a.currentTime+1.05;
+ $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
+ document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=true);
+ $("progress").style.width="0%";safeText("result","연주 중 · 선택한 악기의 노트만 누르세요.");
+ status("준비… 1초 뒤 시작!");hud();
+ clearInterval(timer);cancelAnimationFrame(raf);
+ timer=setInterval(scheduleAhead,30);
+ scheduleAhead();raf=requestAnimationFrame(animate);
+ // Space should work immediately after clicking start on desktop.
+ $("tap").focus({preventScroll:true});
+}
+function finish(interrupted){
+ if(!playing)return;
+ playing=false;clearInterval(timer);cancelAnimationFrame(raf);
+ $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
+ document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);
+ if(interrupted){status("연주를 중단했습니다.");safeText("result","다시 시작할 수 있습니다.");}
+ else{
+ const acc=chart.length?Math.round(hits/chart.length*100):0;
+ status("공연 종료! "+(acc>=85?"훌륭한 연주!":acc>=60?"좋은 연주!":"다시 도전해 보세요."));
+ safeText("result","정확도 "+acc+"% · PERFECT "+perfect+" · GOOD "+good+" · MISS "+miss+" · 최대 콤보 "+bestCombo+" · 노트 "+chart.length+"개");
+ const prior=readBest()||0;
+ if(score>prior){try{localStorage.setItem("nangam-band-v03:"+school.school_id+":"+instrument+":"+tier,String(score))}catch(_){}}
+ showBest();$("progress").style.width="100%";
+ }
+ draw();
+}
+function rounded(x,y,w,h,r){
+ g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();
+}
 function draw(){
- const W=canvas.width,H=canvas.height,left=10,right=W-10,gap=4,count=5,lw=(right-left-gap*(count-1))/count,hitY=H-82,travel=H-115,preview=1600;
- g.clearRect(0,0,W,H);g.fillStyle='#0c1225';g.fillRect(0,0,W,H);
- const labels=['학생·보컬','동료·드럼','관리자·신스','학부모·베이스','교사·기타'];
- for(let i=0;i<count;i++){
-  const x=left+i*(lw+gap);g.fillStyle=i%2?'#1b2643':'#15203a';g.fillRect(x,10,lw,H-20);
-  g.fillStyle=COLORS[i];g.globalAlpha=.7;g.fillRect(x,10,lw,5);g.globalAlpha=1;
-  g.textAlign='center';g.fillStyle='#e0e9ff';g.font='bold 19px system-ui';g.fillText(['D','F','␣','J','K'][i],x+lw/2,36);
-  g.fillStyle='#b7c7e4';g.font='13px system-ui';g.fillText(labels[i],x+lw/2,H-26);
+ const W=canvas.width,H=canvas.height,center=W/2,line=H-72,preview=1.65;
+ g.clearRect(0,0,W,H);
+ g.fillStyle="#0d1429";g.fillRect(0,0,W,H);
+ for(let j=0;j<8;j++){g.fillStyle=j%2===0?"#172341":"#1b2c4d";g.fillRect(57,j*53,266,53)}
+ g.strokeStyle="#526481";g.lineWidth=1;g.globalAlpha=.4;for(let j=0;j<7;j++){let y=25+j*41;g.beginPath();g.moveTo(57,y);g.lineTo(323,y);g.stroke()}g.globalAlpha=1;
+ g.strokeStyle="#f5efff";g.lineWidth=5;g.beginPath();g.moveTo(58,line);g.lineTo(322,line);g.stroke();
+ g.fillStyle="#cfd9fc";g.textAlign="center";g.font="700 16px system-ui";g.fillText(INST[instrument].name+" · "+nameTier(),center,30);
+ const now=playing?nowSong():-.6;
+ for(const n of chart){
+ if(n.done)continue;
+ const dt=n.t-now;
+ if(dt>preview || dt<-.2)continue;
+ const y=line-(dt/preview)*225;
+ g.fillStyle="#a994ff";g.shadowColor="#ad9aff";g.shadowBlur=13;
+ rounded(105,y-11,170,22,9);g.fill();g.shadowBlur=0;
+ g.fillStyle="#ded8ff";rounded(114,y-7,152,5,3);g.fill();
  }
- g.strokeStyle='#e4edff';g.lineWidth=4;g.beginPath();g.moveTo(left,hitY);g.lineTo(right,hitY);g.stroke();
- g.globalAlpha=.12;g.strokeStyle='#d9e5ff';g.lineWidth=1;
- for(let j=1;j<=5;j++){const y=hitY-j*(travel/6);g.beginPath();g.moveTo(left,y);g.lineTo(right,y);g.stroke()}g.globalAlpha=1;
- for(const n of notes){if(n.done)continue;const dt=n.t-elapsed;if(dt>preview||dt< -190)continue;
-  const x=left+n.lane*(lw+gap),y=hitY-dt/preview*travel;
-  g.fillStyle=COLORS[n.lane];g.shadowColor=COLORS[n.lane];g.shadowBlur=13;
-  roundRect(x+12,y-11,lw-24,22,6);g.fill();g.shadowBlur=0;
-  g.fillStyle='#ffffff70';roundRect(x+17,y-8,lw-34,4,2);g.fill();
+ if(!playing){
+ g.fillStyle="#0e172bdc";g.fillRect(58,65,264,210);
+ g.fillStyle="#f4edff";g.font="800 22px system-ui";g.fillText(school?"연주할 준비 완료!":"학교를 먼저 선택하세요",center,155);
+ g.font="14px system-ui";g.fillStyle="#c9d5f1";g.fillText("한 레인 · SPACE 또는 터치",center,190);
+ }else if(now<0){
+ g.font="800 36px system-ui";g.fillStyle="#fff2b8";g.fillText("READY",center,174);
  }
- if(!playing){g.fillStyle='#0e1525cc';g.fillRect(left,64,right-left,hitY-100);
-  g.fillStyle='#f9edff';g.textAlign='center';g.font='bold 27px system-ui';g.fillText('우리 학교의 다섯 소리를 연주하세요',W/2,176);
-  g.fillStyle='#c4d0e6';g.font='17px system-ui';g.fillText('시작 ▶ · D F Space J K 또는 터치',W/2,218);
- }
+ g.fillStyle="#aebddd";g.textAlign="center";g.font="12px system-ui";g.fillText("판정선",center,H-27);
 }
-function roundRect(x,y,w,h,r){r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
-$('startBtn').onclick=start;$('stopBtn').onclick=()=>finish(true);$('soundBtn').onclick=()=>{soundOn=!soundOn;$('soundBtn').textContent=soundOn?'♫ 소리 켜짐':'♫ 음소거';$('soundBtn').setAttribute('aria-pressed',String(soundOn));if(soundOn){setupAudio();ctx?.resume()}};
-const keys={KeyD:0,KeyF:1,Space:2,KeyJ:3,KeyK:4};document.addEventListener('keydown',e=>{if(e.repeat||e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;const lane=keys[e.code];if(lane!==undefined){e.preventDefault();hit(lane);flash(lane)}});
-function flash(lane){const b=document.querySelector(`.pad[data-lane="${lane}"]`);b.classList.add('on');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('on'),110)}
-document.querySelectorAll('.pad').forEach(p=>p.addEventListener('pointerdown',e=>{e.preventDefault();const lane=Number(p.dataset.lane);hit(lane);flash(lane)}));
-$('adminRole').onchange=()=>{if(playing)return;say('가상 '+$('adminRole').selectedOptions[0].textContent+' 캐릭터로 연주합니다. 관리자 파트는 동일한 노트로 구성됩니다.');draw()};
-showSchools();updateHud();
-// Integration contract (not active here): pass only vetted world payload through a separate adapter.
-window.schoolBandPrototype={catalog:CATALOG,worldAxes:WORLD,storyAxes:STORY,regions:REGIONS,states:STATES,officialFacts:FACTS,identityFields:IDENTITY,getDemoSchool:()=>({...SCHOOLS[schoolIdx]}),getPlayState:()=>({playing,score,combo,harmony,accuracy:judged?hits/judged:null}),getChartLanes:()=>[...new Set(notes.map(n=>n.lane))].sort(),getBandCount:()=>COLORS.length};
-</script></body></html>
+$("start").onclick=start;
+$("stop").onclick=()=>finish(true);
+$("mute").onclick=()=>{muted=!muted;$("mute").textContent=muted?"🔇 꺼짐":"♫ 켜짐"};
+$("tap").addEventListener("pointerdown",e=>{e.preventDefault();hit();$("tap").classList.add("pressed");setTimeout(()=>$("tap").classList.remove("pressed"),110)});
+document.addEventListener("keydown",e=>{
+ if(e.repeat||!playing||!["Space","Enter"].includes(e.code))return;
+ if(e.target instanceof HTMLElement && (e.target.matches('input,select,textarea') || (e.target.closest("button") && e.target.id!=="tap")))return;
+ e.preventDefault();hit();
+});
+window.addEventListener("pagehide",()=>{if(playing)finish(true)});
+window.nangamSchoolbandV03={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,done:n.done})),getStatus:()=>({playing,score,hits,judged}),getTierCount:()=>TIERS.length};
+draw();hud();
+})();
+</script>
+</body>
+</html>
