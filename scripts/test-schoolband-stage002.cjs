@@ -147,7 +147,10 @@ async function browserSuite(){
         await page.locator("#searchResults button").first().waitFor({state:"visible",timeout:10000});
         await page.locator("#searchResults button").first().click();
         await page.waitForFunction(()=>document.querySelector("#schoolTitle")?.textContent?.includes("검증초등학교"),null,{timeout:10000});
-        assert((await page.locator("#schoolTier").innerText()).includes(["EASY","NORMAL","HARD","VERY HARD","EXTREME"][diff]),"tier label");
+        const expectedTier=["EASY","NORMAL","HARD","VERY HARD","EXTREME"][diff];
+        await page.waitForFunction(expected=>document.querySelector("#schoolTier")?.textContent?.includes(expected),expectedTier,{timeout:10000});
+        const actualTier=await page.locator("#schoolTier").innerText();
+        assert(actualTier.includes(expectedTier),tier+" tier label: "+actualTier);
         for(const [inst,numLanes] of Object.entries(LANES)){
           const ms=await page.evaluate(key=>{
             const start=performance.now();
