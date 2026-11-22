@@ -28,7 +28,7 @@ function checkStatic(){
   assert(HTML.includes("function laneFeedback(lane,type)"),"per lane feedback logic");
   assert(HTML.includes('laneFeedback(n.lane,"miss")'),"miss feedback");
   assert(HTML.includes('laneFeedback(lane,"empty")'),"empty lane distinguishability");
-  assert(HTML.includes('combo>=3||!(combo===3||combo%5===0)'),"combo milestone guard");
+  assert(HTML.includes('combo<3||!(combo===3||combo%5===0)'),"combo milestone guard");
   assert(HTML.includes("vibrationEnabled&&!motionReduced()"),"vibration must be opt in and off during reduction");
   assert(HTML.includes('clearFxFeedback();'),"cleanup on start/stop");
   assert(HTML.includes("setTimeout(()=>{el.className=kind},holdMs)"),"reduced effects must disappear");
