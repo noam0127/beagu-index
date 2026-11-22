@@ -1,0 +1,21 @@
+name: v1.1.0 stage35 one-time account ownership negative controls
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-code-only-ownership-once.py'
+      - '.github/workflows/v1.1.0-stage35-code-only-ownership-once.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  member-ownership-negative:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure level code does not confer Post-it author or admin rights
+        run: python3 tests/v1.1.0-stage35-code-only-ownership-once.py
+      - name: Cleanup required
+        if: always()
+        run: echo "Temporary code-only Lv2 session must be revoked after this one-time test; no production requests."
