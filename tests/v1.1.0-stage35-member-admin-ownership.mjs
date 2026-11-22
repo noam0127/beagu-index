@@ -31,8 +31,8 @@ contains(postit,/\.eq\("auth_user_id",account\.id\)\.eq\("identity_visitor_id",v
   'Require independent Auth user AND challenge-visitor matching');
 contains(postit,/\.eq\("status","active"\)\.maybeSingle\(\)/,
   'Require active member connection');
-contains(postit,/if\(error\|\|!data\|\|data\.author_uid!==viewer\.id\)return null/,
-  'Writer must match server-derived pseudonymous owner');
+contains(postit,/return resolveVerifiedPostitOwner\(account,viewer,data\)/,
+  'Writer must be authorized by a fail-closed three-way server-side match');
 contains(postit,/if\(!user\)return fail\(req,"WRITER_IDENTITY_REQUIRED",403\)/,
   'Post-it mutation requires verified writer');
 ordered(postit,'const user=await verifiedMember(req,viewer);','if(action==="create_post")',
