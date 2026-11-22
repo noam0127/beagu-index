@@ -1137,11 +1137,11 @@ function showSchool(){
  status(s.eligible?"학교 선택 완료. 연주를 시작하세요.":"공개된 학교 난이도가 없어 NORMAL 연습으로 진행합니다.");
  draw();
 }
-function setSchool(s){if(playing)return;school=s;selectedSong="volleyball";syncSongChoice();renderAnthemDiscovery();showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
+function setSchool(s){if(playing||startPending)return;school=s;selectedSong="volleyball";syncSongChoice();renderAnthemDiscovery();showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
 async function getJson(url){const r=await fetch(url,{cache:"no-store",signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error("school_api_"+r.status);return r.json()}
 $("retrySchool").addEventListener("click",()=>{$("retrySchool").hidden=true;$("schoolSearch").dispatchEvent(new Event("input",{bubbles:true}))});
 $("schoolSearch").addEventListener("input",()=>{
- if(playing)return;
+ if(playing||startPending)return;
  const q=$("schoolSearch").value.trim(),ticket=++querySeq;
  $("retrySchool").hidden=true;
  clearTimeout(searchTimer);
@@ -1174,14 +1174,14 @@ $("schoolSearch").addEventListener("input",()=>{
  },260);
 });
 $("demoSchool").onclick=()=>{
- if(playing)return;
+ if(playing||startPending)return;
  ++querySeq;clearTimeout(searchTimer);$("searchResults").replaceChildren();$("retrySchool").hidden=true;
  $("schoolSearch").value="";
  safeText("schoolStatus","가상 학교 연습 모드 (배구지수 실제 학교가 아닙니다)");
  setSchool({school_id:"demo-school",school_name:"가상 연습초",region:"데모",eligible:false,difficulty:null,source_year:null,publication_state:"unrated"});
 };
 document.querySelectorAll("[data-inst]").forEach(b=>b.onclick=()=>{
- if(playing)return;
+ if(playing||startPending)return;
  instrument=b.dataset.inst;
  document.querySelectorAll("[data-inst]").forEach(el=>el.setAttribute("aria-pressed",String(el===b)));
  safeText("instCaption",INST[instrument].name+"의 "+INST[instrument].note+" 타이밍을 연주합니다.");
@@ -1762,7 +1762,7 @@ async function start(){
  }
  startPending=false;
  if(playing)return;
- playing=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;currentUxStep="play";syncStepNav();syncPauseControl();
+ playing=true;$("resetBest").disabled=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;currentUxStep="play";syncStepNav();syncPauseControl();
  score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;soundEvents.length=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();FX_PERF.judgementFrames=0;FX_PERF.renderedFrames=0;FX_PERF.skippedVisualFrames=0;FX_PERF.lastDrawWall=0;
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
@@ -1782,7 +1782,7 @@ function finish(interrupted){
  void releaseAudioEngine("finish");syncStepNav();syncPauseControl();
  $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
  $("offsetRange").disabled=false;$("offsetReset").disabled=false;
- document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);syncSongChoice();
+ document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);$("resetBest").disabled=false;syncSongChoice();
  if(interrupted){status("연주를 중단했습니다.");safeText("result","다시 시작할 수 있습니다.");}
  else{
  const acc=scoreAccuracy(hits,chart.length)??0;
