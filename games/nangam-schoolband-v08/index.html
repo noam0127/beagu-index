@@ -1594,6 +1594,9 @@ $("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").che
 $("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
 if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
 function updateOrientation(){
+ // Rotation can cancel OS touches without delivering pointerup. Never carry a
+ // pressed finger into a different coordinate system or the next song.
+ clearActiveTouches();
  const orientation=innerWidth>innerHeight?"landscape":"portrait";
  lastScreenOrientation=orientation;
  document.body.dataset.orientation=orientation;
