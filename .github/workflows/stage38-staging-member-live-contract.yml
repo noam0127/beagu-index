@@ -101,3 +101,27 @@ jobs:
           assert isinstance(data,dict) and 'external' in data
           print('PASS: staging Auth settings reachable; no account or session created')
           PY
+      - name: Reject invalid password login and forged user token (no signup)
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://ycwuugggqbunlbwuzvbx.supabase.co/auth/v1"
+          publishable_key="sb_publishable_c8h7TaIYONfP56Zc05K0Sw_SxyT3lZU"
+          status=$(curl --silent --show-error --max-time 15 --output login-negative.json --write-out '%{http_code}' -H "apikey: $publishable_key" -H 'Content-Type: application/json' --data '{"email":"stage38-nonexistent@example.invalid","password":"nonexistent-stage38-password"}' "$base/token?grant_type=password")
+          case "$status" in 400|401|422) echo "PASS: nonexistent credential rejected ($status)";; *) echo "FAIL: unexpected login status $status"; exit 1;; esac
+          python3 - <<'PY'
+          import json
+          d=json.load(open('login-negative.json',encoding='utf-8'))
+          assert isinstance(d,dict)
+          assert not any(k in d for k in ('access_token','refresh_token','user','session'))
+          print('PASS: rejected login did not return session or tokens')
+          PY
+          status=$(curl --silent --show-error --max-time 15 --output user-negative.json --write-out '%{http_code}' -H "apikey: $publishable_key" -H 'Authorization: Bearer invalid.stage38.token' "$base/user")
+          case "$status" in 401|403) echo "PASS: forged access token rejected ($status)";; *) echo "FAIL: unexpected /user status $status"; exit 1;; esac
+          python3 - <<'PY'
+          import json
+          d=json.load(open('user-negative.json',encoding='utf-8'))
+          assert isinstance(d,dict)
+          assert not any(k in d for k in ('access_token','refresh_token','user','session','email','phone'))
+          print('PASS: forged token returned no user profile')
+          PY
