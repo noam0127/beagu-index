@@ -157,6 +157,7 @@ if(process.argv.includes("--browser"))(async()=>{
    assert.equal(await page.locator("#songVolleyball").getAttribute("aria-pressed"),"true");
    assert.equal(await page.locator("#start").isEnabled(),true,"creative track can start later");
    assert.equal(await page.locator("#concertSummary").isHidden(),true);
+   await page.waitForFunction(()=>document.querySelector("#anthemSchoolHomepage")?.hidden===false);
    assert.match(await page.locator("#anthemSchoolHomepage").getAttribute("href"),/school\.example\.org/);
    const aud=await page.evaluate(()=>window.nangamSchoolbandV08.getChartAudit());
    assert.equal(aud.valid,true);
