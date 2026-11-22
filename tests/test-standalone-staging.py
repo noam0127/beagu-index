@@ -71,6 +71,13 @@ assert "snvzwrexuqavnfvzgxqj" not in blueprint
 assert "https://baeguindex.com" not in blueprint
 assert "X-Robots-Tag" in blueprint
 assert "Content-Security-Policy" in blueprint
+assert "/beagu-preview-health.json" in blueprint
+assert "Access-Control-Allow-Origin" in blueprint
+assert 'value: "*"' in blueprint
+assert "Cache-Control" in blueprint
+config = (stage / "js/beagu-independent-preview-target-v1.js").read_text(encoding="utf-8")
+assert 'origin: ""' in config, "Independent host must be disconnected until verified"
+assert "service_role" not in config and "baeguindex.com" not in config
 print("PASS: Render uses manual staging-only deployment and no production hostname")
 
 print("PASS: " + str(len(pages)) + " marked pages; immutable SHA; no production Supabase refs")

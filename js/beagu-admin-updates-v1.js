@@ -8,13 +8,15 @@
  const api=SUPABASE_URL+"/functions/v1/beagu-release-manager-v1";
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
  let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,statusVerified=false;
- let previewProbeId=0;
+ let previewProbeId=0, independentProbeId=0;
  const actionIds=["releaseStageApply","releaseStageRollback","releaseProdApply",
    "releaseProdRollback","releaseRegister"];
  function lockReleaseControls(){
   statusVerified=false;cachedHead=null;cachedProposal=null;
   previewProbeId++;
+  independentProbeId++;
   setPreviewLink(false,"시험 웹 연결 확인 필요");
+  setIndependentLink(false,"독립 시험 웹 연결 확인 필요");
   for(const id of actionIds)el(id).disabled=true;
   el("releaseRefresh").disabled=false;
  }
@@ -119,6 +121,63 @@
   el("releaseProdApply").disabled=!verified||busy||!!model.job||
     !s.production_sha||sha===s.production_sha;
  }
+ // Independent Render sandbox is read-only and never authorizes prod_apply.
+ // No user-supplied URLs, query parameters or server data choose this origin.
+ function independentOrigin(){
+  const raw=window.BEAGU_INDEPENDENT_PREVIEW?.origin;
+  if(typeof raw!=="string"||!raw.trim())return null;
+  try{
+   const u=new URL(raw);
+   if(u.protocol!=="https:"||!u.hostname.endsWith(".onrender.com")||
+      u.hostname==="onrender.com"||u.port||u.username||u.password||
+      u.pathname!=="/"||u.search||u.hash)return null;
+   return u.origin;
+  }catch(_err){return null;}
+ }
+ function setIndependentLink(ready,label,sha=""){
+  const link=el("releaseIndependentLink");
+  link.removeAttribute("href");
+  link.setAttribute("aria-disabled","true");
+  link.setAttribute("tabindex","-1");
+  const origin=independentOrigin();
+  if(ready&&origin){
+   link.href=origin+"/";
+   link.removeAttribute("aria-disabled");
+   link.removeAttribute("tabindex");
+  }
+  link.textContent=label;
+  el("releaseIndependentStatus").textContent=ready?
+   "독립 호스팅 게시 확인 · 코드 "+short(sha)+
+   " · 시험 DB 전용 · 운영 배포 승인은 별도":
+   label==="독립 시험 웹 미연결"?
+    "호스팅 연결 전에는 시험 웹 주소를 사용할 수 없습니다.":
+    "독립 시험 웹 배포 증명이 없거나 주소·환경이 일치하지 않습니다.";
+ }
+ async function verifyIndependentPreview(probeId){
+  const origin=independentOrigin();
+  if(!origin){
+   if(probeId===independentProbeId)setIndependentLink(false,"독립 시험 웹 미연결");
+   return;
+  }
+  let verified=false,actualSha="";
+  try{
+   const res=await fetch(origin+"/beagu-preview-health.json",{
+    method:"GET",mode:"cors",redirect:"error",cache:"no-store",credentials:"omit"
+   });
+   if(res.ok){
+    const proof=await res.json();
+    verified=proof?.schema===1&&proof?.kind==="standalone-staging"&&
+     proof?.hosting==="independent-static"&&
+     proof?.supabase_ref==="ycwuugggqbunlbwuzvbx"&&
+     typeof proof.staging_sha==="string"&&/^[0-9a-f]{40}$/.test(proof.staging_sha);
+    if(verified)actualSha=proof.staging_sha;
+   }
+  }catch(_err){ /* A missing, stale or inaccessible site remains disabled. */ }
+  if(probeId!==independentProbeId||!statusVerified)return;
+  setIndependentLink(verified,verified?"독립 시험 웹 열기":"독립 시험 웹 게시 확인 실패",actualSha);
+  // Deliberately DO NOT touch releaseProdApply: it requires the managed
+  // GitHub Pages staging proof and server-side independent CI attestations.
+ }
  function renderHistory(id,rows){
   const root=el(id);root.replaceChildren();
   if(!rows?.length){const p=document.createElement("p");p.className="subtle";
@@ -174,6 +233,9 @@
   renderHistory("releaseProdHistory",prodHist);
   statusVerified=true;
   if(s.staging_sha)void verifyPreview(s.staging_sha,probeId);
+  setIndependentLink(false,"독립 시험 웹 확인 중");
+  const independentId=++independentProbeId;
+  void verifyIndependentPreview(independentId);
  }
  async function refresh(quiet=false){
   if(busy)return;
