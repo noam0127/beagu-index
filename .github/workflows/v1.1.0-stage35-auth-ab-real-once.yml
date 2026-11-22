@@ -1,0 +1,22 @@
+name: v1.1.0 stage35 one-time real Auth A/B HTTP E2E
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-auth-ab-real-once.py'
+      - '.github/workflows/v1.1.0-stage35-auth-ab-real-once.yml'
+permissions:
+  contents: read
+jobs:
+  staging-real-auth-ownership:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger staging-only self-cleaning Auth admin fixture once
+        run: python3 tests/v1.1.0-stage35-auth-ab-real-once.py
+      - name: Scope
+        if: always()
+        run: |
+          echo "Remove or disable beagu-stage35-auth-once function once test completes."
+          echo "No production credentials, emails, school records, or deploy."
