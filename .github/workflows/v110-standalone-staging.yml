@@ -3,11 +3,7 @@ on:
   push:
     branches:
       - ci/v1.1.0-standalone-test-bundle-20261123
-    paths:
-      - 'scripts/build-standalone-staging.py'
-      - 'tests/test-standalone-staging.py'
-      - 'render.yaml'
-      - '.github/workflows/v110-standalone-staging.yml'
+      - fix/v1.1.0-preview-isolation-gate-20261123
   pull_request:
     paths:
       - 'scripts/build-standalone-staging.py'
