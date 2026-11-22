@@ -347,3 +347,17 @@
 - 확인된 검증: 순수 정책 함수를 실제 연결 도구에서 실행해 **18개 단언 PASS**, 관련 6개 파일 JS/JSON 문법 PASS. 정확한 Node 전체 테스트, 20개 프라이빗 차트 생성과 CI 실행 결과는 미확인. 성공으로 가장하지 않음.
 - 7개 전문가별 근거 및 방법: `docs/schoolband-stage022-trusted-intake.md`. 단계 진행 중 운영 웹·운영 데이터베이스에 쓰기 없음.
 - 다음 독립 작업은 023/030으로 진행 가능하나, 019(#245), 021(#246), 022(#247)의 릴리스 게이트를 029/030 전 해결해야 한다.
+
+## 023/030 — 자체 창작곡 검수·시험 등록·회수 대기열 (2026-11-23)
+
+상태: **IMPLEMENTED / NODE·CI PENDING / REAL-SCHOOL-ANTHEM BLOCKED**. 미확인 검증은 [GitHub Issue #248](https://github.com/noam0127/beagu-index/issues/248).
+
+- 기존 마스터 프롬프트의 023(학교별 편곡 제작 큐·게시/회수 실증)을 사용자 범위에 맞춰 변경: 교가 이용 허락 요청·유료 API·결제·청음/연주감 확인을 하지 않는다. 실제 학교 교가 사용 권한 및 게임 차트가 없어 실교가의 게시·회수 실증은 **BLOCKED**.
+- `games/nangam-schoolband-v08/charts/song-queue-stage023.v1.json`: 원래 저장소 내 자체 창작곡 2개만 등록. 기존 8마디 108 BPM 창작 연습곡은 `trial_available`, 별도 박자 변화 창작곡은 `private_ready`. 외부 학교 교가 없음.
+- `scripts/schoolband-stage023-queue.cjs`: 제출→검수→비공개 승인→시험곡 공개 및 거절·회수 상태 머신. 학교 ID/승인 자료·해시 확인, 감사 이력 재생, 철회/만료된 권리가 이전 시험 공개 상태를 덮어쓰지 못하도록 차단. 미등록 실교가 fallback은 기존 자체 창작곡으로 유지.
+- `scripts/schoolband-stage023-queue-runner.cjs`: 원본 파일 SHA와 등록부·임베디드 차트 ID 일치 검사, 허가/거절/회수 오프라인 초안 생성 및 시뮬레이션(실제 운영 공개·배포 없음).
+- 게임 `games/nangam-schoolband-v08/index.html`: 음악 메타데이터를 실교가로 오인하여 임시 창작곡을 재생하지 않도록, 실제 연주가 구현된 곡은 내부 원본곡뿐이라고 강제. 등록된 학교 교가가 없으므로 교가 버튼 잠금.
+- `scripts/test-schoolband-stage023.cjs` + `.github/workflows/schoolband-stage023.yml`: 상태·사칭·감사·철회·만료·대체·원본 해시·동작 금지 시나리오의 순수 Node 데이터 검사. 이전 022 단계 MIDI/MusicXML 정규식 오류 수정 포함. 청음·연주·유료 API 실행 없음.
+- 수행 검증: 연결 도구에서 실제 큐 정책 모듈을 실행해 **12건 PASS**, 이후 철회/만료와 이력 처리 추가 **8건 PASS**, 게임/관련 테스트 JavaScript 파싱 확인. **GitHub Actions·전체 Node 파일 해시 검증 및 CI 성공은 미확인**이므로 023단계종료 선언 보류.
+- 상세 설계·7개 역할 검토: `docs/schoolband-stage023-queue-review-withdrawal.md`. 운영 `main` 및 `baeguindex.com`, 운영 Supabase 수정 없음.
+- 향후 024/030은 곡 ID·버전별 최고 기록과 점수 공정성 검사로 진행. 019(#245), 021(#246), 022(#247), 023(#248) 검증 게이트는 최종 릴리스 이전에 해결해야 한다.
