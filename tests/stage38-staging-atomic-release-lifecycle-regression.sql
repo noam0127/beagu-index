@@ -41,7 +41,7 @@ BEGIN
   -- Test real constraint: one active queued/running release at a time.
   INSERT INTO public.beagu_site_release_jobs_v1
     (action,target,from_sha,to_sha,version,summary,status,public_data_blob_sha)
-  VALUES('stage_apply','staging',base,candidate,'SIM-1','Synthetic stage apply','running',source_blob)
+  VALUES('stage_apply','staging',base,candidate,'SIM-1','Synthetic stage apply','running',new_blob)
   RETURNING id INTO stage_id;
   blocked:=false;
   BEGIN
@@ -67,7 +67,10 @@ BEGIN
     OR (SELECT staging_sha FROM public.beagu_site_release_state_v1 WHERE id=1) <> candidate
     OR (SELECT status FROM public.beagu_site_release_jobs_v1 WHERE id=stage_id) <> 'deployed'
     OR (SELECT count(*) FROM public.beagu_site_release_history_v1) <> 1
-  THEN RAISE EXCEPTION 'Atomic stage-apply failed'; END IF;
+    -- Regression: stage job knows the new public-data blob, but production
+    -- state must keep the previously released blob until actual prod apply.
+    OR (SELECT public_data_blob_sha FROM public.beagu_site_release_state_v1 WHERE id=1) <> source_blob
+  THEN RAISE EXCEPTION 'Stage apply corrupted production data pointer'; END IF;
   result:=public.beagu_site_release_finalize_v1(stage_id,'deployed','https://staging.example.invalid/rc');
   IF (result->>'already_complete')::boolean IS NOT TRUE
     OR (SELECT count(*) FROM public.beagu_site_release_history_v1) <> 1
@@ -112,12 +115,13 @@ BEGIN
 
   INSERT INTO public.beagu_site_release_jobs_v1
     (action,target,from_sha,to_sha,version,summary,status)
-  VALUES('stage_rollback','staging',candidate,base,'SIM-BASE','Synthetic test rollback','running')
+  VALUES('stage_rollback','staging',candidate,base,'SIM-BASE','Synthetic test rollback','running',new_blob)
   RETURNING id INTO job_id;
   PERFORM public.beagu_site_release_finalize_v1(job_id,'deployed','https://staging.example.invalid/restored');
   IF (SELECT staging_sha FROM public.beagu_site_release_state_v1 WHERE id=1) <> base
    OR (SELECT count(*) FROM public.beagu_site_release_history_v1) <> 4
-  THEN RAISE EXCEPTION 'Staging rollback or deployment history mismatch'; END IF;
+   OR (SELECT public_data_blob_sha FROM public.beagu_site_release_state_v1 WHERE id=1) <> source_blob
+  THEN RAISE EXCEPTION 'Staging rollback changed production public data pointer'; END IF;
 
   -- Inject a history UNIQUE violation AFTER the function updates state.
   -- Only one PostgreSQL transaction can recover the state and job consistently.
