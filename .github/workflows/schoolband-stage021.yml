@@ -6,6 +6,8 @@ on:
       - 'games/nangam-schoolband-v08/index.html'
       - 'games/nangam-schoolband-v08/charts/anthem-media-fixture.v1.json'
       - 'scripts/test-schoolband-stage021.cjs'
+      - 'games/nangam-schoolband-v08/charts/school-homepages.v1.json'
+      - 'scripts/test-schoolband-stage021-homepages.cjs'
       - '.github/workflows/schoolband-stage021.yml'
   workflow_dispatch:
 permissions:
@@ -20,12 +22,16 @@ jobs:
         with: {node-version: '22'}
       - name: Validate discovery metadata ID/review safety and source syntax
         run: node scripts/test-schoolband-stage021.cjs
+      - name: Check public school homepage catalog, URL safety and JS syntax
+        run: node scripts/test-schoolband-stage021-homepages.cjs
       - name: Install Chromium
         run: |
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium --only-shell
       - name: Verify video discovery, test-only preview and game licensing gate
         run: node scripts/test-schoolband-stage021.cjs --browser
+      - name: Check exact school ID homepage link and search fallback on desktop/mobile
+        run: node scripts/test-schoolband-stage021-homepages.cjs --browser
       - name: Preserve song choice and existing school search
         run: |
           node scripts/test-schoolband-stage020.cjs
