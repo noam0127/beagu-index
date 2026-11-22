@@ -72,5 +72,22 @@ for(const file of ["js/beagu-release-progress-v1.js","js/beagu-admin-updates-v1.
 const manifest=JSON.parse(readFileSync("docs/releases/v1.1.0-rc.1.json","utf8"));
 assert.equal(manifest.immutable_candidate.commit_sha,sha);
 assert.equal(manifest.deployment.production_release,"NO_GO");
+const stageState=JSON.parse(readFileSync("docs/releases/v1.1.0-stage38-staging-state.json","utf8"));
+assert.equal(stageState.stage,38);
+assert.equal(stageState.rc_sha,sha);
+assert.notEqual(stageState.published_staging_sha,sha,
+  "Published preview must never be called rc.1 unless the exact pinned SHA matches");
+assert.equal(stageState.live_stage_matches_rc,false);
+assert.equal(stageState.staging_release_complete,false);
+assert.equal(stageState.deployment_status,"BLOCKED_NOT_DEPLOYED");
+assert.equal(stageState.production_release_allowed,false);
+assert.equal(stageState.admin_release_api.requires_owner_aal2,true);
+assert.equal(stageState.admin_release_api.live_deployed,false);
+assert.equal(stageState.offline_package.passed,true);
+assert.equal(stageState.offline_package.online,false);
+const stageDoc=readFileSync("docs/releases/v1.1.0-stage38-staging-deployment.md","utf8");
+assert.match(stageDoc,/38단계 진행 중/);
+assert.match(stageDoc,/RC가 시험 웹에 배포되지 않음/);
+assert.match(stageDoc,/AAL2/);
 console.log("PASS: stage38 pinned RC ownership gate, server-authoritative job status and no production RC promotion.");
 console.log("SCOPE: DEV BRANCH ONLY. RC staging deployment requires owner AAL2 + live release API support; no site deploy.");
