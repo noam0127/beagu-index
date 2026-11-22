@@ -1,0 +1,22 @@
+name: v1.1.0 stage35 one-time real Post-it CRUD Auth E2E
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-postit-crud-real-once.py'
+      - '.github/workflows/v1.1.0-stage35-postit-crud-real-once.yml'
+permissions:
+  contents: read
+jobs:
+  staging-real-auth-crud:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trigger isolated self-cleaning A/B Auth post and comment ownership test
+        run: python3 tests/v1.1.0-stage35-postit-crud-real-once.py
+      - name: Scope and cleanup
+        if: always()
+        run: |
+          echo "One time staging Auth test only. Verify cleanup and disable the QA Edge Function immediately."
+          echo "This is not a production database or website deployment."
