@@ -10,6 +10,13 @@ services:
     buildCommand: python3 scripts/build-standalone-staging.py && python3 tests/test-standalone-staging.py
     staticPublishPath: ./_standalone_staging
     headers:
+      # Public SHA marker: readable across origins, but never contains secrets.
+      - path: /beagu-preview-health.json
+        name: Access-Control-Allow-Origin
+        value: "*"
+      - path: /beagu-preview-health.json
+        name: Cache-Control
+        value: no-store, max-age=0
       - path: /*
         name: X-Robots-Tag
         value: noindex, nofollow, noarchive, nosnippet
