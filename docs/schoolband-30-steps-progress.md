@@ -414,3 +414,17 @@
 - **직접 검증:** 현재 게임 소스에서 추출한 포인터 함수의 **7개 테스트 PASS**, 실제 HTML/Node 스크립트 JS 구문 검사 PASS. GitHub Actions 실행 및 Playwright 성공 여부는 아직 미확인. 실제 Android/iPhone/PC 기기, 음향·연주감 관련 요구는 BLOCKED/USER EXCLUDED.
 - 7개 전문가 역할 검토·검증 매트릭스: `docs/schoolband-stage027-device-input-no-audio.md`. 운영 `main`, `baeguindex.com`, 운영 Supabase DB 변경 없음.
 - 028은 성능·접근성·출시 전 결함 제로 게이트. 027은 실기 미검증 및 CI 미완료 때문에 최종 종료 선언 보류.
+
+## 028/030 — 시각 성능·접근성·출시 전 HIGH 결함 차단 (2026-11-23)
+
+상태: **IMPLEMENTED / RELEASE GATE OPEN / NODE·CHROMIUM CI PENDING**. 개별 고위험 결함 추적: [GitHub Issue #253](https://github.com/noam0127/beagu-index/issues/253).
+
+- 사용자의 제외 조건(교가 이용 허락 요청 없음, 유료 API·결제 없음, 실음향/청음/연주감 확인 없음)을 준수. 실제 게임 연주나 오디오를 시작하지 않고 **정적 화면 그리기 비용과 UI/접근성**만 검증하도록 범위를 좁힘.
+- 본체 `games/nangam-schoolband-v08/index.html`: 단계화면 `:focus` 숨김 CSS 제거→뚜렷한 초점 테두리, 시스템/사용자 Reduced Motion 및 저사양 모드에서 터치 패드 눌림 변형 제거, 32ms 저사양 모드 시각 렌더링 게이트를 순수 함수 `visualFrameEligible`로 분리. 시각 프레임 스킵 여부는 음표 판정·노트 타이밍 계산을 바꾸지 않음.
+- 정적 캔버스 그림 시간 `staticVisualBenchmark(1~60)` 및 최근 120회 메모리 상한 버퍼 평균·p95·최대 기록. 마이크·스피커·오디오 엔진을 시작하거나 점수를 고치지 않음. **정적 draw 비용은 실제 연주 중 FPS/CPU/메모리·음향 품질과 다르며 이를 대신했다고 주장하지 않음**.
+- 신규 `scripts/test-schoolband-stage028.cjs` 및 `.github/workflows/schoolband-stage028.yml`: 시각 throttle·통계·부하 상한 및 CSS 정적 검사, 026~027 데이터/포인터 회귀, Playwright Chromium 1280/390/320 화면의 정적 캔버스 p95·선택적 JS 힙 차이·키보드 초점·큰 글씨·고대비·모션 감소·가로 스크롤·로컬 점수 불변 및 개인정보 서버 미전송. CI artifact `artifacts/schoolband-stage028/visual-preflight-report.json` 저장 계획. 브라우저 테스트는 AudioContext 생성 시 예외 발생하도록 차단.
+- **실행 근거:** 최신 게임/테스트 JS 구문 PASS, 실제 게임의 렌더링 순수 정책·표본 통계를 연결 JavaScript 환경에서 직접 실행해 핵심 **10개 검사 PASS**. 전체 Node·Playwright·GitHub Actions CI 성공/성능 보고서 생성은 **미확인**.
+- 최신 시험 브랜치 커밋 `94162599e988b86f835a24bee8fac7ba77eda139`의 GitHub combined status: **Vercel failure / build-rate-limit**, Pro 유료 변경하지 않음. 무료 별도 시험 웹·최신 커밋 HTTP/HTML 검증은 029의 릴리스 차단요건.
+- 실제 Android/iPhone/PC에서 연주 중 FPS/CPU/메모리·기기 조작감은 증거가 없으므로 **BLOCKED**, 실음향·청음·소음은 사용자가 제외. **치명·높음 결함 0건이라고 선언 불가.** 019~027 미확인 CI/실기 게이트도 OPEN 유지.
+- 상세 심각도별 결함 목록, 완료 기준 및 7개 가상 전문가 관점 검토: `docs/schoolband-stage028-visual-performance-accessibility-release-gate.md`.
+- 운영 `main`, `baeguindex.com`, 운영 Supabase 변경 없음. 다음은 029/030 독립 시험 웹 HTTP/커밋 일치/롤백·운영격리 증명.
