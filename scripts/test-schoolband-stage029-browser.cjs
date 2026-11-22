@@ -34,7 +34,15 @@ async function verify(){
    });
    let response=await page.goto(root+"preview/index.html",{waitUntil:"domcontentloaded",timeout:25000});
    assert.equal(response?.status(),200,"preview landing HTTP must be 200");
-   assert.match(await page.locator("h1").innerText(),/난감한 스쿨밴드/);
+   const heading=await page.locator("h1").first().innerText();
+   if(!/난감한 스쿨밴드/.test(heading)){
+    console.error("STAGE029_EXTERNAL_BROWSER_DIAGNOSTIC",JSON.stringify({
+      url:page.url(),heading,title:await page.title(),
+      responseStatus:response.status(),contentType:response.headers()["content-type"],
+      bodyText:(await page.locator("body").innerText()).slice(0,700)
+    }));
+    throw Error("unexpected_external_preview_document");
+   }
    assert.match(await page.locator(".tag").innerText(),/독립 시험용/);
    const anchor=page.locator("a.launch");
    assert.match(await anchor.getAttribute("href"),/\.\.\/index\.html/);
