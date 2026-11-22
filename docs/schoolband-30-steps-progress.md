@@ -186,5 +186,21 @@
 - 남은 핵심 위험: 예약 Web Audio 노드 정지·중단·재시작 유령 소리·메모리 해제(012), 실제 사람과 Android/iOS 하드웨어 청음·입력 지연(027), 권리 확인된 실제 교가 확보/편곡(022~023), 시험 웹 최초 방문 문제 SB-007(029).
 - 다음 단계 **012/030 — 오디오 정지·메모리·재생 안정성**.
 
-## 012/030 — pending
-일시정지/중단/재시작 시 이미 예약된 Web Audio 오실레이터와 노이즈 노드를 정리·취소하고, 마스터 버스 컴프레서·AudioContext 수명·오디오 권한·실패 복귀를 실제 브라우저에서 검증.
+## 012/030 — 오디오 중단·음소거·모바일 권한 처리 (2026-11-22)
+
+상태: **COMPLETE — PC/320px Chromium에서 4악기 총 8회 미래 예약 음원 중단·Context 종료·0개 유령 소스, PAUSED 중단·자연 종료·볼륨·음소거·권한 실패 복구 PASS. 단, 실제 기기 귀로 듣는 청음은 미완료(027).**
+
+- 사용자 첨부 원본 30단계 지침의 012/030(원본 048~050)에 따라 작업. 시작 `schoolband-playtest` 브랜치 SHA: `ea57b37d44b67b3c8dffd679531bea193dc2832d`. 운영 `main`, `baeguindex.com`, 운영 Supabase·다른 게임 미변경.
+- 게임 소스 `games/nangam-schoolband-v08/index.html`에 **4종 AudioScheduledSourceNode 전수 추적**(`trackAudioSource`)과 `stopTrackedAudio`, `releaseAudioEngine` 도입. 자연 `ended`에는 `disconnect`와 추적 집합 삭제, 수동/정상 종료 때는 master gain을 즉시 0으로 만들고 미래 예약 소스까지 `stop(0)`·이벤트 리스너 제거·노드 disconnect 후 `AudioContext.close()`, 버스·노이즈 버퍼 참조 정리. 중단 후 다른 Context를 새로 생성해 재연주.
+- 오디오 권한 보호: `startPending`으로 연속 클릭 중복 시작 방지, 사용자 직접 버튼 이벤트에서 AudioContext.resume. 권한 거절 시 기존 오디오 객체 전체 정리하고 사용자에게 재시도 안내·시작 버튼 복원. 페이지 이동 중 대기 중인 Context도 정리. 오디오 미지원 환경에서는 오류를 표시하고 시작하지 않음.
+- 게임 음량 0~100%(5% 단위) 슬라이더·값 표시·브라우저 저장, 전체 음소거와 독립 제어. 마스터 게인 목표값 `MIX_LEVELS.master×volume/100`; 음소거가 최우선으로 0, 해제 후 이전 음량 복원. 학교/학생 개인 정보 저장·전송 없음.
+- 신규 테스트 `scripts/test-schoolband-stage012.cjs`, CI `.github/workflows/schoolband-stage012.yml`, 7개 전문가 역할 독립 AI 검토 `docs/schoolband-stage012-audio-lifecycle.md`.
+- **GitHub Actions [run 45006452738](https://github.com/noam0127/beagu-index/actions/runs/45006452738) SUCCESS**, 실제 검증 대상 코드 커밋 `1bb53469e0504f7e484f96c6e87c9a8a27966b6e`. PC/320px Chromium 각각 기타·드럼·베이스·키보드 연주 후 예약된 미래 소스 6개씩을 먼저 확인한 뒤 ■ 중단. **8회×6개=48개의 미래 소스를 전부 stop/disconnect**하고 각 Context.state=closed, 관찰 350ms 후 추가 예약 0개·활성 추적 음원 0개 PASS.
+- 두 브라우저 모두 자연 음원 재생 종료 `onended` 정리, PAUSED 상태에서 STOP으로 모든 노드 해제, 음량 35%·85% 로컬 저장 및 복원, 0% 완전 무음, mute 중 볼륨을 변경해도 master 0, mute 해제 후 0.48(60%×0.8) 복귀 PASS. 첫 resume의 `NotAllowedError` 모의 → 실패 정리 후 다음 클릭 재시도 PASS. Web Audio API 자체 미지원 오류 처리 PASS.
+- 같은 CI에서 011단계 **OfflineAudioContext 48회 파형 생성의 최대 피크 −8.11dBFS·클리핑 0**, 010단계 4악기 합주 음색의 순수 계약, 007단계 60/90/120Hz 일시정지 시간축, 009단계 20조합 차트 스키마 및 오염 거부, 005단계 판정 시계 수치 모두 PASS.
+- [증거 JSON 아티팩트](https://github.com/noam0127/beagu-index/actions/runs/45006452738/artifacts/14747273323): `results.json` 1개(2,944바이트) 직접 다운로드·확인. 8개 stopCycles 모두 `scheduled=6, cancelled=6, contextClosed=closed, ghostSources=0`, 권한 재시도·음소거·자연 해제 상태 확인. 이 아티팩트에는 이미지가 없으며 오디오/화면 캡처는 기존 010/011단계 증거에서 참조.
+- **한계 명시:** 브라우저 오디오 노드와 디지털 파일 수준의 자동 검증이다. 실제 iOS/Android 기기의 소리 권한 팝업과 헤드폰·스피커·블루투스 청음의 '유령 음 없음'은 물리 장치로 검증하지 않았다. 원본 완료 기준 중 '**4악기 실기 청음**' 항목은 027/030에서 수행해야 하며 본 단계에서 수행했다고 주장하지 않는다.
+- 다음 단계 **013/030 — 창작 교가 및 표준 음악 이벤트 규격**.
+
+## 013/030 — pending
+「빛나는 우리 학교」 28음의 박자·BPM·파트 이벤트·기본 화성을 재사용 가능한 버전 규격으로 묶고, 권리 확인된 MIDI/MusicXML 예제의 파싱·변환·일관된 재생 시간축을 검증.
