@@ -47,11 +47,17 @@ SELECT path,required_count,present_count,missing_dependencies,
 FROM results
 ORDER BY path;
 
--- Extra fail-closed checks: table existence alone does not mean school data is available.
--- An empty school catalog cannot be counted as a functional school-context pass.
+-- Empty school tables must not be reported as ready for data-driven E2E.
+-- No real school or respondent data are copied into staging by this check.
 SELECT 'postit_school_context_data' AS path,
- CASE WHEN to_regclass('public.schools') IS NULL
-    OR to_regclass('public.beagu_school_report_yearly') IS NULL
-    OR to_regclass('public.beagu_lv1_school_sort_index') IS NULL
- THEN 'BLOCKED_MISSING_DEPENDENCIES'
- ELSE 'METADATA_PRESENT_DATA_AND_E2E_UNVERIFIED' END AS readiness;
+ CASE
+   WHEN to_regclass('public.schools') IS NULL
+     OR to_regclass('public.beagu_school_report_yearly') IS NULL
+     OR to_regclass('public.beagu_lv1_school_sort_index') IS NULL
+     THEN 'BLOCKED_MISSING_DEPENDENCIES'
+   WHEN NOT EXISTS (SELECT 1 FROM public.schools WHERE status='운영')
+     THEN 'BLOCKED_NO_STAGING_SCHOOL_DATA'
+   WHEN NOT EXISTS (SELECT 1 FROM public.beagu_lv1_school_sort_index)
+     THEN 'BLOCKED_EMPTY_SCHOOL_SORT_VIEW'
+   ELSE 'DATA_PRESENT_REQUIRES_E2E'
+ END AS readiness;
