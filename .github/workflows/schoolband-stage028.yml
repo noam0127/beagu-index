@@ -1,0 +1,45 @@
+name: Schoolband 028 visual performance access and zero-defect preflight
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage028.cjs'
+      - 'scripts/test-schoolband-stage027.cjs'
+      - 'scripts/test-schoolband-stage026.cjs'
+      - '.github/workflows/schoolband-stage028.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: schoolband-stage028-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  visual-accessibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static visual performance and accessibility policy
+        run: node scripts/test-schoolband-stage028.cjs
+      - name: Regression - 20 chart combinations, pure judgement (no audio)
+        run: node scripts/test-schoolband-stage026.cjs
+      - name: Regression - pointer touch and keyboard (no audio)
+        run: node scripts/test-schoolband-stage027.cjs
+      - name: Install Chromium for no-audio visual benchmark and DOM checks
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Benchmark static canvas draw and inspect focus/reduced motion at three widths
+        run: node scripts/test-schoolband-stage028.cjs --browser
+      - name: Attach measured visual-only report without personal data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage028-visual-no-audio
+          path: artifacts/schoolband-stage028/visual-preflight-report.json
+          if-no-files-found: ignore
+          retention-days: 7
