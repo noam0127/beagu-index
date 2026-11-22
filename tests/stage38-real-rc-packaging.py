@@ -76,7 +76,16 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     assert manifest["files_sha256"]["data/public-compare-school-directory-v1.json"] == hashlib.sha256(
         packaged_data
     ).hexdigest()
-    assert set(manifest["files_sha256"]) == {"index.html", "js/supabase-config.js", "vercel.json", "data/public-compare-school-directory-v1.json"}
+    assert {"index.html", "js/supabase-config.js", "vercel.json",
+            "data/public-compare-school-directory-v1.json"}.issubset(manifest["files_sha256"])
+    assert ".nojekyll" in manifest["files_sha256"]
+    published_files = {
+        item.relative_to(out).as_posix()
+        for item in out.rglob("*")
+        if item.is_file() and item.name != "stage38-release-manifest.json"
+    }
+    assert set(manifest["files_sha256"]) == published_files
+    assert all(not item.is_symlink() for item in out.rglob("*"))
     for path, digest in manifest["files_sha256"].items():
         assert re.fullmatch("[0-9a-f]{64}", digest)
         assert __import__("hashlib").sha256((out / path).read_bytes()).hexdigest() == digest
