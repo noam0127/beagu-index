@@ -73,7 +73,7 @@ Conflict resolution: preserve the simplest school → instrument → play UX, an
 
 ## 7. Isolation rules and rollback
 
-Only commit to \`schoolband-playtest\`. Do not change \`main\`, the production admin release controller, production CNAME, production Supabase functions, DB or live rankings. Supabase readings here are nonmutating; live public read API usage must remain read-only. Rollback anchor: \`582fc4fb3f92e93c6841209a864dfb3377b0b73f\` before 001 audit. Stage 001 is a **partial audit** until a hosted browser smoke can recreate the actual v0.8 screen/audio and verify the endpoint content-type.
+Only commit to \`schoolband-playtest\`. Do not change \`main\`, the production admin release controller, production CNAME, production Supabase functions, DB or live rankings. Supabase readings here are nonmutating; live public read API usage must remain read-only. Rollback anchor: \`582fc4fb3f92e93c6841209a864dfb3377b0b73f\` before 001 audit. Stage 001 baseline audit is complete after hosted Chromium verification (CI run 44974305321, SHA 20df18e7903eb204e0aa4faf5dbbafe409d9282f). External hosting remains unsuitable for a seamless first visit until SB-007 is fixed.
 
 ## 8. Stage 001 acceptance
 
@@ -81,5 +81,19 @@ Only commit to \`schoolband-playtest\`. Do not change \`main\`, the production a
 - [x] Version and static contract documented; 20/20 parse/static lane coverage
 - [x] Seven review perspectives and prioritized defect register
 - [x] Branch isolation rationale and extraction dependency map
-- [ ] External test URL HTTP content-type and desktop browser reproduction
+- [x] Hosted RawGitHack and Supabase-redirect browser DOM reproduction after explicit test-only confirmation bypass; HTTP 200 text/html, functioning game UI
 - [ ] Actual Android/PC sound and timing (device verification planned at 027)
+
+
+## 9. Verified browser evidence and newly reproduced host defect
+
+- CI PASS: https://github.com/noam0127/beagu-index/actions/runs/44974305321
+- Tested commit: \`20df18e7903eb204e0aa4faf5dbbafe409d9282f\`.
+- Static: 28-note self-composed melody, eight bars, 24px note geometry, 20/20 instrument-tier lane coverage.
+- Chromium local desktop 1280×900: PASS (HTTP text/html, school demo → each instrument and 4/4/3/5 pads → play → stop).
+- Chromium local narrow mobile viewport 320×640: PASS same DOM, pointer/button flow; this is **not** a physical Android or iOS test.
+- RawGitHack test URL: initial first-visit navigation returns **HTTP 200 text/html but shows "External Content Notice" instead of the game**. A browser automation test applied the documented consent cookie only within the test, reloaded, then game DOM, instrument pads and start/stop all PASS.
+- Supabase \`schoolband-playtest-v02\` URL: redirects to exactly the same RawGitHack consent notice; after the same test-only cookie, playable game DOM PASS. This is a **user-facing blocker for immediate play**, not an API or core game initialization failure.
+- Screenshots: https://github.com/noam0127/beagu-index/actions/runs/44974305321/artifacts/14735295332 (4 images).
+- SB-007 **HIGH**: first visit to either public trial address requires RawGitHack's extra "Open the page" confirmation. Next action: replace this host with a reliable independent trial HTML host before step 029; do not silently simulate a preconsented user in release tests.
+- Note: the automated smoke checked game start/stop in headless Chromium but did not make an external human listening judgement of sound. Real device/audio perception remains for step 027.
