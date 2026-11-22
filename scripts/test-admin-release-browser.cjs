@@ -145,7 +145,8 @@ async function run(){
                               draft_sha:SHAS.stage})),...defect};
     const {ctx,page,errors}=await open(browser,cfg,model);
     await page.locator("#releaseDashboard").waitFor({state:"visible"});
-    await page.locator("#releaseStageHealth").getByText(/게시 확인 실패/).waitFor();
+    await page.locator("#releaseStageLinkLabel").getByText(/게시 확인 실패/).waitFor();
+    assert.match(await page.locator("#releaseStageHealth").innerText(),/배포 기록과 실제 게시 상태를 점검/);
     assert.equal(await page.locator("#releaseStageLink").getAttribute("href"),null,
       defect.name+" must not open stale/missing preview");
     assert.equal(await page.locator("#releaseStageLink").getAttribute("aria-disabled"),"true");
