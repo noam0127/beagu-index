@@ -132,6 +132,7 @@ async function smoke(){
       const api=window.nangamSchoolbandV08,chart=api.getChart();
       const targets=chart.filter(x=>x.lane===2&&x.t>0&&x.t<.5).slice(0,3);
       const results=[];
+      let lastAnimation=null;
       for(const note of targets){
         const deadline=performance.now()+4000;
         while(api.getPlayhead()<note.t-.003&&performance.now()<deadline)await new Promise(r=>setTimeout(r,2));
@@ -141,9 +142,11 @@ async function smoke(){
         // A newly created CSS animation receives its startTime on the next animation frame.
         await new Promise(requestAnimationFrame);
         const animation=document.getElementById("judgeFx").getAnimations()[0];
+        const newAnimation=Boolean(animation)&&animation!==lastAnimation;
+        lastAnimation=animation;
         results.push({t:note.t,playhead:api.getPlayhead(),before,after,
           fx:fx.particleCount,glow:fx.pulseRemainingMs[2],judgement:fx.judgement,animated:fx.judgeAnimate,
-          animationStart:animation?.startTime??null});
+          newAnimation,animationPlayState:animation?.playState??null,animationCurrentTime:animation?.currentTime??null});
       }
       return {targets:targets.length,results,score:api.getStatus().score};
     });
@@ -153,8 +156,7 @@ async function smoke(){
     assert(hits.results.every(x=>x.fx>=1&&x.fx<=60),"particle cap: "+json(hits));
     assert(hits.results.every(x=>x.animated&&x.judgement==="PERFECT!"),"judge restart: "+json(hits));
     console.log("HIT_TRACE",json(hits));
-    const starts=hits.results.map(x=>x.animationStart);
-    assert(starts.every(x=>Number.isFinite(x))&&starts[2]>starts[0],"animation did not restart");
+    assert(hits.results.every(x=>x.newAnimation),"CSS animation object was not recreated per hit: "+json(hits));
     report.browser.rapidHit={...hits,passed:true};
     console.log("PASS rapid-hit: 3 successive 16th hi-hats with PERFECT and animation restart, glow, particles<=60");
     await page.locator(".stage-wrap").screenshot({path:path.join(out,"rapid-hit-stage.png")});
