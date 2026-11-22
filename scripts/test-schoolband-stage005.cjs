@@ -17,7 +17,7 @@ function sourceModel(html){
 function loadModel(html){
  const code=sourceModel(html);new vm.Script(code,{filename:"schoolband-timing-model.js"});
  // Exclude explanatory comments; inspect executable code for forbidden side effects.
- const executable=code.replace(/\\/\\/[^\\n]*/g,"").replace(/\\/\\*[\\s\\S]*?\\*\\//g,"");
+ const executable=code.split("\n").filter(line=>!line.trim().startsWith("//")).join("\n");
  for(const name of ["Date.now","performance.now","requestAnimationFrame","window.","document.","AudioContext","setTimeout"])assert(!executable.includes(name),"impure model contains "+name);
  return vm.runInNewContext(code+"\n({BEAT,BARS,SONG_BEATS,WIDTHS,PERFECT,NOTE_PREVIEW_SECONDS,NOTE_TRAVEL_PX,NOTE_HEIGHT_PX,noteTimeSeconds,noteDeltaSeconds,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed})",Object.create(null),{timeout:1000});
 }
