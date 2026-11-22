@@ -263,5 +263,20 @@
 - **한계:** Android/iOS 물리 기기, 실제 스크린리더 음성/화면 회전·동시터치는 검증하지 않았다(017/027 대상). 실제 공개 학교명·연도별 난이도 API는 모의 fixture로만 UI 경로 확인(019 단계), 제3자 학교 교가 권리 확인 없이 사용·배포하지 않음(021~023 대상).
 - 다음 단계 **017/030 — 다중터치·화면 회전·게임 도중 조작 안정성**.
 
-## 017/030 — pending
-3~5레인 간격·동시터치 위치, Android 다중 손가락 입력/가로·세로 회전, 전체화면·중단·재시작 안정성을 개선하고, 큰 글자·고대비·키보드/스크린리더 접근성을 자동 테스트와 가능할 경우 물리 장치로 검증.
+## 017/030 — 다중터치·화면 회전·연주 중 조작 안정성 (2026-11-22)
+
+상태: **COMPLETE — Chromium CDP에서 가상 터치 2손가락 동시 2노트 정확히 2회 적중, 취소·중복 판정·회전 전후 점수 및 소리 시간축 보존, 320/375px 모바일·1280px PC 가독성/전체화면 거절 복귀, 최종 CI + 기존 016/008/005/007 전부 PASS. 실제 물리 Android/iOS 테스트는 미실시.**
+
+- 사용자 첨부 원본 마스터 30단계의 017/030(원본 064~067)에 따라 **schoolband-playtest** 시험 브랜치만 수정. 시작 HEAD `ac68ed60ed705577cd75f1e4a8fc1f2afb60f331`; 운영 main `0ca283cd09cd63520d9ce8e37463bed8d2f65541`/baeguindex.com/Supabase 운영 데이터 미변경.
+- 게임 `games/nangam-schoolband-v08/index.html`: trusted Web PointerEvents 별 독립 `pointerId→lane` Map, `setPointerCapture` 및 `pointerup/pointercancel/lostpointercapture` 해제, 회전·악기 변경·곡 중단 시 터치 상태 초기화. `#pads`의 `touch-action:none`, 이름·키보드 레이블·키 Enter 유지. 가로 640×320에서는 Canvas/패드 **1:1 너비 두 열**로 변경해 키보드 5레인 글자 줄바꿈을 줄이고 세로 원래 구조 유지. 화면 회전 이벤트는 기존 AudioContext 시계·점수·차트를 초기화하지 않음.
+- 가독성: 큰 글자·고대비 체크박스, OS `prefers-contrast:more`, 레인 이름+키 문자, 3px 흰 테두리·검정 배경·노랑 키, 설정의 로컬 저장. 전체화면 버튼은 실제 `document.fullscreenElement` 확인 후 켜짐 상태 표기하고 권한/지원 거절 시 오류 안내·일반 연주 유지. 읽기 전용 `getMobileUiState()`로 실제 레인 좌표·화면 방향·포인터 수와 설정을 검증.
+- **GitHub Actions [run 45022379933](https://github.com/noam0127/beagu-index/actions/runs/45022379933) completed/success**, 실제 코드 검증 SHA `ff6f8faa099c247defc59427e1c7588daef93612`. 모바일320·375 Chromium에서 CDP 한 사건으로 실제 trusted pointerdown 두 개를 다른 키보드 레인에 전달 → 두 손가락 고유 ID 2개·같은 노트시각에 적중 2회·선택 악기 오디오 hit 2건·움직임 중 중복 득점 0·끝과 취소 시 활성 0. 화면 640×320 가로→원래 세로 복귀 중 score=2·playing=true 보존 후 중단/재시작 성공, 가로 5개 패드 각 최소 50.59px 폭/87.5px 높이, 수평 오버플로 0.
+- PC1280·모바일320·375 모두 4악기 각각 3/4/5레인 이름·PC 키·레이블·패드 겹침 없음, 큰 글자(실측 13/13.5/19px)·고대비(검정 배경·흰 3px 테두리)·새로고침 보존·실제 Fullscreen API 거부 후 `aria-pressed=false` 및 일반연주 회복 PASS, JS 오류 0.
+- **회귀 PASS:** 016단계 3화면 PC/320/375, 008단계 원본 PC/모바일 40게임 + 키 160회·PointerEvent 160회·Enter 40회, 005단계 판정 경계98·기하좌표121·FPS28 및 007단계 공통 시계 60/90/120Hz·일시정지 수치 PASS.
+- [증거 ZIP](https://github.com/noam0127/beagu-index/actions/runs/45022379933/artifacts/14754343012) 실제 다운로드 확인: `results.json` + PC1280/모바일320/375 각각 세로 고대비·가로 연주 PNG **총 7개** 파일, 391,444바이트. `browser.length=3`, 모바일 두 환경 모두 `multitouch[0].hits=2, tracked=2, doubleHitPrevented=true, released=true`, `rotation.portraitToLandscapeAndBack=true`, `stopRestart=true`, `errors=[]`, `failure` 없음.
+- QA 초기 오류: 처음 CDP 터치 좌표를 sticky 내비게이션 y=53px 아래에 보낸 탓에 pointerdown 0건. 터치 버튼을 viewport 중앙으로 옮기고 목표 좌표의 `elementFromPoint`가 실제 버튼을 가리키는지 확인해 해결. 가로 캡처의 5레인 글자가 너무 좁게 분할된 모습도 확인하여 1:1 그리드 조정 후 최종 CI 전체 재실행 성공. 숨기지 않고 `docs/schoolband-stage017-multitouch-rotation.md`에 7개 AI 전문 역할별 문제·검증·남은 위험 기록.
+- **한계:** 실제 Android/iOS 물리 터치패널 및 방향센서, iOS Safari·TalkBack/VoiceOver·실제 사람 청음·OS 고대비·전체화면의 실기 검증은 027단계까지 남아 있음. CDP Chromium 디지털 합성 터치와 물리 실기라는 증거를 구별하여 기록. 실제 학교 교가 권한/유튜브 음원은 사용하지 않음.
+- 다음 단계 **018/030 — 사용자 연출·진동 설정 및 저사양 최적화**.
+
+## 018/030 — pending
+모션 감소·진동 끄기·음량 조절·저성능 이펙트 모드를 고도화하고, 낮은 성능·배터리에서도 판정 시계가 유지되도록 설정 조합별 UI/성능 스모크 테스트와 실제 캡처·실측 기록을 남긴다.
