@@ -1,0 +1,194 @@
+{
+  "schema": 1,
+  "project_ref": "ycwuugggqbunlbwuzvbx",
+  "verified_on": "2026-11-22",
+  "source": "Supabase staging Edge Functions inventory (read-only, verified on 2026-11-23 KST / 2026-11-22 UTC)",
+  "functions": [
+    {
+      "slug": "beagu-admin-access",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-admin-dashboard-v1",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-admin-members-v1",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-level-api",
+      "version": 5,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-postit-api-v1",
+      "version": 4,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-release-manager-v1",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage-preview",
+      "version": 4,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage35-auth-once",
+      "version": 4,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage35-final-gates-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage35-lv3-once",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage35-postit-crud-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage38-auth-mfa-once",
+      "version": 3,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage38-browser-auth-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage38-release-guard",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage38-signed-publish-worker-once",
+      "version": 3,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage38-signed-worker-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage39-auth-oidc-once",
+      "version": 5,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-admin-access",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-admin-dashboard-v1",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-admin-members-v1",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-email-qa-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-gotrue-confirm-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-hosted-auth-oidc-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-lv3-joined-real-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-lv3-oidc-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-real-privacy-http-once",
+      "version": 4,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-release-manager-v1",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage40-release-queue-oidc-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage41-admin-mfa-release-readonly-once",
+      "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-stage42-owner-button-release-once",
+      "version": 4,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-test-v1",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    }
+  ]
+}

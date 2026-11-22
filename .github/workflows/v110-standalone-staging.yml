@@ -25,6 +25,9 @@ on:
       - 'scripts/staging/auth-readiness.sql'
       - 'scripts/staging/check-auth-readiness.cjs'
       - 'tests/staging-auth-readiness.cjs'
+      - 'scripts/staging/audit-frontend-edge-functions.py'
+      - 'scripts/staging/stage-edge-functions-inventory.json'
+      - 'tests/staging-edge-inventory.test.py'
       - 'tests/postit-member-auth.cjs'
       - 'render.yaml'
       - '.github/workflows/v110-standalone-staging.yml'
@@ -53,6 +56,13 @@ jobs:
         run: python3 scripts/build-standalone-staging.py
       - name: Audit test-only bundle and production isolation
         run: python3 tests/test-standalone-staging.py
+      - name: Audit staging Edge Function inventory without contacting backend
+        run: |
+          python3 tests/staging-edge-inventory.test.py
+          python3 scripts/staging/audit-frontend-edge-functions.py
+      - name: Require complete staging Edge Function inventory for manually requested E2E
+        if: github.event_name == 'workflow_dispatch'
+        run: python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
       - name: Audit local asset paths before browser verification
         run: python3 scripts/check-standalone-assets.py
       - name: Setup Node 22 for isolated browser checks
