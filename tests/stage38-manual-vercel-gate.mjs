@@ -50,37 +50,30 @@ assert.match(workflow, /persist-credentials: false/);
 assert.match(workflow, /python3 tests\/stage38-real-rc-packaging\.py/);
 assert.match(workflow, /python3 scripts\/release-manager\/build-offline-rc-bundle\.py/);
 assert.match(workflow, /\$VERCEL_PROJECT_ID/);
-// Previous invalid workflow had an unterminated version regex and a repeated
-// "id: deploy" block.  Fail the PR before anyone can activate the template.
-const cliCheck = "printf '%s' \"$CLI_VERSION\" | grep -Eq '^[0-9]+\\.[0-9]+\\.[0-9]+
-assert.doesNotMatch(workflow, /--prod\b|vercel promote\b|vercel alias\b|vercel rollback\b/);
-assert.doesNotMatch(workflow, /permissions:\s*\n\s+contents:\s*write/);
-assert.match(workflow, /hostname==="baegu-index-test\.vercel\.app"/);
-assert.match(workflow, /hostname==="baeguindex\.com"/);
-
-// Workflow can only be reviewed in PR until merged to protected main.
-// No GitHub Actions dispatch or Vercel invocation is made by this test.
-console.log("PASS: Stage38 deployment job remains dispatch-only; PR checks have no deployment permission, token or protected environment.");
-console.log("NOTE: workflow is a NON-EXECUTABLE template. Separate owner approval and deployment environment verification are required before installing it.");
-";
-assert.ok(workflow.includes(cliCheck), "Exact Vercel CLI version check must have closing quote and EOL anchor");
-const deploymentStepIds = workflow.match(/^        id: deploy\s*$/gm) || [];
-assert.equal(deploymentStepIds.length, 1, "Duplicate Vercel deploy step ID");
-const deploymentCommands = workflow.match(/^          url="\$\(vercel deploy --yes\)"\s*$/gm) || [];
-assert.equal(deploymentCommands.length, 1, "Duplicate Vercel deployment command");
-const stepNames = [...workflow.matchAll(/^      - name: (.+)$/gm)].map(match=>match[1]);
+// Previous inactive YAML draft had an unterminated CLI version regex and
+// two deployment steps with the same "id: deploy". Both must fail review.
+const cliLine=workflow.split("\n").find(line=>line.includes("grep -Eq"));
+assert.ok(cliLine, "Vercel version checking must be present");
+assert.ok(cliLine.includes("printf '%s' \"$CLI_VERSION\" | grep -Eq '"));
+assert.ok(cliLine.includes("^[0-9]+\\.[0-9]+\\.[0-9]+$'"), "Missing EOL anchor or closing regex quote");
+assert.ok(cliLine.includes("Unpinned Vercel CLI version"), "Missing fail-closed error");
+const deploymentStepIds=workflow.match(/^        id: deploy\s*$/gm)||[];
+assert.equal(deploymentStepIds.length,1,"Duplicate Vercel deployment step IDs");
+const deploymentCommands=workflow.match(/^          url="\$\(vercel deploy --yes\)"\s*$/gm)||[];
+assert.equal(deploymentCommands.length,1,"Duplicate Vercel deployment commands");
+const stepNames=[...workflow.matchAll(/^      - name: (.+)$/gm)].map(match=>match[1]);
 assert.equal(stepNames.length,new Set(stepNames).size,"Duplicate workflow step names");
 assert.equal((workflow.match(/^  manual-preview:\s*$/gm)||[]).length,1);
 assert.equal((workflow.match(/^  validate-pr-no-deployment:\s*$/gm)||[]).length,1);
-assert.match(workflow, /test -n "\$VERCEL_TOKEN" \|\|/);
-assert.match(workflow, /^          printf 'url=%s\\n' "\$url" >> "\$GITHUB_OUTPUT"$/m);
-assert.match(workflow, /vercel deploy --yes/);
-assert.doesNotMatch(workflow, /--prod\b|vercel promote\b|vercel alias\b|vercel rollback\b/);
-assert.doesNotMatch(workflow, /permissions:\s*\n\s+contents:\s*write/);
-assert.match(workflow, /hostname==="baegu-index-test\.vercel\.app"/);
-assert.match(workflow, /hostname==="baeguindex\.com"/);
+assert.match(workflow,/test -n "\$VERCEL_TOKEN" \|\|/);
+assert.match(workflow,/^          printf 'url=%s\\n' "\$url" >> "\$GITHUB_OUTPUT"$/m);
+assert.match(workflow,/vercel deploy --yes/);
+assert.doesNotMatch(workflow,/--prod\b|vercel promote\b|vercel alias\b|vercel rollback\b/);
+assert.doesNotMatch(workflow,/permissions:\s*\n\s+contents:\s*write/);
+assert.match(workflow,/hostname==="baegu-index-test\.vercel\.app"/);
+assert.match(workflow,/hostname==="baeguindex\.com"/);
 
-// Workflow can only be reviewed in PR until merged to protected main.
-// No GitHub Actions dispatch or Vercel invocation is made by this test.
-console.log("PASS: Stage38 deployment job remains dispatch-only; PR checks have no deployment permission, token or protected environment.");
-console.log("NOTE: workflow is a NON-EXECUTABLE template. Separate owner approval and deployment environment verification are required before installing it.");
+// Only a separate owner review can activate the draft. This test does not
+// dispatch, access credentials, or change existing Vercel deployments.
+console.log("PASS: Stage38 deployment template is structurally reviewed and inactive; duplicate deploy and malformed version checks are rejected.");
+console.log("NOTE: GitHub environment approvals and exact host deployment remain unverified.");
