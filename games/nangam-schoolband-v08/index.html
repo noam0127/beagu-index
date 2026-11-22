@@ -517,6 +517,12 @@ const WIDTHS=[.20,.17,.14,.11,.075],PERFECT=[.09,.075,.06,.05,.036];
 // Each chart note is anchored to seconds relative to the shared AudioContext start time.
 function noteTimeSeconds(bar,sixteenth){return (bar*4+sixteenth/4)*BEAT}
 function noteDeltaSeconds(noteTime,songTime){return noteTime-songTime}
+// A note first enters the drawing window exactly previewSeconds before it sounds.
+function noteSpawnTimeSeconds(noteTime){return noteTime-NOTE_PREVIEW_SECONDS}
+function noteIsInDrawingWindow(noteTime,songTime){
+ if(!Number.isFinite(noteTime)||!Number.isFinite(songTime))return false;
+ return songTime>=noteSpawnTimeSeconds(noteTime)&&noteDeltaSeconds(noteTime,songTime)>=-.2;
+}
 function noteYForDelta(dt,line){return line-dt/NOTE_PREVIEW_SECONDS*NOTE_TRAVEL_PX}
 function noteYAtAudioTime(noteTime,songTime,line){return noteYForDelta(noteDeltaSeconds(noteTime,songTime),line)}
 function noteStepSpacing(){return NOTE_TRAVEL_PX/NOTE_PREVIEW_SECONDS*BEAT/4}
@@ -938,8 +944,7 @@ function draw(){
  const now=playing?nowSong():-.6;
  for(const n of chart){
   if(n.done)continue;
-  const dt=noteDeltaSeconds(n.t,now);
-  if(dt>NOTE_PREVIEW_SECONDS||dt<-.2)continue;
+  if(!noteIsInDrawingWindow(n.t,now))continue;
   const x=margin+n.lane*(lw+gap),y=noteYAtAudioTime(n.t,now,line);
   // A 24px tall note keeps a >4px internal gap at each sixteenth step (108 BPM).
   const fill=g.createLinearGradient(x,y-12,x,y+12);
@@ -990,7 +995,7 @@ document.addEventListener("keydown",e=>{
  e.preventDefault();hit(index);flash(index);
 });
 window.addEventListener("pagehide",()=>{if(playing)finish(true)});
-window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged,combo,bestCombo,miss,emptyPresses}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteYForDelta,noteYAtAudioTime,judgementForOffset,isNoteMissed})};
+window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,score,hits,judged,combo,bestCombo,miss,emptyPresses}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,judgementForOffset,isNoteMissed})};
 $("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
 $("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
 if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
