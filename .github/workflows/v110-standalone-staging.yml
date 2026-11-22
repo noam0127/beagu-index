@@ -18,6 +18,8 @@ on:
       - 'tests/test-standalone-staging.py'
       - 'scripts/test-standalone-browser.cjs'
       - 'scripts/check-standalone-assets.py'
+      - 'scripts/verify-render-preview.py'
+      - 'tests/test-render-preview-readiness.py'
       - 'render.yaml'
       - '.github/workflows/v110-standalone-staging.yml'
   workflow_dispatch:
@@ -36,6 +38,11 @@ jobs:
         run: |
           python3 -m py_compile scripts/build-standalone-staging.py
           python3 -m py_compile tests/test-standalone-staging.py
+      - name: Validate live-site readiness probe without network access
+        run: |
+          python3 -m py_compile scripts/verify-render-preview.py
+          python3 -m py_compile tests/test-render-preview-readiness.py
+          python3 tests/test-render-preview-readiness.py
       - name: Build test-only static bundle from exact checkout
         run: python3 scripts/build-standalone-staging.py
       - name: Audit test-only bundle and production isolation
