@@ -82,8 +82,16 @@ Deno.serve(async (req: Request) => {
       issuer: "https://token.actions.githubusercontent.com",
       audience: AUD,
     });
-    if (payload.repository !== REPO || payload.ref !== REF ||
-        payload.workflow_ref !== WORKFLOW || payload.event_name !== "push") {
+    const trustedBranchPush = payload.ref === REF &&
+      payload.workflow_ref === WORKFLOW && payload.event_name === "push";
+    // PR #244 is the current same-repository staging integration branch.
+    const trustedSameRepoPR = payload.event_name === "pull_request" &&
+      payload.ref === "refs/pull/244/merge" &&
+      payload.workflow_ref === REPO +
+        "/.github/workflows/stage38-staging-member-live-contract.yml@refs/pull/244/merge" &&
+      payload.head_ref === "hotfix/v1.1.0-preview-backend-isolation" &&
+      payload.base_ref === "main";
+    if (payload.repository !== REPO || !(trustedBranchPush || trustedSameRepoPR)) {
       return json({ error: "untrusted_workflow" }, 403);
     }
   } catch { return json({ error: "untrusted_oidc" }, 403); }
