@@ -32,6 +32,7 @@ on:
       - 'tests/stage38-form-submission-evidence.mjs'
       - 'tests/stage38-form-key-rotation.mjs'
       - 'tests/stage38-stable-enrollment-lookup.mjs'
+      - 'tests/stage38-session-revocation-policy.mjs'
       - 'tests/stage38-synthetic-referral-proof-cases.sql'
       - 'tests/stage38-synthetic-submission-claim-cases.sql'
       - 'docs/releases/templates/stage38-approved-vercel-preview.yml'
@@ -66,6 +67,7 @@ jobs:
           node --test tests/stage38-form-submission-evidence.mjs
           node --test tests/stage38-form-key-rotation.mjs
           node --test tests/stage38-stable-enrollment-lookup.mjs
+          node --test tests/stage38-session-revocation-policy.mjs
           ruby -ryaml -e 'YAML.parse_file(ARGV.fetch(0))' docs/releases/templates/stage38-approved-vercel-preview.yml
           python3 tests/site-release-packaging.py
           python3 tests/site-release-two-sha-isolation.py
