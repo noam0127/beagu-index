@@ -33,7 +33,7 @@ assert.match(member,/writer_status/);
 assert.match(member,/action:'link_member',deviceSecret:original/);
 assert.match(member,/await serverLevel\(\)/);
 assert.ok(!member.includes('signupSection'),'Signup card script references removed');
-assert.match(member,/badge\?\.dataset\.level==='2'/);
+assert.match(member,/Number\(badge\?\.dataset\.level\)>=2/);
 assert.ok(!member.includes('localStorage.setItem(DEVICE_KEY'),'Never mint a new device credential');
 assert.match(css,/\[hidden\]\{display:none!important\}/);
 assert.match(css,/@media\(max-width:440px\)/);
