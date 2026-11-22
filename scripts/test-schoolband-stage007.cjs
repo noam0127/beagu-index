@@ -158,18 +158,40 @@ async function testBrowser(mode,browser,url){
   report.browser.push({mode,scenario:"manual-pause-resume",success:true,frozen_delta_s:manualB.songTime-manualA.songTime,
     resumed_advance_s:resumeB.songTime-resumeA.songTime,pauseMiss:manualA.miss,pauseScore:manualA.score});
   console.log("PASS "+mode+" manual pause/resume: frozen AudioContext, no mass MISS or missed scheduler");
-  // Actual browser tab change: a new page to the foreground must background the game.
+  // Playwright often forces pages to remain focused in headless Chromium.
+  // Try disabling focus emulation before activating another real browser tab.
+  const cdp=await context.newCDPSession(page);
+  await cdp.send("Emulation.setFocusEmulationEnabled",{enabled:false});
   const other=await context.newPage();
   await other.goto("about:blank");
   await other.bringToFront();
-  await waitFor(page,()=>document.hidden&&window.nangamSchoolbandV08.getPlaybackState().paused,7000);
+  const nativeHidden=await page.evaluate(()=>document.hidden);
+  if(!nativeHidden){
+   // Explicit *simulated* visibilitychange. This cannot count as real OS tab visibility.
+   await page.evaluate(()=>{
+    window.__stage007HiddenOverride=true;
+    Object.defineProperties(document,{
+      hidden:{configurable:true,get:()=>window.__stage007HiddenOverride},
+      visibilityState:{configurable:true,get:()=>window.__stage007HiddenOverride?"hidden":"visible"}
+    });
+    document.dispatchEvent(new Event("visibilitychange"));
+   });
+  }
+  await waitFor(page,()=>document.hidden&&window.nangamSchoolbandV08.getPlaybackState().paused,5000);
   await waitFor(page,()=>window.nangamSchoolbandV08.getPlaybackState().audioState==="suspended");
   const bgA=await snap(page);
   assert.equal(bgA.visibility,"hidden");
   await page.waitForTimeout(800);
   const bgB=await snap(page);
-  pausedInvariant(bgA,bgB,mode+" actual background tab");
+  pausedInvariant(bgA,bgB,mode+" "+(nativeHidden?"real":"emulated")+" background tab");
   await page.bringToFront();
+  if(!nativeHidden){
+   await page.evaluate(()=>{
+    window.__stage007HiddenOverride=false;
+    document.dispatchEvent(new Event("visibilitychange"));
+    delete document.hidden;delete document.visibilityState;
+   });
+  }
   await waitFor(page,()=>!document.hidden);
   const visibleA=await snap(page);
   assert.equal(visibleA.paused,true,"tab focus must not autoplay audio");
@@ -177,9 +199,11 @@ async function testBrowser(mode,browser,url){
   await waitFor(page,()=>window.nangamSchoolbandV08.getPlaybackState().audioState==="running"
     &&!window.nangamSchoolbandV08.getPlaybackState().paused);
   assert(Math.abs((await snap(page)).songTime-bgB.songTime)<.09,"tab resume drift");
-  await other.close();
-  report.browser.push({mode,scenario:"real-tab-switch",success:true,hidden:true,frozen_delta_s:bgB.songTime-bgA.songTime,requires_manual_resume:true});
-  console.log("PASS "+mode+" real tab switch: background suspends, no auto-play, resume holds timing");
+  await other.close();await cdp.detach();
+  report.browser.push({mode,scenario:"tab-switch-and-visibility-lifecycle",success:true,hidden:true,
+   native_visibility_event:nativeHidden,synthetic_visibility_event:!nativeHidden,
+   frozen_delta_s:bgB.songTime-bgA.songTime,requires_manual_resume:true});
+  console.log("PASS "+mode+" browser tab activation and "+(nativeHidden?"native":"synthetic")+" visibility: suspended, no auto-play");
   // Browser engine externally suspends AudioContext -> game auto detects statechange.
   await page.evaluate(async()=>window.__stage007Audio.suspend());
   await waitFor(page,()=>window.nangamSchoolbandV08.getPlaybackState().paused
