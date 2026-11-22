@@ -15,7 +15,7 @@ for(const id of ids){
  assert(!u.username&&!u.password,"credential URLs forbidden");
  assert(!u.hash&&!u.search,"tracking/query/fragment not retained");
  assert.match(u.hostname,/^[A-Za-z0-9.-]+$/);
- assert(!/^(localhost|127\\.|10\\.|192\\.168\\.|169\\.254\\.)/.test(u.hostname));
+ assert(!/^(localhost|127\.|10\.|192\.168\.|169\.254\.)/.test(u.hostname));
  accepted++;
 }
 const js=raw.match(/<script>([\s\S]*?)<\/script>/)?.[1];
