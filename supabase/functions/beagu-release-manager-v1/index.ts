@@ -2,6 +2,7 @@
 // GitHub Actions worker operations require a signed GitHub OIDC token restricted to this repo/workflow.
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.58.0";
 import {createRemoteJWKSet,jwtVerify} from "https://esm.sh/jose@5.10.0";
+import {validStagingCandidate,stageCandidateMatchesRef} from "../_shared/staging-release-candidate.mjs";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"",{
   auth:{persistSession:false,autoRefreshToken:false}
@@ -93,6 +94,13 @@ async function activeJob(){
   .select("*").in("status",["queued","running"]).order("created_at",{ascending:true}).limit(1).maybeSingle();
  if(error)throw Error("job_unavailable");return data;
 }
+async function lastJob(){
+ // Do not expose approver UUIDs or arbitrary job rows to the browser.
+ const {data,error}=await db.from("beagu_site_release_jobs_v1")
+  .select("id,status,action,target,version,to_sha,created_at,started_at,finished_at,error_code")
+  .order("created_at",{ascending:false}).limit(1).maybeSingle();
+ if(error)throw Error("job_unavailable");return data;
+}
 async function enqueue(job:{action:string;target:string;to_sha:string|null;from_sha:string|null;
  version:string;summary:string;created_by:string}){
  if(await activeJob())return {error:"release_in_progress",status:409};
@@ -106,7 +114,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  const s=await state();
  const current=await activeJob();
  if(action==="status"){
-  const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
+  const [stageHistory,prodHistory,previousJob]=await Promise.all([history("staging"),history("production"),lastJob()]);
   let head=null,suggested_draft=null;
   if(input.check_latest===true)try{
    const latest=await github("/commits/main");
@@ -116,12 +124,39 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
     if(proposal)suggested_draft={...proposal,sha:head};
    }
   }catch{ /* The release state and history remain available during GitHub outages. */ }
-  return respond({state:s,job:current,head_sha:head,suggested_draft,staging_history:stageHistory,
+  return respond({state:s,job:current,last_job:previousJob,head_sha:head,suggested_draft,staging_history:stageHistory,
     production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",
     production_url:"https://baeguindex.com/"},200,origin);
  }
  if(current)return error("release_in_progress",409,origin);
  if(!s.production_sha)return error("release_bootstrap_pending",409,origin);
+ if(action==="register_stage_candidate"){
+  // Owner + active AAL2 authorization already passed before adminAction.
+  // An unmerged release branch may be tested without merging into main.
+  // The server, not the browser, confirms the ref still points to this SHA.
+  const candidate={
+    ref:String(input.candidate_ref||""),
+    sha:String(input.candidate_sha||""),
+    version:String(input.version||""),
+    summary:String(input.summary||"").trim()
+  };
+  if(!validStagingCandidate(candidate))
+    return error("invalid_staging_candidate",400,origin);
+  const remote=await github("/git/ref/heads/"+candidate.ref);
+  if(!stageCandidateMatchesRef(candidate,remote))
+    return error("staging_candidate_sha_mismatch",409,origin);
+  if(candidate.sha===s.production_sha)
+    return error("already_on_production",409,origin);
+  const files=await changedFiles(s.production_sha,candidate.sha);
+  if(!files.length)return error("no_changes_since_production",409,origin);
+  const {error:e}=await db.from("beagu_site_release_state_v1").update({
+    draft_sha:candidate.sha,draft_version:candidate.version,
+    draft_summary:candidate.summary,updated_at:new Date().toISOString()
+  }).eq("id",1);
+  if(e)throw Error("save_unavailable");
+  return respond({staging_only:true,draft_sha:candidate.sha,version:candidate.version,
+    summary:candidate.summary,changed_count:files.length,changed_files:files.slice(0,25)},200,origin);
+ }
  if(action==="register"){
   const version=String(input.version||"").trim();
   const summary=String(input.summary||"").trim();
@@ -146,7 +181,10 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   // Clicking the stage button then registers that version automatically.
   const latest=await github("/commits/main");
   const proposed=await latestManifest();
-  if(proposed&&SHA.test(String(latest?.sha||""))&&latest.sha!==s.production_sha
+  // Respect a manually registered immutable RC. A later main push must
+  // never silently replace the candidate SHA an owner approved for staging.
+  if((!candidateSha||candidateSha===s.staging_sha)&&proposed
+     &&SHA.test(String(latest?.sha||""))&&latest.sha!==s.production_sha
      &&latest.sha!==s.draft_sha){
    const files=await changedFiles(s.production_sha,latest.sha);
    if(!files.length)return error("no_changes_since_production",409,origin);
@@ -168,6 +206,10 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   job={action,target:"staging",from_sha:s.staging_sha,to_sha:prev.from_sha,
    version:"이전 시험 버전",summary:"시험 웹 이전 배포 복원",created_by:userId};
  }else if(action==="prod_apply"){
+  // RC snapshots are never promotable by merely clicking the production
+  // button. The four stage36 release approval blockers are independent.
+  if(/^v\d+\.\d+\.\d+-rc\.[1-9]\d*$/.test(String(s.staging_version||"")))
+    return error("release_candidate_production_locked",409,origin);
   if(!s.staging_sha||!SHA.test(s.staging_sha))return error("staging_required",409,origin);
   if(s.staging_sha===s.production_sha)return error("already_on_production",409,origin);
   if(input.confirmed_tested!==true)return error("test_confirmation_required",400,origin);
