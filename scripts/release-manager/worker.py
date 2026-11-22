@@ -198,6 +198,51 @@ def build():
 
 
 
+def minimize_independent_preview(target):
+    """Ship only public web assets and keep known navigation on the QA host.
+
+    This applies ONLY to the standalone candidate build; it does not touch
+    the immutable RC tree, GitHub Pages preview, or production release.
+    """
+    for relative in (".github", "tests", "docs", "supabase",
+                     "scripts/release-manager"):
+        unwanted = target / relative
+        if unwanted.is_dir():
+            shutil.rmtree(unwanted)
+
+    # Deliberately narrow rewrites: preserve canonical SEO URLs and the
+    # explicit "actual website" admin link, but never silently redirect
+    # a QA visitor to production from ordinary home navigation.
+    replacements = {
+        "admin-updates.html": [
+            ('href="https://baeguindex.com/_preview/"', 'href="/"')
+        ],
+        "challenge.html": [
+            ('class="site-link" href="https://baeguindex.com/"',
+             'class="site-link" href="/"')
+        ],
+        "js/class-diary-interface-rebalance-v1.js": [
+            ("home.href='https://baeguindex.com/';", "home.href='/';")
+        ],
+        "teacher-class-diary-play.html": [
+            ("window.location.assign('https://baeguindex.com/');",
+             "window.location.assign('/');")
+        ]
+    }
+    for name, rules in replacements.items():
+        file = target / name
+        if not file.is_file():
+            raise RuntimeError("Expected staging navigation asset missing: " + name)
+        old = file.read_text(encoding="utf-8")
+        new = old
+        for original, replacement in rules:
+            if original not in new:
+                raise RuntimeError("Staging navigation link changed; manual review required: " + name)
+            new = new.replace(original, replacement)
+        if new != old:
+            file.write_text(new, encoding="utf-8")
+
+
 def package_independent_preview():
     """Package ONLY the signed job's approved staging SHA for a separate host.
 
@@ -219,6 +264,7 @@ def package_independent_preview():
         live_cname.unlink()
     make_preview_banner(INDEPENDENT_OUTPUT, independent=True)
     isolate_preview_backend(INDEPENDENT_OUTPUT)
+    minimize_independent_preview(INDEPENDENT_OUTPUT)
     (INDEPENDENT_OUTPUT / ".nojekyll").touch()
     if (INDEPENDENT_OUTPUT / "CNAME").exists():
         raise RuntimeError("Production custom domain leaked into standalone preview")
