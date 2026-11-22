@@ -18,8 +18,12 @@ async function publishedBranchAt(sha:string):Promise<boolean>{
  if(sha!==A && sha!==B) return false;
  try {
   const response=await fetch(
-    "https://api.github.com/repos/"+REPO+"/git/ref/heads/"+SANDBOX_BRANCH,
-    {headers:{"Accept":"application/vnd.github+json","User-Agent":"stage38-isolated-release-qa"},
+    "https://api.github.com/repos/"+REPO+"/git/ref/heads/"+SANDBOX_BRANCH+
+      "?stage38_nonce="+encodeURIComponent(crypto.randomUUID()),
+    {cache:"no-store",
+     headers:{"Accept":"application/vnd.github+json",
+       "User-Agent":"stage38-isolated-release-qa",
+       "Cache-Control":"no-cache","Pragma":"no-cache"},
      signal:AbortSignal.timeout(12000)}
   );
   if(!response.ok)return false;
@@ -98,6 +102,13 @@ Deno.serve(async(req:Request)=>{
       !["STAGE38-FAKE-B","STAGE38-FAKE-A"].includes(queued.version))
       return answer(403,{error:"not_a_sandbox_queued_job"});
    if(queued.status!=="queued")return answer(200,{has_job:false,already_running:true});
+   // Every release claim requires a fresh public Git ref attestation of the
+   // FROM version. This closes a cache/stale-ref gap found in the first run:
+   // rollback could be acknowledged from a previously cached A snapshot
+   // while the actual sandbox branch was still at B.
+   if(!(await publishedBranchAt(queued.from_sha)))return answer(409,{
+     error:"sandbox_branch_not_at_claimed_source_sha"
+   });
    const {data:claimed,error:claimError}=await db.from("beagu_site_release_jobs_v1")
       .update({status:"running",started_at:new Date().toISOString()})
       .eq("id",queued.id).eq("status","queued")
