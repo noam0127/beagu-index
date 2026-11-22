@@ -1,0 +1,48 @@
+name: v1.1.0 stage35 final security regression gate
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - '.github/workflows/v1.1.0-stage35-final-regression.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/beagu-level-api/index.ts'
+      - 'supabase/functions/_shared/release-policy.mjs'
+      - 'supabase/functions/beagu-admin-members-v1/index.ts'
+      - 'supabase/functions/beagu-postit-api-v1/index.ts'
+      - 'tests/v1.1.0-stage35-2026-release-policy.mjs'
+      - '.github/workflows/v1.1.0-stage35-final-regression.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage35-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Lv1 24h, Lv2 6h, verified Lv3 immediate approved releases
+        run: node tests/v1.1.0-stage35-2026-release-policy.mjs
+      - name: Check Lv2 exact snapshot and privacy invariants
+        run: node tests/2026-lv2-immediate.mjs
+      - name: Check earned Lv3 eligibility and existing participation UX
+        run: |
+          node tests/v1.1.0-stage35-lv3-member.mjs
+          node tests/levelup-provisional-v1.cjs
+          node tests/challenge-lv2-account-entry.mjs
+          node tests/postit-member-auth.cjs
+      - name: Check account isolation, moderator MFA and durable audit
+        run: |
+          node tests/v1.1.0-stage35-cross-account-decision.mjs
+          node tests/v1.1.0-stage35-member-admin-ownership.mjs
+          node tests/v1.1.0-stage35-moderation-audit.mjs
+      - name: Check system-level security static assertions
+        run: node tests/v1.1.0-stage35-security-static.mjs
+      - name: Scope
+        run: |
+          echo "This is a static/unit regression suite. E2E evidence is in stage35 security audit."
+          echo "Administrator AAL2 positive E2E and production-approved data remain release blockers."
+          echo "This workflow never touches production DB, commits to main, or deploys a website."
