@@ -28,6 +28,8 @@ on:
       - 'tests/stage38-staging-login-foundation.mjs'
       - 'tests/stage38-staging-login-foundation-smoke.sh'
       - 'tests/stage38-staging-synthetic-login-cases.sql'
+      - 'scripts/release-manager/stage38-form-submission-evidence.mjs'
+      - 'tests/stage38-form-submission-evidence.mjs'
       - 'tests/stage38-synthetic-referral-proof-cases.sql'
       - 'docs/releases/templates/stage38-approved-vercel-preview.yml'
   workflow_dispatch:
@@ -58,6 +60,7 @@ jobs:
           node tests/stage38-staging-critical-paths.mjs
           node tests/stage38-staging-column-parity.mjs
           node tests/stage38-staging-login-foundation.mjs
+          node --test tests/stage38-form-submission-evidence.mjs
           ruby -ryaml -e 'YAML.parse_file(ARGV.fetch(0))' docs/releases/templates/stage38-approved-vercel-preview.yml
           python3 tests/site-release-packaging.py
           python3 tests/site-release-two-sha-isolation.py
