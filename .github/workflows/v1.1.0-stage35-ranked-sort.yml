@@ -1,0 +1,29 @@
+name: v1.1.0 stage35 ranked-school tier gate
+on:
+  pull_request:
+    paths:
+      - 'tests/v1.1.0-stage35-ranked-sort-policy.mjs'
+      - 'supabase/functions/_shared/release-policy.mjs'
+      - 'supabase/functions/beagu-level-api/index.ts'
+      - '.github/workflows/v1.1.0-stage35-ranked-sort.yml'
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-ranked-sort-policy.mjs'
+      - '.github/workflows/v1.1.0-stage35-ranked-sort.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ranked-sort-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check tier policy and server authorization placement
+        run: node tests/v1.1.0-stage35-ranked-sort-policy.mjs
+      - name: Scope notice
+        run: echo "No production deployment; API HTTP verification must be separately evidenced."
