@@ -80,7 +80,7 @@ function pure(){
  // Negative control: this mutation must make the test contract fail.
  const broken=GAME.replace("return songTime-offsetMs/1000;","return songTime+offsetMs/1000;");
  assert.notEqual(broken,GAME,"bad offset fixture effective");
- const corruptCode=broken.slice(broken.indexOf(start)+start.length+broken.slice(broken.indexOf(start)).indexOf("\n")+1,broken.indexOf(end));
+ const corruptCode=broken.slice(broken.indexOf("\n",broken.indexOf(start))+1,broken.indexOf(end));
  const corrupted=vm.runInNewContext(corruptCode+"\n({correctedInputTime})",Object.create(null),{timeout:1000});
  let detected=false;
  try{almost(corrupted.correctedInputTime(2.12,120),2,"bad sign");}catch(_){detected=true;}
