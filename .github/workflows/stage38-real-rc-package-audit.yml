@@ -19,7 +19,8 @@ permissions:
   contents: read
 jobs:
   fixed-rc-offline:
-    runs-on: ubuntu-latest
+    # Chromium install currently unsupported on ubuntu-26.04 (ubuntu-latest).
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
