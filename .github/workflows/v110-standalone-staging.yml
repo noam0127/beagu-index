@@ -60,6 +60,9 @@ jobs:
         run: |
           python3 tests/staging-edge-inventory.test.py
           python3 scripts/staging/audit-frontend-edge-functions.py
+      - name: Require complete staging Edge Function inventory for manually requested E2E
+        if: github.event_name == 'workflow_dispatch'
+        run: python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
       - name: Audit local asset paths before browser verification
         run: python3 scripts/check-standalone-assets.py
       - name: Setup Node 22 for isolated browser checks
