@@ -42,7 +42,8 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:380/365;border:1px soli
 .pad-grid[data-instrument=bass] .taphit{background:#1a5564}
 .pad-grid[data-instrument=keys] .taphit{background:#344970}
 #keyHint{font-size:11px;text-align:center;color:var(--muted);margin:3px 0 10px}
-.actions{display:grid;grid-template-columns:1.5fr 1fr .75fr;gap:6px}
+.actions{display:grid;grid-template-columns:1.5fr 1.05fr .9fr .75fr;gap:6px}
+@media(max-width:400px){.actions{grid-template-columns:repeat(2,minmax(0,1fr))}.actions button{min-width:0;white-space:normal}}
 .actions button{min-height:45px;padding:10px 4px;font-size:13px;font-weight:800}
 #start{background:#6656a9;border-color:#a78bfa}
 #feedback{font-size:13px;color:#fde68a;min-height:30px;text-align:center;padding:10px 0 5px;font-weight:700}
@@ -121,7 +122,7 @@ html[data-reduced-fx="true"] .impact-ring{display:none}
 <div id="pads" class="pad-grid" aria-label="모바일 연주 버튼"></div>
 <p id="keyHint">D 리프 · F 파워 · J 업스트럼 · K 고음</p>
 <details class="timing-tuner" id="timingTuner"><summary>판정 보정 <output id="offsetSummary" for="offsetRange">0 ms</output></summary><div class="timing-controls"><label for="offsetRange">입력 판정 보정</label><input type="range" id="offsetRange" min="-150" max="150" step="5" value="0" aria-describedby="offsetHelp"><output id="offsetValue" for="offsetRange">0 ms</output><button type="button" id="offsetReset">초기화</button></div><p class="timing-help" id="offsetHelp">기기에서 소리가 들리는 시점보다 터치 입력이 늦게 인식되면 + 방향, 너무 이르게 인식되면 − 방향으로 조절하세요. +100 ms는 늦게 입력된 100 ms를 판정에서 보상합니다. 판정 화면과 반주는 그대로이며 게임 시작 전에 설정합니다. 실제 기기 오디오·입력 지연을 자동 측정하는 기능은 아닙니다.</p></details><div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label></div>
-<div class="actions"><button type="button" id="start" disabled>▶ 교가 연주 · 음악 켜기</button><button type="button" id="stop" disabled>■ 중단</button><button type="button" id="mute">♫ 소리</button></div>
+<div class="actions"><button type="button" id="start" disabled>▶ 교가 연주 · 음악 켜기</button><button type="button" id="pause" aria-pressed="false" disabled>Ⅱ 일시정지</button><button type="button" id="stop" disabled>■ 중단</button><button type="button" id="mute">♫ 소리</button></div>
 <div id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
 <div class="progress"><div id="progress"></div></div>
 <div class="hud"><div><small>점수</small><b id="score">0</b></div><div><small>콤보</small><b id="combo">0</b></div><div><small>정확도</small><b id="accuracy">—</b></div><div><small>최고</small><b id="best">—</b></div></div>
@@ -587,8 +588,8 @@ function saveOffset(){
  try{localStorage.setItem(OFFSET_STORAGE_KEY,String(inputOffsetMs))}catch(_){}
  syncOffsetUI();
 }
-let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
-let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0,lastMissAnnouncement=-Infinity;
+let school=null, instrument="guitar",playing=false,paused=false,pauseBusy=false,pauseReason=null,pausePromise=null,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
+let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0,lastMissAnnouncement=-Infinity,lastFrameWall=null,lastFrameSong=null;
 let masterBus=null,compressor=null,noiseBuffer=null;
 let particles=[],lanePulse=[0,0,0,0,0],lastImpactAt=0,impactStrength=0,impactLane=0;
 const LANE_GLOW_MS=175,PARTICLE_LIMIT=60;
@@ -714,6 +715,9 @@ function audioContext(){
  if(!Cls){status("오디오 기능을 지원하지 않는 브라우저입니다.");return null}
  try{
   ctx=new Cls();
+   if(ctx.addEventListener)ctx.addEventListener("statechange",()=>{
+    if(playing&&!paused&&ctx.state==="suspended")void pauseGame("audio");
+   });
   masterBus=ctx.createGain();
   masterBus.gain.value=muted?0:.82;
   if(ctx.createDynamicsCompressor){
