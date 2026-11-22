@@ -45,8 +45,6 @@ SELECT path,required_count,present_count,missing_dependencies,
   CASE WHEN all_present THEN 'METADATA_PRESENT_REQUIRES_E2E'
        ELSE 'BLOCKED_MISSING_DEPENDENCIES' END AS readiness
 FROM results
-WHERE to_regnamespace('stage_private') IS NOT NULL
-  AND to_regclass('stage_private.fake_schools') IS NOT NULL
 ORDER BY path;
 
 -- Extra fail-closed checks: table existence alone does not mean school data is available.
