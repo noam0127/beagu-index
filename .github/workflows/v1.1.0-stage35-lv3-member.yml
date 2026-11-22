@@ -4,6 +4,9 @@ on:
     branches: ['develop/v1.1.0-lv3']
     paths:
       - 'tests/v1.1.0-stage35-lv3-member.mjs'
+      - 'tests/postit-member-auth.cjs'
+      - 'tests/levelup-provisional-v1.cjs'
+      - 'tests/challenge-lv2-account-entry.mjs'
       - '.github/workflows/v1.1.0-stage35-lv3-member.yml'
   pull_request:
     paths:
