@@ -50,6 +50,9 @@ Supabase Auth JWT 인증, `aal2` 및 활성 MFA 세션도 확인한다.
 
 - 현재 진단은 **SELECT 집계만** 사용하며 데이터를 수정하지 않는다.
 - 운영 프로젝트 `snvzwrexuqavnfvzgxqj`에서 위 SQL을 실행하지 않는다.
+- 독립 시험 웹의 2026 운영 설문 링크는 `/staging-survey-unavailable.html`로 바꿔 제공한다.
+  실제 설문 또는 추천 실적 E2E는 **별도의 시험 설문 및 시험 데이터 연동**이 준비된 뒤에만 진행한다.
+  테스트를 위해 운영 Google 설문에 응답을 제출하지 않는다.
 - 실계정 확인, MFA 등록, Auth URL Configuration은 시험 프로젝트에서만 한다.
 - 기능 E2E가 완료되어도 배포 승인·GitHub `main` 업데이트는 별도 통제한다.
 - 인증/배포 자격증명은 ChatGPT나 GitHub 코드·PR 코멘트에 직접 붙여넣지 않는다.
