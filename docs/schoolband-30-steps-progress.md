@@ -400,4 +400,4 @@
 - `.github/workflows/schoolband-stage026.yml`: 026 + 024(점수·최고 기록) + 025(결과 화면·개인정보) Node 및 Chromium UI 자동회귀 구성. 새 유료 API·음악 수집·결제 없음.
 - 현재 대화에서 **최신 게임 소스의 순수 함수 검증을 직접 실행**하여 20차트/1,568개 노트의 정합성과 입력 판정 경계 등 **주요 검사 18개 PASS**, 신규 Node 테스트 JavaScript 문법 검사 PASS. **실제 Node 전체 테스트·GitHub Actions 성공·Chromium 1280/320px 성공은 미확인**.
 - GitHub 커밋 상태 검사에서 시험 브랜치 `be6d65f90327b392b448fd5e2e5433a1c9ed9bf1`의 Vercel 미리보기 빌드가 **빌드 횟수 제한으로 실패**했다. Pro 유료 업그레이드는 하지 않으며 029단계에서 별도 무료 시험 호스팅을 검토해야 함. 운영 웹 업데이트로 간주하지 않는다.
-- 설계와 7개 AI 역할별 리뷰: `docs/schoolband-stage026-regression-no-audio.md`. 운영 `main`, `baeguindex.com`, 운영 Supabase 변경 없음. 027단계는 접근성·모바일 UI/성능 등 남은 마스터 계획 확인 후 이어 진행.
+- 설계와 7개 AI 역할별 리뷰: `docs/schoolband-stage026-regression-no-audio.md`. 운영 `main`, `baeguindex.com`, 운영 Supabase 변경 없음. 027단계는 Android/iOS/PC 실제 기기 입력·음향 실증 단계이지만 사용자 요청에 따라 청음·음향·연주감 확인은 제외하고, 접근 가능한 비음향 입력/UI 증거만 확보한다. 실제 기기에 접근할 수 없으면 미검증/BLOCKED로 남긴다.
