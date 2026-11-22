@@ -836,16 +836,51 @@ function goToStep(next,{scroll=true,focus=true}={}){
 document.querySelectorAll("#stepNav [data-step-target]").forEach(btn=>{
  btn.addEventListener("click",()=>goToStep(btn.dataset.stepTarget));
 });
+// Stage019: never infer that a private/unapproved survey result is public.
+// Percentiles are interpreted only when the public API marks the row approved.
+// Legacy public API rows expose eligible+difficulty instead of a percentile.
+const SCHOOL_TIER_THRESHOLDS=Object.freeze([20,40,60,80]);
+function tierFromApprovedPercentile(p){
+ if(typeof p!=="number"||!Number.isFinite(p)||p<0||p>100)return null;
+ return TIERS[SCHOOL_TIER_THRESHOLDS.filter(limit=>p>=limit).length];
+}
+function normalizePublicSchool(record,expectedId){
+ if(!record||typeof record!=="object"||Array.isArray(record))throw Error("invalid_school_record");
+ const id=String(record.school_id||"").trim(),name=String(record.school_name||"").trim();
+ if(!id||!name||id.length>80||name.length>100||expectedId&&id!==String(expectedId))throw Error("school_identity_mismatch");
+ const explicitlyDenied=record.public_approved===false||record.publicApproved===false||
+   record.approved_for_publication===false||record.publication_status==="pending"||
+   record.publication_status==="rejected";
+ const year=Number(record.source_year);
+ const validYear=Number.isInteger(year)&&year>=2023&&year<=new Date().getFullYear();
+ const approved=record.eligible===true&&!explicitlyDenied&&validYear;
+ // Only use the percentile when the server explicitly authorizes its publication.
+ const percentileApproved=record.public_approved===true||record.publicApproved===true||
+   record.approved_for_publication===true||record.publication_status==="approved";
+ const computed=percentileApproved?tierFromApprovedPercentile(record.percentile):null;
+ const difficulty=approved?(computed||TIERS.includes(record.difficulty)?computed||record.difficulty:null):null;
+ const state=explicitlyDenied?"unapproved":difficulty?"published":"unrated";
+ return {school_id:id,school_name:name,region:String(record.region||record.sido_standard||"").slice(0,90),
+  district:String(record.district||record.sigungu||"").slice(0,90),
+  school_code:String(record.school_code||record.school_code_neis||"").slice(0,30),
+  eligible:state==="published",difficulty:state==="published"?difficulty:null,
+  source_year:validYear?year:null,publication_state:state};
+}
+function schoolIdentityText(s){
+ return s.school_name+[s.region,s.district,s.school_code?"학교코드 "+s.school_code:"",s.school_id?"ID "+s.school_id:""].filter(Boolean).join(" · ").replace(/^(.+?)((?: · .+)*)$/,(_,name,rest)=>name+rest);
+}
 function showSchool(){
  const s=selectedRecord();
  if(!s){safeText("schoolTitle","학교를 선택해 주세요");safeText("schoolTier","학교별 난이도는 학교 선택 후 표시됩니다.");$("start").disabled=true;showBest();return}
  tier=(s.eligible&&TIERS.includes(s.difficulty))?s.difficulty:"normal";
- safeText("schoolTitle",s.school_name+(s.region?" · "+s.region:""));
- safeText("schoolTier",s.eligible?nameTier()+" · 공개 자료 "+(s.source_year||"기준연도 확인 중")+"년":"공식 난이도 미산정 · NORMAL 연습용");
+ safeText("schoolTitle",schoolIdentityText(s));
+ const message=s.eligible?nameTier()+" · 공개 승인 난이도 · "+s.source_year+"년":
+  s.publication_state==="unapproved"?"공개 미승인 · NORMAL 연습용":"공식 난이도 미산정 · NORMAL 연습용";
+ safeText("schoolTier",message);
  safeText("playTitle",INST[instrument].name+" · "+INST[instrument].lanes.length+"레인 · "+nameTier());
  $("start").disabled=playing;
  showBest();
- status(s.eligible?"학교 선택 완료. 연주를 시작하세요.":"공식 난이도 정보가 없어 NORMAL 연습으로 진행합니다.");
+ status(s.eligible?"학교 선택 완료. 연주를 시작하세요.":"공개된 학교 난이도가 없어 NORMAL 연습으로 진행합니다.");
  draw();
 }
 function setSchool(s){if(playing)return;school=s;showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
@@ -866,14 +901,14 @@ $("schoolSearch").addEventListener("input",()=>{
  for(const s of list){
  if(!s.school_id||!s.school_name)continue;
  const b=document.createElement("button");b.type="button";
- b.textContent=s.school_name+(s.sido_standard?" · "+s.sido_standard:"");
+ b.textContent=schoolIdentityText({school_id:String(s.school_id),school_name:String(s.school_name),region:String(s.sido_standard||s.region||""),district:String(s.district||s.sigungu||""),school_code:String(s.school_code||"")});
  b.onclick=async()=>{
  const my=++querySeq;safeText("schoolStatus","학교 난이도 확인 중…");$("searchResults").replaceChildren();
  try{
  const d=await getJson(API+"?school_id="+encodeURIComponent(s.school_id));
  if(querySeq!==my)return;
  if(!d.school)throw Error("empty");
- setSchool(d.school);
+ setSchool(normalizePublicSchool(d.school,s.school_id));
  safeText("schoolStatus","선택 완료");
  }catch(e){if(querySeq===my)safeText("schoolStatus","학교 조회 실패. 다시 선택해 주세요.")}
  };
@@ -887,7 +922,7 @@ $("demoSchool").onclick=()=>{
  ++querySeq;clearTimeout(searchTimer);$("searchResults").replaceChildren();
  $("schoolSearch").value="";
  safeText("schoolStatus","가상 학교 연습 모드 (배구지수 실제 학교가 아닙니다)");
- setSchool({school_id:"demo-school",school_name:"가상 연습초",region:"데모",eligible:false,difficulty:null,source_year:null});
+ setSchool({school_id:"demo-school",school_name:"가상 연습초",region:"데모",eligible:false,difficulty:null,source_year:null,publication_state:"unrated"});
 };
 document.querySelectorAll("[data-inst]").forEach(b=>b.onclick=()=>{
  if(playing)return;
