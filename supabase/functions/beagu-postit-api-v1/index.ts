@@ -1,3 +1,4 @@
+import { isBrowserOriginAllowed } from "../_shared/staging-origin.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.57.0";
 
 // Post-it's data and author identities never become directly queryable with
@@ -16,7 +17,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 const SCHOOL_ID = /^[A-Z0-9]{7}$/;
 function cors(req:Request){
  const origin=req.headers.get("origin")||"";
- return { "Access-Control-Allow-Origin":origins.has(origin)?origin:"https://baeguindex.com",
+ return { "Access-Control-Allow-Origin":isBrowserOriginAllowed(origin, origins)?origin:"https://baeguindex.com",
  "Access-Control-Allow-Headers":"authorization,apikey,content-type,x-beagu-level-session",
  "Access-Control-Allow-Methods":"GET,POST,OPTIONS", "Vary":"Origin" };
 }
@@ -201,7 +202,7 @@ Deno.serve(async(req:Request)=>{
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors(req)});
  if(req.method!=="GET"&&req.method!=="POST")return fail(req,"METHOD_NOT_ALLOWED",405);
  const origin=req.headers.get("origin")||"";
- if(origin&&!origins.has(origin))return fail(req,"ORIGIN_NOT_ALLOWED",403);
+ if(origin&&!isBrowserOriginAllowed(origin, origins))return fail(req,"ORIGIN_NOT_ALLOWED",403);
  if(Number(req.headers.get("content-length")||0)>2048)return fail(req,"BODY_TOO_LARGE",413);
  if(!SUPABASE_URL||!ROLE_KEY)return fail(req,"SERVER_NOT_CONFIGURED",503);
  try{
