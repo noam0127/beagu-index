@@ -25,4 +25,9 @@ with tempfile.TemporaryDirectory() as temp:
     assert 'beagu-preview-watermark' in source
     assert '시험 웹' in source
     assert (worker.OUTPUT / "CNAME").read_text().strip()=="baeguindex.com"
+    health=json.loads((worker.OUTPUT / "_preview/beagu-preview-health.json").read_text(encoding="utf8"))
+    assert health["staging_sha"] == sha
+    assert health["kind"] == "staging" and health["schema"] == 1
+    assert health["supabase_ref"] == "ycwuugggqbunlbwuzvbx"
+    assert not (worker.OUTPUT / "beagu-preview-health.json").exists()
 print("PASS: immutable production snapshot + marked preview")
