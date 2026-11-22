@@ -1,4 +1,7 @@
-name: Stage38 REAL Chromium admin Auth/MFA UI E2E (ISOLATED TEST ONLY)
+name: Stage38 real Chromium Auth UI E2E proof (ONE-SHOT RUN COMPLETED)
+# Historical real-browser test passed in Actions 45027770567.
+# Temporary credential provisioner has been disabled at Supabase HTTP 410.
+# This workflow is now read-only: never create accounts or elevate privileges.
 on:
   pull_request:
     paths:
@@ -7,84 +10,42 @@ on:
       - 'tests/fixtures/stage38-browser-auth-oidc-once/**'
 permissions:
   contents: read
-  id-token: write
-
 jobs:
-  actual-admin-ui:
-    # Same-repository PR #244, never forks, never main or production.
-    if: github.repository == 'noam0127/beagu-index' && github.event.pull_request.number == 244 && github.event.pull_request.head.repo.full_name == 'noam0127/beagu-index' && github.event.pull_request.head.ref == 'hotfix/v1.1.0-preview-backend-isolation'
+  assert-ephemeral-auth-provider-disabled:
     runs-on: ubuntu-24.04
-    timeout-minutes: 13
-    env:
-      STAGE38_FIXTURE_URL: https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage38-browser-auth-once
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Build immutable RC for local browser QA without publishing
+      - name: Verify historic signed-run browser test code remains scoped to staging
         run: |
-          test "$(git rev-parse refs/remotes/origin/release/v1.1.0-rc.1)" = 5c95aadad971901a8222f83c52e93bf901a3aeb7
-          python3 tests/stage38-real-rc-packaging.py
-          python3 scripts/release-manager/build-offline-rc-bundle.py
-          test ! -f _preview_standalone_site/CNAME
-      - name: Install isolated Playwright headless Chromium
-        run: |
-          npm install --prefix .stage38-browser-deps --no-save --no-package-lock playwright@1.56.1
-          .stage38-browser-deps/node_modules/.bin/playwright install --with-deps chromium
-      - name: Create one-time staging synthetic admin via signed GitHub Actions identity
+          python3 - <<'PY'
+          from pathlib import Path
+          browser=Path('tests/stage38-real-browser-auth-mfa.cjs').read_text()
+          fixture=Path('tests/fixtures/stage38-browser-auth-oidc-once/index.ts').read_text()
+          assert '5c95aadad971901a8222f83c52e93bf901a3aeb7' in browser
+          assert 'ycwuugggqbunlbwuzvbx' in browser and 'ycwuugggqbunlbwuzvbx' in fixture
+          assert 'snvzwrexuqavnfvzgxqj' in browser
+          assert 'refs/pull/244/merge' in fixture and 'event_name==="pull_request"' in fixture
+          assert 'auth.admin.deleteUser' in fixture or 'client.auth.admin.deleteUser' in fixture
+          assert 'finally' in browser
+          print('PASS: historic real-browser Auth E2E source bound to pinned RC and test-only identities')
+          PY
+      - name: Confirm temporary Auth fixture endpoint no longer creates accounts
         shell: bash
         run: |
           set -euo pipefail
-          test -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}"
-          test -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}"
-          umask 077
-          fixture="$RUNNER_TEMP/stage38-browser-credentials.json"
-          oidc=$(curl --fail --silent --show-error --max-time 20 \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=beagu-stage38-browser-e2e" \
-            | python3 -c 'import json,sys;print(json.load(sys.stdin)["value"])')
-          http=$(curl --silent --show-error --max-time 45 \
-            -H "Authorization: Bearer $oidc" -H 'Content-Type: application/json' \
-            -o "$fixture" -w '%{http_code}' \
-            --data '{"action":"create"}' "$STAGE38_FIXTURE_URL")
-          unset oidc
-          python3 - "$fixture" "$http" <<'PY'
-          import json,sys
-          data=json.load(open(sys.argv[1],encoding='utf-8'))
-          assert sys.argv[2]=='200' and data.get('ok') is True, 'Staging Auth fixture creation failed'
-          assert str(data.get('email','')).endswith('@example.invalid')
-          assert len(str(data.get('password','')))>=50
-          print('PASS: signed PR244 GitHub identity created disposable staging Auth account (credentials withheld)')
+          endpoint='https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage38-browser-auth-once'
+          status=$(curl --silent --show-error --max-time 15 \
+            -o /tmp/stage38-browser-fixture-disabled.json \
+            -w '%{http_code}' --data '{"action":"create"}' \
+            -H 'Content-Type: application/json' "$endpoint")
+          test "$status" = 410
+          python3 - <<'PY'
+          import json
+          x=json.load(open('/tmp/stage38-browser-fixture-disabled.json',encoding='utf-8'))
+          assert x.get('status')=='DISABLED'
+          assert x.get('reason')=='STAGE38_BROWSER_AUTH_QA_COMPLETE'
+          print('PASS: temporary staging Auth fixture provider disabled (HTTP 410); no credential minting')
           PY
-          echo "STAGE38_AUTH_FIXTURE_FILE=$fixture" >> "$GITHUB_ENV"
-      - name: Run genuine local Chromium UI sign-in, TOTP MFA, dashboard and read-only release
-        env:
-          NODE_PATH: .stage38-browser-deps/node_modules
-        run: node tests/stage38-real-browser-auth-mfa.cjs
-      - name: Always delete test user and owner access using signed GitHub identity
-        if: always()
-        shell: bash
-        run: |
-          set -euo pipefail
-          # Trigger cleanup even if the browser failed; this request never
-          # needs or prints the disposable password or TOTP seed.
-          oidc=$(curl --fail --silent --show-error --max-time 20 \
-            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=beagu-stage38-browser-e2e" \
-            | python3 -c 'import json,sys;print(json.load(sys.stdin)["value"])')
-          status=$(curl --silent --show-error --max-time 45 \
-            -H "Authorization: Bearer $oidc" -H 'Content-Type: application/json' \
-            -o "$RUNNER_TEMP/stage38-browser-cleanup.json" -w '%{http_code}' \
-            --data '{"action":"cleanup"}' "$STAGE38_FIXTURE_URL")
-          unset oidc
-          python3 - "$RUNNER_TEMP/stage38-browser-cleanup.json" "$status" <<'PY'
-          import sys,json
-          obj=json.load(open(sys.argv[1],encoding='utf-8'))
-          assert sys.argv[2]=='200' and obj.get('ok') is True and obj.get('failures')==0, 'Fixture cleanup failed'
-          print('PASS: created test Auth account and role deleted; count=',obj.get('deleted',0))
-          PY
-          rm -f "$RUNNER_TEMP/stage38-browser-credentials.json" "$RUNNER_TEMP/stage38-browser-cleanup.json"
