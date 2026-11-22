@@ -33,6 +33,7 @@ assert "beagu-level-api" in names
 assert "beagu-admin-access" in names
 assert "beagu-telemetry-v2" not in names, "Snapshot must reflect real stage absence"
 assert "beagu-edited-api-v1" in names, "Staging restored API must be reflected"
+assert "arcade-leaderboard" in names and "beagu-school-culture-v1" in names
 report = module.check(calls, inventory, date(2026, 11, 23))
 assert list(report["missing"]) == ["beagu-telemetry-v2"]
 assert report["ready_for_real_e2e"] is False
@@ -71,7 +72,7 @@ print("PASS: wrong project, duplicate entries and stale evidence fail closed")
 actual = module.audit(today=date(2026, 11, 23))
 assert "beagu-telemetry-v2" in actual["missing_with_repo_source"]
 assert actual["missing_without_repo_source"] == []
-assert len(actual["missing"]) == 10
+assert len(actual["missing"]) == 8
 assert actual["ready_for_real_e2e"] is False
 assert actual["production_deployment_permitted"] is False
-print("PASS: recovered edited API deployed on staging; 10 missing stage endpoints remain")
+print("PASS: edited/culture/arcade APIs restored on staging; 8 missing endpoints remain")
