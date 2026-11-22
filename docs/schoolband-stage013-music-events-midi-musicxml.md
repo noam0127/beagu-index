@@ -56,4 +56,14 @@ CI `.github/workflows/schoolband-stage013.yml`에서 MIDI/MusicXML 순수+CLI �
 
 ## 4. 최종 결과
 
-**PENDING** — GitHub Actions 최종 성공, 실제 파일 생성과 JSON·음표·권리 검증 근거 확보 후에만 013단계를 종료 처리한다.
+**PASS — 013/030의 구조화 이벤트 파일, 내부 창작곡 MIDI/MusicXML 파싱·변환, 시간·음높이, 권리 게이트 검증 완료.**
+
+- **CI:** [GitHub Actions 45007172102](https://github.com/noam0127/beagu-index/actions/runs/45007172102), 상태 **completed/success**, 실제 검증 코드 커밋 **`2dcbb132f5159ea4400f467cb200866130b7d371`**. 013단계 순수 변환/CLI → PC·320px 실브라우저 Web Audio 예약 → 012·010·005단계 순수 회귀 전부 PASS.
+- **원본·음악 이벤트:** `getMelody()`와 구조화 JSON의 멜로디 28개 모든 `step/pitch/duration` 일치. **156개 이벤트**(멜로디 28, 드럼 64, 베이스 32, 기타 16, 키보드 16)의 각 `startTick/durationTicks/startSeconds/durationSeconds` **312개 숫자 비교 PASS**. 8마디 진행 C–C–G–G–Am–Am–F–C, PPQ 480, 108 BPM, 전체 재생 17.77777778초.
+- **MIDI/MusicXML 표준 포맷 실검사:** 내부 창작 연습곡 28음으로 MIDI binary `original-demo-28notes.mid`(293바이트)와 MusicXML `original-demo-28notes.musicxml`(3,698바이트) 생성. **각 변환기 28음×음높이·스텝·길이·ticks·velocity = 336개** 비교 PASS. MIDI의 µs/beat 정수화(555,556µs)로 인한 변환 시각 오차의 최대값 **0.00001333초 = 0.01333ms**, 허용 한계 0.02ms 이내. MusicXML 108 BPM도 원본과 일치.
+- **실제 CLI 전환:** `--format midi`와 `--format musicxml`을 별도 Node 프로세스로 각각 실행해 `converted-midi.json`(6,990바이트), `converted-musicxml.json`(7,031바이트) **2개 변환 파일** 생성·재읽기 PASS. 권리 JSON을 지정하지 않거나 변환 범위 밖인 파일은 CLI에서 거부.
+- **오염·무권리 입력 21종 차단:** 승인 거절·만료·증빙 없음·잘못된 원본 ID·공개 권한 오용, MIDI 헤더/SMTPE/Type2/4분의3 박자/NoteOff/Truncate/용량 초과, MusicXML 외부 ENTITY·잘못된 음이름·박자·불완전 마디·Chord·복수 성부·Tempo 변경·미완성 악보 모두 거부 PASS. 실제 권리자 서명을 검증하거나 허가받은 학교 교가를 등록했다고 주장하지 않음.
+- **실제 Chromium 타이밍:** PC 1280px·모바일 320px 각각 게임의 전체 28음 MIDI 피치·시작 시각을 표준 이벤트 데이터와 대조하고, 실제 Web Audio로 자동 반주에 기록된 첫 **8개 멜로디 예약 시각**을 기준 곡 시계와 비교 PASS. 재생 중단 시 오디오 컨텍스트 해제, JS 예외 0건. 이는 실기 모바일 스피커 청감은 아님.
+- **결과 아티팩트:** [GitHub Actions 아티팩트 `schoolband-stage013-music-interchange-proof`](https://github.com/noam0127/beagu-index/actions/runs/45007172102/artifacts/14748485389)를 직접 내려받아 ZIP 6개 파일(`results.json`, `original-demo-28notes.mid`, `original-demo-28notes.musicxml`, `original-demo-rights.json`, `converted-midi.json`, `converted-musicxml.json`)과 JSON `unit.passed=true`, 두 브라우저 `passed=true`, `failure` 부재를 대조했다.
+- **7개 역할별 결과:** 리듬·오디오에서 tick/tempo 보존, 연출·접근성에서 기존 게임 화면 손상 방지, 학교정보 보안에서 외부 엔터티·용량·권리범위 거절, 저작권에서 실제 교가 무단 수집/편곡 배제, QA에서 실제 파일 변환/CLI/브라우저 재생 회귀가 성공. 외부 인간 전문가·학교 교가 권리자의 실제 승인 또는 사람 청음 검증은 없다.
+- **단계별 한계 구분:** 013단계의 **허용된 예제**는 직접 창작한 시범곡이다. 제3자 학교 교가에 대한 `approved` 권리 게이트 코드는 형식상 구현했지만, 실제 권리 증빙의 진위 확인과 실학교 제출/공개 워크플로는 022~023단계 미완료·**BLOCKED(실자료 부재)**. 복수 박자/템포 변환 지원은 014단계, 자동 차트는 015단계 검증 예정. 운영 main/웹/Supabase는 변경하지 않았다.
