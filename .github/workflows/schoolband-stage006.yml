@@ -1,0 +1,44 @@
+name: Schoolband 006 lane isolation and latency calibration proof
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage006.cjs'
+      - '.github/workflows/schoolband-stage006.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage006:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pure per-lane and offset checks with sign mutation
+        run: node scripts/test-schoolband-stage006.cjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Real AudioContext and UI offset browser checks
+        run: node scripts/test-schoolband-stage006.cjs --browser
+      - name: Preserve five-tier timing boundaries
+        run: node scripts/test-schoolband-stage005.cjs
+      - name: Retest full 20 combinations and school metadata isolation
+        run: node scripts/test-schoolband-stage002.cjs
+      - name: Retest existing combo and reduced-motion behavior
+        run: node scripts/test-schoolband-stage004.cjs
+      - name: Upload stage006 evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: schoolband-stage006-offset-evidence
+          path: artifacts/schoolband-stage006/
+          if-no-files-found: error
