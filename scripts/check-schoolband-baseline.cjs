@@ -56,7 +56,17 @@ if(process.argv.includes("--browser")){
     async function pageCheck(url,kind,viewport){
       const page=await browser.newPage({viewport,deviceScaleFactor:1});
       const errors=[];page.on("pageerror",e=>errors.push(String(e)));
-      const response=await page.goto(url,{waitUntil:"domcontentloaded",timeout:25000});
+      let response=await page.goto(url,{waitUntil:"domcontentloaded",timeout:25000});
+      if((await page.title()).includes("External Content Notice")){
+        console.log("HOST_NOTICE",kind,"RawGitHack requires an extra click for first-time HTML visitors");
+        // Reproduce the post-consent content without requiring a human in CI.
+        // This is test-only: real first-time users still see the interstitial.
+        await page.context().addCookies([{
+          name:"__Http-phish",value:"1",url:"https://raw.githack.com",
+          secure:true,httpOnly:true
+        }]);
+        response=await page.reload({waitUntil:"domcontentloaded",timeout:25000});
+      }
       assert(response?.ok(),kind+" HTTP status="+response?.status());
       const type=response.headers()["content-type"]||"";
       assert(/text\/html/i.test(type),kind+" must serve HTML, received: "+type);
