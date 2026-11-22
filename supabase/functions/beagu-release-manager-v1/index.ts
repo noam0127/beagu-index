@@ -2,6 +2,7 @@
 // GitHub Actions worker operations require a signed GitHub OIDC token restricted to this repo/workflow.
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.58.0";
 import {createRemoteJWKSet,jwtVerify} from "https://esm.sh/jose@5.10.0";
+import {verifyProductionReadiness} from "./release-ci-proof.mjs";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"",{
   auth:{persistSession:false,autoRefreshToken:false}
@@ -101,6 +102,27 @@ async function enqueue(job:{action:string;target:string;to_sha:string|null;from_
   throw Error("queue_unavailable");}
  return {id:data.id};
 }
+// Release promotion MUST have real, SHA-bound, post-staging GitHub Actions
+// attestation from three separate workflows. Admin input is never evidence.
+// This gate is ALSO checked by the signed worker before it claims a job.
+async function productionProof(sha:string,version:string){
+ if(!SHA.test(sha)||!version)return {ok:false,code:"ci_candidate_invalid"};
+ const {data:stage,error:stageError}=await db.from("beagu_site_release_history_v1")
+  .select("deployed_at,to_sha,version,action").eq("target","staging")
+  .eq("action","stage_apply").eq("to_sha",sha)
+  .order("deployed_at",{ascending:false}).limit(1).maybeSingle();
+ if(stageError||!stage||stage.version!==version)
+  return {ok:false,code:"ci_stage_evidence_missing"};
+ let head;
+ try{head=await github("/commits/main");}
+ catch{return {ok:false,code:"ci_github_unavailable"};}
+ if(!SHA.test(String(head?.sha||""))||head.sha!==sha)
+  return {ok:false,code:"ci_candidate_not_main_head"};
+ return verifyProductionReadiness({
+  githubGet:github,sha,stagingDeployedAt:stage.deployed_at
+ });
+}
+
 async function adminAction(input:Record<string,unknown>,userId:string,origin:string):Promise<Response>{
  const action=String(input.action||"");
  const s=await state();
@@ -171,6 +193,9 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   if(!s.staging_sha||!SHA.test(s.staging_sha))return error("staging_required",409,origin);
   if(s.staging_sha===s.production_sha)return error("already_on_production",409,origin);
   if(input.confirmed_tested!==true)return error("test_confirmation_required",400,origin);
+  // The checkbox is only owner intent; it does NOT prove a passing test run.
+  const verified=await productionProof(s.staging_sha,s.staging_version||"");
+  if(!verified.ok)return error(verified.code||"release_ci_evidence_required",409,origin);
   job={action,target:"production",from_sha:s.production_sha,to_sha:s.staging_sha,
    version:s.staging_version||"시험 승인 버전",summary:"관리자 시험 웹 확인 후 운영 적용",created_by:userId};
  }else if(action==="prod_rollback"){
@@ -223,6 +248,25 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
    }).select("*").single();
    if(e)throw Error("auto_data_refresh_unavailable");
    job=data;
+  }
+  if(!job&&!s.production_sha){
+   // Never initialize a public deployment from worker-supplied head_sha.
+   // Bootstrap needs its own owner-reviewed, signed acceptance path.
+   return respond({has_job:false,release_blocked:"release_bootstrap_ci_required"},200,origin);
+  }
+  if(!job&&s.production_sha&&s.public_data_blob_sha!==publicDataBlob){
+   // An automatic public data refresh is a public-data release, not a safe
+   // workaround for the human privacy and CI acceptance gates.
+   return respond({has_job:false,release_blocked:"release_data_refresh_ci_required"},200,origin);
+  }
+  if(job?.target==="production"){
+   if(job.action!=="prod_rollback"){
+    if(job.action!=="prod_apply")
+     return respond({has_job:false,release_blocked:"release_action_ci_required"},200,origin);
+    const verified=await productionProof(String(job.to_sha||""),String(job.version||""));
+    if(!verified.ok)
+     return respond({has_job:false,release_blocked:verified.code},200,origin);
+   }
   }
   if(!job)return respond({has_job:false},200,origin);
   if(job.status!=="queued")return respond({has_job:false,already_running:true},200,origin);
