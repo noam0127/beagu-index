@@ -4,6 +4,7 @@
 A signed GitHub Actions OIDC identity authorizes claims/acks to the
 MFA-protected Supabase release queue. Every artifact uses immutable SHAs.
 """
+import hashlib
 import json
 import os
 import pathlib
@@ -268,6 +269,34 @@ def minimize_independent_preview(target):
             file.write_text(new, encoding="utf-8")
 
 
+def write_independent_release_manifest(target, staging_sha):
+    """Deterministic public provenance for HTTP smoke checks after deployment.
+
+    Include immutable content hashes, not user identity, auth data, or a
+    declaration that live deployment or administrator approval happened.
+    """
+    required = ("index.html", "js/supabase-config.js")
+    sha256 = {}
+    for relative in required:
+        item = target / relative
+        if not item.is_file():
+            raise RuntimeError("Required test distribution asset missing: " + relative)
+        sha256[relative] = hashlib.sha256(item.read_bytes()).hexdigest()
+    manifest = {
+        "schema": "beagu-independent-preview-package-v1",
+        "rc_version": "v1.1.0-rc.1",
+        "source_sha": staging_sha,
+        "supabase_project_ref": "ycwuugggqbunlbwuzvbx",
+        "environment": "isolated-test-package",
+        "deployment_status": "unverified",
+        "files_sha256": sha256
+    }
+    (target / "stage38-release-manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":")) + "\n",
+        encoding="utf-8"
+    )
+
+
 def package_independent_preview():
     """Package ONLY the signed job's approved staging SHA for a separate host.
 
@@ -293,6 +322,7 @@ def package_independent_preview():
     (INDEPENDENT_OUTPUT / ".nojekyll").touch()
     if (INDEPENDENT_OUTPUT / "CNAME").exists():
         raise RuntimeError("Production custom domain leaked into standalone preview")
+    write_independent_release_manifest(INDEPENDENT_OUTPUT, staging)
     print("Standalone preview artifact ready (NOT deployed):", INDEPENDENT_OUTPUT,
           staging[:8])
 
