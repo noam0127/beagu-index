@@ -12,7 +12,7 @@ const DATA={stage:"011/030",unit:{},offline:{full:[],stems:[]},live:[],limits:[
 const save=()=>fs.writeFileSync(path.join(OUT,"results.json"),JSON.stringify(DATA,null,2)+"\n");
 function source(){
  const js=HTML.match(/<script>([\s\S]*?)<\/script>/i)?.[1];assert(js,"game JS");new vm.Script(js);
- const a=HTML.indexOf("function oscillator("),b=HTML.indexOf("function makeChart(){");
+ const a=HTML.indexOf("function trackAudioSource("),b=HTML.indexOf("function makeChart(){");
  const inst=HTML.match(/const INST=(\{[\s\S]*?\});\s*\/\/ \[한 마디/);
  const mix=HTML.match(/const MIX_LEVELS=Object.freeze\((\{[^)]*\})\)/);
  assert(a>0&&b>a&&inst&&mix,"source markers for real synthesizer");
@@ -22,7 +22,7 @@ function unit(){
  const src=source();
  const model=vm.runInNewContext(
   "const BEAT=60/108,SONG_BEATS=32,INST="+src.inst+",MIX_LEVELS="+src.mix+";"+
-  "let ctx=null,masterBus=null,melodyBus=null,ensembleBus=null,hitBus=null,noiseBuffer=null,muted=false,instrument='guitar';\n"+
+  "let ctx=null,masterBus=null,melodyBus=null,ensembleBus=null,hitBus=null,noiseBuffer=null,muted=false,instrument='guitar';const liveAudioVoices=new Set();const audioLife={created:0,ended:0,cancelled:0,disconnected:0,peakVoices:0};let contextClosePromise=Promise.resolve();\n"+
   src.sound+"\n({harmonyAtBar,chordThirdRatio,rootAt,checkMelodyHarmony,MIX_LEVELS,CHORD_ROOTS,autoPartsAtStep})",
   {},{timeout:1000});
  const expected=["C","C","G","G","Am","Am","F","C"],pcs=[0,0,7,7,9,9,5,0],bars=[];
@@ -66,7 +66,7 @@ function offlineHarness(src){
  return [
  "(function(){",
  "const BEAT=60/108,SONG_BEATS=32,INST="+src.inst+",MIX_LEVELS="+src.mix+";",
- "let ctx=null,masterBus=null,melodyBus=null,ensembleBus=null,hitBus=null,noiseBuffer=null,muted=false,instrument='guitar';",
+ "let ctx=null,masterBus=null,melodyBus=null,ensembleBus=null,hitBus=null,noiseBuffer=null,muted=false,instrument='guitar';const liveAudioVoices=new Set();const audioLife={created:0,ended:0,cancelled:0,disconnected:0,peakVoices:0};let contextClosePromise=Promise.resolve();",
  src.sound,
  "async function render(bar,selected,mode){",
  " if(bar<0||bar>=8||!INST[selected])throw new Error('invalid bar or instrument');",
