@@ -889,7 +889,26 @@ function updateControlsHint(){
  const lanes=INST[instrument].lanes;
  safeText("keyHint",lanes.map(x=>x[1]+" "+x[0]).join("  ·  "));
 }
+const activePadPointers=new Map();
+let screenResizeCount=0,lastScreenOrientation="portrait";
+const READABILITY_KEY="nangam-band-readability-v1";
+function clearActiveTouches(){activePadPointers.clear()}
+function padPointerDown(e,lane){
+ // Synthetic test PointerEvents have pointerId=0 and are not trusted.
+ // Real fingers get independent pointer IDs until pointerup/cancel.
+ if(e.isTrusted&&e.pointerId>0){
+  if(activePadPointers.has(e.pointerId))return;
+  activePadPointers.set(e.pointerId,lane);
+  try{e.currentTarget.setPointerCapture?.(e.pointerId)}catch(_){}
+ }
+ e.preventDefault();
+ hit(lane);flash(lane);
+}
+function padPointerEnd(e){
+ activePadPointers.delete(e.pointerId);
+}
 function renderPads(){
+ clearActiveTouches();
  const pad=$("pads");pad.replaceChildren();pad.style.setProperty("--lane-count",INST[instrument].lanes.length);pad.dataset.instrument=instrument;
  canvas.setAttribute("aria-label",INST[instrument].name+" · "+INST[instrument].lanes.length+"레인 리듬게임. "+INST[instrument].lanes.map(x=>x[0]+" "+x[1]).join(", "));
  const fx=$("laneFx");fx.replaceChildren();fx.style.setProperty("--fx-lanes",INST[instrument].lanes.length);
@@ -903,7 +922,10 @@ function renderPads(){
   const name=document.createElement("strong");name.textContent=lane[0];
   const key=document.createElement("small");key.textContent=lane[1];
   b.append(name,key);
-  b.addEventListener("pointerdown",e=>{e.preventDefault();hit(i);flash(i)});
+  b.addEventListener("pointerdown",e=>padPointerDown(e,i));
+  b.addEventListener("pointerup",padPointerEnd);
+  b.addEventListener("pointercancel",padPointerEnd);
+  b.addEventListener("lostpointercapture",padPointerEnd);
   // Keyboard activation of a focused pad produces click(detail=0).
   // Pointer clicks (detail>0) are already handled by pointerdown.
   b.addEventListener("click",e=>{if(e.detail===0){hit(i);flash(i)}});
@@ -1438,7 +1460,7 @@ async function start(){
 }
 function finish(interrupted){
  if(!playing)return;
- playing=false;paused=false;pauseReason=null;pauseBusy=false;pausePromise=null;lastFrameWall=null;lastFrameSong=null;clearInterval(timer);cancelAnimationFrame(raf);particles=[];lanePulse.fill(0);clearFxFeedback();
+ playing=false;paused=false;pauseReason=null;pauseBusy=false;pausePromise=null;lastFrameWall=null;lastFrameSong=null;clearInterval(timer);cancelAnimationFrame(raf);clearActiveTouches();particles=[];lanePulse.fill(0);clearFxFeedback();
  void releaseAudioEngine("finish");syncStepNav();syncPauseControl();
  $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
  $("offsetRange").disabled=false;$("offsetReset").disabled=false;
@@ -1557,7 +1579,12 @@ window.addEventListener("pageshow",e=>{
   status("복귀했습니다. ▶ 이어하기를 눌러 연주를 재개하세요.");
  }
 });
-window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,pitch:n.pitch??null,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),loadGeneratedTrial,
+window.nangamSchoolbandV08={getMobileUiState:()=>({activePointers:activePadPointers.size,orientation:lastScreenOrientation,resizeCount:screenResizeCount,
+ largeText:document.documentElement.dataset.largeText==="true",highContrast:document.documentElement.dataset.highContrast==="true",
+ fullscreen:!!document.fullscreenElement,fullscreenAvailable:!!$("stepPlay").requestFullscreen,
+ padRects:[...$("pads").querySelectorAll(".taphit")].map(b=>({lane:Number(b.dataset.lane),x:b.getBoundingClientRect().left,
+ y:b.getBoundingClientRect().top,w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height}))}),
+getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,pitch:n.pitch??null,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),loadGeneratedTrial,
  clearGeneratedTrial,getUxStep:()=>currentUxStep,goToUxStep:goToStep,getUxAvailability:stepAvailability,getGeneratedTrial:()=>generatedTrial?({songId:generatedTrial.catalog.songId,
   chartVersion:generatedTrial.catalog.chartVersion,mode:"internal-private-qa",
   notes:generatedTrial.notes.length,autoplayEvents:generatedTrial.autoEvents.length}):null,getMixLevels:()=>({...MIX_LEVELS}),getAudioLifetime:()=>({...audioLife,activeVoices:liveAudioVoices.size,muted,volumePercent,masterGain:desiredMasterGain(),pendingStart:startPending,hasContext:!!ctx}),getHarmonyByBar:()=>CHORD_ROOTS.map((_,bar)=>harmonyAtBar(bar)),getMelodyHarmonyAudit:()=>checkMelodyHarmony(),getPlaybackState:()=>({playing,paused,pauseReason,transitioning:pauseBusy,audioState:ctx?.state||"none",songTime:ctx?nowSong():null,schedulerStep:step,remainingNotes:chart.filter(n=>!n.done).length}),getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
@@ -1566,7 +1593,58 @@ $("offsetReset").addEventListener("click",()=>{if(playing)return;inputOffsetMs=0
 $("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
 $("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
 if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
-renderPads();syncFxSettings();syncOffsetUI();syncVolume();syncPauseControl();syncStepNav();hud();
+function updateOrientation(){
+ const orientation=innerWidth>innerHeight?"landscape":"portrait";
+ lastScreenOrientation=orientation;
+ document.body.dataset.orientation=orientation;
+ screenResizeCount++;
+ if(playing||school)draw();
+}
+let resizeFrame=0;
+function scheduleResponsiveDraw(){
+ if(resizeFrame)return;
+ resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;updateOrientation()});
+}
+window.addEventListener("resize",scheduleResponsiveDraw,{passive:true});
+window.addEventListener("orientationchange",scheduleResponsiveDraw,{passive:true});
+function syncReadability(){
+ const large=$("largeText").checked,contrast=$("highContrast").checked;
+ document.documentElement.dataset.largeText=String(large);
+ document.documentElement.dataset.highContrast=String(contrast);
+ try{localStorage.setItem(READABILITY_KEY,JSON.stringify({large,contrast}))}catch(_){}
+}
+try{
+ const saved=JSON.parse(localStorage.getItem(READABILITY_KEY)||"null");
+ if(saved&&typeof saved==="object"){
+  $("largeText").checked=saved.large===true;
+  $("highContrast").checked=saved.contrast===true;
+ }
+}catch(_){}
+$("largeText").addEventListener("change",syncReadability);
+$("highContrast").addEventListener("change",syncReadability);
+syncReadability();
+function syncFullscreen(){
+ const on=document.fullscreenElement===$("stepPlay");
+ $("fullscreenBtn").setAttribute("aria-pressed",String(on));
+ $("fullscreenBtn").textContent=on?"↙ 전체화면 나가기":"⛶ 전체화면";
+}
+$("fullscreenBtn").addEventListener("click",async()=>{
+ try{
+  if(document.fullscreenElement){await document.exitFullscreen()}
+  else if(typeof $("stepPlay").requestFullscreen==="function"){
+   await $("stepPlay").requestFullscreen();
+  }else throw Error("unsupported");
+  safeText("screenModeStatus",document.fullscreenElement?"전체화면으로 전환했습니다.":"일반 화면으로 돌아왔습니다.");
+ }catch(_){
+  safeText("screenModeStatus","이 브라우저에서는 전체화면 전환이 지원되지 않거나 차단되었습니다.");
+ }
+ syncFullscreen();scheduleResponsiveDraw();
+});
+document.addEventListener("fullscreenchange",()=>{syncFullscreen();scheduleResponsiveDraw()});
+document.addEventListener("fullscreenerror",()=>{
+ safeText("screenModeStatus","전체화면 전환에 실패했습니다. 일반 화면에서 연주할 수 있습니다.");syncFullscreen();
+});
+renderPads();syncFxSettings();syncOffsetUI();syncVolume();syncPauseControl();syncStepNav();updateOrientation();hud();
 })();
 </script>
 </body>
