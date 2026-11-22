@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/release-manager/worker.py'
       - 'tests/stage38-real-rc-packaging.py'
+      - 'scripts/release-manager/build-offline-rc-bundle.py'
       - '.github/workflows/stage38-real-rc-package-audit.yml'
   pull_request:
     paths:
@@ -32,5 +33,14 @@ jobs:
           test "$(git rev-parse refs/remotes/origin/release/v1.1.0-rc.1)" = "5c95aadad971901a8222f83c52e93bf901a3aeb7"
       - name: Package real RC with staging backend and audit (offline)
         run: python3 tests/stage38-real-rc-packaging.py
+      - name: Assemble isolated public review artifact from pinned RC (no deploy)
+        run: python3 scripts/release-manager/build-offline-rc-bundle.py
+      - name: Upload short-lived review artifact (not a site release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: beagu-v1.1.0-rc.1-independent-preview-review
+          path: _preview_standalone_site/
+          if-no-files-found: error
+          retention-days: 7
       - name: No publication or release controller action
         run: echo "This test used an isolated synthetic plan in a temp directory and did not deploy."
