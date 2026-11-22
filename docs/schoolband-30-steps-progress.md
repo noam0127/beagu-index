@@ -248,5 +248,20 @@
 - **7개 독립 AI 전문 역할 관점/위험 및 데이터·저작권 확인:** `docs/schoolband-stage015-chart-registration-gate.md`. 두 자체 창작곡 중 가변 BPM/복합박자 노트는 전수 생성·데이터 타이밍 QA까지만 수행했고, 이를 기존 고정 108 BPM 실시간 게임에 잘못 탑재하지 않도록 제한했다. 실제 모바일 실기 청음·Human 유저 난이도 검증은 027단계, 실제 교가 공개 권한은 022~023단계.
 - 다음 단계 **016/030 — 핵심 3화면과 악기별 레인 즉시 전환**.
 
-## 016/030 — pending
-‘학교 선택 → 악기 선택 → 연주’만 전면에 남기고 장황한 설명과 개발자용 정보는 접는다. 학교 검색, 악기 선택 후 4/4/3/5레인 즉시 전환, PC 및 320px 모바일 UI 화면 캡처·스모크 검증을 진행한다.
+## 016/030 — 핵심 3화면과 악기별 레인 즉시 전환 (2026-11-22)
+
+상태: **COMPLETE — 학교 선택→악기 선택→연주로 이동하는 접근성 있는 3개 화면 패널 구현, PC 1280·모바일 320/375px 9개 PNG/3개 브라우저 스모크 PASS, 4악기 12회 전환/게임 시작·중단/가로 넘침 0건, 이전 015/008/005/007 전체 회귀 PASS.**
+
+- 사용자가 첨부한 원본 `nangam-schoolband_30-step_master_prompt_v1.md` **016/030(원본 061~063)**을 다시 읽고 실제 소스에 반영. 시작 `schoolband-playtest` 브랜치 HEAD `64b722535874250680b887bfdadb068534e803a0`. 운영 `main`·`baeguindex.com`·Supabase 운영 리소스 무변경.
+- 게임 HTML `games/nangam-schoolband-v08/index.html`에 상단 `1 학교 / 2 악기 / 3 연주` sticky 3단계 내비게이션, `aria-current=step`·단계 음성 안내·`goToStep`·`syncStepNav` 도입. 학교 ID가 정식 선택되기 전에는 2/3단계 진입을 제한한다. 학교 선택 시 악기 화면으로, 악기 클릭 시 연주 화면으로 자동 스크롤·포커스 이동. 연주 중 학교/악기 변경 잠금, 중단 후 재진입 지원.
+- 학교 검색 `inputmode=search`, `enterkeyhint=search`, 접근성 `aria-label/aria-controls`, 모바일 50px 입력 높이·44px 검색 결과 최소 높이. 창작 연습곡이라는 명칭을 학교 실제 교가와 구분. 각 악기 선택시 `renderPads`에서 기타/드럼/베이스/키보드 `4/4/3/5`레인 이름·키·터치 패드 즉시 갱신. 최종 실제 320px 캡처를 확인해 연주 버튼이 줄바꿈되던 문제를 `▶ 연주 시작`으로 축약 후 재검증.
+- **GitHub Actions [run 45021205382](https://github.com/noam0127/beagu-index/actions/runs/45021205382) 전체 SUCCESS**. 실제 테스트 게임 커밋 `d4fc720a8dbc4d3fa177916d370a9c60d6132363`. 3개 Chromium 뷰포트에서 3단계 화면 + 학교 검색(동명이교 2개 mock, 동일 이름에 다른 `school_id`), 승인 난이도 HARD·미산정 NORMAL, 악기 4회씩 즉시 레인 전환(총 12회), 실제 AudioContext 시작·중단 PASS. 수평 오버플로·JS 오류 0건.
+- **이전 전체 회귀:** 015단계 20악기×난이도 조합의 PC+모바일 **40회 실제 게임 완주** PASS. 008단계 원본 차트도 PC+모바일 **40회 자동 연주**, 물리키 코드 기반 키 입력 160번+PointerEvent 터치 160번+Enter 40번 PASS. 005단계 PERFECT/GOOD/MISS 판정 98경계·좌표121·FPS28과 007단계 60/90/120Hz 판정·일시정지 회귀 PASS.
+- **증거 [결과 JSON과 9개 PC/모바일 화면 캡처](https://github.com/noam0127/beagu-index/actions/runs/45021205382/artifacts/14753418157)** ZIP 10개 파일(254,258바이트) 실제 다운로드·확인: 각 `desktop1280/mobile320/mobile375`의 `step1-school`, `step2-instrument`, `step3-play-keys` PNG 9개, `results.json`. 세 뷰포트 모두 `hitDone:true`, `instrumentSwaps.length:4`, `errors.length:0`, `failure` 없음.
+- **7개 전문가 역할별 문제·수정·실제 검증·남은 위험**을 `docs/schoolband-stage016-three-screen-ux.md`에 기록(역할 기반 AI 검토로 실제 외부 인간 전문가는 미참여). 페이지는 URL 3개가 아닌 **한 페이지의 순차 3개 섹션**이다. 기존 판정/음악 기능을 안전하게 유지하도록 전체 섹션을 DOM에 남겨 키보드로 왕복할 수 있다.
+- 첫 CI는 `aria-disabled`인 연주 탭의 비활성 검사를 실제 Playwright 클릭으로 시도해 30초 대기 실패. 기능상 올바른 접근성 잠금이었고 검사 방식을 잠금값+API 거절 확인으로 수정. 그 뒤 성공; 최종 버튼 문구 수정 후 **전체 회귀 재실행 성공**. 오류를 숨기지 않고 QA 보고서에 남겼다.
+- **한계:** Android/iOS 물리 기기, 실제 스크린리더 음성/화면 회전·동시터치는 검증하지 않았다(017/027 대상). 실제 공개 학교명·연도별 난이도 API는 모의 fixture로만 UI 경로 확인(019 단계), 제3자 학교 교가 권리 확인 없이 사용·배포하지 않음(021~023 대상).
+- 다음 단계 **017/030 — 다중터치·화면 회전·게임 도중 조작 안정성**.
+
+## 017/030 — pending
+3~5레인 간격·동시터치 위치, Android 다중 손가락 입력/가로·세로 회전, 전체화면·중단·재시작 안정성을 개선하고, 큰 글자·고대비·키보드/스크린리더 접근성을 자동 테스트와 가능할 경우 물리 장치로 검증.
