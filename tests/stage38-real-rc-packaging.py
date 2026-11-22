@@ -136,30 +136,23 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
         if link_count:
             production_link_files[str(file.relative_to(out))] = link_count
     assert html_count >= 1 and static_count >= html_count
-    # Three remaining references are deliberate only: one visibly labelled
-    # "actual web" admin link, plus two SEO canonical URLs in noindex pages.
-    # Unexpected new production-domain navigation fails the RC audit.
-    expected_production_links = {
-        "admin-updates.html": 1,
-        "js/challenge.html": 1,
-        "result.html": 1,
-    }
-    assert production_link_files == expected_production_links, (
-        "Unreviewed production-domain links in standalone RC: " +
-        repr(production_link_files)
+    # The independent QA distribution has no permitted production navigation:
+    # even an explicit "actual web" link is disabled in this staging artifact.
+    assert links_to_production == 0, "Production website references remain"
+    assert production_link_files == {}, (
+        "Production-domain link in standalone RC: " + repr(production_link_files)
     )
-    assert 'href="https://baeguindex.com/"' in (
+    assert '운영 웹 열기 비활성화' in (
         out / "admin-updates.html"
     ).read_text(encoding="utf-8")
-    assert '<link rel="canonical" href="https://baeguindex.com/challenge.html">' in (
+    assert '<link rel="canonical" href="https://baeguindex.com/challenge.html">' not in (
         out / "js/challenge.html"
     ).read_text(encoding="utf-8")
-    assert '<link rel="canonical" href="https://baeguindex.com/school-report.html">' in (
+    assert '<link rel="canonical" href="https://baeguindex.com/school-report.html">' not in (
         out / "result.html"
     ).read_text(encoding="utf-8")
 
-    # Report rather than conceal navigation out of the staging host.
-    # Nonzero links are a separate security review gate, not clearance.
+    # Check the immutable source is preserved; sanitization happens in QA output.
     print("PASS: real immutable RC standalone bundle packaged entirely offline")
     print("Source pinned RC:", RC_SHA)
     print("TRUSTED_STAGE38_MANIFEST_SHA256:", manifest_sha256)
@@ -169,5 +162,5 @@ with tempfile.TemporaryDirectory(prefix="stage38-real-rc-audit-") as folder:
     for rel, count in sorted(production_link_files.items()):
         # Paths and counts only: never print URL query tokens or page source.
         print("PRODUCTION_LINK_REFERENCE:", rel, "count:", count)
-    print("NOTE: production-domain links require manual triage before live account QA.")
+    print("PASS: independent QA artifact has zero production-site URL references.")
     print("NOTE: this synthetic plan is NOT a deploy approval and no website was published.")
