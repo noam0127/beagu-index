@@ -380,8 +380,16 @@ Deno.serve(async(req:Request)=>{
    const table=type==="post"?"beagu_postit_posts":"beagu_postit_comments";
    if(action==="remove"){
     if(t.author_uid!==user.id)return fail(req,"NOT_OWNER",403);
-    const {error}=await db.from(table).update({status:"removed"}).eq("id",id).eq("author_uid",user.id);
-    if(error)throw error;return respond(req,{removed:true});
+    // Preflight ownership alone is not sufficient: another request may have
+    // already removed/hidden the record between target() and UPDATE.
+    // PostgREST UPDATE returns no rows by default, so require the actual
+    // affected row before claiming a successful deletion.
+    const {data:removed,error}=await db.from(table).update({status:"removed"})
+      .eq("id",id).eq("author_uid",user.id).eq("status","published")
+      .select("id").maybeSingle();
+    if(error)throw error;
+    if(!removed)return fail(req,"TARGET_UNAVAILABLE",404);
+    return respond(req,{removed:true});
    }
    if(action==="report"&&t.author_uid===user.id)return fail(req,"CANNOT_REPORT_OWN");
    if(action==="set_like"&&typeof body?.liked!=="boolean")
