@@ -1,5 +1,10 @@
 name: v1.1.0 stage35 security boundaries (read-only)
 on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-security-static.mjs'
+      - '.github/workflows/v1.1.0-stage35-security.yml'
   pull_request:
     paths:
       - 'tests/v1.1.0-stage35-security-static.mjs'
