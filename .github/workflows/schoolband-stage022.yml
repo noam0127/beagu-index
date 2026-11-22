@@ -1,0 +1,39 @@
+name: Schoolband 022 offline trusted-song intake and revoked rights gate
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'scripts/schoolband-rights-policy-v1.cjs'
+      - 'scripts/schoolband-stage022-intake.cjs'
+      - 'scripts/schoolband-rock-arranger-v1.cjs'
+      - 'scripts/schoolband-music-events-v1.cjs'
+      - 'scripts/test-schoolband-stage022.cjs'
+      - 'games/nangam-schoolband-v08/charts/song-intake-rights.v1.json'
+      - '.github/workflows/schoolband-stage022.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  trusted-intake:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify trusted original registry and independent rights gate
+        run: node scripts/test-schoolband-stage022.cjs
+      - name: Verify two in-repo originals are valid private intake
+        run: |
+          node scripts/schoolband-stage022-intake.cjs --song original-shining-our-school
+          node scripts/schoolband-stage022-intake.cjs --song original-meter-shift-exercise-014
+      - name: Reject unregistered school anthem without generating any file
+        shell: bash
+        run: |
+          if node scripts/schoolband-stage022-intake.cjs --song arbitrary-school-anthem; then
+            echo "ERROR: unregistered school was admitted"
+            exit 1
+          fi
+      - name: Verify private chart conversion without playback, listening or sound tests
+        run: node scripts/schoolband-stage022-intake.cjs --song original-shining-our-school --generate-private
