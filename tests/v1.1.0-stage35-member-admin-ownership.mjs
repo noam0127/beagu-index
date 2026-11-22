@@ -22,8 +22,8 @@ contains(postit,/beagu_has_earned_challenge_visitor/,
   'Earned referral rights must be independently revalidated');
 contains(postit,/db\.auth\.getUser\(jwt\)/,
   'Post-it writer identity must be verified via Supabase Auth');
-contains(postit,/user\.is_anonymous\|\|!user\.email_confirmed_at/,
-  'Anonymous or unconfirmed emails cannot become writers');
+contains(postit,/if\(error\|\|!eligiblePostitAuthUser\(user\)\)return null/,
+  'Anonymous, unconfirmed, banned or deleted accounts cannot become writers');
 
 // A confirmed user must own the exact active challenge visitor identity.
 // An ID supplied in the request is NEVER sufficient for account ownership.
