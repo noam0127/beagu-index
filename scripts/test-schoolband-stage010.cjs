@@ -105,7 +105,14 @@ async function browserTests(){
      await page.waitForFunction(()=>window.nangamSchoolbandV08.getStatus().playing);
      const count=await page.evaluate(()=>window.nangamSchoolbandV08.getLaneCount());
      const actual=[];
-     for(let lane=0;lane<count;lane++){
+     // Different instruments lead with different lanes. Keys begins on harmony lane 1,
+     // so play notes in chronological order, not by lane index.
+     const laneTargets=await page.evaluate(()=>{
+      const a=window.nangamSchoolbandV08,c=a.getChart();
+      return a.getLanes().map((_,lane)=>({lane,t:c.find(n=>n.lane===lane)?.t}))
+       .sort((a,b)=>a.t-b.t||a.lane-b.lane);
+     });
+     for(const {lane} of laneTargets){
       const observation=await page.evaluate(async lane=>{
        const a=window.nangamSchoolbandV08,chart=a.getChart(),target=chart.find(n=>n.lane===lane);
        if(!target)throw Error("missing selected lane "+lane);
@@ -134,9 +141,9 @@ async function browserTests(){
       assert(observation.melody.length>=1,"original melody not playing under hit "+instrument);
       assert(observation.background.length>=1,"no background instrumental ensemble "+instrument);
       assert(observation.logSize<=384,"audio events must stay bounded");
-      actual.push({lane,timingErrorMs:Math.round((observation.playhead-observation.targetTime)*1000),
+      actual[lane]={lane,timingErrorMs:Math.round((observation.playhead-observation.targetTime)*1000),
        nodes:observation.nodes.map(x=>x.kind==="noise"?"noise":x.type),
-       event:observation.hitSound,autoEnsemble:[...new Set(observation.background)].sort()});
+       event:observation.hitSound,autoEnsemble:[...new Set(observation.background)].sort()};
       hitTotal++;
      }
      // Distinct four guitar/drum voices verified through node type, polyphony and strum offsets.
