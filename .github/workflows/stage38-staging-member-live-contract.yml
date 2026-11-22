@@ -82,7 +82,8 @@ jobs:
         run: |
           set -euo pipefail
           base="https://ycwuugggqbunlbwuzvbx.supabase.co/auth/v1"
-          status=$(curl --silent --show-error --max-time 15 --output health.json --write-out '%{http_code}' "$base/health")
+          publishable_key="sb_publishable_c8h7TaIYONfP56Zc05K0Sw_SxyT3lZU"
+          status=$(curl --silent --show-error --max-time 15 --output health.json --write-out '%{http_code}' -H "apikey: $publishable_key" "$base/health")
           echo "Auth health HTTP $status"
           test "$status" = 200
           python3 - <<'PY'
@@ -91,7 +92,7 @@ jobs:
           assert isinstance(data,dict)
           print('PASS: staging Auth health 200')
           PY
-          status=$(curl --silent --show-error --max-time 15 --output settings.json --write-out '%{http_code}' "$base/settings")
+          status=$(curl --silent --show-error --max-time 15 --output settings.json --write-out '%{http_code}' -H "apikey: $publishable_key" "$base/settings")
           echo "Auth settings HTTP $status"
           test "$status" = 200
           python3 - <<'PY'
