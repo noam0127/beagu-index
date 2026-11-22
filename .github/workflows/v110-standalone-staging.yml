@@ -21,6 +21,9 @@ on:
       - 'scripts/verify-render-preview.py'
       - 'tests/test-render-preview-readiness.py'
       - 'tests/postit-auth-redirect-stage.cjs'
+      - 'scripts/staging/auth-readiness.sql'
+      - 'scripts/staging/check-auth-readiness.cjs'
+      - 'tests/staging-auth-readiness.cjs'
       - 'tests/postit-member-auth.cjs'
       - 'render.yaml'
       - '.github/workflows/v110-standalone-staging.yml'
@@ -55,6 +58,8 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
+      - name: Staging Auth readiness prerequisites (offline contract only)
+        run: node tests/staging-auth-readiness.cjs
       - name: Post-it staging email confirmation and OAuth redirect regression
         run: |
           node tests/postit-member-auth.cjs
