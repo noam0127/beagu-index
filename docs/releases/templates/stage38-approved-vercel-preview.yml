@@ -88,41 +88,7 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$VERCEL_TOKEN" || { echo "Protected token not configured"; exit 1; }
-          printf '%s' "$CLI_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+
-      - name: Install reviewed CLI without passing secrets
-        env:
-          CLI_VERSION: ${{ vars.STAGE38_VERCEL_CLI_VERSION }}
-        run: npm install --global "vercel@$CLI_VERSION"
-      - name: Bind only to existing isolated test project
-        run: |
-          set -euo pipefail
-          mkdir -p _preview_standalone_site/.vercel
-          printf '{"orgId":"%s","projectId":"%s"}\n' "$VERCEL_ORG_ID" "$VERCEL_PROJECT_ID" > _preview_standalone_site/.vercel/project.json
-      - name: Create unaliased preview, never production
-        id: deploy
-        env:
-          VERCEL_TOKEN: ${{ secrets.STAGE38_VERCEL_TOKEN }}
-        run: |
-          set -euo pipefail
-          cd _preview_standalone_site
-          url="$(vercel deploy --yes)"
-          DEPLOY_URL="$url" node -e '
-            const value=process.env.DEPLOY_URL;
-            const url=new URL(value);
-            if(url.protocol!=="https:" ||
-               !url.hostname.endsWith(".vercel.app") ||
-               url.hostname==="baegu-index-test.vercel.app" ||
-               url.hostname==="baeguindex.com" || url.pathname!=="/")
-              process.exit(1);
-          '
-          printf 'url=%s\n' "$url" >> "$GITHUB_OUTPUT"
-      - name: Report protected test URL
-        env:
-          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
-        run: |
-          echo "Approved preview URL: $PREVIEW_URL"
-          echo "No domain promotion, production release or real-account QA was performed."
-
+          printf '%s' "$CLI_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "Unpinned Vercel CLI version"; exit 1; }
       - name: Install reviewed CLI without passing secrets
         env:
           CLI_VERSION: ${{ vars.STAGE38_VERCEL_CLI_VERSION }}
