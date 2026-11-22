@@ -78,6 +78,7 @@ if(process.argv.includes("--browser"))(async()=>{
    const initial=await page.evaluate(()=>window.nangamSchoolbandV08.getStaticVisualBenchmark(15));
    assert.equal(initial.available,false,"unselected school shouldn't render benchmark");
    await page.locator("#demoSchool").click();
+   const heapBefore=await page.evaluate(()=>Number.isFinite(performance.memory?.usedJSHeapSize)?performance.memory.usedJSHeapSize:null);
    const visible=await page.evaluate(()=>({
     selected:window.nangamSchoolbandV08.getSelected(),
     summary:window.nangamSchoolbandV08.getStaticVisualBenchmark(40),
@@ -98,6 +99,7 @@ if(process.argv.includes("--browser"))(async()=>{
    });
    await page.locator("#highContrast").check();
    await page.locator("#largeText").check();
+   const heapAfter=await page.evaluate(()=>Number.isFinite(performance.memory?.usedJSHeapSize)?performance.memory.usedJSHeapSize:null);
    const computed=await page.evaluate(()=>({
     fx:window.nangamSchoolbandV08.getPerformanceFx(),
     ui:window.nangamSchoolbandV08.getMobileUiState(),
@@ -117,14 +119,21 @@ if(process.argv.includes("--browser"))(async()=>{
    await page.locator("#stepInstrument").focus();
    const outline=await page.locator("#stepInstrument").evaluate(el=>getComputedStyle(el).outlineStyle);
    assert.equal(outline,"solid","stage focus indicator must remain visible");
-   const old=await page.locator("#pads .taphit").first().evaluate(el=>getComputedStyle(el).transform);
-   assert(old==="none"||old.startsWith("matrix(1, 0, 0, 1"),"reduced motion transform is off");
+   const firstPad=page.locator("#pads .taphit").first();
+   await firstPad.evaluate(el=>el.classList.add("pressed"));
+   const old=await firstPad.evaluate(el=>getComputedStyle(el).transform);
+   assert(old==="none"||old.startsWith("matrix(1, 0, 0, 1"),"reduced motion pressed transform is off");
+   await firstPad.evaluate(el=>el.classList.remove("pressed"));
    assert.equal(await page.locator("#songAnthem").isDisabled(),true);
    assert.equal(await page.locator("#songVolleyball").isEnabled(),true);
    assert.deepEqual(errors,[],"browser JS errors");
    assert.deepEqual(writes,[],"no server score/identity POST");
    report.cases.push({device:device.name,viewport:device.width+"x"+device.height,
-    draw:visible.summary,scrollWidth:computed.bodyWidth,viewportWidth:computed.viewWidth,
+    draw:visible.summary,visualBudgetTargetMs:16.7,
+    staticDrawP95BudgetMet:visible.summary.p95Ms<=16.7,
+    heapSampleAvailable:heapBefore!==null&&heapAfter!==null,
+    heapDeltaBytes:heapBefore!==null&&heapAfter!==null?heapAfter-heapBefore:null,
+    scrollWidth:computed.bodyWidth,viewportWidth:computed.viewWidth,
     highContrast:true,largeText:true,reducedMotion:true,lowPower:true,scoreUnchanged:true,
     noAudioStarted:true});
    await context.close();
