@@ -1,0 +1,26 @@
+name: v1.1.0 isolated arcade API HTTP smoke
+on:
+  push:
+    branches: [fix/v110-staging-edited-api-recovery-20261123]
+    paths:
+      - 'scripts/staging/recovered-arcade-leaderboard/**'
+      - 'tests/staging-arcade-contract.test.py'
+      - 'tests/staging-arcade-http-smoke.test.py'
+      - '.github/workflows/v110-staging-arcade.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-arcade-read:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Static source guard checks
+        run: python3 tests/staging-arcade-contract.test.py
+      - name: Live staging HTTP read/negative checks
+        run: python3 tests/staging-arcade-http-smoke.test.py
+      - name: No data mutations or production credentials in CI
+        run: echo 'PASS: only HEAD/GET and deliberately invalid POST to isolated staging'
