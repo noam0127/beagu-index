@@ -820,7 +820,7 @@ function scheduleStep(n,when){
  if(instrument!=="keys" && n%8===0)voice("keys",beat,when);
 }
 function scheduleAhead(){
- if(!playing||!ctx)return;
+ if(!playing||paused||!ctx||ctx.state!=="running")return;
  while(step<SONG_BEATS*4 && beginning+noteTimeSeconds(0,step)<ctx.currentTime+.22){
  scheduleStep(step,beginning+noteTimeSeconds(0,step));step++;
  }
@@ -896,7 +896,7 @@ function triggerImpact(lane,isPerfect){
  if(vibrationEnabled&&!motionReduced()&&window.navigator?.vibrate)try{window.navigator.vibrate(isPerfect?12:7)}catch(_){}
 }
 function hit(lane){
- if(!playing||!ctx||lane<0||lane>=INST[instrument].lanes.length)return;
+ if(!playing||paused||!ctx||ctx.state!=="running"||lane<0||lane>=INST[instrument].lanes.length)return;
  const now=correctedInputTime(nowSong(),inputOffsetMs),idx=tierIdx();
  const chosen=selectPendingNoteIndex(chart,lane,now,idx);
  if(chosen<0){emptyPresses++;laneFeedback(lane,"empty");status(INST[instrument].lanes[lane][0]+" · 지금 누를 노트가 없습니다.");return}
@@ -908,9 +908,67 @@ function hit(lane){
  triggerImpact(lane,judgement==="perfect");
  hud();draw();
 }
+function syncPauseControl(){
+ const btn=$("pause");
+ btn.disabled=!playing||pauseBusy;
+ btn.textContent=paused?"▶ 이어하기":"Ⅱ 일시정지";
+ btn.setAttribute("aria-pressed",String(paused));
+}
+// Suspend the common AudioContext clock: it drives soundtrack, scoring and notes.
+function pauseGame(reason="user"){
+ if(!playing||paused)return pausePromise||Promise.resolve(false);
+ paused=true;pauseBusy=true;pauseReason=reason;
+ clearInterval(timer);timer=0;cancelAnimationFrame(raf);raf=0;
+ lastFrameWall=null;lastFrameSong=null;clearFxFeedback();
+ particles=[];lanePulse.fill(0);
+ syncPauseControl();
+ const label=reason==="background"?"다른 화면으로 전환되어":reason==="audio"?"오디오가 중단되어":"사용자 요청으로";
+ status(label+" 일시정지했습니다. 화면에 돌아와 ▶ 이어하기를 눌러 주세요.");
+ pausePromise=(async()=>{
+  try{
+   if(!ctx)throw Error("audio_context_missing");
+   if(ctx.state==="running")await ctx.suspend();
+   if(ctx.state!=="suspended"&&ctx.state!=="interrupted")throw Error("audio_not_suspended");
+   return true;
+  }catch(_){
+   if(playing){finish(true);status("안전하게 연주를 중단했습니다. 다시 시작해 주세요.");}
+   return false;
+  }finally{
+   pauseBusy=false;syncPauseControl();
+   if(playing)draw();
+  }
+ })();
+ return pausePromise;
+}
+async function resumeGame(){
+ if(!playing||!paused||pauseBusy||!ctx||document.hidden)return false;
+ pauseBusy=true;syncPauseControl();
+ try{
+  if(ctx.state!=="running")await ctx.resume();
+  if(ctx.state!=="running")throw Error("audio_resume_blocked");
+  if(document.hidden){await ctx.suspend();status("배경 화면에서는 이어서 연주할 수 없습니다.");return false;}
+  paused=false;pauseReason=null;lastFrameWall=null;lastFrameSong=null;
+  clearInterval(timer);cancelAnimationFrame(raf);
+  timer=setInterval(scheduleAhead,30);scheduleAhead();raf=requestAnimationFrame(animate);
+  status("이어 연주합니다. 기존 콤보와 노트를 유지했습니다.");
+  return true;
+ }catch(_){
+  status("오디오를 재개할 수 없습니다. 화면을 연 상태에서 ▶ 이어하기를 다시 눌러 주세요.");
+  return false;
+ }finally{pauseBusy=false;syncPauseControl();draw();}
+}
 function animate(){
- if(!playing)return;
- const now=nowSong(),idx=tierIdx(),correctedNow=correctedInputTime(now,inputOffsetMs);
+ if(!playing||paused)return;
+ if(!ctx||ctx.state!=="running"){void pauseGame("audio");return;}
+ const frameWall=performance.now(),songNow=nowSong();
+ // On browsers that freeze without visibilitychange, never bulk-MISS after a long time jump.
+ if(lastFrameWall!==null&&frameWall-lastFrameWall>1500&&songNow-lastFrameSong>.65){
+  finish(true);
+  status("오랜 화면 정지로 연주 시간이 건너뛰어 안전하게 중단했습니다. 처음부터 다시 시작해 주세요.");
+  return;
+ }
+ lastFrameWall=frameWall;lastFrameSong=songNow;
+ const now=songNow,idx=tierIdx(),correctedNow=correctedInputTime(now,inputOffsetMs);
  let missedThisFrame=0;
  for(const n of chart){if(!n.done && isNoteMissed(n.t,correctedNow,idx)){n.done=true;judged++;miss++;combo=0;missedThisFrame++;laneFeedback(n.lane,"miss");}}
  if(missedThisFrame&&now-lastMissAnnouncement>.8){status("MISS · 놓친 노트 "+missedThisFrame+"개");lastMissAnnouncement=now;}
@@ -923,7 +981,7 @@ async function start(){
  const a=audioContext();if(!a)return;
  try{await a.resume()}catch(e){status("오디오 시작에 실패했습니다.");return}
  if(playing)return;
- playing=true;
+ playing=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;syncPauseControl();
  score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();
  beginning=a.currentTime+1.05;
  $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
@@ -939,7 +997,7 @@ async function start(){
 }
 function finish(interrupted){
  if(!playing)return;
- playing=false;clearInterval(timer);cancelAnimationFrame(raf);particles=[];lanePulse.fill(0);clearFxFeedback();
+ playing=false;paused=false;pauseReason=null;pauseBusy=false;pausePromise=null;lastFrameWall=null;lastFrameSong=null;clearInterval(timer);cancelAnimationFrame(raf);particles=[];lanePulse.fill(0);clearFxFeedback();syncPauseControl();
  $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
  $("offsetRange").disabled=false;$("offsetReset").disabled=false;
  document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);
@@ -1016,12 +1074,17 @@ function draw(){
   g.fillText(school?"연주 준비 완료!":"학교를 선택해 주세요",W/2,149);
   g.font="13px system-ui";g.fillStyle="#c9d5f1";
   g.fillText(INST[instrument].name+" · "+N+"레인",W/2,184);
- }else if(now<0){
+ }else if(paused){
+   g.fillStyle="#0e172bc4";g.fillRect(margin,80,W-2*margin,150);
+   g.font="800 34px system-ui";g.fillStyle="#f4e9ff";g.textAlign="center";g.fillText("PAUSED",W/2,161);
+   g.font="14px system-ui";g.fillText("▶ 이어하기를 눌러 주세요",W/2,194);
+  }else if(now<0){
   g.font="800 35px system-ui";g.fillStyle="#fff2b8";g.textAlign="center";g.fillText("READY",W/2,175);
  }
  g.restore();
 }
 $("start").onclick=start;
+$("pause").onclick=()=>{if(paused)void resumeGame();else void pauseGame("user");};
 $("stop").onclick=()=>finish(true);
 $("mute").onclick=()=>{
  muted=!muted;
