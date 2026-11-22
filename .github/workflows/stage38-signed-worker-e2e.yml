@@ -1,0 +1,86 @@
+name: Stage38 signed GitHub worker -> isolated release queue E2E (NO DEPLOY)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/stage38-signed-worker-e2e.yml'
+      - 'tests/stage38-signed-worker-e2e.py'
+      - 'tests/fixtures/stage38-signed-worker-once/**'
+      - 'tests/fixtures/stage38-signed-worker-e2e.sql'
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: stage38-signed-worker-e2e-pr244
+  cancel-in-progress: false
+jobs:
+  real-signed-github-worker-staging-only:
+    # One reviewed same-repo PR context, NEVER a fork, prod main or Pages.
+    if: github.repository == 'noam0127/beagu-index' && github.event.pull_request.number == 244 && github.event.pull_request.head.repo.full_name == 'noam0127/beagu-index' && github.event.pull_request.head.ref == 'hotfix/v1.1.0-preview-backend-isolation'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify hardcoded independent staging and sandbox commit lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          endpoint=Path('tests/fixtures/stage38-signed-worker-once/index.ts').read_text()
+          sql=Path('tests/fixtures/stage38-signed-worker-e2e.sql').read_text()
+          runner=Path('tests/stage38-signed-worker-e2e.py').read_text()
+          assert 'ycwuugggqbunlbwuzvbx' in endpoint
+          assert 'snvzwrexuqavnfvzgxqj' in sql
+          assert 'https://"+PROJECT+".supabase.co"' in endpoint
+          assert 'jwtVerify(bearer,trustedJWKS' in endpoint
+          assert 'payload.workflow_ref!==WORKFLOW' in endpoint
+          assert 'payload.event_name!=="pull_request"' in endpoint
+          assert 'payload.ref!=="refs/pull/244/merge"' in endpoint
+          assert 'payload.head_ref!==BRANCH' in endpoint
+          assert 'origin_forbidden' in endpoint or 'browser_origin_forbidden' in endpoint
+          assert 'beagu_site_release_finalize_v1' in endpoint
+          assert 'beagu_stage38_signed_worker_fixture_v1' in endpoint
+          assert 'prod_apply' not in endpoint
+          assert '037a14afa252c52eaa130d7cbe2e08e649adf5bd' in runner
+          assert '5512e798633eeb8163e8eab20c9ab9678b66f0cd' in runner
+          assert "DELETE FROM public.beagu_site_release_jobs_v1" in sql
+          assert "DELETE FROM public.beagu_site_release_history_v1" in sql
+          assert "REVOKE ALL ON FUNCTION public.beagu_stage38_signed_worker_fixture_v1" in sql
+          print('PASS: OIDC identity-bound staging-only worker, no production actions, guaranteed fixture cleanup')
+          PY
+      - name: REAL signed GitHub PR244 OIDC -> staging queue claim -> atomic finalize -> rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/stage38-signed-worker-e2e.py
+      - name: Always attempt fixture cleanup if runner was interrupted
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,json,urllib.request
+          token_url=os.environ.get('ACTIONS_ID_TOKEN_REQUEST_URL')
+          token_env=os.environ.get('ACTIONS_ID_TOKEN_REQUEST_TOKEN')
+          if not token_url or not token_env: raise SystemExit('OIDC unavailable for cleanup')
+          sep='&' if '?' in token_url else '?'
+          r=urllib.request.Request(
+            token_url+sep+'audience=beagu-stage38-signed-worker-qa',
+            headers={'Authorization':'Bearer '+token_env})
+          with urllib.request.urlopen(r,timeout=15) as f:
+            signed=json.load(f)['value']
+          url='https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-stage38-signed-worker-once'
+          def post(action):
+            req=urllib.request.Request(url,method='POST',
+              data=json.dumps({'action':action}).encode(),
+              headers={'Authorization':'Bearer '+signed,'Content-Type':'application/json'})
+            with urllib.request.urlopen(req,timeout=25) as f: return json.load(f)
+          clean=post('cleanup')
+          check=post('status')
+          assert clean['ok'] and clean['cleanup'], 'Cleanup RPC denied'
+          assert check['jobs']==0 and check['history']==0
+          assert check['production_sha'] is None and check['staging_sha'] is None
+          print('PASS: finally/always staging release jobs/history/pointers 0; no operation to production')
+          PY
