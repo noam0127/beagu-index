@@ -54,6 +54,8 @@ assert.equal(result(metric('percentile',7*hour),catalog(),2,false).length,0,
   'Lv2 must not skip 24h without snapshot review');
 assert.equal(result(metric('percentile',25*hour),catalog(),2,false).length,1,
   'After 24h the approved metric follows the ordinary public release');
+assert.equal(result(metric('Q10',1*hour,2,2025),catalog('Q10',2,2025),2,false).length,1,
+  'New 2026 timing restrictions must not change approved historical 2025 metrics');
 assert.equal(result(metric('percentile',2*hour),catalog(),2,true).length,0,
   'A newly approved metric cannot inherit an older snapshot release timestamp');
 
