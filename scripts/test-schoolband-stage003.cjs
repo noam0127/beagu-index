@@ -137,7 +137,7 @@ async function smoke(){
         const deadline=performance.now()+4000;
         while(api.getPlayhead()<note.t-.003&&performance.now()<deadline)await new Promise(r=>setTimeout(r,2));
         const before=api.getStatus().hits;
-        document.querySelector('[data-lane="2"]').dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true}));
+        document.querySelector('#pads .taphit[data-lane="2"]').dispatchEvent(new PointerEvent("pointerdown",{bubbles:true,cancelable:true}));
         const after=api.getStatus().hits,fx=api.getEffectState();
         // A newly created CSS animation receives its startTime on the next animation frame.
         await new Promise(requestAnimationFrame);
