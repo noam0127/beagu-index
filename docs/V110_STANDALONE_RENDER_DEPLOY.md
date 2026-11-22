@@ -46,7 +46,25 @@ python3 scripts/verify-render-preview.py \
 개설 후 해당 Render origin만 개발 브랜치에서 지정하고 브라우저 검증을 거친다.
 **운영 웹에 즉시 배포하거나 운영 배포 승인 버튼을 활성화해서는 안 된다.**
 
-## 4. 그다음에야 가능한 실제 기능 E2E
+## 4. 시험 Supabase 이메일 확인 후 복귀 URL 등록
+
+Render가 실제로 발급한 주소를 확인한 뒤, **시험 Supabase** 프로젝트
+`ycwuugggqbunlbwuzvbx` → Authentication → URL Configuration에서 다음을 검토한다.
+
+- `Site URL`: **시험** Render origin으로 설정할지 기존 사용 목적을 확인하고 결정한다.
+  운영 사이트 `baeguindex.com`으로 리디렉션되어서는 안 된다.
+- `Redirect URLs`: `https://<실제-시험-주소>.onrender.com/challenge.html`
+  및 `https://<실제-시험-주소>.onrender.com/postit.html`의 **정확한 주소 두 개**를 등록한다.
+- `https://*.onrender.com/**` 같은 전체 호스트 와일드카드는 피한다. 운영 Supabase
+  설정은 변경하지 않는다.
+- 이메일 인증 메일을 누른 뒤 해당 시험 웹으로 돌아오는지 확인한다.
+  Google 로그인을 사용할 경우 별도 Google 제공자 설정도 실제로 검증한다.
+
+현재 설치된 연결 도구만으로는 Supabase Auth의 URL Configuration 값을
+읽거나 수정할 수 없으므로 이 부분은 실제 시험 주소 생성 뒤 확인해야 한다.
+공식 안내: https://supabase.com/docs/guides/auth/redirect-urls
+
+## 5. 그다음에야 가능한 실제 기능 E2E
 
 - 시험 Supabase에서 이메일 로그인과 인증 리디렉션 설정을 확인한다.
 - 시험용 관리자 계정·MFA를 통해 읽기 전용 관리자 화면 및 접근 통제를 점검한다.
