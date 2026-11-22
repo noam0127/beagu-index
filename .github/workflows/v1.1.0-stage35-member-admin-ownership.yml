@@ -27,4 +27,5 @@ jobs:
       - name: Validate server identity linkage and administrator MFA gates
         run: node tests/v1.1.0-stage35-member-admin-ownership.mjs
       - name: Coverage notice
-        run: echo "Static only: two actual authenticated staging users required for full IDOR proof."
+        run: |
+          echo "Static only: two actual authenticated staging users required for full IDOR proof."
