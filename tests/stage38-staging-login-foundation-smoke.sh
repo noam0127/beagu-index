@@ -130,3 +130,20 @@ SET app.stage38_fixture_only = 'ephemeral-ci';
 SQL
 
 echo "PASS: synthetic Lv1/Lv2 hash lookups, revoked/invalid codes, session expiry, duplicate tokens on isolated PostgreSQL."
+
+# Simulate the future verified-survey attestation ONLY in this ephemeral DB.
+# Existing production code issuance is not evidence of submission completion.
+test -f tests/stage38-synthetic-referral-proof-cases.sql
+if psql -v ON_ERROR_STOP=1 -f tests/stage38-synthetic-referral-proof-cases.sql \
+    > /tmp/stage38-unapproved-referral.stdout 2>&1; then
+  echo "INVALID: referral fixture accepted an unauthorized database" >&2
+  exit 1
+fi
+grep -q "STAGE38_SYNTHETIC_REFERRAL_EPHEMERAL_ONLY" \
+  /tmp/stage38-unapproved-referral.stdout
+psql -v ON_ERROR_STOP=1 <<'SQL'
+SET app.stage38_fixture_only = 'ephemeral-ci';
+\i tests/stage38-synthetic-referral-proof-cases.sql
+SQL
+echo "PASS: synthetic survey-verification gate denies issued-only codes, supports Lv1/earned Lv2 and revocation without production data."
+
