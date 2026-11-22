@@ -1,0 +1,24 @@
+name: Stage38 staging member API snapshot contract (NO DEPLOY)
+on:
+  push:
+    branches: ['hotfix/v1.1.0-preview-backend-isolation']
+    paths:
+      - 'tests/fixtures/stage38-staging-admin-members-live-v2/**'
+      - 'tests/stage38-staging-member-live-contract.cjs'
+      - '.github/workflows/stage38-staging-member-live-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify live staging API security contract snapshot
+        run: node tests/stage38-staging-member-live-contract.cjs
+      - name: Confirm no deployment
+        run: echo "Static test only. No Supabase deploy or production changes."
