@@ -6,6 +6,12 @@ on:
       - fix/v1.1.0-preview-isolation-gate-20261123
   pull_request:
     paths:
+      - '**/*.html'
+      - 'js/**'
+      - 'styles/**'
+      - 'assets/**'
+      - 'data/**'
+      - 'r/**'
       - 'scripts/build-standalone-staging.py'
       - 'scripts/staging-runtime-guard.js'
       - 'tests/test-standalone-staging.py'
