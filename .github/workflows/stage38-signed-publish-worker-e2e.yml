@@ -1,0 +1,86 @@
+name: Stage38 signed worker ACTUAL isolated file publish + atomic rollback (NO PRODUCTION)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/stage38-signed-publish-worker-e2e.yml'
+      - 'tests/stage38-signed-publish-worker-e2e.py'
+      - 'tests/fixtures/stage38-signed-publish-worker-once/**'
+      - 'tests/fixtures/stage38-signed-publish-worker-e2e.sql'
+permissions:
+  contents: write
+  id-token: write
+concurrency:
+  group: stage38-signed-publish-worker-pr244
+  cancel-in-progress: false
+jobs:
+  publish-real-sandbox-files-from-verified-oidc-worker:
+    # This deliberately allows only the existing review branch on same-repo PR #244.
+    # Never a fork, main, the production Pages domain, or production Supabase.
+    if: github.repository == 'noam0127/beagu-index' && github.event.pull_request.number == 244 && github.event.pull_request.head.repo.full_name == 'noam0127/beagu-index' && github.event.pull_request.head.ref == 'hotfix/v1.1.0-preview-backend-isolation'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify approved immutable sandbox and staging-only signed worker scopes
+        run: |
+          set -euo pipefail
+          python3 -m py_compile tests/stage38-signed-publish-worker-e2e.py
+          python3 - <<'PY'
+          from pathlib import Path
+          endpoint=Path('tests/fixtures/stage38-signed-publish-worker-once/index.ts').read_text()
+          runner=Path('tests/stage38-signed-publish-worker-e2e.py').read_text()
+          fixture=Path('tests/fixtures/stage38-signed-publish-worker-e2e.sql').read_text()
+          assert 'ycwuugggqbunlbwuzvbx' in endpoint and 'ycwuugggqbunlbwuzvbx' in runner
+          assert 'snvzwrexuqavnfvzgxqj' in fixture
+          assert 'payload.workflow_ref!==WORKFLOW' in endpoint
+          assert 'payload.ref!=="refs/pull/244/merge"' in endpoint
+          assert 'payload.event_name!=="pull_request"' in endpoint
+          assert 'publishedBranchAt(job.to_sha)' in endpoint
+          assert 'sandbox_branch_not_at_claimed_sha' in endpoint
+          assert 'stage38-oidc-atomic-publish-rc-5c95aad' in endpoint
+          assert 'beagu_site_release_finalize_v1' in endpoint
+          assert 'beagu_stage38_signed_publish_worker_fixture_v1' in endpoint
+          assert '--force-with-lease=refs/heads/' in runner
+          assert 'refs/heads/"+BRANCH' in runner
+          assert 'branch_head("main")==main_before' in runner
+          assert 'DELETE FROM public.beagu_site_release_jobs_v1' in fixture
+          assert 'WHERE target=' in fixture
+          for sha in ('037a14afa252c52eaa130d7cbe2e08e649adf5bd',
+                      '5512e798633eeb8163e8eab20c9ab9678b66f0cd'):
+            assert sha in endpoint and sha in runner
+          print('PASS: OIDC-scoped PR244, exact sandbox branch only, immutable A/B, no production push')
+          PY
+          git cat-file -e 037a14afa252c52eaa130d7cbe2e08e649adf5bd^{commit}
+          git cat-file -e 5512e798633eeb8163e8eab20c9ab9678b66f0cd^{commit}
+      - name: Signed worker actually publishes staging A→B then rollbacks B→A before DB acknowledgment
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 tests/stage38-signed-publish-worker-e2e.py
+      - name: Always restore sandbox files and cleanup fictional DB release state
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import runpy
+          scope=runpy.run_path('tests/stage38-signed-publish-worker-e2e.py',run_name='__stage38_cleanup__')
+          head=scope['branch_head'](scope['BRANCH'])
+          if head==scope['B']:
+            scope['update_branch'](scope['B'],scope['A'])
+          else:
+            assert head in (None,scope['A']), 'Unreviewed sandbox ref, refusing cleanup rewrite'
+          signed=scope['token']()
+          status,result=scope['invoke']('cleanup',signed)
+          assert status==200 and result.get('ok') is True and result.get('cleanup') is True
+          status,rest=scope['invoke']('status',signed)
+          assert status==200 and rest.get('jobs')==0 and rest.get('history')==0
+          assert rest.get('staging_sha') is None and rest.get('production_sha') is None
+          assert scope['branch_head'](scope['BRANCH']) in (None,scope['A'])
+          print('PASS: always() cleanup leaves sandbox at A and isolated release DB empty')
+          PY
