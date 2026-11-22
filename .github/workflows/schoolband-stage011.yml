@@ -6,6 +6,7 @@ on:
     paths:
       - 'games/nangam-schoolband-v08/index.html'
       - 'scripts/test-schoolband-stage011.cjs'
+      - 'scripts/test-schoolband-stage010.cjs'
       - '.github/workflows/schoolband-stage011.yml'
   workflow_dispatch:
 
