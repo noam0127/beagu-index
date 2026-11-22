@@ -5,7 +5,7 @@
 - Latest direct read-only staging SQL counts: `public.schools=1` (fictional school only), `public.beagu_school_report_yearly=1` (2026 `PENDING`, not privacy-reviewed), `public.beagu_admin_accounts=0`, `public.beagu_admin_audit_events=0`, `auth.users=0`, `auth.sessions=0`. The earlier zero-school observation is superseded by the isolated synthetic fixture.
 - Live staging admin Edge Function v2 denies anonymous and forged bearer requests with HTTP 401 (GitHub Actions run 45003564875).
 - Forbidden browser origins are rejected with HTTP 403, local OPTIONS receives 204 (run 45003707914).
-- Staging Auth `/auth/v1/health` and `/auth/v1/settings` both returned HTTP 200 with the project publishable API key (run 45007594357). Five CI checks for commit `133814b4` passed. A negative password-login / forged-token HTTP test was added subsequently and must not be represented as passed before its run completes.
+- Staging Auth `/auth/v1/health` and `/auth/v1/settings` both returned HTTP 200 with the project publishable API key (run 45007594357). Five CI checks for commit `133814b4` passed. A real Auth negative-path HTTP test passed in Actions run `45020219118`: nonexistent password credentials were rejected with HTTP 400 and forged bearer `/user` was rejected with HTTP 403; neither response exposed a session/token or user profile. All five workflows on commit `e5f64f0` succeeded.
 - Static RC packaging and CI checks passed; no hosted preview browser E2E performed.
 
 ## Release blocker
