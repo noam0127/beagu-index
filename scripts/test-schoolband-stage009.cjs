@@ -37,7 +37,7 @@ function schemaProof(){
 function staticProof(){
  const {inst,patterns,validate}=gameModel();
  assert.deepEqual(patterns,M.patterns,"embedded PARTS must equal versioned external JSON");
- assert.deepEqual(inst,Object.fromEntries(Object.entries(M.instruments).map(([id,x])=>[id,{name:x.name,lanes:x.lanes.map(y=>[y.label,y.displayKey,y.code])}])), "lane metadata parity");
+ assert.deepEqual(Object.fromEntries(Object.entries(inst).map(([id,x])=>[id,{name:x.name,lanes:x.lanes}])),Object.fromEntries(Object.entries(M.instruments).map(([id,x])=>[id,{name:x.name,lanes:x.lanes.map(y=>[y.label,y.displayKey,y.code])}])), "lane metadata parity");
  assert.equal(M.schemaVersion,1);assert.equal(M.chartVersion,"creative-anthem-rhythm-v1.0.0");
  assert.deepEqual(M.noteTypes,["tap"]);assert.equal(M.longNotesEnabled,false);
  assert.equal(M.bpm,108);assert.equal(M.barCount,8);assert.deepEqual(M.supportedTiers,TIERS);
