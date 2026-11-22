@@ -121,7 +121,7 @@ html[data-reduced-fx="true"] .impact-ring{display:none}
 <div class="stage-wrap"><canvas id="track" width="380" height="365" role="img" aria-label="악기에 따라 3~5개 레인이 표시되는 리듬게임 화면"></canvas><div class="judgement" id="judgeFx" aria-hidden="true"></div><div class="impact-ring" id="impactRing" aria-hidden="true"></div><div id="laneFx" class="lane-fx-layer" aria-hidden="true"></div><div id="comboFx" class="combo-fx" aria-hidden="true"></div></div>
 <div id="pads" class="pad-grid" aria-label="모바일 연주 버튼"></div>
 <p id="keyHint">D 리프 · F 파워코드 · J 업스트럼 · K 고음 리프</p>
-<details class="timing-tuner" id="timingTuner"><summary>판정 보정 <output id="offsetSummary" for="offsetRange">0 ms</output></summary><div class="timing-controls"><label for="offsetRange">입력 판정 보정</label><input type="range" id="offsetRange" min="-150" max="150" step="5" value="0" aria-describedby="offsetHelp"><output id="offsetValue" for="offsetRange">0 ms</output><button type="button" id="offsetReset">초기화</button></div><p class="timing-help" id="offsetHelp">기기에서 소리가 들리는 시점보다 터치 입력이 늦게 인식되면 + 방향, 너무 이르게 인식되면 − 방향으로 조절하세요. +100 ms는 늦게 입력된 100 ms를 판정에서 보상합니다. 판정 화면과 반주는 그대로이며 게임 시작 전에 설정합니다. 실제 기기 오디오·입력 지연을 자동 측정하는 기능은 아닙니다.</p></details><div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label></div>
+<details class="timing-tuner" id="timingTuner"><summary>판정 보정 <output id="offsetSummary" for="offsetRange">0 ms</output></summary><div class="timing-controls"><label for="offsetRange">입력 판정 보정</label><input type="range" id="offsetRange" min="-150" max="150" step="5" value="0" aria-describedby="offsetHelp"><output id="offsetValue" for="offsetRange">0 ms</output><button type="button" id="offsetReset">초기화</button></div><p class="timing-help" id="offsetHelp">기기에서 소리가 들리는 시점보다 터치 입력이 늦게 인식되면 + 방향, 너무 이르게 인식되면 − 방향으로 조절하세요. +100 ms는 늦게 입력된 100 ms를 판정에서 보상합니다. 판정 화면과 반주는 그대로이며 게임 시작 전에 설정합니다. 실제 기기 오디오·입력 지연을 자동 측정하는 기능은 아닙니다.</p></details><div class="timing-controls volume-controls" role="group" aria-label="음향 음량 설정"><label for="volumeRange">음량</label><input type="range" id="volumeRange" min="0" max="100" step="5" value="100" aria-label="게임 전체 음량" aria-describedby="volumeHelp"><output id="volumeValue" for="volumeRange">100%</output><span id="volumeHelp" class="visually-hidden">0퍼센트는 완전 무음이며 음소거 버튼과 독립적으로 음량을 조절합니다.</span></div><div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label></div>
 <div class="actions"><button type="button" id="start" disabled>▶ 교가 연주 · 음악 켜기</button><button type="button" id="pause" aria-pressed="false" disabled>Ⅱ 일시정지</button><button type="button" id="stop" disabled>■ 중단</button><button type="button" id="mute">♫ 소리</button></div>
 <div id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
 <div class="progress"><div id="progress"></div></div>
@@ -1193,15 +1193,30 @@ function animate(){
  hud();draw();raf=requestAnimationFrame(animate);
 }
 async function start(){
- if(playing||!school)return;
+ if(playing||startPending||!school)return;
  const audit=validateChartCatalog(PARTS,INST,CHART_VERSION);
  if(!audit.valid){
   status("차트 데이터 검증에 실패했습니다. 이 버전의 연주를 시작할 수 없습니다.");
   safeText("result","차트 오류: "+audit.errors.slice(0,2).join(", "));
   return;
  }
- const a=audioContext();if(!a)return;
- try{await a.resume()}catch(e){status("오디오 시작에 실패했습니다.");return}
+ startPending=true;$("start").disabled=true;
+ const a=audioContext();
+ if(!a){startPending=false;$("start").disabled=!school;return;}
+ try{
+  // resume() must originate from the Start button's direct user gesture.
+  await a.resume();
+  if(ctx!==a||a.state!=="running"||document.hidden)throw Error("audio_permission_or_background");
+ }catch(_){
+  startPending=false;
+  await releaseAudioEngine("permission-denied");
+  if(!playing){
+   $("start").disabled=!school;
+   status("오디오 시작이 차단되었습니다. 음량·브라우저 소리 권한을 확인하고 ▶ 시작을 다시 눌러 주세요.");
+  }
+  return;
+ }
+ startPending=false;
  if(playing)return;
  playing=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;syncPauseControl();
  score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;soundEvents.length=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();
@@ -1219,7 +1234,8 @@ async function start(){
 }
 function finish(interrupted){
  if(!playing)return;
- playing=false;paused=false;pauseReason=null;pauseBusy=false;pausePromise=null;lastFrameWall=null;lastFrameSong=null;clearInterval(timer);cancelAnimationFrame(raf);particles=[];lanePulse.fill(0);clearFxFeedback();syncPauseControl();
+ playing=false;paused=false;pauseReason=null;pauseBusy=false;pausePromise=null;lastFrameWall=null;lastFrameSong=null;clearInterval(timer);cancelAnimationFrame(raf);particles=[];lanePulse.fill(0);clearFxFeedback();
+ void releaseAudioEngine("finish");syncPauseControl();
  $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
  $("offsetRange").disabled=false;$("offsetReset").disabled=false;
  document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);
@@ -1309,13 +1325,10 @@ $("start").onclick=start;
 $("pause").onclick=()=>{if(paused)void resumeGame();else void pauseGame("user");};
 $("stop").onclick=()=>finish(true);
 $("mute").onclick=()=>{
- muted=!muted;
- if(masterBus&&ctx){
-   if(masterBus.gain.setTargetAtTime)masterBus.gain.setTargetAtTime(muted?0:MIX_LEVELS.master,ctx.currentTime,.015);
-   else masterBus.gain.value=muted?0:MIX_LEVELS.master;
- }
+ muted=!muted;updateMasterVolume();
  $("mute").textContent=muted?"🔇 꺼짐":"♫ 소리";
 };
+$("volumeRange").addEventListener("input",()=>setVolume($("volumeRange").value));
 document.addEventListener("keydown",e=>{
  if(e.repeat||!playing||e.isComposing)return;
  if(e.target instanceof HTMLElement && e.target.matches("input,select,textarea"))return;
@@ -1327,7 +1340,10 @@ document.addEventListener("visibilitychange",()=>{
  if(document.hidden&&playing&&!paused)void pauseGame("background");
 });
 window.addEventListener("pagehide",e=>{
- if(!playing)return;
+ if(!playing){
+  if(startPending){startPending=false;void releaseAudioEngine("pagehide-before-start")}
+  return;
+ }
  if(e.persisted)void pauseGame("background");
  else finish(true);
 });
@@ -1337,13 +1353,13 @@ window.addEventListener("pageshow",e=>{
   status("복귀했습니다. ▶ 이어하기를 눌러 연주를 재개하세요.");
  }
 });
-window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),getMixLevels:()=>({...MIX_LEVELS}),getHarmonyByBar:()=>CHORD_ROOTS.map((_,bar)=>harmonyAtBar(bar)),getMelodyHarmonyAudit:()=>checkMelodyHarmony(),getPlaybackState:()=>({playing,paused,pauseReason,transitioning:pauseBusy,audioState:ctx?.state||"none",songTime:ctx?nowSong():null,schedulerStep:step,remainingNotes:chart.filter(n=>!n.done).length}),getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
+window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),getMixLevels:()=>({...MIX_LEVELS}),getAudioLifetime:()=>({...audioLife,activeVoices:liveAudioVoices.size,muted,volumePercent,masterGain:desiredMasterGain(),pendingStart:startPending,hasContext:!!ctx}),getHarmonyByBar:()=>CHORD_ROOTS.map((_,bar)=>harmonyAtBar(bar)),getMelodyHarmonyAudit:()=>checkMelodyHarmony(),getPlaybackState:()=>({playing,paused,pauseReason,transitioning:pauseBusy,audioState:ctx?.state||"none",songTime:ctx?nowSong():null,schedulerStep:step,remainingNotes:chart.filter(n=>!n.done).length}),getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
 $("offsetRange").addEventListener("input",()=>{if(playing)return;inputOffsetMs=clampOffsetMs($("offsetRange").value);saveOffset()});
 $("offsetReset").addEventListener("click",()=>{if(playing)return;inputOffsetMs=0;saveOffset()});
 $("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
 $("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
 if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
-renderPads();syncFxSettings();syncOffsetUI();syncPauseControl();hud();
+renderPads();syncFxSettings();syncOffsetUI();syncVolume();syncPauseControl();hud();
 })();
 </script>
 </body>
