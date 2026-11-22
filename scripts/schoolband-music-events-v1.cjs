@@ -12,9 +12,10 @@ function rightsGate(rights){
   ensure(rights.sourceId==="original-shining-our-school","demo_original_only_for_verified_fixture");
   ensure(rights.publicRelease===false,"demo_must_not_auto_publish");
  }else if(rights.status==="approved"){
-  ensure(typeof rights.permissionRecordId==="string"&&rights.permissionRecordId.trim().length>=8,"approval_evidence_required");
-  ensure(typeof rights.validUntil==="string"&&/^\d{4}-\d\d-\d\d$/.test(rights.validUntil),"approval_expiry_required");
-  ensure(Date.parse(rights.validUntil+"T23:59:59Z")>=Date.now(),"approval_expired");
+  // Stage022: do not accept self-declared permission evidence from user files.
+  // Existing records must pass the separate trusted offline intake first;
+  // no external MIDI/MusicXML conversion is enabled in this stage.
+  throw new MusicInputError("external_requires_stage022_trusted_registry");
  }else throw new MusicInputError("unapproved_or_withdrawn_rights");
  return {sourceId:rights.sourceId,status:rights.status,scopes:["convert_to_game"],publicRelease:false};
 }
