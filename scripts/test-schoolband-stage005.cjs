@@ -10,7 +10,9 @@ function almost(a,b,msg,eps=1e-10){assert(Number.isFinite(a)&&Math.abs(a-b)<eps,
 function sourceModel(html){
  const start="// BEGIN SCHOOLBAND_TIMING_MODEL_V1",end="// END SCHOOLBAND_TIMING_MODEL_V1";
  assert.equal(html.split(start).length,2);assert.equal(html.split(end).length,2);
- return html.slice(html.indexOf(start)+start.length,html.indexOf(end));
+ const lineEnd=html.indexOf("\n",html.indexOf(start));
+ assert(lineEnd>=0,"timing model start marker line");
+ return html.slice(lineEnd+1,html.indexOf(end));
 }
 function loadModel(html){
  const code=sourceModel(html);new vm.Script(code,{filename:"schoolband-timing-model.js"});
