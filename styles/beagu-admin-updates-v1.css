@@ -37,3 +37,14 @@
 .release-login{padding:18px 0}
 .release-login p{line-height:1.6;font-size:14px}
 @media(max-width:700px){.release-grid,.release-meta-row{grid-template-columns:1fr}.release-surface,.release-draft,.release-queue,.release-history-panel{padding:17px}.release-top-actions{flex-direction:column;align-items:stretch}.release-version{font-size:21px}}
+
+.release-candidate{margin-top:25px;background:#fff;border:1px solid #dce5f1;border-radius:18px;padding:23px;box-shadow:0 4px 18px #173f7910}
+.release-candidate code{overflow-wrap:anywhere;font-size:12px}
+.release-candidate .subtle{line-height:1.65}
+.release-progress-panel{margin-top:15px;padding:14px 16px;border:1px solid #dee9f7;border-radius:12px;background:#f8fbff}
+.release-progress-panel label{display:block;font-weight:750;color:#234e84;font-size:13px;margin-bottom:10px}
+.release-progress-panel progress{display:block;width:100%;height:18px;accent-color:#1769b4}
+.release-progress-panel[data-state="failed"]{background:#fff6f6;border-color:#dfb9b9}
+.release-progress-panel[data-state="deployed"]{background:#f5faf7;border-color:#b9d7c5}
+.release-progress-panel .subtle{margin:9px 0 0;font-size:12px}
+@media(max-width:700px){.release-candidate{padding:17px}}
