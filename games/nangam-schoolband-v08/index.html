@@ -51,6 +51,15 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:380/365;border:1px soli
 .hud div{background:#111827;border:1px solid #43516a;border-radius:9px;padding:7px 2px;text-align:center}
 .hud small{display:block;font-size:10px;color:var(--muted)}.hud b{display:block;font-size:clamp(14px,3.4vw,20px);font-variant-numeric:tabular-nums}
 #result{font-size:11px;color:var(--muted);text-align:center;margin:9px 0 0}
+.timing-tuner{border:1px solid #41516f;background:#101b2f;border-radius:11px;padding:7px 10px;margin:8px 0 3px}
+.timing-tuner summary{color:#d5e4ff;font-size:12px;font-weight:750;cursor:pointer;list-style:revert}
+.timing-tuner summary output{font-variant-numeric:tabular-nums;color:#ffe3b4;padding-left:7px}
+.timing-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.timing-controls label{font-size:12px;white-space:nowrap}
+.timing-controls input[type=range]{flex:1 1 110px;min-width:105px;accent-color:#c4b5fd;touch-action:pan-y}
+.timing-controls output{min-width:54px;font-size:12px;color:#fff2c8;font-variant-numeric:tabular-nums;text-align:right}
+.timing-controls button{padding:6px 9px;font-size:11px;min-height:34px}
+.timing-help{font-size:11px;color:#c0cfe6;margin:8px 0 2px;line-height:1.55}
 .note{font-size:11px;color:#bdcadc;text-align:center;margin:14px 4px}
 @media(max-width:360px){main{padding:10px 7px 25px}.card{padding:11px}.instrument-grid{gap:4px}.instrument{min-height:71px}.instrument .inst-title{font-size:10px}.actions button{font-size:12px}}
 
@@ -111,7 +120,7 @@ html[data-reduced-fx="true"] .impact-ring{display:none}
 <div class="stage-wrap"><canvas id="track" width="380" height="365" role="img" aria-label="악기에 따라 3~5개 레인이 표시되는 리듬게임 화면"></canvas><div class="judgement" id="judgeFx" aria-hidden="true"></div><div class="impact-ring" id="impactRing" aria-hidden="true"></div><div id="laneFx" class="lane-fx-layer" aria-hidden="true"></div><div id="comboFx" class="combo-fx" aria-hidden="true"></div></div>
 <div id="pads" class="pad-grid" aria-label="모바일 연주 버튼"></div>
 <p id="keyHint">D 리프 · F 파워 · J 업스트럼 · K 고음</p>
-<div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label></div>
+<details class="timing-tuner" id="timingTuner"><summary>판정 보정 <output id="offsetSummary" for="offsetRange">0 ms</output></summary><div class="timing-controls"><label for="offsetRange">입력 판정 보정</label><input type="range" id="offsetRange" min="-150" max="150" step="5" value="0" aria-describedby="offsetHelp"><output id="offsetValue" for="offsetRange">0 ms</output><button type="button" id="offsetReset">초기화</button></div><p class="timing-help" id="offsetHelp">기기에서 소리가 들리는 시점보다 터치 입력이 늦게 인식되면 + 방향, 너무 이르게 인식되면 − 방향으로 조절하세요. +100 ms는 늦게 입력된 100 ms를 판정에서 보상합니다. 판정 화면과 반주는 그대로이며 게임 시작 전에 설정합니다. 실제 기기 오디오·입력 지연을 자동 측정하는 기능은 아닙니다.</p></details><div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label></div>
 <div class="actions"><button type="button" id="start" disabled>▶ 교가 연주 · 음악 켜기</button><button type="button" id="stop" disabled>■ 중단</button><button type="button" id="mute">♫ 소리</button></div>
 <div id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
 <div class="progress"><div id="progress"></div></div>
@@ -539,6 +548,24 @@ function isNoteMissed(noteTime,songTime,tierIndex){
  return Number.isFinite(noteTime)&&Number.isFinite(songTime)&&
   Number.isInteger(tierIndex)&&tierIndex>=0&&tierIndex<WIDTHS.length&&
   songTime-noteTime>WIDTHS[tierIndex];
+}
+// Positive correction compensates for input that arrives LATE relative to the audio.
+function correctedInputTime(songTime,offsetMs){
+ if(!Number.isFinite(songTime)||!Number.isFinite(offsetMs))return NaN;
+ return songTime-offsetMs/1000;
+}
+// Pure, lane-local nearest-note selector. Never mutates a note or another lane.
+function selectPendingNoteIndex(notes,lane,correctedTime,tierIndex){
+ if(!Array.isArray(notes)||!Number.isInteger(lane)||lane<0||!Number.isFinite(correctedTime))return -1;
+ let chosen=-1,distance=Infinity,chosenTime=Infinity;
+ for(let i=0;i<notes.length;i++){
+  const n=notes[i];if(!n||n.done||n.lane!==lane)continue;
+  const result=judgementForOffset(noteDeltaSeconds(n.t,correctedTime),tierIndex);
+  if(result==="outside")continue;
+  const d=Math.abs(n.t-correctedTime);
+  if(d<distance||(d===distance&&n.t<chosenTime)){chosen=i;distance=d;chosenTime=n.t}
+ }
+ return chosen;
 }
 // END SCHOOLBAND_TIMING_MODEL_V1
 const $=id=>document.getElementById(id);
