@@ -6,9 +6,11 @@ const executable=sql.split("\n").filter(line=>!line.trimStart().startsWith("--")
 assert.match(sql,/staging only: ycwuugggqbunlbwuzvbx/);
 assert.match(sql,/Never run against production ref snvzwrexuqavnfvzgxqj/);
 assert.match(executable,/^\s*WITH required\(/);
-assert.equal((executable.match(/;/g)||[]).length,1);
-assert.match(executable,/to_regnamespace\('stage_private'\) IS NOT NULL/);
-assert.match(executable,/to_regclass\('stage_private\.fake_schools'\) IS NOT NULL/);
+assert.equal((executable.match(/;/g)||[]).length,2,"Expected metadata and school-data readiness SELECTs");
+assert.doesNotMatch(executable,/to_regnamespace\('stage_private'\)/,"No fake schema readiness filter");
+assert.doesNotMatch(executable,/stage_private\.fake_schools/,"No fake school readiness filter");
+assert.match(executable,/BLOCKED_NO_STAGING_SCHOOL_DATA/);
+assert.match(executable,/BLOCKED_EMPTY_SCHOOL_SORT_VIEW/);
 assert.doesNotMatch(executable,
   /\b(INSERT|UPDATE|DELETE|TRUNCATE|MERGE|CREATE|DROP|ALTER|GRANT|REVOKE|COPY|CALL|DO|EXECUTE|PERFORM|LOCK|SET|RESET|VACUUM|REFRESH)\b/i,
   "No writes, function execution, grants, or deployment in catalog audit");
