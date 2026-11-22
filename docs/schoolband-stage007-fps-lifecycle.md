@@ -38,4 +38,16 @@
 
 ## 4. 실제 실행 결과
 
-**PENDING** — 최종 GitHub Actions 전체 성공과 실제 아티팩트 검증 전까지 007단계종료로 표시하지 않는다.
+**PASS — 정량 주사율, 수동 일시정지·재개, 가시성 대리 시나리오 및 장시간 프레임 정체를 실제 GitHub CI로 검증 완료.**
+
+- **검증 완료 CI**: [run 44995247146](https://github.com/noam0127/beagu-index/actions/runs/44995247146), 상태 `completed/success`, 검증한 코드 SHA `963a6eeaada9badeac5c72500afb044296e735d9`. 이 커밋에서는 Safari 계열의 `AudioContext.state === "interrupted"`도 안전 일시정지로 감지하도록 확장했다. interrupted 상태의 **실제 iOS 기기 재현은 미수행**.
+- [증거 아티팩트: results.json 및 PC/320px PAUSED 캔버스 2장](https://github.com/noam0127/beagu-index/actions/runs/44995247146/artifacts/14743408309). 실물 ZIP을 내려받아 JSON 및 모바일 PAUSED 스크린샷을 확인했다.
+- **주사율 시뮬레이션 60·90·120Hz**: 프레임 수 `121/181/241`에서 동일 입력 5개 결과가 **PERFECT 4개 + GOOD 1개**, 미입력 1개가 MISS 1개로 **완전 일치**. 음원/화면 시간축 수치 일치 **15회 확인**. 고의로 `frameIndex/60`을 모든 화면에 적용하면 120Hz에서 유효 입력 5개가 모두 허용 범위를 벗어나고 6개 노트가 MISS 처리되는 오류를 검출, 테스트 인프라의 실패 감지 능력 확인.
+- **수동 정지·이어하기**: PC 1280px 및 모바일 320px Chromium에서 각 750ms 이상 정지하고 Web Audio 곡 시계 이동 **0초**, MISS·점수·차트 완료 개수·스케줄 인덱스 증가 **0**. 음악을 이어가면 각각 약 **0.2409초**, **0.2293초** 재진행. 반복 입력으로 정지 중 점수를 취득할 수 없음. 게임 중 `Ⅱ 일시정지`와 `▶ 이어하기` 화면 작동 확인.
+- **탭 전환/가시성**: 실제 Playwright 탭 `bringToFront()` 전환을 실행했으나 **헤드리스 Chromium에서 네이티브 `document.hidden` 변화는 2개 환경 모두 확인되지 않았다**(`native_visibility_event:false`). 이 차이를 숨기지 않고 `visibilitychange`를 **합성하여** 같은 백그라운드 처리 경로를 검사했고 800ms 동안 오디오 시계 이동 0초, 자동 재생 없음, 사용자 수동 복귀가 PASS. Playwright의 포커스 에뮬레이션이 원인인 것으로 판단되지만, 이를 물리 기기의 실제 화면 잠금 합격이라고 주장하지 않는다. 참고: https://github.com/microsoft/playwright/issues/41873.
+- **외부 오디오 중단**: Chromium에서 실제 `AudioContext.suspend()`를 테스트 코드가 직접 실행하고, `statechange` 자동 일시정지 및 수동 이어하기가 PC·320px 모두 PASS. 곡 시계 동결 0초.
+- **화면 잠금 대리**: `PageTransitionEvent("pagehide",{persisted:true})` 및 `pageshow`를 합성하여 BFCache/화면잠금에 해당하는 가시성 전환 처리 코드와 수동 재개를 검증. **실제 Android/iOS 화면 잠금은 검증하지 않았음**(027 단계).
+- **1,850ms 예상치 못한 주 스레드 정체**: 별도 실브라우저에서 오디오 시계가 계속 진행하는 상황을 강제로 재현하고, `MISS=1 → 1`로 일괄 MISS 없이 안전 중단 후 처음부터 재시작 가능함을 확인. 이 경로는 곡을 자동 재개하는 것이 아니라, 오디오와 노트가 어긋날 위험이 있을 때 **명시적으로 중단**하는 보호 조치이다.
+- **기존 기능 전체 회귀**: CI에서 Stage005(98개 판정·121개 좌표·28개 FPS 불변성·고의 실패), Stage002(창작 멜로디 28음·악기/난이도 20조합을 PC·모바일 각각 확인·가상 API 비공개 카나리), Stage006(214개 오프셋·레인 독립성·±120ms PC/모바일 브라우저) 모두 PASS. 해당 소스의 별도 Stage001·003·004 GitHub Actions도 **PASS**.
+- **7개 전문가 역할 재판단**: 판정 결과는 프레임 카운트와 분리되었고, AudioContext가 지속 정지·재개될 때 차트가 보존된다. 다만 헤드리스 탭 가시성 대리검사의 한계, 실제 iOS `interrupted` 이벤트, 물리 오디오 출력·손가락 입력 지연, stop 시 예약 노드 해제까지 해결된 것은 아니다.
+- **후속 미검증**: 실기(Android/iOS) 탭·화면 잠금·재개 027/030, 예정된 오디오 노드 최종 취소/유령 음 012/030, 고주사율 실기 렌더링·저성능 018/028/030, RawGitHack 최초 방문 경고(SB-007) 029/030. 운영 `main`/웹·Supabase는 변경하지 않았다.
