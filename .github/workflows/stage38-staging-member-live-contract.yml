@@ -12,6 +12,11 @@ on:
       - '.github/workflows/stage38-staging-admin-http-negative.yml'
       - 'tests/stage38-page-perf-contract.cjs'
       - 'tests/stage38-staging-live-traffic-contract.cjs'
+      - 'tests/stage38-staging-telemetry-health-contract.cjs'
+      - 'tests/stage38-staging-telemetry-health-regression.sql'
+      - 'supabase/migrations/stage38_staging_admin_telemetry_health_rpc.sql'
+      - 'supabase/migrations/20261120_telemetry_gateway_v2.sql'
+      - 'supabase/migrations/20261120_telemetry_guard_decision_monitoring.sql'
       - 'tests/stage38-staging-live-presence-regression.sql'
       - 'tests/stage38-staging-admin-live-traffic-regression.sql'
       - 'supabase/migrations/stage38_staging_live_presence_foundation.sql'
@@ -34,6 +39,11 @@ on:
       - 'tests/stage38-staging-admin-dashboard-contract.cjs'
       - 'tests/stage38-page-perf-contract.cjs'
       - 'tests/stage38-staging-live-traffic-contract.cjs'
+      - 'tests/stage38-staging-telemetry-health-contract.cjs'
+      - 'tests/stage38-staging-telemetry-health-regression.sql'
+      - 'supabase/migrations/stage38_staging_admin_telemetry_health_rpc.sql'
+      - 'supabase/migrations/20261120_telemetry_gateway_v2.sql'
+      - 'supabase/migrations/20261120_telemetry_guard_decision_monitoring.sql'
       - 'tests/stage38-staging-live-presence-regression.sql'
       - 'tests/stage38-staging-admin-live-traffic-regression.sql'
       - 'supabase/migrations/stage38_staging_live_presence_foundation.sql'
@@ -68,6 +78,8 @@ jobs:
         run: node tests/stage38-page-perf-contract.cjs
       - name: Verify original live presence and live-traffic RPC with privacy controls
         run: node tests/stage38-staging-live-traffic-contract.cjs
+      - name: Verify staging telemetry-health aggregates, access and source parity
+        run: node tests/stage38-staging-telemetry-health-contract.cjs
       - name: Validate preflight and forbidden browser origins on isolated staging
         shell: bash
         run: |
