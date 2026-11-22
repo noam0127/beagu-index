@@ -19,89 +19,136 @@ const PINNED_SHA = "5c95aadad971901a8222f83c52e93bf901a3aeb7";
 const STAGING_REF = "ycwuugggqbunlbwuzvbx";
 const LIVE_REF = "snvzwrexuqavnfvzgxqj";
 const LIVE_KEY = "sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2";
-const DIGEST_PATHS = ["index.html", "js/supabase-config.js", "vercel.json", "data/public-compare-school-directory-v1.json"];
+const REQUIRED_FILES = [
+  "index.html", "js/supabase-config.js", "vercel.json",
+  "data/public-compare-school-directory-v1.json"
+];
+const BUILD_ONLY_FILES = new Set(["vercel.json", ".nojekyll"]);
 const SCHEMA = "beagu-independent-preview-package-v1";
-
+const MAX_LISTED_ASSETS = 1500;
+const MAX_FILE_BYTES = 20 * 1024 * 1024;
 const sha256 = value => createHash("sha256").update(value).digest("hex");
 const failure = (reason, detail) => ({
   status: "BLOCKED", reason, detail, staticReady: false,
   realAccountReady: false, productionReleaseReady: false
 });
+const safeRelativeAssetPath = value => (
+  typeof value === "string" && value.length > 0 &&
+  value.length < 512 && !value.includes("\\") &&
+  !value.includes("?") && !value.includes("#") &&
+  !value.startsWith("/") && !value.startsWith(".") &&
+  value.split("/").every(part => part !== "" && part !== "." && part !== "..") &&
+  !value.includes("%")
+);
+const auditableTextAsset = path =>
+  /\.(?:html?|js|mjs|css|json|webmanifest|xml|svg|csv)$/i.test(path);
 
 export async function inspectPublishedStaticPreview(
   siteUrl, {fetcher=globalThis.fetch, productionUrl="https://baeguindex.com/", expectedManifestSha256}={}
 ) {
-  const scope=inspectPreviewOrigin(productionUrl,siteUrl);
+  const scope = inspectPreviewOrigin(productionUrl, siteUrl);
   if (!scope.pass) return failure("invalid_isolation_origin",scope.errors);
-  if (typeof expectedManifestSha256!=="string" || !/^[0-9a-f]{64}$/.test(expectedManifestSha256))
+  if (typeof expectedManifestSha256 !== "string" || !/^[0-9a-f]{64}$/.test(expectedManifestSha256))
     return failure("trusted_manifest_digest_required");
-  if (typeof fetcher!=="function") return failure("no_http_client");
-  const origin=scope.preview_origin;
-  const responses={};
-  for (const path of ["stage38-release-manifest.json","index.html","js/supabase-config.js","data/public-compare-school-directory-v1.json"]) {
-    const url=new URL("/"+path,origin).href;
+  if (typeof fetcher !== "function") return failure("no_http_client");
+  const origin = scope.preview_origin;
+  const readFile = async path => {
     let response;
     try {
-      response=await fetcher(url,{method:"GET",redirect:"manual",cache:"no-store"});
+      response = await fetcher(new URL("/"+path, origin).href, {
+        method:"GET", redirect:"manual", cache:"no-store"
+      });
     } catch {
-      return failure("network_unavailable",path);
+      return {error:failure("network_unavailable",path)};
     }
-    if (response.status===401 || response.status===403)
-      return failure("vercel_authentication_required",path);
-    if (response.status>=300 && response.status<400)
-      return failure("unexpected_redirect",path);
-    if (response.status!==200)
-      return failure("missing_or_inaccessible_rc_asset",{path,status:response.status});
-    const body=await response.text();
-    responses[path]={body,headers:response.headers};
-  }
-  const manifestText=responses["stage38-release-manifest.json"].body;
-  if (sha256(manifestText)!==expectedManifestSha256)
-    return failure("independent_manifest_digest_mismatch");
-  let manifest;
-  try { manifest=JSON.parse(manifestText); }
-  catch { return failure("invalid_rc_manifest"); }
-  if (!manifest || manifest.schema!==SCHEMA ||
-      manifest.rc_version!=="v1.1.0-rc.1" ||
-      manifest.source_sha!==PINNED_SHA ||
-      manifest.supabase_project_ref!==STAGING_REF ||
-      manifest.environment!=="isolated-test-package" ||
-      manifest.deployment_status!=="unverified")
-    return failure("rc_provenance_mismatch");
-  for (const path of DIGEST_PATHS) {
-    if (typeof manifest.files_sha256?.[path]!=="string" ||
-        !/^[0-9a-f]{64}$/.test(manifest.files_sha256[path]))
-      return failure("missing_file_integrity",path);
-  }
-  const html=responses["index.html"].body;
-  const config=responses["js/supabase-config.js"].body;
-  const publicDirectory=responses["data/public-compare-school-directory-v1.json"].body;
-  if (sha256(html)!==manifest.files_sha256["index.html"] ||
-      sha256(config)!==manifest.files_sha256["js/supabase-config.js"] ||
-      sha256(publicDirectory)!==manifest.files_sha256["data/public-compare-school-directory-v1.json"])
-    return failure("deployed_file_hash_mismatch");
-  if (!config.includes(STAGING_REF) || !config.includes("ycwuugggqbunlbwuzvbx.supabase.co") ||
-      config.includes(LIVE_REF) || config.includes(LIVE_KEY) ||
-      html.includes(LIVE_REF) || html.includes(LIVE_KEY))
-    return failure("production_supabase_reference");
-  for (const [path,{headers}] of Object.entries(responses)) {
-    const policy=headers.get("content-security-policy")||"";
-    const robots=headers.get("x-robots-tag")||"";
+    if (response.status === 401 || response.status === 403)
+      return {error:failure("vercel_authentication_required",path)};
+    if (response.status >= 300 && response.status < 400)
+      return {error:failure("unexpected_redirect",path)};
+    if (response.status !== 200)
+      return {error:failure("missing_or_inaccessible_rc_asset",{path,status:response.status})};
+    const len = Number(response.headers.get("content-length") ?? "0");
+    if (Number.isFinite(len) && len > MAX_FILE_BYTES)
+      return {error:failure("oversize_rc_asset",path)};
+    let data;
+    try {
+      data = new Uint8Array(await response.arrayBuffer());
+    } catch {
+      return {error:failure("unreadable_rc_asset",path)};
+    }
+    if (data.byteLength > MAX_FILE_BYTES)
+      return {error:failure("oversize_rc_asset",path)};
+    const policy = response.headers.get("content-security-policy") || "";
+    const robots = response.headers.get("x-robots-tag") || "";
     if (!policy.includes("https://"+STAGING_REF+".supabase.co") ||
         !policy.includes("frame-ancestors 'none'") ||
         !policy.includes("form-action 'self'") ||
         policy.includes(LIVE_REF))
-      return failure("missing_http_csp_header",path);
+      return {error:failure("missing_http_csp_header",path)};
     if (!robots.includes("noindex"))
-      return failure("missing_noindex_header",path);
-    if (headers.get("x-frame-options")!=="DENY")
-      return failure("missing_frame_protection",path);
+      return {error:failure("missing_noindex_header",path)};
+    if (response.headers.get("x-frame-options") !== "DENY")
+      return {error:failure("missing_frame_protection",path)};
+    return {data};
+  };
+  const response = await readFile("stage38-release-manifest.json");
+  if (response.error) return response.error;
+  const manifestText = new TextDecoder().decode(response.data);
+  if (sha256(response.data) !== expectedManifestSha256)
+    return failure("independent_manifest_digest_mismatch");
+  let manifest;
+  try { manifest = JSON.parse(manifestText); }
+  catch { return failure("invalid_rc_manifest"); }
+  if (!manifest || manifest.schema !== SCHEMA ||
+      manifest.rc_version !== "v1.1.0-rc.1" ||
+      manifest.source_sha !== PINNED_SHA ||
+      manifest.supabase_project_ref !== STAGING_REF ||
+      manifest.environment !== "isolated-test-package" ||
+      manifest.deployment_status !== "unverified")
+    return failure("rc_provenance_mismatch");
+
+  const digests = manifest.files_sha256;
+  if (!digests || typeof digests !== "object" || Array.isArray(digests))
+    return failure("missing_file_integrity");
+  const paths = Object.keys(digests);
+  if (paths.length === 0 || paths.length > MAX_LISTED_ASSETS)
+    return failure("invalid_rc_asset_inventory");
+  for (const path of REQUIRED_FILES) {
+    if (!Object.hasOwn(digests,path)) return failure("missing_file_integrity",path);
+  }
+  for (const path of paths) {
+    if ((path !== ".nojekyll" && !safeRelativeAssetPath(path)) ||
+        path === "stage38-release-manifest.json" ||
+        !/^[0-9a-f]{64}$/.test(digests[path]))
+      return failure("invalid_rc_asset_inventory",path);
+  }
+
+  // All publicly served files must be checked; looking only at index.html
+  // permits changed JS/CSS/binary game assets to evade static acceptance.
+  // vercel.json and .nojekyll are packaging controls, not HTTP-served assets.
+  const servedPaths = paths.filter(path => !BUILD_ONLY_FILES.has(path)).sort();
+  for (const path of servedPaths) {
+    const received = await readFile(path);
+    if (received.error) return received.error;
+    if (sha256(received.data) !== digests[path])
+      return failure("deployed_file_hash_mismatch",path);
+    if (auditableTextAsset(path)) {
+      const data = new TextDecoder().decode(received.data);
+      if (data.includes(LIVE_REF) || data.includes(LIVE_KEY))
+        return failure("production_supabase_reference",path);
+      if (path === "js/supabase-config.js" &&
+          (!data.includes(STAGING_REF) ||
+           !data.includes("https://"+STAGING_REF+".supabase.co")))
+        return failure("staging_supabase_reference_missing",path);
+    }
   }
   return {
     status:"STATIC_HTTP_VERIFIED",
     staticReady:true,realAccountReady:false,productionReleaseReady:false,
     checkedOrigin:origin,pinnedSha:PINNED_SHA,
-    trustedManifestSha256:expectedManifestSha256,checkedAssets:4,
+    trustedManifestSha256:expectedManifestSha256,
+    checkedAssets:1 + servedPaths.length,
+    totalManifestFiles:paths.length,
     remaining:"Owner approval, real-browser storage separation, staging Auth/RLS and E2E QA"
   };
 }
