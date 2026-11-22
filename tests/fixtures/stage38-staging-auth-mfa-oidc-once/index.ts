@@ -74,6 +74,7 @@ async function callEndpoint(url: string, jwt: string, body: Record<string, unkno
 Deno.serve(async (req: Request) => {
   // No CORS/preflight surface; this endpoint is never browser accessible.
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  if (req.headers.has("Origin")) return json({ error: "browser_request_not_allowed" }, 403);
   const bearer = req.headers.get("Authorization")?.match(/^Bearer ([A-Za-z0-9._-]+)$/)?.[1];
   if (!bearer) return json({ error: "not_authorized" }, 401);
   try {
