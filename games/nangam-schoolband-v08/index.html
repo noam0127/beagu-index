@@ -517,12 +517,25 @@ function noteStepSpacing(){return NOTE_TRAVEL_PX/NOTE_PREVIEW_SECONDS*BEAT/4}
 const WIDTHS=[.20,.17,.14,.11,.075],PERFECT=[.09,.075,.06,.05,.036];
 const $=id=>document.getElementById(id);
 const canvas=$("track"),g=canvas.getContext("2d");
-let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0;
+let school=null, instrument="guitar",playing=false,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
 let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0;
 let masterBus=null,compressor=null,noiseBuffer=null;
 let particles=[],lanePulse=[0,0,0,0,0],lastImpactAt=0,impactStrength=0,impactLane=0;
 const LANE_GLOW_MS=175,PARTICLE_LIMIT=60;
-const motionReduced=Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches);
+const systemMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")||null;
+const FX_PREF_KEY="nangam-band-fx-v1";
+let userReducedMotion=false,vibrationEnabled=false;
+try{const saved=JSON.parse(localStorage.getItem(FX_PREF_KEY)||"{}");userReducedMotion=saved.reduce===true;vibrationEnabled=saved.vibration===true}catch(_){/* private mode: session settings only */}
+function motionReduced(){return Boolean(systemMotion?.matches||userReducedMotion)}
+function persistFxSettings(){try{localStorage.setItem(FX_PREF_KEY,JSON.stringify({reduce:userReducedMotion,vibration:vibrationEnabled}))}catch(_){}}
+function syncFxSettings(){
+ const reduced=motionReduced();
+ document.documentElement.dataset.reducedFx=String(reduced);
+ $("reduceFx").checked=reduced;$("reduceFx").disabled=Boolean(systemMotion?.matches);
+ $("vibrationFx").checked=!reduced&&vibrationEnabled;$("vibrationFx").disabled=reduced;
+ if(reduced){particles=[];lastImpactAt=0;lanePulse.fill(0);$("impactRing").className="impact-ring"}
+ draw();
+}
 const IMPACT_COLORS=["#8bcaff","#ffc68f","#b1f7cd","#dfbaff","#ffe7a0"];
 function safeText(id,text){$(id).textContent=String(text)}
 function status(text){safeText("feedback",text)}
@@ -600,6 +613,11 @@ function updateControlsHint(){
 }
 function renderPads(){
  const pad=$("pads");pad.replaceChildren();pad.style.setProperty("--lane-count",INST[instrument].lanes.length);pad.dataset.instrument=instrument;
+ const fx=$("laneFx");fx.replaceChildren();fx.style.setProperty("--fx-lanes",INST[instrument].lanes.length);
+ for(let i=0;i<INST[instrument].lanes.length;i++){
+  const laneEl=document.createElement("div");laneEl.className="lane-fx";laneEl.dataset.lane=String(i);
+  const badge=document.createElement("div");badge.className="lane-event";badge.setAttribute("aria-hidden","true");laneEl.append(badge);fx.append(laneEl);
+ }
  for(const [i,lane] of INST[instrument].lanes.entries()){
   const b=document.createElement("button");b.type="button";b.className="taphit";b.dataset.lane=String(i);
   b.setAttribute("aria-label",lane[0]+" 연주, 키보드 "+lane[1]);
@@ -748,7 +766,35 @@ function hud(){
  safeText("combo",combo);
  safeText("accuracy",judged?Math.round(100*hits/judged)+"%":"—");
 }
-
+// Each lane owns its own animation and timeout: simultaneous hits stay readable.
+function restartFx(el,kind,holdMs){
+ clearTimeout(el._fxTimer);
+ for(const animation of el.getAnimations())animation.cancel();
+ el.className=kind;
+ void el.offsetWidth;
+ el.className=kind+" animate";
+ el._fxTimer=setTimeout(()=>{el.className=kind},holdMs);
+}
+function laneFeedback(lane,type){
+ const target=$("laneFx").querySelector('[data-lane="'+lane+'"] .lane-event');if(!target)return;
+ const labels={perfect:"PERFECT",good:"GOOD",miss:"MISS",empty:"NO NOTE"};
+ target.textContent=labels[type];
+ restartFx(target,"lane-event "+type,motionReduced()?260:390);
+}
+function comboFeedback(){
+ if(combo<3||!(combo===3||combo%5===0))return;
+ const badge=$("comboFx");badge.textContent=combo+" COMBO";
+ restartFx(badge,"combo-fx",motionReduced()?260:490);
+}
+function clearFxFeedback(){
+ for(const el of [$("judgeFx"),$("impactRing"),$("comboFx"),...$("laneFx").querySelectorAll(".lane-event")]){
+  clearTimeout(el._fxTimer);for(const fx of el.getAnimations())fx.cancel();
+  if(el.id==="judgeFx")el.className="judgement";
+  else if(el.id==="impactRing")el.className="impact-ring";
+  else if(el.id==="comboFx")el.className="combo-fx";
+  else el.className="lane-event";
+ }
+}
 function triggerImpact(lane,isPerfect){
  const when=performance.now();impactLane=lane;lastImpactAt=when;impactStrength=isPerfect?1:.72;
  lanePulse[lane]=when+LANE_GLOW_MS;
