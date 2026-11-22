@@ -135,6 +135,22 @@ async function contexts(){
     // Test not just 2 simulated PointerEvent calls, but Chromium touchscreen dispatch.
     if(mobile){
      const cdp=await context.newCDPSession(page);
+     // Demo school defaults to NORMAL. Use an isolated fictitious school with
+     // EXTREME difficulty so the preexisting keyboard chart contains chords.
+     await page.route("**/schoolband-school-read-v1**",route=>{
+      const u=new URL(route.request().url());
+      const body=u.searchParams.has("schools")
+       ?{schools:[{school_id:"stage017-fiction",school_name:"동시연주가상초등학교",sido_standard:"가상"}]}
+       :{school:{school_id:"stage017-fiction",school_name:"동시연주가상초등학교",
+         region:"가상",eligible:true,difficulty:"extreme",source_year:2026}};
+      return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(body)});
+     });
+     await page.locator('[data-step-target="school"]').click();
+     await page.locator("#schoolSearch").fill("동시연주");
+     await page.waitForFunction(()=>document.querySelector("#searchResults").children.length===1);
+     await page.locator("#searchResults button").click();
+     await page.waitForFunction(()=>window.nangamSchoolbandV08.getUxStep()==="instrument");
+     assert.equal(await page.evaluate(()=>window.nangamSchoolbandV08.getDifficulty()),"extreme");
      await page.locator('[data-inst="keys"]').click();
      await page.locator("#start").click();
      await page.waitForFunction(()=>window.nangamSchoolbandV08.getStatus().playing);
