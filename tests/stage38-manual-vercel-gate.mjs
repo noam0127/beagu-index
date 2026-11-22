@@ -7,7 +7,7 @@ const digest = "d757a24a1b2541bb52f8eaeb5b1af71706d8e7d1f4bcfee02512e9aa68ea7f70
 
 assert.match(workflow, /^on:\n  workflow_dispatch:/m);
 const trigger = workflow.split("\npermissions:")[0];
-assert.doesNotMatch(trigger, /(?m)^\s+(push|pull_request|schedule):/);
+assert.doesNotMatch(trigger, /^\s+(push|pull_request|schedule):/m);
 assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
 assert.match(workflow, /github\.event_name == 'workflow_dispatch'/);
 assert.match(workflow, /name: beagu-stage38-vercel-preview-approved/);
