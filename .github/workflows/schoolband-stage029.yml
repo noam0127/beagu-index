@@ -1,0 +1,42 @@
+name: Schoolband 029 independent static preview and immutable HTTP verification
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'games/nangam-schoolband-v08/preview/index.html'
+      - 'games/nangam-schoolband-v08/charts/school-homepages.v1.json'
+      - 'scripts/test-schoolband-stage029.cjs'
+      - '.github/workflows/schoolband-stage029.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: schoolband-stage029-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  immutable-static-preview:
+    if: github.ref == 'refs/heads/schoolband-playtest'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build allowlisted static preview and verify same-host HTTP
+        run: node scripts/test-schoolband-stage029.cjs
+      - name: Upload no-CNAME offline test-preview bundle (no private data)
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-029-static-preview-${{ github.sha }}
+          path: artifacts/schoolband-stage029/site/
+          retention-days: 7
+      - name: Verify independent free CDN at exact commit (external HTTP)
+        run: node scripts/test-schoolband-stage029.cjs --external
+      - name: Explicitly confirm NO paid deployment or production promotion
+        run: |
+          test ! -f artifacts/schoolband-stage029/site/CNAME
+          echo "Static-only preview; GitHub Pages/Vercel settings and operating domain unchanged."
