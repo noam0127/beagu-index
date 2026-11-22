@@ -160,6 +160,12 @@ def build():
             nested_cname.unlink()
         make_preview_banner(preview_dir)
         isolate_preview_backend(preview_dir)
+        # Public, immutable proof of the SHA actually packaged for this preview.
+        # This is written after isolation; do not accept a candidate-provided file.
+        health = {"schema": 1, "kind": "staging", "staging_sha": staging,
+                  "supabase_ref": "ycwuugggqbunlbwuzvbx"}
+        (preview_dir / "beagu-preview-health.json").write_text(
+            json.dumps(health, sort_keys=True) + "\n", encoding="utf-8")
         (preview_dir / ".nojekyll").touch()
     if (OUTPUT / "CNAME").read_text(encoding="utf8").strip() != "baeguindex.com":
         raise RuntimeError("Production domain mismatch")
