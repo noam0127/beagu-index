@@ -161,10 +161,10 @@ function parseMusicXml(input,rights){
   ensure(divisions!==null&&meter!==null&&tempo!==null,"xml_tempo_divisions_meter_required");
   let position=0;
   for(const n of xmlNodes(m.note)){
-   ensure(!n.chord&&!n.grace&&!n.tie&&!n.notations?.tied,"chords_grace_ties_stage014_required");
+   ensure(!Object.hasOwn(n,"chord")&&!Object.hasOwn(n,"grace")&&!Object.hasOwn(n,"tie")&&!n.notations?.tied,"chords_grace_ties_stage014_required");
    const len=Number(n.duration);
    ensure(Number.isInteger(len)&&len>0&&len<=divisions*4,"invalid_xml_note_duration");
-   if(!n.rest){
+   if(!Object.hasOwn(n,"rest")){
     ensure(n.pitch&&typeof n.pitch==="object","note_pitch_required");
     const p=n.pitch,step=String(p.step),alter=p.alter===undefined?0:Number(p.alter),oct=Number(p.octave);
     ensure(Object.hasOwn(NATURAL,step)&&Number.isInteger(alter)&&alter>=-2&&alter<=2&&Number.isInteger(oct),"invalid_xml_pitch");
