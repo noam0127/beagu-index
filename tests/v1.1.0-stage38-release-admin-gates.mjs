@@ -44,8 +44,21 @@ state=snapshot(job("queued"),null);
 assert.equal(state.value,0);assert.equal(state.completed,false);
 state=snapshot(job("running"),null);
 assert.equal(state.indeterminate,true);assert.equal(state.value,null);assert.equal(state.completed,false);
-state=snapshot(null,job("deployed"));
+state=snapshot(null,job("deployed"),{staging_sha:sha});
 assert.equal(state.value,100);assert.equal(state.completed,true);
+state=snapshot(null,job("deployed"),{staging_sha:"1".repeat(40)});
+assert.equal(state.state,"superseded","Old successful job must not show false 100% after rollback");
+assert.equal(state.value,0);assert.equal(state.completed,false);
+state=snapshot(null,job("deployed"));
+assert.equal(state.state,"superseded","No server state must not count as deployment confirmation");
+assert.equal(state.completed,false);
+state=snapshot(null,{...job("deployed"),target:"production"},
+  {staging_sha:sha,production_sha:"1".repeat(40)});
+assert.equal(state.state,"superseded","An old production deployment must not be called current");
+state=snapshot(null,{...job("deployed"),target:"production"},
+  {staging_sha:"1".repeat(40),production_sha:sha});
+assert.equal(state.value,100);
+assert.equal(state.completed,true);
 state=snapshot(null,job("failed"));
 assert.equal(state.completed,false);assert.equal(state.value,0);
 state=snapshot(null,job("cancelled"));
@@ -89,7 +102,8 @@ assert.match(script,/const blockedRc=\(s\.staging_sha===rc\.sha\)/,
 assert.match(script,/el\("releaseProdApply"\)\.disabled=busy\|\|active\|\|blockedRc/,
   "RC block is reflected on the user interface");
 assert.match(script,/releaseCandidateRegister/);
-assert.match(script,/BeaguReleaseProgress\.snapshot\(job,data\.last_job\)/);
+assert.match(script,/BeaguReleaseProgress\.snapshot\(job,data\.last_job,s\)/,
+  "Completion must use the current server release SHA");
 assert.match(script,/if\(progress\.indeterminate\)bar\.removeAttribute\("value"\)/);
 assert.match(script,/bar\.value=progress\.value/);
 assert.match(script,/if\(!proof\.permitted\|\|!proof\.mfa_verified\|\|proof\.role!=="owner"\)/);
