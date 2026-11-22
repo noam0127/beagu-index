@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
-import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
+import { releaseMetrics, legacyRows, canSortRankedSchools } from '../_shared/release-policy.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -167,6 +167,10 @@ Deno.serve(async(req:Request)=>{
       !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
       (!searchText&&!region)||(!region&&office))
       return send({error:'INVALID_SEARCH_FILTER'},400,origin);
+   // Lv1 may see previously released school facts but must not sort by
+   // the Lv2-only housing-price criterion. Enforce before any DB read.
+   if(!canSortRankedSchools(Number(session.access_level),sort))
+     return send({error:'ACCESS_DENIED'},403,origin);
    // Level access is checked above, before any cached school record is fetched.
    // The RLS-protected cache contains only fields from the approved public sort view.
    // On cache read errors, preserve the original verified query as the fallback.
