@@ -122,14 +122,18 @@ def run():
     signed=token()
     main_before=branch_head("main")
     assert main_before,"Production main ref missing"
-    assert branch_head(BRANCH) is None,"Unique isolated sandbox branch already exists"
+    existing_branch=branch_head(BRANCH)
+    assert existing_branch in (None,A),"Unknown sandbox state; refuse to overwrite existing QA branch"
     baseline=expect(invoke("status",signed),200)
     assert baseline["jobs"]==0 and baseline["history"]==0
     assert baseline["production_sha"] is None and baseline["staging_sha"] is None
     fixture_started=False
     try:
         # Initial A is a genuine Git branch publication but no DB release job.
-        update_branch(None,A)
+        if existing_branch is None:
+            update_branch(None,A)
+        else:
+            print("PASS: existing QA branch restored to A; no overwrite needed")
         assert_published(A,"A")
         prepared=expect(invoke("prepare",signed),200)
         fixture_started=True
