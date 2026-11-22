@@ -113,7 +113,11 @@ function arrange(source,{seed=14014}={}){
  function accentAt(bar,tick){
   const local=tick-bar.startTick;
   if(local===0)return "strong";
-  if(bar.denominator===8&&bar.numerator%3===0&&local%(PPQ*1.5)===0)return "group";
+  if(bar.denominator===8&&bar.numerator%3===0){
+   // 6/8 accents each dotted quarter: the intervening eighths remain weak
+   // even when their offset happens to be a quarter-note multiple.
+   return local%(PPQ*1.5)===0?"group":"syncopated";
+  }
   if(local%PPQ===0)return "beat";
   return "syncopated";
  }
