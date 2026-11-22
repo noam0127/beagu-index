@@ -53,3 +53,19 @@ jobs:
       - name: Scope notice
         run: |
           echo 'Static checks only. Does not prove live DB/RLS, browser UX, latency, or production readiness.'
+
+  staging-http-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check live production and preview URL using GET requests only
+        env:
+          BEAGU_SITE_ORIGIN: https://baeguindex.com
+          BEAGU_SMOKE_ATTEMPTS: '2'
+          BEAGU_SMOKE_TIMEOUT: '10'
+          BEAGU_SMOKE_RETRY_SECONDS: '1'
+        run: python3 tests/staging-http-smoke.py
