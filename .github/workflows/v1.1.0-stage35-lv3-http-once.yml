@@ -1,0 +1,21 @@
+name: v1.1.0 stage35 one-time real Lv3 Auth HTTP E2E
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-lv3-http-once.py'
+      - '.github/workflows/v1.1.0-stage35-lv3-http-once.yml'
+permissions:
+  contents: read
+jobs:
+  staging-real-lv3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify actual two-user Auth Lv3 and suspended-member access on isolated staging
+        run: python3 tests/v1.1.0-stage35-lv3-http-once.py
+      - name: Scope
+        if: always()
+        run: |
+          echo "Staging-only test. Deactivate one-time QA Edge Function and confirm zero Auth/user/session rows."
