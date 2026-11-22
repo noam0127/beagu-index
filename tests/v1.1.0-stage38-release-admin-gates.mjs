@@ -75,7 +75,6 @@ assert.match(api,/\.like\("version","v%-rc\.%"\)/,
 assert.match(api,/if\(rcLookupError\|\|priorRcs\?\.length\)/,
   "RC history lookup error must fail closed");
 assert.match(api,/release_candidate_production_locked/);
-assert.match(api,/release_candidate_production_locked/);
 assert.match(api,/last_job:previousJob/);
 assert.match(api,/\.select\("id,status,action,target,version,to_sha,created_at,started_at,finished_at,error_code"\)/);
 const html=readFileSync("admin-updates.html","utf8");
@@ -85,6 +84,10 @@ for(const id of ["releaseCandidateRegister","releaseCandidateStatus","releasePro
 assert.ok(html.includes('value="0"'));
 const script=readFileSync("js/beagu-admin-updates-v1.js","utf8");
 assert.match(script,/register_stage_candidate/);
+assert.match(script,/const blockedRc=\(s\.staging_sha===rc\.sha\)/,
+  "Production Apply button must be disabled for pinned RC code even if version is changed");
+assert.match(script,/el\("releaseProdApply"\)\.disabled=busy\|\|active\|\|blockedRc/,
+  "RC block is reflected on the user interface");
 assert.match(script,/releaseCandidateRegister/);
 assert.match(script,/BeaguReleaseProgress\.snapshot\(job,data\.last_job\)/);
 assert.match(script,/if\(progress\.indeterminate\)bar\.removeAttribute\("value"\)/);
