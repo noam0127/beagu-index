@@ -155,8 +155,11 @@ def isolate_preview_backend(preview_dir):
     if stage_ref not in config.read_text(encoding="utf-8") or changed < 1:
         raise RuntimeError("Staging Supabase URL rewrite did not complete")
     for file in preview_dir.rglob("*"):
-        if file.is_file() and file.suffix.lower() in (".js", ".html", ".mjs"):
-            if live_ref in file.read_text(encoding="utf-8") or live_key in file.read_text(encoding="utf-8"):
+        if file.is_file() and file.suffix.lower() in (
+            ".js", ".html", ".mjs", ".json", ".css", ".webmanifest", ".xml", ".svg"
+        ):
+            text = file.read_text(encoding="utf-8")
+            if live_ref in text or live_key in text:
                 raise RuntimeError("Production Supabase configuration leaked into preview: " + str(file))
     print("Preview isolated to staging Supabase; rewritten files:", changed)
 
