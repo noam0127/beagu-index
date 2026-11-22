@@ -7,7 +7,7 @@
 
 ## 001/030 — 저장소·시험 웹·기준 버전 전수 조사 (2026-11-22)
 
-상태: **IN PROGRESS — external browser/HTTP test not yet verified**.
+상태: **COMPLETE — baseline audited, hosted UI reproducible after consent; first-visit notice logged as SB-007**.
 
 - 최초 기준 commit: test=\`582fc4fb3f92e93c6841209a864dfb3377b0b73f\`; main=\`0ca283cd09cd63520d9ce8e37463bed8d2f65541\`.
 - 현재 기준 HTML: \`games/nangam-schoolband-v08/index.html\` (blob \`88d5ed2089498fc67c7e951a2af8cf1b6fb01635\`).
@@ -16,8 +16,12 @@
 - Risk IDs: SB-001–SB-006. Seven-role review and detailed sources: \`docs/schoolband-stage001-baseline-audit.md\`.
 - Added staged test: \`scripts/check-schoolband-baseline.cjs\` (static contract and Chromium DOM/browser smoke, requires GitHub Actions run).
 - GitHub commits: audit=\`dfb7ec5ca311fedad9962105a3a16a36fe6c0cd3\`; browser/static test=\`501e24d3cb411a4d3ba195cc749b87d6ba4d4136\`.
-- External tool limitations: direct web-open and local HTTP requests cannot retrieve RawGitHack, redirect or baeguindex.com in this environment. Do not claim hosted HTML, music playback or device success without fresh evidence.
-- Next: execute GitHub Actions Chromium check including hosted URLs. If passing, record verified run ID, URL, screenshots and completion commit. If failing, repair **within 001** before moving on to 002.
+- Direct assistant-side HTTP was unavailable; **GitHub-hosted Chromium** confirmed HTTP 200 `text/html` and playable game DOM for both hosted URLs after test-only consent. No physical device listening test has been done.
+- CI evidence: PASS run `44974305321` for code commit `20df18e7903eb204e0aa4faf5dbbafe409d9282f`: https://github.com/noam0127/beagu-index/actions/runs/44974305321
+- Chromium PASS: local desktop 1280×900, local mobile viewport 320×640, RawGitHack after consent and Supabase redirect after consent. Instrument pads 4/4/3/5 and start/stop checked; 4 screenshots: https://github.com/noam0127/beagu-index/actions/runs/44974305321/artifacts/14735295332
+- Defect SB-007 HIGH: RawGitHack first-visit confirmation replaces game page at both trial URLs; direct-to-game hosting must be fixed before final trial release, step 029.
+- 001 passed baseline audit criteria with host defect explicitly recorded; audio listening on real devices remains unverified until 027.
+- Next: 002/030 one-command tests, deliberate failure detection and quantified baselines.
 
 ## 002/030 — pending
 One-command test infrastructure, deliberate failure detection, measurement baselines and continuous progress log updates.
