@@ -64,6 +64,8 @@ async function main() {
       assert.equal(new URL(page.url()).origin, origin, "Page left isolated review origin");
       const content = (await page.locator("body").innerText({ timeout: 10000 })).trim();
       assert.ok(content.length > 10, "Page body empty or unrendered: " + file);
+      const productionLinks = await page.locator('a[href*="baeguindex.com"], link[href*="baeguindex.com"]').count();
+      assert.equal(productionLinks, 0, "Isolated RC contains a clickable or canonical production-site link: " + file);
       console.log("PASS: browser rendered " + file + " (visible text chars: " + content.length + ")");
       if (file === "/admin.html") {
         await page.locator("#adminLogin").waitFor({ state: "visible", timeout: 12000 });
@@ -84,6 +86,8 @@ async function main() {
         console.log("PASS: real browser invalid login denied, dashboard/MFA hidden, password cleared");
       }
       if (file === "/admin-updates.html") {
+        assert.equal(await page.locator('.release-site-link[aria-disabled="true"]').count(), 1,
+          "Explicit production navigation was not disabled in isolated QA");
         await page.locator("#releaseLogin").waitFor({ state: "visible", timeout: 12000 });
         assert.equal(await page.locator("#releaseDashboard").isVisible(), false,
           "Unauthenticated user reached release controls");
