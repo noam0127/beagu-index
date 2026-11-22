@@ -35,6 +35,7 @@ on:
       - 'tests/stage38-session-revocation-policy.mjs'
       - 'tests/stage38-synthetic-referral-proof-cases.sql'
       - 'tests/stage38-synthetic-submission-claim-cases.sql'
+      - 'tests/stage38-synthetic-session-revocation-db.sql'
       - 'docs/releases/templates/stage38-approved-vercel-preview.yml'
   workflow_dispatch:
 jobs:
