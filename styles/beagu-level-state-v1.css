@@ -1,0 +1,142 @@
+.beagu-level-state{box-sizing:border-box;position:fixed;top:15px;right:max(18px,calc(50vw - 580px));z-index:900;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:84px;min-height:40px;padding:8px 13px;border:1px solid #d8e2f0;border-radius:999px;background:#fff;box-shadow:0 4px 15px rgba(18,45,83,.085);color:#60718a;text-decoration:none!important;white-space:nowrap;font:800 13px/1.2 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;transition:background-color .15s,border-color .15s,color .15s}
+.beagu-level-state::before{content:"";width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#a3b2c4}
+.beagu-level-state[data-level="1"]{background:#edf5ff;border-color:#b8d4ff;color:#1858bd}
+.beagu-level-state[data-level="1"]::before{background:#2563eb}
+.beagu-level-state[data-level="2"]{background:#f1efff;border-color:#d3ccff;color:#4c37ad}
+.beagu-level-state[data-level="2"]::before{background:#6956cc}
+.beagu-level-state:hover{border-color:#9ebbec;background:#f5f9ff}
+.beagu-level-state:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+.beagu-unified-inner{padding-right:119px}
+.beagu-embedded .beagu-level-state{display:none!important}
+@media(max-width:760px){.beagu-level-state{top:12px;right:14px;min-width:79px;min-height:36px;padding:7px 11px;font-size:12px}.beagu-unified-inner{padding-right:0}.beagu-unified-brand{max-width:calc(100% - 91px)}}
+@media(max-width:390px){.beagu-unified-brand{font-size:15px!important;gap:8px}.beagu-unified-name{letter-spacing:0}.beagu-level-state{right:11px;min-width:72px;padding:7px 9px}}
+@media(prefers-reduced-motion:reduce){.beagu-level-state{transition:none}}
+
+
+/* One shared, mobile-first upgrade dialog for Lv.1 participation and provisional Lv.2. */
+.beagu-level-state[data-provisional="true"]{background:#f6efff;border-color:#cbbde8;color:#603c94}
+.beagu-level-state[data-provisional="true"]::before{background:#9669d4}
+body.beagu-levelup-open{overflow:hidden}
+.beagu-levelup-overlay{position:fixed;inset:0;z-index:5000;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.60);backdrop-filter:blur(7px)}
+.beagu-levelup-dialog{box-sizing:border-box;position:relative;width:min(100%,430px);max-height:min(92dvh,720px);overflow-y:auto;border:1px solid #e0e8f1;border-radius:22px;background:#fff;box-shadow:0 25px 80px rgba(10,26,58,.26);padding:30px 25px;color:#1c304b;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.beagu-levelup-eyebrow{display:block;color:#7187a8;font-size:10px;font-weight:800;letter-spacing:.14em}
+.beagu-levelup-dialog h2{margin:9px 0 7px;font-size:25px;letter-spacing:-.045em;color:#192e53}
+.beagu-levelup-description{font-size:13px;color:#64748b;line-height:1.6;margin:0 0 20px}
+.beagu-levelup-close{position:absolute;right:17px;top:15px;width:33px;height:33px;border:0;border-radius:50%;background:#f1f5f9;color:#64748b;cursor:pointer;font-size:25px;line-height:30px}
+.beagu-levelup-dialog label{display:block;font-size:12px;font-weight:800;color:#344b6b;margin-bottom:8px}
+.beagu-levelup-inputrow{display:flex;align-items:stretch;gap:7px;background:#f7faff;border:1px solid #cedbeb;border-radius:12px;padding:5px}
+.beagu-levelup-inputrow:focus-within{outline:2px solid #93c5fd;outline-offset:1px}
+.beagu-levelup-inputrow input{flex:1;width:100%;min-width:0;padding:11px 9px;border:0;outline:0;background:transparent;color:#10233e;font-size:15px}
+.beagu-levelup-inputrow button{flex:0 0 auto;border:0;border-radius:9px;background:#e8f0ff;color:#2151a8;padding:0 11px;font-size:12px;font-weight:800;cursor:pointer}
+.beagu-levelup-submit,.beagu-levelup-trigger{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:11px;min-height:44px;background:#2458bd;color:white;font-weight:800;font-size:14px;cursor:pointer;padding:11px 18px;font-family:inherit}
+.beagu-levelup-submit{width:100%;margin-top:13px}
+.beagu-levelup-submit:disabled{opacity:.55;cursor:wait}
+.beagu-levelup-trigger{margin:6px 0 12px;max-width:100%}
+.beagu-levelup-feedback{margin:8px 0 0;color:#b42336;font-size:12px;min-height:15px}
+.beagu-levelup-links{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.beagu-levelup-links a{text-decoration:none;text-align:center;border:1px solid #dce6f4;background:#f6f9fd;border-radius:11px;padding:11px 7px;color:#295186;font-weight:800;font-size:12px}
+.beagu-levelup-note{margin:15px 0 0;font-size:11px;color:#64748b;line-height:1.7}
+.beagu-levelup-dialog button:focus-visible,.beagu-levelup-links a:focus-visible,.beagu-levelup-trigger:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+@media(max-width:480px){.beagu-levelup-dialog{padding:25px 17px;border-radius:17px}.beagu-levelup-dialog h2{font-size:22px}}
+@media(prefers-reduced-motion:reduce){.beagu-levelup-overlay{backdrop-filter:none}}
+
+
+/* The badge is a real child of the header: logo and Lv badge share the FIRST row.
+   The navigation gets a separate full-width SECOND row on mobile.
+   No fixed/absolute positioning: never overlay a menu item at any viewport width. */
+.beagu-level-state-container{
+  position:relative;
+  top:auto;
+  right:auto;
+  z-index:auto;
+  display:block;
+  width:max-content;
+  max-width:100%;
+  margin:0;
+  pointer-events:auto;
+}
+.beagu-level-state-container > .beagu-level-state{
+  position:static;
+  top:auto;
+  right:auto;
+  margin:0;
+  pointer-events:auto;
+}
+/* Desktop: logo | navigation | level status. */
+.beagu-unified-header .beagu-unified-inner{
+  display:grid;
+  grid-template-columns:max-content minmax(0,1fr) max-content;
+  align-items:center;
+  column-gap:18px;
+  padding-right:0;
+}
+.beagu-unified-header .beagu-unified-brand{
+  grid-column:1;
+  min-width:0;
+  max-width:none;
+}
+.beagu-unified-header .beagu-unified-nav{
+  grid-column:2;
+  min-width:0;
+  justify-self:end;
+}
+.beagu-unified-header .beagu-level-state-container{
+  grid-column:3;
+  justify-self:end;
+}
+/* Mid-size screens use the same two-row pattern, avoiding compressed menus. */
+@media(max-width:1020px){
+  .beagu-unified-header .beagu-unified-inner{
+    grid-template-columns:minmax(0,1fr) max-content;
+    grid-template-rows:auto auto;
+    row-gap:11px;
+    column-gap:8px;
+    padding-right:0;
+  }
+  .beagu-unified-header .beagu-unified-brand{grid-column:1;grid-row:1;min-width:0;max-width:none;}
+  .beagu-unified-header .beagu-level-state-container{grid-column:2;grid-row:1;justify-self:end;}
+  .beagu-unified-header .beagu-unified-nav{
+    grid-column:1 / -1;
+    grid-row:2;
+    justify-self:stretch;
+    width:100%;
+  }
+}
+/* Mobile: brand and badge are aligned; all five nav entries remain visible below. */
+@media(max-width:760px){
+  .beagu-unified-header .beagu-unified-inner{
+    grid-template-columns:minmax(0,1fr) max-content;
+    grid-template-rows:auto auto;
+    column-gap:8px;
+    row-gap:11px;
+    padding-right:0;
+  }
+  .beagu-unified-header .beagu-unified-brand{
+    grid-column:1;
+    grid-row:1;
+    min-width:0;
+    max-width:none;
+  }
+  .beagu-unified-header .beagu-level-state-container{
+    grid-column:2;
+    grid-row:1;
+    justify-self:end;
+  }
+  .beagu-unified-header .beagu-level-state-container > .beagu-level-state{
+    min-height:35px;
+    min-width:70px;
+    padding:7px 10px;
+    font-size:12px;
+    box-shadow:0 3px 12px rgba(18,45,83,.08);
+  }
+  .beagu-unified-header .beagu-unified-nav{
+    grid-column:1 / -1;
+    grid-row:2;
+    justify-self:stretch;
+    width:100%;
+  }
+}
+@media(max-width:390px){
+  .beagu-unified-header .beagu-unified-brand{gap:8px;font-size:15px;}
+  .beagu-unified-header .beagu-level-state-container > .beagu-level-state{min-width:65px;padding:7px 8px;}
+}

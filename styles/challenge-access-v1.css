@@ -1,0 +1,40 @@
+/* Challenge uses the same form, badge and buttons as search and compare.
+   All common visual rules live in beagu-auth-unified-v1.css and
+   beagu-auth-journey-v1.css; only authenticated-state sizing differs. */
+body.beagu-page-challenge #challengeAccessPanel{
+  width:100%;
+  box-sizing:border-box;
+}
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-form{
+  width:100%;
+  min-width:0;
+  margin:0;
+  gap:14px;
+}
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-field,
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-input-wrap{
+  min-width:0;
+  width:100%;
+}
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-message{
+  color:#61748c;
+}
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-message:not(:empty){
+  margin:12px 0 0;
+}
+body.beagu-page-challenge #challengeAccessPanel[data-auth-level="1"],
+body.beagu-page-challenge #challengeAccessPanel[data-auth-level="2"]{
+  min-height:0;
+  padding-bottom:20px;
+}
+body.beagu-page-challenge #challengeAccessPanel[data-auth-level="1"] .beagu-auth-heading,
+body.beagu-page-challenge #challengeAccessPanel[data-auth-level="2"] .beagu-auth-heading{
+  /* Small, readable gap between the level heading and the code-verification CTA. */
+  margin-bottom:12px;
+}
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-logout[hidden]{
+  display:none!important;
+}
+@media(max-width:720px){
+  body.beagu-page-challenge #challengeAccessPanel .beagu-auth-form{gap:13px}
+}

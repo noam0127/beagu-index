@@ -1,0 +1,66 @@
+/* 2026 Lv2 score bars: scoped to authenticated search detail only. */
+body.beagu-page-lv1 .school-card .beagu-lv2-score-card{
+  padding:15px 16px;margin:12px 0;border:1px solid #dce8f6;border-radius:13px;
+  background:linear-gradient(155deg,#fff,#f7faff);min-width:0;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-score-heading{
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 10px;
+  margin:0 0 15px;color:#223e60;font-size:14px;line-height:1.6;overflow-wrap:anywhere;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-score-code{
+  display:inline-flex;flex:none;padding:2px 7px;border-radius:6px;background:#e9f1ff;color:#2458aa;
+  font-size:11px;letter-spacing:.02em;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-horizontal-row{margin:10px 0;}
+body.beagu-page-lv1 .school-card .beagu-lv2-bar-head{
+  display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  margin-bottom:6px;color:#4b617f;font-size:12px;line-height:1.5;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-bar-number{color:#194f99;font-variant-numeric:tabular-nums;}
+body.beagu-page-lv1 .school-card .beagu-lv2-bar-track{
+  height:12px;width:100%;box-sizing:border-box;overflow:hidden;border-radius:99px;
+  background:#e7edf6;border:1px solid #dfe7f3;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-bar-fill{
+  height:100%;min-width:0;border-radius:inherit;background:#377bc5;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-regional .beagu-lv2-bar-fill{background:#779ebd}
+body.beagu-page-lv1 .school-card .beagu-lv2-national .beagu-lv2-bar-fill{background:#a4b1bf}
+body.beagu-page-lv1 .school-card .beagu-lv2-bar-unavailable,
+body.beagu-page-lv1 .school-card .beagu-lv2-bar-scale{
+  margin:10px 0 0;color:#6a7e98;font-size:11px;line-height:1.6;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-choice-group{
+  margin:12px 0 17px;padding:12px;border:1px solid #e0e8f2;border-radius:12px;
+  background:#fcfdff;min-width:0;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-choice-subject{
+  margin:0 0 7px;color:#334e70;font-size:13px;line-height:1.55;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-choice-caption{
+  margin:0 0 9px;color:#60748d;font-size:11px;line-height:1.5;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-choice-list{
+  display:grid;gap:5px;margin:0;padding:0;list-style:none;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-choice{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;
+  padding:9px 10px;border:1px solid #e7edf5;border-radius:8px;
+  background:#f8fafc;color:#66798e;font-size:12px;line-height:1.5;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-choice.is-selected{
+  background:#eff6ff;border-color:#8aafd9;color:#1e4b85;border-left:4px solid #377bc5;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-choice-name{min-width:0;overflow-wrap:anywhere}
+body.beagu-page-lv1 .school-card .beagu-lv2-choice-status{
+  flex:none;color:#71849c;font-weight:650;font-size:11px;
+}
+body.beagu-page-lv1 .school-card .beagu-lv2-choice.is-selected .beagu-lv2-choice-status{color:#22549b}
+@media(max-width:480px){
+  body.beagu-page-lv1 .school-card .beagu-lv2-score-card{padding:13px 12px}
+  body.beagu-page-lv1 .school-card .beagu-lv2-choice-group{padding:9px}
+  body.beagu-page-lv1 .school-card .beagu-lv2-choice{align-items:flex-start;flex-direction:column;gap:3px}
+}
+@media(prefers-reduced-motion:reduce){
+  body.beagu-page-lv1 .school-card .beagu-lv2-bar-fill{transition:none!important}
+}

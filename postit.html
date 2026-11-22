@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ko">
+<head><meta http-equiv="Content-Security-Policy" content="connect-src 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow,noarchive"><script id="stage38-cdn-static-guard">document.addEventListener("submit",e=>{e.preventDefault();e.stopImmediatePropagation();},true);document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input[type=password],input[type=email]").forEach(x=>{x.disabled=true;x.value="";});}, {once:true});</script><meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"><meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>포스트잇 | 배구지수</title>
+<meta name="description" content="레벨2 전용 익명 포스트잇에서 학교정보, 게임, 비교 결과를 검색하고 의견을 나눕니다.">
+<link rel="stylesheet" href="styles/beagu-design-system-v1.css">
+<link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
+<link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
+<link rel="stylesheet" href="styles/postit-v1.css?v=20261120-lv2-search1">
+<link rel="stylesheet" href="styles/postit-account-v1.css?v=20261121-sms1">
+<script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
+<script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
+</head>
+<body class="beagu-ui-page beagu-postit-page"><div id="stage38-public-static-warning" role="alert" style="z-index:2147483646;position:fixed;top:0;left:0;right:0;text-align:center;padding:10px;background:#7f1d1d;color:white;font:700 13px system-ui">외부 정적 화면 미리보기 · 로그인/개인정보 입력 금지 · 인증과 API 통신 차단</div><div id="beagu-preview-watermark" role="note" style="position:fixed;bottom:10px;right:10px;z-index:2147483600;background:#152943;color:#fff;border-radius:12px;padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>
+<a class="beagu-skip-link" href="#postit-main">본문으로 건너뛰기</a>
+<header class="beagu-unified-header"><div class="beagu-unified-inner">
+<a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈">
+<span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span>
+</a><nav class="beagu-unified-nav" aria-label="주요 메뉴">
+<a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="postit.html" aria-current="page">포스트잇</a><a href="challenge.html">챌린지</a>
+</nav></div></header>
+<div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" href="levels.html" data-level="checking">확인 중</a></div>
+<main id="postit-main" class="postit-layout">
+<header class="postit-intro"><div class="postit-kicker">BAEGUINDEX · NOTES ON A STRING</div>
+<h1>포스트잇<span aria-hidden="true">.</span></h1><p>숫자에 담기지 않은 이야기를 한 장씩 붙입니다.</p>
+<div class="postit-tools"><label for="postitSort" class="sr-only">정렬</label>
+<select id="postitSort" aria-label="포스트잇 정렬"><option value="recent">최신순</option><option value="popular">공감순</option></select>
+<a href="search.html" class="postit-link">학교 찾아보기</a></div></header>
+<section class="postit-account" id="postitAccount" aria-labelledby="postitAccountHeading" hidden>
+<h3 id="postitAccountHeading">Lv2 정식 계정</h3>
+<p>Lv2 참여코드로 읽을 수 있습니다. 글쓰기·댓글·공감은 별도의 계정 인증이 필요합니다.</p>
+<form id="postitAccountForm" autocomplete="on">
+<label class="sr-only" for="postitAccountEmail">이메일</label>
+<input id="postitAccountEmail" type="email" autocomplete="email" placeholder="이메일 주소" maxlength="254" required>
+<label class="sr-only" for="postitAccountPassword">비밀번호</label>
+<input id="postitAccountPassword" type="password" autocomplete="current-password" placeholder="비밀번호 (10자 이상)" minlength="10" maxlength="128" required>
+<div class="postit-sms-consent">
+<label for="postitSmsPhone">휴대폰번호 (선택 · 회원가입 시 문자 안내용)</label>
+<input id="postitSmsPhone" type="tel" autocomplete="tel-national" inputmode="tel" maxlength="13" placeholder="010-1234-5678">
+<label class="postit-sms-check" for="postitSmsConsent"><input id="postitSmsConsent" type="checkbox"><span>(선택) 배구지수 설문·서비스 소식 및 광고성 안내를 SMS/LMS로 받겠습니다.</span></label>
+<small>수집 항목: 휴대폰번호 · 목적: 배구지수 소식과 서비스 안내(광고 포함) · 보유: 동의 철회 또는 회원탈퇴 시까지. 미동의해도 가입 가능하며, 번호 확인 전에는 발송하지 않습니다.</small>
+</div>
+<div class="postit-account-actions">
+<button type="submit" id="postitAccountLogin">이메일 로그인</button>
+<button type="button" id="postitAccountSignup">새 계정 만들기</button>
+</div>
+</form>
+<div class="postit-account-actions">
+<button type="button" id="postitAccountGoogle">Google로 로그인</button>
+<button type="button" id="postitAccountLink" hidden>원래 기기 인증 · Lv2 연결</button>
+<button type="button" id="postitSmsUnsubscribe" hidden>문자 수신 동의 철회</button>
+<button type="button" id="postitAccountSignOut" hidden>계정 로그아웃</button>
+</div>
+<p id="postitAccountNoDevice" hidden>챌린지 발급 기기의 비밀값이 필요합니다. 다른 기기의 참여코드만으로는 연결할 수 없습니다.</p>
+<p id="postitAccountStatus" role="status" aria-live="polite">계정 인증 상태 확인 중…</p>
+</section>
+<section class="postit-compose" aria-labelledby="composeTitle">
+<div class="compose-head"><h2 id="composeTitle">새 포스트잇 붙이기</h2><span id="postitAccess" class="access-tag">등급 확인 중</span></div>
+<div id="postitContext" class="postit-context" role="status" aria-live="polite">학교검색 · 게임 · 비교하기에서 포스트잇을 붙일 수 있습니다.</div>
+<div id="postitSubjectPicker" class="postit-subject-picker">
+<label for="postitSchoolSearch">학교를 찾아 붙이기</label>
+<input id="postitSchoolSearch" type="search" placeholder="학교명 검색" autocomplete="off" maxlength="25">
+<div id="postitSchoolResults" class="postit-school-results" role="listbox" aria-label="학교 선택 결과"></div>
+</div>
+<div id="postitWriteForm" class="postit-form" hidden>
+<label for="postitBody" class="sr-only">포스트잇 본문</label>
+<textarea id="postitBody" rows="3" maxlength="200" placeholder="학교나 게임에 관해 남기고 싶은 이야기를 200자 이내로 적어주세요. 특정 개인을 식별할 수 있는 내용은 적지 마세요."></textarea>
+<div class="postit-form-footer"><small id="postitCounter">0 / 200</small><button type="button" id="postitSubmit">포스트잇 붙이기</button></div>
+</div>
+<div id="postitLocked" class="postit-lock" hidden><span aria-hidden="true">🔒</span>
+<b>글쓰기 준비 중</b><span>Lv2는 게시글과 댓글을 열람할 수 있습니다. 글쓰기·댓글·공감은 준비 중입니다.</span>
+<a href="levels.html">레벨 안내 보기</a></div>
+<div id="postitMessage" class="postit-message" role="status" aria-live="polite"></div>
+</section>
+<section class="postit-board" aria-labelledby="boardTitle">
+<div class="postit-board-heading"><h2 id="boardTitle">이어지는 이야기</h2><p id="postitListStatus" role="status" aria-live="polite">등급 확인 중…</p></div>
+<div id="postitBoardLocked" class="postit-lock postit-board-lock" hidden>
+<b>🔒 Lv.2 전용 공간입니다</b><span>게시글·댓글 검색과 열람은 Lv.2에서 이용할 수 있습니다.</span><a href="levels.html">레벨 안내 보기</a>
+</div>
+<div id="postitBoardContent" hidden>
+<form id="postitSearchForm" class="postit-search" role="search" autocomplete="off">
+<label for="postitSearch">포스트잇 검색</label>
+<div class="postit-search-row"><input id="postitSearch" name="q" type="search" placeholder="학교명 · 게임 · 본문 · 댓글 검색" maxlength="40" enterkeyhint="search" aria-describedby="postitSearchHelp">
+<button id="postitSearchSubmit" type="submit">검색</button></div>
+<small id="postitSearchHelp">두 글자 이상 입력하세요. 정렬과 검색을 함께 사용할 수 있습니다.</small>
+</form>
+<div class="postit-thread" id="postitThread" aria-live="polite"></div>
+<button id="postitReload" class="postit-reload" type="button">다시 불러오기</button>
+</div>
+</section>
+<footer class="postit-footer">익명 게시글은 개인의 경험과 의견이며 학교 전체의 평가가 아닙니다. 개인·학생을 특정하거나 비방하는 글은 삼가주세요.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/postit-account-v1.js?v=20261121-sms1" defer></script>
+<script src="js/postit-v1.js?v=20261121-stage4-atomic1" defer></script>
+</body></html>

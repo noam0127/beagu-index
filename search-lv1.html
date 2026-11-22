@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="ko" data-beagu-level="1">
+<head><meta http-equiv="Content-Security-Policy" content="connect-src 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow,noarchive"><script id="stage38-cdn-static-guard">document.addEventListener("submit",e=>{e.preventDefault();e.stopImmediatePropagation();},true);document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input[type=password],input[type=email]").forEach(x=>{x.disabled=true;x.value="";});}, {once:true});</script><meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"><meta name="robots" content="noindex,nofollow">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f7f8fa">
+  <title>참여자 학교 검색 | 배구지수</title>
+  <style>
+/* 배구지수 Lv.1/Lv.2 검색 UI: 기존 Lv.0 search.html의 시각 규칙을 따른 공용 스타일.
+   데이터/인증 로직에는 영향을 주지 않습니다. */
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  background: #f7f8fa;
+  color: #111;
+  line-height: 1.6;
+}
+button, input, select { font: inherit; }
+a, button { -webkit-tap-highlight-color: transparent; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+/* Lv.0의 상단 조사 참여 배너 */
+.participation-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 12px 16px;
+  background: #f7f8fa;
+  border-bottom: 1px solid #e5e7eb;
+}
+.participation-link {
+  display: block;
+  max-width: 552px;
+  margin: 0 auto;
+  padding: 14px 12px;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #fff;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+.participation-link:hover { background: #1d4ed8; }
+.container { max-width: 600px; margin: 0 auto; padding: 24px; }
+.topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 40px; }
+.back { color: #111; background: none; text-decoration: none; border: 0; font-size: 24px; line-height: 1; padding: 0; }
+.logo { color: #2563eb; text-decoration: none; font-size: 15px; font-weight: 700; }
+.current-level { margin-left: auto; color: #2563eb; background: #eef2ff; border-radius: 999px; padding: 4px 9px; font-size: 12px; font-weight: 700; }
+h1 { font-size: 32px; line-height: 1.3; letter-spacing: -1.5px; margin: 0 0 10px; }
+.description { margin: 0 0 28px; color: #666; line-height: 1.6; font-size: 16px; word-break: keep-all; }
+/* 코드 입력: Lv.0 카드와 같은 배경/곡률 */
+.auth-card { background: #fff; border-radius: 20px; padding: 28px 22px; box-shadow: 0 4px 20px rgba(0,0,0,.06); }
+.auth-card h1 { margin-bottom: 10px; }
+.tier-label { color: #2563eb; font-size: 12px; font-weight: 700; letter-spacing: .04em; margin-bottom: 10px; }
+.auth-card .description { font-size: 15px; margin-bottom: 24px; }
+.field-label { display: block; font-size: 14px; color: #475569; font-weight: 700; margin: 0 0 8px; }
+.field-group { margin-bottom: 14px; }
+.search-box, .region-select, .code-box {
+  width: 100%; min-width: 0; padding: 17px 18px; border: 1px solid #ddd;
+  border-radius: 14px; font-size: 16px; outline: none; background: #fff; color: #111;
+}
+.search-box:focus, .region-select:focus, .code-box:focus {
+  border-color: #2563eb; outline: 2px solid #bfdbfe; outline-offset: 0;
+}
+.region-select:disabled { color: #94a3b8; background-color: #f8fafc; }
+.field-hint { font-size: 13px; color: #64748b; line-height: 1.5; margin: 12px 0 0; }
+.primary-button {
+  width: 100%; margin-top: 14px; padding: 16px; background: #2563eb; border: 0;
+  border-radius: 12px; color: #fff; font-size: 17px; font-weight: 700; cursor: pointer;
+}
+.primary-button:hover { background: #1d4ed8; }
+.primary-button:disabled { opacity: .55; cursor: wait; }
+.feedback { min-height: 0; font-size: 13px; color: #b91c1c; margin: 10px 0 0; }
+.feedback:empty { display: none; }
+/* 인증된 Lv.1·Lv.2 화면: Lv.0의 탭, 검색창, 결과 디자인 */
+.auth-status { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -8px 0 18px; }
+.tier-pill { display: inline-block; color: #1d4ed8; background: #eef2ff; border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 700; }
+.text-button { padding: 7px 9px; border: 0; background: transparent; color: #475569; font-size: 13px; cursor: pointer; }
+.text-button:hover { color: #1d4ed8; }
+.search-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+.search-tab { padding: 14px 8px; border: 1px solid #d7e0ee; background: #fff; color: #475569; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; }
+.search-tab[aria-selected="true"] { background: #2563eb; border-color: #2563eb; color: #fff; }
+.search-tab:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.result-count { font-size: 14px; color: #777; margin: 18px 2px 12px; }
+.results { display: flex; flex-direction: column; gap: 12px; }
+.school-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 3px 14px rgba(0,0,0,.05); min-width: 0; }
+.school-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; overflow-wrap: anywhere; }
+.school-meta { font-size: 14px; color: #666; line-height: 1.6; overflow-wrap: anywhere; }
+.region-badge, .region-pill { display: inline-block; margin-bottom: 10px; padding: 5px 9px; border-radius: 999px; background: #eef2ff; color: #2563eb; font-size: 12px; font-weight: 700; }
+.school-actions, .actions { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
+.view-button {
+  display: block; min-width: 0; width: 100%; text-align: center; text-decoration: none;
+  border-radius: 10px; padding: 13px 10px; font-size: 14px; line-height: 1.45;
+  font-weight: 700; border: 0; cursor: pointer;
+}
+.view-button { background: #2563eb; color: #fff; }
+.view-button:hover { background: #1d4ed8; }
+.empty, .pending { padding: 40px 20px; text-align: center; color: #888; }
+.pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 20px 0 30px; }
+.pager button { background: #fff; color: #1d4ed8; border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 14px; font-size: 14px; cursor: pointer; }
+.pager button:disabled { opacity: .35; cursor: default; }
+.pager span { font-size: 13px; color: #64748b; white-space: nowrap; }
+.legal-note { color: #64748b; font-size: 12px; line-height: 1.7; margin-top: 22px; }
+/* Lv.1 승인 통계 상세: 같은 카드 톤 */
+.detail, .school-detail { margin-top: 18px; border-top: 1px solid #e5e7eb; padding-top: 18px; min-width: 0; }
+.detail h3, .school-detail h3 { margin: 18px 0 10px; font-size: 17px; }
+.detail h3:first-child { margin-top: 0; }
+.percentile-grid, .percentiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 16px 0 8px; }
+.percentile-cell, .percentiles > div { padding: 12px 4px; background: #f1f5f9; border-radius: 10px; text-align: center; min-width: 0; }
+.percentile-year, .percentiles > div > span { display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; }
+.percentile-value, .percentiles > div > b { display: block; color: #1e40af; font-size: 16px; font-weight: 700; }
+.detail-note, .year-note { font-size: 12px; color: #64748b; line-height: 1.7; margin: 10px 0; }
+.data-section { border-top: 1px solid #e5e7eb; padding-top: 14px; margin: 14px 0; }
+.data-section h4 { margin: 0 0 10px; font-size: 15px; }
+.data-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+.data-row span { color: #475569; flex: 1 1 54%; }
+.data-row strong { font-weight: 700; flex: 0 1 46%; text-align: right; overflow-wrap: anywhere; }
+/* Lv.2 원본 편집항목 상세: 연도 탭과 섹션 */
+.overview { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.overview h3 { margin: 0 0 8px; }
+.overview small { font-size: 12px; color: #64748b; }
+.year-tabs { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 8px; margin: 18px 0; }
+.year-tabs button { background: #fff; color: #475569; border: 1px solid #d7e0ee; border-radius: 10px; font-size: 14px; padding: 11px 6px; font-weight: 700; cursor: pointer; }
+.year-tabs button[aria-selected="true"] { background: #2563eb; color: #fff; border-color: #2563eb; }
+.section-card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 14px; margin: 12px 0; background: #fff; }
+.section-card h4 { font-size: 16px; margin: 0 0 10px; }
+.subheading { font-size: 13px; font-weight: 700; color: #1d4ed8; margin-top: 16px; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 11px 0; border-top: 1px solid #f1f5f9; font-size: 13px; }
+.item .name { color: #475569; overflow-wrap: anywhere; }
+.item .val { color: #111; font-weight: 700; overflow-wrap: anywhere; }
+.item .empty-value { color: #94a3b8; font-weight: 400; }
+.source-col { font-size: 11px; display: block; color: #94a3b8; margin-bottom: 3px; }
+@media (max-width: 420px) {
+  .container { padding: 24px 18px 48px; }
+  .topbar { margin-bottom: 28px; }
+  h1 { font-size: 30px; }
+  .auth-card { padding: 24px 18px; }
+  .item { grid-template-columns: 1fr; gap: 4px; }
+}
+@media (max-width: 350px) {
+  .participation-bar { padding: 10px 12px; }
+  .participation-link { font-size: 14px; }
+  .school-actions, .actions { gap: 7px; }
+  .school-card { padding: 16px; }
+  .view-button { padding: 12px 6px; font-size: 13px; }
+}
+
+/* UI 개선 v20261027: 자체 포함 스타일, 모바일 안전, 코드 토글 */
+:root { --beagu-blue: #2563eb; --beagu-muted: #64748b; }
+html { color-scheme: light; }
+body { min-width: 0; }
+.container { padding-bottom: 54px; }
+.topbar { margin-bottom: 28px; }
+.auth-card { border: 1px solid #e5e7eb; }
+.auth-card h1 { font-size: 30px; }
+.auth-card .description { line-height: 1.65; }
+.access-help { margin-top: 14px; border-top: 1px solid #e5e7eb; padding-top: 14px; font-size: 13px; color: #64748b; line-height: 1.65; word-break: keep-all; }
+.access-help a { font-weight: 700; color: #1d4ed8; text-decoration: underline; text-underline-offset: 3px; }
+.access-code-wrap { position: relative; }
+.access-code-wrap .code-box { padding-right: 84px; }
+.code-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 1px solid #d7e0ee; background: #fff; border-radius: 9px; color: #475569; padding: 7px 11px; font-size: 13px; font-weight: 700; cursor: pointer; min-height: 36px; }
+.code-toggle:hover { background: #f1f5f9; }
+.level-hint { color: #64748b; font-size: 13px; margin: 0 0 16px; }
+.auth-status { margin: 0 0 18px; }
+.section-title-level { position: relative; }
+.step-foot { font-size: 12px; color: #64748b; margin-top: 12px; line-height: 1.65; }
+.school-card button { font-family: inherit; }
+.school-card .view-button { display: flex; align-items: center; justify-content: center; }
+@media (max-width: 420px) { .topbar { margin-bottom: 25px; } .auth-card h1 { font-size: 29px; } }
+
+  
+
+/* 지역 검색은 가나다순·주소순, 수치 검색은 높은 순으로 정렬합니다. */
+.sorting-panel{background:#fff;border:1px solid #e0e8f2;border-radius:14px;padding:13px 14px;margin:17px 0 8px}
+.sorting-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:14px;font-weight:750;margin-bottom:10px}
+.sorting-heading small{font-size:12px;font-weight:500;color:#64748b}
+.sort-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.sort-tab{cursor:pointer;background:#f7f9fe;border:1px solid #d8e3ef;border-radius:9px;padding:11px 3px;font-weight:700;font-size:12px;line-height:1.45;color:#42536f}
+.sort-tab[aria-pressed="true"]{color:white;background:#2563eb;border-color:#2563eb}
+.sort-tab:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.sort-explainer{font-size:11px;color:#64748b;line-height:1.65;margin:10px 0 0}
+.sort-result{font-size:12px;color:#1d4ed8;margin:6px 0;padding:8px 10px;background:#eef4ff;border-radius:8px;font-weight:650}
+@media(max-width:440px){.sort-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.sort-tab{font-size:13px}}
+
+/* 2026 + 2023~2025 detailed school layout (2026-10-30). */
+.percentile-grid, .percentiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.percentile-cell, .percentiles > div { padding: 12px 3px; }
+.percentile-value, .percentiles > div > b { overflow-wrap: anywhere; font-size: clamp(12px, 2.1vw, 16px); }
+.school-profile { border: 1px solid #e5e7eb; border-radius: 13px; background: #f8fafc; padding: 14px 16px; margin: 20px 0; }
+.school-profile h3 { margin: 0 0 8px !important; font-size: 16px; }
+.year-2026-button { display: block; width: 100%; margin: 14px 0 10px; padding: 19px 12px; border: 1px solid #2563eb; border-radius: 12px; background: #2563eb; color: white; font: inherit; font-size: 20px; font-weight: 750; cursor: pointer; text-align: center; }
+.year-2026-button[aria-expanded="true"] { background: #1d4ed8; }
+.year-2026-button:hover, .year-2026-button:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.year-2026-content { border: 1px solid #dbeafe; border-radius: 12px; background: #f8fbff; padding: 14px; margin-bottom: 20px; }
+.school-history-heading { font-size: 15px; margin: 23px 0 6px; }
+@media (max-width: 480px) {
+  .percentile-grid, .percentiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .percentile-value, .percentiles > div > b { font-size: 15px; }
+}
+
+/* 백분위와 추이 그래프: 상세보기 버튼 바깥에 상시 표시 */
+.percentile-panel { margin: 16px 0 18px; border: 1px solid #e5e7eb; border-radius: 14px; padding: 12px; background: #fff; }
+.percentile-panel .percentile-heading { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+.percentile-panel .percentile-graph { margin: 10px 0 4px; max-width: 100%; }
+.percentile-panel .percentile-grid, .percentile-panel .percentiles { margin: 12px 0 8px; }
+.percentile-panel .percentile-graph svg { max-width: 100%; height: auto; }
+
+/* Verified school-year record, deliberately distinct from a released percentile. */
+body.beagu-page-lv1 .school-card .school-participation{
+  display:block;
+  width:fit-content;
+  max-width:100%;
+  margin:8px 0 2px;
+  padding:6px 10px;
+  border:1px solid #dce5f1;
+  border-radius:999px;
+  background:#f8fafc;
+  color:#475569;
+  font-size:11px;
+  font-weight:700;
+  line-height:1.5;
+  word-break:keep-all;
+}
+</style>
+  <link rel="stylesheet" href="styles/school-mbti-v1.css?v=20261031-mbti1">
+  <link rel="stylesheet" href="styles/school-search-card-v1.css?v=20261118-blue-outline2">
+  <link rel="stylesheet" href="styles/school-view-counts-v1.css?v=20261120-mono2">
+  <link rel="stylesheet" href="styles/school-detail-groups-v1.css?v=20261031-groups6">
+<link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
+<link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
+<script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
+<link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-sortctrl1">
+<link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
+<link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
+<link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
+<link rel="stylesheet" href="styles/beagu-search-details-v1.css?v=20261119-domain-note1">
+<link rel="stylesheet" href="styles/2026-lv2-horizontal-bars-v1.css?v=20261121-bars1">
+<link rel="stylesheet" href="styles/beagu-auth-unified-v1.css?v=20261119-auth1">
+<script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
+<link rel="stylesheet" href="styles/beagu-school-interest-v1.css?v=20261120-live-rising72-15min">
+<link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
+<link rel="stylesheet" href="styles/beagu-search-compare-unity-v1.css?v=20261120-unity2">
+<link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
+<script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
+</head>
+<body class="beagu-ui-page beagu-page-lv1"><div id="stage38-public-static-warning" role="alert" style="z-index:2147483646;position:fixed;top:0;left:0;right:0;text-align:center;padding:10px;background:#7f1d1d;color:white;font:700 13px system-ui">외부 정적 화면 미리보기 · 로그인/개인정보 입력 금지 · 인증과 API 통신 차단</div><div id="beagu-preview-watermark" role="note" style="position:fixed;bottom:10px;right:10px;z-index:2147483600;background:#152943;color:#fff;border-radius:12px;padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>
+<a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
+<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html" aria-current="page">학교검색</a><a href="statistics.html">비교하기</a><a href="postit.html">포스트잇</a><a href="challenge.html">챌린지</a></nav></div></header>
+<div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
+  
+
+  <main class="container" id="main-content">
+    <section class="beagu-search-hero" aria-labelledby="searchTitle"><h1 id="searchTitle" aria-label="학교 검색">학교를 <span>바로 검색</span></h1></section>
+    
+
+
+    <section class="auth-card beagu-auth-card beagu-levelup-card" id="loginPanel" aria-labelledby="loginTitle">
+      <div class="beagu-auth-heading">
+        <h2 id="loginTitle">참여코드 입력</h2>
+        <span class="beagu-auth-badge">미인증</span>
+      </div>
+      <form id="loginForm" class="beagu-auth-form" autocomplete="off">
+        <div class="beagu-auth-field">
+          <label class="field-label beagu-auth-label" for="levelCode">참여코드</label>
+          <div class="access-code-wrap beagu-auth-input-wrap">
+            <input class="code-box" id="levelCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" required placeholder="발급받은 참여코드를 입력하세요">
+            <button class="code-toggle beagu-auth-toggle" id="toggleCode" type="button" aria-label="참여코드 표시" aria-pressed="false">표시</button>
+          </div>
+        </div>
+        <button class="primary-button beagu-auth-submit" id="loginButton" type="submit">참여코드 입력</button>
+      </form>
+      <p id="loginMessage" class="feedback beagu-auth-message" role="alert" aria-live="polite"></p>
+      <p class="beagu-auth-help">참여코드는 <a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a> 시 발급됩니다.</p>
+    </section>
+
+    <section id="searchPanel" hidden aria-labelledby="searchTitle">
+      <div class="beagu-levelup-card beagu-levelup-status" aria-label="레벨업 인증 상태">
+        <div class="beagu-levelup-heading beagu-auth-heading">
+          <h2>레벨업 인증</h2>
+          <div class="auth-status beagu-auth-actions">
+            <span class="tier-pill beagu-auth-badge">Lv.1 인증됨</span>
+            <button class="text-button beagu-auth-logout" type="button" id="logoutButton">로그아웃</button>
+          </div>
+        </div>
+        
+      </div>
+      <div class="search-tabs" role="tablist" aria-label="찾기 방법">
+        <button type="button" class="search-tab" id="schoolTab" role="tab" aria-selected="true" aria-controls="schoolPanel">학교별 찾기</button>
+        <button type="button" class="search-tab" id="regionTab" role="tab" aria-selected="false" aria-controls="regionPanel">지역 찾기</button>
+      </div>
+      <section id="schoolPanel" role="tabpanel" aria-labelledby="schoolTab">
+        <h2 class="beagu-search-card-title">학교별 찾기</h2>
+        <label class="field-label" for="searchInput">학교명 검색</label>
+        <div class="beagu-school-input-wrap"><input id="searchInput" class="search-box" type="search" placeholder="예: 개원초, 서울개원초등학교" autocomplete="off"></div>
+        
+
+      </section>
+        <section class="beagu-interest beagu-interest--standalone" id="beaguInterest" data-interest-locked="false" data-feature-version="20261120-live-rising72-15min" aria-labelledby="beaguInterestTitle">
+          <div class="beagu-interest-head">
+            <h2 id="beaguInterestTitle">실시간 급상승 학교</h2>
+            <span class="beagu-interest-badge beagu-interest-badge--live"><span class="beagu-interest-live-dot" aria-hidden="true"></span>15분 간격 갱신</span>
+          </div>
+          <p class="beagu-interest-description">최근 72시간에 관심이 가장 많이 늘어난 학교</p>
+          <ol class="beagu-interest-list" data-interest-list aria-live="polite"></ol>
+          <p class="beagu-interest-status" data-interest-status role="status">급상승 순위를 확인하는 중입니다.</p>
+          <button type="button" class="beagu-interest-more" data-interest-more hidden>10위까지 보기</button>
+        </section>
+      <section id="regionPanel" role="tabpanel" aria-labelledby="regionTab" hidden>
+        <div class="field-group"><label class="field-label" for="regionSelect">1. 시도 선택</label>
+          <select id="regionSelect" class="region-select"><option value="">17개 시도·재외한국학교 선택</option><option>서울</option><option>부산</option><option>대구</option><option>인천</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>경기</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option><option value="재외한국학교">재외한국학교</option></select>
+        </div>
+        <div class="field-group"><label class="field-label" for="officeSelect">2. 교육지원청 선택</label>
+          <select id="officeSelect" class="region-select" disabled><option value="">시도를 먼저 선택하세요</option></select>
+        </div>
+        
+        <div class="beagu-search-sort"><label for="regionSort">정렬 기준</label><div class="beagu-sort-controls"><select id="regionSort"><option value="school_name">학교명</option><option value="address">주소</option><option value="student_count">학생수</option><option value="beagu_percentile_2025">배구지수</option><option value="view_count" title="학교 상세조회수 · 같은 방문자는 하루 1회 집계">조회수</option><option value="junior_teacher_ratio">2정교사비</option><option value="male_teacher_ratio">남교사비</option><option value="housing_price_won" title="행정구역 공동주택 평균 공시가격">공시지가</option></select><button id="regionSortDirection" class="beagu-sort-direction" type="button" aria-label="현재 오름차순, 내림차순으로 전환" title="현재 오름차순 · 클릭하면 내림차순">↑</button></div></div>
+      </section>
+      <div id="resultCount" class="result-count" aria-live="polite"></div>
+      <div id="results" class="results"></div>
+      <div id="pager" class="pager" hidden>
+        <button id="prevPage" type="button">이전</button><span id="pageInfo" aria-live="polite"></span><button id="nextPage" type="button">다음</button>
+      </div>
+    </section>
+    
+</main>
+  <!-- 코드 검증 및 상세자료 조회는 기존 서버 측 기능을 그대로 사용합니다. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+<script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
+  <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
+  <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
+    <script src="js/school-search-card-v1.js?v=20261120-monochrome2"></script>
+  <script src="js/school-view-counts-v1.js?v=20261120-selection-record2"></script>
+  <script src="js/school-detail-groups-v1.js?v=20261119-teacher-groups2"></script>
+  <script src="js/school-mbti-v1.js?v=20261118-approved-auto60-v1"></script>
+  <script src="js/historical-original-questions.js?v=20261117-source-headers"></script>
+  <script src="js/historical-questionnaire-choices.js?v=20261118-verified-choices"></script>
+  <script src="js/2025-observed-choices.js?v=20261118-observed-choices"></script>
+  <script src="js/2026-questionnaire-options-v1.2.js?v=20261119-results1"></script>
+<script src="js/2026-approved-question-results.js?v=20261121-lv2-bars1"></script>
+  <script src="js/2026-lv2-horizontal-bars-v1.js?v=20261121-bars1"></script>
+  <script src="js/level-search.js?v=20261121-lv2-bars1"></script>
+  <script src="js/visit-stats.js?v=20261120-gateway2"></script>
+<script src="js/search-telemetry-v1.js?v=20261120-selection-record2"></script>
+  <script>
+  (() => {
+    const button=document.getElementById('toggleCode');
+    const input=document.getElementById('levelCode');
+    button.addEventListener('click',()=>{
+      const reveal=input.type==='password';
+      input.type=reveal?'text':'password';
+      button.textContent=reveal?'숨김':'표시';
+      button.setAttribute('aria-label', reveal?'참여코드 숨김':'참여코드 표시');
+      button.setAttribute('aria-pressed',String(reveal));
+      input.focus();
+    });
+  })();
+  </script>
+<script defer src="js/beagu-school-interest-v1.js?v=20261120-live-rising72-15min"></script>
+</body>
+</html>

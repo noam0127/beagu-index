@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ko">
+<head><meta http-equiv="Content-Security-Policy" content="connect-src 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow,noarchive"><script id="stage38-cdn-static-guard">document.addEventListener("submit",e=>{e.preventDefault();e.stopImmediatePropagation();},true);document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input[type=password],input[type=email]").forEach(x=>{x.disabled=true;x.value="";});}, {once:true});</script><meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"><meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f8fa">
+<title>참여 인증 | 배구지수</title>
+<style>
+  :root {
+    --blue: #2563eb;
+    --blue-dark: #1d4ed8;
+    --blue-light: #eff6ff;
+    --ink: #14233e;
+    --muted: #52627c;
+    --line: #dce4ef;
+    --background: #f7f8fa;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    line-height: 1.6;
+    word-break: keep-all;
+  }
+  main { max-width: 620px; margin: 0 auto; padding: 22px 18px 64px; }
+  a, button { -webkit-tap-highlight-color: transparent; }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  [hidden] { display: none !important; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .brand { color: var(--blue); font-weight: 800; font-size: 12px; letter-spacing: .06em; }
+  .backlink { color: var(--muted); text-decoration: none; font-size: 13px; }
+  .backlink:hover { color: var(--blue-dark); }
+
+  .certificate {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 28px 22px 25px;
+    text-align: center;
+    box-shadow: 0 6px 24px rgba(16, 41, 75, .05);
+  }
+  .trophy { font-size: 43px; line-height: 1.3; }
+  .certificate h1 { font-size: 26px; line-height: 1.3; letter-spacing: -1px; margin: 10px 0 5px; }
+  .subtitle { color: #63728b; font-size: 14px; }
+  .thanks { font-size: 14px; color: var(--muted); margin: 16px 0 0; }
+  .rank { background: #eef4ff; border-radius: 16px; padding: 18px 12px; margin: 20px 0; }
+  .rank-label { color: var(--muted); font-size: 13px; display: block; }
+  .rank strong { display: block; color: var(--blue-dark); font-size: clamp(31px, 8.5vw, 40px); letter-spacing: -1.4px; line-height: 1.35; margin: 4px 0; }
+  .rank-foot { color: var(--muted); font-size: 12px; }
+  .message { font-weight: 750; font-size: 18px; line-height: 1.55; margin: 12px 0 7px; }
+  .body-copy { font-size: 13px; color: var(--muted); margin: 0 auto 12px; max-width: 420px; }
+  .site-link { color: var(--blue-dark); font-weight: 650; font-size: 13px; text-decoration: none; }
+
+  .steps { margin-top: 28px; }
+  .section-title { margin: 0 0 3px; font-size: 21px; letter-spacing: -.5px; }
+  .section-subtitle { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+  .step-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 12px;
+  }
+  .step-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .step-number { display: grid; place-items: center; flex: 0 0 28px; height: 28px; background: var(--blue-light); color: var(--blue-dark); border-radius: 50%; font-size: 14px; font-weight: 800; }
+  .step-heading h3 { margin: 0; font-size: 16px; letter-spacing: -.2px; }
+  .step-card p { color: var(--muted); font-size: 13px; margin: 0 0 14px; }
+  .action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 16px;
+    border-radius: 11px;
+    text-align: center;
+    text-decoration: none;
+    font: inherit;
+    font-weight: 750;
+    font-size: 15px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    background: var(--blue);
+    color: #fff;
+  }
+  .action:hover { background: var(--blue-dark); }
+  .action:disabled { opacity: .55; cursor: wait; }
+  .action.secondary { color: var(--blue-dark); border-color: #bfcef1; background: #fff; }
+  .action.secondary:hover { background: var(--blue-light); }
+  .action.soft { background: #eef4ff; color: var(--blue-dark); border-color: #dae7ff; }
+  .action.soft:hover { background: #e1edff; }
+  #status { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
+  #retry { margin-top: 10px; }
+  .small-note { color: #64748b; font-size: 12px; margin-top: 10px !important; margin-bottom: 0 !important; }
+  .copy-fallback { font-size: 12px; color: var(--muted); margin: 8px 0 0 !important; }
+  .copy-fallback a { color: var(--blue-dark); }
+
+
+  /* Personal identity is deliberately outside #certificate (the PNG capture root). */
+  .challenge-identity {
+    margin: 15px 0 20px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #dce4ef;
+    border-radius: 18px;
+    box-shadow: 0 6px 24px rgba(16,41,75,.035);
+  }
+  .challenge-identity-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .challenge-identity h2 { margin: 0; font-size: 17px; letter-spacing: -.3px; line-height: 1.4; }
+  .challenge-identity-tag { font-size: 11px; color: #475569; background: #f1f5f9; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+  .challenge-identity-row { display: flex; align-items: center; gap: 10px; }
+  .challenge-identity-value { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #1d4ed8; font-size: clamp(13px, 2.9vw, 17px); letter-spacing: .025em; font-weight: 800; font-variant-numeric: tabular-nums; user-select: text; }
+  .challenge-identity-copy { flex-shrink: 0; background: #eff6ff; color: #1d4ed8; border: 1px solid #cbdcf9; padding: 9px 13px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; }
+  .challenge-identity-copy:disabled { opacity: .55; cursor: not-allowed; }
+  /* Verified referrals upgrade the PERSONAL CODE card; the invitation link stays shareable. */
+  .challenge-code-card { position:relative; overflow:hidden; transition:background .35s ease,border-color .35s ease,box-shadow .35s ease; }
+  .challenge-code-card.is-lv2 {
+    background:linear-gradient(125deg,#13273e,#213d5d 65%,#304767);
+    color:#fff7e7; border:1px solid #c6a875;
+    box-shadow:0 15px 38px rgba(15,32,57,.2),inset 0 1px rgba(255,255,255,.13);
+  }
+  .challenge-code-card.is-lv2::before {
+    content:""; position:absolute; pointer-events:none; top:-80px;right:-65px;
+    width:220px;height:220px;border-radius:50%;
+    background:radial-gradient(circle,rgba(235,199,133,.22),transparent 70%);
+  }
+  .challenge-code-card.is-lv2::after {
+    content:"✦";position:absolute;right:22px;bottom:7px;pointer-events:none;
+    color:rgba(236,212,166,.13);font-size:46px;
+  }
+  .challenge-code-card.is-lv2 .challenge-identity-head,
+  .challenge-code-card.is-lv2 .challenge-identity-row,
+  .challenge-code-card.is-lv2 .challenge-identity-feedback { position:relative;z-index:1; }
+  .challenge-code-card.is-lv2 h2 {color:#f6e3ba;letter-spacing:-.025em;}
+  .challenge-code-card.is-lv2 .challenge-identity-tag {
+    background:rgba(232,202,147,.15);color:#f6dca4;border:1px solid rgba(233,200,141,.4);
+  }
+  .challenge-code-card.is-lv2 .challenge-identity-value {
+    color:#fff3d0;font-size:clamp(17px,3.6vw,21px);letter-spacing:.065em;
+  }
+  .challenge-code-card.is-lv2 .challenge-identity-copy {
+    background:linear-gradient(135deg,#f3dfb6,#cba565);color:#16283d;border-color:#d6b679;
+  }
+  .challenge-code-card.is-lv2 .challenge-identity-feedback {color:#e8d6b1;}
+  @media (prefers-reduced-motion:reduce) {.challenge-code-card {transition:none;}}
+  .challenge-identity-feedback { margin: 7px 0 0; font-size: 12px; color: #1d4ed8; min-height: 0; }
+  @media (max-width: 430px) {
+    .challenge-identity { padding: 17px 14px; }
+    .challenge-identity-row { flex-direction: column; align-items: stretch; }
+    .challenge-identity-copy { align-self: flex-end; }
+  }
+\n  .footer-links { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 22px; }
+  .footer-links h2 { font-size: 16px; margin: 0 0 11px; }
+  .footer-grid { display: grid; grid-template-columns: 1fr; gap: 9px; }
+  .footer-link { color: var(--muted); text-align: center; font-size: 13px; border: 1px solid var(--line); background: #fff; padding: 13px 10px; text-decoration: none; border-radius: 11px; font-weight: 650; }
+  .footer-link:hover { color: var(--blue-dark); border-color: #a8bfef; }
+  @media (max-width: 370px) {
+    main { padding: 18px 14px 54px; }
+    .certificate { padding: 24px 15px; }
+    .certificate h1 { font-size: 23px; }
+    .step-card { padding: 16px 14px; }
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+</style>
+  <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
+<link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
+<link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
+<script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
+<link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
+<link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
+<link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
+<link rel="stylesheet" href="styles/beagu-auth-unified-v1.css?v=20261119-auth1">
+<link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
+<script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
+<link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
+<link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
+<link rel="stylesheet" href="styles/challenge-member-auth-v1.css?v=20261121-sms1">
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
+<script defer src="js/beagu-participation-auth-v2.js?v=20261121-challenge-member-login1"></script>
+</head>
+<body class="beagu-ui-page beagu-page-challenge"><div id="stage38-public-static-warning" role="alert" style="z-index:2147483646;position:fixed;top:0;left:0;right:0;text-align:center;padding:10px;background:#7f1d1d;color:white;font:700 13px system-ui">외부 정적 화면 미리보기 · 로그인/개인정보 입력 금지 · 인증과 API 통신 차단</div><div id="beagu-preview-watermark" role="note" style="position:fixed;bottom:10px;right:10px;z-index:2147483600;background:#152943;color:#fff;border-radius:12px;padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>
+<a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
+<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="postit.html">포스트잇</a><a href="challenge.html" aria-current="page">챌린지</a></nav></div></header>
+<div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
+<main id="main-content">
+  <section id="challengeAccessPanel" class="challenge-access-panel beagu-auth-card beagu-levelup-card" aria-labelledby="challengeAccessTitle">
+    <div class="beagu-auth-heading">
+      <h1 id="challengeAccessTitle">참여코드 입력</h1>
+      <div class="beagu-auth-actions">
+        <span id="challengeAccessBadge" class="beagu-auth-badge" role="status" aria-live="polite">확인 중</span>
+        <button id="challengeLogout" class="beagu-auth-logout" type="button" hidden>로그아웃</button>
+      </div>
+    </div>
+    <form id="challengeAccessForm" class="beagu-auth-form" autocomplete="off" hidden>
+      <div class="beagu-auth-field">
+        <label class="beagu-auth-label" for="challengeAccessCode">참여코드</label>
+        <div class="beagu-auth-input-wrap">
+          <input id="challengeAccessCode" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" minlength="8" maxlength="120" placeholder="발급받은 참여코드를 입력하세요" required>
+          <button id="challengeAccessToggle" class="beagu-auth-toggle" type="button" aria-label="참여코드 표시" aria-pressed="false">표시</button>
+        </div>
+      </div>
+      <button id="challengeAccessSubmit" type="submit" class="challenge-access-submit beagu-auth-submit">참여코드 확인</button>
+    </form>
+    <p id="challengeAccessFeedback" class="challenge-access-feedback beagu-auth-message" role="status" aria-live="polite">인증 상태 확인 중…</p>
+    <p class="challenge-access-help beagu-auth-help">참여코드는 <a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a> 시 발급됩니다.</p>
+  </section>
+  <div id="challengeProtected" hidden>
+  
+
+
+  <!-- 인증서 저장 범위: 이 section 안의 내용만 이미지로 생성됩니다. -->
+  <section class="certificate" id="certificate" aria-label="2026 배구지수 참여 인증서">
+    <div class="trophy" aria-hidden="true">🏆</div>
+    <h1>2026 배구지수 챌린지</h1>
+    <div class="rank">
+      <span class="rank-label">2026년 챌린지 참여 순번</span>
+      <strong id="participantNo" aria-live="polite">순번 확인 중</strong>
+    </div>
+    <a class="site-link" href="./">baeguindex.com</a>
+  </section>
+
+  <!-- NOT inside #certificate: excluded from the site's certificate PNG export. -->
+  <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
+    <div class="challenge-identity-head">
+      <h2 id="challengeIdentityTitle">나의 고유번호</h2>
+      <span class="challenge-identity-tag" id="challengeIdentityTag">개인 보관</span>
+    </div>
+    <div class="challenge-identity-row">
+      <strong class="challenge-identity-value" id="identityCode" aria-live="polite">고유번호 확인 중</strong>
+      <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled>번호 복사</button>
+    </div>
+    <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
+    <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
+  </section>
+
+  <section class="challenge-identity" id="challengeReferralPanel"
+    data-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeReferralTitle">
+    <div class="challenge-identity-head">
+      <h2 id="challengeReferralTitle">나의 전용 조사 링크</h2>
+      <span class="challenge-identity-tag" id="challengeReferralTag">링크 공유하기</span>
+    </div>
+    <p id="challengeReferralStatus" class="challenge-identity-feedback" role="status" aria-live="polite">
+      전용 조사 링크를 불러오고 있어요.
+    </p>
+    <div class="challenge-identity-row" style="margin-top:12px">
+      <input id="challengeReferralLink" type="text" aria-label="내 전용 조사 링크"
+        readonly hidden spellcheck="false" autocomplete="off"
+        style="width:100%;min-width:0;flex:1;padding:10px;border:1px solid #dce4ef;border-radius:9px;color:#1d4ed8">
+      <button class="challenge-identity-copy" id="copyChallengeReferral" type="button"
+        disabled hidden>링크 복사</button>
+    </div>
+    <p id="challengeReferralProgress" class="challenge-identity-feedback" aria-live="polite"></p>
+    <p class="small-note" id="challengeReferralNote">동료 1명의 설문 참여가 확인되면 Lv.2로 승급해요.</p>
+  </section>
+
+    <section class="beagu-xp" data-beagu-xp data-xp-state="loading" aria-label="2026년 챌린지 목표 달성률">
+      <div class="beagu-xp-head"><h2>2026 챌린지 · 목표 1,000명</h2><strong class="beagu-xp-number" data-xp-number aria-live="polite">순번 확인 중</strong></div>
+      <div class="beagu-xp-track"><div class="beagu-xp-fill" data-xp-progress role="progressbar" aria-label="챌린지 진행률" aria-valuemin="0" aria-valuemax="1000"></div></div>
+      <div class="beagu-xp-footer"><span class="beagu-sr-only" data-xp-state>챌린지 집계 확인 중</span><strong data-xp-remainder>확인 중</strong></div>
+      
+    </section>
+  <section class="steps" aria-labelledby="steps-title">
+    <h2 class="section-title" id="steps-title">참여 인증</h2>
+
+    <section class="step-card" aria-labelledby="step-1">
+      <div class="step-heading"><span class="step-number" aria-hidden="true">1</span><h3 id="step-1">인증 이미지 저장</h3></div>
+      <button class="action" id="capture" type="button" disabled>↓ 인증 이미지 저장하기</button>
+      <p id="status" role="status" aria-live="polite">참여 순번을 확인하고 있습니다.</p>
+      <button class="action secondary" id="retry" type="button" hidden>다시 시도하기</button>
+    </section>
+
+    <section class="step-card" aria-labelledby="step-2">
+      <div class="step-heading"><span class="step-number" aria-hidden="true">2</span><h3 id="step-2">쫑알쫑알 인증</h3></div>
+      <a class="action secondary" id="loungeLink" href="https://indischool.com/tweets/channels/lounge" target="_blank" rel="noopener noreferrer">인디스쿨 쫑알쫑알에서 인증하기 ↗</a>
+    </section>
+
+  </section>
+  </div>
+
+</main>
+<div id="challengeMemberOverlay" class="challenge-member-overlay" role="presentation" hidden>
+  <section id="challengeMemberDialog" class="challenge-member-dialog" role="dialog" aria-modal="true"
+    aria-labelledby="challengeMemberTitle" aria-describedby="challengeMemberDescription">
+    <button id="challengeMemberClose" class="challenge-member-close" type="button" aria-label="닫기">×</button>
+    <div class="challenge-member-eyebrow">BAEGU INDEX · Lv2 MEMBER</div>
+    <h2 id="challengeMemberTitle">Lv2 로그인</h2>
+    <p id="challengeMemberDescription" class="challenge-member-description">정식 계정으로 로그인하세요.</p>
+    <form id="challengeMemberForm" class="challenge-member-form" autocomplete="on">
+      <label for="challengeMemberEmail">이메일</label>
+      <input id="challengeMemberEmail" type="email" autocomplete="email" placeholder="이메일 주소" maxlength="254" required>
+      <label for="challengeMemberPassword">비밀번호</label>
+      <input id="challengeMemberPassword" type="password" autocomplete="current-password" placeholder="비밀번호 (10자 이상)"
+        minlength="10" maxlength="128" required>
+      <div id="challengeMemberSmsFields" class="challenge-member-sms" hidden>
+        <label for="challengeMemberSmsPhone">휴대폰번호 (선택 · 최신 소식 문자 수신용)</label>
+        <input id="challengeMemberSmsPhone" type="tel" inputmode="tel" autocomplete="tel-national"
+          placeholder="010-1234-5678" maxlength="13" aria-describedby="challengeMemberSmsNotice">
+        <label class="challenge-member-sms-check" for="challengeMemberSmsConsent">
+          <input id="challengeMemberSmsConsent" type="checkbox">
+          <span>(선택) 배구지수 설문·서비스 소식 및 광고성 안내를 SMS/LMS로 받겠습니다.</span>
+        </label>
+        <p id="challengeMemberSmsNotice">수집 항목: 휴대폰번호 · 목적: 배구지수 소식과 서비스 안내(광고성 정보 포함) · 보유: 수신 동의 철회 또는 회원탈퇴 시까지. 동의하지 않아도 가입할 수 있으며, 로그인 후 철회할 수 있습니다. 번호 확인 전에는 문자를 발송하지 않습니다.</p>
+      </div>
+      <button id="challengeMemberSubmit" class="challenge-member-primary" type="submit">로그인하기</button>
+    </form>
+    <button id="challengeMemberSwitch" class="challenge-member-secondary" type="button">계정이 없어요 · 회원가입</button>
+    <button id="challengeMemberLink" class="challenge-member-secondary" type="button" hidden>원래 기기 인증 · Lv2 연결</button>
+    <button id="challengeMemberSmsUnsubscribe" class="challenge-member-secondary" type="button" hidden>문자 안내 수신 동의 철회</button>
+    <button id="challengeMemberSignOut" class="challenge-member-secondary" type="button" hidden>정식 계정 로그아웃</button>
+    <p id="challengeMemberMessage" class="challenge-member-message" role="status" aria-live="polite"></p>
+  </section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
+<script src="js/visit-stats.js?v=20261120-gateway2"></script>
+<script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="js/challenge.js?v=20261121-code-card2"></script>
+<script src="js/challenge-referral-v1.js?v=20261121-lv2-copy1"></script>
+<script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
+<script src="js/challenge-member-auth-v1.js?v=20261121-sms1"></script>
+</body>
+</html>
+

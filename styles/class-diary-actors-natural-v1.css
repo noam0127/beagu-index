@@ -1,0 +1,80 @@
+/* First-person point of view: reveal actual fictional colleagues and pupils only. */
+#sceneArt {isolation:isolate}
+body.is-playing #sceneArt #scenePortrait:not([hidden]),
+body.is-playing #sceneArt #sceneHyunwooLive:not([hidden]){
+ display:block!important;visibility:visible!important;opacity:1!important;pointer-events:none!important;
+}
+body.is-playing #sceneArt #sceneGuest:not([hidden]),
+body.is-playing #sceneArt #sceneDoyun:not([hidden]){
+ display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:none!important;
+}
+body.is-playing #sceneArt #scenePortrait[hidden],
+body.is-playing #sceneArt #sceneHyunwooLive[hidden],
+body.is-playing #sceneArt #sceneGuest[hidden],
+body.is-playing #sceneArt #sceneDoyun[hidden]{display:none!important;visibility:hidden!important}
+/* Actors are transparent cutouts over #sceneBackdrop, not rectangular photo cards. */
+body.is-playing #sceneArt #sceneHyunwooLive{
+ width:clamp(175px,38%,345px);height:auto;aspect-ratio:1;
+ right:clamp(5px,5%,55px);bottom:clamp(95px,23%,200px);
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ background-color:transparent!important;background-repeat:no-repeat;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 82%,transparent 100%);
+ filter:drop-shadow(0 9px 16px #20243b50);transform-origin:50% 100%;
+ animation:diary-natural-entrance .38s cubic-bezier(.2,.7,.3,1) both;
+ transition:transform .3s ease;
+}
+body.is-playing #sceneArt #sceneHyunwooLive[data-pose="shy"]{transform:translateY(4px) rotate(-1.3deg)}
+body.is-playing #sceneArt #sceneHyunwooLive[data-pose="worried"]{transform:translateY(-3px) rotate(.8deg)}
+body.is-playing #sceneArt #sceneHyunwooLive[data-pose="flustered"]{transform:translateX(-5px) rotate(-1deg)}
+body.is-playing #sceneArt #sceneHyunwooLive[data-pose="tired"]{transform:translateY(6px) rotate(1deg)}
+body.is-playing #sceneArt #sceneHyunwooLive[data-pose="smile"]{transform:translateY(-3px)}
+body.is-playing #sceneArt #sceneGuest{
+ bottom:clamp(100px,24%,180px);left:clamp(8px,4%,40px);
+ transform-origin:bottom center;animation:diary-natural-entrance .43s ease-out both;
+}
+body.is-playing #sceneArt #sceneGuestMalePhoto{
+ width:100%;height:clamp(156px,33vh,315px);
+ background-color:transparent!important;background-repeat:no-repeat;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 83%,transparent 100%);
+ filter:drop-shadow(0 8px 14px #232b4140);
+}
+body.is-playing #sceneArt #sceneGuest[data-sd-character="junseo"]{transform:rotate(-1.5deg)}
+body.is-playing #sceneArt #sceneGuest[data-sd-character="dohyun"]{transform:rotate(.65deg)}
+body.is-playing #sceneArt #sceneGuest[data-sd-character="taesik"]{transform:rotate(-.6deg)}
+body.is-playing #sceneArt #sceneDoyun{
+ left:clamp(14px,9%,106px);bottom:clamp(105px,27%,210px);
+ animation:diary-natural-entrance .46s ease-out both;
+}
+body.is-playing #sceneArt #sceneDoyunPhoto{
+ width:100%;aspect-ratio:1;background-color:transparent!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 83%,transparent 100%);
+ filter:drop-shadow(0 8px 13px #26384a53);
+}
+body.is-playing #sceneArt #scenePortrait[data-art-quality="hq"]{
+ mask-image:linear-gradient(to bottom,#000 0%,#000 83%,transparent 100%);
+ animation:diary-natural-entrance .38s ease-out both;
+}
+body.is-playing #sceneArt .vn-overlay{z-index:7}
+@keyframes diary-natural-entrance{
+ from{opacity:0;translate:0 11px}
+ to{opacity:1;translate:0 0}
+}
+@media(max-width:620px){
+ body.is-playing #sceneArt #sceneHyunwooLive{
+  width:clamp(142px,48vw,250px);right:0;bottom:clamp(145px,29%,245px);
+ }
+ body.is-playing #sceneArt #sceneGuest{width:clamp(82px,24vw,126px);left:2%;bottom:30%}
+ body.is-playing #sceneArt #sceneGuestMalePhoto{height:clamp(118px,22vh,180px)}
+ body.is-playing #sceneArt #sceneDoyun{width:clamp(76px,23vw,114px);left:6%;bottom:35%}
+ body.is-playing #sceneArt #sceneDoyun.with-other-guest{left:29%;width:clamp(70px,19vw,104px)}
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing #sceneArt #sceneHyunwooLive,
+ body.is-playing #sceneArt #sceneGuest,
+ body.is-playing #sceneArt #sceneDoyun,
+ body.is-playing #sceneArt #scenePortrait{
+  animation:none!important;transition:none!important;translate:none!important;transform:none!important
+ }
+}

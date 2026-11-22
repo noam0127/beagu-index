@@ -1,0 +1,71 @@
+/* Five fictional colleague portraits: one equal-size square per character.
+   Pre-cropped 256x256 photographs are drawn WITHOUT stretched img elements.
+   No skin-gloss overlays or beauty filters; original in-game sprites remain untouched.
+   Fallback art remains until the WebP sprite has loaded. */
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.jiyoon,
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.hyunwoo,
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.minseo,
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.dogyeom,
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.taeo{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  aspect-ratio:1/1!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  border-radius:clamp(9px,1.8vw,17px)!important;
+  background-image:url("../assets/class-diary/characters/class-diary-cast-five-distinct-v5.webp")!important;
+  background-size:500% 100%!important;
+  background-repeat:no-repeat!important;
+  background-color:#eeece9!important;
+  box-shadow:none!important;
+  filter:none!important;
+  transform:none!important;
+}
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.jiyoon {background-position:0% 50%!important}
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.hyunwoo {background-position:25% 50%!important}
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.minseo {background-position:50% 50%!important}
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.dogyeom {background-position:75% 50%!important}
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art.taeo {background-position:100% 50%!important}
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art > img,
+body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art .setup-hyunwoo-live{
+  visibility:hidden!important;
+  opacity:0!important;
+  transform:none!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character-tag{
+  min-height:3.15em!important;
+  margin-top:5px!important;
+  font-size:clamp(10px,1.75vmin,13px)!important;
+  line-height:1.48!important;
+  letter-spacing:-.045em!important;
+  word-break:keep-all!important;
+  overflow-wrap:break-word;
+  font-weight:400!important;
+}
+body.is-setting #setup[data-step="2"] .setup-portrait-grid{
+  align-items:stretch!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character{
+  height:100%;
+}
+@media(max-width:410px){
+ body.is-setting #setup[data-step="2"] .setup-character-tag{
+   font-size:10px!important;line-height:1.4!important;min-height:4.2em!important;
+ }
+}
+@media(max-height:640px){
+ body.is-setting #setup[data-step="2"] .setup-character-tag{
+   font-size:9px!important;line-height:1.35!important;min-height:3em!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-setting #setup.has-distinct-cast-v5[data-step="2"] .setup-character-art{transition:none!important}
+}
+
+/* The updated Han Hyunwoo sprite is cropped, never stretched, into his setup card. */
+body.is-setting #setup.has-distinct-cast-v5.has-hyunwoo-hair-v3[data-step="2"] .setup-character-art.hyunwoo{
+ background-image:var(--diary-hyunwoo-hair-image)!important;
+ background-size:400% 300%!important;
+ background-position:0% 0%!important;
+}

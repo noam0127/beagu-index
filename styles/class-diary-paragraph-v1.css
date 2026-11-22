@@ -1,0 +1,101 @@
+/* Class Diary: natural prose paragraphs without click flicker.
+ * The original script supplies one sentence at a time; sentences belonging
+ * to the same source paragraph stay inline, with only a normal space.
+ * Actual source paragraph boundaries create a separate block.
+ */
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose .diary-literary-paragraph,
+body.is-ending #endingText .diary-literary-paragraph {
+ display:block!important;
+ box-sizing:border-box;
+ width:100%;
+ max-width:100%;
+ padding:0!important;
+ margin:0 0 .75em!important;
+ line-height:inherit!important;
+ white-space:normal!important;
+ text-align:left;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose .diary-literary-paragraph:last-child,
+body.is-ending #endingText .diary-literary-paragraph:last-child {
+ margin-bottom:0!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose .diary-literary-paragraph[hidden],
+body.is-ending #endingText .diary-literary-paragraph[hidden] {
+ display:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose .diary-literary-paragraph > p.diary-literary-line,
+body.is-ending #endingText .diary-literary-paragraph > p.diary-literary-line {
+ display:inline!important;
+ position:static!important;
+ padding:0!important;
+ margin:0!important;
+ min-height:0!important;
+ max-height:none!important;
+ height:auto!important;
+ font:inherit!important;
+ color:inherit!important;
+ letter-spacing:inherit!important;
+ line-height:inherit!important;
+ white-space:normal!important;
+ word-break:keep-all!important;
+ overflow-wrap:anywhere!important;
+ opacity:1!important;
+ transform:none!important;
+ transition:none!important;
+ animation:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose .diary-literary-paragraph > p.diary-literary-line[hidden],
+body.is-ending #endingText .diary-literary-paragraph > p.diary-literary-line[hidden] {
+ display:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose .diary-literary-paragraph > p.diary-literary-line:not(:first-child)::before,
+body.is-ending #endingText .diary-literary-paragraph > p.diary-literary-line:not(:first-child)::before {
+ content:" ";
+ white-space:pre;
+}
+/* No fade, blur, jump or screen-wide animation when another sentence appears. */
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .diary-literary-paragraph,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot p.diary-literary-line,
+body.is-ending #endingText,
+body.is-ending #endingText .diary-literary-paragraph {
+ animation:none!important;
+ transition:none!important;
+ filter:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line-enter{
+ animation:none!important;
+ opacity:1!important;
+ transform:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose .diary-literary-paragraph p.diary-literary-typing,
+body.is-ending #endingText .diary-literary-paragraph p.diary-literary-typing {
+ animation:none!important;
+}
+/* The typing cursor itself can blink, but the text and the paper remain steady. */
+@media(prefers-reduced-motion:reduce){
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose *,
+ body.is-ending #endingText * {
+  animation:none!important;
+  transition:none!important;
+ }
+}
+
+/* Steady manuscript surface: tapping to reveal a sentence must never flash the entire text panel. */
+body.is-playing #sceneArt,
+body.is-playing #novelCard #vnBottom,
+body.is-playing #novelCard #vnDialogueSlot,
+body.is-playing #novelCard #chapterText,
+body.is-playing #novelCard #outcomeText,
+body.is-playing #novelCard .diary-literary-paragraph {
+ -webkit-tap-highlight-color: transparent;
+}
+body.is-playing.is-literary-mode #novelCard #chapterText.diary-motion-copy,
+body.is-playing.is-literary-mode #novelCard #outcomeText.diary-motion-copy,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose.diary-motion-copy {
+ animation:none!important;
+ transition:none!important;
+ filter:none!important;
+ opacity:1!important;
+}

@@ -1,0 +1,407 @@
+/* One-entry story flow: authenticate on the home page, then never ask for the code again.
+   Original demo/Lv2 game state, scenarios, level authentication and score logic unchanged. */
+body.is-guest-flow .sound-panel,
+body.is-guest-flow #vnSound{display:none!important}
+body.is-guest-flow.is-ticket{height:100dvh;overflow:hidden;background:#f9f1f4}
+body.is-guest-flow.is-ticket main{height:100dvh;max-width:none;padding:0;margin:0}
+body.is-guest-flow.is-ticket header,
+body.is-guest-flow.is-ticket .hero,
+body.is-guest-flow.is-ticket .no-save,
+body.is-guest-flow.is-ticket .status,
+body.is-guest-flow.is-ticket .footer-note{display:none!important}
+body.is-guest-flow.is-ticket #guestAccess{display:flex!important;flex-direction:column;align-items:center;
+ justify-content:center;gap:22px;height:100dvh;min-height:0;margin:0;padding:20px;
+ border:none;border-radius:0;background:radial-gradient(circle at 50% 38%,#fbe1e6,#f6f1f7 65%,#e6edf3);
+ text-align:center}
+body.is-guest-flow.is-ticket #guestAccess h2{font-family:"Gowun Batang","Nanum Myeongjo",serif;font-size:clamp(24px,5vw,36px);color:#795c78}
+body.is-guest-flow.is-ticket #guestAccess p{font-size:13px;color:#89738c}
+body.is-guest-flow.is-ticket .guest-check-mark{font-size:45px;color:#a77f9e;
+ animation:guest-page-breathe 2s ease-in-out infinite}
+@keyframes guest-page-breathe{50%{transform:translateY(-6px) rotate(8deg);opacity:.65}}
+body.is-guest-flow.is-setting .setup-player{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
+body.is-guest-flow.is-setting .setup-player .form-grid,
+body.is-guest-flow.is-setting .setup-player .setup-micro,
+body.is-guest-flow.is-setting #partner,
+body.is-guest-flow.is-setting .setup-partner-label,
+body.is-guest-flow.is-setting .setup-supporting-cast,
+body.is-guest-flow.is-setting .setup-story-note{display:none!important}
+body.is-guest-flow .setup-player-stamp{order:10;margin-top:auto;width:min(100%,420px);
+ padding:15px 19px;border:1px solid #e1c6d3;border-radius:18px;
+ background:linear-gradient(125deg,#f3dce6,#fff5ef);box-shadow:0 9px 30px #7d597b1b}
+body.is-guest-flow .setup-stamp-mark{font-size:30px}
+body.is-guest-flow.is-setting .setup-player .setup-section-title{align-self:flex-start;text-align:left}
+body.is-guest-flow.is-setting .guest-setup-poem{display:block!important;flex:1;min-height:0;
+ align-content:center;font-family:"Gowun Batang","Nanum Myeongjo",serif;
+ color:#6b526b;font-size:clamp(19px,4.5vmin,31px);line-height:2;word-break:keep-all;
+ animation:guest-poem-fade .7s ease-out both}
+body.is-guest-flow.is-setting .guest-setup-poem small{display:block;margin-top:22px;
+ color:#9d8295;font-size:clamp(11px,2vmin,13px);line-height:1.7}
+@keyframes guest-poem-fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-cast{display:flex!important;
+ flex-direction:column;justify-content:center;align-items:stretch;gap:clamp(8px,2.3dvh,20px)}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid{width:min(100%,900px);
+ align-self:center;gap:clamp(7px,2vw,20px)}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character{border-radius:21px;
+ padding:clamp(7px,1.6vw,14px);background:#fff9fc;
+ box-shadow:0 7px 24px #38223911;min-height:0}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{height:clamp(110px,33dvh,345px);
+ border-radius:16px;transition:transform .24s ease}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character:hover .setup-character-art{transform:scale(1.035)}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-name{font-size:clamp(15px,3vmin,22px)}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-tag{font-size:clamp(10px,1.75vmin,12px);min-height:0}
+body.is-guest-flow.is-setting #setup[data-step="2"] #setupNext{display:inline-flex!important}
+body.is-guest-flow.is-setting #setup[data-step="3"] .setup-review-fields>div:nth-child(2){display:none}
+body.is-guest-flow.is-setting .setup-end .muted{display:none}
+body.is-guest-flow.is-setting .setup-end .privacy{font-size:10px;color:#997e96;text-align:center}
+body.is-guest-flow.is-setting .setup-end .setup-begin{margin:auto;min-height:44px;border-radius:999px;
+ padding:10px 23px;background:linear-gradient(115deg,#8b6386,#ad7e9c)!important}
+body.is-guest-flow.is-intro #opening{cursor:pointer;touch-action:manipulation}
+body.is-guest-flow.is-intro #opening button{cursor:pointer}
+body.is-guest-flow.is-playing #novel{touch-action:manipulation}
+body.is-guest-flow.is-playing #novelCard{min-height:0;max-height:100dvh}
+body.is-guest-flow.is-playing #novelCard .vn-overlay{touch-action:manipulation}
+body.is-guest-flow.is-playing #novelCard .vn-bottom .vn-fiction{font-size:10px;opacity:.8}
+@media(max-width:620px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{height:clamp(100px,27dvh,270px)}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-portrait-grid{gap:6px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character{padding:6px;border-radius:13px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{border-radius:10px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-name{font-size:14px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-tag{font-size:9px}
+ body.is-guest-flow .setup-player-stamp{padding:13px}
+}
+@media(max-height:620px){
+ body.is-guest-flow.is-setting #setup[data-step="2"] .setup-character-art{height:clamp(65px,20dvh,160px)}
+ body.is-guest-flow.is-setting .guest-setup-poem{font-size:clamp(15px,3vmin,24px);line-height:1.65}
+ body.is-guest-flow.is-setting .guest-setup-poem small{margin-top:7px}
+ body.is-guest-flow.is-setting .setup-player-stamp{display:flex!important;margin-top:auto;padding:8px 12px}
+ body.is-guest-flow.is-setting #setup[data-step="2"] #partnerDescription{font-size:10px;padding:6px 9px}
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-guest-flow .guest-check-mark,
+ body.is-guest-flow .guest-setup-poem{animation:none!important}
+ body.is-guest-flow.is-setting .setup-character-art{transition:none!important}
+}
+
+/* 2026-11-20 · portrait-only partner selection.
+   Two new headshots are composed in one original same-origin WebP; Minseo
+   keeps the reference portrait. The original character art remains the fallback
+   until the strip finishes loading, without affecting game-scene expressions. */
+#setup.has-unified-portraits .setup-character-art.jiyoon,
+#setup.has-unified-portraits .setup-character-art.hyunwoo{
+ background-image:url("../assets/class-diary/characters/setup-colleagues-20261120.webp");
+ background-size:200% 100%;
+ background-repeat:no-repeat;
+ background-color:#f1edea;
+}
+#setup.has-unified-portraits .setup-character-art.jiyoon{background-position:0 50%}
+#setup.has-unified-portraits .setup-character-art.hyunwoo{background-position:100% 50%}
+#setup.has-unified-portraits .setup-character-art.jiyoon img,
+#setup.has-unified-portraits .setup-character-art.hyunwoo img,
+#setup.has-unified-portraits .setup-character-art .setup-hyunwoo-live{visibility:hidden!important}
+#setup[data-step="2"] .setup-character-art.minseo img{
+ width:100%;
+ height:100%;
+ object-fit:cover;
+ object-position:center 42%;
+}
+body.is-setting #setup[data-step="2"] .setup-character{
+ touch-action:manipulation;
+ transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+body.is-setting #setup[data-step="2"] .setup-character[aria-pressed="true"]{
+ border-color:#936d92;
+ box-shadow:0 0 0 2px #dac6d9,0 9px 25px #624d6122;
+}
+body.is-setting #setup[data-step="2"] .setup-portrait-grid{
+ grid-template-columns:repeat(3,minmax(0,1fr));
+}
+
+/* Existing school selection precedes pen name when guest setup is available. */
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:4px!important;margin:3px 0!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid>div:nth-child(n+3){display:none!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .guest-setup-poem{display:none!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player{justify-content:flex-start;align-items:stretch;text-align:left}
+
+
+/* Two-step school-led prologue: no personal profile or extra opening animation. */
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player{
+ justify-content:center;align-items:stretch;gap:clamp(12px,3dvh,28px);text-align:left;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid{
+ display:grid!important;width:min(100%,570px);margin:clamp(7px,2dvh,18px) auto!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{display:flex!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .guest-setup-poem,
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player-stamp{display:none!important}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-section-title{align-self:center;width:min(100%,570px)}
+body.is-guest-flow.is-setting #setup[data-step="1"] #setupNext{display:inline-flex!important}
+body.is-guest-flow.is-setting #setup[data-step="2"] .setup-end{display:none!important}
+
+/* 2026-11-20 · reference layout for colleague selection.
+   The page is a single, scroll-free sheet: three equal photographic cards,
+   only their names and short relationship captions, with fixed bottom actions. */
+body.is-setting #setup[data-step="2"] .setup-supporting-cast,
+body.is-setting #setup[data-step="2"] .setup-story-note,
+body.is-setting #setup[data-step="2"] .setup-partner-label,
+body.is-setting #setup[data-step="2"] .setup-character-description,
+body.is-setting #setup[data-step="2"] #partner{display:none!important}
+body.is-setting #setup[data-step="2"] .setup-cast{
+ display:flex!important;flex-direction:column!important;
+ justify-content:flex-start!important;align-items:stretch!important;
+ gap:clamp(12px,2.3dvh,22px)!important;
+ padding-top:clamp(16px,3dvh,34px)!important;
+}
+body.is-setting #setup[data-step="2"] .setup-portrait-grid{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:clamp(7px,2.1vw,21px);width:100%;max-width:900px;margin:0 auto;
+}
+body.is-setting #setup[data-step="2"] .setup-character{
+ display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+ min-width:0;min-height:0;
+ background:#fff!important;border:2px solid #e7dae6!important;
+ border-radius:clamp(13px,2.5vw,23px)!important;
+ padding:clamp(6px,1.6vw,15px)!important;
+ box-shadow:0 5px 18px #62476a0a!important;
+ text-align:center;touch-action:manipulation;
+}
+body.is-setting #setup[data-step="2"] .setup-character[aria-pressed="true"]{
+ border-color:#946a94!important;
+ box-shadow:0 0 0 2px #dfcade,0 8px 24px #62476a21!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character-art{
+ display:block;width:100%;height:auto!important;
+ aspect-ratio:4/5!important;
+ border-radius:clamp(9px,1.8vw,17px)!important;
+ overflow:hidden;
+}
+body.is-setting #setup[data-step="2"] .setup-character-art.minseo img{
+ width:100%;height:100%;object-fit:cover;object-position:center 42%;
+}
+body.is-setting #setup[data-step="2"] .setup-character-name{
+ margin-top:clamp(5px,1dvh,12px)!important;
+ font-size:clamp(13px,2.8vmin,22px)!important;
+ font-weight:900;line-height:1.35;white-space:nowrap;
+}
+body.is-setting #setup[data-step="2"] .setup-character-tag{
+ min-height:0!important;margin-top:3px;
+ font-size:clamp(9px,1.75vmin,14px)!important;
+ line-height:1.45;letter-spacing:-.035em;word-break:keep-all;
+}
+body.is-setting #setup[data-step="2"] #setupNext{display:inline-flex!important}
+body.is-setting #setup[data-step="2"] .setup-step-actions{
+ margin-top:auto;padding-bottom:max(16px,env(safe-area-inset-bottom,0px));
+}
+@media(max-width:390px){
+ body.is-setting #setup[data-step="2"] .setup-portrait-grid{gap:6px}
+ body.is-setting #setup[data-step="2"] .setup-character{padding:5px!important}
+ body.is-setting #setup[data-step="2"] .setup-character-name{font-size:13px!important}
+ body.is-setting #setup[data-step="2"] .setup-character-tag{font-size:9px!important}
+}
+
+/* 2026-11-20 · align Minseo with Jiyoon / Hyunwoo headshot framing.
+   The source WebP is a transparent waist-up cutout, so it needs a tighter
+   on-card crop; keep original artwork and scene character art untouched. */
+body.is-setting #setup[data-step="2"] .setup-character-art.minseo{
+ background:linear-gradient(140deg,#dce9de 0%,#f4f3ed 70%,#ece2e8 100%)!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character-art.minseo img#setupPortraitNone{
+ display:block!important;
+ width:100%!important;height:100%!important;
+ max-width:none!important;max-height:none!important;
+ object-fit:cover!important;object-position:center 22%!important;
+ transform:scale(1.29)!important;transform-origin:center 34%!important;
+ transition:transform .2s ease-out;
+}
+@media(max-width:390px){
+ body.is-setting #setup[data-step="2"] .setup-character-art.minseo img#setupPortraitNone{
+  transform:scale(1.34)!important;
+ }
+}
+/* The diary's main calls to action follow the novel's literary type,
+   while small utility buttons retain the functional sans-serif. */
+body.is-setting #setup #setupBack,
+body.is-setting #setup #setupNext,
+body.is-setting #setup .setup-begin,
+body.is-landing #diaryLandingStart,
+body.is-intro #openingStart,
+body.is-intro #semesterStart,
+body.is-playing #choiceSection button.choice{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif!important;
+ font-weight:700!important;
+ letter-spacing:-.035em!important;
+ font-size:clamp(14px,2.45vmin,18px)!important;
+ line-height:1.32!important;
+ word-break:keep-all;
+}
+body.is-setting #setup .setup-begin{
+ min-height:44px!important;
+ padding:9px 20px!important;
+ border-radius:999px!important;
+}
+body.is-setting #setup[data-step="3"] .setup-step-actions{
+ justify-content:flex-start;
+}
+body.is-setting #setup[data-step="3"] #setupNext{display:none!important}
+body.is-setting #setup[data-step="3"] .setup-end{
+ display:block!important;
+ flex:0 0 auto;
+}
+body.is-setting #setup[data-step="3"] .setup-end .actions{
+ display:flex!important;
+ justify-content:center;
+ margin:6px 0!important;
+}
+body.is-setting #setup[data-step="3"] .setup-review-fields div[hidden]{display:none!important}
+
+/* One-title 36-episode flow · real-school identity is selected via a public directory.
+   The school name cannot be free-typed; modal selection is required. */
+body.is-setting #diarySchoolName[readonly]{
+ cursor:pointer!important;caret-color:transparent;
+ background:linear-gradient(120deg,#fffdfd,#f9eff7)!important;
+ border:1px solid #b99db2!important;
+ box-shadow:0 3px 13px #78607712;
+ color:#503e55;
+}
+body.is-setting #diarySchoolName[readonly]:focus-visible{
+ outline:3px solid #bea6bf;outline-offset:2px;
+}
+body.is-setting #diarySchoolSelected{font-size:clamp(10px,1.75vmin,12px);line-height:1.4}
+body.is-setting .diary-school-search-dialog .diary-school-result{
+ touch-action:manipulation;min-height:42px;
+}
+body.is-setting .diary-school-search-dialog #diarySchoolSurveyLink{
+ display:inline-flex;align-items:center;min-height:40px;
+ border:1px solid #af82a5;background:#f7e8f1;padding:8px 13px;
+ border-radius:12px;text-decoration:none;
+}
+body.is-setting .diary-school-search-dialog #diarySchoolSurveyLink[hidden]{display:none!important}
+body.is-landing .diary-landing-meta{
+ display:block;
+ color:#c7b6cd;font:700 clamp(10px,1.8vmin,13px)/1.5 "Gowun Batang","Nanum Myeongjo",serif;
+ letter-spacing:.02em;
+}
+body.is-setting #setup[data-step="3"] .setup-review-fields strong{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+ font-size:clamp(13px,2.6vmin,18px);
+ font-weight:700;
+}
+
+/* November 20 school-screen refresh: a quiet story lead, one real-school picker,
+   one factual disclosure; no oversized intermediate progress illustration. */
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-setup{
+ justify-content:center!important;align-items:stretch!important;
+ gap:clamp(11px,2.65dvh,24px)!important;
+ padding:clamp(10px,2.2dvh,24px) clamp(16px,4.5vw,36px)!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro,
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-setup .form-grid,
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{
+ width:min(100%,600px)!important;
+ margin-left:auto!important;margin-right:auto!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro{
+ flex:0 0 auto;gap:0;text-align:left;animation:diary-school-arrive .45s ease-out both;
+}
+@keyframes diary-school-arrive{
+ from{opacity:0;transform:translateY(8px)}
+ to{opacity:1;transform:translateY(0)}
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-kicker{
+ font:800 clamp(11px,2vmin,13px)/1.35 "Gowun Batang","Nanum Myeongjo",serif;
+ letter-spacing:.10em;color:#98758c;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro p{
+ margin:7px 0 0!important;
+ font:400 clamp(16px,3.35vmin,23px)/1.65 "Gowun Batang","Nanum Myeongjo",serif;
+ color:#756575;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro p strong{
+ color:#4b3d4e;font-weight:700;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-player .form-grid{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ flex:0 0 auto;margin:0 auto!important;gap:0!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-field label{
+ display:flex;align-items:center;gap:7px;
+ margin-bottom:9px!important;font:700 clamp(13px,2.4vmin,16px)/1.3 "Gowun Batang","Nanum Myeongjo",serif;
+ color:#5f4d60;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-field .setup-required{
+ font:700 10px/1.25 sans-serif;padding:4px 6px;
+ border-radius:5px;color:#996779;background:#f6e9ef;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-input-wrap{
+ position:relative;width:100%;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] #diarySchoolName[readonly]{
+ height:clamp(49px,8dvh,60px)!important;min-height:49px!important;
+ padding:10px 49px 10px 17px!important;
+ font:600 clamp(15px,2.8vmin,18px)/1.5 "Gowun Batang","Nanum Myeongjo",sans-serif!important;
+ border:1.5px solid #c9b6c7!important;border-radius:15px!important;
+ color:#49364f!important;
+ background:linear-gradient(120deg,#fffefd,#fcf8fb)!important;
+ box-shadow:0 5px 18px #72557515!important;
+ cursor:pointer!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] #diarySchoolName[readonly]::placeholder{
+ color:#9d8b9e!important;opacity:1;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-input-icon{
+ position:absolute;right:16px;top:50%;transform:translateY(-50%);
+ color:#98758f;font-size:25px;pointer-events:none;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] #diarySchoolSelected{
+ display:block!important;min-height:1.4em;margin:9px 0 0!important;
+ font:400 clamp(11px,1.95vmin,13px)/1.45 "Gowun Batang","Nanum Myeongjo",sans-serif!important;
+ color:#887888!important;word-break:keep-all;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{
+ display:flex!important;gap:10px!important;justify-content:flex-start!important;
+ align-items:flex-start!important;flex:0 0 auto;
+ padding:0!important;margin-top:0!important;
+ color:#92808f!important;
+ font:400 clamp(10px,1.85vmin,12px)/1.6 "Gowun Batang","Nanum Myeongjo",serif!important;
+ text-align:left!important;word-break:keep-all;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-note-symbol{
+ color:#b792aa;flex:none;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] .setup-step-actions{
+ width:min(100%,650px);margin:0 auto!important;
+ gap:8px;padding:0 clamp(16px,4.5vw,36px) max(13px,env(safe-area-inset-bottom,0px))!important;
+}
+body.is-guest-flow.is-setting #setup[data-step="1"] #setupNext{
+ min-height:46px;border-radius:999px;padding:12px 27px!important;
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;
+}
+@media(max-width:620px){
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro,
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{
+  max-width:100%;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] .setup-step-actions #setupNext{
+  width:100%;min-height:50px;margin:0;
+ }
+}
+@media(max-height:540px){
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-setup{
+  gap:clamp(5px,1.5dvh,10px)!important;padding-top:6px!important;padding-bottom:6px!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro p{
+  margin:3px 0 0!important;font-size:clamp(14px,3.2vmin,17px)!important;line-height:1.4;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] #diarySchoolName[readonly]{
+  height:45px!important;min-height:45px!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-narrative{
+  font-size:10px!important;line-height:1.4!important;
+ }
+ body.is-guest-flow.is-setting #setup[data-step="1"] .setup-step-actions #setupNext{
+  min-height:42px!important;padding:7px 18px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-guest-flow.is-setting #setup[data-step="1"] .diary-school-intro{animation:none}
+}

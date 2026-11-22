@@ -1,0 +1,140 @@
+/* 36-episode semester display, separate from the preserved seven-day demo.
+   No changes to narrative logic or persistence. */
+body[data-diary-story="semester"] #novelCard .diary-day-progress{max-width:240px;margin-top:7px;gap:6px}
+body[data-diary-story="semester"] #novelCard .diary-day-progress span{height:5px;min-width:15px;border-radius:8px}
+body[data-diary-story="semester"] #novelCard .diary-day-progress span.current{background:#ffdbaa;box-shadow:0 0 12px #ffdbaa85}
+.diary-semester-meta{display:flex;flex-wrap:wrap;gap:5px 9px;align-items:center;margin-top:5px;max-width:440px;color:#fff0dc;font-size:clamp(10px,1.2vw,12px);font-weight:700;line-height:1.35;text-shadow:0 2px 6px #161521}
+.diary-semester-meta[hidden]{display:none!important}
+.diary-semester-meta .season-marker{display:inline-block;padding:4px 9px;border:1px solid #ffffff5a;border-radius:999px;background:#211f2c82;white-space:nowrap}
+.diary-semester-meta .part-marker{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body[data-diary-story="semester"][data-diary-season="march"] #novelCard{--semester-tone:#a6b8cd}
+body[data-diary-story="semester"][data-diary-season="april"] #novelCard{--semester-tone:#b4c6a8}
+body[data-diary-story="semester"][data-diary-season="may"] #novelCard{--semester-tone:#c4b59b}
+body[data-diary-story="semester"][data-diary-season="june"] #novelCard{--semester-tone:#9fbdc5}
+body[data-diary-story="semester"][data-diary-season="july"] #novelCard{--semester-tone:#dfb38e}
+body[data-diary-story="semester"] #novelCard .diary-semester-meta .season-marker{border-color:var(--semester-tone);box-shadow:inset 0 0 0 1px #ffffff1a}
+body[data-diary-story="semester"] #novelCard #vnDialogueSlot .vn-dialogue,
+body[data-diary-story="semester"] #novelCard #vnDialogueSlot .outcome{border-top-color:var(--semester-tone,#c697a3)}
+body[data-diary-story="semester"] #novelCard #chapterProgress{background:var(--semester-tone,#ffdbaa)}
+.diary-semester-intro{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px;max-width:560px;margin:14px auto 18px}
+.diary-semester-intro span{padding:8px 2px;border-radius:10px;background:#fff7fb;border:1px solid #e8dce8;color:#735f73;font-weight:750;font-size:10px;line-height:1.5;text-align:center}
+.diary-semester-intro b{display:block;font-size:12px}
+.diary-semester-intro small{display:block;color:#9b8091;font-size:10px}
+.diary-semester-finish{font-size:12px;color:#805c77;font-weight:850;letter-spacing:.07em;text-align:center;padding:8px 13px;background:#f7e9f2;border:1px solid #e5ccd9;border-radius:12px;max-width:max-content;margin:10px auto}
+.diary-semester-finish[hidden]{display:none!important}
+body[data-diary-story="semester"] #ending{border-color:#d6b2c7}
+body[data-diary-story="semester"] #endingTitle{word-break:keep-all}
+@media(max-width:620px){
+ body[data-diary-story="semester"] #novelCard .diary-day-progress{max-width:175px;gap:4px;margin-top:4px}
+ body[data-diary-story="semester"] #novelCard .diary-day-progress span{height:4px}
+ .diary-semester-meta{font-size:10px;gap:4px;max-width:min(65vw,260px)}
+ .diary-semester-meta .season-marker{padding:3px 6px}
+ .diary-semester-meta .part-marker{font-size:9px;max-width:190px}
+ .diary-semester-intro{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+@media(max-width:380px){.diary-semester-meta .part-marker{display:none}}
+@media(prefers-reduced-motion:reduce){
+ .diary-semester-intro span,.diary-semester-meta *{animation:none!important;transition:none!important}
+}
+
+
+/* Semester reading panel and centered choices · interface refinement */
+.diary-opening-days.diary-semester-acts{
+ display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+ gap:6px;max-width:620px;margin:16px auto;
+}
+.diary-opening-days.diary-semester-acts span{
+ width:auto;height:auto;min-height:39px;padding:7px 3px;
+ background:#fff8fa;color:#815e74;
+ border:1px solid #e2cad7;border-radius:10px;
+ font-size:clamp(9px,1.7vw,12px);line-height:1.3;text-align:center;
+}
+.diary-opening-days.diary-semester-acts span:first-child,
+.diary-opening-days.diary-semester-acts span:last-child{
+ color:#76566d;background:#f3e3ec;
+}
+body[data-diary-story="semester"].is-playing #novelCard .vn-bottom{
+ width:min(100%,1100px);
+ height:min(74dvh,710px);
+ max-height:calc(100dvh - 95px);
+}
+body[data-diary-story="semester"].is-playing #novelCard #vnDialogueSlot{
+ flex:1 1 auto;min-height:0;overflow:hidden;
+}
+body[data-diary-story="semester"].is-playing #novelCard #vnDialogueSlot .vn-dialogue,
+body[data-diary-story="semester"].is-playing #novelCard #vnDialogueSlot .outcome{
+ height:auto!important;
+ max-height:none!important;
+ flex:1 1 auto;
+ min-height:0;
+ overflow:hidden!important;
+ background:linear-gradient(153deg,rgba(255,253,247,.98),rgba(249,242,234,.98) 78%,rgba(244,234,229,.98));
+}
+body[data-diary-story="semester"].is-playing #novelCard .vn-bottom .prose,
+body[data-diary-story="semester"].is-playing #novelCard .vn-bottom .outcome .prose{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;
+ font-size:clamp(17px,1.95vw,22px);line-height:1.8;
+ letter-spacing:-.013em;word-break:keep-all;
+}
+body[data-diary-story="semester"].is-playing #novelCard .vn-bottom .prose p{
+ margin:0 0 1.05em;
+}
+body[data-diary-story="semester"].is-playing #novelCard .vn-bottom .vn-control-row{
+ flex:0 0 auto;
+}
+body[data-diary-story="semester"].is-playing #choiceSection{
+ background:rgba(12,12,23,.73);
+ backdrop-filter:blur(5px);
+}
+body[data-diary-story="semester"].is-playing #choiceSection .option-title{
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;
+ font-size:clamp(17px,2.2vw,23px);font-weight:700;
+}
+body[data-diary-story="semester"].is-playing #choiceSection .choices{
+ width:min(100%,650px);
+ max-height:min(70dvh,450px);
+ overflow-y:auto;
+ scrollbar-width:thin;
+ overscroll-behavior:contain;
+}
+body[data-diary-story="semester"].is-playing #choiceSection .choice{
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;
+ font-size:clamp(15px,1.75vw,18px);
+ line-height:1.5;
+ background:#fffaf4;border:1px solid #e4cdd7;
+ box-shadow:0 8px 20px #0b0a1d60;
+}
+.diary-text-arrive{animation:diary-copy-arrive .24s ease-out both}
+@keyframes diary-copy-arrive{
+ from{opacity:.4;transform:translateY(6px)}
+ to{opacity:1;transform:translateY(0)}
+}
+body[data-diary-story="semester"].is-ending #endingTitle{
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;
+}
+body[data-diary-story="semester"].is-ending #endingText{
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;
+}
+@media(max-width:620px){
+ .diary-opening-days.diary-semester-acts{gap:4px}
+ .diary-opening-days.diary-semester-acts span{font-size:9px;padding:5px 2px;min-height:39px}
+ body[data-diary-story="semester"].is-playing #novelCard .vn-bottom{
+  height:min(73dvh,640px);max-height:calc(100dvh - 96px);
+ }
+ body[data-diary-story="semester"].is-playing #novelCard .vn-bottom .prose,
+ body[data-diary-story="semester"].is-playing #novelCard .vn-bottom .outcome .prose{
+  font-size:clamp(16px,4vw,19px);line-height:1.7;
+ }
+}
+@media(max-height:540px) and (orientation:landscape){
+ body[data-diary-story="semester"].is-playing #novelCard .vn-bottom{
+  height:69dvh;max-height:calc(100dvh - 67px);
+ }
+ body[data-diary-story="semester"].is-playing #novelCard .vn-bottom .prose{
+  font-size:15px;line-height:1.48;
+ }
+ body[data-diary-story="semester"].is-playing .diary-quickstats{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .diary-text-arrive{animation:none!important;transform:none!important}
+}

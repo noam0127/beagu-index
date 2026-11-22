@@ -1,0 +1,31 @@
+/* Auth controls are separate from anonymous Post-it pages and boards. */
+.postit-account{
+ margin:14px 0 18px;padding:17px;border:1px solid #d7e3f1;border-radius:13px;
+ background:#f7faff;box-shadow:0 3px 13px rgba(42,81,134,.05);
+}
+.postit-account h3{font-size:15px;color:#254466;margin:0 0 9px}
+.postit-account p{font-size:12px;line-height:1.6;color:#657a92;margin:7px 0 12px}
+.postit-account form{display:grid;gap:8px}
+.postit-account input{
+ min-width:0;width:100%;box-sizing:border-box;border:1px solid #cbd9ea;
+ border-radius:9px;padding:10px 12px;font:inherit;background:#fff;color:#203c5e;
+}
+.postit-account-actions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.postit-account button{
+ min-height:40px;padding:9px 13px;border:1px solid #9cbce3;border-radius:9px;
+ background:#fff;color:#204f91;font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+}
+.postit-account button:focus-visible{outline:3px solid #8ab5ee;outline-offset:2px}
+.postit-account button:disabled{opacity:.55;cursor:wait}
+.postit-account #postitAccountLink{background:#255fc3;color:#fff;border-color:#255fc3}
+.postit-account #postitAccountStatus{min-height:20px;color:#335a87}
+.postit-account #postitAccountNoDevice{color:#94552e}
+@media(max-width:460px){.postit-account{padding:12px}.postit-account button{flex:1}}
+
+.postit-account [hidden]{display:none!important}
+
+.postit-sms-consent{display:grid;gap:7px;padding:12px;border:1px solid #dce5ee;border-radius:10px}
+.postit-sms-consent>label{font-size:12px;font-weight:700}
+.postit-sms-check{display:flex;align-items:flex-start;gap:7px;cursor:pointer;font-weight:500!important}
+.postit-sms-check input{flex:0 0 auto;min-height:17px!important;width:17px!important;margin:2px 0 0}
+.postit-sms-consent small{font-size:11px;line-height:1.65;color:#64748b}

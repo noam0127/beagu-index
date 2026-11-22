@@ -1,0 +1,324 @@
+{
+  "schema": "class-diary-art-manifest/v1",
+  "phase": "7-1",
+  "auditCommit": "8938aa14d8c51e388a33388ce4ef09abe5b94e38",
+  "fallback": "legacy-svg",
+  "baseDimensions": {
+    "portrait": {
+      "width": 1536,
+      "height": 2048,
+      "alpha": true
+    },
+    "background": {
+      "width": 1920,
+      "height": 1080,
+      "alpha": false
+    }
+  },
+  "limits": {
+    "portraitBytes": 500000,
+    "backgroundBytes": 650000,
+    "initialSceneTotalBytes": 1100000
+  },
+  "expressions": [
+    "neutral",
+    "smile",
+    "worried",
+    "flustered",
+    "tired",
+    "shy"
+  ],
+  "expressionFallback": {
+    "neutral": "neutral",
+    "smile": "happy",
+    "worried": "worried",
+    "flustered": "worried",
+    "tired": "worried",
+    "shy": "happy"
+  },
+  "characters": [
+    {
+      "id": "jiyoon",
+      "legacyKey": "woman",
+      "name": "서지윤",
+      "age": 30,
+      "story": "성인 교사 / 신중한 호감",
+      "hair": "옅은 밤갈색 반묶음, 얼굴을 감싸는 잔머리",
+      "outfit": "크림색 가디건, 흰 셔츠, 작은 목걸이",
+      "face": "부드러운 타원형, 긴장하지 않은 눈매",
+      "pose": "상반신~허벅지, 어깨 정면에서 약간 틀기",
+      "relationship": "romance-eligible",
+      "expressionStatus": {
+        "neutral": "planned",
+        "smile": "planned",
+        "worried": "planned",
+        "flustered": "planned",
+        "tired": "planned",
+        "shy": "planned"
+      },
+      "identityLock": "same-fictional-adult-actor-across-six-expression-assets",
+      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration",
+      "distinctiveIdentity": {
+        "silhouetteKey": "half-up-hair-soft-oval",
+        "facialStructure": "갸름하지만 각지지 않은 긴 타원형 얼굴, 매끈하게 둥근 턱선, 낮고 부드러운 광대",
+        "eyesBrows": "끝이 아주 살짝 내려가는 긴 눈매, 완만하게 휘는 눈썹, 웃으면 눈꼬리가 먼저 부드러워짐",
+        "noseMouth": "가늘고 곧은 콧대와 둥근 코끝, 입 폭이 작고 왼쪽 입꼬리가 먼저 올라가는 미소",
+        "hairContour": "옅은 밤갈색 긴 머리를 낮지 않게 반묶음, 귀 앞에 잔머리 두 가닥",
+        "signatureDetail": "작은 은색 목걸이와 오른쪽 뺨의 은은한 보조개",
+        "shoulderGesture": "상체를 상대 쪽으로 약간 기울여 경청, 메모지는 두 손으로 살며시 받침",
+        "neutralRead": "입을 다물고 차분히 바라보되 미간에 긴장 없음",
+        "smileRead": "활짝 웃기보다 왼쪽 입꼬리가 먼저 올라가고 눈매가 부드러워짐",
+        "worriedRead": "눈썹 안쪽이 조금 올라가며 미간이 좁아지지만 표정은 절제",
+        "thumbnailCue": "긴 반묶음 머리 실루엣 + 작은 목걸이 + 둥근 턱선"
+      },
+      "distinctFrom": [
+        "hyunwoo",
+        "minseo"
+      ]
+    },
+    {
+      "id": "hyunwoo",
+      "legacyKey": "man",
+      "name": "한현우",
+      "age": 32,
+      "story": "성인 교사 / 농담 뒤의 진심",
+      "hair": "짙은 갈색 짧은 머리, 자연스러운 옆가르마",
+      "outfit": "남색 니트, 연한 하늘색 셔츠",
+      "face": "부드러운 각이 있는 타원형, 둥근 눈매",
+      "pose": "상반신~허벅지, 한쪽 어깨에 무게",
+      "relationship": "romance-eligible",
+      "expressionStatus": {
+        "neutral": "planned",
+        "smile": "planned",
+        "worried": "planned",
+        "flustered": "planned",
+        "tired": "planned",
+        "shy": "planned"
+      },
+      "identityLock": "same-fictional-adult-actor-across-six-expression-assets",
+      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration",
+      "distinctiveIdentity": {
+        "silhouetteKey": "short-tousled-hair-broad-jaw",
+        "facialStructure": "가로 폭이 비교적 넓은 얼굴, 분명한 광대와 부드럽게 각진 턱, 지윤보다 넓은 이마",
+        "eyesBrows": "짙고 거의 일자에 가까운 눈썹, 눈꺼풀이 조금 도톰한 눈매, 한쪽 눈썹이 가볍게 올라가는 습관",
+        "noseMouth": "도톰하고 넓은 콧대와 부드러운 코끝, 입 폭이 넓고 오른쪽 입꼬리가 먼저 올라가는 미소",
+        "hairContour": "짙은 갈색 짧은 머리, 자연스럽게 헝클어진 옆가르마와 이마 위 작은 머리 볼륨",
+        "signatureDetail": "단추 없는 남색 니트의 소매를 약간 걷어 올린 손목, 작은 무표정 속 장난스러운 오른쪽 입꼬리",
+        "shoulderGesture": "어깨를 편 채 한쪽 팔꿈치를 느슨하게 굽힌 자세, 대화할 때 무게중심을 한 발에 둠",
+        "neutralRead": "아주 미세하게 오른쪽 입꼬리가 올라간 편안한 표정",
+        "smileRead": "오른쪽 입꼬리가 먼저 크게 올라가고 눈썹이 살짝 들림",
+        "worriedRead": "입꼬리를 내리고 이마의 장난기가 사라지면서 정면을 응시",
+        "thumbnailCue": "볼륨 있는 짧은 헤어 실루엣 + 넓은 턱 + 남색 니트 소매"
+      },
+      "distinctFrom": [
+        "jiyoon",
+        "minseo"
+      ]
+    },
+    {
+      "id": "minseo",
+      "legacyKey": "none",
+      "name": "윤민서",
+      "age": 29,
+      "story": "성인 교사 / 협력과 우정만",
+      "hair": "턱선 아래 깔끔한 검은 단발",
+      "outfit": "연녹색 카디건, 흰 셔츠",
+      "face": "갸름한 타원형, 집중하는 곧은 눈매",
+      "pose": "상반신~허벅지, 메모 수첩을 들 수 있음",
+      "relationship": "friendship-only",
+      "expressionStatus": {
+        "neutral": "planned",
+        "smile": "planned",
+        "worried": "planned",
+        "flustered": "planned",
+        "tired": "planned",
+        "shy": "planned"
+      },
+      "identityLock": "same-fictional-adult-actor-across-six-expression-assets",
+      "expressionRendering": "subtle-natural-facial-muscle-movement-no-cartoon-exaggeration",
+      "distinctiveIdentity": {
+        "silhouetteKey": "sharp-blunt-bob-diamond-face",
+        "facialStructure": "광대의 윤곽이 분명한 작은 다이아몬드형 얼굴, 아래로 좁아지는 또렷한 턱선, 지윤보다 짧은 얼굴 길이",
+        "eyesBrows": "또렷하고 곧은 눈썹, 수평에 가까운 집중하는 아몬드형 눈매, 시선을 먼저 고정하는 습관",
+        "noseMouth": "짧고 정돈된 콧대와 약간 둥근 코끝, 작은 입과 선명한 윗입술 윤곽, 웃을 때 입보다 눈이 먼저 움직임",
+        "hairContour": "턱선 아래에서 일자로 끊기는 검은 단발, 한쪽 머리를 귀 뒤로 넣은 단정한 옆가르마",
+        "signatureDetail": "은은한 검정 손목시계, 한 손에 쥔 얇은 무지 메모 수첩과 펜",
+        "shoulderGesture": "어깨가 수평인 반듯한 자세, 메모 수첩을 몸 가까이 들고 종이를 확인한 뒤 시선을 듦",
+        "neutralRead": "말하기 전 한 박자 생각하는 듯 입술을 가볍게 다문 표정",
+        "smileRead": "입을 크게 벌리지 않고 눈가부터 작게 웃음",
+        "worriedRead": "입술을 조금 다물고 수첩을 내려다본 뒤 바로 시선을 올림",
+        "thumbnailCue": "단면이 선명한 검정 단발 + 좁아지는 턱선 + 수첩"
+      },
+      "distinctFrom": [
+        "jiyoon",
+        "hyunwoo"
+      ]
+    }
+  ],
+  "backgrounds": [
+    {
+      "id": "morning",
+      "file": "assets/class-diary/backgrounds/grade-office-morning.webp",
+      "title": "학년연구실의 아침",
+      "light": "morning",
+      "time": "07:50~09:00",
+      "description": "아침 햇빛, 정돈된 서류와 교사용 책상",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "meeting",
+      "file": "assets/class-diary/backgrounds/staff-meeting.webp",
+      "title": "교직원 회의실",
+      "light": "afternoon",
+      "time": "15:00~17:00",
+      "description": "긴 탁자와 빈 의자, 부드러운 오후광",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "classroom",
+      "file": "assets/class-diary/backgrounds/classroom-march.webp",
+      "title": "3월의 초등학교 교실",
+      "light": "daylight",
+      "time": "09:00~14:00",
+      "description": "빈 교실과 아이들의 흔적, 칠판의 글자 없는 표면",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "hallway",
+      "file": "assets/class-diary/backgrounds/school-hallway.webp",
+      "title": "학교 복도",
+      "light": "afternoon",
+      "time": "13:00~16:00",
+      "description": "멀리 이어지는 복도, 상담 전의 정적",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "evening",
+      "file": "assets/class-diary/backgrounds/grade-office-evening.webp",
+      "title": "금요일의 학년연구실",
+      "light": "dusk",
+      "time": "16:00~18:30",
+      "description": "일몰의 사선광, 책상 위 커피잔",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "weekend",
+      "file": "assets/class-diary/backgrounds/friday-street.webp",
+      "title": "퇴근길·주말 거리",
+      "light": "golden-hour",
+      "time": "17:00~19:00",
+      "description": "학교에서 멀어지는 길, 노을과 가로수",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "night",
+      "file": "assets/class-diary/backgrounds/sunday-bedroom.webp",
+      "title": "일요일 밤 주인공의 방",
+      "light": "night",
+      "time": "20:00~23:00",
+      "description": "책상 조명과 창밖 밤하늘, 인물 없는 1인칭 시점",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "gate",
+      "file": "assets/class-diary/backgrounds/school-gate-yard.webp",
+      "title": "교문과 운동장",
+      "light": "morning",
+      "time": "07:30~09:00",
+      "description": "3월의 교문과 운동장이 한 프레임에 들어오는 구도",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "cafe",
+      "file": "assets/class-diary/backgrounds/neighborhood-cafe.webp",
+      "title": "동네 카페",
+      "light": "afternoon",
+      "time": "12:00~17:00",
+      "description": "낮은 채도의 목재, 창가 두 자리",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "consultation",
+      "file": "assets/class-diary/backgrounds/consultation-room.webp",
+      "title": "상담 공간",
+      "light": "afternoon",
+      "time": "12:00~17:00",
+      "description": "안정적인 2인 대화 좌석, 긴장감은 절제",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    },
+    {
+      "id": "bookstore",
+      "file": "assets/class-diary/backgrounds/neighborhood-bookstore.webp",
+      "title": "동네 서점",
+      "light": "daylight",
+      "time": "11:00~18:00",
+      "description": "책등은 읽을 수 없는 추상 패턴, 빈 통로와 작은 책상",
+      "status": "planned",
+      "visualTreatment": "photorealistic-fictional-korean-school-or-neighborhood-set"
+    }
+  ],
+  "rules": {
+    "originalArtOnly": true,
+    "noSchoolIdentifyingInformation": true,
+    "noRealStaffInference": true,
+    "studentRomanceForbidden": true,
+    "noPlayerStateStorage": true,
+    "doNotRenderPlannedAssets": true,
+    "visualEffectReducedMotion": true,
+    "noRealPersonLikeness": true,
+    "noReferenceFrameReproduction": true,
+    "noFixedProtagonistGender": true,
+    "mustMatchPhotorealisticDirection": true
+  },
+  "artDirection": {
+    "id": "korean-live-action-drama-photorealistic-v1",
+    "rendering": "photorealistic",
+    "format": "fictional-original-adult-cast",
+    "referenceUse": "composition-only-no-identity-copy",
+    "forbiddenStyles": [
+      "anime",
+      "cartoon",
+      "manga",
+      "watercolor",
+      "chibi",
+      "celebrity-likeness",
+      "existing-drama-stills"
+    ],
+    "portraitLight": "soft-natural-studio-or-classroom-light",
+    "backgroundLight": "cinematic-realistic-diegetic-light",
+    "fixedCharacterTraits": [
+      "facial-structure",
+      "eyes",
+      "eyebrows",
+      "nose",
+      "mouth",
+      "hairline",
+      "hairstyle",
+      "clothing",
+      "skin-tone"
+    ],
+    "protagonist": "first-person-configurable-no-fixed-portrait",
+    "posterReferences": "information-layout-only",
+    "releaseStage": "7-5",
+    "distinctivenessRequirement": "face-and-silhouette-distinguishable-without-labels-colors-or-costumes",
+    "identityContinuityRequirement": "same-actor-face-across-six-expressions-no-drift",
+    "manualArtReview": [
+      "3-way-neutral-contact-sheet",
+      "grayscale-portrait-comparison",
+      "96x128-thumbnail-silhouette-comparison",
+      "six-expression-identity-consistency",
+      "same-lighting-same-crop-no-labels"
+    ],
+    "distinctivenessStatus": "spec-only-manual-image-review-pending"
+  }
+}

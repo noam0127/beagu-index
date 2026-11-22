@@ -1,0 +1,691 @@
+/* 36-episode prose-on-image mode. Inspired by cinematic VN grammar, not proprietary assets. */
+body.is-playing.is-literary-mode #novelCard{width:min(100%,1380px);height:100dvh;border-radius:0;box-shadow:none}
+body.is-playing.is-literary-mode #sceneArt{position:relative;overflow:hidden}
+body.is-playing.is-literary-mode #sceneBackdrop{filter:brightness(.64) saturate(.84)}
+body.is-playing.is-literary-mode #sceneArt::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;background:linear-gradient(90deg,rgba(11,14,24,.04),rgba(9,13,27,.45) 34%,rgba(11,15,28,.70) 100%),linear-gradient(0deg,rgba(12,14,27,.45),transparent 35%,rgba(12,14,27,.29))}
+body.is-playing.is-literary-mode #novelCard #scenePortrait{left:-3%;right:auto;bottom:0;height:92%;max-width:50%;z-index:2;object-position:left bottom;filter:drop-shadow(12px 9px 28px #080a1e72)}
+body.is-playing.is-literary-mode #sceneGuest{z-index:2}
+body.is-playing.is-literary-mode #sceneArt .scene-fade{opacity:.3}
+body.is-playing.is-literary-mode #vnOverlay{z-index:7;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px)}
+body.is-playing.is-literary-mode #vnBottom{
+ position:absolute;top:32%;right:clamp(18px,5vw,70px);bottom:clamp(16px,6dvh,65px);
+ width:min(62%,850px);height:auto;max-height:none;min-height:0;margin:0;padding:0;
+ display:flex;flex-direction:column;justify-content:space-between;gap:10px;align-self:auto;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot{min-height:0;flex:1 1 auto;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .character-strip{display:none}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome{
+ display:flex;flex-direction:column;justify-content:center;flex:0 1 auto;
+ min-height:0;max-height:100%;height:auto;overflow:hidden;overscroll-behavior:none;
+ padding:0;margin:0;border:0!important;border-radius:0!important;background:none!important;
+ box-shadow:none!important;backdrop-filter:none!important;color:#fff!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .vn-dialogue[hidden],
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome[hidden]{display:none!important}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .vn-dialogue::before,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome::before{display:none}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome .prose{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif!important;
+ font-size:clamp(18px,2.15vw,27px)!important;font-weight:500!important;
+ line-height:1.85!important;letter-spacing:-.02em;word-break:keep-all;
+ color:#f8f5f4!important;text-shadow:0 2px 3px #070918f5,0 0 18px #070918df!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p{margin:0 0 .85em!important;overflow-wrap:anywhere}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p:last-child{margin-bottom:0!important}
+body.is-playing.is-literary-mode .diary-literary-echo{
+ max-height:3.3em;overflow:hidden;margin:0 0 .9em;color:#b6b8c3!important;
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif;font-size:clamp(16px,1.9vw,23px);
+ line-height:1.6;opacity:.6;text-shadow:0 2px 8px #080915e8;word-break:keep-all;
+}
+body.is-playing.is-literary-mode .diary-literary-echo[hidden]{display:none}
+.diary-literary-char{opacity:0;animation:diary-literary-ink 160ms ease-out both;animation-delay:var(--diary-delay,0ms)}
+@keyframes diary-literary-ink{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:blur(0)}}
+.diary-literary-revealed .diary-literary-char{opacity:1!important;filter:none!important;animation:none!important}
+body.is-playing.is-literary-mode #novelCard .vn-bottom .vn-control-row{
+ min-height:50px;flex:0 0 auto;border:0;border-radius:0;background:transparent;box-shadow:none;
+ padding:0;justify-content:flex-end;align-items:center;gap:8px;
+}
+body.is-playing.is-literary-mode .vn-control-row .vn-fiction{display:none}
+body.is-playing.is-literary-mode #novelCard .diary-toolbar button{
+ width:34px;min-width:34px;height:38px;border:1px solid #ffffff44;background:#1f253866;color:#fff;
+ font-size:9px;border-radius:8px;box-shadow:0 3px 9px #0002;
+}
+body.is-playing.is-literary-mode #novelCard #vnMore,body.is-playing.is-literary-mode #novelCard #nextBtn{
+ width:45px;height:45px;min-height:45px;flex-basis:45px;border:1px solid #ffffff5a;border-radius:50%;
+ background:#17243888;color:#fff;box-shadow:0 0 14px #b8c5e73b;
+}
+body.is-playing.is-literary-mode .diary-motion-ghost{z-index:4}
+body.is-playing.is-literary-mode .diary-motion-day{z-index:9}
+body.is-playing.is-literary-mode #choiceSection{z-index:110}
+body.is-playing.is-literary-mode #novelCard[data-season="march"] #sceneBackdrop{filter:brightness(.61) saturate(.67) hue-rotate(-4deg)}
+body.is-playing.is-literary-mode #novelCard[data-season="april"] #sceneBackdrop{filter:brightness(.68) saturate(.82)}
+body.is-playing.is-literary-mode #novelCard[data-season="may"] #sceneBackdrop{filter:brightness(.7) saturate(.92)}
+body.is-playing.is-literary-mode #novelCard[data-season="june"] #sceneBackdrop{filter:brightness(.59) saturate(.81)}
+body.is-playing.is-literary-mode #novelCard[data-season="july"] #sceneBackdrop{filter:brightness(.69) saturate(1.02)}
+@media(max-width:620px){
+ body.is-playing.is-literary-mode #novelCard #scenePortrait{left:-20%;height:74%;max-width:85%;opacity:.72}
+ body.is-playing.is-literary-mode #sceneArt::after{background:linear-gradient(90deg,#090e19a1,#0b1024b8),linear-gradient(0deg,#0b112bb8,transparent 70%)}
+ body.is-playing.is-literary-mode #vnBottom{top:29%;left:7%;right:7%;bottom:calc(env(safe-area-inset-bottom,0px) + 11px);width:86%;gap:8px}
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose,body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome .prose{font-size:clamp(16px,4.15vw,20px)!important;line-height:1.72!important}
+ body.is-playing.is-literary-mode .diary-literary-echo{font-size:clamp(14px,3.7vw,17px);max-height:3.1em}
+ body.is-playing.is-literary-mode #novelCard .vn-bottom .vn-control-row{min-height:42px}
+ body.is-playing.is-literary-mode #novelCard .diary-toolbar button{width:32px;min-width:32px;height:35px}
+}
+@media(max-height:520px) and (orientation:landscape){
+ body.is-playing.is-literary-mode #vnHeaderSlot{max-width:calc(100% - 240px)}
+ body.is-playing.is-literary-mode .vn-hud h2{font-size:16px}
+ body.is-playing.is-literary-mode #vnBottom{top:28%;right:5%;bottom:8px;width:59%;left:auto}
+ body.is-playing.is-literary-mode #novelCard #scenePortrait{height:95%;max-width:45%;left:-3%;opacity:.9}
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose,body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome .prose{font-size:clamp(14px,1.9vw,17px)!important;line-height:1.48!important}
+ body.is-playing.is-literary-mode .diary-literary-echo{font-size:13px;line-height:1.3;max-height:1.3em;margin-bottom:5px}
+ body.is-playing.is-literary-mode #vnBottom{gap:4px}
+ body.is-playing.is-literary-mode #novelCard .diary-toolbar button{height:29px;font-size:8px;width:31px;min-width:31px}
+ body.is-playing.is-literary-mode #novelCard #vnMore,body.is-playing.is-literary-mode #novelCard #nextBtn{width:35px;height:35px;min-height:35px;flex-basis:35px}
+}
+@media(prefers-reduced-motion:reduce){
+ .diary-literary-char{opacity:1!important;filter:none!important;animation:none!important}
+}
+
+
+/* Mobile legibility & in-frame literary page-turn, 2026-11-20 */
+body.is-playing.is-literary-mode #vnBottom{
+ box-sizing:border-box;
+ overflow:hidden;
+ min-width:0;
+ border:1px solid rgba(252,233,237,.30);
+ border-radius:22px;
+ padding:clamp(12px,1.7vw,23px);
+ background:linear-gradient(152deg,rgba(24,25,37,.73),rgba(15,18,31,.80) 72%,rgba(38,28,43,.83));
+ box-shadow:0 16px 44px rgba(7,8,20,.37),inset 0 1px 0 rgba(255,242,249,.12);
+ backdrop-filter:blur(10px) saturate(.86);
+ -webkit-backdrop-filter:blur(10px) saturate(.86);
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot{
+ min-width:0;max-width:100%;
+ overflow:hidden;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome{
+ min-width:0;
+ width:100%;
+ max-width:100%;
+ box-sizing:border-box;
+ padding:clamp(5px,1vw,13px) clamp(4px,1vw,12px)!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .diary-literary-text{
+ max-width:100%;
+ min-width:0;
+ box-sizing:border-box;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ word-break:keep-all;
+ color:#fff9f3!important;
+ text-shadow:0 2px 5px rgba(5,7,18,.90)!important;
+}
+body.is-playing.is-literary-mode .diary-literary-echo{
+ color:#f1dae1!important;
+ opacity:.78;
+ max-width:100%;
+ overflow-wrap:anywhere;
+ text-shadow:0 2px 6px #070818e8;
+}
+body.is-playing.is-literary-mode #novelCard .vn-bottom .vn-control-row{
+ width:100%;
+ max-width:100%;
+ min-width:0;
+ box-sizing:border-box;
+ flex:none;
+ justify-content:flex-end;
+ flex-wrap:nowrap;
+ padding:10px 4px 2px;
+ gap:8px;
+ border-top:1px solid rgba(255,231,237,.22);
+}
+body.is-playing.is-literary-mode #novelCard .vn-bottom .diary-toolbar{
+ display:flex;
+ flex:0 1 auto;
+ min-width:0;
+ margin-right:auto;
+ gap:5px;
+}
+body.is-playing.is-literary-mode #novelCard .vn-bottom .diary-toolbar button{
+ flex:none;
+ box-sizing:border-box;
+ border:1px solid rgba(255,238,243,.36);
+ background:rgba(32,27,45,.54);
+ color:#fdf1f3;
+ border-radius:11px;
+}
+body.is-playing.is-literary-mode #novelCard #vnMore,
+body.is-playing.is-literary-mode #novelCard #nextBtn{
+ box-sizing:border-box;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ gap:9px;
+ flex:0 0 102px!important;
+ width:102px!important;
+ min-width:102px!important;
+ max-width:102px!important;
+ height:49px!important;
+ min-height:49px!important;
+ padding:0 13px!important;
+ border:1px solid rgba(255,231,233,.72)!important;
+ border-radius:999px!important;
+ background:linear-gradient(125deg,#b987a1,#92637f 66%,#714c71)!important;
+ color:#fff9fa!important;
+ box-shadow:0 6px 19px rgba(22,11,36,.40),inset 0 1px 0 #ffffff55!important;
+ font-family:"Gowun Batang","Nanum Myeongjo",serif;
+ font-weight:700;
+ font-size:15px;
+ line-height:1;
+ letter-spacing:.02em;
+ overflow:hidden;
+ white-space:nowrap;
+ touch-action:manipulation;
+ transition:transform .18s ease,filter .18s ease,box-shadow .18s ease;
+}
+body.is-playing.is-literary-mode #novelCard #vnMore::before{
+ content:"다음";
+ display:block;
+ flex:none;
+}
+body.is-playing.is-literary-mode #novelCard #nextBtn::before{
+ content:"다음 장면";
+ display:block;
+ font-size:12px;
+ flex:none;
+}
+body.is-playing.is-literary-mode #novelCard #vnMore .vn-arrow-mark{
+ flex:none;
+ width:19px;height:19px;
+ transform:rotate(-90deg);
+ animation:diary-bookmark-arrow 1.8s ease-in-out infinite;
+}
+body.is-playing.is-literary-mode #novelCard #nextBtn .vn-arrow-mark{
+ flex:none;width:16px;height:16px;
+ animation:diary-next-breath 1.8s ease-in-out infinite;
+}
+@keyframes diary-bookmark-arrow{
+ 0%,100%{transform:translateX(0) rotate(-90deg);opacity:.78}
+ 50%{transform:translateX(4px) rotate(-90deg);opacity:1}
+}
+@keyframes diary-next-breath{
+ 0%,100%{transform:translateX(0);opacity:.78}
+ 50%{transform:translateX(4px);opacity:1}
+}
+body.is-playing.is-literary-mode #novelCard #vnMore:hover,
+body.is-playing.is-literary-mode #novelCard #nextBtn:hover{
+ transform:translateY(-2px);
+ filter:brightness(1.08);
+}
+body.is-playing.is-literary-mode #novelCard #vnMore:focus-visible,
+body.is-playing.is-literary-mode #novelCard #nextBtn:focus-visible{
+ outline:3px solid #f7e0e8;
+ outline-offset:3px;
+}
+body.is-playing.is-literary-mode #novelCard #vnMore[hidden],
+body.is-playing.is-literary-mode #novelCard #nextBtn[hidden]{
+ display:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom>.actions{
+ box-sizing:border-box;
+ display:flex;
+ justify-content:flex-end;
+ width:100%;
+ max-width:100%;
+ padding:0 4px 2px;
+ gap:0;
+ margin:0;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom>.actions #nextBtn{
+ flex-basis:115px!important;
+ width:115px!important;
+ min-width:115px!important;
+ max-width:115px!important;
+}
+@media(max-width:620px){
+ body.is-playing.is-literary-mode #vnBottom{
+  left:clamp(12px,4vw,20px)!important;
+  right:clamp(12px,4vw,20px)!important;
+  width:auto!important;
+  top:30%;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 25px)!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:12px 11px 11px;
+  border-radius:18px;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .vn-dialogue,
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome{
+  padding:4px 5px 7px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard .vn-bottom .vn-control-row{
+  min-height:54px;
+  padding:9px 2px 0;
+  gap:5px;
+ }
+ body.is-playing.is-literary-mode #novelCard .vn-bottom .diary-toolbar{
+  gap:4px;
+ }
+ body.is-playing.is-literary-mode #novelCard .vn-bottom .diary-toolbar button{
+  width:36px;min-width:36px;height:40px;
+  border-radius:9px;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnMore{
+  flex-basis:94px!important;
+  width:94px!important;
+  min-width:94px!important;
+  max-width:94px!important;
+  height:45px!important;
+  min-height:45px!important;
+  padding:0 10px!important;
+  font-size:14px;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom>.actions #nextBtn{
+  min-height:44px!important;
+  height:44px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose,
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome .prose{
+  font-size:clamp(16px,4.05vw,19px)!important;
+  line-height:1.67!important;
+ }
+ body.is-playing.is-literary-mode .diary-literary-echo{
+  font-size:clamp(13px,3.4vw,16px);
+  line-height:1.48;
+ }
+}
+@media(max-width:360px){
+ body.is-playing.is-literary-mode #vnBottom{
+  left:10px!important;
+  right:10px!important;
+  padding:10px 8px 10px;
+ }
+ body.is-playing.is-literary-mode #novelCard .vn-bottom .diary-toolbar button{
+  min-width:31px;width:31px;height:37px;font-size:8px;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnMore{
+  flex-basis:88px!important;
+  width:88px!important;
+  min-width:88px!important;
+  max-width:88px!important;
+ }
+}
+@media(max-height:560px) and (orientation:landscape){
+ body.is-playing.is-literary-mode #vnBottom{
+  top:26%;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 10px)!important;
+  padding:8px 12px;
+ }
+ body.is-playing.is-literary-mode #novelCard .vn-bottom .vn-control-row{
+  padding-top:4px;min-height:37px;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnMore{
+  height:36px!important;
+  min-height:36px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose{
+  font-size:clamp(13px,2vw,17px)!important;
+  line-height:1.45!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing.is-literary-mode #novelCard #vnMore .vn-arrow-mark,
+ body.is-playing.is-literary-mode #novelCard #nextBtn .vn-arrow-mark{
+  animation:none!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnMore,
+ body.is-playing.is-literary-mode #novelCard #nextBtn{
+  transition:none!important;
+ }
+}
+
+
+
+/* 2026-11-20 — chapter HUD compact mode and re-centered prose.
+   Hide decorative controls until the reader opens them. */
+body.is-playing #vnHud{position:relative;min-height:44px;overflow:visible;z-index:12}
+body.is-playing #vnHud>.diary-hud-fold{
+ position:absolute;right:0;top:0;z-index:21;
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-width:70px;height:42px;padding:0 12px;
+ background:rgba(33,29,49,.70);
+ color:#fff8f7;border:1px solid rgba(255,248,251,.55);
+ border-radius:16px;box-shadow:0 4px 18px #100f2055;
+ backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+ font-size:12px;font-weight:750;letter-spacing:.01em;
+ cursor:pointer;touch-action:manipulation;
+ transition:background .2s ease,transform .2s ease;
+}
+body.is-playing #vnHud>.diary-hud-fold:hover{background:rgba(67,49,74,.86)}
+body.is-playing #vnHud>.diary-hud-fold:active{transform:scale(.97)}
+body.is-playing #vnHud>.diary-hud-fold:focus-visible{outline:3px solid #ffdbef;outline-offset:3px}
+body.is-playing #vnHud .diary-hud-fold-mark{display:block;font-size:21px;line-height:1;transition:transform .22s ease}
+body.is-playing.diary-hud-open #vnHud .diary-hud-fold-mark{transform:rotate(180deg)}
+body.is-playing.diary-hud-collapsed #vnHeaderSlot,
+body.is-playing.diary-hud-collapsed #diaryHudActions,
+body.is-playing.diary-hud-collapsed #diaryHudStats,
+body.is-playing.diary-hud-collapsed #vnInfo{display:none!important}
+body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{
+ display:block;max-width:calc(100% - 88px);
+ margin:0;padding-right:6px;
+}
+body.is-playing.diary-hud-open #vnHud #diaryHudActions{
+ position:absolute;right:0;top:48px;left:auto;z-index:20;
+ display:flex;justify-content:flex-end;flex-wrap:wrap;gap:5px;
+ max-width:min(92vw,270px);margin:0;
+}
+body.is-playing.diary-hud-open #diaryHudStats{
+ display:flex;flex-direction:column;gap:5px;
+ top:clamp(130px,20dvh,195px);right:clamp(12px,3vw,32px);
+ align-items:flex-end;z-index:13;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot{
+ display:flex;flex-direction:column;justify-content:center;min-height:0;flex:1 1 auto;
+}
+body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom{
+ top:clamp(62px,10dvh,112px)!important;
+ bottom:calc(env(safe-area-inset-bottom,0px) + 12px)!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ display:flex;flex-direction:column;justify-content:space-between;
+ background:linear-gradient(153deg,rgba(24,25,37,.49),rgba(15,18,31,.58) 72%,rgba(38,28,43,.62));
+ backdrop-filter:blur(4px) saturate(.91);-webkit-backdrop-filter:blur(4px) saturate(.91);
+}
+body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+ top:clamp(195px,31dvh,280px)!important;
+ bottom:calc(env(safe-area-inset-bottom,0px) + 12px)!important;
+ max-height:none!important;height:auto!important;
+}
+@media(max-width:620px){
+ body.is-playing #vnHud{min-height:42px}
+ body.is-playing #vnHud>.diary-hud-fold{right:0;top:0;height:39px;min-width:68px;padding:0 10px;border-radius:13px}
+ body.is-playing.diary-hud-open #vnHud #vnHeaderSlot{max-width:calc(100vw - 130px)}
+ body.is-playing.diary-hud-open #vnHud #diaryHudActions{top:45px;right:0;gap:4px}
+ body.is-playing.diary-hud-open #diaryHudStats{top:clamp(140px,23dvh,195px);right:10px}
+ body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom{
+  top:clamp(55px,9dvh,86px)!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 9px)!important;
+  left:clamp(10px,3.5vw,18px)!important;
+  right:clamp(10px,3.5vw,18px)!important;
+  width:auto!important;max-height:none!important;
+ }
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+  top:clamp(190px,31dvh,270px)!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 9px)!important;
+ }
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom{top:53px!important;bottom:5px!important}
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{top:110px!important;bottom:5px!important}
+ body.is-playing.diary-hud-open #diaryHudStats{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing #vnHud>.diary-hud-fold,body.is-playing #vnHud .diary-hud-fold-mark{transition:none}
+}
+
+/* Read by touching the scene: keep controls functional but remove the oversized next pill. */
+body.is-playing.is-literary-mode #novelCard #vnMore,
+body.is-playing.is-literary-mode #novelCard #nextBtn{
+ display:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom>.actions{display:none!important}
+
+
+/* 36-episode cumulative line reading v2: stable text size, manual tap/Enter.
+   This block deliberately overrides the former fading previous-line effect.
+   Earlier lines do not move, shrink, dim or scroll while new lines appear. */
+body.is-playing.is-literary-mode .diary-literary-echo{display:none!important}
+body.is-playing.is-literary-mode #novelCard #vnBottom{
+ left:clamp(12px,3vw,48px)!important;
+ right:clamp(12px,3vw,48px)!important;
+ width:auto!important;
+ max-width:none!important;
+ box-sizing:border-box;
+ padding:clamp(12px,2.2vw,30px)!important;
+ background:linear-gradient(100deg,rgba(8,12,22,.53),rgba(17,21,35,.56))!important;
+ border:1px solid rgba(242,229,235,.23)!important;
+ border-radius:13px!important;
+ backdrop-filter:blur(3px)!important;
+ -webkit-backdrop-filter:blur(3px)!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot{
+ width:100%!important;
+ max-width:100%!important;
+ min-height:0!important;
+ flex:1 1 auto!important;
+ align-items:stretch!important;
+ justify-content:flex-start!important;
+ overflow:hidden!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome{
+ display:flex;
+ flex-direction:column;
+ justify-content:flex-start!important;
+ width:100%!important;
+ height:100%!important;
+ flex:1 1 auto!important;
+ padding:4px 6px!important;
+ overflow:hidden!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .vn-dialogue[hidden],
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome[hidden]{display:none!important}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose{
+ width:100%!important;max-width:100%!important;
+ min-height:0!important;flex:0 1 auto;
+ font-size:clamp(18px,2.05vw,26px)!important;
+ line-height:1.65!important;
+ letter-spacing:-.012em!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line{
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+ font-size:inherit!important;
+ line-height:inherit!important;
+ font-weight:inherit!important;
+ opacity:1!important;
+ color:inherit!important;
+ transform:none;
+ max-width:100%!important;
+ white-space:normal;
+ word-break:keep-all;
+ overflow-wrap:anywhere;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line[hidden]{
+ display:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line-enter{
+ animation:diary-literary-new-line .19s ease-out both;
+}
+@keyframes diary-literary-new-line{
+ from{opacity:0;transform:translateY(3px)}
+ to{opacity:1;transform:translateY(0)}
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line-enter:not(:last-child){
+ animation-fill-mode:forwards;
+}
+@media(max-width:620px){
+ body.is-playing.is-literary-mode #novelCard #vnBottom{
+  left:clamp(8px,2.6vw,14px)!important;
+  right:clamp(8px,2.6vw,14px)!important;
+  padding:12px 10px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose{
+  font-size:clamp(16px,4.05vw,19px)!important;
+  line-height:1.63!important;
+ }
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing.is-literary-mode #novelCard #vnBottom{padding:6px 10px!important}
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose{
+  font-size:clamp(13px,1.9vw,17px)!important;
+  line-height:1.42!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line-enter{
+  animation:none!important;opacity:1!important;transform:none!important;
+ }
+}
+
+
+/* Sentence cursor / background-only story.
+   A single sentence is drawn character-by-character; tapping proceeds.
+   Keep colleague-selection images intact, but suppress all story-scene portraits. */
+body.is-playing #scenePortrait,
+body.is-playing #sceneHyunwooLive,
+body.is-playing #sceneGuest,
+body.is-playing #sceneGuestPortrait,
+body.is-playing #sceneGuestMalePhoto,
+body.is-playing #sceneDoyun,
+body.is-playing #novelCard .character-strip,
+body.is-playing #novelCard #characterAvatar{
+ display:none!important;
+}
+body.is-playing.is-literary-mode .diary-reading-cursor{
+ display:inline-block;min-width:.45em;margin-left:.08em;
+ color:#ead4e5;font-size:.86em;line-height:1;
+ vertical-align:baseline;transform:translateY(-.05em);
+ animation:diary-sentence-cursor-blink .95s steps(1,end) infinite;
+ user-select:none;pointer-events:none;
+}
+body.is-playing.is-literary-mode .diary-literary-typing .diary-reading-cursor{
+ visibility:hidden;animation:none;
+}
+@keyframes diary-sentence-cursor-blink{
+ 0%,49%{opacity:1}
+ 50%,100%{opacity:0}
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line{
+ text-align:left;min-height:1.65em;white-space:pre-wrap;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose p.diary-literary-line.diary-literary-typing{
+ animation:none!important;transform:none!important;opacity:1!important;
+}
+@media(prefers-reduced-motion:reduce){
+ body.is-playing.is-literary-mode .diary-reading-cursor{animation:none;opacity:1}
+}
+
+/* The final chapter uses exactly the same waiting cursor as ordinary dialogue. */
+body.is-ending .diary-reading-cursor{
+ display:inline-block;min-width:.45em;margin-left:.08em;color:#956f8e;
+ font-size:.86em;vertical-align:baseline;
+ animation:diary-sentence-cursor-blink .95s steps(1,end) infinite;
+ user-select:none;pointer-events:none;
+}
+body.is-ending .diary-literary-typing .diary-reading-cursor{visibility:hidden;animation:none}
+body.is-ending #endingText{cursor:pointer;touch-action:manipulation}
+@media(prefers-reduced-motion:reduce){body.is-ending .diary-reading-cursor{animation:none;opacity:1}}
+
+
+/* 2026-11-20: date left, affection/fatigue in a compact upper HUD,
+   and manual story utilities anchored to the lower right. */
+body.is-playing #vnOverlay .diary-scene-date{
+ position:absolute;z-index:20;
+ top:calc(env(safe-area-inset-top,0px) + 14px);
+ left:calc(env(safe-area-inset-left,0px) + clamp(12px,3vw,24px));
+ padding:9px 13px;
+ min-height:38px;display:flex;align-items:center;
+ background:rgba(25,29,45,.68);color:#fff5f8;
+ border:1px solid rgba(255,245,251,.35);border-radius:13px;
+ box-shadow:0 4px 16px rgba(6,9,23,.20);
+ font:750 13px/1.2 "Apple SD Gothic Neo",Pretendard,"Malgun Gothic",sans-serif;
+ letter-spacing:.01em;font-variant-numeric:tabular-nums;
+ backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+ pointer-events:none;
+}
+body.is-playing #vnOverlay .diary-scene-date:empty{display:none}
+body.is-playing #vnOverlay #diaryHudStats,
+body.is-playing.diary-hud-collapsed #vnOverlay #diaryHudStats,
+body.is-playing.diary-hud-open #vnOverlay #diaryHudStats{
+ display:flex!important;
+ position:absolute!important;
+ top:calc(env(safe-area-inset-top,0px) + 14px)!important;
+ right:calc(env(safe-area-inset-right,0px) + 96px)!important;
+ left:auto!important;
+ flex-direction:row!important;align-items:center!important;
+ justify-content:flex-end!important;gap:5px!important;
+ z-index:20!important;max-width:calc(100% - 270px);
+ pointer-events:none!important;
+}
+body.is-playing #vnOverlay #diaryHudStats>span{
+ margin:0!important;padding:7px 9px!important;min-height:38px;
+ white-space:nowrap;border-radius:13px;font-size:11px;
+ background:rgba(25,29,45,.72);box-sizing:border-box;
+}
+body.is-playing #vnOverlay #diaryHudStats b{font-size:12px}
+body.is-playing.is-literary-mode #novelCard .vn-bottom .vn-control-row{
+ align-items:flex-end!important;justify-content:flex-end!important;
+ gap:5px!important;padding-right:0!important;
+}
+body.is-playing.is-literary-mode #novelCard .vn-bottom .diary-toolbar{
+ display:flex!important;align-self:flex-end!important;
+ justify-content:flex-end!important;order:10;
+ margin:0 0 0 auto!important;
+ gap:5px!important;flex:none!important;
+}
+body.is-playing.is-literary-mode #novelCard .vn-bottom .diary-toolbar button{
+ width:39px!important;min-width:39px!important;
+ height:41px!important;min-height:41px!important;
+ font-size:9px!important;border-radius:12px!important;
+}
+@media(max-width:760px){
+ body.is-playing #vnOverlay #diaryHudStats,
+ body.is-playing.diary-hud-collapsed #vnOverlay #diaryHudStats,
+ body.is-playing.diary-hud-open #vnOverlay #diaryHudStats{
+  top:calc(env(safe-area-inset-top,0px) + 57px)!important;
+  right:calc(env(safe-area-inset-right,0px) + 12px)!important;
+  max-width:calc(100% - 24px)!important;
+ }
+ body.is-playing #vnOverlay #diaryHudStats>span{
+  min-height:30px;padding:5px 8px!important;font-size:10px;
+ }
+ body.is-playing #vnOverlay #diaryHudStats b{font-size:11px}
+ body.is-playing #vnOverlay .diary-scene-date{
+  top:calc(env(safe-area-inset-top,0px) + 10px);
+  left:calc(env(safe-area-inset-left,0px) + 12px);
+  min-height:39px;padding:8px 10px;font-size:12px;
+ }
+ body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom{
+  top:calc(env(safe-area-inset-top,0px) + clamp(98px,12dvh,116px))!important;
+ }
+}
+@media(max-width:370px){
+ body.is-playing #vnOverlay #diaryHudStats,
+ body.is-playing.diary-hud-collapsed #vnOverlay #diaryHudStats,
+ body.is-playing.diary-hud-open #vnOverlay #diaryHudStats{
+  display:flex!important;gap:4px!important;
+ }
+ body.is-playing #vnOverlay #diaryHudStats>span{
+  padding:4px 6px!important;font-size:9px;
+ }
+ body.is-playing.is-literary-mode #novelCard .vn-bottom .diary-toolbar button{
+  width:35px!important;min-width:35px!important;height:38px!important;min-height:38px!important;
+ }
+}
+@media(max-width:760px) and (max-height:540px) and (orientation:landscape){
+ body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom{
+  top:calc(env(safe-area-inset-top,0px) + 95px)!important;
+ }
+}
+
+/* Expanded information actions follow the score chips, never cover them. */
+@media(max-width:760px){
+ body.is-playing.diary-hud-open #vnHud #diaryHudActions{
+  top:94px!important;right:0!important;
+ }
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+  top:clamp(180px,29dvh,260px)!important;
+ }
+}
+@media(max-width:760px) and (max-height:540px){
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom{
+  top:144px!important;
+ }
+}

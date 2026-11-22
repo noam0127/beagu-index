@@ -1,0 +1,67 @@
+/* Arcade Cabinet UI — both games, no changes to school data pages */
+:root { --arcade-ink:#eefbff; --arcade-cyan:#61f5e8; --arcade-gold:#ffe47c; --arcade-pink:#ff80b3; --arcade-edge:#668cc0; --arcade-deep:#0a1027; }
+body.arcade-body {
+  background-color:#080f22;
+  background-image: radial-gradient(ellipse at 50% -20%,rgba(65,89,183,.45),transparent 67%),repeating-linear-gradient(90deg,transparent 0 39px,rgba(90,154,209,.055) 40px 41px);
+  color:var(--arcade-ink); text-rendering:optimizeLegibility;
+}
+.arcade-body .game-shell,.arcade-body .shell { position:relative; }
+.arcade-body .brand,.arcade-body .version,.arcade-body .pill {
+  font-family:ui-monospace,"Courier New",monospace; font-weight:900; text-shadow:0 2px #101a4c,0 0 13px rgba(124,220,255,.18);
+}
+.arcade-body .brand { letter-spacing:.01em; }
+.arcade-body .version,.arcade-body .pill { background:#111e3c; border:2px solid #5c72ac; color:#ffd87e; border-radius:5px; box-shadow:3px 3px 0 #070c20; }
+.arcade-body .scoreboard,.arcade-body .stat {
+  border:2px solid #5e85b6; border-radius:4px; background:linear-gradient(180deg,#1a3058,#101e3a);
+  box-shadow:inset 0 2px 0 #597aa1,0 3px 0 #060b20; }
+.arcade-body .stat span,.arcade-body .team span {font-family:ui-monospace,monospace;letter-spacing:.06em;color:#aac6e7}
+.arcade-body .stat strong,.arcade-body .team strong,.arcade-body .center-label {font-family:ui-monospace,"Courier New",monospace;text-shadow:2px 2px #091026}
+.arcade-body .court,.arcade-body .stage {
+  position:relative;border:3px solid #486ea2;border-radius:4px;background:#151d44;box-shadow:0 5px 0 #090f29,0 0 0 2px #1d3662; }
+.arcade-body .court::after,.arcade-body .stage::after {
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:repeating-linear-gradient(to bottom,rgba(4,8,26,.055) 0 2px,transparent 2px 5px);
+}
+.arcade-body canvas {image-rendering:auto; }
+.arcade-body .actions button,.arcade-body .touch button,.arcade-body .control button,.arcade-body .toolbar button,
+.arcade-body .choices button {border-radius:5px;box-shadow:0 4px 0 #080e20, inset 0 1px 0 rgba(255,255,255,.12);transition:filter .1s ease,transform .1s ease}
+.arcade-body .actions button:active,.arcade-body .touch button:active,.arcade-body .control button:active,.arcade-body .toolbar button:active,
+.arcade-body .choices button:active {transform:translateY(3px);box-shadow:0 1px 0 #080e20}
+.arcade-body button:focus-visible,.arcade-ranking button:focus-visible {outline:3px solid #fff7a6;outline-offset:3px}
+.arcade-body .panel {border-radius:5px;background:linear-gradient(170deg,#223d6a,#0e1a38);border:3px solid #679bbd;box-shadow:7px 7px 0 #081229}
+.arcade-body .overlay {backdrop-filter:blur(2px);}
+.arcade-body .status {font-family:ui-monospace,monospace;color:#ffe98c;text-shadow:1px 1px #101228}
+.arcade-body .game-shell,.arcade-body .shell {contain:layout style}
+.arcade-ranking {
+  margin:14px auto 4px; padding:13px; max-width:640px; min-width:0; color:#ecfbff;
+  background:linear-gradient(155deg,#101d3d,#101630 75%);
+  border:3px solid #5d8aaf;border-radius:5px;box-shadow:5px 5px 0 #060b1c;
+  font-family:ui-monospace,"Courier New",monospace;
+}
+.arcade-ranking-toggle{display:flex;width:100%;min-height:44px;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border:1px solid #648db3;border-radius:9px;background:#193958;color:#ffe57f;text-align:left;font:900 14px/1.4 ui-monospace,"Apple SD Gothic Neo",sans-serif;cursor:pointer}
+.arcade-ranking-toggle:hover{background:#224e70}
+.arcade-ranking-toggle:focus-visible{outline:3px solid #fff7a6;outline-offset:3px}
+.arcade-ranking-chevron{font-size:17px;flex:0 0 auto;color:#b4f7e8}
+.arcade-ranking-content{padding-top:13px}
+.arcade-ranking-content[hidden]{display:none!important}
+.arcade-ranking-head {display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;margin-bottom:10px}
+.arcade-ranking-head strong{color:#ffe57f;font-weight:900;font-size:15px;letter-spacing:.1em;text-shadow:2px 2px #4e365c}
+.arcade-ranking-head small{font-size:10px;color:#a7c4df}
+.arcade-tier-filter{display:block;width:min(230px,100%);margin:0 0 10px;padding:8px 12px;border:1px solid #527ba3;border-radius:8px;background:#102b4b;color:#eff9ff;font-size:12px;font-weight:800;cursor:pointer}
+.arcade-tier-filter:focus-visible{outline:3px solid #fff7a6;outline-offset:2px}
+.arcade-rank-grid{display:grid;grid-template-columns:43px minmax(0,1fr) minmax(75px,130px);gap:8px;min-width:0;align-items:center}
+.arcade-rank-grid span:last-child{text-align:right}
+.arcade-rank-label {color:#86aedd;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 5px 8px;border-bottom:1px solid #2b4971}
+.arcade-rank-row {border-bottom:1px solid #273958;padding:8px 5px;color:#f2f8ff;font-size:clamp(11px,3vw,13px);font-weight:800;letter-spacing:.07em}
+.arcade-rank-row:nth-child(-n+4){color:#ffe49a}
+.arcade-rank-row span {white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.arcade-rank-empty {padding:12px 4px;text-align:center;color:#a8c3df;font-size:12px}
+.arcade-rank-feedback{margin:0 0 9px;padding:9px 11px;border:1px solid #426c83;border-radius:8px;background:#183754;color:#d2f8ef;font-size:12px;font-weight:750;line-height:1.5;overflow-wrap:anywhere}
+.arcade-rank-row span:nth-child(1){color:#79dfea}
+.arcade-history-link{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 0;padding:12px 14px;background:#1c446c;color:#f3fdff!important;border:1px solid #76bcd6;border-radius:10px;text-decoration:none;font-size:13px;font-weight:900;transition:background .15s}
+.arcade-history-link:hover,.arcade-history-link:focus-visible{background:#275d89;text-decoration:none;outline:2px solid #fff3a4;outline-offset:2px}
+@media(max-width:360px){
+ .arcade-ranking{padding:10px}.arcade-rank-grid{grid-template-columns:32px minmax(0,1fr) 78px;gap:5px}
+ .arcade-ranking-head strong{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){.arcade-body *{transition:none!important}}

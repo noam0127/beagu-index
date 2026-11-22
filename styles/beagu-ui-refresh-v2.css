@@ -1,0 +1,856 @@
+/*
+ * Beagu Index · UI Refresh 2026-11-18
+ * Source-compatible visual layer: existing data, controls, authentication and
+ * document structure remain authoritative. Game screens keep their arcade theme.
+ */
+:root{
+  --ui-ink:#172a43;
+  --ui-heading:#102a47;
+  --ui-muted:#5c7089;
+  --ui-subtle:#7789a0;
+  --ui-blue:#245dd9;
+  --ui-blue-dark:#174bb8;
+  --ui-blue-soft:#edf4ff;
+  --ui-line:#dfe7f1;
+  --ui-line-strong:#c8d7e9;
+  --ui-canvas:#f5f7fb;
+  --ui-surface:#fff;
+  --ui-radius:20px;
+  --ui-radius-sm:12px;
+  --ui-shadow:0 8px 30px rgba(19,48,85,.045),0 1px 3px rgba(19,48,85,.025);
+  --ui-shadow-hover:0 14px 36px rgba(29,69,118,.09);
+  --ui-transition:.18s ease;
+  accent-color:var(--ui-blue);
+}
+body.beagu-ui-page:not(.beagu-page-game){
+  background:var(--ui-canvas);
+  color:var(--ui-ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  font-size:15px;
+  line-height:1.65;
+  font-feature-settings:"kern" 1;
+  -webkit-font-smoothing:antialiased;
+}
+body.beagu-ui-page{min-width:0}
+body.beagu-ui-page *{box-sizing:border-box}
+body.beagu-ui-page :is(button,input,select,textarea,a){-webkit-tap-highlight-color:transparent}
+body.beagu-ui-page :is(button,input,select,textarea){font-family:inherit}
+body.beagu-ui-page :is(input,select,textarea){
+  transition:border-color var(--ui-transition),box-shadow var(--ui-transition),background-color var(--ui-transition);
+}
+body.beagu-ui-page :is(input,select,textarea):focus-visible{
+  border-color:var(--ui-blue)!important;
+  outline:2px solid rgba(36,93,217,.27);
+  outline-offset:2px;
+}
+body.beagu-ui-page :is(a,button,summary):focus-visible{
+  outline:3px solid #7babff;
+  outline-offset:3px;
+}
+body.beagu-ui-page :is(button,a){transition:background-color var(--ui-transition),border-color var(--ui-transition),color var(--ui-transition),box-shadow var(--ui-transition)}
+body.beagu-ui-page :is(button,input,select){min-width:0}
+body.beagu-ui-page :is(button,[role="button"]):disabled{cursor:not-allowed}
+body.beagu-ui-page :is(p,li,small,dt,dd){overflow-wrap:break-word}
+body.beagu-ui-page :is(h1,h2,h3,h4){letter-spacing:-.042em;text-wrap:balance}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-brand-mark{
+  width:40px;height:40px;flex:0 0 40px;
+  border-radius:12px;background:var(--ui-blue);color:#fff;
+  font:800 26px/1 Arial,Helvetica,sans-serif;
+  letter-spacing:0;box-shadow:0 4px 11px rgba(36,93,217,.15);
+}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-brand-word{
+  font-size:18px;line-height:1.1;letter-spacing:-.047em;
+  color:var(--ui-heading);font-weight:860;
+}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-brand-link{gap:11px;align-self:center}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-global-nav{
+  width:100%;max-width:none;margin:0 0 26px;
+  gap:clamp(16px,2.5vw,34px);
+  border-bottom:1px solid var(--ui-line);
+}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-global-nav>a{
+  display:inline-flex;align-items:center;min-height:49px;
+  padding:9px 2px 12px;color:var(--ui-muted);
+  font-size:14px;letter-spacing:-.016em;font-weight:680;
+}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-global-nav>a:hover{color:var(--ui-blue)}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-global-nav>a[aria-current="page"]{color:var(--ui-blue);font-weight:820;border-bottom-color:var(--ui-blue)}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-content-note{
+  background:#f1f6ff;border:1px solid #dce9ff;
+  border-radius:15px;padding:17px 20px;
+  font-size:14px;color:#4e6683;line-height:1.7;
+}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-content-note strong{color:#244675}
+body.beagu-ui-page:not(.beagu-page-game) .participation-bar{
+  background:#eef4fc;border-bottom:1px solid #d9e5f5;
+  padding:8px 16px;z-index:900;
+}
+body.beagu-ui-page:not(.beagu-page-game) .participation-link{
+  width:fit-content;max-width:100%;padding:8px 16px;
+  border-radius:999px;background:#e1edff;border:1px solid #c6dbff;
+  color:#2457b3;font-size:13px;font-weight:800;
+  box-shadow:none;
+}
+body.beagu-ui-page:not(.beagu-page-game) .participation-link:hover{background:#d5e6ff;border-color:#94baff}
+body.beagu-ui-page:not(.beagu-page-game) :is(.card,.auth-card,.school-card,.block,.step-card){
+  border-color:var(--ui-line);box-shadow:var(--ui-shadow);
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.card,.auth-card,.block,.step-card){
+  border-radius:var(--ui-radius);
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.search-box,.region-select,.code-box,.lv1-quick-input){
+  background:#fff;border:1px solid var(--ui-line-strong);border-radius:13px;
+  color:var(--ui-ink);box-shadow:0 1px 2px rgba(27,61,101,.025);
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.search-box,.region-select,.code-box,.lv1-quick-input)::placeholder{color:#93a1b3}
+body.beagu-ui-page:not(.beagu-page-game) :is(.search-box,.region-select,.code-box,.lv1-quick-input):focus{border-color:var(--ui-blue);box-shadow:0 0 0 4px rgba(36,93,217,.09)}
+body.beagu-ui-page:not(.beagu-page-game) .field-label{font-size:13px;color:#405773;font-weight:790}
+body.beagu-ui-page:not(.beagu-page-game) .description{color:var(--ui-muted);line-height:1.75}
+body.beagu-ui-page:not(.beagu-page-game) .result-count{color:#536c87;font-size:13px;font-weight:650}
+body.beagu-ui-page:not(.beagu-page-game) .pager button{
+  min-height:43px;padding:10px 17px;background:white;
+  border:1px solid var(--ui-line-strong);border-radius:12px;
+  color:var(--ui-blue-dark);font-weight:780;
+}
+body.beagu-ui-page:not(.beagu-page-game) .pager button:not(:disabled):hover{border-color:#a4c1ee;background:#eff5ff}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-search-sort{
+  border:1px solid var(--ui-line);box-shadow:none;background:#fff;border-radius:15px;padding:13px 17px;
+}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-search-sort select{min-height:43px;border:1px solid var(--ui-line-strong);border-radius:11px}
+body.beagu-ui-page:not(.beagu-page-game) .school-card{
+  border:1px solid #c9ddf9!important;border-left:3px solid #3974e6!important;
+  border-radius:17px!important;padding:22px!important;
+  background:linear-gradient(180deg,#fff 0%,#fcfdff 100%);
+  transition:transform var(--ui-transition),box-shadow var(--ui-transition),border-color var(--ui-transition);
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card:hover{
+  border-color:#98bdf6!important;box-shadow:var(--ui-shadow-hover);transform:translateY(-1px);
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .school-name{font-size:19px;font-weight:850;color:var(--ui-heading);letter-spacing:-.04em;line-height:1.42}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .school-meta{color:#68798d;font-size:13px;line-height:1.65}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .region-badge{background:#e9f1ff;color:#275bb3;border:0;font-size:11px;font-weight:850}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell{
+  background:#f4f7fc;border:1px solid #e5edf8;border-radius:11px;padding:11px 7px;
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-value{
+  font-variant-numeric:tabular-nums;font-size:16px;font-weight:840;color:#2458a9;
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-year{font-weight:760;font-size:12px;color:#74859d}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .view-button{
+  min-height:47px;background:var(--ui-blue);border-radius:12px;font-size:14px;font-weight:800;
+  box-shadow:0 5px 10px rgba(36,93,217,.1);
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .view-button:hover{background:var(--ui-blue-dark)}
+body.beagu-ui-page:not(.beagu-page-game) .school-participation{font-size:12px;border-radius:9px}
+body.beagu-ui-page:not(.beagu-page-game) .empty{
+  background:#fff;border:1px dashed #cfdbec;border-radius:18px;
+  color:#647891;font-size:14px;
+}
+/* Home: a spacious dashboard on desktop and readable single column on mobile. */
+body.beagu-page-home main.container{
+  max-width:1152px;padding:30px 30px 90px;
+  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));
+  column-gap:24px;row-gap:22px;
+}
+body.beagu-page-home main.container>.logo{grid-column:1/5;margin:0;align-self:center}
+body.beagu-page-home main.container>.beagu-global-nav{grid-column:5/-1;justify-content:flex-end;margin:0}
+body.beagu-page-home main.container>h1{
+  grid-column:1/8;align-self:end;margin:12px 0 0;
+  font-size:clamp(42px,5.2vw,72px);line-height:1.08;
+  font-weight:870;color:var(--ui-heading);letter-spacing:-.07em;
+}
+body.beagu-page-home main.container>.beagu-content-note{
+  grid-column:8/-1;align-self:center;margin-top:14px;
+}
+body.beagu-page-home .survey-totals{
+  grid-column:1/7;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+  align-items:stretch;margin:0;background:#fff;padding:18px;border:1px solid var(--ui-line);
+  border-radius:21px;box-shadow:var(--ui-shadow);
+}
+body.beagu-page-home .survey-totals>div{
+  padding:10px 8px;text-align:left;display:flex;flex-direction:column;justify-content:center;
+}
+body.beagu-page-home .survey-totals>div+div{border-left:1px solid var(--ui-line);padding-left:23px}
+body.beagu-page-home .survey-totals dt{font-size:13px;font-weight:720;color:#657b94;margin-bottom:6px}
+body.beagu-page-home .survey-totals dd{color:#1c54b8;font-size:16px;font-variant-numeric:tabular-nums}
+body.beagu-page-home .survey-total-number{font-size:clamp(30px,3.4vw,43px);font-weight:890;letter-spacing:-.06em}
+body.beagu-page-home .survey-total-unit{font-size:14px;font-weight:750;color:#58708d}
+body.beagu-page-home .beagu-xp{
+  grid-column:7/-1;margin:0!important;
+  border:1px solid var(--ui-line);border-radius:21px;
+  box-shadow:var(--ui-shadow);background:#fff;padding:19px 22px;
+}
+body.beagu-page-home .beagu-xp-head{gap:10px}
+body.beagu-page-home .beagu-xp-head h2{font-size:15px;color:var(--ui-heading);font-weight:830}
+body.beagu-page-home .beagu-xp-track{height:11px;border-radius:999px;background:#e9f0fb}
+body.beagu-page-home .data-access-link{
+  grid-column:1/-1;width:100%;margin:0;min-height:58px;display:flex;
+  justify-content:center;align-items:center;gap:12px;
+  background:var(--ui-blue);color:#fff;border:1px solid var(--ui-blue);
+  border-radius:15px;font-size:17px;font-weight:850;
+  box-shadow:0 8px 20px rgba(36,93,217,.14);
+}
+body.beagu-page-home .data-access-link::after{content:"→";font-size:22px;font-weight:400;line-height:1}
+body.beagu-page-home .data-access-link:hover{background:var(--ui-blue-dark);box-shadow:0 12px 27px rgba(36,93,217,.2)}
+/* Let the games heading span the whole desktop dashboard grid. */
+body.beagu-page-home main.container > .teacher-arcade-intro {
+  grid-column: 1 / -1;
+  justify-self: stretch;
+  width: 100%;
+  min-width: 0;
+  margin: 10px 0 -6px;
+  padding-inline: 8px;
+  text-align: center;
+  text-wrap: balance;
+}
+body.beagu-page-home .teacher-game-feature{
+  grid-column:1/7;margin-top:0;border:1px solid #2b4b70;
+  border-radius:21px;box-shadow:0 12px 33px rgba(16,38,64,.12);
+}
+body.beagu-page-home .teacher-run-feature{grid-column:7/-1}
+body.beagu-page-home .teacher-game-header{padding:19px 22px 13px}
+body.beagu-page-home .teacher-game-header h2{font-size:21px}
+body.beagu-page-home .teacher-game-footer{padding:11px 16px 18px}
+body.beagu-page-home .teacher-game-footer a{font-size:13px;padding:9px 14px}
+body.beagu-page-home .teacher-game-frame{max-width:100%}
+body.beagu-page-home .teacher-game-details summary{
+  text-decoration:none;color:#eaf5ff;
+  background:rgba(255,255,255,.065);padding:12px 21px;
+}
+body.beagu-page-home .teacher-game-details summary:hover{background:rgba(255,255,255,.1)}
+body.beagu-page-home .card[aria-label="방문 통계"]{
+  grid-column:1/-1;margin-top:0!important;padding:24px 30px;
+  border:1px solid var(--ui-line);background:#fff;
+}
+body.beagu-page-home .card[aria-label="방문 통계"] h2{font-size:19px;font-weight:840;color:var(--ui-heading);margin:0 0 15px}
+body.beagu-page-home .card[aria-label="방문 통계"] strong{font-size:23px;letter-spacing:-.055em;color:#2259b2;font-variant-numeric:tabular-nums}
+body.beagu-page-home .card[aria-label="방문 통계"]>div>div{font-size:13px;color:#75849a;line-height:1.9}
+/* Search: a calm, clearly staged workflow. */
+body.beagu-page-search main.container,
+body.beagu-page-lv1 main.container{max-width:970px;padding:25px 28px 84px}
+body.beagu-page-search .topbar,body.beagu-page-lv1 .topbar{margin-bottom:14px;min-height:48px}
+body.beagu-page-search .back,body.beagu-page-lv1 .back{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:41px;height:41px;flex:0 0 41px;
+  border:1px solid var(--ui-line);border-radius:12px;background:#fff;
+  color:#4e6786;text-decoration:none;
+}
+body.beagu-page-search .back:hover,body.beagu-page-lv1 .back:hover{background:#edf4ff;color:var(--ui-blue)}
+body.beagu-page-search h1,body.beagu-page-lv1 h1{
+  font-size:clamp(30px,4vw,43px);line-height:1.2;
+  font-weight:870;color:var(--ui-heading);margin:0 0 9px;
+}
+body.beagu-page-search .description,body.beagu-page-lv1 .description{font-size:15px;margin-bottom:23px;max-width:690px}
+body.beagu-page-search .lv1-quick-auth,body.beagu-page-lv1 .auth-card{
+  background:#fff;border:1px solid #d7e5f9;
+  border-radius:20px;box-shadow:var(--ui-shadow);
+  padding:22px 25px;margin-bottom:23px;
+}
+body.beagu-page-search .lv1-quick-head h2{font-size:19px;color:#1b3b67}
+body.beagu-page-search .lv1-quick-head small{font-size:12px}
+body.beagu-page-search .lv1-quick-label{font-size:13px}
+body.beagu-page-search .lv1-quick-input{min-height:48px}
+body.beagu-page-search .lv1-quick-submit,body.beagu-page-search .lv1-quick-open{
+  background:var(--ui-blue);border-radius:11px;min-height:48px;font-size:14px;
+}
+body.beagu-page-search .lv1-quick-authenticated span{font-size:14px}
+body.beagu-page-search .search-tabs,body.beagu-page-lv1 .search-tabs{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:6px;padding:6px;margin-bottom:20px;
+  background:#eaf0f9;border-radius:16px;
+}
+body.beagu-page-search .search-tab,body.beagu-page-lv1 .search-tab{
+  min-height:48px;border:1px solid transparent;background:transparent;
+  color:#5a7291;border-radius:11px;font-size:14px;font-weight:760;
+}
+body.beagu-page-search .search-tab[aria-selected="true"],
+body.beagu-page-lv1 .search-tab[aria-selected="true"]{
+  background:#fff;border-color:#d9e5f4;color:#1f57b0;
+  box-shadow:0 2px 7px rgba(27,71,125,.08);
+}
+body.beagu-page-search :is(#schoolPanel,#regionPanel),
+body.beagu-page-lv1 :is(#schoolPanel,#regionPanel){
+  padding:24px 25px;border:1px solid var(--ui-line);
+  border-radius:18px;background:#fff;box-shadow:var(--ui-shadow);
+}
+body.beagu-page-search .search-box,body.beagu-page-lv1 .search-box{min-height:55px;font-size:16px;padding:14px 18px}
+body.beagu-page-search .region-select,body.beagu-page-lv1 .region-select{min-height:50px;font-size:15px}
+body.beagu-page-search .results,body.beagu-page-lv1 .results{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;align-items:stretch;
+}
+body.beagu-page-search .results>.school-card,body.beagu-page-lv1 .results>.school-card{min-width:0}
+body.beagu-page-search .school-card,body.beagu-page-lv1 .school-card{
+  display:flex;flex-direction:column;gap:0;
+}
+body.beagu-page-search .school-card .school-actions,body.beagu-page-lv1 .school-card .school-actions{margin-top:auto;padding-top:17px}
+body.beagu-page-search .lv1-quick-auth .lv1-quick-row{max-width:690px}
+body.beagu-page-lv1 .auth-card{max-width:700px;margin:0 auto 25px}
+body.beagu-page-lv1 .auth-card h1{font-size:30px}
+body.beagu-page-lv1 .tier-label,body.beagu-page-lv1 .tier-pill{font-size:12px;letter-spacing:.01em}
+body.beagu-page-lv1 .primary-button{background:var(--ui-blue);border-radius:12px;min-height:49px}
+body.beagu-page-lv1 .auth-status{padding:13px 17px;border:1px solid var(--ui-line);background:#fff;border-radius:13px;margin-bottom:18px}
+body.beagu-page-search .pager,body.beagu-page-lv1 .pager{margin-top:23px}
+/* School report: stronger hierarchy, quieter metadata and more legible charts. */
+body.beagu-page-report .site-header{background:#fff;border-bottom:1px solid var(--ui-line);box-shadow:none}
+body.beagu-page-report .header-inner{max-width:1160px}
+body.beagu-page-report .brand{font-weight:850;color:var(--ui-heading)}
+body.beagu-page-report .brand-symbol{
+  display:inline-flex;align-items:center;justify-content:center;
+  background:var(--ui-blue);border-radius:12px;
+  width:40px;height:40px;min-width:40px;
+  color:white;font:800 26px/1 Arial,Helvetica,sans-serif;
+  box-shadow:0 4px 11px rgba(36,93,217,.15);
+}
+body.beagu-page-report .brand small{color:var(--ui-muted);font-size:11px;font-weight:650;letter-spacing:0}
+body.beagu-page-report>.beagu-global-nav{width:min(calc(100% - 36px),1160px);margin:14px auto 0}
+body.beagu-page-report .layout{max-width:1160px;padding:28px 26px 75px}
+body.beagu-page-report .page-heading h1{font-size:clamp(29px,3.5vw,43px);font-weight:880;color:var(--ui-heading);line-height:1.2}
+body.beagu-page-report .page-heading .lead{font-size:15px;color:var(--ui-muted)}
+body.beagu-page-report .search-surface,
+body.beagu-page-report .school-hero,
+body.beagu-page-report .tier-panel,
+body.beagu-page-report .year-overview,
+body.beagu-page-report .report-body,
+body.beagu-page-report .approved-summary{
+  border:1px solid var(--ui-line);
+  box-shadow:var(--ui-shadow);border-radius:20px;
+}
+body.beagu-page-report .search-surface{padding:24px 26px;background:#fff}
+body.beagu-page-report .input-wrap input{min-height:52px;border-radius:12px}
+body.beagu-page-report .search-help{font-size:13px}
+body.beagu-page-report .school-hero{
+  background:linear-gradient(120deg,#183a67 0%,#173c78 48%,#2458a5 100%);
+  border-color:#315d96;
+}
+body.beagu-page-report .school-hero :is(.region,.address,.access-tag,.icon-fact){line-height:1.65}
+body.beagu-page-report .tier-panel{padding:21px 24px;background:#fff}
+body.beagu-page-report .tier-selector{gap:8px}
+body.beagu-page-report .tier-button{min-height:44px;border-radius:11px;font-size:13px;font-weight:770}
+body.beagu-page-report .year-overview{padding:24px 26px}
+body.beagu-page-report .year-grid{gap:12px}
+body.beagu-page-report .year-card{
+  border:1px solid #d9e5f3;
+  border-radius:15px;padding:15px;
+  box-shadow:none;transition:box-shadow var(--ui-transition),border-color var(--ui-transition);
+}
+body.beagu-page-report .year-card:hover{border-color:#a5c3eb;box-shadow:0 5px 18px rgba(28,64,108,.07)}
+body.beagu-page-report .year-card[aria-selected="true"]{border-color:#3372db;box-shadow:inset 0 0 0 1px #3372db}
+body.beagu-page-report .year-card .metric-text{font-size:clamp(19px,2.2vw,29px);font-weight:850;font-variant-numeric:tabular-nums}
+body.beagu-page-report .report-body{padding:26px 29px}
+body.beagu-page-report .report-title h3,
+body.beagu-page-report .section-top h3{font-size:22px;color:var(--ui-heading);font-weight:850}
+body.beagu-page-report .section-top p{font-size:13px;color:var(--ui-muted)}
+body.beagu-page-report .controls-bar{gap:12px}
+body.beagu-page-report .question-row{
+  background:#fff;border:1px solid #e2eaf4;border-radius:15px;
+  padding:20px 22px;margin-bottom:11px;
+}
+body.beagu-page-report .question-label{font-size:15px!important;font-weight:760;line-height:1.65}
+body.beagu-page-report .question-value{font-size:14px;line-height:1.65}
+body.beagu-page-report .question-visual{
+  padding:17px;background:#f9fbff;border-color:#dfe9f8;border-radius:14px;
+}
+body.beagu-page-report .question-visual-heading{font-size:15px;font-weight:840}
+body.beagu-page-report .question-visual-directions{font-size:12px;gap:9px}
+body.beagu-page-report .benchmark-values{gap:7px}
+body.beagu-page-report .benchmark-values strong{font-variant-numeric:tabular-nums}
+body.beagu-page-report .summary-metric{border-radius:13px}
+body.beagu-page-report .school-compare-cell{border-radius:13px}
+body.beagu-page-report .beagu-content-note{margin:13px 0}
+body.beagu-page-report .report-footer{border-top:1px solid var(--ui-line);padding-top:20px;color:var(--ui-muted)}
+/* School comparison: five choices remain five, while the table stays horizontally usable. */
+body.beagu-page-compare .site-top{background:#fff;border-bottom:1px solid var(--ui-line);box-shadow:none}
+body.beagu-page-compare .site-top .shell{max-width:1200px}
+body.beagu-page-compare>.beagu-global-nav{max-width:1200px;width:calc(100% - 48px);margin:6px auto 12px}
+body.beagu-page-compare main.shell{max-width:1200px;padding-bottom:70px}
+body.beagu-page-compare .intro{margin-top:22px;margin-bottom:23px;border-radius:22px;background:linear-gradient(115deg,#f0f5fd,#e8f1fe);border:1px solid #dce7f8;padding:34px 38px;box-shadow:none}
+body.beagu-page-compare .intro h1{font-size:clamp(30px,3.4vw,48px);line-height:1.17;color:var(--ui-heading)}
+body.beagu-page-compare .intro .subtitle{font-size:15px;color:#59718d;max-width:680px}
+body.beagu-page-compare .intro-tags span{border-radius:999px}
+body.beagu-page-compare .content-card{
+  border:1px solid var(--ui-line);border-radius:21px;
+  box-shadow:var(--ui-shadow);padding:24px 27px;background:#fff;
+}
+body.beagu-page-compare .section-head h2{font-size:22px;font-weight:860;color:var(--ui-heading)}
+body.beagu-page-compare .compare-search-field input{min-height:52px;font-size:16px;border:1px solid var(--ui-line-strong);border-radius:12px}
+body.beagu-page-compare .comparison-workspace{gap:20px}
+body.beagu-page-compare .comparison-picker{background:#fff;border:1px solid var(--ui-line);border-radius:21px;box-shadow:var(--ui-shadow)}
+body.beagu-page-compare .comparison-results{background:#fff;border:1px solid var(--ui-line);border-radius:21px;box-shadow:var(--ui-shadow)}
+body.beagu-page-compare .comparison-head h2{font-size:23px;font-weight:850;color:var(--ui-heading)}
+body.beagu-page-compare .compare-selections{gap:12px}
+body.beagu-page-compare .compare-selection{
+  background:#fff;border:1px solid #d8e5f3;border-radius:14px;
+  box-shadow:0 3px 12px rgba(19,52,97,.045);padding:14px;
+}
+body.beagu-page-compare .compare-selection-title{font-size:15px;font-weight:840;color:#1b3e69}
+body.beagu-page-compare .compare-selection-subtitle{font-size:12px;line-height:1.5}
+body.beagu-page-compare .compare-selection-year{font-size:12px}
+body.beagu-page-compare .compare-selection-year select{min-height:42px;border:1px solid var(--ui-line-strong)}
+body.beagu-page-compare .compare-placeholder{background:#f8fbff;border:1px dashed #c9d8eb;border-radius:14px}
+body.beagu-page-compare .compare-counter{border-radius:11px;background:#edf4ff;color:#2556a3;font-size:13px}
+body.beagu-page-compare .compare-scroll{border:1px solid var(--ui-line-strong);border-radius:14px}
+body.beagu-page-compare .compare-table{font-size:13px}
+body.beagu-page-compare .compare-table thead th{background:#eaf2fc;color:#214b7b;font-size:13px}
+body.beagu-page-compare .compare-table tbody td{color:#385371;font-size:13px;line-height:1.65}
+body.beagu-page-compare .compare-table tbody th{font-size:13px;font-weight:800;color:#345575}
+body.beagu-page-compare .compare-table tbody tr:nth-child(even) td{background:#fafcff}
+body.beagu-page-compare .compare-percent{font-size:24px}
+body.beagu-page-compare .notice{border:1px solid var(--ui-line);background:#f9fbff;border-radius:18px;padding:21px 24px}
+/* Certificates, policy, and official survey: clear, publication-like layouts. */
+body.beagu-page-challenge main{max-width:840px}
+body.beagu-page-challenge .topbar{margin-bottom:8px}
+body.beagu-page-challenge .certificate{
+  border:1px solid #c7d9f6;border-radius:24px;
+  background:linear-gradient(155deg,#fff 0%,#f5f9ff 100%);
+  padding:35px 30px;box-shadow:0 14px 35px rgba(29,74,128,.07);
+}
+body.beagu-page-challenge .certificate h1{font-size:clamp(26px,3.4vw,35px);color:var(--ui-heading)}
+body.beagu-page-challenge .rank{
+  border:1px solid #dce8fb;background:#eaf2ff;border-radius:17px;
+  padding:20px 14px;
+}
+body.beagu-page-challenge .rank strong{font-size:clamp(34px,5vw,46px);font-weight:870;color:#1d55b2;font-variant-numeric:tabular-nums}
+body.beagu-page-challenge .step-card{padding:23px;border-radius:18px}
+body.beagu-page-challenge .step-heading h3{font-size:18px;color:var(--ui-heading)}
+body.beagu-page-challenge .action{min-height:51px;border-radius:12px;font-weight:850;font-size:15px}
+body.beagu-page-challenge .action:not(.secondary){background:var(--ui-blue)}
+body.beagu-page-challenge .action.secondary{background:#fff;border-color:#c6d8f2;color:#245ab1}
+body.beagu-page-challenge .beagu-xp{background:#fff;border:1px solid var(--ui-line);border-radius:18px;box-shadow:var(--ui-shadow)}
+body.beagu-page-policy .wrap{max-width:940px;padding-bottom:30px}
+body.beagu-page-policy .hero h1{font-size:clamp(31px,4.3vw,43px);font-weight:870;color:var(--ui-heading)}
+body.beagu-page-policy .hero .intro{font-size:15px;line-height:1.8}
+body.beagu-page-policy .block{padding:27px 29px;border-radius:19px}
+body.beagu-page-policy .block h2{font-size:21px;color:var(--ui-heading)}
+body.beagu-page-policy .tier{background:#f5f8fe;border:1px solid var(--ui-line);border-radius:13px;padding:17px}
+body.beagu-page-policy .state{background:#f8fbff;border:1px solid var(--ui-line);border-radius:12px}
+body.beagu-page-survey .survey-shell{max-width:850px;padding:30px 24px 72px}
+body.beagu-page-survey .survey-panel{padding:38px 38px 42px;border-radius:24px;box-shadow:var(--ui-shadow);border-color:var(--ui-line)}
+body.beagu-page-survey .survey-panel h1{font-size:clamp(28px,3.5vw,41px);color:var(--ui-heading)}
+body.beagu-page-survey .survey-panel p{font-size:15px;line-height:1.8}
+body.beagu-page-survey .survey-actions a{border-radius:12px;padding:14px 20px}
+body.beagu-page-survey .survey-actions a:not(.secondary){background:var(--ui-blue)}
+/* Small screens: no forced horizontal scroll or tiny action targets. */
+@media(max-width:1050px){
+  body.beagu-page-home main.container{column-gap:18px;row-gap:18px;padding:26px 24px 70px}
+  body.beagu-page-home main.container>h1{font-size:clamp(38px,5vw,60px)}
+  body.beagu-page-home .teacher-game-feature{grid-column:1/-1}
+  body.beagu-page-home .teacher-run-feature{grid-column:1/-1}
+}
+@media(max-width:760px){
+  body.beagu-ui-page:not(.beagu-page-game) .beagu-brand-mark{width:36px;height:36px;flex-basis:36px;font-size:24px;border-radius:10px}
+  body.beagu-ui-page:not(.beagu-page-game) .beagu-brand-word{font-size:17px}
+  body.beagu-ui-page:not(.beagu-page-game) .beagu-global-nav{justify-content:flex-start;margin:8px 0 20px;gap:20px}
+  body.beagu-ui-page:not(.beagu-page-game) .beagu-global-nav>a{font-size:13px;min-height:44px}
+  body.beagu-page-home main.container{display:flex;flex-direction:column;align-items:stretch;gap:17px;padding:20px 17px 55px}
+  body.beagu-page-home main.container>.logo{margin:0}
+  body.beagu-page-home main.container>.beagu-global-nav{width:100%;margin:0 0 8px}
+  body.beagu-page-home main.container>h1{font-size:clamp(37px,9vw,52px);margin:0}
+  body.beagu-page-home main.container>.beagu-content-note{margin:0}
+  body.beagu-page-home .survey-totals{margin:0;padding:11px;gap:5px}
+  body.beagu-page-home .survey-totals>div{padding:9px}
+  body.beagu-page-home .survey-totals>div+div{padding-left:13px}
+  body.beagu-page-home .survey-total-number{font-size:clamp(25px,7vw,36px)}
+  body.beagu-page-home .beagu-xp{padding:19px}
+  body.beagu-page-home .data-access-link{font-size:16px;min-height:54px}
+  body.beagu-page-home .teacher-game-feature{margin:0}
+  body.beagu-page-home .card[aria-label="방문 통계"]{padding:21px 17px}
+  body.beagu-page-search main.container,body.beagu-page-lv1 main.container{padding:18px 16px 55px}
+  body.beagu-page-search h1,body.beagu-page-lv1 h1{font-size:31px}
+  body.beagu-page-search .lv1-quick-auth,body.beagu-page-lv1 .auth-card{padding:19px}
+  body.beagu-page-search :is(#schoolPanel,#regionPanel),body.beagu-page-lv1 :is(#schoolPanel,#regionPanel){padding:19px}
+  body.beagu-page-search .results,body.beagu-page-lv1 .results{grid-template-columns:1fr}
+  body.beagu-ui-page:not(.beagu-page-game) .school-card{padding:18px!important}
+  body.beagu-page-report .layout{padding:19px 13px 52px}
+  body.beagu-page-report>.beagu-global-nav{width:calc(100% - 26px)}
+  body.beagu-page-report .search-surface,
+  body.beagu-page-report .tier-panel,
+  body.beagu-page-report .year-overview,
+  body.beagu-page-report .report-body{padding:19px}
+  body.beagu-page-report .question-row{padding:16px}
+  body.beagu-page-report .year-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.beagu-page-report .year-card .metric-text{font-size:24px}
+  body.beagu-page-compare>.beagu-global-nav{width:calc(100% - 28px)}
+  body.beagu-page-compare main.shell{padding:0 14px 55px}
+  body.beagu-page-compare .intro{padding:25px 21px}
+  body.beagu-page-compare .content-card{padding:18px}
+  body.beagu-page-compare .compare-selections{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.beagu-page-compare .comparison-head-actions{flex-wrap:wrap}
+  body.beagu-page-challenge main{padding-left:16px;padding-right:16px}
+  body.beagu-page-challenge .certificate{padding:27px 17px}
+  body.beagu-page-policy .block{padding:20px}
+  body.beagu-page-survey .survey-shell{padding:18px 15px 45px}
+  body.beagu-page-survey .survey-panel{padding:25px 21px}
+}
+@media(max-width:450px){
+  body.beagu-page-home .survey-total-number{font-size:clamp(23px,7vw,31px)}
+  body.beagu-page-home .survey-total-unit{font-size:12px}
+  body.beagu-page-home .card[aria-label="방문 통계"] strong{font-size:18px}
+  body.beagu-page-search .school-card .percentile-grid,
+  body.beagu-page-lv1 .school-card .percentile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.beagu-page-search .search-tabs,body.beagu-page-lv1 .search-tabs{margin-bottom:15px}
+  body.beagu-page-compare .compare-selections{grid-template-columns:1fr}
+  body.beagu-page-report .year-card{padding:12px}
+  body.beagu-page-report .question-label{font-size:14px!important}
+  body.beagu-ui-page:not(.beagu-page-game) .participation-link{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+  body.beagu-ui-page :is(a,button,input,select,textarea,.school-card,.year-card){transition:none!important;animation:none!important}
+  body.beagu-ui-page:not(.beagu-page-game) .school-card:hover{transform:none}
+}
+
+
+/* Context-sensitive status remains legible after the unified card treatment. */
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="missing"],
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="unpublished"],
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="loading"]{
+  background:#f6f8fb;border-color:#e4eaf2;
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="review"]{
+  background:#fafbfe;border-style:dashed;border-color:#bfcde0;
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="error"]{
+  background:#fff4f4;border-color:#f3cbce;
+}
+body.beagu-ui-page:not(.beagu-page-game) .school-card .percentile-cell[data-state="locked"]{
+  background:#eef3fd;border-color:#d2dff1;
+}
+/* Report hero uses a deep background; all ordinary text must contrast clearly. */
+body.beagu-page-report .school-hero :is(h2,.region,.address,.icon-fact){color:#fff}
+body.beagu-page-report .school-hero .region{color:#c8ddff}
+body.beagu-page-report .school-hero .address{color:#e2ecfa}
+body.beagu-page-report .school-hero .hero-foot{border-top:1px solid rgba(255,255,255,.25)}
+body.beagu-page-report .school-hero .icon-fact{color:#e1ecfc}
+body.beagu-page-report .school-hero .change-school{color:#d6ebff;text-decoration:underline;text-underline-offset:3px}
+body.beagu-page-report .school-hero .access-tag{
+  background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.32);color:#fff;
+}
+/* Dynamic five-school selection is flex-based in the existing comparison module. */
+body.beagu-page-compare .comparison-picker .compare-selections{display:flex;flex-wrap:wrap;gap:12px}
+body.beagu-page-compare .comparison-picker .compare-selection{flex:1 1 190px;max-width:calc(50% - 6px)}
+body.beagu-page-compare .comparison-picker .compare-placeholder{flex:1 1 190px;max-width:calc(50% - 6px)}
+body.beagu-page-compare .compare-selection :is(select,button){max-width:100%}
+/* Keyboard users can jump straight to the content without navigating every tab. */
+body.beagu-ui-page .beagu-skip-link{
+  position:fixed;top:-70px;left:14px;z-index:2147483600;
+  display:inline-block;padding:12px 17px;background:#102b50;color:white;
+  border-radius:12px;text-decoration:none;font-size:14px;font-weight:800;
+  box-shadow:0 8px 24px rgba(15,43,79,.15);
+}
+body.beagu-ui-page .beagu-skip-link:focus{top:14px}
+@media(min-width:1210px){
+ body.beagu-page-compare .comparison-picker .compare-selection,
+ body.beagu-page-compare .comparison-picker .compare-placeholder{flex:1 1 185px;max-width:calc(20% - 10px)}
+}
+@media(max-width:760px){
+ body.beagu-page-compare .comparison-picker .compare-selection,
+ body.beagu-page-compare .comparison-picker .compare-placeholder{flex:1 1 180px;max-width:calc(50% - 6px)}
+ body.beagu-page-lv1 .results{grid-template-columns:1fr}
+}
+@media(max-width:450px){
+ body.beagu-page-compare .comparison-picker .compare-selection,
+ body.beagu-page-compare .comparison-picker .compare-placeholder{flex:1 1 100%;max-width:100%}
+}
+
+
+/* The legacy comparison intro used pale text on a dark background; the new
+   pale hero requires renewed contrast for every highlighted phrase and tag. */
+body.beagu-page-compare .intro .overline{color:#3f6699}
+body.beagu-page-compare .intro .overline-sep{color:#7c93b2}
+body.beagu-page-compare .intro h1 span{color:#245dbd}
+body.beagu-page-compare .intro-tags span{
+  background:rgba(255,255,255,.65);
+  color:#2b568a;border:1px solid #cfdef2;
+  font-size:12px;font-weight:720;padding:8px 12px;
+}
+body.beagu-page-compare .intro .graphic-grid span{border-color:rgba(34,91,172,.19);background:rgba(95,153,224,.09)}
+body.beagu-page-compare .intro .graphic-grid span:nth-child(3n){background:rgba(71,139,223,.19)}
+body.beagu-page-compare .intro .graphic-grid span:nth-child(7),
+body.beagu-page-compare .intro .graphic-grid span:nth-child(13){background:rgba(55,128,217,.26)}
+body.beagu-page-compare .intro .graphic-line{background:#94b6e252}
+body.beagu-page-compare .intro .graphic-label,
+body.beagu-page-compare .intro .graphic-label b{color:#4775ac}
+body.beagu-page-lv1 .results{grid-template-columns:1fr}
+
+
+/* Mobile homepage alignment: desktop grid-item alignment must NOT leak into
+   the phone flex layout. Without this the brand centers and H1 sticks right. */
+@media (max-width:760px){
+  body.beagu-page-home main.container>.logo{
+    grid-column:auto;
+    align-self:stretch;
+    width:100%;
+    margin:0;
+    display:flex;
+    justify-content:flex-start;
+    text-align:left;
+  }
+  body.beagu-page-home main.container>.logo>.beagu-brand-link{margin:0;max-width:100%}
+  body.beagu-page-home main.container>.beagu-global-nav{
+    grid-column:auto;
+    align-self:stretch;
+    width:100%;
+    max-width:100%;
+    justify-content:flex-start;
+    margin:0 0 6px;
+    gap:clamp(16px,4vw,25px);
+    padding-inline:0;
+  }
+  body.beagu-page-home main.container>h1{
+    grid-column:auto;
+    align-self:stretch;
+    width:100%;
+    min-width:0;
+    text-align:left;
+    margin:0 0 1px;
+    font-size:clamp(37px,9vw,51px);
+    line-height:1.15;
+    letter-spacing:-.065em;
+  }
+  body.beagu-page-home main.container>.beagu-content-note{
+    grid-column:auto;
+    align-self:stretch;
+    width:100%;
+    margin:0;
+  }
+}
+
+/* Cohesive Baegu visual language · compact copy / 2026 comparison */
+:root{
+  --ui-ink:#1b304c;
+  --ui-heading:#112a4a;
+  --ui-muted:#586c83;
+  --ui-blue:#265ed4;
+  --ui-blue-dark:#1645ac;
+  --ui-accent:#078d9c;
+  --ui-blue-soft:#edf3ff;
+  --ui-line:#dde6f1;
+  --ui-line-strong:#cbd9e8;
+  --ui-canvas:#f6f8fc;
+  --ui-shadow:0 7px 24px rgba(21,56,105,.055),0 1px 3px rgba(21,56,105,.035);
+}
+body.beagu-ui-page:not(.beagu-page-game){
+  letter-spacing:-.014em;
+  font-family: -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard Variable","Noto Sans KR",sans-serif;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.school-card,.auth-card,.content-card,.report-card,.block,.step-card){
+  border-color:var(--ui-line);
+  box-shadow:var(--ui-shadow);
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.school-card,.auth-card,.content-card,.block,.step-card):focus-within{
+  border-color:#9fbceb;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.primary-button,.view-button,.compare-auth-submit):not(:disabled){
+  background:var(--ui-blue);
+  color:#fff;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.primary-button,.view-button,.compare-auth-submit):not(:disabled):hover{
+  background:var(--ui-blue-dark);
+}
+body.beagu-ui-page:not(.beagu-page-game) .beagu-global-nav>a[aria-current="page"]{
+  color:var(--ui-blue);
+  border-bottom-color:var(--ui-accent);
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(.region-badge,.tier-pill,.compare-counter){
+  border-radius:12px;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(h1,h2,h3){
+  text-rendering:optimizeLegibility;
+}
+body.beagu-ui-page:not(.beagu-page-game) :is(input,select,button){
+  letter-spacing:-.012em;
+}
+body.beagu-page-compare .topnav{display:none}
+body.beagu-page-compare .intro{
+  min-height:0;
+  margin:16px 0 18px;
+  padding:0;
+  background:linear-gradient(117deg,#eef5ff 0%,#eaf2ff 67%,#e6f6fa 100%);
+  border:1px solid #dce7f4;
+  border-radius:22px;
+  box-shadow:none;
+}
+body.beagu-page-compare .intro-content{
+  padding:26px 32px 27px;
+  max-width:760px;
+}
+body.beagu-page-compare .intro h1{
+  font-size:clamp(31px,3.4vw,45px);
+  font-weight:880;
+  letter-spacing:-.065em;
+  line-height:1.15;
+  text-wrap:initial;
+  word-break:keep-all;
+  margin:0 0 11px;
+}
+body.beagu-page-compare .intro .compare-heading-phrase{
+  display:block;
+  white-space:nowrap;
+  color:var(--ui-blue);
+  letter-spacing:-.065em;
+}
+body.beagu-page-compare .intro .overline{
+  display:inline-flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:9px;
+  color:#346388;
+  font-size:11px;
+  letter-spacing:.105em;
+  margin:0 0 12px;
+}
+body.beagu-page-compare .intro .live-dot{background:var(--ui-accent);width:7px;height:7px}
+body.beagu-page-compare .intro .subtitle{
+  font-size:14px;
+  color:#536b86;
+  max-width:none;
+  line-height:1.6;
+  white-space:normal;
+}
+body.beagu-page-compare .intro .graphic-grid span:nth-child(3n){background:rgba(53,119,209,.1)}
+body.beagu-page-compare .intro .graphic-grid span:nth-child(7),
+body.beagu-page-compare .intro .graphic-grid span:nth-child(13){background:rgba(8,145,163,.14)}
+body.beagu-page-compare .compare-auth-card,
+body.beagu-page-compare .compare-search-only,
+body.beagu-page-compare .comparison-picker,
+body.beagu-page-compare .comparison-results{
+  border:1px solid var(--ui-line);
+  border-radius:19px;
+  background:#fff;
+  box-shadow:var(--ui-shadow);
+}
+body.beagu-page-compare .compare-auth-card{padding:19px 24px;margin:0 0 13px}
+body.beagu-page-compare .compare-search-only{padding:20px 24px;margin-bottom:13px}
+body.beagu-page-compare .comparison-picker{padding:20px 24px}
+body.beagu-page-compare .comparison-results{padding:20px 24px}
+body.beagu-page-compare .compare-auth-heading h2,
+body.beagu-page-compare .section-head h2,
+body.beagu-page-compare .comparison-head h2{
+  color:var(--ui-heading);font-size:20px;line-height:1.35;letter-spacing:-.044em;
+}
+body.beagu-page-compare .compare-auth-heading .section-overline,
+body.beagu-page-compare .section-overline{
+  color:var(--ui-accent);
+  font-size:10px;
+  letter-spacing:.09em;
+}
+body.beagu-page-compare .comparison-workspace{gap:14px}
+body.beagu-page-compare .comparison-results-heading h3{font-size:18px}
+body.beagu-page-compare .compare-table thead th{background:#eaf1fc}
+body.beagu-page-compare .compare-table .compare-group th{background:#e5f1fb!important;color:#1d587d}
+body.beagu-page-compare .compare-percent-track>span{background:linear-gradient(90deg,#2496ac,#2966d6)}
+body.beagu-page-compare .compare-auth-badge.is-authenticated{
+  color:#146e63;background:#e5f7f3;border-color:#bcebe0;
+}
+body.beagu-page-compare .compare-selection-index{background:var(--ui-blue)}
+body.beagu-page-compare .compare-selection{background:#fcfdff}
+body.beagu-page-compare .notice{
+  background:#f7faff;
+  border-color:#e1e9f4;
+}
+@media(max-width:720px){
+  body.beagu-page-compare .intro{margin:12px 0 14px;border-radius:18px}
+  body.beagu-page-compare .intro-content{padding:24px 21px 25px}
+  body.beagu-page-compare .intro h1{font-size:clamp(29px,8.4vw,37px);line-height:1.17}
+  body.beagu-page-compare .intro .subtitle{font-size:13px;line-height:1.55}
+  body.beagu-page-compare .intro .overline{font-size:10px;margin-bottom:12px}
+  body.beagu-page-compare .compare-auth-card,
+  body.beagu-page-compare .compare-search-only,
+  body.beagu-page-compare .comparison-picker,
+  body.beagu-page-compare .comparison-results{padding:18px 17px}
+  body.beagu-page-compare .comparison-head-actions{gap:7px}
+}
+@media(max-width:340px){
+  body.beagu-page-compare .intro-content{padding:22px 16px}
+  body.beagu-page-compare .intro h1{font-size:28px}
+}
+
+
+/* Lv.1 historical results are a single in-card disclosure.
+   No secondary navigation, duplicate school profile, or trend chart. */
+body.beagu-page-lv1 .school-card .lv1-history-disclosure{
+  margin:16px 0 0;
+  padding:15px 17px;
+  border:1px solid #c9dcf5;
+  border-radius:15px;
+  background:#f9fbff;
+  box-shadow:none;
+  cursor:pointer;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure:hover{
+  border-color:#95b9ed;
+  background:#f4f8ff;
+}
+body.beagu-page-lv1 .school-card .lv1-history-trigger{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  width:100%;
+  min-height:45px;
+  padding:5px 0 13px;
+  border:0;
+  border-bottom:1px solid #e2ebf8;
+  background:transparent;
+  color:#193b68;
+  font-size:17px;
+  font-weight:850;
+  text-align:left;
+  letter-spacing:-.035em;
+  cursor:pointer;
+}
+body.beagu-page-lv1 .school-card .lv1-history-trigger::after{
+  content:"펼치기  ▾";
+  flex:0 0 auto;
+  padding:6px 10px;
+  border-radius:9px;
+  color:#245bb2;
+  background:#e7f0ff;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:0;
+}
+body.beagu-page-lv1 .school-card .lv1-history-trigger[aria-expanded="true"]::after{
+  content:"접기  ▴";
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure>.percentile-grid{
+  margin:13px 0 3px;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure>.school-detail{
+  cursor:default;
+  margin:16px 0 0;
+  border-top:1px solid #dbe7f7;
+  padding-top:18px;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure>.school-detail[hidden]{
+  display:none!important;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure .year-tabs{
+  margin:12px 0 18px;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure .year-tabs button{
+  min-height:44px;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure .school-history-heading{
+  margin:0 0 8px;
+  font-size:15px;
+  color:#2a4f83;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure .school-year-details{
+  min-width:0;
+}
+body.beagu-page-lv1 .school-card .lv1-history-disclosure + .beagu-mbti-badge{
+  margin-top:14px;
+  margin-bottom:0;
+}
+@media(max-width:450px){
+  body.beagu-page-lv1 .school-card .lv1-history-disclosure{padding:12px;}
+  body.beagu-page-lv1 .school-card .lv1-history-trigger{font-size:16px;}
+}
+
+/* Shared Lv.0 / Lv.1 sort controls: criterion and direction are independent. */
+body.beagu-ui-page .beagu-search-sort .beagu-sort-controls{display:flex;align-items:stretch;gap:8px;width:min(100%,320px);min-width:0}
+body.beagu-ui-page .beagu-search-sort .beagu-sort-controls select{flex:1 1 auto;width:auto;min-width:0}
+body.beagu-ui-page .beagu-search-sort .beagu-sort-direction{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;min-width:44px;min-height:43px;padding:0;border:1px solid var(--ui-line-strong);border-radius:11px;background:#f1f6ff;color:var(--ui-blue);font-size:23px;font-weight:800;line-height:1;cursor:pointer}
+body.beagu-ui-page .beagu-search-sort .beagu-sort-direction:hover{background:#dfeafe;border-color:#8aaff2}
+body.beagu-ui-page .beagu-search-sort .beagu-sort-direction:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+@media(max-width:700px){body.beagu-ui-page .beagu-search-sort .beagu-sort-controls{width:100%}}

@@ -1,0 +1,368 @@
+/* School-by-year comparison overlay. Keeps the canonical directory stylesheet intact. */
+.comparison-section{margin-top:20px;padding:27px 29px 24px;border-color:#dce7f5}
+.comparison-head{display:flex;align-items:flex-start;justify-content:space-between;gap:22px}
+.comparison-head h2{margin:0;font-size:24px;letter-spacing:-.055em;color:#183862}
+.comparison-subtitle{margin:8px 0 0;font-size:12px;color:#71819a;line-height:1.65;word-break:keep-all}
+.comparison-head-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.compare-counter{border:1px solid #cbdcf4;background:#eaf2ff;border-radius:9px;padding:11px 12px;color:#1d58a6;font-size:12px;font-weight:850;white-space:nowrap}
+.compare-plain-button{border:1px solid #dae5f2;border-radius:9px;background:#fff;color:#395a81;font-size:12px;font-weight:800;padding:11px 12px;min-height:41px}
+.compare-plain-button:hover:not(:disabled){background:#edf4ff;border-color:#9ab8e3}
+.compare-selections{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:21px}
+.compare-selection{border:1px solid #d7e4f4;background:linear-gradient(180deg,#fff,#f7faff);border-radius:14px;padding:12px;min-width:0;box-shadow:0 5px 16px #1a4f9208}
+.compare-selection-header{display:flex;align-items:start;gap:6px;justify-content:space-between}
+.compare-selection-index{background:#2563b9;color:#fff;border-radius:7px;font-weight:850;font-size:11px;display:inline-flex;justify-content:center;align-items:center;min-width:26px;height:26px}
+.compare-selection-title{margin:10px 0 5px;color:#183f71;font-size:14px;font-weight:850;line-height:1.4;overflow-wrap:anywhere}
+.compare-selection-subtitle{font-size:10px;color:#7689a1;line-height:1.45;overflow-wrap:anywhere;min-height:15px}
+.compare-selection-year{display:block;color:#5b718d;font-size:11px;font-weight:760;margin-top:11px}
+.compare-selection-year select{display:block;width:100%;height:38px;border:1px solid #d4e1f2;border-radius:9px;padding:0 9px;margin-top:5px;background:#fff;color:#1d4f91;font-size:13px;font-weight:800}
+.compare-selection-actions{display:flex;gap:5px}
+.compare-mini-button{min-width:27px;height:27px;border:1px solid #dbe6f2;background:#fff;color:#5c7291;font-weight:800;border-radius:7px;font-size:13px;padding:0 5px}
+.compare-mini-button:hover:not(:disabled){background:#e8f0fd;color:#1d5bb1}
+.compare-mini-button.remove{color:#ac5260;border-color:#f2d9db}
+.compare-placeholder{border:1px dashed #d8e4f3;border-radius:14px;min-height:173px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;color:#a5b3c6;background:#fbfdff;font-size:12px;text-align:center}
+.compare-placeholder strong{font-size:21px;font-weight:450}
+.compare-feedback{font-size:12px;color:#365f9c;margin:10px 2px 0;min-height:16px}
+.compare-feedback:empty{min-height:0;margin:0}
+.compare-empty{margin-top:19px;min-height:175px;background:linear-gradient(135deg,#f3f8ff,#f9fbff);border:1px dashed #bed4f2;border-radius:14px;display:flex;flex-direction:column;gap:9px;justify-content:center;align-items:center;text-align:center;padding:24px 18px}
+.compare-empty-icon{width:43px;height:43px;display:grid;place-items:center;color:#3474cb;font-size:28px;font-weight:300;background:#e2edff;border-radius:12px}
+.compare-empty strong{font-size:17px;color:#285487}
+.compare-empty span:last-child{font-size:12px;color:#7389a5;line-height:1.55}
+.compare-scroll{margin-top:18px;overflow:auto;max-width:100%;border:1px solid #dae4f1;border-radius:13px;scrollbar-color:#cad8eb transparent}
+.compare-table{border-collapse:separate;border-spacing:0;table-layout:fixed;min-width:100%;width:max-content;font-size:12px}
+.compare-table thead th{background:#eaf2fd;color:#1e4d86;padding:15px 13px;position:sticky;top:0;min-width:185px;width:185px;height:auto;border-bottom:1px solid #cfdff3;white-space:normal;vertical-align:top}
+.compare-table tbody td{padding:15px 14px;height:auto;min-width:185px;width:185px;white-space:normal;overflow-wrap:anywhere;border-bottom:1px solid #e8eef7;color:#385475;line-height:1.5}
+.compare-table thead th:first-child,.compare-table tbody th{position:sticky;left:0;z-index:5;width:171px;min-width:171px;max-width:171px;box-shadow:3px 0 10px #12365a12;text-align:left}
+.compare-table thead th:first-child{z-index:8}
+.compare-table tbody th{padding:14px;background:#f6f9fe;border-bottom:1px solid #e1eaf5;font-size:12px;color:#536c8c;font-weight:770;line-height:1.5;white-space:normal}
+.compare-table tbody tr:nth-child(even) td{background:#fbfdff}
+.compare-table tbody tr:hover td{background:#f1f6fd}
+.compare-table .compare-group th{position:static;background:#e1ecfa!important;padding:10px 15px;color:#22538e;text-align:left;font-size:11px;letter-spacing:.02em;border-bottom:1px solid #ccdcef;white-space:nowrap}
+.compare-school-heading{font-size:13px;font-weight:860;line-height:1.5;color:#1b4b89;overflow-wrap:anywhere}
+.compare-year-heading{font-size:11px;font-weight:750;color:#6888b2;margin-top:4px}
+.compare-percent{font-size:21px;letter-spacing:-.06em;font-weight:850;color:#1b569d;font-variant-numeric:tabular-nums}
+.compare-percent-track{height:5px;background:#e4ebf6;border-radius:8px;overflow:hidden;margin-top:10px}
+.compare-percent-track span{display:block;height:100%;background:#4e87d6;border-radius:8px}
+.compare-unavailable{font-size:12px;color:#8798ad;font-weight:650}
+.compare-view-link{color:#1d63b8;font-size:12px;font-weight:800;text-decoration:none;border-bottom:1px solid #b8d3f2}
+.compare-view-link:hover{color:#154a8d}
+.compare-fineprint{font-size:11px;color:#7f91a9;line-height:1.8;margin:16px 0 0;word-break:keep-all}
+.search-wrap .compare-suggestions{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:25;background:#fff;box-shadow:0 14px 35px #183e7330;border:1px solid #d3e1f1;border-radius:12px;max-height:345px;overflow:auto}
+.compare-suggestion{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;background:#fff;border:0;border-bottom:1px solid #edf2f8;padding:12px;min-height:56px}
+.compare-suggestion:last-child{border-bottom:0}
+.compare-suggestion:hover:not(:disabled),.compare-suggestion:focus-visible{background:#eff6ff}
+.compare-suggestion-main{min-width:0;display:flex;flex-direction:column;gap:4px}
+.compare-suggestion-main strong{font-size:13px;color:#24496e;overflow-wrap:anywhere}
+.compare-suggestion-main small{font-size:10px;color:#788ba4;overflow-wrap:anywhere}
+.compare-suggestion-add{color:#1d5bb0;font-weight:850;background:#eaf2fe;border:1px solid #d0e2fa;border-radius:8px;padding:6px 9px;font-size:11px;white-space:nowrap}
+.compare-suggestion:disabled .compare-suggestion-add{color:#8999af;background:#f3f6fa;border-color:#e6ecf5}
+.compare-suggestion-empty{margin:0;padding:13px;color:#7e8fa5;font-size:12px;line-height:1.5}
+.detail-button.compare-add-button{background:#e8f3ff;border-color:#b7d4f3;color:#1d60ab;margin-left:5px}
+.mobile-info-button.compare-add-button{background:#2563b9;border-color:#2563b9;color:#fff}
+.mobile-card-bottom .compare-add-button{white-space:normal;text-align:center}
+@media(max-width:1120px){.compare-selections{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:720px){
+  .comparison-section{margin-top:14px;padding:20px 14px 17px}
+  .comparison-head{flex-direction:column;gap:12px}
+  .comparison-head h2{font-size:21px}
+  .comparison-head-actions{width:100%;justify-content:flex-start}
+  .compare-counter,.compare-plain-button{min-height:44px;display:inline-flex;align-items:center}
+  .compare-selections{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:16px}
+  .compare-selection{padding:11px 10px}
+  .compare-selection-title{font-size:13px}
+  .compare-selection-actions{gap:3px}
+  .compare-mini-button{min-width:26px;padding:0 4px}
+  .compare-scroll{margin-top:14px}
+  .compare-table thead th,.compare-table tbody td{min-width:167px;width:167px;padding:13px 11px}
+  .compare-table thead th:first-child,.compare-table tbody th{width:125px;min-width:125px;max-width:125px;padding:12px 9px}
+  .compare-group th{font-size:10px}
+  .compare-school-heading{font-size:12px}
+  .compare-percent{font-size:19px}
+  .mobile-card-bottom{flex-wrap:wrap}
+  .mobile-card-bottom .status-pill{margin-right:auto}
+}
+@media(max-width:375px){.compare-selections{grid-template-columns:1fr 1fr}.compare-selection-actions{flex-wrap:wrap;justify-content:flex-end}.compare-selection-title{font-size:12px}}
+
+/* Comparison-only layout: removed old directory/filter UI rather than hiding it. */
+.compare-search-only{padding:24px 29px 25px}
+.compare-search-field{margin-top:18px;max-width:100%}
+.compare-search-field>label{display:block;font-size:12px;font-weight:780;color:#455773;margin-bottom:8px}
+.compare-search-field .search-wrap{position:relative}
+.compare-search-field .search-wrap svg{position:absolute;left:15px;top:14px;width:18px;height:18px;stroke:#9aacbf;stroke-width:1.8;fill:none}
+.compare-search-field input[type="search"]{display:block;width:100%;height:48px;min-width:0;border:1px solid #dce4f0;border-radius:10px;background:#fff;color:#253d5d;padding:0 78px 0 43px;outline:0;font-size:15px}
+.compare-search-field input[type="search"]:focus{border-color:#6798e0;box-shadow:0 0 0 3px #3d79d41c}
+.compare-search-field input[type="search"]::placeholder{color:#91a2b7}
+.compare-search-field .search-clear{position:absolute;right:5px;top:6px;min-height:36px;border-radius:7px}
+.compare-search-field .compare-suggestions{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:25;max-height:350px;overflow:auto;background:#fff;border:1px solid #d3e1f1;border-radius:12px;box-shadow:0 14px 35px #183e7330}
+.comparison-section{margin-top:17px}
+.compare-selections{grid-template-columns:repeat(auto-fit,minmax(165px,1fr))}
+.compare-placeholder{min-height:120px}
+.compare-approved-value{font-weight:760;color:#23569a;line-height:1.6;overflow-wrap:anywhere}
+.compare-other-year{color:#b2bed0}
+.compare-group th{font-size:12px}
+.compare-table tbody th{min-width:194px;width:194px;max-width:194px;word-break:keep-all;overflow-wrap:anywhere;line-height:1.65}
+.compare-table tbody td{vertical-align:top;white-space:normal;overflow-wrap:anywhere;line-height:1.65}
+.compare-unavailable{line-height:1.6}
+@media(max-width:720px){
+  .compare-search-only{padding:19px 16px 20px}
+  .compare-search-field input[type="search"]{font-size:16px;height:50px}
+  .compare-search-field .search-wrap svg{top:16px}
+  .compare-search-field .search-clear{top:4px;height:42px}
+  .compare-selections{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .compare-placeholder{min-height:120px}
+  .compare-table tbody th{min-width:150px;width:150px;max-width:150px;line-height:1.6;font-size:11px}
+  .compare-table tbody td{min-width:177px;width:177px;line-height:1.6}
+  .comparison-section{margin-bottom:28px}
+}
+@media(max-width:390px){
+  .compare-table tbody th{min-width:132px;width:132px;max-width:132px}
+  .compare-table tbody td{min-width:158px;width:158px}
+}
+
+/* School comparison flow: selected schools in a single picker box,
+   with the full item-by-item result shown underneath (not another card). */
+.comparison-workspace{margin-top:18px;margin-bottom:24px}
+.comparison-picker{padding:25px 28px}
+.comparison-picker .comparison-head h2{color:#153963}
+.comparison-picker .comparison-subtitle{font-size:13px}
+.comparison-picker .compare-selections{display:flex;flex-wrap:wrap;gap:10px;margin-top:19px}
+.comparison-picker .compare-selection{flex:0 1 220px;max-width:100%;min-width:185px}
+.comparison-picker .compare-selection-year{margin-top:8px}
+.comparison-picker .compare-empty{min-height:96px;padding:20px 12px;margin-top:18px;border:1px dashed #cfdfef;background:#fbfdff;box-shadow:none}
+.comparison-picker .compare-empty-icon{display:none}
+.comparison-picker .compare-empty strong{font-size:15px}
+.comparison-picker .compare-empty span:last-child{font-size:12px}
+.comparison-results{margin-top:26px}
+.comparison-results-heading{margin:0 0 13px 2px}
+.comparison-results-heading h3{font-size:19px;font-weight:850;line-height:1.4;letter-spacing:-.04em;color:#1d416e;margin:0}
+.comparison-results-heading p{font-size:12px;line-height:1.65;color:#72849c;margin:5px 0 0}
+.comparison-results .compare-scroll{margin:0;background:#fff}
+.comparison-results .compare-fineprint{margin-top:12px}
+@media(max-width:720px){
+  .comparison-workspace{margin-top:14px}
+  .comparison-picker{padding:19px 15px}
+  .comparison-picker .comparison-head{gap:10px}
+  .comparison-picker .comparison-head h2{font-size:21px}
+  .comparison-picker .compare-selections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .comparison-picker .compare-selection{min-width:0;width:auto;max-width:none;flex:auto}
+  .comparison-results{margin-top:21px}
+  .comparison-results-heading h3{font-size:18px}
+}
+@media(max-width:390px){
+  .comparison-picker .compare-selections{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .comparison-picker .compare-selection-title{font-size:12px}
+}
+
+/* Lv.1 participant authentication on the comparison page */
+.compare-auth-card{margin:0 0 18px;padding:23px 28px 20px}
+.compare-auth-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.compare-auth-heading h2{font-size:21px;line-height:1.35;letter-spacing:-.045em;color:#1c416e;margin:0}
+.compare-auth-help{margin:8px 0 0;color:#71839a;font-size:12px;line-height:1.7;word-break:keep-all;max-width:720px}
+.compare-auth-badge{border:1px solid #d9e3f0;background:#f1f5fb;color:#687e9c;font-size:12px;font-weight:800;padding:8px 12px;border-radius:999px;white-space:nowrap}
+.compare-auth-badge.is-authenticated{background:#eaf7f0;border-color:#c3e9d4;color:#1b7751}
+.compare-auth-form{display:flex;align-items:end;gap:12px;margin-top:20px}
+.compare-auth-field{flex:1;min-width:0;max-width:520px}
+.compare-auth-field label{display:block;font-size:12px;font-weight:800;color:#415c7c;margin-bottom:7px}
+.compare-auth-input-wrap{position:relative}
+.compare-auth-input-wrap input{display:block;width:100%;height:48px;min-width:0;background:#fff;border:1px solid #d8e3f1;border-radius:10px;color:#233f62;font-size:15px;padding:0 76px 0 13px;outline:0}
+.compare-auth-input-wrap input:focus{border-color:#78a5e4;box-shadow:0 0 0 3px #3d79d41d}
+.compare-auth-input-wrap input::placeholder{color:#91a3ba}
+.compare-auth-toggle{position:absolute;right:6px;top:6px;min-height:36px;padding:0 12px;border:0;background:#edf3fc;color:#34639c;border-radius:7px;font-size:12px;font-weight:800}
+.compare-auth-submit{height:48px;min-width:147px;padding:0 18px;border:0;border-radius:10px;background:#1f5db4;color:#fff;font-size:14px;font-weight:850}
+.compare-auth-submit:not(:disabled):hover{background:#164c98}
+.compare-auth-submit:disabled{opacity:.6;cursor:wait}
+.compare-auth-signed-in{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:#f0f8f3;border:1px solid #d0eadb;border-radius:10px;padding:12px 14px;margin-top:18px;color:#266b4b;font-size:13px;font-weight:700;line-height:1.55}
+.compare-auth-logout{border:1px solid #cbdacb;border-radius:8px;background:#fff;color:#47745b;font-size:12px;font-weight:780;padding:9px 12px;min-height:39px}
+.compare-auth-logout:hover{background:#e5f3ea}
+.compare-auth-message{color:#41638c;font-size:12px;line-height:1.6;margin:10px 0 0;min-height:0}
+.compare-auth-message:empty{display:none}
+.compare-auth-card [hidden]{display:none!important}
+@media(max-width:720px){
+  .compare-auth-card{padding:19px 16px 18px;margin-bottom:14px}
+  .compare-auth-heading{gap:10px}
+  .compare-auth-heading h2{font-size:19px}
+  .compare-auth-help{font-size:12px}
+  .compare-auth-badge{font-size:11px;padding:7px 9px}
+  .compare-auth-form{display:flex;flex-direction:column;align-items:stretch;gap:10px;margin-top:16px}
+  .compare-auth-field{max-width:none}
+  .compare-auth-input-wrap input{height:50px;font-size:16px}
+  .compare-auth-toggle{top:4px;min-height:42px}
+  .compare-auth-submit{min-height:48px;width:100%}
+  .compare-auth-signed-in{align-items:stretch;flex-direction:column}
+  .compare-auth-logout{align-self:flex-start}
+}
+
+
+/* Compact authenticated view: status is already conveyed by the Lv.1 badge. */
+body.beagu-page-compare .compare-auth-signed-in{
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:flex-end;
+  gap:0;
+  margin-top:12px;
+  padding:0;
+  border:0;
+  background:transparent;
+  border-radius:0;
+}
+body.beagu-page-compare .compare-auth-signed-in .compare-auth-logout{
+  align-self:auto;
+}
+
+/* The page scrolls vertically; a synced, noninteractive mirror remains visible.
+   A cloned thead preserves the widths and horizontal scroll of the source table. */
+body.beagu-page-compare .compare-sticky-viewport{
+  position:fixed;
+  top:0;
+  z-index:45;
+  max-width:100vw;
+  background:#fff;
+  border:1px solid #cfdfef;
+  border-top:0;
+  border-radius:0 0 10px 10px;
+  overflow:hidden;
+  box-shadow:0 8px 22px rgba(20,50,85,.16);
+  pointer-events:none;
+}
+body.beagu-page-compare .compare-sticky-viewport[hidden]{display:none!important}
+body.beagu-page-compare .compare-sticky-scroll{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+body.beagu-page-compare .compare-sticky-scroll::-webkit-scrollbar{display:none}
+body.beagu-page-compare .compare-sticky-table{
+  margin:0;
+  min-width:0;
+  table-layout:fixed;
+  border-collapse:separate;
+  border-spacing:0;
+}
+body.beagu-page-compare .compare-sticky-table thead th{
+  position:static;
+  box-sizing:border-box;
+  background:#eaf1fc;
+}
+body.beagu-page-compare .compare-sticky-table thead th:first-child{
+  position:sticky;
+  left:0;
+  z-index:2;
+  background:#eaf1fc;
+}
+body.beagu-page-compare .compare-sticky-title{
+  padding:9px 14px;
+  min-height:38px;
+  box-sizing:border-box;
+  background:#e5f1fb;
+  color:#1d587d;
+  border-top:1px solid #cddfec;
+  font-size:12px;
+  font-weight:850;
+  line-height:1.5;
+  white-space:normal;
+  overflow-wrap:break-word;
+}
+@media(max-width:720px){
+  body.beagu-page-compare .compare-auth-signed-in{
+    flex-direction:row;
+    align-items:center;
+  }
+  body.beagu-page-compare .compare-sticky-title{font-size:12px;padding:9px 12px}
+}
+
+/* Compact comparison authentication bar v2.
+   Keep the complete code-entry form unchanged for visitors without access. */
+body.beagu-page-compare .compare-auth-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+}
+body.beagu-page-compare .compare-auth-actions{
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-left:auto;
+  min-width:0;
+}
+body.beagu-page-compare .compare-auth-actions .compare-auth-signed-in{
+  display:flex;
+  align-items:center;
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+body.beagu-page-compare .compare-auth-actions .compare-auth-logout{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:36px;
+  padding:6px 10px;
+  font-size:12px;
+  border-radius:9px;
+  white-space:nowrap;
+}
+body.beagu-page-compare .compare-auth-card.is-authenticated{
+  padding:14px 18px;
+  margin-bottom:12px;
+}
+body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-heading h2{
+  font-size:18px;
+  line-height:1.3;
+}
+body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-badge{
+  padding:7px 10px;
+  font-size:12px;
+}
+body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-message:empty{
+  display:none;
+}
+@media(max-width:420px){
+  body.beagu-page-compare .compare-auth-card.is-authenticated{
+    padding:13px 14px;
+  }
+  body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-heading h2{
+    font-size:17px;
+  }
+  body.beagu-page-compare .compare-auth-card.is-authenticated .compare-auth-badge{
+    font-size:11px;
+    padding:6px 8px;
+  }
+  body.beagu-page-compare .compare-auth-actions{gap:6px}
+  body.beagu-page-compare .compare-auth-actions .compare-auth-logout{
+    font-size:11px;
+    min-height:34px;
+    padding:6px 8px;
+  }
+}
+
+/* Approved school basics: value plus its official reference year. */
+body.beagu-page-compare .compare-basic-value{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  align-items:flex-start;
+  min-width:0;
+}
+body.beagu-page-compare .compare-basic-value strong{
+  font-size:13px;
+  line-height:1.5;
+  color:#1c4f8c;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+body.beagu-page-compare .compare-basic-reference{
+  display:block;
+  color:#7689a2;
+  font-size:10px;
+  font-weight:650;
+  line-height:1.4;
+}
+

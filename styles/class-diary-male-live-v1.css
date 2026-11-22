@@ -1,0 +1,11 @@
+/* Photoreal original fictional Han Hyunwoo; former SD remains failure fallback. */
+.setup-character-art.hyunwoo{position:relative}
+.setup-hyunwoo-live{display:block;width:100%;height:100%;background-repeat:no-repeat;border-radius:9px}
+.setup-hyunwoo-live[hidden],.scene-hyunwoo-live[hidden]{display:none!important}
+.scene-hyunwoo-live{position:absolute;z-index:2;right:5%;bottom:22%;width:min(39%,340px);aspect-ratio:1;background-repeat:no-repeat;border-radius:13px;box-shadow:0 9px 25px #171b2644;mask-image:linear-gradient(#000 0%,#000 78%,transparent 100%);transition:opacity .2s ease}
+.scene-hyunwoo-live[data-season="cold-spring"]{filter:saturate(.87) brightness(.95)}
+.scene-hyunwoo-live[data-season="spring"]{filter:saturate(.97)}
+.scene-hyunwoo-live[data-season="late-spring"]{filter:saturate(1.03)}
+.scene-hyunwoo-live[data-season="early-summer"],.scene-hyunwoo-live[data-season="summer"]{filter:saturate(1.07) brightness(1.02)}
+@media(max-width:620px){.scene-hyunwoo-live{width:min(48vw,260px);right:2%;bottom:35%}}
+@media(prefers-reduced-motion:reduce){.scene-hyunwoo-live{transition:none}}

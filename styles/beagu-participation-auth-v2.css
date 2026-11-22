@@ -1,0 +1,101 @@
+/* Shared Lv1/Lv2 participation-code interface. Existing page palette retained. */
+.beagu-participation-overlay[hidden],.beagu-participation-detail[hidden],
+.beagu-participation-host [hidden],.beagu-participation-game-trigger[hidden]{display:none!important}
+.beagu-participation-overlay{
+ position:fixed;inset:0;z-index:6000;display:flex;align-items:center;justify-content:center;
+ padding:18px;background:rgba(16,36,65,.61);backdrop-filter:blur(5px);
+}
+body.beagu-participation-open{overflow:hidden}
+.beagu-participation-dialog{
+ position:relative;box-sizing:border-box;width:min(100%,440px);max-height:90dvh;overflow:auto;
+ padding:29px 27px 23px;border:1px solid #dbe5f1;border-radius:21px;
+ background:#fff;box-shadow:0 24px 64px rgba(10,30,62,.24);
+ color:#1d344e;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+}
+.beagu-participation-close{
+ position:absolute;top:15px;right:16px;border:0;border-radius:50%;background:#edf3fa;
+ color:#48627e;width:36px;height:36px;cursor:pointer;font-size:25px;line-height:1;
+}
+.beagu-participation-eyebrow{font-size:10px;letter-spacing:.12em;font-weight:850;color:#6b83a3}
+.beagu-participation-dialog h2{margin:9px 0 10px;font-size:25px;letter-spacing:-.045em;line-height:1.32}
+#beaguParticipationDescription{font-size:13px;line-height:1.65;color:#63768f;margin:0 0 20px;word-break:keep-all}
+#beaguParticipationForm{display:grid;gap:11px}
+#beaguParticipationForm label{font-size:13px;font-weight:750;color:#354c68}
+.beagu-participation-field{position:relative}
+.beagu-participation-field input{
+ box-sizing:border-box;width:100%;height:52px;padding:0 72px 0 14px;
+ border:1px solid #cad7e8;border-radius:12px;color:#1d344e;font-size:16px;
+ font-family:inherit;background:white;outline:none
+}
+.beagu-participation-field input:focus-visible{border-color:#508ddd;box-shadow:0 0 0 3px rgba(72,132,218,.16)}
+.beagu-participation-field button{
+ position:absolute;right:7px;top:7px;height:38px;border:0;border-radius:9px;
+ padding:0 12px;background:#edf3fc;color:#356294;cursor:pointer;font-weight:750
+}
+#beaguParticipationSubmit,.beagu-participation-inline-trigger,.beagu-participation-game-trigger{
+ min-height:46px;padding:11px 16px;border:0;border-radius:12px;
+ background:#285ed0;color:white;font:inherit;font-size:14px;font-weight:800;line-height:1.4;cursor:pointer;
+}
+#beaguParticipationSubmit:hover,.beagu-participation-inline-trigger:hover,.beagu-participation-game-trigger:hover{background:#204eb0}
+#beaguParticipationSubmit:disabled{opacity:.55;cursor:wait}
+#beaguParticipationMessage{font-size:12px;min-height:16px;color:#ad3450;line-height:1.5;margin:10px 0 0}
+.beagu-participation-links{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+.beagu-participation-links a{
+ display:flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;
+ border:1px solid #d5e2f3;border-radius:11px;padding:12px 7px;
+ color:#28599f;background:#f4f8ff;font-weight:750;font-size:12px;line-height:1.4
+}
+.beagu-participation-detail{
+ display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:15px;
+ border:1px solid #d5e0f1;border-radius:13px;background:#f4f8fe;
+}
+.beagu-participation-detail strong{font-size:16px;color:#1a4a8f}
+.beagu-participation-detail span{font-size:12px;color:#657b96}
+#beaguParticipationLogout{border:1px solid #ccd7e9;background:white;color:#365471;border-radius:9px;padding:9px 14px;font-weight:800;cursor:pointer}
+.beagu-participation-close:focus-visible,.beagu-participation-dialog button:focus-visible,
+.beagu-participation-dialog a:focus-visible,.beagu-participation-inline-trigger:focus-visible,
+.beagu-participation-inline-status:focus-visible{outline:3px solid #93baf7;outline-offset:3px}
+.beagu-participation-host .beagu-participation-legacy,
+[data-game-lv1-form].beagu-participation-legacy,
+#tierCodeForm.beagu-participation-legacy{display:none!important}
+.beagu-participation-host .beagu-auth-help,
+.beagu-participation-host .beagu-auth-logout,
+.beagu-participation-host #compareLv1SignedIn,
+.beagu-participation-host #lv1QuickAuthenticated{display:none!important}
+.beagu-participation-host .beagu-participation-intro{margin:4px 0 14px;color:#60738d;font-size:13px;line-height:1.6}
+.beagu-participation-host .beagu-participation-inline-trigger{width:100%;max-width:330px;margin:0}
+.beagu-participation-host .beagu-participation-inline-status{
+ background:#edf5ff;border:1px solid #bcd5f6;border-radius:12px;
+ color:#2459a0;font-weight:800;padding:12px 16px;cursor:pointer;
+}
+.beagu-participation-host[data-beagu-participation-level="2"] .beagu-participation-inline-status,
+#beaguLevelState.beagu-participation-earned{
+ background:linear-gradient(125deg,#1b304c,#2e4668);
+ border-color:#bda679;color:#f9ead0;
+}
+.beagu-levelup-status{display:none!important}
+#beaguLevelState{
+ max-width:calc(100vw - 18px);white-space:nowrap;cursor:pointer;
+ box-shadow:0 4px 15px rgba(17,44,81,.1);font-weight:800;
+}
+.beagu-participation-game-trigger{display:inline-flex;align-items:center;justify-content:center;max-width:100%;margin:8px 0}
+@media(max-width:760px){
+ #beaguLevelState{top:55px;right:10px;font-size:11px;padding:7px 10px;min-height:34px}
+ .beagu-unified-brand{max-width:none}
+ .beagu-participation-dialog{padding:25px 18px 19px;border-radius:18px}
+ .beagu-participation-dialog h2{font-size:22px}
+ .beagu-participation-links{grid-template-columns:1fr}
+ .beagu-participation-host .beagu-participation-inline-trigger{max-width:100%}
+}
+@media(prefers-reduced-motion:reduce){.beagu-participation-overlay{backdrop-filter:none}}
+
+/* Keep one visible authentication action or status per existing host. */
+.beagu-participation-host>.beagu-auth-heading{display:none!important}
+.beagu-participation-host[data-beagu-participation-level="1"],
+.beagu-participation-host[data-beagu-participation-level="2"]{
+ padding:12px 15px!important;min-height:0!important;
+}
+.beagu-participation-host[data-beagu-participation-level="1"] .beagu-participation-inline-status,
+.beagu-participation-host[data-beagu-participation-level="2"] .beagu-participation-inline-status{
+ width:100%;min-height:38px;text-align:center;
+}

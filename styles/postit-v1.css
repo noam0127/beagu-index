@@ -1,0 +1,233 @@
+@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&display=swap");
+:root{--postit-ink:#263044;--postit-line:#d3b98a;--postit-paper:#fff9df}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}body.beagu-postit-page{margin:0;background:linear-gradient(110deg,#f5f1e8,#f9f8f4 50%,#f1f2f5);color:var(--postit-ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.postit-layout{width:min(740px,100%);margin:0 auto;padding:52px 20px 100px;line-height:1.65}
+.postit-intro{padding-bottom:20px}.postit-kicker{font-size:11px;letter-spacing:.13em;font-weight:800;color:#718096}
+.postit-intro h1{font-size:clamp(36px,9vw,54px);letter-spacing:-.06em;line-height:1.18;margin:10px 0}.postit-intro h1 span{color:#416db8}.postit-intro p{font-size:15px;color:#596677;margin:0 0 24px}
+.postit-tools{display:flex;gap:12px;align-items:center;justify-content:space-between}
+.postit-tools select,.postit-link{border:1px solid #d9dee6;border-radius:12px;padding:9px 13px;background:white;font:inherit;font-size:14px;text-decoration:none;color:#364457}
+.postit-compose{background:#fff;border:1px solid #e2e6eb;border-radius:19px;padding:20px;box-shadow:0 8px 28px #3440540a}
+.compose-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.compose-head h2{font-size:17px;letter-spacing:-.04em;margin:0 0 12px}.access-tag{font-size:12px;color:#43566c;background:#eef1f7;border-radius:20px;padding:5px 10px}
+.postit-context{border-radius:11px;background:#eff5fe;padding:12px 14px;font-size:14px;font-weight:600;color:#23517c;margin-bottom:15px}
+.postit-subject-picker label{font-size:13px;display:block;font-weight:700;margin-bottom:7px}
+.postit-subject-picker input{width:100%;min-height:45px;padding:11px 13px;border:1px solid #d4dae3;border-radius:11px;font:inherit;background:#fff}
+.postit-school-results{display:grid;gap:5px;margin:6px 0 0}.postit-school-results button{padding:9px 12px;text-align:left;background:#f8fafc;border:1px solid #e6e9f0;border-radius:8px;font:inherit;font-size:13px;color:#26374a;cursor:pointer}
+.postit-form textarea{font:inherit;width:100%;padding:14px;min-height:95px;background:#fff9eb;border:1px solid #ddc786;border-radius:12px;resize:vertical;color:var(--postit-ink)}
+.postit-form-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px}.postit-form-footer small{color:#788290}
+.postit-form-footer button{background:#264a85;color:white;border:0;border-radius:11px;padding:11px 18px;font-weight:700;cursor:pointer}
+.postit-form-footer button:disabled{opacity:.5;cursor:wait}
+.postit-lock{padding:16px;background:#f4f5f7;border-radius:12px;display:flex;gap:7px;flex-direction:column;align-items:flex-start;font-size:13px;color:#657387}
+.postit-lock b{font-size:15px;color:#3e4b5c}.postit-lock a{color:#27599b;font-weight:700;text-underline-offset:3px}
+[hidden]{display:none!important}.postit-message{color:#9d3b39;font-size:13px;margin-top:10px;min-height:1.2em}
+.postit-board{margin-top:38px}.postit-board-heading{display:flex;align-items:baseline;justify-content:space-between;gap:15px}.postit-board-heading h2{font-size:19px;margin:0 0 22px;letter-spacing:-.04em}
+.postit-board-heading p{font-size:12px;color:#7b8697;margin:0}
+.postit-thread{position:relative;display:flex;flex-direction:column;gap:34px;padding:18px 0 10px 34px;min-height:90px}
+.postit-thread::before{content:"";position:absolute;z-index:0;top:0;bottom:0;left:12px;width:2px;background:repeating-linear-gradient(to bottom,#c6ad8b 0 16px,#e4d3b7 16px 21px);filter:drop-shadow(1px 0 1px #b59b7d55);transform-origin:top}
+.postit-thread.is-stretching::before{animation:postit-string-stretch 700ms cubic-bezier(.3,0,.15,1)}
+@keyframes postit-string-stretch{0%{transform:scaleY(.96)}45%{transform:scaleY(1.024)}75%{transform:scaleY(.995)}100%{transform:scaleY(1)}}
+.postit-entry{position:relative;--note-rotation:-1.5deg;z-index:1;width:100%}.postit-entry:nth-child(3n+2){--note-rotation:1.25deg}.postit-entry:nth-child(3n+3){--note-rotation:-.55deg}
+.postit-entry::before{content:"";position:absolute;left:-28px;top:18px;width:28px;height:2px;background:#c4a987}
+.postit-entry::after{content:"";position:absolute;left:-29px;top:14px;width:10px;height:10px;border-radius:50%;background:#c38d62;box-shadow:inset 1px 1px #fff7,1px 1px 2px #0002;transform:translateX(-1px)}
+.postit-paper{--base:#fff4a3;--shadow:#ae9b65;position:relative;overflow:hidden;padding:22px 22px 18px;margin-left:1px;background:linear-gradient(131deg,#ffffff70 0%,transparent 17%,transparent 56%,#ffffff39 59%,transparent 63%,#694d1017 95%),radial-gradient(ellipse at 26% 22%,#fff9 1%,transparent 53%),linear-gradient(175deg,var(--base),var(--base));border:1px solid #7b682f18;box-shadow:3px 9px 0 #755e1920,8px 17px 20px #48391c20,inset -3px -2px 6px #65542215;transform:rotate(var(--note-rotation));border-radius:3px 4px 11px 3px;isolation:isolate}
+.postit-paper::before{content:"";pointer-events:none;position:absolute;inset:0;background:linear-gradient(155deg,transparent 0 22%,#fff7 22.2%,transparent 22.7% 55%,#6d594814 55.2%,transparent 56% 100%),linear-gradient(35deg,transparent 0 68%,#fff6 68.2%,transparent 68.8%),radial-gradient(ellipse at 83% 87%,#0000000c,transparent 30%);mix-blend-mode:multiply;opacity:.8}
+.postit-paper::after{content:"";position:absolute;right:0;bottom:0;width:41px;height:31px;clip-path:polygon(100% 0%,0% 100%,100% 100%);background:linear-gradient(135deg,#fff8,#7f613b2b);box-shadow:-2px -2px 4px #0002}
+.postit-entry:nth-child(5n+1) .postit-paper{--base:#fff1a0}.postit-entry:nth-child(5n+2) .postit-paper{--base:#ffccd9}
+.postit-entry:nth-child(5n+3) .postit-paper{--base:#b9e5fa}.postit-entry:nth-child(5n+4) .postit-paper{--base:#ccebb1}.postit-entry:nth-child(5n+5) .postit-paper{--base:#ffd6b2}
+.paper-overline{position:relative;z-index:1;color:#685b43;font-size:11px;font-weight:700;display:flex;justify-content:space-between;gap:10px}
+.paper-overline span{white-space:nowrap}.paper-topic{position:relative;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 12px}
+.paper-topic a{color:#273344;font-size:18px;letter-spacing:-.035em;font-weight:800;text-decoration:none;border-bottom:1px solid #1a263356}
+.paper-topic a:hover{text-decoration:underline}.paper-chip{background:#ffffff87;border:1px solid #ffffff91;color:#39424d;border-radius:20px;font-size:11px;padding:2px 7px}
+.paper-content{position:relative;z-index:1;white-space:pre-wrap;overflow-wrap:anywhere;color:#303a42;font-size:15px;line-height:1.85;margin:0 0 18px}
+.paper-actions{position:relative;z-index:1;display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+.paper-actions button{font:inherit;font-size:12px;background:transparent;border:0;color:#4e5865;cursor:pointer;padding:3px 2px;border-radius:5px}
+.paper-actions button:focus-visible{outline:2px solid #2460a4}.paper-actions .active{color:#ae3451;font-weight:800}
+.paper-actions button[disabled]{opacity:.7}.paper-actions .paper-remove{margin-left:auto}
+.postit-comments{width:calc(100% - 18px);margin:3px 0 0 9px;display:grid;gap:0;position:relative;z-index:0;transform:rotate(.25deg)}
+.bookmark-comment{--bookmark:#fffdf3;margin:0 13px 0 7px;padding:13px 16px 20px 22px;background:var(--bookmark);border-left:3px solid #9d89814c;border-right:1px solid #bbac982b;box-shadow:2px 4px 10px #4338281a;clip-path:polygon(0 0,100% 0,100% 94%,93% 100%,86% 94%,79% 100%,71% 94%,65% 100%,57% 94%,0 100%)}
+.bookmark-comment:nth-child(3n+2){--bookmark:#e6f1fc}.bookmark-comment:nth-child(3n+3){--bookmark:#ffe9df}
+.bookmark-comment .comment-meta{font-size:11px;color:#72808f;font-weight:700}.bookmark-comment p{font-size:13px;margin:5px 0 8px;white-space:pre-wrap;overflow-wrap:anywhere}
+.bookmark-comment button{font-size:11px;border:0;background:none;cursor:pointer;color:#607083;padding:3px}
+.bookmark-composer{padding:14px 18px 17px;margin:0 15px 0 10px;background:#fffdf7;box-shadow:1px 5px 8px #3c332414}
+.bookmark-composer textarea{font:inherit;width:100%;border:1px solid #d3cbb5;background:#fff;padding:10px;border-radius:8px;resize:vertical}
+.bookmark-composer button{background:#364e72;color:white;font-weight:700;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+.bookmark-composer .locked-comment{font-size:12px;color:#667187;display:block}
+.postit-empty{background:#fff;box-shadow:0 6px 20px #2734440b;border:1px dashed #d8dfeb;padding:24px;border-radius:14px;color:#607083;text-align:center}
+.postit-reload{display:block;margin:24px auto;border:1px solid #c9d0d9;background:#fff;padding:10px 22px;border-radius:12px;cursor:pointer}
+.postit-footer{margin-top:38px;color:#7b8591;font-size:12px;line-height:1.8}
+@keyframes paper-attach{from{opacity:0;transform:translateY(-35px) rotate(-5deg) scale(.95)}to{opacity:1;transform:rotate(var(--note-rotation)) scale(1)}}
+.postit-entry.is-new .postit-paper{animation:paper-attach .7s cubic-bezier(.23,1,.32,1) both}
+@media(max-width:520px){.postit-layout{padding:35px 15px 60px}.postit-compose{padding:15px}.postit-thread{padding-left:25px;gap:27px}.postit-thread::before{left:8px}.postit-entry::before{left:-20px;width:21px}.postit-entry::after{left:-24px}.postit-paper{padding:19px 16px}.paper-topic a{font-size:16px}.paper-content{font-size:14px}}
+/* Breeze follows downward scrolling, never changes document flow or scroll position. */
+.postit-thread.has-breeze:not(.is-stretching)::before{
+ animation:postit-string-breeze .72s cubic-bezier(.19,.72,.27,1) both;
+}
+.postit-entry.is-windward:not(.is-new) .postit-paper{
+ animation:postit-breeze-flutter .72s cubic-bezier(.17,.76,.21,1) both;
+ will-change:transform;
+}
+.postit-entry.is-windward:not(.is-new) .postit-paper::after{
+ transform-origin:100% 100%;
+ animation:postit-corner-flutter .72s ease-out both;
+}
+.postit-entry.is-windward .postit-comments:not([hidden]) .bookmark-comment{
+ transform-origin:50% 0;
+ animation:postit-bookmark-flick .72s ease-in-out both;
+}
+.postit-entry.is-windward .postit-comments:not([hidden]) .bookmark-comment:nth-child(3n+2){
+ animation-delay:70ms;
+}
+@keyframes postit-breeze-flutter{
+ 0%,100%{transform:rotate(var(--note-rotation)) translate(0,0)}
+ 22%{transform:rotate(calc(var(--note-rotation) + 1.15deg)) translate(2px,-1px)}
+ 50%{transform:rotate(calc(var(--note-rotation) - .85deg)) translate(-1px,1px)}
+ 76%{transform:rotate(calc(var(--note-rotation) + .3deg)) translate(1px,0)}
+}
+@keyframes postit-corner-flutter{
+ 0%,100%{transform:rotate(0deg) scale(1)}
+ 24%{transform:rotate(-9deg) scale(1.11,.85)}
+ 58%{transform:rotate(4deg) scale(.97,1.05)}
+}
+@keyframes postit-bookmark-flick{
+ 0%,100%{transform:rotate(0)}
+ 30%{transform:rotate(1deg)}
+ 63%{transform:rotate(-.4deg)}
+}
+@keyframes postit-string-breeze{
+ 0%,100%{transform:translateX(0) scaleY(1)}
+ 26%{transform:translateX(2px) scaleY(1.004)}
+ 57%{transform:translateX(-1px) scaleY(.998)}
+}
+@media(prefers-reduced-motion:reduce){.postit-paper,.postit-paper::after,.postit-thread::before,.postit-entry,.bookmark-comment{animation:none!important;transition:none!important}}
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* Five navigation destinations fit on one mobile row without a dangling second line. */
+@media(max-width:760px){.beagu-unified-nav:has(a[href="postit.html"]){grid-template-columns:repeat(5,minmax(0,1fr))}.beagu-unified-nav:has(a[href="postit.html"]) a{font-size:12px;padding-left:1px;padding-right:1px}}
+
+
+/* Torn, crumpled handwritten notes — decorative layers never carry user text. */
+.postit-entry{filter:drop-shadow(3px 9px 8px rgba(75,57,38,.15))}
+.postit-paper{
+  overflow:hidden;
+  border:0;
+  border-radius:0;
+  padding:31px 27px 27px;
+  background:
+    radial-gradient(ellipse at 18% 15%,rgba(255,255,255,.56),transparent 36%),
+    radial-gradient(ellipse at 77% 77%,rgba(69,45,19,.095),transparent 45%),
+    linear-gradient(125deg,rgba(255,255,255,.3) 7%,transparent 28%,rgba(114,88,47,.065) 43%,transparent 61%,rgba(255,255,255,.22) 83%),
+    var(--base);
+  clip-path:polygon(
+    0.6% 2.5%, 3% .8%, 6% 1.9%, 9% .3%, 12% 1.6%, 16% .5%, 20% 1.5%, 24% .4%,
+    29% 1.9%, 34% .6%, 39% 1.5%, 44% .4%, 49% 1.8%, 54% .3%, 59% 1.7%, 64% .6%,
+    70% 1.8%, 75% .5%, 81% 1.8%, 86% .4%, 92% 1.6%, 96% .5%, 99.2% 1.8%,
+    98.7% 8%, 99.7% 15%, 98.8% 23%, 99.5% 31%, 98.7% 39%, 99.6% 47%,
+    98.9% 56%, 99.7% 66%, 98.7% 76%, 99.6% 85%, 98.6% 94%, 99.1% 98.6%,
+    95% 99.4%, 91% 98.1%, 86% 99.8%, 80% 98.5%, 74% 99.7%, 67% 98.2%,
+    61% 99.7%, 55% 98.5%, 48% 99.8%, 42% 98.3%, 36% 99.5%, 29% 98.4%,
+    22% 99.8%, 17% 98.2%, 11% 99.6%, 6% 98.4%, .8% 99.2%,
+    1.3% 91%, .4% 82%, 1.2% 75%, .3% 67%, 1.1% 58%, .3% 49%,
+    1.1% 40%, .4% 32%, 1.4% 24%, .3% 16%, 1.2% 9%
+  );
+  box-shadow:none;
+}
+.postit-entry:nth-child(3n+2) .postit-paper{
+  clip-path:polygon(
+    1% 1.3%,5% .5%,9% 2.2%,13% .3%,18% 1.8%,23% .7%,28% 1.8%,33% .2%,
+    39% 1.7%,44% .4%,49% 2%,55% .4%,61% 1.5%,67% .4%,73% 1.9%,
+    79% .7%,84% 1.7%,90% .2%,96% 1.5%,99.3% .8%,
+    98.8% 8%,99.6% 18%,98.7% 28%,99.5% 38%,98.7% 47%,99.6% 57%,
+    98.6% 68%,99.5% 79%,98.8% 89%,99.4% 99%,
+    94% 98.7%,88% 99.7%,82% 98.4%,76% 99.4%,69% 98.3%,63% 99.8%,
+    57% 98.4%,51% 99.6%,44% 98.2%,38% 99.6%,32% 98.6%,26% 99.7%,
+    19% 98.6%,12% 99.6%,6% 98.3%,.8% 99.2%,
+    1.2% 89%,.3% 77%,1.3% 66%,.5% 54%,1.4% 43%,.4% 33%,1.3% 21%,.5% 11%
+  );
+}
+.postit-entry:nth-child(3n+3) .postit-paper{
+  clip-path:polygon(
+    .6% .9%,5% 2%,11% .3%,16% 1.8%,21% .5%,27% 1.5%,32% .3%,
+    38% 2%,43% .5%,50% 1.4%,56% .4%,62% 2%,68% .6%,74% 1.6%,
+    81% .4%,87% 1.9%,94% .4%,99.4% 1.6%,
+    98.9% 11%,99.6% 22%,98.7% 35%,99.6% 46%,98.7% 59%,
+    99.6% 72%,98.8% 85%,99.3% 98.8%,
+    94% 99.7%,88% 98.3%,82% 99.7%,75% 98.5%,69% 99.6%,62% 98.4%,
+    56% 99.6%,50% 98.3%,44% 99.8%,38% 98.2%,32% 99.5%,
+    26% 98.5%,20% 99.6%,14% 98.3%,8% 99.8%,.8% 98.6%,
+    1.3% 86%,.4% 75%,1.3% 63%,.4% 52%,1.3% 41%,.4% 30%,1.3% 19%,.4% 9%
+  );
+}
+.postit-paper::before{
+  inset:0;opacity:.7;mix-blend-mode:multiply;
+  background:
+    linear-gradient(134deg,transparent 0 22%,rgba(255,255,255,.66) 22.2%,rgba(92,72,50,.07) 22.8%,transparent 23.5%),
+    linear-gradient(33deg,transparent 0 62%,rgba(88,69,43,.09) 62.2%,rgba(255,255,255,.5) 62.8%,transparent 63.5%),
+    linear-gradient(171deg,transparent 0 39%,rgba(106,78,55,.065) 39.2%,transparent 40%),
+    radial-gradient(ellipse at 27% 72%,rgba(69,45,25,.10),transparent 32%);
+}
+.postit-paper::after{width:47px;height:34px;background:linear-gradient(135deg,rgba(255,255,255,.65),rgba(83,65,40,.16));}
+.paper-tape{
+  position:absolute;z-index:4;top:-7px;left:calc(50% - 35px);
+  width:71px;height:29px;pointer-events:none;
+  background:repeating-linear-gradient(102deg,rgba(255,255,255,.16) 0 3px,transparent 3px 7px),
+             linear-gradient(160deg,rgba(255,255,255,.79),rgba(213,196,153,.73));
+  border-left:1px solid rgba(255,255,255,.56);
+  box-shadow:1px 3px 4px rgba(72,55,29,.12);
+  clip-path:polygon(0% 8%,8% 0%,16% 8%,25% 2%,37% 10%,49% 2%,60% 7%,73% 0%,86% 9%,100% 3%,97% 92%,86% 100%,73% 91%,61% 100%,49% 93%,36% 100%,24% 92%,11% 100%,0% 91%);
+  transform:rotate(-8deg);
+}
+.postit-entry:nth-child(4n+2) .paper-tape{left:20%;transform:rotate(12deg);background-color:rgba(231,209,197,.3)}
+.postit-entry:nth-child(4n+3) .paper-tape{left:65%;transform:rotate(-13deg);background-color:rgba(179,204,219,.25)}
+.postit-entry:nth-child(4n+4) .paper-tape{left:35%;transform:rotate(6deg)}
+.paper-overline{color:#665d51;letter-spacing:.02em}
+.paper-topic a{font-family:"Gaegu","Nanum Pen Script","Apple SD Gothic Neo",sans-serif;font-size:24px;line-height:1.15;letter-spacing:-.025em;font-weight:700;border-bottom:1px solid #4d4e4680}
+.paper-content{
+  font-family:"Gaegu","Nanum Pen Script","Apple SD Gothic Neo",sans-serif;
+  font-size:23px;font-weight:700;letter-spacing:-.02em;line-height:1.55;
+  color:#313943;text-shadow:.2px .2px 0 rgba(51,44,44,.14);
+  margin:8px 0 20px;padding:5px 4px 8px;
+  transform:rotate(-.28deg);
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(1.55em - 2px),rgba(90,78,55,.10) calc(1.55em - 1px),transparent 1.55em);
+}
+.postit-entry:nth-child(3n+2) .paper-content{transform:rotate(.35deg)}
+.postit-entry:nth-child(3n+3) .paper-content{transform:rotate(-.48deg)}
+.paper-actions button{font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;font-size:12px;font-weight:700;min-height:36px;padding:5px 6px}
+.postit-paper a:focus-visible,.postit-paper button:focus-visible{outline:3px solid #164a91;outline-offset:2px}
+@media(max-width:520px){
+  .postit-paper{padding:31px 21px 25px}
+  .paper-topic a{font-size:22px}
+  .paper-content{font-size:21px;line-height:1.5}
+  .paper-tape{width:60px;height:25px}
+}
+
+
+/* Keep the post-it skip link available to keyboard users without showing it by default. */
+body.beagu-postit-page .beagu-skip-link{
+  position:fixed;
+  top:0;
+  left:14px;
+  z-index:2147483600;
+  transform:translateY(calc(-100% - 12px));
+  padding:10px 14px;
+  background:#123c69;
+  color:#fff;
+  border-radius:0 0 10px 10px;
+  font-size:14px;
+  font-weight:700;
+  text-decoration:none;
+}
+body.beagu-postit-page .beagu-skip-link:focus,
+body.beagu-postit-page .beagu-skip-link:focus-visible{
+  transform:translateY(0);
+  outline:3px solid #93c5fd;
+  outline-offset:2px;
+}
+
+/* Lv2-only searchable Post-it board. */
+.postit-board-lock{margin:8px 0 22px}
+.postit-search{background:#ffffffd9;border:1px solid #dfe4eb;border-radius:15px;padding:13px 15px;margin:0 0 18px;box-shadow:0 4px 12px #25385808}
+.postit-search label{display:block;font-size:13px;font-weight:800;margin-bottom:7px;color:#3b4f69}
+.postit-search-row{display:flex;align-items:stretch;gap:8px}
+.postit-search input{min-width:0;flex:1;border:1px solid #d4dae3;border-radius:10px;background:#fff;font:inherit;font-size:14px;padding:11px 12px;color:#263044}
+.postit-search input:focus-visible{outline:2px solid #376db4;outline-offset:1px}
+.postit-search button{border:0;border-radius:10px;padding:9px 18px;background:#304c7a;color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.postit-search small{display:block;margin-top:7px;font-size:11px;color:#738095}
+@media(max-width:520px){.postit-search{padding:12px}.postit-search-row{gap:6px}.postit-search button{padding:9px 12px}}

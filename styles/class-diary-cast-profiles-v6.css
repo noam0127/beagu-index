@@ -1,0 +1,57 @@
+/* '알고 싶은 사람' five fictional profiles — hobbies edition.
+ * Real, equal square crops; no skin glow, automatic stretching or face filters.
+ * Keep the prior v5 as a fallback until this sprite has loaded successfully.
+ * Collage order: 서지윤 / 한현우 / 윤민서 / 차도겸 / 백태오.
+ */
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.jiyoon,
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.hyunwoo,
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.minseo,
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.dogyeom,
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.taeo{
+  display:block!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:1/1!important;
+  overflow:hidden!important;
+  border-radius:clamp(9px,1.8vw,17px)!important;
+  background:url("../assets/class-diary/characters/class-diary-cast-hobbies-v6.webp") no-repeat!important;
+  background-size:500% 100%!important;
+  background-color:#eceae7!important;
+  box-shadow:none!important;
+  transform:none!important;
+  filter:none!important;
+}
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.jiyoon{background-position:0% 50%!important}
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.hyunwoo{background-position:25% 50%!important}
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.minseo{background-position:50% 50%!important}
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.dogyeom{background-position:75% 50%!important}
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art.taeo{background-position:100% 50%!important}
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art img,
+body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art .setup-hyunwoo-live{
+  visibility:hidden!important;
+  opacity:0!important;
+  transform:none!important;
+}
+body.is-setting #setup[data-step="2"] .setup-character-tag{
+  min-height:3.15em!important;
+  max-width:100%;
+  font-size:clamp(10px,1.75vmin,13px)!important;
+  line-height:1.45!important;
+  letter-spacing:-.045em!important;
+  overflow-wrap:anywhere;
+  word-break:keep-all;
+}
+@media(max-width:410px){
+  body.is-setting #setup[data-step="2"] .setup-character-tag{font-size:9.5px!important;min-height:4em!important}
+}
+@media(prefers-reduced-motion:reduce){
+  body.is-setting #setup.has-cast-hobbies-v6[data-step="2"] .setup-character-art{transition:none!important}
+}
+
+/* Hair-only override for Han Hyunwoo: preserve four other hobby portraits. */
+body.is-setting #setup.has-cast-hobbies-v6.has-hyunwoo-hair-v3[data-step="2"] .setup-character-art.hyunwoo{
+ background-image:var(--diary-hyunwoo-hair-image)!important;
+ background-size:400% 300%!important;
+ background-position:0% 0%!important;
+}

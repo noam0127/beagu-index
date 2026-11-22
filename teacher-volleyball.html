@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta http-equiv="Content-Security-Policy" content="connect-src 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow,noarchive"><script id="stage38-cdn-static-guard">document.addEventListener("submit",e=>{e.preventDefault();e.stopImmediatePropagation();},true);document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input[type=password],input[type=email]").forEach(x=>{x.disabled=true;x.value="";});}, {once:true});</script><meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"><meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#142847">
+<title>선생님배구 1.0 | 배구지수</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: #10223d; color: #f8fbff; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  .game-shell { margin: 0 auto; max-width: 1100px; padding: 12px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+  .brand { font-size: 13px; font-weight: 850; letter-spacing: -.3px; }
+  .pill { display: inline-block; padding: 5px 9px; border: 1px solid #6f97c0; border-radius: 999px; font-size: 11px; color: #d6eaff; white-space: nowrap; }
+  .scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 10px 13px; background: #21395b; border: 1px solid #436185; border-radius: 12px 12px 0 0; }
+  .team { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: #cfe1ff; }
+  .team.right { text-align: right; }
+  .team strong { font-size: 24px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; }
+  .center-label { color: #cddcf5; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
+  .court { position: relative; overflow: hidden; border: 1px solid #436185; border-top: 0; background: #dbefff; }
+  canvas { display: block; width: 100%; height: auto; aspect-ratio: 9 / 5; touch-action: none; cursor: crosshair; }
+  .actions { display: flex; gap: 8px; margin-top: 10px; }
+  .actions button { flex: 1; min-height: 44px; padding: 10px; border: 0; border-radius: 10px; background: #6bd9c6; color: #12314d; font: inherit; font-weight: 850; cursor: pointer; }
+  .actions button.secondary { flex: 0 0 30%; color: #f8fbff; background: #385372; }
+  .actions button:disabled { opacity: .45; cursor: not-allowed; }
+  .hint { font-size: 12px; line-height: 1.45; color: #bed1e9; text-align: center; margin: 10px 2px 0; }
+  .status { min-height: 20px; font-size: 12px; font-weight: 700; text-align: center; color: #ffdea6; margin-top: 8px; }
+  button:focus-visible { outline: 3px solid #ffec93; outline-offset: 2px; }
+  @media (hover: hover) and (pointer: fine) { .game-shell { padding: 18px; } }
+  @media(max-width: 380px) { .game-shell { padding: 9px; } .scoreboard { padding: 8px; } }
+
+/* 2.1 responsive volley arcade polish */
+body{background:#10223d;color:#f8fbff}
+.game-shell{max-width:1100px;padding:10px}
+.top{min-width:0;gap:5px;margin-bottom:8px}
+.brand{min-width:0;font-size:clamp(14px,4vw,17px);font-weight:900;letter-spacing:-.04em;overflow-wrap:anywhere}
+.top .beagu-brand-mark{width:30px;height:30px;border-radius:9px;font-size:21px}
+.pill{font-size:11px;padding:6px 9px;background:#203e5e;border-color:#426c91}
+.scoreboard{border-radius:15px 15px 0 0;grid-template-columns:minmax(0,1fr) 50px minmax(0,1fr);padding:12px 15px;
+  background:linear-gradient(125deg,#24486e,#1e3657);border:1px solid #557b9c}
+.team{min-width:0;font-size:12px;font-weight:850;color:#c0d8ed}
+.team span{overflow-wrap:anywhere}
+.team strong{font-size:clamp(23px,6vw,30px);line-height:1.15}
+.scoreboard>.team:not(.right)>strong{color:#a6f4ff}
+.team.right strong{color:#ffc0d4}
+.center-label{font-size:14px;letter-spacing:.04em;color:#fff5d1}
+.court{border:1px solid #547897;border-top:0;border-radius:0 0 15px 15px;box-shadow:0 12px 24px rgba(0,0,0,.2)}
+canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:default}
+.actions{gap:8px;margin-top:10px}
+.actions button{min-width:0;min-height:45px;font-size:14px;padding:9px 10px;border-radius:12px}
+.actions button.secondary{flex:0 0 59px}
+.actions button.auxiliary{flex:0 0 46px;background:#385372;color:#f8fbff}
+.status{min-height:18px;margin:8px 2px 0;font-size:12px;line-height:1.45;overflow-wrap:anywhere;white-space:normal;color:#f9e8bb}
+.hint{display:none}
+.mini-help{margin-top:7px;padding:9px 10px;border:1px solid #4d7292;border-radius:10px;
+  background:#1c3856;color:#d9eafa;font-size:12px;line-height:1.6;overflow-wrap:anywhere;text-align:center}
+.mini-help[hidden]{display:none}
+@media(hover:hover) and (pointer:fine){.game-shell{padding:12px}}
+@media(max-width:380px){
+ .game-shell{padding:7px}.top{flex-wrap:wrap}.pill{font-size:10px}
+ .scoreboard{padding:9px;gap:4px;grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr)}
+ .team{font-size:10px}.team strong{font-size:23px}.center-label{font-size:12px}
+}
+ /* Match the survival game's centered in-court start panel. */
+ .volley-ready-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+   padding:clamp(9px,3vw,24px);background:rgba(11,31,54,.62);z-index:3;overflow:auto}
+ .volley-ready-overlay[hidden]{display:none!important}
+ .volley-ready-panel{width:min(100%,440px);padding:clamp(13px,3vw,23px);
+   border:2px solid #8fb1c8;border-radius:16px;background:linear-gradient(155deg,#294866,#142a43);
+   box-shadow:0 18px 45px rgba(0,0,0,.36);color:#f6fbff;text-align:center;min-width:0}
+ .volley-ready-icon{font-size:clamp(23px,6vw,34px);line-height:1.2;margin-bottom:5px}
+ .volley-ready-panel h2{font-size:clamp(18px,4.4vw,26px);line-height:1.35;letter-spacing:-.04em;
+   margin:0 0 12px;overflow-wrap:anywhere}
+ .volley-ready-panel p{font-size:clamp(11px,2.4vw,13px);color:#dceaff;
+   margin:-4px 0 12px;line-height:1.45;overflow-wrap:anywhere}
+ .volley-ready-panel p[hidden]{display:none!important}
+ .volley-ready-panel .volley-school-choose{display:block;width:100%;min-height:46px;
+   border:0;border-radius:11px;background:#7be3ca;color:#12334b;
+   font:900 clamp(13px,3vw,15px)/1.35 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;
+   padding:12px 14px;cursor:pointer;white-space:normal}
+ .volley-ready-panel .volley-school-choose:hover{background:#a9f2df}
+ .volley-ready-panel .volley-school-choose:focus-visible{outline:3px solid #fff7a6;outline-offset:3px}
+ .volley-ready-panel .volley-school-choose[hidden]{display:none!important}
+ @media(max-width:380px){.volley-ready-panel{padding:12px}.volley-ready-panel h2{margin-bottom:9px}}
+ .volley-best-row{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:7px;margin:-3px 0 0;min-height:29px;flex-wrap:wrap}
+ .volley-best-chip,.volley-current-chip{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 9px;border:1px solid #587da1;border-radius:9px;background:#183554;color:#bcdcf2;font-size:10px;font-weight:850;letter-spacing:.035em;white-space:nowrap;font-variant-numeric:tabular-nums;min-width:0}
+ .volley-current-chip{border-color:#498d98;background:rgba(32,90,106,.43);color:#c8f1f2}
+ .volley-current-chip strong{font-size:16px;line-height:1.2;color:#a9f5db;letter-spacing:0}
+ @media(max-width:380px){.volley-current-chip,.volley-best-chip{padding:4px 6px;gap:5px;font-size:9px}.volley-current-chip strong,.volley-best-chip strong{font-size:14px}}
+ .volley-best-chip strong{font-size:16px;line-height:1.2;color:#ffe9aa;letter-spacing:0}
+ .volley-target-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;
+   background:rgba(48,113,128,.48);border:1px solid #59c4bf;border-radius:9px;
+   color:#d8fff5;font-size:12px;font-weight:900;white-space:nowrap}
+ .volley-progress{background:#1a3553;border-left:1px solid #436185;border-right:1px solid #436185;
+   padding:8px 13px 9px;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+ .volley-progress-label{display:flex;align-items:center;justify-content:space-between;
+   color:#cde9f7;font-size:10px;font-weight:800;margin-bottom:4px}
+ .volley-progress-track{height:7px;background:#0d243e;border-radius:999px;overflow:hidden}
+ .volley-progress-fill{height:100%;width:0;transition:width .3s ease;background:#53d3ce;border-radius:inherit}
+ .volley-progress-fill.cpu{background:#ef8a96}
+ .volley-progress-fill.final{background:#ffe284;box-shadow:0 0 12px #ffe284}
+ .volley-progress-next{grid-column:1/-1;font-size:11px;text-align:center;color:#d8efd8;font-weight:800;min-height:13px}
+ .actions button.sound-toggle{flex:0 0 48px;min-width:45px;background:#264762;color:#f5fbff;font-size:19px;border:1px solid #567c96;padding:6px}
+ .actions button.sound-toggle[aria-pressed="true"]{background:#23565c;border-color:#78c9b6}
+ @media(max-width:380px){.actions button.sound-toggle{flex-basis:43px;min-width:41px}}
+ .center-label small{display:block;margin-top:6px;font-size:10px;line-height:1.2;white-space:nowrap;color:#d3fff4;letter-spacing:0}
+
+ .volley-pause-overlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+   background:rgba(9,26,48,.72);backdrop-filter:blur(4px);padding:clamp(8px,3vw,18px);overflow:auto}
+ .volley-pause-overlay[hidden]{display:none!important}
+ .volley-pause-panel{width:min(100%,430px);max-height:100%;overflow:auto;overscroll-behavior:contain;
+   padding:clamp(13px,3.5vw,20px);border:2px solid #829dc1;border-radius:16px;
+   background:linear-gradient(155deg,#294866,#142a43);box-shadow:0 14px 40px rgba(0,0,0,.32);text-align:center}
+ .volley-pause-icon{font-size:clamp(26px,6vw,38px);margin-bottom:6px}
+ .volley-pause-panel h2{font-size:clamp(21px,5vw,26px);color:#fff;margin:0 0 12px}
+ .volley-pause-choices{display:grid;gap:8px}
+ .volley-pause-choices button{min-height:48px;border:1px solid #6085a9;border-radius:10px;
+   padding:11px 12px;font:850 clamp(13px,3.2vw,16px)/1.35 system-ui,sans-serif;
+   background:#315d88;color:#e8f7ff;cursor:pointer}
+ .volley-pause-choices button:first-child{color:#12334b;background:#65cfce;border-color:#a1ede4}
+ .volley-pause-choices button:disabled{opacity:.6;cursor:wait}
+ .volley-pause-choices button:focus-visible{outline:3px solid #fff1ac;outline-offset:3px}
+ .volley-pause-status{font-size:12px;color:#ffe8b4;line-height:1.5;margin:9px 0 0}
+ .volley-pause-status:empty{display:none}
+</style>
+<link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
+<link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
+<script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
+<link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261119-foldedtop1">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261120-mystery-hud2">
+<link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
+<link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
+<script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
+<link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
+<link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
+<script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
+<link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
+<script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
+</head>
+<body class="arcade-body beagu-ui-page beagu-page-game"><div id="stage38-public-static-warning" role="alert" style="z-index:2147483646;position:fixed;top:0;left:0;right:0;text-align:center;padding:10px;background:#7f1d1d;color:white;font:700 13px system-ui">외부 정적 화면 미리보기 · 로그인/개인정보 입력 금지 · 인증과 API 통신 차단</div><div id="beagu-preview-watermark" role="note" style="position:fixed;bottom:10px;right:10px;z-index:2147483600;background:#152943;color:#fff;border-radius:12px;padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>
+<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">비교하기</a><a href="postit.html">포스트잇</a><a href="challenge.html">챌린지</a></nav></div></header>
+<div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
+<main class="game-shell">
+  <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
+  <div class="scoreboard" aria-label="25점 선착순 경기와 점수 기록">
+    <div class="volley-best-row"><span class="volley-target-chip">🏁 25점</span><span class="volley-best-chip" aria-label="이 기기의 최고 점수 신기록">신기록 <strong id="volley-best-label">0점</strong></span><span class="volley-best-chip" aria-label="내 25점 승리 최단 시간">25점 최단 <strong id="volley-fastest-label">—</strong></span></div>
+    <div class="team"><span class="volley-team-name">나</span><strong id="player-score">0 / 25</strong></div>
+    <div class="center-label">VS<small id="volley-score-label">0점</small><small id="volley-bonus-label">플레이 +0점</small></div>
+    <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0 / 25</strong></div>
+  </div>
+  <div class="volley-progress" aria-label="25점 달성 진행 상황">
+   <div><div class="volley-progress-label"><span>나의 25점</span><span id="volley-my-remain">25점 남음</span></div>
+    <div class="volley-progress-track" id="volley-my-progress" role="progressbar" aria-label="내 점수 진행" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0"><div class="volley-progress-fill" id="volley-my-fill"></div></div></div>
+   <div><div class="volley-progress-label"><span>컴퓨터</span><span id="volley-cpu-remain">25점 남음</span></div>
+    <div class="volley-progress-track" id="volley-cpu-progress" role="progressbar" aria-label="컴퓨터 점수 진행" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0"><div class="volley-progress-fill cpu" id="volley-cpu-fill"></div></div></div>
+   <div class="volley-progress-next" id="volley-next-goal">첫 목표 · 5점 도달하기</div>
+  </div>
+  <div class="court arcade-game-viewport" data-arcade-fullscreen>
+      <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="전체화면으로 확대" title="전체화면으로"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 3h6v6M21 3l-7 7M3 21l7-7M9 21H3v-6"/></svg></button>
+      <div class="arcade-fullscreen-hud arcade-volley-fullscreen-hud" aria-label="전체화면 배구 점수판">
+        <span>나 <strong id="volley-fullscreen-my-score">0</strong></span>
+        <span class="arcade-volley-fullscreen-versus">25점 경기</span>
+        <span>상대 <strong id="volley-fullscreen-cpu-score">0</strong></span>
+        <small id="volley-fullscreen-situation" class="arcade-fullscreen-subline">EASY · 0:00</small>
+      </div>
+      <canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas>
+      <div class="volley-ready-overlay" id="volley-ready-overlay" aria-labelledby="volley-ready-title">
+        <div class="volley-ready-panel">
+          <div class="volley-ready-icon" aria-hidden="true">🏫</div>
+          <h2 id="volley-ready-title">학교를 선택하세요</h2>
+          <p id="volley-ready-detail" hidden></p>
+          <button type="button" id="volley-school-choose" class="volley-school-choose" aria-controls="arcade-school-picker">🏫 학교 선택하기</button>
+        </div>
+      </div>
+      <div class="volley-pause-overlay" id="volley-pause-overlay" role="dialog" aria-labelledby="volley-pause-title" aria-modal="false" hidden>
+        <div class="volley-pause-panel">
+          <div class="volley-pause-icon" aria-hidden="true">⏸️</div>
+          <h2 id="volley-pause-title">일시정지</h2>
+          <div class="volley-pause-choices">
+            <button id="volley-resume" type="button">▶ 계속</button>
+            <button id="volley-change-school" type="button">🏫 다른 학교로 변경</button>
+            <button id="volley-go-first" type="button">↩ 처음으로</button>
+          </div>
+          <p class="volley-pause-status" id="volley-pause-status" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
+  <a class="postit-arcade-link postit-lv2-link" data-postit-game="teacher-volleyball" target="_top" href="postit.html?game=teacher-volleyball">▤ 이 게임 포스트잇</a>
+  <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
+<script defer src="js/beagu-presence-games-v1.js?v=20261120-gateway2"></script>
+<script src="js/arcade-leaderboard-v1.js?v=20261119-foldedtop1"></script>
+<script src="js/arcade-school-picker-v1.js?v=20261120-fast1"></script>
+<script src="js/arcade-fullscreen-v1.js?v=20261120-fullscreen-icons2"></script>
+<script src="js/arcade-scroll-rail-v1.js?v=20261120-rightscroll1"></script>
+<script src="js/arcade-play-lock-v1.js?v=20261120-rightscroll1"></script>
+<script src="js/arcade-mystery-items-v1.js?v=20261120-balls2"></script>
+<script>
+(function () {
+  "use strict";
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const scoreP = document.getElementById("player-score");
+  const scoreC = document.getElementById("cpu-score");
+  const startButton = document.getElementById("start");
+  const pauseButton = document.getElementById("pause");
+  const status = document.getElementById("status");
+  const helpButton=document.getElementById("help"),helpPanel=document.getElementById("help-panel");
+  const schoolChooseButton=document.getElementById("volley-school-choose");
+  const readyOverlay=document.getElementById("volley-ready-overlay");
+  const readyTitle=document.getElementById("volley-ready-title");
+  const readyDetail=document.getElementById("volley-ready-detail");
+  const pauseOverlay=document.getElementById("volley-pause-overlay");
+  const pauseStatus=document.getElementById("volley-pause-status");
+  const pauseChoices=["volley-resume","volley-change-school","volley-go-first"].map(id=>document.getElementById(id));
+  let pauseExitBusy=false;
+  const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("volleyball_25","#arcade-top10") : null;
+  const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
+  const battleProfiles={
+    easy:{allySpeed:1.38,allyJump:1.20,allyReach:1.22,allyAttack:1.24,enemySpeed:4.7,enemyReaction:17,enemyLead:1,enemyError:82,enemyDeadzone:25,enemyJumpChance:.10,enemyJumpReach:105,enemyJumpForce:10.5,enemyReach:.82,enemyAttack:.68,enemySmashChance:.02,label:"아군 강화 · 상대 점프 드묾"},
+    normal:{allySpeed:1.20,allyJump:1.10,allyReach:1.12,allyAttack:1.12,enemySpeed:6.0,enemyReaction:12,enemyLead:3,enemyError:58,enemyDeadzone:17,enemyJumpChance:.27,enemyJumpReach:125,enemyJumpForce:11.5,enemyReach:.91,enemyAttack:.83,enemySmashChance:.08,label:"아군 우세 · 상대 수비 보통"},
+    hard:{allySpeed:1,allyJump:1,allyReach:1,allyAttack:1,enemySpeed:7.5,enemyReaction:8,enemyLead:5,enemyError:35,enemyDeadzone:11,enemyJumpChance:.49,enemyJumpReach:148,enemyJumpForce:12.8,enemyReach:1,enemyAttack:1,enemySmashChance:.19,label:"양 팀 균형 · 상대 점프 수비"},
+    very_hard:{allySpeed:.89,allyJump:.91,allyReach:.94,allyAttack:.91,enemySpeed:9.2,enemyReaction:5,enemyLead:7,enemyError:18,enemyDeadzone:7,enemyJumpChance:.72,enemyJumpReach:172,enemyJumpForce:13.7,enemyReach:1.10,enemyAttack:1.23,enemySmashChance:.38,label:"아군 약화 · 상대 예측 점프·강타·부하 간헐 등장"},
+    extreme:{allySpeed:.79,allyJump:.83,allyReach:.86,allyAttack:.83,enemySpeed:11,enemyReaction:2,enemyLead:9,enemyError:5,enemyDeadzone:3,enemyJumpChance:.96,enemyJumpReach:195,enemyJumpForce:14.8,enemyReach:1.20,enemyAttack:1.48,enemySmashChance:.63,label:"아군 약화 · 상대 초고속 수비·강타·작은 부하"}
+   };
+  // Stronger opponents get distinctive pixel armor, helmets and a boss aura.
+  const enemyLooks={
+    easy:{uniform:"#f0a3b6",trim:"#df8199",eyes:"#304663",armor:0,aura:0},
+    normal:{uniform:"#ec7b97",trim:"#d35e7c",eyes:"#344b64",armor:0,aura:0},
+    hard:{uniform:"#d45472",trim:"#80344c",eyes:"#ab2838",armor:1,aura:0},
+    very_hard:{uniform:"#983355",trim:"#f0b4ad",eyes:"#f6df87",armor:2,aura:1},
+    extreme:{uniform:"#622451",trim:"#ffd168",eyes:"#ffdb60",armor:3,aura:2}
+  };
+  // Ball speed scales with school difficulty, independent of player and CPU movement.
+  const ballSpeedProfiles={easy:.80,normal:.91,hard:1,very_hard:1.13,extreme:1.27};
+  const ballSpeedFactor=()=>ballSpeedProfiles[currentDifficulty]||ballSpeedProfiles.hard;
+  const cloneProfiles={easy:2,normal:1,hard:0,very_hard:0,extreme:0};
+  const specialProfiles={
+    easy:{cooldown:12,chargeFrames:540},
+    normal:{cooldown:16,chargeFrames:480},
+    hard:{cooldown:20,chargeFrames:450},
+    very_hard:{cooldown:24,chargeFrames:420},
+    extreme:{cooldown:28,chargeFrames:390}
+  };
+  const diffName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
+  let currentDifficulty="normal",battle=battleProfiles.normal,specialProfile=specialProfiles.hard,startTicket=0,lastTapAt=0,lastTapX=0,lastTapY=0;
+  schoolPicker.onChange=school=>{
+    if(state.phase==="ready"||state.phase==="finished"){
+      setStatus(!school ? "" :
+        school.eligible ? school.school_name+" · "+diffName[school.difficulty] :
+        "🔒 조사 참여 필요");
+      if(state.phase==="ready"){
+        const tier=school?.difficulty||"hard";
+        currentDifficulty=tier;
+        specialProfile=specialProfiles[tier]||specialProfiles.hard;
+        resetPower();
+      }
+      syncUI();
+    }
+  };
+  const SPEED_MULTIPLIER=2; // horizontal player and AI reaction (5->10, 3.65->7.3)
+  const AUTO_SPIKE_SPEED=8; // player-driven displacement per simulation frame
+  const MATCH_TARGET=25;
+  // Opponent score reduces earned points; victory adds a lead-dependent multiplier.
+  // Win by 1-4: ×1, 5-9: ×2, 10-14: ×3, 15-19: ×4, 20-24: ×5, 25-0: ×6.
+  const POINT_GAIN=100,POINT_LOSS=50;
+  const getBaseMatchScore=(player,cpu)=>Math.max(0,player*POINT_GAIN-cpu*POINT_LOSS);
+  const getVictoryMultiplier=(player,cpu)=>player===MATCH_TARGET&&cpu<MATCH_TARGET
+    ?1+Math.floor((MATCH_TARGET-cpu)/5):1;
+  const MAX_ACTIVE_SECONDS=900,SECONDS_BONUS=4;
+  const activeTenths=()=>Math.floor(state.activeFrames/6);
+  const getSurvivalBonus=(tenths)=>Math.min(MAX_ACTIVE_SECONDS,Math.floor(tenths/10))*SECONDS_BONUS;
+  const getMatchScore=(player,cpu,tenths=0)=>
+    getBaseMatchScore(player,cpu)*getVictoryMultiplier(player,cpu)+getSurvivalBonus(tenths);
+  const fmtTime=tenths=>{const t=Math.max(0,Math.floor(Number(tenths)||0));
+    return Math.floor(t/600)+":"+String(Math.floor((t%600)/10)).padStart(2,"0")+"."+(t%10);};
+  const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
+  const keys = { left: false, right: false, up: false, down: false, jump: false };
+  const touchControl = { pointerId: null, targetX: null, targetY: null };
+  const state = { phase:"ready",leftScore:0,rightScore:0,serveLeft:true,pointTicks:0,flash:0,winner:"",
+    message:"경기 시작을 눌러주세요!",spikes:0,aiRecalc:0,aiTargetX:688,aiJump:false,
+    specialCooldownFrames:0,specialChargeFrames:0,uiTick:0,playFrames:0,activeFrames:0,
+    hitStopFrames:0,impactFrames:0,impactX:0,impactY:0,bossWarnFrames:0,bossCooldownFrames:0,
+    winStreak:0,bestStreak:0,pointCheer:"",recordBroken:false,timeRecordBroken:false,endedEarly:false,
+    rescueUsed:false,qualityText:"",qualityFrames:0,winCheer:"" };
+  const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false, contactFrames:0 };
+  const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false, contactFrames:0 };
+  const ball = { x: 228, y: 218, vx: 0, vy: 0, spin:0, cooldown: 0, trail: [], shadowFrames:0, shadowColor:"#203f65" };
+  const secondBall={x:685,y:168,vx:-6,vy:-5,spin:0,cooldown:0,trail:[],shadowFrames:0,shadowColor:"#762b4b"};
+  const activeBalls=[ball],clones=[];
+  const mystery=window.ArcadeMysteryItems;
+  const mysteryDrops=[],mysteryReveals=[],mysteryBuffs={left:{},right:{}};
+  const mysteryCadence={easy:[15,22],normal:[12,18],hard:[9,14],very_hard:[7,11],extreme:[5,9]};
+  const bonusFriend={x:260,y:FLOOR-31,vx:0,vy:0,side:"left",contactFrames:0,clone:true,name:"친한 동학년"};
+  let nextMystery=0,desiredBalls=1;
+  const MAX_MYSTERY_BALLS=5;
+  function createMysteryBall(index){
+    const serveFromLeft=index%2===0?state.serveLeft:!state.serveLeft;
+    return {
+      x:serveFromLeft?215+Math.min(index*21,85):685-Math.min(index*21,85),
+      y:Math.max(112,223-index*28),
+      vx:(serveFromLeft?5.4:-5.4)*ballSpeedFactor(),
+      vy:-(5.2+index*.24)*ballSpeedFactor(),
+      spin:0,cooldown:0,allyCooldown:0,enemyMinionCooldown:0,
+      trail:[],shadowFrames:0,shadowColor:index%2?"#762b4b":"#203f65"
+    };
+  }
+  function changeMysteryBalls(delta){
+    const target=clamp(desiredBalls+delta,1,MAX_MYSTERY_BALLS);
+    if(target===desiredBalls)return false;
+    desiredBalls=target;
+    while(activeBalls.length>desiredBalls)activeBalls.pop();
+    while(activeBalls.length<desiredBalls)
+      activeBalls.push(createMysteryBall(activeBalls.length));
+    syncUI();
+    return true;
+  }
+  const isMysteryBuff=(side,key)=>mysteryBuffs[side][key]>state.activeFrames;
+  const activeAllies=()=>isMysteryBuff("left","conflict")?[]:
+    isMysteryBuff("left","friends")?[...clones,bonusFriend]:clones;
+  function scheduleMystery(){
+    const span=mysteryCadence[currentDifficulty]||mysteryCadence.hard;
+    nextMystery=state.activeFrames+Math.round((span[0]+Math.random()*(span[1]-span[0]))*60);
+  }
+  function resetMystery(){
+    mysteryDrops.length=0;mysteryReveals.length=0;
+    mysteryBuffs.left={};mysteryBuffs.right={};scheduleMystery();
+  }
+  function itemPoints(side,delta){
+    const key=side==="left"?"leftScore":"rightScore";
+    state[key]=clamp(state[key]+delta,0,MATCH_TARGET);
+    syncUI();
+    if(state.leftScore>=MATCH_TARGET||state.rightScore>=MATCH_TARGET)finishMatch();
+  }
+  function collectMystery(item,side){
+    const buffs=mysteryBuffs[side],now=state.activeFrames;
+    const dur=(item.id==="friends"||item.id==="conflict"?14:11)*60;
+    switch(item.id){
+      case "shackle":buffs.shackle=now+dur;buffs.wings=0;break;
+      case "complaint":buffs.complaint=now+dur;buffs.letter=0;break;
+      case "bullying":itemPoints(side,-1);break;
+      case "report":itemPoints(side,-10);break;
+      case "conflict":buffs.conflict=now+dur;buffs.friends=0;break;
+      case "wings":buffs.wings=now+dur;buffs.shackle=0;break;
+      case "letter":buffs.letter=now+dur;buffs.complaint=0;break;
+      case "salary":itemPoints(side,1);break;
+      case "friends":buffs.friends=now+dur;buffs.conflict=0;break;
+      case "bonus":itemPoints(side,2);break;
+      case "ball_add":changeMysteryBalls(1);break;
+      case "ball_remove":changeMysteryBalls(-1);break;
+    }
+    const p=side==="left"?left:right;
+    mysteryReveals.push({item,x:p.x,y:p.y-80,ttl:105});
+    if(mysteryReveals.length>4)mysteryReveals.shift();
+    setStatus((side==="left"?"나":"상대")+" 획득: "+item.icon+" "+item.name);
+    tone(item.good?850:255,.1,item.good?"triangle":"sawtooth",.025);
+  }
+  function updateMystery(){
+    if(state.activeFrames>=nextMystery){
+      if(mysteryDrops.length<3){
+        const side=Math.random()<.5?"left":"right";
+        mysteryDrops.push({x:side==="left"?70+Math.random()*320:515+Math.random()*315,
+          y:36,dy:1.9+Math.random()*.8,ttl:610,side,item:mystery.pick(false,null,true)});
+      }
+      scheduleMystery();
+    }
+    for(let i=mysteryDrops.length-1;i>=0;i--){
+      const d=mysteryDrops[i];d.y=Math.min(FLOOR-19,d.y+d.dy);d.ttl--;
+      const players=d.side==="left"?[left,...activeAllies()]:
+        [right,...(isEnemyMinionActive()?[enemyMinion]:[])];
+      if(players.some(p=>Math.hypot(d.x-p.x,d.y-(p.y-23))<49)){
+        mysteryDrops.splice(i,1);collectMystery(d.item,d.side);
+        if(state.phase!=="playing")break;
+      }else if(d.ttl<=0)mysteryDrops.splice(i,1);
+    }
+    for(let i=mysteryReveals.length-1;i>=0;i--)
+      if(--mysteryReveals[i].ttl<=0)mysteryReveals.splice(i,1);
+  }
+  function drawMystery(){
+    for(const d of mysteryDrops)mystery.drawMystery(ctx,d.x,d.y,d.item.good,21,state.activeFrames/60);
+    for(const r of mysteryReveals){
+      ctx.save();ctx.globalAlpha=Math.min(1,r.ttl/24);
+      mystery.drawReveal(ctx,r.item,r.x,r.y-(105-r.ttl)*.42,23);ctx.restore();
+    }
+  }
+  function mysteryBrief(){
+    const buffs=Object.entries(mysteryBuffs.left)
+      .filter(([,v])=>v>state.activeFrames)
+      .map(([k,v])=>k+" "+Math.ceil((v-state.activeFrames)/60)+"초");
+    return diffName[currentDifficulty]+" · "+fmtTime(activeTenths())+
+      " · 공 "+activeBalls.length+"개"+
+      (buffs.length?" · "+buffs.join(" / "):"");
+  }
+  // EXTREME: always present. VERY HARD: a short intermittent visit.
+  const enemyMinion={x:810,y:FLOOR-31,vx:0,contactFrames:0,cooldown:0,
+    name:"부하",side:"right",mini:true,active:false,nextSpawnFrame:0,activeUntilFrame:0};
+  const isEnemyMinionActive=()=>!isMysteryBuff("right","conflict")&&
+    (currentDifficulty==="extreme"||(currentDifficulty==="very_hard"&&enemyMinion.active)
+    ||isMysteryBuff("right","friends"));
+  function resetEnemyMinionSchedule(){
+    enemyMinion.active=false;
+    enemyMinion.activeUntilFrame=0;
+    enemyMinion.nextSpawnFrame=currentDifficulty==="very_hard"
+      ?state.activeFrames+Math.round((12+Math.random()*8)*60):0;
+  }
+  function updateEnemyMinionPresence(){
+    if(currentDifficulty!=="very_hard")return;
+    if(enemyMinion.active){
+      if(state.activeFrames>=enemyMinion.activeUntilFrame){
+        enemyMinion.active=false;
+        enemyMinion.cooldown=0;
+        enemyMinion.nextSpawnFrame=state.activeFrames+Math.round((22+Math.random()*14)*60);
+      }
+    }else if(state.activeFrames>=enemyMinion.nextSpawnFrame){
+      enemyMinion.active=true;
+      enemyMinion.activeUntilFrame=state.activeFrames+Math.round((7+Math.random()*4)*60);
+      enemyMinion.x=810;
+      enemyMinion.cooldown=0;
+    }
+  }
+  const volleyShackle={x:156,dir:-1};
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const setStatus = text => { status.textContent = text; };
+  const BEST_SCORE_KEY="teacherVolleyballScore25BestV1";
+  // This score-based season starts fresh, separate from the retired time records.
+  try{
+    for(const key of ["teacherVolleyballFastest25V1","teacherVolleyballFastest25V2",
+      "teacherVolleyballBestV1","arcade-local-top10-v1-volleyball","arcade-local-top10-v1-volleyball_25"])
+      localStorage.removeItem(key);
+  }catch(e){}
+  const bestLabel=document.getElementById("volley-best-label");
+  let bestScore=0;
+  try{bestScore=Math.max(0,Math.floor(Number(localStorage.getItem(BEST_SCORE_KEY))||0));}catch(e){}
+  bestLabel.textContent=bestScore.toLocaleString("ko-KR")+"점";
+  function rememberBestScore(value){
+    if(!Number.isSafeInteger(value)||value<=bestScore)return false;
+    bestScore=value;bestLabel.textContent=value.toLocaleString("ko-KR")+"점";
+    try{localStorage.setItem(BEST_SCORE_KEY,String(value));}catch(e){}
+    return true;
+  }
+  // The personal 25-point speed record is independent of the score leaderboard.
+  const FASTEST_25_KEY="teacherVolleyballFastest25SeparateV1";
+  const fastestLabel=document.getElementById("volley-fastest-label");
+  let fastest25Tenths=0;
+  try{fastest25Tenths=Math.max(0,Math.floor(Number(localStorage.getItem(FASTEST_25_KEY))||0));}catch(e){}
+  fastestLabel.textContent=fastest25Tenths?fmtTime(fastest25Tenths):"—";
+  function rememberFastest25(tenths){
+    if(!Number.isSafeInteger(tenths)||tenths<=0||(fastest25Tenths&&tenths>=fastest25Tenths))return false;
+    fastest25Tenths=tenths;fastestLabel.textContent=fmtTime(tenths);
+    try{localStorage.setItem(FASTEST_25_KEY,String(tenths));}catch(e){}
+    return true;
+  }
+  const hasPlayerWings=()=>currentDifficulty==="easy"||isMysteryBuff("left","wings");
+  const canPlayerJump=()=>!isMysteryBuff("left","shackle")&&(currentDifficulty!=="extreme"||hasPlayerWings());
+  // Player's pixel-art head begins about 55px above the actor's y position.
+  // At NET_TOP+37, the head reaches 18px above the net, but cannot fly away.
+  const playerCeiling=()=>hasPlayerWings()?86:NET_TOP+37;
+  const soundButton=document.getElementById("sound");
+  const SOUND_KEY="teacherVolleyballSoundV1";
+  let soundOn=true,audioContext=null;
+  try{const setting=localStorage.getItem(SOUND_KEY);if(setting!==null)soundOn=setting==="1";}catch(e){}
+  function syncSoundUI(){
+    soundButton.textContent=soundOn?"🔊":"🔇";
+    soundButton.setAttribute("aria-pressed",String(soundOn));
+    soundButton.setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");
+  }
+  syncSoundUI();
+  function unlockSound(){
+    if(!soundOn)return;
+    try{
+      const Ctx=window.AudioContext||window.webkitAudioContext;
+      if(!Ctx)return;
+      audioContext=audioContext||new Ctx();
+      if(audioContext.state==="suspended")audioContext.resume();
+    }catch(e){}
+  }
+  function tone(freq,duration=.11,type="sine",volume=.055,delay=0,toFreq=null){
+    if(!soundOn)return;
+    try{
+      const Ctx=window.AudioContext||window.webkitAudioContext;
+      if(!Ctx)return;
+      audioContext=audioContext||new Ctx();
+      if(audioContext.state==="suspended")audioContext.resume();
+      const start=audioContext.currentTime+delay;
+      const oscillator=audioContext.createOscillator(),gain=audioContext.createGain();
+      oscillator.type=type;oscillator.frequency.setValueAtTime(freq,start);
+      if(toFreq&&toFreq>0)oscillator.frequency.exponentialRampToValueAtTime(toFreq,start+duration);
+      gain.gain.setValueAtTime(Math.max(.0001,volume),start);
+      gain.gain.exponentialRampToValueAtTime(.001,start+duration);
+      oscillator.connect(gain);gain.connect(audioContext.destination);
+      oscillator.start(start);oscillator.stop(start+duration+.01);
+    }catch(e){}
+  }
+  function spikeSound(superSpike=false){
+    tone(superSpike?470:310,superSpike?.22:.14,"sawtooth",superSpike?.063:.038,0,superSpike?105:145);
+    tone(superSpike?730:490,.12,"triangle",.038,.035,superSpike?1100:720);
+  }
+  soundButton.addEventListener("click",()=>{
+    soundOn=!soundOn;
+    try{localStorage.setItem(SOUND_KEY,soundOn?"1":"0");}catch(e){}
+    syncSoundUI();if(soundOn)tone(660,.09,"sine",.055);
+  });
+  function resetPower(){
+    state.specialCooldownFrames=0;state.specialChargeFrames=0;
+    state.uiTick=0;lastTapAt=0;
+    updateMatchScoreUI();
+  }
+  function updateMatchScoreUI(){
+    const bonus=getSurvivalBonus(activeTenths());
+    document.getElementById("volley-score-label").textContent=
+      (getBaseMatchScore(state.leftScore,state.rightScore)+bonus).toLocaleString("ko-KR")+"점";
+    document.getElementById("volley-bonus-label").textContent="플레이 +"+bonus.toLocaleString("ko-KR")+"점";
+  }
+  function activateSuperSpike(){
+    if(state.phase!=="playing"||state.specialCooldownFrames>0||state.specialChargeFrames>0)return false;
+    state.specialCooldownFrames=specialProfile.cooldown*60;
+    state.specialChargeFrames=specialProfile.chargeFrames;
+    state.flash=18;
+    setStatus("⚡ 슈퍼 스파이크 준비!");
+    return true;
+  }
+  const cheerMilestones={
+    5:"✨ 첫 고비를 넘었어요! 다음은 10점!",
+    10:"🔥 벌써 10점! 리듬을 이어가요!",
+    15:"💪 15점 돌파! 목표가 가까워집니다!",
+    20:"🚀 이제 마지막 5점! 집중해서 마무리!",
+    23:"🎯 두 점 남았어요! 조금만 더!",
+    24:"🏁 매치포인트! 마지막 한 점!"
+  };
+  function pointEncouragement(mine,theirs,streak,leftWins){
+    if(leftWins&&cheerMilestones[mine])return cheerMilestones[mine];
+    if(!leftWins&&theirs===24)return "⚠ 상대 매치포인트! 끝까지 막아내요!";
+    if(leftWins&&streak>=4)return "🔥 "+streak+"연속 득점! 지금의 흐름을 유지하세요!";
+    if(leftWins&&streak>=2)return "👏 "+streak+"연속 득점! 손끝의 감각이 좋아요!";
+    if(theirs-mine>=4)return "🌱 아직 기회가 있어요. 한 점씩 따라가요!";
+    if(!leftWins&&theirs>mine)return "좋아요, 다음 공부터 다시 따라가요!";
+    if(mine>=20)return "25점까지 "+(MATCH_TARGET-mine)+"점! 마지막까지 집중!";
+    if(leftWins&&mine>theirs)return "앞서고 있어요! 서두르지 말고 정확히!";
+    return "한 번 더! 공을 정확하게 받아내세요!";
+  }
+  function nextMilestone(score){
+    return [5,10,15,20,23,24,25].find(x=>x>score)||25;
+  }
+  function updateScoreProgress(){
+    const mine=state.leftScore,cpu=state.rightScore;
+    document.getElementById("volley-my-fill").style.width=(mine/MATCH_TARGET*100)+"%";
+    document.getElementById("volley-cpu-fill").style.width=(cpu/MATCH_TARGET*100)+"%";
+    document.getElementById("volley-my-progress").setAttribute("aria-valuenow",String(mine));
+    document.getElementById("volley-cpu-progress").setAttribute("aria-valuenow",String(cpu));
+    document.getElementById("volley-my-remain").textContent=Math.max(0,MATCH_TARGET-mine)+"점 남음";
+    document.getElementById("volley-cpu-remain").textContent=Math.max(0,MATCH_TARGET-cpu)+"점 남음";
+    document.getElementById("volley-next-goal").textContent=mine>=MATCH_TARGET
+      ?"🏆 25점 달성!"
+      :cpu>=24?"⚠ 상대 매치포인트 · 마지막까지!"
+      :mine>=20?"🏁 마지막 "+(MATCH_TARGET-mine)+"점 · 이대로 승리하면 ×"+getVictoryMultiplier(MATCH_TARGET,cpu)
+      :"다음 목표 · "+nextMilestone(mine)+"점까지 "+(nextMilestone(mine)-mine)+"점";
+    document.getElementById("volley-my-fill").classList.toggle("final",mine>=20);
+  }
+  function syncUI() {
+    const chosen=schoolPicker.get();
+    const isReady=state.phase==="ready";
+    readyOverlay.hidden=!isReady;
+    schoolChooseButton.hidden=!isReady;
+    readyTitle.textContent=chosen?.eligible?chosen.school_name:chosen?"조사 참여 필요":"학교를 선택하세요";
+    readyDetail.textContent=chosen?.eligible?(diffName[chosen.difficulty]||"")+" · 준비 완료":
+      chosen?"2026 배구지수 조사 참여 후 시작할 수 있습니다.":"";
+    readyDetail.hidden=!readyDetail.textContent;
+    schoolChooseButton.textContent=chosen?.eligible?"▶ 이 학교로 시작하기":chosen?"🏫 다른 학교 검색":"🏫 학교 선택하기";
+    schoolChooseButton.setAttribute("aria-label",chosen?.eligible?"선택한 학교로 게임 시작하기":"학교 선택하기");
+    scoreP.textContent = state.leftScore+" / "+MATCH_TARGET;
+    scoreC.textContent = state.rightScore+" / "+MATCH_TARGET;
+    document.getElementById("volley-fullscreen-my-score").textContent=String(state.leftScore);
+    document.getElementById("volley-fullscreen-cpu-score").textContent=String(state.rightScore);
+    document.getElementById("volley-fullscreen-situation").textContent=mysteryBrief();
+    updateScoreProgress();
+    startButton.textContent = state.phase === "starting" ? "⏳ 학교 확인 중" : state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "⏹ 여기까지 기록";
+    startButton.disabled = state.phase === "starting" ||
+      ((state.phase === "ready" || state.phase === "finished") && schoolPicker.get()?.eligible !== true);
+    pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point" || state.phase === "starting";
+    pauseButton.textContent = state.phase === "paused" ? "▶" : "⏸";
+    pauseButton.setAttribute("aria-label",state.phase === "paused"?"계속하기":"일시정지");
+    updateMatchScoreUI();
+  }
+  function resetPositions() {
+    Object.assign(left, { x: 210, y: FLOOR - 31, vx: 0, vy: 0, impactSpeed: 0, jumpLock: false, contactFrames:0 });
+    volleyShackle.x=left.x-54;volleyShackle.dir=-1;
+    Object.assign(right, { x: 690, y: FLOOR - 31, vx: 0, vy: 0, jumpLock: false, contactFrames:0 });
+    Object.assign(enemyMinion,{x:810,y:FLOOR-31,vx:0,contactFrames:0,cooldown:0});
+    Object.assign(bonusFriend,{x:260,y:FLOOR-31,vx:0,vy:0,contactFrames:0});
+    ball.x = state.serveLeft ? 215 : 685;
+    ball.y = 223;
+    state.rescueUsed=false;
+    ball.vx = (state.serveLeft ? 6.1 : -6.1)*ballSpeedFactor();
+    ball.vy = -6.3*ballSpeedFactor();
+    ball.cooldown = 0;
+    ball.allyCooldown = 0;
+    ball.enemyMinionCooldown = 0;
+    ball.spin=0;
+    ball.shadowFrames=0;
+    state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;
+    ball.trail.length=0;
+    activeBalls.length=1;
+    // Pickups carry the changed ball count across every rally this match.
+    while(activeBalls.length<desiredBalls)
+      activeBalls.push(createMysteryBall(activeBalls.length));
+    clones.length=0;
+    const count=cloneProfiles[currentDifficulty]||0;
+    for(let i=0;i<count;i++)clones.push({
+      x:count===2?(i?335:145):315,y:FLOOR-31,vx:0,vy:0,
+      side:"left",contactFrames:0,impactSpeed:0,clone:true,name:i===0?"동료":"관리자"
+    });
+    state.aiRecalc=0;state.aiJump=false;state.aiTargetX=688;
+  }
+  async function startMatch() {
+    const school=schoolPicker.get();
+    if(!school?.eligible){
+      setStatus("🔒 조사 참여 필요");
+      schoolPicker.focus();syncUI();return;
+    }
+    if(state.phase==="starting")return;
+    const previousPhase=state.phase;
+    const ticket=++startTicket;
+    state.phase="starting";syncUI();setStatus("조사 백분위와 참가 자격 확인 중…");
+    const session=ranking?await ranking.start(school):null;
+    if(ticket!==startTicket)return;
+    if(!session){
+      state.phase=previousPhase;
+      schoolPicker.setLocked(false);
+      syncUI();
+      setStatus("시작할 수 없습니다. 조사 백분위 또는 게임 서버 연결을 확인하세요.");
+      return;
+    }
+    currentDifficulty=school.difficulty;
+    battle=battleProfiles[currentDifficulty]||battleProfiles.hard;
+    specialProfile=specialProfiles[currentDifficulty]||specialProfiles.hard;
+    resetPower();
+    desiredBalls=currentDifficulty==="extreme"?2:1;
+    schoolPicker.setLocked(true);
+    state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
+    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
+    state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
+    resetEnemyMinionSchedule();
+    resetMystery();
+    releaseKeys();
+    state.serveLeft=Math.random()<.5;
+    state.phase="playing";state.winner="";state.message="";state.flash=0;
+    resetPositions();
+    if(!canPlayerJump())setStatus(school.school_name+" · EXTREME · 공 2개 · 족쇄 · 점프 불가 · 적 부하");
+    else if(currentDifficulty==="easy")setStatus(school.school_name+" · EASY · 날개·동료·관리자 지원");
+    else if(currentDifficulty==="normal")setStatus(school.school_name+" · NORMAL · 동료 지원");
+    else setStatus(school.school_name+" · "+diffName[school.difficulty]);
+    syncUI();canvas.focus({preventScroll:true});
+  }
+  function stopForSchoolChange(keepSchool=false){
+    ++startTicket;
+    ranking?.cancel();
+    releaseKeys();
+    state.phase="ready";state.message="";state.winner="";state.flash=0;
+    state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
+    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
+    currentDifficulty="hard";
+    desiredBalls=1;
+    resetMystery();
+    state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
+    specialProfile=specialProfiles.hard;resetPower();
+    schoolPicker.setLocked(false);
+    if(!keepSchool)schoolPicker.resetForChange();
+    pauseOverlay.hidden=true;pauseStatus.textContent="";
+    resetPositions();
+    syncUI();
+    setStatus("게임을 중단했습니다. 다른 학교를 선택해 시작하세요.");
+  }
+  schoolPicker.onRequestChange=stopForSchoolChange;
+  schoolChooseButton.addEventListener("click",()=>{
+    if(state.phase!=="ready")return;
+    if(schoolPicker.get()?.eligible===true){void startMatch();return;}
+    if(schoolPicker.get())schoolPicker.resetForChange();
+    else schoolPicker.focus();
+    document.getElementById("arcade-school-picker").scrollIntoView?.({behavior:"smooth",block:"start"});
+  });
+  function pause(){
+    if(state.phase==="playing"){
+      state.phase="paused";releaseKeys();setStatus("일시정지");
+      pauseStatus.textContent="";pauseOverlay.hidden=false;
+    }else if(state.phase==="paused"&&!pauseExitBusy){
+      state.phase="playing";setStatus("");pauseOverlay.hidden=true;
+    }
+    syncUI();
+  }
+  async function leavePausedMatch(changeSchool){
+    if(state.phase!=="paused"||pauseExitBusy)return;
+    // Current official game verification requires at least four seconds of active play.
+    if(activeTenths()<40){
+      pauseStatus.textContent="공식 기록은 4초 이상 플레이한 뒤 남길 수 있습니다. ▶ 계속을 눌러 이어서 플레이해 주세요.";
+      return;
+    }
+    pauseExitBusy=true;pauseChoices.forEach(button=>button.disabled=true);
+    pauseStatus.textContent="이번 경기 기록을 서버에 저장하고 있습니다…";
+    try{
+      const saved=await finishMatch(true);
+      stopForSchoolChange(!changeSchool);
+      setStatus(saved===true?"✅ 경기 기록을 저장했습니다.":"⚠ 서버 연결 또는 검증 문제로 기록 저장에 실패했습니다.");
+    }finally{
+      pauseExitBusy=false;pauseChoices.forEach(button=>button.disabled=false);
+    }
+  }
+  pauseChoices[0].addEventListener("click",pause);
+  pauseChoices[1].addEventListener("click",()=>{void leavePausedMatch(true);});
+  pauseChoices[2].addEventListener("click",()=>{void leavePausedMatch(false);});
+  function releaseKeys() {
+    Object.keys(keys).forEach(k => { keys[k] = false; });
+    touchControl.pointerId = null;
+    touchControl.targetX = null;
+    touchControl.targetY = null;
+    left.vy = 0;
+    left.impactSpeed = 0;
+  }
+  // Desktop arrows and WASD fly in all four directions (including diagonals).
+  // Space still makes a standard jump.
+  const codes = { KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",
+    KeyW:"up",ArrowUp:"up",KeyS:"down",ArrowDown:"down",Space:"jump" };
+  document.addEventListener("keydown", e => {
+    if(!["playing","point"].includes(state.phase))return;
+    if(e.target?.closest?.("input,textarea,select,[contenteditable]"))return;
+    const key=codes[e.code];
+    if(!key)return;
+    e.preventDefault(); // Arrow keys and space must not scroll the page.
+    if(state.phase==="playing")keys[key]=true;
+  });
+  document.addEventListener("keyup", e => {
+    const key=codes[e.code];
+    if(key)keys[key]=false;
+  });
+  // Touch/drag: fly freely in the player's half of the court.
+  // Gravity resumes on release; automatic spike is triggered by rapid movement.
+  function targetFromPointer(e) {
+    const bounds = canvas.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return;
+    const x = (e.clientX - bounds.left) * W / bounds.width;
+    const y = (e.clientY - bounds.top) * H / bounds.height;
+    touchControl.targetX = clamp(x, 35, NET_X - NET_W / 2 - 36);
+    touchControl.targetY = canPlayerJump() ? clamp(y, playerCeiling(), FLOOR - 31) : FLOOR - 31;
+  }
+  canvas.addEventListener("pointerdown", e => {
+    if (state.phase !== "playing" || touchControl.pointerId !== null) return;
+    e.preventDefault();
+    const now=Date.now(),bounds=canvas.getBoundingClientRect();
+    const posX=bounds.width?(e.clientX-bounds.left)/bounds.width*W:0;
+    const posY=bounds.height?(e.clientY-bounds.top)/bounds.height*H:0;
+    if(lastTapAt&&now-lastTapAt<=320&&Math.hypot(posX-lastTapX,posY-lastTapY)<110){
+      activateSuperSpike();lastTapAt=0;
+    }else{lastTapAt=now;lastTapX=posX;lastTapY=posY;}
+    touchControl.pointerId = e.pointerId;
+    targetFromPointer(e);
+    if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (touchControl.pointerId !== e.pointerId) return;
+    e.preventDefault();
+    targetFromPointer(e);
+  });
+  function endCourtTouch(e) {
+    if (touchControl.pointerId !== e.pointerId) return;
+    touchControl.pointerId = null;
+    touchControl.targetX = null;
+    touchControl.targetY = null;
+    left.vy = 0; // land naturally instead of carrying pointer velocity
+  }
+  canvas.addEventListener("pointerup", endCourtTouch);
+  canvas.addEventListener("pointercancel", endCourtTouch);
+  canvas.addEventListener("lostpointercapture", endCourtTouch);
+  startButton.addEventListener("click",()=>{unlockSound();if(["playing","point","paused"].includes(state.phase))finishMatch(true);else startMatch();});
+  pauseButton.addEventListener("click", pause);
+  helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
+  // Focus changes are frequent in mobile/embedded browsers. Only pause button pauses.
+  // Clear keyboard input on blur without cancelling a finger dragging on canvas.
+  window.addEventListener("blur", () => { Object.keys(keys).forEach(k => { keys[k] = false; }); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) releaseKeys(); });
+  function controlPlayer(p, direction, jump, speed, jumpStrength=12.8) {
+    p.vx = direction * speed;
+    p.x = clamp(p.x + p.vx, p.side === "left" ? 35 : NET_X + NET_W / 2 + 36, p.side === "left" ? NET_X - NET_W / 2 - 36 : W - 35);
+    const grounded = p.y >= FLOOR - 31 - .1;
+    if (jump && grounded && !p.jumpLock) { p.vy = -jumpStrength; p.jumpLock = true; }
+    if (!jump) p.jumpLock = false;
+    p.vy += .49;
+    p.y += p.vy;
+    if (p.y > FLOOR - 31) { p.y = FLOOR - 31; p.vy = 0; }
+  }
+  function moveClones(){
+    for(const ally of activeAllies()){
+      const incoming=activeBalls.filter(b=>b.vx<0&&b.x<NET_X-26&&b.y>120);
+      if(incoming.length){
+        const target=incoming.sort((a,b)=>Math.abs(a.x-ally.x)-Math.abs(b.x-ally.x))[0];
+        const predicted=target.x+target.vx*clamp((FLOOR-60-target.y)/Math.max(3,Math.abs(target.vy)+4),1,10);
+        const oldX=ally.x;
+        ally.x=clamp(ally.x+clamp(predicted-ally.x,-7.8,7.8),58,NET_X-61);
+        ally.vx=ally.x-oldX;
+      }
+      ally.y=FLOOR-31;
+    }
+  }
+  // Circle versus the companion's actual torso/head/legs rectangle.
+  // The previous rescue-only predicate let the ball visibly pass through teammates.
+  function allyBodyTouchesBall(ally,hitBall){
+    const nearX=clamp(hitBall.x,ally.x-30,ally.x+30);
+    const nearY=clamp(hitBall.y,ally.y-54,ally.y+33);
+    const dx=hitBall.x-nearX,dy=hitBall.y-nearY;
+    return dx*dx+dy*dy<=R*R;
+  }
+  function cloneHit(ally,hitBall){
+    if(hitBall.x>NET_X+R || hitBall.allyCooldown>0 || !allyBodyTouchesBall(ally,hitBall))
+      return false;
+    // Both descending and rising balls collide. An outgoing ball is gently
+    // redirected forward; an incoming ball is received and lifted back over the net.
+    const incoming=hitBall.vx<0;
+    const speed=ballSpeedFactor();
+    hitBall.vx=(incoming?(state.rescueUsed?8.3:10.2):
+      clamp(Math.abs(hitBall.vx),7.6,12.2))*speed;
+    hitBall.vy=-(incoming?(state.rescueUsed?8.1:10.4):8.6)*speed;
+    // A short bounded push and independent teammate cooldown prevent repeated
+    // contacts while the large ball overlaps the character's sprite.
+    hitBall.x=clamp(hitBall.x+Math.min(14,Math.max(3,ally.x+30+R-hitBall.x)),
+      R,NET_X-NET_W/2-R-2);
+    hitBall.y=Math.min(hitBall.y,ally.y-17);
+    hitBall.allyCooldown=16;
+    hitBall.cooldown=Math.max(hitBall.cooldown,9);
+    ally.contactFrames=11;
+    if(incoming&&!state.rescueUsed){
+      state.rescueUsed=true;
+      setStatus("🤝 "+(ally.name||"동료")+"가 공을 받아냈어요!");
+    }
+    hitBall.shadowFrames=12;hitBall.shadowColor="#257d84";
+    tone(540,.09,"triangle",.03);
+    return true;
+  }
+  function moveAI() {
+    const ball=activeBalls.find(b=>b.x>NET_X&&b.vx>0)||
+      activeBalls.find(b=>b.x>NET_X)||activeBalls[0];
+    // Challenging schools telegraph a boss spike before the CPU can use it.
+    const bossTier=currentDifficulty==="very_hard"||currentDifficulty==="extreme";
+    if(bossTier&&state.bossWarnFrames===0&&state.bossCooldownFrames===0&&
+       ball.x>NET_X+65&&ball.x<W-65&&ball.vx>0&&
+       Math.abs(ball.x-right.x)<185&&ball.y<right.y+20){
+      state.bossWarnFrames=currentDifficulty==="extreme"?39:32;
+      state.bossCooldownFrames=currentDifficulty==="extreme"?190:250;
+    }
+    // Tier-specific reaction delay, aim error, anticipation and jump decisions.
+    if(--state.aiRecalc<=0){
+      state.aiRecalc=battle.enemyReaction;
+      let target=688;
+      if(ball.x>NET_X+2){
+        target=ball.x+ball.vx*battle.enemyLead+(Math.random()-.5)*battle.enemyError;
+      }else if(ball.vx>0&&ball.y<NET_TOP){
+        target=NET_X+130+(Math.random()-.5)*battle.enemyError;
+      }
+      state.aiTargetX=clamp(target,NET_X+48,W-42);
+      const near=ball.x>NET_X && Math.abs(ball.x-right.x)<95 &&
+        ball.y>right.y-battle.enemyJumpReach && ball.y<right.y+22 && ball.vy>-4;
+      state.aiJump=near&&Math.random()<battle.enemyJumpChance;
+    }
+    const pickup=mysteryDrops.filter(d=>d.side==="right"&&d.y>FLOOR-180)
+      .sort((a,b)=>b.y-a.y)[0];
+    if(pickup&&(ball.x<NET_X||Math.abs(ball.x-right.x)>215))
+      state.aiTargetX=pickup.x;
+    const difference=state.aiTargetX-right.x;
+    const move=Math.abs(difference)>battle.enemyDeadzone?Math.sign(difference):0;
+    const slow=isMysteryBuff("right","complaint")?.65:1;
+    const fast=isMysteryBuff("right","letter")?1.35:1;
+    const shackle=isMysteryBuff("right","shackle");
+    controlPlayer(right,move,!shackle&&state.aiJump,battle.enemySpeed*slow*fast,battle.enemyJumpForce);
+    const cpuCeiling=isMysteryBuff("right","wings")?86:
+      (["normal","hard","very_hard"].includes(currentDifficulty)?NET_TOP+37:NET_TOP+56);
+    if(shackle){right.y=FLOOR-31;right.vy=0;}
+    else if(isMysteryBuff("right","wings")){
+      const target=ball.x>NET_X?clamp(ball.y,86,FLOOR-31):FLOOR-31;
+      right.y=clamp(right.y+clamp(target-right.y,-10,10),86,FLOOR-31);
+      right.vy=0;
+    }else if(right.y<cpuCeiling){right.y=cpuCeiling;right.vy=Math.max(0,right.vy);}
+  }
+  // Small defender: only chases incoming, descending balls and is slower
+  // than the main CPU player, with one shared collision cooldown.
+  function moveEnemyMinion(){
+    if(!isEnemyMinionActive())return;
+    if(enemyMinion.cooldown>0)enemyMinion.cooldown--;
+    const threat=activeBalls.filter(b=>b.x>NET_X+R&&b.vx>0&&b.vy>0)
+      .sort((a,b)=>Math.abs(a.x-enemyMinion.x)-Math.abs(b.x-enemyMinion.x))[0];
+    const target=threat?clamp(threat.x+threat.vx*2.5,NET_X+88,W-42):790;
+    const oldX=enemyMinion.x;
+    enemyMinion.x=clamp(enemyMinion.x+clamp(target-enemyMinion.x,-5.5,5.5),
+      NET_X+88,W-42);
+    enemyMinion.vx=enemyMinion.x-oldX;
+    enemyMinion.y=FLOOR-31;
+  }
+  function enemyMinionHit(hitBall){
+    if(!isEnemyMinionActive()||enemyMinion.cooldown>0||
+       hitBall.enemyMinionCooldown>0||hitBall.cooldown>0)return false;
+    // Body collision fits the visibly smaller 58%-scale character.
+    const nearX=clamp(hitBall.x,enemyMinion.x-20,enemyMinion.x+20);
+    const nearY=clamp(hitBall.y,enemyMinion.y-34,enemyMinion.y+20);
+    const dx=hitBall.x-nearX,dy=hitBall.y-nearY;
+    if(dx*dx+dy*dy>R*R)return false;
+    const force=ballSpeedFactor();
+    hitBall.vx=-(8.0+Math.min(2.5,Math.abs(hitBall.vx)*.12))*force;
+    hitBall.vy=-(8.0+Math.min(1.8,Math.abs(hitBall.vy)*.12))*force;
+    hitBall.x=clamp(hitBall.x-9,NET_X+NET_W/2+R+1,W-R);
+    hitBall.y=Math.min(hitBall.y,enemyMinion.y-18);
+    hitBall.cooldown=9;
+    hitBall.enemyMinionCooldown=22;
+    enemyMinion.cooldown=22;
+    enemyMinion.contactFrames=12;
+    hitBall.shadowFrames=12;hitBall.shadowColor="#8e3c70";
+    tone(480,.07,"triangle",.024);
+    return true;
+  }
+  function playerHit(p,ball=activeBalls[0]) {
+    const sign = p.side === "left" ? 1 : -1;
+    // Receive near the extended forearms, not the sprite's body center.
+    const handX=p.x+sign*29, handY=p.y-15;
+    const dx=ball.x-handX, dy=ball.y-handY;
+    const reach=p.side==="left"?43*.75*battle.allyReach:42*.75*battle.enemyReach;
+    const contactDistance=Math.hypot(dx,dy);
+    if(ball.cooldown>0||contactDistance>reach+R)return;
+    const incomingVx=ball.vx,incomingVy=ball.vy;
+    const charged=p.side==="left"&&state.specialChargeFrames>0;
+    const accuracy=p.side==="left"?Math.max(0,1-contactDistance/(reach+R)):0;
+    const precise=p.side==="left"&&accuracy>.42&&Math.abs(p.vx)>2.2;
+    if(precise){
+      state.qualityText="✨ PERFECT HIT!";
+      state.qualityFrames=27;
+      state.impactFrames=Math.max(state.impactFrames,12);
+      state.impactX=ball.x;state.impactY=ball.y;
+      tone(920,.085,"triangle",.04);
+    }
+    const spike = p.side === "left" && (p.impactSpeed >= AUTO_SPIKE_SPEED||charged);
+    const bossStrike=p.side==="right"&&state.bossWarnFrames>0&&
+      (currentDifficulty==="very_hard"||currentDifficulty==="extreme");
+    const cpuSmash=p.side==="right"&&(bossStrike||Math.random()<battle.enemySmashChance);
+    const attack=p.side==="left" ? (charged?23.5:spike?16.5:11.5)*battle.allyAttack :
+      (bossStrike?14.5:cpuSmash?13.2:10.8)*battle.enemyAttack;
+    ball.vx=(sign*attack+clamp(p.vx,-12,12)*.16+(precise?1.9:0))*ballSpeedFactor();
+    // Aim by the teacher's actual diagonal movement at impact:
+    // moving right-down sends the ball right-down; right-up sends it right-up.
+    const diagonalAim=p.side==="left"&&p.vx>3&&Math.abs(p.vy)>3;
+    const downwardAim=diagonalAim&&p.vy>0;
+    const directedVy=downwardAim
+      ?Math.max(5.5,Math.min(14,attack*.62))
+      :-Math.max(8,Math.min(19,attack*.72));
+    ball.vy=(diagonalAim?directedVy:
+      p.side==="left"?(charged?-8.8:spike?-7.4:-11.8):
+      bossStrike?(state.playFrames%2===0?-6.6:-11.2):cpuSmash?-8.5:-12.8)*ballSpeedFactor();
+    if(charged){
+      state.specialChargeFrames=0;state.flash=32;
+      setStatus("⚡ 필살기! 슈퍼 스파이크!");
+    }
+    if(bossStrike){state.bossWarnFrames=0;state.flash=19;}
+    // Push only enough to separate overlapping hit areas (max 12px); never
+    // teleport the ball to a fixed spot beside the teacher.
+    const distance=Math.max(1,contactDistance);
+    const push=Math.min(12,Math.max(0,reach+R-contactDistance+1));
+    ball.x+=(contactDistance>1?dx/distance:sign)*push;
+    ball.y+=(contactDistance>1?dy/distance:-.35)*push;
+    // Gentle forearm lift carries the opponent's incoming momentum into an arc.
+    ball.vy+=clamp((handY-ball.y)*.025,-1.25,1.25)-clamp(incomingVy*.09,-1.2,1.2);
+    if(p.vy<-2)ball.vy-=1.1;
+    // Aim to clear the raised net when time permits, without forcing a teleport.
+    if(!downwardAim && sign*(NET_X-ball.x)>0 && Math.abs(ball.vx)>1){
+      const framesToNet=clamp((NET_X-ball.x)/ball.vx,4,45);
+      const neededVy=(NET_TOP-R-14-ball.y-.15*framesToNet*(framesToNet+1))/framesToNet;
+      ball.vy=clamp(Math.min(ball.vy,neededVy),-19*ballSpeedFactor(),-4*ballSpeedFactor());
+    }
+    p.contactFrames=spike||cpuSmash?12:9;
+    ball.cooldown=10;
+    if(spike||cpuSmash){
+      // A short, bounded hit-stop and impact ring make successful smashes feel weighty.
+      state.hitStopFrames=charged?5:bossStrike?4:3;
+      state.impactFrames=charged?19:bossStrike?15:11;
+      state.impactX=ball.x;state.impactY=ball.y;
+      ball.shadowFrames=charged?26:18;
+      ball.shadowColor=p.side==="left"?"#244363":"#762b4b";
+      ball.trail.length=0;
+      spikeSound(charged);
+    }else{
+      tone(p.side==="left"?440:390,.07,"triangle",.023);
+    }
+    if (spike) { state.flash=charged?32:9;state.spikes+=1; }
+  }
+  function volleyballCongratulations(cpu,difficulty,streak,newScore,newFast){
+    const margin=MATCH_TARGET-cpu;
+    if(cpu===0)return {title:"🏆 25대 0, 완벽한 승리!",detail:"상대에게 한 점도 허용하지 않은 멋진 경기입니다!"};
+    if(difficulty==="extreme")return {title:"⛓️ 족쇄를 넘은 챔피언!",detail:"공 두 개의 압박을 버텨 낸 믿기 어려운 승리!"};
+    if(cpu>=23)return {title:"🔥 마지막 한 점까지 버텼어요!",detail:"손에 땀을 쥐게 한 접전! 끝내 승리를 가져왔습니다."};
+    if(newScore&&newFast)return {title:"🏅 두 개의 신기록!",detail:"최고 점수와 최단시간을 동시에 새로 썼어요!"};
+    if(margin>=15)return {title:"⚡ 압도적인 25점 승리!",detail:"좋은 리시브와 정확한 타격이 완승을 만들었습니다."};
+    if(streak>=6)return {title:"🔥 연속 득점의 주인공!",detail:streak+"연속 득점! 공격의 흐름이 정말 좋았습니다."};
+    if(newFast)return {title:"⏱ 최단시간 신기록!",detail:"조금 더 빠르게, 마침내 25점을 달성했어요!"};
+    if(newScore)return {title:"📈 최고 점수를 새로 썼어요!",detail:"한 번의 도전이 새로운 기준이 됐습니다!"};
+    const cheers=[
+      {title:"🎊 25점, 멋진 승리!",detail:"공 하나하나에 집중한 시간이 결실을 맺었습니다."},
+      {title:"🙌 오늘의 승자는 선생님!",detail:"끝까지 공을 살려 낸 집중력이 빛났습니다."},
+      {title:"🏐 환상적인 경기였습니다!",detail:"다음에는 더 큰 점수 차에도 도전해 보세요."}
+    ];
+    return cheers[(cpu+streak)%cheers.length];
+  }
+  function finishMatch(early=false){
+    if(state.phase==="finished"||state.phase==="ready"||state.phase==="starting")return;
+    if(early&&activeTenths()<40){setStatus("4초 이상 플레이하면 기록을 남길 수 있어요");return;}
+    state.phase="finished";state.endedEarly=early;
+    const won=state.leftScore===MATCH_TARGET&&state.rightScore<MATCH_TARGET;
+    const elapsedTenths=activeTenths(),bonus=getSurvivalBonus(elapsedTenths);
+    const base=getBaseMatchScore(state.leftScore,state.rightScore);
+    const multiplier=getVictoryMultiplier(state.leftScore,state.rightScore);
+    const finalScore=getMatchScore(state.leftScore,state.rightScore,elapsedTenths);
+    state.winner=won?"🏆 25점 선착순 승리!":early?"🏁 이번 경기 기록 종료":"⛔ 컴퓨터 25점 · 패배";
+    state.message=state.winner;releaseKeys();schoolPicker.setLocked(false);
+    state.recordBroken=rememberBestScore(finalScore);
+    state.timeRecordBroken=won&&rememberFastest25(elapsedTenths);
+    if(won){
+      const cheer=volleyballCongratulations(state.rightScore,currentDifficulty,
+        state.bestStreak,state.recordBroken,state.timeRecordBroken);
+      state.winner=cheer.title;state.winCheer=cheer.detail;
+    }
+    const summary=base.toLocaleString("ko-KR")+"점 + 플레이 "+bonus.toLocaleString("ko-KR")+
+      "점"+(won?" ×"+multiplier:"")+" = "+finalScore.toLocaleString("ko-KR")+"점";
+    setStatus((state.recordBroken?"🎉 점수 신기록! ":"")+
+      (state.timeRecordBroken?"⏱ 최단시간 신기록! ":"")+summary);
+    if(won){tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);}
+    else tone(early?470:240,.18,"triangle",.035);
+    const saveResult=ranking?.finish(finalScore,{
+      player:state.leftScore,cpu:state.rightScore,baseScore:base,
+      survivalBonus:bonus,multiplier,finalScore,victory:won,
+      endedEarly:early,activeTenths:elapsedTenths
+    });
+    syncUI();
+    return saveResult;
+  }
+  function point(leftWins) {
+    if(state.phase!=="playing")return;
+    state.phase="point";
+    state.pointTicks=24; // ~0.4 s: do not make every score a blocking intermission
+    state.serveLeft=!leftWins;
+    if(leftWins){
+      state.leftScore++;
+      state.winStreak++;
+      state.bestStreak=Math.max(state.bestStreak,state.winStreak);
+    }else{
+      state.rightScore++;
+      state.winStreak=0;
+    }
+    state.pointCheer=pointEncouragement(state.leftScore,state.rightScore,state.winStreak,leftWins)+
+      (leftWins?" · +"+POINT_GAIN+"점":" · −"+POINT_LOSS+"점");
+    state.message=leftWins?"득점! "+state.leftScore+" / "+MATCH_TARGET:
+      "실점! "+state.rightScore+" / "+MATCH_TARGET;
+    if(leftWins&&cheerMilestones[state.leftScore]){
+      tone(660,.09,"triangle",.03);
+      tone(880,.13,"triangle",.03,.1);
+    }else tone(leftWins?760:340,.12,leftWins?"triangle":"sawtooth",.038);
+    if(leftWins&&state.leftScore>=20)state.flash=Math.max(state.flash,17);
+    if(state.leftScore>=MATCH_TARGET||state.rightScore>=MATCH_TARGET){
+      finishMatch();return;
+    }
+    setStatus(state.pointCheer);
+    syncUI();
+  }
+  function step() {
+    if(state.phase==="playing"){
+      state.activeFrames++;
+      if(state.activeFrames%60===0)updateMatchScoreUI();
+    }
+    if(state.hitStopFrames>0){state.hitStopFrames--;return;}
+    if(left.contactFrames>0)left.contactFrames--;
+    if(right.contactFrames>0)right.contactFrames--;
+    if(enemyMinion.contactFrames>0)enemyMinion.contactFrames--;
+    for(const ally of clones)if(ally.contactFrames>0)ally.contactFrames--;
+    if(bonusFriend.contactFrames>0)bonusFriend.contactFrames--;
+    if(state.impactFrames>0)state.impactFrames--;
+    if(state.qualityFrames>0)state.qualityFrames--;
+    if (state.flash > 0) state.flash--;
+    if(state.phase==="playing")for(const liveBall of activeBalls)if(liveBall.shadowFrames>0)liveBall.shadowFrames--;
+    if(state.phase==="playing"){
+      if(state.bossWarnFrames>0)state.bossWarnFrames--;
+      if(state.bossCooldownFrames>0)state.bossCooldownFrames--;
+      state.playFrames++;
+      if(state.specialCooldownFrames>0)state.specialCooldownFrames--;
+      if(state.specialChargeFrames>0)state.specialChargeFrames--;
+    }
+    if (state.phase === "point") {
+      if (--state.pointTicks <= 0) { state.phase = "playing"; state.message = ""; state.pointCheer=""; resetPositions(); syncUI(); setStatus(""); }
+      return;
+    }
+    if (state.phase !== "playing") return;
+    updateEnemyMinionPresence();
+    const keyboardDirection = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+    const keyboardVertical = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+    const beforeMoveX = left.x, beforeMoveY = left.y;
+    const itemSlow=isMysteryBuff("left","complaint")?.65:1;
+    const itemFast=isMysteryBuff("left","letter")?1.35:1;
+    const itemSpeed=itemSlow*itemFast;
+    if (touchControl.pointerId !== null && touchControl.targetX !== null && touchControl.targetY !== null) {
+      // Responsive, smoothed 2-axis flight; remain within the player's half-court.
+      const oldX = left.x, oldY = left.y;
+      const flightStep = 24 * SPEED_MULTIPLIER * battle.allySpeed*itemSpeed;
+      left.x += clamp(touchControl.targetX - left.x, -flightStep, flightStep);
+      left.y += canPlayerJump() ? clamp(touchControl.targetY - left.y, -flightStep, flightStep) : 0;
+      left.x = clamp(left.x, 35, NET_X - NET_W / 2 - 36);
+      left.y = canPlayerJump() ? clamp(left.y, playerCeiling(), FLOOR - 31) : FLOOR - 31;
+      left.vx = left.x - oldX;
+      left.vy = left.y - oldY;
+      left.jumpLock = false;
+    } else if(canPlayerJump() && keyboardVertical!==0){
+      // Match mobile two-axis flight controls; release restores gravity.
+      const oldX=left.x, oldY=left.y;
+      const keyboardStep=10*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
+      left.x=clamp(left.x+keyboardDirection*keyboardStep,35,NET_X-NET_W/2-36);
+      left.y=clamp(left.y+keyboardVertical*keyboardStep,playerCeiling(),FLOOR-31);
+      left.vx=left.x-oldX;
+      left.vy=left.y-oldY;
+      left.jumpLock=false;
+    } else {
+      controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump,
+       5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed,12.8*battle.allyJump);
+       if(!canPlayerJump()){left.y=FLOOR-31;left.vy=0;}
+       else if(left.y<playerCeiling()){left.y=playerCeiling();left.vy=Math.max(0,left.vy);}
+    }
+    if(currentDifficulty==="extreme"){
+      if(Math.abs(left.x-beforeMoveX)>.2)volleyShackle.dir=left.x>beforeMoveX?-1:1;
+      const trailing=clamp(left.x+volleyShackle.dir*58,24,NET_X-50);
+      volleyShackle.x+=clamp((trailing-volleyShackle.x)*.19,-8,8);
+    }
+    // Only intentional, fast player movement powers up the next ball contact.
+    const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || keyboardVertical !== 0 || (canPlayerJump()&&keys.jump);
+    left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
+    moveAI();moveClones();moveEnemyMinion();
+    updateMystery();
+    if(state.phase!=="playing")return;
+    for(const liveBall of activeBalls){
+    const ball=liveBall;
+    const previousX = ball.x, previousY = ball.y;
+    ball.vy += .30;
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    ball.spin+=ball.vx*.009;
+    ball.vx *= .999;
+    if (ball.cooldown > 0) ball.cooldown--;
+    if (ball.allyCooldown > 0) ball.allyCooldown--;
+    if (ball.enemyMinionCooldown > 0) ball.enemyMinionCooldown--;
+    if (ball.x - R < 0) { ball.x = R; ball.vx = Math.abs(ball.vx) * .94; }
+    if (ball.x + R > W) { ball.x = W - R; ball.vx = -Math.abs(ball.vx) * .94; }
+    if (ball.y - R < 25) { ball.y = R + 25; ball.vy = Math.abs(ball.vy) * .85; }
+    if (Math.abs(ball.x - NET_X) < NET_W / 2 + R && ball.y + R >= NET_TOP && ball.y - R < FLOOR) {
+      if (previousY + R <= NET_TOP + 4 && ball.vy > 0) {
+        ball.y = NET_TOP - R;
+        ball.vy = -Math.max(3.7, Math.abs(ball.vy) * .7);
+      } else if (previousX <= NET_X) {
+        ball.x = NET_X - NET_W / 2 - R;
+        ball.vx = -Math.max(2.8, Math.abs(ball.vx) * .85);
+      } else {
+        ball.x = NET_X + NET_W / 2 + R;
+        ball.vx = Math.max(2.8, Math.abs(ball.vx) * .85);
+      }
+    }
+    playerHit(left,ball);
+    for(const ally of activeAllies())if(cloneHit(ally,ball))break;
+    playerHit(right,ball);
+    enemyMinionHit(ball);
+    ball.trail.push({ x: ball.x, y: ball.y });
+    if (ball.trail.length > (ball.shadowFrames>0?14:6)) ball.trail.shift();
+    if (ball.y + R >= FLOOR) {
+      ball.y = FLOOR - R;
+      point(ball.x >= NET_X);
+      break; // First grounded ball ends this rally: one point, both balls reset.
+    }
+    }
+  }
+  function rect(x, y, w, h, color) { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h); }
+  function oval(x, y, rx, ry, color) {
+    ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  function textLabel(text, x, y, size, color, align, maxWidth) {
+    ctx.textAlign = align || "center";
+    ctx.fillStyle = color; ctx.font = "900 " + size + "px system-ui, sans-serif";
+    ctx.fillText(text, x, y, maxWidth || 850);
+  }
+  function background() {
+    const sky=ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,"#95ceef");sky.addColorStop(.57,"#e2f8fa");sky.addColorStop(1,"#ffe7c4");
+    ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+    // 체육관 천장과 채광
+    rect(0,0,W,14,"#17254e");rect(0,14,W,6,"#758de9");
+    for(let i=0;i<5;i++){
+      const x=45+i*195;rect(x,21,13,145,"rgba(238,250,255,.4)");
+      oval(x+8,24,36,11,"rgba(255,255,255,.33)");
+    }
+    rect(0,162,W,136,"#b4d1e5");rect(0,162,W,11,"#517da2");
+    for(let i=0;i<8;i++){const x=22+i*120;rect(x,174,94,48,"#93bad5");rect(x+6,179,82,38,"#bde0f1");}
+    rect(0,231,W,11,"#5885a8");rect(0,244,W,54,"#7baccf");
+    for(let row=0;row<2;row++){
+      for(let i=0;i<29;i++){
+        const x=i*33+(row%2)*14,y=251+row*25;
+        oval(x+9,y+6,7,8,["#f4c99d","#d6a075","#eab481","#a67055"][(i+row)%4]);
+        oval(x+9,y-1,9,4,["#355778","#6e5362","#38495d"][(i+row)%3]);
+        rect(x+2,y+13,16,12,["#466eaa","#f5a36b","#84c7b8","#e9cc76"][(i*3+row)%4]);
+      }
+    }
+    rect(0,295,W,9,"#5263a5");
+    const floor=ctx.createLinearGradient(0,304,0,FLOOR);
+    floor.addColorStop(0,"#f9e0b4");floor.addColorStop(.55,"#f4ce97");floor.addColorStop(1,"#e5b47e");
+    ctx.fillStyle=floor;ctx.fillRect(0,304,W,FLOOR-304);
+    for(let x=0;x<W;x+=65)rect(x,306,2,FLOOR-306,"rgba(162,98,62,.13)");
+    rect(0,FLOOR,W,H-FLOOR,"#bb7e59");rect(0,FLOOR,W,8,"#fffaf0");rect(0,FLOOR+20,W,3,"#a56e53");
+    rect(29,306,5,FLOOR-306,"#fffbeb");rect(W-34,306,5,FLOOR-306,"#fffbeb");
+    ctx.fillStyle="rgba(243,254,255,.28)";ctx.fillRect(NET_X-29,NET_TOP,58,FLOOR-NET_TOP);
+    rect(NET_X-5,NET_TOP,10,FLOOR-NET_TOP,"#f9fdff");rect(NET_X-9,NET_TOP-3,18,12,"#ee7889");
+    ctx.strokeStyle="rgba(255,255,255,.85)";ctx.lineWidth=2;
+    for(let y=NET_TOP+17;y<FLOOR-4;y+=18){ctx.beginPath();ctx.moveTo(NET_X-27,y);ctx.lineTo(NET_X+27,y);ctx.stroke();}
+    for(let x=NET_X-25;x<=NET_X+25;x+=12){ctx.beginPath();ctx.moveTo(x,NET_TOP+11);ctx.lineTo(x,FLOOR-2);ctx.stroke();}
+    oval(W/2,67,33,33,"rgba(23,67,99,.85)");oval(W/2,67,22,22,"#fff8eb");
+    ctx.strokeStyle="#f0ad52";ctx.lineWidth=4;ctx.beginPath();ctx.arc(W/2,67,16,-1.1,1.4);ctx.stroke();
+  }
+  function drawTeacher(p,uniform){
+ const x=Math.round(p.x),y=Math.round(p.y),mine=p.side==="left";
+ const look=mine?null:(enemyLooks[currentDifficulty]||enemyLooks.normal);
+ ctx.save();ctx.translate(x,y);
+ const px=(a,b,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(a,b,w,h);};
+ if(look&&look.aura&&!p.mini){
+   const pulse=.57+.18*Math.sin(state.playFrames*.11);
+   ctx.save();ctx.globalAlpha=pulse*(look.aura===2?.75:.48);
+   const auraColor=look.aura===2?"#fa9c43":"#b364c7";
+   for(let i=0;i<10;i++){
+     const xx=(i%2===0?-1:1)*(35+(i%3)*9),yy=-61+(i*17)%88;
+     px(xx,yy,7+(i%2)*4,9+(i%3)*3,auraColor);
+   }
+   if(look.aura===2){px(-26,-77,52,5,"#ffcb64");px(-14,-86,28,6,"#ff9955");}
+   ctx.restore();
+ }
+ // EASY: animated feather wings stay behind the playable character, not clones.
+ if(p===left&&hasPlayerWings()&&!isMysteryBuff("left","shackle")){
+   const flap=Math.round(Math.sin(state.playFrames*.18)*10);
+   ctx.save();ctx.globalAlpha=.92;
+   px(-68,-46-flap,33,13,"#b9edff");px(-80,-39-flap,27,11,"#f0fdff");
+   px(-70,-26-flap,29,11,"#def8ff");px(-56,-14,22,12,"#77c9f4");
+   px(36,-46-flap,33,13,"#b9edff");px(53,-39-flap,27,11,"#f0fdff");
+   px(41,-26-flap,29,11,"#def8ff");px(34,-14,22,12,"#77c9f4");
+   px(-81,-48-flap,12,8,"#ffffff");px(69,-48-flap,12,8,"#ffffff");
+   ctx.restore();
+ }
+ px(-35,30,70,7,"rgba(25,45,77,.15)");
+ // pixel sneakers and shorts
+ px(-24,25,21,8,"#f6ffff");px(4,25,21,8,"#f6ffff");
+ px(-21,8,15,19,"#24365f");px(6,8,15,19,"#24365f");
+ // thick pixel stroke around shirt
+ px(-30,-11,60,34,"#12234a");
+ px(-26,-9,52,29,uniform);
+ px(-23,-6,7,23,mine?"#2b68c5":look.trim);
+ px(16,-6,7,23,mine?"#2b68c5":look.trim);
+ if(look&&look.armor&&!p.mini){
+   px(-38,-14,19,15,look.trim);px(19,-14,19,15,look.trim);
+   px(-10,-7,20,16,look.armor>=2?"#e8c7ae":"#f4a5a1");
+   px(-6,-3,12,7,look.armor===3?"#fff0a8":"#a8405a");
+   if(look.armor>=2){
+     px(-40,-20,13,9,"#432942");px(27,-20,13,9,"#432942");
+     px(-36,-18,9,6,look.trim);px(27,-18,9,6,look.trim);
+     px(-25,17,17,7,look.trim);px(8,17,17,7,look.trim);
+   }
+   if(look.armor>=3){
+     px(-45,-24,12,9,"#ffd168");px(33,-24,12,9,"#ffd168");
+     px(-40,-30,7,7,"#fff4b2");px(33,-30,7,7,"#fff4b2");
+   }
+ }
+ px(-8,0,16,5,"#ffffff");px(-6,8,12,6,"#ffe194");
+ // gloves / hands: a quick forearm follow-through makes reception readable.
+ px(mine?22:-34,-8,12,27,uniform);
+ px(mine?29:-37,8,8,12,"#f6c28b");
+ if(p.contactFrames>0){
+   const lift=Math.round(p.contactFrames*.85);
+   px(mine?25:-51,-18-lift,25,11,uniform);
+   px(mine?45:-56,-17-lift,12,12,"#f6c28b");
+ }
+ // square pixel face with darker outline
+ px(-23,-52,46,37,"#152644");
+ px(-19,-50,38,33,"#f7c797");
+ px(-19,-55,38,12,mine?"#254269":look.armor>=2?"#34283f":"#69455f");
+ px(-23,-49,8,12,mine?"#254269":look.armor>=2?"#34283f":"#69455f");
+ px(15,-49,8,12,mine?"#254269":look.armor>=2?"#34283f":"#69455f");
+ // eyes and retro spectacles
+ px(-13,-34,6,5,"#17294c");px(7,-34,6,5,"#17294c");
+ px(-15,-37,13,2,"#344b64");px(2,-37,13,2,"#344b64");
+ px(-15,-37,2,13,"#344b64");px(13,-37,2,13,"#344b64");
+ px(-2,-33,4,2,"#344b64");
+ px(-5,-24,10,3,"#a85d60");
+ // cap / glow highlight
+ px(-13,-54,24,3,"rgba(255,255,255,.3)");
+ if(look&&look.armor&&!p.mini){
+   px(-20,-56,40,8,look.trim);
+   px(-23,-48,7,12,look.trim);px(16,-48,7,12,look.trim);
+   px(-12,-34,7,5,look.eyes);px(6,-34,7,5,look.eyes);
+   if(look.armor>=2){
+     px(-26,-61,52,7,"#272338");px(-23,-58,46,5,look.trim);
+     px(-30,-50,8,14,"#2b2a44");px(22,-50,8,14,"#2b2a44");
+     px(-7,-57,14,7,"#f6e8c2");
+   }
+   if(look.armor>=3){
+     px(-30,-64,60,6,"#ffd168");px(-20,-70,14,8,"#ffd168");
+     px(6,-70,14,8,"#ffd168");px(-6,-74,12,14,"#fff0b5");
+     px(-13,-35,9,5,"#ffe568");px(4,-35,9,5,"#ffe568");
+     px(-4,-26,8,3,"#56203c");
+   }
+ }
+ ctx.restore();
+}
+  function drawVolleyShackle(){
+    if(canPlayerJump()||state.phase==="ready"||state.phase==="starting")return;
+    const ankleX=left.x+12,ankleY=left.y+25;
+    const weightX=volleyShackle.x,weightY=FLOOR-16+Math.sin(state.playFrames*.23)*1.3;
+    ctx.save();ctx.lineCap="round";
+    ctx.strokeStyle="#394653";ctx.lineWidth=7;
+    ctx.beginPath();ctx.moveTo(ankleX,ankleY);
+    ctx.quadraticCurveTo((ankleX+weightX)/2,FLOOR+1,weightX,weightY);ctx.stroke();
+    ctx.strokeStyle="#aab4c2";ctx.lineWidth=2;
+    ctx.beginPath();ctx.moveTo(ankleX,ankleY);
+    ctx.quadraticCurveTo((ankleX+weightX)/2,FLOOR+1,weightX,weightY);ctx.stroke();
+    oval(weightX,weightY,21,21,"#2b3746");
+    oval(weightX-5,weightY-7,7,6,"#9eacb9");
+    ctx.fillStyle="#4a596c";ctx.fillRect(ankleX-14,ankleY-8,28,13);
+    ctx.fillStyle="#c3d0d9";ctx.fillRect(ankleX-10,ankleY-5,20,4);
+    ctx.restore();
+  }
+  function drawBall(ball=activeBalls[0]) {
+    // Spikes leave a dark, fading shadow of the ball plus a short speed streak.
+    if(ball.shadowFrames>0){
+      const fade=Math.min(1,ball.shadowFrames/18);
+      ctx.save();
+      for(let i=0;i<ball.trail.length;i++){
+        const pos=ball.trail[i],progress=(i+1)/ball.trail.length;
+        ctx.globalAlpha=fade*(.07+.24*progress);
+        ctx.fillStyle=ball.shadowColor;
+        ctx.beginPath();
+        ctx.ellipse(pos.x-5,pos.y+5,R*(.54+.32*progress),R*(.54+.32*progress),0,0,Math.PI*2);
+        ctx.fill();
+      }
+      for(let i=4;i>=1;i--){
+        ctx.globalAlpha=fade*(.045+(5-i)*.04);
+        ctx.fillStyle=ball.shadowColor;
+        ctx.beginPath();
+        ctx.ellipse(ball.x-ball.vx*i*1.55,ball.y-ball.vy*i*1.55,
+          R*(.48+i*.07),R*(.45+i*.07),0,0,Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }else{
+      const trailSize=R*.15;
+      ball.trail.forEach((pos,i)=>oval(pos.x,pos.y,
+        trailSize+i*1.1,trailSize+i*1.1,"rgba(255,248,218,"+(.04+i*.035)+")"));
+    }
+    ctx.save();
+    ctx.translate(ball.x, ball.y);
+    ctx.rotate(ball.spin);
+    ctx.shadowColor = "rgba(255,244,180,.64)";
+    ctx.shadowBlur = 14;
+    oval(2, 3, R+3, R+3, "rgba(24,54,83,.24)");
+    oval(0, 0, R, R, "#fffdf2");
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(-R*.48, -R*.62, R*.42, R*.18);
+    ctx.fillStyle = "#ffdf8e";
+    ctx.fillRect(-R*.45, -R*.42, R*.31, R*.32);
+    ctx.fillStyle = "#f68b7a";
+    ctx.fillRect(R*.18, R*.15, R*.36, R*.33);
+    ctx.strokeStyle = "#eba24e";
+    ctx.lineWidth = Math.max(4,R*.13);
+    ctx.beginPath();
+    ctx.arc(0, 0, R*.74, -.95, 1.35);
+    ctx.moveTo(-R*.84,R*.1);
+    ctx.quadraticCurveTo(0,-R*.4,R*.72,-R*.72);
+    ctx.moveTo(-R*.27,R*.92);
+    ctx.quadraticCurveTo(-R*.2,R*.03,R*.9,-R*.12);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function overlay(headline, subtitle, detail="") {
+    rect(0,0,W,H,"rgba(11,31,54,.56)");
+    ctx.save();ctx.shadowColor="rgba(12,26,45,.5)";ctx.shadowBlur=24;ctx.shadowOffsetY=13;
+    ctx.fillStyle="#183552";ctx.beginPath();ctx.roundRect(180,163,540,177,24);ctx.fill();ctx.restore();
+    ctx.lineWidth=3;ctx.strokeStyle="#6a9bb6";ctx.beginPath();ctx.roundRect(180,163,540,177,24);ctx.stroke();
+    textLabel(headline,450,249,45,"#fff6d8","center",494);
+    if(subtitle)textLabel(subtitle,450,289,19,"#deefff","center",492);
+    if(detail)textLabel(detail,450,317,17,"#ffe8a5","center",492);
+  }
+  function render() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    if(state.impactFrames>0){
+      const shake=(state.impactFrames/19)*4;
+      ctx.translate((Math.random()-.5)*2*shake,(Math.random()-.5)*2*shake);
+    }
+    background();
+    for(const ally of activeAllies()){
+      ctx.save();ctx.globalAlpha=.58;
+      drawTeacher(ally,ally.name==="관리자"?"#8d9fcd":"#50bdb5");
+      ctx.restore();
+      textLabel(ally.name||"동료",ally.x,ally.y-66,13,"#217f85","center",45);
+    }
+    drawTeacher(left, "#448bd8");
+    drawVolleyShackle();
+    if(isEnemyMinionActive()){
+      ctx.save();
+      ctx.translate(enemyMinion.x,enemyMinion.y);
+      ctx.scale(.58,.58);
+      drawTeacher({...enemyMinion,x:0,y:0}, "#b15a82");
+      ctx.restore();
+      textLabel(enemyMinion.name,enemyMinion.x,enemyMinion.y-51,13,
+        "#7d224f","center",55);
+    }
+    drawTeacher(right, (enemyLooks[currentDifficulty]||enemyLooks.normal).uniform);
+    drawMystery();
+    if(state.bossWarnFrames>0){
+      const glow=state.bossWarnFrames%10<5?"#ffe57a":"#ff8e70";
+      ctx.save();ctx.strokeStyle=glow;ctx.lineWidth=5;
+      ctx.beginPath();ctx.arc(right.x,right.y-29,57,Math.PI*1.1,Math.PI*1.9);ctx.stroke();
+      textLabel("⚠",right.x,right.y-91,31,glow,"center",58);
+      ctx.restore();
+    }
+    for(const liveBall of activeBalls)drawBall(liveBall);
+    if(state.impactFrames>0){
+      const t=1-state.impactFrames/19;
+      ctx.save();
+      ctx.globalAlpha=Math.max(.05,(1-t)*.8);
+      ctx.strokeStyle=state.impactFrames>11?"#fff0a1":"#295780";
+      ctx.lineWidth=8*(1-t)+1;
+      ctx.beginPath();ctx.arc(state.impactX,state.impactY,15+75*t,0,Math.PI*2);ctx.stroke();
+      ctx.restore();
+    }
+    if(state.qualityFrames>0)
+      textLabel(state.qualityText,clamp(left.x+30,110,W-110),left.y-125,21,"#fff1a7","center",240);
+    if(state.flash>0){
+      const alpha=Math.min(1,state.flash/9);ctx.fillStyle="rgba(255,235,128,"+(.12*alpha)+")";
+      for(let i=0;i<15;i++){const fx=(i*79+state.flash*13)%W,fy=(i*41)%270+25;ctx.fillRect(fx,fy,6,6);}
+      textLabel(state.flash>18?"⚡ SUPER SPIKE!":"⚡ SPIKE!",clamp(left.x+85,115,W-115),left.y-115,25,"#a94b27","center",250);
+    }
+    // The ready-state message and action now share one accessible HTML card.
+    if (state.phase === "paused") overlay("PAUSE", "");
+    else if(state.phase==="point"){
+      // Non-blocking feedback: keep the court and ball visible between serves.
+      ctx.save();ctx.fillStyle="rgba(12,42,68,.83)";ctx.fillRect(210,22,480,74);
+      textLabel(state.message,450,55,28,"#fff6d8","center",465);
+      textLabel(state.pointCheer,450,82,15,"#d7f8ff","center",470);ctx.restore();
+    }
+    else if (state.phase === "finished") overlay(state.winner,
+      state.winCheer||"다음 경기에 다시 도전해 보세요.",
+      "최종 "+getMatchScore(state.leftScore,state.rightScore,activeTenths()).toLocaleString("ko-KR")+"점"+
+      (state.timeRecordBroken?" · ⏱ 최단 "+fmtTime(activeTenths()):""));
+    ctx.restore();
+  }
+  let last = 0, accumulator = 0;
+  function frame(time) {
+    window.ArcadePlayLock?.sync(state.phase==="playing"||state.phase==="point");
+    if (!last) last = time;
+    accumulator += Math.min((time - last) / 1000, .06);
+    last = time;
+    let loops = 0;
+    while (accumulator >= 1 / 60 && loops < 4) { step(); accumulator -= 1 / 60; loops++; }
+    render();
+    requestAnimationFrame(frame);
+  }
+  // Embedded game content determines iframe height, not the iframe viewport.
+  // This prevents a nested scrollbar when school search or rankings expand.
+  const embeddedShell = document.querySelector(".game-shell");
+  let lastSentHeight = 0;
+  function notifyHeight() {
+    if (window.parent === window || !embeddedShell) return;
+    const bounds = embeddedShell.getBoundingClientRect();
+    const height = Math.ceil(bounds.bottom + window.scrollY) + 8;
+    if (!Number.isFinite(height) || height === lastSentHeight) return;
+    lastSentHeight = height;
+    window.parent.postMessage({ type: "teacher-volleyball:resize", height }, window.location.origin);
+  }
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(notifyHeight).observe(embeddedShell);
+  window.addEventListener("load", notifyHeight);
+  window.addEventListener("resize", notifyHeight);
+  syncUI();
+  render();
+  requestAnimationFrame(frame);
+})();
+</script>
+<script defer src="js/postit-entry-links-v1.js?v=20261120-2"></script>
+</body>
+</html>

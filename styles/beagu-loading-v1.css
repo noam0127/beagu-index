@@ -1,0 +1,33 @@
+/* 배구지수 공통 지연 로딩: 배구공이 느리게 굴러가는 화면 */
+.beagu-loading-screen{
+  position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;
+  padding:24px;background:rgba(247,250,255,.97);backdrop-filter:blur(7px);
+  color:#19334e;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+}
+.beagu-loading-screen[hidden]{display:none!important}
+.beagu-loading-card{width:min(100%,340px);text-align:center}
+.beagu-loading-track{
+  position:relative;display:flex;justify-content:center;align-items:center;
+  width:min(100%,280px);height:113px;margin:0 auto 13px;overflow:hidden
+}
+.beagu-loading-track:after{
+  content:"";position:absolute;bottom:13px;left:11%;right:11%;height:2px;
+  background:linear-gradient(90deg,transparent,#bfd5f2 15%,#bfd5f2 85%,transparent);
+  border-radius:9px
+}
+.beagu-loading-ball{
+  position:relative;z-index:1;width:70px;height:70px;flex:0 0 70px;
+  filter:drop-shadow(0 6px 5px rgba(33,66,102,.15));
+  animation:beagu-ball-roll 4.2s ease-in-out infinite alternate;
+  transform-origin:50% 50%
+}
+.beagu-loading-title{font-size:20px;letter-spacing:-.04em;line-height:1.45;font-weight:850;margin:0 0 7px}
+.beagu-loading-message{font-size:13px;color:#65758e;line-height:1.6;margin:0}
+@keyframes beagu-ball-roll{
+  from{transform:translateX(-99px) rotate(-300deg)}
+  to{transform:translateX(99px) rotate(300deg)}
+}
+@media(max-width:360px){.beagu-loading-ball{width:62px;height:62px;flex-basis:62px}
+  @keyframes beagu-ball-roll{from{transform:translateX(-78px) rotate(-300deg)}to{transform:translateX(78px) rotate(300deg)}}
+}
+@media(prefers-reduced-motion:reduce){.beagu-loading-ball{animation:none;transform:none}}

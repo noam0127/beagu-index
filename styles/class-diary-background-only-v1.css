@@ -1,0 +1,14 @@
+/* Background-only presentation for the visual novel, both the 36-episode
+   semester and the original seven-day preview.
+   Character selection portraits in the setup are intentionally unaffected.
+   The scene background, prose, HUD, arrows and choice overlay remain visible.
+   Covers asynchronous high-resolution/SD portrait replacements as well. */
+body.is-playing #sceneArt #scenePortrait,
+body.is-playing #sceneArt #sceneHyunwooLive,
+body.is-playing #sceneArt #sceneDoyun,
+body.is-playing #sceneArt #sceneGuest {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ko">
+<head><meta http-equiv="Content-Security-Policy" content="connect-src 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow,noarchive"><script id="stage38-cdn-static-guard">document.addEventListener("submit",e=>{e.preventDefault();e.stopImmediatePropagation();},true);document.addEventListener("DOMContentLoaded",()=>{document.querySelectorAll("input[type=password],input[type=email]").forEach(x=>{x.disabled=true;x.value="";});}, {once:true});</script><meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://ycwuugggqbunlbwuzvbx.supabase.co wss://ycwuugggqbunlbwuzvbx.supabase.co; form-action 'self'"><meta name="robots" content="noindex,nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<script>
+/* All standalone diary previews are paused until the private test is released. */
+location.replace('index.html#teacher-diary-feature');
+</script>
+<title>나의 OO한 학급일지 · 학교 세계 생성기</title>
+<style>
+:root{font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:#152b3b;background:#f4f7fb}
+*{box-sizing:border-box}body{margin:0}main{max-width:980px;margin:auto;padding:24px 16px 80px}
+a{color:#215b8c}header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0 26px}
+.brand{font-weight:800;text-decoration:none;letter-spacing:.08em;color:#16324b}
+.badge{display:inline-block;padding:5px 10px;font-size:12px;background:#e2ecf9;border-radius:20px;color:#284d72}
+h1{font-size:clamp(25px,5vw,38px);margin:8px 0 12px;letter-spacing:-.05em}
+h2{font-size:20px;margin:0 0 16px}p{line-height:1.65}
+.muted{color:#667b8e}.panel{background:white;border:1px solid #dce6f0;border-radius:20px;padding:22px;margin-bottom:18px;box-shadow:0 8px 25px rgba(20,60,90,.035)}
+label{display:block;font-weight:700;margin:0 0 9px}
+input{width:100%;font:inherit;padding:14px;border:1px solid #a9bfd1;border-radius:10px}
+input:focus{outline:2px solid #3a83bd}button{font:inherit;cursor:pointer}
+.result{display:block;width:100%;padding:12px;text-align:left;background:white;border:0;border-bottom:1px solid #e5edf5}
+.result:hover,.result:focus{background:#eef6ff}
+#playSection[hidden],[hidden]{display:none!important}
+#status{min-height:24px;font-size:14px}#world[hidden],#results:empty{display:none}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.chip{border-radius:18px;background:#eaf3fa;color:#31546e;padding:6px 10px;font-size:13px}
+dl{display:grid;grid-template-columns:minmax(150px,1fr) 2fr;margin:0;gap:0}
+dt,dd{padding:11px 7px;border-bottom:1px solid #ebeff5;margin:0;font-size:14px;line-height:1.6}
+dt{color:#627789}dd{font-weight:600;overflow-wrap:anywhere}
+.hooks{padding-left:22px}.hooks li{margin:12px 0;line-height:1.65}
+footer{font-size:13px;color:#738598}
+@media(max-width:600px){dl{grid-template-columns:1fr}dt{padding-bottom:0;border-bottom:0}dd{padding-top:0}.panel{padding:16px}}
+</style>
+</head>
+<body><div id="stage38-public-static-warning" role="alert" style="z-index:2147483646;position:fixed;top:0;left:0;right:0;text-align:center;padding:10px;background:#7f1d1d;color:white;font:700 13px system-ui">외부 정적 화면 미리보기 · 로그인/개인정보 입력 금지 · 인증과 API 통신 차단</div><div id="beagu-preview-watermark" role="note" style="position:fixed;bottom:10px;right:10px;z-index:2147483600;background:#152943;color:#fff;border-radius:12px;padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">독립 시험 후보 · 실제 계정 사용은 별도 관리자 승인 후</div>
+<main>
+<header><a class="brand" href="index.html">B · BAEGUINDEX</a><a href="search-lv2.html">레벨2 인증</a></header>
+<div class="badge">1·2단계 · 학교 세계 미리보기</div>
+<h1>나의 OO한 학급일지</h1>
+<p class="muted">학교마다 다른 일주일이 시작될 준비를 합니다. 아직 레벨2가 없다면 아래 가상학교 체험판에서 바로 이야기를 시작할 수 있습니다.</p>
+<section class="panel" style="background:#edf5fa"><h2>먼저 플레이해 보기</h2><p class="muted">로그인이나 레벨2 인증 없이 7일의 이야기를 처음부터 끝까지 체험합니다. 체험판은 실제 학교 자료를 사용하지 않으며 기록을 저장하지 않습니다.</p><a class="chip" href="teacher-class-diary-play.html?demo=1" style="display:inline-block;padding:12px 16px;text-decoration:none;font-weight:800">가상학교 무료 체험판 시작</a></section>
+<section class="panel">
+<label for="search">플레이할 학교 찾아보기</label>
+<input id="search" type="search" placeholder="학교명을 두 글자 이상 입력하세요" autocomplete="off" maxlength="30">
+<div id="results" role="listbox" aria-label="학교 검색 결과"></div>
+<p id="status" role="status" aria-live="polite">레벨2 인증 후 학교의 세계 설정을 살펴볼 수 있습니다.</p>
+</section>
+<div id="world" hidden>
+<section class="panel"><h2 id="schoolName"></h2><p id="identity" class="muted"></p><div id="tags" class="chips"></div><p id="eligibility"></p></section>
+<section class="panel" id="playSection" hidden><a id="playLink" class="chip" href="teacher-class-diary-play.html" style="text-decoration:none;padding:12px 16px;font-weight:800">나의 OO한 학급일지 · 게임 시작</a><p class="muted" style="margin:12px 0 0">게임 진행 상황과 결과는 저장되지 않습니다. 페이지를 나가면 기록이 사라집니다.</p></section>
+<section class="panel"><h2>확인된 학교 정보</h2><dl id="facts"></dl></section>
+<section class="panel"><h2>이야기의 재료</h2><p class="muted">아래 항목은 아직 소설 본문이 아닙니다. 실제 장면으로 발전시키기 위한 조건입니다.</p><ol id="hooks" class="hooks"></ol></section>
+<section class="panel" id="storyPanel" hidden><h2>일주일의 이야기 · 2단계 미리보기</h2><p class="muted">2027년 3월 8~14일을 배경으로 한 소설 장면의 씨앗입니다. 과거 설문 결과를 참고하더라도 실제 학교에서 벌어진 사건이나 발언을 뜻하지 않습니다.</p><p id="storyCoverage"></p><ol class="hooks" id="storyScenes"></ol></section>
+<section class="panel"><h2>자료 검증</h2><p id="coverage"></p><p id="issues" class="muted"></p></section>
+</div>
+<footer>이 게임의 사건과 대화는 실제 조사 자료에 착안한 창작입니다. 실제 교직원의 발언이나 2027년 학교 현황을 뜻하지 않습니다.</footer>
+</main>
+<script src="js/class-diary-world-v1.js"></script>
+<script src="js/2026-questionnaire-options-v1.2.js"></script>
+<script src="js/class-diary-narrative-v1.js"></script>
+<script>
+(function(){
+'use strict';
+const API='https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/';
+const $=id=>document.getElementById(id);
+const token=sessionStorage.getItem('beagu-level-session-v1')||'';
+let serial=0,timer;
+function node(tag,text){const e=document.createElement(tag);if(text!==undefined)e.textContent=String(text);return e}
+function status(text){$('status').textContent=text}
+function render(world){
+  $('world').hidden=false;
+  $('storyPanel').hidden=true;
+  $('playSection').hidden=!world.eligible;
+  $('playLink').href='teacher-class-diary-play.html?schoolId='+encodeURIComponent(world.basic.id);
+  $('schoolName').textContent=world.basic.name;
+  $('identity').textContent=[world.basic.sido,world.basic.office,world.basic.address].filter(Boolean).join(' · ');
+  $('tags').replaceChildren();
+  const scale={small:'소규모 (150명 이하)',medium:'중규모 (151~600명)',large:'대규모 (601명 이상)'};
+  if(world.basic.scale){const s=node('span',scale[world.basic.scale]);s.className='chip';$('tags').append(s);}
+  for(const t of world.geography.tags){const chip=node('span',t.label);chip.className='chip';$('tags').append(chip)}
+  $('eligibility').textContent=world.eligible?
+    '플레이 조건 충족 · 공개·검증된 조사연도: '+world.publishedYears.join(', '):
+    '아직 플레이할 수 없음 · 공개된 조사자료를 확인할 수 없습니다. 2026년 배구지수 설문에 참여해 주세요.';
+  $('facts').replaceChildren();
+  const add=(name,value)=>{
+    $('facts').append(node('dt',name),node('dd',value));
+  };
+  add('학교 구분',world.basic.establishment||'미확인');
+  add('학교 규모',world.basic.scale?scale[world.basic.scale]:'미확인');
+  for(const k of BeaguClassDiaryWorld.NUMERIC_KEYS){
+    const item=world.numbers[k];if(!item)continue;
+    add(item.label||k,Number(item.value).toLocaleString('ko-KR')+(item.unit||'')+
+      ' · '+item.referenceYear+'년 기준');
+  }
+  for(const k of BeaguClassDiaryWorld.CATEGORY_KEYS){
+    const item=world.categories[k];if(item)add(item.label||k,item.value+' · '+item.referenceYear+'년 기준');
+  }
+  $('hooks').replaceChildren();
+  for(const h of world.storyHooks){
+    const li=node('li','');const strong=node('strong',h.day+'일 차 · '+h.storyBrief);
+    li.append(strong);$('hooks').append(li);
+  }
+  $('coverage').textContent='확인된 공식 수치 '+world.coverage.numericKnown+'/'+world.coverage.numericTotal+
+    '개 · 범주형 '+world.coverage.categoricalKnown+'/'+world.coverage.categoricalTotal+'개';
+  const conflict=world.issues.filter(x=>x.code==='CONFLICTING_APPROVED_VALUES').length;
+  const missing=world.issues.filter(x=>x.code.startsWith('MISSING_')).length;
+  $('issues').textContent='값 충돌 '+conflict+'건 · 누락 '+missing+
+    '건. 미확인 지리 특성이나 과거 자료를 현재의 사실로 임의 보충하지 않습니다.';
+}
+async function renderStory(world,schoolId,ticket){
+  if(!world.eligible){return;}
+  try{
+    const [catalogResponse,signalsResponse]=await Promise.all([
+      fetch('data/public-statistics-question-catalog-v1.json',{cache:'no-store'}),
+      fetch(API+'class-diary-story-signals-v1',{
+        method:'POST',cache:'no-store',
+        headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+        body:JSON.stringify({schoolId})
+      })
+    ]);
+    if(ticket!==serial)return;
+    if(!catalogResponse.ok)throw Error('CATALOG_UNAVAILABLE');
+    const catalog=await catalogResponse.json();
+    const blueprint=BeaguClassDiaryNarrative.createBlueprint(catalog,window.Beagu2026Questionnaire);
+    if(blueprint.coverage.questionCount!==128)throw Error('INCOMPLETE_QUESTION_MAPPING');
+    const response=signalsResponse.ok?await signalsResponse.json():null;
+    if(ticket!==serial)return;
+    const signals=response&&response.schoolId===schoolId&&Array.isArray(response.historicalSignals)?
+      response.historicalSignals:[];
+    const plan=BeaguClassDiaryNarrative.scenePlan(blueprint,world,signals);
+    const list=$('storyScenes');list.replaceChildren();
+    for(const scene of plan.scenes){
+      const li=node('li');
+      const title=node('strong',scene.day+'일 차 · '+scene.brief);
+      const body=node('p',scene.passage+' '+scene.dialogue);
+      const source=node('small',scene.basis==='approved_historical_aggregate'?
+        '공개 검증된 과거 조사 경향을 소재로 한 허구':'공통 교직 경험에 착안한 허구');
+      source.className='muted';li.append(title,body,source);list.append(li);
+    }
+    $('storyCoverage').textContent='조사 문항 '+blueprint.coverage.questionCount+
+      '개 · 2026 세부 선택·행 '+blueprint.coverage.subitemCount+
+      '개 · 공개 검증된 과거 경향 반영 '+plan.approvedSignals+'개';
+    $('storyPanel').hidden=false;
+  }catch(e){
+    if(ticket===serial)status('학교 기본정보는 표시했습니다. 이야기 미리보기 자료를 확인하지 못했습니다.');
+  }
+}
+async function choose(record,ticket){
+  $('results').replaceChildren();status('레벨2 권한과 승인 자료를 확인하는 중…');
+  if(!token){status('레벨2 인증이 필요합니다. 화면 위쪽의 레벨2 인증에서 로그인해 주세요.');return}
+  try{
+    const response=await fetch(API+'class-diary-world-v1',{method:'POST',cache:'no-store',
+      headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+      body:JSON.stringify({schoolId:record.school_id})});
+    if(ticket!==serial)return;
+    if(response.status===401||response.status===403){status('레벨2 인증이 필요하거나 인증이 만료되었습니다.');return}
+    if(!response.ok)throw Error('WORLD_'+response.status);
+    const payload=await response.json();
+    const world=BeaguClassDiaryWorld.generateWorld(payload);
+    if(ticket!==serial)return;
+    render(world);status('승인된 학교 정보를 불러왔습니다.');
+    await renderStory(world,record.school_id,ticket);
+  }catch(e){if(ticket===serial)status('학교 데이터를 확인하지 못했습니다. 다시 시도해 주세요.')}
+}
+async function search(){
+  const q=$('search').value.trim();const ticket=++serial;
+  $('world').hidden=true;$('playSection').hidden=true;$('results').replaceChildren();
+  if(q.length<2){status('학교명을 두 글자 이상 입력하세요.');return}
+  status('학교 검색 중…');
+  try{
+    const response=await fetch(API+'arcade-leaderboard?schools='+encodeURIComponent(q),{cache:'no-store'});
+    if(!response.ok)throw Error('SEARCH_'+response.status);
+    const data=await response.json();
+    if(ticket!==serial)return;
+    const schools=Array.isArray(data.schools)?data.schools:[];
+    if(!schools.length){status('검색된 학교가 없습니다.');return}
+    status('학교를 선택하세요.');
+    for(const s of schools){
+      if(!/^[A-Z0-9]{7}$/.test(String(s.school_id||'')))continue;
+      const btn=node('button',s.school_name+' · '+(s.sido_standard||''));btn.type='button';btn.className='result';
+      btn.addEventListener('click',()=>choose(s,++serial));
+      $('results').append(btn);
+    }
+  }catch(e){if(ticket===serial)status('학교 검색 연결에 실패했습니다.')}
+}
+$('search').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(search,300)});
+})();
+</script>
+</body>
+</html>
