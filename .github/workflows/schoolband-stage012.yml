@@ -1,0 +1,47 @@
+name: Schoolband 012 WebAudio lifecycle and mobile permission safety
+
+on:
+  push:
+    branches: [schoolband-playtest]
+    paths:
+      - 'games/nangam-schoolband-v08/index.html'
+      - 'scripts/test-schoolband-stage012.cjs'
+      - '.github/workflows/schoolband-stage012.yml'
+      - 'scripts/test-schoolband-stage011.cjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audio-lifetime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Validate all tracked WebAudio source and permission contracts
+        run: node scripts/test-schoolband-stage012.cjs
+      - name: Install Chromium and JSON Schema validator
+        run: |
+          npm install --no-save --no-package-lock playwright ajv@8
+          npx playwright install --with-deps chromium --only-shell
+      - name: Repeated four-instrument stop and no ghost, volume, permission retry
+        run: node scripts/test-schoolband-stage012.cjs --browser
+      - name: Preserve C-G-Am-F harmony and 48 measured digital mixes
+        run: node scripts/test-schoolband-stage011.cjs --browser
+      - name: Preserve source signatures, silent misses, mute and original track
+        run: node scripts/test-schoolband-stage010.cjs
+      - name: Preserve pause/resume and all 20 chart source contracts
+        run: |
+          node scripts/test-schoolband-stage007.cjs
+          node scripts/test-schoolband-stage009.cjs
+          node scripts/test-schoolband-stage005.cjs
+      - name: Upload real browser source lifecycle, mute and permission evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: schoolband-stage012-audio-lifecycle-proof
+          path: artifacts/schoolband-stage012/
+          if-no-files-found: error
