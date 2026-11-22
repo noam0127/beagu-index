@@ -29,5 +29,6 @@ const api=read('supabase/functions/beagu-level-api/index.ts');
 assert.ok(api.includes("if(level>=2){")&&api.includes("beagu_2026_lv2_released_question_results"));
 assert.ok(api.includes("if(level<2){")&&api.includes("beagu_2026_released_question_results"));
 assert.ok(api.includes("releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)"));
-assert.ok(api.includes("if(Number(session.access_level)>=2)"));
+assert.ok(api.includes("if(effectiveLevel>=2)"));
+assert.ok(api.includes("canUse2026TierSnapshot(x.approved_at,effectiveLevel)"));
 console.log('PASS 2026 Lv2 immediate approval / Lv1 cooldown / privacy regression');
