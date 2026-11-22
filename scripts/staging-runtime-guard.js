@@ -10,8 +10,11 @@
     if (target === null || target === undefined || target === "") return false;
     try {
       const value = target && typeof target.url === "string" ? target.url : String(target);
-      const host = new URL(value, location.href).hostname.toLowerCase();
-      return PROD_HOSTS.has(host) ||
+      const parsed = new URL(value, location.href);
+      const host = parsed.hostname.toLowerCase();
+      const releaseAction = host === STAGE_SUPABASE &&
+        /^\/functions\/v1\/beagu-release-(?:manager|worker)(?:-v[0-9]+)?(?:\/|$)/.test(parsed.pathname);
+      return PROD_HOSTS.has(host) || releaseAction ||
         (host.endsWith(".supabase.co") && host !== STAGE_SUPABASE);
     } catch (_error) {
       return false;

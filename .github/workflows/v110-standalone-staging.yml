@@ -14,6 +14,7 @@ on:
       - 'r/**'
       - 'scripts/build-standalone-staging.py'
       - 'scripts/staging-runtime-guard.js'
+      - 'scripts/standalone-admin-release-disabled.html'
       - 'tests/test-standalone-staging.py'
       - 'scripts/test-standalone-browser.cjs'
       - 'scripts/check-standalone-assets.py'
