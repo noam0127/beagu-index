@@ -915,27 +915,30 @@ function voice(inst,beat,when,lane=0,source="auto"){
   oscillator(freqs[lane]||root/2,when,.24,"triangle",.065,bus);return;
  }
  if(inst==="guitar"){
-  const r=[root*2,root*2.5,root*3,root*4][lane]||root*2;
+  const r=lane===3?root*4:root*2;
   if(lane===0){ // riff: tight single-note articulation
-   oscillator(r,when,.135,"sawtooth",.032);
-  }else if(lane===1){ // power chord: tonic and fifth (and a quiet octave)
-   oscillator(r,when,.235,"sawtooth",.029);
-   oscillator(r*1.5,when,.225,"sawtooth",.020);
-   oscillator(r*2,when,.185,"triangle",.008);
-  }else if(lane===2){ // upward strum: staggered starts are audible as a pick sweep
-   oscillator(r,when,.175,"sawtooth",.022);
-   oscillator(r*1.25,when+.017,.17,"sawtooth",.019);
-   oscillator(r*1.5,when+.034,.16,"sawtooth",.016);
+   oscillator(r,when,.135,"sawtooth",.032,bus);
+  }else if(lane===1){ // root-fifth-octave power chord, never a minor-key major third
+   oscillator(r,when,.235,"sawtooth",.029,bus);
+   oscillator(r*chordFifthRatio(),when,.225,"sawtooth",.020,bus);
+   oscillator(r*2,when,.185,"triangle",.008,bus);
+  }else if(lane===2){ // upward strum: chord root, diatonic third, fifth
+   oscillator(r,when,.175,"sawtooth",.022,bus);
+   oscillator(r*chordThirdRatio(beat),when+.017,.17,"sawtooth",.019,bus);
+   oscillator(r*chordFifthRatio(),when+.034,.16,"sawtooth",.016,bus);
   }else{ // high riff: short, bright overtone
-   oscillator(r,when,.11,"sawtooth",.024);
-   oscillator(r*2,when,.095,"triangle",.009);
+   oscillator(r,when,.11,"sawtooth",.024,bus);
+   oscillator(r*2,when,.095,"triangle",.009,bus);
   }
   return;
  }
  if(inst==="keys"){
-  const tones=[root,root*2,root*2.5,root*3,root*4];
-  oscillator(tones[lane]||root*2,when,.32,"sine",.036);
-  if(lane===1||lane===2)oscillator((tones[lane]||root*2)*1.5,when,.27,"sine",.016);
+  const tones=[root,root*2,root*2*chordThirdRatio(beat),root*2*chordFifthRatio(),root*4];
+  oscillator(tones[lane]||root*2,when,.32,"sine",.036,bus);
+  if(lane===1||lane===2){
+   // Both harmony lanes share chord tones; A minor contains C natural.
+   oscillator(root*2*chordFifthRatio(),when,.27,"sine",.016,bus);
+  }
  }
 }
 function scheduleStep(n,when){
@@ -1225,8 +1228,8 @@ $("stop").onclick=()=>finish(true);
 $("mute").onclick=()=>{
  muted=!muted;
  if(masterBus&&ctx){
-   if(masterBus.gain.setTargetAtTime)masterBus.gain.setTargetAtTime(muted?0:.82,ctx.currentTime,.015);
-   else masterBus.gain.value=muted?0:.82;
+   if(masterBus.gain.setTargetAtTime)masterBus.gain.setTargetAtTime(muted?0:MIX_LEVELS.master,ctx.currentTime,.015);
+   else masterBus.gain.value=muted?0:MIX_LEVELS.master;
  }
  $("mute").textContent=muted?"🔇 꺼짐":"♫ 소리";
 };
@@ -1251,7 +1254,7 @@ window.addEventListener("pageshow",e=>{
   status("복귀했습니다. ▶ 이어하기를 눌러 연주를 재개하세요.");
  }
 });
-window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),getPlaybackState:()=>({playing,paused,pauseReason,transitioning:pauseBusy,audioState:ctx?.state||"none",songTime:ctx?nowSong():null,schedulerStep:step,remainingNotes:chart.filter(n=>!n.done).length}),getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
+window.nangamSchoolbandV08={getSelected:()=>school?{...school}:null,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),getMixLevels:()=>({...MIX_LEVELS}),getHarmonyByBar:()=>CHORD_ROOTS.map((_,bar)=>harmonyAtBar(bar)),getMelodyHarmonyAudit:()=>checkMelodyHarmony(),getPlaybackState:()=>({playing,paused,pauseReason,transitioning:pauseBusy,audioState:ctx?.state||"none",songTime:ctx?nowSong():null,schedulerStep:step,remainingNotes:chart.filter(n=>!n.done).length}),getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
 $("offsetRange").addEventListener("input",()=>{if(playing)return;inputOffsetMs=clampOffsetMs($("offsetRange").value);saveOffset()});
 $("offsetReset").addEventListener("click",()=>{if(playing)return;inputOffsetMs=0;saveOffset()});
 $("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
