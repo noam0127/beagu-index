@@ -1,0 +1,29 @@
+name: v1.1.0 stage35 2026 disclosure privacy policy
+on:
+  push:
+    branches: ['develop/v1.1.0-lv3']
+    paths:
+      - 'tests/v1.1.0-stage35-2026-release-policy.mjs'
+      - '.github/workflows/v1.1.0-stage35-2026-release.yml'
+  pull_request:
+    paths:
+      - 'supabase/functions/beagu-level-api/index.ts'
+      - 'supabase/functions/_shared/release-policy.mjs'
+      - 'tests/v1.1.0-stage35-2026-release-policy.mjs'
+      - '.github/workflows/v1.1.0-stage35-2026-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  disclosure-privacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify 2026 approval cutoff and sensitive-question denial
+        run: node tests/v1.1.0-stage35-2026-release-policy.mjs
+      - name: Scope guard
+        run: echo "Read-only unit/static tests. No production database or web deployment. Lv3 still blocked."
