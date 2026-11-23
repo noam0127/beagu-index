@@ -17,6 +17,7 @@ name: BAEGU release controller (admin approval)
 # Owner-requested 2026-11-23 CC0 arcade soundtrack release: signed GitHub Pages job f076c4a1-0d1e-4fcb-ac7a-2a30b60b944f pins 2e04067c0a93be15512b7a56e0dfefa5e4994aa4. Vercel is not involved.
 # Owner-approved 2026 bulk UI emergency: release job 000bf5f1-a567-4bde-b7ae-63e906cc490e pinned to be811d896ed82d65c34da419882cc5ed4d943a58.
 # Owner-requested 2026-11-23 bulk approval cap 400 and enabled button release job 2211af99-e648-4a86-91d1-73fdcd8e78c4 pinned f21fb7a164adb30a402b38fa62e575649a9860f8.
+# Owner-requested 2026-11-23 volleyball touch-jump release: signed Pages job 94335fa9-30fa-4692-a520-70462d24c7cf pins af94d2158b0cb6b1a6def02644e54715fdc38518; Vercel not used.
 on:
   schedule:
     - cron: '*/5 * * * *'
