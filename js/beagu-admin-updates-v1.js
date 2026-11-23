@@ -29,6 +29,7 @@
   const result=await response.json().catch(()=>({}));
   if(!response.ok){
    const messages={
+    production_changed:"실제 웹 버전이 변경되었습니다. 상태를 새로고침한 뒤 다시 시도하세요.",
     release_in_progress:"다른 배포가 진행 중입니다. 완료 후 다시 시도하세요.",
     staging_is_stale:"현재 운영 웹보다 오래된 시험 버전으로는 배포할 수 없습니다.",
     no_changes_since_production:"현재 운영 버전과 비교해 변경된 파일이 없습니다. 최소 1개를 수정하세요.",
@@ -90,6 +91,7 @@
     "현재 진행 중인 배포가 없습니다.");
   el("releaseStageApply").disabled=busy||active||!s.production_sha||
     (!candidate&&(!s.draft_sha||s.draft_sha===s.staging_sha));
+  el("releaseStageSync").disabled=busy||active||!s.production_sha||s.staging_sha===s.production_sha;
   el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
   el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
@@ -114,6 +116,7 @@
   if(busy)return;
   const wording={
    stage_apply:"등록된 버전을 시험 웹에 적용하시겠습니까?",
+   stage_sync:"현재 실제 웹 코드만 시험 웹에 복제하시겠습니까? 운영 버전과 등록된 신규 개발 버전은 그대로 유지됩니다.",
    stage_rollback:"시험 웹을 바로 이전 버전으로 되돌리시겠습니까?",
    prod_apply:"시험 웹에서 직접 구동을 확인했고 이상이 없습니까? 동일한 코드 버전을 실제 웹에 배포합니다.",
    prod_rollback:"실제 웹을 바로 이전 버전으로 되돌리시겠습니까? 모든 방문자에게 적용됩니다."
@@ -121,7 +124,7 @@
   if(!window.confirm(wording[action]))return;
   busy=true;
   try{
-   const result=await request(action,action==="prod_apply"?{confirmed_tested:true}:{});
+   const result=await request(action==="stage_sync"?"stage_apply":action,action==="stage_sync"?{mirror_production:true,expected_production_sha:model?.state?.production_sha}:action==="prod_apply"?{confirmed_tested:true}:{});
    message("배포 요청 등록 완료 ("+result.job_id.slice(0,8)+"). 완료되면 아래 버전 기록이 바뀝니다.");
   }catch(err){message(err.message,true)}
   finally{busy=false;await refresh(true);}
@@ -146,7 +149,7 @@
  }
  el("releaseDraftForm").addEventListener("submit",register);
  for(const [id,action] of [
-  ["releaseStageApply","stage_apply"],["releaseStageRollback","stage_rollback"],
+  ["releaseStageApply","stage_apply"],["releaseStageSync","stage_sync"],["releaseStageRollback","stage_rollback"],
   ["releaseProdApply","prod_apply"],["releaseProdRollback","prod_rollback"]])
     el(id).addEventListener("click",()=>void command(action));
  el("releaseRefresh").addEventListener("click",()=>void refresh(false));

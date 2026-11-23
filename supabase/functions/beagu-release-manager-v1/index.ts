@@ -140,7 +140,12 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
     changed_files:files.slice(0,25)},200,origin);
  }
  let job:null|{action:string;target:string;to_sha:string|null;from_sha:string|null;version:string;summary:string;created_by:string}=null;
- if(action==="stage_apply"){
+ if(action==="stage_apply"&&input.mirror_production===true){
+  if(!SHA.test(String(s.production_sha))||input.expected_production_sha!==s.production_sha)return error("production_changed",409,origin);
+  if(s.staging_sha===s.production_sha)return error("already_on_staging",409,origin);
+  job={action,target:"staging",from_sha:s.staging_sha,to_sha:s.production_sha,
+   version:s.production_version||"운영 기준 동기화",summary:"현재 실제 웹의 승인된 코드만 시험 웹으로 복제",created_by:userId};
+ }else if(action==="stage_apply"){
   let candidateSha=s.draft_sha,candidateVersion=s.draft_version,candidateSummary=s.draft_summary;
   // ChatGPT can commit a release-candidate.json alongside changes.
   // Clicking the stage button then registers that version automatically.

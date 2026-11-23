@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+const h=fs.readFileSync("admin-updates.html","utf8"),j=fs.readFileSync("js/beagu-admin-updates-v1.js","utf8"),t=fs.readFileSync("supabase/functions/beagu-release-manager-v1/index.ts","utf8");
+assert.match(h,/id="releaseStageSync"/);
+assert.match(j,/\["releaseStageSync","stage_sync"\]/);
+assert.match(j,/mirror_production:true,expected_production_sha:model\?\.state\?\.production_sha/);
+const block=t.split('if(action==="stage_apply"&&input.mirror_production===true){')[1].split('}else if(action==="stage_apply"){')[0];
+assert.match(block,/input.expected_production_sha!==s.production_sha/);
+assert.match(block,/target:"staging",from_sha:s.staging_sha,to_sha:s.production_sha/);
+assert.match(block,/created_by:userId/);
+assert.doesNotMatch(block,/draft_sha|github\(|\.update\(/);
+assert.match(t,/admin_mfa_required/);
+console.log("stage mirror static checks passed");
