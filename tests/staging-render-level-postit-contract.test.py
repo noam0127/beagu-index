@@ -30,4 +30,12 @@ for name in ("results-2026.mjs","questionnaire-2026.mjs","release-policy.mjs",
 assert (post/"_shared/postit-member-ownership.mjs").is_file()
 print("PASS restored exact deployed Lv3 and postit-membership function dependencies")
 print("PASS exact Render origin only with project identity and local QA allowlist")
+for parent in (lvl,post):
+ assert (parent/"_shared/member-session-v1.mjs").is_file()
+ src=(parent/"index.ts").read_text()
+ assert ".auth.getUser(" in src and "verifiedAuthSessionId(" in src
+ assert src.index(".auth.getUser(")<src.index("verifiedAuthSessionId(")
+ assert src.index("verifiedAuthSessionId(")<src.index("beagu_stage_active_member_auth_session")
+ assert "sessionError||" in src
+print("PASS: Lv3 AND postit member actions recheck active owner-bound Auth sessions")
 print("PASS no production origin fallback, no wildcard, no identity check removed")
