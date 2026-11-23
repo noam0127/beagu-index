@@ -1,7 +1,7 @@
 # 배구지수 v1.1.0 — 시험 Supabase Edge Function 실배포 현황
 
 2026년 11월 23일(한국 시간) **시험 프로젝트**
-`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **36개**
+`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **39개**
 Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전의 스냅샷은
 `scripts/staging/stage-edge-functions-inventory.json`에 있다.
 
@@ -23,20 +23,17 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 
 2026-11-23 기준 시험 웹 빌드 산출물(HTML 24개 및 JS·CSS 포함)에서
 정적 URL 또는 SDK 호출로 참조하는 Edge Function은 **16개**이고,
-시험 Supabase 실제 목록에는 이 중 **10개**가 배포되어 있다.
+시험 Supabase 실제 목록에는 이 중 **13개**가 배포되어 있다.
 
-아래 6개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
+아래 3개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
 
 | 구분 | 시험 프로젝트에 없는 함수 | 정적 호출 파일 |
 |---|---|---|
-| 챌린지 신원 | `beagu-challenge-identity` | `js/challenge.js` |
-| 추천 응답 | `beagu-referral-checkin-v1` | `js/beagu-referral-form-v1.js` |
-| 추천 링크 | `beagu-referral-link-v1` | `js/challenge-referral-v1.js` |
 | 관리자 검토 | `beagu-2026-review-admin` | `js/beagu-2026-admin-review.js` |
 | 학급일지 접근 | `class-diary-guest-access-v1` | `js/class-diary-home-entry-v1.js` |
 | 학급일지 진행 | `class-diary-progress-v1` | `js/class-diary-progress-v1.js` |
 
-**소스 준비 상태:** 누락된 6개는 모두 GitHub 개발 브랜치의
+**소스 준비 상태:** 누락된 3개는 모두 GitHub 개발 브랜치의
 `supabase/functions/<함수명>/index.ts`가 존재한다. 이는 **시험 배포 가능성
 검토 대상**이라는 뜻이지, SQL 의존성·권한·보안·요금 검증이 끝났다는 뜻은
 아니다. **`beagu-edited-api-v1`은 운영 배포본에서 소스를 읽기 전용으로 확보한 뒤 시험 전용으로 복구하여 시험 Supabase v1로 배포하였다.**
@@ -108,3 +105,11 @@ python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
 - [GitHub Actions #45088247300](https://github.com/noam0127/beagu-index/actions/runs/45088247300): 실제 OPTIONS/GET, 운영 출처·잘못된 요청 차단, 가상 방문자 ping, 최초 방문 집계, 동일 방문 이벤트 멱등성 검증 통과.
 - 가상 방문자·이벤트·호출 카운터는 검사 후 명시적 SQL로 청소함. 다섯 종류의 시험 방문/활동 관련 테이블 모두 0건 확인.
 - 실제 호스팅 Origin, 관리자 활동 제외의 양성 검증, 신뢰된 역방향 프록시/IP 경계, PC/모바일 전체 E2E는 아직 미완료.
+
+## 2026-11-23 추가 복구: 챌린지·추천 (권한 상승은 잠금)
+
+- `beagu-challenge-identity` 시험 v1 ACTIVE. 브라우저 챌린지 화면과 추천링크 화면에서 동일 32바이트 임의 기기 비밀을 공유하고, 서버가 Lv1 세션 SHA-256·만료·기기 해시·동일 방문자 바인딩을 **하나의 SQL 트랜잭션으로 검증**. 가상 SQL 반복발급/다른 기기/다른 방문자/무효 세션 검증 후 전량 ROLLBACK.
+- [GitHub Actions #45089094875](https://github.com/noam0127/beagu-index/actions/runs/45089094875) 시험 Edge 실제 HTTP 거부 및 브라우저 JS 문법 PASS. **실제 Lv1 사용자 인증 완료→양성 발급 브라우저 E2E는 미검증.**
+- `beagu-referral-link-v1`, `beagu-referral-checkin-v1` 시험 v1 ACTIVE이지만, `BEAGU_STAGING_REFERRAL_VERIFIED` 인증이 없고 `beagu_private.challenge_referral_settings.public_enabled=false`여서 실제 링크/추천 인정은 **잠금**. 관련 4개 비공개 RPC 복원·익명/회원 실행 불가 확인.
+- [GitHub Actions #45089400570](https://github.com/noam0127/beagu-index/actions/runs/45089400570): 출처 차단·API `REFERRAL_NOT_READY` 응답 검증 PASS. 이 PASS는 **추천 기능 정상 작동을 뜻하지 않음.** 실제 Google Forms 설문 제출 검증을 구현하고 독립 검수하기 전 잠금 해제 금지.
+- 미배포 3개 이외에도 **배포됐으나 기능 잠금 상태인 추천 API 2개**를 별도로 추적한다. 엄격한 시험 준비 검사에서 둘 다 NO-GO로 취급한다.
