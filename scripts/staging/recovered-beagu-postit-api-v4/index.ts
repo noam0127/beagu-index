@@ -241,7 +241,20 @@ Deno.serve(async(req:Request)=>{
    const viewer=await identity(req,2);
    if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
    const member=await verifiedMember(req,viewer);
-   if(action==="writer_status")return respond(req,{linked:Boolean(member)});
+   if(action==="writer_status"){
+    // Expose suspended status only to the Auth user who previously owned it.
+    if(member)return respond(req,{linked:true,link_state:"active"});
+    if(!viewer.visitor||!viewer.id)return respond(req,{linked:false,link_state:"unlinked"});
+    const account=await authenticatedUser(req);
+    if(!account)return respond(req,{linked:false,link_state:"unlinked"});
+    const {data:suspended,error:suspendedError}=await db
+      .from("beagu_postit_member_accounts")
+      .select("status").eq("auth_user_id",account.id)
+      .eq("identity_visitor_id",viewer.visitor)
+      .eq("author_uid",viewer.id).maybeSingle();
+    if(suspendedError)return fail(req,"MEMBER_STATUS_UNAVAILABLE",503);
+    return respond(req,{linked:false,link_state:suspended?.status==="suspended"?"suspended":"unlinked"});
+   }
    if(action==="school_info"){
     const ids=(url.searchParams.get("school_ids")||"").split(",").filter(Boolean);
     if(ids.length<1||ids.length>5||ids.some(x=>!SCHOOL_ID.test(x)))
@@ -317,18 +330,43 @@ Deno.serve(async(req:Request)=>{
   // account are mandatory. Claiming a code alone cannot authorize mutations.
   const viewer=await identity(req,2);
   if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
-  if(action==="link_member"){
+  if(action==="link_member"||action==="suspend_member"||action==="reactivate_member"){
+   // Only the same verified account can modify its reserved visitor binding.
+   // All transitions and audit rows are written atomically inside one RPC.
+   const mustProveDevice=action!=="suspend_member";
    const deviceSecret=typeof body?.deviceSecret==="string"?body.deviceSecret:"";
-   if(!/^[a-f0-9]{64}$/.test(deviceSecret))return fail(req,"ORIGINAL_DEVICE_REQUIRED",403);
+   if(mustProveDevice&&!/^[a-f0-9]{64}$/.test(deviceSecret))
+     return fail(req,"ORIGINAL_DEVICE_REQUIRED",403);
    const account=await authenticatedUser(req);
    if(!account||!viewer.visitor||!viewer.id)return fail(req,"ACCOUNT_AUTH_REQUIRED",403);
-   const {data:actor,error}=await db.rpc("beagu_postit_bind_verified_member",{
-      p_user:account.id,p_visitor:viewer.visitor,
-      p_device_hash:await sha256(deviceSecret),p_actor:viewer.id
+   const jwt=(req.headers.get("authorization")||"").slice(7);
+   const authSessionId=verifiedAuthSessionId(jwt,account);
+   if(!authSessionId)return fail(req,"ACCOUNT_AUTH_REQUIRED",403);
+   const op=action==="suspend_member"?"SUSPEND":
+     action==="reactivate_member"?"REACTIVATE":"LINK";
+   const {data:decision,error:transitionError}=await db.rpc(
+     "beagu_stage_postit_member_transition",{
+      p_user:account.id,p_session:authSessionId,
+      p_visitor:viewer.visitor,p_author:viewer.id,p_action:op,
+      p_device_hash:mustProveDevice?await sha256(deviceSecret):null
    });
-   if(error?.code==="23505")return fail(req,"MEMBERSHIP_ALREADY_CLAIMED",409);
-   if(error||!actor||actor!==viewer.id)return fail(req,"DEVICE_OWNERSHIP_NOT_VERIFIED",403);
-   return respond(req,{linked:true});
+   if(transitionError)return fail(req,"MEMBER_AUDIT_UNAVAILABLE",503);
+   if(!decision||typeof decision!=="object")
+     return fail(req,"MEMBER_TRANSITION_UNAVAILABLE",503);
+   if(decision.state==="denied"){
+     if(decision.reason==="MEMBERSHIP_RESERVED")return fail(req,"MEMBERSHIP_ALREADY_CLAIMED",409);
+     if(decision.reason==="EXPLICIT_REACTIVATION_REQUIRED")
+       return fail(req,"EXPLICIT_REACTIVATION_REQUIRED",409);
+     if(decision.reason==="MEMBER_NOT_LINKED")return fail(req,"MEMBER_NOT_LINKED",409);
+     if(decision.reason==="AUTH_SESSION_INACTIVE")
+       return fail(req,"ACCOUNT_AUTH_REQUIRED",403);
+     return fail(req,"DEVICE_OWNERSHIP_NOT_VERIFIED",403);
+   }
+   const state=decision.state;
+   if(state!=="active"&&state!=="suspended")
+     return fail(req,"MEMBER_TRANSITION_UNAVAILABLE",503);
+   return respond(req,{linked:state==="active",link_state:state,
+     changed:decision.changed===true});
   }
   const user=await verifiedMember(req,viewer);
   if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403);
