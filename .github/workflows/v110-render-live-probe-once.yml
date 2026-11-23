@@ -5,6 +5,9 @@ on:
       - fix/v110-staging-edited-api-recovery-20261123
     paths:
       - '.github/workflows/v110-render-live-probe-once.yml'
+      - 'tests/test-render-live-sha-cors.py'
+      - 'scripts/staging/check-render-live-sha-cors.py'
+      - 'scripts/verify-render-preview.py'
   workflow_dispatch:
     inputs:
       render_origin:
