@@ -21,5 +21,5 @@ assert.match(api,/claims.aal!=="aal2"/);
 assert.match(ui,/action:"bulk_verified"/);
 assert.match(ui,/window.confirm\("독립적으로 공개 근거/);
 assert.match(html,/id="adminBulkApprovalApply" disabled/);
-assert.match(html,/20261123-bulk-verified1/);
+assert.match(html,/20261123-bulk-400-enabled1/);
 console.log("PASS: bulk approval strictly limited to previously VERIFIED schools with owner MFA and per-school audit");
