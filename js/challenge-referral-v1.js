@@ -15,6 +15,8 @@
   const identityReward = get('challengeIdentityReward');
   const copyIdentityCode = get('copyIdentityCode');
   const vipMedal = get('challengeVipMedal');
+  const certificateLevelBanner = get('certificateLevelBanner');
+  const certificate = get('certificate');
   const certificateMedal = get('certificateMedal');
   const certificateThanks = get('certificateThanks');
   if (![panel, linkField, copyButton, status, progress, title, tag,
@@ -37,6 +39,10 @@
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
     identityTitle.textContent = upgraded ? 'Lv.2 참여코드' : 'Lv.2 참여코드(비활성)';
     identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' : '승급 대기';
+    if(certificateLevelBanner)certificateLevelBanner.textContent = upgraded ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
+    if(certificate)certificate.dataset.level = upgraded ? '2' : '1';
+    copyIdentityCode.hidden = !upgraded;
+    copyIdentityCode.disabled = !upgraded || !lastIdentity;
     if(vipMedal)vipMedal.hidden=!upgraded;
     if(certificateMedal)certificateMedal.hidden=!upgraded;
     if(certificateThanks){

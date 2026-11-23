@@ -49,7 +49,7 @@
         personalCode = code;
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
         identityCode.textContent = code;
-        copyIdentityCode.disabled = false;
+        copyIdentityCode.disabled = byId('challengeIdentityPanel')?.dataset.referralState !== 'earned';
         identityCopyFeedback.textContent = '';
         // Referral display is separate from the certificate PNG and requires a validated session.
         window.dispatchEvent(new CustomEvent('beagu:identity-ready', {
@@ -113,7 +113,7 @@
   });
 
   copyIdentityCode.addEventListener('click', async () => {
-    if (!accessGranted || !personalCode) return;
+    if (!accessGranted || !personalCode || byId('challengeIdentityPanel')?.dataset.referralState !== 'earned') return;
     try {
       if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('UNAVAILABLE');
       await navigator.clipboard.writeText(personalCode);

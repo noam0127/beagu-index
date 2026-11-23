@@ -20,7 +20,7 @@ function fakeNode(){
 const ids=['challengeReferralPanel','challengeReferralLink','copyChallengeReferral',
   'challengeReferralStatus','challengeReferralProgress','challengeReferralTitle','challengeReferralTag',
   'challengeReferralNote','challengeIdentityPanel','challengeIdentityTitle','challengeIdentityTag',
-  'challengeIdentityReward','copyIdentityCode','challengeVipMedal','certificateMedal','certificateThanks'];
+  'challengeIdentityReward','copyIdentityCode','challengeVipMedal','certificateMedal','certificateThanks','certificateLevelBanner','certificate'];
 const nodes=Object.fromEntries(ids.map(k=>[k,fakeNode()]));
 const events={};
 const payload={level:1,validReferrals:0,provisional:false,
@@ -41,6 +41,8 @@ vm.runInNewContext(source,{document,window:win, SUPABASE_URL:'https://example.su
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
   assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
+  assert.equal(nodes.copyIdentityCode.hidden,true);
+  assert.equal(nodes.certificateLevelBanner.textContent,'Lv.1 챌린지 달성');
   events['beagu:challenge-access-granted']();
   events['beagu:identity-ready']({detail:{visitor,code}});
   await flush();
@@ -55,6 +57,8 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   payload.validReferrals=1;
   events.focus();await flush();
   assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드');
+  assert.equal(nodes.copyIdentityCode.hidden,false);
+  assert.equal(nodes.certificateLevelBanner.textContent,'Lv.2 챌린지 달성');
   assert.equal(nodes.challengeIdentityPanel.classList.contains('is-lv2'),true);
   assert.equal(nodes.challengeIdentityPanel.dataset.referralState,'earned');
   assert.equal(nodes.copyIdentityCode.textContent,'코드 복사');

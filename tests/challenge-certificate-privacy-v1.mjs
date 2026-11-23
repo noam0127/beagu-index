@@ -14,6 +14,12 @@ for(const forbidden of ['id="identityCode"','id="challengeReferralLink"','id="ch
 assert.ok(publicCertificate.includes('id="participantNo"'));
 assert.ok(publicCertificate.includes('data-beagu-xp'));
 assert.ok(publicCertificate.includes('id="certificateMedal"'));
+assert.ok(publicCertificate.includes('id="certificateLevelBanner"'));
+assert.ok(publicCertificate.includes('Lv.1 챌린지 달성'));
+assert.match(ref, /Lv\.2 챌린지 달성/);
+assert.match(ref, /copyIdentityCode\.hidden = !upgraded/);
+assert.match(html, /id="copyIdentityCode"[^>]*disabled hidden/);
+assert.match(capture, /dataset\.referralState !== 'earned'/);
 assert.ok(publicCertificate.includes('id="certificateThanks"'));
 const order=['id="certificate"','id="challenge-levelup-title"','id="challengeIdentityPanel"','id="challengeReferralPanel"','class="steps"','challenge-notice-title'];
 let previous=-1;for(const key of order){const i=html.indexOf(key);assert.ok(i>previous,'Challenge layout order violated: '+key);previous=i;}

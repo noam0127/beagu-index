@@ -43,6 +43,8 @@
     box-shadow: 0 6px 24px rgba(16, 41, 75, .05);
   }
   .trophy { font-size: 43px; line-height: 1.3; }
+  .certificate-level-banner { display:inline-flex;align-items:center;justify-content:center;max-width:100%;margin:0 auto 14px;padding:9px 17px;border-radius:999px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:15px;font-weight:850;letter-spacing:-.025em; }
+  #certificate[data-level="2"] .certificate-level-banner {background:#fff7e5;color:#795012;border-color:#e7c78c;}
   .certificate h1 { font-size: 26px; line-height: 1.3; letter-spacing: -1px; margin: 10px 0 5px; }
   .subtitle { color: #63728b; font-size: 14px; }
   .thanks { font-size: 14px; color: var(--muted); margin: 16px 0 0; }
@@ -116,6 +118,7 @@
   .challenge-identity-value { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #1d4ed8; font-size: clamp(13px, 2.9vw, 17px); letter-spacing: .025em; font-weight: 800; font-variant-numeric: tabular-nums; user-select: text; }
   .challenge-identity-copy { flex-shrink: 0; background: #eff6ff; color: #1d4ed8; border: 1px solid #cbdcf9; padding: 9px 13px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; }
   .challenge-identity-copy:disabled { opacity: .55; cursor: not-allowed; }
+  .challenge-identity-copy[hidden] { display:none!important; }
   /* Verified referrals upgrade the PERSONAL CODE card; the invitation link stays shareable. */
   .challenge-code-card { position:relative; overflow:hidden; transition:background .35s ease,border-color .35s ease,box-shadow .35s ease; }
   .challenge-code-card.is-lv2 {
@@ -146,16 +149,6 @@
     background:linear-gradient(135deg,#f3dfb6,#cba565);color:#16283d;border-color:#d6b679;
   }
   .challenge-code-card.is-lv2 .challenge-identity-feedback {color:#e8d6b1;}
-  @media(min-width:761px){
-    #challengeIdentityPanel.is-lv2{box-sizing:border-box;width:100%;margin:18px 0 24px;padding:30px 34px 26px;border-radius:23px;box-shadow:0 20px 46px rgba(13,32,58,.24),inset 0 1px rgba(255,255,255,.17)}
-    #challengeIdentityPanel.is-lv2 .challenge-identity-head{margin-bottom:22px}
-    #challengeIdentityPanel.is-lv2 h2{font-size:24px}
-    #challengeIdentityPanel.is-lv2 .challenge-identity-tag{font-size:13px;padding:9px 14px}
-    #challengeIdentityPanel.is-lv2 .challenge-identity-row{gap:18px;align-items:stretch}
-    #challengeIdentityPanel.is-lv2 .challenge-identity-value{display:flex;align-items:center;min-height:72px;padding:12px 18px;font-size:clamp(20px,2vw,28px);letter-spacing:.055em;border:1px solid rgba(235,207,150,.33);border-radius:14px;background:rgba(255,255,255,.065)}
-    #challengeIdentityPanel.is-lv2 .challenge-identity-copy{font-size:16px;min-width:126px;padding:14px 22px;border-radius:13px}
-    #challengeIdentityPanel.is-lv2 #challengeIdentityReward{margin-top:16px;font-size:14px}
-  }
   @media (prefers-reduced-motion:reduce) {.challenge-code-card {transition:none;}}
   .challenge-identity-feedback { margin: 7px 0 0; font-size: 12px; color: #1d4ed8; min-height: 0; }
   @media (max-width: 430px) {
@@ -177,7 +170,7 @@
   }
 </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
-<link rel="stylesheet" href="styles/challenge-layout-v1.css?v=20261123-vip2">
+<link rel="stylesheet" href="styles/challenge-layout-v1.css?v=20261123-original-vip3">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
@@ -223,7 +216,8 @@
 
 
   <!-- #certificate 내부만 인증 이미지로 저장. 개인 정보는 밖에 둡니다. -->
-  <section class="certificate" id="certificate" aria-label="2026 배구지수 참여 인증서">
+  <section class="certificate" id="certificate" data-level="1" aria-label="2026 배구지수 참여 인증서">
+    <div id="certificateLevelBanner" class="certificate-level-banner" role="status" aria-live="polite">Lv.1 챌린지 달성</div>
     <div class="trophy" aria-hidden="true">🏆</div>
     <div id="certificateMedal" class="certificate-medal" hidden><span aria-hidden="true">🏅</span><strong>LV.2 CHALLENGE HONOR</strong></div>
     <h1>2026 배구지수 챌린지</h1>
@@ -259,7 +253,7 @@
     </div>
     <div class="challenge-identity-row">
       <strong class="challenge-identity-value" id="identityCode" aria-live="polite">고유번호 확인 중</strong>
-      <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled>번호 복사</button>
+      <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled hidden>번호 복사</button>
     </div>
     <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
     <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
@@ -313,8 +307,8 @@
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="js/challenge.js?v=20261123-safe-capture1"></script>
-<script src="js/challenge-referral-v1.js?v=20261123-vip2"></script>
+<script src="js/challenge.js?v=20261123-banner-private3"></script>
+<script src="js/challenge-referral-v1.js?v=20261123-original-vip3"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>

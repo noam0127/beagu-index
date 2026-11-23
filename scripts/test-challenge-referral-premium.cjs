@@ -19,7 +19,7 @@ const ids = [
   'challengeReferralTag', 'challengeReferralNote',
   'challengeIdentityPanel', 'challengeIdentityTitle', 'challengeIdentityTag',
   'challengeIdentityReward', 'copyIdentityCode',
-  'challengeVipMedal','certificateMedal','certificateThanks'
+  'challengeVipMedal','certificateMedal','certificateThanks','certificateLevelBanner','certificate'
 ];
 const el = Object.fromEntries(ids.map(id => [id, {
   hidden: ['challengeIdentityReward','challengeVipMedal','certificateMedal','certificateThanks'].includes(id), value: '', textContent: '', disabled: false,
@@ -61,6 +61,8 @@ const emit=(type,arg={})=>(listeners[type]||[]).forEach(cb=>cb(arg));
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
   assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
+  assert.equal(el.copyIdentityCode.hidden,true);
+  assert.equal(el.certificateLevelBanner.textContent,'Lv.1 챌린지 달성');
   emit('beagu:challenge-access-granted');
   emit('beagu:identity-ready',{detail:{visitor,code}});
   await tick();
@@ -84,6 +86,9 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
   emit('focus');await tick();
   assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드');
+  assert.equal(el.copyIdentityCode.hidden,false);
+  assert.equal(el.certificateLevelBanner.textContent,'Lv.2 챌린지 달성');
+  assert.equal(el.certificate.dataset.level,'2');
   assert.equal(el.challengeIdentityTag.textContent,'✓ Lv.2 인증 완료');
   assert.equal(el.copyIdentityCode.textContent,'코드 복사');
   assert.equal(el.challengeIdentityReward.hidden,false);
