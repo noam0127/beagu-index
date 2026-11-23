@@ -1,0 +1,95 @@
+name: One-time challenge login removal (production-only hotfix)
+# Publish the already running production snapshot with exactly two reviewed UI files.
+# Triggered only when this workflow is first added to main. The admin release
+# controller remains unchanged; it may replace this snapshot on a later release.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/challenge-login-only-hotfix-20261123.yml'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages-direct
+  cancel-in-progress: false
+jobs:
+  challenge-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify immutable base and exactly two approved changed paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=5950755c8174788d7bb1fa879be73a15f25d9ae2
+          HOTFIX=abfd097892b75de0562019fd178191fedcd1a575
+          git cat-file -e "${BASE}^{commit}"
+          git cat-file -e "${HOTFIX}^{commit}"
+          git diff --name-only "$BASE" "$HOTFIX" | sort > /tmp/hotfix-changed-files
+          printf '%s\n' challenge.html js/beagu-participation-auth-v2.js > /tmp/hotfix-allowed-files
+          diff -u /tmp/hotfix-allowed-files /tmp/hotfix-changed-files
+          mkdir -p _release_site
+          git archive --format=tar "$BASE" | tar -xf - -C _release_site
+          git show "$HOTFIX:challenge.html" > _release_site/challenge.html
+          git show "$HOTFIX:js/beagu-participation-auth-v2.js" > _release_site/js/beagu-participation-auth-v2.js
+          test "$(cat _release_site/CNAME)" = baeguindex.com
+          node --check _release_site/js/beagu-participation-auth-v2.js
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('_release_site/challenge.html').read_text(encoding='utf-8')
+          js=Path('_release_site/js/beagu-participation-auth-v2.js').read_text(encoding='utf-8')
+          for field in ['challengeAccessPanel','challengeProtected','participantNo','identityCode','challengeReferralLink']:
+              assert ('id="'+field+'"') in html,field
+          for removed in ['challengeMemberOverlay','challengeMemberSignup','challenge-member-auth-v1']:
+              assert removed not in html,removed
+          assert 'beagu:challenge-account-open' not in js
+          assert '로그인하기' not in js
+          assert 'Lv2 참여 인증 완료' in js
+          assert '20261123-challenge-no-login-hotfix1' in html
+          print('PASS: exact two-file production hotfix and preserved challenge flows')
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _release_site
+      - name: Publish two-file-only emergency artifact
+        uses: actions/deploy-pages@v4
+        id: deployment
+      - name: Verify published challenge page
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import time,urllib.request
+          base='https://baeguindex.com'
+          for i in range(24):
+              try:
+                  u=base+'/challenge.html?challenge_login_hotfix=20261123-'+str(i)
+                  request=urllib.request.Request(u,headers={'Cache-Control':'no-cache'})
+                  with urllib.request.urlopen(request,timeout=12) as result:
+                      html=result.read().decode('utf-8')
+                  u2=base+'/js/beagu-participation-auth-v2.js?challenge_login_hotfix=20261123-'+str(i)
+                  with urllib.request.urlopen(urllib.request.Request(u2,headers={'Cache-Control':'no-cache'}),timeout=12) as result:
+                      js=result.read().decode('utf-8')
+                  if ('20261123-challenge-no-login-hotfix1' in html
+                        and 'challengeMemberOverlay' not in html
+                        and 'challengeMemberSignup' not in html
+                        and 'beagu:challenge-account-open' not in js
+                        and 'Lv2 참여 인증 완료' in js):
+                      print('PASS: production challenge page serves exact login-free hotfix')
+                      break
+              except Exception as e:
+                  print('Production verification retry:',str(e)[:160])
+              time.sleep(5)
+          else:
+              raise SystemExit('Published website did not yet show verified hotfix')
+          PY
