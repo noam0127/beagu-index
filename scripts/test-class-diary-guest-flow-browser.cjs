@@ -71,6 +71,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
     return {url:location.href,documentTitle:document.title,formExists:!!form,sectionExists:!!game,parents,firstText:document.body?.innerText?.slice(0,280)};
    });
    console.log('DIARY_HOME_PROBE',JSON.stringify(homeProbe));
+   await page.locator('.teacher-diary-private-preview summary').click();
    await page.locator('#homeDiaryGuestForm').waitFor({state:'visible',timeout:4500});
    assert.equal(await page.locator('#homeDiaryCode').count(),1);
    assert.equal(await page.locator('#teacher-diary-feature .teacher-diary-code-message').count(),1);

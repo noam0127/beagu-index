@@ -6,6 +6,8 @@ on:
       - 'index.html'
       - 'js/class-diary-home-entry-v1.js'
       - 'styles/class-diary-guest-experience-v1.css'
+      - 'styles/class-diary-home-entry-v2.css'
+      - 'tests/class-diary-lv2-beta-home.mjs'
       - 'scripts/test-class-diary-guest-flow-browser.cjs'
       - 'teacher-class-diary-play.html'
       - 'supabase/functions/class-diary-guest-access-v1/**'
@@ -29,4 +31,5 @@ jobs:
       - name: Verify home link and live guest endpoint rejects unknown codes
         run: |
           node --check js/class-diary-home-entry-v1.js
+          node tests/class-diary-lv2-beta-home.mjs
           node scripts/test-class-diary-guest-live.cjs
