@@ -36,7 +36,7 @@ for fn in functions:
     assert "FUNCTION public."+fn+"(" in rpc,fn
     assert "REVOKE ALL ON FUNCTION public."+fn+"(" in rpc,fn
     assert "GRANT EXECUTE ON FUNCTION public."+fn+"(" in rpc,fn
-assert rpc.count("SECURITY DEFINER")==6, "All six must use server-only privileged SQL"
+assert len(re.findall(r"\b(?:STABLE\s+)?SECURITY\s+DEFINER\s*(?:SET|\n)",rpc))==6, "All six must use server-only privileged SQL"
 assert "not q.form_quality_attested" in rpc
 assert "name='public_enabled' and s.enabled" in rpc
 assert "p_session uuid" in rpc
