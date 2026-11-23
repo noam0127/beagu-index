@@ -315,7 +315,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const mysteryDrops=[],mysteryReveals=[],mysteryBuffs={left:{},right:{}};
   const mysteryCadence={easy:[15,22],normal:[12,18],hard:[9,14],very_hard:[7,11],extreme:[5,9]};
   const bonusFriend={x:260,y:FLOOR-31,vx:0,vy:0,side:"left",contactFrames:0,clone:true,name:"친한 동학년"};
-  let nextMystery=0,desiredBalls=1;
+  let nextMystery=0,desiredBalls=1,airCourier=null;
   const MAX_MYSTERY_BALLS=5;
   function createMysteryBall(index){
     const serveFromLeft=index%2===0?state.serveLeft:!state.serveLeft;
@@ -347,7 +347,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   function resetMystery(){
     mysteryDrops.length=0;mysteryReveals.length=0;
-    mysteryBuffs.left={};mysteryBuffs.right={};scheduleMystery();
+    mysteryBuffs.left={};mysteryBuffs.right={};airCourier=null;scheduleMystery();
   }
   function itemPoints(side,delta){
     const key=side==="left"?"leftScore":"rightScore";
@@ -379,14 +379,26 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     setStatus((side==="left"?"나":"상대")+" 획득: "+item.icon+" "+item.name);
     tone(item.good?850:255,.1,item.good?"triangle":"sawtooth",.025);
   }
+  // A passing airplane carries a teacher and drops one surprise item.
   function updateMystery(){
     if(state.activeFrames>=nextMystery){
-      if(mysteryDrops.length<3){
-        const side=Math.random()<.5?"left":"right";
-        mysteryDrops.push({x:side==="left"?70+Math.random()*320:515+Math.random()*315,
-          y:36,dy:1.9+Math.random()*.8,ttl:610,side,item:mystery.pick(false,null,true)});
+      if(mysteryDrops.length<3&&!airCourier){
+        const side=Math.random()<.5?"left":"right",leftToRight=Math.random()<.5;
+        airCourier={x:leftToRight?-75:W+75,y:72+Math.random()*36,
+          vx:leftToRight?5.5:-5.5,
+          dropX:side==="left"?100+Math.random()*260:545+Math.random()*250,
+          side,item:mystery.pick(false,null,true),dropped:false};
       }
       scheduleMystery();
+    }
+    if(airCourier){
+      const p=airCourier;p.x+=p.vx;
+      if(!p.dropped&&((p.vx>0&&p.x>=p.dropX)||(p.vx<0&&p.x<=p.dropX))){
+        mysteryDrops.push({x:p.x,y:p.y+23,dy:2.35+Math.random()*.7,
+          ttl:610,side:p.side,item:p.item});
+        p.dropped=true;
+      }
+      if(p.x<-95||p.x>W+95)airCourier=null;
     }
     for(let i=mysteryDrops.length-1;i>=0;i--){
       const d=mysteryDrops[i];d.y=Math.min(FLOOR-19,d.y+d.dy);d.ttl--;
@@ -401,6 +413,18 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       if(--mysteryReveals[i].ttl<=0)mysteryReveals.splice(i,1);
   }
   function drawMystery(){
+    if(airCourier){
+      const p=airCourier;
+      ctx.save();ctx.translate(p.x,p.y);if(p.vx<0)ctx.scale(-1,1);
+      ctx.fillStyle="#f8fbff";ctx.beginPath();ctx.ellipse(0,4,49,13,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#468acb";ctx.fillRect(-7,-18,22,34);
+      ctx.fillStyle="#20496b";ctx.beginPath();ctx.moveTo(-41,1);ctx.lineTo(-55,-22);ctx.lineTo(-26,0);ctx.fill();
+      ctx.fillStyle="#ffd49d";ctx.beginPath();ctx.arc(0,-19,10,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#294e77";ctx.fillRect(-11,-33,22,9);
+      ctx.fillStyle="#4a8bc9";ctx.fillRect(8,-4,38,5);
+      ctx.fillStyle="#d8effd";ctx.fillRect(37,-7,11,5);
+      ctx.restore();
+    }
     for(const d of mysteryDrops)mystery.drawMystery(ctx,d.x,d.y,d.item.good,21,state.activeFrames/60);
     for(const r of mysteryReveals){
       ctx.save();ctx.globalAlpha=Math.min(1,r.ttl/24);
