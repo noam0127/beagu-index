@@ -90,7 +90,7 @@ async function directCandidate(base:string,sha:string){
  const version=String(value.version||"").trim(),summary=String(value.summary||"").trim();
  if(!allowedVersion.test(version)||summary.length<3||summary.length>500)return {error:"invalid_direct_manifest",status:400};
  // Code-only validation workflow must report success at the immutable candidate SHA.
- const runs=await github("/actions/workflows/clean-release-validation.yml/runs?head_sha="+sha+"&status=success&per_page=20");
+ const runs=await github("/actions/runs?head_sha="+sha+"&status=success&per_page=50");
  const proof=(runs.workflow_runs||[]).find((r:any)=>r.head_sha===sha&&r.conclusion==="success"&&r.status==="completed"&&r.path===".github/workflows/clean-release-validation.yml"&&r.head_repository?.full_name===repo);
  if(!proof)return {error:"direct_ci_required",status:409};
  return {version,summary,files:delta.files.map((f:any)=>String(f.filename||"")).filter(Boolean)};
@@ -138,6 +138,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
     production_url:"https://baeguindex.com/"},200,origin);
  }
  if(current)return error("release_in_progress",409,origin);
+ if(["register","stage_apply","stage_rollback","prod_apply"].includes(action))return error("direct_route_required",409,origin);
  if(!s.production_sha)return error("release_bootstrap_pending",409,origin);
  if(action==="register_direct"){
   const sha=String(input.candidate_sha||"");
@@ -155,52 +156,8 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   await db.from("beagu_admin_audit_events").insert({actor_user_id:userId,event_type:"site_release_register_direct",outcome:"success",details:{sha,version:candidate.version,base:s.production_sha}});
   return respond({draft_sha:sha,version:candidate.version,summary:candidate.summary,changed_count:candidate.files.length,changed_files:candidate.files.slice(0,25)},200,origin);
  }
- if(action==="register"){
-  const version=String(input.version||"").trim();
-  const summary=String(input.summary||"").trim();
-  if(!allowedVersion.test(version)||summary.length<3||summary.length>500)
-   return error("invalid_release_metadata",400,origin);
-  const main=await github("/commits/main");
-  if(!SHA.test(String(main.sha||"")))return error("github_unavailable",503,origin);
-  if(main.sha===s.production_sha)return error("no_changes_since_production",409,origin);
-  const files=await changedFiles(s.production_sha,main.sha);
-  if(!files.length)return error("no_changes_since_production",409,origin);
-  const {error:e}=await db.from("beagu_site_release_state_v1").update({
-    draft_sha:main.sha,draft_version:version,draft_summary:summary,updated_at:new Date().toISOString()
-  }).eq("id",1);
-  if(e)throw Error("save_unavailable");
-  return respond({draft_sha:main.sha,version,summary,changed_count:files.length,
-    changed_files:files.slice(0,25)},200,origin);
- }
  let job:null|{action:string;target:string;to_sha:string|null;from_sha:string|null;version:string;summary:string;created_by:string}=null;
- if(action==="stage_apply"){
-  let candidateSha=s.draft_sha,candidateVersion=s.draft_version,candidateSummary=s.draft_summary;
-  // ChatGPT can commit a release-candidate.json alongside changes.
-  // Clicking the stage button then registers that version automatically.
-  const latest=await github("/commits/main");
-  const proposed=await latestManifest();
-  if(proposed&&SHA.test(String(latest?.sha||""))&&latest.sha!==s.production_sha
-     &&latest.sha!==s.draft_sha){
-   const files=await changedFiles(s.production_sha,latest.sha);
-   if(!files.length)return error("no_changes_since_production",409,origin);
-   candidateSha=latest.sha;candidateVersion=proposed.version;candidateSummary=proposed.summary;
-   const {error:draftErr}=await db.from("beagu_site_release_state_v1").update({
-    draft_sha:candidateSha,draft_version:candidateVersion,draft_summary:candidateSummary,
-    updated_at:new Date().toISOString()
-   }).eq("id",1);
-   if(draftErr)throw Error("save_unavailable");
-  }
-  if(!candidateSha||!SHA.test(candidateSha)||!candidateVersion||!candidateSummary)
-   return error("register_version_first",409,origin);
-  if(candidateSha===s.staging_sha)return error("already_on_staging",409,origin);
-  job={action,target:"staging",from_sha:s.staging_sha,to_sha:candidateSha,
-   version:candidateVersion,summary:candidateSummary,created_by:userId};
- }else if(action==="stage_rollback"){
-  const prev=(await history("staging"))[0];
-  if(!prev||prev.from_sha===s.staging_sha)return error("no_staging_rollback",409,origin);
-  job={action,target:"staging",from_sha:s.staging_sha,to_sha:prev.from_sha,
-   version:"이전 시험 버전",summary:"시험 웹 이전 배포 복원",created_by:userId};
- }else if(action==="prod_direct_apply"){
+ if(action==="prod_direct_apply"){
   const sha=String(input.candidate_sha||"");
   if(input.confirmed_direct!==true||!s.draft_sha||sha!==s.draft_sha||input.expected_production_sha!==s.production_sha)
    return error("direct_confirmation_required",409,origin);
@@ -209,18 +166,6 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   if(candidate.version!==s.draft_version||candidate.summary!==s.draft_summary)return error("direct_version_mismatch",409,origin);
   // Keep the existing database action constraint and history format.
   job={action:"prod_apply",target:"production",from_sha:s.production_sha,to_sha:sha,version:candidate.version,summary:candidate.summary,created_by:userId};
- }else if(action==="prod_apply"){
-  if(!s.staging_sha||!SHA.test(s.staging_sha))return error("staging_required",409,origin);
-  if(s.staging_sha===s.production_sha)return error("already_on_production",409,origin);
-  // Only allow a staging build that contains all deployed production changes.
-  if(s.production_sha&&SHA.test(s.production_sha)){
-   const delta=await github("/compare/"+s.production_sha+"..."+s.staging_sha);
-   if(!["ahead","identical"].includes(String(delta.status||"")))
-    return error("staging_is_stale",409,origin);
-  }
-  if(input.confirmed_tested!==true)return error("test_confirmation_required",400,origin);
-  job={action,target:"production",from_sha:s.production_sha,to_sha:s.staging_sha,
-   version:s.staging_version||"시험 승인 버전",summary:"관리자 시험 웹 확인 후 운영 적용",created_by:userId};
  }else if(action==="prod_rollback"){
   const {data:recentRollbackTarget,error:previousError}=await db.from("beagu_site_release_history_v1")
    .select("from_sha,to_sha").eq("target","production").neq("action","data_refresh")
@@ -274,6 +219,10 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   }
   if(!job)return respond({has_job:false},200,origin);
   if(job.status!=="queued")return respond({has_job:false,already_running:true},200,origin);
+  if(job.target==="staging"){
+   await db.from("beagu_site_release_jobs_v1").update({status:"failed",error_code:"staging_route_retired",finished_at:new Date().toISOString()}).eq("id",job.id).eq("status","queued");
+   return respond({has_job:false,staging_route_retired:true},200,origin);
+  }
   if(job.target==="production"&&job.action!=="bootstrap"&&job.from_sha!==s.production_sha){
    await db.from("beagu_site_release_jobs_v1").update({status:"failed",error_code:"stale_production_base",finished_at:new Date().toISOString()}).eq("id",job.id).eq("status","queued");
    return respond({has_job:false,stale_production_base:true},200,origin);
@@ -285,7 +234,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   if(e)throw Error("claim_unavailable");
   if(!claimed)return respond({has_job:false},200,origin);
   const productionSha=claimed.target==="production"?claimed.to_sha:s.production_sha;
-  const stagingSha=claimed.target==="staging"?claimed.to_sha:s.staging_sha;
+  const stagingSha=null; // No preview archive is produced. Retain old staging history in the database.
   if(!productionSha||!SHA.test(productionSha)||(stagingSha&&!SHA.test(stagingSha)))
    return error("invalid_release_pointer",503,origin);
   return respond({has_job:true,job_id:claimed.id,action:claimed.action,
