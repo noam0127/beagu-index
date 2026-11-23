@@ -15,6 +15,7 @@ on:
       - 'tests/2026-bulk-verified-static.cjs'
       - 'tests/2026-bulk-400-enabled-static.cjs'
       - 'tests/2026-civic-feedback-safe.cjs'
+      - 'tests/2026-civic-live.mjs'
       - 'js/beagu-2026-civic-v1.js'
       - 'js/beagu-2026-civic-admin-v1.js'
       - 'supabase/functions/beagu-2026-civic/**'
@@ -43,6 +44,7 @@ on:
       - 'tests/2026-bulk-verified-static.cjs'
       - 'tests/2026-bulk-400-enabled-static.cjs'
       - 'tests/2026-civic-feedback-safe.cjs'
+      - 'tests/2026-civic-live.mjs'
       - 'js/beagu-2026-civic-v1.js'
       - 'js/beagu-2026-civic-admin-v1.js'
       - 'supabase/functions/beagu-2026-civic/**'
@@ -74,6 +76,7 @@ jobs:
           node tests/2026-bulk-verified-static.cjs
           node tests/2026-bulk-400-enabled-static.cjs
           node tests/2026-civic-feedback-safe.cjs
+          node tests/2026-civic-live.mjs
           node tests/2026-level-final-approval-ui.cjs
           node tests/2026-three-stage-review-flow.mjs
           node tests/admin-dashboard-static.cjs
