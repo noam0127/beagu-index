@@ -913,6 +913,28 @@ const token=isGuest?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
 const schoolId=params.get('schoolId')||'';
 let world=null,plan=null,game=null,progressSession=null;
 let schoolSelection=null; // Public directory context only; never private survey responses.
+let homeSchoolSelection=null;
+async function validateHomeSchool(id){
+ if(!/^[A-Z0-9]{7}$/.test(id))return;
+ try{
+  const response=await fetch(API+'arcade-leaderboard?school_id='+encodeURIComponent(id),{cache:'no-store'});
+  if(!response.ok)return;
+  const school=(await response.json()).school;
+  if(!school||school.school_id!==id||school.eligible!==true)return;
+  const years=Array.isArray(school.available_years)?
+   [...new Set(school.available_years.filter(year=>Number.isInteger(year)&&year>=2023&&year<=2026))].sort():[];
+  const name=String(school.school_name||'').trim().slice(0,70);
+  if(!years.length||!name)return;
+  homeSchoolSelection=Object.freeze({id,name,region:String(school.region||'지역 미확인').slice(0,40),years});
+ }catch(_){} // A failed public lookup falls back to the existing in-game picker.
+}
+function enterSchoolSetup(){
+ schoolSelection=homeSchoolSelection||null;
+ selectSchoolMode(schoolSelection?'real':'choose',schoolSelection?.name);
+ show('setup');
+ if(schoolSelection){applySchoolName();journey.go(2)}
+ else journey.go(1);
+}
 let guestIntroTimer=null;
 let schoolSearchSerial=0,schoolSearchTimer=null;
 function selectSchoolMode(mode,name){
@@ -1024,11 +1046,9 @@ $('diaryLandingStart').addEventListener('click',()=>{
   world=fixture.world;plan=fixture.plan;
  }
  storyMode='semester';
- schoolSelection=null;
- selectSchoolMode('choose');
- show('setup');
- journey.go(1);
- status('실제 초등학교를 선택하면 한 학기의 이야기가 이어집니다.');
+ enterSchoolSetup();
+ status(homeSchoolSelection?'홈에서 선택한 학교에서 이야기가 이어집니다.':
+  '실제 초등학교를 선택하면 한 학기의 이야기가 이어집니다.');
 });
 $('openingStart').addEventListener('click',()=>{clearTimeout(guestIntroTimer);$('opening').classList.remove('intro-autoplay')});
 let storyMode='semester';
@@ -1755,10 +1775,10 @@ async function apiPost(endpoint,body){
  return response.json();
 }
 async function boot(){
- // Direct, demo, or previously authorized Lv.2 links cannot bypass the preview PIN.
+ // Direct links cannot bypass a server-issued scoped Lv.2 or developer-preview ticket.
  if(!isGuest){location.replace('index.html#teacher-diary-feature');return;}
  if(isGuest){
-  // Home already verified the code. Consume the 10-minute signed game ticket once.
+  // Home already verified Lv.2 or the developer PIN. Consume the signed ticket once.
   const handoffKey='beagu-class-diary-guest-handoff-v1';
   let ticket='';
   try{
@@ -1777,37 +1797,54 @@ async function boot(){
   try{
    const response=await fetch(API+'class-diary-guest-access-v1',{
     method:'POST',credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json',...(token?{'X-Beagu-Session':token}:{})},
     body:JSON.stringify({action:'verify-ticket',ticket})
    });
    ticket='';
    if(!response.ok)throw Error('INVALID_GUEST_TICKET');
    const result=await response.json();
    if(result.ok!==true||result.scope!=='class-diary-fictional-guest')throw Error('INVALID_SCOPE');
-   if(typeof result.progressToken!=='string')throw Error('NO_PROGRESS_TOKEN');
-   progressSession=window.BeaguClassDiaryProgress.create(result.progressToken,progressStatus);
+   const lv2Entry=result.entryKind==='lv2';
+   if(lv2Entry){
+    if(typeof result.schoolId!=='string'||!/^[A-Z0-9]{7}$/.test(result.schoolId))
+     throw Error('INVALID_SCHOOL_SCOPE');
+    await validateHomeSchool(result.schoolId);
+    $('accessLabel').textContent='Lv.2 · 시험 운영 중 · 가상 학급일지';
+    progressSession=null;
+    $('diaryCheckpointControls').hidden=true;
+   }else{
+    if(typeof result.progressToken!=='string')throw Error('NO_PROGRESS_TOKEN');
+    progressSession=window.BeaguClassDiaryProgress.create(result.progressToken,progressStatus);
     $('diaryCheckpointControls').hidden=false;
+   }
    const fixture=window.BeaguClassDiaryDemo.createDemo();
    world=fixture.world;plan=fixture.plan;
    prepareGuestProfile();
    $('schoolLine').textContent='학교 선택 전 · 2027년 3월–7월';
    $('openingSchool').textContent=$('schoolLine').textContent;
    $('worldAutoNote').textContent='실제 학교의 공개 정보 중 이름·지역·공개 조사연도만 일부 반영합니다. 인물과 사건은 허구입니다.';
-   $('noSaveNotice').textContent='고유번호별 진행 기록을 자동 저장합니다. 다른 기기에서도 같은 번호로 이어할 수 있습니다.';
-   $('opening').querySelector('.diary-opening-note').textContent='고유번호별 자동 저장 · 언제든 이어하기';
+   $('noSaveNotice').textContent=lv2Entry?
+    '현재 시험 운영 중입니다. Lv.2 입장 기록은 저장되지 않으므로 페이지를 닫으면 진행 상황이 사라집니다.':
+    '고유번호별 진행 기록을 자동 저장합니다. 다른 기기에서도 같은 번호로 이어할 수 있습니다.';
+   $('opening').querySelector('.diary-opening-note').textContent=lv2Entry?
+    'Lv.2 시험 운영 · 진행 기록 미저장':'고유번호별 자동 저장 · 언제든 이어하기';
    const privacy=$('setup').querySelector('.privacy');
-   if(privacy)privacy.textContent='인물과 사건은 허구이며 실제 교직원을 재현하지 않습니다. 공개 학교 정보 일부와 진행 기록은 구분하여 사용하고, 선택은 승인된 미리보기 계정으로 저장됩니다.';
+   if(privacy)privacy.textContent=lv2Entry?
+    '인물과 사건은 허구입니다. 실제 학교의 공개 정보 일부만 배경으로 쓰며 이번 시험 입장의 진행 기록은 저장되지 않습니다.':
+    '인물과 사건은 허구이며 실제 교직원을 재현하지 않습니다. 공개 학교 정보 일부와 진행 기록은 구분하여 사용하고, 선택은 승인된 미리보기 계정으로 저장됩니다.';
    let saved=null;
-   try{
-    saved=await progressSession.load();
-    if(saved&&!saved.compatible)throw Error('UNSUPPORTED_SAVE_FORMAT');
-   }catch(_){
-    // Fail closed for checkpoint writes if the server read is unavailable.
-    progressSession=null;
-    $('diaryCheckpointControls').hidden=true;
-    $('noSaveNotice').textContent='저장 기록을 확인하지 못했습니다. 이번 진행은 저장되지 않으며 기존 기록은 보존됩니다.';
-    $('opening').querySelector('.diary-opening-note').textContent='기존 기록 보존 · 저장 일시 중단';
-    status('기존 기록 확인에 실패했습니다. 이번 진행은 저장되지 않으며 이전 기록은 보존됩니다.');
+   if(progressSession){
+    try{
+     saved=await progressSession.load();
+     if(saved&&!saved.compatible)throw Error('UNSUPPORTED_SAVE_FORMAT');
+    }catch(_){
+     // Fail closed for checkpoint writes if the server read is unavailable.
+     progressSession=null;
+     $('diaryCheckpointControls').hidden=true;
+     $('noSaveNotice').textContent='저장 기록을 확인하지 못했습니다. 이번 진행은 저장되지 않으며 기존 기록은 보존됩니다.';
+     $('opening').querySelector('.diary-opening-note').textContent='기존 기록 보존 · 저장 일시 중단';
+     status('기존 기록 확인에 실패했습니다. 이번 진행은 저장되지 않으며 이전 기록은 보존됩니다.');
+    }
    }
    if(saved&&saved.state){
     $('guestResumeSummary').textContent='제 '+saved.state.episode+'화 · '+
@@ -1822,9 +1859,7 @@ async function boot(){
     $('guestNewBtn').onclick=()=>{
      $('guestResume').hidden=true;
      storyMode='semester';
-     schoolSelection=null;
-     selectSchoolMode('choose');
-     show('setup');journey.go(1);
+     enterSchoolSetup();
     };
     enterGuestOpening();
     status('제목 카드를 누르면 이어하기 또는 처음부터 시작할 수 있습니다.');
