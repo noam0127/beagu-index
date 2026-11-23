@@ -31,19 +31,28 @@
   }
   if(!visitor)return;
   const allowedActions=new Set(['navigation','school_search','school_selection','compare_directory']);
+  // Staging-only privacy gateway. Never submit QA measurements to the
+  // operating API even when another static page embeds this development JS.
+  const qaSupabase='https://ycwuugggqbunlbwuzvbx.supabase.co';
+  const telemetryURL=typeof SUPABASE_URL==='string' && SUPABASE_URL===qaSupabase
+    ?qaSupabase+'/functions/v1/beagu-perf-ingest-v1':null;
   let pending=0;
   function record(operation,duration,ok){
     if(!allowedActions.has(operation)||!Number.isFinite(duration)||
-       duration<0||typeof ok!=='boolean'||pending>3||
-       typeof supabaseClient==='undefined')return;
+       duration<0||typeof ok!=='boolean'||pending>3||!telemetryURL||
+       typeof fetch!=='function')return;
     const rounded=Math.max(1,Math.round(duration));
     if(rounded>120000)return;
     pending++;
-    // The public RPC only writes into private tables, and may silently discard
-    // a duplicate sample; failures never change the searched schools or gameplay.
-    Promise.resolve().then(()=>supabaseClient.rpc('beagu_perf_record_v1',{
-      p_visitor:visitor,p_page:page,p_operation:operation,
-      p_duration_ms:rounded,p_ok:ok
+    // Do NOT call public SECURITY DEFINER RPC from a browser. The isolated
+    // QA Edge API validates fixed categories and uses a global backend budget.
+    // No auth token, search text, query URL, IP, student/survey data is sent.
+    Promise.resolve().then(()=>fetch(telemetryURL,{
+      method:'POST',cache:'no-store',mode:'cors',keepalive:true,
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        visitor,page,operation,duration_ms:rounded,ok
+      })
     })).catch(()=>{}).finally(()=>{pending=Math.max(0,pending-1)});
   }
   window.BeaguPerf=Object.freeze({record});
