@@ -1,0 +1,33 @@
+name: v1.1.0 staging performance gateway privacy regression
+on:
+  push:
+    branches:
+      - fix/v110-staging-edited-api-recovery-20261123
+    paths:
+      - 'js/beagu-page-performance-v1.js'
+      - 'scripts/staging/recovered-beagu-perf-ingest-v1/**'
+      - 'scripts/staging/schema-page-performance-server-only-qa.sql'
+      - 'tests/staging-perf-gateway-*.test.py'
+      - 'tests/admin-page-performance-static.cjs'
+      - '.github/workflows/v110-staging-perf-gateway.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage-perf-no-write:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify stage-only client, private RPC and gateway source
+        run: python3 tests/staging-perf-gateway-contract.test.py
+      - name: Check original page-performance client behavior
+        run: node tests/admin-page-performance-static.cjs
+      - name: Run real HTTP denial tests, without DB writes
+        run: python3 tests/staging-perf-gateway-http-negative.test.py
+      - name: Describe scope
+        run: |
+          echo "No operating origin used for QA collection, no service role key in CI."
+          echo "No positive samples submitted in this recurring workflow."
