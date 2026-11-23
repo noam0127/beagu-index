@@ -15,7 +15,7 @@ assert.ok(publicCertificate.includes('id="participantNo"'));
 assert.ok(publicCertificate.includes('data-beagu-xp'));
 assert.ok(publicCertificate.includes('id="certificateMedal"'));
 assert.ok(publicCertificate.includes('id="certificateThanks"'));
-const order=['id="certificate"','id="challenge-levelup-title"','id="challengeReferralPanel"','id="challengeIdentityPanel"','class="steps"','challenge-notice-title'];
+const order=['id="certificate"','id="challenge-levelup-title"','id="challengeIdentityPanel"','id="challengeReferralPanel"','class="steps"','challenge-notice-title'];
 let previous=-1;for(const key of order){const i=html.indexOf(key);assert.ok(i>previous,'Challenge layout order violated: '+key);previous=i;}
 assert.match(capture,/html2canvas\(root,\s*\{/);
 assert.match(capture,/root\.querySelector\('#identityCode,#challengeReferralLink/);
@@ -25,3 +25,8 @@ assert.match(ref,/referral-status-changed/);
 assert.match(api,/validReferrals: Number\.isSafeInteger\(Number\(enrollment\?\.validReferrals\)\)/);
 assert.doesNotMatch(api,/validReferrals: Number\(enrollment\?\.validReferrals\) === 1/);
 console.log('PASS: private codes excluded from certificate and cumulative verified referrals survive');
+
+assert.doesNotMatch(html,/id="challengeReferralNote"/);
+assert.doesNotMatch(ref,/유효한 추천 1건이 확인되면 \(비활성\)이 사라지고/);
+assert.match(html,/BAEGU INDEX · VERIFIED MEMBER/);
+assert.ok(html.indexOf('id="challengeIdentityPanel"')<html.indexOf('id="challengeReferralPanel"'));

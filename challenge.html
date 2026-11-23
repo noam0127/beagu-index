@@ -177,7 +177,7 @@
   }
 </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
-<link rel="stylesheet" href="styles/challenge-layout-v1.css?v=20261123-layout1">
+<link rel="stylesheet" href="styles/challenge-layout-v1.css?v=20261123-vip2">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
@@ -244,7 +244,27 @@
     <p>전용 조사 링크를 공유해 동료의 유효한 설문 응답을 받으면 Lv.2가 활성화됩니다. 이후에도 추천 인원이 계속 누적됩니다.</p>
   </section>
   <!-- 아래 링크와 참여코드는 인증샷에서 제외 -->
-  <section class="challenge-identity" id="challengeReferralPanel"
+  <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
+    <div class="challenge-vip-crown" id="challengeVipMedal" hidden aria-label="Lv.2 인증 완료 VIP 회원">
+      <div class="challenge-vip-emblem" aria-hidden="true">🏅</div>
+      <div class="challenge-vip-wordmark">
+        <span class="challenge-vip-eyebrow">BAEGU INDEX · VERIFIED MEMBER</span>
+        <strong>VIP LEVEL 2</strong>
+      </div>
+      <span class="challenge-vip-star" aria-hidden="true">✦</span>
+    </div>
+    <div class="challenge-identity-head">
+      <h2 id="challengeIdentityTitle">Lv.2 참여코드(비활성)</h2>
+      <span class="challenge-identity-tag" id="challengeIdentityTag">승급 대기</span>
+    </div>
+    <div class="challenge-identity-row">
+      <strong class="challenge-identity-value" id="identityCode" aria-live="polite">고유번호 확인 중</strong>
+      <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled>번호 복사</button>
+    </div>
+    <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
+    <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
+  </section>
+    <section class="challenge-identity" id="challengeReferralPanel"
     data-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeReferralTitle">
     <div class="challenge-identity-head">
       <h2 id="challengeReferralTitle">나의 전용 조사 링크</h2>
@@ -262,22 +282,8 @@
     </div>
     <p id="challengeReferralProgress" class="challenge-identity-feedback" aria-live="polite"></p>
     <button id="challengeReferralRetry" type="button" class="challenge-identity-copy" hidden style="margin-top:10px">링크 다시 확인</button>
-    <p class="small-note" id="challengeReferralNote">동료 1명의 설문 참여가 확인되면 Lv.2로 승급해요.</p>
   </section>
-  <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
-    <div class="challenge-vip-crown" id="challengeVipMedal" hidden><span aria-hidden="true">🏅</span> BAEGU VIP · LEVEL 2</div>
-    <div class="challenge-identity-head">
-      <h2 id="challengeIdentityTitle">Lv.2 참여코드(비활성)</h2>
-      <span class="challenge-identity-tag" id="challengeIdentityTag">승급 대기</span>
-    </div>
-    <div class="challenge-identity-row">
-      <strong class="challenge-identity-value" id="identityCode" aria-live="polite">고유번호 확인 중</strong>
-      <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled>번호 복사</button>
-    </div>
-    <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
-    <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
-  </section>
-    <section class="steps" aria-labelledby="steps-title">
+  <section class="steps" aria-labelledby="steps-title">
     <h2 class="section-title" id="steps-title">참여 인증</h2>
 
     <section class="step-card" aria-labelledby="step-1">
@@ -308,7 +314,7 @@
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/challenge.js?v=20261123-safe-capture1"></script>
-<script src="js/challenge-referral-v1.js?v=20261123-count-vip1"></script>
+<script src="js/challenge-referral-v1.js?v=20261123-vip2"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>

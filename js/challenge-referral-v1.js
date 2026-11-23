@@ -9,7 +9,6 @@
   const retry = get('challengeReferralRetry');
   const title = get('challengeReferralTitle');
   const tag = get('challengeReferralTag');
-  const note = get('challengeReferralNote');
   const identityPanel = get('challengeIdentityPanel');
   const identityTitle = get('challengeIdentityTitle');
   const identityTag = get('challengeIdentityTag');
@@ -18,7 +17,7 @@
   const vipMedal = get('challengeVipMedal');
   const certificateMedal = get('certificateMedal');
   const certificateThanks = get('certificateThanks');
-  if (![panel, linkField, copyButton, status, progress, title, tag, note,
+  if (![panel, linkField, copyButton, status, progress, title, tag,
       identityPanel, identityTitle, identityTag, identityReward, copyIdentityCode].every(Boolean)) return;
 
   const endpoint = SUPABASE_URL + '/functions/v1/beagu-referral-link-v1';
@@ -37,7 +36,7 @@
     identityPanel.classList.toggle('is-lv2', upgraded);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
     identityTitle.textContent = upgraded ? 'Lv.2 참여코드' : 'Lv.2 참여코드(비활성)';
-    identityTag.textContent = upgraded ? 'Lv.2 활성화 ✦' : '승급 대기';
+    identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' : '승급 대기';
     if(vipMedal)vipMedal.hidden=!upgraded;
     if(certificateMedal)certificateMedal.hidden=!upgraded;
     if(certificateThanks){
@@ -54,7 +53,7 @@
     }
     identityReward.hidden = !upgraded;
     identityReward.textContent = upgraded
-      ? 'Lv.2 달성! 위 코드를 참여코드로 사용하세요.'
+      ? '🏅 공식 Lv.2 참여코드가 활성화되었습니다. 함께해 주셔서 감사합니다.'
       : '';
     copyIdentityCode.textContent = upgraded ? '코드 복사' : '번호 복사';
 
@@ -65,9 +64,6 @@
     linkField.value = currentLink;
     linkField.setAttribute('aria-label', '내 전용 조사 링크');
     copyButton.textContent = '링크 복사';
-    note.textContent = upgraded
-      ? 'Lv.2가 활성화되어도 같은 코드를 사용하며 추천 인원은 계속 누적됩니다.'
-      : '유효한 추천 1건이 확인되면 (비활성)이 사라지고 같은 번호로 Lv.2를 이용할 수 있습니다.';
   }
   function reset() {
     ++generation;
