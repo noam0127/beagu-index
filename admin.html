@@ -6,7 +6,7 @@
   <meta name="robots" content="noindex,nofollow,noarchive">
   <meta name="referrer" content="no-referrer">
   <title>관리자 · 배구지수</title>
-  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261122-n1review1">
+  <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261123-level-approvals1">
 </head>
 <body>
   <main class="shell">
@@ -276,43 +276,81 @@
           <h3 id="adminReview2026Heading">2026 조사자료 자동 검증 · 공개 흐름</h3>
           <small>응답 신뢰성 → 집계 정확성 → 공개 적격성 · 예외 중심 운영</small>
         </div>
-        <p class="subtle">정상 자료는 가능한 범위에서 자동 검증하고, 확인이 필요한 예외만 아래 목록에 표시합니다.
-          학교별 집계 정확성과 개인 응답 신뢰성은 다른 검사입니다. 공개 근거·재식별 위험 확인 전에는 자동 공개하지 않습니다.</p>
+        <p class="admin-review-intro">검증 현황은 핵심 수치만 표시합니다. 개별 학교의 공개 근거와 재식별 위험은 별도로 심사하며, 기술검사 통과만으로 공개되지 않습니다.</p>
+        <div class="admin-review-overview" aria-label="2026 조사자료 핵심 현황">
+          <article><span>집계 학교</span><strong id="adminReview2026Total">—</strong><small>2026 비공개 학교별 집계</small></article>
+          <article><span>기술검사 통과</span><strong id="adminReview2026Technical">—</strong><small>전체 문항 기준</small></article>
+          <article><span>학교별 최종 승인</span><strong id="adminReview2026Approved">—</strong><small>레벨별 최종 승인과 별개</small></article>
+        </div>
         <div class="admin-pipeline-stages" role="list" aria-label="2026 조사자료 검증 3단계">
           <article class="admin-pipeline-stage" role="listitem" aria-labelledby="adminPipelineTrustHeading">
-            <p class="admin-pipeline-index">01 · 조사 응답</p>
-            <h4 id="adminPipelineTrustHeading">응답 신뢰성 검사</h4>
-            <strong id="adminPipelineTrustStatus">추천 연결 응답만 부분 검사</strong>
-            <p class="subtle">중복 제출·같은 보기 반복·자기추천 신호 검토. 이상 징후는 부정행위 확정이 아닌 잠정 보류입니다.</p>
-            <p class="admin-pipeline-detail">추천 검사 기록 <b id="adminPipelineReferralEvents">—</b>건 · 관리자 검토 <b id="adminPipelineReferralPending">—</b>건</p>
-            <p class="admin-pipeline-footnote">일반 설문 전체의 개별 응답 신뢰성 검사는 아직 연결되지 않았습니다.</p>
+            <p class="admin-pipeline-index">01 / 응답</p>
+            <h4 id="adminPipelineTrustHeading">응답 신뢰성</h4>
+            <strong id="adminPipelineTrustStatus">연결 검사 범위 확인 중</strong>
+            <p class="admin-pipeline-primary">검토 필요 <b id="adminPipelineReferralPending">—</b>건</p>
+            <details class="admin-pipeline-more"><summary>검사 범위와 세부 값</summary>
+              <p>추천 연결 응답만 부분 검증합니다. 이상 징후는 부정행위 확정이 아닙니다.</p>
+              <p>추천 검사 기록 <b id="adminPipelineReferralEvents">—</b>건</p>
+            </details>
           </article>
           <article class="admin-pipeline-stage" role="listitem" aria-labelledby="adminPipelineAccuracyHeading">
-            <p class="admin-pipeline-index">02 · 비공개 자동 집계</p>
-            <h4 id="adminPipelineAccuracyHeading">집계 정확성 검사</h4>
-            <strong>자동 진행 · 기초 정합성 검사</strong>
-            <p class="subtle">학교 매칭, 필수 문항 집계, 보기값·문항 구조를 검사합니다. 기본 검사와 전체 문항 기술검사는 별도 기준입니다.</p>
-            <p class="admin-pipeline-detail">기초 통과 <b id="adminPipelineAggregateAuto">—</b>개교 · 확인 필요 <b id="adminPipelineAggregateReview">—</b>개교</p>
-            <p class="admin-pipeline-detail">전체 문항 기술 통과 <b id="adminPipelineTechnicalPass">—</b>개교</p>
-            <p class="admin-pipeline-footnote">집계 정상 판정은 응답의 진실성이나 웹 공개 허가가 아닙니다.</p>
+            <p class="admin-pipeline-index">02 / 집계</p>
+            <h4 id="adminPipelineAccuracyHeading">집계 정확성</h4>
+            <strong>기초 정합성 자동 검사</strong>
+            <p class="admin-pipeline-primary">확인 필요 <b id="adminPipelineAggregateReview">—</b>개교</p>
+            <details class="admin-pipeline-more"><summary>집계 단계 세부 값</summary>
+              <p>기초 통과 <b id="adminPipelineAggregateAuto">—</b>개교</p>
+              <p>전체 문항 기술 통과 <b id="adminPipelineTechnicalPass">—</b>개교</p>
+              <p>기술검사 합격은 자료의 진실성이나 공개 허가가 아닙니다.</p>
+            </details>
           </article>
           <article class="admin-pipeline-stage" role="listitem" aria-labelledby="adminPipelineEligibilityHeading">
-            <p class="admin-pipeline-index">03 · 공개 전 보호</p>
-            <h4 id="adminPipelineEligibilityHeading">공개 적격성 검사</h4>
-            <strong id="adminPipelinePublicationStatus">공개 조건 확인 중</strong>
-            <p class="subtle">공개 근거, 소표본·재식별 위험, 민감 문항, 최신 스냅샷 승인 상태를 별도로 확인합니다.</p>
-            <p class="admin-pipeline-detail">근거 검증 완료 <b id="adminPipelineBasis">—</b>개교 · 승인 <b id="adminPipelineApproved">—</b>개교</p>
-            <p class="admin-pipeline-detail">응답 1건 학교 <b id="adminPipelineSingle">—</b>개교 · 기술검사 통과 <b id="adminPipelineSingleTechnical">—</b>개교 · 추가 확인 <b id="adminPipelineSingleReview">—</b>개교</p>
-            <p class="admin-pipeline-footnote">응답 1건도 공개 심사 및 최종 승인 대상입니다. 5건 미만이라는 이유만으로 자동 반려하지 않습니다. 단, 공개 근거와 재식별 위험 검증 및 최종 승인 없이는 학교별 결과를 공개하지 않습니다.</p>
-            <p class="admin-pipeline-footnote">자동 공개는 적격성 확인 후에만 가능하며, 현재 검수 통과만으로 활성화되지 않습니다.</p>
+            <p class="admin-pipeline-index">03 / 공개 근거</p>
+            <h4 id="adminPipelineEligibilityHeading">공개 적격성</h4>
+            <strong id="adminPipelinePublicationStatus">개별 승인 필요</strong>
+            <p class="admin-pipeline-primary">근거 검증 <b id="adminPipelineBasis">—</b>개교</p>
+            <details class="admin-pipeline-more"><summary>학교별 공개 검토 기준</summary>
+              <p>학교별 최종 승인 <b id="adminPipelineApproved">—</b>개교</p>
+              <p>응답 1건 학교 <b id="adminPipelineSingle">—</b>개교 /
+                기술 통과 <b id="adminPipelineSingleTechnical">—</b>개교 /
+                추가 확인 <b id="adminPipelineSingleReview">—</b>개교</p>
+              <p>응답 수 1건인 학교도 검토할 수 있지만, 동의·적법 근거·재식별 위험 검수와 최종 승인을 생략하지 않습니다.</p>
+            </details>
           </article>
         </div>
-        <p class="subtle" id="adminPipelineStatus" role="status" aria-live="polite">3단계 운영 상태를 불러오는 중입니다.</p>
-        <div class="metrics" id="adminReview2026Metrics">
-          <article><h4>비공개 학교별 집계</h4><strong id="adminReview2026Total">—</strong></article>
-          <article><h4>전체 문항 기술검사 통과</h4><strong id="adminReview2026Technical">—</strong></article>
-          <article><h4>공개 최종 승인</h4><strong id="adminReview2026Approved">—</strong></article>
-        </div>
+        <p class="subtle" id="adminPipelineStatus" role="status" aria-live="polite">검증 상태를 불러오는 중입니다.</p>
+        <section class="admin-release-section" aria-labelledby="adminReleaseHeading">
+          <div class="admin-release-head"><div>
+            <h4 id="adminReleaseHeading">2026 자료 레벨별 최종 공개 승인</h4>
+            <p>Lv.0 · Lv.1 · Lv.2를 각각 승인합니다. 학교별 최종 승인과 공개 적격성 검토가 완료된 자료만 대상입니다.</p>
+          </div><button type="button" class="secondary" id="adminLevelReleaseReload">상태 새로고침</button></div>
+          <div class="admin-release-grid" id="adminLevelReleaseGrid">
+            <article class="admin-release-card" data-release-level="0">
+              <div class="admin-release-card-head"><h5>Lv.0 <span>일반 방문자</span></h5><strong id="adminLevelReleaseState0">확인 중</strong></div>
+              <p class="admin-release-main">공개 대상 <b id="adminLevelReleaseCovered0">—</b>개교</p>
+              <p class="admin-release-hint">2026 학교별 상세 결과는 현재 Lv.0에 제공하지 않습니다. 향후 자료 공개를 위한 별도 승인입니다.</p>
+              <button type="button" class="primary" id="adminLevelReleaseButton0" disabled>Lv.0 최종 공개 승인</button>
+              <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke0" disabled hidden>Lv.0 공개 중단</button>
+            </article>
+            <article class="admin-release-card" data-release-level="1">
+              <div class="admin-release-card-head"><h5>Lv.1 <span>인증 참여자</span></h5><strong id="adminLevelReleaseState1">확인 중</strong></div>
+              <p class="admin-release-main">공개 대상 <b id="adminLevelReleaseCovered1">—</b>개교</p>
+              <p class="admin-release-hint">학교별 승인 및 24시간 대기 조건을 통과한 2026 자료만 표시합니다.</p>
+              <button type="button" class="primary" id="adminLevelReleaseButton1" disabled>Lv.1 최종 공개 승인</button>
+              <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke1" disabled hidden>Lv.1 공개 중단</button>
+            </article>
+            <article class="admin-release-card" data-release-level="2">
+              <div class="admin-release-card-head"><h5>Lv.2 <span>챌린지 달성자</span></h5><strong id="adminLevelReleaseState2">확인 중</strong></div>
+              <p class="admin-release-main">공개 대상 <b id="adminLevelReleaseCovered2">—</b>개교</p>
+              <p class="admin-release-hint">검증된 학교 자료에 한해 최종 승인 직후 공개할 수 있습니다.</p>
+              <button type="button" class="primary" id="adminLevelReleaseButton2" disabled>Lv.2 최종 공개 승인</button>
+              <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke2" disabled hidden>Lv.2 공개 중단</button>
+            </article>
+          </div>
+          <p id="adminLevelReleaseStatus" class="subtle" role="status" aria-live="polite">레벨별 공개 권한을 확인하고 있습니다.</p>
+        </section>
+        <details class="admin-review-disclosure" id="adminReview2026Details">
+          <summary>학교별 상세 검증 · 예외 목록 열기</summary>
         <div class="ranking-card">
           <div class="section-title">
             <label for="adminReview2026Filter">집계 정확성 예외 및 공개 상태</label>
@@ -339,6 +377,7 @@
             <button type="button" class="secondary" id="adminReview2026Next" disabled>다음</button>
           </div>
         </div>
+        </details>
         <div class="ranking-card" id="adminReferralRiskCard" hidden>
           <div class="section-title">
             <h4>응답 신뢰성 검사 · 추천코드 연결 예외</h4>
@@ -394,7 +433,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
   <script defer src="js/beagu-admin-access-v1.js?v=20261121-members1"></script>
-  <script defer src="js/beagu-2026-admin-review.js?v=20261123-final-approval1"></script>
+  <script defer src="js/beagu-2026-admin-review.js?v=20261123-level-approvals1"></script>
   <script defer src="js/beagu-admin-members-v1.js?v=20261121-members1"></script>
 </body>
 </html>
