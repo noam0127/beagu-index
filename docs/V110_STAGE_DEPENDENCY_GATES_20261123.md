@@ -66,3 +66,9 @@
 - 시험 DB: 심사 품질/추천 품질/비공개 감사 테이블 6개, 큐·파이프라인·추천 품질 조회 및 보류·검토·승급 결정 RPC 6종 복구. 신규 테이블 RLS/익명 직접 접근 차단.
 - 실제 SQL 읽기 3종 성공, 무권한 결정 3종 거부, 감사 기록 건수 변동 없음. 시험 관리자 API는 v2로 업데이트, MFA 세션 인수 전달 및 DB 원자적 감사로 개선.
 - [소스·검증 상세](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/docs/V110_STAGE_REVIEW_RPC_RECOVERY_20261123.md). **실소유자 AAL2 양성 E2E·개인정보 공개 승인 미검증**, 5개 기능 잠금 유지.
+
+## 관리자 MFA QA 진단용 시험 API v3
+
+- `beagu-2026-review-admin` v3: `?preflight=mfa`는 **실제 Auth JWT 검증/소유자 DB 역할/활성 AAL2 세션 읽기 전용**. 원래 심사 POST는 계속 `REVIEW_NOT_READY` 503.
+- [Actions #45091965156](https://github.com/noam0127/beagu-index/actions/runs/45091965156)에서 위조·과대 JWT와 운영 출처 거부, 기존 잠금 유지 PASS. 실제 시험 소유자·MFA 계정 0건이므로 **양성 로그인 E2E는 여전히 미실시**.
+- 16/16 API 이름 설치·42개 실제 Edge 등록·5개 롤아웃 잠금 유지. 완료·출시 허용 금지.
