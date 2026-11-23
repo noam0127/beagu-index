@@ -32,6 +32,8 @@ names = {f["slug"] for f in inventory["functions"]}
 assert "beagu-challenge-identity" in names
 assert "beagu-referral-link-v1" in names
 assert "beagu-referral-checkin-v1" in names
+assert {"beagu-2026-review-admin","class-diary-guest-access-v1",
+        "class-diary-progress-v1"}.issubset(names)
 assert "beagu-level-api" in names
 assert "beagu-admin-access" in names
 assert "beagu-telemetry-v2" in names, "Recovered staging telemetry must be inventoried"
@@ -86,9 +88,13 @@ print("PASS: wrong project, duplicate entries and stale evidence fail closed")
 actual = module.audit(today=date(2026, 11, 23))
 assert "beagu-telemetry-v2" not in actual["missing_with_repo_source"]
 assert actual["missing_without_repo_source"] == []
-assert len(actual["missing"]) == 3
-assert set(actual["locked"]) == {"beagu-referral-link-v1","beagu-referral-checkin-v1"}
+assert actual["missing"] == {}
+assert set(actual["locked"]) == {
+    "beagu-referral-link-v1","beagu-referral-checkin-v1",
+    "beagu-2026-review-admin","class-diary-guest-access-v1",
+    "class-diary-progress-v1"
+}
 assert "beagu-challenge-identity" not in actual["missing"]
 assert actual["ready_for_real_e2e"] is False
 assert actual["production_deployment_permitted"] is False
-print("PASS: challenge/referral functions deployed, 3 missing; 2 rollout-locked remain")
+print("PASS: all 16 API slugs installed, five critical rollouts remain LOCKED")
