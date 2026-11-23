@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.0";
 import { resolveVerifiedPostitOwner, eligiblePostitAuthUser } from "./_shared/postit-member-ownership.mjs";
+import { verifiedAuthSessionId } from "./_shared/member-session-v1.mjs";
 
 // Post-it's data and author identities never become directly queryable with
 // the browser's publishable key. Even curated projections require Lv2 authorization.
@@ -74,6 +75,14 @@ async function authenticatedUser(req:Request){
  const {data,error}=await db.auth.getUser(jwt);
  const user=data?.user;
  if(error||!eligiblePostitAuthUser(user))return null;
+ // Every linked-member operation rechecks this Auth JWT's signed session
+ // claim against the live DB, independent of token expiry / client cache.
+ const authSessionId=verifiedAuthSessionId(jwt,user);
+ if(!authSessionId)return null;
+ const {data:active,error:sessionError}=await db.rpc(
+   "beagu_stage_active_member_auth_session",
+   {p_user:user.id,p_session:authSessionId});
+ if(sessionError||active!==true)return null;
  return user;
 }
 async function verifiedMember(req:Request,viewer:any){
