@@ -31,21 +31,23 @@ assert inventory["project_ref"] == module.PROJECT
 names = {f["slug"] for f in inventory["functions"]}
 assert "beagu-level-api" in names
 assert "beagu-admin-access" in names
-assert "beagu-telemetry-v2" not in names, "Snapshot must reflect real stage absence"
+assert "beagu-telemetry-v2" in names, "Recovered staging telemetry must be inventoried"
 assert "beagu-edited-api-v1" in names, "Staging restored API must be reflected"
 assert "arcade-leaderboard" in names and "beagu-school-culture-v1" in names and "beagu-school-interest-v1" in names
 report = module.check(calls, inventory, date(2026, 11, 23))
-assert list(report["missing"]) == ["beagu-telemetry-v2"]
-assert report["ready_for_real_e2e"] is False
+assert report["missing"] == {}
+assert report["ready_for_real_e2e"] is True
 assert report["real_e2e_executed"] is False
 assert report["production_deployment_permitted"] is False
-print("PASS: known missing stage telemetry detected, never counted as E2E success")
+print("PASS: recovered telemetry is now in the snapshot, without claiming E2E")
 
 complete = json.loads(json.dumps(inventory))
-complete["functions"].append({
-    "slug": "beagu-telemetry-v2", "version": 1, "status": "ACTIVE", "verify_jwt": False
-})
 yes = module.check(calls, complete, date(2026, 11, 23))
+missing = json.loads(json.dumps(inventory))
+missing["functions"] = [x for x in missing["functions"] if x["slug"] != "beagu-telemetry-v2"]
+denied = module.check(calls, missing, date(2026, 11, 23))
+assert list(denied["missing"]) == ["beagu-telemetry-v2"]
+assert denied["ready_for_real_e2e"] is False
 assert yes["missing"] == {}
 assert yes["ready_for_real_e2e"] is True
 assert yes["real_e2e_executed"] is False
@@ -70,9 +72,9 @@ print("PASS: wrong project, duplicate entries and stale evidence fail closed")
 
 # This test runs AFTER the CI builds the exact Git SHA preview.
 actual = module.audit(today=date(2026, 11, 23))
-assert "beagu-telemetry-v2" in actual["missing_with_repo_source"]
+assert "beagu-telemetry-v2" not in actual["missing_with_repo_source"]
 assert actual["missing_without_repo_source"] == []
-assert len(actual["missing"]) == 7
+assert len(actual["missing"]) == 6
 assert actual["ready_for_real_e2e"] is False
 assert actual["production_deployment_permitted"] is False
-print("PASS: edited/culture/arcade/interest APIs deployed; 7 missing endpoints remain")
+print("PASS: edited/culture/arcade/interest/telemetry deployed; 6 missing endpoints remain")
