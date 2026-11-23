@@ -5,20 +5,20 @@
 ## 실제 시험 환경과 사실
 
 - Supabase 시험 프로젝트 `ycwuugggqbunlbwuzvbx` ACTIVE.
-- 시험 Edge Function **39개** 확인. 정적 시험 웹이 직접 참조하는 **16개 중 13개 배포 이름 존재, 3개 미배포**.
-- **이름이 존재한다는 것과 정상 HTTP 동작한다는 것은 다르다.** 13개 전체의 E2E 완료를 선언하지 않는다.
+- 시험 Edge Function **42개** 확인. 정적 시험 웹이 직접 참조하는 **16개 중 16개 배포 이름 존재, 0개 미배포, 5개 기능 잠금**.
+- **이름이 존재한다는 것과 정상 HTTP 동작한다는 것은 다르다.** 16개 전체의 E2E 완료를 선언하지 않는다.
 - `beagu-school-culture-v1` 시험 v1 ACTIVE. 2026 승인후 24시간·동일 승인 버전·유효 응답/교사 각각 5인 이상·개인정보/소집단/차분 검토를 서버가 확인. 누락 `n_valid`·`teacher_count`를 시험 DB에 추가, 기존 집계 0건 확인. [실제 무인증·CORS HTTP 5개 흐름 PASS](https://github.com/noam0127/beagu-index/actions/runs/45085852982). 정상 Lv1 토큰으로 성공 응답을 받는 시험은 아직 실시하지 않았다.
 - `arcade-leaderboard` 시험 v2 ACTIVE. **503/PGRST205 원인 해결:** 게임에서 일반 점수와 함께 조회하는 `arcade_fastest25_records`가 시험 DB에 미존재. 운영의 스키마·RLS·service_role 전용 권한·`arcade_enforce_game_record_limits` 트리거를 **시험 전용 빈 상태로 복원**하고, [GitHub Actions #45086190661 5차 재실행](https://github.com/noam0127/beagu-index/actions/runs/45086190661)에서 실제 GET·부정 요청 HTTP 검증 PASS. [회귀 검증 #45087829964](https://github.com/noam0127/beagu-index/actions/runs/45087829964)도 PASS. **이 결과는 게임 플레이→점수 등록 브라우저 E2E를 증명하지 않음.**
 - 이전 단계에서 복구한 `beagu-edited-api-v1` 시험 v1의 무인증/출처 거부 HTTP는 [PASS](https://github.com/noam0127/beagu-index/actions/runs/45085533181). 정상 Lv2 자료 조회 및 브라우저 E2E는 미실시.
 - 분리된 `scripts/staging/recovered-*/index.ts`는 운영 자동배포 디렉터리 밖에 둔다. 서비스 역할 비밀을 GitHub에 입력하지 않았으며 사용자 데이터 복사는 없었다.
 
-## 미배포 3개와 실제 소스에서 발견한 의존성
+## 배포됐으나 기능 잠금 3개와 실제 의존성
 
-| API | 시험 DB/구성의 확인된 차단 사항 | 분류 |
+| API (배포됨, 기능 잠금) | 시험 DB/구성의 확인된 차단 사항 | 분류 |
 |---|---|---|
-| `beagu-2026-review-admin` | `beagu_admin_active_mfa_session`은 존재하나 검토 대기열·심사 기록·보류·추천 품질 등 6종 RPC 부재 | 개인정보·관리 |
-| `class-diary-guest-access-v1` | `beagu_consume_login_budget` 존재, `beagu_consume_class_diary_preview_budget` 부재. 별도 미리보기 PIN 설정 필요 | 다른 게임·인증 |
-| `class-diary-progress-v1` | `beagu_class_diary_preview_progress_read`, `beagu_class_diary_preview_progress_write` RPC 부재 | 다른 게임·저장 |
+| `beagu-2026-review-admin` | 시험 v1 설치. 관리자 실 MFA/감사·6개 심사 RPC 미검증 → `REVIEW_NOT_READY` | 개인정보·관리 |
+| `class-diary-guest-access-v1` | 시험 v1 설치. preview 시도 제한 RPC 복원, 별도 PIN·관리자 승인 미설정 → `PREVIEW_NOT_READY` | 다른 게임·인증 |
+| `class-diary-progress-v1` | 시험 v1 설치. revision CAS 저장·조회 RPC 복원, 별도 PIN·승인 미설정 → `PREVIEW_NOT_READY` | 다른 게임·저장 |
 
 *이 목록은 직접 참조되는 RPC에 대한 소스 스캔과 시험 DB `pg_proc` 조회 결과이다. 동적 의존성·필수 DB 데이터·배포 비밀 구성까지 자동으로 보증하지 않는다.*
 
@@ -55,3 +55,8 @@
 - `beagu-challenge-identity`: 기존 생산용 무기기증명 RPC를 시험 환경에서 그대로 노출하지 않고 `beagu_stage_issue_challenge_bound`를 통한 Lv1 세션/기기/UUID 원자적 바인딩으로 교체. GitHub 브라우저 소스에도 동일 기기 비밀을 전송하도록 수정. [HTTP 부정검사 PASS](https://github.com/noam0127/beagu-index/actions/runs/45089094875), SQL 양성/부정 롤백 검증 PASS. 실제 로그인 양성 HTTP는 아직 미실시.
 - `beagu-referral-link-v1` 및 `beagu-referral-checkin-v1`는 시험 프로젝트에 v1 설치했으나 `public_enabled=false`, `BEAGU_STAGING_REFERRAL_VERIFIED` 미설정으로 `REFERRAL_NOT_READY`를 반환하도록 고정. [실제 HTTP 차단검사 PASS](https://github.com/noam0127/beagu-index/actions/runs/45089400570).
 - 외부 설문 직접 제출 여부·추천 인정 심사를 전혀 증명하지 못한 상태이므로 두 함수는 **PRESENT but LOCKED**. 향후 누락 API가 0개라도 잠금 중인 함수가 있으면 전체 E2E readiness=NO-GO.
+
+## 최종 미배포 0, 롤아웃 잠금 5
+
+- [GitHub Actions #45090059588](https://github.com/noam0127/beagu-index/actions/runs/45090059588)에서 2026 관리자·학급일지 3개 시험 API의 HTTP 차단 PASS. 가상 저장 SQL은 rollback으로 종료, DB 행 0건.
+- 미배포 함수가 0개여도 `feature_gates` 5개가 남아 있는 동안 `ready_for_real_e2e=false`; **운영 승격 NO-GO 유지.**
