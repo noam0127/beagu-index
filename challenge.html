@@ -44,7 +44,17 @@
   }
   .trophy { font-size: 43px; line-height: 1.3; }
   .certificate-level-banner { display:inline-flex;align-items:center;justify-content:center;max-width:100%;margin:0 auto 14px;padding:9px 17px;border-radius:999px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:15px;font-weight:850;letter-spacing:-.025em; }
-  #certificate[data-level="2"] .certificate-level-banner {background:#fff7e5;color:#795012;border-color:#e7c78c;}
+  /* Captured Lv.2 certificate: restrained purple celebration. */
+  #certificate[data-level="2"]{border-color:#d8c5f6;background:linear-gradient(165deg,#fbf8ff 0%,#fff 55%);box-shadow:0 9px 33px rgba(100,51,169,.13);}
+  #certificate[data-level="2"] .certificate-level-banner{
+    padding:11px 22px;border:1px solid #cfb3fd;
+    background:linear-gradient(110deg,#55218f 0%,#7739bd 55%,#9b5fea 100%);
+    color:#fff;font-size:16px;font-weight:900;letter-spacing:.01em;
+    text-shadow:0 1px 2px rgba(33,8,56,.32);
+    box-shadow:0 0 0 4px rgba(183,147,238,.18),0 7px 21px rgba(104,53,171,.28);
+  }
+  #certificate[data-level="2"] .rank{background:#f4edff;}
+  #certificate[data-level="2"] .rank strong{color:#6332a4;}
   .certificate h1 { font-size: 26px; line-height: 1.3; letter-spacing: -1px; margin: 10px 0 5px; }
   .subtitle { color: #63728b; font-size: 14px; }
   .thanks { font-size: 14px; color: var(--muted); margin: 16px 0 0; }
@@ -318,7 +328,7 @@
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/challenge.js?v=20261123-banner-private3"></script>
-<script src="js/challenge-referral-v1.js?v=20261123-premium-grid1"></script>
+<script src="js/challenge-referral-v1.js?v=20261123-level2-purple1"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>
