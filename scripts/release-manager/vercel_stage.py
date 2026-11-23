@@ -26,6 +26,8 @@ def main():
     sha = plan.get("staging_sha")
     if plan.get("target") != "staging" or not re.fullmatch(r"[0-9a-f]{40}", sha or ""):
         raise RuntimeError("Only an approved pinned staging job is accepted")
+    if not os.environ.get("VERCEL_TOKEN") or not os.environ.get("VERCEL_STAGE_BYPASS"):
+        raise RuntimeError("Both independent stage deployment and smoke-test credentials must be configured before upload")
     with tempfile.TemporaryDirectory() as tmp:
         source = pathlib.Path(tmp) / "source"
         archive(sha, source)
