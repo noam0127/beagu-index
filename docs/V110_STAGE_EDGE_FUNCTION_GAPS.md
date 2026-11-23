@@ -1,7 +1,7 @@
 # 배구지수 v1.1.0 — 시험 Supabase Edge Function 실배포 현황
 
 2026년 11월 23일(한국 시간) **시험 프로젝트**
-`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **34개**
+`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **35개**
 Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전의 스냅샷은
 `scripts/staging/stage-edge-functions-inventory.json`에 있다.
 
@@ -22,9 +22,9 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 
 2026-11-23 기준 시험 웹 빌드 산출물(HTML 24개 및 JS·CSS 포함)에서
 정적 URL 또는 SDK 호출로 참조하는 Edge Function은 **16개**이고,
-시험 Supabase 실제 목록에는 이 중 **8개**가 배포되어 있다.
+시험 Supabase 실제 목록에는 이 중 **9개**가 배포되어 있다.
 
-아래 8개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
+아래 7개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
 
 | 구분 | 시험 프로젝트에 없는 함수 | 정적 호출 파일 |
 |---|---|---|
@@ -32,12 +32,11 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 | 추천 응답 | `beagu-referral-checkin-v1` | `js/beagu-referral-form-v1.js` |
 | 추천 링크 | `beagu-referral-link-v1` | `js/challenge-referral-v1.js` |
 | 관리자 검토 | `beagu-2026-review-admin` | `js/beagu-2026-admin-review.js` |
-| 관심학교 | `beagu-school-interest-v1` | `js/beagu-school-interest-v1.js` |
 | 방문 계측 | `beagu-telemetry-v2` | `js/visit-stats.js`, `js/beagu-presence-games-v1.js` |
 | 학급일지 접근 | `class-diary-guest-access-v1` | `js/class-diary-home-entry-v1.js` |
 | 학급일지 진행 | `class-diary-progress-v1` | `js/class-diary-progress-v1.js` |
 
-**소스 준비 상태:** 누락된 8개는 모두 GitHub 개발 브랜치의
+**소스 준비 상태:** 누락된 7개는 모두 GitHub 개발 브랜치의
 `supabase/functions/<함수명>/index.ts`가 존재한다. 이는 **시험 배포 가능성
 검토 대상**이라는 뜻이지, SQL 의존성·권한·보안·요금 검증이 끝났다는 뜻은
 아니다. **`beagu-edited-api-v1`은 운영 배포본에서 소스를 읽기 전용으로 확보한 뒤 시험 전용으로 복구하여 시험 Supabase v1로 배포하였다.**
@@ -91,3 +90,12 @@ python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
 - `beagu-school-culture-v1` v1: 운영 도메인 CORS 및 운영 프로젝트를 차단하는 시험 전용 소스 배포. 시험 `beagu_release_metrics_v2`의 `n_valid`, `teacher_count` 두 정수 칼럼만 추가하고, 기존 행은 0건. 5인 기준, 모든 개인정보 검토 플래그, 승인 후 24시간을 서버에서 검증. 실제 성공적인 인증·분류 결과 반환은 미검증.
 - `arcade-leaderboard` v1: 운영 프로젝트 거부, 명시적 시험 Origin만 허용, 실제 설문으로 이동하는 URL 제거. 시험의 `arcade_game_sessions`, `arcade_game_scores` 테이블 구조가 운영과 동일함을 읽기 전용으로 확인. 실제 순위 GET과 부정 요청을 검증하되 점수 등록·게임 전체 E2E 성공은 별도 검증 전까지 선언하지 않음.
 - 시험에 원자료·개인정보·운영 게임 점수를 이관하지 않음. 운영 DB·웹·GitHub `main` 변경 없음.
+
+## 2026-11-23 추가 복구: 학교 관심도
+
+- `beagu-school-interest-v1` 시험 Edge v1 ACTIVE. `beagu_school_interest_daily` 빈 테이블 및 `beagu_school_interest_rankings()` SQL RPC 복구.
+- SQL 직접 실행 결과 `{"rising":[],"window_hours":72}`; 이벤트 0건, RLS true. `anon`/`authenticated`의 테이블 SELECT·RPC EXECUTE 모두 불가. 서버 `service_role`만 SELECT/EXECUTE 허용.
+- 최소 방문자 5명과 이전 72시간 대비 증가 3명 조건을 준수하며 개인별 방문 이벤트는 반환하지 않음.
+- [GitHub Actions #45086973139](https://github.com/noam0127/beagu-index/actions/runs/45086973139): 실제 HTTP/가짜 토큰/출처 거부 검증 성공. 다만 정상 Lv1 사용자 경로는 미검증.
+- **게임 API는 HTTP 503 `PGRST205` 지속**: 시험 DB 테이블·서버 SELECT 권한은 존재, 익명 공개키로 접근하는 임시 빈 REST 경로는 HTTP 200. 게임 테이블 임시 SELECT GRANT 후에도 Edge 서버 요청의 404는 계속됨. 실제 원인(서버 인증 헤더·역할별 스키마 등) 미확정. RLS·권한을 더 넓히지 않음.
+- 해당 원인 분석 실험 후 `anon` 임시 GRANT 철회, 임시 정책과 빈 진단 테이블 제거. 이 실험으로 정상 게임 조회가 증명된 것은 아님.
