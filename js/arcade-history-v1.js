@@ -49,11 +49,23 @@
   }
   return ["이전 기록","loss"];
  }
+ function schoolHeading(row){
+  const title=el("h2","history-school");
+  const id=row.schoolId;
+  const name=row.schoolName||"학교 미등록";
+  if(typeof id==="string"&&/^[A-Z0-9]{7}$/.test(id)){
+   const link=el("a","history-school-link",name);
+   link.href="school-link.html?school_id="+encodeURIComponent(id);
+   link.setAttribute("aria-label",name+" 학교 상세조회");
+   title.append(link);
+  }else title.textContent=name;
+  return title;
+ }
  function renderRecord(row){
   const result=row.details&&typeof row.details==="object"?row.details:{};
   const card=el("article","history-record");
   const head=el("div","history-record-head"),about=el("div"),score=el("div","history-score",number(row.score)+"점");
-  about.append(el("h2","history-school",row.schoolName||"학교 미등록"),
+  about.append(schoolHeading(row),
     el("div","history-meta",date(row.createdAt)+" · "+(DIFFICULTIES[row.difficulty]||"난이도 미확인")));
   const [label,kind]=titleFor(row);
   about.append(el("span","history-status"+(kind==="loss"?" loss":""),label));

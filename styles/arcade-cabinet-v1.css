@@ -65,3 +65,7 @@ body.arcade-body {
  .arcade-ranking-head strong{font-size:13px}
 }
 @media(prefers-reduced-motion:reduce){.arcade-body *{transition:none!important}}
+
+/* Ranking school names link to the level-aware public school detail view. */
+.arcade-rank-school-link{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;cursor:pointer}
+.arcade-rank-school-link:hover,.arcade-rank-school-link:focus-visible{color:#1d4ed8}
