@@ -40,7 +40,7 @@ Deno.serve(async(request:Request)=>{
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(!["queue","pipeline","hold","basis_review","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
+ if(!["queue","pipeline","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -91,6 +91,44 @@ Deno.serve(async(request:Request)=>{
        p_decision:decision,p_reason:reason});
     if(error)return send(origin,409,{error:"review_denied_or_changed"});
     return send(origin,200,data||{ok:true,decision});
+  }
+  if(input.action==="finalize"){
+    const id=typeof input.school_id==="string"?input.school_id:"";
+    const sha=typeof input.payload_sha256==="string"?input.payload_sha256:"";
+    const ref=typeof input.notice_source_ref==="string"?input.notice_source_ref.trim():"";
+    const digest=typeof input.notice_digest_sha256==="string"?input.notice_digest_sha256:"";
+    const when=typeof input.notice_effective_at==="string"?input.notice_effective_at:"";
+    const scope=typeof input.publication_scope==="string"?input.publication_scope.trim():"";
+    const notes=typeof input.notes==="string"?input.notes.trim():"";
+    const type=typeof input.basis_type==="string"?input.basis_type:"";
+    const checks=input.review_checks;
+    const ev=input.evidence;
+    const names=["distinct_respondents_reviewed","personal_data_reviewed","small_sample_reviewed",
+      "reidentification_reviewed","prior_data_combination_reviewed"];
+    const evidenceNames=["source_scoring","school_identity","duplicate_responses",
+      "consent","small_sample","reidentification","prior_data_combination"];
+    if(!/^[A-Z0-9]{7}$/.test(id)||!/^[a-f0-9]{64}$/.test(sha)||
+      !["EXPLICIT_RESPONDENT_CONSENT","OTHER_DOCUMENTED_LEGAL_BASIS"].includes(type)||
+      ref.length<12||ref.length>400||/[<>\r\n]/.test(ref)||
+      !/^[a-f0-9]{64}$/.test(digest)||
+      !/^20\d\d-\d\d-\d\dT/.test(when)||!Number.isFinite(Date.parse(when))||
+      scope.length<20||scope.length>500||/[<>\r\n]/.test(scope)||
+      notes.length<12||notes.length>500||/[<>]/.test(notes)||
+      !checks||typeof checks!=="object"||Array.isArray(checks)||
+      names.some(k=>checks[k]!==true)||
+      !ev||typeof ev!=="object"||Array.isArray(ev)||
+      evidenceNames.some(k=>typeof ev[k]!=="string"||
+        ev[k].trim().length<10||ev[k].length>400||/[<>]/.test(ev[k])))
+      return send(origin,400,{error:"final_approval_evidence_incomplete"});
+    const {data,error}=await db.rpc("beagu_2026_owner_finalize_one",{
+      p_school_id:id,p_expected_sha256:sha,p_actor:actor,p_session:claims.session_id,
+      p_basis_type:type,p_notice_ref:ref,p_notice_digest:digest,
+      p_notice_effective_at:when,p_scope:scope,p_notes:notes,
+      p_review_checks:checks,p_evidence:ev
+    });
+    if(error){console.error("final_approval_refused",error.code||"unknown");
+      return send(origin,409,{error:"final_approval_rejected_or_snapshot_changed"});}
+    return send(origin,200,data||{ok:true,school_id:id});
   }
   if(input.action==="basis_review"){
     const id=typeof input.school_id==="string"?input.school_id:"";

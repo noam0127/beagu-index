@@ -11,6 +11,8 @@ on:
       - 'tests/2026-review-admin-static.cjs'
       - 'tests/2026-review-basis-pending-static.cjs'
       - 'tests/2026-one-response-final-approval-rule.mjs'
+      - 'tests/2026-owner-final-approval-static.cjs'
+      - 'supabase/migrations/20261123162500_2026_owner_final_review_publication.sql'
       - 'supabase/migrations/20261123153000_beagu_2026_n1_final_approval_eligible.sql'
       - 'styles/beagu-admin-v1.css'
       - '.github/workflows/2026-review-admin-validation.yml'
@@ -26,6 +28,8 @@ on:
       - 'tests/2026-review-admin-static.cjs'
       - 'tests/2026-review-basis-pending-static.cjs'
       - 'tests/2026-one-response-final-approval-rule.mjs'
+      - 'tests/2026-owner-final-approval-static.cjs'
+      - 'supabase/migrations/20261123162500_2026_owner_final_review_publication.sql'
       - 'supabase/migrations/20261123153000_beagu_2026_n1_final_approval_eligible.sql'
       - 'styles/beagu-admin-v1.css'
       - '.github/workflows/2026-review-admin-validation.yml'
@@ -44,6 +48,7 @@ jobs:
           node tests/2026-review-admin-static.cjs
           node tests/2026-review-basis-pending-static.cjs
           node tests/2026-one-response-final-approval-rule.mjs
+          node tests/2026-owner-final-approval-static.cjs
           node tests/admin-dashboard-static.cjs
           node tests/2026-question-results-pipeline.mjs
           node tests/three-day-release.mjs

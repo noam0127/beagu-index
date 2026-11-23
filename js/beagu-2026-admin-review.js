@@ -127,6 +127,7 @@
     row.append(build("p","subtle","공개 적격성 · 근거: "+basisLabel+
       (item.basis_reviewed_at?" · 검토일 "+formatDate(item.basis_reviewed_at):"")));
     if(role==="owner")row.append(makeBasisForm(item));
+    if(role==="owner"&&item.approval_status!=="APPROVED")row.append(makeFinalApproveForm(item));
 
     if(role==="owner" && item.approval_status!=="WITHHELD" || role==="owner" && item.last_decision!=="WITHHELD"){
       const button=build("button","secondary","보류 사유 기록");
