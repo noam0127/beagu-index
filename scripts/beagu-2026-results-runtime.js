@@ -10,14 +10,16 @@ function readBeagu2026SourceSnapshot() {
   const values=source.getRange(1,1,Math.max(1,rowCount),last+1).getDisplayValues();
   const schools=fetchSchools();
   if(!schools.length)throw Error('학교 MASTER 비어 있음');
-  return {startedAt,values,schools};
+  const audit=readBeagu2026VerifiedRematches(values,schools);
+  return {startedAt,values,schools,verifiedRematches:audit.verifiedRematches,
+    rematchVerified:audit.verified,rematchStale:audit.stale};
 }
 function refreshBeagu2026QuestionResults(snapshot) {
   const lock=snapshot?null:LockService.getScriptLock();
   if(lock&&!lock.tryLock(30000))throw Error('질문별 집계 실행 중');
   try {
-    const {startedAt,values,schools}=snapshot||readBeagu2026SourceSnapshot();
-    const {reviewRows, ...payload}=beagu26BuildResults(values,schools,BEAGU26_QUESTION_CATALOG);
+    const {startedAt,values,schools,verifiedRematches}=snapshot||readBeagu2026SourceSnapshot();
+    const {reviewRows, ...payload}=beagu26BuildResults(values,schools,BEAGU26_QUESTION_CATALOG,verifiedRematches);
     payload.snapshot_at=startedAt;
     const master=SpreadsheetApp.openById(BEAGU26.destinationId);
     const tab=master.getSheetByName('2026_문항별_검수대기')||master.insertSheet('2026_문항별_검수대기');
