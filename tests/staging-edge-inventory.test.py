@@ -39,6 +39,10 @@ assert "beagu-admin-access" in names
 assert "beagu-telemetry-v2" in names, "Recovered staging telemetry must be inventoried"
 assert "beagu-perf-ingest-v1" in names, "Server-only page performance API must be registered"
 assert len(names)==43, "Latest actual staging function count must be reflected"
+function_versions={f["slug"]:f["version"] for f in inventory["functions"]}
+assert function_versions["beagu-level-api"]==6, "Never overwrite deployed Lv3 logic with stale branch source"
+assert function_versions["beagu-postit-api-v1"]==5, "Never overwrite device-bound membership binding with stale branch source"
+
 assert "beagu-edited-api-v1" in names, "Staging restored API must be reflected"
 assert "arcade-leaderboard" in names and "beagu-school-culture-v1" in names and "beagu-school-interest-v1" in names
 report = module.check(calls, inventory, date(2026, 11, 23))
