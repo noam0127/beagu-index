@@ -587,6 +587,10 @@
     heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
     heading.append(make('span','beagu-year-caption',year===2026?'승인된 최신 자료':'문항·학교정보 비교'));
     host.append(heading);
+    if(year===2026&&Number(viewerTier)>=2){
+      host.append(make('p','beagu-year-release-note',
+        'Lv.2 최신 조사 · 공개 적격성 검토와 최종 승인을 통과한 학교별 집계만 표시합니다. 공개 보류 중인 결과는 표시하지 않습니다.'));
+    }
     // Fail closed on refresh errors. Never preserve an old 2026 school answer
     // after the signed API cannot re-confirm that the exact version is approved.
     if(year===2026 && loadStatus==='error'){
@@ -625,7 +629,9 @@
         host.append(section);
       } else if(!hasQuestions) {
         host.append(make('p','beagu-year-empty',
-          '2026년 공개된 학교별 조사 결과가 없습니다. 아직 참여하지 않았거나 집계·검수 및 공개 대기 중일 수 있습니다.'));
+          Number(viewerTier)>=2
+            ?'2026년 학교별 조사 집계는 진행 중이지만, 현재 이 학교의 최종 공개 승인 결과는 없습니다. 공개 심사가 완료된 자료만 Lv.2에 표시합니다.'
+            :'2026년 공개된 학교별 조사 결과가 없습니다. 아직 참여하지 않았거나 집계·검수 및 공개 대기 중일 수 있습니다.'));
         const survey=make('a','beagu-year-survey-link','2026 조사 참여하기');
         survey.href='https://forms.gle/TPyCakK6Sj2zchRy7';
         survey.target='_blank';
@@ -845,7 +851,7 @@
       });
     }
     for(const [index,year] of YEARS.entries()){
-      const button=make('button','',year+'년');
+      const button=make('button','',year===2026&&Number(viewerTier)>=2?'2026년 · 최신':year+'년');
       button.id=prefix+'-tab-'+year;
       button.type='button';
       button.dataset.year=String(year);
@@ -897,7 +903,8 @@
       (Array.isArray(rows)?rows:[]).some(row=>
         Number(row.year)===year&&Number(row.access_level)<=level&&
         (Array.isArray(row.summary?.metrics)?row.summary.metrics:[]).length>0));
-    choose(firstAvailable||2025);
+    // Lv.2 opens newest reviewed data. Never bypass the signed publication gate.
+    choose(Number(viewerTier)>=2?2026:(firstAvailable||2025));
   }
 
   function render(list, total, sortValue='school_name_asc') {
@@ -940,11 +947,12 @@
       const heading=historyPanel?.querySelector('.percentile-heading');
       if(!historyPanel||!heading||!detail)throw Error('LV1_HISTORY_PANEL_MISSING');
       historyPanel.classList.add('lv1-history-disclosure');
-      const trigger=make('button','lv1-history-trigger','역대 조사결과');
+      const trigger=make('button','lv1-history-trigger',Number(viewerTier)>=2?'2026 조사 결과 확인 · 연도별 상세':'역대 조사결과');
       trigger.type='button';
       trigger.setAttribute('aria-controls',detail.id);
       trigger.setAttribute('aria-expanded','false');
-      trigger.setAttribute('aria-label',String(school.school_name||'학교')+' 역대 조사결과 펼치기');
+      trigger.setAttribute('aria-label',String(school.school_name||'학교')+
+        (Number(viewerTier)>=2?' 2026 최신 조사 결과 및 연도별 기록 펼치기':' 역대 조사결과 펼치기'));
       heading.replaceWith(trigger);
       historyPanel.append(detail);
       card.querySelector('.school-actions')?.remove();

@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {Script} from 'node:vm';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const source=read('js/level-search.js'),html=read('search-lv1.html'),backend=read('supabase/functions/beagu-level-api/index.ts');
+assert.doesNotThrow(()=>new Script(source));
+assert.match(source,/choose\(Number\(viewerTier\)>=2\?2026:\(firstAvailable\|\|2025\)\)/);
+assert.match(source,/2026 조사 결과 확인 · 연도별 상세/);
+assert.match(source,/2026년 학교별 조사 집계는 진행 중이지만/);
+assert.match(source,/공개 보류 중인 결과는 표시하지 않습니다/);
+assert.match(source,/window\.Beagu2026ApprovedResults\?\.render\(host,results2026,\{level:viewerTier\}\)/);
+assert.match(backend,/admin\.rpc\('beagu_2026_lv2_released_question_results'/);
+assert.match(backend,/level>=2&&lv2Approved2026!==null/);
+assert.doesNotMatch(source,/\.from\('beagu_2026_results_snapshot'\)/);
+assert.doesNotMatch(source,/\.from\('beagu_2026_qa_ingest_staging'\)/);
+assert.match(html,/js\/level-search\.js\?v=20261123-2026-lv2/);
+console.log('PASS: Lv2 opens 2026 first, withheld school results stay private');
