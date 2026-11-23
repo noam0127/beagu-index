@@ -16,7 +16,7 @@ assert.match(html,/id="adminPipelineBasis"/);
 assert.match(html,/id="adminPipelineStatus"/);
 assert.match(html,/추천 연결 응답만 부분 검증합니다/);
 assert.match(html,/기술검사 합격은 자료의 진실성이나 공개 허가가 아닙니다/);
-assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261123-level-approvals1/);
+assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261123-bulk-verified1/);
 assert.match(css,/\.admin-pipeline-stages/);
 assert.match(css,/@media\(max-width:950px\)/);
 assert.doesNotThrow(()=>new vm.Script(js,{filename:'beagu-2026-admin-review.js'}));
