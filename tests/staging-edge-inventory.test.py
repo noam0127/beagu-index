@@ -29,6 +29,9 @@ print("PASS: detect frontend edge routes with origin URLs, root paths and SDK in
 inventory = json.loads(module.INVENTORY.read_text(encoding="utf-8"))
 assert inventory["project_ref"] == module.PROJECT
 names = {f["slug"] for f in inventory["functions"]}
+assert "beagu-challenge-identity" in names
+assert "beagu-referral-link-v1" in names
+assert "beagu-referral-checkin-v1" in names
 assert "beagu-level-api" in names
 assert "beagu-admin-access" in names
 assert "beagu-telemetry-v2" in names, "Recovered staging telemetry must be inventoried"
@@ -37,9 +40,18 @@ assert "arcade-leaderboard" in names and "beagu-school-culture-v1" in names and 
 report = module.check(calls, inventory, date(2026, 11, 23))
 assert report["missing"] == {}
 assert report["ready_for_real_e2e"] is True
+assert report["locked"] == {}
 assert report["real_e2e_executed"] is False
 assert report["production_deployment_permitted"] is False
 print("PASS: recovered telemetry is now in the snapshot, without claiming E2E")
+referral_calls = dict(calls)
+referral_calls["beagu-referral-link-v1"] = ["js/challenge-referral-v1.js"]
+referral_calls["beagu-referral-checkin-v1"] = ["js/beagu-referral-form-v1.js"]
+locked = module.check(referral_calls, inventory, date(2026, 11, 23))
+assert locked["missing"] == {}
+assert set(locked["locked"]) == {"beagu-referral-link-v1","beagu-referral-checkin-v1"}
+assert locked["ready_for_real_e2e"] is False
+print("PASS: rollout-locked referrals are NO-GO despite deployed functions")
 
 complete = json.loads(json.dumps(inventory))
 yes = module.check(calls, complete, date(2026, 11, 23))
@@ -74,7 +86,9 @@ print("PASS: wrong project, duplicate entries and stale evidence fail closed")
 actual = module.audit(today=date(2026, 11, 23))
 assert "beagu-telemetry-v2" not in actual["missing_with_repo_source"]
 assert actual["missing_without_repo_source"] == []
-assert len(actual["missing"]) == 6
+assert len(actual["missing"]) == 3
+assert set(actual["locked"]) == {"beagu-referral-link-v1","beagu-referral-checkin-v1"}
+assert "beagu-challenge-identity" not in actual["missing"]
 assert actual["ready_for_real_e2e"] is False
 assert actual["production_deployment_permitted"] is False
-print("PASS: edited/culture/arcade/interest/telemetry deployed; 6 missing endpoints remain")
+print("PASS: challenge/referral functions deployed, 3 missing; 2 rollout-locked remain")
