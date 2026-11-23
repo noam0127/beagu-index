@@ -615,7 +615,7 @@ const contact=new Function("ball","state","p","tier",[
  'const currentDifficulty=tier,R=48,NET_X=450,NET_TOP=342,AUTO_SPIKE_SPEED=8;',
  'const battle={allyReach:1,enemyReach:1,allyAttack:1,enemyAttack:1,enemySmashChance:0};',
  'const ballSpeedFactor=()=>1,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));',
- 'const setStatus=()=>{},tone=()=>{},spikeSound=()=>{};',
+ 'const setStatus=()=>{},tone=()=>{},spikeSound=()=>{},isMysteryBuff=()=>false;',
  hitSrc,'playerHit(p,ball);return {ball,state,p};'
 ].join("\n"));
 function contactCase(tier="hard",spike=false){
