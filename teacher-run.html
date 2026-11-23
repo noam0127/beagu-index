@@ -1136,8 +1136,10 @@ function drawPatternHazards(){
 }
 // Draw full-size Korean text with line wrapping (never maxWidth compression).
 function drawReadableNotice(content,y,background,color){
- const width=Math.min(W-20,Math.max(190,W*.88)),inside=width-32;
- ctx.save();ctx.font='800 18px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+ // Situational subtitles must not obscure falling objects or the teacher.
+ const width=Math.min(W-18,Math.max(145,W*.72)),inside=width-18;
+ const fontSize=Math.min(15,Math.max(12,Math.round(W*.023)));
+ ctx.save();ctx.font='750 '+fontSize+'px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
  const pieces=String(content).split(/\s+/).filter(Boolean),lines=[];
  let line='';
  for(const chunk of pieces){
@@ -1152,10 +1154,16 @@ function drawReadableNotice(content,y,background,color){
  if(line)lines.push(line);
  const shown=lines.slice(0,3);
  if(lines.length>3)shown[2]=shown[2].slice(0,-1)+'…';
- const h=16+shown.length*23;
- roundRect((W-width)/2,y,width,h,12,background);
- ctx.fillStyle=color;ctx.textAlign="center";ctx.textBaseline="middle";
- for(let i=0;i<shown.length;i++)ctx.fillText(shown[i],W/2,y+19+i*23);
+ const lineHeight=18,h=8+shown.length*lineHeight;
+ ctx.globalAlpha=.17;roundRect((W-width)/2,y,width,h,9,background);
+ ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
+ ctx.lineJoin="round";ctx.lineWidth=2.4;ctx.strokeStyle="rgba(4,14,27,.83)";
+ ctx.fillStyle=color;
+ for(let i=0;i<shown.length;i++){
+  const lineY=y+13+i*lineHeight;
+  ctx.strokeText(shown[i],W/2,lineY,inside);
+  ctx.fillText(shown[i],W/2,lineY,inside);
+ }
  ctx.restore();return h;
 }
 function draw(){

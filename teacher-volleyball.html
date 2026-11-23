@@ -123,6 +123,19 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
  .volley-pause-choices button:focus-visible{outline:3px solid #fff1ac;outline-offset:3px}
  .volley-pause-status{font-size:12px;color:#ffe8b4;line-height:1.5;margin:9px 0 0}
  .volley-pause-status:empty{display:none}
+
+/* Mobile volleyball: dragging moves; one separate accessible button jumps. */
+.volley-mobile-jump{display:none;position:absolute;z-index:4;right:max(12px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));
+ min-width:64px;min-height:64px;padding:8px 10px;flex-direction:column;align-items:center;justify-content:center;
+ border:2px solid rgba(248,241,206,.92);border-radius:19px;background:rgba(19,59,94,.86);
+ color:#fffbe8;box-shadow:0 3px 14px rgba(8,23,42,.28);cursor:pointer;touch-action:none;
+ font:850 14px/1.1 system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+.volley-mobile-jump span{font-size:25px;font-weight:900;line-height:1}
+.volley-mobile-jump small{font-size:12px;font-weight:800;margin-top:3px}
+.volley-mobile-jump:active{background:rgba(32,99,128,.94);transform:scale(.96)}
+.volley-mobile-jump:focus-visible{outline:3px solid #ffe69c;outline-offset:2px}
+@media(pointer:coarse){.court.volleyball-playing .volley-mobile-jump{display:flex}}
+@media(max-width:700px){.volley-mobile-jump{min-width:58px;min-height:58px;right:8px;bottom:8px}}
 </style>
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-b1">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -167,6 +180,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         <small id="volley-fullscreen-situation" class="arcade-fullscreen-subline">EASY · 0:00</small>
       </div>
       <canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas>
+      <button type="button" id="volley-mobile-jump" class="volley-mobile-jump" aria-label="점프" title="점프"><span aria-hidden="true">↑</span><small>점프</small></button>
       <div class="volley-ready-overlay" id="volley-ready-overlay" aria-labelledby="volley-ready-title">
         <div class="volley-ready-panel">
           <div class="volley-ready-icon" aria-hidden="true">🏐</div>
@@ -190,7 +204,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     </div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
   <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/keep-your-dream-alive-seamless-loop" target="_blank" rel="noopener noreferrer">Keep your dream alive! · congusbongus (CC0)</a></p>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 터치하면 점프 · 드래그는 좌우 이동 · EASY/날개 아이템에서만 비행 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 좌우 드래그 이동 · 모바일은 오른쪽 점프 버튼 · EASY/날개 아이템에서만 비행 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
   <a class="postit-arcade-link postit-lv2-link" data-postit-game="teacher-volleyball" target="_top" href="postit.html?game=teacher-volleyball">▤ 이 게임 포스트잇</a>
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
@@ -209,6 +223,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 (function () {
   "use strict";
   const canvas = document.getElementById("game");
+  const mobileJumpButton=document.getElementById("volley-mobile-jump");
+  const courtElement=canvas.closest(".court");
   const ctx = canvas.getContext("2d");
   const scoreP = document.getElementById("player-score");
   const scoreC = document.getElementById("cpu-score");
@@ -789,7 +805,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const key=codes[e.code];
     if(key)keys[key]=false;
   });
-  // Touch down queues exactly one grounded jump; dragging moves horizontally.
+  // Mobile canvas touch/drag moves horizontally; only the dedicated jump button jumps.
   // Only EASY or the wings pickup allows vertical dragging/free flight.
   function targetFromPointer(e) {
     const bounds = canvas.getBoundingClientRect();
@@ -799,6 +815,17 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     touchControl.targetX = clamp(x, 35, NET_X - NET_W / 2 - 36);
     touchControl.targetY = hasPlayerWings() && canPlayerJump() ? clamp(y, playerCeiling(), FLOOR - 31) : null;
   }
+  // The jump button is separate from the canvas: an ordinary tap does not jump.
+  mobileJumpButton.addEventListener("pointerdown",event=>{
+    if(state.phase!=="playing")return;
+    event.preventDefault();event.stopPropagation();
+    touchControl.jumpQueued=canPlayerJump();
+  });
+  // Keyboard/assistive button activation remains accessible without double firing.
+  mobileJumpButton.addEventListener("click",event=>{
+    event.stopPropagation();
+    if(event.detail===0&&state.phase==="playing")touchControl.jumpQueued=canPlayerJump();
+  });
   canvas.addEventListener("pointerdown", e => {
     if (state.phase !== "playing" || touchControl.pointerId !== null) return;
     e.preventDefault();
@@ -809,7 +836,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       activateSuperSpike();lastTapAt=0;
     }else{lastTapAt=now;lastTapX=posX;lastTapY=posY;}
     touchControl.pointerId = e.pointerId;
-    touchControl.jumpQueued = canPlayerJump();
     targetFromPointer(e);
     if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
   });
@@ -823,8 +849,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     touchControl.pointerId = null;
     touchControl.targetX = null;
     touchControl.targetY = null;
-    // Do not cancel jump velocity on release; gravity completes the arc.
-    // The queued impulse survives a tap shorter than one animation frame.
+    // Releasing movement does not cancel a separate jump-button impulse.
   }
   canvas.addEventListener("pointerup", endCourtTouch);
   canvas.addEventListener("pointercancel", endCourtTouch);
@@ -1548,6 +1573,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   let last = 0, accumulator = 0;
   function frame(time) {
     window.ArcadePlayLock?.sync(state.phase==="playing"||state.phase==="point");
+    // Hide the mobile jump control on menus and during point transitions.
+    const isPlaying=state.phase==="playing";
+    if(courtElement.classList.contains("volleyball-playing")!==isPlaying)
+      courtElement.classList.toggle("volleyball-playing",isPlaying);
     if (!last) last = time;
     accumulator += Math.min((time - last) / 1000, .06);
     last = time;

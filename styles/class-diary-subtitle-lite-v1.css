@@ -1,0 +1,115 @@
+/* Class Diary - lightweight dialogue subtitles, not a new visual identity.
+   Background art/character art and scene choices remain unchanged. */
+body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom,
+body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom,
+body.is-playing.is-literary-mode #novelCard #vnBottom{
+ top:auto!important;
+ bottom:calc(env(safe-area-inset-bottom,0px) + 14px)!important;
+ right:clamp(12px,3vw,32px)!important;
+ left:auto!important;
+ width:min(76%,720px)!important;
+ height:auto!important;
+ min-height:0!important;
+ max-height:min(34dvh,246px)!important;
+ padding:9px 12px 7px!important;
+ gap:5px!important;
+ justify-content:flex-end!important;
+ border:1px solid rgba(255,243,250,.13)!important;
+ border-radius:14px!important;
+ background:rgba(19,17,31,.12)!important;
+ box-shadow:none!important;
+ backdrop-filter:none!important;
+ -webkit-backdrop-filter:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot{
+ flex:0 1 auto!important;
+ min-height:0!important;
+ max-height:min(23dvh,158px)!important;
+ padding:0!important;
+ overflow-y:auto!important;
+ overscroll-behavior:contain!important;
+ scrollbar-width:thin;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .vn-dialogue,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome{
+ flex:0 1 auto!important;
+ height:auto!important;
+ min-height:0!important;
+ max-height:none!important;
+ padding:3px 4px!important;
+ overflow:visible!important;
+ background:transparent!important;
+ border:0!important;
+ box-shadow:none!important;
+ backdrop-filter:none!important;
+ -webkit-backdrop-filter:none!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose,
+body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome .prose{
+ font-family:"Gowun Batang","Nanum Myeongjo","Batang",serif!important;
+ font-size:clamp(13px,1.55vw,17px)!important;
+ font-weight:550!important;
+ line-height:1.5!important;
+ letter-spacing:-.012em!important;
+ color:#fffaf5!important;
+ text-shadow:0 1px 3px rgba(5,7,19,.85),0 0 8px rgba(5,7,19,.45)!important;
+}
+body.is-playing.is-literary-mode .diary-literary-echo{
+ font-size:clamp(11px,1.3vw,13px)!important;
+ line-height:1.35!important;
+ max-height:2.7em!important;
+ opacity:.68;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row{
+ min-height:42px!important;
+ padding:3px 0 0!important;
+ gap:4px!important;
+ border-top:1px solid rgba(250,231,243,.13)!important;
+}
+body.is-playing.is-literary-mode #novelCard #vnBottom #vnDialogueSlot .prose p{
+ margin-bottom:.5em!important;
+}
+body.is-playing:not(.is-literary-mode) #novelCard .vn-bottom .vn-dialogue,
+body.is-playing:not(.is-literary-mode) #novelCard .vn-bottom .outcome{
+ padding:8px 11px!important;
+ max-height:min(25dvh,155px)!important;
+ background:rgba(20,19,34,.16)!important;
+ border-color:rgba(255,255,255,.12)!important;
+ box-shadow:none!important;
+ backdrop-filter:none!important;
+}
+body.is-playing:not(.is-literary-mode) #novelCard .vn-bottom .prose{
+ font-size:clamp(12px,1.6vw,16px)!important;line-height:1.5!important;
+}
+@media(max-width:760px){
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom,
+ body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom,
+ body.is-playing.is-literary-mode #novelCard #vnBottom{
+  left:10px!important;right:10px!important;
+  width:auto!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 16px)!important;
+  max-height:min(32dvh,208px)!important;
+  padding:8px 9px 5px!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot{
+  max-height:min(20dvh,128px)!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .prose,
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot .outcome .prose{
+  font-size:clamp(12px,3.4vw,14px)!important;
+  line-height:1.43!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnBottom .vn-control-row{
+  min-height:42px!important;
+  padding:2px 0!important;
+ }
+}
+@media(max-height:540px) and (orientation:landscape){
+ body.is-playing.is-literary-mode.diary-hud-open #novelCard #vnBottom,
+ body.is-playing.is-literary-mode.diary-hud-collapsed #novelCard #vnBottom,
+ body.is-playing.is-literary-mode #novelCard #vnBottom{
+  max-height:min(42dvh,165px)!important;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 7px)!important;
+ }
+ body.is-playing.is-literary-mode #novelCard #vnDialogueSlot{max-height:calc(42dvh - 54px)!important}
+}
