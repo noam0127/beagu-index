@@ -5,7 +5,7 @@
 ## 실제 시험 환경과 사실
 
 - Supabase 시험 프로젝트 `ycwuugggqbunlbwuzvbx` ACTIVE.
-- 시험 Edge Function **42개** 확인. 정적 시험 웹이 직접 참조하는 **16개 중 16개 배포 이름 존재, 0개 미배포, 5개 기능 잠금**.
+- 시험 Edge Function **43개** 확인. 정적 시험 웹이 직접 참조하는 **17개 참조 API 중 17개 배포 이름 존재(기존 16 + 성능 계측 1), 0개 미배포, 5개 기능 잠금**.
 - **이름이 존재한다는 것과 정상 HTTP 동작한다는 것은 다르다.** 16개 전체의 E2E 완료를 선언하지 않는다.
 - `beagu-school-culture-v1` 시험 v1 ACTIVE. 2026 승인후 24시간·동일 승인 버전·유효 응답/교사 각각 5인 이상·개인정보/소집단/차분 검토를 서버가 확인. 누락 `n_valid`·`teacher_count`를 시험 DB에 추가, 기존 집계 0건 확인. [실제 무인증·CORS HTTP 5개 흐름 PASS](https://github.com/noam0127/beagu-index/actions/runs/45085852982). 정상 Lv1 토큰으로 성공 응답을 받는 시험은 아직 실시하지 않았다.
 - `arcade-leaderboard` 시험 v2 ACTIVE. **503/PGRST205 원인 해결:** 게임에서 일반 점수와 함께 조회하는 `arcade_fastest25_records`가 시험 DB에 미존재. 운영의 스키마·RLS·service_role 전용 권한·`arcade_enforce_game_record_limits` 트리거를 **시험 전용 빈 상태로 복원**하고, [GitHub Actions #45086190661 5차 재실행](https://github.com/noam0127/beagu-index/actions/runs/45086190661)에서 실제 GET·부정 요청 HTTP 검증 PASS. [회귀 검증 #45087829964](https://github.com/noam0127/beagu-index/actions/runs/45087829964)도 PASS. **이 결과는 게임 플레이→점수 등록 브라우저 E2E를 증명하지 않음.**
@@ -72,3 +72,11 @@
 - `beagu-2026-review-admin` v3: `?preflight=mfa`는 **실제 Auth JWT 검증/소유자 DB 역할/활성 AAL2 세션 읽기 전용**. 원래 심사 POST는 계속 `REVIEW_NOT_READY` 503.
 - [Actions #45091965156](https://github.com/noam0127/beagu-index/actions/runs/45091965156)에서 위조·과대 JWT와 운영 출처 거부, 기존 잠금 유지 PASS. 실제 시험 소유자·MFA 계정 0건이므로 **양성 로그인 E2E는 여전히 미실시**.
 - 16/16 API 이름 설치·42개 실제 Edge 등록·5개 롤아웃 잠금 유지. 완료·출시 허용 금지.
+
+## 2026-11-23 성능 계측 브라우저 직접 RPC 권한 제거
+
+- 시험 Edge `beagu-perf-ingest-v1` v1 설치(총 함수 43개). 브라우저 계측 스크립트를 Edge API로 전환하고, `beagu_perf_record_v1` 직접 RPC의 익명·일반 회원 EXECUTE 권한을 철회했다. 서버 역할만 실행 가능.
+- [일반 회귀 #45092500046](https://github.com/noam0127/beagu-index/actions/runs/45092500046) PASS: 기존 9개 HTML 화면 성능 계측 연결·실제 부정 HTTP·브라우저 직접 DB 호출 제거.
+- [일회성 양성 HTTP #45092587758](https://github.com/noam0127/beagu-index/actions/runs/45092587758) PASS: 가상 성능 기록 1건, 20초 안의 중복 측정 거부. 가상 데이터 세 종류는 검증 뒤 삭제, **0건 재확인**.
+- Supabase Security Advisor **WARN 0**, INFO `rls_enabled_no_policy` 61건. 기존 `SECURITY DEFINER`의 `anon`·`authenticated` 실행 경고 2개는 시험 DB에서 해결. **운영 DB의 동일 권한은 변경하지 않음**.
+- [상세 검증 문서](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/docs/V110_STAGE_PERFORMANCE_RPC_PRIVACY_RECOVERY_20261123.md). 정상 브라우저 PC·모바일·성능 수치 대시보드 전체 E2E는 미완료, 5개 기능 잠금 유지.
