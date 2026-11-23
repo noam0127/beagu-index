@@ -385,7 +385,7 @@ console.log("PASS: verified 25-point +100/-50 win-margin scoring and 62-year ret
 
 // EXTREME disables player ascent in both games without suppressing enemy AI jump.
 assert.match(volley,/const hasPlayerWings=\(\)=>currentDifficulty==="easy"\|\|isMysteryBuff/,"EASY and wing pickups permit flight");
-assert.match(volley,/const playerCeiling=\(\)=>hasPlayerWings\(\)\?86:NET_TOP\+37/,"NORMAL/HARD/VERY HARD jump slightly above the net");
+assert.match(volley,/const playerCeiling=\(\)=>hasPlayerWings\(\)\?86:NET_TOP-78/,"NORMAL/HARD/VERY HARD higher jump reach");
 assert.match(volley,/controlPlayer\(left, keyboardDirection, canPlayerJump\(\)&&keys\.jump/,"keyboard jump gated");
 assert.match(volley,/left\.y = canPlayerJump\(\) \? clamp\(left\.y, playerCeiling\(\), FLOOR - 31\) : FLOOR - 31/,"player flight limited by item/net ceiling");
 assert.match(volley,/controlPlayer\(right,move,!shackle&&state\.aiJump/,"CPU jumps unless affected by shackle");
@@ -399,13 +399,13 @@ const volleyPointer=new Function("difficulty", [
  'const touchControl={targetX:null,targetY:null};',
  'const canvas={getBoundingClientRect:()=>({left:0,top:0,width:450,height:250})};',
  'const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));',
- 'const canPlayerJump=()=>difficulty!=="extreme";const playerCeiling=()=>difficulty==="easy"?86:379;',
+ 'const canPlayerJump=()=>difficulty!=="extreme";const playerCeiling=()=>difficulty==="easy"?86:264;',
  volleyPointerSource,
  'targetFromPointer({clientX:100,clientY:0});',
  'return touchControl;'
 ].join("\n"));
 assert.equal(volleyPointer("extreme").targetY,420,"extreme volleyball touch must stay on court floor");
-assert.equal(volleyPointer("hard").targetY,379,"HARD rises just above the net, without free flight");
+assert.equal(volleyPointer("hard").targetY,264,"HARD now jumps noticeably higher without unrestricted flight");
 const runnerPointerSource=runner.slice(runner.indexOf('function dragPosition(e)'),runner.indexOf('function setFlightTarget(e)'));
 const runnerPointer=new Function("jumpEnabled",[
  'const profile={jumpEnabled},canPlayerRise=()=>profile.jumpEnabled!==false,W=600,H=420;',
