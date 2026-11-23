@@ -12,6 +12,13 @@
 - 운영 Supabase Security Advisor에는 관련 WARNING: `extension_in_public` 1건, `anon_security_definer_function_executable` 6건, `authenticated_security_definer_function_executable` 6건, `auth_leaked_password_protection` 1건. 이번 단계에서 운영 권한·RLS·Auth 설정은 **변경하지 않음**. 실제 운영 CI에서 먼저 위험 평가해야 한다.
 - 운영 GitHub Pages 배포기는 `beagu-release-controller.yml`과 `scripts/release-manager/worker.py`에서 서버 승인을 받은 **고정 production_sha** 아카이브를 게시함. 단순히 main에 커밋하는 것이 실제 웹 배포가 아니며 `prod_apply`는 owner AAL2와 **시험 배포 증명**을 요구한다. 오래된 시험 SHA로 prod_apply를 호출하면 잘못된 v1.1.0이 공개됨.
 
+## 자동검사 실제 실행 결과
+
+- [GitHub Actions #45100113151](https://github.com/noam0127/beagu-index/actions/runs/45100113151) **검사 프로그램 자체 PASS / 운영 직접 배포 판정 NO_GO**. 테스트가 성공한 것과 배포 후보가 승인된 것을 혼동하지 않는다.
+- 배포된 SHA `5950755c...`와 개발 후보 당시 SHA `2f739c63...` 사이 **변경 파일 총 216개**: 시험/서버 권한 기능 **99개**, 인증·관리자·데이터 등 실행 변경 **44개**, 개별 검토가 가능한 정적 파일 **2개**, 추가 검토가 필요한 기타 파일 **71개**.
+- 고정 운영 SHA와 main 최신 SHA가 다르며, 216개를 한 번에 운영에 배포하면 **시험 전용 함수/API·권한·데이터를 가져갈 위험이 높다**. 실제 배포를 하지 않은 이유는 이 자동검사가 확실한 NO-GO를 반환했기 때문이다.
+- 이 검사는 **테스트 웹을 사용하지 않고** 실제 운영 Git SHA와 후보 브랜치 차이만 검증했다. GitHub Pages/운영 Supabase에는 변경을 가하지 않았다.
+
 ## 이번 차례에서 실제 완료한 작업
 
 - [운영 고정 SHA 대비 직접 배포 허용성 검사기](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/scripts/release-manager/direct-prod-readiness.py), [독립 회귀 테스트](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/tests/test-v110-direct-prod-readiness.py), [읽기 전용 CI](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/.github/workflows/v110-direct-prod-readiness.yml).
