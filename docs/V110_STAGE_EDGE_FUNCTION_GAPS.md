@@ -116,6 +116,11 @@ python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
 ## 2026-11-23: 마지막 세 API 시험 설치, 전부 잠금
 
 - `class-diary-guest-access-v1` / `class-diary-progress-v1`: 시험 v1 ACTIVE. 운영 PIN과 구분되는 별도 `BEAGU_STAGING_CLASS_DIARY_APPROVED` 승인이 없으면 `PREVIEW_NOT_READY`. 시험 DB에 텅 빈 가상 게임 진행 테이블과 PIN 시도 테이블 및 RPC 복원, RLS/익명 직접 실행 차단 확인. SQL 트랜잭션에서 revision 1→2, stale revision 충돌, 비정상 JSON, 시간당 80회 제한을 시험 후 **전량 ROLLBACK**.
-- `beagu-2026-review-admin`: 시험 v1 ACTIVE이지만, 관리자 MFA·6개 심사 RPC·민감정보/감사 이벤트 전체 통합 검증 전까지 `BEAGU_STAGING_REVIEW_APPROVED` 미설정 상태에서 `REVIEW_NOT_READY`. **심사 결정이나 2026 공개 승인 기능은 작동하지 않음.**
+- `beagu-2026-review-admin`: 시험 v1 ACTIVE이지만, 관리자 MFA·비공개 테이블/6개 RPC 복구 후에도 민감정보/감사 이벤트 양성 E2E 검증 전까지 `BEAGU_STAGING_REVIEW_APPROVED` 미설정 상태에서 `REVIEW_NOT_READY`. **심사 결정이나 2026 공개 승인 기능은 작동하지 않음.**
 - [무기록 실제 HTTP 차단 검사](https://github.com/noam0127/beagu-index/actions/runs/45090059588) 통과: 3개 함수의 운영 출처·무출처 접근 차단, 로컬 CORS, GET 제한, POST 잠금.
 - 이제 웹의 정적 API 이름 16개가 시험 Supabase에 모두 존재하지만 **추천 2개 + 체험판 2개 + 2026 관리자 1개 = 총 5개 LOCKED**. 일부 다른 배포 함수도 실제 사용자 양성 E2E 미검증이므로 전체 개발 완료가 아님.
+
+## 2026 관리자 검토 함수 QA 고도화
+
+- 비공개 심사·감사 테이블 6개와 관리자 RPC 6종 복구 후 실제 SQL로 3종 내부 읽기 정상, 3종 무권한 결정 거부·감사 불변 검증.
+- `beagu-2026-review-admin` 시험 v2 ACTIVE, 관리자 보류와 두 감사 기록 원자화. 여전히 `REVIEW_NOT_READY`이며 [무기록 실제 HTTP 검사](https://github.com/noam0127/beagu-index/actions/runs/45090796259) PASS.
