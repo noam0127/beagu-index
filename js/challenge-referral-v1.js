@@ -45,12 +45,14 @@
       premiumVisual ? 'Lv.2 인증 회원 · 참여코드' : 'Lv.2 참여코드(비활성)';
     identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' :
       premiumVisual ? '✓ Lv.2 로그인 완료' : '승급 대기';
-    if(certificateLevelBanner)certificateLevelBanner.textContent = upgraded ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
-    if(certificate)certificate.dataset.level = upgraded ? '2' : '1';
+    // Captured tier follows a verified Lv.2 session or credited referral;
+    // the personal code stays inactive until its own referral is confirmed.
+    if(certificateLevelBanner)certificateLevelBanner.textContent = premiumVisual ? '✦ Lv.2 챌린지 달성 ✦' : 'Lv.1 챌린지 달성';
+    if(certificate)certificate.dataset.level = premiumVisual ? '2' : '1';
     copyIdentityCode.hidden = !upgraded;
     copyIdentityCode.disabled = !upgraded || !lastIdentity;
-    if(vipMedal)vipMedal.hidden=!upgraded;
-    if(certificateMedal)certificateMedal.hidden=!upgraded;
+    if(vipMedal)vipMedal.hidden=!premiumVisual;
+    if(certificateMedal)certificateMedal.hidden=!premiumVisual;
     if(certificateThanks){
       const thanksCount=Math.floor(count/10)*10;
       const thanks=[
@@ -180,7 +182,10 @@
       status.textContent = '링크를 선택했습니다. 직접 복사해 주세요.';
     }
   });
-  window.addEventListener('beagu:challenge-access-granted', () => {active = true;});
+  window.addEventListener('beagu:challenge-access-granted', () => {
+    active = true;
+    renderState(upgraded,lastReferrals);
+  });
   window.addEventListener('beagu:challenge-access-revoked', () => {
     active = false; lastIdentity = null; reset();
   });
