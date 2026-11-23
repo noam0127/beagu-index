@@ -38,4 +38,11 @@ for parent in (lvl,post):
  assert src.index("verifiedAuthSessionId(")<src.index("beagu_stage_active_member_auth_session")
  assert "sessionError||" in src
 print("PASS: Lv3 AND postit member actions recheck active owner-bound Auth sessions")
+memberSource=(post/"index.ts").read_text()
+for required in ('beagu_stage_postit_member_transition',
+    'action==="suspend_member"','action==="reactivate_member"',
+    'MEMBER_AUDIT_UNAVAILABLE'):
+ assert required in memberSource,required
+assert 'db.rpc("beagu_postit_bind_verified_member"' not in memberSource
+print("PASS member link, suspend, reactivate all use atomically audited service RPC")
 print("PASS no production origin fallback, no wildcard, no identity check removed")
