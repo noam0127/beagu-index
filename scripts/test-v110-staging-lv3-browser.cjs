@@ -27,7 +27,7 @@ const fulfill=(route,status,data)=>route.fulfill({status,headers:cors,body:JSON.
   ]){
    const ctx=await browser.newContext({viewport:{width:cfg.width,height:cfg.height},
      isMobile:cfg.mobile,deviceScaleFactor:1,hasTouch:cfg.mobile});
-   const state={signedIn:false,confirmed:false,linked:false,authSessionAlive:true,accountId:'qa-owner',
+   const state={signedIn:false,confirmed:false,linked:false,suspended:false,authSessionAlive:true,accountId:'qa-owner',
      visitorId:'qa-visitor',levelSession:'',revoked:false};
    const realExternal=[];
    await ctx.route('**/*',route=>{
@@ -87,20 +87,29 @@ const fulfill=(route,status,data)=>route.fulfill({status,headers:cors,body:JSON.
      if(req.method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
      if(req.method()==='GET'){
        const linked=state.signedIn&&state.confirmed&&state.linked&&state.accountId==='qa-owner';
-       return fulfill(route,200,{linked});
+       const suspended=state.signedIn&&state.confirmed&&state.suspended&&state.accountId==='qa-owner';
+       return fulfill(route,200,{linked,link_state:linked?'active':suspended?'suspended':'unlinked'});
      }
      return fulfill(route,403,{error:'WRITER_IDENTITY_REQUIRED'});
    });
    await page.route(api+'beagu-postit-api-v1',async route=>{
      if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
      let b={};try{b=route.request().postDataJSON()}catch(_){}
-     const authorized=b.action==='link_member'&&b.deviceSecret===originalSecret&&
-       state.signedIn&&state.confirmed&&state.accountId==='qa-owner'&&
+     const authOK=state.authSessionAlive&&state.signedIn&&state.confirmed&&state.accountId==='qa-owner'&&
        route.request().headers()['x-beagu-level-session']===state.levelSession&&
        route.request().headers()['authorization']==='Bearer '+fakeJWT;
-     if(!authorized)return fulfill(route,403,{error:'DEVICE_OWNERSHIP_NOT_VERIFIED'});
-     state.linked=true;
-     return fulfill(route,200,{linked:true});
+     const deviceOK=b.deviceSecret===originalSecret;
+     if(!authOK)return fulfill(route,403,{error:'ACCOUNT_AUTH_REQUIRED'});
+     if(b.action==='suspend_member'&&state.linked){
+       state.linked=false;state.suspended=true;
+       return fulfill(route,200,{linked:false,link_state:'suspended',changed:true});
+     }
+     if((b.action==='link_member'&&!state.suspended||
+         b.action==='reactivate_member'&&state.suspended)&&deviceOK){
+       state.linked=true;state.suspended=false;
+       return fulfill(route,200,{linked:true,link_state:'active',changed:true});
+     }
+     return fulfill(route,403,{error:'DEVICE_OWNERSHIP_NOT_VERIFIED'});
    });
    async function update(patch){
      Object.assign(state,patch);
@@ -143,6 +152,27 @@ const fulfill=(route,status,data)=>route.fulfill({status,headers:cors,body:JSON.
    assert.equal(await page.locator('#challengeMemberOverlay').isVisible(),true);
    assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.3');
    assert.equal(await page.locator('#challengeMemberLink').isHidden(),true);
+   // Explicit member suspension must downgrade Lv3. A suspended visitor stays
+   // bound to this account, and only the original device may reactivate it.
+   await page.locator('#challengeMemberSuspend').waitFor({state:'visible'});
+   page.once('dialog',d=>d.accept());
+   await page.locator('#challengeMemberSuspend').click();
+   await expectTier(2);
+   assert.equal(state.suspended,true);
+   await page.locator('#challengeMemberLink').waitFor({state:'visible'});
+   assert.equal(await page.locator('#challengeMemberLink').getAttribute('data-action'),'reactivate_member');
+   await page.evaluate(()=>localStorage.removeItem('beagu-referral-device-secret-v1'));
+   await page.evaluate(()=>window.dispatchEvent(new Event('beagu:level-state-change')));
+   // No original device proof: the same account cannot reactivate.
+   await page.locator('#challengeMemberLink').waitFor({state:'hidden'});
+   await page.evaluate(secret=>localStorage.setItem('beagu-referral-device-secret-v1',secret),originalSecret);
+   await page.evaluate(()=>window.dispatchEvent(new Event('beagu:level-state-change')));
+   await page.locator('#challengeMemberLink').waitFor({state:'visible'});
+   await page.locator('#challengeMemberLink').click();
+   await expectTier(3);
+   assert.equal(state.linked,true);
+   assert.equal(state.suspended,false);
+   await page.locator('#challengeMemberSuspend').waitFor({state:'visible'});
    // Shared badge/details must preserve Level 3, not report INVALID_LEVEL.
    await page.locator('#challengeMemberClose').click();
    await page.locator('#beaguLevelState').click();
@@ -184,6 +214,7 @@ const fulfill=(route,status,data)=>route.fulfill({status,headers:cors,body:JSON.
    console.log('PASS '+cfg.name+': synthetic email unverified->Lv2, verified-unlinked->Lv2, device-linked->Lv3, wrong account->Lv2, revoked->Lv0');
   }
  }finally{await browser.close()}
+ console.log('PASS: explicit member suspension Lv3->Lv2 and original-device same-account reactivation Lv2->Lv3');
  console.log('PASS: remote Auth revocation downgrades cached JWT on next server recheck');
  console.log('NOT PROVEN: real Auth signup/email confirmation or backend-positive Lv3 on Render');
 })().catch(e=>{console.error(e);process.exitCode=1});
