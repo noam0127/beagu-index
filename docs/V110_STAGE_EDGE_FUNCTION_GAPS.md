@@ -1,7 +1,7 @@
 # 배구지수 v1.1.0 — 시험 Supabase Edge Function 실배포 현황
 
 2026년 11월 23일(한국 시간) **시험 프로젝트**
-`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **35개**
+`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **36개**
 Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전의 스냅샷은
 `scripts/staging/stage-edge-functions-inventory.json`에 있다.
 
@@ -10,8 +10,9 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 - 핵심 호출 함수인 `beagu-level-api`, `beagu-postit-api-v1`,
   `beagu-admin-access`, `beagu-admin-dashboard-v1`,
   `beagu-admin-members-v1` 등은 시험 프로젝트에 존재한다.
-- **`beagu-telemetry-v2`는 시험 프로젝트에 존재하지 않는다.**
-  방문·활동 계측 화면에서 호출한다면 실제 시험 웹에서는 API를 찾을 수 없다.
+- **`beagu-telemetry-v2`를 시험 전용 v1으로 배포했다.** 
+  방문·활동 계측의 익명 조회/사용자 기록은 실제 시험 HTTP로 검증했지만
+  브라우저 실제 운영 환경과 IP 신뢰경계는 아직 미검증이다.
 - 배포된 시험 함수들은 개발 브랜치 원본과 다르게
   운영 도메인을 거부하도록 로컬 QA용 CORS 코드를 수정한 상태다.
   GitHub 원본을 무조건 덮어써서는 안 된다.
@@ -22,9 +23,9 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 
 2026-11-23 기준 시험 웹 빌드 산출물(HTML 24개 및 JS·CSS 포함)에서
 정적 URL 또는 SDK 호출로 참조하는 Edge Function은 **16개**이고,
-시험 Supabase 실제 목록에는 이 중 **9개**가 배포되어 있다.
+시험 Supabase 실제 목록에는 이 중 **10개**가 배포되어 있다.
 
-아래 7개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
+아래 6개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
 
 | 구분 | 시험 프로젝트에 없는 함수 | 정적 호출 파일 |
 |---|---|---|
@@ -32,11 +33,10 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 | 추천 응답 | `beagu-referral-checkin-v1` | `js/beagu-referral-form-v1.js` |
 | 추천 링크 | `beagu-referral-link-v1` | `js/challenge-referral-v1.js` |
 | 관리자 검토 | `beagu-2026-review-admin` | `js/beagu-2026-admin-review.js` |
-| 방문 계측 | `beagu-telemetry-v2` | `js/visit-stats.js`, `js/beagu-presence-games-v1.js` |
 | 학급일지 접근 | `class-diary-guest-access-v1` | `js/class-diary-home-entry-v1.js` |
 | 학급일지 진행 | `class-diary-progress-v1` | `js/class-diary-progress-v1.js` |
 
-**소스 준비 상태:** 누락된 7개는 모두 GitHub 개발 브랜치의
+**소스 준비 상태:** 누락된 6개는 모두 GitHub 개발 브랜치의
 `supabase/functions/<함수명>/index.ts`가 존재한다. 이는 **시험 배포 가능성
 검토 대상**이라는 뜻이지, SQL 의존성·권한·보안·요금 검증이 끝났다는 뜻은
 아니다. **`beagu-edited-api-v1`은 운영 배포본에서 소스를 읽기 전용으로 확보한 뒤 시험 전용으로 복구하여 시험 Supabase v1로 배포하였다.**
@@ -99,3 +99,12 @@ python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
 - [GitHub Actions #45086973139](https://github.com/noam0127/beagu-index/actions/runs/45086973139): 실제 HTTP/가짜 토큰/출처 거부 검증 성공. 다만 정상 Lv1 사용자 경로는 미검증.
 - **게임 API 503 원인 해결**: `arcade_fastest25_records` 누락이 원인이었으며, 해당 테이블과 `arcade_enforce_game_record_limits` 트리거 복구 후 실제 HTTP GET/부정 검사 성공 ([Actions #45087829964](https://github.com/noam0127/beagu-index/actions/runs/45087829964)). 102건 가상 점수 SQL 검증 후 롤백, 기록 0건·RLS 유지 확인.
 - 해당 원인 분석 실험 후 `anon` 임시 GRANT 철회, 임시 정책과 빈 진단 테이블 제거. 이 실험으로 정상 게임 조회가 증명된 것은 아님.
+
+## 2026-11-23 추가 복구: 방문/활동 계측
+
+- `beagu-telemetry-v2` 시험 v1 ACTIVE. 필요한 `beagu_record_visit`, `beagu_telemetry_totals_v2`만 운영 함수 정의를 읽어 시험 DB에 복구. 원본 개인정보/운영 방문기록 미이관.
+- 비공개 `beagu_private.visits` RLS 유지. `anon`/`authenticated`에는 RPC EXECUTE 없음, `service_role` 전용.
+- 독립 시험 소스는 운영 프로젝트·Origin을 거부. 프록시 IP 헤더는 인입 경로 검증 전까지 신뢰하지 않고, QA 전체에 공통 호출 제한을 적용하는 방식으로 임시 처리한다. 이 구조는 **운영용 확장성을 검증한 설계가 아니다.**
+- [GitHub Actions #45088247300](https://github.com/noam0127/beagu-index/actions/runs/45088247300): 실제 OPTIONS/GET, 운영 출처·잘못된 요청 차단, 가상 방문자 ping, 최초 방문 집계, 동일 방문 이벤트 멱등성 검증 통과.
+- 가상 방문자·이벤트·호출 카운터는 검사 후 명시적 SQL로 청소함. 다섯 종류의 시험 방문/활동 관련 테이블 모두 0건 확인.
+- 실제 호스팅 Origin, 관리자 활동 제외의 양성 검증, 신뢰된 역방향 프록시/IP 경계, PC/모바일 전체 E2E는 아직 미완료.
