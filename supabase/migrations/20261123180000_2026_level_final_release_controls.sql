@@ -85,7 +85,7 @@ GRANT EXECUTE ON FUNCTION public.beagu_2026_level_school_published(text,integer)
 CREATE OR REPLACE FUNCTION public.beagu_2026_level_released_school_ids(p_ids text[],p_level integer)
 RETURNS text[] LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT coalesce(array_agg(id),ARRAY[]::text[]) FROM (
-   SELECT DISTINCT school_id AS id FROM unnest(p_ids) AS school_id
+   SELECT DISTINCT u.school_id AS id FROM unnest(p_ids) AS u(school_id)
    WHERE p_level BETWEEN 0 AND 2
      AND public.beagu_2026_level_school_published(school_id,p_level)
    LIMIT 20
@@ -155,26 +155,28 @@ BEGIN
  PERFORM pg_advisory_xact_lock(2026,2026);
  SELECT count(*)::integer INTO eligible_count
  FROM public.beagu_2026_results_snapshot r
- WHERE public.beagu_2026_level_school_published(r.school_id,2)
-   OR (r.approval_status='APPROVED' AND r.approved_payload_sha256=r.payload_sha256
-    AND r.school_match_status='EXACT_REGION_OFFICE_NAME'
-    AND EXISTS(SELECT 1 FROM beagu_private.beagu_2026_publication_basis_review b
-     WHERE b.school_id=r.school_id AND b.payload_sha256=r.payload_sha256
-       AND b.review_status='VERIFIED'
-       AND b.reviewer_user_id::text=r.approved_by
-       AND b.reviewed_at>=r.source_snapshot_at
-       AND b.notice_effective_at<=r.source_snapshot_at
-       AND b.distinct_respondents_reviewed AND b.personal_data_reviewed
-       AND b.small_sample_reviewed AND b.reidentification_reviewed
-       AND b.prior_data_combination_reviewed)
-    AND EXISTS(SELECT 1 FROM beagu_private.beagu_2026_auto_review_status t
-      WHERE t.school_id=r.school_id AND t.survey_year=2026
-      AND t.technical_status='TECHNICAL_CHECK_PASSED'
-      AND t.checked_at>=r.source_snapshot_at
-      AND t.matching_core_questions=13 AND t.verified_catalog_questions=13
-      AND t.source_spreadsheet_id='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4')
-    AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r.questions) q
-        WHERE coalesce((q->>'invalid')::integer,1)>0));
+ JOIN beagu_private.beagu_2026_publication_basis_review b
+   ON b.school_id=r.school_id AND b.payload_sha256=r.payload_sha256
+ JOIN beagu_private.beagu_2026_auto_review_status t
+   ON t.school_id=r.school_id AND t.survey_year=2026
+ WHERE r.approval_status='APPROVED'
+   AND r.approved_payload_sha256=r.payload_sha256
+   AND r.approved_at IS NOT NULL
+   AND r.approved_at>=r.updated_at AND r.approved_at>=r.source_snapshot_at
+   AND r.school_match_status='EXACT_REGION_OFFICE_NAME'
+   AND r.school_response_rows>=1
+   AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r.questions) q
+     WHERE coalesce((q->>'invalid')::integer,1)>0)
+   AND b.review_status='VERIFIED' AND b.reviewer_user_id::text=r.approved_by
+   AND b.reviewed_at>=r.source_snapshot_at
+   AND b.notice_effective_at<=r.source_snapshot_at
+   AND b.distinct_respondents_reviewed AND b.personal_data_reviewed
+   AND b.small_sample_reviewed AND b.reidentification_reviewed
+   AND b.prior_data_combination_reviewed
+   AND t.technical_status='TECHNICAL_CHECK_PASSED'
+   AND t.matching_core_questions=13 AND t.verified_catalog_questions=13
+   AND t.checked_at>=r.source_snapshot_at
+   AND t.source_spreadsheet_id='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4';
  IF p_action='APPROVE' AND eligible_count=0
  THEN RAISE EXCEPTION 'no fully approved school results available'; END IF;
  decision_at:=CASE WHEN p_action='APPROVE' THEN now() ELSE NULL END;
