@@ -5,6 +5,8 @@ on:
       - fix/v110-staging-edited-api-recovery-20261123
     paths:
       - 'scripts/test-v110-staging-auth-perf-browser.cjs'
+      - 'scripts/test-v110-staging-lv3-browser.cjs'
+      - 'tests/staging-lv3-member-predicate.mjs'
       - 'js/beagu-participation-auth-v2.js'
       - 'js/beagu-level-state-v1.js'
       - 'js/beagu-page-performance-v1.js'
@@ -35,6 +37,8 @@ jobs:
           node --check scripts/test-v110-staging-auth-perf-browser.cjs
           node tests/staging-auth-readiness.cjs
           node tests/auth-journey-states.mjs
+          node tests/staging-lv3-member-predicate.mjs
+          node --check scripts/test-v110-staging-lv3-browser.cjs
           node tests/admin-page-performance-static.cjs
       - name: Real staging Auth negative HTTP without codes, credentials or DB writes
         run: python3 tests/staging-browser-auth-real-denials.test.py
@@ -51,11 +55,13 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           node scripts/test-v110-staging-auth-perf-browser.cjs
+          node scripts/test-v110-staging-lv3-browser.cjs
       - name: Explicitly deny false claims of real Lv3 or production release
         run: |
           test ! -e _standalone_staging/CNAME
           test ! -e _standalone_staging/supabase
-          echo "All Auth/Perf responses mocked; no real user signup, no operational data writes, no Render deploy"
+          echo "All Auth/Perf responses mocked; simulated Lv3 requires verified email plus device-owned Lv2 and exact bound member"
+          echo "No real user signup, no operational data writes, no Render deploy"
           echo "Five rollout gates remain locked; this is NOT a real email/MFA/Lv3 E2E"
       - name: Attach simulated PC/mobile screenshots for manual review
         if: always()
