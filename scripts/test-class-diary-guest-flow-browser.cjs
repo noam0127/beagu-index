@@ -74,7 +74,8 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    await page.locator('.teacher-diary-private-preview summary').click();
    await page.locator('#homeDiaryGuestForm').waitFor({state:'visible',timeout:4500});
    assert.equal(await page.locator('#homeDiaryCode').count(),1);
-   assert.equal(await page.locator('#teacher-diary-feature .teacher-diary-code-message').count(),1);
+   assert.equal(await page.locator('#homeDiaryGuestForm .teacher-diary-code-message').count(),1);
+   assert.equal(await page.locator('#homeDiaryLv2Form .teacher-diary-code-message').count(),1);
    await page.locator('#homeDiaryCode').fill('1234');
    await page.locator('#homeDiarySubmit').click();
    await page.waitForURL('**/teacher-class-diary-play.html?guest=1',{timeout:12000});
