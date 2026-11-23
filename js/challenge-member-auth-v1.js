@@ -150,7 +150,12 @@ function open(next='signin'){
  });
 }
 window.addEventListener('beagu:challenge-account-open',event=>open(event.detail?.mode||'signin'));
-window.addEventListener('beagu:level-state-updated',paintTier);
+window.addEventListener('beagu:level-state-updated',()=>{
+ paintTier();
+ // Re-evaluate original-device availability and member suspension when the
+ // server-verified level changes (including revoked sessions or a lost key).
+ if(!overlay.hidden&&tier2)void showAccountStatus();
+});
 window.addEventListener('beagu:participation-authenticated',()=>queueMicrotask(paintTier));
 window.addEventListener('beagu:participation-logged-out',()=>{tier2=false;close()});
 closeButton.addEventListener('click',close);
