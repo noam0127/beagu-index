@@ -12,6 +12,7 @@ on:
       - 'js/challenge.js'
       - 'render.yaml'
       - 'tests/test-standalone-staging.py'
+      - 'tests/staging-browser-auth-real-denials.test.py'
       - 'scripts/build-standalone-staging.py'
       - '.github/workflows/v110-staging-browser-auth-perf.yml'
   workflow_dispatch:
@@ -35,6 +36,8 @@ jobs:
           node tests/staging-auth-readiness.cjs
           node tests/auth-journey-states.mjs
           node tests/admin-page-performance-static.cjs
+      - name: Real staging Auth negative HTTP without codes, credentials or DB writes
+        run: python3 tests/staging-browser-auth-real-denials.test.py
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 22
