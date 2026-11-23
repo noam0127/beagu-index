@@ -148,7 +148,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   <div class="scoreboard" aria-label="25점 선착순 경기와 점수 기록">
     <div class="volley-best-row"><span class="volley-target-chip">🏁 25점</span><span class="volley-best-chip" aria-label="이 기기의 최고 점수 신기록">신기록 <strong id="volley-best-label">0점</strong></span><span class="volley-best-chip" aria-label="내 25점 승리 최단 시간">25점 최단 <strong id="volley-fastest-label">—</strong></span></div>
     <div class="team"><span class="volley-team-name">나</span><strong id="player-score">0 / 25</strong></div>
-    <div class="center-label">VS<small id="volley-score-label">0점</small><small id="volley-bonus-label">플레이 +0점</small></div>
+    <div class="center-label">VS<small id="volley-score-label">0점</small><small id="volley-bonus-label">플레이 +0점</small><small id="volley-item-score-label">아이템 +0점</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0 / 25</strong></div>
   </div>
   <div class="volley-progress" aria-label="25점 달성 진행 상황">
@@ -202,7 +202,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-fullscreen-v1.js?v=20261120-fullscreen-icons2"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=20261120-rightscroll1"></script>
 <script src="js/arcade-play-lock-v1.js?v=20261120-rightscroll1"></script>
-<script src="js/arcade-mystery-items-v1.js?v=20261120-balls2"></script>
+<script src="js/arcade-mystery-items-v1.js?v=20261123-items"></script>
 <script>
 (function () {
   "use strict";
@@ -278,8 +278,23 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const MAX_ACTIVE_SECONDS=900,SECONDS_BONUS=4;
   const activeTenths=()=>Math.floor(state.activeFrames/6);
   const getSurvivalBonus=(tenths)=>Math.min(MAX_ACTIVE_SECONDS,Math.floor(tenths/10))*SECONDS_BONUS;
+  // Keep item score separate from the 25-point match score.
+  let itemScoreDelta=0,itemScoreEvents=[];
   const getMatchScore=(player,cpu,tenths=0)=>
-    getBaseMatchScore(player,cpu)*getVictoryMultiplier(player,cpu)+getSurvivalBonus(tenths);
+    Math.max(0,getBaseMatchScore(player,cpu)*getVictoryMultiplier(player,cpu)+
+      getSurvivalBonus(tenths)+itemScoreDelta);
+  function applyItemScore(kind){
+    const current=getMatchScore(state.leftScore,state.rightScore,activeTenths());
+    const delta=kind==="salary"?100:kind==="bonus"?200:
+      kind==="bullying"?-Math.ceil(current*.10):
+      kind==="report"?-Math.ceil(current*.25):0;
+    if(!delta)return 0;
+    itemScoreDelta+=delta;
+    itemScoreEvents.push({kind,t:state.activeFrames,
+      player:state.leftScore,cpu:state.rightScore,delta});
+    updateMatchScoreUI();
+    return delta;
+  }
   const fmtTime=tenths=>{const t=Math.max(0,Math.floor(Number(tenths)||0));
     return Math.floor(t/600)+":"+String(Math.floor((t%600)/10)).padStart(2,"0")+"."+(t%10);};
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
@@ -346,16 +361,17 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     switch(item.id){
       case "shackle":buffs.shackle=now+dur;buffs.wings=0;break;
       case "complaint":buffs.complaint=now+dur;buffs.letter=0;break;
-      case "bullying":itemPoints(side,-1);break;
-      case "report":itemPoints(side,-10);break;
+      case "bullying":if(side==="left")applyItemScore("bullying");break;
+      case "report":if(side==="left")applyItemScore("report");break;
       case "conflict":buffs.conflict=now+dur;buffs.friends=0;break;
       case "wings":buffs.wings=now+dur;buffs.shackle=0;break;
       case "letter":buffs.letter=now+dur;buffs.complaint=0;break;
-      case "salary":itemPoints(side,1);break;
+      case "salary":if(side==="left")applyItemScore("salary");break;
       case "friends":buffs.friends=now+dur;buffs.conflict=0;break;
-      case "bonus":itemPoints(side,2);break;
+      case "bonus":if(side==="left")applyItemScore("bonus");break;
       case "ball_add":changeMysteryBalls(1);break;
       case "ball_remove":changeMysteryBalls(-1);break;
+      case "rapid_smash":buffs.rapid_smash=now+300;break;
     }
     const p=side==="left"?left:right;
     mysteryReveals.push({item,x:p.x,y:p.y-80,ttl:105});
@@ -462,7 +478,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const canPlayerJump=()=>!isMysteryBuff("left","shackle")&&(currentDifficulty!=="extreme"||hasPlayerWings());
   // Player's pixel-art head begins about 55px above the actor's y position.
   // At NET_TOP+37, the head reaches 18px above the net, but cannot fly away.
-  const playerCeiling=()=>hasPlayerWings()?86:NET_TOP+37;
+  const playerCeiling=()=>hasPlayerWings()?86:NET_TOP-78; // extended jump range
   const soundButton=document.getElementById("sound");
   const SOUND_KEY="teacherVolleyballSoundV1";
   let soundOn=true,audioContext=null;
@@ -516,7 +532,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function updateMatchScoreUI(){
     const bonus=getSurvivalBonus(activeTenths());
     document.getElementById("volley-score-label").textContent=
-      (getBaseMatchScore(state.leftScore,state.rightScore)+bonus).toLocaleString("ko-KR")+"점";
+      getMatchScore(state.leftScore,state.rightScore,activeTenths()).toLocaleString("ko-KR")+"점";
+    document.getElementById("volley-item-score-label").textContent="아이템 "+
+      (itemScoreDelta>=0?"+":"")+itemScoreDelta.toLocaleString("ko-KR")+"점";
     document.getElementById("volley-bonus-label").textContent="플레이 +"+bonus.toLocaleString("ko-KR")+"점";
   }
   function activateSuperSpike(){
@@ -644,7 +662,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     resetPower();
     desiredBalls=currentDifficulty==="extreme"?2:1;
     schoolPicker.setLocked(true);
-    state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
+    state.leftScore=0;state.rightScore=0;itemScoreDelta=0;itemScoreEvents=[];state.spikes=0;state.playFrames=0;state.activeFrames=0;
     state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     resetEnemyMinionSchedule();
@@ -976,6 +994,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       const neededVy=(NET_TOP-R-14-ball.y-.15*framesToNet*(framesToNet+1))/framesToNet;
       ball.vy=clamp(Math.min(ball.vy,neededVy),-19*ballSpeedFactor(),-4*ballSpeedFactor());
     }
+    if(spike&&isMysteryBuff("left","rapid_smash")){
+      ball.vx*=2;ball.vy*=2;
+      ball.shadowFrames=28;ball.shadowColor="#ffe075";
+    }
     p.contactFrames=spike||cpuSmash?12:9;
     ball.cooldown=10;
     if(spike||cpuSmash){
@@ -1027,15 +1049,17 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         state.bestStreak,state.recordBroken,state.timeRecordBroken);
       state.winner=cheer.title;state.winCheer=cheer.detail;
     }
-    const summary=base.toLocaleString("ko-KR")+"점 + 플레이 "+bonus.toLocaleString("ko-KR")+
-      "점"+(won?" ×"+multiplier:"")+" = "+finalScore.toLocaleString("ko-KR")+"점";
+    const summary=base.toLocaleString("ko-KR")+"점"+(won?" ×"+multiplier:"")+
+      " + 플레이 "+bonus.toLocaleString("ko-KR")+"점 · 아이템 "+
+      (itemScoreDelta>=0?"+":"")+itemScoreDelta.toLocaleString("ko-KR")+"점 = "+
+      finalScore.toLocaleString("ko-KR")+"점";
     setStatus((state.recordBroken?"🎉 점수 신기록! ":"")+
       (state.timeRecordBroken?"⏱ 최단시간 신기록! ":"")+summary);
     if(won){tone(660,.17,"triangle",.06);tone(880,.18,"triangle",.05,.14);}
     else tone(early?470:240,.18,"triangle",.035);
     const saveResult=ranking?.finish(finalScore,{
       player:state.leftScore,cpu:state.rightScore,baseScore:base,
-      survivalBonus:bonus,multiplier,finalScore,victory:won,
+      survivalBonus:bonus,multiplier,itemScoreDelta,itemScoreEvents,finalScore,victory:won,
       endedEarly:early,activeTenths:elapsedTenths
     });
     syncUI();
@@ -1125,7 +1149,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       left.jumpLock=false;
     } else {
       controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump,
-       5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed,12.8*battle.allyJump);
+       5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed,15.8*battle.allyJump);
        if(!canPlayerJump()){left.y=FLOOR-31;left.vy=0;}
        else if(left.y<playerCeiling()){left.y=playerCeiling();left.vy=Math.max(0,left.vy);}
     }
