@@ -92,3 +92,9 @@
 - 시험 Supabase에 배포돼 있던 `beagu-level-api` v5는 GitHub 범용 `supabase/functions/beagu-level-api/index.ts`와 **내용이 다르며**, 실제 배포본에 추가 Lv3 회원검증이 존재했다. 범용 원본을 덮어쓰지 않고 실제 배포본 전체와 공유 모듈을 시험용 디렉터리에 복제한 뒤 Stage Origin 허용 규칙만 안전하게 추가.
 - `beagu-level-api` v6, `beagu-postit-api-v1` v5 시험 재배포 후 [CORS+무인증 HTTP PASS #45094909765](https://github.com/noam0127/beagu-index/actions/runs/45094909765) 확인. `BEAGU_STAGING_ALLOWED_ORIGIN` 실 Render 주소는 미설정/미확인 상태이므로 외부 Render 출처는 아직 허용하지 않음.
 - 시험 Edge 총 43개, 참조 17/17개. 5개 롤아웃 기능은 그대로 잠금. 정식 Lv3·MFA·Render 실배포 검증은 NO-GO.
+
+## Lv3/Auth 세션 철회 강화 (2026-11-23)
+
+- `beagu-level-api` 시험 v7 · `beagu-postit-api-v1` 시험 v6: JWT는 Auth 서버가 검증한 후에만 `sub`, `session_id`, `exp` 확인. 추가 서버 전용 RPC가 `auth.sessions`의 해당 사용자·세션 실존과 만료 여부를 검사하므로 로그아웃/만료 세션은 Lv3·포스트잇 회원 권한을 받지 못함.
+- 브라우저에 오래된 JWT가 남아 있어도 **다음 보호 API 검증부터** Lv3가 철회. 회원 상태 `suspended` 또는 연결 행 삭제도 active 조회에서 배제. 가상 데이터 트랜잭션 테스트 통과, 최종 0행.
+- [세부 구현·검증 및 실제 계정 E2E 한계](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/docs/V110_STAGE_LV3_BROWSER_MEMBER_RECOVERY_20261123.md). 실계정 로그인·Render 실호스트 테스트는 미완료. 5개 기능 잠금·운영 배포 **NO-GO**.
