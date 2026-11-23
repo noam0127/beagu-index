@@ -8,6 +8,7 @@ on:
       - 'js/level-search.js'
       - 'search-lv1.html'
       - 'tests/2026-lv2-bars.mjs'
+      - 'tests/2026-lv2-n1-policy-ui.mjs'
       - 'tests/2026-lv2-school-first-v1.mjs'
       - 'styles/2026-lv2-release-status-v1.css'
       - '.github/workflows/2026-lv2-bars.yml'
@@ -20,6 +21,7 @@ on:
       - 'js/level-search.js'
       - 'search-lv1.html'
       - 'tests/2026-lv2-bars.mjs'
+      - 'tests/2026-lv2-n1-policy-ui.mjs'
       - 'tests/2026-lv2-school-first-v1.mjs'
       - 'styles/2026-lv2-release-status-v1.css'
 jobs:
@@ -33,4 +35,5 @@ jobs:
       - run: node tests/2026-lv2-bars.mjs
       - run: node tests/2026-school-empty-survey-cta.mjs
       - run: node tests/2026-approved-search-refresh.mjs
+      - run: node tests/2026-lv2-n1-policy-ui.mjs
       - run: node tests/2026-lv2-school-first-v1.mjs

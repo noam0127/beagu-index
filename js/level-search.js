@@ -589,7 +589,7 @@
     host.append(heading);
     if(year===2026&&Number(viewerTier)>=2){
       host.append(make('p','beagu-year-release-note',
-        'Lv.2 최신 조사 · 공개 적격성 검토와 최종 승인을 통과한 학교별 집계만 표시합니다. 공개 보류 중인 결과는 표시하지 않습니다.'));
+        'Lv.2 · 2026년 최신 조사: 유효 응답이 1건인 학교도 최종 공개 승인 대상입니다. 다만 공개 근거·소표본 재식별 검토가 완료된 학교별 결과만 표시합니다.'));
     }
     // Fail closed on refresh errors. Never preserve an old 2026 school answer
     // after the signed API cannot re-confirm that the exact version is approved.
@@ -630,7 +630,7 @@
       } else if(!hasQuestions) {
         host.append(make('p','beagu-year-empty',
           Number(viewerTier)>=2
-            ?'2026년 학교별 조사 집계는 진행 중이지만, 현재 이 학교의 최종 공개 승인 결과는 없습니다. 공개 심사가 완료된 자료만 Lv.2에 표시합니다.'
+            ?'2026년 조사 자료를 확인 중입니다. 응답 1건인 학교도 승인 대상이지만, 이 학교는 아직 공개 근거·재식별 검토 및 최종 승인이 완료되지 않아 결과가 표시되지 않습니다.'
             :'2026년 공개된 학교별 조사 결과가 없습니다. 아직 참여하지 않았거나 집계·검수 및 공개 대기 중일 수 있습니다.'));
         const survey=make('a','beagu-year-survey-link','2026 조사 참여하기');
         survey.href='https://forms.gle/TPyCakK6Sj2zchRy7';
