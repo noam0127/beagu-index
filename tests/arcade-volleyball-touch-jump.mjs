@@ -23,7 +23,7 @@ const control=source.slice(controlStart,controlEnd);
 const movement=source.slice(movementStart,movementEnd);
 
 // Execute the game's actual movement and gravity code with a deterministic court.
-const frame=new Function('env',String.raw\`
+const frame=new Function('env',String.raw`
  const {left,touchControl,keys,currentDifficulty,wingActive,shackle}=env;
  const FLOOR=451,NET_X=450,NET_W=14,NET_TOP=342,W=900,SPEED_MULTIPLIER=1;
  const battle={allySpeed:1,allyJump:1};
@@ -36,10 +36,10 @@ const frame=new Function('env',String.raw\`
  const keyboardVertical=(keys.down?1:0)-(keys.up?1:0);
  const beforeMoveX=left.x,beforeMoveY=left.y;
  const itemSlow=1,itemFast=1,itemSpeed=1;
- \${control}
- \${movement}
+ ${control}
+ ${movement}
  return {x:left.x,y:left.y,vy:left.vy,flightAllowed,tapJump};
-\`);
+`);
 const actor=()=>({x:180,y:420,vy:0,vx:0,side:'left',jumpLock:false});
 const controls=()=>({pointerId:null,targetX:null,targetY:null,jumpQueued:false});
 const keys=()=>({left:false,right:false,up:false,down:false,jump:false});
