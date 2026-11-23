@@ -40,3 +40,9 @@
 .beagu-interest-number{color:#087c66;font-weight:800}
 .beagu-interest-updated{margin:5px 0 0;color:#8a99ad;font-size:11px;text-align:right}
 @media(max-width:410px){.beagu-interest--standalone{margin-top:16px;padding:17px 14px}.beagu-interest-description{font-size:11px}}
+
+/* Public ranking: direct-detail links preserve ordinary link semantics. */
+.beagu-interest-item .beagu-interest-link{display:flex;align-items:center;gap:12px;width:100%;min-width:0;text-align:left;background:transparent;border:0;border-radius:8px;padding:13px 6px;cursor:pointer;color:#172c48;text-decoration:none}
+.beagu-interest-item .beagu-interest-link:hover{background:#f2f6fc}
+.beagu-interest-item .beagu-interest-link:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+@media(max-width:410px){.beagu-interest-item .beagu-interest-link{gap:7px;flex-wrap:wrap}}
