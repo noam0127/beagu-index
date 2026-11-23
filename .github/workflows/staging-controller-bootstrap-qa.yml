@@ -1,0 +1,29 @@
+name: staging release controller bootstrap security
+on:
+  push:
+    branches: ['hotfix/v1.1.0-staging-controller-bootstrap']
+  pull_request:
+    paths:
+      - 'supabase/functions/beagu-release-manager-v1/index.ts'
+      - 'supabase/functions/_shared/staging-release-candidate.mjs'
+      - 'js/beagu-admin-updates-v1.js'
+      - 'js/beagu-release-progress-v1.js'
+      - 'admin-updates.html'
+      - '.github/workflows/staging-controller-bootstrap-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  code-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify staging bootstrap security without release deployment
+        run: node tests/staging-controller-bootstrap-qa.mjs
+      - name: No production action
+        run: |
+          echo "This PR is an opt-in bootstrap only. It does not deploy the release API, RC, or website."

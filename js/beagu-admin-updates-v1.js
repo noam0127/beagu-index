@@ -8,6 +8,9 @@
  const api=SUPABASE_URL+"/functions/v1/beagu-release-manager-v1";
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
  let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null;
+ const rc={ref:"release/v1.1.0-rc.1",sha:"5c95aadad971901a8222f83c52e93bf901a3aeb7",
+   version:"v1.1.0-rc.1",
+   summary:"Lv3 회원, 2026 공개 정책, 포스트잇 소유권 및 관리자 인증 통합 후보"};
  const date=value=>{if(!value)return "—";const d=new Date(value);
    return Number.isFinite(d.getTime())?d.toLocaleString("ko-KR"):"—";};
  const short=value=>value?String(value).slice(0,8):"—";
@@ -41,7 +44,11 @@
     no_production_rollback:"되돌릴 수 있는 이전 운영 버전이 없습니다.",
     admin_mfa_required:"관리자 2단계 인증이 필요합니다. 다시 로그인하세요.",
     github_unavailable:"GitHub 버전을 확인할 수 없습니다. 잠시 후 다시 시도하세요.",
-    release_service_unavailable:"배포 서버가 응답하지 않습니다. 잠시 후 다시 확인하세요."
+    release_service_unavailable:"배포 서버가 응답하지 않습니다. 잠시 후 다시 확인하세요.",
+    invalid_staging_candidate:"허용되지 않는 시험 후보 버전입니다.",
+    staging_candidate_sha_mismatch:"고정된 RC 소스와 GitHub 후보 브랜치의 SHA가 다릅니다.",
+    release_candidate_production_locked:"RC 후보는 운영 웹에 배포할 수 없습니다. 최종 출고 승인이 필요합니다.",
+    invalid_action:"관리자 서버에 RC 시험 등록 기능이 아직 적용되지 않았습니다."
    };
    throw Error(messages[result.error]||"요청 실패 ("+(result.error||response.status)+")");
   }
@@ -83,6 +90,25 @@
    if(document.activeElement!==el("releaseSummaryInput"))el("releaseSummaryInput").value=s.draft_summary||"";
   }
   const active=!!job;
+  const exactDraft=s.draft_sha===rc.sha&&s.draft_version===rc.version;
+  const exactStage=s.staging_sha===rc.sha;
+  el("releaseCandidateRegister").disabled=busy||active||exactDraft||exactStage;
+  write("releaseCandidateStatus",exactStage?
+    "등록된 RC와 시험 웹 코드 SHA 일치 · 실제 HTTP 검증 대기":
+    exactDraft?"고정 RC 등록 완료 · 시험 웹 적용은 별도 관리자 승인이 필요":
+    "RC 후보가 현재 시험 웹에 적용된 상태가 아닙니다. 관리자 인증 후 고정 SHA 등록 필요");
+  const progress=window.BeaguReleaseProgress.snapshot(job,data.last_job,s);
+  const panel=el("releaseProgressPanel"),bar=el("releaseProgressBar");
+  panel.hidden=!progress.visible;
+  if(progress.visible){
+    panel.dataset.state=progress.state;
+    write("releaseProgressLabel",progress.text);
+    if(progress.indeterminate)bar.removeAttribute("value");
+    else bar.value=progress.value;
+    write("releaseProgressDetail",
+      "상태: "+progress.state+" · "+(job||data.last_job)?.to_sha?.slice(0,8)+
+      " · 서버 기록 기반"+(progress.completed?" · 적용 완료 확인":""));
+  }
   write("releaseQueueText",active?
     ((job.status==="running"?"배포 중":"배포 대기")+" · "+job.version+
      " · "+(job.target==="staging"?"시험 웹":"실제 웹")+
@@ -91,7 +117,14 @@
   el("releaseStageApply").disabled=busy||active||!s.production_sha||
     (!candidate&&(!s.draft_sha||s.draft_sha===s.staging_sha));
   el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
-  el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
+  // Show the same fail-closed rule enforced by the server: a registered
+  // RC must never be promoted by the "actual website" button.
+  const blockedRc=(s.staging_sha===rc.sha)||
+    /^v\d+\.\d+\.\d+-rc\.[1-9]\d*$/.test(String(s.staging_version||""));
+  el("releaseProdApply").disabled=busy||active||blockedRc||
+    !s.staging_sha||s.staging_sha===s.production_sha;
+  el("releaseProdApply").title=blockedRc?
+    "릴리스 후보는 운영 웹에 적용할 수 없습니다. 정식 승인 이후 새 버전이 필요합니다.":"";
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
   el("releaseProdRollback").disabled=busy||active||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||active||!s.production_sha;
@@ -144,6 +177,24 @@
   }catch(err){message(err.message,true)}
   finally{busy=false;await refresh(true);}
  }
+ async function registerCandidate(){
+  if(busy||!model)return;
+  const s=model.state||{},active=!!model.job;
+  if(active||s.draft_sha===rc.sha&&s.draft_version===rc.version||s.staging_sha===rc.sha)return;
+  busy=true;
+  el("releaseCandidateRegister").disabled=true;
+  try{
+    // Requires owner/AAL2 on server. Exact branch and SHA rechecked by API.
+    const result=await request("register_stage_candidate",{
+      candidate_ref:rc.ref,candidate_sha:rc.sha,version:rc.version,summary:rc.summary
+    });
+    if(result.staging_only!==true||result.draft_sha!==rc.sha)
+      throw Error("서버의 시험용 후보 등록 확인에 실패했습니다.");
+    message("고정 후보 등록 완료 · 시험 웹 적용은 아직 시작되지 않았습니다.");
+  }catch(err){message(err.message,true)}
+  finally{busy=false;await refresh(true);}
+ }
+ el("releaseCandidateRegister").addEventListener("click",()=>void registerCandidate());
  el("releaseDraftForm").addEventListener("submit",register);
  for(const [id,action] of [
   ["releaseStageApply","stage_apply"],["releaseStageRollback","stage_rollback"],
