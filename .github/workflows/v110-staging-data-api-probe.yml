@@ -1,0 +1,23 @@
+name: staging Data API zero-row route diagnosis (NO SECRET, NO DEPLOY)
+on:
+  push:
+    branches:
+      - fix/v110-staging-edited-api-recovery-20261123
+    paths:
+      - 'tests/staging-data-api-zero-row-probe.py'
+      - '.github/workflows/v110-staging-data-api-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rest-diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Build local sandbox with public staging key only
+        run: python3 scripts/build-standalone-staging.py
+      - name: Check empty staging-only table using anon API and report status
+        run: python3 tests/staging-data-api-zero-row-probe.py
