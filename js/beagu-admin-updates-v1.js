@@ -7,7 +7,7 @@
  const auth=supabaseClient.auth;
  const api=SUPABASE_URL+"/functions/v1/beagu-release-manager-v1";
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
- let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null;
+ let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,readyKey=null,lastKey=null;
  const date=value=>{if(!value)return "—";const d=new Date(value);
    return Number.isFinite(d.getTime())?d.toLocaleString("ko-KR"):"—";};
  const short=value=>value?String(value).slice(0,8):"—";
@@ -34,6 +34,11 @@
     no_changes_since_production:"현재 운영 버전과 비교해 변경된 파일이 없습니다. 최소 1개를 수정하세요.",
     release_bootstrap_pending:"배포 관리 시스템의 최초 배포가 아직 끝나지 않았습니다.",
     register_version_first:"먼저 새 업데이트의 버전과 변경 내용을 등록하세요.",
+    direct_route_required:"직접 배포 관리자 화면을 새로고침하세요.",
+    direct_ci_required:"이 커밋의 코드 검증이 아직 통과하지 않았습니다.",
+    direct_candidate_stale:"현재 운영 버전을 포함하지 않는 후보입니다.",
+    direct_confirmation_required:"배포 대상이 변경되었습니다. 새로고침하세요.",
+    direct_draft_conflict:"등록 후보가 변경되었습니다. 새로고침하세요.",
     staging_required:"시험 웹에 먼저 적용해 주세요.",
     already_on_staging:"이 버전은 이미 시험 웹에 적용되어 있습니다.",
     already_on_production:"이미 운영 웹에 적용된 버전입니다.",
@@ -74,9 +79,14 @@
   write("releaseStageSha",s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹에 아직 업데이트가 없습니다");
   write("releaseProdSha",s.production_sha?"코드 "+short(s.production_sha):"초기 배포 후 표시됩니다");
   write("releaseHead",cachedHead?"GitHub 최신 코드: "+short(cachedHead):"새로고침하면 GitHub 최신 코드를 확인합니다.");
+  const key=String(s.production_sha||"")+":"+String(s.draft_sha||"");
+  if(key!==lastKey){readyKey=null;lastKey=key;}
+  if(data.direct_candidate_ready===true)readyKey=key;
+  else if(data.direct_candidate_ready===false)readyKey=null;
   const candidate=data.direct_release_v1===true&&s.draft_sha?{sha:s.draft_sha,version:s.draft_version}:null;
+  const ready=!!candidate&&readyKey===key;
   write("releaseDraftInfo",candidate?
-    "등록된 독립 후보 "+candidate.version+" · "+short(candidate.sha)+" · 실제 웹 적용 전 서버 재검증":
+    (ready?"검증 완료 · ":"검증 미확인 · ")+candidate.version+" · "+short(candidate.sha)+(ready?" · 실제 웹 적용 가능":" · 직접 적용 전 검증 필요"):
     s.draft_sha?"등록된 업데이트: "+s.draft_version+" ("+short(s.draft_sha)+")":"새 버전을 등록하세요.");
   if(s.draft_sha){
    if(document.activeElement!==el("releaseVersionInput"))el("releaseVersionInput").value=s.draft_version||"";
@@ -90,7 +100,7 @@
     "현재 진행 중인 배포가 없습니다.");
   el("releaseStageApply").hidden=true;el("releaseStageApply").disabled=true;
   el("releaseStageRollback").hidden=true;el("releaseStageRollback").disabled=true;
-  el("releaseProdApply").disabled=busy||active||data.direct_release_v1!==true||!s.draft_sha||s.draft_sha===s.production_sha;
+  el("releaseProdApply").disabled=busy||active||data.direct_release_v1!==true||!ready||!s.draft_sha||s.draft_sha===s.production_sha;
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
   el("releaseProdRollback").disabled=busy||active||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||active||data.direct_release_v1!==true||!s.production_sha;
@@ -111,6 +121,8 @@
  }
  async function command(action){
   if(busy)return;
+  if(action==="stage_apply"||action==="stage_rollback")return;
+  if(action==="prod_apply"&&(el("releaseProdApply").disabled||!model?.state?.draft_sha))return;
   const wording={
    stage_apply:"등록된 버전을 시험 웹에 적용하시겠습니까?",
    stage_rollback:"시험 웹을 바로 이전 버전으로 되돌리시겠습니까?",
@@ -146,7 +158,7 @@
    el("releaseFileSummary").hidden=false;
    message("업데이트 등록 완료 · "+result.changed_count+"개 변경 파일 확인. 등록 후보를 확인한 후 '실제 웹 적용'을 누르세요.");
   }catch(err){message(err.message,true)}
-  finally{busy=false;await refresh(true);}
+  finally{busy=false;await refresh(false);}
  }
  el("releaseDraftForm").addEventListener("submit",register);
  for(const [id,action] of [
