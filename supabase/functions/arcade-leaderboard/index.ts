@@ -209,7 +209,7 @@ function scoreFromVolleyball25(result:any,elapsed:number):number {
  const expectedMultiplier=victory?1+Math.floor((25-cpu)/5):1;
  const itemScore=verifiedVolleyballItemScore(result,tenths,player,cpu);
  if(base!==expectedBase||bonus!==expectedBonus||multiplier!==expectedMultiplier||
-    final!==Math.max(0,expectedBase*expectedMultiplier+expectedBonus+itemScore)
+    final!==Math.max(0,expectedBase*expectedMultiplier+expectedBonus+itemScore))
   throw new Error("invalid_score");
  return final;
 }
