@@ -124,18 +124,20 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  const current=await activeJob();
  if(action==="status"){
   const [stageHistory,prodHistory]=await Promise.all([history("staging"),history("production")]);
-  let head=null,suggested_draft=null;
-  if(input.check_latest===true)try{
-   const latest=await github("/commits/main");
-   head=typeof latest.sha==="string"?latest.sha:null;
-   if(head&&head!==s.production_sha){
-    const proposal=await latestManifest();
-    if(proposal)suggested_draft={...proposal,sha:head};
+  let ready:null|boolean=null, reason:string|null=null;
+  if(input.check_latest===true){
+   ready=false;
+   if(s.draft_sha&&s.production_sha&&s.draft_sha!==s.production_sha){
+    try{
+     const candidate=await directCandidate(s.production_sha,s.draft_sha);
+     if("error" in candidate)reason=candidate.error||"direct_candidate_invalid";
+     else if(candidate.version===s.draft_version&&candidate.summary===s.draft_summary)ready=true;
+     else reason="direct_version_mismatch";
+    }catch{reason="github_unavailable";}
    }
-  }catch{ /* The release state and history remain available during GitHub outages. */ }
-  return respond({direct_release_v1:true,state:s,job:current,head_sha:head,suggested_draft,staging_history:stageHistory,
-    production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",
-    production_url:"https://baeguindex.com/"},200,origin);
+  }
+  return respond({direct_release_v1:true,direct_candidate_ready:ready,direct_candidate_reason:reason,state:s,job:current,head_sha:null,suggested_draft:null,staging_history:stageHistory,
+    production_history:prodHistory,staging_url:null,production_url:"https://baeguindex.com/"},200,origin);
  }
  if(current)return error("release_in_progress",409,origin);
  if(["register","stage_apply","stage_rollback","prod_apply"].includes(action))return error("direct_route_required",409,origin);
