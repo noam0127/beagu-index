@@ -9,6 +9,9 @@
   const base = `${SUPABASE_URL}/functions/v1/beagu-level-api`;
   const $ = id => document.getElementById(id);
   const key = 'beagu-level-session-v1';
+  const arcadeTargetId = new URLSearchParams(window.location.search).get('school_id');
+  const arcadeTargetValid = typeof arcadeTargetId==='string'&&/^[A-Z0-9]{7}$/.test(arcadeTargetId);
+  let arcadeTargetOpened = false;
   let session = sessionStorage.getItem(key) || '';
   let viewerTier=1;
   function showUpgrade(){
@@ -142,7 +145,41 @@
     $('loginPanel').hidden = true;
     $('searchPanel').hidden = false;
     showUpgrade();
+    if(arcadeTargetValid)void openArcadeTarget();
   }
+  async function openArcadeTarget(){
+    if(!arcadeTargetValid||arcadeTargetOpened||!session)return;
+    arcadeTargetOpened=true;
+    try{
+      // Resolve exact school ID; same-name schools must never be mixed up.
+      const {data:school,error}=await supabaseClient.from('schools')
+        .select('school_id,school_name,sido_standard').eq('school_id',arcadeTargetId).limit(1).maybeSingle();
+      if(error||!school||String(school.school_id)!==arcadeTargetId)throw Error('SCHOOL_NOT_FOUND');
+      mode='school';
+      $('searchInput').value=String(school.school_name||'');
+      const region=String(school.sido_standard||'');
+      let selected=null;
+      // Search is paged at 20 entries: scan until exact ID is found.
+      for(let candidatePage=0;candidatePage<10;candidatePage++){
+        const found=await api('ranked_schools',{searchText:school.school_name,region,office:'',
+          sort:'school_name',direction:'asc',page:candidatePage});
+        const list=Array.isArray(found.schools)?found.schools:[];
+        selected=list.find(item=>String(item.school_id)===arcadeTargetId);
+        if(selected||((candidatePage+1)*LIMIT)>=Number(found.total||0))break;
+      }
+      if(!selected)throw Error('SCHOOL_NOT_IN_RESULTS');
+      ++serial;page=0;
+      render([selected],1,'school_name_asc');
+      const trigger=$('results').querySelector('.lv1-history-trigger');
+      if(trigger)trigger.click();
+      const card=$('results').querySelector('.school-card');
+      if(card?.scrollIntoView)card.scrollIntoView({block:'start'});
+    }catch(error){
+      console.warn('학교 고유번호 상세조회 실패 · 이름 검색으로 전환합니다.',error);
+      if($('searchInput').value.trim())void search(true);
+    }
+  }
+
   async function api(action, payload = {}) {
     const response = await fetch(base, {
       method: 'POST', cache: 'no-store',
