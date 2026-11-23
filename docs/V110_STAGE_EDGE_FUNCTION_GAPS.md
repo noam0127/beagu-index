@@ -1,7 +1,7 @@
 # 배구지수 v1.1.0 — 시험 Supabase Edge Function 실배포 현황
 
 2026년 11월 23일(한국 시간) **시험 프로젝트**
-`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **39개**
+`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **42개**
 Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전의 스냅샷은
 `scripts/staging/stage-edge-functions-inventory.json`에 있다.
 
@@ -23,19 +23,18 @@ Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전�
 
 2026-11-23 기준 시험 웹 빌드 산출물(HTML 24개 및 JS·CSS 포함)에서
 정적 URL 또는 SDK 호출로 참조하는 Edge Function은 **16개**이고,
-시험 Supabase 실제 목록에는 이 중 **13개**가 배포되어 있다.
+시험 Supabase 실제 목록에는 이 중 **16개**가 배포되어 있다.
 
-아래 3개는 시험 프로젝트에서 **미배포(MISSING)** 상태다.
+아래 3개는 이번에 시험 프로젝트에 설치되었지만 **독립 인증/보안 승인 전에는 사용 잠금(LOCKED)** 상태다.
 
-| 구분 | 시험 프로젝트에 없는 함수 | 정적 호출 파일 |
+| 구분 | 시험 프로젝트에 설치된 잠금 함수 | 정적 호출 파일 |
 |---|---|---|
 | 관리자 검토 | `beagu-2026-review-admin` | `js/beagu-2026-admin-review.js` |
 | 학급일지 접근 | `class-diary-guest-access-v1` | `js/class-diary-home-entry-v1.js` |
 | 학급일지 진행 | `class-diary-progress-v1` | `js/class-diary-progress-v1.js` |
 
-**소스 준비 상태:** 누락된 3개는 모두 GitHub 개발 브랜치의
-`supabase/functions/<함수명>/index.ts`가 존재한다. 이는 **시험 배포 가능성
-검토 대상**이라는 뜻이지, SQL 의존성·권한·보안·요금 검증이 끝났다는 뜻은
+**소스 준비 상태:** 이번에 설치한 3개는 GitHub 개발 브랜치의
+`supabase/functions/<함수명>/index.ts`가 존재한다. 이는 **잠긴 기능의 검증 대상**이라는 뜻이지, SQL 의존성·권한·보안·요금 검증이 끝났다는 뜻은
 아니다. **`beagu-edited-api-v1`은 운영 배포본에서 소스를 읽기 전용으로 확보한 뒤 시험 전용으로 복구하여 시험 Supabase v1로 배포하였다.**
 `school-report.html`에서는 Lv2 추가 편집본 정보를 불러올 때 해당 API를
 선택적으로 호출하고, 실패 시 추가 항목을 생략한다. 복구본은 운영 프로젝트를 거부하고, 승인된 시험 Origin만 허용한다. 시험 DB의 누락된 공식 분류 테이블을 **빈 구조**로 생성하고 RLS·익명 접근 차단을 확인하였다. 브라우저·Lv2 실세션 E2E는 아직 완료되지 않았다.
@@ -113,3 +112,10 @@ python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
 - `beagu-referral-link-v1`, `beagu-referral-checkin-v1` 시험 v1 ACTIVE이지만, `BEAGU_STAGING_REFERRAL_VERIFIED` 인증이 없고 `beagu_private.challenge_referral_settings.public_enabled=false`여서 실제 링크/추천 인정은 **잠금**. 관련 4개 비공개 RPC 복원·익명/회원 실행 불가 확인.
 - [GitHub Actions #45089400570](https://github.com/noam0127/beagu-index/actions/runs/45089400570): 출처 차단·API `REFERRAL_NOT_READY` 응답 검증 PASS. 이 PASS는 **추천 기능 정상 작동을 뜻하지 않음.** 실제 Google Forms 설문 제출 검증을 구현하고 독립 검수하기 전 잠금 해제 금지.
 - 미배포 3개 이외에도 **배포됐으나 기능 잠금 상태인 추천 API 2개**를 별도로 추적한다. 엄격한 시험 준비 검사에서 둘 다 NO-GO로 취급한다.
+
+## 2026-11-23: 마지막 세 API 시험 설치, 전부 잠금
+
+- `class-diary-guest-access-v1` / `class-diary-progress-v1`: 시험 v1 ACTIVE. 운영 PIN과 구분되는 별도 `BEAGU_STAGING_CLASS_DIARY_APPROVED` 승인이 없으면 `PREVIEW_NOT_READY`. 시험 DB에 텅 빈 가상 게임 진행 테이블과 PIN 시도 테이블 및 RPC 복원, RLS/익명 직접 실행 차단 확인. SQL 트랜잭션에서 revision 1→2, stale revision 충돌, 비정상 JSON, 시간당 80회 제한을 시험 후 **전량 ROLLBACK**.
+- `beagu-2026-review-admin`: 시험 v1 ACTIVE이지만, 관리자 MFA·6개 심사 RPC·민감정보/감사 이벤트 전체 통합 검증 전까지 `BEAGU_STAGING_REVIEW_APPROVED` 미설정 상태에서 `REVIEW_NOT_READY`. **심사 결정이나 2026 공개 승인 기능은 작동하지 않음.**
+- [무기록 실제 HTTP 차단 검사](https://github.com/noam0127/beagu-index/actions/runs/45090059588) 통과: 3개 함수의 운영 출처·무출처 접근 차단, 로컬 CORS, GET 제한, POST 잠금.
+- 이제 웹의 정적 API 이름 16개가 시험 Supabase에 모두 존재하지만 **추천 2개 + 체험판 2개 + 2026 관리자 1개 = 총 5개 LOCKED**. 일부 다른 배포 함수도 실제 사용자 양성 E2E 미검증이므로 전체 개발 완료가 아님.
