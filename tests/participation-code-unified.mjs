@@ -86,7 +86,8 @@ function fakeElement(name='div'){
 }
 async function exercise(level){
  const nodes=new Map(),storage=new Map(),events=[],calls=[];
- const selectors=['#beaguParticipationForm','#beaguParticipationCode',
+ const selectors=['#beaguParticipationTitle','#beaguParticipationDescription',
+ '#beaguParticipationForm','#beaguParticipationCode',
  '#beaguParticipationSubmit','#beaguParticipationMessage','#beaguParticipationDetail',
  '#beaguParticipationCodeLabel',
  '#beaguParticipationTier','#beaguParticipationExpiry','#beaguParticipationToggle',
