@@ -724,7 +724,7 @@ assert.deepEqual(shoot("easy",false,.9),{created:1,remaining:1,score:0,removed:0
 assert.deepEqual(shoot("hard"),{created:0,remaining:1,score:0,removed:0,roles:[]});
 assert.deepEqual(shoot("extreme"),{created:0,remaining:1,score:0,removed:0,roles:[]});
 assert.deepEqual(shoot("easy",true),{created:0,remaining:1,score:0,removed:0,roles:["동료","관리자"]});
-assert.match(runner,/const willHit=Math\.random\(\)<\.5/);
+assert.match(runner,/const willHit=isMysteryBuff\("bullet"\)\|\|Math\.random\(\)<\.5/);
 assert.match(runner,/function drawChalkHelpers\(\)/);
 assert.match(runner,/x:helper\.role==="관리자"\?W-38:38,y:H-52/);
 assert.match(runner,/function drawShackle\(\)/);
