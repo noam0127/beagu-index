@@ -127,24 +127,34 @@ async function allUsers(): Promise<{ users: AuthUser[]; truncated: boolean }> {
 }
 async function listMembers(input: Record<string, unknown>) {
   const search = typeof input.search === "string" ? input.search.trim().slice(0, 100) : "";
-  const page = Math.min(200, Math.max(1, Math.floor(Number(input.page) || 1)));
+  const page = Math.min(1000000, Math.max(1, Math.floor(Number(input.page) || 1)));
+  const status = ["all","confirmed","unconfirmed","suspended"].includes(String(input.status))
+    ? String(input.status) : "all";
+  const sort = ["newest","oldest","email"].includes(String(input.sort))
+    ? String(input.sort) : "newest";
+  const { data, error } = await db.rpc("beagu_admin_member_directory_v2", {
+    p_search: search, p_status: status, p_sort: sort, p_page: page, p_size: 20,
+  });
+  if (error || !data || !Array.isArray(data.rows))
+    throw new HttpError(503, "member_directory_unavailable");
   const admins = await adminMap();
-  const { users, truncated } = await allUsers();
-  const ordered = users.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
-  const q = search.toLocaleLowerCase("ko-KR");
-  const filtered = q ? ordered.filter(u => (u.email || "").toLocaleLowerCase("ko-KR").includes(q) ||
-    u.id.toLowerCase().includes(q)) : ordered;
-  const pageSize = 20;
-  const selected = filtered.slice((page - 1) * pageSize, page * pageSize);
+  return { ...data, rows: await decorate(data.rows as AuthUser[], admins) };
+}
+// Server-only lookup. The RPC returns no identity code, visitor ID, or referral token.
+async function challengeSummary(id: string) {
+  const { data, error } = await db.rpc("beagu_admin_member_challenge_summary_v1", {
+    p_user: id,
+  });
+  if (error) throw new HttpError(503, "challenge_summary_unavailable");
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || row.link_status !== "active" || row.participant_no == null) {
+    return { linked: false, participant_no: null, access_level: null, valid_referrals: null };
+  }
   return {
-    rows: await decorate(selected, admins),
-    total_matches: filtered.length,
-    page, page_size: pageSize,
-    total_users_scanned: users.length,
-    total_admins_scanned: users.filter(u => admins.has(u.id)).length,
-    unconfirmed_scanned: users.filter(u => !u.email_confirmed_at).length,
-    suspended_scanned: users.filter(u => u.banned_until && Date.parse(u.banned_until) > Date.now()).length,
-    truncated,
+    linked: true,
+    participant_no: row.participant_no,
+    access_level: row.access_level,
+    valid_referrals: row.valid_referrals,
   };
 }
 async function details(input: Record<string, unknown>) {
@@ -160,7 +170,8 @@ async function details(input: Record<string, unknown>) {
     .contains("details", { target_user_id: id })
     .order("occurred_at", { ascending: false }).limit(10);
   if (auditError) throw new HttpError(503, "audit_unavailable");
-  return { profile, moderation_history: events || [] };
+  const challenge = await challengeSummary(id);
+  return { profile, challenge, moderation_history: events || [] };
 }
 async function audit(actor: string, event: string, target: string, reason: string, duration: string) {
   const { error } = await db.from("beagu_admin_audit_events").insert({

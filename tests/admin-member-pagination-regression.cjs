@@ -1,0 +1,14 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const source = fs.readFileSync("supabase/functions/beagu-admin-members-v1/index.ts","utf8");
+const sql = fs.readFileSync("supabase/migrations/20261122020000_admin_member_directory_v2.sql","utf8");
+const list = source.slice(source.indexOf("async function listMembers("),source.indexOf("// Server-only lookup."));
+assert.equal((list.match(/const status =/g)||[]).length,1,"duplicate status declaration");
+assert.equal((list.match(/const sort =/g)||[]).length,1,"duplicate sort declaration");
+assert.match(list,/Math\.min\(1000000/,"pagination must not stop at page 200");
+assert.match(list,/beagu_admin_member_directory_v2/);
+assert.doesNotMatch(list,/allUsers\(/);
+assert.match(sql,/p_page not between 1 and 1000000/);
+assert.match(sql,/revoke all on function public\.beagu_admin_member_directory_v2/);
+assert.match(sql,/to service_role/);
+console.log("PASS: pagination regression static checks");
