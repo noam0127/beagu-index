@@ -81,8 +81,10 @@
      if(token!==pipelineSeq||!ready)return;
      if(!data?.status||data.status.year!==2026)throw Error("unexpected_status");
      renderPipeline(data.status);
+     renderLevelApprovals(data.levels);
    }catch{
      if(token!==pipelineSeq||!ready)return;
+     renderLevelApprovals([]);
      if($("adminPipelineStatus"))$("adminPipelineStatus").textContent=
        "단계별 수치를 가져오지 못했습니다. 관리자 세션과 서버 업데이트 상태를 확인하세요.";
    }
@@ -214,6 +216,95 @@
   wrap.append(form);
   return wrap;
  }
+
+ function makeFinalApproveForm(item){
+   const wrap=build("details","beagu-basis-review beagu-final-approve");
+   wrap.append(build("summary","","학교별 최종 승인 · 증빙 확인 후 진행"));
+   const form=build("form","beagu-basis-form");
+   const add=(labelText,name,type,min,max)=>{
+     const label=build("label","",labelText);
+     const input=build(type==="textarea"?"textarea":"input");
+     input.name=name;input.required=true;
+     if(type!=="textarea")input.type=type;
+     if(min)input.minLength=min;
+     if(max)input.maxLength=max;
+     label.append(input);form.append(label);return input;
+   };
+   const label=build("label","","법적 공개 근거");
+   const type=build("select");type.name="basis_type";type.required=true;
+   for(const [value,name] of [
+     ["","선택하세요"],["EXPLICIT_RESPONDENT_CONSENT","응답자 명시적 동의"],
+     ["OTHER_DOCUMENTED_LEGAL_BASIS","기타 문서화한 적법한 근거"]
+   ]){
+     const option=build("option","",name);option.value=value;type.append(option);
+   }
+   label.append(type);form.append(label);
+   add("원본 고지/동의 증빙 문서 참조(12~400자)","notice_source_ref","text",12,400);
+   const digest=add("원본 고지 파일의 SHA-256 해시(소문자 64자리)","notice_digest_sha256","text",64,64);
+   digest.pattern="[a-f0-9]{64}";
+   const effective=add("고지 효력 발생일","notice_effective_at","date");
+   effective.max="2099-12-31";
+   add("고지로 허용된 자료 공개 범위(20~500자)","publication_scope","textarea",20,500);
+   add("공개 승인 사유·검토 결과(12~500자, 개인정보 제외)","notes","textarea",12,500);
+   const checks=[
+     ["distinct_respondents_reviewed","고유 응답자·중복 검토 완료"],
+     ["personal_data_reviewed","개인정보와 민감 문항 검토 완료"],
+     ["small_sample_reviewed","소표본 위험 검토 완료"],
+     ["reidentification_reviewed","재식별 위험 검토 완료"],
+     ["prior_data_combination_reviewed","과거 자료 결합 위험 검토 완료"]
+   ];
+   for(const [name,description] of checks){
+     const row=build("label","beagu-basis-check");
+     const checkbox=build("input");checkbox.type="checkbox";checkbox.name=name;checkbox.required=true;
+     row.append(checkbox,build("span","",description));form.append(row);
+   }
+   const fields=[
+     ["source_scoring","점수·채점 근거"],["school_identity","학교 매칭 근거"],
+     ["duplicate_responses","중복 응답 검토 근거"],["consent","동의·적법성 근거"],
+     ["small_sample","소표본 위험 검토 근거"],
+     ["reidentification","재식별 위험 검토 근거"],
+     ["prior_data_combination","과거 자료 결합 검토 근거"]
+   ];
+   const evidence=build("details","beagu-evidence-details");
+   evidence.append(build("summary","","필수 검토 증빙 7항목 펼치기"));
+   const evidenceContent=build("div","beagu-evidence-fields");
+   for(const [name,description] of fields){
+     const row=build("label","",description);
+     const input=build("textarea");input.name=name;input.required=true;
+     input.minLength=10;input.maxLength=400;
+     row.append(input);evidenceContent.append(row);
+   }
+   evidence.append(evidenceContent);form.append(evidence);
+   const button=build("button","primary","이 학교의 검토 결과를 최종 승인");
+   button.type="submit";form.append(button);
+   form.addEventListener("submit",async event=>{
+     event.preventDefault();
+     if(!form.reportValidity()){evidence.open=true;return;}
+     if(!window.confirm("이 학교의 검증·동의·재식별 위험 증빙을 직접 확인한 뒤, 현재 2026 자료의 최종 공개를 승인하시겠습니까?"))return;
+     button.disabled=true;
+     const input={
+       action:"finalize",school_id:item.school_id,payload_sha256:item.payload_sha256,
+       basis_type:type.value,
+       notice_source_ref:form.elements.namedItem("notice_source_ref").value.trim(),
+       notice_digest_sha256:digest.value.trim(),
+       notice_effective_at:effective.value+"T00:00:00+09:00",
+       publication_scope:form.elements.namedItem("publication_scope").value.trim(),
+       notes:form.elements.namedItem("notes").value.trim(),
+       review_checks:{},evidence:{}
+     };
+     for(const [name] of checks)input.review_checks[name]=form.elements.namedItem(name).checked;
+     for(const [name] of fields)input.evidence[name]=form.elements.namedItem(name).value.trim();
+     try{
+       const result=await call(input);
+       if(result?.ok!==true)throw Error("approval_missing");
+       notice("학교별 최종 승인이 기록됐습니다. 레벨별 공개 승인은 별도로 진행해야 합니다.");
+       await Promise.all([refresh(),refreshPipeline()]);
+     }catch{
+       notice("학교별 최종 승인에 실패했습니다. 공개 증빙·고지 효력일·최신 자료·MFA 인증을 확인하세요.");
+     }finally{button.disabled=false;}
+   });
+   wrap.append(form);return wrap;
+ }
  async function hold(item,button){
   if(role!=="owner")return;
   const reason=window.prompt("이 학교의 공개를 보류하는 사유를 12~500자로 기록하세요. 개인정보와 원본 설문 응답은 입력하지 마세요.","동의 증빙 또는 재식별 위험 검토 미완료");
@@ -304,6 +395,7 @@
  }
  function reset(){
   ready=false;role="";seq++;page=0;pipelineSeq++;
+  renderLevelApprovals([]);
   $("adminReferralRiskCard").hidden=true;
   $("adminReferralRiskList").replaceChildren();
   $("adminReview2026List").replaceChildren();
@@ -320,5 +412,46 @@
  $("adminReferralRiskReload").addEventListener("click",()=>{void refreshReferralRisks();});
  $("adminReview2026Prev").addEventListener("click",()=>{if(page>0){page--;void refresh();}});
  $("adminReview2026Next").addEventListener("click",()=>{page++;void refresh();});
+
+ function renderLevelApprovals(items){
+   const rows=Array.isArray(items)?items:[];
+   for(let level=0;level<=2;level++){
+     const data=rows.find(x=>x?.level===level),approved=data?.approved===true;
+     const eligible=Number(data?.eligible_schools)||0,covered=Number(data?.covered_schools)||0;
+     const button=$("adminLevelReleaseButton"+level),revoke=$("adminLevelReleaseRevoke"+level);
+     $("adminLevelReleaseState"+level).textContent=!data?"확인 불가":approved?"승인됨":"승인 대기";
+     $("adminLevelReleaseCovered"+level).textContent=data?(approved?covered:eligible).toLocaleString("ko-KR"):"—";
+     button.textContent=approved?(covered<eligible?"새로 승인된 학교 반영":"Lv."+level+" 승인 완료"):"Lv."+level+" 최종 공개 승인";
+     button.disabled=!data||role!=="owner"||eligible<1||(approved&&covered>=eligible);
+     revoke.hidden=!approved||role!=="owner";
+     revoke.disabled=!approved||role!=="owner";
+   }
+   $("adminLevelReleaseStatus").textContent=rows.length!==3?
+     "레벨 상태를 확인할 수 없어 승인 기능을 중단했습니다.":
+     role==="owner"?"학교별 승인을 마친 현재 자료만 포함됩니다. 이후 승인된 학교는 레벨별 재승인이 필요합니다.":
+       "조회 전용 계정: 소유자만 최종 공개 승인할 수 있습니다.";
+ }
+ async function decideLevel(level,action,button){
+   if(!ready||role!=="owner"||button.disabled)return;
+   const label="Lv."+level;
+   if(!window.confirm(action==="REVOKE"?
+     label+"의 2026 자료 공개를 중단하시겠습니까? 다른 레벨은 변경되지 않습니다.":
+     label+"에서 학교별 최종 승인된 현재 2026 자료를 공개하도록 최종 승인하시겠습니까?"))return;
+   button.disabled=true;
+   try{
+     const result=await call({action:"level_decision",level,decision:action});
+     if(result?.ok!==true||result.level!==level)throw Error("invalid_result");
+     await refreshPipeline();
+     $("adminLevelReleaseStatus").textContent=label+(action==="REVOKE"?" 공개 중단":" 최종 공개 승인")+"이 서버에 기록됐습니다.";
+   }catch{
+     await refreshPipeline();
+     $("adminLevelReleaseStatus").textContent="처리 실패: 학교별 검증·승인, 관리자 MFA, 서버 연결을 확인하세요.";
+   }
+ }
+ for(let level=0;level<=2;level++){
+   $("adminLevelReleaseButton"+level).addEventListener("click",event=>void decideLevel(level,"APPROVE",event.currentTarget));
+   $("adminLevelReleaseRevoke"+level).addEventListener("click",event=>void decideLevel(level,"REVOKE",event.currentTarget));
+ }
+ $("adminLevelReleaseReload").addEventListener("click",()=>void refreshPipeline());
  window.Beagu2026ReviewAdmin={mount,reset};
 })();

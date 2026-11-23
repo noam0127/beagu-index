@@ -110,8 +110,15 @@ Deno.serve(async(req:Request)=>{
      if(reviewed.some(r=>r.error))return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
      for(const r of reviewed)if(Array.isArray(r.data))recentIds.add(r.schoolId);
    }
+   const {data:publishedIds,error:publishedError}=await admin.rpc(
+    'beagu_2026_level_released_school_ids',
+    {p_ids:ids,p_level:Number(session.access_level)});
+   if(publishedError||!Array.isArray(publishedIds))
+     return send({error:'PUBLICATION_GATE_UNAVAILABLE'},503,origin);
+   const publishedSet=new Set(publishedIds);
    const out:Record<string,number>={};
    for(const id of ids){
+    if(!publishedSet.has(id))continue;
     const approved=releaseMetrics((metrics.data||[]).filter((m:any)=>m.school_id===id),catalog.data||[],1,recentIds.has(id))
      .filter((m:any)=>m.year===2026&&m.key==='percentile'&&typeof m.value==='number'&&m.value>=0&&m.value<=100);
     if(approved.length)out[id]=approved[0].value;
@@ -202,10 +209,16 @@ Deno.serve(async(req:Request)=>{
   if(!/^[A-Z0-9]{7}$/.test(id))return send({error:'INVALID_SCHOOL'},400,origin);
   const level=Number(session.access_level);
   if(level<1)return send({error:'ACCESS_DENIED'},403,origin);
+  // Tier approval and school snapshot approval must both hold for 2026 outputs.
+  const {data:schoolReleased,error:schoolReleasedError}=await admin.rpc(
+    'beagu_2026_level_school_published',{p_school_id:id,p_level:level});
+  if(schoolReleasedError||typeof schoolReleased!=='boolean')
+    return send({error:'PUBLICATION_GATE_UNAVAILABLE'},503,origin);
+  const tierPublished2026=schoolReleased===true;
   // Separate Lv2 access from the existing public/Lv1 24-hour release path.
   // A null result means the exact snapshot failed independent publication review.
   let lv2Approved2026:null|unknown[]=null;
-  if(level>=2){
+  if(level>=2&&tierPublished2026){
     const {data,error}=await admin.rpc('beagu_2026_lv2_released_question_results',{p_school_id:id});
     if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
     if(Array.isArray(data))lv2Approved2026=data;
@@ -220,7 +233,8 @@ Deno.serve(async(req:Request)=>{
   ]);
   if(legacy.error||metrics.error||catalog.error||curated2025.error)return send({error:'DATA_UNAVAILABLE'},503,origin);
   const rows=legacyRows(legacy.data||[],level);
-  const safe=releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null);
+  const safe=releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)
+    .filter((m:any)=>m.year!==2026||tierPublished2026);
   // School facts are independently reviewed, not teacher survey observations.
   // Return only per-tier, per-year allowlisted facts from the server after validating session.
   const [officialNumbers, officialCategories]=await Promise.all([

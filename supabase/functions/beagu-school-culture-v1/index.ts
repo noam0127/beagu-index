@@ -76,13 +76,20 @@ Deno.serve(async(req:Request)=>{
      body.schoolIds.some((id:any)=>typeof id!=='string'||!/^\d{7}$/.test(id))||
      new Set(body.schoolIds).size!==body.schoolIds.length)
    return send(origin,{error:'INVALID_SCOPE'},400);
+  const {data:releasedIds,error:releaseGateError}=await admin.rpc(
+    'beagu_2026_level_released_school_ids',
+    {p_ids:body.schoolIds,p_level:Number(session.access_level)});
+  if(releaseGateError||!Array.isArray(releasedIds))
+    return send(origin,{error:'PUBLICATION_GATE_UNAVAILABLE'},503);
+  const releasedSet=new Set(releasedIds);
   const {data,error}=await admin.from('beagu_release_metrics_v2')
    .select('school_id,question_id,value,release_version,access_level,n_valid,teacher_count,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence')
    .in('school_id',body.schoolIds).eq('survey_year',2026).eq('access_level',1)
    .in('question_id',keys).eq('approval_status','APPROVED').limit(1000);
   if(error)return send(origin,{error:'DATA_UNAVAILABLE'},503);
   const values:Record<string,unknown>={};
-  for(const id of body.schoolIds)values[id]=classify((data||[]).filter((r:any)=>r.school_id===id));
+  for(const id of body.schoolIds)
+    values[id]=releasedSet.has(id)?classify((data||[]).filter((r:any)=>r.school_id===id)):{status:'not_published'};
   return send(origin,{values});
  }catch(_){return send(origin,{error:'INTERNAL_ERROR'},500)}
 });

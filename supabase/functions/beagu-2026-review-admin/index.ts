@@ -40,7 +40,7 @@ Deno.serve(async(request:Request)=>{
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(!["queue","pipeline","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
+ if(!["queue","pipeline","level_decision","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -65,15 +65,36 @@ Deno.serve(async(request:Request)=>{
   if(input.action==="pipeline"){
     // The status contains bounded counts only. No school-level details,
     // raw response text, event hashes, or public approval side effects.
-    const {data,error}=await db.rpc("beagu_2026_admin_pipeline_status");
-    if(error||!data){
-      console.error("pipeline_status_unavailable",error?.code||"unknown");
+    const [pipeline,levelStatus]=await Promise.all([
+      db.rpc("beagu_2026_admin_pipeline_status"),
+      db.rpc("beagu_2026_level_release_status")
+    ]);
+    if(pipeline.error||!pipeline.data||levelStatus.error||
+       !Array.isArray(levelStatus.data)||levelStatus.data.length!==3){
+      console.error("pipeline_status_unavailable",
+        pipeline.error?.code||levelStatus.error?.code||"unknown");
       return send(origin,503,{error:"pipeline_status_unavailable"});
     }
-    return send(origin,200,{status:data});
+    return send(origin,200,{status:pipeline.data,levels:levelStatus.data});
   }
   // Review decisions may only be made by the owner, never a viewer or editor.
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
+  if(input.action==="level_decision"){
+    // Tier approval never changes individual school approvals or source records.
+    const level=input.level;
+    const decision=input.decision;
+    if(typeof level!=="number"||!Number.isInteger(level)||level<0||level>2||
+      !["APPROVE","REVOKE"].includes(String(decision)))
+      return send(origin,400,{error:"invalid_level_decision"});
+    const {data,error}=await db.rpc("beagu_2026_set_level_final_approval",{
+      p_level:level,p_actor:actor,p_session:claims.session_id,p_action:decision
+    });
+    if(error||!data?.ok){
+      console.error("level_final_decision_refused",error?.code||"unknown");
+      return send(origin,409,{error:"level_approval_requires_finalized_schools_and_owner_mfa"});
+    }
+    return send(origin,200,data);
+  }
   if(input.action==="referral_quality_queue"){
     const {data,error}=await db.rpc("beagu_referral_quality_queue");
     if(error||!data)return send(origin,503,{error:"referral_quality_queue_unavailable"});
