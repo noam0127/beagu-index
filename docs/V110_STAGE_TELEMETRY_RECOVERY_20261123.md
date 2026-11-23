@@ -4,7 +4,7 @@
 
 - **시험 Supabase만 수정:** `ycwuugggqbunlbwuzvbx`, 운영 Supabase `snvzwrexuqavnfvzgxqj`는 함수 정의/스키마 비교를 위한 읽기 전용 조회만 진행.
 - 운영 웹 `https://baeguindex.com`, 운영 GitHub `main`, 운영 설문 응답, 실제 방문자/개인정보는 변경·이관하지 않음.
-- 시험 Edge `beagu-telemetry-v2` v1 ACTIVE. 정적 시험 웹의 직접 참조 API 16개 중 10개 배포, 6개 미배포. 이는 전체 E2E 완료나 운영 배포 승인을 뜻하지 않음.
+- 시험 Edge `beagu-telemetry-v2` v1 ACTIVE. 정적 시험 웹의 직접 참조 API 16개 중 10개 배포, 3개 미배포. 이는 전체 E2E 완료나 운영 배포 승인을 뜻하지 않음.
 
 ## 누락 의존성 복구
 
