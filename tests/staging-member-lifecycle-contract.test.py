@@ -37,7 +37,7 @@ for marker in (
  "verifiedAuthSessionId(jwt,account)",
  "const account=await authenticatedUser(req)",
  "MEMBER_AUDIT_UNAVAILABLE",
- 'link_state:"suspended"',
+ 'link_state:suspended?.status==="suspended"?"suspended":"unlinked"',
  "MEMBER_STATUS_UNAVAILABLE",
  'changed:decision.changed===true',
 ):
