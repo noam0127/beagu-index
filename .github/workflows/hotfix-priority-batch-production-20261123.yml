@@ -33,24 +33,24 @@ jobs:
           git cat-file -e "${HOTFIX}^{commit}"
           git diff --name-only "$BASE" "$HOTFIX" | sort > /tmp/change-list
           cat > /tmp/allowed-list <<'EOF'
-challenge.html
-index.html
-js/beagu-game-lv1-gate-v1.js
-js/beagu-participation-auth-v2.js
-js/beagu-school-interest-v1.js
-js/challenge-referral-v1.js
-js/level-search.js
-js/statistics-compare.js
-search-lv1.html
-search.html
-statistics.html
-styles/beagu-participation-auth-v2.css
-styles/beagu-search-compare-unity-v1.css
-styles/beagu-site-header-v1.css
-supabase/functions/beagu-level-api/index.ts
-supabase/functions/beagu-referral-link-v1/index.ts
-teacher-run.html
-EOF
+          challenge.html
+          index.html
+          js/beagu-game-lv1-gate-v1.js
+          js/beagu-participation-auth-v2.js
+          js/beagu-school-interest-v1.js
+          js/challenge-referral-v1.js
+          js/level-search.js
+          js/statistics-compare.js
+          search-lv1.html
+          search.html
+          statistics.html
+          styles/beagu-participation-auth-v2.css
+          styles/beagu-search-compare-unity-v1.css
+          styles/beagu-site-header-v1.css
+          supabase/functions/beagu-level-api/index.ts
+          supabase/functions/beagu-referral-link-v1/index.ts
+          teacher-run.html
+          EOF
           sort /tmp/allowed-list -o /tmp/allowed-list
           diff -u /tmp/allowed-list /tmp/change-list
           mkdir -p _release_site
