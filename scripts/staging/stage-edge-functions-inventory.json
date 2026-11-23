@@ -2,7 +2,7 @@
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
   "verified_on": "2026-11-23",
-  "source": "Actual staging Edge Function inventory, read-only verified after v2 telemetry deployment and positive synthetic QA (2026-11-23 KST); 6 API prerequisites still absent",
+  "source": "Read-only verified staging Edge Function inventory, 39 ACTIVE 2026-11-23 KST. Three missing frontend endpoints; referral rollout locked.",
   "functions": [
     {
       "slug": "arcade-leaderboard",
@@ -29,6 +29,12 @@
       "verify_jwt": false
     },
     {
+      "slug": "beagu-challenge-identity",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
       "slug": "beagu-edited-api-v1",
       "version": 1,
       "status": "ACTIVE",
@@ -43,6 +49,18 @@
     {
       "slug": "beagu-postit-api-v1",
       "version": 4,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-referral-checkin-v1",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-referral-link-v1",
+      "version": 1,
       "status": "ACTIVE",
       "verify_jwt": false
     },
@@ -220,5 +238,9 @@
       "status": "ACTIVE",
       "verify_jwt": false
     }
-  ]
+  ],
+  "feature_gates": {
+    "beagu-referral-checkin-v1": "google_form_attribution_unverified",
+    "beagu-referral-link-v1": "google_form_attribution_unverified"
+  }
 }
