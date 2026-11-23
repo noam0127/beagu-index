@@ -7,6 +7,8 @@ on:
       - 'scripts/staging/schema-review-admin-*.sql'
       - 'scripts/staging/recovered-beagu-2026-review-admin/**'
       - 'tests/sql/staging-review-admin-six-rpc-rollback-20261123.sql'
+      - 'tests/sql/staging-review-owner-aal2-atomic-positive-rollback-20261123.sql'
+      - 'tests/sql/staging-review-referral-quality-atomic-rollback-20261123.sql'
       - 'tests/staging-admin-review-six-contract.test.py'
       - '.github/workflows/v110-staging-review-rpcs.yml'
   workflow_dispatch:
@@ -24,6 +26,10 @@ jobs:
         run: python3 tests/staging-admin-review-six-contract.test.py
       - name: Verify live staging admin API is STILL locked
         run: python3 tests/staging-class-diary-admin-http.test.py
+      - name: Confirm positive database-only fixtures do not imply real MFA E2E
+        run: |
+          echo "Rollback-only synthetic auth.sessions aal2 row is not a real MFA session."
+          echo "Two SQL transaction tests ran separately against isolated test DB and left zero records."
       - name: No live SQL writes or privileged credentials in CI
         run: |
           echo "No release authorization. Six RPCs reconstructed but live admin review remains locked."
