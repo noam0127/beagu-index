@@ -909,7 +909,7 @@ function playSceneDetail(key,place){
 const params=new URLSearchParams(location.search);
 const isDemo=params.get('demo')==='1';
 const isGuest=!isDemo&&params.get('guest')==='1';
-const token=isGuest?'':(sessionStorage.getItem('beagu-level-session-v1')||'');
+const token=sessionStorage.getItem('beagu-level-session-v1')||''; // Required for server-verified Lv.2 tickets; private PIN stays independent.
 const schoolId=params.get('schoolId')||'';
 let world=null,plan=null,game=null,progressSession=null;
 let schoolSelection=null; // Public directory context only; never private survey responses.
