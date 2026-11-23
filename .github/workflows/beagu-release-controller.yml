@@ -2,7 +2,7 @@ name: BAEGU release controller (admin approval)
 # Explicit staging-only request 2026-11-22: wake existing signed OIDC release worker; production SHA remains pinned.
 # Emergency fix: verified latest main SHA, admin-recorded production deploy; stale staging cannot replace it.
 # Authorized 2026-11-23 hotfix: production job 4dd58c2f-16a4-477c-8944-85277283a358 publishes pinned c2ac5615 after QA.
-# The worker still claims only server-authorized jobs and cannot promote to production.
+# Authorized emergency release: 2026-11-23 arcade and VIP, queued job 520b0770-f3d1-40c5-bd82-8488ce16fc1a pinned to 4e9cbd0e.\n# The worker claims only server-authorized jobs; older staging cannot overwrite production.
 on:
   schedule:
     - cron: '*/5 * * * *'
@@ -41,6 +41,11 @@ jobs:
           node-version: '22'
       - name: Validate Lv2 and 17-region emergency release
         run: node tests/lv2-price-region-20261123.mjs
+      - name: Validate arcade item rules and private VIP code card
+        run: |
+          node tests/arcade-item-upgrade-v1.mjs
+          node scripts/test-challenge-referral-premium.cjs
+          node tests/challenge-certificate-privacy-v1.mjs
       - name: Claim signed release job (GitHub Actions OIDC)
         id: job
         run: python3 scripts/release-manager/worker.py next
