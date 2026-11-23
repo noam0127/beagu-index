@@ -2,7 +2,8 @@ name: BAEGU release controller (admin approval)
 # Explicit staging-only request 2026-11-22: wake existing signed OIDC release worker; production SHA remains pinned.
 # Emergency fix: verified latest main SHA, admin-recorded production deploy; stale staging cannot replace it.
 # Authorized 2026-11-23 hotfix: production job 4dd58c2f-16a4-477c-8944-85277283a358 publishes pinned c2ac5615 after QA.
-# Authorized emergency release: 2026-11-23 arcade and VIP, queued job 520b0770-f3d1-40c5-bd82-8488ce16fc1a pinned to 4e9cbd0e.\n# The worker claims only server-authorized jobs; older staging cannot overwrite production.
+# Authorized emergency release: 2026-11-23 arcade and VIP, queued job 520b0770-f3d1-40c5-bd82-8488ce16fc1a pinned to 4e9cbd0e.
+# Re-run: validate correct Lv2 masked price rendering after independent search UI update.\n# The worker claims only server-authorized jobs; older staging cannot overwrite production.
 on:
   schedule:
     - cron: '*/5 * * * *'
