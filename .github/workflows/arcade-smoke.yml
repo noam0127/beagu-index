@@ -9,6 +9,11 @@ on:
       - 'tests/arcade-item-upgrade-v1.mjs'
       - 'index.html'
       - 'js/arcade-leaderboard-v1.js'
+      - 'js/arcade-history-v1.js'
+      - 'js/level-search.js'
+      - 'school-link.html'
+      - 'arcade-history.html'
+      - 'tests/arcade-school-link.mjs'
       - 'js/arcade-fullscreen-v1.js'
       - 'js/beagu-game-lv1-gate-v1.js'
       - 'styles/arcade-cabinet-v1.css'
@@ -39,5 +44,7 @@ jobs:
           node-version: '22'
       - name: Check game HUD and item scoring contract
         run: node tests/arcade-item-upgrade-v1.mjs
+      - name: Verify ranking school links and level access
+        run: node tests/arcade-school-link.mjs
       - name: Check game scripts and deployed arcade ranking
         run: node tests/arcade-smoke.mjs
