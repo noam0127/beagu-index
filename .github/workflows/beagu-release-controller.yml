@@ -26,6 +26,7 @@ on:
 permissions:
   contents: read
   pages: write
+  actions: read
   id-token: write
 concurrency:
   group: github-pages-direct
@@ -80,6 +81,26 @@ jobs:
         if: steps.job.outputs.has_job == 'true'
         with:
           path: _release_site
+      - name: Wait for indexed Pages artifact (prevent transient 0-count failures)
+        if: steps.job.outputs.has_job == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in $(seq 1 15); do
+            count="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "github-pages" and .expired == false)] | length')"
+            if [ "$count" = "1" ]; then
+              echo "Pages artifact visible to deployment API."
+              sleep 4
+              exit 0
+            fi
+            if [ "$count" -gt 1 ]; then
+              echo "Multiple Pages artifacts found in the current run; refusing publication." >&2
+              exit 1
+            fi
+            sleep 4
+          done
+          echo "Pages artifact not indexed after repeated checks." >&2
+          exit 1
       - name: Publish tested release artifact
         if: steps.job.outputs.has_job == 'true'
         id: deployment
