@@ -783,7 +783,7 @@ assert.equal(testCloneHit({x:240,y:380,vx:8,vy:4,cooldown:0,allyCooldown:10},tes
 assert.match(volley,/function drawVolleyShackle\(\)/);
 assert.match(volley,/if\(canPlayerJump\(\)\|\|state\.phase==="ready"/,"shackle drawn only during restricted movement");
 assert.match(volley,/volleyShackle\.dir=left\.x>beforeMoveX\?-1:1/,"volleyball shackle trails movement direction");
-assert.match(volley,/drawTeacher\(left, "#448bd8"\);\s*drawVolleyShackle\(\)/,"volleyball chain drawn on ankle");
+assert.match(volley,/drawTeacher\(left, "#448bd8"\);[\s\S]{0,800}drawVolleyShackle\(\)/,"volleyball chain remains visible after dash trail");
 const chalkMatch=runner.match(/const chalkProfiles=(\{[^\n]+\});/);
 assert.ok(chalkMatch);
 const chalkProfiles=new Function("return "+chalkMatch[1])();
