@@ -125,3 +125,35 @@
 
 .beagu-unified-header .beagu-unified-nav>a[href="postit.html"]{display:none!important}
 @media(max-width:760px){.beagu-unified-header .beagu-unified-nav{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* Four core tabs: single challenge-page navigation geometry for all four entry pages.
+   The existing separate post-it control is intentionally not part of these tabs. */
+.beagu-unified-header .beagu-unified-nav.beagu-core-nav{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:clamp(6px,1.35vw,16px);
+}
+.beagu-unified-header .beagu-unified-nav.beagu-core-nav > a:not([href="postit.html"]){
+  min-height:42px;
+  padding:9px 15px;
+  border-radius:12px;
+  font-size:14px;
+  line-height:1.4;
+  letter-spacing:normal;
+}
+@media(max-width:760px){
+  .beagu-unified-header .beagu-unified-nav.beagu-core-nav{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:4px;
+    width:100%;
+  }
+  .beagu-unified-header .beagu-unified-nav.beagu-core-nav > a:not([href="postit.html"]){
+    min-width:0;
+    min-height:40px;
+    padding:8px 2px;
+    border-radius:9px;
+    font-size:12px;
+    letter-spacing:-.035em;
+  }
+}

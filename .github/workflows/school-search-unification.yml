@@ -3,6 +3,10 @@ on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'challenge.html'
+      - 'styles/beagu-site-header-v1.css'
+      - 'tests/site-nav-challenge-unity.mjs'
       - 'search.html'
       - 'search-lv1.html'
       - 'statistics.html'
@@ -51,6 +55,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node tests/site-nav-challenge-unity.mjs
       - run: node tests/school-search-unification.mjs
       - run: node tests/lv1-ranked-office-history.mjs
       - run: node tests/lv1-view-count-sort.mjs
