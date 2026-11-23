@@ -110,27 +110,17 @@ def make_preview_banner(target):
 def build():
     plan = read_plan()
     production = plan.get("production_sha")
-    staging = plan.get("staging_sha")
+    if plan.get("target") != "production":
+        raise RuntimeError("Staging jobs must use the independent Vercel worker")
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
     archive(production, OUTPUT)
     overlay_approved_directory(OUTPUT)
-    if plan.get("target") != "production":
-        raise RuntimeError("Staging jobs must use the independent Vercel worker")
-    if False and staging:
-        preview_dir = OUTPUT / "_preview"
-        archive(staging, preview_dir)
-        overlay_approved_directory(preview_dir)
-        nested_cname = preview_dir / "CNAME"
-        if nested_cname.exists():
-            nested_cname.unlink()
-        make_preview_banner(preview_dir)
-        (preview_dir / ".nojekyll").touch()
     if (OUTPUT / "CNAME").read_text(encoding="utf8").strip() != "baeguindex.com":
         raise RuntimeError("Production domain mismatch")
     (OUTPUT / ".nojekyll").touch()
     print("Build ready:", str(OUTPUT), "prod", production[:8],
-          "staging", staging[:8] if staging else "none")
+          "independent staging is not included")
 
 
 def main():

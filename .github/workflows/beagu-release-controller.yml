@@ -82,6 +82,7 @@ jobs:
         if: steps.job.outputs.has_job == 'true' && steps.job.outputs.target == 'staging'
         env:
           VERCEL_TOKEN: ${{ secrets.BEAGU_STAGE_VERCEL_TOKEN }}
+          VERCEL_STAGE_BYPASS: ${{ secrets.BEAGU_STAGE_VERCEL_BYPASS }}
         run: python3 scripts/release-manager/vercel_stage.py
       - name: Build immutable production snapshot
         if: steps.job.outputs.has_job == 'true' && steps.job.outputs.target == 'production'

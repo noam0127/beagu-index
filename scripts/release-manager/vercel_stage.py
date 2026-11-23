@@ -66,6 +66,14 @@ def main():
                     alias=request("GET","/v4/aliases/"+HOST)
                     if (alias.get("deploymentId") or (alias.get("deployment") or {}).get("id"))!=deployment:
                         raise RuntimeError("Canonical alias mismatch")
+                    bypass = os.environ.get("VERCEL_STAGE_BYPASS")
+                    if not bypass: raise RuntimeError("Stage smoke-test authentication is not configured")
+                    req = urllib.request.Request(ORIGIN+"test-mirror-version.json",headers={"x-vercel-protection-bypass":bypass,"Cache-Control":"no-cache"})
+                    with urllib.request.urlopen(req,timeout=25) as response:
+                        live = json.load(response)
+                        csp = response.headers.get("Content-Security-Policy","")
+                    if live.get("productionBaseline")!=sha or live.get("stageRef")!=STAGE or PROD in csp or STAGE not in csp:
+                        raise RuntimeError("Live stage manifest or CSP mismatch")
                     (ROOT/".stage-proof.json").write_text(json.dumps({"verified_stage_sha":sha,"verified_stage_url":ORIGIN,"verified_deployment_id":deployment}))
                     print("Independent staging ready",sha[:8],deployment)
                     return

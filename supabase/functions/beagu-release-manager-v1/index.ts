@@ -272,7 +272,6 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
    {public_data_blob_sha:job.public_data_blob_sha,updated_at:new Date().toISOString()}:
    job.target==="staging"?
    {staging_sha:job.to_sha,staging_version:job.version,
-    public_data_blob_sha:job.public_data_blob_sha||current.public_data_blob_sha,
     updated_at:new Date().toISOString()}:
    {production_sha:job.to_sha,production_version:job.version,
     public_data_blob_sha:job.public_data_blob_sha||current.public_data_blob_sha,
