@@ -5,6 +5,8 @@ on:
     paths:
       - 'scripts/staging/recovered-arcade-leaderboard/**'
       - 'tests/staging-arcade-contract.test.py'
+      - 'tests/staging-arcade-dependency.test.py'
+      - 'scripts/staging/schema-arcade-fastest25-trigger-qa-only.sql'
       - 'tests/staging-arcade-http-smoke.test.py'
       - '.github/workflows/v110-staging-arcade.yml'
   workflow_dispatch:
@@ -20,6 +22,8 @@ jobs:
           persist-credentials: false
       - name: Static source guard checks
         run: python3 tests/staging-arcade-contract.test.py
+      - name: Enforce explicit arcade DB dependencies and ranking trigger
+        run: python3 tests/staging-arcade-dependency.test.py
       - name: Live staging HTTP read/negative checks
         run: python3 tests/staging-arcade-http-smoke.test.py
       - name: No data mutations or production credentials in CI
