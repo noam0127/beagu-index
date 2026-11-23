@@ -48,7 +48,7 @@ const mbti=read('js/school-mbti-v1.js');
 const report=read('school-report.html');
 for(const [level,code] of [[0,lv0],[1,lv1],[2,lv2]]){
  assert.match(code,/BeaguSchoolSearchCard\.createCard\(/,'Lv.'+level+' not using canonical card');
- assert.match(code,level===1?/level:\\s*viewerTier/:new RegExp('level:\\s*'+level),
+ assert.match(code,level===1?/level:\s*viewerTier/:new RegExp('level:\\s*'+level),
    'Lv.'+level+' incorrect card privilege');
  assert.doesNotMatch(code,/🌐 학교 홈페이지|address,homepage/);
 }
