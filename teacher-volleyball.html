@@ -169,8 +169,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       <canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas>
       <div class="volley-ready-overlay" id="volley-ready-overlay" aria-labelledby="volley-ready-title">
         <div class="volley-ready-panel">
-          <div class="volley-ready-icon" aria-hidden="true">🏫</div>
-          <h2 id="volley-ready-title">학교를 선택하세요</h2>
+          <div class="volley-ready-icon" aria-hidden="true">🏐</div>
+          <h2 id="volley-ready-title">선생님배구 1.0</h2>
           <p id="volley-ready-detail" hidden></p>
           <button type="button" id="volley-school-choose" class="volley-school-choose" aria-controls="arcade-school-picker">🏫 학교 선택하기</button>
         </div>
@@ -611,7 +611,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const isReady=state.phase==="ready";
     readyOverlay.hidden=!isReady;
     schoolChooseButton.hidden=!isReady;
-    readyTitle.textContent=chosen?.eligible?chosen.school_name:chosen?"조사 참여 필요":"학교를 선택하세요";
+    readyTitle.textContent=chosen?.eligible?chosen.school_name:chosen?"조사 참여 필요":"선생님배구 1.0";
     readyDetail.textContent=chosen?.eligible?(diffName[chosen.difficulty]||"")+" · 준비 완료":
       chosen?"2026 배구지수 조사 참여 후 시작할 수 있습니다.":"";
     readyDetail.hidden=!readyDetail.textContent;

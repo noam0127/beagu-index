@@ -411,10 +411,9 @@ function intro(){
  state="ready";schoolPicker.setLocked(false);
  const selected=schoolPicker.get();
  const ready=selected?.eligible===true;
- const title=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
-   selected?selected.school_name+" · 조사 필요":"학교를 선택하세요";
- const desc=ready?"24세 임용 → 62세 정년 · 5초마다 1년":selected?"2026년 조사 참여 후 시작 가능":"학교 선택";
- message("험난한 교직생활 3.0",title+"\n"+desc,[
+ const desc=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
+   selected?"2026년 조사 참여 후 시작 가능":"";
+ message("험난한 교직생활 3.0",desc,[
   {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
    action:()=>ready?start():schoolPicker.focus()}
  ],"🏫");
