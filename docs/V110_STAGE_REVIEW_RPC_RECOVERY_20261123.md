@@ -34,6 +34,18 @@
 ## 승인 전 남은 의무 검증
 
 - 독립 시험 도메인 및 실제 Supabase Auth AAL2 로그인·MFA 세션·소유자/뷰어/편집자 역할별 HTTP 양성/음성 E2E.
-- 가상 2026 학교 스냅샷과 감사 기록의 **성공 경로 원자성**, 근거자료·최소표본·재식별 위험 심사, 추천 실응답 제출 확인, 세션 무효화·정책 변경·장애 복구.
+- 근거자료·최소표본·재식별 위험 심사, 추천 실응답 제출 확인, 실제 JWT의 세션 무효화·정책 변경·장애 복구. 가상 2026 학교 스냅샷에서의 **DB 내부 성공 경로·감사 원자성은 검증 완료**했으나 실제 인증 E2E는 아직 미검증.
 - 시험 관리자 계정은 아직 0건. 보안 권한을 우회하거나 실제 운영 계정을 복제해 양성 테스트를 꾸미지 않음.
 - **관리자 심사 플래그는 잠금 유지. 16/16 API 설치는 운영 출시 승인이 아니다.**
+
+## 2026-11-23 후속: 가상 AAL2 상태로 DB 성공 경로와 감사 실패 롤백 검증
+
+**실제 MFA 성공이라고 주장하지 않는다.** 시험 Supabase에는 검사 전후 `auth.users=0`, `auth.sessions=0`, MFA 요소 0건, 활성 관리자 0건이므로, 아래 테스트에서는 **DB 트랜잭션 안에서만** `auth.users`·`auth.sessions.aal='aal2'`·`beagu_admin_accounts.owner`·`TST0999` 학교와 가상 2026 집계 행을 만든 후 검증한다. 실제 MFA 등록, OTP 입력, Auth 토큰/JWT 발급, 브라우저 로그인은 발생하지 않음.
+
+- [가상 소유자·권한·감사 원자성 실제 시험 SQL](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/tests/sql/staging-review-owner-aal2-atomic-positive-rollback-20261123.sql): `viewer` 권한 거부, `aal1` 거부, 세션 만료 거부. QA용 소유자+AAL2 행에서는 `PENDING` 근거 심사 성공 및 기존 승인 `WITHHELD` 회수 확인. 별도 보류 실행에서는 스냅샷 보류 + 비공개 결정 감사 + 공개 관리자 감사가 **함께 성공**. 마지막 공개 감사 INSERT에 강제 SQL 오류를 일으켰더니 앞선 스냅샷 수정/비공개 감사까지 모두 **롤백**됨.
+- [가상 추천 품질 심사/원자성 실제 시험 SQL](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/tests/sql/staging-review-referral-quality-atomic-rollback-20261123.sql): `form_quality_attested=false`에서 APPROVE 거부, `form_quality_attested=true`로 바꿔도 `public_enabled=false`이므로 APPROVE 거부 및 Lv2 프로필 0건. 동일 가상 소유자의 `REJECT`는 이벤트 변경 + 품질 검토 변경 + 감사 기록이 함께 성공. 마지막 감사 INSERT 강제 실패에서 앞선 변경 모두 롤백.
+- 양쪽 테스트는 **BEGIN / ROLLBACK**으로 종료. 최종 SQL 조회에서 가상 Auth 사용자·세션·관리자·QA 학교·2026 스냅샷·가상 감사·추천 이벤트·강제 실패 트리거 **전부 0건**. 기존 관리자 감사 16건은 유지.
+- [GitHub Actions 회귀 검사 #45091470112](https://github.com/noam0127/beagu-index/actions/runs/45091470112) **성공**: 양성/부정 SQL 테스트의 필수 범위와 안전장치, 2026 관리자 API 실제 `REVIEW_NOT_READY` 잠금 응답 검증.
+- [진짜 관리자 MFA 준비 확인용 읽기 전용 SQL](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/scripts/staging/read-only-real-reviewer-mfa-prereqs-20261123.sql): Auth 사용자 0, 활성 owner 계정 0, 검증된 MFA factor가 있는 owner 0, 활성 owner AAL2 세션 0. 판정 **`BLOCKED_REAL_MFA_OWNER_ACCOUNT_NOT_CONFIGURED`**.
+
+다음 단계의 필수 외부 인증 절차: 시험 프로젝트에 실제 소유자 QA 계정을 만들고 TOTP MFA를 등록·검증한 후, **실제 발급된 JWT**의 `sub`·`aal='aal2'`·`session_id`와 `auth.sessions`의 활성 상태가 일치하는지 서버·브라우저에서 검증해야 한다. <https://supabase.com/docs/guides/auth/auth-mfa> 및 <https://supabase.com/docs/guides/auth/sessions> 참고. 계정이 준비되기 전까지 `BEAGU_STAGING_REVIEW_APPROVED`는 설정하지 않고 기존 5개 롤아웃 잠금을 유지한다.
