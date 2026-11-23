@@ -218,9 +218,9 @@ const chalkProfiles={easy:{interval:1.1,maxShots:2,range:470},normal:{interval:1
 const chalkProfile=()=>{
  const base=chalkProfiles[schoolPicker.get()?.difficulty]||null;
  if(isMysteryBuff("conflict"))return null;
- const extras=(isMysteryBuff("friends")?1:0)+(isMysteryBuff("chalk")?1:0);
+ const extras=(isMysteryBuff("friends")?1:0)+(isMysteryBuff("chalk")?1:0)+(isMysteryBuff("bullet")?1:0);
  if(!extras)return base;
- return {interval:Math.min(base?.interval||1,.85),range:490,maxShots:(base?.maxShots||0)+extras};
+ return {interval:isMysteryBuff("bullet")?.24:Math.min(base?.interval||1,.85),range:490,maxShots:(base?.maxShots||0)+extras};
 };
 function helperPosition(helper){
  // Fixed corner positions are based on canvas size, never on the moving player.
@@ -287,10 +287,10 @@ let sideStudents=[],paperBullets=[],paperTarget=null,sideRushClock=999,paperStor
 let mysteryDrops=[],mysteryReveals=[],mysteryBuffs={},nextMysteryAt=0;
 const mystery=window.ArcadeMysteryItems;
 const isMysteryBuff=key=>Number(mysteryBuffs[key]||0)>clock;
-const mysteryCadence={easy:[18,25],normal:[14,21],hard:[11,17],very_hard:[8,13],extreme:[6,10]};
+const mysteryCadence={easy:[9,29],normal:[8,26],hard:[6,21],very_hard:[5,17],extreme:[4,14]};
 function scheduleMystery(){
  const span=mysteryCadence[schoolPicker.get()?.difficulty]||mysteryCadence.hard;
- nextMysteryAt=clock+span[0]+Math.random()*(span[1]-span[0]);
+ nextMysteryAt=clock+span[0]+Math.pow(Math.random(),1.25)*(span[1]-span[0]);
 }
 function resetMystery(){
  mysteryDrops=[];mysteryReveals=[];mysteryBuffs={};scheduleMystery();
@@ -658,7 +658,7 @@ function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing",wasPaused=state==="paused";
  if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
- message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\n난이도가 높을수록 옆에서 돌진 학생 증가 · 느린 공문 탄막 증가\n랜덤 물음표 아이템: 빨강 불이익 / 파랑 도움 · 잠시 후 소멸\nEASY 날개·동료·관리자 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
+ message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\n난이도가 높을수록 옆에서 돌진 학생 증가 · 느린 공문 탄막 증가\n불규칙 물음표: 빨강 총점 비율 차감 / 파랑 도움 · 🎯 탄환 5초\nEASY 날개·동료·관리자 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
   {label:wasPlaying?"▶ 게임으로 돌아가기":wasPaused?"⏸ 일시정지 메뉴":"확인",
    action:()=>{if(wasPlaying)resume();else if(wasPaused){state="playing";pause();}else stopToIntro();}}
  ],"❔");
@@ -676,7 +676,7 @@ function fireChalk(dt){
    !chalkShots.some(shot=>shot.target===a)
   ).sort((a,b)=>Math.hypot(a.x-origin.x,a.y-origin.y)-Math.hypot(b.x-origin.x,b.y-origin.y))[0];
   if(!target)continue;
-  const willHit=Math.random()<.5;
+  const willHit=isMysteryBuff("bullet")||Math.random()<.5;
   const missOffset=(Math.random()<.5?-1:1)*(target.r+65);
   chalkShots.push({
    role:helper.role,x:origin.x,y:origin.y-34,target,willHit,life:1.6,
@@ -842,8 +842,8 @@ function collectMystery(item,x,y){
  switch(item.id){
   case "shackle":mysteryBuffs.shackle=t+dur;mysteryBuffs.wings=0;player.y=H-52;break;
   case "complaint":mysteryBuffs.complaint=t+dur;mysteryBuffs.letter=0;break;
-  case "bullying":score=Math.max(0,score-1);break;
-  case "report":score=Math.max(0,score-10);break;
+  case "bullying":score=Math.max(0,score-Math.ceil(score*.10));break;
+  case "report":score=Math.max(0,score-Math.ceil(score*.25));break;
   case "conflict":mysteryBuffs.conflict=t+dur;mysteryBuffs.friends=0;chalkShots=[];break;
   case "wings":mysteryBuffs.wings=t+dur;mysteryBuffs.shackle=0;break;
   case "letter":mysteryBuffs.letter=t+dur;mysteryBuffs.complaint=0;break;
@@ -851,6 +851,7 @@ function collectMystery(item,x,y){
   case "friends":mysteryBuffs.friends=t+dur;mysteryBuffs.conflict=0;break;
   case "bonus":score+=2;break;
   case "chalk":mysteryBuffs.chalk=t+dur;break;
+  case "bullet":mysteryBuffs.bullet=t+5;break;
  }
  if(chalkHelpers.length!==(chalkProfile()?.maxShots||0))resetChalkHelpers();
  mysteryReveals.push({item,x,y,life:1.6});
@@ -964,7 +965,7 @@ function update(dt){
  }
  fireChalk(dt);
  spawnClock-=dt;
- if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-stage*.085-(getAge()>=60?.2:0))/profile.spawnPressure)*(0.8+Math.random()*.45)/(activeEvent?.id==="rush"?1.30:1);}
+ if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-stage*.085-(getAge()>=60?.2:0))/profile.spawnPressure)*(.48+Math.random()*1.55)/(activeEvent?.id==="rush"?1.30:1);}
  for(let i=items.length-1;i>=0;i--){
   const a=items[i];a.y+=a.speed*dt;a.x+=Math.sin(clock*(2+profile.zigzag)+a.phase)*a.wobble*dt;
    if(!a.good&&a.y>H*.18&&a.y<H-75){
@@ -1128,6 +1129,30 @@ function drawPatternHazards(){
   ctx.restore();
  }
 }
+// Draw full-size Korean text with line wrapping (never maxWidth compression).
+function drawReadableNotice(content,y,background,color){
+ const width=Math.min(W-20,Math.max(190,W*.88)),inside=width-32;
+ ctx.save();ctx.font='800 18px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
+ const pieces=String(content).split(/\s+/).filter(Boolean),lines=[];
+ let line='';
+ for(const chunk of pieces){
+  const next=line?line+' '+chunk:chunk;
+  if(ctx.measureText(next).width<=inside){line=next;continue;}
+  if(line){lines.push(line);line='';}
+  for(const char of Array.from(chunk)){
+   if(ctx.measureText(line+char).width>inside&&line){lines.push(line);line='';}
+   line+=char;
+  }
+ }
+ if(line)lines.push(line);
+ const shown=lines.slice(0,3);
+ if(lines.length>3)shown[2]=shown[2].slice(0,-1)+'…';
+ const h=16+shown.length*23;
+ roundRect((W-width)/2,y,width,h,12,background);
+ ctx.fillStyle=color;ctx.textAlign="center";ctx.textBaseline="middle";
+ for(let i=0;i<shown.length;i++)ctx.fillText(shown[i],W/2,y+19+i*23);
+ ctx.restore();return h;
+}
 function draw(){
  ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
  background();drawItems();drawMystery();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();
@@ -1150,16 +1175,17 @@ function draw(){
  ctx.fillText(Math.max(0,Math.ceil(RETIREMENT_SECONDS-clock))+"s",W-timeW/2-9,33,timeW-12);
  ctx.font="bold 9px sans-serif";ctx.fillStyle="#b9ecdd";ctx.fillText("정년까지",W-timeW/2-9,48,timeW-12);
  if(combo>=3){
-  ctx.textAlign="center";roundRect(W/2-53,64,106,24,11,"rgba(108,55,32,.9)");
-  ctx.font="900 12px sans-serif";ctx.fillStyle="#fff3c9";ctx.fillText("🔥 "+combo+" COMBO",W/2,80,101);
+  ctx.textAlign="center";roundRect(W/2-104,62,208,31,13,"rgba(108,55,32,.94)");
+  ctx.font='900 18px "Apple SD Gothic Neo",sans-serif';ctx.fillStyle="#fff3c9";
+  ctx.fillText("🔥 "+combo+" COMBO",W/2,83);
  }
  roundRect(12,H-7,W-24,3,2,"rgba(24,62,83,.15)");
  if(clock>0)roundRect(12,H-7,(W-24)*Math.min(1,clock/RETIREMENT_SECONDS),3,2,"#2b9c8b");
- if(noticeTime>0){ctx.textAlign="center";roundRect(W/2-68,93,136,27,9,"rgba(17,54,70,.88)");ctx.font="bold 13px sans-serif";ctx.fillStyle="#fff";ctx.fillText(notice,W/2,111,126);}
+ let bannerY=98;
+ if(noticeTime>0)bannerY+=drawReadableNotice(notice,bannerY,"rgba(17,54,70,.94)","#fff")+8;
  if(activeEvent&&eventSeconds>0){
-  const label=activeEvent.icon+" "+activeEvent.title+" · "+Math.ceil(eventSeconds)+"s";
-  ctx.textAlign="center";roundRect(W/2-78,124,156,25,10,"rgba(25,55,84,.9)");
-  ctx.font="bold 12px sans-serif";ctx.fillStyle="#fff6ce";ctx.fillText(label,W/2,141,150);
+  const label=activeEvent.icon+" "+activeEvent.title+" · "+Math.ceil(eventSeconds)+"초";
+  drawReadableNotice(label,bannerY,"rgba(25,55,84,.94)","#fff6ce");
  }
  if(stage===3){
   const leftSafe=Math.floor(clock/5)%2===0;

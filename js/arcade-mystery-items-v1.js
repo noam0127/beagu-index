@@ -5,26 +5,29 @@
  const bad=[
   {id:"shackle",good:false,name:"업무족쇄",icon:"⛓️",detail:"비행·점프 제한"},
   {id:"complaint",good:false,name:"악성민원",icon:"☎️",detail:"이동 속도 감소"},
-  {id:"bullying",good:false,name:"학폭",icon:"⚠️",detail:"점수 -1"},
-  {id:"report",good:false,name:"무고성 아동학대 신고",icon:"🚨",detail:"점수 -10"},
+  {id:"bullying",good:false,name:"학폭",icon:"⚠️",detail:"현재 총점 10% 차감"},
+  {id:"report",good:false,name:"무고성 아동학대 신고",icon:"🚨",detail:"현재 총점 25% 차감"},
   {id:"conflict",good:false,name:"교직원 갈등",icon:"💢",detail:"동료 일시 퇴장"},
   {id:"ball_add",good:false,name:"공 추가",icon:"🏐",detail:"경기 중 공 1개 증가"}
  ];
  const good=[
   {id:"wings",good:true,name:"날개",icon:"🪽",detail:"족쇄 해제·비행"},
   {id:"letter",good:true,name:"편지",icon:"💌",detail:"이동 속도 증가"},
-  {id:"salary",good:true,name:"월급",icon:"💵",detail:"점수 +1"},
+  {id:"salary",good:true,name:"월급",icon:"💵",detail:"누적 점수 +100"},
   {id:"friends",good:true,name:"친한 동학년",icon:"🤝",detail:"동료 일시 증가"},
-  {id:"bonus",good:true,name:"성과금",icon:"🏅",detail:"점수 +2"},
+  {id:"bonus",good:true,name:"성과금",icon:"🏅",detail:"누적 점수 +200"},
   {id:"chalk",good:true,name:"분필탄환",icon:"🖍️",detail:"분필 지원 활성화"},
-  {id:"ball_remove",good:true,name:"공 삭제",icon:"🏐",detail:"공 1개 제거 · 최소 1개 유지"}
+  {id:"ball_remove",good:true,name:"공 삭제",icon:"🏐",detail:"공 1개 제거 · 최소 1개 유지"},
+  {id:"rapid_smash",good:true,name:"속공 강화",icon:"⚡",detail:"5초 동안 스매시 속도 2배"},
+  {id:"bullet",good:true,name:"분필 탄환",icon:"🎯",detail:"5초 동안 자동 탄환 지원"}
  ];
  const pools={bad,good};
  function pick(includeChalk=false,forceGood=null,includeBalls=false){
   const positive=forceGood===null?Math.random()<.51:Boolean(forceGood);
   // Ball-count effects belong to volleyball only, not the survival runner.
   const pool=positive
-    ?(includeBalls?[...good.slice(0,5),good[6]]:includeChalk?good.slice(0,6):good.slice(0,5))
+    ?(includeBalls?good.filter(x=>x.id!=="chalk"&&x.id!=="bullet"):
+       includeChalk?good.filter(x=>x.id!=="ball_remove"&&x.id!=="rapid_smash"):good.slice(0,5))
     :(includeBalls?bad:bad.slice(0,5));
   return {...pool[Math.floor(Math.random()*pool.length)]};
  }
