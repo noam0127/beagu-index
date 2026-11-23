@@ -29,7 +29,7 @@ assert blocked["deployment_executed"] is False
 assert blocked["counts"]["POSSIBLE_STATIC_ONLY"]==1
 assert blocked["counts"]["BLOCK_STAGE_OR_PRIVILEGED"]==1
 assert blocked["counts"]["BLOCK_BEHAVIOR_OR_DATA"]==1
-assert "PRODUCTION_SHA_DIFFERS_FROM_GITHUB_MAIN" in blocked["notes"]
+assert any(note.startswith("PRODUCTION_SHA_DIFFERS_FROM_GITHUB_MAIN") for note in blocked["notes"])
 assert m.evaluate(base,base,candidate,["styles/safe-only.css"])["decision"]=="STATIC_ONLY_REVIEW_REQUIRED"
 assert m.evaluate(base,base,candidate,[])["decision"]=="NO_GO"
 print("PASS: production commit comparison cannot confuse main with actually deployed SHA")
