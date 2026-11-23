@@ -48,3 +48,8 @@
 .release-progress-panel[data-state="deployed"]{background:#f5faf7;border-color:#b9d7c5}
 .release-progress-panel .subtle{margin:9px 0 0;font-size:12px}
 @media(max-width:700px){.release-candidate{padding:17px}}
+.release-site-link[aria-disabled="true"]{opacity:.55;cursor:not-allowed;text-decoration:none;pointer-events:none}
+.release-independent{margin:16px 0;padding:14px;border:1px solid #dbe6f5;border-radius:12px;background:#f7faff}
+.release-independent>strong{display:block;font-size:13px;color:#18365a}
+.release-independent .release-site-link{margin:5px 0}
+.release-independent .subtle{margin:5px 0 0;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
