@@ -2,7 +2,7 @@
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
   "verified_on": "2026-11-22",
-  "source": "Supabase staging Edge Function inventory, manually read-only verified after 2 QA-only deployments 2026-11-23 KST",
+  "source": "Supabase staging Edge Function inventory reverified 2026-11-23 KST after isolated interest API recovery; remaining 7 API blockers",
   "functions": [
     {
       "slug": "arcade-leaderboard",
@@ -54,6 +54,12 @@
     },
     {
       "slug": "beagu-school-culture-v1",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-school-interest-v1",
       "version": 1,
       "status": "ACTIVE",
       "verify_jwt": false
