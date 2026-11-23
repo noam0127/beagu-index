@@ -50,6 +50,16 @@ assert.match(picker,/BeaguPerf\?\.record\('school_selection'/);
 assert.match(picker,/BeaguPerf\?\.record\('school_search'/);
 const body=read('js/beagu-page-performance-v1.js');
 assert.doesNotMatch(body,/location\.search|searchInput\.value|userAgent|error\.message/);
+assert.doesNotMatch(body,/supabaseClient\.rpc\(['"]beagu_perf_record_v1/);
+assert.match(body,/functions\/v1\/beagu-perf-ingest-v1/);
+const stageSql=read('scripts/staging/schema-page-performance-server-only-qa.sql');
+assert.match(stageSql,/REVOKE ALL ON FUNCTION public\.beagu_perf_record_v1/);
+assert.match(stageSql,/FROM PUBLIC,anon,authenticated/);
+assert.match(stageSql,/TO service_role/);
+const gateway=read('scripts/staging/recovered-beagu-perf-ingest-v1/index.ts');
+assert.match(gateway,/const STAGE_URL='https:\/\/ycwuugggqbunlbwuzvbx\.supabase\.co'/);
+assert.match(gateway,/ORIGIN_NOT_ALLOWED/);
+assert.match(gateway,/beagu_perf_record_v1/);
 assert.match(body,/window\.setTimeout\(\(\)=>\{/);
 async function unit(){
   const events={},scheduled=[],calls=[];
@@ -65,7 +75,8 @@ async function unit(){
     location:{pathname:'/search.html'},
     document:{readyState:'loading'},
     performance:{getEntriesByType:()=>[{loadEventEnd:832}],timing:null},
-    supabaseClient:{rpc:(_name,payload)=>{calls.push(payload);return Promise.resolve({data:true,error:null})}},
+    SUPABASE_URL:'https://ycwuugggqbunlbwuzvbx.supabase.co',
+    fetch:(url,opts)=>{calls.push({url,body:JSON.parse(opts.body),headers:opts.headers});return Promise.resolve({ok:true,status:200})},
     crypto:{randomUUID:()=> '11111111-1111-4111-8111-111111111111'},
     Promise,Number,Math,Set,RegExp,Date,Object,String,console
   };
@@ -73,10 +84,14 @@ async function unit(){
   assert.equal(typeof state.window.BeaguPerf.record,'function');
   state.window.BeaguPerf.record('school_search',280,true);
   await Promise.resolve();await Promise.resolve();
-  assert.equal(calls[0].p_page,'search');
-  assert.equal(calls[0].p_duration_ms,280);
-  assert.equal(calls[0].p_ok,true);
-  assert.equal(calls[0].p_operation,'school_search');
+  assert.equal(calls[0].body.page,'search');
+  assert.equal(calls[0].body.duration_ms,280);
+  assert.equal(calls[0].body.ok,true);
+  assert.equal(calls[0].body.operation,'school_search');
+  assert.equal(calls[0].url,
+    'https://ycwuugggqbunlbwuzvbx.supabase.co/functions/v1/beagu-perf-ingest-v1');
+  assert.equal(calls[0].body.visitor,'11111111-1111-4111-8111-111111111111');
+  assert.equal(calls[0].headers['Content-Type'],'application/json');
   state.window.BeaguPerf.record('unknown',10,true);
   assert.equal(calls.length,1);
   assert.equal(typeof events.load,'function');
@@ -86,7 +101,16 @@ async function unit(){
   assert.equal(scheduled.length,1);
   scheduled.shift()();
   await Promise.resolve();await Promise.resolve();
-  assert.ok(calls.some(x=>x.p_operation==='navigation'&&x.p_duration_ms===832));
+  assert.ok(calls.some(x=>x.body.operation==='navigation'&&x.body.duration_ms===832));
+  const previous=calls.length;
+  vm.runInNewContext(body,{
+    ...state,
+    SUPABASE_URL:'https://snvzwrexuqavnfvzgxqj.supabase.co',
+    window:{...state.window,BeaguPerf:undefined}
+  });
+  // The development sampler may be embedded in a production-configured page,
+  // but it must NEVER send QA events to that production API.
+  assert.equal(calls.length,previous);
 }
 unit().then(()=>console.log('Admin performance privacy/latency/behavior tests passed'))
   .catch(e=>{console.error(e);process.exitCode=1});
