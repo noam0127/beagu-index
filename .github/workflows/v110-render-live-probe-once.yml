@@ -1,0 +1,50 @@
+name: v1.1.0 one-time read-only Render site and CORS probe
+on:
+  push:
+    branches:
+      - fix/v110-staging-edited-api-recovery-20261123
+    paths:
+      - '.github/workflows/v110-render-live-probe-once.yml'
+  workflow_dispatch:
+    inputs:
+      render_origin:
+        description: Exact https://*.onrender.com test origin; blank tests unverified name candidate
+        required: false
+        type: string
+permissions:
+  contents: read
+jobs:
+  one-time-readonly-render-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Offline strict SHA and CORS contract tests
+        run: python3 tests/test-render-live-sha-cors.py
+      - name: Real host GET and staging Supabase OPTIONS only
+        id: probe
+        shell: bash
+        env:
+          RENDER_HOST_INPUT: ${{ inputs.render_origin }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          origin="$RENDER_HOST_INPUT"
+          if [ -z "$origin" ]; then
+            origin="https://baegu-index-v110-sandbox.onrender.com"
+            echo "::notice title=Unverified Render candidate::URL is based on Blueprint name only; actual assigned URL may differ."
+          fi
+          if python3 scripts/staging/check-render-live-sha-cors.py --url "$origin" --sha "$EXPECTED_SHA"; then
+            echo "render_verified=true" >> "$GITHUB_OUTPUT"
+            echo "VERIFIED: exact live Render SHA + 4 staging CORS OPTIONS probes (no writes)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "render_verified=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Render NOT VERIFIED::Host unreachable, revision stale or precise backend Origin not authorized."
+            echo "NOT VERIFIED: Render deployment + CORS acceptance is BLOCKED. Production NO-GO." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Prohibit misinterpretation of diagnostic run
+        run: |
+          echo "A green diagnostic job only means checks ran. Site readiness requires probe.render_verified=true."
+          echo "No Render deploy, account creation, Supabase writes or production changes."
