@@ -1,0 +1,67 @@
+/* Literary Class Diary school selection and Lv.2 beta entry.
+   Keep the original dusk-lavender background, serif title and rose buttons. */
+body.beagu-page-home .teacher-diary-feature .teacher-game-access-level{
+ background:#e6d2e31d;color:#f7e1ee;border:1px solid #eed6e777;
+ font:700 12px/1.4 "Gowun Batang","Nanum Myeongjo",serif}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-lock{
+ background:linear-gradient(145deg,#17243cce,#2c2b44d8);border-color:#c9b7d255;min-height:285px}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-beta-note{
+ border:1px solid #eacde744;background:#f4dbec12;border-radius:999px;
+ padding:7px 12px;font-size:12px;color:#f1deea;line-height:1.55}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-school-button{
+ display:block;width:min(100%,720px);min-height:56px;border:1px solid #eddbeb;
+ border-radius:13px;background:linear-gradient(135deg,#ead4e4,#f5e7d5);
+ color:#4c3551;font:700 18px/1.4 "Gowun Batang","Nanum Myeongjo",serif;
+ cursor:pointer;padding:12px 18px}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-school-button:hover{background:#fae8f3}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-picked{
+ min-height:16px;margin:0;color:#f0d9e8;font-size:13px;font-family:"Gowun Batang","Nanum Myeongjo",serif}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-lv2-form{
+ display:grid;width:min(100%,720px);gap:10px;margin:7px auto 0;text-align:left}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-lv2-form label{font-size:14px;color:#f7e6f1;font-weight:750}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-lv2-form .teacher-diary-code-row{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,215px);gap:10px}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-lv2-form input,
+body.beagu-page-home .teacher-diary-feature .teacher-diary-lv2-form button{
+ min-width:0;box-sizing:border-box;min-height:53px;border-radius:12px;padding:11px 13px;font-size:15px;width:100%}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-lv2-form input{
+ background:#fffafd;color:#342a40;border:1px solid #d5c1d9}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-lv2-form button{
+ background:#e8d1e5;color:#4c3551;border:0;cursor:pointer;font-weight:850;
+ font-family:"Gowun Batang","Nanum Myeongjo",serif}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-lv2-form button:disabled{opacity:.6;cursor:wait}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-private-preview{
+ width:min(100%,720px);margin:13px auto 0;padding:12px 0 0;
+ border-top:1px solid #d8bcda55;text-align:left}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-private-preview summary{
+ cursor:pointer;color:#edd7e8;font:700 12px "Gowun Batang","Nanum Myeongjo",serif}
+body.beagu-page-home .teacher-diary-feature .teacher-diary-private-preview form{margin-top:12px}
+.teacher-diary-school-dialog[hidden]{display:none!important}
+.teacher-diary-school-dialog{position:fixed;inset:0;z-index:10600;display:grid;place-items:center;overflow:auto;
+ padding:12px;background:#101527d9}
+.teacher-diary-school-dialog-inner{width:min(100%,600px);max-height:85dvh;overflow:auto;
+ background:linear-gradient(140deg,#555b70,#353c55);border:1px solid #e3cfe3a8;
+ border-radius:22px;padding:clamp(18px,4vw,30px);box-shadow:0 20px 70px #0c10236b;color:#fff6fc}
+.teacher-diary-dialog-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.teacher-diary-dialog-head h3{margin:0;color:#fff4fc;font:700 23px "Gowun Batang","Nanum Myeongjo",serif}
+.teacher-diary-dialog-head button{min-width:43px;min-height:43px;border-radius:11px;border:1px solid #e6d3e4;
+ color:#fff;background:#55506b;font-size:22px;cursor:pointer}
+.teacher-diary-school-help{color:#f2dfea;font-size:12px;line-height:1.65;margin:10px 0 0}
+.teacher-diary-school-dialog .arcade-school-picker{background:none;border:0;padding:0;box-shadow:none;color:#fff2fa}
+.teacher-diary-school-dialog .arcade-school-heading{font:700 15px "Gowun Batang","Nanum Myeongjo",serif;margin:0 0 9px}
+.teacher-diary-school-dialog .arcade-school-input{box-sizing:border-box;width:100%;min-height:50px;
+ background:#fffafd;border:1px solid #e5cfe0;border-radius:12px;color:#342a40;padding:10px 13px;font-size:15px}
+.teacher-diary-school-dialog .arcade-school-brief-note{font-size:12px;color:#efdfed;line-height:1.6}
+.teacher-diary-school-dialog .arcade-school-results{display:grid;gap:7px;max-height:240px;overflow:auto}
+.teacher-diary-school-dialog .arcade-school-results:empty,.teacher-diary-school-dialog .arcade-school-results[hidden]{display:none}
+.teacher-diary-school-dialog .arcade-school-option{min-height:45px;padding:10px 12px;
+ background:#ead4e422;border:1px solid #ead4e488;border-radius:12px;color:#fff7fd;text-align:left;cursor:pointer;font-size:14px}
+.teacher-diary-school-dialog .arcade-school-option:hover{background:#ead4e44d}
+.teacher-diary-school-dialog .arcade-school-status{font-size:12px;color:#f1dce9;line-height:1.5}
+.teacher-diary-school-dialog .arcade-school-change,.teacher-diary-school-dialog .arcade-school-survey{
+ display:block;width:100%;box-sizing:border-box;min-height:42px;margin-top:8px;border-radius:10px;
+ background:#edd9e7;border:0;color:#49374e;font-weight:800;padding:10px;text-align:center;text-decoration:none}
+.teacher-diary-school-dialog .arcade-school-change[hidden],.teacher-diary-school-dialog .arcade-school-survey[hidden]{display:none}
+.teacher-diary-school-dialog :is(button,input,a):focus-visible,
+body.beagu-page-home .teacher-diary-feature :is(button,input,summary):focus-visible{outline:3px solid #ffe1a8;outline-offset:3px}
+@media(max-width:600px){body.beagu-page-home .teacher-diary-feature .teacher-diary-lv2-form .teacher-diary-code-row{grid-template-columns:1fr}}
