@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "route": "GitHub → code tests → administrator pinned-SHA registration → explicit direct GitHub Pages publication → verification; no Vercel or test website",
+  "route": "GitHub → local/CI tests → administrator pinned-SHA registration → explicit direct GitHub Pages publication → verification; no Vercel or test website",
   "baseline": {
     "pages_release_state_sha": "36c68c8394a77a94541a2ad04a83db7242639c0c",
     "separate_vercel_hotfix_sha": "ff6d4ec2d59f0a4aa0f84531be633896d321943b",
@@ -12,17 +12,76 @@
       "version": "v1.2.0",
       "name": "정돈",
       "scope": "공통 메뉴·검색 비교 UI·참여코드·레벨 색상·버전 표시",
-      "status": "IN_PROGRESS",
+      "status": "PARTIAL_VALIDATION_ADMIN_BOOTSTRAP_REQUIRED",
       "branch": "release/v1.2.0-clean-pages",
       "pr": null,
-      "commit": null,
-      "tests": [],
-      "changed_files": [],
+      "commit": "0cc5acc509159b34a00f1c22dac9de1e4f42c971",
+      "tests": [
+        {
+          "name": "GitHub exact source JS/CSS SHA match and node syntax",
+          "result": "PASS",
+          "blobs": [
+            "5dfd86ae8a7938bfa4e125d736597a83dec4b5e8",
+            "d0c742ce923348b267dda80846c533e6e076f5dc"
+          ]
+        },
+        {
+          "name": "metadata VM unit cases",
+          "result": "PASS",
+          "groups": 13,
+          "scope": "mock DOM and network only"
+        },
+        {
+          "name": "Chromium fixture viewport 320/390/768/1440",
+          "result": "PASS",
+          "cases": 8,
+          "scope": "in-memory fixture, exact JS/CSS, no public network"
+        },
+        {
+          "name": "full site E2E and exact CI result",
+          "result": "NOT_VERIFIED",
+          "reason": "external network blocked; code-only workflow added but not run"
+        },
+        {
+          "name": "direct admin service end-to-end and exact publication timestamp",
+          "result": "NOT_VERIFIED"
+        }
+      ],
+      "changed_files": [
+        ".github/workflows/clean-release-validation.yml",
+        "challenge.html",
+        "development-roadmap.json",
+        "index.html",
+        "js/beagu-release-info-v1.js",
+        "postit.html",
+        "release-candidate.json",
+        "release-info.json",
+        "scripts/release-manager/stamp_release_info.py",
+        "search-lv1.html",
+        "search.html",
+        "statistics.html",
+        "styles/beagu-clean-v1.css",
+        "styles/beagu-participation-auth-v2.css",
+        "teacher-class-diary-entry.html",
+        "tests/clean-release-contract.cjs",
+        "tests/clean-release-info-runtime.cjs"
+      ],
       "dependencies": [],
-      "admin_registration": "PENDING",
+      "admin_registration": "BLOCKED_EXISTING_STAGING_JOB_AND_LEGACY_API",
       "production": "NOT_APPROVED",
       "deployment_date": null,
-      "rollback_sha": "36c68c8394a77a94541a2ad04a83db7242639c0c"
+      "rollback_sha": "36c68c8394a77a94541a2ad04a83db7242639c0c",
+      "prerequisite": {
+        "branch": "infra/pages-direct-release-v1",
+        "commit": "ea951df6533138bbcb4cba9a80c869ebed4815fb",
+        "status": "SOURCE_ONLY_NOT_DEPLOYED",
+        "scope": "owner MFA direct pinned candidate, server CI proof, stale-base guard, artifact stamp, admin UI",
+        "required": "review and separately approve activation; preserve existing staging request; rebase candidate on actual newly deployed admin baseline"
+      },
+      "user_approval_needed": [
+        "Approve separate minimal admin system activation, not the v1.2.0 public release",
+        "Resolve existing staging job before registering new candidate"
+      ]
     },
     {
       "order": 2,
