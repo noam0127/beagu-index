@@ -9,6 +9,7 @@ name: BAEGU release controller (admin approval)
 # Emergency owner request 2026-11-23 13:59 KST: wake production job 585ad673-9313-48d4-988b-77a67d4bc376 (pinned df83ae9) without altering release worker safeguards.
 # Owner-requested emergency production publish, 2026-11-23: queue 07266cd9-6661-4262-9896-b7701543c207 pinned to SHA 4113e9582698f340281fef61a6b6dfb571e0d04b; keep OIDC worker checks.
 # Owner-requested notice wording follow-up, 2026-11-23: signed queue job 1253f097-b0e1-4089-92a2-e10046157b23 publishes immutable 93ebc83afdfa44f1e19296d253906d7e7f5c2398.
+# Owner-requested 2026-11-23 challenge UI and 2026-data notice: trigger signed Pages worker for queued c9eae0c2-30e1-49bf-999a-26d8d6e7263f pinned to 0b15df7df31ef1ef7ba99ffbbe0e1e060665d8eb.
 on:
   schedule:
     - cron: '*/5 * * * *'
