@@ -16,6 +16,7 @@ const switchMode=byId('challengeMemberSwitch');
 const closeButton=byId('challengeMemberClose');
 const message=byId('challengeMemberMessage');
 const connect=byId('challengeMemberLink');
+const suspend=byId('challengeMemberSuspend');
 const signOut=byId('challengeMemberSignOut');
 const smsFields=byId('challengeMemberSmsFields');
 const smsPhone=byId('challengeMemberSmsPhone');
@@ -23,7 +24,7 @@ const smsConsent=byId('challengeMemberSmsConsent');
 const smsUnsubscribe=byId('challengeMemberSmsUnsubscribe');
 // supabase-config.js declares a top-level lexical const, not a window property.
 const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
-if(![card,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,signOut,smsFields,smsPhone,smsConsent,smsUnsubscribe].every(Boolean)||!client)return;
+if(![card,overlay,dialog,title,description,form,email,password,submit,switchMode,closeButton,message,connect,suspend,signOut,smsFields,smsPhone,smsConsent,smsUnsubscribe].every(Boolean)||!client)return;
 const SESSION_KEY='beagu-level-session-v1';
 const DEVICE_KEY='beagu-referral-device-secret-v1';
 const LEVEL_API='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-level-api';
@@ -54,7 +55,8 @@ function paintMode(next){
  switchMode.textContent=mode==='signup'?'이미 계정이 있어요 · 로그인하기':'계정이 없어요 · 회원가입';
  form.hidden=false;
  switchMode.hidden=false;
- connect.hidden=true;signOut.hidden=true;smsUnsubscribe.hidden=true;
+ connect.hidden=true;suspend.hidden=true;signOut.hidden=true;smsUnsubscribe.hidden=true;
+ connect.dataset.action='link_member';connect.textContent='원래 기기 인증 · 회원 연결';
  message.textContent='';
 }
 async function serverLevel(){
@@ -82,7 +84,11 @@ async function linkedStatus(accessToken){
   }
  });
  const result=await response.json().catch(()=>({}));
- return response.ok&&result.linked===true;
+ if(!response.ok)return {state:'unavailable'};
+ if(result.linked===true)return {state:'active'};
+ if(result.link_state==='suspended')return {state:'suspended'};
+ if(result.link_state==='unlinked'||result.linked===false)return {state:'unlinked'};
+ return {state:'unavailable'};
 }
 async function showAccountStatus(){
  const person=await userSession();
@@ -90,17 +96,30 @@ async function showAccountStatus(){
  if(!person)return;
  form.hidden=true;switchMode.hidden=true;signOut.hidden=false;
  smsUnsubscribe.hidden=person.user.user_metadata?.beagu_sms_opt_in!==true;
- const linked=await linkedStatus(person.token).catch(()=>false);
+ const member=await linkedStatus(person.token).catch(()=>({state:'unavailable'}));
  if(overlay.hidden||!tier2)return;
- if(linked){
-  connect.hidden=true;
-  message.textContent='Lv3 정식 회원 연결이 확인되었습니다.';
- }else if(deviceProof()){
+ connect.hidden=true;suspend.hidden=true;
+ connect.dataset.action='link_member';
+ connect.textContent='원래 기기 인증 · 회원 연결';
+ if(member.state==='active'){
+  suspend.hidden=false;
+  message.textContent='Lv3 정식 회원 연결이 활성화되어 있습니다.';
+ }else if(member.state==='suspended'){
+  if(deviceProof()){
+   connect.hidden=false;
+   connect.dataset.action='reactivate_member';
+   connect.textContent='원래 기기로 회원 재연결';
+   message.textContent='연결이 중지됐습니다. 같은 계정과 원래 기기에서만 복원할 수 있습니다.';
+  }else{
+   message.textContent='연결이 중지됐습니다. 재연결은 원래 기기에서만 가능합니다.';
+  }
+ }else if(member.state==='unlinked'&&deviceProof()){
   connect.hidden=false;
-  message.textContent='로그인 완료. 챌린지 발급 기기 확인을 눌러 작성 권한을 연결하세요.';
+  message.textContent='로그인 완료. 원래 기기 인증으로 회원 권한을 연결하세요.';
+ }else if(member.state==='unlinked'){
+  message.textContent='회원 연결은 챌린지를 진행한 원래 기기에서만 가능합니다.';
  }else{
-  connect.hidden=true;
-  message.textContent='로그인 완료. 작성 권한 연결은 챌린지를 진행한 원래 기기에서 할 수 있습니다.';
+  message.textContent='현재 회원 연결 상태를 확인하지 못했습니다. 다시 시도해 주세요.';
  }
 }
 function close(){
@@ -197,17 +216,42 @@ connect.addEventListener('click',async()=>{
   const response=await fetch(POSTIT_API,{method:'POST',cache:'no-store',headers:{
    'Content-Type':'application/json','X-Beagu-Level-Session':levelToken(),
    'Authorization':'Bearer '+person.token},
-   body:JSON.stringify({action:'link_member',deviceSecret:original})});
+   body:JSON.stringify({action:connect.dataset.action==='reactivate_member'?'reactivate_member':'link_member',deviceSecret:original})});
   const answer=await response.json().catch(()=>({}));
   if(!response.ok||answer.linked!==true)throw Error(answer.error||'LINK_FAILED');
   connect.hidden=true;
-  message.textContent='정식 회원 연결 완료. Lv3 권한을 확인하고 있습니다.';
+  message.textContent='같은 계정의 회원 연결이 활성화됐습니다. Lv3 권한을 다시 확인합니다.';
   window.dispatchEvent(new Event('beagu:level-state-change'));
+  await showAccountStatus();
  }catch(error){
   message.textContent=error.message==='MEMBERSHIP_ALREADY_CLAIMED'
    ?'이미 다른 계정에 연결된 챌린지 권한입니다.'
    :'Lv2 챌린지 기기 확인에 실패했습니다. 원래 기기에서 다시 시도해 주세요.';
  }finally{busy=false;connect.disabled=false}
+});
+// Suspension immediately removes Lv3/writer privileges, but deliberately
+// reserves the original visitor/author ID: it cannot be moved to another user.
+suspend.addEventListener('click',async()=>{
+ if(busy||suspend.hidden)return;
+ if(!window.confirm('회원 연결을 잠시 해제하시겠습니까?\nLv3·포스트잇 작성 권한은 중지되지만 기존 게시글은 삭제되지 않습니다. 재연결에는 같은 계정과 원래 기기가 필요합니다.'))return;
+ const person=await userSession();
+ if(!person||!await serverLevel()){
+  message.textContent='계정 로그인과 참여코드 인증을 다시 확인해 주세요.';return;
+ }
+ busy=true;suspend.disabled=true;
+ try{
+  const response=await fetch(POSTIT_API,{method:'POST',cache:'no-store',headers:{
+   'Content-Type':'application/json','X-Beagu-Level-Session':levelToken(),
+   'Authorization':'Bearer '+person.token},
+   body:JSON.stringify({action:'suspend_member'})});
+  const answer=await response.json().catch(()=>({}));
+  if(!response.ok||answer.link_state!=='suspended')throw Error('SUSPEND_FAILED');
+  suspend.hidden=true;
+  message.textContent='회원 연결을 중지했습니다. 같은 계정과 원래 기기에서만 복원할 수 있습니다.';
+  window.dispatchEvent(new Event('beagu:level-state-change'));
+  await showAccountStatus();
+ }catch{message.textContent='회원 연결을 중지하지 못했습니다. 다시 시도해 주세요.'}
+ finally{busy=false;suspend.disabled=false}
 });
 smsUnsubscribe.addEventListener('click',async()=>{
  if(busy)return;
