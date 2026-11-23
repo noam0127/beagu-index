@@ -1,7 +1,7 @@
 # 배구지수 v1.1.0 — 시험 Supabase Edge Function 실배포 현황
 
 2026년 11월 23일(한국 시간) **시험 프로젝트**
-`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **42개**
+`ycwuugggqbunlbwuzvbx`를 읽기 전용으로 확인한 결과, 총 **43개**
 Edge Function이 등록되어 있다. 정확한 함수 이름과 현재 버전의 스냅샷은
 `scripts/staging/stage-edge-functions-inventory.json`에 있다.
 
@@ -124,3 +124,9 @@ python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
 
 - 비공개 심사·감사 테이블 6개와 관리자 RPC 6종 복구 후 실제 SQL로 3종 내부 읽기 정상, 3종 무권한 결정 거부·감사 불변 검증.
 - `beagu-2026-review-admin` 시험 v2 ACTIVE, 관리자 보류와 두 감사 기록 원자화. 여전히 `REVIEW_NOT_READY`이며 [무기록 실제 HTTP 검사](https://github.com/noam0127/beagu-index/actions/runs/45090796259) PASS.
+
+## 성능 샘플 수집 API 추가 (보안 경고 제거)
+
+- `beagu-perf-ingest-v1` 시험 Edge v1 추가. 브라우저에 열린 `beagu_perf_record_v1` `SECURITY DEFINER` 실행 권한을 서버 전용으로 제한했고, 성능 샘플 수집을 시험 gateway로 전환.
+- 정적 시험 웹 참조 API는 새 성능 측정 API를 포함해 **17개 전부 배포됨**. 하지만 고유 인증·추천·체험판·심사 실양성 E2E가 남아 있어 **NO-GO**.
+- [실제 HTTP 검사 및 삭제 증거](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/docs/V110_STAGE_PERFORMANCE_RPC_PRIVACY_RECOVERY_20261123.md) 참조.
