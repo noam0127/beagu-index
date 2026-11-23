@@ -14,6 +14,11 @@ on:
       - 'tests/2026-owner-final-approval-static.cjs'
       - 'tests/2026-bulk-verified-static.cjs'
       - 'tests/2026-bulk-400-enabled-static.cjs'
+      - 'tests/2026-civic-feedback-safe.cjs'
+      - 'js/beagu-2026-civic-v1.js'
+      - 'js/beagu-2026-civic-admin-v1.js'
+      - 'supabase/functions/beagu-2026-civic/**'
+      - 'supabase/migrations/20261123190000_beagu_2026_civic_feedback.sql'
       - 'supabase/migrations/20261123173500_2026_bulk_verified_limit_400.sql'
       - 'supabase/migrations/20261123171500_2026_bulk_verified_school_approval.sql'
       - 'tests/2026-level-final-approval-ui.cjs'
@@ -37,6 +42,11 @@ on:
       - 'tests/2026-owner-final-approval-static.cjs'
       - 'tests/2026-bulk-verified-static.cjs'
       - 'tests/2026-bulk-400-enabled-static.cjs'
+      - 'tests/2026-civic-feedback-safe.cjs'
+      - 'js/beagu-2026-civic-v1.js'
+      - 'js/beagu-2026-civic-admin-v1.js'
+      - 'supabase/functions/beagu-2026-civic/**'
+      - 'supabase/migrations/20261123190000_beagu_2026_civic_feedback.sql'
       - 'supabase/migrations/20261123173500_2026_bulk_verified_limit_400.sql'
       - 'supabase/migrations/20261123171500_2026_bulk_verified_school_approval.sql'
       - 'tests/2026-level-final-approval-ui.cjs'
@@ -63,6 +73,7 @@ jobs:
           node tests/2026-owner-final-approval-static.cjs
           node tests/2026-bulk-verified-static.cjs
           node tests/2026-bulk-400-enabled-static.cjs
+          node tests/2026-civic-feedback-safe.cjs
           node tests/2026-level-final-approval-ui.cjs
           node tests/2026-three-stage-review-flow.mjs
           node tests/admin-dashboard-static.cjs
