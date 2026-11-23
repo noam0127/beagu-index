@@ -23,6 +23,29 @@ const fullscreenCSS=await readFile("styles/arcade-fullscreen-v1.css","utf8");
 const gameGate=await readFile("js/beagu-game-lv1-gate-v1.js","utf8");
 new Function(fullscreenSource);
 new Function(gameGate);
+const playbackCSS=await readFile("styles/arcade-playback-v1.css","utf8");
+for(const [name,game,fullscreenId] of [
+ ["volleyball",volley,"volley-fullscreen-pause"],["survival",runner,"run-fullscreen-pause"]
+]){
+ assert.match(game,/<div class="arcade-playback-bar"><button[^>]*id="pause"[^>]*>⏸ 일시정지<\/button><\/div>/,
+  name+" displays a long pause/play control beneath the game");
+ assert.equal((game.match(/id="pause"/g)||[]).length,1,name+" has exactly one normal pause button");
+ assert.match(game,new RegExp('id="'+fullscreenId+'" class="arcade-fullscreen-pause"'),
+  name+" provides the same control within fullscreen");
+ assert.match(game,/arcade-playback-v1\.css/,name+" loads bottom control styles");
+ assert.doesNotMatch(game,/arcade-scroll-rail-v1\.(css|js)/,name+" no longer creates a right scroll rail");
+}
+assert.doesNotMatch(html,/arcade-scroll-rail-v1\.(css|js)/,"home stops injecting the gameplay scroll rail");
+assert.match(playbackCSS,/\.arcade-playback-bar>button/,"centered wide playback bar is styled");
+assert.match(playbackCSS,/\.court:fullscreen>\.arcade-fullscreen-pause/,"volleyball fullscreen pause sits in viewport");
+assert.match(playbackCSS,/\.stage:fullscreen>\.arcade-fullscreen-pause/,"survival fullscreen pause sits in viewport");
+assert.match(playbackCSS,/left:50%!important/,"fullscreen controls are centered");
+assert.match(playbackCSS,/bottom:max\(12px,env\(safe-area-inset-bottom\)\)/,
+ "fullscreen controls sit above the bottom safe area");
+assert.match(volley,/fullscreenPauseButton\.addEventListener\("click", pause\)/,
+ "volleyball fullscreen pause reuses the existing pause state machine");
+assert.match(runner,/for\(const control of \[\$\("pause"\),\$\("run-fullscreen-pause"\)\]\)/,
+ "survival pause and play labels remain synchronized");
 for (const game of [volley,runner]) {
  assert.match(game,/data-arcade-fullscreen/,"game has a fullscreen-only viewport");
  assert.match(game,/data-arcade-fullscreen-button/,"viewport contains a fullscreen toggle");

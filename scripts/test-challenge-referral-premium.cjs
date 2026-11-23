@@ -91,9 +91,14 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.challengeIdentityTag.textContent,'✓ Lv.2 로그인 완료');
   assert.equal(el.copyIdentityCode.hidden,true);
   assert.equal(el.challengeIdentityPanel.dataset.referralState,'pending');
+  assert.equal(el.certificateLevelBanner.textContent,'Lv.2 챌린지 달성');
+  assert.equal(el.certificate.dataset.level,'2');
+  assert.equal(el.certificateMedal.hidden,false);
   delete el.challengeAccessPanel;
   emit('focus');await tick();
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
+  assert.equal(el.certificateLevelBanner.textContent,'Lv.1 챌린지 달성');
+  assert.equal(el.certificate.dataset.level,'1');
 
   // A server-confirmed credit converts the original personal code card.
   returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
