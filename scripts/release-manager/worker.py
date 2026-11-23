@@ -115,7 +115,9 @@ def build():
         shutil.rmtree(OUTPUT)
     archive(production, OUTPUT)
     overlay_approved_directory(OUTPUT)
-    if staging:
+    if plan.get("target") != "production":
+        raise RuntimeError("Staging jobs must use the independent Vercel worker")
+    if False and staging:
         preview_dir = OUTPUT / "_preview"
         archive(staging, preview_dir)
         overlay_approved_directory(preview_dir)
@@ -145,6 +147,7 @@ def main():
         plan = api("worker_next", head_sha=sha, data_blob_sha=data_blob)
         PLAN.write_text(json.dumps(plan), encoding="utf8")
         output("has_job", "true" if plan.get("has_job") else "false")
+        output("target", plan.get("target", ""))
         if plan.get("has_job"):
             print("Claimed", plan.get("action"), plan.get("job_id"))
     elif op == "build":
@@ -152,7 +155,13 @@ def main():
     elif op in ("complete", "fail"):
         plan = read_plan()
         if op == "complete":
-            result = api("worker_complete", job_id=plan["job_id"])
+            if plan.get("target") == "staging":
+                proof = json.loads((ROOT / ".stage-proof.json").read_text(encoding="utf8"))
+                if proof.get("verified_stage_sha") != plan.get("staging_sha"):
+                    raise RuntimeError("Stage proof SHA mismatch")
+                result = api("worker_complete", job_id=plan["job_id"], **proof)
+            else:
+                result = api("worker_complete", job_id=plan["job_id"])
         else:
             result = api("worker_fail", job_id=plan["job_id"])
         print("Release worker", op, json.dumps(result, ensure_ascii=False))

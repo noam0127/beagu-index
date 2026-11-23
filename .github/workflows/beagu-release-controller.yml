@@ -78,8 +78,13 @@ jobs:
       - name: Claim signed release job (GitHub Actions OIDC)
         id: job
         run: python3 scripts/release-manager/worker.py next
-      - name: Build immutable production and optional preview snapshots
-        if: steps.job.outputs.has_job == 'true'
+      - name: Deploy isolated test snapshot (manual approved job only)
+        if: steps.job.outputs.has_job == 'true' && steps.job.outputs.target == 'staging'
+        env:
+          VERCEL_TOKEN: ${{ secrets.BEAGU_STAGE_VERCEL_TOKEN }}
+        run: python3 scripts/release-manager/vercel_stage.py
+      - name: Build immutable production snapshot
+        if: steps.job.outputs.has_job == 'true' && steps.job.outputs.target == 'production'
         run: |
           python3 scripts/release-manager/worker.py build
           cd _release_site
@@ -91,13 +96,13 @@ jobs:
           node scripts/test-class-diary-play-page.cjs
           node scripts/test-class-diary-semester.cjs
       - uses: actions/configure-pages@v5
-        if: steps.job.outputs.has_job == 'true'
+        if: steps.job.outputs.has_job == 'true' && steps.job.outputs.target == 'production'
       - uses: actions/upload-pages-artifact@v3
-        if: steps.job.outputs.has_job == 'true'
+        if: steps.job.outputs.has_job == 'true' && steps.job.outputs.target == 'production'
         with:
           path: _release_site
       - name: Wait for indexed Pages artifact (prevent transient 0-count failures)
-        if: steps.job.outputs.has_job == 'true'
+        if: steps.job.outputs.has_job == 'true' && steps.job.outputs.target == 'production'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -117,7 +122,7 @@ jobs:
           echo "Pages artifact not indexed after repeated checks." >&2
           exit 1
       - name: Publish tested release artifact
-        if: steps.job.outputs.has_job == 'true'
+        if: steps.job.outputs.has_job == 'true' && steps.job.outputs.target == 'production'
         id: deployment
         uses: actions/deploy-pages@v4
       - name: Store successful release and history

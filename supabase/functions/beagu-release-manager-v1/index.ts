@@ -175,6 +175,8 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  }else if(action==="prod_apply"){
   if(!s.staging_sha||!SHA.test(s.staging_sha))return error("staging_required",409,origin);
   if(s.staging_sha===s.production_sha)return error("already_on_production",409,origin);
+  const verifiedStage=(await history("staging"))[0];
+  if(verifiedStage?.to_sha!==s.staging_sha||verifiedStage?.deployed_url!=="https://baegu-index-test.vercel.app/")return error("staging_proof_required",409,origin);
   // Only allow a staging build that contains all deployed production changes.
   if(s.production_sha&&SHA.test(s.production_sha)){
    const delta=await github("/compare/"+s.production_sha+"..."+s.staging_sha);
@@ -264,6 +266,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
    }).eq("id",id).eq("status","running");
    return respond({ok:true},200,origin);
   }
+  if(job.target==="staging"&&(input.verified_stage_sha!==job.to_sha||input.verified_stage_url!=="https://baegu-index-test.vercel.app/"||!/^dpl_[A-Za-z0-9]+$/.test(String(input.verified_deployment_id||""))))return error("staging_proof_required",409,origin);
   const current=await state();
   const update=job.action==="data_refresh"?
    {public_data_blob_sha:job.public_data_blob_sha,updated_at:new Date().toISOString()}:
@@ -276,7 +279,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
     updated_at:new Date().toISOString()};
   const {error:stErr}=await db.from("beagu_site_release_state_v1").update(update).eq("id",1);
   if(stErr)throw Error("commit_unavailable");
-  const deployedUrl=job.target==="staging"?"https://baeguindex.com/_preview/":"https://baeguindex.com/";
+  const deployedUrl=job.target==="staging"?"https://baegu-index-test.vercel.app/":"https://baeguindex.com/";
   const {error:histErr}=await db.from("beagu_site_release_history_v1").insert({
    job_id:id,target:job.target,action:job.action,version:job.version,summary:job.summary,
    from_sha:job.from_sha,to_sha:job.to_sha,deployed_url:deployedUrl

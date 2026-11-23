@@ -29,6 +29,7 @@
   const result=await response.json().catch(()=>({}));
   if(!response.ok){
    const messages={
+    staging_proof_required:"독립 시험 웹의 배포 검증이 아직 완료되지 않았습니다.",
     production_changed:"실제 웹 버전이 변경되었습니다. 상태를 새로고침한 뒤 다시 시도하세요.",
     release_in_progress:"다른 배포가 진행 중입니다. 완료 후 다시 시도하세요.",
     staging_is_stale:"현재 운영 웹보다 오래된 시험 버전으로는 배포할 수 없습니다.",
