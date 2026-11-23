@@ -2,7 +2,7 @@
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
   "verified_on": "2026-11-23",
-  "source": "Live staging 42 functions checked 2026-11-23 KST: admin 2026 reviewer v3 adds independent read-only signed-JWT MFA preflight; all 5 rollout locks remain NO-GO",
+  "source": "Staging Edge Function list verified 2026-11-23 KST: 43 functions including page perf gateway v1; 5 independently locked rollouts remain NO-GO",
   "functions": [
     {
       "slug": "arcade-leaderboard",
@@ -49,6 +49,12 @@
     {
       "slug": "beagu-level-api",
       "version": 5,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-perf-ingest-v1",
+      "version": 1,
       "status": "ACTIVE",
       "verify_jwt": false
     },
