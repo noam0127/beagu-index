@@ -53,3 +53,19 @@
 .release-independent>strong{display:block;font-size:13px;color:#18365a}
 .release-independent .release-site-link{margin:5px 0}
 .release-independent .subtle{margin:5px 0 0;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+.release-select-label{display:block;margin:15px 0 6px;font-size:13px;font-weight:750;color:#314c72}
+.release-select{display:block;box-sizing:border-box;width:100%;min-height:44px;border-radius:11px;border:1px solid #b8cbe4;background:#fff;color:#1e3657;padding:9px 12px;font:inherit;font-size:14px}
+.release-select:disabled{opacity:.5}
+.release-pending-log{display:grid;gap:8px;max-height:340px;overflow:auto}
+.release-pending-item,.release-catalog-item{padding:12px 13px;border:1px solid #e2eaf4;border-radius:12px;background:#f9fbff;overflow-wrap:anywhere}
+.release-pending-item{display:flex;gap:9px;justify-content:space-between;align-items:flex-start}
+.release-pending-item strong{font-size:13px;line-height:1.55;font-weight:650}
+.release-pending-item code{font-size:11px;white-space:nowrap;color:#64748b}
+.release-version-catalog{display:grid;gap:10px;max-height:420px;overflow:auto}
+.release-catalog-item strong{display:block;font-size:14px}
+.release-catalog-item p{font-size:12px;margin:7px 0 0;color:#48617f}
+.release-catalog-changes{color:#7688a0!important;line-height:1.55;max-height:62px;overflow:auto}
+@media(max-width:700px){.release-pending-item{flex-direction:column;gap:3px}.release-pending-log{max-height:300px}}
+.release-inbox-subtitle{font-size:14px;margin:19px 0 9px;color:#3a5275}
+.release-pr-link{font-size:13px;font-weight:680;text-decoration:underline;text-underline-offset:3px;line-height:1.5}
+.release-pr-status{font-size:11px;white-space:nowrap;color:#637895}
