@@ -3,8 +3,10 @@ name: BAEGU release controller (admin approval)
 # Emergency fix: verified latest main SHA, admin-recorded production deploy; stale staging cannot replace it.
 # Authorized 2026-11-23 hotfix: production job 4dd58c2f-16a4-477c-8944-85277283a358 publishes pinned c2ac5615 after QA.
 # Authorized emergency release: 2026-11-23 arcade and VIP, queued job 520b0770-f3d1-40c5-bd82-8488ce16fc1a pinned to 4e9cbd0e.
-# Re-run: validate correct Lv2 masked price rendering after independent search UI update.\n# The worker claims only server-authorized jobs; older staging cannot overwrite production.
-# Emergency compare fix 2026-11-23: job 786a73d4-b75d-4e21-8a0b-eabb453f49c6 publishes reviewed 241f03e after preflight.\n# Emergency owner request 2026-11-23 13:59 KST: wake production job 585ad673-9313-48d4-988b-77a67d4bc376 (pinned df83ae9) without altering release worker safeguards.
+# Re-run: validate correct Lv2 masked price rendering after independent search UI update.
+# The worker claims only server-authorized jobs; older staging cannot overwrite production.
+# Emergency compare fix 2026-11-23: job 786a73d4-b75d-4e21-8a0b-eabb453f49c6 publishes reviewed 241f03e after preflight.
+# Emergency owner request 2026-11-23 13:59 KST: wake production job 585ad673-9313-48d4-988b-77a67d4bc376 (pinned df83ae9) without altering release worker safeguards.
 on:
   schedule:
     - cron: '*/5 * * * *'
@@ -52,6 +54,8 @@ jobs:
         run: |
           node tests/statistics-lv2-price-upgrade-v1.mjs
           node tests/search-compare-unity.mjs
+      - name: Enforce single publisher invariant (prevent stale snapshots)
+        run: node --test tests/site-release-single-publisher.mjs
       - name: Claim signed release job (GitHub Actions OIDC)
         id: job
         run: python3 scripts/release-manager/worker.py next
