@@ -1,11 +1,13 @@
 # Vercel-free, independently hosted testing site only.
 # This Blueprint must never use the real production domain or main branch.
+# Manual Render Blueprint sync/deploy is still REQUIRED; editing this repository
+# file does NOT update an existing Render service or prove a hosted site.
 services:
   - type: web
     runtime: static
     name: baegu-index-v110-sandbox
     repo: https://github.com/noam0127/beagu-index
-    branch: fix/v1.1.0-preview-isolation-gate-20261123
+    branch: fix/v110-staging-edited-api-recovery-20261123
     autoDeployTrigger: off
     buildCommand: python3 scripts/build-standalone-staging.py && python3 tests/test-standalone-staging.py
     staticPublishPath: ./_standalone_staging
