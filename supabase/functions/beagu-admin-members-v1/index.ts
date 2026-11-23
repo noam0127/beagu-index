@@ -67,6 +67,12 @@ async function adminMap(): Promise<Map<string, { role: string; enabled: boolean 
     role: String(a.role), enabled: a.enabled === true,
   }]));
 }
+function maskedEmail(value: string | null | undefined): string {
+  const email = String(value || "");
+  const at = email.lastIndexOf("@");
+  if (at < 1) return "";
+  return email.slice(0, 1) + "***" + email.slice(at);
+}
 async function decorate(users: AuthUser[], admins: Map<string, { role: string; enabled: boolean }>) {
   const ids = users.map(user => user.id);
   let linked = new Map<string, { status: string; linked_at: string | null }>();
@@ -94,7 +100,7 @@ async function decorate(users: AuthUser[], admins: Map<string, { role: string; e
     const until = user.banned_until || null;
     return {
       id: user.id,
-      email: user.email || "",
+      email: maskedEmail(user.email),
       email_confirmed: Boolean(user.email_confirmed_at),
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at || null,
@@ -127,24 +133,37 @@ async function allUsers(): Promise<{ users: AuthUser[]; truncated: boolean }> {
 }
 async function listMembers(input: Record<string, unknown>) {
   const search = typeof input.search === "string" ? input.search.trim().slice(0, 100) : "";
-  const page = Math.min(200, Math.max(1, Math.floor(Number(input.page) || 1)));
+  const requestedPage = Number(input.page ?? 1);
+  if (!Number.isSafeInteger(requestedPage) || requestedPage < 1 || requestedPage > 1000000)
+    throw new HttpError(400, "invalid_page");
+  const page = requestedPage;
+  const status = ["all","confirmed","unconfirmed","suspended"].includes(String(input.status))
+    ? String(input.status) : "all";
+  const sort = ["newest","oldest","email"].includes(String(input.sort))
+    ? String(input.sort) : "newest";
+  const { data, error } = await db.rpc("beagu_admin_member_directory_v2", {
+    p_search: search, p_status: status, p_sort: sort, p_page: page, p_size: 20,
+  });
+  if (error || !data || !Array.isArray(data.rows))
+    throw new HttpError(503, "member_directory_unavailable");
   const admins = await adminMap();
-  const { users, truncated } = await allUsers();
-  const ordered = users.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
-  const q = search.toLocaleLowerCase("ko-KR");
-  const filtered = q ? ordered.filter(u => (u.email || "").toLocaleLowerCase("ko-KR").includes(q) ||
-    u.id.toLowerCase().includes(q)) : ordered;
-  const pageSize = 20;
-  const selected = filtered.slice((page - 1) * pageSize, page * pageSize);
+  return { ...data, rows: await decorate(data.rows as AuthUser[], admins) };
+}
+// Server-only lookup. The RPC returns no identity code, visitor ID, or referral token.
+async function challengeSummary(id: string) {
+  const { data, error } = await db.rpc("beagu_admin_member_challenge_summary_v1", {
+    p_user: id,
+  });
+  if (error) throw new HttpError(503, "challenge_summary_unavailable");
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || row.link_status !== "active" || row.participant_no == null) {
+    return { linked: false, participant_no: null, access_level: null, valid_referrals: null };
+  }
   return {
-    rows: await decorate(selected, admins),
-    total_matches: filtered.length,
-    page, page_size: pageSize,
-    total_users_scanned: users.length,
-    total_admins_scanned: users.filter(u => admins.has(u.id)).length,
-    unconfirmed_scanned: users.filter(u => !u.email_confirmed_at).length,
-    suspended_scanned: users.filter(u => u.banned_until && Date.parse(u.banned_until) > Date.now()).length,
-    truncated,
+    linked: true,
+    participant_no: row.participant_no,
+    access_level: row.access_level,
+    valid_referrals: row.valid_referrals,
   };
 }
 async function details(input: Record<string, unknown>) {
@@ -160,7 +179,15 @@ async function details(input: Record<string, unknown>) {
     .contains("details", { target_user_id: id })
     .order("occurred_at", { ascending: false }).limit(10);
   if (auditError) throw new HttpError(503, "audit_unavailable");
-  return { profile, moderation_history: events || [] };
+  const challenge = await challengeSummary(id);
+  const moderation_history = (events || []).map(event => ({
+    event_type: event.event_type,
+    outcome: event.outcome,
+    occurred_at: event.occurred_at,
+    details: { reason: typeof event.details?.reason === "string"
+      ? event.details.reason.slice(0, 200) : "" },
+  }));
+  return { profile, challenge, moderation_history };
 }
 async function audit(actor: string, event: string, target: string, reason: string, duration: string) {
   const { error } = await db.from("beagu_admin_audit_events").insert({
@@ -190,8 +217,14 @@ async function moderate(input: Record<string, unknown>, actor: { id: string; rol
     ban_duration: duration,
   });
   if (updateError) throw new HttpError(503, "moderation_failed");
-  await audit(actor.id, "member_" + operation, id, reason, duration);
-  return { updated: true, user_id: id, operation };
+  try {
+    await audit(actor.id, "member_" + operation, id, reason, duration);
+  } catch {
+    // Do not report a failed moderation action after Auth has already changed.
+    // Operator must reconcile the missing audit record before another action.
+    return { updated: true, user_id: id, operation, audit_recorded: false };
+  }
+  return { updated: true, user_id: id, operation, audit_recorded: true };
 }
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("Origin") || "";
