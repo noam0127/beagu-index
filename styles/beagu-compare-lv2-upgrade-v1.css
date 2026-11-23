@@ -1,0 +1,38 @@
+/* Comparison Lv1 -> Lv2 inline upgrade: robust against global button CSS. */
+body.beagu-page-compare #compareLv2Upgrade{
+  box-sizing:border-box;display:block;margin:0 0 20px;padding:20px 23px;
+  border:1px solid #b9ccec;border-radius:17px;
+  background:linear-gradient(120deg,#f1f6ff,#fff);
+  box-shadow:0 6px 23px rgba(25,63,109,.055);
+}
+body.beagu-page-compare #compareLv2Upgrade[hidden],
+body.beagu-page-compare #compareLv1Form[hidden],
+body.beagu-page-compare #compareLv1SignedIn[hidden]{display:none!important}
+body.beagu-page-compare .compare-lv2-heading strong{
+  font-size:18px;color:#1e4987;letter-spacing:-.03em}
+body.beagu-page-compare .compare-lv2-heading p{
+  font-size:13px;line-height:1.65;color:#566f8b;margin:8px 0 15px}
+body.beagu-page-compare #compareLv2Form label{
+  display:block;font-size:12px;font-weight:800;color:#345477;margin-bottom:7px}
+body.beagu-page-compare .compare-lv2-input-row{display:flex;gap:9px;align-items:stretch}
+body.beagu-page-compare #compareLv2Code{
+  min-width:0;min-height:46px;flex:1;border-radius:10px;
+  border:1px solid #bdcee5;padding:10px 13px;background:white;
+  color:#173756;font-size:15px}
+body.beagu-page-compare #compareLv2Submit{
+  box-sizing:border-box;width:auto!important;min-width:112px;
+  border:0;border-radius:10px;padding:10px 16px;
+  background:#265dd0;color:#fff;font-weight:800;cursor:pointer}
+body.beagu-page-compare #compareLv2Submit:disabled{opacity:.65;cursor:wait}
+body.beagu-page-compare .compare-lv2-message{
+  font-size:12px;color:#47647f;line-height:1.55;margin:9px 0 0}
+body.beagu-page-compare .compare-price-locked{display:flex;flex-direction:column;gap:5px}
+body.beagu-page-compare .compare-price-masked{
+  color:#607893;font-weight:850;filter:blur(2.8px);user-select:none;pointer-events:none}
+body.beagu-page-compare .compare-price-callout{
+  color:#385987;font-weight:750;font-size:11px;white-space:normal}
+@media(max-width:600px){
+  body.beagu-page-compare #compareLv2Upgrade{padding:16px}
+  body.beagu-page-compare .compare-lv2-input-row{flex-direction:column}
+  body.beagu-page-compare #compareLv2Submit{width:100%!important;min-height:44px}
+}

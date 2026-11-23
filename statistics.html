@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-priority2">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
 <link rel="stylesheet" href="styles/beagu-global-notice-v1.css?v=20261123-notice1">
+<link rel="stylesheet" href="styles/beagu-compare-lv2-upgrade-v1.css?v=20261123-compare1">
 </head>
 <body class="beagu-ui-page beagu-page-compare">
   <a class="skip-link" href="#compareHeading">학교 비교하기로 건너뛰기</a>
@@ -65,6 +66,21 @@
       <p class="beagu-auth-help">참여코드는 <a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a> 시 발급됩니다.</p>
     </section>
 
+    <!-- Keep Lv.1 authenticated while offering a separate, server-verified Lv.2 upgrade. -->
+    <section id="compareLv2Upgrade" class="content-card compare-lv2-upgrade" aria-labelledby="compareLv2Title" hidden>
+      <div class="compare-lv2-heading">
+        <strong id="compareLv2Title">🔒 레벨2에 도전하세요!</strong>
+        <p>Lv.2 참여코드를 입력하면 비교표에서 학교 소재 행정동의 공동주택 평균 공시가격을 확인할 수 있습니다.</p>
+      </div>
+      <form id="compareLv2Form" autocomplete="off">
+        <label for="compareLv2Code">Lv.2 참여코드</label>
+        <div class="compare-lv2-input-row">
+          <input id="compareLv2Code" type="password" minlength="8" maxlength="120" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Lv.2 참여코드를 입력하세요" required>
+          <button id="compareLv2Submit" type="submit">Lv.2 인증</button>
+        </div>
+      </form>
+      <p id="compareLv2Message" class="compare-lv2-message" role="status" aria-live="polite"></p>
+    </section>
     <section class="content-card controls compare-search-only" aria-label="비교할 학교 검색">
       <div class="section-head"><div><h2>비교할 학교 찾기</h2></div></div>
       <div class="compare-search-field">
@@ -110,7 +126,7 @@
              aria-label="선택한 학교들의 항목별 비교표, 좌우 스크롤 가능" hidden>
           <table id="compareTable" class="compare-table"></table>
         </div>
-        <details class="beagu-inline-disclosure"><summary>비교 기준</summary><p>자료 없음은 0점이 아닙니다. 세부 통계는 인증 후 표시됩니다.</p><p>연도별 문항과 산식이 달라 백분위만으로 변화를 판단할 수 없습니다. 2026년 결과는 공개 기준에 따라 지연 표시됩니다.</p></details>
+        <details class="beagu-inline-disclosure"><summary>비교 기준</summary><p>공동주택 평균 공시가격은 학교 자체의 가격이 아니라 해당 학교가 위치한 행정동의 공동주택 평균값입니다. 승인된 공식자료가 있는 경우 Lv.2에서만 열람할 수 있습니다.</p><p>자료 없음은 0점이 아닙니다. 세부 통계는 인증 후 표시됩니다.</p><p>연도별 문항과 산식이 달라 백분위만으로 변화를 판단할 수 없습니다. 2026년 결과는 공개 기준에 따라 지연 표시됩니다.</p></details>
       </section>
     </section>
     
@@ -129,7 +145,7 @@
   <script src="js/statistics-directory-v2.js?v=20261120-static1"></script>
   <script src="js/2026-questionnaire-options-v1.2.js?v=20261119-results1"></script>
 <script src="js/2026-approved-question-results.js?v=20261121-lv2-approved-instant"></script>
-  <script src="js/statistics-compare.js?v=20261123-priority2"></script>
+  <script src="js/statistics-compare.js?v=20261123-compare-lv2-1"></script>
   <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 </body>
 </html>

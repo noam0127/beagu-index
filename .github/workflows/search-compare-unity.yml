@@ -36,3 +36,4 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/search-compare-unity.mjs
+      - run: node tests/statistics-lv2-price-upgrade-v1.mjs

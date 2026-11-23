@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {Script} from 'node:vm';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const html=read('statistics.html');
+const js=read('js/statistics-compare.js');
+const css=read('styles/beagu-compare-lv2-upgrade-v1.css');
+const server=read('supabase/functions/beagu-level-api/index.ts');
+assert.doesNotThrow(()=>new Script(js));
+for(const id of ['compareLv2Upgrade','compareLv2Form','compareLv2Code','compareLv2Submit','compareLv2Message'])
+  assert.ok(html.includes('id="'+id+'"'),id+' is missing');
+assert.match(html,/레벨2에 도전하세요!/);
+assert.match(html,/학교가 위치한 행정동의 공동주택 평균값/);
+assert.match(js,/elements\.lv2Upgrade\.hidden=!\(authenticated && state\.authLevel===1\)/);
+assert.match(js,/if\(Number\(verified\?\.level\)<2\)/);
+assert.match(js,/Lv\.1 인증은 그대로 유지됩니다/);
+assert.match(js,/district_housing_price_mean/);
+assert.match(js,/state\.authLevel<2/);
+assert.match(js,/₩ •••,•••,•••/);
+assert.match(server,/fact_key==='district_housing_price_mean'\?2/);
+assert.match(css,/#compareLv2Upgrade\[hidden\]/);
+assert.match(css,/#compareLv2Submit/);
+assert.ok(html.indexOf('id="compareLv1AuthPanel"')<html.indexOf('id="compareLv2Upgrade"'));
+assert.ok(html.indexOf('id="compareLv2Upgrade"')<html.indexOf('id="searchInput"'));
+console.log('PASS: compare Lv1 upgrade box; Lv2-only official housing prices; no client price leakage');

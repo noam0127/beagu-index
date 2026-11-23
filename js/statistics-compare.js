@@ -21,7 +21,9 @@
     authSubmit:$('compareLv1Submit'), authBadge:$('compareLv1Badge'),
     authSignedIn:$('compareLv1SignedIn'),
     authMessage:$('compareLv1Message'), authToggle:$('compareLv1Toggle'),
-    authLogout:$('compareLv1Logout')
+    authLogout:$('compareLv1Logout'),
+    lv2Upgrade:$('compareLv2Upgrade'),lv2Form:$('compareLv2Form'),
+    lv2Code:$('compareLv2Code'),lv2Submit:$('compareLv2Submit'),lv2Message:$('compareLv2Message')
   };
   const normalize = value => String(value ?? '').normalize('NFKC').toLocaleLowerCase('ko-KR').replace(/\s+/g,'');
   function make(tag, value, className) {
@@ -49,6 +51,8 @@
     const authenticated=state.authLevel>=1 && !!state.sessionToken;
     elements.authForm.hidden=authenticated;
     elements.authSignedIn.hidden=!authenticated;
+    elements.lv2Upgrade.hidden=!(authenticated && state.authLevel===1);
+    if(state.authLevel>=2)elements.lv2Message.textContent='';
     elements.authBadge.textContent=authenticated
       ? state.authLevel>=2
         ? (state.authProvisional?'Lv.2(임시)':'Lv.2 인증됨')
@@ -64,6 +68,8 @@
     state.authProvisional=false;
     state.approvedBySchool.clear();
     state.approvedLoading.clear();
+    elements.lv2Code.value='';
+    elements.lv2Message.textContent='';
     if(removeStored){try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}}
     window.dispatchEvent(new Event('beagu:level-state-change'));
     updateAuthUI();
@@ -410,7 +416,8 @@
     ['students','학생수'],
     ['teachers','교원수'],
     ['junior_teacher_ratio','2급 정교사 비율'],
-    ['male_teacher_ratio','남교사 비율']
+    ['male_teacher_ratio','남교사 비율'],
+    ['district_housing_price_mean','공동주택 평균 공시가격 (학교 소재 행정동)']
   ];
   const basicFactKeys=new Set(basicFactLabels.map(([key])=>key));
   function basicFactFor(school,selectedYear,key){
@@ -424,6 +431,14 @@
     return candidates[0]?.fact||null;
   }
   function basicFactCell(school,selectedYear,key){
+    // Never receive or display a protected numeric housing price at Lv.0/Lv.1.
+    if(key==='district_housing_price_mean' && state.authLevel<2) {
+      const blurred=make('span','₩ •••,•••,•••','compare-price-masked');
+      blurred.setAttribute('aria-label','Lv.2 전용 · 실제 공시가격 미공개');
+      const container=make('div',null,'compare-price-locked');
+      container.append(blurred,make('small','🔒 Lv.2 잠금 · 레벨2에 도전하세요!','compare-price-callout'));
+      return container;
+    }
     if(!state.sessionToken || state.authLevel<1)
       return make('span','Lv.1 인증 후 확인','compare-unavailable');
     const fact=basicFactFor(school,selectedYear,key);
@@ -765,6 +780,37 @@
     }finally{
       elements.authSubmit.disabled=false;
       window.BeaguLoading?.finish(loading);
+    }
+  });
+  elements.lv2Form.addEventListener('submit',async event=>{
+    event.preventDefault();
+    // Refuse upgrade requests unless a currently authenticated Lv.1 session exists.
+    if(state.authLevel!==1 || !state.sessionToken)return;
+    const code=elements.lv2Code.value.trim();
+    if(!code){elements.lv2Message.textContent='Lv.2 참여코드를 입력해 주세요.';return;}
+    const currentToken=state.sessionToken,epoch=++state.authEpoch;
+    elements.lv2Submit.disabled=true;
+    elements.lv2Message.textContent='Lv.2 참여코드를 확인하는 중…';
+    try{
+      const next=await authRequest('login',{code});
+      if(epoch!==state.authEpoch || currentToken!==state.sessionToken)return;
+      if(!/^[a-f0-9]{64}$/.test(String(next?.token||'')))throw Error('INVALID_TOKEN');
+      const verified=await authRequest('verify',{},next.token);
+      if(epoch!==state.authEpoch || currentToken!==state.sessionToken)return;
+      if(Number(verified?.level)<2){
+        elements.lv2Message.textContent='아직 Lv.2 승급 조건을 충족하지 않았습니다. Lv.1 인증은 그대로 유지됩니다.';
+        return;
+      }
+      elements.lv2Code.value='';
+      activateAuth(next.token,2,verified.provisional===true);
+      window.dispatchEvent(new CustomEvent('beagu:participation-authenticated',
+        {detail:{token:next.token,level:2,provisional:verified.provisional===true}}));
+    }catch(_){
+      if(epoch===state.authEpoch)
+        elements.lv2Message.textContent='Lv.2 코드를 확인하지 못했습니다. 기존 Lv.1 인증은 유지됩니다.';
+    }finally{
+      elements.lv2Submit.disabled=false;
+      elements.lv2Code.value='';
     }
   });
   elements.authLogout.addEventListener('click',()=>{
