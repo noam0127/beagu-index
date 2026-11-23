@@ -12,6 +12,7 @@ name: BAEGU release controller (admin approval)
 # Owner-requested 2026-11-23 challenge UI and 2026-data notice: trigger signed Pages worker for queued c9eae0c2-30e1-49bf-999a-26d8d6e7263f pinned to 0b15df7df31ef1ef7ba99ffbbe0e1e060665d8eb.
 # Owner-requested Pages retry after artifact-indexing fix, 2026-11-23: signed queue job 364cdf44-a86a-4a03-9ef0-7d9554177188 pins 052962383c9c5690736f1cb0e292337d11aa3d93.
 # Signed urgent Lv2 search 2026 N=1 eligibility display; authorized queue 138c8d0b-231c-4752-a170-05b67fc441da pinned to 567f92e7103cbbc6010fc8d9dc58fd3e2ec401a4.
+# Owner-requested 2026-11-23 emergency arcade school-name links: signed Pages queue d1ce57cc-fcb6-4aed-95b2-54ffbba1a559 pins ee700c46a96c80b0978b95c872cbd4b717ea27de; backend arcade-leaderboard v26 deployed separately.
 on:
   schedule:
     - cron: '*/5 * * * *'
