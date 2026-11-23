@@ -2,7 +2,7 @@
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
   "verified_on": "2026-11-23",
-  "source": "Actual staging 2026-11-23: 43 ACTIVE Edge Functions; Level v7/Postit v6 check live owner-bound auth.sessions before Lv3 or member writes; 5 rollout gates remain locked NO-GO",
+  "source": "Live isolated stage 2026-11-23: 43 ACTIVE functions; Level v7 verifies auth.sessions, Postit v7 adds original-owner link/suspend/reactivate and atomic private audit; five rollout gates LOCKED NO-GO",
   "functions": [
     {
       "slug": "arcade-leaderboard",
@@ -60,7 +60,7 @@
     },
     {
       "slug": "beagu-postit-api-v1",
-      "version": 6,
+      "version": 7,
       "status": "ACTIVE",
       "verify_jwt": false
     },
