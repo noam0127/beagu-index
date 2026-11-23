@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {Script} from 'node:vm';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const html=read('challenge.html'),capture=read('js/challenge.js'),ref=read('js/challenge-referral-v1.js'),api=read('supabase/functions/beagu-referral-link-v1/index.ts');
+assert.doesNotThrow(()=>new Script(capture));
+assert.doesNotThrow(()=>new Script(ref));
+const start=html.indexOf('<section class="certificate"');
+const end=html.indexOf('<section class="challenge-levelup-heading"',start);
+assert.ok(start>0&&end>start);
+const publicCertificate=html.slice(start,end);
+for(const forbidden of ['id="identityCode"','id="challengeReferralLink"','id="challengeIdentityPanel"','id="challengeReferralPanel"'])
+ assert.ok(!publicCertificate.includes(forbidden),'Private value inside screenshot: '+forbidden);
+assert.ok(publicCertificate.includes('id="participantNo"'));
+assert.ok(publicCertificate.includes('data-beagu-xp'));
+assert.ok(publicCertificate.includes('id="certificateMedal"'));
+assert.ok(publicCertificate.includes('id="certificateThanks"'));
+const order=['id="certificate"','id="challenge-levelup-title"','id="challengeReferralPanel"','id="challengeIdentityPanel"','class="steps"','challenge-notice-title'];
+let previous=-1;for(const key of order){const i=html.indexOf(key);assert.ok(i>previous,'Challenge layout order violated: '+key);previous=i;}
+assert.match(capture,/html2canvas\(root,\s*\{/);
+assert.match(capture,/root\.querySelector\('#identityCode,#challengeReferralLink/);
+assert.match(capture,/root\.textContent\.includes\(personalCode\)/);
+assert.match(ref,/Math\.floor\(count\/10\)\*10/);
+assert.match(ref,/referral-status-changed/);
+assert.match(api,/validReferrals: Number\.isSafeInteger\(Number\(enrollment\?\.validReferrals\)\)/);
+assert.doesNotMatch(api,/validReferrals: Number\(enrollment\?\.validReferrals\) === 1/);
+console.log('PASS: private codes excluded from certificate and cumulative verified referrals survive');

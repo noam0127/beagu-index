@@ -9,6 +9,12 @@ on:
       - styles/beagu-auth-unified-v1.css
       - styles/beagu-auth-journey-v1.css
       - tests/challenge-auth-ui.mjs
+      - js/challenge-referral-v1.js
+      - js/challenge.js
+      - styles/challenge-layout-v1.css
+      - styles/beagu-participation-auth-v2.css
+      - tests/challenge-certificate-privacy-v1.mjs
+      - tests/beagu-notice-pages-v1.mjs
       - .github/workflows/challenge-auth-ui.yml
   workflow_dispatch:
 permissions:
@@ -22,3 +28,8 @@ jobs:
         with:
           node-version: '22'
       - run: node tests/challenge-auth-ui.mjs
+      - run: node tests/participation-code-unified.mjs
+      - run: node scripts/test-challenge-referral-premium.cjs
+      - run: node scripts/test-challenge-lv2-card.cjs
+      - run: node tests/challenge-certificate-privacy-v1.mjs
+      - run: node tests/beagu-notice-pages-v1.mjs

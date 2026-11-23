@@ -18,10 +18,11 @@ const ids = [
   'challengeReferralStatus', 'challengeReferralProgress', 'challengeReferralTitle',
   'challengeReferralTag', 'challengeReferralNote',
   'challengeIdentityPanel', 'challengeIdentityTitle', 'challengeIdentityTag',
-  'challengeIdentityReward', 'copyIdentityCode'
+  'challengeIdentityReward', 'copyIdentityCode',
+  'challengeVipMedal','certificateMedal','certificateThanks'
 ];
 const el = Object.fromEntries(ids.map(id => [id, {
-  hidden: id === 'challengeIdentityReward', value: '', textContent: '', disabled: false,
+  hidden: ['challengeIdentityReward','challengeVipMedal','certificateMedal','certificateThanks'].includes(id), value: '', textContent: '', disabled: false,
   dataset: {}, attributes: {}, listeners: {}, classes: new Set(),
   classList: {toggle(cls, enabled) {
     if (enabled) el[id].classes.add(cls); else el[id].classes.delete(cls);
@@ -53,16 +54,17 @@ vm.runInNewContext(js,{
     assert.equal(body.identityCode,code);
     return {ok:true,status:200,json:async()=>({...returned})};
   },
-  setInterval:()=>1,Event:class {constructor(type){this.type=type;}}
+  setInterval:()=>1,Event:class {constructor(type){this.type=type;}},
+  CustomEvent:class {constructor(type,options){this.type=type;this.detail=options?.detail;}}
 });
 const emit=(type,arg={})=>(listeners[type]||[]).forEach(cb=>cb(arg));
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
-  assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   emit('beagu:challenge-access-granted');
   emit('beagu:identity-ready',{detail:{visitor,code}});
   await tick();
-  assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   assert.equal(el.challengeReferralLink.value,referral);
   assert.equal(el.challengeReferralTitle.textContent,'나의 전용 조사 링크');
 
@@ -75,27 +77,42 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   // A client-supplied "level: 2" alone must not grant premium visuals.
   returned={link:referral,shortLink,level:2,validReferrals:0,provisional:true};
   emit('focus');await tick();
-  assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
 
   // A server-confirmed credit converts the original personal code card.
   returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
   emit('focus');await tick();
-  assert.equal(el.challengeIdentityTitle.textContent,'Lv2 참여코드');
-  assert.equal(el.challengeIdentityTag.textContent,'Lv.2 달성 ✦');
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드');
+  assert.equal(el.challengeIdentityTag.textContent,'Lv.2 활성화 ✦');
   assert.equal(el.copyIdentityCode.textContent,'코드 복사');
   assert.equal(el.challengeIdentityReward.hidden,false);
   assert.ok(el.challengeIdentityPanel.classes.has('is-lv2'));
   assert.equal(el.challengeIdentityPanel.dataset.referralState,'earned');
+  assert.equal(el.challengeVipMedal.hidden,false);
+  assert.equal(el.certificateMedal.hidden,false);
   assert.equal(el.challengeReferralTitle.textContent,'나의 전용 조사 링크');
   assert.equal(el.challengeReferralLink.value,shortLink);
   await el.copyChallengeReferral.listeners.click();await tick();
   assert.equal(copies.at(-1),shortLink);
 
+  returned.validReferrals=10;
+  emit('focus');await tick();
+  assert.match(el.challengeReferralProgress.textContent,/10 \/ 1건/);
+  assert.match(el.certificateThanks.textContent,/10명 달성/);
+  returned.validReferrals=26;
+  emit('focus');await tick();
+  assert.match(el.challengeReferralProgress.textContent,/26 \/ 1건/);
+  assert.match(el.certificateThanks.textContent,/20명 달성/);
+  returned.validReferrals=31;
+  emit('focus');await tick();
+  assert.match(el.certificateThanks.textContent,/30명 달성/);
   emit('beagu:challenge-access-revoked');
-  assert.equal(el.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
   assert.equal(el.challengeReferralLink.value,'');
   assert.equal(el.challengeIdentityReward.hidden,true);
+  assert.equal(el.certificateThanks.hidden,true);
+  assert.equal(el.certificateMedal.hidden,true);
   console.log('PASS: premium personal code card is gated by verified referral; link retained and logout resets');
 })().catch(err=>{console.error(err);process.exitCode=1;});

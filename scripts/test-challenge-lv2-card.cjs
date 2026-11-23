@@ -20,7 +20,7 @@ function fakeNode(){
 const ids=['challengeReferralPanel','challengeReferralLink','copyChallengeReferral',
   'challengeReferralStatus','challengeReferralProgress','challengeReferralTitle','challengeReferralTag',
   'challengeReferralNote','challengeIdentityPanel','challengeIdentityTitle','challengeIdentityTag',
-  'challengeIdentityReward','copyIdentityCode'];
+  'challengeIdentityReward','copyIdentityCode','challengeVipMedal','certificateMedal','certificateThanks'];
 const nodes=Object.fromEntries(ids.map(k=>[k,fakeNode()]));
 const events={};
 const payload={level:1,validReferrals:0,provisional:false,
@@ -36,34 +36,35 @@ vm.runInNewContext(source,{document,window:win, SUPABASE_URL:'https://example.su
   localStorage:{getItem:()=> 'b'.repeat(64)},
   crypto:require('node:crypto').webcrypto, Event:class{constructor(type){this.type=type;}},
   fetch:async()=>({ok:true,json:async()=>({...payload})}),
+  CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},
   setInterval:()=>0,navigator:{clipboard:{writeText:async()=>{}}}});
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 (async()=>{
-  assert.equal(nodes.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   events['beagu:challenge-access-granted']();
   events['beagu:identity-ready']({detail:{visitor,code}});
   await flush();
-  assert.equal(nodes.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   assert.equal(nodes.challengeIdentityPanel.classList.contains('is-lv2'),false);
   assert.equal(nodes.challengeReferralLink.value,payload.shortLink);
   assert.equal(nodes.challengeReferralTitle.textContent,'나의 전용 조사 링크');
   // Level 2 alone cannot trigger a code promotion without a credited respondent.
   payload.level=2;payload.provisional=true;payload.validReferrals=0;
   events.focus();await flush();
-  assert.equal(nodes.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   payload.validReferrals=1;
   events.focus();await flush();
-  assert.equal(nodes.challengeIdentityTitle.textContent,'Lv2 참여코드');
+  assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드');
   assert.equal(nodes.challengeIdentityPanel.classList.contains('is-lv2'),true);
   assert.equal(nodes.challengeIdentityPanel.dataset.referralState,'earned');
   assert.equal(nodes.copyIdentityCode.textContent,'코드 복사');
   assert.equal(nodes.challengeIdentityReward.hidden,false);
   assert.equal(nodes.challengeReferralLink.value,payload.shortLink,'referral link preserved');
   assert.equal(nodes.challengeReferralTitle.textContent,'나의 전용 조사 링크');
-  assert.equal(win.lastEvent,'beagu:level-state-change');
+  assert.equal(win.lastEvent,'beagu:referral-status-changed');
   // Logout must restore the pre-credit label, no cached premium status.
   events['beagu:challenge-access-revoked']();
-  assert.equal(nodes.challengeIdentityTitle.textContent,'나의 고유번호');
+  assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   assert.equal(nodes.challengeIdentityPanel.classList.contains('is-lv2'),false);
   assert.equal(nodes.challengeReferralLink.hidden,true);
   console.log('PASS: verified Lv2 code-card transition, no false credits, link kept, logout reset');
