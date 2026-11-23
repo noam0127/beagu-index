@@ -86,27 +86,6 @@ def overlay_approved_directory(target):
       "tar -xf - -C " + str(target)], cwd=ROOT, check=True)
 
 
-def make_preview_banner(target):
-    banner = (
-        '<div id="beagu-preview-watermark" role="note" '
-        'style="position:fixed;bottom:10px;right:10px;z-index:2147483600;'
-        'background:#152943;color:#fff;border-radius:12px;'
-        'padding:9px 14px;font:700 13px system-ui;box-shadow:0 4px 22px #15294355">'
-        '시험 웹 · 운영 데이터 연결 주의</div>'
-    )
-    for file in target.rglob("*.html"):
-        source = file.read_text(encoding="utf-8", errors="replace")
-        source = re.sub(r"(?i)<body(\s[^>]*)?>",
-                        lambda match: match.group(0) + banner,
-                        source, count=1)
-        source = source.replace("<head>", '<head><meta name="robots" content="noindex,nofollow">', 1)
-        # Root-absolute navigation should stay in the selected candidate snapshot.
-        source = re.sub(r'(?i)(href|src)=(["\\\'])/(?!/|_preview/)',
-                        lambda match: match.group(1) + "=" + match.group(2) + "/_preview/",
-                        source)
-        file.write_text(source, encoding="utf-8")
-
-
 def stamp_release_metadata(target, sha, environment):
     """Stamp the selected archive with its immutable source SHA; publication time is not fabricated."""
     file = target / "release-info.json"
@@ -125,7 +104,8 @@ def stamp_release_metadata(target, sha, environment):
 def build():
     plan = read_plan()
     production = plan.get("production_sha")
-    staging = plan.get("staging_sha")
+    if plan.get("staging_sha") is not None:
+        raise RuntimeError("Retired staging route must not publish a preview")
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
     archive(production, OUTPUT)
@@ -133,22 +113,10 @@ def build():
     stamp_release_metadata(OUTPUT, production, "production")
     # Internal roadmap is not part of the public site artifact.
     (OUTPUT / "development-roadmap.json").unlink(missing_ok=True)
-    if staging:
-        preview_dir = OUTPUT / "_preview"
-        archive(staging, preview_dir)
-        overlay_approved_directory(preview_dir)
-        stamp_release_metadata(preview_dir, staging, "preview")
-        (preview_dir / "development-roadmap.json").unlink(missing_ok=True)
-        nested_cname = preview_dir / "CNAME"
-        if nested_cname.exists():
-            nested_cname.unlink()
-        make_preview_banner(preview_dir)
-        (preview_dir / ".nojekyll").touch()
     if (OUTPUT / "CNAME").read_text(encoding="utf8").strip() != "baeguindex.com":
         raise RuntimeError("Production domain mismatch")
     (OUTPUT / ".nojekyll").touch()
-    print("Build ready:", str(OUTPUT), "prod", production[:8],
-          "staging", staging[:8] if staging else "none")
+    print("Build ready:", str(OUTPUT), "prod", production[:8], "direct only")
 
 
 def main():
