@@ -118,7 +118,7 @@ assert.ok(challenge.indexOf('id="identityCode"') > challenge.indexOf('</section>
  'Identity code must be outside the image capture root');
 assert.match(challenge,/data-html2canvas-ignore="true"/,'Private code should never render in generated certificate');
 assert.ok(challenge.includes('id="challengeReferralTag"') &&
- read('js/challenge-referral-v1.js').includes("'개인 보관'"),
+ read('js/challenge-referral-v1.js').includes("'Lv.2 참여코드(비활성)'"),
  'Private identity code remains marked for private keeping until earned Lv2');
 assert.ok(challenge.indexOf('id="challengeAccessCode"')<challenge.indexOf('id="challengeProtected"'),'Level 1 entry uses a separate field from the identity code');
 assert.match(read('js/challenge.js'),/BeaguChallengeProgress\.refresh/);
