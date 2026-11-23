@@ -33,5 +33,6 @@ jobs:
       - name: Test approval and security invariants
         run: |
           node --test tests/site-release-center.mjs
+          node --test tests/site-release-single-publisher.mjs
           python3 tests/site-release-packaging.py
           python3 tests/site-release-two-sha-isolation.py
