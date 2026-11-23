@@ -7,6 +7,20 @@
   const identityCopyFeedback = byId('identityCopyFeedback');
   const identityEndpoint = SUPABASE_URL + '/functions/v1/beagu-challenge-identity';
   const levelSessionKey = 'beagu-level-session-v1';
+  // The same browser-local device proof is used at initial challenge issue
+  // and later at referral-link issuance. Never send a raw secret to logs/URLs.
+  const deviceKey = 'beagu-referral-device-secret-v1';
+  function deviceSecret() {
+    try {
+      const old = localStorage.getItem(deviceKey);
+      if (old && /^[a-f0-9]{64}$/.test(old)) return old;
+      const bytes = new Uint8Array(32);
+      crypto.getRandomValues(bytes);
+      const created = Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+      localStorage.setItem(deviceKey,created);
+      return created;
+    } catch (_) { throw new Error('STORAGE_UNAVAILABLE'); }
+  }
   let imageUrl = null, participant = null, personalCode = null, busy = false, accessGranted = false;
   const deadline = (promise, ms, message) => {
     let timer;
@@ -32,7 +46,9 @@
         const response = await deadline(fetch(identityEndpoint, {
           method: 'POST', cache: 'no-store',
           headers: { 'Content-Type': 'application/json', 'X-Beagu-Session': sessionToken },
-          body: JSON.stringify({ action: 'issue', visitor: window.beaguVisitor })
+          body: JSON.stringify({
+            action: 'issue', visitor: window.beaguVisitor, deviceSecret: deviceSecret()
+          })
         }), 15000, '연결이 지연되고 있습니다. 다시 시도해주세요.');
         if (!accessGranted) return;
         if (response.status === 401 || response.status === 403) throw new Error('레벨1 인증이 만료되었습니다. 다시 인증해 주세요.');
