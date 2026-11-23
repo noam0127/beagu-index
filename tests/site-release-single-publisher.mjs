@@ -34,11 +34,13 @@ test("retired one-time hotfixes cannot run or publish obsolete snapshots", () =>
   }
 });
 
-test("release worker pins production independently from the preview SHA", () => {
+test("release worker pins production and rejects all preview publication", () => {
   const worker = readFileSync("scripts/release-manager/worker.py", "utf8");
   const api = readFileSync("supabase/functions/beagu-release-manager-v1/index.ts", "utf8");
   assert.match(worker, /archive\(production, OUTPUT\)/);
-  assert.match(worker, /archive\(staging, preview_dir\)/);
+  assert.doesNotMatch(worker, /archive\(staging, preview_dir\)/);
+  assert.match(worker, /if plan\.get\("staging_sha"\) is not None:/);
   assert.match(api, /claimed\.target==="production"\?claimed\.to_sha:s\.production_sha/);
-  assert.match(api, /claimed\.target==="staging"\?claimed\.to_sha:s\.staging_sha/);
+  assert.match(api, /const stagingSha=null;/);
+  assert.match(api, /staging_route_retired/);
 });

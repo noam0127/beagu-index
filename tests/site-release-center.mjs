@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const source=path=>readFileSync(path,"utf8");
 
-test("release center includes all 4 buttons and two independent histories",()=>{
+test("release center retains archived controls, direct apply, rollback and both histories",()=>{
  const html=source("admin-updates.html");
  for(const id of ["releaseStageApply","releaseStageRollback","releaseProdApply",
   "releaseProdRollback","releaseStageHistory","releaseProdHistory",
-  "releaseVersionInput","releaseSummaryInput","releaseDraftForm","releaseQueueText"]){
+  "releaseVersionInput","releaseCandidateSha","releaseSummaryInput","releaseDraftForm","releaseQueueText"]){
   assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(source("admin.html"),/admin-updates\.html/);
@@ -16,7 +16,7 @@ test("release center includes all 4 buttons and two independent histories",()=>{
 test("controls are wired to server, not just decorative",()=>{
  const js=source("js/beagu-admin-updates-v1.js");
  for(const action of ["stage_apply","stage_rollback","prod_apply","prod_rollback",
-   "register","status","confirmed_tested"])assert.ok(js.includes(action),action);
+   "register_direct","status","confirmed_direct","prod_direct_apply","expected_production_sha"])assert.ok(js.includes(action),action);
  assert.match(js,/\.textContent\s*=/);
  assert.doesNotMatch(js,/innerHTML\s*=/);
 });
@@ -36,7 +36,7 @@ test("server checks admin session and signed GitHub OIDC identity",()=>{
  for(const p of ["getUser(token)","beagu_admin_accounts","beagu_admin_active_mfa_session",
   "aal2","owner","jwtVerify","createRemoteJWKSet","workflow_ref",
   "beagu-release-worker","worker_next","worker_complete","worker_fail",
-  "no_changes_since_production","test_confirmation_required","confirmed_tested"]){
+  "direct_candidate_stale","direct_ci_required","direct_confirmation_required","confirmed_direct","direct_route_required","staging_route_retired"]){
   assert.ok(edge.includes(p),p);
  }
  assert.match(edge,/payload\.ref==="refs\/heads\/main"/);
@@ -67,4 +67,6 @@ test("anonymous admin commands are denied by server",async()=>{
  assert.equal(await request("stage_apply"),401);
  assert.equal(await request("prod_apply"),401);
  assert.equal(await request("prod_rollback"),401);
+ assert.equal(await request("register_direct"),401);
+ assert.equal(await request("prod_direct_apply"),401);
 });

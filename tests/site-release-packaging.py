@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline packaging smoke: preview and production should contain working HTML."""
+"""Offline packaging smoke: only a pinned production snapshot may contain working HTML."""
 import importlib.util
 import json
 import pathlib
@@ -16,13 +16,9 @@ with tempfile.TemporaryDirectory() as temp:
     worker.PLAN = pathlib.Path(temp) / "job.json"
     worker.OUTPUT = pathlib.Path(temp) / "website"
     worker.PLAN.write_text(json.dumps({"has_job": True,
-       "production_sha":sha,"staging_sha":sha}),encoding="utf8")
+       "production_sha":sha,"staging_sha":None}),encoding="utf8")
     worker.build()
     assert (worker.OUTPUT / "index.html").exists()
-    preview = worker.OUTPUT / "_preview/index.html"
-    assert preview.exists()
-    source = preview.read_text(encoding="utf8")
-    assert 'beagu-preview-watermark' in source
-    assert '시험 웹' in source
+    assert not (worker.OUTPUT / "_preview").exists()
     assert (worker.OUTPUT / "CNAME").read_text().strip()=="baeguindex.com"
-print("PASS: immutable production snapshot + marked preview")
+print("PASS: immutable production snapshot, no preview")

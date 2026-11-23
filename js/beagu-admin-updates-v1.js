@@ -7,7 +7,7 @@
  const auth=supabaseClient.auth;
  const api=SUPABASE_URL+"/functions/v1/beagu-release-manager-v1";
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
- let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null;
+ let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,readyKey=null,lastKey=null;
  const date=value=>{if(!value)return "—";const d=new Date(value);
    return Number.isFinite(d.getTime())?d.toLocaleString("ko-KR"):"—";};
  const short=value=>value?String(value).slice(0,8):"—";
@@ -34,6 +34,11 @@
     no_changes_since_production:"현재 운영 버전과 비교해 변경된 파일이 없습니다. 최소 1개를 수정하세요.",
     release_bootstrap_pending:"배포 관리 시스템의 최초 배포가 아직 끝나지 않았습니다.",
     register_version_first:"먼저 새 업데이트의 버전과 변경 내용을 등록하세요.",
+    direct_route_required:"직접 배포 관리자 화면을 새로고침하세요.",
+    direct_ci_required:"이 커밋의 코드 검증이 아직 통과하지 않았습니다.",
+    direct_candidate_stale:"현재 운영 버전을 포함하지 않는 후보입니다.",
+    direct_confirmation_required:"배포 대상이 변경되었습니다. 새로고침하세요.",
+    direct_draft_conflict:"등록 후보가 변경되었습니다. 새로고침하세요.",
     staging_required:"시험 웹에 먼저 적용해 주세요.",
     already_on_staging:"이 버전은 이미 시험 웹에 적용되어 있습니다.",
     already_on_production:"이미 운영 웹에 적용된 버전입니다.",
@@ -69,14 +74,19 @@
   if(data.head_sha)cachedHead=data.head_sha;
   if(data.suggested_draft)cachedProposal=data.suggested_draft;
   if(cachedProposal?.sha===s.production_sha)cachedProposal=null;
-  write("releaseStageVersion",s.staging_sha?(s.staging_version||"버전 미입력"):"아직 시험 웹 미배포");
+  write("releaseStageVersion",s.staging_sha?(s.staging_version||"과거 버전"):"과거 시험웹 기록 없음");
   write("releaseProdVersion",s.production_sha?(s.production_version||"버전 미입력"):"최초 배포 준비 중");
-  write("releaseStageSha",s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹에 아직 업데이트가 없습니다");
+  write("releaseStageSha",s.staging_sha?"종료된 경로 · 과거 코드 "+short(s.staging_sha):"종료된 경로");
   write("releaseProdSha",s.production_sha?"코드 "+short(s.production_sha):"초기 배포 후 표시됩니다");
   write("releaseHead",cachedHead?"GitHub 최신 코드: "+short(cachedHead):"새로고침하면 GitHub 최신 코드를 확인합니다.");
-  const candidate=cachedProposal&&cachedProposal.sha!==s.staging_sha?cachedProposal:null;
+  const key=String(s.production_sha||"")+":"+String(s.draft_sha||"");
+  if(key!==lastKey){readyKey=null;lastKey=key;}
+  if(data.direct_candidate_ready===true)readyKey=key;
+  else if(data.direct_candidate_ready===false)readyKey=null;
+  const candidate=data.direct_release_v1===true&&s.draft_sha?{sha:s.draft_sha,version:s.draft_version}:null;
+  const ready=!!candidate&&readyKey===key;
   write("releaseDraftInfo",candidate?
-    "ChatGPT 입력 버전 "+candidate.version+" · 시험 웹 적용 버튼으로 바로 배포 가능":
+    (ready?"검증 완료 · ":"검증 미확인 · ")+candidate.version+" · "+short(candidate.sha)+(ready?" · 실제 웹 적용 가능":" · 직접 적용 전 검증 필요"):
     s.draft_sha?"등록된 업데이트: "+s.draft_version+" ("+short(s.draft_sha)+")":"새 버전을 등록하세요.");
   if(s.draft_sha){
    if(document.activeElement!==el("releaseVersionInput"))el("releaseVersionInput").value=s.draft_version||"";
@@ -88,13 +98,12 @@
      " · "+(job.target==="staging"?"시험 웹":"실제 웹")+
      " · 요청 시각 "+date(job.created_at)):
     "현재 진행 중인 배포가 없습니다.");
-  el("releaseStageApply").disabled=busy||active||!s.production_sha||
-    (!candidate&&(!s.draft_sha||s.draft_sha===s.staging_sha));
-  el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
-  el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
+  el("releaseStageApply").hidden=true;el("releaseStageApply").disabled=true;
+  el("releaseStageRollback").hidden=true;el("releaseStageRollback").disabled=true;
+  el("releaseProdApply").disabled=busy||active||data.direct_release_v1!==true||!ready||!s.draft_sha||s.draft_sha===s.production_sha;
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
   el("releaseProdRollback").disabled=busy||active||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
-  el("releaseRegister").disabled=busy||active||!s.production_sha;
+  el("releaseRegister").disabled=busy||active||data.direct_release_v1!==true||!s.production_sha;
   el("releaseRefresh").disabled=busy;
   renderHistory("releaseStageHistory",stageHist);
   renderHistory("releaseProdHistory",prodHist);
@@ -112,16 +121,19 @@
  }
  async function command(action){
   if(busy)return;
+  if(action==="stage_apply"||action==="stage_rollback")return;
+  if(action==="prod_apply"&&(el("releaseProdApply").disabled||!model?.state?.draft_sha))return;
   const wording={
    stage_apply:"등록된 버전을 시험 웹에 적용하시겠습니까?",
    stage_rollback:"시험 웹을 바로 이전 버전으로 되돌리시겠습니까?",
-   prod_apply:"시험 웹에서 직접 구동을 확인했고 이상이 없습니까? 동일한 코드 버전을 실제 웹에 배포합니다.",
+   prod_apply:"등록된 독립 버전 "+String(model?.state?.draft_version||"")+" ("+short(model?.state?.draft_sha)+")을 실제 웹에 적용하시겠습니까? 시험웹은 사용하지 않습니다.",
    prod_rollback:"실제 웹을 바로 이전 버전으로 되돌리시겠습니까? 모든 방문자에게 적용됩니다."
   };
   if(!window.confirm(wording[action]))return;
   busy=true;
   try{
-   const result=await request(action,action==="prod_apply"?{confirmed_tested:true}:{});
+   if(action==="prod_apply"&&model?.direct_release_v1!==true)throw Error("직접 적용 서버가 아직 활성화되지 않았습니다.");
+   const result=action==="prod_apply"?await request("prod_direct_apply",{candidate_sha:model.state.draft_sha,expected_production_sha:model.state.production_sha,confirmed_direct:true}):await request(action,{});
    message("배포 요청 등록 완료 ("+result.job_id.slice(0,8)+"). 완료되면 아래 버전 기록이 바뀝니다.");
   }catch(err){message(err.message,true)}
   finally{busy=false;await refresh(true);}
@@ -130,19 +142,23 @@
   event.preventDefault();if(busy)return;
   const version=el("releaseVersionInput").value.trim();
   const summary=el("releaseSummaryInput").value.trim();
-  if(!version||summary.length<3)return;
+  const candidate_sha=el("releaseCandidateSha").value.trim();
+  if(!version||summary.length<3||!/^[0-9a-f]{40}$/.test(candidate_sha)||model?.direct_release_v1!==true)return;
+  const old=model?.state?.draft_sha;
+  const replace=old&&old!==candidate_sha&&old!==model?.state?.production_sha;
+  if(replace&&!window.confirm("기존 등록 후보 "+short(old)+"를 이번 독립 후보로 교체하시겠습니까? GitHub 기록은 유지됩니다."))return;
   busy=true;el("releaseRegister").disabled=true;
   message("GitHub 최신 코드에서 변경된 파일을 확인하는 중입니다.");
   try{
-   const result=await request("register",{version,summary});
+   const result=await request("register_direct",{version,candidate_sha,...(replace?{replace_draft_sha:old}:{})});
    const list=el("releaseChangedFiles");list.replaceChildren();
    for(const name of result.changed_files||[]){
     const item=document.createElement("li");item.textContent=name;list.append(item);
    }
    el("releaseFileSummary").hidden=false;
-   message("업데이트 등록 완료 · "+result.changed_count+"개 변경 파일 확인. 이제 '시험 웹 적용'을 누르세요.");
+   message("업데이트 등록 완료 · "+result.changed_count+"개 변경 파일 확인. 등록 후보를 확인한 후 '실제 웹 적용'을 누르세요.");
   }catch(err){message(err.message,true)}
-  finally{busy=false;await refresh(true);}
+  finally{busy=false;await refresh(false);}
  }
  el("releaseDraftForm").addEventListener("submit",register);
  for(const [id,action] of [
