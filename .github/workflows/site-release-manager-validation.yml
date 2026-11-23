@@ -6,12 +6,13 @@ on:
       - 'admin-updates.html'
       - 'styles/beagu-admin-updates-v1.css'
       - 'js/beagu-admin-updates-v1.js'
-      - '.github/workflows/beagu-release-controller.yml'
+      - '.github/workflows/**'
       - '.github/workflows/deploy-github-pages-direct.yml'
       - 'scripts/release-manager/**'
       - 'supabase/migrations/20261121_site_release_manager.sql'
       - 'supabase/functions/beagu-release-manager-v1/**'
       - 'tests/site-release-center.mjs'
+      - 'tests/site-release-single-publisher.mjs'
       - 'tests/site-release-two-sha-isolation.py'
   workflow_dispatch:
 jobs:
