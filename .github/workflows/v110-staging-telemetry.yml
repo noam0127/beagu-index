@@ -21,9 +21,9 @@ jobs:
           persist-credentials: false
       - name: Validate privacy, origin and server RPC source
         run: python3 tests/staging-telemetry-contract.test.py
-      - name: Exercise live isolated telemetry HTTP (synthetic UUID only)
-        run: python3 tests/staging-telemetry-http.test.py
+      - name: Exercise live isolated telemetry HTTP (NO DATA WRITES)
+        run: python3 tests/staging-telemetry-http-denials.test.py
       - name: Note safety boundary
         run: |
-          echo "This workflow has NO production credentials, uses only staging API and synthetic UUIDs."
-          echo "Staging cleanup of synthetic visits and guard buckets is required after QA."
+          echo "This workflow has NO production credentials and NO positive telemetry writes."
+          echo "The previously verified positive synthetic test is deliberately not run automatically."
