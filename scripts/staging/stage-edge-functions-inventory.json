@@ -2,7 +2,7 @@
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
   "verified_on": "2026-11-23",
-  "source": "Read-only verified staging Edge Function inventory 2026-11-23 KST: all 16 static frontend endpoints deployed; 5 deliberately locked pending credentials/MFA/data verification",
+  "source": "Read-only verified staging Edge Functions 2026-11-23 KST (42); admin 2026 reviewer v2 with six DB RPCs restored, owner AAL2 positive E2E still unverified, 5 locked rollout gates",
   "functions": [
     {
       "slug": "arcade-leaderboard",
@@ -12,7 +12,7 @@
     },
     {
       "slug": "beagu-2026-review-admin",
-      "version": 1,
+      "version": 2,
       "status": "ACTIVE",
       "verify_jwt": false
     },
@@ -260,7 +260,7 @@
   "feature_gates": {
     "beagu-referral-checkin-v1": "google_form_attribution_unverified",
     "beagu-referral-link-v1": "google_form_attribution_unverified",
-    "beagu-2026-review-admin": "reviewer_rpc_mfa_audit_unverified",
+    "beagu-2026-review-admin": "reviewer_aal2_positive_e2e_unverified",
     "class-diary-guest-access-v1": "owner_preview_pin_unconfigured",
     "class-diary-progress-v1": "owner_preview_pin_unconfigured"
   }
