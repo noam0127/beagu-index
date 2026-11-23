@@ -1,0 +1,22 @@
+name: Direct Pages controller code-only validation
+on:
+  pull_request:
+    branches:
+      - 'release/base-pages-*'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check js/beagu-admin-updates-v1.js
+          node tests/direct-pages-release-contract.cjs
+          python3 -m py_compile scripts/release-manager/worker.py
