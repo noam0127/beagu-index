@@ -1,0 +1,34 @@
+name: v1.1.0 isolated desktop code UI browser QA
+on:
+  push:
+    branches:
+      - test/v110-desktop-code-ui-browser-20261123
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install isolated browser
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Desktop 520px layout and PC/mobile Lv0-Lv2 regression
+        run: |
+          python3 -m http.server 8124 --bind 127.0.0.1 >/tmp/v110-desktop-auth.log 2>&1 &
+          node scripts/test-participation-browser.cjs
+      - name: Keep non-sensitive screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-dialog-desktop-mobile-qa
+          path: artifacts/participation-auth/
+          if-no-files-found: ignore
