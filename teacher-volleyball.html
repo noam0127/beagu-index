@@ -190,7 +190,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     </div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
   <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/keep-your-dream-alive-seamless-loop" target="_blank" rel="noopener noreferrer">Keep your dream alive! · congusbongus (CC0)</a></p>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · ✈ 드래그 이동 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 터치하면 점프 · 드래그는 좌우 이동 · EASY/날개 아이템에서만 비행 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
   <a class="postit-arcade-link postit-lv2-link" data-postit-game="teacher-volleyball" target="_top" href="postit.html?game=teacher-volleyball">▤ 이 게임 포스트잇</a>
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
@@ -301,7 +301,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     return Math.floor(t/600)+":"+String(Math.floor((t%600)/10)).padStart(2,"0")+"."+(t%10);};
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, up: false, down: false, jump: false };
-  const touchControl = { pointerId: null, targetX: null, targetY: null };
+  const touchControl = { pointerId: null, targetX: null, targetY: null, jumpQueued: false };
   const state = { phase:"ready",leftScore:0,rightScore:0,serveLeft:true,pointTicks:0,flash:0,winner:"",
     message:"경기 시작을 눌러주세요!",spikes:0,aiRecalc:0,aiTargetX:688,aiJump:false,
     specialCooldownFrames:0,specialChargeFrames:0,uiTick:0,playFrames:0,activeFrames:0,
@@ -769,11 +769,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     touchControl.pointerId = null;
     touchControl.targetX = null;
     touchControl.targetY = null;
+    touchControl.jumpQueued = false;
     left.vy = 0;
     left.impactSpeed = 0;
   }
-  // Desktop arrows and WASD fly in all four directions (including diagonals).
-  // Space still makes a standard jump.
+  // Left/right move normally. Up and Space jump without wings;
+  // vertical free flight is restricted to EASY or an active wings pickup.
   const codes = { KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",
     KeyW:"up",ArrowUp:"up",KeyS:"down",ArrowDown:"down",Space:"jump" };
   document.addEventListener("keydown", e => {
@@ -788,15 +789,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const key=codes[e.code];
     if(key)keys[key]=false;
   });
-  // Touch/drag: fly freely in the player's half of the court.
-  // Gravity resumes on release; automatic spike is triggered by rapid movement.
+  // Touch down queues exactly one grounded jump; dragging moves horizontally.
+  // Only EASY or the wings pickup allows vertical dragging/free flight.
   function targetFromPointer(e) {
     const bounds = canvas.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
     const x = (e.clientX - bounds.left) * W / bounds.width;
     const y = (e.clientY - bounds.top) * H / bounds.height;
     touchControl.targetX = clamp(x, 35, NET_X - NET_W / 2 - 36);
-    touchControl.targetY = canPlayerJump() ? clamp(y, playerCeiling(), FLOOR - 31) : FLOOR - 31;
+    touchControl.targetY = hasPlayerWings() && canPlayerJump() ? clamp(y, playerCeiling(), FLOOR - 31) : null;
   }
   canvas.addEventListener("pointerdown", e => {
     if (state.phase !== "playing" || touchControl.pointerId !== null) return;
@@ -808,6 +809,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       activateSuperSpike();lastTapAt=0;
     }else{lastTapAt=now;lastTapX=posX;lastTapY=posY;}
     touchControl.pointerId = e.pointerId;
+    touchControl.jumpQueued = canPlayerJump();
     targetFromPointer(e);
     if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
   });
@@ -821,7 +823,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     touchControl.pointerId = null;
     touchControl.targetX = null;
     touchControl.targetY = null;
-    left.vy = 0; // land naturally instead of carrying pointer velocity
+    // Do not cancel jump velocity on release; gravity completes the arc.
+    // The queued impulse survives a tap shorter than one animation frame.
   }
   canvas.addEventListener("pointerup", endCourtTouch);
   canvas.addEventListener("pointercancel", endCourtTouch);
@@ -1158,20 +1161,24 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const itemSlow=isMysteryBuff("left","complaint")?.65:1;
     const itemFast=isMysteryBuff("left","letter")?1.35:1;
     const itemSpeed=itemSlow*itemFast;
-    if (touchControl.pointerId !== null && touchControl.targetX !== null && touchControl.targetY !== null) {
-      // Responsive, smoothed 2-axis flight; remain within the player's half-court.
-      const oldX = left.x, oldY = left.y;
-      const flightStep = 24 * SPEED_MULTIPLIER * battle.allySpeed*itemSpeed;
-      left.x += clamp(touchControl.targetX - left.x, -flightStep, flightStep);
-      left.y += canPlayerJump() ? clamp(touchControl.targetY - left.y, -flightStep, flightStep) : 0;
-      left.x = clamp(left.x, 35, NET_X - NET_W / 2 - 36);
-      left.y = canPlayerJump() ? clamp(left.y, playerCeiling(), FLOOR - 31) : FLOOR - 31;
-      left.vx = left.x - oldX;
-      left.vy = left.y - oldY;
-      left.jumpLock = false;
-    } else if(canPlayerJump() && keyboardVertical!==0){
-      // Match mobile two-axis flight controls; release restores gravity.
-      const oldX=left.x, oldY=left.y;
+    const flightAllowed=hasPlayerWings()&&canPlayerJump();
+    const touchActive=touchControl.pointerId!==null&&touchControl.targetX!==null;
+    // Consume one tap even if pointerup arrived before this animation frame.
+    const tapJump=touchControl.jumpQueued;
+    touchControl.jumpQueued=false;
+    if (flightAllowed && touchActive && touchControl.targetY!==null) {
+      // EASY or wings: intentional two-axis flight is still available.
+      const oldX=left.x,oldY=left.y;
+      const flightStep=24*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
+      left.x+=clamp(touchControl.targetX-left.x,-flightStep,flightStep);
+      left.y+=clamp(touchControl.targetY-left.y,-flightStep,flightStep);
+      left.x=clamp(left.x,35,NET_X-NET_W/2-36);
+      left.y=clamp(left.y,playerCeiling(),FLOOR-31);
+      left.vx=left.x-oldX;
+      left.vy=left.y-oldY;
+      left.jumpLock=false;
+    } else if(flightAllowed && keyboardVertical!==0) {
+      const oldX=left.x,oldY=left.y;
       const keyboardStep=10*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
       left.x=clamp(left.x+keyboardDirection*keyboardStep,35,NET_X-NET_W/2-36);
       left.y=clamp(left.y+keyboardVertical*keyboardStep,playerCeiling(),FLOOR-31);
@@ -1179,10 +1186,22 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       left.vy=left.y-oldY;
       left.jumpLock=false;
     } else {
-      controlPlayer(left, keyboardDirection, canPlayerJump()&&keys.jump,
-       5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed,15.8*battle.allyJump);
-       if(!canPlayerJump()){left.y=FLOOR-31;left.vy=0;}
-       else if(left.y<playerCeiling()){left.y=playerCeiling();left.vy=Math.max(0,left.vy);}
+      // Other difficulties: horizontal movement + a single physical jump.
+      // Continuous touch/drag never changes Y directly or resets gravity.
+      const speed=5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
+      const distance=touchActive?touchControl.targetX-left.x:0;
+      const direction=touchActive?(Math.abs(distance)>3?Math.sign(distance):0):keyboardDirection;
+      if(left.y<playerCeiling()&&left.vy<0)left.vy=0; // Wings can expire midair: descend, don't teleport.
+      controlPlayer(left,direction,canPlayerJump()&&(tapJump||keys.jump||keys.up),
+        speed,15.8*battle.allyJump);
+      if(touchActive&&Math.abs(distance)<=speed){
+        left.x=clamp(touchControl.targetX,35,NET_X-NET_W/2-36);
+        left.vx=left.x-beforeMoveX;
+      }
+      if(!canPlayerJump()){left.y=FLOOR-31;left.vy=0;}
+      else if(left.y<playerCeiling()&&left.vy<0){
+        left.y=playerCeiling();left.vy=0;
+      }
     }
     if(currentDifficulty==="extreme"){
       if(Math.abs(left.x-beforeMoveX)>.2)volleyShackle.dir=left.x>beforeMoveX?-1:1;
@@ -1190,7 +1209,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       volleyShackle.x+=clamp((trailing-volleyShackle.x)*.19,-8,8);
     }
     // Only intentional, fast player movement powers up the next ball contact.
-    const activeMove = touchControl.pointerId !== null || keyboardDirection !== 0 || keyboardVertical !== 0 || (canPlayerJump()&&keys.jump);
+    const activeMove = touchActive || keyboardDirection !== 0 || (flightAllowed && keyboardVertical !== 0) || (canPlayerJump()&&(keys.jump||keys.up||tapJump));
     left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
     moveAI();moveClones();moveEnemyMinion();
     updateMystery();
