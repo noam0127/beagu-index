@@ -98,3 +98,14 @@
 - `beagu-level-api` 시험 v7 · `beagu-postit-api-v1` 시험 v6: JWT는 Auth 서버가 검증한 후에만 `sub`, `session_id`, `exp` 확인. 추가 서버 전용 RPC가 `auth.sessions`의 해당 사용자·세션 실존과 만료 여부를 검사하므로 로그아웃/만료 세션은 Lv3·포스트잇 회원 권한을 받지 못함.
 - 브라우저에 오래된 JWT가 남아 있어도 **다음 보호 API 검증부터** Lv3가 철회. 회원 상태 `suspended` 또는 연결 행 삭제도 active 조회에서 배제. 가상 데이터 트랜잭션 테스트 통과, 최종 0행.
 - [세부 구현·검증 및 실제 계정 E2E 한계](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/docs/V110_STAGE_LV3_BROWSER_MEMBER_RECOVERY_20261123.md). 실계정 로그인·Render 실호스트 테스트는 미완료. 5개 기능 잠금·운영 배포 **NO-GO**.
+
+## 2026-11-23 회원 연결·해제·동일 계정 재연결 및 비공개 감사
+
+- **시험 DB**: 서명 검증된 Auth 사용자, 유효 `auth.sessions`, 2026년 Lv2 방문자, 원래 기기 비밀값을 함께 확인하는 `beagu_stage_postit_member_transition` 서버 전용 RPC 추가. `LINK`/`SUSPEND`/`REACTIVATE`와 모든 실제 변경의 감사 기록은 **한 DB 트랜잭션**으로 저장. 감사 실패면 회원 상태 변경도 롤백.
+- **명의 이전 불가**: 연결 중단은 `status=suspended`이며 기존 Auth 사용자·방문자·작성자 고유 관계를 보존. 새 계정이 이전 권한을 가져갈 수 없고, 원래 Auth 계정과 원래 기기/유효 추천으로만 명시적 복원 가능. 기존 포스트잇 삭제 없음.
+- **기존 우회 차단**: 감사 없는 옛 `beagu_postit_bind_verified_member`의 시험 `service_role` 직접 실행 권한 철회. 새 RPC만 서버 역할에 EXECUTE 허용. 감사 테이블 RLS=true, 익명/일반 회원 직접 조회·호출 불가.
+- **시험 Edge**: `beagu-postit-api-v1` **v7 ACTIVE**, `beagu-level-api` v7 ACTIVE. 43개 시험 함수 등록, 17/17 웹 API 설치, 기존 5개 기능 잠금 유지.
+- [실제 SQL 전체 시나리오](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/tests/sql/staging-member-link-lifecycle-rollback-20261123.sql) PASS: 초기 연결·중지·복원·중복 감사·타인 탈취·원래 기기 부재·유효 추천 취소·세션 철회·강제 감사 실패 검증. 모든 합성 행 0건.
+- [PC/모바일 Chromium 브라우저 CI #45097875238](https://github.com/noam0127/beagu-index/actions/runs/45097875238) **최종 PASS**: 신규 버튼과 모의 백엔드에서 Lv3→Lv2 중지·원래 기기 재연결→Lv3, 원격 JWT 철회, 기존 레벨/계측. 이 검사는 **실제 Auth 가입·실계정 이메일 인증의 양성 E2E가 아니다**.
+- Supabase Security Advisor WARN **0건**, RLS 정책이 없는 테이블 관련 INFO 62건. 해당 INFO 전체를 무해하다고 승인한 것은 아님.
+- [자세한 구현·테스트·잔여 정책](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/docs/V110_STAGE_MEMBER_LIFECYCLE_AUDIT_20261123.md). **실제 Render 호스트/실계정 Lv3/MFA E2E 미검증**, 전체 운영 출시 **NO-GO**.
