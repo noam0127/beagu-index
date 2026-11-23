@@ -1,0 +1,49 @@
+name: v1.1.0 direct production read-only release gate
+on:
+  push:
+    branches:
+      - fix/v110-staging-edited-api-recovery-20261123
+    paths:
+      - '.github/workflows/v110-direct-prod-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Fetch exact GitHub main baseline (no mutations)
+        run: git fetch --no-tags origin main
+      - name: Fail-closed unit tests
+        run: python3 tests/test-v110-direct-prod-readiness.py
+      - name: Compare exact deployed SHA to current production candidate
+        id: gate
+        shell: bash
+        run: |
+          set +e
+          python3 scripts/release-manager/direct-prod-readiness.py \
+            --deployed-sha 5950755c8174788d7bb1fa879be73a15f25d9ae2 \
+            --out /tmp/direct-prod-readiness.json
+          code=$?
+          cat /tmp/direct-prod-readiness.json >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -ne 0 ]; then
+            echo "::warning title=NO-GO direct release::Candidate contains stage-only or privileged changes. No production deploy was attempted."
+          fi
+          # Diagnostic job succeeds only to publish a machine-readable report;
+          # never equate green workflow with release authorization.
+          exit 0
+      - name: Upload release eligibility JSON (not a production artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: v110-direct-release-readiness-only
+          path: /tmp/direct-prod-readiness.json
+          retention-days: 14
+      - name: Explicit safeguard
+        run: |
+          echo "THIS JOB NEVER DEPLOYS. Only static-only changes qualify for later reviewed direct production deployment."
+          echo "NO bypass of owner AAL2, immutable rollback, production APIs, or the five locked rollout gates."
