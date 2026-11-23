@@ -16,7 +16,7 @@
 
 | API (배포됨, 기능 잠금) | 시험 DB/구성의 확인된 차단 사항 | 분류 |
 |---|---|---|
-| `beagu-2026-review-admin` | 시험 v1 설치. 관리자 실 MFA/감사·6개 심사 RPC 미검증 → `REVIEW_NOT_READY` | 개인정보·관리 |
+| `beagu-2026-review-admin` | 시험 v1 설치. 관리자 실 AAL2 MFA/감사 성공 E2E 미검증 (6개 RPC·비공개 테이블은 복구) → `REVIEW_NOT_READY` | 개인정보·관리 |
 | `class-diary-guest-access-v1` | 시험 v1 설치. preview 시도 제한 RPC 복원, 별도 PIN·관리자 승인 미설정 → `PREVIEW_NOT_READY` | 다른 게임·인증 |
 | `class-diary-progress-v1` | 시험 v1 설치. revision CAS 저장·조회 RPC 복원, 별도 PIN·승인 미설정 → `PREVIEW_NOT_READY` | 다른 게임·저장 |
 
@@ -60,3 +60,9 @@
 
 - [GitHub Actions #45090059588](https://github.com/noam0127/beagu-index/actions/runs/45090059588)에서 2026 관리자·학급일지 3개 시험 API의 HTTP 차단 PASS. 가상 저장 SQL은 rollback으로 종료, DB 행 0건.
 - 미배포 함수가 0개여도 `feature_gates` 5개가 남아 있는 동안 `ready_for_real_e2e=false`; **운영 승격 NO-GO 유지.**
+
+## 2026 심사 RPC 추가 복구 (운영 승격 NO-GO)
+
+- 시험 DB: 심사 품질/추천 품질/비공개 감사 테이블 6개, 큐·파이프라인·추천 품질 조회 및 보류·검토·승급 결정 RPC 6종 복구. 신규 테이블 RLS/익명 직접 접근 차단.
+- 실제 SQL 읽기 3종 성공, 무권한 결정 3종 거부, 감사 기록 건수 변동 없음. 시험 관리자 API는 v2로 업데이트, MFA 세션 인수 전달 및 DB 원자적 감사로 개선.
+- [소스·검증 상세](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/docs/V110_STAGE_REVIEW_RPC_RECOVERY_20261123.md). **실소유자 AAL2 양성 E2E·개인정보 공개 승인 미검증**, 5개 기능 잠금 유지.
