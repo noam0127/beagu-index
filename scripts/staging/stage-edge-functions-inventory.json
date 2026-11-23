@@ -2,7 +2,7 @@
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
   "verified_on": "2026-11-23",
-  "source": "Read-only verified staging Edge Functions 2026-11-23 KST (42); admin 2026 reviewer v2 with six DB RPCs restored, owner AAL2 positive E2E still unverified, 5 locked rollout gates",
+  "source": "Live staging 42 functions checked 2026-11-23 KST: admin 2026 reviewer v3 adds independent read-only signed-JWT MFA preflight; all 5 rollout locks remain NO-GO",
   "functions": [
     {
       "slug": "arcade-leaderboard",
@@ -12,7 +12,7 @@
     },
     {
       "slug": "beagu-2026-review-admin",
-      "version": 2,
+      "version": 3,
       "status": "ACTIVE",
       "verify_jwt": false
     },
