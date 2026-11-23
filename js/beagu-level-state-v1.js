@@ -18,12 +18,13 @@
   const getToken=()=>{
     try { return sessionStorage.getItem(KEY)||''; } catch (_) { return ''; }
   };
-  // The same auth card remains in place at Lv.0, Lv.1 and Lv.2.
+  // The same auth card remains in place at Lv.0 through Lv.3.
   // Use only the server-verified badge event; never upgrade from a typed code alone.
   const syncLevelCards=(raw,provisional)=>{
-    const tier=/^[012]$/.test(raw)?Number(raw):null;
+    const tier=/^[0123]$/.test(raw)?Number(raw):null;
     const badgeLabel=tier===0?'미인증':tier===1?'✓ Lv1 · 설문 참여 완료'
       :tier===2?'♛ Lv2 · 챌린지 달성'
+      :tier===3?'★ Lv3 · 인증 회원'
       :raw==='checking'?'확인 중':'확인 불가';
     const cards=[
       ['lv1QuickAuth','lv1QuickBadge'],
@@ -67,9 +68,24 @@
       setState('checking','확인 중','인증 상태를 확인하는 중');
     }
     try{
+      // Lv3 requires an independent Supabase Auth bearer token as well as
+      // this server-issued Lv2 participation session. The backend validates
+      // both proofs and the device-bound member record.
+      let bearer='';
+      try{
+        const authClient=typeof supabaseClient!=='undefined'
+          ?supabaseClient:window.supabaseClient;
+        if(typeof authClient?.auth?.getSession==='function'){
+          const {data,error}=await authClient.auth.getSession();
+          if(!error&&typeof data?.session?.access_token==='string'
+             &&data.session.access_token.length<=4096)bearer=data.session.access_token;
+        }
+      }catch(_){/* Missing email session means Lv1/Lv2, never fabricated Lv3. */}
+      if(seq!==generation||getToken()!==token)return;
       const response=await fetch(VERIFY_URL,{
         method:'POST',cache:'no-store',
-        headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+        headers:{'Content-Type':'application/json','X-Beagu-Session':token,
+          ...(bearer?{'Authorization':'Bearer '+bearer}:{})},
         body:JSON.stringify({action:'verify'})
       });
       if(seq!==generation||getToken()!==token)return;
@@ -82,9 +98,9 @@
       if(!response.ok)throw Error('AUTH_CHECK_UNAVAILABLE');
       const result=await response.json();
       if(seq!==generation||getToken()!==token)return;
-      if(Number.isInteger(result?.level)&&result.level>=1){
+      if(Number.isInteger(result?.level)&&result.level>=1&&result.level<=3){
         lastValidatedToken=token;
-        const tier=result.level>=2?2:1;
+        const tier=result.level===3?3:result.level===2?2:1;
         const provisional=tier===2&&result.provisional===true;
         const label='Lv.'+tier;
         setState(String(tier),label,'현재 '+label+' · 레벨 안내 보기',provisional);
@@ -106,7 +122,7 @@
   window.addEventListener('focus',refreshIfVisible);
   document.addEventListener('visibilitychange',refreshIfVisible);
 
-  // Shared Lv1/Lv2 participation dialog observes this server-verified event;
+  // Shared participation dialog observes server-verified Lv1/Lv2/Lv3;
   // data.provisional is retained for legacy access restrictions.
   void refresh();
 })();
