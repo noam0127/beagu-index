@@ -8,8 +8,8 @@ const VALID_GAMES = new Set(["volleyball_25","teacher_run_retirement"]);
 const encoder = new TextEncoder();
 const CACHE = "no-store";
 type Game = "volleyball" | "teacher_run" | "volleyball_25" | "teacher_run_retirement";
-type Entry = { score: number; created_at: string; school_name?: string | null; difficulty?: string | null };
-type FastEntry = { win_time_tenths: number; created_at: string; school_name?: string | null; difficulty?: string | null };
+type Entry = { score: number; created_at: string; school_id?: string | null; school_name?: string | null; difficulty?: string | null };
+type FastEntry = { session_id?: string | null; win_time_tenths: number; created_at: string; school_name?: string | null; difficulty?: string | null };
 type Session = { id: string; game: Game; ip_hash: string; started_at: string; submitted_at: string | null; school_id?:string; school_name?:string; difficulty?:string };
 
 function json(data: unknown, status = 200, origin = "https://baeguindex.com"): Response {
@@ -44,20 +44,28 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
   const raw=await response.text();return raw?JSON.parse(raw):null;
 }
 async function top(game: Game,tier:string|null=null): Promise<Entry[]> {
-  const q = new URLSearchParams({select:"score,created_at,school_name,difficulty",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
+  const q = new URLSearchParams({select:"score,created_at,school_id,school_name,difficulty",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
   if(tier)q.set("difficulty","eq."+tier);
   const list = await db("arcade_game_scores?" + q);
-  return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_name:e.school_name??null,difficulty:e.difficulty??null}));
+  return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_id:e.school_id??null,school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
 
-async function fastest25(tier:string|null=null):Promise<Array<{timeTenths:number;created_at:string;school_name:string|null;difficulty:string|null}>>{
+async function fastest25(tier:string|null=null):Promise<Array<{timeTenths:number;created_at:string;school_id:string|null;school_name:string|null;difficulty:string|null}>>{
  const q=new URLSearchParams({
-  select:"win_time_tenths,created_at,school_name,difficulty",
+  select:"session_id,win_time_tenths,created_at,school_name,difficulty",
   order:"win_time_tenths.asc,created_at.asc",limit:"10"
  });
  if(tier)q.set("difficulty","eq."+tier);
  const rows=await db("arcade_fastest25_records?"+q) as FastEntry[];
+ // Match the fastest-25 records by immutable session ID, not school display name.
+ const sessions=[...new Set(rows.map(r=>r.session_id).filter((id):id is string=>
+  typeof id==="string"&&/^[0-9a-f-]{36}$/i.test(id)))];
+ const related=sessions.length?await db("arcade_game_scores?"+new URLSearchParams({
+  select:"session_id,school_id",session_id:"in.("+sessions.join(",")+")",limit:"100"
+ })) as Array<{session_id:string;school_id:string|null}>:[];
+ const schoolIds=new Map(related.map(row=>[row.session_id,row.school_id]));
  return rows.map(e=>({timeTenths:e.win_time_tenths,created_at:e.created_at,
+  school_id:e.session_id?schoolIds.get(e.session_id)??null:null,
   school_name:e.school_name??null,difficulty:e.difficulty??null}));
 }
 
@@ -238,17 +246,17 @@ function publicGameResult(game:Game,result:any):Record<string,unknown>{
 async function gameHistory(game:Game,tier:string|null,page:number){
  const pageSize=30,offset=(page-1)*pageSize;
  const q=new URLSearchParams({
-  select:"id,score,created_at,school_name,difficulty,win_time_tenths,public_result",
+  select:"id,score,created_at,school_id,school_name,difficulty,win_time_tenths,public_result",
   game:"eq."+game,order:"score.desc,created_at.asc,id.asc",
   limit:String(pageSize+1),offset:String(offset)
  });
  if(tier)q.set("difficulty","eq."+tier);
  const results=await db("arcade_game_scores?"+q) as Array<{
-  score:number;created_at:string;school_name:string|null;difficulty:string|null;
+  score:number;created_at:string;school_id:string|null;school_name:string|null;difficulty:string|null;
   win_time_tenths:number|null;public_result:Record<string,unknown>|null
  }>;
  const records=results.slice(0,pageSize).map(record=>({
-  score:record.score,createdAt:record.created_at,
+  score:record.score,createdAt:record.created_at,schoolId:record.school_id??null,
   schoolName:record.school_name??"학교 미등록",difficulty:record.difficulty,
   winTimeTenths:record.win_time_tenths,
   details:record.public_result&&typeof record.public_result==="object"?record.public_result:{}
