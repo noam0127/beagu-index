@@ -151,16 +151,14 @@ Deno.serve(async(request:Request)=>{
   if(!/^[A-Z0-9]{7}$/.test(schoolId)||!/^[a-f0-9]{64}$/.test(sha)||
     reason.length<12||reason.length>500||/[<>]/.test(reason))
    return send(origin,400,{error:"invalid_hold_decision"});
+  // The DB RPC checks an active owner AAL2 session AND writes the hold
+  // plus both private/public audit records atomically. A separate Edge
+  // audit insert after commit would allow partial success on audit failure.
   const {error}=await db.rpc("beagu_2026_admin_hold_result",
-   {p_school_id:schoolId,p_expected_sha256:sha,p_actor:actor,p_reason:reason});
+   {p_school_id:schoolId,p_expected_sha256:sha,p_actor:actor,
+    p_session:claims.session_id,p_reason:reason});
   if(error){console.error("review_hold_unavailable",error.code||"unknown");
     return send(origin,409,{error:"hold_failed_or_snapshot_changed"});}
-  const {error:auditError}=await db.from("beagu_admin_audit_events").insert({
-   actor_user_id:actor,event_type:"admin_2026_review_hold",outcome:"success",
-   details:{school_id:schoolId}
-  });
-  if(auditError){console.error("review_hold_audit_unavailable",auditError.code||"unknown");
-    return send(origin,503,{error:"audit_unavailable"});}
   return send(origin,200,{ok:true,school_id:schoolId,decision:"WITHHELD"});
  }catch(error){
   console.error("review_api_unavailable",error instanceof Error?error.name:"unknown");
