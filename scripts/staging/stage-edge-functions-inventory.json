@@ -2,7 +2,7 @@
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
   "verified_on": "2026-11-23",
-  "source": "Staging Edge Function list verified 2026-11-23 KST: 43 functions including page perf gateway v1; 5 independently locked rollouts remain NO-GO",
+  "source": "Actual staging inventory 2026-11-23: 43 ACTIVE functions, Level v6 and Postit v5 carry isolated Render CORS and full deployed Lv3 logic; five rollout gates remain LOCKED NO-GO",
   "functions": [
     {
       "slug": "arcade-leaderboard",
@@ -48,7 +48,7 @@
     },
     {
       "slug": "beagu-level-api",
-      "version": 5,
+      "version": 6,
       "status": "ACTIVE",
       "verify_jwt": false
     },
@@ -60,7 +60,7 @@
     },
     {
       "slug": "beagu-postit-api-v1",
-      "version": 4,
+      "version": 5,
       "status": "ACTIVE",
       "verify_jwt": false
     },
