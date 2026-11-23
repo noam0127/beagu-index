@@ -81,8 +81,10 @@
      if(token!==pipelineSeq||!ready)return;
      if(!data?.status||data.status.year!==2026)throw Error("unexpected_status");
      renderPipeline(data.status);
+     renderLevelApprovals(data.levels);
    }catch{
      if(token!==pipelineSeq||!ready)return;
+     renderLevelApprovals([]);
      if($("adminPipelineStatus"))$("adminPipelineStatus").textContent=
        "단계별 수치를 가져오지 못했습니다. 관리자 세션과 서버 업데이트 상태를 확인하세요.";
    }
@@ -304,6 +306,7 @@
  }
  function reset(){
   ready=false;role="";seq++;page=0;pipelineSeq++;
+  renderLevelApprovals([]);
   $("adminReferralRiskCard").hidden=true;
   $("adminReferralRiskList").replaceChildren();
   $("adminReview2026List").replaceChildren();
@@ -320,5 +323,46 @@
  $("adminReferralRiskReload").addEventListener("click",()=>{void refreshReferralRisks();});
  $("adminReview2026Prev").addEventListener("click",()=>{if(page>0){page--;void refresh();}});
  $("adminReview2026Next").addEventListener("click",()=>{page++;void refresh();});
+
+ function renderLevelApprovals(items){
+   const rows=Array.isArray(items)?items:[];
+   for(let level=0;level<=2;level++){
+     const data=rows.find(x=>x?.level===level),approved=data?.approved===true;
+     const eligible=Number(data?.eligible_schools)||0,covered=Number(data?.covered_schools)||0;
+     const button=$("adminLevelReleaseButton"+level),revoke=$("adminLevelReleaseRevoke"+level);
+     $("adminLevelReleaseState"+level).textContent=!data?"확인 불가":approved?"승인됨":"승인 대기";
+     $("adminLevelReleaseCovered"+level).textContent=data?(approved?covered:eligible).toLocaleString("ko-KR"):"—";
+     button.textContent=approved?(covered<eligible?"새로 승인된 학교 반영":"Lv."+level+" 승인 완료"):"Lv."+level+" 최종 공개 승인";
+     button.disabled=!data||role!=="owner"||eligible<1||(approved&&covered>=eligible);
+     revoke.hidden=!approved||role!=="owner";
+     revoke.disabled=!approved||role!=="owner";
+   }
+   $("adminLevelReleaseStatus").textContent=rows.length!==3?
+     "레벨 상태를 확인할 수 없어 승인 기능을 중단했습니다.":
+     role==="owner"?"학교별 승인을 마친 현재 자료만 포함됩니다. 이후 승인된 학교는 레벨별 재승인이 필요합니다.":
+       "조회 전용 계정: 소유자만 최종 공개 승인할 수 있습니다.";
+ }
+ async function decideLevel(level,action,button){
+   if(!ready||role!=="owner"||button.disabled)return;
+   const label="Lv."+level;
+   if(!window.confirm(action==="REVOKE"?
+     label+"의 2026 자료 공개를 중단하시겠습니까? 다른 레벨은 변경되지 않습니다.":
+     label+"에서 학교별 최종 승인된 현재 2026 자료를 공개하도록 최종 승인하시겠습니까?"))return;
+   button.disabled=true;
+   try{
+     const result=await call({action:"level_decision",level,decision:action});
+     if(result?.ok!==true||result.level!==level)throw Error("invalid_result");
+     await refreshPipeline();
+     $("adminLevelReleaseStatus").textContent=label+(action==="REVOKE"?" 공개 중단":" 최종 공개 승인")+"이 서버에 기록됐습니다.";
+   }catch{
+     await refreshPipeline();
+     $("adminLevelReleaseStatus").textContent="처리 실패: 학교별 검증·승인, 관리자 MFA, 서버 연결을 확인하세요.";
+   }
+ }
+ for(let level=0;level<=2;level++){
+   $("adminLevelReleaseButton"+level).addEventListener("click",event=>void decideLevel(level,"APPROVE",event.currentTarget));
+   $("adminLevelReleaseRevoke"+level).addEventListener("click",event=>void decideLevel(level,"REVOKE",event.currentTarget));
+ }
+ $("adminLevelReleaseReload").addEventListener("click",()=>void refreshPipeline());
  window.Beagu2026ReviewAdmin={mount,reset};
 })();
