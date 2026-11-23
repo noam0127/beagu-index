@@ -292,7 +292,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     extreme:{cooldown:28,chargeFrames:390}
   };
   const diffName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
-  let currentDifficulty="normal",battle=battleProfiles.normal,specialProfile=specialProfiles.hard,startTicket=0,lastTapAt=0,lastTapX=0,lastTapY=0;
+  let currentDifficulty="normal",battle=battleProfiles.normal,specialProfile=specialProfiles.hard,startTicket=0,lastTapAt=0,lastMoveDirection=1;
   schoolPicker.onChange=school=>{
     if(state.phase==="ready"||state.phase==="finished"){
       setStatus(!school ? "" :
@@ -308,7 +308,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     }
   };
   const SPEED_MULTIPLIER=2; // horizontal player and AI reaction (5->10, 3.65->7.3)
-  const AUTO_SPIKE_SPEED=8; // player-driven displacement per simulation frame
+  const DASH_DURATION=8,DASH_COOLDOWN=102,SPIKE_BUFFER=19; // 0.13s dash, 1.7s cooldown, 0.3s spike hit window
   const MATCH_TARGET=25;
   // Opponent score reduces earned points; victory adds a lead-dependent multiplier.
   // Win by 1-4: ×1, 5-9: ×2, 10-14: ×3, 15-19: ×4, 20-24: ×5, 25-0: ×6.
@@ -340,10 +340,10 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     return Math.floor(t/600)+":"+String(Math.floor((t%600)/10)).padStart(2,"0")+"."+(t%10);};
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, up: false, down: false, jump: false };
-  const touchControl = { pointerId: null, targetX: null, targetY: null, jumpQueued: false };
+  const touchControl = { pointerId: null, axisX: 0, axisY: 0 };
   const state = { phase:"ready",leftScore:0,rightScore:0,serveLeft:true,pointTicks:0,flash:0,winner:"",
     message:"경기 시작을 눌러주세요!",spikes:0,aiRecalc:0,aiTargetX:688,aiJump:false,
-    specialCooldownFrames:0,specialChargeFrames:0,uiTick:0,playFrames:0,activeFrames:0,
+    specialCooldownFrames:0,specialChargeFrames:0,spikeBufferFrames:0,dashFrames:0,dashCooldownFrames:0,dashX:1,dashY:0,uiTick:0,playFrames:0,activeFrames:0,
     hitStopFrames:0,impactFrames:0,impactX:0,impactY:0,bossWarnFrames:0,bossCooldownFrames:0,
     winStreak:0,bestStreak:0,pointCheer:"",recordBroken:false,timeRecordBroken:false,endedEarly:false,
     rescueUsed:false,qualityText:"",qualityFrames:0,winCheer:"" };
@@ -679,6 +679,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     fullscreenPauseButton.disabled=pauseButton.disabled;
     fullscreenPauseButton.textContent=playbackLabel;
     fullscreenPauseButton.setAttribute("aria-label",playbackTitle);fullscreenPauseButton.title=playbackTitle;
+    updateTouchActions();
     updateMatchScoreUI();
   }
   function resetPositions() {
@@ -735,6 +736,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     battle=battleProfiles[currentDifficulty]||battleProfiles.hard;
     specialProfile=specialProfiles[currentDifficulty]||specialProfiles.hard;
     resetPower();
+    state.spikeBufferFrames=0;state.dashFrames=0;state.dashCooldownFrames=0;lastMoveDirection=1;
     desiredBalls=currentDifficulty==="extreme"?2:1;
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;itemScoreDelta=0;itemScoreEvents=[];state.spikes=0;state.playFrames=0;state.activeFrames=0;
@@ -756,6 +758,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     ++startTicket;
     ranking?.cancel();
     releaseKeys();
+    state.spikeBufferFrames=0;state.dashFrames=0;state.dashCooldownFrames=0;
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
     state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
@@ -811,77 +814,111 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function releaseKeys() {
     Object.keys(keys).forEach(k => { keys[k] = false; });
     touchControl.pointerId = null;
-    touchControl.targetX = null;
-    touchControl.targetY = null;
-    touchControl.jumpQueued = false;
+    touchControl.axisX = 0;touchControl.axisY = 0;
+    joystickThumb.style.setProperty("--jx","0px");
+    joystickThumb.style.setProperty("--jy","0px");
+    state.dashFrames=0;state.spikeBufferFrames=0;
     left.vy = 0;
     left.impactSpeed = 0;
   }
-  // Left/right move normally. Up and Space jump without wings;
-  // vertical free flight is restricted to EASY or an active wings pickup.
+  // Desktop: WASD/arrows move, W/Space jump, J spikes, Shift/K dashes.
   const codes = { KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",
     KeyW:"up",ArrowUp:"up",KeyS:"down",ArrowDown:"down",Space:"jump" };
-  document.addEventListener("keydown", e => {
+  document.addEventListener("keydown",e=>{
     if(!["playing","point"].includes(state.phase))return;
     if(e.target?.closest?.("input,textarea,select,[contenteditable]"))return;
+    if(e.code==="KeyJ"){e.preventDefault();if(!e.repeat)requestSpike();return;}
+    if(e.code==="ShiftLeft"||e.code==="ShiftRight"||e.code==="KeyK"){
+      e.preventDefault();if(!e.repeat)requestDash();return;
+    }
     const key=codes[e.code];
     if(!key)return;
-    e.preventDefault(); // Arrow keys and space must not scroll the page.
+    e.preventDefault();
     if(state.phase==="playing")keys[key]=true;
   });
-  document.addEventListener("keyup", e => {
-    const key=codes[e.code];
-    if(key)keys[key]=false;
+  document.addEventListener("keyup",e=>{
+    const key=codes[e.code];if(key)keys[key]=false;
   });
-  // Mobile canvas touch/drag moves horizontally; only the dedicated jump button jumps.
-  // Only EASY or the wings pickup allows vertical dragging/free flight.
-  function targetFromPointer(e) {
-    const bounds = canvas.getBoundingClientRect();
-    if (!bounds.width || !bounds.height) return;
-    const x = (e.clientX - bounds.left) * W / bounds.width;
-    const y = (e.clientY - bounds.top) * H / bounds.height;
-    touchControl.targetX = clamp(x, 35, NET_X - NET_W / 2 - 36);
-    touchControl.targetY = hasPlayerWings() && canPlayerJump() ? clamp(y, playerCeiling(), FLOOR - 31) : null;
+  // Pointer capture keeps the left thumb steering during simultaneous right-hand input.
+  function setJoystickVector(clientX,clientY){
+    const rect=joystick.getBoundingClientRect();
+    if(!rect.width||!rect.height)return;
+    const radius=Math.max(1,Math.min(rect.width,rect.height)*.39);
+    const dx=(clientX-rect.left-rect.width/2)/radius;
+    const dy=(clientY-rect.top-rect.height/2)/radius;
+    const length=Math.hypot(dx,dy),deadzone=.18;
+    const strength=length<=deadzone?0:Math.min(1,(length-deadzone)/(1-deadzone));
+    touchControl.axisX=length?dx/length*strength:0;
+    touchControl.axisY=length?dy/length*strength:0;
+    joystickThumb.style.setProperty("--jx",(touchControl.axisX*radius)+"px");
+    joystickThumb.style.setProperty("--jy",(touchControl.axisY*radius)+"px");
   }
-  // The jump button is separate from the canvas: an ordinary tap does not jump.
-  mobileJumpButton.addEventListener("pointerdown",event=>{
-    if(state.phase!=="playing")return;
+  function endJoystick(event){
+    if(touchControl.pointerId!==event.pointerId)return;
+    touchControl.pointerId=null;touchControl.axisX=0;touchControl.axisY=0;
+    joystickThumb.style.setProperty("--jx","0px");
+    joystickThumb.style.setProperty("--jy","0px");
+  }
+  joystick.addEventListener("pointerdown",event=>{
+    if(state.phase!=="playing"||touchControl.pointerId!==null)return;
     event.preventDefault();event.stopPropagation();
-    touchControl.jumpQueued=canPlayerJump();
+    touchControl.pointerId=event.pointerId;
+    setJoystickVector(event.clientX,event.clientY);
+    joystick.setPointerCapture?.(event.pointerId);
   });
-  // Keyboard/assistive button activation remains accessible without double firing.
-  mobileJumpButton.addEventListener("click",event=>{
-    event.stopPropagation();
-    if(event.detail===0&&state.phase==="playing")touchControl.jumpQueued=canPlayerJump();
+  joystick.addEventListener("pointermove",event=>{
+    if(touchControl.pointerId!==event.pointerId)return;
+    event.preventDefault();setJoystickVector(event.clientX,event.clientY);
   });
-  canvas.addEventListener("pointerdown", e => {
-    if (state.phase !== "playing" || touchControl.pointerId !== null) return;
-    e.preventDefault();
-    const now=Date.now(),bounds=canvas.getBoundingClientRect();
-    const posX=bounds.width?(e.clientX-bounds.left)/bounds.width*W:0;
-    const posY=bounds.height?(e.clientY-bounds.top)/bounds.height*H:0;
-    if(lastTapAt&&now-lastTapAt<=320&&Math.hypot(posX-lastTapX,posY-lastTapY)<110){
-      activateSuperSpike();lastTapAt=0;
-    }else{lastTapAt=now;lastTapX=posX;lastTapY=posY;}
-    touchControl.pointerId = e.pointerId;
-    targetFromPointer(e);
-    if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
-  });
-  canvas.addEventListener("pointermove", e => {
-    if (touchControl.pointerId !== e.pointerId) return;
-    e.preventDefault();
-    targetFromPointer(e);
-  });
-  function endCourtTouch(e) {
-    if (touchControl.pointerId !== e.pointerId) return;
-    touchControl.pointerId = null;
-    touchControl.targetX = null;
-    touchControl.targetY = null;
-    // Releasing movement does not cancel a separate jump-button impulse.
+  for(const type of ["pointerup","pointercancel","lostpointercapture"])
+    joystick.addEventListener(type,endJoystick);
+  function requestSpike(){
+    if(state.phase!=="playing")return false;
+    const now=Date.now();
+    if(lastTapAt&&now-lastTapAt<=320){activateSuperSpike();lastTapAt=0;}
+    else lastTapAt=now;
+    state.spikeBufferFrames=SPIKE_BUFFER;
+    updateTouchActions();
+    return true;
   }
-  canvas.addEventListener("pointerup", endCourtTouch);
-  canvas.addEventListener("pointercancel", endCourtTouch);
-  canvas.addEventListener("lostpointercapture", endCourtTouch);
+  function requestDash(){
+    if(state.phase!=="playing"||state.dashCooldownFrames>0)return false;
+    const inputX=touchControl.pointerId!==null?touchControl.axisX:(keys.right?1:0)-(keys.left?1:0);
+    const inputY=touchControl.pointerId!==null?touchControl.axisY:(keys.down?1:0)-(keys.up?1:0);
+    // Normal tiers dash horizontally only; EASY/wings unlock vertical motion.
+    const vertical=hasPlayerWings()&&canPlayerJump()?inputY:0;
+    const len=Math.hypot(inputX,vertical);
+    state.dashX=len>.2?inputX/len:lastMoveDirection;
+    state.dashY=len>.2?vertical/len:0;
+    state.dashFrames=DASH_DURATION;
+    state.dashCooldownFrames=DASH_COOLDOWN;
+    tone(280,.09,"sawtooth",.035,0,780);
+    updateTouchActions();
+    return true;
+  }
+  function updateTouchActions(){
+    const playing=state.phase==="playing";
+    spikeButton.disabled=!playing;
+    dashButton.disabled=!playing||state.dashCooldownFrames>0;
+    dashCooldownLabel.textContent=state.dashCooldownFrames>0
+      ?(state.dashCooldownFrames/60).toFixed(1)+"초":"대시";
+    spikeButton.classList.toggle("is-armed",playing&&state.spikeBufferFrames>0);
+    spikeButton.setAttribute("aria-pressed",String(playing&&state.spikeBufferFrames>0));
+  }
+  spikeButton.addEventListener("pointerdown",event=>{
+    if(state.phase!=="playing")return;
+    event.preventDefault();requestSpike();
+  });
+  spikeButton.addEventListener("click",event=>{
+    // Keyboard and assistive clicks have detail===0; ordinary pointer clicks already fired.
+    if(event.detail===0)requestSpike();
+  });
+  dashButton.addEventListener("pointerdown",event=>{
+    if(state.phase!=="playing")return;
+    event.preventDefault();requestDash();
+  });
+  dashButton.addEventListener("click",event=>{if(event.detail===0)requestDash();});
+  // Court taps never move the player: steering is exclusively via joystick/keyboard.
   startButton.addEventListener("click",()=>{unlockSound();if(["playing","point","paused"].includes(state.phase))finishMatch(true);else startMatch();});
   pauseButton.addEventListener("click", pause);
   fullscreenPauseButton.addEventListener("click", pause);
@@ -1045,7 +1082,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       state.impactX=ball.x;state.impactY=ball.y;
       tone(920,.085,"triangle",.04);
     }
-    const spike = p.side === "left" && (p.impactSpeed >= AUTO_SPIKE_SPEED||charged);
+    const spike = p.side === "left" && (state.spikeBufferFrames>0||charged);
     const bossStrike=p.side==="right"&&state.bossWarnFrames>0&&
       (currentDifficulty==="very_hard"||currentDifficulty==="extreme");
     const cpuSmash=p.side==="right"&&(bossStrike||Math.random()<battle.enemySmashChance);
@@ -1082,6 +1119,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       const neededVy=(NET_TOP-R-14-ball.y-.15*framesToNet*(framesToNet+1))/framesToNet;
       ball.vy=clamp(Math.min(ball.vy,neededVy),-19*ballSpeedFactor(),-4*ballSpeedFactor());
     }
+    if(p.side==="left"&&spike)state.spikeBufferFrames=0;
     if(spike&&isMysteryBuff("left","rapid_smash")){
       ball.vx*=2;ball.vy*=2;
       ball.shadowFrames=28;ball.shadowColor="#ffe075";
@@ -1202,6 +1240,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       state.playFrames++;
       if(state.specialCooldownFrames>0)state.specialCooldownFrames--;
       if(state.specialChargeFrames>0)state.specialChargeFrames--;
+      if(state.spikeBufferFrames>0)state.spikeBufferFrames--;
+      if(state.dashCooldownFrames>0)state.dashCooldownFrames--;
     }
     if (state.phase === "point") {
       if (--state.pointTicks <= 0) { state.phase = "playing"; state.message = ""; state.pointCheer=""; resetPositions(); syncUI(); setStatus(""); }
@@ -1216,68 +1256,39 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const itemFast=isMysteryBuff("left","letter")?1.35:1;
     const itemSpeed=itemSlow*itemFast;
     const flightAllowed=hasPlayerWings()&&canPlayerJump();
-    const touchActive=touchControl.pointerId!==null&&touchControl.targetX!==null;
-    // Consume one tap even if pointerup arrived before this animation frame.
-    const tapJump=touchControl.jumpQueued;
-    touchControl.jumpQueued=false;
-    if (flightAllowed && touchActive && touchControl.targetY!==null) {
-      // EASY or wings: intentional two-axis flight is still available.
-      const oldX=left.x,oldY=left.y;
-      const flightStep=24*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
-      left.x+=clamp(touchControl.targetX-left.x,-flightStep,flightStep);
-      left.y+=clamp(touchControl.targetY-left.y,-flightStep,flightStep);
-      left.x=clamp(left.x,35,NET_X-NET_W/2-36);
-      left.y=clamp(left.y,playerCeiling(),FLOOR-31);
-      left.vx=left.x-oldX;
-      left.vy=left.y-oldY;
+    const stickActive=touchControl.pointerId!==null;
+    const inputX=stickActive?touchControl.axisX:keyboardDirection;
+    const inputY=stickActive?touchControl.axisY:keyboardVertical;
+    if(Math.abs(inputX)>.2)lastMoveDirection=Math.sign(inputX);
+    const dashing=state.dashFrames>0;
+    const moveX=dashing?state.dashX:inputX;
+    const moveY=dashing?state.dashY:inputY;
+    if(flightAllowed){
+      // EASY/wings: the joystick moves on both axes and releasing it hovers.
+      const flightStep=10*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed*(dashing?1.75:1);
+      left.x=clamp(left.x+moveX*flightStep,35,NET_X-NET_W/2-36);
+      left.y=clamp(left.y+moveY*flightStep,playerCeiling(),FLOOR-31);
+      left.vx=left.x-beforeMoveX;left.vy=left.y-beforeMoveY;
       left.jumpLock=false;
-    } else if(flightAllowed && keyboardVertical!==0) {
-      const oldX=left.x,oldY=left.y;
-      const keyboardStep=10*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
-      left.x=clamp(left.x+keyboardDirection*keyboardStep,35,NET_X-NET_W/2-36);
-      left.y=clamp(left.y+keyboardVertical*keyboardStep,playerCeiling(),FLOOR-31);
-      left.vx=left.x-oldX;
-      left.vy=left.y-oldY;
-      left.jumpLock=false;
-    } else if(flightAllowed) {
-      // A wing pickup (or EASY) hovers at the last altitude when controls
-      // are released. No gravity until wings expire or shackles cancel flight.
-      const oldX=left.x;
-      const speed=5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
-      const distance=touchActive?touchControl.targetX-left.x:0;
-      const direction=touchActive?(Math.abs(distance)>3?Math.sign(distance):0):keyboardDirection;
-      left.x=clamp(left.x+direction*speed,35,NET_X-NET_W/2-36);
-      if(touchActive&&Math.abs(distance)<=speed)left.x=clamp(touchControl.targetX,35,NET_X-NET_W/2-36);
-      left.y=clamp(left.y,playerCeiling(),FLOOR-31);
-      left.vx=left.x-oldX;
-      left.vy=0;
-      left.jumpLock=false;
-    } else {
-      // Other difficulties: horizontal movement + a single physical jump.
-      // Continuous touch/drag never changes Y directly or resets gravity.
-      const speed=5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
-      const distance=touchActive?touchControl.targetX-left.x:0;
-      const direction=touchActive?(Math.abs(distance)>3?Math.sign(distance):0):keyboardDirection;
-      if(left.y<playerCeiling()&&left.vy<0)left.vy=0; // Wings can expire midair: descend, don't teleport.
-      controlPlayer(left,direction,canPlayerJump()&&(tapJump||keys.jump||keys.up),
+    }else{
+      // Normal tiers: horizontal movement and physical jump, never free flight.
+      const speed=5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed*(dashing?2.05:1);
+      if(left.y<playerCeiling()&&left.vy<0)left.vy=0;
+      controlPlayer(left,moveX,canPlayerJump()&&(keys.jump||keys.up||inputY<-.58),
         speed,15.8*battle.allyJump);
-      if(touchActive&&Math.abs(distance)<=speed){
-        left.x=clamp(touchControl.targetX,35,NET_X-NET_W/2-36);
-        left.vx=left.x-beforeMoveX;
-      }
       if(!canPlayerJump()){left.y=FLOOR-31;left.vy=0;}
       else if(left.y<playerCeiling()&&left.vy<0){
         left.y=playerCeiling();left.vy=0;
       }
     }
+    if(dashing)state.dashFrames--;
     if(currentDifficulty==="extreme"){
       if(Math.abs(left.x-beforeMoveX)>.2)volleyShackle.dir=left.x>beforeMoveX?-1:1;
       const trailing=clamp(left.x+volleyShackle.dir*58,24,NET_X-50);
       volleyShackle.x+=clamp((trailing-volleyShackle.x)*.19,-8,8);
     }
-    // Only intentional, fast player movement powers up the next ball contact.
-    const activeMove = touchActive || keyboardDirection !== 0 || (flightAllowed && keyboardVertical !== 0) || (canPlayerJump()&&(keys.jump||keys.up||tapJump));
-    left.impactSpeed = activeMove ? Math.hypot(left.x-beforeMoveX, left.y-beforeMoveY) : 0;
+    // Directional speed affects hit precision; the spike button alone arms manual attacks.
+    left.impactSpeed = Math.hypot(left.x-beforeMoveX,left.y-beforeMoveY);
     moveAI();moveClones();moveEnemyMinion();
     updateMystery();
     if(state.phase!=="playing")return;
@@ -1549,6 +1560,12 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       textLabel(ally.name||"동료",ally.x,ally.y-66,13,"#217f85","center",45);
     }
     drawTeacher(left, "#448bd8");
+    if(state.dashFrames>0){
+      ctx.save();ctx.strokeStyle="rgba(120,239,255,.88)";ctx.lineWidth=7;ctx.lineCap="round";
+      for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(left.x-state.dashX*(30+i*17),left.y-15+i*13);
+        ctx.lineTo(left.x-state.dashX*(50+i*17),left.y-15+i*13);ctx.stroke();}
+      ctx.restore();
+    }
     drawVolleyShackle();
     if(isEnemyMinionActive()){
       ctx.save();
@@ -1602,7 +1619,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   let last = 0, accumulator = 0;
   function frame(time) {
     window.ArcadePlayLock?.sync(state.phase==="playing"||state.phase==="point");
-    // Hide the mobile jump control on menus and during point transitions.
+    // Hide mobile controls on menus and during point transitions.
     const isPlaying=state.phase==="playing";
     if(courtElement.classList.contains("volleyball-playing")!==isPlaying)
       courtElement.classList.toggle("volleyball-playing",isPlaying);
@@ -1611,6 +1628,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     last = time;
     let loops = 0;
     while (accumulator >= 1 / 60 && loops < 4) { step(); accumulator -= 1 / 60; loops++; }
+    updateTouchActions();
     render();
     requestAnimationFrame(frame);
   }
