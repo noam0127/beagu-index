@@ -56,6 +56,11 @@ Deno.serve(async(req:Request)=>{
      if(identityError)return send({error:'AUTH_UNAVAILABLE'},503,origin);
      if(typeof earnedVisitor==='string'&&/^[a-f0-9-]{36}$/i.test(earnedVisitor)){
        visitorId=earnedVisitor;level=2;
+     }else{
+       // Issued but not yet promoted personal challenge codes grant Lv.1 only.
+       const {data:issuedLevel,error:issuedError}=await admin.rpc('beagu_issued_challenge_code_level_v1',{p_code:code});
+       if(issuedError)return send({error:'AUTH_UNAVAILABLE'},503,origin);
+       if(Number(issuedLevel)===1)level=1;
      }
    }
    if(level<1)return send({error:'INVALID_CODE'},401,origin);
