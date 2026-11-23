@@ -2,109 +2,115 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const source=readFileSync('teacher-volleyball.html','utf8');
-assert.match(source,/id="volley-mobile-jump"/);
-assert.match(source,/mobileJumpButton\.addEventListener\("pointerdown"/);
-assert.match(source,/touchControl\.jumpQueued=canPlayerJump\(\)/);
-assert.match(source,/touchControl\.targetY = hasPlayerWings\(\) && canPlayerJump\(\) \?/,'only wings use vertical pointer target');
+assert.match(source,/id="volley-joystick"/,'mobile uses analog stick');
+assert.match(source,/id="volley-spike"/,'mobile has a manual attack button');
+assert.match(source,/id="volley-dash"/,'mobile has a dash button');
+assert.doesNotMatch(source,/volley-mobile-jump|touchControl\.jumpQueued|touchControl\.targetX|touchControl\.targetY/,'old tap-to-jump and drag controls are removed');
 assert.match(source,/const flightAllowed=hasPlayerWings\(\)&&canPlayerJump\(\)/);
-assert.match(source,/const tapJump=touchControl\.jumpQueued;\s*touchControl\.jumpQueued=false/,'one jump impulse per tap');
-assert.match(source,/controlPlayer\(left,direction,canPlayerJump\(\)&&\(tapJump\|\|keys\.jump\|\|keys\.up\)/);
-assert.match(source,/🏐 좌우 드래그 이동 · 모바일은 오른쪽 점프 버튼/);
-assert.doesNotMatch(source,/Touch\/drag: fly freely/);
-const down=source.slice(source.indexOf('canvas.addEventListener("pointerdown"'),source.indexOf('canvas.addEventListener("pointermove"'));
-assert.doesNotMatch(down,/jumpQueued\s*=/,'canvas touch must never queue jump');
-const release=source.slice(source.indexOf('function endCourtTouch'),source.indexOf('canvas.addEventListener("pointerup"'));
-assert.doesNotMatch(release,/left\.vy\s*=/,'pointer release must not kill a jump arc');
+assert.match(source,/controlPlayer\(left,moveX,canPlayerJump\(\)&&\(keys\.jump\|\|keys\.up\|\|inputY<-.58\)/,'stick-up jump remains difficulty gated');
+assert.match(source,/touchControl\.pointerId!==null/,'active joystick pointer is tracked');
+assert.match(source,/if\(dashing\)state\.dashFrames--/,'dash ends after a bounded burst');
+assert.match(source,/state\.dashCooldownFrames=DASH_COOLDOWN/,'dash uses a cooldown');
+assert.match(source,/ArrowRight:"right"/,'keyboard right binding remains');
 
-const controlStart=source.indexOf('  function controlPlayer(p, direction, jump, speed, jumpStrength=12.8) {');
-const controlEnd=source.indexOf('  function moveClones()',controlStart);
-const movementStart=source.indexOf('    const flightAllowed=hasPlayerWings()&&canPlayerJump();');
-const movementEnd=source.indexOf('    if(currentDifficulty==="extreme"){',movementStart);
-assert(controlStart>0&&controlEnd>controlStart&&movementStart>controlEnd&&movementEnd>movementStart);
+const controlStart=source.indexOf('function controlPlayer(p, direction, jump, speed, jumpStrength=12.8) {');
+const controlEnd=source.indexOf('function moveClones()',controlStart);
+const movementStart=source.indexOf('const keyboardDirection = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);',controlEnd);
+const movementEnd=source.indexOf('if(currentDifficulty==="extreme"){',movementStart);
+assert.ok(controlStart>0&&controlEnd>controlStart&&movementStart>controlEnd&&movementEnd>movementStart,
+ 'must execute the actual game movement and gravity code');
 const control=source.slice(controlStart,controlEnd);
 const movement=source.slice(movementStart,movementEnd);
 
-// Execute the game's actual movement and gravity code with a deterministic court.
-const frame=new Function('env',String.raw`
- const {left,touchControl,keys,currentDifficulty,wingActive,shackle}=env;
- const FLOOR=451,NET_X=450,NET_W=14,NET_TOP=342,W=900,SPEED_MULTIPLIER=1;
- const battle={allySpeed:1,allyJump:1};
- const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
- const isMysteryBuff=(_side,item)=>item==='wings'?wingActive:item==='shackle'?shackle:false;
- const hasPlayerWings=()=>currentDifficulty==='easy'||isMysteryBuff('left','wings');
- const canPlayerJump=()=>!isMysteryBuff('left','shackle')&&(currentDifficulty!=='extreme'||hasPlayerWings());
- const playerCeiling=()=>hasPlayerWings()?86:NET_TOP-78;
- const keyboardDirection=(keys.right?1:0)-(keys.left?1:0);
- const keyboardVertical=(keys.down?1:0)-(keys.up?1:0);
- const beforeMoveX=left.x,beforeMoveY=left.y;
- const itemSlow=1,itemFast=1,itemSpeed=1;
- ${control}
- ${movement}
- return {x:left.x,y:left.y,vy:left.vy,flightAllowed,tapJump};
-`);
+// Run the exact in-game gravity and dash movement block with deterministic inputs.
+const frame=new Function('env',[
+ 'const {left,touchControl,keys,state,currentDifficulty,wingActive,shackle}=env;',
+ 'let lastMoveDirection=env.lastMoveDirection??1;',
+ 'const FLOOR=451,NET_X=450,NET_W=14,NET_TOP=342,W=900,SPEED_MULTIPLIER=2;',
+ 'const battle={allySpeed:1,allyJump:1};',
+ 'const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));',
+ "const isMysteryBuff=(_side,item)=>item==='wings'?wingActive:item==='shackle'?shackle:false;",
+ "const hasPlayerWings=()=>currentDifficulty==='easy'||isMysteryBuff('left','wings');",
+ "const canPlayerJump=()=>!isMysteryBuff('left','shackle')&&(currentDifficulty!=='extreme'||hasPlayerWings());",
+ 'const playerCeiling=()=>hasPlayerWings()?86:NET_TOP-78;',
+ control,movement,
+ 'env.lastMoveDirection=lastMoveDirection;',
+ 'return {x:left.x,y:left.y,vy:left.vy,flightAllowed,remainingDash:state.dashFrames};'
+].join('\n'));
 const actor=()=>({x:180,y:420,vy:0,vx:0,side:'left',jumpLock:false});
-const controls=()=>({pointerId:null,targetX:null,targetY:null,jumpQueued:false});
+const controls=()=>({pointerId:null,axisX:0,axisY:0});
 const keys=()=>({left:false,right:false,up:false,down:false,jump:false});
-function make(difficulty,wing=false,shackle=false){
- return {left:actor(),touchControl:controls(),keys:keys(),currentDifficulty:difficulty,wingActive:wing,shackle};
+function make(difficulty='normal',wingActive=false,shackle=false){
+ return {left:actor(),touchControl:controls(),keys:keys(),
+  state:{dashFrames:0,dashX:1,dashY:0},currentDifficulty:difficulty,wingActive,shackle,lastMoveDirection:1};
 }
-const normal=make('normal');
-normal.touchControl.pointerId=3;
-normal.touchControl.targetX=300;
-normal.touchControl.targetY=90; // malicious/stale vertical drag must still be ignored.
-const plainTap=make('normal');
-plainTap.touchControl.pointerId=9;
-plainTap.touchControl.targetX=300;
-let result=frame(plainTap);
-assert.equal(result.y,420,'touch and drag never trigger a jump');
-assert(plainTap.left.x>180,'touch still moves horizontally');
-normal.touchControl.jumpQueued=true; // dedicated button
-result=frame(normal);
-assert(result.y<420,'separate button lifts player by a physical jump');
-assert(result.vy<0,'jump starts with upward momentum');
-assert.equal(normal.touchControl.jumpQueued,false,'tap impulse consumed once');
-for(let i=0;i<125;i++)result=frame(normal);
-assert.equal(result.y,420,'normal held touch must land, not hover or fly');
-assert.equal(result.vy,0,'normal gravity finishes on floor');
-assert(normal.left.x>180,'drag should still move horizontally');
-const up=make('hard');
-up.keys.up=true;
-result=frame(up);
-assert(result.y<420,'up arrow should jump without free flight');
-for(let i=0;i<125;i++)frame(up);
-assert.equal(up.left.y,420,'holding up must not fly');
-const quickTap=make('normal');
-quickTap.touchControl.jumpQueued=true; // button released before frame.
-result=frame(quickTap);
-assert(result.y<420,'very short button presses should jump');
+const neutral=make();
+assert.equal(frame(neutral).x,180,'neutral joystick cannot drift');
+assert.equal(neutral.left.y,420,'neutral grounded joystick stays grounded');
+
+const right=make();
+right.touchControl.pointerId=3;right.touchControl.axisX=1;
+for(let i=0;i<4;i++)frame(right);
+assert.ok(right.left.x>180,'horizontal joystick moves the teacher');
+right.touchControl.pointerId=null;
+const stoppedX=right.left.x;
+frame(right);
+assert.equal(right.left.x,stoppedX,'releasing the joystick stops horizontal movement');
+
+const ground=make();
+ground.touchControl.pointerId=1;ground.touchControl.axisY=-1;
+let result=frame(ground);
+assert.ok(result.y<420&&result.vy<0,'holding joystick up creates a physical jump');
+for(let i=0;i<125;i++)result=frame(ground);
+assert.equal(result.y,420,'holding upward on non-winged difficulty lands under gravity');
+assert.equal(result.vy,0);
+
+const keyboard=make('hard');
+keyboard.keys.up=true;
+assert.ok(frame(keyboard).y<420,'keyboard W/up retains jump parity');
+for(let i=0;i<125;i++)frame(keyboard);
+assert.equal(keyboard.left.y,420,'keyboard up cannot create unlimited flight');
+
 const easy=make('easy');
-easy.touchControl.pointerId=5;easy.touchControl.targetX=240;easy.touchControl.targetY=90;
+easy.touchControl.pointerId=5;easy.touchControl.axisY=-1;
 for(let i=0;i<18;i++)frame(easy);
-assert(easy.left.y<180,'EASY retains vertical flight');
-const wings=make('normal',true);
-wings.touchControl.pointerId=6;wings.touchControl.targetX=240;wings.touchControl.targetY=90;
-for(let i=0;i<18;i++)frame(wings);
-assert(wings.left.y<180,'wings pickup retains flight on normal');
-const altitude=wings.left.y;
-wings.touchControl.pointerId=null;
-wings.touchControl.targetX=null;
-wings.touchControl.targetY=null;
-for(let i=0;i<40;i++)frame(wings);
-assert.equal(wings.left.y,altitude,'wing pickup holds altitude with no active touch');
-assert.equal(wings.left.vy,0,'wing pickup cancels falling velocity');
-const easyAltitude=easy.left.y;
+assert.ok(easy.left.y<180,'EASY retains vertical flight');
 easy.touchControl.pointerId=null;
-easy.touchControl.targetX=null;
-easy.touchControl.targetY=null;
+const hover=easy.left.y;
 for(let i=0;i<40;i++)frame(easy);
-assert.equal(easy.left.y,easyAltitude,'EASY retains altitude when released');
+assert.equal(easy.left.y,hover,'EASY hovers after joystick release');
+
+const wings=make('normal',true);
+wings.touchControl.pointerId=6;wings.touchControl.axisY=-1;
+for(let i=0;i<18;i++)frame(wings);
+assert.ok(wings.left.y<180,'wing pickup grants controlled flight');
+wings.touchControl.pointerId=null;
+const wingAltitude=wings.left.y;
+frame(wings);
+assert.equal(wings.left.y,wingAltitude,'releasing stick freezes altitude while wings are active');
 wings.wingActive=false;
 result=frame(wings);
-assert(result.y>=altitude&&result.y<264,'expired wings start falling rather than teleporting');
+assert.ok(result.y>=wingAltitude&&result.y<264,'wing expiration begins falling, not teleporting');
 for(let i=0;i<125;i++)frame(wings);
-assert.equal(wings.left.y,420,'expired wings eventually land');
-const chained=make('extreme',false,true);
-chained.touchControl.pointerId=8;chained.touchControl.targetX=250;chained.touchControl.jumpQueued=true;
-frame(chained);
-assert.equal(chained.left.y,420,'shackles still prevent jumping');
-console.log('PASS volleyball mobile: touch-to-move, dedicated jump button, gravity, wings hover and shackles');
+assert.equal(wings.left.y,420,'expired wings land normally');
+
+const blocked=make('extreme',false,true);
+blocked.touchControl.pointerId=8;blocked.touchControl.axisY=-1;
+frame(blocked);
+assert.equal(blocked.left.y,420,'shackles and EXTREME prevent upward movement');
+
+const walking=make('hard');
+walking.touchControl.pointerId=4;walking.touchControl.axisX=1;
+const walkX=frame(walking).x-180;
+const dash=make('hard');
+dash.touchControl.pointerId=4;dash.touchControl.axisX=1;
+dash.state.dashFrames=8;
+result=frame(dash);
+assert.ok(result.x-180>walkX*1.9,'dash delivers a meaningful horizontal speed boost');
+assert.equal(result.remainingDash,7,'dash duration is consumed per frame');
+for(let i=0;i<100;i++)frame(dash);
+assert.ok(dash.left.x<=450-14/2-36,'dash never crosses into the enemy half');
+const wingDash=make('easy');
+wingDash.state.dashFrames=8;wingDash.state.dashX=0;wingDash.state.dashY=-1;
+assert.ok(frame(wingDash).y<400,'wings permit vertical dash');
+console.log('PASS volleyball analog: normal jump/landing, wing hover/expiration, extreme shackle, dash speed and court bounds');

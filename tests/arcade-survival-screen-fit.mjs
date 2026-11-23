@@ -74,6 +74,6 @@ assert.equal(move({difficulty:"hard",wings:true,y:175}),175,"wing pickup holds a
 assert.equal(move({difficulty:"easy",wings:false,y:175}),175,"EASY holds altitude");
 assert(move({difficulty:"hard",wings:false,y:175})>175,"gravity resumes without wings");
 assert.equal(move({difficulty:"extreme",wings:true,y:175}),175,"wings temporarily override extreme grounding");
-assert.match(volley,/else if\(flightAllowed\) \{[\s\S]*?left\.vy=0;/,
- "volleyball wing effect holds altitude");
+assert.match(volley,/if\(flightAllowed\)\{[\s\S]{0,450}left\.vy=left\.y-beforeMoveY;/,
+ "volleyball neutral joystick preserves altitude while wings are active");
 console.log("PASS: survival fullscreen sizing, desktop/mobile center, wing-hover and gravity");
