@@ -37,6 +37,8 @@ assert {"beagu-2026-review-admin","class-diary-guest-access-v1",
 assert "beagu-level-api" in names
 assert "beagu-admin-access" in names
 assert "beagu-telemetry-v2" in names, "Recovered staging telemetry must be inventoried"
+assert "beagu-perf-ingest-v1" in names, "Server-only page performance API must be registered"
+assert len(names)==43, "Latest actual staging function count must be reflected"
 assert "beagu-edited-api-v1" in names, "Staging restored API must be reflected"
 assert "arcade-leaderboard" in names and "beagu-school-culture-v1" in names and "beagu-school-interest-v1" in names
 report = module.check(calls, inventory, date(2026, 11, 23))
@@ -97,4 +99,6 @@ assert set(actual["locked"]) == {
 assert "beagu-challenge-identity" not in actual["missing"]
 assert actual["ready_for_real_e2e"] is False
 assert actual["production_deployment_permitted"] is False
-print("PASS: all 16 API slugs installed, five critical rollouts remain LOCKED")
+assert "beagu-perf-ingest-v1" in actual["referenced"]
+assert len(actual["referenced"])==17, "Standalone app now calls 16 existing APIs plus performance gateway"
+print("PASS: all 17 referenced API slugs installed, five critical rollouts remain LOCKED")
