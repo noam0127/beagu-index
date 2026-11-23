@@ -67,5 +67,7 @@ body.arcade-body {
 @media(prefers-reduced-motion:reduce){.arcade-body *{transition:none!important}}
 
 /* Ranking school names link to the level-aware public school detail view. */
-.arcade-rank-school-link{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;cursor:pointer}
+.arcade-rank-school-link{display:inline-flex;align-items:center;max-width:100%;min-height:28px;color:#d1eaff;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px;cursor:pointer;touch-action:manipulation}
+.arcade-rank-school-link::after{content:'↗';font-size:.85em;margin-left:4px;opacity:.86}
+.arcade-rank-school-link:focus-visible{outline:2px solid #ffda8a;outline-offset:3px}
 .arcade-rank-school-link:hover,.arcade-rank-school-link:focus-visible{color:#1d4ed8}
