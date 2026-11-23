@@ -8,15 +8,15 @@ const html=read('admin.html');
 const js=read('js/beagu-2026-admin-review.js');
 const css=read('styles/beagu-admin-v1.css');
 // The three stages explicitly identify the scope of evidence.
-for(const stage of ['응답 신뢰성 검사','집계 정확성 검사','공개 적격성 검사'])
+for(const stage of ['응답 신뢰성','집계 정확성','공개 적격성'])
  assert.ok(html.includes(stage),'missing independent stage '+stage);
 assert.match(html,/id="adminPipelineTrustStatus"/);
 assert.match(html,/id="adminPipelineAggregateAuto"/);
 assert.match(html,/id="adminPipelineBasis"/);
 assert.match(html,/id="adminPipelineStatus"/);
-assert.match(html,/일반 설문 전체의 개별 응답 신뢰성 검사는 아직 연결되지 않았습니다/);
-assert.match(html,/집계 정상 판정은 응답의 진실성이나 웹 공개 허가가 아닙니다/);
-assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261122-n1review1/);
+assert.match(html,/추천 연결 응답만 부분 검증합니다/);
+assert.match(html,/기술검사 합격은 자료의 진실성이나 공개 허가가 아닙니다/);
+assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261123-level-approvals1/);
 assert.match(css,/\.admin-pipeline-stages/);
 assert.match(css,/@media\(max-width:950px\)/);
 assert.doesNotThrow(()=>new vm.Script(js,{filename:'beagu-2026-admin-review.js'}));
