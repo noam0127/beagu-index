@@ -41,8 +41,9 @@ for(const marker of ["admin.auth.getUser(match[1])","verifiedMemberTier(req,sess
  "beagu_postit_member_accounts","identity_visitor_id", "beagu_has_earned_challenge_visitor"])
  assert.ok(edge.includes(marker),marker);
 const postit=readFileSync('scripts/staging/recovered-beagu-postit-api-v4/index.ts','utf8');
-for(const marker of ['beagu_postit_bind_verified_member','p_device_hash:await sha256(deviceSecret)',
-  'await authenticatedUser(req)','resolveVerifiedPostitOwner(account,viewer,data)'])
+for(const marker of ['beagu_stage_postit_member_transition','p_device_hash:mustProveDevice?await sha256(deviceSecret):null',
+  'await authenticatedUser(req)','resolveVerifiedPostitOwner(account,viewer,data)',
+  'action==="suspend_member"','action==="reactivate_member"','MEMBER_AUDIT_UNAVAILABLE'])
  assert.ok(postit.includes(marker),marker);
 const browserLevel=readFileSync('js/beagu-level-state-v1.js','utf8');
 const browserShared=readFileSync('js/beagu-participation-auth-v2.js','utf8');
