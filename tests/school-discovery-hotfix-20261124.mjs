@@ -47,3 +47,21 @@ test('Rising carousel never guesses a school and protects anonymous counts',()=>
   assert.match(js,/},900000\)/);
   assert.doesNotThrow(()=>new Script(js));
 });
+
+test('Live anonymous ranking API returns schools without private visitor counts',async()=>{
+  const url='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-school-interest-v1';
+  const response=await fetch(url,{
+    method:'POST',cache:'no-store',
+    headers:{'Content-Type':'application/json','Origin':'https://baeguindex.com'},
+    body:'{}',signal:AbortSignal.timeout(15000)
+  });
+  assert.equal(response.status,200,'Anonymous ranking must be accessible after Edge deployment');
+  const result=await response.json();
+  assert.ok(Array.isArray(result.rising),'Ranking response must expose a public list');
+  for(const school of result.rising){
+    assert.match(String(school.school_id),/^[0-9]{7}$/);
+    assert.equal(typeof school.school_name,'string');
+    assert.equal(Object.hasOwn(school,'visitors'),false,'Anonymous visitors must be hidden');
+    assert.equal(Object.hasOwn(school,'growth'),false,'Anonymous growth counts must be hidden');
+  }
+});
