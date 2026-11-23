@@ -7,6 +7,9 @@ on:
       - 'scripts/staging/recovered-beagu-level-api-v5/**'
       - 'scripts/staging/recovered-beagu-postit-api-v4/**'
       - 'tests/staging-render-level-postit-*.test.py'
+      - 'tests/staging-lv3-active-auth-session.mjs'
+      - 'scripts/staging/schema-lv3-revoked-auth-session-qa-only.sql'
+      - 'tests/sql/staging-lv3-auth-session-revocation-rollback-20261123.sql'
       - '.github/workflows/v110-staging-render-level-postit-cors.yml'
   workflow_dispatch:
 permissions:
@@ -21,6 +24,8 @@ jobs:
           persist-credentials: false
       - name: Verify exact deployed Level and Postit member gate source
         run: python3 tests/staging-render-level-postit-contract.test.py
+      - name: Test Auth session JWT claim and server-only RPC contract
+        run: node tests/staging-lv3-active-auth-session.mjs
       - name: Exercise real staging OPTIONS GET without any user data
         run: python3 tests/staging-render-level-postit-http.test.py
       - name: Delineate test evidence
