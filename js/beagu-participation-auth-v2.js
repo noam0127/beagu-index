@@ -30,7 +30,7 @@
    <button type="button" id="beaguParticipationLogout">인증 해제</button>
   </div>
   <form id="beaguParticipationForm" autocomplete="off">
-   <label for="beaguParticipationCode">참여코드</label>
+   <label id="beaguParticipationCodeLabel" for="beaguParticipationCode">참여코드</label>
    <div class="beagu-participation-field">
     <input id="beaguParticipationCode" type="password" minlength="8" maxlength="120"
        placeholder="참여코드를 입력하세요" autocomplete="off" autocapitalize="off"
@@ -46,6 +46,9 @@
   </nav>
  </section>`;
  document.body.append(modal);
+ const heading=modal.querySelector('#beaguParticipationTitle');
+ const description=modal.querySelector('#beaguParticipationDescription');
+ const label=modal.querySelector('#beaguParticipationCodeLabel');
  const form=modal.querySelector('#beaguParticipationForm');
  const code=modal.querySelector('#beaguParticipationCode');
  const submit=modal.querySelector('#beaguParticipationSubmit');
@@ -64,8 +67,8 @@
   lastLevel=level;
   const text=labelFor(level);
   badge.textContent='Lv.'+level;
-  badge.setAttribute('aria-label',level?'인증 정보 및 해제 · '+text:'참여코드 입력');
-  badge.title=level?'인증 정보 확인 및 인증 해제':'참여코드 입력';
+  badge.setAttribute('aria-label',level===1?'Lv.1 인증 완료 · Lv.2 참여코드 입력':level?'인증 정보 및 해제 · '+text:'참여코드 입력');
+  badge.title=level===1?'Lv.2 참여코드 입력 또는 인증 해제':level?'인증 정보 확인 및 인증 해제':'참여코드 입력';
   badge.classList.toggle('beagu-participation-earned',level>=2);
   for(const host of hosts){
    host.dataset.beaguParticipationLevel=String(level);
@@ -75,8 +78,9 @@
    if(action)action.hidden=level>=1;
    if(description)description.hidden=level>=1;
    if(state){
-    state.textContent=text;
-    state.setAttribute('aria-label',text);
+    const stateText=level===1?text+' · Lv.2 참여코드 입력':text;
+    state.textContent=stateText;
+    state.setAttribute('aria-label',stateText);
     state.hidden=level<1;
    }
    // Keep the challenge screen participation-code-only at all levels.
@@ -88,7 +92,14 @@
   for(const item of document.querySelectorAll('[data-beagu-participation-game-trigger]'))
    item.hidden=level>=1;
   detail.hidden=level<1;
-  form.hidden=level>=1;
+  // Lv.1 must retain a code field so an earned Lv.2 code can upgrade in place.
+  form.hidden=level>=2;
+  heading.textContent=level===1?'Lv.2 참여코드 입력':level>=2?'참여 인증 정보':'참여코드 입력';
+  description.textContent=level===1?'Lv.1 인증을 유지하면서 Lv.2 참여코드를 입력할 수 있습니다.':
+   level>=2?'Lv.2 인증이 완료되었습니다.':'발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.';
+  label.textContent=level===1?'Lv.2 참여코드':'참여코드';
+  code.placeholder=level===1?'Lv.2 참여코드를 입력하세요':'참여코드를 입력하세요';
+  submit.textContent=level===1?'Lv.2 인증하기':'레벨1 인증';
   if(level>=1){
    tierText.textContent=text;
    expiryText.textContent=expiresAt?
@@ -111,7 +122,8 @@
   if(lastLevel>=1){
    // Revalidate expiry on opening details without exposing a code.
    void verifyCurrent();
-   logout.focus();
+   if(lastLevel===1)code.focus();
+   else logout.focus();
   }else code.focus();
  }
  const button=(label,className,action=open)=>{
@@ -218,6 +230,10 @@
    const checked=await request('verify',{},result.token);
    const level=Number(checked.level);
    if(!Number.isInteger(level)||level<1||level>2)throw Error('INVALID_LEVEL');
+   if(lastLevel===1&&level<2){
+    message.textContent='Lv.2 권한이 확인되지 않았습니다. 기존 Lv.1 인증은 유지됩니다.';
+    return;
+   }
    try{sessionStorage.setItem(KEY,result.token)}catch(_){throw Error('STORAGE_UNAVAILABLE')}
    if(stored()!==result.token)throw Error('STORAGE_UNAVAILABLE');
    expiresAt=checked.expires_at||'';

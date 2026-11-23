@@ -30,6 +30,9 @@ assert.match(ui,/sessionStorage\.removeItem\(KEY\)/);
 assert.doesNotMatch(ui,/Lv3 활성화|Lv3 승급|회원가입 유도/,'No Lv3 prompts or account registration UI');
 const css=read('styles/beagu-participation-auth-v2.css');
 assert.match(css,/@media\(max-width:760px\)/);
+assert.match(css,/#beaguParticipationForm\[hidden\]\{display:none!important\}/);
+assert.match(ui,/form\.hidden=level>=2/,'Lv1 keeps the upgrade code field visible');
+assert.match(ui,/lastLevel===1&&level<2/,'Lv1 preserved on unearned code');
 assert.match(css,/\.beagu-participation-host \.beagu-participation-legacy/);
 assert.ok(!css.includes('display:contents'));
 assert.ok(css.includes('#tierCodeForm.beagu-participation-legacy'), 'School report legacy form hidden behind the shared dialog');
@@ -81,6 +84,7 @@ async function exercise(level){
  const nodes=new Map(),storage=new Map(),events=[],calls=[];
  const selectors=['#beaguParticipationForm','#beaguParticipationCode',
  '#beaguParticipationSubmit','#beaguParticipationMessage','#beaguParticipationDetail',
+ '#beaguParticipationCodeLabel',
  '#beaguParticipationTier','#beaguParticipationExpiry','#beaguParticipationToggle',
  '[data-beagu-close]','#beaguParticipationLogout'];
  for(const id of selectors)nodes.set(id,fakeElement());
@@ -92,6 +96,7 @@ async function exercise(level){
   getElementById:id=>id==='beaguLevelState'?badge:null,
   querySelectorAll:()=>[],addEventListener(){}};
  const token='b'.repeat(64);
+ let issuedLevel=level,issuedToken=token;
  const storageAPI={
   getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),
   removeItem:k=>storage.delete(k)
@@ -110,8 +115,8 @@ async function exercise(level){
   fetch:async (_url,opts)=>{
    const action=JSON.parse(opts.body).action;
    calls.push(action);
-   if(action==='login')return {ok:true,json:async()=>({token,level})};
-   if(action==='verify')return {ok:true,json:async()=>({level,expires_at:'2026-11-21T11:00:00+09:00'})};
+   if(action==='login')return {ok:true,json:async()=>({token:issuedToken,level:issuedLevel})};
+   if(action==='verify')return {ok:true,json:async()=>({level:issuedLevel,expires_at:'2026-11-21T11:00:00+09:00'})};
    if(action==='logout')return {ok:true,json:async()=>({ok:true})};
    throw Error('unknown action');
   }
@@ -126,11 +131,27 @@ async function exercise(level){
  await nodes.get('#beaguParticipationForm').dispatch('submit',{preventDefault(){}});
  assert.equal(storage.get('beagu-level-session-v1'),token);
  assert.equal(badge.textContent,'Lv.'+level);
+ assert.equal(nodes.get('#beaguParticipationForm').hidden,level===2);
  assert.ok(events.includes('beagu:participation-authenticated'));
+ if(level===1){
+  assert.equal(nodes.get('#beaguParticipationCodeLabel').textContent,'Lv.2 참여코드');
+  assert.equal(nodes.get('#beaguParticipationSubmit').textContent,'Lv.2 인증하기');
+  issuedToken='c'.repeat(64);issuedLevel=1;
+  nodes.get('#beaguParticipationCode').value='NOTUPGRADED12';
+  await nodes.get('#beaguParticipationForm').dispatch('submit',{preventDefault(){}});
+  assert.equal(storage.get('beagu-level-session-v1'),token,'Unqualified code must not replace Lv1');
+  assert.match(nodes.get('#beaguParticipationMessage').textContent,/기존 Lv.1 인증은 유지/);
+  issuedToken='d'.repeat(64);issuedLevel=2;
+  nodes.get('#beaguParticipationCode').value='EARNEDLV2CODE';
+  await nodes.get('#beaguParticipationForm').dispatch('submit',{preventDefault(){}});
+  assert.equal(storage.get('beagu-level-session-v1'),issuedToken,'Earned code upgrades session');
+  assert.equal(badge.textContent,'Lv.2');
+  assert.equal(nodes.get('#beaguParticipationForm').hidden,true);
+ }
  await nodes.get('#beaguParticipationLogout').dispatch('click');
  assert.equal(storage.size,0);
  assert.ok(events.includes('beagu:participation-logged-out'));
- assert.deepEqual(calls,['login','verify','logout']);
+ assert.deepEqual(calls,level===1?['login','verify','login','verify','login','verify','logout']:['login','verify','logout']);
 }
 await exercise(1);await exercise(2);
 console.log('PASS: Lv0/Lv1/Lv2 shared code UI, server-only earned authorization and page coverage');

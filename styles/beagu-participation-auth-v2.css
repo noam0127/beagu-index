@@ -20,6 +20,7 @@ body.beagu-participation-open{overflow:hidden}
 .beagu-participation-dialog h2{margin:9px 0 10px;font-size:25px;letter-spacing:-.045em;line-height:1.32}
 #beaguParticipationDescription{font-size:13px;line-height:1.65;color:#63768f;margin:0 0 20px;word-break:keep-all}
 #beaguParticipationForm{display:grid;gap:11px}
+#beaguParticipationForm[hidden]{display:none!important}
 #beaguParticipationForm label{font-size:13px;font-weight:750;color:#354c68}
 .beagu-participation-field{position:relative}
 .beagu-participation-field input{
