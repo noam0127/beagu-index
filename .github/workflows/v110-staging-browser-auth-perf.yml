@@ -10,6 +10,9 @@ on:
       - 'js/beagu-page-performance-v1.js'
       - 'js/challenge-member-auth-v1.js'
       - 'js/challenge.js'
+      - 'render.yaml'
+      - 'tests/test-standalone-staging.py'
+      - 'scripts/build-standalone-staging.py'
       - '.github/workflows/v110-staging-browser-auth-perf.yml'
   workflow_dispatch:
 permissions:
