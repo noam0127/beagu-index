@@ -19,6 +19,7 @@ name: BAEGU release controller (admin approval)
 # Owner-requested 2026-11-23 bulk approval cap 400 and enabled button release job 2211af99-e648-4a86-91d1-73fdcd8e78c4 pinned f21fb7a164adb30a402b38fa62e575649a9860f8.
 # Owner-requested 2026-11-23 volleyball touch-jump release: signed Pages job 94335fa9-30fa-4692-a520-70462d24c7cf pins af94d2158b0cb6b1a6def02644e54715fdc38518; Vercel not used.
 # Owner authorized 2026 civic feedback release, job 4b33f962-b574-4d9d-b74a-a918dfc27b2f targets verified dc7f645deb849c1ae462b78428ededa51f1e5d52.
+# Owner-requested survival fullscreen center/contain and both games wing-hover release, 2026-11-23: signed Pages job 1c1e8e14-b441-4c72-bf62-9a4b62a8657a pins 8ae2ed90c2c51f18e1422588ce76429bffb14ecd, GitHub Pages only.
 on:
   schedule:
     - cron: '*/5 * * * *'
