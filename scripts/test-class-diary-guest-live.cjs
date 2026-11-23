@@ -36,6 +36,14 @@ assert(!edge.includes("grant_level2"),'Guest route must not elevate any tier');
  assert.equal(opt.headers.get('access-control-allow-origin'),origin,'Unexpected allowed origin');
  const invalid=await fetch(url,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({action:'verify-code',code:'AAAAAAAAAA'}),signal:AbortSignal.timeout(14000)});
  assert([401,429].includes(invalid.status),'Unknown/unissued code must not be accepted: '+invalid.status);
+ const noLevel2=await fetch(url,{method:'POST',
+   headers:{Origin:origin,'Content-Type':'application/json'},
+   body:JSON.stringify({action:'verify-lv2',schoolId:'A123456'}),
+   signal:AbortSignal.timeout(14000)});
+ assert.equal(noLevel2.status,403,'Missing Lv2 session must not issue a story ticket');
+ const noLevel2Body=await noLevel2.json();
+ assert.equal(noLevel2Body.error,'LV2_REQUIRED');
+ assert(!('ticket' in noLevel2Body),'Unauthenticated users receive no ticket');
  const badTicket=await fetch(url,{method:'POST',
    headers:{Origin:origin,'Content-Type':'application/json'},
    body:JSON.stringify({action:'verify-ticket',ticket:'v1.invalid.invalid'}),
