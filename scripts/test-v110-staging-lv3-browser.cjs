@@ -27,7 +27,7 @@ const fulfill=(route,status,data)=>route.fulfill({status,headers:cors,body:JSON.
   ]){
    const ctx=await browser.newContext({viewport:{width:cfg.width,height:cfg.height},
      isMobile:cfg.mobile,deviceScaleFactor:1,hasTouch:cfg.mobile});
-   const state={signedIn:false,confirmed:false,linked:false,accountId:'qa-owner',
+   const state={signedIn:false,confirmed:false,linked:false,authSessionAlive:true,accountId:'qa-owner',
      visitorId:'qa-visitor',levelSession:'',revoked:false};
    const realExternal=[];
    await ctx.route('**/*',route=>{
@@ -74,7 +74,7 @@ const fulfill=(route,status,data)=>route.fulfill({status,headers:cors,body:JSON.
        const token=req.headers()['x-beagu-session'];
        if(token!==state.levelSession||state.revoked)return fulfill(route,401,{error:'AUTH_REQUIRED'});
        const header=req.headers()['authorization'];
-       const third=header==='Bearer '+fakeJWT&&state.signedIn&&state.confirmed&&
+       const third=header==='Bearer '+fakeJWT&&state.authSessionAlive&&state.signedIn&&state.confirmed&&
          state.linked&&state.accountId==='qa-owner'&&state.visitorId==='qa-visitor';
        return fulfill(route,200,{level:third?3:2,provisional:false,
          expires_at:'2027-01-01T00:00:00Z'});
@@ -159,6 +159,14 @@ const fulfill=(route,status,data)=>route.fulfill({status,headers:cors,body:JSON.
    await expectTier(2);
    await update({confirmed:true});
    await expectTier(3);
+   // Simulated remote sign-out: the browser still holds the old Auth JWT.
+   // On the NEXT server check, the revoked auth.sessions ID loses Lv3.
+   state.authSessionAlive=false;
+   await page.evaluate(()=>window.dispatchEvent(new Event('beagu:level-state-change')));
+   await expectTier(2);
+   state.authSessionAlive=true;
+   await page.evaluate(()=>window.dispatchEvent(new Event('beagu:level-state-change')));
+   await expectTier(3);
    await update({signedIn:false});
    await expectTier(2);
    // Without participation code, an email account cannot establish Lv3.
@@ -176,5 +184,6 @@ const fulfill=(route,status,data)=>route.fulfill({status,headers:cors,body:JSON.
    console.log('PASS '+cfg.name+': synthetic email unverified->Lv2, verified-unlinked->Lv2, device-linked->Lv3, wrong account->Lv2, revoked->Lv0');
   }
  }finally{await browser.close()}
+ console.log('PASS: remote Auth revocation downgrades cached JWT on next server recheck');
  console.log('NOT PROVEN: real Auth signup/email confirmation or backend-positive Lv3 on Render');
 })().catch(e=>{console.error(e);process.exitCode=1});
