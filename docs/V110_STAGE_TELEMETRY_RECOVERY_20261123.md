@@ -26,3 +26,10 @@
 - 실제 관리자 브라우저 인증 시 방문/접속 제외, 허용된 Render 시험 호스트에서의 Origin, 장기간 동시 사용 부하, 장비별 PC·모바일 전체 E2E는 확인되지 않음.
 - 2026-11-23 Supabase 보안 점검에서 `rls_enabled_no_policy` INFO 52건(여러 비공개 객체의 deny-all 설계 포함)과 **별개 기존 성능 함수** `public.beagu_perf_record_v1`의 익명/회원 `SECURITY DEFINER` 실행 허용 WARN 2종을 발견. 이 함수는 이번 계측 복구에서 수정하지 않았음. 운영 승격 전 권한 및 익명 입력 검증을 독립 심사해야 함. [Supabase Lint: anonymous definer execution](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable).
 - 최종 사용자 가입·Lv1/Lv2/Lv3·관리자 MFA·추천/심사·전체 PC/모바일 E2E·2026 개인정보 독립 승인 전까지 **NO-GO**.
+
+## 재실행 시 가상 기록 누적 방지 (후속 개선)
+
+- 처음의 [양성 시험 #45088247300](https://github.com/noam0127/beagu-index/actions/runs/45088247300)은 가상 방문자 UUID로 실제 ping·visit을 기록했기 때문에 별도로 시험 흔적을 청소해야 했음.
+- 이를 개선해 GitHub `.github/workflows/v110-staging-telemetry.yml`의 **일반 push/수동 자동검사 모두 무기록 테스트** `tests/staging-telemetry-http-denials.test.py`만 실행하도록 변경. [새 자동검사 #45088606539](https://github.com/noam0127/beagu-index/actions/runs/45088606539) 통과.
+- 변경 직전 시작된 기존 양성 시험 #45088594084가 한 차례 더 실행되어 같은 가상 UUID가 재기록된 사실을 확인하고, 기록 개수 사전검증 후 같은 cleanup SQL로 다시 삭제.
+- **최종 재확인:** visits, live_presence, source_visitors, source_windows, guard_decisions 테이블 5개 모두 0건, 일반 사용자 direct RPC 접근 불가, RLS enabled. 앞으로 양성 HTTP 테스트는 자동 실행하지 않음.
