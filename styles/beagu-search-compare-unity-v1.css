@@ -281,3 +281,16 @@ body.beagu-page-lv1 .beagu-levelup-status .beagu-levelup-trigger{
     width:auto;min-width:120px;margin:5px 0 0;
   }
 }
+
+/* Matching first hero panel in search and compare; magnifier identifies search. */
+body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero,
+body.beagu-page-compare main.shell>.intro{
+box-sizing:border-box;min-height:218px;margin:18px 0 24px;
+border:1px solid #d9e6f8;border-radius:22px;
+background:linear-gradient(115deg,#eef3fd 0%,#e9f3ff 70%,#e6f8ff 100%);
+box-shadow:none;position:relative;overflow:hidden}
+body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero-magnifier{
+position:absolute;right:9%;top:50%;transform:translateY(-50%) rotate(-7deg);
+width:118px;height:118px;color:#4686d6;opacity:.38;pointer-events:none}
+@media(max-width:720px){body:is(.beagu-page-search,.beagu-page-lv1)
+.beagu-search-hero-magnifier{right:5%;width:76px;height:76px;opacity:.22}}

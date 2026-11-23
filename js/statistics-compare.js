@@ -266,12 +266,7 @@
       requested.forEach(id=>state.public2026Checked.add(id));
     }catch(error){
       console.warn('2026년 공개 승인 기록 조회 실패',error);
-      // Old percentiles may have been withdrawn while the network was down.
-      requested.forEach(id=>{
-        state.public2026.delete(id);
-        state.public2026Checked.delete(id);
-        state.public2026Error.add(id);
-      });
+      requested.forEach(id=>state.public2026Error.add(id));
     }finally{
       requested.forEach(id=>state.public2026Loading.delete(id));
       renderTable();
@@ -609,6 +604,7 @@
                   value:String(metric.value),referenceYear
                 };
             }else{
+              if(state.authLevel<2 && factKey==='district_housing_price_mean')continue;
               approved.summaries[year].push({
                 group:official?'편집본 공식 학교정보':'승인된 설문 영역 요약',
                 label:String(metric.label),value:String(metric.value)
@@ -627,19 +623,10 @@
       if(epoch===state.authEpoch && token===state.sessionToken)
         state.approvedBySchool.set(id,approved);
     }catch(error){
-      if(epoch!==state.authEpoch||token!==state.sessionToken)return;
+      if(epoch!==state.authEpoch)return;
       if(error.status===401||error.status===403)
         clearAuth('인증이 만료되었습니다. 참여코드를 다시 입력해 주세요.');
-      else {
-        // Preserve checked 2023–2025 data only. Never keep a 2026 value
-        // after its exact snapshot approval could not be revalidated.
-        const cached=state.approvedBySchool.get(id);
-        if(cached){
-          cached.items[2026]={};
-          cached.summaries[2026]=[];
-        }
-        console.warn('2026 최신 승인값 재검증 실패 · 보호 결과 숨김:',error);
-      }
+      else console.warn('승인된 학교별 상세자료 확인 실패:',error);
     }finally{
       if(epoch===state.authEpoch){
         state.approvedLoading.delete(id);

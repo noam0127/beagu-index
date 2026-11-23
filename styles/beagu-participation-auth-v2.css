@@ -20,7 +20,6 @@ body.beagu-participation-open{overflow:hidden}
 .beagu-participation-dialog h2{margin:9px 0 10px;font-size:25px;letter-spacing:-.045em;line-height:1.32}
 #beaguParticipationDescription{font-size:13px;line-height:1.65;color:#63768f;margin:0 0 20px;word-break:keep-all}
 #beaguParticipationForm{display:grid;gap:11px}
-#beaguParticipationForm[hidden]{display:none!important}
 #beaguParticipationForm label{font-size:13px;font-weight:750;color:#354c68}
 .beagu-participation-field{position:relative}
 .beagu-participation-field input{
@@ -100,3 +99,22 @@ body.beagu-participation-open{overflow:hidden}
 .beagu-participation-host[data-beagu-participation-level="2"] .beagu-participation-inline-status{
  width:100%;min-height:38px;text-align:center;
 }
+
+/* Uniform participation cards on desktop: same width, position, spacing and action. */
+@media(min-width:761px){
+body:is(.beagu-page-search,.beagu-page-compare,.beagu-page-challenge)
+:is(#lv1QuickAuth,#compareLv1AuthPanel,#challengeAccessPanel).beagu-participation-host{
+box-sizing:border-box;width:calc(100% - 32px);max-width:760px;
+margin:16px auto 22px!important;padding:27px 32px!important;
+min-height:0!important;height:auto!important;display:flex;
+flex-direction:column;align-items:center;gap:0;border-radius:20px}
+body:is(.beagu-page-search,.beagu-page-compare,.beagu-page-challenge)
+.beagu-participation-host .beagu-participation-intro{
+width:100%;max-width:560px;text-align:center;margin:0 auto 16px;font-size:14px;line-height:1.6}
+body:is(.beagu-page-search,.beagu-page-compare,.beagu-page-challenge)
+.beagu-participation-host .beagu-participation-inline-trigger,
+body:is(.beagu-page-search,.beagu-page-compare,.beagu-page-challenge)
+.beagu-participation-host .beagu-participation-inline-status{
+box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+width:100%;max-width:560px;min-height:52px;margin:0 auto!important;
+border-radius:12px;text-align:center}}

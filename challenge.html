@@ -146,6 +146,16 @@
     background:linear-gradient(135deg,#f3dfb6,#cba565);color:#16283d;border-color:#d6b679;
   }
   .challenge-code-card.is-lv2 .challenge-identity-feedback {color:#e8d6b1;}
+  @media(min-width:761px){
+    #challengeIdentityPanel.is-lv2{box-sizing:border-box;width:100%;margin:18px 0 24px;padding:30px 34px 26px;border-radius:23px;box-shadow:0 20px 46px rgba(13,32,58,.24),inset 0 1px rgba(255,255,255,.17)}
+    #challengeIdentityPanel.is-lv2 .challenge-identity-head{margin-bottom:22px}
+    #challengeIdentityPanel.is-lv2 h2{font-size:24px}
+    #challengeIdentityPanel.is-lv2 .challenge-identity-tag{font-size:13px;padding:9px 14px}
+    #challengeIdentityPanel.is-lv2 .challenge-identity-row{gap:18px;align-items:stretch}
+    #challengeIdentityPanel.is-lv2 .challenge-identity-value{display:flex;align-items:center;min-height:72px;padding:12px 18px;font-size:clamp(20px,2vw,28px);letter-spacing:.055em;border:1px solid rgba(235,207,150,.33);border-radius:14px;background:rgba(255,255,255,.065)}
+    #challengeIdentityPanel.is-lv2 .challenge-identity-copy{font-size:16px;min-width:126px;padding:14px 22px;border-radius:13px}
+    #challengeIdentityPanel.is-lv2 #challengeIdentityReward{margin-top:16px;font-size:14px}
+  }
   @media (prefers-reduced-motion:reduce) {.challenge-code-card {transition:none;}}
   .challenge-identity-feedback { margin: 7px 0 0; font-size: 12px; color: #1d4ed8; min-height: 0; }
   @media (max-width: 430px) {
@@ -171,15 +181,15 @@
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
-<link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
+<link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261123-priority2">
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-auth-unified-v1.css?v=20261119-auth1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
 <script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
 <link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
 <link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
-<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
-<script defer src="js/beagu-participation-auth-v2.js?v=20261123-challenge-code-only1"></script>
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-priority2">
+<script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
 </head>
 <body class="beagu-ui-page beagu-page-challenge">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -253,6 +263,7 @@
         disabled hidden>링크 복사</button>
     </div>
     <p id="challengeReferralProgress" class="challenge-identity-feedback" aria-live="polite"></p>
+    <button id="challengeReferralRetry" type="button" class="challenge-identity-copy" hidden style="margin-top:10px">링크 다시 확인</button>
     <p class="small-note" id="challengeReferralNote">동료 1명의 설문 참여가 확인되면 Lv.2로 승급해요.</p>
   </section>
 
@@ -288,7 +299,7 @@
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/challenge.js?v=20261121-code-card2"></script>
-<script src="js/challenge-referral-v1.js?v=20261121-lv2-copy1"></script>
+<script src="js/challenge-referral-v1.js?v=20261123-priority2"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>

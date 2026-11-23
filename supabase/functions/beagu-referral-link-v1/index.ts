@@ -102,8 +102,35 @@ Deno.serve(async (req) => {
         p_existing_code: identityCode,
       },
     );
-    if (bindingError || bound?.identity_code !== identityCode)
+    if (bindingError || bound?.identity_code !== identityCode) {
+      // Read-only recovery: a known challenge code and existing referral hash
+      // may retrieve an already-issued link on a different browser, but can
+      // NEVER create a new claim or take over a different device's ownership.
+      if (bindingError?.code === '28000') {
+        const proofToken = await referralToken(visitor, identityCode);
+        const { data: existing, error: proofError } = await db.rpc(
+          'beagu_referral_existing_link_v1', {
+            p_visitor: visitor,
+            p_identity_code: identityCode,
+            p_referral_hash: await digest(proofToken),
+          },
+        );
+        if (!proofError && existing &&
+            typeof existing.shortCode === 'string' &&
+            /^[A-Za-z0-9_-]{8}$/.test(existing.shortCode)) {
+          const earned = Number(existing.level) === 2 &&
+            Number(existing.validReferrals) >= 1;
+          return json(origin, 200, {
+            shortLink: 'https://baeguindex.com/r/#' + existing.shortCode,
+            link: 'https://baeguindex.com/survey.html?ref=' + proofToken,
+            level: earned ? 2 : 1,
+            validReferrals: earned ? 1 : 0,
+            provisional: earned,
+          });
+        }
+      }
       return json(origin, 403, { error: 'OWNERSHIP_VERIFICATION_FAILED' });
+    }
 
     const token = await referralToken(visitor, identityCode);
     const { data: enrollment, error: enrollError } = await db.rpc(
