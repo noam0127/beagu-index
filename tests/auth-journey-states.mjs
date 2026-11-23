@@ -54,7 +54,8 @@ const document={
 const sync=runInNewContext('(()=>{'+level.slice(begin,end)+'return syncLevelCards})()', {document});
 for(const [rank,provisional,label] of [
  ['0',false,'미인증'],['1',false,'✓ Lv1 · 설문 참여 완료'],
- ['2',true,'♛ Lv2 · 챌린지 달성'],['2',false,'♛ Lv2 · 챌린지 달성']
+ ['2',true,'♛ Lv2 · 챌린지 달성'],['2',false,'♛ Lv2 · 챌린지 달성'],
+ ['3',false,'★ Lv3 · 인증 회원']
 ]){
  sync(rank,provisional);
  for(const obj of Object.values(cards)){
@@ -62,6 +63,15 @@ for(const [rank,provisional,label] of [
   assert.equal(obj.card.dataset.provisional,String(provisional));
  }
 }
+assert.ok(level.includes("const tier=result.level===3?3:result.level===2?2:1"),
+ 'Level 3 badge is server-authoritative, not just a verified email session');
+assert.ok(level.includes("'Authorization':'Bearer '+bearer"),
+ 'Lv3 verification sends the independent Auth bearer when present');
+assert.ok(unified.includes("'Authorization':'Bearer '+jwt"),
+ 'Shared dialog forwards independently verified Auth bearer only for level check');
+assert.ok(unified.includes("result.level>3"), 'Level 3 is accepted, larger levels rejected');
+assert.ok(read('js/challenge-member-auth-v1.js').includes("badge?.dataset.level||''"),
+ 'Member dialog must remain open at verified Lv3');
 assert.match(read('js/challenge-access-v1.js'),/beagu:participation-authenticated/);
 assert.match(read('js/statistics-compare.js'),/beagu:participation-authenticated/);
 assert.match(read('js/level-search.js'),/beagu:participation-authenticated/);
