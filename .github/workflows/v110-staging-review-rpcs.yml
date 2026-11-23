@@ -1,0 +1,29 @@
+name: v1.1.0 staging 2026 reviewer 6 RPC contract and locked HTTP
+on:
+  push:
+    branches:
+      - fix/v110-staging-edited-api-recovery-20261123
+    paths:
+      - 'scripts/staging/schema-review-admin-*.sql'
+      - 'scripts/staging/recovered-beagu-2026-review-admin/**'
+      - 'tests/sql/staging-review-admin-six-rpc-rollback-20261123.sql'
+      - 'tests/staging-admin-review-six-contract.test.py'
+      - '.github/workflows/v110-staging-review-rpcs.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stage-review-no-write:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify six private RPCs and single-transaction audit gate
+        run: python3 tests/staging-admin-review-six-contract.test.py
+      - name: Verify live staging admin API is STILL locked
+        run: python3 tests/staging-class-diary-admin-http.test.py
+      - name: No live SQL writes or privileged credentials in CI
+        run: |
+          echo "No release authorization. Six RPCs reconstructed but live admin review remains locked."
