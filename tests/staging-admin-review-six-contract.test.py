@@ -56,6 +56,41 @@ assert sql_test.lstrip().startswith("-- Staging-only") and sql_test.rstrip().end
 assert "owner/MFA-less HOLD unexpectedly succeeded" in sql_test
 assert "owner/MFA-less Lv2 credit unexpectedly succeeded" in sql_test
 assert "denied admin request mutated records" in sql_test
+# DB-positive flow uses deliberately fabricated AAL2 labels, not a real
+# authenticator. It must not be treated as an actual Supabase Auth MFA E2E.
+owner_case=(R/"tests/sql/staging-review-owner-aal2-atomic-positive-rollback-20261123.sql").read_text()
+for marker in (
+  "NOT_ISOLATED_STAGING_DATABASE",
+  "VIEWER_ROLE_BYPASSED_OWNER_CHECK",
+  "AAL1_ACCEPTED_FOR_HOLD",
+  "EXPIRED_AAL2_SESSION_ACCEPTED",
+  "PENDING_BASIS_DID_NOT_REVOKE_APPROVAL",
+  "POSITIVE_HOLD_OR_BOTH_AUDITS_INCONSISTENT",
+  "QA_FORCED_AUDIT_INSERT_FAILURE",
+  "ATOMICITY_BROKEN_PARTIAL_PRIVATE_OR_SNAPSHOT_COMMIT",
+  "auth_users_after_rollback",
+  "qa_trigger_after_rollback"
+):
+    assert marker in owner_case,marker
+assert owner_case.startswith("-- STAGING-ONLY") and "\nROLLBACK;" in owner_case
+assert "NOT a real MFA enrollment" in owner_case
+quality_case=(R/"tests/sql/staging-review-referral-quality-atomic-rollback-20261123.sql").read_text()
+for marker in (
+  "REFUSE_NON_STAGING",
+  "NONEMPTY_OR_REFERRALS_ALREADY_ENABLED",
+  "UNATTESTED_REFERRAL_APPROVAL_ACCEPTED",
+  "DISABLED_REFERRAL_LAUNCH_BYPASSED",
+  "UNVERIFIED_LV2_PROFILE_CREATED",
+  "REFERRAL_REJECTION_OR_AUDIT_NOT_ATOMIC",
+  "QA_REFERRAL_AUDIT_FORCED_FAILURE",
+  "REFERRAL_REJECTION_PARTIALLY_COMMITTED",
+  "rollout_enabled"
+):
+    assert marker in quality_case,marker
+assert quality_case.startswith("-- STAGING QA") and "\nROLLBACK;" in quality_case
+print("PASS: simulated AAL2 owner accepted, viewer/AAL1/expired denied, dual audits atomic")
+print("PASS: referral APPROVE cannot grant Lv2 while evidence/rollout absent")
+print("PASS: synthetic fixture records and fault-injection triggers are rolled back")
 print("PASS six SQL RPCs and six private tables with server-only execution and RLS")
 print("PASS MFA/session owner checks, verified-form-only Lv2 credits, atomic hold audit")
 print("PASS stage Edge still locked and no duplicate post-commit audit")
