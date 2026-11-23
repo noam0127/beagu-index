@@ -22,7 +22,7 @@
 - [실제 HTTP 요청 테스트 코드](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/tests/staging-browser-auth-real-denials.test.py):
   `beagu-level-api`의 `verify`, `school`, `percentiles`, `offices`, `ranked_schools`, `survey_comparisons`을 무세션으로 요청하고 모두 `AUTH_REQUIRED` 401이어야 한다. 64자리 가짜 세션도 거부.
 - `beagu-postit-api-v1` 작성자/학교정보 조회를 무세션·가짜 세션으로 요청하고 `LEVEL_REQUIRED` 403을 확인. 실가입·실참여코드 로그인·DB 쓰기가 발생하지 않는 **부정 검증**이다.
-- [재검증 실행 #45093475443](https://github.com/noam0127/beagu-index/actions/runs/45093475443): 실제 시험 Supabase의 무인증 보호 API 검사 단계 PASS. 이 GitHub Actions 작업 전체 결과는 최종 확인 후 판정해야 한다.
+- [최종 통합 검사 #45093475443](https://github.com/noam0127/beagu-index/actions/runs/45093475443) **전체 PASS**: 실제 시험 Supabase의 무인증·위조 세션 접근 차단 + PC/모바일 실제 Chromium(모의 Lv1/Lv2·계측) + 새 Render 브랜치 설정을 적용한 독립 시험 웹 빌드 모두 통과.
 
 ## Render 시험 웹 배포 설정의 브랜치 오정렬 수정
 
@@ -37,3 +37,9 @@
 - **실제 Lv3 회원가입·이메일 확인·Auth 세션·기기 소유자 연결** 및 관리자 소유자 AAL2 MFA 양성 E2E 미완료. 채팅창에서 비밀번호/세션/OTP를 수집하지 않음.
 - **실제 Render 호스트 브라우저/CORS/E2E 미검증**. 새 성능 계측은 시험 Supabase URL에서만 전송되고 운영 호출은 하지 않는다.
 - 시험 Edge 43개·정적 웹 참조 API 17개 설치, 전체 5개 롤아웃 잠금 유지. 안전 승인/전체 PC·모바일 양성 E2E 전 운영 배포 **NO-GO**.
+
+## 최종 불변 확인
+
+- 시험 Supabase의 `auth.users`, `auth.sessions`, `auth.mfa_factors`, `beagu_admin_accounts`, `beagu_level_sessions`, `beagu_private.participants`, 추천 프로필, 성능 샘플·속도 제한·전체 카운터 모두 **0건** 확인. 추천 기능 설정 `public_enabled=false`.
+- 시험 Edge 함수 **43개** 등록, 정적 웹 참조 API **17개 설치**, 추천·2026 관리자·학급일지 **5개 기능 잠금**.
+- 운영 GitHub `main` SHA `b2460e47aa53c9e06ffc3899fad21aa63cae94bb` 그대로, 운영 Supabase·운영 웹에 쓰기 작업 없음. Render에 실제 사이트 배포는 실행하지 않음.
