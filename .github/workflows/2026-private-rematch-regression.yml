@@ -5,11 +5,15 @@ on:
       - feature/2026-verified-rematch-noon-20261124
     paths:
       - scripts/beagu-2026-noon-sync.gs
+      - scripts/beagu-2026-results-core.js
+      - scripts/beagu-2026-results-runtime.js
       - tests/2026-noon-verified-rematch-audit.mjs
       - .github/workflows/2026-private-rematch-regression.yml
   pull_request:
     paths:
       - scripts/beagu-2026-noon-sync.gs
+      - scripts/beagu-2026-results-core.js
+      - scripts/beagu-2026-results-runtime.js
       - tests/2026-noon-verified-rematch-audit.mjs
       - .github/workflows/2026-private-rematch-regression.yml
 permissions:
@@ -25,6 +29,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check generated aggregation bundle consistency
+        run: |
+          node scripts/build-2026-results.mjs
+          git diff --exit-code -- scripts/beagu-2026-noon-sync.gs
       - name: Verify source row and exact school ID audit
         run: node tests/2026-noon-verified-rematch-audit.mjs
       - name: Regression on noon/form-submit private pipeline
