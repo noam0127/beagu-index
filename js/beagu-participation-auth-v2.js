@@ -58,7 +58,8 @@
  const logout=modal.querySelector('#beaguParticipationLogout');
  const hosts=[...document.querySelectorAll('#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel')];
  const gameForms=[...document.querySelectorAll('[data-game-lv1-form],#tierCodeForm')];
- const labelFor=n=>n>=2?'♛ Lv2 · 챌린지 달성':n>=1?'✓ Lv1 · 설문 참여 완료':'참여코드 입력';
+ const labelFor=n=>n>=3?'★ Lv3 · 인증 회원'
+  :n>=2?'♛ Lv2 · 챌린지 달성':n>=1?'✓ Lv1 · 설문 참여 완료':'참여코드 입력';
  function stored(){try{return sessionStorage.getItem(KEY)||''}catch(_){return ''}}
  function paint(level){
   lastLevel=level;
@@ -76,15 +77,15 @@
    if(description)description.hidden=level>=1;
    if(state){
     const challengeLogin=host.id==='challengeAccessPanel'&&level>=2;
-    state.textContent=challengeLogin?'로그인하기':text;
-    state.setAttribute('aria-label',challengeLogin?'정식 계정 로그인 화면 열기':text);
+    state.textContent=challengeLogin?(level>=3?'회원정보 보기':'로그인하기'):text;
+    state.setAttribute('aria-label',challengeLogin?(level>=3?'연결된 정식 회원 계정 보기':'정식 계정 로그인 화면 열기'):text);
     state.hidden=level<1;
    }
    // Only the Challenge's earned Lv2 panel changes into account login.
    // Other public pages retain the established participation-code interface.
    if(host.id==='challengeAccessPanel'){
     const heading=host.querySelector('h1,h2');
-    if(heading)heading.textContent=level>=2?'로그인하기':'참여코드 입력';
+    if(heading)heading.textContent=level>=3?'회원정보':level>=2?'로그인하기':'참여코드 입력';
    }
   }
   for(const item of document.querySelectorAll('[data-beagu-participation-game-trigger]'))
@@ -154,9 +155,21 @@
   legacy.before(action);
  }
  async function request(action,payload={},token=''){
+  // The optional email JWT is sent only for server-side read-only Lv3
+  // verification, never as an automatic membership claim on code login.
+  let jwt='';
+  if(action==='verify'&&token){
+   try{
+    const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
+    const {data,error}=await client?.auth?.getSession?.()||{};
+    if(!error&&typeof data?.session?.access_token==='string'
+       &&data.session.access_token.length<=4096)jwt=data.session.access_token;
+   }catch(_){/* An absent Auth account preserves Lv1/Lv2 semantics. */}
+  }
   const res=await fetch(ENDPOINT,{
    method:'POST',cache:'no-store',
-   headers:{'Content-Type':'application/json',...(token?{'X-Beagu-Session':token}:{})},
+   headers:{'Content-Type':'application/json',...(token?{'X-Beagu-Session':token}:{}),
+    ...(jwt?{'Authorization':'Bearer '+jwt}:{})},
    body:JSON.stringify({action,...payload})
   });
   const data=await res.json().catch(()=>({}));
@@ -171,7 +184,7 @@
   try{
    const result=await request('verify',{},token);
    if(stored()!==token)return;
-   if(Number(result.level)<1||Number(result.level)>2)throw Error('INVALID_LEVEL');
+   if(!Number.isInteger(result.level)||result.level<1||result.level>3)throw Error('INVALID_LEVEL');
    expiresAt=result.expires_at||'';
    // The level-state module also rechecks on every route/focus.
    if(!modal.hidden)paint(Number(result.level));
@@ -225,7 +238,7 @@
     throw Error('INVALID_SESSION');
    const checked=await request('verify',{},result.token);
    const level=Number(checked.level);
-   if(!Number.isInteger(level)||level<1||level>2)throw Error('INVALID_LEVEL');
+   if(!Number.isInteger(level)||level<1||level>3)throw Error('INVALID_LEVEL');
    try{sessionStorage.setItem(KEY,result.token)}catch(_){throw Error('STORAGE_UNAVAILABLE')}
    if(stored()!==result.token)throw Error('STORAGE_UNAVAILABLE');
    expiresAt=checked.expires_at||'';
@@ -254,11 +267,11 @@
  });
  window.addEventListener('beagu:level-state-updated',event=>{
   const n=event.detail?.level;
-  if(Number.isInteger(n)&&n>=0&&n<=2)paint(n);
+  if(Number.isInteger(n)&&n>=0&&n<=3)paint(n);
   else if(event.detail?.status==='checking')badge.textContent='인증 확인 중';
   else if(event.detail?.status==='error')badge.textContent='참여코드 확인';
  });
  window.addEventListener('beagu:participation-open',open);
  const level=Number(badge.dataset.level);
- paint(Number.isInteger(level)&&level>=1&&level<=2?level:0);
+ paint(Number.isInteger(level)&&level>=1&&level<=3?level:0);
 })();
