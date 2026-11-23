@@ -45,5 +45,5 @@ blocked("wildcard CORS",lambda:checker.check(ORIGIN,SHA,lambda o,path:p[path],wi
 def no_header(o,s):
     code,headers=cors(o,s);headers["access-control-allow-headers"]="content-type";return code,headers
 blocked("missing auth CORS",lambda:checker.check(ORIGIN,SHA,lambda o,path:p[path],no_header),"missing CORS request headers")
-blocked("untrusted URL",lambda:checker.check("https://example.org",SHA,lambda o,path:p[path],cors),"Render HTTPS")
+blocked("untrusted URL",lambda:checker.check("https://example.org",SHA,lambda o,path:p[path],cors),"https://*.onrender.com")
 print("PASS offline SHA/CORS contract. NOT PROVEN: live Render service exists.")
