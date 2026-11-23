@@ -2,15 +2,17 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const source=readFileSync('teacher-volleyball.html','utf8');
-assert.match(source,/touchControl\.jumpQueued = canPlayerJump\(\)/,'touch down must queue a jump');
+assert.match(source,/id="volley-mobile-jump"/);
+assert.match(source,/mobileJumpButton\.addEventListener\("pointerdown"/);
+assert.match(source,/touchControl\.jumpQueued=canPlayerJump\(\)/);
 assert.match(source,/touchControl\.targetY = hasPlayerWings\(\) && canPlayerJump\(\) \?/,'only wings use vertical pointer target');
 assert.match(source,/const flightAllowed=hasPlayerWings\(\)&&canPlayerJump\(\)/);
 assert.match(source,/const tapJump=touchControl\.jumpQueued;\s*touchControl\.jumpQueued=false/,'one jump impulse per tap');
 assert.match(source,/controlPlayer\(left,direction,canPlayerJump\(\)&&\(tapJump\|\|keys\.jump\|\|keys\.up\)/);
-assert.match(source,/🏐 터치하면 점프 · 드래그는 좌우 이동/);
+assert.match(source,/🏐 좌우 드래그 이동 · 모바일은 오른쪽 점프 버튼/);
 assert.doesNotMatch(source,/Touch\/drag: fly freely/);
 const down=source.slice(source.indexOf('canvas.addEventListener("pointerdown"'),source.indexOf('canvas.addEventListener("pointermove"'));
-assert.match(down,/touchControl\.jumpQueued = canPlayerJump\(\)/);
+assert.doesNotMatch(down,/jumpQueued\s*=/,'canvas touch must never queue jump');
 const release=source.slice(source.indexOf('function endCourtTouch'),source.indexOf('canvas.addEventListener("pointerup"'));
 assert.doesNotMatch(release,/left\.vy\s*=/,'pointer release must not kill a jump arc');
 
@@ -50,9 +52,15 @@ const normal=make('normal');
 normal.touchControl.pointerId=3;
 normal.touchControl.targetX=300;
 normal.touchControl.targetY=90; // malicious/stale vertical drag must still be ignored.
-normal.touchControl.jumpQueued=true;
-let result=frame(normal);
-assert(result.y<420,'tap lifts player by a physical jump');
+const plainTap=make('normal');
+plainTap.touchControl.pointerId=9;
+plainTap.touchControl.targetX=300;
+let result=frame(plainTap);
+assert.equal(result.y,420,'touch and drag never trigger a jump');
+assert(plainTap.left.x>180,'touch still moves horizontally');
+normal.touchControl.jumpQueued=true; // dedicated button
+result=frame(normal);
+assert(result.y<420,'separate button lifts player by a physical jump');
 assert(result.vy<0,'jump starts with upward momentum');
 assert.equal(normal.touchControl.jumpQueued,false,'tap impulse consumed once');
 for(let i=0;i<125;i++)result=frame(normal);
@@ -66,9 +74,9 @@ assert(result.y<420,'up arrow should jump without free flight');
 for(let i=0;i<125;i++)frame(up);
 assert.equal(up.left.y,420,'holding up must not fly');
 const quickTap=make('normal');
-quickTap.touchControl.jumpQueued=true; // pointer already released before frame.
+quickTap.touchControl.jumpQueued=true; // button released before frame.
 result=frame(quickTap);
-assert(result.y<420,'very short taps should still jump');
+assert(result.y<420,'very short button presses should jump');
 const easy=make('easy');
 easy.touchControl.pointerId=5;easy.touchControl.targetX=240;easy.touchControl.targetY=90;
 for(let i=0;i<18;i++)frame(easy);
@@ -99,4 +107,4 @@ const chained=make('extreme',false,true);
 chained.touchControl.pointerId=8;chained.touchControl.targetX=250;chained.touchControl.jumpQueued=true;
 frame(chained);
 assert.equal(chained.left.y,420,'shackles still prevent jumping');
-console.log('PASS volleyball touch: grounded jump, gravity, horizontal drag, short taps, EASY/wings flight, expiration, shackles');
+console.log('PASS volleyball mobile: touch-to-move, dedicated jump button, gravity, wings hover and shackles');
