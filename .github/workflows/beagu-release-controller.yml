@@ -7,6 +7,7 @@ name: BAEGU release controller (admin approval)
 # The worker claims only server-authorized jobs; older staging cannot overwrite production.
 # Emergency compare fix 2026-11-23: job 786a73d4-b75d-4e21-8a0b-eabb453f49c6 publishes reviewed 241f03e after preflight.
 # Emergency owner request 2026-11-23 13:59 KST: wake production job 585ad673-9313-48d4-988b-77a67d4bc376 (pinned df83ae9) without altering release worker safeguards.
+# Owner-requested emergency production publish, 2026-11-23: queue 07266cd9-6661-4262-9896-b7701543c207 pinned to SHA 4113e9582698f340281fef61a6b6dfb571e0d04b; keep OIDC worker checks.
 on:
   schedule:
     - cron: '*/5 * * * *'
