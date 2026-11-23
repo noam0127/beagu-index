@@ -33,3 +33,11 @@
 - Lv3는 **단순 가입 요청 성공만으로 인증 완료라 주장하지 않는다**. 이메일 확인, 현재 JWT의 `sub` 일치, Lv2 추천 달성 상태 검증, 기존 개인 고유번호·기기 권한 연결을 별도 서버 측에서 검사해야 한다.
 - 시험 관리자 AAL2 검증은 **실제 이메일 인증된 관리자 소유자 계정과 실제 TOTP MFA 등록 및 활성 세션**이 생긴 뒤에만 실행한다. 가상의 AAL2 DB 행은 E2E 근거가 아니다.
 - API 17/17 설치, 시험 Supabase Edge 43개, 잠금 기능 5개이며 실제 웹 배포·Lv3·MFA 등 3가지의 양성 E2E는 아직 **미통과**. 운영 웹·DB·main 변경 금지 유지.
+
+## 2026-11-23: 시험 API의 저장소/배포본 불일치 해소 및 CORS 엄격화
+
+- **중요 발견:** 원래 `supabase/functions/beagu-level-api/index.ts` 파일은 실제 시험 Supabase에 배포됐던 `beagu-level-api` v5의 코드와 다르다. 실제 v5에는 `verifiedMemberTier`, `isVerifiedLv3Member` 및 개인 고유번호·Auth 연결 확인 로직이 더 있다. 같은 방식으로 포스트잇 v4에도 최신 회원 소유권 로직이 포함되어 있다. **원본 GitHub 함수 파일을 그대로 재배포하면 Lv3·회원 소유권 기능이 퇴행할 수 있으므로 금지**한다.
+- 시험 서버에서 실제 제공되던 `beagu-level-api` v5의 원본 소스·공유 의존 파일 총 6개, `beagu-postit-api-v1` v4의 원본 소스·공유 파일 총 2개를 개발 브랜치 `scripts/staging/recovered-beagu-level-api-v5/`, `scripts/staging/recovered-beagu-postit-api-v4/`에 보존했다.
+- **시험 서버만 재배포:** 기존 기능을 유지한 채 정확한 Render Origin 검사를 적용한 `beagu-level-api` **v6 ACTIVE**, `beagu-postit-api-v1` **v5 ACTIVE**. `SUPABASE_URL`이 반드시 `ycwuugggqbunlbwuzvbx`여야 하고, 로컬 시험 출처 또는 `BEAGU_STAGING_ALLOWED_ORIGIN`에 등록된 한 개의 정확한 Render HTTPS 도메인만 허용. 운영 출처·임의 Render 출처·빈 Origin은 CORS 응답 없이 HTTP 403. 이 비밀 설정 값이 등록되기 전까지 Render 출처는 **거부**된다.
+- [실제 HTTP 보안 검사 #45094909765](https://github.com/noam0127/beagu-index/actions/runs/45094909765) **PASS**: 4개 API(Level, Postit, 2026 reviewer, performance gateway)의 로컬 CORS·Headers·Vary, 운영 두 도메인/임의 Render/빈 Origin 사전 요청 차단, Lv1/포스트잇 무세션 GET 차단. 실제 회원가입·승급·브라우저 Render 호스트 E2E 미실시.
+- 변경 후 시험 API 총 43개, 참조 17/17개 설치, **추천 2개·학급일지 2개·관리자 1개 잠금 유지**. 운영 웹·운영 DB·GitHub main은 변경하지 않음. Render 후보 주소의 health 404 역시 미해결이므로 배포 및 SHA 확인은 **NOT VERIFIED**.
