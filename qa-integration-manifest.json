@@ -334,6 +334,12 @@
       "path": "styles/beagu-admin-updates-v1.css",
       "status": "reconciled source delta; exact readback verified; runtime pending",
       "commit": "721287dc60b6fdd51280705ee7024ea9de5e87f0"
+    },
+    {
+      "source": "notice",
+      "path": "js/beagu-admin-access-v1.js",
+      "status": "reconciled source delta; exact readback verified; runtime pending",
+      "commit": "42373498546830fa2125bc1111bd24422cf91ae2"
     }
   ],
   "pending": [
@@ -492,14 +498,6 @@
       "status": "modified"
     },
     {
-      "source": "notice",
-      "source_sha": "64192de346c2f15ec7d6988212fe382f2d7afadb",
-      "merge_base": "73eec3674972f27fe9649aec69cde82942bb18f1",
-      "path": "js/beagu-admin-access-v1.js",
-      "blob_sha": "695fa601920cc62fb77f2a4e5839c91d25fb9524",
-      "status": "modified"
-    },
-    {
       "source": "postit",
       "source_sha": "99977702eaa4e43fee852fc08891dc57e97843f4",
       "merge_base": "d5ed0c525b0fb9495032989a39898ebd3b17d03a",
@@ -543,5 +541,172 @@
     "2026 actual-response approval and privacy verification",
     "email signup end-to-end and staging backend/auth/MFA integration"
   ],
-  "scope": "no production code deployment, no DB migrations; source integration only; conflicts remain explicitly pending"
+  "scope": "no production code deployment, no DB migrations; source integration only; conflicts remain explicitly pending",
+  "expansion_20261124": {
+    "target_version": "v1.2.0",
+    "status": "DEVELOPMENT_ONLY",
+    "production_release_approved": false,
+    "original_version_preserved": "v1.1.0-rc.2",
+    "latest_production_deployment_observed": "ff6d4ec2d59f0a4aa0f84531be633896d321943b",
+    "independent_test_deployment_observed": "d746bf18f4cadce77f516243939b1b5c352f8f29",
+    "baseline_review": {
+      "status": "eight of nine hotfix paths exact blob match; release-candidate.json metadata differs; ancestry diverged; rebase/reconcile and reverify before freeze",
+      "exact_paths": [
+        "index.html",
+        "js/beagu-home-schools-v1.js",
+        "js/beagu-participation-auth-v2.js",
+        "js/beagu-school-interest-v1.js",
+        "search-lv1.html",
+        "search.html",
+        "styles/beagu-home-schools-v1.css",
+        "styles/beagu-school-interest-v1.css"
+      ],
+      "metadata_review": "release-candidate.json"
+    },
+    "deployment_route": [
+      "GitHub development",
+      "administrator release registration",
+      "isolated test deployment",
+      "integration verification",
+      "explicit production approval and deployment",
+      "immutable deployment history"
+    ],
+    "stages": [
+      {
+        "id": 1,
+        "state": "IN_PROGRESS",
+        "scope": [
+          "inventory live/test/branches/PRs and all known backlog",
+          "retain original pending and applied lists",
+          "resolve conflicts against current live baseline",
+          "do not duplicate completed features"
+        ],
+        "acceptance": "inventory with source SHAs, dependency and conflict map, verified preservation of live hotfixes"
+      },
+      {
+        "id": 2,
+        "state": "PENDING",
+        "scope": [
+          "live/test/development version and commit display",
+          "version changes, unapplied work, verification and deployment evidence",
+          "immutable artifact registration and rollback",
+          "isolated emergency patch from current production; no stale rollback",
+          "test parity with safe independent backend, never production credentials/writes"
+        ],
+        "acceptance": "reject stale base, mismatched SHA and absent CI evidence; smoke-test baseline and rollback; no production writes"
+      },
+      {
+        "id": 3,
+        "state": "PENDING",
+        "scope": [
+          "raw reconciliation, school matching and deduplication",
+          "basic checks, aggregate, eligibility, per-tier approval, publication, report, recheck",
+          "single response eligible for review only",
+          "consent, de-identification and small-cell disclosure risks; Q31/Q51 raw excluded",
+          "Lv0–3 data scope and existing 2026 delay policy only",
+          "consistent search/detail/compare snapshot",
+          "civic report and admin recheck",
+          "revision reaggregation and reapproval",
+          "clear admin state UI"
+        ],
+        "acceptance": "counts reconcile by reason; approved snapshots only; privacy and delay tests across tiers"
+      },
+      {
+        "id": 4,
+        "state": "PENDING",
+        "scope": [
+          "persistent code, level, activation, personal survey link/copy, total and valid referral counts, next tier, linked identity",
+          "verified one referral promotes same code to Lv2",
+          "reject self, duplicate and invalid referral"
+        ],
+        "acceptance": "server-derived referral qualification, concurrent idempotent promotion, no client authority"
+      },
+      {
+        "id": 5,
+        "state": "PENDING",
+        "scope": [
+          "canonical member ID separate from public nickname and code",
+          "Lv0 guest, Lv1 survey participant with code/password, Lv2 verified referral",
+          "cryptographically random unique immutable I/l barcode nickname; collision retry; not authentication",
+          "password hash, rate limits, recovery, sessions, proof of legacy ownership",
+          "identity data isolated from survey data; server authorization and RLS",
+          "reuse existing records and retain game/referral history"
+        ],
+        "acceptance": "ownership tests, collision/concurrency tests, no plain passwords, no unauthorized access"
+      },
+      {
+        "id": 6,
+        "state": "PENDING",
+        "scope": [
+          "verified own-response read and edit",
+          "revision history; optimistic concurrency and idempotency",
+          "revalidation/reaggregation, publication gate and no double count",
+          "password set/change/recovery; same identity after upgrade"
+        ],
+        "acceptance": "cross-user denial, replay and stale revision tests, aggregation consistency"
+      },
+      {
+        "id": 7,
+        "state": "PENDING",
+        "scope": [
+          "Lv2 links Naver, Google, Kakao with verified provider identity, canonical member retained, email later extensible",
+          "legacy Lv1/Lv2 separate direct connection route after ownership proof",
+          "legacy Lv1 waiver/immediate Lv3 undecided, preserve current entitlement pending decision",
+          "no duplicate user record; safe provider collision handling"
+        ],
+        "acceptance": "provider capability and configuration verified; no privilege expansion by client or user metadata; linkage and history retention tests"
+      },
+      {
+        "id": 8,
+        "state": "PENDING",
+        "scope": [
+          "home, search, compare, challenge, games; shared profile/login/connection",
+          "separate game hub with image, description, start, tier, real status, scores and personal record",
+          "volleyball, teacher-run, class diary, schoolband; preserve design/controls and private diary hold",
+          "barcode nickname for member scores/community, no real social names/photos",
+          "neutral/blue/purple/gold tiers; desktop/mobile consistent"
+        ],
+        "acceptance": "navigation, responsive, game regression and truthful readiness/access tests"
+      },
+      {
+        "id": 9,
+        "state": "PENDING",
+        "scope": [
+          "regression, signup/login, referral, revision, aggregation, identity linking, privacy/RLS, desktop/mobile",
+          "all original pending and new requirements traceable; independent eight perspective review"
+        ],
+        "acceptance": "real test evidence per gate; blocked or not-run remain incomplete"
+      },
+      {
+        "id": 10,
+        "state": "PENDING",
+        "scope": [
+          "immutable version with GitHub SHA, admin registration, isolated test deployment and verification",
+          "rollback plan and production readiness decision only"
+        ],
+        "acceptance": "test project verified at exact SHA, no live/DB changes before explicit approval; only then all stages complete"
+      }
+    ],
+    "unresolved_policy": [
+      "legacy Lv1 referral waiver",
+      "legacy Lv1 immediate Lv3 after account connection"
+    ],
+    "review_perspectives": [
+      "architecture",
+      "frontend",
+      "backend/Supabase",
+      "authentication/security",
+      "data quality/statistics",
+      "UI/UX",
+      "product",
+      "test/release/versioning"
+    ],
+    "guardrails": [
+      "no production site or production DB changes before final validation and approval",
+      "no billing changes or paid services",
+      "do not remove original pending or backlog without verified evidence",
+      "do not publish private manuscript or unapproved data",
+      "no deployment or runtime test inferred from source collection"
+    ]
+  }
 }
