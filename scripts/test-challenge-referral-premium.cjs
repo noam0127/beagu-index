@@ -84,7 +84,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
   emit('focus');await tick();
   assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드');
-  assert.equal(el.challengeIdentityTag.textContent,'Lv.2 활성화 ✦');
+  assert.equal(el.challengeIdentityTag.textContent,'✓ Lv.2 인증 완료');
   assert.equal(el.copyIdentityCode.textContent,'코드 복사');
   assert.equal(el.challengeIdentityReward.hidden,false);
   assert.ok(el.challengeIdentityPanel.classes.has('is-lv2'));
@@ -116,3 +116,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.certificateMedal.hidden,true);
   console.log('PASS: premium personal code card is gated by verified referral; link retained and logout resets');
 })().catch(err=>{console.error(err);process.exitCode=1;});
+
+assert.ok(html.indexOf('id="challengeIdentityPanel"')<html.indexOf('id="challengeReferralPanel"'));
+assert.match(html,/VIP LEVEL 2/);
+assert.doesNotMatch(html,/id="challengeReferralNote"/);

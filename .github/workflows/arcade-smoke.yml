@@ -5,6 +5,8 @@ on:
     paths:
       - 'teacher-volleyball.html'
       - 'teacher-run.html'
+      - 'js/arcade-mystery-items-v1.js'
+      - 'tests/arcade-item-upgrade-v1.mjs'
       - 'index.html'
       - 'js/arcade-leaderboard-v1.js'
       - 'js/arcade-fullscreen-v1.js'
@@ -35,5 +37,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Check game HUD and item scoring contract
+        run: node tests/arcade-item-upgrade-v1.mjs
       - name: Check game scripts and deployed arcade ranking
         run: node tests/arcade-smoke.mjs
