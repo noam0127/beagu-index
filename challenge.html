@@ -178,9 +178,8 @@
 <script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
 <link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
 <link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
-<link rel="stylesheet" href="styles/challenge-member-auth-v1.css?v=20261121-sms1">
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
-<script defer src="js/beagu-participation-auth-v2.js?v=20261121-challenge-member-login1"></script>
+<script defer src="js/beagu-participation-auth-v2.js?v=20261123-challenge-code-only1"></script>
 </head>
 <body class="beagu-ui-page beagu-page-challenge">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -282,38 +281,6 @@
   </div>
 
 </main>
-<div id="challengeMemberOverlay" class="challenge-member-overlay" role="presentation" hidden>
-  <section id="challengeMemberDialog" class="challenge-member-dialog" role="dialog" aria-modal="true"
-    aria-labelledby="challengeMemberTitle" aria-describedby="challengeMemberDescription">
-    <button id="challengeMemberClose" class="challenge-member-close" type="button" aria-label="닫기">×</button>
-    <div class="challenge-member-eyebrow">BAEGU INDEX · Lv2 MEMBER</div>
-    <h2 id="challengeMemberTitle">Lv2 로그인</h2>
-    <p id="challengeMemberDescription" class="challenge-member-description">정식 계정으로 로그인하세요.</p>
-    <form id="challengeMemberForm" class="challenge-member-form" autocomplete="on">
-      <label for="challengeMemberEmail">이메일</label>
-      <input id="challengeMemberEmail" type="email" autocomplete="email" placeholder="이메일 주소" maxlength="254" required>
-      <label for="challengeMemberPassword">비밀번호</label>
-      <input id="challengeMemberPassword" type="password" autocomplete="current-password" placeholder="비밀번호 (10자 이상)"
-        minlength="10" maxlength="128" required>
-      <div id="challengeMemberSmsFields" class="challenge-member-sms" hidden>
-        <label for="challengeMemberSmsPhone">휴대폰번호 (선택 · 최신 소식 문자 수신용)</label>
-        <input id="challengeMemberSmsPhone" type="tel" inputmode="tel" autocomplete="tel-national"
-          placeholder="010-1234-5678" maxlength="13" aria-describedby="challengeMemberSmsNotice">
-        <label class="challenge-member-sms-check" for="challengeMemberSmsConsent">
-          <input id="challengeMemberSmsConsent" type="checkbox">
-          <span>(선택) 배구지수 설문·서비스 소식 및 광고성 안내를 SMS/LMS로 받겠습니다.</span>
-        </label>
-        <p id="challengeMemberSmsNotice">수집 항목: 휴대폰번호 · 목적: 배구지수 소식과 서비스 안내(광고성 정보 포함) · 보유: 수신 동의 철회 또는 회원탈퇴 시까지. 동의하지 않아도 가입할 수 있으며, 로그인 후 철회할 수 있습니다. 번호 확인 전에는 문자를 발송하지 않습니다.</p>
-      </div>
-      <button id="challengeMemberSubmit" class="challenge-member-primary" type="submit">로그인하기</button>
-    </form>
-    <button id="challengeMemberSwitch" class="challenge-member-secondary" type="button">계정이 없어요 · 회원가입</button>
-    <button id="challengeMemberLink" class="challenge-member-secondary" type="button" hidden>원래 기기 인증 · Lv2 연결</button>
-    <button id="challengeMemberSmsUnsubscribe" class="challenge-member-secondary" type="button" hidden>문자 안내 수신 동의 철회</button>
-    <button id="challengeMemberSignOut" class="challenge-member-secondary" type="button" hidden>정식 계정 로그아웃</button>
-    <p id="challengeMemberMessage" class="challenge-member-message" role="status" aria-live="polite"></p>
-  </section>
-</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
@@ -323,7 +290,6 @@
 <script src="js/challenge.js?v=20261121-code-card2"></script>
 <script src="js/challenge-referral-v1.js?v=20261121-lv2-copy1"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
-<script src="js/challenge-member-auth-v1.js?v=20261121-sms1"></script>
 </body>
 </html>
 
