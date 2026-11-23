@@ -47,7 +47,7 @@
       premiumVisual ? '✓ Lv.2 로그인 완료' : '승급 대기';
     // Captured tier follows a verified Lv.2 session or credited referral;
     // the personal code stays inactive until its own referral is confirmed.
-    if(certificateLevelBanner)certificateLevelBanner.textContent = premiumVisual ? '✦ Lv.2 챌린지 달성 ✦' : 'Lv.1 챌린지 달성';
+    if(certificateLevelBanner)certificateLevelBanner.textContent = premiumVisual ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
     if(certificate)certificate.dataset.level = premiumVisual ? '2' : '1';
     copyIdentityCode.hidden = !upgraded;
     copyIdentityCode.disabled = !upgraded || !lastIdentity;
