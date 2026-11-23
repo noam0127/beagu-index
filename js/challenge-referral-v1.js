@@ -82,9 +82,9 @@
     copyButton.disabled = true;
     progress.textContent = '';
     lastReferrals=0;lastSnapshot='';
-    referralCount.textContent = '확인 중';
     if(retry)retry.hidden=true;
     renderState(false,0);
+    referralCount.textContent = '확인 중';
     status.textContent = '전용 조사 링크를 불러오고 있어요.';
   }
   function deviceSecret() {
