@@ -59,6 +59,11 @@ const qa=readFileSync('tests/sql/staging-lv3-auth-session-revocation-rollback-20
 for(const name of ['OTHER_USER_REUSED_SESSION_ID','EXPIRED_SESSION_ACCEPTED',
  'REVOKED_SESSION_ACCEPTED','ROLLBACK;','REFUSE_NON_ISOLATED_STAGE'])
  assert(qa.includes(name),name);
+const unlinkQA=readFileSync('tests/sql/staging-lv3-member-suspend-delete-rollback-20261123.sql','utf8');
+for(const part of ['REFUSE_NON_STAGE_DB','SUSPENDED_MEMBER_STILL_ACTIVE',
+  'DELETED_LINK_STILL_QUERYABLE', "status='suspended'",'ROLLBACK;'])
+ assert(unlinkQA.includes(part),part);
+console.log('PASS: revoked/suspended member records cease to match active-only author linkage');
 console.log('PASS: JWT session claim parsed only AFTER getUser; no matching user/session/expiry => Lv3 denied');
 console.log('PASS: level API and postit/membership both require live auth.sessions via service-role-only RPC');
 console.log('PASS: real SQL QA handles missing, expired, different user and revoked sessions, all rollback');
