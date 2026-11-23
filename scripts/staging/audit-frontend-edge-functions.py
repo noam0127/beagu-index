@@ -2,7 +2,7 @@
 """Compare immutable static-preview API routes with a test Supabase function
 inventory. All local processing: no network requests and no mutations.
 
-By default, missing endpoints appear as BLOCKED without falsely claiming E2E
+By default, missing or rollout-locked endpoints appear as BLOCKED without falsely claiming E2E
 success. The --require-ready flag makes them a hard failure.
 """
 from __future__ import annotations
@@ -48,6 +48,14 @@ def check(calls: dict[str, list[str]], inventory: dict,
                 or slug in names or not isinstance(version, int) or version < 1):
             raise ValueError("Invalid or repeated function slug/version")
         names.add(slug)
+    gates = inventory.get("feature_gates", {})
+    if not isinstance(gates, dict):
+        raise ValueError("Bad gated feature metadata")
+    for slug, reason in gates.items():
+        if (not isinstance(slug, str) or slug not in names or
+                not isinstance(reason, str) or
+                not re.fullmatch(r"[a-z][a-z0-9_]{3,80}", reason)):
+            raise ValueError("Invalid or unreviewed locked endpoint")
     observed = inventory.get("verified_on")
     if not isinstance(observed, str):
         raise ValueError("Inventory lacks its verified date")
@@ -59,6 +67,7 @@ def check(calls: dict[str, list[str]], inventory: dict,
     # Static CI uses a snapshot; a live-site check needs fresh evidence.
     stale = age > 7
     missing = {slug: files for slug, files in calls.items() if slug not in names}
+    locked = {slug: gates[slug] for slug in sorted(calls) if slug in gates}
     return {
         "project": PROJECT,
         "snapshot_date": observed,
@@ -68,7 +77,8 @@ def check(calls: dict[str, list[str]], inventory: dict,
         "frontend_edge_functions": len(calls),
         "referenced": calls,
         "missing": missing,
-        "ready_for_real_e2e": not missing and not stale,
+        "locked": locked,
+        "ready_for_real_e2e": not missing and not locked and not stale,
         "real_e2e_executed": False,
         "production_deployment_permitted": False,
     }
@@ -103,6 +113,8 @@ def audit(preview: Path = PREVIEW, manifest: Path = INVENTORY,
               (f" (+{len(used)-7} more)" if len(used)>7 else ""))
     for slug in result["missing_without_repo_source"]:
         print("NO_SOURCE "+slug+" <- missing Supabase function source in GitHub")
+    for slug, reason in result["locked"].items():
+        print("LOCKED "+slug+" <- "+reason)
     if result["snapshot_stale"]:
         print("WARNING: inventory older than 7 days; refresh from test Supabase")
     print("EDGE_FUNCTION_READINESS "+json.dumps(result, ensure_ascii=False,
@@ -113,12 +125,12 @@ def audit(preview: Path = PREVIEW, manifest: Path = INVENTORY,
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--require-ready", action="store_true",
-                        help="Fail for missing functions or stale inventory")
+                        help="Fail for missing, rollout-locked functions or stale inventory")
     args = parser.parse_args()
     try:
         result = audit()
         if not result["ready_for_real_e2e"]:
-            print("BLOCKED: Edge Function inventory incomplete. Do NOT claim "
+            print("BLOCKED: Edge Function inventory incomplete/locked. Do NOT claim "
                   "actual login or production deployment readiness.")
             if args.require_ready:
                 sys.exit(2)
