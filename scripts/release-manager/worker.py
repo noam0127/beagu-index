@@ -107,6 +107,21 @@ def make_preview_banner(target):
         file.write_text(source, encoding="utf-8")
 
 
+def stamp_release_metadata(target, sha, environment):
+    """Stamp the selected archive with its immutable source SHA; publication time is not fabricated."""
+    file = target / "release-info.json"
+    if not file.is_file():
+        return
+    meta = json.loads(file.read_text(encoding="utf8"))
+    if meta.get("schema") != 1 or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", meta.get("version", "")):
+        raise RuntimeError("Invalid release metadata")
+    if not SHA.fullmatch(sha):
+        raise RuntimeError("Invalid release SHA")
+    import datetime
+    meta.update(environment=environment, commit=sha, builtAt=datetime.datetime.now(datetime.timezone.utc).isoformat(), deployedAt=None)
+    file.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf8")
+
+
 def build():
     plan = read_plan()
     production = plan.get("production_sha")
@@ -115,10 +130,15 @@ def build():
         shutil.rmtree(OUTPUT)
     archive(production, OUTPUT)
     overlay_approved_directory(OUTPUT)
+    stamp_release_metadata(OUTPUT, production, "production")
+    # Internal roadmap is not part of the public site artifact.
+    (OUTPUT / "development-roadmap.json").unlink(missing_ok=True)
     if staging:
         preview_dir = OUTPUT / "_preview"
         archive(staging, preview_dir)
         overlay_approved_directory(preview_dir)
+        stamp_release_metadata(preview_dir, staging, "preview")
+        (preview_dir / "development-roadmap.json").unlink(missing_ok=True)
         nested_cname = preview_dir / "CNAME"
         if nested_cname.exists():
             nested_cname.unlink()
