@@ -21,6 +21,7 @@ name: BAEGU release controller (admin approval)
 # Owner authorized 2026 civic feedback release, job 4b33f962-b574-4d9d-b74a-a918dfc27b2f targets verified dc7f645deb849c1ae462b78428ededa51f1e5d52.
 # Owner-requested survival fullscreen center/contain and both games wing-hover release, 2026-11-23: signed Pages job 1c1e8e14-b441-4c72-bf62-9a4b62a8657a pins 8ae2ed90c2c51f18e1422588ce76429bffb14ecd, GitHub Pages only.
 # Owner-requested subtitle transparency and non-jumping mobile volleyball release, 2026-11-23: signed GitHub Pages job d8c3d958-9621-406a-9775-15176c36ca7f pins cd7126b9729d22e843b330228fd1d938fd4c45c3.
+# Owner-requested homepage Class Diary coming-soon replacement, 2026-11-23: signed Pages job a110fad1-e067-4960-a1ca-e57cc3fafb11 pins 36c68c8394a77a94541a2ad04a83db7242639c0c; no DB changes.
 on:
   schedule:
     - cron: '*/5 * * * *'
