@@ -395,7 +395,7 @@ assert.match(runner,/extreme:\{jumpEnabled:false,/,"runner disables aerial contr
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"runner upward drag gated by difficulty");
 assert.match(runner,/player\.y=canPlayerRise\(\)\?Math\.max\(76,Math\.min\(H-52,player\.y\)\):H-52/,"runner grounded on each frame");
 assert.match(runner,/player\.y=canPlayerRise\(\)\?Math\.max\(76,Math\.min\(H-52,player\.y\)\):H-52/,"survival resize follows active wings/shackle");
-const volleyPointerSource=volley.slice(volley.indexOf('function targetFromPointer(e)'),volley.indexOf('canvas.addEventListener("pointerdown"'));
+const volleyPointerSource=volley.slice(volley.indexOf('function targetFromPointer(e)'),volley.indexOf('  // The jump button is separate'));
 const volleyPointer=new Function("difficulty", [
  'const W=900,H=500,FLOOR=451,NET_X=450,NET_W=14;',
  'const touchControl={targetX:null,targetY:null};',
