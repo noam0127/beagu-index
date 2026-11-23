@@ -2,11 +2,17 @@
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
   "verified_on": "2026-11-23",
-  "source": "Read-only verified staging Edge Function inventory, 39 ACTIVE 2026-11-23 KST. Three missing frontend endpoints; referral rollout locked.",
+  "source": "Read-only verified staging Edge Function inventory 2026-11-23 KST: all 16 static frontend endpoints deployed; 5 deliberately locked pending credentials/MFA/data verification",
   "functions": [
     {
       "slug": "arcade-leaderboard",
       "version": 2,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-2026-review-admin",
+      "version": 1,
       "status": "ACTIVE",
       "verify_jwt": false
     },
@@ -237,10 +243,25 @@
       "version": 1,
       "status": "ACTIVE",
       "verify_jwt": false
+    },
+    {
+      "slug": "class-diary-guest-access-v1",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "class-diary-progress-v1",
+      "version": 1,
+      "status": "ACTIVE",
+      "verify_jwt": false
     }
   ],
   "feature_gates": {
     "beagu-referral-checkin-v1": "google_form_attribution_unverified",
-    "beagu-referral-link-v1": "google_form_attribution_unverified"
+    "beagu-referral-link-v1": "google_form_attribution_unverified",
+    "beagu-2026-review-admin": "reviewer_rpc_mfa_audit_unverified",
+    "class-diary-guest-access-v1": "owner_preview_pin_unconfigured",
+    "class-diary-progress-v1": "owner_preview_pin_unconfigured"
   }
 }
