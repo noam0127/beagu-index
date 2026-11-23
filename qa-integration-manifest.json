@@ -316,6 +316,18 @@
       "source": "isolation",
       "path": "teacher-class-diary-entry.html",
       "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "isolation",
+      "path": "js/postit-account-v1.js",
+      "status": "reconciled source delta; exact readback verified; runtime pending",
+      "commit": "ada47bd040e9201c514c771b7ad391e6270f6aa7"
+    },
+    {
+      "source": "isolation",
+      "path": "styles/beagu-admin-updates-v1.css",
+      "status": "reconciled source delta; exact readback verified; runtime pending",
+      "commit": "c00e3dd4361d47924236fba1c924dfffc06fc90d"
     }
   ],
   "pending": [
@@ -413,22 +425,6 @@
       "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
       "path": "js/beagu-admin-updates-v1.js",
       "blob_sha": "8a73cea03df071aca9b655afee894f5f2efd886b",
-      "status": "modified"
-    },
-    {
-      "source": "isolation",
-      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
-      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
-      "path": "js/postit-account-v1.js",
-      "blob_sha": "dc7acd81fb7aa85aefa68970bcef006b6db7cd41",
-      "status": "modified"
-    },
-    {
-      "source": "isolation",
-      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
-      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
-      "path": "styles/beagu-admin-updates-v1.css",
-      "blob_sha": "b46f2876fac0fe33fd33eda7612031a6737fe6bd",
       "status": "modified"
     },
     {
