@@ -50,7 +50,9 @@ function copy(src) {
   copied++;
 }
 for (const f of fs.readdirSync('.')) if(/^[^/]+\.html$/.test(f)) copy(f);
-for (const d of ['assets','data','js','styles','r','css']) if(fs.existsSync(d)) copy(d);
+for (const d of ['assets','data','js','styles','r','css','\u200bcss']) if(fs.existsSync(d)) copy(d);
+// Public root resources used by the browser; never copy server scripts, SQL, or repository metadata.
+for (const f of ['lv2-edited-column-schema.json','release-candidate.json']) if(fs.existsSync(f)) copy(f);
 fs.writeFileSync(path.join(OUT,'robots.txt'),'User-agent: *\nDisallow: /\n');
 fs.writeFileSync(path.join(OUT,'test-survey-disabled.html'),'<!doctype html><html lang="ko"><meta charset="utf-8"><title>시험 설문</title><h1>시험 환경에서는 실제 설문 제출이 차단됩니다.</h1><a href="/">홈으로</a></html>');
 fs.writeFileSync(path.join(OUT,'test-mirror-version.json'),JSON.stringify({productionBaseline:BASE,mode:'isolated-test',html,copied,changed,stageRef:STAGE_REF},null,2));
