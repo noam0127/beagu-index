@@ -53,7 +53,7 @@ async function open(page){
   const toggle=await page.locator('.beagu-participation-field button').boundingBox();
   assert(input&&toggle,'Participation input and reveal button are visible');
   assert(toggle.x>=input.x&&toggle.x+toggle.width<=input.x+input.width+1,
-   'Reveal button must fit inside desktop code input without overflow');
+   'Reveal button must fit inside desktop code input without overflow: '+JSON.stringify({input,toggle,formWidth:fit.width}));
   const form=await page.locator('#beaguParticipationForm').boundingBox();
   assert(form&&form.width>400,'Desktop form must use the extra horizontal space');
  }
