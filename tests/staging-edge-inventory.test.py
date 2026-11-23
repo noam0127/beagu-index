@@ -41,7 +41,7 @@ assert "beagu-perf-ingest-v1" in names, "Server-only page performance API must b
 assert len(names)==43, "Latest actual staging function count must be reflected"
 function_versions={f["slug"]:f["version"] for f in inventory["functions"]}
 assert function_versions["beagu-level-api"]==7, "Never remove live Auth session revocation from Lv3"
-assert function_versions["beagu-postit-api-v1"]==6, "Never remove live session revocation from postit writes"
+assert function_versions["beagu-postit-api-v1"]==7, "Must retain atomic member transitions and audited revocation"
 
 assert "beagu-edited-api-v1" in names, "Staging restored API must be reflected"
 assert "arcade-leaderboard" in names and "beagu-school-culture-v1" in names and "beagu-school-interest-v1" in names
