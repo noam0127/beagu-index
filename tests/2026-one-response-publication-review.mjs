@@ -37,7 +37,7 @@ for(const id of ['adminPipelineSingle','adminPipelineSingleTechnical','adminPipe
  assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(ui,new RegExp('setCount\\("'+id+'"'));
 }
-assert.match(html,/응답 1건도 공개 심사 대상입니다/);
+assert.match(html,/응답 1건도 공개 심사 및 최종 승인 대상입니다/);
 assert.match(html,/공개 근거와 재식별 위험 검증 및 최종 승인 없이는/);
 assert.doesNotMatch(ui,/\bpublish\(|\bapproveResults\(/);
 assert.match(release,/review_status='VERIFIED'/);
