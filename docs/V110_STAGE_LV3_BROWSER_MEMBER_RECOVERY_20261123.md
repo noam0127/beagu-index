@@ -37,3 +37,27 @@
 - 사용자가 승인한 실제 시험용 이메일 인증이 가능한 계정 및 유효한 2026 챌린지 Lv2 실적/기기 증명이 생긴 다음에만 실제 Lv3 회원 연결의 양성 브라우저 E2E 실행. 임의로 운영 개인 기록 복사하거나 실제 인증을 우회하지 않는다.
 - 서버 역할이 아닌 일반 앱 사용자로의 직접 DB RPC 호출 방지, Auth 세션 취소·만료·다른 기기 재접속 및 회원 연결 삭제 후 Lv3 하향 E2E 검증.
 - 전체 Auth/MFA, 공개 승인 프라이버시 검토, 실제 모바일 Render E2E 통과 전에는 운영 웹/DB/main 변경 금지.
+
+## 2026-11-23 후속 — JWT 유효 기간과 실제 Auth 세션 종료를 분리해 철회 처리
+
+**발견된 핵심 누락:** 기존 시험 `beagu-level-api` v6와 `beagu-postit-api-v1` v5는 `supabase.auth.getUser(jwt)`로 서명된 JWT와 활성 회원 연결을 확인했지만, 토큰에 포함된 `session_id`가 **현재도 `auth.sessions`에 남아 있는지** 독립 확인하지 않았다. Supabase [User sessions](https://supabase.com/docs/guides/auth/sessions) 자료에 따르면 JWT의 `session_id`는 DB의 `auth.sessions.id`에 대응한다. 로그아웃 직후 아직 만료되지 않은 JWT를 서버가 신뢰하지 않도록 추가 검사했다.
+
+### 시험 환경에서 수행한 실제 변경
+
+1. [서비스 역할 전용 세션 검사 SQL](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/scripts/staging/schema-lv3-revoked-auth-session-qa-only.sql) 적용. `public.beagu_stage_active_member_auth_session(p_user uuid,p_session uuid)`은 두 값이 동일한 활성 `auth.sessions` 행을 가리키고 `not_after`가 만료되지 않았을 때만 true. `PUBLIC`·`anon`·`authenticated` 직접 실행 금지, `service_role`만 실행 허용. 시험 DB에만 존재하며 운영 DB 수정 없음.
+2. JWT payload를 단순 신뢰하지 않기 위해 **서버에서 먼저 `admin.auth.getUser(jwt)`로 검증된 사용자**를 얻고, 그 뒤에만 JWT의 `sub`·`session_id`·`exp`를 읽는 [공유 검사기](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/scripts/staging/recovered-beagu-level-api-v5/_shared/member-session-v1.mjs) 추가. JWT payload 파싱 자체는 서명 검증이 아니며 언제나 `getUser` 검증 후에 수행.
+3. `beagu-level-api` **시험 v7 ACTIVE**: `verifiedMemberTier`가 회원 연결을 조회하기 전에 JWT의 Auth 세션 실존/유효 시간을 확인. 세션 삭제·기한 만료·계정 불일치·DB 조회 실패는 Lv3를 부여하지 않고 기존 유효 Lv2 자격으로만 응답. 원래 Lv2 추천 실적 검증은 계속 유지.
+4. `beagu-postit-api-v1` **시험 v6 ACTIVE**: `authenticatedUser`에서 같은 세션 재검증을 적용. `link_member`·포스트잇 작성·댓글·공감 등 모든 정식 회원 행동에서 만료/종료된 Auth 세션은 회원 권한으로 통과할 수 없음. Lv2 참여코드만으로는 쓰기 권한이 생기지 않음.
+5. **별도의 회원 연결 취소**는 현재 테이블의 `status='suspended'` 또는 기록 삭제로 나타낼 수 있으며, `verifiedMemberTier`의 active 여부와 `resolveVerifiedPostitOwner`가 즉시 거부하도록 기존 구현 유지. 새로운 사용자 공개 해지 UI나 운영 계정 변경은 도입하지 않음.
+
+### 실제 시험과 검증 경계
+
+- [실제 SQL Auth 세션 철회/만료 검사](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/tests/sql/staging-lv3-auth-session-revocation-rollback-20261123.sql): 가상 DB 사용자+세션을 **BEGIN/ROLLBACK** 안에서 생성. 정상 세션만 true, 다른 사용자 ID·NULL·만료·삭제된 세션은 false. 최종 Auth 사용자·세션·회원 0행 확인.
+- [실제 SQL 회원 연결 취소 검사](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/tests/sql/staging-lv3-member-suspend-delete-rollback-20261123.sql): 가상 활성 회원 연결은 조회되지만 상태를 `suspended`로 변경하거나 행을 삭제하면 활성 연결 조회에서 제외. 최종 Auth 사용자·회원 0행.
+- [JWT/서버 소스 회귀 테스트](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/tests/staging-lv3-active-auth-session.mjs): 만료·다른 주체·잘못된 `session_id`·만료 클레임 없는 JWT 거부, 서명 검증을 담당하는 `getUser` 호출 이후에만 파싱/세션 SQL을 수행하도록 확인. **테스트용 서명 문자열은 유효한 JWT가 아니며 실제 인증 성공의 증거가 아니다.**
+- [실제 무인증 HTTP·CORS 검사](https://github.com/noam0127/beagu-index/actions/runs/45096617193) **PASS**, [전체 API 설치·잠금 검사](https://github.com/noam0127/beagu-index/actions/runs/45096644093) **PASS**, [PC/모바일 Chromium 가상 원격 로그아웃 검사](https://github.com/noam0127/beagu-index/actions/runs/45096624548) **PASS**. 가상 브라우저는 **서버 응답을 모의** 처리하였고, Auth 세션이 제거됐어도 브라우저에 JWT가 남은 경우 다음 서버 재확인에서 Lv3→Lv2로 떨어지는 상황을 검증했다.
+- 철회가 서버에 반영되는 시점은 **다음 보호 API 요청부터**. 이미 열려 있는 브라우저의 뱃지 표시는 인증 상태 갱신/포커스 복귀 등 재검사 시점에 바뀔 수 있으며, 모든 화면이 별도 새로고침 없이 즉시 변경된다는 뜻은 아니다.
+
+### 남은 차단
+
+실제 Auth 가입 사용자·TOTP·실 Lv2 기기 소유권·실제 Render 호스트가 없으므로 유효 서명된 JWT를 통한 양성 Lv3·회원 철회 **실계정 E2E는 미수행**. 독립 시험 DB 함수와 Edge는 운영에 적용하지 않았다. 시험 함수 43개, 참조 API 17/17개, 기능 잠금 **5개 유지**, 전체 운영 배포 **NO-GO**.
