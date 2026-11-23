@@ -24,7 +24,7 @@ for x in (
     "STAGING_PROJECT_ONLY","ORIGIN_NOT_ALLOWED",
     "IDENTITY_BEARER_NOT_ACCEPTED","JSON_REQUIRED","INVALID_SAMPLE",
     "SAMPLE_UNAVAILABLE","AbortSignal.timeout(5000)",
-    "body.duration_ms>120000","beagu_perf_record_v1",
+    "b.duration_ms>120000","beagu_perf_record_v1",
     "'authorization':'Bearer '+secret",
     "const STAGE_URL='https://ycwuugggqbunlbwuzvbx.supabase.co'"
 ):
