@@ -96,7 +96,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
   border-radius:3px;
 }
 </style>
-  <link rel="stylesheet" href="styles/school-search-card-v1.css?v=20261118-blue-outline2">
+  <link rel="stylesheet" href="styles/school-search-card-v1.css?v=20261123-sort-primary1">
   <link rel="stylesheet" href="styles/school-view-counts-v1.css?v=20261120-mono2">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -218,7 +218,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
 <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
-  <script src="js/school-search-card-v1.js?v=20261120-monochrome2"></script>
+  <script src="js/school-search-card-v1.js?v=20261123-sort-primary1"></script>
   <script src="js/school-view-counts-v1.js?v=20261120-selection-record2"></script>
 <script>
   const searchInput = document.getElementById('searchInput');
@@ -439,7 +439,8 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
     schools.forEach(school => {
       const {card}=BeaguSchoolSearchCard.createCard(school,{
         level:0,
-        percentile:renderPercentiles(school)
+        percentile:renderPercentiles(school),
+        sortBy:mode==='region'?publicSort.value:'school_name'
       });
       const recorded=['2023','2024','2025'].filter(y=>
         publicParticipationByYear[y]?.has(String(school.school_id)));

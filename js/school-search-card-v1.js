@@ -94,13 +94,50 @@
  }
  // Canonical card tree. Lv.0 opens the public report; authenticated tiers
  // toggle in-card details. All three tiers have identical visual structure.
- function createCard(school,{level=0,percentile}={}){
+ // The chosen sort metric is the first school fact in every search card.
+ // Authorization is server-side; this presentation also denies cross-tier fields.
+ function addSortPrimary(card,school,sortBy,level){
+  const key=String(sortBy||'school_name').replace(/_(?:asc|desc)$/,'');
+  if(key==='school_name'||(level===0&&key!=='address')||
+     (level<2&&key==='housing_price_won'))return;
+  const numeric=(value,suffix,options={})=>{
+   if(value===null||value===undefined||value===''||
+      !Number.isFinite(Number(value))||Number(value)<0)return '자료 없음';
+   return Number(value).toLocaleString('ko-KR',options)+suffix;
+  };
+  let label='',value='';
+  switch(key){
+   case 'address': label='주소';value=String(school.address||'').trim()||'자료 없음';break;
+   case 'student_count':
+    label='학생 수'+(Number.isInteger(Number(school.student_reference_year))&&
+      Number(school.student_reference_year)>2000?' ('+school.student_reference_year+'년 기준)':'');
+    value=numeric(school.student_count,'명');break;
+   case 'beagu_percentile_2025':
+    label='2025 배구지수';value=numeric(school.beagu_percentile_2025,'%',{maximumFractionDigits:2});break;
+   case 'view_count':
+    label='학교 조회수';value=numeric(school.view_count,'회');break;
+   case 'junior_teacher_ratio':
+    label='2급 정교사 비율';value=numeric(school.junior_teacher_ratio,'%',{maximumFractionDigits:2});break;
+   case 'male_teacher_ratio':
+    label='남교사 비율';value=numeric(school.male_teacher_ratio,'%',{maximumFractionDigits:2});break;
+   case 'housing_price_won':
+    label='행정동 공동주택 평균 공시가격';value=numeric(school.housing_price_won,'원');break;
+   default:return;
+  }
+  const primary=el('div','school-sort-primary');
+  primary.dataset.sortKey=key;
+  primary.append(el('span','school-sort-primary-label',label),
+                 el('strong','school-sort-primary-value',value));
+  card.querySelector('.school-name').after(primary);
+ }
+ function createCard(school,{level=0,percentile,sortBy='school_name'}={}){
   if(!Number.isInteger(level)||level<0||level>2)throw Error('INVALID_CARD_LEVEL');
   if(!school||!/^[A-Z0-9]{7}$/.test(String(school.school_id)))throw Error('INVALID_SCHOOL_ID');
   const card=el('article','school-card');
   card.dataset.schoolId=String(school.school_id);
   card.dataset.accessLevel=String(level);
   addHeader(card,school);
+  addSortPrimary(card,school,sortBy,level);
   if(!percentile||!percentile.classList?.contains('percentile-panel'))throw Error('INVALID_PERCENTILE_PANEL');
   card.append(percentile);
   const actions=el('div','school-actions');

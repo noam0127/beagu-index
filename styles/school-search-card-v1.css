@@ -28,3 +28,10 @@
 .school-card .view-button:hover{background:#1d4ed8}
 .school-card .view-button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
 @media(max-width:480px){.school-card{padding:16px}.school-card .percentile-grid,.school-card .percentiles{grid-template-columns:repeat(2,minmax(0,1fr))}.school-card .percentile-value{font-size:15px}}
+
+/* 2026-11-23: selected sort's verified value leads the card at Lv.0/1/2. */
+.school-card .school-sort-primary{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;
+ padding:11px 13px;margin:2px 0 12px;border:1px solid #d4e2f4;border-radius:11px;background:#f5f9ff;
+ color:#193b69;overflow-wrap:anywhere}
+.school-card .school-sort-primary-label{font-size:12px;font-weight:650;color:#536783}
+.school-card .school-sort-primary-value{font-size:clamp(16px,3vw,20px);font-weight:800}

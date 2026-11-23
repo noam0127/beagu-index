@@ -877,7 +877,8 @@
     for (const school of list) {
       const {card,open:button,detail}=BeaguSchoolSearchCard.createCard(school,{
         level:viewerTier,
-        percentile:percentilePanel(school)
+        percentile:percentilePanel(school),
+        sortBy:sortValue
       });
       const housing=make('section','beagu-housing-preview');
       housing.append(make('strong','beagu-housing-label','공동주택 평균 공시가격'));
@@ -889,28 +890,12 @@
       housing.append(amount,make('p','beagu-housing-note',
         '해당 학교가 위치한 행정동의 공동주택 평균 공시가격입니다. 학교 자체나 개별 주택의 가격이 아닙니다.'));
       if(viewerTier<2){
-        const unlock=make('button','beagu-housing-unlock','🔒 Lv.2 잠금 · 레벨2에 도전하세요!');
-        unlock.type='button';
-        unlock.addEventListener('click',()=>{$('lv2UpgradeCard').scrollIntoView?.({behavior:'smooth'});$('lv2UpgradeCode').focus();});
+        const unlock=make('a','beagu-housing-unlock','🔒 Lv.2 잠금 · 레벨2에 도전하세요!');
+        unlock.href='challenge.html';
+        unlock.setAttribute('aria-label','Lv.2 잠금 해제 안내 · 챌린지로 이동');
         housing.append(unlock);
       }
       card.insertBefore(housing,card.querySelector('.percentile-panel'));
-      // Only show the chosen metric when sorting a regional list; values come from the existing authenticated sort API.
-      if(mode==='region'){
-        const metricSort={
-          beagu_percentile_2025:['2025 배구지수',school.beagu_percentile_2025,v=>Number(v).toFixed(2)+'%'],
-          student_count:['학생 수',school.student_count,v=>Number(v).toLocaleString('ko-KR')+'명'],
-          junior_teacher_ratio:['2급 정교사 비율 (2024년 기준)',school.junior_teacher_ratio,v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'],
-          male_teacher_ratio:['남교사 비율 (2024년 기준)',school.male_teacher_ratio,v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'],
-          housing_price_won:['공동주택 평균 공시가격',viewerTier>=2?school.housing_price_won:null,v=>Number(v).toLocaleString('ko-KR')+'원']
-        }[sortValue.replace(/_(?:asc|desc)$/,'')];
-        if(metricSort){
-          const [label,value,format]=metricSort;
-          const numeric=value!==null&&value!==undefined&&value!==''&&Number.isFinite(Number(value));
-          const indicator=make('div','sort-result',label+' · '+(numeric?format(value):'자료 없음'));
-          card.insertBefore(indicator,card.querySelector('.percentile-panel'));
-        }
-      }
       // Preserve Lv.0's exact four-year vertical percentile chart. Each
       // year is an independent marker, never a connecting trend line.
       // Only the heading becomes the detail disclosure control.
