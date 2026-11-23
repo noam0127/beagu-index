@@ -1185,6 +1185,19 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       left.vx=left.x-oldX;
       left.vy=left.y-oldY;
       left.jumpLock=false;
+    } else if(flightAllowed) {
+      // A wing pickup (or EASY) hovers at the last altitude when controls
+      // are released. No gravity until wings expire or shackles cancel flight.
+      const oldX=left.x;
+      const speed=5*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed;
+      const distance=touchActive?touchControl.targetX-left.x:0;
+      const direction=touchActive?(Math.abs(distance)>3?Math.sign(distance):0):keyboardDirection;
+      left.x=clamp(left.x+direction*speed,35,NET_X-NET_W/2-36);
+      if(touchActive&&Math.abs(distance)<=speed)left.x=clamp(touchControl.targetX,35,NET_X-NET_W/2-36);
+      left.y=clamp(left.y,playerCeiling(),FLOOR-31);
+      left.vx=left.x-oldX;
+      left.vy=0;
+      left.jumpLock=false;
     } else {
       // Other difficulties: horizontal movement + a single physical jump.
       // Continuous touch/drag never changes Y directly or resets gravity.

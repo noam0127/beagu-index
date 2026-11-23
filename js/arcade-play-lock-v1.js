@@ -14,18 +14,23 @@
       // In a very short survival viewport, prioritize the bottom character.
       const canvas=document.querySelector(".arcade-game-viewport canvas");
       const mobile=window.matchMedia?.("(max-width: 768px)").matches;
+      const survival=Boolean(canvas?.closest?.(".stage"));
       const fullscreen=Boolean(document.fullscreenElement||document.webkitFullscreenElement||
         document.querySelector(".arcade-fullscreen-fallback"));
-      if(canvas&&mobile&&!fullscreen){
-        const rect=canvas.getBoundingClientRect();
+      if(canvas&&(mobile||survival)&&!fullscreen){
         const viewport=window.visualViewport;
         const height=viewport?.height||window.innerHeight;
+        if(survival&&height>0)
+          document.documentElement.style.setProperty("--arcade-run-parent-visible-height",height+"px");
+        const rect=canvas.getBoundingClientRect();
         if(height>0&&rect.height>0){
           const visibleCenter=(viewport?.offsetTop||0)+height/2;
           let target=scrollY+rect.top+rect.height/2-visibleCenter;
-          if(canvas.closest(".stage")&&rect.height>height-32){
+          if(survival&&rect.height>height-24)target=scrollY+rect.top-12;
+          // Retain the existing vertical priority for volleyball on very
+          // short phones; survival instead fits the whole canvas above.
+          else if(!survival&&rect.height>height-32)
             target=Math.max(target,scrollY+rect.bottom-(height-24));
-          }
           const pageHeight=Math.max(document.documentElement.scrollHeight,
             document.body.scrollHeight);
           scrollY=Math.max(0,Math.min(Math.max(0,pageHeight-height),target));

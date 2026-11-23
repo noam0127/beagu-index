@@ -116,7 +116,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261123-cc0-bgm2">
-<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261120-survival-fs-check2">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261123-survival-contain1">
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
@@ -957,7 +957,9 @@ function update(dt){
   player.x+=dir*speed*dt;
   const vertical=(pressed.has("down")?1:0)-(pressed.has("up")?1:0);
   if(canPlayerRise()&&vertical!==0)player.y+=vertical*speed*dt;
-  else player.y=Math.min(H-52,player.y+520*dt);
+  else if(!(canPlayerRise()&&(profile===difficultyProfiles.easy||isMysteryBuff("wings"))))
+    player.y=Math.min(H-52,player.y+520*dt);
+  // Wing item or EASY: retain altitude without an active vertical input.
  }
  player.x=Math.max(27,Math.min(W-27,player.x));
  player.y=canPlayerRise()?Math.max(76,Math.min(H-52,player.y)):H-52;
@@ -1212,6 +1214,9 @@ function syncFullscreenPause(){
 }
 function tick(t){
  bgm.sync(soundOn&&(state==="playing"||state==="starting"));
+ // Apply the viewport-sized playing canvas before notifying a parent frame
+ // to center and freeze scrolling; do not refocus the page every frame.
+ document.body.classList.toggle("arcade-run-game-playing",state==="playing"||state==="paused");
  window.ArcadePlayLock?.sync(state==="playing");
  syncFullscreenPause();
  const dt=Math.min(.04,(t-last)/1000||0);last=t;

@@ -283,7 +283,7 @@
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261123-challenge-core-nav1">
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
-<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261120-survival-fs-check2">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261123-survival-contain1">
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
@@ -371,7 +371,7 @@
           class="teacher-game-frame"
           id="teacher-run-frame"
         scrolling="no"
-          data-src="teacher-run.html?v=20261123-cc0-bgm2"
+          data-src="teacher-run.html?v=20261123-screen-center-wings1"
           title="험난한 교직생활 3.0 — 24세 임용부터 62세 정년까지 살아남는 교사 생존 게임"
           loading="lazy"
           allowfullscreen></iframe>
@@ -481,26 +481,34 @@
     }
     function centerGameBeforeLock(frame){
       // An iframe sends its first play-state event only when a match starts.
-      // Align the court/stage within the phone viewport before freezing scroll.
-      if(expandedFrame===frame||!window.matchMedia?.("(max-width: 768px)").matches)return null;
+      // Center survival play on desktop AND mobile; retain existing mobile-only
+      // volleyball behavior. Never scroll a full-screen embedded viewport.
+      if(expandedFrame===frame||
+        (frame.id!=="teacher-run-frame"&&!window.matchMedia?.("(max-width: 768px)").matches))return null;
       let canvas;
       try{canvas=frame.contentDocument?.querySelector(".arcade-game-viewport canvas");}
       catch(_){return null;}
       if(!canvas)return null;
       const frameRect=frame.getBoundingClientRect();
-      const canvasRect=canvas.getBoundingClientRect();
       const viewport=window.visualViewport;
       const height=viewport?.height||window.innerHeight;
-      if(!height||!frameRect.height||!canvasRect.height)return null;
+      if(!height||!frameRect.height)return null;
+      if(frame.id==="teacher-run-frame"){
+        // Limit the playable canvas to the real PARENT viewport, not the
+        // iframe's often taller 720px viewport, before computing its center.
+        frame.contentDocument?.documentElement?.style.setProperty(
+          "--arcade-run-parent-visible-height",height+"px");
+      }
+      const canvasRect=canvas.getBoundingClientRect();
+      if(!canvasRect.height)return null;
       const current=window.scrollY||window.pageYOffset||0;
       const visibleCenter=(viewport?.offsetTop||0)+height/2;
       const canvasCenter=frameRect.top+canvasRect.top+canvasRect.height/2;
       let target=current+canvasCenter-visibleCenter;
-      // When the phone is shorter than the survival stage, keep the teacher
-      // near its bottom visible rather than cutting the character off.
-      if(frame.id==="teacher-run-frame"&&canvasRect.height>height-32){
-        const bottom=frameRect.top+canvasRect.bottom;
-        target=Math.max(target,current+bottom-(height-24));
+      // A frame smaller than the viewport can be fully centered; on
+      // exceptionally short screens prefer its top edge, not a cropped bottom.
+      if(frame.id==="teacher-run-frame"&&canvasRect.height>height-24){
+        target=current+frameRect.top+canvasRect.top-12;
       }
       const pageHeight=Math.max(document.documentElement.scrollHeight,
         document.body.scrollHeight);

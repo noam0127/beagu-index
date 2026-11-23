@@ -78,6 +78,18 @@ wings.touchControl.pointerId=6;wings.touchControl.targetX=240;wings.touchControl
 for(let i=0;i<18;i++)frame(wings);
 assert(wings.left.y<180,'wings pickup retains flight on normal');
 const altitude=wings.left.y;
+wings.touchControl.pointerId=null;
+wings.touchControl.targetX=null;
+wings.touchControl.targetY=null;
+for(let i=0;i<40;i++)frame(wings);
+assert.equal(wings.left.y,altitude,'wing pickup holds altitude with no active touch');
+assert.equal(wings.left.vy,0,'wing pickup cancels falling velocity');
+const easyAltitude=easy.left.y;
+easy.touchControl.pointerId=null;
+easy.touchControl.targetX=null;
+easy.touchControl.targetY=null;
+for(let i=0;i<40;i++)frame(easy);
+assert.equal(easy.left.y,easyAltitude,'EASY retains altitude when released');
 wings.wingActive=false;
 result=frame(wings);
 assert(result.y>=altitude&&result.y<264,'expired wings start falling rather than teleporting');
