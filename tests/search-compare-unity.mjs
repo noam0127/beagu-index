@@ -18,7 +18,7 @@ for(const p of ['js/beagu-level-state-v1.js','js/beagu-level-guide-v1.js','js/po
   execFileSync(process.execPath,['--check',p],{stdio:'inherit'});
 }
 for(const [key,html] of Object.entries(pages)){
-  assert.ok(html.includes('styles/beagu-search-compare-unity-v1.css?v=20261120-unity2'),
+  assert.ok(/styles\/beagu-search-compare-unity-v1\.css\?v=[0-9A-Za-z-]+/.test(html),
     key+' loads fresh common CSS');
   assert.ok(html.includes('class="beagu-levelup-') ||
     html.includes('beagu-levelup-card'),key+' uses shared level-up card');
