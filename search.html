@@ -158,17 +158,16 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
   
 
 </section>
-  <section class="beagu-interest beagu-interest--standalone" id="beaguInterest" data-interest-locked="true" aria-labelledby="beaguInterestTitle">
+  <section class="beagu-interest beagu-interest--standalone" id="beaguInterest" data-interest-locked="false" aria-labelledby="beaguInterestTitle">
     <div class="beagu-interest-head">
       <h2 id="beaguInterestTitle">실시간 급상승 학교</h2>
-      <span class="beagu-interest-badge">🔒 Lv.1 이상</span>
+      <span class="beagu-interest-badge beagu-interest-badge--live"><span class="beagu-interest-live-dot" aria-hidden="true"></span>15분마다 갱신 · Lv.0 공개</span>
     </div>
-    <div class="beagu-interest-lock">
-      <span class="beagu-interest-lock-icon" aria-hidden="true">🔒</span>
-      <strong>Lv.1부터 확인할 수 있습니다</strong>
-      <p>최근 72시간 사이 관심이 빠르게 늘어난 학교를 확인하세요.</p>
-      <a href="search-lv1.html?v=20261120-live-rising72-15min">참여코드 입력</a>
-    </div>
+    <p class="beagu-interest-description">최근 72시간 관심 증가순 상위 10개 학교</p>
+    <ol class="beagu-interest-list" data-interest-list aria-live="polite"></ol>
+    <p class="beagu-interest-status" data-interest-status role="status">급상승 학교를 확인하는 중입니다.</p>
+    <button type="button" class="beagu-interest-more" data-interest-more hidden>10위까지 보기</button>
+    <span class="beagu-interest-updated" data-interest-updated></span>
   </section>
 <section id="regionPanel" role="tabpanel" aria-labelledby="regionTab" hidden>
   <div class="field-group"><label class="field-label" for="regionSelect">1. 시도 선택</label>
@@ -193,7 +192,6 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
            <option value="view_count" disabled>🔒 조회수</option>
            <option value="junior_teacher_ratio" disabled>🔒 2정교사비</option>
            <option value="male_teacher_ratio" disabled>🔒 남교사비</option>
-           <option value="housing_price_won" disabled>🔒 공시지가</option>
          </optgroup>
        </select>
        <button id="publicSortDirection" class="beagu-sort-direction" type="button" aria-label="현재 오름차순, 내림차순으로 전환" title="현재 오름차순 · 클릭하면 내림차순">↑</button>
@@ -632,6 +630,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 </script>
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/search-telemetry-v1.js?v=20261120-selection-record2"></script>
+<script defer src="js/beagu-school-interest-v1.js?v=20261124-public-home1"></script>
 </body>
 </html>
 
