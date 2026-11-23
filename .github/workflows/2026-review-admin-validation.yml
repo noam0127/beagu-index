@@ -10,6 +10,8 @@ on:
       - 'supabase/migrations/*beagu_2026_basis_pending_review_audit.sql'
       - 'tests/2026-review-admin-static.cjs'
       - 'tests/2026-review-basis-pending-static.cjs'
+      - 'tests/2026-one-response-final-approval-rule.mjs'
+      - 'supabase/migrations/20261123153000_beagu_2026_n1_final_approval_eligible.sql'
       - 'styles/beagu-admin-v1.css'
       - '.github/workflows/2026-review-admin-validation.yml'
   push:
@@ -23,6 +25,8 @@ on:
       - 'supabase/migrations/*beagu_2026_basis_pending_review_audit.sql'
       - 'tests/2026-review-admin-static.cjs'
       - 'tests/2026-review-basis-pending-static.cjs'
+      - 'tests/2026-one-response-final-approval-rule.mjs'
+      - 'supabase/migrations/20261123153000_beagu_2026_n1_final_approval_eligible.sql'
       - 'styles/beagu-admin-v1.css'
       - '.github/workflows/2026-review-admin-validation.yml'
   workflow_dispatch:
@@ -39,6 +43,7 @@ jobs:
       - run: |
           node tests/2026-review-admin-static.cjs
           node tests/2026-review-basis-pending-static.cjs
+          node tests/2026-one-response-final-approval-rule.mjs
           node tests/admin-dashboard-static.cjs
           node tests/2026-question-results-pipeline.mjs
           node tests/three-day-release.mjs
