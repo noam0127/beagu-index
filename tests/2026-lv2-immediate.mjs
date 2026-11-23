@@ -24,8 +24,9 @@ assert.ok(!sql.includes("r.approved_at <= now()-interval '24 hours'"),'New Lv2 R
 assert.ok(sql.includes("revoke all on function public.beagu_2026_lv2_released_question_results(text) from public, anon, authenticated;"));
 assert.ok(sql.includes("grant execute on function public.beagu_2026_lv2_released_question_results(text) to service_role;"));
 const api=read('supabase/functions/beagu-level-api/index.ts');
-assert.ok(api.includes("if(level>=2){")&&api.includes("beagu_2026_lv2_released_question_results"));
-assert.ok(api.includes("if(level<2){")&&api.includes("beagu_2026_released_question_results"));
+assert.ok(api.includes("if(level>=2&&tierPublished2026){")&&api.includes("beagu_2026_lv2_released_question_results"));
+assert.ok(api.includes("if(level<2){")&&api.includes("beagu_2026_released_question_results")); 
+assert.ok(api.includes("beagu_2026_level_school_published"),"tier gate mandatory");
 assert.ok(api.includes("releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)"));
 assert.ok(api.includes("if(Number(session.access_level)>=2)"));
 console.log('PASS 2026 Lv2 immediate approval / Lv1 cooldown / privacy regression');
