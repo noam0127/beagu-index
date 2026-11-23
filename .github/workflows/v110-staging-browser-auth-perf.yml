@@ -6,6 +6,8 @@ on:
     paths:
       - 'scripts/test-v110-staging-auth-perf-browser.cjs'
       - 'scripts/test-v110-staging-lv3-browser.cjs'
+      - 'challenge.html'
+      - 'tests/staging-member-lifecycle-contract.test.py'
       - 'tests/staging-lv3-member-predicate.mjs'
       - 'tests/staging-lv3-active-auth-session.mjs'
       - 'js/beagu-participation-auth-v2.js'
@@ -41,6 +43,8 @@ jobs:
           node tests/staging-lv3-member-predicate.mjs
           node tests/staging-lv3-active-auth-session.mjs
           node --check scripts/test-v110-staging-lv3-browser.cjs
+          node --check js/challenge-member-auth-v1.js
+          python3 tests/staging-member-lifecycle-contract.test.py
           node tests/admin-page-performance-static.cjs
       - name: Real staging Auth negative HTTP without codes, credentials or DB writes
         run: python3 tests/staging-browser-auth-real-denials.test.py
