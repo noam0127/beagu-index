@@ -241,6 +241,16 @@
       "source": "pause",
       "path": "teacher-run.html",
       "status": "already present"
+    },
+    {
+      "source": "pause",
+      "path": "challenge.html",
+      "status": "already present by patch"
+    },
+    {
+      "source": "desktop",
+      "path": "styles/beagu-participation-auth-v2.css",
+      "status": "merged without overlapping context"
     }
   ],
   "pending": [
@@ -498,7 +508,8 @@
       "merge_base": "36c68c8394a77a94541a2ad04a83db7242639c0c",
       "path": "index.html",
       "blob_sha": "d254180a30be0221dc39be273062fa6ad2c99c4d",
-      "status": "modified"
+      "status": "modified",
+      "reason": "conflicting context 1"
     },
     {
       "source": "volley",
@@ -506,7 +517,8 @@
       "merge_base": "36c68c8394a77a94541a2ad04a83db7242639c0c",
       "path": "teacher-volleyball.html",
       "blob_sha": "8714f05198c613d610629d732806454aa9680a65",
-      "status": "modified"
+      "status": "modified",
+      "reason": "conflicting context 3"
     },
     {
       "source": "notice",
@@ -544,17 +556,10 @@
       "source": "pause",
       "source_sha": "27f96a29923226216c4c7c6b80cca6aa701cf21f",
       "merge_base": "02f952af2e62b6ad1380b7ad324a1fb5362fdcd2",
-      "path": "challenge.html",
-      "blob_sha": "1210740de339ca3d9529eaef63ee90a647acef4a",
-      "status": "modified"
-    },
-    {
-      "source": "pause",
-      "source_sha": "27f96a29923226216c4c7c6b80cca6aa701cf21f",
-      "merge_base": "02f952af2e62b6ad1380b7ad324a1fb5362fdcd2",
       "path": "index.html",
       "blob_sha": "96f71debbe8cffbdfe19ad058800f33e6eeb5b35",
-      "status": "modified"
+      "status": "modified",
+      "reason": "conflicting context 1"
     },
     {
       "source": "pause",
@@ -562,15 +567,8 @@
       "merge_base": "02f952af2e62b6ad1380b7ad324a1fb5362fdcd2",
       "path": "teacher-volleyball.html",
       "blob_sha": "ff6500a89664bdc50974d42c6198f4a3a0ea0e0f",
-      "status": "modified"
-    },
-    {
-      "source": "desktop",
-      "source_sha": "e484c2767121021feb1f98eae1d7c44be9c5cec3",
-      "merge_base": "5950755c8174788d7bb1fa879be73a15f25d9ae2",
-      "path": "styles/beagu-participation-auth-v2.css",
-      "blob_sha": "1ae57aa23ad546ee2ecbe5b7f0f8cd7dab8126a5",
-      "status": "modified"
+      "status": "modified",
+      "reason": "conflicting context 3"
     }
   ],
   "external_project_holds": [
