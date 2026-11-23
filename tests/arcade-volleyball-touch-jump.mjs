@@ -11,7 +11,7 @@ assert.match(source,/controlPlayer\(left,moveX,canPlayerJump\(\)&&\(keys\.jump\|
 assert.match(source,/touchControl\.pointerId!==null/,'active joystick pointer is tracked');
 assert.match(source,/if\(dashing\)state\.dashFrames--/,'dash ends after a bounded burst');
 assert.match(source,/state\.dashCooldownFrames=DASH_COOLDOWN/,'dash uses a cooldown');
-assert.match(source,/right:"right"/,'keyboard right binding remains');
+assert.match(source,/ArrowRight:"right"/,'keyboard right binding remains');
 
 const controlStart=source.indexOf('function controlPlayer(p, direction, jump, speed, jumpStrength=12.8) {');
 const controlEnd=source.indexOf('function moveClones()',controlStart);
