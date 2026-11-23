@@ -15,7 +15,7 @@ assert.match(volley,/bgm\.sync\(soundOn&&\["starting","playing","point"\]/);
 assert.match(run,/bgm\.sync\(soundOn&&\(state==="playing"\|\|state==="starting"\)\)/);
 assert.match(style,/\.arcade-bgm-credit a:focus-visible/);
 assert.match(read('index.html'),/teacher-volleyball\.html\?v=20261123-touch-jump1/);
-assert.match(read('index.html'),/teacher-run\.html\?v=20261123-cc0-bgm2/);
+assert.match(read('index.html'),/teacher-run\.html\?v=20261123-screen-center-wings1/);
 assert.match(volley,/styles\/arcade-cabinet-v1\.css\?v=20261123-cc0-bgm2/);
 assert.match(run,/styles\/arcade-cabinet-v1\.css\?v=20261123-cc0-bgm2/);
 assert.match(volley,/https:\/\/opengameart\.org\/content\/keep-your-dream-alive-seamless-loop/);

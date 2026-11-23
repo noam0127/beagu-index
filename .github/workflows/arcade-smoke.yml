@@ -10,6 +10,8 @@ on:
       - 'tests/arcade-bgm-v1.mjs'
       - 'tests/arcade-item-upgrade-v1.mjs'
       - 'tests/arcade-volleyball-touch-jump.mjs'
+      - 'tests/arcade-survival-screen-fit.mjs'
+      - 'js/arcade-play-lock-v1.js'
       - 'index.html'
       - 'js/arcade-leaderboard-v1.js'
       - 'js/arcade-history-v1.js'
@@ -51,6 +53,8 @@ jobs:
         run: node tests/arcade-item-upgrade-v1.mjs
       - name: Check touch jump, gravity and wings-only flight physics
         run: node tests/arcade-volleyball-touch-jump.mjs
+      - name: Verify survival fullscreen centering and both wing-hover behaviors
+        run: node tests/arcade-survival-screen-fit.mjs
       - name: Verify ranking school links and level access
         run: node tests/arcade-school-link.mjs
       - name: Check game scripts and deployed arcade ranking
