@@ -1,0 +1,1203 @@
+{
+  "schema": 1,
+  "route": "GitHub → local/CI tests → administrator pinned-SHA registration → explicit direct GitHub Pages publication → verification; no Vercel or test website",
+  "baseline": {
+    "pages_release_state_sha": "36c68c8394a77a94541a2ad04a83db7242639c0c",
+    "separate_vercel_hotfix_sha": "ff6d4ec2d59f0a4aa0f84531be633896d321943b",
+    "public_http_verified": false
+  },
+  "versions": [
+    {
+      "order": 1,
+      "version": "v1.2.0",
+      "name": "정돈",
+      "scope": "공통 메뉴·검색 비교 UI·참여코드·레벨 색상·버전 표시",
+      "status": "PARTIAL_VALIDATION_ADMIN_BOOTSTRAP_REQUIRED",
+      "branch": "release/v1.2.0-clean-pages",
+      "pr": null,
+      "commit": "0cc5acc509159b34a00f1c22dac9de1e4f42c971",
+      "tests": [
+        {
+          "name": "GitHub exact source JS/CSS SHA match and node syntax",
+          "result": "PASS",
+          "blobs": [
+            "5dfd86ae8a7938bfa4e125d736597a83dec4b5e8",
+            "d0c742ce923348b267dda80846c533e6e076f5dc"
+          ]
+        },
+        {
+          "name": "metadata VM unit cases",
+          "result": "PASS",
+          "groups": 13,
+          "scope": "mock DOM and network only"
+        },
+        {
+          "name": "Chromium fixture viewport 320/390/768/1440",
+          "result": "PASS",
+          "cases": 8,
+          "scope": "in-memory fixture, exact JS/CSS, no public network"
+        },
+        {
+          "name": "full site E2E and exact CI result",
+          "result": "NOT_VERIFIED",
+          "reason": "external network blocked; code-only workflow added but not run"
+        },
+        {
+          "name": "direct admin service end-to-end and exact publication timestamp",
+          "result": "NOT_VERIFIED"
+        }
+      ],
+      "changed_files": [
+        ".github/workflows/clean-release-validation.yml",
+        "challenge.html",
+        "development-roadmap.json",
+        "index.html",
+        "js/beagu-release-info-v1.js",
+        "postit.html",
+        "release-candidate.json",
+        "release-info.json",
+        "scripts/release-manager/stamp_release_info.py",
+        "search-lv1.html",
+        "search.html",
+        "statistics.html",
+        "styles/beagu-clean-v1.css",
+        "styles/beagu-participation-auth-v2.css",
+        "teacher-class-diary-entry.html",
+        "tests/clean-release-contract.cjs",
+        "tests/clean-release-info-runtime.cjs"
+      ],
+      "dependencies": [],
+      "admin_registration": "BLOCKED_EXISTING_STAGING_JOB_AND_LEGACY_API",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "36c68c8394a77a94541a2ad04a83db7242639c0c",
+      "prerequisite": {
+        "branch": "infra/pages-direct-release-v1",
+        "commit": "ea951df6533138bbcb4cba9a80c869ebed4815fb",
+        "status": "SOURCE_ONLY_NOT_DEPLOYED",
+        "scope": "owner MFA direct pinned candidate, server CI proof, stale-base guard, artifact stamp, admin UI",
+        "required": "review and separately approve activation; preserve existing staging request; rebase candidate on actual newly deployed admin baseline"
+      },
+      "user_approval_needed": [
+        "Approve separate minimal admin system activation, not the v1.2.0 public release",
+        "Resolve existing staging job before registering new candidate"
+      ]
+    },
+    {
+      "order": 2,
+      "version": "v1.3.0",
+      "name": "놀이터",
+      "scope": "게임 허브·기존 진입 유지",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 3,
+      "version": "v1.4.0",
+      "name": "플레이",
+      "scope": "게임 조작·전체화면·일시정지",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 4,
+      "version": "v1.5.0",
+      "name": "이정표",
+      "scope": "챌린지 달성·코드·추천 현황",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 5,
+      "version": "v1.6.0",
+      "name": "소통",
+      "scope": "공지사항·의견 접수",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 6,
+      "version": "v1.7.0",
+      "name": "관제탑",
+      "scope": "관리자 직접 배포·SHA 검증·롤백",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 7,
+      "version": "v1.8.0",
+      "name": "연결고리",
+      "scope": "추천 서버 검증·자동 승급",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 8,
+      "version": "v1.9.0",
+      "name": "투명한 데이터",
+      "scope": "2026 집계·비식별·레벨별 승인",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 9,
+      "version": "v1.10.0",
+      "name": "신뢰",
+      "scope": "신고·재검증·재공개",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [
+        "v1.9.0"
+      ],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 10,
+      "version": "v1.11.0",
+      "name": "나의 계정",
+      "scope": "가계정·비밀번호·본인확인",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 11,
+      "version": "v1.12.0",
+      "name": "다시 쓰기",
+      "scope": "본인 응답 수정·이력·집계",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [
+        "v1.9.0",
+        "v1.11.0"
+      ],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 12,
+      "version": "v1.13.0",
+      "name": "바코드 공동체",
+      "scope": "바코드닉·프로필·게임 기록",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [
+        "v1.11.0"
+      ],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 13,
+      "version": "v1.14.0",
+      "name": "이야기와 음악",
+      "scope": "학급일지·스쿨밴드",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 14,
+      "version": "v2.0.0",
+      "name": "새로운 배구지수",
+      "scope": "소셜 계정·Lv3·관리자 MFA",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [
+        "v1.11.0"
+      ],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    }
+  ],
+  "source_manifest": {
+    "branch": "integration/v1.1.0-rc.2-20261124",
+    "path": "qa-integration-manifest.json"
+  },
+  "inventory": [
+    {
+      "source": "member",
+      "path": "js/beagu-release-progress-v1.js",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/member-tier-v1.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.11.0",
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/moderation-audit.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.10.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/postit-member-ownership.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.13.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/staging-release-candidate.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "admin",
+      "path": "supabase/migrations/20261122010000_admin_member_challenge_summary_v1.sql",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "admin",
+      "path": "supabase/migrations/20261122020000_admin_member_directory_v2.sql",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/github-work-inbox.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/release-conflict-preflight.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/release-impact-evidence.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/release-snapshot-gate.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/release-work-dependencies.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "release",
+      "path": "supabase/migrations/20261121_site_release_version_catalog.sql",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "path": "js/beagu-independent-preview-target-v1.js",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/_shared/staging-origin.ts",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/beagu-release-manager-v1/release-ci-proof.mjs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "rematch",
+      "path": "scripts/beagu-2026-noon-sync.gs",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.9.0"
+      ]
+    },
+    {
+      "source": "rematch",
+      "path": "scripts/beagu-2026-results-core.js",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.9.0"
+      ]
+    },
+    {
+      "source": "rematch",
+      "path": "scripts/beagu-2026-results-runtime.js",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.9.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/anthem-media-fixture.v1.json",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/creative-school-anthem.chart.v1.json",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/original-anthem.music-events.v1.json",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/original-variable-meter-exercise.input.v1.json",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/school-homepages.v1.json",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/schoolband-chart.schema.json",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/song-intake-rights.v1.json",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/song-queue-stage023.v1.json",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/index.html",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/preview/index.html",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.14.0"
+      ]
+    },
+    {
+      "source": "notice",
+      "path": "js/beagu-home-notice-admin-v1.js",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.6.0"
+      ]
+    },
+    {
+      "source": "notice",
+      "path": "js/beagu-home-notice-public-v1.js",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.6.0"
+      ]
+    },
+    {
+      "source": "notice",
+      "path": "styles/beagu-home-notice-admin-v1.css",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.6.0"
+      ]
+    },
+    {
+      "source": "notice",
+      "path": "supabase/functions/beagu-home-notice-v1/index.ts",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.6.0"
+      ]
+    },
+    {
+      "source": "notice",
+      "path": "supabase/migrations/20261121_home_notice_admin_editor.sql",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.6.0"
+      ]
+    },
+    {
+      "source": "postit",
+      "path": "supabase/migrations/20261120_beagu_postit_verified_account_bridge_v1.sql",
+      "status": "collected exact source",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.13.0"
+      ]
+    },
+    {
+      "source": "pause",
+      "path": "js/challenge-referral-v1.js",
+      "status": "already present",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.5.0"
+      ]
+    },
+    {
+      "source": "pause",
+      "path": "styles/arcade-playback-v1.css",
+      "status": "already present",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.4.0"
+      ]
+    },
+    {
+      "source": "pause",
+      "path": "teacher-run.html",
+      "status": "already present",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.4.0"
+      ]
+    },
+    {
+      "source": "pause",
+      "path": "challenge.html",
+      "status": "already present by patch",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.5.0"
+      ]
+    },
+    {
+      "source": "desktop",
+      "path": "styles/beagu-participation-auth-v2.css",
+      "status": "merged without overlapping context",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.2.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "admin-updates.html",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "js/beagu-level-state-v1.js",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.11.0",
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "js/challenge-member-auth-v1.js",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.11.0",
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "js/postit-account-v1.js",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.13.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "styles/beagu-admin-updates-v1.css",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/release-policy.mjs",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/beagu-admin-members-v1/index.ts",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.11.0",
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/beagu-postit-api-v1/index.ts",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.13.0"
+      ]
+    },
+    {
+      "source": "admin",
+      "path": "js/beagu-admin-members-v1.js",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/beagu-admin-access/index.ts",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/beagu-admin-dashboard-v1/index.ts",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/beagu-telemetry-v2/index.ts",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "path": "teacher-class-diary-entry.html",
+      "status": "exact three-way unchanged base",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "path": "js/postit-account-v1.js",
+      "status": "reconciled source delta; exact readback verified; runtime pending",
+      "commit": "ada47bd040e9201c514c771b7ad391e6270f6aa7",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "path": "styles/beagu-admin-updates-v1.css",
+      "status": "reconciled source delta; exact readback verified; runtime pending",
+      "commit": "c00e3dd4361d47924236fba1c924dfffc06fc90d",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "release",
+      "path": "styles/beagu-admin-updates-v1.css",
+      "status": "reconciled source delta; exact readback verified; runtime pending",
+      "commit": "721287dc60b6fdd51280705ee7024ea9de5e87f0",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "notice",
+      "path": "js/beagu-admin-access-v1.js",
+      "status": "reconciled source delta; exact readback verified; runtime pending",
+      "commit": "42373498546830fa2125bc1111bd24422cf91ae2",
+      "original_status": "collected_or_merged_in_prior_integration",
+      "target_versions": [
+        "v1.6.0"
+      ]
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "js/beagu-admin-updates-v1.js",
+      "blob_sha": "1f9bafc2f7e470859077361ed4abc3d372f5b15e",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "js/level-search.js",
+      "blob_sha": "cb59860a82f3243acdc59339df1cf59959c60bfe",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.11.0",
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "supabase/functions/beagu-level-api/index.ts",
+      "blob_sha": "f4c5ca4e6e85660273dcc155b115b1f16668f2cd",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.11.0",
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "supabase/functions/beagu-release-manager-v1/index.ts",
+      "blob_sha": "5b9ff576fcf598a0eba6a1dcf50c00bf7eba7c97",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "admin",
+      "source_sha": "a00a9a4af67069b45277cde28f199de4f4733acc",
+      "merge_base": "0ea26679515c0e6a88d123e478c955e2c49fd737",
+      "path": "admin.html",
+      "blob_sha": "154f3e26cf0139909b189af4bd70d111fff0fd8c",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "admin",
+      "source_sha": "a00a9a4af67069b45277cde28f199de4f4733acc",
+      "merge_base": "0ea26679515c0e6a88d123e478c955e2c49fd737",
+      "path": "supabase/functions/beagu-admin-members-v1/index.ts",
+      "blob_sha": "0fc0e08f019e6a3f4131373564a565f24474f93e",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v2.0.0"
+      ]
+    },
+    {
+      "source": "release",
+      "source_sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84",
+      "merge_base": "6467b42a14fde343326b40cb251add91e05e2cec",
+      "path": "admin-updates.html",
+      "blob_sha": "259bfec782ade25a15cb17552dd76534d5110f18",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "release",
+      "source_sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84",
+      "merge_base": "6467b42a14fde343326b40cb251add91e05e2cec",
+      "path": "js/beagu-admin-updates-v1.js",
+      "blob_sha": "f998be9435c8e3c9c988779eeedf7f2ccd1ac74f",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "release",
+      "source_sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84",
+      "merge_base": "6467b42a14fde343326b40cb251add91e05e2cec",
+      "path": "supabase/functions/beagu-release-manager-v1/index.ts",
+      "blob_sha": "5b1fbd5d2deaa1a9b077d5dd91d1be79bd9078fb",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "admin-updates.html",
+      "blob_sha": "3ab93671a9ba15991dd47e2d7cb9a4e3a4e9ffa8",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "js/beagu-admin-updates-v1.js",
+      "blob_sha": "8a73cea03df071aca9b655afee894f5f2efd886b",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-admin-members-v1/index.ts",
+      "blob_sha": "931ef6ccfff8442b918b7150b3ced5822f2928c4",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-level-api/index.ts",
+      "blob_sha": "562fcaf651a5b274dc5771184e7c52a105c95909",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-postit-api-v1/index.ts",
+      "blob_sha": "af8974f6e8a1224fd835730dcad6d801d32889fa",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-release-manager-v1/index.ts",
+      "blob_sha": "5dd4d869ce5c414b9b53d760afac6274fb635ebb",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.7.0"
+      ]
+    },
+    {
+      "source": "volley",
+      "source_sha": "e1aa7557d6da61cff48417373e6d30c7d34913e9",
+      "merge_base": "36c68c8394a77a94541a2ad04a83db7242639c0c",
+      "path": "index.html",
+      "blob_sha": "d254180a30be0221dc39be273062fa6ad2c99c4d",
+      "status": "modified",
+      "reason": "conflicting context 1",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.4.0"
+      ]
+    },
+    {
+      "source": "volley",
+      "source_sha": "e1aa7557d6da61cff48417373e6d30c7d34913e9",
+      "merge_base": "36c68c8394a77a94541a2ad04a83db7242639c0c",
+      "path": "teacher-volleyball.html",
+      "blob_sha": "8714f05198c613d610629d732806454aa9680a65",
+      "status": "modified",
+      "reason": "conflicting context 3",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.4.0"
+      ]
+    },
+    {
+      "source": "notice",
+      "source_sha": "64192de346c2f15ec7d6988212fe382f2d7afadb",
+      "merge_base": "73eec3674972f27fe9649aec69cde82942bb18f1",
+      "path": "admin.html",
+      "blob_sha": "eb0fb40fc1b3ec499848ed8dee1cad2d23807f0c",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.6.0"
+      ]
+    },
+    {
+      "source": "notice",
+      "source_sha": "64192de346c2f15ec7d6988212fe382f2d7afadb",
+      "merge_base": "73eec3674972f27fe9649aec69cde82942bb18f1",
+      "path": "index.html",
+      "blob_sha": "3a32c3fda5f8423e56be9e18bc32d249c7687e35",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.6.0"
+      ]
+    },
+    {
+      "source": "postit",
+      "source_sha": "99977702eaa4e43fee852fc08891dc57e97843f4",
+      "merge_base": "d5ed0c525b0fb9495032989a39898ebd3b17d03a",
+      "path": "supabase/functions/beagu-postit-api-v1/index.ts",
+      "blob_sha": "09451e5905fdc72c27d6f421ad9c8a54c90c02f4",
+      "status": "modified",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.13.0"
+      ]
+    },
+    {
+      "source": "pause",
+      "source_sha": "27f96a29923226216c4c7c6b80cca6aa701cf21f",
+      "merge_base": "02f952af2e62b6ad1380b7ad324a1fb5362fdcd2",
+      "path": "index.html",
+      "blob_sha": "96f71debbe8cffbdfe19ad058800f33e6eeb5b35",
+      "status": "modified",
+      "reason": "conflicting context 1",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.4.0"
+      ]
+    },
+    {
+      "source": "pause",
+      "source_sha": "27f96a29923226216c4c7c6b80cca6aa701cf21f",
+      "merge_base": "02f952af2e62b6ad1380b7ad324a1fb5362fdcd2",
+      "path": "teacher-volleyball.html",
+      "blob_sha": "ff6500a89664bdc50974d42c6198f4a3a0ea0e0f",
+      "status": "modified",
+      "reason": "conflicting context 3",
+      "original_status": "unresolved",
+      "target_versions": [
+        "v1.4.0"
+      ]
+    }
+  ],
+  "source_branches": [
+    {
+      "name": "member",
+      "sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b"
+    },
+    {
+      "name": "admin",
+      "sha": "a00a9a4af67069b45277cde28f199de4f4733acc"
+    },
+    {
+      "name": "release",
+      "sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84"
+    },
+    {
+      "name": "isolation",
+      "sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b"
+    },
+    {
+      "name": "rematch",
+      "sha": "544913f9d37146e63d3518f32a86881497195d21"
+    },
+    {
+      "name": "volley",
+      "sha": "e1aa7557d6da61cff48417373e6d30c7d34913e9"
+    },
+    {
+      "name": "band",
+      "sha": "8962ff47dd0e0d05f4ccfebd28ca33e1d49ac4a3"
+    },
+    {
+      "name": "notice",
+      "sha": "64192de346c2f15ec7d6988212fe382f2d7afadb"
+    },
+    {
+      "name": "postit",
+      "sha": "99977702eaa4e43fee852fc08891dc57e97843f4"
+    },
+    {
+      "name": "pause",
+      "sha": "27f96a29923226216c4c7c6b80cca6aa701cf21f"
+    },
+    {
+      "name": "desktop",
+      "sha": "e484c2767121021feb1f98eae1d7c44be9c5cec3"
+    }
+  ],
+  "external_project_holds": [
+    {
+      "repo": "noam0127/class-diary-visual-novel",
+      "draft_pr": 20,
+      "sha": "34533ea5d094b00064f238654a5203e25a383467",
+      "dependency_pr": 19,
+      "dependency_sha": "8df8e96da713d3b377e2972981f151cf18b52d75",
+      "reason": "private manuscript and unresolved 109/110 acceptance; keep separate from public QA"
+    }
+  ],
+  "backlog": [
+    {
+      "item": "new separate game-list navigation",
+      "target_version": "v1.3.0"
+    },
+    {
+      "item": "survey-response password and own-answer correction",
+      "target_version": "v1.12.0"
+    },
+    {
+      "item": "persistent unique code + password login",
+      "target_version": "v1.11.0"
+    },
+    {
+      "item": "2026 actual-response approval and privacy verification",
+      "target_version": "v1.9.0"
+    },
+    {
+      "item": "email signup end-to-end and staging backend/auth/MFA integration",
+      "target_version": "v2.0.0"
+    }
+  ],
+  "previous_plan_preserved": true,
+  "unresolved_policy": [
+    "legacy Lv1 referral waiver",
+    "legacy Lv1 immediate Lv3 after account connection"
+  ],
+  "guardrails": [
+    "No production DB change, no paid changes, no production publication until explicitly approved",
+    "Do not bundle the separate Vercel hotfix or later features without reconciliation",
+    "Use exact candidate SHA, reject stale base, preserve rollback",
+    "Local/CI tests only; no test site deployment"
+  ]
+}
