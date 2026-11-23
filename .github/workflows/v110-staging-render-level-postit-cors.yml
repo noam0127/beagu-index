@@ -11,6 +11,9 @@ on:
       - 'scripts/staging/schema-lv3-revoked-auth-session-qa-only.sql'
       - 'tests/sql/staging-lv3-auth-session-revocation-rollback-20261123.sql'
       - 'tests/sql/staging-lv3-member-suspend-delete-rollback-20261123.sql'
+      - 'scripts/staging/schema-postit-member-transition-audit-qa-20261123.sql'
+      - 'tests/sql/staging-member-link-lifecycle-rollback-20261123.sql'
+      - 'tests/staging-member-lifecycle-contract.test.py'
       - '.github/workflows/v110-staging-render-level-postit-cors.yml'
   workflow_dispatch:
 permissions:
@@ -27,6 +30,8 @@ jobs:
         run: python3 tests/staging-render-level-postit-contract.test.py
       - name: Test Auth session JWT claim and server-only RPC contract
         run: node tests/staging-lv3-active-auth-session.mjs
+      - name: Enforce member identity reservation and audit atomicity contract
+        run: python3 tests/staging-member-lifecycle-contract.test.py
       - name: Exercise real staging OPTIONS GET without any user data
         run: python3 tests/staging-render-level-postit-http.test.py
       - name: Delineate test evidence
