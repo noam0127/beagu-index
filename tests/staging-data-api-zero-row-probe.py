@@ -33,3 +33,22 @@ if status!=200:
 if body.strip()!=b'[]':
   raise SystemExit("SECURITY FAILURE: zero-row RLS deny-all probe exposed unexpected contents")
 print("PASS: staging REST is enabled and honors deny-all RLS; investigate table-level cache")
+
+# Additional read-only probe: despite ACL SELECT, deny-all RLS must return []
+score_url="https://ycwuugggqbunlbwuzvbx.supabase.co/rest/v1/arcade_game_scores?select=id&limit=0"
+req=request.Request(score_url,headers={"apikey":key,"Accept":"application/json"})
+try:
+  with request.urlopen(req,timeout=25) as response:
+    score_status=response.status
+    score_body=response.read(512)
+except error.HTTPError as e:
+  score_status=e.code
+  score_body=e.read(512)
+score_code="NONE"
+try:
+  sj=json.loads(score_body)
+  if isinstance(sj,dict):score_code=str(sj.get("code","NONE"))
+except (json.JSONDecodeError,UnicodeDecodeError):pass
+print("ANON SCORE TABLE route:",score_status,"code:",score_code)
+if score_status==200 and score_body.strip()!=b'[]':
+  raise SystemExit("SECURITY FAILURE: a raw arcade row became visible")
