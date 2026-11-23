@@ -70,3 +70,4 @@ jobs:
       - run: node tests/2026-approved-search-refresh.mjs
       - run: node tests/2026-school-empty-survey-cta.mjs
       - run: node tests/lv1-percentile-chart-parity.mjs
+      - run: node --test tests/school-discovery-hotfix-20261124.mjs
