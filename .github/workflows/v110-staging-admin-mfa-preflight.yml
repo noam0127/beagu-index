@@ -6,6 +6,8 @@ on:
     paths:
       - 'scripts/staging/recovered-beagu-2026-review-admin/**'
       - 'tests/staging-admin-mfa-preflight-*.test.py'
+      - 'tests/staging-owner-aal2-local-checker.test.py'
+      - 'scripts/staging/check-owner-aal2-interactive.py'
       - '.github/workflows/v110-staging-admin-mfa-preflight.yml'
   workflow_dispatch:
 permissions:
@@ -22,6 +24,8 @@ jobs:
         run: python3 tests/staging-admin-mfa-preflight-contract.test.py
       - name: Call REAL STAGING HTTP with unsigned/forged tokens only
         run: python3 tests/staging-admin-mfa-preflight-http.test.py
+      - name: Test local tester instructions with zero secrets
+        run: python3 tests/staging-owner-aal2-local-checker.test.py
       - name: Document narrow evidence boundary
         run: |
           echo "All live requests are credential-free and make no database changes."
