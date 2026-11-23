@@ -49,7 +49,8 @@ assert.match(api,/student_count/,'Student count is a verified server sort');
 assert.match(api,/housing_price_won/,'Housing price is a verified server sort');
 assert.match(api,/junior_teacher_ratio/,'2nd-class teacher ratio is a verified server sort');
 assert.match(api,/male_teacher_ratio/,'Male teacher ratio is a verified server sort');
-assert.match(api,/student_count,student_reference_year,housing_price_won,junior_teacher_ratio,male_teacher_ratio/,'Approved school ratios must be returned for sort cards');
+for(const field of ['student_count','student_reference_year','housing_price_won','junior_teacher_ratio','male_teacher_ratio'])
+ assert.match(api,new RegExp(field),'Approved school sort field missing: '+field);
 assert.doesNotMatch(html,/id="sortTabs"/,'No school search sorting buttons');
 assert.doesNotMatch(html,/자료 표시 기준|Lv.1에서 공개 승인된 2023~2026년 학교 규모/);
 assert.doesNotMatch(search,/세종시 전체 공동주택 평균 공시가격/);
