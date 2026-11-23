@@ -86,7 +86,7 @@ for file in stage.rglob("*"):
 blueprint = (root / "render.yaml").read_text(encoding="utf-8")
 assert "runtime: static" in blueprint
 assert "autoDeployTrigger: off" in blueprint
-assert "branch: fix/v1.1.0-preview-isolation-gate-20261123" in blueprint
+assert "branch: fix/v110-staging-edited-api-recovery-20261123" in blueprint
 assert "staticPublishPath: ./_standalone_staging" in blueprint
 assert "https://ycwuugggqbunlbwuzvbx.supabase.co" in blueprint
 assert "snvzwrexuqavnfvzgxqj" not in blueprint
