@@ -40,7 +40,7 @@ Deno.serve(async(request:Request)=>{
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(!["queue","pipeline","level_decision","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
+ if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -79,6 +79,23 @@ Deno.serve(async(request:Request)=>{
   }
   // Review decisions may only be made by the owner, never a viewer or editor.
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
+  if(input.action==="bulk_verified"){
+    const preview=input.preview===true;
+    const limit=input.limit===undefined?40:input.limit;
+    if(typeof limit!=="number"||!Number.isInteger(limit)||limit<1||limit>40)
+      return send(origin,400,{error:"invalid_bulk_limit"});
+    if(!preview&&input.confirmation!=="APPROVE_VERIFIED_EXACT_SNAPSHOTS")
+      return send(origin,400,{error:"missing_explicit_bulk_confirmation"});
+    const {data,error}=await db.rpc("beagu_2026_owner_bulk_verified",{
+      p_actor:actor,p_session:claims.session_id,p_preview:preview,p_limit:limit,
+      p_confirmation:preview?null:"APPROVE_VERIFIED_EXACT_SNAPSHOTS"
+    });
+    if(error||!data?.ok){
+      console.error("bulk_approval_rejected",error?.code||"unknown");
+      return send(origin,409,{error:"bulk_approval_checks_failed"});
+    }
+    return send(origin,200,data);
+  }
   if(input.action==="level_decision"){
     // Tier approval never changes individual school approvals or source records.
     const level=input.level;

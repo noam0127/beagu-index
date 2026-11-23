@@ -12,6 +12,8 @@ on:
       - 'tests/2026-review-basis-pending-static.cjs'
       - 'tests/2026-one-response-final-approval-rule.mjs'
       - 'tests/2026-owner-final-approval-static.cjs'
+      - 'tests/2026-bulk-verified-static.cjs'
+      - 'supabase/migrations/20261123171500_2026_bulk_verified_school_approval.sql'
       - 'tests/2026-level-final-approval-ui.cjs'
       - 'tests/2026-three-stage-review-flow.mjs'
       - 'supabase/migrations/20261123162500_2026_owner_final_review_publication.sql'
@@ -31,6 +33,8 @@ on:
       - 'tests/2026-review-basis-pending-static.cjs'
       - 'tests/2026-one-response-final-approval-rule.mjs'
       - 'tests/2026-owner-final-approval-static.cjs'
+      - 'tests/2026-bulk-verified-static.cjs'
+      - 'supabase/migrations/20261123171500_2026_bulk_verified_school_approval.sql'
       - 'tests/2026-level-final-approval-ui.cjs'
       - 'tests/2026-three-stage-review-flow.mjs'
       - 'supabase/migrations/20261123162500_2026_owner_final_review_publication.sql'
@@ -53,6 +57,7 @@ jobs:
           node tests/2026-review-basis-pending-static.cjs
           node tests/2026-one-response-final-approval-rule.mjs
           node tests/2026-owner-final-approval-static.cjs
+          node tests/2026-bulk-verified-static.cjs
           node tests/2026-level-final-approval-ui.cjs
           node tests/2026-three-stage-review-flow.mjs
           node tests/admin-dashboard-static.cjs

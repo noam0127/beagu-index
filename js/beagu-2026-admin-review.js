@@ -413,6 +413,46 @@
  $("adminReview2026Prev").addEventListener("click",()=>{if(page>0){page--;void refresh();}});
  $("adminReview2026Next").addEventListener("click",()=>{page++;void refresh();});
 
+ let bulkCandidates=0;
+ async function previewBulk(){
+  if(role!=="owner"||!ready)return;
+  const btn=$("adminBulkApprovalPreview"),apply=$("adminBulkApprovalApply");
+  btn.disabled=true;apply.disabled=true;
+  $("adminBulkApprovalStatus").textContent="승인 가능 학교를 서버에서 확인 중입니다.";
+  try{
+   const data=await call({action:"bulk_verified",preview:true,limit:40});
+   if(!data.ok||!data.preview)throw Error("preview_missing");
+   bulkCandidates=Math.max(0,Number(data.batch_candidates)||0);
+   $("adminBulkApprovalCount").textContent=bulkCandidates.toLocaleString("ko-KR");
+   apply.disabled=bulkCandidates===0;
+   $("adminBulkApprovalStatus").textContent=bulkCandidates===0?
+    "현재 최종승인 가능한 학교 0개교. 개별 공개 근거 검증 기록이 완료되어야 합니다.":
+    "검증 완료된 "+bulkCandidates+"개교에 대해 일괄승인할 수 있습니다.";
+  }catch{
+   bulkCandidates=0;$("adminBulkApprovalCount").textContent="—";
+   $("adminBulkApprovalStatus").textContent="승인 대상 확인 실패 · 관리자 MFA와 서버 상태를 확인하세요.";
+  }finally{btn.disabled=false;}
+ }
+ async function applyBulk(){
+  if(role!=="owner"||!ready||bulkCandidates===0)return;
+  if(!window.confirm("독립적으로 공개 근거·재식별 검토를 마쳐 VERIFIED로 기록된 학교만 최대 40개교 최종승인합니다. 서버에서 학교별 조건을 다시 검증합니다. 승인할까요?"))return;
+  const btn=$("adminBulkApprovalApply");btn.disabled=true;
+  $("adminBulkApprovalStatus").textContent="학교별 승인 진행 중입니다.";
+  try{
+   const result=await call({action:"bulk_verified",preview:false,limit:40,
+      confirmation:"APPROVE_VERIFIED_EXACT_SNAPSHOTS"});
+   if(!result.ok||result.preview!==false)throw Error("bulk_failed");
+   const success=Number(result.approved_count)||0,fail=Number(result.failed_count)||0;
+   $("adminBulkApprovalStatus").textContent="다량승인 완료 · 승인 "+success+
+      "개교, 실패 "+fail+"개교. Lv.2 최종 공개 설정도 별도로 확인하세요.";
+   await Promise.all([refresh(),refreshPipeline()]);
+   await previewBulk();
+  }catch{
+   $("adminBulkApprovalStatus").textContent="일괄승인 실패 · 검토 기록, 스냅샷 및 MFA 상태 확인 필요.";
+  }finally{if(bulkCandidates>0)btn.disabled=false;}
+ }
+ $("adminBulkApprovalPreview").addEventListener("click",()=>void previewBulk());
+ $("adminBulkApprovalApply").addEventListener("click",()=>void applyBulk());
  function renderLevelApprovals(items){
    const rows=Array.isArray(items)?items:[];
    for(let level=0;level<=2;level++){
