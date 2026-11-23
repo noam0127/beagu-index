@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "project_ref": "ycwuugggqbunlbwuzvbx",
-  "verified_on": "2026-11-22",
-  "source": "Supabase staging Edge Function inventory reverified 2026-11-23 KST after isolated interest API recovery; remaining 7 API blockers",
+  "verified_on": "2026-11-23",
+  "source": "Actual staging Edge Function inventory, read-only verified after v2 telemetry deployment and positive synthetic QA (2026-11-23 KST); 6 API prerequisites still absent",
   "functions": [
     {
       "slug": "arcade-leaderboard",
-      "version": 1,
+      "version": 2,
       "status": "ACTIVE",
       "verify_jwt": false
     },
@@ -205,6 +205,12 @@
     {
       "slug": "beagu-stage42-owner-button-release-once",
       "version": 4,
+      "status": "ACTIVE",
+      "verify_jwt": false
+    },
+    {
+      "slug": "beagu-telemetry-v2",
+      "version": 1,
       "status": "ACTIVE",
       "verify_jwt": false
     },
