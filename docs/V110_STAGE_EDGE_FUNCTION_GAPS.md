@@ -88,7 +88,7 @@ python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
 ## 2026-11-23 시험 추가 복구
 
 - `beagu-school-culture-v1` v1: 운영 도메인 CORS 및 운영 프로젝트를 차단하는 시험 전용 소스 배포. 시험 `beagu_release_metrics_v2`의 `n_valid`, `teacher_count` 두 정수 칼럼만 추가하고, 기존 행은 0건. 5인 기준, 모든 개인정보 검토 플래그, 승인 후 24시간을 서버에서 검증. 실제 성공적인 인증·분류 결과 반환은 미검증.
-- `arcade-leaderboard` v1: 운영 프로젝트 거부, 명시적 시험 Origin만 허용, 실제 설문으로 이동하는 URL 제거. 시험의 `arcade_game_sessions`, `arcade_game_scores` 테이블 구조가 운영과 동일함을 읽기 전용으로 확인. 실제 순위 GET과 부정 요청을 검증하되 점수 등록·게임 전체 E2E 성공은 별도 검증 전까지 선언하지 않음.
+- `arcade-leaderboard` v1: 운영 프로젝트 거부, 명시적 시험 Origin만 허용, 실제 설문으로 이동하는 URL 제거. 시험의 `arcade_game_sessions`, `arcade_game_scores` 테이블 구조가 운영과 동일함을 읽기 전용으로 확인. 최단시간 기록용 누락 테이블 및 점수 정리 트리거를 뒤이어 복구하여 실제 GET/부정 요청은 통과했지만 점수 등록·게임 전체 E2E 성공은 별도 검증 전까지 선언하지 않음.
 - 시험에 원자료·개인정보·운영 게임 점수를 이관하지 않음. 운영 DB·웹·GitHub `main` 변경 없음.
 
 ## 2026-11-23 추가 복구: 학교 관심도
@@ -97,5 +97,5 @@ python3 scripts/staging/audit-frontend-edge-functions.py --require-ready
 - SQL 직접 실행 결과 `{"rising":[],"window_hours":72}`; 이벤트 0건, RLS true. `anon`/`authenticated`의 테이블 SELECT·RPC EXECUTE 모두 불가. 서버 `service_role`만 SELECT/EXECUTE 허용.
 - 최소 방문자 5명과 이전 72시간 대비 증가 3명 조건을 준수하며 개인별 방문 이벤트는 반환하지 않음.
 - [GitHub Actions #45086973139](https://github.com/noam0127/beagu-index/actions/runs/45086973139): 실제 HTTP/가짜 토큰/출처 거부 검증 성공. 다만 정상 Lv1 사용자 경로는 미검증.
-- **게임 API는 HTTP 503 `PGRST205` 지속**: 시험 DB 테이블·서버 SELECT 권한은 존재, 익명 공개키로 접근하는 임시 빈 REST 경로는 HTTP 200. 게임 테이블 임시 SELECT GRANT 후에도 Edge 서버 요청의 404는 계속됨. 실제 원인(서버 인증 헤더·역할별 스키마 등) 미확정. RLS·권한을 더 넓히지 않음.
+- **게임 API 503 원인 해결**: `arcade_fastest25_records` 누락이 원인이었으며, 해당 테이블과 `arcade_enforce_game_record_limits` 트리거 복구 후 실제 HTTP GET/부정 검사 성공 ([Actions #45087829964](https://github.com/noam0127/beagu-index/actions/runs/45087829964)). 102건 가상 점수 SQL 검증 후 롤백, 기록 0건·RLS 유지 확인.
 - 해당 원인 분석 실험 후 `anon` 임시 GRANT 철회, 임시 정책과 빈 진단 테이블 제거. 이 실험으로 정상 게임 조회가 증명된 것은 아님.
