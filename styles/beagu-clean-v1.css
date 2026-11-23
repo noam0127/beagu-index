@@ -1,0 +1,21 @@
+/* Clean: presentation only, no authorization rules. */
+.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="index.html#teacher-game-title"]{display:inline-flex!important}
+@media(max-width:760px){.beagu-unified-header .beagu-unified-nav.beagu-core-nav{grid-template-columns:repeat(5,minmax(0,1fr))}}
+#beaguLevelState[data-level="0"]{background:#f8fafc;border-color:#d7dee8;color:#475569}
+#beaguLevelState[data-level="1"]{background:#edf5ff;border-color:#b8d4ff;color:#1858bd}
+#beaguLevelState[data-level="2"],.beagu-participation-host[data-beagu-participation-level="2"] .beagu-participation-inline-status{background:#f3efff;border-color:#c9b7ef;color:#5935a3}
+#beaguLevelState[data-level="3"]{background:#fff5d6;border-color:#e2c067;color:#805800}
+#beaguLevelState[data-level="3"]::before{background:#b78413}
+body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero,body.beagu-page-compare main.shell>.intro{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:226px;padding:35px 39px;margin:18px 0 24px;background:linear-gradient(115deg,#eef3fd,#e9f3ff 70%,#e6f8ff);border:1px solid #d9e6f8;border-radius:22px}
+body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero::after{display:none}
+body.beagu-page-compare .intro>.intro-graphic{display:none}
+body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero .beagu-search-hero-magnifier,body.beagu-page-compare .intro>.beagu-clean-hero-icon{position:static;flex:0 0 auto;width:clamp(58px,15vw,148px);height:auto;color:#5b8dd2;opacity:.55;pointer-events:none;transform:none}
+body.beagu-page-compare .intro-content{min-width:0}
+@media(max-width:720px){body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero,body.beagu-page-compare main.shell>.intro{min-height:206px;margin:16px 0 21px;padding:28px 23px}body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero .beagu-search-hero-magnifier,body.beagu-page-compare .intro>.beagu-clean-hero-icon{width:clamp(40px,16vw,95px)}}
+.beagu-release-footer{box-sizing:border-box;display:flex;justify-content:flex-end;max-width:1200px;margin:12px auto 0;padding:8px max(14px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom));color:#64748b;font:12px/1.5 system-ui,sans-serif}
+.beagu-release-footer details{max-width:min(100%,340px);text-align:right}
+.beagu-release-footer summary{cursor:pointer;padding:5px 0;white-space:normal}
+.beagu-release-footer summary:focus-visible{outline:2px solid #2563eb;outline-offset:3px}
+.beagu-release-panel{text-align:left;background:#fff;border:1px solid #dbe4ef;border-radius:12px;padding:12px;color:#475569;overflow-wrap:anywhere}
+.beagu-release-panel p{margin:4px 0;font-size:12px}.beagu-release-panel ul{margin:8px 0 0;padding-left:18px}
+.beagu-page-game .beagu-release-footer,.arcade-body .beagu-release-footer,.beagu-embedded .beagu-release-footer{display:none!important}
