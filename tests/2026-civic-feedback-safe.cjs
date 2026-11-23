@@ -35,4 +35,12 @@ assert.match(adminLogin,/window\.BeaguCivicAdmin\?\.mount/);
 assert.match(adminLogin,/window\.BeaguCivicAdmin\?\.reset/);
 assert.match(rd("school-report.html"),/js\/beagu-2026-civic-v1\.js/);
 assert.match(rd("admin.html"),/js\/beagu-2026-civic-admin-v1\.js/);
+// Public status is gated by final school release, not by raw N>=1 presence.
+assert.match(api,/beagu_2026_level_released_school_ids/);
+assert.match(api,/p_level:0/);
+assert.doesNotMatch(api,/select\("school_response_rows,school_match_status"\)/);
+assert.match(publicUI,/statusSeq=0/);
+assert.match(publicUI,/current=\+\+statusSeq/);
+assert.match(publicUI,/공개 근거와 재식별 위험을 검토 중입니다/);
+assert.match(publicUI,/replace\(\/\\s\+\/g/);
 console.log("PASS: 2026 civic report + verified personal Lv2 correction request, MFA admin-only queue and privacy gates");
