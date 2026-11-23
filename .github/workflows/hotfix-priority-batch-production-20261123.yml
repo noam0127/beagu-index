@@ -1,4 +1,6 @@
 name: Priority batch emergency production publish
+# Re-publish approved hotfix after staging-only release reverted the live artifact.
+# Release manager production_sha is now synchronized to HOTFIX, so future staging updates preserve it.
 on:
   push:
     branches: [main]
