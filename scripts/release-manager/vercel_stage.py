@@ -28,13 +28,23 @@ def main():
         raise RuntimeError("Only an approved pinned staging job is accepted")
     if not os.environ.get("VERCEL_TOKEN") or not os.environ.get("VERCEL_STAGE_BYPASS"):
         raise RuntimeError("Both independent stage deployment and smoke-test credentials must be configured before upload")
+    # Validate the credential against the exact test project and existing protected origin before any upload.
+    project = request("GET","/v9/projects/"+PROJECT)
+    if project.get("id")!=PROJECT or project.get("name")!="baegu-index-test":
+        raise RuntimeError("Stage credential or project mismatch")
+    existing = urllib.request.Request(ORIGIN+"test-mirror-version.json",headers={"x-vercel-protection-bypass":os.environ["VERCEL_STAGE_BYPASS"],"Cache-Control":"no-cache"})
+    with urllib.request.urlopen(existing,timeout=25) as response:
+        current = json.load(response)
+    if current.get("mode")!="isolated-test" or current.get("stageRef")!=STAGE:
+        raise RuntimeError("Existing independent stage verification failed")
+    (ROOT/".stage-proof.json").unlink(missing_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         source = pathlib.Path(tmp) / "source"
         archive(sha, source)
         overlay_approved_directory(source)
         # Use trusted packager from the controller checkout, never execute candidate code.
         subprocess.run(["node", str(ROOT / "scripts/build-vercel-test-mirror.mjs")], cwd=source,
-                       env={**os.environ, "BEAGU_SOURCE_SHA":sha, "VERCEL_PROJECT_PRODUCTION_URL":HOST}, check=True)
+                       env={"PATH":os.environ.get("PATH",""), "BEAGU_SOURCE_SHA":sha, "VERCEL_PROJECT_PRODUCTION_URL":HOST}, check=True)
         out = source / "dist"
         manifest = json.loads((out/"test-mirror-version.json").read_text())
         if manifest.get("productionBaseline") != sha or manifest.get("stageRef") != STAGE:

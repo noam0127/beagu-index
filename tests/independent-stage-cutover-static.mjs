@@ -1,0 +1,15 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+const read=p=>fs.readFileSync(p,"utf8");
+const t=read("supabase/functions/beagu-release-manager-v1/index.ts");
+const j=read("js/beagu-admin-updates-v1.js");
+const w=read("scripts/release-manager/worker.py");
+const p=read("scripts/release-manager/vercel_stage.py");
+assert.match(t,/independent_stage_verified:independentVerified/);
+assert.match(t,/legacy_preview_required:!stageVerified/);
+assert.match(j,/!independentReady\|\|!s\.staging_sha/);
+assert.match(w,/plan\.get\("legacy_preview_required"\) is not False/);
+assert.ok(p.indexOf('request("GET","/v9/projects/"+PROJECT)')<p.indexOf('request("POST","/v2/files"'));
+assert.ok(p.indexOf('Existing independent stage verification failed')<p.indexOf('request("POST","/v2/files"'));
+assert.doesNotMatch(p,/env=\{\*\*os\.environ/);
+console.log("cutover guard static checks passed");

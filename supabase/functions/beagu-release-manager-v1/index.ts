@@ -88,6 +88,10 @@ async function history(target:string){
   .eq("target",target).order("deployed_at",{ascending:false}).limit(35);
  if(error)throw Error("history_unavailable");return data||[];
 }
+const INDEPENDENT_STAGE_URL="https://baegu-index-test.vercel.app/";
+function independentVerified(rows:any[],sha:unknown){
+ return typeof sha==="string"&&SHA.test(sha)&&rows[0]?.to_sha===sha&&rows[0]?.deployed_url===INDEPENDENT_STAGE_URL;
+}
 async function activeJob(){
  const {data,error}=await db.from("beagu_site_release_jobs_v1")
   .select("*").in("status",["queued","running"]).order("created_at",{ascending:true}).limit(1).maybeSingle();
@@ -117,7 +121,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
    }
   }catch{ /* The release state and history remain available during GitHub outages. */ }
   return respond({state:s,job:current,head_sha:head,suggested_draft,staging_history:stageHistory,
-    production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",
+    production_history:prodHistory,staging_url:INDEPENDENT_STAGE_URL,independent_stage_verified:independentVerified(stageHistory,s.staging_sha),
     production_url:"https://baeguindex.com/"},200,origin);
  }
  if(current)return error("release_in_progress",409,origin);
@@ -142,7 +146,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  let job:null|{action:string;target:string;to_sha:string|null;from_sha:string|null;version:string;summary:string;created_by:string}=null;
  if(action==="stage_apply"&&input.mirror_production===true){
   if(!SHA.test(String(s.production_sha))||input.expected_production_sha!==s.production_sha)return error("production_changed",409,origin);
-  if(s.staging_sha===s.production_sha)return error("already_on_staging",409,origin);
+  if(s.staging_sha===s.production_sha&&independentVerified(await history("staging"),s.staging_sha))return error("already_on_staging",409,origin);
   job={action,target:"staging",from_sha:s.staging_sha,to_sha:s.production_sha,
    version:s.production_version||"운영 기준 동기화",summary:"현재 실제 웹의 승인된 코드만 시험 웹으로 복제",created_by:userId};
  }else if(action==="stage_apply"){
@@ -164,7 +168,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   }
   if(!candidateSha||!SHA.test(candidateSha)||!candidateVersion||!candidateSummary)
    return error("register_version_first",409,origin);
-  if(candidateSha===s.staging_sha)return error("already_on_staging",409,origin);
+  if(candidateSha===s.staging_sha&&independentVerified(await history("staging"),s.staging_sha))return error("already_on_staging",409,origin);
   job={action,target:"staging",from_sha:s.staging_sha,to_sha:candidateSha,
    version:candidateVersion,summary:candidateSummary,created_by:userId};
  }else if(action==="stage_rollback"){
@@ -249,8 +253,10 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   const stagingSha=claimed.target==="staging"?claimed.to_sha:s.staging_sha;
   if(!productionSha||!SHA.test(productionSha)||(stagingSha&&!SHA.test(stagingSha)))
    return error("invalid_release_pointer",503,origin);
+  const stageVerified=independentVerified(await history("staging"),s.staging_sha);
   return respond({has_job:true,job_id:claimed.id,action:claimed.action,
    target:claimed.target,production_sha:productionSha,staging_sha:stagingSha||null,
+   legacy_preview_required:!stageVerified,
    version:claimed.version},200,origin);
  }
  if(action==="worker_complete"||action==="worker_fail"){

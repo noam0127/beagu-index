@@ -71,7 +71,8 @@
   if(data.head_sha)cachedHead=data.head_sha;
   if(data.suggested_draft)cachedProposal=data.suggested_draft;
   if(cachedProposal?.sha===s.production_sha)cachedProposal=null;
-  write("releaseStageVersion",s.staging_sha?(s.staging_version||"버전 미입력"):"아직 시험 웹 미배포");
+  const independentReady=data.independent_stage_verified===true;
+  write("releaseStageVersion",independentReady?(s.staging_version||"버전 미입력"):"독립 시험웹 · 관리자 배포 연동 검증 전");
   write("releaseProdVersion",s.production_sha?(s.production_version||"버전 미입력"):"최초 배포 준비 중");
   write("releaseStageSha",s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹에 아직 업데이트가 없습니다");
   write("releaseProdSha",s.production_sha?"코드 "+short(s.production_sha):"초기 배포 후 표시됩니다");
@@ -92,9 +93,9 @@
     "현재 진행 중인 배포가 없습니다.");
   el("releaseStageApply").disabled=busy||active||!s.production_sha||
     (!candidate&&(!s.draft_sha||s.draft_sha===s.staging_sha));
-  el("releaseStageSync").disabled=busy||active||!s.production_sha||s.staging_sha===s.production_sha;
+  el("releaseStageSync").disabled=busy||active||!s.production_sha||(independentReady&&s.staging_sha===s.production_sha);
   el("releaseStageRollback").disabled=busy||active||!stageHist.length||stageHist[0].from_sha===s.staging_sha;
-  el("releaseProdApply").disabled=busy||active||!s.staging_sha||s.staging_sha===s.production_sha;
+  el("releaseProdApply").disabled=busy||active||!independentReady||!s.staging_sha||s.staging_sha===s.production_sha;
   const lastCodeRelease=prodHist.find(h=>h.action!=="data_refresh");
   el("releaseProdRollback").disabled=busy||active||!lastCodeRelease||!lastCodeRelease.from_sha||lastCodeRelease.from_sha===s.production_sha;
   el("releaseRegister").disabled=busy||active||!s.production_sha;

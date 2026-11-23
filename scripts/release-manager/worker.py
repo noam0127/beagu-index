@@ -116,6 +116,14 @@ def build():
         shutil.rmtree(OUTPUT)
     archive(production, OUTPUT)
     overlay_approved_directory(OUTPUT)
+    # Legacy route is retained until a signed worker has recorded an independently verified test deployment.
+    if plan.get("legacy_preview_required") is not False and plan.get("staging_sha"):
+        preview_dir = OUTPUT / "_preview"
+        archive(plan["staging_sha"], preview_dir)
+        overlay_approved_directory(preview_dir)
+        (preview_dir / "CNAME").unlink(missing_ok=True)
+        make_preview_banner(preview_dir)
+        (preview_dir / ".nojekyll").touch()
     if (OUTPUT / "CNAME").read_text(encoding="utf8").strip() != "baeguindex.com":
         raise RuntimeError("Production domain mismatch")
     (OUTPUT / ".nojekyll").touch()
