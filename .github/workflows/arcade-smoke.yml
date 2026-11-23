@@ -6,6 +6,8 @@ on:
       - 'teacher-volleyball.html'
       - 'teacher-run.html'
       - 'js/arcade-mystery-items-v1.js'
+      - 'js/arcade-bgm-v1.js'
+      - 'tests/arcade-bgm-v1.mjs'
       - 'tests/arcade-item-upgrade-v1.mjs'
       - 'index.html'
       - 'js/arcade-leaderboard-v1.js'
@@ -42,6 +44,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify licensed BGM autoplay, pause/mute and mobile fallback
+        run: node tests/arcade-bgm-v1.mjs
       - name: Check game HUD and item scoring contract
         run: node tests/arcade-item-upgrade-v1.mjs
       - name: Verify ranking school links and level access

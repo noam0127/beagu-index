@@ -71,3 +71,8 @@ body.arcade-body {
 .arcade-rank-school-link::after{content:'↗';font-size:.85em;margin-left:4px;opacity:.86}
 .arcade-rank-school-link:focus-visible{outline:2px solid #ffda8a;outline-offset:3px}
 .arcade-rank-school-link:hover,.arcade-rank-school-link:focus-visible{color:#1d4ed8}
+
+/* CC0 music credits: unobtrusive and readable in the compact game shell. */
+.arcade-bgm-credit{margin:6px 0 10px;text-align:center;font-size:11px;line-height:1.55;color:#b7cee0}
+.arcade-bgm-credit a{color:#d5f3eb;text-underline-offset:3px}
+.arcade-bgm-credit a:focus-visible{outline:2px solid #ffe39a;outline-offset:3px}
