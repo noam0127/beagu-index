@@ -27,7 +27,7 @@
 
 - 시험 DB SQL 조회: 심사 대기열 `items=[]`, 총 0건. 내부 파이프라인 `year=2026`과 모든 공개 승인/품질 수치 0, 추천 품질 `items=[]`, 총 0건. 세 읽기 함수 **정상 응답**.
 - [실행한 트랜잭션형 SQL 테스트](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/tests/sql/staging-review-admin-six-rpc-rollback-20261123.sql): 관리자 계정·활성 MFA 없는 가상 사용자에서 `HOLD`/`PENDING` 근거검토/`APPROVE` 추천 승급 **모두 거부**. 거부된 요청 전후 2026 스냅샷·비공개 결정 감사·추천 품질 감사·기존 공개 관리자 감사 기록 모두 **건수 불변**. 끝에 `ROLLBACK`.
-- 시험 `beagu-2026-review-admin` **v2 ACTIVE**: `p_session=claims.session_id`을 SQL RPC로 전달하고, DB 원자적 감사 이후 Edge에서 중복으로 감사 INSERT 하던 코드를 제거.
+- 시험 `beagu-2026-review-admin` **v3 ACTIVE**: `p_session=claims.session_id`을 SQL RPC로 전달하고, DB 원자적 감사 이후 Edge에서 중복으로 감사 INSERT 하던 코드를 제거.
 - [GitHub Actions #45090796259](https://github.com/noam0127/beagu-index/actions/runs/45090796259) PASS: 6개 SQL 함수·6개 비공개 테이블·권한/감사 원자성 정적 검사, 실제 시험 Edge의 `REVIEW_NOT_READY` 및 보안 차단 HTTP 검증.
 - 위 GitHub Actions 검사는 실제 관리자 소유자 MFA 인증 후 심사·공개 결정의 **양성 E2E를 수행하지 않았다**. 시험 `BEAGU_STAGING_REVIEW_APPROVED` 플래그는 여전히 활성화하지 않았다.
 
@@ -49,3 +49,13 @@
 - [진짜 관리자 MFA 준비 확인용 읽기 전용 SQL](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/scripts/staging/read-only-real-reviewer-mfa-prereqs-20261123.sql): Auth 사용자 0, 활성 owner 계정 0, 검증된 MFA factor가 있는 owner 0, 활성 owner AAL2 세션 0. 판정 **`BLOCKED_REAL_MFA_OWNER_ACCOUNT_NOT_CONFIGURED`**.
 
 다음 단계의 필수 외부 인증 절차: 시험 프로젝트에 실제 소유자 QA 계정을 만들고 TOTP MFA를 등록·검증한 후, **실제 발급된 JWT**의 `sub`·`aal='aal2'`·`session_id`와 `auth.sessions`의 활성 상태가 일치하는지 서버·브라우저에서 검증해야 한다. <https://supabase.com/docs/guides/auth/auth-mfa> 및 <https://supabase.com/docs/guides/auth/sessions> 참고. 계정이 준비되기 전까지 `BEAGU_STAGING_REVIEW_APPROVED`는 설정하지 않고 기존 5개 롤아웃 잠금을 유지한다.
+
+## 2026-11-23: 실제 JWT·AAL2 MFA 진단 전용 경로 추가 (본 기능은 잠금)
+
+- `beagu-2026-review-admin` **시험 v3 ACTIVE**. 별도 POST `?preflight=mfa` 경로만 관리자 심사 잠금 이전에 호출 가능. 이는 **읽기 전용 인증 자기점검**이며 학교 데이터 조회·공개 심사·기록 변경은 불가능. 일반 심사 POST는 종전처럼 HTTP 503 `REVIEW_NOT_READY`.
+- 시험 로컬 Origin 또는 별도 승인한 Render 도메인만 CORS 허용. 유효한 실제 **Supabase Auth 서명 JWT** `getUser(jwt)`을 확인한 후에만 `sub`와 `session_id`를 조회. JWT `aal`이 AAL2여도 DB의 실제 `auth.sessions` AAL2/만료 검증에 실패하면 `inactive_or_expired_mfa_session`. 본인 권한은 `beagu_admin_accounts`에서 확인하며 사용자 ID·이메일·토큰은 결과에 노출하지 않음.
+- [실제 무기록 HTTP 검증 #45091845564](https://github.com/noam0127/beagu-index/actions/runs/45091845564) **PASS**: 무인증 JWT 401, 운영 출처 403, Origin 없는 요청 403, 너무 긴 JWT 401, 위조 AAL2 JWT 401, 일반 관리자 심사 503 잠금 유지.
+- [후속 테스트 #45091965156](https://github.com/noam0127/beagu-index/actions/runs/45091965156) **PASS**: 위 실제 HTTP 회귀와 함께 로컬 확인 도구의 보안·무기록 계약 검사.
+- [로컬 실제 AAL2 확인기](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/scripts/staging/check-owner-aal2-interactive.py) 추가. 실제 시험 Auth 사용자와 TOTP 등록 후, 신뢰하는 PC의 터미널에서만 access_token을 **숨김 입력**으로 받아 본인 소유자 권한/활성 AAL2 여부를 진단. 토큰은 채팅·GitHub·CI에 공유하거나 저장하지 않음. 사용자가 직접 실행하기 전까지 실제 양성 E2E가 수행됐다고 주장하지 않음.
+- [실제 MFA 준비용 읽기 전용 SQL](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/scripts/staging/read-only-real-reviewer-mfa-prereqs-20261123.sql)에서 2026-11-23 기준 시험 Auth 사용자·소유자·MFA 인증기·활성 세션은 모두 **0건**. 실제 관리자 MFA 설정은 사용자 계정의 명시적인 등록·인증 절차가 필요하고 이 채팅에서 우회하거나 계정을 만들지 않음.
+- 릴리스 조건 **변경 없음**: 관리자 MFA 실제 브라우저 양성 E2E, 추천 실응답 검증, 학급일지 PIN 검수 및 5개 잠금 해제 승인이 없으면 전체 v1.1.0은 NO-GO.
