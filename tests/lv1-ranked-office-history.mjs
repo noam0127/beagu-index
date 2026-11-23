@@ -36,7 +36,8 @@ assert.match(search,/m\.kind==='most_frequent'\|\|m\.kind==='mode'/, 'mode compa
 assert.match(search,/vetted\.get\(id\)\|\|null/, 'only verified school distributions can populate school cell');
 assert.match(search,/원자료에서 확인된 보기 \(전체 목록 미확인\)/, 'observed partial option lists must be distinguished from authoritative options');
 for(const s of ['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won'])assert.ok(html.includes('value="'+s+'"'),'Missing region sort '+s);
-for(const label of ['학교명','주소','배구지수','학생수','2정교사비','남교사비','공시지가'])assert.ok(html.includes('>'+label+'</option>'),'Missing sort label '+label);
+for(const label of ['학교명','주소','배구지수','학생수','2정교사비','남교사비'])assert.ok(html.includes('>'+label+'</option>'),'Missing sort label '+label);
+assert.match(html,/>🔒 공시가격 \(Lv\.2\)<\/option>/,'Lv.1 still masks Lv.2-only price');
 assert.match(html,/id="regionSortDirection"/,'Lv.1 must include a separate direction toggle');
 assert.match(search,/sortDirection=sortDirection==='asc'\?'desc':'asc'/,'Lv.1 direction button must toggle ascending/descending');
 assert.match(search,/value}_\$\{sortDirection\}/,'Lv.1 must send the selected direction to full-dataset API');
