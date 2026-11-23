@@ -328,6 +328,12 @@
       "path": "styles/beagu-admin-updates-v1.css",
       "status": "reconciled source delta; exact readback verified; runtime pending",
       "commit": "c00e3dd4361d47924236fba1c924dfffc06fc90d"
+    },
+    {
+      "source": "release",
+      "path": "styles/beagu-admin-updates-v1.css",
+      "status": "reconciled source delta; exact readback verified; runtime pending",
+      "commit": "721287dc60b6fdd51280705ee7024ea9de5e87f0"
     }
   ],
   "pending": [
@@ -393,14 +399,6 @@
       "merge_base": "6467b42a14fde343326b40cb251add91e05e2cec",
       "path": "js/beagu-admin-updates-v1.js",
       "blob_sha": "f998be9435c8e3c9c988779eeedf7f2ccd1ac74f",
-      "status": "modified"
-    },
-    {
-      "source": "release",
-      "source_sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84",
-      "merge_base": "6467b42a14fde343326b40cb251add91e05e2cec",
-      "path": "styles/beagu-admin-updates-v1.css",
-      "blob_sha": "3a1308f70fd5e8a976c9652f6dab65311ff1d61f",
       "status": "modified"
     },
     {
