@@ -1,4 +1,4 @@
 {
-  "version": "1.1.0-hf-20261123-gamecode",
-  "summary": "긴급: Lv0 험난한 교직생활 참여코드 입력 가림 수정, 기존 Lv2 인증 화면 유지"
+  "version": "1.1.0-hf-20261123-challenge-layout",
+  "summary": "챌린지 화면 재배치: 참여 순번 아래 진행바, Lv2 링크 및 코드, VIP 훈장, 안전한 인증샷, 게임 Lv0 입력창 복구"
 }

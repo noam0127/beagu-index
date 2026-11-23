@@ -177,6 +177,7 @@
   }
 </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
+<link rel="stylesheet" href="styles/challenge-layout-v1.css?v=20261123-layout1">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
@@ -221,31 +222,28 @@
   
 
 
-  <!-- 인증서 저장 범위: 이 section 안의 내용만 이미지로 생성됩니다. -->
+  <!-- #certificate 내부만 인증 이미지로 저장. 개인 정보는 밖에 둡니다. -->
   <section class="certificate" id="certificate" aria-label="2026 배구지수 참여 인증서">
     <div class="trophy" aria-hidden="true">🏆</div>
+    <div id="certificateMedal" class="certificate-medal" hidden><span aria-hidden="true">🏅</span><strong>LV.2 CHALLENGE HONOR</strong></div>
     <h1>2026 배구지수 챌린지</h1>
     <div class="rank">
       <span class="rank-label">2026년 챌린지 참여 순번</span>
       <strong id="participantNo" aria-live="polite">순번 확인 중</strong>
     </div>
     <a class="site-link" href="https://baeguindex.com/">baeguindex.com</a>
+  <div class="certificate-progress"><section class="beagu-xp" data-beagu-xp data-xp-state="loading" aria-label="2026년 챌린지 목표 달성률">
+      <div class="beagu-xp-head"><h2>2026 챌린지 · 목표 1,000명</h2><strong class="beagu-xp-number" data-xp-number aria-live="polite">순번 확인 중</strong></div>
+      <div class="beagu-xp-track"><div class="beagu-xp-fill" data-xp-progress role="progressbar" aria-label="챌린지 진행률" aria-valuemin="0" aria-valuemax="1000"></div></div>
+      <div class="beagu-xp-footer"><span class="beagu-sr-only" data-xp-state>챌린지 집계 확인 중</span><strong data-xp-remainder>확인 중</strong></div>
+      
+    </section></div><aside id="certificateThanks" class="certificate-gratitude" role="status" aria-live="polite" hidden></aside></section>
+  <section class="challenge-levelup-heading" aria-labelledby="challenge-levelup-title">
+    <span class="challenge-levelup-kicker">LEVEL UP</span>
+    <h2 id="challenge-levelup-title">Lv.2로 레벨업하기</h2>
+    <p>전용 조사 링크를 공유해 동료의 유효한 설문 응답을 받으면 Lv.2가 활성화됩니다. 이후에도 추천 인원이 계속 누적됩니다.</p>
   </section>
-
-  <!-- NOT inside #certificate: excluded from the site's certificate PNG export. -->
-  <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
-    <div class="challenge-identity-head">
-      <h2 id="challengeIdentityTitle">나의 고유번호</h2>
-      <span class="challenge-identity-tag" id="challengeIdentityTag">개인 보관</span>
-    </div>
-    <div class="challenge-identity-row">
-      <strong class="challenge-identity-value" id="identityCode" aria-live="polite">고유번호 확인 중</strong>
-      <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled>번호 복사</button>
-    </div>
-    <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
-    <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
-  </section>
-
+  <!-- 아래 링크와 참여코드는 인증샷에서 제외 -->
   <section class="challenge-identity" id="challengeReferralPanel"
     data-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeReferralTitle">
     <div class="challenge-identity-head">
@@ -266,14 +264,20 @@
     <button id="challengeReferralRetry" type="button" class="challenge-identity-copy" hidden style="margin-top:10px">링크 다시 확인</button>
     <p class="small-note" id="challengeReferralNote">동료 1명의 설문 참여가 확인되면 Lv.2로 승급해요.</p>
   </section>
-
-    <section class="beagu-xp" data-beagu-xp data-xp-state="loading" aria-label="2026년 챌린지 목표 달성률">
-      <div class="beagu-xp-head"><h2>2026 챌린지 · 목표 1,000명</h2><strong class="beagu-xp-number" data-xp-number aria-live="polite">순번 확인 중</strong></div>
-      <div class="beagu-xp-track"><div class="beagu-xp-fill" data-xp-progress role="progressbar" aria-label="챌린지 진행률" aria-valuemin="0" aria-valuemax="1000"></div></div>
-      <div class="beagu-xp-footer"><span class="beagu-sr-only" data-xp-state>챌린지 집계 확인 중</span><strong data-xp-remainder>확인 중</strong></div>
-      
-    </section>
-  <section class="steps" aria-labelledby="steps-title">
+  <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
+    <div class="challenge-vip-crown" id="challengeVipMedal" hidden><span aria-hidden="true">🏅</span> BAEGU VIP · LEVEL 2</div>
+    <div class="challenge-identity-head">
+      <h2 id="challengeIdentityTitle">Lv.2 참여코드(비활성)</h2>
+      <span class="challenge-identity-tag" id="challengeIdentityTag">승급 대기</span>
+    </div>
+    <div class="challenge-identity-row">
+      <strong class="challenge-identity-value" id="identityCode" aria-live="polite">고유번호 확인 중</strong>
+      <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled>번호 복사</button>
+    </div>
+    <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
+    <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
+  </section>
+    <section class="steps" aria-labelledby="steps-title">
     <h2 class="section-title" id="steps-title">참여 인증</h2>
 
     <section class="step-card" aria-labelledby="step-1">
@@ -291,6 +295,11 @@
   </section>
   </div>
 
+<section class="beagu-home-notice" aria-labelledby="challenge-notice-title">
+  <h2 id="challenge-notice-title">공지사항</h2>
+  <p><strong>2026년 배구지수 데이터 작업 중입니다.</strong> 학교별 결과를 정리하고 있어 일부 정보는 아직 반영되지 않았을 수 있습니다.</p>
+  <p><strong>Lv.3 및 회원가입 기능, 포스트잇 기능 점검 중</strong></p>
+</section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
