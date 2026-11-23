@@ -20,7 +20,7 @@ for(const path of pages){
 const sharedCardCSS=read('styles/school-search-card-v1.css');
 assert.match(sharedCardCSS,/\.school-card\{[^}]*border:2px solid #2563eb/, 'Each complete search-result card must have a blue outer border');
 for(const page of pages){
-  assert.match(read(page),/styles\/school-search-card-v1\.css\?v=20261118-blue-outline2/,page+' must load updated shared card border');
+  assert.match(read(page),/styles\/school-search-card-v1\.css\?v=20261123-sort-primary1/,page+' must load updated shared card border');
 }
 // Public search contains an inline Lv.1 login without disclosing codes.
 const publicHtml=read('search.html');
