@@ -86,3 +86,9 @@
 - [실제 로컬 Chromium #45093475443](https://github.com/noam0127/beagu-index/actions/runs/45093475443) **전체 PASS**: desktop/mobile Lv0→Lv1→Lv2 **모의 서버 응답**, 페이지 전환·로그아웃·로그인 UI, 가상 성능 계측 Edge 요청 형식과 운영 URL 차단. 실제 Lv3 계정·MFA E2E를 대신하지 않음.
 - 같은 CI에서 **실제 시험 Supabase의 무인증 및 가짜 참여세션 HTTP 접근 거부** PASS: Level API 401·Post-it writer/학교정보 403. 모든 요청은 부정 검증, 실자료·이메일·권한변경·DB 쓰기 없음.
 - Render Blueprint는 활성 개발 브랜치로 맞췄지만 `autoDeployTrigger: off`, 실제 Render 배포 SHA/호스트/CORS는 미검증. **운영 출시 NO-GO + 잠금 5개 유지**.
+
+## GitHub 원본과 실제 시험 Supabase Auth API 소스 일치성
+
+- 시험 Supabase에 배포돼 있던 `beagu-level-api` v5는 GitHub 범용 `supabase/functions/beagu-level-api/index.ts`와 **내용이 다르며**, 실제 배포본에 추가 Lv3 회원검증이 존재했다. 범용 원본을 덮어쓰지 않고 실제 배포본 전체와 공유 모듈을 시험용 디렉터리에 복제한 뒤 Stage Origin 허용 규칙만 안전하게 추가.
+- `beagu-level-api` v6, `beagu-postit-api-v1` v5 시험 재배포 후 [CORS+무인증 HTTP PASS #45094909765](https://github.com/noam0127/beagu-index/actions/runs/45094909765) 확인. `BEAGU_STAGING_ALLOWED_ORIGIN` 실 Render 주소는 미설정/미확인 상태이므로 외부 Render 출처는 아직 허용하지 않음.
+- 시험 Edge 총 43개, 참조 17/17개. 5개 롤아웃 기능은 그대로 잠금. 정식 Lv3·MFA·Render 실배포 검증은 NO-GO.
