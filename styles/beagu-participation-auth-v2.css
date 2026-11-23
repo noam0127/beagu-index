@@ -115,7 +115,7 @@ body.beagu-participation-open{overflow:hidden}
   height:56px;padding-right:79px;border-radius:13px;font-size:17px;
  }
  .beagu-participation-field button{
-  top:8px;right:8px;min-width:60px;height:40px;
+  top:8px;right:8px;width:auto;min-width:60px;height:40px;
  }
  #beaguParticipationSubmit{min-height:50px;font-size:15px}
 }
