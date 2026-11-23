@@ -58,30 +58,20 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({entries:[],top:[],leaderboard:[]})});
    });
    await page.route('https://www.scottbuckley.com.au/**',route=>route.abort('blockedbyclient'));
+   // Public homepage is now a coming-soon card: no visible login or preview controls.
    await page.goto(base+'/index.html',{waitUntil:'domcontentloaded'});
-   const homeProbe=await page.evaluate(()=>{
-    const form=document.getElementById('homeDiaryGuestForm');
-    const game=document.getElementById('teacher-diary-feature');
-    const parents=[];let el=form;
-    while(el&&parents.length<7){
-     const style=getComputedStyle(el),bounds=el.getBoundingClientRect();
-     parents.push({tag:el.tagName,id:el.id,display:style.display,visibility:style.visibility,opacity:style.opacity,width:bounds.width,height:bounds.height,hidden:el.hidden});
-     el=el.parentElement;
-    }
-    return {url:location.href,documentTitle:document.title,formExists:!!form,sectionExists:!!game,parents,firstText:document.body?.innerText?.slice(0,280)};
-   });
-   console.log('DIARY_HOME_PROBE',JSON.stringify(homeProbe));
-   await page.locator('.teacher-diary-private-preview summary').click();
-   await page.locator('#homeDiaryGuestForm').waitFor({state:'visible',timeout:4500});
-   assert.equal(await page.locator('#homeDiaryCode').count(),1);
-   assert.equal(await page.locator('#homeDiaryGuestForm .teacher-diary-code-message').count(),1);
-   assert.equal(await page.locator('#homeDiaryLv2Form .teacher-diary-code-message').count(),1);
-   await page.locator('#homeDiaryCode').fill('1234');
-   await page.locator('#homeDiarySubmit').click();
-   await page.waitForURL('**/teacher-class-diary-play.html?guest=1',{timeout:12000});
+   await page.locator('#teacher-diary-feature').waitFor({state:'visible'});
+   assert.equal(await page.locator('#teacher-diary-feature .teacher-diary-coming-soon').count(),1);
+   assert((await page.locator('#teacher-diary-feature').innerText()).includes('현재 준비 중입니다'));
+   for(const oldId of ['homeDiaryGuestForm','homeDiaryLv2Form','homeDiaryCode','homeDiaryLv2Code','homeDiarySchoolOpen'])
+    assert.equal(await page.locator('#'+oldId).count(),0,'No public access control: '+oldId);
+   assert.equal(codeCheck,0,'Homepage must never submit an access code');
+   // Continue independent internal story E2E with a synthetic signed handoff mock.
+   // This does not introduce any public login, button or bypass.
+   await page.evaluate(()=>sessionStorage.setItem('beagu-class-diary-guest-handoff-v1','v1.fakepayload.fakesignature'));
+   await page.goto(base+'/teacher-class-diary-play.html?guest=1',{waitUntil:'domcontentloaded'});
    await page.locator('#diaryLanding').waitFor({state:'visible'});
-   assert.equal(codeCheck,1,'Code should be verified exactly once, on home');
-   assert.equal(ticketCheck,1,'Ticket should be validated on game arrival');
+   assert.equal(ticketCheck,1,'Game must still verify its internal signed ticket');
    assert.equal(await page.locator('#guestCode').count(),0,'No duplicate code field in game');
    assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-class-diary-guest-handoff-v1')),null,
     'Ticket must be consumed before the story appears');
@@ -273,7 +263,7 @@ const progressApi='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/class-d
    assert.equal(await page.locator('#diaryEffectsVolume').isVisible(),true);
    await page.locator('.diary-panel-close').click();
    assert.equal(errors.length,0,'Browser errors: '+errors.join('; '));
-   console.log('PASS mocked guest '+device.name+': home code → title → school → colleague → story, saved progress and settings');
+   console.log('PASS mocked guest '+device.name+': coming-soon home → internal signed handoff → story, saved progress and settings');
    await page.close();
   }
   const legacy=await browser.newPage({viewport:{width:390,height:844}});

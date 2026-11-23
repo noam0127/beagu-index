@@ -216,7 +216,7 @@
   
 
 
-    /* Developer-only class diary PIN entry; no public direct-game links. */
+    /* Class diary remains a literary-themed coming-soon card until release. */
     body.beagu-page-home main.container > .teacher-diary-feature{
       grid-column:1/-1;position:relative;isolation:isolate;
       background:linear-gradient(138deg,#5d6170,#343d50);
@@ -247,29 +247,17 @@
     .teacher-diary-feature .teacher-diary-lock>p{
       color:#e0d3e7;font-size:13px;line-height:1.6;margin:0;
     }
-    #homeDiaryGuestForm{
-      display:grid;width:min(100%,720px);gap:10px;text-align:left;margin:12px auto 0;
+    .teacher-diary-feature .teacher-diary-coming-soon{
+      width:min(100%,560px);display:flex;flex-direction:column;align-items:center;
+      gap:7px;padding:16px 18px;margin-top:10px;border-radius:16px;
+      border:1px solid rgba(232,206,225,.42);
+      background:linear-gradient(135deg,rgba(222,190,210,.18),rgba(243,221,218,.09));
+      color:#f8e9f4;font-family:"Gowun Batang","Nanum Myeongjo","Malgun Gothic",serif;
     }
-    #homeDiaryGuestForm label{font-size:14px;font-weight:750;color:#f9e8f7}
-    #homeDiaryGuestForm .teacher-diary-code-row{
-      display:grid;grid-template-columns:minmax(0,1fr) minmax(145px,195px);
-      gap:10px;
-    }
-    #homeDiaryGuestForm input,#homeDiaryGuestForm button{
-      box-sizing:border-box;min-width:0;width:100%;min-height:54px;border-radius:12px;
-      padding:12px 15px;font-size:16px;
-    }
-    #homeDiaryGuestForm input{border:1px solid #d5c1d9;background:#fffafd;color:#342a40}
-    #homeDiaryGuestForm button{
-      background:#e8d1e5;color:#4c3551;border:0;font-weight:800;
-      font-family:"Gowun Batang","Nanum Myeongjo","Malgun Gothic",serif;cursor:pointer;
-    }
-    #homeDiaryGuestForm button:disabled{opacity:.66;cursor:wait}
-    #homeDiaryGuestForm .teacher-diary-code-message{
-      margin:0;min-height:1.6em;font-size:12px;line-height:1.6;color:#ebddec;
-    }
+    .teacher-diary-coming-soon strong{font-size:clamp(17px,3.5vw,21px);line-height:1.5}
+    .teacher-diary-coming-soon span{font-size:13px;line-height:1.6;color:#f3e4f0}
+    .teacher-diary-lock>.teacher-diary-beta-note{font-size:12px;color:#ebdbe9}
     @media(max-width:600px){
-      #homeDiaryGuestForm .teacher-diary-code-row{grid-template-columns:1fr}
       .teacher-diary-feature .teacher-game-header{padding:15px}
       .teacher-diary-feature .teacher-diary-lock{padding:18px 15px 23px;margin:0 10px 10px}
     }
@@ -287,7 +275,6 @@
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
-<script defer src="js/class-diary-home-entry-v1.js?v=20261123-literary-lv2-1"></script>
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-gamecodefix1">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
 </head>
@@ -382,55 +369,19 @@
     <section id="teacher-diary-feature" class="teacher-game-feature teacher-diary-feature" aria-labelledby="teacher-diary-title">
       <div class="teacher-game-header">
         <h2 id="teacher-diary-title">📖 나의 OO한 학급일지</h2>
-        <span class="teacher-game-access-level">Lv.2 · 시험 운영</span>
+        <span class="teacher-game-access-level">준비 중</span>
       </div>
       <div class="teacher-diary-lock" aria-labelledby="teacher-diary-lock-title">
         <span class="teacher-diary-lock-icon" aria-hidden="true">📖</span>
         <h3 id="teacher-diary-lock-title">나의 OO한 학급일지</h3>
         <p>봄에서 여름까지, 한 교실에서 펼쳐지는 이야기</p>
-        <p class="teacher-diary-beta-note">현재 시험 중입니다 · 화면과 기능이 변경될 수 있습니다.</p>
-        <button type="button" id="homeDiarySchoolOpen" class="teacher-diary-school-button"
-          aria-haspopup="dialog" aria-controls="homeDiarySchoolDialog">🏫 학교 선택하기</button>
-        <p id="homeDiarySchoolPicked" class="teacher-diary-picked" role="status" aria-live="polite"></p>
-        <form id="homeDiaryLv2Form" class="teacher-diary-lv2-form" autocomplete="off">
-          <label for="homeDiaryLv2Code">Lv.2 참여코드</label>
-          <div class="teacher-diary-code-row">
-            <input id="homeDiaryLv2Code" type="password" minlength="8" maxlength="120" autocapitalize="off"
-              autocomplete="off" spellcheck="false" placeholder="Lv.2 코드 입력 · 이미 인증했다면 생략">
-            <button id="homeDiaryLv2Submit" type="submit">이야기 시작하기 ›</button>
-          </div>
-          <p id="homeDiaryLv2Message" class="teacher-diary-code-message" role="status" aria-live="polite">
-            학교 선택과 Lv.2 인증 후 입장할 수 있습니다. 등장인물과 사건은 허구입니다.
-          </p>
-        </form>
-        <details class="teacher-diary-private-preview">
-          <summary>기존 개발자 미리보기 입장</summary>
-          <form id="homeDiaryGuestForm" autocomplete="off" aria-label="학급일지 비공개 테스트 입장">
-            <label for="homeDiaryCode">테스트 입장 코드</label>
-            <div class="teacher-diary-code-row">
-              <input id="homeDiaryCode" name="diaryCode" type="password" inputmode="numeric" spellcheck="false"
-                autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" aria-describedby="homeDiaryMessage"
-                placeholder="4자리 코드" required>
-              <button id="homeDiarySubmit" type="submit">미리보기 입장 <span aria-hidden="true">›</span></button>
-            </div>
-            <p id="homeDiaryMessage" class="teacher-diary-code-message" role="status" aria-live="polite">
-              개발자용 비공개 입장입니다. Lv.2 참여코드와는 별개입니다.
-            </p>
-          </form>
-        </details>
+        <div class="teacher-diary-coming-soon" role="status">
+          <strong>🌸 현재 준비 중입니다</strong>
+          <span>시나리오와 플레이 화면을 다듬고 있습니다.</span>
+        </div>
+        <p class="teacher-diary-beta-note">게임은 준비가 완료된 후 공개됩니다.</p>
       </div>
     </section>
-    <div id="homeDiarySchoolDialog" class="teacher-diary-school-dialog" role="dialog" aria-modal="true"
-      aria-labelledby="homeDiarySchoolDialogTitle" hidden>
-      <div class="teacher-diary-school-dialog-inner">
-        <div class="teacher-diary-dialog-head">
-          <h3 id="homeDiarySchoolDialogTitle">📖 이야기의 학교</h3>
-          <button type="button" id="homeDiarySchoolClose" aria-label="학교 검색 닫기">×</button>
-        </div>
-        <div id="homeDiarySchoolPicker"></div>
-        <p class="teacher-diary-school-help">공개된 학교명·지역·조사연도 일부만 사용하며 이야기 속 인물과 사건은 허구입니다.</p>
-      </div>
-    </div>
 
         <section class="card" style="margin-top:20px" aria-label="방문 통계">
       <h2>방문한 선생님</h2>
