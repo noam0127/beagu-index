@@ -28,6 +28,15 @@ body.beagu-participation-open{overflow:hidden}
  font-family:inherit;background:white;outline:none
 }
 .beagu-participation-field input:focus-visible{border-color:#508ddd;box-shadow:0 0 0 3px rgba(72,132,218,.16)}
+/* Home button{width:100%} must never cover the Lv0 code input. */
+#beaguParticipationCode{display:block;width:100%;min-width:0;padding-right:78px}
+#beaguParticipationToggle{
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ width:58px!important;min-width:58px;max-width:58px;flex:none;
+ height:38px;padding:0 8px;margin:0;right:7px;top:7px;
+ font-size:12px;line-height:1.2;white-space:nowrap;z-index:1;
+}
+
 .beagu-participation-field button{
  position:absolute;right:7px;top:7px;height:38px;border:0;border-radius:9px;
  padding:0 12px;background:#edf3fc;color:#356294;cursor:pointer;font-weight:750

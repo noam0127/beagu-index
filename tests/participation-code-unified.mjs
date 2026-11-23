@@ -31,6 +31,10 @@ assert.doesNotMatch(ui,/Lv3 활성화|Lv3 승급|회원가입 유도/,'No Lv3 pr
 const css=read('styles/beagu-participation-auth-v2.css');
 assert.match(css,/@media\(max-width:760px\)/);
 assert.match(css,/#beaguParticipationForm\[hidden\]\{display:none!important\}/);
+assert.match(read('index.html'),/button\\s*\\{\\s*width:\\s*100%/);
+assert.match(css,/#beaguParticipationToggle\\s*\\{[^}]*width:58px!important/s);
+assert.match(css,/#beaguParticipationCode\\s*\\{[^}]*padding-right:78px/s);
+
 assert.match(ui,/form\.hidden=level>=2/,'Lv1 keeps the upgrade code field visible');
 assert.match(ui,/lastLevel===1&&level<2/,'Lv1 preserved on unearned code');
 assert.match(css,/\.beagu-participation-host \.beagu-participation-legacy/);
