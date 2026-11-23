@@ -31,7 +31,7 @@ for(const school of ['teacher-volleyball.html','teacher-run.html']){
  const page=read(school);
  assert.match(page,/js\/arcade-leaderboard-v1\.js\?v=20261123-school-links-live2/);
 }
-assert.match(read('index.html'),/teacher-volleyball\.html\?v=20261123-cc0-bgm2/);
+assert.match(read('index.html'),/teacher-volleyball\.html\?v=20261123-touch-jump1/);
 assert.match(read('index.html'),/teacher-run\.html\?v=20261123-cc0-bgm2/);
 assert.match(shell,/js\/arcade-history-v1\.js\?v=20261123-school-links-live2/);
 assert.match(read('styles/arcade-cabinet-v1.css'),/arcade-rank-school-link::after/);

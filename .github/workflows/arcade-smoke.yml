@@ -9,6 +9,7 @@ on:
       - 'js/arcade-bgm-v1.js'
       - 'tests/arcade-bgm-v1.mjs'
       - 'tests/arcade-item-upgrade-v1.mjs'
+      - 'tests/arcade-volleyball-touch-jump.mjs'
       - 'index.html'
       - 'js/arcade-leaderboard-v1.js'
       - 'js/arcade-history-v1.js'
@@ -48,6 +49,8 @@ jobs:
         run: node tests/arcade-bgm-v1.mjs
       - name: Check game HUD and item scoring contract
         run: node tests/arcade-item-upgrade-v1.mjs
+      - name: Check touch jump, gravity and wings-only flight physics
+        run: node tests/arcade-volleyball-touch-jump.mjs
       - name: Verify ranking school links and level access
         run: node tests/arcade-school-link.mjs
       - name: Check game scripts and deployed arcade ranking
