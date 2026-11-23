@@ -19,6 +19,7 @@ on:
       - scripts/test-challenge-referral-premium.cjs
       - scripts/test-challenge-lv2-card.cjs
       - tests/beagu-notice-pages-v1.mjs
+      - tests/lv2-price-region-20261123.mjs
       - .github/workflows/challenge-auth-ui.yml
   workflow_dispatch:
 permissions:
@@ -37,3 +38,4 @@ jobs:
       - run: node scripts/test-challenge-lv2-card.cjs
       - run: node tests/challenge-certificate-privacy-v1.mjs
       - run: node tests/beagu-notice-pages-v1.mjs
+      - run: node tests/lv2-price-region-20261123.mjs
