@@ -26,7 +26,10 @@ const bad=[
 ];
 for(const [reason,s,u,m] of bad) {
  assert.equal(entitled(s,u,m),false,reason);
- if(u&&m){
+ // The Post-it owner helper receives only an already-verified viewer
+ // (level+visitor+author), not the campaign. Campaign gating belongs to
+ // Level API's verifiedMemberTier / Post-it identity() before this helper.
+ if(u&&m&&reason!=='other survey campaign'){
   const viewer={level:s?.access_level||0,visitor:s?.identity_visitor_id||'',id:record.author_uid};
   assert.equal(resolveVerifiedPostitOwner(u,viewer,m),null,reason+' postit');
  }
