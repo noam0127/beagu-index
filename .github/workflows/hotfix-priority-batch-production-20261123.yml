@@ -1,0 +1,142 @@
+name: Priority batch emergency production publish
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/hotfix-priority-batch-production-20261123.yml'
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: github-pages-direct
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Stage production snapshot with approved hotfix files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=5950755c8174788d7bb1fa879be73a15f25d9ae2
+          HOTFIX=1aa9f6784661ed901297314e8642409487e9807e
+          git cat-file -e "${BASE}^{commit}"
+          git cat-file -e "${HOTFIX}^{commit}"
+          git diff --name-only "$BASE" "$HOTFIX" | sort > /tmp/change-list
+          cat > /tmp/allowed-list <<'EOF'
+challenge.html
+index.html
+js/beagu-game-lv1-gate-v1.js
+js/beagu-participation-auth-v2.js
+js/beagu-school-interest-v1.js
+js/challenge-referral-v1.js
+js/level-search.js
+js/statistics-compare.js
+search-lv1.html
+search.html
+statistics.html
+styles/beagu-participation-auth-v2.css
+styles/beagu-search-compare-unity-v1.css
+styles/beagu-site-header-v1.css
+supabase/functions/beagu-level-api/index.ts
+supabase/functions/beagu-referral-link-v1/index.ts
+teacher-run.html
+EOF
+          sort /tmp/allowed-list -o /tmp/allowed-list
+          diff -u /tmp/allowed-list /tmp/change-list
+          mkdir -p _release_site
+          git archive --format=tar "$BASE" | tar -xf - -C _release_site
+          while IFS= read -r file; do
+            case "$file" in
+              supabase/*) continue ;;
+            esac
+            mkdir -p "_release_site/$(dirname "$file")"
+            git show "$HOTFIX:$file" > "_release_site/$file"
+          done < /tmp/allowed-list
+          test "$(cat _release_site/CNAME)" = baeguindex.com
+          for script in js/beagu-game-lv1-gate-v1.js js/beagu-participation-auth-v2.js js/beagu-school-interest-v1.js js/challenge-referral-v1.js js/level-search.js js/statistics-compare.js; do
+            node --check "_release_site/$script"
+          done
+          python3 - <<'PY'
+          from pathlib import Path
+          root=Path('_release_site')
+          for name in ['challenge.html','index.html','search.html','statistics.html','search-lv1.html','teacher-run.html']:
+              html=(root/name).read_text(encoding='utf-8')
+              assert '20261123-priority2' in html,name
+              assert 'styles/beagu-site-header-v1.css' in html
+          challenge=(root/'challenge.html').read_text(encoding='utf-8')
+          for banned in ['challengeMemberOverlay','challengeMemberSignup','challenge-member-auth-v1']:
+              assert banned not in challenge,banned
+          for keep in ['challengeAccessPanel','challengeProtected','challengeReferralLink','challengeReferralRetry','identityCode']:
+              assert ('id="'+keep+'"') in challenge,keep
+          home=(root/'index.html').read_text(encoding='utf-8')
+          assert 'Lv.3 및 회원가입 기능, 포스트잇 기능 점검 중' in home
+          search=(root/'search.html').read_text(encoding='utf-8')
+          compare=(root/'statistics.html').read_text(encoding='utf-8')
+          school=(root/'search-lv1.html').read_text(encoding='utf-8')
+          assert 'beagu-search-hero-magnifier' in search
+          assert 'beagu-search-hero-magnifier' in school
+          assert 'housing_price_won" title="Lv2 인증 후 이용 가능" disabled' in school
+          assert 'js/statistics-compare.js?v=20261123-priority2' in compare
+          js=(root/'js/beagu-school-interest-v1.js').read_text(encoding='utf-8')
+          assert 'Number(row.visitors)>=1' in js
+          auth=(root/'js/beagu-participation-auth-v2.js').read_text(encoding='utf-8')
+          assert 'beagu:challenge-account-open' not in auth
+          referral=(root/'js/challenge-referral-v1.js').read_text(encoding='utf-8')
+          assert "'Lv.2 참여코드'" in referral
+          css=(root/'styles/beagu-site-header-v1.css').read_text(encoding='utf-8')
+          assert '.beagu-unified-nav>a[href="postit.html"]{display:none!important}' in css
+          print('PASS: isolated emergency artifact; login removal preserved, 15 static files only')
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _release_site
+      - name: Publish emergency hotfix to production
+        uses: actions/deploy-pages@v4
+        id: deployment
+      - name: Verify live production paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import time,urllib.request
+          base='https://baeguindex.com'
+          for attempt in range(24):
+              try:
+                  def read(path):
+                      request=urllib.request.Request(base+path+'?hotfix_check=20261123-priority2-'+str(attempt),headers={'Cache-Control':'no-cache'})
+                      with urllib.request.urlopen(request,timeout=15) as response:
+                          return response.read().decode('utf-8')
+                  home=read('/index.html')
+                  challenge=read('/challenge.html')
+                  search=read('/search.html')
+                  compare=read('/statistics.html')
+                  lv1=read('/search-lv1.html')
+                  game=read('/js/beagu-game-lv1-gate-v1.js')
+                  referral=read('/js/challenge-referral-v1.js')
+                  if ('Lv.3 및 회원가입 기능, 포스트잇 기능 점검 중' in home
+                      and '20261123-priority2' in challenge
+                      and 'challengeMemberOverlay' not in challenge
+                      and 'beagu-search-hero-magnifier' in search
+                      and '20261123-priority2' in compare
+                      and 'Lv2 전용' in lv1
+                      and 'beagu:participation-authenticated' in game
+                      and "'Lv.2 참여코드'" in referral):
+                      print('PASS: production pages reflect approved priority emergency update')
+                      break
+              except Exception as error:
+                  print('Verification retry:',str(error)[:140])
+              time.sleep(5)
+          else:
+              raise SystemExit('FAIL: production pages did not converge to emergency hotfix')
+          PY
