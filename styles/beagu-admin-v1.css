@@ -156,3 +156,87 @@ footer{margin-top:48px;color:#98a6ba;font-size:11px}
 .admin-pipeline-footnote{margin:auto 0 0;padding-top:12px;border-top:1px solid #e5edf6;font-size:11px;line-height:1.5;color:#697b93}
 #adminPipelineStatus{margin:0 0 15px;font-size:12px}
 @media(max-width:950px){.admin-pipeline-stages{grid-template-columns:1fr}}
+
+
+/* 2026-11-23: unified numeric hierarchy across the private admin dashboard.
+   Quiet primary metrics, secondary details on demand, three owner-only release cards. */
+.metrics{gap:10px}
+.metrics article{min-width:0;min-height:100px;padding:17px 16px;border:1px solid #e0e8f2;border-radius:14px;background:#fff}
+.metrics h4{font-size:12px;font-weight:700;color:#687d97;letter-spacing:-.01em;margin:0 0 8px}
+.metrics strong{color:#183e6b;font-weight:850;font-size:clamp(22px,2.6vw,28px);letter-spacing:-.045em;line-height:1.25}
+.metrics small{font-size:11px;color:#8291a4;line-height:1.5;margin-top:7px}
+.metrics article:has(strong[data-site="page_views"]),.metrics article:has(strong[data-challenge="participants"]){border-top:2px solid #bcd0ea}
+.chart-card,.ranking-card,.game-stat{box-shadow:0 2px 10px rgba(31,70,110,.025)}
+.game-stat{padding:16px 17px}
+.game-stat h4{color:#586e87;font-size:12px;margin-bottom:7px}
+.game-stat .game-value{font-variant-numeric:tabular-nums;font-size:clamp(22px,2.5vw,28px)}
+.game-stat dl{row-gap:7px;margin-top:12px;padding-top:11px;border-top:1px solid #ecf1f7}
+.admin-review-intro{font-size:13px;line-height:1.7;color:#5c7190;margin:3px 0 15px;max-width:72ch}
+.admin-review-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.admin-review-overview article{min-width:0;padding:17px;background:#fff;border:1px solid #dfe7f0;border-radius:14px}
+.admin-review-overview span{display:block;font-size:12px;font-weight:750;color:#6a7c95}
+.admin-review-overview strong{display:block;color:#173c71;font-size:clamp(27px,3vw,36px);font-variant-numeric:tabular-nums;line-height:1.45;letter-spacing:-.05em}
+.admin-review-overview small{display:block;font-size:11px;color:#8190a3;line-height:1.45}
+.admin-pipeline-stages{margin:12px 0 14px;gap:10px}
+.admin-pipeline-stage{padding:15px;gap:6px;background:#f8fafd;border-color:#e3eaf3}
+.admin-pipeline-stage h4{font-size:15px}
+.admin-pipeline-stage strong{font-size:12px;font-weight:650;color:#55708d}
+.admin-pipeline-primary{font-size:12px;color:#586e86;margin:8px 0 4px}
+.admin-pipeline-primary b{font-size:21px;color:#173e72;font-weight:850;font-variant-numeric:tabular-nums;margin-left:3px}
+.admin-pipeline-more{margin-top:auto;border-top:1px solid #e0e9f3;padding-top:10px;font-size:12px;color:#657e99}
+.admin-pipeline-more summary{cursor:pointer;font-weight:700;color:#32669c}
+.admin-pipeline-more p{line-height:1.65;margin:8px 0 0}
+.admin-pipeline-more b{color:#234b75;font-variant-numeric:tabular-nums}
+#adminPipelineStatus{font-size:11px;margin-bottom:22px}
+.admin-release-section{padding:19px;background:#fff;border:1px solid #d7e3f0;border-radius:18px;margin:20px 0}
+.admin-release-head{display:flex;align-items:start;justify-content:space-between;gap:14px;margin-bottom:16px}
+.admin-release-head h4{font-size:16px;color:#183b67;margin:0 0 6px}
+.admin-release-head p{font-size:12px;color:#7588a0;line-height:1.6;margin:0}
+.admin-release-head .secondary{min-height:34px;font-size:12px;white-space:nowrap;margin:0}
+.admin-release-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.admin-release-card{min-width:0;display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid #e1e8f1;border-radius:13px;background:#fbfcff}
+.admin-release-card-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:7px}
+.admin-release-card h5{font-size:17px;color:#163c6b;margin:0}
+.admin-release-card h5 span{display:block;margin-top:3px;color:#70839b;font-size:11px;font-weight:600}
+.admin-release-card-head>strong{font-size:11px;color:#45617e;font-weight:750}
+.admin-release-main{color:#5c7490;font-size:12px;margin:3px 0 0}
+.admin-release-main b{font-size:25px;color:#133e71;font-variant-numeric:tabular-nums;font-weight:850;margin:0 3px}
+.admin-release-hint{font-size:11px;line-height:1.6;color:#768ba4;margin:0;flex:1;min-height:53px}
+.admin-release-card .primary{font-size:12px;min-height:41px;margin:0;padding:9px 10px}
+.admin-release-card .primary:disabled{opacity:1;background:#ebf0f6;color:#7487a0;border-color:#dbe5ef;cursor:not-allowed}
+.admin-release-card .admin-release-revoke{font-size:11px;min-height:35px;padding:7px 10px}
+#adminLevelReleaseStatus{margin:12px 0 0;font-size:11px}
+.admin-review-disclosure{margin:20px 0;border:1px solid #dfe7f0;border-radius:15px;background:#fff;padding:15px}
+.admin-review-disclosure>summary{cursor:pointer;font-size:13px;font-weight:800;color:#2b567f}
+.admin-review-disclosure[open]>summary{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #edf2f7}
+.admin-review-disclosure>.ranking-card{box-shadow:none}
+.beagu-final-approve{margin-top:12px}
+.beagu-basis-form textarea,.beagu-evidence-fields textarea{width:100%;min-height:64px;border:1px solid #c7d5e5;border-radius:10px;padding:10px;color:#193a5a;font:inherit}
+.beagu-basis-form select{width:100%;padding:10px;border-radius:10px;border:1px solid #c7d5e5;background:#fff;color:#193a5a}
+.beagu-evidence-details{padding:12px;border:1px solid #e0e9f4;border-radius:12px}
+.beagu-evidence-details summary{cursor:pointer;font-size:12px;font-weight:750}
+.beagu-evidence-fields{display:grid;gap:10px;margin-top:12px}
+@media(max-width:850px){
+ .admin-release-grid{grid-template-columns:1fr}
+ .admin-release-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center}
+ .admin-release-card-head,.admin-release-hint{grid-column:1/-1}
+ .admin-release-main{grid-column:1}
+ .admin-release-card .primary{grid-column:2}
+ .admin-release-card .admin-release-revoke{grid-column:1/-1}
+ .admin-release-hint{min-height:0}
+}
+@media(max-width:640px){
+ .admin-review-overview{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .admin-review-overview article{padding:12px}
+ .admin-review-overview strong{font-size:27px}
+ .admin-release-section{padding:13px}
+ .admin-release-head{flex-direction:column}
+ .admin-release-head .secondary{width:100%}
+ .metrics article{padding:13px;min-height:90px}
+ .metrics strong{font-size:23px}
+}
+@media(max-width:390px){
+ .admin-review-overview{grid-template-columns:1fr}
+ .admin-release-card{display:flex}
+ .admin-release-card .primary{width:100%}
+}
