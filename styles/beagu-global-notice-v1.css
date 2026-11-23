@@ -1,0 +1,13 @@
+/* Matching the existing home notice: consistent final section on search/compare. */
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare) main>.beagu-home-notice{
+ box-sizing:border-box;width:100%;max-width:none;min-width:0;margin:36px 0 0;
+ padding:22px 24px;border:1px solid #d5e3f3;border-radius:18px;
+ background:#f1f6fd;color:#173858;box-shadow:0 3px 14px rgba(22,53,88,.04);
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare) .beagu-home-notice h2{
+ margin:0 0 10px;font-size:17px;font-weight:850;line-height:1.4;letter-spacing:-.035em;
+}
+body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare) .beagu-home-notice p{
+ margin:4px 0 0;font-size:14px;line-height:1.7;color:#425d7a;word-break:keep-all;
+}
+@media(max-width:600px){body:is(.beagu-page-search,.beagu-page-lv1,.beagu-page-compare) main>.beagu-home-notice{padding:19px 18px}}
