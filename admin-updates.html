@@ -18,7 +18,7 @@
   <section class="hero">
     <p class="eyebrow">OPERATIONS / RELEASE CENTER</p>
     <h1>업데이트 관리</h1>
-    <p>ChatGPT에서 변경사항을 개발하고 버전을 등록한 뒤, 여기서 시험 웹에 먼저 적용하세요. 시험 웹을 직접 확인한 후에만 실제 웹에 적용할 수 있습니다.</p>
+    <p>검증된 독립 버전의 GitHub 커밋을 등록하고 실제 웹 적용을 직접 승인하세요. 시험 웹과 Vercel을 사용하지 않습니다.</p>
   </section>
   <p id="releaseStatus" class="notice" role="status" aria-live="polite">관리자 인증을 확인하는 중입니다.</p>
   <section class="release-login" id="releaseLogin" hidden>
@@ -33,13 +33,13 @@
     <section class="release-grid" aria-label="배포 환경">
       <article class="release-surface">
         <p class="eyebrow">TEST / PREVIEW</p>
-        <h2>시험 웹</h2>
+        <h2>종료된 시험웹 기록</h2>
         <p id="releaseStageVersion" class="release-version">배포 전</p>
         <p id="releaseStageSha" class="subtle">—</p>
-        <a href="https://baeguindex.com/_preview/" target="_blank" rel="noopener noreferrer" class="release-site-link">시험 웹 열기 <span aria-hidden="true">↗</span></a>
+        <p class="subtle">과거 배포 이력만 보존합니다. 시험웹은 더 이상 사용하지 않습니다.</p>
         <div class="release-buttons">
-          <button type="button" id="releaseStageApply" class="primary" disabled>시험 웹 적용</button>
-          <button type="button" id="releaseStageRollback" class="secondary" disabled>전 버전으로 되돌리기</button>
+          <button type="button" id="releaseStageApply" class="primary" hidden disabled>시험 웹 적용</button>
+          <button type="button" id="releaseStageRollback" class="secondary" hidden disabled>전 버전으로 되돌리기</button>
         </div>
       </article>
       <article class="release-surface">
@@ -56,8 +56,8 @@
     </section>
     <section class="release-draft" aria-labelledby="releaseDraftHeading">
       <div class="release-section-head"><h2 id="releaseDraftHeading">업데이트 버전</h2>
-        <p>ChatGPT가 변경 파일과 버전을 등록했다면 위의 <strong>시험 웹 적용</strong>만 누르세요. 직접 작성하고 싶을 때는 아래 입력창을 이용할 수 있습니다.</p></div>
-      <form id="releaseDraftForm">
+        <p>코드 검증을 통과한 독립 버전만 등록할 수 있습니다. 등록 후 위의 <strong>실제 웹 적용</strong>을 누르세요.</p></div>
+      <form id="releaseDraftForm"><div><label for="releaseCandidateSha">독립 버전 커밋 SHA</label><input id="releaseCandidateSha" required maxlength="40" pattern="[0-9a-f]{40}" autocomplete="off" placeholder="40자리 GitHub 커밋 SHA"></div>
         <div class="release-meta-row">
           <div><label for="releaseVersionInput">업데이트 버전</label>
             <input id="releaseVersionInput" maxlength="32" pattern="[0-9A-Za-z][0-9A-Za-z._-]{0,31}" required placeholder="예: 1.1.0" autocomplete="off"></div>
@@ -66,7 +66,7 @@
         </div>
         <div class="release-register-actions">
           <button type="submit" id="releaseRegister" class="secondary">변경사항 등록</button>
-          <span id="releaseDraftInfo" class="subtle" aria-live="polite">변경한 코드가 GitHub main에 있는지 검사합니다.</span>
+          <span id="releaseDraftInfo" class="subtle" aria-live="polite">독립 커밋과 현재 운영 기준 및 코드 검증 결과를 검사합니다.</span>
         </div>
       </form>
       <div id="releaseFileSummary" class="release-file-summary" hidden>
@@ -92,11 +92,11 @@
         </div>
       </div>
     </section>
-    <p class="release-caution"><strong>시험 웹 주의:</strong> 현재 시험 웹은 같은 도메인의 별도 경로에 배포됩니다. 일부 기능은 운영 Supabase 데이터에 연결되므로 시험 중 실제 설문·글쓰기·관리자 데이터 변경은 주의하세요. 시험 웹에 데이터까지 완전히 격리된 것은 아닙니다.</p>
+    <p class="release-caution">검증된 독립 커밋만 직접 적용할 수 있습니다. 배포 요청과 실제 완료는 구분하여 기록합니다.</p>
   </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
-<script defer src="js/beagu-admin-updates-v1.js?v=20261121-1"></script>
+<script defer src="js/beagu-admin-updates-v1.js?v=direct-pages-v1"></script>
 </body>
 </html>

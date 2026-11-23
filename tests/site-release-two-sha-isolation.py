@@ -76,41 +76,35 @@ with tempfile.TemporaryDirectory(prefix="beagu-preview-isolation-") as scratch:
         }), encoding="utf-8")
         worker.build()
 
-    build_with(staging)
+    # Any stale preview plan is rejected before publication.
+    try:
+        build_with(staging)
+    except RuntimeError as error:
+        assert "Retired staging route" in str(error)
+    else:
+        raise AssertionError("Staging plan was accepted")
+    assert not worker.OUTPUT.exists()
+
+    # Even if HEAD contains a newer unapproved candidate, publish only the
+    # selected immutable production SHA and the one approved directory overlay.
+    build_with(None)
     out = worker.OUTPUT
     prod_html = (out / "index.html").read_text(encoding="utf-8")
-    stage_html = (out / "_preview/index.html").read_text(encoding="utf-8")
     assert "PRODUCTION_SAFE" in prod_html and "STAGING_NEW" not in prod_html
-    assert "STAGING_NEW" in stage_html and "PRODUCTION_SAFE" not in stage_html
     assert "beagu-preview-watermark" not in prod_html
-    assert "beagu-preview-watermark" in stage_html
-    assert 'href="/_preview/school-report.html"' in stage_html
-    assert 'src="/_preview/js/site.js"' in stage_html
     assert 'href="/school-report.html"' in prod_html
     assert 'src="/js/site.js"' in prod_html
-    assert "STAGE_JS" in (out / "_preview/js/site.js").read_text(encoding="utf-8")
     assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
-    assert "STAGE_REPORT" in (out / "_preview/school-report.html").read_text(encoding="utf-8")
     assert "PROD_REPORT" in (out / "school-report.html").read_text(encoding="utf-8")
     assert (out / "CNAME").read_text().strip() == "baeguindex.com"
-    assert not (out / "_preview/CNAME").exists()
-    assert '<meta name="robots" content="noindex,nofollow">' in stage_html
-    assert '<meta name="robots" content="noindex,nofollow">' not in prod_html
     assert (out / ".nojekyll").exists()
-    assert (out / "_preview/.nojekyll").exists()
-    for prefix in (out, out / "_preview"):
-        assert (prefix / "data/public-compare-school-directory-v1.json").read_text(
-            encoding="utf-8"
-        ) == '{"version":"LATEST_ALLOWED_DIRECTORY"}'
-
-    # A rollback to a null staging SHA removes preview, without replacing the
-    # previously approved production HTML or JavaScript. Such a rollback is
-    # currently queued in the real release manager and must NOT be forced.
-    build_with(None)
     assert not (out / "_preview").exists()
-    assert "PRODUCTION_SAFE" in (out / "index.html").read_text(encoding="utf-8")
-    assert "PROD_JS" in (out / "js/site.js").read_text(encoding="utf-8")
-    assert (out / "CNAME").read_text().strip() == "baeguindex.com"
+    assert (out / "data/public-compare-school-directory-v1.json").read_text(encoding="utf-8") == '{"version":"LATEST_ALLOWED_DIRECTORY"}'
+    # Selecting the other SHA explicitly changes production, not a preview.
+    worker.PLAN.write_text(json.dumps({"has_job":True,"production_sha":staging,"staging_sha":None}),encoding="utf-8")
+    worker.build()
+    assert "STAGING_NEW" in (out / "index.html").read_text(encoding="utf-8")
+    assert "STAGE_JS" in (out / "js/site.js").read_text(encoding="utf-8")
+    assert not (out / "_preview").exists()
 
-print("PASS: two immutable SHAs isolate approved production from marked preview")
-print("PASS: empty staging rollback removes preview only; no live deployment performed")
+print("PASS: selected immutable production only; stale preview plan denied; public directory overlay preserved")
