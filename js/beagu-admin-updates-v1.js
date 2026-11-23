@@ -74,9 +74,9 @@
   if(data.head_sha)cachedHead=data.head_sha;
   if(data.suggested_draft)cachedProposal=data.suggested_draft;
   if(cachedProposal?.sha===s.production_sha)cachedProposal=null;
-  write("releaseStageVersion",s.staging_sha?(s.staging_version||"버전 미입력"):"아직 시험 웹 미배포");
+  write("releaseStageVersion",s.staging_sha?(s.staging_version||"과거 버전"):"과거 시험웹 기록 없음");
   write("releaseProdVersion",s.production_sha?(s.production_version||"버전 미입력"):"최초 배포 준비 중");
-  write("releaseStageSha",s.staging_sha?"코드 "+short(s.staging_sha):"시험 웹에 아직 업데이트가 없습니다");
+  write("releaseStageSha",s.staging_sha?"종료된 경로 · 과거 코드 "+short(s.staging_sha):"종료된 경로");
   write("releaseProdSha",s.production_sha?"코드 "+short(s.production_sha):"초기 배포 후 표시됩니다");
   write("releaseHead",cachedHead?"GitHub 최신 코드: "+short(cachedHead):"새로고침하면 GitHub 최신 코드를 확인합니다.");
   const key=String(s.production_sha||"")+":"+String(s.draft_sha||"");
