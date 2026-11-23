@@ -142,7 +142,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261123-cc0-bgm2">
 <link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261120-mystery-hud2">
-<link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
+<link rel="stylesheet" href="styles/arcade-playback-v1.css?v=20261123-center-bottom1">
+
 <link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
@@ -173,6 +174,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   </div>
   <div class="court arcade-game-viewport" data-arcade-fullscreen>
       <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="전체화면으로 확대" title="전체화면으로"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 3h6v6M21 3l-7 7M3 21l7-7M9 21H3v-6"/></svg></button>
+      <button type="button" id="volley-fullscreen-pause" class="arcade-fullscreen-pause" aria-label="일시정지" title="일시정지" disabled>⏸ 일시정지</button>
       <div class="arcade-fullscreen-hud arcade-volley-fullscreen-hud" aria-label="전체화면 배구 점수판">
         <span>나 <strong id="volley-fullscreen-my-score">0</strong></span>
         <span class="arcade-volley-fullscreen-versus">25점 경기</span>
@@ -202,7 +204,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         </div>
       </div>
     </div>
-  <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
+  <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
+  <div class="arcade-playback-bar"><button type="button" id="pause" disabled aria-label="일시정지" title="일시정지">⏸ 일시정지</button></div>
   <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/keep-your-dream-alive-seamless-loop" target="_blank" rel="noopener noreferrer">Keep your dream alive! · congusbongus (CC0)</a></p>
   <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 좌우 드래그 이동 · 모바일은 오른쪽 점프 버튼 · EASY/날개 아이템에서만 비행 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
   <a class="postit-arcade-link postit-lv2-link" data-postit-game="teacher-volleyball" target="_top" href="postit.html?game=teacher-volleyball">▤ 이 게임 포스트잇</a>
@@ -215,7 +218,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-leaderboard-v1.js?v=20261123-school-links-live2"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261120-fast1"></script>
 <script src="js/arcade-fullscreen-v1.js?v=20261120-fullscreen-icons2"></script>
-<script src="js/arcade-scroll-rail-v1.js?v=20261120-rightscroll1"></script>
+
 <script src="js/arcade-play-lock-v1.js?v=20261120-rightscroll1"></script>
 <script src="js/arcade-mystery-items-v1.js?v=20261123-items"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
@@ -230,6 +233,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const scoreC = document.getElementById("cpu-score");
   const startButton = document.getElementById("start");
   const pauseButton = document.getElementById("pause");
+  const fullscreenPauseButton = document.getElementById("volley-fullscreen-pause");
   const status = document.getElementById("status");
   const helpButton=document.getElementById("help"),helpPanel=document.getElementById("help-panel");
   const schoolChooseButton=document.getElementById("volley-school-choose");
@@ -649,8 +653,13 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     startButton.disabled = state.phase === "starting" ||
       ((state.phase === "ready" || state.phase === "finished") && schoolPicker.get()?.eligible !== true);
     pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point" || state.phase === "starting";
-    pauseButton.textContent = state.phase === "paused" ? "▶" : "⏸";
-    pauseButton.setAttribute("aria-label",state.phase === "paused"?"계속하기":"일시정지");
+    const playbackLabel=state.phase==="paused"?"▶ 계속하기":"⏸ 일시정지";
+    const playbackTitle=state.phase==="paused"?"계속하기":"일시정지";
+    pauseButton.textContent=playbackLabel;
+    pauseButton.setAttribute("aria-label",playbackTitle);pauseButton.title=playbackTitle;
+    fullscreenPauseButton.disabled=pauseButton.disabled;
+    fullscreenPauseButton.textContent=playbackLabel;
+    fullscreenPauseButton.setAttribute("aria-label",playbackTitle);fullscreenPauseButton.title=playbackTitle;
     updateMatchScoreUI();
   }
   function resetPositions() {
@@ -856,6 +865,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   canvas.addEventListener("lostpointercapture", endCourtTouch);
   startButton.addEventListener("click",()=>{unlockSound();if(["playing","point","paused"].includes(state.phase))finishMatch(true);else startMatch();});
   pauseButton.addEventListener("click", pause);
+  fullscreenPauseButton.addEventListener("click", pause);
   helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
   // Focus changes are frequent in mobile/embedded browsers. Only pause button pauses.
   // Clear keyboard input on blur without cancelling a finger dragging on canvas.
