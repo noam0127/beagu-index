@@ -14,6 +14,10 @@ on:
       - styles/challenge-layout-v1.css
       - styles/beagu-participation-auth-v2.css
       - tests/challenge-certificate-privacy-v1.mjs
+      - tests/participation-code-unified.mjs
+      - tests/challenge-search-telemetry.mjs
+      - scripts/test-challenge-referral-premium.cjs
+      - scripts/test-challenge-lv2-card.cjs
       - tests/beagu-notice-pages-v1.mjs
       - .github/workflows/challenge-auth-ui.yml
   workflow_dispatch:
