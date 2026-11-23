@@ -1,0 +1,24 @@
+name: One-shot isolated staging page performance positive HTTP QA
+on:
+  push:
+    branches:
+      - fix/v110-staging-edited-api-recovery-20261123
+    paths:
+      - '.github/workflows/v110-staging-perf-one-shot-positive.yml'
+permissions:
+  contents: read
+jobs:
+  single-synthetic-sample:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: One-time real HTTP - positive and immediate 20s dedup (SYNTHETIC)
+        run: python3 tests/staging-perf-gateway-http-positive-once.py
+      - name: Cleanup reminder - NO user data and NO production credentials
+        run: |
+          echo "One synthetic sample was just written to the isolated staging project."
+          echo "A separate fail-closed stage SQL cleanup is REQUIRED now."
+          echo "NEVER enable this job on every development push."
