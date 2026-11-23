@@ -10,6 +10,7 @@ on:
       - 'tests/staging-lv3-active-auth-session.mjs'
       - 'scripts/staging/schema-lv3-revoked-auth-session-qa-only.sql'
       - 'tests/sql/staging-lv3-auth-session-revocation-rollback-20261123.sql'
+      - 'tests/sql/staging-lv3-member-suspend-delete-rollback-20261123.sql'
       - '.github/workflows/v110-staging-render-level-postit-cors.yml'
   workflow_dispatch:
 permissions:
