@@ -6,12 +6,12 @@ const source=read('js/level-search.js'),html=read('search-lv1.html'),backend=rea
 assert.doesNotThrow(()=>new Script(source));
 assert.match(source,/choose\(Number\(viewerTier\)>=2\?2026:\(firstAvailable\|\|2025\)\)/);
 assert.match(source,/2026 조사 결과 확인 · 연도별 상세/);
-assert.match(source,/2026년 학교별 조사 집계는 진행 중이지만/);
-assert.match(source,/공개 보류 중인 결과는 표시하지 않습니다/);
+assert.match(source,/응답 1건인 학교도 승인 대상이지만/);
+assert.match(source,/공개 근거·소표본 재식별 검토가 완료된 학교별 결과만 표시합니다/);
 assert.match(source,/window\.Beagu2026ApprovedResults\?\.render\(host,results2026,\{level:viewerTier\}\)/);
 assert.match(backend,/admin\.rpc\('beagu_2026_lv2_released_question_results'/);
 assert.match(backend,/level>=2&&lv2Approved2026!==null/);
 assert.doesNotMatch(source,/\.from\('beagu_2026_results_snapshot'\)/);
 assert.doesNotMatch(source,/\.from\('beagu_2026_qa_ingest_staging'\)/);
-assert.match(html,/js\/level-search\.js\?v=20261123-2026-lv2/);
+assert.match(html,/js\/level-search\.js\?v=20261123-n1-release/);
 console.log('PASS: Lv2 opens 2026 first, withheld school results stay private');
