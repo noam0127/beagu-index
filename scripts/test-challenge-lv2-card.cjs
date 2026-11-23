@@ -18,7 +18,7 @@ function fakeNode(){
     addEventListener(k,cb){this.listeners[k]=cb;},focus(){},select(){}};
 }
 const ids=['challengeReferralPanel','challengeReferralLink','copyChallengeReferral',
-  'challengeReferralStatus','challengeReferralProgress','challengeReferralTitle','challengeReferralTag',
+  'challengeReferralStatus','challengeReferralProgress','challengeReferralCount','challengeReferralTitle','challengeReferralTag',
   'challengeReferralNote','challengeIdentityPanel','challengeIdentityTitle','challengeIdentityTag',
   'challengeIdentityReward','copyIdentityCode','challengeVipMedal','certificateMedal','certificateThanks','certificateLevelBanner','certificate'];
 const nodes=Object.fromEntries(ids.map(k=>[k,fakeNode()]));
@@ -61,6 +61,7 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(nodes.certificateLevelBanner.textContent,'Lv.2 챌린지 달성');
   assert.equal(nodes.challengeIdentityPanel.classList.contains('is-lv2'),true);
   assert.equal(nodes.challengeIdentityPanel.dataset.referralState,'earned');
+  assert.equal(nodes.challengeReferralCount.textContent,'1건');
   assert.equal(nodes.copyIdentityCode.textContent,'코드 복사');
   assert.equal(nodes.challengeIdentityReward.hidden,false);
   assert.equal(nodes.challengeReferralLink.value,payload.shortLink,'referral link preserved');

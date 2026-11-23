@@ -6,6 +6,7 @@
   const copyButton = get('copyChallengeReferral');
   const status = get('challengeReferralStatus');
   const progress = get('challengeReferralProgress');
+  const referralCount = get('challengeReferralCount');
   const retry = get('challengeReferralRetry');
   const title = get('challengeReferralTitle');
   const tag = get('challengeReferralTag');
@@ -20,7 +21,7 @@
   const certificateMedal = get('certificateMedal');
   const certificateThanks = get('certificateThanks');
   if (![panel, linkField, copyButton, status, progress, title, tag,
-      identityPanel, identityTitle, identityTag, identityReward, copyIdentityCode].every(Boolean)) return;
+      identityPanel, identityTitle, identityTag, identityReward, copyIdentityCode, referralCount].every(Boolean)) return;
 
   const endpoint = SUPABASE_URL + '/functions/v1/beagu-referral-link-v1';
   const sessionKey = 'beagu-level-session-v1';
@@ -65,7 +66,8 @@
 
     // Invitation links must remain visible and copyable after promotion.
     title.textContent = '나의 전용 조사 링크';
-    tag.textContent = upgraded?'유효한 추천 '+count.toLocaleString('ko-KR')+'건':'링크 공유하기';
+    tag.textContent = '링크 공유하기';
+    referralCount.textContent = count.toLocaleString('ko-KR') + '건';
     panel.dataset.state = upgraded ? 'earned' : 'pending';
     linkField.value = currentLink;
     linkField.setAttribute('aria-label', '내 전용 조사 링크');
@@ -80,6 +82,7 @@
     copyButton.disabled = true;
     progress.textContent = '';
     lastReferrals=0;lastSnapshot='';
+    referralCount.textContent = '확인 중';
     if(retry)retry.hidden=true;
     renderState(false,0);
     status.textContent = '전용 조사 링크를 불러오고 있어요.';
@@ -146,9 +149,12 @@
         window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',
           {detail:{level:promoted?2:1,validReferrals:count}}));
       }
+      const loginLevel = Number(get('challengeAccessPanel')?.getAttribute('data-auth-level') || 0);
       status.textContent = promoted
-        ? 'Lv.2 달성! 기존 고유번호를 참여코드로 사용하세요.'
-        : '동료에게 링크를 보내세요. 설문 참여 1건이 확인되면 Lv.2!';
+        ? '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.'
+        : loginLevel >= 2
+          ? 'Lv.2 로그인은 확인됐습니다. 개인 참여코드는 추천 1건 확인 후 별도로 활성화됩니다.'
+          : '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.';
     } catch (error) {
       if (!active || seq !== generation) return;
       if(retry)retry.hidden=false;

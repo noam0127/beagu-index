@@ -156,7 +156,8 @@
     .challenge-identity-row { flex-direction: column; align-items: stretch; }
     .challenge-identity-copy { align-self: flex-end; }
   }
-\n  .footer-links { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 22px; }
+
+  .footer-links { border-top: 1px solid var(--line); margin-top: 26px; padding-top: 22px; }
   .footer-links h2 { font-size: 16px; margin: 0 0 11px; }
   .footer-grid { display: grid; grid-template-columns: 1fr; gap: 9px; }
   .footer-link { color: var(--muted); text-align: center; font-size: 13px; border: 1px solid var(--line); background: #fff; padding: 13px 10px; text-decoration: none; border-radius: 11px; font-weight: 650; }
@@ -184,6 +185,7 @@
 <link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-priority2">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
+<link rel="stylesheet" href="styles/challenge-premium-grid-v1.css?v=20261123-layout1">
 </head>
 <body class="beagu-ui-page beagu-page-challenge">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -239,6 +241,7 @@
   </section>
   <!-- 아래 링크와 참여코드는 인증샷에서 제외 -->
   <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
+    <div class="challenge-premium-emblem" aria-hidden="true"><span class="challenge-premium-crown">♛</span><strong>Lv.2</strong></div>
     <div class="challenge-vip-crown" id="challengeVipMedal" hidden aria-label="Lv.2 인증 완료 VIP 회원">
       <div class="challenge-vip-emblem" aria-hidden="true">🏅</div>
       <div class="challenge-vip-wordmark">
@@ -264,18 +267,25 @@
       <h2 id="challengeReferralTitle">나의 전용 조사 링크</h2>
       <span class="challenge-identity-tag" id="challengeReferralTag">링크 공유하기</span>
     </div>
-    <p id="challengeReferralStatus" class="challenge-identity-feedback" role="status" aria-live="polite">
-      전용 조사 링크를 불러오고 있어요.
-    </p>
-    <div class="challenge-identity-row" style="margin-top:12px">
-      <input id="challengeReferralLink" type="text" aria-label="내 전용 조사 링크"
-        readonly hidden spellcheck="false" autocomplete="off"
-        style="width:100%;min-width:0;flex:1;padding:10px;border:1px solid #dce4ef;border-radius:9px;color:#1d4ed8">
-      <button class="challenge-identity-copy" id="copyChallengeReferral" type="button"
-        disabled hidden>링크 복사</button>
+    <div class="challenge-referral-grid">
+      <div class="challenge-referral-link-card">
+        <p id="challengeReferralStatus" class="challenge-identity-feedback" role="status" aria-live="polite">
+          전용 조사 링크를 불러오고 있어요.
+        </p>
+        <div class="challenge-identity-row challenge-referral-link-row">
+          <input id="challengeReferralLink" type="text" aria-label="내 전용 조사 링크"
+            readonly hidden spellcheck="false" autocomplete="off">
+          <button class="challenge-identity-copy" id="copyChallengeReferral" type="button"
+            disabled hidden>링크 복사</button>
+        </div>
+        <p id="challengeReferralProgress" class="challenge-identity-feedback" hidden></p>
+        <button id="challengeReferralRetry" type="button" class="challenge-identity-copy" hidden>링크 다시 확인</button>
+      </div>
+      <aside class="challenge-referral-count-card" aria-label="유효 추천 횟수">
+        <h3>유효 추천 횟수</h3>
+        <strong id="challengeReferralCount" aria-live="polite">확인 중</strong>
+      </aside>
     </div>
-    <p id="challengeReferralProgress" class="challenge-identity-feedback" aria-live="polite"></p>
-    <button id="challengeReferralRetry" type="button" class="challenge-identity-copy" hidden style="margin-top:10px">링크 다시 확인</button>
   </section>
   <section class="steps" aria-labelledby="steps-title">
     <h2 class="section-title" id="steps-title">참여 인증</h2>
@@ -297,7 +307,8 @@
 
 <section class="beagu-home-notice" aria-labelledby="challenge-notice-title">
   <h2 id="challenge-notice-title">공지사항</h2>
-<p>2026 데이터, 회원가입, Lv.3 구현, 포스트잇, Lv.2 게임 점검. 레벨이 높을수록 최신자료를 빠르게 확인할 수 있습니다.</p>
+<p><strong>2026 조사데이터 업로드 시작.</strong></p>
+<p>레벨2부터 확인 가능합니다. 추후 표본 수가 많아질 경우 레벨1에서도 확인하실 수 있습니다. 레벨이 높을수록 최신 자료와 더 많은 정보를 더 빠르게 확인할 수 있습니다.</p>
 </section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -307,7 +318,7 @@
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/challenge.js?v=20261123-banner-private3"></script>
-<script src="js/challenge-referral-v1.js?v=20261123-original-vip3"></script>
+<script src="js/challenge-referral-v1.js?v=20261123-premium-grid1"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>

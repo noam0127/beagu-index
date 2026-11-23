@@ -15,7 +15,7 @@ assert.match(server, /provisional:/);
 assert.doesNotThrow(() => new vm.Script(js));
 const ids = [
   'challengeReferralPanel', 'challengeReferralLink', 'copyChallengeReferral',
-  'challengeReferralStatus', 'challengeReferralProgress', 'challengeReferralTitle',
+  'challengeReferralStatus', 'challengeReferralProgress', 'challengeReferralCount', 'challengeReferralTitle',
   'challengeReferralTag', 'challengeReferralNote',
   'challengeIdentityPanel', 'challengeIdentityTitle', 'challengeIdentityTag',
   'challengeIdentityReward', 'copyIdentityCode',
@@ -94,6 +94,7 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.challengeIdentityReward.hidden,false);
   assert.ok(el.challengeIdentityPanel.classes.has('is-lv2'));
   assert.equal(el.challengeIdentityPanel.dataset.referralState,'earned');
+  assert.equal(el.challengeReferralCount.textContent,'1건');
   assert.equal(el.challengeVipMedal.hidden,false);
   assert.equal(el.certificateMedal.hidden,false);
   assert.equal(el.challengeReferralTitle.textContent,'나의 전용 조사 링크');

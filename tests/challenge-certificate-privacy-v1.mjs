@@ -33,6 +33,12 @@ assert.doesNotMatch(api,/validReferrals: Number\(enrollment\?\.validReferrals\) 
 console.log('PASS: private codes excluded from certificate and cumulative verified referrals survive');
 
 assert.doesNotMatch(html,/id="challengeReferralNote"/);
+assert.match(html,/id="challengeReferralCount"/);
+assert.match(html,/class="challenge-referral-grid"/);
+assert.match(html,/class="challenge-premium-emblem"/);
+assert.match(html,/2026 조사데이터 업로드 시작\./);
+assert.match(ref,/referralCount\.textContent = count\.toLocaleString/);
+assert.match(read('styles/challenge-premium-grid-v1.css'),/grid-template-columns:minmax\(0,2fr\) minmax\(0,1fr\)/);
 assert.doesNotMatch(ref,/유효한 추천 1건이 확인되면 \(비활성\)이 사라지고/);
 assert.match(html,/BAEGU INDEX · VERIFIED MEMBER/);
 assert.ok(html.indexOf('id="challengeIdentityPanel"')<html.indexOf('id="challengeReferralPanel"'));
