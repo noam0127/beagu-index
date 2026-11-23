@@ -604,6 +604,7 @@
                   value:String(metric.value),referenceYear
                 };
             }else{
+              if(state.authLevel<2 && factKey==='district_housing_price_mean')continue;
               approved.summaries[year].push({
                 group:official?'편집본 공식 학교정보':'승인된 설문 영역 요약',
                 label:String(metric.label),value:String(metric.value)

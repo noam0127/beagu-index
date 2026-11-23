@@ -240,7 +240,7 @@ body.beagu-page-lv1 .school-card .school-participation{
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-sortctrl1">
-<link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
+<link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261123-priority2">
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
 <link rel="stylesheet" href="styles/beagu-search-details-v1.css?v=20261119-domain-note1">
@@ -249,10 +249,10 @@ body.beagu-page-lv1 .school-card .school-participation{
 <script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
 <link rel="stylesheet" href="styles/beagu-school-interest-v1.css?v=20261120-live-rising72-15min">
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
-<link rel="stylesheet" href="styles/beagu-search-compare-unity-v1.css?v=20261120-unity2">
+<link rel="stylesheet" href="styles/beagu-search-compare-unity-v1.css?v=20261123-priority2">
 <link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
-<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
-<script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-priority2">
+<script defer src="js/beagu-participation-auth-v2.js?v=20261123-priority2"></script>
 </head>
 <body class="beagu-ui-page beagu-page-lv1">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -261,7 +261,7 @@ body.beagu-page-lv1 .school-card .school-participation{
   
 
   <main class="container" id="main-content">
-    <section class="beagu-search-hero" aria-labelledby="searchTitle"><h1 id="searchTitle" aria-label="학교 검색">학교를 <span>바로 검색</span></h1></section>
+    <section class="beagu-search-hero" aria-labelledby="searchTitle"><h1 id="searchTitle" aria-label="학교 검색">학교를 <span>바로 검색</span></h1><svg class="beagu-search-hero-magnifier" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><circle cx="51" cy="50" r="33" fill="none" stroke="currentColor" stroke-width="11"/><path d="M77 77l29 29" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round"/></svg></section>
     
 
 
@@ -311,7 +311,7 @@ body.beagu-page-lv1 .school-card .school-participation{
             <h2 id="beaguInterestTitle">실시간 급상승 학교</h2>
             <span class="beagu-interest-badge beagu-interest-badge--live"><span class="beagu-interest-live-dot" aria-hidden="true"></span>15분 간격 갱신</span>
           </div>
-          <p class="beagu-interest-description">최근 72시간에 관심이 가장 많이 늘어난 학교</p>
+          <p class="beagu-interest-description">최근 72시간 조회수가 있는 학교 중 증가순 상위 10개</p>
           <ol class="beagu-interest-list" data-interest-list aria-live="polite"></ol>
           <p class="beagu-interest-status" data-interest-status role="status">급상승 순위를 확인하는 중입니다.</p>
           <button type="button" class="beagu-interest-more" data-interest-more hidden>10위까지 보기</button>
@@ -324,7 +324,7 @@ body.beagu-page-lv1 .school-card .school-participation{
           <select id="officeSelect" class="region-select" disabled><option value="">시도를 먼저 선택하세요</option></select>
         </div>
         
-        <div class="beagu-search-sort"><label for="regionSort">정렬 기준</label><div class="beagu-sort-controls"><select id="regionSort"><option value="school_name">학교명</option><option value="address">주소</option><option value="student_count">학생수</option><option value="beagu_percentile_2025">배구지수</option><option value="view_count" title="학교 상세조회수 · 같은 방문자는 하루 1회 집계">조회수</option><option value="junior_teacher_ratio">2정교사비</option><option value="male_teacher_ratio">남교사비</option><option value="housing_price_won" title="행정구역 공동주택 평균 공시가격">공시지가</option></select><button id="regionSortDirection" class="beagu-sort-direction" type="button" aria-label="현재 오름차순, 내림차순으로 전환" title="현재 오름차순 · 클릭하면 내림차순">↑</button></div></div>
+        <div class="beagu-search-sort"><label for="regionSort">정렬 기준</label><div class="beagu-sort-controls"><select id="regionSort"><option value="school_name">학교명</option><option value="address">주소</option><option value="student_count">학생수</option><option value="beagu_percentile_2025">배구지수</option><option value="view_count" title="학교 상세조회수 · 같은 방문자는 하루 1회 집계">조회수</option><option value="junior_teacher_ratio">2정교사비</option><option value="male_teacher_ratio">남교사비</option><option value="housing_price_won" title="Lv2 인증 후 이용 가능" disabled>🔒 공시지가 (Lv2 전용)</option></select><button id="regionSortDirection" class="beagu-sort-direction" type="button" aria-label="현재 오름차순, 내림차순으로 전환" title="현재 오름차순 · 클릭하면 내림차순">↑</button></div></div>
       </section>
       <div id="resultCount" class="result-count" aria-live="polite"></div>
       <div id="results" class="results"></div>
@@ -350,7 +350,7 @@ body.beagu-page-lv1 .school-card .school-participation{
   <script src="js/2026-questionnaire-options-v1.2.js?v=20261119-results1"></script>
 <script src="js/2026-approved-question-results.js?v=20261121-lv2-bars1"></script>
   <script src="js/2026-lv2-horizontal-bars-v1.js?v=20261121-bars1"></script>
-  <script src="js/level-search.js?v=20261121-lv2-bars1"></script>
+  <script src="js/level-search.js?v=20261123-priority2"></script>
   <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/search-telemetry-v1.js?v=20261120-selection-record2"></script>
   <script>
@@ -367,6 +367,6 @@ body.beagu-page-lv1 .school-card .school-participation{
     });
   })();
   </script>
-<script defer src="js/beagu-school-interest-v1.js?v=20261120-live-rising72-15min"></script>
+<script defer src="js/beagu-school-interest-v1.js?v=20261123-priority2"></script>
 </body>
 </html>

@@ -21,6 +21,8 @@
   let officeLoadSerial=0;
   const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count']);
   let sortDirection='asc';
+  let viewerTier=1;
+  const setTier=t=>{viewerTier=Number(t)>=2?2:1;const option=$('regionSort')?.querySelector('option[value="housing_price_won"]');if(!option)return;option.disabled=viewerTier<2;option.textContent=viewerTier>=2?'공시지가':'🔒 공시지가 (Lv2 전용)';if(viewerTier<2&&$('regionSort').value==='housing_price_won')$('regionSort').value='school_name';};
   const updateSortDirection=()=>{
     const button=$('regionSortDirection');
     const ascending=sortDirection==='asc';
@@ -117,6 +119,7 @@
   }
 
   function loggedOut(message = '') {
+    setTier(1);
     session = '';
     geographyComparisons.clear();
     visiblePageSchools=[];
@@ -161,6 +164,7 @@
       geographyComparisons.clear();
       sessionStorage.setItem(key, session);
       $('levelCode').value = '';
+      setTier(data.level);
       loggedIn();
       $('searchInput').focus();
     } catch (_) {
@@ -177,6 +181,7 @@
     session=next.token;
     geographyComparisons.clear();
     visiblePageSchools=[];
+    setTier(next.level);
     loggedIn();
     $('searchInput').focus();
   });
@@ -217,7 +222,7 @@
   $('officeSelect').addEventListener('change', () => search(true));
   // 지역 찾기만 선택형 정렬을 사용합니다. 서버는 페이지 나누기 전에 정렬합니다.
   $('regionSort').addEventListener('change',()=>{
-    if(!SORTS.has($('regionSort').value))return;
+    if(!SORTS.has($('regionSort').value)||($('regionSort').value==='housing_price_won'&&viewerTier<2))return;
     // "조회수" defaults to most viewed first; the arrow still toggles either direction.
     if($('regionSort').value==='view_count'){
       sortDirection='desc';
@@ -788,7 +793,7 @@
           student_count:['학생 수',school.student_count,v=>Number(v).toLocaleString('ko-KR')+'명'],
           junior_teacher_ratio:['2급 정교사 비율 (2024년 기준)',school.junior_teacher_ratio,v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'],
           male_teacher_ratio:['남교사 비율 (2024년 기준)',school.male_teacher_ratio,v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'],
-          housing_price_won:['공동주택 평균 공시가격',school.housing_price_won,v=>Number(v).toLocaleString('ko-KR')+'원']
+          ...(viewerTier>=2?{housing_price_won:['공동주택 평균 공시가격',school.housing_price_won,v=>Number(v).toLocaleString('ko-KR')+'원']}: {})
         }[sortValue.replace(/_(?:asc|desc)$/,'')];
         if(metricSort){
           const [label,value,format]=metricSort;
@@ -961,7 +966,7 @@
     if (!session) { loggedOut(); return; }
     try {
       const state = await api('verify');
-      if (state.level >= level) loggedIn();
+      if (state.level >= level){setTier(state.level);loggedIn();}
       else loggedOut('현재 코드가 이 등급에 미달합니다.');
     } catch (_) { loggedOut('인증을 다시 진행해주세요.'); }
   })();

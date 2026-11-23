@@ -112,6 +112,8 @@
       if (!response.ok || Number(data.level) < 1 ||
           typeof data.token !== 'string' || !data.token) throw new Error('LOGIN_FAILED');
       sessionStorage.setItem(sessionKey, data.token);
+      verifiedToken = '';
+      void verify();
       codeInput.value = '';
       if (loginMessage) loginMessage.textContent = '인증되었습니다. 게임을 열고 있습니다.';
       window.dispatchEvent(new Event('beagu:level-state-change'));
@@ -125,6 +127,8 @@
 
   const verifyIfVisible = () => { if (!document.hidden) void verify(); };
   window.addEventListener('beagu:level-state-change', verify);
+  window.addEventListener('beagu:participation-authenticated', verify);
+  window.addEventListener('beagu:participation-logged-out', verify);
   window.addEventListener('beagu:challenge-access-granted', verify);
   window.addEventListener('beagu:challenge-access-revoked', verify);
   window.addEventListener('pageshow', event => { if (event.persisted) void verify(); });

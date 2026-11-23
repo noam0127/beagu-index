@@ -6,6 +6,7 @@
   const copyButton = get('copyChallengeReferral');
   const status = get('challengeReferralStatus');
   const progress = get('challengeReferralProgress');
+  const retry = get('challengeReferralRetry');
   const title = get('challengeReferralTitle');
   const tag = get('challengeReferralTag');
   const note = get('challengeReferralNote');
@@ -30,7 +31,7 @@
     // A name change never mints a new code. The existing personal code stays unchanged.
     identityPanel.classList.toggle('is-lv2', upgraded);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
-    identityTitle.textContent = upgraded ? 'Lv2 참여코드' : '나의 고유번호';
+    identityTitle.textContent = upgraded ? 'Lv.2 참여코드' : '나의 고유번호';
     identityTag.textContent = upgraded ? 'Lv.2 달성 ✦' : '개인 보관';
     identityReward.hidden = !upgraded;
     identityReward.textContent = upgraded
@@ -57,6 +58,7 @@
     copyButton.hidden = true;
     copyButton.disabled = true;
     progress.textContent = '';
+    if(retry)retry.hidden=true;
     renderState(false);
     status.textContent = '전용 조사 링크를 불러오고 있어요.';
   }
@@ -93,7 +95,7 @@
         if (!upgraded) status.textContent = '설문 연결을 확인 중이에요.';
         return;
       }
-      if (!response.ok) throw Error(payload.error || 'UNAVAILABLE');
+      if (!response.ok) {const error=Error(payload.error || 'UNAVAILABLE');error.status=response.status;throw error;}
       if (typeof payload.link !== 'string' ||
           !/^https:\/\/baeguindex\.com\/survey\.html\?ref=[a-f0-9]{64}$/.test(payload.link))
         throw Error('INVALID_LINK');
@@ -101,6 +103,7 @@
         /^https:\/\/baeguindex\.com\/r\/#[A-Za-z0-9_-]{8}$/.test(payload.shortLink)
         ? payload.shortLink : payload.link;
       linkField.hidden = false;
+      if(retry)retry.hidden=true;
       copyButton.hidden = false;
       copyButton.disabled = false;
 
@@ -115,11 +118,15 @@
       status.textContent = promoted
         ? 'Lv.2 달성! 기존 고유번호를 참여코드로 사용하세요.'
         : '동료에게 링크를 보내세요. 설문 참여 1건이 확인되면 Lv.2!';
-    } catch (_) {
+    } catch (error) {
       if (!active || seq !== generation) return;
-      if (!upgraded) status.textContent = '추천 정보를 확인하지 못했습니다. 다시 열거나 소유자 인증을 확인해 주세요.';
+      if(retry)retry.hidden=false;
+      if(error?.status===403)status.textContent='소유자 확인에 실패했습니다. 처음 코드를 발급받은 브라우저에서 확인하거나 저장 설정을 확인해 주세요.';
+      else if(error?.status===401)status.textContent='인증이 만료되었습니다. 다시 인증한 뒤 링크를 확인해 주세요.';
+      else status.textContent='전용 조사 링크를 불러오지 못했습니다. 연결을 확인하고 다시 시도해 주세요.';
     }
   }
+  retry?.addEventListener('click',()=>{if(active&&lastIdentity)void load(lastIdentity)});
   copyButton.addEventListener('click', async () => {
     if (!currentLink) return;
     try {
