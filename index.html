@@ -274,6 +274,7 @@
       .teacher-diary-feature .teacher-diary-lock{padding:18px 15px 23px;margin:0 10px 10px}
     }
 </style>
+  <link rel="stylesheet" href="styles/class-diary-home-entry-v2.css?v=20261123-literary-1">
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
 <link rel="stylesheet" href="styles/beagu-design-system-v1.css?v=20261118-search-nav2">
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
@@ -286,7 +287,7 @@
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
-<script defer src="js/class-diary-home-entry-v1.js?v=20261120-unified"></script>
+<script defer src="js/class-diary-home-entry-v1.js?v=20261123-literary-lv2-1"></script>
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-gamecodefix1">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
 </head>
@@ -381,26 +382,57 @@
     <section id="teacher-diary-feature" class="teacher-game-feature teacher-diary-feature" aria-labelledby="teacher-diary-title">
       <div class="teacher-game-header">
         <h2 id="teacher-diary-title">📖 나의 OO한 학급일지</h2>
-        <span class="teacher-game-access-level teacher-game-access-level--locked">준비 중</span>
+        <span class="teacher-game-access-level">Lv.2 · 시험 운영</span>
       </div>
       <div class="teacher-diary-lock" aria-labelledby="teacher-diary-lock-title">
-        <span class="teacher-diary-lock-icon" aria-hidden="true">🔒</span>
-        <h3 id="teacher-diary-lock-title">준비 중</h3>
-        <p>나의 OO한 학급일지 · 개발자 미리보기</p>
-        <form id="homeDiaryGuestForm" autocomplete="off" aria-label="학급일지 비공개 테스트 입장">
-          <label for="homeDiaryCode">테스트 입장 코드</label>
+        <span class="teacher-diary-lock-icon" aria-hidden="true">📖</span>
+        <h3 id="teacher-diary-lock-title">나의 OO한 학급일지</h3>
+        <p>봄에서 여름까지, 한 교실에서 펼쳐지는 이야기</p>
+        <p class="teacher-diary-beta-note">현재 시험 중입니다 · 화면과 기능이 변경될 수 있습니다.</p>
+        <button type="button" id="homeDiarySchoolOpen" class="teacher-diary-school-button"
+          aria-haspopup="dialog" aria-controls="homeDiarySchoolDialog">🏫 학교 선택하기</button>
+        <p id="homeDiarySchoolPicked" class="teacher-diary-picked" role="status" aria-live="polite"></p>
+        <form id="homeDiaryLv2Form" class="teacher-diary-lv2-form" autocomplete="off">
+          <label for="homeDiaryLv2Code">Lv.2 참여코드</label>
           <div class="teacher-diary-code-row">
-            <input id="homeDiaryCode" name="diaryCode" type="password" inputmode="numeric" spellcheck="false"
-              autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" aria-describedby="homeDiaryMessage"
-              placeholder="4자리 코드" required>
-            <button id="homeDiarySubmit" type="submit">미리보기 입장 <span aria-hidden="true">›</span></button>
+            <input id="homeDiaryLv2Code" type="password" minlength="8" maxlength="120" autocapitalize="off"
+              autocomplete="off" spellcheck="false" placeholder="Lv.2 코드 입력 · 이미 인증했다면 생략">
+            <button id="homeDiaryLv2Submit" type="submit">이야기 시작하기 ›</button>
           </div>
-          <p id="homeDiaryMessage" class="teacher-diary-code-message" role="status" aria-live="polite">공개 전 테스트 중입니다. 일반 이용은 아직 불가능합니다.</p>
+          <p id="homeDiaryLv2Message" class="teacher-diary-code-message" role="status" aria-live="polite">
+            학교 선택과 Lv.2 인증 후 입장할 수 있습니다. 등장인물과 사건은 허구입니다.
+          </p>
         </form>
+        <details class="teacher-diary-private-preview">
+          <summary>기존 개발자 미리보기 입장</summary>
+          <form id="homeDiaryGuestForm" autocomplete="off" aria-label="학급일지 비공개 테스트 입장">
+            <label for="homeDiaryCode">테스트 입장 코드</label>
+            <div class="teacher-diary-code-row">
+              <input id="homeDiaryCode" name="diaryCode" type="password" inputmode="numeric" spellcheck="false"
+                autocomplete="off" minlength="4" maxlength="4" pattern="[0-9]{4}" aria-describedby="homeDiaryMessage"
+                placeholder="4자리 코드" required>
+              <button id="homeDiarySubmit" type="submit">미리보기 입장 <span aria-hidden="true">›</span></button>
+            </div>
+            <p id="homeDiaryMessage" class="teacher-diary-code-message" role="status" aria-live="polite">
+              개발자용 비공개 입장입니다. Lv.2 참여코드와는 별개입니다.
+            </p>
+          </form>
+        </details>
       </div>
     </section>
+    <div id="homeDiarySchoolDialog" class="teacher-diary-school-dialog" role="dialog" aria-modal="true"
+      aria-labelledby="homeDiarySchoolDialogTitle" hidden>
+      <div class="teacher-diary-school-dialog-inner">
+        <div class="teacher-diary-dialog-head">
+          <h3 id="homeDiarySchoolDialogTitle">📖 이야기의 학교</h3>
+          <button type="button" id="homeDiarySchoolClose" aria-label="학교 검색 닫기">×</button>
+        </div>
+        <div id="homeDiarySchoolPicker"></div>
+        <p class="teacher-diary-school-help">공개된 학교명·지역·조사연도 일부만 사용하며 이야기 속 인물과 사건은 허구입니다.</p>
+      </div>
+    </div>
 
-    <section class="card" style="margin-top:20px" aria-label="방문 통계">
+        <section class="card" style="margin-top:20px" aria-label="방문 통계">
       <h2>방문한 선생님</h2>
       <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center">
         <div>오늘 방문자<br><strong data-stat="today" aria-live="polite">집계 중</strong></div>
@@ -418,6 +450,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
+<script defer src="js/arcade-school-picker-v1.js?v=20261123-diary-picker1"></script>
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
  <script src="js/home-cumulative-stats.js?v=20261118-live1"></script>
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
