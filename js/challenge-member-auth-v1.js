@@ -38,7 +38,7 @@ function paintTier(){
  // The badge's level comes from beagu-level-state-v1's server-verified response.
  const badge=byId('beaguLevelState');
  const token=levelToken();
- tier2=badge?.dataset.level==='2'&&/^[a-f0-9]{64}$/.test(token);
+ tier2=/^[23]$/.test(badge?.dataset.level||'')&&/^[a-f0-9]{64}$/.test(token);
  if(!tier2)close();
 }
 function paintMode(next){
@@ -94,7 +94,7 @@ async function showAccountStatus(){
  if(overlay.hidden||!tier2)return;
  if(linked){
   connect.hidden=true;
-  message.textContent='로그인 완료 · Lv2 정식 계정 연결이 확인되었습니다.';
+  message.textContent='Lv3 정식 회원 연결이 확인되었습니다.';
  }else if(deviceProof()){
   connect.hidden=false;
   message.textContent='로그인 완료. 챌린지 발급 기기 확인을 눌러 작성 권한을 연결하세요.';
@@ -201,7 +201,8 @@ connect.addEventListener('click',async()=>{
   const answer=await response.json().catch(()=>({}));
   if(!response.ok||answer.linked!==true)throw Error(answer.error||'LINK_FAILED');
   connect.hidden=true;
-  message.textContent='Lv2 계정 연결 완료. 포스트잇 등 계정 기능을 이용할 수 있습니다.';
+  message.textContent='정식 회원 연결 완료. Lv3 권한을 확인하고 있습니다.';
+  window.dispatchEvent(new Event('beagu:level-state-change'));
  }catch(error){
   message.textContent=error.message==='MEMBERSHIP_ALREADY_CLAIMED'
    ?'이미 다른 계정에 연결된 챌린지 권한입니다.'
@@ -226,7 +227,14 @@ signOut.addEventListener('click',async()=>{
  finally{busy=false;signOut.disabled=false}
  paintMode('signin');
  message.textContent='정식 계정에서 로그아웃했습니다. Lv2 참여코드 인증은 유지됩니다.';
+ window.dispatchEvent(new Event('beagu:level-state-change'));
 });
-client.auth.onAuthStateChange(()=>{if(!overlay.hidden)queueMicrotask(()=>{void showAccountStatus()})});
+client.auth.onAuthStateChange(()=>{
+ // The backend, not Auth callbacks, decides whether Lv3 has been earned.
+ queueMicrotask(()=>{
+  window.dispatchEvent(new Event('beagu:level-state-change'));
+  if(!overlay.hidden)void showAccountStatus();
+ });
+});
 paintTier();
 })();
