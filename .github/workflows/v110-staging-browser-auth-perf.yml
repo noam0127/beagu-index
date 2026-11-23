@@ -7,6 +7,7 @@ on:
       - 'scripts/test-v110-staging-auth-perf-browser.cjs'
       - 'scripts/test-v110-staging-lv3-browser.cjs'
       - 'tests/staging-lv3-member-predicate.mjs'
+      - 'tests/staging-lv3-active-auth-session.mjs'
       - 'js/beagu-participation-auth-v2.js'
       - 'js/beagu-level-state-v1.js'
       - 'js/beagu-page-performance-v1.js'
@@ -38,6 +39,7 @@ jobs:
           node tests/staging-auth-readiness.cjs
           node tests/auth-journey-states.mjs
           node tests/staging-lv3-member-predicate.mjs
+          node tests/staging-lv3-active-auth-session.mjs
           node --check scripts/test-v110-staging-lv3-browser.cjs
           node tests/admin-page-performance-static.cjs
       - name: Real staging Auth negative HTTP without codes, credentials or DB writes
