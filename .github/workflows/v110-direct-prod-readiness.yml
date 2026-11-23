@@ -5,6 +5,8 @@ on:
       - fix/v110-staging-edited-api-recovery-20261123
     paths:
       - '.github/workflows/v110-direct-prod-readiness.yml'
+      - 'tests/test-v110-direct-prod-readiness.py'
+      - 'scripts/release-manager/direct-prod-readiness.py'
   workflow_dispatch:
 permissions:
   contents: read
