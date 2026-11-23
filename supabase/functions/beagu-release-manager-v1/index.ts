@@ -78,6 +78,23 @@ async function changedFiles(from:string,to:string){
  return (diff.files||[]).map((f:{filename?:string})=>f.filename||"")
   .filter((path:string)=>path&&path!=="release-candidate.json");
 }
+// Direct Pages release gate: exact candidate, current production ancestor, and server-read CI.
+async function directCandidate(base:string,sha:string){
+ if(!SHA.test(base)||!SHA.test(sha)||base===sha)return {error:"invalid_direct_sha",status:400};
+ const delta=await github("/compare/"+base+"..."+sha);
+ if(delta.status!=="ahead"||delta.merge_base_commit?.sha!==base||!Array.isArray(delta.files)||!delta.files.length||delta.files.length>=300)
+  return {error:"direct_candidate_stale",status:409};
+ const doc=await github("/contents/release-candidate.json?ref="+sha);
+ if(typeof doc?.content!=="string")return {error:"invalid_direct_manifest",status:400};
+ const value=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(doc.content.replace(/\s/g,"")),ch=>ch.charCodeAt(0))));
+ const version=String(value.version||"").trim(),summary=String(value.summary||"").trim();
+ if(!allowedVersion.test(version)||summary.length<3||summary.length>500)return {error:"invalid_direct_manifest",status:400};
+ // Code-only validation workflow must report success at the immutable candidate SHA.
+ const runs=await github("/actions/workflows/clean-release-validation.yml/runs?head_sha="+sha+"&status=success&per_page=20");
+ const proof=(runs.workflow_runs||[]).find((r:any)=>r.head_sha===sha&&r.conclusion==="success"&&r.status==="completed"&&r.path===".github/workflows/clean-release-validation.yml"&&r.head_repository?.full_name===repo);
+ if(!proof)return {error:"direct_ci_required",status:409};
+ return {version,summary,files:delta.files.map((f:any)=>String(f.filename||"")).filter(Boolean)};
+}
 async function state(){
  const {data,error}=await db.from("beagu_site_release_state_v1").select("*").eq("id",1).single();
  if(error||!data)throw Error("state_unavailable");return data;
@@ -116,12 +133,28 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
     if(proposal)suggested_draft={...proposal,sha:head};
    }
   }catch{ /* The release state and history remain available during GitHub outages. */ }
-  return respond({state:s,job:current,head_sha:head,suggested_draft,staging_history:stageHistory,
+  return respond({direct_release_v1:true,state:s,job:current,head_sha:head,suggested_draft,staging_history:stageHistory,
     production_history:prodHistory,staging_url:"https://baeguindex.com/_preview/",
     production_url:"https://baeguindex.com/"},200,origin);
  }
  if(current)return error("release_in_progress",409,origin);
  if(!s.production_sha)return error("release_bootstrap_pending",409,origin);
+ if(action==="register_direct"){
+  const sha=String(input.candidate_sha||"");
+  const candidate=await directCandidate(s.production_sha,sha);
+  if("error" in candidate)return error(candidate.error!,candidate.status!,origin);
+  if(candidate.version!==String(input.version||""))return error("direct_version_mismatch",409,origin);
+  // Do not silently replace an unrelated registered draft.
+  if(s.draft_sha&&s.draft_sha!==sha&&s.draft_sha!==s.production_sha&&input.replace_draft_sha!==s.draft_sha)
+   return error("direct_draft_conflict",409,origin);
+  let q=db.from("beagu_site_release_state_v1").update({draft_sha:sha,draft_version:candidate.version,draft_summary:candidate.summary,updated_at:new Date().toISOString()}).eq("id",1).eq("production_sha",s.production_sha);
+  q=s.draft_sha?q.eq("draft_sha",s.draft_sha):q.is("draft_sha",null);
+  const {data,error:e}=await q.select("draft_sha").maybeSingle();
+  if(e)throw Error("save_unavailable");
+  if(data?.draft_sha!==sha)return error("direct_draft_conflict",409,origin);
+  await db.from("beagu_admin_audit_events").insert({actor_user_id:userId,event_type:"site_release_register_direct",outcome:"success",details:{sha,version:candidate.version,base:s.production_sha}});
+  return respond({draft_sha:sha,version:candidate.version,summary:candidate.summary,changed_count:candidate.files.length,changed_files:candidate.files.slice(0,25)},200,origin);
+ }
  if(action==="register"){
   const version=String(input.version||"").trim();
   const summary=String(input.summary||"").trim();
@@ -167,6 +200,15 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   if(!prev||prev.from_sha===s.staging_sha)return error("no_staging_rollback",409,origin);
   job={action,target:"staging",from_sha:s.staging_sha,to_sha:prev.from_sha,
    version:"이전 시험 버전",summary:"시험 웹 이전 배포 복원",created_by:userId};
+ }else if(action==="prod_direct_apply"){
+  const sha=String(input.candidate_sha||"");
+  if(input.confirmed_direct!==true||!s.draft_sha||sha!==s.draft_sha||input.expected_production_sha!==s.production_sha)
+   return error("direct_confirmation_required",409,origin);
+  const candidate=await directCandidate(s.production_sha,sha);
+  if("error" in candidate)return error(candidate.error!,candidate.status!,origin);
+  if(candidate.version!==s.draft_version||candidate.summary!==s.draft_summary)return error("direct_version_mismatch",409,origin);
+  // Keep the existing database action constraint and history format.
+  job={action:"prod_apply",target:"production",from_sha:s.production_sha,to_sha:sha,version:candidate.version,summary:candidate.summary,created_by:userId};
  }else if(action==="prod_apply"){
   if(!s.staging_sha||!SHA.test(s.staging_sha))return error("staging_required",409,origin);
   if(s.staging_sha===s.production_sha)return error("already_on_production",409,origin);
@@ -232,6 +274,10 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   }
   if(!job)return respond({has_job:false},200,origin);
   if(job.status!=="queued")return respond({has_job:false,already_running:true},200,origin);
+  if(job.target==="production"&&job.action!=="bootstrap"&&job.from_sha!==s.production_sha){
+   await db.from("beagu_site_release_jobs_v1").update({status:"failed",error_code:"stale_production_base",finished_at:new Date().toISOString()}).eq("id",job.id).eq("status","queued");
+   return respond({has_job:false,stale_production_base:true},200,origin);
+  }
   const {data:claimed,error:e}=await db.from("beagu_site_release_jobs_v1")
    .update({status:"running",started_at:new Date().toISOString(),
     public_data_blob_sha:publicDataBlob})
