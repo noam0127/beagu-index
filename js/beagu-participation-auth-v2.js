@@ -95,8 +95,13 @@
   // Lv.1 must retain a code field so an earned Lv.2 code can upgrade in place.
   form.hidden=level>=2;
   heading.textContent=level===1?'레벨2에 도전하세요!':level>=2?'참여 인증 정보':'참여코드 입력';
-  description.textContent=level===1?'Lv.2 참여코드를 입력하면 공시가격 등 더 많은 학교정보를 확인할 수 있습니다. 기존 Lv.1 인증은 유지됩니다.':
-   level>=2?'Lv.2 인증이 완료되었습니다.':'발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.';
+  if(level===1){
+   const link=el('a','beagu-participation-challenge-link','나의 조사링크');
+   link.href='challenge.html';
+   description.replaceChildren(link,document.createTextNode('를 공유하고 Lv.2참여코드를 활성화하세요.'));
+  }else{
+   description.textContent=level>=2?'Lv.2 인증이 완료되었습니다.':'발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.';
+  }
   label.textContent=level===1?'Lv.2 참여코드':'참여코드';
   code.placeholder=level===1?'Lv.2 참여코드를 입력하세요':'참여코드를 입력하세요';
   submit.textContent=level===1?'Lv.2 인증하기':'레벨1 인증';

@@ -1,0 +1,22 @@
+/* Home school showcase immediately below the search action. */
+.beagu-home-showcase{margin:24px 0 10px;padding:20px 18px;border:1px solid #d5e2f0;border-radius:18px;background:#fff;box-shadow:0 6px 24px rgba(15,47,90,.05)}
+.beagu-home-showcase-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.beagu-home-showcase-head h2{margin:0;color:#172f4e;font-size:20px;letter-spacing:-.03em}
+.beagu-home-showcase-head span{color:#6c7f98;font-size:12px}
+.beagu-home-school-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.beagu-home-school{display:flex;flex-direction:column;gap:9px;min-width:0;padding:18px 16px;border-radius:15px;border:1px solid #dce6f2;background:#f8fbff}
+.beagu-home-school--high{border-color:#bfdbfe;background:#f2f7ff}
+.beagu-home-school--low{border-color:#ddd6fe;background:#f8f6ff}
+.beagu-home-school-tier{font-size:12px;font-weight:800;color:#315994}
+.beagu-home-school--low .beagu-home-school-tier{color:#6941a6}
+.beagu-home-school-name{font-size:clamp(15px,2.2vw,19px);font-weight:850;line-height:1.4;color:#152e52;overflow-wrap:anywhere;text-decoration:none}
+.beagu-home-school-name:hover{text-decoration:underline}
+.beagu-home-school-name:focus-visible{outline:3px solid #93c5fd;outline-offset:3px}
+.beagu-home-school-region{font-size:12px;color:#64748b}
+.beagu-home-school-value{font-size:12px;color:#405a77;font-weight:750}
+.beagu-home-showcase-status{margin:5px 0 13px;color:#64748b;font-size:13px}
+.beagu-home-showcase-status[hidden]{display:none}
+.beagu-home-school-note{margin:13px 0 0;color:#718097;font-size:11px;line-height:1.6}
+.beagu-interest--home{margin-top:15px}
+.beagu-interest--home .beagu-interest-list{min-height:64px}
+@media(max-width:520px){.beagu-home-showcase{padding:17px 13px}.beagu-home-showcase-head{flex-wrap:wrap}.beagu-home-school-grid{gap:8px}.beagu-home-school{padding:15px 11px}.beagu-home-showcase-head h2{font-size:18px}}
