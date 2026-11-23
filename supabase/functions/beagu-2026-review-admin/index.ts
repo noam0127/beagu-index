@@ -81,8 +81,8 @@ Deno.serve(async(request:Request)=>{
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
   if(input.action==="bulk_verified"){
     const preview=input.preview===true;
-    const limit=input.limit===undefined?40:input.limit;
-    if(typeof limit!=="number"||!Number.isInteger(limit)||limit<1||limit>40)
+    const limit=input.limit===undefined?400:input.limit;
+    if(typeof limit!=="number"||!Number.isInteger(limit)||limit<1||limit>400)
       return send(origin,400,{error:"invalid_bulk_limit"});
     if(!preview&&input.confirmation!=="APPROVE_VERIFIED_EXACT_SNAPSHOTS")
       return send(origin,400,{error:"missing_explicit_bulk_confirmation"});
