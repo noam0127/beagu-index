@@ -380,6 +380,7 @@
     window.Beagu2026ReviewAdmin?.mount(proof.role);
      window.BeaguCivicAdmin?.mount(proof.role);
     window.BeaguMembersAdmin?.mount(proof.role);
+    void window.BeaguHomeNoticeAdmin?.mount();
     await loadMetrics();
     if(liveTimer===null)liveTimer=window.setInterval(()=>{
       if(!document.hidden&&!$("adminDashboard").hidden)refreshLiveSafely();
@@ -506,6 +507,7 @@
       $("adminReferralFunnelStatus").textContent="인증 후 표시됩니다.";
       $("adminReferralCodeSearch").value="";
       window.Beagu2026ReviewAdmin?.reset();
+      window.BeaguHomeNoticeAdmin?.reset();
        window.BeaguCivicAdmin?.reset();
       window.BeaguMembersAdmin?.reset();
       $("adminPassword").value = "";
