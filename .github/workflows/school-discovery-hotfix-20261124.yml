@@ -1,0 +1,28 @@
+name: School discovery 2026-11-24 urgent regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'search.html'
+      - 'search-lv1.html'
+      - 'js/beagu-home-schools-v1.js'
+      - 'js/beagu-school-interest-v1.js'
+      - 'js/beagu-participation-auth-v2.js'
+      - 'supabase/functions/beagu-school-interest-v1/index.ts'
+      - 'tests/school-discovery-hotfix-20261124.mjs'
+      - '.github/workflows/school-discovery-hotfix-20261124.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate public rising-school and 12-hour selection policies
+        run: node --test tests/school-discovery-hotfix-20261124.mjs
