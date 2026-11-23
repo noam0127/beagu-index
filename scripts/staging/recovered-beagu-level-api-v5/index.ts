@@ -3,6 +3,7 @@ import {publicQuestionResults} from './_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows, canSortRankedSchools, canUse2026TierSnapshot } from './_shared/release-policy.mjs';
 import { eligiblePostitAuthUser } from './_shared/postit-member-ownership.mjs';
 import { isVerifiedLv3Member } from './_shared/member-tier-v1.mjs';
+import { verifiedAuthSessionId } from './_shared/member-session-v1.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -48,6 +49,14 @@ async function verifiedMemberTier(req:Request,session:any):Promise<number>{
  const {data:verified,error:authError}=await admin.auth.getUser(match[1]);
  const account=verified?.user;
  if(authError||!eligiblePostitAuthUser(account))return level;
+ // A signed but sign-out/revoked JWT can remain unexpired: check its
+ // signed session_id against auth.sessions on EVERY protected Lv3 read.
+ const authSessionId=verifiedAuthSessionId(match[1],account);
+ if(!authSessionId)return level;
+ const {data:sessionActive,error:sessionError}=await admin.rpc(
+   'beagu_stage_active_member_auth_session',
+   {p_user:account.id,p_session:authSessionId});
+ if(sessionError||sessionActive!==true)return level;
  const {data:member,error:memberError}=await admin
    .from('beagu_postit_member_accounts')
    .select('auth_user_id,identity_visitor_id,author_uid,status')
