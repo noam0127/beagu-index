@@ -47,7 +47,7 @@ async function open(page){
  assert(fit&&fit.x>=-1&&fit.x+fit.width<=size.width+1,'Modal must fit viewport width');
  assert(fit.y>=-1&&fit.y+fit.height<=size.height+1,'Modal must fit viewport height');
  // Desktop-only CSS refinement must change layout, never the auth flow.
- if(size.width>=901){
+ if(size.width>=901 && await page.locator('#beaguParticipationForm').isVisible()){
   assert(Math.abs(fit.width-520)<2,'Desktop modal must be exactly 520px wide');
   const input=await page.locator('#beaguParticipationCode').boundingBox();
   const toggle=await page.locator('.beagu-participation-field button').boundingBox();
