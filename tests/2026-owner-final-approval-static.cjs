@@ -16,6 +16,6 @@ assert.match(api,/db.rpc\("beagu_2026_owner_finalize_one"/);
 assert.match(api,/claims.aal!=="aal2"/);
 assert.match(ui,/makeFinalApproveForm/);
 assert.match(ui,/action:"finalize"/);
-assert.match(ui,/window.confirm\("학교별 문항 결과/);
-assert.match(html,/20261123-final-approval1/);
+assert.match(ui,/window.confirm\("이 학교의 검증·동의·재식별 위험/);
+assert.match(html,/20261123-level-approvals1/);
 console.log('PASS: owner MFA final approval with individual review evidence and no automatic publication');
