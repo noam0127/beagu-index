@@ -15,6 +15,9 @@
   const identityTag = get('challengeIdentityTag');
   const identityReward = get('challengeIdentityReward');
   const copyIdentityCode = get('copyIdentityCode');
+  const vipMedal = get('challengeVipMedal');
+  const certificateMedal = get('certificateMedal');
+  const certificateThanks = get('certificateThanks');
   if (![panel, linkField, copyButton, status, progress, title, tag, note,
       identityPanel, identityTitle, identityTag, identityReward, copyIdentityCode].every(Boolean)) return;
 
@@ -26,13 +29,29 @@
   let currentLink = '';
   let lastIdentity = null;
   let upgraded = false;
-  function renderState(earned) {
+  let lastReferrals = 0;
+  let lastSnapshot = '';
+  function renderState(earned,count=lastReferrals) {
     upgraded = earned === true;
     // A name change never mints a new code. The existing personal code stays unchanged.
     identityPanel.classList.toggle('is-lv2', upgraded);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
-    identityTitle.textContent = upgraded ? 'Lv.2 참여코드' : '나의 고유번호';
-    identityTag.textContent = upgraded ? 'Lv.2 달성 ✦' : '개인 보관';
+    identityTitle.textContent = upgraded ? 'Lv.2 참여코드' : 'Lv.2 참여코드(비활성)';
+    identityTag.textContent = upgraded ? 'Lv.2 활성화 ✦' : '승급 대기';
+    if(vipMedal)vipMedal.hidden=!upgraded;
+    if(certificateMedal)certificateMedal.hidden=!upgraded;
+    if(certificateThanks){
+      const thanksCount=Math.floor(count/10)*10;
+      const thanks=[
+        '함께해 주신 선생님들 덕분에 변화가 시작됩니다.',
+        '더 나은 교직문화를 위한 연대에 감사드립니다.',
+        '선생님들의 목소리가 더 멀리 전해지고 있습니다.',
+        '참여를 이어 주신 모든 분께 깊이 감사드립니다.'
+      ];
+      certificateThanks.hidden=thanksCount<10;
+      certificateThanks.textContent=thanksCount>=10?
+        '감사의 훈장 · 유효한 추천 '+thanksCount.toLocaleString('ko-KR')+'명 달성! '+thanks[(Math.floor(count/10)-1)%thanks.length]:'';
+    }
     identityReward.hidden = !upgraded;
     identityReward.textContent = upgraded
       ? 'Lv.2 달성! 위 코드를 참여코드로 사용하세요.'
@@ -41,14 +60,14 @@
 
     // Invitation links must remain visible and copyable after promotion.
     title.textContent = '나의 전용 조사 링크';
-    tag.textContent = upgraded ? '추천 1건 확인' : '링크 공유하기';
+    tag.textContent = upgraded?'유효한 추천 '+count.toLocaleString('ko-KR')+'건':'링크 공유하기';
     panel.dataset.state = upgraded ? 'earned' : 'pending';
     linkField.value = currentLink;
     linkField.setAttribute('aria-label', '내 전용 조사 링크');
     copyButton.textContent = '링크 복사';
     note.textContent = upgraded
-      ? '번호는 그대로 유지돼요. 전용 링크도 계속 공유할 수 있어요.'
-      : '유효한 추천 1건이 확인되면 기존 번호가 Lv.2 참여코드로 바뀝니다.';
+      ? 'Lv.2가 활성화되어도 같은 코드를 사용하며 추천 인원은 계속 누적됩니다.'
+      : '유효한 추천 1건이 확인되면 (비활성)이 사라지고 같은 번호로 Lv.2를 이용할 수 있습니다.';
   }
   function reset() {
     ++generation;
@@ -58,8 +77,9 @@
     copyButton.hidden = true;
     copyButton.disabled = true;
     progress.textContent = '';
+    lastReferrals=0;lastSnapshot='';
     if(retry)retry.hidden=true;
-    renderState(false);
+    renderState(false,0);
     status.textContent = '전용 조사 링크를 불러오고 있어요.';
   }
   function deviceSecret() {
@@ -109,12 +129,21 @@
 
       // Only a server-approved, credited referral can upgrade the PERSONAL CODE.
       // A link visit, self-declared level, or incomplete payload cannot do so.
+      const rawCount=Number(payload.validReferrals);
+      const count=Number.isSafeInteger(rawCount)&&rawCount>=0?rawCount:0;
       const promoted = Number(payload.level) === 2 &&
-        Number(payload.validReferrals) >= 1 && payload.provisional === true;
+        count >= 1 && payload.provisional === true;
       const newlyPromoted = promoted && !upgraded;
-      renderState(promoted);
+      lastReferrals=count;
+      renderState(promoted,count);
       if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
-      progress.textContent = promoted ? '유효한 추천 1 / 1건 · Lv2 승급 완료' : '유효한 추천 0 / 1건';
+      progress.textContent = '유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(promoted?'Lv.2 활성화':'1건부터 Lv.2 활성화');
+      const snapshot=(promoted?'2':'1')+':'+count;
+      if(snapshot!==lastSnapshot){
+        lastSnapshot=snapshot;
+        window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',
+          {detail:{level:promoted?2:1,validReferrals:count}}));
+      }
       status.textContent = promoted
         ? 'Lv.2 달성! 기존 고유번호를 참여코드로 사용하세요.'
         : '동료에게 링크를 보내세요. 설문 참여 1건이 확인되면 Lv.2!';
@@ -150,7 +179,7 @@
     if (active && lastIdentity && !document.hidden) void load(lastIdentity);
   });
   setInterval(() => {
-    if (active && !upgraded && lastIdentity && !document.hidden) void load(lastIdentity);
+    if (active && lastIdentity && !document.hidden) void load(lastIdentity);
   }, 60000);
   reset();
 })();

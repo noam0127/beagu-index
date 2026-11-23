@@ -7,7 +7,7 @@
   const identityCopyFeedback = byId('identityCopyFeedback');
   const identityEndpoint = SUPABASE_URL + '/functions/v1/beagu-challenge-identity';
   const levelSessionKey = 'beagu-level-session-v1';
-  let imageUrl = null, participant = null, personalCode = null, busy = false, accessGranted = false;
+  let imageUrl = null, participant = null, personalCode = null, busy = false, accessGranted = false, certificateRefreshPending = false;
   const deadline = (promise, ms, message) => {
     let timer;
     return Promise.race([Promise.resolve(promise), new Promise((_, reject) => {
@@ -55,13 +55,18 @@
         window.dispatchEvent(new CustomEvent('beagu:identity-ready', {
           detail: { visitor: window.beaguVisitor, code: personalCode }
         }));
-        if (window.BeaguChallengeProgress) void window.BeaguChallengeProgress.refresh();
+        if (window.BeaguChallengeProgress) await window.BeaguChallengeProgress.refresh();
       }
       if (!accessGranted) return;
       status.textContent = '인증 이미지를 준비하고 있습니다.';
       if (typeof html2canvas !== 'function') throw new Error('이미지 기능을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
       if (document.fonts) await deadline(document.fonts.ready, 10000, '글꼴 로딩이 지연되고 있습니다. 다시 시도해주세요.');
-      const canvas = await deadline(html2canvas(byId('certificate'), {
+      // Strictly capture only public information. Never serialize the whole page.
+      const root=byId('certificate');
+      if(!root || root.querySelector('#identityCode,#challengeReferralLink,#challengeReferralPanel,#challengeIdentityPanel,[data-referral-secret]') ||
+         (personalCode && root.textContent.includes(personalCode)))
+        throw new Error('개인 코드 노출 위험으로 인증 이미지 생성을 차단했습니다.');
+      const canvas = await deadline(html2canvas(root, {
         scale: 2, backgroundColor: '#ffffff', logging: false
       }), 20000, '이미지 생성이 지연되고 있습니다. 다시 시도해주세요.');
       const blob = await deadline(new Promise(resolve => canvas.toBlob(resolve, 'image/png')), 10000, '이미지 변환에 실패했습니다. 다시 시도해주세요.');
@@ -84,6 +89,10 @@
     } finally {
       busy = false;
       retry.disabled = false;
+      if(certificateRefreshPending && accessGranted){
+        certificateRefreshPending=false;
+        void prepare();
+      }
     }
   }
 
@@ -124,6 +133,7 @@
   });
   window.addEventListener('beagu:challenge-access-revoked', () => {
     accessGranted = false;
+    certificateRefreshPending=false;
     participant = null;
     personalCode = null;
     identityCode.textContent = '고유번호 확인 중';
@@ -135,6 +145,11 @@
     participantNo.textContent = '순번 확인 중';
     status.textContent = '';
     retry.hidden = true;
+  });
+  window.addEventListener('beagu:referral-status-changed', () => {
+    if(!accessGranted)return;
+    if(busy){certificateRefreshPending=true;return;}
+    void prepare();
   });
   window.addEventListener('beagu:challenge-access-granted', () => {
     accessGranted = true;

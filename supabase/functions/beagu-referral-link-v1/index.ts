@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
             shortLink: 'https://baeguindex.com/r/#' + existing.shortCode,
             link: 'https://baeguindex.com/survey.html?ref=' + proofToken,
             level: earned ? 2 : 1,
-            validReferrals: earned ? 1 : 0,
+            validReferrals: Number(existing.validReferrals) || 0,
             provisional: earned,
           });
         }
@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
       shortLink: 'https://baeguindex.com/r/#' + shortCode,
       link: 'https://baeguindex.com/survey.html?ref=' + token,
       level: Number(enrollment?.level) === 2 ? 2 : 1,
-      validReferrals: Number(enrollment?.validReferrals) === 1 ? 1 : 0,
+      validReferrals: Number.isSafeInteger(Number(enrollment?.validReferrals)) && Number(enrollment?.validReferrals)>=0 ? Number(enrollment?.validReferrals):0,
       provisional: Number(enrollment?.level) === 2,
     });
   } catch (err) {
