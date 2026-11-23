@@ -10,6 +10,14 @@
   const $ = id => document.getElementById(id);
   const key = 'beagu-level-session-v1';
   let session = sessionStorage.getItem(key) || '';
+  let viewerTier=1;
+  function showUpgrade(){
+    const isLv2=viewerTier>=2;
+    $('lv2UpgradeCard').hidden=isLv2;
+    const option=$('regionSort').querySelector('option[value="housing_price_won"]');
+    if(option){option.disabled=!isLv2;option.textContent=isLv2?'공동주택 평균 공시가격':'🔒 공시가격 (Lv.2)';}
+    if(!isLv2&&$('regionSort').value==='housing_price_won')$('regionSort').value='school_name';
+  }
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
   const YEARS = [2023, 2024, 2025, 2026];
@@ -126,12 +134,14 @@
     window.dispatchEvent(new Event('beagu:level-state-change'));
     $('loginPanel').hidden = false;
     $('searchPanel').hidden = true;
+    viewerTier=1;
     $('loginMessage').textContent = message;
   }
   function loggedIn() {
     window.dispatchEvent(new Event('beagu:level-state-change'));
     $('loginPanel').hidden = true;
     $('searchPanel').hidden = false;
+    showUpgrade();
   }
   async function api(action, payload = {}) {
     const response = await fetch(base, {
@@ -160,6 +170,7 @@
         return;
       }
       session = data.token;
+      viewerTier=Number(data.level)>=2?2:1;
       geographyComparisons.clear();
       sessionStorage.setItem(key, session);
       $('levelCode').value = '';
@@ -177,12 +188,40 @@
     const next=event.detail;
     if(!next||Number(next.level)<level||typeof next.token!=='string')return;
     session=next.token;
+    viewerTier=Number(next.level)>=2?2:1;
     geographyComparisons.clear();
     visiblePageSchools=[];
     loggedIn();
     $('searchInput').focus();
+    if($('searchInput').value.trim()||$('regionSelect').value)void search(true);
   });
   window.addEventListener('beagu:participation-logged-out',()=>loggedOut());
+  $('lv2UpgradeForm').addEventListener('submit',async event=>{
+    event.preventDefault();
+    if(viewerTier>=2)return;
+    const input=$('lv2UpgradeCode'),submit=$('lv2UpgradeSubmit'),message=$('lv2UpgradeMessage');
+    const code=input.value.trim();
+    if(!/^[A-Za-z0-9-]{8,120}$/.test(code)){message.textContent='코드 형식을 확인해 주세요.';return;}
+    submit.disabled=true;message.textContent='Lv.2 코드를 확인하는 중…';
+    try{
+      const result=await api('login',{code});
+      if(!/^[a-f0-9]{64}$/.test(String(result.token||'')))throw Error('INVALID_SESSION');
+      const response=await fetch(base,{method:'POST',cache:'no-store',
+        headers:{'Content-Type':'application/json','X-Beagu-Session':result.token},
+        body:JSON.stringify({action:'verify'})});
+      const checked=await response.json().catch(()=>({}));
+      if(!response.ok||Number(checked.level)<2){
+        message.textContent='아직 Lv.2 권한이 없습니다. 기존 Lv.1 인증은 유지됩니다.';return;
+      }
+      sessionStorage.setItem(key,result.token);
+      session=result.token;viewerTier=2;showUpgrade();
+      window.dispatchEvent(new CustomEvent('beagu:participation-authenticated',
+        {detail:{token:result.token,level:2,provisional:checked.provisional===true}}));
+      window.dispatchEvent(new Event('beagu:level-state-change'));
+      if($('searchInput').value.trim()||$('regionSelect').value)void search(true);
+    }catch(_){message.textContent='코드를 확인해 주세요. 기존 Lv.1 인증은 유지됩니다.';}
+    finally{input.value='';submit.disabled=false;}
+  });
   function selectMode(nextMode) {
     mode = nextMode;
     $('schoolPanel').hidden = mode !== 'school';
@@ -585,7 +624,7 @@
     // The already-visible year grid above carries the public percentile; do
     // not repeat the same value as a second section in the expanded detail.
     const yearRows=(Array.isArray(rows)?rows:[]).filter(row=>
-      Number(row.year)===year && Number(row.access_level)===level);
+      Number(row.year)===year && Number(row.access_level)<=Number(viewerTier));
     const releasedMetrics=[];
     let hadRestricted=false,hadMismatch=false;
     for(const row of yearRows){
@@ -707,6 +746,18 @@
   }
   function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
     host.replaceChildren();
+    const basic=make('section','beagu-school-basics');
+    basic.append(make('h3','','학교 기본정보'));
+    const grid=make('dl','beagu-school-basics-grid');
+    for(const [label,value] of [
+      ['학교명',school.school_name],['시도',school.sido_standard||school.sido],
+      ['교육지원청',school.support_office],['주소',school.address],
+      ['설립구분',school.establishment],['학교급',school.school_kind]]){
+      const row=make('div','beagu-school-basic-row');
+      row.append(make('dt','',label),make('dd','',value||'정보 없음'));grid.append(row);
+    }
+    basic.append(grid,make('p','beagu-school-basic-note','학생 수 등 공식 기본현황은 승인 자료가 있는 학교에서 추가 표시됩니다.'));
+    host.append(basic);
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
     const prefix='beagu-history-'+String(school.school_id);
@@ -825,9 +876,25 @@
     if (!list.length) { host.append(make('div','empty','검색 결과가 없습니다.')); return; }
     for (const school of list) {
       const {card,open:button,detail}=BeaguSchoolSearchCard.createCard(school,{
-        level:1,
+        level:viewerTier,
         percentile:percentilePanel(school)
       });
+      const housing=make('section','beagu-housing-preview');
+      housing.append(make('strong','beagu-housing-label','공동주택 평균 공시가격'));
+      const amount=make('div','beagu-housing-amount');
+      const available=viewerTier>=2&&school.housing_price_won!=null&&Number(school.housing_price_won)>0&&Number.isFinite(Number(school.housing_price_won));
+      amount.textContent=viewerTier>=2?
+        (available?Number(school.housing_price_won).toLocaleString('ko-KR')+'원':'공개할 공시가격 자료 없음'):'₩ •••,•••,•••';
+      if(viewerTier<2){amount.classList.add('beagu-housing-blur');amount.setAttribute('aria-label','Lv.2에서 공개');}
+      housing.append(amount,make('p','beagu-housing-note',
+        '해당 학교가 위치한 행정동의 공동주택 평균 공시가격입니다. 학교 자체나 개별 주택의 가격이 아닙니다.'));
+      if(viewerTier<2){
+        const unlock=make('button','beagu-housing-unlock','🔒 Lv.2 잠금 · 레벨2에 도전하세요!');
+        unlock.type='button';
+        unlock.addEventListener('click',()=>{$('lv2UpgradeCard').scrollIntoView?.({behavior:'smooth'});$('lv2UpgradeCode').focus();});
+        housing.append(unlock);
+      }
+      card.insertBefore(housing,card.querySelector('.percentile-panel'));
       // Only show the chosen metric when sorting a regional list; values come from the existing authenticated sort API.
       if(mode==='region'){
         const metricSort={
@@ -835,7 +902,7 @@
           student_count:['학생 수',school.student_count,v=>Number(v).toLocaleString('ko-KR')+'명'],
           junior_teacher_ratio:['2급 정교사 비율 (2024년 기준)',school.junior_teacher_ratio,v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'],
           male_teacher_ratio:['남교사 비율 (2024년 기준)',school.male_teacher_ratio,v=>Number(v).toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'],
-          housing_price_won:['공동주택 평균 공시가격',school.housing_price_won,v=>Number(v).toLocaleString('ko-KR')+'원']
+          housing_price_won:['공동주택 평균 공시가격',viewerTier>=2?school.housing_price_won:null,v=>Number(v).toLocaleString('ko-KR')+'원']
         }[sortValue.replace(/_(?:asc|desc)$/,'')];
         if(metricSort){
           const [label,value,format]=metricSort;
@@ -1015,7 +1082,7 @@
     if (!session) { loggedOut(); return; }
     try {
       const state = await api('verify');
-      if (state.level >= level) loggedIn();
+      if (state.level >= level) {viewerTier=Number(state.level)>=2?2:1;loggedIn();}
       else loggedOut('현재 코드가 이 등급에 미달합니다.');
     } catch (_) { loggedOut('인증을 다시 진행해주세요.'); }
   })();

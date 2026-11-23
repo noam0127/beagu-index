@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {Script} from 'node:vm';
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const html=read('search-lv1.html'),ui=read('js/level-search.js'),server=read('supabase/functions/beagu-level-api/index.ts');
+assert.doesNotThrow(()=>new Script(ui));assert.doesNotThrow(()=>new Script(read('js/beagu-participation-auth-v2.js')));
+for(const name of ['lv2UpgradeCard','lv2UpgradeCode','lv2UpgradeForm'])assert.ok(html.includes('id="'+name+'"'));
+assert.match(ui,/viewerTier>=2\?school\.housing_price_won:null/);
+assert.match(ui,/학교 기본정보/);
+assert.match(server,/sort==='housing_price_won'&&Number\(session\.access_level\)<2/);
+assert.match(server,/Number\(session\.access_level\)>=2\?',housing_price_won'/);
+assert.match(server,/fact_key==='district_housing_price_mean'\?2/);
+const regions=['서울','부산','대구','인천','광주','대전','울산','세종','경기','강원','충북','충남','전북','전남','경북','경남','제주'];
+const records=JSON.parse(read('data/public-compare-school-directory-v1.json')).rows;
+for(const region of regions)assert.ok(records.some(row=>row[2]===region),'Missing '+region);
+console.log('PASS: Lv.2 upgrade, secure price exposure, all regions metadata');

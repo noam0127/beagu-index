@@ -56,6 +56,11 @@ Deno.serve(async(req:Request)=>{
      if(identityError)return send({error:'AUTH_UNAVAILABLE'},503,origin);
      if(typeof earnedVisitor==='string'&&/^[a-f0-9-]{36}$/i.test(earnedVisitor)){
        visitorId=earnedVisitor;level=2;
+     }else{
+       // Issued but not yet promoted personal challenge codes grant Lv.1 only.
+       const {data:issuedLevel,error:issuedError}=await admin.rpc('beagu_issued_challenge_code_level_v1',{p_code:code});
+       if(issuedError)return send({error:'AUTH_UNAVAILABLE'},503,origin);
+       if(Number(issuedLevel)===1)level=1;
      }
    }
    if(level<1)return send({error:'INVALID_CODE'},401,origin);
@@ -167,12 +172,15 @@ Deno.serve(async(req:Request)=>{
       !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
       (!searchText&&!region)||(!region&&office))
       return send({error:'INVALID_SEARCH_FILTER'},400,origin);
+   // Do not permit Lv.1 price sorting. The API must enforce this, not just the browser.
+   if(sort==='housing_price_won'&&Number(session.access_level)<2)
+     return send({error:'LEVEL2_REQUIRED'},403,origin);
    // Level access is checked above, before any cached school record is fetched.
    // The RLS-protected cache contains only fields from the approved public sort view.
    // On cache read errors, preserve the original verified query as the fallback.
    const rankedQuery=(table:string)=>{
      let query=admin.from(table)
-       .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,housing_price_won,junior_teacher_ratio,male_teacher_ratio,view_count',{count:'exact'});
+       .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count'+(Number(session.access_level)>=2?',housing_price_won':''),{count:'exact'});
      if(searchText)query=query.ilike('school_name','%'+searchText.replace(/[%_\\]/g,'')+'%');
      if(region)query=query.eq('sido_standard',region);
      if(office)query=query.eq('support_office',office);
@@ -283,7 +291,7 @@ Deno.serve(async(req:Request)=>{
     'vice_principals','lead_teachers','classrooms','gym_spaces','cafeterias',
     'teacher_support_spaces','land_area','playground_area','admin_employees',
     'school_employees','meal_place','milk_lunch','junior_teacher_ratio','male_teacher_ratio',
-    'district_housing_price_mean','september_participation_rate'
+    'september_participation_rate'
   ]);
   const vettedCategories:Record<string,Set<string>>={
     establishment_type:new Set(['국립','공립','사립']),
@@ -294,7 +302,7 @@ Deno.serve(async(req:Request)=>{
   const addFact=(year:number,fact_key:string,label:string,value:string,sourceYear:number,unit:string,category:boolean)=>{
     if(![2024,2025].includes(year)||!/^.{1,60}$/.test(label)||!/^.{1,60}$/.test(value)||/[<>\r\n]/.test(label+value))return;
     // Unified Lv.1: approved official school facts only, never raw teacher surveys.
-    const required=(basicKeys.has(fact_key)||detailedKeys.has(fact_key))?1:99;
+    const required=fact_key==='district_housing_price_mean'?2:(basicKeys.has(fact_key)||detailedKeys.has(fact_key))?1:99;
     if(required>level)return;
     let bucket=facts.find(x=>x.year===year&&x.access_level===required);
     if(!bucket){bucket={year,access_level:required,summary:{metrics:[]}};facts.push(bucket)}
