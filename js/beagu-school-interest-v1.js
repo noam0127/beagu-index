@@ -21,8 +21,8 @@
   };
   const isValid=row=>row&&idPattern.test(String(row.school_id||'')) &&
     typeof row.school_name==='string'&&row.school_name.length<=120 &&
-    Number.isSafeInteger(Number(row.growth))&&Number(row.growth)>=3 &&
-    Number.isSafeInteger(Number(row.visitors))&&Number(row.visitors)>=5;
+    Number.isSafeInteger(Number(row.growth))&&
+    Number.isSafeInteger(Number(row.visitors))&&Number(row.visitors)>=1;
   function render(){
     list.replaceChildren();
     for(const [index,school] of (expanded?schools:schools.slice(0,5)).entries()){
@@ -33,7 +33,8 @@
       const rank=el('span','beagu-interest-rank',String(index+1));
       const detail=el('span','beagu-interest-school');
       detail.append(el('strong','',school.school_name),el('small','',school.region||''));
-      const increase=el('span','beagu-interest-number','↑ '+Number(school.growth).toLocaleString('ko-KR')+'명');
+      const growth=Number(school.growth);
+      const increase=el('span','beagu-interest-number','최근 '+Number(school.visitors).toLocaleString('ko-KR')+'명 · '+(growth>0?'↑ +':growth<0?'↓ -':'→ ')+Math.abs(growth).toLocaleString('ko-KR')+'명');
       button.append(rank,detail,increase);
       button.addEventListener('click',event=>{
         window.BeaguSearchTelemetry?.selected(String(school.school_id),1,'search-lv1',event);
@@ -50,7 +51,7 @@
       list.append(item);
     }
     message.hidden=schools.length>0;
-    if(!schools.length)message.innerHTML='급상승 학교를 집계 중입니다.<br>방문 기록이 충분히 쌓이면 순위가 표시됩니다.';
+    if(!schools.length)message.textContent='최근 72시간 조회 기록이 있는 학교가 없습니다.';
     more.hidden=schools.length<=5;
     more.textContent=expanded?'접기':'10위까지 보기';
   }

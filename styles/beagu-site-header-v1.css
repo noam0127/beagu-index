@@ -122,3 +122,6 @@
     transform:rotate(-3deg) translateY(-1px);
   }
 }
+
+.beagu-unified-header .beagu-unified-nav>a[href="postit.html"]{display:none!important}
+@media(max-width:760px){.beagu-unified-header .beagu-unified-nav{grid-template-columns:repeat(4,minmax(0,1fr))}}
