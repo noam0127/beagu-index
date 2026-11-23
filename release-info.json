@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "version": "v1.2.0",
+  "name": "정돈",
+  "environment": "candidate",
+  "commit": null,
+  "builtAt": null,
+  "deployedAt": null,
+  "changes": [
+    "공통 메뉴와 기존 게임 진입 경로 정리",
+    "검색·비교 카드 및 아이콘 통일",
+    "참여코드·레벨 색상 개선",
+    "공통 버전 정보 및 업데이트 내역"
+  ]
+}
