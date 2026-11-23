@@ -1,0 +1,61 @@
+name: v1.1.0 isolated PC-mobile browser auth plus performance flow
+on:
+  push:
+    branches:
+      - fix/v110-staging-edited-api-recovery-20261123
+    paths:
+      - 'scripts/test-v110-staging-auth-perf-browser.cjs'
+      - 'js/beagu-participation-auth-v2.js'
+      - 'js/beagu-level-state-v1.js'
+      - 'js/beagu-page-performance-v1.js'
+      - 'js/challenge-member-auth-v1.js'
+      - 'js/challenge.js'
+      - '.github/workflows/v110-staging-browser-auth-perf.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-chromium-lv1-lv2-perf:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Build exact Git SHA static preview and check isolation
+        run: |
+          python3 scripts/build-standalone-staging.py
+          python3 tests/test-standalone-staging.py
+      - name: Verify local browser script syntax and auth-readiness gates
+        run: |
+          node --check scripts/test-v110-staging-auth-perf-browser.cjs
+          node tests/staging-auth-readiness.cjs
+          node tests/auth-journey-states.mjs
+          node tests/admin-page-performance-static.cjs
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Install isolated headless Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium --only-shell
+      - name: Desktop/mobile simulated participation sessions and RUM gateway
+        run: |
+          python3 -m http.server 8132 --directory _standalone_staging --bind 127.0.0.1 > /tmp/beagu-stage-browser-test.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node scripts/test-v110-staging-auth-perf-browser.cjs
+      - name: Explicitly deny false claims of real Lv3 or production release
+        run: |
+          test ! -e _standalone_staging/CNAME
+          test ! -e _standalone_staging/supabase
+          echo "All Auth/Perf responses mocked; no real user signup, no operational data writes, no Render deploy"
+          echo "Five rollout gates remain locked; this is NOT a real email/MFA/Lv3 E2E"
+      - name: Attach simulated PC/mobile screenshots for manual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v110-synthetic-chromium-levels
+          path: artifacts/participation-auth/
+          retention-days: 7
+          if-no-files-found: ignore
