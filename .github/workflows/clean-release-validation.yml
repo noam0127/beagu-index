@@ -1,0 +1,43 @@
+name: Clean release code-only validation
+on:
+  pull_request:
+    branches:
+      - 'release/base-pages-*'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify source and simulated DOM
+        run: |
+          node --check js/beagu-release-info-v1.js
+          node tests/clean-release-contract.cjs
+          node tests/clean-release-info-runtime.cjs
+          python3 -m py_compile scripts/release-manager/stamp_release_info.py
+      - name: Verify selected artifact metadata
+        run: |
+          python3 - <<'PY'
+          import importlib.util, tempfile, pathlib, json, shutil
+          p = pathlib.Path('scripts/release-manager/stamp_release_info.py')
+          spec = importlib.util.spec_from_file_location('stamp', p)
+          m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+          with tempfile.TemporaryDirectory() as directory:
+              target = pathlib.Path(directory)
+              shutil.copy('release-info.json', target / 'release-info.json')
+              assert m.stamp(target, 'a'*40, 'production')
+              data = json.loads((target / 'release-info.json').read_text())
+              assert data['commit'] == 'a'*40 and data['environment'] == 'production'
+              assert data['deployedAt'] is None and data['builtAt']
+              try:
+                  m.stamp(target, 'invalid', 'production')
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError('invalid SHA accepted')
+          PY
