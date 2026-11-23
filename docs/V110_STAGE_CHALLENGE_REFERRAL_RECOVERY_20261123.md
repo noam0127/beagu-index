@@ -15,7 +15,7 @@
 
 ## 정식 배포 차단 상태
 
-- 독립 시험 웹 참조 API **16개 중 13개 배포**, 남은 미배포 **3개**:
+- 독립 시험 웹 참조 API **16개 중 13개 배포**, 남은 미배포 **0개**(배포돼도 잠금 5개):
   `beagu-2026-review-admin`, `class-diary-guest-access-v1`, `class-diary-progress-v1`.
 - **배포됐으나 잠긴 2개**: `beagu-referral-link-v1`, `beagu-referral-checkin-v1`. Google Forms 단순 방문/체크인이 아니라 *실제 유효 응답 제출*을 검증해야 Lv2를 인정함.
 - `scripts/staging/audit-frontend-edge-functions.py`에 `feature_gates` 지원을 추가해 **MISSING 3 + LOCKED 2**를 각각 출력하고 모두 E2E readiness NO-GO로 판단.
