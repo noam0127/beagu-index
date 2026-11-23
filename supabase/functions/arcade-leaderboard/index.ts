@@ -164,12 +164,35 @@ function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number 
   return p*120+Math.min(60,spikes)*25+
     (!knockout&&p>c?600+Math.max(0,7-c)*30:0)+Math.min(900,seconds*4);
 }
+// Recompute item effects; do not trust client-supplied adjustment totals.
+function verifiedVolleyballItemScore(result:any,tenths:number,player:number,cpu:number):number {
+ const events=result?.itemScoreEvents??[];
+ const claimed=result?.itemScoreDelta??0;
+ if(!Array.isArray(events)||events.length>256||!int(claimed,-50000,50000)||
+    events.length>Math.floor(tenths/10/3)+3)throw new Error("invalid_item_score");
+ let total=0,lastTime=-1,lastPlayer=0,lastCpu=0;
+ for(const e of events){
+  if(!e||!["salary","bonus","bullying","report"].includes(e.kind)||
+     !int(e.t,0,tenths*6+5)||e.t<lastTime||
+     !int(e.player,lastPlayer,player)||!int(e.cpu,lastCpu,cpu)||
+     !int(e.delta,-50000,50000))throw new Error("invalid_item_event");
+  const base=Math.max(0,e.player*100-e.cpu*50);
+  const secondsBonus=Math.min(900,Math.floor(e.t/60))*4;
+  const current=Math.max(0,base+secondsBonus+total);
+  const actual=e.kind==="salary"?100:e.kind==="bonus"?200:
+    e.kind==="bullying"?-Math.ceil(current*.1):-Math.ceil(current*.25);
+  if(actual!==e.delta)throw new Error("invalid_item_delta");
+  total+=actual;lastTime=e.t;lastPlayer=e.player;lastCpu=e.cpu;
+ }
+ if(total!==claimed)throw new Error("invalid_item_score");
+ return total;
+}
 function scoreFromVolleyball25(result:any,elapsed:number):number {
  const player=result?.player,cpu=result?.cpu,base=result?.baseScore,
    bonus=result?.survivalBonus,multiplier=result?.multiplier,final=result?.finalScore,
    victory=result?.victory,endedEarly=result?.endedEarly,tenths=result?.activeTenths;
  if(!int(player,0,25)||!int(cpu,0,25)||!int(base,0,2500)||
-   !int(bonus,0,3600)||!int(multiplier,1,6)||!int(final,0,36600)||
+   !int(bonus,0,3600)||!int(multiplier,1,6)||!int(final,0,100000)||
    !int(tenths,1,36000)||typeof victory!=="boolean"||typeof endedEarly!=="boolean")
   throw new Error("invalid_stats");
  if(tenths>Math.floor(elapsed*10)+20)throw new Error("invalid_survival_time");
@@ -184,8 +207,9 @@ function scoreFromVolleyball25(result:any,elapsed:number):number {
  const expectedBase=Math.max(0,player*100-cpu*50);
  const expectedBonus=Math.min(900,Math.floor(tenths/10))*4;
  const expectedMultiplier=victory?1+Math.floor((25-cpu)/5):1;
+ const itemScore=verifiedVolleyballItemScore(result,tenths,player,cpu);
  if(base!==expectedBase||bonus!==expectedBonus||multiplier!==expectedMultiplier||
-    final!==expectedBase*expectedMultiplier+expectedBonus)
+    final!==Math.max(0,expectedBase*expectedMultiplier+expectedBonus+itemScore)
   throw new Error("invalid_score");
  return final;
 }
@@ -197,6 +221,7 @@ function publicGameResult(game:Game,result:any):Record<string,unknown>{
    outcome:result.victory?"victory":result.endedEarly?"stopped":"defeat",
    playerPoints:result.player,cpuPoints:result.cpu,
    baseScore:result.baseScore,playBonus:result.survivalBonus,
+   itemScore:result.itemScoreDelta??0,
    winMultiplier:result.multiplier,playedTenths:result.activeTenths
   };
  }
