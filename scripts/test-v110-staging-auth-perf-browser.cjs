@@ -151,6 +151,16 @@ async function login(page,code){
    await page.locator('#challengeAccessPanel [data-beagu-participation-status]').click();
    await page.locator('#challengeMemberOverlay').waitFor({state:'visible',timeout:10000});
    assert.equal(await page.locator('#challengeMemberTitle').innerText(),'Lv2 로그인');
+   // Lv2 participation code is NOT verified-email membership. The browser
+   // must not expose member-link actions until Auth has confirmed an account.
+   assert.equal(await page.locator('#challengeMemberLink').isHidden(),true);
+   assert.equal(await page.locator('#challengeMemberSignOut').isHidden(),true);
+   await page.locator('#challengeMemberSwitch').click();
+   assert.equal(await page.locator('#challengeMemberTitle').innerText(),'Lv2 회원가입');
+   assert.equal(await page.locator('#challengeMemberSmsFields').isVisible(),true);
+   // We inspect the signup UI but do not submit credentials or mint Lv3.
+   await page.locator('#challengeMemberSwitch').click();
+   assert.equal(await page.locator('#challengeMemberTitle').innerText(),'Lv2 로그인');
    const memberFit=await page.locator('#challengeMemberDialog').boundingBox();
    assert(memberFit&&memberFit.x>=-1&&memberFit.x+memberFit.width<=cfg.width+1,'Member login modal fits mobile width');
    await page.locator('#challengeMemberClose').click();
