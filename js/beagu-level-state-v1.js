@@ -21,9 +21,10 @@
   // The same auth card remains in place at Lv.0, Lv.1 and Lv.2.
   // Use only the server-verified badge event; never upgrade from a typed code alone.
   const syncLevelCards=(raw,provisional)=>{
-    const tier=/^[012]$/.test(raw)?Number(raw):null;
+    const tier=/^[0123]$/.test(raw)?Number(raw):null;
     const badgeLabel=tier===0?'미인증':tier===1?'✓ Lv1 · 설문 참여 완료'
       :tier===2?'♛ Lv2 · 챌린지 달성'
+      :tier===3?'✓ Lv3 · 정식 회원'
       :raw==='checking'?'확인 중':'확인 불가';
     const cards=[
       ['lv1QuickAuth','lv1QuickBadge'],
@@ -55,6 +56,15 @@
     syncLevelCards(level,provisional);
     window.dispatchEvent(new CustomEvent('beagu:level-state-updated', {detail:{level:Number.isInteger(Number(level))?Number(level):null,status:level,provisional}}));
   };
+  async function authBearer(){
+    // This is only a local hint. The server verifies the actual Auth user,
+    // email status and linked visitor independently before reporting Lv3.
+    const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
+    if(!client?.auth?.getSession)return '';
+    try{const {data,error}=await client.auth.getSession();
+      return error?'':data?.session?.access_token||'';
+    }catch{return ''}
+  }
   async function refresh(){
     const seq=++generation;
     const token=getToken();
@@ -67,9 +77,12 @@
       setState('checking','확인 중','인증 상태를 확인하는 중');
     }
     try{
+      const bearer=await authBearer();
+      if(seq!==generation||getToken()!==token)return;
       const response=await fetch(VERIFY_URL,{
         method:'POST',cache:'no-store',
-        headers:{'Content-Type':'application/json','X-Beagu-Session':token},
+        headers:{'Content-Type':'application/json','X-Beagu-Session':token,
+          ...(bearer?{'Authorization':'Bearer '+bearer}:{})},
         body:JSON.stringify({action:'verify'})
       });
       if(seq!==generation||getToken()!==token)return;
@@ -84,7 +97,7 @@
       if(seq!==generation||getToken()!==token)return;
       if(Number.isInteger(result?.level)&&result.level>=1){
         lastValidatedToken=token;
-        const tier=result.level>=2?2:1;
+        const tier=result.level>=3?3:result.level>=2?2:1;
         const provisional=tier===2&&result.provisional===true;
         const label='Lv.'+tier;
         setState(String(tier),label,'현재 '+label+' · 레벨 안내 보기',provisional);
@@ -106,7 +119,12 @@
   window.addEventListener('focus',refreshIfVisible);
   document.addEventListener('visibilitychange',refreshIfVisible);
 
-  // Shared Lv1/Lv2 participation dialog observes this server-verified event;
+  // Account login/logout and identity linking can change Lv3 independently
+  // of the participation code. Only server-verified responses set the badge.
+  const client=typeof supabaseClient!=='undefined'?supabaseClient:window.supabaseClient;
+  client?.auth?.onAuthStateChange?.(()=>queueMicrotask(()=>void refresh()));
+  window.addEventListener('beagu:member-linked',refresh);
+  // Shared participation dialog observes this server-verified event;
   // data.provisional is retained for legacy access restrictions.
   void refresh();
 })();

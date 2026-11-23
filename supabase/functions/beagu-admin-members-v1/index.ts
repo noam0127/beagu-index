@@ -1,5 +1,6 @@
 // Member administration API: separate from challenge participant codes.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import { applyModerationWithAudit } from "../_shared/moderation-audit.mjs";
 
 const endpoint = Deno.env.get("SUPABASE_URL") || "";
 const secret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -162,12 +163,17 @@ async function details(input: Record<string, unknown>) {
   if (auditError) throw new HttpError(503, "audit_unavailable");
   return { profile, moderation_history: events || [] };
 }
-async function audit(actor: string, event: string, target: string, reason: string, duration: string) {
+async function audit(actor: string, event: string, target: string, reason: string,
+                     duration: string, operationId: string, phase: "intent" | "success" | "error") {
   const { error } = await db.from("beagu_admin_audit_events").insert({
-    actor_user_id: actor, event_type: event, outcome: "success",
-    details: { target_user_id: target, reason, duration },
+    actor_user_id: actor,
+    event_type: phase === "intent" ? event + "_intent" : event,
+    outcome: phase === "error" ? "error" : "success",
+    details: { target_user_id: target, reason, duration, operation_id: operationId,
+               phase, action_completed: phase === "success" },
   });
   if (error) {
+    // Log the error code only, not the reason, email, or target identity.
     console.error("member_moderation_audit_failed", error.code);
     throw new HttpError(503, "audit_unavailable");
   }
@@ -186,11 +192,19 @@ async function moderate(input: Record<string, unknown>, actor: { id: string; rol
   if (findError || !found?.user) throw new HttpError(404, "member_not_found");
   const duration = operation === "suspend_24h" ? "24h" :
     operation === "suspend_7d" ? "168h" : "none";
-  const { error: updateError } = await db.auth.admin.updateUserById(id, {
-    ban_duration: duration,
-  });
-  if (updateError) throw new HttpError(503, "moderation_failed");
-  await audit(actor.id, "member_" + operation, id, reason, duration);
+  // Postgres audit and Auth Admin are separate systems, not one transaction.
+  // An unlogged moderation action is forbidden. Correlate intent/outcome by
+  // operation_id so an incomplete action can be reconciled after a timeout.
+  const operationId = crypto.randomUUID();
+  await applyModerationWithAudit(
+    phase => audit(actor.id, "member_" + operation, id, reason, duration, operationId, phase),
+    async () => {
+      const { error: updateError } = await db.auth.admin.updateUserById(id, {
+        ban_duration: duration,
+      });
+      if (updateError) throw new HttpError(503, "moderation_failed");
+    }
+  );
   return { updated: true, user_id: id, operation };
 }
 Deno.serve(async (request: Request) => {

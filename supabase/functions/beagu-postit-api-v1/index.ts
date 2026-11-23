@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.0";
+import { resolveVerifiedPostitOwner, eligiblePostitAuthUser } from "../_shared/postit-member-ownership.mjs";
 
 // Post-it's data and author identities never become directly queryable with
 // the browser's publishable key. Even curated projections require Lv2 authorization.
@@ -67,7 +68,7 @@ async function authenticatedUser(req:Request){
  const jwt=authorization.slice(7);
  const {data,error}=await db.auth.getUser(jwt);
  const user=data?.user;
- if(error||!user||user.is_anonymous||!user.email_confirmed_at)return null;
+ if(error||!eligiblePostitAuthUser(user))return null;
  return user;
 }
 async function verifiedMember(req:Request,viewer:any){
@@ -75,11 +76,13 @@ async function verifiedMember(req:Request,viewer:any){
  const account=await authenticatedUser(req);
  if(!account)return null;
  const {data,error}=await db.from("beagu_postit_member_accounts")
-   .select("author_uid,identity_visitor_id,status")
+   .select("auth_user_id,author_uid,identity_visitor_id,status")
    .eq("auth_user_id",account.id).eq("identity_visitor_id",viewer.visitor)
    .eq("status","active").maybeSingle();
- if(error||!data||data.author_uid!==viewer.id)return null;
- return {level:viewer.level,id:data.author_uid,visitor:viewer.visitor,authId:account.id};
+ if(error)return null;
+ // Reconfirm ALL ownership keys from returned data, even if query filters
+ // were modified later. Never use a client-supplied author_uid or role.
+ return resolveVerifiedPostitOwner(account,viewer,data);
 }
 const sha256=async(value:string)=>Array.from(
  new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value))),
@@ -377,8 +380,16 @@ Deno.serve(async(req:Request)=>{
    const table=type==="post"?"beagu_postit_posts":"beagu_postit_comments";
    if(action==="remove"){
     if(t.author_uid!==user.id)return fail(req,"NOT_OWNER",403);
-    const {error}=await db.from(table).update({status:"removed"}).eq("id",id).eq("author_uid",user.id);
-    if(error)throw error;return respond(req,{removed:true});
+    // Preflight ownership alone is not sufficient: another request may have
+    // already removed/hidden the record between target() and UPDATE.
+    // PostgREST UPDATE returns no rows by default, so require the actual
+    // affected row before claiming a successful deletion.
+    const {data:removed,error}=await db.from(table).update({status:"removed"})
+      .eq("id",id).eq("author_uid",user.id).eq("status","published")
+      .select("id").maybeSingle();
+    if(error)throw error;
+    if(!removed)return fail(req,"TARGET_UNAVAILABLE",404);
+    return respond(req,{removed:true});
    }
    if(action==="report"&&t.author_uid===user.id)return fail(req,"CANNOT_REPORT_OWN");
    if(action==="set_like"&&typeof body?.liked!=="boolean")

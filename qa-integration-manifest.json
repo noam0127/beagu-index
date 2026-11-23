@@ -251,6 +251,71 @@
       "source": "desktop",
       "path": "styles/beagu-participation-auth-v2.css",
       "status": "merged without overlapping context"
+    },
+    {
+      "source": "member",
+      "path": "admin-updates.html",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "member",
+      "path": "js/beagu-level-state-v1.js",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "member",
+      "path": "js/challenge-member-auth-v1.js",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "member",
+      "path": "js/postit-account-v1.js",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "member",
+      "path": "styles/beagu-admin-updates-v1.css",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/release-policy.mjs",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/beagu-admin-members-v1/index.ts",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/beagu-postit-api-v1/index.ts",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "admin",
+      "path": "js/beagu-admin-members-v1.js",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/beagu-admin-access/index.ts",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/beagu-admin-dashboard-v1/index.ts",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/beagu-telemetry-v2/index.ts",
+      "status": "exact three-way unchanged base"
+    },
+    {
+      "source": "isolation",
+      "path": "teacher-class-diary-entry.html",
+      "status": "exact three-way unchanged base"
     }
   ],
   "pending": [
@@ -258,32 +323,8 @@
       "source": "member",
       "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
       "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
-      "path": "admin-updates.html",
-      "blob_sha": "ae6af011c8068af565d0dc054db8e98dd0ac6f49",
-      "status": "modified"
-    },
-    {
-      "source": "member",
-      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
-      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
       "path": "js/beagu-admin-updates-v1.js",
       "blob_sha": "1f9bafc2f7e470859077361ed4abc3d372f5b15e",
-      "status": "modified"
-    },
-    {
-      "source": "member",
-      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
-      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
-      "path": "js/beagu-level-state-v1.js",
-      "blob_sha": "49e98009653c7368e3d766a7358f6d3b5b4e58b0",
-      "status": "modified"
-    },
-    {
-      "source": "member",
-      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
-      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
-      "path": "js/challenge-member-auth-v1.js",
-      "blob_sha": "cc9cf9fba1916af9a27e322b68c7dbce21d665de",
       "status": "modified"
     },
     {
@@ -298,48 +339,8 @@
       "source": "member",
       "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
       "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
-      "path": "js/postit-account-v1.js",
-      "blob_sha": "f5a4168321780b2f16a268002a332f69416ef6dd",
-      "status": "modified"
-    },
-    {
-      "source": "member",
-      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
-      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
-      "path": "styles/beagu-admin-updates-v1.css",
-      "blob_sha": "4f34ffcb2ab76e135017136475a5b7283a43928f",
-      "status": "modified"
-    },
-    {
-      "source": "member",
-      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
-      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
-      "path": "supabase/functions/_shared/release-policy.mjs",
-      "blob_sha": "ee44da9071436429d3bfe8c2098e928759f8f96f",
-      "status": "modified"
-    },
-    {
-      "source": "member",
-      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
-      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
-      "path": "supabase/functions/beagu-admin-members-v1/index.ts",
-      "blob_sha": "bebe715788bd86ae1d9c0193c15eac164399056c",
-      "status": "modified"
-    },
-    {
-      "source": "member",
-      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
-      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
       "path": "supabase/functions/beagu-level-api/index.ts",
       "blob_sha": "f4c5ca4e6e85660273dcc155b115b1f16668f2cd",
-      "status": "modified"
-    },
-    {
-      "source": "member",
-      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
-      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
-      "path": "supabase/functions/beagu-postit-api-v1/index.ts",
-      "blob_sha": "a5f708e179da1cd53976077c57ee51a6f46d30a4",
       "status": "modified"
     },
     {
@@ -356,14 +357,6 @@
       "merge_base": "0ea26679515c0e6a88d123e478c955e2c49fd737",
       "path": "admin.html",
       "blob_sha": "154f3e26cf0139909b189af4bd70d111fff0fd8c",
-      "status": "modified"
-    },
-    {
-      "source": "admin",
-      "source_sha": "a00a9a4af67069b45277cde28f199de4f4733acc",
-      "merge_base": "0ea26679515c0e6a88d123e478c955e2c49fd737",
-      "path": "js/beagu-admin-members-v1.js",
-      "blob_sha": "2ba3978fa1690ff409a0e693d3c4467e90706ffb",
       "status": "modified"
     },
     {
@@ -442,22 +435,6 @@
       "source": "isolation",
       "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
       "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
-      "path": "supabase/functions/beagu-admin-access/index.ts",
-      "blob_sha": "e1bd45a2abd95ae74503cbc2bd3058ad308bcddf",
-      "status": "modified"
-    },
-    {
-      "source": "isolation",
-      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
-      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
-      "path": "supabase/functions/beagu-admin-dashboard-v1/index.ts",
-      "blob_sha": "a7f17ae86226f6a6098d5a79d535f155667e0c20",
-      "status": "modified"
-    },
-    {
-      "source": "isolation",
-      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
-      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
       "path": "supabase/functions/beagu-admin-members-v1/index.ts",
       "blob_sha": "931ef6ccfff8442b918b7150b3ced5822f2928c4",
       "status": "modified"
@@ -484,22 +461,6 @@
       "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
       "path": "supabase/functions/beagu-release-manager-v1/index.ts",
       "blob_sha": "5dd4d869ce5c414b9b53d760afac6274fb635ebb",
-      "status": "modified"
-    },
-    {
-      "source": "isolation",
-      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
-      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
-      "path": "supabase/functions/beagu-telemetry-v2/index.ts",
-      "blob_sha": "191847c0c71de3f9f70a227ecc0be964d5b22728",
-      "status": "modified"
-    },
-    {
-      "source": "isolation",
-      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
-      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
-      "path": "teacher-class-diary-entry.html",
-      "blob_sha": "1ca7104cb0a8ff53600188405451744fdcefeac1",
       "status": "modified"
     },
     {

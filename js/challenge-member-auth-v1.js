@@ -38,7 +38,7 @@ function paintTier(){
  // The badge's level comes from beagu-level-state-v1's server-verified response.
  const badge=byId('beaguLevelState');
  const token=levelToken();
- tier2=badge?.dataset.level==='2'&&/^[a-f0-9]{64}$/.test(token);
+ tier2=Number(badge?.dataset.level)>=2&&/^[a-f0-9]{64}$/.test(token);
  if(!tier2)close();
 }
 function paintMode(next){
@@ -65,7 +65,7 @@ async function serverLevel(){
    headers:{'Content-Type':'application/json','X-Beagu-Session':token},
    body:JSON.stringify({action:'verify'})});
   const data=await r.json().catch(()=>({}));
-  return r.ok&&Number(data.level)===2&&levelToken()===token;
+  return r.ok&&Number(data.level)>=2&&levelToken()===token;
  }catch{return false}
 }
 async function userSession(){
@@ -201,7 +201,8 @@ connect.addEventListener('click',async()=>{
   const answer=await response.json().catch(()=>({}));
   if(!response.ok||answer.linked!==true)throw Error(answer.error||'LINK_FAILED');
   connect.hidden=true;
-  message.textContent='Lv2 계정 연결 완료. 포스트잇 등 계정 기능을 이용할 수 있습니다.';
+  message.textContent='정식 회원 연결 완료. Lv3 인증과 포스트잇 기능을 확인해 주세요.';
+  window.dispatchEvent(new CustomEvent('beagu:member-linked'));
  }catch(error){
   message.textContent=error.message==='MEMBERSHIP_ALREADY_CLAIMED'
    ?'이미 다른 계정에 연결된 챌린지 권한입니다.'
