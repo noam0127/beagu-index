@@ -3,7 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 const base = Deno.env.get('SUPABASE_URL') || '';
 const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const admin = createClient(base, secret, { auth: { persistSession: false, autoRefreshToken: false } });
-const origins = new Set(['https://baeguindex.com','https://www.baeguindex.com','https://noam0127.github.io','http://localhost:8000','http://127.0.0.1:8000']);
+const origins = new Set(['https://baeguindex.com','https://www.baeguindex.com','https://noam0127.github.io','https://beagu-index.vercel.app','https://beagu-index-ibelieveyou365-4134.vercel.app','http://localhost:8000','http://127.0.0.1:8000']);
 const responseHeaders = (origin: string) => ({
   'Access-Control-Allow-Origin': origins.has(origin) ? origin : 'https://baeguindex.com',
   'Access-Control-Allow-Headers': 'content-type, x-beagu-session, apikey, authorization',
