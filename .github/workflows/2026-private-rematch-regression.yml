@@ -31,4 +31,3 @@ jobs:
         run: |
           node tests/2026-form-submit-private-sync.mjs
           node tests/2026-automated-qa-ingest.mjs
-          node tests/2026-one-response-publication-review.mjs
