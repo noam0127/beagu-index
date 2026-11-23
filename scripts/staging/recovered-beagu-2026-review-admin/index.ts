@@ -36,9 +36,54 @@ Deno.serve(async(request:Request)=>{
  if(!allowedOrigin(origin))return send(origin,403,{error:"origin_not_allowed"});
  if(request.method==="OPTIONS")return new Response(null,{status:204,headers:headers(origin)});
  if(request.method!=="POST")return send(origin,405,{error:"method_not_allowed"});
- // Publication review requires an independently audited MFA->RPC->audit chain.
- // The source stage database lacks the six privileged review RPC dependencies.
- // Fail CLOSED before any admin data read, audit write or publication decision.
+ // Read-only Auth preflight: deliberately separate from the disabled review
+ // route. It issues NO MFA factor, JWT, owner role, session or approval.
+ // Only Supabase Auth can verify a JWT; parse claims AFTER getUser verifies it.
+ // Origin headers are UX/CORS controls, NOT authentication by themselves.
+ const isPreflight=new URL(request.url).searchParams.get("preflight")==="mfa";
+ if(isPreflight){
+   const length=Number(request.headers.get("content-length")||0);
+   if(!Number.isFinite(length)||length>1024)return send(origin,413,{error:"request_too_large"});
+   const supplied=/^Bearer ([A-Za-z0-9._-]+)$/.exec(request.headers.get("authorization")||"");
+   if(!supplied||supplied[1].length>4096||supplied[1].split(".").length!==3)
+     return send(origin,401,{error:"authentication_required"});
+   const jwt=supplied[1];
+   const {data:verified,error:verifyError}=await db.auth.getUser(jwt);
+   const actor=verified?.user?.id||"";
+   const claims=claimsOf(jwt);
+   if(verifyError||!actor||claims?.sub!==actor||!claims.session_id||
+     !uuid.test(claims.session_id))
+     return send(origin,401,{error:"authentication_required"});
+   try{
+     const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
+       .select("role,enabled").eq("user_id",actor).maybeSingle();
+     if(accountError)return send(origin,503,{error:"authorization_unavailable"});
+     if(!account?.enabled)return send(origin,200,{
+       authenticated:true,status:"admin_access_not_configured",
+       review_enabled:false,owner:false,active_mfa:false
+     });
+     if(claims.aal!=="aal2")return send(origin,200,{
+       authenticated:true,status:"mfa_challenge_required",
+       review_enabled:false,owner:account.role==="owner",active_mfa:false
+     });
+     const {data:active,error:sessionError}=await db.rpc(
+       "beagu_admin_active_mfa_session",
+       {p_user:actor,p_session:claims.session_id});
+     if(sessionError)return send(origin,503,{error:"mfa_session_check_unavailable"});
+     return send(origin,200,{
+       authenticated:true,
+       status:active===true?"verified_aal2_session":"inactive_or_expired_mfa_session",
+       owner:account.role==="owner",active_mfa:active===true,
+       review_enabled:false
+     });
+   }catch(err){
+     console.error("review_mfa_preflight_unavailable",err instanceof Error?err.name:"unknown");
+     return send(origin,503,{error:"mfa_preflight_unavailable"});
+   }
+ }
+ // Real reviewer privileges are still locked independently of preflight.
+ // Six private RPCs are restored, but real MFA/browser authorization,
+ // verified form evidence, and owner E2E have NOT been signed off.
  if(Deno.env.get('BEAGU_STAGING_REVIEW_APPROVED')!=='true')
    return send(origin,503,{error:"REVIEW_NOT_READY"});
  if(Number(request.headers.get("content-length")||0)>4096)return send(origin,413,{error:"request_too_large"});
