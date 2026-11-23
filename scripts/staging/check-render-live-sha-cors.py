@@ -79,7 +79,10 @@ def check(
         vary = {h.strip().lower() for h in headers.get("vary", "").split(",")}
         assert "origin" in vary, f"{slug}: Origin-dependent CORS missing Vary"
         print(f"PASS: {slug} exact staging-origin CORS, no writes")
-    print("VERIFIED: live Render SHA, ten static/headers checks, four staging CORS preflights")
+    if page_loader is site.fetch_page and preflight_loader is get_cors:
+        print("VERIFIED: actual live Render SHA, ten static/headers checks, four staging CORS preflights")
+    else:
+        print("MOCK_ONLY: strict SHA/CORS contract passed with injected offline fixtures")
     print("LIMITATION: real Lv3 email signup, MFA, real account browser E2E NOT tested")
     return checked + len(FUNCTIONS)
 
