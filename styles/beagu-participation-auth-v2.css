@@ -109,6 +109,25 @@ body.beagu-participation-open{overflow:hidden}
  width:100%;min-height:38px;text-align:center;
 }
 
+/* Desktop participation-code dialog: layout only, no authentication changes.
+   This is an isolated release candidate based on the actually deployed SHA. */
+@media (min-width:901px){
+ .beagu-participation-dialog{
+  width:min(100%,520px);padding:34px 36px 29px;
+  border-radius:22px;
+ }
+ .beagu-participation-dialog h2{font-size:27px;line-height:1.35}
+ #beaguParticipationDescription{font-size:14px;margin-bottom:22px}
+ #beaguParticipationForm{gap:14px}
+ .beagu-participation-field input{
+  height:56px;padding-right:79px;border-radius:13px;font-size:17px;
+ }
+ .beagu-participation-field button{
+  top:8px;right:8px;width:auto;min-width:60px;height:40px;
+ }
+ #beaguParticipationSubmit{min-height:50px;font-size:15px}
+}
+
 /* Uniform participation cards on desktop: same width, position, spacing and action. */
 @media(min-width:761px){
 body:is(.beagu-page-search,.beagu-page-compare,.beagu-page-challenge)
