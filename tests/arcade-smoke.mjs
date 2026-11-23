@@ -31,8 +31,10 @@ for (const game of [volley,runner]) {
 assert.match(fullscreenCSS,/:fullscreen canvas/,"fullscreen scales the gameplay canvas");
 assert.match(fullscreenCSS,/100dvh/,"fullscreen uses actual viewport height");
 assert.match(volley,/id="volley-ready-overlay"/,"volleyball start overlay appears inside the court");
-assert.match(volley,/<h2 id="volley-ready-title">학교를 선택하세요<\/h2>/,"start card has its own heading");
+assert.match(volley,/<h2 id="volley-ready-title">선생님배구 1\.0<\/h2>/,"start card has its own heading");
 assert.doesNotMatch(volley,/위의 학교 검색창에서 선택/,"obsolete instruction removed");
+assert.doesNotMatch(volley,/<h2 id="volley-ready-title">학교를 선택하세요<\/h2>/,"start overlay must not duplicate school selection prompt");
+assert.match(volley,/<div class="volley-ready-icon" aria-hidden="true">🏐<\/div>/,"volleyball uses its sport emoji");
 assert.match(volley,/▶ 이 학교로 시작하기/,"school CTA switches after eligible selection");
 assert.match(volley,/if\(schoolPicker\.get\(\)\?\.eligible===true\)\{void startMatch\(\);return;\}/,
  "selected school starts the match without reopening selection");
@@ -903,7 +905,7 @@ console.log("PASS: no volleyball zoom link, both TOP10 panels folded by default 
 
 
 // The volleyball start-screen school button is real, keyboard-accessible and connected to the live picker.
-assert.match(volley,/<div class="volley-ready-overlay"[\s\S]*?<div class="volley-ready-panel">[\s\S]*?<h2 id="volley-ready-title">학교를 선택하세요<\/h2>[\s\S]*?<button type="button" id="volley-school-choose"[^>]*aria-controls="arcade-school-picker">🏫 학교 선택하기<\/button>/,
+assert.match(volley,/<div class="volley-ready-overlay"[\s\S]*?<div class="volley-ready-panel">[\s\S]*?<h2 id="volley-ready-title">선생님배구 1\.0<\/h2>[\s\S]*?<button type="button" id="volley-school-choose"[^>]*aria-controls="arcade-school-picker">🏫 학교 선택하기<\/button>/,
  "school button is inside the in-court ready panel, as in survival game");
 assert.match(volley,/readyOverlay\.hidden=!isReady/,"ready overlay only appears before a match");
 assert.match(volley,/schoolChooseButton\.hidden=!isReady/,"button visibility follows the ready state");
