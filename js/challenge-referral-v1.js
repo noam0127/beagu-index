@@ -35,11 +35,16 @@
   let lastSnapshot = '';
   function renderState(earned,count=lastReferrals) {
     upgraded = earned === true;
-    // A name change never mints a new code. The existing personal code stays unchanged.
-    identityPanel.classList.toggle('is-lv2', upgraded);
+    // Verified Lv.2 login can show its visual tier, but cannot activate a
+    // separate personal code without a server-confirmed referral.
+    const verifiedLoginLevel=Number(get('challengeAccessPanel')?.getAttribute?.('data-auth-level') || 0);
+    const premiumVisual=upgraded || verifiedLoginLevel>=2;
+    identityPanel.classList.toggle('is-lv2', premiumVisual);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
-    identityTitle.textContent = upgraded ? 'Lv.2 참여코드' : 'Lv.2 참여코드(비활성)';
-    identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' : '승급 대기';
+    identityTitle.textContent = upgraded ? 'Lv.2 참여코드' :
+      premiumVisual ? 'Lv.2 인증 회원 · 참여코드' : 'Lv.2 참여코드(비활성)';
+    identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' :
+      premiumVisual ? '✓ Lv.2 로그인 완료' : '승급 대기';
     if(certificateLevelBanner)certificateLevelBanner.textContent = upgraded ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
     if(certificate)certificate.dataset.level = upgraded ? '2' : '1';
     copyIdentityCode.hidden = !upgraded;

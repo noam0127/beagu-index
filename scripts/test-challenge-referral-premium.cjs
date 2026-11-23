@@ -82,6 +82,19 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
 
+  // A separate, server-verified Lv.2 login deserves the premium visual
+  // without falsely upgrading an uncredited personal referral code.
+  el.challengeAccessPanel={getAttribute:()=> '2'};
+  emit('focus');await tick();
+  assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),true);
+  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 인증 회원 · 참여코드');
+  assert.equal(el.challengeIdentityTag.textContent,'✓ Lv.2 로그인 완료');
+  assert.equal(el.copyIdentityCode.hidden,true);
+  assert.equal(el.challengeIdentityPanel.dataset.referralState,'pending');
+  delete el.challengeAccessPanel;
+  emit('focus');await tick();
+  assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
+
   // A server-confirmed credit converts the original personal code card.
   returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
   emit('focus');await tick();
