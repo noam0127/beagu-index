@@ -1,0 +1,2112 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111829">
+<title>난감한 스쿨밴드 · 학교 선택 → 곡 선택 → 악기 선택 → 연주</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;color-scheme:dark;--bg:#111827;--panel:#1e293b;--fg:#f8fafc;--muted:#b8c7da;--line:#42516b;--point:#a5b4fc}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--fg);line-height:1.45}
+button,input{font:inherit}button{cursor:pointer;border:1px solid #5d6c89;background:#334155;color:white;border-radius:12px;padding:10px 12px}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:3px solid #c4b5fd;outline-offset:2px}
+button:disabled{opacity:.5;cursor:default}main{width:min(100%,600px);margin:0 auto;padding:18px 12px 40px}
+header{text-align:center;margin:6px 0 19px}header h1{font-size:clamp(30px,7vw,44px);letter-spacing:-.05em;margin:0}header p{margin:3px 0;color:var(--muted);font-size:13px}
+.card{border:1px solid var(--line);border-radius:18px;background:var(--panel);padding:15px;margin-bottom:12px;box-shadow:0 8px 24px #04091222}
+h2{font-size:17px;margin:0 0 9px}.minor{color:var(--muted);font-size:12px;margin:6px 0}
+input[type=search]{width:100%;background:#0f172a;color:var(--fg);border:1px solid #576c88;border-radius:11px;padding:12px;min-height:47px}
+.schools{display:grid;gap:5px;max-height:158px;overflow-y:auto;margin:6px 0}
+.schools button{text-align:left;padding:10px}
+.school-line{display:flex;align-items:center;gap:9px;justify-content:space-between;flex-wrap:wrap}
+#schoolStatus{min-height:0;margin:7px 0;font-size:12px;color:var(--muted)}
+#retrySchool:not([hidden]){border-color:#b8b1fe;font-size:12px}
+#demoSchool{padding:7px 10px;font-size:12px;min-height:36px}
+.picked{border:1px solid #475569;border-radius:11px;background:#0f172a;margin-top:10px;padding:10px 12px}
+.picked strong{font-size:14px;display:block}.picked small{font-size:12px;color:var(--muted);display:block}
+.instrument-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.instrument{min-width:0;min-height:78px;padding:8px 3px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:13px;border:1px solid #4c5876}
+.instrument .inst-emoji{font-size:24px}.instrument .inst-title{font-size:clamp(11px,2.9vw,13px);font-weight:750;white-space:nowrap;letter-spacing:-.02em}.instrument .inst-count{font-size:11px;color:#cad5e7}
+.instrument[aria-pressed=true]{background:#4c437c;border-color:#ddd6fe;outline:2px solid #a5b4fc;outline-offset:-2px}
+.instrument:disabled{opacity:.5}
+#instCaption{margin:8px 0 0;color:var(--muted);font-size:12px}
+.song{display:flex;align-items:center;gap:9px;padding:9px 0 0;font-size:13px;color:var(--muted)}
+.song span{font-weight:800;color:#fff}
+.play-head{text-align:center;margin-bottom:9px}
+#laneInfo{font-size:19px;font-weight:900;color:#e0d8ff;letter-spacing:-.03em}
+#playTitle{font-size:12px;color:var(--muted);margin:3px 0}
+canvas{display:block;width:100%;height:auto;aspect-ratio:380/365;border:1px solid #475569;border-radius:12px;background:#0f172a}
+.pad-grid{display:grid;grid-template-columns:repeat(var(--lane-count,4),minmax(0,1fr));gap:5px;margin:8px 0}
+.taphit{min-width:0;min-height:68px;touch-action:none;user-select:none;-webkit-user-select:none;background:#374266;border:1px solid #7481a6;border-radius:11px;padding:6px 1px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.taphit strong{font-size:clamp(11px,2.8vw,15px)}.taphit small{font-size:11px;color:#eceaff;font-weight:800}
+.taphit.pressed{background:#7563b6;transform:translateY(2px)}
+.pad-grid[data-instrument=drums] .taphit{background:#4d3c52}
+.pad-grid[data-instrument=bass] .taphit{background:#1a5564}
+.pad-grid[data-instrument=keys] .taphit{background:#344970}
+#keyHint{font-size:11px;text-align:center;color:var(--muted);margin:3px 0 10px}
+.actions{display:grid;grid-template-columns:1.5fr 1.05fr .9fr .75fr;gap:6px}
+@media(max-width:400px){.actions{grid-template-columns:repeat(2,minmax(0,1fr))}.actions button{min-width:0;white-space:normal}}
+.actions button{min-height:45px;padding:10px 4px;font-size:13px;font-weight:800}
+#start{background:#6656a9;border-color:#a78bfa}
+#feedback{font-size:13px;color:#fde68a;min-height:30px;text-align:center;padding:10px 0 5px;font-weight:700}
+.progress{height:5px;background:#334155;border-radius:99px;overflow:hidden}.progress div{height:100%;width:0;background:#c4b5fd}
+.hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:10px 0 0}
+.hud div{background:#111827;border:1px solid #43516a;border-radius:9px;padding:7px 2px;text-align:center}
+.hud small{display:block;font-size:10px;color:var(--muted)}.hud b{display:block;font-size:clamp(14px,3.4vw,20px);font-variant-numeric:tabular-nums}
+#result{font-size:11px;color:var(--muted);text-align:center;margin:9px 0 0}
+.timing-tuner{border:1px solid #41516f;background:#101b2f;border-radius:11px;padding:7px 10px;margin:8px 0 3px}
+.timing-tuner summary{color:#d5e4ff;font-size:12px;font-weight:750;cursor:pointer;list-style:revert}
+.timing-tuner summary output{font-variant-numeric:tabular-nums;color:#ffe3b4;padding-left:7px}
+.timing-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.timing-controls label{font-size:12px;white-space:nowrap}
+.timing-controls input[type=range]{flex:1 1 110px;min-width:105px;accent-color:#c4b5fd;touch-action:pan-y}
+.timing-controls output{min-width:54px;font-size:12px;color:#fff2c8;font-variant-numeric:tabular-nums;text-align:right}
+.timing-controls button{padding:6px 9px;font-size:11px;min-height:34px}
+.timing-help{font-size:11px;color:#c0cfe6;margin:8px 0 2px;line-height:1.55}
+.volume-controls{border-top:1px solid #2d3b53;padding:8px 4px 3px;margin:8px 0 3px}
+.volume-controls label{font-weight:700;color:#e1eaff}
+.volume-controls input[type=range]{min-width:110px;accent-color:#8fe5c7}
+.volume-controls output{font-variant-numeric:tabular-nums;color:#d5f7e7}
+.visually-hidden{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.note{font-size:11px;color:#bdcadc;text-align:center;margin:14px 4px}
+@media(max-width:360px){main{padding:10px 7px 25px}.card{padding:11px}.instrument-grid{gap:4px}.instrument{min-height:71px}.instrument .inst-title{font-size:10px}.actions button{font-size:12px}}
+
+.stage-wrap{position:relative;isolation:isolate;overflow:hidden;border-radius:12px}
+.fx-options{display:flex;justify-content:center;flex-wrap:wrap;gap:16px;margin:3px 0 10px;color:#dae4f6;font-size:12px}
+.fx-options label{display:inline-flex;align-items:center;gap:5px;min-height:28px;cursor:pointer}
+.fx-options input{accent-color:#c4b5fd;width:17px;height:17px}
+.fx-options input:disabled{opacity:.6;cursor:not-allowed}
+.lane-fx-layer{position:absolute;inset:0;pointer-events:none;display:grid;grid-template-columns:repeat(var(--fx-lanes,4),minmax(0,1fr));gap:4px;padding:0 9px;z-index:4}
+.lane-fx{position:relative;min-width:0;pointer-events:none}
+.lane-event{position:absolute;top:66%;left:0;right:0;text-align:center;font-size:clamp(11px,3.5vw,13px);font-weight:900;letter-spacing:-.04em;text-shadow:0 1px 3px #000b;white-space:nowrap;color:#fff3c4;opacity:0;pointer-events:none}
+.lane-event.good{color:#ccefff}.lane-event.miss{color:#ffd6cf}.lane-event.empty{color:#c3cbd9}
+.lane-event.animate{animation:laneResult .36s ease-out both}
+.combo-fx{position:absolute;top:13%;left:50%;font-size:clamp(16px,4.8vw,23px);font-weight:900;letter-spacing:-.04em;color:#f8ebb7;text-shadow:0 2px 4px #0009;transform:translateX(-50%);opacity:0;white-space:nowrap;z-index:4;pointer-events:none}
+.combo-fx.animate{animation:comboRise .46s ease-out both}
+@keyframes laneResult{0%{opacity:0;transform:translateY(7px)}22%{opacity:1;transform:translateY(0)}78%{opacity:1}100%{opacity:0;transform:translateY(-5px)}}
+@keyframes comboRise{0%{opacity:0;transform:translate(-50%,5px) scale(.94)}18%{opacity:1;transform:translate(-50%,0) scale(1.05)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-7px)}}
+.judgement{position:absolute;left:50%;top:45%;transform:translate(-50%,0) scale(.82);font-size:clamp(24px,7vw,39px);line-height:1.1;font-weight:950;letter-spacing:-.06em;text-align:center;white-space:nowrap;color:#fdf2b4;text-shadow:0 2px 3px #0009,0 0 16px #d7c2ffaa;pointer-events:none;opacity:0;z-index:3}
+.judgement.good{color:#d4f5ff;text-shadow:0 0 15px #79ddff99}
+.judgement.animate{animation:judgeRise .49s cubic-bezier(.2,.8,.25,1) both}
+.impact-ring{position:absolute;top:75%;left:50%;width:40px;height:40px;border-radius:50%;border:3px solid #f8d4ff;transform:translate(-50%,-50%) scale(.35);opacity:0;box-shadow:0 0 18px #f8d4ff66;pointer-events:none;z-index:2}
+.impact-ring.animate{animation:ringBurst .33s ease-out both}
+@keyframes judgeRise{0%{opacity:0;transform:translate(-50%,16px) scale(.65)}16%{opacity:1;transform:translate(-50%,-6px) scale(1.18)}55%{opacity:1;transform:translate(-50%,-15px) scale(1)}100%{opacity:0;transform:translate(-50%,-26px) scale(.96)}}
+@keyframes ringBurst{0%{opacity:.95;transform:translate(-50%,-50%) scale(.25)}100%{opacity:0;transform:translate(-50%,-50%) scale(2.8)}}
+@media(prefers-reduced-motion:reduce){.judgement.animate,.impact-ring.animate,.lane-event.animate,.combo-fx.animate{animation:none;opacity:1}.judgement.animate,.lane-event.animate{transform:none}.combo-fx.animate{transform:translateX(-50%)}.impact-ring{display:none}}
+html[data-reduced-fx="true"] .judgement.animate,html[data-reduced-fx="true"] .lane-event.animate,html[data-reduced-fx="true"] .combo-fx.animate{animation:none;opacity:1}
+html[data-reduced-fx="true"] .judgement.animate,html[data-reduced-fx="true"] .lane-event.animate{transform:none}
+html[data-reduced-fx="true"] .combo-fx.animate{transform:translateX(-50%)}
+html[data-reduced-fx="true"] .impact-ring{display:none}
+
+/* Stage016: three-step focus without removing the legacy controls needed for practice. */
+.step-nav{position:sticky;top:0;z-index:20;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:8px 0 10px;background:linear-gradient(180deg,#111827 84%,#111827e0);margin-bottom:12px}
+.step-nav button{min-height:44px;min-width:0;padding:8px 5px;border:1px solid #60708c;border-radius:12px;font-size:clamp(12px,3.4vw,14px);font-weight:760;color:#dae5f5;background:#27364d}
+.step-nav button[aria-current=step]{background:#554c94;border-color:#d5c9ff;box-shadow:inset 0 0 0 1px #bca7ff;color:white}
+.step-nav button[aria-disabled=true]{opacity:.60}
+.ux-step-card{scroll-margin-top:70px}
+.ux-step-card:focus{outline:2px solid #d5c9ff;outline-offset:3px}
+.ux-step-card h2{letter-spacing:-.02em}
+body[data-ux-step=school] #stepSchool,body[data-ux-step=instrument] #stepInstrument,body[data-ux-step=play] #stepPlay{border-color:#887be4}
+#schoolSearch{font-size:16px;min-height:50px}
+#searchResults:not(:empty){border:1px solid #3d526e;border-radius:11px;padding:5px;background:#111d30}
+#searchResults button{min-height:44px;background:#23334a}
+#instCaption{margin:8px 0 1px;color:#d5dff3;font-size:12px}
+.song{line-height:1.35;flex-wrap:wrap}
+#stepSchool .school-line{gap:6px}
+@media(max-width:360px){
+ .step-nav{padding-top:5px;padding-bottom:7px}
+ .step-nav button{font-size:12px;min-height:44px;padding:7px 2px}
+ .ux-step-card{scroll-margin-top:61px}
+ #schoolSearch{padding:10px}
+}
+
+/* 017 mobile touch target layout and explicit non-color lane labels */
+.play-surface{min-width:0}
+#pads{touch-action:none}
+.taphit{touch-action:none;overflow-wrap:anywhere;overflow:hidden;white-space:normal}
+.taphit strong,.taphit small{max-width:100%;overflow-wrap:anywhere;line-height:1.25}
+.taphit:focus-visible{outline:3px solid #fff5b4;outline-offset:-3px}
+.mobile-controls{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin:10px 0 6px}
+.mobile-controls label{display:inline-flex;align-items:center;gap:5px;min-height:44px;padding:6px 7px;font-size:13px}
+.mobile-controls input{width:19px;height:19px;accent-color:#c4b5fd}
+#fullscreenBtn{min-height:44px;min-width:110px;font-size:13px;background:#293c5c}
+#stepPlay:fullscreen{overflow-y:auto;width:100%;height:100%;margin:0;background:#111827;padding:12px;box-sizing:border-box}
+#stepPlay:fullscreen .play-surface{max-width:min(680px,96vw);margin:auto}
+html[data-large-text=true] #pads .taphit strong{font-size:clamp(13px,3.6vw,19px);font-weight:900}
+html[data-large-text=true] #pads .taphit small{font-size:clamp(12px,3vw,16px)}
+html[data-large-text=true] #keyHint{font-size:14px;line-height:1.5}
+html[data-large-text=true] #laneInfo{font-size:clamp(20px,5vw,27px)}
+html[data-large-text=true] #feedback{font-size:16px}
+html[data-large-text=true] .taphit{min-height:78px}
+html[data-high-contrast=true] .taphit{background:#000;color:#fff;border:3px solid #fff}
+html[data-high-contrast=true] .taphit small{color:#ffe985}
+html[data-high-contrast=true] .pad-grid[data-instrument=drums] .taphit,html[data-high-contrast=true] .pad-grid[data-instrument=bass] .taphit,html[data-high-contrast=true] .pad-grid[data-instrument=keys] .taphit{background:#000;color:#fff;border-color:#fff}
+html[data-high-contrast=true] .taphit.pressed{background:#6f3300;outline:3px solid #ffe985}
+html[data-high-contrast=true] canvas{border:3px solid #fff}
+html[data-high-contrast=true] #keyHint,html[data-high-contrast=true] #playTitle{color:#fff}
+@media(prefers-contrast:more){
+ .taphit{border:3px solid #fff;color:#fff;background:#080808!important}
+ .taphit small{color:#ffe985}
+ canvas{border:3px solid #fff}
+}
+@media(orientation:landscape) and (max-height:500px) and (min-width:550px){
+ .play-surface{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:10px}
+ .stage-wrap{width:100%;min-width:0}
+ .pad-grid{min-width:0;align-items:stretch;margin:0}
+ .taphit{min-height:90px;padding:6px 1px}
+ .play-head{margin-bottom:4px}
+ .mobile-controls{margin:4px 0}
+ #stepPlay{padding:9px}
+ #keyHint{margin:5px 0}
+}
+@media(max-width:360px){
+ .mobile-controls{gap:5px}
+ .mobile-controls label{font-size:12px;padding:5px 3px}
+ #fullscreenBtn{min-width:95px;padding:7px 4px}
+ .taphit strong{font-size:11px}
+ html[data-large-text=true] .taphit strong{font-size:13px}
+}
+/* 018 performance modes never alter the audio clock or hit judgement */
+.fx-options{gap:8px 14px;align-items:center}
+.fx-options label{min-height:44px;padding:5px 3px}
+.fx-mode-status{font-size:11px;line-height:1.4;text-align:center;color:#d1d9eb;margin:3px 0 6px}
+html[data-low-power-fx="true"] .impact-ring,html[data-low-power-fx="true"] .combo-fx{display:none}
+html[data-low-power-fx="true"] .judgement.animate,html[data-low-power-fx="true"] .lane-event.animate{animation:none;opacity:1}
+html[data-low-power-fx="true"] .judgement.animate{transform:translate(-50%,0) scale(1)}
+html[data-low-power-fx="true"] .lane-event.animate{transform:none}
+html[data-low-power-fx="true"] .taphit.pressed,html[data-reduced-fx="true"] .taphit.pressed{transform:none}
+@media(prefers-reduced-motion:reduce){.taphit.pressed{transform:none}}
+@media(max-width:360px){.fx-options{gap:3px 9px}.fx-options label{font-size:11px}}
+/* Stage020: song choice is separate from school index tier and music licensing. */
+.song-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:9px 0}
+.song-choice{min-width:0;text-align:left;min-height:98px;background:#182941;border:2px solid #50627e;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.song-choice strong{font-size:14px}.song-choice small{font-size:11px;line-height:1.45;color:#ccd9ed}
+.song-choice[aria-pressed=true]{border-color:#b3a7ff;background:#393464}
+.song-choice:disabled{opacity:.55;background:#1a2435}
+#songState{font-size:12px;line-height:1.55;color:#d7e7fb;margin:7px 0}
+@media(max-width:360px){.song-choice{padding:9px 7px}.song-choice strong{font-size:12px}}
+/* Stage021: verified school song media is a discovery/listening facility only. */
+.anthem-discovery{margin:10px 0 12px;padding:10px;border:1px solid #465c79;border-radius:12px;background:#101c31}
+.anthem-discovery h3{font-size:13px;margin:0 0 6px}
+.anthem-discovery p{color:#cbd5e1;font-size:12px;margin:6px 0}
+.anthem-links{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}
+.anthem-links a{font-size:12px;color:#fff;text-decoration:none;padding:9px;border-radius:9px;border:1px solid #64748b;background:#27364b;min-height:42px;display:inline-flex;align-items:center}
+.anthem-links a:focus-visible{outline:3px solid #c4b5fd;outline-offset:2px}
+.anthem-links a[hidden]{display:none}
+.anthem-media-card{border:1px solid #5e6f8d;border-radius:9px;padding:8px;margin:8px 0}
+.anthem-media-card button{font-size:12px;min-height:40px}
+.anthem-media-card strong{font-size:12px;display:block}
+.anthem-media-card small{display:block;color:#bfcfe4}
+#anthemPlayer{width:100%;aspect-ratio:16/9;border:0;border-radius:8px;margin:6px 0}
+#anthemPlayer[hidden],#closeAnthemPlayer[hidden]{display:none}
+.record-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:6px 0 12px}.record-controls button{padding:8px 10px;font-size:12px;min-height:40px}.record-controls small{font-size:11px;color:#c9d5f1}
+.concert-summary{margin:12px 0;border:1px solid #7484a2;border-radius:14px;background:#1b293f;padding:12px}
+.concert-summary[hidden]{display:none}
+.concert-summary h3{margin:0 0 10px;font-size:16px}
+.concert-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.concert-metrics>div{min-width:0;background:#111c30;border-radius:10px;padding:9px 7px;text-align:center}
+.concert-metrics small{display:block;font-size:11px;color:#cad5e4}
+.concert-metrics strong{font-variant-numeric:tabular-nums;display:block;font-size:clamp(15px,4.3vw,23px);white-space:nowrap}
+#summaryBreakdown,#summaryNotice{font-size:12px;margin:9px 0 0}
+#summaryPrivacy{display:block;font-size:11px;color:#bdcde1;margin-top:7px}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>🎸 난감한 스쿨밴드</h1>
+<p>학교 고르고 · 악기 고르고 · 연주!</p>
+</header>
+<nav id="stepNav" class="step-nav" aria-label="연주 단계">
+<button type="button" data-step-target="school" aria-current="step">1 학교</button>
+<button type="button" data-step-target="instrument" aria-disabled="true">2 곡·악기</button>
+<button type="button" data-step-target="play" aria-disabled="true">3 연주</button>
+</nav>
+<p id="stepStatus" class="visually-hidden" aria-live="polite">1단계 학교 선택</p>
+<section id="stepSchool" class="card ux-step-card" data-step-panel="school" aria-label="학교 선택" tabindex="-1">
+<h2>① 학교 선택</h2>
+<input id="schoolSearch" type="search" inputmode="search" enterkeyhint="search" aria-label="초등학교명 검색" aria-controls="searchResults" maxlength="30" autocomplete="off" placeholder="학교 이름 (2글자 이상)">
+<div id="searchResults" class="schools"></div>
+<div class="school-line"><p id="schoolStatus" role="status" aria-live="polite">학교 검색 또는 가상 학교 체험</p><button type="button" id="retrySchool" hidden>검색 재시도</button><button type="button" id="demoSchool">가상 학교 체험</button></div>
+<div class="picked"><strong id="schoolTitle">학교를 선택해 주세요</strong><small id="schoolTier">학교별 난이도 표시</small></div>
+</section>
+<section id="stepInstrument" class="card ux-step-card" data-step-panel="instrument" aria-label="곡과 악기 선택" tabindex="-1">
+<h2>② 곡 선택</h2>
+<div class="song-choices" id="songChoices" role="group" aria-label="연주곡 선택">
+<button id="songVolleyball" class="song-choice" type="button" data-song="volleyball" aria-pressed="true"><strong>🏐 배구 테마 연습곡</strong><small>항상 연주 가능 · 기존 창작 연습곡</small></button>
+<button id="songAnthem" class="song-choice" type="button" data-song="anthem" aria-pressed="false" disabled><strong>🏫 우리 학교 교가</strong><small id="anthemAvailability">게임용 교가 미등록 · 준비 중</small></button>
+</div>
+<p id="songState" role="status" aria-live="polite">배구 테마 연습곡이 선택되었습니다.</p>
+<section class="anthem-discovery" id="anthemDiscovery" aria-label="학교 교가 찾기와 감상">
+<h3>🔎 우리 학교 교가 찾아보기</h3>
+<p id="anthemDiscoveryStatus" role="status" aria-live="polite">학교를 선택하면 공식 교가 자료를 찾아볼 수 있습니다.</p>
+<div class="anthem-links">
+<a id="anthemSchoolHomepage" target="_blank" rel="noopener noreferrer" hidden>학교 DB에 기록된 홈페이지 열기</a>
+<a id="anthemOfficialSearch" target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q=%EC%B4%88%EB%93%B1%ED%95%99%EA%B5%90+%EA%B5%90%EA%B0%80">선택한 학교 교가 검색</a>
+<span id="anthemHomepageStatus" role="status" aria-live="polite">학교 홈페이지 정보 확인 중…</span>
+<a id="anthemYoutubeSearch" target="_blank" rel="noopener noreferrer" href="https://www.youtube.com/results?search_query=%EC%B4%88%EB%93%B1%ED%95%99%EA%B5%90+%EA%B5%90%EA%B0%80">유튜브 후보 찾기</a>
+</div>
+<div id="anthemMediaList" aria-label="검수된 교가 미디어"></div>
+<iframe id="anthemPlayer" title="검수된 공식 교가 유튜브 감상" referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy" hidden></iframe>
+<button id="closeAnthemPlayer" type="button" hidden>감상 닫기</button>
+<p>교가 영상 감상은 리듬게임 연주와 별개입니다. 교가를 게임으로 연주하려면 별도 권리·악보·차트 승인이 필요합니다.</p>
+</section>
+<h2>③ 악기 선택</h2>
+<div id="instruments" class="instrument-grid">
+<button type="button" class="instrument" data-inst="guitar" aria-pressed="true"><span class="inst-emoji">🎸</span><span class="inst-title">일렉기타</span><span class="inst-count">4레인</span></button>
+<button type="button" class="instrument" data-inst="drums" aria-pressed="false"><span class="inst-emoji">🥁</span><span class="inst-title">드럼</span><span class="inst-count">4레인</span></button>
+<button type="button" class="instrument" data-inst="bass" aria-pressed="false"><span class="inst-emoji">🎸</span><span class="inst-title">베이스</span><span class="inst-count">3레인</span></button>
+<button type="button" class="instrument" data-inst="keys" aria-pressed="false"><span class="inst-emoji">🎹</span><span class="inst-title">키보드</span><span class="inst-count">5레인</span></button>
+</div>
+<p id="instCaption">일렉기타 · 4레인 · D F J K</p>
+<div class="song">🎵 <span id="currentSongName">배구 테마 연습곡</span> · 기존 창작 멜로디 (약 18초)</div>
+</section>
+<section id="stepPlay" class="card ux-step-card" data-step-panel="play" aria-label="연주" tabindex="-1">
+<div class="play-head"><div id="laneInfo">일렉기타 · 4레인</div><p id="playTitle">일렉기타 · 4레인 · NORMAL</p></div>
+<div id="playSurface" class="play-surface"><div class="stage-wrap"><canvas id="track" width="380" height="365" role="img" aria-label="악기에 따라 3~5개 레인이 표시되는 리듬게임 화면"></canvas><div class="judgement" id="judgeFx" aria-hidden="true"></div><div class="impact-ring" id="impactRing" aria-hidden="true"></div><div id="laneFx" class="lane-fx-layer" aria-hidden="true"></div><div id="comboFx" class="combo-fx" aria-hidden="true"></div></div>
+<div id="pads" class="pad-grid" role="group" aria-label="모바일 동시 연주 버튼"></div></div>
+<p id="keyHint">D 리프 · F 파워코드 · J 업스트럼 · K 고음 리프</p>
+<div id="mobileControls" class="mobile-controls" role="group" aria-label="연주 화면 보기 설정"><label><input type="checkbox" id="largeText"> 큰 글씨</label><label><input type="checkbox" id="highContrast"> 고대비</label><button type="button" id="fullscreenBtn" aria-pressed="false">⛶ 전체화면</button></div>
+<p id="screenModeStatus" class="visually-hidden" role="status" aria-live="polite"></p>
+<details class="timing-tuner" id="timingTuner"><summary>판정 보정 <output id="offsetSummary" for="offsetRange">0 ms</output></summary><div class="timing-controls"><label for="offsetRange">입력 판정 보정</label><input type="range" id="offsetRange" min="-150" max="150" step="5" value="0" aria-describedby="offsetHelp"><output id="offsetValue" for="offsetRange">0 ms</output><button type="button" id="offsetReset">초기화</button></div><p class="timing-help" id="offsetHelp">기기에서 소리가 들리는 시점보다 터치 입력이 늦게 인식되면 + 방향, 너무 이르게 인식되면 − 방향으로 조절하세요. +100 ms는 늦게 입력된 100 ms를 판정에서 보상합니다. 판정 화면과 반주는 그대로이며 게임 시작 전에 설정합니다. 실제 기기 오디오·입력 지연을 자동 측정하는 기능은 아닙니다.</p></details><div class="timing-controls volume-controls" role="group" aria-label="음향 음량 설정"><label for="volumeRange">음량</label><input type="range" id="volumeRange" min="0" max="100" step="5" value="100" aria-label="게임 전체 음량" aria-describedby="volumeHelp"><output id="volumeValue" for="volumeRange">100%</output><span id="volumeHelp" class="visually-hidden">0퍼센트는 완전 무음이며 음소거 버튼과 독립적으로 음량을 조절합니다.</span></div><div class="fx-options" role="group" aria-label="연출 및 진동 설정"><label><input type="checkbox" id="reduceFx"> 효과 줄이기</label><label><input type="checkbox" id="vibrationFx"> 진동 사용</label><label><input type="checkbox" id="lowPowerFx"> 저사양 모드</label></div><p id="fxModeStatus" class="fx-mode-status" role="status" aria-live="polite">기본 연출 · 60fps 목표</p>
+<div class="actions"><button type="button" id="start" disabled>▶ 연주 시작</button><button type="button" id="pause" aria-pressed="false" disabled>Ⅱ 일시정지</button><button type="button" id="stop" disabled>■ 중단</button><button type="button" id="mute">♫ 소리</button></div>
+<div id="feedback" aria-live="polite">학교를 선택하면 시작할 수 있습니다.</div>
+<div class="progress"><div id="progress"></div></div>
+<div class="hud"><div><small>점수</small><b id="score">0</b></div><div><small>콤보</small><b id="combo">0</b></div><div><small>정확도</small><b id="accuracy">—</b></div><div><small>최고</small><b id="best">—</b></div></div>
+<div class="record-controls"><button id="resetBest" type="button">이 조합의 최고 기록 초기화</button><small id="recordStatus" role="status" aria-live="polite">학교·곡·악기·난이도·차트 버전별로 별도 저장됩니다.</small></div>
+<p id="result">노트가 판정선에 오면 해당 레인 키나 터치 버튼을 누르세요.</p>
+<section id="concertSummary" class="concert-summary" aria-label="공연 결과" aria-live="polite" hidden>
+ <h3 id="summaryHeading">공연 결과</h3>
+ <div class="concert-metrics">
+  <div><small>이번 점수</small><strong id="summaryScore">—</strong></div>
+  <div><small>정확도</small><strong id="summaryAccuracy">—</strong></div>
+  <div><small>최대 콤보</small><strong id="summaryCombo">—</strong></div>
+ </div>
+ <p id="summaryBreakdown">판정 정보는 공연이 끝나면 표시됩니다.</p>
+ <p id="summaryNotice">기록은 이 브라우저에만 보관됩니다.</p>
+ <small id="summaryPrivacy">전국 순위표 미사용 · 서버에 점수·닉네임·학생정보를 전송하지 않습니다.</small>
+</section>
+</section>
+<p class="note">배구 테마 연습곡은 기존에 제작한 창작곡을 사용하는 시험용 선택지입니다. 실제 학교 교가가 아니며, 교가 선택은 권리 확인과 게임용 차트 등록 후 열립니다.</p>
+</main>
+<script>
+(function(){
+"use strict";
+const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/schoolband-school-read-v1";
+const TIERS=["easy","normal","hard","very_hard","extreme"];
+const LABELS=["EASY","NORMAL","HARD","VERY HARD","EXTREME"];
+const INST={
+ guitar:{name:"일렉기타",icon:"🎸",note:"리프·파워코드·업스트럼·고음 리프",lanes:[["리프","D","KeyD"],["파워코드","F","KeyF"],["업스트럼","J","KeyJ"],["고음 리프","K","KeyK"]]},
+ drums:{name:"드럼",icon:"🥁",note:"킥·스네어·하이햇·탐",lanes:[["킥","D","KeyD"],["스네어","F","KeyF"],["하이햇","J","KeyJ"],["탐","K","KeyK"]]},
+ bass:{name:"베이스",icon:"🎸",note:"루트·5도·옥타브",lanes:[["루트","F","KeyF"],["5도","SPACE","Space"],["옥타브","J","KeyJ"]]},
+ keys:{name:"키보드",icon:"🎹",note:"저음·화음·멜로디·고음",lanes:[["저음","A","KeyA"],["화음1","S","KeyS"],["화음2","D","KeyD"],["멜로디","J","KeyJ"],["고음","K","KeyK"]]}
+};
+// [한 마디 안의 16분음표 위치, 악기 내 레인 인덱스, 최소 등장 난이도]
+// 모든 난이도에서 각 악기의 모든 레인을 연주하며, 난이도는 노트 밀도와 판정으로 조절합니다.
+// This version is tied to charts/creative-school-anthem.chart.v1.json and its JSON Schema.
+// Keep the embedded patterns for standalone single-HTML playtest links; CI verifies exact parity.
+const CHART_SCHEMA_VERSION=1;
+const CHART_VERSION="creative-anthem-rhythm-v1.0.0";
+const CHART_SONG_ID="original-shining-our-school";
+const CHART_NOTE_TYPES=Object.freeze(["tap"]); // no hold notes without hold/release scoring
+const PARTS={
+ "guitar": [
+  [
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   0
+  ],
+  [
+   4,
+   1,
+   0
+  ],
+  [
+   12,
+   1,
+   1
+  ],
+  [
+   6,
+   2,
+   0
+  ],
+  [
+   14,
+   3,
+   0
+  ],
+  [
+   2,
+   2,
+   2
+  ],
+  [
+   10,
+   3,
+   1
+  ],
+  [
+   0,
+   1,
+   2
+  ],
+  [
+   8,
+   1,
+   3
+  ],
+  [
+   1,
+   2,
+   4
+  ],
+  [
+   3,
+   3,
+   3
+  ],
+  [
+   5,
+   2,
+   4
+  ],
+  [
+   7,
+   3,
+   4
+  ],
+  [
+   9,
+   2,
+   4
+  ],
+  [
+   11,
+   3,
+   4
+  ],
+  [
+   13,
+   2,
+   4
+  ],
+  [
+   15,
+   3,
+   4
+  ]
+ ],
+ "drums": [
+  [
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   1
+  ],
+  [
+   4,
+   1,
+   0
+  ],
+  [
+   12,
+   1,
+   1
+  ],
+  [
+   2,
+   2,
+   2
+  ],
+  [
+   6,
+   2,
+   0
+  ],
+  [
+   10,
+   2,
+   2
+  ],
+  [
+   14,
+   2,
+   2
+  ],
+  [
+   0,
+   2,
+   3
+  ],
+  [
+   4,
+   2,
+   3
+  ],
+  [
+   8,
+   2,
+   3
+  ],
+  [
+   12,
+   2,
+   3
+  ],
+  [
+   7,
+   3,
+   3
+  ],
+  [
+   15,
+   3,
+   0
+  ],
+  [
+   1,
+   2,
+   4
+  ],
+  [
+   3,
+   2,
+   4
+  ],
+  [
+   5,
+   2,
+   4
+  ],
+  [
+   9,
+   2,
+   4
+  ],
+  [
+   11,
+   2,
+   4
+  ],
+  [
+   13,
+   2,
+   4
+  ],
+  [
+   15,
+   2,
+   4
+  ]
+ ],
+ "bass": [
+  [
+   0,
+   0,
+   0
+  ],
+  [
+   8,
+   0,
+   0
+  ],
+  [
+   4,
+   1,
+   0
+  ],
+  [
+   12,
+   2,
+   0
+  ],
+  [
+   2,
+   0,
+   1
+  ],
+  [
+   10,
+   1,
+   1
+  ],
+  [
+   6,
+   2,
+   2
+  ],
+  [
+   14,
+   0,
+   2
+  ],
+  [
+   1,
+   0,
+   3
+  ],
+  [
+   3,
+   1,
+   4
+  ],
+  [
+   5,
+   2,
+   4
+  ],
+  [
+   7,
+   0,
+   4
+  ],
+  [
+   9,
+   0,
+   3
+  ],
+  [
+   11,
+   1,
+   4
+  ],
+  [
+   13,
+   2,
+   4
+  ],
+  [
+   15,
+   0,
+   4
+  ]
+ ],
+ "keys": [
+  [
+   0,
+   1,
+   0
+  ],
+  [
+   8,
+   3,
+   0
+  ],
+  [
+   4,
+   2,
+   0
+  ],
+  [
+   12,
+   4,
+   0
+  ],
+  [
+   2,
+   0,
+   0
+  ],
+  [
+   10,
+   3,
+   1
+  ],
+  [
+   6,
+   2,
+   1
+  ],
+  [
+   14,
+   4,
+   2
+  ],
+  [
+   0,
+   0,
+   3
+  ],
+  [
+   8,
+   1,
+   3
+  ],
+  [
+   1,
+   3,
+   4
+  ],
+  [
+   3,
+   4,
+   4
+  ],
+  [
+   5,
+   2,
+   4
+  ],
+  [
+   7,
+   3,
+   4
+  ],
+  [
+   9,
+   4,
+   4
+  ],
+  [
+   11,
+   2,
+   4
+  ],
+  [
+   13,
+   3,
+   4
+  ],
+  [
+   15,
+   4,
+   4
+  ]
+ ]
+};
+// BEGIN SCHOOLBAND_TIMING_MODEL_V1 — pure music/time/geometry rules, no DOM or wall clock.
+const BEAT=60/108,BARS=8,SONG_BEATS=BARS*4;
+// At 108 BPM a sixteenth lasts 138.89 ms. 24px notes need >24px travel per step.
+const NOTE_PREVIEW_SECONDS=1.16,NOTE_TRAVEL_PX=240,NOTE_HEIGHT_PX=24;
+const WIDTHS=[.20,.17,.14,.11,.075],PERFECT=[.09,.075,.06,.05,.036];
+// Each chart note is anchored to seconds relative to the shared AudioContext start time.
+function noteTimeSeconds(bar,sixteenth){return (bar*4+sixteenth/4)*BEAT}
+function noteDeltaSeconds(noteTime,songTime){return noteTime-songTime}
+// A note first enters the drawing window exactly previewSeconds before it sounds.
+function noteSpawnTimeSeconds(noteTime){return noteTime-NOTE_PREVIEW_SECONDS}
+function noteIsInDrawingWindow(noteTime,songTime){
+ if(!Number.isFinite(noteTime)||!Number.isFinite(songTime))return false;
+ return songTime>=noteSpawnTimeSeconds(noteTime)&&noteDeltaSeconds(noteTime,songTime)>=-.2;
+}
+function noteYForDelta(dt,line){return line-dt/NOTE_PREVIEW_SECONDS*NOTE_TRAVEL_PX}
+function noteYAtAudioTime(noteTime,songTime,line){return noteYForDelta(noteDeltaSeconds(noteTime,songTime),line)}
+function noteStepSpacing(){return NOTE_TRAVEL_PX/NOTE_PREVIEW_SECONDS*BEAT/4}
+// The thresholds are inclusive: |offset| <= PERFECT -> perfect,
+// PERFECT < |offset| <= WIDTHS -> good, outside WIDTHS -> no hit.
+// Negative offsets (early hits) and positive offsets (late hits) are symmetric.
+function judgementForOffset(offset,tierIndex){
+ if(!Number.isFinite(offset)||!Number.isInteger(tierIndex)||tierIndex<0||tierIndex>=WIDTHS.length)return "outside";
+ const distance=Math.abs(offset);
+ return distance<=PERFECT[tierIndex]?"perfect":distance<=WIDTHS[tierIndex]?"good":"outside";
+}
+// Exactly at the late boundary a note is still hittable; only strictly later is MISS.
+function isNoteMissed(noteTime,songTime,tierIndex){
+ return Number.isFinite(noteTime)&&Number.isFinite(songTime)&&
+  Number.isInteger(tierIndex)&&tierIndex>=0&&tierIndex<WIDTHS.length&&
+  songTime-noteTime>WIDTHS[tierIndex];
+}
+// Positive correction compensates for input that arrives LATE relative to the audio.
+function correctedInputTime(songTime,offsetMs){
+ if(!Number.isFinite(songTime)||!Number.isFinite(offsetMs))return NaN;
+ return songTime-offsetMs/1000;
+}
+function clampOffsetMs(value){
+ const n=Number(value);
+ return Number.isFinite(n)?Math.max(-150,Math.min(150,Math.round(n/5)*5)):0;
+}
+// Pure, lane-local nearest-note selector. Never mutates a note or another lane.
+function selectPendingNoteIndex(notes,lane,correctedTime,tierIndex){
+ if(!Array.isArray(notes)||!Number.isInteger(lane)||lane<0||!Number.isFinite(correctedTime))return -1;
+ let chosen=-1,distance=Infinity,chosenTime=Infinity;
+ for(let i=0;i<notes.length;i++){
+  const n=notes[i];if(!n||n.done||n.lane!==lane)continue;
+  const result=judgementForOffset(noteDeltaSeconds(n.t,correctedTime),tierIndex);
+  if(result==="outside")continue;
+  const d=Math.abs(n.t-correctedTime);
+  if(d<distance||(d===distance&&n.t<chosenTime)){chosen=i;distance=d;chosenTime=n.t}
+ }
+ return chosen;
+}
+// END SCHOOLBAND_TIMING_MODEL_V1
+// BEGIN SCHOOLBAND_CHART_VALIDATION_V1 — pure, deterministic chart quality and safety checks.
+function validateChartCatalog(patterns,instruments,version){
+ const errors=[],metrics={},ids=["guitar","drums","bass","keys"];
+ if(version!=="creative-anthem-rhythm-v1.0.0")errors.push("chart_version_mismatch");
+ if(!patterns||typeof patterns!=="object"||Array.isArray(patterns)||
+    !instruments||typeof instruments!=="object")return {valid:false,errors:["invalid_chart_root",...errors],metrics};
+ if(Object.keys(patterns).sort().join(",")!==[...ids].sort().join(","))errors.push("instrument_set");
+ for(const id of ids){
+  const lanes=instruments[id]?.lanes;
+  const rows=patterns[id];
+  if(!Array.isArray(lanes)||!Array.isArray(rows)||rows.length===0){
+   errors.push(id+":missing_lanes_or_notes");continue;
+  }
+  const seen=new Set(),uniqueSteps=new Set();
+  for(const row of rows){
+   if(!Array.isArray(row)||row.length!==3||
+      !row.every(Number.isInteger)||row[0]<0||row[0]>15||
+      row[1]<0||row[1]>=lanes.length||row[2]<0||row[2]>=5){
+    errors.push(id+":invalid_note");continue;
+   }
+   const pair=row[0]+":"+row[1];
+   if(seen.has(pair))errors.push(id+":duplicate_lane_step:"+pair);
+   seen.add(pair);uniqueSteps.add(row[0]);
+  }
+  const perTier=[];let previousCount=0,previousOffbeat=0;
+  for(let tier=0;tier<5;tier++){
+   const selected=rows.filter(x=>Array.isArray(x)&&x.length===3&&x.every(Number.isInteger)&&x[2]<=tier);
+   const perLane=lanes.map((_,i)=>selected.filter(x=>x[1]===i).length);
+   if(perLane.some(x=>x===0))errors.push(id+":empty_lane_tier_"+tier);
+   if(selected.length<=previousCount)errors.push(id+":density_not_increasing_tier_"+tier);
+   const offbeat=selected.filter(x=>x[0]%4!==0).length;
+   const sixteenth=selected.filter(x=>x[0]%2!==0).length;
+   if(offbeat<previousOffbeat)errors.push(id+":offbeat_decrease_tier_"+tier);
+   const stepCounts=new Map();
+   for(const row of selected)stepCounts.set(row[0],(stepCounts.get(row[0])||0)+1);
+   const chords=[...stepCounts.values()].filter(x=>x>1).length;
+   const maxSimultaneous=Math.max(0,...stepCounts.values());
+   if(maxSimultaneous>2)errors.push(id+":unplayable_multi_chord_tier_"+tier);
+   if(id==="bass"&&chords>0)errors.push("bass:chord_not_supported");
+   perTier.push({tier,noteCountPerBar:selected.length,totalNotes:selected.length*8,
+    perLane,offbeatCount:offbeat,sixteenthCount:sixteenth,chordMoments:chords,maxSimultaneous});
+   previousCount=selected.length;previousOffbeat=offbeat;
+  }
+  if(perTier[4]?.sixteenthCount===0)errors.push(id+":extreme_requires_sixteenth");
+  if(ids.includes(id)&&!uniqueSteps.has(0))errors.push(id+":missing_downbeat");
+  metrics[id]={laneCount:lanes.length,notesInCatalog:rows.length,tiers:perTier};
+ }
+ // All instruments should keep distinct rhythmic signatures; bass stays monophonic,
+ // drums emphasize repeated subdivisions, guitar riff+chords, keys harmony+melody.
+ if(metrics.drums?.tiers[4].perLane[2]<=metrics.drums?.tiers[4].perLane[0])errors.push("drums:hi_hat_not_dominant");
+ if(!metrics.guitar?.tiers[2].chordMoments)errors.push("guitar:missing_power_chord");
+ if(!metrics.keys?.tiers[3].chordMoments)errors.push("keys:missing_harmony");
+ return {valid:errors.length===0,errors,metrics};
+}
+// END SCHOOLBAND_CHART_VALIDATION_V1
+const $=id=>document.getElementById(id);
+const canvas=$("track"),g=canvas.getContext("2d");
+const OFFSET_STORAGE_KEY="nangam-band-input-offset-ms-v1";
+let inputOffsetMs=0;
+try{inputOffsetMs=clampOffsetMs(localStorage.getItem(OFFSET_STORAGE_KEY))}catch(_){/* private-mode storage may be blocked */ }
+function offsetDisplay(ms){return (ms>0?"+":"")+ms+" ms"}
+function syncOffsetUI(){
+ $("offsetRange").value=String(inputOffsetMs);
+ safeText("offsetValue",offsetDisplay(inputOffsetMs));
+ safeText("offsetSummary",offsetDisplay(inputOffsetMs));
+}
+function saveOffset(){
+ try{localStorage.setItem(OFFSET_STORAGE_KEY,String(inputOffsetMs))}catch(_){}
+ syncOffsetUI();
+}
+let school=null, selectedSong="volleyball", instrument="guitar",playing=false,paused=false,pauseBusy=false,pauseReason=null,pausePromise=null,ctx=null,muted=false,tier="normal",chart=[],score=0,combo=0,bestCombo=0,hits=0,judged=0,perfect=0,good=0,miss=0,emptyPresses=0;
+let beginning=0,timer=0,raf=0,step=0,querySeq=0,searchTimer=0,lastMissAnnouncement=-Infinity,lastFrameWall=null,lastFrameSong=null;
+const MIX_LEVELS=Object.freeze({master:.80,melody:.96,ensemble:.46,hit:.80});
+let masterBus=null,melodyBus=null,ensembleBus=null,hitBus=null,compressor=null,noiseBuffer=null;
+const liveAudioVoices=new Set();
+const audioLife={created:0,ended:0,cancelled:0,disconnected:0,contextsCreated:0,contextsClosed:0,peakVoices:0};
+let startPending=false,volumePercent=100,contextClosePromise=Promise.resolve();
+const VOLUME_KEY="nangam-schoolband-volume-percent-v1";
+try{
+ const saved=localStorage.getItem(VOLUME_KEY);
+ if(saved!==null&&/^\d{1,3}$/.test(saved))volumePercent=Math.min(100,Math.max(0,Math.round(Number(saved)/5)*5));
+}catch(_){/* private browsing: session-only volume */}
+function desiredMasterGain(){return muted?0:MIX_LEVELS.master*volumePercent/100}
+function syncVolume(){
+ $("volumeRange").value=String(volumePercent);
+ $("volumeValue").textContent=volumePercent+"%";
+}
+function updateMasterVolume(){
+ if(!masterBus||!ctx)return;
+ const now=ctx.currentTime,gain=desiredMasterGain();
+ try{
+  masterBus.gain.cancelScheduledValues(now);
+  masterBus.gain.setTargetAtTime(gain,now,.01);
+ }catch(_){masterBus.gain.value=gain}
+}
+function setVolume(value){
+ const v=Number(value);
+ if(!Number.isFinite(v))return;
+ volumePercent=Math.max(0,Math.min(100,Math.round(v/5)*5));
+ try{localStorage.setItem(VOLUME_KEY,String(volumePercent))}catch(_){}
+ syncVolume();updateMasterVolume();
+}
+let particles=[],lanePulse=[0,0,0,0,0],lastImpactAt=0,impactStrength=0,impactLane=0;
+const LANE_GLOW_MS=175,PARTICLE_LIMIT=60;
+const systemMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")||null;
+const FX_PREF_KEY="nangam-band-fx-v1";
+let userReducedMotion=false,vibrationEnabled=false,lowPowerFx=false;
+// Stage028: rendering-throttle choices are pure and NEVER modify note timing.
+const LOW_POWER_VISUAL_BUDGET_MS=32;
+function visualFrameEligible(lowPower,wall,lastWall){
+ if(!lowPower)return true;
+ return Number.isFinite(wall)&&Number.isFinite(lastWall)&&
+   wall-lastWall>=LOW_POWER_VISUAL_BUDGET_MS;
+}
+function visualSampleStats(samples){
+ if(!Array.isArray(samples)||!samples.length)return null;
+ const nums=samples.filter(v=>Number.isFinite(v)&&v>=0&&v<=10000).sort((a,b)=>a-b);
+ if(!nums.length)return null;
+ const sum=nums.reduce((a,b)=>a+b,0);
+ return {samples:nums.length,avgMs:Math.round(sum/nums.length*100)/100,
+  p95Ms:Math.round(nums[Math.ceil(nums.length*.95)-1]*100)/100,
+  maxMs:Math.round(nums[nums.length-1]*100)/100};
+}
+const VISUAL_SAMPLES_MAX=120;
+const visualDrawSamples=[];
+function recordVisualDraw(durationMs){
+ if(!Number.isFinite(durationMs)||durationMs<0)return;
+ visualDrawSamples.push(durationMs);
+ if(visualDrawSamples.length>VISUAL_SAMPLES_MAX)visualDrawSamples.shift();
+}
+function sampledDraw(){
+ const before=performance.now();draw();
+ recordVisualDraw(performance.now()-before);
+}
+function staticVisualBenchmark(count=30){
+ // This is a purely visual in-memory canvas drawing benchmark.
+ // NEVER creates or resumes AudioContext or changes judgement/scoring.
+ if(playing||startPending||!school)return {available:false,reason:"requires_selected_school_idle"};
+ const n=Math.min(60,Math.max(1,Number.isInteger(count)?count:30));
+ const durations=[];
+ for(let i=0;i<n;i++){
+  const before=performance.now();draw();
+  const elapsed=performance.now()-before;
+  durations.push(elapsed);recordVisualDraw(elapsed);
+ }
+ return {available:true,kind:"static_canvas_draw_only",...visualSampleStats(durations)};
+}
+const FX_PERF={judgementFrames:0,renderedFrames:0,skippedVisualFrames:0,lastDrawWall:0,modeChanges:0};
+try{const saved=JSON.parse(localStorage.getItem(FX_PREF_KEY)||"{}");userReducedMotion=saved.reduce===true;vibrationEnabled=saved.vibration===true;lowPowerFx=saved.lowPower===true}catch(_){/* private mode */ }
+function motionReduced(){return Boolean(systemMotion?.matches||userReducedMotion)}
+function perfFxMode(){return motionReduced()?"reduced":lowPowerFx?"low":"full"}
+function persistFxSettings(){try{localStorage.setItem(FX_PREF_KEY,JSON.stringify({reduce:userReducedMotion,vibration:vibrationEnabled,lowPower:lowPowerFx}))}catch(_){}}
+function syncFxSettings(){
+ const reduced=motionReduced(),mode=perfFxMode();
+ document.documentElement.dataset.reducedFx=String(reduced);
+ document.documentElement.dataset.lowPowerFx=String(lowPowerFx);
+ $("reduceFx").checked=reduced;$("reduceFx").disabled=Boolean(systemMotion?.matches);
+ $("vibrationFx").checked=!reduced&&!lowPowerFx&&vibrationEnabled;$("vibrationFx").disabled=reduced||lowPowerFx;
+ $("lowPowerFx").checked=lowPowerFx;
+ safeText("fxModeStatus",mode==="reduced"?"움직임 최소화 · 진동과 파편 없음":lowPowerFx?"저사양 모드 · 화면 최대 30fps · 판정 계산 유지":"기본 연출 · 60fps 목표");
+ if(reduced||lowPowerFx){particles=[];lastImpactAt=0;lanePulse.fill(0);$("impactRing").className="impact-ring";clearFxFeedback()}
+ FX_PERF.modeChanges++;FX_PERF.lastDrawWall=0;
+ draw();
+}
+const IMPACT_COLORS=["#8bcaff","#ffc68f","#b1f7cd","#dfbaff","#ffe7a0"];
+function safeText(id,text){$(id).textContent=String(text)}
+function status(text){safeText("feedback",text)}
+function tierIdx(){return Math.max(0,TIERS.indexOf(tier))}
+function nameTier(){return LABELS[tierIdx()]}
+// The anthem registry is deliberately empty until stage021-023 have verified
+// identity, score/chart/audio integrity and publication rights for real schools.
+// A metadata URL or YouTube video alone must never unlock game playback.
+// Stage023: Game playback is implemented ONLY for the bundled original chart.
+// A school anthem needs a genuine school-specific rhythm chart/engine mapping;
+// review metadata alone must never cause the original practice tune to masquerade
+// as a school anthem. This empty registry remains an intentional fail-closed gate.
+const REGISTERED_ANTHEMS=Object.freeze({});
+const PLAYABLE_SCHOOL_CHARTS=Object.freeze({});
+const INTERNAL_PLAYTEST_SONG=Object.freeze({
+ song_id:"original-shining-our-school",chart_version:"creative-anthem-rhythm-v1.0.0",
+ source:"built_in_original",school_id:null
+});
+function songAvailability(record){
+ const item=record&&REGISTERED_ANTHEMS[record.school_id];
+ const actual=record&&PLAYABLE_SCHOOL_CHARTS[record.school_id];
+ const ready=!!(item&&actual&&item.publicApproved===true&&item.rightsApproved===true&&
+  item.chartValidated===true&&item.schoolId===record.school_id&&item.playable===true&&
+  actual.school_id===record.school_id&&actual.song_id===item.songId&&
+  actual.runtimeReady===true);
+ return {volleyball:true,anthem:ready,reason:ready?"교가 게임용 등록 완료":"게임용 교가 미등록 · 준비 중"};
+}
+function syncSongChoice(){
+ const available=songAvailability(school);
+ if(selectedSong==="anthem"&&!available.anthem)selectedSong="volleyball";
+ $("songVolleyball").setAttribute("aria-pressed",String(selectedSong==="volleyball"));
+ $("songAnthem").setAttribute("aria-pressed",String(selectedSong==="anthem"));
+ $("songAnthem").disabled=!available.anthem||playing||startPending;
+ $("songVolleyball").disabled=playing||startPending;
+ safeText("anthemAvailability",available.reason);
+ safeText("songState",selectedSong==="anthem"?"학교 교가 선택됨":"배구 테마 연습곡 선택됨 · 실제 교가 음원 아님");
+ safeText("currentSongName",selectedSong==="anthem"?"우리 학교 교가":"배구 테마 연습곡");
+}
+function chooseSong(song){
+ if(playing||startPending||!school||!["volleyball","anthem"].includes(song))return false;
+ if(song==="anthem"&&!songAvailability(school).anthem){
+  syncSongChoice();return false;
+ }
+ selectedSong=song;clearConcertSummary();syncSongChoice();showBest();return true;
+}
+$("songVolleyball").addEventListener("click",()=>chooseSong("volleyball"));
+$("songAnthem").addEventListener("click",()=>chooseSong("anthem"));
+// Stage021: No real-school media candidate is shipped without exact school ID
+// verification. The example video is retained as a test fixture, not presented
+// as a match for an arbitrary selected school.
+// School websites are read-only public metadata exported for this isolated test branch.
+// Sites are NOT claimed live/owned/anthem-bearing until independently verified.
+// Never fetch external websites here; only open outbound links on user gesture.
+let SCHOOL_HOMEPAGE_LINKS=null;
+function schoolHomepageUrl(record){
+ if(!record||!SCHOOL_HOMEPAGE_LINKS||!Object.prototype.hasOwnProperty.call(SCHOOL_HOMEPAGE_LINKS,String(record.school_id)))return null;
+ const value=SCHOOL_HOMEPAGE_LINKS[String(record.school_id)];
+ if(typeof value!=="string"||value.length>360)return null;
+ try{
+  const parsed=new URL(value);
+  if(!["http:","https:"].includes(parsed.protocol)||parsed.username||parsed.password||
+     !/^[a-z0-9.-]+$/i.test(parsed.hostname)||!parsed.hostname.includes(".")||
+     /^(localhost|127\.|10\.|192\.168\.|169\.254\.)/i.test(parsed.hostname)||
+     /^172\.(1[6-9]|2\d|3[01])\./.test(parsed.hostname))return null;
+  return parsed.href;
+ }catch(_){return null}
+}
+function syncHomepageDiscovery(){
+ const link=$("anthemSchoolHomepage");
+ const site=schoolHomepageUrl(school);
+ if(!school){
+  link.hidden=true;link.removeAttribute("href");
+  safeText("anthemHomepageStatus","학교를 선택하면 기록된 홈페이지 주소를 확인할 수 있습니다.");
+  return;
+ }
+ if(site){
+  link.href=site;link.hidden=false;
+  safeText("anthemHomepageStatus","학교 DB에 기록된 홈페이지 주소입니다. 실제 교가와 접속 여부는 확인되지 않았습니다.");
+ }else{
+  link.removeAttribute("href");link.hidden=true;
+  safeText("anthemHomepageStatus",SCHOOL_HOMEPAGE_LINKS?
+   "등록된 홈페이지 주소가 없습니다. 학교명으로 교가를 검색할 수 있습니다.":
+   "홈페이지 주소 목록을 불러오지 못했습니다. 학교명 검색을 이용하세요.");
+ }
+ if(school){
+  const term=school.school_name+" "+(school.region||"")+" 교가";
+  const targeted=site?"site:"+new URL(site).hostname+" "+term:term+" 학교 홈페이지";
+  $("anthemOfficialSearch").href="https://www.google.com/search?q="+encodeURIComponent(targeted);
+ }
+}
+async function loadHomepageCatalog(){
+ try{
+  const r=await fetch("./charts/school-homepages.v1.json",{
+   method:"GET",cache:"force-cache",signal:AbortSignal.timeout(9000)
+  });
+  if(!r.ok)throw Error("catalog_"+r.status);
+  const catalog=await r.json();
+  if(catalog.schema_version!==1||!catalog.homepages||
+     typeof catalog.homepages!=="object"||Array.isArray(catalog.homepages)||
+     !Number.isInteger(catalog.count)||catalog.count<1||catalog.count>10000)throw Error("invalid_catalog");
+  SCHOOL_HOMEPAGE_LINKS=catalog.homepages;
+ }catch(_){SCHOOL_HOMEPAGE_LINKS=null}
+ syncHomepageDiscovery();
+}
+const VERIFIED_ANTHEM_MEDIA=Object.freeze({});
+let activeMediaId=null;
+function validAnthemMedia(item,selectedSchoolId){
+ if(!item||typeof item!=="object"||!selectedSchoolId||item.school_id!==selectedSchoolId||
+   item.review_status!=="reviewed"||item.source_type!=="youtube"||
+   typeof item.video_id!=="string"||!/^[A-Za-z0-9_-]{11}$/.test(item.video_id)||
+   typeof item.title!=="string"||!item.title.trim()||
+   typeof item.channel!=="string"||!item.channel.trim()||
+   typeof item.checked_at!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(item.checked_at))return false;
+ return true;
+}
+function closeAnthemMedia(){
+ const frame=$("anthemPlayer");frame.removeAttribute("src");frame.hidden=true;
+ $("closeAnthemPlayer").hidden=true;activeMediaId=null;
+}
+function renderAnthemDiscovery(){
+ closeAnthemMedia();
+ const out=$("anthemMediaList");out.replaceChildren();
+ syncHomepageDiscovery();
+ if(!school){safeText("anthemDiscoveryStatus","학교를 선택하면 홈페이지와 교가 자료를 찾아볼 수 있습니다.");return}
+ const schoolTerm=school.school_name+" "+(school.region||"")+" 교가";
+ $("anthemYoutubeSearch").href="https://www.youtube.com/results?search_query="+encodeURIComponent(schoolTerm);
+ const records=Array.isArray(VERIFIED_ANTHEM_MEDIA[school.school_id])?
+  VERIFIED_ANTHEM_MEDIA[school.school_id].filter(item=>validAnthemMedia(item,school.school_id)):[];
+ safeText("anthemDiscoveryStatus",records.length?
+  records.length+"건의 검수된 영상 후보가 있습니다. 시청은 별도 유튜브 플레이어에서만 가능합니다.":
+  "이 학교의 검수된 교가 영상은 아직 없습니다. 아래 검색 링크에서 공식 출처를 확인할 수 있습니다.");
+ for(const item of records){
+  const card=document.createElement("div");card.className="anthem-media-card";
+  const title=document.createElement("strong");title.textContent=item.title;card.append(title);
+  const detail=document.createElement("small");detail.textContent=item.channel+" · 출처 확인 "+item.checked_at;card.append(detail);
+  const button=document.createElement("button");button.type="button";button.textContent="공식 영상 감상";
+  button.addEventListener("click",()=>{
+   if(!school||!validAnthemMedia(item,school.school_id))return;
+   activeMediaId=item.video_id;
+   $("anthemPlayer").src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(item.video_id);
+   $("anthemPlayer").hidden=false;$("closeAnthemPlayer").hidden=false;
+   safeText("anthemDiscoveryStatus","공식 영상 감상 중 · 리듬게임 음원으로 사용되지 않습니다.");
+  });
+  card.append(button);out.append(card);
+ }
+}
+$("closeAnthemPlayer").addEventListener("click",()=>{closeAnthemMedia();safeText("anthemDiscoveryStatus","감상을 종료했습니다.")});
+function selectedRecord(){return school && school.school_id ? school : null}
+// BEGIN SCHOOLBAND_SCORE_V2 — deterministic, self-contained scoring and storage guards.
+const RECORD_PREFIX="nangam-schoolband-best-v2:";
+const MAX_STORED_SCORE=10000000;
+function scoreRecordKey(identity){
+ if(!identity||typeof identity!=="object")return null;
+ const required=["schoolId","songId","chartVersion","instrument","difficulty"];
+ if(required.some(k=>typeof identity[k]!=="string"||!identity[k]||
+   identity[k].length>120||!(/^[a-z0-9._+-]+$/i.test(identity[k]))))return null;
+ return RECORD_PREFIX+required.map(k=>identity[k]).join(":");
+}
+function parseStoredScore(value){
+ if(typeof value!=="string"||!/^(?:0|[1-9][0-9]{0,7})$/.test(value))return null;
+ const n=Number(value);
+ return Number.isSafeInteger(n)&&n>=0&&n<=MAX_STORED_SCORE?n:null;
+}
+function scoreAccuracy(hits,total){
+ return Number.isInteger(hits)&&Number.isInteger(total)&&total>0&&hits>=0&&hits<=total?
+  Math.round(100*hits/total):null;
+}
+function validScoringResult(result){
+ if(!result||result.interrupted!==false||result.song!=="volleyball"||
+   !Number.isInteger(result.total)||result.total<=0||
+   !Number.isInteger(result.judged)||result.judged!==result.total||
+   !Number.isInteger(result.perfect)||!Number.isInteger(result.good)||
+   !Number.isInteger(result.miss)||!Number.isInteger(result.hits)||
+   !Number.isInteger(result.score)||result.score<0||result.score>MAX_STORED_SCORE||
+   result.perfect<0||result.good<0||result.miss<0||
+   result.perfect+result.good!==result.hits||
+   result.hits+result.miss!==result.judged||
+   result.score<result.perfect*1000+result.good*600||
+   result.score>result.perfect*1500+result.good*900)return false;
+ return true;
+}
+// Stage025: concise, privacy-preserving local result. No remote leaderboard.
+function concertSummaryModel(result){
+ if(!result||typeof result!=="object"||typeof result.interrupted!=="boolean"||
+    result.song!=="volleyball"||
+    !Number.isSafeInteger(result.score)||result.score<0||result.score>MAX_STORED_SCORE||
+    !Number.isSafeInteger(result.bestCombo)||result.bestCombo<0||
+    !Number.isSafeInteger(result.judged)||result.judged<0||
+    !Number.isSafeInteger(result.hits)||result.hits<0||result.hits>result.judged||
+    !Number.isSafeInteger(result.total)||result.total<=0||
+    result.judged>result.total||result.bestCombo>result.hits||
+    !Number.isSafeInteger(result.perfect)||!Number.isSafeInteger(result.good)||
+    !Number.isSafeInteger(result.miss)||result.perfect<0||result.good<0||
+    result.miss<0||result.perfect+result.good!==result.hits||
+    result.hits+result.miss!==result.judged||
+    result.score<result.perfect*1000+result.good*600||
+    result.score>result.perfect*1500+result.good*900)return {
+      state:"invalid",score:null,accuracy:null,bestCombo:null,
+      breakdown:"결과 데이터가 일치하지 않습니다.",persistable:false
+    };
+ if(result.interrupted===true){
+  return {state:"interrupted",score:result.score,
+   accuracy:scoreAccuracy(result.hits,result.judged),bestCombo:result.bestCombo,
+   breakdown:"중단 시점의 판정만 표시합니다.",persistable:false};
+ }
+ if(!validScoringResult(result))return {
+  state:"invalid",score:null,accuracy:null,bestCombo:null,
+  breakdown:"완주 기록이 유효하지 않아 저장하지 않았습니다.",persistable:false
+ };
+ return {state:"complete",score:result.score,accuracy:scoreAccuracy(result.hits,result.total),
+  bestCombo:result.bestCombo,
+  breakdown:"PERFECT "+result.perfect+" · GOOD "+result.good+" · MISS "+result.miss,
+  persistable:true};
+}
+function scoreForHit(judgement,comboValue){
+ if(!Number.isInteger(comboValue)||comboValue<1||!["perfect","good"].includes(judgement))return null;
+ const bonus=Math.min(100,comboValue);
+ return judgement==="perfect"?1000+bonus*5:600+bonus*3;
+}
+// END SCHOOLBAND_SCORE_V2
+function currentScoreIdentity(){
+ if(!school||selectedSong!=="volleyball")return null;
+ const chartVersion=generatedTrial?.catalog?.chartVersion||CHART_VERSION;
+ const songId=generatedTrial?.catalog?.songId||CHART_SONG_ID;
+ return {schoolId:String(school.school_id),songId,chartVersion,instrument,difficulty:tier};
+}
+function currentBestKey(){return scoreRecordKey(currentScoreIdentity())}
+function readBest(){
+ const key=currentBestKey();if(!key)return null;
+ try{return parseStoredScore(localStorage.getItem(key))}catch(_){return null}
+}
+function showBest(){const n=readBest();safeText("best",n===null?"—":n.toLocaleString("ko-KR"))}
+function saveCompletedBest(result){
+ if(!validScoringResult(result))return {saved:false,reason:"incomplete_or_invalid"};
+ const key=currentBestKey();if(!key)return {saved:false,reason:"invalid_identity"};
+ try{
+  const previous=parseStoredScore(localStorage.getItem(key));
+  if(previous!==null&&previous>=result.score)return {saved:false,reason:"no_improvement"};
+  localStorage.setItem(key,String(result.score));
+  return {saved:true,reason:"new_best"};
+ }catch(_){return {saved:false,reason:"storage_unavailable"}}
+}
+function renderConcertSummary(result,saved){
+ const model=concertSummaryModel(result);
+ const summary=$("concertSummary");summary.hidden=false;
+ safeText("summaryHeading",model.state==="complete"?"공연 완료":
+  model.state==="interrupted"?"연주 중단":"결과 검증 실패");
+ safeText("summaryScore",model.score===null?"—":model.score.toLocaleString("ko-KR"));
+ safeText("summaryAccuracy",model.accuracy===null?"—":model.accuracy+"%");
+ safeText("summaryCombo",model.bestCombo===null?"—":model.bestCombo);
+ safeText("summaryBreakdown",model.breakdown);
+ safeText("summaryNotice",model.state==="interrupted"?"중단한 연주는 최고 기록에 저장하지 않습니다.":
+  model.state==="invalid"?"비정상 또는 미완료 결과입니다. 점수 저장을 차단했습니다.":
+  saved?.saved?"이번 조합의 새 최고 기록입니다.":saved?.reason==="storage_unavailable"?
+   "기록 저장을 사용할 수 없습니다. 공연 결과는 이 화면에서만 확인하세요.":
+   "이번 결과는 최고 기록을 넘지 못했거나 저장할 수 없습니다.");
+ return model;
+}
+function clearConcertSummary(){
+ $("concertSummary").hidden=true;
+ safeText("summaryHeading","공연 결과");
+}
+function resetCurrentBest(){
+ if(playing||startPending)return false;
+ const key=currentBestKey();if(!key)return false;
+ try{localStorage.removeItem(key);showBest();safeText("recordStatus","현재 곡·학교·악기·난이도·차트 버전의 최고 기록을 초기화했습니다.");return true}
+ catch(_){safeText("recordStatus","저장소에 접근하지 못했습니다. 연주는 계속할 수 있습니다.");return false}
+}
+$("resetBest").addEventListener("click",resetCurrentBest);
+// A single guided route over three complete accessible panels: no elements are
+// hidden, ensuring that keyboard users can always return and change instruments.
+const UX_STEPS=Object.freeze(["school","instrument","play"]);
+let currentUxStep="school";
+function stepAvailability(){
+ return {school:true,instrument:!!school,play:!!school};
+}
+function syncStepNav(){
+ const valid=stepAvailability();
+ document.body.dataset.uxStep=currentUxStep;
+ document.querySelectorAll("#stepNav [data-step-target]").forEach(btn=>{
+  const step=btn.dataset.stepTarget,available=valid[step];
+  btn.setAttribute("aria-current",step===currentUxStep?"step":"false");
+  btn.setAttribute("aria-disabled",String(!available||playing&&step!=="play"));
+  btn.disabled=playing&&step!=="play";
+ });
+ const copy={school:"1단계 학교 선택",instrument:"2단계 곡과 악기 선택",play:"3단계 연주"};
+ safeText("stepStatus",copy[currentUxStep]);
+}
+function goToStep(next,{scroll=true,focus=true}={}){
+ if(!UX_STEPS.includes(next))return false;
+ if(!stepAvailability()[next]||playing&&next!=="play"){
+  if(!school){safeText("schoolStatus","먼저 학교를 선택하세요.");}
+  return false;
+ }
+ currentUxStep=next;syncStepNav();
+ const panel=$("step"+next[0].toUpperCase()+next.slice(1));
+ if(scroll)panel.scrollIntoView({behavior:"instant",block:"start"});
+ if(focus)panel.focus({preventScroll:true});
+ return true;
+}
+document.querySelectorAll("#stepNav [data-step-target]").forEach(btn=>{
+ btn.addEventListener("click",()=>goToStep(btn.dataset.stepTarget));
+});
+// Stage019: never infer that a private/unapproved survey result is public.
+// Percentiles are interpreted only when the public API marks the row approved.
+// Legacy public API rows expose eligible+difficulty instead of a percentile.
+const SCHOOL_TIER_THRESHOLDS=Object.freeze([20,40,60,80]);
+function tierFromApprovedPercentile(p){
+ if(typeof p!=="number"||!Number.isFinite(p)||p<0||p>100)return null;
+ return TIERS[SCHOOL_TIER_THRESHOLDS.filter(limit=>p>=limit).length];
+}
+function normalizePublicSchool(record,expectedId){
+ if(!record||typeof record!=="object"||Array.isArray(record))throw Error("invalid_school_record");
+ const id=String(record.school_id||"").trim(),name=String(record.school_name||"").trim();
+ if(!id||!name||id.length>80||name.length>100||expectedId&&id!==String(expectedId))throw Error("school_identity_mismatch");
+ const explicitlyDenied=record.public_approved===false||record.publicApproved===false||
+   record.approved_for_publication===false||record.publication_status==="pending"||
+   record.publication_status==="rejected";
+ const year=Number(record.source_year);
+ const validYear=Number.isInteger(year)&&year>=2023&&year<=new Date().getFullYear();
+ const approved=record.eligible===true&&!explicitlyDenied&&validYear;
+ // Only use the percentile when the server explicitly authorizes its publication.
+ const percentileApproved=record.public_approved===true||record.publicApproved===true||
+   record.approved_for_publication===true||record.publication_status==="approved";
+ const computed=percentileApproved?tierFromApprovedPercentile(record.percentile):null;
+ const difficulty=approved?(computed||TIERS.includes(record.difficulty)?computed||record.difficulty:null):null;
+ const state=explicitlyDenied?"unapproved":difficulty?"published":"unrated";
+ return {school_id:id,school_name:name,region:String(record.region||record.sido_standard||"").slice(0,90),
+  district:String(record.district||record.sigungu||"").slice(0,90),
+  school_code:String(record.school_code||record.school_code_neis||"").slice(0,30),
+  eligible:state==="published",difficulty:state==="published"?difficulty:null,
+  source_year:validYear?year:null,publication_state:state};
+}
+function schoolIdentityText(s){
+ return [s.school_name,s.region,s.district,s.school_code?"학교코드 "+s.school_code:"",s.school_id?"ID "+s.school_id:""].filter(Boolean).join(" · ");
+}
+function showSchool(){
+ syncSongChoice();
+ const s=selectedRecord();
+ if(!s){safeText("schoolTitle","학교를 선택해 주세요");safeText("schoolTier","학교별 난이도는 학교 선택 후 표시됩니다.");$("start").disabled=true;showBest();return}
+ tier=(s.eligible&&TIERS.includes(s.difficulty))?s.difficulty:"normal";
+ safeText("schoolTitle",schoolIdentityText(s));
+ const message=s.eligible?nameTier()+" · 공개 승인 난이도 · "+s.source_year+"년":
+  s.publication_state==="unapproved"?"공개 미승인 · NORMAL 연습용":"공식 난이도 미산정 · NORMAL 연습용";
+ safeText("schoolTier",message);
+ safeText("playTitle",INST[instrument].name+" · "+INST[instrument].lanes.length+"레인 · "+nameTier());
+ $("start").disabled=playing;
+ showBest();
+ status(s.eligible?"학교 선택 완료. 연주를 시작하세요.":"공개된 학교 난이도가 없어 NORMAL 연습으로 진행합니다.");
+ draw();
+}
+function setSchool(s){if(playing||startPending)return;clearConcertSummary();school=s;selectedSong="volleyball";syncSongChoice();renderAnthemDiscovery();showSchool();$("searchResults").replaceChildren();goToStep("instrument")}
+async function getJson(url){const r=await fetch(url,{cache:"no-store",signal:AbortSignal.timeout(9000)});if(!r.ok)throw Error("school_api_"+r.status);return r.json()}
+$("retrySchool").addEventListener("click",()=>{$("retrySchool").hidden=true;$("schoolSearch").dispatchEvent(new Event("input",{bubbles:true}))});
+$("schoolSearch").addEventListener("input",()=>{
+ if(playing||startPending)return;
+ const q=$("schoolSearch").value.trim(),ticket=++querySeq;
+ $("retrySchool").hidden=true;
+ clearTimeout(searchTimer);
+ $("searchResults").replaceChildren();
+ if(q.length<2){safeText("schoolStatus","학교명 2글자 이상 입력해 주세요.");return}
+ safeText("schoolStatus","학교 검색 중…");
+ searchTimer=setTimeout(async()=>{
+ try{
+ const data=await getJson(API+"?schools="+encodeURIComponent(q));
+ if(querySeq!==ticket)return;
+ const list=Array.isArray(data.schools)?data.schools:[];
+ safeText("schoolStatus",list.length?list.length+"개 학교가 검색됐습니다.":"검색 결과가 없습니다.");
+ for(const s of list){
+ if(!s.school_id||!s.school_name)continue;
+ const b=document.createElement("button");b.type="button";
+ b.textContent=schoolIdentityText({school_id:String(s.school_id),school_name:String(s.school_name),region:String(s.sido_standard||s.region||""),district:String(s.district||s.sigungu||""),school_code:String(s.school_code||"")});
+ b.onclick=async()=>{
+ const my=++querySeq;safeText("schoolStatus","학교 난이도 확인 중…");$("searchResults").replaceChildren();
+ try{
+ const d=await getJson(API+"?school_id="+encodeURIComponent(s.school_id));
+ if(querySeq!==my)return;
+ if(!d.school)throw Error("empty");
+ setSchool(normalizePublicSchool(d.school,s.school_id));
+ safeText("schoolStatus","선택 완료");
+ }catch(e){if(querySeq===my){safeText("schoolStatus","학교 조회 실패. 검색 재시도 또는 가상 학교 체험을 선택하세요.");$("retrySchool").hidden=false}}
+ };
+ $("searchResults").append(b);
+ }
+ }catch(e){if(querySeq===ticket){safeText("schoolStatus","검색 연결 실패. 검색 재시도 또는 가상 학교 체험을 선택하세요.");$("retrySchool").hidden=false}}
+ },260);
+});
+$("demoSchool").onclick=()=>{
+ if(playing||startPending)return;
+ ++querySeq;clearTimeout(searchTimer);$("searchResults").replaceChildren();$("retrySchool").hidden=true;
+ $("schoolSearch").value="";
+ safeText("schoolStatus","가상 학교 연습 모드 (배구지수 실제 학교가 아닙니다)");
+ setSchool({school_id:"demo-school",school_name:"가상 연습초",region:"데모",eligible:false,difficulty:null,source_year:null,publication_state:"unrated"});
+};
+document.querySelectorAll("[data-inst]").forEach(b=>b.onclick=()=>{
+ if(playing||startPending)return;
+ instrument=b.dataset.inst;clearConcertSummary();
+ document.querySelectorAll("[data-inst]").forEach(el=>el.setAttribute("aria-pressed",String(el===b)));
+ safeText("instCaption",INST[instrument].name+"의 "+INST[instrument].note+" 타이밍을 연주합니다.");
+ updateControlsHint();
+ if(school)showSchool();
+ renderPads();draw();
+ if(school)goToStep("play");
+});
+
+function updateControlsHint(){
+ const lanes=INST[instrument].lanes;
+ safeText("keyHint",lanes.map(x=>x[1]+" "+x[0]).join("  ·  "));
+}
+const activePadPointers=new Map();
+let screenResizeCount=0,lastScreenOrientation="portrait";
+const READABILITY_KEY="nangam-band-readability-v1";
+function clearActiveTouches(){activePadPointers.clear()}
+function padPointerDown(e,lane){
+ // Touchpads suppress panning/zoom gestures only on pad surfaces; the rest
+ // of the page remains scrollable and browser text scaling is unaffected.
+ // Synthetic test PointerEvents have pointerId=0 and are not trusted.
+ // Real fingers get independent pointer IDs until pointerup/cancel.
+ if(e.isTrusted&&e.pointerId>0){
+  if(activePadPointers.has(e.pointerId))return;
+  activePadPointers.set(e.pointerId,lane);
+  try{e.currentTarget.setPointerCapture?.(e.pointerId)}catch(_){}
+ }
+ e.preventDefault();
+ hit(lane);flash(lane);
+}
+function padPointerEnd(e){
+ activePadPointers.delete(e.pointerId);
+}
+function renderPads(){
+ clearActiveTouches();
+ const pad=$("pads");pad.replaceChildren();pad.style.setProperty("--lane-count",INST[instrument].lanes.length);pad.dataset.instrument=instrument;
+ canvas.setAttribute("aria-label",INST[instrument].name+" · "+INST[instrument].lanes.length+"레인 리듬게임. "+INST[instrument].lanes.map(x=>x[0]+" "+x[1]).join(", "));
+ const fx=$("laneFx");fx.replaceChildren();fx.style.setProperty("--fx-lanes",INST[instrument].lanes.length);
+ for(let i=0;i<INST[instrument].lanes.length;i++){
+  const laneEl=document.createElement("div");laneEl.className="lane-fx";laneEl.dataset.lane=String(i);
+  const badge=document.createElement("div");badge.className="lane-event";badge.setAttribute("aria-hidden","true");laneEl.append(badge);fx.append(laneEl);
+ }
+ for(const [i,lane] of INST[instrument].lanes.entries()){
+  const b=document.createElement("button");b.type="button";b.className="taphit";b.dataset.lane=String(i);
+  b.setAttribute("aria-label",lane[0]+" 연주, 키보드 "+lane[1]);
+  const name=document.createElement("strong");name.textContent=lane[0];
+  const key=document.createElement("small");key.textContent=lane[1];
+  b.append(name,key);
+  b.addEventListener("pointerdown",e=>padPointerDown(e,i));
+  b.addEventListener("pointerup",padPointerEnd);
+  b.addEventListener("pointercancel",padPointerEnd);
+  b.addEventListener("lostpointercapture",padPointerEnd);
+  // Keyboard activation of a focused pad produces click(detail=0).
+  // Pointer clicks (detail>0) are already handled by pointerdown.
+  b.addEventListener("click",e=>{if(e.detail===0){hit(i);flash(i)}});
+  pad.append(b);
+ }
+ updateControlsHint();
+ safeText("laneInfo",INST[instrument].name+" · "+INST[instrument].lanes.length+"레인");
+ safeText("playTitle",INST[instrument].name+" · "+INST[instrument].lanes.length+"레인 · "+nameTier());
+}
+function flash(lane){
+ const pad=$("pads").querySelector('[data-lane="'+lane+'"]');
+ if(!pad)return;
+ pad.classList.add("pressed");clearTimeout(pad._flash);
+ pad._flash=setTimeout(()=>pad.classList.remove("pressed"),120);
+}
+
+function audioContext(){
+ if(ctx&&ctx.state!=="closed")return ctx;
+ const Cls=window.AudioContext||window.webkitAudioContext;
+ if(!Cls){status("오디오 기능을 지원하지 않는 브라우저입니다.");return null}
+ try{
+  ctx=new Cls();audioLife.contextsCreated++;
+  const currentContext=ctx;
+  if(ctx.addEventListener)ctx.addEventListener("statechange",()=>{
+   if(ctx!==currentContext)return; // stale closed context must not pause the next session
+   if(playing&&!paused&&(ctx.state==="suspended"||ctx.state==="interrupted"))void pauseGame("audio");
+  });
+  masterBus=ctx.createGain();
+  masterBus.gain.value=desiredMasterGain();
+  melodyBus=ctx.createGain();ensembleBus=ctx.createGain();hitBus=ctx.createGain();
+  melodyBus.gain.value=MIX_LEVELS.melody;
+  ensembleBus.gain.value=MIX_LEVELS.ensemble;
+  hitBus.gain.value=MIX_LEVELS.hit;
+  melodyBus.connect(masterBus);ensembleBus.connect(masterBus);hitBus.connect(masterBus);
+  if(ctx.createDynamicsCompressor){
+    compressor=ctx.createDynamicsCompressor();
+    compressor.threshold.value=-19;
+    compressor.knee.value=14;
+    compressor.ratio.value=7;
+    compressor.attack.value=.004;
+    compressor.release.value=.20;
+    masterBus.connect(compressor);compressor.connect(ctx.destination);
+  }else masterBus.connect(ctx.destination);
+  return ctx;
+ }catch(_){
+  void releaseAudioEngine("create-failed");
+  status("오디오를 시작할 수 없습니다. 소리 권한을 확인하고 다시 시도해 주세요.");return null;
+ }
+}
+// Track both already-playing and scheduled Web Audio nodes. Stopping only the
+// requestAnimationFrame or timer does NOT cancel an oscillator already scheduled.
+function trackAudioSource(source,nodes){
+ const entry={source,nodes,context:ctx,active:true};
+ liveAudioVoices.add(entry);audioLife.created++;
+ audioLife.peakVoices=Math.max(audioLife.peakVoices,liveAudioVoices.size);
+ const dispose=()=>{
+  if(!entry.active)return;
+  entry.active=false;liveAudioVoices.delete(entry);audioLife.ended++;
+  for(const node of nodes){
+   try{node.disconnect()}catch(_){}
+   audioLife.disconnected++;
+  }
+ };
+ entry.dispose=dispose;
+ source.addEventListener?.("ended",dispose,{once:true});
+ return entry;
+}
+function stopTrackedAudio(){
+ for(const entry of [...liveAudioVoices]){
+  entry.active=false;liveAudioVoices.delete(entry);
+  audioLife.cancelled++;
+  try{entry.source.stop(0)}catch(_){}
+  try{entry.source.removeEventListener?.("ended",entry.dispose)}catch(_){}
+  try{entry.source.onended=null}catch(_){}
+  for(const node of entry.nodes){try{node.disconnect()}catch(_){}audioLife.disconnected++;}
+ }
+}
+function releaseAudioEngine(reason="stop"){
+ const old=ctx;
+ if(!old)return contextClosePromise;
+ try{
+  if(masterBus){
+   const time=old.currentTime;
+   masterBus.gain.cancelScheduledValues(time);
+   masterBus.gain.setValueAtTime(0,time);
+  }
+ }catch(_){}
+ stopTrackedAudio();
+ for(const node of [melodyBus,ensembleBus,hitBus,masterBus,compressor]){
+  if(node)try{node.disconnect()}catch(_){}
+ }
+ ctx=null;masterBus=null;melodyBus=null;ensembleBus=null;hitBus=null;compressor=null;noiseBuffer=null;
+ if(old.state!=="closed"&&typeof old.close==="function"){
+  contextClosePromise=old.close().then(()=>{audioLife.contextsClosed++},()=>{});
+ }else contextClosePromise=Promise.resolve();
+ return contextClosePromise;
+}
+function oscillator(freq,when,dur,type,vol,bus=null){
+ if(!ctx||muted)return;
+ const o=ctx.createOscillator(),v=ctx.createGain();
+ o.type=type;o.frequency.setValueAtTime(Math.max(25,freq),when);
+ v.gain.setValueAtTime(.0001,when);
+ v.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),when+.008);
+ v.gain.exponentialRampToValueAtTime(.0001,when+Math.max(.035,dur));
+ o.connect(v);v.connect(bus||masterBus||ctx.destination);
+ trackAudioSource(o,[o,v]);o.start(when);o.stop(when+Math.max(.04,dur)+.02);
+}
+
+function playNoise(when,duration,level,frequency,bus=null){
+ if(!ctx||muted||!ctx.createBuffer||!ctx.createBufferSource||!ctx.createBiquadFilter)return;
+ if(!noiseBuffer){
+  const length=Math.max(1,Math.floor(ctx.sampleRate*.18));
+  noiseBuffer=ctx.createBuffer(1,length,ctx.sampleRate);
+  const a=noiseBuffer.getChannelData(0);
+  for(let i=0;i<length;i++)a[i]=(Math.random()*2-1);
+ }
+ const source=ctx.createBufferSource();source.buffer=noiseBuffer;
+ const filter=ctx.createBiquadFilter();filter.type="highpass";filter.frequency.value=frequency;
+ const v=ctx.createGain();v.gain.setValueAtTime(.0001,when);
+ v.gain.exponentialRampToValueAtTime(level,when+.004);
+ v.gain.exponentialRampToValueAtTime(.0001,when+duration);
+ source.connect(filter);filter.connect(v);v.connect(bus||masterBus||ctx.destination);
+ trackAudioSource(source,[source,filter,v]);
+ source.start(when);source.stop(when+duration+.01);
+}
+function drum(when,kind,bus=null){
+ if(!ctx||muted)return;
+ if(kind==="kick"){
+ const o=ctx.createOscillator(),v=ctx.createGain();o.type="sine";
+ o.frequency.setValueAtTime(135,when);o.frequency.exponentialRampToValueAtTime(45,when+.12);
+ v.gain.setValueAtTime(.22,when);v.gain.exponentialRampToValueAtTime(.0001,when+.17);
+ o.connect(v);v.connect(bus||masterBus||ctx.destination);
+ trackAudioSource(o,[o,v]);o.start(when);o.stop(when+.18);
+ }else if(kind==="tom"){
+  // Tom: dropping pitch, lower tone and longer tail than the snare.
+  const o=ctx.createOscillator(),v=ctx.createGain();
+  o.type="triangle";o.frequency.setValueAtTime(235,when);
+  o.frequency.exponentialRampToValueAtTime(96,when+.16);
+  v.gain.setValueAtTime(.08,when);v.gain.exponentialRampToValueAtTime(.0001,when+.23);
+  o.connect(v);v.connect(bus||masterBus||ctx.destination);
+ trackAudioSource(o,[o,v]);o.start(when);o.stop(when+.24);
+ }else if(kind==="hat"){playNoise(when,.045,.035,4200,bus)}
+ else{ // snare: short body plus noise burst
+  oscillator(200,when,.075,"triangle",.033,bus);playNoise(when,.11,.12,1400,bus);
+ }
+
+}
+// Original fictitious school anthem "빛나는 우리 학교": 8 bars, 108 BPM.
+// [sixteenth-step position, MIDI pitch, duration in sixteenth-step units].
+const MELODY=[
+[0,76,4],[4,79,4],[8,81,4],[12,79,4],
+[16,76,4],[20,74,4],[24,72,8],
+[32,74,4],[36,79,4],[40,83,4],[44,81,4],
+[48,79,4],[52,76,4],[56,74,8],
+[64,81,4],[68,84,4],[72,83,4],[76,81,4],
+[80,79,4],[84,76,4],[88,72,8],
+[96,81,4],[100,79,4],[104,77,4],[108,76,4],
+[112,74,4],[116,76,4],[120,72,8]
+];
+const MELODY_BY_STEP=new Map(MELODY.map(([at,pitch,duration])=>[at,{pitch,duration}]));
+const AUDIO_EVENT_LIMIT=384,soundEvents=[];
+function logAudioEvent(source,part,lane,when,detail=""){
+ const evt={source,part,lane,when:Number(when.toFixed(6)),detail,audible:source!=="miss"&&!muted};
+ soundEvents.push(evt);
+ if(soundEvents.length>AUDIO_EVENT_LIMIT)soundEvents.splice(0,soundEvents.length-AUDIO_EVENT_LIMIT);
+}
+function autoPartsAtStep(step,selected){
+ const parts=[];
+ if(MELODY_BY_STEP.has(step))parts.push("melody");
+ if(selected!=="drums"&&step%2===0)parts.push("drums");
+ if(selected!=="bass"&&step%4===0)parts.push("bass");
+ if(selected!=="guitar"&&step%8===0)parts.push("guitar");
+ if(selected!=="keys"&&step%8===0)parts.push("keys");
+ return parts;
+}
+const CHORD_ROOTS=[130.81,130.81,98.00,98.00,110.00,110.00,87.31,130.81];
+const CHORD_SYMBOLS=Object.freeze(["C","C","G","G","Am","Am","F","C"]);
+const CHORD_ROOT_PCS=Object.freeze([0,0,7,7,9,9,5,0]);
+const CHORD_MINOR=Object.freeze([false,false,false,false,true,true,false,false]);
+function chordBar(beat){return Math.min(7,Math.max(0,Math.floor(beat/4)))}
+function rootAt(beat){return CHORD_ROOTS[chordBar(beat)]}
+function chordThirdRatio(beat){return Math.pow(2,(CHORD_MINOR[chordBar(beat)]?3:4)/12)}
+function chordFifthRatio(){return Math.pow(2,7/12)}
+// At the Am bars use C natural, NOT C#; melody notes B and G are intentional tensions.
+function harmonyAtBar(bar){
+ if(!Number.isInteger(bar)||bar<0||bar>=8)return null;
+ const root=CHORD_ROOT_PCS[bar],minor=CHORD_MINOR[bar];
+ return {bar,symbol:CHORD_SYMBOLS[bar],rootPc:root,thirdPc:(root+(minor?3:4))%12,fifthPc:(root+7)%12,
+  minor,rootHz:CHORD_ROOTS[bar]};
+}
+function checkMelodyHarmony(){
+ return MELODY.map(([step,pitch,duration])=>{
+  const bar=Math.floor(step/16),chord=harmonyAtBar(bar),pc=pitch%12;
+  return {bar,step,pitch,duration,chord:chord.symbol,pc,chordTone:[chord.rootPc,chord.thirdPc,chord.fifthPc].includes(pc)};
+ });
+}
+function melodyVoice(pitch,when,duration){
+ logAudioEvent("auto","melody",-1,when,"original-melody");
+ const hz=440*Math.pow(2,(pitch-69)/12),dur=Math.max(.12,duration-.032);
+ oscillator(hz,when,dur,"triangle",.086,melodyBus);
+ oscillator(hz/2,when,dur,"sine",.036,melodyBus);
+ oscillator(hz*2,when,Math.min(dur,.20),"sine",.009,melodyBus);
+}
+function voice(inst,beat,when,lane=0,source="auto"){
+ if(!INST[inst]||!INST[inst].lanes[lane])return;
+ logAudioEvent(source,inst,lane,when,INST[inst].lanes[lane][0]);
+ const root=rootAt(beat),bus=source==="hit"?hitBus:ensembleBus;
+ if(inst==="drums"){drum(when,["kick","snare","hat","tom"][lane]||"kick",bus);return}
+ if(inst==="bass"){
+  const freqs=[root/2,root*3/4,root];
+  oscillator(freqs[lane]||root/2,when,.24,"triangle",.065,bus);return;
+ }
+ if(inst==="guitar"){
+  const r=lane===3?root*4:root*2;
+  if(lane===0){ // riff: tight single-note articulation
+   oscillator(r,when,.135,"sawtooth",.032,bus);
+  }else if(lane===1){ // root-fifth-octave power chord, never a minor-key major third
+   oscillator(r,when,.235,"sawtooth",.029,bus);
+   oscillator(r*chordFifthRatio(),when,.225,"sawtooth",.020,bus);
+   oscillator(r*2,when,.185,"triangle",.008,bus);
+  }else if(lane===2){ // upward strum: chord root, diatonic third, fifth
+   oscillator(r,when,.175,"sawtooth",.022,bus);
+   oscillator(r*chordThirdRatio(beat),when+.017,.17,"sawtooth",.019,bus);
+   oscillator(r*chordFifthRatio(),when+.034,.16,"sawtooth",.016,bus);
+  }else{ // high riff: short, bright overtone
+   oscillator(r,when,.11,"sawtooth",.024,bus);
+   oscillator(r*2,when,.095,"triangle",.009,bus);
+  }
+  return;
+ }
+ if(inst==="keys"){
+  const tones=[root,root*2,root*2*chordThirdRatio(beat),root*2*chordFifthRatio(),root*4];
+  oscillator(tones[lane]||root*2,when,.32,"sine",.036,bus);
+  if(lane===1||lane===2){
+   // Both harmony lanes share chord tones; A minor contains C natural.
+   oscillator(root*2*chordFifthRatio(),when,.27,"sine",.016,bus);
+  }
+ }
+}
+function scheduleStep(n,when){
+ const parts=autoPartsAtStep(n,instrument),beat=n/4;
+ for(const part of parts){
+  if(part==="melody"){
+   const lead=MELODY_BY_STEP.get(n);melodyVoice(lead.pitch,when,lead.duration*BEAT/4);
+  }else if(part==="drums"){
+   const lane=n%4===0?(n%16===0?0:1):2;
+   voice("drums",beat,when,lane,"auto");
+  }else voice(part,beat,when,0,"auto");
+ }
+}
+// Stage015 internal-only chart QA preview: NOT a public song registration path.
+let generatedTrial=null;
+function generatedSound(event,when,source="auto",lane=-1){
+ if(!event||!Number.isInteger(event.pitch)||!Number.isFinite(when))return;
+ const part=event.part,mode=part==="drums"?"drums":part;
+ logAudioEvent(source,part,lane,when,event.role||"generated-note");
+ if(muted)return;
+ const bus=source==="hit"?hitBus:part==="melody"?melodyBus:ensembleBus;
+ if(part==="drums"){
+  const sound=source==="hit"?["kick","snare","hat","tom"][lane]:
+   event.role==="kick"?"kick":event.role==="snare"?"snare":event.role==="closed-hihat"?"hat":"tom";
+  drum(when,sound||"hat",bus);return;
+ }
+ const hz=440*Math.pow(2,(event.pitch-69)/12);
+ const wave=part==="guitar"?"sawtooth":part==="bass"?"triangle":part==="melody"?"triangle":"sine";
+ const dur=Math.min(.25,Math.max(.07,(event.durationTicks||120)/480*.23));
+ oscillator(hz,when,dur,wave,part==="melody"?.070:source==="hit"?.038:.026,bus);
+}
+function loadGeneratedTrial(catalog,targetInstrument="guitar",difficulty="normal"){
+ if(playing||startPending||!catalog||typeof catalog!=="object")return false;
+ if(catalog.catalogVersion!=="schoolband-chart-catalog-v1.0.0"||
+    catalog.songId!=="original-shining-our-school"||
+    catalog.publicRelease!==false||catalog.rights?.status!=="demo_original"||
+    catalog.registration?.status!=="qa_passed_private"||
+    catalog.registration?.publicApproved!==false||
+    catalog.review?.qualityGate?.passed!==true)return false;
+ if(!INST[targetInstrument]||!TIERS.includes(difficulty))return false;
+ // 015: existing live playback can only use original 4/4 108 BPM 8 bars.
+ // Variable-tempo and mixed-meter data are quality-checked OFFLINE, not misplayed.
+ if(catalog.timing?.totalTicks!==15360||
+    Math.abs(catalog.timing.totalSeconds-SONG_BEATS*BEAT)>0.00001||
+    catalog.timing?.tempos?.length!==1||
+    catalog.timing.tempos[0].bpm!==108||
+    catalog.timing.bars?.length!==8||
+    !catalog.timing.bars.every(b=>b.numerator===4&&b.denominator===4))return false;
+ const notes=catalog.charts?.[targetInstrument]?.[difficulty]?.notes;
+ if(!Array.isArray(notes)||notes.length<INST[targetInstrument].lanes.length)return false;
+ const seen=new Set(),counts=INST[targetInstrument].lanes.map(()=>0);
+ for(const n of notes){
+  if(!Number.isInteger(n.lane)||n.lane<0||n.lane>=counts.length||
+     !Number.isInteger(n.pitch)||n.pitch<0||n.pitch>127||
+     !Number.isFinite(n.startSeconds)||n.startSeconds<0||
+     n.startSeconds>catalog.timing.totalSeconds||!Number.isInteger(n.startTick)||
+     Math.abs(n.startSeconds-noteTimeSeconds(0,n.startTick/120))>0.0001)return false;
+  const id=n.startTick+":"+n.lane;
+  if(seen.has(id))return false;
+  seen.add(id);counts[n.lane]++;
+ }
+ if(counts.some(x=>x<1))return false;
+ const audio=catalog.audioEvents;
+ if(!Array.isArray(audio)||audio.length!==5)return false;
+ const autoEvents=audio.filter(x=>x.part!==targetInstrument).flatMap(p=>p.events)
+  .filter(x=>Number.isFinite(x.playbackSeconds)&&Number.isInteger(x.pitch)&&x.pitch>=0&&x.pitch<=127)
+  .sort((a,b)=>a.playbackSeconds-b.playbackSeconds||a.part.localeCompare(b.part));
+ generatedTrial={catalog,notes:notes.map(n=>({...n})),autoEvents,trackSeconds:catalog.timing.totalSeconds};
+ instrument=targetInstrument;
+ school={school_id:"stage015-original-qa",school_name:"창작 교가 내부 검수",region:"비공개",eligible:true,difficulty,source_year:2026};
+ tier=difficulty;showSchool();renderPads();
+ document.querySelectorAll("[data-inst]").forEach(el=>el.setAttribute("aria-pressed",String(el.dataset.inst===instrument)));
+ status("내부 QA 차트 "+catalog.chartVersion+" · "+notes.length+"노트. 운영 곡 등록이 아닙니다.");
+ goToStep("play");
+ return true;
+}
+function clearGeneratedTrial(){
+ if(playing||startPending)return false;
+ generatedTrial=null;showSchool();return true;
+}
+function scheduleAhead(){
+ if(!playing||paused||!ctx||ctx.state!=="running")return;
+ if(generatedTrial){
+  while(step<generatedTrial.autoEvents.length &&
+    beginning+generatedTrial.autoEvents[step].playbackSeconds<ctx.currentTime+.22){
+   const e=generatedTrial.autoEvents[step++];
+   generatedSound(e,beginning+e.playbackSeconds,"auto");
+  }
+  return;
+ }
+ while(step<SONG_BEATS*4 && beginning+noteTimeSeconds(0,step)<ctx.currentTime+.22){
+ scheduleStep(step,beginning+noteTimeSeconds(0,step));step++;
+ }
+}
+function makeChart(){
+ chart=[];
+ if(generatedTrial){
+  chart=generatedTrial.notes.map(n=>({
+   t:n.startSeconds,beat:n.startTick/480,lane:n.lane,pitch:n.pitch,
+   role:n.role,durationTicks:n.durationTicks,part:n.part,done:false
+  })).sort((a,b)=>a.t-b.t||a.lane-b.lane);
+  return chart;
+ }
+ const points=PARTS[instrument].filter(p=>p[2]<=tierIdx());
+ for(let bar=0;bar<BARS;bar++)for(const [step,lane] of points){
+  chart.push({t:noteTimeSeconds(bar,step),beat:bar*4+step/4,lane,done:false});
+ }
+ chart.sort((a,b)=>a.t-b.t||a.lane-b.lane);
+ return chart;
+}
+function nowSong(){return ctx?ctx.currentTime-beginning:-1}
+function hud(){
+ safeText("score",score.toLocaleString("ko-KR"));
+ safeText("combo",combo);
+ safeText("accuracy",judged?Math.round(100*hits/judged)+"%":"—");
+}
+// Each lane owns its own animation and timeout: simultaneous hits stay readable.
+function restartFx(el,kind,holdMs){
+ clearTimeout(el._fxTimer);
+ for(const animation of el.getAnimations())animation.cancel();
+ el.className=kind;
+ void el.offsetWidth;
+ el.className=kind+" animate";
+ el._fxTimer=setTimeout(()=>{el.className=kind},holdMs);
+}
+function laneFeedback(lane,type){
+ const target=$("laneFx").querySelector('[data-lane="'+lane+'"] .lane-event');if(!target)return;
+ const labels={perfect:"PERFECT",good:"GOOD",miss:"MISS",empty:"NO NOTE"};
+ target.textContent=labels[type];
+ restartFx(target,"lane-event "+type,motionReduced()?260:390);
+}
+function comboFeedback(){
+ if(combo<3||!(combo===3||combo%5===0))return;
+ const badge=$("comboFx");badge.textContent=combo+" COMBO";
+ restartFx(badge,"combo-fx",motionReduced()?260:490);
+}
+function clearFxFeedback(){
+ for(const el of [$("judgeFx"),$("impactRing"),$("comboFx"),...$("laneFx").querySelectorAll(".lane-event")]){
+  clearTimeout(el._fxTimer);for(const fx of el.getAnimations())fx.cancel();
+  if(el.id==="judgeFx")el.className="judgement";
+  else if(el.id==="impactRing")el.className="impact-ring";
+  else if(el.id==="comboFx")el.className="combo-fx";
+  else el.className="lane-event";
+ }
+}
+function triggerImpact(lane,isPerfect){
+ const when=performance.now();impactLane=lane;lastImpactAt=when;impactStrength=isPerfect?1:.72;
+ lanePulse[lane]=when+LANE_GLOW_MS;
+ if(!motionReduced()){
+  const n=INST[instrument].lanes.length, margin=9,gap=4;
+  const w=(canvas.width-2*margin-gap*(n-1))/n;
+  const x=margin+lane*(w+gap)+w/2,y=canvas.height-72;
+  const count=lowPowerFx?(isPerfect?3:2):(isPerfect?11:6);
+  for(let i=0;i<count;i++){
+   const angle=(i/count)*Math.PI*2+(Math.random()-.5)*.4;
+   const speed=60+Math.random()*90;
+   particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-25,
+      start:when,life:240+Math.random()*280,size:2+Math.random()*4,
+      color:IMPACT_COLORS[lane]});
+  }
+  const cap=lowPowerFx?12:PARTICLE_LIMIT;
+  if(particles.length>cap)particles=particles.slice(-cap);
+ }
+ const text=$("judgeFx"),ring=$("impactRing");
+ text.textContent=isPerfect?"PERFECT!":"GOOD!";
+ ring.style.left=(100*(lane+.5)/INST[instrument].lanes.length)+"%";
+ restartFx(text,"judgement "+(isPerfect?"perfect":"good"),motionReduced()?260:510);
+ if(!motionReduced()&&!lowPowerFx)restartFx(ring,"impact-ring",360);
+ laneFeedback(lane,isPerfect?"perfect":"good");
+ comboFeedback();
+ if(vibrationEnabled&&!motionReduced()&&!lowPowerFx&&window.navigator?.vibrate)try{window.navigator.vibrate(isPerfect?12:7)}catch(_){}
+}
+function hit(lane){
+ if(!playing||paused||!ctx||ctx.state!=="running"||lane<0||lane>=INST[instrument].lanes.length)return;
+ const now=correctedInputTime(nowSong(),inputOffsetMs),idx=tierIdx();
+ const chosen=selectPendingNoteIndex(chart,lane,now,idx);
+ if(chosen<0){emptyPresses++;laneFeedback(lane,"empty");status(INST[instrument].lanes[lane][0]+" · 지금 누를 노트가 없습니다.");return}
+ const closest=chart[chosen],judgement=judgementForOffset(noteDeltaSeconds(closest.t,now),idx);
+ closest.done=true;hits++;judged++;combo++;bestCombo=Math.max(bestCombo,combo);
+ if(judgement==="perfect"){score+=scoreForHit("perfect",combo);perfect++;status("PERFECT ✦ "+INST[instrument].lanes[lane][0])}
+ else{score+=scoreForHit("good",combo);good++;status("GOOD! "+INST[instrument].lanes[lane][0])}
+ if(generatedTrial)generatedSound({part:instrument,pitch:closest.pitch,role:closest.role,
+ durationTicks:closest.durationTicks},ctx.currentTime,"hit",lane);
+ else voice(instrument,closest.beat,ctx.currentTime,lane,"hit");
+ triggerImpact(lane,judgement==="perfect");
+ hud();draw();
+}
+function syncPauseControl(){
+ const btn=$("pause");
+ btn.disabled=!playing||pauseBusy;
+ btn.textContent=paused?"▶ 이어하기":"Ⅱ 일시정지";
+ btn.setAttribute("aria-pressed",String(paused));
+}
+// Suspend the common AudioContext clock: it drives soundtrack, scoring and notes.
+function pauseGame(reason="user"){
+ if(!playing||paused)return pausePromise||Promise.resolve(false);
+ paused=true;pauseBusy=true;pauseReason=reason;
+ clearInterval(timer);timer=0;cancelAnimationFrame(raf);raf=0;
+ lastFrameWall=null;lastFrameSong=null;clearFxFeedback();
+ particles=[];lanePulse.fill(0);
+ syncPauseControl();
+ const label=reason==="background"?"다른 화면으로 전환되어":reason==="audio"?"오디오가 중단되어":"사용자 요청으로";
+ status(label+" 일시정지했습니다. 화면에 돌아와 ▶ 이어하기를 눌러 주세요.");
+ pausePromise=(async()=>{
+  try{
+   if(!ctx)throw Error("audio_context_missing");
+   if(ctx.state==="running")await ctx.suspend();
+   if(ctx.state!=="suspended"&&ctx.state!=="interrupted")throw Error("audio_not_suspended");
+   return true;
+  }catch(_){
+   if(playing){finish(true);status("안전하게 연주를 중단했습니다. 다시 시작해 주세요.");}
+   return false;
+  }finally{
+   pauseBusy=false;syncPauseControl();
+   if(playing)draw();
+  }
+ })();
+ return pausePromise;
+}
+async function resumeGame(){
+ if(!playing||!paused||pauseBusy||!ctx||document.hidden)return false;
+ pauseBusy=true;syncPauseControl();
+ try{
+  if(ctx.state!=="running")await ctx.resume();
+  if(ctx.state!=="running")throw Error("audio_resume_blocked");
+  if(document.hidden){await ctx.suspend();status("배경 화면에서는 이어서 연주할 수 없습니다.");return false;}
+  paused=false;pauseReason=null;lastFrameWall=null;lastFrameSong=null;
+  clearInterval(timer);cancelAnimationFrame(raf);
+  timer=setInterval(scheduleAhead,30);scheduleAhead();raf=requestAnimationFrame(animate);
+  status("이어 연주합니다. 기존 콤보와 노트를 유지했습니다.");
+  return true;
+ }catch(_){
+  status("오디오를 재개할 수 없습니다. 화면을 연 상태에서 ▶ 이어하기를 다시 눌러 주세요.");
+  return false;
+ }finally{pauseBusy=false;syncPauseControl();draw();}
+}
+function animate(){
+ if(!playing||paused)return;
+ if(!ctx||ctx.state!=="running"){void pauseGame("audio");return;}
+ const frameWall=performance.now(),songNow=nowSong();
+ // On browsers that freeze without visibilitychange, never bulk-MISS after a long time jump.
+ if(lastFrameWall!==null&&frameWall-lastFrameWall>1500&&songNow-lastFrameSong>.65){
+  finish(true);
+  status("오랜 화면 정지로 연주 시간이 건너뛰어 안전하게 중단했습니다. 처음부터 다시 시작해 주세요.");
+  return;
+ }
+ lastFrameWall=frameWall;lastFrameSong=songNow;FX_PERF.judgementFrames++;
+ const now=songNow,idx=tierIdx(),correctedNow=correctedInputTime(now,inputOffsetMs);
+ let missedThisFrame=0;
+ for(const n of chart){if(!n.done && isNoteMissed(n.t,correctedNow,idx)){n.done=true;judged++;miss++;combo=0;missedThisFrame++;logAudioEvent("miss",instrument,n.lane,ctx.currentTime,"no-hit-sound");laneFeedback(n.lane,"miss");}}
+ if(missedThisFrame&&now-lastMissAnnouncement>.8){status("MISS · 놓친 노트 "+missedThisFrame+"개");lastMissAnnouncement=now;}
+ const trackLength=generatedTrial?generatedTrial.trackSeconds:SONG_BEATS*BEAT;
+ if(now>=trackLength+.28){finish(false);return}
+ $("progress").style.width=Math.max(0,Math.min(100,100*(now/trackLength)))+"%";
+ hud();
+ // Low-power mode throttles rendering ONLY; judgement runs on each rAF.
+ if(visualFrameEligible(lowPowerFx,frameWall,FX_PERF.lastDrawWall)){
+  sampledDraw();FX_PERF.lastDrawWall=frameWall;FX_PERF.renderedFrames++;
+ }else FX_PERF.skippedVisualFrames++;
+ raf=requestAnimationFrame(animate);
+}
+async function start(){
+ if(playing||startPending||!school)return;
+ // The runtime has only the bundled original song. An "approved" metadata
+ // object cannot unlock an unimplemented school-specific rhythm chart.
+ if(selectedSong!=="volleyball"){
+  status("이 버전에는 학교 교가의 실제 차트가 연결되지 않았습니다. 창작 연습곡을 선택하세요.");
+  return;
+ }
+ const audit=validateChartCatalog(PARTS,INST,CHART_VERSION);
+ if(!audit.valid){
+  status("차트 데이터 검증에 실패했습니다. 이 버전의 연주를 시작할 수 없습니다.");
+  safeText("result","차트 오류: "+audit.errors.slice(0,2).join(", "));
+  return;
+ }
+ startPending=true;$("start").disabled=true;
+ const a=audioContext();
+ if(!a){startPending=false;$("start").disabled=!school;return;}
+ try{
+  // resume() must originate from the Start button's direct user gesture.
+  await a.resume();
+  if(ctx!==a||a.state!=="running"||document.hidden)throw Error("audio_permission_or_background");
+ }catch(_){
+  startPending=false;
+  await releaseAudioEngine("permission-denied");
+  if(!playing){
+   $("start").disabled=!school;
+   status("오디오 시작이 차단되었습니다. 음량·브라우저 소리 권한을 확인하고 ▶ 시작을 다시 눌러 주세요.");
+  }
+  return;
+ }
+ startPending=false;
+ if(playing)return;
+ playing=true;clearConcertSummary();$("resetBest").disabled=true;paused=false;pauseBusy=false;pauseReason=null;pausePromise=null;lastFrameWall=null;lastFrameSong=null;currentUxStep="play";syncStepNav();syncPauseControl();
+ score=combo=bestCombo=hits=judged=perfect=good=miss=emptyPresses=0;lastMissAnnouncement=-Infinity;step=0;soundEvents.length=0;makeChart();particles=[];lanePulse.fill(0);clearFxFeedback();FX_PERF.judgementFrames=0;FX_PERF.renderedFrames=0;FX_PERF.skippedVisualFrames=0;FX_PERF.lastDrawWall=0;
+ beginning=a.currentTime+1.05;
+ $("start").disabled=true;$("stop").disabled=false;$("demoSchool").disabled=true;$("schoolSearch").disabled=true;
+ $("offsetRange").disabled=true;$("offsetReset").disabled=true;
+ document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=true);syncSongChoice();
+ $("progress").style.width="0%";safeText("result","연주 중 · 선택한 악기의 노트만 누르세요.");
+ status("준비… 1초 뒤 시작!");hud();
+ clearInterval(timer);cancelAnimationFrame(raf);
+ timer=setInterval(scheduleAhead,30);
+ scheduleAhead();raf=requestAnimationFrame(animate);
+ // Keyboard controls should not accidentally activate the start button.
+ canvas.tabIndex=0;canvas.focus({preventScroll:true});
+}
+function finish(interrupted){
+ if(!playing)return;
+ playing=false;paused=false;pauseReason=null;pauseBusy=false;pausePromise=null;lastFrameWall=null;lastFrameSong=null;clearInterval(timer);cancelAnimationFrame(raf);clearActiveTouches();particles=[];lanePulse.fill(0);clearFxFeedback();
+ void releaseAudioEngine("finish");syncStepNav();syncPauseControl();
+ $("start").disabled=!school;$("stop").disabled=true;$("demoSchool").disabled=false;$("schoolSearch").disabled=false;
+ $("offsetRange").disabled=false;$("offsetReset").disabled=false;
+ document.querySelectorAll("[data-inst]").forEach(x=>x.disabled=false);$("resetBest").disabled=false;syncSongChoice();
+ const outcome={interrupted:!!interrupted,song:selectedSong,total:chart.length,
+  judged,hits,perfect,good,miss,score,bestCombo};
+ if(interrupted){
+  status("연주를 중단했습니다.");safeText("result","다시 시작할 수 있습니다.");
+  renderConcertSummary(outcome,{saved:false,reason:"interrupted"});
+ }
+ else{
+ const model=concertSummaryModel(outcome);
+ if(model.state==="complete"){
+  const acc=model.accuracy;
+  status("공연 종료! "+(acc>=85?"훌륭한 연주!":acc>=60?"좋은 연주!":"다시 도전해 보세요."));
+  safeText("result","정확도 "+acc+"% · PERFECT "+perfect+" · GOOD "+good+" · MISS "+miss+" · 최대 콤보 "+bestCombo+" · 빈 입력 "+emptyPresses+"회 · 노트 "+chart.length+"개");
+ }else{
+  status("판정 정보 검증 실패 · 기록 저장을 차단했습니다.");
+  safeText("result","결과 데이터가 올바르지 않아 점수 및 정확도를 표시하지 않습니다.");
+ }
+ const saved=saveCompletedBest(outcome);
+ renderConcertSummary(outcome,saved);
+ safeText("recordStatus",saved.saved?"새 최고 기록 저장 완료":saved.reason==="storage_unavailable"?
+  "저장소 사용 불가 · 이번 연주는 정상 종료했습니다.":saved.reason==="incomplete_or_invalid"?
+  "노트 판정이 완결되지 않아 최고 기록을 저장하지 않았습니다.":
+  "현재 조합의 최고 기록은 유지됩니다.");
+ showBest();$("progress").style.width="100%";
+ }
+ draw();
+}
+function rounded(x,y,w,h,r){
+ g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();
+}
+function draw(){
+ const W=canvas.width,H=canvas.height,line=H-72;
+ const lanes=INST[instrument].lanes,N=lanes.length;
+ const margin=9,gap=4,lw=(W-2*margin-gap*(N-1))/N;
+ const colors=IMPACT_COLORS;
+ const fxAge=performance.now()-lastImpactAt;
+ const shake=(!motionReduced()&&!lowPowerFx&&fxAge>=0&&fxAge<85)?(1-fxAge/85)*impactStrength*.85:0;
+ g.save();
+ g.clearRect(0,0,W,H);
+ if(shake)g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+ g.fillStyle="#0d1429";g.fillRect(0,0,W,H);
+
+ for(let i=0;i<N;i++){
+  const x=margin+i*(lw+gap);
+  g.fillStyle=i%2===0?"#172341":"#203054";g.fillRect(x,12,lw,H-24);
+  g.fillStyle=colors[i];g.fillRect(x,12,lw,5);
+  const glowLeft=lanePulse[i]-performance.now();
+  if(glowLeft>0){
+    g.fillStyle=colors[i];g.globalAlpha=motionReduced()?.10:.08+.20*Math.min(1,glowLeft/LANE_GLOW_MS);
+    g.fillRect(x,12,lw,H-24);g.globalAlpha=1;
+    g.fillStyle="#fff";g.globalAlpha=motionReduced()?.08:.22*Math.min(1,glowLeft/LANE_GLOW_MS);
+    g.fillRect(x+3,H-84,lw-6,5);g.globalAlpha=1;
+  }
+  g.fillStyle="#eff5ff";g.font="800 17px system-ui";g.textAlign="center";g.fillText(lanes[i][1],x+lw/2,38);
+  g.fillStyle="#e1eafa";g.font=N===5?"13px system-ui":"14px system-ui";
+  g.fillText(lanes[i][0],x+lw/2,H-23);
+ }
+ g.strokeStyle="#f5efff";g.lineWidth=4;g.beginPath();g.moveTo(margin,line);g.lineTo(W-margin,line);g.stroke();
+ const now=playing?nowSong():-.6;
+ for(const n of chart){
+  if(n.done)continue;
+  if(!noteIsInDrawingWindow(n.t,now))continue;
+  const x=margin+n.lane*(lw+gap),y=noteYAtAudioTime(n.t,now,line);
+  // A 24px tall note keeps a >4px internal gap at each sixteenth step (108 BPM).
+  if(lowPowerFx){
+   g.fillStyle=colors[n.lane];g.shadowBlur=0;
+   rounded(x+4,y-12,lw-8,24,7);g.fill();
+   g.strokeStyle="#fff";g.lineWidth=2;g.stroke();
+  }else{
+   const fill=g.createLinearGradient(x,y-12,x,y+12);
+   fill.addColorStop(0,"#ffffff");fill.addColorStop(.22,colors[n.lane]);fill.addColorStop(1,colors[n.lane]);
+   g.fillStyle=fill;g.shadowColor=colors[n.lane];g.shadowBlur=6;
+   rounded(x+4,y-12,lw-8,24,7);g.fill();
+   g.shadowBlur=0;g.strokeStyle="#ffffffd9";g.lineWidth=1.4;g.stroke();
+   g.fillStyle="#ffffffa8";rounded(x+10,y-9,Math.max(4,lw-20),4,2);g.fill();
+  }
+ }
+ const frameTime=performance.now();
+ if(!motionReduced()&&particles.length){
+  particles=particles.filter(p=>frameTime-p.start<p.life);
+  for(const p of particles){
+   const age=frameTime-p.start,seconds=age/1000,f=age/p.life;
+   g.globalAlpha=Math.max(0,1-f);
+   g.fillStyle=p.color;
+   g.fillRect(p.x+p.vx*seconds,p.y+p.vy*seconds+90*seconds*seconds,
+     Math.max(.8,p.size*(1-f)),Math.max(.8,p.size*(1-f)));
+  }
+  g.globalAlpha=1;
+ }
+ if(!playing){
+  g.fillStyle="#0e172be8";g.fillRect(margin,75,W-2*margin,160);
+  g.fillStyle="#f4edff";g.font="800 21px system-ui";g.textAlign="center";
+  g.fillText(school?"연주 준비 완료!":"학교를 선택해 주세요",W/2,149);
+  g.font="13px system-ui";g.fillStyle="#c9d5f1";
+  g.fillText(INST[instrument].name+" · "+N+"레인",W/2,184);
+ }else if(paused){
+   g.fillStyle="#0e172bc4";g.fillRect(margin,80,W-2*margin,150);
+   g.font="800 34px system-ui";g.fillStyle="#f4e9ff";g.textAlign="center";g.fillText("PAUSED",W/2,161);
+   g.font="14px system-ui";g.fillText("▶ 이어하기를 눌러 주세요",W/2,194);
+  }else if(now<0){
+  g.font="800 35px system-ui";g.fillStyle="#fff2b8";g.textAlign="center";g.fillText("READY",W/2,175);
+ }
+ g.restore();
+}
+$("start").onclick=start;
+$("pause").onclick=()=>{if(paused)void resumeGame();else void pauseGame("user");};
+$("stop").onclick=()=>finish(true);
+$("mute").onclick=()=>{
+ muted=!muted;updateMasterVolume();
+ $("mute").textContent=muted?"🔇 꺼짐":"♫ 소리";
+};
+$("volumeRange").addEventListener("input",()=>setVolume($("volumeRange").value));
+document.addEventListener("keydown",e=>{
+ if(e.repeat||!playing||e.isComposing)return;
+ if(e.target instanceof HTMLElement && e.target.matches("input,select,textarea"))return;
+ const index=INST[instrument].lanes.findIndex(x=>x[2]===e.code);
+ if(index<0)return;
+ e.preventDefault();hit(index);flash(index);
+});
+document.addEventListener("visibilitychange",()=>{
+ if(document.hidden&&playing&&!paused)void pauseGame("background");
+});
+window.addEventListener("pagehide",e=>{
+ if(!playing){
+  if(startPending){startPending=false;void releaseAudioEngine("pagehide-before-start")}
+  return;
+ }
+ if(e.persisted)void pauseGame("background");
+ else finish(true);
+});
+window.addEventListener("pageshow",e=>{
+ if(e.persisted&&playing&&paused){
+  if(pauseBusy&&ctx?.state==="suspended"){pauseBusy=false;syncPauseControl();}
+  status("복귀했습니다. ▶ 이어하기를 눌러 연주를 재개하세요.");
+ }
+});
+window.nangamSchoolbandV08={getStaticVisualBenchmark:staticVisualBenchmark,getVisualTimingStats:()=>visualSampleStats(visualDrawSamples),getPerformanceFx:()=>({...FX_PERF,mode:perfFxMode(),motionReduced:motionReduced(),lowPower:lowPowerFx,vibrationEnabled:vibrationEnabled&&!motionReduced()&&!lowPowerFx,volumePercent,particleCount:particles.length,maxParticles:lowPowerFx?12:PARTICLE_LIMIT,clockSource:"AudioContext.currentTime"}),getMobileUiState:()=>({activePointers:activePadPointers.size,orientation:lastScreenOrientation,resizeCount:screenResizeCount,
+ largeText:document.documentElement.dataset.largeText==="true",highContrast:document.documentElement.dataset.highContrast==="true",
+ fullscreen:!!document.fullscreenElement,fullscreenAvailable:!!$("stepPlay").requestFullscreen,
+ padRects:[...$("pads").querySelectorAll(".taphit")].map(b=>({lane:Number(b.dataset.lane),x:b.getBoundingClientRect().left,
+ y:b.getBoundingClientRect().top,w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height}))}),
+getSelected:()=>school?{...school}:null,getBestRecordKey:()=>currentBestKey(),getBest:()=>readBest(),getScoreModel:()=>({prefix:RECORD_PREFIX,maxScore:MAX_STORED_SCORE,chartVersion:generatedTrial?.catalog?.chartVersion||CHART_VERSION}),getResolvedSongId:()=>selectedSong==="volleyball"?INTERNAL_PLAYTEST_SONG.song_id:null,getAnthemMediaCount:()=>Array.isArray(VERIFIED_ANTHEM_MEDIA[school?.school_id])?VERIFIED_ANTHEM_MEDIA[school.school_id].filter(m=>validAnthemMedia(m,school.school_id)).length:0,getSong:()=>selectedSong,getSongAvailability:()=>songAvailability(school),chooseSong,getInstrument:()=>instrument,getDifficulty:()=>tier,getChart:()=>chart.map(n=>({t:n.t,lane:n.lane,pitch:n.pitch??null,done:n.done})),getStatus:()=>({playing,paused,score,hits,judged,combo,bestCombo,miss,emptyPresses,offsetMs:inputOffsetMs}),getTierCount:()=>TIERS.length,getLaneCount:()=>INST[instrument].lanes.length,getChartVersion:()=>CHART_VERSION,getChartMetadata:()=>({schemaVersion:CHART_SCHEMA_VERSION,chartVersion:CHART_VERSION,songId:CHART_SONG_ID,noteTypes:[...CHART_NOTE_TYPES],longNotesEnabled:false,bpm:108,beatsPerBar:4,barCount:8}),getChartAudit:()=>validateChartCatalog(PARTS,INST,CHART_VERSION),getMelody:()=>MELODY.map(([step,pitch,duration])=>({step,pitch,duration})),getLanes:()=>INST[instrument].lanes.map(([label,key,code])=>({label,key,code})),getVisualMetrics:()=>({noteHeight:NOTE_HEIGHT_PX,previewSeconds:NOTE_PREVIEW_SECONDS,stepSpacingPx:noteStepSpacing(),gapPx:noteStepSpacing()-NOTE_HEIGHT_PX,canvasWidth:canvas.width,cssWidth:canvas.getBoundingClientRect().width,particleLimit:PARTICLE_LIMIT}),getEffectState:()=>({particleCount:particles.length,pulseRemainingMs:lanePulse.map(v=>Math.max(0,v-performance.now())),judgement:$("judgeFx").textContent,judgeAnimate:$("judgeFx").classList.contains("animate"),laneMessages:[...$("laneFx").querySelectorAll(".lane-event")].map(el=>({message:el.textContent,visible:el.classList.contains("animate"),type:el.className})),comboMessage:$("comboFx").textContent,comboVisible:$("comboFx").classList.contains("animate"),reducedMotion:motionReduced(),vibrationEnabled:vibrationEnabled&&!motionReduced()}),getPlayhead:()=>playing?nowSong():null,getAudioEvents:()=>soundEvents.map(e=>({...e})),getAudioPlan:step=>autoPartsAtStep(step,instrument),loadGeneratedTrial,
+ clearGeneratedTrial,getUxStep:()=>currentUxStep,goToUxStep:goToStep,getUxAvailability:stepAvailability,getGeneratedTrial:()=>generatedTrial?({songId:generatedTrial.catalog.songId,
+  chartVersion:generatedTrial.catalog.chartVersion,mode:"internal-private-qa",
+  notes:generatedTrial.notes.length,autoplayEvents:generatedTrial.autoEvents.length}):null,getMixLevels:()=>({...MIX_LEVELS}),getAudioLifetime:()=>({...audioLife,activeVoices:liveAudioVoices.size,muted,volumePercent,masterGain:desiredMasterGain(),pendingStart:startPending,hasContext:!!ctx}),getHarmonyByBar:()=>CHORD_ROOTS.map((_,bar)=>harmonyAtBar(bar)),getMelodyHarmonyAudit:()=>checkMelodyHarmony(),getPlaybackState:()=>({playing,paused,pauseReason,transitioning:pauseBusy,audioState:ctx?.state||"none",songTime:ctx?nowSong():null,schedulerStep:step,remainingNotes:chart.filter(n=>!n.done).length}),getTimingRules:()=>({beatSeconds:BEAT,perfectSeconds:[...PERFECT],goodSeconds:[...WIDTHS],previewSeconds:NOTE_PREVIEW_SECONDS,noteTravelPx:NOTE_TRAVEL_PX,noteHeightPx:NOTE_HEIGHT_PX}),getTimingModel:()=>Object.freeze({noteTimeSeconds,noteDeltaSeconds,noteSpawnTimeSeconds,noteIsInDrawingWindow,noteYForDelta,noteYAtAudioTime,noteStepSpacing,judgementForOffset,isNoteMissed,correctedInputTime,clampOffsetMs,selectPendingNoteIndex})};
+$("offsetRange").addEventListener("input",()=>{if(playing)return;inputOffsetMs=clampOffsetMs($("offsetRange").value);saveOffset()});
+$("offsetReset").addEventListener("click",()=>{if(playing)return;inputOffsetMs=0;saveOffset()});
+$("reduceFx").addEventListener("change",()=>{userReducedMotion=$("reduceFx").checked;persistFxSettings();syncFxSettings()});
+$("vibrationFx").addEventListener("change",()=>{vibrationEnabled=$("vibrationFx").checked;persistFxSettings();syncFxSettings()});
+$("lowPowerFx").addEventListener("change",()=>{lowPowerFx=$("lowPowerFx").checked;persistFxSettings();syncFxSettings()});
+if(systemMotion?.addEventListener)systemMotion.addEventListener("change",syncFxSettings);
+function updateOrientation(){
+ // Rotation can cancel OS touches without delivering pointerup. Never carry a
+ // pressed finger into a different coordinate system or the next song.
+ clearActiveTouches();
+ const orientation=innerWidth>innerHeight?"landscape":"portrait";
+ lastScreenOrientation=orientation;
+ document.body.dataset.orientation=orientation;
+ screenResizeCount++;
+ if(playing||school)draw();
+}
+let resizeFrame=0;
+function scheduleResponsiveDraw(){
+ if(resizeFrame)return;
+ resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;updateOrientation()});
+}
+window.addEventListener("resize",scheduleResponsiveDraw,{passive:true});
+window.addEventListener("orientationchange",scheduleResponsiveDraw,{passive:true});
+function syncReadability(){
+ const large=$("largeText").checked,contrast=$("highContrast").checked;
+ document.documentElement.dataset.largeText=String(large);
+ document.documentElement.dataset.highContrast=String(contrast);
+ try{localStorage.setItem(READABILITY_KEY,JSON.stringify({large,contrast}))}catch(_){}
+}
+try{
+ const saved=JSON.parse(localStorage.getItem(READABILITY_KEY)||"null");
+ if(saved&&typeof saved==="object"){
+  $("largeText").checked=saved.large===true;
+  $("highContrast").checked=saved.contrast===true;
+ }
+}catch(_){}
+$("largeText").addEventListener("change",syncReadability);
+$("highContrast").addEventListener("change",syncReadability);
+syncReadability();
+function syncFullscreen(){
+ const on=document.fullscreenElement===$("stepPlay");
+ $("fullscreenBtn").setAttribute("aria-pressed",String(on));
+ $("fullscreenBtn").textContent=on?"↙ 전체화면 나가기":"⛶ 전체화면";
+}
+$("fullscreenBtn").addEventListener("click",async()=>{
+ try{
+  if(document.fullscreenElement){await document.exitFullscreen()}
+  else if(typeof $("stepPlay").requestFullscreen==="function"){
+   await $("stepPlay").requestFullscreen();
+  }else throw Error("unsupported");
+  safeText("screenModeStatus",document.fullscreenElement?"전체화면으로 전환했습니다.":"일반 화면으로 돌아왔습니다.");
+ }catch(_){
+  safeText("screenModeStatus","이 브라우저에서는 전체화면 전환이 지원되지 않거나 차단되었습니다.");
+ }
+ syncFullscreen();scheduleResponsiveDraw();
+});
+document.addEventListener("fullscreenchange",()=>{syncFullscreen();scheduleResponsiveDraw()});
+document.addEventListener("fullscreenerror",()=>{
+ safeText("screenModeStatus","전체화면 전환에 실패했습니다. 일반 화면에서 연주할 수 있습니다.");syncFullscreen();
+});
+renderPads();syncFxSettings();syncOffsetUI();syncVolume();syncPauseControl();syncStepNav();syncSongChoice();renderAnthemDiscovery();updateOrientation();hud();
+void loadHomepageCatalog();
+})();
+</script>
+</body>
+</html>

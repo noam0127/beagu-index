@@ -1,0 +1,283 @@
+{
+  "songId": "original-meter-shift-exercise-014",
+  "title": "직접 창작 박자·템포 변환 연습곡",
+  "origin": "internal-original-demo",
+  "rights": {
+    "sourceId": "original-meter-shift-exercise-014",
+    "status": "demo_original",
+    "scopes": [
+      "convert_to_game",
+      "internal_playtest"
+    ],
+    "publicRelease": false
+  },
+  "timeline": {
+    "ticksPerQuarter": 480,
+    "barCount": 8,
+    "meters": [
+      {
+        "bar": 0,
+        "numerator": 4,
+        "denominator": 4
+      },
+      {
+        "bar": 2,
+        "numerator": 3,
+        "denominator": 4
+      },
+      {
+        "bar": 4,
+        "numerator": 6,
+        "denominator": 8
+      },
+      {
+        "bar": 6,
+        "numerator": 5,
+        "denominator": 4
+      },
+      {
+        "bar": 7,
+        "numerator": 4,
+        "denominator": 4
+      }
+    ],
+    "tempos": [
+      {
+        "tick": 0,
+        "bpm": 106
+      },
+      {
+        "tick": 3840,
+        "bpm": 126
+      },
+      {
+        "tick": 7200,
+        "bpm": 92
+      },
+      {
+        "tick": 12000,
+        "bpm": 114
+      }
+    ]
+  },
+  "harmony": [
+    {
+      "bar": 0,
+      "symbol": "C",
+      "rootMidi": 48,
+      "quality": "major"
+    },
+    {
+      "bar": 1,
+      "symbol": "G",
+      "rootMidi": 43,
+      "quality": "major"
+    },
+    {
+      "bar": 2,
+      "symbol": "Am",
+      "rootMidi": 45,
+      "quality": "minor"
+    },
+    {
+      "bar": 3,
+      "symbol": "F",
+      "rootMidi": 41,
+      "quality": "major"
+    },
+    {
+      "bar": 4,
+      "symbol": "C",
+      "rootMidi": 48,
+      "quality": "major"
+    },
+    {
+      "bar": 5,
+      "symbol": "G",
+      "rootMidi": 43,
+      "quality": "major"
+    },
+    {
+      "bar": 6,
+      "symbol": "Am",
+      "rootMidi": 45,
+      "quality": "minor"
+    },
+    {
+      "bar": 7,
+      "symbol": "F",
+      "rootMidi": 41,
+      "quality": "major"
+    }
+  ],
+  "melody": [
+    {
+      "startTick": 0,
+      "durationTicks": 480,
+      "pitch": 72,
+      "velocity": 102
+    },
+    {
+      "startTick": 480,
+      "durationTicks": 600,
+      "pitch": 76,
+      "velocity": 91
+    },
+    {
+      "startTick": 1080,
+      "durationTicks": 360,
+      "pitch": 74,
+      "velocity": 94
+    },
+    {
+      "startTick": 1440,
+      "durationTicks": 480,
+      "pitch": 79,
+      "velocity": 88
+    },
+    {
+      "startTick": 1920,
+      "durationTicks": 720,
+      "pitch": 71,
+      "velocity": 102
+    },
+    {
+      "startTick": 2640,
+      "durationTicks": 480,
+      "pitch": 74,
+      "velocity": 91
+    },
+    {
+      "startTick": 3120,
+      "durationTicks": 720,
+      "pitch": 79,
+      "velocity": 94
+    },
+    {
+      "startTick": 3840,
+      "durationTicks": 360,
+      "pitch": 69,
+      "velocity": 102
+    },
+    {
+      "startTick": 4200,
+      "durationTicks": 480,
+      "pitch": 72,
+      "velocity": 91
+    },
+    {
+      "startTick": 4680,
+      "durationTicks": 600,
+      "pitch": 76,
+      "velocity": 94
+    },
+    {
+      "startTick": 5280,
+      "durationTicks": 480,
+      "pitch": 65,
+      "velocity": 102
+    },
+    {
+      "startTick": 5760,
+      "durationTicks": 480,
+      "pitch": 69,
+      "velocity": 91
+    },
+    {
+      "startTick": 6240,
+      "durationTicks": 480,
+      "pitch": 72,
+      "velocity": 94
+    },
+    {
+      "startTick": 6720,
+      "durationTicks": 360,
+      "pitch": 72,
+      "velocity": 102
+    },
+    {
+      "startTick": 7080,
+      "durationTicks": 360,
+      "pitch": 74,
+      "velocity": 91
+    },
+    {
+      "startTick": 7440,
+      "durationTicks": 360,
+      "pitch": 76,
+      "velocity": 94
+    },
+    {
+      "startTick": 7800,
+      "durationTicks": 360,
+      "pitch": 79,
+      "velocity": 88
+    },
+    {
+      "startTick": 8160,
+      "durationTicks": 480,
+      "pitch": 67,
+      "velocity": 102
+    },
+    {
+      "startTick": 8640,
+      "durationTicks": 480,
+      "pitch": 71,
+      "velocity": 91
+    },
+    {
+      "startTick": 9120,
+      "durationTicks": 480,
+      "pitch": 74,
+      "velocity": 94
+    },
+    {
+      "startTick": 9600,
+      "durationTicks": 600,
+      "pitch": 69,
+      "velocity": 102
+    },
+    {
+      "startTick": 10200,
+      "durationTicks": 600,
+      "pitch": 72,
+      "velocity": 91
+    },
+    {
+      "startTick": 10800,
+      "durationTicks": 600,
+      "pitch": 76,
+      "velocity": 94
+    },
+    {
+      "startTick": 11400,
+      "durationTicks": 600,
+      "pitch": 79,
+      "velocity": 88
+    },
+    {
+      "startTick": 12000,
+      "durationTicks": 480,
+      "pitch": 65,
+      "velocity": 102
+    },
+    {
+      "startTick": 12480,
+      "durationTicks": 480,
+      "pitch": 69,
+      "velocity": 91
+    },
+    {
+      "startTick": 12960,
+      "durationTicks": 480,
+      "pitch": 67,
+      "velocity": 94
+    },
+    {
+      "startTick": 13440,
+      "durationTicks": 480,
+      "pitch": 65,
+      "velocity": 88
+    }
+  ]
+}

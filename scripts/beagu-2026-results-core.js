@@ -22,7 +22,7 @@ function beagu26Selections(value, options, multiple) {
   }
   return found.sort((a,b)=>a-b);
 }
-function beagu26BuildResults(values, schools, catalog) {
+function beagu26BuildResults(values, schools, catalog, verifiedRematches) {
   const headers=values[0], c=questionColumns(headers), specs=[];
   for(const id of Object.keys(catalog)){
     const meta=catalog[id], hits=[];
@@ -49,7 +49,7 @@ function beagu26BuildResults(values, schools, catalog) {
     if(day<'2026-11-01'){totals.prelaunch_rows++;continue;}
     if(day>'2026-12-31'){totals.undated_rows++;continue;}
     totals.official_rows++;
-    const match=resolveSchool(r,c,schools);
+    const match=resolveSchool(r,c,schools,verifiedRematches,sourceIndex+1);
     if(!match.school){totals.unmatched_rows++;continue;}
     const id=String(match.school.school_id);
     if(!groups.has(id))groups.set(id,{school_id:id,school_response_rows:0,school_match_status:'EXACT_REGION_OFFICE_NAME',

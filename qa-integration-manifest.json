@@ -1,0 +1,594 @@
+{
+  "version": "v1.1.0-rc.2",
+  "name_ko": "통합 시험판",
+  "production_baseline": "36c68c8394a77a94541a2ad04a83db7242639c0c",
+  "main_source": "680e8fd11928aa41b5acdbd5c3da29fd1456937b",
+  "status": "PARTIAL_INTEGRATION_QA_ONLY",
+  "production_release_approved": false,
+  "source_branches": [
+    {
+      "name": "member",
+      "sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b"
+    },
+    {
+      "name": "admin",
+      "sha": "a00a9a4af67069b45277cde28f199de4f4733acc"
+    },
+    {
+      "name": "release",
+      "sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84"
+    },
+    {
+      "name": "isolation",
+      "sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b"
+    },
+    {
+      "name": "rematch",
+      "sha": "544913f9d37146e63d3518f32a86881497195d21"
+    },
+    {
+      "name": "volley",
+      "sha": "e1aa7557d6da61cff48417373e6d30c7d34913e9"
+    },
+    {
+      "name": "band",
+      "sha": "8962ff47dd0e0d05f4ccfebd28ca33e1d49ac4a3"
+    },
+    {
+      "name": "notice",
+      "sha": "64192de346c2f15ec7d6988212fe382f2d7afadb"
+    },
+    {
+      "name": "postit",
+      "sha": "99977702eaa4e43fee852fc08891dc57e97843f4"
+    },
+    {
+      "name": "pause",
+      "sha": "27f96a29923226216c4c7c6b80cca6aa701cf21f"
+    },
+    {
+      "name": "desktop",
+      "sha": "e484c2767121021feb1f98eae1d7c44be9c5cec3"
+    }
+  ],
+  "applied": [
+    {
+      "source": "member",
+      "path": "js/beagu-release-progress-v1.js",
+      "status": "collected exact source"
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/member-tier-v1.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/moderation-audit.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/postit-member-ownership.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "member",
+      "path": "supabase/functions/_shared/staging-release-candidate.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "admin",
+      "path": "supabase/migrations/20261122010000_admin_member_challenge_summary_v1.sql",
+      "status": "collected exact source"
+    },
+    {
+      "source": "admin",
+      "path": "supabase/migrations/20261122020000_admin_member_directory_v2.sql",
+      "status": "collected exact source"
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/github-work-inbox.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/release-conflict-preflight.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/release-impact-evidence.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/release-snapshot-gate.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "release",
+      "path": "supabase/functions/beagu-release-manager-v1/release-work-dependencies.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "release",
+      "path": "supabase/migrations/20261121_site_release_version_catalog.sql",
+      "status": "collected exact source"
+    },
+    {
+      "source": "isolation",
+      "path": "js/beagu-independent-preview-target-v1.js",
+      "status": "collected exact source"
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/_shared/staging-origin.ts",
+      "status": "collected exact source"
+    },
+    {
+      "source": "isolation",
+      "path": "supabase/functions/beagu-release-manager-v1/release-ci-proof.mjs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "rematch",
+      "path": "scripts/beagu-2026-noon-sync.gs",
+      "status": "collected exact source"
+    },
+    {
+      "source": "rematch",
+      "path": "scripts/beagu-2026-results-core.js",
+      "status": "collected exact source"
+    },
+    {
+      "source": "rematch",
+      "path": "scripts/beagu-2026-results-runtime.js",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/anthem-media-fixture.v1.json",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/creative-school-anthem.chart.v1.json",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/original-anthem.music-events.v1.json",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/original-variable-meter-exercise.input.v1.json",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/school-homepages.v1.json",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/schoolband-chart.schema.json",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/song-intake-rights.v1.json",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/charts/song-queue-stage023.v1.json",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/index.html",
+      "status": "collected exact source"
+    },
+    {
+      "source": "band",
+      "path": "games/nangam-schoolband-v08/preview/index.html",
+      "status": "collected exact source"
+    },
+    {
+      "source": "notice",
+      "path": "js/beagu-home-notice-admin-v1.js",
+      "status": "collected exact source"
+    },
+    {
+      "source": "notice",
+      "path": "js/beagu-home-notice-public-v1.js",
+      "status": "collected exact source"
+    },
+    {
+      "source": "notice",
+      "path": "styles/beagu-home-notice-admin-v1.css",
+      "status": "collected exact source"
+    },
+    {
+      "source": "notice",
+      "path": "supabase/functions/beagu-home-notice-v1/index.ts",
+      "status": "collected exact source"
+    },
+    {
+      "source": "notice",
+      "path": "supabase/migrations/20261121_home_notice_admin_editor.sql",
+      "status": "collected exact source"
+    },
+    {
+      "source": "postit",
+      "path": "supabase/migrations/20261120_beagu_postit_verified_account_bridge_v1.sql",
+      "status": "collected exact source"
+    },
+    {
+      "source": "pause",
+      "path": "js/challenge-referral-v1.js",
+      "status": "already present"
+    },
+    {
+      "source": "pause",
+      "path": "styles/arcade-playback-v1.css",
+      "status": "already present"
+    },
+    {
+      "source": "pause",
+      "path": "teacher-run.html",
+      "status": "already present"
+    }
+  ],
+  "pending": [
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "admin-updates.html",
+      "blob_sha": "ae6af011c8068af565d0dc054db8e98dd0ac6f49",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "js/beagu-admin-updates-v1.js",
+      "blob_sha": "1f9bafc2f7e470859077361ed4abc3d372f5b15e",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "js/beagu-level-state-v1.js",
+      "blob_sha": "49e98009653c7368e3d766a7358f6d3b5b4e58b0",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "js/challenge-member-auth-v1.js",
+      "blob_sha": "cc9cf9fba1916af9a27e322b68c7dbce21d665de",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "js/level-search.js",
+      "blob_sha": "cb59860a82f3243acdc59339df1cf59959c60bfe",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "js/postit-account-v1.js",
+      "blob_sha": "f5a4168321780b2f16a268002a332f69416ef6dd",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "styles/beagu-admin-updates-v1.css",
+      "blob_sha": "4f34ffcb2ab76e135017136475a5b7283a43928f",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "supabase/functions/_shared/release-policy.mjs",
+      "blob_sha": "ee44da9071436429d3bfe8c2098e928759f8f96f",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "supabase/functions/beagu-admin-members-v1/index.ts",
+      "blob_sha": "bebe715788bd86ae1d9c0193c15eac164399056c",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "supabase/functions/beagu-level-api/index.ts",
+      "blob_sha": "f4c5ca4e6e85660273dcc155b115b1f16668f2cd",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "supabase/functions/beagu-postit-api-v1/index.ts",
+      "blob_sha": "a5f708e179da1cd53976077c57ee51a6f46d30a4",
+      "status": "modified"
+    },
+    {
+      "source": "member",
+      "source_sha": "ff2d5cc6159bb7a69c34afd7114ae217ee07747b",
+      "merge_base": "390e42b3b26ee6b496365f0f07f6e4f2b199a46d",
+      "path": "supabase/functions/beagu-release-manager-v1/index.ts",
+      "blob_sha": "5b9ff576fcf598a0eba6a1dcf50c00bf7eba7c97",
+      "status": "modified"
+    },
+    {
+      "source": "admin",
+      "source_sha": "a00a9a4af67069b45277cde28f199de4f4733acc",
+      "merge_base": "0ea26679515c0e6a88d123e478c955e2c49fd737",
+      "path": "admin.html",
+      "blob_sha": "154f3e26cf0139909b189af4bd70d111fff0fd8c",
+      "status": "modified"
+    },
+    {
+      "source": "admin",
+      "source_sha": "a00a9a4af67069b45277cde28f199de4f4733acc",
+      "merge_base": "0ea26679515c0e6a88d123e478c955e2c49fd737",
+      "path": "js/beagu-admin-members-v1.js",
+      "blob_sha": "2ba3978fa1690ff409a0e693d3c4467e90706ffb",
+      "status": "modified"
+    },
+    {
+      "source": "admin",
+      "source_sha": "a00a9a4af67069b45277cde28f199de4f4733acc",
+      "merge_base": "0ea26679515c0e6a88d123e478c955e2c49fd737",
+      "path": "supabase/functions/beagu-admin-members-v1/index.ts",
+      "blob_sha": "0fc0e08f019e6a3f4131373564a565f24474f93e",
+      "status": "modified"
+    },
+    {
+      "source": "release",
+      "source_sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84",
+      "merge_base": "6467b42a14fde343326b40cb251add91e05e2cec",
+      "path": "admin-updates.html",
+      "blob_sha": "259bfec782ade25a15cb17552dd76534d5110f18",
+      "status": "modified"
+    },
+    {
+      "source": "release",
+      "source_sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84",
+      "merge_base": "6467b42a14fde343326b40cb251add91e05e2cec",
+      "path": "js/beagu-admin-updates-v1.js",
+      "blob_sha": "f998be9435c8e3c9c988779eeedf7f2ccd1ac74f",
+      "status": "modified"
+    },
+    {
+      "source": "release",
+      "source_sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84",
+      "merge_base": "6467b42a14fde343326b40cb251add91e05e2cec",
+      "path": "styles/beagu-admin-updates-v1.css",
+      "blob_sha": "3a1308f70fd5e8a976c9652f6dab65311ff1d61f",
+      "status": "modified"
+    },
+    {
+      "source": "release",
+      "source_sha": "bc70acc38038ee69fdc59ec285ae474db58b4e84",
+      "merge_base": "6467b42a14fde343326b40cb251add91e05e2cec",
+      "path": "supabase/functions/beagu-release-manager-v1/index.ts",
+      "blob_sha": "5b1fbd5d2deaa1a9b077d5dd91d1be79bd9078fb",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "admin-updates.html",
+      "blob_sha": "3ab93671a9ba15991dd47e2d7cb9a4e3a4e9ffa8",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "js/beagu-admin-updates-v1.js",
+      "blob_sha": "8a73cea03df071aca9b655afee894f5f2efd886b",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "js/postit-account-v1.js",
+      "blob_sha": "dc7acd81fb7aa85aefa68970bcef006b6db7cd41",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "styles/beagu-admin-updates-v1.css",
+      "blob_sha": "b46f2876fac0fe33fd33eda7612031a6737fe6bd",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-admin-access/index.ts",
+      "blob_sha": "e1bd45a2abd95ae74503cbc2bd3058ad308bcddf",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-admin-dashboard-v1/index.ts",
+      "blob_sha": "a7f17ae86226f6a6098d5a79d535f155667e0c20",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-admin-members-v1/index.ts",
+      "blob_sha": "931ef6ccfff8442b918b7150b3ced5822f2928c4",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-level-api/index.ts",
+      "blob_sha": "562fcaf651a5b274dc5771184e7c52a105c95909",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-postit-api-v1/index.ts",
+      "blob_sha": "af8974f6e8a1224fd835730dcad6d801d32889fa",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-release-manager-v1/index.ts",
+      "blob_sha": "5dd4d869ce5c414b9b53d760afac6274fb635ebb",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "supabase/functions/beagu-telemetry-v2/index.ts",
+      "blob_sha": "191847c0c71de3f9f70a227ecc0be964d5b22728",
+      "status": "modified"
+    },
+    {
+      "source": "isolation",
+      "source_sha": "d1e1fe6c429ce0c648327e30eab47fd1c30c561b",
+      "merge_base": "0ca283cd09cd63520d9ce8e37463bed8d2f65541",
+      "path": "teacher-class-diary-entry.html",
+      "blob_sha": "1ca7104cb0a8ff53600188405451744fdcefeac1",
+      "status": "modified"
+    },
+    {
+      "source": "volley",
+      "source_sha": "e1aa7557d6da61cff48417373e6d30c7d34913e9",
+      "merge_base": "36c68c8394a77a94541a2ad04a83db7242639c0c",
+      "path": "index.html",
+      "blob_sha": "d254180a30be0221dc39be273062fa6ad2c99c4d",
+      "status": "modified"
+    },
+    {
+      "source": "volley",
+      "source_sha": "e1aa7557d6da61cff48417373e6d30c7d34913e9",
+      "merge_base": "36c68c8394a77a94541a2ad04a83db7242639c0c",
+      "path": "teacher-volleyball.html",
+      "blob_sha": "8714f05198c613d610629d732806454aa9680a65",
+      "status": "modified"
+    },
+    {
+      "source": "notice",
+      "source_sha": "64192de346c2f15ec7d6988212fe382f2d7afadb",
+      "merge_base": "73eec3674972f27fe9649aec69cde82942bb18f1",
+      "path": "admin.html",
+      "blob_sha": "eb0fb40fc1b3ec499848ed8dee1cad2d23807f0c",
+      "status": "modified"
+    },
+    {
+      "source": "notice",
+      "source_sha": "64192de346c2f15ec7d6988212fe382f2d7afadb",
+      "merge_base": "73eec3674972f27fe9649aec69cde82942bb18f1",
+      "path": "index.html",
+      "blob_sha": "3a32c3fda5f8423e56be9e18bc32d249c7687e35",
+      "status": "modified"
+    },
+    {
+      "source": "notice",
+      "source_sha": "64192de346c2f15ec7d6988212fe382f2d7afadb",
+      "merge_base": "73eec3674972f27fe9649aec69cde82942bb18f1",
+      "path": "js/beagu-admin-access-v1.js",
+      "blob_sha": "695fa601920cc62fb77f2a4e5839c91d25fb9524",
+      "status": "modified"
+    },
+    {
+      "source": "postit",
+      "source_sha": "99977702eaa4e43fee852fc08891dc57e97843f4",
+      "merge_base": "d5ed0c525b0fb9495032989a39898ebd3b17d03a",
+      "path": "supabase/functions/beagu-postit-api-v1/index.ts",
+      "blob_sha": "09451e5905fdc72c27d6f421ad9c8a54c90c02f4",
+      "status": "modified"
+    },
+    {
+      "source": "pause",
+      "source_sha": "27f96a29923226216c4c7c6b80cca6aa701cf21f",
+      "merge_base": "02f952af2e62b6ad1380b7ad324a1fb5362fdcd2",
+      "path": "challenge.html",
+      "blob_sha": "1210740de339ca3d9529eaef63ee90a647acef4a",
+      "status": "modified"
+    },
+    {
+      "source": "pause",
+      "source_sha": "27f96a29923226216c4c7c6b80cca6aa701cf21f",
+      "merge_base": "02f952af2e62b6ad1380b7ad324a1fb5362fdcd2",
+      "path": "index.html",
+      "blob_sha": "96f71debbe8cffbdfe19ad058800f33e6eeb5b35",
+      "status": "modified"
+    },
+    {
+      "source": "pause",
+      "source_sha": "27f96a29923226216c4c7c6b80cca6aa701cf21f",
+      "merge_base": "02f952af2e62b6ad1380b7ad324a1fb5362fdcd2",
+      "path": "teacher-volleyball.html",
+      "blob_sha": "ff6500a89664bdc50974d42c6198f4a3a0ea0e0f",
+      "status": "modified"
+    },
+    {
+      "source": "desktop",
+      "source_sha": "e484c2767121021feb1f98eae1d7c44be9c5cec3",
+      "merge_base": "5950755c8174788d7bb1fa879be73a15f25d9ae2",
+      "path": "styles/beagu-participation-auth-v2.css",
+      "blob_sha": "1ae57aa23ad546ee2ecbe5b7f0f8cd7dab8126a5",
+      "status": "modified"
+    }
+  ],
+  "external_project_holds": [
+    {
+      "repo": "noam0127/class-diary-visual-novel",
+      "draft_pr": 20,
+      "sha": "34533ea5d094b00064f238654a5203e25a383467",
+      "dependency_pr": 19,
+      "dependency_sha": "8df8e96da713d3b377e2972981f151cf18b52d75",
+      "reason": "private manuscript and unresolved 109/110 acceptance; keep separate from public QA"
+    }
+  ],
+  "backlog": [
+    "new separate game-list navigation",
+    "survey-response password and own-answer correction",
+    "persistent unique code + password login",
+    "2026 actual-response approval and privacy verification",
+    "email signup end-to-end and staging backend/auth/MFA integration"
+  ],
+  "scope": "no production code deployment, no DB migrations; source integration only; conflicts remain explicitly pending"
+}

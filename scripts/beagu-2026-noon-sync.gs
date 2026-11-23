@@ -18,6 +18,7 @@ const BEAGU26 = Object.freeze({
   destinationId: "1I9SXXmOCnyeWP3RjoBHW5Tfvg0RpgR4RjnEVoxZvpp8",
   summaryTab: "학교별_집계_내부",
   holdTab: "학교매칭_보류",
+  verifiedRematchTab: "2026_학교매칭_재검증_1124",
   logTab: "정오_실행로그",
   timezone: "Asia/Seoul",
   firstOfficialResponseDay: "2026-11-01",
@@ -302,7 +303,7 @@ function beagu26ScoreOrReview(code, answer, sourceRow, schoolId, reviewRows) {
     return null;
   }
 }
-function resolveSchool(row,c,schools) {
+function resolveSchool(row,c,schools,verifiedRematches,sourceRow) {
   const schoolName=normalize(row[c.school]);
   const region=regionOf(row[c.region]);
   const officeNames=c.office.map(i=>String(row[i]||"").trim()).filter(Boolean);
@@ -313,6 +314,13 @@ function resolveSchool(row,c,schools) {
     &&normalize(s.school_name)===schoolName
     &&normalizeOffice(s.support_office)===office);
   if(same.length!==1)return {error:same.length===0?"학교 MASTER 미매칭":"동일명 학교 중복",region,office};
+  // Previously audited rows must still match the exact school ID. Never force
+  // a row into a school based only on the review sheet or school name.
+  if(verifiedRematches&&verifiedRematches.has(sourceRow)){
+    const audit=verifiedRematches.get(sourceRow);
+    if(!audit.valid||String(same[0].school_id)!==audit.schoolId)
+      return {error:"재매칭 검증 원본 변경 · 재검토 필요",region,office};
+  }
   // B04 is used for a *review flag*, not as a replacement for the unique
   // region + office + school-name identity match.
   const selectedType=String(row[c.schoolType]||"").match(/(?:공립|국립|사립)/)?.[0]||"";
@@ -320,6 +328,48 @@ function resolveSchool(row,c,schools) {
   const typeConflict=!!selectedType&&!!registeredType&&selectedType!==registeredType;
   return {school:same[0],region,office,typeConflict,selectedType,registeredType};
 }
+
+/**
+ * Link the November 24 private reclassification to BOTH noon pipelines.
+ * The review tab is an audit assertion, NOT a source of forced school IDs.
+ * A changed source row or a mismatching official record stays on hold.
+ * No free-text, Q31, Q51 or individual answers are copied into the audit.
+ */
+function readBeagu2026VerifiedRematches(values,schools){
+  const book=SpreadsheetApp.openById(BEAGU26.destinationId);
+  const sheet=book.getSheetByName(BEAGU26.verifiedRematchTab);
+  if(!sheet)throw Error("2026 재매칭 검증 탭 없음 · 자동 집계 중단");
+  const length=sheet.getLastRow();
+  if(length<2)throw Error("2026 재매칭 검증 목록 비어 있음");
+  const audit=sheet.getRange(1,1,length,7).getDisplayValues();
+  const head=audit[0];
+  if(head[0]!=="원본행"||head[2]!=="최신 학교 MASTER 재분류"||
+     head[3]!=="공식학교ID(정확 일치만)")
+    throw Error("2026 재매칭 검증 탭 열 구조 변경");
+  const cols=questionColumns(values[0]);
+  const verifiedRematches=new Map();
+  let verified=0,stale=0;
+  for(let i=1;i<audit.length;i++){
+    const item=audit[i];
+    if(String(item[2]||"").trim()!=="UNIQUE_EXACT_MATCH_RECHECK")continue;
+    const sourceRow=Number(item[0]),schoolId=String(item[3]||"").trim();
+    if(!Number.isSafeInteger(sourceRow)||sourceRow<2||
+       sourceRow>values.length||!/^[0-9]{7}$/.test(schoolId)||
+       verifiedRematches.has(sourceRow))
+      throw Error("2026 재매칭 검증 탭 중복·부정확 행 번호/학교 ID");
+    const source=values[sourceRow-1];
+    const match=resolveSchool(source,cols,schools);
+    const day=getSubmittedDay(source[0]);
+    const valid=String(item[4]||"").trim()==="원본 기본정보 일치"&&
+      day!==null&&day>=BEAGU26.firstOfficialResponseDay&&
+      String(match.school?.school_id||"")===schoolId&&!match.typeConflict;
+    verifiedRematches.set(sourceRow,{schoolId,valid});
+    if(valid)verified++;else stale++;
+  }
+  Logger.log("2026 재매칭 비공개 사전검증: 유효 "+verified+"건, 원본 변경 "+stale+"건");
+  return {verifiedRematches,verified,stale};
+}
+
 function replaceBody(sheet,rows,columns) {
   const necessary=rows.length+1;
   if(sheet.getMaxRows()<necessary)sheet.insertRowsAfter(sheet.getMaxRows(),necessary-sheet.getMaxRows());
@@ -345,7 +395,7 @@ function refreshBeagu2026Stats(snapshot) {
   let destination;
   try{
     destination=SpreadsheetApp.openById(BEAGU26.destinationId);
-    const {values,schools}=snapshot||readBeagu2026SourceSnapshot();
+    const {values,schools,verifiedRematches}=snapshot||readBeagu2026SourceSnapshot();
     const columns=questionColumns(values[0]);
     const groups=new Map(),holds=[],reviewRows=[];
     for(let i=1;i<values.length;i++){
@@ -356,7 +406,7 @@ function refreshBeagu2026Stats(snapshot) {
       // Never mix pilot/prelaunch and official 2026 survey responses.
       if(submittedDay && submittedDay<BEAGU26.firstOfficialResponseDay){prelaunch++;continue;}
       if(!submittedDay){undated++;unmatched++;holds.push([i+1,"","","","응답 시각 확인 불가","NEEDS_REVIEW"]);continue;}
-      const m=resolveSchool(r,columns,schools);
+      const m=resolveSchool(r,columns,schools,verifiedRematches,i+1);
       if(!m.school){
         holds.push([i+1,String(r[columns.region]||""),columns.office.map(k=>r[k]).filter(Boolean).join("/"),String(r[columns.school]||""),m.error,"NEEDS_REVIEW"]);
         unmatched++;continue;
@@ -447,7 +497,7 @@ function beagu26Selections(value, options, multiple) {
   }
   return found.sort((a,b)=>a-b);
 }
-function beagu26BuildResults(values, schools, catalog) {
+function beagu26BuildResults(values, schools, catalog, verifiedRematches) {
   const headers=values[0], c=questionColumns(headers), specs=[];
   for(const id of Object.keys(catalog)){
     const meta=catalog[id], hits=[];
@@ -474,7 +524,7 @@ function beagu26BuildResults(values, schools, catalog) {
     if(day<'2026-11-01'){totals.prelaunch_rows++;continue;}
     if(day>'2026-12-31'){totals.undated_rows++;continue;}
     totals.official_rows++;
-    const match=resolveSchool(r,c,schools);
+    const match=resolveSchool(r,c,schools,verifiedRematches,sourceIndex+1);
     if(!match.school){totals.unmatched_rows++;continue;}
     const id=String(match.school.school_id);
     if(!groups.has(id))groups.set(id,{school_id:id,school_response_rows:0,school_match_status:'EXACT_REGION_OFFICE_NAME',
@@ -523,14 +573,16 @@ function readBeagu2026SourceSnapshot() {
   const values=source.getRange(1,1,Math.max(1,rowCount),last+1).getDisplayValues();
   const schools=fetchSchools();
   if(!schools.length)throw Error('학교 MASTER 비어 있음');
-  return {startedAt,values,schools};
+  const audit=readBeagu2026VerifiedRematches(values,schools);
+  return {startedAt,values,schools,verifiedRematches:audit.verifiedRematches,
+    rematchVerified:audit.verified,rematchStale:audit.stale};
 }
 function refreshBeagu2026QuestionResults(snapshot) {
   const lock=snapshot?null:LockService.getScriptLock();
   if(lock&&!lock.tryLock(30000))throw Error('질문별 집계 실행 중');
   try {
-    const {startedAt,values,schools}=snapshot||readBeagu2026SourceSnapshot();
-    const {reviewRows, ...payload}=beagu26BuildResults(values,schools,BEAGU26_QUESTION_CATALOG);
+    const {startedAt,values,schools,verifiedRematches}=snapshot||readBeagu2026SourceSnapshot();
+    const {reviewRows, ...payload}=beagu26BuildResults(values,schools,BEAGU26_QUESTION_CATALOG,verifiedRematches);
     payload.snapshot_at=startedAt;
     const master=SpreadsheetApp.openById(BEAGU26.destinationId);
     const tab=master.getSheetByName('2026_문항별_검수대기')||master.insertSheet('2026_문항별_검수대기');

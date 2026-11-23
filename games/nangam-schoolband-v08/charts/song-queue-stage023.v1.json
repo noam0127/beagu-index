@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "scope": "playtest_only",
+  "rights_requests_enabled": false,
+  "billing_enabled": false,
+  "listen_testing_enabled": false,
+  "records": [
+    {
+      "song_id": "original-shining-our-school",
+      "school_id": null,
+      "kind": "original_internal",
+      "stage": "trial_available",
+      "source_sha": "68fee4141a048df7e421af32775827d4a5482c64",
+      "chart_id": "creative-anthem-rhythm-v1.0.0",
+      "review": {
+        "data_checked": true,
+        "approved_for_trial": true
+      },
+      "audit": [
+        {
+          "seq": 1,
+          "event": "submit",
+          "date": "2026-11-23"
+        },
+        {
+          "seq": 2,
+          "event": "start_review",
+          "date": "2026-11-23"
+        },
+        {
+          "seq": 3,
+          "event": "approve_private",
+          "date": "2026-11-23"
+        },
+        {
+          "seq": 4,
+          "event": "release_trial",
+          "date": "2026-11-23"
+        }
+      ]
+    },
+    {
+      "song_id": "original-meter-shift-exercise-014",
+      "school_id": null,
+      "kind": "original_internal",
+      "stage": "private_ready",
+      "source_sha": "f638dcda79eadad65dead8318a94dfaa16f4817d",
+      "chart_id": null,
+      "review": {
+        "data_checked": true,
+        "approved_for_trial": false
+      },
+      "audit": [
+        {
+          "seq": 1,
+          "event": "submit",
+          "date": "2026-11-23"
+        },
+        {
+          "seq": 2,
+          "event": "start_review",
+          "date": "2026-11-23"
+        },
+        {
+          "seq": 3,
+          "event": "approve_private",
+          "date": "2026-11-23"
+        }
+      ]
+    }
+  ]
+}
