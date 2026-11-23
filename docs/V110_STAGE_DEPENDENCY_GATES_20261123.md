@@ -80,3 +80,9 @@
 - [일회성 양성 HTTP #45092587758](https://github.com/noam0127/beagu-index/actions/runs/45092587758) PASS: 가상 성능 기록 1건, 20초 안의 중복 측정 거부. 가상 데이터 세 종류는 검증 뒤 삭제, **0건 재확인**.
 - Supabase Security Advisor **WARN 0**, INFO `rls_enabled_no_policy` 61건. 기존 `SECURITY DEFINER`의 `anon`·`authenticated` 실행 경고 2개는 시험 DB에서 해결. **운영 DB의 동일 권한은 변경하지 않음**.
 - [상세 검증 문서](https://github.com/noam0127/beagu-index/blob/fix/v110-staging-edited-api-recovery-20261123/docs/V110_STAGE_PERFORMANCE_RPC_PRIVACY_RECOVERY_20261123.md). 정상 브라우저 PC·모바일·성능 수치 대시보드 전체 E2E는 미완료, 5개 기능 잠금 유지.
+
+## PC·모바일 브라우저 인증 + 성능 통합검사 후속
+
+- [실제 로컬 Chromium #45093475443](https://github.com/noam0127/beagu-index/actions/runs/45093475443) **전체 PASS**: desktop/mobile Lv0→Lv1→Lv2 **모의 서버 응답**, 페이지 전환·로그아웃·로그인 UI, 가상 성능 계측 Edge 요청 형식과 운영 URL 차단. 실제 Lv3 계정·MFA E2E를 대신하지 않음.
+- 같은 CI에서 **실제 시험 Supabase의 무인증 및 가짜 참여세션 HTTP 접근 거부** PASS: Level API 401·Post-it writer/학교정보 403. 모든 요청은 부정 검증, 실자료·이메일·권한변경·DB 쓰기 없음.
+- Render Blueprint는 활성 개발 브랜치로 맞췄지만 `autoDeployTrigger: off`, 실제 Render 배포 SHA/호스트/CORS는 미검증. **운영 출시 NO-GO + 잠금 5개 유지**.
