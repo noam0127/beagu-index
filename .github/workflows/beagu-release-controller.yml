@@ -1,6 +1,6 @@
 name: BAEGU release controller (admin approval)
 # Explicit staging-only request 2026-11-22: wake existing signed OIDC release worker; production SHA remains pinned.
-# GitHub push wake-up for the queued admin-approved staging release.
+# Emergency fix: verified latest main SHA, admin-recorded production deploy; stale staging cannot replace it.
 # The worker still claims only server-authorized jobs and cannot promote to production.
 on:
   schedule:
@@ -38,6 +38,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Validate Lv2 and 17-region emergency release
+        run: node tests/lv2-price-region-20261123.mjs
       - name: Claim signed release job (GitHub Actions OIDC)
         id: job
         run: python3 scripts/release-manager/worker.py next

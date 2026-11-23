@@ -30,6 +30,7 @@
   if(!response.ok){
    const messages={
     release_in_progress:"다른 배포가 진행 중입니다. 완료 후 다시 시도하세요.",
+    staging_is_stale:"현재 운영 웹보다 오래된 시험 버전으로는 배포할 수 없습니다.",
     no_changes_since_production:"현재 운영 버전과 비교해 변경된 파일이 없습니다. 최소 1개를 수정하세요.",
     release_bootstrap_pending:"배포 관리 시스템의 최초 배포가 아직 끝나지 않았습니다.",
     register_version_first:"먼저 새 업데이트의 버전과 변경 내용을 등록하세요.",

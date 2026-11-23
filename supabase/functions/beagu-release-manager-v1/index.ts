@@ -170,6 +170,12 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  }else if(action==="prod_apply"){
   if(!s.staging_sha||!SHA.test(s.staging_sha))return error("staging_required",409,origin);
   if(s.staging_sha===s.production_sha)return error("already_on_production",409,origin);
+  // Only allow a staging build that contains all deployed production changes.
+  if(s.production_sha&&SHA.test(s.production_sha)){
+   const delta=await github("/compare/"+s.production_sha+"..."+s.staging_sha);
+   if(!["ahead","identical"].includes(String(delta.status||"")))
+    return error("staging_is_stale",409,origin);
+  }
   if(input.confirmed_tested!==true)return error("test_confirmation_required",400,origin);
   job={action,target:"production",from_sha:s.production_sha,to_sha:s.staging_sha,
    version:s.staging_version||"시험 승인 버전",summary:"관리자 시험 웹 확인 후 운영 적용",created_by:userId};
