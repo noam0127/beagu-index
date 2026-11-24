@@ -37,6 +37,7 @@
     if(accountStatus)accountStatus.textContent=level==='checking'?'인증 상태 확인 중':verified?'현재 인증: Lv.'+level:'현재 인증: Lv.0';
     badge.classList.toggle('is-authenticated',verified);
     panel.setAttribute('data-auth-level',verified?String(level):'0');
+    panel.setAttribute('data-challenge-verified-level',verified?String(level):'0');
   }
   toggle.addEventListener('click',()=>{
     const reveal=input.type==='password';
