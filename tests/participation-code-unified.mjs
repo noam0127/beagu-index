@@ -35,7 +35,7 @@ assert.match(read('index.html'),/button\s*\{\s*width:\s*100%/);
 assert.match(css,/#beaguParticipationToggle\s*\{[^}]*width:58px!important/s);
 assert.match(css,/#beaguParticipationCode\s*\{[^}]*padding-right:78px/s);
 
-assert.match(ui,/form\.hidden=level>=2/,'Lv1 keeps the upgrade code field visible');
+assert.match(ui,/form\.hidden=level>=2/,'Lv1 keeps the legacy transition code field visible');
 assert.match(ui,/lastLevel===1&&level<2/,'Lv1 preserved on unearned code');
 assert.match(css,/\.beagu-participation-host \.beagu-participation-legacy/);
 assert.ok(!css.includes('display:contents'));
@@ -139,8 +139,8 @@ async function exercise(level){
  assert.equal(nodes.get('#beaguParticipationForm').hidden,level===2);
  assert.ok(events.includes('beagu:participation-authenticated'));
  if(level===1){
-  assert.equal(nodes.get('#beaguParticipationCodeLabel').textContent,'Lv.2 참여코드');
-  assert.equal(nodes.get('#beaguParticipationSubmit').textContent,'Lv.2 인증하기');
+  assert.equal(nodes.get('#beaguParticipationCodeLabel').textContent,'기존 Lv.2 고유번호 (전환용)');
+  assert.equal(nodes.get('#beaguParticipationSubmit').textContent,'기존 권한 확인');
   issuedToken='c'.repeat(64);issuedLevel=1;
   nodes.get('#beaguParticipationCode').value='NOTUPGRADED12';
   await nodes.get('#beaguParticipationForm').dispatch('submit',{preventDefault(){}});

@@ -23,7 +23,7 @@ $("accountSignup").onsubmit=e=>{e.preventDefault();const f=e.currentTarget;const
  if(typeof password!=="string"||Array.from(password).length<4){msg("비밀번호를 4자 이상 입력하세요.");return;}
  if(password!==confirmation){msg("비밀번호가 일치하지 않습니다.");return;}
  const id=String(data.get("code")).trim(),recovery=newRecovery();clearCard();
- try{const r=await api("signup",{account_id:id,new_recovery:recovery,code:String(data.get("code")).trim(),password,deviceSecret:device()});if(r.account_id!==id||![1,2].includes(r.level))throw Error("가입 결과 확인 실패");showCard(id,recovery,r);$("accountLogin").elements.account_id.value=id;msg("가입 완료. 회원증을 저장한 뒤 로그인하세요.");}
+ try{const r=await api("signup",{account_id:id,new_recovery:recovery,code:String(data.get("code")).trim(),password,deviceSecret:device()});if(r.account_id!==id||![1,2].includes(r.level))throw Error("가입 결과 확인 실패");showCard(id,recovery,r);$("accountLogin").elements.account_id.value=id;try{install(await api("password_login",{account_id:id,password}));msg("가입 및 자동 로그인 완료. 회원증을 저장하세요.");}catch{msg("가입 완료. 회원증을 저장한 뒤 직접 로그인하세요.");}}
  catch(e){if(!e.rejected){showCard(id,recovery,null);$("accountLogin").elements.account_id.value=id;}throw e;}
 });};
 $("accountLogin").onsubmit=e=>{e.preventDefault();const f=e.currentTarget;const data=new FormData(f);const password=data.get("password");f.elements.password.value="";void exclusive(async()=>install(await api("password_login",{account_id:String(data.get("account_id")).trim(),password})));};

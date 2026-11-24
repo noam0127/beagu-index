@@ -48,6 +48,7 @@ const server=http.createServer(async(req,res)=>{const p=new URL(req.url,origin).
    await page.waitForFunction(()=>document.querySelector('#accountMessage').textContent.includes('일치하지'));assert.equal(requests,0);
    await form('accountSignup','password').fill(password);await form('accountSignup','password_confirm').fill(password);await submit('accountSignup');
    await page.locator('#issuedAccount').waitFor({state:'visible'});assert.equal(await page.locator('#cardAccount').innerText(),account);assert.equal(await page.locator('#cardLv2').innerText(),'Lv.2 비활성');
+   await page.locator('#accountSummary').waitFor({state:'visible'});assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-account-session-v1')),token);
    const old=await page.locator('#cardRecovery').innerText();assert.match(old,/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{5}$/);assert.equal(old.replaceAll('-',''),recovery);
    const downloadEvent=page.waitForEvent('download');await page.locator('#accountSaveCard').click();const download=await downloadEvent;
    const data=await fs.readFile(await download.path(),'utf8');assert.ok(data.includes(account)&&data.includes(old)&&data.includes('Lv.2 비활성'));assert.ok(!data.includes(password));

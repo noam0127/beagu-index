@@ -32,7 +32,7 @@ const submit=async(id,data)=>{const f=node(id);f.data=data;f.onsubmit({preventDe
  assert.equal(node("accountSignup").elements.password_confirm.value,"");assert.equal("password_confirm" in calls[0].body,false);
  assert.equal(node("accountLogin").elements.account_id.value,account);
  assert.equal(node("accountSignup").elements.password.value,"");
- assert.equal(node("cardLv2").textContent,"Lv.2 비활성");
+ assert.equal(node("cardLv2").textContent,"Lv.2 비활성");assert.equal(store.get("beagu-account-session-v1"),token);
  assert.equal(node("cardRecovery").textContent.replaceAll("-",""),recovery);
  node("accountSaveCard").onclick();assert.ok(fileText.includes(account)&&fileText.includes("Lv.2 비활성")&&fileText.includes(node("cardRecovery").textContent));
  node("accountHideCard").onclick();assert.equal(node("cardRecovery").textContent,"");

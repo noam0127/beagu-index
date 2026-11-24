@@ -1,6 +1,6 @@
 /* One reusable Lv1/Lv2 participation-code control on every public page.
  * Server is authoritative: client-side levels never authorize protected data.
- * No account, social provider login, or higher-tier control is introduced here. */
+ * Lv1 participation remains independent from anonymous account login. */
 (() => {
  'use strict';
  try { if(window.self !== window.top) return; } catch (_) { return; }
@@ -68,8 +68,8 @@
   lastLevel=level;
   const text=labelFor(level);
   badge.textContent='Lv.'+level;
-  badge.setAttribute('aria-label',level===1?'Lv.1 인증 완료 · Lv.2 참여코드 입력':level?'인증 정보 및 해제 · '+text:'참여코드 입력');
-  badge.title=level===1?'Lv.2 참여코드 입력 또는 인증 해제':level?'인증 정보 확인 및 인증 해제':'참여코드 입력';
+  badge.setAttribute('aria-label',level===1?'Lv.1 인증 완료 · 챌린지':level?'인증 정보 및 해제 · '+text:'참여코드 입력');
+  badge.title=level===1?'Lv.1 참여 정보 확인 또는 인증 해제':level?'인증 정보 확인 및 인증 해제':'참여코드 입력';
   badge.classList.toggle('beagu-participation-earned',level>=2);
   for(const host of hosts){
    host.dataset.beaguParticipationLevel=String(level);
@@ -79,7 +79,7 @@
    if(action)action.hidden=level>=1;
    if(description)description.hidden=level>=1;
    if(state){
-    const stateText=level===1?text+' · Lv.2 참여코드 입력':text;
+    const stateText=level===1?text+' · Lv.2 도전하기':text;
     state.textContent=stateText;
     state.setAttribute('aria-label',stateText);
     state.hidden=level<1;
@@ -93,14 +93,14 @@
   for(const item of document.querySelectorAll('[data-beagu-participation-game-trigger]'))
    item.hidden=level>=1;
   detail.hidden=level<1;
-  // Lv.1 must retain a code field so an earned Lv.2 code can upgrade in place.
+  // Retain the personal code field only as a transition path for existing earned readers.
   form.hidden=level>=2;
   heading.textContent=level===1?'레벨2에 도전하세요!':level>=2?'참여 인증 정보':'참여코드 입력';
-  description.textContent=level===1?'Lv.2 참여코드를 입력하면 공시가격 등 더 많은 학교정보를 확인할 수 있습니다. 기존 Lv.1 인증은 유지됩니다.':
-   level>=2?'Lv.2 인증이 완료되었습니다.':'발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.';
-  label.textContent=level===1?'Lv.2 참여코드':'참여코드';
-  code.placeholder=level===1?'Lv.2 참여코드를 입력하세요':'참여코드를 입력하세요';
-  submit.textContent=level===1?'Lv.2 인증하기':'레벨1 인증';
+  description.textContent=level===1?'Lv.1은 회원가입 없이 이용할 수 있습니다. 신규 Lv.2는 유효 추천 1건과 익명 계정 로그인으로 달성하세요. 기존 Lv.2 이용자는 전환용 개인 고유번호를 입력할 수 있습니다.':
+   level>=2?'Lv.2 열람 권한이 확인되었습니다. 신규 Lv.2는 익명 계정 로그인이 필요합니다.':'발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.';
+  label.textContent=level===1?'기존 Lv.2 고유번호 (전환용)':'참여코드';
+  code.placeholder=level===1?'기존 Lv.2 개인 고유번호':'참여코드를 입력하세요';
+  submit.textContent=level===1?'기존 권한 확인':'레벨1 인증';
   if(level>=1){
    tierText.textContent=text;
    expiryText.textContent=expiresAt?
@@ -290,19 +290,19 @@
  const panel=document.createElement('section');panel.id='beaguAccountEntry';
  panel.innerHTML=`
  <h2 id="beaguAccountEntryTitle">배구지수 로그인</h2>
- <p id="beaguEntryCopy">나의 고유번호가 로그인 아이디입니다.</p>
+ <p id="beaguEntryCopy">나의 고유번호가 로그인 아이디입니다. 공통 참여코드와는 다릅니다.</p>
  <div id="beaguEntryTabs" class="beagu-account-entry-tabs"><button type="button" id="beaguEntryLoginTab">로그인</button><button type="button" id="beaguEntrySignupTab">회원가입</button></div>
  <form id="beaguEntryForm" method="post">
  <label for="beaguEntryId">로그인 아이디 (나의 고유번호)</label><input id="beaguEntryId" autocomplete="username" maxlength="120" minlength="8" required spellcheck="false" autocapitalize="off">
  <label for="beaguEntryPassword">비밀번호</label><input id="beaguEntryPassword" type="password" autocomplete="current-password" minlength="4" maxlength="256" required>
  <div id="beaguEntryConfirmRow" hidden><label for="beaguEntryConfirm">비밀번호 확인</label><input id="beaguEntryConfirm" type="password" autocomplete="new-password" minlength="4" maxlength="256"></div>
- <p id="beaguEntryHelp" hidden>최초 참여 기기에서 가입하세요. 비밀번호는 4자 이상, 추측하기 어려운 긴 비밀번호를 권장합니다.</p>
+ <p id="beaguEntryHelp" hidden>Lv.1은 가입 선택, 신규 Lv.2는 유효 추천 1건과 계정 로그인이 모두 필요합니다. 최초 참여 기기에서 가입하세요. 비밀번호는 4자 이상, 추측하기 어려운 긴 비밀번호를 권장합니다.</p>
  <button id="beaguEntrySubmit" type="submit">로그인</button></form>
  <div id="beaguEntryOwner" hidden><p>익명 계정으로 로그인했습니다.</p><a href="account.html">나의 계정 관리</a><button id="beaguEntryLogout" type="button">로그아웃</button></div>
  <section id="beaguEntryCard" hidden><h3>나의 익명 회원증</h3><strong id="beaguEntryCardId"></strong><p id="beaguEntryCardLevel"></p><p>일회용 복구코드</p><code id="beaguEntryRecovery"></code><p>다른 사람에게 공유하지 마세요. 비밀번호와 복구코드를 모두 잃으면 운영자도 복구할 수 없습니다.</p><button type="button" id="beaguEntrySave">회원증 저장 (.txt)</button><button type="button" id="beaguEntryContinue">저장 완료 · 계속</button></section>
  <p id="beaguEntryMessage" role="status" aria-live="polite"></p>
  <nav id="beaguEntryLinks"><a href="account.html#accountRecover">비밀번호 복구</a><a href="challenge.html">챌린지에서 회원가입</a><a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a></nav>
- <button type="button" id="beaguEntryLegacy">기존 참여코드로 자료 열람하기</button><button type="button" id="beaguEntryBack" hidden>로그인 화면으로 돌아가기</button>`;
+ <button type="button" id="beaguEntryLegacy">Lv.1 참여코드 인증 (회원가입 없이)</button><button type="button" id="beaguEntryBack" hidden>익명 계정 로그인 · 회원가입</button>`;
  dialog.append(panel);
  const header=document.createElement('button');header.id='beaguAccountHeader';header.type='button';badge.after(header);
  const footer=document.createElement('p');footer.className='beagu-anonymous-notice';
@@ -317,14 +317,14 @@
   const logged=Boolean(own())&&ownerToken===own();
   header.textContent=logged?'나의 계정':'로그인';
   if(join){const ready=challengeToken===read(KEY)&&idPattern.test(challengeCode)&&tokenPattern.test(localDevice());join.hidden=logged||!ready;join.disabled=!ready||busy;if(joinStatus)joinStatus.textContent=logged?'나의 고유번호가 로그인 아이디입니다. 계정 로그인 완료.':ready?'나의 고유번호가 로그인 아이디입니다. 비밀번호만 설정해 계정을 만드세요.':'나의 고유번호가 로그인 아이디입니다. 최초 참여 기기에서 가입하세요.';}
-  for(const b of document.querySelectorAll('[data-beagu-participation-trigger],[data-beagu-participation-game-trigger]'))b.textContent='로그인';
+  for(const b of document.querySelectorAll('[data-beagu-participation-trigger],[data-beagu-participation-game-trigger]'))b.textContent='참여코드 입력';
  }
  function show(next,prefill=''){
   if(busy||card)return;
   mode=next;clearFields();msg.textContent='';
   const legacy=next==='legacy',signup=next==='signup',owner=next==='owner';
   overlay.dataset.entryMode=legacy?'legacy':'account';
-  dialog.setAttribute('aria-labelledby',legacy?'beaguParticipationTitle':'beaguAccountEntryTitle');
+  dialog.setAttribute('aria-labelledby',legacy?'beaguParticipationTitle':'beaguAccountEntryTitle');dialog.setAttribute('aria-describedby',legacy?'beaguParticipationDescription':'beaguEntryCopy');
   $('beaguEntryBack').hidden=!legacy;
   $('beaguAccountEntryTitle').hidden=legacy;$('beaguEntryCopy').hidden=legacy;
   $('beaguEntryTabs').hidden=legacy||owner;$('beaguEntryLinks').hidden=legacy||owner;
@@ -337,7 +337,7 @@
   $('beaguAccountEntryTitle').textContent=owner?'나의 계정':signup?'익명 회원가입':'배구지수 로그인';
   $('beaguEntryLoginTab').setAttribute('aria-pressed',String(!signup));$('beaguEntrySignupTab').setAttribute('aria-pressed',String(signup));
   if(prefill){code.value=prefill;code.readOnly=true;}
-  if(!overlay.hidden&&!legacy)(owner?$('beaguEntryLogout'):prefill?pw:code).focus();
+  if(!overlay.hidden){if(legacy){const field=$('beaguParticipationCode');if(field&&!$('beaguParticipationForm').hidden)field.focus();else $('beaguParticipationLogout')?.focus();}else(owner?$('beaguEntryLogout'):prefill?pw:code).focus();}
  }
  function open(next,prefill=''){window.dispatchEvent(new Event('beagu:participation-open'));show(next,prefill);}
  async function api(action,payload={},token=''){
@@ -349,7 +349,8 @@
   if(!tokenPattern.test(result.token||'')||result.account_id!==id||![1,2].includes(result.level))throw Error('INVALID_SESSION');
   const response=await fetch(base+'beagu-level-api',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Beagu-Session':result.token},body:JSON.stringify({action:'verify'})});
   const checked=await response.json();
-  if(!response.ok||Number(checked.level)!==result.level)throw Error('VERIFY_FAILED');
+  if(!response.ok||![1,2].includes(Number(checked.level)))throw Error('VERIFY_FAILED');
+  result.level=Number(checked.level);result.lv2_active=result.level===2;
   const previous=read(KEY),previousOwn=read(OWN);
   try{sessionStorage.setItem(KEY,result.token);sessionStorage.setItem(OWN,result.token);}
   catch(e){try{previous?sessionStorage.setItem(KEY,previous):sessionStorage.removeItem(KEY);previousOwn?sessionStorage.setItem(OWN,previousOwn):sessionStorage.removeItem(OWN);}catch{}throw e;}
@@ -365,7 +366,7 @@
   $('beaguEntryCard').hidden=false;$('beaguEntryCardId').textContent=id;$('beaguEntryCardLevel').textContent=card.known?(card.active?'Lv.2 활성':'Lv.2 비활성'):'Lv.2 확인 필요';
   $('beaguEntryRecovery').textContent=recovery.slice(0,4)+'-'+recovery.slice(4,8)+'-'+recovery.slice(8);$('beaguEntryContinue').disabled=true;
  }
- window.addEventListener('beagu:participation-dialog-opened',()=>show(own()&&ownerToken===own()?'owner':'login'));
+ window.addEventListener('beagu:participation-dialog-opened',()=>show(own()&&ownerToken===own()?'owner':'legacy'));
  window.addEventListener('beagu:participation-dialog-closed',()=>{clearFields();if(!card)msg.textContent='';});
  window.addEventListener('beagu:participation-before-close',e=>{if(busy||card){e.preventDefault();msg.textContent=busy?'처리 중입니다.':'회원증을 저장하고 계속 버튼을 눌러주세요.';}});
  header.addEventListener('click',()=>open(own()&&ownerToken===own()?'owner':'login'));

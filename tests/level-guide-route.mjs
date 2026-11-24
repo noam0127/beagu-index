@@ -9,7 +9,7 @@ assert.match(page,/id="beaguLevelState"/);
 assert.match(page,/유효한 추천 설문 1건/,'Only earned referrals qualify for Lv2');
 assert.match(page,/href="challenge.html">Lv2 달성하기/,'Earn challenge link visible');
 assert.match(page,/href="search.html">참여코드 입력/,'Lv1 unified code input route');
-assert.match(page,/회원가입이나 로그인이 필요하지 않아요/);
+assert.match(page,/회원가입이나 로그인이 필요하지 않아요/);assert.match(page,/유효한 추천 설문 1건과 익명 계정 생성·로그인/);
 assert.doesNotMatch(page,/정식 계정 준비중|정식 계정 생성|Lv\.2\(임시\)|Lv\.2\(진\)/);
 assert.doesNotMatch(css,/pointer-events:none|cursor:not-allowed/,'Lv2 challenge link must remain enabled');
 assert.match(css,/@media\(max-width:700px\)/);
