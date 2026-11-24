@@ -11,7 +11,7 @@ async function api(action,fields={},auth=false){
  const result=await res.json();if(!res.ok)throw Error("인증 또는 계정 확인에 실패했습니다. 원래 기기와 입력값을 확인하세요.");return result;
 }
 async function exclusive(fn){if(busy)return;busy=true;const controls=[...document.querySelectorAll("button")];controls.forEach(b=>b.disabled=true);try{await fn()}catch(e){msg(e.message||"처리 실패")}finally{busy=false;controls.forEach(b=>b.disabled=false);}}
-function renderNickname(r){const n=$("accountNickname");n.hidden=!/^[Il|ǀ∣❘]{7}$/.test(r.nickname||"");n.textContent=n.hidden?"":"자동 바코드 닉네임: "+r.nickname;}
+function renderNickname(r){const n=$("accountNickname");n.hidden=!/^[Il|ǀ❘ıɪ│┃]{10}$/.test(r.nickname||"");n.textContent=n.hidden?"":"자동 바코드 닉네임: "+r.nickname;}
 function install(r){if(!/^[a-f0-9]{64}$/.test(r.token)||![1,2].includes(r.level))throw Error("인증 실패");sessionStorage.setItem(own,r.token);sessionStorage.setItem(key,r.token);renderNickname(r);msg(r.formal?"정식 계정 인증 완료 · 자료 열람 Lv.2":"가계정 로그인 완료 · Lv."+r.level);}
 $("accountSignup").onsubmit=e=>{e.preventDefault();const f=e.currentTarget;const data=new FormData(f);const password=data.get("password");f.elements.password.value="";void exclusive(async()=>{
  const r=await api("signup",{code:String(data.get("code")).trim(),password,deviceSecret:device()});
