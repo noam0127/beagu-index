@@ -22,10 +22,14 @@ class Fake:
     def request(self,host,method,path,headers,body=None):
         self.calls.append(method)
         u=urlsplit(path)
-        if method=="POST":return 200,{"Location":"https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&upload_id=fixture"},b""
-        if method=="PUT":
-            assert body==self.raw
+        if method=="POST":
+            expected,ctype=r.multipart(self.folder,self.raw)
+            assert parse_qs(u.query)=={"uploadType":["multipart"],"fields":[d.FIELDS]}
+            assert body==expected and headers["Content-Type"]==ctype
+            assert headers["Content-Length"]==str(len(body))
+            assert self.calls.count("POST")==1
             return resp({"id":FILE})
+        if method=="PUT":raise AssertionError("resumable upload not permitted")
         if u.path.endswith("/permissions"):return resp({"permissions":[{"id":C["owner_permission_id"],"type":"user","role":"owner"}]})
         if parse_qs(u.query)=={"alt":["media"]}:
             self.downloaded=b"x"*len(self.raw) if self.bad else self.raw
@@ -59,6 +63,27 @@ class Rehearsal(unittest.TestCase):
         self.assertEqual(r.error_code(ValueError("drive_upload_readback_mismatch")),"drive_upload_readback_mismatch")
         self.assertEqual(r.error_code(ValueError("untrusted secret payload")),"unclassified_error")
         self.assertEqual(r.error_code(OSError("private path")),"local_io_error")
+    def test_multipart_real_transport_and_no_retry(self):
+        raw=v.MAGIC+b"fixture"
+        body,ctype=r.multipart(C["folder_id"],raw)
+        calls=[]
+        class Response:
+            status=200
+            def read(self,n):return v.canonical({"id":FILE})
+        class Connection:
+            def __init__(self,host,**kw):self.host=host
+            def request(self,method,path,body=None,headers=None):
+                calls.append((self.host,method,path))
+                assert body.endswith(b"--\r\n") and raw in body
+            def getresponse(self):return Response()
+            def close(self):pass
+        t=r.FixtureTransport(C["folder_id"],raw,Connection)
+        path=d.UPLOAD+"?"+r.urlencode({"uploadType":"multipart","fields":d.FIELDS})
+        headers={"Content-Type":ctype,"Content-Length":str(len(body))}
+        self.assertEqual(t.request(d.HOST,"POST",path,headers,body)[0],200)
+        self.assertEqual(t.file_id,FILE)
+        with self.assertRaises(ValueError):t.request(d.HOST,"POST",path,headers,body)
+        self.assertEqual(len(calls),1)
     def test_real_transport_denies_unrelated_effects(self):
         def forbidden(*a,**k):raise AssertionError("network attempted")
         t=r.FixtureTransport(C["folder_id"],v.MAGIC+b"fixture",connection=forbidden)

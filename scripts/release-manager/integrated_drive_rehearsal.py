@@ -2,7 +2,7 @@
 
 Generate the only accepted payload internally: a tiny SQLite fixture. A fresh
 test-only encryption key is used, not the retained production-intended key.
-Only one create session is allowed per invocation. No update/delete/retry.
+Only one multipart create is allowed per invocation. No update/delete/retry.
 """
 import argparse
 import http.client
@@ -13,7 +13,7 @@ import sqlite3
 import ssl
 import tempfile
 import uuid
-from urllib.parse import urlsplit,parse_qs
+from urllib.parse import urlsplit,parse_qs,urlencode
 import integrated_drive_setup as setup
 import integrated_drive_checkpoint as drive
 import integrated_vault as vault
@@ -24,7 +24,7 @@ ROWS=((1,"synthetic-a",7),(2,"synthetic-b",12),(3,"synthetic-c",0))
 KEY_ID="drive-synthetic-rehearsal-v1"
 MAX_FIXTURE=512*1024
 # Only static internal error codes may be emitted. Never echo exception text.
-SAFE_ERRORS=frozenset(["credential_inside_checkout_or_link","credential_size_changed","drive_checkpoint_changed","drive_folder_not_writable","drive_invalid_upload_session","drive_live_transport_disabled","drive_metadata_unconfirmed","drive_not_folder","drive_not_private","drive_owner_mismatch","drive_permissions_not_private","drive_upload_id_missing","drive_upload_metadata_mismatch","drive_upload_outcome_uncertain","drive_upload_readback_mismatch","drive_upload_session_unconfirmed","duplicate_vault_key","explicit_fixture_upload_required","fixture_create_denied","fixture_endpoint_denied","fixture_integrity_failure","fixture_network_or_outcome_uncertain","fixture_object_sha256","fixture_put_denied","fixture_readback_repeated","fixture_remote_bytes_missing","fixture_response_too_large","fixture_restore_mismatch","fixture_restore_verified","fixture_rows","fixture_rows_changed","fixture_too_large","fixture_verified","invalid_drive_file_id","invalid_drive_metadata","invalid_drive_path","invalid_drive_pins","invalid_drive_token","invalid_fixture_transport","invalid_key_descriptor","invalid_oauth_access","invalid_oauth_client","invalid_oauth_credential","invalid_oauth_response","invalid_private_oauth_config","invalid_release_pins","invalid_vault_fingerprint","invalid_vault_format","invalid_vault_header","invalid_vault_key","invalid_vault_key_length","invalid_vault_manifest","invalid_vault_manifest_size","invalid_vault_payload","invalid_vault_pin","invalid_vault_scope","missing_independent_vault_pin","oauth_config_required","oauth_refresh_denied","oauth_scope_or_expiry_not_verified","oauth_scope_verified","setup_endpoint_denied","setup_network_unavailable","setup_ready","setup_response_too_large","stale_or_tampered_vault","unsafe_credential_directory","unsafe_credential_file","unsafe_key_descriptor","unsafe_vault_directory","unsafe_vault_object","vault_authentication_failed","vault_checkpoint_mismatch","vault_dump_integrity_failure","vault_header_mismatch","vault_header_too_large","vault_manifest_pin_mismatch","vault_manifest_too_large","vault_object_too_large","vault_release_mismatch","vault_size_mismatch"])
+SAFE_ERRORS=frozenset(["fixture_boundary_collision","credential_inside_checkout_or_link","credential_size_changed","drive_checkpoint_changed","drive_folder_not_writable","drive_invalid_upload_session","drive_live_transport_disabled","drive_metadata_unconfirmed","drive_not_folder","drive_not_private","drive_owner_mismatch","drive_permissions_not_private","drive_upload_id_missing","drive_upload_metadata_mismatch","drive_upload_outcome_uncertain","drive_upload_readback_mismatch","drive_upload_session_unconfirmed","duplicate_vault_key","explicit_fixture_upload_required","fixture_create_denied","fixture_endpoint_denied","fixture_integrity_failure","fixture_network_or_outcome_uncertain","fixture_object_sha256","fixture_put_denied","fixture_readback_repeated","fixture_remote_bytes_missing","fixture_response_too_large","fixture_restore_mismatch","fixture_restore_verified","fixture_rows","fixture_rows_changed","fixture_too_large","fixture_verified","invalid_drive_file_id","invalid_drive_metadata","invalid_drive_path","invalid_drive_pins","invalid_drive_token","invalid_fixture_transport","invalid_key_descriptor","invalid_oauth_access","invalid_oauth_client","invalid_oauth_credential","invalid_oauth_response","invalid_private_oauth_config","invalid_release_pins","invalid_vault_fingerprint","invalid_vault_format","invalid_vault_header","invalid_vault_key","invalid_vault_key_length","invalid_vault_manifest","invalid_vault_manifest_size","invalid_vault_payload","invalid_vault_pin","invalid_vault_scope","missing_independent_vault_pin","oauth_config_required","oauth_refresh_denied","oauth_scope_or_expiry_not_verified","oauth_scope_verified","setup_endpoint_denied","setup_network_unavailable","setup_ready","setup_response_too_large","stale_or_tampered_vault","unsafe_credential_directory","unsafe_credential_file","unsafe_key_descriptor","unsafe_vault_directory","unsafe_vault_object","vault_authentication_failed","vault_checkpoint_mismatch","vault_dump_integrity_failure","vault_header_mismatch","vault_header_too_large","vault_manifest_pin_mismatch","vault_manifest_too_large","vault_object_too_large","vault_release_mismatch","vault_size_mismatch"])
 
 def error_code(exc):
     if isinstance(exc,ValueError) and len(exc.args)==1 and isinstance(exc.args[0],str) and exc.args[0] in SAFE_ERRORS:return exc.args[0]
@@ -32,53 +32,75 @@ def error_code(exc):
     if isinstance(exc,OSError):return "local_io_error"
     return "unclassified_error"
 
+def multipart(folder,raw):
+    require(drive.valid_id(folder) and isinstance(raw,bytes) and 0<len(raw)<=MAX_FIXTURE and raw.startswith(vault.MAGIC),"invalid_fixture_transport")
+    name=vault.digest(raw)+".vault"
+    meta=vault.canonical({"name":name,"parents":[folder],"mimeType":drive.MIME})
+    boundary=("beagu_"+vault.digest(raw)).encode("ascii")
+    require(boundary not in raw and boundary not in meta,"fixture_boundary_collision")
+    body=b"--"+boundary+b"\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n"+meta+b"\r\n--"+boundary+b"\r\nContent-Type: application/octet-stream\r\n\r\n"+raw+b"\r\n--"+boundary+b"--\r\n"
+    return body,"multipart/related; boundary="+boundary.decode("ascii")
+
 class FixtureTransport:
     """Bounded TLS transport for one generated synthetic ciphertext only."""
     def __init__(self,folder,raw,connection=http.client.HTTPSConnection):
-        require(drive.valid_id(folder) and isinstance(raw,bytes) and 0<len(raw)<=MAX_FIXTURE and raw.startswith(vault.MAGIC),"invalid_fixture_transport")
+        self.body,self.content_type=multipart(folder,raw)
         self.folder,self.raw,self.connection=folder,raw,connection
-        self.file_id=None;self.session=None;self.posted=False;self.put=False;self.downloaded=None
+        self.file_id=None;self.posted=False;self.downloaded=None
     def request(self,host,method,path,headers,body=None):
         u=urlsplit(path)
-        require(host==drive.HOST and not u.scheme and not u.netloc and not u.fragment,"fixture_endpoint_denied")
+        require(host==drive.HOST and not u.scheme and not u.netloc and not u.fragment and not any(x in path for x in ("\r","\n")),"fixture_endpoint_denied")
         q=parse_qs(u.query,keep_blank_values=True)
         require(all(len(x)==1 for x in q.values()),"fixture_endpoint_denied")
         allowed_ids={self.folder}
         if self.file_id:allowed_ids.add(self.file_id)
+        media=False
         if method=="GET":
             allowed=any(u.path in (drive.API+"/"+f,drive.API+"/"+f+"/permissions") for f in allowed_ids) and body is None and set(q)<=set(("fields","pageSize"))
             media=self.file_id is not None and u.path==drive.API+"/"+self.file_id and q=={"alt":["media"]} and body is None
             require(allowed or media,"fixture_endpoint_denied")
         elif method=="POST":
-            require(not self.posted and u.path==drive.UPLOAD and q=={"uploadType":["resumable"],"fields":[drive.FIELDS]} and body==vault.canonical({"name":vault.digest(self.raw)+".vault","parents":[self.folder],"mimeType":drive.MIME}) and headers.get("X-Upload-Content-Length")==str(len(self.raw)),"fixture_create_denied")
+            require(not self.posted and u.path==drive.UPLOAD and q=={"uploadType":["multipart"],"fields":[drive.FIELDS]} and body==self.body and headers.get("Content-Type")==self.content_type and headers.get("Content-Length")==str(len(self.body)),"fixture_create_denied")
             self.posted=True
-        elif method=="PUT":
-            require(self.posted and not self.put and self.session==path and u.path==drive.UPLOAD and body==self.raw,"fixture_put_denied")
-            self.put=True
         else:raise ValueError("fixture_endpoint_denied")
         conn=self.connection(host,timeout=45,context=ssl.create_default_context())
         try:
             conn.request(method,path,body=body,headers=headers)
             res=conn.getresponse();raw=res.read(1024*1024+1)
             require(len(raw)<=1024*1024,"fixture_response_too_large")
-            h={}
-            if method=="POST" and res.status==200:
-                location=res.getheader("Location")
-                require(isinstance(location,str) and len(location)<=8192,"drive_invalid_upload_session")
-                p=urlsplit(location)
-                require(p.scheme=="https" and p.netloc==drive.HOST and p.path==drive.UPLOAD and not p.fragment,"drive_invalid_upload_session")
-                self.session=p.path+"?"+p.query;h["Location"]=location
-            if method=="PUT" and res.status in (200,201):
+            if method=="POST" and res.status in (200,201):
                 m=vault.parse(raw);fid=m.get("id")
                 require(drive.valid_id(fid) and fid!=self.folder,"drive_upload_id_missing")
                 self.file_id=fid
             if method=="GET" and media and res.status==200:
                 require(self.downloaded is None,"fixture_readback_repeated")
                 self.downloaded=raw
-            return res.status,h,raw
+            return res.status,{},raw
         except (OSError,http.client.HTTPException):
             raise ValueError("fixture_network_or_outcome_uncertain") from None
         finally:conn.close()
+
+def transfer_small_fixture(adapter,root,key,pin,token,state):
+    vault.unseal(root,key,KEY_ID,pin,*PINS)
+    raw=vault.read_private(root,pin["checkpoint_id"]+".vault")
+    sha=vault.digest(raw)
+    require(sha==pin["object_sha256"],"drive_checkpoint_changed")
+    adapter.verify_folder(token,write=True)
+    body,content_type=multipart(adapter.folder,raw)
+    state["phase"]="multipart_create"
+    state["upload_may_be_attempted"]=True
+    result=adapter.request("POST",drive.UPLOAD+"?"+urlencode({"uploadType":"multipart","fields":drive.FIELDS}),token,body,{"Content-Type":content_type,"Content-Length":str(len(body))})
+    require(result[0] in (200,201),"drive_upload_outcome_uncertain")
+    fid=drive.json_response(result,result[0]).get("id")
+    require(drive.valid_id(fid) and fid!=adapter.folder,"drive_upload_id_missing")
+    state["phase"]="remote_metadata"
+    m=adapter.private_metadata(fid,token)
+    require(m.get("name")==sha+".vault" and m.get("mimeType")==drive.MIME and m.get("parents")==[adapter.folder] and m.get("size")==str(len(raw)) and m.get("sha256Checksum")==sha,"drive_upload_metadata_mismatch")
+    state["phase"]="remote_download"
+    code,_,observed=adapter.request("GET",drive.API+"/"+fid+"?alt=media",token)
+    require(code==200 and isinstance(observed,bytes) and len(observed)==len(raw) and vault.digest(observed)==sha,"drive_upload_readback_mismatch")
+    adapter.verify_folder(token)
+    return {"readback_verified":True}
 
 def fingerprint(db):
     with sqlite3.connect(str(db)) as conn:
@@ -118,8 +140,7 @@ def rehearsal(parent,c,transport_factory=FixtureTransport,refresh_transport=None
         state["phase"]="drive_transfer"
         transport=transport_factory(c["folder_id"],encrypted)
         adapter=drive.DriveCheckpoint(c["folder_id"],c["owner_permission_id"],transport)
-        state["upload_may_be_attempted"]=True
-        receipt=adapter.transfer_fixture(send,key,KEY_ID,pin,*PINS,token,token)
+        receipt=transfer_small_fixture(adapter,send,key,pin,token,state)
         # The restore input must be the actual downloaded bytes, not local copy.
         state["phase"]="downloaded_fixture_restore"
         downloaded=transport.downloaded
