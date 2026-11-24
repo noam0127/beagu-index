@@ -335,7 +335,7 @@ assert.doesNotMatch(volley,/leftEnergy|rightEnergy|energyProfiles|energyFactor|r
 assert.match(volley,/function activateSuperSpike\(\)/);
 assert.match(runner,/id="run-health-progress"|id="run-lives"/);
 assert.match(volley,/now-lastTapAt<=320/);
-assert.match(runner,/now-lastTapAt<=320/);
+assert.match(runner,/tapGesture\.up\(e\)&&state==="playing"\)activateSpecial\(\)/);
 assert.match(picker,/🏫 학교 선택/);
 assert.match(backend,/function validatedSurvivalSeconds/);
 assert.match(backend,/invalid_time_bonus/);
