@@ -375,9 +375,9 @@
  window.addEventListener('beagu:challenge-device-verified',e=>{if(idPattern.test(e.detail?.code||'')&&tokenPattern.test(read(KEY))){challengeCode=e.detail.code;challengeToken=read(KEY);sync();}});
  window.addEventListener('beagu:challenge-access-revoked',()=>{challengeCode='';challengeToken='';sync();});
  async function refreshOwner(){
-  const t=own();if(!t){ownerToken='';sync();return;}
+  const t=own();if(!t){const expired=ownerToken;ownerToken='';if(expired&&read(OWN)===expired){try{sessionStorage.removeItem(OWN)}catch{}if(!read(KEY))window.dispatchEvent(new Event('beagu:participation-logged-out'));}sync();return;}
   try{const r=await api('status',{},t);if(own()===t&&idPattern.test(r.account_id||'')&&[1,2].includes(r.level)){ownerToken=t;sync();}}
-  catch(e){if(own()===t&&(e.status===401||e.status===403)){sessionStorage.removeItem(OWN);if(read(KEY)===t)sessionStorage.removeItem(KEY);ownerToken='';sync();window.dispatchEvent(new Event('beagu:level-state-change'));}}
+  catch(e){if(own()===t&&(e.status===401||e.status===403)){sessionStorage.removeItem(OWN);if(read(KEY)===t)sessionStorage.removeItem(KEY);ownerToken='';sync();window.dispatchEvent(new Event('beagu:participation-logged-out'));window.dispatchEvent(new Event('beagu:level-state-change'));}}
  }
  window.addEventListener('beagu:level-state-updated',()=>{sync();if(!busy&&own()!==ownerToken)void refreshOwner();});
  window.addEventListener('beagu:participation-logged-out',()=>{ownerToken='';challengeCode='';challengeToken='';try{sessionStorage.removeItem(OWN)}catch{}sync();});

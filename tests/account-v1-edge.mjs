@@ -53,8 +53,9 @@ try{
  const status=await response({action:'status'},200,{'X-Beagu-Session':login.token});
  assert.equal(status.account_id,account);assert.equal(calls.at(-1).p.p_token_sha,hash(login.token));
  await response({action:'logout'},200,{'X-Beagu-Session':login.token});
- failRpc=true;await response({action:'password_login',account_id:account,password},401);
- await response({action:'recover',account_id:account,password,recovery:old,new_recovery:next},403);
+ failRpc=true;await response({action:'password_login',account_id:account,password},503);
+ await response(signup,503);
+ await response({action:'recover',account_id:account,password,recovery:old,new_recovery:next},503);
  await response({action:'password_login',account_id:account,password,extra:'x'.repeat(2200)},413);
  assert.equal((await request({}, {},'GET')).status,405);
  assert.equal((await request({}, {},'OPTIONS')).status,204);
