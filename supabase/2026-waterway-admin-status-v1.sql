@@ -1,6 +1,9 @@
 -- v1.11.4 Waterway: service-only diagnostic, no approval or data mutation.
 -- Deploy only via the approved backend release process; never execute as a live development step.
 begin;
+-- Existing sync table is private and service_role lacked SELECT. Grant only
+-- the three aggregate metadata columns needed by this invoker RPC.
+grant select(singleton,snapshot_at,totals) on beagu_private.beagu_2026_results_sync to service_role;
 create or replace function public.beagu_2026_waterway_status_v1()
 returns jsonb language sql stable security invoker set search_path='' as $waterway$
 with assessed as (
@@ -9,6 +12,8 @@ with assessed as (
      when exists (select 1 from beagu_private.beagu_2026_civic_publication_hold h
        where h.school_id=r.school_id and h.active) then 'PUBLICATION_RESTRICTED'
      when r.school_response_rows<1 or r.school_match_status is distinct from 'EXACT_REGION_OFFICE_NAME'
+       or exists (select 1 from jsonb_array_elements(r.questions) q
+         where coalesce((q->>'invalid')::integer,1)>0)
        or not exists (select 1 from beagu_private.beagu_2026_quality_reviews q
          where q.school_id=r.school_id and q.payload_sha256=r.payload_sha256 and q.quality_status='AUTO_PASS')
        or not exists (select 1 from beagu_private.beagu_2026_auto_review_status t
@@ -33,7 +38,8 @@ with assessed as (
        and b.small_sample_reviewed and b.reidentification_reviewed
        and b.prior_data_combination_reviewed,false) then 'BASIS_REVIEW_REQUIRED'
      when r.approval_status='APPROVED' and r.approved_payload_sha256=r.payload_sha256
-       and r.approved_by=b.reviewer_user_id::text then 'APPROVAL_RECORDED_CURRENT'
+       and r.approved_by=b.reviewer_user_id::text
+       and r.approved_at>=r.source_snapshot_at and r.approved_at>=r.updated_at then 'APPROVAL_RECORDED_CURRENT'
      else 'BASIS_VERIFIED_AWAITING_APPROVAL'
    end as preflight_status
  from public.beagu_2026_results_snapshot r
