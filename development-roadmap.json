@@ -579,6 +579,29 @@
     },
     {
       "order": 20,
+      "version": "v1.11.10",
+      "name": "코트 정돈",
+      "scope": "홈 공지사항 최하단 한 줄 및 방문 통계 독립 카드 복원 / 오늘의 학교 2개 홈 카드 이동 · 한국시간 자정 갱신 / 검색 공개 기준 안내 제거 · 학교별 체험 연결 / 라커룸 공통 메뉴 숨김 · 기존 포스트잇과 권한 보존",
+      "status": "CANDIDATE_PARTIAL_VERIFICATION",
+      "branch": "release/v1.11.10-court-tidy",
+      "pr": null,
+      "commit": null,
+      "tests": [
+        {
+          "name": "Exact CI + offline Chromium",
+          "result": "PENDING"
+        }
+      ],
+      "dependencies": [
+        "v1.11.9"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "12fe60fdbbf2d9dedce46250c0bbe0e5a93ae97e"
+    },
+    {
+      "order": 21,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -598,7 +621,7 @@
       "rollback_sha": null
     },
     {
-      "order": 21,
+      "order": 22,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -617,7 +640,7 @@
       "rollback_sha": null
     },
     {
-      "order": 22,
+      "order": 23,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -634,7 +657,7 @@
       "rollback_sha": null
     },
     {
-      "order": 23,
+      "order": 24,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

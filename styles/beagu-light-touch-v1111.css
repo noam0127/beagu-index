@@ -27,9 +27,9 @@ body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero{min-height:120px;
 
 /* Shared navigation, fixed opinion control, and compact home cards */
 .beagu-unified-header .beagu-unified-nav.beagu-core-nav{gap:4px}
-.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="postit.html"]{display:inline-flex!important;transform:none!important}
+.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="postit.html"]{display:none!important;transform:none!important}
 .beagu-unified-header .beagu-unified-nav.beagu-core-nav>a{min-width:0;padding-inline:clamp(5px,1vw,14px);white-space:nowrap}
-@media(max-width:900px){.beagu-unified-header .beagu-unified-nav.beagu-core-nav{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;width:100%;gap:2px}.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a{min-width:0!important;min-height:40px;padding:6px 0!important;font-size:clamp(10px,2.9vw,13px)!important;letter-spacing:-.055em!important}.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="postit.html"]{background-image:none}}
+@media(max-width:900px){.beagu-unified-header .beagu-unified-nav.beagu-core-nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;width:100%;gap:2px}.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a{min-width:0!important;min-height:40px;padding:6px 0!important;font-size:clamp(10px,2.9vw,13px)!important;letter-spacing:-.055em!important}.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="postit.html"]{background-image:none}}
 body.beagu-page-home main.container>.light-touch-experience-link{grid-column:1/-1;margin:14px 0;text-align:center}
 body.beagu-page-home main.container>.light-touch-home-bottom{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px;width:100%;align-items:stretch}
 .light-touch-home-bottom>.beagu-home-notice,.light-touch-home-bottom>.light-touch-visit{min-width:0;box-sizing:border-box;margin:0!important;padding:13px!important;background:#fff;border:1px solid #dce6f2;border-radius:14px;overflow-wrap:anywhere}
@@ -46,3 +46,53 @@ body.beagu-page-home main.container>.light-touch-home-bottom{grid-column:1/-1;di
 .light-touch-opinion-panel{position:absolute;right:0;bottom:46px;width:min(240px,calc(100vw - 32px));box-sizing:border-box;background:#fff;border:1px solid #dce6f2;border-radius:12px;padding:12px;font-size:13px;color:#183153;box-shadow:0 4px 16px #19344d26}
 .light-touch-opinion-panel p{margin:6px 0;font-size:12px}.light-touch-opinion-panel a{color:#2458b9;font-weight:700}
 @media(max-width:600px){.light-touch-home-bottom>.beagu-home-notice,.light-touch-home-bottom>.light-touch-visit{padding:8px!important}.light-touch-home-bottom .light-touch-visit>div{font-size:11px}.light-touch-home-bottom .light-touch-visit>div>div{display:block}.light-touch-home-bottom .light-touch-visit strong{display:block}}
+
+/* v1.11.10: home-only layout, existing notice audience contract unchanged. */
+body.beagu-page-home main.container>#beaguTodaySchools{grid-column:1/-1;width:100%;min-width:0;box-sizing:border-box;margin:0;padding:0;background:transparent;border:0}
+#beaguTodaySchools .beagu-home-school{background:#fff;box-shadow:0 3px 12px #19344d0d;align-content:start}
+#beaguTodaySchools .beagu-home-school-name{overflow-wrap:anywhere}
+body.beagu-page-home main.container>.light-touch-visit{grid-column:1/-1;width:100%;min-width:0;margin:0;box-sizing:border-box}
+body.beagu-page-home .light-touch-visit>div{grid-template-columns:repeat(3,minmax(0,1fr))!important;text-align:center!important}
+body.beagu-page-home .light-touch-visit>div>div{min-width:0;overflow-wrap:anywhere}
+body.beagu-page-home main.container>.beagu-home-notice{grid-column:1/-1;display:flex;align-items:center;gap:8px;min-width:0;width:100%;padding:8px 12px!important;background:transparent;border:0;border-top:1px solid #dce6f2;border-radius:0;box-shadow:none;font-size:12px}
+body.beagu-page-home .beagu-home-notice[hidden]{display:none!important}
+body.beagu-page-home .beagu-home-notice h2{flex:0 0 auto;font-size:12px;margin:0!important;white-space:nowrap}
+body.beagu-page-home .beagu-home-notice:not(.court-notice-open) :is(.beagu-notice-common,.beagu-tier-notice,#beaguNoticeError){flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+body.beagu-page-home .beagu-home-notice:not(.court-notice-open) .beagu-tier-notice{padding:0;margin:0;border:0;background:none}
+body.beagu-page-home .beagu-home-notice:not(.court-notice-open) .beagu-tier-notice p{display:inline;margin:0 0 0 4px;white-space:nowrap;font-size:12px}
+body.beagu-page-home .beagu-home-notice.court-notice-open{flex-wrap:wrap;align-items:flex-start}
+body.beagu-page-home .court-notice-open :is(.beagu-notice-common,.beagu-tier-notice,#beaguNoticeError){flex:1 0 100%;min-width:0}
+#courtNoticeToggle{width:auto;flex:0 0 auto;padding:3px 5px;border:0;background:transparent;color:#2458b9;font-size:11px;white-space:nowrap;cursor:pointer}
+#courtNoticeToggle:focus-visible{outline:2px solid #2458b9;outline-offset:2px}
+
+/* Direct school experience, consistent between public and verified cards. */
+.court-school-experience{display:inline-flex;align-items:center;justify-content:center;justify-self:end;align-self:end;margin-top:5px;padding:8px 12px;min-height:36px;border:1px solid #c9d7ef;border-radius:9px;background:#eff6ff;color:#2458b9;font-weight:750;font-size:12px;line-height:1.4;text-decoration:none;white-space:nowrap;box-sizing:border-box}
+.court-school-experience:hover{background:#dbeafe}
+.court-school-experience:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+#beaguTodaySchools .beagu-home-school{grid-template-rows:auto auto auto 1fr auto;align-content:stretch}
+#beaguTodaySchools .court-school-experience{margin-top:8px}
+.school-card>.court-school-experience{align-self:flex-end;margin-top:10px}
+@media(max-width:360px){.court-school-experience{padding:7px 8px;font-size:11px}}
+
+/* Home showcase: aligned cards, restrained shared palette, accessible footer actions. */
+#beaguTodaySchools .beagu-home-school-grid{gap:12px;align-items:stretch}
+#beaguTodaySchools .beagu-home-school{display:grid;grid-template-rows:auto 1fr auto;gap:14px;padding:16px;min-width:0;border:1px solid #dce6f2;border-radius:14px;background:#fff;box-shadow:0 3px 12px #19344d0d}
+#beaguTodaySchools .beagu-home-school-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#beaguTodaySchools .beagu-home-school-tier{display:inline-flex;align-items:center;padding:4px 8px;border-radius:6px;background:#eef3fa;color:#415773;font-size:12px;font-weight:700;white-space:nowrap}
+#beaguTodaySchools .beagu-home-school-value{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;color:#64748b;font-size:11px;font-variant-numeric:tabular-nums}
+#beaguTodaySchools .beagu-home-percentile-number{font-size:18px;font-weight:800;color:#2458b9;line-height:1.2;white-space:nowrap}
+#beaguTodaySchools .beagu-home-school-identity{display:grid;align-content:start;gap:5px;min-width:0}
+#beaguTodaySchools .beagu-home-school-name{font-size:clamp(16px,2vw,19px);line-height:1.4;font-weight:800;color:#183153;text-decoration:none}
+#beaguTodaySchools .beagu-home-school-name:hover{text-decoration:underline}
+#beaguTodaySchools .beagu-home-school-region{font-size:12px;line-height:1.5;color:#64748b}
+#beaguTodaySchools .beagu-home-school-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px solid #e7edf5}
+#beaguTodaySchools .beagu-home-school-year{color:#64748b;font-size:11px;white-space:nowrap}
+#beaguTodaySchools .beagu-home-school-actions{display:flex;align-items:center;gap:6px;margin-left:auto;flex-wrap:wrap}
+#beaguTodaySchools .beagu-home-school-actions>a{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;margin:0;min-height:40px;padding:7px 10px;border:1px solid #c9d7ef;border-radius:8px;font-size:12px;line-height:1.35;font-weight:700;white-space:nowrap;text-decoration:none}
+#beaguTodaySchools .court-school-detail{color:#2458b9;background:#fff}
+#beaguTodaySchools .court-school-detail:hover{background:#f1f5fb}
+#beaguTodaySchools .court-school-experience{color:#fff;background:#2458b9;border-color:#2458b9}
+#beaguTodaySchools .court-school-experience:hover{background:#194795}
+#beaguTodaySchools a:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+@media(max-width:640px){#beaguTodaySchools .beagu-home-school-grid{grid-template-columns:1fr;gap:10px}#beaguTodaySchools .beagu-home-school{padding:13px;gap:11px}}
+@media(max-width:360px){#beaguTodaySchools .beagu-home-school-actions>a{padding:6px 8px;font-size:11px}#beaguTodaySchools .beagu-home-school-footer{gap:5px}}

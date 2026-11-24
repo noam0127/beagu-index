@@ -117,11 +117,11 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <script defer src="js/beagu-release-info-v1.js?v=120"></script>
 <link rel="stylesheet" href="styles/beagu-communication-v1.css?v=160b">
-<link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1111">
+<link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-experience">
 </head>
 <body class="beagu-ui-page beagu-page-search">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
-<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html" aria-current="page">학교검색</a><a href="statistics.html">학교비교</a><a href="postit.html">라커룸</a><a href="games.html">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
+<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html" aria-current="page">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 
 <main class="container" id="main-content">
@@ -201,11 +201,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <button id="prevPage" type="button">이전</button><span id="pageInfo" aria-live="polite"></span><button id="nextPage" type="button">다음</button>
 </div>
   
-<section class="beagu-home-showcase" id="beaguTodaySchools" aria-labelledby="beaguTodayTitle">
-<div class="beagu-home-showcase-head"><h2 id="beaguTodayTitle">오늘의 학교</h2><span>매일 00시·12시 변경 · 한국시간</span></div>
-<p class="beagu-home-showcase-status" data-today-status role="status">공개된 2025년 자료에서 학교를 선정하는 중입니다.</p>
-<div class="beagu-home-school-grid"><article class="beagu-home-school beagu-home-school--high" data-today-high aria-label="상위권 학교"></article><article class="beagu-home-school beagu-home-school--low" data-today-low aria-label="하위권 학교"></article></div>
-<p class="beagu-home-school-note">검증·공개된 2025년 백분위 기준이며 학교 전체에 대한 평가를 뜻하지 않습니다.</p></section>
+
 <section class="beagu-interest beagu-interest--standalone" id="beaguInterest" data-interest-locked="false" data-interest-top-five="true" aria-labelledby="beaguInterestTitle">
 <div class="beagu-interest-head"><h2 id="beaguInterestTitle">실시간 급상승 학교</h2><span class="beagu-interest-badge">15분마다 갱신 · Lv.0 공개</span></div>
 <p class="beagu-interest-description">최근 72시간 관심 증가순 상위 5개 학교 · 배구지수 순위 아님</p>
@@ -223,7 +219,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
 <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
-  <script src="js/school-search-card-v1.js?v=20261123-sort-primary1"></script>
+  <script src="js/school-search-card-v1.js?v=1110-experience"></script>
   <script src="js/school-view-counts-v1.js?v=20261120-selection-record2"></script>
 <script>
   const searchInput = document.getElementById('searchInput');
@@ -638,7 +634,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/search-telemetry-v1.js?v=20261120-selection-record2"></script>
 <script>(()=>{const ref=new URLSearchParams(location.search).get('ref');if(/^(?:[a-f0-9]{64}|[A-Za-z0-9_-]{8})$/.test(ref||''))document.getElementById('lightTouchSurveyLink').href='survey.html?ref='+encodeURIComponent(ref);})();</script>
-<script defer src="js/beagu-home-schools-v1.js?v=1111"></script>
+
 <script defer src="js/beagu-school-interest-v1.js?v=1111"></script>
 </body>
 </html>

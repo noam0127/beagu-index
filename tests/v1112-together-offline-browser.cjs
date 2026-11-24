@@ -97,6 +97,7 @@ async function search(page,level){
  await page.locator('#searchInput').waitFor({state:'visible'});
  await page.locator('#searchInput').fill('검증초등학교');await page.locator('#searchInput').press('Enter');
  await page.locator('.school-card[data-school-id="1234567"][data-access-level="'+level+'"]').waitFor({state:'visible',timeout:20000});
+  assert.equal(await page.locator('.school-card[data-school-id="1234567"] .court-school-experience').getAttribute('href'),'teacher-volleyball.html?school_id=1234567');
  if(level===0)assert.equal(await page.locator('.school-card .beagu-housing-preview').count(),0);
 }
 (async()=>{

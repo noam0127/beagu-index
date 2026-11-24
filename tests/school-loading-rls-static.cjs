@@ -30,7 +30,7 @@ assert.match(backend,/const \[rows,annualRows\]=await Promise.all\(\[/);
 assert.match(picker,/const requestCache=new Map\(\)/);
 assert.match(picker,/if\(cached\)return cached/);
 for(const p of ['teacher-run.html','teacher-volleyball.html']){
-  assert.match(read(p),/js\/arcade-school-picker-v1\.js\?v=20261120-fast1/);
+  assert.match(read(p),/js\/arcade-school-picker-v1\.js\?v=1110-court/);
 }
 // Inline script syntax checks for the modified public search page.
 const block=/<script\b([^>]*)>([\s\S]*?)<\/script>/gi;

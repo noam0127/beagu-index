@@ -944,7 +944,7 @@
     $('nextPage').disabled = page + 1 >= pages;
     if (!list.length) { host.append(make('div','empty','검색 결과가 없습니다.')); return; }
     for (const school of list) {
-      const {card,open:button,detail}=BeaguSchoolSearchCard.createCard(school,{
+      const {card,open:button,detail,experience}=BeaguSchoolSearchCard.createCard(school,{
         level:viewerTier,
         percentile:percentilePanel(school),
         sortBy:mode==='region'&&sortValue.startsWith('housing_price_won_')?'school_name_asc':sortValue
@@ -983,6 +983,7 @@
       heading.replaceWith(trigger);
       historyPanel.append(detail);
       card.querySelector('.school-actions')?.remove();
+      card.append(experience);
       async function toggleHistory(event){
         const opening=detail.hidden;
         detail.hidden=!opening;
