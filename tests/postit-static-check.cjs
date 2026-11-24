@@ -95,10 +95,11 @@ assert.ok(challenge.includes('.step-card {')&&challenge.includes('border-radius:
  'Challenge retains rounded standard cards');
 
 const edge=read('supabase/functions/beagu-postit-api-v1/index.ts');
-assert.ok(edge.includes('const user=await verifiedMember(req,viewer)'), 'mutations require independent verified Auth account');
+assert.ok(edge.includes('const user=await verifiedMember(req,viewer)'), 'mutations require verified anonymous account session');
 assert.ok(!edge.includes('identity_visitor_id||hash'), 'session token hash must not become rotating writer identity');
-assert.ok(edge.includes('if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null,visitor:null}'),
- 'Lv1 can read without identity but no actor UUID is synthesized');
+assert.ok(edge.includes('return {level:Number(data.access_level),hash}'), 'read access does not synthesize an author ID');
+assert.ok(edge.includes('beagu_account_postit_writer_v1')&&edge.includes('p_token_sha:viewer.hash'), 'writer identity is retrieved from the verified anonymous session only');
+assert.ok(!edge.includes('crypto.subtle.sign'), 'edge does not synthesize writer IDs');
 assert.ok(edge.includes('if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403)'),
  'Lv2 writes fail closed until trusted permanent identity is bound');
 assert.ok(app.includes('WRITER_IDENTITY_REQUIRED'), 'client explains pending Lv2 account verification');
