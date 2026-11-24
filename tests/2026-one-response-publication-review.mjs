@@ -37,8 +37,9 @@ for(const id of ['adminPipelineSingle','adminPipelineSingleTechnical','adminPipe
  assert.match(html,new RegExp('id="'+id+'"'));
  assert.match(ui,new RegExp('setCount\\("'+id+'"'));
 }
-assert.match(html,/응답 1건도 공개 심사 및 최종 승인 대상입니다/);
-assert.match(html,/공개 근거와 재식별 위험 검증 및 최종 승인 없이는/);
+assert.match(html,/응답 수 1건인 학교도 검토할 수 있지만/);
+assert.match(html,/동의·적법 근거·재식별 위험 검수와 최종 승인을 생략하지 않습니다/);
+assert.match(html,/기술검사 통과만으로 공개되지 않습니다/);
 assert.doesNotMatch(ui,/\bpublish\(|\bapproveResults\(/);
 assert.match(release,/review_status='VERIFIED'/);
 assert.match(release,/beagu_admin_active_mfa_session/);
