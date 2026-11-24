@@ -30,6 +30,8 @@ jobs:
           node tests/beagu-notice-pages-v1.mjs
           node tests/notice-audience-server.mjs
           python3 -m py_compile scripts/release-manager/stamp_release_info.py
+      - name: Verify isolated notice API (read and denied access only)
+        run: node tests/notice-audience-live.mjs
       - name: Install pinned Chromium browser test tooling
         run: |
           npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1

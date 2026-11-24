@@ -225,24 +225,28 @@
       "version": "v1.6.0",
       "name": "소통",
       "scope": "공지사항·의견 접수",
-      "status": "AUDIENCE_CANDIDATE_CI_PENDING",
+      "status": "AUDIENCE_CANDIDATE_FINAL_CI_PENDING",
       "branch": "release/v1.6.0-communication",
       "pr": 286,
       "commit": null,
       "tests": [
         {
-          "name": "Prior common notice CI",
+          "name": "Audience server and browser fixtures",
           "result": "PASS",
-          "run": 45311753868
+          "run": 45312937843
         },
         {
-          "name": "Four audiences, server authorization, browser regression",
+          "name": "Private review policy wording regression",
+          "result": "FIXED_PENDING_CI"
+        },
+        {
+          "name": "Actual isolated API read and denied access",
           "result": "PENDING"
         }
       ],
       "changed_files": [],
       "dependencies": [
-        "isolated audience table and function required before registration",
+        "isolated audience storage and API provisioned; exact source verified",
         "v1.5.0 deployed"
       ],
       "admin_registration": "PENDING",
