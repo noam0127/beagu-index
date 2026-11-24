@@ -62,6 +62,21 @@ async function summary() {
     throw new HttpError(503,"membership_unavailable");
   return result;
 }
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+async function reportQueue(){
+ const {data,error}=await db.rpc("beagu_postit_report_queue_v1");
+ if(error||!Array.isArray(data))throw new HttpError(503,"reports_unavailable");
+ return {rows:data.slice(0,50).map(row=>({target_type:row.target_type,target_id:row.target_id,body:String(row.body||"").slice(0,200),status:row.status,reports:Number(row.reports),case_id:row.case_id||null,decision:row.decision||null,expires_at:row.expires_at||null}))};
+}
+async function decide(input:Record<string,unknown>,actor:{id:string;role:string}){
+ if(actor.role!=="owner")throw new HttpError(403,"owner_required");
+ const type=String(input.target_type||""),id=String(input.target_id||""),decision=String(input.decision||""),reason=typeof input.reason==="string"?input.reason.trim():"";
+ if(!["post","comment"].includes(type)||!uuid.test(id)||!["dismiss","restrict_24h","restrict_7d","restore"].includes(decision)||reason.length<8||reason.length>200)throw new HttpError(400,"invalid_decision");
+ const {data,error}=await db.rpc("beagu_postit_report_decide_v1",{p_type:type,p_target:id,p_decision:decision,p_reason:reason,p_admin:actor.id});
+ if(error)throw new HttpError(503,"decision_unavailable");
+ if(data?.ok!==true||!uuid.test(String(data.case_id||"")))throw new HttpError(409,"case_unavailable");
+ return {ok:true,case_id:data.case_id};
+}
 Deno.serve(async (request: Request) => {
   const origin = request.headers.get("Origin") || "";
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
@@ -73,7 +88,7 @@ Deno.serve(async (request: Request) => {
     try { input = await request.json(); } catch { throw new HttpError(400, "invalid_request"); }
     if (!input || typeof input !== "object" || Array.isArray(input)) throw new HttpError(400, "invalid_request");
     const action = String(input.action || "");
-    const data = action === "summary" ? await summary() : null;
+    const data = action === "summary" ? await summary() : action === "report_queue" ? await reportQueue() : action === "report_decide" ? await decide(input,actor) : null;
     if (data === null) throw new HttpError(400, "invalid_action");
     return reply(origin, 200, { ok: true, data, role: actor.role });
   } catch (error) {
