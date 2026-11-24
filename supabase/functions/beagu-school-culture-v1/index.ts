@@ -69,6 +69,8 @@ Deno.serve(async(req:Request)=>{
   if(sessionError||!session||Number(session.access_level)<1||
      !Number.isFinite(Date.parse(session.expires_at))||Date.parse(session.expires_at)<=Date.now())
    return send(origin,{error:'AUTH_REQUIRED'},401);
+  const {data:allowed,error:gateError}=await admin.rpc('beagu_account_level_session_allowed_v1',{p_token_sha:await sha256(raw)});
+  if(gateError||allowed!==true)return send(origin,{error:'AUTH_REQUIRED'},401);
   if((Number(req.headers.get('Content-Length'))||0)>1024)return send(origin,{error:'TOO_LARGE'},413);
   const input=await req.text();if(input.length>1024)return send(origin,{error:'TOO_LARGE'},413);
   let body:any;try{body=JSON.parse(input)}catch{return send(origin,{error:'INVALID_JSON'},400)}

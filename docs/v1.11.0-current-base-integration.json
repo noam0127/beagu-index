@@ -1,0 +1,233 @@
+{
+  "schema": 1,
+  "status": "INCOMPLETE_INTEGRATION_DO_NOT_DEPLOY",
+  "live_base": "76d2c01878d8242e62dd87e30cfb707ab431d3ee",
+  "verified_account_source": "4d17fe64973175ea04cdfbb30e216dd18193c978",
+  "exact_unshared_files": [
+    {
+      "path": "account.html",
+      "blob_sha": "cfeed79ff9bbd68de9cd068fff8cabc0167a64ec"
+    },
+    {
+      "path": "docs/v1.11-account-contract.md",
+      "blob_sha": "909256cab39afa53234487a0c3bb72d2121d3cc1"
+    },
+    {
+      "path": "docs/v1.11-lv2-dual-mission-contract.md",
+      "blob_sha": "904b4202ee2a7fb854e9e6f683806933ee2ec583"
+    },
+    {
+      "path": "docs/v1.11-privacy-cutover.md",
+      "blob_sha": "3ae900dab22c9dc2fbb1ff189c6c39fda3acd117"
+    },
+    {
+      "path": "docs/v1.11-release-registration-preflight.md",
+      "blob_sha": "fe6bd110a0a71d125ff85ffa1f2b5d4ce9da62c7"
+    },
+    {
+      "path": "js/beagu-account-v1.js",
+      "blob_sha": "40372127de55426c402f393714845acd5076ab4a"
+    },
+    {
+      "path": "js/beagu-admin-members-v1.js",
+      "blob_sha": "400f605cbb49aad87bec302738f00e4956c1d709"
+    },
+    {
+      "path": "js/beagu-participation-auth-v2.js",
+      "blob_sha": "45113cc14a2e490006d9bc1bbd9f95bd73ced713"
+    },
+    {
+      "path": "js/postit-account-v1.js",
+      "blob_sha": "1d300ea750e411204efeb61f9d07dddb5f1dd513"
+    },
+    {
+      "path": "js/postit-v1.js",
+      "blob_sha": "507514fd2785ea01ed56289a30f85e22bfa4c9c6"
+    },
+    {
+      "path": "scripts/test-challenge-lv2-card.cjs",
+      "blob_sha": "2582c26c2c17cb868ad0d477cd445749245f4505"
+    },
+    {
+      "path": "scripts/test-participation-browser.cjs",
+      "blob_sha": "e00d05b76155246c76486a273243af4b48444598"
+    },
+    {
+      "path": "styles/beagu-account-v1.css",
+      "blob_sha": "7c2d916a0495ecf92650bdefc800dff7e54c3071"
+    },
+    {
+      "path": "styles/beagu-participation-auth-v2.css",
+      "blob_sha": "e5969c2a0cc8087adba39158a30bef2d6845affd"
+    },
+    {
+      "path": "supabase/account-identity-v1.sql",
+      "blob_sha": "a5928dc26b5cb844559838919fc736acd4763b1f"
+    },
+    {
+      "path": "supabase/account-nickname-cron-v1.sql",
+      "blob_sha": "d8445260c1b1a3e2f6e70517e7297a60c621271c"
+    },
+    {
+      "path": "supabase/account-provisional-v1.sql",
+      "blob_sha": "42f565fe4d18074e66049c1ef4ca87272d82f6ef"
+    },
+    {
+      "path": "supabase/functions/beagu-2026-civic/index.ts",
+      "blob_sha": "1a50100ae1dddb0dca9696634bb8a64f8ec9e4b2"
+    },
+    {
+      "path": "supabase/functions/beagu-account-v1/index.ts",
+      "blob_sha": "d7d0b21954b2662d3d70aa090944cba3fe608d8c"
+    },
+    {
+      "path": "supabase/functions/beagu-admin-members-v1/index.ts",
+      "blob_sha": "2a46f2cbac59672ca9a33bbd5e3315b3ac99fb32"
+    },
+    {
+      "path": "supabase/functions/beagu-challenge-identity/index.ts",
+      "blob_sha": "6ad38b64f401c4c43b9253fd64c09c580853741f"
+    },
+    {
+      "path": "supabase/functions/beagu-level-api/index.ts",
+      "blob_sha": "b50c28a9d83810def84260b15cfa8f4b8433ae74"
+    },
+    {
+      "path": "supabase/functions/beagu-postit-api-v1/index.ts",
+      "blob_sha": "8c6e623d2da14f240134823de70739ab07e8d26f"
+    },
+    {
+      "path": "supabase/functions/beagu-referral-link-v1/index.ts",
+      "blob_sha": "559ba381fbb2a7a025e33cf981552ed4b0718a2b"
+    },
+    {
+      "path": "supabase/functions/beagu-school-culture-v1/index.ts",
+      "blob_sha": "5ffca23ba2c3da1dfda435b8e3fdef2766de1475"
+    },
+    {
+      "path": "supabase/functions/beagu-school-interest-v1/index.ts",
+      "blob_sha": "bd6d09d637c03333dd44f2fe3b2d2c342949a95d"
+    },
+    {
+      "path": "supabase/functions/class-diary-guest-access-v1/index.ts",
+      "blob_sha": "bd1ff789099f5d35de1df61c26ddfc93d3b3115a"
+    },
+    {
+      "path": "supabase/functions/class-diary-story-signals-v1/index.ts",
+      "blob_sha": "3b1798110cba6ac91679a67f1d93a316652903c5"
+    },
+    {
+      "path": "supabase/functions/class-diary-world-v1/index.ts",
+      "blob_sha": "f4827d62b1010f2010d8775ac98b460f124275b7"
+    },
+    {
+      "path": "tests/account-nickname-100k.sql",
+      "blob_sha": "48474a4a72acf99c88ce302bc1370b474b05b01e"
+    },
+    {
+      "path": "tests/account-v1-admin-moderation.mjs",
+      "blob_sha": "39de9e87ff3db0d228c692f1fc048ba827e4bc68"
+    },
+    {
+      "path": "tests/account-v1-browser.cjs",
+      "blob_sha": "51f9fc4d3348e879c8777c7283a63fc505d110e0"
+    },
+    {
+      "path": "tests/account-v1-edge.mjs",
+      "blob_sha": "ce50541b983c85032b24c1c9f779275cba1b8df2"
+    },
+    {
+      "path": "tests/account-v1-http-integration.mjs",
+      "blob_sha": "ad5e9e1f27598fd08a24e05738a5f6a66c7f61b7"
+    },
+    {
+      "path": "tests/account-v1-postgres-assertions.sql",
+      "blob_sha": "53cf0bea8ce551234a5a4dfde23d53b46671e7ba"
+    },
+    {
+      "path": "tests/account-v1-postgres-fixture.sql",
+      "blob_sha": "05c1840b9f14e46a429fdcf1e4efb4f87ec3525a"
+    },
+    {
+      "path": "tests/account-v1-postit-privacy.mjs",
+      "blob_sha": "6eea4a0dbe98eaf99339c5830f7d1e634df16494"
+    },
+    {
+      "path": "tests/account-v1-protected-api-gates.mjs",
+      "blob_sha": "7a57de628802d0b4ac1f674b20a58dbc1617f9f4"
+    },
+    {
+      "path": "tests/account-v1-supabase-runtime.mjs",
+      "blob_sha": "0694517baf8bf0ac201966383e14e6ab69928149"
+    },
+    {
+      "path": "tests/account-v1-ui.cjs",
+      "blob_sha": "1cc781afb746f74e2246de8f06d7d20048590b8a"
+    },
+    {
+      "path": "tests/admin-members-static.cjs",
+      "blob_sha": "26526c9ad7ad90b2a117e96757c9c7bf538879f9"
+    },
+    {
+      "path": "tests/challenge-lv2-account-entry.mjs",
+      "blob_sha": "9b9251923ab2a699f91360f0bf3912b59d31e20d"
+    },
+    {
+      "path": "tests/level-guide-route.mjs",
+      "blob_sha": "6c5c12f48acbe38afb568e5c9f736d624d00b441"
+    },
+    {
+      "path": "tests/levelup-provisional-v1.cjs",
+      "blob_sha": "919ff24971452d215286b627b3ae9e2eb9752e27"
+    },
+    {
+      "path": "tests/lv2-sms-consent.mjs",
+      "blob_sha": "daf679e9c523438d87b3224f1ba7af748c575c6c"
+    },
+    {
+      "path": "tests/participation-code-unified.mjs",
+      "blob_sha": "448231c3548e967134948e518120d6b31cf7556c"
+    },
+    {
+      "path": "tests/postit-member-auth.cjs",
+      "blob_sha": "d267b22c0079d1a7f40b905afd05c0d630aef676"
+    },
+    {
+      "path": "tests/postit-static-check.cjs",
+      "blob_sha": "42d4c97cf5ea21f8ab5966dd02986a9a7d535537"
+    },
+    {
+      "path": "tests/referral-promotion-v1.cjs",
+      "blob_sha": "27cd7a22315d485e779813d6bdfeefb61ac6bda3"
+    }
+  ],
+  "pending_paths": [
+    ".github/workflows/clean-release-validation.yml",
+    "admin.html",
+    "arcade-history.html",
+    "challenge.html",
+    "index.html",
+    "js/challenge-referral-v1.js",
+    "levels.html",
+    "postit.html",
+    "release-candidate.json",
+    "release-info.json",
+    "release-policy.html",
+    "school-report.html",
+    "scripts/test-challenge-referral-premium.cjs",
+    "search-lv1.html",
+    "search.html",
+    "statistics.html",
+    "survey.html",
+    "teacher-run.html",
+    "teacher-volleyball.html",
+    "tests/challenge-certificate-privacy-v1.mjs",
+    "tests/milestone-browser.cjs",
+    ".github/workflows/account-anonymous-integration.yml",
+    ".github/workflows/account-local-http-integration.yml",
+    ".github/workflows/account-nickname-100k.yml",
+    ".github/workflows/account-supabase-runtime.yml"
+  ],
+  "production_execution_enabled": false,
+  "admin_registration_allowed": false
+}

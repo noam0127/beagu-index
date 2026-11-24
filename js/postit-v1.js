@@ -11,12 +11,10 @@ const validCompare=x=>{
  const a=x.split(",");
  return a.length>=1&&a.length<=5&&a.every(v=>/^[A-Z0-9]{7}:202[3-6]$/.test(v))&&new Set(a).size===a.length;
 };
-const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false,postAttempt:null,pendingActions:new Set()};
+const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false,accountReadable:false,accountToken:'',postAttempt:null,pendingActions:new Set()};
 function token(){try{return sessionStorage.getItem(key)||""}catch{return ""}}
 async function headers(){
- const bearer=await window.BeaguPostitAccount?.accessToken?.()||"";
- return {"Content-Type":"application/json","X-Beagu-Level-Session":token(),
-  ...(bearer?{"Authorization":"Bearer "+bearer}:{})};
+ return {"Content-Type":"application/json","X-Beagu-Level-Session":token()};
 }
 async function request(action,data,method="GET"){
  const url=new URL(api);
@@ -28,6 +26,9 @@ async function request(action,data,method="GET"){
  if(!res.ok)throw Object.assign(new Error(json.error||"FETCH_FAILED"),{status:res.status});
  return json;
 }
+// Never label earlier-week content with a current alias (including cached responses).
+function weekKey(at){const d=new Date(Number(at)+9*3600000);d.setUTCHours(0,0,0,0);d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));return d.getTime();}
+function postitAlias(item){return weekKey(Date.parse(item.created_at))===weekKey(Date.now())&&/^[Il|ǀ❘ı∣│]{10}$/.test(item.nickname||"")?item.nickname:"익명";}
 function node(tag,cls,text){
  const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=String(text);
  return el;
@@ -37,7 +38,7 @@ function link(url,label,cls){
 }
 function showMessage(error){$("postitMessage").textContent=error||""}
 function readableError(e){
- const m={LEVEL_REQUIRED:"Lv.2 인증이 필요합니다. 오른쪽 위 레벨 표시를 확인하세요.",
+ const m={ACCOUNT_REQUIRED:"포스트잇 열람과 참여에는 익명 계정 가입 및 로그인이 필요합니다. 기존 Lv.2는 유지됩니다.",LEVEL_REQUIRED:"Lv.2 인증이 필요합니다. 오른쪽 위 레벨 표시를 확인하세요.",
  COMMENT_READ_LEVEL_REQUIRED:"🔒 포스트잇과 댓글은 Lv.2부터 열람할 수 있습니다.",
  WRITER_IDENTITY_REQUIRED:"🔒 정식 계정과 원래 챌린지 기기의 연결을 완료해야 작성할 수 있습니다.",
  ORIGINAL_DEVICE_REQUIRED:"챌린지를 처음 진행한 기기에서 인증해 주세요.",
@@ -88,17 +89,18 @@ async function renderContext(){
  }
  updateComposeAccess();
 }
-function canRead(){return state.level>=2}
+function canRead(){return state.level>=2 && state.accountReadable===true && state.accountToken===token()}
 function canWrite(){return canRead() && state.accountLinked===true}
 function updateComposeAccess(){
  const level=Number($("beaguLevelState")?.dataset.level);
  state.level=Number.isInteger(level)&&level>=0?level:0;
  const allowed=canWrite();
- $("postitAccess").textContent=allowed?"Lv2 · 작성 가능":canRead()?"Lv2 · 읽기 전용":"🔒 Lv2 인증 필요";
+ $("postitAccess").textContent=allowed?"Lv2 · 작성 가능":canRead()?"Lv2 · 읽기 전용":state.level>=2?"Lv2 · 계정 인증 필요":"🔒 Lv2 인증 필요";
  const lockedText=$("postitLocked")?.querySelector("b");
  if(lockedText)lockedText.textContent=canRead()
-  ?"글쓰기 준비 중"
-  :"Lv2부터 포스트잇을 열람할 수 있습니다";
+  ?"현재 글쓰기 권한이 제한되어 있습니다"
+  :state.level>=2?"포스트잇은 익명 계정으로 이용하세요":"Lv2부터 포스트잇을 이용할 수 있습니다";
+ $("postitAccount").hidden=state.level<2||canRead();
  $("postitLocked").hidden=allowed;
  $("postitWriteForm").hidden=!allowed||!state.subject;
  $("postitSubjectPicker").hidden=state.subject!==""||!allowed;
@@ -136,7 +138,7 @@ function buildPost(post){
  entry.dataset.postId=post.id;
  const paper=node("div","postit-paper");
  const top=node("div","paper-overline");
- top.append(node("span","","POST-IT · 익명"),node("span","",timeSince(post.created_at)));
+ top.append(node("span","postit-rotating-alias","POST-IT · "+postitAlias(post)),node("span","",timeSince(post.created_at)));
  paper.append(top);
  const topic=node("div","paper-topic");
  if(post.subject_type==="school"&&post.school){
@@ -184,7 +186,7 @@ function buildPost(post){
  return entry;
 }
 async function mutation(action,data){
- if(!canWrite()){showMessage("🔒 정식 Lv.2 계정 연결 후 이용할 수 있습니다.");return;}
+ if(!canWrite()){showMessage("🔒 Lv.2 익명 계정 로그인 후 이용할 수 있습니다.");return;}
  const actionKey=action+":"+String(data.target_type||"")+":"+String(data.target_id||"");
  if(state.pendingActions.has(actionKey))return;
  state.pendingActions.add(actionKey);
@@ -204,7 +206,7 @@ async function fillComments(id,host){
   host.replaceChildren();
   if(!comments.length)host.append(node("div","bookmark-comment","첫 댓글을 남겨보세요."));
   for(const c of comments){
-   const mark=node("div","bookmark-comment"),meta=node("div","comment-meta","익명 · "+timeSince(c.created_at));
+   const mark=node("div","bookmark-comment"),meta=node("div","comment-meta",""+postitAlias(c)+" · "+timeSince(c.created_at));
    mark.append(meta,node("p","",c.body));
    const row=node("div","");
    row.append(actionButton((c.liked?"♥":"♡")+" "+c.likes,()=>mutation("set_like",{target_type:"comment",target_id:c.id,liked:!c.liked}),{disabled:!canWrite()}));
@@ -213,7 +215,7 @@ async function fillComments(id,host){
    mark.append(row);host.append(mark);
   }
   const composer=node("form","bookmark-composer");
-  if(!canWrite())composer.append(node("span","locked-comment","🔒 정식 Lv.2 계정 생성 후 댓글을 작성할 수 있습니다."));
+  if(!canWrite())composer.append(node("span","locked-comment","🔒 Lv.2 익명 계정 로그인 후 댓글을 작성할 수 있습니다."));
   else{
    const ta=node("textarea","");ta.maxLength=150;ta.rows=2;ta.placeholder="책갈피처럼 댓글 남기기 (150자)";
    const btn=node("button","","댓글 붙이기");btn.type="submit";
@@ -244,7 +246,7 @@ async function loadPosts(newId=""){
  const host=$("postitThread"),ticket=++state.listTicket;
  if(!canRead()){
   state.posts=[];host.replaceChildren();
-  $("postitListStatus").textContent="Lv.2 전용";
+  $("postitListStatus").textContent=state.level>=2?"익명 계정 인증 필요":"Lv.2 전용";
   return;
  }
  const term=$("postitSearch").value.trim();
@@ -294,7 +296,7 @@ async function loadPosts(newId=""){
 }
 function handleLevel(e){
  const level=e?.detail?.level;
- if(level!==2){state.accountLinked=false;state.pendingActions.clear();}
+ if(level!==2||state.accountToken!==token()){state.accountLinked=false;state.accountReadable=false;state.accountToken="";state.pendingActions.clear();}
  if(Number.isInteger(level))$("beaguLevelState").dataset.level=String(level);
  updateComposeAccess();
  if(!canRead()){
@@ -330,6 +332,9 @@ else setSubject("");
 window.addEventListener("beagu:level-state-updated",handleLevel);
 window.addEventListener("beagu:postit-account-status",event=>{
  state.accountLinked=event?.detail?.linked===true;
+ state.accountReadable=event?.detail?.readable===true;
+ state.accountToken=event?.detail?.token||"";
+ if(!canRead())state.expanded.clear();
  updateComposeAccess();
  void loadPosts();
 });
@@ -402,5 +407,16 @@ $("postitThread").addEventListener("animationend",event=>{
  if(event.animationName==="paper-attach")entry?.classList.remove("is-new");
 });
 
+// Clear displayed aliases at the Korean week boundary before refreshing the list.
+let visibleWeek=weekKey(Date.now());
+function clearOldAliases(){
+ const next=weekKey(Date.now());if(next===visibleWeek)return;
+ visibleWeek=next;
+ for(const el of document.querySelectorAll(".postit-rotating-alias"))el.textContent="POST-IT · 익명";
+ for(const el of document.querySelectorAll(".comment-meta"))el.textContent="익명";
+ state.expanded.clear();void loadPosts();
+}
+setInterval(clearOldAliases,15000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)clearOldAliases();});
 updateComposeAccess();void loadPosts();
 })();

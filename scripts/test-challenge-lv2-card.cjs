@@ -20,9 +20,10 @@ function fakeNode(){
 const ids=['challengeReferralPanel','challengeReferralLink','copyChallengeReferral',
   'challengeReferralStatus','challengeReferralProgress','challengeReferralCount','challengeReferralTitle','challengeReferralTag',
   'challengeReferralNote','challengeIdentityPanel','challengeIdentityTitle','challengeIdentityTag',
-  'challengeIdentityReward','copyIdentityCode','challengeVipMedal','certificateMedal','certificateThanks','certificateLevelBanner','certificate'];
+  'challengeIdentityReward','copyIdentityCode','challengeVipMedal','certificateMedal','certificateThanks','certificateLevelBanner','certificate','challengeAccountStatus','challengeMissionReferral','challengeMissionAccount','challengeMissionSummary'];
 const nodes=Object.fromEntries(ids.map(k=>[k,fakeNode()]));
 const events={};
+nodes.challengeAccountStatus.dataset.accountState='unverified';let ownerToken='';
 const payload={level:1,validReferrals:0,provisional:false,
   link:'https://baeguindex.com/survey.html?ref='+'f'.repeat(64),
   shortLink:'https://baeguindex.com/r/#ABCDEFGH'};
@@ -32,7 +33,7 @@ const win={addEventListener:(name,fn)=>events[name]=fn,
 const document={hidden:false,getElementById:(id)=>nodes[id],
  addEventListener:(name,fn)=>events[name]=fn};
 vm.runInNewContext(source,{document,window:win, SUPABASE_URL:'https://example.supabase.co',
-  sessionStorage:{getItem:()=> 'a'.repeat(64)},
+  sessionStorage:{getItem:k=>k==='beagu-account-session-v1'?ownerToken:'a'.repeat(64)},
   localStorage:{getItem:()=> 'b'.repeat(64)},
   crypto:require('node:crypto').webcrypto, Event:class{constructor(type){this.type=type;}},
   fetch:async()=>({ok:true,json:async()=>({...payload})}),
@@ -54,7 +55,17 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   payload.level=2;payload.provisional=true;payload.validReferrals=0;
   events.focus();await flush();
   assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
-  payload.validReferrals=1;
+  payload.level=1;payload.provisional=false;payload.validReferrals=1;
+  events.focus();await flush();
+  assert.equal(nodes.challengeMissionReferral.dataset.state,'complete');
+  assert.equal(nodes.challengeMissionAccount.dataset.state,'pending');
+  assert.equal(nodes.copyIdentityCode.hidden,true);
+  assert.equal(nodes.certificateLevelBanner.textContent,'Lv.1 챌린지 달성');
+  ownerToken='a'.repeat(64);nodes.challengeAccountStatus.dataset.accountState='verified';
+  events['beagu:challenge-account-state']();
+  assert.equal(nodes.challengeMissionAccount.dataset.state,'complete');
+  assert.equal(nodes.copyIdentityCode.hidden,true,'Both missions still require server promotion');
+  payload.level=2;payload.provisional=true;
   events.focus();await flush();
   assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드');
   assert.equal(nodes.copyIdentityCode.hidden,false);
@@ -68,6 +79,7 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
   assert.equal(nodes.challengeReferralTitle.textContent,'나의 전용 조사 링크');
   assert.equal(win.lastEvent,'beagu:referral-status-changed');
   // Logout must restore the pre-credit label, no cached premium status.
+  ownerToken='';nodes.challengeAccountStatus.dataset.accountState='unverified';
   events['beagu:challenge-access-revoked']();
   assert.equal(nodes.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   assert.equal(nodes.challengeIdentityPanel.classList.contains('is-lv2'),false);

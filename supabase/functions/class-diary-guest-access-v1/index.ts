@@ -83,6 +83,8 @@ async function verifiedLv2(req:Request){
   .eq('token_sha256',hashed).maybeSingle();
  if(error||!data||Number(data.access_level)<2||
   !Number.isFinite(Date.parse(data.expires_at))||Date.parse(data.expires_at)<=Date.now())return null;
+ const {data:allowed,error:gateError}=await admin.rpc('beagu_account_level_session_allowed_v1',{p_token_sha:hashed});
+ if(gateError||allowed!==true)return null;
  // The same server-side earned-visitor revocation policy as beagu-level-api.
  if(data.identity_campaign==='2026'&&data.identity_visitor_id){
   const {data:earned,error:earnedError}=await admin.rpc('beagu_has_earned_challenge_visitor',{

@@ -39,6 +39,8 @@ async function identity(req:Request,minLevel=2){
  const {data,error}=await db.from("beagu_level_sessions").select("access_level,identity_visitor_id,identity_campaign")
    .eq("token_sha256",hash).gt("expires_at",new Date().toISOString()).maybeSingle();
  if(error||!data||Number(data.access_level)<minLevel)return null;
+ const {data:allowed,error:gateError}=await db.rpc('beagu_account_level_session_allowed_v1',{p_token_sha:hash});
+ if(gateError||allowed!==true)return null;
  // An earned challenge identity is revocable: each request must still have
  // an active, verified referral credit. Never trust the client-side badge.
  if(data.identity_campaign==="2026"&&data.identity_visitor_id){
@@ -47,43 +49,14 @@ async function identity(req:Request,minLevel=2){
   });
   if(earnedError||earned!==true)return null;
  }
- // A session token is a rotating credential, not an enduring person ID.
- // Readers may use Lv1 sessions without a bound identity, but writers must not
- // gain a new author persona on every login or regain like/report quotas.
- if(!data.identity_visitor_id)return {level:Number(data.access_level),id:null,visitor:null};
- const seed=String(data.identity_visitor_id);
- const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(ROLE_KEY),
-   {name:"HMAC",hash:"SHA-256"},false,["sign"]);
- const mac=new Uint8Array(await crypto.subtle.sign("HMAC",key,new TextEncoder().encode("postit:"+seed)));
- mac[6]=(mac[6]&15)|64;mac[8]=(mac[8]&63)|128;
- const h=Array.from(mac.slice(0,16),v=>v.toString(16).padStart(2,"0")).join("");
- return {level:Number(data.access_level),id:h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20,32),visitor:seed};
-}
-// Account and participation code are two independent proofs of membership.
-// A transferable Lv2 code never grants writer privileges on its own.
-async function authenticatedUser(req:Request){
- const authorization=req.headers.get("Authorization")||"";
- if(!/^Bearer [A-Za-z0-9_.-]{20,8000}$/.test(authorization))return null;
- const jwt=authorization.slice(7);
- const {data,error}=await db.auth.getUser(jwt);
- const user=data?.user;
- if(error||!user||user.is_anonymous||!user.email_confirmed_at)return null;
- return user;
+ return {level:Number(data.access_level),hash};
 }
 async function verifiedMember(req:Request,viewer:any){
- if(!viewer||viewer.level<2||!viewer.visitor||!viewer.id)return null;
- const account=await authenticatedUser(req);
- if(!account)return null;
- const {data,error}=await db.from("beagu_postit_member_accounts")
-   .select("author_uid,identity_visitor_id,status")
-   .eq("auth_user_id",account.id).eq("identity_visitor_id",viewer.visitor)
-   .eq("status","active").maybeSingle();
- if(error||!data||data.author_uid!==viewer.id)return null;
- return {level:viewer.level,id:data.author_uid,visitor:viewer.visitor,authId:account.id};
+ if(!viewer||viewer.level!==2||!viewer.hash)return null;
+ const {data,error}=await db.rpc("beagu_account_postit_writer_v1",{p_token_sha:viewer.hash});
+ if(error||typeof data!=="string"||!UUID.test(data))return null;
+ return {level:2,id:data};
 }
-const sha256=async(value:string)=>Array.from(
- new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value))),
- byte=>byte.toString(16).padStart(2,"0")).join("");
 async function minimumLevel(){
  const {data,error}=await db.from("beagu_postit_settings").select("minimum_write_level,max_daily_posts,max_daily_comments").eq("id",1).single();
  if(error)throw error;
@@ -157,8 +130,12 @@ async function enrich(items:any[],type:"post"|"comment",self:string|null){
  const compareIds=type==="post"?items.flatMap(x=>
    typeof x.comparison_selection==="string"?x.comparison_selection.split(",").map((z:string)=>z.split(":")[0]):[]):[];
  const schools=type==="post"?await schoolInfo([...items.map(x=>x.school_id).filter(Boolean),...compareIds]):{};
+ const {data:aliases,error:aliasError}=await db.rpc("beagu_account_postit_current_aliases_v1",{p_items:items.map(x=>({item_id:x.id,author_uid:x.author_uid,created_at:x.created_at}))});
+ // Fail closed: old content and unavailable alias data remain anonymous.
+ const names=new Map<string,string>();
+ if(!aliasError&&Array.isArray(aliases))for(const a of aliases)if(typeof a.item_id==="string"&&typeof a.nickname==="string"&&/^[Il|ǀ❘ı∣│]{10}$/.test(a.nickname))names.set(a.item_id,a.nickname);
  return items.map(x=>({
-  id:x.id,body:x.body,created_at:x.created_at,
+  id:x.id,body:x.body,created_at:x.created_at,nickname:names.get(x.id)||"익명",
   ...(type==="post"?{
    subject_type:x.subject_type||"school",
    school:schools[x.school_id]||null,
@@ -227,8 +204,12 @@ Deno.serve(async(req:Request)=>{
    // All Post-it reads (including search, comments, and school previews) are Lv2-only.
    const viewer=await identity(req,2);
    if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
-   const member=await verifiedMember(req,viewer);
-   if(action==="writer_status")return respond(req,{linked:Boolean(member)});
+   const {data:accountStatus,error:accountError}=await db.rpc("beagu_account_session_status_v1",{p_token_sha:viewer.hash});
+   if(accountError)return fail(req,"TEMPORARY_ERROR",503);
+   const readable=accountStatus?.level===2&&accountStatus?.lv2_active===true;
+   const member=readable?await verifiedMember(req,viewer):null;
+   if(action==="writer_status")return respond(req,{linked:Boolean(member),readable});
+   if(!readable)return fail(req,"ACCOUNT_REQUIRED",403);
    if(action==="school_info"){
     const ids=(url.searchParams.get("school_ids")||"").split(",").filter(Boolean);
     if(ids.length<1||ids.length>5||ids.some(x=>!SCHOOL_ID.test(x)))
@@ -300,23 +281,9 @@ Deno.serve(async(req:Request)=>{
    }
    return fail(req,"UNKNOWN_ACTION");
   }
-  // Both the server-issued earned Lv2 session and independently verified Auth
-  // account are mandatory. Claiming a code alone cannot authorize mutations.
+  // Anonymous account session plus earned referral; participation code alone cannot write.
   const viewer=await identity(req,2);
   if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
-  if(action==="link_member"){
-   const deviceSecret=typeof body?.deviceSecret==="string"?body.deviceSecret:"";
-   if(!/^[a-f0-9]{64}$/.test(deviceSecret))return fail(req,"ORIGINAL_DEVICE_REQUIRED",403);
-   const account=await authenticatedUser(req);
-   if(!account||!viewer.visitor||!viewer.id)return fail(req,"ACCOUNT_AUTH_REQUIRED",403);
-   const {data:actor,error}=await db.rpc("beagu_postit_bind_verified_member",{
-      p_user:account.id,p_visitor:viewer.visitor,
-      p_device_hash:await sha256(deviceSecret),p_actor:viewer.id
-   });
-   if(error?.code==="23505")return fail(req,"MEMBERSHIP_ALREADY_CLAIMED",409);
-   if(error||!actor||actor!==viewer.id)return fail(req,"DEVICE_OWNERSHIP_NOT_VERIFIED",403);
-   return respond(req,{linked:true});
-  }
   const user=await verifiedMember(req,viewer);
   if(!user)return fail(req,"WRITER_IDENTITY_REQUIRED",403);
   const settings=await minimumLevel();
@@ -357,7 +324,7 @@ Deno.serve(async(req:Request)=>{
      p_comparison_selection:subject==="comparison"?compare:null,p_body:content
    });
    if(error)throw error;
-   if(created?.error)return fail(req,String(created.error),created.error==="POST_RATE_LIMIT"?429:400);
+   if(created?.error){const code=String(created.error);return fail(req,["INVALID_POST","POST_RATE_LIMIT"].includes(code)?code:"TEMPORARY_ERROR",code==="POST_RATE_LIMIT"?429:code==="INVALID_POST"?400:500); }
    if(!UUID.test(String(created?.id||"")))throw Error("INVALID_POST_CREATE_RESULT");
    return respond(req,{id:created.id,replayed:created.replayed===true},created.replayed?200:201);
   }
@@ -372,8 +339,7 @@ Deno.serve(async(req:Request)=>{
      p_post_id:postId,p_body:content
    });
    if(error)throw error;
-   if(created?.error)return fail(req,String(created.error),
-     created.error==="COMMENT_RATE_LIMIT"?429:created.error==="POST_UNAVAILABLE"?404:400);
+   if(created?.error){const code=String(created.error);return fail(req,["INVALID_COMMENT","COMMENT_RATE_LIMIT","POST_UNAVAILABLE"].includes(code)?code:"TEMPORARY_ERROR",code==="COMMENT_RATE_LIMIT"?429:code==="POST_UNAVAILABLE"?404:code==="INVALID_COMMENT"?400:500); }
    if(!UUID.test(String(created?.id||"")))throw Error("INVALID_COMMENT_CREATE_RESULT");
    return respond(req,{id:created.id,replayed:created.replayed===true},created.replayed?200:201);
   }
@@ -418,5 +384,5 @@ Deno.serve(async(req:Request)=>{
    return respond(req,{likes,reported:kind==="report",hidden:reports>=3&&reports/(likes+reports)>=0.5});
   }
   return fail(req,"UNKNOWN_ACTION");
- }catch(err){console.error("beagu-postit-api-v1",String(err));return fail(req,"TEMPORARY_ERROR",500);}
+ }catch{console.error("beagu-postit-api-v1: request failed");return fail(req,"TEMPORARY_ERROR",500);}
 });
