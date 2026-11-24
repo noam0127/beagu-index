@@ -35,6 +35,7 @@ jobs:
           /usr/bin/python3 tests/integrated-release-drive-pg-rehearsal.py
           /usr/bin/python3 tests/integrated-release-drive-fixture-observer.py
           /usr/bin/python3 tests/integrated-release-fixture-attestation.py
+          /usr/bin/python3 tests/integrated-release-fixture-challenge.py
           /usr/bin/python3 tests/integrated-release-backup.py
           /usr/bin/python3 tests/integrated-release-runner.py
           /usr/bin/python3 tests/integrated-release-remote.py
