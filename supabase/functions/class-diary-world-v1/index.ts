@@ -57,6 +57,15 @@ async function checkLevel2(req: Request) {
     Number.isFinite(Date.parse(found.expires_at)) &&
     Date.parse(found.expires_at)>Date.now();
 }
+// Annual public data must respect the shared Lv0 tier and civic hold.
+async function annual2026Allowed(id:string):Promise<boolean>{
+ try{
+ const res=await fetch(BASE+'/rest/v1/rpc/beagu_2026_level_school_published',{method:'POST',
+ headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},
+ body:JSON.stringify({p_school_id:id,p_level:0})});
+ return res.ok && (await res.json())===true;
+ }catch{return false;}
+}
 Deno.serve(async req => {
   const origin=req.headers.get('Origin')||'';
   if (req.method==='OPTIONS') {
@@ -86,6 +95,7 @@ Deno.serve(async req => {
       return send({error:'INVALID_SCHOOL_ID'},400,origin);
     if (!(await checkLevel2(req))) return send({error:'LEVEL2_REQUIRED'},401,origin);
     const id=body.schoolId;
+    const allow2026=await annual2026Allowed(id);
     const schools=await db('schools',{
       select:'school_id,school_code,school_name,sido,sido_standard,support_office,education_office,education_office_code,address,homepage,establishment,school_kind,status,source,last_synced_at',
       school_id:'eq.'+id,school_kind:'eq.초등학교',status:'eq.운영',limit:'1'
@@ -115,7 +125,7 @@ Deno.serve(async req => {
       return Number.isInteger(year)&&year>=2023&&year<=2026&&
         row.percentile!==null&&Number.isFinite(pct)&&pct>=0&&pct<=100 &&
         row.publication_status==='PUBLISHED'&&row.privacy_reviewed===true &&
-        (year!==2026 || row.manual_release_approved===true);
+        (year!==2026 || (allow2026&&row.manual_release_approved===true));
     }).map((r:any)=>Number(r.survey_year)))].sort();
     return send({
       schemaVersion:'class-diary-world/v1',
