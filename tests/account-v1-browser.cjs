@@ -12,6 +12,17 @@ const server=http.createServer(async(req,res)=>{const p=new URL(req.url,origin).
  let browser;
  try{
   browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});
+  // Fail closed if the account JS is unavailable: no credentials in query string or network.
+  const noJS=await browser.newContext({javaScriptEnabled:false});
+  const noPage=await noJS.newPage();let submissions=0;
+  await noJS.route('**/*',route=>{const u=new URL(route.request().url());if(route.request().method()!=='GET'||(u.pathname==='/account.html'&&u.search))submissions++;return u.origin===origin?route.continue():route.abort();});
+  await noPage.goto(origin+'/account.html');
+  await noPage.locator('#accountLogin [name="account_id"]').fill(account);
+  await noPage.locator('#accountLogin [name="password"]').fill(password);
+  await noPage.locator('#accountLogin button').click();
+  await noPage.waitForTimeout(250);
+  assert.equal(noPage.url(),origin+'/account.html');assert.equal(submissions,0);
+  await noJS.close();console.log('PASS script-disabled credential submission blocked by CSP');
   for(const viewport of [{width:1280,height:850},{width:390,height:844}]){
    const ctx=await browser.newContext({viewport,acceptDownloads:true});let recovery='',pw=password,level=1,session=false,requests=0;const errors=[];
    await ctx.addInitScript(d=>localStorage.setItem('beagu-referral-device-secret-v1',d),device);
