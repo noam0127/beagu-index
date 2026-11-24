@@ -136,6 +136,6 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   console.log('PASS: premium personal code card is gated by verified referral; link retained and logout resets');
 })().catch(err=>{console.error(err);process.exitCode=1;});
 
-assert.ok(html.indexOf('id="challengeIdentityPanel"')<html.indexOf('id="challengeReferralPanel"'));
+assert.ok(html.indexOf('id="challengeIdentityPanel"')>html.indexOf('id="challengeReferralPanel"'));
 assert.match(html,/VIP LEVEL 2/);
 assert.doesNotMatch(html,/id="challengeReferralNote"/);

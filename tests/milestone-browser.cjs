@@ -12,17 +12,17 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),{chrom
     sessionStorage.setItem('beagu-level-session-v1','b'.repeat(64));localStorage.setItem('beagu-referral-device-secret-v1','c'.repeat(64));
     document.querySelector('#challengeAccessPanel').setAttribute('data-auth-level',String(s.level));document.querySelector('#challengeProtected').hidden=false;
     window._captures=[];window._shares=[];window._count=s.count;window._promoted=s.promoted;
-    Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window._shares.push(data)}});
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async data=>{window._shares.push(data)}}});
     window.fetch=async(url)=>({ok:true,status:200,json:async()=>String(url).includes('identity')?{participantNo:s.ordinal,identityCode:'ABCDEFGHJK'}:{link:'https://baeguindex.com/survey.html?ref='+'a'.repeat(64),level:window._promoted?2:1,validReferrals:window._count,provisional:window._promoted}});
     window.html2canvas=async(root)=>{window._captures.push({text:root.textContent,level:root.dataset.level,private:!!root.querySelector('#identityCode,#challengeReferralLink')});const canvas=document.createElement('canvas');canvas.width=2;canvas.height=2;return canvas;};
    },scenario);
    await page.addScriptTag({content:js});await page.addScriptTag({content:ref});await page.evaluate(()=>window.dispatchEvent(new Event('beagu:challenge-access-granted')));
    const expected=scenario.promoted||scenario.level===2?'2':'1';
    await page.waitForFunction(({expected,count})=>document.querySelector('#certificate').dataset.level===expected&&document.querySelector('#challengeReferralCount').textContent===count.toLocaleString('ko-KR')+'건'&&!document.querySelector('#capture').disabled&&window._captures.length>0,{expected,count:scenario.count});
-   assert.equal(await page.locator('#certificateMilestone').isVisible(),scenario.ordinal===777);assert.equal(await page.locator('#copyIdentityCode').isVisible(),scenario.promoted);
+   assert.equal(await page.locator('#certificateMilestone').isVisible(),scenario.ordinal===777);assert.equal(await page.locator('#copyIdentityCode').isVisible(),false);await page.locator('#togetherIdentityDetails summary').click();assert.equal(await page.locator('#copyIdentityCode').isVisible(),scenario.promoted);
    const captures=await page.evaluate(()=>window._captures);assert.equal(captures.at(-1).level,expected);assert(captures.every(x=>!x.private&&!x.text.includes('ABCDEFGHJK')&&!x.text.includes('?ref=')));
    if(expected==='2')assert.equal(await page.locator('#certificateLevelBanner').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(109, 54, 179)');
-   await page.locator('#shareChallengeReferral').click();const shares=await page.evaluate(()=>window._shares);assert.equal(shares.length,1);assert(shares[0].url.startsWith('https://baeguindex.com/survey.html?ref='));assert(!JSON.stringify(shares[0]).includes('ABCDEFGHJK'));
+   await page.locator('#shareChallengeReferral').click();const shares=await page.evaluate(()=>window._shares);assert.equal(shares.length,1);assert(shares[0].includes('https://baeguindex.com/survey.html?ref='));assert(!JSON.stringify(shares[0]).includes('ABCDEFGHJK'));
    // Hold a real UI refresh while parsing its response, then revoke access.
    await page.evaluate(()=>{window._staleReleased=false;window.fetch=async()=>({ok:true,status:200,json:()=>new Promise(resolve=>{window._releaseStale=()=>{resolve({link:'https://baeguindex.com/survey.html?ref='+'d'.repeat(64),level:2,validReferrals:99,provisional:true});window._staleReleased=true;}})});window.dispatchEvent(new Event('focus'));});
    await page.waitForFunction(()=>typeof window._releaseStale==='function');

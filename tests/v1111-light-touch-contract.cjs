@@ -14,7 +14,7 @@ for(const p of ['search.html','search-lv1.html']){
 }
 const l=read('js/level-search.js');assert.match(l,/generation!==authGeneration\|\|requestToken!==session/);assert.match(l,/if\(mode!=='region'\)\{/);assert.match(l,/mode==='region'&&sortValue.startsWith\('housing_price_won_'\)/);assert.match(l,/api\('ranked_schools',\{searchText:q,region,office,sort,direction,page\}\)/);
 const interest=read('js/beagu-school-interest-v1.js');assert.match(interest,/slice\(0,topFive\?5:10\)/);assert.match(interest,/lastToken===getToken\(\)&&verifiedLevel\(\)>=1/);
-assert.equal(JSON.parse(read('release-info.json')).version,'v1.11.1');assert.equal(JSON.parse(read('release-info.json')).environment,'candidate');assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);
+assert.equal(JSON.parse(read('release-info.json')).version,'v1.11.2');assert.equal(JSON.parse(read('release-info.json')).environment,'candidate');assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);
 for(const p of ['js/level-search.js','js/beagu-home-schools-v1.js','js/beagu-school-interest-v1.js'])cp.execFileSync(process.execPath,['--check',p]);
 const old='5f19ddf28a2f24a98fb03900739147a04a547cbe';
 const strip=s=>s.replace(/<nav\b[^>]*class="[^"]*beagu-unified-nav[^"]*"[^>]*>[\s\S]*?<\/nav>/,'').replace(/<link rel="stylesheet" href="styles\/beagu-light-touch-v1111\.css\?v=1111">\n/,'');

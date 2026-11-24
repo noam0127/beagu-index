@@ -219,6 +219,12 @@
   window.addEventListener('beagu:challenge-access-revoked', () => {
     active = false; activeToken=''; lastIdentity = null; reset();
   });
+  window.addEventListener('beagu:challenge-verified-level-changed',()=>{
+    if(!active||sessionStorage.getItem(sessionKey)!==activeToken)return;
+    const before=certificate?.dataset.level;
+    renderState(upgraded,lastReferrals);
+    if(before!==certificate?.dataset.level)window.dispatchEvent(new Event('beagu:referral-status-changed'));
+  });
   window.addEventListener('beagu:identity-ready', e => {void load(e.detail);});
   window.addEventListener('focus', () => {
     if (active && lastIdentity) void load(lastIdentity);

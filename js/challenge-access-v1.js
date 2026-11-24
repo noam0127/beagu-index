@@ -173,5 +173,17 @@
     ++requestSerial;
     lock('');
   });
+  window.addEventListener('beagu:level-state-updated',event=>{
+    if(!activeToken)return;
+    if(event.detail?.status==='0' && !session()){
+      ++requestSerial;lock('인증이 만료되었습니다. 참여코드를 입력해 주세요.');return;
+    }
+    if(session()!==activeToken)return;
+    const tier=event.detail?.status;
+    if((tier==='1'||tier==='2')&&panel.getAttribute('data-challenge-verified-level')!==tier){
+      authState(Number(tier));
+      window.dispatchEvent(new Event('beagu:challenge-verified-level-changed'));
+    }
+  });
   void verifyStored();
 })();
