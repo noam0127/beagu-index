@@ -30,6 +30,7 @@ jobs:
           /usr/bin/python3 tests/integrated-release-vault.py
           /usr/bin/python3 tests/integrated-release-drive-checkpoint.py
           /usr/bin/python3 tests/integrated-release-drive-setup.py
+          /usr/bin/python3 tests/integrated-release-drive-enroll.py
           /usr/bin/python3 tests/integrated-release-backup.py
           /usr/bin/python3 tests/integrated-release-runner.py
           /usr/bin/python3 tests/integrated-release-remote.py
