@@ -105,10 +105,39 @@ class Bridge:
             and isinstance(receipt["provider_id"],str) and PROVIDER_ID.fullmatch(receipt["provider_id"]),"remote_effect_not_verified")
         # Keep full signed proof private. No archive bytes, keys, or leases in public status.
         proof={"request_sha256":digest(request),"receipt":receipt,"signature":envelope["signature"]}
+        # Final observer request contains no archive or secret. Retain it for independent finalization recheck.
+        if op=="verify_live":proof["request"]=request
         name=job+"-"+str(claim["idx"])+".receipt.json"
         backup.private_write(self.directory/name,canonical(proof))
         return {"scope":SCOPE,"ok":True,"operation":op,"plan_sha256":verified["plan_sha256"],
             "remote_receipt_sha256":digest(proof),"provider_id":receipt["provider_id"],"execution_enabled":False}
+
+def finalize_verified(ledger,job,verified,registry,bridge,expected):
+    """Reverify persisted independent live proof, then atomically record fixture version.
+    Never calls a provider or automatically replays an uncertain deployment.
+    """
+    state=ledger.snapshot(job)
+    require(state["status"] in ("verified","completed"),"finalization_not_ready")
+    require(state["base_sha"]==verified["base_sha"] and state["candidate_sha"]==verified["candidate_sha"] and state["plan_sha"]==verified["plan_sha256"],"finalization_pin_mismatch")
+    steps=state["steps"]
+    require(len(steps)==state["task_count"] and all(s["status"]=="done" and valid_digest(s["evidence"]) for s in steps),"missing_step_evidence")
+    final=steps[-1]
+    require(final["task"]["op"]=="verify_live","missing_final_observer")
+    proof=verify.read_json(backup.private_read(bridge.directory/(job+"-"+str(final["idx"])+".receipt.json"),MAX_RESPONSE))
+    require(set(proof)=={"request_sha256","receipt","signature","request"},"invalid_final_proof")
+    q,receipt=proof["request"],proof["receipt"]
+    require(q["job_id"]==job and q["idx"]==final["idx"] and q["target"]==bridge.target and q["scope"]==SCOPE and q["operation"]=="verify_live" and q["artifact_base64"] is None and
+            q["base_sha"]==verified["base_sha"] and q["candidate_sha"]==verified["candidate_sha"] and q["plan_sha256"]==verified["plan_sha256"] and
+            q["task_sha256"]==digest(final["task"]) and q["expected"]==expected and digest(q)==proof["request_sha256"],"final_proof_pin_mismatch")
+    try:
+        bridge.keys["observer"].verify(base64.b64decode(proof["signature"],validate=True),canonical(receipt))
+    except (InvalidSignature,ValueError,TypeError):
+        raise ValueError("final_observer_signature_invalid") from None
+    require(receipt["request_sha256"]==proof["request_sha256"] and receipt["role"]=="observer" and receipt["target"]==bridge.target and receipt["scope"]==SCOPE and receipt["operation"]=="verify_live" and receipt["status"]=="verified" and receipt["observed"]==expected,"final_observer_mismatch")
+    evidence={"scope":SCOPE,"ok":True,"operation":"verify_live","plan_sha256":verified["plan_sha256"],"remote_receipt_sha256":digest(proof),"provider_id":receipt["provider_id"],"execution_enabled":False}
+    require(runner.digest(evidence)==final["evidence"],"final_evidence_mismatch")
+    return ledger.finalize(job,verified,registry,final["evidence"])
+
 
 class RemoteFixtureAdapter:
     """Integrates real transport and independent observations into the existing runner.
@@ -154,12 +183,13 @@ class RemoteFixtureAdapter:
             expected["edge_"+edge+"_artifact_sha256"]=hash_bytes(backup.private_read(dest,MAX_UPLOAD))
             expected["edge_"+edge+"_inventory_sha256"]=pin
         return self.bridge.invoke(self.job,self.claim,p,expected)
-    def verify_live(self,t,f,p):
-        require(self.claim and self.claim["task"]==t,"missing_remote_claim")
+    def expected_live(self):
         inventory,pin=self.pins["pages"]
         raw=backup.private_read(self.directory/"pages.tar",MAX_UPLOAD)
         # Observer must independently hash served bytes for every approved public path.
         # Fixture only: actual provider rollout, cache, release stamp, and domain are not claimed.
-        expected={"artifact_sha256":hash_bytes(raw),"inventory_sha256":pin,
+        return {"artifact_sha256":hash_bytes(raw),"inventory_sha256":pin,
             "served_file_set_sha256":digest(inventory["files"])}
-        return self.bridge.invoke(self.job,self.claim,p,expected)
+    def verify_live(self,t,f,p):
+        require(self.claim and self.claim["task"]==t,"missing_remote_claim")
+        return self.bridge.invoke(self.job,self.claim,p,self.expected_live())
