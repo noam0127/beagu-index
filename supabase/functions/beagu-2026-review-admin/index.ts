@@ -75,7 +75,16 @@ Deno.serve(async(request:Request)=>{
         pipeline.error?.code||levelStatus.error?.code||"unknown");
       return send(origin,503,{error:"pipeline_status_unavailable"});
     }
-    return send(origin,200,{status:pipeline.data,levels:levelStatus.data});
+    // Waterway diagnostic is optional during a staggered backend rollout.
+    // Existing approval gates remain authoritative. Never fabricate missing counts.
+    let waterway:unknown=null;
+    try {
+      const diagnostic=await db.rpc("beagu_2026_waterway_status_v1");
+      if(!diagnostic.error&&diagnostic.data?.version===1)waterway=diagnostic.data;
+      else console.error("waterway_status_unavailable",diagnostic.error?.code||"invalid_result");
+    }catch{console.error("waterway_status_unavailable");}
+    return send(origin,200,{status:pipeline.data,levels:levelStatus.data,
+      waterway,waterway_status:waterway===null?"UNAVAILABLE":"OK"});
   }
   // Review decisions may only be made by the owner, never a viewer or editor.
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
