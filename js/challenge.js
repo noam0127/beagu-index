@@ -8,6 +8,7 @@
   const identityEndpoint = SUPABASE_URL + '/functions/v1/beagu-challenge-identity';
   const levelSessionKey = 'beagu-level-session-v1';
   let imageUrl = null, participant = null, personalCode = null, busy = false, accessGranted = false, certificateRefreshPending = false;
+  let accessEpoch = 0;
   const deadline = (promise, ms, message) => {
     let timer;
     return Promise.race([Promise.resolve(promise), new Promise((_, reject) => {
@@ -27,6 +28,8 @@
   async function prepare() {
     if (!accessGranted || busy) return;
     busy = true;
+    const epoch = accessEpoch;
+    const current = () => accessGranted && epoch === accessEpoch;
     capture.disabled = true;
     retry.hidden = true;
     retry.disabled = true;
@@ -43,11 +46,11 @@
           headers: { 'Content-Type': 'application/json', 'X-Beagu-Session': sessionToken },
           body: JSON.stringify({ action: 'issue', visitor: window.beaguVisitor })
         }), 15000, '연결이 지연되고 있습니다. 다시 시도해주세요.');
-        if (!accessGranted) return;
+        if (!current()) return;
         if (response.status === 401 || response.status === 403) throw new Error('레벨1 인증이 만료되었습니다. 다시 인증해 주세요.');
         if (!response.ok) throw new Error('고유번호 발급에 실패했습니다. 다시 시도해주세요.');
         const data = await response.json();
-        if (!accessGranted) return;
+        if (!current()) return;
         const n = Number(data.participantNo);
         const code = data.identityCode;
         if (!Number.isSafeInteger(n) || n < 1 ||
@@ -67,7 +70,7 @@
         }));
         if (window.BeaguChallengeProgress) await window.BeaguChallengeProgress.refresh();
       }
-      if (!accessGranted) return;
+      if (!current()) return;
       status.textContent = '인증 이미지를 준비하고 있습니다.';
       if (typeof html2canvas !== 'function') throw new Error('이미지 기능을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
       if (document.fonts) await deadline(document.fonts.ready, 10000, '글꼴 로딩이 지연되고 있습니다. 다시 시도해주세요.');
@@ -76,17 +79,20 @@
       if(!root || root.querySelector('#identityCode,#challengeReferralLink,#challengeReferralPanel,#challengeIdentityPanel,[data-referral-secret]') ||
          (personalCode && root.textContent.includes(personalCode)))
         throw new Error('개인 코드 노출 위험으로 인증 이미지 생성을 차단했습니다.');
+      if (!current()) return;
       const canvas = await deadline(html2canvas(root, {
         scale: 2, backgroundColor: '#ffffff', logging: false
       }), 20000, '이미지 생성이 지연되고 있습니다. 다시 시도해주세요.');
       const blob = await deadline(new Promise(resolve => canvas.toBlob(resolve, 'image/png')), 10000, '이미지 변환에 실패했습니다. 다시 시도해주세요.');
       if (!blob) throw new Error('이미지를 생성하지 못했습니다. 다시 시도해주세요.');
-      if (!accessGranted) return;
+      if (!current()) return;
+      if (certificateRefreshPending) return;
       if (imageUrl) URL.revokeObjectURL(imageUrl);
       imageUrl = URL.createObjectURL(blob);
       capture.disabled = false;
       status.textContent = '';
     } catch (error) {
+      if (!current()) return;
       if (participant === null) participantNo.textContent = '순번 조회 실패';
       if (personalCode === null) {
         identityCode.textContent = '고유번호 발급 실패';
@@ -143,6 +149,7 @@
   });
   window.addEventListener('beagu:challenge-access-revoked', () => {
     accessGranted = false;
+    ++accessEpoch;
     certificateRefreshPending=false;
     participant = null;
     personalCode = null;
@@ -160,11 +167,13 @@
   });
   window.addEventListener('beagu:referral-status-changed', () => {
     if(!accessGranted)return;
+    capture.disabled=true;
     if(busy){certificateRefreshPending=true;return;}
     void prepare();
   });
   window.addEventListener('beagu:challenge-access-granted', () => {
     accessGranted = true;
+    if(busy){certificateRefreshPending=true;return;}
     void prepare();
   });
 })();
