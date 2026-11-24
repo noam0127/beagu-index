@@ -308,7 +308,7 @@
           <h4 id="adminWaterwayHeading">수집부터 공개까지</h4>
           <p id="adminWaterwayStatus" class="subtle" role="status" aria-live="polite">관리자 인증 후 조회합니다.</p>
           <div class="admin-waterway-steps" role="list" aria-label="데이터 처리 단계">
-            <article role="listitem"><small>01 · 원본 수집</small><b id="adminWaterwayRaw">—</b><span>실시간 원본 응답</span><p id="adminWaterwaySourceNote">최근 수집 확인 대기</p></article>
+            <article role="listitem"><small>01 · 원본 수집</small><b id="adminWaterwayRaw">—</b><span>최근 관측 원본 응답</span><p id="adminWaterwaySourceNote">최근 수집 확인 대기</p></article>
             <article role="listitem"><small>02 · 서버 동기화</small><b id="adminWaterwaySync">—</b><span>마지막 전송 원본 응답</span><p id="adminWaterwaySyncNote">전송 기록 확인 대기</p></article>
             <article role="listitem"><small>03 · 학교매칭</small><b id="adminWaterwayMatched">—</b><span>학교 연결 응답</span><p id="adminWaterwayMatchNote">보류 기록 확인 대기</p></article>
             <article role="listitem"><small>04 · 응답 검수</small><b id="adminWaterwayValid">—</b><span>개별 검증 완료 응답</span><p id="adminWaterwayValidityNote">응답별 검수 수집 확인 대기</p></article>
@@ -320,6 +320,7 @@
             <ul id="adminWaterwayReasons"><li>조회 전</li></ul>
             <p class="subtle">학교별 실제 동의·비식별·소표본 심사는 자동으로 승인되지 않습니다.</p>
           </details>
+          <details class="admin-waterway-reasons"><summary id="adminWaterwayRunAt">최근 실행 기록 미수신</summary><ul id="adminWaterwayRunStages"><li>조회 전</li></ul></details>
           <p class="subtle" id="adminWaterwayFailure">마지막 실패 시각 및 원인: 확인 대기</p>
         </section>
         <details class="admin-review-disclosure"><summary>기존 세부 검수 지표</summary>
@@ -494,7 +495,7 @@
   <script src="js/supabase-config.js"></script>
   <script defer src="js/beagu-home-notice-admin-v1.js?v=160b"></script>
   <script defer src="js/beagu-admin-access-v1.js?v=160"></script>
-  <script defer src="js/beagu-2026-admin-review.js?v=20261124-waterway1"></script>
+  <script defer src="js/beagu-2026-admin-review.js?v=20261124-waterway2"></script>
   <script defer src="js/beagu-admin-members-v1.js?v=20261121-members1"></script>
 <script defer src="js/beagu-2026-civic-admin-v1.js?v=20261124-trust1"></script>
 </body>
