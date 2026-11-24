@@ -202,14 +202,8 @@
     }
   ],
   "pending_paths": [
-    ".github/workflows/clean-release-validation.yml",
-    "challenge.html",
-    "js/challenge-referral-v1.js",
     "release-candidate.json",
     "release-info.json",
-    "scripts/test-challenge-referral-premium.cjs",
-    "tests/challenge-certificate-privacy-v1.mjs",
-    "tests/milestone-browser.cjs",
     ".github/workflows/account-anonymous-integration.yml",
     ".github/workflows/account-local-http-integration.yml",
     ".github/workflows/account-nickname-100k.yml",
@@ -230,6 +224,17 @@
     "statistics.html",
     "survey.html",
     "teacher-run.html",
-    "teacher-volleyball.html"
+    "teacher-volleyball.html",
+    "challenge.html",
+    "js/challenge-referral-v1.js",
+    "scripts/test-challenge-referral-premium.cjs",
+    "tests/challenge-certificate-privacy-v1.mjs",
+    "tests/milestone-browser.cjs",
+    ".github/workflows/clean-release-validation.yml"
+  ],
+  "additional_regression_required": [
+    "v1111 menu and unchanged gameplay checks must allow account cache bust only",
+    "v1112 offline browser must model dual mission and legacy verification",
+    "release metadata and CI trigger integration"
   ]
 }
