@@ -121,7 +121,7 @@ class ArcadeLeaderboard{
  cancel(){
   // Any delayed start/record result belongs to the previous match.
   this.playGeneration++;this.session=null;this.pendingStart=null;this.school=null;
-  this.score=0;this.stats=null;this.notice="";this.isSubmitting=false;
+  this.score=0;this.stats=null;this.notice="";this.isSubmitting=false;this.shareResult=null;
   this.draw();
  }
  async finish(score,stats){
@@ -150,6 +150,7 @@ class ArcadeLeaderboard{
     :data.timeRanked?"⏱ 25점 최단시간 TOP "+data.timeRank+"위 · "+displayScore(finalScore)
     :data.recorded===false?"이번 경기 "+displayScore(finalScore)+" · 상위 100위 밖 · 기록 미등록"
     :"이번 경기 "+displayScore(finalScore)+" · 역대 상위 100위 안에 기록됨";
+    if(data.excluded!==true&&Number.isSafeInteger(data.score)&&data.score>=0){this.shareResult={score:data.score,school:String(this.school?.school_name||"")};}
     return true;
   }catch(err){
    if(generation!==this.playGeneration)return;
@@ -182,6 +183,36 @@ class ArcadeLeaderboard{
   });
   root.append(toggle);
   if(this.notice){const node=el("p","arcade-rank-feedback",this.notice);node.setAttribute("role","status");root.append(node);}
+  if(this.shareResult){
+   const result=this.shareResult;
+   const panel=el("section","arcade-share-panel");
+   const name=this.game==="volleyball_25"?"선생님배구":"험난한 교직생활";
+   const label=el("label",""," 학교명 포함");
+   const checkbox=el("input");checkbox.type="checkbox";label.prepend(checkbox);
+   const message=el("textarea");message.rows=3;message.readOnly=true;message.setAttribute("aria-label","공유 문구");
+   const feedback=el("p");feedback.setAttribute("role","status");
+   const refresh=()=>{message.value=name+" · "+displayScore(result.score)+(checkbox.checked&&result.school?" · "+result.school:"")+"\n배구지수 학교체험 https://baeguindex.com/games.html";};
+   checkbox.disabled=!result.school;checkbox.addEventListener("change",refresh);refresh();
+   const copy=el("button","","결과 복사");copy.type="button";
+   copy.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(message.value);feedback.textContent="복사했습니다.";}catch(_){message.focus();message.select();feedback.textContent="선택한 문구를 직접 복사해 주세요.";}});
+   const save=el("button","","결과 이미지 저장");save.type="button";
+   save.addEventListener("click",()=>{
+    try{
+     const canvas=document.createElement("canvas");canvas.width=900;canvas.height=500;
+     const ctx=canvas.getContext("2d");if(!ctx)throw Error("canvas");
+     ctx.fillStyle="#132c49";ctx.fillRect(0,0,900,500);
+     ctx.fillStyle="#b8f8e9";ctx.font="bold 34px sans-serif";ctx.fillText("BAEGUINDEX · 학교체험",55,90,790);
+     ctx.fillStyle="#fff";ctx.font="bold 46px sans-serif";ctx.fillText(name,55,170,790);
+     ctx.font="bold 76px sans-serif";ctx.fillText(displayScore(result.score),55,285,790);
+     ctx.font="30px sans-serif";if(checkbox.checked&&result.school)ctx.fillText(result.school,55,350,790);
+     ctx.font="25px sans-serif";ctx.fillText("baeguindex.com · 게임 결과 (순위 인증 아님)",55,440,790);
+     const link=el("a");link.download="beagu-game-result.png";link.href=canvas.toDataURL("image/png");link.click();
+    }catch(_){feedback.textContent="이미지를 만들 수 없습니다. 결과 문구를 복사해 주세요.";}
+   });
+   const lounge=el("a","","인디스쿨 라운지");lounge.href="https://indischool.com/tweets/channels/lounge";lounge.target="_blank";lounge.rel="noopener noreferrer";
+   panel.append(el("h3","","경기 하이라이트"),label,message,copy,save,lounge,feedback);
+   root.append(panel);
+  }
   root.append(content);
   const header=el("div","arcade-ranking-head");
   header.append(el("strong","",this.game==="volleyball_25"?"🏆 배구 최고 점수 TOP 10":"🏆 정년 생존 점수 TOP 10"),
