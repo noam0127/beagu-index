@@ -5,25 +5,29 @@ import vm from 'node:vm';
 const read=path=>readFileSync(path,'utf8');
 const challenge=read('challenge.html');
 const postit=read('postit.html');
-const challengeJs=read('js/challenge-member-auth-v1.js');
+const account=read('account.html');
+const accountJs=read('js/beagu-account-v1.js');
 const postitJs=read('js/postit-account-v1.js');
 const schema=read('supabase/migrations/20261121090000_member_sms_opt_in_v1.sql');
 
-assert.doesNotThrow(()=>new vm.Script(challengeJs));
+assert.doesNotThrow(()=>new vm.Script(accountJs));
 assert.doesNotThrow(()=>new vm.Script(postitJs));
 
-for (const [html,id] of [[challenge,'challengeMemberSmsConsent'],[postit,'postitSmsConsent']]) {
+for (const [html,id] of [[postit,'postitSmsConsent']]) {
  const tag=html.match(new RegExp('<input[^>]*id="'+id+'"[^>]*>'))?.[0];
  assert.ok(tag, 'SMS consent checkbox missing: '+id);
  assert.ok(tag.includes('type="checkbox"'));
  assert.equal(tag.includes('checked'),false,'Marketing consent must begin unchecked');
 }
-for (const [html,id] of [[challenge,'challengeMemberSmsPhone'],[postit,'postitSmsPhone']]) {
+for (const [html,id] of [[postit,'postitSmsPhone']]) {
  assert.ok(html.includes('id="'+id+'"'), 'Phone input absent: '+id);
 }
-assert.ok(challenge.includes('동의하지 않아도 가입할 수 있으며'));
+// The new account entry deliberately collects no phone or marketing consent.
+assert.doesNotMatch(challenge,/challengeMemberSmsConsent|challengeMemberSmsPhone|challenge-member-auth-v1\.js/);
+assert.doesNotMatch(account,/type="tel"|SmsConsent|SmsPhone/);
+assert.doesNotMatch(accountJs,/beagu_sms_phone|beagu_sms_opt_in/);
 assert.ok(postit.includes('미동의해도 가입 가능'));
-for (const script of [challengeJs,postitJs]) {
+for (const script of [postitJs]) {
  assert.ok(script.includes('beagu_sms_opt_in:wantsSms'));
  assert.ok(script.includes('beagu_sms_phone:wantsSms?mobile:null'));
  assert.ok(script.includes("replace(/[^0-9]/g,'')"));
