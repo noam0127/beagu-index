@@ -59,3 +59,5 @@ for(const p of ['js/beagu-home-schools-v1.js','js/school-search-card-v1.js']){co
 assert.match(l,/card\.append\(experience\)/);
 
 const showcase=read('js/beagu-home-schools-v1.js');assert.match(showcase,/detail\.href=linkFor\(school\.id\)/);assert.match(showcase,/actions\.append\(detail,experience\)/);assert.match(showcase,/footer\.append\(el\('span','beagu-home-school-year','2025년 기준'\),actions\)/);
+
+const fullset=read('styles/beagu-fullset-school-v11111.css');for(const width of [600,1024,1440])assert.ok(fullset.includes('min-width:'+width+'px'));for(const p of ['search.html','search-lv1.html','school-report.html'])assert.match(read(p),/beagu-fullset-school-v11111\.css/);

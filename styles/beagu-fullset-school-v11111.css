@@ -1,0 +1,39 @@
+/* Full Set stage 1. CSS only; no data, chart coordinates, release or authorization changes. */
+body:is(.beagu-page-search,.beagu-page-lv1) main.container{width:calc(100% - 40px);max-width:1920px;container-type:inline-size;container-name:fullset-search}
+body:is(.beagu-page-search,.beagu-page-lv1) #searchPanel{container-type:inline-size;container-name:fullset-search}
+body:is(.beagu-page-search,.beagu-page-lv1) #results{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:stretch;min-width:0}
+body:is(.beagu-page-search,.beagu-page-lv1) #results>:not(.school-card),
+body:is(.beagu-page-search,.beagu-page-lv1) #results>.school-card:has(.lv1-history-trigger[aria-expanded="true"]){grid-column:1/-1}
+@container fullset-search (min-width:600px){body:is(.beagu-page-search,.beagu-page-lv1) #results{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container fullset-search (min-width:1024px){body:is(.beagu-page-search,.beagu-page-lv1) #results{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container fullset-search (min-width:1440px){body:is(.beagu-page-search,.beagu-page-lv1) #results{grid-template-columns:repeat(4,minmax(0,1fr))}}
+body:is(.beagu-page-search,.beagu-page-lv1) #results>.school-card{box-sizing:border-box;min-width:0;max-width:100%;padding:14px;overflow-wrap:anywhere}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .region-badge{margin-bottom:4px;padding:3px 8px}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .school-name{font-size:17px;line-height:1.4;margin-bottom:4px}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .school-meta{font-size:12px;line-height:1.5}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .percentile-panel{margin:10px 0 8px;padding:8px}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .percentile-grid{gap:4px;margin:6px 0;grid-template-columns:repeat(4,minmax(0,1fr))}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .percentile-cell{padding:6px 3px}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .percentile-year{margin-bottom:3px;font-size:11px}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .percentile-value{font-size:12px;line-height:1.4}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .percentile-graph{max-width:320px;width:100%;margin:4px auto 0}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .percentile-graph svg{display:block;width:100%;height:auto;max-height:144px}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .school-actions{gap:6px;margin-top:8px}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .school-sort-primary{padding:7px 9px;margin:4px 0 6px}
+body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .lv1-history-trigger{min-height:40px;font-size:14px}
+body.beagu-page-lv1 #results .school-card .school-detail{min-width:0}
+body.beagu-page-lv1 #results .school-detail .beagu-lv2-score-card{max-width:640px;width:100%;box-sizing:border-box}
+body.beagu-page-report .benchmark-plot{max-width:420px;height:58px}
+body.beagu-page-report .summary-metrics{grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:10px}
+body.beagu-page-report .approved-summary .summary-metric.compare-metric{padding:12px}
+@media(min-width:900px){
+ body.beagu-page-report .layout{max-width:1440px}
+ body.beagu-page-report .question-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;border:0;overflow:visible}
+ body.beagu-page-report .question-list>.question-row{min-width:0;border:1px solid #e7edf5;border-radius:12px}
+}
+@media(max-width:599px){
+ body:is(.beagu-page-search,.beagu-page-lv1) main.container{width:calc(100% - 24px)}
+ body:is(.beagu-page-search,.beagu-page-lv1) #results>.school-card{padding:12px}
+ body.beagu-page-report .summary-metrics{grid-template-columns:1fr}
+}
+@media(max-width:380px){body:is(.beagu-page-search,.beagu-page-lv1) #results .school-card .percentile-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

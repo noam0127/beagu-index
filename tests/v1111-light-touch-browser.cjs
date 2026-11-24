@@ -81,6 +81,14 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  assert.equal(await page.getByText('2026 자료 공개 기준',{exact:true}).count(),0);
  if(!tier){assert.equal(await page.locator('.beagu-interest-number').count(),0);assert.match(await page.locator('#beaguInterest li a').first().getAttribute('href'),/^school-report\.html\?school_id=/);}
  else{await page.locator('#searchInput').fill('검증초');await page.locator('#results .school-card').first().waitFor();assert.equal(await page.locator('#results .school-card').count(),7);
+ // Actual available content width controls the layout, not the window width.
+ for(const w of [360,390,768,1024,1440,1920]){
+  await page.setViewportSize({width:w,height:900});
+  const layout=await page.locator('#results').evaluate(el=>{const container=el.closest('#searchPanel')||el.closest('main');const available=container.getBoundingClientRect().width-parseFloat(getComputedStyle(container).paddingLeft)-parseFloat(getComputedStyle(container).paddingRight);return {available,columns:getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length,scroll:document.documentElement.scrollWidth,width:innerWidth}});
+  const expected=layout.available>=1440?4:layout.available>=1024?3:layout.available>=600?2:1;
+  assert.equal(layout.columns,expected,JSON.stringify(layout));assert.ok(layout.scroll<=layout.width+1,JSON.stringify(layout));
+ }
+ await page.setViewportSize({width,height:900});
  assert.equal(await page.locator('#results .school-card .court-school-experience').count(),7);
  assert.equal(await page.locator('#results .school-card .court-school-experience').first().getAttribute('href'),'teacher-volleyball.html?school_id='+fixture[0].school_id);
  await page.locator('.lv1-history-trigger').first().click();await page.waitForFunction(()=>document.querySelector('.lv1-history-trigger[aria-expanded="true"]'));await page.waitForFunction(()=>!!document.querySelector('#results .school-detail[data-loaded="1"]'));assert.equal(detailRequested,true);
