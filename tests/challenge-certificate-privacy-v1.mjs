@@ -6,7 +6,7 @@ const html=read('challenge.html'),capture=read('js/challenge.js'),ref=read('js/c
 assert.doesNotThrow(()=>new Script(capture));
 assert.doesNotThrow(()=>new Script(ref));
 const start=html.indexOf('<section class="certificate"');
-const end=html.indexOf('<section class="challenge-levelup-heading"',start);
+const end=html.indexOf('<section class="together-save"',start);
 assert.ok(start>0&&end>start);
 const publicCertificate=html.slice(start,end);
 for(const forbidden of ['id="identityCode"','id="challengeReferralLink"','id="challengeIdentityPanel"','id="challengeReferralPanel"'])
@@ -21,7 +21,7 @@ assert.match(ref, /copyIdentityCode\.hidden = !upgraded/);
 assert.match(html, /id="copyIdentityCode"[^>]*disabled hidden/);
 assert.match(capture, /dataset\.referralState !== 'earned'/);
 assert.ok(publicCertificate.includes('id="certificateThanks"'));
-const order=['id="certificate"','id="challenge-levelup-title"','id="challengeIdentityPanel"','id="challengeReferralPanel"','class="steps"','challenge-notice-title'];
+const order=['id="certificate"','id="capture"','id="challengeReferralPanel"','class="together-benefits"','id="togetherIdentityPanel"','id="challengeIdentityPanel"','challenge-notice-title'].filter(key=>key!=='id="togetherIdentityPanel"');
 let previous=-1;for(const key of order){const i=html.indexOf(key);assert.ok(i>previous,'Challenge layout order violated: '+key);previous=i;}
 assert.match(capture,/html2canvas\(root,\s*\{/);
 assert.match(capture,/root\.querySelector\('#identityCode,#challengeReferralLink/);
@@ -41,4 +41,7 @@ assert.match(ref,/referralCount\.textContent = count\.toLocaleString/);
 assert.match(read('styles/challenge-premium-grid-v1.css'),/grid-template-columns:minmax\(0,2fr\) minmax\(0,1fr\)/);
 assert.doesNotMatch(ref,/유효한 추천 1건이 확인되면 \(비활성\)이 사라지고/);
 assert.match(html,/BAEGU INDEX · VERIFIED MEMBER/);
-assert.ok(html.indexOf('id="challengeIdentityPanel"')<html.indexOf('id="challengeReferralPanel"'));
+assert.ok(html.indexOf('id="challengeIdentityPanel"')>html.indexOf('id="challengeReferralPanel"'));
+assert.match(html,/<details\b[^>]*class="challenge-account-details"[^>]*>/);
+assert.match(html,/id="loungeLink"[^>]*href="https:\/\/indischool\.com\/tweets\/channels\/lounge"/);
+assert.match(html,/id="copyChallengeShareText"/);
