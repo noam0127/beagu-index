@@ -1,0 +1,26 @@
+/* v1.11.1: search layout only; no permission changes. */
+body:is(.beagu-page-search,.beagu-page-lv1) main.container{width:calc(100% - 48px);max-width:1600px}
+.light-touch-survey{margin:0 0 16px}
+.light-touch-survey .participation-link{max-width:none;padding:12px 16px;font-size:15px}
+body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero{min-height:120px;padding-block:20px}
+#results[data-search-mode="region"]{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px;align-items:start}
+#results[data-search-mode="region"]>.school-card{min-width:0;padding:14px;overflow-wrap:anywhere}
+#results[data-search-mode="region"]>.empty{grid-column:1/-1}
+#results[data-search-mode="region"] .percentile-graph svg{max-height:112px;width:100%;height:auto}
+#results[data-search-mode="region"] .percentile-grid{gap:4px}
+#results[data-search-mode="region"] .percentile-heading{font-size:14px}
+#results[data-search-mode="region"] .school-card:has(.lv1-history-trigger[aria-expanded="true"]){grid-column:1/-1}
+.beagu-home-showcase{margin:20px 0;padding:18px;background:#fff;border:1px solid #dce6f2;border-radius:18px}
+.beagu-home-showcase-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.beagu-home-showcase-head h2{margin:0;font-size:18px}
+.beagu-home-showcase-head span,.beagu-home-school-note{font-size:12px;color:#64748b}
+.beagu-home-school-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.beagu-home-school{display:grid;gap:5px;min-width:0;overflow-wrap:anywhere;padding:14px;border:1px solid #dce6f2;border-radius:12px}
+.beagu-home-school-name{color:#2458b9;font-weight:800}
+.beagu-home-school-tier,.beagu-home-school-region,.beagu-home-school-value{font-size:13px}
+@media(max-width:600px){body:is(.beagu-page-search,.beagu-page-lv1) main.container{width:calc(100% - 24px)}#results[data-search-mode="region"]{grid-template-columns:1fr}.beagu-home-school{padding:10px}}
+
+.beagu-interest-item .beagu-interest-link{display:flex;align-items:center;gap:10px;width:100%;min-width:0;text-decoration:none;color:inherit;padding:10px 6px;border-radius:8px}
+.beagu-interest-item .beagu-interest-link:hover{background:#f2f6fc}
+.beagu-interest-link:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}
+.light-touch-survey a{display:block;width:100%;box-sizing:border-box}

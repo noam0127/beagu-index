@@ -117,6 +117,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <script defer src="js/beagu-release-info-v1.js?v=120"></script>
 <link rel="stylesheet" href="styles/beagu-communication-v1.css?v=160b">
+<link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1111">
 </head>
 <body class="beagu-ui-page beagu-page-search">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -124,6 +125,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 
 <main class="container" id="main-content">
+<section class="light-touch-survey" aria-label="2026 배구지수 설문조사"><a id="lightTouchSurveyLink" class="participation-link survey-access-link" href="survey.html">2026 배구지수 설문조사 참여하기</a></section>
 
 
 <section class="beagu-search-hero" aria-labelledby="searchTitle"><h1 id="searchTitle" aria-label="학교 검색">학교를 <span>바로 검색</span></h1><svg class="beagu-search-hero-magnifier" viewBox="0 0 120 120" aria-hidden="true" focusable="false"><circle cx="51" cy="50" r="33" fill="none" stroke="currentColor" stroke-width="11"/><path d="M77 77l29 29" fill="none" stroke="currentColor" stroke-width="13" stroke-linecap="round"/></svg></section>
@@ -161,18 +163,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
   
 
 </section>
-  <section class="beagu-interest beagu-interest--standalone" id="beaguInterest" data-interest-locked="true" aria-labelledby="beaguInterestTitle">
-    <div class="beagu-interest-head">
-      <h2 id="beaguInterestTitle">실시간 급상승 학교</h2>
-      <span class="beagu-interest-badge">🔒 Lv.1 이상</span>
-    </div>
-    <div class="beagu-interest-lock">
-      <span class="beagu-interest-lock-icon" aria-hidden="true">🔒</span>
-      <strong>Lv.1부터 확인할 수 있습니다</strong>
-      <p>최근 72시간 사이 관심이 빠르게 늘어난 학교를 확인하세요.</p>
-      <a href="search-lv1.html?v=20261120-live-rising72-15min">참여코드 입력</a>
-    </div>
-  </section>
+  
 <section id="regionPanel" role="tabpanel" aria-labelledby="regionTab" hidden>
   <div class="field-group"><label class="field-label" for="regionSelect">1. 시도 선택</label>
     <select id="regionSelect" class="region-select">
@@ -210,6 +201,15 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <button id="prevPage" type="button">이전</button><span id="pageInfo" aria-live="polite"></span><button id="nextPage" type="button">다음</button>
 </div>
   
+<section class="beagu-home-showcase" id="beaguTodaySchools" aria-labelledby="beaguTodayTitle">
+<div class="beagu-home-showcase-head"><h2 id="beaguTodayTitle">오늘의 학교</h2><span>매일 00시·12시 변경 · 한국시간</span></div>
+<p class="beagu-home-showcase-status" data-today-status role="status">공개된 2025년 자료에서 학교를 선정하는 중입니다.</p>
+<div class="beagu-home-school-grid"><article class="beagu-home-school beagu-home-school--high" data-today-high aria-label="상위권 학교"></article><article class="beagu-home-school beagu-home-school--low" data-today-low aria-label="하위권 학교"></article></div>
+<p class="beagu-home-school-note">검증·공개된 2025년 백분위 기준이며 학교 전체에 대한 평가를 뜻하지 않습니다.</p></section>
+<section class="beagu-interest beagu-interest--standalone" id="beaguInterest" data-interest-locked="false" data-interest-top-five="true" aria-labelledby="beaguInterestTitle">
+<div class="beagu-interest-head"><h2 id="beaguInterestTitle">실시간 급상승 학교</h2><span class="beagu-interest-badge">15분마다 갱신 · Lv.0 공개</span></div>
+<p class="beagu-interest-description">최근 72시간 관심 증가순 상위 5개 학교 · 배구지수 순위 아님</p>
+<ol class="beagu-interest-list" data-interest-list aria-live="polite"></ol><p class="beagu-interest-status" data-interest-status role="status">급상승 학교를 확인하는 중입니다.</p><span class="beagu-interest-updated" data-interest-updated></span></section>
 <section class="beagu-home-notice" data-notice-state="loading" hidden aria-labelledby="site-notice-title">
  <h2 id="site-notice-title">공지사항</h2>
 <div id="beaguHomeNoticeBody" class="beagu-notice-common" hidden></div>
@@ -312,7 +312,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
     mode = target;
     schoolPanel.hidden = target !== 'school';
     regionPanel.hidden = target !== 'region';
-    document.getElementById('beaguInterest').hidden = target !== 'school';
+    results.dataset.searchMode=target;
     schoolTab.setAttribute('aria-selected', String(target === 'school'));
     regionTab.setAttribute('aria-selected', String(target === 'region'));
     loadSchools(true);
@@ -637,6 +637,9 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 </script>
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/search-telemetry-v1.js?v=20261120-selection-record2"></script>
+<script>(()=>{const ref=new URLSearchParams(location.search).get('ref');if(/^(?:[a-f0-9]{64}|[A-Za-z0-9_-]{8})$/.test(ref||''))document.getElementById('lightTouchSurveyLink').href='survey.html?ref='+encodeURIComponent(ref);})();</script>
+<script defer src="js/beagu-home-schools-v1.js?v=1111"></script>
+<script defer src="js/beagu-school-interest-v1.js?v=1111"></script>
 </body>
 </html>
 
