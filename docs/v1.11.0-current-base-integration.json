@@ -203,24 +203,11 @@
   ],
   "pending_paths": [
     ".github/workflows/clean-release-validation.yml",
-    "admin.html",
-    "arcade-history.html",
     "challenge.html",
-    "index.html",
     "js/challenge-referral-v1.js",
-    "levels.html",
-    "postit.html",
     "release-candidate.json",
     "release-info.json",
-    "release-policy.html",
-    "school-report.html",
     "scripts/test-challenge-referral-premium.cjs",
-    "search-lv1.html",
-    "search.html",
-    "statistics.html",
-    "survey.html",
-    "teacher-run.html",
-    "teacher-volleyball.html",
     "tests/challenge-certificate-privacy-v1.mjs",
     "tests/milestone-browser.cjs",
     ".github/workflows/account-anonymous-integration.yml",
@@ -229,5 +216,20 @@
     ".github/workflows/account-supabase-runtime.yml"
   ],
   "production_execution_enabled": false,
-  "admin_registration_allowed": false
+  "admin_registration_allowed": false,
+  "merged_paths": [
+    "admin.html",
+    "arcade-history.html",
+    "index.html",
+    "levels.html",
+    "postit.html",
+    "release-policy.html",
+    "school-report.html",
+    "search-lv1.html",
+    "search.html",
+    "statistics.html",
+    "survey.html",
+    "teacher-run.html",
+    "teacher-volleyball.html"
+  ]
 }
