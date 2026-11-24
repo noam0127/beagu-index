@@ -163,3 +163,8 @@ jobs:
           psql_data < supabase/migrations/20261123180000_2026_level_final_release_controls.sql
           psql_data < supabase/2026-release-reconciliation-v1.sql
           psql_data < tests/2026-reconciliation-postgres-assertions.sql
+
+          psql_data < tests/2026-civic-hold-fixture.sql
+          psql_data < supabase/migrations/20261123190000_beagu_2026_civic_feedback.sql
+          psql_data < supabase/2026-civic-publication-hold-v1.sql
+          psql_data < tests/2026-civic-hold-assertions.sql
