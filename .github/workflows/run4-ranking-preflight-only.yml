@@ -1,0 +1,35 @@
+name: Run4 isolated ranking schema preflight
+on:
+  push:
+    branches: ['validation/run4-ranking-preflight']
+permissions:
+  contents: read
+jobs:
+  disposable-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify draft in disposable local PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          container="run4-fixture-${GITHUB_RUN_ID}"
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          docker run --rm -d --name "$container" --network none -e POSTGRES_PASSWORD=fixture_only postgres:16
+          for i in {1..45}; do
+            if docker exec "$container" pg_isready -U postgres; then break; fi
+            sleep 1
+          done
+          psql_fixture() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres; }
+          psql_fixture <<'SQL'
+          create role anon nologin;
+          create role authenticated nologin;
+          create role service_role nologin bypassrls;
+          create table public.arcade_game_scores(id integer primary key,score integer not null);
+          insert into public.arcade_game_scores values (1,42);
+          SQL
+          psql_fixture < docs/run4-ranking-preflight/schema-draft.sql
+          psql_fixture < docs/run4-ranking-preflight/assertions.sql
