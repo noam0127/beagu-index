@@ -19,30 +19,57 @@ ALTER TABLE beagu_private.beagu_account_sessions_v1 ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON beagu_private.beagu_provisional_accounts_v1,beagu_private.beagu_account_login_budget_v1,beagu_private.beagu_account_sessions_v1 FROM PUBLIC,anon,authenticated;
 CREATE TABLE beagu_private.beagu_account_nicknames_v1(
  visitor_id uuid PRIMARY KEY,
- nickname text COLLATE "C" NOT NULL UNIQUE CHECK(nickname ~ '^[Il|ǀ❘ı∣│]{7}$')
+ nickname text COLLATE "C" NOT NULL UNIQUE CHECK(nickname ~ '^[Il|ǀ❘ı∣│]{10}$'),
+ week_start date NOT NULL DEFAULT date_trunc('week',now() AT TIME ZONE 'Asia/Seoul')::date
 );
 ALTER TABLE beagu_private.beagu_account_nicknames_v1 ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON beagu_private.beagu_account_nicknames_v1 FROM PUBLIC,anon,authenticated;
 CREATE FUNCTION beagu_private.beagu_account_nickname_v1(p_visitor uuid)
 RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE result text; candidate text; n integer; alphabet constant text:='Il|ǀ❘ı∣│';
+DECLARE result text; candidate text; previous text; stored_week date;
+ current_week date:=date_trunc('week',now() AT TIME ZONE 'Asia/Seoul')::date;
+ n integer; alphabet constant text:='Il|ǀ❘ı∣│';
 BEGIN
- SELECT nickname INTO result FROM beagu_private.beagu_account_nicknames_v1 WHERE visitor_id=p_visitor;
- IF result IS NOT NULL THEN RETURN result; END IF;
+ -- Same lock as account registration and formal linking; cron and login cannot race.
+ PERFORM pg_advisory_xact_lock(2026,1110);
+ SELECT nickname,week_start INTO previous,stored_week FROM beagu_private.beagu_account_nicknames_v1 WHERE visitor_id=p_visitor;
+ IF previous IS NOT NULL AND stored_week>=current_week THEN RETURN previous; END IF;
  FOR i IN 1..64 LOOP
   candidate:='';
-  WHILE char_length(candidate)<7 LOOP
+  WHILE char_length(candidate)<10 LOOP
    n:=get_byte(extensions.gen_random_bytes(1),0);
-   IF n<256 THEN candidate:=candidate||substr(alphabet,1+n%8,1); END IF;
+   candidate:=candidate||substr(alphabet,1+n%8,1);
   END LOOP;
-  INSERT INTO beagu_private.beagu_account_nicknames_v1(visitor_id,nickname)
-  VALUES(p_visitor,candidate) ON CONFLICT DO NOTHING;
-  SELECT nickname INTO result FROM beagu_private.beagu_account_nicknames_v1 WHERE visitor_id=p_visitor;
-  IF result IS NOT NULL THEN RETURN result; END IF;
+  IF candidate IS NOT DISTINCT FROM previous THEN CONTINUE; END IF;
+  BEGIN
+   INSERT INTO beagu_private.beagu_account_nicknames_v1(visitor_id,nickname,week_start)
+   VALUES(p_visitor,candidate,current_week)
+   ON CONFLICT(visitor_id) DO UPDATE SET nickname=excluded.nickname,week_start=excluded.week_start
+   RETURNING nickname INTO result;
+   RETURN result;
+  EXCEPTION WHEN unique_violation THEN
+   -- Random collision: retry; never displace another member.
+  END;
  END LOOP;
  RAISE EXCEPTION 'nickname allocation unavailable';
 END $$;
 REVOKE ALL ON FUNCTION beagu_private.beagu_account_nickname_v1(uuid) FROM PUBLIC,anon,authenticated;
+
+-- Rotate every registered nickname, even when its owner is offline.
+-- One transaction; repeated scheduling in the same Korean calendar week is a no-op.
+CREATE FUNCTION beagu_private.beagu_account_rotate_nicknames_v1()
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE v uuid; total integer:=0;
+ current_week date:=date_trunc('week',now() AT TIME ZONE 'Asia/Seoul')::date;
+BEGIN
+ PERFORM pg_advisory_xact_lock(2026,1110);
+ FOR v IN SELECT visitor_id FROM beagu_private.beagu_account_nicknames_v1 WHERE week_start<current_week ORDER BY visitor_id LOOP
+  PERFORM beagu_private.beagu_account_nickname_v1(v);
+  total:=total+1;
+ END LOOP;
+ RETURN total;
+END $$;
+REVOKE ALL ON FUNCTION beagu_private.beagu_account_rotate_nicknames_v1() FROM PUBLIC,anon,authenticated;
 -- No table grants: RPCs are the only account credential access path.
 CREATE FUNCTION beagu_private.beagu_account_visitor_level_v1(p_visitor uuid)
 RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
@@ -129,9 +156,9 @@ BEGIN
  RETURN jsonb_build_object('account_id',a.account_id,'nickname',beagu_private.beagu_account_nickname_v1(a.visitor_id),'level',2,'formal',true,'expires_at',exp);
 END $$;
 CREATE FUNCTION public.beagu_account_session_status_v1(p_token_sha text)
-RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
+RETURNS jsonb LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path='' AS $
  SELECT jsonb_build_object('level',least(l.access_level,beagu_private.beagu_account_visitor_level_v1(s.visitor_id)),
- 'formal',s.account_id IS NULL,'nickname',(SELECT nickname FROM beagu_private.beagu_account_nicknames_v1 n WHERE n.visitor_id=s.visitor_id),'expires_at',s.expires_at)
+ 'formal',s.account_id IS NULL,'nickname',beagu_private.beagu_account_nickname_v1(s.visitor_id),'expires_at',s.expires_at)
  FROM beagu_private.beagu_account_sessions_v1 s JOIN public.beagu_level_sessions l USING(token_sha256)
  WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now()
  AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)>0
@@ -193,7 +220,11 @@ CREATE TRIGGER beagu_account_provisional_revoke AFTER UPDATE OF enabled,password
 CREATE FUNCTION public.beagu_account_level_session_allowed_v1(p_token_sha text)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT EXISTS(SELECT 1 FROM public.beagu_level_sessions WHERE token_sha256=p_token_sha AND expires_at>now()) AND CASE WHEN EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 WHERE token_sha256=p_token_sha)
- THEN public.beagu_account_session_status_v1(p_token_sha) IS NOT NULL ELSE true END
+ THEN EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 s JOIN public.beagu_level_sessions l USING(token_sha256)
+ WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now()
+ AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)>0
+ AND (EXISTS(SELECT 1 FROM beagu_private.beagu_provisional_accounts_v1 a WHERE a.account_id=s.account_id AND a.enabled)
+ OR (s.account_id IS NULL AND EXISTS(SELECT 1 FROM beagu_private.beagu_account_identity_v1 a WHERE a.visitor_id=s.visitor_id AND a.status='ACTIVE') AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)=2))) ELSE true END
 $$;
 REVOKE ALL ON FUNCTION public.beagu_account_level_session_allowed_v1(text) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.beagu_account_level_session_allowed_v1(text) TO service_role;
