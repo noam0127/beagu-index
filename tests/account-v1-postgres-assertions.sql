@@ -7,7 +7,7 @@ BEGIN
  IF public.beagu_account_password_login_v1(a,repeat('d',64),repeat('1',64)) IS NOT NULL THEN RAISE EXCEPTION 'wrong credential accepted'; END IF;
  r:=public.beagu_account_password_login_v1(a,repeat('c',64),repeat('1',64));
  IF r->>'level' IS DISTINCT FROM '1' THEN RAISE EXCEPTION 'Lv1 login failed'; END IF;
- nick:=r->>'nickname'; IF nick IS NULL OR nick !~ '^[Il1]{32}
+ nick:=r->>'nickname'; IF nick IS NULL OR nick !~ '^[Il]{32}
  IF public.beagu_account_formal_link_v1(u,'SYNTHETIC-ONE',repeat('a',64),repeat('1',64)) IS NOT NULL THEN RAISE EXCEPTION 'unearned formal tier'; END IF;
  UPDATE beagu_private.challenge_referral_profiles SET access_level=2,valid_referrals=1,upgraded_at=now() WHERE visitor_id=v;
  IF public.beagu_account_level_session_allowed_v1(repeat('1',64)) THEN RAISE EXCEPTION 'obsolete referral session survived'; END IF;
