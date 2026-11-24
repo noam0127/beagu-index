@@ -1176,7 +1176,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.winner=result.title;state.winCheer=result.detail;
     render();
     resultView.show({game:"선생님배구",title:result.title,detail:result.detail,
-      metrics:[state.leftScore+" : "+state.rightScore,finalScore.toLocaleString("ko-KR")+"점",fmtTime(elapsedTenths),diffName[currentDifficulty]||currentDifficulty]},
+      metrics:[state.leftScore+" : "+state.rightScore,finalScore.toLocaleString("ko-KR")+"점",fmtTime(elapsedTenths),diffName[currentDifficulty]||currentDifficulty,...(state.recordBroken?["기기 최고점 신기록"]:[]),...(state.timeRecordBroken?["기기 최단시간 신기록"]:[])]},
       [{label:"↻ 다시 하기",action:()=>void startMatch()},{label:"🏫 다른 학교",action:()=>stopForSchoolChange()}]);
     syncUI();
     return saveResult;

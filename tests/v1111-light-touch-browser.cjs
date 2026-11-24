@@ -82,6 +82,12 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   assert.equal(await page.locator('#volley-attack').getAttribute('aria-pressed'),'true');
   await page.evaluate(()=>document.querySelector('#volley-attack').dispatchEvent(new PointerEvent('pointercancel',{pointerId:32,pointerType:'touch',bubbles:true})));
   assert.equal(await page.locator('#volley-attack').getAttribute('aria-pressed'),'false');
+  await page.waitForTimeout(5000);
+  await page.locator('#start').click();
+  await page.locator('.arcade-result-full').waitFor({state:'visible'});
+  assert.match(await page.locator('.arcade-result-title').innerText(),/도전의 기록/);
+  await page.waitForFunction(()=>!document.querySelector('.arcade-result-copy').disabled);
+  assert.equal(await page.locator('.arcade-result-brag').getAttribute('href'),'https://indischool.com/tweets/channels/lounge');
  }
  await page.goto(origin+'/teacher-volleyball.html?school_id='+tomorrow[1-cardIndex]);
  await page.waitForFunction(()=>document.querySelector('#volley-ready-title')?.textContent==='조사 참여 필요');
