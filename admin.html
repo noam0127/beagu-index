@@ -207,7 +207,10 @@
         </div>
         <button type="button" class="secondary" id="adminMembersReload">새로고침</button>
         <p id="adminMembersStatus" class="subtle" role="status" aria-live="polite">관리자 인증 후 집계를 불러옵니다.</p>
-        <p class="subtle">회원 개인의 이메일·연락처·고유번호·작성자 ID는 조회하지 않습니다. 익명 신고 기반 제재는 별도 출시 전 검증 대상입니다.</p>
+        <p class="subtle">회원 개인의 이메일·연락처·고유번호·작성자 ID는 조회하지 않습니다.</p>
+        <div class="ranking-card"><h4>신고된 포스트잇 · 댓글</h4><p class="subtle">신고만으로 회원을 제재하지 않습니다. 관리자가 내용을 검토하며, 소유자만 24시간·7일 작성 제한, 기각, 제한 해제를 결정합니다. 작성 제한은 추천 실적과 열람 권한에 영향을 주지 않습니다.</p>
+          <p id="adminReportStatus" class="subtle" role="status" aria-live="polite">신고 집계 확인 전</p><div id="adminReportRows"></div>
+        </div>
       </section>
 
       <section class="dash-section" id="adminReferralFunnel" aria-labelledby="adminReferralFunnelHeading">
@@ -421,7 +424,7 @@
   <script defer src="js/beagu-home-notice-admin-v1.js?v=160b"></script>
   <script defer src="js/beagu-admin-access-v1.js?v=160"></script>
   <script defer src="js/beagu-2026-admin-review.js?v=20261123-bulk-400-enabled1"></script>
-  <script defer src="js/beagu-admin-members-v1.js?v=20261124-anonymous1"></script>
+  <script defer src="js/beagu-admin-members-v1.js?v=20261124-anonymous2"></script>
 <script defer src="js/beagu-2026-civic-admin-v1.js?v=20261124-trust1"></script>
 </body>
 </html>
