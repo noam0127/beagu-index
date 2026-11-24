@@ -53,3 +53,20 @@ BEGIN
  IF has_table_privilege('anon','beagu_private.beagu_account_nicknames_v1','select') OR has_table_privilege('authenticated','beagu_private.beagu_account_nicknames_v1','select') OR has_function_privilege('service_role','beagu_private.beagu_account_alias_at_v1(uuid,timestamptz)','execute') OR has_function_privilege('authenticated','beagu_private.beagu_account_prepare_nicknames_v1(timestamptz,integer)','execute') THEN RAISE EXCEPTION 'alias history access'; END IF;
  RAISE NOTICE 'PASS next aliases, exact KST boundary, private history and idempotence';
 END $$;
+
+-- Public content alias projection never exposes stable member/author identity or old/future aliases.
+DO $$
+DECLARE v uuid:='10000000-0000-0000-0000-000000000002';
+ u uuid:='00000000-0000-0000-0000-000000000002'; a uuid:=gen_random_uuid(); cur uuid:=gen_random_uuid(); old uuid:=gen_random_uuid(); future uuid:=gen_random_uuid();
+ r jsonb; wk date:=beagu_private.beagu_account_week_v1(statement_timestamp()); expected text;
+BEGIN
+ INSERT INTO public.beagu_postit_member_accounts(auth_user_id,identity_visitor_id,author_uid) VALUES(u,v,a);
+ expected:=beagu_private.beagu_account_alias_at_v1(v,statement_timestamp());
+ SELECT jsonb_agg(to_jsonb(z)) INTO r FROM public.beagu_account_postit_current_aliases_v1(jsonb_build_array(
+ jsonb_build_object('item_id',cur,'author_uid',a,'created_at',statement_timestamp()),
+ jsonb_build_object('item_id',old,'author_uid',a,'created_at',((wk-7)::timestamp AT TIME ZONE 'Asia/Seoul')),
+ jsonb_build_object('item_id',future,'author_uid',a,'created_at',((wk+7)::timestamp AT TIME ZONE 'Asia/Seoul')))) z;
+ IF r IS DISTINCT FROM jsonb_build_array(jsonb_build_object('item_id',cur,'nickname',expected)) THEN RAISE EXCEPTION 'public content alias leak or missing current alias: %',r; END IF;
+ IF has_function_privilege('anon','public.beagu_account_postit_current_aliases_v1(jsonb)','execute') OR has_function_privilege('authenticated','public.beagu_account_postit_current_aliases_v1(jsonb)','execute') THEN RAISE EXCEPTION 'arbitrary alias lookup exposed'; END IF;
+ RAISE NOTICE 'PASS current-week Post-it alias only, no old/future alias or stable author identifier';
+END $$;
