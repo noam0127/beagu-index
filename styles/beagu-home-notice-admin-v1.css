@@ -1,0 +1,15 @@
+.admin-home-notice-editor{max-width:860px}
+.admin-home-notice-editor form{display:grid;gap:12px}
+.admin-home-notice-editor label{font-weight:800;color:#243f61;font-size:14px}
+.admin-home-notice-editor textarea{display:block;width:100%;min-height:120px;box-sizing:border-box;resize:vertical;line-height:1.7;font:inherit;color:#173858;background:#fff;border:1px solid #bfd0e4;border-radius:12px;padding:13px 14px}
+.admin-home-notice-editor textarea:focus-visible{outline:2px solid #3673cb;outline-offset:2px}
+.admin-home-notice-meta{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+.admin-home-notice-preview{padding:18px 20px;background:#f1f6fd;border:1px solid #d5e3f3;border-radius:16px}
+.admin-home-notice-preview>strong{font-size:12px;color:#637b98}
+.admin-home-notice-preview h4{margin:9px 0;font-size:17px;color:#173858}
+.admin-home-notice-preview p{white-space:pre-line;overflow-wrap:anywhere;line-height:1.7;font-size:14px;color:#425d7a;margin:0}
+.admin-home-notice-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.admin-home-notice-actions a{font-size:13px;font-weight:700;color:#245788}
+.admin-home-notice-editor #adminHomeNoticeStatus.error{color:#b42318}
+
+#adminHomeNoticeSection[hidden]{display:none!important}#adminHomeNoticePublication{font-size:13px;color:#264b79}#adminHomeNoticeSection button{min-height:44px}

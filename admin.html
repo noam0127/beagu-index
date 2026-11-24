@@ -7,6 +7,7 @@
   <meta name="referrer" content="no-referrer">
   <title>관리자 · 배구지수</title>
   <link rel="stylesheet" href="styles/beagu-admin-v1.css?v=20261123-level-approvals1">
+<link rel="stylesheet" href="styles/beagu-home-notice-admin-v1.css?v=160">
 </head>
 <body>
   <main class="shell">
@@ -67,6 +68,31 @@
       </nav>
       <p class="subtle" id="adminDataAsOf" aria-live="polite">통계를 확인하는 중입니다.</p>
 
+<section class="dash-section" id="adminHomeNoticeSection" aria-labelledby="adminHomeNoticeHeading" hidden>
+        <div class="section-title"><h3 id="adminHomeNoticeHeading">홈 공지사항 관리</h3><small>홈 · 학교검색 · 학교비교 · 챌린지</small></div>
+        <div class="ranking-card admin-home-notice-editor">
+          <p class="subtle">게시할 내용은 공개됩니다. 개인정보를 입력하지 마세요. 숨기면 서버에는 숨김 상태만 남고, 기존 본문은 현재 편집 화면에만 유지됩니다. 나중에 재게시하려면 별도로 보관하세요.</p>
+          <form id="adminHomeNoticeForm">
+            <label for="adminHomeNoticeText">공지사항 본문</label>
+            <textarea id="adminHomeNoticeText" rows="5" maxlength="1000" minlength="1" required aria-describedby="adminHomeNoticeCount" placeholder="홈에 표시할 공지사항을 작성하세요."></textarea>
+            <div class="admin-home-notice-meta">
+              <span class="subtle" id="adminHomeNoticeCount">0 / 1000자</span>
+              <span class="subtle" id="adminHomeNoticeUpdated">현재 공지를 불러오는 중입니다.</span><strong id="adminHomeNoticePublication">확인 중</strong>
+            </div>
+            <div class="admin-home-notice-preview">
+              <strong>홈 화면 미리보기</strong>
+              <h4>공지사항</h4>
+              <p id="adminHomeNoticePreview"></p>
+            </div>
+            <div class="admin-home-notice-actions">
+              <button type="submit" id="adminHomeNoticeSave" class="primary" disabled>게시 / 수정 저장</button>
+              <button type="button" id="adminHomeNoticeHide" class="secondary" disabled>공지 숨기기</button><button type="button" id="adminHomeNoticeReset" class="secondary" disabled>수정 취소</button><button type="button" id="adminHomeNoticeReload" class="secondary">다시 불러오기</button>
+              <a href="index.html#home-notice-title" target="_blank" rel="noopener noreferrer">홈에서 확인</a>
+            </div>
+            <p id="adminHomeNoticeStatus" class="subtle" role="status" aria-live="polite">관리자 인증 후 공지를 불러옵니다.</p>
+          </form>
+        </div>
+      </section>
       <section class="dash-section" aria-labelledby="adminSiteHeading">
         <div class="section-title"><h3 id="adminSiteHeading">사이트 이용 현황</h3><small>방문 기록을 기준으로 집계</small></div>
         <div class="metrics" id="adminSiteMetrics">
@@ -442,7 +468,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
   <script src="js/supabase-config.js"></script>
-  <script defer src="js/beagu-admin-access-v1.js?v=20261121-members1"></script>
+  <script defer src="js/beagu-home-notice-admin-v1.js?v=160"></script>
+  <script defer src="js/beagu-admin-access-v1.js?v=160"></script>
   <script defer src="js/beagu-2026-admin-review.js?v=20261123-bulk-400-enabled1"></script>
   <script defer src="js/beagu-admin-members-v1.js?v=20261121-members1"></script>
 <script defer src="js/beagu-2026-civic-admin-v1.js?v=20261123-civic1"></script>
