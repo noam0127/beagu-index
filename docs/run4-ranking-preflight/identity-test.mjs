@@ -1,0 +1,24 @@
+import assert from "node:assert/strict";
+import {generateKeyPairSync,verify} from "node:crypto";
+import {createGoogleIdentityProvider} from "./google-identity.mjs";
+const {privateKey,publicKey}=generateKeyPairSync("rsa",{modulusLength:2048});
+const credential={type:"service_account",client_email:"run4-invoker@fixture-project.iam.gserviceaccount.com",private_key_id:"a".repeat(40),private_key:privateKey.export({type:"pkcs8",format:"pem"}),token_uri:"https://never-contact.invalid"};
+const url="https://fixture.run.app",epoch=1764000000000;let time=epoch,calls=0,bad=false,fail=false;
+const encode=v=>Buffer.from(JSON.stringify(v)).toString("base64url");
+const mock=async(address,o)=>{
+ calls++;assert.equal(address,"https://oauth2.googleapis.com/token");assert.equal(o.redirect,"error");assert.equal(o.body.get("grant_type"),"urn:ietf:params:oauth:grant-type:jwt-bearer");
+ const [h,p,s]=o.body.get("assertion").split(".");
+ assert.equal(verify("RSA-SHA256",Buffer.from(h+"."+p),publicKey,Buffer.from(s,"base64url")),true);
+ const claims=JSON.parse(Buffer.from(p,"base64url"));assert.equal(claims.target_audience,url);assert.equal(claims.aud,address);assert.equal(claims.iss,credential.client_email);assert.equal(claims.exp-claims.iat,300);
+ if(fail)return new Response("{}",{status:403});
+ return new Response(JSON.stringify({id_token:encode({alg:"RS256"})+"."+encode({iss:"https://accounts.google.com",aud:bad?"https://other.run.app":url,exp:Math.floor(time/1000)+3600,email:credential.client_email})+".fixture"}));
+};
+assert.throws(()=>createGoogleIdentityProvider({workerUrl:url,credential}),/identity_unavailable/);
+assert.throws(()=>createGoogleIdentityProvider({workerUrl:"https://example.com",credential,allowKey:true}),/invalid_audience/);
+const provider=createGoogleIdentityProvider({workerUrl:url,credential,allowKey:true,fetcher:mock,now:()=>time});
+const tokens=await Promise.all([provider(url),provider(url),provider(url)]);assert.equal(calls,1);assert.equal(tokens[0],tokens[2]);
+await assert.rejects(()=>provider("https://other.run.app"),/invalid_audience/);assert.equal(calls,1);
+time+=3550000;bad=true;await assert.rejects(()=>provider(url),/identity_unavailable/);assert.equal(calls,2);
+bad=false;fail=true;await assert.rejects(()=>provider(url),/identity_unavailable/);assert.equal(calls,3);
+fail=false;assert.ok(await provider(url));assert.equal(calls,4);
+console.log("PASS RUN4_IAM RSA assertion, exact audience, fixed exchange endpoint, cache, concurrency, expiry and denial (synthetic key)");

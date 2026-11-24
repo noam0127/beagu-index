@@ -5,6 +5,7 @@ const base="https://baeguindex.com";
 const api="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard";
 const origin={"Origin":base,"Content-Type":"application/json"};
 const html=await readFile("index.html","utf8");
+const hub=await readFile("games.html","utf8");
 const volley=await readFile("teacher-volleyball.html","utf8");
 const runner=await readFile("teacher-run.html","utf8");
 const shared=await readFile("js/arcade-leaderboard-v1.js","utf8");
@@ -38,9 +39,9 @@ assert.match(volley,/<div class="volley-ready-icon" aria-hidden="true">🏐<\/di
 assert.match(volley,/▶ 이 학교로 시작하기/,"school CTA switches after eligible selection");
 assert.match(volley,/if\(schoolPicker\.get\(\)\?\.eligible===true\)\{void startMatch\(\);return;\}/,
  "selected school starts the match without reopening selection");
-assert.match(html,/id="teacher-run-home-code"/,"homepage provides an in-place game authentication code field");
+assert.match(html,/href="games\.html/,"home opens Playcourt");assert.match(hub,/href="teacher-run\.html"/,"Playcourt opens gated survival");
 assert.match(runner,/id="teacher-run-code"/,"standalone survival game provides an in-place code field");
-assert.match(html,/data-game-lv1-form/);
+assert.doesNotMatch(html,/id="teacher-run-home-code"/,"obsolete embedded auth form removed");
 assert.match(runner,/data-game-lv1-form/);
 assert.doesNotMatch(runner,/<a href="search\.html">Lv\.1 인증하기<\/a>/,"standalone auth does not navigate");
 assert.match(gameGate,/JSON\.stringify\(\{action:'login',code\}\)/,"in-place form checks codes on the existing server");
@@ -113,14 +114,7 @@ assert.match(gameGate,/window\.dispatchEvent\(new Event\('beagu:level-state-chan
  assert.ok(!areaStates.has("arcade-fullscreen-fallback"));
  assert.equal(button.innerHTML,embeddedIcon);
 }
-const hostFullscreenScript=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
- .map(match=>match[1]).find(src=>src.includes("arcade:fullscreen-request"));
-assert.ok(hostFullscreenScript,"homepage iframe host expansion is installed");
-new Function(hostFullscreenScript);
-assert.match(hostFullscreenScript,/frame\.closest\("\.teacher-game-feature"\)/,
- "host expands the existing game section instead of replacing its iframe");
-assert.match(hostFullscreenScript,/event\.source===frame\.contentWindow/,
- "only messages from known arcade iframes are accepted");
+assert.doesNotMatch(html,/id="teacher-game-frame"|id="teacher-run-frame"/,"games now open as standalone pages");
 assert.match(fullscreenCSS,/\.arcade-game-viewport\.arcade-fullscreen-fallback/,
  "a fixed viewport is available when browser Fullscreen API is blocked");
 assert.match(fullscreenCSS,/contain:none!important/,
@@ -245,17 +239,17 @@ assert.match(runner,/difficultyProfiles=\{/,"survival game defines five hero/ene
 assert.match(volley,/battleProfiles=\{/,"volleyball defines five ally/CPU profiles");
 assert.match(shared,/arcade-rank-school/);
 assert.doesNotMatch(shared,/ENTER YOUR NAME|nickname:/,"no player names in leaderboard client");
-assert.match(html,/id="teacher-game-title">🏐 선생님배구 1\.0<\/h2>/,"volleyball homepage title should show 1.0");
-assert.match(html,/id="teacher-run-title">🎒 험난한 교직생활 3\.0<\/h2>/,"teacher-run homepage title should show 3.0");
+assert.match(hub,/<h3>선생님배구 1\.0<\/h3>/,"volleyball homepage title should show 1.0");
+assert.match(hub,/<h3>험난한 교직생활 3\.0<\/h3>/,"teacher-run homepage title should show 3.0");
 assert.match(volley,/<title>선생님배구 1\.0 \| 배구지수<\/title>/);
 assert.match(runner,/<title>험난한 교직생활 3\.0 \| 배구지수<\/title>/);
-assert.doesNotMatch(html,/험난한 교직생활 2\.0|선생님배구(?! 1\.0)/,"old game titles removed from home");
+assert.doesNotMatch(hub,/<h3>험난한 교직생활 2\.0<\/h3>|<h3>선생님배구<\/h3>/,"old game titles removed from Playcourt headings");
 assert.doesNotMatch(runner,/험난한 교직생활 2\.0/,"old teacher-run title removed");
-assert.ok(html.indexOf('id="teacher-game-frame"')<html.indexOf('id="teacher-run-frame"'));
+assert.ok(hub.indexOf('data-game="volleyball"')<hub.indexOf('data-game="survival"'));
 assert.match(volley,/SPEED_MULTIPLIER=2/);
 assert.match(volley,/AUTO_SPIKE_SPEED=8/,"automatic spike requires fast movement");
 assert.match(volley,/impactSpeed >= AUTO_SPIKE_SPEED/,"contact fires automatic spike");
-assert.match(volley,/id="volley-spike"/,"explicit spike button is available");
+assert.match(volley,/id="volley-attack"/,"combined spike/dash button is available");
 assert.match(volley,/state.spikeBufferFrames=SPIKE_BUFFER/,"manual spike buffer is implemented");
 
 assert.match(volley,/R = 48;/,"volleyball radius enlarged 1.5x from 32 to 48");
@@ -263,7 +257,7 @@ assert.match(volley,/NET_TOP = 342/,"net rises from 97px to 109px");
 assert.match(volley,/43\s*\*\s*\.75\s*\*\s*battle\.allyReach/,"forearm reach remains tier-adjusted");
 assert.doesNotMatch(volley,/data-key="jump"/,"touch jump button removed");
 assert.doesNotMatch(volley,/class="touch"/,"empty touch control region removed");
-assert.match(volley,/touchControl\.axisY/,"volleyball joystick has vertical axis");
+assert.match(volley,/touchControl\.axes\(left\.x,left\.y,flightAllowed\)/,"direct touch has gated vertical movement");
 assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is implemented");
 assert.match(runner,/pointerY=target\.y/,"survival game tracks 2D touch target");
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically except EXTREME");
@@ -307,9 +301,9 @@ assert.equal((mainRun.match(/id="arcade-school-picker"/g)||[]).length,1);
 assert.doesNotMatch(mainVolley,/class="top"|7 PTS|beagu-brand-mark/,"volleyball duplicate game logo and label removed");
 assert.doesNotMatch(mainRun,/class="top"|ARCADE · LIFE|beagu-brand-mark/,"run duplicate game header removed");
 assert.doesNotMatch(html,/<details class="teacher-game-details"|게임 펼치기 · 접기/,"home game no longer has unnecessary fold text");
-assert.match(html,/id="teacher-game-title">🏐 선생님배구 1\.0<\/h2>/,"outer game name remains");
-assert.match(html,/id="teacher-run-title">🎒 험난한 교직생활 3\.0<\/h2>/,"outer run name remains");
-assert.match(html,/id="teacher-run-home-lock"/,"LV1 game gate is preserved");
+assert.match(hub,/<h3>선생님배구 1\.0<\/h3>/,"outer game name remains");
+assert.match(hub,/<h3>험난한 교직생활 3\.0<\/h3>/,"outer run name remains");
+assert.match(runner,/id="teacher-run-lv1-gate"/,"standalone LV1 game gate is preserved");
 assert.match(picker,/this\.guide=make\("p","arcade-school-brief-note","학교를 선택해주세요\. 배구지수 자료가 없는 학교는 2026 조사에 참여해야 진행이 가능합니다\."/);
 assert.match(picker,/this\.mount\.append\(heading,this\.input,this\.guide,this\.changeButton/,"small help directly follows the school input");
 assert.match(picker,/aria-describedby/,"school search is accessible");
@@ -388,24 +382,19 @@ console.log("PASS: verified 25-point +100/-50 win-margin scoring and 62-year ret
 // EXTREME disables player ascent in both games without suppressing enemy AI jump.
 assert.match(volley,/const hasPlayerWings=\(\)=>currentDifficulty==="easy"\|\|isMysteryBuff/,"EASY and wing pickups permit flight");
 assert.match(volley,/const playerCeiling=\(\)=>hasPlayerWings\(\)\?86:NET_TOP-78/,"NORMAL/HARD/VERY HARD higher jump reach");
-assert.match(volley,/controlPlayer\(left,moveX,canPlayerJump\(\)&&\(keys\.jump\|\|keys\.up\|\|inputY<-\.58\)/,"touch and keyboard jump gated");
+assert.match(volley,/controlPlayer\(left,axes&&!dashing\?touchControl\.limitX\(moveX\*speed,left\.x\)\/speed:moveX,canPlayerJump\(\)&&\(keys\.jump\|\|keys\.up\|\|touchJump\)/,"touch and keyboard jump gated");
 assert.match(volley,/const flightAllowed=hasPlayerWings\(\)&&canPlayerJump\(\)/,"flight requires EASY or wing pickup");
 assert.match(volley,/controlPlayer\(right,move,!shackle&&state\.aiJump/,"CPU jumps unless affected by shackle");
 assert.match(runner,/extreme:\{jumpEnabled:false,/,"runner disables aerial control in EXTREME");
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"runner upward drag gated by difficulty");
 assert.match(runner,/player\.y=canPlayerRise\(\)\?Math\.max\(76,Math\.min\(H-52,player\.y\)\):H-52/,"runner grounded on each frame");
 assert.match(runner,/player\.y=canPlayerRise\(\)\?Math\.max\(76,Math\.min\(H-52,player\.y\)\):H-52/,"survival resize follows active wings/shackle");
-// Actual joystick vector mapping and deadzone, separate from the movement physics test.
-const jsStart=volley.indexOf('function setJoystickVector(clientX,clientY){'),jsEnd=volley.indexOf('function endJoystick(event){',jsStart);
-assert(jsStart>=0&&jsEnd>jsStart);
-const vector=new Function('x','y',`
- const joystick={getBoundingClientRect:()=>({left:0,top:0,width:100,height:100})};
- const joystickThumb={style:{setProperty(){}}};const touchControl={axisX:0,axisY:0};
- ${volley.slice(jsStart,jsEnd)}
- setJoystickVector(x,y);return touchControl;
-`);
-assert.deepEqual(vector(50,50),{axisX:0,axisY:0});assert.equal(vector(90,50).axisX,1);
-assert.equal(vector(50,0).axisY,-1);assert(Math.hypot(vector(100,100).axisX,vector(100,100).axisY)<=1.00001);
+// Actual direct-touch mapping, single jump and flight-only vertical axis.
+const tw={};new Function("window",await readFile("js/volley-touch-v1.js","utf8"))(tw);
+const direct=tw.BeaguVolleyTouch.create();assert.equal(direct.down(1,{x:300,y:100},420),true);
+assert.deepEqual(direct.axes(180,420,false),{x:1,y:0});assert.deepEqual(direct.axes(180,420,true),{x:1,y:-1});
+assert.equal(direct.takeJump(),true);assert.equal(direct.takeJump(),false);assert.equal(direct.down(2,{x:1,y:2},420),false);
+direct.up(1,true);assert.equal(direct.axes(180,420,true),null);
 const runnerPointerSource=runner.slice(runner.indexOf('function dragPosition(e)'),runner.indexOf('function setFlightTarget(e)'));
 const runnerPointer=new Function("jumpEnabled",[
  'const profile={jumpEnabled},canPlayerRise=()=>profile.jumpEnabled!==false,W=600,H=420;',
@@ -593,8 +582,8 @@ const eventScore=id=>new Function("activeEvent",[
 ].join("\n"))(id?{id}:null);
 assert.equal(eventScore(null),100);
 assert.equal(eventScore("focus"),135);
-assert.match(html,/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/);
-assert.match(html,/teacher-run\.html\?v=[a-zA-Z0-9-]+/);
+assert.match(hub,/href="teacher-volleyball\.html"/);
+assert.match(hub,/href="teacher-run\.html"/);
 console.log("PASS: 5-second career ages 24–62, five career stages, events, promotion choices and final rush");
 
 
@@ -737,8 +726,8 @@ assert.match(runner,/shackle\.dir=player\.x>oldX\?-1:1/);
 assert.match(runner,/drawItems\(\);drawMystery\(\);drawPatternHazards\(\);drawChalkHelpers\(\);drawChalk\(\);drawShackle\(\);playerDraw\(\)/);
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.35/,"projectiles reset on new run");
 assert.match(runner,/chalkShots=\[\];chalkCooldown=\.4/,"projectiles reset on next day");
-assert.match(html,/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/);
-assert.match(html,/teacher-run\.html\?v=[a-zA-Z0-9-]+/);
+assert.match(hub,/href="teacher-volleyball\.html"/);
+assert.match(hub,/href="teacher-run\.html"/);
 console.log("PASS: EXTREME dual volleyballs and both dragging shackles; EASY/NORMAL helper clones and automatic chalk aiming");
 
 
@@ -754,7 +743,7 @@ function finishCareer(initialScore,seconds,victory){
  'const pressed={clear(){}},schoolPicker={setLocked(){},get(){return {difficulty:"hard"}}},ranking={finish(score,stats){submitted={score,stats};}};',
  'let submitted=null,headline="",description="",misses=0,nearCount=0,livesLeft=2,life=100,maxLife=100;',
  'const getAge=()=>Math.min(62,24+Math.floor(clock/5));',
- 'const persist=()=>{},updateLabels=()=>{},playTone=()=>{},stopAndChangeSchool=()=>{},$=()=>({textContent:""});',
+ 'const persist=()=>{},updateLabels=()=>{},playTone=()=>{},stopAndChangeSchool=()=>{},draw=()=>{},resultView={show(){}},difficultyName={hard:"HARD"},$=()=>({textContent:"",classList:{add(){}}});',
  'const message=(title,desc)=>{headline=title;description=desc;};',
  runFinishSource,
  'finish(victory);return {state,score,best,clock,submitted,headline,description};'
@@ -855,10 +844,7 @@ assert.match(backend,/recorded,score,top10/,"API returns whether result survived
 console.log("PASS: conditional congratulations, core action rewards, input parity and automatic tiered ranking");
 
 // Both TOP10 panels are initially folded and remain user-controlled during redraws.
-assert.doesNotMatch(html,/<a href="teacher-volleyball\.html"[^>]*>↗ 크게 보기<\/a>/,
- "the embedded volleyball game no longer has a zoom/enlarge link");
-assert.match(html,/<a href="teacher-run\.html"[^>]*>↗ 크게 보기<\/a>/,
- "survival external link remains unchanged");
+assert.match(hub,/href="teacher-volleyball\.html"/);assert.match(hub,/href="teacher-run\.html"/);
 assert.match(volley,/arcade-leaderboard-v1\.js\?v=[a-zA-Z0-9-]+/);
 assert.match(runner,/arcade-leaderboard-v1\.js\?v=[a-zA-Z0-9-]+/);
 assert.match(shared,/this\.expanded=false/);
@@ -949,28 +935,15 @@ async function requestWithRetry(url,expected=200,options={},times=3){
   await new Promise(resolve=>setTimeout(resolve,2500));
  }
 }
-// Pages deployment and the smoke workflow run in parallel: poll until the
-// published home matches this commit instead of failing on the previous build.
-// Observe the exact cache-buster committed by THIS checkout instead of hardcoding a past release.
-const expectedVolleyFrame=html.match(/teacher-volleyball\.html\?v=[a-zA-Z0-9-]+/)?.[0];
-const expectedRunFrame=html.match(/teacher-run\.html\?v=[a-zA-Z0-9-]+/)?.[0];
-assert.ok(expectedVolleyFrame&&expectedRunFrame,"game iframe URLs must retain versioned paths");
-async function waitForPublishedHome() {
- for(let attempt=0;attempt<20;attempt++){
-  const site=await requestWithRetry(base+"/",200,{},3);
-  if(site.body.includes(expectedVolleyFrame)&&
-     site.body.includes(expectedRunFrame))return site;
-  await new Promise(resolve=>setTimeout(resolve,8000));
- }
- throw new Error("Published game iframe versions did not update");
-}
-const [site,topVolley,topRun]=await Promise.all([
- waitForPublishedHome(),
+// Read-only public site smoke. Current Playcourt replaces home iframes.
+const [site,playcourt,topVolley,topRun]=await Promise.all([
+ requestWithRetry(base+"/",200),requestWithRetry(base+"/games.html",200),
  requestWithRetry(api+"?game=volleyball_25",200,{headers:origin}),
  requestWithRetry(api+"?game=teacher_run_retirement",200,{headers:origin})
 ]);
-assert.ok(site.body.includes(expectedVolleyFrame),"published volleyball iframe must match tested version");
-assert.ok(site.body.includes(expectedRunFrame),"published run iframe must match tested version");
+assert.match(site.body,/href="games\.html/);
+assert.match(playcourt.body,/href="teacher-volleyball\.html"/);
+assert.match(playcourt.body,/href="teacher-run\.html"/);
 for(const response of [topVolley,topRun]){
  const parsed=JSON.parse(response.body);
  assert.ok(Array.isArray(parsed.top10));
@@ -998,52 +971,6 @@ assert.equal(school.available_years.length>0,school.eligible,"any one surveyed y
 assert.equal(school.available_years.length+school.missing_years.length,4);
 assert.equal("national_percentile" in school,false,"never return individual raw percentiles");
 assert.equal("average_percentile" in school,false,"do not leak potentially sensitive average values");
-if(school.eligible){
- assert.ok(["easy","normal","hard","very_hard","extreme"].includes(school.difficulty));
- const start=await requestWithRetry(api,200,{
-  method:"POST",headers:origin,
-  body:JSON.stringify({action:"start",game:"volleyball_25",school_id:school.school_id})
- });
- const started=JSON.parse(start.body);
- assert.equal(started.school.eligible,true);
- assert.equal(started.school.school_id,school.school_id);
- assert.equal(started.school.difficulty,school.difficulty);
- assert.match(started.session,/^[0-9a-f-]{36}$/i);
- const invalid=await requestWithRetry(api,400,{
-  method:"POST",headers:origin,
-  body:JSON.stringify({action:"submit",game:"volleyball_25",session:started.session,nickname:"123",stats:{player:25,cpu:0,elapsedTenths:500}})
- });
- assert.equal(JSON.parse(invalid.body).error,"nickname_not_supported");
- console.log("PASS: eligible school session and rejection of user-supplied nicknames");
-}else{
- assert.equal(school.difficulty,null,"no provisional middle-tier fallback");
- const refused=await requestWithRetry(api,409,{
-  method:"POST",headers:origin,
-  body:JSON.stringify({action:"start",game:"volleyball_25",school_id:school.school_id})
- });
- const failed=JSON.parse(refused.body);
- assert.equal(failed.error,"school_ineligible");
- assert.deepEqual(failed.missing_years,school.missing_years);
- console.log("PASS: four-year survey requirement blocks ineligible school");
-}
-console.log("PASS: school search and any-year percentile eligibility (no raw values)");
-// Verify a one-year school is eligible, and a four-year-zero school is refused.
-const oneYear=JSON.parse((await requestWithRetry(api+"?school_id=7021086",200,{headers:origin})).body).school;
-assert.equal(oneYear.eligible,true,"one-year school should play");
-assert.deepEqual(oneYear.available_years,[2024],"2024-only school is grounded");
-assert.ok(["easy","normal","hard","very_hard","extreme"].includes(oneYear.difficulty));
-const oneStart=JSON.parse((await requestWithRetry(api,200,{
- method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"volleyball_25",school_id:oneYear.school_id})
-})).body);
-assert.equal(oneStart.school.eligible,true);
-assert.match(oneStart.session,/^[0-9a-f-]{36}$/i);
-const zeroYear=JSON.parse((await requestWithRetry(api+"?school_id=7003849",200,{headers:origin})).body).school;
-assert.equal(zeroYear.eligible,false,"zero-year school should not play");
-assert.deepEqual(zeroYear.available_years,[]);
-const zeroDenied=JSON.parse((await requestWithRetry(api,409,{
- method:"POST",headers:origin,body:JSON.stringify({action:"start",game:"teacher_run_retirement",school_id:zeroYear.school_id})
-})).body);
-assert.equal(zeroDenied.error,"school_ineligible");
-assert.equal(zeroDenied.survey_url,"https://forms.gle/TPyCakK6Sj2zchRy7");
-console.log("PASS: single surveyed year unlocks both games; no years requires 2026 survey");
-
+if(school.eligible)assert.ok(["easy","normal","hard","very_hard","extreme"].includes(school.difficulty));
+else assert.equal(school.difficulty,null);
+console.log("PASS: read-only school lookup and any-year eligibility; POST checks remain isolated in fixtures");

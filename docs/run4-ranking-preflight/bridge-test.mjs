@@ -1,0 +1,26 @@
+import assert from "node:assert/strict";
+import {createHmac} from "node:crypto";
+import {createRemoteVerifier,createSupabaseAdapters} from "./supabase-bridge.mjs";
+const secret="ab".repeat(32),now=()=>1764000000000;
+const expected={score:42};let calls=0;
+const verify=createRemoteVerifier({workerUrl:"https://fixture.run.app",secret,now,getIdentityToken:async()=> "eyJhbGciOiJSUzI1NiJ9.e30.fake",fetcher:async(url,o)=>{
+ calls++;assert.equal(url,"https://fixture.run.app/v1/replay");assert.equal(o.redirect,"error");
+ const h=o.headers;assert.match(h.authorization,/^Bearer ey/);
+ assert.equal(h["x-run4-signature"],createHmac("sha256",Buffer.from(secret,"hex")).update("run4-v1\n"+h["x-run4-time"]+"\n"+h["x-run4-nonce"]+"\n"+o.body).digest("hex"));
+ assert.deepEqual(Object.keys(JSON.parse(o.body)).sort(),["difficulty","elapsed","replay","seed"]);
+ assert.ok(!o.body.includes("actorHash"));return new Response(JSON.stringify({result:expected}));
+}});
+const input={seed:42,difficulty:"normal",elapsed:6,replay:[{tick:300,action:"stop"}],actorHash:"private"};
+assert.deepEqual(await verify(input),expected);assert.equal(calls,1);
+assert.throws(()=>createRemoteVerifier({workerUrl:"https://other.example",secret,getIdentityToken:async()=>""}),/invalid_worker_url/);
+assert.throws(()=>createRemoteVerifier({workerUrl:"https://fixture.run.app",secret}),/verification_unavailable/);
+let session={access_level:1,expires_at:new Date(now()+1000).toISOString()},earned=true,isAdmin=false;
+const rpcCalls=[];
+const admin={from(table){let query={select(){return this},eq(){return this},async maybeSingle(){return {data:table==="beagu_level_sessions"?session:isAdmin?{user_id:"fixture"}:null,error:null}}};return query},auth:{getUser:async()=>({data:{user:{id:"fixture"}}})},rpc:async(name,params)=>{rpcCalls.push({name,params});return {data:name==="beagu_has_earned_challenge_visitor"?earned:true,error:null}}};
+const a=createSupabaseAdapters({admin,supabaseUrl:"https://fixture.supabase.co",actorSecret:secret,now,fetcher:async url=>new Response(JSON.stringify({school:{school_id:url.searchParams.get("school_id"),eligible:true,difficulty:"easy"}}))});
+const token="a".repeat(64);assert.equal(await a.authenticate({levelToken:"fake"}),null);const actor=await a.authenticate({levelToken:token});assert.equal(actor.level,1);assert.match(actor.hash,/^[a-f0-9]{64}$/);assert.notEqual(actor.hash,token);
+session={...session,access_level:2,identity_campaign:"2026",identity_visitor_id:"fixture-visitor"};const lv2=await a.authenticate({levelToken:token});assert.equal(lv2.level,2);assert.equal((await a.authenticate({levelToken:"b".repeat(64)})).hash,lv2.hash);
+earned=false;assert.equal(await a.authenticate({levelToken:token}),null);earned=true;isAdmin=true;assert.equal(await a.authenticate({levelToken:token,adminBearer:"Bearer fixture"}),null);
+assert.deepEqual(await a.resolveSchool("1234567"),{eligible:true,difficulty:"easy"});assert.equal(await a.resolveSchool("invalid"),null);
+assert.equal(await a.store.claimAttempt({id:"fixture",actorHash:actor.hash}),true);assert.equal(rpcCalls.at(-1).name,"run4_candidate_claim");
+console.log("PASS RUN4_BRIDGE signed worker request, private-field exclusion, server session, revoked Lv2, admin, school and quota RPC");

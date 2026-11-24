@@ -1,0 +1,10 @@
+.run4-leave{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 8px;background:#f9ebca;color:#503c20;border-radius:9px;font:700 12px/1.3 system-ui,sans-serif}
+.run4-leave button{min-height:36px;padding:5px 9px;border:1px solid #a17d35;background:#fff9e8;border-radius:8px;color:#503c20;font:800 12px system-ui,sans-serif;cursor:pointer}
+.run4-leave button.run4-leave-pick{background:#ffd878;border:2px solid #9a6922}
+.run4-leave button:disabled{opacity:.5;cursor:default}
+.run4-leave button:focus-visible{outline:3px solid #4875c4;outline-offset:2px}
+.run4-leave-label{font-weight:850}
+#run4-leave-inventory{margin:6px 0}
+html body .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen){--arcade-run-hud-height:136px;grid-template-rows:var(--arcade-run-hud-height) minmax(0,1fr)!important}
+#run4-leave-fullscreen{padding:3px 4px;flex-wrap:nowrap;overflow-x:auto;max-width:100%;box-sizing:border-box;white-space:nowrap}
+#run4-leave-fullscreen button{flex:none;min-height:36px}

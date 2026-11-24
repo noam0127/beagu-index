@@ -7,3 +7,7 @@ for(const p of ["index.html","search.html","search-lv1.html","statistics.html","
 const home=read('index.html');for(const id of ['teacher-game-title','teacher-game-frame','teacher-run-home-lock','teacher-run-frame','teacher-diary-feature'])assert.ok(!home.includes('id="'+id+'"'));
 assert.match(read('teacher-run.html'),/beagu-game-lv1-gate-v1\.js/);assert.match(read('js/beagu-game-lv1-gate-v1.js'),/X-Beagu-Session/);assert.match(read('styles/beagu-playground-v1.css'),/@media\(max-width:600px\)/);
 {const v=JSON.parse(read('release-info.json')).version;const candidate=JSON.parse(read('release-candidate.json')).version;const versions=JSON.parse(read('development-roadmap.json')).versions.map(x=>x.version);assert.equal(v,candidate);assert.ok(versions.includes('v1.3.0')&&versions.indexOf(v)>=versions.indexOf('v1.3.0'),'candidate includes feature release');}assert.equal(JSON.parse(read('release-info.json')).environment,'candidate');console.log('PASS: four game cards, existing gates and scores, unpublished games inaccessible from hub, common navigation and version metadata');
+
+assert.doesNotMatch(html,/게임 방법에서 조작을 확인할 수 있습니다|기존 인증 후 학교를 선택하고 게임 방법을 확인하세요/);assert.match(html,/학교를 선택하고 25점 선착순 배구 경기에 도전하세요\./);assert.match(html,/24세 임용부터 62세 정년까지 살아남으세요\./);
+
+assert.match(html,/href="teacher-run-4-preview\.html\?recording=1">4\.0 검수판 · 개인 기록/);assert.match(read('teacher-run-4-preview.html'),/beagu-game-lv1-gate-v1\.js/);assert.doesNotMatch(read('teacher-run-4-preview.html'),/new window\.ArcadeLeaderboard/);

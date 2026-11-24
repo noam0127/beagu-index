@@ -65,7 +65,7 @@ runInNewContext(code,{
 });
 assert.equal(elems.challengeAccessForm.hidden,false);
 assert.equal(elems.challengeProtected.hidden,true);
-assert.equal(elems.challengeAccessBadge.textContent,'미인증');
+assert.equal(elems.challengeAccessBadge.textContent,'Lv.0 · 미인증');
 assert.equal(elems.challengeAccessPanel.attrs['data-auth-level'],'0');
 elems.challengeAccessCode.value='testcode';
 elems.challengeAccessToggle.listeners.click();
@@ -94,7 +94,7 @@ await elems.challengeLogout.listeners.click();
 assert.equal(token,'');
 assert.equal(elems.challengeProtected.hidden,true);
 assert.equal(elems.challengeAccessForm.hidden,false);
-assert.equal(elems.challengeAccessBadge.textContent,'미인증');
+assert.equal(elems.challengeAccessBadge.textContent,'Lv.0 · 미인증');
 assert.equal(elems.challengeLogout.hidden,true);
 assert.ok(eventNames.includes('beagu:challenge-access-revoked'));
 assert.deepEqual(calls.filter(a=>a==='login'),['login','login']);

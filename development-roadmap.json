@@ -582,26 +582,62 @@
       "version": "v1.11.10",
       "name": "코트 정돈",
       "scope": "홈 공지사항 최하단 한 줄 및 방문 통계 독립 카드 복원 / 오늘의 학교 2개 홈 카드 이동 · 한국시간 자정 갱신 / 검색 공개 기준 안내 제거 · 학교별 체험 연결 / 라커룸 공통 메뉴 숨김 · 기존 포스트잇과 권한 보존",
-      "status": "CANDIDATE_PARTIAL_VERIFICATION",
+      "status": "DEPLOYED",
       "branch": "release/v1.11.10-court-tidy",
-      "pr": null,
-      "commit": null,
+      "pr": 299,
+      "commit": "4dbc473bb49cec3d510ea2fbc58ee24f344b6e1f",
       "tests": [
         {
-          "name": "Exact CI + offline Chromium",
-          "result": "PENDING"
+          "name": "Official clean release CI 45456923349",
+          "result": "SUCCESS"
+        },
+        {
+          "name": "Production publish 45457295558",
+          "result": "SUCCESS"
         }
       ],
       "dependencies": [
         "v1.11.9"
       ],
-      "admin_registration": "NOT_REGISTERED",
-      "production": "NOT_APPROVED",
-      "deployment_date": null,
+      "admin_registration": "REGISTERED",
+      "production": "APPROVED",
+      "deployment_date": "2026-11-25T03:15:00+09:00",
       "rollback_sha": "12fe60fdbbf2d9dedce46250c0bbe0e5a93ae97e"
     },
     {
       "order": 21,
+      "version": "v1.11.11",
+      "name": "풀세트",
+      "scope": "코트정돈 포함 / 학교검색·상세보기 반응형 / 선생님배구 원터치 / 험난한 교직생활 4.0 개인 기록 검수판만 / 공식 4.0 랭킹 비활성화",
+      "status": "CANDIDATE_PERSONAL_PREVIEW_FINAL_CI_PENDING",
+      "branch": "release/v1.11.11-full-set",
+      "dependencies": [
+        "v1.11.10"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "4dbc473bb49cec3d510ea2fbc58ee24f344b6e1f",
+      "tests": [
+        {
+          "name": "Base candidate 4a885a9 all 16 CI workflows",
+          "result": "PASS",
+          "sha": "4a885a9fc58c039544540a910b5d0cf38a58f79e",
+          "run": 45480626570
+        },
+        {
+          "name": "Independent IAM and runtime fixture",
+          "result": "PASS",
+          "sha": "89de34215ff85cccb86befeecd3fe642b6912bbb",
+          "run": 45480676975
+        },
+        {
+          "name": "Final scoped release exact SHA CI",
+          "result": "PENDING"
+        }
+      ]
+    },
+    {
+      "order": 22,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -621,7 +657,7 @@
       "rollback_sha": null
     },
     {
-      "order": 22,
+      "order": 23,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -640,7 +676,7 @@
       "rollback_sha": null
     },
     {
-      "order": 23,
+      "order": 24,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -657,7 +693,7 @@
       "rollback_sha": null
     },
     {
-      "order": 24,
+      "order": 25,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

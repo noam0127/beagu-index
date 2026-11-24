@@ -1,0 +1,20 @@
+/* Shared result screen, separate from gameplay, no third-party capture library. */
+.arcade-result-share[hidden],.arcade-result-share [hidden]{display:none!important}
+.arcade-result-full{position:absolute;inset:0;z-index:24;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:8px;padding:12px;overflow:auto;overscroll-behavior:contain;background:linear-gradient(145deg,rgba(13,37,63,.97),rgba(34,67,104,.96));color:#fff;text-align:center;touch-action:pan-y}
+.arcade-result-title{font-size:clamp(18px,4.5vw,32px);line-height:1.3;margin:0;color:#fff0bf;overflow-wrap:anywhere}
+.arcade-result-detail{font-size:12px;line-height:1.4;margin:0;color:#dceaff}
+.arcade-result-metrics{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;max-width:100%}
+.arcade-result-metrics span{background:#244765;border:1px solid #6b95b9;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:750}
+.arcade-result-replay,.arcade-result-actions{width:min(100%,440px);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.arcade-result-share button,.arcade-result-share a{display:flex;align-items:center;justify-content:center;box-sizing:border-box;min-height:44px;padding:7px 8px;border:1px solid #a4c3df;border-radius:9px;background:#244765;color:#f3faff;text-decoration:none;font:750 12px/1.35 system-ui,sans-serif;cursor:pointer;white-space:normal;text-align:center}
+.arcade-result-share button:disabled{opacity:.5;cursor:wait}
+.arcade-result-share .arcade-result-brag{background:#78ddc4;color:#112f43;border-color:#a1f5e0}
+.arcade-result-share .arcade-result-download{margin:6px auto}
+.arcade-result-share :is(a,button):focus-visible{outline:3px solid #ffe2a0;outline-offset:2px}
+.arcade-result-status,.panel .arcade-result-status{font-size:11px;line-height:1.4;margin:4px 0;color:#c7dbed;overflow-wrap:anywhere}
+.arcade-result-compact{border-top:1px solid #6687a5;margin-top:12px;padding-top:10px;text-align:center}
+.arcade-result-compact .arcade-result-actions{margin:auto}
+
+/* Only finished survival runs use the same two-column action row as volleyball. */
+.panel .choices.arcade-result-replay-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.panel .choices.arcade-result-replay-row button{min-height:44px;font-size:12px;padding:7px 8px}

@@ -172,10 +172,10 @@
       }
       const loginLevel = Number(get('challengeAccessPanel')?.getAttribute('data-auth-level') || 0);
       status.textContent = promoted
-        ? '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.'
+        ? '동료에게 링크를 보내 1명 이상 참여하면 Lv.2로 레벨업됩니다.'
         : loginLevel >= 2
           ? '동료의 설문 참여가 확인되면 추천이 누적됩니다.'
-          : '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.';
+          : '동료에게 링크를 보내 1명 이상 참여하면 Lv.2로 레벨업됩니다.';
     } catch (error) {
       if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
       if(error?.status===401||error?.status===403){reset();window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',{detail:{level:1,validReferrals:0}}));}
