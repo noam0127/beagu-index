@@ -53,3 +53,16 @@ const preview=read('teacher-run-4-preview.html');assert.doesNotMatch(preview,/ne
 assert.match(preview,/teacherRun4PreviewBestV1/);assert.match(preview,/beagu-game-lv1-gate-v1\.js/);assert.match(preview,/run4\.nearMiss\(a,a\.closestClearance\)/);
 assert.match(preview,/!document.hidden&&!\$\("teacher-run-protected"\).hidden/);
 console.log('PASS 4.0 exact round boundaries, avoidance rewards, crisis deduplication, separate local-only preview');
+
+// Result sharing only consumes local game state; no account or school identifiers.
+const resultWindow={};vm.runInNewContext(read('js/arcade-result-share-v1.js'),{window:resultWindow});
+const resultTitle=resultWindow.BeaguArcadeResult.volleyballTitle;
+assert.match(resultTitle({won:true,opponent:20,maxDeficit:5}).title,/대역전승/);
+assert.match(resultTitle({won:true,opponent:24,maxDeficit:1}).title,/역전승/);
+assert.match(resultTitle({won:true,opponent:0,maxDeficit:0}).title,/25대 0/);
+assert.match(resultTitle({won:true,opponent:24,maxDeficit:0}).title,/접전/);
+assert.match(resultTitle({won:true,opponent:9,maxDeficit:0}).title,/압승/);
+assert.doesNotMatch(resultTitle({won:false,early:true,opponent:2,maxDeficit:4}).title,/승리|역전승/);
+const shareSource=read('js/arcade-result-share-v1.js');assert.match(shareSource,/navigator\.clipboard\.write/);assert.match(shareSource,/image\/png/);assert.match(shareSource,/indischool\.com\/tweets\/channels\/lounge/);assert.doesNotMatch(shareSource,/fetch\(|sessionStorage|localStorage|school_name|school_id/);
+for(const p of ['teacher-volleyball.html','teacher-run.html','teacher-run-4-preview.html'])assert.match(read(p),/resultView\.show\(/);
+console.log('PASS result title classification, local-only PNG share and no automatic posting');

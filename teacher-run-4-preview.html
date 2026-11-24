@@ -129,6 +129,7 @@ canvas{height:400px;cursor:default}
 <script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
+<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11111">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
@@ -196,12 +197,14 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
+<script src="js/arcade-result-share-v1.js?v=11111"></script>
 <script src="js/teacher-run-4-rules.js?v=11111-1"></script>
 <script>
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
+const resultView=window.BeaguArcadeResult.create($("choices").parentElement,canvas,{compact:true});
 // Candidate-only local preview. Never submit new rules to the legacy score endpoint.
 const ranking={start:async()=>({localPreview:true}),finish:async()=>true,cancel:()=>{}};
 const rules=window.BeaguRun4Rules;let run4=rules.create();
@@ -363,6 +366,7 @@ function resize(){
 }
 if(typeof ResizeObserver!=="undefined"){new ResizeObserver(resize).observe(canvas);}else{window.addEventListener("resize",resize);}
 function message(title,desc,choices,symbol="🎒"){
+ resultView.clear();
  $("overlayTitle").textContent=title;$("overlayDesc").textContent=desc;$("overlaySymbol").textContent=symbol;
  const root=$("choices");root.replaceChildren();
  choices.forEach((c,i)=>{const b=document.createElement("button");b.type="button";b.textContent=c.label;b.className=i?"secondary":"";if(c.detail){const small=document.createElement("small");small.textContent=c.detail;b.append(small);}b.addEventListener("click",c.action);root.append(b);});
@@ -618,6 +622,8 @@ function finish(win){
   (win?celebration.detail+"\n":"")+details+"\n최대 회피 콤보 "+run4.stats().maxCombo+" · 위기 극복 "+run4.stats().crises+"회\n4.0 검수판 · 기기 기록만 저장",[
    {label:"↻ 다시 하기",action:()=>start()},
    {label:"🏫 학교 변경",action:stopAndChangeSchool}],win?celebration.icon:"🫖");
+ draw();
+ resultView.show({game:"험난한 교직생활 4.0 검수판",title:win?celebration.title:"새로운 도전의 기록!",detail:win?"62세 정년 달성!":getAge()+"세까지 생존",metrics:[Math.floor(score).toLocaleString("ko-KR")+"점",getAge()+"세",survivalSeconds+"초","회피 "+nearCount+"회",difficultyName[schoolPicker.get()?.difficulty]||""],note:"4.0 개발 검수판 · 공식 랭킹 미제출"});
  playTone(win?950:280,.32);
 }
 let savingPausedRun=false;

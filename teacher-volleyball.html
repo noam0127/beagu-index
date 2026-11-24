@@ -155,6 +155,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
+<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11111">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
@@ -227,6 +228,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/volley-touch-v1.js?v=11111"></script>
+<script src="js/arcade-result-share-v1.js?v=11111"></script>
 <script>
 (function () {
   "use strict";
@@ -234,6 +236,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const attackButton=document.getElementById("volley-attack");
 
   const courtElement=canvas.closest(".court");
+  const resultView=window.BeaguArcadeResult.create(courtElement,canvas);
   const ctx = canvas.getContext("2d");
   const scoreP = document.getElementById("player-score");
   const scoreC = document.getElementById("cpu-score");
@@ -333,7 +336,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     message:"경기 시작을 눌러주세요!",spikes:0,aiRecalc:0,aiTargetX:688,aiJump:false,
     specialCooldownFrames:0,specialChargeFrames:0,spikeBufferFrames:0,dashFrames:0,dashCooldownFrames:0,dashX:1,dashY:0,uiTick:0,playFrames:0,activeFrames:0,
     hitStopFrames:0,impactFrames:0,impactX:0,impactY:0,bossWarnFrames:0,bossCooldownFrames:0,
-    winStreak:0,bestStreak:0,pointCheer:"",recordBroken:false,timeRecordBroken:false,endedEarly:false,
+    maxDeficit:0,winStreak:0,bestStreak:0,pointCheer:"",recordBroken:false,timeRecordBroken:false,endedEarly:false,
     rescueUsed:false,qualityText:"",qualityFrames:0,winCheer:"" };
   const left = { x: 210, y: FLOOR - 31, vy: 0, vx: 0, impactSpeed: 0, side: "left", jumpLock: false, contactFrames:0 };
   const right = { x: 690, y: FLOOR - 31, vy: 0, vx: 0, side: "right", jumpLock: false, contactFrames:0 };
@@ -644,6 +647,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     bgm.sync(soundOn&&["starting","playing","point"].includes(state.phase));
     const isReady=state.phase==="ready";
     readyOverlay.hidden=!isReady;
+    resultView.setVisible(state.phase==="finished");
     schoolChooseButton.hidden=!isReady;
     readyTitle.textContent=chosen?.eligible?chosen.school_name:chosen?"조사 참여 필요":"선생님배구 1.0";
     readyDetail.textContent=chosen?.eligible?(diffName[chosen.difficulty]||"")+" · 준비 완료":
@@ -725,7 +729,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     desiredBalls=currentDifficulty==="extreme"?2:1;
     schoolPicker.setLocked(true);
     state.leftScore=0;state.rightScore=0;itemScoreDelta=0;itemScoreEvents=[];state.spikes=0;state.playFrames=0;state.activeFrames=0;
-    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
+    state.maxDeficit=0;state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
     state.hitStopFrames=0;state.impactFrames=0;state.bossWarnFrames=0;state.bossCooldownFrames=0;
     resetEnemyMinionSchedule();
     resetMystery();
@@ -746,7 +750,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.spikeBufferFrames=0;state.dashFrames=0;state.dashCooldownFrames=0;
     state.phase="ready";state.message="";state.winner="";state.flash=0;
     state.leftScore=0;state.rightScore=0;state.spikes=0;state.playFrames=0;state.activeFrames=0;
-    state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
+    state.maxDeficit=0;state.winStreak=0;state.bestStreak=0;state.pointCheer="";state.recordBroken=false;state.timeRecordBroken=false;state.endedEarly=false;state.winCheer="";
     currentDifficulty="hard";
     desiredBalls=1;
     resetMystery();
@@ -1167,6 +1171,13 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       survivalBonus:bonus,multiplier,itemScoreDelta,itemScoreEvents,finalScore,victory:won,
       endedEarly:early,activeTenths:elapsedTenths
     });
+    pauseOverlay.hidden=true;
+    const result=window.BeaguArcadeResult.volleyballTitle({won,early,opponent:state.rightScore,maxDeficit:state.maxDeficit,streak:state.bestStreak});
+    state.winner=result.title;state.winCheer=result.detail;
+    render();
+    resultView.show({game:"선생님배구",title:result.title,detail:result.detail,
+      metrics:[state.leftScore+" : "+state.rightScore,finalScore.toLocaleString("ko-KR")+"점",fmtTime(elapsedTenths),diffName[currentDifficulty]||currentDifficulty]},
+      [{label:"↻ 다시 하기",action:()=>void startMatch()},{label:"🏫 다른 학교",action:()=>stopForSchoolChange()}]);
     syncUI();
     return saveResult;
   }
@@ -1183,6 +1194,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       state.rightScore++;
       state.winStreak=0;
     }
+    state.maxDeficit=Math.max(state.maxDeficit,state.rightScore-state.leftScore);
     state.pointCheer=pointEncouragement(state.leftScore,state.rightScore,state.winStreak,leftWins)+
       (leftWins?" · +"+POINT_GAIN+"점":" · −"+POINT_LOSS+"점");
     state.message=leftWins?"득점! "+state.leftScore+" / "+MATCH_TARGET:
@@ -1597,10 +1609,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       textLabel(state.message,450,55,28,"#fff6d8","center",465);
       textLabel(state.pointCheer,450,82,15,"#d7f8ff","center",470);ctx.restore();
     }
-    else if (state.phase === "finished") overlay(state.winner,
-      state.winCheer||"다음 경기에 다시 도전해 보세요.",
-      "최종 "+getMatchScore(state.leftScore,state.rightScore,activeTenths()).toLocaleString("ko-KR")+"점"+
-      (state.timeRecordBroken?" · ⏱ 최단 "+fmtTime(activeTenths()):""));
+    // Finished games use a scrollable HTML result panel, not painted text.
     ctx.restore();
   }
   let last = 0, accumulator = 0;
