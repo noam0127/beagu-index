@@ -139,6 +139,7 @@
       });
       if (!active || seq !== generation) return;
       const payload = await response.json().catch(() => ({}));
+      if (!active || seq !== generation) return;
       if (response.status === 503 && payload.error === 'REFERRAL_NOT_READY') {
         if (!upgraded) status.textContent = '설문 연결을 확인 중이에요.';
         return;
@@ -201,13 +202,16 @@
   });
   shareTextButton?.addEventListener('click',async()=>{
     if(!active||!currentLink)return;
+    const linkAtCopy=currentLink;
     const text='2026 배구지수 조사에 함께해 주세요!\n\n선생님들의 참여로 전국 초등학교의 근무환경을 함께 기록하고 있습니다.\n\n아래 링크를 통해 조사에 참여하실 수 있습니다.\n\n'+currentLink;
     try{
       if(!navigator.clipboard?.writeText)throw Error('UNAVAILABLE');
       await navigator.clipboard.writeText(text);
+      if(!active||currentLink!==linkAtCopy)return;
       status.textContent='공유 문구를 복사했습니다.';
       if(fallback){fallback.value='';fallback.hidden=true;}
     }catch(_){
+      if(!active||currentLink!==linkAtCopy)return;
       if(fallback){fallback.value=text;fallback.hidden=false;fallback.focus();fallback.select();}
       status.textContent='공유 문구를 선택했습니다. 직접 복사해 주세요.';
     }
