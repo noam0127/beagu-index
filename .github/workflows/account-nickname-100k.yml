@@ -1,0 +1,45 @@
+name: Account 100k nickname isolation
+on:
+  pull_request:
+    branches: ['release/base-pages-*']
+    paths:
+      - 'supabase/account*.sql'
+      - 'tests/account*'
+      - '.github/workflows/account-nickname-100k.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Disposable PostgreSQL 17 benchmark and regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          c=beagu-account-fixture
+          docker run --rm -d --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:17
+          trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres && break || sleep 1; done
+          psql_local() { docker exec -i "$c" psql -X -v ON_ERROR_STOP=1 -U postgres "$@"; }
+          printf '%s\n' 'create role anon;' 'create role authenticated;' 'create role service_role bypassrls;' | psql_local
+          psql_local < tests/account-v1-postgres-fixture.sql
+          psql_local < supabase/migrations/20261121103000_beagu_postit_member_auth.sql
+          psql_local < supabase/account-identity-v1.sql
+          psql_local < supabase/account-provisional-v1.sql
+          psql_local < tests/account-v1-postgres-assertions.sql
+          docker exec "$c" createdb -U postgres load_fixture
+          psql_local -d load_fixture < tests/account-v1-postgres-fixture.sql
+          psql_local -d load_fixture < supabase/migrations/20261121103000_beagu_postit_member_auth.sql
+          psql_local -d load_fixture < supabase/account-identity-v1.sql
+          psql_local -d load_fixture < supabase/account-provisional-v1.sql
+          psql_local -d load_fixture < tests/account-nickname-100k.sql > benchmark.log 2>&1 || { tail -80 benchmark.log; exit 1; }
+          tail -35 benchmark.log
+          node tests/account-v1-ui.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nickname-benchmark
+          path: benchmark.log
