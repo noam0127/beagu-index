@@ -1,4 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),{chromium}=require('playwright');
+const {instrumentTrustedSource,replayInPage}=require('../docs/run4-ranking-preflight/replay-engine.cjs');
 const origin='http://light-touch.invalid',mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json'};
 const fixture=Array.from({length:7},(_,i)=>({school_id:String(7003915+i),school_name:'검증초등학교 '+i,sido_standard:'부산',region:'부산',support_office:'동래교육지원청',address:'부산',visitors:12+i,growth:i,housing_price_won:123000000,student_count:200}));
 (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});
@@ -32,6 +33,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  try{
   let body=await fs.readFile(p);
   if(p==='teacher-run-4-preview.html'){
+   if(u.searchParams.get('replay_fixture')==='1')return route.fulfill({contentType:'text/html',body:instrumentTrustedSource(body.toString('utf8'))});
    // Fixture-only accelerated clock. Production game code is not instrumented.
    // Restore HP to isolate lifecycle integration from stochastic survival balance.
    const anchor='resize();intro();requestAnimationFrame(tick);postHeight();';
@@ -236,6 +238,24 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
    assert.ok(records.every(r=>r.game==='teacher_run_retirement_v4'&&r.version==='4.0'&&!('school_id'in r)&&!('school_name'in r)&&!('verified'in r)));
   }
   console.log('RUN4_NATURAL_BALANCE '+JSON.stringify(outcomes));
+  // Run the actual game physics twice with identical input in two viewport sizes.
+  selectedSchool={...selectedSchool,difficulty:'normal',eligible:true};
+  const trace=[{tick:0,action:'move',x:.5,y:.85},{tick:120,action:'move',x:.25,y:.7},{tick:240,action:'release'},{tick:300,action:'stop'}];
+  async function reproduce(viewport,events=trace){
+   await page.setViewportSize(viewport);
+   await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id+'&replay_fixture=1');
+   await page.locator('#teacher-run-protected').waitFor({state:'visible'});
+   await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).waitFor();
+   return replayInPage(page,{seed:42,difficulty:'normal',replay:events,elapsed:6});
+  }
+  const replayA=await reproduce({width:390,height:700});
+  const replayB=await reproduce({width:1440,height:900});
+  assert.deepEqual(replayA,replayB);assert.equal(replayA.victory,false);assert.ok(replayA.survivalSeconds>=4&&replayA.survivalSeconds<=5);
+  await assert.rejects(()=>reproduce({width:390,height:700},[{tick:0,action:'leave',choice:20},{tick:300,action:'stop'}]),/invalid_leave/);
+  await assert.rejects(()=>reproduce({width:390,height:700},[{tick:0,action:'move',x:.5,y:.5,score:999999},{tick:300,action:'stop'}]),/invalid_replay/);
+  await page.setViewportSize({width,height:900});
+  console.log('PASS real game replay: deterministic five-second partial match, cross viewport, premature leave and forged fields denied '+JSON.stringify(replayA));
+
   assert.deepEqual(errors,[]);
   // This is a deterministic legal-input probe, not a human play session.
   // A failed tier remains a balance blocker, rather than being counted as complete.

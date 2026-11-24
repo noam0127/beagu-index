@@ -25,17 +25,7 @@ function createBoundary({policy,authenticate,resolveSchool,store,replayVerifier=
  async function submit({credentials,sessionId,replay}={}){
   const actor=await requireActor(credentials);requireVerifier();
   if(!idOk(sessionId)||!Array.isArray(replay)||replay.length>12000)fail("invalid_replay");
-  // Replay format: monotonic active simulation ticks and constrained input tokens.
-  // The future authoritative verifier must reject impossible action transitions.
-  let last=-1;
-  for(const e of replay){
-   if(!e||typeof e!=="object"||Object.keys(e).some(k=>!["tick","action","x","y","choice"].includes(k))||
-    !Number.isInteger(e.tick)||e.tick<last||e.tick>11400||!["move","special","leave","growth","cooperate","stop"].includes(e.action))fail("invalid_replay");
-   if(e.action==="move"&&(!Number.isFinite(e.x)||!Number.isFinite(e.y)||e.x<0||e.x>1||e.y<0||e.y>1))fail("invalid_replay");
-   if(e.action==="leave"&&![5,10,20].includes(e.choice))fail("invalid_replay");
-   if(e.action==="growth"&&(typeof e.choice!=="string"||!["guidance","speed","power","rate","ally","vital","shield","heal","workload","community"].includes(e.choice)))fail("invalid_replay");
-   last=e.tick;
-  }
+  try{require("./replay-protocol.cjs").validateReplay(replay);}catch(_){fail("invalid_replay");}
   const session=await store.get(sessionId);
   if(!session||session.actorHash!==actor.hash||session.version!=="4.0"||session.submitted)fail("session_expired");
   const elapsed=(now()-session.startedAt)/1000;
