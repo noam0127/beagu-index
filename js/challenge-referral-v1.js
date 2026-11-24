@@ -2,6 +2,19 @@
   'use strict';
   const get = id => document.getElementById(id);
   const panel = get('challengeReferralPanel');
+  const shareTextButton=get('copyChallengeShareText'), fallback=get('togetherCopyFallback');
+  const meter=get('togetherReferralMeter'), stateLabel=get('togetherReferralState');
+  const benefitsState=get('togetherBenefitsState');
+  const syncTogether=(earned,count,verified,known)=>{
+    if(meter){
+      meter.dataset.complete=String(known&&count>=1);
+      if(known)meter.setAttribute('aria-valuenow',String(Math.min(count,1)));
+      else meter.removeAttribute('aria-valuenow');
+      meter.hidden=verified||earned;
+    }
+    if(stateLabel)stateLabel.textContent=verified?'Lv.2 인증 완료':earned?'Lv.2 참여코드 활성화 · 인증정보에서 확인':!known?'추천 확인 중':count>=1?'권한 활성화 확인 중':'유효 추천 0 / 1건';
+    if(benefitsState)benefitsState.textContent=verified?'Lv.2 이용 가능':earned?'Lv.2 참여코드로 인증하면 이용 가능':'Lv.2 인증 후 이용';
+  };
   const linkField = get('challengeReferralLink');
   const copyButton = get('copyChallengeReferral');
   const status = get('challengeReferralStatus');
@@ -39,6 +52,7 @@
     // separate personal code without a server-confirmed referral.
     const verifiedLoginLevel=Number(get('challengeAccessPanel')?.getAttribute?.('data-auth-level') || 0);
     const premiumVisual=upgraded || verifiedLoginLevel>=2;
+    syncTogether(upgraded,count,verifiedLoginLevel>=2,Boolean(currentLink));
     identityPanel.classList.toggle('is-lv2', premiumVisual);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
     identityTitle.textContent = upgraded ? 'Lv.2 참여코드' :
@@ -87,6 +101,8 @@
     linkField.hidden = true;
     copyButton.hidden = true;
     copyButton.disabled = true;
+    if(shareTextButton){shareTextButton.disabled=true;shareTextButton.hidden=true;}
+    if(fallback){fallback.hidden=true;fallback.value='';}
     progress.textContent = '';
     lastReferrals=0;lastSnapshot='';
     if(retry)retry.hidden=true;
@@ -138,6 +154,7 @@
       if(retry)retry.hidden=true;
       copyButton.hidden = false;
       copyButton.disabled = false;
+      if(shareTextButton){shareTextButton.disabled=false;shareTextButton.hidden=false;}
 
       // Only a server-approved, credited referral can upgrade the PERSONAL CODE.
       // A link visit, self-declared level, or incomplete payload cannot do so.
@@ -149,7 +166,7 @@
       lastReferrals=count;
       renderState(promoted,count);
       if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
-      progress.textContent = '유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(promoted?'Lv.2 활성화':'1건부터 Lv.2 활성화');
+      progress.hidden=true;
       const snapshot=(promoted?'2':'1')+':'+count;
       if(snapshot!==lastSnapshot){
         lastSnapshot=snapshot;
@@ -160,7 +177,7 @@
       status.textContent = promoted
         ? '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.'
         : loginLevel >= 2
-          ? 'Lv.2 로그인은 확인됐습니다. 개인 참여코드는 추천 1건 확인 후 별도로 활성화됩니다.'
+          ? '동료의 설문 참여가 확인되면 추천이 누적됩니다.'
           : '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.';
     } catch (error) {
       if (!active || seq !== generation) return;
@@ -180,6 +197,19 @@
       linkField.focus();
       linkField.select();
       status.textContent = '링크를 선택했습니다. 직접 복사해 주세요.';
+    }
+  });
+  shareTextButton?.addEventListener('click',async()=>{
+    if(!active||!currentLink)return;
+    const text='2026 배구지수 조사에 함께해 주세요!\n\n선생님들의 참여로 전국 초등학교의 근무환경을 함께 기록하고 있습니다.\n\n아래 링크를 통해 조사에 참여하실 수 있습니다.\n\n'+currentLink;
+    try{
+      if(!navigator.clipboard?.writeText)throw Error('UNAVAILABLE');
+      await navigator.clipboard.writeText(text);
+      status.textContent='공유 문구를 복사했습니다.';
+      if(fallback){fallback.value='';fallback.hidden=true;}
+    }catch(_){
+      if(fallback){fallback.value=text;fallback.hidden=false;fallback.focus();fallback.select();}
+      status.textContent='공유 문구를 선택했습니다. 직접 복사해 주세요.';
     }
   });
   window.addEventListener('beagu:challenge-access-granted', () => {
