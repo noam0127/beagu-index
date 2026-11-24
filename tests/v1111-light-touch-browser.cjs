@@ -39,7 +39,50 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
    body=source.replace(anchor,`resize();intro();postHeight();
     window.__run4Fixture=Object.freeze({
       snapshot:()=>({state,clock,stage,life,maxLife,leave:leave.state(),boss:bosses.active(),defeated:bosses.defeated(),allies:allies.count(),score}),
-      advance:target=>{for(let i=0;i<6000&&state==="playing"&&clock<target-1e-8;i++){life=maxLife;update(Math.min(.04,target-clock));}draw();syncLeave();return window.__run4Fixture.snapshot();}
+      advance:target=>{for(let i=0;i<6000&&state==="playing"&&clock<target-1e-8;i++){life=maxLife;update(Math.min(.04,target-clock));}draw();syncLeave();return window.__run4Fixture.snapshot();},
+      // Test-only legal steering: inspect nearby hazards and choose a reachable
+      // target, never assign HP, invulnerability, score or actual player position.
+      naturalAdvance:target=>{
+       let aimAt=-1;
+       for(let i=0;i<6000&&state==="playing"&&clock<target-1e-8;i++){
+        if(clock>=aimAt){
+         aimAt=clock+.18;
+         const threats=[
+          ...items.filter(a=>!a.good).map(a=>({x:a.x,y:a.y,vx:0,vy:a.speed,r:a.r})),
+          ...paperBullets.map(a=>({x:a.x,y:a.y,vx:a.vx,vy:a.vy,r:a.r})),
+          ...bossProjectiles.filter(a=>!a.friendly).map(a=>({x:a.x,y:a.y,vx:a.vx,vy:a.vy,r:a.r})),
+          ...sideStudents.map(a=>({x:a.x,y:a.y-10,vx:a.vx*(175+stage*10),vy:0,r:a.r}))
+         ];
+         const xs=Array.from({length:11},(_,n)=>27+(W-54)*n/10),ys=canPlayerRise()?[Math.max(76,H*.35),H*.60,H-52]:[H-52];
+         let bestAim={x:player.x,y:player.y},bestUtility=-Infinity,minGap=Infinity;
+         for(const a of threats)minGap=Math.min(minGap,Math.hypot(player.x-a.x,player.y-a.y)-a.r-player.r);
+         for(const x of xs)for(const y of ys){
+          const distance=Math.hypot(x-player.x,y-player.y);
+          let utility=-distance*.025;
+          for(const a of threats)for(const t of [.18,.4,.65]){
+           const fraction=Math.min(1,285*profile.heroSpeed*growth.effects().speed*t/Math.max(1,distance));
+           const px=player.x+(x-player.x)*fraction,py=player.y+(y-player.y)*fraction;
+           const gap=Math.hypot(px-a.x-a.vx*t,py-a.y-a.vy*t)-a.r-player.r;
+           if(gap<60)utility-=(60-gap)*(gap<0?4:1);
+          }
+          for(const a of items)if(a.good&&a.y>H*.2){const d=Math.hypot(x-a.x,y-a.y-a.speed*.35);if(d<85)utility+=(85-d)*(.25+(1-life/maxLife)*.45);}
+          if(utility>bestUtility){bestUtility=utility;bestAim={x,y};}
+         }
+         pointerId=999;pointerX=bestAim.x;pointerY=bestAim.y;
+         // Use the same available actions and cooldowns as a real player.
+         const held=leave.state().held;
+         if(life/maxLife<.55&&held.length&&!leave.active(clock)){
+          const b=leave.use(held[held.length-1].years,clock,life,maxLife,bosses.tier.leave);
+          if(b)life=b.hp; // actual legal leave healing, not a fixture HP reset
+         }
+         if((minGap<20||bosses.active())&&specialCooldown<=0)activateSpecial();
+         if(allies.canCooperate(clock)&&(life/maxLife<.65||bosses.active()))cooperate();
+         for(const p of leave.state().pending)leave.collect(p.years);
+        }
+        update(Math.min(.04,target-clock));
+       }
+       draw();syncLeave();return window.__run4Fixture.snapshot();
+      }
     });`);
   }
   return route.fulfill({contentType:mime[path.extname(p)]||'application/octet-stream',body})
@@ -165,6 +208,36 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   assert.equal((await page.evaluate(()=>window.__run4Fixture.snapshot())).leave.used,0);
   assert.deepEqual(errors,[]);
   console.log('PASS 4.0 actual page lifecycle with fixture-only accelerated clock and restored HP (not natural-play balance)');
+  const outcomes=[];
+  for(const difficulty of ['easy','normal','hard','very_hard','extreme']){
+   selectedSchool={...selectedSchool,difficulty};
+   await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id);
+   await page.locator('#teacher-run-protected').waitFor({state:'visible'});
+   const start=page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true});await start.waitFor();
+   await page.evaluate(()=>{let seed=20261125;Math.random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};});
+   await start.click();await page.waitForFunction(()=>window.__run4Fixture?.snapshot().state==='playing');
+   let run;
+   for(let step=0;step<9;step++){
+    run=await page.evaluate(()=>window.__run4Fixture.naturalAdvance(190));
+    if(run.state==='over')break;
+    assert.equal(run.state,'between');
+    const buttons=page.locator('#choices button'),labels=await buttons.allTextContents();
+    const priorities=['자기관리','생활지도','위기 대응','동료 관계','교육자의 신념','학급운영','수업 전문성','업무 능력','교직 경험','전문적 학습공동체'];
+    const chosen=priorities.map(label=>labels.findIndex(x=>x.includes(label))).find(i=>i>=0);
+    await buttons.nth(chosen??0).click();
+   }
+   assert.equal(run?.state,'over');
+   assert.ok(Number.isFinite(run.score)&&run.score>=0&&run.life>=0&&run.life<=run.maxLife);
+   outcomes.push({difficulty,seconds:Number(run.clock.toFixed(2)),bosses:run.defeated.length,score:run.score,retired:run.clock===190});
+   await page.waitForFunction(()=>!document.querySelector('.arcade-result-copy').disabled);
+   const records=await page.evaluate(()=>JSON.parse(localStorage.getItem('beaguRun4LocalRecordsV1')||'[]'));
+   assert.ok(records.every(r=>r.game==='teacher_run_retirement_v4'&&r.version==='4.0'&&!('school_id'in r)&&!('school_name'in r)&&!('verified'in r)));
+  }
+  console.log('RUN4_NATURAL_BALANCE '+JSON.stringify(outcomes));
+  assert.deepEqual(errors,[]);
+  // This is a deterministic legal-input probe, not a human play session.
+  // A failed tier remains a balance blocker, rather than being counted as complete.
+  assert.ok(outcomes.every(r=>r.retired),'Natural-life balance probe: '+JSON.stringify(outcomes));
  }
  console.log('PASS fixture search width='+width+' tier='+tier);
  }finally{await context.close()}
