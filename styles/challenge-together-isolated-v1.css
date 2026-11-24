@@ -42,3 +42,11 @@ body.beagu-page-challenge #challengeReferralPanel[data-state="earned"] #challeng
 body.beagu-page-challenge .challenge-account-details{overflow:hidden}
 body.beagu-page-challenge .challenge-account-details #challengeIdentityPanel.is-lv2{background:linear-gradient(135deg,#302049,#54317a);border-color:#b89bdf;box-shadow:none}
 body.beagu-page-challenge .challenge-account-details #challengeIdentityPanel.is-lv2::after{display:none}
+
+/* Shared participation CSS normally hides help; the explicit survey CTA is required for Lv.0. */
+body.beagu-page-challenge #challengeAccessPanel .beagu-auth-help{display:block!important;margin:6px 0 0;text-align:center}
+body.beagu-page-challenge #challengeAccessPanel[data-challenge-verified-level="1"] .beagu-auth-help,
+body.beagu-page-challenge #challengeAccessPanel[data-challenge-verified-level="2"] .beagu-auth-help{display:none!important}
+body.beagu-page-challenge #challengeAccessPanel.beagu-participation-host{max-width:620px;margin:8px auto 12px!important;padding:12px 15px!important}
+body.beagu-page-challenge #challengeAccessPanel .beagu-participation-intro{margin:0 0 8px}
+body.beagu-page-challenge #challengeAccessPanel .beagu-participation-inline-status{min-height:44px}
