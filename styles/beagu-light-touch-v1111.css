@@ -27,9 +27,9 @@ body:is(.beagu-page-search,.beagu-page-lv1) .beagu-search-hero{min-height:120px;
 
 /* Shared navigation, fixed opinion control, and compact home cards */
 .beagu-unified-header .beagu-unified-nav.beagu-core-nav{gap:4px}
-.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="postit.html"]{display:inline-flex!important;transform:none!important}
+.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="postit.html"]{display:none!important;transform:none!important}
 .beagu-unified-header .beagu-unified-nav.beagu-core-nav>a{min-width:0;padding-inline:clamp(5px,1vw,14px);white-space:nowrap}
-@media(max-width:900px){.beagu-unified-header .beagu-unified-nav.beagu-core-nav{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;width:100%;gap:2px}.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a{min-width:0!important;min-height:40px;padding:6px 0!important;font-size:clamp(10px,2.9vw,13px)!important;letter-spacing:-.055em!important}.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="postit.html"]{background-image:none}}
+@media(max-width:900px){.beagu-unified-header .beagu-unified-nav.beagu-core-nav{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;width:100%;gap:2px}.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a{min-width:0!important;min-height:40px;padding:6px 0!important;font-size:clamp(10px,2.9vw,13px)!important;letter-spacing:-.055em!important}.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="postit.html"]{background-image:none}}
 body.beagu-page-home main.container>.light-touch-experience-link{grid-column:1/-1;margin:14px 0;text-align:center}
 body.beagu-page-home main.container>.light-touch-home-bottom{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:10px;width:100%;align-items:stretch}
 .light-touch-home-bottom>.beagu-home-notice,.light-touch-home-bottom>.light-touch-visit{min-width:0;box-sizing:border-box;margin:0!important;padding:13px!important;background:#fff;border:1px solid #dce6f2;border-radius:14px;overflow-wrap:anywhere}
@@ -46,3 +46,21 @@ body.beagu-page-home main.container>.light-touch-home-bottom{grid-column:1/-1;di
 .light-touch-opinion-panel{position:absolute;right:0;bottom:46px;width:min(240px,calc(100vw - 32px));box-sizing:border-box;background:#fff;border:1px solid #dce6f2;border-radius:12px;padding:12px;font-size:13px;color:#183153;box-shadow:0 4px 16px #19344d26}
 .light-touch-opinion-panel p{margin:6px 0;font-size:12px}.light-touch-opinion-panel a{color:#2458b9;font-weight:700}
 @media(max-width:600px){.light-touch-home-bottom>.beagu-home-notice,.light-touch-home-bottom>.light-touch-visit{padding:8px!important}.light-touch-home-bottom .light-touch-visit>div{font-size:11px}.light-touch-home-bottom .light-touch-visit>div>div{display:block}.light-touch-home-bottom .light-touch-visit strong{display:block}}
+
+/* v1.11.10: home-only layout, existing notice audience contract unchanged. */
+body.beagu-page-home main.container>#beaguTodaySchools{grid-column:1/-1;width:100%;min-width:0;box-sizing:border-box;margin:0;padding:0;background:transparent;border:0}
+#beaguTodaySchools .beagu-home-school{background:#fff;box-shadow:0 3px 12px #19344d0d;align-content:start}
+#beaguTodaySchools .beagu-home-school-name{overflow-wrap:anywhere}
+body.beagu-page-home main.container>.light-touch-visit{grid-column:1/-1;width:100%;min-width:0;margin:0;box-sizing:border-box}
+body.beagu-page-home .light-touch-visit>div{grid-template-columns:repeat(3,minmax(0,1fr))!important;text-align:center!important}
+body.beagu-page-home .light-touch-visit>div>div{min-width:0;overflow-wrap:anywhere}
+body.beagu-page-home main.container>.beagu-home-notice{grid-column:1/-1;display:flex;align-items:center;gap:8px;min-width:0;width:100%;padding:8px 12px!important;background:transparent;border:0;border-top:1px solid #dce6f2;border-radius:0;box-shadow:none;font-size:12px}
+body.beagu-page-home .beagu-home-notice[hidden]{display:none!important}
+body.beagu-page-home .beagu-home-notice h2{flex:0 0 auto;font-size:12px;margin:0!important;white-space:nowrap}
+body.beagu-page-home .beagu-home-notice:not(.court-notice-open) :is(.beagu-notice-common,.beagu-tier-notice,#beaguNoticeError){flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+body.beagu-page-home .beagu-home-notice:not(.court-notice-open) .beagu-tier-notice{padding:0;margin:0;border:0;background:none}
+body.beagu-page-home .beagu-home-notice:not(.court-notice-open) .beagu-tier-notice p{display:inline;margin:0 0 0 4px;white-space:nowrap;font-size:12px}
+body.beagu-page-home .beagu-home-notice.court-notice-open{flex-wrap:wrap;align-items:flex-start}
+body.beagu-page-home .court-notice-open :is(.beagu-notice-common,.beagu-tier-notice,#beaguNoticeError){flex:1 0 100%;min-width:0}
+#courtNoticeToggle{width:auto;flex:0 0 auto;padding:3px 5px;border:0;background:transparent;color:#2458b9;font-size:11px;white-space:nowrap;cursor:pointer}
+#courtNoticeToggle:focus-visible{outline:2px solid #2458b9;outline-offset:2px}

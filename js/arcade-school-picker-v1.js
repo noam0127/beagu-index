@@ -42,6 +42,8 @@ class ArcadeSchoolPicker{
   this.surveyLink.hidden=true;
   this.mount.append(heading,this.input,this.guide,this.changeButton,this.results,this.status,this.surveyLink);
   this.input.addEventListener("input",()=>{this.clear();clearTimeout(this.timer);this.timer=setTimeout(()=>this.search(),250);});
+  const target=new URLSearchParams(location.search).get("school_id");
+  if(/^[A-Z0-9]{7}$/.test(target||""))setTimeout(()=>{if(this.serial===0&&!this.locked)void this.select({school_id:target});},0);
  }
  clear(){
   this.serial++;this.selected=null;delete this.mount.dataset.schoolId;this.changeButton.hidden=true;this.surveyLink.hidden=true;this.results.replaceChildren();this.status.textContent="";
@@ -119,7 +121,7 @@ class ArcadeSchoolPicker{
    const data=await this.request("?school_id="+encodeURIComponent(record.school_id));
    if(ticket!==this.serial||this.locked)return;
    const school=data.school;
-   if(!school||!isSafe(school.school_name)||typeof school.eligible!=="boolean"||
+   if(!school||String(school.school_id)!==String(record.school_id)||!isSafe(school.school_name)||typeof school.eligible!=="boolean"||
       (school.eligible&&!["easy","normal","hard","very_hard","extreme"].includes(school.difficulty)))throw new Error("invalid_school");
    this.selected=school;
    this.mount.dataset.schoolId=String(school.school_id);

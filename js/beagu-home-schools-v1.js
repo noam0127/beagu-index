@@ -8,7 +8,7 @@
   const low=root.querySelector('[data-today-low]');
   const status=root.querySelector('[data-today-status]');
   if(!high||!low||!status)return;
-  const HOUR=3600000,PERIOD=12*HOUR,SEOUL_OFFSET=9*HOUR;
+  const HOUR=3600000,PERIOD=24*HOUR,SEOUL_OFFSET=9*HOUR;
   let upper=[],lower=[],timer=null;
   const slotAt=now=>Math.floor((now+SEOUL_OFFSET)/PERIOD);
   const nextBoundary=now=>(slotAt(now)+1)*PERIOD-SEOUL_OFFSET;
@@ -40,7 +40,7 @@
     if(!upper.length||!lower.length)return;
     const slot=slotAt(Date.now());
     paint(high,upper,slot,'상위 10%',1);
-    paint(low,lower,slot,'하위 10%',7);
+    paint(low,lower,slot,'하위 10%',1);
     status.hidden=true;
   }
   function schedule(){

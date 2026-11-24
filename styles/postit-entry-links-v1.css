@@ -11,3 +11,9 @@ body:not(:has(#beaguLevelState[data-level="2"])) .postit-lv2-link::after{content
 
 /* Five navigation destinations fit on one mobile row without a dangling second line. */
 @media(max-width:760px){.beagu-unified-nav:has(a[href="postit.html"]){grid-template-columns:repeat(5,minmax(0,1fr))}.beagu-unified-nav:has(a[href="postit.html"]) a{font-size:12px;padding-left:1px;padding-right:1px}}
+
+/* School report only: keep Post-it and experience as two adjacent actions. */
+.court-experience-link{display:inline-flex;align-items:center;justify-content:center;flex:1 1 90px;min-height:38px;padding:10px 13px;border:1px solid #c9d7ef;border-radius:10px;background:#eff6ff;color:#2458b9;font-size:13px;font-weight:700;text-decoration:none}
+.court-experience-link[hidden]{display:none!important}
+.court-experience-link:focus-visible{outline:2px solid #2458b9;outline-offset:2px}
+#reportPostitLink{flex:1 1 90px}
