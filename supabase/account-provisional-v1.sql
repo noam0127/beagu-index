@@ -19,21 +19,21 @@ ALTER TABLE beagu_private.beagu_account_sessions_v1 ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON beagu_private.beagu_provisional_accounts_v1,beagu_private.beagu_account_login_budget_v1,beagu_private.beagu_account_sessions_v1 FROM PUBLIC,anon,authenticated;
 CREATE TABLE beagu_private.beagu_account_nicknames_v1(
  visitor_id uuid PRIMARY KEY,
- nickname text COLLATE "C" NOT NULL UNIQUE CHECK(nickname ~ '^[Il|ǀ❘ı┃]{8}$')
+ nickname text COLLATE "C" NOT NULL UNIQUE CHECK(nickname ~ '^[Il|ǀ❘ı∣│]{7}$')
 );
 ALTER TABLE beagu_private.beagu_account_nicknames_v1 ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON beagu_private.beagu_account_nicknames_v1 FROM PUBLIC,anon,authenticated;
 CREATE FUNCTION beagu_private.beagu_account_nickname_v1(p_visitor uuid)
 RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE result text; candidate text; n integer; alphabet constant text:='Il|ǀ❘ı┃';
+DECLARE result text; candidate text; n integer; alphabet constant text:='Il|ǀ❘ı∣│';
 BEGIN
  SELECT nickname INTO result FROM beagu_private.beagu_account_nicknames_v1 WHERE visitor_id=p_visitor;
  IF result IS NOT NULL THEN RETURN result; END IF;
  FOR i IN 1..64 LOOP
   candidate:='';
-  WHILE char_length(candidate)<8 LOOP
+  WHILE char_length(candidate)<7 LOOP
    n:=get_byte(extensions.gen_random_bytes(1),0);
-   IF n<252 THEN candidate:=candidate||substr(alphabet,1+n%7,1); END IF;
+   IF n<256 THEN candidate:=candidate||substr(alphabet,1+n%8,1); END IF;
   END LOOP;
   INSERT INTO beagu_private.beagu_account_nicknames_v1(visitor_id,nickname)
   VALUES(p_visitor,candidate) ON CONFLICT DO NOTHING;
