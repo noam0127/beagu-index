@@ -126,7 +126,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 
 /* Full Set touch controls: canvas steering and an independent attack strip. */
 .volleyball-touch-controls{display:none;position:absolute;left:0;right:0;bottom:0;height:60px;z-index:4;align-items:center;justify-content:flex-end;padding:6px max(8px,env(safe-area-inset-right));box-sizing:border-box;pointer-events:none;background:#14314d}
-.volley-touch-action{display:flex;align-items:center;justify-content:center;gap:4px;min-height:44px;width:min(30%,154px);padding:5px;border:1px solid #ffe2a0;border-radius:10px;background:linear-gradient(140deg,#ec8a3e,#ac3a46);color:#fff;font:800 12px/1.2 system-ui,sans-serif;white-space:normal;text-align:center;cursor:pointer;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.volley-touch-action{display:flex;align-items:center;justify-content:center;gap:4px;min-height:44px;width:min(26%,154px);box-sizing:border-box;padding:5px;border:1px solid #ffe2a0;border-radius:10px;background:linear-gradient(140deg,#ec8a3e,#ac3a46);color:#fff;font:800 12px/1.2 system-ui,sans-serif;white-space:normal;text-align:center;cursor:pointer;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}
 .volley-touch-action:focus-visible{outline:3px solid #ffe99d;outline-offset:2px}
 .volley-touch-action.is-armed{background:#b94737;box-shadow:0 0 10px #ffe180}
 .volley-touch-action:disabled{opacity:.54}
@@ -818,7 +818,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const key=codes[e.code];
     if(!key)return;
     e.preventDefault();
-    if(state.phase==="playing"){touchControl.clear();keys[key]=true;}
+    if(state.phase==="playing"){clearMobileInput();keys[key]=true;}
   });
   document.addEventListener("keyup",e=>{
     const key=codes[e.code];if(key)keys[key]=false;
@@ -894,10 +894,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
   // Focus changes are frequent in mobile/embedded browsers. Only pause button pauses.
   // Clear keyboard input on blur without cancelling a finger dragging on canvas.
-  window.addEventListener("blur",()=>releaseKeys(true));
-  window.addEventListener("resize",()=>releaseKeys(true));
-  document.addEventListener("fullscreenchange",()=>releaseKeys(true));
-  document.addEventListener("webkitfullscreenchange",()=>releaseKeys(true));
+  function clearMobileInput(){
+    if(touchControl.pointerId!==null||touchControl.axes(left.x,left.y,false)||attackPointer!==null){
+      touchControl.clear();endAttack();
+    }
+  }
+  window.addEventListener("blur",()=>{Object.keys(keys).forEach(k=>{keys[k]=false;});clearMobileInput();});
+  window.addEventListener("resize",clearMobileInput);
+  document.addEventListener("fullscreenchange",clearMobileInput);
+  document.addEventListener("webkitfullscreenchange",clearMobileInput);
   document.addEventListener("visibilitychange", () => { if (document.hidden) releaseKeys(true); });
   function controlPlayer(p, direction, jump, speed, jumpStrength=12.8) {
     p.vx = direction * speed;

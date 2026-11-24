@@ -21,7 +21,7 @@ for(const width of [320,390,768,1440])for(const mode of ['normal','arcade-fullsc
    await touch.addStyleTag({content:css+'\n'+controlsCss});
    assert.equal(await touch.locator('#volley-joystick,#volley-spike,#volley-dash').count(),0);
    const c=await touch.locator('#volley-attack').boundingBox(),p=await touch.locator('#pause').boundingBox(),canvas=await touch.locator('canvas').boundingBox();
-   assert(c&&p&&canvas&&c.width>=44&&c.height>=44);assert(c.x>=p.x+p.width-1,'attack overlaps pause');
+   assert(c&&p&&canvas&&c.width>=44&&c.height>=44);assert(c.x>=p.x+p.width-1,JSON.stringify({message:'attack overlaps pause',width,mode,attack:c,pause:p}));
    assert(c.y>=canvas.y+canvas.height-1&&p.y>=canvas.y+canvas.height-1,'controls overlap canvas');
    console.log('PASS direct touch controls layout viewport='+width+' mode='+mode);
   }finally{await touch.close()}

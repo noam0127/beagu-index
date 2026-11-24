@@ -25,3 +25,11 @@ assert.match(v,/if\(!canPlayerJump\(\)\)\{left.y=FLOOR-31;left.vy=0;\}/);assert.
 assert.match(v,/if\(attackPointer!==null\)\{\s*aimDash\(inputX,inputY\);state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;/);
 assert.match(v,/p.contactFrames=spike\|\|cpuSmash\?12:9/);
 console.log('PASS target touch jump, flight exception, pointer cancel, unlimited held attack and contact debounce');
+
+// Desktop keyboard keeps its original direction, jump and cooldown. Mobile only has unlimited attack.
+assert.match(v,/if\(e.code==="KeyJ"\)\{e.preventDefault\(\);if\(!e.repeat\)requestSpike\(\);return;\}/);
+assert.match(v,/if\(!e.repeat\)requestDash\(\);return;/);
+assert.match(v,/\(!mobile&&state.dashCooldownFrames>0\)/);assert.match(v,/state.dashCooldownFrames=mobile\?0:DASH_COOLDOWN/);
+assert.match(v,/event.pointerType==="mouse"\|\|state.phase!=="playing"/);
+assert.match(v,/const inputX=axes\?axes.x:keyboardDirection/);
+assert.match(v,/const inputY=axes\?axes.y:keyboardVertical/);
