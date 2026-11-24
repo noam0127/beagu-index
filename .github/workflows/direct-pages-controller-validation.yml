@@ -19,6 +19,7 @@ jobs:
       - run: |
           node --check js/beagu-admin-updates-v1.js
           node tests/direct-pages-release-contract.cjs
+          node tests/integrated-release-admin-ui.cjs
           python3 -m py_compile scripts/release-manager/worker.py scripts/release-manager/integrated_verify.py
           python3 tests/integrated-release-verification.py
           python3 -m py_compile scripts/release-manager/integrated_backup.py

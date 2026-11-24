@@ -9,6 +9,99 @@
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
  let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,readyKey=null,lastKey=null,refreshSeq=0,liveSeq=0,liveSHA=null,liveVersion=null,liveCheckedAt=0,lastDispatch=null,wakeAt=0,refreshInFlight=false,refreshRequested=false;
  const SHA=/^[0-9a-f]{40}$/;
+ const DIGEST=/^[0-9a-f]{64}$/;
+ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+ const integratedOrder=["backup","apply_sql","apply_scheduler","deploy_edge","verify_backend","publish_pages","verify_live"];
+ const integratedLabels={backup:"암호화 백업·복원 검증",apply_sql:"DB 변경",apply_scheduler:"예약 작업 변경",deploy_edge:"Edge 서버 적용",verify_backend:"서버 검증",publish_pages:"웹 적용",verify_live:"실제 웹 검증",finalize:"최종 버전 기록"};
+ const kindLabels={db_review:"DB",scheduler_review:"예약 작업",edge_review:"Edge",edge_shared_review:"공용 서버 의존성",controller_review:"관제탑",config_review:"설정",ci_review:"CI",web_review:"웹",manual_review:"수동 검토"};
+ const checkLabels={backup_review:"백업 및 복원",database_review:"DB 변경 확인",edge_review:"Edge 변경 확인",server_verification:"서버 검증",pages_verification:"웹 검증",post_release_verification:"최종 적용 확인"};
+ let integratedPlan=null,integratedJob=null,integratedKey=null,integratedSeq=0,integratedLoading=false,integratedError="";
+ function integratedStateKey(data){const s=data?.state||{};return [s.production_sha,s.draft_sha,s.draft_version,s.draft_summary].join("\u0000");}
+ function clearIntegrated(){++integratedSeq;integratedPlan=null;integratedJob=null;integratedLoading=false;integratedError="";el("integratedJobId").value="";}
+ function validReview(data,s){
+  const p=data?.plan;
+  return data?.approved===false&&data.execution_enabled===false&&DIGEST.test(data.plan_sha256||"")&&p?.schema===1&&p.policy==="integrated-review-v1"&&p.execution_enabled===false&&p.base_sha===s.production_sha&&p.candidate_sha===s.draft_sha&&p.version===s.draft_version&&p.summary===s.draft_summary&&typeof p.backend_required==="boolean"&&Array.isArray(p.inventory)&&p.inventory.length>0&&p.inventory.length<300&&p.inventory.every(f=>typeof f.path==="string"&&typeof f.status==="string"&&Array.isArray(f.review_kinds)&&typeof f.backend==="boolean")&&Array.isArray(p.required_checks);
+ }
+ function validIntegratedJob(job,s,plan){
+  return job?.scope==="isolated_fixture_only"&&job.execution_enabled===false&&UUID.test(job.id||"")&&job.base_sha===s.production_sha&&job.candidate_sha===s.draft_sha&&job.plan_sha===plan?.plan_sha256&&["queued","running","blocked","verified","completed","abandoned"].includes(job.status)&&Number.isInteger(job.task_count)&&job.task_count>=2&&job.task_count<=100&&Array.isArray(job.steps)&&job.steps.length===job.task_count&&job.steps.every((step,i)=>step.idx===i&&integratedOrder.includes(step.task?.op)&&["pending","running","done","blocked"].includes(step.status)&&(step.status!=="done"||DIGEST.test(step.evidence||"")));
+ }
+ function integratedList(id,items){
+  const root=el(id);root.replaceChildren();
+  for(const value of items){const node=document.createElement("li");node.textContent=value;root.append(node);}
+ }
+ function renderIntegrated(data){
+  const s=data?.state||{},key=integratedStateKey(data);
+  if(key!==integratedKey){clearIntegrated();integratedKey=key;}
+  if(data?.job&&(integratedPlan||integratedLoading||integratedJob))clearIntegrated();
+  const candidate=SHA.test(s.production_sha||"")&&SHA.test(s.draft_sha||"")&&s.production_sha!==s.draft_sha;
+  write("integratedBase",s.production_sha||"—");write("integratedCandidate",s.draft_sha||"—");
+  el("integratedInspect").disabled=busy||integratedLoading||!!data?.job||!candidate;
+  el("integratedApply").disabled=true;el("integratedRecoveryApply").disabled=true;
+  el("integratedJobLookup").disabled=busy||integratedLoading||!!data?.job||!integratedPlan;
+  const p=integratedPlan?.plan,job=integratedJob;
+  write("integratedNotice",integratedLoading?"서버 검증 결과 조회 중":integratedError||(!candidate?"검토할 독립 후보가 없습니다.":p?(p.backend_required?"통합 적용 필요 · 운영 실행 잠금":"웹 변경 전용 후보 · 기존 직접 적용 경로 사용"):"등록 후보의 검토 명세를 조회하세요."));
+  el("integratedReview").hidden=!p;
+  if(p){
+   write("integratedVersion",p.version);write("integratedSummary",p.summary);
+   write("integratedDigest",integratedPlan.plan_sha256);
+   write("integratedCounts",p.inventory.length+"개 파일 · 서버 관련 "+p.inventory.filter(f=>f.backend).length+"개");
+   write("integratedManual",p.requires_manual_review||p.requires_shared_dependency_review?"수동 검토 또는 공용 의존성 검증 필요 · 실행 잠금":"명세 조회 완료 · 별도 승인 및 운영 연결 필요");
+   integratedList("integratedFiles",p.inventory.map(f=>f.review_kinds.map(k=>kindLabels[k]||"기타 검토").join(" / ")+" · "+f.status+" · "+f.path));
+   integratedList("integratedChecks",p.required_checks.map(k=>checkLabels[k]||"추가 확인"));
+  }else{
+   for(const id of ["integratedVersion","integratedSummary","integratedDigest","integratedCounts","integratedManual"])write(id,"—");
+   integratedList("integratedFiles",[]);integratedList("integratedChecks",[]);
+  }
+  const stages=el("integratedSteps");stages.replaceChildren();
+  const labels={pending:"대기",running:"실행 중",done:"검증 기록 있음",blocked:"중단"};
+  const steps=job?job.steps.map(step=>({op:step.task.op,label:integratedLabels[step.task.op]+(step.task.op==="deploy_edge"&&typeof step.task.edge_function==="string"?" · "+step.task.edge_function:""),status:step.status})):
+   (p?.backend_required===false?["publish_pages","verify_live"]:integratedOrder).map(op=>({op,label:integratedLabels[op],status:"planned"}));
+  steps.push({op:"finalize",label:integratedLabels.finalize,status:job?.status==="completed"?"done":job?.status==="blocked"?"blocked":job?"pending":"planned"});
+  for(const step of steps){const li=document.createElement("li");li.dataset.state=step.status;
+   const name=document.createElement("span");name.textContent=step.label;
+   const status=document.createElement("strong");status.textContent=labels[step.status]||"계획";
+   li.append(name,status);stages.append(li);}
+  write("integratedProgress",job?"격리 검증 기록 · "+({queued:"대기",running:"실행 중",blocked:"중단 · 복구 검토 필요",verified:"검증 완료 · 최종 기록 전",completed:"격리 최종 기록 완료",abandoned:"변경 전 취소"}[job.status])+" · 운영 적용 아님":"실제 작업 기록 없음 · 위 순서는 실행 계획입니다.");
+  const records=Array.isArray(job?.recovery)?job.recovery:[];
+  write("integratedRecovery",job?.status==="blocked"?"오류로 중단되었습니다. 원본 데이터 보존 및 별도 복구 승인 필요 · 자동 재시도 금지":job?.status==="abandoned"?"변경 전 취소된 격리 작업":records.length?"복구 검토 기록 "+records.length+"건 · 운영 복구 아님":"복구 기록 없음");
+ }
+ async function inspectIntegrated(){
+  if(el("integratedInspect").disabled||!model)return;
+  const s={...model.state},key=integratedKey,seq=++integratedSeq;
+  integratedPlan=null;integratedJob=null;integratedLoading=true;integratedError="";
+  renderIntegrated(model);
+  try{
+   const data=await request("inspect_integrated_plan",{candidate_sha:s.draft_sha,expected_production_sha:s.production_sha});
+   if(seq!==integratedSeq||key!==integratedKey||busy||!model)return;
+   if(!validReview(data,model.state))throw Error("검토 명세가 현재 후보와 일치하지 않습니다.");
+   // Recompute the exact server JSON digest. A reviewed plan never constitutes approval.
+   const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(data.plan)));
+   const actual=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,"0")).join("");
+   if(seq!==integratedSeq||key!==integratedKey||busy||!model)return;
+   if(actual!==data.plan_sha256)throw Error("검토 명세 무결성 확인 실패");
+   integratedPlan=data;
+  }catch(e){
+   if(seq!==integratedSeq)return;
+   integratedError="명세 조회 실패 · 다시 검토 필요";
+   if(e.status===401||e.status===403){denied("관리자 인증 필요");return;}
+  }finally{if(seq===integratedSeq){integratedLoading=false;if(model)renderIntegrated(model);}}
+ }
+ async function lookupIntegrated(event){
+  event.preventDefault();
+  const id=el("integratedJobId").value.trim();
+  if(el("integratedJobLookup").disabled||!UUID.test(id)||!model)return;
+  const seq=++integratedSeq,key=integratedKey;integratedLoading=true;integratedJob=null;integratedError="";renderIntegrated(model);
+  try{
+   const job=await request("integrated_fixture_status",{job_id:id});
+   if(seq!==integratedSeq||key!==integratedKey||!model||busy)return;
+   if(job.id!==id||!validIntegratedJob(job,model.state,integratedPlan))throw Error("작업 기록 불일치");
+   integratedJob=job;
+  }catch(e){
+   if(seq!==integratedSeq)return;
+   integratedError="격리 작업 조회 불가 · 실제 적용 상태로 간주하지 않습니다.";
+   if(e.status===401||e.status===403){denied("관리자 인증 필요");return;}
+  }finally{if(seq===integratedSeq){integratedLoading=false;if(model)renderIntegrated(model);}}
+ }
  const seconds=(a,b)=>{const x=Date.parse(a),y=b?Date.parse(b):Date.now();return Number.isFinite(x)&&Number.isFinite(y)?Math.max(0,Math.floor((y-x)/1000)):null;};
  const elapsed=n=>n===null?'—':Math.floor(n/60)+'분 '+n%60+'초';
  const date=value=>{if(!value)return "—";const d=new Date(value);
@@ -19,7 +112,7 @@
   p.classList.toggle("release-status-error",isError);
  }
  function denied(text){
-  ++refreshSeq;++liveSeq;model=null;readyKey=null;liveSHA=null;el("releaseLogin").hidden=false;el("releaseDashboard").hidden=true;
+  ++refreshSeq;++liveSeq;clearIntegrated();integratedKey=null;model=null;readyKey=null;liveSHA=null;el("releaseLogin").hidden=false;el("releaseDashboard").hidden=true;
   message(text,true);
  }
  async function request(action,payload={},endpoint=api){
@@ -138,6 +231,7 @@
   renderHistory("releaseStageHistory",stageHist);
   renderHistory("releaseProdHistory",prodHist);
   renderJob(data);
+  renderIntegrated(data);
  }
  async function refresh(quiet=false){
   if(busy)return;
@@ -154,7 +248,7 @@
   }catch(err){
    if(seq!==refreshSeq)return;
    if(err.status===401||err.status===403){denied("관리자 인증 필요: "+err.message);return;}
-   readyKey=null;if(model)render(model);
+   readyKey=null;clearIntegrated();if(model)render(model);
    if(!quiet)message("배포 상태 조회 실패: "+(err.message||String(err)),true);
   }finally{refreshInFlight=false;if(refreshRequested&&!busy){refreshRequested=false;void refresh(false);}}
  }
@@ -172,7 +266,7 @@
    prod_rollback:"실제 웹 "+short(snapshot.production_sha)+" → "+short(rollback)+" 복원하시겠습니까? 모든 방문자에게 적용됩니다."
   };
   if(!window.confirm(wording[action]))return;
-  busy=true;++refreshSeq;if(model)render(model);
+  busy=true;++refreshSeq;clearIntegrated();if(model)render(model);
   try{
    if(action==="prod_apply"&&model?.direct_release_v1!==true)throw Error("직접 적용 서버가 아직 활성화되지 않았습니다.");
    const result=action==="prod_apply"?await request("prod_direct_apply",{candidate_sha:snapshot.draft_sha,expected_production_sha:snapshot.production_sha,confirmed_direct:true}):await request(action,{expected_production_sha:snapshot.production_sha,expected_rollback_sha:rollback,confirmed_direct:true});
@@ -190,7 +284,7 @@
   const old=model?.state?.draft_sha;
   const replace=old&&old!==candidate_sha&&old!==model?.state?.production_sha;
   if(replace&&!window.confirm("기존 등록 후보 "+short(old)+"를 이번 독립 후보로 교체하시겠습니까? GitHub 기록은 유지됩니다."))return;
-  busy=true;++refreshSeq;if(model)render(model);el("releaseRegister").disabled=true;
+  busy=true;++refreshSeq;clearIntegrated();if(model)render(model);el("releaseRegister").disabled=true;
   message("GitHub 최신 코드에서 변경된 파일을 확인하는 중입니다.");
   try{
    const result=await request("register_direct",{version,candidate_sha,...(replace?{replace_draft_sha:old}:{})});
@@ -203,6 +297,8 @@
   }catch(err){message(err.message,true)}
   finally{busy=false;await refresh(false);}
  }
+ el("integratedInspect").addEventListener("click",()=>void inspectIntegrated());
+ el("integratedJobForm").addEventListener("submit",event=>void lookupIntegrated(event));
  el("releaseDraftForm").addEventListener("submit",register);
  for(const [id,action] of [
   ["releaseStageApply","stage_apply"],["releaseStageRollback","stage_rollback"],
@@ -219,6 +315,6 @@
    timer=setInterval(()=>{if(!document.hidden&&!busy)void refresh(true)},10000);
   }catch(err){denied("관리자 인증 필요: "+err.message);}
  })();
- window.addEventListener("pagehide",()=>{++refreshSeq;++liveSeq;if(timer)clearInterval(timer)});
+ window.addEventListener("pagehide",()=>{++refreshSeq;++liveSeq;clearIntegrated();if(timer)clearInterval(timer)});
  window.addEventListener("pageshow",event=>{if(event.persisted){void refresh(false);if(timer)clearInterval(timer);timer=setInterval(()=>{if(!document.hidden&&!busy)void refresh(true)},10000);}});
 })();
