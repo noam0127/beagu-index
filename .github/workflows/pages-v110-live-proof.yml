@@ -1,0 +1,35 @@
+name: v1.10.0 live proof (read only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pages-v110-live-proof.yml'
+permissions:
+  contents: read
+jobs:
+  live-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Verify production artifact and unauthenticated administrator denial
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 18); do
+            if curl -fsS --max-time 10 -H 'Cache-Control: no-cache' "https://baeguindex.com/release-info.json?proof=${GITHUB_RUN_ID}-$attempt" > /tmp/meta.json && node -e 'const m=require("/tmp/meta.json");if(m.version!=="v1.10.0"||m.commit!=="5f19ddf28a2f24a98fb03900739147a04a547cbe"||m.environment!=="production")process.exit(1)'; then
+              echo "PASS live v1.10.0 exact SHA"
+              break
+            fi
+            test "$attempt" != 18
+            sleep 5
+          done
+          curl -fsS --max-time 20 "https://baeguindex.com/admin.html?proof=${GITHUB_RUN_ID}" >/tmp/admin.html
+          grep -Fq 'civic-admin-v1.js?v=20261124-trust1' /tmp/admin.html
+          curl -fsS --max-time 20 "https://baeguindex.com/js/beagu-2026-civic-admin-v1.js?v=20261124-trust1" >/tmp/admin.js
+          grep -Fq 'admin_hold_context' /tmp/admin.js
+          grep -Fq 'admin_resume' /tmp/admin.js
+          echo "PASS live civic admin assets"
+          for action in admin_hold_context admin_hold admin_resume; do
+            code=$(curl -sS --max-time 20 -o /tmp/denied.json -w '%{http_code}' -X POST -H 'Origin: https://baeguindex.com' -H 'Content-Type: application/json' --data "{\"action\":\"$action\"}" https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-civic)
+            test "$code" = 403
+            node -e 'const x=require("/tmp/denied.json");if(x.error!=="OWNER_MFA_REQUIRED")throw Error("unexpected denial")'
+          done
+          echo "PASS live civic admin rejects unauthenticated commands"
