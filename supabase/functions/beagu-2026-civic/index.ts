@@ -28,6 +28,8 @@ async function corrector(req:Request){
  if(error||!s||Number(s.access_level)<2||s.identity_campaign!=="2026"||
  !uuid.test(s.identity_visitor_id||"")||!Number.isFinite(Date.parse(s.expires_at))||
  Date.parse(s.expires_at)<=Date.now())return null;
+ const {data:account,error:accountError}=await db.rpc("beagu_account_session_status_v1",{p_token_sha:await hash(token)});
+ if(accountError||account?.level!==2||account.lv2_active!==true)return null;
  const {data:earned,error:e}=await db.rpc("beagu_has_earned_challenge_visitor",{p_visitor:s.identity_visitor_id});
  return !e&&earned===true?s.identity_visitor_id:null;
 }

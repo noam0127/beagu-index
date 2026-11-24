@@ -33,7 +33,7 @@ jobs:
           psql_local < supabase/account-identity-v1.sql
           psql_local < supabase/migrations/20261120_beagu_postit_school_conversations.sql
           psql_local < supabase/migrations/20261120_beagu_postit_session_identity.sql
-          psql_local < supabase/account-provisional-v1.sql
+          psql_local --single-transaction -c "SELECT set_config('beagu.lv2_transition_expires_at',(now()+interval '1 day')::text,true)" -f - < supabase/account-provisional-v1.sql
           psql_local < tests/account-v1-postgres-assertions.sql
           docker exec "$c" createdb -U postgres load_fixture
           psql_local -d load_fixture < tests/account-v1-postgres-fixture.sql
@@ -41,7 +41,7 @@ jobs:
           psql_local -d load_fixture < supabase/account-identity-v1.sql
           psql_local -d load_fixture < supabase/migrations/20261120_beagu_postit_school_conversations.sql
           psql_local -d load_fixture < supabase/migrations/20261120_beagu_postit_session_identity.sql
-          psql_local -d load_fixture < supabase/account-provisional-v1.sql
+          psql_local -d load_fixture --single-transaction < supabase/account-provisional-v1.sql
           psql_local -d load_fixture < tests/account-nickname-100k.sql > benchmark.log 2>&1 || { tail -80 benchmark.log; exit 1; }
           tail -35 benchmark.log
           node tests/account-v1-ui.cjs

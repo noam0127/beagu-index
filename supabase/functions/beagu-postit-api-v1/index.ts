@@ -39,6 +39,8 @@ async function identity(req:Request,minLevel=2){
  const {data,error}=await db.from("beagu_level_sessions").select("access_level,identity_visitor_id,identity_campaign")
    .eq("token_sha256",hash).gt("expires_at",new Date().toISOString()).maybeSingle();
  if(error||!data||Number(data.access_level)<minLevel)return null;
+ const {data:allowed,error:gateError}=await db.rpc('beagu_account_level_session_allowed_v1',{p_token_sha:hash});
+ if(gateError||allowed!==true)return null;
  // An earned challenge identity is revocable: each request must still have
  // an active, verified referral credit. Never trust the client-side badge.
  if(data.identity_campaign==="2026"&&data.identity_visitor_id){

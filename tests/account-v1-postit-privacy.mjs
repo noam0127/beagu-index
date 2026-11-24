@@ -23,6 +23,7 @@ const client={from(table){
  const q={select(){return q},eq(k,v){filters[k]=v;return q},gt(){return q},in(){return q},order(){return q},limit(){return q},update(){update=true;return q},maybeSingle:async()=>run(),single:async()=>run(),then(resolve,reject){return Promise.resolve().then(run).then(resolve,reject)}};
  return q;
 },rpc:async(name,p)=>{
+ if(name==='beagu_account_level_session_allowed_v1')return {data:p.p_token_sha!==hash(tokens.revoked),error:null};
  if(name==='beagu_has_earned_challenge_visitor')return {data:true,error:null};
  if(name==='beagu_account_postit_writer_v1')return {data:p.p_token_sha===hash(tokens.member)?actor:null,error:null};
  if(name==='beagu_account_postit_current_aliases_v1')return {data:[{item_id:id,nickname:nick,author_uid:actor,visitor_id:visitor,account_id:'private-account'}],error:null};

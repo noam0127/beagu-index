@@ -13,16 +13,17 @@ assert.ok(start>=0&&stop>start);
 const promote=new Function('verifiedReferralCredit','enrollment','session','db','digest','sessionToken','visitor','json','origin',
 'return (async()=>{'+source.slice(start,stop)+';return {ok:true};})()');
 const visitor='aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
-async function check(session,enrollment,result){
+async function check(session,enrollment,result,legacy=true){
  const calls=[];
  const q={};
  for(const method of ['update','eq','lte','gt','is','select'])q[method]=(...args)=>{calls.push([method,...args]);return q};
  q.maybeSingle=async()=>result;
- const out=await promote(credit,enrollment,session,{from:(table)=>{calls.push(['from',table]);return q}},async()=> 'hash','token',visitor,(_o,status,data)=>({status,data}),'');
+ const out=await promote(credit,enrollment,session,{rpc:async(name,params)=>{assert.equal(name,'beagu_legacy_lv2_read_allowed_v1');assert.equal(params.p_visitor,visitor);return {data:legacy,error:null}},from:(table)=>{calls.push(['from',table]);return q}},async()=> 'hash','token',visitor,(_o,status,data)=>({status,data}),'');
  return {out,calls};
 }
 (async()=>{
  const valid={level:2,validReferrals:1};
+ const noExemption=await check({access_level:1,identity_visitor_id:null},valid,{data:null,error:null},false);assert.equal(noExemption.out.ok,true);assert.equal(noExemption.calls.length,0,'new referral-only visitor must not request an upgrade');
  const unbound={access_level:1,identity_visitor_id:null};
  const row={data:{access_level:2,identity_visitor_id:visitor},error:null};
  let x=await check(unbound,valid,row);

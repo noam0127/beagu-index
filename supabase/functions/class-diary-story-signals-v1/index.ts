@@ -47,6 +47,11 @@ async function verifiedSession(req:Request){
     select:'access_level,expires_at',token_sha256:'eq.'+await sha(token),limit:'1'
   });
   const s=sessions[0];
+  if(!s)return false;
+  const gate=await fetch(BASE+'/rest/v1/rpc/beagu_account_level_session_allowed_v1',{method:'POST',
+    headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({p_token_sha:await sha(token)})});
+  if(!gate.ok||await gate.json()!==true)return false;
   return !!s && Number(s.access_level)>=2 &&
     Number.isFinite(Date.parse(s.expires_at))&&Date.parse(s.expires_at)>Date.now();
 }
