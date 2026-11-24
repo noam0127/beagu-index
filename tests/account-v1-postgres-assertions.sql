@@ -1,5 +1,5 @@
 DO $$
-DECLARE a uuid; x uuid; v uuid:='10000000-0000-0000-0000-000000000001'; u uuid:='00000000-0000-0000-0000-000000000001'; other_user uuid:='00000000-0000-0000-0000-000000000002'; r jsonb;
+DECLARE a uuid; x uuid; v uuid:='10000000-0000-0000-0000-000000000001'; u uuid:='00000000-0000-0000-0000-000000000001'; other_user uuid:='00000000-0000-0000-0000-000000000002'; r jsonb; nick text;
 BEGIN
  IF public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('b',64),repeat('c',64)) IS NOT NULL THEN RAISE EXCEPTION 'device theft'; END IF;
  a:=public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('a',64),repeat('c',64));
@@ -7,6 +7,34 @@ BEGIN
  IF public.beagu_account_password_login_v1(a,repeat('d',64),repeat('1',64)) IS NOT NULL THEN RAISE EXCEPTION 'wrong credential accepted'; END IF;
  r:=public.beagu_account_password_login_v1(a,repeat('c',64),repeat('1',64));
  IF r->>'level' IS DISTINCT FROM '1' THEN RAISE EXCEPTION 'Lv1 login failed'; END IF;
+ nick:=r->>'nickname'; IF nick IS NULL OR nick !~ '^[Il1]{32}
+ IF public.beagu_account_formal_link_v1(u,'SYNTHETIC-ONE',repeat('a',64),repeat('1',64)) IS NOT NULL THEN RAISE EXCEPTION 'unearned formal tier'; END IF;
+ UPDATE beagu_private.challenge_referral_profiles SET access_level=2,valid_referrals=1,upgraded_at=now() WHERE visitor_id=v;
+ IF public.beagu_account_level_session_allowed_v1(repeat('1',64)) THEN RAISE EXCEPTION 'obsolete referral session survived'; END IF;
+ r:=public.beagu_account_password_login_v1(a,repeat('c',64),repeat('2',64));
+ IF r->>'level' IS DISTINCT FROM '2' THEN RAISE EXCEPTION 'earned entitlement missing'; END IF;
+ IF public.beagu_account_formal_link_v1(u,'SYNTHETIC-ONE',repeat('a',64),repeat('3',64)) IS NOT NULL THEN RAISE EXCEPTION 'password session bypass'; END IF;
+ x:=public.beagu_account_formal_link_v1(u,'SYNTHETIC-ONE',repeat('a',64),repeat('2',64));
+ IF x IS NULL THEN RAISE EXCEPTION 'formal conversion failed'; END IF;
+ IF public.beagu_account_password_login_v1(a,repeat('c',64),repeat('4',64)) IS NOT NULL OR public.beagu_account_session_status_v1(repeat('2',64)) IS NOT NULL THEN RAISE EXCEPTION 'old credential survived'; END IF;
+ IF public.beagu_account_formal_link_v1(other_user,'SYNTHETIC-ONE',repeat('a',64),NULL) IS NOT NULL THEN RAISE EXCEPTION 'identity rebound'; END IF;
+ IF public.beagu_account_formal_link_v1(u,'SYNTHETIC-ONE',repeat('a',64),NULL) IS DISTINCT FROM x THEN RAISE EXCEPTION 'retry not idempotent'; END IF;
+ r:=public.beagu_account_formal_login_v1(u,repeat('5',64));
+ IF r->>'formal' IS DISTINCT FROM 'true' OR r->>'level' IS DISTINCT FROM '2' OR r->>'nickname' IS DISTINCT FROM nick THEN RAISE EXCEPTION 'formal login failed'; END IF;
+ IF (SELECT valid_referrals FROM beagu_private.challenge_referral_profiles WHERE visitor_id=v)<>1 THEN RAISE EXCEPTION 'referral changed'; END IF;
+ BEGIN INSERT INTO public.beagu_postit_member_accounts(auth_user_id,identity_visitor_id,author_uid) VALUES(other_user,v,gen_random_uuid()); RAISE EXCEPTION 'cross-account takeover'; EXCEPTION WHEN others THEN IF sqlerrm<>'account identity conflict' THEN RAISE; END IF; END;
+ IF NOT public.beagu_account_logout_v1(repeat('5',64)) THEN RAISE EXCEPTION 'logout deletion failed'; END IF;
+ IF public.beagu_account_session_status_v1(repeat('5',64)) IS NOT NULL OR EXISTS(SELECT 1 FROM public.beagu_level_sessions WHERE token_sha256=repeat('5',64)) THEN RAISE EXCEPTION 'logout session survived'; END IF;
+ IF public.beagu_account_formal_link_v1(other_user,'SYNTHETIC-TWO',repeat('b',64),NULL) IS NULL THEN RAISE EXCEPTION 'existing earned user cannot link directly'; END IF;
+ IF has_function_privilege('anon','public.beagu_account_password_login_v1(uuid,text,text)','execute') OR has_table_privilege('authenticated','beagu_private.beagu_provisional_accounts_v1','select') THEN RAISE EXCEPTION 'private credentials exposed'; END IF;
+ r:=public.beagu_account_formal_login_v1(u,repeat('7',64));
+ UPDATE beagu_private.challenge_referral_profiles SET disabled=true WHERE visitor_id=v;
+ IF public.beagu_account_level_session_allowed_v1(repeat('7',64)) OR EXISTS(SELECT 1 FROM public.beagu_level_sessions WHERE token_sha256=repeat('7',64)) THEN RAISE EXCEPTION 'disabled account session survived'; END IF;
+ IF public.beagu_account_formal_login_v1(u,repeat('6',64)) IS NOT NULL THEN RAISE EXCEPTION 'disabled profile login'; END IF;
+ RAISE NOTICE 'PASS stable barcode nickname and global session revocation; account: original device, credential hashing, earned level, formal link, session revocation, preserved referral and identity conflicts';
+END $$;
+ THEN RAISE EXCEPTION 'nickname invalid'; END IF;
+ IF NOT public.beagu_account_level_session_allowed_v1(repeat('1',64)) THEN RAISE EXCEPTION 'valid session denied'; END IF;
  IF public.beagu_account_formal_link_v1(u,'SYNTHETIC-ONE',repeat('a',64),repeat('1',64)) IS NOT NULL THEN RAISE EXCEPTION 'unearned formal tier'; END IF;
  UPDATE beagu_private.challenge_referral_profiles SET access_level=2,valid_referrals=1,upgraded_at=now() WHERE visitor_id=v;
  r:=public.beagu_account_password_login_v1(a,repeat('c',64),repeat('2',64));
