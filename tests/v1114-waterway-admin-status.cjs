@@ -12,9 +12,9 @@ assert.doesNotMatch(sql,/\b(?:insert\s+into|update\s+(?:public|beagu_private)\.|
 assert.match(sql,/b\.payload_sha256 is distinct from r\.payload_sha256/);
 assert.match(sql,/t\.checked_at>=r\.source_snapshot_at/);
 assert.match(sql,/b\.small_sample_reviewed and b\.reidentification_reviewed/);
-assert.match(sql,/'live_raw_rows',null/);
+assert.match(sql,/'live_raw_rows',\(select payload->'source_rows' from latest_run\)/);
 assert.match(sql,/'individual_valid_rows',null/);
-assert.match(sql,/'last_failure_at',null/);
+assert.match(sql,/'last_failure_at',\(select finished_at from last_failure\)/);
 assert.match(sql,/public\.beagu_2026_level_release_status\(\)/);
 assert.ok(api.indexOf('beagu_admin_active_mfa_session')<api.indexOf('db.rpc("beagu_2026_waterway_status_v1")'));
 assert.match(api,/waterway_status:waterway===null\?"UNAVAILABLE":"OK"/);
