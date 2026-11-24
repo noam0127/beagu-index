@@ -41,7 +41,8 @@ async function view(page,path){
 async function open(page){
  await page.locator('#beaguLevelState').click({timeout:8000});
  await page.locator('#beaguParticipationOverlay').waitFor({state:'visible'});
- assert.equal(await page.locator('#beaguParticipationTitle').innerText(),'참여코드 입력');
+ const level=await page.locator('#beaguLevelState').getAttribute('data-level');
+ assert.equal(await page.locator('#beaguParticipationTitle').innerText(),level==='1'?'레벨2에 도전하세요!':level==='2'?'참여 인증 정보':'참여코드 입력');
  const fit=await page.locator('.beagu-participation-dialog').boundingBox();
  const size=page.viewportSize();
  assert(fit&&fit.x>=-1&&fit.x+fit.width<=size.width+1,'Modal must fit mobile width');
@@ -102,16 +103,12 @@ async function login(page,code){
    assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.2');
    await view(page,'challenge.html');
    await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.dataset.level==='2');
-   // Lv2 alone upgrades the Challenge action into account login.
-   await page.waitForFunction(()=>document.querySelector('#challengeAccessPanel [data-beagu-participation-status]')?.textContent==='로그인하기');
+   // Challenge remains a code-only surface; account entry is a separate page.
+   await page.waitForFunction(()=>document.querySelector('#challengeAccessPanel [data-beagu-participation-status]')?.textContent.includes('Lv2 · 챌린지 달성'));
    await page.locator('#challengeAccessPanel [data-beagu-participation-status]').click();
-   await page.locator('#challengeMemberOverlay').waitFor({state:'visible',timeout:10000});
-   assert.equal(await page.locator('#challengeMemberTitle').innerText(),'Lv2 로그인');
-   const memberFit=await page.locator('#challengeMemberDialog').boundingBox();
-   assert(memberFit&&memberFit.x>=-1&&memberFit.x+memberFit.width<=cfg.width+1,'Member login modal fits mobile width');
-   await page.locator('#challengeMemberClose').click();
-   await page.locator('#beaguLevelState').click();
    await page.locator('#beaguParticipationOverlay').waitFor({state:'visible'});
+   assert.equal(await page.locator('#challengeMemberOverlay').count(),0);
+   assert.equal(await page.locator('#beaguParticipationOverlay a[href="account.html"]').isVisible(),true);
    await page.screenshot({path:'artifacts/participation-auth/'+cfg.name+'-lv2.png',fullPage:false});
    await page.keyboard.press('Escape');
    assert.equal(await page.locator('#beaguParticipationOverlay').isHidden(),true);
