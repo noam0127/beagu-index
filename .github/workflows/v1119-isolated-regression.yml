@@ -1,0 +1,57 @@
+name: v1.11.3-9 isolated candidate regression
+on:
+  push:
+    branches: ['qa/v1113-v1119-offline-20261125']
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [static, playground, search, playback, together]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: '5ccb149dcb59cab66c2c40c450455fabd2c348b3'
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check immutable candidate and disabled Vercel
+        run: |
+          test "$(git rev-parse HEAD)" = '5ccb149dcb59cab66c2c40c450455fabd2c348b3'
+          node -e "if(require('./vercel.json').git.deploymentEnabled!==false)process.exit(1)"
+      - name: Install pinned browser dependencies
+        if: matrix.suite != 'static'
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1 html2canvas@1.4.1
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"; else npx playwright install chromium --only-shell; fi
+      - name: Run offline regression suite
+        env:
+          SUITE: ${{ matrix.suite }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$SUITE" in
+            static)
+              result=0
+              for f in tests/homecourt-position-v1.mjs tests/clean-release-contract.cjs tests/clean-release-info-runtime.cjs tests/v1111-light-touch-contract.cjs tests/playground-contract.cjs tests/playback-contract.cjs tests/arcade-item-upgrade-v1.mjs tests/arcade-school-link.mjs tests/challenge-certificate-privacy-v1.mjs; do
+                echo "::group::$f"
+                node "$f" || result=1
+                echo "::endgroup::"
+              done
+              exit "$result"
+              ;;
+            playground) node tests/playground-browser.cjs ;;
+            search) node tests/v1111-light-touch-browser.cjs ;;
+            playback) node tests/playback-browser.cjs ;;
+            together)
+              python3 -m http.server 8124 --bind 127.0.0.1 >/tmp/qa-http.log 2>&1 &
+              pid=$!
+              trap 'kill "$pid" 2>/dev/null || true' EXIT
+              for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8124/challenge.html >/dev/null && break; sleep 1; done
+              node tests/v1112-together-offline-browser.cjs
+              ;;
+          esac
