@@ -1,5 +1,4 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.0";
-import { threadPositions } from "../_shared/postit-position-v1.mjs";
 
 // Post-it's data and author identities never become directly queryable with
 // the browser's publishable key. Even curated projections require Lv2 authorization.
@@ -135,7 +134,7 @@ async function schoolInfo(ids:string[]){
  }
  return map;
 }
-async function enrich(items:any[],type:"post"|"comment",self:string|null,threadLabels?:Map<string,{nickname:string,is_post_author:boolean}>){
+async function enrich(items:any[],type:"post"|"comment",self:string|null){
  if(!items.length)return [];
  const ids=items.map(x=>x.id);
  const table=type==="post"?"beagu_postit_posts":"beagu_postit_comments";
@@ -158,9 +157,8 @@ async function enrich(items:any[],type:"post"|"comment",self:string|null,threadL
  const compareIds=type==="post"?items.flatMap(x=>
    typeof x.comparison_selection==="string"?x.comparison_selection.split(",").map((z:string)=>z.split(":")[0]):[]):[];
  const schools=type==="post"?await schoolInfo([...items.map(x=>x.school_id).filter(Boolean),...compareIds]):{};
- return Promise.all(items.map(async x=>({
+ return items.map(x=>({
   id:x.id,body:x.body,created_at:x.created_at,
-  ...(type==="post"?(await threadPositions(ROLE_KEY,x.id,x.author_uid,[])).get(x.author_uid):threadLabels?.get(x.author_uid)),
   ...(type==="post"?{
    subject_type:x.subject_type||"school",
    school:schools[x.school_id]||null,
@@ -171,7 +169,7 @@ async function enrich(items:any[],type:"post"|"comment",self:string|null,threadL
   }:{}),
   ...{likes:counts[x.id].likes,liked:counts[x.id].liked,reported:counts[x.id].reported,
    mine:Boolean(self&&self===x.author_uid)}
- })));
+ }));
 }
 // Quotas and duplicate handling are serialized inside Postgres RPCs, not
 // in independent client-side count/insert queries that race across tabs.
@@ -295,25 +293,9 @@ Deno.serve(async(req:Request)=>{
     const exists=await target("post",id);
     if(!exists)return fail(req,"POST_UNAVAILABLE",404);
     const {data,error}=await db.from("beagu_postit_comments").select("id,body,author_uid,created_at")
-     .eq("post_id",id).eq("status","published").order("created_at",{ascending:true}).order("id",{ascending:true}).limit(80);
+     .eq("post_id",id).eq("status","published").order("created_at",{ascending:true}).limit(80);
     if(error)throw error;
-    // Include soft-hidden/removed authors in assignment, never in the response.
-    // The published list is bounded to 80; stop after its last row is reached.
-    const authors:string[]=[];
-    const visible=data||[];
-    if(visible.length){
-     const last=visible[visible.length-1].id;
-     let found=false;
-     for(let offset=0;!found&&offset<5000;offset+=500){
-      const {data:rows,error:aliasError}=await db.from("beagu_postit_comments")
-       .select("id,author_uid").eq("post_id",id).order("created_at",{ascending:true}).order("id",{ascending:true}).range(offset,offset+499);
-      if(aliasError)throw aliasError;
-      for(const row of rows||[]){authors.push(row.author_uid);if(row.id===last){found=true;break;}}
-      if(!found&&(!rows||rows.length<500))throw Error("THREAD_ALIAS_SNAPSHOT_CHANGED");
-     }
-    }
-    const labels=await threadPositions(ROLE_KEY,id,exists.author_uid,authors);
-    const comments=await enrich(visible,"comment",member?.id||null,labels);
+    const comments=await enrich(data||[],"comment",member?.id||null);
     return respond(req,{comments});
    }
    return fail(req,"UNKNOWN_ACTION");

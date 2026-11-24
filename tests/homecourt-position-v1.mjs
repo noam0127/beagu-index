@@ -1,5 +1,20 @@
 import assert from "node:assert/strict";
-import {threadPositions,POSITIONS} from "../supabase/functions/_shared/postit-position-v1.mjs";
+import {execFileSync} from "node:child_process";
+import {readFileSync,existsSync} from "node:fs";
+// Keep the original algorithm checks on the immutable deferred source, not on the release candidate.
+const source=execFileSync("git",["show","7c069111b2d2e5c0c3f1cac458f75ca066df1489:supabase/functions/_shared/postit-position-v1.mjs"],{encoding:"utf8"});
+const {threadPositions,POSITIONS}=await import("data:text/javascript;base64,"+Buffer.from(source).toString("base64"));
+const server="supabase/functions/beagu-postit-api-v1/index.ts";
+assert.equal(execFileSync("git",["hash-object",server],{encoding:"utf8"}).trim(),"50c2b6cfce81177c5a6defab20c1189d4d6384ce","legacy server must be byte-for-byte unchanged");
+assert.equal(existsSync("supabase/functions/_shared/postit-position-v1.mjs"),false,"deferred server module must not ship");
+const client=readFileSync("js/postit-v1.js","utf8");
+assert.doesNotMatch(client,/\.nickname\b|\.is_post_author\b/);
+assert.match(client,/라커룸 · 익명/);
+assert.match(client,/"익명 · "\+timeSince\(c\.created_at\)/);
+const page=readFileSync("postit.html","utf8");
+assert.doesNotMatch(page,/게시글마다 배구 포지션닉을 사용합니다/);
+assert.match(page,/postit-v1\.js\?v=1119-legacy/);
+console.log("PASS: release candidate retains legacy anonymous API; deferred alias algorithm tested separately");
 const root="fixture-root",actors=Array.from({length:60},(_,i)=>"fixture-"+i);
 const a=await threadPositions("fixture-key","thread-a",root,actors);
 const b=await threadPositions("fixture-key","thread-a",root,[...actors,"new-author"]);

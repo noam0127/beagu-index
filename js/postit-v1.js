@@ -136,7 +136,7 @@ function buildPost(post){
  entry.dataset.postId=post.id;
  const paper=node("div","postit-paper");
  const top=node("div","paper-overline");
- top.append(node("span","", "라커룸 · "+(post.nickname||"익명")+" · 글쓴이"),node("span","",timeSince(post.created_at)));
+ top.append(node("span","","라커룸 · 익명"),node("span","",timeSince(post.created_at)));
  paper.append(top);
  const topic=node("div","paper-topic");
  if(post.subject_type==="school"&&post.school){
@@ -204,7 +204,7 @@ async function fillComments(id,host){
   host.replaceChildren();
   if(!comments.length)host.append(node("div","bookmark-comment","첫 댓글을 남겨보세요."));
   for(const c of comments){
-   const mark=node("div","bookmark-comment"),meta=node("div","comment-meta",(c.nickname||"익명")+(c.is_post_author?" · 글쓴이":"")+" · "+timeSince(c.created_at));
+   const mark=node("div","bookmark-comment"),meta=node("div","comment-meta","익명 · "+timeSince(c.created_at));
    mark.append(meta,node("p","",c.body));
    const row=node("div","");
    row.append(actionButton((c.liked?"♥":"♡")+" "+c.likes,()=>mutation("set_like",{target_type:"comment",target_id:c.id,liked:!c.liked}),{disabled:!canWrite()}));

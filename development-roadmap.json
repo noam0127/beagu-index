@@ -456,7 +456,7 @@
     {
       "version": "v1.11.3",
       "name": "홈코트",
-      "scope": "공통 메뉴와 게시글 포지션닉",
+      "scope": "공통 메뉴와 라커룸 명칭 개선",
       "branch": "release/v1.11.3-homecourt-independent",
       "last_feature_commit": "542dd16df4127b1456b034ff968592539c4c2da2",
       "status": "CANDIDATE_PARTIAL_VERIFICATION",
@@ -471,7 +471,11 @@
           "result": "PENDING"
         }
       ],
-      "order": 14
+      "order": 14,
+      "deferred_scope": [
+        "게시글별 포지션닉 서버 연동 및 영구 배정"
+      ],
+      "deferred_source_sha": "7c069111b2d2e5c0c3f1cac458f75ca066df1489"
     },
     {
       "version": "v1.11.5",
