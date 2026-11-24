@@ -84,18 +84,18 @@ def recover_fixture(store,ledger,key_file,job,expected_manifest_sha,plan,base,ca
             require(observed==m["source_fingerprint"],"solo_backup_restore_mismatch")
     return {"scope":SCOPE,"manifest_sha256":expected_manifest_sha,"checkpoint_sha256":pin["object_sha256"],"automatic_restore_verified":True,"remote_simulation_readback_verified":True,"separate_pg17_target_verified":True,"independent_observer_verified":False,"actual_drive_transfer_verified":False,"production_backup_proof":False,"execution_enabled":False}
 
-def run_fixture(store,ledger,key_file,job,plan,base,candidate):
-    """Generate only fixed synthetic data. Persist encrypted object and manifest.
-    Failure after attempt marker is fail-closed; no automatic retry or deletion.
+def backup_isolated_source(source,store,ledger,key_file,job,plan,base,candidate):
+    """Capture the SAME isolated fixture that the approved runner will mutate.
+    Never accepts a connection string, arbitrary adapter or existing DB URL.
     """
+    require(type(source) is pg.FixtureCluster and source.container is not None and source.major==17,"solo_isolated_pg17_required")
     store,ledger,key_file=locations(store,ledger,key_file)
     require(v.match(JOB,job),"solo_backup_job_invalid")
     v.check_pins(plan,base,candidate)
     key=read_key(key_file)
     marker(ledger,job,".attempt.json",{"scope":SCOPE,"job":job,"plan_sha256":plan,"base_sha":base,"candidate_sha":candidate,"execution_enabled":False})
-    with pg.FixtureCluster(17) as source, tempfile.TemporaryDirectory(prefix="solo-capture-",dir=ledger) as tmp:
+    with tempfile.TemporaryDirectory(prefix="solo-capture-",dir=ledger) as tmp:
         import io
-        source.sql("fixture_source",SQL)
         manifest,data=pg.capture_checkpoint(source,plan,base,candidate)
         pin=stream.seal(pathlib.Path(tmp),io.BytesIO(data),len(data),key,"solo-fixture-retained-key",plan,base,candidate)
         del data
@@ -108,3 +108,27 @@ def run_fixture(store,ledger,key_file,job,plan,base,candidate):
         proof={**proof,"source_unchanged":True}
         marker(ledger,job,".complete.json",proof)
         return proof
+
+def run_fixture(store,ledger,key_file,job,plan,base,candidate):
+    """Generate only fixed synthetic data; no operational connection."""
+    store,ledger,key_file=locations(store,ledger,key_file)
+    require(v.match(JOB,job),"solo_backup_job_invalid")
+    v.check_pins(plan,base,candidate)
+    read_key(key_file)
+    # Fast duplicate rejection; atomic marker in backup_isolated_source is authoritative.
+    require(not (ledger/(job+".attempt.json")).exists(),"solo_backup_already_attempted")
+    with pg.FixtureCluster(17) as source:
+        source.sql("fixture_source",SQL)
+        return backup_isolated_source(source,store,ledger,key_file,job,plan,base,candidate)
+
+def approved_fixture_backup(source,store,ledger,key_file,job,claim,verified):
+    """Fixed first-step handler for the existing isolated release runner.
+    Caller is the trusted fixture adapter after its durable ledger claim.
+    No production receipt is emitted; a fixture job cannot unlock production.
+    """
+    require(isinstance(claim,dict) and set(claim)=={"idx","lease","task"} and claim["idx"]==0 and v.match(JOB,claim["lease"]) and claim["task"]=={"op":"backup","files":[],"edge_function":None},"solo_backup_claim_invalid")
+    require(isinstance(verified,dict) and verified.get("execution_enabled") is False,"solo_backup_plan_invalid")
+    pins=[verified[k] for k in ("plan_sha256","base_sha","candidate_sha")]
+    proof=backup_isolated_source(source,store,ledger,key_file,job,*pins)
+    require(all(proof.get(k) is True for k in ("automatic_restore_verified","remote_simulation_readback_verified","separate_pg17_target_verified","source_unchanged")) and proof.get("production_backup_proof") is False and proof.get("execution_enabled") is False,"solo_backup_not_verified")
+    return {"scope":"isolated_fixture_only","ok":True,"operation":"backup","plan_sha256":pins[0],"encrypted":True,"restore_verified":True,"checkpoint_sha256":proof["checkpoint_sha256"],"manifest_sha256":proof["manifest_sha256"],"automatic_backup_proof":proof}

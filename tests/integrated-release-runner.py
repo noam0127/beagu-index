@@ -13,6 +13,8 @@ sys.path.insert(0,str(ROOT/"scripts/release-manager"))
 import integrated_runner as r
 import integrated_verify as v
 import integrated_backup as b
+import integrated_solo_backup_candidate as solo
+import integrated_vault as vault
 import integrated_server_control as server
 import integrated_package as package
 import integrated_recovery as recovery
@@ -141,21 +143,64 @@ class Runner(unittest.TestCase):
         self.assertEqual([s["status"] for s in state["steps"]],["done","blocked","pending","pending","pending","pending"])
         with self.assertRaisesRegex(ValueError,"release_blocked"):
             restarted.claim(self.job,self.verified,self.registry,self.base)
+    def solo_adapter(self,cluster,missing_key=False):
+        parent=pathlib.Path(self.tmp.name).resolve()
+        remote,receipts,keys=(parent/n for n in ("solo-remote","solo-receipts","solo-keys"))
+        for p in (remote,receipts,keys):p.mkdir(mode=0o700)
+        key=keys/"recovery.key"
+        if not missing_key:vault.write_exclusive(keys,key.name,os.urandom(32))
+        class SoloAdapter(Adapter):
+            def bind_claim(inner,job,claim):inner.job,inner.claim=job,claim
+            def backup(inner,t,f,p):
+                r.require(not f and inner.claim["task"]==t,"unexpected_backup_inputs")
+                proof=solo.approved_fixture_backup(cluster,remote,receipts,key,inner.job,inner.claim,p)
+                inner.calls.append("backup")
+                inner.backup_proof=proof
+                return proof
+        adapter=SoloAdapter(self.base,cluster,self.objects,self.git)
+        adapter.package_pins=self.package_pins
+        return adapter,remote,receipts,key
     def test_actual_database_and_local_package_sequence(self):
-        with b.FixtureCluster() as cluster:
+        with b.FixtureCluster(17) as cluster:
             cluster.sql("fixture_source","CREATE TABLE public.existing(id integer PRIMARY KEY); INSERT INTO public.existing VALUES (1),(2);")
-            adapter=Adapter(self.base,cluster,self.objects,self.git)
-            adapter.package_pins=self.package_pins
-            # Reopen durable ledger between every step.
+            adapter,remote,receipts,key=self.solo_adapter(cluster)
+            # One existing approval, then actual backup of the same fixture DB.
+            self.assertEqual(self.ledger.create(self.verified,self.registry,self.approval),self.job)
+            original=b.fingerprint(cluster,"fixture_source")
             for task in self.recipe["tasks"]:
                 runner=r.FixtureRunner(r.Ledger(self.store),self.git,self.envelope,self.registry,adapter)
                 self.assertTrue(runner.once(self.job))
+                if task["op"]=="backup":
+                    self.assertEqual(b.fingerprint(cluster,"fixture_source"),original)
+                    self.assertEqual(r.Ledger(self.store).snapshot(self.job)["next_step"],1)
+                    proof=adapter.backup_proof
+                    self.assertFalse(proof["automatic_backup_proof"]["production_backup_proof"])
+                    manifest=vault.parse(vault.read_private(receipts,self.job+".manifest.json"))
+                    self.assertEqual(manifest["source_fingerprint"],original)
+                    self.assertEqual(len(list(remote.iterdir())),1)
+                    self.assertEqual(len(list(receipts.iterdir())),3)
+                    self.assertTrue(key.exists())
             self.assertFalse(runner.once(self.job))
             state=r.Ledger(self.store).snapshot(self.job)
             self.assertEqual(state["status"],"completed")
             self.assertTrue(all(s["status"]=="done" and s["evidence"] for s in state["steps"]))
             self.assertEqual(adapter.calls,[t["op"] for t in self.recipe["tasks"]])
             self.assertFalse(state["execution_enabled"])
+    def test_solo_backup_missing_key_blocks_approved_job(self):
+        with b.FixtureCluster(17) as cluster:
+            cluster.sql("fixture_source","CREATE TABLE public.existing(id integer PRIMARY KEY); INSERT INTO public.existing VALUES (1),(2);")
+            adapter,remote,receipts,_=self.solo_adapter(cluster,missing_key=True)
+            runner=r.FixtureRunner(self.ledger,self.git,self.envelope,self.registry,adapter)
+            with self.assertRaises(FileNotFoundError):runner.once(self.job)
+            state=self.ledger.snapshot(self.job)
+            self.assertEqual(state["status"],"blocked")
+            self.assertEqual(state["next_step"],0)
+            self.assertEqual([s["status"] for s in state["steps"]],["blocked","pending","pending","pending","pending","pending"])
+            self.assertEqual(cluster.sql("fixture_source","SELECT count(*) FROM public.existing;").strip(),b"2")
+            self.assertEqual(cluster.sql("fixture_source","SELECT to_regclass('public.fixture_added');").strip(),b"")
+            self.assertEqual(list(remote.iterdir()),[])
+            self.assertEqual(list(receipts.iterdir()),[])
+            with self.assertRaisesRegex(ValueError,"release_blocked"):runner.once(self.job)
     def test_adapter_failure_blocks_web(self):
         class Fail:
             scope=r.SCOPE
