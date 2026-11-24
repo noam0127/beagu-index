@@ -72,8 +72,9 @@
     if(certificateLevelBanner)certificateLevelBanner.textContent = upgraded ? 'Lv.2 챌린지 달성' : mission.legacy ? '기존 Lv.2 참여 인증' : 'Lv.1 챌린지 달성';
     if(certificate)certificate.dataset.level = premiumVisual ? '2' : '1';
     if(heading)heading.textContent=upgraded?'Lv.2 달성 · 추천 이어가기':'Lv.2로 레벨업하기';
-    copyIdentityCode.hidden = !(upgraded||mission.legacy);
-    copyIdentityCode.disabled = !(upgraded||mission.legacy) || !lastIdentity;
+    const canCopy=upgraded||(mission.legacy&&referralKnown&&count>=1);
+    copyIdentityCode.hidden = !canCopy;
+    copyIdentityCode.disabled = !canCopy || !lastIdentity;
     if(vipMedal)vipMedal.hidden=!upgraded;
     if(certificateMedal)certificateMedal.hidden=!premiumVisual;
     if(certificateThanks){
@@ -195,7 +196,13 @@
     } catch (error) {
       if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
       if(error?.status===401||error?.status===403){reset();window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',{detail:{level:1,validReferrals:0}}));}
-      else if(countHint&&lastSnapshot){referralKnown=false;serverPromotion=false;renderState(false,lastReferrals);countHint.textContent='마지막으로 확인된 실적 · 새로고침 필요';}
+      else if(countHint&&lastSnapshot){
+        const before=certificateLevelBanner?.textContent;
+        referralKnown=false;serverPromotion=false;renderState(false,lastReferrals);
+        countHint.textContent='마지막으로 확인된 실적 · 새로고침 필요';
+        if(before!==certificateLevelBanner?.textContent)
+          window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',{detail:{level:1,validReferrals:0}}));
+      }
       if(retry)retry.hidden=false;
       if(error?.status===403)status.textContent='소유자 확인에 실패했습니다. 처음 코드를 발급받은 브라우저에서 확인하거나 저장 설정을 확인해 주세요.';
       else if(error?.status===401)status.textContent='인증이 만료되었습니다. 다시 인증한 뒤 링크를 확인해 주세요.';
@@ -226,7 +233,14 @@
     active = false; activeToken=''; lastIdentity = null; reset();
   });
   window.addEventListener('beagu:identity-ready', e => {void load(e.detail);});
-  window.addEventListener('beagu:challenge-account-state',()=>{renderState(serverPromotion,lastReferrals);if(!referralKnown){referralCount.textContent='확인 중';renderMeter(0,false);}});
+  window.addEventListener('beagu:challenge-account-state',()=>{
+    if(!active||sessionStorage.getItem(sessionKey)!==activeToken)return;
+    const before=certificateLevelBanner?.textContent;
+    renderState(serverPromotion,lastReferrals);
+    if(!referralKnown){referralCount.textContent='확인 중';renderMeter(0,false);}
+    if(before!==certificateLevelBanner?.textContent)
+      window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',{detail:{level:upgraded?2:1,validReferrals:lastReferrals}}));
+  });
 
   window.addEventListener('focus', () => {
     if (active && lastIdentity) void load(lastIdentity);
