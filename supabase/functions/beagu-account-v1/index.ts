@@ -16,7 +16,7 @@ async function recoveryProof(p:string){
 }
 Deno.serve(async(req:Request)=>{
  const origin=req.headers.get("Origin")||"";
- const headers={"Access-Control-Allow-Origin":allowed.has(origin)?origin:"https://baeguindex.com","Access-Control-Allow-Methods":"POST,OPTIONS","Access-Control-Allow-Headers":"content-type,authorization,apikey,x-beagu-session","Cache-Control":"no-store","Vary":"Origin","Referrer-Policy":"no-referrer","X-Content-Type-Options":"nosniff"};
+ const headers={"Access-Control-Allow-Origin":allowed.has(origin)?origin:"https://baeguindex.com","Access-Control-Allow-Methods":"POST,OPTIONS","Access-Control-Allow-Headers":"content-type,x-beagu-session","Cache-Control":"no-store","Vary":"Origin","Referrer-Policy":"no-referrer","X-Content-Type-Options":"nosniff"};
  const send=(status:number,body:unknown)=>new Response(JSON.stringify(body),{status,headers:{...headers,"Content-Type":"application/json"}});
  if(!allowed.has(origin))return send(403,{error:"ORIGIN_DENIED"});
  if(req.method==="OPTIONS")return new Response(null,{status:204,headers});
