@@ -260,7 +260,7 @@ runInNewContext(challengeGate,{
 });
 assert.equal(gateElements.challengeProtected.hidden,true,'Anonymous certificate remains hidden');
 assert.equal(gateElements.challengeAccessForm.hidden,false,'Anonymous users see login form');
-assert.equal(gateElements.challengeAccessBadge.textContent,'미인증','Same badge as search and comparison');
+assert.equal(gateElements.challengeAccessBadge.textContent,'Lv.0 · 미인증','Explicit Lv.0 challenge fallback badge');
 assert.equal(gateElements.challengeAccessCode.type,'password');
 gateElements.challengeAccessCode.value='samplecode';
 gateElements.challengeAccessToggle.listeners.click();
@@ -285,7 +285,7 @@ assert.equal(storedGateToken,'f'.repeat(64),'Share verified session with search'
 assert.ok(gateEvents.includes('beagu:challenge-access-granted'),'Only verified access signals certificate generator');
 assert.equal(gateFetchCalls.filter(x=>x.action==='login').length,2);
 await gateElements.challengeLogout.listeners.click();
-assert.equal(gateElements.challengeAccessBadge.textContent,'미인증','Logout resets common badge');
+assert.equal(gateElements.challengeAccessBadge.textContent,'Lv.0 · 미인증','Logout resets common badge');
 assert.equal(gateElements.challengeAccessForm.hidden,false,'Logout restores input form');
 assert.equal(gateElements.challengeProtected.hidden,true,'Logout hides participation certificate');
 assert.equal(storedGateToken,'','Logout forgets the Lv1 session');
