@@ -84,5 +84,57 @@
     "durable backup/restore and receipt storage unverified",
     "provider permissions and independent observer proof unverified",
     "main divergence and workflow preservation review required"
-  ]
+  ],
+  "read_only_preflight": {
+    "checked_on": "2026-11-24",
+    "production_state": {
+      "version": "v1.10.0",
+      "sha": "5f19ddf28a2f24a98fb03900739147a04a547cbe",
+      "draft_sha": "5f19ddf28a2f24a98fb03900739147a04a547cbe",
+      "active_jobs": 0
+    },
+    "edge": {
+      "slug": "beagu-release-manager-v1",
+      "version": 6,
+      "baseline_source_match": true,
+      "main_source_match": false,
+      "candidate_blob": "6590732255e70dfd1f29177f9fd1890eb3cf8642"
+    },
+    "publisher": {
+      "main_blob": "1866108d1aba88da769c925fe632a08e24edeb1d",
+      "candidate_blob": "de7df010a6512594400f49a4dd28090ee6ed041d",
+      "noncomment_lines_match": true,
+      "main_merge_forbidden": true
+    },
+    "release_tables": {
+      "rls": true,
+      "anon_select": false,
+      "authenticated_select": false,
+      "service_role_select": true,
+      "count": 3
+    },
+    "enabled_owner_count": 1,
+    "active_cron_count": 12,
+    "storage_bucket_count": 0,
+    "schema_tables": {
+      "net": 2,
+      "auth": 27,
+      "cron": 2,
+      "vault": 1,
+      "public": 50,
+      "storage": 10,
+      "realtime": 3,
+      "beagu_master": 3,
+      "beagu_private": 54,
+      "supabase_migrations": 1
+    },
+    "fixture_installed": false,
+    "public_web_sha": "unverified_dns_or_fetch_failure",
+    "backup_restore": "not_performed",
+    "provider_write_permission": "not_verified",
+    "production_execution": "not_implemented",
+    "vercel_used": false,
+    "production_changed": false
+  },
+  "next_action": "Reuse the verified runner modules in an explicitly reviewed production control migration and single publisher adapter. Do not enable fixture SQL or transport gates. Prove actual backup/restore capability, write permission and independent observer before any installation authorization. This is an implementation blocker, not merely an approval step."
 }
