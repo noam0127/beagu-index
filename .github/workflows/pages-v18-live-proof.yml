@@ -1,0 +1,20 @@
+name: v1.8.0 live proof (read only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pages-v18-live-proof.yml'
+permissions:
+  contents: read
+jobs:
+  live-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Verify actual site and denied unauthenticated referral request
+        run: |
+          set -euo pipefail
+          curl -fsS --max-time 20 -H 'Cache-Control: no-cache' "https://baeguindex.com/release-info.json?proof=${GITHUB_RUN_ID}" > /tmp/meta.json
+          node -e 'const m=require("/tmp/meta.json"); if(m.version!=="v1.8.0"||m.commit!=="4fd176c384f45848b9f83f46f0ea459726346897"||m.environment!=="production")throw Error("live version or SHA mismatch"); console.log("PASS live v1.8.0 exact SHA")'
+          status=$(curl -sS --max-time 20 -o /tmp/ref.json -w '%{http_code}' -X POST -H 'Origin: https://baeguindex.com' -H 'Content-Type: application/json' --data '{"action":"issue"}' https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-referral-link-v1)
+          test "$status" = 401
+          node -e 'const m=require("/tmp/ref.json");if(m.error!=="AUTH_REQUIRED")throw Error("unexpected denial");console.log("PASS live referral rejects unauthenticated request")'
