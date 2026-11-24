@@ -158,7 +158,7 @@ function buildPost(post){
  const blocked=!canWrite();
  const like=actionButton((post.liked?"♥":"♡")+" "+post.likes,async()=>{
   await mutation("set_like",{target_type:"post",target_id:post.id,liked:!post.liked});
- },{className:post.liked?"active":"",disabled:blocked,title:blocked?"Lv.2부터 공감할 수 있습니다":"공감"});
+ },{className:post.liked?"active":"",disabled:blocked,title:blocked?"Lv.2부터 공감할 수 있습니다":"나이스! (공감)"});
  const canReadComments=canRead();
  const comment=actionButton(canReadComments?"▤ 댓글 "+post.comments:"🔒 Lv.2 댓글",async()=>{
   if(!canRead())return;

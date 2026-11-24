@@ -304,7 +304,7 @@ Deno.serve(async(req:Request)=>{
     if(visible.length){
      const last=visible[visible.length-1].id;
      let found=false;
-     for(let offset=0;!found;offset+=500){
+     for(let offset=0;!found&&offset<5000;offset+=500){
       const {data:rows,error:aliasError}=await db.from("beagu_postit_comments")
        .select("id,author_uid").eq("post_id",id).order("created_at",{ascending:true}).order("id",{ascending:true}).range(offset,offset+499);
       if(aliasError)throw aliasError;

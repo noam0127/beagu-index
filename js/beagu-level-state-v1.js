@@ -110,3 +110,6 @@
   // data.provisional is retained for legacy access restrictions.
   void refresh();
 })();
+
+/* Homecourt vocabulary: presentation only, original routes and auth unchanged. */
+(()=>{const rename=()=>{document.querySelectorAll('.beagu-unified-nav a').forEach(a=>{const route=(a.getAttribute('href')||'').split('?')[0];if(route==='index.html'&&a.textContent.trim()==='홈')a.textContent='홈코트';if(route==='postit.html'&&a.textContent.trim()==='포스트잇')a.textContent='라커룸';});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',rename,{once:true});else rename();})();
