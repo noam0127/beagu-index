@@ -1,4 +1,4 @@
-/* Rotating school showcase from the previously published 2025 percentiles.
+/* Per-load random school showcase from the previously published 2025 percentiles.
  * No private responses or unreleased 2026 metrics are requested. */
 (() => {
   'use strict';
@@ -8,10 +8,24 @@
   const low=root.querySelector('[data-today-low]');
   const status=root.querySelector('[data-today-status]');
   if(!high||!low||!status)return;
-  const HOUR=3600000,PERIOD=24*HOUR,SEOUL_OFFSET=9*HOUR;
-  let upper=[],lower=[],timer=null;
-  const slotAt=now=>Math.floor((now+SEOUL_OFFSET)/PERIOD);
-  const nextBoundary=now=>(slotAt(now)+1)*PERIOD-SEOUL_OFFSET;
+  const STORAGE_KEY='beagu-home-school-pair-v2';
+  let selectedHigh=null,selectedLow=null;
+  function previousPair(){
+    try{const value=JSON.parse(window.sessionStorage.getItem(STORAGE_KEY)||'null');return value&&typeof value==='object'?value:{};}catch(_){return {};}
+  }
+  function choose(pool,previousId){
+    // Exclude the last school when an alternative exists. One-school pools
+    // necessarily repeat. No account information or private data is stored.
+    const alternatives=pool.filter(school=>school.id!==previousId);
+    const candidates=alternatives.length?alternatives:pool;
+    return candidates.length?candidates[Math.floor(Math.random()*candidates.length)]:null;
+  }
+  function selectPair(upper,lower){
+    const previous=previousPair();
+    selectedHigh=choose(upper,previous.high);
+    selectedLow=choose(lower,previous.low);
+    try{window.sessionStorage.setItem(STORAGE_KEY,JSON.stringify({high:selectedHigh?.id,low:selectedLow?.id}));}catch(_){}
+  }
   const tier=()=>{
     const level=document.getElementById('beaguLevelState')?.dataset.level;
     return level==='1'||level==='2'?Number(level):0;
@@ -24,10 +38,9 @@
     if(text!==undefined)node.textContent=String(text);
     return node;
   };
-  function paint(host,pool,slot,label,step){
+  function paint(host,school,label){
     host.replaceChildren();
-    if(!pool.length){host.append(el('p','',label+' 공개 학교 자료 없음'));return;}
-    const school=pool[(slot*step%pool.length+pool.length)%pool.length];
+    if(!school){host.append(el('p','',label+' 공개 학교 자료 없음'));return;}
     const anchor=el('a','beagu-home-school-name',school.name);
     anchor.href=linkFor(school.id);
     anchor.setAttribute('aria-label',school.name+' 학교 상세페이지 보기');
@@ -51,16 +64,10 @@
     host.append(header,identity,footer);
   }
   function render(){
-    if(!upper.length||!lower.length)return;
-    const slot=slotAt(Date.now());
-    paint(high,upper,slot,'상위 10%',1);
-    paint(low,lower,slot,'하위 10%',1);
+    if(!selectedHigh||!selectedLow)return;
+    paint(high,selectedHigh,'상위 10%');
+    paint(low,selectedLow,'하위 10%');
     status.hidden=true;
-  }
-  function schedule(){
-    if(timer!==null)clearTimeout(timer);
-    const now=Date.now();
-    timer=setTimeout(()=>{render();schedule()},Math.max(1000,nextBoundary(now)-now+50));
   }
   async function init(){
     try{
@@ -83,12 +90,14 @@
            percentile<0||percentile>100)return [];
         return [{id,name:school.name,region:school.region,office:school.office,percentile}];
       }).sort((a,b)=>a.id.localeCompare(b.id));
-      upper=all.filter(row=>row.percentile>=90);
-      lower=all.filter(row=>row.percentile<=10);
+      const unique=Array.from(new Map(all.map(school=>[school.id,school])).values());
+      const upper=unique.filter(row=>row.percentile>=90);
+      const lower=unique.filter(row=>row.percentile<=10);
       if(!upper.length||!lower.length)throw Error('NO_PUBLIC_CANDIDATES');
-      render();schedule();
-      window.addEventListener('pageshow',()=>{render();schedule()});
-      document.addEventListener('visibilitychange',()=>{if(!document.hidden){render();schedule()}});
+      selectPair(upper,lower);
+      render();
+      // Repaint links on permission changes without selecting a different pair.
+      window.addEventListener('pageshow',render);
       window.addEventListener('beagu:level-state-updated',render);
     }catch(_){
       high.replaceChildren();low.replaceChildren();

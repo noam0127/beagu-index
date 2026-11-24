@@ -1,6 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),{chromium}=require('playwright');
 const origin='http://light-touch.invalid',mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json'};
-let sameDaySchoolIds=null;
 const fixture=Array.from({length:7},(_,i)=>({school_id:String(7003915+i),school_name:'검증초등학교 '+i,sido_standard:'부산',region:'부산',support_office:'동래교육지원청',address:'부산',visitors:12+i,growth:i,housing_price_won:123000000,student_count:200}));
 (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});
 try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
@@ -45,7 +44,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  const cardLayout=await page.locator('#beaguTodaySchools .beagu-home-school').evaluateAll(cards=>cards.map(card=>{const rect=s=>card.querySelector(s).getBoundingClientRect();const c=card.getBoundingClientRect(),y=rect('.beagu-home-school-year'),d=rect('.court-school-detail'),e=rect('.court-school-experience');return {year:card.querySelector('.beagu-home-school-year').textContent,inside:d.left>=c.left&&e.right<=c.right&&e.bottom<=c.bottom,right:d.left>=y.right&&e.left>=d.right,aligned:Math.abs(d.top-e.top)<1,sameRow:y.top<d.bottom&&y.bottom>d.top}}));
  assert.ok(cardLayout.every(x=>x.year==='2025년 기준'&&x.inside&&x.right&&x.aligned&&x.sameRow),JSON.stringify(cardLayout));
  assert.equal(await page.getByText('학교별 근무난이도 게임으로 확인하기',{exact:true}).count(),0);
- if(sameDaySchoolIds)assert.deepEqual(today,sameDaySchoolIds);else sameDaySchoolIds=today;
+ assert.equal(await page.locator('#beaguTodaySchools .beagu-home-showcase-head span').innerText(),'새로고침마다 변경');
  assert.equal(await page.locator('.beagu-core-nav a:visible').count(),5);
  assert.equal(await page.locator('.light-touch-visit.card').count(),1);
  const layout=await page.evaluate(()=>{const box=s=>document.querySelector(s).getBoundingClientRect();return {actions:box('.beagu-home-actions').bottom,schools:box('#beaguTodaySchools').top,visits:box('.light-touch-visit').bottom,notice:box('.beagu-home-notice').top,columns:getComputedStyle(document.querySelector('.light-touch-visit>div')).gridTemplateColumns.split(' ').length,scroll:document.documentElement.scrollWidth,width:innerWidth};});
@@ -53,10 +52,14 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  assert.equal(await page.locator('#courtNoticeToggle').getAttribute('aria-expanded'),'false');
  await page.locator('#courtNoticeToggle').click();assert.equal(await page.locator('#courtNoticeToggle').getAttribute('aria-expanded'),'true');
  await page.locator('#courtNoticeToggle').click();assert.equal(await page.locator('#courtNoticeToggle').getAttribute('aria-expanded'),'false');
- await page.reload();await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);assert.deepEqual(await ids(),today);
+ await page.reload();await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);
+ const refreshed=await ids();assert.ok(refreshed.every((id,i)=>id!==today[i]),JSON.stringify({today,refreshed}));
  await page.clock.setFixedTime(new Date('2026-11-25T15:00:01Z'));
- await page.evaluate(()=>window.dispatchEvent(new Event('pageshow')));
- const tomorrow=await ids();assert.ok(tomorrow.every((id,i)=>id!==today[i]),JSON.stringify({today,tomorrow}));
+ await page.evaluate(()=>{window.dispatchEvent(new Event('pageshow'));window.dispatchEvent(new Event('beagu:level-state-updated'));});
+ assert.deepEqual(await ids(),refreshed,'midnight and auth repaint do not resample');
+ const again=await ids();
+ await page.reload();await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);
+ const tomorrow=await ids();assert.ok(tomorrow.every((id,i)=>id!==again[i]),JSON.stringify({again,tomorrow}));
  assert.deepEqual((await experienceLinks()).map(n=>n.id),tomorrow);assert.deepEqual((await detailLinks()).map(n=>n.id),tomorrow);
  // Use the real game page and its existing school picker + Start button; all API calls are intercepted.
  const cardIndex=tier===1?1:0;

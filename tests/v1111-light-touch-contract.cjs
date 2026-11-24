@@ -50,7 +50,7 @@ assert.match(report,/teacher-volleyball\.html\?school_id=/);
 assert.match(picker,/String\(school\.school_id\)!==String\(record\.school_id\)/);
 assert.match(picker,/this\.serial===0&&!this\.locked/);
 assert.match(hub,/searchParams\.set\("school_id",id\)/);
-assert.match(read('js/beagu-home-schools-v1.js'),/PERIOD=24\*HOUR/);
+assert.match(read('js/beagu-home-schools-v1.js'),/school\.id!==previousId/);assert.match(read('js/beagu-home-schools-v1.js'),/Math\.random\(\)/);assert.doesNotMatch(read('js/beagu-home-schools-v1.js'),/nextBoundary|setTimeout|PERIOD=24/);assert.match(home,/새로고침마다 변경/);
 assert.match(read('styles/beagu-light-touch-v1111.css'),/repeat\(5,minmax\(0,1fr\)\)/);
 for(const p of ['js/beagu-court-tidy-v1110.js','js/arcade-school-picker-v1.js'])cp.execFileSync(process.execPath,['--check',p]);
 console.log('PASS v1.11.10 court tidy static contracts');
