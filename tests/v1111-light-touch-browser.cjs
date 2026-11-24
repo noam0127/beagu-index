@@ -11,6 +11,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(u.hostname.endsWith('.supabase.co')){if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
  const a=route.request().postDataJSON()?.action,token=route.request().headers()['x-beagu-session'];let data={};
  if(u.pathname.endsWith('/beagu-level-api')){
+ if(a==='login')return route.fulfill({status:200,headers:cors,body:JSON.stringify({level:tier,token:'b'.repeat(64)})});
  if(a==='verify')data={level:tier,provisional:false};
  else if(a==='ranked_schools'){const b=route.request().postDataJSON();sorted ||= b.sort==='housing_price_won';data={schools:fixture.map(({housing_price_won,...v})=>tier===2?{...v,housing_price_won}:v),total:fixture.length};}
  else if(a==='school'){detailRequested=true;data={level:tier,rows:[],schoolQuestionModes:[],schoolQuestionSelections:[],schoolQuestionResults2026:[]};}
@@ -39,7 +40,8 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(tier===2){await page.locator('#regionSort').selectOption('housing_price_won');await page.waitForTimeout(600);assert.equal(sorted,true);assert.equal(await page.locator('#results [data-sort-key="housing_price_won"]').count(),0);}
  }
  const dims=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));assert.ok(dims.scroll<=dims.width+1,JSON.stringify(dims));
- if(tier){await page.locator('#beaguLevelState').click();await page.locator('#beaguParticipationLogout').click();await page.locator('#searchPanel').waitFor({state:'hidden'});assert.equal(await page.locator('#searchPanel').isVisible(),false);assert.equal(await page.locator('#results .school-card').count(),0);await page.waitForFunction(()=>document.querySelectorAll('.beagu-interest-number').length===0);}
+ if(tier){await page.locator('#beaguLevelState').click();await page.locator('#beaguParticipationLogout').click();await page.locator('#searchPanel').waitFor({state:'hidden'});assert.equal(await page.locator('#searchPanel').isVisible(),false);assert.equal(await page.locator('#results .school-card').count(),0);await page.waitForFunction(()=>document.querySelectorAll('.beagu-interest-number').length===0);
+ await page.locator('#beaguLevelState').click();await page.locator('#beaguParticipationCode').fill('FIXTURE01');await page.locator('#beaguParticipationSubmit').click();await page.locator('#searchPanel').waitFor({state:'visible'});await page.locator('#schoolTab').click();await page.locator('#searchInput').fill('검증초');await page.locator('#results .school-card').first().waitFor();assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-level-session-v1')),'b'.repeat(64));}
  console.log('PASS fixture search width='+width+' tier='+tier);
  }finally{await context.close()}
  }}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

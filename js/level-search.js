@@ -250,7 +250,7 @@
     const verified=event.detail?.level;
     const saved=sessionStorage.getItem(key)||'';
     if(session && verified===0 && !saved){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
-    if(session && saved===session && (verified===1||verified===2) && verified!==viewerTier){
+    if(session && saved===session && !$('searchPanel').hidden && (verified===1||verified===2) && verified!==viewerTier){
       ++authGeneration;invalidateSearch();viewerTier=verified;showUpgrade();
       if(!$('searchPanel').hidden)void search(true);
     }
