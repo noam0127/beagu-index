@@ -18,7 +18,7 @@ CREATE OR REPLACE FUNCTION public.beagu_2026_civic_hold_school(
 DECLARE f beagu_private.beagu_2026_civic_feedback; s public.beagu_2026_results_snapshot;
 BEGIN
  IF p_actor IS NULL OR p_session IS NULL OR p_feedback IS NULL OR p_expected_sha IS NULL
- OR p_expected_sha !~ '^[a-f0-9]{64}$' OR length(trim(coalesce(p_reason,''))) NOT BETWEEN 12 AND 500
+ OR p_expected_sha !~ '^[a-f0-9]{64}$' OR (length(trim(coalesce(p_reason,''))) NOT BETWEEN 12 AND 500 OR coalesce(p_reason,'') ~ '[<>[:cntrl:]]')
  THEN RAISE EXCEPTION 'invalid hold request'; END IF;
  IF NOT EXISTS(SELECT 1 FROM public.beagu_admin_accounts WHERE user_id=p_actor AND role='owner' AND enabled)
  OR public.beagu_admin_active_mfa_session(p_actor,p_session) IS DISTINCT FROM true
@@ -64,6 +64,7 @@ CREATE OR REPLACE FUNCTION public.beagu_2026_level_school_published(
      AND r.approved_payload_sha256=r.payload_sha256
      AND r.approved_at IS NOT NULL
      AND r.approved_at<=l.approved_at
+     AND NOT EXISTS (SELECT 1 FROM beagu_private.beagu_2026_civic_publication_hold h WHERE h.school_id=r.school_id AND h.updated_at>l.approved_at)
      AND r.approved_at>=r.updated_at
      AND r.approved_at>=r.source_snapshot_at
      AND (p_level=2 OR r.approved_at<=now()-interval '24 hours')
@@ -109,7 +110,7 @@ GRANT EXECUTE ON FUNCTION public.beagu_2026_level_released_school_ids(text[],int
 CREATE OR REPLACE FUNCTION public.beagu_2026_level_release_status()
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  WITH eligible AS (
-  SELECT r.school_id,r.approved_at
+  SELECT r.school_id,r.approved_at,coalesce((SELECT h.updated_at FROM beagu_private.beagu_2026_civic_publication_hold h WHERE h.school_id=r.school_id),r.approved_at) as hold_decision_at
   FROM public.beagu_2026_results_snapshot r
   JOIN beagu_private.beagu_2026_publication_basis_review b
     ON b.school_id=r.school_id AND b.payload_sha256=r.payload_sha256
@@ -141,9 +142,9 @@ RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
    'approved_at',l.approved_at,
    'eligible_schools',(SELECT count(*) FROM eligible),
    'covered_schools',(SELECT count(*) FROM eligible e
-       WHERE l.approved AND e.approved_at<=l.approved_at),
+       WHERE l.approved AND e.approved_at<=l.approved_at AND e.hold_decision_at<=l.approved_at),
    'released_schools',(SELECT count(*) FROM eligible e
-       WHERE l.approved AND e.approved_at<=l.approved_at
+       WHERE l.approved AND e.approved_at<=l.approved_at AND e.hold_decision_at<=l.approved_at
         AND (v.level=2 OR e.approved_at<=now()-interval '24 hours'))
  ) ORDER BY v.level),'[]'::jsonb)
  FROM (VALUES (0),(1),(2)) v(level)
@@ -221,7 +222,7 @@ CREATE OR REPLACE FUNCTION public.beagu_2026_civic_resume_school(
 DECLARE h beagu_private.beagu_2026_civic_publication_hold; r public.beagu_2026_results_snapshot;
 BEGIN
  IF p_actor IS NULL OR p_session IS NULL OR p_feedback IS NULL OR p_expected_sha IS NULL
- OR p_expected_sha !~ '^[a-f0-9]{64}$' OR length(trim(coalesce(p_reason,''))) NOT BETWEEN 12 AND 500
+ OR p_expected_sha !~ '^[a-f0-9]{64}$' OR (length(trim(coalesce(p_reason,''))) NOT BETWEEN 12 AND 500 OR coalesce(p_reason,'') ~ '[<>[:cntrl:]]')
  THEN RAISE EXCEPTION 'invalid resume request'; END IF;
  IF NOT EXISTS(SELECT 1 FROM public.beagu_admin_accounts WHERE user_id=p_actor AND role='owner' AND enabled)
  OR public.beagu_admin_active_mfa_session(p_actor,p_session) IS DISTINCT FROM true
