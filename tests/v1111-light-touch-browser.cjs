@@ -4,7 +4,7 @@ let sameDaySchoolIds=null;
 const fixture=Array.from({length:7},(_,i)=>({school_id:String(7003915+i),school_name:'검증초등학교 '+i,sido_standard:'부산',region:'부산',support_office:'동래교육지원청',address:'부산',visitors:12+i,growth:i,housing_price_won:123000000,student_count:200}));
 (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});
 try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
- const context=await browser.newContext({viewport:{width,height:900}});
+ const context=await browser.newContext({viewport:{width,height:900},...(tier===0?{hasTouch:true,isMobile:true}:{})});
  try{await context.addInitScript(({origin,tier})=>{if(location.origin===origin&&tier)sessionStorage.setItem('beagu-level-session-v1','a'.repeat(64))},{origin,tier});
  let sorted=false, detailRequested=false,comparisonRequested=false;let selectedSchool=null,startedSchool=null;
  await context.route('**/*',async route=>{const u=new URL(route.request().url());const cors={'access-control-allow-origin':origin,'access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS','content-type':'application/json'};
@@ -70,6 +70,16 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.locator('#volley-school-choose').click();
  await page.waitForFunction(()=>document.querySelector('#start')?.textContent.includes('여기까지 기록'));
  assert.equal(startedSchool,selectedSchool.school_id);
+ if(tier===0){
+  await page.locator('#volley-attack').waitFor({state:'visible'});
+  assert.equal(await page.locator('#volley-joystick,#volley-spike,#volley-dash').count(),0);
+  const boxes=await page.evaluate(()=>{const r=s=>document.querySelector(s).getBoundingClientRect();return {courtBottom:r('#game').bottom,attackTop:r('#volley-attack').top,pauseTop:r('#pause').top}});
+  assert.ok(boxes.attackTop>=boxes.courtBottom-1&&boxes.pauseTop>=boxes.courtBottom-1,JSON.stringify(boxes));
+  await page.evaluate(()=>document.querySelector('#volley-attack').dispatchEvent(new PointerEvent('pointerdown',{pointerId:32,pointerType:'touch',bubbles:true,cancelable:true})));
+  assert.equal(await page.locator('#volley-attack').getAttribute('aria-pressed'),'true');
+  await page.evaluate(()=>document.querySelector('#volley-attack').dispatchEvent(new PointerEvent('pointercancel',{pointerId:32,pointerType:'touch',bubbles:true})));
+  assert.equal(await page.locator('#volley-attack').getAttribute('aria-pressed'),'false');
+ }
  await page.goto(origin+'/teacher-volleyball.html?school_id='+tomorrow[1-cardIndex]);
  await page.waitForFunction(()=>document.querySelector('#volley-ready-title')?.textContent==='조사 참여 필요');
  assert.equal(await page.locator('#start').isDisabled(),true);

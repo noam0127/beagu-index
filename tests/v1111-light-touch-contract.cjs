@@ -23,7 +23,7 @@ const strip=s=>s.replace(/<nav\b[^>]*class="[^"]*beagu-unified-nav[^"]*"[^>]*>[\
 const gitRead=(ref,p)=>cp.execFileSync('git',['show',ref+':'+p],{encoding:'utf8',maxBuffer:20*1024*1024});
 const homecourt='497682f2abd359802944f00f187b3f2e81bd4e2d';
 for(const p of ['teacher-volleyball.html','teacher-run.html']){
- const baseline=gitRead(homecourt,p),current=read(p);
+ const baseline=gitRead(homecourt,p),current=p==='teacher-volleyball.html'?gitRead('4dbc473bb49cec3d510ea2fbc58ee24f344b6e1f',p):read(p);
  // Reverse only the explicitly approved UI changes; preserve all other game logic.
  let normalized=current.replace(/arcade-school-picker-v1\.js\?v=1110-court/,'arcade-school-picker-v1.js?v=20261120-fast1').replace(/arcade-leaderboard-v1\.js\?v=1119/,'arcade-leaderboard-v1.js?v=20261123-school-links-live2')
  .replace(/arcade-mystery-items-v1\.js\?v=1116/,p.includes('volleyball')?'arcade-mystery-items-v1.js?v=20261123-items':'arcade-mystery-items-v1.js?v=20261123-arcade-items3');
@@ -61,3 +61,9 @@ assert.match(l,/card\.append\(experience\)/);
 const showcase=read('js/beagu-home-schools-v1.js');assert.match(showcase,/detail\.href=linkFor\(school\.id\)/);assert.match(showcase,/actions\.append\(detail,experience\)/);assert.match(showcase,/footer\.append\(el\('span','beagu-home-school-year','2025년 기준'\),actions\)/);
 
 const fullset=read('styles/beagu-fullset-school-v11111.css');for(const width of [600,1024,1440])assert.ok(fullset.includes('min-width:'+width+'px'));for(const p of ['search.html','search-lv1.html','school-report.html'])assert.match(read(p),/beagu-fullset-school-v11111\.css/);
+
+// Full Set intentionally changes only the volleyball touch/control path; preserve the
+// published baseline's server-start, contact, ranking and school selection logic.
+const fullVolley=read('teacher-volleyball.html'),publishedVolley=gitRead('4dbc473bb49cec3d510ea2fbc58ee24f344b6e1f','teacher-volleyball.html');
+for(const [start,end] of [['  async function startMatch() {',"  function stopForSchoolChange(keepSchool=false){"],['  function controlPlayer(','  function moveClones(']]){const a=publishedVolley.indexOf(start),b=publishedVolley.indexOf(end,a+start.length),c=fullVolley.indexOf(start),d=fullVolley.indexOf(end,c+start.length);assert.ok(a>=0&&b>a&&c>=0&&d>c);assert.equal(fullVolley.slice(c,d),publishedVolley.slice(a,b));}
+assert.match(fullVolley,/volley-touch-v1\.js\?v=11111/);assert.doesNotMatch(fullVolley,/volley-joystick|조이스틱/);

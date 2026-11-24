@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),{chromium}=require('playwright');
 (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});try{const css=await fs.readFile('styles/arcade-playback-v1.css','utf8'),gest=await fs.readFile('js/arcade-gestures-v1.js','utf8'),rail=await fs.readFile('js/arcade-scroll-rail-v1.js','utf8');
 const source=await fs.readFile('teacher-volleyball.html','utf8');
-const cssStart=source.indexOf('/* Brawl-style multitouch controls:'),cssEnd=source.indexOf('</style>',cssStart);
+const cssStart=source.indexOf('/* Full Set touch controls:'),cssEnd=source.indexOf('</style>',cssStart);
 const markupStart=source.indexOf('<div class="volleyball-touch-controls"'),markupEnd=source.indexOf('<div class="volley-ready-overlay"',markupStart);
 assert(cssStart>=0&&cssEnd>cssStart&&markupStart>=0&&markupEnd>markupStart);
 const controlsCss=source.slice(cssStart,cssEnd),controls=source.slice(markupStart,markupEnd);
@@ -17,13 +17,13 @@ for(const width of [320,390,768,1440])for(const mode of ['normal','arcade-fullsc
  if(width<=768){
   const touch=await browser.newPage({viewport:{width,height:700},hasTouch:true,isMobile:true});
   try{
-   await touch.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}.arcade-game-viewport{position:relative;height:300px;width:100%}canvas{width:100%;height:100%}</style><div class="court arcade-game-viewport volleyball-playing '+mode+'"><canvas></canvas><button id="pause" class="arcade-playback">⏸ 일시정지</button>'+controls+'</div>');
-   await touch.addStyleTag({content:controlsCss+'\n'+css});
-   for(const id of ['volley-joystick','volley-spike','volley-dash']){
-    const c=await touch.locator('#'+id).boundingBox(),p=await touch.locator('#pause').boundingBox();
-    assert(c&&p&&c.width>=44&&c.height>=44);assert(c.y+c.height<=p.y+1,'control overlaps pause');
-   }
-   console.log('PASS joystick layout viewport='+width+' mode='+mode);
+   await touch.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}.arcade-game-viewport{position:relative;height:300px;width:100%}canvas{width:100%;height:100%}</style><div class="court arcade-game-viewport volleyball-playing volleyball-controls-active '+mode+'"><canvas style="height:220px"></canvas><button id="pause" class="arcade-playback">⏸ 일시정지</button>'+controls+'</div>');
+   await touch.addStyleTag({content:css+'\n'+controlsCss});
+   assert.equal(await touch.locator('#volley-joystick,#volley-spike,#volley-dash').count(),0);
+   const c=await touch.locator('#volley-attack').boundingBox(),p=await touch.locator('#pause').boundingBox(),canvas=await touch.locator('canvas').boundingBox();
+   assert(c&&p&&canvas&&c.width>=44&&c.height>=44);assert(c.x>=p.x+p.width-1,'attack overlaps pause');
+   assert(c.y>=canvas.y+canvas.height-1&&p.y>=canvas.y+canvas.height-1,'controls overlap canvas');
+   console.log('PASS direct touch controls layout viewport='+width+' mode='+mode);
   }finally{await touch.close()}
  }
  }finally{await page.close()}
