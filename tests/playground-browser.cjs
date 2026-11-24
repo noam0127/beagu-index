@@ -22,12 +22,16 @@ const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8',
        if(action==='verify'&&tier&&route.request().headers()['x-beagu-session']==='a'.repeat(64))return route.fulfill({status:200,headers,body:JSON.stringify({level:tier,provisional:false})});
        return route.fulfill({status:401,headers,body:'{}'});
       }
+      if(url.pathname.endsWith('/functions/v1/arcade-leaderboard')&&url.hostname.endsWith('.supabase.co')){
+       const headers={'access-control-allow-origin':origin,'content-type':'application/json'};
+       return route.fulfill({status:200,headers,body:JSON.stringify({school:{school_id:'7003915',school_name:'검증초등학교',region:'부산',eligible:true,difficulty:'normal'}})});
+      }
       if(url.origin!==origin)return route.abort();
       const relative=decodeURIComponent(url.pathname).replace(/^\/+/, '');
       if(!relative||relative.includes('..'))return route.abort();
       // Actual hub and all its local dependencies; target navigation is intercepted
       // as a harmless landing marker to avoid executing existing games or services.
-      if(relative.endsWith('.html')&&relative!=='games.html')return route.fulfill({contentType:mime['.html'],body:'<!doctype html><title>Navigation fixture</title><p>Target reached</p>'});
+      if(relative.endsWith('.html')&&relative!=='games.html')return route.fulfill({contentType:mime['.html'],body:'<!doctype html><title>Navigation fixture</title><p>Target reached</p><div id="picker"></div><script src="js/arcade-school-picker-v1.js"></script><script>window.picker=new ArcadeSchoolPicker("#picker");window.selected=null;picker.onChange=s=>window.selected=s;</script>'});
       try{return route.fulfill({status:200,contentType:mime[path.extname(relative)]||'application/octet-stream',body:await fs.readFile(path.join(process.cwd(),relative))})}catch{return route.fulfill({status:404,body:''})}
      });
      const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -35,7 +39,7 @@ const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8',
      await page.waitForFunction(level=>document.querySelector('#beaguLevelState')?.dataset.level===String(level),tier);
      assert.equal(await page.locator('article[data-game]').count(),4);
      assert.equal(await page.locator('article[data-status="coming-soon"] a,article[data-status="coming-soon"] button').count(),0);
-     assert.equal(await page.locator('.beagu-core-nav a:visible').count(),6);
+     assert.equal(await page.locator('.beagu-core-nav a:visible').count(),5);
      const dims=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,columns:getComputedStyle(document.querySelector('.playground-grid')).gridTemplateColumns.split(' ').length}));
      assert.ok(dims.scroll<=dims.width+1,'horizontal overflow '+JSON.stringify(dims));assert.equal(dims.columns,width<=600?1:2);
      await page.locator('#beaguLevelState').click();
@@ -50,6 +54,18 @@ const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8',
       await page.locator('[data-game="'+game+'"] .playground-secondary').click();assert.equal(new URL(page.url()).searchParams.get('game'),history);
       await page.goto(origin+'/games.html');
      }
+     await page.goto(origin+'/games.html?school_id=7003915');
+     await page.waitForFunction(()=>document.querySelector('#courtExperienceSchool').textContent==='선택 학교 · 검증초등학교');
+     for(const game of ['volleyball','survival']){
+      const card=page.locator('[data-game="'+game+'"]');
+      await card.locator('.playground-primary').click();assert.equal(new URL(page.url()).searchParams.get('school_id'),'7003915');
+      await page.waitForFunction(()=>window.selected?.school_id==='7003915');
+      assert.equal(await page.locator('#picker').getAttribute('data-school-id'),'7003915');
+      await page.goto(origin+'/games.html?school_id=7003915');
+     }
+     await page.goto(origin+'/games.html?school_id=invalid');
+     assert.equal(await page.locator('#courtExperienceSchool').isVisible(),false);
+     assert.equal(new URL(await page.locator('[data-game="volleyball"] .playground-primary').getAttribute('href'),origin).searchParams.has('school_id'),false);
      assert.deepEqual(errors,[]);console.log('PASS viewport='+width+' tier='+tier);
     }finally{await context.close()}
    }

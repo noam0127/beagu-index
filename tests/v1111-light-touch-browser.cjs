@@ -1,5 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),path=require('node:path'),{chromium}=require('playwright');
 const origin='http://light-touch.invalid',mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.json':'application/json'};
+let sameDaySchoolIds=null;
 const fixture=Array.from({length:7},(_,i)=>({school_id:String(7003915+i),school_name:'검증초등학교 '+i,sido_standard:'부산',region:'부산',support_office:'동래교육지원청',address:'부산',visitors:12+i,growth:i,housing_price_won:123000000,student_count:200}));
 (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});
 try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
@@ -22,14 +23,35 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  else throw Error('Unexpected level API fixture action: '+a);
  if(!tier||!token)return route.fulfill({status:401,headers:cors,body:'{}'});
  }else if(u.pathname.endsWith('/beagu-school-interest-v1'))data={rising:fixture.map(({housing_price_won,visitors,growth,...v})=>token?{...v,visitors,growth}:v)};
+ if(u.pathname.endsWith('/beagu-notice-audience-v1'))data={level:token?tier:0,notices:[{audience:'all',body:'공통 검증 공지'},{audience:String(token?tier:0),body:'레벨 검증 공지'}]};
  return route.fulfill({status:200,headers:cors,body:JSON.stringify(data)});}
  if(u.origin!==origin)return route.abort();const p=decodeURIComponent(u.pathname).replace(/^\/+/, '');if(!p||p.includes('..'))return route.abort();
  try{return route.fulfill({contentType:mime[path.extname(p)]||'application/octet-stream',body:await fs.readFile(p)})}catch{return route.fulfill({status:404,body:''})}});
- const page=await context.newPage();await page.goto(origin+(tier?'/search-lv1.html':'/search.html'));
+ const page=await context.newPage();
+ await page.clock.setFixedTime(new Date('2026-11-25T14:59:00Z'));
+ await page.goto(origin+'/index.html');
+ await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);
+ await page.waitForFunction(()=>document.querySelector('#beaguHomeNoticeBody').textContent==='공통 검증 공지');
+ const ids=()=>page.locator('#beaguTodaySchools .beagu-home-school-name').evaluateAll(nodes=>nodes.map(n=>new URL(n.href).searchParams.get('school_id')));
+ const today=await ids();assert.equal(new Set(today).size,2);
+ if(sameDaySchoolIds)assert.deepEqual(today,sameDaySchoolIds);else sameDaySchoolIds=today;
+ assert.equal(await page.locator('.beagu-core-nav a:visible').count(),5);
+ assert.equal(await page.locator('.light-touch-visit.card').count(),1);
+ const layout=await page.evaluate(()=>{const box=s=>document.querySelector(s).getBoundingClientRect();return {actions:box('.beagu-home-actions').bottom,schools:box('#beaguTodaySchools').top,visits:box('.light-touch-visit').bottom,notice:box('.beagu-home-notice').top,columns:getComputedStyle(document.querySelector('.light-touch-visit>div')).gridTemplateColumns.split(' ').length,scroll:document.documentElement.scrollWidth,width:innerWidth};});
+ assert.ok(layout.actions<=layout.schools+1&&layout.visits<=layout.notice+1,JSON.stringify(layout));assert.equal(layout.columns,3);assert.ok(layout.scroll<=layout.width+1,JSON.stringify(layout));
+ assert.equal(await page.locator('#courtNoticeToggle').getAttribute('aria-expanded'),'false');
+ await page.locator('#courtNoticeToggle').click();assert.equal(await page.locator('#courtNoticeToggle').getAttribute('aria-expanded'),'true');
+ await page.locator('#courtNoticeToggle').click();assert.equal(await page.locator('#courtNoticeToggle').getAttribute('aria-expanded'),'false');
+ await page.reload();await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);assert.deepEqual(await ids(),today);
+ await page.clock.setFixedTime(new Date('2026-11-25T15:00:01Z'));
+ await page.evaluate(()=>window.dispatchEvent(new Event('pageshow')));
+ const tomorrow=await ids();assert.ok(tomorrow.every((id,i)=>id!==today[i]),JSON.stringify({today,tomorrow}));
+ await page.goto(origin+(tier?'/search-lv1.html':'/search.html'));
  await page.waitForFunction(()=>document.querySelectorAll('#beaguInterest li').length===5);
  assert.equal(await page.locator('#beaguInterest li').count(),5);
- assert.equal(await page.locator('.beagu-core-nav a:visible').count(),6);
- await page.waitForFunction(()=>document.querySelectorAll('#beaguTodaySchools .beagu-home-school-name').length===2);
+ assert.equal(await page.locator('.beagu-core-nav a:visible').count(),5);
+ assert.equal(await page.locator('#beaguTodaySchools').count(),0);
+ assert.equal(await page.getByText('2026 자료 공개 기준',{exact:true}).count(),0);
  if(!tier){assert.equal(await page.locator('.beagu-interest-number').count(),0);assert.match(await page.locator('#beaguInterest li a').first().getAttribute('href'),/^school-report\.html\?school_id=/);}
  else{await page.locator('#searchInput').fill('검증초');await page.locator('#results .school-card').first().waitFor();assert.equal(await page.locator('#results .school-card').count(),7);
  await page.locator('.lv1-history-trigger').first().click();await page.waitForFunction(()=>document.querySelector('.lv1-history-trigger[aria-expanded="true"]'));await page.waitForFunction(()=>!!document.querySelector('#results .school-detail[data-loaded="1"]'));assert.equal(detailRequested,true);

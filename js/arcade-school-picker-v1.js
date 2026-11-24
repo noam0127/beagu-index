@@ -42,7 +42,7 @@ class ArcadeSchoolPicker{
   this.surveyLink.hidden=true;
   this.mount.append(heading,this.input,this.guide,this.changeButton,this.results,this.status,this.surveyLink);
   this.input.addEventListener("input",()=>{this.clear();clearTimeout(this.timer);this.timer=setTimeout(()=>this.search(),250);});
-  const target=new URLSearchParams(location.search).get("school_id");
+  const target=new URLSearchParams(window.location?.search||"").get("school_id");
   if(/^[A-Z0-9]{7}$/.test(target||""))setTimeout(()=>{if(this.serial===0&&!this.locked)void this.select({school_id:target});},0);
  }
  clear(){
