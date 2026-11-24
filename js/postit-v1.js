@@ -14,9 +14,7 @@ const validCompare=x=>{
 const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false,postAttempt:null,pendingActions:new Set()};
 function token(){try{return sessionStorage.getItem(key)||""}catch{return ""}}
 async function headers(){
- const bearer=await window.BeaguPostitAccount?.accessToken?.()||"";
- return {"Content-Type":"application/json","X-Beagu-Level-Session":token(),
-  ...(bearer?{"Authorization":"Bearer "+bearer}:{})};
+ return {"Content-Type":"application/json","X-Beagu-Level-Session":token()};
 }
 async function request(action,data,method="GET"){
  const url=new URL(api);
@@ -187,7 +185,7 @@ function buildPost(post){
  return entry;
 }
 async function mutation(action,data){
- if(!canWrite()){showMessage("🔒 정식 Lv.2 계정 연결 후 이용할 수 있습니다.");return;}
+ if(!canWrite()){showMessage("🔒 Lv.2 익명 계정 로그인 후 이용할 수 있습니다.");return;}
  const actionKey=action+":"+String(data.target_type||"")+":"+String(data.target_id||"");
  if(state.pendingActions.has(actionKey))return;
  state.pendingActions.add(actionKey);
@@ -216,7 +214,7 @@ async function fillComments(id,host){
    mark.append(row);host.append(mark);
   }
   const composer=node("form","bookmark-composer");
-  if(!canWrite())composer.append(node("span","locked-comment","🔒 정식 Lv.2 계정 생성 후 댓글을 작성할 수 있습니다."));
+  if(!canWrite())composer.append(node("span","locked-comment","🔒 Lv.2 익명 계정 로그인 후 댓글을 작성할 수 있습니다."));
   else{
    const ta=node("textarea","");ta.maxLength=150;ta.rows=2;ta.placeholder="책갈피처럼 댓글 남기기 (150자)";
    const btn=node("button","","댓글 붙이기");btn.type="submit";
