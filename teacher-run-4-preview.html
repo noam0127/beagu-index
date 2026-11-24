@@ -202,6 +202,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11111"></script>
 <script src="js/teacher-run-4-rules.js?v=11111-6"></script>
+<script src="js/teacher-run-4-records-v1.js?v=11111"></script>
 <script>
 (function(){
 "use strict";
@@ -210,6 +211,7 @@ const canvas=$("game"),ctx=canvas.getContext("2d");
 const resultView=window.BeaguArcadeResult.create($("choices").parentElement,canvas,{compact:true});
 // Candidate-only local preview. Never submit new rules to the legacy score endpoint.
 const ranking={start:async()=>({localPreview:true}),finish:async()=>true,cancel:()=>{}};
+const recordPolicy=window.BeaguRun4Records;
 const rules=window.BeaguRun4Rules;let run4=rules.create(),leave=rules.createLeave(),growth=rules.createGrowth(),effects=rules.createEffects(),bosses=rules.createBosses(),allies=rules.createAllies();
 let bossX=0,bossWarn=null,bossNext=0,bossShot=0,bossProjectiles=[],bossRate=1,bossGuard=0,bossSpawn=1,alliesPeak=0;
 let tenureSeen=new Set(),tenureAttack=1,tenureDamage=1;
@@ -655,7 +657,7 @@ function finish(win){
  const survivalSeconds=Math.floor(clock);
  const rawScore=Math.max(0,Math.floor(score));
  const difficultyScore=bosses.tier.score;
- score=Math.floor(rawScore*difficultyScore*(win?2:1));
+ score=recordPolicy.score(rawScore,schoolPicker.get()?.difficulty||"hard",win);
  const newRecord=score>best;
  if(newRecord){best=Math.floor(score);persist();}
  updateLabels();$("bestLabel").textContent=best.toLocaleString("ko-KR");
@@ -669,6 +671,13 @@ function finish(win){
  const ending=rules.ending({win,bosses:beaten.length,allies:alliesPeak,crises:stats.crises,growth:rules.growthPlan.reduce((n,p)=>n+growth.level(p.id),0),combo:stats.maxCombo,hits:misses});
  const details=(win?"24세 임용 → 62세 정년 달성!\n수많은 어려움 속에서도 당신은 교실을 지켜왔습니다.":getAge()+"세 · 새로운 도전")+"\n"+rawScore.toLocaleString("ko-KR")+"점 × 난이도 "+difficultyScore+(win?" × 정년 2":"")+" = "+Math.floor(score).toLocaleString("ko-KR")+"점";
  const bossNames=rules.bossPlan.filter(p=>beaten.includes(p.id)).map(p=>p.name);
+ // Separate, strictly local record envelope. Never send it to the 3.0 endpoint.
+ try{
+  const record=recordPolicy.localRecord({version:"4.0",game:recordPolicy.game,difficulty:schoolPicker.get()?.difficulty||"hard",baseScore:rawScore,score:Math.floor(score),survivalSeconds,age:getAge(),victory:win,bossIds:beaten,maxCombo:stats.maxCombo,hits:misses,crises:stats.crises,leaveDays:leave.state().usedDays,allies:alliesPeak});
+  const key="beaguRun4LocalRecordsV1";let previous=[];
+  try{const stored=JSON.parse(localStorage.getItem(key)||"[]");if(Array.isArray(stored))previous=stored.slice(0,50).flatMap(r=>{try{return [recordPolicy.localRecord(r)]}catch(_){return []}});}catch(_){}
+  const records=[record,...previous].sort((a,b)=>b.score-a.score).slice(0,50);localStorage.setItem(key,JSON.stringify(records));
+ }catch(_){/* Result screen remains usable if storage is unavailable or an experimental score exceeds the provisional bound. */}
  const report=[details,"재직 "+Math.floor(clock/5)+"년 · ROUND "+(stage+1)+" · "+(difficultyName[schoolPicker.get()?.difficulty]||""),
   "보스 "+beaten.length+"/5"+(bossNames.length?" · "+bossNames.join(", "):""),
   "최대 콤보 "+stats.maxCombo+" · 피격 "+misses+"회 · 위기 극복 "+stats.crises+"회",
@@ -692,7 +701,7 @@ async function leavePausedRun(changeSchool=false){
  savingPausedRun=true;state="saving";
  message("기록 저장 중","지금까지의 점수와 나이를 기록하고 있습니다.",[],"💾");
  try{
-  const rawScore=Math.max(0,Math.floor(score)),finalScore=Math.floor(rawScore*bosses.tier.score);
+  const rawScore=Math.max(0,Math.floor(score)),finalScore=recordPolicy.score(rawScore,schoolPicker.get()?.difficulty||"hard",false);
   const survivalSeconds=Math.floor(clock);
   if(finalScore>best){best=finalScore;persist();}
   $("bestLabel").textContent=best.toLocaleString("ko-KR");

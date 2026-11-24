@@ -82,4 +82,13 @@ const bc=rules.createBosses("normal");assert.equal(bc.advance(19.99).started,nul
 
 const team=rules.createAllies();assert.equal(team.canCooperate(0),false);for(let i=0;i<6;i++)assert.ok(team.join(0,()=>0));assert.equal(team.join(0,()=>0),null);assert.equal(team.count(),6);assert.equal(team.tick(1).length,0);assert.ok(team.tick(12).length>=5);assert.equal(team.cooperate(12),true);assert.equal(team.cooperate(12),false);assert.equal(team.cooldown(24),12);assert.equal(team.cooperate(36),true);assert.match(preview,/function cooperate\(\)/);assert.match(preview,/선생님들의 연대/);console.log('PASS ally roles, unique joining, timed support and cooperation cooldown');
 
-assert.match(shareSource,/data\.certificateLines/);assert.match(preview,/function drawRetirementScene/);assert.match(preview,/function playRetirementMusic/);assert.match(preview,/certificateLines:\["버전 4\.0/);assert.match(preview,/finalScore=Math\.floor\(rawScore\*bosses\.tier\.score\)/);console.log('PASS retirement scene, sound opt-in, certificate details and consistent early-stop score');
+assert.match(shareSource,/data\.certificateLines/);assert.match(preview,/function drawRetirementScene/);assert.match(preview,/function playRetirementMusic/);assert.match(preview,/certificateLines:\["버전 4\.0/);assert.match(preview,/finalScore=recordPolicy\.score\(rawScore,/);console.log('PASS retirement scene, sound opt-in, certificate details and consistent early-stop score');
+
+const rw={};vm.runInNewContext(read('js/teacher-run-4-records-v1.js'),{window:rw});const rp=rw.BeaguRun4Records;
+const rr={version:'4.0',game:rp.game,difficulty:'normal',baseScore:1000,score:3000,survivalSeconds:190,age:62,victory:true,bossIds:['confusion','final'],maxCombo:10,hits:2,crises:1,leaveDays:8,allies:2};
+assert.equal(rp.validate(rr,190,'normal').score,3000);
+for(const bad of [{...rr,score:3001},{...rr,version:'3.0'},{...rr,school_name:'private'},{...rr,verified:true},{...rr,bossIds:['final','final']},{...rr,leaveDays:4},{...rr,age:61},{...rr,survivalSeconds:30,victory:false,age:30,score:1500,bossIds:['final']}])assert.throws(()=>rp.validate(bad,190,'normal'));
+assert.throws(()=>rp.validate(rr,100,'normal'));assert.throws(()=>rp.validate(rr,190,'hard'));
+assert.match(preview,/beaguRun4LocalRecordsV1/);assert.doesNotMatch(preview,/new window\.ArcadeLeaderboard/);
+const rankingDraft=read('docs/run4-ranking-preflight/schema-draft.sql');assert.match(rankingDraft,/session_id uuid primary key/);assert.match(rankingDraft,/enable row level security/);assert.match(rankingDraft,/where r.verification_status='verified'/);assert.doesNotMatch(rankingDraft,/alter table public\.arcade_game_scores\b|drop table/i);
+console.log('PASS version-separated local results and impossible-summary rejection; staged SQL remains unexecuted');
