@@ -75,6 +75,7 @@
       status.textContent = '인증 이미지를 준비하고 있습니다.';
       if (typeof html2canvas !== 'function') throw new Error('이미지 기능을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
       if (document.fonts) await deadline(document.fonts.ready, 10000, '글꼴 로딩이 지연되고 있습니다. 다시 시도해주세요.');
+      if (!valid()) return;
       // Strictly capture only public information. Never serialize the whole page.
       const root=byId('certificate');
       if(!root || root.querySelector('#identityCode,#challengeReferralLink,#challengeReferralPanel,#challengeIdentityPanel,[data-referral-secret]') ||
@@ -129,7 +130,7 @@
   });
 
   copyIdentityCode.addEventListener('click', async () => {
-    if (!accessGranted || !personalCode || byId('challengeIdentityPanel')?.dataset.referralState !== 'earned') return;
+    if (!accessGranted || currentSession()!==activeSession || !personalCode || byId('challengeIdentityPanel')?.dataset.referralState !== 'earned') return;
     try {
       if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('UNAVAILABLE');
       await navigator.clipboard.writeText(personalCode);

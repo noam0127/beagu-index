@@ -130,6 +130,7 @@
       });
       if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
       const payload = await response.json().catch(() => ({}));
+      if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
       if (response.status === 503 && payload.error === 'REFERRAL_NOT_READY') {
         if (!upgraded) status.textContent = '설문 연결을 확인 중이에요.';
         if(retry)retry.hidden=false;
