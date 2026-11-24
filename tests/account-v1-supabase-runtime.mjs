@@ -59,10 +59,17 @@ if(phase==='seed'){
 }else if(phase==='before'){
  const state=JSON.parse(await readFile(statePath,'utf8'));
  await account({action:'password_login',account_id:a,password:pw},401);
+ const legacyToken='e'.repeat(64),referralOnly='f'.repeat(64);
+ assert.deepEqual(await writer(legacyToken),{linked:false,readable:false});
+ for(const action of ['posts','comments','schools','school_info'])assert.equal((await call('beagu-postit-api-v1',null,403,{token:legacyToken,query:'?action='+action,method:'GET'})).error,'ACCOUNT_REQUIRED');
+ await call('beagu-postit-api-v1',null,403,{token:referralOnly,query:'?action=posts',method:'GET'});
+ await call('beagu-postit-api-v1',{action:'create_post',subject_type:'game',game_slug:'teacher-volleyball',text:'fixture denied'},403,{token:legacyToken});
  for(const [code,deviceSecret,new_recovery] of [[a,'a'.repeat(64),old],[b,'b'.repeat(64),'9KMTH8RDW3NPQ']]){
   const r=await account({action:'signup',account_id:code,code,deviceSecret,new_recovery,password:pw},201);assert.equal(r.lv2_active,true);
  }
  const one=await login(a),two=await login(b);
+ assert.deepEqual(await writer(two.token),{linked:true,readable:true});
+ assert.equal((await call('beagu-postit-api-v1',null,403,{token:legacyToken,query:'?action=posts',method:'GET'})).error,'ACCOUNT_REQUIRED');
  const create={action:'create_post',subject_type:'game',game_slug:'teacher-volleyball',text:'synthetic runtime report target',request_id:randomUUID()};
  const post=await call('beagu-postit-api-v1',create,201,{token:one.token});
  const mine=await posts(one.token);assert.ok(mine.posts.some(p=>p.id===post.id&&p.mine&&p.nickname===one.nickname));
@@ -73,7 +80,7 @@ if(phase==='seed'){
  await adminCall({action:'report_queue'},403,auth.before);
  const queue=await adminCall({action:'report_queue'},200,auth.token);assert.ok(queue.data.rows.some(p=>p.target_id===post.id&&p.reports===1));assert.doesNotMatch(JSON.stringify(queue),/SYNTHETIC-ONE|SYNTHETIC-TWO|fixture-owner|fixture-legacy/);
  const decision={action:'report_decide',target_type:'post',target_id:post.id,decision:'restrict_24h',reason:'synthetic review reason'};
- await adminCall(decision,200,auth.token);assert.equal((await writer(one.token)).linked,false);
+ await adminCall(decision,200,auth.token);assert.deepEqual(await writer(one.token),{linked:false,readable:true});
  await call('beagu-postit-api-v1',create,403,{token:one.token});await posts(one.token);
  await adminCall({...decision,decision:'restore'},200,auth.token);assert.equal((await writer(one.token)).linked,true);
  await account({action:'recover',account_id:a,password:replacement,recovery:old,new_recovery:next},200);

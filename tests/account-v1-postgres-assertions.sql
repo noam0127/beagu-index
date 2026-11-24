@@ -7,6 +7,11 @@ BEGIN
  IF NOT public.beagu_account_level_session_allowed_v1(repeat('8',64)) OR public.beagu_account_postit_writer_v1(repeat('8',64)) IS NOT NULL OR (SELECT expires_at FROM public.beagu_level_sessions WHERE token_sha256=repeat('8',64))<=now()+interval '1 day' THEN RAISE EXCEPTION 'grandfathered personal read must survive transition deadline'; END IF;
  INSERT INTO public.beagu_level_sessions VALUES(repeat('0',64),2,now()+interval '30 minutes',NULL,NULL);
  IF (SELECT access_level FROM public.beagu_level_sessions WHERE token_sha256=repeat('0',64)) IS DISTINCT FROM 1 THEN RAISE EXCEPTION 'new static-code session bypass'; END IF;
+ -- Simulate an expired cutover window; personal entitlement must survive and permit a fresh normal session.
+ UPDATE beagu_private.beagu_lv2_transition_v1 SET cutoff=now()-interval '2 days',expires_at=now()-interval '1 day' WHERE id=1;
+ IF NOT public.beagu_legacy_lv2_read_allowed_v1(v2) OR NOT public.beagu_account_level_session_allowed_v1(repeat('8',64)) THEN RAISE EXCEPTION 'expired migration window revoked personal Lv2'; END IF;
+ INSERT INTO public.beagu_level_sessions VALUES(repeat('a',64),2,now()+interval '6 hours','2026',v2);
+ IF NOT public.beagu_account_level_session_allowed_v1(repeat('a',64)) OR (SELECT access_level FROM public.beagu_level_sessions WHERE token_sha256=repeat('a',64)) IS DISTINCT FROM 2 OR public.beagu_account_session_status_v1(repeat('a',64)) IS NOT NULL THEN RAISE EXCEPTION 'new personal code session after cutoff failed'; END IF;
  -- Legacy Auth deletion happens only in this synthetic database.
  IF NOT EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 WHERE visitor_id=v2 AND author_uid=legacy_actor) THEN RAISE EXCEPTION 'legacy bridge missing'; END IF;
  INSERT INTO public.beagu_postit_posts(id,school_id,author_uid,body) VALUES('70000000-0000-4000-8000-000000000002','TEST001',legacy_actor,'legacy synthetic post');

@@ -53,11 +53,19 @@ try{
   return data;
  }
  const a='SYNTHETIC-ONE',b='SYNTHETIC-TWO',pw='x7!Q',old='7KMXF9TDW4NPQ',next='8RYH6ZB3W7KMP';
+ // Real gateway: old personal Lv2 retains general level but cannot read or write Post-it.
+ const legacyToken='e'.repeat(64),referralOnly='f'.repeat(64);
+ assert.deepEqual(await call('/postit?action=writer_status',null,200,{method:'GET',token:legacyToken}),{linked:false,readable:false});
+ for(const action of ['posts','comments','schools','school_info'])assert.equal((await call('/postit?action='+action,null,403,{method:'GET',token:legacyToken})).error,'ACCOUNT_REQUIRED');
+ await call('/postit?action=posts',null,403,{method:'GET',token:referralOnly});
+ await call('/postit',{action:'create_post',subject_type:'game',game_slug:'teacher-volleyball',text:'fixture denied'},403,{token:legacyToken});
  const signup=(code,deviceSecret,new_recovery)=>call('/account',{action:'signup',account_id:code,code,deviceSecret,new_recovery,password:pw},201);
  assert.equal((await signup(a,'a'.repeat(64),old)).level,2);
  assert.equal((await signup(b,'b'.repeat(64),'9KMTH8RDW3NPQ')).lv2_active,true);
  const login=async(code,password=pw)=>call('/account',{action:'password_login',account_id:code,password},200);
  const one=await login(a),two=await login(b);assert.match(one.token,/^[a-f0-9]{64}$/);
+ assert.deepEqual(await call('/postit?action=writer_status',null,200,{method:'GET',token:two.token}),{linked:true,readable:true});
+ assert.equal((await call('/postit?action=posts',null,403,{method:'GET',token:legacyToken})).error,'ACCOUNT_REQUIRED');
  const nonce=randomUUID(),create={action:'create_post',subject_type:'game',game_slug:'teacher-volleyball',text:'synthetic report target',request_id:nonce};
  const post=await call('/postit',create,201,{token:one.token});
  const mine=await call('/postit?action=posts',null,200,{method:'GET',token:one.token});assert.equal(mine.posts[0].mine,true);assert.equal(mine.posts[0].nickname,one.nickname);
@@ -66,7 +74,7 @@ try{
  const queue=await call('/admin',{action:'report_queue'},200,{auth:owner});assert.equal(queue.data.rows[0].target_id,post.id);assert.equal(queue.data.rows[0].reports,1);assert.doesNotMatch(JSON.stringify(queue),/SYNTHETIC-ONE|SYNTHETIC-TWO/);
  const decision={action:'report_decide',target_type:'post',target_id:post.id,decision:'restrict_24h',reason:'synthetic review reason'};
  await call('/admin',decision,200,{auth:owner});
- assert.equal((await call('/postit?action=writer_status',null,200,{method:'GET',token:one.token})).linked,false);
+ assert.deepEqual(await call('/postit?action=writer_status',null,200,{method:'GET',token:one.token}),{linked:false,readable:true});
  await call('/postit',create,403,{token:one.token});
  await call('/postit?action=posts',null,200,{method:'GET',token:one.token});
  assert.equal((await call('/account',{action:'status'},200,{token:one.token})).lv2_active,true);

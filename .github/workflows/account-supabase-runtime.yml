@@ -95,6 +95,16 @@ jobs:
           pg <<'SQL'
           UPDATE beagu_private.challenge_device_claims SET device_secret_sha256=encode(extensions.digest(device_secret_sha256,'sha256'),'hex');
           UPDATE beagu_private.challenge_referral_profiles SET access_level=2,valid_referrals=1,upgraded_at=now() WHERE access_level=1;
+          -- Fixture only: a pre-cutover personal visitor versus a newly earned visitor.
+          INSERT INTO public.beagu_level_sessions(token_sha256,access_level,expires_at,identity_campaign,identity_visitor_id) VALUES
+           (encode(extensions.digest(repeat('e',64),'sha256'),'hex'),2,now()+interval '6 hours','2026','10000000-0000-0000-0000-000000000002'),
+           (encode(extensions.digest(repeat('f',64),'sha256'),'hex'),2,now()+interval '6 hours','2026','10000000-0000-0000-0000-000000000001');
+          DO $ BEGIN
+           IF NOT public.beagu_account_level_session_allowed_v1(encode(extensions.digest(repeat('e',64),'sha256'),'hex'))
+            OR (SELECT access_level FROM public.beagu_level_sessions WHERE token_sha256=encode(extensions.digest(repeat('e',64),'sha256'),'hex')) IS DISTINCT FROM 2
+            OR (SELECT access_level FROM public.beagu_level_sessions WHERE token_sha256=encode(extensions.digest(repeat('f',64),'sha256'),'hex')) IS DISTINCT FROM 1
+           THEN RAISE EXCEPTION 'legacy general read / new recommendation only gate failed'; END IF;
+          END $;
           GRANT SELECT ON public.beagu_level_sessions,public.beagu_admin_accounts,public.schools TO service_role;
           REVOKE ALL ON public.beagu_level_sessions,public.beagu_admin_accounts FROM PUBLIC,anon,authenticated;
           REVOKE ALL ON FUNCTION public.beagu_consume_login_budget(),public.beagu_has_earned_challenge_visitor(uuid) FROM PUBLIC,anon,authenticated;
