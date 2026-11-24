@@ -16,6 +16,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  else if(a==='school'){detailRequested=true;data={level:tier,rows:[],schoolQuestionModes:[],schoolQuestionSelections:[],schoolQuestionResults2026:[]};}
  else if(a==='offices')data={offices:['동래교육지원청']};
  else if(a==='percentiles')data={values:{}};
+ else if(a==='logout')data={ok:true};
  else if(a==='survey_comparisons'){comparisonRequested=true;const b=route.request().postDataJSON();data={year:b.year,region:b.region,items:{}};}
  else throw Error('Unexpected level API fixture action: '+a);
  if(!tier||!token)return route.fulfill({status:401,headers:cors,body:'{}'});
@@ -38,7 +39,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(tier===2){await page.locator('#regionSort').selectOption('housing_price_won');await page.waitForTimeout(600);assert.equal(sorted,true);assert.equal(await page.locator('#results [data-sort-key="housing_price_won"]').count(),0);}
  }
  const dims=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));assert.ok(dims.scroll<=dims.width+1,JSON.stringify(dims));
- if(tier){await page.locator('#logoutButton').click();assert.equal(await page.locator('#searchPanel').isVisible(),false);assert.equal(await page.locator('#results .school-card').count(),0);await page.waitForFunction(()=>document.querySelectorAll('.beagu-interest-number').length===0);}
+ if(tier){await page.locator('#beaguLevelState').click();await page.locator('#beaguParticipationLogout').click();await page.locator('#searchPanel').waitFor({state:'hidden'});assert.equal(await page.locator('#searchPanel').isVisible(),false);assert.equal(await page.locator('#results .school-card').count(),0);await page.waitForFunction(()=>document.querySelectorAll('.beagu-interest-number').length===0);}
  console.log('PASS fixture search width='+width+' tier='+tier);
  }finally{await context.close()}
  }}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
