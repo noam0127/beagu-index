@@ -3,7 +3,11 @@ DECLARE a text:='SYNTHETIC-ONE'; b text:='SYNTHETIC-TWO'; v uuid:='10000000-0000
 BEGIN
  -- Legacy Auth deletion happens only in this synthetic database.
  IF NOT EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 WHERE visitor_id=v2 AND author_uid=legacy_actor) THEN RAISE EXCEPTION 'legacy bridge missing'; END IF;
+ INSERT INTO public.beagu_postit_posts(id,school_id,author_uid,body) VALUES('70000000-0000-4000-8000-000000000002','TEST001',legacy_actor,'legacy synthetic post');
+ INSERT INTO public.beagu_postit_comments(id,post_id,author_uid,body) VALUES('70000000-0000-4000-8000-000000000003','70000000-0000-4000-8000-000000000002',legacy_actor,'legacy synthetic comment');
+ INSERT INTO public.beagu_postit_reactions(author_uid,target_type,target_id,kind) VALUES(legacy_actor,'post','70000000-0000-4000-8000-000000000002','like');
  DELETE FROM auth.users WHERE id='00000000-0000-0000-0000-000000000002';
+ IF NOT EXISTS(SELECT 1 FROM public.beagu_postit_posts WHERE id='70000000-0000-4000-8000-000000000002' AND author_uid=legacy_actor) OR NOT EXISTS(SELECT 1 FROM public.beagu_postit_comments WHERE id='70000000-0000-4000-8000-000000000003' AND author_uid=legacy_actor) OR NOT EXISTS(SELECT 1 FROM public.beagu_postit_reactions WHERE author_uid=legacy_actor AND target_id='70000000-0000-4000-8000-000000000002') THEN RAISE EXCEPTION 'legacy content lost on auth cleanup'; END IF;
  IF EXISTS(SELECT 1 FROM public.beagu_postit_member_accounts WHERE identity_visitor_id=v2) OR NOT EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 WHERE visitor_id=v2 AND author_uid=legacy_actor) THEN RAISE EXCEPTION 'legacy author not independent of Auth'; END IF;
  IF public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('b',64),repeat('c',64),repeat('d',64)) IS NOT NULL THEN RAISE EXCEPTION 'device theft'; END IF;
  r:=public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('a',64),repeat('c',64),repeat('d',64));
@@ -103,6 +107,7 @@ DECLARE v uuid:='10000000-0000-0000-0000-000000000001'; v2 uuid:='10000000-0000-
 BEGIN
  SELECT author_uid INTO actor FROM beagu_private.beagu_anonymous_accounts_v1 WHERE visitor_id=v;
  SELECT author_uid INTO reporter FROM beagu_private.beagu_anonymous_accounts_v1 WHERE visitor_id=v2;
+ UPDATE beagu_private.challenge_referral_profiles SET disabled=false WHERE visitor_id=v2;
  SELECT jsonb_agg(to_jsonb(x) ORDER BY visitor_id) INTO credits FROM beagu_private.challenge_referral_profiles x;
  SELECT to_jsonb(x) INTO account_state FROM beagu_private.beagu_anonymous_accounts_v1 x WHERE visitor_id=v;
  INSERT INTO public.beagu_postit_posts(id,school_id,author_uid,body) VALUES(post_id,'TEST001',actor,'synthetic reported text'),(other_id,'TEST001',actor,'unreported text');
