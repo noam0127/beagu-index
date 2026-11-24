@@ -122,11 +122,11 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
 
   returned.validReferrals=10;
   emit('focus');await tick();
-  assert.match(el.challengeReferralProgress.textContent,/10 \/ 1건/);
+  assert.equal(el.challengeReferralCount.textContent,'10건');
   assert.match(el.certificateThanks.textContent,/10명 달성/);
   returned.validReferrals=26;
   emit('focus');await tick();
-  assert.match(el.challengeReferralProgress.textContent,/26 \/ 1건/);
+  assert.equal(el.challengeReferralCount.textContent,'26건');
   assert.match(el.certificateThanks.textContent,/20명 달성/);
   returned.validReferrals=31;
   emit('focus');await tick();
@@ -141,6 +141,6 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   console.log('PASS: premium personal code card is gated by verified referral; link retained and logout resets');
 })().catch(err=>{console.error(err);process.exitCode=1;});
 
-assert.ok(html.indexOf('id="challengeIdentityPanel"')<html.indexOf('id="challengeReferralPanel"'));
+assert.ok(html.indexOf('id="challengeIdentityPanel"')>html.indexOf('id="challengeReferralPanel"'));
 assert.match(html,/VIP LEVEL 2/);
 assert.doesNotMatch(html,/id="challengeReferralNote"/);
