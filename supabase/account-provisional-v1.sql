@@ -238,6 +238,29 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  JOIN beagu_private.beagu_anonymous_accounts_v1 a ON a.account_id=s.account_id AND a.visitor_id=s.visitor_id
  WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now() AND a.enabled AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)>0) ELSE true END
 $$;
+-- Report-based writing restrictions are separate from survey eligibility and credentials.
+CREATE TABLE beagu_private.beagu_postit_restrictions_v1(
+ case_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+ target_type text NOT NULL CHECK(target_type IN ('post','comment')),
+ target_id uuid NOT NULL,
+ author_uid uuid NOT NULL,
+ decision text NOT NULL CHECK(decision IN ('dismiss','restrict_24h','restrict_7d')),
+ decided_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ expires_at timestamptz,
+ restored_at timestamptz,
+ actor_admin uuid NOT NULL,
+ restore_admin uuid,
+ reason text NOT NULL CHECK(length(reason) BETWEEN 8 AND 200),
+ UNIQUE(target_type,target_id)
+);
+CREATE INDEX beagu_postit_restrictions_author_idx ON beagu_private.beagu_postit_restrictions_v1(author_uid,expires_at) WHERE restored_at IS NULL AND expires_at IS NOT NULL;
+ALTER TABLE beagu_private.beagu_postit_restrictions_v1 ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON beagu_private.beagu_postit_restrictions_v1 FROM PUBLIC,anon,authenticated,service_role;
+CREATE FUNCTION beagu_private.beagu_postit_restricted_v1(p_author uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
+ SELECT EXISTS(SELECT 1 FROM beagu_private.beagu_postit_restrictions_v1 WHERE author_uid=p_author AND restored_at IS NULL AND expires_at>now())
+$$;
+REVOKE ALL ON FUNCTION beagu_private.beagu_postit_restricted_v1(uuid) FROM PUBLIC,anon,authenticated,service_role;
 -- A legacy participation token may read; it must never authorize account writing.
 CREATE FUNCTION public.beagu_account_postit_writer_v1(p_token_sha text)
 RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
@@ -245,6 +268,7 @@ RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  JOIN beagu_private.beagu_anonymous_accounts_v1 a ON a.account_id=s.account_id AND a.visitor_id=s.visitor_id
  WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now() AND l.access_level=2 AND a.enabled
  AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)=2
+ AND NOT beagu_private.beagu_postit_restricted_v1(a.author_uid)
  AND NOT EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 m WHERE m.visitor_id=s.visitor_id AND (m.status<>'active' OR m.suspended_until>now()))
 $$;
 CREATE FUNCTION public.beagu_account_postit_current_aliases_v1(p_items jsonb)
@@ -265,8 +289,66 @@ GRANT EXECUTE ON FUNCTION public.beagu_account_signup_v1(text,text,text,text),pu
 CREATE FUNCTION public.beagu_account_admin_counts_v1()
 RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT jsonb_build_object('members',count(*),'lv2',count(*) FILTER(WHERE a.enabled AND beagu_private.beagu_account_visitor_level_v1(a.visitor_id)=2),
- 'suspended',count(*) FILTER(WHERE NOT a.enabled OR EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 b WHERE b.visitor_id=a.visitor_id AND (b.status='suspended' OR b.suspended_until>now()))))
+ 'suspended',count(*) FILTER(WHERE NOT a.enabled OR beagu_private.beagu_postit_restricted_v1(a.author_uid) OR EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 b WHERE b.visitor_id=a.visitor_id AND (b.status='suspended' OR b.suspended_until>now()))))
  FROM beagu_private.beagu_anonymous_accounts_v1 a
 $$;
 REVOKE ALL ON FUNCTION public.beagu_account_admin_counts_v1() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.beagu_account_admin_counts_v1() TO service_role;
+
+-- This candidate follows the existing Post-it schema, including its removal of Auth foreign keys.
+-- A separate test fixture installs the actual historical Post-it migrations before this file.
+CREATE FUNCTION public.beagu_postit_report_queue_v1()
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
+ WITH reported AS (
+ SELECT r.target_type,r.target_id,count(DISTINCT r.author_uid) AS reports
+ FROM public.beagu_postit_reactions r WHERE r.kind='report' GROUP BY r.target_type,r.target_id
+ ), targets AS (
+ SELECT 'post'::text AS target_type,p.id AS target_id,p.body,p.status,p.author_uid FROM public.beagu_postit_posts p
+ UNION ALL SELECT 'comment',c.id,c.body,c.status,c.author_uid FROM public.beagu_postit_comments c
+ ), rows AS (
+ SELECT t.target_type,t.target_id,t.body,t.status,r.reports,d.case_id,d.decision,d.expires_at,d.restored_at
+ FROM reported r JOIN targets t USING(target_type,target_id)
+ JOIN beagu_private.beagu_anonymous_accounts_v1 a ON a.author_uid=t.author_uid
+ LEFT JOIN beagu_private.beagu_postit_restrictions_v1 d USING(target_type,target_id)
+ WHERE t.status IN ('published','hidden','removed') AND (d.case_id IS NULL OR (d.expires_at>now() AND d.restored_at IS NULL))
+ ORDER BY (d.case_id IS NULL) DESC,r.reports DESC,t.target_id LIMIT 50
+ )
+ SELECT coalesce(jsonb_agg(to_jsonb(rows)),'[]'::jsonb) FROM rows
+$$;
+CREATE FUNCTION public.beagu_postit_report_decide_v1(p_type text,p_target uuid,p_decision text,p_reason text,p_admin uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE v_author uuid; v_case uuid; v_exp timestamptz;
+BEGIN
+ IF p_type IS NULL OR p_type NOT IN ('post','comment') OR p_target IS NULL OR p_decision IS NULL OR p_decision NOT IN ('dismiss','restrict_24h','restrict_7d','restore') OR p_admin IS NULL OR p_reason IS NULL OR length(btrim(p_reason)) NOT BETWEEN 8 AND 200 THEN RETURN NULL; END IF;
+ -- Only an actual reported content item can be selected, never a supplied member ID.
+ IF p_type='post' THEN SELECT author_uid INTO v_author FROM public.beagu_postit_posts WHERE id=p_target;
+ ELSE SELECT author_uid INTO v_author FROM public.beagu_postit_comments WHERE id=p_target; END IF;
+ IF v_author IS NULL OR NOT EXISTS(SELECT 1 FROM beagu_private.beagu_anonymous_accounts_v1 WHERE author_uid=v_author) THEN RETURN NULL; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext(v_author::text),20261121);
+ IF NOT EXISTS(SELECT 1 FROM public.beagu_postit_reactions WHERE target_type=p_type AND target_id=p_target AND kind='report' AND author_uid<>v_author) THEN RETURN NULL; END IF;
+ IF p_decision='restore' THEN
+ UPDATE beagu_private.beagu_postit_restrictions_v1 SET restored_at=clock_timestamp(),restore_admin=p_admin WHERE target_type=p_type AND target_id=p_target AND author_uid=v_author AND expires_at>now() AND restored_at IS NULL RETURNING case_id INTO v_case;
+ ELSE
+ v_exp:=CASE p_decision WHEN 'restrict_24h' THEN clock_timestamp()+interval '24 hours' WHEN 'restrict_7d' THEN clock_timestamp()+interval '7 days' ELSE NULL END;
+ INSERT INTO beagu_private.beagu_postit_restrictions_v1(target_type,target_id,author_uid,decision,expires_at,actor_admin,reason)
+ VALUES(p_type,p_target,v_author,p_decision,v_exp,p_admin,btrim(p_reason)) ON CONFLICT(target_type,target_id) DO NOTHING RETURNING case_id INTO v_case;
+ END IF;
+ IF v_case IS NULL THEN RETURN NULL; END IF;
+ RETURN jsonb_build_object('ok',true,'case_id',v_case);
+END $$;
+REVOKE ALL ON FUNCTION public.beagu_postit_report_queue_v1(),public.beagu_postit_report_decide_v1(text,uuid,text,text,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.beagu_postit_report_queue_v1(),public.beagu_postit_report_decide_v1(text,uuid,text,text,uuid) TO service_role;
+-- Recheck the restriction in the write transaction (also covers requests already in flight).
+CREATE FUNCTION beagu_private.beagu_postit_restriction_guard_v1()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE v_author uuid;
+BEGIN
+ IF TG_OP='DELETE' THEN v_author:=OLD.author_uid; ELSE v_author:=NEW.author_uid; END IF;
+ PERFORM pg_advisory_xact_lock(hashtext(v_author::text),20261121);
+ IF beagu_private.beagu_postit_restricted_v1(v_author) THEN RAISE EXCEPTION 'POSTIT_RESTRICTED' USING ERRCODE='42501'; END IF;
+ IF TG_OP='DELETE' THEN RETURN OLD; END IF; RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION beagu_private.beagu_postit_restriction_guard_v1() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER beagu_postit_restrict_post BEFORE INSERT ON public.beagu_postit_posts FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_postit_restriction_guard_v1();
+CREATE TRIGGER beagu_postit_restrict_comment BEFORE INSERT ON public.beagu_postit_comments FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_postit_restriction_guard_v1();
+CREATE TRIGGER beagu_postit_restrict_reaction BEFORE INSERT OR DELETE ON public.beagu_postit_reactions FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_postit_restriction_guard_v1();
