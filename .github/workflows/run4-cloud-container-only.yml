@@ -1,0 +1,52 @@
+name: Run4 Cloud Run container offline preflight
+on:
+  push:
+    branches: ['validation/run4-cloud-container']
+permissions:
+  contents: read
+jobs:
+  isolated:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Test Edge bridge without production requests
+        run: node docs/run4-ranking-preflight/bridge-test.mjs
+      - name: Build allowlisted replay image (no push)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node docs/run4-ranking-preflight/cloud-run/prepare-context.cjs /tmp/run4-context
+          test ! -e /tmp/run4-context/game/js/supabase-config.js
+          test ! -e /tmp/run4-context/supabase
+          docker build --tag run4-fixture:local /tmp/run4-context
+      - name: Run offline HTTP and complete replay in container
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="run4-worker-${GITHUB_RUN_ID}"
+          trap 'docker logs "$name" || true; docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+          docker run -d --name "$name" --network none --memory 2g --cpus 1 -e RUN4_WORKER_HMAC="$(printf 'ab%.0s' {1..32})" run4-fixture:local
+          docker exec "$name" node smoke.cjs
+      - name: Test service-only RPC and daily quota in disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          name="run4-quota-${GITHUB_RUN_ID}"
+          trap 'docker rm -f "$name" >/dev/null 2>&1 || true' EXIT
+          docker run -d --rm --name "$name" --network none -e POSTGRES_PASSWORD=fixture_only postgres:16
+          for i in {1..45}; do if docker exec "$name" pg_isready -U postgres; then break; fi; sleep 1; done
+          psql_fixture() { docker exec -i "$name" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres; }
+          psql_fixture <<'SQL'
+          create role anon nologin;
+          create role authenticated nologin;
+          create role service_role nologin bypassrls;
+          create table public.arcade_game_scores(id integer primary key,score integer not null);
+          insert into public.arcade_game_scores values (1,42);
+          SQL
+          psql_fixture < docs/run4-ranking-preflight/schema-draft.sql
+          psql_fixture < docs/run4-ranking-preflight/store-draft.sql
+          psql_fixture < docs/run4-ranking-preflight/edge-store-draft.sql
+          psql_fixture < docs/run4-ranking-preflight/edge-store-assertions.sql
