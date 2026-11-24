@@ -31,14 +31,24 @@
     const anchor=el('a','beagu-home-school-name',school.name);
     anchor.href=linkFor(school.id);
     anchor.setAttribute('aria-label',school.name+' 학교 상세페이지 보기');
-    host.append(el('span','beagu-home-school-tier',label),anchor,
-      el('span','beagu-home-school-region',[school.region,school.office,'2025년 기준'].filter(Boolean).join(' · ')),
-      el('span','beagu-home-school-value','공개 백분위 '+
-        school.percentile.toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'));
+    const header=el('div','beagu-home-school-top');
+    const value=el('span','beagu-home-school-value');
+    value.append(el('span','beagu-home-percentile-label','공개 백분위'),
+      el('strong','beagu-home-percentile-number',school.percentile.toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'));
+    header.append(el('span','beagu-home-school-tier',label),value);
+    const identity=el('div','beagu-home-school-identity');
+    identity.append(anchor,el('span','beagu-home-school-region',[school.region,school.office].filter(Boolean).join(' · ')));
+    const footer=el('div','beagu-home-school-footer');
+    const actions=el('div','beagu-home-school-actions');
+    const detail=el('a','court-school-detail','상세보기');
+    detail.href=linkFor(school.id);
+    detail.setAttribute('aria-label',school.name+' 상세보기');
     const experience=el('a','court-school-experience','학교체험');
     experience.href='teacher-volleyball.html?school_id='+encodeURIComponent(school.id);
     experience.setAttribute('aria-label',school.name+' 학교체험 · 선생님배구');
-    host.append(experience);
+    actions.append(detail,experience);
+    footer.append(el('span','beagu-home-school-year','2025년 기준'),actions);
+    host.append(header,identity,footer);
   }
   function render(){
     if(!upper.length||!lower.length)return;

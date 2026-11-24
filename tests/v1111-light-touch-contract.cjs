@@ -57,3 +57,5 @@ console.log('PASS v1.11.10 court tidy static contracts');
 
 for(const p of ['js/beagu-home-schools-v1.js','js/school-search-card-v1.js']){const source=read(p);assert.match(source,/court-school-experience/);assert.match(source,/teacher-volleyball\.html\?school_id=/);assert.match(source,/학교체험/);}
 assert.match(l,/card\.append\(experience\)/);
+
+const showcase=read('js/beagu-home-schools-v1.js');assert.match(showcase,/detail\.href=linkFor\(school\.id\)/);assert.match(showcase,/actions\.append\(detail,experience\)/);assert.match(showcase,/footer\.append\(el\('span','beagu-home-school-year','2025년 기준'\),actions\)/);

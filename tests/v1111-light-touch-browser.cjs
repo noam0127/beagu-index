@@ -40,6 +40,10 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  const today=await ids();assert.equal(new Set(today).size,2);
  const experienceLinks=()=>page.locator('#beaguTodaySchools .court-school-experience').evaluateAll(nodes=>nodes.map(n=>({id:new URL(n.href).searchParams.get('school_id'),path:new URL(n.href).pathname,text:n.textContent})));
  assert.deepEqual((await experienceLinks()).map(n=>n.id),today);assert.ok((await experienceLinks()).every(n=>n.path==='/teacher-volleyball.html'&&n.text==='학교체험'));
+ const detailLinks=()=>page.locator('#beaguTodaySchools .court-school-detail').evaluateAll(nodes=>nodes.map(n=>({id:new URL(n.href).searchParams.get('school_id'),path:new URL(n.href).pathname,text:n.textContent})));
+ assert.deepEqual((await detailLinks()).map(n=>n.id),today);assert.ok((await detailLinks()).every(n=>n.path===(tier?'/search-lv1.html':'/school-report.html')&&n.text==='상세보기'));
+ const cardLayout=await page.locator('#beaguTodaySchools .beagu-home-school').evaluateAll(cards=>cards.map(card=>{const rect=s=>card.querySelector(s).getBoundingClientRect();const c=card.getBoundingClientRect(),y=rect('.beagu-home-school-year'),d=rect('.court-school-detail'),e=rect('.court-school-experience');return {year:card.querySelector('.beagu-home-school-year').textContent,inside:d.left>=c.left&&e.right<=c.right&&e.bottom<=c.bottom,right:d.left>=y.right&&e.left>=d.right,aligned:Math.abs(d.top-e.top)<1,sameRow:y.top<d.bottom&&y.bottom>d.top}}));
+ assert.ok(cardLayout.every(x=>x.year==='2025년 기준'&&x.inside&&x.right&&x.aligned&&x.sameRow),JSON.stringify(cardLayout));
  assert.equal(await page.getByText('학교별 근무난이도 게임으로 확인하기',{exact:true}).count(),0);
  if(sameDaySchoolIds)assert.deepEqual(today,sameDaySchoolIds);else sameDaySchoolIds=today;
  assert.equal(await page.locator('.beagu-core-nav a:visible').count(),5);
@@ -53,7 +57,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.clock.setFixedTime(new Date('2026-11-25T15:00:01Z'));
  await page.evaluate(()=>window.dispatchEvent(new Event('pageshow')));
  const tomorrow=await ids();assert.ok(tomorrow.every((id,i)=>id!==today[i]),JSON.stringify({today,tomorrow}));
- assert.deepEqual((await experienceLinks()).map(n=>n.id),tomorrow);
+ assert.deepEqual((await experienceLinks()).map(n=>n.id),tomorrow);assert.deepEqual((await detailLinks()).map(n=>n.id),tomorrow);
  // Use the real game page and its existing school picker + Start button; all API calls are intercepted.
  const cardIndex=tier===1?1:0;
  selectedSchool={school_id:tomorrow[cardIndex],school_name:await page.locator('#beaguTodaySchools .beagu-home-school-name').nth(cardIndex).innerText(),region:'부산',eligible:true,difficulty:cardIndex?'extreme':'easy'};
