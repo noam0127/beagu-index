@@ -21,7 +21,7 @@ assert.match(ref, /copyIdentityCode\.hidden = !upgraded/);
 assert.match(html, /id="copyIdentityCode"[^>]*disabled hidden/);
 assert.match(capture, /dataset\.referralState !== 'earned'/);
 assert.ok(publicCertificate.includes('id="certificateThanks"'));
-const order=['id="certificate"','id="capture"','id="challengeReferralPanel"','class="together-benefits"','id="togetherIdentityPanel"','id="challengeIdentityPanel"','challenge-notice-title'].filter(key=>key!=='id="togetherIdentityPanel"');
+const order=['id="certificate"','id="capture"','id="challengeReferralPanel"','class="together-benefits"','id="togetherIdentityDetails"','id="challengeIdentityPanel"','challenge-notice-title'];
 let previous=-1;for(const key of order){const i=html.indexOf(key);assert.ok(i>previous,'Challenge layout order violated: '+key);previous=i;}
 assert.match(capture,/html2canvas\(root,\s*\{/);
 assert.match(capture,/root\.querySelector\('#identityCode,#challengeReferralLink/);
