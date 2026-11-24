@@ -290,6 +290,41 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   const fullReplay=await replayInPage(page,{seed:fullCapture.seed,difficulty:'easy',replay:fullCapture.events,elapsed:190});
   assert.deepEqual(fullReplay,fullCapture.result);
   console.log('PASS RUN4_FULL_REPLAY '+JSON.stringify({events:fullCapture.events.length,result:fullReplay}));
+  // Actual replay engine through the server boundary (fixture auth/store only).
+  const {createBoundary}=require('../docs/run4-ranking-preflight/server-boundary.cjs');
+  const {createReplayVerifier}=require('../docs/run4-ranking-preflight/replay-worker.cjs');
+  const vm=require('node:vm'),policyWindow={};
+  vm.runInNewContext(await fs.readFile('js/teacher-run-4-records-v1.js','utf8'),{window:policyWindow});
+  const policy=policyWindow.BeaguRun4Records,actorHash='a'.repeat(64);
+  const sid='11111111-1111-4111-8111-111111111111';
+  let serverTime=0,serverSession=null,verifiedResult=null,opened=0,closed=0;
+  const verifier=createReplayVerifier({maxConcurrent:1,openTrustedPage:async difficulty=>{
+   assert.equal(difficulty,'easy');opened++;
+   const worker=await context.newPage();
+   try{
+    await worker.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id+'&replay_fixture=1&recording=1');
+    await worker.locator('#teacher-run-protected').waitFor({state:'visible'});
+    await worker.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).waitFor();
+    return {page:worker,dispose:async()=>{closed++;await worker.close();}};
+   }catch(e){closed++;await worker.close();throw e;}
+  }});
+  const boundary=createBoundary({policy,authenticate:async c=>c==='fixture-lv1'?{level:1,hash:actorHash}:null,
+   resolveSchool:async id=>id===selectedSchool.school_id?{eligible:true,difficulty:'easy'}:null,
+   store:{createIfBelowLimit:async session=>{if(serverSession)return false;serverSession=session;return true;},get:async id=>id===sid?serverSession:null,
+    insertVerifiedOnce:async(session,result)=>{if(verifiedResult||session.id!==sid)return false;verifiedResult=result;serverSession.submitted=true;return true;}},
+   replayVerifier:verifier,now:()=>serverTime,newId:()=>sid,seed:()=>fullCapture.seed});
+  await assert.rejects(()=>boundary.start({credentials:'invalid',schoolId:selectedSchool.school_id}),/unauthorized/);
+  const issued=await boundary.start({credentials:'fixture-lv1',schoolId:selectedSchool.school_id});assert.equal(issued.seed,fullCapture.seed);
+  serverTime=190000;
+  await assert.rejects(()=>boundary.submit({credentials:'fixture-lv1',sessionId:sid,replay:[{tick:0,action:'leave',choice:20},{tick:60,action:'stop'}]}),/invalid_leave/);
+  assert.equal(verifiedResult,null);
+  const accepted=await boundary.submit({credentials:'fixture-lv1',sessionId:sid,replay:fullCapture.events,score:999999,verified:true});
+  assert.deepEqual(JSON.parse(JSON.stringify(verifiedResult)),fullCapture.result);
+  assert.equal(accepted.score,fullCapture.result.score);assert.equal(accepted.retired,true);
+  await assert.rejects(()=>boundary.submit({credentials:'fixture-lv1',sessionId:sid,replay:fullCapture.events}),/session_expired/);
+  assert.equal(opened,closed);assert.equal(opened,2);
+  console.log('PASS RUN4_BOUNDARY_REAL_REPLAY '+JSON.stringify({score:accepted.score,retired:accepted.retired,workerOpened:opened,workerClosed:closed,store:'fixture-only'}));
+
   await page.setViewportSize({width,height:900});
   console.log('PASS real game replay: deterministic five-second partial match, cross viewport, premature leave and forged fields denied '+JSON.stringify(replayA));
 
