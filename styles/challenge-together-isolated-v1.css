@@ -1,0 +1,36 @@
+/* v1.11.2 together: challenge-only, no access policy changes. */
+body.beagu-page-challenge #challengeProtected[hidden],body.beagu-page-challenge #challengeProtected [hidden],body.beagu-page-challenge #challengeAccessPanel [hidden]{display:none!important}
+body.beagu-page-challenge #challengeProtected{display:flex;flex-direction:column;gap:12px;min-width:0}
+body.beagu-page-challenge #certificate{width:min(100%,620px);box-sizing:border-box;margin:0 auto}
+body.beagu-page-challenge .together-save,body.beagu-page-challenge #challengeReferralPanel,body.beagu-page-challenge .together-benefits,body.beagu-page-challenge .challenge-account-details{width:min(100%,620px);box-sizing:border-box;margin:0 auto;min-width:0}
+body.beagu-page-challenge .together-save{text-align:center}
+body.beagu-page-challenge .together-save #capture{min-height:44px;width:100%;margin:0}
+body.beagu-page-challenge .together-save #status{margin:4px 0;font-size:12px}
+body.beagu-page-challenge .together-survey{display:inline-flex;align-items:center;min-height:44px;font-weight:700}
+body.beagu-page-challenge .challenge-access-help span{display:block;font-size:12px}
+body.beagu-page-challenge #challengeReferralPanel .challenge-referral-grid{display:block}
+body.beagu-page-challenge #challengeReferralPanel .challenge-referral-link-card,body.beagu-page-challenge #challengeReferralPanel .challenge-referral-count-card{background:transparent;border:0;box-shadow:none;padding:8px 0;min-width:0;width:auto}
+body.beagu-page-challenge #challengeReferralPanel .challenge-referral-count-card{border-top:1px solid #d5e3f3;text-align:left;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px}
+body.beagu-page-challenge #challengeReferralPanel .challenge-referral-count-card h3{font-size:14px;margin:0}
+body.beagu-page-challenge #challengeReferralCount{font-size:20px}
+body.beagu-page-challenge #challengeReferralLink{min-width:0;width:100%;box-sizing:border-box}
+body.beagu-page-challenge .together-share-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+body.beagu-page-challenge .together-share-actions>*{min-height:44px;box-sizing:border-box;flex:1 1 130px;margin:0!important;display:inline-flex;justify-content:center;align-items:center;text-align:center;font-size:13px}
+body.beagu-page-challenge #copyChallengeReferral{min-height:44px}
+body.beagu-page-challenge #togetherCopyFallback{width:100%;min-height:100px;box-sizing:border-box;margin-top:8px}
+body.beagu-page-challenge #togetherReferralMeter{flex:1 0 100%;height:6px;border-radius:6px;background:#dce3ef;overflow:hidden}
+body.beagu-page-challenge #togetherReferralMeter span{display:block;width:0;height:100%;background:#8756c5}
+body.beagu-page-challenge #togetherReferralMeter[data-complete=true] span{width:100%}
+body.beagu-page-challenge #togetherReferralState{font-size:12px;margin:0;flex-basis:100%}
+body.beagu-page-challenge .together-benefits,body.beagu-page-challenge .challenge-account-details{padding:12px 16px;border:1px solid #d5e3f3;border-radius:12px;background:#fff}
+body.beagu-page-challenge .together-benefits h2{font-size:16px;margin:0 0 4px}
+body.beagu-page-challenge .together-benefits p,body.beagu-page-challenge .together-benefits li,body.beagu-page-challenge .together-benefits a{font-size:13px;margin:4px 0}
+body.beagu-page-challenge .challenge-account-details>summary{min-height:44px;cursor:pointer;font-weight:700;align-content:center}
+body.beagu-page-challenge .challenge-account-details #challengeIdentityPanel{margin:8px 0 0;width:100%;box-sizing:border-box;box-shadow:none;overflow-wrap:anywhere}
+body.beagu-page-challenge .together-private-note{font-size:12px;color:#536079}
+body.beagu-page-challenge #certificate[data-level="2"] .certificate-level-banner{background:linear-gradient(120deg,#6231a4,#8953cb);color:#fff}
+body.beagu-page-challenge #certificate[data-level="2"]{border-color:#9e78d9}
+body.beagu-page-challenge .certificate-milestone{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px;margin:10px auto 0;border:1px solid #d3a34a;border-radius:12px;background:#fff5dc;color:#764c13}
+body.beagu-page-challenge .certificate-milestone strong{font-size:17px}
+body.beagu-page-challenge #certificate.has-milestone{outline:2px solid #e1b96f;outline-offset:2px}
+@media(max-width:430px){body.beagu-page-challenge #challengeProtected{gap:8px}body.beagu-page-challenge #challengeReferralPanel .challenge-identity-row{flex-wrap:wrap}body.beagu-page-challenge #copyChallengeReferral{flex:1}}
