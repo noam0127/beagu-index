@@ -17,6 +17,8 @@ async function check(req:Request){
  const digest=await hash(v);
  const {data,error}=await admin.from('beagu_level_sessions').select('access_level,expires_at,identity_visitor_id,identity_campaign').eq('token_sha256',digest).maybeSingle();
  if(error||!data||(!Number.isFinite(Date.parse(data.expires_at))||Date.parse(data.expires_at)<=Date.now()))return null;
+ const {data:accountAllowed,error:accountError}=await admin.rpc('beagu_account_level_session_allowed_v1',{p_token_sha:digest});
+ if(accountError||accountAllowed!==true)return null;
  // Re-check earned Lv2 authorization on every protected request. Disabling a
  // referral profile immediately revokes its ability to read protected content.
  if(data.identity_campaign==='2026'&&data.identity_visitor_id&&Number(data.access_level)>=2){
