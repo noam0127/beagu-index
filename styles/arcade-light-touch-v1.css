@@ -1,0 +1,14 @@
+/* Touch controls have their own lower dock, not the playable canvas. */
+@media (pointer:coarse){
+ .court:has(>.arcade-playback:not([hidden])){box-sizing:border-box;padding-bottom:88px!important;background:#10243c}
+ .court.volleyball-playing .volleyball-touch-controls{top:auto;bottom:0;left:0;right:0;height:88px}
+ .volley-joystick{width:66px;bottom:10px;left:max(8px,env(safe-area-inset-left))}
+ .volley-spike{width:56px;bottom:12px;right:max(8px,env(safe-area-inset-right))}
+ .volley-dash{width:52px;bottom:14px;right:calc(max(8px,env(safe-area-inset-right)) + 62px)}
+ .volley-touch-action>span{font-size:20px}.volley-touch-action>small{font-size:10px}
+ .court.arcade-game-viewport>.arcade-playback{left:43%!important;bottom:22px!important;width:min(25%,140px);min-width:0;max-width:none;font-size:11px;padding:5px 3px;white-space:normal}
+ .court:is(.arcade-fullscreen-fallback,:fullscreen):has(>.arcade-playback:not([hidden])) canvas{width:min(100vw,calc((100dvh - 170px) * 1.8))!important;max-height:100%!important;object-fit:contain!important}
+ .court:-webkit-full-screen:has(>.arcade-playback:not([hidden])) canvas{width:min(100vw,calc((100dvh - 170px) * 1.8))!important;max-height:100%!important;object-fit:contain!important}
+ .stage:has(>.arcade-playback:not([hidden])){box-sizing:border-box;padding-bottom:max(60px,env(safe-area-inset-bottom))!important}
+ .arcade-mobile-scroll-rail{display:none!important}
+}
