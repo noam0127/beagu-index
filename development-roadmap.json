@@ -454,7 +454,127 @@
       ]
     },
     {
-      "order": 14,
+      "version": "v1.11.3",
+      "name": "홈코트",
+      "scope": "공통 메뉴와 게시글 포지션닉",
+      "branch": "release/v1.11.3-homecourt-independent",
+      "last_feature_commit": "542dd16df4127b1456b034ff968592539c4c2da2",
+      "status": "CANDIDATE_PARTIAL_VERIFICATION",
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "dependencies": [
+        "v1.11.4"
+      ],
+      "tests": [
+        {
+          "name": "Exact cumulative CI and offline browser regression",
+          "result": "PENDING"
+        }
+      ],
+      "order": 14
+    },
+    {
+      "version": "v1.11.5",
+      "name": "학교체험",
+      "scope": "게임 장르 및 게임 내 링크",
+      "branch": "release/v1.11.5-school-experience",
+      "last_feature_commit": "5ca5149404d7e109f33d37db6c01a30cdc12d696",
+      "status": "CANDIDATE_PARTIAL_VERIFICATION",
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "dependencies": [
+        "v1.11.3"
+      ],
+      "tests": [
+        {
+          "name": "Exact cumulative CI and offline browser regression",
+          "result": "PENDING"
+        }
+      ],
+      "order": 15
+    },
+    {
+      "version": "v1.11.6",
+      "name": "매치포인트",
+      "scope": "아이템 표시와 점수 안내",
+      "branch": "release/v1.11.6-matchpoint",
+      "last_feature_commit": "206d40947a0c62f755a30afc3e891599808be9dc",
+      "status": "CANDIDATE_PARTIAL_VERIFICATION",
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "dependencies": [
+        "v1.11.5"
+      ],
+      "tests": [
+        {
+          "name": "Exact cumulative CI and offline browser regression",
+          "result": "PENDING"
+        }
+      ],
+      "order": 16
+    },
+    {
+      "version": "v1.11.7",
+      "name": "명예의 전당",
+      "scope": "공개 점수 기록 순위",
+      "branch": "release/v1.11.7-hall-of-fame",
+      "last_feature_commit": "67937dfac2a6ff01af650061bdafc2c230c16936",
+      "status": "CANDIDATE_PARTIAL_VERIFICATION",
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "dependencies": [
+        "v1.11.6"
+      ],
+      "tests": [
+        {
+          "name": "Exact cumulative CI and offline browser regression",
+          "result": "PENDING"
+        }
+      ],
+      "order": 17
+    },
+    {
+      "version": "v1.11.8",
+      "name": "하이라이트",
+      "scope": "경기 결과 문구와 PNG 공유",
+      "branch": "release/v1.11.8-highlights",
+      "last_feature_commit": "ba5b23e1435c330d2482acd137035de4b0d6bb1c",
+      "status": "CANDIDATE_PARTIAL_VERIFICATION",
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "dependencies": [
+        "v1.11.7"
+      ],
+      "tests": [
+        {
+          "name": "Exact cumulative CI and offline browser regression",
+          "result": "PENDING"
+        }
+      ],
+      "order": 18
+    },
+    {
+      "version": "v1.11.9",
+      "name": "명예의 훈장",
+      "scope": "이번 경기 달성 훈장",
+      "branch": "release/v1.11.9-medals",
+      "last_feature_commit": "cea45d0af5221bb3b4316484b4a106d890406096",
+      "status": "CANDIDATE_PARTIAL_VERIFICATION",
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "dependencies": [
+        "v1.11.8"
+      ],
+      "tests": [
+        {
+          "name": "Exact cumulative CI and offline browser regression",
+          "result": "PENDING"
+        }
+      ],
+      "order": 19
+    },
+    {
+      "order": 20,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -474,7 +594,7 @@
       "rollback_sha": null
     },
     {
-      "order": 15,
+      "order": 21,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -493,7 +613,7 @@
       "rollback_sha": null
     },
     {
-      "order": 16,
+      "order": 22,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -510,7 +630,7 @@
       "rollback_sha": null
     },
     {
-      "order": 17,
+      "order": 23,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
