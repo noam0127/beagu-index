@@ -424,6 +424,37 @@
     },
     {
       "order": 13,
+      "version": "v1.11.4",
+      "name": "물길",
+      "scope": "2026 재집계·Q45 호환·관리자 실행 진단",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.11.4-waterway",
+      "baseline_sha": "1c9d5d8c978ceb1836d3eb1829d18dbf8b073ea2",
+      "dependencies": [
+        "v1.11.2"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "tests": [
+        {
+          "name": "Waterway code, PostgreSQL and Chromium at f6d1542",
+          "result": "PASS"
+        },
+        {
+          "name": "Standard release CI",
+          "result": "PENDING"
+        }
+      ],
+      "backend_prerequisites": [
+        "2026-waterway-run-telemetry-v1.sql",
+        "2026-waterway-admin-status-v1.sql",
+        "beagu-2026-results-ingest",
+        "beagu-2026-review-admin",
+        "owner Apps Script installation"
+      ]
+    },
+    {
+      "order": 14,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -443,7 +474,7 @@
       "rollback_sha": null
     },
     {
-      "order": 14,
+      "order": 15,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -462,7 +493,7 @@
       "rollback_sha": null
     },
     {
-      "order": 15,
+      "order": 16,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -479,7 +510,7 @@
       "rollback_sha": null
     },
     {
-      "order": 16,
+      "order": 17,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
