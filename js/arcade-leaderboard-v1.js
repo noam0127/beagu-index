@@ -150,7 +150,11 @@ class ArcadeLeaderboard{
     :data.timeRanked?"⏱ 25점 최단시간 TOP "+data.timeRank+"위 · "+displayScore(finalScore)
     :data.recorded===false?"이번 경기 "+displayScore(finalScore)+" · 상위 100위 밖 · 기록 미등록"
     :"이번 경기 "+displayScore(finalScore)+" · 역대 상위 100위 안에 기록됨";
-    if(data.excluded!==true&&Number.isSafeInteger(data.score)&&data.score>=0){this.shareResult={score:data.score,school:String(this.school?.school_name||"")};}
+    if(data.excluded!==true&&Number.isSafeInteger(data.score)&&data.score>=0){const medals=[];
+     if(stats?.victory===true)medals.push(game==="volleyball_25"?"25점 승리":"62세 정년 달성");
+     if(data.ranked===true&&Number.isSafeInteger(data.rank)&&data.rank>=1&&data.rank<=10)medals.push("최고 점수 TOP 10");
+     if(game==="volleyball_25"&&data.timeRanked===true&&Number.isSafeInteger(data.timeRank)&&data.timeRank>=1&&data.timeRank<=10)medals.push("25점 최단시간 TOP 10");
+     this.shareResult={score:data.score,school:String(this.school?.school_name||""),medals};}
     return true;
   }catch(err){
    if(generation!==this.playGeneration)return;
@@ -211,6 +215,13 @@ class ArcadeLeaderboard{
    });
    const lounge=el("a","","인디스쿨 라운지");lounge.href="https://indischool.com/tweets/channels/lounge";lounge.target="_blank";lounge.rel="noopener noreferrer";
    panel.append(el("h3","","경기 하이라이트"),label,message,copy,save,lounge,feedback);
+   if(result.medals?.length){
+    const medalPanel=el("section","arcade-match-medals");
+    medalPanel.append(el("h3","","이번 경기 명예의 훈장"),el("p","","서버에서 확인한 이번 경기의 달성 항목입니다. 학교 누적 훈장은 아직 제공하지 않습니다."));
+    const list=el("ul");
+    for(const medal of result.medals)list.append(el("li","","🏅 "+medal));
+    medalPanel.append(list);panel.append(medalPanel);
+   }
    root.append(panel);
   }
   root.append(content);
