@@ -15,6 +15,15 @@
     })]).finally(() => clearTimeout(timer));
   };
 
+  function renderMilestone(n) {
+    const card=byId('certificateMilestone'), title=byId('certificateMilestoneTitle');
+    if(!card || !title)return;
+    const special=Number.isSafeInteger(n)&&n>=100&&(n%100===0||/^([1-9])\1\1$/.test(String(n)));
+    card.hidden=!special;
+    title.textContent=special?n.toLocaleString('ko-KR')+'번째 특별한 이정표':'';
+    byId('certificate')?.classList.toggle('has-milestone',special);
+  }
+
   async function prepare() {
     if (!accessGranted || busy) return;
     busy = true;
@@ -48,6 +57,7 @@
         participant = n;
         personalCode = code;
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
+        renderMilestone(n);
         identityCode.textContent = code;
         copyIdentityCode.disabled = byId('challengeIdentityPanel')?.dataset.referralState !== 'earned';
         identityCopyFeedback.textContent = '';
@@ -143,6 +153,8 @@
     imageUrl = null;
     capture.disabled = true;
     participantNo.textContent = '순번 확인 중';
+    renderMilestone(null);
+    if(byId('togetherIdentityDetails'))byId('togetherIdentityDetails').open=false;
     status.textContent = '';
     retry.hidden = true;
   });
