@@ -162,33 +162,28 @@
       "version": "v1.4.0",
       "name": "플레이",
       "scope": "게임 조작·전체화면·일시정지",
-      "status": "CANDIDATE_JOYSTICK_CI_PENDING",
+      "status": "DEPLOYED",
       "branch": "release/v1.4.0-play",
       "pr": 284,
-      "commit": null,
+      "commit": "494383cde9f952bec9cc09fbfebe373cc6ef797b",
       "tests": [
         {
-          "name": "Prior candidate playback UI and unit CI",
+          "name": "All 7 CI workflows",
           "result": "PASS",
-          "run": 45306192075
+          "run": 45309979994
         },
         {
-          "name": "Prior candidate arcade smoke",
-          "result": "FAIL",
-          "reason": "outdated exact cache-buster assertions, controls have changed"
-        },
-        {
-          "name": "Merged joystick branch and updated physical movement regression",
-          "result": "PENDING"
+          "name": "Chromium 26 cases",
+          "result": "PASS"
         }
       ],
       "changed_files": [],
       "dependencies": [
         "v1.3.0 production applied before registration"
       ],
-      "admin_registration": "PENDING",
-      "production": "NOT_APPROVED",
-      "deployment_date": null,
+      "admin_registration": "VERIFIED",
+      "production": "DEPLOYED",
+      "deployment_date": "2026-11-24T02:09:56.002Z",
       "rollback_sha": "1a3a67e53e4201f3b292219a0b3f0b3a9898de23"
     },
     {
@@ -196,17 +191,34 @@
       "version": "v1.5.0",
       "name": "이정표",
       "scope": "챌린지 달성·코드·추천 현황",
-      "status": "PENDING",
-      "branch": null,
-      "pr": null,
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.5.0-milestone",
+      "pr": 285,
       "commit": null,
-      "tests": [],
+      "tests": [
+        {
+          "name": "Initial referral safety and source/privacy checks",
+          "result": "PASS",
+          "run": 45310497709
+        },
+        {
+          "name": "Chromium installation delay",
+          "result": "INCOMPLETE",
+          "run": 45310497825
+        },
+        {
+          "name": "System Chromium and stale session regression",
+          "result": "PENDING"
+        }
+      ],
       "changed_files": [],
-      "dependencies": [],
+      "dependencies": [
+        "v1.4.0 production applied before registration"
+      ],
       "admin_registration": "PENDING",
       "production": "NOT_APPROVED",
       "deployment_date": null,
-      "rollback_sha": null
+      "rollback_sha": "494383cde9f952bec9cc09fbfebe373cc6ef797b"
     },
     {
       "order": 5,

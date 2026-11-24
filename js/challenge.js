@@ -8,6 +8,17 @@
   const identityEndpoint = SUPABASE_URL + '/functions/v1/beagu-challenge-identity';
   const levelSessionKey = 'beagu-level-session-v1';
   let imageUrl = null, participant = null, personalCode = null, busy = false, accessGranted = false, certificateRefreshPending = false;
+  let epoch=0, certificateRevision=0, activeSession="";
+  const currentSession=()=>{try{return sessionStorage.getItem(levelSessionKey)||"";}catch(_){return "";}};
+  function renderMilestone(n){
+    const card=byId("certificateMilestone"),title=byId("certificateMilestoneTitle");
+    if(!card||!title)return;
+    const special=Number.isSafeInteger(n)&&n>=100&&(n%100===0||/^([1-9])\1\1$/.test(String(n)));
+    card.hidden=!special;title.textContent=special?n.toLocaleString("ko-KR")+"번째 특별한 이정표":"";
+    byId("certificate")?.classList.toggle("has-milestone",special);
+  }
+  function invalidateImage(){certificateRevision++;capture.disabled=true;if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=null;}
+  function resetIdentity(){participant=null;personalCode=null;participantNo.textContent="순번 확인 중";identityCode.textContent="고유번호 확인 중";copyIdentityCode.disabled=true;identityCopyFeedback.textContent="";renderMilestone(null);invalidateImage();}
   const deadline = (promise, ms, message) => {
     let timer;
     return Promise.race([Promise.resolve(promise), new Promise((_, reject) => {
@@ -17,6 +28,8 @@
 
   async function prepare() {
     if (!accessGranted || busy) return;
+    const mine=epoch;const tokenAtStart=activeSession;
+    const valid=()=>accessGranted&&epoch===mine&&currentSession()===tokenAtStart;
     busy = true;
     capture.disabled = true;
     retry.hidden = true;
@@ -34,11 +47,11 @@
           headers: { 'Content-Type': 'application/json', 'X-Beagu-Session': sessionToken },
           body: JSON.stringify({ action: 'issue', visitor: window.beaguVisitor })
         }), 15000, '연결이 지연되고 있습니다. 다시 시도해주세요.');
-        if (!accessGranted) return;
+        if (!valid()) return;
         if (response.status === 401 || response.status === 403) throw new Error('레벨1 인증이 만료되었습니다. 다시 인증해 주세요.');
         if (!response.ok) throw new Error('고유번호 발급에 실패했습니다. 다시 시도해주세요.');
         const data = await response.json();
-        if (!accessGranted) return;
+        if (!valid()) return;
         const n = Number(data.participantNo);
         const code = data.identityCode;
         if (!Number.isSafeInteger(n) || n < 1 ||
@@ -48,6 +61,7 @@
         participant = n;
         personalCode = code;
         participantNo.textContent = n.toLocaleString('ko-KR') + '번째';
+        renderMilestone(n);
         identityCode.textContent = code;
         copyIdentityCode.disabled = byId('challengeIdentityPanel')?.dataset.referralState !== 'earned';
         identityCopyFeedback.textContent = '';
@@ -57,26 +71,29 @@
         }));
         if (window.BeaguChallengeProgress) await window.BeaguChallengeProgress.refresh();
       }
-      if (!accessGranted) return;
+      if (!valid()) return;
       status.textContent = '인증 이미지를 준비하고 있습니다.';
       if (typeof html2canvas !== 'function') throw new Error('이미지 기능을 불러오지 못했습니다. 페이지를 새로고침해주세요.');
       if (document.fonts) await deadline(document.fonts.ready, 10000, '글꼴 로딩이 지연되고 있습니다. 다시 시도해주세요.');
+      if (!valid()) return;
       // Strictly capture only public information. Never serialize the whole page.
       const root=byId('certificate');
       if(!root || root.querySelector('#identityCode,#challengeReferralLink,#challengeReferralPanel,#challengeIdentityPanel,[data-referral-secret]') ||
          (personalCode && root.textContent.includes(personalCode)))
         throw new Error('개인 코드 노출 위험으로 인증 이미지 생성을 차단했습니다.');
+      const revision=certificateRevision;
       const canvas = await deadline(html2canvas(root, {
         scale: 2, backgroundColor: '#ffffff', logging: false
       }), 20000, '이미지 생성이 지연되고 있습니다. 다시 시도해주세요.');
       const blob = await deadline(new Promise(resolve => canvas.toBlob(resolve, 'image/png')), 10000, '이미지 변환에 실패했습니다. 다시 시도해주세요.');
       if (!blob) throw new Error('이미지를 생성하지 못했습니다. 다시 시도해주세요.');
-      if (!accessGranted) return;
+      if (!valid()||revision!==certificateRevision) return;
       if (imageUrl) URL.revokeObjectURL(imageUrl);
       imageUrl = URL.createObjectURL(blob);
       capture.disabled = false;
       status.textContent = '';
     } catch (error) {
+      if(!valid())return;
       if (participant === null) participantNo.textContent = '순번 조회 실패';
       if (personalCode === null) {
         identityCode.textContent = '고유번호 발급 실패';
@@ -97,7 +114,7 @@
   }
 
   capture.addEventListener('click', () => {
-    if (!accessGranted || !imageUrl) return;
+    if (!accessGranted || !imageUrl || currentSession()!==activeSession) return;
     try {
       const link = document.createElement('a');
       link.href = imageUrl;
@@ -113,7 +130,7 @@
   });
 
   copyIdentityCode.addEventListener('click', async () => {
-    if (!accessGranted || !personalCode || byId('challengeIdentityPanel')?.dataset.referralState !== 'earned') return;
+    if (!accessGranted || currentSession()!==activeSession || !personalCode || byId('challengeIdentityPanel')?.dataset.referralState !== 'earned') return;
     try {
       if (!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('UNAVAILABLE');
       await navigator.clipboard.writeText(personalCode);
@@ -132,27 +149,21 @@
     if (!event.persisted && imageUrl) URL.revokeObjectURL(imageUrl);
   });
   window.addEventListener('beagu:challenge-access-revoked', () => {
-    accessGranted = false;
-    certificateRefreshPending=false;
-    participant = null;
-    personalCode = null;
-    identityCode.textContent = '고유번호 확인 중';
-    copyIdentityCode.disabled = true;
-    identityCopyFeedback.textContent = '';
-    if (imageUrl) URL.revokeObjectURL(imageUrl);
-    imageUrl = null;
-    capture.disabled = true;
-    participantNo.textContent = '순번 확인 중';
-    status.textContent = '';
-    retry.hidden = true;
+    accessGranted=false;activeSession="";epoch++;certificateRefreshPending=false;resetIdentity();
+    status.textContent="";retry.hidden=true;
   });
   window.addEventListener('beagu:referral-status-changed', () => {
     if(!accessGranted)return;
+    invalidateImage();
     if(busy){certificateRefreshPending=true;return;}
     void prepare();
   });
   window.addEventListener('beagu:challenge-access-granted', () => {
-    accessGranted = true;
+    const token=currentSession();
+    if(!token)return;
+    if(token!==activeSession){epoch++;activeSession=token;resetIdentity();}
+    accessGranted=true;
+    if(busy){certificateRefreshPending=true;return;}
     void prepare();
   });
 })();

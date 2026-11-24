@@ -1,6 +1,6 @@
 /* Browser-only CSS and actual shared gesture script, no network or live game scores. */
 const assert=require('node:assert/strict'),fs=require('node:fs/promises'),{chromium}=require('playwright');
-(async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox']});try{const css=await fs.readFile('styles/arcade-playback-v1.css','utf8'),gest=await fs.readFile('js/arcade-gestures-v1.js','utf8'),rail=await fs.readFile('js/arcade-scroll-rail-v1.js','utf8');
+(async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});try{const css=await fs.readFile('styles/arcade-playback-v1.css','utf8'),gest=await fs.readFile('js/arcade-gestures-v1.js','utf8'),rail=await fs.readFile('js/arcade-scroll-rail-v1.js','utf8');
 const source=await fs.readFile('teacher-volleyball.html','utf8');
 const cssStart=source.indexOf('/* Brawl-style multitouch controls:'),cssEnd=source.indexOf('</style>',cssStart);
 const markupStart=source.indexOf('<div class="volleyball-touch-controls"'),markupEnd=source.indexOf('<div class="volley-ready-overlay"',markupStart);

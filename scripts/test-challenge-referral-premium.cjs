@@ -117,11 +117,11 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
 
   returned.validReferrals=10;
   emit('focus');await tick();
-  assert.match(el.challengeReferralProgress.textContent,/10 \/ 1건/);
+  assert.match(el.challengeReferralProgress.textContent,/누적 유효 추천 10건/);
   assert.match(el.certificateThanks.textContent,/10명 달성/);
   returned.validReferrals=26;
   emit('focus');await tick();
-  assert.match(el.challengeReferralProgress.textContent,/26 \/ 1건/);
+  assert.match(el.challengeReferralProgress.textContent,/누적 유효 추천 26건/);
   assert.match(el.certificateThanks.textContent,/20명 달성/);
   returned.validReferrals=31;
   emit('focus');await tick();
