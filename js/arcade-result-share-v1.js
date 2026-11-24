@@ -17,7 +17,8 @@
   const image=document.createElement("canvas"),w=1000,inner=920;
   const aspect=canvas.width>0&&canvas.height>0?canvas.height/canvas.width:5/9;
   const h=Math.min(800,Math.round(inner*aspect)),imgW=Math.min(inner,Math.round(h/aspect));
-  image.width=w;image.height=390+h;const c=image.getContext("2d");
+  const extra=Array.isArray(data.certificateLines)?data.certificateLines.slice(0,4):[];
+  image.width=w;image.height=390+h+extra.length*42;const c=image.getContext("2d");
   if(!c)throw Error("canvas_unavailable");
   c.fillStyle="#142b45";c.fillRect(0,0,w,image.height);
   c.fillStyle="#c7e7fb";c.font="700 23px sans-serif";c.fillText("BAEGUINDEX  ·  "+data.game,40,45,920);
@@ -26,8 +27,10 @@
   c.fillStyle="#071b2e";c.fillRect(40,180,920,h);
   c.drawImage(canvas,(w-imgW)/2,180,imgW,h);
   c.fillStyle="#fff";c.font="800 29px sans-serif";c.fillText(data.metrics.join("  ·  "),40,180+h+55,920);
-  c.fillStyle="#a8d9ed";c.font="600 22px sans-serif";c.fillText(data.note||"개인 게임 결과 · 공식 인증서 아님",40,180+h+98,920);
-  c.fillText("baeguindex.com  |  플레이코트",40,180+h+140,920);
+  c.fillStyle="#d4edfa";c.font="600 24px sans-serif";
+  extra.forEach((line,i)=>c.fillText(line,40,180+h+96+i*42,920));
+  c.fillStyle="#a8d9ed";c.font="600 22px sans-serif";c.fillText(data.note||"개인 게임 결과 · 공식 인증서 아님",40,180+h+98+extra.length*42,920);
+  c.fillText("baeguindex.com  |  플레이코트",40,180+h+140+extra.length*42,920);
   return image;
  }
  function create(parent,canvas,{compact=false}={}){
@@ -49,11 +52,11 @@
    const buttons=text("div","arcade-result-actions");
    const copy=text("button","arcade-result-copy","게임화면을 복사하기");copy.type="button";copy.disabled=true;
    const brag=text("a","arcade-result-brag","자랑하기 ↗");brag.href=LOUNGE;brag.target="_blank";brag.rel="noopener noreferrer";
-   const download=text("button","arcade-result-download","이미지 저장");download.type="button";download.hidden=true;
+   const download=text("button","arcade-result-download","이미지 저장");download.type="button";download.hidden=true;download.disabled=true;
    const msg=text("p","arcade-result-status","결과 이미지를 준비하고 있습니다.");msg.setAttribute("role","status");msg.setAttribute("aria-live","polite");
    buttons.append(copy,brag);section.append(buttons,download,msg);
    section.hidden=false;section.scrollTop=0;
-   const prepared=()=>{if(ticket!==serial)return;copy.disabled=!blob;msg.textContent=blob?"이미지를 복사한 뒤 인디스쿨 라운지에 붙여넣어 주세요.":"이미지를 만들 수 없습니다."};
+   const prepared=()=>{if(ticket!==serial)return;copy.disabled=!blob;download.disabled=!blob;download.hidden=!blob;msg.textContent=blob?"이미지를 복사한 뒤 인디스쿨 라운지에 붙여넣어 주세요.":"이미지를 만들 수 없습니다."};
    try{snapshot=makeSnapshot(canvas,data);snapshot.toBlob(b=>{if(ticket!==serial)return;blob=b;prepared();},"image/png");}catch(_){prepared();}
    download.addEventListener("click",()=>{if(ticket!==serial||!blob)return;const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="baegu-game-result.png";a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);msg.textContent="저장한 이미지를 인디스쿨 라운지에 첨부해 주세요.";});
    copy.addEventListener("click",async()=>{

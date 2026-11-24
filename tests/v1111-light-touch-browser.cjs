@@ -157,6 +157,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   result=await page.evaluate(()=>window.__run4Fixture.advance(190));
   assert.equal(result.state,'over');assert.equal(result.clock,190);assert.match(await page.locator('#overlayTitle').innerText(),/정년퇴직/);
   assert.equal(await page.locator('#choices button').count(),2);assert.match(await page.locator('#overlayDesc').innerText(),/보스 .*\/5/);
+  assert.match(await page.locator('#overlayDesc').innerText(),/교실을 지켜왔습니다/);
   await page.waitForFunction(()=>!document.querySelector('.arcade-result-copy').disabled);
   assert.equal(await page.locator('.arcade-result-brag').getAttribute('href'),'https://indischool.com/tweets/channels/lounge');
   await page.getByRole('button',{name:'↻ 다시 하기',exact:true}).click();

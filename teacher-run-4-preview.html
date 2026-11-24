@@ -214,6 +214,7 @@ const rules=window.BeaguRun4Rules;let run4=rules.create(),leave=rules.createLeav
 let bossX=0,bossWarn=null,bossNext=0,bossShot=0,bossProjectiles=[],bossRate=1,bossGuard=0,bossSpawn=1,alliesPeak=0;
 let tenureSeen=new Set(),tenureAttack=1,tenureDamage=1;
 let leaveUiKey="";
+let retirementScene=false;
 const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
 const bgm=window.BeaguArcadeBgm.create("teacher_run");
 const difficultyProfiles={
@@ -386,7 +387,7 @@ async function start(){
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
  state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";retirementScene=false;combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;resetChalkHelpers();
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=Math.max(profile.inv,3);
  resetPatternHazards();resetMystery();
@@ -401,7 +402,7 @@ function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;resetPatternHazards();resetMystery();
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";retirementScene=false;score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -666,51 +667,40 @@ function finish(win){
  });
  const stats=run4.stats(),beaten=bosses.defeated(),abilityNames=rules.growthPlan.filter(p=>growth.level(p.id)>0).map(p=>p.name+" "+growth.level(p.id));
  const ending=rules.ending({win,bosses:beaten.length,allies:alliesPeak,crises:stats.crises,growth:rules.growthPlan.reduce((n,p)=>n+growth.level(p.id),0),combo:stats.maxCombo,hits:misses});
- const details=(win?"24세 임용 → 62세 정년 달성!":getAge()+"세 · 새로운 도전")+"\n"+rawScore.toLocaleString("ko-KR")+"점 × 난이도 "+difficultyScore+(win?" × 정년 2":"")+" = "+Math.floor(score).toLocaleString("ko-KR")+"점";
+ const details=(win?"24세 임용 → 62세 정년 달성!\n수많은 어려움 속에서도 당신은 교실을 지켜왔습니다.":getAge()+"세 · 새로운 도전")+"\n"+rawScore.toLocaleString("ko-KR")+"점 × 난이도 "+difficultyScore+(win?" × 정년 2":"")+" = "+Math.floor(score).toLocaleString("ko-KR")+"점";
  const bossNames=rules.bossPlan.filter(p=>beaten.includes(p.id)).map(p=>p.name);
  const report=[details,"재직 "+Math.floor(clock/5)+"년 · ROUND "+(stage+1)+" · "+(difficultyName[schoolPicker.get()?.difficulty]||""),
   "보스 "+beaten.length+"/5"+(bossNames.length?" · "+bossNames.join(", "):""),
   "최대 콤보 "+stats.maxCombo+" · 피격 "+misses+"회 · 위기 극복 "+stats.crises+"회",
   "사용한 휴가 "+leave.state().usedDays+"일 · 동료 "+alliesPeak+"명","성장: "+(abilityNames.join(", ")||"없음"),"칭호: "+ending.titles.join(" · "),"4.0 검수판 · 기기 기록만 저장"];
  resetBossThreats();
- if(win){items=[];sideStudents=[];paperBullets=[];paperTarget=null;bosses.advance(190);burst(player.x,player.y,"#ffdf80",40);}
+ if(win){retirementScene=true;items=[];mysteryDrops=[];mysteryReveals=[];chalkShots=[];sideStudents=[];paperBullets=[];paperTarget=null;activeEvent=null;eventSeconds=0;specialFlash=0;noticeTime=0;bosses.advance(190);burst(player.x,player.y,"#ffdf80",40);}
  message((win?"🎓 ":"🌿 ")+ending.primary,report.join("\n"),[
   {label:"↻ 다시 하기",action:()=>start()},{label:"🏫 다른 학교",action:stopAndChangeSchool}],win?"🎓":"🌿");
  $("choices").classList.add("arcade-result-replay-row");
  draw();
- resultView.show({game:"험난한 교직생활 4.0 검수판",title:ending.primary,detail:win?"62세 정년 달성!":getAge()+"세까지 생존",metrics:[Math.floor(score).toLocaleString("ko-KR")+"점",Math.floor(clock/5)+"년","보스 "+beaten.length+"/5",difficultyName[schoolPicker.get()?.difficulty]||""],note:"4.0 개발 검수판 · 공식 랭킹 미제출"});
- playTone(win?950:280,.32);
+ resultView.show({game:"험난한 교직생활 4.0 검수판",title:ending.primary,detail:win?"62세 정년 달성!":getAge()+"세까지 생존",metrics:[Math.floor(score).toLocaleString("ko-KR")+"점",Math.floor(clock/5)+"년","보스 "+beaten.length+"/5",difficultyName[schoolPicker.get()?.difficulty]||""],certificateLines:["버전 4.0 · "+(win?"정년퇴직 성공":"새로운 인생의 시작"),"대표 칭호: "+ending.primary,"재직 "+Math.floor(clock/5)+"년 · "+getAge()+"세 · 처치 보스 "+beaten.length+"/5"],note:"4.0 개발 검수판 · 개인 기록 · 공식 랭킹 미제출"});
+ if(win)playRetirementMusic();else playTone(280,.32);
 }
 let savingPausedRun=false;
 async function leavePausedRun(changeSchool=false){
  if(state!=="paused"||savingPausedRun)return;
  if(clock<1){
-  $("overlayDesc").textContent="공식 기록을 남기려면 1초 이상 플레이해 주세요.";
+  $("overlayDesc").textContent="기기 기록을 남기려면 1초 이상 플레이해 주세요.";
   return;
  }
  savingPausedRun=true;state="saving";
  message("기록 저장 중","지금까지의 점수와 나이를 기록하고 있습니다.",[],"💾");
- const rawScore=Math.max(0,Math.floor(score));
- const survivalSeconds=Math.floor(clock);
- if(rawScore>best){best=rawScore;persist();}
- $("bestLabel").textContent=best.toLocaleString("ko-KR");
  try{
-  const saved=await ranking?.finish(rawScore,{
-   score:rawScore,baseScore:rawScore,survivalSeconds,age:getAge(),victory:false,
-   nearMisses:nearCount,hits:misses,livesLeft,
-   healthPercent:Math.max(0,Math.min(100,Math.round(life/Math.max(1,maxLife)*100)))
-  });
-  if(saved!==true){
-   state="over";
-   message("기록 저장 실패","공식 기록을 저장하지 못했습니다. 연결 상태를 확인해 주세요.",[
-    {label:"↩ 처음으로 (기록 미저장)",action:stopToIntro},
-    {label:"🏫 다른 학교 선택",action:()=>{stopToIntro();schoolPicker.resetForChange();}}
-   ],"⚠️");
-   return;
-  }
+  const rawScore=Math.max(0,Math.floor(score)),finalScore=Math.floor(rawScore*bosses.tier.score);
+  const survivalSeconds=Math.floor(clock);
+  if(finalScore>best){best=finalScore;persist();}
+  $("bestLabel").textContent=best.toLocaleString("ko-KR");
+  await ranking?.finish(finalScore,{score:finalScore,baseScore:rawScore,survivalSeconds,age:getAge(),victory:false});
   stopToIntro();
   if(changeSchool)schoolPicker.resetForChange();
   schoolPicker.status.textContent="✅ 직전 경기의 기기 최고점 기록을 확인했습니다. 공식 기록 미제출.";
+
  }finally{savingPausedRun=false;}
 }
 function pause(){
@@ -1346,10 +1336,30 @@ function drawReadableNotice(content,y,background,color){
  }
  ctx.restore();return h;
 }
+function playRetirementMusic(){
+ // Original short celebration motif. Honor the existing sound switch and never loop.
+ if(!soundOn||document.hidden)return;
+ const ticket=startTicket;
+ [523.25,659.25,783.99,659.25,587.33,698.46,783.99,1046.5].forEach((note,i)=>{
+  setTimeout(()=>{if(ticket===startTicket&&retirementScene&&state==="over"&&soundOn&&!document.hidden)playTone(note,.32,"triangle",.035);},i*270);
+ });
+}
+function drawRetirementScene(){
+ ctx.save();const sky=ctx.createLinearGradient(0,0,0,H);
+ sky.addColorStop(0,"#ffe5b2");sky.addColorStop(1,"#f8bc8f");ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ ctx.fillStyle="#fff7d4";ctx.beginPath();ctx.arc(W*.78,H*.24,Math.min(65,W*.17),0,Math.PI*2);ctx.fill();
+ ctx.textAlign="center";ctx.fillStyle="#734d36";ctx.font="900 20px sans-serif";ctx.fillText("수고 많으셨습니다, 선생님!",W/2,Math.max(35,H*.16),W-20);
+ ctx.font="bold 13px sans-serif";ctx.fillText("24세 임용 · 38년의 교직 인생 · 62세 정년",W/2,H*.23,W-20);
+ for(let i=0;i<22;i++){const x=((i*53+17)%97)/97*W,y=H*.27+((i*29)%73)/100*H*.46;ctx.font=(12+i%4*3)+"px sans-serif";ctx.fillText(i%3===0?"💌":i%3===1?"🌸":"✨",x,y);}
+ const team=allies.list();team.forEach((a,i)=>{const x=W*(i+1)/(team.length+1),y=H*.68;ctx.fillStyle=a.color;ctx.beginPath();ctx.arc(x,y,17,0,Math.PI*2);ctx.fill();ctx.font="19px sans-serif";ctx.fillText(a.icon,x,y+6);ctx.font="10px sans-serif";ctx.fillStyle="#734d36";ctx.fillText(a.name,x,y+29,Math.max(38,W/(team.length+1)-4));});
+ ctx.font="38px sans-serif";ctx.fillText("🎓 💐",W/2,H*.85);
+ ctx.restore();
+}
 function draw(){
+ if(retirementScene&&state==="over"){drawRetirementScene();return;}
  ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
  background();
- if(state==="over"&&clock>=RETIREMENT_SECONDS){ctx.fillStyle="rgba(255,211,136,.3)";ctx.fillRect(0,0,W,H);ctx.font="28px sans-serif";ctx.textAlign="center";ctx.fillText("💌  🎓  💐",W/2,H*.42);}
+
  if(leave.active(clock)){ctx.save();ctx.fillStyle="rgba(255,223,125,.16)";ctx.fillRect(0,0,W,H);ctx.strokeStyle="#ffdf80";ctx.lineWidth=3;ctx.beginPath();ctx.arc(player.x,player.y-12,38,0,Math.PI*2);ctx.stroke();ctx.restore();}
  drawItems();drawMystery();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();drawAllies();drawBoss();
  if(specialFlash>0){

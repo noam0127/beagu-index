@@ -44,9 +44,10 @@ for(const compact of [false,true]){
     window.png={type:blob.type,size:blob.size,pixel:Array.from(c.getImageData(500,250,1,1).data)};
    }}});
    window.result=window.BeaguArcadeResult.create(document.querySelector('#mount'),canvas,{compact});
-   window.result.show({game:compact?'험난한 교직생활':'선생님배구',title:'역전승!',detail:'검증 결과',metrics:['25 : 23','2,500점']});
+   window.result.show({game:compact?'험난한 교직생활':'선생님배구',title:'역전승!',detail:'검증 결과',metrics:['25 : 23','2,500점'],...(compact?{certificateLines:['버전 4.0','정년퇴직 성공']}: {})});
   },compact);
   await p.waitForFunction(()=>!document.querySelector('.arcade-result-copy').disabled);
+  assert.equal(await p.locator('.arcade-result-download').isVisible(),true);
   await p.locator('.arcade-result-copy').click();await p.waitForFunction(()=>window.png);
   const png=await p.evaluate(()=>window.png);assert.equal(png.type,'image/png');assert.ok(png.size>1000);assert.deepEqual(png.pixel,[223,69,48,255]);
   assert.equal(await p.locator('.arcade-result-brag').getAttribute('href'),'https://indischool.com/tweets/channels/lounge');assert.equal(await p.locator('.arcade-result-brag').getAttribute('target'),'_blank');
