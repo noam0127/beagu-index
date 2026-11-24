@@ -50,14 +50,17 @@ Deno.serve(async(req:Request)=>{
    if(error)return send({error:'AUTH_UNAVAILABLE'},503,origin);
    // A challenge identity code is a temporary, server-verified Lv.2 credential.
    // It must never become a full account or a Post-it author identity.
-   let level=Number(acc?.access_level)||0;
+   let level=acc?1:0;
    let visitorId:string|null=null;
    if(!acc){
      // A merely issued challenge identity code is NOT sufficient.
      const {data:earnedVisitor,error:identityError}=await admin.rpc('beagu_earned_challenge_visitor',{p_code:code});
      if(identityError)return send({error:'AUTH_UNAVAILABLE'},503,origin);
      if(typeof earnedVisitor==='string'&&/^[a-f0-9-]{36}$/i.test(earnedVisitor)){
-       visitorId=earnedVisitor;level=2;
+       visitorId=earnedVisitor;
+       const {data:legacy,error:legacyError}=await admin.rpc('beagu_legacy_lv2_read_allowed_v1',{p_visitor:visitorId});
+       if(legacyError)return send({error:'AUTH_UNAVAILABLE'},503,origin);
+       level=legacy===true?2:1;
      }else{
        // Issued but not yet promoted personal challenge codes grant Lv.1 only.
        const {data:issuedLevel,error:issuedError}=await admin.rpc('beagu_issued_challenge_code_level_v1',{p_code:code});
@@ -72,9 +75,9 @@ Deno.serve(async(req:Request)=>{
    const v=token(),expiry=new Date(Date.now()+6*60*60*1000).toISOString();
    const record:Record<string,unknown>={token_sha256:await hash(v),access_level:level,expires_at:expiry};
    if(visitorId){record.identity_campaign='2026';record.identity_visitor_id=visitorId;}
-   const {error:writeError}=await admin.from('beagu_level_sessions').insert(record);
-   if(writeError)return send({error:'SESSION_UNAVAILABLE'},503,origin);
-   return send({token:v,level,provisional,expires_at:expiry},200,origin);
+   const {data:issued,error:writeError}=await admin.from('beagu_level_sessions').insert(record).select('access_level,expires_at').single();
+   if(writeError||!issued)return send({error:'SESSION_UNAVAILABLE'},503,origin);
+   return send({token:v,level:Number(issued.access_level),provisional:Number(issued.access_level)>=2,expires_at:issued.expires_at},200,origin);
   }
   if(body.action!=='verify'&&body.action!=='school'&&body.action!=='logout'&&body.action!=='percentiles'&&body.action!=='offices'&&body.action!=='ranked_schools'&&body.action!=='survey_comparisons')return send({error:'UNKNOWN_ACTION'},400,origin);
   const session=await check(req);

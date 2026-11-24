@@ -177,7 +177,10 @@ Deno.serve(async (req) => {
       return json(origin, 503, { error: 'REFERRAL_UNAVAILABLE' });
     }
     const credit = verifiedReferralCredit(enrollment);
-    if (credit.earned && (Number(session.access_level) < 2 || !session.identity_visitor_id)) {
+    const {data:legacy,error:legacyError}=await db.rpc('beagu_legacy_lv2_read_allowed_v1',{p_visitor:visitor});
+    if(legacyError)return json(origin,503,{error:'SESSION_UNAVAILABLE'});
+    const transitionEarned=credit.earned&&legacy===true;
+    if (transitionEarned && (Number(session.access_level) < 2 || !session.identity_visitor_id)) {
       // Compare-and-set: an expired or concurrently rebound session must never
       // be upgraded using a stale ownership check.
       let upgrade = db.from('beagu_level_sessions')
@@ -203,9 +206,10 @@ Deno.serve(async (req) => {
     return json(origin, 200, {
       shortLink: 'https://baeguindex.com/r/#' + shortCode,
       link: 'https://baeguindex.com/survey.html?ref=' + token,
-      level: credit.earned ? 2 : 1,
+      level: transitionEarned ? 2 : 1,
       validReferrals: credit.count,
-      provisional: credit.earned,
+      provisional: transitionEarned,
+      referralEarned: credit.earned,
       deviceBound: true,
     });
   } catch (err) {
