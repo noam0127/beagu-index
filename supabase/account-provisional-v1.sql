@@ -17,59 +17,97 @@ ALTER TABLE beagu_private.beagu_provisional_accounts_v1 ENABLE ROW LEVEL SECURIT
 ALTER TABLE beagu_private.beagu_account_login_budget_v1 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE beagu_private.beagu_account_sessions_v1 ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON beagu_private.beagu_provisional_accounts_v1,beagu_private.beagu_account_login_budget_v1,beagu_private.beagu_account_sessions_v1 FROM PUBLIC,anon,authenticated;
-CREATE TABLE beagu_private.beagu_account_nicknames_v1(
- visitor_id uuid PRIMARY KEY,
- nickname text COLLATE "C" NOT NULL UNIQUE CHECK(nickname ~ '^[Il|ǀ❘ı∣│]{10}$'),
- week_start date NOT NULL DEFAULT date_trunc('week',now() AT TIME ZONE 'Asia/Seoul')::date
+CREATE TABLE beagu_private.beagu_account_nickname_members_v1(
+ visitor_id uuid PRIMARY KEY, prepared_through date NOT NULL DEFAULT '-infinity'
 );
+CREATE INDEX beagu_account_nickname_pending_idx ON beagu_private.beagu_account_nickname_members_v1(prepared_through,visitor_id);
+CREATE TABLE beagu_private.beagu_account_nicknames_v1(
+ visitor_id uuid NOT NULL REFERENCES beagu_private.beagu_account_nickname_members_v1(visitor_id) ON DELETE CASCADE,
+ week_start date NOT NULL,
+ nickname text COLLATE "C" NOT NULL UNIQUE CHECK(nickname ~ '^[Il|ǀ❘ı∣│]{10}$'),
+ PRIMARY KEY(visitor_id,week_start)
+);
+CREATE INDEX beagu_account_nickname_week_idx ON beagu_private.beagu_account_nicknames_v1(week_start,visitor_id);
+ALTER TABLE beagu_private.beagu_account_nickname_members_v1 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE beagu_private.beagu_account_nicknames_v1 ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON beagu_private.beagu_account_nicknames_v1 FROM PUBLIC,anon,authenticated;
-CREATE FUNCTION beagu_private.beagu_account_nickname_v1(p_visitor uuid)
+REVOKE ALL ON beagu_private.beagu_account_nickname_members_v1,beagu_private.beagu_account_nicknames_v1 FROM PUBLIC,anon,authenticated,service_role;
+CREATE FUNCTION beagu_private.beagu_account_week_v1(p_at timestamptz)
+RETURNS date LANGUAGE sql IMMUTABLE SET search_path='' AS $$
+ SELECT date_trunc('week',p_at AT TIME ZONE 'Asia/Seoul')::date
+$$;
+-- Registry row lock serializes allocation for this member only.
+CREATE FUNCTION beagu_private.beagu_account_allocate_nickname_v1(p_visitor uuid,p_week date)
 RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE result text; candidate text; previous text; stored_week date;
- current_week date:=date_trunc('week',now() AT TIME ZONE 'Asia/Seoul')::date;
- n integer; alphabet constant text:='Il|ǀ❘ı∣│';
+DECLARE result text; candidate text; rnd bytea; alphabet constant text:='Il|ǀ❘ı∣│';
 BEGIN
- -- Same lock as account registration and formal linking; cron and login cannot race.
- PERFORM pg_advisory_xact_lock(2026,1110);
- SELECT nickname,week_start INTO previous,stored_week FROM beagu_private.beagu_account_nicknames_v1 WHERE visitor_id=p_visitor;
- IF previous IS NOT NULL AND stored_week>=current_week THEN RETURN previous; END IF;
+ SELECT nickname INTO result FROM beagu_private.beagu_account_nicknames_v1 WHERE visitor_id=p_visitor AND week_start=p_week;
+ IF result IS NOT NULL THEN RETURN result; END IF;
  FOR i IN 1..64 LOOP
-  candidate:='';
-  WHILE char_length(candidate)<10 LOOP
-   n:=get_byte(extensions.gen_random_bytes(1),0);
-   candidate:=candidate||substr(alphabet,1+n%8,1);
-  END LOOP;
-  IF candidate IS NOT DISTINCT FROM previous THEN CONTINUE; END IF;
-  BEGIN
-   INSERT INTO beagu_private.beagu_account_nicknames_v1(visitor_id,nickname,week_start)
-   VALUES(p_visitor,candidate,current_week)
-   ON CONFLICT(visitor_id) DO UPDATE SET nickname=excluded.nickname,week_start=excluded.week_start
-   RETURNING nickname INTO result;
-   RETURN result;
-  EXCEPTION WHEN unique_violation THEN
-   -- Random collision: retry; never displace another member.
-  END;
+  rnd:=extensions.gen_random_bytes(10); candidate:='';
+  FOR j IN 0..9 LOOP candidate:=candidate||substr(alphabet,1+get_byte(rnd,j)%8,1); END LOOP;
+  INSERT INTO beagu_private.beagu_account_nicknames_v1(visitor_id,week_start,nickname)
+  VALUES(p_visitor,p_week,candidate) ON CONFLICT DO NOTHING RETURNING nickname INTO result;
+  IF result IS NOT NULL THEN RETURN result; END IF;
+  SELECT nickname INTO result FROM beagu_private.beagu_account_nicknames_v1 WHERE visitor_id=p_visitor AND week_start=p_week;
+  IF result IS NOT NULL THEN RETURN result; END IF;
  END LOOP;
  RAISE EXCEPTION 'nickname allocation unavailable';
 END $$;
-REVOKE ALL ON FUNCTION beagu_private.beagu_account_nickname_v1(uuid) FROM PUBLIC,anon,authenticated;
-
--- Rotate every registered nickname, even when its owner is offline.
--- One transaction; repeated scheduling in the same Korean calendar week is a no-op.
-CREATE FUNCTION beagu_private.beagu_account_rotate_nicknames_v1()
-RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
-DECLARE v uuid; total integer:=0;
- current_week date:=date_trunc('week',now() AT TIME ZONE 'Asia/Seoul')::date;
+CREATE FUNCTION beagu_private.beagu_account_nickname_v1(p_visitor uuid)
+RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE result text; wk date:=beagu_private.beagu_account_week_v1(statement_timestamp());
 BEGIN
- PERFORM pg_advisory_xact_lock(2026,1110);
- FOR v IN SELECT visitor_id FROM beagu_private.beagu_account_nicknames_v1 WHERE week_start<current_week ORDER BY visitor_id LOOP
-  PERFORM beagu_private.beagu_account_nickname_v1(v);
+ SELECT nickname INTO result FROM beagu_private.beagu_account_nicknames_v1 WHERE visitor_id=p_visitor AND week_start=wk;
+ IF result IS NOT NULL THEN RETURN result; END IF;
+ INSERT INTO beagu_private.beagu_account_nickname_members_v1(visitor_id) VALUES(p_visitor) ON CONFLICT DO NOTHING;
+ PERFORM 1 FROM beagu_private.beagu_account_nickname_members_v1 WHERE visitor_id=p_visitor FOR UPDATE;
+ result:=beagu_private.beagu_account_allocate_nickname_v1(p_visitor,wk);
+ PERFORM beagu_private.beagu_account_allocate_nickname_v1(p_visitor,wk+7);
+ UPDATE beagu_private.beagu_account_nickname_members_v1 SET prepared_through=greatest(prepared_through,wk+7) WHERE visitor_id=p_visitor;
+ RETURN result;
+END $$;
+-- Bounded transactions; no global authentication lock. Private clock argument enables boundary tests.
+CREATE FUNCTION beagu_private.beagu_account_prepare_nicknames_v1(p_at timestamptz,p_limit integer DEFAULT 500)
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE v uuid; total integer:=0; wk date:=beagu_private.beagu_account_week_v1(p_at);
+BEGIN
+ IF p_at IS NULL OR p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 1000 THEN RAISE EXCEPTION 'invalid batch'; END IF;
+ FOR v IN SELECT visitor_id FROM beagu_private.beagu_account_nickname_members_v1
+ WHERE prepared_through<wk+7 ORDER BY prepared_through,visitor_id LIMIT p_limit FOR UPDATE SKIP LOCKED LOOP
+  PERFORM beagu_private.beagu_account_allocate_nickname_v1(v,wk);
+  PERFORM beagu_private.beagu_account_allocate_nickname_v1(v,wk+7);
+  UPDATE beagu_private.beagu_account_nickname_members_v1 SET prepared_through=wk+7 WHERE visitor_id=v;
   total:=total+1;
  END LOOP;
  RETURN total;
 END $$;
-REVOKE ALL ON FUNCTION beagu_private.beagu_account_rotate_nicknames_v1() FROM PUBLIC,anon,authenticated;
+CREATE FUNCTION beagu_private.beagu_account_prune_nicknames_v1(p_at timestamptz,p_limit integer DEFAULT 1000)
+RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE n integer;
+BEGIN
+ IF p_at IS NULL OR p_limit IS NULL OR p_limit NOT BETWEEN 1 AND 1000 THEN RAISE EXCEPTION 'invalid batch'; END IF;
+ WITH expired AS (SELECT visitor_id,week_start FROM beagu_private.beagu_account_nicknames_v1
+ WHERE week_start<beagu_private.beagu_account_week_v1(p_at)-7 ORDER BY week_start,visitor_id LIMIT p_limit FOR UPDATE SKIP LOCKED)
+ DELETE FROM beagu_private.beagu_account_nicknames_v1 a USING expired e WHERE a.visitor_id=e.visitor_id AND a.week_start=e.week_start;
+ GET DIAGNOSTICS n=ROW_COUNT; RETURN n;
+END $$;
+CREATE FUNCTION beagu_private.beagu_account_alias_at_v1(p_visitor uuid,p_at timestamptz)
+RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
+ SELECT nickname FROM beagu_private.beagu_account_nicknames_v1
+ WHERE visitor_id=p_visitor AND week_start=beagu_private.beagu_account_week_v1(p_at)
+$$;
+REVOKE ALL ON FUNCTION beagu_private.beagu_account_week_v1(timestamptz),beagu_private.beagu_account_allocate_nickname_v1(uuid,date),beagu_private.beagu_account_nickname_v1(uuid),beagu_private.beagu_account_prepare_nicknames_v1(timestamptz,integer),beagu_private.beagu_account_prune_nicknames_v1(timestamptz,integer),beagu_private.beagu_account_alias_at_v1(uuid,timestamptz) FROM PUBLIC,anon,authenticated,service_role;
+-- Register previously verified Post-it members without reassigning author identities.
+INSERT INTO beagu_private.beagu_account_nickname_members_v1(visitor_id)
+ SELECT identity_visitor_id FROM public.beagu_postit_member_accounts ON CONFLICT DO NOTHING;
+CREATE FUNCTION beagu_private.beagu_account_register_postit_alias_v1()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+BEGIN
+ PERFORM beagu_private.beagu_account_nickname_v1(NEW.identity_visitor_id);
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION beagu_private.beagu_account_register_postit_alias_v1() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER beagu_account_register_postit_alias AFTER INSERT ON public.beagu_postit_member_accounts FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_account_register_postit_alias_v1();
 -- No table grants: RPCs are the only account credential access path.
 CREATE FUNCTION beagu_private.beagu_account_visitor_level_v1(p_visitor uuid)
 RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
@@ -156,7 +194,7 @@ BEGIN
  RETURN jsonb_build_object('account_id',a.account_id,'nickname',beagu_private.beagu_account_nickname_v1(a.visitor_id),'level',2,'formal',true,'expires_at',exp);
 END $$;
 CREATE FUNCTION public.beagu_account_session_status_v1(p_token_sha text)
-RETURNS jsonb LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path='' AS $
+RETURNS jsonb LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path='' AS $$
  SELECT jsonb_build_object('level',least(l.access_level,beagu_private.beagu_account_visitor_level_v1(s.visitor_id)),
  'formal',s.account_id IS NULL,'nickname',beagu_private.beagu_account_nickname_v1(s.visitor_id),'expires_at',s.expires_at)
  FROM beagu_private.beagu_account_sessions_v1 s JOIN public.beagu_level_sessions l USING(token_sha256)
