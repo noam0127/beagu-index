@@ -33,6 +33,7 @@ function createBoundary({policy,authenticate,resolveSchool,store,replayVerifier=
   const school=await resolveSchool(session.schoolId);
   if(!school?.eligible||school.difficulty!==session.difficulty)fail("school_ineligible");
   // The trusted, server-owned simulator computes the result, not the request.
+  if(typeof store.claimAttempt==="function"&&!await store.claimAttempt(session))fail("rate_limited");
   const calculated=await replayVerifier({seed:session.seed,difficulty:session.difficulty,replay,elapsed});
   if(!calculated)fail("invalid_replay");
   const result=policy.validate(calculated,elapsed,session.difficulty);
