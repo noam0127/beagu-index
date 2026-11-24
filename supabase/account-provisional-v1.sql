@@ -1,6 +1,6 @@
 -- Candidate only. No new Auth users, social identities, names, email or phone.
 CREATE TABLE beagu_private.beagu_anonymous_accounts_v1(
- account_id uuid PRIMARY KEY,
+ account_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  visitor_id uuid UNIQUE NOT NULL,
  author_uid uuid UNIQUE NOT NULL,
  password_hash text NOT NULL,
@@ -112,12 +112,12 @@ REVOKE ALL ON FUNCTION beagu_private.beagu_account_visitor_level_v1(uuid) FROM P
 
 -- Preserve legacy authors only after original-device proof. No new social bindings.
 REVOKE EXECUTE ON FUNCTION public.beagu_postit_bind_verified_member(uuid,uuid,text,uuid) FROM service_role;
-CREATE FUNCTION public.beagu_account_signup_v1(p_code text,p_device_hash text,p_password_proof text,p_account uuid,p_recovery_hash text)
+CREATE FUNCTION public.beagu_account_signup_v1(p_code text,p_device_hash text,p_password_proof text,p_recovery_hash text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE v uuid; result uuid; actor uuid; legacy_status text; lvl integer;
 BEGIN
  IF p_code IS NULL OR length(p_code) NOT BETWEEN 8 AND 120 OR p_device_hash IS NULL OR p_device_hash !~ '^[a-f0-9]{64}$'
- OR p_password_proof IS NULL OR p_password_proof !~ '^[a-f0-9]{64}$' OR p_account IS NULL
+ OR p_password_proof IS NULL OR p_password_proof !~ '^[a-f0-9]{64}$'
  OR p_recovery_hash IS NULL OR p_recovery_hash !~ '^[a-f0-9]{64}$' THEN RETURN NULL; END IF;
  IF public.beagu_consume_login_budget() IS DISTINCT FROM true THEN RETURN NULL; END IF;
  PERFORM pg_advisory_xact_lock(2026,1110);
@@ -129,12 +129,12 @@ BEGIN
  IF lvl=0 THEN RETURN NULL; END IF;
  SELECT m.author_uid,m.status INTO actor,legacy_status FROM public.beagu_postit_member_accounts m WHERE m.identity_visitor_id=v;
  IF legacy_status IS NOT NULL AND legacy_status<>'active' THEN RETURN NULL; END IF;
- INSERT INTO beagu_private.beagu_anonymous_accounts_v1(account_id,visitor_id,author_uid,password_hash,recovery_hash)
- VALUES(p_account,v,coalesce(actor,gen_random_uuid()),extensions.crypt(p_password_proof,extensions.gen_salt('bf',12)),p_recovery_hash)
+ INSERT INTO beagu_private.beagu_anonymous_accounts_v1(visitor_id,author_uid,password_hash,recovery_hash)
+ VALUES(v,coalesce(actor,gen_random_uuid()),extensions.crypt(p_password_proof,extensions.gen_salt('bf',12)),p_recovery_hash)
  ON CONFLICT DO NOTHING RETURNING account_id INTO result;
  IF result IS NULL THEN RETURN NULL; END IF;
  PERFORM beagu_private.beagu_account_nickname_v1(v);
- RETURN jsonb_build_object('account_id',result,'level',lvl,'lv2_active',lvl=2);
+ RETURN jsonb_build_object('account_id',p_code,'level',lvl,'lv2_active',lvl=2);
 END $$;
 CREATE FUNCTION beagu_private.beagu_account_attempt_v1(p_account uuid)
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
@@ -145,51 +145,56 @@ BEGIN
  RETURN n<=10;
 END $$;
 REVOKE ALL ON FUNCTION beagu_private.beagu_account_attempt_v1(uuid) FROM PUBLIC,anon,authenticated,service_role;
-CREATE FUNCTION public.beagu_account_password_login_v1(p_account uuid,p_password_proof text,p_token_sha text)
+CREATE FUNCTION public.beagu_account_password_login_v1(p_account text,p_password_proof text,p_token_sha text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a beagu_private.beagu_anonymous_accounts_v1; lvl integer; exp timestamptz;
 BEGIN
- IF p_account IS NULL OR p_password_proof IS NULL OR p_password_proof !~ '^[a-f0-9]{64}$' OR p_token_sha IS NULL OR p_token_sha !~ '^[a-f0-9]{64}$' THEN RETURN NULL; END IF;
+ IF p_account IS NULL OR length(p_account) NOT BETWEEN 8 AND 120 OR p_password_proof IS NULL OR p_password_proof !~ '^[a-f0-9]{64}$' OR p_token_sha IS NULL OR p_token_sha !~ '^[a-f0-9]{64}$' THEN RETURN NULL; END IF;
  IF public.beagu_consume_login_budget() IS DISTINCT FROM true THEN RETURN NULL; END IF;
  PERFORM pg_advisory_xact_lock(2026,1110);
- SELECT * INTO a FROM beagu_private.beagu_anonymous_accounts_v1 WHERE account_id=p_account FOR UPDATE;
+ SELECT m.* INTO a FROM beagu_private.beagu_anonymous_accounts_v1 m
+ JOIN beagu_private.challenge_identity_codes c ON c.campaign='2026' AND c.visitor_id=m.visitor_id
+ WHERE c.identity_code=p_account FOR UPDATE OF m;
  IF NOT FOUND THEN RETURN NULL; END IF;
- IF NOT beagu_private.beagu_account_attempt_v1(p_account) OR NOT a.enabled OR extensions.crypt(p_password_proof,a.password_hash) IS DISTINCT FROM a.password_hash THEN RETURN NULL; END IF;
+ IF NOT beagu_private.beagu_account_attempt_v1(a.account_id) OR NOT a.enabled OR extensions.crypt(p_password_proof,a.password_hash) IS DISTINCT FROM a.password_hash THEN RETURN NULL; END IF;
  lvl:=beagu_private.beagu_account_visitor_level_v1(a.visitor_id);
  IF lvl=0 THEN RETURN NULL; END IF;
  exp:=now()+interval '30 minutes';
  INSERT INTO public.beagu_level_sessions(token_sha256,access_level,expires_at,identity_campaign,identity_visitor_id)
  VALUES(p_token_sha,lvl,exp,'2026',a.visitor_id);
  INSERT INTO beagu_private.beagu_account_sessions_v1 VALUES(p_token_sha,a.visitor_id,a.account_id,exp);
- DELETE FROM beagu_private.beagu_account_login_budget_v1 WHERE account_id=p_account;
- RETURN jsonb_build_object('account_id',a.account_id,'nickname',beagu_private.beagu_account_nickname_v1(a.visitor_id),'level',lvl,'lv2_active',lvl=2,'expires_at',exp);
+ DELETE FROM beagu_private.beagu_account_login_budget_v1 WHERE account_id=a.account_id;
+ RETURN jsonb_build_object('account_id',p_account,'nickname',beagu_private.beagu_account_nickname_v1(a.visitor_id),'level',lvl,'lv2_active',lvl=2,'expires_at',exp);
 END $$;
 -- Atomic one-use recovery: replacement proof and password are installed together.
 -- No administrator recovery, no identity lookup, and no account creation on failure.
-CREATE FUNCTION public.beagu_account_recover_v1(p_account uuid,p_old_recovery_hash text,p_new_recovery_hash text,p_password_proof text)
+CREATE FUNCTION public.beagu_account_recover_v1(p_account text,p_old_recovery_hash text,p_new_recovery_hash text,p_password_proof text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a beagu_private.beagu_anonymous_accounts_v1; lvl integer;
 BEGIN
- IF p_account IS NULL OR p_old_recovery_hash IS NULL OR p_old_recovery_hash !~ '^[a-f0-9]{64}$'
+ IF p_account IS NULL OR length(p_account) NOT BETWEEN 8 AND 120 OR p_old_recovery_hash IS NULL OR p_old_recovery_hash !~ '^[a-f0-9]{64}$'
  OR p_new_recovery_hash IS NULL OR p_new_recovery_hash !~ '^[a-f0-9]{64}$' OR p_old_recovery_hash=p_new_recovery_hash
  OR p_password_proof IS NULL OR p_password_proof !~ '^[a-f0-9]{64}$' THEN RETURN NULL; END IF;
  IF public.beagu_consume_login_budget() IS DISTINCT FROM true THEN RETURN NULL; END IF;
  PERFORM pg_advisory_xact_lock(2026,1110);
- SELECT * INTO a FROM beagu_private.beagu_anonymous_accounts_v1 WHERE account_id=p_account FOR UPDATE;
+ SELECT m.* INTO a FROM beagu_private.beagu_anonymous_accounts_v1 m
+ JOIN beagu_private.challenge_identity_codes c ON c.campaign='2026' AND c.visitor_id=m.visitor_id
+ WHERE c.identity_code=p_account FOR UPDATE OF m;
  IF NOT FOUND THEN RETURN NULL; END IF;
- IF NOT beagu_private.beagu_account_attempt_v1(p_account) OR NOT a.enabled OR a.recovery_hash IS DISTINCT FROM p_old_recovery_hash THEN RETURN NULL; END IF;
+ IF NOT beagu_private.beagu_account_attempt_v1(a.account_id) OR NOT a.enabled OR a.recovery_hash IS DISTINCT FROM p_old_recovery_hash THEN RETURN NULL; END IF;
  lvl:=beagu_private.beagu_account_visitor_level_v1(a.visitor_id);
  IF lvl=0 THEN RETURN NULL; END IF;
- UPDATE beagu_private.beagu_anonymous_accounts_v1 SET password_hash=extensions.crypt(p_password_proof,extensions.gen_salt('bf',12)),recovery_hash=p_new_recovery_hash WHERE account_id=p_account;
- DELETE FROM beagu_private.beagu_account_login_budget_v1 WHERE account_id=p_account;
+ UPDATE beagu_private.beagu_anonymous_accounts_v1 SET password_hash=extensions.crypt(p_password_proof,extensions.gen_salt('bf',12)),recovery_hash=p_new_recovery_hash WHERE account_id=a.account_id;
+ DELETE FROM beagu_private.beagu_account_login_budget_v1 WHERE account_id=a.account_id;
  RETURN jsonb_build_object('account_id',p_account,'level',lvl,'lv2_active',lvl=2);
 END $$;
 CREATE FUNCTION public.beagu_account_session_status_v1(p_token_sha text)
 RETURNS jsonb LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path='' AS $$
- SELECT jsonb_build_object('account_id',a.account_id,'level',least(l.access_level,beagu_private.beagu_account_visitor_level_v1(s.visitor_id)),
+ SELECT jsonb_build_object('account_id',c.identity_code,'level',least(l.access_level,beagu_private.beagu_account_visitor_level_v1(s.visitor_id)),
  'lv2_active',beagu_private.beagu_account_visitor_level_v1(s.visitor_id)=2,'nickname',beagu_private.beagu_account_nickname_v1(s.visitor_id),'expires_at',s.expires_at)
  FROM beagu_private.beagu_account_sessions_v1 s JOIN public.beagu_level_sessions l USING(token_sha256)
  JOIN beagu_private.beagu_anonymous_accounts_v1 a ON a.account_id=s.account_id AND a.visitor_id=s.visitor_id
+ JOIN beagu_private.challenge_identity_codes c ON c.campaign='2026' AND c.visitor_id=s.visitor_id
  WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now() AND a.enabled AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)>0
 $$;
 CREATE FUNCTION public.beagu_account_logout_v1(p_token_sha text)
@@ -239,5 +244,5 @@ BEGIN
  JOIN beagu_private.beagu_account_nicknames_v1 n ON n.visitor_id=a.visitor_id AND n.week_start=beagu_private.beagu_account_week_v1(statement_timestamp())
  WHERE x.created_at<=statement_timestamp() AND beagu_private.beagu_account_week_v1(x.created_at)=n.week_start;
 END $$;
-REVOKE ALL ON FUNCTION public.beagu_account_signup_v1(text,text,text,uuid,text),public.beagu_account_password_login_v1(uuid,text,text),public.beagu_account_recover_v1(uuid,text,text,text),public.beagu_account_session_status_v1(text),public.beagu_account_logout_v1(text),public.beagu_account_level_session_allowed_v1(text),public.beagu_account_postit_writer_v1(text),public.beagu_account_postit_current_aliases_v1(jsonb) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.beagu_account_signup_v1(text,text,text,uuid,text),public.beagu_account_password_login_v1(uuid,text,text),public.beagu_account_recover_v1(uuid,text,text,text),public.beagu_account_session_status_v1(text),public.beagu_account_logout_v1(text),public.beagu_account_level_session_allowed_v1(text),public.beagu_account_postit_writer_v1(text),public.beagu_account_postit_current_aliases_v1(jsonb) TO service_role;
+REVOKE ALL ON FUNCTION public.beagu_account_signup_v1(text,text,text,text),public.beagu_account_password_login_v1(text,text,text),public.beagu_account_recover_v1(text,text,text,text),public.beagu_account_session_status_v1(text),public.beagu_account_logout_v1(text),public.beagu_account_level_session_allowed_v1(text),public.beagu_account_postit_writer_v1(text),public.beagu_account_postit_current_aliases_v1(jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.beagu_account_signup_v1(text,text,text,text),public.beagu_account_password_login_v1(text,text,text),public.beagu_account_recover_v1(text,text,text,text),public.beagu_account_session_status_v1(text),public.beagu_account_logout_v1(text),public.beagu_account_level_session_allowed_v1(text),public.beagu_account_postit_writer_v1(text),public.beagu_account_postit_current_aliases_v1(jsonb) TO service_role;
