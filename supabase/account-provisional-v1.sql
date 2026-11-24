@@ -19,7 +19,7 @@ ALTER TABLE beagu_private.beagu_account_sessions_v1 ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON beagu_private.beagu_provisional_accounts_v1,beagu_private.beagu_account_login_budget_v1,beagu_private.beagu_account_sessions_v1 FROM PUBLIC,anon,authenticated;
 CREATE TABLE beagu_private.beagu_account_nicknames_v1(
  visitor_id uuid PRIMARY KEY,
- nickname text NOT NULL UNIQUE CHECK(nickname ~ '^[Il1]{32}
+ nickname text NOT NULL UNIQUE CHECK(nickname ~ '^[Il]{32}
 CREATE FUNCTION beagu_private.beagu_account_visitor_level_v1(p_visitor uuid)
 RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM beagu_private.challenge_identity_codes c WHERE c.campaign='2026' AND c.visitor_id=p_visitor)
@@ -155,7 +155,7 @@ BEGIN
  IF result IS NOT NULL THEN RETURN result; END IF;
  FOR i IN 1..5 LOOP
   INSERT INTO beagu_private.beagu_account_nicknames_v1(visitor_id,nickname)
-  VALUES(p_visitor,translate(encode(extensions.gen_random_bytes(16),'hex'),'0123456789abcdef','Il1lI1lI1Il1lI1l'))
+  VALUES(p_visitor,translate(encode(extensions.gen_random_bytes(16),'hex'),'0123456789abcdef','IlIlIlIlIlIlIlIl'))
   ON CONFLICT DO NOTHING;
   SELECT nickname INTO result FROM beagu_private.beagu_account_nicknames_v1 WHERE visitor_id=p_visitor;
   IF result IS NOT NULL THEN RETURN result; END IF;
