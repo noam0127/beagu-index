@@ -55,6 +55,20 @@ Deno.serve(async(req:Request)=>{
  if(!body||typeof body!=="object"||Array.isArray(body))throw Error();}
  catch{return send(origin,400,{error:"INVALID_REQUEST"});}
  const action=String(body.action||"");
+ if(["admin_hold_context","admin_hold","admin_resume"].includes(action)){
+ const a=await adminSession(req);if(!a)return send(origin,403,{error:"OWNER_MFA_REQUIRED"});
+ const id=typeof body.id==="string"?body.id:"";
+ if(!uuid.test(id))return send(origin,400,{error:"INVALID_REQUEST"});
+ const params={p_actor:a.actor,p_session:a.session,p_feedback:id};
+ let result;
+ if(action==="admin_hold_context")result=await db.rpc("beagu_2026_civic_hold_context",params);
+ else {
+ const sha=typeof body.snapshot_sha==="string"?body.snapshot_sha:"",reason=typeof body.reason==="string"?body.reason.trim():"";
+ if(!/^[a-f0-9]{64}$/.test(sha)||reason.length<12||reason.length>500||/[<>\\u0000-\\u001f]/.test(reason))return send(origin,400,{error:"INVALID_REQUEST"});
+ result=await db.rpc(action==="admin_hold"?"beagu_2026_civic_hold_school":"beagu_2026_civic_resume_school",{...params,p_expected_sha:sha,p_reason:reason});
+ }
+ return result.error?send(origin,409,{error:"HOLD_REVIEW_REQUIRED"}):send(origin,200,result.data);
+ }
  if(action==="admin_list"||action==="admin_decide"){
  const a=await adminSession(req);if(!a)return send(origin,403,{error:"OWNER_MFA_REQUIRED"});
  const query=action==="admin_list"?
