@@ -232,6 +232,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
    console.log('RUN4_TIER_PROBE '+JSON.stringify(outcomes[outcomes.length-1]));
    await page.waitForFunction(()=>!document.querySelector('.arcade-result-copy').disabled);
    const records=await page.evaluate(()=>JSON.parse(localStorage.getItem('beaguRun4LocalRecordsV1')||'[]'));
+   assert.ok(records.length>0,'4.0 local results must actually persist');
    assert.ok(records.every(r=>r.game==='teacher_run_retirement_v4'&&r.version==='4.0'&&!('school_id'in r)&&!('school_name'in r)&&!('verified'in r)));
   }
   console.log('RUN4_NATURAL_BALANCE '+JSON.stringify(outcomes));

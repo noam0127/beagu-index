@@ -22,5 +22,16 @@
  // This check rejects impossible summaries; it is not proof of actual gameplay.
  // No client-supplied boolean can convert a local record into an official one.
  function localRecord(r){return validate(r,r.survivalSeconds,r.difficulty);}
- root.BeaguRun4Records=Object.freeze({version,game,score,validate,localRecord});
+ const storageKey="beaguRun4LocalRecordsV1";
+ function list(storage,{difficulty="all",outcome="all",limit=50}={}){
+  try{
+   const raw=JSON.parse(storage.getItem(storageKey)||"[]");
+   if(!Array.isArray(raw))return [];
+   return raw.slice(0,50).flatMap(r=>{try{return [localRecord(r)]}catch(_){return [];}})
+    .filter(r=>(difficulty==="all"||r.difficulty===difficulty)&&(outcome==="all"||(outcome==="retired"&&r.victory)||(outcome==="all_bosses"&&r.bossIds.length===5)))
+    .sort((a,b)=>b.score-a.score).slice(0,Math.max(0,Math.min(50,Number(limit)||0)));
+  }catch(_){return [];}
+ }
+ function save(storage,r){const record=localRecord(r);const records=[record,...list(storage)].sort((a,b)=>b.score-a.score).slice(0,50);storage.setItem(storageKey,JSON.stringify(records));return record;}
+ root.BeaguRun4Records=Object.freeze({version,game,score,validate,localRecord,storageKey,list,save});
 })(typeof window!=="undefined"?window:globalThis);
