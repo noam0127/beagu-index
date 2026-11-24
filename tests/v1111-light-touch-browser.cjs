@@ -29,7 +29,21 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(u.pathname.endsWith('/beagu-notice-audience-v1'))data={level:token?tier:0,notices:[{audience:'all',body:'공통 검증 공지'},{audience:String(token?tier:0),body:'레벨 검증 공지'}]};
  return route.fulfill({status:200,headers:cors,body:JSON.stringify(data)});}
  if(u.origin!==origin)return route.abort();const p=decodeURIComponent(u.pathname).replace(/^\/+/, '');if(!p||p.includes('..'))return route.abort();
- try{return route.fulfill({contentType:mime[path.extname(p)]||'application/octet-stream',body:await fs.readFile(p)})}catch{return route.fulfill({status:404,body:''})}});
+ try{
+  let body=await fs.readFile(p);
+  if(p==='teacher-run-4-preview.html'){
+   // Fixture-only accelerated clock. Production game code is not instrumented.
+   // Restore HP to isolate lifecycle integration from stochastic survival balance.
+   const anchor='resize();intro();requestAnimationFrame(tick);postHeight();';
+   const source=body.toString('utf8');assert.ok(source.includes(anchor));
+   body=source.replace(anchor,`resize();intro();postHeight();
+    window.__run4Fixture=Object.freeze({
+      snapshot:()=>({state,clock,stage,life,maxLife,leave:leave.state(),boss:bosses.active(),defeated:bosses.defeated(),allies:allies.count(),score}),
+      advance:target=>{for(let i=0;i<6000&&state==="playing"&&clock<target-1e-8;i++){life=maxLife;update(Math.min(.04,target-clock));}draw();syncLeave();return window.__run4Fixture.snapshot();}
+    });`);
+  }
+  return route.fulfill({contentType:mime[path.extname(p)]||'application/octet-stream',body})
+ }catch{return route.fulfill({status:404,body:''})}});
  const page=await context.newPage();
  await page.clock.setFixedTime(new Date('2026-11-25T14:59:00Z'));
  await page.goto(origin+'/index.html');
@@ -120,6 +134,37 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  const dims=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth}));assert.ok(dims.scroll<=dims.width+1,JSON.stringify(dims));
  if(tier){await page.locator('#beaguLevelState').click();await page.locator('#beaguParticipationLogout').click();await page.locator('#searchPanel').waitFor({state:'hidden'});assert.equal(await page.locator('#searchPanel').isVisible(),false);assert.equal(await page.locator('#results .school-card').count(),0);await page.waitForFunction(()=>document.querySelectorAll('.beagu-interest-number').length===0);
  await page.locator('#beaguLevelState').click();await page.locator('#beaguParticipationCode').fill('FIXTURE01');await page.locator('#beaguParticipationSubmit').click();await page.locator('#searchPanel').waitFor({state:'visible'});await page.locator('#schoolTab').click();await page.locator('#searchInput').fill('검증초');await page.locator('#results .school-card').first().waitFor();assert.equal(await page.evaluate(()=>sessionStorage.getItem('beagu-level-session-v1')),'b'.repeat(64));}
+ if(tier===2){
+  const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+  selectedSchool={...selectedSchool,difficulty:'easy',eligible:true};
+  await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id);
+  await page.locator('#teacher-run-protected').waitFor({state:'visible'});
+  await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).waitFor();
+  await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).click();
+  await page.waitForFunction(()=>window.__run4Fixture?.snapshot().state==='playing');
+  let result=await page.evaluate(()=>window.__run4Fixture.advance(25.01));
+  assert.equal(result.state,'between');assert.ok(Math.abs(result.clock-25)<.06);assert.equal(result.leave.pending[0].days,3);
+  assert.equal(await page.locator('#choices button').count(),3);
+  await page.locator('#choices button').first().click();
+  await page.locator('#run4-leave-inventory button.run4-leave-pick').click();
+  await page.locator('#run4-leave-inventory').getByRole('button',{name:'5년 휴가권 3일 사용'}).click();
+  assert.equal((await page.evaluate(()=>window.__run4Fixture.snapshot())).leave.used,1);
+  for(const year of [10,15,20,25,30,35]){
+   result=await page.evaluate(t=>window.__run4Fixture.advance(t),year*5+.05);
+   assert.equal(result.state,'between',JSON.stringify({year,result}));assert.ok(Math.abs(result.clock-year*5)<.08);assert.equal(await page.locator('#choices button').count(),3);
+   await page.locator('#choices button').first().click();
+  }
+  result=await page.evaluate(()=>window.__run4Fixture.advance(190));
+  assert.equal(result.state,'over');assert.equal(result.clock,190);assert.match(await page.locator('#overlayTitle').innerText(),/정년퇴직/);
+  assert.equal(await page.locator('#choices button').count(),2);assert.match(await page.locator('#overlayDesc').innerText(),/보스 .*\/5/);
+  await page.waitForFunction(()=>!document.querySelector('.arcade-result-copy').disabled);
+  assert.equal(await page.locator('.arcade-result-brag').getAttribute('href'),'https://indischool.com/tweets/channels/lounge');
+  await page.getByRole('button',{name:'↻ 다시 하기',exact:true}).click();
+  await page.waitForFunction(()=>window.__run4Fixture.snapshot().state==='playing'&&window.__run4Fixture.snapshot().clock===0);
+  assert.equal((await page.evaluate(()=>window.__run4Fixture.snapshot())).leave.used,0);
+  assert.deepEqual(errors,[]);
+  console.log('PASS 4.0 actual page lifecycle with fixture-only accelerated clock and restored HP (not natural-play balance)');
+ }
  console.log('PASS fixture search width='+width+' tier='+tier);
  }finally{await context.close()}
  }}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
