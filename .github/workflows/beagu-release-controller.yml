@@ -29,6 +29,7 @@ name: BAEGU release controller (admin approval)
 # Wake existing owner-approved v1.6.0 job 5cce3de3-e5fd-4946-b68b-b264ed4528f6; pinned d9a52a8, no new job and no preview.
 # Wake existing owner-approved v1.7.0 job 54eec5d6-d578-4f01-b692-93a0efe5e000; pinned 55612c3, no new job and no preview.
 # Wake existing owner-approved v1.8.0 job 5fdbc103-c493-4b09-acba-efa2392aab7f; pinned 4fd176c, no new job and no preview.
+# Wake existing owner-approved v1.9.0 job d81129ee-8609-45f5-aa2a-2d9ff069d5a7; pinned af045d4, no duplicate job and no preview.
 on:
   schedule:
     - cron: '*/5 * * * *'
