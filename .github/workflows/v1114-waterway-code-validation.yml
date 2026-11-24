@@ -1,7 +1,7 @@
 name: Waterway private pipeline code validation
 on:
   push:
-    branches: [release/v1.11.4-waterway]
+    branches: [release/v1.11.4-waterway, release/v1.10.1-waterway-reintegration]
   workflow_dispatch:
 permissions:
   contents: read

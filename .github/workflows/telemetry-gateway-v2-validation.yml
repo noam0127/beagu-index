@@ -10,7 +10,7 @@ on:
       - 'tests/**'
       - '.github/workflows/telemetry-gateway-v2-validation.yml'
   push:
-    branches: [main]
+    branches: [main, release/v1.10.1-waterway-reintegration]
     paths:
       - 'supabase/functions/beagu-telemetry-v2/**'
       - 'supabase/migrations/20261120_telemetry_gateway_v2.sql'

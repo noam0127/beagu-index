@@ -373,23 +373,6 @@
     },
     {
       "order": 10,
-      "version": "v1.11.0",
-      "name": "나의 계정",
-      "scope": "가계정·비밀번호·본인확인",
-      "status": "PENDING",
-      "branch": null,
-      "pr": null,
-      "commit": null,
-      "tests": [],
-      "changed_files": [],
-      "dependencies": [],
-      "admin_registration": "PENDING",
-      "production": "NOT_APPROVED",
-      "deployment_date": null,
-      "rollback_sha": null
-    },
-    {
-      "order": 11,
       "version": "v1.11.1",
       "name": "가벼운 터치",
       "scope": "운영 v1.10.0 기반 검색 인증 경합 방지, 공통 UI, 학교체험, 공개 학교 관심도, 지역별 카드",
@@ -406,7 +389,7 @@
       ]
     },
     {
-      "order": 12,
+      "order": 11,
       "version": "v1.11.2",
       "name": "함께하기",
       "scope": "챌린지 화면, 공유 문구, 인증 이미지, 유효 추천, 기존 권한 유지",
@@ -423,7 +406,7 @@
       ]
     },
     {
-      "order": 13,
+      "order": 12,
       "version": "v1.11.4",
       "name": "물길",
       "scope": "2026 재집계·Q45 호환·관리자 실행 진단",
@@ -454,7 +437,90 @@
       ]
     },
     {
+      "order": 13,
+      "version": "v1.10.1",
+      "name": "통합 관제탑",
+      "scope": "서버 변경 포함 버전의 승인·백업·DB·Edge·Pages 순차 적용 및 안전 복구",
+      "status": "REINTEGRATED_CI_PENDING",
+      "branch": "release/v1.10.1-waterway-reintegration",
+      "pr": 294,
+      "commit": "fbccbe9050ee5373d03e4ff4b8feda69726ccdb5",
+      "tests": [
+        {
+          "name": "Previous integrated controller validation",
+          "result": "PASS",
+          "sha": "fee74e30819457be79c8a6b994055f55e950ce43"
+        },
+        {
+          "name": "Reintegrated regression",
+          "result": "PENDING"
+        }
+      ],
+      "changed_files": [
+        ".github/workflows/clean-release-validation.yml",
+        ".github/workflows/direct-pages-controller-validation.yml",
+        "admin-updates.html",
+        "development-roadmap.json",
+        "docs/v1.10.1-integrated-controller-contract.md",
+        "js/beagu-admin-updates-v1.js",
+        "release-candidate.json",
+        "release-info.json",
+        "scripts/release-manager/integrated_backup.py",
+        "scripts/release-manager/integrated_execution_allowlist.json",
+        "scripts/release-manager/integrated_package.py",
+        "scripts/release-manager/integrated_provider.py",
+        "scripts/release-manager/integrated_recovery.py",
+        "scripts/release-manager/integrated_remote.py",
+        "scripts/release-manager/integrated_runner.py",
+        "scripts/release-manager/integrated_server_control.py",
+        "scripts/release-manager/integrated_vault.py",
+        "scripts/release-manager/integrated_verify.py",
+        "styles/beagu-admin-updates-v1.css",
+        "supabase/functions/beagu-release-manager-v1/index.ts",
+        "supabase/integrated-release-control-fixture-v1.sql",
+        "tests/clean-release-contract.cjs",
+        "tests/direct-pages-release-contract.cjs",
+        "tests/integrated-release-admin-browser.cjs",
+        "tests/integrated-release-admin-ui.cjs",
+        "tests/integrated-release-backup.py",
+        "tests/integrated-release-provider.py",
+        "tests/integrated-release-remote.py",
+        "tests/integrated-release-runner.py",
+        "tests/integrated-release-vault.py",
+        "tests/integrated-release-verification.py"
+      ],
+      "dependencies": [
+        "v1.11.4 운영 기준",
+        "separate approved controller bootstrap"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "76d2c01878d8242e62dd87e30cfb707ab431d3ee",
+      "source_sha": "1b39c9efc09d39110012ba61377f4e4a1faef614",
+      "baseline_sha": "76d2c01878d8242e62dd87e30cfb707ab431d3ee"
+    },
+    {
       "order": 14,
+      "version": "v1.11.0",
+      "name": "나의 계정",
+      "scope": "가계정·비밀번호·본인확인",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [
+        "v1.10.1 통합 관제탑 운영 적용 및 재통합 검증"
+      ],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 15,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -474,7 +540,7 @@
       "rollback_sha": null
     },
     {
-      "order": 15,
+      "order": 16,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -493,7 +559,7 @@
       "rollback_sha": null
     },
     {
-      "order": 16,
+      "order": 17,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -510,7 +576,7 @@
       "rollback_sha": null
     },
     {
-      "order": 17,
+      "order": 18,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
@@ -1414,5 +1480,11 @@
     "Do not bundle the separate Vercel hotfix or later features without reconciliation",
     "Use exact candidate SHA, reject stale base, preserve rollback",
     "Local/CI tests only; no test site deployment"
-  ]
+  ],
+  "reintegration": {
+    "production_base": "76d2c01878d8242e62dd87e30cfb707ab431d3ee",
+    "controller_source": "1b39c9efc09d39110012ba61377f4e4a1faef614",
+    "branch": "release/v1.10.1-waterway-reintegration",
+    "production_authorized": false
+  }
 }

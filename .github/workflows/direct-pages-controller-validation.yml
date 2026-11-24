@@ -3,6 +3,8 @@ on:
   pull_request:
     branches:
       - 'release/base-pages-*'
+  push:
+    branches: [release/v1.10.1-waterway-reintegration]
 permissions:
   contents: read
 jobs:
@@ -11,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -19,5 +21,15 @@ jobs:
       - run: |
           node --check js/beagu-admin-updates-v1.js
           node tests/direct-pages-release-contract.cjs
-          python3 -m py_compile scripts/release-manager/worker.py
+          node tests/integrated-release-admin-ui.cjs
+          python3 -m py_compile scripts/release-manager/worker.py scripts/release-manager/integrated_verify.py
+          python3 tests/integrated-release-verification.py
+          python3 -m py_compile scripts/release-manager/integrated_backup.py
+          # Use the runner OS-maintained cryptography package; never install candidate-provided crypto code.
+          /usr/bin/python3 -c 'from cryptography.hazmat.primitives.ciphers.aead import AESGCM' || (sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends python3-cryptography)
+          /usr/bin/python3 tests/integrated-release-vault.py
+          /usr/bin/python3 tests/integrated-release-backup.py
+          /usr/bin/python3 tests/integrated-release-runner.py
+          /usr/bin/python3 tests/integrated-release-remote.py
+          /usr/bin/python3 tests/integrated-release-provider.py
           node --test tests/site-release-center.mjs tests/site-release-single-publisher.mjs

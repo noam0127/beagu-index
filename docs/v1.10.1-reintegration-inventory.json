@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "scope": "development_only",
+  "base": "76d2c01878d8242e62dd87e30cfb707ab431d3ee",
+  "controller": "1b39c9efc09d39110012ba61377f4e4a1faef614",
+  "allowed_changes": [
+    ".github/workflows/clean-release-validation.yml",
+    ".github/workflows/direct-pages-controller-validation.yml",
+    ".github/workflows/site-release-manager-validation.yml",
+    ".github/workflows/telemetry-gateway-v2-validation.yml",
+    ".github/workflows/v1114-waterway-code-validation.yml",
+    "admin-updates.html",
+    "development-roadmap.json",
+    "docs/bootstrap-preparation-v1.json",
+    "docs/v1.10.1-bootstrap-preparation.md",
+    "docs/v1.10.1-integrated-controller-contract.md",
+    "docs/v1.10.1-waterway-reintegration.md",
+    "js/beagu-admin-updates-v1.js",
+    "release-candidate.json",
+    "release-info.json",
+    "scripts/release-manager/integrated_backup.py",
+    "scripts/release-manager/integrated_execution_allowlist.json",
+    "scripts/release-manager/integrated_package.py",
+    "scripts/release-manager/integrated_production.py",
+    "scripts/release-manager/integrated_production_entry.py",
+    "scripts/release-manager/integrated_production_pages.py",
+    "scripts/release-manager/integrated_provider.py",
+    "scripts/release-manager/integrated_recovery.py",
+    "scripts/release-manager/integrated_remote.py",
+    "scripts/release-manager/integrated_runner.py",
+    "scripts/release-manager/integrated_server_control.py",
+    "scripts/release-manager/integrated_vault.py",
+    "scripts/release-manager/integrated_verify.py",
+    "scripts/release-manager/verify_bootstrap_preparation.py",
+    "styles/beagu-admin-updates-v1.css",
+    "supabase/functions/beagu-release-manager-v1/index.ts",
+    "supabase/integrated-release-control-fixture-v1.sql",
+    "supabase/integrated-release-control-production-candidate-v1.sql",
+    "tests/clean-release-contract.cjs",
+    "tests/direct-pages-release-contract.cjs",
+    "tests/integrated-release-admin-browser.cjs",
+    "tests/integrated-release-admin-ui.cjs",
+    "tests/integrated-release-backup.py",
+    "tests/integrated-release-provider.py",
+    "tests/integrated-release-remote.py",
+    "tests/integrated-release-runner.py",
+    "tests/integrated-release-vault.py",
+    "tests/integrated-release-verification.py"
+  ],
+  "protected_blobs": [
+    {
+      "path": "js/2026-questionnaire-options-v1.2.js",
+      "sha": "50b490d8cb8ee758ae09825210dd2a23075804ea"
+    },
+    {
+      "path": "js/beagu-2026-admin-review.js",
+      "sha": "26b9094ade7319a7b13417d188584b73264378b7"
+    },
+    {
+      "path": "js/statistics-compare.js",
+      "sha": "0154907740765ef333c9046c00f2e13597259a62"
+    },
+    {
+      "path": "js/statistics-directory-v2.js",
+      "sha": "041b69674a69171a7fd4b3b631caa9cbbf509ea1"
+    },
+    {
+      "path": "scripts/beagu-2026-mbti-review-sync.gs",
+      "sha": "32ddc508cc3ccf8bfce63c0203bde8db58e17a01"
+    },
+    {
+      "path": "scripts/beagu-2026-noon-sync.gs",
+      "sha": "1c1cdd51fecf6144d316f7daeedd4aec0ce047a4"
+    },
+    {
+      "path": "scripts/beagu-2026-referral-integration.gs",
+      "sha": "fe6ba1c77ebd9b4d4858d936ca97c8c184357305"
+    },
+    {
+      "path": "scripts/beagu-2026-results-core.js",
+      "sha": "04e9070a5859061abfdb03690919686fd3696592"
+    },
+    {
+      "path": "scripts/beagu-2026-results-runtime.js",
+      "sha": "8c797e190341645b7503d19edf9acb1bdef8175b"
+    },
+    {
+      "path": "supabase/2026-waterway-admin-status-v1.sql",
+      "sha": "6dd13164877bafb9e227ce10801b6cdf01ba1255"
+    },
+    {
+      "path": "supabase/2026-waterway-run-telemetry-v1.sql",
+      "sha": "94225c24830bc5f84457c026b13d0fe880f116d7"
+    },
+    {
+      "path": "supabase/functions/_shared/questionnaire-2026.mjs",
+      "sha": "3bb1205ac622733af4a1826320dd4d64d320cdc9"
+    },
+    {
+      "path": "supabase/functions/_shared/waterway-run-v1.mjs",
+      "sha": "d2b6a26acbc27831b1e083373dba30e3b9975cd4"
+    },
+    {
+      "path": "supabase/functions/beagu-2026-results-ingest/index.ts",
+      "sha": "e8b0c777aea45314908a53968b5943a5281967b8"
+    },
+    {
+      "path": "supabase/functions/beagu-2026-review-admin/index.ts",
+      "sha": "0ac8a466afdef63a3b7d312e7632445477cd708b"
+    },
+    {
+      "path": "tests/v1114-waterway-admin-status.cjs",
+      "sha": "d3dbf1ef4637201daa78facd8081d40ba435f9e3"
+    },
+    {
+      "path": "tests/v1114-waterway-postgres-assertions.sql",
+      "sha": "72f884de27f44b4a1981076782977c3ea05a8e10"
+    },
+    {
+      "path": "tests/v1114-waterway-postgres-fixture.sql",
+      "sha": "b38f1d7fe433b3d378f39bf440bd929ea6f03036"
+    },
+    {
+      "path": "tests/v1114-waterway-run.mjs",
+      "sha": "5c0062a076608c61b27839852d755deaee3a5385"
+    }
+  ],
+  "execution_enabled": false
+}

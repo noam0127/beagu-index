@@ -5,13 +5,13 @@ on:
       - 'release/base-pages-*'
   workflow_dispatch:
   push:
-    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway]
+    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.10.1-waterway-reintegration]
 permissions:
   contents: read
 jobs:
   validate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -61,6 +61,7 @@ jobs:
           node tests/milestone-browser.cjs
           node tests/communication-browser.cjs
           node tests/control-tower-browser.cjs
+          node tests/integrated-release-admin-browser.cjs
       - name: Verify Together actual Chromium downloads and search regression
         run: |
           set -euo pipefail
@@ -102,7 +103,7 @@ jobs:
         run: |
           set -euo pipefail
           container="beagu-release-db-${GITHUB_RUN_ID}"
-          docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          docker run -d --rm --network none --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
           trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
           for i in $(seq 1 40); do
             if docker exec "$container" pg_isready -U postgres >/dev/null 2>&1; then break; fi
