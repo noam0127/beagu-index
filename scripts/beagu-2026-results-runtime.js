@@ -52,5 +52,6 @@ function refreshBeagu2026QuestionResults(snapshot) {
     });
     if(response.getResponseCode()!==200)throw Error('비공개 문항 집계 전송 실패 HTTP '+response.getResponseCode());
     Logger.log('비공개 문항 집계 저장: 학교 '+payload.schools.length+'개. 공개 승인은 별도입니다.');
+    return {basicReviewRows:new Set(reviewRows.map(r=>r[0])).size};
   } finally {if(lock)lock.releaseLock();}
 }
