@@ -1,11 +1,11 @@
 DO $$
-DECLARE a uuid:='20000000-0000-4000-8000-000000000001'; b uuid:='20000000-0000-4000-8000-000000000002'; v uuid:='10000000-0000-0000-0000-000000000001'; v2 uuid:='10000000-0000-0000-0000-000000000002'; legacy_actor uuid:=gen_random_uuid(); r jsonb; nick text; actor uuid;
+DECLARE a text:='SYNTHETIC-ONE'; b text:='SYNTHETIC-TWO'; v uuid:='10000000-0000-0000-0000-000000000001'; v2 uuid:='10000000-0000-0000-0000-000000000002'; legacy_actor uuid:=gen_random_uuid(); r jsonb; nick text; actor uuid;
 BEGIN
  INSERT INTO public.beagu_postit_member_accounts(auth_user_id,identity_visitor_id,author_uid) VALUES('00000000-0000-0000-0000-000000000002',v2,legacy_actor);
- IF public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('b',64),repeat('c',64),a,repeat('d',64)) IS NOT NULL THEN RAISE EXCEPTION 'device theft'; END IF;
- r:=public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('a',64),repeat('c',64),a,repeat('d',64));
+ IF public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('b',64),repeat('c',64),repeat('d',64)) IS NOT NULL THEN RAISE EXCEPTION 'device theft'; END IF;
+ r:=public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('a',64),repeat('c',64),repeat('d',64));
  IF r->>'account_id' IS DISTINCT FROM a::text OR r->>'lv2_active' IS DISTINCT FROM 'false' THEN RAISE EXCEPTION 'signup badge'; END IF;
- IF public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('a',64),repeat('d',64),gen_random_uuid(),repeat('e',64)) IS NOT NULL THEN RAISE EXCEPTION 'signup uniqueness'; END IF;
+ IF public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('a',64),repeat('d',64),repeat('e',64)) IS NOT NULL THEN RAISE EXCEPTION 'signup uniqueness'; END IF;
  IF public.beagu_account_password_login_v1(a,repeat('d',64),repeat('1',64)) IS NOT NULL THEN RAISE EXCEPTION 'wrong password'; END IF;
  r:=public.beagu_account_password_login_v1(a,repeat('c',64),repeat('1',64));
  IF r->>'level' IS DISTINCT FROM '1' OR r->>'lv2_active' IS DISTINCT FROM 'false' THEN RAISE EXCEPTION 'Lv1 login'; END IF;
@@ -29,11 +29,11 @@ BEGIN
  IF r->>'nickname' IS DISTINCT FROM nick OR public.beagu_account_postit_writer_v1(repeat('4',64)) IS DISTINCT FROM actor THEN RAISE EXCEPTION 'author/alias changed'; END IF;
  IF NOT public.beagu_account_logout_v1(repeat('4',64)) THEN RAISE EXCEPTION 'logout failed'; END IF;
  IF public.beagu_account_session_status_v1(repeat('4',64)) IS NOT NULL THEN RAISE EXCEPTION 'logout session survived'; END IF;
- r:=public.beagu_account_signup_v1('SYNTHETIC-TWO',repeat('b',64),repeat('c',64),b,repeat('b',64));
+ r:=public.beagu_account_signup_v1('SYNTHETIC-TWO',repeat('b',64),repeat('c',64),repeat('b',64));
  IF r->>'lv2_active' IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'legacy earned account'; END IF;
  r:=public.beagu_account_password_login_v1(b,repeat('c',64),repeat('5',64));
  IF public.beagu_account_postit_writer_v1(repeat('5',64)) IS DISTINCT FROM legacy_actor THEN RAISE EXCEPTION 'legacy author lost'; END IF;
- IF has_function_privilege('anon','public.beagu_account_recover_v1(uuid,text,text,text)','execute') OR has_table_privilege('service_role','beagu_private.beagu_anonymous_accounts_v1','select') OR has_function_privilege('service_role','public.beagu_postit_bind_verified_member(uuid,uuid,text,uuid)','execute') OR to_regprocedure('public.beagu_account_formal_login_v1(uuid,text)') IS NOT NULL THEN RAISE EXCEPTION 'private credentials or social route exposed'; END IF;
+ IF has_function_privilege('anon','public.beagu_account_recover_v1(text,text,text,text)','execute') OR has_table_privilege('service_role','beagu_private.beagu_anonymous_accounts_v1','select') OR has_function_privilege('service_role','public.beagu_postit_bind_verified_member(uuid,uuid,text,uuid)','execute') OR to_regprocedure('public.beagu_account_formal_login_v1(uuid,text)') IS NOT NULL THEN RAISE EXCEPTION 'private credentials or social route exposed'; END IF;
  IF (SELECT valid_referrals FROM beagu_private.challenge_referral_profiles WHERE visitor_id=v)<>1 THEN RAISE EXCEPTION 'referral modified'; END IF;
  UPDATE beagu_private.challenge_referral_profiles SET disabled=true WHERE visitor_id=v2;
  IF public.beagu_account_postit_writer_v1(repeat('5',64)) IS NOT NULL OR public.beagu_account_password_login_v1(b,repeat('c',64),repeat('6',64)) IS NOT NULL THEN RAISE EXCEPTION 'disabled profile login'; END IF;
