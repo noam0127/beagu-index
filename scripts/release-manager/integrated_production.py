@@ -52,6 +52,14 @@ class ProductionRunner(r.ScopedRunner):
         r.require(state.get("id")==job and state.get("base_sha")==verified["base_sha"] and state.get("candidate_sha")==verified["candidate_sha"] and state.get("plan_sha")==verified["plan_sha256"],"production_job_pin_mismatch")
         return super().once(job)
 
+    def validate_evidence(self,job,task,verified,evidence):
+        super().validate_evidence(job,task,verified,evidence)
+        if task['op']=='backup':
+            cfg=getattr(self.adapter,'backup_observer_config',None)
+            r.require(isinstance(cfg,dict) and set(cfg)=={'public_key','scope','checkpoint_sha256'},'backup_observer_not_connected')
+            checked=verify_backup_observation(evidence.get('backup_proof'),cfg['public_key'],job,verified,cfg['scope'],cfg['checkpoint_sha256'])
+            r.require(evidence.get('checkpoint_sha256')==checked['checkpoint_sha256'] and evidence.get('backup_observation_sha256')==checked['backup_observation_sha256'],'backup_observation_pin_mismatch')
+
 def _https_json(host,path,method,headers,body=None,connection=http.client.HTTPSConnection):
     """One bounded TLS request. No proxy, redirect, retry or arbitrary host."""
     r.require(path.startswith("/") and not path.startswith("//") and not any(c in path for c in "\r\n"),"invalid_control_path")
@@ -95,3 +103,31 @@ def github_worker_transport(action,payload):
     r.require(PRODUCTION_WORKER_TRANSPORT_ENABLED,"production_worker_transport_not_authorized")
     r.require(os.environ.get("GITHUB_ACTIONS")=="true" and os.environ.get("GITHUB_REF")=="refs/heads/main" and os.environ.get("GITHUB_REPOSITORY")==v.REPOSITORY,"untrusted_production_workflow")
     return _control_request(action,payload,_https_json,_oidc_token(_https_json))
+
+
+BACKUP_SCHEMAS=frozenset({"public","beagu_private","beagu_master","auth","storage","cron","vault","realtime","net","supabase_migrations"})
+
+def verify_backup_observation(proof,public_key,job,verified,expected_scope,expected_checkpoint):
+    """Check an independently signed backup/restore attestation.
+    The observer must actually restore a private durable checkpoint into an
+    isolated target. This function does not perform or claim that restore.
+    Exact live scope and checkpoint pins come from trusted operator config.
+    """
+    import base64
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    from cryptography.exceptions import InvalidSignature
+    r.require(isinstance(public_key,bytes) and len(public_key)==32,"backup_observer_not_connected")
+    r.require(isinstance(proof,dict) and set(proof)=={"statement","signature"},"invalid_backup_observation")
+    q=proof["statement"]
+    keys={"schema","scope","job_id","base_sha","candidate_sha","plan_sha256","checkpoint_sha256","source_fingerprint_sha256","restored_fingerprint_sha256","scope_sha256","encrypted","durable","restore_isolated","source_unchanged"}
+    r.require(isinstance(q,dict) and set(q)==keys and q["schema"]==1 and q["scope"]==SCOPE and q["job_id"]==job,"invalid_backup_observation")
+    r.require(isinstance(expected_scope,dict) and set(expected_scope)=={"schemas","extensions","external_dependencies"} and isinstance(expected_scope["schemas"],list) and BACKUP_SCHEMAS.issubset(expected_scope["schemas"]) and isinstance(expected_scope["extensions"],list) and isinstance(expected_scope["external_dependencies"],list),"incomplete_backup_scope")
+    r.require(isinstance(expected_checkpoint,str) and v.DIGEST.fullmatch(expected_checkpoint) and q["checkpoint_sha256"]==expected_checkpoint and q["scope_sha256"]==r.digest(expected_scope),"backup_checkpoint_pin_mismatch")
+    r.require(all(q[k]==verified[k] for k in ("base_sha","candidate_sha","plan_sha256")),"backup_release_pin_mismatch")
+    r.require(isinstance(q["source_fingerprint_sha256"],str) and v.DIGEST.fullmatch(q["source_fingerprint_sha256"]) and q["source_fingerprint_sha256"]==q["restored_fingerprint_sha256"] and all(q[k] is True for k in ("encrypted","durable","restore_isolated","source_unchanged")),"backup_restore_not_verified")
+    try:
+        Ed25519PublicKey.from_public_bytes(public_key).verify(base64.b64decode(proof["signature"],validate=True),r.canonical(q).encode("utf8"))
+    except (ValueError,TypeError,InvalidSignature):
+        raise ValueError("backup_observer_signature_invalid") from None
+    return {"scope":SCOPE,"ok":True,"operation":"backup","plan_sha256":verified["plan_sha256"],"checkpoint_sha256":expected_checkpoint,"backup_observation_sha256":r.digest(proof),"encrypted":True,"restore_verified":True}
+

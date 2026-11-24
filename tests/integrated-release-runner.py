@@ -383,6 +383,32 @@ class Runner(unittest.TestCase):
                 cluster.restore(b"invalid","fixture_source")
             self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
 
+    def production_test_adapter(self,cluster,job):
+        parent=self
+        class TestAdapter(Adapter):
+            scope=production.SCOPE
+            def __init__(self,*args):
+                super().__init__(*args)
+                self.observer=Ed25519PrivateKey.generate()
+                self.backup_observer_config=None
+            def result(self,op,p,**kw):
+                result={**super().result(op,p,**kw),"scope":production.SCOPE}
+                if op=="backup":
+                    # Synthetic scope evidence only: never claim the fixture
+                    # contains production schemas. Real fixture restore was checked.
+                    scope={"schemas":sorted(production.BACKUP_SCHEMAS),"extensions":[],"external_dependencies":[]}
+                    fingerprint=r.digest(b.fingerprint(self.cluster,"fixture_source"))
+                    q={"schema":1,"scope":production.SCOPE,"job_id":job,**{k:p[k] for k in ("base_sha","candidate_sha","plan_sha256")},
+                       "checkpoint_sha256":result["checkpoint_sha256"],"source_fingerprint_sha256":fingerprint,"restored_fingerprint_sha256":fingerprint,
+                       "scope_sha256":r.digest(scope),"encrypted":True,"durable":True,"restore_isolated":True,"source_unchanged":True}
+                    proof={"statement":q,"signature":base64.b64encode(self.observer.sign(r.canonical(q).encode())).decode()}
+                    self.backup_observer_config={"public_key":self.observer.public_key().public_bytes(serialization.Encoding.Raw,serialization.PublicFormat.Raw),"scope":scope,"checkpoint_sha256":result["checkpoint_sha256"]}
+                    result.update(backup_proof=proof,backup_observation_sha256=r.digest(proof))
+                return result
+        adapter=TestAdapter(parent.base,cluster,parent.objects,parent.git)
+        adapter.package_pins=parent.package_pins
+        return adapter
+
     def test_production_control_connection_isolated(self):
         with b.FixtureCluster() as cluster:
             cluster.sql("fixture_source","CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE TABLE public.existing(id integer PRIMARY KEY); INSERT INTO public.existing VALUES (1),(2);")
@@ -421,15 +447,13 @@ class Runner(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"non_fixture_adapter"):
                 production.ProductionRunner(ledger,self.git,self.envelope,self.registry,adapter)
             # Reuse the exact fixture adapter in a scope-labelled test double only.
-            class TestAdapter(Adapter):
-                scope=production.SCOPE
-                def result(self,op,p,**kw):
-                    return {**super().result(op,p,**kw),"scope":production.SCOPE}
-            adapter=TestAdapter(self.base,cluster,self.objects,self.git)
-            adapter.package_pins=self.package_pins
+            adapter=self.production_test_adapter(cluster,job)
             worker=production.ProductionRunner(ledger,self.git,self.envelope,self.registry,adapter)
             self.assertTrue(worker.once(job))
             self.assertEqual(ledger.snapshot(job)["next_step"],1)
+            cfg=adapter.backup_observer_config
+            with self.assertRaisesRegex(ValueError,"invalid_backup_observation"):
+                production.verify_backup_observation({},cfg["public_key"],job,self.verified,cfg["scope"],cfg["checkpoint_sha256"])
             adapter.fail="apply_sql"
             with self.assertRaisesRegex(RuntimeError,"fixture injected failure"):worker.once(job)
             self.assertEqual(ledger.snapshot(job)["status"],"blocked")
@@ -466,12 +490,7 @@ class Runner(unittest.TestCase):
             pins={**self.pins,"recipe_sha256":r.digest(self.recipe),"approval_sha256":r.digest(self.approval),"confirmed":True,"tasks":self.recipe["tasks"],"scope":production.SCOPE}
             job=rpc("create",pins)["id"]
             ledger=production.ProductionLedger(rpc,"42:1")
-            class TestAdapter(Adapter):
-                scope=production.SCOPE
-                def result(self,op,p,**kw):
-                    return {**super().result(op,p,**kw),"scope":production.SCOPE}
-            adapter=TestAdapter(self.base,cluster,self.objects,self.git)
-            adapter.package_pins=self.package_pins
+            adapter=self.production_test_adapter(cluster,job)
             executor=production.ProductionRunner(ledger,self.git,self.envelope,self.registry,adapter)
             for task in self.recipe["tasks"]:
                 self.assertTrue(executor.once(job))
@@ -521,5 +540,29 @@ class Runner(unittest.TestCase):
             prod_pages.build(self.git,verified,inv,"0"*64,self.objects/"bad.tar")
         with self.assertRaisesRegex(ValueError,"invalid_production_public_paths"):
             prod_pages.inventory(self.git,verified,overlay,paths+["supabase/account.sql"],"2026-11-24T00:00:00Z")
+        import integrated_provider as ip
+        class HTTP:
+            def __init__(inner):inner.calls=[];inner.answers=[]
+            def request(inner,host,method,path,headers,body=None):
+                inner.calls.append((host,method,path))
+                self.assertTrue(inner.answers)
+                return inner.answers.pop(0)
+        h=HTTP()
+        publisher=prod_pages.Publisher(ip.ProviderAdapter("snvzwrexuqavnfvzgxqj",h))
+        a={"repository":ip.REPO,"workflow_sha":self.base,"run_id":123,"artifact_id":456,
+           "artifact_zip_sha256":"e"*64,"candidate_sha":sha,"plan_sha256":verified["plan_sha256"]}
+        approval={"provider":a,"archive_sha256":proof["artifact_sha256"],"inventory_sha256":pin,"public_data_blob_sha":overlay}
+        with self.assertRaisesRegex(ValueError,"production_upload_approval_mismatch"):
+            publisher.publish(self.git,verified,inv,pin,dest,proof,{**approval,"archive_sha256":"0"*64},"fixture-write","fixture-read","fixture-oidc")
+        self.assertEqual(h.calls,[])
+        art={"id":456,"name":"github-pages","expired":False,"digest":"sha256:"+"e"*64,"workflow_run":{"id":123,"head_sha":self.base}}
+        h.answers=[(200,ip.canonical(art)),(200,ip.canonical({"id":"fixture-deployment"}))]
+        deployed=publisher.publish(self.git,verified,inv,pin,dest,proof,approval,"fixture-write","fixture-read","fixture-oidc")
+        h.answers=[(200,ip.canonical({"status":"succeed"}))]+[(200,contents[x]) for x in paths if x!=".nojekyll"]
+        observed=publisher.observe(deployed,"fixture-observer",inv,pin,"v1.10.1")
+        self.assertTrue(observed["live_verified"])
+        self.assertEqual(sum(method=="POST" for _,method,_ in h.calls),1)
+        self.assertEqual(h.answers,[])
+
 
 if __name__=="__main__":unittest.main()

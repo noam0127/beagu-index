@@ -67,3 +67,41 @@ def build(root,verified,approved,expected_sha,destination):
     b.private_write(pathlib.Path(destination),raw)
     p.require(len(p.hash_bytes(raw))==64,"archive_hash_missing")
     return {"scope":SCOPE,"inventory_sha256":expected_sha,"artifact_sha256":p.hash_bytes(raw),"public_data_blob_sha":fresh["public_data_blob_sha"],"candidate_sha":fresh["candidate_sha"],"plan_sha256":fresh["plan_sha256"],"execution_enabled":False}
+
+
+class Publisher:
+    """Connect the verified Pages archive to the existing provider API adapter.
+    This is called by a trusted single-publisher runner, not by candidate code.
+    Production transport remains disabled in integrated_provider.
+    """
+    def __init__(self,provider):
+        import integrated_provider as ip
+        p.require(type(provider) is ip.ProviderAdapter and provider.project=="snvzwrexuqavnfvzgxqj","invalid_production_provider")
+        self.provider=provider
+
+    def publish(self,root,verified,approved_inventory,expected_inventory_sha,archive_path,archive_receipt,artifact_approval,write_token,read_token,oidc_token):
+        p.require(isinstance(approved_inventory,dict) and approved_inventory.get("scope")==SCOPE,"invalid_production_inventory")
+        fresh,contents=inventory(root,verified,approved_inventory["public_data_blob_sha"],[x["path"] for x in approved_inventory["files"]],approved_inventory["build_timestamp"])
+        p.require(fresh==approved_inventory and p.hash_bytes(p.canonical(fresh))==expected_inventory_sha,"production_inventory_changed")
+        raw=b.private_read(pathlib.Path(archive_path),p.MAX_TOTAL+p.MAX_FILES*1024+10240)
+        expected={"scope":SCOPE,"inventory_sha256":expected_inventory_sha,"artifact_sha256":p.hash_bytes(raw),"public_data_blob_sha":fresh["public_data_blob_sha"],"candidate_sha":fresh["candidate_sha"],"plan_sha256":fresh["plan_sha256"],"execution_enabled":False}
+        p.require(archive_receipt==expected,"production_artifact_receipt_mismatch")
+        with tarfile.open(fileobj=io.BytesIO(raw),mode="r:") as tar:
+            members=tar.getmembers()
+            p.require([m.name for m in members]==list(contents),"production_archive_members_mismatch")
+            for m in members:
+                p.require(m.isfile() and m.size==len(contents[m.name]) and tar.extractfile(m).read()==contents[m.name],"production_archive_content_mismatch")
+        # Artifact index digest and tar digest are distinct. The independent
+        # upload observer must bind both before publication can be requested.
+        p.require(isinstance(artifact_approval,dict) and set(artifact_approval)=={"provider","archive_sha256","inventory_sha256","public_data_blob_sha"} and artifact_approval["archive_sha256"]==expected["artifact_sha256"] and artifact_approval["inventory_sha256"]==expected_inventory_sha and artifact_approval["public_data_blob_sha"]==fresh["public_data_blob_sha"],"production_upload_approval_mismatch")
+        a=artifact_approval["provider"]
+        p.require(a["candidate_sha"]==fresh["candidate_sha"] and a["plan_sha256"]==fresh["plan_sha256"],"production_upload_pin_mismatch")
+        # Does not upload a second artifact or start a second workflow.
+        return self.provider.publish_pages(a,write_token,read_token,oidc_token)
+
+    def observe(self,deployment,read_token,approved_inventory,expected_inventory_sha,version):
+        p.require(approved_inventory.get("scope")==SCOPE and p.hash_bytes(p.canonical(approved_inventory))==expected_inventory_sha,"production_inventory_pin_mismatch")
+        # .nojekyll is a build directive, not a guaranteed served HTTP path.
+        served={**approved_inventory,"files":[x for x in approved_inventory["files"] if x["path"]!=".nojekyll"]}
+        p.require(all(allowed(x["path"]) for x in served["files"]),"nonpublic_live_probe")
+        return self.provider.verify_pages(deployment,read_token,served,version,public_path=allowed)

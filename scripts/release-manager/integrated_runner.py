@@ -150,9 +150,7 @@ class ScopedRunner:
                 "verify_backend":self.adapter.verify_backend,"publish_pages":self.adapter.publish_pages,
                 "verify_live":self.adapter.verify_live}
             evidence=handlers[task["op"]](task,files,verified)
-            require(isinstance(evidence,dict) and evidence.get("scope")==self.scope and evidence.get("ok") is True,"missing_fixture_evidence")
-            require(evidence.get("plan_sha256")==verified["plan_sha256"] and evidence.get("operation")==task["op"],"wrong_fixture_evidence")
-            if task["op"]=="backup":require(evidence.get("restore_verified") is True and evidence.get("encrypted") is True,"backup_not_verified")
+            self.validate_evidence(job,task,verified,evidence)
             self.ledger.finish(job,claim,digest(evidence))
             return True
         except Exception:
@@ -160,6 +158,11 @@ class ScopedRunner:
             self.ledger.finish(job,claim)
             raise
 
+
+    def validate_evidence(self,job,task,verified,evidence):
+        require(isinstance(evidence,dict) and evidence.get("scope")==self.scope and evidence.get("ok") is True,"missing_fixture_evidence")
+        require(evidence.get("plan_sha256")==verified["plan_sha256"] and evidence.get("operation")==task["op"],"wrong_fixture_evidence")
+        if task["op"]=="backup":require(evidence.get("restore_verified") is True and evidence.get("encrypted") is True,"backup_not_verified")
 
 class FixtureRunner(ScopedRunner):
     """Original isolated execution path; no production adapter accepted."""

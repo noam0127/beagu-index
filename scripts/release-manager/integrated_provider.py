@@ -134,7 +134,7 @@ class ProviderAdapter:
         require(isinstance(dep,str) and IDENT.fullmatch(dep),"invalid_pages_deployment_id")
         return {"deployment_id":dep,"candidate_sha":approved["candidate_sha"],"plan_sha256":approved["plan_sha256"],"live_verified":False}
 
-    def verify_pages(self,deployment,read_token,inventory,version):
+    def verify_pages(self,deployment,read_token,inventory,version,public_path=None):
         require(isinstance(deployment.get("deployment_id"),str) and IDENT.fullmatch(deployment["deployment_id"]) and deployment["candidate_sha"]==inventory["candidate_sha"] and deployment["plan_sha256"]==inventory["plan_sha256"] and inventory["operation"]=="publish_pages","pages_receipt_mismatch")
         prefix="/repos/"+REPO
         status=json_response(self.http.request(GITHUB_HOST,"GET",prefix+"/pages/deployments/"+quote(deployment["deployment_id"],safe=""),{**auth(read_token),"X-GitHub-Api-Version":"2022-11-28"}),200)
@@ -143,7 +143,7 @@ class ProviderAdapter:
         observed=[]
         for pin in inventory["files"]:
             path=pin["path"]
-            require(pkg.public_path(path),"nonpublic_live_probe")
+            require((public_path or pkg.public_path)(path),"nonpublic_live_probe")
             code,raw=self.http.request(DOMAIN,"GET","/"+quote(path,safe="/")+"?release="+deployment["candidate_sha"],{"Cache-Control":"no-cache","Accept-Encoding":"identity","User-Agent":"beagu-release-observer"})
             require(code==200 and hash_bytes(raw)==pin["sha256"],"live_file_mismatch")
             if path=="release-info.json":
