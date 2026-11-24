@@ -13,10 +13,10 @@
       "version": "v1.2.0",
       "name": "정돈",
       "scope": "공통 메뉴·검색 비교 UI·참여코드·레벨 색상·버전 표시",
-      "status": "CANDIDATE_REBASED_REQUIRES_FINAL_CI_AND_ADMIN_REGISTRATION",
+      "status": "REGISTERED_OWNER_APPROVED_QUEUED",
       "branch": "release/v1.2.0-clean-ready",
-      "pr": null,
-      "commit": null,
+      "pr": 282,
+      "commit": "01a3dcd4319d29f78222f12f942162e541a371fe",
       "tests": [
         {
           "name": "GitHub exact source JS/CSS SHA match and node syntax",
@@ -91,8 +91,8 @@
         "tests/clean-release-info-runtime.cjs"
       ],
       "dependencies": [],
-      "admin_registration": "PENDING_ADMIN_BOOTSTRAP_AND_FINAL_CI",
-      "production": "NOT_APPROVED",
+      "admin_registration": "VERIFIED",
+      "production": "QUEUED_NOT_DEPLOYED",
       "deployment_date": null,
       "rollback_sha": "09dbb7aaa62db9a6ee898b349a99aaa57a944e42",
       "prerequisite": {
@@ -114,17 +114,28 @@
       "version": "v1.3.0",
       "name": "놀이터",
       "scope": "게임 허브·기존 진입 유지",
-      "status": "PENDING",
-      "branch": null,
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.3.0-playground",
       "pr": null,
       "commit": null,
-      "tests": [],
+      "tests": [
+        {
+          "name": "Playground source and navigation contract",
+          "result": "PENDING"
+        },
+        {
+          "name": "Existing game engines and access policy unchanged",
+          "result": "PENDING"
+        }
+      ],
       "changed_files": [],
-      "dependencies": [],
-      "admin_registration": "PENDING",
+      "dependencies": [
+        "v1.2.0 production applied before registration"
+      ],
+      "admin_registration": "BLOCKED_PREVIOUS_RELEASE_QUEUED",
       "production": "NOT_APPROVED",
       "deployment_date": null,
-      "rollback_sha": null
+      "rollback_sha": "01a3dcd4319d29f78222f12f942162e541a371fe"
     },
     {
       "order": 3,

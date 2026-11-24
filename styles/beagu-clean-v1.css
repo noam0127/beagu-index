@@ -1,5 +1,5 @@
 /* Clean: presentation only, no authorization rules. */
-.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="index.html#teacher-game-title"]{display:inline-flex!important}
+.beagu-unified-header .beagu-unified-nav.beagu-core-nav>a[href="games.html"]{display:inline-flex!important}
 @media(max-width:760px){.beagu-unified-header .beagu-unified-nav.beagu-core-nav{grid-template-columns:repeat(5,minmax(0,1fr))}}
 #beaguLevelState[data-level="0"]{background:#f8fafc;border-color:#d7dee8;color:#475569}
 #beaguLevelState[data-level="1"]{background:#edf5ff;border-color:#b8d4ff;color:#1858bd}

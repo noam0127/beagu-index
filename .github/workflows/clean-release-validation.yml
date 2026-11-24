@@ -19,6 +19,7 @@ jobs:
           node --check js/beagu-release-info-v1.js
           node tests/clean-release-contract.cjs
           node tests/clean-release-info-runtime.cjs
+          node tests/playground-contract.cjs
           python3 -m py_compile scripts/release-manager/stamp_release_info.py
       - name: Verify selected artifact metadata
         run: |
