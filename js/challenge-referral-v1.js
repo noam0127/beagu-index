@@ -35,13 +35,15 @@
   let upgraded = false;
   let lastReferrals = 0;
   let lastSnapshot = '', activeToken='', referralKnown=false, serverPromotion=false;
+  function ownerSessionMatches(){try{const t=sessionStorage.getItem(sessionKey);return /^[a-f0-9]{64}$/.test(t||'')&&t===sessionStorage.getItem('beagu-account-session-v1');}catch{return false;}}
   function missionState(){
-    const accountState=get('challengeAccountStatus')?.dataset.accountState||'checking';
+    const reported=get('challengeAccountStatus')?.dataset.accountState||'checking';
+    const accountState=reported==='verified'&&!ownerSessionMatches()?'checking':reported;
     const referralComplete=referralKnown&&lastReferrals>=1;
     const accountComplete=accountState==='verified';
     const verifiedLevel=Number(get('challengeAccessPanel')?.getAttribute('data-auth-level')||0);
     const achieved=referralComplete&&accountComplete&&serverPromotion;
-    const legacy=accountState==='unverified'&&(serverPromotion||verifiedLevel===2);
+    const legacy=active&&accountState==='unverified'&&(serverPromotion||verifiedLevel===2);
     return {accountState,referralComplete,accountComplete,achieved,legacy};
   }
   function renderMissions(){
@@ -151,9 +153,7 @@
       const payload = await response.json().catch(() => ({}));
       if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
       if (response.status === 503 && payload.error === 'REFERRAL_NOT_READY') {
-        if (!upgraded) status.textContent = '설문 연결을 확인 중이에요.';
-        if(retry)retry.hidden=false;
-        return;
+        throw Object.assign(Error('REFERRAL_NOT_READY'),{status:503});
       }
       if (!response.ok) {const error=Error(payload.error || 'UNAVAILABLE');error.status=response.status;throw error;}
       if (typeof payload.link !== 'string' ||
@@ -180,7 +180,7 @@
       if(payload.deviceBound===true)window.dispatchEvent(new CustomEvent('beagu:challenge-device-verified',{detail:{code:detail.code}}));
       if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
       progress.hidden=false;
-      progress.textContent = '유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(count>=1?'추천 미션 완료':'추천 미션 진행 중');
+      progress.textContent = upgraded?'Lv.2 달성 · 누적 유효 추천 '+count.toLocaleString('ko-KR')+'건':'유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(count>=1?'추천 미션 완료':'추천 미션 진행 중');
       const snapshot=(promoted?'2':'1')+':'+count;
       if(snapshot!==lastSnapshot){
         lastSnapshot=snapshot;
@@ -191,15 +191,15 @@
       status.textContent = promoted
         ? '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.'
         : loginLevel >= 2
-          ? 'Lv.2 로그인은 확인됐습니다. 개인 참여코드는 추천 1건 확인 후 별도로 활성화됩니다.'
+          ? '기존 Lv.2 열람 권한은 유지됩니다. 포스트잇 이용 시 계정 인증이 필요합니다.'
           : '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.';
     } catch (error) {
       if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
       if(error?.status===401||error?.status===403){reset();window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',{detail:{level:1,validReferrals:0}}));}
-      else if(countHint&&lastSnapshot){
+      else if(lastSnapshot){
         const before=certificateLevelBanner?.textContent;
         referralKnown=false;serverPromotion=false;renderState(false,lastReferrals);
-        countHint.textContent='마지막으로 확인된 실적 · 새로고침 필요';
+        if(countHint)countHint.textContent='마지막으로 확인된 실적 · 새로고침 필요';
         if(before!==certificateLevelBanner?.textContent)
           window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',{detail:{level:1,validReferrals:0}}));
       }
@@ -228,7 +228,7 @@
       else{await navigator.clipboard.writeText(url);status.textContent='전용 조사 링크를 복사했습니다.';}}
     catch(error){if(error?.name==='AbortError')return;linkField.focus();linkField.select();status.textContent='링크를 선택했습니다. 직접 복사해 주세요.';}
   });
-  window.addEventListener('beagu:challenge-access-granted', () => {const token=sessionStorage.getItem(sessionKey)||'';if(token!==activeToken){lastIdentity=null;activeToken=token;reset();}active=true;});
+  window.addEventListener('beagu:challenge-access-granted', () => {const token=sessionStorage.getItem(sessionKey)||'';active=true;if(token!==activeToken){lastIdentity=null;activeToken=token;reset();}});
   window.addEventListener('beagu:challenge-access-revoked', () => {
     active = false; activeToken=''; lastIdentity = null; reset();
   });

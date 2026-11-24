@@ -24,18 +24,18 @@ assert.match(html,/id="challengeAccountJoin"/);assert.match(html,/나의 고유�
 assert.doesNotThrow(()=>new vm.Script(referral));
 for(const id of ['challengeBenefitsTitle','challengeMissionReferral','challengeMissionAccount','challengeMissionSummary'])assert.ok(html.includes('id="'+id+'"'));
 assert.match(referral,/const achieved=referralComplete&&accountComplete&&serverPromotion/);
-assert.match(referral,/기존 Lv\.2 · 계정 전환 안내/);
+assert.match(referral,/기존 Lv\.2 달성 · 혜택 유지/);
 assert.match(ui,/ownerToken===own\(\)/);
 assert.match(ui,/beagu:challenge-account-state/);
 const logic=referral.slice(referral.indexOf('  function missionState(){'),referral.indexOf('  function renderMissions(){'));
-const decide=new Function('get','referralKnown','lastReferrals','serverPromotion',logic+';return missionState()');
+const decide=new Function('get','referralKnown','lastReferrals','serverPromotion','ownerSessionMatches','active',logic+';return missionState()');
 for(const [state,known,count,promoted,level,achieved,legacy] of [
  ['unverified',true,1,false,1,false,false],['verified',true,0,false,1,false,false],
  ['verified',true,1,true,2,true,false],['verified',true,1,false,1,false,false],
  ['unverified',true,1,true,2,false,true],['checking',true,1,true,2,false,false],
  ['verified',false,1,true,2,false,false],['unverified',true,0,false,2,false,true]
 ]){
- const result=decide(id=>id==='challengeAccountStatus'?{dataset:{accountState:state}}:{getAttribute:()=>String(level)},known,count,promoted);
+ const result=decide(id=>id==='challengeAccountStatus'?{dataset:{accountState:state}}:{getAttribute:()=>String(level)},known,count,promoted,()=>true,true);
  assert.equal(result.achieved,achieved);assert.equal(result.legacy,legacy);
 }
 console.log('PASS: independent Lv1 access, anonymous account login, two missions and legacy transition');
