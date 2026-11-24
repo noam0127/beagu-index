@@ -108,11 +108,13 @@
   }
  }
  function close(){
+  if(window.dispatchEvent(new Event('beagu:participation-before-close',{cancelable:true}))===false)return;
   modal.hidden=true;
   document.body.classList.remove('beagu-participation-open');
   message.textContent='';
   code.value='';code.type='password';toggle.textContent='표시';toggle.setAttribute('aria-pressed','false');
   lastFocus?.focus?.();
+  window.dispatchEvent(new Event('beagu:participation-dialog-closed'));
  }
  function open(){
   lastFocus=document.activeElement;
@@ -126,6 +128,7 @@
    if(lastLevel===1)code.focus();
    else logout.focus();
   }else code.focus();
+  window.dispatchEvent(new Event('beagu:participation-dialog-opened'));
  }
  const button=(label,className,action=open)=>{
   const b=el('button',className,label);b.type='button';
@@ -218,7 +221,7 @@
  });
  form.addEventListener('submit',async e=>{
   e.preventDefault();
-  if(busy)return;
+  if(busy||modal.dataset.entryMode==='account')return;
   const value=code.value.trim();
   if(!/^[A-Za-z0-9-]{8,120}$/.test(value)){
    message.textContent='참여코드 형식을 확인해 주세요.';return;
@@ -270,4 +273,136 @@
  window.addEventListener('beagu:participation-open',open);
  const level=Number(badge.dataset.level);
  paint(Number.isInteger(level)&&level>=1&&level<=2?level:0);
+})();
+
+/* Unified anonymous account entry. Legacy code access remains explicit. */
+(()=>{
+ 'use strict';
+ const $=id=>document.getElementById(id),badge=$('beaguLevelState'),overlay=$('beaguParticipationOverlay');
+ if(!badge||!overlay)return;
+ const KEY='beagu-level-session-v1',OWN='beagu-account-session-v1',DEVICE='beagu-referral-device-secret-v1';
+ const base='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/';
+ const idPattern=/^[A-Za-z0-9-]{8,120}$/,tokenPattern=/^[a-f0-9]{64}$/;
+ const read=k=>{try{return sessionStorage.getItem(k)||''}catch{return ''}};
+ const own=()=>{const t=read(OWN);return tokenPattern.test(t)&&t===read(KEY)?t:''};
+ const localDevice=()=>{try{return localStorage.getItem(DEVICE)||''}catch{return ''}};
+ const dialog=overlay.querySelector('.beagu-participation-dialog');
+ const panel=document.createElement('section');panel.id='beaguAccountEntry';
+ panel.innerHTML=`
+ <h2 id="beaguAccountEntryTitle">배구지수 로그인</h2>
+ <p id="beaguEntryCopy">나의 고유번호가 로그인 아이디입니다.</p>
+ <div id="beaguEntryTabs" class="beagu-account-entry-tabs"><button type="button" id="beaguEntryLoginTab">로그인</button><button type="button" id="beaguEntrySignupTab">회원가입</button></div>
+ <form id="beaguEntryForm" method="post">
+ <label for="beaguEntryId">로그인 아이디 (나의 고유번호)</label><input id="beaguEntryId" autocomplete="username" maxlength="120" minlength="8" required spellcheck="false" autocapitalize="off">
+ <label for="beaguEntryPassword">비밀번호</label><input id="beaguEntryPassword" type="password" autocomplete="current-password" minlength="4" maxlength="256" required>
+ <div id="beaguEntryConfirmRow" hidden><label for="beaguEntryConfirm">비밀번호 확인</label><input id="beaguEntryConfirm" type="password" autocomplete="new-password" minlength="4" maxlength="256"></div>
+ <p id="beaguEntryHelp" hidden>최초 참여 기기에서 가입하세요. 비밀번호는 4자 이상, 추측하기 어려운 긴 비밀번호를 권장합니다.</p>
+ <button id="beaguEntrySubmit" type="submit">로그인</button></form>
+ <div id="beaguEntryOwner" hidden><p>익명 계정으로 로그인했습니다.</p><a href="account.html">나의 계정 관리</a><button id="beaguEntryLogout" type="button">로그아웃</button></div>
+ <section id="beaguEntryCard" hidden><h3>나의 익명 회원증</h3><strong id="beaguEntryCardId"></strong><p id="beaguEntryCardLevel"></p><p>일회용 복구코드</p><code id="beaguEntryRecovery"></code><p>다른 사람에게 공유하지 마세요. 비밀번호와 복구코드를 모두 잃으면 운영자도 복구할 수 없습니다.</p><button type="button" id="beaguEntrySave">회원증 저장 (.txt)</button><button type="button" id="beaguEntryContinue">저장 완료 · 계속</button></section>
+ <p id="beaguEntryMessage" role="status" aria-live="polite"></p>
+ <nav id="beaguEntryLinks"><a href="account.html#accountRecover">비밀번호 복구</a><a href="challenge.html">챌린지에서 회원가입</a><a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a></nav>
+ <button type="button" id="beaguEntryLegacy">기존 참여코드로 자료 열람하기</button><button type="button" id="beaguEntryBack" hidden>로그인 화면으로 돌아가기</button>`;
+ dialog.append(panel);
+ const header=document.createElement('button');header.id='beaguAccountHeader';header.type='button';badge.after(header);
+ const footer=document.createElement('p');footer.className='beagu-anonymous-notice';
+ footer.textContent='배구지수사이트는 익명 회원제로 운영되며, 신규 회원가입 시 이메일, 전화번호, 실명 등을 수집하거나 저장하지 않습니다.';
+ (document.querySelector('footer')||document.querySelector('main')||document.body).append(footer);
+ const form=$('beaguEntryForm'),code=$('beaguEntryId'),pw=$('beaguEntryPassword'),confirm=$('beaguEntryConfirm'),msg=$('beaguEntryMessage');
+ const join=$('challengeAccountJoin'),joinStatus=$('challengeAccountStatus');
+ let mode='login',busy=false,card=null,challengeCode='',challengeToken='',ownerToken='',saved=false;
+ function clearFields(){code.value='';pw.value='';confirm.value='';code.readOnly=false;}
+ function clearCard(){card=null;saved=false;$('beaguEntryCard').hidden=true;$('beaguEntryCardId').textContent='';$('beaguEntryCardLevel').textContent='';$('beaguEntryRecovery').textContent='';$('beaguEntryContinue').disabled=true;}
+ function sync(){
+  const logged=Boolean(own())&&ownerToken===own();
+  header.textContent=logged?'나의 계정':'로그인';
+  if(join){const ready=challengeToken===read(KEY)&&idPattern.test(challengeCode)&&tokenPattern.test(localDevice());join.hidden=logged||!ready;join.disabled=!ready||busy;if(joinStatus)joinStatus.textContent=logged?'나의 고유번호가 로그인 아이디입니다. 계정 로그인 완료.':ready?'나의 고유번호가 로그인 아이디입니다. 비밀번호만 설정해 계정을 만드세요.':'나의 고유번호가 로그인 아이디입니다. 최초 참여 기기에서 가입하세요.';}
+  for(const b of document.querySelectorAll('[data-beagu-participation-trigger],[data-beagu-participation-game-trigger]'))b.textContent='로그인';
+ }
+ function show(next,prefill=''){
+  if(busy||card)return;
+  mode=next;clearFields();msg.textContent='';
+  const legacy=next==='legacy',signup=next==='signup',owner=next==='owner';
+  overlay.dataset.entryMode=legacy?'legacy':'account';
+  dialog.setAttribute('aria-labelledby',legacy?'beaguParticipationTitle':'beaguAccountEntryTitle');
+  $('beaguEntryBack').hidden=!legacy;
+  $('beaguAccountEntryTitle').hidden=legacy;$('beaguEntryCopy').hidden=legacy;
+  $('beaguEntryTabs').hidden=legacy||owner;$('beaguEntryLinks').hidden=legacy||owner;
+  form.hidden=legacy||owner;$('beaguEntryOwner').hidden=!owner;
+  $('beaguEntryLegacy').hidden=legacy||owner||Boolean(own());
+  $('beaguEntryConfirmRow').hidden=!signup;confirm.required=signup;
+  pw.autocomplete=signup?'new-password':'current-password';
+  $('beaguEntryHelp').hidden=!signup;
+  $('beaguEntrySubmit').textContent=signup?'회원가입':'로그인';
+  $('beaguAccountEntryTitle').textContent=owner?'나의 계정':signup?'익명 회원가입':'배구지수 로그인';
+  $('beaguEntryLoginTab').setAttribute('aria-pressed',String(!signup));$('beaguEntrySignupTab').setAttribute('aria-pressed',String(signup));
+  if(prefill){code.value=prefill;code.readOnly=true;}
+  if(!overlay.hidden&&!legacy)(owner?$('beaguEntryLogout'):prefill?pw:code).focus();
+ }
+ function open(next,prefill=''){window.dispatchEvent(new Event('beagu:participation-open'));show(next,prefill);}
+ async function api(action,payload={},token=''){
+  const r=await fetch(base+'beagu-account-v1',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Beagu-Session':token},body:JSON.stringify({action,...payload})});
+  const d=await r.json().catch(()=>null);if(!r.ok||!d){const e=Error('ACCOUNT_FAILED');e.status=r.status;throw e;}return d;
+ }
+ async function verifyLogin(id,password){
+  const result=await api('password_login',{account_id:id,password});
+  if(!tokenPattern.test(result.token||'')||result.account_id!==id||![1,2].includes(result.level))throw Error('INVALID_SESSION');
+  const response=await fetch(base+'beagu-level-api',{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-Beagu-Session':result.token},body:JSON.stringify({action:'verify'})});
+  const checked=await response.json();
+  if(!response.ok||Number(checked.level)!==result.level)throw Error('VERIFY_FAILED');
+  const previous=read(KEY),previousOwn=read(OWN);
+  try{sessionStorage.setItem(KEY,result.token);sessionStorage.setItem(OWN,result.token);}
+  catch(e){try{previous?sessionStorage.setItem(KEY,previous):sessionStorage.removeItem(KEY);previousOwn?sessionStorage.setItem(OWN,previousOwn):sessionStorage.removeItem(OWN);}catch{}throw e;}
+  ownerToken=result.token;challengeCode='';challengeToken='';sync();
+  window.dispatchEvent(new CustomEvent('beagu:participation-authenticated',{detail:{token:result.token,level:result.level,provisional:checked.provisional===true}}));
+  window.dispatchEvent(new Event('beagu:level-state-change'));
+  return result;
+ }
+ function finish(){clearCard();overlay.querySelector('[data-beagu-close]').click();if(document.body.classList.contains('beagu-page-search'))window.location.assign('search-lv1.html');}
+ function renderCard(id,recovery,result){
+  card={id,recovery,known:Boolean(result),active:result?.lv2_active===true};saved=false;
+  form.hidden=true;$('beaguEntryTabs').hidden=true;$('beaguEntryLinks').hidden=true;$('beaguEntryLegacy').hidden=true;
+  $('beaguEntryCard').hidden=false;$('beaguEntryCardId').textContent=id;$('beaguEntryCardLevel').textContent=card.known?(card.active?'Lv.2 활성':'Lv.2 비활성'):'Lv.2 확인 필요';
+  $('beaguEntryRecovery').textContent=recovery.slice(0,4)+'-'+recovery.slice(4,8)+'-'+recovery.slice(8);$('beaguEntryContinue').disabled=true;
+ }
+ window.addEventListener('beagu:participation-dialog-opened',()=>show(own()&&ownerToken===own()?'owner':'login'));
+ window.addEventListener('beagu:participation-dialog-closed',()=>{clearFields();if(!card)msg.textContent='';});
+ window.addEventListener('beagu:participation-before-close',e=>{if(busy||card){e.preventDefault();msg.textContent=busy?'처리 중입니다.':'회원증을 저장하고 계속 버튼을 눌러주세요.';}});
+ header.addEventListener('click',()=>open(own()&&ownerToken===own()?'owner':'login'));
+ $('beaguEntryLoginTab').onclick=()=>show('login');$('beaguEntrySignupTab').onclick=()=>show('signup');
+ $('beaguEntryLegacy').onclick=()=>show('legacy');$('beaguEntryBack').onclick=()=>show('login');
+ join?.addEventListener('click',()=>{if(challengeToken===read(KEY)&&idPattern.test(challengeCode))open('signup',challengeCode);});
+ window.addEventListener('beagu:identity-ready',e=>{if(idPattern.test(e.detail?.code||'')&&tokenPattern.test(read(KEY))){challengeCode=e.detail.code;challengeToken=read(KEY);sync();}});
+ window.addEventListener('beagu:challenge-access-revoked',()=>{challengeCode='';challengeToken='';sync();});
+ async function refreshOwner(){
+  const t=own();if(!t){ownerToken='';sync();return;}
+  try{const r=await api('status',{},t);if(own()===t&&idPattern.test(r.account_id||'')&&[1,2].includes(r.level)){ownerToken=t;sync();}}
+  catch(e){if(own()===t&&(e.status===401||e.status===403)){sessionStorage.removeItem(OWN);if(read(KEY)===t)sessionStorage.removeItem(KEY);ownerToken='';sync();window.dispatchEvent(new Event('beagu:level-state-change'));}}
+ }
+ window.addEventListener('beagu:level-state-updated',()=>{sync();if(!busy&&own()!==ownerToken)void refreshOwner();});
+ window.addEventListener('beagu:participation-logged-out',()=>{ownerToken='';challengeCode='';challengeToken='';try{sessionStorage.removeItem(OWN)}catch{}sync();});
+ form.onsubmit=async e=>{
+  e.preventDefault();if(busy||card||!['login','signup'].includes(mode))return;
+  const id=code.value.trim(),password=pw.value,repeated=confirm.value,signup=mode==='signup';pw.value='';confirm.value='';
+  if(!idPattern.test(id)||Array.from(password).length<4){msg.textContent='고유번호와 4자 이상 비밀번호를 확인하세요.';return;}
+  if(signup&&password!==repeated){msg.textContent='비밀번호가 일치하지 않습니다.';return;}
+  if(signup&&!tokenPattern.test(localDevice())){msg.textContent='최초 설문 참여 기기에서 가입하세요.';return;}
+  busy=true;$('beaguEntrySubmit').disabled=true;msg.textContent='확인 중입니다.';
+  try{
+   if(signup){
+    const recovery=Array.from(crypto.getRandomValues(new Uint8Array(13)),b=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b&31]).join('');
+    let result;
+    try{result=await api('signup',{account_id:id,code:id,password,deviceSecret:localDevice(),new_recovery:recovery});if(result.account_id!==id||![1,2].includes(result.level))throw Error('INVALID_RESULT');}
+    catch(err){if(!err.status||err.status>=500){renderCard(id,recovery,null);msg.textContent='가입 결과를 확인할 수 없습니다. 회원증을 저장한 후 로그인 여부를 확인하세요.';return;}throw err;}
+    renderCard(id,recovery,result);
+    try{await verifyLogin(id,password);msg.textContent='가입 및 자동 로그인 완료. 회원증을 저장하세요.';}
+    catch{msg.textContent='가입 완료. 회원증을 저장한 뒤 직접 로그인하세요.';}
+   }else{await verifyLogin(id,password);busy=false;finish();}
+  }catch(err){msg.textContent=err.status===429?'인증 요청이 많습니다. 잠시 후 다시 시도하세요.':'로그인 또는 가입에 실패했습니다. 입력값과 최초 참여 기기를 확인하세요.';}
+  finally{busy=false;$('beaguEntrySubmit').disabled=false;sync();}
+ };
+ $('beaguEntrySave').onclick=()=>{if(!card)return;const text='BAEGUINDEX 익명 회원증\n로그인 고유번호: '+card.id+'\n'+$('beaguEntryCardLevel').textContent+' (발급 시점)\n일회용 복구코드: '+$('beaguEntryRecovery').textContent+'\n타인과 공유 금지.\n';const url=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='BAEGUINDEX-익명회원증.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);saved=true;$('beaguEntryContinue').disabled=false;};
+ $('beaguEntryContinue').onclick=()=>{if(!card||!saved)return;const logged=Boolean(own())&&ownerToken===own();const id=card.id;clearCard();if(logged)finish();else{show('login');code.value=id;}};
+ $('beaguEntryLogout').onclick=async()=>{if(busy)return;const t=own();busy=true;try{if(t)await api('logout',{},t);}catch{msg.textContent='서버 로그아웃을 확인하지 못했습니다.';}finally{try{if(read(KEY)===t)sessionStorage.removeItem(KEY);sessionStorage.removeItem(OWN);}catch{}ownerToken='';busy=false;window.dispatchEvent(new Event('beagu:participation-logged-out'));window.dispatchEvent(new Event('beagu:level-state-change'));sync();show('login');}};
+ sync();void refreshOwner();
 })();
