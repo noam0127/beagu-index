@@ -8,6 +8,8 @@
   const progress = get('challengeReferralProgress');
   const referralCount = get('challengeReferralCount');
   const retry = get('challengeReferralRetry');
+  const share = get('shareChallengeReferral'), countHint=get('challengeReferralCountHint'), meter=get('challengeMilestoneProgress');
+  const heading=get('challenge-levelup-title');
   const title = get('challengeReferralTitle');
   const tag = get('challengeReferralTag');
   const identityPanel = get('challengeIdentityPanel');
@@ -32,7 +34,11 @@
   let lastIdentity = null;
   let upgraded = false;
   let lastReferrals = 0;
-  let lastSnapshot = '';
+  let lastSnapshot = '', activeToken='';
+  function renderMeter(count,known=true){
+    if(countHint)countHint.textContent=known?'서버 확인 완료 기준':'현재 확인 중 · 숫자 미확정';
+    if(meter){if(known)meter.setAttribute('aria-valuenow',String(Math.min(1,count)));else meter.removeAttribute('aria-valuenow');meter.dataset.complete=known&&count>=1?'true':'false';}
+  }
   function renderState(earned,count=lastReferrals) {
     upgraded = earned === true;
     // Verified Lv.2 login can show its visual tier, but cannot activate a
@@ -45,12 +51,13 @@
       premiumVisual ? 'Lv.2 인증 회원 · 참여코드' : 'Lv.2 참여코드(비활성)';
     identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' :
       premiumVisual ? '✓ Lv.2 로그인 완료' : '승급 대기';
-    if(certificateLevelBanner)certificateLevelBanner.textContent = upgraded ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
-    if(certificate)certificate.dataset.level = upgraded ? '2' : '1';
+    if(certificateLevelBanner)certificateLevelBanner.textContent = premiumVisual ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
+    if(certificate)certificate.dataset.level = premiumVisual ? '2' : '1';
+    if(heading)heading.textContent=upgraded?'Lv.2 달성 · 추천 이어가기':'Lv.2로 레벨업하기';
     copyIdentityCode.hidden = !upgraded;
     copyIdentityCode.disabled = !upgraded || !lastIdentity;
     if(vipMedal)vipMedal.hidden=!upgraded;
-    if(certificateMedal)certificateMedal.hidden=!upgraded;
+    if(certificateMedal)certificateMedal.hidden=!premiumVisual;
     if(certificateThanks){
       const thanksCount=Math.floor(count/10)*10;
       const thanks=[
@@ -77,6 +84,8 @@
     linkField.value = currentLink;
     linkField.setAttribute('aria-label', '내 전용 조사 링크');
     copyButton.textContent = '링크 복사';
+    renderMeter(count);
+    if(share){share.hidden=!currentLink;share.disabled=!currentLink;}
   }
   function reset() {
     ++generation;
@@ -85,11 +94,11 @@
     linkField.hidden = true;
     copyButton.hidden = true;
     copyButton.disabled = true;
-    progress.textContent = '';
+    progress.textContent = '';progress.hidden=true;
     lastReferrals=0;lastSnapshot='';
     if(retry)retry.hidden=true;
     renderState(false,0);
-    referralCount.textContent = '확인 중';
+    referralCount.textContent = '확인 중';renderMeter(0,false);
     status.textContent = '전용 조사 링크를 불러오고 있어요.';
   }
   function deviceSecret() {
@@ -105,7 +114,7 @@
     if (!active) return;
     const seq = ++generation;
     const token = sessionStorage.getItem(sessionKey) || '';
-    if (!/^[a-f0-9]{64}$/.test(token)) return;
+    if (!/^[a-f0-9]{64}$/.test(token)||token!==activeToken) return;
     if (!detail || typeof detail.visitor !== 'string' ||
         typeof detail.code !== 'string') return;
     lastIdentity = {visitor: detail.visitor, code: detail.code};
@@ -119,16 +128,20 @@
           deviceSecret: deviceSecret()
         })
       });
-      if (!active || seq !== generation) return;
+      if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
       const payload = await response.json().catch(() => ({}));
       if (response.status === 503 && payload.error === 'REFERRAL_NOT_READY') {
         if (!upgraded) status.textContent = '설문 연결을 확인 중이에요.';
+        if(retry)retry.hidden=false;
         return;
       }
       if (!response.ok) {const error=Error(payload.error || 'UNAVAILABLE');error.status=response.status;throw error;}
       if (typeof payload.link !== 'string' ||
           !/^https:\/\/baeguindex\.com\/survey\.html\?ref=[a-f0-9]{64}$/.test(payload.link))
         throw Error('INVALID_LINK');
+      const rawCount=payload.validReferrals;
+      if(typeof rawCount!=='number'||!Number.isSafeInteger(rawCount)||rawCount<0)throw Error('INVALID_REFERRAL_COUNT');
+      const count=rawCount;
       currentLink = typeof payload.shortLink === 'string' &&
         /^https:\/\/baeguindex\.com\/r\/#[A-Za-z0-9_-]{8}$/.test(payload.shortLink)
         ? payload.shortLink : payload.link;
@@ -139,15 +152,14 @@
 
       // Only a server-approved, credited referral can upgrade the PERSONAL CODE.
       // A link visit, self-declared level, or incomplete payload cannot do so.
-      const rawCount=Number(payload.validReferrals);
-      const count=Number.isSafeInteger(rawCount)&&rawCount>=0?rawCount:0;
       const promoted = Number(payload.level) === 2 &&
         count >= 1 && payload.provisional === true;
       const newlyPromoted = promoted && !upgraded;
       lastReferrals=count;
       renderState(promoted,count);
       if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
-      progress.textContent = '유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(promoted?'Lv.2 활성화':'1건부터 Lv.2 활성화');
+      progress.hidden=false;
+      progress.textContent = promoted?'Lv.2 달성 · 누적 유효 추천 '+count.toLocaleString('ko-KR')+'건':'유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(count>=1?'활성화 확인 중':'1건부터 Lv.2 활성화');
       const snapshot=(promoted?'2':'1')+':'+count;
       if(snapshot!==lastSnapshot){
         lastSnapshot=snapshot;
@@ -161,7 +173,9 @@
           ? 'Lv.2 로그인은 확인됐습니다. 개인 참여코드는 추천 1건 확인 후 별도로 활성화됩니다.'
           : '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.';
     } catch (error) {
-      if (!active || seq !== generation) return;
+      if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
+      if(error?.status===401||error?.status===403){reset();window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',{detail:{level:1,validReferrals:0}}));}
+      else if(countHint&&lastSnapshot)countHint.textContent='마지막으로 확인된 실적 · 새로고침 필요';
       if(retry)retry.hidden=false;
       if(error?.status===403)status.textContent='소유자 확인에 실패했습니다. 처음 코드를 발급받은 브라우저에서 확인하거나 저장 설정을 확인해 주세요.';
       else if(error?.status===401)status.textContent='인증이 만료되었습니다. 다시 인증한 뒤 링크를 확인해 주세요.';
@@ -170,7 +184,7 @@
   }
   retry?.addEventListener('click',()=>{if(active&&lastIdentity)void load(lastIdentity)});
   copyButton.addEventListener('click', async () => {
-    if (!currentLink) return;
+    if (!active || !currentLink || sessionStorage.getItem(sessionKey)!==activeToken) return;
     try {
       await navigator.clipboard.writeText(currentLink);
       status.textContent = '전용 조사 링크를 복사했습니다.';
@@ -180,9 +194,16 @@
       status.textContent = '링크를 선택했습니다. 직접 복사해 주세요.';
     }
   });
-  window.addEventListener('beagu:challenge-access-granted', () => {active = true;});
+  share?.addEventListener('click',async()=>{
+    if(!active||!currentLink||sessionStorage.getItem(sessionKey)!==activeToken)return;
+    const url=currentLink;
+    try{if(typeof navigator.share==='function'){await navigator.share({title:'2026 배구지수 챌린지',text:'선생님들의 교직문화 조사에 함께해 주세요.',url});status.textContent='공유 요청을 전달했습니다.';}
+      else{await navigator.clipboard.writeText(url);status.textContent='전용 조사 링크를 복사했습니다.';}}
+    catch(error){if(error?.name==='AbortError')return;linkField.focus();linkField.select();status.textContent='링크를 선택했습니다. 직접 복사해 주세요.';}
+  });
+  window.addEventListener('beagu:challenge-access-granted', () => {const token=sessionStorage.getItem(sessionKey)||'';if(token!==activeToken){lastIdentity=null;activeToken=token;reset();}active=true;});
   window.addEventListener('beagu:challenge-access-revoked', () => {
-    active = false; lastIdentity = null; reset();
+    active = false; activeToken=''; lastIdentity = null; reset();
   });
   window.addEventListener('beagu:identity-ready', e => {void load(e.detail);});
   window.addEventListener('focus', () => {

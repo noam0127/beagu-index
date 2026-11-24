@@ -1,0 +1,25 @@
+/* v1.5.0: purple level two; milestone art stays inside the public certificate. */
+body.beagu-page-challenge #certificate[data-level="2"]{background:linear-gradient(150deg,#faf6ff,#efe5ff 65%,#fff);border:2px solid #9e78d9;box-shadow:0 10px 36px #6d38ac22;color:#3c235d}
+body.beagu-page-challenge #certificate[data-level="2"] .certificate-level-banner{background:#6d36b3;color:#fff;border-color:#60309e}
+body.beagu-page-challenge #certificate[data-level="2"] .certificate-medal{color:#6333a4}
+body.beagu-page-challenge #certificate[data-level="2"] .rank strong{color:#6933ac}
+body.beagu-page-challenge #certificate[data-level="2"] .certificate-progress .beagu-xp{background:#f9f4ff;border-color:#ddc8f5}
+body.beagu-page-challenge #certificate[data-level="2"] [data-xp-progress]{background:linear-gradient(90deg,#7746ca,#bc83e7)}
+body.beagu-page-challenge #challengeIdentityPanel.is-lv2{background:linear-gradient(135deg,#302049,#54317a 66%,#352052);border-color:#b89bdf;box-shadow:0 0 0 3px #fff,0 0 0 4px #cbb5e8,0 16px 34px #32195322}
+body.beagu-page-challenge #challengeIdentityPanel.is-lv2 h2,body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-value{color:#f5ebff}
+body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-tag,body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-copy{background:#e9d8ff;border-color:#e4d2ff;color:#422266}
+body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-premium-emblem{border-color:#d8bafa;color:#f1dcff;background:radial-gradient(circle,#ddc4ff29,transparent 74%)}
+body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-premium-crown{color:#e5caff}
+body.beagu-page-challenge #challengeIdentityPanel.is-lv2 .challenge-identity-feedback{color:#eadbfa}
+body.beagu-page-challenge #challengeReferralPanel[data-state="earned"] .challenge-referral-count-card{background:#f4ecff;border-color:#dac3f4}
+body.beagu-page-challenge #challengeReferralPanel[data-state="earned"] #challengeReferralCount{color:#6935ac}
+.certificate-milestone[hidden],#shareChallengeReferral[hidden],#challengeReferralRetry[hidden],#challengeReferralProgress[hidden]{display:none!important}
+.certificate-milestone{display:flex;flex-direction:column;align-items:center;gap:5px;margin:16px auto 4px;padding:14px 12px;border:1px solid #d3a34a;border-radius:14px;background:linear-gradient(120deg,#fff8e5,#fff0ce,#fff9eb);color:#764c13}
+.certificate-milestone span{font-size:21px;color:#a97521;letter-spacing:.22em}.certificate-milestone strong{font-size:19px;line-height:1.4}.certificate-milestone small{font-size:12px}
+#certificate.has-milestone{outline:3px solid #e1b96f;outline-offset:2px}
+.challenge-referral-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.challenge-referral-actions button{min-height:44px;margin:0!important}
+#challengeReferralCountHint{font-size:12px;line-height:1.5;color:#536079;text-align:center}
+.challenge-milestone-track{width:100%;max-width:180px;height:6px;background:#d7deef;overflow:hidden;border-radius:999px;margin:8px auto 0}
+.challenge-milestone-track span{display:block;width:0;height:100%;background:#8350c4;border-radius:inherit}
+.challenge-milestone-track[data-complete="true"] span{width:100%}
+@media(max-width:430px){.challenge-referral-actions button{flex:1}.certificate-milestone strong{font-size:17px}}
