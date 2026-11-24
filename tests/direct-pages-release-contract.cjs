@@ -17,7 +17,7 @@ function query(table){
  const q={select(){return q},eq(k,v){filters.push(r=>r[k]===v);return q},is(k,v){filters.push(r=>r[k]==v);return q},in(k,v){filters.push(r=>v.includes(r[k]));return q},neq(k,v){filters.push(r=>r[k]!==v);return q},lt(){return q},order(){return q},limit(){return q},insert(v){operation='insert';value=v;return q},update(v){operation='update';value=v;return q},async single(){const r=execute();return {...r,data:r.data[0]||null}},async maybeSingle(){return q.single()},then(resolve,reject){return Promise.resolve(execute()).then(resolve,reject)}};
  return q;
 }
-const db={from:query,auth:{getUser:async()=>({data:{user:{id:'owner'}},error:null})},rpc:async(name,args)=>{if(name==="beagu_integrated_fixture_transition_v1"){fixtureCalls.push(args);return {data:{id:"00000000-0000-0000-0000-000000000099",ok:true},error:null};}if(name!=="beagu_release_transition_v2")return {data:allowMfa,error:null};const p=args.p_payload;let data;if(args.p_action==="register"){if(state.production_sha!==p.base||state.draft_sha!==p.expected_draft)data={error:"direct_draft_conflict"};else{Object.assign(state,{draft_sha:p.sha,draft_version:p.version,draft_summary:p.summary});data={draft_sha:p.sha}}}else if(args.p_action==="enqueue"){if(jobs.some(j=>["queued","running"].includes(j.status)))data={error:"release_in_progress"};else if(state.production_sha!==p.from_sha||state.draft_sha!==p.to_sha)data={error:"direct_draft_conflict"};else{const j={id:"00000000-0000-0000-0000-000000000001",status:"queued",...p};jobs.push(j);data={id:j.id}}}else if(args.p_action==="complete"){const j=jobs.find(j=>j.id===p.job_id);if(!j||j.status!=="running"||state.production_sha!==j.from_sha)data={error:"stale_production_base"};else{state.production_sha=j.to_sha;state.production_version=j.version;j.status="deployed";data={ok:true,version:j.version}}}return {data,error:null}}};
+const db={from:query,auth:{getUser:async()=>({data:{user:{id:'owner'}},error:null})},rpc:async(name,args)=>{if(name==="beagu_integrated_fixture_transition_v1"||name==="beagu_integrated_production_transition_v1"){fixtureCalls.push(args);return {data:{id:"00000000-0000-0000-0000-000000000099",ok:true},error:null};}if(name!=="beagu_release_transition_v2")return {data:allowMfa,error:null};const p=args.p_payload;let data;if(args.p_action==="register"){if(state.production_sha!==p.base||state.draft_sha!==p.expected_draft)data={error:"direct_draft_conflict"};else{Object.assign(state,{draft_sha:p.sha,draft_version:p.version,draft_summary:p.summary});data={draft_sha:p.sha}}}else if(args.p_action==="enqueue"){if(jobs.some(j=>["queued","running"].includes(j.status)))data={error:"release_in_progress"};else if(state.production_sha!==p.from_sha||state.draft_sha!==p.to_sha)data={error:"direct_draft_conflict"};else{const j={id:"00000000-0000-0000-0000-000000000001",status:"queued",...p};jobs.push(j);data={id:j.id}}}else if(args.p_action==="complete"){const j=jobs.find(j=>j.id===p.job_id);if(!j||j.status!=="running"||state.production_sha!==j.from_sha)data={error:"stale_production_base"};else{state.production_sha=j.to_sha;state.production_version=j.version;j.status="deployed";data={ok:true,version:j.version}}}return {data,error:null}}};
 const mockFetch=async(url)=>{const p=String(url);
  let data;
  if(p.includes('/compare/'))data={status:stale?'diverged':'ahead',merge_base_commit:{sha:BASE},files:inventoryOverride||[{filename:'index.html',status:'modified',sha:BLOB},...(backend?[{filename:'supabase/account-provisional-v1.sql',status:'added',sha:BLOB}]:[]),...(renamed?[{filename:'archived.sql',previous_filename:'supabase/old.sql',status:'renamed',sha:BLOB}]:[])]};
@@ -146,6 +146,22 @@ async function call(action,fields={},token=jwt){const headers={'Content-Type':'a
  assert.equal(fixtureCalls.at(-1).p.worker_run,'12345:2');
  assert.equal((await call('worker_integrated_fixture_finish',{job_id:jid,idx:0,lease:jid,task:recipe.tasks[0],evidence:'a'.repeat(64),worker_run:'forged'},'worker.stub.token')).status,200);
  assert.equal(fixtureCalls.at(-1).p.worker_run,'12345:2');
+ // Default production lock and separately pinned worker audience.
+ assert.equal((await call('integrated_production_create',approve)).body.error,'production_execution_disabled');
+ assert.equal((await call('worker_integrated_production_claim',workerFields,'worker.stub.token')).status,403);
+ fixtureEnv={BEAGU_INTEGRATED_PRODUCTION_CONTROL:'approved_v1',BEAGU_INTEGRATED_PRODUCTION_WORKFLOW_SHA:OTHER,BEAGU_INTEGRATED_PRODUCTION_TRUSTED_REGISTRY:JSON.stringify({schema:1,recipes:[recipe]})};
+ vm.runInNewContext(stripTypeScriptTypes(src.replace(/^import .*;$/gm,''),{mode:'strip'}),{...context});
+ allowMfa=false;assert.equal((await call('integrated_production_create',approve)).status,403);allowMfa=true;
+ assert.equal((await call('integrated_production_create',{...approve,recipe_sha256:'0'.repeat(64)})).body.error,'production_recipe_changed');
+ assert.equal((await call('integrated_production_create',approve)).status,200);
+ assert.equal(fixtureCalls.at(-1).p.scope,'production_integrated_v1');
+ assert.deepEqual(JSON.parse(JSON.stringify(fixtureCalls.at(-1).p.tasks)),recipe.tasks);
+ oidcOverride={...good,workflow_sha:BASE};assert.equal((await call('worker_integrated_production_claim',workerFields,'worker.stub.token')).status,403);
+ oidcOverride=good;assert.equal((await call('worker_integrated_production_claim',workerFields,'worker.stub.token')).status,200);
+ assert.equal(oidcAudience,'beagu-integrated-production-worker');
+ assert.equal(fixtureCalls.at(-1).p.worker_run,'12345:2');
+ assert.equal((await call('worker_integrated_production_finish',{job_id:jid,idx:0,lease:jid,task:recipe.tasks[0],evidence:null},'worker.stub.token')).status,200);
+ assert.equal((await call('worker_integrated_production_finalize',{job_id:jid},'worker.stub.token')).status,400);
  assert.equal(jobs.length,0);assert.equal(state.production_sha,BASE);
  console.log('PASS: owner MFA, legacy rejection, exact CI and SHA, draft conflict, registration without publication, confirmed queue, staging retirement, UI fail-closed contract and isolated integrated authentication');
 })().catch(e=>{console.error(e);process.exitCode=1});

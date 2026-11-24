@@ -425,5 +425,13 @@ class Runner(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"production_final_observer_not_connected"):ledger.finalize(job,self.verified,self.registry,"a"*64)
             self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
             with self.assertRaisesRegex(ValueError,"production_worker_transport_not_authorized"):production.github_worker_transport("claim",{})
+            calls=[]
+            def fake_request(host,path,method,headers,body):
+                calls.append((host,path,method,json.loads(body)))
+                self.assertEqual(headers["Authorization"],"Bearer fixture-token")
+                return {"scope":production.SCOPE,"execution_enabled":True}
+            production._control_request("status",{"scope":production.SCOPE,"job_id":job},fake_request,"fixture-token")
+            self.assertEqual(calls[0][0],"snvzwrexuqavnfvzgxqj.supabase.co")
+            self.assertEqual(calls[0][3]["action"],"worker_integrated_production_status")
 
 if __name__=="__main__":unittest.main()

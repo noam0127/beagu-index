@@ -3,14 +3,20 @@ The worker obtains a separately scoped OIDC token only in a trusted workflow.
 Existing manifest verification and ordered step runner are reused.
 """
 import json
-import urllib.request
+import http.client
+import ssl
+import os
 import re
+from urllib.parse import urlsplit,parse_qsl,urlencode
 import integrated_runner as r
 import integrated_verify as v
 import integrated_server_control as control
 
 SCOPE="production_integrated_v1"
 API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-release-manager-v1"
+PRODUCTION_WORKER_TRANSPORT_ENABLED=False
+AUDIENCE="beagu-integrated-production-worker"
+MAX_RESPONSE=2*1024*1024
 ACTIONS={"status","claim","finish"}
 
 class ProductionLedger(control.PostgresLedger):
@@ -39,6 +45,46 @@ class ProductionRunner(r.ScopedRunner):
         r.require(state.get("id")==job and state.get("base_sha")==verified["base_sha"] and state.get("candidate_sha")==verified["candidate_sha"] and state.get("plan_sha")==verified["plan_sha256"],"production_job_pin_mismatch")
         return super().once(job)
 
+def _https_json(host,path,method,headers,body=None,connection=http.client.HTTPSConnection):
+    """One bounded TLS request. No proxy, redirect, retry or arbitrary host."""
+    r.require(path.startswith("/") and not path.startswith("//") and not any(c in path for c in "\r\n"),"invalid_control_path")
+    conn=connection(host,timeout=25,context=ssl.create_default_context())
+    try:
+        conn.request(method,path,body=body,headers=headers)
+        res=conn.getresponse()
+        r.require(res.status in (200,400,401,403,409,503),"unexpected_control_status")
+        raw=res.read(MAX_RESPONSE+1)
+        r.require(len(raw)<=MAX_RESPONSE,"control_response_too_large")
+        out=v.read_json(raw)
+        r.require(isinstance(out,dict),"invalid_control_response")
+        if res.status!=200:r.require(isinstance(out.get("error"),str),"control_http_error")
+        return out
+    finally:conn.close()
+
+def _oidc_token(request):
+    endpoint=urlsplit(os.environ["ACTIONS_ID_TOKEN_REQUEST_URL"])
+    host=endpoint.hostname or ""
+    # GitHub Actions OIDC runtime endpoint only; never send its credential to
+    # an arbitrary host, userinfo, alternate port, or redirected request.
+    r.require(endpoint.scheme=="https" and host.endswith(".actions.githubusercontent.com") and endpoint.username is None and endpoint.password is None and endpoint.port in (None,443) and not endpoint.fragment,"invalid_oidc_endpoint")
+    query=parse_qsl(endpoint.query,keep_blank_values=True)
+    r.require(not any(k=="audience" for k,_ in query),"unexpected_oidc_audience")
+    query.append(("audience",AUDIENCE))
+    result=request(host,endpoint.path+"?"+urlencode(query),"GET",{"Authorization":"Bearer "+os.environ["ACTIONS_ID_TOKEN_REQUEST_TOKEN"]})
+    token=result.get("value","")
+    r.require(isinstance(token,str) and len(token)<16000 and re.fullmatch(r"[A-Za-z0-9._-]+",token),"invalid_oidc_token")
+    return token
+
+def _control_request(action,payload,request,token):
+    r.require(action in ACTIONS and isinstance(payload,dict) and payload.get("scope")==SCOPE,"invalid_production_request")
+    endpoint=urlsplit(API)
+    data=json.dumps({**payload,"action":"worker_integrated_production_"+action},separators=(",",":")).encode()
+    r.require(len(data)<=14000,"control_request_too_large")
+    import worker
+    return request(endpoint.hostname,endpoint.path,"POST",{"Authorization":"Bearer "+token,"apikey":worker.PUBLIC_KEY,"Content-Type":"application/json"},data)
+
 def github_worker_transport(action,payload):
-    """Intentionally no operational network path before separate activation review."""
-    raise ValueError("production_worker_transport_not_authorized")
+    """Operational call path; disabled in this candidate even with env credentials."""
+    r.require(PRODUCTION_WORKER_TRANSPORT_ENABLED,"production_worker_transport_not_authorized")
+    r.require(os.environ.get("GITHUB_ACTIONS")=="true" and os.environ.get("GITHUB_REF")=="refs/heads/main" and os.environ.get("GITHUB_REPOSITORY")==v.REPOSITORY,"untrusted_production_workflow")
+    return _control_request(action,payload,_https_json,_oidc_token(_https_json))
