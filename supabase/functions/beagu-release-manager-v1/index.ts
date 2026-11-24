@@ -106,6 +106,57 @@ async function backendChangeBetween(base:string,sha:string){
   throw Error("backend_comparison_unavailable");
  return backendPaths(delta.files);
 }
+// Phase 2: a server-derived, deterministic review plan. No candidate-supplied commands,
+// SQL execution, endpoint URLs, secrets, or execution permissions are accepted here.
+const planPath=(p:unknown):p is string=>typeof p==="string"&&p.length>0&&p.length<=1024&&
+ !/[\x00-\x1f\x7f\\]/.test(p)&&p.split("/").every(s=>s!==""&&s!=="."&&s!=="..");
+const reviewKinds=new Set(["db_review","scheduler_review","edge_review","edge_shared_review","server_config_review","controller_review","ci_review","web_review","manual_review"]);
+function reviewKind(path:string){
+ if(/^supabase\/(?:[^/]*cron[^/]*\.sql|[^/]*scheduler[^/]*\.sql)$/.test(path))return "scheduler_review";
+ if(/^supabase\/(?:migrations\/[^/]+\.sql|[^/]+\.sql)$/.test(path))return "db_review";
+ if(/^supabase\/functions\/_shared\//.test(path))return "edge_shared_review";
+ if(/^supabase\/functions\/[a-z0-9][a-z0-9-]*\/.+/.test(path))return "edge_review";
+ if(/^supabase\/config\.toml$/.test(path))return "server_config_review";
+ if(/^scripts\/release-manager\//.test(path)||/^\.github\/workflows\/(?:beagu-release-controller|deploy-github-pages-direct)\.ya?ml$/.test(path))return "controller_review";
+ if(/^supabase\//.test(path))return "manual_review";
+ if(/^\.github\/workflows\//.test(path))return "ci_review";
+ return "web_review";
+}
+function reviewInventory(files:any[]){
+ if(!Array.isArray(files)||!files.length||files.length>=300)throw Error("invalid_plan_inventory");
+ const seen=new Set<string>();
+ return files.map(f=>{
+  const path=f?.filename,status=f?.status,blob=f?.sha,prior=f?.previous_filename??null;
+  if(!planPath(path)||seen.has(path)||typeof blob!=="string"||!SHA.test(blob)||!/^(added|modified|removed|renamed|copied|changed|unchanged)$/.test(status)||
+    ((status==="renamed"||status==="copied")?(!planPath(prior)||prior===path):prior!==null))
+   throw Error("invalid_plan_inventory");
+  seen.add(path);
+  const kinds=[...new Set([reviewKind(path),...(prior?[reviewKind(prior)]:[])])].sort();
+  if(kinds.some(k=>!reviewKinds.has(k)))throw Error("invalid_plan_inventory");
+  const backend=backendPaths([{filename:path,previous_filename:prior}]).length>0;
+  const manual=backend&&(status==="removed"||status==="renamed"||status==="copied"||status==="changed"||
+    kinds.some(k=>["manual_review","controller_review","edge_shared_review","server_config_review"].includes(k)));
+  return {path,status,blob_sha:blob,blob_ref:status==="removed"?"base":"candidate",previous_path:prior,review_kinds:kinds,backend,manual_review_required:manual};
+ }).sort((a,b)=>a.path<b.path?-1:a.path>b.path?1:0);
+}
+async function makeReviewPlan(base:string,sha:string,version:string,summary:string,files:any[]){
+ if(!SHA.test(base)||!SHA.test(sha)||base===sha)throw Error("invalid_plan_sha");
+ const inventory=reviewInventory(files);
+ const backend=inventory.filter(f=>f.backend);
+ const edge_functions=[...new Set(inventory.flatMap(f=>[f.path,f.previous_path]).flatMap(p=>{
+  const m=p?.match(/^supabase\/functions\/([a-z0-9][a-z0-9-]*)\//);
+  return m?[m[1]]:[];
+ }))].sort();
+ const plan={schema:1,policy:"integrated-review-v1",repository:repo,base_sha:base,candidate_sha:sha,version,summary,
+  backend_required:backend.length>0,execution_enabled:false,
+  inventory,edge_functions,
+  requires_shared_dependency_review:backend.some(f=>f.review_kinds.includes("edge_shared_review")),
+  requires_manual_review:backend.some(f=>f.manual_review_required),
+  required_checks:backend.length?["backup_review","database_review","edge_review","server_verification","pages_verification","post_release_verification"]:["pages_verification","post_release_verification"]};
+ const hash=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify(plan)));
+ const plan_sha256=Array.from(new Uint8Array(hash),b=>b.toString(16).padStart(2,"0")).join("");
+ return {plan,plan_sha256};
+}
 // Direct Pages release gate: exact candidate, current production ancestor, and server-read CI.
 async function directCandidate(base:string,sha:string){
  if(!SHA.test(base)||!SHA.test(sha)||base===sha)return {error:"invalid_direct_sha",status:400};
@@ -122,7 +173,7 @@ async function directCandidate(base:string,sha:string){
  const proof=(runs.workflow_runs||[]).find((r:any)=>r.head_sha===sha&&r.conclusion==="success"&&r.status==="completed"&&r.path===".github/workflows/clean-release-validation.yml"&&r.head_repository?.full_name===repo);
  if(!proof)return {error:"direct_ci_required",status:409};
  const backend_files=backendPaths(delta.files);
- return {version,summary,files:delta.files.map((f:any)=>String(f.filename||"")).filter(Boolean),backend_required:backend_files.length>0,backend_files};
+ return {version,summary,files:delta.files.map((f:any)=>String(f.filename||"")).filter(Boolean),backend_required:backend_files.length>0,backend_files,delta_files:delta.files};
 }
 async function state(){
  const {data,error}=await db.from("beagu_site_release_state_v1").select("*").eq("id",1).single();
@@ -171,6 +222,25 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   }
   return respond({direct_release_v1:true,control_tower_v2:true,dispatch_configured:!!dispatchToken,recent_jobs:recent.data||[],direct_candidate_ready:ready,direct_candidate_reason:reason,state:s,job:current,head_sha:null,suggested_draft:null,staging_history:stageHistory,
     production_history:prodHistory,staging_url:null,production_url:"https://baeguindex.com/"},200,origin);
+ }
+ // MFA-gated inspection only. The plan is not an approval, stored job, or authorization.
+ if(action==="inspect_integrated_plan"){
+  const sha=String(input.candidate_sha||"");
+  if(current)return error("release_in_progress",409,origin);
+  if(!s.production_sha||!s.draft_sha||sha!==s.draft_sha||input.expected_production_sha!==s.production_sha)
+   return error("direct_confirmation_required",409,origin);
+  const candidate=await directCandidate(s.production_sha,sha);
+  if("error" in candidate)return error(candidate.error!,candidate.status!,origin);
+  if(candidate.version!==s.draft_version||candidate.summary!==s.draft_summary)return error("direct_version_mismatch",409,origin);
+  let result;
+  try{result=await makeReviewPlan(s.production_sha,sha,candidate.version,candidate.summary,candidate.delta_files);}
+  catch{return error("integrated_inventory_invalid",409,origin);}
+  if(input.expected_plan_sha256!==undefined&&input.expected_plan_sha256!==result.plan_sha256)
+   return error("integrated_plan_changed",409,origin);
+  const latest=await state();
+  if(latest.production_sha!==s.production_sha||latest.draft_sha!==sha||latest.draft_version!==candidate.version||
+     latest.draft_summary!==candidate.summary||await activeJob())return error("direct_confirmation_required",409,origin);
+  return respond({...result,approved:false,execution_enabled:false},200,origin);
  }
  if(action==="wake_approved_job"){
   if(!current||current.id!==input.job_id||current.status!=="queued"||current.target!=="production"||current.from_sha!==s.production_sha||current.to_sha!==input.candidate_sha||!["prod_apply","prod_rollback"].includes(current.action))return error("direct_confirmation_required",409,origin);
