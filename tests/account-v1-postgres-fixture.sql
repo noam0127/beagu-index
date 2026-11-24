@@ -18,3 +18,8 @@ INSERT INTO auth.users(id,email_confirmed_at) VALUES('00000000-0000-0000-0000-00
 INSERT INTO beagu_private.challenge_identity_codes VALUES('2026','10000000-0000-0000-0000-000000000001','SYNTHETIC-ONE'),('2026','10000000-0000-0000-0000-000000000002','SYNTHETIC-TWO');
 INSERT INTO beagu_private.challenge_device_claims VALUES('2026','10000000-0000-0000-0000-000000000001',repeat('a',64)),('2026','10000000-0000-0000-0000-000000000002',repeat('b',64));
 INSERT INTO beagu_private.challenge_referral_profiles VALUES('2026','10000000-0000-0000-0000-000000000001',1,0,NULL,false),('2026','10000000-0000-0000-0000-000000000002',2,2,now(),false);
+
+CREATE TABLE public.schools(school_id text PRIMARY KEY);
+INSERT INTO public.schools VALUES('TEST001');
+CREATE TABLE public.beagu_admin_accounts(user_id uuid PRIMARY KEY,role text,enabled boolean);
+INSERT INTO public.beagu_admin_accounts VALUES('00000000-0000-0000-0000-000000000001','owner',true);
