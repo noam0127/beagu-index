@@ -35,18 +35,21 @@ BEGIN
  RAISE NOTICE 'PASS account: original device, credential hashing, earned level, formal link, session revocation, preserved referral and identity conflicts';
 END $$;
 
--- Simulate the next week by aging rows; no wall-clock dependence.
+-- Simulate the next week without changing the live clock or data.
 DO $$
-DECLARE before_rows jsonb; before_ids jsonb; before_credits jsonb; changed integer;
+DECLARE wk date:=beagu_private.beagu_account_week_v1(now()); next_at timestamptz;
+ before_ids jsonb; before_credits jsonb;
 BEGIN
- SELECT jsonb_object_agg(visitor_id::text,nickname) INTO before_rows FROM beagu_private.beagu_account_nicknames_v1;
+ next_at:=((wk+7)::timestamp AT TIME ZONE 'Asia/Seoul');
  SELECT jsonb_agg(to_jsonb(a) ORDER BY visitor_id) INTO before_ids FROM beagu_private.beagu_account_identity_v1 a;
  SELECT jsonb_agg(to_jsonb(r) ORDER BY visitor_id) INTO before_credits FROM beagu_private.challenge_referral_profiles r;
- UPDATE beagu_private.beagu_account_nicknames_v1 SET week_start=week_start-7;
- changed:=beagu_private.beagu_account_rotate_nicknames_v1();
- IF changed<>2 THEN RAISE EXCEPTION 'offline member rotation incomplete'; END IF;
- IF EXISTS(SELECT 1 FROM beagu_private.beagu_account_nicknames_v1 n WHERE nickname=before_rows->>visitor_id::text OR nickname !~ '^[Il|ǀ❘ı∣│]{10}$') THEN RAISE EXCEPTION 'invalid rotated nickname'; END IF;
- IF beagu_private.beagu_account_rotate_nicknames_v1()<>0 THEN RAISE EXCEPTION 'weekly retry rotated twice'; END IF;
- IF before_ids IS DISTINCT FROM (SELECT jsonb_agg(to_jsonb(a) ORDER BY visitor_id) FROM beagu_private.beagu_account_identity_v1 a) OR before_credits IS DISTINCT FROM (SELECT jsonb_agg(to_jsonb(r) ORDER BY visitor_id) FROM beagu_private.challenge_referral_profiles r) THEN RAISE EXCEPTION 'rotation modified account or referral data'; END IF;
- RAISE NOTICE 'PASS weekly KST barcode rotation: offline members, unique changed aliases, idempotence, preserved accounts and referrals';
+ IF (SELECT count(*) FROM beagu_private.beagu_account_nicknames_v1 WHERE week_start=wk+7)<>2 THEN RAISE EXCEPTION 'next aliases missing'; END IF;
+ IF EXISTS(SELECT 1 FROM beagu_private.beagu_account_nickname_members_v1 m WHERE
+ beagu_private.beagu_account_alias_at_v1(m.visitor_id,next_at-interval '1 second') IS NULL OR
+ beagu_private.beagu_account_alias_at_v1(m.visitor_id,next_at) IS NULL OR
+ beagu_private.beagu_account_alias_at_v1(m.visitor_id,next_at-interval '1 second')=beagu_private.beagu_account_alias_at_v1(m.visitor_id,next_at)) THEN RAISE EXCEPTION 'boundary switch failed'; END IF;
+ IF beagu_private.beagu_account_prepare_nicknames_v1(now(),500)<>0 THEN RAISE EXCEPTION 'not idempotent'; END IF;
+ IF before_ids IS DISTINCT FROM (SELECT jsonb_agg(to_jsonb(a) ORDER BY visitor_id) FROM beagu_private.beagu_account_identity_v1 a) OR before_credits IS DISTINCT FROM (SELECT jsonb_agg(to_jsonb(r) ORDER BY visitor_id) FROM beagu_private.challenge_referral_profiles r) THEN RAISE EXCEPTION 'account/referral changed'; END IF;
+ IF has_table_privilege('anon','beagu_private.beagu_account_nicknames_v1','select') OR has_table_privilege('authenticated','beagu_private.beagu_account_nicknames_v1','select') OR has_function_privilege('service_role','beagu_private.beagu_account_alias_at_v1(uuid,timestamptz)','execute') OR has_function_privilege('authenticated','beagu_private.beagu_account_prepare_nicknames_v1(timestamptz,integer)','execute') THEN RAISE EXCEPTION 'alias history access'; END IF;
+ RAISE NOTICE 'PASS next aliases, exact KST boundary, private history and idempotence';
 END $$;
