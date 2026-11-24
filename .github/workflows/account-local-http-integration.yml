@@ -62,12 +62,12 @@ jobs:
           INSERT INTO public.beagu_level_sessions(token_sha256,access_level,expires_at,identity_campaign,identity_visitor_id) VALUES
            (encode(extensions.digest(repeat('e',64),'sha256'),'hex'),2,now()+interval '6 hours','2026','10000000-0000-0000-0000-000000000002'),
            (encode(extensions.digest(repeat('f',64),'sha256'),'hex'),2,now()+interval '6 hours','2026','10000000-0000-0000-0000-000000000001');
-          DO $ BEGIN
+          DO $fixture$ BEGIN
            IF NOT public.beagu_account_level_session_allowed_v1(encode(extensions.digest(repeat('e',64),'sha256'),'hex'))
             OR (SELECT access_level FROM public.beagu_level_sessions WHERE token_sha256=encode(extensions.digest(repeat('e',64),'sha256'),'hex')) IS DISTINCT FROM 2
             OR (SELECT access_level FROM public.beagu_level_sessions WHERE token_sha256=encode(extensions.digest(repeat('f',64),'sha256'),'hex')) IS DISTINCT FROM 1
            THEN RAISE EXCEPTION 'legacy general read / new recommendation only gate failed'; END IF;
-          END $;
+          END $fixture$;
           GRANT SELECT ON public.beagu_level_sessions,public.beagu_admin_accounts,public.schools TO service_role;
           CREATE FUNCTION public.beagu_admin_active_mfa_session(p_user uuid,p_session text) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT p_user='00000000-0000-0000-0000-000000000001'::uuid AND p_session='fixture-session' $$;
           REVOKE ALL ON FUNCTION public.beagu_admin_active_mfa_session(uuid,text) FROM PUBLIC,anon,authenticated;
