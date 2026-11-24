@@ -8,12 +8,12 @@ assert.match(read("supabase/functions/beagu-level-api/index.ts"),/beagu_account_
 const map=new Map(),store=new Map(),local=new Map([["beagu-referral-device-secret-v1","a".repeat(64)]]);
 const node=id=>{if(!map.has(id))map.set(id,{hidden:false,textContent:"",dataset:{},elements:{password:{value:"test"},recovery:{value:"test"},account_id:{value:""}},disabled:false});return map.get(id)};
 const storage=m=>({getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)});
-const calls=[],account="20000000-0000-4000-8000-000000000001",nickname="Il|ǀ❘ı∣│Il",token="b".repeat(64),nextToken="c".repeat(64);
+const calls=[],account="SYNTHETIC-CODE",nickname="Il|ǀ❘ı∣│Il",token="b".repeat(64),nextToken="c".repeat(64);
 let recovery,active=false,logged=false,n=0,fileText;
-const context={document:{getElementById:node,querySelectorAll:()=>[],addEventListener(){},createElement:()=>({click(){}})},window:{},sessionStorage:storage(store),localStorage:storage(local),crypto:{randomUUID:()=>account,getRandomValues:a=>a.fill(++n)},Blob:class{constructor(parts){fileText=parts.join("")}},URL:{createObjectURL:()=>"blob:fixture",revokeObjectURL(){}},setTimeout:()=>{},FormData:class{constructor(f){this.data=f.data}get(k){return this.data[k]}},fetch:async(_url,opts)=>{
+const context={document:{getElementById:node,querySelectorAll:()=>[],addEventListener(){},createElement:()=>({click(){}})},window:{},sessionStorage:storage(store),localStorage:storage(local),crypto:{getRandomValues:a=>a.fill(++n)},Blob:class{constructor(parts){fileText=parts.join("")}},URL:{createObjectURL:()=>"blob:fixture",revokeObjectURL(){}},setTimeout:()=>{},FormData:class{constructor(f){this.data=f.data}get(k){return this.data[k]}},fetch:async(_url,opts)=>{
  const b=JSON.parse(opts.body);calls.push({body:b,headers:opts.headers});assert.ok(!("Authorization" in opts.headers));
  let data;
- if(b.action==="signup"){assert.equal(b.account_id,account);recovery=b.new_recovery;data={account_id:account,level:1,lv2_active:false};}
+ if(b.action==="signup"){assert.equal(b.account_id,account);assert.equal(b.code,account);assert.match(b.new_recovery,/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{13}$/);recovery=b.new_recovery;data={account_id:account,level:1,lv2_active:false};}
  else if(b.action==="password_login"){logged=true;data={account_id:account,nickname,token:active?nextToken:token,level:active?2:1,lv2_active:active};}
  else if(b.action==="recover"){assert.equal(b.recovery,recovery);assert.notEqual(b.new_recovery,recovery);recovery=b.new_recovery;active=true;data={account_id:account,level:2,lv2_active:true};}
  else if(b.action==="logout"){assert.equal(opts.headers["X-Beagu-Session"],nextToken);data={ok:true};}
