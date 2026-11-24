@@ -1,10 +1,13 @@
 """Real PostgreSQL 16 backup/restore on a new networkless fixture. No production access."""
 import importlib.util
+import os
+import sys
 import pathlib
 import tempfile
 import unittest
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT/"scripts/release-manager"))
 spec=importlib.util.spec_from_file_location("integrated_backup",ROOT/"scripts/release-manager/integrated_backup.py")
 b=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(b)
@@ -53,7 +56,12 @@ SELECT nextval(pg_get_serial_sequence('public.posts','id'));
             self.assertNotEqual(latest,pin)
             with self.assertRaisesRegex(ValueError,"stale_or_tampered_checkpoint"):
                 b.verify_checkpoint(a,latest,*PINS)
-            proof=b.rehearse_restore(cluster,c,latest,*PINS)
+            private=root/"vault";private.mkdir(mode=0o700)
+            key=os.urandom(32)
+            encrypted_pin=b.encrypted_checkpoint(cluster,private,key,"fixture-key-1",*PINS)
+            self.assertEqual([f.suffix for f in private.iterdir()],[".vault"])
+            proof=b.rehearse_encrypted_restore(cluster,private,key,"fixture-key-1",encrypted_pin,*PINS)
+            self.assertTrue(proof["encrypted"])
             self.assertTrue(proof["restore_verified"])
             self.assertFalse(proof["execution_enabled"])
             self.assertEqual(cluster.sql("fixture_restore","SELECT relrowsecurity FROM pg_class WHERE oid='public.posts'::regclass;").strip(),b"t")

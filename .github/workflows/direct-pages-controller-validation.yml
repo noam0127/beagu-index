@@ -22,5 +22,8 @@ jobs:
           python3 -m py_compile scripts/release-manager/worker.py scripts/release-manager/integrated_verify.py
           python3 tests/integrated-release-verification.py
           python3 -m py_compile scripts/release-manager/integrated_backup.py
-          python3 tests/integrated-release-backup.py
+          # Use the runner OS-maintained cryptography package; never install candidate-provided crypto code.
+          /usr/bin/python3 -c 'from cryptography.hazmat.primitives.ciphers.aead import AESGCM' || (sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends python3-cryptography)
+          /usr/bin/python3 tests/integrated-release-vault.py
+          /usr/bin/python3 tests/integrated-release-backup.py
           node --test tests/site-release-center.mjs tests/site-release-single-publisher.mjs

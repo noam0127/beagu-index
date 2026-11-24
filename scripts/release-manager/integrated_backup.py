@@ -196,11 +196,8 @@ def safe_dir(path):
     require(stat.S_ISDIR(st.st_mode) and st.st_uid==os.getuid() and stat.S_IMODE(st.st_mode)==0o700,"unsafe_checkpoint_directory")
 
 
-def checkpoint(cluster,directory,plan_sha256,base_sha,candidate_sha):
+def capture_checkpoint(cluster,plan_sha256,base_sha,candidate_sha):
     require(HASH.fullmatch(plan_sha256) and SHA.fullmatch(base_sha) and SHA.fullmatch(candidate_sha) and base_sha!=candidate_sha,"invalid_release_pins")
-    directory=pathlib.Path(directory)
-    safe_dir(directory)
-    require(not list(directory.iterdir()),"checkpoint_directory_not_empty")
     with cluster.snapshot() as snapshot:
         source=fingerprint(cluster,"fixture_source",snapshot)
         data=cluster.dump("fixture_source",snapshot=snapshot)
@@ -209,6 +206,14 @@ def checkpoint(cluster,directory,plan_sha256,base_sha,candidate_sha):
     manifest={"schema":1,"scope":"isolated_fixture_only","checkpoint_id":uuid.uuid4().hex,
               "plan_sha256":plan_sha256,"base_sha":base_sha,"candidate_sha":candidate_sha,
               "dump_sha256":hash_bytes(data),"dump_size":len(data),"fingerprint":source}
+    return manifest,data
+
+
+def checkpoint(cluster,directory,plan_sha256,base_sha,candidate_sha):
+    directory=pathlib.Path(directory)
+    safe_dir(directory)
+    require(not list(directory.iterdir()),"checkpoint_directory_not_empty")
+    manifest,data=capture_checkpoint(cluster,plan_sha256,base_sha,candidate_sha)
     raw=canonical(manifest)
     private_write(directory/"checkpoint.dump",data)
     private_write(directory/"checkpoint.json",raw)
@@ -242,3 +247,20 @@ def rehearse_restore(cluster,directory,expected_digest,plan_sha256,base_sha,cand
     require(restored==manifest["fingerprint"],"restore_fingerprint_mismatch")
     require(fingerprint(cluster,"fixture_source")==manifest["fingerprint"],"source_changed_during_rehearsal")
     return {"checkpoint_sha256":expected_digest,"restore_verified":True,"scope":"isolated_fixture_only","execution_enabled":False}
+
+
+def encrypted_checkpoint(cluster,directory,key,key_id,plan_sha256,base_sha,candidate_sha):
+    # Capture directly in memory. Do not create the plaintext fixture checkpoint.
+    import integrated_vault as vault
+    manifest,data=capture_checkpoint(cluster,plan_sha256,base_sha,candidate_sha)
+    return vault.seal(directory,key,key_id,manifest,data,plan_sha256,base_sha,candidate_sha)
+
+
+def rehearse_encrypted_restore(cluster,directory,key,key_id,pin,plan_sha256,base_sha,candidate_sha):
+    import integrated_vault as vault
+    manifest,data=vault.unseal(directory,key,key_id,pin,plan_sha256,base_sha,candidate_sha)
+    require(fingerprint(cluster,"fixture_source")==manifest["fingerprint"],"stale_source_checkpoint")
+    cluster.restore(data)
+    require(fingerprint(cluster,"fixture_restore")==manifest["fingerprint"],"restore_fingerprint_mismatch")
+    require(fingerprint(cluster,"fixture_source")==manifest["fingerprint"],"source_changed_during_rehearsal")
+    return {"checkpoint_sha256":pin["object_sha256"],"restore_verified":True,"encrypted":True,"scope":"isolated_fixture_only","execution_enabled":False}
