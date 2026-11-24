@@ -45,6 +45,8 @@ Deno.serve(async (req: Request) => {
       return respond({ error: 'AUTH_REQUIRED' }, 401, origin);
     }
 
+    const {data:allowedSession,error:gateError}=await admin.rpc('beagu_account_level_session_allowed_v1',{p_token_sha:sessionDigest});
+    if(gateError||allowedSession!==true)return respond({error:'AUTH_REQUIRED'},401,origin);
     const raw = await req.text();
     if (enc.encode(raw).byteLength > 512) return respond({ error: 'TOO_LARGE' }, 413, origin);
     let body: unknown;

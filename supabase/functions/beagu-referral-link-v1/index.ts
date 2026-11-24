@@ -78,6 +78,8 @@ Deno.serve(async (req) => {
         Date.parse(session.expires_at) <= Date.now())
       return json(origin, 401, { error: 'AUTH_REQUIRED' });
 
+    const {data:allowedSession,error:gateError}=await db.rpc('beagu_account_level_session_allowed_v1',{p_token_sha:await digest(sessionToken)});
+    if(gateError||allowedSession!==true)return json(origin,401,{error:'AUTH_REQUIRED'});
     // Rollout gate: do not create device claims while Google Forms attribution is unverified.
     if (Deno.env.get('BEAGU_REFERRAL_LINK_ENABLED') !== 'true' || referralKey.length < 32)
       return json(origin, 503, { error: 'REFERRAL_NOT_READY' });

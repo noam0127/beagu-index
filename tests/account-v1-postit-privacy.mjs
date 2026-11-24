@@ -42,7 +42,7 @@ try{
  const send=async(action,token,status,body)=>{const r=await handler(new Request('https://invalid.example/postit?action='+action,{method:body?'POST':'GET',headers:{Origin:'https://baeguindex.com','Content-Type':'application/json','X-Beagu-Level-Session':token||'',Authorization:'Bearer forged-token'},...(body?{body:JSON.stringify(body)}:{})}));assert.equal(r.status,status);assert.equal(r.headers.get('cache-control'),'no-store');const out=await r.json(),serialized=JSON.stringify(out);for(const v of [visitor,actor,other,'private-account',privateMarker])assert.ok(!serialized.includes(v));assert.doesNotMatch(serialized,/author_uid|visitor_id|account_id|recovery_hash/);return out;};
  await send('posts','',403);await send('posts',tokens.lv1,403);
  assert.deepEqual(await send('writer_status',tokens.legacy,200),{linked:false});
- assert.deepEqual(await send('writer_status',tokens.revoked,200),{linked:false});
+ await send('writer_status',tokens.revoked,403);await send('posts',tokens.revoked,403);
  assert.deepEqual(await send('writer_status',tokens.member,200),{linked:true});
  const list=await send('posts',tokens.legacy,200);assert.equal(list.posts[0].nickname,nick);assert.equal(list.posts[1].nickname,'익명');assert.equal(list.posts[0].mine,false);
  const own=await send('posts',tokens.member,200);assert.equal(own.posts[0].mine,true);assert.equal(own.posts[1].mine,false);
