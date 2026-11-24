@@ -1,0 +1,27 @@
+name: Pages preclaim diagnostic (read only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pages-preclaim-diagnostic.yml'
+permissions:
+  contents: read
+jobs:
+  preclaim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 37908a331d990d812b58b6eb284b60d51c1569e8
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reproduce exact main preclaim tests
+        run: |
+          failed=0
+          for test in tests/lv2-price-region-20261123.mjs tests/arcade-item-upgrade-v1.mjs scripts/test-challenge-referral-premium.cjs tests/challenge-certificate-privacy-v1.mjs tests/statistics-lv2-price-upgrade-v1.mjs tests/search-compare-unity.mjs tests/2026-lv2-n1-policy-ui.mjs tests/2026-lv2-school-first-v1.mjs; do
+            if node "$test"; then echo "PASS $test"; else echo "FAIL $test"; failed=1; fi
+          done
+          if node --test tests/site-release-single-publisher.mjs; then echo "PASS publisher invariant"; else failed=1; fi
+          exit "$failed"

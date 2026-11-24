@@ -1,0 +1,27 @@
+name: v1.9.0 live proof (read only)
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/pages-v19-live-proof.yml'
+permissions:
+  contents: read
+jobs:
+  live-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify live version, pinned SHA and deployed script
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if curl -fsS --max-time 10 -H 'Cache-Control: no-cache' "https://baeguindex.com/release-info.json?proof=${GITHUB_RUN_ID}-$attempt" > /tmp/meta.json && node -e 'const m=require("/tmp/meta.json");if(m.version!=="v1.9.0"||m.commit!=="af045d41f6d2f27967ae51bb391ace2edc8c5052"||m.environment!=="production")process.exit(1)'; then
+              echo "PASS live v1.9.0 exact SHA"
+              break
+            fi
+            test "$attempt" != 12
+            sleep 5
+          done
+          curl -fsS --max-time 20 -H 'Cache-Control: no-cache' "https://baeguindex.com/js/statistics-compare.js?proof=${GITHUB_RUN_ID}" > /tmp/compare.js
+          grep -Fq 'cached.items[2026]={};' /tmp/compare.js
+          grep -Fq 'state.public2026Checked.delete(id);' /tmp/compare.js
+          echo "PASS live compare cache invalidation"
