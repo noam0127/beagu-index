@@ -23,6 +23,7 @@ name: BAEGU release controller (admin approval)
 # Owner-requested subtitle transparency and non-jumping mobile volleyball release, 2026-11-23: signed GitHub Pages job d8c3d958-9621-406a-9775-15176c36ca7f pins cd7126b9729d22e843b330228fd1d938fd4c45c3.
 # Owner-requested homepage Class Diary coming-soon replacement, 2026-11-23: signed Pages job a110fad1-e067-4960-a1ca-e57cc3fafb11 pins 36c68c8394a77a94541a2ad04a83db7242639c0c; no DB changes.
 # Wake existing owner-approved v1.2.0 job 3c632989-d85e-4622-9f46-25c33e9bc028; pinned 01a3dcd, no new job and no preview.
+# Wake existing owner-approved v1.3.0 job 0802e7fd-a1f1-4a5d-a481-bfec8f798ed9; pinned 1a3a67e, no new job and no preview.
 on:
   schedule:
     - cron: '*/5 * * * *'
