@@ -1558,13 +1558,13 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       ctx.restore();
       textLabel(ally.name||"동료",ally.x,ally.y-66,13,"#217f85","center",45);
     }
-    drawTeacher(left, "#448bd8");
     if(state.dashFrames>0){
       ctx.save();ctx.strokeStyle="rgba(120,239,255,.88)";ctx.lineWidth=7;ctx.lineCap="round";
       for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(left.x-state.dashX*(30+i*17),left.y-15+i*13);
         ctx.lineTo(left.x-state.dashX*(50+i*17),left.y-15+i*13);ctx.stroke();}
       ctx.restore();
     }
+    drawTeacher(left, "#448bd8");
     drawVolleyShackle();
     if(isEnemyMinionActive()){
       ctx.save();
