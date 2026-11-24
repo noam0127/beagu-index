@@ -82,12 +82,19 @@ jobs:
         run: |
           set -euo pipefail
           container="beagu-release-db-${GITHUB_RUN_ID}"
-          docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          docker run -d --rm --network none --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
           trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
-          for i in $(seq 1 40); do
-            if docker exec "$container" pg_isready -U postgres >/dev/null 2>&1; then break; fi
+          # The entrypoint's temporary init server listens only on Unix sockets.
+          # Wait for the final TCP server, including an authenticated query.
+          ready=0
+          for i in $(seq 1 60); do
+            if docker exec -e PGPASSWORD=fixture-only "$container" psql -X -h 127.0.0.1 -U postgres -d postgres -Atqc 'SELECT 1' >/dev/null 2>&1; then
+              ready=1
+              break
+            fi
             sleep 1
           done
+          test "$ready" = 1
           psql_local() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres; }
           printf '%s\n' 'create role anon;' 'create role authenticated;' 'create role service_role bypassrls;' | psql_local
           psql_local < supabase/migrations/20261121_site_release_manager.sql

@@ -72,12 +72,16 @@ class FixtureCluster:
                     and all(m["Type"]=="volume" for m in config["Mounts"]), "fixture_isolation_failure")
             for _ in range(60):
                 try:
-                    self.exec("pg_isready","-U","postgres",timeout=5)
-                    self.exec("createdb","-U","postgres","fixture_source")
-                    return self
+                    # The temporary init server is socket-only; require the final TCP listener.
+                    self.exec("env","PGPASSWORD=disposable-fixture-only","psql","-X","-h","127.0.0.1","-U","postgres","-d","postgres","-Atqc","SELECT 1",timeout=5)
+                    break
                 except RuntimeError:
                     time.sleep(1)
-            raise RuntimeError("fixture_start_timeout")
+            else:
+                raise RuntimeError("fixture_start_timeout")
+            # Do not retry database creation after an uncertain effect.
+            self.exec("createdb","-U","postgres","fixture_source")
+            return self
         except BaseException:
             self.__exit__(None,None,None)
             raise
