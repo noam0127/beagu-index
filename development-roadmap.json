@@ -376,10 +376,10 @@
       "version": "v1.10.1",
       "name": "통합 관제탑",
       "scope": "서버 변경 포함 버전의 승인·백업·DB·Edge·Pages 순차 적용 및 안전 복구",
-      "status": "DEVELOPMENT_STAGE_1_CI_PENDING",
+      "status": "STAGE_6_ISOLATED_PASS_STAGE_7_FINAL_CI_PENDING",
       "branch": "release/integrated-controller-preflight-v1",
       "pr": 294,
-      "commit": null,
+      "commit": "fbccbe9050ee5373d03e4ff4b8feda69726ccdb5",
       "tests": [
         {
           "name": "First direct Pages controller code-only validation",
@@ -391,9 +391,71 @@
           "result": "FAIL",
           "run": 45359500639,
           "notes": "Roadmap did not list v1.10.1; fix pending fresh CI"
+        },
+        {
+          "name": "Telemetry v2 gateway validation",
+          "result": "PASS",
+          "run": 45366571674,
+          "notes": "Exact tested SHA fbccbe9050ee5373d03e4ff4b8feda69726ccdb5"
+        },
+        {
+          "name": "Site release manager checks",
+          "result": "PASS",
+          "run": 45366571770,
+          "notes": "Exact tested SHA fbccbe9050ee5373d03e4ff4b8feda69726ccdb5"
+        },
+        {
+          "name": "Clean release code-only validation",
+          "result": "PASS",
+          "run": 45366571666,
+          "notes": "Exact tested SHA fbccbe9050ee5373d03e4ff4b8feda69726ccdb5"
+        },
+        {
+          "name": "Direct Pages controller code-only validation",
+          "result": "PASS",
+          "run": 45366571982,
+          "notes": "Exact tested SHA fbccbe9050ee5373d03e4ff4b8feda69726ccdb5"
+        },
+        {
+          "name": "Integrated release Chromium 390px and 1440px",
+          "result": "PASS",
+          "run": 45366571666,
+          "notes": "Actual browser, isolated intercepted requests; both viewport logs verified"
         }
       ],
-      "changed_files": [],
+      "changed_files": [
+        ".github/workflows/clean-release-validation.yml",
+        ".github/workflows/direct-pages-controller-validation.yml",
+        "admin-updates.html",
+        "development-roadmap.json",
+        "docs/v1.10.1-integrated-controller-contract.md",
+        "js/beagu-admin-updates-v1.js",
+        "release-candidate.json",
+        "release-info.json",
+        "scripts/release-manager/integrated_backup.py",
+        "scripts/release-manager/integrated_execution_allowlist.json",
+        "scripts/release-manager/integrated_package.py",
+        "scripts/release-manager/integrated_provider.py",
+        "scripts/release-manager/integrated_recovery.py",
+        "scripts/release-manager/integrated_remote.py",
+        "scripts/release-manager/integrated_runner.py",
+        "scripts/release-manager/integrated_server_control.py",
+        "scripts/release-manager/integrated_vault.py",
+        "scripts/release-manager/integrated_verify.py",
+        "styles/beagu-admin-updates-v1.css",
+        "supabase/functions/beagu-release-manager-v1/index.ts",
+        "supabase/integrated-release-control-fixture-v1.sql",
+        "tests/clean-release-contract.cjs",
+        "tests/direct-pages-release-contract.cjs",
+        "tests/integrated-release-admin-browser.cjs",
+        "tests/integrated-release-admin-ui.cjs",
+        "tests/integrated-release-backup.py",
+        "tests/integrated-release-provider.py",
+        "tests/integrated-release-remote.py",
+        "tests/integrated-release-runner.py",
+        "tests/integrated-release-vault.py",
+        "tests/integrated-release-verification.py"
+      ],
       "dependencies": [
         "v1.10.0",
         "separate approved controller bootstrap"
