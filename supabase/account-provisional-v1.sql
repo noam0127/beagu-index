@@ -260,3 +260,13 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.beagu_account_signup_v1(text,text,text,text),public.beagu_account_password_login_v1(text,text,text),public.beagu_account_recover_v1(text,text,text,text),public.beagu_account_session_status_v1(text),public.beagu_account_logout_v1(text),public.beagu_account_level_session_allowed_v1(text),public.beagu_account_postit_writer_v1(text),public.beagu_account_postit_current_aliases_v1(jsonb) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.beagu_account_signup_v1(text,text,text,text),public.beagu_account_password_login_v1(text,text,text),public.beagu_account_recover_v1(text,text,text,text),public.beagu_account_session_status_v1(text),public.beagu_account_logout_v1(text),public.beagu_account_level_session_allowed_v1(text),public.beagu_account_postit_writer_v1(text),public.beagu_account_postit_current_aliases_v1(jsonb) TO service_role;
+
+-- Aggregate-only member administration. The Edge handler separately verifies admin MFA.
+CREATE FUNCTION public.beagu_account_admin_counts_v1()
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
+ SELECT jsonb_build_object('members',count(*),'lv2',count(*) FILTER(WHERE a.enabled AND beagu_private.beagu_account_visitor_level_v1(a.visitor_id)=2),
+ 'suspended',count(*) FILTER(WHERE NOT a.enabled OR EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 b WHERE b.visitor_id=a.visitor_id AND (b.status='suspended' OR b.suspended_until>now()))))
+ FROM beagu_private.beagu_anonymous_accounts_v1 a
+$$;
+REVOKE ALL ON FUNCTION public.beagu_account_admin_counts_v1() FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.beagu_account_admin_counts_v1() TO service_role;
