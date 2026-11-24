@@ -10,5 +10,5 @@ assert.match(read('statistics.html'),/beagu-clean-hero-icon/);
 const js=read('js/beagu-release-info-v1.js');assert.doesNotMatch(js,/innerHTML|localStorage|sessionStorage|supabase/i);
 assert.match(js,/m.environment==='production'&&verified/);
 const m=JSON.parse(read('release-info.json'));assert.equal(m.environment,'candidate');assert.equal(m.commit,null);
-const roadmap=JSON.parse(read('development-roadmap.json'));assert.equal(roadmap.versions.length,15);assert.ok(roadmap.inventory.every(x=>x.target_versions.length));
+const roadmap=JSON.parse(read('development-roadmap.json'));assert.equal(roadmap.versions.length,16);assert.ok(roadmap.versions.some(v=>v.version==='v1.11.2'&&v.name==='함께하기'));assert.ok(roadmap.inventory.every(x=>x.target_versions.length));
 console.log('clean release source contract passed');
