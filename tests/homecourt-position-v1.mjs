@@ -1,0 +1,17 @@
+import assert from "node:assert/strict";
+import {threadPositions,POSITIONS} from "../supabase/functions/_shared/postit-position-v1.mjs";
+const root="fixture-root",actors=Array.from({length:60},(_,i)=>"fixture-"+i);
+const a=await threadPositions("fixture-key","thread-a",root,actors);
+const b=await threadPositions("fixture-key","thread-a",root,[...actors,"new-author"]);
+assert.equal(a.size,61);
+assert.equal(new Set([...a.values()].map(x=>x.nickname)).size,a.size);
+for(const [id,label] of a)assert.deepEqual(b.get(id),label);
+assert.equal(a.get(root).is_post_author,true);
+for(const actor of actors)assert.equal(a.get(actor).is_post_author,false);
+for(const v of a.values())assert.ok(POSITIONS.some(p=>v.nickname===p||v.nickname.startsWith(p+" ")));
+const other=await threadPositions("fixture-key","thread-b",root,actors);
+assert.ok(actors.some(id=>a.get(id).nickname!==other.get(id).nickname));
+const dup=await threadPositions("fixture-key","thread-a",root,[actors[0],actors[0],root,...actors.slice(1)]);
+assert.deepEqual([...dup],[...a]);
+assert.ok([...a.values()].every(v=>Object.keys(v).sort().join(",")==="is_post_author,nickname"));
+console.log("Homecourt thread-scoped alias checks passed");

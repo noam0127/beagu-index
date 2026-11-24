@@ -5,7 +5,7 @@ on:
       - 'release/base-pages-*'
   workflow_dispatch:
   push:
-    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway]
+    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent]
 permissions:
   contents: read
 jobs:
@@ -21,6 +21,7 @@ jobs:
       - name: Verify source and simulated DOM
         run: |
           node --check js/beagu-release-info-v1.js
+          node tests/homecourt-position-v1.mjs
           node tests/clean-release-contract.cjs
           node tests/v1111-light-touch-contract.cjs
           node tests/clean-release-info-runtime.cjs
