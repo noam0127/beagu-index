@@ -198,10 +198,10 @@
     });
     const data = await response.json().catch(() => ({}));
     if(generation!==authGeneration||requestToken!==session){const stale=new Error('이전 인증 요청 종료');stale.stale=true;throw stale;}
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401 || (response.status === 403 && data.error !== 'LEVEL2_REQUIRED' && data.error !== 'ACCESS_DENIED')) {
       const error = new Error('인증 만료'); error.unauthorized = true; throw error;
     }
-    if (!response.ok) throw new Error(data.error || '서버 오류');
+    if (!response.ok) { const error=new Error(data.error || '서버 오류'); error.status=response.status; throw error; }
     return data;
   }
 
@@ -246,11 +246,20 @@
     if($('searchInput').value.trim()||$('regionSelect').value)void search(true);
   });
   window.addEventListener('beagu:participation-logged-out',()=>loggedOut());
+  window.addEventListener('beagu:level-state-updated',event=>{
+    const verified=event.detail?.level;
+    const saved=sessionStorage.getItem(key)||'';
+    if(session && verified===0 && !saved){loggedOut('인증이 만료되었습니다. 다시 로그인해주세요.');return;}
+    if(session && saved===session && (verified===1||verified===2) && verified!==viewerTier){
+      ++authGeneration;invalidateSearch();viewerTier=verified;showUpgrade();
+      if(!$('searchPanel').hidden)void search(true);
+    }
+  });
   $('lv2UpgradeForm').addEventListener('submit',async event=>{
     event.preventDefault();
     if(viewerTier>=2)return;
     const input=$('lv2UpgradeCode'),submit=$('lv2UpgradeSubmit'),message=$('lv2UpgradeMessage');
-    const code=input.value.trim();
+    const code=input.value.trim(),upgradeGeneration=authGeneration;
     if(!/^[A-Za-z0-9-]{8,120}$/.test(code)){message.textContent='코드 형식을 확인해 주세요.';return;}
     submit.disabled=true;message.textContent='Lv.2 코드를 확인하는 중…';
     try{
@@ -260,7 +269,8 @@
         headers:{'Content-Type':'application/json','X-Beagu-Session':result.token},
         body:JSON.stringify({action:'verify'})});
       const checked=await response.json().catch(()=>({}));
-      if(!response.ok||Number(checked.level)<2){
+      if(upgradeGeneration!==authGeneration)return;
+      if(!response.ok||Number(checked.level)!==2){
         message.textContent='아직 Lv.2 권한이 없습니다. 기존 Lv.1 인증은 유지됩니다.';return;
       }
       sessionStorage.setItem(key,result.token);
@@ -1132,7 +1142,7 @@
     try {
       const state = await api('verify');
       if(generation!==authGeneration||session!==verifyingToken)return;
-      if (state.level >= level) {viewerTier=Number(state.level)>=2?2:1;loggedIn();}
+      if ([1,2].includes(Number(state.level)) && Number(state.level) >= level) {viewerTier=Number(state.level);loggedIn();}
       else loggedOut('현재 코드가 이 등급에 미달합니다.');
     } catch (_) { if(generation===authGeneration&&session===verifyingToken)loggedOut('인증을 다시 진행해주세요.'); }
   })();
