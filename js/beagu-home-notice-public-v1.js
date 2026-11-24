@@ -1,2 +1,24 @@
-/* Public notice: literal text only; legacy untouched seed preserves the existing page notice. */
-(()=>{"use strict";const body=document.getElementById("beaguHomeNoticeBody"),section=body?.closest("[data-notice-state]");if(!section)return;const marker="[BEAGU_NOTICE_HIDDEN_V1]",seed="2026년 배구지수 데이터 작업 중입니다. 학교별 결과를 정리하고 있어 일부 정보는 아직 반영되지 않았을 수 있습니다.";fetch(SUPABASE_URL+"/functions/v1/beagu-home-notice-v1",{method:"GET",headers:{apikey:SUPABASE_PUBLISHABLE_KEY},cache:"no-store",signal:AbortSignal.timeout(6500)}).then(async res=>{if(!res.ok)throw Error("notice");return res.json()}).then(data=>{if(typeof data?.body!=="string"||!data.body.trim()||!Number.isSafeInteger(data.revision)||data.revision<1)throw Error("invalid");if(data.body===marker){body.textContent="";section.hidden=true;section.dataset.noticeState="hidden";return;}if(!(data.revision===1&&data.body===seed))body.textContent=data.body;section.hidden=false;section.dataset.noticeState="published";}).catch(()=>{body.textContent="공지사항을 확인하지 못했습니다.";section.hidden=false;section.dataset.noticeState="unavailable";});})();
+/* Never infer the audience from a page or UI badge. The endpoint derives it from the session. */
+(()=>{"use strict";
+const by=id=>document.getElementById(id),common=by("beaguHomeNoticeBody"),tier=by("beaguTierNotice"),label=by("beaguTierNoticeLabel"),body=by("beaguTierNoticeBody"),error=by("beaguNoticeError"),section=common?.closest("[data-notice-state]");if(!section||!tier||!label||!body||!error)return;
+const endpoint=SUPABASE_URL+"/functions/v1/beagu-notice-audience-v1",key="beagu-level-session-v1";let generation=0,controller;
+const token=()=>{try{return sessionStorage.getItem(key)||""}catch{return ""}};
+function clear(){common.textContent="";body.textContent="";label.textContent="";common.hidden=tier.hidden=error.hidden=true;section.hidden=true;section.dataset.noticeState="loading";}
+async function refresh(){
+ const seq=++generation,start=token();controller?.abort();controller=new AbortController();const requestController=controller,signal=requestController.signal;const timer=setTimeout(()=>requestController.abort(),10000);clear();
+ const current=()=>seq===generation&&token()===start&&!signal.aborted;
+ try{
+ const headers={apikey:SUPABASE_PUBLISHABLE_KEY,"Content-Type":"application/json"};if(start)headers["X-Beagu-Session"]=start;
+ const res=await fetch(endpoint,{method:"POST",headers,body:JSON.stringify({action:"public_read"}),cache:"no-store",signal});if(!current())return;
+ if(!res.ok)throw Error("notice");const data=await res.json();if(!current())return;
+ if(![0,1,2].includes(data.level)||!Array.isArray(data.notices)||(!start&&data.level!==0))throw Error("response");
+ const render=(audience,node)=>{const n=data.notices.find(x=>x.audience===audience&&typeof x.body==="string"&&x.body.trim());node.textContent=n?.body||"";return !!n;};
+ const hasCommon=render("all",common),hasTier=render(String(data.level),body);common.hidden=!hasCommon;tier.hidden=!hasTier;
+ if(hasTier){label.textContent="Lv."+data.level+" 공지사항";tier.dataset.level=String(data.level);}
+ section.hidden=!hasCommon&&!hasTier;section.dataset.noticeState=section.hidden?"hidden":"published";
+ }catch{if(seq!==generation||token()!==start)return;clear();error.textContent="공지사항을 확인하지 못했습니다.";error.hidden=false;section.hidden=false;section.dataset.noticeState="unavailable";}finally{clearTimeout(timer)}
+}
+for(const e of ["beagu:level-state-change","beagu:level-state-updated","beagu:challenge-access-granted","beagu:challenge-access-revoked","focus","pageshow"])window.addEventListener(e,refresh);
+document.addEventListener("visibilitychange",()=>{if(document.hidden){++generation;controller?.abort();clear();}else void refresh();});
+void refresh();
+})();

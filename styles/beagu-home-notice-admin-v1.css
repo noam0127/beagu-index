@@ -13,3 +13,5 @@
 .admin-home-notice-editor #adminHomeNoticeStatus.error{color:#b42318}
 
 #adminHomeNoticeSection[hidden]{display:none!important}#adminHomeNoticePublication{font-size:13px;color:#264b79}#adminHomeNoticeSection button{min-height:44px}
+
+#adminHomeNoticeAudience{width:100%;max-width:400px;min-height:44px;border:1px solid #bfd0e4;border-radius:10px;padding:8px 10px;font:inherit;background:white;color:#173858}
