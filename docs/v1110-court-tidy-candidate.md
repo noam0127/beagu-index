@@ -8,3 +8,5 @@ Base: 12fe60fdbbf2d9dedce46250c0bbe0e5a93ae97e (v1.11.9; prior official CI succe
 - Main navigation: five destinations, locker room hidden; Post-it routes and server code preserved.
 - No production deployment, database changes, Vercel use, account or integrated control tower changes.
 - Candidate remains unregistered until exact-SHA official CI and registration preflight pass. Browser tests use intercepted network fixtures; no production writes.
+
+Follow-up: remove generic home experience button; each daily school, public/verified search result and report links directly to teacher-volleyball.html with school ID. Keep the hub route available via main navigation. Existing picker and game start API remain authoritative. Added actual game-page intercepted-browser checks for selected school, easy/extreme readiness, start, and ineligible school; no DB writes.

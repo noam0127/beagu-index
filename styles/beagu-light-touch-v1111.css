@@ -64,3 +64,12 @@ body.beagu-page-home .beagu-home-notice.court-notice-open{flex-wrap:wrap;align-i
 body.beagu-page-home .court-notice-open :is(.beagu-notice-common,.beagu-tier-notice,#beaguNoticeError){flex:1 0 100%;min-width:0}
 #courtNoticeToggle{width:auto;flex:0 0 auto;padding:3px 5px;border:0;background:transparent;color:#2458b9;font-size:11px;white-space:nowrap;cursor:pointer}
 #courtNoticeToggle:focus-visible{outline:2px solid #2458b9;outline-offset:2px}
+
+/* Direct school experience, consistent between public and verified cards. */
+.court-school-experience{display:inline-flex;align-items:center;justify-content:center;justify-self:end;align-self:end;margin-top:5px;padding:8px 12px;min-height:36px;border:1px solid #c9d7ef;border-radius:9px;background:#eff6ff;color:#2458b9;font-weight:750;font-size:12px;line-height:1.4;text-decoration:none;white-space:nowrap;box-sizing:border-box}
+.court-school-experience:hover{background:#dbeafe}
+.court-school-experience:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+#beaguTodaySchools .beagu-home-school{grid-template-rows:auto auto auto 1fr auto;align-content:stretch}
+#beaguTodaySchools .court-school-experience{margin-top:8px}
+.school-card>.court-school-experience{align-self:flex-end;margin-top:10px}
+@media(max-width:360px){.court-school-experience{padding:7px 8px;font-size:11px}}

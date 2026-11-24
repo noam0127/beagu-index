@@ -35,6 +35,10 @@
       el('span','beagu-home-school-region',[school.region,school.office,'2025년 기준'].filter(Boolean).join(' · ')),
       el('span','beagu-home-school-value','공개 백분위 '+
         school.percentile.toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'));
+    const experience=el('a','court-school-experience','학교체험');
+    experience.href='teacher-volleyball.html?school_id='+encodeURIComponent(school.id);
+    experience.setAttribute('aria-label',school.name+' 학교체험 · 선생님배구');
+    host.append(experience);
   }
   function render(){
     if(!upper.length||!lower.length)return;

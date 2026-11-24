@@ -6,7 +6,7 @@ for(const p of ['index.html','search.html','search-lv1.html','statistics.html','
  const c=read(p),nav=c.match(/<nav\b[^>]*class="[^"]*beagu-unified-nav[^"]*"[^>]*>[\s\S]*?<\/nav>/)[0];
  const a=[...nav.matchAll(/<a href="([^"]+)"[^>]*>([^<]+)<\/a>/g)];assert.deepEqual(a.map(m=>m[1]),urls,p);assert.deepEqual(a.map(m=>m[2]),expected,p);
 }
-const home=read('index.html');assert.doesNotMatch(home,/<iframe\b|id="teacher-game-frame"|id="teacher-run-frame"|배구지수 놀이터/);assert.match(home,/href="games.html">학교별 근무난이도 게임으로 확인하기/);
+const home=read('index.html');assert.doesNotMatch(home,/<iframe\b|id="teacher-game-frame"|id="teacher-run-frame"|배구지수 놀이터/);assert.doesNotMatch(home,/학교별 근무난이도 게임으로 확인하기/);
 assert.match(home,/beagu-home-actions[\s\S]*id="beaguTodaySchools"[\s\S]*class="card light-touch-visit"[\s\S]*class="beagu-home-notice"/);assert.doesNotMatch(home,/class="light-touch-home-bottom"/);assert.match(home,/mailto:manatee09@kakao\.com/);
 for(const p of ['search.html','search-lv1.html']){
  const s=read(p);const ids=['lightTouchSurveyLink','searchInput','results','beaguInterest'];const ix=ids.map(id=>s.indexOf('id="'+id+'"'));assert.ok(ix.every((v,i)=>v>=0&&(!i||v>ix[i-1])),p+' section order '+ix);
@@ -46,7 +46,7 @@ console.log('PASS v1.11.1 static source, menu, release isolation and game preser
 const report=read('school-report.html'),picker=read('js/arcade-school-picker-v1.js'),hub=read('js/beagu-court-tidy-v1110.js');
 assert.match(report,/id="reportPostitLink"[^>]*>[^<]*<\/a><a id="reportExperienceLink"/);
 assert.match(report,/experience\.hidden=!!state\.demo/);
-assert.match(report,/games\.html\?school_id=/);
+assert.match(report,/teacher-volleyball\.html\?school_id=/);
 assert.match(picker,/String\(school\.school_id\)!==String\(record\.school_id\)/);
 assert.match(picker,/this\.serial===0&&!this\.locked/);
 assert.match(hub,/searchParams\.set\("school_id",id\)/);
@@ -54,3 +54,6 @@ assert.match(read('js/beagu-home-schools-v1.js'),/PERIOD=24\*HOUR/);
 assert.match(read('styles/beagu-light-touch-v1111.css'),/repeat\(5,minmax\(0,1fr\)\)/);
 for(const p of ['js/beagu-court-tidy-v1110.js','js/arcade-school-picker-v1.js'])cp.execFileSync(process.execPath,['--check',p]);
 console.log('PASS v1.11.10 court tidy static contracts');
+
+for(const p of ['js/beagu-home-schools-v1.js','js/school-search-card-v1.js']){const source=read(p);assert.match(source,/court-school-experience/);assert.match(source,/teacher-volleyball\.html\?school_id=/);assert.match(source,/학교체험/);}
+assert.match(l,/card\.append\(experience\)/);

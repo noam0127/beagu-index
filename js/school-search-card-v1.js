@@ -160,10 +160,13 @@
   const postit=el('a','postit-quick-link postit-lv2-link','▤ 포스트잇');
   postit.href='postit.html?school_id='+encodeURIComponent(String(school.school_id));
   postit.setAttribute('aria-label',String(school.school_name||'학교')+' 포스트잇 열람 · 작성은 Lv.2부터');
-  actions.append(open,postit);
+  const experience=el('a','court-school-experience','학교체험');
+  experience.href='teacher-volleyball.html?school_id='+encodeURIComponent(String(school.school_id));
+  experience.setAttribute('aria-label',String(school.school_name||'학교')+' 학교체험 · 선생님배구');
+  actions.append(open,postit,experience);
   card.append(actions);
   if(detail)card.append(detail);
-  return {card,open,detail};
+  return {card,open,detail,experience};
  }
  window.BeaguSchoolSearchCard=Object.freeze({addHeader,percentiles,createCard,STATES});
 })();
