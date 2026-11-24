@@ -1,54 +1,47 @@
 "use strict";
 const {validateReplay,MAX_TICKS,TIERS}=require("./replay-protocol.cjs");
-// Trusted server-owned source instrumentation, NEVER pass client HTML or scripts.
-// Test-only adapter: existing complete game simulation runs in isolated Chromium.
-// Canonical 600x420 world, fixed 60Hz, seed assigned by server, no rendering between inputs.
 function instrumentTrustedSource(source){
  const anchor="resize();intro();requestAnimationFrame(tick);postHeight();";
  if(source.split(anchor).length!==2)throw Error("unsupported_source");
- const start=source.indexOf("function resize(){"),end=source.indexOf('if(typeof ResizeObserver!=="undefined"){new ResizeObserver(resize)',start);
- if(start<0||end<=start)throw Error("unsupported_resize");
- const canonical=source.slice(0,start)+'function resize(){W=600;H=420;dpr=1;canvas.width=W;canvas.height=H;ctx.setTransform(1,0,0,1,0,0);}\n'+source.slice(end);
- return canonical.replace(anchor,`resize();intro();
- let replayTick=0,replayStarted=false;
- const replaySnapshot=()=>({tick:replayTick,state,clock,life,score,growth:rules.growthPlan.filter(p=>growth.level(p.id)>0).map(p=>p.id)});
- const stepReplay=target=>{
-  if(!Number.isInteger(target)||target<replayTick||target>11400)throw Error("invalid_tick");
-  while(replayTick<target){
-   if(state!=="playing")throw Error("action_required");
-   replayTick++;
-   update(replayTick===11400?Math.max(1e-9,190-clock):1/60);
-  }
+ return source.replace(anchor,`resize();intro();
+ let replayStarted=false;
+ const snapshot=()=>({tick:recordTick,state,clock,life,score});
+ const stepTo=target=>{
+  if(!Number.isInteger(target)||target<recordTick||target>11400)throw Error("invalid_tick");
+  while(recordTick<target){if(!stepRecording())throw Error("action_required");}
  };
- const inputReplay=e=>{
-  stepReplay(e.tick);
-  if(e.action==="end"){if(state!=="over")throw Error("not_finished");return;}
-  if(e.action==="growth"){
-   if(state!=="between"||!applyGrowth(e.choice))throw Error("invalid_growth");
-   state="playing";updateLabels();closeMessage();return;
-  }
-  if(state!=="playing")throw Error("invalid_state");
-  if(e.action==="move"){pointerId=1;pointerX=Math.max(27,Math.min(W-27,e.x*W));pointerY=canPlayerRise()?Math.max(76,Math.min(H-52,e.y*H)):H-52;}
-  else if(e.action==="release"){pointerId=null;pointerX=null;pointerY=null;}
-  else if(e.action==="special"){if(!activateSpecial())throw Error("invalid_special");}
-  else if(e.action==="collect"){if(!leave.collect(e.choice))throw Error("invalid_collect");syncLeave();}
-  else if(e.action==="leave"){const b=leave.use(e.choice,clock,life,maxLife,bosses.tier.leave);if(!b)throw Error("invalid_leave");life=b.hp;burst(player.x,player.y,"#ffdf80",22);updateLabels();}
-  else if(e.action==="cooperate"){if(!allies.canCooperate(clock))throw Error("invalid_cooperate");cooperate();}
-  else if(e.action==="stop"){if(clock<1)throw Error("invalid_stop");finish(false);}
-  else throw Error("invalid_action");
+ const startSeed=async seed=>{
+  if(replayStarted||!recordingMode)throw Error("already_started_or_wrong_mode");
+  if(!Number.isInteger(seed)||seed<0||seed>4294967295)throw Error("invalid_seed");
+  replayStarted=true;recordSeedOverride=seed;soundOn=false;await start();if(state!=="playing")throw Error("start_denied");
  };
  window.__trustedRun4Replay=Object.freeze({
-  async run(seed,events){
-   if(replayStarted)throw Error("already_started");replayStarted=true;
-   if(!Number.isInteger(seed)||seed<0||seed>4294967295)throw Error("invalid_seed");
-   let n=seed>>>0;Math.random=()=>{n=(Math.imul(n,1664525)+1013904223)>>>0;return n/4294967296;};
-   localStorage.removeItem(recordPolicy.storageKey);soundOn=false;
-   await start();if(state!=="playing")throw Error("start_denied");
-   for(const e of events)inputReplay(e);
-   if(state!=="over")throw Error("not_finished");
-   const records=recordPolicy.list(localStorage);
-   if(records.length!==1)throw Error("result_missing");
-   return {result:records[0],terminal:replaySnapshot()};
+  async run(seed,events){await startSeed(seed);for(const e of events){stepTo(e.tick);applyReplayInput(e);}if(state!=="over"||!recordEnvelope)throw Error("not_finished");return {result:recordEnvelope.result,terminal:snapshot()};},
+  startSeed,stepTo,snapshot,envelope:()=>recordEnvelope,
+  autoAdvance(){
+   let aimAt=-1;
+   while(state==="playing"&&recordTick<11400){
+    if(clock>=aimAt){
+     aimAt=clock+.18;
+     const threats=[...items.filter(a=>!a.good).map(a=>({x:a.x,y:a.y,vx:0,vy:a.speed,r:a.r})),...paperBullets.map(a=>({x:a.x,y:a.y,vx:a.vx,vy:a.vy,r:a.r})),...bossProjectiles.filter(a=>!a.friendly).map(a=>({x:a.x,y:a.y,vx:a.vx,vy:a.vy,r:a.r})),...sideStudents.map(a=>({x:a.x,y:a.y-10,vx:a.vx*(175+stage*10),vy:0,r:a.r}))];
+     const xs=Array.from({length:11},(_,n)=>27+(W-54)*n/10),ys=canPlayerRise()?[Math.max(76,H*.35),H*.60,H-52]:[H-52];
+     let bestAim={x:player.x,y:player.y},bestUtility=-Infinity,minGap=Infinity;
+     for(const a of threats)minGap=Math.min(minGap,Math.hypot(player.x-a.x,player.y-a.y)-a.r-player.r);
+     for(const x of xs)for(const y of ys){
+      const distance=Math.hypot(x-player.x,y-player.y);let utility=-distance*.025;
+      for(const a of threats)for(const t of [.18,.4,.65]){const fraction=Math.min(1,285*profile.heroSpeed*growth.effects().speed*t/Math.max(1,distance));const px=player.x+(x-player.x)*fraction,py=player.y+(y-player.y)*fraction;const gap=Math.hypot(px-a.x-a.vx*t,py-a.y-a.vy*t)-a.r-player.r;if(gap<60)utility-=(60-gap)*(gap<0?4:1);}
+      for(const a of items)if(a.good&&a.y>H*.2){const d=Math.hypot(x-a.x,y-a.y-a.speed*.35);if(d<85)utility+=(85-d)*(.25+(1-life/maxLife)*.45);}
+      if(utility>bestUtility){bestUtility=utility;bestAim={x,y};}
+     }
+     applyReplayInput({action:"move",x:bestAim.x/W,y:bestAim.y/H});
+     const held=leave.state().held;if(life/maxLife<.55&&held.length&&!leave.active(clock))applyReplayInput({action:"leave",choice:held[held.length-1].years});
+     if((minGap<20||bosses.active())&&specialCooldown<=0)applyReplayInput({action:"special"});
+     if(allies.canCooperate(clock)&&(life/maxLife<.65||bosses.active()))applyReplayInput({action:"cooperate"});
+     for(const p of leave.state().pending)applyReplayInput({action:"collect",choice:p.years});
+    }
+    stepRecording();
+   }
+   draw();syncLeave();return snapshot();
   }
  });
  `);
@@ -56,10 +49,8 @@ function instrumentTrustedSource(source){
 async function replayInPage(page,{seed,difficulty,replay,elapsed}){
  validateReplay(replay);
  if(!TIERS.has(difficulty)||!Number.isInteger(seed)||seed<0||seed>4294967295||!Number.isFinite(elapsed)||elapsed<1||elapsed>3600)throw Error("invalid_session");
- const last=replay.at(-1).tick;
- if(last/60>elapsed+1||last>MAX_TICKS)throw Error("invalid_time");
+ const last=replay.at(-1).tick;if(last/60>elapsed+1||last>MAX_TICKS)throw Error("invalid_time");
  const output=await page.evaluate(({seed,replay})=>window.__trustedRun4Replay.run(seed,replay),{seed,replay});
- if(output.result.difficulty!==difficulty||output.result.survivalSeconds>Math.floor(elapsed)+1)throw Error("invalid_result");
- return output.result;
+ if(output.result.difficulty!==difficulty||output.result.survivalSeconds>Math.floor(elapsed)+1)throw Error("invalid_result");return output.result;
 }
 module.exports={instrumentTrustedSource,replayInPage};

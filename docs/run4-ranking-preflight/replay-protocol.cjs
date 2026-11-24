@@ -11,6 +11,7 @@ function validateReplay(replay){
   const keys=["tick","action"];
   if(e.action==="move"){keys.push("x","y");if(![e.x,e.y].every(n=>Number.isFinite(n)&&n>=0&&n<=1))throw Error("invalid_replay");}
   else if(e.action==="collect"||e.action==="leave"){keys.push("choice");if(![5,10,20].includes(e.choice))throw Error("invalid_replay");}
+  else if(e.action==="keys"){keys.push("choice");if(!Number.isInteger(e.choice)||e.choice<0||e.choice>15)throw Error("invalid_replay");}
   else if(e.action==="growth"){keys.push("choice");if(!GROWTH.has(e.choice))throw Error("invalid_replay");}
   else if(!["release","special","cooperate","stop","end"].includes(e.action))throw Error("invalid_replay");
   if(Object.keys(e).length!==keys.length||Object.keys(e).some(k=>!keys.includes(k)))throw Error("invalid_replay");

@@ -189,6 +189,7 @@ canvas{height:400px;cursor:default}
   <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/8-bit-jester-theme" target="_blank" rel="noopener noreferrer">8-bit Jester Theme · HydroGene (CC0)</a></p>
   
   <details id="run4-local-board" class="run4-local-board"><summary>4.0 기기 기록 · 최대 50개</summary><p>이 기기에 저장한 개인 기록입니다. 공식 명예의 전당과 별개입니다.</p><div class="run4-board-filters"><label>난이도 <select id="run4-record-tier"><option value="all">전체</option><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option><option value="very_hard">VERY HARD</option><option value="extreme">EXTREME</option></select></label><label>기록 <select id="run4-record-outcome"><option value="all">전체</option><option value="retired">정년 달성</option><option value="all_bosses">보스 5종 처치</option></select></label></div><ol id="run4-record-list" aria-live="polite"></ol></details>
+  <div id="run4-trace-panel" hidden><p id="run4-trace-status" role="status">개인 경기 재현 검수 모드 · 공식 랭킹 미제출</p><button type="button" id="run4-trace-download" disabled>조작 기록 저장 (JSON)</button></div>
   <p role="status" id="run4-preview-notice">4.0 개발 검수판 · 이 기기의 기록만 저장합니다. 공식 3.0 랭킹에는 반영되지 않습니다. 휴가권은 게임 설정이며 실제 교원 복무제도를 의미하지 않습니다.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -210,6 +211,40 @@ canvas{height:400px;cursor:default}
 "use strict";
 const $=id=>document.getElementById(id);
 const canvas=$("game"),ctx=canvas.getContext("2d");
+const recordingMode=new URLSearchParams(location.search).get("recording")==="1";
+let recordSeed=0,randomState=0,recordTick=0,recordAccumulator=0,recordEvents=[],recordInvalid=false,recordEnvelope=null,recordSeedOverride=null;
+const gameRandom=()=>{if(!recordingMode)return Math.random();randomState=(Math.imul(randomState,1664525)+1013904223)>>>0;return randomState/4294967296;};
+const cosmeticRandom=()=>recordingMode?Math.random():gameRandom();
+function resetRecording(){
+ recordSeed=recordSeedOverride??(crypto.getRandomValues(new Uint32Array(1))[0]);recordSeedOverride=null;
+ randomState=recordSeed;recordTick=0;recordAccumulator=0;recordEvents=[];recordInvalid=false;recordEnvelope=null;
+ $("run4-trace-download").disabled=true;$("run4-trace-status").textContent="경기 조작을 이 기기에만 기록합니다.";
+}
+function recordInput(action,fields={}){
+ if(!recordingMode||recordInvalid)return;
+ const event={tick:recordTick,action,...fields},lastEvent=recordEvents.at(-1);
+ if((action==="move"||action==="keys")&&lastEvent?.tick===recordTick&&lastEvent.action===action){recordEvents[recordEvents.length-1]=event;return;}
+ if(recordEvents.length>=12000||recordEvents.slice(-12).filter(e=>e.tick===recordTick).length>=12){recordInvalid=true;return;}
+ recordEvents.push(event);
+}
+function closeRecording(result,action="end"){
+ if(!recordingMode||recordEnvelope)return;
+ if(recordEvents.at(-1)?.action!=="stop")recordInput(action);
+ if(recordInvalid||!result){$("run4-trace-status").textContent="이 경기의 재현 기록을 저장할 수 없습니다.";return;}
+ recordEnvelope={format:"run4-replay-v1",seed:recordSeed,difficulty:result.difficulty,events:recordEvents.map(e=>({...e})),result};
+ $("run4-trace-download").disabled=false;$("run4-trace-status").textContent="개인 검수용 조작 기록 준비 완료 · 공식 기록 아님";
+}
+function stepRecording(){
+ if(state!=="playing"||recordTick>=11400)return false;
+ recordTick++;update(1/60);return true;
+}
+function keyMask(){return ["left","right","up","down"].reduce((n,k,i)=>n+(pressed.has(k)?1<<i:0),0);}
+function setKeyMask(mask){pressed.clear();["left","right","up","down"].forEach((k,i)=>{if(mask&(1<<i))pressed.add(k);});}
+function releaseRecordedControls(){
+ if(recordingMode&&state==="playing"){if(pointerId!==null)recordInput("release");if(keyMask())recordInput("keys",{choice:0});}
+ pressed.clear();pointerId=null;pointerX=null;pointerY=null;
+}
+
 const resultView=window.BeaguArcadeResult.create($("choices").parentElement,canvas,{compact:true});
 // Candidate-only local preview. Never submit new rules to the legacy score endpoint.
 const ranking={start:async()=>({localPreview:true}),finish:async()=>true,cancel:()=>{}};
@@ -292,11 +327,12 @@ let items=[],sparks=[],floats=[],spawnClock=0,combo=0,nearCount=0,misses=0,skill
 let sideStudents=[],paperBullets=[],paperTarget=null,sideRushClock=999,paperStormClock=999;
 let mysteryDrops=[],mysteryReveals=[],mysteryBuffs={},nextMysteryAt=0;
 const mystery=window.ArcadeMysteryItems;
+function pickRunMystery(){if(!recordingMode)return mystery.pick(true);const pool=gameRandom()<.51?mystery.good.filter(x=>x.id!=="ball_remove"&&x.id!=="rapid_smash"):mystery.bad.slice(0,5);return {...pool[Math.floor(gameRandom()*pool.length)]};}
 const isMysteryBuff=key=>Number(mysteryBuffs[key]||0)>clock;
 const mysteryCadence={easy:[9,29],normal:[8,26],hard:[6,21],very_hard:[5,17],extreme:[4,14]};
 function scheduleMystery(){
  const span=mysteryCadence[schoolPicker.get()?.difficulty]||mysteryCadence.hard;
- nextMysteryAt=clock+span[0]+Math.pow(Math.random(),1.25)*(span[1]-span[0]);
+ nextMysteryAt=clock+span[0]+Math.pow(gameRandom(),1.25)*(span[1]-span[0]);
 }
 function resetMystery(){
  mysteryDrops=[];mysteryReveals=[];mysteryBuffs={};scheduleMystery();
@@ -322,6 +358,7 @@ function playTone(freq,duration=.1,type="sine",volume=.055){
  }catch(e){}
 }
 function resize(){
+ if(recordingMode){W=600;H=420;dpr=Math.min(2,window.devicePixelRatio||1);if(canvas.width!==Math.round(W*dpr)||canvas.height!==Math.round(H*dpr)){canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);}canvas.style.objectFit="contain";return;}
  // Safari briefly reports a zero-height canvas during fullscreen transitions.
  // Never turn that temporary measurement into the game's collision world.
  const nextW=canvas.clientWidth,nextH=canvas.clientHeight;
@@ -388,6 +425,7 @@ async function start(){
   schoolPicker.status.textContent="게임 서버 연결 실패";
   return;
  }
+ if(recordingMode)resetRecording();
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
  state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
@@ -443,13 +481,13 @@ function syncLeave(){
   for(const p of info.pending){
    const b=document.createElement("button");b.type="button";b.className="run4-leave-pick";b.textContent="🎁 "+p.days+"일 받기";b.disabled=!playing;
    b.setAttribute("aria-label",p.years+"년 장기재직휴가 "+p.days+"일 획득");
-   b.onclick=()=>{if(state!=="playing"||!leave.collect(p.years))return;setNotice("🌿 "+p.days+"일 휴가권을 보관했습니다.",2);playTone(760,.15);syncLeave();};
+   b.onclick=()=>{if(state!=="playing"||!leave.collect(p.years))return;recordInput("collect",{choice:p.years});setNotice("🌿 "+p.days+"일 휴가권을 보관했습니다.",2);playTone(760,.15);syncLeave();};
    host.append(b);
   }
   for(const p of info.held){
    const b=document.createElement("button");b.type="button";b.textContent=p.days+"일 사용";b.disabled=!playing||remaining>0;
    b.setAttribute("aria-label",p.years+"년 휴가권 "+p.days+"일 사용");
-   b.onclick=()=>{if(state!=="playing")return;const benefit=leave.use(p.years,clock,life,maxLife,bosses.tier.leave);if(!benefit)return;life=benefit.hp;setNotice("☀ "+p.days+"일 재충전 · "+p.seconds+"초 보호",2.5);burst(player.x,player.y,"#ffdf80",22);playTone(880,.2);updateLabels();};
+   b.onclick=()=>{if(state!=="playing")return;const benefit=leave.use(p.years,clock,life,maxLife,bosses.tier.leave);if(!benefit)return;recordInput("leave",{choice:p.years});life=benefit.hp;setNotice("☀ "+p.days+"일 재충전 · "+p.seconds+"초 보호",2.5);burst(player.x,player.y,"#ffdf80",22);playTone(880,.2);updateLabels();};
    host.append(b);
   }
   if(allies.count()>=2){const b=document.createElement("button");b.type="button";b.textContent=coopRemaining?"연대 "+coopRemaining+"초":"🤝 선생님들의 연대";b.disabled=!playing||!allies.canCooperate(clock);b.onclick=cooperate;host.append(b);}
@@ -483,11 +521,12 @@ function setNotice(t,time=1.8){notice=t;noticeTime=time;}
 function resetPatternHazards(){
  sideStudents=[];paperBullets=[];paperTarget=null;
  const cfg=chaosProfile();
- sideRushClock=cfg.rushEvery*(.64+Math.random()*.2);
- paperStormClock=cfg.paperEvery*(.55+Math.random()*.18);
+ sideRushClock=cfg.rushEvery*(.64+gameRandom()*.2);
+ paperStormClock=cfg.paperEvery*(.55+gameRandom()*.18);
 }
 function activateSpecial(){
  if(state!=="playing"||specialCooldown>0)return false;
+ recordInput("special");
  specialCooldown=profile.specialCooldown/(growth.effects().rate*bossRate);specialFlash=.9;
  player.inv=Math.max(player.inv,profile.specialShield);
  let cleared=0;
@@ -517,8 +556,8 @@ function activateSpecial(){
  return true;
 }
 function burst(x,y,color,n=9){
- for(let i=0;i<n;i++){let a=Math.PI*2*i/n+(Math.random()-.5)*.8,v=50+Math.random()*140;
- sparks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.5+Math.random()*.4,color,r:2+Math.random()*3});}
+ for(let i=0;i<n;i++){let a=Math.PI*2*i/n+(cosmeticRandom()-.5)*.8,v=50+cosmeticRandom()*140;
+ sparks.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.5+cosmeticRandom()*.4,color,r:2+cosmeticRandom()*3});}
 }
 function float(x,y,text,color="#fff"){floats.push({x,y,text,color,life:1});}
 function addScore(n){score+=Math.round(n*(activeEvent?.id==="focus"?1.35:1));updateLabels();}
@@ -552,16 +591,16 @@ function clearNearby(limit){
  const hazards=items.filter(a=>!a.good).sort((a,b)=>Math.hypot(a.x-player.x,a.y-player.y)-Math.hypot(b.x-player.x,b.y-player.y)).slice(0,limit);
  for(const a of hazards){const i=items.indexOf(a);if(i>=0){items.splice(i,1);burst(a.x,a.y,"#c7f9e9",8);}}
 }
-function spawnFeature(p,x=30+Math.random()*Math.max(1,W-60),y=-35){
+function spawnFeature(p,x=30+gameRandom()*Math.max(1,W-60),y=-35){
  if(items.length>=100)return;
- items.push({x:Math.max(24,Math.min(W-24,x)),y,speed:(95+stage*15)*profile.enemySpeed,r:21,size:1,wobble:4,phase:Math.random()*6.28,good:p.good,tracker:!!p.tracker,closestClearance:Infinity,nearMissWindow:false,emoji:p.emoji,name:p.name,damage:p.damage||0,heal:p.heal||0,feature:p});
+ items.push({x:Math.max(24,Math.min(W-24,x)),y,speed:(95+stage*15)*profile.enemySpeed,r:21,size:1,wobble:4,phase:gameRandom()*6.28,good:p.good,tracker:!!p.tracker,closestClearance:Infinity,nearMissWindow:false,emoji:p.emoji,name:p.name,damage:p.damage||0,heal:p.heal||0,feature:p});
 }
 function applyFeature(p){
  if(p.buff)effects.set(p.buff,clock,p.duration);
  if(p.heal||p.healRatio){const amount=Math.round(((p.heal||0)+(p.healRatio||0)*maxLife)*profile.heal*growth.effects().heal);life=Math.min(maxLife,life+amount);}
  if(p.inv)player.inv=Math.max(player.inv,p.inv);
  if(p.shield)effects.addShield();
- if(p.growth){const eligible=rules.growthPlan.filter(a=>growth.level(a.id)<a.max);if(eligible.length)applyGrowth(eligible[Math.floor(Math.random()*eligible.length)].id,false);}
+ if(p.growth){const eligible=rules.growthPlan.filter(a=>growth.level(a.id)<a.max);if(eligible.length)applyGrowth(eligible[Math.floor(gameRandom()*eligible.length)].id,false);}
  if(p.clear){clearNearby(p.clear);joinAlly();}
  if(p.papers)for(let i=0;i<p.papers;i++)spawnFeature({name:"추가 공문",emoji:"📄",good:false,damage:9},W*(i===0?.22:.78),-55-i*35);
  if(p.good)addScore(p.points||75);
@@ -569,7 +608,7 @@ function applyFeature(p){
 }
 function triggerCareerEvent(){
  if(state!=="playing"||activeEvent||bosses.active())return;
- const event=rules.pickEvent(stage,Math.random,!!bosses.active());if(!event)return;
+ const event=rules.pickEvent(stage,gameRandom,!!bosses.active());if(!event)return;
  activeEvent=event;eventSeconds=event.duration;
  if(event.id==="support"){life=Math.min(maxLife,life+Math.round(maxLife*.18));clearNearby(6);effects.set("training",clock,3);joinAlly();}
  if(event.id==="focus")life=Math.min(maxLife,life+Math.round(maxLife*.15));
@@ -579,30 +618,30 @@ function triggerCareerEvent(){
 }
 function spawn(){
  if(windowRunEffects().noSpawn)return;
- if(bosses.active()&&Math.random()<.65)return;
- if(Math.random()<.24){
-  const goodPick=Math.random()<Math.max(.3,profile.goodChance);
+ if(bosses.active()&&gameRandom()<.65)return;
+ if(gameRandom()<.24){
+  const goodPick=gameRandom()<Math.max(.3,profile.goodChance);
   const candidates=rules.items.filter(p=>p.good===goodPick);
-  spawnFeature(candidates[Math.floor(Math.random()*candidates.length)]);return;
+  spawnFeature(candidates[Math.floor(gameRandom()*candidates.length)]);return;
  }
- const isGood=Math.random()<Math.min(.55,profile.goodChance+(stageElapsed()>12?.04:0)),source=isGood?good:bad;
- let a=source[Math.floor(Math.random()*source.length)];
- let x=30+Math.random()*Math.max(1,W-60);
+ const isGood=gameRandom()<Math.min(.55,profile.goodChance+(stageElapsed()>12?.04:0)),source=isGood?good:bad;
+ let a=source[Math.floor(gameRandom()*source.length)];
+ let x=30+gameRandom()*Math.max(1,W-60);
  // From age 60, retirement paperwork sweeps alternating court lanes.
  if(getAge()>=60&&!isGood)x=Math.max(30,Math.min(W-30,
-   W*(Math.floor((clock-180)/2.7)%2===0?.25:.75)+(Math.random()-.5)*W*.19));
- let speed=(88+stage*18+Math.random()*56)*profile.enemySpeed;
+   W*(Math.floor((clock-180)/2.7)%2===0?.25:.75)+(gameRandom()-.5)*W*.19));
+ let speed=(88+stage*18+gameRandom()*56)*profile.enemySpeed;
  if(activeEvent?.id==="rush")speed*=1.20;
  if(activeEvent?.id==="transfer"&&!isGood)x=W-x;
  if(getAge()>=60)speed*=1.20;
  // Each career era has a distinct physical dodge pattern.
- if(!isGood&&stage===1)x=Math.random()<.5?W*.24:W*.76;
- if(!isGood&&stage===3)x=(Math.floor(clock/5)%2===0?W*.76:W*.24)+(Math.random()-.5)*W*.12;
+ if(!isGood&&stage===1)x=gameRandom()<.5?W*.24:W*.76;
+ if(!isGood&&stage===3)x=(Math.floor(clock/5)%2===0?W*.76:W*.24)+(gameRandom()-.5)*W*.12;
  const tracker=!isGood&&stage===2;
- items.push({x,y:-40,speed,r:(20+Math.random()*3)*(isGood?1:profile.enemySize),size:isGood?1:profile.enemySize,
-   wobble:(3+Math.random()*7)*profile.zigzag,phase:Math.random()*6.28,good:isGood,tracker,
+ items.push({x,y:-40,speed,r:(20+gameRandom()*3)*(isGood?1:profile.enemySize),size:isGood?1:profile.enemySize,
+   wobble:(3+gameRandom()*7)*profile.zigzag,phase:gameRandom()*6.28,good:isGood,tracker,
    closestClearance:Infinity,nearMissWindow:false,...a});
- if(!isGood&&stage===1&&Math.random()<.28){
+ if(!isGood&&stage===1&&gameRandom()<.28){
   items.push({x:x<W/2?W*.76:W*.24,y:-110,speed:speed*.93,r:20*profile.enemySize,size:profile.enemySize,
     wobble:3,phase:0,good:false,tracker:false,closestClearance:Infinity,nearMissWindow:false,...a});
  }
@@ -624,14 +663,14 @@ function openGrowth(pick){
  state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;tapGesture.cancel();
  message("재직 "+pick.year+"년 · 능력 성장","능력 하나를 선택하세요. 선택 중 교직시간과 휴가 효과는 정지합니다.",
   pick.choices.map(u=>({label:u.name,detail:u.detail+" · "+u.level+" → "+(u.level+1)+"/"+u.max,action:()=>{
-    if(state!=="between"||!applyGrowth(u.id))return;state="playing";updateLabels();closeMessage();playTone(610,.16);
+    if(state!=="between"||!applyGrowth(u.id))return;recordInput("growth",{choice:u.id});state="playing";updateLabels();closeMessage();playTone(610,.16);
   }})),"🎖️");
 }
 function tenureEvents(){
  for(const [year,id,label] of [[3,"adapt","교직 적응"],[10,"growth","중견교사 성장"],[20,"power","베테랑 교사"],[30,"defense","오랜 교직 경험"]]){
   if(clock<year*5||tenureSeen.has(year))continue;tenureSeen.add(year);
   if(id==="adapt")skill.speed*=1.05;
-  if(id==="growth"){const p=rules.growthPlan.filter(p=>growth.level(p.id)<p.max);if(p.length)applyGrowth(p[Math.floor(Math.random()*p.length)].id,false);}
+  if(id==="growth"){const p=rules.growthPlan.filter(p=>growth.level(p.id)<p.max);if(p.length)applyGrowth(p[Math.floor(gameRandom()*p.length)].id,false);}
   if(id==="power")tenureAttack=1.15;
   if(id==="defense")tenureDamage=.9;
   setNotice("🎖️ "+year+"년 재직 · "+label,2.4);
@@ -658,8 +697,9 @@ function paintLocalRecords(){
  for(const r of rows){const li=document.createElement("li");li.textContent=(difficultyName[r.difficulty]||r.difficulty)+" · "+r.score.toLocaleString("ko-KR")+"점 · "+r.age+"세 · 보스 "+r.bossIds.length+"/5"+(r.victory?" · 정년 달성":"");host.append(li);}
 }
 function saveLocalResult(baseScore,finalScore,win){
- try{const stats=run4.stats();recordPolicy.save(localStorage,{version:"4.0",game:recordPolicy.game,difficulty:schoolPicker.get()?.difficulty||"hard",baseScore,score:finalScore,survivalSeconds:Math.floor(clock),age:getAge(),victory:win,bossIds:bosses.defeated(),maxCombo:stats.maxCombo,hits:misses,crises:stats.crises,leaveDays:leave.state().usedDays,allies:alliesPeak});}catch(_){}
- paintLocalRecords();
+ let result=null;
+ try{const stats=run4.stats();result=recordPolicy.save(localStorage,{version:"4.0",game:recordPolicy.game,difficulty:schoolPicker.get()?.difficulty||"hard",baseScore,score:finalScore,survivalSeconds:Math.floor(clock),age:getAge(),victory:win,bossIds:bosses.defeated(),maxCombo:stats.maxCombo,hits:misses,crises:stats.crises,leaveDays:leave.state().usedDays,allies:alliesPeak});}catch(_){}
+ paintLocalRecords();return result;
 }
 $("run4-record-tier").addEventListener("change",paintLocalRecords);
 $("run4-record-outcome").addEventListener("change",paintLocalRecords);
@@ -686,7 +726,7 @@ function finish(win){
  const ending=rules.ending({win,bosses:beaten.length,allies:alliesPeak,crises:stats.crises,growth:rules.growthPlan.reduce((n,p)=>n+growth.level(p.id),0),combo:stats.maxCombo,hits:misses});
  const details=(win?"24세 임용 → 62세 정년 달성!\n수많은 어려움 속에서도 당신은 교실을 지켜왔습니다.":getAge()+"세 · 새로운 도전")+"\n"+rawScore.toLocaleString("ko-KR")+"점 × 난이도 "+difficultyScore+(win?" × 정년 2":"")+" = "+Math.floor(score).toLocaleString("ko-KR")+"점";
  const bossNames=rules.bossPlan.filter(p=>beaten.includes(p.id)).map(p=>p.name);
- saveLocalResult(rawScore,score,win);
+ closeRecording(saveLocalResult(rawScore,score,win));
  const report=[details,"재직 "+Math.floor(clock/5)+"년 · ROUND "+(stage+1)+" · "+(difficultyName[schoolPicker.get()?.difficulty]||""),
   "보스 "+beaten.length+"/5"+(bossNames.length?" · "+bossNames.join(", "):""),
   "최대 콤보 "+stats.maxCombo+" · 피격 "+misses+"회 · 위기 극복 "+stats.crises+"회",
@@ -714,7 +754,7 @@ async function leavePausedRun(changeSchool=false){
   const survivalSeconds=Math.floor(clock);
   if(finalScore>best){best=finalScore;persist();}
   $("bestLabel").textContent=best.toLocaleString("ko-KR");
-  saveLocalResult(rawScore,finalScore,false);
+  closeRecording(saveLocalResult(rawScore,finalScore,false),"stop");
   await ranking?.finish(finalScore,{score:finalScore,baseScore:rawScore,survivalSeconds,age:getAge(),victory:false});
   stopToIntro();
   if(changeSchool)schoolPicker.resetForChange();
@@ -723,7 +763,7 @@ async function leavePausedRun(changeSchool=false){
  }finally{savingPausedRun=false;}
 }
 function pause(){
- if(state==="playing"){state="paused";pressed.clear();tapGesture.cancel();pointerId=null;pointerX=null;pointerY=null;
+ if(state==="playing"){releaseRecordedControls();state="paused";tapGesture.cancel();
   message("일시정지","",[
    {label:"▶ 계속",action:resume},
    {label:"🏫 다른 학교로 변경",action:()=>{void leavePausedRun(true);}},
@@ -734,7 +774,7 @@ function pause(){
 function resume(){state="playing";closeMessage();}
 function help(){
  const wasPlaying=state==="playing",wasPaused=state==="paused";
- if(wasPlaying){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;}
+ if(wasPlaying){releaseRecordedControls();state="paused";}
  message("게임 방법","24세 임용 → 62세 정년 · 5초마다 1년\n정년 달성 시 누적 점수 2배 · 낙하물 회피가 핵심\n난이도가 높을수록 옆에서 돌진 학생 증가 · 느린 공문 탄막 증가\n불규칙 물음표: 빨강 총점 비율 차감 / 파랑 도움 · 🎯 탄환 5초\nEASY 날개·동료·관리자 분필 · EXTREME 족쇄 · PC 방향키/WASD / 모바일 드래그",[
   {label:wasPlaying?"▶ 게임으로 돌아가기":wasPaused?"⏸ 일시정지 메뉴":"확인",
    action:()=>{if(wasPlaying)resume();else if(wasPaused){state="playing";pause();}else stopToIntro();}}
@@ -753,8 +793,8 @@ function fireChalk(dt){
    !chalkShots.some(shot=>shot.target===a)
   ).sort((a,b)=>Math.hypot(a.x-origin.x,a.y-origin.y)-Math.hypot(b.x-origin.x,b.y-origin.y))[0];
   if(!target)continue;
-  const willHit=isMysteryBuff("bullet")||Math.random()<.5;
-  const missOffset=(Math.random()<.5?-1:1)*(target.r+65);
+  const willHit=isMysteryBuff("bullet")||gameRandom()<.5;
+  const missOffset=(gameRandom()<.5?-1:1)*(target.r+65);
   chalkShots.push({
    role:helper.role,helperId:helper.id,x:origin.x,y:origin.y-34,target,willHit,life:1.6,
    missX:Math.max(12,Math.min(W-12,target.x+missOffset)),
@@ -839,7 +879,7 @@ function drawShackle(){
 function beginSideRush(){
  const cfg=chaosProfile();if(!cfg.students)return;
  const count=cfg.students+Math.min(1,Math.floor(stage/3));
- const firstSide=Math.random()<.5?"left":"right";
+ const firstSide=gameRandom()<.5?"left":"right";
  for(let i=0;i<count;i++){
   const side=i%3===2?(firstSide==="left"?"right":"left"):firstSide;
   sideStudents.push({
@@ -868,7 +908,7 @@ function firePaperStorm(target){
   const x=Math.max(12,Math.min(W-12,startCenter+(frac-.5)*Math.min(W*.3,105)));
   const dx=aimX-x,dy=aimY+15;
   const dist=Math.max(1,Math.hypot(dx,dy));
-  const speed=90+Math.random()*20+stage*2.5;
+  const speed=90+gameRandom()*20+stage*2.5;
   paperBullets.push({x,y:-14-(i%5)*12,vx:dx/dist*speed,vy:dy/dist*speed,
    r:8,angle:(i%2?1:-1)*.12,spin:(i%2?1:-1)*.45});
  }
@@ -877,11 +917,11 @@ function updatePatternHazards(dt){
  const cfg=chaosProfile();
  if(!windowRunEffects().noSpawn&&!bosses.active()){sideRushClock-=dt;paperStormClock-=dt;}
  if(!windowRunEffects().noSpawn&&!bosses.active()&&sideRushClock<=0){
-  beginSideRush();sideRushClock=cfg.rushEvery*(.9+Math.random()*.25)*(1-stage*.035);
+  beginSideRush();sideRushClock=cfg.rushEvery*(.9+gameRandom()*.25)*(1-stage*.035);
  }
  if(!windowRunEffects().noSpawn&&!bosses.active()&&paperStormClock<=0){
   if(!paperTarget)beginPaperStorm();
-  paperStormClock=cfg.paperEvery*(.9+Math.random()*.25)*(1-stage*.035);
+  paperStormClock=cfg.paperEvery*(.9+gameRandom()*.25)*(1-stage*.035);
  }
  if(paperTarget){
   paperTarget.wait-=dt;
@@ -945,12 +985,12 @@ function collectMystery(item,x,y){
 function updateMystery(dt){
  if(clock>=nextMysteryAt){
   if(mysteryDrops.length<3){
-   const x=37+Math.random()*Math.max(1,W-74);
+   const x=37+gameRandom()*Math.max(1,W-74);
    const nearGround=profile.jumpEnabled===false&&!isMysteryBuff("wings");
    const targetY=nearGround?H-52:
-     (Math.random()<.62?H-52:Math.max(120,Math.min(H-85,110+Math.random()*(H-205))));
+     (gameRandom()<.62?H-52:Math.max(120,Math.min(H-85,110+gameRandom()*(H-205))));
    mysteryDrops.push({x,y:H+26,startY:H+26,targetY,
-    rise:0,wait:5.5+Math.random()*3.0,item:mystery.pick(true)});
+    rise:0,wait:5.5+gameRandom()*3.0,item:pickRunMystery()});
   }
   scheduleMystery();
  }
@@ -1005,7 +1045,7 @@ function damageBoss(amount){
  setNotice("🏆 "+defeated.name+" 처치 · "+defeated.reward,3);playTone(990,.24);
 }
 function joinAlly(){
- const a=allies.join(clock);if(!a)return;
+ const a=allies.join(clock,gameRandom);if(!a)return;
  alliesPeak=Math.max(alliesPeak,allies.count());setNotice("🤝 "+a.name+" 합류!",2);syncLeave();
 }
 function allyPosition(i,count){const angle=clock*.5+i*Math.PI*2/Math.max(1,count);return {x:Math.max(20,Math.min(W-20,player.x+Math.cos(angle)*52)),y:Math.max(76,Math.min(H-32,player.y+Math.sin(angle)*32-15))};}
@@ -1022,6 +1062,7 @@ function updateAllies(){
 }
 function cooperate(){
  if(state!=="playing"||!allies.cooperate(clock))return;
+ recordInput("cooperate");
  clearNearby(100);sideStudents=[];paperBullets=[];paperTarget=null;
  bossProjectiles=bossProjectiles.filter(p=>p.friendly);
  if(bosses.active())damageBoss(35*growth.effects().power);
@@ -1094,7 +1135,7 @@ function drawBoss(){
  ctx.restore();
 }
 function update(dt){
- clock=Math.min(RETIREMENT_SECONDS,clock+dt);
+ clock=recordingMode?Math.min(RETIREMENT_SECONDS,recordTick/60):Math.min(RETIREMENT_SECONDS,clock+dt);
  for(const p of leave.advance(clock)){setNotice("🎁 "+p.years+"년 재직 · "+p.days+"일 휴가권 등장!",3);playTone(830,.2);}
  syncLeave();
  if(clock>=RETIREMENT_SECONDS){finish(true);return;}
@@ -1116,7 +1157,7 @@ function update(dt){
  }
  if(getCareerStage()>stage)nextCareerStage();
  tenureEvents();
- const growthPick=growth.next(clock);if(growthPick){openGrowth(growthPick);return;}
+ const growthPick=growth.next(clock,gameRandom);if(growthPick){openGrowth(growthPick);return;}
  if(eventSeconds>0){eventSeconds=Math.max(0,eventSeconds-dt);if(eventSeconds===0)activeEvent=null;}
  const cycle=Math.floor((stageElapsed()-5)/14);
  if(cycle>=0&&cycle!==lastEventCycle){
@@ -1158,7 +1199,7 @@ function update(dt){
  fireChalk(dt);
  updateAllies();alliesPeak=Math.max(alliesPeak,allies.count());
  spawnClock-=dt;
- if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-stage*.085-(getAge()>=60?.2:0))/(profile.spawnPressure*growth.effects().spawn*windowRunEffects().spawn*bossSpawn))*(.48+Math.random()*1.55)/(activeEvent?.id==="rush"?1.30:1);}
+ if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-stage*.085-(getAge()>=60?.2:0))/(profile.spawnPressure*growth.effects().spawn*windowRunEffects().spawn*bossSpawn))*(.48+gameRandom()*1.55)/(activeEvent?.id==="rush"?1.30:1);}
  for(let i=items.length-1;i>=0;i--){
   const a=items[i];a.y+=a.speed*dt;a.x+=Math.sin(clock*(2+profile.zigzag)+a.phase)*a.wobble*dt;
    if(!a.good&&a.y>H*.18&&a.y<H-75){
@@ -1376,7 +1417,7 @@ function drawRetirementScene(){
 }
 function draw(){
  if(retirementScene&&state==="over"){drawRetirementScene();return;}
- ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
+ ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((cosmeticRandom()-.5)*6,(cosmeticRandom()-.5)*4);
  background();
 
  if(leave.active(clock)){ctx.save();ctx.fillStyle="rgba(255,223,125,.16)";ctx.fillRect(0,0,W,H);ctx.strokeStyle="#ffdf80";ctx.lineWidth=3;ctx.beginPath();ctx.arc(player.x,player.y-12,38,0,Math.PI*2);ctx.stroke();ctx.restore();}
@@ -1441,7 +1482,7 @@ function tick(t){
  window.ArcadePlayLock?.sync(state==="playing");
  syncFullscreenPause();
  const dt=Math.min(.04,(t-last)/1000||0);last=t;
- if(state==="playing"&&!document.hidden&&!$("teacher-run-protected").hidden)update(dt);
+ if(state==="playing"&&!document.hidden&&!$("teacher-run-protected").hidden){if(recordingMode){recordAccumulator+=dt;while(recordAccumulator>=1/60&&state==="playing"){recordAccumulator-=1/60;stepRecording();}}else update(dt);}else if(recordingMode)recordAccumulator=0;
  syncLeave();
  draw();requestAnimationFrame(tick);
 }
@@ -1456,20 +1497,23 @@ window.addEventListener("keydown",e=>{
  if(state!=="playing")return;
  if(!["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(key))return;
  e.preventDefault(); // Arrow keys and WASD move the teacher, not the page.
+ const beforeMask=keyMask();
  if(key==="arrowleft"||key==="a")pressed.add("left");
  if(key==="arrowright"||key==="d")pressed.add("right");
  if(key==="arrowup"||key==="w")pressed.add("up");
  if(key==="arrowdown"||key==="s")pressed.add("down");
+ if(keyMask()!==beforeMask)recordInput("keys",{choice:keyMask()});
 });
-window.addEventListener("keyup",e=>{let key=e.key.toLowerCase();if(key==="arrowleft"||key==="a")pressed.delete("left");if(key==="arrowright"||key==="d")pressed.delete("right");
+window.addEventListener("keyup",e=>{const beforeMask=keyMask();let key=e.key.toLowerCase();if(key==="arrowleft"||key==="a")pressed.delete("left");if(key==="arrowright"||key==="d")pressed.delete("right");
   if(key==="arrowup"||key==="w")pressed.delete("up");
-  if(key==="arrowdown"||key==="s")pressed.delete("down");});
+  if(key==="arrowdown"||key==="s")pressed.delete("down");if(state==="playing"&&keyMask()!==beforeMask)recordInput("keys",{choice:keyMask()});});
 // Browser focus changes are not a request to pause the match.
-window.addEventListener("blur",()=>{pressed.clear();});
-document.addEventListener("visibilitychange",()=>{if(document.hidden){pressed.clear();tapGesture.cancel();pointerId=null;pointerX=null;pointerY=null;}});
+window.addEventListener("blur",()=>{if(recordingMode&&state==="playing"&&keyMask())recordInput("keys",{choice:0});pressed.clear();});
+document.addEventListener("visibilitychange",()=>{if(document.hidden){releaseRecordedControls();tapGesture.cancel();}});
 function dragPosition(e){
  const r=canvas.getBoundingClientRect();
  if(!r.width||!r.height)return null;
+ if(recordingMode){const scale=Math.min(r.width/W,r.height/H),x=(e.clientX-r.left-(r.width-W*scale)/2)/scale,y=(e.clientY-r.top-(r.height-H*scale)/2)/scale;return {x:Math.max(27,Math.min(W-27,x)),y:canPlayerRise()?Math.max(76,Math.min(H-52,y)):H-52};}
  return {
   x:Math.max(27,Math.min(W-27,(e.clientX-r.left)/r.width*W)),
   y:canPlayerRise()?Math.max(76,Math.min(H-52,(e.clientY-r.top)/r.height*H)):H-52
@@ -1478,6 +1522,7 @@ function dragPosition(e){
 function setFlightTarget(e){
  const target=dragPosition(e);if(!target)return;
  pointerX=target.x;pointerY=target.y;
+ if(recordingMode){const x=pointerX/W,y=pointerY/H;pointerX=x*W;pointerY=y*H;recordInput("move",{x,y});}
 }
 const tapGesture=window.BeaguArcadeGestures.create();
 canvas.addEventListener("pointerdown",e=>{
@@ -1491,7 +1536,7 @@ canvas.addEventListener("pointerdown",e=>{
 canvas.addEventListener("pointermove",e=>{
  if(pointerId===e.pointerId&&state==="playing"){e.preventDefault();tapGesture.move(e);setFlightTarget(e);}
 });
-const endDrag=e=>{if(pointerId===e.pointerId){pointerId=null;pointerX=null;pointerY=null;}};
+const endDrag=e=>{if(pointerId===e.pointerId){if(state==="playing")recordInput("release");pointerId=null;pointerX=null;pointerY=null;}};
 canvas.addEventListener("pointerup",e=>{if(pointerId===e.pointerId&&tapGesture.up(e)&&state==="playing")activateSpecial();endDrag(e);});
 canvas.addEventListener("pointercancel",e=>{if(pointerId===e.pointerId)tapGesture.cancel();endDrag(e);});
 canvas.addEventListener("lostpointercapture",e=>{if(pointerId===e.pointerId)tapGesture.cancel();endDrag(e);});
@@ -1523,6 +1568,24 @@ window.addEventListener("resize",postHeight);
 window.addEventListener("load",postHeight);
 window.addEventListener("beagu:challenge-access-granted",postHeight);
 window.addEventListener("beagu:challenge-access-revoked",postHeight);
+function applyReplayInput(e){
+ if(e.action==="end"){if(state!=="over")throw Error("not_finished");return;}
+ if(e.action==="growth"){if(state!=="between"||!applyGrowth(e.choice))throw Error("invalid_growth");recordInput("growth",{choice:e.choice});state="playing";updateLabels();closeMessage();return;}
+ if(state!=="playing")throw Error("invalid_state");
+ if(e.action==="move"){pointerId=1;pointerX=Math.max(27,Math.min(W-27,e.x*W));pointerY=canPlayerRise()?Math.max(76,Math.min(H-52,e.y*H)):H-52;recordInput("move",{x:e.x,y:e.y});}
+ else if(e.action==="release"){pointerId=null;pointerX=null;pointerY=null;recordInput("release");}
+ else if(e.action==="keys"){setKeyMask(e.choice);recordInput("keys",{choice:e.choice});}
+ else if(e.action==="special"){if(!activateSpecial())throw Error("invalid_special");}
+ else if(e.action==="collect"){if(!leave.collect(e.choice))throw Error("invalid_collect");recordInput("collect",{choice:e.choice});syncLeave();}
+ else if(e.action==="leave"){const b=leave.use(e.choice,clock,life,maxLife,bosses.tier.leave);if(!b)throw Error("invalid_leave");recordInput("leave",{choice:e.choice});life=b.hp;burst(player.x,player.y,"#ffdf80",22);updateLabels();}
+ else if(e.action==="cooperate"){if(!allies.canCooperate(clock))throw Error("invalid_cooperate");cooperate();}
+ else if(e.action==="stop"){if(clock<1)throw Error("invalid_stop");recordInput("stop");finish(false);}
+ else throw Error("invalid_action");
+}
+if(recordingMode){
+ $("run4-trace-panel").hidden=false;
+ $("run4-trace-download").addEventListener("click",()=>{if(!recordEnvelope)return;const u=URL.createObjectURL(new Blob([JSON.stringify(recordEnvelope)],{type:"application/json"}));const a=document.createElement("a");a.href=u;a.download="run4-personal-replay.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),30000);});
+}
 resize();intro();requestAnimationFrame(tick);postHeight();
 })();
 </script>

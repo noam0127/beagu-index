@@ -243,16 +243,53 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   const trace=[{tick:0,action:'move',x:.5,y:.85},{tick:120,action:'move',x:.25,y:.7},{tick:240,action:'release'},{tick:300,action:'stop'}];
   async function reproduce(viewport,events=trace){
    await page.setViewportSize(viewport);
-   await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id+'&replay_fixture=1');
+   await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id+'&replay_fixture=1&recording=1');
    await page.locator('#teacher-run-protected').waitFor({state:'visible'});
    await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).waitFor();
    return replayInPage(page,{seed:42,difficulty:'normal',replay:events,elapsed:6});
   }
   const replayA=await reproduce({width:390,height:700});
   const replayB=await reproduce({width:1440,height:900});
-  assert.deepEqual(replayA,replayB);assert.equal(replayA.victory,false);assert.ok(replayA.survivalSeconds>=4&&replayA.survivalSeconds<=5);
+  assert.deepEqual(replayA,replayB);assert.equal(replayA.victory,false);assert.equal(replayA.survivalSeconds,5);
   await assert.rejects(()=>reproduce({width:390,height:700},[{tick:0,action:'leave',choice:20},{tick:300,action:'stop'}]),/invalid_leave/);
   await assert.rejects(()=>reproduce({width:390,height:700},[{tick:0,action:'move',x:.5,y:.5,score:999999},{tick:300,action:'stop'}]),/invalid_replay/);
+  // Real UI pointer/keyboard capture in the same deterministic practice mode.
+  await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id+'&replay_fixture=1&recording=1');
+  await page.locator('#teacher-run-protected').waitFor({state:'visible'});
+  await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).waitFor();
+  await page.evaluate(()=>window.__trustedRun4Replay.startSeed(42));
+  const game=page.locator('#game'),rect=await game.boundingBox();
+  await page.mouse.move(rect.x+rect.width*.5,rect.y+rect.height*.8);
+  await page.mouse.down();await page.evaluate(()=>window.__trustedRun4Replay.stepTo(60));await page.mouse.up();
+  await game.focus();await page.keyboard.down('ArrowRight');await page.evaluate(()=>window.__trustedRun4Replay.stepTo(120));await page.keyboard.up('ArrowRight');
+  await page.locator('#pause').click();await page.getByRole('button',{name:'↩ 처음으로',exact:true}).click();
+  await page.waitForFunction(()=>!!window.__trustedRun4Replay.envelope());
+  const captured=await page.evaluate(()=>window.__trustedRun4Replay.envelope());
+  assert.ok(captured.events.some(e=>e.action==='move')&&captured.events.some(e=>e.action==='keys')&&captured.events.at(-1).action==='stop');
+  assert.deepEqual(await reproduce({width:1440,height:900},captured.events),captured.result);
+  // Full legal-input EASY recording through all seven growth prompts, no HP resets.
+  selectedSchool={...selectedSchool,difficulty:'easy'};
+  await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id+'&replay_fixture=1&recording=1');
+  await page.locator('#teacher-run-protected').waitFor({state:'visible'});
+  await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).waitFor();
+  await page.evaluate(()=>window.__trustedRun4Replay.startSeed(20261125));
+  let full;
+  for(let i=0;i<9;i++){
+   full=await page.evaluate(()=>window.__trustedRun4Replay.autoAdvance());
+   if(full.state==='over')break;
+   assert.equal(full.state,'between');
+   const buttons=page.locator('#choices button'),labels=await buttons.allTextContents();
+   const preferred=['자기관리','생활지도','위기 대응','동료 관계','교육자의 신념','학급운영','수업 전문성','업무 능력','교직 경험','전문적 학습공동체'].map(label=>labels.findIndex(x=>x.includes(label))).find(i=>i>=0);
+   await buttons.nth(preferred??0).click();
+  }
+  const fullCapture=await page.evaluate(()=>window.__trustedRun4Replay.envelope());
+  assert.equal(full.clock,190,JSON.stringify(full));assert.equal(fullCapture.result.victory,true);assert.equal(fullCapture.events.at(-1).tick,11400);
+  await page.setViewportSize({width:390,height:700});
+  await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id+'&replay_fixture=1&recording=1');
+  await page.locator('#teacher-run-protected').waitFor({state:'visible'});await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).waitFor();
+  const fullReplay=await replayInPage(page,{seed:fullCapture.seed,difficulty:'easy',replay:fullCapture.events,elapsed:190});
+  assert.deepEqual(fullReplay,fullCapture.result);
+  console.log('PASS RUN4_FULL_REPLAY '+JSON.stringify({events:fullCapture.events.length,result:fullReplay}));
   await page.setViewportSize({width,height:900});
   console.log('PASS real game replay: deterministic five-second partial match, cross viewport, premature leave and forged fields denied '+JSON.stringify(replayA));
 
