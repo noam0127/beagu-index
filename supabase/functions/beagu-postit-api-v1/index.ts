@@ -157,8 +157,12 @@ async function enrich(items:any[],type:"post"|"comment",self:string|null){
  const compareIds=type==="post"?items.flatMap(x=>
    typeof x.comparison_selection==="string"?x.comparison_selection.split(",").map((z:string)=>z.split(":")[0]):[]):[];
  const schools=type==="post"?await schoolInfo([...items.map(x=>x.school_id).filter(Boolean),...compareIds]):{};
+ const {data:aliases,error:aliasError}=await db.rpc("beagu_account_postit_current_aliases_v1",{p_items:items.map(x=>({item_id:x.id,author_uid:x.author_uid,created_at:x.created_at}))});
+ // Fail closed: old content and unavailable alias data remain anonymous.
+ const names=new Map<string,string>();
+ if(!aliasError&&Array.isArray(aliases))for(const a of aliases)if(typeof a.item_id==="string"&&typeof a.nickname==="string"&&/^[Il|ǀ❘ı∣│]{10}$/.test(a.nickname))names.set(a.item_id,a.nickname);
  return items.map(x=>({
-  id:x.id,body:x.body,created_at:x.created_at,
+  id:x.id,body:x.body,created_at:x.created_at,nickname:names.get(x.id)||"익명",
   ...(type==="post"?{
    subject_type:x.subject_type||"school",
    school:schools[x.school_id]||null,
