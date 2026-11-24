@@ -17,9 +17,16 @@ TOKEN="synthetic-token"
 OWNER="fixture_owner"
 require=v.require
 def session_path(location):
-    require(isinstance(location,str) and len(location)<=8192,"stream_session_invalid")
-    u=urlsplit(location);pairs=parse_qsl(u.query,keep_blank_values=True);q=dict(pairs)
-    require(u.scheme=="https" and u.netloc==d.HOST and u.path==d.UPLOAD and not u.fragment and len(pairs)==len(q) and set(q)<=set(("uploadType","upload_id","upload_protocol")) and q.get("uploadType","resumable")=="resumable" and q.get("upload_protocol","resumable")=="resumable" and re.fullmatch(r"[A-Za-z0-9_.~-]{1,4096}",q.get("upload_id","")),"stream_session_invalid")
+    require(isinstance(location,str) and 0<len(location)<=8192 and not any(ord(c)<=32 or ord(c)>=127 for c in location),"stream_session_format_invalid")
+    try:u=urlsplit(location);pairs=parse_qsl(u.query,keep_blank_values=True,strict_parsing=True,max_num_fields=12)
+    except ValueError:raise ValueError("stream_session_format_invalid") from None
+    require(u.scheme=="https" and u.netloc==d.HOST and u.path==d.UPLOAD and not u.fragment,"stream_session_origin_invalid")
+    q=dict(pairs)
+    require(len(pairs)==len(q) and set(q)<=set(("uploadType","upload_id","upload_protocol","fields")),"stream_session_query_invalid")
+    require(q.get("uploadType","resumable")=="resumable" and q.get("upload_protocol","resumable")=="resumable" and q.get("fields",d.FIELDS)==d.FIELDS,"stream_session_parameter_invalid")
+    # The opaque ID may be URL encoded. Never reconstruct it, follow redirects,
+    # or accept userinfo, arbitrary origin/path, duplicate or credential fields.
+    require(re.fullmatch(r"[A-Za-z0-9_.~+/=-]{1,4096}",q.get("upload_id","")),"stream_session_id_invalid")
     return u.path+"?"+u.query
 def transfer(source_root,dest_root,pin,transport):
     require(getattr(transport,"scope",None)==SCOPE,"stream_live_transport_disabled")
@@ -42,7 +49,7 @@ def _transfer(source_root,dest_root,pin,transport,folder,owner,token):
         f.seek(0)
         adapter.verify_folder(token,write=True)
         meta=v.canonical({"name":digest+".stream","parents":[folder],"mimeType":d.MIME})
-        code,headers,_=adapter.request("POST",d.UPLOAD+"?"+urlencode({"uploadType":"resumable","fields":d.FIELDS}),token,meta,{"Content-Type":"application/json; charset=UTF-8","X-Upload-Content-Type":d.MIME,"X-Upload-Content-Length":str(total)})
+        code,headers,_=adapter.request("POST",d.UPLOAD+"?"+urlencode({"uploadType":"resumable"}),token,meta,{"Content-Type":"application/json; charset=UTF-8","X-Upload-Content-Type":d.MIME,"X-Upload-Content-Length":str(total)})
         require(code==200,"stream_create_uncertain")
         path=session_path(headers.get("Location") or headers.get("location"))
         offset=0;sent=hashlib.sha256()
