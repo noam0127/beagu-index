@@ -373,23 +373,6 @@
     },
     {
       "order": 10,
-      "version": "v1.11.0",
-      "name": "나의 계정",
-      "scope": "가계정·비밀번호·본인확인",
-      "status": "PENDING",
-      "branch": null,
-      "pr": null,
-      "commit": null,
-      "tests": [],
-      "changed_files": [],
-      "dependencies": [],
-      "admin_registration": "PENDING",
-      "production": "NOT_APPROVED",
-      "deployment_date": null,
-      "rollback_sha": null
-    },
-    {
-      "order": 11,
       "version": "v1.11.1",
       "name": "가벼운 터치",
       "scope": "운영 v1.10.0 기반 검색 인증 경합 방지, 공통 UI, 학교체험, 공개 학교 관심도, 지역별 카드",
@@ -406,7 +389,7 @@
       ]
     },
     {
-      "order": 12,
+      "order": 11,
       "version": "v1.11.2",
       "name": "함께하기",
       "scope": "챌린지 화면, 공유 문구, 인증 이미지, 유효 추천, 기존 권한 유지",
@@ -423,7 +406,7 @@
       ]
     },
     {
-      "order": 13,
+      "order": 12,
       "version": "v1.11.4",
       "name": "물길",
       "scope": "2026 재집계·Q45 호환·관리자 실행 진단",
@@ -452,6 +435,33 @@
         "beagu-2026-review-admin",
         "owner Apps Script installation"
       ]
+    },
+    {
+      "order": 13,
+      "version": "v1.11.0",
+      "name": "나의 계정",
+      "scope": "가계정·비밀번호·본인확인",
+      "status": "CURRENT_BASE_INTEGRATION_CI_PENDING",
+      "branch": "integration/v1.11.0-account-current-base-draft",
+      "pr": 292,
+      "commit": null,
+      "tests": [
+        {
+          "name": "Original account candidate",
+          "sha": "4d17fe64973175ea04cdfbb30e216dd18193c978",
+          "result": "PASS_30_OF_30"
+        },
+        {
+          "name": "Current base integrated candidate",
+          "result": "PENDING"
+        }
+      ],
+      "changed_files": [],
+      "dependencies": [],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
     },
     {
       "order": 14,

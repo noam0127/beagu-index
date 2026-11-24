@@ -17,6 +17,6 @@ const interest=read('js/beagu-school-interest-v1.js');assert.match(interest,/sli
 {const v=JSON.parse(read('release-info.json')).version;assert.equal(v,JSON.parse(read('release-candidate.json')).version);const order=JSON.parse(read('development-roadmap.json')).versions.map(x=>x.version);assert.ok(order.includes('v1.11.2')&&order.indexOf(v)>=order.indexOf('v1.11.2'));}assert.equal(JSON.parse(read('release-info.json')).environment,'candidate');assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);
 for(const p of ['js/level-search.js','js/beagu-home-schools-v1.js','js/beagu-school-interest-v1.js'])cp.execFileSync(process.execPath,['--check',p]);
 const old='5f19ddf28a2f24a98fb03900739147a04a547cbe';
-const strip=s=>s.replace(/<nav\b[^>]*class="[^"]*beagu-unified-nav[^"]*"[^>]*>[\s\S]*?<\/nav>/,'').replace(/<link rel="stylesheet" href="styles\/beagu-light-touch-v1111\.css\?v=1111">\n/,'');
+const strip=s=>s.replace(/(beagu-participation-auth-v2\.(?:js|css)\?v=)[^"']+/g,'$1CACHE').replace(/<nav\b[^>]*class="[^"]*beagu-unified-nav[^"]*"[^>]*>[\s\S]*?<\/nav>/,'').replace(/<link rel="stylesheet" href="styles\/beagu-light-touch-v1111\.css\?v=1111">\n/,'');
 for(const p of ['teacher-volleyball.html','teacher-run.html'])assert.equal(strip(read(p)),strip(cp.execFileSync('git',['show',old+':'+p],{encoding:'utf8',maxBuffer:20*1024*1024})),p+' gameplay unchanged');
 console.log('PASS v1.11.1 static source, menu, release isolation and game preservation');

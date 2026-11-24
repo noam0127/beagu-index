@@ -41,6 +41,12 @@ async function routes(page,tracker){
   const respond=(status,data)=>route.fulfill({status,headers,body:JSON.stringify(data)});
   const token=req.headers()['x-beagu-session']||'';
   const tier=token===token1?(tracker.sessionPromoted?2:1):token===token2&&tracker.allowLv2?2:0;
+  if(name==='beagu-account-v1'){
+   if(body.action==='password_login'&&body.account_id===code&&body.password==='fixture-pass'){tracker.owner=true;return respond(200,{token:token1,account_id:code,level:tracker.sessionPromoted?2:1});}
+   if(body.action==='status'&&token===token1&&tracker.owner)return respond(200,{account_id:code,level:tier,lv2_active:tier===2});
+   if(body.action==='logout'&&token===token1&&tracker.owner){tracker.owner=false;tracker.sessionPromoted=false;return respond(200,{ok:true});}
+   return respond(401,{error:'AUTH_REQUIRED'});
+  }
   if(name==='beagu-level-api'){
    if(body.action==='login'){
     if(body.code===common)return respond(200,{token:token1,level:1,provisional:false});
@@ -60,8 +66,8 @@ async function routes(page,tracker){
   }
   if(name==='beagu-referral-link-v1'){
    if(!tier)return respond(401,{error:'AUTH_REQUIRED'});
-   assert.equal(body.identityCode,code);tracker.referralRequests++;if(tracker.promoted&&tracker.count>=1&&token===token1)tracker.sessionPromoted=true;
-   return respond(200,{link:fullLink,shortLink:publicLink,validReferrals:tracker.count,level:tracker.promoted?2:1,provisional:tracker.promoted});
+   assert.equal(body.identityCode,code);tracker.referralRequests++;if(tracker.owner&&tracker.promoted&&tracker.count>=1&&token===token1)tracker.sessionPromoted=true;
+   return respond(200,{link:fullLink,shortLink:publicLink,validReferrals:tracker.count,level:tracker.owner&&tracker.promoted?2:1,provisional:tracker.owner&&tracker.promoted});
   }
   return route.abort('blockedbyclient');
  });
@@ -133,9 +139,18 @@ async function search(page,level){
   await page.screenshot({path:path.join(out,cfg.name+'-challenge-lv1.png'),fullPage:true});
   tracker.count=1;tracker.promoted=false;
   await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
-  await waitText(page,'#togetherReferralState','권한 활성화 확인 중');
+  await waitText(page,'#togetherReferralState','추천 완료 · 계정 및 권한 확인 중');
   assert.equal(await page.locator('#certificate').getAttribute('data-level'),'1');
   tracker.promoted=true;tracker.allowLv2=true;
+  await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await waitText(page,'#togetherReferralState','추천 완료 · 계정 및 권한 확인 중');
+  assert.equal(await page.locator('#certificate').getAttribute('data-level'),'1','Referral alone must not promote a new member');
+  await page.locator('#beaguAccountHeader').click();
+  await page.locator('#beaguEntryId').fill(code);
+  await page.locator('#beaguEntryPassword').fill('fixture-pass');
+  await page.locator('#beaguEntrySubmit').click();
+  await page.locator('#beaguParticipationOverlay').waitFor({state:'hidden',timeout:15000});
+  await page.waitForFunction(()=>document.querySelector('#challengeAccountStatus')?.dataset.accountState==='verified');
   await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
   await waitText(page,'#togetherReferralState','Lv.2 인증 완료');
   await waitText(page,'#certificateLevelBanner','Lv.2 챌린지 달성');
@@ -159,8 +174,7 @@ async function search(page,level){
   await waitText(page,'#compareCounter','1 / 5');
   await page.locator('#compareResults').waitFor({state:'visible'});
   assert.ok((await page.locator('#compareSelections').innerText()).includes('검증초등학교'));
-  await page.locator('#beaguLevelState').click();
-  await page.locator('#beaguParticipationLogout').click();
+  await page.locator('#beaguAccountHeader').click();await page.locator('#beaguEntryLogout').click();
   await page.waitForFunction(()=>document.querySelector('#beaguLevelState')?.dataset.level==='0');
   await search(page,0);
   await goto(page,'challenge.html');

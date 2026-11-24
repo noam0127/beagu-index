@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "status": "INCOMPLETE_INTEGRATION_DO_NOT_DEPLOY",
+  "status": "INTEGRATED_CI_PENDING_DO_NOT_DEPLOY",
   "live_base": "76d2c01878d8242e62dd87e30cfb707ab431d3ee",
   "verified_account_source": "4d17fe64973175ea04cdfbb30e216dd18193c978",
   "exact_unshared_files": [
@@ -201,14 +201,7 @@
       "blob_sha": "27cd7a22315d485e779813d6bdfeefb61ac6bda3"
     }
   ],
-  "pending_paths": [
-    "release-candidate.json",
-    "release-info.json",
-    ".github/workflows/account-anonymous-integration.yml",
-    ".github/workflows/account-local-http-integration.yml",
-    ".github/workflows/account-nickname-100k.yml",
-    ".github/workflows/account-supabase-runtime.yml"
-  ],
+  "pending_paths": [],
   "production_execution_enabled": false,
   "admin_registration_allowed": false,
   "merged_paths": [
@@ -230,11 +223,17 @@
     "scripts/test-challenge-referral-premium.cjs",
     "tests/challenge-certificate-privacy-v1.mjs",
     "tests/milestone-browser.cjs",
-    ".github/workflows/clean-release-validation.yml"
+    ".github/workflows/clean-release-validation.yml",
+    ".github/workflows/account-anonymous-integration.yml",
+    ".github/workflows/account-local-http-integration.yml",
+    ".github/workflows/account-nickname-100k.yml",
+    ".github/workflows/account-supabase-runtime.yml",
+    "release-candidate.json",
+    "release-info.json"
   ],
   "additional_regression_required": [
-    "v1111 menu and unchanged gameplay checks must allow account cache bust only",
-    "v1112 offline browser must model dual mission and legacy verification",
-    "release metadata and CI trigger integration"
+    "Exact candidate official CI",
+    "Actual server backup and migration approval",
+    "Production provider/API compatibility and cutover"
   ]
 }
