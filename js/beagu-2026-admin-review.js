@@ -76,15 +76,28 @@
    put("adminWaterwayAggregated",countText(agg.rows));
    put("adminWaterwayBasis",countText(basisA===null||basisB===null?null:basisA+basisB));
    put("adminWaterwayApproved",countText(basisB));
-   put("adminWaterwaySourceNote",d?"최근 서버 수신 본조사 "+countText(source.last_observed_official_rows)+"건 · "+formatDate(source.last_observed_at)+(source.live_raw_status==="SOURCE_NOT_CONNECTED"?" · 원본 직접연결 미확인":""):"원본 연결 확인 불가");
+   put("adminWaterwaySourceNote",d?"최근 서버 수신 본조사 "+countText(source.last_observed_official_rows)+"건 · "+formatDate(source.last_observed_at)+(source.live_raw_status==="SOURCE_NOT_CONNECTED"?" · 원본 직접연결 미확인":" · 원본 관측 "+formatDate(source.raw_observed_at)):"원본 연결 확인 불가");
    const syncLabels={NO_SNAPSHOT:"전송 기록 없음",NEWER_COUNT_DIFFERS:"최근 응답 수신 기록과 집계 기준 수치가 다름",SNAPSHOT_STALE:"마지막 집계 26시간 초과",SNAPSHOT_RECORDED:"집계 기록 확인"};
    put("adminWaterwaySyncNote",d?(syncLabels[sync.status]||"전송 상태 미확인")+" · "+formatDate(sync.snapshot_at):"전송 기록 확인 불가");
    put("adminWaterwayMatchNote",d?"미매칭 "+countText(sync.unmatched_rows)+"건 · 사전조사 "+countText(sync.prelaunch_rows)+"건 · 날짜 확인 "+countText(sync.undated_rows)+"건":"매칭 기록 확인 불가");
-   put("adminWaterwayValidityNote",d?"검수 대기 "+countText(agg.individual_review_rows)+"건 · 개별 응답 검수 서버 수집 미연결":"응답 검수 기록 확인 불가");
+   put("adminWaterwayValidityNote",d?"기초 검수 표시 응답 "+countText(agg.basic_review_rows)+"건 · "+formatDate(agg.basic_review_at)+" · 전체 유효성 확정 아님":"응답 검수 기록 확인 불가");
    put("adminWaterwayAggregateNote",d?countText(agg.schools)+"개교 · "+formatDate(agg.snapshot_at)+(agg.same_snapshot===true?" · 동기화 시점 일치":" · 동기화 시점 일치 미확인"):"집계 기록 확인 불가");
    put("adminWaterwayBasisNote",preValid?"증빙 미등록 "+countText(getReason("BASIS_MISSING"))+"개교 · 기술 확인 "+countText(getReason("TECHNICAL_REVIEW_REQUIRED"))+"개교":"공개 사전검사 확인 불가");
    put("adminWaterwayStatus",d?"진단 시각 "+formatDate(d.checked_at)+" · 각 단계의 단위와 기준 시각을 구분합니다.":"공개 흐름 상세 진단을 가져오지 못했습니다. 관리자 인증 및 서버 연결을 확인하세요.");
    put("adminWaterwayFailure",d?"마지막 실패 시각: "+(sync.last_failure_at?formatDate(sync.last_failure_at):"미확인")+" · 원인: "+(typeof sync.last_failure_reason==="string"&&sync.last_failure_reason?sync.last_failure_reason:"Apps Script 실행 기록 미연결 (실패 없음으로 해석하지 않음)"):"마지막 실패 시각 및 원인: 미확인");
+   const stageList=$("adminWaterwayRunStages");
+   if(stageList){
+     stageList.replaceChildren();
+     const names={SOURCE:"원본·학교정보",QUESTION_RESULTS:"문항 집계·전송",CORE_AND_QA:"핵심 집계·검수 전송",SCHOOL_CULTURE:"학교문화 집계"};
+     const states={SUCCESS:"성공",ERROR:"실패",SKIPPED:"미실행"};
+     const reasons={NONE:"",AUTH_CONFIG:"인증 설정",HTTP_401:"인증 실패",HTTP_403:"접근 제한",HTTP_409:"스냅샷 충돌",HTTP_429:"요청 제한",HTTP_5XX:"서버 오류",HTTP_OTHER:"HTTP 오류",SOURCE_OR_SCHEMA:"원본·문항·학교정보 확인",LOCK_BUSY:"다른 집계 실행 중",PARTIAL_SYNC:"일부 전송 실패",STAGE_ERROR:"단계 오류",NOT_INSTALLED:"미실행"};
+     if(!Array.isArray(d?.run?.stages))stageList.append(build("li","","실행 기록 미수신"));
+     else for(const s of d.run.stages){
+       if(!Object.hasOwn(names,s.stage)||!Object.hasOwn(states,s.status)||!Object.hasOwn(reasons,s.reason))continue;
+       stageList.append(build("li","",names[s.stage]+" · "+states[s.status]+(reasons[s.reason]?" · "+reasons[s.reason]:"")+" · "+countText(s.duration_ms)+"ms"));
+     }
+   }
+   put("adminWaterwayRunAt",d?.run?.finished_at?"최근 실행 종료 "+formatDate(d.run.finished_at):"최근 실행 기록 미수신");
    const list=$("adminWaterwayReasons");
    if(list){
      list.replaceChildren();
