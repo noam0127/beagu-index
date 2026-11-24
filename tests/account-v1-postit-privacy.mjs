@@ -25,6 +25,7 @@ const client={from(table){
 },rpc:async(name,p)=>{
  if(name==='beagu_account_level_session_allowed_v1')return {data:p.p_token_sha!==hash(tokens.revoked),error:null};
  if(name==='beagu_has_earned_challenge_visitor')return {data:true,error:null};
+ if(name==='beagu_account_session_status_v1')return {data:p.p_token_sha===hash(tokens.member)?{level:2,lv2_active:true}:null,error:null};
  if(name==='beagu_account_postit_writer_v1')return {data:p.p_token_sha===hash(tokens.member)?actor:null,error:null};
  if(name==='beagu_account_postit_current_aliases_v1')return {data:[{item_id:id,nickname:nick,author_uid:actor,visitor_id:visitor,account_id:'private-account'}],error:null};
  if(name==='beagu_postit_create_post_v2'){mutations.push({name,p});return {data:unexpectedError?{error:privateMarker}:{id,replayed:false},error:null};}
@@ -41,11 +42,11 @@ try{
  assert.notEqual(src,raw);const file=join(temp,'postit.mts');await writeFile(file,src);await import(pathToFileURL(file).href);
  const send=async(action,token,status,body)=>{const r=await handler(new Request('https://invalid.example/postit?action='+action,{method:body?'POST':'GET',headers:{Origin:'https://baeguindex.com','Content-Type':'application/json','X-Beagu-Level-Session':token||'',Authorization:'Bearer forged-token'},...(body?{body:JSON.stringify(body)}:{})}));assert.equal(r.status,status);assert.equal(r.headers.get('cache-control'),'no-store');const out=await r.json(),serialized=JSON.stringify(out);for(const v of [visitor,actor,other,'private-account',privateMarker])assert.ok(!serialized.includes(v));assert.doesNotMatch(serialized,/author_uid|visitor_id|account_id|recovery_hash/);return out;};
  await send('posts','',403);await send('posts',tokens.lv1,403);
- assert.deepEqual(await send('writer_status',tokens.legacy,200),{linked:false});
+ assert.deepEqual(await send('writer_status',tokens.legacy,200),{linked:false,readable:false});
  await send('writer_status',tokens.revoked,403);await send('posts',tokens.revoked,403);
- assert.deepEqual(await send('writer_status',tokens.member,200),{linked:true});
- const list=await send('posts',tokens.legacy,200);assert.equal(list.posts[0].nickname,nick);assert.equal(list.posts[1].nickname,'익명');assert.equal(list.posts[0].mine,false);
- const own=await send('posts',tokens.member,200);assert.equal(own.posts[0].mine,true);assert.equal(own.posts[1].mine,false);
+ assert.deepEqual(await send('writer_status',tokens.member,200),{linked:true,readable:true});
+ for(const action of ['posts','comments','schools','school_info'])assert.equal((await send(action,tokens.legacy,403)).error,'ACCOUNT_REQUIRED');
+ const own=await send('posts',tokens.member,200);assert.equal(own.posts[0].nickname,nick);assert.equal(own.posts[1].nickname,'익명');assert.equal(own.posts[0].mine,true);assert.equal(own.posts[1].mine,false);
  const create={action:'create_post',subject_type:'game',game_slug:'teacher-volleyball',text:'fixture',author_uid:other,visitor_id:visitor,level:3};
  await send('create_post',tokens.legacy,403,create);await send('create_post',tokens.revoked,403,create);assert.equal(mutations.length,0);
  await send('create_post',tokens.member,201,create);assert.equal(mutations.at(-1).p.p_actor,actor);

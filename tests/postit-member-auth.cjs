@@ -6,7 +6,7 @@ assert.match(sql,/a\.account_id=s\.account_id AND a\.visitor_id=s\.visitor_id/);
 assert.match(sql,/beagu_account_visitor_level_v1\(s\.visitor_id\)=2/);assert.match(sql,/coalesce\(actor,gen_random_uuid\(\)\)/);
 assert.match(api,/db\.rpc\("beagu_account_postit_writer_v1",\{p_token_sha:viewer\.hash\}\)/);
 assert.match(api,/verifiedMember\(req,viewer\)/);assert.match(api,/if\(!user\)return fail\(req,"WRITER_IDENTITY_REQUIRED",403\)/);
-assert.match(api,/if\(action==="writer_status"\)return respond\(req,\{linked:Boolean\(member\)\}\)/);
+assert.match(api,/if\(action==="writer_status"\)return respond\(req,\{linked:Boolean\(member\),readable\}\)/);assert.match(api,/if\(!readable\)return fail\(req,"ACCOUNT_REQUIRED",403\)/);
 assert.match(api,/beagu_has_earned_challenge_visitor/);assert.doesNotMatch(api,/db\.auth\.getUser|link_member|beagu_postit_bind_verified_member/);
 assert.match(js,/function canWrite\(\)\{return canRead\(\) && state\.accountLinked===true\}/);
 assert.match(js,/beagu:postit-account-status/);assert.match(account,/action=writer_status/);assert.match(account,/X-Beagu-Level-Session/);
@@ -14,4 +14,4 @@ assert.doesNotMatch(account,/signUp\(|signInWithOAuth|accessToken|Authorization/
 assert.doesNotMatch(html,/postitAccountEmail|postitSmsConsent|postitAccountGoogle/);
 assert.match(html,/id="postitAccountLogin" href="account\.html"/);
 assert.match(api,/if\(!viewer\)return fail\(req,"LEVEL_REQUIRED",403\)/);
-console.log('PASS anonymous earned Lv2 account, session-bound private author, legacy code read-only and no social entry');
+console.log('PASS anonymous earned Lv2 account, session-bound private author, legacy code cannot read Post-it and no social entry');

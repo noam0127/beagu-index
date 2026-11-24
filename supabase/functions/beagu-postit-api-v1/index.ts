@@ -204,8 +204,12 @@ Deno.serve(async(req:Request)=>{
    // All Post-it reads (including search, comments, and school previews) are Lv2-only.
    const viewer=await identity(req,2);
    if(!viewer)return fail(req,"LEVEL_REQUIRED",403);
-   const member=await verifiedMember(req,viewer);
-   if(action==="writer_status")return respond(req,{linked:Boolean(member)});
+   const {data:accountStatus,error:accountError}=await db.rpc("beagu_account_session_status_v1",{p_token_sha:viewer.hash});
+   if(accountError)return fail(req,"TEMPORARY_ERROR",503);
+   const readable=accountStatus?.level===2&&accountStatus?.lv2_active===true;
+   const member=readable?await verifiedMember(req,viewer):null;
+   if(action==="writer_status")return respond(req,{linked:Boolean(member),readable});
+   if(!readable)return fail(req,"ACCOUNT_REQUIRED",403);
    if(action==="school_info"){
     const ids=(url.searchParams.get("school_ids")||"").split(",").filter(Boolean);
     if(ids.length<1||ids.length>5||ids.some(x=>!SCHOOL_ID.test(x)))

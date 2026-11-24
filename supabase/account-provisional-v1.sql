@@ -111,8 +111,8 @@ $$;
 REVOKE ALL ON FUNCTION beagu_private.beagu_account_visitor_level_v1(uuid) FROM PUBLIC,anon,authenticated;
 
 -- Dual-mission cutover. This snapshot is immutable after installation; only an
--- explicitly approved absolute expiry supplied by the release operator enables
--- the grandfathered read-only exception. No production invocation in CI.
+-- pre-cutover personal identities keep earned Lv2 reading without a signup deadline.
+-- Shared-code sessions remain bounded; no new static Lv2 credentials. No production invocation in CI.
 CREATE TABLE beagu_private.beagu_lv2_transition_v1(
  id integer PRIMARY KEY CHECK(id=1), cutoff timestamptz NOT NULL, expires_at timestamptz,
  CHECK(expires_at IS NULL OR expires_at>cutoff)
@@ -137,7 +137,7 @@ INSERT INTO beagu_private.beagu_lv2_transition_tokens_v1
 CREATE FUNCTION public.beagu_legacy_lv2_read_allowed_v1(p_visitor uuid)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_visitors_v1 v
- CROSS JOIN beagu_private.beagu_lv2_transition_v1 c WHERE v.visitor_id=p_visitor AND c.expires_at>now())
+ WHERE v.visitor_id=p_visitor)
  AND public.beagu_has_earned_challenge_visitor(p_visitor)
 $$;
 REVOKE ALL ON FUNCTION public.beagu_legacy_lv2_read_allowed_v1(uuid) FROM PUBLIC,anon,authenticated;
@@ -155,9 +155,8 @@ BEGIN
  AND s.expires_at>now() AND a.enabled AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)=2)
  THEN RETURN NEW; END IF;
  SELECT expires_at INTO deadline FROM beagu_private.beagu_lv2_transition_v1 WHERE id=1 AND expires_at>now();
- IF NEW.access_level=2 AND deadline IS NOT NULL AND
- ( (NEW.identity_campaign='2026' AND public.beagu_legacy_lv2_read_allowed_v1(NEW.identity_visitor_id))
- OR (NEW.identity_visitor_id IS NULL AND EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_tokens_v1 t WHERE t.token_sha256=NEW.token_sha256)) )
+ IF NEW.access_level=2 AND NEW.identity_campaign='2026' AND public.beagu_legacy_lv2_read_allowed_v1(NEW.identity_visitor_id) THEN RETURN NEW; END IF;
+ IF NEW.access_level=2 AND deadline IS NOT NULL AND NEW.identity_visitor_id IS NULL AND EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_tokens_v1 t WHERE t.token_sha256=NEW.token_sha256)
  THEN NEW.expires_at:=least(NEW.expires_at,deadline); RETURN NEW; END IF;
  NEW.access_level:=1;
  RETURN NEW;
@@ -318,7 +317,7 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT EXISTS(SELECT 1 FROM public.beagu_level_sessions WHERE token_sha256=p_token_sha AND expires_at>now()) AND CASE WHEN EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 WHERE token_sha256=p_token_sha)
  THEN EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 s JOIN public.beagu_level_sessions l USING(token_sha256)
  JOIN beagu_private.beagu_anonymous_accounts_v1 a ON a.account_id=s.account_id AND a.visitor_id=s.visitor_id
- WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now() AND a.enabled AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)>=l.access_level) ELSE EXISTS(SELECT 1 FROM public.beagu_level_sessions l WHERE l.token_sha256=p_token_sha AND (l.access_level=1 OR (l.access_level=2 AND EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_v1 c WHERE c.expires_at>now()) AND ((l.identity_campaign='2026' AND public.beagu_legacy_lv2_read_allowed_v1(l.identity_visitor_id)) OR (l.identity_visitor_id IS NULL AND EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_tokens_v1 t WHERE t.token_sha256=l.token_sha256)))))) END
+ WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now() AND a.enabled AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)>=l.access_level) ELSE EXISTS(SELECT 1 FROM public.beagu_level_sessions l WHERE l.token_sha256=p_token_sha AND (l.access_level=1 OR (l.access_level=2 AND ((l.identity_campaign='2026' AND public.beagu_legacy_lv2_read_allowed_v1(l.identity_visitor_id)) OR (l.identity_visitor_id IS NULL AND EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_v1 c WHERE c.expires_at>now()) AND EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_tokens_v1 t WHERE t.token_sha256=l.token_sha256)))))) END
 $$;
 -- Report-based writing restrictions are separate from survey eligibility and credentials.
 CREATE TABLE beagu_private.beagu_postit_restrictions_v1(
@@ -344,7 +343,7 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT EXISTS(SELECT 1 FROM beagu_private.beagu_postit_restrictions_v1 WHERE author_uid=p_author AND restored_at IS NULL AND expires_at>now())
 $$;
 REVOKE ALL ON FUNCTION beagu_private.beagu_postit_restricted_v1(uuid) FROM PUBLIC,anon,authenticated,service_role;
--- A legacy participation token may read; it must never authorize account writing.
+-- General legacy Lv2 reading is preserved; Post-it reads and writes require an account.
 CREATE FUNCTION public.beagu_account_postit_writer_v1(p_token_sha text)
 RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT a.author_uid FROM beagu_private.beagu_account_sessions_v1 s JOIN public.beagu_level_sessions l USING(token_sha256)

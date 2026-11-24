@@ -11,7 +11,7 @@ const validCompare=x=>{
  const a=x.split(",");
  return a.length>=1&&a.length<=5&&a.every(v=>/^[A-Z0-9]{7}:202[3-6]$/.test(v))&&new Set(a).size===a.length;
 };
-const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false,postAttempt:null,pendingActions:new Set()};
+const state={subject:"",schoolId:"",game:"",compare:"",posts:[],level:0,expanded:new Set(),busy:false,queryTicket:0,listTicket:0,accountLinked:false,accountReadable:false,accountToken:'',postAttempt:null,pendingActions:new Set()};
 function token(){try{return sessionStorage.getItem(key)||""}catch{return ""}}
 async function headers(){
  return {"Content-Type":"application/json","X-Beagu-Level-Session":token()};
@@ -38,7 +38,7 @@ function link(url,label,cls){
 }
 function showMessage(error){$("postitMessage").textContent=error||""}
 function readableError(e){
- const m={LEVEL_REQUIRED:"Lv.2 인증이 필요합니다. 오른쪽 위 레벨 표시를 확인하세요.",
+ const m={ACCOUNT_REQUIRED:"포스트잇 열람과 참여에는 익명 계정 가입 및 로그인이 필요합니다. 기존 Lv.2는 유지됩니다.",LEVEL_REQUIRED:"Lv.2 인증이 필요합니다. 오른쪽 위 레벨 표시를 확인하세요.",
  COMMENT_READ_LEVEL_REQUIRED:"🔒 포스트잇과 댓글은 Lv.2부터 열람할 수 있습니다.",
  WRITER_IDENTITY_REQUIRED:"🔒 정식 계정과 원래 챌린지 기기의 연결을 완료해야 작성할 수 있습니다.",
  ORIGINAL_DEVICE_REQUIRED:"챌린지를 처음 진행한 기기에서 인증해 주세요.",
@@ -89,17 +89,18 @@ async function renderContext(){
  }
  updateComposeAccess();
 }
-function canRead(){return state.level>=2}
+function canRead(){return state.level>=2 && state.accountReadable===true && state.accountToken===token()}
 function canWrite(){return canRead() && state.accountLinked===true}
 function updateComposeAccess(){
  const level=Number($("beaguLevelState")?.dataset.level);
  state.level=Number.isInteger(level)&&level>=0?level:0;
  const allowed=canWrite();
- $("postitAccess").textContent=allowed?"Lv2 · 작성 가능":canRead()?"Lv2 · 읽기 전용":"🔒 Lv2 인증 필요";
+ $("postitAccess").textContent=allowed?"Lv2 · 작성 가능":canRead()?"Lv2 · 읽기 전용":state.level>=2?"Lv2 · 계정 인증 필요":"🔒 Lv2 인증 필요";
  const lockedText=$("postitLocked")?.querySelector("b");
  if(lockedText)lockedText.textContent=canRead()
-  ?"글쓰기 준비 중"
-  :"Lv2부터 포스트잇을 열람할 수 있습니다";
+  ?"현재 글쓰기 권한이 제한되어 있습니다"
+  :state.level>=2?"포스트잇은 익명 계정으로 이용하세요":"Lv2부터 포스트잇을 이용할 수 있습니다";
+ $("postitAccount").hidden=state.level<2||canRead();
  $("postitLocked").hidden=allowed;
  $("postitWriteForm").hidden=!allowed||!state.subject;
  $("postitSubjectPicker").hidden=state.subject!==""||!allowed;
@@ -245,7 +246,7 @@ async function loadPosts(newId=""){
  const host=$("postitThread"),ticket=++state.listTicket;
  if(!canRead()){
   state.posts=[];host.replaceChildren();
-  $("postitListStatus").textContent="Lv.2 전용";
+  $("postitListStatus").textContent=state.level>=2?"익명 계정 인증 필요":"Lv.2 전용";
   return;
  }
  const term=$("postitSearch").value.trim();
@@ -295,7 +296,7 @@ async function loadPosts(newId=""){
 }
 function handleLevel(e){
  const level=e?.detail?.level;
- if(level!==2){state.accountLinked=false;state.pendingActions.clear();}
+ if(level!==2||state.accountToken!==token()){state.accountLinked=false;state.accountReadable=false;state.accountToken="";state.pendingActions.clear();}
  if(Number.isInteger(level))$("beaguLevelState").dataset.level=String(level);
  updateComposeAccess();
  if(!canRead()){
@@ -331,6 +332,9 @@ else setSubject("");
 window.addEventListener("beagu:level-state-updated",handleLevel);
 window.addEventListener("beagu:postit-account-status",event=>{
  state.accountLinked=event?.detail?.linked===true;
+ state.accountReadable=event?.detail?.readable===true;
+ state.accountToken=event?.detail?.token||"";
+ if(!canRead())state.expanded.clear();
  updateComposeAccess();
  void loadPosts();
 });

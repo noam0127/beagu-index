@@ -51,7 +51,7 @@
     const rt=get('challengeMissionReferralState'),at=get('challengeMissionAccountState'),summary=get('challengeMissionSummary');
     if(rt)rt.textContent=referralKnown?(m.referralComplete?'완료 · 1 / 1':'0 / 1'):'확인 중';
     if(at)at.textContent=m.accountComplete?'완료 · 로그인 인증':m.accountState==='checking'?'확인 중':'가입 또는 로그인 필요';
-    if(summary)summary.textContent=m.achieved?'두 미션 완료 · Lv.2 활성화':m.legacy?'기존 Lv.2 · 계정 전환 안내 (기존 열람 권한 유지)':m.referralComplete&&m.accountComplete?'두 미션 완료 · 서버 Lv.2 확인 중':'두 미션의 달성 순서는 자유롭습니다.';
+    if(summary)summary.textContent=m.achieved?'두 미션 완료 · Lv.2 활성화':m.legacy?'기존 Lv.2 달성 · 현재 혜택 유지 (포스트잇 이용 시 계정 필요)':m.referralComplete&&m.accountComplete?'두 미션 완료 · 서버 Lv.2 확인 중':'두 미션의 달성 순서는 자유롭습니다.';
     return m;
   }
   function renderMeter(count,known=true){
@@ -66,12 +66,12 @@
     identityPanel.classList.toggle('is-lv2', premiumVisual);
     identityPanel.dataset.referralState = upgraded||(mission.legacy&&referralKnown&&count>=1) ? 'earned' : 'pending';
     identityTitle.textContent = upgraded ? 'Lv.2 참여코드' :
-      mission.legacy ? '기존 Lv.2 · 계정 전환 안내' : 'Lv.2 참여코드(비활성)';
+      mission.legacy ? '기존 Lv.2 달성 · 혜택 유지' : 'Lv.2 참여코드(비활성)';
     identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' :
       mission.legacy ? '기존 열람 권한' : '승급 대기';
     if(certificateLevelBanner)certificateLevelBanner.textContent = upgraded ? 'Lv.2 챌린지 달성' : mission.legacy ? '기존 Lv.2 참여 인증' : 'Lv.1 챌린지 달성';
     if(certificate)certificate.dataset.level = premiumVisual ? '2' : '1';
-    if(heading)heading.textContent=upgraded?'Lv.2 달성 · 추천 이어가기':'Lv.2로 레벨업하기';
+    if(heading)heading.textContent=upgraded||mission.legacy?'Lv.2 달성 · 추천 이어가기':'Lv.2로 레벨업하기';
     const canCopy=upgraded||(mission.legacy&&referralKnown&&count>=1);
     copyIdentityCode.hidden = !canCopy;
     copyIdentityCode.disabled = !canCopy || !lastIdentity;
