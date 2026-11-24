@@ -4,7 +4,7 @@ const pepper=Deno.env.get("BEAGU_ACCOUNT_PASSWORD_PEPPER_V1")||"";
 const allowed=new Set(["https://baeguindex.com","https://www.baeguindex.com"]);
 const enc=new TextEncoder(),hex=(a:Uint8Array)=>Array.from(a,b=>b.toString(16).padStart(2,"0")).join("");
 const sha=async(s:string)=>hex(new Uint8Array(await crypto.subtle.digest("SHA-256",enc.encode(s))));
-const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, secret=/^[a-f0-9]{64}$/;
+const recoveryCode=/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{13}$/, secret=/^[a-f0-9]{64}$/;
 const code=/^[A-Za-z0-9-]{8,120}$/;
 async function proof(p:string){
  const key=await crypto.subtle.importKey("raw",enc.encode(pepper),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
@@ -31,11 +31,11 @@ Deno.serve(async(req:Request)=>{
  const action=b.action;
  const session=(req.headers.get("X-Beagu-Session")||"").trim();
  const validPassword=typeof b.password==="string"&&b.password.length>=12&&enc.encode(b.password).byteLength<=256;
- const accountOk=typeof b.account_id==="string"&&uuid.test(b.account_id);
- const recoveryOk=typeof b.new_recovery==="string"&&secret.test(b.new_recovery);
+ const accountOk=typeof b.account_id==="string"&&code.test(b.account_id);
+ const recoveryOk=typeof b.new_recovery==="string"&&recoveryCode.test(b.new_recovery);
  if(action==="signup"){
-  if(!validPassword||!accountOk||!recoveryOk||typeof b.code!=="string"||!code.test(b.code)||typeof b.deviceSecret!=="string"||!secret.test(b.deviceSecret))return send(400,{error:"INVALID_REQUEST"});
-  const {data,error}=await db.rpc("beagu_account_signup_v1",{p_code:b.code,p_device_hash:await sha(b.deviceSecret),p_password_proof:await proof(b.password),p_account:b.account_id,p_recovery_hash:await recoveryProof(b.new_recovery)});
+  if(!validPassword||!accountOk||b.account_id!==b.code||!recoveryOk||typeof b.code!=="string"||!code.test(b.code)||typeof b.deviceSecret!=="string"||!secret.test(b.deviceSecret))return send(400,{error:"INVALID_REQUEST"});
+  const {data,error}=await db.rpc("beagu_account_signup_v1",{p_code:b.code,p_device_hash:await sha(b.deviceSecret),p_password_proof:await proof(b.password),p_recovery_hash:await recoveryProof(b.new_recovery)});
   return !error&&data?.account_id===b.account_id&&[1,2].includes(data.level)?send(201,{account_id:data.account_id,level:data.level,lv2_active:data.lv2_active===true}):send(403,{error:"ACCOUNT_VERIFICATION_FAILED"});
  }
  if(action==="password_login"){
@@ -45,7 +45,7 @@ Deno.serve(async(req:Request)=>{
   return !result.error&&result.data?.account_id===b.account_id&&[1,2].includes(result.data.level)?send(200,{account_id:result.data.account_id,level:result.data.level,lv2_active:result.data.lv2_active===true,nickname:result.data.nickname,expires_at:result.data.expires_at,token}):send(401,{error:"LOGIN_FAILED"});
  }
  if(action==="recover"){
-  if(!validPassword||!accountOk||!recoveryOk||typeof b.recovery!=="string"||!secret.test(b.recovery)||b.recovery===b.new_recovery)return send(400,{error:"INVALID_REQUEST"});
+  if(!validPassword||!accountOk||!recoveryOk||typeof b.recovery!=="string"||!recoveryCode.test(b.recovery)||b.recovery===b.new_recovery)return send(400,{error:"INVALID_REQUEST"});
   const {data,error}=await db.rpc("beagu_account_recover_v1",{p_account:b.account_id,p_old_recovery_hash:await recoveryProof(b.recovery),p_new_recovery_hash:await recoveryProof(b.new_recovery),p_password_proof:await proof(b.password)});
   return !error&&data?.account_id===b.account_id&&[1,2].includes(data.level)?send(200,{account_id:data.account_id,level:data.level,lv2_active:data.lv2_active===true}):send(403,{error:"RECOVERY_FAILED"});
  }
