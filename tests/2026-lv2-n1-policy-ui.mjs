@@ -7,8 +7,8 @@ const policy=read('supabase/migrations/20261123153000_beagu_2026_n1_final_approv
 const server=read('supabase/functions/beagu-level-api/index.ts');
 const lv2=read('supabase/migrations/20261121100000_beagu_2026_lv2_immediate_approved.sql');
 assert.doesNotThrow(()=>new Script(js));
-assert.match(html,/레벨2 학교검색에서 2026년 최신 조사 탭/);
-assert.match(html,/응답 1건인 학교도 심사 및 최종 승인 대상/);
+// Search-page disclosure removed by v1.11.10; all detailed policy and server checks below remain mandatory.
+assert.doesNotMatch(html,/2026 자료 공개 기준|레벨2 학교검색에서 2026년 최신 조사 탭/);
 assert.match(html,/js\/level-search\.js\?v=20261123-n1-release/);
 assert.match(js,/유효 응답이 1건인 학교도 최종 공개 승인 대상/);
 assert.match(js,/공개 근거·소표본 재식별 검토가 완료된 학교별 결과만 표시/);

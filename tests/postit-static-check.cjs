@@ -25,29 +25,26 @@ assert.ok(core.includes("postitUrl.searchParams.set('compare',comparison)"),'com
 assert.ok(core.includes('navigator.clipboard'),'comparison copied');
 const cards=read('js/school-search-card-v1.js');
 assert.ok(cards.includes('postit.html?school_id='),'search cards link');
-for(const file of ['search.html','search-lv1.html','index.html','statistics.html'])
- assert.ok(read(file).includes('href="postit.html"'),'nav on '+file);
-for(const file of ['teacher-run.html','teacher-volleyball.html','teacher-class-diary-play.html'])
- assert.ok(read(file).includes('data-postit-game'),'game link in '+file);
-// All existing public page menus must expose Post-it, without changing restricted pages.
+// v1.11.10: the locker room is intentionally absent from navigation.
+// Contextual links and the server-side Lv.2 gate remain intact.
+assert.match(read('school-report.html'),/id="reportPostitLink" href="postit.html"/);
+assert.match(read('school-report.html'),/postit\.href='postit\.html\?school_id='/);
+assert.ok(read('teacher-class-diary-play.html').includes('data-postit-game'),'retained diary shortcut');
+for(const file of ['teacher-run.html','teacher-volleyball.html'])
+ assert.ok(!read(file).includes('data-postit-game'),'v1.11.9 approved removal of arcade shortcut '+file);
 const menuPages=[
  'index.html','search.html','search-lv1.html','school-report.html',
  'statistics.html','challenge.html','levels.html','arcade-history.html',
  'release-policy.html','survey.html','teacher-run.html',
- 'teacher-volleyball.html','postit.html'
+ 'teacher-volleyball.html','postit.html','games.html'
 ];
 for(const file of menuPages){
- const pageHtml=read(file);
- const nav=Array.from(pageHtml.matchAll(/<nav\b[^>]*class="([^"]*)"[^>]*>[\s\S]*?<\/nav>/g))
+ const nav=Array.from(read(file).matchAll(/<nav\b[^>]*class="([^"]*)"[^>]*>[\s\S]*?<\/nav>/g))
   .find(m=>m[1].split(/\s+/).includes('beagu-unified-nav'))?.[0]||'';
  assert.ok(nav,'shared nav on '+file);
- assert.ok(nav.includes('href="postit.html"'),'Post-it menu link on '+file);
- const label='>포스트잇</a>';
- assert.ok(nav.includes(label),'Post-it text on '+file);
- const links=['index.html','search.html','statistics.html','postit.html','challenge.html'];
- assert.ok(links.every((target,index)=>nav.indexOf('href="'+target+'"')>=0
-  &&(index===0||nav.indexOf('href="'+links[index-1]+'"')<nav.indexOf('href="'+target+'"'))),'preserved menu item order '+file);
- if(nav.includes('beagu-core-nav')) assert.ok(nav.includes('href="games.html"')&&nav.indexOf('href="games.html"')>nav.indexOf('href="challenge.html"'),'game menu retained '+file);
+ assert.doesNotMatch(nav,/href="postit\.html"/,'locker room hidden '+file);
+ const links=['index.html','search.html','statistics.html','games.html','challenge.html'];
+ assert.deepEqual([...nav.matchAll(/<a href="([^"]+)"/g)].map(m=>m[1]),links,'preserved five menu destinations '+file);
 }
 const headerCSS=read('styles/beagu-site-header-v1.css');
 assert.ok(headerCSS.includes('grid-template-columns:repeat(5,minmax(0,1fr))'),'mobile 5 tabs in one row');
@@ -68,8 +65,7 @@ assert.ok(page.includes('styles/postit-v1.css?v=')&&
 const challenge=read('challenge.html');
 assert.ok(!challenge.includes('styles/challenge-postit-unity-v1.css'),
  'Challenge must not load Post-it paper overrides');
-assert.ok(challenge.includes('href="postit.html">포스트잇</a>'),
- 'Challenge navigation keeps the Post-it destination');
+assert.doesNotMatch(challenge.match(/<nav\b[^>]*class="[^"]*beagu-unified-nav[^"]*"[^>]*>[\s\S]*?<\/nav>/)[0],/href="postit\.html"/,'Challenge hides locker room only in navigation');
 assert.ok(challenge.includes('styles/beagu-site-header-v1.css'),
  'Shared navigation remains available');
 for(const id of ['challengeAccessPanel','challengeProtected','certificate','participantNo',
