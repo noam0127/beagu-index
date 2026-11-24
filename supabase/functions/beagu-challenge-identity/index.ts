@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
     if (!/^[a-f0-9]{64}$/.test(sessionToken)) return respond({ error: 'AUTH_REQUIRED' }, 401, origin);
     const sessionDigest = await sha256(sessionToken);
     const { data: session, error: sessionError } = await admin.from('beagu_level_sessions')
-      .select('access_level,expires_at').eq('token_sha256', sessionDigest).maybeSingle();
+      .select('access_level,expires_at,identity_visitor_id').eq('token_sha256', sessionDigest).maybeSingle();
     if (sessionError) return respond({ error: 'SESSION_UNAVAILABLE' }, 503, origin);
     if (!session || Number(session.access_level) < 1 ||
       !Number.isFinite(Date.parse(session.expires_at)) ||
@@ -54,13 +54,26 @@ Deno.serve(async (req: Request) => {
     if (input.action !== 'issue' || typeof input.visitor !== 'string' || !uuid.test(input.visitor)) {
       return respond({ error: 'INVALID_REQUEST' }, 400, origin);
     }
-    const { data, error } = await admin.rpc('beagu_issue_challenge_identity', { p_visitor: input.visitor });
+    // An anonymous account session must reuse its canonical visitor even on a new device.
+    let visitor = input.visitor;
+    let accountId = '';
+    if (session.identity_visitor_id) {
+      const account = await admin.rpc('beagu_account_session_status_v1', { p_token_sha: sessionDigest });
+      if (account.error) return respond({ error: 'SESSION_UNAVAILABLE' }, 503, origin);
+      if (account.data) {
+        visitor = session.identity_visitor_id;
+        accountId = String(account.data.account_id || '');
+        if (!accountId || !uuid.test(visitor)) return respond({ error: 'AUTH_REQUIRED' }, 401, origin);
+      }
+    }
+    const { data, error } = await admin.rpc('beagu_issue_challenge_identity', { p_visitor: visitor });
     if (error) {
       console.error('challenge code issuance error', error.code || 'UNKNOWN');
       return respond({ error: 'ISSUE_UNAVAILABLE' }, 503, origin);
     }
     const number = Number(data?.participant_no);
     const code = data?.identity_code;
+    if (accountId && code !== accountId) return respond({ error: 'IDENTITY_MISMATCH' }, 503, origin);
     if (!Number.isSafeInteger(number) || number < 1 ||
       typeof code !== 'string' || !/^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}|[A-HJ-NP-Z2-9]{10})$/.test(code)) {
       return respond({ error: 'INVALID_ISSUED_DATA' }, 503, origin);

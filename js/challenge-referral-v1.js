@@ -158,6 +158,7 @@
       const newlyPromoted = promoted && !upgraded;
       lastReferrals=count;
       renderState(promoted,count);
+      if(payload.deviceBound===true)window.dispatchEvent(new CustomEvent('beagu:challenge-device-verified',{detail:{code:detail.code}}));
       if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
       progress.hidden=false;
       progress.textContent = promoted?'Lv.2 달성 · 누적 유효 추천 '+count.toLocaleString('ko-KR')+'건':'유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(count>=1?'활성화 확인 중':'1건부터 Lv.2 활성화');

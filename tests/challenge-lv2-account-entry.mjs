@@ -20,4 +20,4 @@ assert.match(ui,/href="account\.html"/,'Account entry is a separate page, not an
 assert.match(ui,/heading\.textContent=level>=2\?'Lv2 참여 인증 완료':'참여코드 입력'/);
 assert.match(ui,/const status=button\('', 'beagu-participation-inline-status',open\);/,'Lv2 status opens participation details instead of member login');
 assert.match(html,/js\/beagu-participation-auth-v2\.js\?v=20261124-v111-account/,'Updated account entry asset cache-bust required');
-console.log('PASS: challenge account login and registration removed; code/level/referrals preserved');
+assert.match(html,/id="challengeAccountJoin"/);assert.match(html,/나의 고유번호가 로그인 아이디입니다/);assert.match(ui,/beaguEntryConfirm/);assert.match(ui,/verifyLogin\(id,password\)/);assert.match(ui,/beaguEntryLegacy/);assert.match(ui,/beagu:challenge-device-verified/);console.log('PASS: unified account entry, legacy transition and challenge signup hook');

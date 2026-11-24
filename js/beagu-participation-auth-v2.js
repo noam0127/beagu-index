@@ -372,7 +372,7 @@
  $('beaguEntryLoginTab').onclick=()=>show('login');$('beaguEntrySignupTab').onclick=()=>show('signup');
  $('beaguEntryLegacy').onclick=()=>show('legacy');$('beaguEntryBack').onclick=()=>show('login');
  join?.addEventListener('click',()=>{if(challengeToken===read(KEY)&&idPattern.test(challengeCode))open('signup',challengeCode);});
- window.addEventListener('beagu:identity-ready',e=>{if(idPattern.test(e.detail?.code||'')&&tokenPattern.test(read(KEY))){challengeCode=e.detail.code;challengeToken=read(KEY);sync();}});
+ window.addEventListener('beagu:challenge-device-verified',e=>{if(idPattern.test(e.detail?.code||'')&&tokenPattern.test(read(KEY))){challengeCode=e.detail.code;challengeToken=read(KEY);sync();}});
  window.addEventListener('beagu:challenge-access-revoked',()=>{challengeCode='';challengeToken='';sync();});
  async function refreshOwner(){
   const t=own();if(!t){ownerToken='';sync();return;}

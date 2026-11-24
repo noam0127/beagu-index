@@ -94,7 +94,29 @@ Deno.serve(async (req) => {
         !codePattern.test(body.identityCode) || typeof body.deviceSecret !== 'string' ||
         !/^[0-9a-f]{64}$/.test(body.deviceSecret))
       return json(origin, 400, { error: 'INVALID_REQUEST' });
-    const visitor = body.visitor.toLowerCase();
+    let visitor = body.visitor.toLowerCase();
+    // A password-authenticated account may read its existing invitation on any device.
+    // Never bind a new device or reissue the identity based on a caller-supplied visitor.
+    if (session.identity_visitor_id) {
+      const account = await db.rpc('beagu_account_session_status_v1', { p_token_sha: await digest(sessionToken) });
+      if (account.error) return json(origin, 503, { error: 'SESSION_UNAVAILABLE' });
+      if (account.data) {
+        visitor = session.identity_visitor_id;
+        if (account.data.account_id !== body.identityCode)
+          return json(origin, 403, { error: 'VISITOR_MISMATCH' });
+        const proofToken = await referralToken(visitor, body.identityCode);
+        const existing = await db.rpc('beagu_referral_existing_link_v1', {
+          p_visitor: visitor, p_identity_code: body.identityCode, p_referral_hash: await digest(proofToken),
+        });
+        if (existing.error || !existing.data || typeof existing.data.shortCode !== 'string' ||
+            !/^[A-Za-z0-9_-]{8}$/.test(existing.data.shortCode))
+          return json(origin, 503, { error: 'REFERRAL_UNAVAILABLE' });
+        const credit = verifiedReferralCredit(existing.data);
+        const earned = credit.earned && Number(account.data.level) === 2;
+        return json(origin, 200, {shortLink:'https://baeguindex.com/r/#'+existing.data.shortCode,
+          link:'https://baeguindex.com/survey.html?ref='+proofToken,level:earned?2:1,validReferrals:credit.count,provisional:earned,deviceBound:false});
+      }
+    }
     const identityCode = body.identityCode;
     if (session.identity_visitor_id && session.identity_visitor_id !== visitor)
       return json(origin, 403, { error: 'VISITOR_MISMATCH' });
@@ -134,6 +156,7 @@ Deno.serve(async (req) => {
             level: earned ? 2 : 1,
             validReferrals: credit.count,
             provisional: earned,
+            deviceBound: false,
           });
         }
       }
@@ -183,6 +206,7 @@ Deno.serve(async (req) => {
       level: credit.earned ? 2 : 1,
       validReferrals: credit.count,
       provisional: credit.earned,
+      deviceBound: true,
     });
   } catch (err) {
     console.error('referral link unexpected error', err instanceof Error ? err.name : 'Unknown');

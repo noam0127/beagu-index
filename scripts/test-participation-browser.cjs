@@ -41,6 +41,7 @@ async function view(page,path){
 async function open(page){
  await page.locator('#beaguLevelState').click({timeout:8000});
  await page.locator('#beaguParticipationOverlay').waitFor({state:'visible'});
+ await page.locator('#beaguEntryLegacy').click();
  const level=await page.locator('#beaguLevelState').getAttribute('data-level');
  assert.equal(await page.locator('#beaguParticipationTitle').innerText(),level==='1'?'레벨2에 도전하세요!':level==='2'?'참여 인증 정보':'참여코드 입력');
  const fit=await page.locator('.beagu-participation-dialog').boundingBox();
@@ -87,9 +88,11 @@ async function login(page,code){
    assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.0');
    await page.locator('[data-beagu-close]').click();
    await login(page,LV1);
+   await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.textContent==='Lv.1');
    assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.1');
    await view(page,'statistics.html');
    await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.dataset.level==='1');
+   await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.textContent==='Lv.1');
    assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.1');
    await open(page);
    assert.equal(await page.locator('#beaguParticipationDetail').isVisible(),true);
@@ -97,9 +100,11 @@ async function login(page,code){
    await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.dataset.level==='0');
    assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.0');
    await login(page,LV2);
+   await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.textContent==='Lv.2');
    assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.2');
    await view(page,'postit.html');
    await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.dataset.level==='2');
+   await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.textContent==='Lv.2');
    assert.equal(await page.locator('#beaguLevelState').innerText(),'Lv.2');
    await view(page,'challenge.html');
    await page.waitForFunction(()=>document.getElementById('beaguLevelState')?.dataset.level==='2');
@@ -108,7 +113,7 @@ async function login(page,code){
    await page.locator('#challengeAccessPanel [data-beagu-participation-status]').click();
    await page.locator('#beaguParticipationOverlay').waitFor({state:'visible'});
    assert.equal(await page.locator('#challengeMemberOverlay').count(),0);
-   assert.equal(await page.locator('#beaguParticipationOverlay a[href="account.html"]').isVisible(),true);
+   assert.equal(await page.locator('#beaguAccountEntryTitle').isVisible(),true);
    await page.screenshot({path:'artifacts/participation-auth/'+cfg.name+'-lv2.png',fullPage:false});
    await page.keyboard.press('Escape');
    assert.equal(await page.locator('#beaguParticipationOverlay').isHidden(),true);
