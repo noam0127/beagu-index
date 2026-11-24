@@ -169,6 +169,14 @@
     .step-card { padding: 16px 14px; }
     .footer-grid { grid-template-columns: 1fr; }
   }
+  .challenge-lv2-benefits ul{padding-left:1.25rem;line-height:1.65;margin:12px 0}
+  .challenge-lv2-benefits a,.challenge-mission a{font-weight:700;overflow-wrap:anywhere}
+  .challenge-mission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+  .challenge-mission{border:1px solid #d7dce6;border-radius:12px;padding:14px;min-width:0}
+  .challenge-mission h3{font-size:15px;margin:6px 0}.challenge-mission p{font-size:13px;margin:8px 0}
+  .challenge-mission[data-state="complete"]{border-color:#8b5cf6;background:#f5f3ff;color:#4c1d95}
+  #challengeMissionSummary{font-weight:700;margin-bottom:0}
+  @media(max-width:600px){.challenge-mission-grid{grid-template-columns:1fr}}
 </style>
   <link rel="stylesheet" href="styles/challenge-progress-v1.css?v=20261117-minimal2">
 <link rel="stylesheet" href="styles/challenge-layout-v1.css?v=20261123-original-vip3">
@@ -184,7 +192,7 @@
 <link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
 <link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261124-entry1">
-<script defer src="js/beagu-participation-auth-v2.js?v=20261124-v111-dual-entry"></script>
+<script defer src="js/beagu-participation-auth-v2.js?v=20261124-v111-dual-entry-missions1"></script>
 <link rel="stylesheet" href="styles/challenge-premium-grid-v1.css?v=20261123-layout1">
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/challenge-milestone-v1.css?v=150">
@@ -217,6 +225,17 @@
     <p id="challengeAccessFeedback" class="challenge-access-feedback beagu-auth-message" role="status" aria-live="polite">인증 상태 확인 중…</p>
     <p class="challenge-access-help beagu-auth-help">참여코드는 <a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a> 시 발급됩니다.</p>
   </section>
+  <section class="challenge-identity challenge-lv2-benefits" aria-labelledby="challengeBenefitsTitle">
+    <h2 id="challengeBenefitsTitle">Lv.2가 되면 무엇이 달라질까요?</h2>
+    <p>Lv.1 혜택에 더해 다음 기능을 이용할 수 있어요.</p>
+    <ul>
+      <li><strong>학교 상세자료</strong> · 공개 승인된 2026 확장 조사 결과 열람</li>
+      <li><strong>학교검색·비교</strong> · 학교 소재 행정동의 공동주택 평균 공시가격 확인 및 정렬</li>
+      <li><strong>포스트잇</strong> · 인증된 익명 계정으로 글과 댓글 참여</li>
+    </ul>
+    <p><small>추가 예정: Lv.2 전용 『나의 OO한 학급일지』 (준비 중). 자료는 공개 승인 범위에 따릅니다.</small></p>
+    <a href="levels.html">레벨별 혜택 자세히 보기</a>
+  </section>
   <div id="challengeProtected" hidden>
   
 
@@ -243,6 +262,20 @@
     <span class="challenge-levelup-kicker">LEVEL UP</span>
     <h2 id="challenge-levelup-title">Lv.2로 레벨업하기</h2>
     <p>전용 조사 링크로 유효한 추천 응답 1건 이상을 달성하고 익명 계정을 생성해 로그인하면 Lv.2가 활성화됩니다. 두 미션의 순서는 자유롭습니다. 이후에도 추천 인원이 누적됩니다.</p>
+  </section>
+  <section class="challenge-identity challenge-dual-missions" id="challengeDualMissions" data-html2canvas-ignore="true" aria-labelledby="challengeMissionsTitle">
+    <h2 id="challengeMissionsTitle">Lv.2 달성 미션</h2>
+    <div class="challenge-mission-grid">
+      <article class="challenge-mission" id="challengeMissionReferral" data-state="checking">
+        <small>MISSION 01</small><h3>유효 추천 응답 1건</h3><strong id="challengeMissionReferralState" aria-live="polite">확인 중</strong>
+        <p>아래 전용 조사 링크를 동료에게 공유하세요.</p><a href="#challengeReferralPanel">추천 링크 확인</a>
+      </article>
+      <article class="challenge-mission" id="challengeMissionAccount" data-state="checking">
+        <small>MISSION 02</small><h3>익명 계정 생성 및 로그인</h3><strong id="challengeMissionAccountState" aria-live="polite">확인 중</strong>
+        <p>나의 고유번호로 가입하고 로그인하세요.</p><a href="#challengeIdentityPanel">계정 만들기 안내</a> · <a href="account.html">계정 관리</a>
+      </article>
+    </div>
+    <p id="challengeMissionSummary" role="status" aria-live="polite">두 미션의 달성 순서는 자유롭습니다.</p>
   </section>
   <!-- 아래 링크와 참여코드는 인증샷에서 제외 -->
   <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
@@ -325,7 +358,7 @@
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/challenge.js?v=150a"></script>
-<script src="js/challenge-referral-v1.js?v=20261124-entry1"></script>
+<script src="js/challenge-referral-v1.js?v=20261124-dual-missions1"></script>
 <script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
 </body>
 </html>

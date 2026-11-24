@@ -316,6 +316,13 @@
  function sync(){
   const logged=Boolean(own())&&ownerToken===own();
   header.textContent=logged?'나의 계정':'로그인';
+  if(joinStatus){
+   const state=logged?'verified':own()?'checking':'unverified';
+   if(joinStatus.dataset.accountState!==state){
+    joinStatus.dataset.accountState=state;
+    window.dispatchEvent(new Event('beagu:challenge-account-state'));
+   }
+  }
   if(join){const ready=challengeToken===read(KEY)&&idPattern.test(challengeCode)&&tokenPattern.test(localDevice());join.hidden=logged||!ready;join.disabled=!ready||busy;if(joinStatus)joinStatus.textContent=logged?'나의 고유번호가 로그인 아이디입니다. 계정 로그인 완료.':ready?'나의 고유번호가 로그인 아이디입니다. 비밀번호만 설정해 계정을 만드세요.':'나의 고유번호가 로그인 아이디입니다. 최초 참여 기기에서 가입하세요.';}
   for(const b of document.querySelectorAll('[data-beagu-participation-trigger],[data-beagu-participation-game-trigger]'))b.textContent='참여코드 입력';
  }

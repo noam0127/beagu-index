@@ -34,28 +34,46 @@
   let lastIdentity = null;
   let upgraded = false;
   let lastReferrals = 0;
-  let lastSnapshot = '', activeToken='';
+  let lastSnapshot = '', activeToken='', referralKnown=false, serverPromotion=false;
+  function missionState(){
+    const accountState=get('challengeAccountStatus')?.dataset.accountState||'checking';
+    const referralComplete=referralKnown&&lastReferrals>=1;
+    const accountComplete=accountState==='verified';
+    const verifiedLevel=Number(get('challengeAccessPanel')?.getAttribute('data-auth-level')||0);
+    const achieved=referralComplete&&accountComplete&&serverPromotion;
+    const legacy=accountState==='unverified'&&(serverPromotion||verifiedLevel===2);
+    return {accountState,referralComplete,accountComplete,achieved,legacy};
+  }
+  function renderMissions(){
+    const m=missionState(),r=get('challengeMissionReferral'),a=get('challengeMissionAccount');
+    if(r)r.dataset.state=!referralKnown?'checking':m.referralComplete?'complete':'pending';
+    if(a)a.dataset.state=m.accountComplete?'complete':m.accountState==='checking'?'checking':'pending';
+    const rt=get('challengeMissionReferralState'),at=get('challengeMissionAccountState'),summary=get('challengeMissionSummary');
+    if(rt)rt.textContent=referralKnown?(m.referralComplete?'완료 · 1 / 1':'0 / 1'):'확인 중';
+    if(at)at.textContent=m.accountComplete?'완료 · 로그인 인증':m.accountState==='checking'?'확인 중':'가입 또는 로그인 필요';
+    if(summary)summary.textContent=m.achieved?'두 미션 완료 · Lv.2 활성화':m.legacy?'기존 Lv.2 · 계정 전환 안내 (기존 열람 권한 유지)':m.referralComplete&&m.accountComplete?'두 미션 완료 · 서버 Lv.2 확인 중':'두 미션의 달성 순서는 자유롭습니다.';
+    return m;
+  }
   function renderMeter(count,known=true){
     if(countHint)countHint.textContent=known?'서버 확인 완료 기준':'현재 확인 중 · 숫자 미확정';
     if(meter){if(known)meter.setAttribute('aria-valuenow',String(Math.min(1,count)));else meter.removeAttribute('aria-valuenow');meter.dataset.complete=known&&count>=1?'true':'false';}
   }
   function renderState(earned,count=lastReferrals) {
-    upgraded = earned === true;
-    // Verified Lv.2 login can show its visual tier, but cannot activate a
-    // separate personal code without a server-confirmed referral.
-    const verifiedLoginLevel=Number(get('challengeAccessPanel')?.getAttribute?.('data-auth-level') || 0);
-    const premiumVisual=upgraded || verifiedLoginLevel>=2;
+    serverPromotion=earned===true;
+    const mission=renderMissions();
+    upgraded=mission.achieved;
+    const premiumVisual=upgraded||mission.legacy;
     identityPanel.classList.toggle('is-lv2', premiumVisual);
-    identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
+    identityPanel.dataset.referralState = upgraded||(mission.legacy&&referralKnown&&count>=1) ? 'earned' : 'pending';
     identityTitle.textContent = upgraded ? 'Lv.2 참여코드' :
-      premiumVisual ? 'Lv.2 인증 회원 · 참여코드' : 'Lv.2 참여코드(비활성)';
+      mission.legacy ? '기존 Lv.2 · 계정 전환 안내' : 'Lv.2 참여코드(비활성)';
     identityTag.textContent = upgraded ? '✓ Lv.2 인증 완료' :
-      premiumVisual ? '✓ Lv.2 로그인 완료' : '승급 대기';
-    if(certificateLevelBanner)certificateLevelBanner.textContent = premiumVisual ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
+      mission.legacy ? '기존 열람 권한' : '승급 대기';
+    if(certificateLevelBanner)certificateLevelBanner.textContent = upgraded ? 'Lv.2 챌린지 달성' : mission.legacy ? '기존 Lv.2 참여 인증' : 'Lv.1 챌린지 달성';
     if(certificate)certificate.dataset.level = premiumVisual ? '2' : '1';
     if(heading)heading.textContent=upgraded?'Lv.2 달성 · 추천 이어가기':'Lv.2로 레벨업하기';
-    copyIdentityCode.hidden = !upgraded;
-    copyIdentityCode.disabled = !upgraded || !lastIdentity;
+    copyIdentityCode.hidden = !(upgraded||mission.legacy);
+    copyIdentityCode.disabled = !(upgraded||mission.legacy) || !lastIdentity;
     if(vipMedal)vipMedal.hidden=!upgraded;
     if(certificateMedal)certificateMedal.hidden=!premiumVisual;
     if(certificateThanks){
@@ -84,7 +102,7 @@
     linkField.value = currentLink;
     linkField.setAttribute('aria-label', '내 전용 조사 링크');
     copyButton.textContent = '링크 복사';
-    renderMeter(count);
+    renderMeter(count,referralKnown);
     if(share){share.hidden=!currentLink;share.disabled=!currentLink;}
   }
   function reset() {
@@ -95,7 +113,7 @@
     copyButton.hidden = true;
     copyButton.disabled = true;
     progress.textContent = '';progress.hidden=true;
-    lastReferrals=0;lastSnapshot='';
+    lastReferrals=0;lastSnapshot='';referralKnown=false;serverPromotion=false;
     if(retry)retry.hidden=true;
     renderState(false,0);
     referralCount.textContent = '확인 중';renderMeter(0,false);
@@ -155,13 +173,13 @@
       // A link visit, self-declared level, or incomplete payload cannot do so.
       const promoted = Number(payload.level) === 2 &&
         count >= 1 && payload.provisional === true;
-      const newlyPromoted = promoted && !upgraded;
-      lastReferrals=count;
+      const newlyPromoted = promoted && !serverPromotion;
+      lastReferrals=count;referralKnown=true;
       renderState(promoted,count);
       if(payload.deviceBound===true)window.dispatchEvent(new CustomEvent('beagu:challenge-device-verified',{detail:{code:detail.code}}));
       if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
       progress.hidden=false;
-      progress.textContent = promoted?'Lv.2 달성 · 누적 유효 추천 '+count.toLocaleString('ko-KR')+'건':'유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(count>=1?'활성화 확인 중':'1건부터 Lv.2 활성화');
+      progress.textContent = '유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(count>=1?'추천 미션 완료':'추천 미션 진행 중');
       const snapshot=(promoted?'2':'1')+':'+count;
       if(snapshot!==lastSnapshot){
         lastSnapshot=snapshot;
@@ -177,7 +195,7 @@
     } catch (error) {
       if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
       if(error?.status===401||error?.status===403){reset();window.dispatchEvent(new CustomEvent('beagu:referral-status-changed',{detail:{level:1,validReferrals:0}}));}
-      else if(countHint&&lastSnapshot)countHint.textContent='마지막으로 확인된 실적 · 새로고침 필요';
+      else if(countHint&&lastSnapshot){referralKnown=false;serverPromotion=false;renderState(false,lastReferrals);countHint.textContent='마지막으로 확인된 실적 · 새로고침 필요';}
       if(retry)retry.hidden=false;
       if(error?.status===403)status.textContent='소유자 확인에 실패했습니다. 처음 코드를 발급받은 브라우저에서 확인하거나 저장 설정을 확인해 주세요.';
       else if(error?.status===401)status.textContent='인증이 만료되었습니다. 다시 인증한 뒤 링크를 확인해 주세요.';
@@ -208,6 +226,8 @@
     active = false; activeToken=''; lastIdentity = null; reset();
   });
   window.addEventListener('beagu:identity-ready', e => {void load(e.detail);});
+  window.addEventListener('beagu:challenge-account-state',()=>{renderState(serverPromotion,lastReferrals);if(!referralKnown){referralCount.textContent='확인 중';renderMeter(0,false);}});
+
   window.addEventListener('focus', () => {
     if (active && lastIdentity) void load(lastIdentity);
   });
