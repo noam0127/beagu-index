@@ -5,7 +5,7 @@ on:
       - 'release/base-pages-*'
   workflow_dispatch:
   push:
-    branches: [fix/v1.11.1-light-touch-production-base]
+    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base]
 permissions:
   contents: read
 jobs:
@@ -45,7 +45,7 @@ jobs:
         run: node tests/notice-audience-live.mjs
       - name: Install pinned Chromium browser test tooling
         run: |
-          npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1
+          npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1 html2canvas@1.4.1
           browser=$(command -v google-chrome || command -v chromium || true)
           if [ -n "$browser" ]; then
             "$browser" --version
@@ -61,6 +61,21 @@ jobs:
           node tests/milestone-browser.cjs
           node tests/communication-browser.cjs
           node tests/control-tower-browser.cjs
+      - name: Verify Together actual Chromium downloads and search regression
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8124 --bind 127.0.0.1 >/tmp/v1112-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8124/challenge.html >/dev/null && break; sleep 1; done
+          node tests/v1112-together-offline-browser.cjs
+      - name: Retain fixture certificate and screen evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v1112-chromium-fixture-evidence
+          path: artifacts/v1112/
+          if-no-files-found: ignore
       - name: Verify selected artifact metadata
         run: |
           python3 - <<'PY'
