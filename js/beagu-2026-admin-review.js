@@ -125,8 +125,11 @@
      if(token!==pipelineSeq||!ready)return;
      if(!data?.status||data.status.year!==2026)throw Error("unexpected_status");
      renderPipeline(data.status);
-     renderWaterway(data.waterway_status==="OK"?data.waterway:null);
-     renderLevelApprovals(data.levels);
+     const diagnostic=data.waterway_status==="OK"?data.waterway:null;
+     renderWaterway(diagnostic);
+     // Use the release status read in the same database statement as the
+     // diagnostic counts; retain the existing RPC as rollout fallback.
+     renderLevelApprovals(diagnostic?.version===1&&Array.isArray(diagnostic.release)&&diagnostic.release.length===3?diagnostic.release:data.levels);
    }catch{
      if(token!==pipelineSeq||!ready)return;
      renderWaterway(null);
