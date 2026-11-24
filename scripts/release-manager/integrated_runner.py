@@ -136,6 +136,8 @@ class FixtureRunner:
         if claim is None:return False
         try:
             task=claim["task"]
+            if hasattr(self.adapter,"bind_claim"):
+                self.adapter.bind_claim(job,claim)
             # Read exactly pinned bytes; never execute candidate shell or import candidate code.
             files={}
             for pin in task["files"]:
