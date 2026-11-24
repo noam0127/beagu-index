@@ -30,6 +30,31 @@
    state(){return {pending:leavePlan.filter(p=>pending.has(p.years)),held:leavePlan.filter(p=>held.has(p.years)),used:used.size};}
   };
  }
+ const growthPlan=Object.freeze([
+  {id:"guidance",name:"생활지도",detail:"피해 20% 감소",max:3},
+  {id:"speed",name:"업무 능력",detail:"이동속도 15% 증가",max:3},
+  {id:"power",name:"수업 전문성",detail:"공격력 20% 증가",max:3},
+  {id:"rate",name:"교직 경험",detail:"공격속도 15% 증가",max:3},
+  {id:"ally",name:"동료 관계",detail:"동료 교사 합류",max:2},
+  {id:"vital",name:"자기관리",detail:"최대 체력 15% 증가",max:3},
+  {id:"shield",name:"위기 대응",detail:"피해 1회 방어",max:2},
+  {id:"heal",name:"교육자의 신념",detail:"회복 효과 20% 증가",max:3},
+  {id:"workload",name:"학급운영",detail:"일반 장애물 12% 감소",max:3},
+  {id:"community",name:"전문적 학습공동체",detail:"동료 공격속도 15% 증가",max:3}
+ ].map(Object.freeze));
+ function createGrowth(){
+  const levels={},seen=new Set();let waiting=null,offered=[],shields=0;
+  const level=id=>levels[id]||0;
+  const available=()=>growthPlan.filter(p=>level(p.id)<p.max);
+  function options(random=Math.random){const list=available().slice();for(let i=list.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}return list.slice(0,3).map(p=>({...p,level:level(p.id)}));}
+  return {
+   next(t,random=Math.random){if(waiting!==null)return null;for(const year of [5,10,15,20,25,30,35]){if(t>=year*5&&!seen.has(year)){seen.add(year);waiting=year;offered=options(random);return {year,choices:offered.slice()};}}return null;},
+   choose(id){if(waiting===null||!offered.some(p=>p.id===id))return false;levels[id]=level(id)+1;if(id==="shield")shields++;waiting=null;offered=[];return true;},
+   grant(id){const p=available().find(p=>p.id===id);if(!p)return false;levels[id]=level(id)+1;if(id==="shield")shields++;return true;},
+   absorb(){if(shields<=0)return false;shields--;return true;},level,shields:()=>shields,
+   effects(){return {damage:Math.pow(.8,level("guidance")),speed:Math.pow(1.15,level("speed")),power:Math.pow(1.2,level("power")),rate:Math.pow(1.15,level("rate")),allies:level("ally"),maxHP:Math.pow(1.15,level("vital")),heal:Math.pow(1.2,level("heal")),spawn:Math.pow(.88,level("workload")),community:Math.pow(1.15,level("community"))};}
+  };
+ }
  function create(){
   let combo=0,maxCombo=0,near=0,hits=0,lastHit=-Infinity,lowSince=null,lowEpisode=false;
   const paid=new Set(),objects=new WeakSet();
@@ -50,5 +75,5 @@
    stats(){return {combo,maxCombo,near,hits,crises:paid.size,lastHit};}
   };
  }
- root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave});
+ root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth});
 })(typeof window!=="undefined"?window:globalThis);
