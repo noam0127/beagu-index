@@ -52,7 +52,7 @@ try{
   assert.doesNotMatch(JSON.stringify(data),/"(?:author_uid|visitor_id|recovery_hash|password_hash|auth_user_id)"/);
   return data;
  }
- const a='SYNTHETIC-ONE',b='SYNTHETIC-TWO',pw='fixture-password-123',old='7KMXF9TDW4NPQ',next='8RYH6ZB3W7KMP';
+ const a='SYNTHETIC-ONE',b='SYNTHETIC-TWO',pw='x7!Q',old='7KMXF9TDW4NPQ',next='8RYH6ZB3W7KMP';
  const signup=(code,deviceSecret,new_recovery)=>call('/account',{action:'signup',account_id:code,code,deviceSecret,new_recovery,password:pw},201);
  assert.equal((await signup(a,'a'.repeat(64),old)).level,2);
  assert.equal((await signup(b,'b'.repeat(64),'9KMTH8RDW3NPQ')).lv2_active,true);
@@ -73,10 +73,10 @@ try{
  await call('/admin',{...decision,decision:'restore'},200,{auth:owner});
  assert.equal((await call('/postit?action=writer_status',null,200,{method:'GET',token:one.token})).linked,true);
  assert.equal((await call('/postit',create,200,{token:one.token})).id,post.id);
- await call('/account',{action:'recover',account_id:a,password:'fixture-new-password-123',recovery:old,new_recovery:next},200);
+ await call('/account',{action:'recover',account_id:a,password:'v8!R',recovery:old,new_recovery:next},200);
  await call('/account',{action:'status'},401,{token:one.token});
  await call('/account',{action:'recover',account_id:a,password:pw,recovery:old,new_recovery:'6KMXF9TDW4NPQ'},403);
- const again=await login(a,'fixture-new-password-123');
+ const again=await login(a,'v8!R');
  const after=await call('/postit?action=posts',null,200,{method:'GET',token:again.token});assert.equal(after.posts[0].mine,true);assert.equal(after.posts[0].id,post.id);
  assert.equal(again.nickname,one.nickname);
  // Direct Data API with an unprivileged JWT must deny credential and moderation RPCs.

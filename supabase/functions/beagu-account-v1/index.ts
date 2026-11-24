@@ -30,7 +30,7 @@ Deno.serve(async(req:Request)=>{
  if(!b||typeof b!=="object"||Array.isArray(b))return send(400,{error:"INVALID_REQUEST"});
  const action=b.action;
  const session=(req.headers.get("X-Beagu-Session")||"").trim();
- const validPassword=typeof b.password==="string"&&b.password.length>=12&&enc.encode(b.password).byteLength<=256;
+ const validPassword=typeof b.password==="string"&&Array.from(b.password).length>=4&&enc.encode(b.password).byteLength<=256;
  const accountOk=typeof b.account_id==="string"&&code.test(b.account_id);
  const recoveryOk=typeof b.new_recovery==="string"&&recoveryCode.test(b.new_recovery);
  if(action==="signup"){

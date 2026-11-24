@@ -4,7 +4,7 @@ const fs=require('node:fs/promises');
 const http=require('node:http');
 const {chromium}=require('playwright');
 const origin='http://127.0.0.1:8127',endpoint='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-account-v1';
-const account='K7M4Q8TX2A',password='fixture-password-123',newPassword='replacement-password-456',device='a'.repeat(64),token='b'.repeat(64);
+const account='K7M4Q8TX2A',password='x7!Q',newPassword='v8!R',device='a'.repeat(64),token='b'.repeat(64);
 const assets=new Map([['/account.html','text/html'],['/js/beagu-account-v1.js','text/javascript'],['/styles/beagu-account-v1.css','text/css']]);
 const server=http.createServer(async(req,res)=>{const p=new URL(req.url,origin).pathname;try{if(!assets.has(p)){res.writeHead(404);res.end();return;}res.writeHead(200,{'Content-Type':assets.get(p)});res.end(await fs.readFile('.'+p));}catch{res.end();}});
 (async()=>{
@@ -44,7 +44,9 @@ const server=http.createServer(async(req,res)=>{const p=new URL(req.url,origin).
    const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
    await page.goto(origin+'/account.html');const form=(id,name)=>page.locator('#'+id+' [name="'+name+'"]');
    const submit=async id=>page.locator('#'+id+' button').click();
-   await form('accountSignup','code').fill(account);await form('accountSignup','password').fill(password);await submit('accountSignup');
+   await form('accountSignup','code').fill(account);await form('accountSignup','password').fill(password);await form('accountSignup','password_confirm').fill('different');await submit('accountSignup');
+   await page.waitForFunction(()=>document.querySelector('#accountMessage').textContent.includes('일치하지'));assert.equal(requests,0);
+   await form('accountSignup','password').fill(password);await form('accountSignup','password_confirm').fill(password);await submit('accountSignup');
    await page.locator('#issuedAccount').waitFor({state:'visible'});assert.equal(await page.locator('#cardAccount').innerText(),account);assert.equal(await page.locator('#cardLv2').innerText(),'Lv.2 비활성');
    const old=await page.locator('#cardRecovery').innerText();assert.match(old,/^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{5}$/);assert.equal(old.replaceAll('-',''),recovery);
    const downloadEvent=page.waitForEvent('download');await page.locator('#accountSaveCard').click();const download=await downloadEvent;

@@ -7,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {createHmac,createHash} from 'node:crypto';
 const temp=await mkdtemp(join(tmpdir(),'beagu-edge-'));
 const pepper='test-fixture-pepper-not-a-production-secret-1234';
-const account='K7M4Q8TX2A',legacy='BG26-ABCD-ABCD-ABCD-ABCD-ABCD',old='7KMXF9TDW4NPQ',next='8RYH6ZB3W7KMP',password='test-password-123',device='a'.repeat(64);
+const account='K7M4Q8TX2A',legacy='BG26-ABCD-ABCD-ABCD-ABCD-ABCD',old='7KMXF9TDW4NPQ',next='8RYH6ZB3W7KMP',password='x7!Q',device='a'.repeat(64);
 const calls=[];let handler,level=1,failRpc=false;
 const hmac=(domain,v)=>createHmac('sha256',pepper).update(domain+'|'+v).digest('hex');
 const hash=v=>createHash('sha256').update(v).digest('hex');
@@ -31,7 +31,7 @@ try{
  await response({...signup,account_id:legacy},400);
  await response({...signup,new_recovery:'1234567890123'},400);
  await response({...signup,new_recovery:old.slice(1)},400);
- await response({...signup,password:'short'},400);
+ await response({...signup,password:'abc'},400);
  await response(signup,403,{Origin:'https://invalid.example'});
  assert.equal(calls.length,0);
  const s=await response(signup,201);assert.deepEqual(s,{account_id:account,level:1,lv2_active:false});
