@@ -324,6 +324,52 @@ function beagu26ScoreOrReview(code, answer, sourceRow, schoolId, reviewRows) {
     return null;
   }
 }
+// Cache only the current snapshot directory; no respondent row numbers or
+// historical school IDs can override the exact identity resolver.
+const BEAGU26_SCHOOL_INDEXES=new WeakMap();
+function beagu26PrepareSchoolIndex(schools) {
+  const index=new Map();
+  for(const s of schools){
+    const key=JSON.stringify([regionOf(s.sido_standard),normalizeOffice(s.support_office),normalize(s.school_name)]);
+    if(!index.has(key))index.set(key,[]);
+    index.get(key).push(s);
+  }
+  BEAGU26_SCHOOL_INDEXES.set(schools,index);
+}
+function beagu26AuditPriorExactMatches(values,schools,priorRows,holdRows) {
+  const result={candidates:0,reusable:0,held:0};
+  const c=questionColumns(values[0]),prior=new Map(),holds=new Map();
+  for(const r of holdRows){
+    const n=Number(r[0]);
+    if(!holds.has(n))holds.set(n,[]);
+    holds.get(n).push(r);
+  }
+  for(const r of priorRows){
+    if(r[2]!=="UNIQUE_EXACT_MATCH_RECHECK")continue;
+    result.candidates++;
+    const n=Number(r[0]);
+    if(!prior.has(n))prior.set(n,[]);
+    prior.get(n).push(r);
+  }
+  for(const [n,records] of prior){
+    const r=Number.isSafeInteger(n)&&n>=2?values[n-1]:null;
+    const old=holds.get(n)||[];
+    if(records.length!==1||!r||old.length!==1){result.held+=records.length;continue;}
+    const evidence=records[0],previous=old[0],day=getSubmittedDay(r[0]);
+    const offices=c.office.map(i=>String(r[i]||"").trim()).filter(Boolean);
+    if(evidence[4]!=="원본 기본정보 일치"||evidence[1]!=="학교 MASTER 미매칭"||
+        previous[4]!=="학교 MASTER 미매칭"||!day||day<BEAGU26.firstOfficialResponseDay||day>"2026-12-31"||
+        offices.length!==1||normalize(r[c.region])!==normalize(previous[1])||
+        normalize(offices[0])!==normalize(previous[2])||normalize(r[c.school])!==normalize(previous[3])){
+      result.held++;continue;
+    }
+    const exact=resolveSchool(r,c,schools);
+    if(!exact.school||String(exact.school.school_id)!==String(evidence[3])||
+        exact.school.status!=="운영"||exact.typeConflict){result.held++;continue;}
+    result.reusable++;
+  }
+  return result;
+}
 function resolveSchool(row,c,schools) {
   const schoolName=normalize(row[c.school]);
   const region=regionOf(row[c.region]);
@@ -331,7 +377,8 @@ function resolveSchool(row,c,schools) {
   if(!schoolName||!region||officeNames.length!==1)return {error:"학교·지역·교육지원청 필수값 누락 또는 중복"};
   const office=normalizeOffice(officeNames[0]);
   if(!office)return {error:"교육지원청을 식별할 수 없음"};
-  const same=schools.filter(s=>regionOf(s.sido_standard)===region
+  const index=BEAGU26_SCHOOL_INDEXES.get(schools);
+  const same=index?(index.get(JSON.stringify([region,office,schoolName]))||[]):schools.filter(s=>regionOf(s.sido_standard)===region
     &&normalize(s.school_name)===schoolName
     &&normalizeOffice(s.support_office)===office);
   if(same.length!==1)return {error:same.length===0?"학교 MASTER 미매칭":"동일명 학교 중복",region,office};
@@ -547,6 +594,20 @@ function readBeagu2026SourceSnapshot() {
   const values=source.getRange(1,1,Math.max(1,rowCount),last+1).getDisplayValues();
   const schools=fetchSchools();
   if(!schools.length)throw Error('학교 MASTER 비어 있음');
+  beagu26PrepareSchoolIndex(schools);
+  // Optional audit only. A stale or absent historical row cannot force a match
+  // or prevent the normal exact current-directory aggregation.
+  try {
+    const master=SpreadsheetApp.openById(BEAGU26.destinationId);
+    const prior=master.getSheetByName('2026_학교매칭_재검증_1124');
+    const holds=master.getSheetByName(BEAGU26.holdTab);
+    if(prior&&holds&&prior.getLastRow()>1&&holds.getLastRow()>1){
+      const result=beagu26AuditPriorExactMatches(values,schools,
+        prior.getRange(2,1,prior.getLastRow()-1,7).getDisplayValues(),
+        holds.getRange(2,1,holds.getLastRow()-1,6).getDisplayValues());
+      Logger.log('BEAGU26_PRIOR_MATCH_AUDIT '+JSON.stringify(result));
+    }
+  } catch(e){Logger.log('BEAGU26_PRIOR_MATCH_AUDIT unavailable');}
   return {startedAt,values,schools};
 }
 function refreshBeagu2026QuestionResults(snapshot) {
