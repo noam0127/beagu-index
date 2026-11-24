@@ -1,0 +1,72 @@
+name: Anonymous account local HTTP gateway integration
+on:
+  pull_request:
+    branches: ['release/base-pages-*']
+    paths:
+      - 'supabase/account*.sql'
+      - 'supabase/functions/beagu-account-v1/**'
+      - 'supabase/functions/beagu-postit-api-v1/**'
+      - 'supabase/functions/beagu-admin-members-v1/**'
+      - 'tests/account-v1-*'
+      - '.github/workflows/account-local-http-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anonymous-http-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  http-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install disposable local SDKs
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 @supabase/supabase-js@2.58.0 supabase-fixture-257@npm:@supabase/supabase-js@2.57.0
+      - name: Actual local HTTP and database integration, no production credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker network create beagu-account-local
+          trap 'docker rm -f beagu-pgrst beagu-pg >/dev/null 2>&1 || true; docker network rm beagu-account-local >/dev/null 2>&1 || true' EXIT
+          docker run --rm -d --name beagu-pg --network beagu-account-local -e POSTGRES_PASSWORD=fixture-only postgres:17
+          for i in $(seq 1 45); do docker exec beagu-pg pg_isready -U postgres && break || sleep 1; done
+          pg() { docker exec -i beagu-pg psql -X -v ON_ERROR_STOP=1 -U postgres "$@"; }
+          pg <<'SQL'
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN BYPASSRLS;
+          CREATE ROLE authenticator LOGIN NOINHERIT PASSWORD 'fixture-rest-only';
+          GRANT anon,authenticated,service_role TO authenticator;
+          SQL
+          pg < tests/account-v1-postgres-fixture.sql
+          pg < supabase/migrations/20261121103000_beagu_postit_member_auth.sql
+          pg < supabase/migrations/20261120_beagu_postit_school_conversations.sql
+          pg < supabase/migrations/20261120_beagu_postit_session_identity.sql
+          pg < supabase/migrations/20261120_beagu_postit_game_subjects.sql
+          pg < supabase/migrations/20261120_beagu_postit_comparison_subjects.sql
+          pg < supabase/migrations/20261120_beagu_postit_game_school_refs.sql
+          pg < supabase/migrations/20261121140000_beagu_postit_atomic_write.sql
+          pg < supabase/account-identity-v1.sql
+          pg < supabase/account-provisional-v1.sql
+          pg <<'SQL'
+          UPDATE beagu_private.challenge_device_claims SET device_secret_sha256=encode(extensions.digest(device_secret_sha256,'sha256'),'hex');
+          UPDATE beagu_private.challenge_referral_profiles SET access_level=2,valid_referrals=1,upgraded_at=now() WHERE access_level=1;
+          GRANT SELECT ON public.beagu_level_sessions,public.beagu_admin_accounts,public.schools TO service_role;
+          CREATE FUNCTION public.beagu_admin_active_mfa_session(p_user uuid,p_session text) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT p_user='00000000-0000-0000-0000-000000000001'::uuid AND p_session='fixture-session' $$;
+          REVOKE ALL ON FUNCTION public.beagu_admin_active_mfa_session(uuid,text) FROM PUBLIC,anon,authenticated;
+          GRANT EXECUTE ON FUNCTION public.beagu_admin_active_mfa_session(uuid,text) TO service_role;
+          SQL
+          pg -Atc "SELECT md5(string_agg(to_jsonb(r)::text,',' ORDER BY visitor_id)) FROM beagu_private.challenge_referral_profiles r" > /tmp/beagu-credit-before
+          docker run --rm -d --name beagu-pgrst --network beagu-account-local -p 127.0.0.1:18790:3000 -e PGRST_DB_URI=postgres://authenticator:fixture-rest-only@beagu-pg:5432/postgres -e PGRST_DB_SCHEMAS=public -e PGRST_DB_ANON_ROLE=anon -e PGRST_JWT_SECRET=fixture-local-jwt-secret-do-not-use-in-production-2026 postgrest/postgrest:v12.2.12
+          for i in $(seq 1 40); do if curl -fsS http://127.0.0.1:18790/ >/dev/null; then break; fi; sleep 1; done
+          node --experimental-strip-types --experimental-transform-types tests/account-v1-http-integration.mjs
+          pg -Atc "SELECT md5(string_agg(to_jsonb(r)::text,',' ORDER BY visitor_id)) FROM beagu_private.challenge_referral_profiles r" > /tmp/beagu-credit-after
+          cmp /tmp/beagu-credit-before /tmp/beagu-credit-after
+          echo 'PASS referral profile exact digest preserved across real HTTP operations'
