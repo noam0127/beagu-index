@@ -1,23 +1,21 @@
 const assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("node:vm");
-const read=p=>fs.readFileSync(p,"utf8");
-const src=read("js/beagu-account-v1.js"),html=read("account.html");
-for(const id of ["accountSignup","accountLogin","accountFormal","accountGoogle","accountFormalLogin","accountLogout","accountNickname"])assert.ok(html.includes('id="'+id+'"'));
+const read=p=>fs.readFileSync(p,"utf8"),src=read("js/beagu-account-v1.js"),html=read("account.html");
+for(const id of ["accountSignup","accountLogin","accountRecover","accountSaveCard","accountHideCard","accountLogout","currentLv2","cardLv2","cardRecovery"])assert.ok(html.includes('id="'+id+'"'));
+assert.doesNotMatch(html,/type="email"|type="tel"|accountGoogle|accountFormal/);
 assert.match(read("index.html"),/href="account\.html"/);
 assert.match(read("js/beagu-participation-auth-v2.js"),/href="account\.html"/);
 assert.match(read("supabase/functions/beagu-level-api/index.ts"),/beagu_account_level_session_allowed_v1/);
 const map=new Map(),store=new Map(),local=new Map([["beagu-referral-device-secret-v1","a".repeat(64)]]);
-const node=id=>{if(!map.has(id))map.set(id,{hidden:false,textContent:"",elements:{password:{value:"test"},account_id:{value:""}},disabled:false});return map.get(id)};
+const node=id=>{if(!map.has(id))map.set(id,{hidden:false,textContent:"",dataset:{},elements:{password:{value:"test"},recovery:{value:"test"},account_id:{value:""}},disabled:false});return map.get(id)};
 const storage=m=>({getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)});
-const calls=[],account="00000000-0000-0000-0000-000000000001",nickname="Il|ǀ❘ı∣│Il",token="b".repeat(64),nextToken="c".repeat(64);
-let formal=false;
-const client={auth:{getSession:async()=>({data:{session:{access_token:"fixture-token"}}}),signInWithOAuth:async()=>({}),signOut:async()=>({})}};
-const context={document:{getElementById:node,querySelectorAll:()=>[]},window:{supabaseClient:client},sessionStorage:storage(store),localStorage:storage(local),location:{href:"https://baeguindex.com/account.html"},URL,FormData:class{constructor(f){this.data=f.data}get(k){return this.data[k]}},fetch:async(_url,opts)=>{
- const b=JSON.parse(opts.body);calls.push({body:b,headers:opts.headers});
+const calls=[],account="20000000-0000-4000-8000-000000000001",nickname="Il|ǀ❘ı∣│Il",token="b".repeat(64),nextToken="c".repeat(64);
+let recovery,active=false,logged=false,n=0,fileText;
+const context={document:{getElementById:node,querySelectorAll:()=>[],addEventListener(){},createElement:()=>({click(){}})},window:{},sessionStorage:storage(store),localStorage:storage(local),crypto:{randomUUID:()=>account,getRandomValues:a=>a.fill(++n)},Blob:class{constructor(parts){fileText=parts.join("")}},URL:{createObjectURL:()=>"blob:fixture",revokeObjectURL(){}},setTimeout:()=>{},FormData:class{constructor(f){this.data=f.data}get(k){return this.data[k]}},fetch:async(_url,opts)=>{
+ const b=JSON.parse(opts.body);calls.push({body:b,headers:opts.headers});assert.ok(!("Authorization" in opts.headers));
  let data;
- if(b.action==="signup")data={account_id:account};
- else if(b.action==="password_login")data={account_id:account,nickname,token,level:2};
- else if(b.action==="formal_link"){assert.equal(opts.headers["X-Beagu-Session"],token);assert.equal(opts.headers.Authorization,"Bearer fixture-token");formal=true;data={formal:true,account_id:account};}
- else if(b.action==="formal_login"){assert.equal(formal,true);data={formal:true,account_id:account,nickname,token:nextToken,level:2};}
+ if(b.action==="signup"){assert.equal(b.account_id,account);recovery=b.new_recovery;data={account_id:account,level:1,lv2_active:false};}
+ else if(b.action==="password_login"){logged=true;data={account_id:account,nickname,token:active?nextToken:token,level:active?2:1,lv2_active:active};}
+ else if(b.action==="recover"){assert.equal(b.recovery,recovery);assert.notEqual(b.new_recovery,recovery);recovery=b.new_recovery;active=true;data={account_id:account,level:2,lv2_active:true};}
  else if(b.action==="logout"){assert.equal(opts.headers["X-Beagu-Session"],nextToken);data={ok:true};}
  else throw Error("unexpected call "+b.action);
  return {ok:true,json:async()=>data};
@@ -29,15 +27,21 @@ const submit=async(id,data)=>{const f=node(id);f.data=data;f.onsubmit({preventDe
  await submit("accountSignup",{code:"SYNTHETIC-CODE",password:"test-password-123"});
  assert.equal(node("accountLogin").elements.account_id.value,account);
  assert.equal(node("accountSignup").elements.password.value,"");
+ assert.equal(node("cardLv2").textContent,"Lv.2 비활성");
+ assert.equal(node("cardRecovery").textContent.replaceAll("-",""),recovery);
+ node("accountSaveCard").onclick();assert.ok(fileText.includes(account)&&fileText.includes("Lv.2 비활성")&&fileText.includes(node("cardRecovery").textContent));
+ node("accountHideCard").onclick();assert.equal(node("cardRecovery").textContent,"");
  await submit("accountLogin",{account_id:account,password:"test-password-123"});
  assert.equal(store.get("beagu-level-session-v1"),token);
- assert.ok(node("accountNickname").textContent.includes(nickname));
- await submit("accountFormal",{code:"SYNTHETIC-CODE"});
- assert.equal(store.get("beagu-level-session-v1"),nextToken);
- assert.ok(node("accountNickname").textContent.includes(nickname));
+ assert.ok(node("accountNickname").textContent.includes(nickname));assert.equal(node("currentLv2").textContent,"Lv.2 비활성");
+ await submit("accountRecover",{account_id:account,recovery,password:"replacement-password"});
+ assert.equal(node("accountRecover").elements.password.value,"");assert.equal(node("accountRecover").elements.recovery.value,"");assert.equal(store.has("beagu-account-session-v1"),false);
+ assert.equal(node("cardLv2").textContent,"Lv.2 활성");assert.equal(node("cardRecovery").textContent.replaceAll("-",""),recovery);
+ await submit("accountLogin",{account_id:account,password:"replacement-password"});
+ assert.equal(node("currentLv2").textContent,"Lv.2 활성");
  node("accountLogout").onclick();await settle();await settle();
  assert.equal(store.has("beagu-level-session-v1"),false);assert.equal(store.has("beagu-account-session-v1"),false);
- assert.equal(node("accountNickname").hidden,true);
- assert.equal(calls[0].body.deviceSecret,"a".repeat(64));
- console.log("PASS account UI: signup, password clearing, login, original-device formal conversion, nickname and logout");
+ assert.equal(node("accountNickname").hidden,true);assert.equal(node("cardRecovery").textContent,"");
+ assert.equal(calls[0].body.deviceSecret,"a".repeat(64));assert.ok([...store.values(),...local.values()].every(x=>x!==recovery));
+ console.log("PASS anonymous account UI: signup, local member card, Lv2 activation, recovery rotation, secret clearing and logout");
 })().catch(e=>{console.error(e);process.exitCode=1});
