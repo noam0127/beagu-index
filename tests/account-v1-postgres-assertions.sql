@@ -19,12 +19,14 @@ BEGIN
  nick:=r->>'nickname'; IF nick IS NULL OR nick !~ '^[Il|ǀ❘ı∣│]{10}$' THEN RAISE EXCEPTION 'nickname invalid'; END IF;
  IF public.beagu_account_postit_writer_v1(repeat('1',64)) IS NOT NULL THEN RAISE EXCEPTION 'Lv1 writer'; END IF;
  UPDATE beagu_private.challenge_referral_profiles SET access_level=2,valid_referrals=1,upgraded_at=now() WHERE visitor_id=v;
- IF public.beagu_account_level_session_allowed_v1(repeat('1',64)) THEN RAISE EXCEPTION 'old session survived referral change'; END IF;
+ IF NOT public.beagu_account_level_session_allowed_v1(repeat('1',64)) OR public.beagu_account_postit_writer_v1(repeat('1',64)) IS NULL OR (public.beagu_account_session_status_v1(repeat('1',64))->>'level') IS DISTINCT FROM '2' THEN RAISE EXCEPTION 'existing authenticated session did not promote'; END IF;
  r:=public.beagu_account_password_login_v1(a,repeat('c',64),repeat('2',64));
  IF r->>'lv2_active' IS DISTINCT FROM 'true' OR r->>'nickname' IS DISTINCT FROM nick THEN RAISE EXCEPTION 'earned badge missing'; END IF;
  actor:=public.beagu_account_postit_writer_v1(repeat('2',64)); IF actor IS NULL THEN RAISE EXCEPTION 'Lv2 writer missing'; END IF;
  INSERT INTO public.beagu_level_sessions VALUES(repeat('9',64),2,now()+interval '30 minutes','2026',v);
- IF public.beagu_account_postit_writer_v1(repeat('9',64)) IS NOT NULL THEN RAISE EXCEPTION 'participation-only writer'; END IF;
+ IF public.beagu_account_postit_writer_v1(repeat('9',64)) IS NOT NULL OR (SELECT access_level FROM public.beagu_level_sessions WHERE token_sha256=repeat('9',64)) IS DISTINCT FROM 1 THEN RAISE EXCEPTION 'new recommendation-only session bypass'; END IF;
+ IF public.beagu_legacy_lv2_read_allowed_v1(v) IS DISTINCT FROM false THEN RAISE EXCEPTION 'post-cutover visitor grandfathered'; END IF;
+ IF has_function_privilege('anon','public.beagu_legacy_lv2_read_allowed_v1(uuid)','execute') OR has_table_privilege('service_role','beagu_private.beagu_lv2_transition_visitors_v1','insert') THEN RAISE EXCEPTION 'transition grants exposed'; END IF;
  IF public.beagu_account_recover_v1(a,repeat('a',64),repeat('f',64),repeat('e',64)) IS NOT NULL THEN RAISE EXCEPTION 'recovery guessing'; END IF;
  IF public.beagu_account_recover_v1(a,repeat('d',64),repeat('d',64),repeat('e',64)) IS NOT NULL THEN RAISE EXCEPTION 'recovery reuse'; END IF;
  r:=public.beagu_account_recover_v1(a,repeat('d',64),repeat('f',64),repeat('e',64));

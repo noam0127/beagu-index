@@ -110,6 +110,63 @@ RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
 $$;
 REVOKE ALL ON FUNCTION beagu_private.beagu_account_visitor_level_v1(uuid) FROM PUBLIC,anon,authenticated;
 
+-- Dual-mission cutover. This snapshot is immutable after installation; only an
+-- explicitly approved absolute expiry supplied by the release operator enables
+-- the grandfathered read-only exception. No production invocation in CI.
+CREATE TABLE beagu_private.beagu_lv2_transition_v1(
+ id integer PRIMARY KEY CHECK(id=1), cutoff timestamptz NOT NULL, expires_at timestamptz,
+ CHECK(expires_at IS NULL OR expires_at>cutoff)
+);
+CREATE TABLE beagu_private.beagu_lv2_transition_visitors_v1(visitor_id uuid PRIMARY KEY);
+CREATE TABLE beagu_private.beagu_lv2_transition_tokens_v1(token_sha256 text PRIMARY KEY);
+ALTER TABLE beagu_private.beagu_lv2_transition_v1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE beagu_private.beagu_lv2_transition_visitors_v1 ENABLE ROW LEVEL SECURITY;
+ALTER TABLE beagu_private.beagu_lv2_transition_tokens_v1 ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON beagu_private.beagu_lv2_transition_v1,beagu_private.beagu_lv2_transition_visitors_v1,beagu_private.beagu_lv2_transition_tokens_v1 FROM PUBLIC,anon,authenticated,service_role;
+-- Installation must run in a single transaction with referral/session writes frozen.
+-- Capture ONLY already-earned identities and already-issued static Lv2 sessions.
+LOCK TABLE beagu_private.challenge_referral_profiles IN SHARE ROW EXCLUSIVE MODE;
+LOCK TABLE public.beagu_level_sessions IN SHARE ROW EXCLUSIVE MODE;
+INSERT INTO beagu_private.beagu_lv2_transition_v1 VALUES(1,statement_timestamp(),nullif(current_setting('beagu.lv2_transition_expires_at',true),'')::timestamptz);
+INSERT INTO beagu_private.beagu_lv2_transition_visitors_v1
+ SELECT visitor_id FROM beagu_private.challenge_referral_profiles
+ WHERE campaign='2026' AND public.beagu_has_earned_challenge_visitor(visitor_id);
+INSERT INTO beagu_private.beagu_lv2_transition_tokens_v1
+ SELECT token_sha256 FROM public.beagu_level_sessions
+ WHERE access_level=2 AND identity_visitor_id IS NULL AND expires_at>now();
+CREATE FUNCTION public.beagu_legacy_lv2_read_allowed_v1(p_visitor uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
+ SELECT EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_visitors_v1 v
+ CROSS JOIN beagu_private.beagu_lv2_transition_v1 c WHERE v.visitor_id=p_visitor AND c.expires_at>now())
+ AND public.beagu_has_earned_challenge_visitor(p_visitor)
+$$;
+REVOKE ALL ON FUNCTION public.beagu_legacy_lv2_read_allowed_v1(uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.beagu_legacy_lv2_read_allowed_v1(uuid) TO service_role;
+-- All writers (even older Edge versions) must pass the database session gate.
+CREATE FUNCTION beagu_private.beagu_lv2_session_guard_v1()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+DECLARE deadline timestamptz;
+BEGIN
+ IF NEW.access_level<2 THEN RETURN NEW; END IF;
+ IF NEW.access_level=2 AND NEW.identity_campaign='2026' AND EXISTS(
+ SELECT 1 FROM beagu_private.beagu_account_sessions_v1 s
+ JOIN beagu_private.beagu_anonymous_accounts_v1 a ON a.account_id=s.account_id AND a.visitor_id=s.visitor_id
+ WHERE s.token_sha256=NEW.token_sha256 AND s.visitor_id=NEW.identity_visitor_id
+ AND s.expires_at>now() AND a.enabled AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)=2)
+ THEN RETURN NEW; END IF;
+ SELECT expires_at INTO deadline FROM beagu_private.beagu_lv2_transition_v1 WHERE id=1 AND expires_at>now();
+ IF NEW.access_level=2 AND deadline IS NOT NULL AND
+ ( (NEW.identity_campaign='2026' AND public.beagu_legacy_lv2_read_allowed_v1(NEW.identity_visitor_id))
+ OR (NEW.identity_visitor_id IS NULL AND EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_tokens_v1 t WHERE t.token_sha256=NEW.token_sha256)) )
+ THEN NEW.expires_at:=least(NEW.expires_at,deadline); RETURN NEW; END IF;
+ NEW.access_level:=1;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION beagu_private.beagu_lv2_session_guard_v1() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER beagu_lv2_session_guard_v1 BEFORE INSERT OR UPDATE OF access_level,identity_visitor_id,identity_campaign,expires_at ON public.beagu_level_sessions FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_lv2_session_guard_v1();
+-- Existing sessions receive the same gate; grandfathered expiry is capped.
+UPDATE public.beagu_level_sessions SET access_level=access_level WHERE access_level>=2;
+
 -- Copy only the pseudonymous ownership and moderation state, never Auth identity.
 -- Must execute under a reviewed cutover transaction after legacy signups are frozen.
 CREATE TABLE beagu_private.beagu_legacy_author_bridge_v1(
@@ -175,8 +232,9 @@ BEGIN
  IF lvl=0 THEN RETURN NULL; END IF;
  exp:=now()+interval '30 minutes';
  INSERT INTO public.beagu_level_sessions(token_sha256,access_level,expires_at,identity_campaign,identity_visitor_id)
- VALUES(p_token_sha,lvl,exp,'2026',a.visitor_id);
+ VALUES(p_token_sha,1,exp,'2026',a.visitor_id);
  INSERT INTO beagu_private.beagu_account_sessions_v1 VALUES(p_token_sha,a.visitor_id,a.account_id,exp);
+ IF lvl=2 THEN UPDATE public.beagu_level_sessions SET access_level=2 WHERE token_sha256=p_token_sha; END IF;
  DELETE FROM beagu_private.beagu_account_login_budget_v1 WHERE account_id=a.account_id;
  RETURN jsonb_build_object('account_id',p_account,'nickname',beagu_private.beagu_account_nickname_v1(a.visitor_id),'level',lvl,'lv2_active',lvl=2,'expires_at',exp);
 END $$;
@@ -228,7 +286,31 @@ BEGIN
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION beagu_private.beagu_account_revoke_sessions_v1() FROM PUBLIC,anon,authenticated,service_role;
-CREATE TRIGGER beagu_account_referral_revoke AFTER UPDATE OF disabled,access_level,valid_referrals,upgraded_at OR DELETE ON beagu_private.challenge_referral_profiles FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_account_revoke_sessions_v1();
+CREATE FUNCTION beagu_private.beagu_account_referral_refresh_v1()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
+BEGIN
+ PERFORM pg_advisory_xact_lock(2026,1110);
+ -- Genuine first promotion upgrades the same authenticated session, not a code-only session.
+ IF TG_OP='UPDATE' AND NOT OLD.disabled AND NOT NEW.disabled AND
+    OLD.access_level=1 AND NEW.access_level=2 AND OLD.valid_referrals<1 AND NEW.valid_referrals>=1
+    AND beagu_private.beagu_account_visitor_level_v1(NEW.visitor_id)=2 THEN
+   UPDATE public.beagu_level_sessions l SET access_level=2
+   WHERE l.expires_at>now() AND EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 s
+     JOIN beagu_private.beagu_anonymous_accounts_v1 a ON a.account_id=s.account_id AND a.visitor_id=s.visitor_id
+     WHERE s.token_sha256=l.token_sha256 AND s.visitor_id=NEW.visitor_id AND s.expires_at>now() AND a.enabled);
+ ELSE
+   DELETE FROM public.beagu_level_sessions l WHERE EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 s
+     WHERE s.token_sha256=l.token_sha256 AND s.visitor_id=OLD.visitor_id);
+ END IF;
+ -- Any revoked referral loses legacy read access immediately, including old API readers.
+ IF TG_OP='DELETE' OR NOT public.beagu_has_earned_challenge_visitor(OLD.visitor_id) THEN
+   UPDATE public.beagu_level_sessions l SET access_level=1
+   WHERE l.identity_campaign='2026' AND l.identity_visitor_id=OLD.visitor_id AND l.access_level>=2;
+ END IF;
+ IF TG_OP='DELETE' THEN RETURN OLD; END IF; RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION beagu_private.beagu_account_referral_refresh_v1() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER beagu_account_referral_revoke AFTER UPDATE OF disabled,access_level,valid_referrals,upgraded_at OR DELETE ON beagu_private.challenge_referral_profiles FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_account_referral_refresh_v1();
 CREATE TRIGGER beagu_account_code_revoke AFTER UPDATE OF identity_code OR DELETE ON beagu_private.challenge_identity_codes FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_account_revoke_sessions_v1();
 CREATE TRIGGER beagu_account_credential_revoke BEFORE UPDATE OF enabled,password_hash,recovery_hash OR DELETE ON beagu_private.beagu_anonymous_accounts_v1 FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_account_revoke_sessions_v1();
 CREATE FUNCTION public.beagu_account_level_session_allowed_v1(p_token_sha text)
@@ -236,7 +318,7 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT EXISTS(SELECT 1 FROM public.beagu_level_sessions WHERE token_sha256=p_token_sha AND expires_at>now()) AND CASE WHEN EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 WHERE token_sha256=p_token_sha)
  THEN EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 s JOIN public.beagu_level_sessions l USING(token_sha256)
  JOIN beagu_private.beagu_anonymous_accounts_v1 a ON a.account_id=s.account_id AND a.visitor_id=s.visitor_id
- WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now() AND a.enabled AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)>0) ELSE true END
+ WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now() AND a.enabled AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)>=l.access_level) ELSE EXISTS(SELECT 1 FROM public.beagu_level_sessions l WHERE l.token_sha256=p_token_sha AND (l.access_level=1 OR (l.access_level=2 AND EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_v1 c WHERE c.expires_at>now()) AND ((l.identity_campaign='2026' AND public.beagu_legacy_lv2_read_allowed_v1(l.identity_visitor_id)) OR (l.identity_visitor_id IS NULL AND EXISTS(SELECT 1 FROM beagu_private.beagu_lv2_transition_tokens_v1 t WHERE t.token_sha256=l.token_sha256)))))) END
 $$;
 -- Report-based writing restrictions are separate from survey eligibility and credentials.
 CREATE TABLE beagu_private.beagu_postit_restrictions_v1(
