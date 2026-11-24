@@ -188,6 +188,7 @@
 <link rel="stylesheet" href="styles/challenge-premium-grid-v1.css?v=20261123-layout1">
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/challenge-milestone-v1.css?v=150">
+<link rel="stylesheet" href="styles/challenge-together-v1.css?v=1112">
 <script defer src="js/beagu-release-info-v1.js?v=120"></script>
 <link rel="stylesheet" href="styles/beagu-communication-v1.css?v=1111">
 </head>
@@ -239,33 +240,23 @@
       <div class="beagu-xp-footer"><span class="beagu-sr-only" data-xp-state>챌린지 집계 확인 중</span><strong data-xp-remainder>확인 중</strong></div>
       
     </section></div><aside id="certificateThanks" class="certificate-gratitude" role="status" aria-live="polite" hidden></aside></section>
+  <section class="steps" aria-labelledby="steps-title">
+    <h2 class="section-title" id="steps-title">참여 인증</h2>
+
+    <section class="step-card" aria-labelledby="step-1">
+      <div class="step-heading"><span class="step-number" aria-hidden="true">1</span><h3 id="step-1">인증 이미지 저장</h3></div>
+      <button class="action" id="capture" type="button" disabled>↓ 인증 이미지 저장하기</button>
+      <p id="status" role="status" aria-live="polite">참여 순번을 확인하고 있습니다.</p>
+      <button class="action secondary" id="retry" type="button" hidden>다시 시도하기</button>
+    </section>
+
+  </section>
   <section class="challenge-levelup-heading" aria-labelledby="challenge-levelup-title">
     <span class="challenge-levelup-kicker">LEVEL UP</span>
     <h2 id="challenge-levelup-title">Lv.2로 레벨업하기</h2>
     <p>전용 조사 링크를 공유해 동료의 유효한 설문 응답을 받으면 Lv.2가 활성화됩니다. 이후에도 추천 인원이 계속 누적됩니다.</p>
   </section>
   <!-- 아래 링크와 참여코드는 인증샷에서 제외 -->
-  <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
-    <div class="challenge-premium-emblem" aria-hidden="true"><span class="challenge-premium-crown">♛</span><strong>Lv.2</strong></div>
-    <div class="challenge-vip-crown" id="challengeVipMedal" hidden aria-label="Lv.2 인증 완료 VIP 회원">
-      <div class="challenge-vip-emblem" aria-hidden="true">🏅</div>
-      <div class="challenge-vip-wordmark">
-        <span class="challenge-vip-eyebrow">BAEGU INDEX · VERIFIED MEMBER</span>
-        <strong>VIP LEVEL 2</strong>
-      </div>
-      <span class="challenge-vip-star" aria-hidden="true">✦</span>
-    </div>
-    <div class="challenge-identity-head">
-      <h2 id="challengeIdentityTitle">Lv.2 참여코드(비활성)</h2>
-      <span class="challenge-identity-tag" id="challengeIdentityTag">승급 대기</span>
-    </div>
-    <div class="challenge-identity-row">
-      <strong class="challenge-identity-value" id="identityCode" aria-live="polite">고유번호 확인 중</strong>
-      <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled hidden>번호 복사</button>
-    </div>
-    <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
-    <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
-  </section>
     <section class="challenge-identity" id="challengeReferralPanel"
     data-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeReferralTitle">
     <div class="challenge-identity-head">
@@ -292,22 +283,37 @@
       </aside>
     </div>
   </section>
-  <section class="steps" aria-labelledby="steps-title">
-    <h2 class="section-title" id="steps-title">참여 인증</h2>
-
-    <section class="step-card" aria-labelledby="step-1">
-      <div class="step-heading"><span class="step-number" aria-hidden="true">1</span><h3 id="step-1">인증 이미지 저장</h3></div>
-      <button class="action" id="capture" type="button" disabled>↓ 인증 이미지 저장하기</button>
-      <p id="status" role="status" aria-live="polite">참여 순번을 확인하고 있습니다.</p>
-      <button class="action secondary" id="retry" type="button" hidden>다시 시도하기</button>
-    </section>
-
+  <section class="steps challenge-share-step" aria-label="공유하기">
     <section class="step-card" aria-labelledby="step-2">
       <div class="step-heading"><span class="step-number" aria-hidden="true">2</span><h3 id="step-2">쫑알쫑알 인증</h3></div>
       <a class="action secondary" id="loungeLink" href="https://indischool.com/tweets/channels/lounge" target="_blank" rel="noopener noreferrer">인디스쿨 쫑알쫑알에서 인증하기 ↗</a>
     </section>
 
   </section>
+  <details class="challenge-account-details" data-html2canvas-ignore="true">
+    <summary>나의 참여코드 및 인증 정보</summary>
+  <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
+    <div class="challenge-premium-emblem" aria-hidden="true"><span class="challenge-premium-crown">♛</span><strong>Lv.2</strong></div>
+    <div class="challenge-vip-crown" id="challengeVipMedal" hidden aria-label="Lv.2 인증 완료 VIP 회원">
+      <div class="challenge-vip-emblem" aria-hidden="true">🏅</div>
+      <div class="challenge-vip-wordmark">
+        <span class="challenge-vip-eyebrow">BAEGU INDEX · VERIFIED MEMBER</span>
+        <strong>VIP LEVEL 2</strong>
+      </div>
+      <span class="challenge-vip-star" aria-hidden="true">✦</span>
+    </div>
+    <div class="challenge-identity-head">
+      <h2 id="challengeIdentityTitle">Lv.2 참여코드(비활성)</h2>
+      <span class="challenge-identity-tag" id="challengeIdentityTag">승급 대기</span>
+    </div>
+    <div class="challenge-identity-row">
+      <strong class="challenge-identity-value" id="identityCode" aria-live="polite">고유번호 확인 중</strong>
+      <button class="challenge-identity-copy" id="copyIdentityCode" type="button" disabled hidden>번호 복사</button>
+    </div>
+    <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
+    <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
+  </section>
+  </details>
   </div>
 
 <section class="beagu-home-notice" data-notice-state="loading" hidden aria-labelledby="challenge-notice-title">
