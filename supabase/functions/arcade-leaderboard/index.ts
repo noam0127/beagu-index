@@ -101,8 +101,11 @@ async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
    db("beagu_school_report_yearly?"+p) as Promise<Array<{survey_year:number;percentile:number|null}>>
  ]);
  const school=rows[0];if(!school)return null;
+ let allow2026=false;
+ try{allow2026=(await db("rpc/beagu_2026_level_school_published","POST",{p_school_id:rawId,p_level:0}))===true;}catch{/* fail closed */}
  const percentiles=new Map<number,number>();
  for(const row of annualRows){
+   if(Number(row.survey_year)===2026&&!allow2026)continue;
    const raw=row.percentile;
    if(raw===null||raw===undefined||raw==="")continue;
    const value=Number(raw);
