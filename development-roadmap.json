@@ -227,11 +227,21 @@
       "scope": "공지사항·의견 접수",
       "status": "CANDIDATE_CI_PENDING",
       "branch": "release/v1.6.0-communication",
-      "pr": null,
+      "pr": 286,
       "commit": null,
       "tests": [
         {
-          "name": "Notice publish/hide conflict and stale session",
+          "name": "Initial communication browser and source validation",
+          "result": "PASS",
+          "run": 45311753868
+        },
+        {
+          "name": "Administrator telemetry legacy cache-version test",
+          "result": "FAIL",
+          "run": 45311753620
+        },
+        {
+          "name": "Updated contact and regression validation",
           "result": "PENDING"
         }
       ],

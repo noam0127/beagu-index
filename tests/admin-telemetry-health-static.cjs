@@ -20,7 +20,7 @@ assert.match(edge,/admin\.rpc\("beagu_admin_telemetry_health_v2"\)/);
 assert.match(edge,/telemetry_health:telemetryResult\.error\?null:telemetryResult\.data/);
 assert.match(html,/id="adminTelemetryHealthPanel"/);
 assert.match(html,/id="adminTelemetryAsOf"/);
-assert.match(html,/js\/beagu-admin-access-v1\.js\?v=20261121-[a-z0-9-]+/);
+assert.match(html,/js\/beagu-admin-access-v1\.js\?v=160"/);
 assert.match(js,/function renderTelemetryHealth\(data\)/);
 assert.match(js,/renderTelemetryHealth\(payload\.telemetry_health\)/);
 assert.match(js,/renderTelemetryHealth\(null\)/);
