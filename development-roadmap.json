@@ -225,10 +225,10 @@
       "version": "v1.6.0",
       "name": "소통",
       "scope": "공지사항·의견 접수",
-      "status": "AUDIENCE_CANDIDATE_FINAL_CI_PENDING",
+      "status": "DEPLOYED",
       "branch": "release/v1.6.0-communication",
       "pr": 286,
-      "commit": null,
+      "commit": "d9a52a8576e7a4729df7663c73d78c0aa38cfd09",
       "tests": [
         {
           "name": "Audience server and browser fixtures",
@@ -249,9 +249,9 @@
         "isolated audience storage and API provisioned; exact source verified",
         "v1.5.0 deployed"
       ],
-      "admin_registration": "PENDING",
-      "production": "NOT_APPROVED",
-      "deployment_date": null,
+      "admin_registration": "VERIFIED",
+      "production": "DEPLOYED",
+      "deployment_date": "2026-11-24T02:37:28.147Z",
       "rollback_sha": "c7676cc0acc3fe374bee49a4b26209e9101c5407"
     },
     {
@@ -259,17 +259,25 @@
       "version": "v1.7.0",
       "name": "관제탑",
       "scope": "관리자 직접 배포·SHA 검증·롤백",
-      "status": "PENDING",
-      "branch": null,
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.7.0-control-tower",
       "pr": null,
       "commit": null,
-      "tests": [],
+      "tests": [
+        {
+          "name": "Atomic transition, direct-release controller, browser",
+          "result": "PENDING"
+        }
+      ],
       "changed_files": [],
-      "dependencies": [],
+      "dependencies": [
+        "atomic service-role-only RPC and backward-compatible manager upgrade",
+        "optional server dispatch token; without it scheduled/manual wake remains"
+      ],
       "admin_registration": "PENDING",
       "production": "NOT_APPROVED",
       "deployment_date": null,
-      "rollback_sha": null
+      "rollback_sha": "d9a52a8576e7a4729df7663c73d78c0aa38cfd09"
     },
     {
       "order": 7,

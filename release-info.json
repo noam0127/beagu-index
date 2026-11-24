@@ -1,15 +1,15 @@
 {
   "schema": 1,
-  "version": "v1.6.0",
-  "name": "소통",
+  "version": "v1.7.0",
+  "name": "관제탑",
   "environment": "candidate",
   "commit": null,
   "builtAt": null,
   "deployedAt": null,
   "changes": [
-    "공통·Lv.0·Lv.1·Lv.2 개별 공지 작성·게시·숨김",
-    "서버 검증 레벨별 노출·숨긴 본문 관리자 전용",
-    "홈·검색·비교·챌린지 공지 연동",
-    "의견 접수 이메일 manatee09@kakao.com"
+    "승인 직후 GitHub 실행 요청 지원 및 수동 실행 대체 경로",
+    "등록·승인·완료 원자적 처리",
+    "배포 대기·실행·게시·실제 웹 SHA 확인",
+    "최근 작업·실패 내역 및 정확한 롤백 대상 표시"
   ]
 }
