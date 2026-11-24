@@ -40,6 +40,7 @@
     direct_route_required:"직접 배포 관리자 화면을 새로고침하세요.",
     direct_ci_required:"이 커밋의 코드 검증이 아직 통과하지 않았습니다.",
     direct_candidate_stale:"현재 운영 버전을 포함하지 않는 후보입니다.",
+    backend_integrated_required:"서버 변경이 포함된 버전입니다. 통합 적용 준비가 완료될 때까지 웹 단독 적용을 차단합니다.",
     direct_confirmation_required:"배포 대상이 변경되었습니다. 새로고침하세요.",
     direct_draft_conflict:"등록 후보가 변경되었습니다. 새로고침하세요.",
     version_already_used:"같은 버전 이름으로 이미 다른 코드가 배포됐습니다.",
@@ -113,7 +114,7 @@
   const candidate=data.direct_release_v1===true&&s.draft_sha?{sha:s.draft_sha,version:s.draft_version}:null;
   const ready=!!candidate&&readyKey===key;
   write("releaseDraftInfo",candidate?
-    (ready?"검증 완료 · ":"검증 미확인 · ")+candidate.version+" · "+short(candidate.sha)+(ready?" · 실제 웹 적용 가능":" · 직접 적용 전 검증 필요"):
+    (ready?"검증 완료 · ":"검증 미확인 · ")+candidate.version+" · "+short(candidate.sha)+(ready?" · 실제 웹 적용 가능":data.direct_candidate_reason==="backend_integrated_required"?" · 통합 적용 필요 · 웹 단독 적용 차단":" · 직접 적용 전 검증 필요"):
     s.draft_sha?"등록된 업데이트: "+s.draft_version+" ("+short(s.draft_sha)+")":"새 버전을 등록하세요.");
   if(s.draft_sha){
    if(!el("releaseCandidateSha").value&&s.draft_sha!==s.production_sha)el("releaseCandidateSha").value=s.draft_sha;

@@ -93,6 +93,19 @@ async function changedFiles(from:string,to:string){
  return (diff.files||[]).map((f:{filename?:string})=>f.filename||"")
   .filter((path:string)=>path&&path!=="release-candidate.json");
 }
+// Phase 1: classify backend changes using the GitHub delta, never client flags.
+function backendPaths(files:any[]):string[]{
+ return [...new Set(files.flatMap(f=>[String(f.filename||""),String(f.previous_filename||"")])
+  .filter(p=>/^supabase\//.test(p)||/^scripts\/release-manager\//.test(p)||
+    /^\.github\/workflows\/(beagu-release-controller|deploy-github-pages-direct)\.ya?ml$/.test(p)))].sort();
+}
+async function backendChangeBetween(base:string,sha:string){
+ if(!SHA.test(base)||!SHA.test(sha)||base===sha)throw Error("invalid_backend_comparison");
+ const delta=await github("/compare/"+base+"..."+sha);
+ if(delta.status!=="ahead"||delta.merge_base_commit?.sha!==base||!Array.isArray(delta.files)||!delta.files.length||delta.files.length>=300)
+  throw Error("backend_comparison_unavailable");
+ return backendPaths(delta.files);
+}
 // Direct Pages release gate: exact candidate, current production ancestor, and server-read CI.
 async function directCandidate(base:string,sha:string){
  if(!SHA.test(base)||!SHA.test(sha)||base===sha)return {error:"invalid_direct_sha",status:400};
@@ -108,7 +121,8 @@ async function directCandidate(base:string,sha:string){
  const runs=await github("/actions/runs?head_sha="+sha+"&status=success&per_page=50");
  const proof=(runs.workflow_runs||[]).find((r:any)=>r.head_sha===sha&&r.conclusion==="success"&&r.status==="completed"&&r.path===".github/workflows/clean-release-validation.yml"&&r.head_repository?.full_name===repo);
  if(!proof)return {error:"direct_ci_required",status:409};
- return {version,summary,files:delta.files.map((f:any)=>String(f.filename||"")).filter(Boolean)};
+ const backend_files=backendPaths(delta.files);
+ return {version,summary,files:delta.files.map((f:any)=>String(f.filename||"")).filter(Boolean),backend_required:backend_files.length>0,backend_files};
 }
 async function state(){
  const {data,error}=await db.from("beagu_site_release_state_v1").select("*").eq("id",1).single();
@@ -147,7 +161,10 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
     try{
      const candidate=await directCandidate(s.production_sha,s.draft_sha);
      if("error" in candidate)reason=candidate.error||"direct_candidate_invalid";
-     else if(candidate.version===s.draft_version&&candidate.summary===s.draft_summary)ready=true;
+     else if(candidate.version===s.draft_version&&candidate.summary===s.draft_summary){
+      if(candidate.backend_required)reason="backend_integrated_required";
+      else ready=true;
+     }
      else reason="direct_version_mismatch";
     }catch{reason="github_unavailable";}
    }
@@ -174,7 +191,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   if(result.error)return error(result.error,409,origin);
   if(result.draft_sha!==sha)return error("direct_draft_conflict",409,origin);
   await db.from("beagu_admin_audit_events").insert({actor_user_id:userId,event_type:"site_release_register_direct",outcome:"success",details:{sha,version:candidate.version,base:s.production_sha}});
-  return respond({draft_sha:sha,version:candidate.version,summary:candidate.summary,changed_count:candidate.files.length,changed_files:candidate.files.slice(0,25)},200,origin);
+  return respond({draft_sha:sha,version:candidate.version,summary:candidate.summary,changed_count:candidate.files.length,changed_files:candidate.files.slice(0,25),backend_required:candidate.backend_required,backend_files:candidate.backend_files},200,origin);
  }
  let job:null|{action:string;target:string;to_sha:string|null;from_sha:string|null;version:string;summary:string;created_by:string}=null;
  if(action==="prod_direct_apply"){
@@ -184,6 +201,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   const candidate=await directCandidate(s.production_sha,sha);
   if("error" in candidate)return error(candidate.error!,candidate.status!,origin);
   if(candidate.version!==s.draft_version||candidate.summary!==s.draft_summary)return error("direct_version_mismatch",409,origin);
+  if(candidate.backend_required)return error("backend_integrated_required",409,origin);
   // Keep the existing database action constraint and history format.
   job={action:"prod_apply",target:"production",from_sha:s.production_sha,to_sha:sha,version:candidate.version,summary:candidate.summary,created_by:userId};
  }else if(action==="prod_rollback"){
@@ -197,6 +215,8 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   job={action,target:"production",from_sha:s.production_sha,to_sha:prev.from_sha,
    version:"이전 운영 버전",summary:"관리자 요청에 따라 직전 운영 배포 복원",created_by:userId};
   if(input.expected_production_sha!==undefined&&(input.expected_production_sha!==s.production_sha||input.expected_rollback_sha!==prev.from_sha||input.confirmed_direct!==true))return error("direct_confirmation_required",409,origin);
+  // A web-only rollback is unsafe when the prior release changed backend files.
+  if((await backendChangeBetween(prev.from_sha,s.production_sha)).length)return error("backend_integrated_required",409,origin);
   // Recover the exact restored version from the pinned historical manifest, not a generic label.
   try{const doc=await github("/contents/release-info.json?ref="+prev.from_sha);const meta=JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(doc.content.replace(/\s/g,"")),ch=>ch.charCodeAt(0))));if(allowedVersion.test(meta.version))job.version=meta.version;}catch{/* Older pre-version history can lack metadata. */}
  }else return error("invalid_action",400,origin);
@@ -246,6 +266,17 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
   if(job.target==="production"&&job.action!=="bootstrap"&&job.from_sha!==s.production_sha){
    await db.from("beagu_site_release_jobs_v1").update({status:"failed",error_code:"stale_production_base",finished_at:new Date().toISOString()}).eq("id",job.id).eq("status","queued");
    return respond({has_job:false,stale_production_base:true},200,origin);
+  }
+  // Recheck at claim time, including jobs queued by a pre-upgrade controller.
+  if(job.action==="prod_apply"||job.action==="prod_rollback"){
+   const paths=job.action==="prod_apply"?await backendChangeBetween(job.from_sha,job.to_sha):await backendChangeBetween(job.to_sha,job.from_sha);
+   if(paths.length){
+    const {error:blocked}=await db.from("beagu_site_release_jobs_v1").update({
+     status:"failed",error_code:"backend_integrated_required",finished_at:new Date().toISOString()
+    }).eq("id",job.id).eq("status","queued");
+    if(blocked)throw Error("claim_unavailable");
+    return respond({has_job:false,backend_integrated_required:true},200,origin);
+   }
   }
   const {data:claimed,error:e}=await db.from("beagu_site_release_jobs_v1")
    .update({status:"running",started_at:new Date().toISOString(),

@@ -4,7 +4,7 @@ const BASE='a'.repeat(40),DRAFT='b'.repeat(40),OTHER='c'.repeat(40),BLOB='d'.rep
 const version='v1.2.0',summary='정돈 · UI 개선',repo='noam0127/beagu-index';
 const src=fs.readFileSync('supabase/functions/beagu-release-manager-v1/index.ts','utf8');
 const state={id:1,production_sha:BASE,production_version:'old',draft_sha:OTHER,draft_version:'old-draft',draft_summary:'old draft',staging_sha:OTHER,public_data_blob_sha:BLOB};
-const jobs=[],audit=[];let allowMfa=true,allowCI=true,stale=false,handler;
+const jobs=[],audit=[];let allowMfa=true,allowCI=true,stale=false,handler,backend=false,renamed=false;
 function query(table){
  let operation='select',value=null,filters=[];
  const rows=()=>table==='beagu_site_release_state_v1'?[state]:table==='beagu_site_release_jobs_v1'?jobs:table==='beagu_admin_accounts'?[{user_id:'owner',role:'owner',enabled:true}]:[];
@@ -20,7 +20,7 @@ function query(table){
 const db={from:query,auth:{getUser:async()=>({data:{user:{id:'owner'}},error:null})},rpc:async(name,args)=>{if(name!=="beagu_release_transition_v2")return {data:allowMfa,error:null};const p=args.p_payload;let data;if(args.p_action==="register"){if(state.production_sha!==p.base||state.draft_sha!==p.expected_draft)data={error:"direct_draft_conflict"};else{Object.assign(state,{draft_sha:p.sha,draft_version:p.version,draft_summary:p.summary});data={draft_sha:p.sha}}}else if(args.p_action==="enqueue"){if(jobs.some(j=>["queued","running"].includes(j.status)))data={error:"release_in_progress"};else if(state.production_sha!==p.from_sha||state.draft_sha!==p.to_sha)data={error:"direct_draft_conflict"};else{const j={id:"00000000-0000-0000-0000-000000000001",status:"queued",...p};jobs.push(j);data={id:j.id}}}else if(args.p_action==="complete"){const j=jobs.find(j=>j.id===p.job_id);if(!j||j.status!=="running"||state.production_sha!==j.from_sha)data={error:"stale_production_base"};else{state.production_sha=j.to_sha;state.production_version=j.version;j.status="deployed";data={ok:true,version:j.version}}}return {data,error:null}}};
 const mockFetch=async(url)=>{const p=String(url);
  let data;
- if(p.includes('/compare/'))data={status:stale?'diverged':'ahead',merge_base_commit:{sha:BASE},files:[{filename:'index.html'}]};
+ if(p.includes('/compare/'))data={status:stale?'diverged':'ahead',merge_base_commit:{sha:BASE},files:[{filename:'index.html'},...(backend?[{filename:'supabase/account-provisional-v1.sql'}]:[]),...(renamed?[{filename:'archived.sql',previous_filename:'supabase/old.sql'}]:[])]};
  else if(p.includes('/contents/release-candidate.json'))data={content:Buffer.from(JSON.stringify({version,summary})).toString('base64')};
  else if(p.includes('/actions/runs?'))data={workflow_runs:allowCI?[{head_sha:DRAFT,status:'completed',conclusion:'success',path:'.github/workflows/clean-release-validation.yml',head_repository:{full_name:repo}}]:[]};
  else throw Error('unexpected network '+p);
@@ -42,6 +42,19 @@ async function call(action,fields={},token=jwt){const headers={'Content-Type':'a
  assert.equal((await call('status',{check_latest:true})).body.direct_candidate_ready,true);
  assert.equal((await call('prod_direct_apply',{candidate_sha:DRAFT,expected_production_sha:OTHER,confirmed_direct:true})).body.error,'direct_confirmation_required');
  assert.equal((await call('prod_direct_apply',{candidate_sha:DRAFT,expected_production_sha:BASE})).body.error,'direct_confirmation_required');
+ backend=true;
+ assert.equal((await call('status',{check_latest:true})).body.direct_candidate_reason,'backend_integrated_required');
+ assert.equal((await call('prod_direct_apply',{candidate_sha:DRAFT,expected_production_sha:BASE,confirmed_direct:true})).body.error,'backend_integrated_required');
+ assert.equal(jobs.length,0);
+ backend=false;renamed=true;
+ assert.equal((await call('prod_direct_apply',{candidate_sha:DRAFT,expected_production_sha:BASE,confirmed_direct:true})).body.error,'backend_integrated_required');
+ renamed=false;
+ jobs.push({id:'00000000-0000-0000-0000-000000000099',action:'prod_apply',target:'production',from_sha:BASE,to_sha:DRAFT,status:'queued'});
+ backend=true;
+ const blocked=(await call('worker_next',{head_sha:OTHER,data_blob_sha:BLOB},'worker.stub.token')).body;
+ assert.equal(blocked.has_job,false);assert.equal(blocked.backend_integrated_required,true);
+ assert.equal(jobs[0].status,'failed');assert.equal(state.production_sha,BASE);
+ jobs.splice(0);backend=false;
  assert.equal((await call('prod_direct_apply',{candidate_sha:DRAFT,expected_production_sha:BASE,confirmed_direct:true})).status,202);
  assert.equal(jobs.length,1);assert.equal((await call('wake_approved_job',{job_id:jobs[0].id,candidate_sha:DRAFT})).body.dispatch,'scheduled_only');assert.equal((await call('wake_approved_job',{job_id:jobs[0].id,candidate_sha:OTHER})).status,409);assert.equal(jobs.length,1);assert.equal(jobs[0].action,'prod_apply');assert.equal(jobs[0].to_sha,DRAFT);assert.equal(state.production_sha,BASE);
  const plan=(await call('worker_next',{head_sha:OTHER,data_blob_sha:BLOB},'worker.stub.token')).body;
