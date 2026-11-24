@@ -29,6 +29,28 @@ class Provider(unittest.TestCase):
     def test_transport_disabled(self):
         with self.assertRaisesRegex(ValueError,"production_transport_disabled"):
             p.ProviderAdapter(PROJECT).edge_metadata("account","fixture")
+    def test_read_only_baseline_metadata_never_authorizes(self):
+        slugs=["beagu-2026-results-ingest","beagu-2026-review-admin","beagu-release-manager-v1"]
+        pins={slug:{"version":i+1,"verify_jwt":False,"bundle_sha256":BUNDLE} for i,slug in enumerate(slugs)}
+        expected={"project":PROJECT,"base_sha":BASE,"version":"v1.11.4","edges":pins}
+        def answers():
+            return [response(200,{"slug":slug,"status":"ACTIVE","version":pin["version"],"verify_jwt":False,"ezbr_sha256":BUNDLE}) for slug,pin in sorted(pins.items())]+[response(200,{"commit":BASE,"version":"v1.11.4","environment":"production"})]
+        f=Fake(answers())
+        result=p.ProviderAdapter(PROJECT,f).observe_baseline_metadata(expected,"reader-fixture")
+        self.assertEqual(set(result["edge_observation_sha256"]),set(slugs))
+        for k in ("execution_enabled","write_permission_verified","runtime_verified"):self.assertFalse(result[k])
+        self.assertEqual([x[1] for x in f.calls],["GET"]*4)
+        self.assertNotIn("Authorization",f.calls[-1][3])
+        self.assertNotIn("reader-fixture",json.dumps(result))
+        bad=answers();bad[0]=response(200,{"slug":slugs[0],"status":"ACTIVE","version":99,"verify_jwt":False,"ezbr_sha256":BUNDLE})
+        f=Fake(bad)
+        with self.assertRaisesRegex(ValueError,"baseline_edge_metadata_mismatch"):p.ProviderAdapter(PROJECT,f).observe_baseline_metadata(expected,"reader-fixture")
+        self.assertEqual(len(f.calls),1)
+        f=Fake(answers()[:-1]+[response(200,{"commit":CAND,"version":"v1.11.4","environment":"production"})])
+        with self.assertRaisesRegex(ValueError,"baseline_web_metadata_mismatch"):p.ProviderAdapter(PROJECT,f).observe_baseline_metadata(expected,"reader-fixture")
+        f=Fake([])
+        with self.assertRaisesRegex(ValueError,"incomplete_baseline_edge_pins"):p.ProviderAdapter(PROJECT,f).observe_baseline_metadata({**expected,"edges":{}},"reader-fixture")
+        self.assertEqual(f.calls,[])
     def test_edge_post_and_independent_readback(self):
         files=[("supabase/functions/account/index.ts",b"fixture")]
         raw=tar(files)

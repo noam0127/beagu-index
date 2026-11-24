@@ -90,6 +90,26 @@ class ProviderAdapter:
     def edge_metadata(self,slug,token):
         require(isinstance(slug,str) and SLUG.fullmatch(slug),"invalid_edge_slug")
         return json_response(self.http.request(SUPABASE_HOST,"GET",f"/v1/projects/{self.project}/functions/{slug}",auth(token)),200)
+    def observe_baseline_metadata(self,expected,read_token):
+        """Read-only corroboration of independently pinned metadata, not an approval.
+        No provider write, runtime proof, or inferred credential capability.
+        """
+        require(isinstance(expected,dict) and set(expected)=={"project","base_sha","version","edges"} and expected["project"]==self.project and v.sha(expected["base_sha"]) and isinstance(expected["version"],str) and re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+",expected["version"]),"invalid_baseline_metadata_pins")
+        edges=expected["edges"]
+        require(isinstance(edges,dict) and set(edges)=={"beagu-2026-results-ingest","beagu-2026-review-admin","beagu-release-manager-v1"},"incomplete_baseline_edge_pins")
+        for pin in edges.values():
+            require(isinstance(pin,dict) and set(pin)=={"version","verify_jwt","bundle_sha256"} and type(pin["version"]) is int and pin["version"]>0 and type(pin["verify_jwt"]) is bool and hex64(pin["bundle_sha256"]),"invalid_baseline_edge_pin")
+        observed={}
+        for slug,pin in sorted(edges.items()):
+            meta=self.edge_metadata(slug,read_token)
+            require(meta.get("slug")==slug and meta.get("status")=="ACTIVE" and type(meta.get("version")) is int and meta["version"]==pin["version"] and meta.get("verify_jwt") is pin["verify_jwt"] and meta.get("ezbr_sha256")==pin["bundle_sha256"],"baseline_edge_metadata_mismatch")
+            observed[slug]=hash_bytes(canonical({"slug":slug,"status":"ACTIVE",**pin}))
+        code,raw=self.http.request(DOMAIN,"GET","/release-info.json?release="+expected["base_sha"],{"Cache-Control":"no-cache","Accept-Encoding":"identity","User-Agent":"beagu-release-observer"})
+        require(code==200 and len(raw)<=65536,"baseline_web_metadata_unavailable")
+        meta=v.read_json(raw)
+        require(isinstance(meta,dict) and meta.get("environment")=="production" and meta.get("commit")==expected["base_sha"] and meta.get("version")==expected["version"],"baseline_web_metadata_mismatch")
+        return {"scope":"read_only_baseline_metadata_v1","project":self.project,"base_sha":expected["base_sha"],"edge_observation_sha256":observed,"web_metadata_sha256":hash_bytes(raw),"write_permission_verified":False,"runtime_verified":False,"execution_enabled":False}
+
     def deploy_edge(self,raw,inventory,artifact_sha,approved,write_token,read_token):
         slug=inventory["edge_function"]
         require(isinstance(slug,str) and SLUG.fullmatch(slug) and inventory["operation"]=="deploy_edge","invalid_edge_slug")

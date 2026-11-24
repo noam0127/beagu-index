@@ -57,13 +57,17 @@ def run(args, data=None, timeout=120):
 
 class FixtureCluster:
     """Only owns the random, newly created local container; never accepts a connection string."""
+    def __init__(self,major=16):
+        require(type(major) is int and major in (16,17),"unsupported_fixture_postgres_major")
+        self.major=major
+
     def __enter__(self):
         self.name = "beagu-backup-fixture-" + uuid.uuid4().hex
         self.container = None
         try:
             self.container = run(DOCKER + ["run", "-d", "--rm", "--network", "none",
                 "--name", self.name, "--label", "beagu.release.fixture=backup-v1",
-                "-e", "POSTGRES_PASSWORD=disposable-fixture-only", "postgres:16"]).decode().strip()
+                "-e", "POSTGRES_PASSWORD=disposable-fixture-only", "postgres:"+str(self.major)]).decode().strip()
             require(re.fullmatch(r"[a-f0-9]{64}", self.container), "invalid_container_id")
             config = json.loads(run(DOCKER+["inspect",self.container]))[0]
             require(config["Name"] == "/"+self.name and config["HostConfig"]["NetworkMode"] == "none"

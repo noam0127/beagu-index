@@ -15,6 +15,20 @@ PINS=("a"*64,"b"*40,"c"*40)
 
 
 class Checkpoint(unittest.TestCase):
+    def test_postgres17_encrypted_restore(self):
+        with self.assertRaisesRegex(ValueError,"unsupported_fixture_postgres_major"):
+            b.FixtureCluster("17")
+        with b.FixtureCluster(17) as cluster, tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(cluster.sql("fixture_source","SELECT current_setting('server_version_num')::int / 10000;").strip(),b"17")
+            cluster.sql("fixture_source","CREATE SCHEMA beagu_private; CREATE TABLE beagu_private.fixture(id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY, body text); INSERT INTO beagu_private.fixture(body) VALUES ('fixture'); ALTER TABLE beagu_private.fixture ENABLE ROW LEVEL SECURITY;")
+            root=pathlib.Path(directory)
+            key=os.urandom(32)
+            pin=b.encrypted_checkpoint(cluster,root,key,"fixture-pg17",*PINS)
+            proof=b.rehearse_encrypted_restore(cluster,root,key,"fixture-pg17",pin,*PINS)
+            self.assertTrue(proof["encrypted"] and proof["restore_verified"])
+            self.assertFalse(proof["execution_enabled"])
+            self.assertEqual(cluster.sql("fixture_restore","SELECT count(*) FROM beagu_private.fixture;").strip(),b"1")
+
     def test_private_actual_backup_restore_and_rejections(self):
         with b.FixtureCluster() as cluster, tempfile.TemporaryDirectory() as parent:
             root=pathlib.Path(parent)
