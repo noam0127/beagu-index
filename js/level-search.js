@@ -156,10 +156,12 @@
   async function openArcadeTarget(){
     if(!arcadeTargetValid||arcadeTargetOpened||!session)return;
     arcadeTargetOpened=true;
+    const targetGeneration=authGeneration;
     try{
       // Resolve exact school ID; same-name schools must never be mixed up.
       const {data:school,error}=await supabaseClient.from('schools')
         .select('school_id,school_name,sido_standard').eq('school_id',arcadeTargetId).limit(1).maybeSingle();
+      if(targetGeneration!==authGeneration)return;
       if(error||!school||String(school.school_id)!==arcadeTargetId)throw Error('SCHOOL_NOT_FOUND');
       mode='school';
       $('searchInput').value=String(school.school_name||'');
@@ -181,6 +183,7 @@
       const card=$('results').querySelector('.school-card');
       if(card?.scrollIntoView)card.scrollIntoView({block:'start'});
     }catch(error){
+      if(targetGeneration!==authGeneration||error.stale)return;
       console.warn('학교 고유번호 상세조회 실패 · 이름 검색으로 전환합니다.',error);
       if($('searchInput').value.trim())void search(true);
     }
@@ -194,7 +197,7 @@
       body: JSON.stringify({action, ...payload})
     });
     const data = await response.json().catch(() => ({}));
-    if(action!=='login'&&(generation!==authGeneration||requestToken!==session)){const stale=new Error('이전 인증 요청 종료');stale.stale=true;throw stale;}
+    if(generation!==authGeneration||requestToken!==session){const stale=new Error('이전 인증 요청 종료');stale.stale=true;throw stale;}
     if (response.status === 401 || response.status === 403) {
       const error = new Error('인증 만료'); error.unauthorized = true; throw error;
     }

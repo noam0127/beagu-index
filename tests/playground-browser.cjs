@@ -35,7 +35,7 @@ const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8',
      await page.waitForFunction(level=>document.querySelector('#beaguLevelState')?.dataset.level===String(level),tier);
      assert.equal(await page.locator('article[data-game]').count(),4);
      assert.equal(await page.locator('article[data-status="coming-soon"] a,article[data-status="coming-soon"] button').count(),0);
-     assert.equal(await page.locator('.beagu-core-nav a:visible').count(),5);
+     assert.equal(await page.locator('.beagu-core-nav a:visible').count(),6);
      const dims=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,columns:getComputedStyle(document.querySelector('.playground-grid')).gridTemplateColumns.split(' ').length}));
      assert.ok(dims.scroll<=dims.width+1,'horizontal overflow '+JSON.stringify(dims));assert.equal(dims.columns,width<=600?1:2);
      await page.locator('#beaguLevelState').click();

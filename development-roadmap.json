@@ -390,6 +390,23 @@
     },
     {
       "order": 11,
+      "version": "v1.11.1",
+      "name": "가벼운 터치",
+      "scope": "운영 v1.10.0 기반 검색 인증 경합 방지, 공통 UI, 학교체험, 공개 학교 관심도, 지역별 카드",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v1.11.1-light-touch-production-base",
+      "baseline_sha": "5f19ddf28a2f24a98fb03900739147a04a547cbe",
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "tests": [
+        {
+          "name": "Isolated browser and static contract",
+          "result": "PENDING"
+        }
+      ]
+    },
+    {
+      "order": 12,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -409,7 +426,7 @@
       "rollback_sha": null
     },
     {
-      "order": 12,
+      "order": 13,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -428,7 +445,7 @@
       "rollback_sha": null
     },
     {
-      "order": 13,
+      "order": 14,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -445,7 +462,7 @@
       "rollback_sha": null
     },
     {
-      "order": 14,
+      "order": 15,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
