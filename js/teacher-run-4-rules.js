@@ -25,9 +25,9 @@
   return {
    advance(t){const added=[];for(const p of leavePlan)if(t>=p.at&&!appeared.has(p.years)){appeared.add(p.years);pending.add(p.years);added.push(p);}return added;},
    collect(years){if(!pending.delete(years))return false;held.add(years);return true;},
-   use(years,t,hp,maxHp){const p=find(years);if(!p||active(t)||!held.has(years)||hp<=0||maxHp<=0)return null;held.delete(years);used.add(years);until=t+p.seconds;return {hp:Math.min(maxHp,hp+Math.round(maxHp*p.heal)),until,days:p.days};},
+   use(years,t,hp,maxHp,boost=1){const p=find(years);if(!p||active(t)||!held.has(years)||hp<=0||maxHp<=0)return null;held.delete(years);used.add(years);until=t+p.seconds;return {hp:Math.min(maxHp,hp+Math.round(maxHp*p.heal*Math.max(1,Math.min(1.2,boost)))),until,days:p.days};},
    active, remaining:t=>Math.max(0,until-t),
-   state(){return {pending:leavePlan.filter(p=>pending.has(p.years)),held:leavePlan.filter(p=>held.has(p.years)),used:used.size};}
+   state(){return {pending:leavePlan.filter(p=>pending.has(p.years)),held:leavePlan.filter(p=>held.has(p.years)),used:used.size,usedDays:leavePlan.filter(p=>used.has(p.years)).reduce((n,p)=>n+p.days,0)};}
   };
  }
  const growthPlan=Object.freeze([
@@ -98,6 +98,41 @@
   };
  }
  function pickEvent(stage,random=Math.random,bossActive=false){if(bossActive)return null;const pool=events.filter(e=>e.stages.includes(stage));return pool.length?pool[Math.floor(random()*pool.length)]:null;}
+ const bossPlan=Object.freeze([
+  {id:"confusion",name:"신규교사의 혼란",icon:"📚",color:"#426991",start:20,end:30,hp:92,interval:2.1,damage:8,reward:"업무의 달인"},
+  {id:"demands",name:"끝없는 요구",icon:"💬",color:"#a04c82",start:65,end:80,hp:140,interval:2,damage:9,reward:"교권 보호막"},
+  {id:"responsibility",name:"책임의 거인",icon:"🗄️",color:"#a2683f",start:115,end:130,hp:155,interval:2.2,damage:11,reward:"업무 경감"},
+  {id:"burnout",name:"번아웃의 그림자",icon:"🌘",color:"#60568d",start:165,end:180,hp:160,interval:2.0,damage:10,reward:"교육자의 신념"},
+  {id:"final",name:"마지막 공문",icon:"📄",color:"#b48b35",start:185,end:190,hp:42,interval:1.55,damage:7,reward:"황금 분필"}
+ ].map(Object.freeze));
+ const difficulty=Object.freeze({easy:{hp:.6,score:1,pattern:1,leave:1.2},normal:{hp:1,score:1.5,pattern:2,leave:1},hard:{hp:1.5,score:2,pattern:3,leave:1},very_hard:{hp:1.65,score:2.2,pattern:3,leave:1},extreme:{hp:1.8,score:2.4,pattern:3,leave:1}});
+ function createBosses(tier="hard"){
+  const cfg=difficulty[tier]||difficulty.hard,seen=new Set(),defeated=[];
+  let current=null;
+  return {
+   advance(t){let expired=null,started=null;
+    if(current&&t>=current.end){expired=current.id;current=null;}
+    const p=bossPlan.find(p=>t>=p.start&&t<p.end&&!seen.has(p.id));
+    if(p){seen.add(p.id);const max=Math.ceil(p.hp*cfg.hp);current={...p,hp:max,maxHP:max};started={...current};}
+    return {expired,started};},
+   active(){return current?{...current}:null;},
+   damage(amount,t){if(!current||t<current.start||t>=current.end||!Number.isFinite(amount)||amount<=0)return null;
+    current.hp=Math.max(0,current.hp-amount);if(current.hp>0)return null;
+    const beaten={...current};defeated.push(beaten.id);current=null;return beaten;},
+   defeated(){return defeated.slice();},tier:cfg
+  };
+ }
+ function ending({win=false,bosses=0,allies=0,crises=0,growth=0,combo=0,hits=0}={}){
+  const titles=[];
+  if(win&&bosses===5)titles.push("전설의 정년퇴직");
+  if(win)titles.push("영광의 정년퇴직");
+  if(allies>=3)titles.push("함께한 교직 인생");
+  if(crises>=2)titles.push("불굴의 교사");
+  if(growth>=7)titles.push("교육 전문가");
+  if(combo>=10&&hits<=5)titles.push("회피의 달인");
+  if(!win)titles.push("새로운 인생의 시작");
+  return {primary:win?titles[0]:"새로운 인생의 시작",titles};
+ }
  function create(){
   let combo=0,maxCombo=0,near=0,hits=0,lastHit=-Infinity,lowSince=null,lowEpisode=false;
   const paid=new Set(),objects=new WeakSet();
@@ -114,9 +149,10 @@
     else{lowSince=null;if(ratio>=.8&&lowEpisode){award("low-recovery",250,out);lowEpisode=false;}else if(ratio<=0){lowEpisode=false;}}
     return out;
    },
+   bossClutch(){const out=[];award("boss-clutch",300,out);return out;},
    complete(t){const out=[];if(t>=duration&&lastHit<=duration-10)award("final-ten",200,out);return out;},
    stats(){return {combo,maxCombo,near,hits,crises:paid.size,lastHit};}
   };
  }
- root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent});
+ root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,ending});
 })(typeof window!=="undefined"?window:globalThis);
