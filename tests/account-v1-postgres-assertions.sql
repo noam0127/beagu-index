@@ -95,3 +95,49 @@ BEGIN
  END LOOP;
  RAISE NOTICE 'PASS explicit anonymous/authenticated RPC denial and no direct credential/alias table access even for service role';
 END $$;
+
+-- Actual content, private report decision, and write restriction tests in disposable PostgreSQL.
+DO $$
+DECLARE v uuid:='10000000-0000-0000-0000-000000000001'; v2 uuid:='10000000-0000-0000-0000-000000000002';
+ owner_id uuid:='00000000-0000-0000-0000-000000000001'; actor uuid; reporter uuid; post_id uuid:=gen_random_uuid(); other_id uuid:=gen_random_uuid(); case_id uuid; r jsonb; credits jsonb; account_state jsonb; k text;
+BEGIN
+ SELECT author_uid INTO actor FROM beagu_private.beagu_anonymous_accounts_v1 WHERE visitor_id=v;
+ SELECT author_uid INTO reporter FROM beagu_private.beagu_anonymous_accounts_v1 WHERE visitor_id=v2;
+ SELECT jsonb_agg(to_jsonb(x) ORDER BY visitor_id) INTO credits FROM beagu_private.challenge_referral_profiles x;
+ SELECT to_jsonb(x) INTO account_state FROM beagu_private.beagu_anonymous_accounts_v1 x WHERE visitor_id=v;
+ INSERT INTO public.beagu_postit_posts(id,school_id,author_uid,body) VALUES(post_id,'TEST001',actor,'synthetic reported text'),(other_id,'TEST001',actor,'unreported text');
+ IF public.beagu_postit_report_decide_v1('post',other_id,'restrict_24h','synthetic review reason',owner_id) IS NOT NULL THEN RAISE EXCEPTION 'unreported member restriction'; END IF;
+ INSERT INTO public.beagu_postit_reactions(author_uid,target_type,target_id,kind) VALUES(reporter,'post',post_id,'report');
+ r:=public.beagu_postit_report_queue_v1();
+ IF jsonb_array_length(r)<>1 OR r->0->>'target_id'<>post_id::text OR (r->0->>'reports')::int<>1 THEN RAISE EXCEPTION 'report queue missing'; END IF;
+ FOR k IN SELECT jsonb_object_keys(r->0) LOOP
+  IF k NOT IN ('target_type','target_id','body','status','reports','case_id','decision','expires_at','restored_at') THEN RAISE EXCEPTION 'private field in report queue: %',k; END IF;
+ END LOOP;
+ IF public.beagu_postit_report_decide_v1('post',post_id,'restrict_24h','synthetic review reason',gen_random_uuid()) IS NOT NULL THEN RAISE EXCEPTION 'nonowner decision accepted'; END IF;
+ r:=public.beagu_account_password_login_v1('SYNTHETIC-ONE',repeat('e',64),repeat('7',64));
+ IF public.beagu_account_postit_writer_v1(repeat('7',64)) IS DISTINCT FROM actor THEN RAISE EXCEPTION 'writer missing before decision'; END IF;
+ r:=public.beagu_postit_report_decide_v1('post',post_id,'restrict_24h','synthetic review reason',owner_id);
+ case_id:=(r->>'case_id')::uuid;
+ IF case_id IS NULL OR (SELECT count(*) FROM jsonb_object_keys(r))<>2 THEN RAISE EXCEPTION 'decision result'; END IF;
+ IF public.beagu_account_postit_writer_v1(repeat('7',64)) IS NOT NULL OR NOT public.beagu_account_level_session_allowed_v1(repeat('7',64)) THEN RAISE EXCEPTION 'writing restriction or reading preservation failed'; END IF;
+ BEGIN
+  INSERT INTO public.beagu_postit_posts(school_id,author_uid,body) VALUES('TEST001',actor,'denied');
+  RAISE EXCEPTION 'post restriction bypass';
+ EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN
+  INSERT INTO public.beagu_postit_comments(post_id,author_uid,body) VALUES(post_id,actor,'denied');
+  RAISE EXCEPTION 'comment restriction bypass';
+ EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN
+  INSERT INTO public.beagu_postit_reactions(author_uid,target_type,target_id,kind) VALUES(actor,'post',other_id,'like');
+  RAISE EXCEPTION 'reaction restriction bypass';
+ EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ IF public.beagu_postit_report_decide_v1('post',post_id,'restrict_7d','synthetic duplicate decision',owner_id) IS NOT NULL THEN RAISE EXCEPTION 'duplicate sanction'; END IF;
+ IF (public.beagu_account_admin_counts_v1()->>'suspended')::int<>1 THEN RAISE EXCEPTION 'restriction count incorrect'; END IF;
+ IF (public.beagu_postit_report_decide_v1('post',post_id,'restore','synthetic restoration reason',owner_id)->>'case_id')::uuid IS DISTINCT FROM case_id THEN RAISE EXCEPTION 'restore failed'; END IF;
+ IF public.beagu_account_postit_writer_v1(repeat('7',64)) IS DISTINCT FROM actor THEN RAISE EXCEPTION 'author rights not restored'; END IF;
+ IF credits IS DISTINCT FROM (SELECT jsonb_agg(to_jsonb(x) ORDER BY visitor_id) FROM beagu_private.challenge_referral_profiles x) OR account_state IS DISTINCT FROM (SELECT to_jsonb(x) FROM beagu_private.beagu_anonymous_accounts_v1 x WHERE visitor_id=v) THEN RAISE EXCEPTION 'restriction changed credentials or referral credit'; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.beagu_postit_posts WHERE id=post_id AND author_uid=actor) THEN RAISE EXCEPTION 'author content lost'; END IF;
+ IF has_function_privilege('anon','public.beagu_postit_report_queue_v1()','execute') OR has_function_privilege('authenticated','public.beagu_postit_report_decide_v1(text,uuid,text,text,uuid)','execute') OR has_table_privilege('service_role','beagu_private.beagu_postit_restrictions_v1','select') THEN RAISE EXCEPTION 'moderation permissions leak'; END IF;
+ RAISE NOTICE 'PASS reported-content restriction, no author ID projection, unreported/unauthorized/duplicate decision denied, existing session writing blocked, reading and referral preserved, restore same author';
+END $$;
