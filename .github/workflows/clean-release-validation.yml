@@ -4,6 +4,8 @@ on:
     branches:
       - 'release/base-pages-*'
   workflow_dispatch:
+  push:
+    branches: [fix/v1.11.1-light-touch-production-base]
 permissions:
   contents: read
 jobs:
@@ -15,10 +17,12 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+          fetch-depth: 0
       - name: Verify source and simulated DOM
         run: |
           node --check js/beagu-release-info-v1.js
           node tests/clean-release-contract.cjs
+          node tests/v1111-light-touch-contract.cjs
           node tests/clean-release-info-runtime.cjs
           node tests/playground-contract.cjs
           node tests/playback-contract.cjs
@@ -52,6 +56,7 @@ jobs:
       - name: Verify playground in Chromium (offline intercepted requests)
         run: |
           node tests/playground-browser.cjs
+          node tests/v1111-light-touch-browser.cjs
           node tests/playback-browser.cjs
           node tests/milestone-browser.cjs
           node tests/communication-browser.cjs

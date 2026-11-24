@@ -4,7 +4,7 @@ for(const p of ['index.html','search.html','search-lv1.html','statistics.html','
  const html=read(p);assert.equal((html.match(/js\/beagu-release-info-v1\.js/g)||[]).length,1);
  assert.match(html,/<a href="games.html">게임<\/a>/);assert.match(html,/학교비교/);
 }
-assert.match(read('index.html'),/id="teacher-game-title"/);
+assert.doesNotMatch(read('index.html'),/id="teacher-game-title"/);assert.match(read('index.html'),/href="games.html">학교별 근무난이도 게임으로 확인하기/);
 for(const p of ['search.html','search-lv1.html'])assert.match(read(p),/beagu-search-hero-magnifier/);
 assert.match(read('statistics.html'),/beagu-clean-hero-icon/);
 const js=read('js/beagu-release-info-v1.js');assert.doesNotMatch(js,/innerHTML|localStorage|sessionStorage|supabase/i);
