@@ -1,6 +1,6 @@
 -- Isolated synthetic test data; never connect to production.
 CREATE SCHEMA auth;
-CREATE TABLE auth.users(id uuid PRIMARY KEY,email_confirmed_at timestamptz);
+CREATE TABLE auth.users(id uuid PRIMARY KEY,email_confirmed_at timestamptz,banned_until timestamptz);
 CREATE SCHEMA beagu_private;
 CREATE SCHEMA extensions;
 CREATE EXTENSION pgcrypto WITH SCHEMA extensions;
@@ -14,7 +14,7 @@ CREATE FUNCTION public.beagu_consume_login_budget() RETURNS boolean LANGUAGE plp
 CREATE FUNCTION public.beagu_has_earned_challenge_visitor(p_visitor uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
 SELECT EXISTS(SELECT 1 FROM beagu_private.challenge_referral_profiles WHERE campaign='2026' AND visitor_id=p_visitor AND access_level>=2 AND valid_referrals>=1 AND upgraded_at IS NOT NULL AND disabled=false)
 $$;
-INSERT INTO auth.users VALUES('00000000-0000-0000-0000-000000000001',now()),('00000000-0000-0000-0000-000000000002',now());
+INSERT INTO auth.users(id,email_confirmed_at) VALUES('00000000-0000-0000-0000-000000000001',now()),('00000000-0000-0000-0000-000000000002',now());
 INSERT INTO beagu_private.challenge_identity_codes VALUES('2026','10000000-0000-0000-0000-000000000001','SYNTHETIC-ONE'),('2026','10000000-0000-0000-0000-000000000002','SYNTHETIC-TWO');
 INSERT INTO beagu_private.challenge_device_claims VALUES('2026','10000000-0000-0000-0000-000000000001',repeat('a',64)),('2026','10000000-0000-0000-0000-000000000002',repeat('b',64));
 INSERT INTO beagu_private.challenge_referral_profiles VALUES('2026','10000000-0000-0000-0000-000000000001',1,0,NULL,false),('2026','10000000-0000-0000-0000-000000000002',2,2,now(),false);
