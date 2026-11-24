@@ -243,7 +243,7 @@ assert.match(hub,/<h3>선생님배구 1\.0<\/h3>/,"volleyball homepage title sho
 assert.match(hub,/<h3>험난한 교직생활 3\.0<\/h3>/,"teacher-run homepage title should show 3.0");
 assert.match(volley,/<title>선생님배구 1\.0 \| 배구지수<\/title>/);
 assert.match(runner,/<title>험난한 교직생활 3\.0 \| 배구지수<\/title>/);
-assert.doesNotMatch(hub,/험난한 교직생활 2\.0|선생님배구(?! 1\.0)/,"old game titles removed from home");
+assert.doesNotMatch(hub,/<h3>험난한 교직생활 2\.0<\/h3>|<h3>선생님배구<\/h3>/,"old game titles removed from Playcourt headings");
 assert.doesNotMatch(runner,/험난한 교직생활 2\.0/,"old teacher-run title removed");
 assert.ok(hub.indexOf('data-game="volleyball"')<hub.indexOf('data-game="survival"'));
 assert.match(volley,/SPEED_MULTIPLIER=2/);

@@ -7,3 +7,5 @@ schema-draft.sql is deliberately outside the automatic migration directory. Revi
 Current blocker: the real game is client-side and lacks a deterministic server-verifiable replay. The existing 3.0 API is not a substitute. This draft prepares separation but does not enable the new official board.
 
 The preview now displays up to 50 local records with five-tier and retirement/all-boss filters, including partial runs. This is not the official hall of fame. The authoritative server replay dependency is still missing.
+
+The review-only server-boundary.cjs defines authorization, school eligibility, server-issued seed/session, bounded input, trusted verifier dependency, server elapsed time and atomic repository submission. Without a real authoritative replayVerifier it refuses start and submit. Its fixture supplies a stub for boundary testing only; it is not a deployed API and cannot publish any official record. The repository adapter and authoritative simulator still need implementation and verification.

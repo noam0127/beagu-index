@@ -96,3 +96,5 @@ console.log('PASS version-separated local results and impossible-summary rejecti
 assert.equal(rp.score(200001,'hard',true),800004);assert.throws(()=>rp.validate({...rr,baseScore:200001,score:600003},190,'normal')); // render experimental result, reject oversized official envelope
 
 const fakeStorage={raw:'[]',getItem(k){assert.equal(k,rp.storageKey);return this.raw;},setItem(k,v){assert.equal(k,rp.storageKey);this.raw=v;}};rp.save(fakeStorage,rr);rp.save(fakeStorage,{...rr,difficulty:'easy',score:2000});rp.save(fakeStorage,{...rr,victory:false,survivalSeconds:100,age:44,score:1500,bossIds:['confusion'],leaveDays:3});assert.equal(rp.list(fakeStorage,{difficulty:'normal'}).length,2);assert.equal(rp.list(fakeStorage,{outcome:'retired'}).length,2);assert.equal(rp.list(fakeStorage,{outcome:'all_bosses'}).length,0);assert.equal(rp.list(fakeStorage)[0].score,3000);assert.match(preview,/saveLocalResult\(rawScore,finalScore,false\)/);console.log('PASS 4.0 local leaderboard filters and partial results');
+
+const {execFileSync}=require('node:child_process');execFileSync(process.execPath,['docs/run4-ranking-preflight/server-boundary-test.cjs'],{stdio:'inherit'});
