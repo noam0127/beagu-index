@@ -36,8 +36,9 @@ for(const p of ['teacher-volleyball.html','teacher-run.html']){
   normalized=normalized.replace('aria-label="게임 방법" title="게임 방법"','aria-label="조작법" title="조작법"')
    .replace('const affectsScore=["bullying","report","salary","bonus"].includes(item.id);\n    setStatus((side==="left"?"나":"상대")+" 획득: "+item.icon+" "+item.name+" · "+(side==="right"&&affectsScore?"내 점수 변동 없음":item.detail));','setStatus((side==="left"?"나":"상대")+" 획득: "+item.icon+" "+item.name);');
  }else{
-  normalized=normalized.replace('\n<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11111">','').replace('\n<script src="js/arcade-result-share-v1.js?v=11111"></script>','')
-   .replace('\nconst resultView=window.BeaguArcadeResult.create($("choices").parentElement,canvas,{compact:true});','').replace('function message(title,desc,choices,symbol="🎒"){\n resultView.clear();','function message(title,desc,choices,symbol="🎒"){')
+  normalized=normalized.replace('\n<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11111-replay">','').replace('\n<script src="js/arcade-result-share-v1.js?v=11111"></script>','')
+   .replace('\nconst resultView=window.BeaguArcadeResult.create($("choices").parentElement,canvas,{compact:true});','').replace('function message(title,desc,choices,symbol="🎒"){\n resultView.clear();$("choices").classList.remove("arcade-result-replay-row");','function message(title,desc,choices,symbol="🎒"){')
+   .replace('{label:"🏫 다른 학교",action:stopAndChangeSchool}],win?celebration.icon:"🫖");\n $("choices").classList.add("arcade-result-replay-row");','{label:"🏫 학교 변경",action:stopAndChangeSchool}],win?celebration.icon:"🫖");')
    .replace(/\n draw\(\);\n resultView\.show\(\{game:"험난한 교직생활 3\.0"[^\n]*\);/,'');
   normalized=normalized.replace('const scoreBefore=score;\n ','').replace('const delta=score-scoreBefore;\n const scoreItem=["salary","bonus","bullying","report"].includes(item.id);\n setNotice((item.good?"🔵":"🔴")+" "+item.name+" · "+(scoreItem?"점수 "+(delta>=0?"+":"")+delta:item.detail),2.2);','setNotice((item.good?"🔵":"🔴")+" "+item.name+" · "+item.detail,2.2);');
  }
