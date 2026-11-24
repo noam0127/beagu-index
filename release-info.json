@@ -1,14 +1,14 @@
 {
   "schema": 1,
-  "version": "v1.10.0",
-  "name": "신뢰",
+  "version": "v1.11.1",
+  "name": "가벼운 터치",
   "environment": "candidate",
   "commit": null,
   "builtAt": null,
   "deployedAt": null,
   "changes": [
-    "학교별 신고 검토 및 관리자 공개 보류",
-    "최신 집계와 검수 근거에 대한 재검증",
-    "보류 해제 뒤 레벨별 최종 재승인 및 이력 관리"
+    "학교검색 인증 경합 방지 및 지역별 카드 개선",
+    "홈 게임 영역 분리 및 학교체험 메뉴",
+    "공통 하단 간소화 및 공개 학교 관심도"
   ]
 }

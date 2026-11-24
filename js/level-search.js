@@ -14,7 +14,7 @@
   let arcadeTargetOpened = false;
   let session = sessionStorage.getItem(key) || '';
   let authGeneration = 0;
-  function invalidateSearch(){ ++serial; ++officeLoadSerial; clearTimeout(timer); current2026.clear(); visiblePageSchools=[]; }
+  function invalidateSearch(){ ++serial; ++officeLoadSerial; clearTimeout(timer); current2026.clear(); visiblePageSchools=[]; geographyComparisons.clear(); arcadeTargetOpened=false; $('results').replaceChildren(); $('resultCount').textContent=''; $('pager').hidden=true; }
   let viewerTier=1;
   function showUpgrade(){
     const isLv2=viewerTier>=2;
@@ -210,7 +210,7 @@
     const loginTask=window.BeaguLoading?.start('참여코드를 확인하는 중…');
     try {
       const data = await api('login', {code});
-      if (data.level < level) {
+      if (!/^[a-f0-9]{64}$/.test(String(data.token||'')) || ![1,2].includes(Number(data.level)) || Number(data.level) < level) {
         $('loginMessage').textContent = '이 등급에서 사용할 수 없는 참여코드입니다.';
         return;
       }
@@ -232,8 +232,8 @@
   $('logoutButton').addEventListener('click', () => loggedOut());
   window.addEventListener('beagu:participation-authenticated',event=>{
     const next=event.detail;
-    if(!next||Number(next.level)<level||typeof next.token!=='string')return;
-    if(session!==next.token){++authGeneration;invalidateSearch();}
+    if(!next||![1,2].includes(Number(next.level))||Number(next.level)<level||!/^[a-f0-9]{64}$/.test(String(next.token||'')))return;
+    if(session!==next.token||viewerTier!==Number(next.level)){++authGeneration;invalidateSearch();}
     session=next.token;
     viewerTier=Number(next.level)>=2?2:1;
     geographyComparisons.clear();
