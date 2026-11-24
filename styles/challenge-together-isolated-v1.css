@@ -34,3 +34,11 @@ body.beagu-page-challenge .certificate-milestone{display:flex;flex-direction:col
 body.beagu-page-challenge .certificate-milestone strong{font-size:17px}
 body.beagu-page-challenge #certificate.has-milestone{outline:2px solid #e1b96f;outline-offset:2px}
 @media(max-width:430px){body.beagu-page-challenge #challengeProtected{gap:8px}body.beagu-page-challenge #challengeReferralPanel .challenge-identity-row{flex-wrap:wrap}body.beagu-page-challenge #copyChallengeReferral{flex:1}}
+
+body.beagu-page-challenge #challengeReferralPanel{padding:14px 16px;border-radius:14px}
+body.beagu-page-challenge #challengeReferralPanel .challenge-referral-count-card{flex-direction:row;min-height:0}
+body.beagu-page-challenge #challengeReferralPanel #challengeReferralStatus{margin:0 0 8px;min-height:0;font-size:13px}
+body.beagu-page-challenge #challengeReferralPanel[data-state="earned"] #challengeReferralCount{color:#6935ac}
+body.beagu-page-challenge .challenge-account-details{overflow:hidden}
+body.beagu-page-challenge .challenge-account-details #challengeIdentityPanel.is-lv2{background:linear-gradient(135deg,#302049,#54317a);border-color:#b89bdf;box-shadow:none}
+body.beagu-page-challenge .challenge-account-details #challengeIdentityPanel.is-lv2::after{display:none}
