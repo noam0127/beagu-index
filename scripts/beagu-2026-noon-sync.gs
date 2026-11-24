@@ -47,13 +47,35 @@ function refreshBeagu2026AllPrivateStats() {
   if(!lock.tryLock(180000))throw Error("다른 2026 전체 집계가 실행 중입니다.");
   try {
     const snapshot=readBeagu2026SourceSnapshot();
-    refreshBeagu2026QuestionResults(snapshot);
-    refreshBeagu2026Stats(snapshot);
+    const failures=[];
+    // Each independent output uses the same immutable-in-practice source snapshot.
+    // Failure in one destination must not prevent the remaining destinations.
+    const runStage=(name,work)=>{
+      const started=Date.now();
+      try {
+        work();
+        Logger.log("BEAGU26_STAGE "+name+" SUCCESS "+(Date.now()-started)+"ms");
+      } catch(e) {
+        failures.push(e);
+        // Do not include response content, tokens or HTTP bodies in stage logs.
+        Logger.log("BEAGU26_STAGE "+name+" ERROR "+(Date.now()-started)+"ms");
+      }
+    };
+    runStage("QUESTION_RESULTS",()=>refreshBeagu2026QuestionResults(snapshot));
+    runStage("CORE_AND_QA",()=>{
+      const result=refreshBeagu2026Stats(snapshot);
+      if(result && (result.privateQaStatus==="PRIVATE_QA_ERROR" ||
+          result.publishStatus==="PUBLIC_ERROR"))throw Error("CORE_AND_QA partial sync failed");
+    });
     if(typeof refreshBeagu2026SchoolCulture==="function") {
-      refreshBeagu2026SchoolCulture(snapshot);
+      runStage("SCHOOL_CULTURE",()=>refreshBeagu2026SchoolCulture(snapshot));
     } else {
       Logger.log("Q14~Q17 학교문화 자동 집계 미설치: MBTI 스크립트 파일을 추가하세요.");
     }
+    // Report failure to Apps Script execution history after all independent stages.
+    // The existing form-submit/next-noon trigger retries by rebuilding the latest
+    // snapshot; no new trigger, raw response insert or approval is created here.
+    if(failures.length)throw failures[0];
   } finally {
     lock.releaseLock();
   }
@@ -411,9 +433,11 @@ function refreshBeagu2026Stats(snapshot) {
       publishStatus=publishBeagu2026NationalCount(scanned-prelaunch-undated,newUniqueSchools);
     }
     catch(e){publishStatus="PUBLIC_ERROR";Logger.log("National count publish: "+String(e.message||e).slice(0,100))}
-    destination.getSheetByName(BEAGU26.logTab).appendRow([now,scanned,matched,unmatched,"SUCCESS",
+    destination.getSheetByName(BEAGU26.logTab).appendRow([now,scanned,matched,unmatched,
+      privateQaStatus==="PRIVATE_QA_ERROR"||publishStatus==="PUBLIC_ERROR"?"PARTIAL":"SUCCESS",
       "본조사 이전 "+prelaunch+"건 제외; 시각 불명 "+undated+"건 보류; 기타·미등록 보기 검수 "+reviewRows.length+"건; 전국 응답건수 "+publishStatus+" · 비공개 자동검수 "+privateQaStatus]);
     Logger.log("Updated internal school summary: "+matched+" schools");
+    return {privateQaStatus,publishStatus};
   }catch(e){
     const stamp=Utilities.formatDate(new Date(),BEAGU26.timezone,"yyyy-MM-dd HH:mm:ss");
     if(destination)destination.getSheetByName(BEAGU26.logTab).appendRow([stamp,scanned,matched,unmatched,"ERROR",("사전응답 제외 "+prelaunch+"건; "+String(e.message||e)).slice(0,300)]);
