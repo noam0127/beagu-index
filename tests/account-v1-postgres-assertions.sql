@@ -21,7 +21,8 @@ BEGIN
  IF r->>'formal' IS DISTINCT FROM 'true' OR r->>'level' IS DISTINCT FROM '2' THEN RAISE EXCEPTION 'formal login failed'; END IF;
  IF (SELECT valid_referrals FROM beagu_private.challenge_referral_profiles WHERE visitor_id=v)<>1 THEN RAISE EXCEPTION 'referral changed'; END IF;
  BEGIN INSERT INTO public.beagu_postit_member_accounts(auth_user_id,identity_visitor_id,author_uid) VALUES(other_user,v,gen_random_uuid()); RAISE EXCEPTION 'cross-account takeover'; EXCEPTION WHEN others THEN IF sqlerrm<>'account identity conflict' THEN RAISE; END IF; END;
- IF NOT public.beagu_account_logout_v1(repeat('5',64)) OR public.beagu_account_session_status_v1(repeat('5',64)) IS NOT NULL THEN RAISE EXCEPTION 'logout failed'; END IF;
+ IF NOT public.beagu_account_logout_v1(repeat('5',64)) THEN RAISE EXCEPTION 'logout deletion failed'; END IF;
+ IF public.beagu_account_session_status_v1(repeat('5',64)) IS NOT NULL OR EXISTS(SELECT 1 FROM public.beagu_level_sessions WHERE token_sha256=repeat('5',64)) THEN RAISE EXCEPTION 'logout session survived'; END IF;
  IF public.beagu_account_formal_link_v1(other_user,'SYNTHETIC-TWO',repeat('b',64),NULL) IS NULL THEN RAISE EXCEPTION 'existing earned user cannot link directly'; END IF;
  IF has_function_privilege('anon','public.beagu_account_password_login_v1(uuid,text,text)','execute') OR has_table_privilege('authenticated','beagu_private.beagu_provisional_accounts_v1','select') THEN RAISE EXCEPTION 'private credentials exposed'; END IF;
  UPDATE beagu_private.challenge_referral_profiles SET disabled=true WHERE visitor_id=v;
