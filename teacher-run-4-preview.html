@@ -1200,8 +1200,10 @@ function update(dt){
  updateAllies();alliesPeak=Math.max(alliesPeak,allies.count());
  spawnClock-=dt;
  if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-stage*.085-(getAge()>=60?.2:0))/(profile.spawnPressure*growth.effects().spawn*windowRunEffects().spawn*bossSpawn))*(.48+gameRandom()*1.55)/(activeEvent?.id==="rush"?1.30:1);}
- for(let i=items.length-1;i>=0;i--){
-  const a=items[i];a.y+=a.speed*dt;a.x+=Math.sin(clock*(2+profile.zigzag)+a.phase)*a.wobble*dt;
+ // A collected support item can remove other hazards or append new ones.
+ // Iterate the original objects in reverse; skip anything already removed.
+ for(const a of items.slice().reverse()){
+  const i=items.indexOf(a);if(i<0)continue;a.y+=a.speed*dt;a.x+=Math.sin(clock*(2+profile.zigzag)+a.phase)*a.wobble*dt;
    if(!a.good&&a.y>H*.18&&a.y<H-75){
     const trackSpeed=a.tracker?Math.max(profile.homing,45):profile.homing;
      a.x+=Math.sign(player.x-a.x)*Math.min(Math.abs(player.x-a.x),trackSpeed*dt);

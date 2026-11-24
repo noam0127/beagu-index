@@ -100,3 +100,8 @@ const fakeStorage={raw:'[]',getItem(k){assert.equal(k,rp.storageKey);return this
 const {execFileSync}=require('node:child_process');execFileSync(process.execPath,['docs/run4-ranking-preflight/server-boundary-test.cjs'],{stdio:'inherit'});
 
 assert.match(preview,/function stepRecording/);assert.match(preview,/function recordInput/);assert.match(preview,/recordingMode\?Math\.min\(RETIREMENT_SECONDS,recordTick\/60\)/);assert.match(preview,/function applyReplayInput/);assert.match(preview,/run4-trace-download/);assert.match(preview,/cosmeticRandom/);console.log('PASS opt-in fixed tick recording structure, isolated local export');
+
+// Regression: support collection may shrink items during the collision loop.
+const loop=preview.slice(preview.indexOf(' // A collected support item'),preview.indexOf(' updateChalk(dt);',preview.indexOf(' // A collected support item')));
+assert.match(loop,/for\(const a of items\.slice\(\)\.reverse\(\)\)/);assert.match(loop,/const i=items\.indexOf\(a\);if\(i<0\)continue/);
+const collisionFixture=new Function('const items=[{x:100,y:100,r:10,good:false,speed:0,phase:0,wobble:0},{x:100,y:100,r:10,good:true,speed:0,phase:0,wobble:0}];let hits=0;const dt=1/60,clock=1,W=600,H=420,player={x:100,y:100,r:20},profile={zigzag:0,homing:0,heroSize:1},state="playing";function hit(a){hits++;if(a.good)items.length=0;}'+loop+'return {hits,remaining:items.length};');assert.deepEqual(collisionFixture(),{hits:1,remaining:0});console.log('PASS support item removes hazards safely during collision iteration');
