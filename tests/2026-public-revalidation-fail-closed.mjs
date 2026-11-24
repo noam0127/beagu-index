@@ -29,8 +29,8 @@ assert.match(compare,/cached\.summaries\[2026\]=\[\]/);
 assert.match(compare,/if\(epoch!==state\.authEpoch\|\|token!==state\.sessionToken\)return/);
 assert.match(report,/if\(latestOnly\)\{\s*\/\/ A withdrawn 2026 publication[\s\S]*?state\.years\['2026'\]\.percentile=null/);
 assert.match(report,/state\.years\['2026'\]\.items=\{\};\s*state\.approvedSummary\['2026'\]=\[\];\s*render\(\)/);
-assert.match(read('search-lv1.html'),/js\/level-search\.js\?v=20261122-recheck1/);
-assert.match(read('statistics.html'),/js\/statistics-compare\.js\?v=20261122-recheck1/);
+assert.match(read('search-lv1.html'),/js\/level-search\.js\?v=20261123-n1-release/);
+assert.match(read('statistics.html'),/js\/statistics-compare\.js\?v=20261124-data-recheck1/);
 for(const publicSource of [search,compare,report,view])
   assert.doesNotMatch(publicSource,/응답 1건 학교|1건이라도 공개/);
 assert.match(api,/'Cache-Control':'no-store'/);
