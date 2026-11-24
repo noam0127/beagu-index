@@ -407,6 +407,23 @@
     },
     {
       "order": 12,
+      "version": "v1.11.2",
+      "name": "함께하기",
+      "scope": "챌린지 화면, 공유 문구, 인증 이미지, 유효 추천, 기존 권한 유지",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v1.11.2-together-production-base",
+      "baseline_sha": "28d6ad42f846655b74ae5b6f7bf0b8ad4a517ea1",
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "tests": [
+        {
+          "name": "Official clean release and actual Chromium regression",
+          "result": "PENDING"
+        }
+      ]
+    },
+    {
+      "order": 13,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -426,7 +443,7 @@
       "rollback_sha": null
     },
     {
-      "order": 13,
+      "order": 14,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -445,7 +462,7 @@
       "rollback_sha": null
     },
     {
-      "order": 14,
+      "order": 15,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -462,7 +479,7 @@
       "rollback_sha": null
     },
     {
-      "order": 15,
+      "order": 16,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
