@@ -55,6 +55,49 @@
    effects(){return {damage:Math.pow(.8,level("guidance")),speed:Math.pow(1.15,level("speed")),power:Math.pow(1.2,level("power")),rate:Math.pow(1.15,level("rate")),allies:level("ally"),maxHP:Math.pow(1.15,level("vital")),heal:Math.pow(1.2,level("heal")),spawn:Math.pow(.88,level("workload")),community:Math.pow(1.15,level("community"))};}
   };
  }
+ const items=Object.freeze([
+  {id:"coffee",name:"따뜻한 커피",emoji:"☕",good:true,heal:17,buff:"coffee",duration:6},
+  {id:"snack",name:"동료의 간식",emoji:"🍪",good:true,heal:25},
+  {id:"vacation",name:"방학",emoji:"🌴",good:true,inv:5},
+  {id:"parental",name:"육아휴직",emoji:"🏡",good:true,buff:"parental",duration:5},
+  {id:"graduate",name:"대학원",emoji:"🎓",good:true,growth:true},
+  {id:"shield",name:"교권 보호막",emoji:"🛡️",good:true,shield:true},
+  {id:"alumni",name:"졸업생의 편지",emoji:"💌",good:true,healRatio:.35},
+  {id:"support",name:"동료의 지원",emoji:"🤝",good:true,clear:5},
+  {id:"training",name:"연수",emoji:"📚",good:true,buff:"training",duration:7},
+  {id:"relief",name:"업무 경감",emoji:"🌿",good:true,buff:"relief",duration:7},
+  {id:"assignment",name:"업무분장",emoji:"🗂️",good:false,damage:8,buff:"assignment",duration:6},
+  {id:"printer",name:"프린터 고장",emoji:"🖨️",good:false,damage:8,buff:"printer",duration:5},
+  {id:"insomnia",name:"불면증",emoji:"🌙",good:false,damage:8,buff:"insomnia",duration:5},
+  {id:"meeting",name:"회의 지옥",emoji:"📅",good:false,damage:8,buff:"meeting",duration:5},
+  {id:"paper",name:"갑작스러운 공문",emoji:"📄",good:false,damage:8,papers:2},
+  {id:"conflict",name:"교직원 갈등",emoji:"💢",good:false,damage:8,buff:"conflict",duration:5}
+ ].map(Object.freeze));
+ const events=Object.freeze([
+  {id:"rush",icon:"📨",title:"공문 폭풍",detail:"장애물 증가",duration:6,stages:[0,1,2,3,4]},
+  {id:"audit",icon:"🔎",title:"갑작스러운 감사",detail:"추적 장애물 출현",duration:5,stages:[1,2,3]},
+  {id:"bonus",icon:"💰",title:"성과급 지급일",detail:"점수 아이템 등장",duration:4,stages:[0,1,2,3,4]},
+  {id:"support",icon:"🤝",title:"동료 교사들의 연대",detail:"회복 및 장애물 제거",duration:5,stages:[0,1,2,3,4]},
+  {id:"focus",icon:"✨",title:"수업 대성공",detail:"회복 · 점수 35% 추가",duration:6,stages:[0,1,2,3,4]},
+  {id:"letters",icon:"💌",title:"스승의 날",detail:"감사 편지 등장",duration:4,stages:[0,1,2,3,4]},
+  {id:"transfer",icon:"🏫",title:"학교 전근",detail:"교실과 장애물 패턴 변경",duration:6,stages:[1,2,3]}
+ ].map(p=>Object.freeze({...p,stages:Object.freeze(p.stages)})));
+ function createEffects(){
+  const expires={};let shield=false;
+  const active=(id,t)=>(expires[id]||0)>t;
+  return {
+   set(id,t,seconds){expires[id]=Math.max(expires[id]||0,t+seconds);},
+   active,addShield(){shield=true;},consumeShield(){if(!shield)return false;shield=false;return true;},
+   values(t){return {
+    speed:Math.max(.65,Math.min(1.35,(active("coffee",t)?1.25:1)*(active("insomnia",t)?.7:1))),
+    spawn:Math.max(.65,Math.min(1.5,(active("assignment",t)?1.35:1)*(active("relief",t)?.72:1))),
+    power:Math.max(.6,Math.min(1.3,(active("training",t)?1.2:1)*(active("printer",t)?.65:1))),
+    damage:active("training",t)?.8:1,helperRate:active("conflict",t)?.65:1,
+    noSpawn:active("parental",t),meeting:active("meeting",t),shield};},
+   labels(t){return Object.keys(expires).filter(id=>active(id,t)).map(id=>({id,remaining:Math.ceil(expires[id]-t)}));}
+  };
+ }
+ function pickEvent(stage,random=Math.random,bossActive=false){if(bossActive)return null;const pool=events.filter(e=>e.stages.includes(stage));return pool.length?pool[Math.floor(random()*pool.length)]:null;}
  function create(){
   let combo=0,maxCombo=0,near=0,hits=0,lastHit=-Infinity,lowSince=null,lowEpisode=false;
   const paid=new Set(),objects=new WeakSet();
@@ -75,5 +118,5 @@
    stats(){return {combo,maxCombo,near,hits,crises:paid.size,lastHit};}
   };
  }
- root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth});
+ root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent});
 })(typeof window!=="undefined"?window:globalThis);
