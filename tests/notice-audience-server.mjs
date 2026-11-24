@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {makeNoticeHandler} from '../supabase/functions/beagu-notice-audience-v1/handler.mjs';
+const rows=new Map(['all','0','1','2'].map(a=>[a,{audience:a,body:'notice-'+a,published:true,revision:1,updated_at:null}]));
+const audits=[];let writes=0;
+const db={from(table){if(table==='beagu_admin_audit_events')return {insert:async x=>{audits.push(x);return {error:null}}};assert.equal(table,'beagu_notice_audience_v1');let filters=[],patch=null;const query={select(){return query},in(k,v){filters.push(r=>v.includes(r[k]));return query},eq(k,v){filters.push(r=>r[k]===v);return query},update(p){patch=p;return query},async maybeSingle(){const row=[...rows.values()].find(r=>filters.every(f=>f(r)));if(!row)return {data:null,error:null};if(patch){Object.assign(row,patch);writes++}return {data:{...row},error:null}},then(resolve){return Promise.resolve({data:[...rows.values()].filter(r=>filters.every(f=>f(r))).map(r=>({...r})),error:null}).then(resolve)}};return query;}};
+const handler=makeNoticeHandler({db,verifyLevel:async t=>({'token1':1,'token2':2}[t]??null),verifyAdmin:async t=>t==='mfa'?{userId:'owner',status:200}:{status:403,error:'mfa_required'}});
+const call=async(input,headers={})=>{const r=await handler(new Request('https://fixture.invalid',{method:'POST',headers:{'Content-Type':'application/json',...headers},body:JSON.stringify(input)}));return {status:r.status,data:await r.json(),cache:r.headers.get('cache-control')}};
+for(const [token,level] of [['',0],['token1',1],['token2',2]]){const r=await call({action:'public_read',audience:'2',level:2},token?{'X-Beagu-Session':token}:{});assert.equal(r.status,200);assert.equal(r.data.level,level);assert.deepEqual(r.data.notices.map(n=>n.audience).sort(),['all',String(level)].sort());assert.match(r.cache,/no-store/);}
+assert.equal((await call({action:'public_read'},{'X-Beagu-Session':'revoked'})).status,401);
+assert.equal((await call({action:'admin_read',audience:'2'})).status,401);
+assert.equal((await call({action:'admin_read',audience:'2'},{Authorization:'Bearer low'})).status,403);
+assert.equal((await call({action:'admin_save',audience:'2',revision:1,body:'forged'})).status,401);assert.equal(writes,0);
+const headers={Authorization:'Bearer mfa'};
+assert.equal((await call({action:'admin_read',audience:'9'},headers)).status,400);
+assert.equal((await call({action:'admin_hide',audience:'2',revision:1},headers)).status,200);
+assert.equal(rows.get('2').body,'notice-2');assert.equal(rows.get('2').published,false);
+assert.deepEqual((await call({action:'public_read'},{'X-Beagu-Session':'token2'})).data.notices.map(n=>n.audience),['all']);
+assert.equal((await call({action:'admin_read',audience:'2'},headers)).data.body,'notice-2');
+assert.equal((await call({action:'admin_save',audience:'2',revision:1,body:'stale'},headers)).status,409);
+assert.equal((await call({action:'admin_save',audience:'2',revision:2,body:'<img src=x>새 공지'},headers)).status,200);
+assert.equal(rows.get('2').revision,3);assert.equal(rows.get('1').revision,1);assert.equal(writes,2);
+assert.ok(audits.every(a=>!JSON.stringify(a).includes('notice-2')&&!JSON.stringify(a).includes('<img')));
+assert.equal((await call({action:'admin_save',audience:'2',revision:3,body:'x'.repeat(1001)},headers)).status,400);
+console.log('PASS audience-server: exact levels, forged level ignored, invalid session, admin MFA, hide preserves body, conflict, audit minimization');

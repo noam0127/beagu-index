@@ -15,6 +15,7 @@
 
   function show(section, message, error = false) {
     for (const id of sections) $(id).hidden = id !== section;
+    if(section!=="adminDashboard")window.BeaguHomeNoticeAdmin?.reset();
     notice.textContent = message;
     notice.classList.toggle("error", error);
   }
@@ -24,7 +25,7 @@
   }
   function busy(value) {
     pending = value;
-    document.querySelectorAll("button").forEach(button => { button.disabled = value; });
+    document.querySelectorAll("button").forEach(button => { if(!button.closest("#adminHomeNoticeSection"))button.disabled = value; });
   }
   async function gate(action) {
     const {data, error} = await auth.getSession();
@@ -380,6 +381,7 @@
     window.Beagu2026ReviewAdmin?.mount(proof.role);
      window.BeaguCivicAdmin?.mount(proof.role);
     window.BeaguMembersAdmin?.mount(proof.role);
+    window.BeaguHomeNoticeAdmin?.mount(proof.role);
     await loadMetrics();
     if(liveTimer===null)liveTimer=window.setInterval(()=>{
       if(!document.hidden&&!$("adminDashboard").hidden)refreshLiveSafely();
