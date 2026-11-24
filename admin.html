@@ -304,6 +304,24 @@
           <small>응답 신뢰성 → 집계 정확성 → 공개 적격성 · 예외 중심 운영</small>
         </div>
         <p class="admin-review-intro">검증 현황은 핵심 수치만 표시합니다. 개별 학교의 공개 근거와 재식별 위험은 별도로 심사하며, 기술검사 통과만으로 공개되지 않습니다.</p>
+        <section class="admin-waterway" aria-labelledby="adminWaterwayHeading">
+          <h4 id="adminWaterwayHeading">수집부터 공개까지</h4>
+          <p id="adminWaterwayStatus" class="subtle" role="status" aria-live="polite">관리자 인증 후 조회합니다.</p>
+          <div class="admin-waterway-steps" role="list" aria-label="데이터 처리 단계">
+            <article role="listitem"><small>01 · 원본 수집</small><b id="adminWaterwayRaw">—</b><span>실시간 원본 응답</span><p id="adminWaterwaySourceNote">최근 수집 확인 대기</p></article>
+            <article role="listitem"><small>02 · 서버 동기화</small><b id="adminWaterwaySync">—</b><span>마지막 전송 원본 응답</span><p id="adminWaterwaySyncNote">전송 기록 확인 대기</p></article>
+            <article role="listitem"><small>03 · 학교매칭</small><b id="adminWaterwayMatched">—</b><span>학교 연결 응답</span><p id="adminWaterwayMatchNote">보류 기록 확인 대기</p></article>
+            <article role="listitem"><small>04 · 응답 검수</small><b id="adminWaterwayValid">—</b><span>개별 검증 완료 응답</span><p id="adminWaterwayValidityNote">응답별 검수 수집 확인 대기</p></article>
+            <article role="listitem"><small>05 · 비공개 집계</small><b id="adminWaterwayAggregated">—</b><span>집계 반영 응답</span><p id="adminWaterwayAggregateNote">집계 학교 및 시각 확인 대기</p></article>
+            <article role="listitem"><small>06 · 공개 근거</small><b id="adminWaterwayBasis">—</b><span>근거 확인 학교</span><p id="adminWaterwayBasisNote">사전심사 대기</p></article>
+            <article role="listitem"><small>07 · 학교별 승인</small><b id="adminWaterwayApproved">—</b><span>현재 근거와 일치하는 승인 학교</span><p>레벨별 승인은 아래에서 별도 확인</p></article>
+          </div>
+          <details class="admin-waterway-reasons"><summary>공개 사전검사 결과 및 보류 사유</summary>
+            <ul id="adminWaterwayReasons"><li>조회 전</li></ul>
+            <p class="subtle">학교별 실제 동의·비식별·소표본 심사는 자동으로 승인되지 않습니다.</p>
+          </details>
+          <p class="subtle" id="adminWaterwayFailure">마지막 실패 시각 및 원인: 확인 대기</p>
+        </section>
         <div class="admin-review-overview" aria-label="2026 조사자료 핵심 현황">
           <article><span>집계 학교</span><strong id="adminReview2026Total">—</strong><small>2026 비공개 학교별 집계</small></article>
           <article><span>기술검사 통과</span><strong id="adminReview2026Technical">—</strong><small>전체 문항 기준</small></article>
@@ -354,21 +372,24 @@
           <div class="admin-release-grid" id="adminLevelReleaseGrid">
             <article class="admin-release-card" data-release-level="0">
               <div class="admin-release-card-head"><h5>Lv.0 <span>일반 방문자</span></h5><strong id="adminLevelReleaseState0">확인 중</strong></div>
-              <p class="admin-release-main">공개 대상 <b id="adminLevelReleaseCovered0">—</b>개교</p>
+              <p class="admin-release-main">승인 포함 <b id="adminLevelReleaseCovered0">—</b>개교</p>
+              <p class="admin-waterway-level">승인 가능 <b id="adminWaterwayEligible0">—</b>개교 · 서버 정책상 공개 조건 충족 <b id="adminWaterwayReleased0">—</b>개교</p>
               <p class="admin-release-hint">2026 학교별 상세 결과는 현재 Lv.0에 제공하지 않습니다. 향후 자료 공개를 위한 별도 승인입니다.</p>
               <button type="button" class="primary" id="adminLevelReleaseButton0" disabled>Lv.0 최종 공개 승인</button>
               <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke0" disabled hidden>Lv.0 공개 중단</button>
             </article>
             <article class="admin-release-card" data-release-level="1">
               <div class="admin-release-card-head"><h5>Lv.1 <span>인증 참여자</span></h5><strong id="adminLevelReleaseState1">확인 중</strong></div>
-              <p class="admin-release-main">공개 대상 <b id="adminLevelReleaseCovered1">—</b>개교</p>
+              <p class="admin-release-main">승인 포함 <b id="adminLevelReleaseCovered1">—</b>개교</p>
+              <p class="admin-waterway-level">승인 가능 <b id="adminWaterwayEligible1">—</b>개교 · 서버 공개 조건 충족 <b id="adminWaterwayReleased1">—</b>개교</p>
               <p class="admin-release-hint">학교별 승인 및 24시간 대기 조건을 통과한 2026 자료만 표시합니다.</p>
               <button type="button" class="primary" id="adminLevelReleaseButton1" disabled>Lv.1 최종 공개 승인</button>
               <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke1" disabled hidden>Lv.1 공개 중단</button>
             </article>
             <article class="admin-release-card" data-release-level="2">
               <div class="admin-release-card-head"><h5>Lv.2 <span>챌린지 달성자</span></h5><strong id="adminLevelReleaseState2">확인 중</strong></div>
-              <p class="admin-release-main">공개 대상 <b id="adminLevelReleaseCovered2">—</b>개교</p>
+              <p class="admin-release-main">승인 포함 <b id="adminLevelReleaseCovered2">—</b>개교</p>
+              <p class="admin-waterway-level">승인 가능 <b id="adminWaterwayEligible2">—</b>개교 · 서버 공개 조건 충족 <b id="adminWaterwayReleased2">—</b>개교</p>
               <p class="admin-release-hint">검증된 학교 자료에 한해 최종 승인 직후 공개할 수 있습니다.</p>
               <button type="button" class="primary" id="adminLevelReleaseButton2" disabled>Lv.2 최종 공개 승인</button>
               <button type="button" class="secondary admin-release-revoke" id="adminLevelReleaseRevoke2" disabled hidden>Lv.2 공개 중단</button>
@@ -471,7 +492,7 @@
   <script src="js/supabase-config.js"></script>
   <script defer src="js/beagu-home-notice-admin-v1.js?v=160b"></script>
   <script defer src="js/beagu-admin-access-v1.js?v=160"></script>
-  <script defer src="js/beagu-2026-admin-review.js?v=20261123-bulk-400-enabled1"></script>
+  <script defer src="js/beagu-2026-admin-review.js?v=20261124-waterway1"></script>
   <script defer src="js/beagu-admin-members-v1.js?v=20261121-members1"></script>
 <script defer src="js/beagu-2026-civic-admin-v1.js?v=20261124-trust1"></script>
 </body>
