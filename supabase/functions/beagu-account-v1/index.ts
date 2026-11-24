@@ -48,7 +48,7 @@ Deno.serve(async(req:Request)=>{
    const u=await user(req);if(!u)return send(401,{error:"LOGIN_FAILED"});
    result=await db.rpc("beagu_account_formal_login_v1",{p_user:u.id,p_token_sha});
   }
-  return !result.error&&result.data&&[1,2].includes(result.data.level)?send(200,{...result.data,token}):send(401,{error:"LOGIN_FAILED"});
+  return !result.error&&result.data&&[1,2].includes(result.data.level)?send(200,{account_id:result.data.account_id,level:result.data.level,formal:result.data.formal===true,nickname:result.data.nickname,expires_at:result.data.expires_at,token}):send(401,{error:"LOGIN_FAILED"});
  }
  if(action==="formal_link"){
   const u=await user(req);if(!u)return send(401,{error:"ACCOUNT_AUTH_REQUIRED"});
@@ -59,7 +59,7 @@ Deno.serve(async(req:Request)=>{
  if(action==="status"||action==="logout"){
   if(!secret.test(session))return send(401,{error:"LOGIN_FAILED"});
   const {data,error}=await db.rpc(action==="status"?"beagu_account_session_status_v1":"beagu_account_logout_v1",{p_token_sha:await sha(session)});
-  return !error&&data?send(200,action==="logout"?{ok:true}:data):send(401,{error:"LOGIN_FAILED"});
+  return !error&&data?send(200,action==="logout"?{ok:true}:{level:data.level,formal:data.formal===true,nickname:data.nickname,expires_at:data.expires_at}):send(401,{error:"LOGIN_FAILED"});
  }
  return send(400,{error:"INVALID_REQUEST"});
  }catch{return send(400,{error:"REQUEST_FAILED"});}
