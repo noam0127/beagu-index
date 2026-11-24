@@ -89,7 +89,7 @@ const rr={version:'4.0',game:rp.game,difficulty:'normal',baseScore:1000,score:30
 assert.equal(rp.validate(rr,190,'normal').score,3000);
 for(const bad of [{...rr,score:3001},{...rr,version:'3.0'},{...rr,school_name:'private'},{...rr,verified:true},{...rr,bossIds:['final','final']},{...rr,leaveDays:4},{...rr,age:61},{...rr,survivalSeconds:30,victory:false,age:30,score:1500,bossIds:['final']}])assert.throws(()=>rp.validate(bad,190,'normal'));
 assert.throws(()=>rp.validate(rr,100,'normal'));assert.throws(()=>rp.validate(rr,190,'hard'));
-assert.equal(rp.storageKey,'beaguRun4LocalRecordsV1');assert.match(preview,/recordPolicy\.save\(localStorage,/);assert.doesNotMatch(preview,/new window\.ArcadeLeaderboard/);
+assert.equal(rp.storageKey,'beaguRun4LocalRecordsV1');assert.match(preview,/recordPolicy\.save\(localStorage,result\)/);assert.doesNotMatch(preview,/new window\.ArcadeLeaderboard/);
 const rankingDraft=read('docs/run4-ranking-preflight/schema-draft.sql');assert.match(rankingDraft,/session_id uuid primary key/);assert.match(rankingDraft,/enable row level security/);assert.match(rankingDraft,/where r.verification_status='verified'/);assert.doesNotMatch(rankingDraft,/alter table public\.arcade_game_scores\b|drop table/i);
 console.log('PASS version-separated local results and impossible-summary rejection; staged SQL remains unexecuted');
 

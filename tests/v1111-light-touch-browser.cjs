@@ -258,7 +258,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   await page.locator('#teacher-run-protected').waitFor({state:'visible'});
   await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).waitFor();
   await page.evaluate(()=>window.__trustedRun4Replay.startSeed(42));
-  const game=page.locator('#game'),rect=await game.boundingBox();
+  const game=page.locator('#game');await game.scrollIntoViewIfNeeded();const rect=await game.boundingBox();
   await page.mouse.move(rect.x+rect.width*.5,rect.y+rect.height*.8);
   await page.mouse.down();await page.evaluate(()=>window.__trustedRun4Replay.stepTo(60));await page.mouse.up();
   await game.focus();await page.keyboard.down('ArrowRight');await page.evaluate(()=>window.__trustedRun4Replay.stepTo(120));await page.keyboard.up('ArrowRight');

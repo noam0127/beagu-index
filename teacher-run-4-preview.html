@@ -698,7 +698,7 @@ function paintLocalRecords(){
 }
 function saveLocalResult(baseScore,finalScore,win){
  let result=null;
- try{const stats=run4.stats();result=recordPolicy.save(localStorage,{version:"4.0",game:recordPolicy.game,difficulty:schoolPicker.get()?.difficulty||"hard",baseScore,score:finalScore,survivalSeconds:Math.floor(clock),age:getAge(),victory:win,bossIds:bosses.defeated(),maxCombo:stats.maxCombo,hits:misses,crises:stats.crises,leaveDays:leave.state().usedDays,allies:alliesPeak});}catch(_){}
+ try{const stats=run4.stats();result=recordPolicy.localRecord({version:"4.0",game:recordPolicy.game,difficulty:schoolPicker.get()?.difficulty||"hard",baseScore,score:finalScore,survivalSeconds:Math.floor(clock),age:getAge(),victory:win,bossIds:bosses.defeated(),maxCombo:stats.maxCombo,hits:misses,crises:stats.crises,leaveDays:leave.state().usedDays,allies:alliesPeak});try{recordPolicy.save(localStorage,result);}catch(_){}}catch(_){}
  paintLocalRecords();return result;
 }
 $("run4-record-tier").addEventListener("change",paintLocalRecords);

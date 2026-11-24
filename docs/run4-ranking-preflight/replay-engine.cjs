@@ -4,16 +4,21 @@ function instrumentTrustedSource(source){
  const anchor="resize();intro();requestAnimationFrame(tick);postHeight();";
  if(source.split(anchor).length!==2)throw Error("unsupported_source");
  return source.replace(anchor,`resize();intro();
+ // Render state-only UI in the accelerated fixture, without advancing simulation.
+ const syncFixtureUI=()=>{document.body.classList.toggle("arcade-run-game-playing",state==="playing"||state==="paused");syncFullscreenPause();syncLeave();draw();};
+ function fixturePaint(){syncFixtureUI();requestAnimationFrame(fixturePaint);}
+ requestAnimationFrame(fixturePaint);
  let replayStarted=false;
  const snapshot=()=>({tick:recordTick,state,clock,life,score});
  const stepTo=target=>{
   if(!Number.isInteger(target)||target<recordTick||target>11400)throw Error("invalid_tick");
   while(recordTick<target){if(!stepRecording())throw Error("action_required");}
+  syncFixtureUI();
  };
  const startSeed=async seed=>{
   if(replayStarted||!recordingMode)throw Error("already_started_or_wrong_mode");
   if(!Number.isInteger(seed)||seed<0||seed>4294967295)throw Error("invalid_seed");
-  replayStarted=true;recordSeedOverride=seed;soundOn=false;await start();if(state!=="playing")throw Error("start_denied");
+  replayStarted=true;recordSeedOverride=seed;soundOn=false;await start();if(state!=="playing")throw Error("start_denied");syncFixtureUI();
  };
  window.__trustedRun4Replay=Object.freeze({
   async run(seed,events){await startSeed(seed);for(const e of events){stepTo(e.tick);applyReplayInput(e);}if(state!=="over"||!recordEnvelope)throw Error("not_finished");return {result:recordEnvelope.result,terminal:snapshot()};},
