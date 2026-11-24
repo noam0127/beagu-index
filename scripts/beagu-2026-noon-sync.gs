@@ -40,44 +40,85 @@ function setupDailyNoonTrigger() {
  * publication. MBTI is optional for backward compatibility with installs
  * where the second source file has not yet been added.
  */
+// Send only aggregate run metadata; never include exception text, source rows,
+// answers, school identifiers, or credentials in the payload.
+function beagu26RunReason(e){
+  const message=String(e?.message||"");
+  if(/토큰|TOKEN|인증|설정 필요/i.test(message))return "AUTH_CONFIG";
+  const http=message.match(/HTTP\s+(\d{3})/);
+  if(http){
+    if(["401","403","409","429"].includes(http[1]))return "HTTP_"+http[1];
+    return http[1][0]==="5"?"HTTP_5XX":"HTTP_OTHER";
+  }
+  if(/partial sync/i.test(message))return "PARTIAL_SYNC";
+  if(/열|행 안전|원본|MASTER|column count|grid row/i.test(message))return "SOURCE_OR_SCHEMA";
+  return "STAGE_ERROR";
+}
+function beagu26SendRunReport(report){
+  try{
+    const token=PropertiesService.getScriptProperties().getProperty("BEAGU_2026_INGEST_TOKEN")||"";
+    if(token.length<32)return;
+    const response=UrlFetchApp.fetch(BEAGU26.supabaseUrl+"/functions/v1/beagu-2026-results-ingest",{
+      method:"post",contentType:"application/json",headers:{"X-Beagu-Ingest-Token":token},
+      payload:JSON.stringify(report),muteHttpExceptions:true
+    });
+    if(response.getResponseCode()!==200)Logger.log("BEAGU26_RUN_REPORT_FAILED HTTP "+response.getResponseCode());
+  }catch(e){Logger.log("BEAGU26_RUN_REPORT_UNAVAILABLE");}
+}
 function refreshBeagu2026AllPrivateStats() {
   if(typeof refreshBeagu2026QuestionResults!=="function")throw Error("최신 Code.gs 설치 필요");
+  const report={kind:"WATERWAY_RUN_V1",started_at:new Date().toISOString(),finished_at:null,
+    source_rows:null,basic_review_rows:null,stages:["SOURCE","QUESTION_RESULTS","CORE_AND_QA","SCHOOL_CULTURE"]
+      .map(stage=>({stage,status:"SKIPPED",reason:"NOT_INSTALLED",duration_ms:0}))};
   const lock=LockService.getScriptLock();
-  // A few closely spaced submissions may queue behind a complete private refresh.
-  if(!lock.tryLock(180000))throw Error("다른 2026 전체 집계가 실행 중입니다.");
-  try {
-    const snapshot=readBeagu2026SourceSnapshot();
-    const failures=[];
-    // Each independent output uses the same immutable-in-practice source snapshot.
-    // Failure in one destination must not prevent the remaining destinations.
-    const runStage=(name,work)=>{
-      const started=Date.now();
-      try {
-        work();
-        Logger.log("BEAGU26_STAGE "+name+" SUCCESS "+(Date.now()-started)+"ms");
-      } catch(e) {
-        failures.push(e);
-        // Do not include response content, tokens or HTTP bodies in stage logs.
-        Logger.log("BEAGU26_STAGE "+name+" ERROR "+(Date.now()-started)+"ms");
-      }
-    };
-    runStage("QUESTION_RESULTS",()=>refreshBeagu2026QuestionResults(snapshot));
-    runStage("CORE_AND_QA",()=>{
-      const result=refreshBeagu2026Stats(snapshot);
-      if(result && (result.privateQaStatus==="PRIVATE_QA_ERROR" ||
-          result.publishStatus==="PUBLIC_ERROR"))throw Error("CORE_AND_QA partial sync failed");
-    });
-    if(typeof refreshBeagu2026SchoolCulture==="function") {
-      runStage("SCHOOL_CULTURE",()=>refreshBeagu2026SchoolCulture(snapshot));
-    } else {
-      Logger.log("Q14~Q17 학교문화 자동 집계 미설치: MBTI 스크립트 파일을 추가하세요.");
+  if(!lock.tryLock(180000)){
+    report.stages[0]={stage:"SOURCE",status:"ERROR",reason:"LOCK_BUSY",duration_ms:0};
+    report.finished_at=new Date().toISOString();
+    beagu26SendRunReport(report);
+    throw Error("다른 2026 전체 집계가 실행 중입니다.");
+  }
+  const failures=[];
+  const runStage=(index,work)=>{
+    const started=Date.now(),stage=report.stages[index].stage;
+    try {
+      const result=work();
+      report.stages[index]={stage,status:"SUCCESS",reason:"NONE",duration_ms:Date.now()-started};
+      Logger.log("BEAGU26_STAGE "+stage+" SUCCESS "+(Date.now()-started)+"ms");
+      return result;
+    }catch(e){
+      failures.push(e);
+      report.stages[index]={stage,status:"ERROR",reason:beagu26RunReason(e),duration_ms:Date.now()-started};
+      Logger.log("BEAGU26_STAGE "+stage+" ERROR "+(Date.now()-started)+"ms");
+      return null;
     }
-    // Report failure to Apps Script execution history after all independent stages.
-    // The existing form-submit/next-noon trigger retries by rebuilding the latest
-    // snapshot; no new trigger, raw response insert or approval is created here.
+  };
+  try{
+    const snapshot=runStage(0,()=>{
+      const s=readBeagu2026SourceSnapshot();
+      if(s.values.length){
+        const c=questionColumns(s.values[0]);
+        report.source_rows=s.values.slice(1).filter(r=>r[0]||r[c.school]).length;
+      }
+      return s;
+    });
+    if(snapshot){
+      runStage(1,()=>{
+        const result=refreshBeagu2026QuestionResults(snapshot);
+        if(Number.isSafeInteger(result?.basicReviewRows))report.basic_review_rows=result.basicReviewRows;
+      });
+      runStage(2,()=>{
+        const result=refreshBeagu2026Stats(snapshot);
+        if(result&&(result.privateQaStatus==="PRIVATE_QA_ERROR"||result.publishStatus==="PUBLIC_ERROR"))throw Error("CORE_AND_QA partial sync failed");
+      });
+      if(typeof refreshBeagu2026SchoolCulture==="function"){
+        runStage(3,()=>refreshBeagu2026SchoolCulture(snapshot));
+      }else Logger.log("Q14~Q17 학교문화 자동 집계 미설치: MBTI 스크립트 파일을 추가하세요.");
+    }
     if(failures.length)throw failures[0];
-  } finally {
+  }finally{
     lock.releaseLock();
+    report.finished_at=new Date().toISOString();
+    beagu26SendRunReport(report);
   }
 }
 // Optional near-real-time private aggregation after each genuine Google Form submission.
@@ -672,5 +713,6 @@ function refreshBeagu2026QuestionResults(snapshot) {
     });
     if(response.getResponseCode()!==200)throw Error('비공개 문항 집계 전송 실패 HTTP '+response.getResponseCode());
     Logger.log('비공개 문항 집계 저장: 학교 '+payload.schools.length+'개. 공개 승인은 별도입니다.');
+    return {basicReviewRows:new Set(reviewRows.map(r=>r[0])).size};
   } finally {if(lock)lock.releaseLock();}
 }
