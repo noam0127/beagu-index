@@ -119,10 +119,10 @@
       "version": "v1.3.0",
       "name": "놀이터",
       "scope": "게임 허브·기존 진입 유지",
-      "status": "CANDIDATE_BROWSER_CI_PENDING",
+      "status": "REGISTERED_OWNER_APPROVED_QUEUED",
       "branch": "release/v1.3.0-playground",
       "pr": 283,
-      "commit": null,
+      "commit": "1a3a67e53e4201f3b292219a0b3f0b3a9898de23",
       "tests": [
         {
           "name": "Previous exact candidate source assertions",
@@ -141,14 +141,19 @@
         {
           "name": "Chromium 4 viewports x 3 levels",
           "result": "PENDING"
+        },
+        {
+          "name": "Chromium 12 cases",
+          "result": "PASS",
+          "run": 45303798145
         }
       ],
       "changed_files": [],
       "dependencies": [
         "v1.2.0 production applied before registration"
       ],
-      "admin_registration": "PENDING_FINAL_CI",
-      "production": "NOT_APPROVED",
+      "admin_registration": "VERIFIED",
+      "production": "QUEUED_NOT_DEPLOYED",
       "deployment_date": null,
       "rollback_sha": "01a3dcd4319d29f78222f12f942162e541a371fe"
     },
@@ -157,17 +162,28 @@
       "version": "v1.4.0",
       "name": "플레이",
       "scope": "게임 조작·전체화면·일시정지",
-      "status": "PENDING",
-      "branch": null,
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.4.0-play",
       "pr": null,
       "commit": null,
-      "tests": [],
+      "tests": [
+        {
+          "name": "Gesture and pause unit tests",
+          "result": "PENDING"
+        },
+        {
+          "name": "Chromium playback UI fixture",
+          "result": "PENDING"
+        }
+      ],
       "changed_files": [],
-      "dependencies": [],
+      "dependencies": [
+        "v1.3.0 production applied before registration"
+      ],
       "admin_registration": "PENDING",
       "production": "NOT_APPROVED",
       "deployment_date": null,
-      "rollback_sha": null
+      "rollback_sha": "1a3a67e53e4201f3b292219a0b3f0b3a9898de23"
     },
     {
       "order": 4,

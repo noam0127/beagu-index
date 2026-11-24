@@ -1,0 +1,6 @@
+/* Same in-court playback control in standalone, native and fallback fullscreen. */
+.arcade-game-viewport>.arcade-playback{position:absolute!important;display:flex;align-items:center;justify-content:center;left:50%!important;right:auto!important;top:auto!important;bottom:max(8px,env(safe-area-inset-bottom))!important;transform:translateX(-50%);z-index:32;min-height:44px;width:min(46%,220px);max-width:calc(100% - 130px);padding:7px 10px;border:1px solid #c6e4ee;border-radius:999px;background:rgba(10,28,48,.9);color:#fff;font:750 14px/1.2 system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
+.arcade-game-viewport>.arcade-playback[hidden]{display:none!important}.arcade-game-viewport>.arcade-playback:disabled{opacity:.55;cursor:wait}
+.arcade-game-viewport>.arcade-playback:focus-visible{outline:3px solid #ffe5a1;outline-offset:2px}
+.arcade-mobile-scroll-rail{display:none!important}
+@media(max-width:360px){.arcade-game-viewport>.arcade-playback{font-size:12px;min-height:44px;max-width:calc(100% - 122px)}}

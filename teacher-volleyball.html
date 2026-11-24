@@ -153,6 +153,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261121-lv1label2">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
+<link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="postit.html">포스트잇</a><a href="challenge.html">챌린지</a><a href="games.html" aria-current="page">게임</a></nav></div></header>
@@ -180,6 +181,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         <span>상대 <strong id="volley-fullscreen-cpu-score">0</strong></span>
         <small id="volley-fullscreen-situation" class="arcade-fullscreen-subline">EASY · 0:00</small>
       </div>
+      <button type="button" id="pause" class="arcade-playback" disabled hidden aria-label="일시정지" title="일시정지">⏸ 일시정지</button>
       <canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas>
       <button type="button" id="volley-mobile-jump" class="volley-mobile-jump" aria-label="점프" title="점프"><span aria-hidden="true">↑</span><small>점프</small></button>
       <div class="volley-ready-overlay" id="volley-ready-overlay" aria-labelledby="volley-ready-title">
@@ -203,7 +205,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
         </div>
       </div>
     </div>
-  <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="secondary" id="pause" disabled aria-label="일시정지" title="일시정지">⏸</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
+  <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="auxiliary" id="help" aria-label="조작법" title="조작법">?</button></div>
   <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/keep-your-dream-alive-seamless-loop" target="_blank" rel="noopener noreferrer">Keep your dream alive! · congusbongus (CC0)</a></p>
   <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 좌우 드래그 이동 · 모바일은 오른쪽 점프 버튼 · EASY/날개 아이템에서만 비행 · ⚡ 더블 터치 필살기 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
   <a class="postit-arcade-link postit-lv2-link" data-postit-game="teacher-volleyball" target="_top" href="postit.html?game=teacher-volleyball">▤ 이 게임 포스트잇</a>
@@ -216,10 +218,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-leaderboard-v1.js?v=20261123-school-links-live2"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261120-fast1"></script>
 <script src="js/arcade-fullscreen-v1.js?v=20261120-fullscreen-icons2"></script>
-<script src="js/arcade-scroll-rail-v1.js?v=20261120-rightscroll1"></script>
+<script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=20261120-rightscroll1"></script>
 <script src="js/arcade-mystery-items-v1.js?v=20261123-items"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
+<script src="js/arcade-gestures-v1.js?v=140"></script>
 <script>
 (function () {
   "use strict";
@@ -649,9 +652,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     startButton.textContent = state.phase === "starting" ? "⏳ 학교 확인 중" : state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "⏹ 여기까지 기록";
     startButton.disabled = state.phase === "starting" ||
       ((state.phase === "ready" || state.phase === "finished") && schoolPicker.get()?.eligible !== true);
-    pauseButton.disabled = state.phase === "ready" || state.phase === "finished" || state.phase === "point" || state.phase === "starting";
-    pauseButton.textContent = state.phase === "paused" ? "▶" : "⏸";
+    pauseButton.hidden = !["playing","point","paused"].includes(state.phase);
+    pauseButton.disabled = pauseButton.hidden || pauseExitBusy;
+    pauseButton.textContent = state.phase === "paused" ? "▶ 계속하기" : "⏸ 일시정지";
     pauseButton.setAttribute("aria-label",state.phase === "paused"?"계속하기":"일시정지");
+    pauseButton.title=state.phase==="paused"?"계속하기":"일시정지";
     updateMatchScoreUI();
   }
   function resetPositions() {
@@ -752,12 +757,13 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     else schoolPicker.focus();
     document.getElementById("arcade-school-picker").scrollIntoView?.({behavior:"smooth",block:"start"});
   });
+  let pausedPhase="playing";
   function pause(){
-    if(state.phase==="playing"){
-      state.phase="paused";releaseKeys();setStatus("일시정지");
+    if(state.phase==="playing"||state.phase==="point"){
+      pausedPhase=state.phase;state.phase="paused";releaseKeys(true);setStatus("일시정지");
       pauseStatus.textContent="";pauseOverlay.hidden=false;
     }else if(state.phase==="paused"&&!pauseExitBusy){
-      state.phase="playing";setStatus("");pauseOverlay.hidden=true;
+      state.phase=pausedPhase;setStatus("");pauseOverlay.hidden=true;
     }
     syncUI();
   }
@@ -768,35 +774,36 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       pauseStatus.textContent="공식 기록은 4초 이상 플레이한 뒤 남길 수 있습니다. ▶ 계속을 눌러 이어서 플레이해 주세요.";
       return;
     }
-    pauseExitBusy=true;pauseChoices.forEach(button=>button.disabled=true);
+    pauseExitBusy=true;pauseButton.disabled=true;pauseChoices.forEach(button=>button.disabled=true);
     pauseStatus.textContent="이번 경기 기록을 서버에 저장하고 있습니다…";
     try{
       const saved=await finishMatch(true);
       stopForSchoolChange(!changeSchool);
       setStatus(saved===true?"✅ 경기 기록을 저장했습니다.":"⚠ 서버 연결 또는 검증 문제로 기록 저장에 실패했습니다.");
     }finally{
-      pauseExitBusy=false;pauseChoices.forEach(button=>button.disabled=false);
+      pauseExitBusy=false;pauseChoices.forEach(button=>button.disabled=false);syncUI();
     }
   }
   pauseChoices[0].addEventListener("click",pause);
   pauseChoices[1].addEventListener("click",()=>{void leavePausedMatch(true);});
   pauseChoices[2].addEventListener("click",()=>{void leavePausedMatch(false);});
-  function releaseKeys() {
+  function releaseKeys(preserveMomentum=false) {
     Object.keys(keys).forEach(k => { keys[k] = false; });
     touchControl.pointerId = null;
     touchControl.targetX = null;
     touchControl.targetY = null;
     touchControl.jumpQueued = false;
-    left.vy = 0;
-    left.impactSpeed = 0;
+    lastTapAt=0;tapGesture.cancel();
+    if(!preserveMomentum){left.vy=0;left.impactSpeed=0;}
   }
   // Left/right move normally. Up and Space jump without wings;
   // vertical free flight is restricted to EASY or an active wings pickup.
   const codes = { KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",
     KeyW:"up",ArrowUp:"up",KeyS:"down",ArrowDown:"down",Space:"jump" };
   document.addEventListener("keydown", e => {
-    if(!["playing","point"].includes(state.phase))return;
     if(e.target?.closest?.("input,textarea,select,[contenteditable]"))return;
+    if(e.key==="Escape"&&["playing","point","paused"].includes(state.phase)&&!document.fullscreenElement&&!document.webkitFullscreenElement&&!document.querySelector(".arcade-fullscreen-fallback")){e.preventDefault();if(!e.repeat)pause();return;}
+    if(!["playing","point"].includes(state.phase))return;
     const key=codes[e.code];
     if(!key)return;
     e.preventDefault(); // Arrow keys and space must not scroll the page.
@@ -827,15 +834,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     event.stopPropagation();
     if(event.detail===0&&state.phase==="playing")touchControl.jumpQueued=canPlayerJump();
   });
+  const tapGesture=window.BeaguArcadeGestures.create();
   canvas.addEventListener("pointerdown", e => {
     if (state.phase !== "playing" || touchControl.pointerId !== null) return;
     e.preventDefault();
-    const now=Date.now(),bounds=canvas.getBoundingClientRect();
-    const posX=bounds.width?(e.clientX-bounds.left)/bounds.width*W:0;
-    const posY=bounds.height?(e.clientY-bounds.top)/bounds.height*H:0;
-    if(lastTapAt&&now-lastTapAt<=320&&Math.hypot(posX-lastTapX,posY-lastTapY)<110){
-      activateSuperSpike();lastTapAt=0;
-    }else{lastTapAt=now;lastTapX=posX;lastTapY=posY;}
+    tapGesture.down(e);
     touchControl.pointerId = e.pointerId;
     targetFromPointer(e);
     if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
@@ -843,7 +846,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   canvas.addEventListener("pointermove", e => {
     if (touchControl.pointerId !== e.pointerId) return;
     e.preventDefault();
-    targetFromPointer(e);
+    tapGesture.move(e);targetFromPointer(e);
   });
   function endCourtTouch(e) {
     if (touchControl.pointerId !== e.pointerId) return;
@@ -852,16 +855,16 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     touchControl.targetY = null;
     // Releasing movement does not cancel a separate jump-button impulse.
   }
-  canvas.addEventListener("pointerup", endCourtTouch);
-  canvas.addEventListener("pointercancel", endCourtTouch);
-  canvas.addEventListener("lostpointercapture", endCourtTouch);
+  canvas.addEventListener("pointerup",e=>{if(touchControl.pointerId===e.pointerId&&tapGesture.up(e)&&state.phase==="playing")activateSuperSpike();endCourtTouch(e);});
+  canvas.addEventListener("pointercancel",e=>{if(touchControl.pointerId===e.pointerId)tapGesture.cancel();endCourtTouch(e);});
+  canvas.addEventListener("lostpointercapture",e=>{if(touchControl.pointerId===e.pointerId)tapGesture.cancel();endCourtTouch(e);});
   startButton.addEventListener("click",()=>{unlockSound();if(["playing","point","paused"].includes(state.phase))finishMatch(true);else startMatch();});
   pauseButton.addEventListener("click", pause);
   helpButton.addEventListener("click",()=>{helpPanel.hidden=!helpPanel.hidden;helpButton.setAttribute("aria-expanded",String(!helpPanel.hidden));notifyHeight();});
   // Focus changes are frequent in mobile/embedded browsers. Only pause button pauses.
   // Clear keyboard input on blur without cancelling a finger dragging on canvas.
   window.addEventListener("blur", () => { Object.keys(keys).forEach(k => { keys[k] = false; }); });
-  document.addEventListener("visibilitychange", () => { if (document.hidden) releaseKeys(); });
+  document.addEventListener("visibilitychange", () => { if (document.hidden) releaseKeys(true); });
   function controlPlayer(p, direction, jump, speed, jumpStrength=12.8) {
     p.vx = direction * speed;
     p.x = clamp(p.x + p.vx, p.side === "left" ? 35 : NET_X + NET_W / 2 + 36, p.side === "left" ? NET_X - NET_W / 2 - 36 : W - 35);
@@ -1154,6 +1157,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     syncUI();
   }
   function step() {
+    if(state.phase==="paused")return;
     if(state.phase==="playing"){
       state.activeFrames++;
       if(state.activeFrames%60===0)updateMatchScoreUI();

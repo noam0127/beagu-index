@@ -66,7 +66,7 @@
  document.addEventListener('fullscreenchange',sync);
  document.addEventListener('webkitfullscreenchange',sync);
  document.addEventListener('keydown',event=>{
-  if(event.key==='Escape'&&fallback){
+  if(event.key==='Escape'&&fallback&&!event.repeat){
    event.preventDefault();
    if(sameOriginParent())window.parent.postMessage({type:'arcade:fullscreen-request',active:false},window.location.origin);
    else setFallback(false);
