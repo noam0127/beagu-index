@@ -171,7 +171,7 @@ jobs:
           psql_data < tests/2026-civic-hold-assertions.sql
 
           docker exec "$container" createdb -U postgres beagu_account_fixture
-          psql_account() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d beagu_account_fixture; }
+          psql_account() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d beagu_account_fixture "$@"; }
           psql_account < tests/account-v1-postgres-fixture.sql
           psql_account < supabase/migrations/20261121103000_beagu_postit_member_auth.sql
           psql_account <<'SQL'
