@@ -373,6 +373,38 @@
     },
     {
       "order": 10,
+      "version": "v1.10.1",
+      "name": "통합 관제탑",
+      "scope": "서버 변경 포함 버전의 승인·백업·DB·Edge·Pages 순차 적용 및 안전 복구",
+      "status": "DEVELOPMENT_STAGE_1_CI_PENDING",
+      "branch": "release/integrated-controller-preflight-v1",
+      "pr": 294,
+      "commit": null,
+      "tests": [
+        {
+          "name": "First direct Pages controller code-only validation",
+          "result": "PASS",
+          "run": 45359500753
+        },
+        {
+          "name": "First clean release validation",
+          "result": "FAIL",
+          "run": 45359500639,
+          "notes": "Roadmap did not list v1.10.1; fix pending fresh CI"
+        }
+      ],
+      "changed_files": [],
+      "dependencies": [
+        "v1.10.0",
+        "separate approved controller bootstrap"
+      ],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "5f19ddf28a2f24a98fb03900739147a04a547cbe"
+    },
+    {
+      "order": 11,
       "version": "v1.11.0",
       "name": "나의 계정",
       "scope": "가계정·비밀번호·본인확인",
@@ -382,14 +414,16 @@
       "commit": null,
       "tests": [],
       "changed_files": [],
-      "dependencies": [],
+      "dependencies": [
+        "v1.10.1 통합 관제탑 운영 적용 및 재통합 검증"
+      ],
       "admin_registration": "PENDING",
       "production": "NOT_APPROVED",
       "deployment_date": null,
       "rollback_sha": null
     },
     {
-      "order": 11,
+      "order": 12,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -409,7 +443,7 @@
       "rollback_sha": null
     },
     {
-      "order": 12,
+      "order": 13,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -428,7 +462,7 @@
       "rollback_sha": null
     },
     {
-      "order": 13,
+      "order": 14,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -445,7 +479,7 @@
       "rollback_sha": null
     },
     {
-      "order": 14,
+      "order": 15,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
