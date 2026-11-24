@@ -33,10 +33,29 @@ export function validateSnapshot(data,now=Date.now()) {
 }
 // Called only after the DB's evidence/hash/24-hour gate. Return whitelist labels
 // and modes only; never return distributions, counts, source rows, or evidence.
+// Defense in depth: revalidate the stored aggregate before deriving a public label.
+// Publication approval and privacy evidence still belong to the DB gate.
 export function publicQuestionResults(questions) {
+  if(!Array.isArray(questions))return [];
+  const occurrences=new Map();
+  for(const q of questions){
+    if(!q||typeof q.id!=='string'||!Number.isSafeInteger(q.row))continue;
+    const key=q.id+':'+q.row;
+    occurrences.set(key,(occurrences.get(key)||0)+1);
+  }
   return questions.flatMap(q=>{
-    const m=catalog[q.id];if(!m||q.id==='Q31'||q.id==='Q51'||q.invalid||!q.valid)return [];
-    const options=q.row>=0?m.columns:m.options;
+    if(!keys(q,['id','row','valid','invalid','counts','minutes_sum'])||
+      typeof q.id!=='string'||!Object.hasOwn(catalog,q.id)||q.id==='Q31'||q.id==='Q51'||
+      occurrences.get(q.id+':'+q.row)!==1||q.invalid!==0||!integer(q.valid,50000)||q.valid<1)return [];
+    const m=catalog[q.id],grid=m.kind==='grid';
+    if(!Number.isSafeInteger(q.row)||(grid?(q.row<0||q.row>=m.rows.length):q.row!==-1))return [];
+    const options=grid?m.columns:m.options;
+    if(!Array.isArray(q.counts)||q.counts.length!==options.length||
+      !q.counts.every(c=>integer(c,q.valid))||!integer(q.minutes_sum,1439*q.valid))return [];
+    const sum=q.counts.reduce((a,b)=>a+b,0),multi=m.kind==='multi'||q.id==='Q45';
+    if(m.kind==='time'?sum!==0:(q.minutes_sum!==0||(multi?sum<q.valid:sum!==q.valid)))return [];
+    // Do not project free-form/other selections even if a stored row was corrupted.
+    if(options.some((v,i)=>v==='기타'&&q.counts[i]>0))return [];
     let values=[];
     if(m.kind==='time'){
       const minutes=Math.round(q.minutes_sum/q.valid);

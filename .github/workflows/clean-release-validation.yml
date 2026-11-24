@@ -31,6 +31,11 @@ jobs:
           node tests/notice-audience-server.mjs
           node tests/control-tower-contract.cjs
           node tests/referral-promotion-v1.cjs
+          node tests/2026-public-projection-integrity.mjs
+          node tests/2026-question-results-pipeline.mjs
+          node tests/2026-release-consent-gate.mjs
+          node tests/2026-public-revalidation-fail-closed.mjs
+          node tests/2026-level-final-approval-ui.cjs
           python3 -m py_compile scripts/release-manager/stamp_release_info.py
       - name: Verify isolated notice API (read and denied access only)
         run: node tests/notice-audience-live.mjs
@@ -151,3 +156,10 @@ jobs:
           SQL
           psql_local < supabase/migrations/20261121_earned_challenge_participation_auth.sql
           psql_local < tests/referral-quality-postgres-assertions.sql
+
+          docker exec "$container" createdb -U postgres beagu_data_fixture
+          psql_data() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d beagu_data_fixture; }
+          psql_data < tests/2026-reconciliation-postgres.sql
+          psql_data < supabase/migrations/20261123180000_2026_level_final_release_controls.sql
+          psql_data < supabase/2026-release-reconciliation-v1.sql
+          psql_data < tests/2026-reconciliation-postgres-assertions.sql

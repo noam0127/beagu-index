@@ -246,7 +246,12 @@
       /^[A-Z0-9]{7}$/.test(id) &&
       (refresh || !state.public2026Checked.has(id)) && !state.public2026Loading.has(id));
     if(!requested.length || typeof supabaseClient==='undefined')return;
-    requested.forEach(id=>state.public2026Loading.add(id));
+    requested.forEach(id=>{
+      state.public2026.delete(id);
+      state.public2026Checked.delete(id);
+      state.public2026Error.delete(id);
+      state.public2026Loading.add(id);
+    });
     renderTable();
     try{
       const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
@@ -272,7 +277,11 @@
       requested.forEach(id=>state.public2026Checked.add(id));
     }catch(error){
       console.warn('2026년 공개 승인 기록 조회 실패',error);
-      requested.forEach(id=>state.public2026Error.add(id));
+      requested.forEach(id=>{
+        state.public2026.delete(id);
+        state.public2026Checked.delete(id);
+        state.public2026Error.add(id);
+      });
     }finally{
       requested.forEach(id=>state.public2026Loading.delete(id));
       renderTable();
@@ -589,10 +598,15 @@
     const epoch=state.authEpoch;
     const token=state.sessionToken;
     state.approvedLoading.add(id);
+    const cached=state.approvedBySchool.get(id);
+    if(cached){
+      cached.items[2026]={};
+      cached.summaries[2026]=[];
+    }
     renderTable();
     try{
       const data=await authRequest('school',{schoolId:id},token);
-      if(epoch!==state.authEpoch || token!==state.sessionToken) return;
+      if(epoch!==state.authEpoch||token!==state.sessionToken)return;
       const approved={
         items:{2023:{},2024:{},2025:{},2026:{}},
         summaries:{2023:[],2024:[],2025:[],2026:[]},
