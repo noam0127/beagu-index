@@ -266,3 +266,18 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
 $$;
 REVOKE ALL ON FUNCTION public.beagu_account_level_session_allowed_v1(text) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.beagu_account_level_session_allowed_v1(text) TO service_role;
+
+-- Only trusted Edge code can resolve current-week content; never return author identifiers.
+CREATE FUNCTION public.beagu_account_postit_current_aliases_v1(p_items jsonb)
+RETURNS TABLE(item_id uuid,nickname text) LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
+BEGIN
+ IF p_items IS NULL OR jsonb_typeof(p_items)<>'array' THEN RETURN; END IF;
+ IF jsonb_array_length(p_items)>100 THEN RETURN; END IF;
+ RETURN QUERY SELECT x.item_id,n.nickname
+ FROM jsonb_to_recordset(p_items) AS x(item_id uuid,author_uid uuid,created_at timestamptz)
+ JOIN public.beagu_postit_member_accounts m ON m.author_uid=x.author_uid AND m.status='active'
+ JOIN beagu_private.beagu_account_nicknames_v1 n ON n.visitor_id=m.identity_visitor_id AND n.week_start=beagu_private.beagu_account_week_v1(statement_timestamp())
+ WHERE x.created_at<=statement_timestamp() AND beagu_private.beagu_account_week_v1(x.created_at)=n.week_start;
+END $$;
+REVOKE ALL ON FUNCTION public.beagu_account_postit_current_aliases_v1(jsonb) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.beagu_account_postit_current_aliases_v1(jsonb) TO service_role;
