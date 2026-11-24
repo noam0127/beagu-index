@@ -30,6 +30,7 @@ jobs:
           node tests/beagu-notice-pages-v1.mjs
           node tests/notice-audience-server.mjs
           node tests/control-tower-contract.cjs
+          node tests/referral-promotion-v1.cjs
           python3 -m py_compile scripts/release-manager/stamp_release_info.py
       - name: Verify isolated notice API (read and denied access only)
         run: node tests/notice-audience-live.mjs
