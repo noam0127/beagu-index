@@ -178,6 +178,8 @@ jobs:
           INSERT INTO public.beagu_postit_member_accounts(auth_user_id,identity_visitor_id,author_uid) VALUES('00000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002','60000000-0000-4000-8000-000000000002');
           SQL
           psql_account < supabase/account-identity-v1.sql
+          psql_account < supabase/migrations/20261120_beagu_postit_school_conversations.sql
+          psql_account < supabase/migrations/20261120_beagu_postit_session_identity.sql
           psql_account < supabase/account-provisional-v1.sql
           psql_account < tests/account-v1-postgres-assertions.sql
           node --check js/beagu-account-v1.js
