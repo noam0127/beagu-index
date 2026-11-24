@@ -309,7 +309,7 @@ CREATE TRIGGER beagu_account_provisional_revoke AFTER UPDATE OF enabled,password
  FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_account_revoke_sessions_v1();
 CREATE FUNCTION public.beagu_account_level_session_allowed_v1(p_token_sha text)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
- SELECT CASE WHEN EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 WHERE token_sha256=p_token_sha)
+ SELECT EXISTS(SELECT 1 FROM public.beagu_level_sessions WHERE token_sha256=p_token_sha AND expires_at>now()) AND CASE WHEN EXISTS(SELECT 1 FROM beagu_private.beagu_account_sessions_v1 WHERE token_sha256=p_token_sha)
  THEN public.beagu_account_session_status_v1(p_token_sha) IS NOT NULL ELSE true END
 $$;
 REVOKE ALL ON FUNCTION public.beagu_account_level_session_allowed_v1(text) FROM PUBLIC,anon,authenticated;
