@@ -28,6 +28,9 @@ async function request(action,data,method="GET"){
  if(!res.ok)throw Object.assign(new Error(json.error||"FETCH_FAILED"),{status:res.status});
  return json;
 }
+// Never label earlier-week content with a current alias (including cached responses).
+function weekKey(at){const d=new Date(Number(at)+9*3600000);d.setUTCHours(0,0,0,0);d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7));return d.getTime();}
+function postitAlias(item){return weekKey(Date.parse(item.created_at))===weekKey(Date.now())&&/^[Il|ǀ❘ı∣│]{10}$/.test(item.nickname||"")?item.nickname:"익명";}
 function node(tag,cls,text){
  const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=String(text);
  return el;
@@ -136,7 +139,7 @@ function buildPost(post){
  entry.dataset.postId=post.id;
  const paper=node("div","postit-paper");
  const top=node("div","paper-overline");
- top.append(node("span","","POST-IT · 익명"),node("span","",timeSince(post.created_at)));
+ top.append(node("span","postit-rotating-alias","POST-IT · "+postitAlias(post)),node("span","",timeSince(post.created_at)));
  paper.append(top);
  const topic=node("div","paper-topic");
  if(post.subject_type==="school"&&post.school){
@@ -204,7 +207,7 @@ async function fillComments(id,host){
   host.replaceChildren();
   if(!comments.length)host.append(node("div","bookmark-comment","첫 댓글을 남겨보세요."));
   for(const c of comments){
-   const mark=node("div","bookmark-comment"),meta=node("div","comment-meta","익명 · "+timeSince(c.created_at));
+   const mark=node("div","bookmark-comment"),meta=node("div","comment-meta",""+postitAlias(c)+" · "+timeSince(c.created_at));
    mark.append(meta,node("p","",c.body));
    const row=node("div","");
    row.append(actionButton((c.liked?"♥":"♡")+" "+c.likes,()=>mutation("set_like",{target_type:"comment",target_id:c.id,liked:!c.liked}),{disabled:!canWrite()}));
@@ -402,5 +405,16 @@ $("postitThread").addEventListener("animationend",event=>{
  if(event.animationName==="paper-attach")entry?.classList.remove("is-new");
 });
 
+// Clear displayed aliases at the Korean week boundary before refreshing the list.
+let visibleWeek=weekKey(Date.now());
+function clearOldAliases(){
+ const next=weekKey(Date.now());if(next===visibleWeek)return;
+ visibleWeek=next;
+ for(const el of document.querySelectorAll(".postit-rotating-alias"))el.textContent="POST-IT · 익명";
+ for(const el of document.querySelectorAll(".comment-meta"))el.textContent="익명";
+ state.expanded.clear();void loadPosts();
+}
+setInterval(clearOldAliases,15000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)clearOldAliases();});
 updateComposeAccess();void loadPosts();
 })();
