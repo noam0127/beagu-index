@@ -51,6 +51,21 @@ const crypto=require("node:crypto");
     await page.waitForFunction(()=>!document.querySelector("#releaseDashboard").hidden&&!document.querySelector("#integratedInspect").disabled);
     assert.equal(await loc("#releaseProdApply").isDisabled(),true);
     assert.equal(await loc("#integratedApply").isDisabled(),true);
+    // New candidate values survive real automatic polling and manual status refresh.
+    const fields=["#releaseCandidateSha","#releaseVersionInput","#releaseSummaryInput"];
+    const entered=["c".repeat(40),"v1.11.4","물길 신규 등록 설명"];
+    for(const field of fields)assert.equal(await loc(field).inputValue(),"");
+    for(let i=0;i<fields.length;i++)await loc(fields[i]).fill(entered[i]);
+    await loc("#releaseDraftInfo").click();
+    const previousStatus=calls.filter(a=>a==="status").length;
+    await page.waitForFunction(()=>document.querySelector("#releaseDashboard").hidden===false);
+    for(let i=0;i<130&&calls.filter(a=>a==="status").length===previousStatus;i++)await new Promise(r=>setTimeout(r,100));
+    assert.ok(calls.filter(a=>a==="status").length>previousStatus,"actual scheduled status poll");
+    await page.waitForLoadState("networkidle");
+    for(let i=0;i<fields.length;i++)assert.equal(await loc(fields[i]).inputValue(),entered[i]);
+    await loc("#releaseRefresh").click();
+    await page.waitForLoadState("networkidle");
+    for(let i=0;i<fields.length;i++)assert.equal(await loc(fields[i]).inputValue(),entered[i]);
     // Explicit backend reason must override an inconsistent stale ready flag.
     server={...server,direct_candidate_ready:true};
     await loc("#releaseRefresh").click();

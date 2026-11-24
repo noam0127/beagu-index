@@ -209,11 +209,8 @@
   write("releaseDraftInfo",candidate?
     (ready?"검증 완료 · ":"검증 미확인 · ")+candidate.version+" · "+short(candidate.sha)+(ready?" · 실제 웹 적용 가능":data.direct_candidate_reason==="backend_integrated_required"?" · 통합 적용 필요 · 웹 단독 적용 차단":" · 직접 적용 전 검증 필요"):
     s.draft_sha?"등록된 업데이트: "+s.draft_version+" ("+short(s.draft_sha)+")":"새 버전을 등록하세요.");
-  if(s.draft_sha){
-   if(!el("releaseCandidateSha").value&&s.draft_sha!==s.production_sha)el("releaseCandidateSha").value=s.draft_sha;
-   if(document.activeElement!==el("releaseVersionInput"))el("releaseVersionInput").value=s.draft_version||"";
-   if(document.activeElement!==el("releaseSummaryInput"))el("releaseSummaryInput").value=s.draft_summary||"";
-  }
+  // Server status and the independent registration form are separate.
+  // Polling, manual refresh and live SHA verification must never write form values.
   const active=!!job;
   const mismatch=!!liveSHA&&liveSHA!==s.production_sha;
   write("releaseQueueText",active?
@@ -293,7 +290,11 @@
     const item=document.createElement("li");item.textContent=name;list.append(item);
    }
    el("releaseFileSummary").hidden=false;
-   message("업데이트 등록 완료 · "+result.changed_count+"개 변경 파일 확인. 등록 후보를 확인한 후 '실제 웹 적용'을 누르세요.");
+   // Clear only the exact successfully submitted input; preserve later edits.
+   if(el("releaseCandidateSha").value.trim()===candidate_sha&&el("releaseVersionInput").value.trim()===version&&el("releaseSummaryInput").value.trim()===summary){
+    for(const id of ["releaseCandidateSha","releaseVersionInput","releaseSummaryInput"])el(id).value="";
+   }
+   message("업데이트 등록 완료 · "+result.changed_count+"개 변경 파일 확인. 통합 적용 필요 여부를 먼저 확인하세요.");
   }catch(err){message(err.message,true)}
   finally{busy=false;await refresh(false);}
  }

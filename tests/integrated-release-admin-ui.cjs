@@ -36,6 +36,16 @@ const until=async(predicate,label)=>{
 (async()=>{
  await until(()=>el("integratedCandidate").textContent===candidate&&!el("integratedInspect").disabled,"initial dashboard");
  assert.equal(el("integratedApply").disabled,true);assert.equal(el("integratedInspect").disabled,false);
+ // Server draft must remain in its own status panel, not the new registration form.
+ const fields=["releaseCandidateSha","releaseVersionInput","releaseSummaryInput"];
+ assert.ok(fields.every(id=>el(id).value===""));
+ const entered=["c".repeat(40),"v1.11.4","새 후보 설명"];
+ fields.forEach((id,i)=>el(id).value=entered[i]);
+ el("releaseRefresh").listeners.click();
+ await until(()=>!el("releaseRefresh").disabled,"manual refresh");
+ await new Promise(r=>setImmediate(r));
+ assert.deepEqual(fields.map(id=>el(id).value),entered);
+
  el("integratedInspect").listeners.click();await until(()=>!el("integratedReview").hidden&&!el("integratedInspect").disabled,"review digest completion");
  assert.equal(el("integratedReview").hidden,false);assert.equal(el("integratedDigest").textContent,review.plan_sha256);
  assert.equal(el("integratedFiles").children.length,1);assert.equal(el("integratedSteps").children[0].dataset.state,"planned");
@@ -58,5 +68,7 @@ const until=async(predicate,label)=>{
  assert.equal(el("integratedReview").hidden,true);assert.equal(el("integratedCandidate").textContent,"d".repeat(40));
  assert.equal(el("integratedApply").disabled,true);assert.equal(el("integratedRecoveryApply").disabled,true);
  assert.ok(calls.every(x=>["verify","status","inspect_integrated_plan","integrated_fixture_status"].includes(x.action)));
+ assert.deepEqual(fields.map(id=>el(id).value),entered,"new server draft cannot overwrite typed candidate");
+
  console.log("PASS: integrated review digest, stale result invalidation, read-only fixture status and locked actions");
 })().catch(e=>{console.error(e);process.exitCode=1});

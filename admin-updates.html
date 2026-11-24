@@ -57,6 +57,7 @@
     <section class="release-draft" aria-labelledby="releaseDraftHeading">
       <div class="release-section-head"><h2 id="releaseDraftHeading">업데이트 버전</h2>
         <p>코드 검증을 통과한 독립 버전만 등록할 수 있습니다. 등록 후 위의 <strong>실제 웹 적용</strong>을 누르세요.</p></div>
+      <p class="subtle">새 후보를 입력하세요. 서버 상태 새로고침은 입력값을 변경하지 않습니다.</p>
       <form id="releaseDraftForm"><div><label for="releaseCandidateSha">독립 버전 커밋 SHA</label><input id="releaseCandidateSha" required maxlength="40" pattern="[0-9a-f]{40}" autocomplete="off" placeholder="40자리 GitHub 커밋 SHA"></div>
         <div class="release-meta-row">
           <div><label for="releaseVersionInput">업데이트 버전</label>
@@ -131,6 +132,6 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
-<script defer src="js/beagu-admin-updates-v1.js?v=1101"></script>
+<script defer src="js/beagu-admin-updates-v1.js?v=1101-form1"></script>
 </body>
 </html>
