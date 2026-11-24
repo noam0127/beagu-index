@@ -130,6 +130,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
 <link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11111">
+<link rel="stylesheet" href="styles/teacher-run-4-leave.css?v=11111">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
@@ -159,6 +160,7 @@ canvas{height:400px;cursor:default}
     </div>
     <div class="arcade-survival-health-track" id="run-health-progress" role="progressbar" aria-label="교사 체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="arcade-survival-health-fill" id="run-health-fill"></div></div>
   </section>
+  <div id="run4-leave-inventory" class="run4-leave" aria-label="장기재직휴가 보관함"></div>
   <div class="stage arcade-game-viewport" data-arcade-fullscreen>
     <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="전체화면으로 확대" title="전체화면으로"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 3h6v6M21 3l-7 7M3 21l7-7M9 21H3v-6"/></svg></button>
     <button type="button" id="pause" class="arcade-playback" hidden disabled aria-label="일시정지" title="일시정지">⏸ 일시정지</button>
@@ -171,6 +173,7 @@ canvas{height:400px;cursor:default}
         <div class="arcade-run-fullscreen-fill" id="run-fullscreen-health-fill"></div>
       </div>
       <div class="arcade-fullscreen-subline" id="run-fullscreen-situation">24세 · 0점 · 0초</div>
+      <div id="run4-leave-fullscreen" class="run4-leave" aria-label="전체화면 장기재직휴가 보관함"></div>
     </div>
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 4.0 — 정년까지 살아남아라 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
@@ -184,7 +187,7 @@ canvas{height:400px;cursor:default}
   </div>
   <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/8-bit-jester-theme" target="_blank" rel="noopener noreferrer">8-bit Jester Theme · HydroGene (CC0)</a></p>
   
-  <p role="status" id="run4-preview-notice">4.0 개발 검수판 · 이 기기의 기록만 저장합니다. 공식 3.0 랭킹에는 반영되지 않습니다.</p>
+  <p role="status" id="run4-preview-notice">4.0 개발 검수판 · 이 기기의 기록만 저장합니다. 공식 3.0 랭킹에는 반영되지 않습니다. 휴가권은 게임 설정이며 실제 교원 복무제도를 의미하지 않습니다.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
@@ -198,7 +201,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11111"></script>
-<script src="js/teacher-run-4-rules.js?v=11111-1"></script>
+<script src="js/teacher-run-4-rules.js?v=11111-2"></script>
 <script>
 (function(){
 "use strict";
@@ -207,7 +210,8 @@ const canvas=$("game"),ctx=canvas.getContext("2d");
 const resultView=window.BeaguArcadeResult.create($("choices").parentElement,canvas,{compact:true});
 // Candidate-only local preview. Never submit new rules to the legacy score endpoint.
 const ranking={start:async()=>({localPreview:true}),finish:async()=>true,cancel:()=>{}};
-const rules=window.BeaguRun4Rules;let run4=rules.create();
+const rules=window.BeaguRun4Rules;let run4=rules.create(),leave=rules.createLeave();
+let leaveUiKey="";
 const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
 const bgm=window.BeaguArcadeBgm.create("teacher_run");
 const difficultyProfiles={
@@ -392,7 +396,7 @@ async function start(){
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
  state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- run4=rules.create();combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();leaveUiKey="";combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;resetChalkHelpers();
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=profile.inv;
  resetPatternHazards();resetMystery();
@@ -406,7 +410,7 @@ function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;resetPatternHazards();resetMystery();
- run4=rules.create();score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();leaveUiKey="";score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -429,7 +433,33 @@ function intro(){
  ],"🏫");
 }
 
+function syncLeave(){
+ const info=leave.state(),remaining=Math.ceil(leave.remaining(clock)),playing=state==="playing";
+ const key=JSON.stringify([info.pending.map(p=>p.years),info.held.map(p=>p.years),remaining,playing]);
+ if(key===leaveUiKey)return;
+ leaveUiKey=key;
+ for(const id of ["run4-leave-inventory","run4-leave-fullscreen"]){
+  const host=$(id);host.replaceChildren();
+  const label=document.createElement("span");label.className="run4-leave-label";
+  label.textContent=remaining>0?(remaining<=1?"☀ 휴가 종료 임박":"☀ 휴가 중 "+remaining+"초"):"🌿 장기재직휴가";
+  host.append(label);
+  for(const p of info.pending){
+   const b=document.createElement("button");b.type="button";b.className="run4-leave-pick";b.textContent="🎁 "+p.days+"일 받기";b.disabled=!playing;
+   b.setAttribute("aria-label",p.years+"년 장기재직휴가 "+p.days+"일 획득");
+   b.onclick=()=>{if(state!=="playing"||!leave.collect(p.years))return;setNotice("🌿 "+p.days+"일 휴가권을 보관했습니다.",2);playTone(760,.15);syncLeave();};
+   host.append(b);
+  }
+  for(const p of info.held){
+   const b=document.createElement("button");b.type="button";b.textContent=p.days+"일 사용";b.disabled=!playing||remaining>0;
+   b.setAttribute("aria-label",p.years+"년 휴가권 "+p.days+"일 사용");
+   b.onclick=()=>{if(state!=="playing")return;const benefit=leave.use(p.years,clock,life,maxLife);if(!benefit)return;life=benefit.hp;setNotice("☀ "+p.days+"일 재충전 · "+p.seconds+"초 보호",2.5);burst(player.x,player.y,"#ffdf80",22);playTone(880,.2);updateLabels();};
+   host.append(b);
+  }
+  if(!info.pending.length&&!info.held.length&&!remaining){const hint=document.createElement("span");hint.textContent="보유 없음";host.append(hint);}
+ }
+}
 function updateLabels(){
+ syncLeave();
  $("careerCurrentAge").textContent=getAge()+"세";
  $("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");
  const hp=Math.max(0,Math.min(maxLife,life));
@@ -499,7 +529,7 @@ function hit(a){
   let amount=Math.round(a.heal*skill.heal*profile.heal),before=life;life=Math.min(maxLife,life+amount);
   crisisAwards(run4.health(clock,life,maxLife));addScore(75);float(a.x,a.y,"+"+(life-before)+" 체력","#1e945b");burst(a.x,a.y,"#7be3ca",12);playTone(760,.1);return;
  }
- if(player.inv>0){float(a.x,a.y,"🛡️ 보호막","#fcdd87");burst(a.x,a.y,"#ffe7a0",8);return;}
+ if(leave.active(clock)||player.inv>0){float(a.x,a.y,"🛡️ 보호막","#fcdd87");burst(a.x,a.y,"#ffe7a0",8);return;}
  let amount=Math.round(a.damage*profile.damage);
  life=Math.max(0,life-amount);run4.hit(clock);combo=0;player.inv=profile.inv+skill.guard;shake=.2;misses++;
  crisisAwards(run4.health(clock,life,maxLife));
@@ -926,6 +956,8 @@ function mysterySituation(){
 }
 function update(dt){
  clock=Math.min(RETIREMENT_SECONDS,clock+dt);
+ for(const p of leave.advance(clock)){setNotice("🎁 "+p.years+"년 재직 · "+p.days+"일 휴가권 등장!",3);playTone(830,.2);}
+ syncLeave();
  if(clock>=RETIREMENT_SECONDS){finish(true);return;}
  for(const mark of [10,20,30]){
   if(clock>=mark&&!earlyMilestones.has(mark)){
@@ -1182,7 +1214,9 @@ function drawReadableNotice(content,y,background,color){
 }
 function draw(){
  ctx.clearRect(0,0,W,H);ctx.save();if(shake>0)ctx.translate((Math.random()-.5)*6,(Math.random()-.5)*4);
- background();drawItems();drawMystery();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();
+ background();
+ if(leave.active(clock)){ctx.save();ctx.fillStyle="rgba(255,223,125,.16)";ctx.fillRect(0,0,W,H);ctx.strokeStyle="#ffdf80";ctx.lineWidth=3;ctx.beginPath();ctx.arc(player.x,player.y-12,38,0,Math.PI*2);ctx.stroke();ctx.restore();}
+ drawItems();drawMystery();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();
  if(specialFlash>0){
   ctx.save();ctx.strokeStyle="rgba(255,235,117,"+Math.min(1,specialFlash*1.1)+")";
   ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,profile.specialRadius*(1-specialFlash*.1),0,Math.PI*2);ctx.stroke();
@@ -1244,6 +1278,7 @@ function tick(t){
  syncFullscreenPause();
  const dt=Math.min(.04,(t-last)/1000||0);last=t;
  if(state==="playing"&&!document.hidden&&!$("teacher-run-protected").hidden)update(dt);
+ syncLeave();
  draw();requestAnimationFrame(tick);
 }
 window.addEventListener("keydown",e=>{
