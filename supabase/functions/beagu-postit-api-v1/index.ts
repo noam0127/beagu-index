@@ -318,7 +318,7 @@ Deno.serve(async(req:Request)=>{
      p_comparison_selection:subject==="comparison"?compare:null,p_body:content
    });
    if(error)throw error;
-   if(created?.error)return fail(req,String(created.error),created.error==="POST_RATE_LIMIT"?429:400);
+   if(created?.error){const code=String(created.error);return fail(req,["INVALID_POST","POST_RATE_LIMIT"].includes(code)?code:"TEMPORARY_ERROR",code==="POST_RATE_LIMIT"?429:code==="INVALID_POST"?400:500); }
    if(!UUID.test(String(created?.id||"")))throw Error("INVALID_POST_CREATE_RESULT");
    return respond(req,{id:created.id,replayed:created.replayed===true},created.replayed?200:201);
   }
@@ -333,8 +333,7 @@ Deno.serve(async(req:Request)=>{
      p_post_id:postId,p_body:content
    });
    if(error)throw error;
-   if(created?.error)return fail(req,String(created.error),
-     created.error==="COMMENT_RATE_LIMIT"?429:created.error==="POST_UNAVAILABLE"?404:400);
+   if(created?.error){const code=String(created.error);return fail(req,["INVALID_COMMENT","COMMENT_RATE_LIMIT","POST_UNAVAILABLE"].includes(code)?code:"TEMPORARY_ERROR",code==="COMMENT_RATE_LIMIT"?429:code==="POST_UNAVAILABLE"?404:code==="INVALID_COMMENT"?400:500); }
    if(!UUID.test(String(created?.id||"")))throw Error("INVALID_COMMENT_CREATE_RESULT");
    return respond(req,{id:created.id,replayed:created.replayed===true},created.replayed?200:201);
   }
@@ -379,5 +378,5 @@ Deno.serve(async(req:Request)=>{
    return respond(req,{likes,reported:kind==="report",hidden:reports>=3&&reports/(likes+reports)>=0.5});
   }
   return fail(req,"UNKNOWN_ACTION");
- }catch(err){console.error("beagu-postit-api-v1",String(err));return fail(req,"TEMPORARY_ERROR",500);}
+ }catch{console.error("beagu-postit-api-v1: request failed");return fail(req,"TEMPORARY_ERROR",500);}
 });
