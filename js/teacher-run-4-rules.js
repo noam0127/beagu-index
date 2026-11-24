@@ -122,6 +122,26 @@
    defeated(){return defeated.slice();},tier:cfg
   };
  }
+ const allyPlan=Object.freeze([
+  {id:"lesson",name:"수업 전문가",icon:"📚",color:"#4979b2",interval:2.5},
+  {id:"guidance",name:"생활지도 전문가",icon:"🛡️",color:"#3f9d80",interval:12},
+  {id:"work",name:"업무 전문가",icon:"🗂️",color:"#b98b44",interval:6},
+  {id:"warm",name:"따뜻한 동료",icon:"💚",color:"#bf7492",interval:7},
+  {id:"veteran",name:"베테랑 교사",icon:"🌟",color:"#8271bd",interval:9},
+  {id:"research",name:"연구하는 교사",icon:"🔬",color:"#4a9e9c",interval:6}
+ ].map(Object.freeze));
+ function createAllies(){
+  const members=new Map();let readyAt=0,joined=0;
+  return {
+   join(t,random=Math.random){const pool=allyPlan.filter(a=>!members.has(a.id));if(members.size>=6||!pool.length)return null;const a=pool[Math.floor(random()*pool.length)];members.set(a.id,{...a,next:t+a.interval});joined++;return a;},
+   tick(t,rate=1){const actions=[];for(const a of members.values()){if(t>=a.next){actions.push({...a});a.next=t+a.interval/Math.max(.5,Math.min(2,rate));}}return actions;},
+   list(){return Array.from(members.values()).map(a=>({...a}));},
+   count:()=>members.size,joined:()=>joined,
+   cooldown:t=>Math.max(0,readyAt-t),
+   canCooperate:t=>members.size>=2&&t>=readyAt,
+   cooperate(t){if(members.size<2||t<readyAt)return false;readyAt=t+24;return true;}
+  };
+ }
  function ending({win=false,bosses=0,allies=0,crises=0,growth=0,combo=0,hits=0}={}){
   const titles=[];
   if(win&&bosses===5)titles.push("전설의 정년퇴직");
@@ -154,5 +174,5 @@
    stats(){return {combo,maxCombo,near,hits,crises:paid.size,lastHit};}
   };
  }
- root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,ending});
+ root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending});
 })(typeof window!=="undefined"?window:globalThis);

@@ -201,7 +201,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11111"></script>
-<script src="js/teacher-run-4-rules.js?v=11111-5"></script>
+<script src="js/teacher-run-4-rules.js?v=11111-6"></script>
 <script>
 (function(){
 "use strict";
@@ -210,7 +210,7 @@ const canvas=$("game"),ctx=canvas.getContext("2d");
 const resultView=window.BeaguArcadeResult.create($("choices").parentElement,canvas,{compact:true});
 // Candidate-only local preview. Never submit new rules to the legacy score endpoint.
 const ranking={start:async()=>({localPreview:true}),finish:async()=>true,cancel:()=>{}};
-const rules=window.BeaguRun4Rules;let run4=rules.create(),leave=rules.createLeave(),growth=rules.createGrowth(),effects=rules.createEffects(),bosses=rules.createBosses();
+const rules=window.BeaguRun4Rules;let run4=rules.create(),leave=rules.createLeave(),growth=rules.createGrowth(),effects=rules.createEffects(),bosses=rules.createBosses(),allies=rules.createAllies();
 let bossX=0,bossWarn=null,bossNext=0,bossShot=0,bossProjectiles=[],bossRate=1,bossGuard=0,bossSpawn=1,alliesPeak=0;
 let tenureSeen=new Set(),tenureAttack=1,tenureDamage=1;
 let leaveUiKey="";
@@ -239,7 +239,7 @@ const chalkProfile=()=>{
  const base=chalkProfiles[schoolPicker.get()?.difficulty]||null;
  if(isMysteryBuff("conflict"))return null;
  const effects=growth.effects();
- const extras=(isMysteryBuff("friends")?1:0)+(isMysteryBuff("chalk")?1:0)+(isMysteryBuff("bullet")?1:0)+effects.allies;
+ const extras=(isMysteryBuff("friends")?1:0)+(isMysteryBuff("chalk")?1:0)+(isMysteryBuff("bullet")?1:0);
  if(!extras&&!base)return null;
  return {interval:(isMysteryBuff("bullet")?.24:extras?Math.min(base?.interval||1,.85):base.interval)/(effects.rate*effects.community*windowRunEffects().helperRate*bossRate),range:extras?490:base.range,maxShots:Math.min(6,(base?.maxShots||0)+extras)};
 };
@@ -386,10 +386,11 @@ async function start(){
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
  state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;resetChalkHelpers();
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=Math.max(profile.inv,3);
  resetPatternHazards();resetMystery();
+ if(selected.difficulty==="easy")joinAlly();
  shackle={x:player.x-52,dir:-1};pointerId=null;pointerY=null;
  pressed.clear();pointerX=null;pointerY=null;updateLabels();setNotice(selected.difficulty==="extreme"?"EXTREME · 족쇄 · 점프 불가":
   selected.difficulty==="easy"?"EASY · 날개·동료·관리자 지원 (분필 명중률 50%)":
@@ -400,7 +401,7 @@ function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;resetPatternHazards();resetMystery();
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -425,7 +426,8 @@ function intro(){
 
 function syncLeave(){
  const info=leave.state(),remaining=Math.ceil(leave.remaining(clock)),playing=state==="playing";
- const key=JSON.stringify([info.pending.map(p=>p.years),info.held.map(p=>p.years),remaining,playing]);
+ const coopRemaining=Math.ceil(allies.cooldown(clock));
+ const key=JSON.stringify([info.pending.map(p=>p.years),info.held.map(p=>p.years),remaining,playing,allies.count(),coopRemaining]);
  if(key===leaveUiKey)return;
  leaveUiKey=key;
  for(const id of ["run4-leave-inventory","run4-leave-fullscreen"]){
@@ -445,6 +447,7 @@ function syncLeave(){
    b.onclick=()=>{if(state!=="playing")return;const benefit=leave.use(p.years,clock,life,maxLife,bosses.tier.leave);if(!benefit)return;life=benefit.hp;setNotice("☀ "+p.days+"일 재충전 · "+p.seconds+"초 보호",2.5);burst(player.x,player.y,"#ffdf80",22);playTone(880,.2);updateLabels();};
    host.append(b);
   }
+  if(allies.count()>=2){const b=document.createElement("button");b.type="button";b.textContent=coopRemaining?"연대 "+coopRemaining+"초":"🤝 선생님들의 연대";b.disabled=!playing||!allies.canCooperate(clock);b.onclick=cooperate;host.append(b);}
   if(!info.pending.length&&!info.held.length&&!remaining){const hint=document.createElement("span");hint.textContent="보유 없음";host.append(hint);}
  }
 }
@@ -554,7 +557,7 @@ function applyFeature(p){
  if(p.inv)player.inv=Math.max(player.inv,p.inv);
  if(p.shield)effects.addShield();
  if(p.growth){const eligible=rules.growthPlan.filter(a=>growth.level(a.id)<a.max);if(eligible.length)applyGrowth(eligible[Math.floor(Math.random()*eligible.length)].id,false);}
- if(p.clear)clearNearby(p.clear);
+ if(p.clear){clearNearby(p.clear);joinAlly();}
  if(p.papers)for(let i=0;i<p.papers;i++)spawnFeature({name:"추가 공문",emoji:"📄",good:false,damage:9},W*(i===0?.22:.78),-55-i*35);
  if(p.good)addScore(p.points||75);
  setNotice(p.emoji+" "+p.name,2);burst(player.x,player.y,p.good?"#b2ffe0":"#ff9d88",8);playTone(p.good?820:260,.13);updateLabels();
@@ -563,7 +566,7 @@ function triggerCareerEvent(){
  if(state!=="playing"||activeEvent||bosses.active())return;
  const event=rules.pickEvent(stage,Math.random,!!bosses.active());if(!event)return;
  activeEvent=event;eventSeconds=event.duration;
- if(event.id==="support"){life=Math.min(maxLife,life+Math.round(maxLife*.18));clearNearby(6);effects.set("training",clock,3);}
+ if(event.id==="support"){life=Math.min(maxLife,life+Math.round(maxLife*.18));clearNearby(6);effects.set("training",clock,3);joinAlly();}
  if(event.id==="focus")life=Math.min(maxLife,life+Math.round(maxLife*.15));
  if(event.id==="audit")spawnFeature({name:"감사 추적 공문",emoji:"🔎",good:false,damage:14,tracker:true},W*.5,-45);
  if(event.id==="bonus"||event.id==="letters")for(let i=0;i<4;i++)spawnFeature(event.id==="bonus"?{name:"성과급",emoji:"💰",good:true,points:150}:{name:"감사 편지",emoji:"💌",good:true,heal:20},W*(i+1)/5,-40-i*28);
@@ -608,6 +611,7 @@ function nextCareerStage(){
 function applyGrowth(id,manual=true){
  const ok=manual?growth.choose(id):growth.grant(id);if(!ok)return false;
  if(id==="vital"){const next=Math.max(maxLife+1,Math.round(maxLife*1.15));life=Math.min(next,life+next-maxLife);maxLife=next;}
+ if(id==="ally")joinAlly();
  if(id==="ally"||id==="community"||id==="rate"){chalkShots=[];resetChalkHelpers();}
  return true;
 }
@@ -913,7 +917,7 @@ function collectMystery(item,x,y){
   case "wings":mysteryBuffs.wings=t+dur;mysteryBuffs.shackle=0;break;
   case "letter":mysteryBuffs.letter=t+dur;mysteryBuffs.complaint=0;break;
   case "salary":score+=1;break;
-  case "friends":mysteryBuffs.friends=t+dur;mysteryBuffs.conflict=0;break;
+  case "friends":mysteryBuffs.friends=t+dur;mysteryBuffs.conflict=0;joinAlly();break;
   case "bonus":score+=2;break;
   case "chalk":mysteryBuffs.chalk=t+dur;break;
   case "bullet":mysteryBuffs.bullet=t+5;break;
@@ -980,14 +984,43 @@ function damageBoss(amount){
  const active=bosses.active();if(!active)return;
  const defeated=bosses.damage(amount,clock);
  if(!defeated)return;
+ const clutch=life<=maxLife*.1;
  resetBossThreats();clearNearby(8);life=Math.min(maxLife,life+Math.round(maxLife*.12));player.inv=Math.max(player.inv,1.2);
  if(defeated.id==="confusion")bossRate=1.2;
  if(defeated.id==="demands")bossGuard+=3;
  if(defeated.id==="responsibility")bossSpawn=.8;
  if(defeated.id==="burnout"){const old=maxLife;maxLife=Math.round(maxLife*1.3);life=Math.min(maxLife,life+maxLife-old);}
  addScore(defeated.id==="final"?1200:500);
- if(life<=maxLife*.1)crisisAwards(run4.bossClutch());
+ if(clutch)crisisAwards(run4.bossClutch());
+ if(defeated.id==="responsibility"||defeated.id==="burnout")joinAlly();
  setNotice("🏆 "+defeated.name+" 처치 · "+defeated.reward,3);playTone(990,.24);
+}
+function joinAlly(){
+ const a=allies.join(clock);if(!a)return;
+ alliesPeak=Math.max(alliesPeak,allies.count());setNotice("🤝 "+a.name+" 합류!",2);syncLeave();
+}
+function allyPosition(i,count){const angle=clock*.5+i*Math.PI*2/Math.max(1,count);return {x:Math.max(20,Math.min(W-20,player.x+Math.cos(angle)*52)),y:Math.max(76,Math.min(H-32,player.y+Math.sin(angle)*32-15))};}
+function updateAllies(){
+ const rate=growth.effects().community*windowRunEffects().helperRate*(isMysteryBuff("conflict")?.65:1);
+ for(const a of allies.tick(clock,rate)){
+  if(a.id==="lesson"){if(bosses.active())damageBoss(7*growth.effects().power);else clearNearby(1);}
+  if(a.id==="guidance")effects.addShield();
+  if(a.id==="work")clearNearby(3);
+  if(a.id==="warm")life=Math.min(maxLife,life+Math.round(maxLife*.08));
+  if(a.id==="veteran"){effects.set("training",clock,3);effects.set("coffee",clock,3);}
+  if(a.id==="research"){effects.set("training",clock,4);if(bosses.active())damageBoss(5*growth.effects().power);}
+ }
+}
+function cooperate(){
+ if(state!=="playing"||!allies.cooperate(clock))return;
+ clearNearby(100);sideStudents=[];paperBullets=[];paperTarget=null;
+ bossProjectiles=bossProjectiles.filter(p=>p.friendly);
+ if(bosses.active())damageBoss(35*growth.effects().power);
+ life=Math.min(maxLife,life+Math.round(maxLife*.18));player.inv=Math.max(player.inv,2);
+ setNotice("🤝 선생님들의 연대!",2.5);burst(player.x,player.y,"#fff0a0",30);playTone(950,.22);updateLabels();
+}
+function drawAllies(){
+ const team=allies.list();team.forEach((a,i)=>{const p=allyPosition(i,team.length);ctx.save();ctx.fillStyle=a.color;ctx.beginPath();ctx.arc(p.x,p.y,13,0,Math.PI*2);ctx.fill();ctx.font="15px sans-serif";ctx.textAlign="center";ctx.fillText(a.icon,p.x,p.y+5);ctx.restore();});
 }
 function updateBoss(dt){
  const change=bosses.advance(clock);
@@ -1114,7 +1147,7 @@ function update(dt){
  }
  updateBoss(dt);if(state!=="playing")return;
  fireChalk(dt);
- alliesPeak=Math.max(alliesPeak,chalkHelpers.length);
+ updateAllies();alliesPeak=Math.max(alliesPeak,allies.count());
  spawnClock-=dt;
  if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-stage*.085-(getAge()>=60?.2:0))/(profile.spawnPressure*growth.effects().spawn*windowRunEffects().spawn*bossSpawn))*(.48+Math.random()*1.55)/(activeEvent?.id==="rush"?1.30:1);}
  for(let i=items.length-1;i>=0;i--){
@@ -1318,7 +1351,7 @@ function draw(){
  background();
  if(state==="over"&&clock>=RETIREMENT_SECONDS){ctx.fillStyle="rgba(255,211,136,.3)";ctx.fillRect(0,0,W,H);ctx.font="28px sans-serif";ctx.textAlign="center";ctx.fillText("💌  🎓  💐",W/2,H*.42);}
  if(leave.active(clock)){ctx.save();ctx.fillStyle="rgba(255,223,125,.16)";ctx.fillRect(0,0,W,H);ctx.strokeStyle="#ffdf80";ctx.lineWidth=3;ctx.beginPath();ctx.arc(player.x,player.y-12,38,0,Math.PI*2);ctx.stroke();ctx.restore();}
- drawItems();drawMystery();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();drawBoss();
+ drawItems();drawMystery();drawPatternHazards();drawChalkHelpers();drawChalk();drawShackle();playerDraw();drawAllies();drawBoss();
  if(specialFlash>0){
   ctx.save();ctx.strokeStyle="rgba(255,235,117,"+Math.min(1,specialFlash*1.1)+")";
   ctx.lineWidth=5;ctx.beginPath();ctx.arc(player.x,player.y,profile.specialRadius*(1-specialFlash*.1),0,Math.PI*2);ctx.stroke();
