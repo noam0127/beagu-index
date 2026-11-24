@@ -191,10 +191,10 @@
       "version": "v1.5.0",
       "name": "이정표",
       "scope": "챌린지 달성·코드·추천 현황",
-      "status": "CANDIDATE_CI_PENDING",
+      "status": "DEPLOYED",
       "branch": "release/v1.5.0-milestone",
       "pr": 285,
-      "commit": null,
+      "commit": "c7676cc0acc3fe374bee49a4b26209e9101c5407",
       "tests": [
         {
           "name": "Initial referral safety and source/privacy checks",
@@ -215,9 +215,9 @@
       "dependencies": [
         "v1.4.0 production applied before registration"
       ],
-      "admin_registration": "PENDING",
-      "production": "NOT_APPROVED",
-      "deployment_date": null,
+      "admin_registration": "VERIFIED",
+      "production": "DEPLOYED",
+      "deployment_date": "2026-11-24T02:17:44.300Z",
       "rollback_sha": "494383cde9f952bec9cc09fbfebe373cc6ef797b"
     },
     {
@@ -225,17 +225,25 @@
       "version": "v1.6.0",
       "name": "소통",
       "scope": "공지사항·의견 접수",
-      "status": "PENDING",
-      "branch": null,
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.6.0-communication",
       "pr": null,
       "commit": null,
-      "tests": [],
+      "tests": [
+        {
+          "name": "Notice publish/hide conflict and stale session",
+          "result": "PENDING"
+        }
+      ],
       "changed_files": [],
-      "dependencies": [],
+      "dependencies": [
+        "existing exact deployed notice API",
+        "v1.5.0 deployed"
+      ],
       "admin_registration": "PENDING",
       "production": "NOT_APPROVED",
       "deployment_date": null,
-      "rollback_sha": null
+      "rollback_sha": "c7676cc0acc3fe374bee49a4b26209e9101c5407"
     },
     {
       "order": 6,
