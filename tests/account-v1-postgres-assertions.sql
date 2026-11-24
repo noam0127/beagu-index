@@ -1,7 +1,10 @@
 DO $$
-DECLARE a text:='SYNTHETIC-ONE'; b text:='SYNTHETIC-TWO'; v uuid:='10000000-0000-0000-0000-000000000001'; v2 uuid:='10000000-0000-0000-0000-000000000002'; legacy_actor uuid:=gen_random_uuid(); r jsonb; nick text; actor uuid;
+DECLARE a text:='SYNTHETIC-ONE'; b text:='SYNTHETIC-TWO'; v uuid:='10000000-0000-0000-0000-000000000001'; v2 uuid:='10000000-0000-0000-0000-000000000002'; legacy_actor uuid:='60000000-0000-4000-8000-000000000002'; r jsonb; nick text; actor uuid;
 BEGIN
- INSERT INTO public.beagu_postit_member_accounts(auth_user_id,identity_visitor_id,author_uid) VALUES('00000000-0000-0000-0000-000000000002',v2,legacy_actor);
+ -- Legacy Auth deletion happens only in this synthetic database.
+ IF NOT EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 WHERE visitor_id=v2 AND author_uid=legacy_actor) THEN RAISE EXCEPTION 'legacy bridge missing'; END IF;
+ DELETE FROM auth.users WHERE id='00000000-0000-0000-0000-000000000002';
+ IF EXISTS(SELECT 1 FROM public.beagu_postit_member_accounts WHERE identity_visitor_id=v2) OR NOT EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 WHERE visitor_id=v2 AND author_uid=legacy_actor) THEN RAISE EXCEPTION 'legacy author not independent of Auth'; END IF;
  IF public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('b',64),repeat('c',64),repeat('d',64)) IS NOT NULL THEN RAISE EXCEPTION 'device theft'; END IF;
  r:=public.beagu_account_signup_v1('SYNTHETIC-ONE',repeat('a',64),repeat('c',64),repeat('d',64));
  IF r->>'account_id' IS DISTINCT FROM a::text OR r->>'lv2_active' IS DISTINCT FROM 'false' THEN RAISE EXCEPTION 'signup badge'; END IF;
@@ -37,7 +40,7 @@ BEGIN
  IF (SELECT valid_referrals FROM beagu_private.challenge_referral_profiles WHERE visitor_id=v)<>1 THEN RAISE EXCEPTION 'referral modified'; END IF;
  UPDATE beagu_private.challenge_referral_profiles SET disabled=true WHERE visitor_id=v2;
  IF public.beagu_account_postit_writer_v1(repeat('5',64)) IS NOT NULL OR public.beagu_account_password_login_v1(b,repeat('c',64),repeat('6',64)) IS NOT NULL THEN RAISE EXCEPTION 'disabled profile login'; END IF;
- RAISE NOTICE 'PASS anonymous signup, live Lv2 badge, one-use recovery, session revocation, legacy author, referral preservation and no social binding';
+ RAISE NOTICE 'PASS anonymous signup, live Lv2 badge, one-use recovery, session revocation, legacy author after synthetic Auth deletion, referral preservation and no social binding';
 END $$;
 
 -- Simulate the next week without changing the live clock or data.
@@ -86,7 +89,7 @@ BEGIN
   END LOOP;
  END LOOP;
  FOREACH role_name IN ARRAY ARRAY['anon','authenticated','service_role'] LOOP
-  FOREACH tab IN ARRAY ARRAY['beagu_private.beagu_anonymous_accounts_v1','beagu_private.beagu_account_login_budget_v1','beagu_private.beagu_account_sessions_v1','beagu_private.beagu_account_nicknames_v1','beagu_private.beagu_account_nickname_members_v1'] LOOP
+  FOREACH tab IN ARRAY ARRAY['beagu_private.beagu_anonymous_accounts_v1','beagu_private.beagu_account_login_budget_v1','beagu_private.beagu_account_sessions_v1','beagu_private.beagu_account_nicknames_v1','beagu_private.beagu_account_nickname_members_v1','beagu_private.beagu_legacy_author_bridge_v1'] LOOP
    IF has_table_privilege(role_name,tab,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE') THEN RAISE EXCEPTION 'unexpected direct credential access: % %',role_name,tab; END IF;
   END LOOP;
  END LOOP;
