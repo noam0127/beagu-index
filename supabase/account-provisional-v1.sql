@@ -347,7 +347,9 @@ DECLARE v_author uuid;
 BEGIN
  IF TG_OP='DELETE' THEN v_author:=OLD.author_uid; ELSE v_author:=NEW.author_uid; END IF;
  PERFORM pg_advisory_xact_lock(hashtext(v_author::text),20261121);
- IF beagu_private.beagu_postit_restricted_v1(v_author) THEN RAISE EXCEPTION 'POSTIT_RESTRICTED' USING ERRCODE='42501'; END IF;
+ -- This VOLATILE trigger executes a fresh query after taking the author lock,
+ -- rather than relying on the stable snapshot of a request that started earlier.
+ IF EXISTS(SELECT 1 FROM beagu_private.beagu_postit_restrictions_v1 WHERE author_uid=v_author AND restored_at IS NULL AND expires_at>clock_timestamp()) THEN RAISE EXCEPTION 'POSTIT_RESTRICTED' USING ERRCODE='42501'; END IF;
  IF TG_OP='DELETE' THEN RETURN OLD; END IF; RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION beagu_private.beagu_postit_restriction_guard_v1() FROM PUBLIC,anon,authenticated,service_role;
