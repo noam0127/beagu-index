@@ -47,14 +47,7 @@
       Object.assign(body.style,{
         position:"fixed",top:-scrollY+"px",left:"0",right:"0",width:"100%",overflow:"hidden"
       });
-      window.ArcadeScrollRail?.show({
-        get:()=>scrollY,
-        max:()=>maxScrollY,
-        set:position=>{
-          scrollY=Math.max(0,Math.min(maxScrollY,Number(position)||0));
-          body.style.top=-scrollY+"px";
-        }
-      });
+      window.ArcadeScrollRail?.hide();
     }else if(previous){
       window.ArcadeScrollRail?.hide();
       Object.assign(body.style,previous);

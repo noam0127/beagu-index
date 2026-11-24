@@ -255,15 +255,15 @@ assert.ok(html.indexOf('id="teacher-game-frame"')<html.indexOf('id="teacher-run-
 assert.match(volley,/SPEED_MULTIPLIER=2/);
 assert.match(volley,/AUTO_SPIKE_SPEED=8/,"automatic spike requires fast movement");
 assert.match(volley,/impactSpeed >= AUTO_SPIKE_SPEED/,"contact fires automatic spike");
-assert.doesNotMatch(volley,/data-key="spike"/,"separate spike button removed");
-assert.doesNotMatch(volley,/keys\.spike/,"manual spike input removed");
+assert.match(volley,/id="volley-spike"/,"explicit spike button is available");
+assert.match(volley,/state.spikeBufferFrames=SPIKE_BUFFER/,"manual spike buffer is implemented");
 
 assert.match(volley,/R = 48;/,"volleyball radius enlarged 1.5x from 32 to 48");
 assert.match(volley,/NET_TOP = 342/,"net rises from 97px to 109px");
 assert.match(volley,/43\s*\*\s*\.75\s*\*\s*battle\.allyReach/,"forearm reach remains tier-adjusted");
 assert.doesNotMatch(volley,/data-key="jump"/,"touch jump button removed");
 assert.doesNotMatch(volley,/class="touch"/,"empty touch control region removed");
-assert.match(volley,/touchControl\.targetY/,"volleyball touch flight has vertical axis");
+assert.match(volley,/touchControl\.axisY/,"volleyball joystick has vertical axis");
 assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is implemented");
 assert.match(runner,/pointerY=target\.y/,"survival game tracks 2D touch target");
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically except EXTREME");
@@ -335,7 +335,7 @@ assert.doesNotMatch(volley,/leftEnergy|rightEnergy|energyProfiles|energyFactor|r
 assert.match(volley,/function activateSuperSpike\(\)/);
 assert.match(runner,/id="run-health-progress"|id="run-lives"/);
 assert.match(volley,/now-lastTapAt<=320/);
-assert.match(runner,/now-lastTapAt<=320/);
+assert.match(runner,/tapGesture\.up\(e\)&&state==="playing"\)activateSpecial\(\)/);
 assert.match(picker,/🏫 학교 선택/);
 assert.match(backend,/function validatedSurvivalSeconds/);
 assert.match(backend,/invalid_time_bonus/);
@@ -388,27 +388,24 @@ console.log("PASS: verified 25-point +100/-50 win-margin scoring and 62-year ret
 // EXTREME disables player ascent in both games without suppressing enemy AI jump.
 assert.match(volley,/const hasPlayerWings=\(\)=>currentDifficulty==="easy"\|\|isMysteryBuff/,"EASY and wing pickups permit flight");
 assert.match(volley,/const playerCeiling=\(\)=>hasPlayerWings\(\)\?86:NET_TOP-78/,"NORMAL/HARD/VERY HARD higher jump reach");
-assert.match(volley,/controlPlayer\(left,direction,canPlayerJump\(\)&&\(tapJump\|\|keys\.jump\|\|keys\.up\)/,"touch and keyboard jump gated");
+assert.match(volley,/controlPlayer\(left,moveX,canPlayerJump\(\)&&\(keys\.jump\|\|keys\.up\|\|inputY<-\.58\)/,"touch and keyboard jump gated");
 assert.match(volley,/const flightAllowed=hasPlayerWings\(\)&&canPlayerJump\(\)/,"flight requires EASY or wing pickup");
 assert.match(volley,/controlPlayer\(right,move,!shackle&&state\.aiJump/,"CPU jumps unless affected by shackle");
 assert.match(runner,/extreme:\{jumpEnabled:false,/,"runner disables aerial control in EXTREME");
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"runner upward drag gated by difficulty");
 assert.match(runner,/player\.y=canPlayerRise\(\)\?Math\.max\(76,Math\.min\(H-52,player\.y\)\):H-52/,"runner grounded on each frame");
 assert.match(runner,/player\.y=canPlayerRise\(\)\?Math\.max\(76,Math\.min\(H-52,player\.y\)\):H-52/,"survival resize follows active wings/shackle");
-const volleyPointerSource=volley.slice(volley.indexOf('function targetFromPointer(e)'),volley.indexOf('  // The jump button is separate'));
-const volleyPointer=new Function("difficulty", [
- 'const W=900,H=500,FLOOR=451,NET_X=450,NET_W=14;',
- 'const touchControl={targetX:null,targetY:null};',
- 'const canvas={getBoundingClientRect:()=>({left:0,top:0,width:450,height:250})};',
- 'const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));',
- 'const canPlayerJump=()=>difficulty!=="extreme";const hasPlayerWings=()=>difficulty==="easy";const playerCeiling=()=>difficulty==="easy"?86:264;',
- volleyPointerSource,
- 'targetFromPointer({clientX:100,clientY:0});',
- 'return touchControl;'
-].join("\n"));
-assert.equal(volleyPointer("extreme").targetY,null,"EXTREME has no vertical touch flight");
-assert.equal(volleyPointer("hard").targetY,null,"HARD touch can only jump under gravity");
-assert.equal(volleyPointer("easy").targetY,86,"EASY retains free flight");
+// Actual joystick vector mapping and deadzone, separate from the movement physics test.
+const jsStart=volley.indexOf('function setJoystickVector(clientX,clientY){'),jsEnd=volley.indexOf('function endJoystick(event){',jsStart);
+assert(jsStart>=0&&jsEnd>jsStart);
+const vector=new Function('x','y',`
+ const joystick={getBoundingClientRect:()=>({left:0,top:0,width:100,height:100})};
+ const joystickThumb={style:{setProperty(){}}};const touchControl={axisX:0,axisY:0};
+ ${volley.slice(jsStart,jsEnd)}
+ setJoystickVector(x,y);return touchControl;
+`);
+assert.deepEqual(vector(50,50),{axisX:0,axisY:0});assert.equal(vector(90,50).axisX,1);
+assert.equal(vector(50,0).axisY,-1);assert(Math.hypot(vector(100,100).axisX,vector(100,100).axisY)<=1.00001);
 const runnerPointerSource=runner.slice(runner.indexOf('function dragPosition(e)'),runner.indexOf('function setFlightTarget(e)'));
 const runnerPointer=new Function("jumpEnabled",[
  'const profile={jumpEnabled},canPlayerRise=()=>profile.jumpEnabled!==false,W=600,H=420;',

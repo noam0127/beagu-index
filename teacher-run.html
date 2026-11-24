@@ -128,6 +128,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-gamecodefix1">
 <script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
+<link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="postit.html">포스트잇</a><a href="challenge.html">챌린지</a><a href="games.html" aria-current="page">게임</a></nav></div></header>
@@ -158,7 +159,7 @@ canvas{height:400px;cursor:default}
   </section>
   <div class="stage arcade-game-viewport" data-arcade-fullscreen>
     <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="전체화면으로 확대" title="전체화면으로"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 3h6v6M21 3l-7 7M3 21l7-7M9 21H3v-6"/></svg></button>
-    <button type="button" id="run-fullscreen-pause" class="arcade-fullscreen-pause" aria-label="일시정지" title="일시정지" disabled>⏸</button>
+    <button type="button" id="pause" class="arcade-playback" hidden disabled aria-label="일시정지" title="일시정지">⏸ 일시정지</button>
     <div class="arcade-fullscreen-hud arcade-run-fullscreen-hud" aria-label="전체화면 교사 체력 및 게임 현황">
       <div class="arcade-run-fullscreen-heading">
         <span>♥ 체력 <strong id="run-fullscreen-health-numbers">100 / 100</strong></span>
@@ -175,7 +176,7 @@ canvas{height:400px;cursor:default}
     </div>
   </div>
   <div class="toolbar">
-    <button id="pause" type="button" disabled aria-label="일시정지" title="일시정지">⏸</button>
+    
     <button id="sound" type="button" aria-pressed="false" aria-label="소리 켜기" title="효과음 및 배경음악">🔇</button>
     <button id="how" class="help" type="button" aria-label="게임 방법" title="게임 방법">?</button><a class="original" href="https://ilovebaegu.itch.io/teacherrun09" target="_blank" rel="noopener noreferrer" aria-label="원작 게임">↗ 원작</a>
   </div>
@@ -189,10 +190,11 @@ canvas{height:400px;cursor:default}
 <script defer src="js/beagu-presence-games-v1.js?v=20261120-gateway2"></script>
 <script src="js/arcade-leaderboard-v1.js?v=20261123-school-links-live2"></script>
 <script src="js/arcade-school-picker-v1.js?v=20261120-fast1"></script>
-<script src="js/arcade-scroll-rail-v1.js?v=20261120-rightscroll1"></script>
-<script src="js/arcade-play-lock-v1.js?v=20261120-rightscroll1"></script>
+<script src="js/arcade-scroll-rail-v1.js?v=140"></script>
+<script src="js/arcade-play-lock-v1.js?v=140"></script>
 <script src="js/arcade-mystery-items-v1.js?v=20261123-arcade-items3"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
+<script src="js/arcade-gestures-v1.js?v=140"></script>
 <script>
 (function(){
 "use strict";
@@ -650,7 +652,7 @@ async function leavePausedRun(changeSchool=false){
  }finally{savingPausedRun=false;}
 }
 function pause(){
- if(state==="playing"){state="paused";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
+ if(state==="playing"){state="paused";pressed.clear();tapGesture.cancel();pointerId=null;pointerX=null;pointerY=null;
   message("일시정지","",[
    {label:"▶ 계속",action:resume},
    {label:"🏫 다른 학교로 변경",action:()=>{void leavePausedRun(true);}},
@@ -1139,7 +1141,7 @@ function drawPatternHazards(){
 function drawReadableNotice(content,y,background,color){
  // Situational subtitles must not obscure falling objects or the teacher.
  const width=Math.min(W-18,Math.max(145,W*.72)),inside=width-18;
- const fontSize=Math.min(15,Math.max(12,Math.round(W*.023)));
+ const fontSize=Math.min(13,Math.max(11,Math.round(W*.020)));
  ctx.save();ctx.font='750 '+fontSize+'px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
  const pieces=String(content).split(/\s+/).filter(Boolean),lines=[];
  let line='';
@@ -1153,15 +1155,15 @@ function drawReadableNotice(content,y,background,color){
   }
  }
  if(line)lines.push(line);
- const shown=lines.slice(0,3);
- if(lines.length>3)shown[2]=shown[2].slice(0,-1)+'…';
- const lineHeight=18,h=8+shown.length*lineHeight;
- ctx.globalAlpha=.17;roundRect((W-width)/2,y,width,h,9,background);
+ const shown=lines.slice(0,2);
+ if(lines.length>2)shown[1]=shown[1].slice(0,-1)+'…';
+ const lineHeight=15,h=6+shown.length*lineHeight;
+ ctx.globalAlpha=.07;roundRect((W-width)/2,y,width,h,9,background);
  ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
- ctx.lineJoin="round";ctx.lineWidth=2.4;ctx.strokeStyle="rgba(4,14,27,.83)";
+ ctx.lineJoin="round";ctx.lineWidth=2;ctx.strokeStyle="rgba(4,14,27,.83)";
  ctx.fillStyle=color;
  for(let i=0;i<shown.length;i++){
-  const lineY=y+13+i*lineHeight;
+  const lineY=y+10+i*lineHeight;
   ctx.strokeText(shown[i],W/2,lineY,inside);
   ctx.fillText(shown[i],W/2,lineY,inside);
  }
@@ -1215,9 +1217,10 @@ let previousFullscreenPauseState="";
 function syncFullscreenPause(){
  if(previousFullscreenPauseState===state)return;
  previousFullscreenPauseState=state;
- const control=$("run-fullscreen-pause"),paused=state==="paused";
- control.disabled=state!=="playing"&&!paused;
- control.textContent=paused?"▶":"⏸";
+ const control=$("pause"),paused=state==="paused";
+ control.hidden=state!=="playing"&&!paused;
+ control.disabled=control.hidden||savingPausedRun;
+ control.textContent=paused?"▶ 계속하기":"⏸ 일시정지";
  control.setAttribute("aria-label",paused?"게임 계속하기":"일시정지");
  control.title=paused?"게임 계속하기":"일시정지";
 }
@@ -1235,7 +1238,7 @@ function tick(t){
 window.addEventListener("keydown",e=>{
  const key=e.key.toLowerCase();
  if(e.target?.matches?.("input,textarea,select,[contenteditable]"))return;
- if(key==="escape"&&(state==="playing"||state==="paused")){
+ if(key==="escape"&&(state==="playing"||state==="paused")&&!document.fullscreenElement&&!document.webkitFullscreenElement&&!document.querySelector(".arcade-fullscreen-fallback")){
   e.preventDefault();
   if(!e.repeat)pause();
   return;
@@ -1253,7 +1256,7 @@ window.addEventListener("keyup",e=>{let key=e.key.toLowerCase();if(key==="arrowl
   if(key==="arrowdown"||key==="s")pressed.delete("down");});
 // Browser focus changes are not a request to pause the match.
 window.addEventListener("blur",()=>{pressed.clear();});
-document.addEventListener("visibilitychange",()=>{if(document.hidden){pressed.clear();pointerId=null;pointerX=null;pointerY=null;}});
+document.addEventListener("visibilitychange",()=>{if(document.hidden){pressed.clear();tapGesture.cancel();pointerId=null;pointerX=null;pointerY=null;}});
 function dragPosition(e){
  const r=canvas.getBoundingClientRect();
  if(!r.width||!r.height)return null;
@@ -1266,27 +1269,24 @@ function setFlightTarget(e){
  const target=dragPosition(e);if(!target)return;
  pointerX=target.x;pointerY=target.y;
 }
+const tapGesture=window.BeaguArcadeGestures.create();
 canvas.addEventListener("pointerdown",e=>{
  if(state!=="playing"||pointerId!==null)return;
  e.preventDefault();
- const now=Date.now(),bounds=canvas.getBoundingClientRect();
- const px=bounds.width?(e.clientX-bounds.left)/bounds.width*W:0;
- const py=bounds.height?(e.clientY-bounds.top)/bounds.height*H:0;
- if(lastTapAt&&now-lastTapAt<=320&&Math.hypot(px-lastTapX,py-lastTapY)<105){
-  activateSpecial();lastTapAt=0;
- }else{lastTapAt=now;lastTapX=px;lastTapY=py;}
+ tapGesture.down(e);
  pointerId=e.pointerId;
  if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId);
  setFlightTarget(e);
 });
 canvas.addEventListener("pointermove",e=>{
- if(pointerId===e.pointerId&&state==="playing"){e.preventDefault();setFlightTarget(e);}
+ if(pointerId===e.pointerId&&state==="playing"){e.preventDefault();tapGesture.move(e);setFlightTarget(e);}
 });
 const endDrag=e=>{if(pointerId===e.pointerId){pointerId=null;pointerX=null;pointerY=null;}};
-canvas.addEventListener("pointerup",endDrag);canvas.addEventListener("pointercancel",endDrag);
-canvas.addEventListener("lostpointercapture",endDrag);
+canvas.addEventListener("pointerup",e=>{if(pointerId===e.pointerId&&tapGesture.up(e)&&state==="playing")activateSpecial();endDrag(e);});
+canvas.addEventListener("pointercancel",e=>{if(pointerId===e.pointerId)tapGesture.cancel();endDrag(e);});
+canvas.addEventListener("lostpointercapture",e=>{if(pointerId===e.pointerId)tapGesture.cancel();endDrag(e);});
 $("pause").addEventListener("click",pause);
-$("run-fullscreen-pause").addEventListener("click",()=>{if(state==="playing"||state==="paused")pause();});
+
 $("how").addEventListener("click",help);
 $("sound").addEventListener("click",()=>{soundOn=!soundOn;$("sound").textContent=soundOn?"🔊":"🔇";$("sound").setAttribute("aria-pressed",String(soundOn));$("sound").setAttribute("aria-label",soundOn?"소리 끄기":"소리 켜기");try{localStorage.setItem("teacherRunSoundV2",soundOn?"1":"0");}catch(e){}bgm.sync(soundOn&&(state==="playing"||state==="starting"));playTone(800,.12);});
 let lastEmbeddedHeight = 0;
@@ -1316,7 +1316,7 @@ window.addEventListener("beagu:challenge-access-revoked",postHeight);
 resize();intro();requestAnimationFrame(tick);postHeight();
 })();
 </script>
-<script src="js/arcade-fullscreen-v1.js?v=20261120-fullscreen-icons2"></script>
+<script src="js/arcade-fullscreen-v1.js?v=140"></script>
 <script defer src="js/beagu-game-lv1-gate-v1.js?v=20261123-priority2"></script>
 <script defer src="js/postit-entry-links-v1.js?v=20261120-2"></script>
 </body>
