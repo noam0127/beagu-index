@@ -30,7 +30,7 @@ class PostgresLedger:
         self.worker_run=worker_run
 
     def rpc(self,action,payload):
-        runner.require(action in ("create","claim","finish","status","finalize"),"invalid_control_action")
+        runner.require(action in ("create","claim","finish","status","finalize","recovery_decision"),"invalid_control_action")
         # Hex encoded UTF-8 JSON is data, not SQL syntax.
         raw=json.dumps({"scope":runner.SCOPE,**payload},ensure_ascii=False,separators=(",",":")).encode().hex()
         sql="SELECT public.beagu_integrated_fixture_transition_v1('"+action+"',convert_from(decode('"+raw+"','hex'),'UTF8')::jsonb);"

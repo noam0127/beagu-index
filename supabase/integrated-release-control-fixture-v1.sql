@@ -14,7 +14,7 @@ create table public.beagu_integrated_fixture_jobs_v1(
  recipe_sha text not null check(recipe_sha ~ '^[0-9a-f]{64}$'),
  approval_sha text not null check(approval_sha ~ '^[0-9a-f]{64}$'),
  version text not null, summary text not null, final_evidence text check(final_evidence is null or final_evidence ~ '^[0-9a-f]{64}$'),
- status text not null default 'queued' check(status in ('queued','running','blocked','verified','completed')),
+ status text not null default 'queued' check(status in ('queued','running','blocked','verified','completed','abandoned')),
  next_step integer not null default 0 check(next_step>=0),
  task_count integer not null check(task_count between 2 and 100),
  unique(base_sha,candidate_sha),
@@ -29,6 +29,8 @@ create table public.beagu_integrated_fixture_steps_v1(
  status text not null default 'pending' check(status in ('pending','running','done','blocked')),
  lease uuid,
  worker_run text,
+ incident_id uuid,
+ incident_worker_run text,
  evidence text check(evidence is null or evidence ~ '^[0-9a-f]{64}$'),
  error text,
  primary key(job_id,idx),
@@ -36,6 +38,21 @@ create table public.beagu_integrated_fixture_steps_v1(
  check((status='running')=(worker_run is not null)),
  check((status='done')=(evidence is not null))
 );
+-- Append-only incident decisions. No credentials or row data are stored.
+create table public.beagu_integrated_fixture_recovery_v1(
+ id uuid primary key default gen_random_uuid(),
+ job_id uuid not null references public.beagu_integrated_fixture_jobs_v1(id),
+ idx integer not null,
+ incident_id uuid not null,
+ decision text not null check(decision in ('hold','abandon_before_mutation')),
+ observation_sha text not null check(observation_sha ~ '^[0-9a-f]{64}$'),
+ approval_sha text not null check(approval_sha ~ '^[0-9a-f]{64}$'),
+ recorded_at timestamptz not null default now(),
+ unique(job_id,incident_id,approval_sha)
+);
+alter table public.beagu_integrated_fixture_recovery_v1 enable row level security;
+revoke all on public.beagu_integrated_fixture_recovery_v1 from public,anon,authenticated,service_role;
+grant select,insert on public.beagu_integrated_fixture_recovery_v1 to service_role;
 alter table public.beagu_integrated_fixture_jobs_v1 enable row level security;
 alter table public.beagu_integrated_fixture_steps_v1 enable row level security;
 revoke all on public.beagu_integrated_fixture_jobs_v1,public.beagu_integrated_fixture_steps_v1 from public,anon,authenticated;
@@ -87,7 +104,7 @@ begin
   n:=jsonb_array_length(p->'tasks');
   if n not between 2 and 100 then return jsonb_build_object('error','invalid_tasks'); end if;
   -- Additional defense; the trusted Python verifier checks file/recipe pins before calling.
-  for t in select null::uuid, (ord-1)::integer, task, 'pending'::text, null::uuid,null::text,null::text,null::text
+  for t in select null::uuid, (ord-1)::integer, task, 'pending'::text, null::uuid,null::text,null::uuid,null::text,null::text,null::text
     from jsonb_array_elements(p->'tasks') with ordinality as e(task,ord)
   loop
    op:=t.task->>'op';
@@ -127,7 +144,8 @@ begin
  if not found then return jsonb_build_object('error','unknown_job'); end if;
  if p_action='status' then
    return to_jsonb(j)||jsonb_build_object('scope','isolated_fixture_only','execution_enabled',false,'steps',
-    (select jsonb_agg(to_jsonb(x)-'lease'-'worker_run'-'job_id' order by idx) from public.beagu_integrated_fixture_steps_v1 x where job_id=j.id));
+    (select jsonb_agg(to_jsonb(x)-'lease'-'worker_run'-'job_id' order by idx) from public.beagu_integrated_fixture_steps_v1 x where job_id=j.id),
+    'recovery',coalesce((select jsonb_agg(to_jsonb(x) order by recorded_at,id) from public.beagu_integrated_fixture_recovery_v1 x where job_id=j.id),'[]'::jsonb));
  end if;
  -- Finalize is an isolated control-plane transaction, not a publication operation.
  -- The trusted caller must have independently verified all provider receipts first.
@@ -167,6 +185,41 @@ begin
  if s.production_sha is distinct from j.base_sha or s.draft_sha is distinct from j.candidate_sha then
   return jsonb_build_object('error','stale_or_changed_plan');
  end if;
+ if p_action='recovery_decision' then
+  -- Only the isolated trusted recovery adapter may invoke this service-role RPC.
+  -- No SQL repair, restore, automatic retry or external side effects here.
+  if j.plan_sha is distinct from p->>'plan_sha256' or j.recipe_sha is distinct from p->>'recipe_sha256'
+    or j.base_sha is distinct from p->>'base_sha' or j.candidate_sha is distinct from p->>'candidate_sha'
+    or coalesce(p->>'observation_sha256','') !~ '^[0-9a-f]{64}$' or coalesce(p->>'approval_sha256','') !~ '^[0-9a-f]{64}$'
+    or coalesce(p->>'decision','') not in ('hold','abandon_before_mutation') then
+   return jsonb_build_object('error','recovery_pin_mismatch');
+  end if;
+  select * into t from public.beagu_integrated_fixture_steps_v1 where job_id=j.id and idx=j.next_step for update;
+  if not found or to_jsonb(t.idx) is distinct from p->'idx' or t.incident_id is null
+   or t.incident_id::text is distinct from p->>'incident_id' or t.incident_worker_run is distinct from p->>'incident_worker_run' then
+   return jsonb_build_object('error','recovery_incident_mismatch');
+  end if;
+  if exists(select 1 from public.beagu_integrated_fixture_recovery_v1 where job_id=j.id and incident_id=t.incident_id
+   and approval_sha=p->>'approval_sha256' and observation_sha=p->>'observation_sha256' and decision=p->>'decision') then
+   return jsonb_build_object('ok',true,'status',j.status,'rehearsal',true);
+  end if;
+  if j.status not in ('running','blocked') or t.status not in ('running','blocked')
+   or j.status is distinct from p->>'expected_status' or t.status is distinct from p->>'expected_step_status' then
+   return jsonb_build_object('error','recovery_state_changed');
+  end if;
+  if p->>'decision'='abandon_before_mutation' and
+   (t.idx<>0 or t.task->>'op'<>'backup' or p->'worker_retired' is distinct from 'true'::jsonb
+    or p->'no_effect_verified' is distinct from 'true'::jsonb
+    or exists(select 1 from public.beagu_integrated_fixture_steps_v1 where job_id=j.id and status='done')) then
+   return jsonb_build_object('error','partial_effect_requires_manual_recovery');
+  end if;
+  insert into public.beagu_integrated_fixture_recovery_v1(job_id,idx,incident_id,decision,observation_sha,approval_sha)
+   values(j.id,t.idx,t.incident_id,p->>'decision',p->>'observation_sha256',p->>'approval_sha256');
+  update public.beagu_integrated_fixture_steps_v1 set status='blocked',lease=null,worker_run=null,error='recovery_review_required'
+   where job_id=j.id and idx=t.idx;
+  update public.beagu_integrated_fixture_jobs_v1 set status=case when p->>'decision'='abandon_before_mutation' then 'abandoned' else 'blocked' end where id=j.id;
+  return jsonb_build_object('ok',true,'status',case when p->>'decision'='abandon_before_mutation' then 'abandoned' else 'blocked' end,'rehearsal',true);
+ end if;
  if p_action='claim' then
   if coalesce(p->>'worker_run','') !~ '^[0-9]{1,24}:[0-9]{1,8}$' then return jsonb_build_object('error','invalid_worker_run'); end if;
   if j.base_sha is distinct from p->>'observed_base' or j.candidate_sha is distinct from p->>'candidate_sha'
@@ -174,14 +227,14 @@ begin
    return jsonb_build_object('error','stale_or_changed_plan');
   end if;
   if j.status in ('verified','completed') then return jsonb_build_object('completed',true); end if;
-  if j.status='blocked' then return jsonb_build_object('error','release_blocked'); end if;
+  if j.status in ('blocked','abandoned') then return jsonb_build_object('error','release_blocked'); end if;
   select * into t from public.beagu_integrated_fixture_steps_v1 where job_id=j.id and idx=j.next_step for update;
   if not found or t.status<>'pending' then return jsonb_build_object('error','step_already_claimed_or_uncertain'); end if;
   if (select count(*) from public.beagu_integrated_fixture_steps_v1 where job_id=j.id and idx<j.next_step and status='done')<>j.next_step then
    return jsonb_build_object('error','missing_prior_checkpoint');
   end if;
   lease_id:=gen_random_uuid();
-  update public.beagu_integrated_fixture_steps_v1 set status='running',lease=lease_id,worker_run=p->>'worker_run' where job_id=j.id and idx=j.next_step;
+  update public.beagu_integrated_fixture_steps_v1 set status='running',lease=lease_id,worker_run=p->>'worker_run',incident_id=gen_random_uuid(),incident_worker_run=p->>'worker_run' where job_id=j.id and idx=j.next_step;
   update public.beagu_integrated_fixture_jobs_v1 set status='running' where id=j.id;
   return jsonb_build_object('idx',j.next_step,'lease',lease_id,'task',t.task);
  elsif p_action='finish' then

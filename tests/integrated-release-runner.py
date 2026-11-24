@@ -15,6 +15,10 @@ import integrated_verify as v
 import integrated_backup as b
 import integrated_server_control as server
 import integrated_package as package
+import integrated_recovery as recovery
+import base64
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives import serialization
 spec=importlib.util.spec_from_file_location("git_fixture",ROOT/"tests/integrated-release-verification.py")
 g=importlib.util.module_from_spec(spec);spec.loader.exec_module(g)
 
@@ -255,5 +259,79 @@ class Runner(unittest.TestCase):
         dest.write_bytes(dest.read_bytes()+b"tampered")
         with self.assertRaisesRegex(ValueError,"package_artifact_mismatch"):
             package.verify_artifact(dest,inventory,receipt)
+
+    def test_recovery_decisions_preserve_partial_effect_and_require_separate_approval(self):
+        with b.FixtureCluster() as cluster:
+            cluster.sql("fixture_source","CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE TABLE public.existing(id integer PRIMARY KEY); INSERT INTO public.existing VALUES (1);")
+            server.install(cluster,ROOT,self.base,self.candidate)
+            ledger=server.PostgresLedger(cluster)
+            job=ledger.create(self.verified,self.registry,self.approval)
+            obs,owner=Ed25519PrivateKey.generate(),Ed25519PrivateKey.generate()
+            def pub(k):return k.public_key().public_bytes(serialization.Encoding.Raw,serialization.PublicFormat.Raw)
+            def sign(k,p):return {"payload":p,"signature":base64.b64encode(k.sign(recovery.canonical(p))).decode()}
+            def evidence(decision,retired=True,absent=True):
+                incident=recovery.inspect(ledger,job)
+                o=sign(obs,{"kind":"recovery_observation","incident":incident,"worker_retired":retired,"no_effect_verified":absent,
+                    "current_state_sha256":r.digest(b.fingerprint(cluster,"fixture_source"))})
+                a=sign(owner,{"kind":"recovery_approval","incident_sha256":r.digest(incident),"observation_sha256":r.digest(o),"decision":decision,"confirmed":True})
+                return o,a
+            proofs=pathlib.Path(self.tmp.name)/"recovery";proofs.mkdir(mode=0o700)
+            backup_claim=ledger.claim(job,self.verified,self.registry,self.base)
+            ledger.finish(job,backup_claim,"a"*64)
+            sql_claim=ledger.claim(job,self.verified,self.registry,self.base)
+            # Simulate a mutation which succeeded but whose completion receipt was lost.
+            cluster.sql("fixture_source","CREATE TABLE public.fixture_added(id integer PRIMARY KEY); INSERT INTO public.existing VALUES(2);")
+            o,a=evidence("abandon_before_mutation")
+            with self.assertRaisesRegex(ValueError,"partial_effect_requires_manual_recovery"):
+                recovery.decide(ledger,job,o,a,pub(obs),pub(owner),proofs)
+            o,a=evidence("hold",absent=False)
+            with self.assertRaisesRegex(ValueError,"invalid_recovery_signature"):
+                recovery.decide(ledger,job,o,{**a,"signature":"AAAA"},pub(obs),pub(owner),proofs)
+            result=recovery.decide(ledger,job,o,a,pub(obs),pub(owner),proofs)
+            self.assertEqual(result["status"],"blocked")
+            state=ledger.snapshot(job)
+            self.assertEqual(state["recovery"][0]["decision"],"hold")
+            self.assertEqual(state["steps"][0]["status"],"done")
+            self.assertEqual(state["steps"][1]["incident_id"],o["payload"]["incident"]["incident_id"])
+            with self.assertRaisesRegex(ValueError,"stale_step_receipt"):
+                ledger.finish(job,sql_claim,"a"*64)
+            with self.assertRaisesRegex(ValueError,"release_blocked"):
+                ledger.claim(job,self.verified,self.registry,self.base)
+            self.assertEqual(cluster.sql("fixture_source","SELECT count(*) FROM public.existing;").strip(),b"2")
+            self.assertEqual(cluster.sql("fixture_source","SELECT to_regclass('public.fixture_added');").strip(),b"fixture_added")
+            self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
+            self.assertEqual(len(list(proofs.iterdir())),1)
+            with self.assertRaises(RuntimeError):
+                server.execute(cluster,b"DELETE FROM public.beagu_integrated_fixture_recovery_v1;","service_role")
+
+    def test_recovery_abandon_only_before_mutation(self):
+        with b.FixtureCluster() as cluster:
+            cluster.sql("fixture_source","CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;")
+            server.install(cluster,ROOT,self.base,self.candidate)
+            ledger=server.PostgresLedger(cluster)
+            job=ledger.create(self.verified,self.registry,self.approval)
+            claim=ledger.claim(job,self.verified,self.registry,self.base)
+            ledger.finish(job,claim)
+            obs,owner=Ed25519PrivateKey.generate(),Ed25519PrivateKey.generate()
+            def pub(k):return k.public_key().public_bytes(serialization.Encoding.Raw,serialization.PublicFormat.Raw)
+            def sign(k,p):return {"payload":p,"signature":base64.b64encode(k.sign(recovery.canonical(p))).decode()}
+            incident=recovery.inspect(ledger,job)
+            def signed(retired):
+                o=sign(obs,{"kind":"recovery_observation","incident":incident,"worker_retired":retired,"no_effect_verified":True,"current_state_sha256":r.digest(b.fingerprint(cluster,"fixture_source"))})
+                a=sign(owner,{"kind":"recovery_approval","incident_sha256":r.digest(incident),"observation_sha256":r.digest(o),"decision":"abandon_before_mutation","confirmed":True})
+                return o,a
+            proofs=pathlib.Path(self.tmp.name)/"recovery";proofs.mkdir(mode=0o700)
+            o,a=signed(False)
+            with self.assertRaisesRegex(ValueError,"absence_of_effect_not_verified"):
+                recovery.decide(ledger,job,o,a,pub(obs),pub(owner),proofs)
+            o,a=signed(True)
+            result=recovery.decide(ledger,job,o,a,pub(obs),pub(owner),proofs)
+            self.assertEqual(result["status"],"abandoned")
+            self.assertEqual(ledger.snapshot(job)["recovery"][0]["decision"],"abandon_before_mutation")
+            with self.assertRaisesRegex(ValueError,"release_blocked"):
+                ledger.claim(job,self.verified,self.registry,self.base)
+            self.assertEqual(ledger.create(self.verified,self.registry,self.approval),job)
+            # Old job never reopens; a new candidate would require a separate approval.
+            self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
 
 if __name__=="__main__":unittest.main()
