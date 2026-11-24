@@ -178,3 +178,4 @@ jobs:
           psql_account < supabase/account-provisional-v1.sql
           psql_account < tests/account-v1-postgres-assertions.sql
           node --check js/beagu-account-v1.js
+          node tests/account-v1-ui.cjs
