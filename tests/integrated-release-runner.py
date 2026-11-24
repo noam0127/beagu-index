@@ -13,6 +13,7 @@ sys.path.insert(0,str(ROOT/"scripts/release-manager"))
 import integrated_runner as r
 import integrated_verify as v
 import integrated_backup as b
+import integrated_server_control as server
 spec=importlib.util.spec_from_file_location("git_fixture",ROOT/"tests/integrated-release-verification.py")
 g=importlib.util.module_from_spec(spec);spec.loader.exec_module(g)
 
@@ -144,5 +145,67 @@ class Runner(unittest.TestCase):
         with self.assertRaises(RuntimeError):runner.once(self.job)
         self.assertEqual(self.ledger.snapshot(self.job)["status"],"blocked")
         with self.assertRaisesRegex(ValueError,"release_blocked"):runner.once(self.job)
+
+    def test_postgres_control_and_legacy_queue_exclusion(self):
+        with b.FixtureCluster() as cluster:
+            cluster.sql("fixture_source","CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE TABLE public.existing(id integer PRIMARY KEY); INSERT INTO public.existing VALUES (1),(2);")
+            server.install(cluster,ROOT,self.base,self.candidate)
+            ledger=server.PostgresLedger(cluster)
+            # Public/anonymous calls cannot access the new transition RPC.
+            with self.assertRaises(RuntimeError):
+                server.execute(cluster,b"SELECT public.beagu_integrated_fixture_transition_v1('status','{}');","anon")
+            with self.assertRaises(RuntimeError):
+                server.execute(cluster,b"SELECT * FROM public.beagu_integrated_fixture_jobs_v1;","authenticated")
+            legacy=("INSERT INTO public.beagu_site_release_jobs_v1(action,target,from_sha,to_sha,version,summary) VALUES('prod_apply','production','"+self.base+"','"+self.candidate+"','fixture','fixture');").encode()
+            server.execute(cluster,legacy,"service_role")
+            with self.assertRaisesRegex(ValueError,"active_release_exists"):
+                ledger.create(self.verified,self.registry,self.approval)
+            server.execute(cluster,b"UPDATE public.beagu_site_release_jobs_v1 SET status='failed';","service_role")
+            job=ledger.create(self.verified,self.registry,self.approval)
+            self.assertEqual(job,server.PostgresLedger(cluster).create(self.verified,self.registry,self.approval))
+            with self.assertRaises(RuntimeError):
+                server.execute(cluster,legacy,"service_role")
+            with self.assertRaises(RuntimeError):
+                server.execute(cluster,b"UPDATE public.beagu_site_release_state_v1 SET draft_summary='stale';","service_role")
+            with self.assertRaisesRegex(ValueError,"stale_or_changed_plan"):
+                ledger.claim(job,self.verified,self.registry,"f"*40)
+            adapter=Adapter(self.base,cluster,self.objects,self.git)
+            # Real DB operations via runner; control state survives reopening the PostgreSQL client.
+            for task in self.recipe["tasks"]:
+                runner=r.FixtureRunner(server.PostgresLedger(cluster),self.git,self.envelope,self.registry,adapter)
+                self.assertTrue(runner.once(job))
+            self.assertFalse(runner.once(job))
+            state=ledger.snapshot(job)
+            self.assertEqual(state["status"],"completed")
+            self.assertTrue(all(s["status"]=="done" and "lease" not in s for s in state["steps"]))
+            self.assertFalse(state["execution_enabled"])
+            self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
+            # A completed rehearsal never changes the production pointer.
+            server.execute(cluster,legacy,"service_role")
+
+    def test_postgres_concurrent_claim_and_uncertain_effect(self):
+        with b.FixtureCluster() as cluster:
+            cluster.sql("fixture_source","CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;")
+            server.install(cluster,ROOT,self.base,self.candidate)
+            ledger=server.PostgresLedger(cluster)
+            job=ledger.create(self.verified,self.registry,self.approval)
+            results=[];errors=[];barrier=threading.Barrier(2)
+            def worker():
+                barrier.wait()
+                try:results.append(server.PostgresLedger(cluster).claim(job,self.verified,self.registry,self.base))
+                except ValueError as e:errors.append(str(e))
+            threads=[threading.Thread(target=worker) for _ in range(2)]
+            for t in threads:t.start()
+            for t in threads:t.join()
+            self.assertEqual(len(results),1);self.assertEqual(errors,["step_already_claimed_or_uncertain"])
+            claim=results[0]
+            with self.assertRaisesRegex(ValueError,"step_already_claimed_or_uncertain"):
+                server.PostgresLedger(cluster).claim(job,self.verified,self.registry,self.base)
+            with self.assertRaisesRegex(ValueError,"wrong_step_lease"):
+                ledger.finish(job,{**claim,"lease":"wrong"},"a"*64)
+            ledger.finish(job,claim)
+            self.assertEqual(ledger.snapshot(job)["status"],"blocked")
+            with self.assertRaisesRegex(ValueError,"release_blocked"):
+                ledger.claim(job,self.verified,self.registry,self.base)
 
 if __name__=="__main__":unittest.main()
