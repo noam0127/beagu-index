@@ -59,6 +59,29 @@ assert.match(js,/publishBeagu2026NationalCount\(scanned-prelaunch-undated,newUni
 assert.doesNotMatch(js,/from\(['"]beagu_release_metrics_v2/);
 assert.doesNotMatch(js,/service_role|SUPABASE_SERVICE_ROLE/i);
 
+// Historical evidence is reused only after fresh unique exact identity verification.
+const auditRow=row.slice();
+auditRow[0]='2026. 11. 24 오후 1:00:00';
+auditRow[22]='② 공립초등학교';
+const auditSchool={...schools[0],status:'운영'};
+const directory=[auditSchool];
+const prior=[[2,'학교 MASTER 미매칭','UNIQUE_EXACT_MATCH_RECHECK','7331195','원본 기본정보 일치']];
+const hold=[[2,auditRow[1],auditRow[6],auditRow[21],'학교 MASTER 미매칭']];
+const audit=(rows,dir,p=prior,h=hold)=>{
+  scope.beagu26PrepareSchoolIndex(dir);
+  return JSON.parse(JSON.stringify(scope.beagu26AuditPriorExactMatches([header,...rows],dir,p,h)));
+};
+assert.deepEqual(audit([auditRow],directory),{candidates:1,reusable:1,held:0});
+assert.equal(scope.resolveSchool(auditRow,cols,directory).school.school_id,'7331195');
+assert.deepEqual(audit([auditRow],[auditSchool,{...auditSchool,school_id:'9999999'}]),{candidates:1,reusable:0,held:1});
+assert.deepEqual(audit([auditRow],directory,[...prior,...prior]),{candidates:2,reusable:0,held:2});
+assert.deepEqual(audit([auditRow],directory,[[...prior[0].slice(0,3),'9999999',prior[0][4]]]),{candidates:1,reusable:0,held:1});
+const changed=auditRow.slice();changed[21]='다른초등학교';
+assert.deepEqual(audit([changed],directory),{candidates:1,reusable:0,held:1});
+assert.deepEqual(audit([row],directory),{candidates:1,reusable:0,held:1});
+assert.deepEqual(audit([auditRow],[{...auditSchool,status:'폐교'}]),{candidates:1,reusable:0,held:1});
+assert.deepEqual(audit([auditRow],directory,prior,[]),{candidates:1,reusable:0,held:1});
+
 const invoked=[];
 const snapshot={values:[],schools:[]};
 let locked=false;
