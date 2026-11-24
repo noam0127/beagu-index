@@ -5,11 +5,12 @@
   const root=document.getElementById('beaguInterest');
   if(!root)return;
   const carousel=root.dataset.interestCarousel==='true';
+  const topFive=root.dataset.interestTopFive==='true';
   const list=root.querySelector('[data-interest-list]');
   const message=root.querySelector('[data-interest-status]');
   const more=root.querySelector('[data-interest-more]');
   const updated=root.querySelector('[data-interest-updated]');
-  if(!list||!message||(!carousel&&!more))return;
+  if(!list||!message||(!carousel&&!topFive&&!more))return;
   const endpoint='https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-school-interest-v1';
   const key='beagu-level-session-v1';
   const idPattern=/^[0-9]{7}$/;
@@ -43,7 +44,7 @@
       const detail=el('span','beagu-interest-school');
       detail.append(el('strong','',school.school_name),el('small','',school.region||''));
       link.append(rank,detail);
-      if(school.visitors!==undefined&&school.growth!==undefined&&
+      if(verifiedLevel()>=1&&school.visitors!==undefined&&school.growth!==undefined&&
          Number.isSafeInteger(Number(school.visitors))&&Number.isSafeInteger(Number(school.growth))){
         const growth=Number(school.growth);
         link.append(el('span','beagu-interest-number',
@@ -84,7 +85,7 @@
       if(seq!==requestId)return;
       if(!response.ok)throw Error('RANKING_UNAVAILABLE');
       const result=await response.json();
-      schools=(Array.isArray(result.rising)?result.rising:[]).filter(valid).slice(0,10);
+      schools=(Array.isArray(result.rising)?result.rising:[]).filter(valid).slice(0,topFive?5:10);
       activeIndex=activeIndex%Math.max(1,schools.length);
       lastToken=token;lastLoadedAt=Date.now();
       render();
