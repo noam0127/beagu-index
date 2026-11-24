@@ -54,7 +54,7 @@ jobs:
           pg < supabase/migrations/20261120_beagu_postit_game_school_refs.sql
           pg < supabase/migrations/20261121140000_beagu_postit_atomic_write.sql
           pg < supabase/account-identity-v1.sql
-          pg < supabase/account-provisional-v1.sql
+          pg --single-transaction < supabase/account-provisional-v1.sql
           pg <<'SQL'
           UPDATE beagu_private.challenge_device_claims SET device_secret_sha256=encode(extensions.digest(device_secret_sha256,'sha256'),'hex');
           UPDATE beagu_private.challenge_referral_profiles SET access_level=2,valid_referrals=1,upgraded_at=now() WHERE access_level=1;

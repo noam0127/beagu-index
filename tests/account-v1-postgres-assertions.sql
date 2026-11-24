@@ -1,6 +1,12 @@
 DO $$
 DECLARE a text:='SYNTHETIC-ONE'; b text:='SYNTHETIC-TWO'; v uuid:='10000000-0000-0000-0000-000000000001'; v2 uuid:='10000000-0000-0000-0000-000000000002'; legacy_actor uuid:='60000000-0000-4000-8000-000000000002'; r jsonb; nick text; actor uuid;
 BEGIN
+ -- The fixture snapshot is created before new earned credit.
+ IF NOT public.beagu_legacy_lv2_read_allowed_v1(v2) OR public.beagu_legacy_lv2_read_allowed_v1(v) THEN RAISE EXCEPTION 'cutover visitor snapshot mismatch'; END IF;
+ INSERT INTO public.beagu_level_sessions VALUES(repeat('8',64),2,now()+interval '2 days','2026',v2);
+ IF NOT public.beagu_account_level_session_allowed_v1(repeat('8',64)) OR public.beagu_account_postit_writer_v1(repeat('8',64)) IS NOT NULL OR (SELECT expires_at FROM public.beagu_level_sessions WHERE token_sha256=repeat('8',64))>(SELECT expires_at FROM beagu_private.beagu_lv2_transition_v1 WHERE id=1) THEN RAISE EXCEPTION 'grandfathered read only or expiry cap failed'; END IF;
+ INSERT INTO public.beagu_level_sessions VALUES(repeat('0',64),2,now()+interval '30 minutes',NULL,NULL);
+ IF (SELECT access_level FROM public.beagu_level_sessions WHERE token_sha256=repeat('0',64)) IS DISTINCT FROM 1 THEN RAISE EXCEPTION 'new static-code session bypass'; END IF;
  -- Legacy Auth deletion happens only in this synthetic database.
  IF NOT EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 WHERE visitor_id=v2 AND author_uid=legacy_actor) THEN RAISE EXCEPTION 'legacy bridge missing'; END IF;
  INSERT INTO public.beagu_postit_posts(id,school_id,author_uid,body) VALUES('70000000-0000-4000-8000-000000000002','TEST001',legacy_actor,'legacy synthetic post');
@@ -46,6 +52,8 @@ BEGIN
  IF (SELECT valid_referrals FROM beagu_private.challenge_referral_profiles WHERE visitor_id=v)<>1 THEN RAISE EXCEPTION 'referral modified'; END IF;
  UPDATE beagu_private.challenge_referral_profiles SET disabled=true WHERE visitor_id=v2;
  IF public.beagu_account_postit_writer_v1(repeat('5',64)) IS NOT NULL OR public.beagu_account_password_login_v1(b,repeat('c',64),repeat('6',64)) IS NOT NULL THEN RAISE EXCEPTION 'disabled profile login'; END IF;
+ IF (SELECT access_level FROM public.beagu_level_sessions WHERE token_sha256=repeat('8',64)) IS DISTINCT FROM 1 THEN RAISE EXCEPTION 'legacy credit revocation failed'; END IF;
+ RAISE NOTICE 'PASS dual mission: account-only denied, referral-only capped, account-first live promotion, referral-first login, grandfather read-only and expiry cap, revocation and private grants';
  RAISE NOTICE 'PASS anonymous signup, live Lv2 badge, one-use recovery, session revocation, legacy author after synthetic Auth deletion, referral preservation and no social binding';
 END $$;
 

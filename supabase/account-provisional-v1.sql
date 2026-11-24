@@ -163,7 +163,7 @@ BEGIN
  RETURN NEW;
 END $$;
 REVOKE ALL ON FUNCTION beagu_private.beagu_lv2_session_guard_v1() FROM PUBLIC,anon,authenticated,service_role;
-CREATE TRIGGER beagu_lv2_session_guard_v1 BEFORE INSERT OR UPDATE OF access_level,identity_visitor_id,identity_campaign,expires_at ON public.beagu_level_sessions FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_lv2_session_guard_v1();
+CREATE TRIGGER beagu_lv2_session_guard_v1 BEFORE INSERT OR UPDATE OF token_sha256,access_level,identity_visitor_id,identity_campaign,expires_at ON public.beagu_level_sessions FOR EACH ROW EXECUTE FUNCTION beagu_private.beagu_lv2_session_guard_v1();
 -- Existing sessions receive the same gate; grandfathered expiry is capped.
 UPDATE public.beagu_level_sessions SET access_level=access_level WHERE access_level>=2;
 
