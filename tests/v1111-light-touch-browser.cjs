@@ -6,7 +6,7 @@ const fixture=Array.from({length:7},(_,i)=>({school_id:String(7003915+i),school_
 try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  const context=await browser.newContext({viewport:{width,height:900},...(tier===0?{hasTouch:true,isMobile:true}:{})});
  try{await context.addInitScript(({origin,tier})=>{if(location.origin===origin&&tier)sessionStorage.setItem('beagu-level-session-v1','a'.repeat(64))},{origin,tier});
- let sorted=false, detailRequested=false,comparisonRequested=false;let selectedSchool=null,startedSchool=null;
+ let sorted=false, detailRequested=false,comparisonRequested=false;let selectedSchool=null,startedSchool=null,officialFixture=false;const officialCalls=[];
  await context.route('**/*',async route=>{const u=new URL(route.request().url());const cors={'access-control-allow-origin':origin,'access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS','content-type':'application/json'};
  if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.includes('supabase-js'))return route.fulfill({contentType:'application/javascript',body:"window.supabase={createClient:()=>({from:()=>{const p={then:(a,b)=>Promise.resolve({data:[],count:0,error:null}).then(a,b)};for(const m of ['select','eq','in','limit','range','order','ilike','or','maybeSingle','single','gte','lte','not'])p[m]=()=>p;return p},rpc:async()=>({data:[],error:null})})};"});
  if(u.hostname.endsWith('.supabase.co')){if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:cors});
@@ -22,6 +22,12 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  else if(a==='survey_comparisons'){comparisonRequested=true;const b=route.request().postDataJSON();data={year:b.year,region:b.region,items:{}};}
  else throw Error('Unexpected level API fixture action: '+a);
  if(!tier||!token)return route.fulfill({status:401,headers:cors,body:'{}'});
+ }else if(u.pathname.endsWith('/run4-official')){
+   assert.equal(officialFixture,true);assert.ok(token);const body=route.request().postDataJSON();officialCalls.push(body);
+   if(a==='start')data={game:'teacher_run_retirement_v4',version:'4.0',session:'11111111-1111-4111-8111-111111111111',difficulty:selectedSchool.difficulty,seed:42};
+   else if(a==='submit'){assert.deepEqual(Object.keys(body).sort(),['action','replay','sessionId']);data={game:'teacher_run_retirement_v4',version:'4.0',score:0,retired:false,bossCount:0};}
+   else if(a==='list')data={game:'teacher_run_retirement_v4',version:'4.0',records:[{score:17626,difficulty:'easy',survivalSeconds:190,retired:true,bossCount:5}]};
+   else throw Error('unexpected official action');
  }else if(u.pathname.endsWith('/arcade-leaderboard')){
    if(route.request().method()==='POST'&&a==='start'){const body=route.request().postDataJSON();startedSchool=body.school_id;assert.equal(body.game,'volleyball_25');data={session:'fixture-only-session',school:selectedSchool};}
    else if(u.searchParams.has('school_id')){const id=u.searchParams.get('school_id');data={school:selectedSchool?.school_id===id?selectedSchool:{school_id:id,school_name:'다른 검증 학교',region:'부산',eligible:false,difficulty:null}};}
@@ -32,6 +38,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  if(u.origin!==origin)return route.abort();const p=decodeURIComponent(u.pathname).replace(/^\/+/, '');if(!p||p.includes('..'))return route.abort();
  try{
   let body=await fs.readFile(p);
+  if(p==='js/run4-official-client-v1.js'&&officialFixture)body=body.toString('utf8').replace('enabled:false,endpoint:','enabled:true,endpoint:');
   if(p==='teacher-run-4-preview.html'){
    if(u.searchParams.get('replay_fixture')==='1')return route.fulfill({contentType:'text/html',body:instrumentTrustedSource(body.toString('utf8'))});
    // Fixture-only accelerated clock. Production game code is not instrumented.
@@ -335,6 +342,25 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   await page.setViewportSize({width,height:900});
   console.log('PASS real game replay: deterministic five-second partial match, cross viewport, premature leave and forged fields denied '+JSON.stringify(replayA));
 
+  // Default-disabled client: no official calls in prior fixtures.
+  assert.equal(officialCalls.length,0);
+  officialFixture=true;selectedSchool={...selectedSchool,difficulty:'normal'};
+  await page.goto(origin+'/teacher-run-4-preview.html?school_id='+selectedSchool.school_id+'&replay_fixture=1&recording=1');
+  await page.locator('#teacher-run-protected').waitFor({state:'visible'});
+  await page.locator('#run4-official-mode').check();
+  await page.getByRole('button',{name:'▶ 이 학교로 시작',exact:true}).click();
+  await page.waitForFunction(()=>window.__trustedRun4Replay.snapshot().state==='playing');
+  await page.evaluate(()=>window.__trustedRun4Replay.stepTo(120));
+  await page.locator('#pause').click();await page.getByRole('button',{name:'↩ 처음으로',exact:true}).click();
+  await page.waitForFunction(()=>!!window.__trustedRun4Replay.envelope());
+  const officialTrace=await page.evaluate(()=>window.__trustedRun4Replay.envelope());assert.equal(officialTrace.seed,42);
+  assert.equal(officialCalls.filter(x=>x.action==='submit').length,0);
+  await page.locator('#run4-official-submit').click();await page.waitForFunction(()=>document.querySelector('#run4-official-status').textContent.includes('공식 기록 승인'));
+  assert.deepEqual(officialCalls.find(x=>x.action==='submit').replay,officialTrace.events);
+  await page.locator('#run4-official-outcome').selectOption('retired');await page.locator('#run4-official-refresh').click();
+  await page.waitForFunction(()=>document.querySelector('#run4-official-list').textContent.includes('17,626'));
+  assert.equal(officialCalls.at(-1).outcome,'retired');officialFixture=false;
+  console.log('PASS RUN4_OFFICIAL_UI server seed, explicit submission, trace only, separate filtered board (intercepted API)');
   assert.deepEqual(errors,[]);
   // This is a deterministic legal-input probe, not a human play session.
   // A failed tier remains a balance blocker, rather than being counted as complete.
