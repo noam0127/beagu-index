@@ -1,0 +1,144 @@
+name: Anonymous account Supabase runtime and recovery rehearsal
+on:
+  pull_request:
+    branches: ['release/base-pages-*']
+    paths:
+      - 'supabase/account*.sql'
+      - 'supabase/functions/beagu-account-v1/**'
+      - 'supabase/functions/beagu-postit-api-v1/**'
+      - 'supabase/functions/beagu-admin-members-v1/**'
+      - 'tests/account-v1-*'
+      - '.github/workflows/account-supabase-runtime.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: account-runtime-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  local-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.75.0
+      - name: Local fixture SDK
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 @supabase/supabase-js@2.58.0
+      - name: Actual local Supabase Auth and Edge Runtime; no remote link
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          unset SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD SUPABASE_PROJECT_ID
+          repo="$GITHUB_WORKSPACE"
+          work=$(mktemp -d "$RUNNER_TEMP/beagu-local-runtime.XXXXXX")
+          export BEAGU_LOCAL_STATUS="$work/status.json" BEAGU_LOCAL_STATE="$work/state.json"
+          cd "$work"
+          trap 'supabase stop --no-backup >/dev/null 2>&1 || true; rm -rf "$work"' EXIT
+          supabase init >/dev/null
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          p=Path('supabase/config.toml')
+          s=p.read_text()
+          s=re.sub(r'^project_id\s*=.*$', 'project_id = "beagu-account-local-runtime"',s,flags=re.M)
+          section=re.search(r'^\[auth\.mfa\.totp\]\s*\n([\s\S]*?)(?=^\[|\Z)',s,re.M)
+          if section:
+              replacement=re.sub(r'^(enroll_enabled|verify_enabled)\s*=\s*false',r'\1 = true',section.group(0),flags=re.M)
+              s=s[:section.start()]+replacement+s[section.end():]
+          else:
+              s+='\n[auth.mfa.totp]\nenroll_enabled = true\nverify_enabled = true\n'
+          for name in ['beagu-account-v1','beagu-postit-api-v1','beagu-admin-members-v1']:
+              s+=f'\n[functions.{name}]\nverify_jwt = false\n'
+          p.write_text(s)
+          PY
+          mkdir -p supabase/functions
+          for fn in beagu-account-v1 beagu-postit-api-v1 beagu-admin-members-v1; do
+            cp -r "$repo/supabase/functions/$fn" supabase/functions/
+          done
+          printf '%s\n' 'BEAGU_ACCOUNT_PASSWORD_PEPPER_V1=local-fixture-restart-pepper-not-production-2026' > supabase/functions/.env
+          supabase --version
+          supabase start --help >/dev/null
+          supabase start -x studio,storage-api,imgproxy,realtime,postgres-meta,logflare,vector,supavisor > "$work/start.log" 2>&1 || { echo 'Local stack startup failed (private log not exported)'; exit 1; }
+          supabase status -o json > "$BEAGU_LOCAL_STATUS"
+          db=supabase_db_beagu-account-local-runtime
+          edge=supabase_edge_runtime_beagu-account-local-runtime
+          docker inspect "$db" "$edge" >/dev/null
+          pg() { docker exec -i "$db" psql -X -v ON_ERROR_STOP=1 -U postgres "$@"; }
+          node "$repo/tests/account-v1-supabase-runtime.mjs" seed
+          # Install only the synthetic application fixture. Keep actual Supabase Auth tables.
+          sed -e '/^CREATE SCHEMA auth;/d' -e '/^CREATE TABLE auth.users(/d' -e '/^CREATE SCHEMA extensions;/d' -e '/^CREATE EXTENSION pgcrypto /d' -e '/^INSERT INTO auth.users(/d' -e '/^INSERT INTO public.beagu_admin_accounts VALUES/d' "$repo/tests/account-v1-postgres-fixture.sql" | pg
+          pg < "$repo/supabase/migrations/20261121103000_beagu_postit_member_auth.sql"
+          for migration in 20261120_beagu_postit_school_conversations 20261120_beagu_postit_session_identity 20261120_beagu_postit_game_subjects 20261120_beagu_postit_comparison_subjects 20261120_beagu_postit_game_school_refs 20261121140000_beagu_postit_atomic_write; do
+            pg < "$repo/supabase/migrations/$migration.sql"
+          done
+          # Real local Auth identifiers; only fixture user UUIDs enter the migration.
+          python3 - <<'PY' | pg
+          import json,os,uuid
+          data=json.load(open(os.environ['BEAGU_LOCAL_STATE']))
+          a,b=(str(uuid.UUID(data[k])) for k in ('admin','legacy'))
+          print(f"INSERT INTO public.beagu_admin_accounts VALUES('{a}','owner',true);")
+          print(f"INSERT INTO public.beagu_postit_member_accounts(auth_user_id,identity_visitor_id,author_uid) VALUES('{b}','10000000-0000-0000-0000-000000000002','60000000-0000-4000-8000-000000000002');")
+          print("INSERT INTO public.beagu_postit_posts(id,author_uid,body,subject_type,game_slug) VALUES('70000000-0000-4000-8000-000000000002','60000000-0000-4000-8000-000000000002','legacy synthetic content','game','teacher-volleyball');")
+          PY
+          # Extract the actual production-equivalent session guard, not a mock.
+          sed '/^-- Reuse the existing server-side authenticated-admin filter/,$d' "$repo/supabase/migrations/20261120_admin_mfa_session_collector_guard.sql" | pg
+          pg --single-transaction < "$repo/supabase/account-provisional-v1.sql"
+          pg <<'SQL'
+          UPDATE beagu_private.challenge_device_claims SET device_secret_sha256=encode(extensions.digest(device_secret_sha256,'sha256'),'hex');
+          UPDATE beagu_private.challenge_referral_profiles SET access_level=2,valid_referrals=1,upgraded_at=now() WHERE access_level=1;
+          GRANT SELECT ON public.beagu_level_sessions,public.beagu_admin_accounts,public.schools TO service_role;
+          REVOKE ALL ON public.beagu_level_sessions,public.beagu_admin_accounts FROM PUBLIC,anon,authenticated;
+          REVOKE ALL ON FUNCTION public.beagu_consume_login_budget(),public.beagu_has_earned_challenge_visitor(uuid) FROM PUBLIC,anon,authenticated;
+          GRANT EXECUTE ON FUNCTION public.beagu_has_earned_challenge_visitor(uuid) TO service_role;
+          CREATE EXTENSION IF NOT EXISTS pg_cron;
+          NOTIFY pgrst,'reload schema';
+          SQL
+          pg < "$repo/supabase/account-nickname-cron-v1.sql"
+          sleep 3
+          node "$repo/tests/account-v1-supabase-runtime.mjs" before
+          # Fingerprint data privately; no row content or hashes printed/uploaded.
+          fingerprint() {
+            pg -At <<'SQL'
+          SELECT md5(coalesce(string_agg(to_jsonb(t)::text,',' ORDER BY visitor_id),'')) FROM beagu_private.challenge_referral_profiles t;
+          SELECT md5(coalesce(string_agg(to_jsonb(t)::text,',' ORDER BY visitor_id),'')) FROM beagu_private.challenge_identity_codes t;
+          SELECT md5(coalesce(string_agg(to_jsonb(t)::text,',' ORDER BY visitor_id),'')) FROM beagu_private.beagu_anonymous_accounts_v1 t;
+          SELECT md5(coalesce(string_agg(to_jsonb(t)::text,',' ORDER BY visitor_id),'')) FROM beagu_private.beagu_legacy_author_bridge_v1 t;
+          SELECT md5(coalesce(string_agg(to_jsonb(t)::text,',' ORDER BY id),'')) FROM public.beagu_postit_posts t;
+          SELECT md5(coalesce(string_agg(to_jsonb(t)::text,',' ORDER BY id),'')) FROM public.beagu_postit_comments t;
+          SELECT md5(coalesce(string_agg(to_jsonb(t)::text,',' ORDER BY id),'')) FROM public.beagu_postit_reactions t;
+          SELECT md5(coalesce(string_agg(to_jsonb(t)::text,',' ORDER BY case_id),'')) FROM beagu_private.beagu_postit_restrictions_v1 t;
+          SQL
+          }
+          fingerprint > "$work/before.sha"
+          # Fault injection: restart only this disposable local database and Edge runtime.
+          docker stop "$edge" >/dev/null
+          docker restart "$db" >/dev/null
+          for i in $(seq 1 45); do if docker exec "$db" pg_isready -U postgres >/dev/null; then break; fi; sleep 1; done
+          docker start "$edge" >/dev/null
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS -H 'Origin: https://baeguindex.com' http://127.0.0.1:54321/functions/v1/beagu-account-v1 || true)
+            if [ "$code" = 204 ]; then break; fi
+            sleep 1
+          done
+          fingerprint > "$work/after.sha"
+          cmp "$work/before.sha" "$work/after.sha"
+          echo 'PASS exact credentials, referral, author bridge, posts, comments, reactions and moderation data preserved across local DB/Edge restart'
+          node "$repo/tests/account-v1-supabase-runtime.mjs" after
+          # Observe an actual pg_cron invocation, not just a function call.
+          for i in $(seq 1 90); do
+            if [ "$(pg -Atc "SELECT count(*) FROM cron.job_run_details d JOIN cron.job j USING(jobid) WHERE j.jobname='beagu-account-nickname-weekly-v1' AND d.status='succeeded'")" -ge 1 ]; then
+              echo 'PASS actual pg_cron scheduler executed nickname preparation'
+              exit 0
+            fi
+            sleep 1
+          done
+          echo 'Local cron run not confirmed'; exit 1
