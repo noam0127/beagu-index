@@ -22,7 +22,7 @@ assert.match(shell,/result\.provisional===true/,'Legacy provisional permissions 
 assert.match(client,/beagu:participation-authenticated/);
 assert.match(client,/beagu:participation-logged-out/);
 assert.match(client,/action,\.\.\.payload/,'Common client uses actual server auth');
-assert.match(post,/function canRead\(\)\{return state\.level>=2\}/);
+assert.match(post,/function canRead\(\)\{return state\.level>=2 && state\.accountReadable===true && state\.accountToken===token\(\)\}/);
 assert.match(post,/function canWrite\(\)\{return canRead\(\) && state\.accountLinked===true\}/);
 assert.match(api,/beagu_has_earned_challenge_visitor/,'Post-it backend revalidates earned status');
 assert.match(api,/if\(!user\)return fail\(req,"WRITER_IDENTITY_REQUIRED",403\)/);

@@ -19,7 +19,7 @@ const ids = [
   'challengeReferralTag', 'challengeReferralNote',
   'challengeIdentityPanel', 'challengeIdentityTitle', 'challengeIdentityTag',
   'challengeIdentityReward', 'copyIdentityCode',
-  'challengeVipMedal','certificateMedal','certificateThanks','certificateLevelBanner','certificate'
+  'challengeVipMedal','certificateMedal','certificateThanks','certificateLevelBanner','certificate','challengeAccountStatus','challengeMissionReferral','challengeMissionAccount','challengeMissionSummary'
 ];
 const el = Object.fromEntries(ids.map(id => [id, {
   hidden: ['challengeIdentityReward','challengeVipMedal','certificateMedal','certificateThanks'].includes(id), value: '', textContent: '', disabled: false,
@@ -37,6 +37,7 @@ const referral='https://baeguindex.com/survey.html?ref='+'a'.repeat(64);
 const shortLink='https://baeguindex.com/r/#aB3_dE-9';
 const session='b'.repeat(64);
 const storage=new Map(), copies=[], listeners={};
+el.challengeAccountStatus.dataset.accountState='unverified';let ownerToken='';
 let returned={link:referral,level:1,validReferrals:0,provisional:false};
 const mockWindow={
   addEventListener(type,cb){(listeners[type]??=[]).push(cb);},
@@ -45,7 +46,7 @@ const mockWindow={
 vm.runInNewContext(js,{
   document:{getElementById:id=>el[id],hidden:false,addEventListener(){}},
   window:mockWindow,navigator:{clipboard:{writeText:async v=>{copies.push(v);}}},
-  sessionStorage:{getItem:()=>session},
+  sessionStorage:{getItem:k=>k==='beagu-account-session-v1'?ownerToken:session},
   localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
   crypto:crypto.webcrypto,SUPABASE_URL:'https://example.supabase.co',
   fetch:async (_url,opts)=>{
@@ -87,15 +88,20 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   el.challengeAccessPanel={getAttribute:()=> '2'};
   emit('focus');await tick();
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),true);
-  assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 인증 회원 · 참여코드');
-  assert.equal(el.challengeIdentityTag.textContent,'✓ Lv.2 로그인 완료');
+  assert.equal(el.challengeIdentityTitle.textContent,'기존 Lv.2 달성 · 혜택 유지');
+  assert.equal(el.challengeIdentityTag.textContent,'기존 열람 권한');
   assert.equal(el.copyIdentityCode.hidden,true);
   assert.equal(el.challengeIdentityPanel.dataset.referralState,'pending');
   delete el.challengeAccessPanel;
   emit('focus');await tick();
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);
 
-  // A server-confirmed credit converts the original personal code card.
+  // Account-first must not unlock before referral and server promotion.
+  ownerToken=session;el.challengeAccountStatus.dataset.accountState='verified';
+  returned={link:referral,shortLink,level:1,validReferrals:0,provisional:false};
+  emit('beagu:challenge-account-state');emit('focus');await tick();
+  assert.equal(el.challengeMissionAccount.dataset.state,'complete');
+  assert.equal(el.challengeMissionReferral.dataset.state,'pending');assert.equal(el.certificate.dataset.level,'1');
   returned={link:referral,shortLink,level:2,validReferrals:1,provisional:true};
   emit('focus');await tick();
   assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드');
@@ -126,6 +132,9 @@ const tick=()=>new Promise(resolve=>setImmediate(resolve));
   returned.validReferrals=31;
   emit('focus');await tick();
   assert.match(el.certificateThanks.textContent,/30명 달성/);
+  returned={link:referral,shortLink,level:1,validReferrals:0,provisional:false};
+  emit('focus');await tick();assert.equal(el.certificate.dataset.level,'1','Revoked referral invalidates premium');
+  ownerToken='';el.challengeAccountStatus.dataset.accountState='unverified';
   emit('beagu:challenge-access-revoked');
   assert.equal(el.challengeIdentityTitle.textContent,'Lv.2 참여코드(비활성)');
   assert.equal(el.challengeIdentityPanel.classes.has('is-lv2'),false);

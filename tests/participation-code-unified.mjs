@@ -35,7 +35,7 @@ assert.match(read('index.html'),/button\s*\{\s*width:\s*100%/);
 assert.match(css,/#beaguParticipationToggle\s*\{[^}]*width:58px!important/s);
 assert.match(css,/#beaguParticipationCode\s*\{[^}]*padding-right:78px/s);
 
-assert.match(ui,/form\.hidden=level>=2/,'Lv1 keeps the upgrade code field visible');
+assert.match(ui,/form\.hidden=level>=2/,'Lv1 keeps the legacy transition code field visible');
 assert.match(ui,/lastLevel===1&&level<2/,'Lv1 preserved on unearned code');
 assert.match(css,/\.beagu-participation-host \.beagu-participation-legacy/);
 assert.ok(!css.includes('display:contents'));
@@ -65,7 +65,13 @@ assert.ok(migration.includes('p.valid_referrals>=1')&&migration.includes('p.upgr
 assert.ok(migration.includes('to service_role'),'RPCs are service-role only');
 assert.ok(server.includes("beagu_2026_lv2_released_question_results"),
  'Preserve newer immediate reviewed-release feature');
-assert.ok(read('levels.html').includes('서버에서 유효한 추천 참여가 확인된 코드'));
+const levelGuide=read('levels.html');
+assert.ok(levelGuide.includes('서버에서 유효한 추천 참여와 익명 계정 인증이 모두 확인되어야 신규 Lv2 권한이 부여됩니다.'),
+ 'New Lv2 requires both earned referral credit and anonymous account authentication');
+assert.ok(levelGuide.includes('기존 Lv2 이용자는 전환 안내에 따라 기존 추천 실적을 유지합니다.'),
+ 'Legacy earned participants retain referral credit through transition');
+assert.ok(levelGuide.includes('회원가입이나 로그인이 필요하지 않아요.'),
+ 'Lv1 common-code access remains independent of account registration');
 assert.doesNotMatch(read('levels.html'),/정식 계정 준비중|Lv\.2\(임시\)|Lv\.2\(진\)/);
 
 function fakeElement(name='div'){
@@ -139,8 +145,8 @@ async function exercise(level){
  assert.equal(nodes.get('#beaguParticipationForm').hidden,level===2);
  assert.ok(events.includes('beagu:participation-authenticated'));
  if(level===1){
-  assert.equal(nodes.get('#beaguParticipationCodeLabel').textContent,'Lv.2 참여코드');
-  assert.equal(nodes.get('#beaguParticipationSubmit').textContent,'Lv.2 인증하기');
+  assert.equal(nodes.get('#beaguParticipationCodeLabel').textContent,'기존 Lv.2 고유번호 (전환용)');
+  assert.equal(nodes.get('#beaguParticipationSubmit').textContent,'기존 권한 확인');
   issuedToken='c'.repeat(64);issuedLevel=1;
   nodes.get('#beaguParticipationCode').value='NOTUPGRADED12';
   await nodes.get('#beaguParticipationForm').dispatch('submit',{preventDefault(){}});

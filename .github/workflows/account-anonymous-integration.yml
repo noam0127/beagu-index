@@ -1,0 +1,45 @@
+name: Anonymous account Edge and browser integration
+on:
+  pull_request:
+    branches: ['release/base-pages-*']
+    paths:
+      - 'account.html'
+      - 'js/beagu-account-v1.js'
+      - 'styles/beagu-account-v1.css'
+      - 'supabase/functions/beagu-account-v1/**'
+      - 'supabase/functions/beagu-postit-api-v1/**'
+      - 'supabase/functions/beagu-admin-members-v1/**'
+      - 'tests/account-v1-*'
+      - '.github/workflows/account-anonymous-integration.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Actual Edge handler with synthetic RPC transport
+        run: |
+          node --experimental-strip-types tests/account-v1-edge.mjs
+          node --experimental-strip-types tests/account-v1-postit-privacy.mjs
+          node --experimental-strip-types --experimental-transform-types tests/account-v1-protected-api-gates.mjs
+          node --experimental-strip-types --experimental-transform-types tests/account-v1-admin-moderation.mjs
+      - name: Pinned Chromium test tooling
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then
+            echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"
+          else
+            timeout 120s npx playwright install chromium --only-shell
+          fi
+      - name: Desktop and mobile account flow with all external requests intercepted
+        run: node tests/account-v1-browser.cjs

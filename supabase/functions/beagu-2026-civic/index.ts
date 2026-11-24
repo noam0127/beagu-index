@@ -28,6 +28,8 @@ async function corrector(req:Request){
  if(error||!s||Number(s.access_level)<2||s.identity_campaign!=="2026"||
  !uuid.test(s.identity_visitor_id||"")||!Number.isFinite(Date.parse(s.expires_at))||
  Date.parse(s.expires_at)<=Date.now())return null;
+ const {data:account,error:accountError}=await db.rpc("beagu_account_session_status_v1",{p_token_sha:await hash(token)});
+ if(accountError||account?.level!==2||account.lv2_active!==true)return null;
  const {data:earned,error:e}=await db.rpc("beagu_has_earned_challenge_visitor",{p_visitor:s.identity_visitor_id});
  return !e&&earned===true?s.identity_visitor_id:null;
 }
@@ -81,10 +83,14 @@ Deno.serve(async(req:Request)=>{
  const school=String(body.school_id||"");
  if(!/^[A-Z0-9]{7}$/.test(school))return send(origin,400,{error:"INVALID_SCHOOL"});
  if(action==="status"){
- const {data,error}=await db.from("beagu_2026_results_snapshot").select("school_response_rows,school_match_status")
- .eq("school_id",school).maybeSingle();
- return error?send(origin,503,{error:"UNAVAILABLE"}):
- send(origin,200,{participation_confirmed:!!data&&Number(data.school_response_rows)>=1&&data.school_match_status==="EXACT_REGION_OFFICE_NAME"});
+ // Publication approval—not merely the existence of one response—controls
+ // what the public may learn about a particular school's 2026 survey.
+ // This existing RPC enforces school approval, tier-0 release delay,
+ // source-hash revalidation and the owner's final publication decision.
+ const {data,error}=await db.rpc("beagu_2026_level_released_school_ids",
+  {p_ids:[school],p_level:0});
+ return error||!Array.isArray(data)?send(origin,503,{error:"PUBLICATION_GATE_UNAVAILABLE"}):
+  send(origin,200,{participation_confirmed:data.includes(school)});
  }
  if(action!=="report"&&action!=="correct")return send(origin,400,{error:"INVALID_ACTION"});
  const category=action==="correct"?"CORRECTION":String(body.category||"");

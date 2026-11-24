@@ -53,6 +53,11 @@ async function checkLevel2(req: Request) {
     limit:'1'
   });
   const found=list[0];
+  if(!found)return false;
+  const gate=await fetch(BASE+'/rest/v1/rpc/beagu_account_level_session_allowed_v1',{method:'POST',
+    headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({p_token_sha:await sha256(session)})});
+  if(!gate.ok||await gate.json()!==true)return false;
   return !!found && Number(found.access_level)>=2 &&
     Number.isFinite(Date.parse(found.expires_at)) &&
     Date.parse(found.expires_at)>Date.now();
