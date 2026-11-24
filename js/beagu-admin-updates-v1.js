@@ -205,7 +205,7 @@
   if(data.direct_candidate_ready===true)readyKey=key;
   else if(data.direct_candidate_ready===false)readyKey=null;
   const candidate=data.direct_release_v1===true&&s.draft_sha?{sha:s.draft_sha,version:s.draft_version}:null;
-  const ready=!!candidate&&readyKey===key;
+  const ready=!!candidate&&readyKey===key&&data.direct_candidate_reason!=="backend_integrated_required";
   write("releaseDraftInfo",candidate?
     (ready?"검증 완료 · ":"검증 미확인 · ")+candidate.version+" · "+short(candidate.sha)+(ready?" · 실제 웹 적용 가능":data.direct_candidate_reason==="backend_integrated_required"?" · 통합 적용 필요 · 웹 단독 적용 차단":" · 직접 적용 전 검증 필요"):
     s.draft_sha?"등록된 업데이트: "+s.draft_version+" ("+short(s.draft_sha)+")":"새 버전을 등록하세요.");

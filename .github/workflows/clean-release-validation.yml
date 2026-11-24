@@ -56,6 +56,7 @@ jobs:
           node tests/milestone-browser.cjs
           node tests/communication-browser.cjs
           node tests/control-tower-browser.cjs
+          node tests/integrated-release-admin-browser.cjs
       - name: Verify selected artifact metadata
         run: |
           python3 - <<'PY'
