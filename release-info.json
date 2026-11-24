@@ -1,14 +1,15 @@
 {
   "schema": 1,
-  "version": "v1.11.2",
-  "name": "함께하기",
+  "version": "v1.11.4",
+  "name": "물길",
   "environment": "candidate",
   "commit": null,
   "builtAt": null,
   "deployedAt": null,
   "changes": [
-    "챌린지 참여 인증과 공유 화면 정리",
-    "유효 추천 및 Lv.2 달성 현황",
-    "개인 인증정보 접기, 기존 운영 권한 보존"
+    "2026 학교매칭·응답 재집계 및 Q45 문구 정정",
+    "관리자 수집·검수·전송 진단",
+    "기존 공개 근거·개인정보 및 레벨별 승인 유지",
+    "서버 수신 기능 및 Apps Script 별도 설치 필요"
   ]
 }
