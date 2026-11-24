@@ -1,5 +1,6 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {validateSnapshot} from '../_shared/results-2026.mjs';
+import {validateWaterwayRun} from '../_shared/waterway-run-v1.mjs';
 const send=(status:number,body:unknown)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 const digest=async(s:string)=>new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)));
 Deno.serve(async(req:Request)=>{
@@ -16,8 +17,16 @@ Deno.serve(async(req:Request)=>{
     for(;;){const part=await reader.read();if(part.done)break;bytes+=part.value.byteLength;
       if(bytes>32*1024*1024){await reader.cancel();return send(413,{error:'PAYLOAD_TOO_LARGE'});}
       raw+=decoder.decode(part.value,{stream:true});}
-    const data=validateSnapshot(JSON.parse(raw+decoder.decode()));
+    const parsed=JSON.parse(raw+decoder.decode());
     const admin=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
+    if(parsed?.kind==='WATERWAY_RUN_V1'){
+      if(bytes>8192)return send(413,{error:'HEARTBEAT_TOO_LARGE'});
+      const data=validateWaterwayRun(parsed);
+      const {error}=await admin.rpc('beagu_2026_waterway_record_run_v1',{p_run:data});
+      if(error)return send(503,{error:'HEARTBEAT_NOT_ACCEPTED'});
+      return send(200,{ok:true,kind:'WATERWAY_RUN_V1'});
+    }
+    const data=validateSnapshot(parsed);
     const {data:result,error}=await admin.rpc('beagu_2026_replace_results_snapshot',{p_snapshot:data});
     if(error)return send(409,{error:'SNAPSHOT_NOT_ACCEPTED'});
     return send(200,{ok:true,schools:result});
