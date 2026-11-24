@@ -19,5 +19,5 @@ assert.match(ui,/const stateText=level===1\?text\+[^;]+:text;/,'Lv1 upgrade hint
 assert.match(ui,/href="account\.html"/,'Account entry is a separate page, not an inline challenge signup');
 assert.match(ui,/heading\.textContent=level>=2\?'Lv2 참여 인증 완료':'참여코드 입력'/);
 assert.match(ui,/const status=button\('', 'beagu-participation-inline-status',open\);/,'Lv2 status opens participation details instead of member login');
-assert.match(html,/v=20261123-challenge-code-only1/,'Updated asset cache-bust required');
+assert.match(html,/js\/beagu-participation-auth-v2\.js\?v=20261124-v111-account/,'Updated account entry asset cache-bust required');
 console.log('PASS: challenge account login and registration removed; code/level/referrals preserved');
