@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "kind": "bootstrap_preparation_only",
+  "version": "v1.10.1",
+  "verified_source_sha": "2fdff7e0396413c7ae7a7e41c18f8a8fe661bf30",
+  "expected_production_base": "5f19ddf28a2f24a98fb03900739147a04a547cbe",
+  "repository": "noam0127/beagu-index",
+  "project_ref": "snvzwrexuqavnfvzgxqj",
+  "deployment_authorized": false,
+  "executable": false,
+  "verified_ci_runs": [
+    45367174253,
+    45367171934,
+    45367171959,
+    45367171669
+  ],
+  "core_files": [
+    {
+      "path": "supabase/functions/beagu-release-manager-v1/index.ts",
+      "blob_sha": "6590732255e70dfd1f29177f9fd1890eb3cf8642"
+    },
+    {
+      "path": "supabase/integrated-release-control-fixture-v1.sql",
+      "blob_sha": "7eaa03f3cf1809761b2eb47088fdfc1d1f212dba"
+    },
+    {
+      "path": "scripts/release-manager/integrated_execution_allowlist.json",
+      "blob_sha": "0380d60ae476a992c5f57a0f5c199490ce687ce8"
+    },
+    {
+      "path": "scripts/release-manager/integrated_runner.py",
+      "blob_sha": "e962afabf1b369978cfab79cf429698df2aa7f96"
+    },
+    {
+      "path": "scripts/release-manager/integrated_server_control.py",
+      "blob_sha": "724e0d2bba1f711de291bf72106afe0a96d6076a"
+    },
+    {
+      "path": "scripts/release-manager/integrated_remote.py",
+      "blob_sha": "f517066ba69dee3655c3c21d306c5e72be838181"
+    },
+    {
+      "path": "scripts/release-manager/integrated_provider.py",
+      "blob_sha": "e81ef273f0bc62cb2b0e4973486e04cabc6e2a7a"
+    },
+    {
+      "path": "scripts/release-manager/integrated_recovery.py",
+      "blob_sha": "c6fa825973c48cc8adf671fdd308eac63289fac9"
+    },
+    {
+      "path": "scripts/release-manager/worker.py",
+      "blob_sha": "ebbf2012d1de4789a732cb973e765b175f6fce16"
+    },
+    {
+      "path": ".github/workflows/beagu-release-controller.yml",
+      "blob_sha": "de7df010a6512594400f49a4dd28090ee6ed041d"
+    },
+    {
+      "path": "js/beagu-admin-updates-v1.js",
+      "blob_sha": "f0cd1994b6d328e270b93a043c40148409ab0f09"
+    }
+  ],
+  "observed_gates": {
+    "fixture_sql_only": true,
+    "transport_disabled": true,
+    "registry_empty": true,
+    "legacy_publisher_only": true,
+    "ui_locked": true
+  },
+  "connection_requirements": {
+    "database": "production-specific reviewed migration and legacy queue lock; fixture SQL must never be installed",
+    "runner": "trusted existing single publisher routes approved integrated jobs; no second publisher",
+    "provider": "restricted server-side credentials, production adapter and independent observation",
+    "backup": "private encrypted checkpoint and recovery proof covering application/auth/storage/cron dependencies",
+    "identity": "existing owner MFA and pinned separate worker identity",
+    "registry": "exact approved base/candidate/plan/task pins; currently empty"
+  },
+  "blocked": [
+    "actual public web SHA unconfirmed",
+    "production control migration absent",
+    "production worker/gateway wiring absent",
+    "production transport disabled",
+    "trusted production recipe absent",
+    "durable backup/restore and receipt storage unverified",
+    "provider permissions and independent observer proof unverified",
+    "main divergence and workflow preservation review required"
+  ]
+}
