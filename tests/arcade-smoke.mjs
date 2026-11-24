@@ -255,15 +255,15 @@ assert.ok(html.indexOf('id="teacher-game-frame"')<html.indexOf('id="teacher-run-
 assert.match(volley,/SPEED_MULTIPLIER=2/);
 assert.match(volley,/AUTO_SPIKE_SPEED=8/,"automatic spike requires fast movement");
 assert.match(volley,/impactSpeed >= AUTO_SPIKE_SPEED/,"contact fires automatic spike");
-assert.doesNotMatch(volley,/data-key="spike"/,"separate spike button removed");
-assert.doesNotMatch(volley,/keys\.spike/,"manual spike input removed");
+assert.match(volley,/id="volley-spike"/,"explicit spike button is available");
+assert.match(volley,/state.spikeBufferFrames=SPIKE_BUFFER/,"manual spike buffer is implemented");
 
 assert.match(volley,/R = 48;/,"volleyball radius enlarged 1.5x from 32 to 48");
 assert.match(volley,/NET_TOP = 342/,"net rises from 97px to 109px");
 assert.match(volley,/43\s*\*\s*\.75\s*\*\s*battle\.allyReach/,"forearm reach remains tier-adjusted");
 assert.doesNotMatch(volley,/data-key="jump"/,"touch jump button removed");
 assert.doesNotMatch(volley,/class="touch"/,"empty touch control region removed");
-assert.match(volley,/touchControl\.targetY/,"volleyball touch flight has vertical axis");
+assert.match(volley,/touchControl\.axisY/,"volleyball joystick has vertical axis");
 assert.match(volley,/flyingStep|flightStep/,"volleyball flight movement is implemented");
 assert.match(runner,/pointerY=target\.y/,"survival game tracks 2D touch target");
 assert.match(runner,/if\(canPlayerRise\(\)\)player\.y\+=Math\.sign\(dy\)/,"survival game flies vertically except EXTREME");

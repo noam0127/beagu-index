@@ -119,7 +119,7 @@
       "version": "v1.3.0",
       "name": "놀이터",
       "scope": "게임 허브·기존 진입 유지",
-      "status": "REGISTERED_OWNER_APPROVED_QUEUED",
+      "status": "DEPLOYED",
       "branch": "release/v1.3.0-playground",
       "pr": 283,
       "commit": "1a3a67e53e4201f3b292219a0b3f0b3a9898de23",
@@ -153,8 +153,8 @@
         "v1.2.0 production applied before registration"
       ],
       "admin_registration": "VERIFIED",
-      "production": "QUEUED_NOT_DEPLOYED",
-      "deployment_date": null,
+      "production": "DEPLOYED",
+      "deployment_date": "2026-11-24T01:34:58.386Z",
       "rollback_sha": "01a3dcd4319d29f78222f12f942162e541a371fe"
     },
     {
@@ -162,17 +162,23 @@
       "version": "v1.4.0",
       "name": "플레이",
       "scope": "게임 조작·전체화면·일시정지",
-      "status": "CANDIDATE_CI_PENDING",
+      "status": "CANDIDATE_JOYSTICK_CI_PENDING",
       "branch": "release/v1.4.0-play",
-      "pr": null,
+      "pr": 284,
       "commit": null,
       "tests": [
         {
-          "name": "Gesture and pause unit tests",
-          "result": "PENDING"
+          "name": "Prior candidate playback UI and unit CI",
+          "result": "PASS",
+          "run": 45306192075
         },
         {
-          "name": "Chromium playback UI fixture",
+          "name": "Prior candidate arcade smoke",
+          "result": "FAIL",
+          "reason": "outdated exact cache-buster assertions, controls have changed"
+        },
+        {
+          "name": "Merged joystick branch and updated physical movement regression",
           "result": "PENDING"
         }
       ],

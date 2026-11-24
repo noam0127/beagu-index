@@ -5,7 +5,7 @@ const run=load("teacher-run.html"),volley=load("teacher-volleyball.html");
 const home=load("index.html"),hostLock=load("js/arcade-play-lock-v1.js");
 const css=load("styles/arcade-fullscreen-v1.css");
 assert.match(run,/styles\/arcade-fullscreen-v1\.css\?v=20261123-survival-contain1/);
-assert.match(home,/teacher-run\.html\?v=20261123-screen-center-wings1/);
+assert.match(home,/teacher-run\.html\?v=140/);
 assert.match(run,/document\.body\.classList\.toggle\("arcade-run-game-playing",state==="playing"\|\|state==="paused"\)/);
 assert.match(css,/body\.arcade-run-game-playing \.stage:not\(\.arcade-fullscreen-fallback\)/);
 assert.match(css,/--arcade-run-parent-visible-height,100svh/);
@@ -74,6 +74,6 @@ assert.equal(move({difficulty:"hard",wings:true,y:175}),175,"wing pickup holds a
 assert.equal(move({difficulty:"easy",wings:false,y:175}),175,"EASY holds altitude");
 assert(move({difficulty:"hard",wings:false,y:175})>175,"gravity resumes without wings");
 assert.equal(move({difficulty:"extreme",wings:true,y:175}),175,"wings temporarily override extreme grounding");
-assert.match(volley,/else if\(flightAllowed\) \{[\s\S]*?left\.vy=0;/,
+assert.match(volley,/if\(flightAllowed\)\{[\s\S]*?left\.vy=left\.y-beforeMoveY;/,
  "volleyball wing effect holds altitude");
 console.log("PASS: survival fullscreen sizing, desktop/mobile center, wing-hover and gravity");
