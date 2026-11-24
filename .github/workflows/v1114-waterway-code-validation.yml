@@ -25,3 +25,5 @@ jobs:
           node tests/2026-three-stage-review-flow.mjs
           node tests/2026-one-response-publication-review.mjs
           node tests/2026-public-projection-integrity.mjs
+          node tests/2026-level-final-approval-ui.cjs
+          node tests/v1114-waterway-admin-status.cjs
