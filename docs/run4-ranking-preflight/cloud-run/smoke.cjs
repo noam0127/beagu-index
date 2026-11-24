@@ -17,4 +17,26 @@ const assert=require("node:assert/strict"),crypto=require("node:crypto");
  const forged=JSON.stringify({...data,score:999999});assert.equal((await send(forged,sign(forged))).status,400);
  const invalid=JSON.stringify({...data,replay:[{tick:0,action:"leave",choice:20},{tick:60,action:"stop"}]});assert.equal((await send(invalid,sign(invalid))).status,400);
  console.log("PASS RUN4_CONTAINER_HTTP real replay, HMAC, nonce, result consistency and invalid actions");
+ const factory=await require("./factory.cjs").createFactory();let capture;
+ try{
+  const r=await factory.openTrustedPage("easy");
+  try{
+   const p=r.page;await p.evaluate(()=>window.__trustedRun4Replay.startSeed(20261125));
+   for(let i=0;i<9;i++){
+    const state=await p.evaluate(()=>window.__trustedRun4Replay.autoAdvance());
+    if(state.state==="over")break;
+    assert.equal(state.state,"between");
+    const buttons=p.locator("#choices button"),labels=await buttons.allTextContents();
+    const preferred=["자기관리","생활지도","위기 대응","동료 관계","교육자의 신념","학급운영","수업 전문성","업무 능력","교직 경험","전문적 학습공동체"].map(label=>labels.findIndex(x=>x.includes(label))).find(i=>i>=0);
+    await buttons.nth(preferred??0).click();
+   }
+   capture=await p.evaluate(()=>window.__trustedRun4Replay.envelope());
+   assert.equal(capture.result.survivalSeconds,190);assert.equal(capture.result.bossIds.length,5);
+  }finally{await r.dispose();}
+ }finally{await factory.close();}
+ const full=JSON.stringify({seed:capture.seed,difficulty:"easy",elapsed:190,replay:capture.events});
+ const response=await send(full,sign(full)),body=await response.json();
+ assert.equal(response.status,200,JSON.stringify(body));assert.deepEqual(body.result,capture.result);
+ console.log("PASS RUN4_CONTAINER_FULL "+JSON.stringify({score:body.result.score,ticks:11400,events:capture.events.length,bosses:body.result.bossIds.length}));
+
 })().catch(e=>{console.error(e);process.exitCode=1;});
