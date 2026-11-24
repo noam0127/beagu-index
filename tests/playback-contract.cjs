@@ -33,3 +33,23 @@ assert.match(v,/\(!mobile&&state.dashCooldownFrames>0\)/);assert.match(v,/state.
 assert.match(v,/event.pointerType==="mouse"\|\|state.phase!=="playing"/);
 assert.match(v,/const inputX=axes\?axes.x:keyboardDirection/);
 assert.match(v,/const inputY=axes\?axes.y:keyboardVertical/);
+
+// 4.0 pure rules: timeline boundaries, independent avoidance rewards, one-time crises.
+const run4Window={};vm.runInNewContext(read('js/teacher-run-4-rules.js'),{window:run4Window,Math});
+const rules=run4Window.BeaguRun4Rules;
+assert.equal(rules.duration,190);assert.equal(rules.age(0),24);assert.equal(rules.age(190),62);
+for(const [time,round] of [[0,0],[29.99,0],[30,1],[79.99,1],[80,2],[129.99,2],[130,3],[179.99,3],[180,4],[190,4]])assert.equal(rules.roundAt(time),round);
+const career=rules.create(),obstacle={good:false};
+assert.equal(career.nearMiss(obstacle,10),90);assert.equal(career.nearMiss(obstacle,10),0);
+assert.equal(career.nearMiss({},0),0);assert.equal(career.nearMiss({good:true},10),0);
+for(let n=2;n<=32;n++)assert.equal(career.nearMiss({},10),Math.round(90*(n>=30?3:n>=20?2:n>=10?1.5:n>=5?1.2:1)));
+assert.equal(career.stats().maxCombo,32);career.hit(35);assert.equal(career.stats().combo,0);
+assert.equal(career.health(40,10,100).length,0);assert.equal(career.health(44.9,10,100).length,0);
+assert.equal(career.health(45,10,100)[0].id,'low-survival');assert.equal(career.health(46,10,100).length,0);
+assert.equal(career.health(50,80,100)[0].id,'low-recovery');assert.equal(career.health(51,100,100).length,0);
+assert.equal(career.complete(189.9).length,0);assert.equal(career.complete(190)[0].id,'final-ten');assert.equal(career.complete(190).length,0);
+const late=rules.create();late.hit(181);assert.equal(late.complete(190).length,0);
+const preview=read('teacher-run-4-preview.html');assert.doesNotMatch(preview,/new window\.ArcadeLeaderboard|teacherRunRetirementBestV1/);
+assert.match(preview,/teacherRun4PreviewBestV1/);assert.match(preview,/beagu-game-lv1-gate-v1\.js/);assert.match(preview,/run4\.nearMiss\(a,a\.closestClearance\)/);
+assert.match(preview,/!document.hidden&&!\$\("teacher-run-protected"\).hidden/);
+console.log('PASS 4.0 exact round boundaries, avoidance rewards, crisis deduplication, separate local-only preview');
