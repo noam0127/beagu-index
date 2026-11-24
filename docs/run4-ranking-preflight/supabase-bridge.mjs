@@ -72,5 +72,9 @@ export function createSupabaseAdapters({admin,supabaseUrl,actorSecret,fetcher=fe
   async claimAttempt(s){return (await rpc("run4_candidate_claim",{p_id:s.id,p_actor:s.actorHash}))===true;},
   async insertVerifiedOnce(s,result){return (await rpc("run4_candidate_save",{p_id:s.id,p_actor:s.actorHash,p_result:result}))===true;}
  };
- return {authenticate,resolveSchool,store};
+ async function listRecords(difficulty,outcome){
+  if(!["all",...tiers].includes(difficulty)||!["all","retired","all_bosses"].includes(outcome))throw Error("invalid_filter");
+  return rpc("run4_candidate_list",{p_tier:difficulty,p_outcome:outcome});
+ }
+ return {authenticate,resolveSchool,store,listRecords};
 }
