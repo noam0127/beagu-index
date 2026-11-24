@@ -10,6 +10,20 @@ function readBeagu2026SourceSnapshot() {
   const values=source.getRange(1,1,Math.max(1,rowCount),last+1).getDisplayValues();
   const schools=fetchSchools();
   if(!schools.length)throw Error('학교 MASTER 비어 있음');
+  beagu26PrepareSchoolIndex(schools);
+  // Optional audit only. A stale or absent historical row cannot force a match
+  // or prevent the normal exact current-directory aggregation.
+  try {
+    const master=SpreadsheetApp.openById(BEAGU26.destinationId);
+    const prior=master.getSheetByName('2026_학교매칭_재검증_1124');
+    const holds=master.getSheetByName(BEAGU26.holdTab);
+    if(prior&&holds&&prior.getLastRow()>1&&holds.getLastRow()>1){
+      const result=beagu26AuditPriorExactMatches(values,schools,
+        prior.getRange(2,1,prior.getLastRow()-1,7).getDisplayValues(),
+        holds.getRange(2,1,holds.getLastRow()-1,6).getDisplayValues());
+      Logger.log('BEAGU26_PRIOR_MATCH_AUDIT '+JSON.stringify(result));
+    }
+  } catch(e){Logger.log('BEAGU26_PRIOR_MATCH_AUDIT unavailable');}
   return {startedAt,values,schools};
 }
 function refreshBeagu2026QuestionResults(snapshot) {
