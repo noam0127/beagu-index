@@ -9,12 +9,48 @@ import integrated_backup as b
 JOB=re.compile(r"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}")
 OPS=("apply_sql","apply_scheduler","deploy_edge","verify_backend","publish_pages","verify_live")
 
+# The Pages release pointer is not evidence that external services were installed.
+# This known inherited baseline has outstanding non-Pages obligations.
+WATERWAY_BASE="76d2c01878d8242e62dd87e30cfb707ab431d3ee"
+BASELINE_CHECKS=frozenset({"telemetry_sql","admin_status_sql","results_ingest_edge","review_admin_edge","apps_script_source","successful_authenticated_sync","publication_gates_unchanged"})
+
+def verify_baseline_observation(proof,public_key,job,verified,now=None):
+    import base64
+    import time
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+    from cryptography.exceptions import InvalidSignature
+    r.require(isinstance(public_key,bytes) and len(public_key)==32,"baseline_observer_not_connected")
+    r.require(isinstance(proof,dict) and set(proof)=={"statement","signature"},"invalid_baseline_observation")
+    q=proof["statement"]
+    r.require(isinstance(q,dict) and set(q)=={"schema","kind","scope","job_id","base_sha","candidate_sha","plan_sha256","observed_at","checks"} and q["schema"]==1 and q["kind"]=="waterway_baseline_v1" and q["scope"]==prod.SCOPE and q["job_id"]==job,"invalid_baseline_observation")
+    r.require(all(q[k]==verified[k] for k in ("base_sha","candidate_sha","plan_sha256")) and q["base_sha"]==WATERWAY_BASE,"baseline_release_pin_mismatch")
+    now=int(time.time()) if now is None else now
+    r.require(type(q["observed_at"]) is int and now-1800<=q["observed_at"]<=now+60,"baseline_observation_stale")
+    checks=q["checks"]
+    r.require(isinstance(checks,dict) and set(checks)==BASELINE_CHECKS and all(isinstance(x,str) and v.DIGEST.fullmatch(x) for x in checks.values()),"baseline_obligations_unverified")
+    try:
+        Ed25519PublicKey.from_public_bytes(public_key).verify(base64.b64decode(proof["signature"],validate=True),r.canonical(q).encode("utf8"))
+    except (ValueError,TypeError,InvalidSignature):
+        raise ValueError("baseline_observer_signature_invalid") from None
+    return r.digest(proof)
+
 class PrivateBackup:
     def __init__(self,directory,config):
         self.directory=pathlib.Path(directory)
         b.safe_dir(self.directory)
         r.require(isinstance(config,dict) and set(config)=={"public_key","scope","checkpoint_sha256"},"backup_observer_not_connected")
         self.config=config
+    def verify_inherited_baseline(self,job,verified):
+        if verified["base_sha"]!=WATERWAY_BASE:
+            return None
+        r.require(isinstance(job,str) and JOB.fullmatch(job),"invalid_production_job")
+        # Independent observer must write a separate, current signed record.
+        # No inference from the web pointer, backup receipt or Git comparison.
+        try:
+            proof=v.read_json(b.private_read(self.directory/(job+".baseline.json"),128*1024))
+        except FileNotFoundError:
+            raise ValueError("waterway_baseline_observation_required") from None
+        return verify_baseline_observation(proof,self.config["public_key"],job,verified)
     def evidence(self,job,verified):
         r.require(isinstance(job,str) and JOB.fullmatch(job),"invalid_production_job")
         proof=v.read_json(b.private_read(self.directory/(job+".backup.json"),128*1024))
@@ -60,6 +96,8 @@ def execute_next(ledger,root,envelope,registry,adapter,backup_source,job,final_p
         if status=="completed":return {"status":"completed","advanced":False}
     else:
         r.require(nxt<len(steps) and all(x.get("status")=="pending" for x in steps[nxt:]),"step_already_claimed_or_uncertain")
+    r.require(type(backup_source) is PrivateBackup,"backup_source_not_connected")
+    backup_source.verify_inherited_baseline(job,verified)
     wrapped=ApprovedAdapter(adapter,backup_source,job,verified)
     if nxt:r.require(steps[0]["evidence"]==r.digest(wrapped.evidence),"backup_checkpoint_changed")
     if status=="verified":

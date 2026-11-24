@@ -580,4 +580,41 @@ class Runner(unittest.TestCase):
         self.assertEqual(h.answers,[])
 
 
+class InheritedWaterwayBaseline(unittest.TestCase):
+    def test_signed_fresh_exact_baseline_and_missing_evidence(self):
+        import time
+        key=Ed25519PrivateKey.generate()
+        pub=key.public_key().public_bytes(serialization.Encoding.Raw,serialization.PublicFormat.Raw)
+        job="00000000-0000-0000-0000-000000000001"
+        verified={"base_sha":prod_entry.WATERWAY_BASE,"candidate_sha":"b"*40,"plan_sha256":"c"*64}
+        now=int(time.time())
+        q={"schema":1,"kind":"waterway_baseline_v1","scope":production.SCOPE,"job_id":job,**verified,"observed_at":now,"checks":{k:"d"*64 for k in prod_entry.BASELINE_CHECKS}}
+        def sign(statement):
+            return {"statement":statement,"signature":base64.b64encode(key.sign(r.canonical(statement).encode())).decode()}
+        proof=sign(q)
+        self.assertEqual(prod_entry.verify_baseline_observation(proof,pub,job,verified,now),r.digest(proof))
+        for patch,error in [
+            ({"base_sha":"e"*40},"baseline_release_pin_mismatch"),
+            ({"candidate_sha":"e"*40},"baseline_release_pin_mismatch"),
+            ({"plan_sha256":"e"*64},"baseline_release_pin_mismatch"),
+            ({"observed_at":now-1801},"baseline_observation_stale"),
+            ({"observed_at":now+61},"baseline_observation_stale"),
+            ({"checks":{}},"baseline_obligations_unverified"),
+            ({"checks":{k:True for k in prod_entry.BASELINE_CHECKS}},"baseline_obligations_unverified")]:
+            with self.assertRaisesRegex(ValueError,error):prod_entry.verify_baseline_observation(sign({**q,**patch}),pub,job,verified,now)
+        with self.assertRaisesRegex(ValueError,"baseline_observer_signature_invalid"):
+            prod_entry.verify_baseline_observation({**proof,"signature":base64.b64encode(bytes(64)).decode()},pub,job,verified,now)
+        with tempfile.TemporaryDirectory() as directory:
+            source=prod_entry.PrivateBackup(directory,{"public_key":pub,"scope":{},"checkpoint_sha256":"f"*64})
+            with self.assertRaisesRegex(ValueError,"waterway_baseline_observation_required"):
+                source.verify_inherited_baseline(job,verified)
+            b.private_write(pathlib.Path(directory)/(job+".baseline.json"),r.canonical(proof).encode())
+            self.assertEqual(source.verify_inherited_baseline(job,verified),r.digest(proof))
+            self.assertIsNone(source.verify_inherited_baseline(job,{**verified,"base_sha":"e"*40}))
+        # Keep the existing production transport disabled and ensure the
+        # inherited baseline check precedes the effect runner invocation.
+        self.assertFalse(production.PRODUCTION_WORKER_TRANSPORT_ENABLED)
+        text=(ROOT/"scripts/release-manager/integrated_production_entry.py").read_text()
+        self.assertLess(text.index("backup_source.verify_inherited_baseline(job,verified)"),text.index("prod.ProductionRunner(ledger,root,envelope,registry,wrapped).once(job)"))
+
 if __name__=="__main__":unittest.main()
