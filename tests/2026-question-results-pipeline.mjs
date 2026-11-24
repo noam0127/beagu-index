@@ -49,6 +49,26 @@ const [timeQuestion]=timeResult.schools[0].questions;
 assert.deepEqual([timeQuestion.valid,timeQuestion.invalid,timeQuestion.minutes_sum],[1,1,1280]);
 assert.equal(timeResult.reviewRows[0][4],'INVALID_TIME');
 assert.equal(JSON.stringify(timeResult.reviewRows).includes('임의 시간'),false);
+// Q45 exact old/new label compatibility, no generalized alias or positional guessing.
+const q45={Q45:catalog.Q45};
+const q45Headers=['날짜','지역','학교',...catalog.Q45.rows.map(x=>'Q45. 문항 ['+x+']')];
+const q45Row=['2026-11-24','부산','검증학교',...catalog.Q45.rows.map(()=>catalog.Q45.columns[0])];
+const q45Build=h=>context.beagu26BuildResults([h,q45Row],[],q45);
+const current=q45Build(q45Headers);
+const former=q45Headers.slice();
+former[13]='Q45. 문항 [⑪ 교사용 와이파이(안정적으로 연결되는 공간)]';
+former[14]='Q45. 문항 [⑫ 교사용 와이파이(연결이 자주 끊기거나 불안정한 공간)]';
+assert.deepEqual(JSON.parse(JSON.stringify(q45Build(former))),JSON.parse(JSON.stringify(current)));
+assert.equal(current.reviewRows.length,0);
+assert.equal(current.schools[0].questions[10].valid,1);
+assert.equal(current.schools[0].questions[11].valid,1);
+for(const [i,label] of [[13,'학생용 와이파이(안정적으로 연결되는 공간)'],[14,'교사용 와이파이(안정적으로 연결되는 공간)'],[3,'다른 비품']]){
+ const bad=q45Headers.slice();bad[i]='Q45. 문항 ['+label+']';
+ assert.throws(()=>q45Build(bad),/grid row mismatch/);
+}
+assert.throws(()=>q45Build(q45Headers.concat(q45Headers[13])),/column count mismatch/);
+assert.equal(catalog.Q45.rows[10],'와이파이(안정적으로 연결되는 공간)');
+assert.equal(catalog.Q45.rows[11],'와이파이(연결이 자주 끊기거나 불안정한 공간)');
 const questions=Object.entries(catalog).flatMap(([id,m])=>(m.kind==='grid'?m.rows:[null]).map((_,i)=>({id,row:m.kind==='grid'?i:-1,valid:0,invalid:0,counts:(m.kind==='grid'?m.columns:m.options).map(()=>0),minutes_sum:0})));
 const payload={source_spreadsheet_id:sourceId,official_start_day:'2026-11-01',schema_version:1,snapshot_at:new Date().toISOString(),totals:{source_rows:2,official_rows:1,prelaunch_rows:1,unmatched_rows:0,undated_rows:0},schools:[{school_id:'1000001',school_response_rows:1,school_match_status:'EXACT_REGION_OFFICE_NAME',questions}]};
 assert.equal(validateSnapshot(payload),payload);

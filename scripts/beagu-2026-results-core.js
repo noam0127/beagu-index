@@ -57,20 +57,18 @@ function beagu26BuildResults(values, schools, catalog) {
     const expected=meta.kind==='grid'?meta.rows.length:1;
     if(hits.length!==expected)throw Error(id+' column count mismatch');
     hits.forEach((col,index)=>{
-      let schemaReview=false;
       if(meta.kind==='grid'){
         const label=beagu26CleanOption(String(headers[col]).match(/\[([^\]]+)\]\s*$/)?.[1]);
         const expectedLabel=beagu26CleanOption(meta.rows[index]);
-        if(label!==expectedLabel){
-          // Exact known Form drift only. Never reinterpret a broader label.
-          schemaReview=id==='Q45'&&(
-            (index===10&&label==='와이파이(안정적으로 연결되는 공간)'&&expectedLabel==='교사용 와이파이(안정적으로 연결되는 공간)')||
-            (index===11&&label==='와이파이(연결이 자주 끊기거나 불안정한 공간)'&&expectedLabel==='교사용 와이파이(연결이 자주 끊기거나 불안정한 공간)')
-          );
-          if(!schemaReview)throw Error(id+' grid row mismatch');
-        }
+        // Owner confirmed 2026-11-23 evening (KST) wording-only change.
+        // Exact historical aliases at these two row positions, no other drift.
+        const historicalAlias=id==='Q45'&&(
+          (index===10&&label==='교사용 와이파이(안정적으로 연결되는 공간)'&&expectedLabel==='와이파이(안정적으로 연결되는 공간)')||
+          (index===11&&label==='교사용 와이파이(연결이 자주 끊기거나 불안정한 공간)'&&expectedLabel==='와이파이(연결이 자주 끊기거나 불안정한 공간)')
+        );
+        if(label!==expectedLabel&&!historicalAlias)throw Error(id+' grid row mismatch');
       }
-      specs.push({id,row:meta.kind==='grid'?index:-1,col,schemaReview,
+      specs.push({id,row:meta.kind==='grid'?index:-1,col,
         options:meta.kind==='grid'?meta.columns:meta.options,
         multiple:meta.kind==='multi'||id==='Q45',time:meta.kind==='time'});
     });
@@ -97,11 +95,6 @@ function beagu26BuildResults(values, schools, catalog) {
     for(const reason of rowSignals)reviewRows.push([sourceIndex+1,id,'ROW',-1,reason,'PENDING_REVIEW']);
     specs.forEach((s,index)=>{
       const q=g.questions[index], raw=String(r[s.col]||'').trim();
-      if(s.schemaReview){
-        q.invalid++;
-        reviewRows.push([sourceIndex+1,id,s.id,s.row,'SCHEMA_LABEL_REVIEW','PENDING_REVIEW']);
-        return;
-      }
       if(!raw)return;
       if(s.time){
         const m=/^(?:(오전|오후)\s*)?(\d{1,2}):(\d{2})(?::00)?$/.exec(raw);
