@@ -250,6 +250,7 @@ CREATE TABLE beagu_private.beagu_postit_restrictions_v1(
  restored_at timestamptz,
  actor_admin uuid NOT NULL,
  restore_admin uuid,
+ restore_reason text,
  reason text NOT NULL CHECK(length(reason) BETWEEN 8 AND 200),
  UNIQUE(target_type,target_id)
 );
@@ -320,6 +321,7 @@ RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE v_author uuid; v_case uuid; v_exp timestamptz;
 BEGIN
  IF p_type IS NULL OR p_type NOT IN ('post','comment') OR p_target IS NULL OR p_decision IS NULL OR p_decision NOT IN ('dismiss','restrict_24h','restrict_7d','restore') OR p_admin IS NULL OR p_reason IS NULL OR length(btrim(p_reason)) NOT BETWEEN 8 AND 200 THEN RETURN NULL; END IF;
+ IF NOT EXISTS(SELECT 1 FROM public.beagu_admin_accounts WHERE user_id=p_admin AND role='owner' AND enabled=true) THEN RETURN NULL; END IF;
  -- Only an actual reported content item can be selected, never a supplied member ID.
  IF p_type='post' THEN SELECT author_uid INTO v_author FROM public.beagu_postit_posts WHERE id=p_target;
  ELSE SELECT author_uid INTO v_author FROM public.beagu_postit_comments WHERE id=p_target; END IF;
@@ -327,7 +329,7 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtext(v_author::text),20261121);
  IF NOT EXISTS(SELECT 1 FROM public.beagu_postit_reactions WHERE target_type=p_type AND target_id=p_target AND kind='report' AND author_uid<>v_author) THEN RETURN NULL; END IF;
  IF p_decision='restore' THEN
- UPDATE beagu_private.beagu_postit_restrictions_v1 SET restored_at=clock_timestamp(),restore_admin=p_admin WHERE target_type=p_type AND target_id=p_target AND author_uid=v_author AND expires_at>now() AND restored_at IS NULL RETURNING case_id INTO v_case;
+ UPDATE beagu_private.beagu_postit_restrictions_v1 SET restored_at=clock_timestamp(),restore_admin=p_admin,restore_reason=btrim(p_reason) WHERE target_type=p_type AND target_id=p_target AND author_uid=v_author AND expires_at>now() AND restored_at IS NULL RETURNING case_id INTO v_case;
  ELSE
  v_exp:=CASE p_decision WHEN 'restrict_24h' THEN clock_timestamp()+interval '24 hours' WHEN 'restrict_7d' THEN clock_timestamp()+interval '7 days' ELSE NULL END;
  INSERT INTO beagu_private.beagu_postit_restrictions_v1(target_type,target_id,author_uid,decision,expires_at,actor_admin,reason)
