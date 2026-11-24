@@ -58,10 +58,15 @@ test("anonymous admin commands are denied by server",async()=>{
  const url="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-release-manager-v1";
  const key="sb_publishable_WbByHRhd0RmNiRrYHaINXQ_u5dfegL2";
  const request=async action=>{
-  const res=await fetch(url,{method:"POST",signal:AbortSignal.timeout(15000),headers:{
-   "apikey":key,"Content-Type":"application/json","Origin":"https://baeguindex.com"},
-   body:JSON.stringify({action,version:"1.0.0",summary:"malicious"} )});
-  return res.status;
+  // Retry transport failures only; a wrong HTTP status is never ignored.
+  for(let i=0;i<3;i++){
+   try{
+    const res=await fetch(url,{method:"POST",signal:AbortSignal.timeout(20000),headers:{
+     "apikey":key,"Content-Type":"application/json","Origin":"https://baeguindex.com"},
+     body:JSON.stringify({action,version:"1.0.0",summary:"malicious"})});
+    return res.status;
+   }catch(error){if(i===2)throw error;}
+  }
  };
  assert.equal(await request("status"),401);
  assert.equal(await request("stage_apply"),401);
