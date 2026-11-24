@@ -7,7 +7,7 @@ BEGIN
  IF public.beagu_account_password_login_v1(a,repeat('d',64),repeat('1',64)) IS NOT NULL THEN RAISE EXCEPTION 'wrong credential accepted'; END IF;
  r:=public.beagu_account_password_login_v1(a,repeat('c',64),repeat('1',64));
  IF r->>'level' IS DISTINCT FROM '1' THEN RAISE EXCEPTION 'Lv1 login failed'; END IF;
- nick:=r->>'nickname'; IF nick IS NULL OR nick !~ '^[Il|ǀ❘ı∣│]{7}$' THEN RAISE EXCEPTION 'nickname invalid'; END IF;
+ nick:=r->>'nickname'; IF nick IS NULL OR nick !~ '^[Il|ǀ❘ı∣│]{10}$' THEN RAISE EXCEPTION 'nickname invalid'; END IF;
  IF NOT public.beagu_account_level_session_allowed_v1(repeat('1',64)) THEN RAISE EXCEPTION 'valid session denied'; END IF;
  IF public.beagu_account_formal_link_v1(u,'SYNTHETIC-ONE',repeat('a',64),repeat('1',64)) IS NOT NULL THEN RAISE EXCEPTION 'unearned formal tier'; END IF;
  UPDATE beagu_private.challenge_referral_profiles SET access_level=2,valid_referrals=1,upgraded_at=now() WHERE visitor_id=v;
@@ -33,4 +33,20 @@ BEGIN
  IF public.beagu_account_level_session_allowed_v1(repeat('7',64)) OR EXISTS(SELECT 1 FROM public.beagu_level_sessions WHERE token_sha256=repeat('7',64)) THEN RAISE EXCEPTION 'disabled account session survived'; END IF;
  IF public.beagu_account_formal_login_v1(u,repeat('6',64)) IS NOT NULL THEN RAISE EXCEPTION 'disabled profile login'; END IF;
  RAISE NOTICE 'PASS account: original device, credential hashing, earned level, formal link, session revocation, preserved referral and identity conflicts';
+END $$;
+
+-- Simulate the next week by aging rows; no wall-clock dependence.
+DO $$
+DECLARE before_rows jsonb; before_ids jsonb; before_credits jsonb; changed integer;
+BEGIN
+ SELECT jsonb_object_agg(visitor_id::text,nickname) INTO before_rows FROM beagu_private.beagu_account_nicknames_v1;
+ SELECT jsonb_agg(to_jsonb(a) ORDER BY visitor_id) INTO before_ids FROM beagu_private.beagu_account_identity_v1 a;
+ SELECT jsonb_agg(to_jsonb(r) ORDER BY visitor_id) INTO before_credits FROM beagu_private.challenge_referral_profiles r;
+ UPDATE beagu_private.beagu_account_nicknames_v1 SET week_start=week_start-7;
+ changed:=beagu_private.beagu_account_rotate_nicknames_v1();
+ IF changed<>2 THEN RAISE EXCEPTION 'offline member rotation incomplete'; END IF;
+ IF EXISTS(SELECT 1 FROM beagu_private.beagu_account_nicknames_v1 n WHERE nickname=before_rows->>visitor_id::text OR nickname !~ '^[Il|ǀ❘ı∣│]{10}$') THEN RAISE EXCEPTION 'invalid rotated nickname'; END IF;
+ IF beagu_private.beagu_account_rotate_nicknames_v1()<>0 THEN RAISE EXCEPTION 'weekly retry rotated twice'; END IF;
+ IF before_ids IS DISTINCT FROM (SELECT jsonb_agg(to_jsonb(a) ORDER BY visitor_id) FROM beagu_private.beagu_account_identity_v1 a) OR before_credits IS DISTINCT FROM (SELECT jsonb_agg(to_jsonb(r) ORDER BY visitor_id) FROM beagu_private.challenge_referral_profiles r) THEN RAISE EXCEPTION 'rotation modified account or referral data'; END IF;
+ RAISE NOTICE 'PASS weekly KST barcode rotation: offline members, unique changed aliases, idempotence, preserved accounts and referrals';
 END $$;
