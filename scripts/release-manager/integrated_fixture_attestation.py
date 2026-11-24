@@ -25,7 +25,7 @@ def validate_pins(pins):
     require(drive.valid_id(pins["folder_id"]) and drive.valid_id(pins["file_id"]) and pins["folder_id"]!=pins["file_id"],"fixture_attestation_pins_invalid")
 def validate_observation(o,pins):
     require(isinstance(o,dict) and set(o)==OBS_KEYS and o["scope"]=="synthetic_ciphertext_observation_only" and o["fixture_object_sha256"]==pins["fixture_object_sha256"],"fixture_attestation_observation_invalid")
-    require(type(o["bytes"]) is int and 0<o["bytes"]<=observer.MAX and o["private_metadata_verified"] is True and o["remote_ciphertext_verified"] is True,"fixture_attestation_observation_invalid")
+    require(type(o["bytes"]) is int and 0<o["bytes"]<=observer.STREAM_MAX and o["private_metadata_verified"] is True and o["remote_ciphertext_verified"] is True,"fixture_attestation_observation_invalid")
     require(all(o[k] is False for k in ("independent_observer_verified","restore_verified","production_backup_proof","execution_enabled")),"fixture_attestation_scope_violation")
 def sign_observed(config,pins,signing_key,transport=None):
     validate_pins(pins)
