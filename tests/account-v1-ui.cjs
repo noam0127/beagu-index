@@ -8,7 +8,7 @@ assert.match(read("supabase/functions/beagu-level-api/index.ts"),/beagu_account_
 const map=new Map(),store=new Map(),local=new Map([["beagu-referral-device-secret-v1","a".repeat(64)]]);
 const node=id=>{if(!map.has(id))map.set(id,{hidden:false,textContent:"",elements:{password:{value:"test"},account_id:{value:""}},disabled:false});return map.get(id)};
 const storage=m=>({getItem:k=>m.get(k)||null,setItem:(k,v)=>m.set(k,v),removeItem:k=>m.delete(k)});
-const calls=[],account="00000000-0000-0000-0000-000000000001",nickname="Il|ǀ❘ıɪ│┃I",token="b".repeat(64),nextToken="c".repeat(64);
+const calls=[],account="00000000-0000-0000-0000-000000000001",nickname="Il|ǀ❘ı┃I",token="b".repeat(64),nextToken="c".repeat(64);
 let formal=false;
 const client={auth:{getSession:async()=>({data:{session:{access_token:"fixture-token"}}}),signInWithOAuth:async()=>({}),signOut:async()=>({})}};
 const context={document:{getElementById:node,querySelectorAll:()=>[]},window:{supabaseClient:client},sessionStorage:storage(store),localStorage:storage(local),location:{href:"https://baeguindex.com/account.html"},URL,FormData:class{constructor(f){this.data=f.data}get(k){return this.data[k]}},fetch:async(_url,opts)=>{
