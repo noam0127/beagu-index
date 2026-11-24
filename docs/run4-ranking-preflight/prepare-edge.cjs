@@ -11,5 +11,5 @@ let boundary=replace(read("server-boundary.cjs"),'require("./replay-protocol.cjs
 boundary=replace(boundary,"module.exports={createBoundary};","export {createBoundary};");
 write("server-boundary.mjs",'import {validateReplay} from "./replay-protocol.mjs";\n'+boundary);
 write("record-policy.mjs",fs.readFileSync(path.join(__dirname,"../../js/teacher-run-4-records-v1.js"),"utf8")+"\nexport const policy=globalThis.BeaguRun4Records;\n");
-for(const p of ["gateway.mjs","supabase-bridge.mjs","edge-entry.mjs"])write(p,read(p));
+for(const p of ["gateway.mjs","supabase-bridge.mjs","edge-entry.mjs","google-identity.mjs","runtime-config.mjs","edge-index.ts"])write(p,read(p));
 console.log("Prepared Edge modules only; no deployed function or secret.");

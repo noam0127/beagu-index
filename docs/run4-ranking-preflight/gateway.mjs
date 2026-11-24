@@ -31,6 +31,6 @@ export function createGateway({boundary,authenticate,listRecords,enabled=()=>fal
     return reply({game:"teacher_run_retirement_v4",version:"4.0",records:rows.slice(0,10).map(r=>({score:r.score,difficulty:r.difficulty,survivalSeconds:r.survival_seconds,retired:r.victory,bossCount:r.boss_count}))});
    }
    return reply({error:"invalid_action"},400);
-  }catch(e){const code=e?.code||e?.message;return reply({error:Object.hasOwn(statuses,code)?code:"verification_unavailable"},statuses[code]||503);}
+  }catch(e){const code=e?.code||e?.message;const known=Object.hasOwn(statuses,code);return reply({error:known?code:"verification_unavailable"},known?statuses[code]:503);}
  };
 }
