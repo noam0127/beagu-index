@@ -20,6 +20,8 @@ import integrated_vault as v
 
 MARKER="large-pg17-fixture-attempt.json"
 RECOVERY_MARKER="large-pg17-fixture-recovery-attempt.json"
+PROBE_MARKER="large-pg17-session-probe-attempt.json"
+DIAGNOSED_MARKER="large-pg17-fixture-diagnosed-attempt.json"
 MAX_LIVE=200*1024**2
 require=v.require
 class LocalFixtureHTTPS:
@@ -90,19 +92,28 @@ def main():
     p.add_argument("--oauth-file",required=True)
     p.add_argument("--key-file",required=True)
     p.add_argument("--confirm-large-pg-fixture-upload",required=True,action="store_true")
-    p.add_argument("--retry-after-session-rejection",action="store_true",help="Explicit one-time recovery only after prior rejected session and operator reconciliation; preserves original record")
+    group=p.add_mutually_exclusive_group()
+    group.add_argument("--retry-after-session-rejection",action="store_true",help="Original one-time recovery; no reuse")
+    group.add_argument("--retry-after-session-diagnosis",action="store_true",help="One explicit post-diagnosis synthetic attempt only after operator reconciliation")
     a=p.parse_args()
-    phase="local_credentials";registry=None;marker=RECOVERY_MARKER if a.retry_after_session_rejection else MARKER
+    phase="local_credentials";registry=None;marker=DIAGNOSED_MARKER if a.retry_after_session_diagnosis else (RECOVERY_MARKER if a.retry_after_session_rejection else MARKER)
     try:
         setup.key_file(a.key_file)
         c=setup.read_config(a.oauth_file)
         registry=setup.private_parent(a.oauth_file).parent
-        require(not os.path.lexists(registry/RECOVERY_MARKER),"large_fixture_attempt_already_recorded")
-        if a.retry_after_session_rejection:
+        require(not os.path.lexists(registry/DIAGNOSED_MARKER),"large_fixture_attempt_already_recorded")
+        if a.retry_after_session_diagnosis:
+            for name in (MARKER,RECOVERY_MARKER):
+                prior=v.parse(v.read_private(registry,name))
+                require(isinstance(prior,dict) and set(prior)=={"scope","object_sha256","bytes","execution_enabled"} and prior["scope"]=="synthetic_large_pg17_attempt" and v.match(v.HASH,prior["object_sha256"]) and type(prior["bytes"]) is int and 128*1024**2<prior["bytes"]<=MAX_LIVE and prior["execution_enabled"] is False,"large_fixture_prior_attempt_invalid")
+            probe=v.parse(v.read_private(registry,PROBE_MARKER))
+            require(probe=={"scope":"synthetic_session_probe_only","media_upload_attempted":False,"execution_enabled":False},"large_fixture_prior_attempt_invalid")
+        elif a.retry_after_session_rejection:
+            require(not os.path.lexists(registry/RECOVERY_MARKER),"large_fixture_attempt_already_recorded")
             prior=v.parse(v.read_private(registry,MARKER))
             require(isinstance(prior,dict) and set(prior)=={"scope","object_sha256","bytes","execution_enabled"} and prior["scope"]=="synthetic_large_pg17_attempt" and v.match(v.HASH,prior["object_sha256"]) and type(prior["bytes"]) is int and 128*1024**2<prior["bytes"]<=MAX_LIVE and prior["execution_enabled"] is False,"large_fixture_prior_attempt_invalid")
         else:
-            require(not os.path.lexists(registry/MARKER),"large_fixture_attempt_already_recorded")
+            require(not os.path.lexists(registry/MARKER) and not os.path.lexists(registry/RECOVERY_MARKER) and not os.path.lexists(registry/PROBE_MARKER),"large_fixture_attempt_already_recorded")
         phase="local_pg_fixture"
         def transfer(source,dest,pin):
             nonlocal phase
@@ -117,7 +128,7 @@ def main():
         print(json.dumps({**result,"scope":"synthetic_pg17_stream_actual_drive_only","actual_drive_transfer_verified":True,"independent_observer_verified":False,"production_backup_executed":False},sort_keys=True))
     except (ValueError,OSError,KeyError,TypeError,RuntimeError,subprocess.SubprocessError) as exc:
         # Fixed diagnostic only: no raw provider errors, credentials, or session URL.
-        safe={"large_fixture_attempt_already_recorded","stream_session_invalid","stream_session_format_invalid","stream_session_origin_invalid","stream_session_query_invalid","stream_session_parameter_invalid","stream_session_id_invalid","large_fixture_prior_attempt_invalid","large_fixture_network_uncertain","stream_upload_ack_uncertain","stream_upload_completion_uncertain","stream_remote_range_mismatch","stream_remote_metadata_mismatch","stream_remote_digest_mismatch","oauth_refresh_denied"}
+        safe={"large_fixture_attempt_already_recorded","stream_session_invalid","stream_session_format_invalid","stream_session_origin_invalid","stream_session_query_invalid","stream_session_parameter_invalid","stream_session_id_invalid","stream_session_credential_invalid","large_fixture_prior_attempt_invalid","large_fixture_network_uncertain","stream_upload_ack_uncertain","stream_upload_completion_uncertain","stream_remote_range_mismatch","stream_remote_metadata_mismatch","stream_remote_digest_mismatch","oauth_refresh_denied"}
         reason=str(exc) if isinstance(exc,ValueError) and str(exc) in safe else "large_fixture_check_failed"
         print(json.dumps({"fixture_verified":False,"phase":phase,"reason":reason,"remote_object_may_exist":registry is not None and os.path.lexists(registry/marker),"execution_enabled":False}))
         raise SystemExit(1) from None

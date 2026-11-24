@@ -33,7 +33,7 @@ def describe(location):
     keys=[k for k,_ in pairs]
     safe=sorted({k for k in keys if SAFE_KEY.fullmatch(k)})
     result["query_keys"]=safe
-    result["unknown_query_keys"]=[k for k in safe if k not in ("uploadType","upload_id","upload_protocol","fields")]
+    result["unknown_query_keys"]=[k for k in safe if k not in protocol.SESSION_KEYS]
     result["duplicate_query_keys"]=len(keys)!=len(set(keys))
     result["unsafe_key_names_redacted"]=sum(not SAFE_KEY.fullmatch(k) for k in keys)
     try:

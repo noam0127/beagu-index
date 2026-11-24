@@ -60,5 +60,26 @@ class Guard(unittest.TestCase):
             t.request(d.HOST,"POST",d.UPLOAD+"?uploadType=resumable",{"X-Upload-Content-Length":str(t.total),"X-Upload-Content-Type":d.MIME},t.meta)
             self.assertEqual(original.read_bytes(),b"previous")
             self.assertTrue((root/live.RECOVERY_MARKER).exists())
+    def test_observed_google_session_shape(self):
+        base="https://"+d.HOST+d.UPLOAD
+        query="session_crd=synthetic%2Bcredential%3D&uploadType=resumable&upload_id=synthetic_id"
+        self.assertEqual(r.session_path(base+"?"+query),d.UPLOAD+"?"+query)
+        for bad in ("session_crd=x&session_crd=y&upload_id=x","session_crd=x%0D%0A&upload_id=x","session_crd=&upload_id=x","session_crd=x&access_token=y&upload_id=x","session_crd=x&upload_id=x&unknown=y"):
+            with self.assertRaises(ValueError):r.session_path(base+"?"+bad)
+    def test_diagnosed_attempt_marker_keeps_all_previous(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=pathlib.Path(temp).resolve()
+            t=live.LocalFixtureHTTPS.__new__(live.LocalFixtureHTTPS)
+            t.folder="fixture_folder";t.registry=root;t.connection=Connection
+            t.total=192*1024**2;t.digest="a"*64;t.meta=b"fixed metadata"
+            t.posted=False;t.session=None;t.file_id=None;t.offset=0;t.marker=live.DIAGNOSED_MARKER
+            names=(live.MARKER,live.RECOVERY_MARKER,live.PROBE_MARKER)
+            for name in names:(root/name).write_bytes(name.encode())
+            t.request(d.HOST,"POST",d.UPLOAD+"?uploadType=resumable",{"X-Upload-Content-Length":str(t.total),"X-Upload-Content-Type":d.MIME},t.meta)
+            self.assertTrue((root/live.DIAGNOSED_MARKER).exists())
+            self.assertEqual([(root/n).read_bytes() for n in names],[n.encode() for n in names])
+            t.posted=False
+            with self.assertRaises(FileExistsError):t.request(d.HOST,"POST",d.UPLOAD+"?uploadType=resumable",{"X-Upload-Content-Length":str(t.total),"X-Upload-Content-Type":d.MIME},t.meta)
 if __name__=="__main__":unittest.main()
+
 
