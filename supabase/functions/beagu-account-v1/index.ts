@@ -10,11 +10,9 @@ async function proof(p:string){
  const key=await crypto.subtle.importKey("raw",enc.encode(pepper),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
  return hex(new Uint8Array(await crypto.subtle.sign("HMAC",key,enc.encode("BEAGU_ACCOUNT_PASSWORD_V1|"+p))));
 }
-async function user(req:Request){
- const h=req.headers.get("Authorization")||"";
- if(!/^Bearer [A-Za-z0-9._-]{20,8000}$/.test(h))return null;
- const {data,error}=await db.auth.getUser(h.slice(7));
- return !error&&data.user&&!data.user.is_anonymous&&data.user.email_confirmed_at?data.user:null;
+async function recoveryProof(p:string){
+ const key=await crypto.subtle.importKey("raw",enc.encode(pepper),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+ return hex(new Uint8Array(await crypto.subtle.sign("HMAC",key,enc.encode("BEAGU_ACCOUNT_RECOVERY_V1|"+p))));
 }
 Deno.serve(async(req:Request)=>{
  const origin=req.headers.get("Origin")||"";
@@ -33,33 +31,28 @@ Deno.serve(async(req:Request)=>{
  const action=b.action;
  const session=(req.headers.get("X-Beagu-Session")||"").trim();
  const validPassword=typeof b.password==="string"&&b.password.length>=12&&enc.encode(b.password).byteLength<=256;
+ const accountOk=typeof b.account_id==="string"&&uuid.test(b.account_id);
+ const recoveryOk=typeof b.new_recovery==="string"&&secret.test(b.new_recovery);
  if(action==="signup"){
-  if(!validPassword||typeof b.code!=="string"||!code.test(b.code)||typeof b.deviceSecret!=="string"||!secret.test(b.deviceSecret))return send(400,{error:"INVALID_REQUEST"});
-  const {data,error}=await db.rpc("beagu_account_signup_v1",{p_code:b.code,p_device_hash:await sha(b.deviceSecret),p_password_proof:await proof(b.password)});
-  return !error&&typeof data==="string"&&uuid.test(data)?send(201,{account_id:data}):send(403,{error:"ACCOUNT_VERIFICATION_FAILED"});
+  if(!validPassword||!accountOk||!recoveryOk||typeof b.code!=="string"||!code.test(b.code)||typeof b.deviceSecret!=="string"||!secret.test(b.deviceSecret))return send(400,{error:"INVALID_REQUEST"});
+  const {data,error}=await db.rpc("beagu_account_signup_v1",{p_code:b.code,p_device_hash:await sha(b.deviceSecret),p_password_proof:await proof(b.password),p_account:b.account_id,p_recovery_hash:await recoveryProof(b.new_recovery)});
+  return !error&&data?.account_id===b.account_id&&[1,2].includes(data.level)?send(201,{account_id:data.account_id,level:data.level,lv2_active:data.lv2_active===true}):send(403,{error:"ACCOUNT_VERIFICATION_FAILED"});
  }
- if(action==="password_login"||action==="formal_login"){
-  const token=hex(crypto.getRandomValues(new Uint8Array(32))),p_token_sha=await sha(token);
-  let result;
-  if(action==="password_login"){
-   if(!validPassword||typeof b.account_id!=="string"||!uuid.test(b.account_id))return send(401,{error:"LOGIN_FAILED"});
-   result=await db.rpc("beagu_account_password_login_v1",{p_account:b.account_id,p_password_proof:await proof(b.password),p_token_sha});
-  }else{
-   const u=await user(req);if(!u)return send(401,{error:"LOGIN_FAILED"});
-   result=await db.rpc("beagu_account_formal_login_v1",{p_user:u.id,p_token_sha});
-  }
-  return !result.error&&result.data&&[1,2].includes(result.data.level)?send(200,{account_id:result.data.account_id,level:result.data.level,formal:result.data.formal===true,nickname:result.data.nickname,expires_at:result.data.expires_at,token}):send(401,{error:"LOGIN_FAILED"});
+ if(action==="password_login"){
+  if(!validPassword||!accountOk)return send(401,{error:"LOGIN_FAILED"});
+  const token=hex(crypto.getRandomValues(new Uint8Array(32)));
+  const result=await db.rpc("beagu_account_password_login_v1",{p_account:b.account_id,p_password_proof:await proof(b.password),p_token_sha:await sha(token)});
+  return !result.error&&result.data?.account_id===b.account_id&&[1,2].includes(result.data.level)?send(200,{account_id:result.data.account_id,level:result.data.level,lv2_active:result.data.lv2_active===true,nickname:result.data.nickname,expires_at:result.data.expires_at,token}):send(401,{error:"LOGIN_FAILED"});
  }
- if(action==="formal_link"){
-  const u=await user(req);if(!u)return send(401,{error:"ACCOUNT_AUTH_REQUIRED"});
-  if(typeof b.code!=="string"||!code.test(b.code)||typeof b.deviceSecret!=="string"||!secret.test(b.deviceSecret))return send(400,{error:"INVALID_REQUEST"});
-  const {data,error}=await db.rpc("beagu_account_formal_link_v1",{p_user:u.id,p_code:b.code,p_device_hash:await sha(b.deviceSecret),p_token_sha:secret.test(session)?await sha(session):null});
-  return !error&&typeof data==="string"&&uuid.test(data)?send(200,{account_id:data,formal:true}):send(403,{error:"ACCOUNT_VERIFICATION_FAILED"});
+ if(action==="recover"){
+  if(!validPassword||!accountOk||!recoveryOk||typeof b.recovery!=="string"||!secret.test(b.recovery)||b.recovery===b.new_recovery)return send(400,{error:"INVALID_REQUEST"});
+  const {data,error}=await db.rpc("beagu_account_recover_v1",{p_account:b.account_id,p_old_recovery_hash:await recoveryProof(b.recovery),p_new_recovery_hash:await recoveryProof(b.new_recovery),p_password_proof:await proof(b.password)});
+  return !error&&data?.account_id===b.account_id&&[1,2].includes(data.level)?send(200,{account_id:data.account_id,level:data.level,lv2_active:data.lv2_active===true}):send(403,{error:"RECOVERY_FAILED"});
  }
  if(action==="status"||action==="logout"){
   if(!secret.test(session))return send(401,{error:"LOGIN_FAILED"});
   const {data,error}=await db.rpc(action==="status"?"beagu_account_session_status_v1":"beagu_account_logout_v1",{p_token_sha:await sha(session)});
-  return !error&&data?send(200,action==="logout"?{ok:true}:{level:data.level,formal:data.formal===true,nickname:data.nickname,expires_at:data.expires_at}):send(401,{error:"LOGIN_FAILED"});
+  return !error&&data?send(200,action==="logout"?{ok:true}:{account_id:data.account_id,level:data.level,lv2_active:data.lv2_active===true,nickname:data.nickname,expires_at:data.expires_at}):send(401,{error:"LOGIN_FAILED"});
  }
  return send(400,{error:"INVALID_REQUEST"});
  }catch{return send(400,{error:"REQUEST_FAILED"});}
