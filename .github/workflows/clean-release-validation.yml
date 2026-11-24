@@ -71,3 +71,72 @@ jobs:
               else:
                   raise AssertionError('invalid SHA accepted')
           PY
+
+      - name: Verify atomic transitions in disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          container="beagu-release-db-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do
+            if docker exec "$container" pg_isready -U postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          psql_local() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres; }
+          printf '%s\n' 'create role anon;' 'create role authenticated;' 'create role service_role bypassrls;' | psql_local
+          psql_local < supabase/migrations/20261121_site_release_manager.sql
+          psql_local < supabase/migrations/20261121_site_release_directory_overlay.sql
+          psql_local < supabase/release-transition-v2.sql
+          psql_local <<'SQL'
+          do $$
+          begin
+            if has_function_privilege('anon','public.beagu_release_transition_v2(text,jsonb)','execute')
+              or has_function_privilege('authenticated','public.beagu_release_transition_v2(text,jsonb)','execute')
+              or not has_function_privilege('service_role','public.beagu_release_transition_v2(text,jsonb)','execute')
+            then raise exception 'incorrect RPC grants'; end if;
+          end $$;
+          set role service_role;
+          do $$
+          declare a text := repeat('a',40); b text := repeat('b',40); c text := repeat('c',40);
+            r jsonb; job uuid; payload jsonb;
+          begin
+            update public.beagu_site_release_state_v1 set production_sha=a, production_version='v1.6.0' where id=1;
+            r:=public.beagu_release_transition_v2('register',jsonb_build_object('base',c,'sha',b,'version','v1.7.0','summary','fixture'));
+            if r->>'error' is distinct from 'direct_draft_conflict' then raise exception 'stale register: %',r; end if;
+            r:=public.beagu_release_transition_v2('register',jsonb_build_object('base',a,'sha',b,'version','v1.7.0','summary','fixture'));
+            if r->>'draft_sha' is distinct from b then raise exception 'register: %',r; end if;
+            payload:=jsonb_build_object('action','prod_apply','from_sha',a,'to_sha',b,'version','v1.7.0','summary','fixture');
+            r:=public.beagu_release_transition_v2('enqueue',payload || jsonb_build_object('from_sha',c));
+            if r->>'error' is distinct from 'direct_confirmation_required' then raise exception 'stale enqueue: %',r; end if;
+            r:=public.beagu_release_transition_v2('enqueue',payload);
+            job:=(r->>'id')::uuid;
+            if job is null then raise exception 'enqueue: %',r; end if;
+            r:=public.beagu_release_transition_v2('enqueue',payload);
+            if r->>'error' is distinct from 'release_in_progress' then raise exception 'duplicate enqueue: %',r; end if;
+            r:=public.beagu_release_transition_v2('reserve_dispatch',jsonb_build_object('job_id',job,'candidate_sha',c));
+            if r->>'error' is distinct from 'direct_confirmation_required' then raise exception 'wrong dispatch SHA: %',r; end if;
+            r:=public.beagu_release_transition_v2('reserve_dispatch',jsonb_build_object('job_id',job,'candidate_sha',b));
+            if r->>'ok' is distinct from 'true' then raise exception 'reserve: %',r; end if;
+            r:=public.beagu_release_transition_v2('reserve_dispatch',jsonb_build_object('job_id',job,'candidate_sha',b));
+            if r->>'error' is distinct from 'dispatch_rate_limited' then raise exception 'rate limit: %',r; end if;
+            r:=public.beagu_release_transition_v2('complete',jsonb_build_object('job_id',job));
+            if r->>'error' is distinct from 'job_not_running' then raise exception 'unstarted completion: %',r; end if;
+            update public.beagu_site_release_jobs_v1 set status='running' where id=job;
+            update public.beagu_site_release_state_v1 set production_sha=c where id=1;
+            r:=public.beagu_release_transition_v2('complete',jsonb_build_object('job_id',job));
+            if r->>'error' is distinct from 'stale_production_base' then raise exception 'stale complete: %',r; end if;
+            if exists(select 1 from public.beagu_site_release_history_v1 where job_id=job) then raise exception 'stale completion created history'; end if;
+            update public.beagu_site_release_state_v1 set production_sha=a where id=1;
+            r:=public.beagu_release_transition_v2('complete',jsonb_build_object('job_id',job));
+            if r->>'ok' is distinct from 'true' then raise exception 'complete: %',r; end if;
+            r:=public.beagu_release_transition_v2('complete',jsonb_build_object('job_id',job));
+            if r->>'ok' is distinct from 'true' then raise exception 'idempotent complete: %',r; end if;
+            if (select count(*) from public.beagu_site_release_history_v1 where job_id=job) <> 1
+              or (select production_sha from public.beagu_site_release_state_v1 where id=1) is distinct from b
+              or (select status from public.beagu_site_release_jobs_v1 where id=job) is distinct from 'deployed'
+            then raise exception 'atomic final state mismatch'; end if;
+            r:=public.beagu_release_transition_v2('register',jsonb_build_object('base',b,'expected_draft',b,'sha',c,'version','v1.7.0','summary','fixture'));
+            if r->>'error' is distinct from 'version_already_used' then raise exception 'reused version: %',r; end if;
+            raise notice 'PASS: RPC grants, stale SHA, duplicate enqueue, dispatch throttling, atomic completion and version reuse';
+          end $$;
+          SQL
