@@ -38,16 +38,16 @@ const menuPages=[
 ];
 for(const file of menuPages){
  const pageHtml=read(file);
- const navStart=pageHtml.indexOf('<nav class="beagu-unified-nav"');
- const navEnd=pageHtml.indexOf('</nav>',navStart);
- const nav=navStart>=0&&navEnd>navStart?pageHtml.slice(navStart,navEnd):'';
+ const nav=Array.from(pageHtml.matchAll(/<nav\b[^>]*class="([^"]*)"[^>]*>[\s\S]*?<\/nav>/g))
+  .find(m=>m[1].split(/\s+/).includes('beagu-unified-nav'))?.[0]||'';
  assert.ok(nav,'shared nav on '+file);
  assert.ok(nav.includes('href="postit.html"'),'Post-it menu link on '+file);
  const label='>포스트잇</a>';
  assert.ok(nav.includes(label),'Post-it text on '+file);
  const links=['index.html','search.html','statistics.html','postit.html','challenge.html'];
  assert.ok(links.every((target,index)=>nav.indexOf('href="'+target+'"')>=0
-  &&(index===0||nav.indexOf('href="'+links[index-1]+'"')<nav.indexOf('href="'+target+'"'))),'five menu item order '+file);
+  &&(index===0||nav.indexOf('href="'+links[index-1]+'"')<nav.indexOf('href="'+target+'"'))),'preserved menu item order '+file);
+ if(nav.includes('beagu-core-nav')) assert.ok(nav.includes('href="games.html"')&&nav.indexOf('href="games.html"')>nav.indexOf('href="challenge.html"'),'game menu retained '+file);
 }
 const headerCSS=read('styles/beagu-site-header-v1.css');
 assert.ok(headerCSS.includes('grid-template-columns:repeat(5,minmax(0,1fr))'),'mobile 5 tabs in one row');

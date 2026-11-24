@@ -259,14 +259,29 @@
       "version": "v1.7.0",
       "name": "관제탑",
       "scope": "관리자 직접 배포·SHA 검증·롤백",
-      "status": "CANDIDATE_CI_PENDING",
+      "status": "CANDIDATE_CI_PASS_AWAITING_ADMIN_REGISTRATION",
       "branch": "release/v1.7.0-control-tower",
-      "pr": null,
-      "commit": null,
+      "pr": 287,
+      "commit": "07a2f1b6ed855275b1c101238b341e6617ebd141",
       "tests": [
         {
-          "name": "Atomic transition, direct-release controller, browser",
-          "result": "PENDING"
+          "name": "Exact candidate 4 GitHub Actions workflows",
+          "result": "PASS",
+          "runs": [
+            45315068625,
+            45315068593,
+            45315068600,
+            45315068595
+          ]
+        },
+        {
+          "name": "Disposable PostgreSQL 16 transitions and Chromium fixture",
+          "result": "PASS",
+          "run": 45315068595
+        },
+        {
+          "name": "Live administrator registration and production control-plane deployment",
+          "result": "NOT_VERIFIED"
         }
       ],
       "changed_files": [],
@@ -274,7 +289,7 @@
         "atomic service-role-only RPC and backward-compatible manager upgrade",
         "optional server dispatch token; without it scheduled/manual wake remains"
       ],
-      "admin_registration": "PENDING",
+      "admin_registration": "PENDING_OWNER_MFA",
       "production": "NOT_APPROVED",
       "deployment_date": null,
       "rollback_sha": "d9a52a8576e7a4729df7663c73d78c0aa38cfd09"
@@ -284,17 +299,41 @@
       "version": "v1.8.0",
       "name": "연결고리",
       "scope": "추천 서버 검증·자동 승급",
-      "status": "PENDING",
-      "branch": null,
-      "pr": null,
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.8.0-linkage",
+      "pr": 288,
       "commit": null,
-      "tests": [],
-      "changed_files": [],
-      "dependencies": [],
+      "tests": [
+        {
+          "name": "Initial legacy participation-code checks",
+          "result": "FAIL",
+          "runs": [
+            45315453883,
+            45315453901
+          ],
+          "notes": "Existing postit-static-check expects beagu-unified-nav on index.html; candidate did not change index.html."
+        },
+        {
+          "name": "Strict referral credit and session promotion regression",
+          "result": "PENDING"
+        }
+      ],
+      "changed_files": [
+        "supabase/functions/beagu-referral-link-v1/index.ts",
+        "tests/referral-promotion-v1.cjs",
+        ".github/workflows/clean-release-validation.yml",
+        "release-info.json",
+        "release-candidate.json",
+        "development-roadmap.json"
+      ],
+      "dependencies": [
+        "v1.7.0 exact candidate applied and production SHA verified before registration",
+        "Referral Edge deployment and isolated verified Form ingestion E2E before activation"
+      ],
       "admin_registration": "PENDING",
       "production": "NOT_APPROVED",
       "deployment_date": null,
-      "rollback_sha": null
+      "rollback_sha": "07a2f1b6ed855275b1c101238b341e6617ebd141"
     },
     {
       "order": 8,

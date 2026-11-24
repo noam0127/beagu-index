@@ -3,6 +3,12 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 // Private referral-link issuer. A challenge identity is NOT a login credential.
 // The enrollment gate stays closed until the actual Google Form submission path
 // is wired and independently verified. No settings are changed by this code.
+// Only an actual integer credit returned by the database can activate Lv2.
+function verifiedReferralCredit(profile: {level?: unknown; validReferrals?: unknown} | null | undefined) {
+  const raw = profile?.validReferrals;
+  const count = typeof raw === 'number' && Number.isSafeInteger(raw) && raw >= 0 ? raw : 0;
+  return { count, earned: profile?.level === 2 && count >= 1 };
+}
 const endpoint = Deno.env.get('SUPABASE_URL')!;
 const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const referralKey = Deno.env.get('BEAGU_REFERRAL_HMAC_KEY') || '';
@@ -118,13 +124,15 @@ Deno.serve(async (req) => {
         if (!proofError && existing &&
             typeof existing.shortCode === 'string' &&
             /^[A-Za-z0-9_-]{8}$/.test(existing.shortCode)) {
-          const earned = Number(existing.level) === 2 &&
-            Number(existing.validReferrals) >= 1;
+          // Recovery is read-only: an unbound session must not appear promoted.
+          const credit = verifiedReferralCredit(existing);
+          const earned = credit.earned && Number(session.access_level) === 2 &&
+            session.identity_visitor_id === visitor;
           return json(origin, 200, {
             shortLink: 'https://baeguindex.com/r/#' + existing.shortCode,
             link: 'https://baeguindex.com/survey.html?ref=' + proofToken,
             level: earned ? 2 : 1,
-            validReferrals: Number(existing.validReferrals) || 0,
+            validReferrals: credit.count,
             provisional: earned,
           });
         }
@@ -145,16 +153,23 @@ Deno.serve(async (req) => {
         return json(origin, 503, { error: 'REFERRAL_NOT_READY' });
       return json(origin, 503, { error: 'REFERRAL_UNAVAILABLE' });
     }
-    if (Number(enrollment?.level) === 2 && (Number(session.access_level) < 2 || !session.identity_visitor_id)) {
-      // A credited referral grants earned Lv2 without account creation.
-      // The visitor identity binds one pseudonymous Post-it writer across sessions.
-      // Bind the verified challenge visitor, not an account identity. This supports
-      // stable author quotas without signup and permits immediate revocation.
-      const { error: upgradeError } = await db.from('beagu_level_sessions')
+    const credit = verifiedReferralCredit(enrollment);
+    if (credit.earned && (Number(session.access_level) < 2 || !session.identity_visitor_id)) {
+      // Compare-and-set: an expired or concurrently rebound session must never
+      // be upgraded using a stale ownership check.
+      let upgrade = db.from('beagu_level_sessions')
         .update({ access_level: 2, identity_campaign: '2026', identity_visitor_id: visitor })
         .eq('token_sha256', await digest(sessionToken))
-        .lte('access_level', 2);
-      if (upgradeError)
+        .eq('access_level', session.access_level)
+        .lte('access_level', 2)
+        .gt('expires_at', new Date().toISOString());
+      upgrade = session.identity_visitor_id
+        ? upgrade.eq('identity_visitor_id', visitor)
+        : upgrade.is('identity_visitor_id', null);
+      const { data: updated, error: upgradeError } = await upgrade
+        .select('access_level,identity_visitor_id').maybeSingle();
+      if (upgradeError || !updated || Number(updated.access_level) !== 2 ||
+          updated.identity_visitor_id !== visitor)
         return json(origin, 503, { error: 'SESSION_UPGRADE_UNAVAILABLE' });
     }
     const { data: shortCode, error: shortError } = await db.rpc('beagu_referral_short_issue', {
@@ -165,9 +180,9 @@ Deno.serve(async (req) => {
     return json(origin, 200, {
       shortLink: 'https://baeguindex.com/r/#' + shortCode,
       link: 'https://baeguindex.com/survey.html?ref=' + token,
-      level: Number(enrollment?.level) === 2 ? 2 : 1,
-      validReferrals: Number.isSafeInteger(Number(enrollment?.validReferrals)) && Number(enrollment?.validReferrals)>=0 ? Number(enrollment?.validReferrals):0,
-      provisional: Number(enrollment?.level) === 2,
+      level: credit.earned ? 2 : 1,
+      validReferrals: credit.count,
+      provisional: credit.earned,
     });
   } catch (err) {
     console.error('referral link unexpected error', err instanceof Error ? err.name : 'Unknown');
