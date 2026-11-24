@@ -17,6 +17,7 @@ import integrated_server_control as server
 import integrated_package as package
 import integrated_recovery as recovery
 import integrated_production as production
+import integrated_production_entry as prod_entry
 import integrated_production_pages as prod_pages
 import tarfile
 import json
@@ -448,16 +449,30 @@ class Runner(unittest.TestCase):
                 production.ProductionRunner(ledger,self.git,self.envelope,self.registry,adapter)
             # Reuse the exact fixture adapter in a scope-labelled test double only.
             adapter=self.production_test_adapter(cluster,job)
-            worker=production.ProductionRunner(ledger,self.git,self.envelope,self.registry,adapter)
-            self.assertTrue(worker.once(job))
+            evidence=adapter.backup(self.recipe["tasks"][0],{},self.verified)
+            directory=pathlib.Path(self.tmp.name)/"private-observer"
+            directory.mkdir(mode=0o700)
+            path=directory/(job+".backup.json")
+            source=prod_entry.PrivateBackup(directory,adapter.backup_observer_config)
+            def step():return prod_entry.execute_next(ledger,self.git,self.envelope,self.registry,adapter,source,job)
+            with self.assertRaises(FileNotFoundError):step()
+            self.assertEqual(ledger.snapshot(job)["next_step"],0)
+            b.private_write(path,r.canonical(evidence["backup_proof"]).encode())
+            self.assertTrue(step()["advanced"])
+            original=path.read_bytes()
+            forged=json.loads(original);forged["signature"]=base64.b64encode(bytes(64)).decode()
+            path.write_bytes(r.canonical(forged).encode())
+            with self.assertRaisesRegex(ValueError,"backup_observer_signature_invalid"):step()
+            self.assertEqual(ledger.snapshot(job)["next_step"],1)
+            path.write_bytes(original)
             self.assertEqual(ledger.snapshot(job)["next_step"],1)
             cfg=adapter.backup_observer_config
             with self.assertRaisesRegex(ValueError,"invalid_backup_observation"):
                 production.verify_backup_observation({},cfg["public_key"],job,self.verified,cfg["scope"],cfg["checkpoint_sha256"])
             adapter.fail="apply_sql"
-            with self.assertRaisesRegex(RuntimeError,"fixture injected failure"):worker.once(job)
+            with self.assertRaisesRegex(RuntimeError,"fixture injected failure"):step()
             self.assertEqual(ledger.snapshot(job)["status"],"blocked")
-            with self.assertRaisesRegex(ValueError,"release_blocked"):worker.once(job)
+            with self.assertRaisesRegex(ValueError,"release_blocked"):step()
             with self.assertRaisesRegex(ValueError,"production_final_observer_not_connected"):ledger.finalize(job,self.verified,self.registry,"a"*64)
             self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
             with self.assertRaisesRegex(ValueError,"production_worker_transport_not_authorized"):production.github_worker_transport("claim",{})
