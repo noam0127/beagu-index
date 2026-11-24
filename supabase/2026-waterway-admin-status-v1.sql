@@ -4,6 +4,38 @@ begin;
 -- Existing sync table is private and service_role lacked SELECT. Grant only
 -- the three aggregate metadata columns needed by this invoker RPC.
 grant select(singleton,snapshot_at,totals) on beagu_private.beagu_2026_results_sync to service_role;
+-- Two bounded private records, independent of the survey snapshot and approval.
+create table if not exists beagu_private.beagu_2026_waterway_runs_v1 (
+ slot text primary key check(slot in ('latest','failure')),
+ finished_at timestamptz not null,
+ payload jsonb not null,
+ received_at timestamptz not null default now()
+);
+alter table beagu_private.beagu_2026_waterway_runs_v1 enable row level security;
+revoke all on beagu_private.beagu_2026_waterway_runs_v1 from public,anon,authenticated;
+grant select,insert,update on beagu_private.beagu_2026_waterway_runs_v1 to service_role;
+create or replace function public.beagu_2026_waterway_record_run_v1(p_run jsonb)
+returns void language plpgsql security invoker set search_path='' as $record$
+declare t timestamptz;
+begin
+ if p_run->>'kind' is distinct from 'WATERWAY_RUN_V1' or jsonb_typeof(p_run->'stages') is distinct from 'array'
+ or pg_column_size(p_run)>8192 then raise exception 'invalid heartbeat'; end if;
+ t:=(p_run->>'finished_at')::timestamptz;
+ if t is null or abs(extract(epoch from (now()-t)))>1800 then raise exception 'invalid heartbeat time'; end if;
+ insert into beagu_private.beagu_2026_waterway_runs_v1 as old(slot,finished_at,payload)
+ values('latest',t,p_run)
+ on conflict(slot) do update set finished_at=excluded.finished_at,payload=excluded.payload,received_at=now()
+ where old.finished_at<excluded.finished_at;
+ if exists(select 1 from jsonb_array_elements(p_run->'stages') s where s->>'status'='ERROR') then
+   insert into beagu_private.beagu_2026_waterway_runs_v1 as old(slot,finished_at,payload)
+   values('failure',t,p_run)
+   on conflict(slot) do update set finished_at=excluded.finished_at,payload=excluded.payload,received_at=now()
+   where old.finished_at<excluded.finished_at;
+ end if;
+end $record$;
+revoke all on function public.beagu_2026_waterway_record_run_v1(jsonb) from public,anon,authenticated;
+grant execute on function public.beagu_2026_waterway_record_run_v1(jsonb) to service_role;
+
 create or replace function public.beagu_2026_waterway_status_v1()
 returns jsonb language sql stable security invoker set search_path='' as $waterway$
 with assessed as (
@@ -55,11 +87,17 @@ with assessed as (
  select snapshot_at,totals from beagu_private.beagu_2026_results_sync where singleton
  ), progress as (
  select official_submission_rows,refreshed_at from public.beagu_2026_public_progress where id=1
+ ), latest_run as (
+ select payload,finished_at,received_at from beagu_private.beagu_2026_waterway_runs_v1 where slot='latest'
+ ), last_failure as (
+ select payload,finished_at from beagu_private.beagu_2026_waterway_runs_v1 where slot='failure'
  )
  select jsonb_build_object(
  'version',1,'checked_at',now(),
  'source',jsonb_build_object(
-   'live_raw_rows',null,'live_raw_status','SOURCE_NOT_CONNECTED',
+   'live_raw_rows',(select payload->'source_rows' from latest_run),
+   'live_raw_status',case when (select payload->>'source_rows' from latest_run) is not null then 'LAST_RUN_OBSERVED' else 'SOURCE_NOT_CONNECTED' end,
+   'raw_observed_at',(select finished_at from latest_run),
    'last_observed_official_rows',(select official_submission_rows from progress),
    'last_observed_at',(select refreshed_at from progress)),
  'sync',jsonb_build_object(
@@ -70,7 +108,8 @@ with assessed as (
    'undated_rows',(select totals->'undated_rows' from sync),
    'unmatched_rows',(select totals->'unmatched_rows' from sync),
    'matched_rows',(select case when totals->>'official_rows' ~ '^[0-9]+$' and totals->>'unmatched_rows' ~ '^[0-9]+$' and (totals->>'official_rows')::integer >= (totals->>'unmatched_rows')::integer then (totals->>'official_rows')::integer-(totals->>'unmatched_rows')::integer end from sync),
-   'last_failure_at',null,'last_failure_reason',null,
+   'last_failure_at',(select finished_at from last_failure),
+   'last_failure_reason',(select string_agg((s->>'stage')||':'||(s->>'reason'),', ' order by s->>'stage') from last_failure cross join lateral jsonb_array_elements(payload->'stages') s where s->>'status'='ERROR'),
    'status',case when not exists(select 1 from sync) then 'NO_SNAPSHOT'
     when (select refreshed_at from progress)>(select snapshot_at from sync)
      and (select official_submission_rows from progress) is distinct from (select (totals->>'official_rows')::integer from sync)
@@ -80,7 +119,10 @@ with assessed as (
  'aggregate',jsonb_build_object('schools',snap.schools,'rows',snap.rows,'snapshot_at',snap.last_at,
    'same_snapshot',coalesce(snap.first_at=snap.last_at and snap.last_at=(select snapshot_at from sync),false),
    'individual_valid_rows',null,'individual_review_rows',null,
+   'basic_review_rows',(select payload->'basic_review_rows' from latest_run),
+   'basic_review_at',(select finished_at from latest_run),
    'distinct_respondents',null),
+ 'run',(select jsonb_build_object('started_at',payload->'started_at','finished_at',finished_at,'received_at',received_at,'stages',payload->'stages') from latest_run),
  'preflight',coalesce((select jsonb_object_agg(preflight_status,schools) from counts),'{}'::jsonb),
  'preflight_total',snap.schools,
  'release',public.beagu_2026_level_release_status()
