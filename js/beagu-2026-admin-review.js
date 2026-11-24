@@ -48,6 +48,50 @@
  const setCount=(id,value)=>{
    const el=$(id);if(el)el.textContent=value===null||value===undefined?"—":String(value);
  };
+ // Waterway uses strict non-negative integer counts, never null -> zero.
+ const knownCount=value=>Number.isSafeInteger(value)&&value>=0?value:null;
+ const countText=value=>knownCount(value)===null?"미확인":value.toLocaleString("ko-KR");
+ const put=(id,value)=>{const el=$(id);if(el)el.textContent=value;};
+ const preflightLabels={
+   PUBLICATION_RESTRICTED:"공개 제한 · 신고 보류 또는 근거 반려",
+   TECHNICAL_REVIEW_REQUIRED:"학교매칭·응답·문항 기술검사 추가 확인",
+   BASIS_MISSING:"공개 근거 미등록",
+   BASIS_STALE:"변경된 집계에 대한 공개 근거 재검증",
+   BASIS_REVIEW_REQUIRED:"동의·재식별·소표본 등 추가 검토",
+   BASIS_VERIFIED_AWAITING_APPROVAL:"근거 확인 · 학교별 승인 대기",
+   APPROVAL_RECORDED_CURRENT:"현재 근거와 일치하는 학교별 승인"
+ };
+ function renderWaterway(data){
+   const d=data?.version===1?data:null;
+   const source=d?.source||{},sync=d?.sync||{},agg=d?.aggregate||{};
+   const pre=d?.preflight||{},total=knownCount(d?.preflight_total);
+   const preValid=total!==null&&Object.keys(pre).every(k=>Object.hasOwn(preflightLabels,k)&&knownCount(pre[k])!==null)
+     &&Object.values(pre).reduce((sum,n)=>sum+n,0)===total;
+   const getReason=k=>preValid?(pre[k]??0):null;
+   const basisA=getReason("BASIS_VERIFIED_AWAITING_APPROVAL"),basisB=getReason("APPROVAL_RECORDED_CURRENT");
+   put("adminWaterwayRaw",countText(source.live_raw_rows));
+   put("adminWaterwaySync",countText(sync.source_rows));
+   put("adminWaterwayMatched",countText(sync.matched_rows));
+   put("adminWaterwayValid",countText(agg.individual_valid_rows));
+   put("adminWaterwayAggregated",countText(agg.rows));
+   put("adminWaterwayBasis",countText(basisA===null||basisB===null?null:basisA+basisB));
+   put("adminWaterwayApproved",countText(basisB));
+   put("adminWaterwaySourceNote",d?"최근 서버 수신 본조사 "+countText(source.last_observed_official_rows)+"건 · "+formatDate(source.last_observed_at)+(source.live_raw_status==="SOURCE_NOT_CONNECTED"?" · 원본 직접연결 미확인":""):"원본 연결 확인 불가");
+   const syncLabels={NO_SNAPSHOT:"전송 기록 없음",NEWER_COUNT_DIFFERS:"최근 응답 수신 기록과 집계 기준 수치가 다름",SNAPSHOT_STALE:"마지막 집계 26시간 초과",SNAPSHOT_RECORDED:"집계 기록 확인"};
+   put("adminWaterwaySyncNote",d?(syncLabels[sync.status]||"전송 상태 미확인")+" · "+formatDate(sync.snapshot_at):"전송 기록 확인 불가");
+   put("adminWaterwayMatchNote",d?"미매칭 "+countText(sync.unmatched_rows)+"건 · 사전조사 "+countText(sync.prelaunch_rows)+"건 · 날짜 확인 "+countText(sync.undated_rows)+"건":"매칭 기록 확인 불가");
+   put("adminWaterwayValidityNote",d?"검수 대기 "+countText(agg.individual_review_rows)+"건 · 개별 응답 검수 서버 수집 미연결":"응답 검수 기록 확인 불가");
+   put("adminWaterwayAggregateNote",d?countText(agg.schools)+"개교 · "+formatDate(agg.snapshot_at)+(agg.same_snapshot===true?" · 동기화 시점 일치":" · 동기화 시점 일치 미확인"):"집계 기록 확인 불가");
+   put("adminWaterwayBasisNote",preValid?"증빙 미등록 "+countText(getReason("BASIS_MISSING"))+"개교 · 기술 확인 "+countText(getReason("TECHNICAL_REVIEW_REQUIRED"))+"개교":"공개 사전검사 확인 불가");
+   put("adminWaterwayStatus",d?"진단 시각 "+formatDate(d.checked_at)+" · 각 단계의 단위와 기준 시각을 구분합니다.":"공개 흐름 상세 진단을 가져오지 못했습니다. 관리자 인증 및 서버 연결을 확인하세요.");
+   put("adminWaterwayFailure",d?"마지막 실패 시각: "+(sync.last_failure_at?formatDate(sync.last_failure_at):"미확인")+" · 원인: "+(typeof sync.last_failure_reason==="string"&&sync.last_failure_reason?sync.last_failure_reason:"Apps Script 실행 기록 미연결 (실패 없음으로 해석하지 않음)"):"마지막 실패 시각 및 원인: 미확인");
+   const list=$("adminWaterwayReasons");
+   if(list){
+     list.replaceChildren();
+     if(!preValid)list.append(build("li","","사전검사 결과 확인 불가"));
+     else for(const [key,label] of Object.entries(preflightLabels))list.append(build("li","",label+" · "+countText(getReason(key))+"개교"));
+   }
+ }
  const renderPipeline=payload=>{
    const response=payload?.response_trust||{};
    const aggregate=payload?.aggregation_accuracy||{};
@@ -81,9 +125,11 @@
      if(token!==pipelineSeq||!ready)return;
      if(!data?.status||data.status.year!==2026)throw Error("unexpected_status");
      renderPipeline(data.status);
+     renderWaterway(data.waterway_status==="OK"?data.waterway:null);
      renderLevelApprovals(data.levels);
    }catch{
      if(token!==pipelineSeq||!ready)return;
+     renderWaterway(null);
      renderLevelApprovals([]);
      if($("adminPipelineStatus"))$("adminPipelineStatus").textContent=
        "단계별 수치를 가져오지 못했습니다. 관리자 세션과 서버 업데이트 상태를 확인하세요.";
@@ -395,6 +441,7 @@
  }
  function reset(){
   ready=false;role="";seq++;page=0;pipelineSeq++;
+  renderWaterway(null);
   renderLevelApprovals([]);
   bulkCandidates=0;
   $("adminBulkApprovalApply").disabled=true;
@@ -470,12 +517,15 @@
    const rows=Array.isArray(items)?items:[];
    for(let level=0;level<=2;level++){
      const data=rows.find(x=>x?.level===level),approved=data?.approved===true;
-     const eligible=Number(data?.eligible_schools)||0,covered=Number(data?.covered_schools)||0;
+     const eligible=knownCount(data?.eligible_schools),covered=knownCount(data?.covered_schools);
+     const released=knownCount(data?.released_schools);
+     put("adminWaterwayEligible"+level,countText(eligible));
+     put("adminWaterwayReleased"+level,countText(released));
      const button=$("adminLevelReleaseButton"+level),revoke=$("adminLevelReleaseRevoke"+level);
      $("adminLevelReleaseState"+level).textContent=!data?"확인 불가":approved?"승인됨":"승인 대기";
-     $("adminLevelReleaseCovered"+level).textContent=data?(approved?covered:eligible).toLocaleString("ko-KR"):"—";
+     $("adminLevelReleaseCovered"+level).textContent=countText(covered);
      button.textContent=approved?(covered<eligible?"새로 승인된 학교 반영":"Lv."+level+" 승인 완료"):"Lv."+level+" 최종 공개 승인";
-     button.disabled=!data||role!=="owner"||eligible<1||(approved&&covered>=eligible);
+     button.disabled=!data||role!=="owner"||eligible===null||covered===null||eligible<1||(approved&&covered>=eligible);
      revoke.hidden=!approved||role!=="owner";
      revoke.disabled=!approved||role!=="owner";
    }
