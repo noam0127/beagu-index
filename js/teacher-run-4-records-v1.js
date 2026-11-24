@@ -6,7 +6,7 @@
  const bossWindows=Object.freeze({confusion:20,demands:65,responsibility:115,burnout:165,final:185});
  const fields=new Set(["version","game","difficulty","baseScore","score","survivalSeconds","age","victory","bossIds","maxCombo","hits","crises","leaveDays","allies"]);
  const int=(v,min,max)=>Number.isInteger(v)&&v>=min&&v<=max;
- function score(base,tier,win){if(!Object.hasOwn(tiers,tier)||!int(base,0,200000)||typeof win!=="boolean")throw Error("invalid_score");return Math.floor(base*tiers[tier]*(win?2:1)/10);}
+ function score(base,tier,win){if(!Object.hasOwn(tiers,tier)||!int(base,0,Math.floor(Number.MAX_SAFE_INTEGER/48))||typeof win!=="boolean")throw Error("invalid_score");return Math.floor(base*tiers[tier]*(win?2:1)/10);}
  function validate(result,elapsed,expectedTier){
   if(!result||typeof result!=="object"||Array.isArray(result)||Object.keys(result).some(k=>!fields.has(k)))throw Error("invalid_fields");
   const r=result,s=r.survivalSeconds;

@@ -92,3 +92,5 @@ assert.throws(()=>rp.validate(rr,100,'normal'));assert.throws(()=>rp.validate(rr
 assert.match(preview,/beaguRun4LocalRecordsV1/);assert.doesNotMatch(preview,/new window\.ArcadeLeaderboard/);
 const rankingDraft=read('docs/run4-ranking-preflight/schema-draft.sql');assert.match(rankingDraft,/session_id uuid primary key/);assert.match(rankingDraft,/enable row level security/);assert.match(rankingDraft,/where r.verification_status='verified'/);assert.doesNotMatch(rankingDraft,/alter table public\.arcade_game_scores\b|drop table/i);
 console.log('PASS version-separated local results and impossible-summary rejection; staged SQL remains unexecuted');
+
+assert.equal(rp.score(200001,'hard',true),800004);assert.throws(()=>rp.validate({...rr,baseScore:200001,score:600003},190,'normal')); // render experimental result, reject oversized official envelope
