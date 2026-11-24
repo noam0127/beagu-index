@@ -43,6 +43,22 @@ class Rehearsal(unittest.TestCase):
             for k in ("actual_postgresql_remote_restore_verified","production_backup_executed","independent_observer_verified","execution_enabled"):self.assertFalse(result[k])
             self.assertEqual(list(root.iterdir()),[])
             with self.assertRaisesRegex(ValueError,"drive_upload_readback_mismatch"):r.rehearsal(root,C,lambda folder,raw:Fake(folder,raw,True),Refresh())
+    def test_preflight_is_read_only_and_error_output_is_safe(self):
+        class ReadOnly:
+            def request(self,host,method,path,headers,body=None):
+                if host==s.TOKEN_HOST:return Refresh().request()
+                assert method=="GET" and body is None
+                return Fake(C["folder_id"],b"").request(host,method,path,headers,body)
+        def denied(*a,**k):raise AssertionError("upload transport constructed")
+        with tempfile.TemporaryDirectory() as temp:
+            state={}
+            result=r.rehearsal(pathlib.Path(temp).resolve(),C,denied,ReadOnly(),preflight_only=True,state=state)
+            self.assertTrue(result["local_fixture_verified"] and result["folder_private"])
+            self.assertFalse(result["upload_attempted"] or result["execution_enabled"])
+            self.assertFalse(state.get("upload_may_be_attempted"))
+        self.assertEqual(r.error_code(ValueError("drive_upload_readback_mismatch")),"drive_upload_readback_mismatch")
+        self.assertEqual(r.error_code(ValueError("untrusted secret payload")),"unclassified_error")
+        self.assertEqual(r.error_code(OSError("private path")),"local_io_error")
     def test_real_transport_denies_unrelated_effects(self):
         def forbidden(*a,**k):raise AssertionError("network attempted")
         t=r.FixtureTransport(C["folder_id"],v.MAGIC+b"fixture",connection=forbidden)

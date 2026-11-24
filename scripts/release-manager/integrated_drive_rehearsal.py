@@ -23,6 +23,14 @@ PINS=("a"*64,"b"*40,"c"*40)
 ROWS=((1,"synthetic-a",7),(2,"synthetic-b",12),(3,"synthetic-c",0))
 KEY_ID="drive-synthetic-rehearsal-v1"
 MAX_FIXTURE=512*1024
+# Only static internal error codes may be emitted. Never echo exception text.
+SAFE_ERRORS=frozenset(["credential_inside_checkout_or_link","credential_size_changed","drive_checkpoint_changed","drive_folder_not_writable","drive_invalid_upload_session","drive_live_transport_disabled","drive_metadata_unconfirmed","drive_not_folder","drive_not_private","drive_owner_mismatch","drive_permissions_not_private","drive_upload_id_missing","drive_upload_metadata_mismatch","drive_upload_outcome_uncertain","drive_upload_readback_mismatch","drive_upload_session_unconfirmed","duplicate_vault_key","explicit_fixture_upload_required","fixture_create_denied","fixture_endpoint_denied","fixture_integrity_failure","fixture_network_or_outcome_uncertain","fixture_object_sha256","fixture_put_denied","fixture_readback_repeated","fixture_remote_bytes_missing","fixture_response_too_large","fixture_restore_mismatch","fixture_restore_verified","fixture_rows","fixture_rows_changed","fixture_too_large","fixture_verified","invalid_drive_file_id","invalid_drive_metadata","invalid_drive_path","invalid_drive_pins","invalid_drive_token","invalid_fixture_transport","invalid_key_descriptor","invalid_oauth_access","invalid_oauth_client","invalid_oauth_credential","invalid_oauth_response","invalid_private_oauth_config","invalid_release_pins","invalid_vault_fingerprint","invalid_vault_format","invalid_vault_header","invalid_vault_key","invalid_vault_key_length","invalid_vault_manifest","invalid_vault_manifest_size","invalid_vault_payload","invalid_vault_pin","invalid_vault_scope","missing_independent_vault_pin","oauth_config_required","oauth_refresh_denied","oauth_scope_or_expiry_not_verified","oauth_scope_verified","setup_endpoint_denied","setup_network_unavailable","setup_ready","setup_response_too_large","stale_or_tampered_vault","unsafe_credential_directory","unsafe_credential_file","unsafe_key_descriptor","unsafe_vault_directory","unsafe_vault_object","vault_authentication_failed","vault_checkpoint_mismatch","vault_dump_integrity_failure","vault_header_mismatch","vault_header_too_large","vault_manifest_pin_mismatch","vault_manifest_too_large","vault_object_too_large","vault_release_mismatch","vault_size_mismatch"])
+
+def error_code(exc):
+    if isinstance(exc,ValueError) and len(exc.args)==1 and isinstance(exc.args[0],str) and exc.args[0] in SAFE_ERRORS:return exc.args[0]
+    if isinstance(exc,sqlite3.Error):return "local_sqlite_error"
+    if isinstance(exc,OSError):return "local_io_error"
+    return "unclassified_error"
 
 class FixtureTransport:
     """Bounded TLS transport for one generated synthetic ciphertext only."""
@@ -80,7 +88,9 @@ def fingerprint(db):
         require(tuple(rows)==ROWS,"fixture_rows_changed")
         return {"row_count":len(rows),"sha256":vault.digest(vault.canonical({"schema":schema,"rows":rows}))}
 
-def rehearsal(parent,c,transport_factory=FixtureTransport,refresh_transport=None):
+def rehearsal(parent,c,transport_factory=FixtureTransport,refresh_transport=None,*,preflight_only=False,state=None):
+    state={} if state is None else state
+    state["phase"]="local_fixture"
     # Only a fresh fixture created here can reach the network. No path to
     # a real DB, SQL import, user-supplied payload, or production key.
     setup.validate_config(c)
@@ -97,11 +107,21 @@ def rehearsal(parent,c,transport_factory=FixtureTransport,refresh_transport=None
         pin=vault.seal(send,key,KEY_ID,manifest,data,*PINS)
         encrypted=vault.read_private(send,pin["checkpoint_id"]+".vault")
         require(len(encrypted)<=MAX_FIXTURE,"fixture_too_large")
-        token=setup.refresh_access(c,refresh_transport or setup.SetupHTTPS(c["folder_id"]))
+        state["phase"]="oauth_refresh"
+        refresh_transport=refresh_transport or setup.SetupHTTPS(c["folder_id"])
+        token=setup.refresh_access(c,refresh_transport)
+        state["phase"]="folder_preflight"
+        if preflight_only:
+            adapter=drive.DriveCheckpoint(c["folder_id"],c["owner_permission_id"],refresh_transport)
+            folder=adapter.verify_folder(token,write=True)
+            return {"local_fixture_verified":True,"oauth_scope_verified":True,"folder_private":folder["folder_private"],"folder_add_capability_observed":folder["write_capability_observed"],"upload_attempted":False,"execution_enabled":False}
+        state["phase"]="drive_transfer"
         transport=transport_factory(c["folder_id"],encrypted)
         adapter=drive.DriveCheckpoint(c["folder_id"],c["owner_permission_id"],transport)
+        state["upload_may_be_attempted"]=True
         receipt=adapter.transfer_fixture(send,key,KEY_ID,pin,*PINS,token,token)
         # The restore input must be the actual downloaded bytes, not local copy.
+        state["phase"]="downloaded_fixture_restore"
         downloaded=transport.downloaded
         require(isinstance(downloaded,bytes) and vault.digest(downloaded)==pin["object_sha256"],"fixture_remote_bytes_missing")
         receive=root/"receive";receive.mkdir(mode=0o700)
@@ -116,15 +136,17 @@ def main():
     p=argparse.ArgumentParser(description="Upload one small encrypted synthetic fixture, download and restore locally")
     p.add_argument("--oauth-file",required=True)
     p.add_argument("--key-file",required=True,help="Check existing key only; fixture uses separate temporary key")
-    p.add_argument("--confirm-synthetic-upload",action="store_true")
+    group=p.add_mutually_exclusive_group(required=True)
+    group.add_argument("--confirm-synthetic-upload",action="store_true")
+    group.add_argument("--preflight-only",action="store_true",help="Local fixture and read-only Google folder checks; no upload")
     a=p.parse_args()
+    state={"phase":"local_credentials"}
     try:
-        require(a.confirm_synthetic_upload,"explicit_fixture_upload_required")
         setup.key_file(a.key_file)
         c=setup.read_config(a.oauth_file)
-        result=rehearsal(pathlib.Path(a.oauth_file).absolute().parent,c)
+        result=rehearsal(pathlib.Path(a.oauth_file).absolute().parent,c,preflight_only=a.preflight_only,state=state)
         print(json.dumps(result,sort_keys=True))
-    except (ValueError,OSError,KeyError,TypeError,sqlite3.Error):
-        print(json.dumps({"fixture_verified":False,"remote_object_may_exist":True,"execution_enabled":False}))
+    except (ValueError,OSError,KeyError,TypeError,sqlite3.Error) as exc:
+        print(json.dumps({"fixture_verified":False,"phase":state["phase"],"reason":error_code(exc),"remote_object_may_exist":bool(state.get("upload_may_be_attempted")),"execution_enabled":False}))
         raise SystemExit(1) from None
 if __name__=="__main__":main()
