@@ -26,3 +26,25 @@ begin
  if public.beagu_2026_level_school_published('A000001',0) then raise exception 'privacy gate bypass'; end if;
  raise notice 'PASS: source counts, owner MFA, independent tier approval and revocation, privacy gate';
 end $$;
+
+-- Use actual anonymous role, not only privileged helper calls.
+update beagu_private.beagu_2026_publication_basis_review set personal_data_reviewed=true;
+do $$ begin
+ if has_column_privilege('anon','public.beagu_school_report_yearly','valid_observation_count','select') or
+ has_column_privilege('authenticated','public.beagu_school_report_yearly','release_evidence','select') then raise exception 'private column permission'; end if;
+ if has_function_privilege('anon','public.beagu_2026_level_school_published(text,integer)','execute') then raise exception 'internal RPC exposed'; end if;
+end $$;
+set role anon;
+do $$ begin
+ if (select count(school_id) from public.beagu_school_report_yearly where survey_year=2026)<>1 then raise exception 'Lv0 approved direct row absent'; end if;
+ if (select count(school_id) from public.beagu_school_report_yearly where survey_year=2025)<>1 then raise exception 'historical regression'; end if;
+end $$;
+reset role;
+select public.beagu_2026_set_level_final_approval(0,'00000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002','REVOKE');
+set role authenticated;
+do $$ begin
+ if exists(select school_id from public.beagu_school_report_yearly where survey_year=2026) then raise exception 'revoked direct row leaked'; end if;
+ if (select count(school_id) from public.beagu_school_report_yearly where survey_year=2025)<>1 then raise exception 'historical regression'; end if;
+ raise notice 'PASS: real RLS, column privileges, revoked Lv0, historical continuity';
+end $$;
+reset role;
