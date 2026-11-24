@@ -27,6 +27,9 @@ jobs:
           printf '%s\n' 'create role anon;' 'create role authenticated;' 'create role service_role bypassrls;' | psql_local
           psql_local < tests/account-v1-postgres-fixture.sql
           psql_local < supabase/migrations/20261121103000_beagu_postit_member_auth.sql
+          psql_local <<'SQL'
+          INSERT INTO public.beagu_postit_member_accounts(auth_user_id,identity_visitor_id,author_uid) VALUES('00000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002','60000000-0000-4000-8000-000000000002');
+          SQL
           psql_local < supabase/account-identity-v1.sql
           psql_local < supabase/account-provisional-v1.sql
           psql_local < tests/account-v1-postgres-assertions.sql
