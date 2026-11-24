@@ -98,6 +98,13 @@ create trigger integrated_production_legacy_insert_guard before insert on public
 create trigger integrated_production_state_guard before update on public.beagu_site_release_state_v1
  for each row execute function public.beagu_integrated_production_legacy_guard_v1();
 
+create function public.beagu_integrated_production_active_v1()
+returns boolean language sql stable security invoker set search_path=pg_catalog,public as $$
+ select exists(select 1 from public.beagu_integrated_production_jobs_v1 where status in ('queued','running','blocked','verified'))
+$$;
+revoke all on function public.beagu_integrated_production_active_v1() from public,anon,authenticated;
+grant execute on function public.beagu_integrated_production_active_v1() to service_role;
+
 create function public.beagu_integrated_production_transition_v1(p_action text,p jsonb)
 returns jsonb language plpgsql security invoker set search_path=pg_catalog,public as $$
 declare s public.beagu_site_release_state_v1%rowtype;

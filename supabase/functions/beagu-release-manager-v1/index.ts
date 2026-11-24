@@ -501,6 +501,13 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
 async function workerAction(input:Record<string,unknown>,origin:string):Promise<Response>{
  const action=String(input.action||"");
  if(action==="worker_next"){
+  // Existing single publisher yields to an integrated job, including a blocked
+  // job. The DB trigger is the atomic backstop if a job starts after this check.
+  if(productionControlEnabled){
+   const {data,error:e}=await db.rpc("beagu_integrated_production_active_v1");
+   if(e||typeof data!=="boolean")return error("production_control_unavailable",503,origin);
+   if(data)return respond({has_job:false,integrated_release_active:true},200,origin);
+  }
   const s=await state();
   // A timed-out worker might already have published Pages. Never automatically
   // clear a running job or claim a replacement; the owner must reconcile it.
@@ -515,6 +522,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
     version:"관리자 배포 시스템 1.0",summary:"관리자 업데이트 페이지 최초 설치",status:"queued",
     public_data_blob_sha:publicDataBlob
    }).select("*").single();
+   if(e?.code==="55000")return respond({has_job:false,integrated_release_active:true},200,origin);
    if(e)throw Error("bootstrap_unavailable");job=data;
   }
   if(!job&&s.production_sha&&s.public_data_blob_sha!==publicDataBlob){
@@ -523,6 +531,7 @@ async function workerAction(input:Record<string,unknown>,origin:string):Promise<
     version:s.production_version||"운영 데이터",summary:"공개 학교 목록 자동 갱신",
     status:"queued",public_data_blob_sha:publicDataBlob
    }).select("*").single();
+   if(e?.code==="55000")return respond({has_job:false,integrated_release_active:true},200,origin);
    if(e)throw Error("auto_data_refresh_unavailable");
    job=data;
   }

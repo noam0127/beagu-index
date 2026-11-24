@@ -17,6 +17,8 @@ import integrated_server_control as server
 import integrated_package as package
 import integrated_recovery as recovery
 import integrated_production as production
+import integrated_production_pages as prod_pages
+import tarfile
 import json
 import base64
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -403,6 +405,15 @@ class Runner(unittest.TestCase):
             job=rpc("create",pins)["id"]
             ledger=production.ProductionLedger(rpc,"42:1")
             self.assertEqual(ledger.snapshot(job)["status"],"queued")
+            self.assertEqual(server.execute(cluster,b"SELECT public.beagu_integrated_production_active_v1();","service_role").strip(),b"t")
+            with self.assertRaises(RuntimeError):
+                server.execute(cluster,b"SELECT public.beagu_integrated_production_active_v1();","anon")
+            # Lock remains effective if the execution gate is turned off during an incident.
+            server.execute(cluster,b"UPDATE public.beagu_integrated_production_gate_v1 SET enabled=false;")
+            self.assertEqual(server.execute(cluster,b"SELECT public.beagu_integrated_production_active_v1();","service_role").strip(),b"t")
+            with self.assertRaises(RuntimeError):
+                server.execute(cluster,b"INSERT INTO public.beagu_site_release_jobs_v1(action,target,version,summary,status) VALUES('data_refresh','production','fixture','fixture','queued');","service_role")
+            server.execute(cluster,b"UPDATE public.beagu_integrated_production_gate_v1 SET enabled=true;")
             self.assertNotIn("lease",ledger.snapshot(job)["steps"][0])
             with self.assertRaisesRegex(ValueError,"owner_approval_required"):ledger.create(None,None,None)
             adapter=Adapter(self.base,cluster,self.objects,self.git)
@@ -482,5 +493,33 @@ class Runner(unittest.TestCase):
             self.assertEqual(ledger.snapshot(job)["status"],"completed")
             self.assertEqual(server.execute(cluster,b"SELECT production_sha||':'||public_data_blob_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.candidate+":"+blob)
             self.assertEqual(server.execute(cluster,("SELECT count(*) FROM public.beagu_site_release_history_v1 WHERE job_id='"+job+"';").encode()).strip(),b"1")
+
+    def test_production_pages_pinned_overlay_and_stamp(self):
+        # Separate synthetic tree; no changes to the original fixture recipe.
+        g.write(self.git,"CNAME",b"baeguindex.com\n")
+        g.write(self.git,"release-info.json",b'{"schema":1,"version":"v1.10.1","environment":"candidate","commit":null}')
+        g.write(self.git,prod_pages.OVERLAY,b'{"data":"candidate"}')
+        g.write(self.git,"admin-updates.html",b"owner UI")
+        sha=g.commit(self.git)
+        overlay=g.run(self.git,"rev-parse",sha+":"+prod_pages.OVERLAY)
+        g.write(self.git,prod_pages.OVERLAY,b'{"data":"unapproved HEAD"}')
+        g.commit(self.git)
+        verified={**self.verified,"candidate_sha":sha,"version":"v1.10.1"}
+        paths=sorted(prod_pages.REQUIRED|{"admin-updates.html"})
+        inv,contents=prod_pages.inventory(self.git,verified,overlay,paths,"2026-11-24T00:00:00Z")
+        self.assertEqual(contents[prod_pages.OVERLAY],b'{"data":"candidate"}')
+        self.assertEqual(json.loads(contents["release-info.json"])["commit"],sha)
+        self.assertEqual(json.loads(contents["release-info.json"])["environment"],"production")
+        pin=package.hash_bytes(package.canonical(inv))
+        dest=self.objects/"production-pages.tar"
+        proof=prod_pages.build(self.git,verified,inv,pin,dest)
+        self.assertFalse(proof["execution_enabled"])
+        with tarfile.open(dest) as archive:
+            self.assertEqual(archive.getnames(),paths)
+            self.assertEqual(archive.extractfile(prod_pages.OVERLAY).read(),contents[prod_pages.OVERLAY])
+        with self.assertRaisesRegex(ValueError,"production_inventory_pin_mismatch"):
+            prod_pages.build(self.git,verified,inv,"0"*64,self.objects/"bad.tar")
+        with self.assertRaisesRegex(ValueError,"invalid_production_public_paths"):
+            prod_pages.inventory(self.git,verified,overlay,paths+["supabase/account.sql"],"2026-11-24T00:00:00Z")
 
 if __name__=="__main__":unittest.main()
