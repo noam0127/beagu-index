@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
 for(const p of ['index.html','search.html','search-lv1.html','statistics.html','challenge.html']){
  const html=read(p);assert.equal((html.match(/js\/beagu-release-info-v1\.js/g)||[]).length,1);
- assert.match(html,/<a href="games.html">학교체험<\/a>/);assert.match(html,/학교비교/);
+ assert.match(html,/<a href="games.html">플레이코트<\/a>/);assert.match(html,/학교비교/);
 }
 assert.doesNotMatch(read('index.html'),/id="teacher-game-title"/);assert.match(read('index.html'),/href="games.html">학교별 근무난이도 게임으로 확인하기/);
 for(const p of ['search.html','search-lv1.html'])assert.match(read(p),/beagu-search-hero-magnifier/);
