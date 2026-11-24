@@ -25,8 +25,9 @@ def execute(cluster,data,role="postgres"):
     return cluster.exec("psql","-X","-qAt","-v","ON_ERROR_STOP=1","-U","postgres","-d",DB,data=prefix+data)
 
 class PostgresLedger:
-    def __init__(self,cluster):
+    def __init__(self,cluster,worker_run="1:1"):
         self.cluster=cluster
+        self.worker_run=worker_run
 
     def rpc(self,action,payload):
         runner.require(action in ("create","claim","finish","status"),"invalid_control_action")
@@ -49,13 +50,13 @@ class PostgresLedger:
         verify.validate_recipe(verified,registry)
         recipe=next(r for r in registry["recipes"] if r["plan_sha256"]==verified["plan_sha256"])
         runner.require(observed_base==verified["base_sha"],"stale_or_changed_plan")
-        value=self.rpc("claim",{"job_id":job,"observed_base":observed_base,"candidate_sha":verified["candidate_sha"],"plan_sha256":verified["plan_sha256"],"recipe_sha256":runner.digest(recipe)})
+        value=self.rpc("claim",{"job_id":job,"observed_base":observed_base,"candidate_sha":verified["candidate_sha"],"plan_sha256":verified["plan_sha256"],"recipe_sha256":runner.digest(recipe),"worker_run":self.worker_run})
         if value.get("completed"):return None
         runner.require(value["task"]==recipe["tasks"][value["idx"]],"stored_task_mismatch")
         return value
 
     def finish(self,job,claim,evidence=None):
-        self.rpc("finish",{"job_id":job,**claim,"evidence":evidence})
+        self.rpc("finish",{"job_id":job,**claim,"evidence":evidence,"worker_run":self.worker_run})
 
     def snapshot(self,job):
         return self.rpc("status",{"job_id":job})

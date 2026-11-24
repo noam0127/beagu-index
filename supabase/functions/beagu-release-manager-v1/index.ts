@@ -68,6 +68,117 @@ async function githubWorker(token:string):Promise<boolean>{
    ["schedule","push","workflow_dispatch"].includes(String(payload.event_name||""));
  }catch{return false;}
 }
+// Integrated fixture authentication is separate from the legacy Pages publisher.
+// No fixture configuration is accepted from the browser or candidate repository.
+const fixtureEnabled=Deno.env.get("BEAGU_INTEGRATED_FIXTURE_MODE")==="isolated_fixture_only";
+const fixtureWorkerSha=Deno.env.get("BEAGU_INTEGRATED_FIXTURE_WORKFLOW_SHA")||"";
+const fixtureRegistry=Deno.env.get("BEAGU_INTEGRATED_FIXTURE_TRUSTED_REGISTRY")||"";
+const HEX64=/^[a-f0-9]{64}$/;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+async function fixtureWorker(token:string){
+ if(!fixtureEnabled||!SHA.test(fixtureWorkerSha))return null;
+ try{
+  const {payload:p}=await jwtVerify(token,jwks,{issuer:"https://token.actions.githubusercontent.com",audience:"beagu-integrated-fixture-worker"});
+  if(p.repository!==repo||p.ref!=="refs/heads/main"||
+     p.workflow_ref!==repo+"/.github/workflows/beagu-release-controller.yml@refs/heads/main"||
+     p.workflow_sha!==fixtureWorkerSha||p.sha!==fixtureWorkerSha||p.event_name!=="workflow_dispatch"||
+     !/^[0-9]{1,24}$/.test(String(p.run_id||""))||!/^[0-9]{1,8}$/.test(String(p.run_attempt||"")))return null;
+  return String(p.run_id)+":"+String(p.run_attempt);
+ }catch{return null;}
+}
+function sortedJson(v:any):string{
+ if(Array.isArray(v))return "["+v.map(sortedJson).join(",")+"]";
+ if(v!==null&&typeof v==="object")return "{"+Object.keys(v).sort().map(k=>JSON.stringify(k)+":"+sortedJson(v[k])).join(",")+"}";
+ return JSON.stringify(v);
+}
+async function fixtureHash(v:any){
+ return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(sortedJson(v)))),b=>b.toString(16).padStart(2,"0")).join("");
+}
+function fixtureRecipe(plan:any,planSha:string){
+ const registry=JSON.parse(fixtureRegistry);
+ if(registry?.schema!==1||!Array.isArray(registry.recipes))throw Error("fixture_registry_invalid");
+ const matches=registry.recipes.filter((r:any)=>r?.plan_sha256===planSha);
+ if(matches.length!==1)throw Error("fixture_recipe_unavailable");
+ const r=matches[0];
+ if(r.base_sha!==plan.base_sha||r.candidate_sha!==plan.candidate_sha||
+    Object.keys(r).sort().join(",")!=="base_sha,candidate_sha,plan_sha256,tasks"||
+    !Array.isArray(r.tasks)||r.tasks.length<2||r.tasks.length>100)throw Error("fixture_recipe_invalid");
+ const order=["backup","apply_sql","apply_scheduler","deploy_edge","verify_backend","publish_pages","verify_live"];
+ const expected=new Map<string,any>(plan.inventory.filter((f:any)=>f.backend).map((f:any)=>[f.path,f]));
+ if([...expected.values()].some(f=>f.manual_review_required||!["added","modified"].includes(f.status)))throw Error("manual_backend_review_required");
+ const used=new Set<string>(),edges=new Set<string>(),ops:string[]=[];
+ for(const t of r.tasks){
+  if(!t||Object.keys(t).sort().join(",")!=="edge_function,files,op"||!order.includes(t.op)||!Array.isArray(t.files))throw Error("fixture_recipe_invalid");
+  if(ops.length&&order.indexOf(ops[ops.length-1])>order.indexOf(t.op))throw Error("fixture_recipe_order");
+  ops.push(t.op);
+  const kind=({apply_sql:"db_review",apply_scheduler:"scheduler_review",deploy_edge:"edge_review"} as Record<string,string>)[t.op];
+  if(kind){
+   if(!t.files.length||(t.op!=="deploy_edge"&&(t.files.length!==1||t.edge_function!==null)))throw Error("fixture_recipe_files");
+   if(t.op==="deploy_edge"){
+    if(typeof t.edge_function!=="string"||!plan.edge_functions.includes(t.edge_function)||edges.has(t.edge_function))throw Error("fixture_recipe_edge");
+    edges.add(t.edge_function);
+   }
+   for(const pin of t.files){
+    const f=expected.get(pin?.path);
+    if(!pin||Object.keys(pin).sort().join(",")!=="path,sha256"||!f||used.has(pin.path)||
+      f.review_kinds.length!==1||f.review_kinds[0]!==kind||typeof pin.sha256!=="string"||!HEX64.test(pin.sha256)||
+      (t.op==="deploy_edge"&&!pin.path.startsWith("supabase/functions/"+t.edge_function+"/")))throw Error("fixture_recipe_pin");
+    used.add(pin.path);
+   }
+  }else if(t.files.length||t.edge_function!==null)throw Error("fixture_recipe_parameters");
+ }
+ const checkpoints=ops.filter(op=>["backup","verify_backend","publish_pages","verify_live"].includes(op));
+ if(JSON.stringify(checkpoints)!==JSON.stringify(expected.size?["backup","verify_backend","publish_pages","verify_live"]:["publish_pages","verify_live"])||
+    used.size!==expected.size||edges.size!==plan.edge_functions.length)throw Error("fixture_recipe_incomplete");
+ return r;
+}
+async function fixtureRpc(action:string,payload:Record<string,unknown>,origin:string){
+ const {data,error:e}=await db.rpc("beagu_integrated_fixture_transition_v1",{p_action:action,p:{...payload,scope:"isolated_fixture_only"}});
+ if(e||!data)return error("fixture_control_unavailable",503,origin);
+ if(data.error)return error(String(data.error),409,origin);
+ return respond({...data,scope:"isolated_fixture_only",execution_enabled:false},200,origin);
+}
+async function fixtureAdmin(input:Record<string,unknown>,userId:string,origin:string){
+ if(!fixtureEnabled)return error("integrated_fixture_disabled",409,origin);
+ if(input.action==="integrated_fixture_status"){
+  if(typeof input.job_id!=="string"||!UUID.test(input.job_id))return error("invalid_job_id",400,origin);
+  return fixtureRpc("status",{job_id:input.job_id},origin);
+ }
+ if(input.action!=="integrated_fixture_create")return error("invalid_action",400,origin);
+ const s=await state(),sha=String(input.candidate_sha||"");
+ if(input.confirmed!==true||input.expected_production_sha!==s.production_sha||sha!==s.draft_sha||
+    !s.production_sha||typeof input.plan_sha256!=="string"||!HEX64.test(input.plan_sha256)||
+    typeof input.recipe_sha256!=="string"||!HEX64.test(input.recipe_sha256))return error("direct_confirmation_required",409,origin);
+ const candidate=await directCandidate(s.production_sha,sha);
+ if("error" in candidate)return error(candidate.error!,candidate.status!,origin);
+ if(candidate.version!==s.draft_version||candidate.summary!==s.draft_summary)return error("direct_version_mismatch",409,origin);
+ const result=await makeReviewPlan(s.production_sha,sha,candidate.version,candidate.summary,candidate.delta_files);
+ if(result.plan_sha256!==input.plan_sha256)return error("integrated_plan_changed",409,origin);
+ let recipe;
+ try{recipe=fixtureRecipe(result.plan,result.plan_sha256);}catch{return error("fixture_recipe_unavailable",409,origin);}
+ const recipeSha=await fixtureHash(recipe);
+ if(recipeSha!==input.recipe_sha256)return error("fixture_recipe_changed",409,origin);
+ const pins={base_sha:s.production_sha,candidate_sha:sha,plan_sha256:result.plan_sha256,recipe_sha256:recipeSha};
+ const approvalSha=await fixtureHash({scope:"isolated_fixture_only",...pins,confirmed:true,approved_by:userId});
+ // RPC rechecks release state under lock. Client cannot submit tasks, evidence or actor.
+ return fixtureRpc("create",{...pins,approval_sha256:approvalSha,confirmed:true,tasks:recipe.tasks},origin);
+}
+async function fixtureWorkerAction(input:Record<string,unknown>,run:string,origin:string){
+ if(typeof input.job_id!=="string"||!UUID.test(input.job_id))return error("invalid_job_id",400,origin);
+ if(input.action==="worker_integrated_fixture_claim"){
+  for(const key of ["observed_base","candidate_sha"])if(typeof input[key]!=="string"||!SHA.test(String(input[key])))return error("invalid_fixture_pin",400,origin);
+  for(const key of ["plan_sha256","recipe_sha256"])if(typeof input[key]!=="string"||!HEX64.test(String(input[key])))return error("invalid_fixture_pin",400,origin);
+  return fixtureRpc("claim",{job_id:input.job_id,observed_base:input.observed_base,candidate_sha:input.candidate_sha,
+   plan_sha256:input.plan_sha256,recipe_sha256:input.recipe_sha256,worker_run:run},origin);
+ }
+ if(input.action==="worker_integrated_fixture_finish"){
+  if(!Number.isInteger(input.idx)||Number(input.idx)<0||Number(input.idx)>=100||typeof input.lease!=="string"||!UUID.test(input.lease)||
+    !input.task||typeof input.task!=="object"||Array.isArray(input.task)||
+    !(input.evidence===null||(typeof input.evidence==="string"&&HEX64.test(input.evidence))))return error("invalid_step_receipt",400,origin);
+  return fixtureRpc("finish",{job_id:input.job_id,idx:input.idx,lease:input.lease,task:input.task,evidence:input.evidence,worker_run:run},origin);
+ }
+ return error("invalid_action",400,origin);
+}
 async function github(path:string){
  const response=await fetch(mainApi+path,{headers:{
   "Accept":"application/vnd.github+json","User-Agent":"beaguindex-release-v1",...(dispatchToken?{"Authorization":"Bearer "+dispatchToken}:{})
@@ -396,12 +507,18 @@ Deno.serve(async(req:Request)=>{
  catch{return error("invalid_json",400,origin);}
  const action=String(input.action||"");
  try{
+  if(action.startsWith("worker_integrated_fixture_")){
+   const run=await fixtureWorker(jwt);
+   if(!run)return error("worker_auth_denied",403,origin);
+   return await fixtureWorkerAction(input,run,origin);
+  }
   if(action.startsWith("worker_")){
    if(!(await githubWorker(jwt)))return error("worker_auth_denied",403,origin);
    return await workerAction(input,origin);
   }
   const userId=await owner(jwt);
   if(!userId)return error("admin_mfa_required",403,origin);
+  if(action.startsWith("integrated_fixture_"))return await fixtureAdmin(input,userId,origin);
   return await adminAction(input,userId,origin);
  }catch(e){
   console.error("site_release_failure",e instanceof Error?e.message:"unknown");

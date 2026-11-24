@@ -27,10 +27,12 @@ create table public.beagu_integrated_fixture_steps_v1(
  task jsonb not null,
  status text not null default 'pending' check(status in ('pending','running','done','blocked')),
  lease uuid,
+ worker_run text,
  evidence text check(evidence is null or evidence ~ '^[0-9a-f]{64}$'),
  error text,
  primary key(job_id,idx),
  check((status='running')=(lease is not null)),
+ check((status='running')=(worker_run is not null)),
  check((status='done')=(evidence is not null))
 );
 alter table public.beagu_integrated_fixture_jobs_v1 enable row level security;
@@ -83,7 +85,7 @@ begin
   n:=jsonb_array_length(p->'tasks');
   if n not between 2 and 100 then return jsonb_build_object('error','invalid_tasks'); end if;
   -- Additional defense; the trusted Python verifier checks file/recipe pins before calling.
-  for t in select null::uuid, (ord-1)::integer, task, 'pending'::text, null::uuid,null::text,null::text
+  for t in select null::uuid, (ord-1)::integer, task, 'pending'::text, null::uuid,null::text,null::text,null::text
     from jsonb_array_elements(p->'tasks') with ordinality as e(task,ord)
   loop
    op:=t.task->>'op';
@@ -123,12 +125,13 @@ begin
  if not found then return jsonb_build_object('error','unknown_job'); end if;
  if p_action='status' then
    return to_jsonb(j)||jsonb_build_object('scope','isolated_fixture_only','execution_enabled',false,'steps',
-    (select jsonb_agg(to_jsonb(x)-'lease'-'job_id' order by idx) from public.beagu_integrated_fixture_steps_v1 x where job_id=j.id));
+    (select jsonb_agg(to_jsonb(x)-'lease'-'worker_run'-'job_id' order by idx) from public.beagu_integrated_fixture_steps_v1 x where job_id=j.id));
  end if;
  if s.production_sha is distinct from j.base_sha or s.draft_sha is distinct from j.candidate_sha then
   return jsonb_build_object('error','stale_or_changed_plan');
  end if;
  if p_action='claim' then
+  if coalesce(p->>'worker_run','') !~ '^[0-9]{1,24}:[0-9]{1,8}$' then return jsonb_build_object('error','invalid_worker_run'); end if;
   if j.base_sha is distinct from p->>'observed_base' or j.candidate_sha is distinct from p->>'candidate_sha'
     or j.plan_sha is distinct from p->>'plan_sha256' or j.recipe_sha is distinct from p->>'recipe_sha256' then
    return jsonb_build_object('error','stale_or_changed_plan');
@@ -141,21 +144,21 @@ begin
    return jsonb_build_object('error','missing_prior_checkpoint');
   end if;
   lease_id:=gen_random_uuid();
-  update public.beagu_integrated_fixture_steps_v1 set status='running',lease=lease_id where job_id=j.id and idx=j.next_step;
+  update public.beagu_integrated_fixture_steps_v1 set status='running',lease=lease_id,worker_run=p->>'worker_run' where job_id=j.id and idx=j.next_step;
   update public.beagu_integrated_fixture_jobs_v1 set status='running' where id=j.id;
   return jsonb_build_object('idx',j.next_step,'lease',lease_id,'task',t.task);
  elsif p_action='finish' then
   if j.status<>'running' or to_jsonb(j.next_step) is distinct from p->'idx' then return jsonb_build_object('error','stale_step_receipt'); end if;
   select * into t from public.beagu_integrated_fixture_steps_v1 where job_id=j.id and idx=j.next_step for update;
-  if not found or t.status<>'running' or t.lease::text is distinct from p->>'lease' or t.task is distinct from p->'task' then
+  if not found or t.status<>'running' or t.lease::text is distinct from p->>'lease' or t.worker_run is distinct from p->>'worker_run' or t.task is distinct from p->'task' then
    return jsonb_build_object('error','wrong_step_lease');
   end if;
   if p->>'evidence' is null then
-   update public.beagu_integrated_fixture_steps_v1 set status='blocked',lease=null,error='effect_uncertain_or_failed' where job_id=j.id and idx=j.next_step;
+   update public.beagu_integrated_fixture_steps_v1 set status='blocked',lease=null,worker_run=null,error='effect_uncertain_or_failed' where job_id=j.id and idx=j.next_step;
    update public.beagu_integrated_fixture_jobs_v1 set status='blocked' where id=j.id;
   else
    if p->>'evidence' !~ '^[0-9a-f]{64}$' then return jsonb_build_object('error','invalid_step_evidence'); end if;
-   update public.beagu_integrated_fixture_steps_v1 set status='done',lease=null,evidence=p->>'evidence' where job_id=j.id and idx=j.next_step;
+   update public.beagu_integrated_fixture_steps_v1 set status='done',lease=null,worker_run=null,evidence=p->>'evidence' where job_id=j.id and idx=j.next_step;
    update public.beagu_integrated_fixture_jobs_v1 set next_step=j.next_step+1,
     status=case when j.next_step+1=j.task_count then 'completed' else 'running' end where id=j.id;
   end if;
