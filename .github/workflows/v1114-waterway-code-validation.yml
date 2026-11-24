@@ -1,0 +1,27 @@
+name: Waterway private pipeline code validation
+on:
+  push:
+    branches: [release/v1.11.4-waterway]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Validate generated source and private pipeline (offline fixtures only)
+        run: |
+          node scripts/build-2026-results.mjs
+          git diff --exit-code -- scripts/beagu-2026-noon-sync.gs supabase/functions/_shared/questionnaire-2026.mjs
+          node tests/2026-form-submit-private-sync.mjs
+          node tests/2026-question-results-pipeline.mjs
+          node tests/2026-release-consent-gate.mjs
+          node tests/2026-public-revalidation-fail-closed.mjs
+          node tests/2026-three-stage-review-flow.mjs
+          node tests/2026-one-response-publication-review.mjs
+          node tests/2026-public-projection-integrity.mjs
