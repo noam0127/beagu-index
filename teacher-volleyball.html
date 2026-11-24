@@ -163,6 +163,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
+<link rel="stylesheet" href="styles/arcade-light-touch-v1.css?v=1111">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="postit.html">포스트잇</a><a href="challenge.html">챌린지</a><a href="games.html" aria-current="page">게임</a></nav></div></header>
@@ -235,7 +236,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-fullscreen-v1.js?v=140"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
-<script src="js/arcade-mystery-items-v1.js?v=20261123-items"></script>
+<script src="js/arcade-mystery-items-v1.js?v=20261123-items&amp;rev=1111"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script>
 (function () {
@@ -470,7 +471,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     for(const d of mysteryDrops)mystery.drawMystery(ctx,d.x,d.y,d.item.good,21,state.activeFrames/60);
     for(const r of mysteryReveals){
       ctx.save();ctx.globalAlpha=Math.min(1,r.ttl/24);
-      mystery.drawReveal(ctx,r.item,r.x,r.y-(105-r.ttl)*.42,23);ctx.restore();
+      mystery.drawReveal(ctx,r.item,Math.max(26,Math.min(W-26,r.x)),Math.max(26,Math.min(FLOOR-26,r.y-(105-r.ttl)*.42)),23);ctx.restore();
     }
   }
   function mysteryBrief(){
