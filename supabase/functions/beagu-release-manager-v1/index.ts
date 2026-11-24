@@ -225,9 +225,35 @@ async function productionAdmin(input:Record<string,unknown>,userId:string,origin
  const approvalSha=await fixtureHash({scope:productionScope,...pins,confirmed:true,approved_by:userId});
  return productionRpc("create",{...pins,approval_sha256:approvalSha,confirmed:true,tasks:recipe.tasks},origin);
 }
+// Final observation is independently signed and bound to a reviewed served-file
+// inventory. The executor's success flag or its own hash is never sufficient.
+const productionFinalKey=Deno.env.get("BEAGU_INTEGRATED_PRODUCTION_OBSERVER_KEY")||"";
+const productionFinalPins=Deno.env.get("BEAGU_INTEGRATED_PRODUCTION_FINAL_PINS")||"";
+async function productionFinalize(input:Record<string,unknown>,origin:string){
+ const proof=input.proof as any;
+ if(!HEX64.test(productionFinalKey)||!productionFinalPins)return error("production_final_observer_not_connected",409,origin);
+ const q=proof?.statement;
+ if(!proof||Object.keys(proof).sort().join(",")!=="signature,statement"||!q||typeof q!=="object"||
+  Object.keys(q).sort().join(",")!=="base_sha,candidate_sha,final_evidence,job_id,plan_sha256,public_data_blob_sha,recipe_sha256,schema,scope,served_file_set_sha256,target,version"||
+  q.schema!==1||q.scope!==productionScope||q.target!=="https://baeguindex.com/"||q.job_id!==input.job_id||!UUID.test(q.job_id)||
+  !SHA.test(q.base_sha)||!SHA.test(q.candidate_sha)||q.base_sha===q.candidate_sha||!SHA.test(q.public_data_blob_sha)||
+  !HEX64.test(q.plan_sha256)||!HEX64.test(q.recipe_sha256)||!HEX64.test(q.final_evidence)||!HEX64.test(q.served_file_set_sha256)||
+  typeof q.version!=="string"||!allowedVersion.test(q.version)||typeof proof.signature!=="string"||!/^[A-Za-z0-9+/]{86}==$/.test(proof.signature))return error("invalid_final_observation",400,origin);
+ try{
+  const pins=JSON.parse(productionFinalPins);
+  const expected={base_sha:q.base_sha,candidate_sha:q.candidate_sha,plan_sha256:q.plan_sha256,recipe_sha256:q.recipe_sha256,public_data_blob_sha:q.public_data_blob_sha,served_file_set_sha256:q.served_file_set_sha256,version:q.version};
+  if(pins?.schema!==1||!Array.isArray(pins.pins)||pins.pins.filter((p:any)=>sortedJson(p)===sortedJson(expected)).length!==1)return error("final_observation_unapproved",409,origin);
+  const key=await crypto.subtle.importKey("raw",Uint8Array.from(productionFinalKey.match(/../g)!,x=>parseInt(x,16)),{name:"Ed25519"},false,["verify"]);
+  const signature=Uint8Array.from(atob(proof.signature),x=>x.charCodeAt(0));
+  if(signature.length!==64||!(await crypto.subtle.verify({name:"Ed25519"},key,signature,new TextEncoder().encode(sortedJson(q)))))return error("final_observer_signature_invalid",403,origin);
+  return productionRpc("finalize",{job_id:q.job_id,base_sha:q.base_sha,candidate_sha:q.candidate_sha,plan_sha256:q.plan_sha256,recipe_sha256:q.recipe_sha256,public_data_blob_sha:q.public_data_blob_sha,version:q.version,final_evidence:q.final_evidence,observer_proof_sha256:await fixtureHash(proof)},origin);
+ }catch{return error("final_observation_invalid",409,origin);}
+}
+
 async function productionWorkerAction(input:Record<string,unknown>,run:string,origin:string){
  if(typeof input.job_id!=="string"||!UUID.test(input.job_id))return error("invalid_job_id",400,origin);
  if(input.action==="worker_integrated_production_status")return productionRpc("status",{job_id:input.job_id},origin);
+ if(input.action==="worker_integrated_production_finalize")return productionFinalize(input,origin);
  if(input.action==="worker_integrated_production_claim"){
   for(const key of ["observed_base","candidate_sha"])if(typeof input[key]!=="string"||!SHA.test(String(input[key])))return error("invalid_production_pin",400,origin);
   for(const key of ["plan_sha256","recipe_sha256"])if(typeof input[key]!=="string"||!HEX64.test(String(input[key])))return error("invalid_production_pin",400,origin);

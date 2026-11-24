@@ -17,7 +17,7 @@ API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-release-manager
 PRODUCTION_WORKER_TRANSPORT_ENABLED=False
 AUDIENCE="beagu-integrated-production-worker"
 MAX_RESPONSE=2*1024*1024
-ACTIONS={"status","claim","finish"}
+ACTIONS={"status","claim","finish","finalize"}
 
 class ProductionLedger(control.PostgresLedger):
     """RPC transport is injected; no database password is passed to a worker."""
@@ -32,7 +32,14 @@ class ProductionLedger(control.PostgresLedger):
         r.require(result.get("scope")==SCOPE and result.get("execution_enabled") is True,"production_execution_disabled")
         return result
     def create(self,*args):raise ValueError("owner_approval_required")
-    def finalize(self,*args):raise ValueError("production_final_observer_not_connected")
+    def finalize(self,job,verified,registry,final_evidence,proof=None):
+        r.require(isinstance(proof,dict) and set(proof)=={"statement","signature"},"production_final_observer_not_connected")
+        v.validate_recipe(verified,registry)
+        recipe=next(x for x in registry["recipes"] if x["plan_sha256"]==verified["plan_sha256"])
+        q=proof["statement"]
+        r.require(isinstance(q,dict) and q.get("scope")==SCOPE and q.get("job_id")==job and q.get("base_sha")==verified["base_sha"] and q.get("candidate_sha")==verified["candidate_sha"] and q.get("plan_sha256")==verified["plan_sha256"] and q.get("recipe_sha256")==r.digest(recipe) and q.get("final_evidence")==final_evidence,"final_observation_pin_mismatch")
+        # The control Edge, not this worker, verifies the independent observer signature.
+        return self.rpc("finalize",{"job_id":job,"proof":proof})
 
 class ProductionRunner(r.ScopedRunner):
     scope=SCOPE

@@ -31,6 +31,8 @@ create table public.beagu_integrated_production_jobs_v1(
  plan_sha text not null check(plan_sha ~ '^[0-9a-f]{64}$'),
  recipe_sha text not null check(recipe_sha ~ '^[0-9a-f]{64}$'),
  approval_sha text not null check(approval_sha ~ '^[0-9a-f]{64}$'),
+ public_data_blob_sha text not null check(public_data_blob_sha ~ '^[0-9a-f]{40}$'),
+ observer_proof_sha text check(observer_proof_sha is null or observer_proof_sha ~ '^[0-9a-f]{64}$'),
  version text not null, summary text not null, final_evidence text check(final_evidence is null or final_evidence ~ '^[0-9a-f]{64}$'),
  status text not null default 'queued' check(status in ('queued','running','blocked','verified','completed','abandoned')),
  next_step integer not null default 0 check(next_step>=0),
@@ -118,6 +120,7 @@ begin
   if s.production_sha is distinct from p->>'base_sha' or s.draft_sha is distinct from p->>'candidate_sha' then
    return jsonb_build_object('error','stale_or_changed_plan');
   end if;
+  if coalesce(s.public_data_blob_sha,'') !~ '^[0-9a-f]{40}$' then return jsonb_build_object('error','public_data_overlay_unpinned'); end if;
   if s.draft_version is null or s.draft_summary is null then return jsonb_build_object('error','missing_version_metadata'); end if;
   n:=jsonb_array_length(p->'tasks');
   if n not between 4 and 100 then return jsonb_build_object('error','invalid_tasks'); end if;
@@ -141,7 +144,7 @@ begin
   select * into j from public.beagu_integrated_production_jobs_v1 where base_sha=p->>'base_sha' and candidate_sha=p->>'candidate_sha';
   if found then
    if j.plan_sha is distinct from p->>'plan_sha256' or j.recipe_sha is distinct from p->>'recipe_sha256'
-    or j.approval_sha is distinct from p->>'approval_sha256' or
+    or j.approval_sha is distinct from p->>'approval_sha256' or j.public_data_blob_sha is distinct from s.public_data_blob_sha or
     (select jsonb_agg(task order by idx) from public.beagu_integrated_production_steps_v1 where job_id=j.id) is distinct from p->'tasks' then
     return jsonb_build_object('error','duplicate_candidate_conflict');
    end if;
@@ -151,8 +154,8 @@ begin
      exists(select 1 from public.beagu_integrated_production_jobs_v1 where status in ('queued','running','blocked','verified')) then
    return jsonb_build_object('error','active_release_exists');
   end if;
-  insert into public.beagu_integrated_production_jobs_v1(base_sha,candidate_sha,plan_sha,recipe_sha,approval_sha,version,summary,task_count)
-    values(p->>'base_sha',p->>'candidate_sha',p->>'plan_sha256',p->>'recipe_sha256',p->>'approval_sha256',s.draft_version,s.draft_summary,n) returning id into jid;
+  insert into public.beagu_integrated_production_jobs_v1(base_sha,candidate_sha,plan_sha,recipe_sha,approval_sha,public_data_blob_sha,version,summary,task_count)
+    values(p->>'base_sha',p->>'candidate_sha',p->>'plan_sha256',p->>'recipe_sha256',p->>'approval_sha256',s.public_data_blob_sha,s.draft_version,s.draft_summary,n) returning id into jid;
   insert into public.beagu_integrated_production_steps_v1(job_id,idx,task)
     select jid,(ord-1)::integer,task from jsonb_array_elements(p->'tasks') with ordinality as e(task,ord);
   return jsonb_build_object('id',jid);
@@ -167,8 +170,43 @@ begin
  end if;
  -- Finalize is an isolated control-plane transaction, not a publication operation.
  -- The trusted caller must have independently verified all provider receipts first.
- if p_action='finalize' then return jsonb_build_object('error','production_final_observer_not_connected'); end if;
- if s.production_sha is distinct from j.base_sha or s.draft_sha is distinct from j.candidate_sha then
+ -- Only the trusted Edge route verifies the independent signature and supplies the proof digest.
+ if p_action='finalize' then
+  if j.plan_sha is distinct from p->>'plan_sha256' or j.recipe_sha is distinct from p->>'recipe_sha256'
+   or j.candidate_sha is distinct from p->>'candidate_sha' or j.base_sha is distinct from p->>'base_sha'
+   or j.public_data_blob_sha is distinct from p->>'public_data_blob_sha' or j.version is distinct from p->>'version'
+   or coalesce(p->>'observer_proof_sha256','') !~ '^[0-9a-f]{64}$' or coalesce(p->>'final_evidence','') !~ '^[0-9a-f]{64}$' then
+   return jsonb_build_object('error','finalization_pin_mismatch');
+  end if;
+  if j.status='completed' then
+   if j.final_evidence is distinct from p->>'final_evidence' or j.observer_proof_sha is distinct from p->>'observer_proof_sha256' then return jsonb_build_object('error','finalization_pin_mismatch'); end if;
+   return jsonb_build_object('ok',true,'version',j.version,'candidate_sha',j.candidate_sha,'observer_verified',true);
+  end if;
+  if j.status<>'verified' or j.next_step<>j.task_count or s.production_sha is distinct from j.base_sha
+   or s.public_data_blob_sha is distinct from j.public_data_blob_sha or s.draft_sha is distinct from j.candidate_sha or s.draft_version is distinct from j.version or s.draft_summary is distinct from j.summary
+   or exists(select 1 from public.beagu_site_release_jobs_v1 where status in ('queued','running')) then
+   return jsonb_build_object('error','finalization_not_ready');
+  end if;
+  if (select count(*) from public.beagu_integrated_production_steps_v1 where job_id=j.id and status='done' and evidence is not null)<>j.task_count
+   or not exists(select 1 from public.beagu_integrated_production_steps_v1 where job_id=j.id and idx=j.task_count-1
+    and task->>'op'='verify_live' and evidence=p->>'final_evidence') then
+   return jsonb_build_object('error','final_evidence_mismatch');
+  end if;
+  if exists(select 1 from public.beagu_site_release_history_v1 where target='production' and version=j.version and to_sha<>j.candidate_sha) then
+   return jsonb_build_object('error','version_already_used');
+  end if;
+  -- All changes are in the same transaction under release-state lock. A failure
+  -- rolls back status, pointer and history together. The legacy trigger sees
+  -- completed only within this transaction and cannot race the state row lock.
+  update public.beagu_integrated_production_jobs_v1 set status='completed',final_evidence=p->>'final_evidence',observer_proof_sha=p->>'observer_proof_sha256' where id=j.id;
+  insert into public.beagu_site_release_jobs_v1(id,action,target,from_sha,to_sha,version,summary,status,finished_at,public_data_blob_sha,deployed_url)
+   values(j.id,'prod_apply','production',j.base_sha,j.candidate_sha,j.version,j.summary,'deployed',now(),j.public_data_blob_sha,'https://baeguindex.com/');
+  insert into public.beagu_site_release_history_v1(job_id,target,action,version,summary,from_sha,to_sha,deployed_url)
+   values(j.id,'production','prod_apply',j.version,j.summary,j.base_sha,j.candidate_sha,'https://baeguindex.com/');
+  update public.beagu_site_release_state_v1 set production_sha=j.candidate_sha,production_version=j.version,updated_at=now() where id=1;
+  return jsonb_build_object('ok',true,'version',j.version,'candidate_sha',j.candidate_sha,'observer_verified',true);
+ end if;
+ if s.production_sha is distinct from j.base_sha or s.draft_sha is distinct from j.candidate_sha or s.public_data_blob_sha is distinct from j.public_data_blob_sha then
   return jsonb_build_object('error','stale_or_changed_plan');
  end if;
  if p_action='recovery_decision' then return jsonb_build_object('error','production_recovery_approval_not_connected'); end if;

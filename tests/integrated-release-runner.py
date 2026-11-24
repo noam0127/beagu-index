@@ -389,6 +389,7 @@ class Runner(unittest.TestCase):
             with self.assertRaises(RuntimeError):server.execute(cluster,migration)
             prefix=("SET beagu.bootstrap_reviewed='production_control_v1'; SET beagu.bootstrap_expected_base='"+self.base+"';\n").encode()
             server.execute(cluster,prefix+migration)
+            server.execute(cluster,("UPDATE public.beagu_site_release_state_v1 SET public_data_blob_sha=\x27"+"c"*40+"\x27 WHERE id=1;").encode())
             def rpc(action,payload):
                 raw=json.dumps(payload,separators=(",",":")).encode().hex()
                 value=json.loads(server.execute(cluster,("SELECT public.beagu_integrated_production_transition_v1('"+action+"',convert_from(decode('"+raw+"','hex'),'UTF8')::jsonb);").encode(),"service_role"))
@@ -433,5 +434,53 @@ class Runner(unittest.TestCase):
             production._control_request("status",{"scope":production.SCOPE,"job_id":job},fake_request,"fixture-token")
             self.assertEqual(calls[0][0],"snvzwrexuqavnfvzgxqj.supabase.co")
             self.assertEqual(calls[0][3]["action"],"worker_integrated_production_status")
+
+    def test_production_finalize_with_pinned_overlay(self):
+        # Actual PostgreSQL transaction + original local fixture adapter. No provider write.
+        with b.FixtureCluster() as cluster:
+            cluster.sql("fixture_source","CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE TABLE public.existing(id integer PRIMARY KEY); INSERT INTO public.existing VALUES (1),(2);")
+            server.install(cluster,ROOT,self.base,self.candidate)
+            prefix=("SET beagu.bootstrap_reviewed='production_control_v1'; SET beagu.bootstrap_expected_base='"+self.base+"';\n").encode()
+            server.execute(cluster,prefix+(ROOT/"supabase/integrated-release-control-production-candidate-v1.sql").read_bytes())
+            blob="c"*40
+            server.execute(cluster,("UPDATE public.beagu_site_release_state_v1 SET public_data_blob_sha='"+blob+"' WHERE id=1; UPDATE public.beagu_integrated_production_gate_v1 SET enabled=true;").encode())
+            def rpc(action,payload):
+                # Model the independently signature-verified Edge-to-RPC envelope.
+                if action=="finalize" and "proof" in payload:
+                    q=payload["proof"]["statement"]
+                    payload={"scope":production.SCOPE,**{k:q[k] for k in ("job_id","base_sha","candidate_sha","plan_sha256","recipe_sha256","public_data_blob_sha","version","final_evidence")},"observer_proof_sha256":r.digest(payload["proof"])}
+                raw=json.dumps(payload,separators=(",",":")).encode().hex()
+                out=json.loads(server.execute(cluster,("SELECT public.beagu_integrated_production_transition_v1('"+action+"',convert_from(decode('"+raw+"','hex'),'UTF8')::jsonb);").encode(),"service_role"))
+                return out if out.get("error") else {**out,"scope":production.SCOPE,"execution_enabled":True}
+            pins={**self.pins,"recipe_sha256":r.digest(self.recipe),"approval_sha256":r.digest(self.approval),"confirmed":True,"tasks":self.recipe["tasks"],"scope":production.SCOPE}
+            job=rpc("create",pins)["id"]
+            ledger=production.ProductionLedger(rpc,"42:1")
+            class TestAdapter(Adapter):
+                scope=production.SCOPE
+                def result(self,op,p,**kw):
+                    return {**super().result(op,p,**kw),"scope":production.SCOPE}
+            adapter=TestAdapter(self.base,cluster,self.objects,self.git)
+            adapter.package_pins=self.package_pins
+            executor=production.ProductionRunner(ledger,self.git,self.envelope,self.registry,adapter)
+            for task in self.recipe["tasks"]:
+                self.assertTrue(executor.once(job))
+            state=ledger.snapshot(job)
+            self.assertEqual(state["status"],"verified")
+            self.assertEqual(state["public_data_blob_sha"],blob)
+            self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
+            evidence=state["steps"][-1]["evidence"]
+            q={"scope":production.SCOPE,"job_id":job,**self.pins,"recipe_sha256":r.digest(self.recipe),"final_evidence":evidence,"public_data_blob_sha":blob,"version":state["version"]}
+            proof={"statement":q,"signature":"synthetic Edge verified"}
+            with self.assertRaisesRegex(ValueError,"finalization_pin_mismatch"):
+                ledger.finalize(job,self.verified,self.registry,evidence,{"statement":{**q,"public_data_blob_sha":"d"*40},"signature":"synthetic"})
+            with self.assertRaisesRegex(ValueError,"final_evidence_mismatch"):
+                ledger.finalize(job,self.verified,self.registry,"a"*64,{"statement":{**q,"final_evidence":"a"*64},"signature":"synthetic"})
+            self.assertEqual(ledger.snapshot(job)["status"],"verified")
+            result=ledger.finalize(job,self.verified,self.registry,evidence,proof)
+            self.assertTrue(result["observer_verified"])
+            self.assertEqual(ledger.finalize(job,self.verified,self.registry,evidence,proof),result)
+            self.assertEqual(ledger.snapshot(job)["status"],"completed")
+            self.assertEqual(server.execute(cluster,b"SELECT production_sha||':'||public_data_blob_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.candidate+":"+blob)
+            self.assertEqual(server.execute(cluster,("SELECT count(*) FROM public.beagu_site_release_history_v1 WHERE job_id='"+job+"';").encode()).strip(),b"1")
 
 if __name__=="__main__":unittest.main()
