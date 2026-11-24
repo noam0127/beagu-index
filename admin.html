@@ -199,66 +199,15 @@
 
 
       <section class="dash-section" id="adminMemberManagement" aria-labelledby="adminMemberHeading">
-        <div class="section-title">
-          <h3 id="adminMemberHeading">회원관리</h3>
-          <small>관리자 2단계 인증 전용 · 계정과 챌린지 참여자를 구분합니다</small>
-        </div>
+        <div class="section-title"><h3 id="adminMemberHeading">익명 회원 현황</h3><small>관리자 2단계 인증 전용 · 집계만 조회</small></div>
         <div class="metrics admin-member-metrics">
-          <article><h4>조회된 Auth 계정</h4><strong id="adminMembersTotal">—</strong></article>
-          <article><h4>관리자 계정</h4><strong id="adminMembersAdminCount">—</strong></article>
-          <article><h4>이메일 미인증</h4><strong id="adminMembersUnconfirmed">—</strong></article>
-          <article><h4>이용 정지</h4><strong id="adminMembersSuspended">—</strong></article>
+          <article><h4>전체 익명 회원</h4><strong id="adminMembersTotal">—</strong></article>
+          <article><h4>Lv.2 활성 회원</h4><strong id="adminMembersLv2">—</strong></article>
+          <article><h4>이용 제한 회원</h4><strong id="adminMembersSuspended">—</strong></article>
         </div>
-        <div class="ranking-card">
-          <form id="adminMembersSearchForm" class="admin-members-search">
-            <label for="adminMembersSearch">회원 검색</label>
-            <input id="adminMembersSearch" type="search" maxlength="100"
-              placeholder="이메일 또는 회원 ID" autocomplete="off">
-            <button type="submit" class="primary">검색</button>
-            <button type="button" class="secondary" id="adminMembersClear">초기화</button>
-            <button type="button" class="secondary" id="adminMembersReload">새로고침</button>
-          </form>
-          <p id="adminMembersStatus" class="subtle" role="status" aria-live="polite">관리자 인증 후 목록을 불러옵니다.</p>
-          <div class="admin-members-scroll" role="region" aria-label="회원 목록" tabindex="0">
-            <table class="admin-members-table">
-              <thead><tr>
-                <th scope="col">이메일 · ID</th><th scope="col">유형</th>
-                <th scope="col">인증</th><th scope="col">Lv2 연결</th>
-                <th scope="col">상태</th><th scope="col">조회</th>
-              </tr></thead>
-              <tbody id="adminMembersRows">
-                <tr><td colspan="6" class="empty">관리자 인증 후 표시됩니다.</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="admin-members-pagination">
-            <button type="button" class="secondary" id="adminMembersPrev" disabled>이전</button>
-            <span id="adminMembersPage" aria-live="polite">1 / 1</span>
-            <button type="button" class="secondary" id="adminMembersNext" disabled>다음</button>
-          </div>
-        </div>
-        <div class="ranking-card" id="adminMemberDetailPanel" hidden>
-          <div class="chart-title">
-            <h4>회원 상세</h4>
-            <button type="button" class="secondary member-mini-action" id="adminMemberClose">닫기</button>
-          </div>
-          <div id="adminMemberDetail"></div>
-          <div class="admin-member-moderation" id="adminMemberModeration" hidden>
-            <label for="adminMemberReason">계정 상태 변경 사유 · 8자 이상</label>
-            <textarea id="adminMemberReason" maxlength="200" minlength="8" rows="3"
-              placeholder="조치 사유를 구체적으로 기록해 주세요."></textarea>
-            <div class="admin-members-actions">
-              <button type="button" class="secondary" id="adminMemberSuspend24"
-                data-member-operation="suspend_24h">24시간 정지</button>
-              <button type="button" class="secondary" id="adminMemberSuspend7"
-                data-member-operation="suspend_7d">7일 정지</button>
-              <button type="button" class="secondary" id="adminMemberRestore"
-                data-member-operation="restore" hidden>정지 해제</button>
-            </div>
-          </div>
-          <p id="adminMemberActionStatus" class="subtle" role="status" aria-live="polite"></p>
-        </div>
-        <p class="subtle">문자 수신 동의는 서버 기록에 근거해 표시하며, 전화번호 자체는 제공하지 않습니다. 이용 정지는 새 로그인에 적용되지만 기존 로그인 세션이나 참여코드의 즉시 차단을 보장하지 않습니다.</p>
+        <button type="button" class="secondary" id="adminMembersReload">새로고침</button>
+        <p id="adminMembersStatus" class="subtle" role="status" aria-live="polite">관리자 인증 후 집계를 불러옵니다.</p>
+        <p class="subtle">회원 개인의 이메일·연락처·고유번호·작성자 ID는 조회하지 않습니다. 익명 신고 기반 제재는 별도 출시 전 검증 대상입니다.</p>
       </section>
 
       <section class="dash-section" id="adminReferralFunnel" aria-labelledby="adminReferralFunnelHeading">
@@ -472,7 +421,7 @@
   <script defer src="js/beagu-home-notice-admin-v1.js?v=160b"></script>
   <script defer src="js/beagu-admin-access-v1.js?v=160"></script>
   <script defer src="js/beagu-2026-admin-review.js?v=20261123-bulk-400-enabled1"></script>
-  <script defer src="js/beagu-admin-members-v1.js?v=20261121-members1"></script>
+  <script defer src="js/beagu-admin-members-v1.js?v=20261124-anonymous1"></script>
 <script defer src="js/beagu-2026-civic-admin-v1.js?v=20261124-trust1"></script>
 </body>
 </html>
