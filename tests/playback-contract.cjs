@@ -107,3 +107,16 @@ assert.match(loop,/for\(const a of items\.slice\(\)\.reverse\(\)\)/);assert.matc
 const collisionFixture=new Function('const items=[{x:100,y:100,r:10,good:false,speed:0,phase:0,wobble:0},{x:100,y:100,r:10,good:true,speed:0,phase:0,wobble:0}];let hits=0;const dt=1/60,clock=1,W=600,H=420,player={x:100,y:100,r:20},profile={zigzag:0,homing:0,heroSize:1},state="playing";function hit(a){hits++;if(a.good)items.length=0;}'+loop+'return {hits,remaining:items.length};');assert.deepEqual(collisionFixture(),{hits:1,remaining:0});console.log('PASS support item removes hazards safely during collision iteration');
 
 assert.match(preview,/run4-official-submit/);assert.match(read('js/run4-official-client-v1.js'),/enabled:false,endpoint:/);assert.match(preview,/activeOfficial\.seed/);assert.match(preview,/official\.submit\(captured\.session,captured\.envelope\)/);console.log('PASS official client stays disabled by default and explicit submit UI');
+
+// Scoped release: the shipped default must not touch tokens, auth or the network.
+(async()=>{
+ const officialWindow={};let calls=0;
+ const forbidden=()=>{calls++;throw Error('unexpected external access');};
+ vm.runInNewContext(read('js/run4-official-client-v1.js'),{window:officialWindow,fetch:forbidden});
+ const api=officialWindow.BeaguRun4Official.create({fetcher:forbidden,getToken:forbidden,getAdminBearer:forbidden});
+ assert.equal(api.enabled,false);assert.equal(Object.isFrozen(officialWindow.BeaguRun4Official.defaultConfig),true);
+ for(const action of [()=>api.start({school_id:'fixture'}),()=>api.submit({seed:1,difficulty:'easy',session:'fixture'},{seed:1,difficulty:'easy',events:[]}),()=>api.list('all','all')])await assert.rejects(action(),/verification_unavailable/);
+ assert.equal(calls,0);
+ const manifest=JSON.parse(read('release-candidate.json'));assert.ok(manifest.summary.length<=500);assert.match(manifest.summary,/4\.0 공식 랭킹 비활성화/);assert.match(manifest.summary,/기존 3\.0 공식 랭킹 유지/);
+ console.log('PASS scoped personal preview: zero default official API, token and auth access');
+})().catch(error=>{console.error(error);process.exitCode=1;});

@@ -608,8 +608,8 @@
       "order": 21,
       "version": "v1.11.11",
       "name": "풀세트",
-      "scope": "학교검색·상세보기 압축 및 반응형 / 선생님배구 원터치 / 험난한 교직생활 4.0",
-      "status": "CANDIDATE_PARTIAL_IMPLEMENTATION",
+      "scope": "코트정돈 포함 / 학교검색·상세보기 반응형 / 선생님배구 원터치 / 험난한 교직생활 4.0 개인 기록 검수판만 / 공식 4.0 랭킹 비활성화",
+      "status": "CANDIDATE_PERSONAL_PREVIEW_FINAL_CI_PENDING",
       "branch": "release/v1.11.11-full-set",
       "dependencies": [
         "v1.11.10"
@@ -619,7 +619,19 @@
       "rollback_sha": "4dbc473bb49cec3d510ea2fbc58ee24f344b6e1f",
       "tests": [
         {
-          "name": "Stage 1 responsive layout",
+          "name": "Base candidate 4a885a9 all 16 CI workflows",
+          "result": "PASS",
+          "sha": "4a885a9fc58c039544540a910b5d0cf38a58f79e",
+          "run": 45480626570
+        },
+        {
+          "name": "Independent IAM and runtime fixture",
+          "result": "PASS",
+          "sha": "89de34215ff85cccb86befeecd3fe642b6912bbb",
+          "run": 45480676975
+        },
+        {
+          "name": "Final scoped release exact SHA CI",
           "result": "PENDING"
         }
       ]
