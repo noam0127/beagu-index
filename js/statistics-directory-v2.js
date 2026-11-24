@@ -93,7 +93,13 @@
     if(!(index instanceof Map)||!index.size)throw Error('공개본이 비어 있습니다.');
     return index;
   }
+  // Directory can finish before the comparison script has registered its listener.
+  // Retain only the latest directory and percentile events for a one-time replay.
+  const readyState={directory:null,snapshot:null};
+  window.BeaguStatisticsDirectoryState=readyState;
   function dispatch(detail){
+    if(detail.snapshotOnly===true)readyState.snapshot=detail;
+    else{readyState.directory=detail;readyState.snapshot=null;}
     window.dispatchEvent(new CustomEvent('beagu:statistics-ready',{detail}));
   }
   async function start(){

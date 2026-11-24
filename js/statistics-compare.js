@@ -705,7 +705,7 @@
   document.addEventListener('visibilitychange',refreshVisible2026);
   window.setInterval(refreshVisible2026,60000);
   window.BeaguStatisticsCompare={ add:addSchool };
-  window.addEventListener('beagu:statistics-ready',event=>{
+  function consumeStatisticsReady(event){
     const detail=event.detail||{};
     if(detail.snapshotOnly===true){
       state.snapshot=detail.snapshot instanceof Map?detail.snapshot:new Map();
@@ -727,7 +727,11 @@
     if (!state.snapshotReady && state.ready && !detail.snapshotPending) notice('공개 백분위를 확인할 수 없어 문항 목록만 표시됩니다.');
     loadPublic2026(state.selected.map(x=>x.id));
     refreshApprovedSelections();
-  });
+  }
+  window.addEventListener('beagu:statistics-ready',consumeStatisticsReady);
+  const previousReady=window.BeaguStatisticsDirectoryState;
+  if(previousReady?.directory)consumeStatisticsReady({detail:previousReady.directory});
+  if(previousReady?.snapshot)consumeStatisticsReady({detail:previousReady.snapshot});
   loadPublicQuestions();
   elements.search.addEventListener('input',renderSuggestions);
   elements.search.addEventListener('focus',renderSuggestions);

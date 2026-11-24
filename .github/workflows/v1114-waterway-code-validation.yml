@@ -49,6 +49,14 @@ jobs:
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8124/challenge.html >/dev/null && break; sleep 1; done
           node tests/v1112-together-offline-browser.cjs
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - name: Verify actual telemetry and admin SQL in disposable PostgreSQL
         run: |
           set -euo pipefail
