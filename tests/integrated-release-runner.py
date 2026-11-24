@@ -14,6 +14,7 @@ import integrated_runner as r
 import integrated_verify as v
 import integrated_backup as b
 import integrated_server_control as server
+import integrated_package as package
 spec=importlib.util.spec_from_file_location("git_fixture",ROOT/"tests/integrated-release-verification.py")
 g=importlib.util.module_from_spec(spec);spec.loader.exec_module(g)
 
@@ -24,6 +25,8 @@ class Adapter:
         self.key=os.urandom(32)
         self.calls=[]
         self.fail=None
+        self.package_pins={}
+        self.package_receipts={}
     def observed_base(self):return self.base
     def result(self,op,p,**kw):
         self.calls.append(op)
@@ -43,20 +46,23 @@ class Adapter:
     def deploy_edge(self,t,f,p):
         # Deliberately a local package receipt, not real Edge deployment.
         r.require(t["edge_function"]=="account" and len(f)==1,"unexpected_fixture_edge")
-        dest=self.directory/"fixture-edge-package"
-        b.private_write(dest,next(iter(f.values())))
-        return self.result("deploy_edge",p,local_package_sha256=b.hash_bytes(dest.read_bytes()))
+        dest=self.directory/"fixture-edge-package.tar"
+        inventory,pin=self.package_pins["deploy_edge"]
+        receipt=package.build(self.root,p,inventory,pin,dest)
+        self.package_receipts["deploy_edge"]=receipt
+        return self.result("deploy_edge",p,local_package_sha256=receipt["artifact_sha256"])
     def verify_backend(self,t,f,p):
         r.require(self.cluster.sql("fixture_source","SELECT to_regclass('public.fixture_added');").strip()==b"fixture_added","fixture_database_missing")
         r.require(self.cluster.sql("fixture_source","SELECT count(*) FROM public.existing;").strip()==b"2","existing_data_lost")
-        r.require((self.directory/"fixture-edge-package").read_bytes()==b"// fixture only\n","fixture_package_missing")
+        r.require(package.verify_artifact(self.directory/"fixture-edge-package.tar",self.package_pins["deploy_edge"][0],self.package_receipts["deploy_edge"]),"fixture_package_missing")
         return self.result("verify_backend",p)
     def publish_pages(self,t,f,p):
-        _,_,data=v.tree_blob(self.root,p["candidate_sha"],"index.html")
-        b.private_write(self.directory/"fixture-index.html",data)
-        return self.result("publish_pages",p,local_artifact_sha256=b.hash_bytes(data))
+        inventory,pin=self.package_pins["publish_pages"]
+        receipt=package.build(self.root,p,inventory,pin,self.directory/"fixture-pages.tar")
+        self.package_receipts["publish_pages"]=receipt
+        return self.result("publish_pages",p,local_artifact_sha256=receipt["artifact_sha256"])
     def verify_live(self,t,f,p):
-        r.require((self.directory/"fixture-index.html").read_bytes()==b"new","fixture_artifact_mismatch")
+        r.require(package.verify_artifact(self.directory/"fixture-pages.tar",self.package_pins["publish_pages"][0],self.package_receipts["publish_pages"]),"fixture_artifact_mismatch")
         return self.result("verify_live",p)
 
 class Runner(unittest.TestCase):
@@ -68,6 +74,7 @@ class Runner(unittest.TestCase):
         self.objects=root/"objects";self.objects.mkdir(mode=0o700)
         g.run(self.git,"init","-q")
         g.write(self.git,"index.html",b"old")
+        g.write(self.git,"supabase/functions/_shared/fixture.ts",b"// unchanged shared dependency\n")
         g.write(self.git,"release-candidate.json",b'{"version":"v1.10.1","summary":"fixture"}')
         self.base=g.commit(self.git)
         g.write(self.git,"index.html",b"new")
@@ -89,6 +96,10 @@ class Runner(unittest.TestCase):
         self.approval={"scope":r.SCOPE,**self.pins,"recipe_sha256":r.digest(self.recipe),"confirmed":True}
         self.ledger=r.Ledger(self.store)
         self.job=self.ledger.create(self.verified,self.registry,self.approval)
+        self.package_pins={}
+        for op,edge,pages in [("deploy_edge","account",None),("publish_pages",None,["index.html"])]:
+            inventory=package.inspect(self.git,self.verified,op,edge,pages)
+            self.package_pins[op]=(inventory,package.hash_bytes(package.canonical(inventory)))
     def test_atomic_claim_persistence_and_fail_closed(self):
         self.assertEqual(self.job,r.Ledger(self.store).create(self.verified,self.registry,self.approval))
         with self.assertRaisesRegex(ValueError,"approval_pin_mismatch"):
@@ -125,6 +136,7 @@ class Runner(unittest.TestCase):
         with b.FixtureCluster() as cluster:
             cluster.sql("fixture_source","CREATE TABLE public.existing(id integer PRIMARY KEY); INSERT INTO public.existing VALUES (1),(2);")
             adapter=Adapter(self.base,cluster,self.objects,self.git)
+            adapter.package_pins=self.package_pins
             # Reopen durable ledger between every step.
             for task in self.recipe["tasks"]:
                 runner=r.FixtureRunner(r.Ledger(self.store),self.git,self.envelope,self.registry,adapter)
@@ -170,6 +182,7 @@ class Runner(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"stale_or_changed_plan"):
                 ledger.claim(job,self.verified,self.registry,"f"*40)
             adapter=Adapter(self.base,cluster,self.objects,self.git)
+            adapter.package_pins=self.package_pins
             # Real DB operations via runner; control state survives reopening the PostgreSQL client.
             for task in self.recipe["tasks"]:
                 runner=r.FixtureRunner(server.PostgresLedger(cluster),self.git,self.envelope,self.registry,adapter)
@@ -199,6 +212,8 @@ class Runner(unittest.TestCase):
             for t in threads:t.join()
             self.assertEqual(len(results),1);self.assertEqual(errors,["step_already_claimed_or_uncertain"])
             claim=results[0]
+            with self.assertRaisesRegex(ValueError,"wrong_step_lease"):
+                server.PostgresLedger(cluster,worker_run="2:1").finish(job,claim,"a"*64)
             with self.assertRaisesRegex(ValueError,"step_already_claimed_or_uncertain"):
                 server.PostgresLedger(cluster).claim(job,self.verified,self.registry,self.base)
             with self.assertRaisesRegex(ValueError,"wrong_step_lease"):
@@ -207,5 +222,24 @@ class Runner(unittest.TestCase):
             self.assertEqual(ledger.snapshot(job)["status"],"blocked")
             with self.assertRaisesRegex(ValueError,"release_blocked"):
                 ledger.claim(job,self.verified,self.registry,self.base)
+
+    def test_complete_pinned_artifact_and_public_exclusion(self):
+        inventory,pin=self.package_pins["deploy_edge"]
+        self.assertIn("supabase/functions/_shared/fixture.ts",[f["path"] for f in inventory["files"]])
+        missing=copy.deepcopy(inventory)
+        missing["files"]=[f for f in missing["files"] if "_shared" not in f["path"]]
+        with self.assertRaisesRegex(ValueError,"package_inventory_changed"):
+            package.build(self.git,self.verified,missing,package.hash_bytes(package.canonical(missing)),self.objects/"bad.tar")
+        with self.assertRaisesRegex(ValueError,"package_inventory_pin_mismatch"):
+            package.build(self.git,self.verified,inventory,"a"*64,self.objects/"bad.tar")
+        with self.assertRaisesRegex(ValueError,"invalid_public_file_set"):
+            package.inspect(self.git,self.verified,"publish_pages",None,["index.html","supabase/account.sql"])
+        dest=self.objects/"verified.tar"
+        receipt=package.build(self.git,self.verified,inventory,pin,dest)
+        self.assertTrue(package.verify_artifact(dest,inventory,receipt))
+        self.assertFalse(receipt["execution_enabled"])
+        dest.write_bytes(dest.read_bytes()+b"tampered")
+        with self.assertRaisesRegex(ValueError,"package_artifact_mismatch"):
+            package.verify_artifact(dest,inventory,receipt)
 
 if __name__=="__main__":unittest.main()

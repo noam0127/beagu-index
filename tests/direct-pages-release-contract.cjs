@@ -126,7 +126,7 @@ async function call(action,fields={},token=jwt){const headers={'Content-Type':'a
  const canonical=x=>Array.isArray(x)?'['+x.map(canonical).join(',')+']':x!==null&&typeof x==='object'?'{'+Object.keys(x).sort().map(k=>JSON.stringify(k)+':'+canonical(x[k])).join(',')+'}':JSON.stringify(x);
  const recipeSha=require('node:crypto').createHash('sha256').update(canonical(recipe)).digest('hex');
  fixtureEnv.BEAGU_INTEGRATED_FIXTURE_TRUSTED_REGISTRY=JSON.stringify({schema:1,recipes:[recipe]});
- vm.runInNewContext(stripTypeScriptTypes(src.replace(/^import .*;$/gm,''),{mode:'strip'}),context);
+ vm.runInNewContext(stripTypeScriptTypes(src.replace(/^import .*;$/gm,''),{mode:'strip'}),{...context});
  const approve={candidate_sha:DRAFT,expected_production_sha:BASE,plan_sha256:preview.plan_sha256,recipe_sha256:recipeSha,confirmed:true,tasks:[{op:'shell'}],approved_by:'forged'};
  allowMfa=false;assert.equal((await call('integrated_fixture_create',approve)).status,403);allowMfa=true;
  assert.equal((await call('integrated_fixture_create',{...approve,recipe_sha256:'0'.repeat(64)})).body.error,'fixture_recipe_changed');
