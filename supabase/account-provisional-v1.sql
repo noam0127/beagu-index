@@ -110,6 +110,19 @@ RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
 $$;
 REVOKE ALL ON FUNCTION beagu_private.beagu_account_visitor_level_v1(uuid) FROM PUBLIC,anon,authenticated;
 
+-- Copy only the pseudonymous ownership and moderation state, never Auth identity.
+-- Must execute under a reviewed cutover transaction after legacy signups are frozen.
+CREATE TABLE beagu_private.beagu_legacy_author_bridge_v1(
+ visitor_id uuid PRIMARY KEY,
+ author_uid uuid UNIQUE NOT NULL,
+ status text NOT NULL CHECK(status IN ('active','suspended')),
+ suspended_until timestamptz
+);
+ALTER TABLE beagu_private.beagu_legacy_author_bridge_v1 ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON beagu_private.beagu_legacy_author_bridge_v1 FROM PUBLIC,anon,authenticated,service_role;
+INSERT INTO beagu_private.beagu_legacy_author_bridge_v1(visitor_id,author_uid,status,suspended_until)
+ SELECT m.identity_visitor_id,m.author_uid,m.status,u.banned_until
+ FROM public.beagu_postit_member_accounts m JOIN auth.users u ON u.id=m.auth_user_id;
 -- Preserve legacy authors only after original-device proof. No new social bindings.
 REVOKE EXECUTE ON FUNCTION public.beagu_postit_bind_verified_member(uuid,uuid,text,uuid) FROM service_role;
 CREATE FUNCTION public.beagu_account_signup_v1(p_code text,p_device_hash text,p_password_proof text,p_recovery_hash text)
@@ -127,7 +140,8 @@ BEGIN
  IF v IS NULL THEN RETURN NULL; END IF;
  lvl:=beagu_private.beagu_account_visitor_level_v1(v);
  IF lvl=0 THEN RETURN NULL; END IF;
- SELECT m.author_uid,m.status INTO actor,legacy_status FROM public.beagu_postit_member_accounts m WHERE m.identity_visitor_id=v;
+ SELECT m.author_uid,CASE WHEN m.status='suspended' OR m.suspended_until>now() THEN 'suspended' ELSE 'active' END INTO actor,legacy_status
+ FROM beagu_private.beagu_legacy_author_bridge_v1 m WHERE m.visitor_id=v;
  IF legacy_status IS NOT NULL AND legacy_status<>'active' THEN RETURN NULL; END IF;
  INSERT INTO beagu_private.beagu_anonymous_accounts_v1(visitor_id,author_uid,password_hash,recovery_hash)
  VALUES(v,coalesce(actor,gen_random_uuid()),extensions.crypt(p_password_proof,extensions.gen_salt('bf',12)),p_recovery_hash)
@@ -231,7 +245,7 @@ RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  JOIN beagu_private.beagu_anonymous_accounts_v1 a ON a.account_id=s.account_id AND a.visitor_id=s.visitor_id
  WHERE s.token_sha256=p_token_sha AND s.expires_at>now() AND l.expires_at>now() AND l.access_level=2 AND a.enabled
  AND beagu_private.beagu_account_visitor_level_v1(s.visitor_id)=2
- AND NOT EXISTS(SELECT 1 FROM public.beagu_postit_member_accounts m WHERE m.identity_visitor_id=s.visitor_id AND m.status<>'active')
+ AND NOT EXISTS(SELECT 1 FROM beagu_private.beagu_legacy_author_bridge_v1 m WHERE m.visitor_id=s.visitor_id AND (m.status<>'active' OR m.suspended_until>now()))
 $$;
 CREATE FUNCTION public.beagu_account_postit_current_aliases_v1(p_items jsonb)
 RETURNS TABLE(item_id uuid,nickname text) LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
