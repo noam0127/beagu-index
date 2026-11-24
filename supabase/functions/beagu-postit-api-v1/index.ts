@@ -107,10 +107,16 @@ async function schoolInfo(ids:string[]){
   map[row.school_id].students=Number.isFinite(n)&&n>=0?n:null;
   map[row.school_id].student_year=Number(row.student_reference_year)||null;
  }
+ const allowed2026=new Set<string>();
+ for(let i=0;i<unique.length;i+=20){
+  const {data,error}=await db.rpc("beagu_2026_level_released_school_ids",{p_ids:unique.slice(i,i+20),p_level:0});
+  if(!error&&Array.isArray(data))for(const id of data)if(typeof id==="string")allowed2026.add(id);
+ }
  for(const row of p.data||[]){
   if(!map[row.school_id]||map[row.school_id].percentile_year!==undefined)continue;
   // Service-role reads bypass RLS: reproduce the public annual release guard.
   if(Number(row.survey_year)===2026){
+    if(!allowed2026.has(row.school_id))continue;
     const before=Date.now()-24*3600000;
     if(!(Number(row.valid_observation_count)>=1 && row.unique_respondents_reviewed===true &&
       row.school_identity_reviewed===true && row.small_cell_reviewed===true &&
