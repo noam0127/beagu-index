@@ -29,6 +29,7 @@ jobs:
           /usr/bin/python3 -c 'from cryptography.hazmat.primitives.ciphers.aead import AESGCM' || (sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends python3-cryptography)
           /usr/bin/python3 tests/integrated-release-vault.py
           /usr/bin/python3 tests/integrated-release-drive-checkpoint.py
+          /usr/bin/python3 tests/integrated-release-drive-setup.py
           /usr/bin/python3 tests/integrated-release-backup.py
           /usr/bin/python3 tests/integrated-release-runner.py
           /usr/bin/python3 tests/integrated-release-remote.py
