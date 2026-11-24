@@ -50,7 +50,7 @@
     upgraded = earned === true;
     // Verified Lv.2 login can show its visual tier, but cannot activate a
     // separate personal code without a server-confirmed referral.
-    const verifiedLoginLevel=Number(get('challengeAccessPanel')?.getAttribute?.('data-auth-level') || 0);
+    const verifiedLoginLevel=Number(get('challengeAccessPanel')?.getAttribute?.('data-challenge-verified-level') || get('challengeAccessPanel')?.getAttribute?.('data-auth-level') || 0);
     const premiumVisual=upgraded || verifiedLoginLevel>=2;
     syncTogether(upgraded,count,verifiedLoginLevel>=2,Boolean(currentLink));
     identityPanel.classList.toggle('is-lv2', premiumVisual);
