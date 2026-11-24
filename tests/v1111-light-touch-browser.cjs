@@ -39,12 +39,12 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
    body=source.replace(anchor,`resize();intro();postHeight();
     window.__run4Fixture=Object.freeze({
       snapshot:()=>({state,clock,stage,life,maxLife,leave:leave.state(),boss:bosses.active(),defeated:bosses.defeated(),allies:allies.count(),score}),
-      advance:target=>{for(let i=0;i<6000&&state==="playing"&&clock<target-1e-8;i++){life=maxLife;update(Math.min(.04,target-clock));}draw();syncLeave();return window.__run4Fixture.snapshot();},
+      advance:target=>{for(let i=0;i<6000&&state==="playing"&&clock<target;i++){life=maxLife;update(Math.min(.04,Math.max(1e-7,target-clock)));}draw();syncLeave();return window.__run4Fixture.snapshot();},
       // Test-only legal steering: inspect nearby hazards and choose a reachable
       // target, never assign HP, invulnerability, score or actual player position.
       naturalAdvance:target=>{
        let aimAt=-1;
-       for(let i=0;i<6000&&state==="playing"&&clock<target-1e-8;i++){
+       for(let i=0;i<6000&&state==="playing"&&clock<target;i++){
         if(clock>=aimAt){
          aimAt=clock+.18;
          const threats=[
@@ -79,7 +79,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
          if(allies.canCooperate(clock)&&(life/maxLife<.65||bosses.active()))cooperate();
          for(const p of leave.state().pending)leave.collect(p.years);
         }
-        update(Math.min(.04,target-clock));
+        update(Math.min(.04,Math.max(1e-7,target-clock)));
        }
        draw();syncLeave();return window.__run4Fixture.snapshot();
       }
@@ -220,7 +220,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
    for(let step=0;step<9;step++){
     run=await page.evaluate(()=>window.__run4Fixture.naturalAdvance(190));
     if(run.state==='over')break;
-    assert.equal(run.state,'between');
+    assert.equal(run.state,'between',JSON.stringify({difficulty,step,state:run.state,clock:run.clock}));
     const buttons=page.locator('#choices button'),labels=await buttons.allTextContents();
     const priorities=['자기관리','생활지도','위기 대응','동료 관계','교육자의 신념','학급운영','수업 전문성','업무 능력','교직 경험','전문적 학습공동체'];
     const chosen=priorities.map(label=>labels.findIndex(x=>x.includes(label))).find(i=>i>=0);
@@ -229,6 +229,7 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
    assert.equal(run?.state,'over');
    assert.ok(Number.isFinite(run.score)&&run.score>=0&&run.life>=0&&run.life<=run.maxLife);
    outcomes.push({difficulty,seconds:Number(run.clock.toFixed(2)),bosses:run.defeated.length,score:run.score,retired:run.clock===190});
+   console.log('RUN4_TIER_PROBE '+JSON.stringify(outcomes[outcomes.length-1]));
    await page.waitForFunction(()=>!document.querySelector('.arcade-result-copy').disabled);
    const records=await page.evaluate(()=>JSON.parse(localStorage.getItem('beaguRun4LocalRecordsV1')||'[]'));
    assert.ok(records.every(r=>r.game==='teacher_run_retirement_v4'&&r.version==='4.0'&&!('school_id'in r)&&!('school_name'in r)&&!('verified'in r)));
