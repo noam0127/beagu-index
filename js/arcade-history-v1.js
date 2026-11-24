@@ -61,11 +61,11 @@
   }else title.textContent=name;
   return title;
  }
- function renderRecord(row){
+ function renderRecord(row,rank){
   const result=row.details&&typeof row.details==="object"?row.details:{};
   const card=el("article","history-record");
   const head=el("div","history-record-head"),about=el("div"),score=el("div","history-score",number(row.score)+"점");
-  about.append(schoolHeading(row),
+  about.append(el("span","history-status","공개 점수 기록 "+rank+"위"),schoolHeading(row),
     el("div","history-meta",date(row.createdAt)+" · "+(DIFFICULTIES[row.difficulty]||"난이도 미확인")));
   const [label,kind]=titleFor(row);
   about.append(el("span","history-status"+(kind==="loss"?" loss":""),label));
@@ -121,7 +121,7 @@
    list.replaceChildren();
    if(!data.records.length)list.append(el("div","history-empty",
     page===1?"아직 상위 100위 기록이 없습니다.":"이 페이지에는 기록이 없습니다."));
-   else for(const row of data.records)list.append(renderRecord(row));
+   else for(const [i,row] of data.records.entries())list.append(renderRecord(row,(page-1)*30+i+1));
    prev.disabled=page<=1;next.disabled=!hasMore||page>=4;
   }catch(err){
    if(token!==requestId)return;
