@@ -30,7 +30,7 @@ class PostgresLedger:
         self.worker_run=worker_run
 
     def rpc(self,action,payload):
-        runner.require(action in ("create","claim","finish","status"),"invalid_control_action")
+        runner.require(action in ("create","claim","finish","status","finalize"),"invalid_control_action")
         # Hex encoded UTF-8 JSON is data, not SQL syntax.
         raw=json.dumps({"scope":runner.SCOPE,**payload},ensure_ascii=False,separators=(",",":")).encode().hex()
         sql="SELECT public.beagu_integrated_fixture_transition_v1('"+action+"',convert_from(decode('"+raw+"','hex'),'UTF8')::jsonb);"
@@ -60,3 +60,8 @@ class PostgresLedger:
 
     def snapshot(self,job):
         return self.rpc("status",{"job_id":job})
+
+    def finalize(self,job,verified,registry,final_evidence):
+        verify.validate_recipe(verified,registry)
+        recipe=next(r for r in registry["recipes"] if r["plan_sha256"]==verified["plan_sha256"])
+        return self.rpc("finalize",{"job_id":job,"candidate_sha":verified["candidate_sha"],"plan_sha256":verified["plan_sha256"],"recipe_sha256":runner.digest(recipe),"final_evidence":final_evidence})

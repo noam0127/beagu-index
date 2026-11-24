@@ -28,4 +28,5 @@ jobs:
           /usr/bin/python3 tests/integrated-release-backup.py
           /usr/bin/python3 tests/integrated-release-runner.py
           /usr/bin/python3 tests/integrated-release-remote.py
+          /usr/bin/python3 tests/integrated-release-provider.py
           node --test tests/site-release-center.mjs tests/site-release-single-publisher.mjs

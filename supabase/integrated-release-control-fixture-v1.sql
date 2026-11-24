@@ -13,14 +13,15 @@ create table public.beagu_integrated_fixture_jobs_v1(
  plan_sha text not null check(plan_sha ~ '^[0-9a-f]{64}$'),
  recipe_sha text not null check(recipe_sha ~ '^[0-9a-f]{64}$'),
  approval_sha text not null check(approval_sha ~ '^[0-9a-f]{64}$'),
- status text not null default 'queued' check(status in ('queued','running','blocked','completed')),
+ version text not null, summary text not null, final_evidence text check(final_evidence is null or final_evidence ~ '^[0-9a-f]{64}$'),
+ status text not null default 'queued' check(status in ('queued','running','blocked','verified','completed')),
  next_step integer not null default 0 check(next_step>=0),
  task_count integer not null check(task_count between 2 and 100),
  unique(base_sha,candidate_sha),
  check(next_step<=task_count)
 );
 create unique index beagu_integrated_fixture_one_active_v1
- on public.beagu_integrated_fixture_jobs_v1((1)) where status in ('queued','running','blocked');
+ on public.beagu_integrated_fixture_jobs_v1((1)) where status in ('queued','running','blocked','verified');
 create table public.beagu_integrated_fixture_steps_v1(
  job_id uuid not null references public.beagu_integrated_fixture_jobs_v1(id),
  idx integer not null check(idx>=0),
@@ -46,7 +47,7 @@ create function public.beagu_integrated_fixture_legacy_guard_v1() returns trigge
 language plpgsql security invoker set search_path=pg_catalog,public as $$
 begin
  perform 1 from public.beagu_site_release_state_v1 where id=1 for update;
- if exists(select 1 from public.beagu_integrated_fixture_jobs_v1 where status in ('queued','running','blocked')) then
+ if exists(select 1 from public.beagu_integrated_fixture_jobs_v1 where status in ('queued','running','blocked','verified')) then
    raise exception 'integrated_release_active' using errcode='55000';
  end if;
  return new;
@@ -82,6 +83,7 @@ begin
   if s.production_sha is distinct from p->>'base_sha' or s.draft_sha is distinct from p->>'candidate_sha' then
    return jsonb_build_object('error','stale_or_changed_plan');
   end if;
+  if s.draft_version is null or s.draft_summary is null then return jsonb_build_object('error','missing_version_metadata'); end if;
   n:=jsonb_array_length(p->'tasks');
   if n not between 2 and 100 then return jsonb_build_object('error','invalid_tasks'); end if;
   -- Additional defense; the trusted Python verifier checks file/recipe pins before calling.
@@ -111,11 +113,11 @@ begin
    return jsonb_build_object('id',j.id);
   end if;
   if exists(select 1 from public.beagu_site_release_jobs_v1 where status in ('queued','running')) or
-     exists(select 1 from public.beagu_integrated_fixture_jobs_v1 where status in ('queued','running','blocked')) then
+     exists(select 1 from public.beagu_integrated_fixture_jobs_v1 where status in ('queued','running','blocked','verified')) then
    return jsonb_build_object('error','active_release_exists');
   end if;
-  insert into public.beagu_integrated_fixture_jobs_v1(base_sha,candidate_sha,plan_sha,recipe_sha,approval_sha,task_count)
-    values(p->>'base_sha',p->>'candidate_sha',p->>'plan_sha256',p->>'recipe_sha256',p->>'approval_sha256',n) returning id into jid;
+  insert into public.beagu_integrated_fixture_jobs_v1(base_sha,candidate_sha,plan_sha,recipe_sha,approval_sha,version,summary,task_count)
+    values(p->>'base_sha',p->>'candidate_sha',p->>'plan_sha256',p->>'recipe_sha256',p->>'approval_sha256',s.draft_version,s.draft_summary,n) returning id into jid;
   insert into public.beagu_integrated_fixture_steps_v1(job_id,idx,task)
     select jid,(ord-1)::integer,task from jsonb_array_elements(p->'tasks') with ordinality as e(task,ord);
   return jsonb_build_object('id',jid);
@@ -127,6 +129,41 @@ begin
    return to_jsonb(j)||jsonb_build_object('scope','isolated_fixture_only','execution_enabled',false,'steps',
     (select jsonb_agg(to_jsonb(x)-'lease'-'worker_run'-'job_id' order by idx) from public.beagu_integrated_fixture_steps_v1 x where job_id=j.id));
  end if;
+ -- Finalize is an isolated control-plane transaction, not a publication operation.
+ -- The trusted caller must have independently verified all provider receipts first.
+ if p_action='finalize' then
+  if j.plan_sha is distinct from p->>'plan_sha256' or j.recipe_sha is distinct from p->>'recipe_sha256'
+   or j.candidate_sha is distinct from p->>'candidate_sha' or coalesce(p->>'final_evidence','') !~ '^[0-9a-f]{64}$' then
+   return jsonb_build_object('error','finalization_pin_mismatch');
+  end if;
+  if j.status='completed' then
+   if j.final_evidence is distinct from p->>'final_evidence' then return jsonb_build_object('error','finalization_pin_mismatch'); end if;
+   return jsonb_build_object('ok',true,'version',j.version,'candidate_sha',j.candidate_sha,'rehearsal',true);
+  end if;
+  if j.status<>'verified' or j.next_step<>j.task_count or s.production_sha is distinct from j.base_sha
+   or s.draft_sha is distinct from j.candidate_sha or s.draft_version is distinct from j.version or s.draft_summary is distinct from j.summary
+   or exists(select 1 from public.beagu_site_release_jobs_v1 where status in ('queued','running')) then
+   return jsonb_build_object('error','finalization_not_ready');
+  end if;
+  if (select count(*) from public.beagu_integrated_fixture_steps_v1 where job_id=j.id and status='done' and evidence is not null)<>j.task_count
+   or not exists(select 1 from public.beagu_integrated_fixture_steps_v1 where job_id=j.id and idx=j.task_count-1
+    and task->>'op'='verify_live' and evidence=p->>'final_evidence') then
+   return jsonb_build_object('error','final_evidence_mismatch');
+  end if;
+  if exists(select 1 from public.beagu_site_release_history_v1 where target='production' and version=j.version and to_sha<>j.candidate_sha) then
+   return jsonb_build_object('error','version_already_used');
+  end if;
+  -- All changes are in the same transaction under release-state lock. A failure
+  -- rolls back status, pointer and history together. The legacy trigger sees
+  -- completed only within this transaction and cannot race the state row lock.
+  update public.beagu_integrated_fixture_jobs_v1 set status='completed',final_evidence=p->>'final_evidence' where id=j.id;
+  insert into public.beagu_site_release_jobs_v1(id,action,target,from_sha,to_sha,version,summary,status,finished_at)
+   values(j.id,'prod_apply','production',j.base_sha,j.candidate_sha,j.version,j.summary,'deployed',now());
+  insert into public.beagu_site_release_history_v1(job_id,target,action,version,summary,from_sha,to_sha)
+   values(j.id,'production','prod_apply',j.version,j.summary,j.base_sha,j.candidate_sha);
+  update public.beagu_site_release_state_v1 set production_sha=j.candidate_sha,production_version=j.version,updated_at=now() where id=1;
+  return jsonb_build_object('ok',true,'version',j.version,'candidate_sha',j.candidate_sha,'rehearsal',true);
+ end if;
  if s.production_sha is distinct from j.base_sha or s.draft_sha is distinct from j.candidate_sha then
   return jsonb_build_object('error','stale_or_changed_plan');
  end if;
@@ -136,7 +173,7 @@ begin
     or j.plan_sha is distinct from p->>'plan_sha256' or j.recipe_sha is distinct from p->>'recipe_sha256' then
    return jsonb_build_object('error','stale_or_changed_plan');
   end if;
-  if j.status='completed' then return jsonb_build_object('completed',true); end if;
+  if j.status in ('verified','completed') then return jsonb_build_object('completed',true); end if;
   if j.status='blocked' then return jsonb_build_object('error','release_blocked'); end if;
   select * into t from public.beagu_integrated_fixture_steps_v1 where job_id=j.id and idx=j.next_step for update;
   if not found or t.status<>'pending' then return jsonb_build_object('error','step_already_claimed_or_uncertain'); end if;
@@ -160,7 +197,7 @@ begin
    if p->>'evidence' !~ '^[0-9a-f]{64}$' then return jsonb_build_object('error','invalid_step_evidence'); end if;
    update public.beagu_integrated_fixture_steps_v1 set status='done',lease=null,worker_run=null,evidence=p->>'evidence' where job_id=j.id and idx=j.next_step;
    update public.beagu_integrated_fixture_jobs_v1 set next_step=j.next_step+1,
-    status=case when j.next_step+1=j.task_count then 'completed' else 'running' end where id=j.id;
+    status=case when j.next_step+1=j.task_count then 'verified' else 'running' end where id=j.id;
   end if;
   return jsonb_build_object('ok',true);
  end if;

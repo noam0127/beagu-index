@@ -175,6 +175,8 @@ class Runner(unittest.TestCase):
             server.execute(cluster,b"UPDATE public.beagu_site_release_jobs_v1 SET status='failed';","service_role")
             job=ledger.create(self.verified,self.registry,self.approval)
             self.assertEqual(job,server.PostgresLedger(cluster).create(self.verified,self.registry,self.approval))
+            with self.assertRaisesRegex(ValueError,"finalization_not_ready"):
+                ledger.finalize(job,self.verified,self.registry,"a"*64)
             with self.assertRaises(RuntimeError):
                 server.execute(cluster,legacy,"service_role")
             with self.assertRaises(RuntimeError):
@@ -189,11 +191,23 @@ class Runner(unittest.TestCase):
                 self.assertTrue(runner.once(job))
             self.assertFalse(runner.once(job))
             state=ledger.snapshot(job)
-            self.assertEqual(state["status"],"completed")
+            self.assertEqual(state["status"],"verified")
             self.assertTrue(all(s["status"]=="done" and "lease" not in s for s in state["steps"]))
             self.assertFalse(state["execution_enabled"])
             self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
-            # A completed rehearsal never changes the production pointer.
+            with self.assertRaises(RuntimeError):
+                server.execute(cluster,legacy,"service_role")
+            with self.assertRaisesRegex(ValueError,"final_evidence_mismatch"):
+                ledger.finalize(job,self.verified,self.registry,"0"*64)
+            final=state["steps"][-1]["evidence"]
+            result=ledger.finalize(job,self.verified,self.registry,final)
+            self.assertTrue(result["rehearsal"])
+            self.assertEqual(result,ledger.finalize(job,self.verified,self.registry,final))
+            self.assertEqual(ledger.snapshot(job)["status"],"completed")
+            self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.candidate)
+            self.assertEqual(server.execute(cluster,("SELECT count(*) FROM public.beagu_site_release_history_v1 WHERE job_id='"+job+"';").encode()).strip(),b"1")
+            with self.assertRaisesRegex(ValueError,"finalization_pin_mismatch"):
+                ledger.finalize(job,self.verified,self.registry,"0"*64)
             server.execute(cluster,legacy,"service_role")
 
     def test_postgres_concurrent_claim_and_uncertain_effect(self):
