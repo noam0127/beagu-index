@@ -13,5 +13,5 @@ assert.match(backend,/admin\.rpc\('beagu_2026_lv2_released_question_results'/);
 assert.match(backend,/level>=2&&lv2Approved2026!==null/);
 assert.doesNotMatch(source,/\.from\('beagu_2026_results_snapshot'\)/);
 assert.doesNotMatch(source,/\.from\('beagu_2026_qa_ingest_staging'\)/);
-assert.match(html,/js\/level-search\.js\?v=20261123-n1-release/);
+assert.match(html,/js\/level-search\.js\?v=1110-experience/);
 console.log('PASS: Lv2 opens 2026 first, withheld school results stay private');

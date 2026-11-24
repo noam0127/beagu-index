@@ -12,16 +12,19 @@ const schema=read('supabase/migrations/20261121090000_member_sms_opt_in_v1.sql')
 assert.doesNotThrow(()=>new vm.Script(challengeJs));
 assert.doesNotThrow(()=>new vm.Script(postitJs));
 
-for (const [html,id] of [[challenge,'challengeMemberSmsConsent'],[postit,'postitSmsConsent']]) {
+// Account work remains on hold; the current challenge intentionally has no member signup.
+assert.doesNotMatch(challenge,/id="challengeMember(?:SmsConsent|SmsPhone|Form|Overlay)"/);
+assert.doesNotMatch(challenge,/challenge-member-auth-v1\.(?:js|css)/);
+for (const [html,id] of [[postit,'postitSmsConsent']]) {
  const tag=html.match(new RegExp('<input[^>]*id="'+id+'"[^>]*>'))?.[0];
  assert.ok(tag, 'SMS consent checkbox missing: '+id);
  assert.ok(tag.includes('type="checkbox"'));
  assert.equal(tag.includes('checked'),false,'Marketing consent must begin unchecked');
 }
-for (const [html,id] of [[challenge,'challengeMemberSmsPhone'],[postit,'postitSmsPhone']]) {
+for (const [html,id] of [[postit,'postitSmsPhone']]) {
  assert.ok(html.includes('id="'+id+'"'), 'Phone input absent: '+id);
 }
-assert.ok(challenge.includes('동의하지 않아도 가입할 수 있으며'));
+// Preserve dormant challenge opt-in handler and private database checks below; no contact form restored.
 assert.ok(postit.includes('미동의해도 가입 가능'));
 for (const script of [challengeJs,postitJs]) {
  assert.ok(script.includes('beagu_sms_opt_in:wantsSms'));
