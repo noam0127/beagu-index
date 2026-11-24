@@ -28,6 +28,8 @@ globalThis.Deno={env:{get:k=>({SUPABASE_URL:'https://fixture.invalid',SUPABASE_S
 globalThis.fetch=async (url,opts)=>{
  const u=new URL(url);assert.equal(u.origin,'https://fixture.invalid');
  if(u.pathname.endsWith('/beagu_level_sessions'))return Response.json([session()]);
+ if(u.pathname.endsWith('/rpc/beagu_2026_level_school_published'))return Response.json(false);
+ if(u.pathname.endsWith('/schools')||u.pathname.endsWith('/beagu_school_report_yearly')||u.pathname.endsWith('/beagu_verified_school_question_distributions_v1'))return Response.json([]);
  if(u.pathname.endsWith('/rpc/beagu_account_level_session_allowed_v1')){const r=await rpc('beagu_account_level_session_allowed_v1',JSON.parse(opts.body));return Response.json(r.data);}
  throw Error('unexpected fetch '+u.pathname);
 };
@@ -37,9 +39,9 @@ const specs=[
  ['beagu-school-culture-v1',{},401,400],
  ['beagu-challenge-identity',{},401,400],
  ['beagu-referral-link-v1',{},401,400],
- ['class-diary-world-v1',{},401,null],
- ['class-diary-story-signals-v1',{},401,null],
- ['class-diary-guest-access-v1',{action:'verify-lv2'},null,null]
+ ['class-diary-world-v1',{schoolId:'TEST001'},401,404],
+ ['class-diary-story-signals-v1',{schoolId:'TEST001'},401,404],
+ ['class-diary-guest-access-v1',{action:'verify-lv2',schoolId:'TEST001'},403,403]
 ];
 async function load(name){
  const raw=await readFile('supabase/functions/'+name+'/index.ts','utf8');
@@ -62,6 +64,7 @@ try{
   allow=true;calls=[];
   const valid=await invoke(body);
   if(accepted!==null)assert.equal(valid.status,accepted,name+' verified transition');
+  if(name==='class-diary-guest-access-v1'){assert.equal(result.data.error,'LV2_REQUIRED');assert.equal(valid.data.error,'SCHOOL_NOT_ELIGIBLE');}
   assert.ok(calls.includes('beagu_account_level_session_allowed_v1'),name+' valid session check');
   if(name.startsWith('class-diary-')){
    tier=1;calls=[];const lower=await invoke(body);
