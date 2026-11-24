@@ -442,7 +442,20 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   const latest=await state();
   if(latest.production_sha!==s.production_sha||latest.draft_sha!==sha||latest.draft_version!==candidate.version||
      latest.draft_summary!==candidate.summary||await activeJob())return error("direct_confirmation_required",409,origin);
-  return respond({...result,approved:false,execution_enabled:false},200,origin);
+  // Read-only solo-operator preview, not an approval or job creation.
+  let recipeSha:string|null=null;
+  if(result.plan.backend_required){
+   try{recipeSha=await fixtureHash(fixtureRecipe(result.plan,result.plan_sha256,productionRegistry));}catch{/* no trusted recipe */}
+  }
+  const solo={schema:1,mode:"solo_operator",base_sha:s.production_sha,candidate_sha:sha,
+   plan_sha256:result.plan_sha256,recipe_sha256:recipeSha,
+   owner_mfa_verified:true,approval_recorded:false,automatic_backup_connected:false,
+   execution_enabled:false,blockers:[
+    ...(!recipeSha&&result.plan.backend_required?["trusted_recipe_missing"]:[]),
+    "production_backup_connection_unverified","automatic_restore_unverified",
+    "single_approval_integration_unverified","waterway_baseline_unverified","production_execution_locked"
+   ]};
+  return respond({...result,solo_preparation:solo,approved:false,execution_enabled:false},200,origin);
  }
  if(action==="wake_approved_job"){
   if(!current||current.id!==input.job_id||current.status!=="queued"||current.target!=="production"||current.from_sha!==s.production_sha||current.to_sha!==input.candidate_sha||!["prod_apply","prod_rollback"].includes(current.action))return error("direct_confirmation_required",409,origin);

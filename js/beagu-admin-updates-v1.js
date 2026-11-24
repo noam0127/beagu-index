@@ -47,7 +47,10 @@
    write("integratedCounts",p.inventory.length+"개 파일 · 서버 관련 "+p.inventory.filter(f=>f.backend).length+"개");
    write("integratedManual",p.requires_manual_review||p.requires_shared_dependency_review?"수동 검토 또는 공용 의존성 검증 필요 · 실행 잠금":"명세 조회 완료 · 별도 승인 및 운영 연결 필요");
    integratedList("integratedFiles",p.inventory.map(f=>f.review_kinds.map(k=>kindLabels[k]||"기타 검토").join(" / ")+" · "+f.status+" · "+f.path));
-   integratedList("integratedChecks",p.required_checks.map(k=>checkLabels[k]||"추가 확인"));
+   const solo=integratedPlan.solo_preparation;
+   const soloLabels={trusted_recipe_missing:"승인된 실행 계획 미연결",production_backup_connection_unverified:"운영 백업 연결 미검증",automatic_restore_unverified:"자동 운영 복원 미검증",single_approval_integration_unverified:"관리자 단일 승인 연동 미검증",waterway_baseline_unverified:"물길 선행 조건 미검증",production_execution_locked:"운영 실행 잠금"};
+   const validSolo=solo?.schema===1&&solo.mode==="solo_operator"&&solo.base_sha===p.base_sha&&solo.candidate_sha===p.candidate_sha&&solo.plan_sha256===integratedPlan.plan_sha256&&solo.owner_mfa_verified===true&&solo.approval_recorded===false&&solo.automatic_backup_connected===false&&solo.execution_enabled===false&&Array.isArray(solo.blockers)&&solo.blockers.includes("production_execution_locked")&&solo.blockers.every(k=>Object.prototype.hasOwnProperty.call(soloLabels,k));
+   integratedList("integratedChecks",[...p.required_checks.map(k=>checkLabels[k]||"추가 확인"),...(validSolo&&p.backend_required?["1인 운영형 · 관리자 인증 확인 (승인 전)",...solo.blockers.map(k=>soloLabels[k])]:[])]);
   }else{
    for(const id of ["integratedVersion","integratedSummary","integratedDigest","integratedCounts","integratedManual"])write(id,"—");
    integratedList("integratedFiles",[]);integratedList("integratedChecks",[]);

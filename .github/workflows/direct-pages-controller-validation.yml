@@ -37,6 +37,7 @@ jobs:
           /usr/bin/python3 tests/integrated-release-backup-policy-candidate.py
           /usr/bin/python3 tests/integrated-release-backup-evidence-candidate.py
           /usr/bin/python3 tests/integrated-release-solo-backup-candidate.py
+          /usr/bin/python3 tests/integrated-release-solo-connection-candidate.py
           /usr/bin/python3 tests/integrated-release-fixture-attestation.py
           /usr/bin/python3 tests/integrated-release-fixture-challenge.py
           /usr/bin/python3 tests/integrated-release-fixture-observer-cli.py

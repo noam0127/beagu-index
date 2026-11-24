@@ -11,6 +11,7 @@ const base="a".repeat(40),candidate="b".repeat(40),uuid="00000000-0000-0000-0000
 const state={production_sha:base,draft_sha:candidate,draft_version:"v1.10.1",draft_summary:"fixture",production_version:"old"};
 const plan={schema:1,policy:"integrated-review-v1",base_sha:base,candidate_sha:candidate,version:state.draft_version,summary:state.draft_summary,backend_required:true,execution_enabled:false,inventory:[{path:"supabase/fixture.sql",status:"added",review_kinds:["db_review"],backend:true}],required_checks:["backup_review"],requires_manual_review:false};
 const review={plan,plan_sha256:crypto.createHash("sha256").update(JSON.stringify(plan)).digest("hex"),approved:false,execution_enabled:false};
+review.solo_preparation={schema:1,mode:"solo_operator",base_sha:base,candidate_sha:candidate,plan_sha256:review.plan_sha256,recipe_sha256:null,owner_mfa_verified:true,approval_recorded:false,automatic_backup_connected:false,execution_enabled:false,blockers:["trusted_recipe_missing","production_backup_connection_unverified","automatic_restore_unverified","single_approval_integration_unverified","waterway_baseline_unverified","production_execution_locked"]};
 let status={state,direct_release_v1:true,direct_candidate_ready:false,direct_candidate_reason:"backend_integrated_required"},preview=review,job=null,wait=null,delivered=false;
 const calls=[];
 const response=(obj,code=200)=>new Response(JSON.stringify(obj),{status:code});

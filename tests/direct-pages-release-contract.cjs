@@ -70,6 +70,16 @@ async function call(action,fields={},token=jwt){const headers={'Content-Type':'a
  const auditCount=audit.length;
  const review=(await inspect({execution_enabled:true,approved:true,commands:['untrusted'],plan:{base_sha:OTHER}})).body;
  assert.equal(review.approved,false);assert.equal(review.execution_enabled,false);assert.equal(review.plan.execution_enabled,false);
+ assert.equal(review.solo_preparation.mode,"solo_operator");
+ assert.equal(review.solo_preparation.owner_mfa_verified,true);
+ assert.equal(review.solo_preparation.approval_recorded,false);
+ assert.equal(review.solo_preparation.execution_enabled,false);
+ assert.equal(review.solo_preparation.base_sha,BASE);
+ assert.equal(review.solo_preparation.candidate_sha,DRAFT);
+ assert.equal(review.solo_preparation.plan_sha256,review.plan_sha256);
+ assert.equal(review.solo_preparation.recipe_sha256,null);
+ assert.ok(review.solo_preparation.blockers.includes("production_backup_connection_unverified"));
+ assert.ok(review.solo_preparation.blockers.includes("production_execution_locked"));
  assert.equal(review.plan.base_sha,BASE);assert.equal(review.plan.candidate_sha,DRAFT);assert.equal(review.plan.backend_required,true);
  assert.equal(review.plan.requires_manual_review,true);assert.equal(review.plan.requires_shared_dependency_review,true);
  assert.deepEqual(review.plan.edge_functions,['beagu-account-v1']);
