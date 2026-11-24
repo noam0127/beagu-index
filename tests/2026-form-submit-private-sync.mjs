@@ -75,7 +75,18 @@ assert.deepEqual(invoked,['read','questions','core','culture'],'Every output mus
 assert.equal(locked,false);
 scope.onBeagu2026FormSubmitted({range:{getSheet:()=>({getName:()=> '다른 시트'})}});
 assert.equal(invoked.length,4,'Unrelated sheet must not trigger refresh');
-scope.refreshBeagu2026QuestionResults=()=>{throw new Error('ingest failed');};
+scope.refreshBeagu2026QuestionResults=()=>{invoked.push('questions-failed');throw new Error('ingest failed');};
 assert.throws(()=>scope.refreshBeagu2026AllPrivateStats(),/ingest failed/);
+assert.deepEqual(invoked.slice(-4),['read','questions-failed','core','culture'],
+  'A failed question ingest must not block core or culture processing');
 assert.equal(locked,false,'A failed sync must release the lock for the next trigger');
+scope.refreshBeagu2026QuestionResults=input=>{assert.equal(input,snapshot);invoked.push('questions');};
+scope.refreshBeagu2026Stats=input=>{assert.equal(input,snapshot);invoked.push('partial-core');return {privateQaStatus:'PRIVATE_QA_ERROR',publishStatus:'PUBLISHED'};};
+assert.throws(()=>scope.refreshBeagu2026AllPrivateStats(),/partial sync failed/);
+assert.deepEqual(invoked.slice(-4),['read','questions','partial-core','culture']);
+assert.equal(locked,false);
+scope.refreshBeagu2026Stats=input=>{assert.equal(input,snapshot);invoked.push('core');return {privateQaStatus:'SENT_1',publishStatus:'PUBLISHED'};};
+scope.refreshBeagu2026AllPrivateStats();
+assert.deepEqual(invoked.slice(-4),['read','questions','core','culture'],'A later retry must use a fresh snapshot and complete all stages');
+assert.equal(locked,false);
 console.log('PASS: 2026 one-time trigger path, one official row, school-type review, Q01-Q17 private auto aggregation');
