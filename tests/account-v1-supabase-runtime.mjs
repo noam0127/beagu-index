@@ -98,4 +98,20 @@ if(phase==='seed'){
  const auth=await signInAdmin();await adminCall({action:'list'},400,auth.token);await adminCall({action:'detail'},400,auth.token);await adminCall({action:'report_queue'},200,auth.token);
  assert.equal((await writer(fresh.token)).linked,true);
  console.log('PASS recovery after actual runtime/DB restart: rotated credential remains valid, used recovery and revoked sessions denied, both author rights preserved, old personal directory remains closed');
+}else if(phase==='restored'){
+ const state=JSON.parse(await readFile(statePath,'utf8'));
+ // Application snapshot recovery deliberately invalidates account sessions.
+ await account({action:'status'},401,state.oldToken);
+ await account({action:'status'},401,state.currentToken);
+ await account({action:'password_login',account_id:a,password:pw},401);
+ await account({action:'recover',account_id:a,password:pw,recovery:old,new_recovery:'6KMXF9TDW4NPQ'},403);
+ const fresh=await login(a,replacement);
+ assert.equal(fresh.nickname,state.nick);assert.equal(fresh.lv2_active,true);
+ assert.ok((await posts(fresh.token)).posts.some(p=>p.id===state.post&&p.mine));
+ const two=await login(b);assert.ok((await posts(two.token)).posts.some(p=>p.id==='70000000-0000-4000-8000-000000000002'&&p.mine));
+ assert.equal((await writer(fresh.token)).linked,true);
+ await adminCall({action:'report_queue'},401,state.revokedAdmin);
+ const former=await privileged.auth.admin.getUserById(state.legacy);
+ assert.ok(former.error&&!former.data?.user,'deleted fixture Auth user must not return');
+ console.log('PASS restored application checkpoint through actual gateway: old sessions, password, recovery denied; new credentials, nickname, referral level, legacy authors and deleted Auth identity preserved');
 }else throw Error('unknown local fixture phase');
