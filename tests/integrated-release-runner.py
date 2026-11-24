@@ -16,6 +16,8 @@ import integrated_backup as b
 import integrated_server_control as server
 import integrated_package as package
 import integrated_recovery as recovery
+import integrated_production as production
+import json
 import base64
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives import serialization
@@ -378,5 +380,50 @@ class Runner(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,"not_restore_destination"):
                 cluster.restore(b"invalid","fixture_source")
             self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
+
+    def test_production_control_connection_isolated(self):
+        with b.FixtureCluster() as cluster:
+            cluster.sql("fixture_source","CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE TABLE public.existing(id integer PRIMARY KEY); INSERT INTO public.existing VALUES (1),(2);")
+            server.install(cluster,ROOT,self.base,self.candidate)
+            migration=(ROOT/"supabase/integrated-release-control-production-candidate-v1.sql").read_bytes()
+            with self.assertRaises(RuntimeError):server.execute(cluster,migration)
+            prefix=("SET beagu.bootstrap_reviewed='production_control_v1'; SET beagu.bootstrap_expected_base='"+self.base+"';\n").encode()
+            server.execute(cluster,prefix+migration)
+            def rpc(action,payload):
+                raw=json.dumps(payload,separators=(",",":")).encode().hex()
+                value=json.loads(server.execute(cluster,("SELECT public.beagu_integrated_production_transition_v1('"+action+"',convert_from(decode('"+raw+"','hex'),'UTF8')::jsonb);").encode(),"service_role"))
+                return value if value.get("error") else {**value,"scope":production.SCOPE,"execution_enabled":True}
+            pins={**self.pins,"recipe_sha256":r.digest(self.recipe),"approval_sha256":r.digest(self.approval),"confirmed":True,"tasks":self.recipe["tasks"],"scope":production.SCOPE}
+            self.assertEqual(rpc("create",pins)["error"],"production_execution_disabled")
+            with self.assertRaises(RuntimeError):
+                server.execute(cluster,b"UPDATE public.beagu_integrated_production_gate_v1 SET enabled=true;","service_role")
+            # Test-only activation by the disposable cluster owner; no production setting changed.
+            server.execute(cluster,b"UPDATE public.beagu_integrated_production_gate_v1 SET enabled=true;")
+            job=rpc("create",pins)["id"]
+            ledger=production.ProductionLedger(rpc,"42:1")
+            self.assertEqual(ledger.snapshot(job)["status"],"queued")
+            self.assertNotIn("lease",ledger.snapshot(job)["steps"][0])
+            with self.assertRaisesRegex(ValueError,"owner_approval_required"):ledger.create(None,None,None)
+            adapter=Adapter(self.base,cluster,self.objects,self.git)
+            adapter.package_pins=self.package_pins
+            with self.assertRaisesRegex(ValueError,"non_fixture_adapter"):
+                production.ProductionRunner(ledger,self.git,self.envelope,self.registry,adapter)
+            # Reuse the exact fixture adapter in a scope-labelled test double only.
+            class TestAdapter(Adapter):
+                scope=production.SCOPE
+                def result(self,op,p,**kw):
+                    return {**super().result(op,p,**kw),"scope":production.SCOPE}
+            adapter=TestAdapter(self.base,cluster,self.objects,self.git)
+            adapter.package_pins=self.package_pins
+            worker=production.ProductionRunner(ledger,self.git,self.envelope,self.registry,adapter)
+            self.assertTrue(worker.once(job))
+            self.assertEqual(ledger.snapshot(job)["next_step"],1)
+            adapter.fail="apply_sql"
+            with self.assertRaisesRegex(RuntimeError,"fixture injected failure"):worker.once(job)
+            self.assertEqual(ledger.snapshot(job)["status"],"blocked")
+            with self.assertRaisesRegex(ValueError,"release_blocked"):worker.once(job)
+            with self.assertRaisesRegex(ValueError,"production_final_observer_not_connected"):ledger.finalize(job,self.verified,self.registry,"a"*64)
+            self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
+            with self.assertRaisesRegex(ValueError,"production_worker_transport_not_authorized"):production.github_worker_transport("claim",{})
 
 if __name__=="__main__":unittest.main()

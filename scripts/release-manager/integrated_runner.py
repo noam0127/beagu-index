@@ -125,10 +125,11 @@ class Ledger:
             nxt=claim["idx"]+1
             c.execute("UPDATE jobs SET next_step=?,status=? WHERE id=?",(nxt,"completed" if nxt==row["task_count"] else "running",job))
 
-class FixtureRunner:
-    """Fixed trusted handler interface. Only fixture-scoped, never a production worker."""
+class ScopedRunner:
+    """Fixed trusted handler interface; subclasses pin their execution scope."""
+    scope=SCOPE
     def __init__(self,ledger,root,envelope,registry,adapter):
-        require(getattr(adapter,"scope",None)==SCOPE,"non_fixture_adapter")
+        require(getattr(adapter,"scope",None)==self.scope,"non_fixture_adapter")
         self.ledger,self.root,self.envelope,self.registry,self.adapter=ledger,root,envelope,registry,adapter
     def once(self,job):
         verified=verify.verify_manifest(self.root,self.envelope)
@@ -149,7 +150,7 @@ class FixtureRunner:
                 "verify_backend":self.adapter.verify_backend,"publish_pages":self.adapter.publish_pages,
                 "verify_live":self.adapter.verify_live}
             evidence=handlers[task["op"]](task,files,verified)
-            require(isinstance(evidence,dict) and evidence.get("scope")==SCOPE and evidence.get("ok") is True,"missing_fixture_evidence")
+            require(isinstance(evidence,dict) and evidence.get("scope")==self.scope and evidence.get("ok") is True,"missing_fixture_evidence")
             require(evidence.get("plan_sha256")==verified["plan_sha256"] and evidence.get("operation")==task["op"],"wrong_fixture_evidence")
             if task["op"]=="backup":require(evidence.get("restore_verified") is True and evidence.get("encrypted") is True,"backup_not_verified")
             self.ledger.finish(job,claim,digest(evidence))
@@ -158,3 +159,8 @@ class FixtureRunner:
             # Effects may have occurred. Block, never roll back or retry implicitly.
             self.ledger.finish(job,claim)
             raise
+
+
+class FixtureRunner(ScopedRunner):
+    """Original isolated execution path; no production adapter accepted."""
+    scope=SCOPE

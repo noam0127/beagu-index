@@ -94,8 +94,8 @@ function sortedJson(v:any):string{
 async function fixtureHash(v:any){
  return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(sortedJson(v)))),b=>b.toString(16).padStart(2,"0")).join("");
 }
-function fixtureRecipe(plan:any,planSha:string){
- const registry=JSON.parse(fixtureRegistry);
+function fixtureRecipe(plan:any,planSha:string,registryRaw=fixtureRegistry){
+ const registry=JSON.parse(registryRaw);
  if(registry?.schema!==1||!Array.isArray(registry.recipes))throw Error("fixture_registry_invalid");
  const matches=registry.recipes.filter((r:any)=>r?.plan_sha256===planSha);
  if(matches.length!==1)throw Error("fixture_recipe_unavailable");
@@ -179,6 +179,68 @@ async function fixtureWorkerAction(input:Record<string,unknown>,run:string,origi
  }
  return error("invalid_action",400,origin);
 }
+// Production control route is separate from fixture and legacy identities.
+// Deployment requires both independently configured Edge and database gates.
+const productionControlEnabled=Deno.env.get("BEAGU_INTEGRATED_PRODUCTION_CONTROL")==="approved_v1";
+const productionWorkerSha=Deno.env.get("BEAGU_INTEGRATED_PRODUCTION_WORKFLOW_SHA")||"";
+const productionRegistry=Deno.env.get("BEAGU_INTEGRATED_PRODUCTION_TRUSTED_REGISTRY")||"";
+const productionScope="production_integrated_v1";
+async function productionWorker(token:string){
+ if(!productionControlEnabled||!SHA.test(productionWorkerSha))return null;
+ try{
+  const {payload:p}=await jwtVerify(token,jwks,{issuer:"https://token.actions.githubusercontent.com",audience:"beagu-integrated-production-worker"});
+  if(p.repository!==repo||p.ref!=="refs/heads/main"||p.workflow_ref!==repo+"/.github/workflows/beagu-release-controller.yml@refs/heads/main"||
+   p.workflow_sha!==productionWorkerSha||p.sha!==productionWorkerSha||p.event_name!=="workflow_dispatch"||
+   !/^[0-9]{1,24}$/.test(String(p.run_id||""))||!/^[0-9]{1,8}$/.test(String(p.run_attempt||"")))return null;
+  return String(p.run_id)+":"+String(p.run_attempt);
+ }catch{return null;}
+}
+async function productionRpc(action:string,payload:Record<string,unknown>,origin:string){
+ const {data,error:e}=await db.rpc("beagu_integrated_production_transition_v1",{p_action:action,p:{...payload,scope:productionScope}});
+ if(e||!data)return error("production_control_unavailable",503,origin);
+ if(data.error)return error(String(data.error),409,origin);
+ return respond({...data,scope:productionScope,execution_enabled:true},200,origin);
+}
+async function productionAdmin(input:Record<string,unknown>,userId:string,origin:string){
+ if(!productionControlEnabled)return error("production_execution_disabled",409,origin);
+ if(input.action==="integrated_production_status"){
+  if(typeof input.job_id!=="string"||!UUID.test(input.job_id))return error("invalid_job_id",400,origin);
+  return productionRpc("status",{job_id:input.job_id},origin);
+ }
+ if(input.action!=="integrated_production_create")return error("invalid_action",400,origin);
+ const s=await state(),sha=String(input.candidate_sha||"");
+ if(input.confirmed!==true||input.expected_production_sha!==s.production_sha||sha!==s.draft_sha||
+    !s.production_sha||typeof input.plan_sha256!=="string"||!HEX64.test(input.plan_sha256)||
+    typeof input.recipe_sha256!=="string"||!HEX64.test(input.recipe_sha256))return error("direct_confirmation_required",409,origin);
+ const candidate=await directCandidate(s.production_sha,sha);
+ if("error" in candidate)return error(candidate.error!,candidate.status!,origin);
+ if(candidate.version!==s.draft_version||candidate.summary!==s.draft_summary)return error("direct_version_mismatch",409,origin);
+ const result=await makeReviewPlan(s.production_sha,sha,candidate.version,candidate.summary,candidate.delta_files);
+ if(!result.plan.backend_required||result.plan_sha256!==input.plan_sha256)return error("integrated_plan_changed",409,origin);
+ let recipe;
+ try{recipe=fixtureRecipe(result.plan,result.plan_sha256,productionRegistry);}catch{return error("production_recipe_unavailable",409,origin);}
+ const recipeSha=await fixtureHash(recipe);
+ if(recipeSha!==input.recipe_sha256)return error("production_recipe_changed",409,origin);
+ const pins={base_sha:s.production_sha,candidate_sha:sha,plan_sha256:result.plan_sha256,recipe_sha256:recipeSha};
+ const approvalSha=await fixtureHash({scope:productionScope,...pins,confirmed:true,approved_by:userId});
+ return productionRpc("create",{...pins,approval_sha256:approvalSha,confirmed:true,tasks:recipe.tasks},origin);
+}
+async function productionWorkerAction(input:Record<string,unknown>,run:string,origin:string){
+ if(typeof input.job_id!=="string"||!UUID.test(input.job_id))return error("invalid_job_id",400,origin);
+ if(input.action==="worker_integrated_production_status")return productionRpc("status",{job_id:input.job_id},origin);
+ if(input.action==="worker_integrated_production_claim"){
+  for(const key of ["observed_base","candidate_sha"])if(typeof input[key]!=="string"||!SHA.test(String(input[key])))return error("invalid_production_pin",400,origin);
+  for(const key of ["plan_sha256","recipe_sha256"])if(typeof input[key]!=="string"||!HEX64.test(String(input[key])))return error("invalid_production_pin",400,origin);
+  return productionRpc("claim",{job_id:input.job_id,observed_base:input.observed_base,candidate_sha:input.candidate_sha,plan_sha256:input.plan_sha256,recipe_sha256:input.recipe_sha256,worker_run:run},origin);
+ }
+ if(input.action==="worker_integrated_production_finish"){
+  if(!Number.isInteger(input.idx)||Number(input.idx)<0||Number(input.idx)>=100||typeof input.lease!=="string"||!UUID.test(input.lease)||
+   !input.task||typeof input.task!=="object"||Array.isArray(input.task)||!(input.evidence===null||(typeof input.evidence==="string"&&HEX64.test(input.evidence))))return error("invalid_step_receipt",400,origin);
+  return productionRpc("finish",{job_id:input.job_id,idx:input.idx,lease:input.lease,task:input.task,evidence:input.evidence,worker_run:run},origin);
+ }
+ return error("invalid_action",400,origin);
+}
+
 async function github(path:string){
  const response=await fetch(mainApi+path,{headers:{
   "Accept":"application/vnd.github+json","User-Agent":"beaguindex-release-v1",...(dispatchToken?{"Authorization":"Bearer "+dispatchToken}:{})
@@ -507,6 +569,11 @@ Deno.serve(async(req:Request)=>{
  catch{return error("invalid_json",400,origin);}
  const action=String(input.action||"");
  try{
+  if(action.startsWith("worker_integrated_production_")){
+   const run=await productionWorker(jwt);
+   if(!run)return error("worker_auth_denied",403,origin);
+   return await productionWorkerAction(input,run,origin);
+  }
   if(action.startsWith("worker_integrated_fixture_")){
    const run=await fixtureWorker(jwt);
    if(!run)return error("worker_auth_denied",403,origin);
@@ -518,6 +585,7 @@ Deno.serve(async(req:Request)=>{
   }
   const userId=await owner(jwt);
   if(!userId)return error("admin_mfa_required",403,origin);
+  if(action.startsWith("integrated_production_"))return await productionAdmin(input,userId,origin);
   if(action.startsWith("integrated_fixture_"))return await fixtureAdmin(input,userId,origin);
   return await adminAction(input,userId,origin);
  }catch(e){
