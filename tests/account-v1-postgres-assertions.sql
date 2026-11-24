@@ -75,3 +75,20 @@ BEGIN
  IF has_function_privilege('anon','public.beagu_account_postit_current_aliases_v1(jsonb)','execute') OR has_function_privilege('authenticated','public.beagu_account_postit_current_aliases_v1(jsonb)','execute') THEN RAISE EXCEPTION 'arbitrary alias lookup exposed'; END IF;
  RAISE NOTICE 'PASS current-week Post-it alias only, no old/future alias or stable author identifier';
 END $$;
+
+-- Exercise actual ACLs, not only browser controls. No production connection.
+DO $$
+DECLARE role_name text; fn text; tab text;
+BEGIN
+ FOREACH role_name IN ARRAY ARRAY['anon','authenticated'] LOOP
+  FOREACH fn IN ARRAY ARRAY['public.beagu_account_signup_v1(text,text,text,text)','public.beagu_account_password_login_v1(text,text,text)','public.beagu_account_recover_v1(text,text,text,text)','public.beagu_account_session_status_v1(text)','public.beagu_account_logout_v1(text)','public.beagu_account_level_session_allowed_v1(text)','public.beagu_account_postit_writer_v1(text)','public.beagu_account_postit_current_aliases_v1(jsonb)'] LOOP
+   IF has_function_privilege(role_name,fn,'EXECUTE') THEN RAISE EXCEPTION 'unexpected public execute: % %',role_name,fn; END IF;
+  END LOOP;
+ END LOOP;
+ FOREACH role_name IN ARRAY ARRAY['anon','authenticated','service_role'] LOOP
+  FOREACH tab IN ARRAY ARRAY['beagu_private.beagu_anonymous_accounts_v1','beagu_private.beagu_account_login_budget_v1','beagu_private.beagu_account_sessions_v1','beagu_private.beagu_account_nicknames_v1','beagu_private.beagu_account_nickname_members_v1'] LOOP
+   IF has_table_privilege(role_name,tab,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE') THEN RAISE EXCEPTION 'unexpected direct credential access: % %',role_name,tab; END IF;
+  END LOOP;
+ END LOOP;
+ RAISE NOTICE 'PASS explicit anonymous/authenticated RPC denial and no direct credential/alias table access even for service role';
+END $$;
