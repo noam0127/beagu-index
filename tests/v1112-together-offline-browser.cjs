@@ -166,6 +166,8 @@ async function search(page,level){
   await goto(page,'challenge.html');
   assert.equal(await page.locator('#challengeProtected').isHidden(),true);
   assert.equal(await page.locator('#challengeReferralLink').inputValue(),'');
+  // Independent no-credit fixture: an earned visitor would correctly auto-promote on re-login.
+  tracker.count=0;tracker.promoted=false;tracker.sessionPromoted=false;
   await login(page,common,1);
   await search(page,1);
   assert.ok(tracker.searchTiers.includes(1));
