@@ -22,6 +22,33 @@ function beagu26Selections(value, options, multiple) {
   }
   return found.sort((a,b)=>a-b);
 }
+// Private row-level triage, not proof of distinct respondents or consent.
+// Only identical second-level timestamps and all 13 identical mandatory
+// selections at the same uniquely matched school are duplicate suspects.
+// Never remove rows on suspicion, persist fingerprints or export them.
+function beagu26RowReviewSignals(values,c,schools) {
+  const signals=new Map(),seen=new Map();
+  if(!Array.isArray(c.q)||c.q.length!==13)return signals;
+  const add=(i,reason)=>{
+    if(!signals.has(i))signals.set(i,new Set());
+    signals.get(i).add(reason);
+  };
+  for(let i=1;i<values.length;i++){
+    const r=values[i],day=getSubmittedDay(r[0]);
+    if(!day||day<'2026-11-01'||day>'2026-12-31')continue;
+    const match=resolveSchool(r,c,schools);
+    if(!match.school)continue;
+    if(match.typeConflict)add(i,'SCHOOL_TYPE_REVIEW');
+    const core=c.q.map(j=>String(r[j]||'').trim());
+    if(core.some(v=>!v))add(i,'MANDATORY_MISSING');
+    const stamp=String(r[0]||'').trim();
+    if(core.some(v=>!v)||! /\\d{1,2}:\\d{2}:\\d{2}(?:\\s|$)/.test(stamp))continue;
+    const key=JSON.stringify([String(match.school.school_id),stamp,...core]);
+    if(seen.has(key)){add(seen.get(key),'DUPLICATE_SUSPECT');add(i,'DUPLICATE_SUSPECT');}
+    else seen.set(key,i);
+  }
+  return signals;
+}
 function beagu26BuildResults(values, schools, catalog) {
   const headers=values[0], c=questionColumns(headers), specs=[];
   for(const id of Object.keys(catalog)){
@@ -39,6 +66,7 @@ function beagu26BuildResults(values, schools, catalog) {
         multiple:meta.kind==='multi'||id==='Q45',time:meta.kind==='time'});
     });
   }
+  const signals=beagu26RowReviewSignals(values,c,schools);
   const groups=new Map(), reviewRows=[], totals={source_rows:0,official_rows:0,prelaunch_rows:0,unmatched_rows:0,undated_rows:0};
   for(let sourceIndex=1;sourceIndex<values.length;sourceIndex++){
     const r=values[sourceIndex];
@@ -55,7 +83,9 @@ function beagu26BuildResults(values, schools, catalog) {
     if(!groups.has(id))groups.set(id,{school_id:id,school_response_rows:0,school_match_status:'EXACT_REGION_OFFICE_NAME',
       questions:specs.map(s=>({id:s.id,row:s.row,valid:0,invalid:0,counts:s.options.map(()=>0),minutes_sum:0}))});
     const g=groups.get(id);g.school_response_rows++;
-    if(match.typeConflict)g.school_match_status='NEEDS_REVIEW';
+    const rowSignals=signals.get(sourceIndex)||new Set();
+    if(match.typeConflict||rowSignals.has('DUPLICATE_SUSPECT')||rowSignals.has('MANDATORY_MISSING'))g.school_match_status='NEEDS_REVIEW';
+    for(const reason of rowSignals)reviewRows.push([sourceIndex+1,id,'ROW',-1,reason,'PENDING_REVIEW']);
     specs.forEach((s,index)=>{
       const q=g.questions[index], raw=String(r[s.col]||'').trim();
       if(!raw)return;
