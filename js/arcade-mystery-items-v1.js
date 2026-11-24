@@ -63,10 +63,21 @@
   gradient.addColorStop(0,item.good?"#e5faff":"#fff1e8");
   gradient.addColorStop(1,item.good?"#91d7ff":"#f8a9ad");
   ctx.fillStyle=gradient;ctx.strokeStyle=item.good?"#2375bc":"#b3364b";
-  ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(-r,-r,r*2,r*2,r*.35);ctx.fill();ctx.stroke();
+  ctx.lineWidth=3;ctx.beginPath();if(typeof ctx.roundRect==="function")ctx.roundRect(-r,-r,r*2,r*2,r*.35);else ctx.rect(-r,-r,r*2,r*2);ctx.fill();ctx.stroke();
   ctx.shadowBlur=0;
   ctx.font=Math.floor(r*1.35)+"px Apple Color Emoji,Segoe UI Emoji,sans-serif";
-  ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(item.icon,0,0,r*1.75);
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  if(item.id==="shackle"){
+    ctx.strokeStyle="#67343b";ctx.lineWidth=Math.max(2,r*.13);
+    ctx.save();ctx.rotate(-Math.PI/4);
+    for(const dx of [-r*.29,r*.29]){ctx.beginPath();ctx.ellipse(dx,0,r*.43,r*.25,0,0,Math.PI*2);ctx.stroke();}
+    ctx.restore();
+  }else{
+    ctx.fillStyle="#24364d";ctx.fillText(item.icon,0,-r*.16,r*1.65);
+  }
+  // A readable label remains even on devices missing the emoji glyph.
+  ctx.fillStyle="#24364d";ctx.font="700 "+Math.max(9,Math.floor(r*.39))+"px system-ui,sans-serif";
+  ctx.fillText(item.name,0,r*.66,r*1.78);
   if(item.id==="ball_add"||item.id==="ball_remove"){
     ctx.fillStyle=item.good?"#17639e":"#b63045";
     ctx.strokeStyle="#fff";ctx.lineWidth=2;

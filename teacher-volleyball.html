@@ -236,7 +236,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-fullscreen-v1.js?v=140"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
-<script src="js/arcade-mystery-items-v1.js?v=20261123-items"></script>
+<script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script>
 (function () {
@@ -419,7 +419,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const p=side==="left"?left:right;
     mysteryReveals.push({item,x:p.x,y:p.y-80,ttl:105});
     if(mysteryReveals.length>4)mysteryReveals.shift();
-    setStatus((side==="left"?"나":"상대")+" 획득: "+item.icon+" "+item.name);
+    const affectsScore=["bullying","report","salary","bonus"].includes(item.id);
+    setStatus((side==="left"?"나":"상대")+" 획득: "+item.icon+" "+item.name+" · "+(side==="right"&&affectsScore?"내 점수 변동 없음":item.detail));
     tone(item.good?850:255,.1,item.good?"triangle":"sawtooth",.025);
   }
   // A passing airplane carries a teacher and drops one surprise item.

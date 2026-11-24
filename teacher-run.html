@@ -193,7 +193,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-school-picker-v1.js?v=20261120-fast1"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
-<script src="js/arcade-mystery-items-v1.js?v=20261123-arcade-items3"></script>
+<script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script>
@@ -845,6 +845,7 @@ function updatePatternHazards(dt){
 }
 // Red/blue mystery drops rise from the floor at random places, wait, then vanish.
 function collectMystery(item,x,y){
+ const scoreBefore=score;
  const t=clock,dur=item.id==="friends"||item.id==="conflict"?16:12;
  switch(item.id){
   case "shackle":mysteryBuffs.shackle=t+dur;mysteryBuffs.wings=0;player.y=H-52;break;
@@ -863,7 +864,9 @@ function collectMystery(item,x,y){
  if(chalkHelpers.length!==(chalkProfile()?.maxShots||0))resetChalkHelpers();
  mysteryReveals.push({item,x,y,life:1.6});
  if(mysteryReveals.length>4)mysteryReveals.shift();
- setNotice((item.good?"🔵":"🔴")+" "+item.name+" · "+item.detail,2.2);
+ const delta=score-scoreBefore;
+ const scoreItem=["salary","bonus","bullying","report"].includes(item.id);
+ setNotice((item.good?"🔵":"🔴")+" "+item.name+" · "+(scoreItem?"점수 "+(delta>=0?"+":"")+delta:item.detail),2.2);
  float(player.x,Math.max(70,player.y-50),item.icon+" "+item.name,item.good?"#b8f6ff":"#ffb8be");
  burst(x,y,item.good?"#9bd9ff":"#ff8189",12);
  playTone(item.good?810:255,.15,"triangle");
