@@ -324,6 +324,13 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
   await assert.rejects(()=>boundary.submit({credentials:'fixture-lv1',sessionId:sid,replay:fullCapture.events}),/session_expired/);
   assert.equal(opened,closed);assert.equal(opened,2);
   console.log('PASS RUN4_BOUNDARY_REAL_REPLAY '+JSON.stringify({score:accepted.score,retired:accepted.retired,workerOpened:opened,workerClosed:closed,store:'fixture-only'}));
+  // Optional isolated workflow only. No production address or credentials can be supplied.
+  if(process.env.RUN4_DISPOSABLE_POSTGRES==='1'){
+   const {verifyPersistentReplay}=require('../docs/run4-ranking-preflight/persistent-replay-test.cjs');
+   await verifyPersistentReplay({policy,verifier,schoolId:selectedSchool.school_id,capture:fullCapture});
+   assert.equal(opened,closed);
+  }
+
 
   await page.setViewportSize({width,height:900});
   console.log('PASS real game replay: deterministic five-second partial match, cross viewport, premature leave and forged fields denied '+JSON.stringify(replayA));
