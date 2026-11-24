@@ -1,7 +1,6 @@
-"""Drive resumable protocol rehearsal using injected simulated transport only.
-
-Fixed chunk ranges, one create session, exact acknowledgements, no retries.
-Transport is NOT live; no HTTP implementation, credentials or CLI accepted.
+"""Shared synthetic-only resumable protocol. Public transfer is simulated;
+private helper is used by the explicit guarded local fixture CLI. No production.
+Fixed chunk ranges, one create, exact acknowledgements, no retries.
 """
 import hashlib
 import os
@@ -24,7 +23,7 @@ def session_path(location):
     return u.path+"?"+u.query
 def transfer(source_root,dest_root,pin,transport):
     require(getattr(transport,"scope",None)==SCOPE,"stream_live_transport_disabled")
-    return _transfer(source_root,dest_root,pin,transport,FOLDER,OWNER,token)
+    return _transfer(source_root,dest_root,pin,transport,FOLDER,OWNER,TOKEN)
 def _transfer(source_root,dest_root,pin,transport,folder,owner,token):
     require(isinstance(pin,dict) and set(pin)==s.PIN_KEYS and pin["scope"]==s.SCOPE and v.match(v.HEX32,pin["checkpoint_id"]) and v.match(v.HASH,pin["object_sha256"]),"stream_pin_invalid")
     h={k:pin[k] for k in s.HEADER_KEYS}
