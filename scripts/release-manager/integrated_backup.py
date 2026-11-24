@@ -96,11 +96,11 @@ class FixtureCluster:
         return run(DOCKER+["exec","-i",self.container,*args],data,timeout)
 
     def sql(self,db,sql):
-        require(db in ("fixture_source","fixture_restore"), "not_fixture_database")
+        require(db in ("fixture_source","fixture_restore","fixture_recovery"), "not_fixture_database")
         return self.exec("psql","-X","-qAt","-v","ON_ERROR_STOP=1","-U","postgres","-d",db,data=sql.encode())
 
     def dump(self,db,snapshot=None,schema_only=False):
-        require(db in ("fixture_source","fixture_restore"), "not_fixture_database")
+        require(db in ("fixture_source","fixture_restore","fixture_recovery"), "not_fixture_database")
         args=["pg_dump","-U","postgres","-d",db]
         args+=["--schema-only"] if schema_only else ["--format=custom"]
         if snapshot is not None:
@@ -110,10 +110,11 @@ class FixtureCluster:
         require(0<len(out)<=MAX_BACKUP, "backup_size_limit")
         return out
 
-    def restore(self,data):
-        # createdb refuses an existing name. Never drop or overwrite a database.
-        self.exec("createdb","-U","postgres","-T","template0","fixture_restore")
-        self.exec("pg_restore","-U","postgres","-d","fixture_restore",
+    def restore(self,data,destination="fixture_restore"):
+        # Only fresh disposable clone names. Never drop or overwrite a database.
+        require(destination in ("fixture_restore","fixture_recovery"),"not_restore_destination")
+        self.exec("createdb","-U","postgres","-T","template0",destination)
+        self.exec("pg_restore","-U","postgres","-d",destination,
             "--single-transaction","--exit-on-error",data=data)
 
     def snapshot(self):

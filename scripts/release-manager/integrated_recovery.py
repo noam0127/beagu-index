@@ -58,3 +58,51 @@ def decide(ledger,job,observation,approval,observer_key,owner_key,directory):
     return ledger.rpc("recovery_decision",{**{k:incident[k] for k in ("job_id","idx","incident_id","incident_worker_run","base_sha","candidate_sha","plan_sha256","recipe_sha256","expected_status","expected_step_status")},
         "decision":decision,"observation_sha256":r.digest(observation),"approval_sha256":r.digest(approval),
         "worker_retired":o["worker_retired"],"no_effect_verified":o["no_effect_verified"]})
+
+
+def rehearse_forward_repair(cluster,ledger,job,directory,key,key_id,historical_pin,approved):
+    """Preserve the original and post-incident data in a new isolated clone.
+
+    Fixed synthetic repair only. A historical checkpoint is reference evidence,
+    never the restore input for the current database. The actual job remains blocked.
+    No production SQL, user-supplied command, external endpoint or resume path.
+    """
+    import integrated_vault as vault
+    require(type(cluster) is b.FixtureCluster and cluster.container is not None,"isolated_cluster_required")
+    incident=inspect(ledger,job)
+    state=ledger.snapshot(job)
+    require(incident["expected_status"]=="blocked" and incident["operation"]=="apply_sql" and incident["idx"]>0,"recovery_rehearsal_not_ready")
+    require(state["recovery"] and state["recovery"][-1]["decision"]=="hold" and state["recovery"][-1]["incident_id"]==incident["incident_id"],"recovery_hold_required")
+    pins=[incident[k] for k in ("plan_sha256","base_sha","candidate_sha")]
+    historical,old_dump=vault.unseal(directory,key,key_id,historical_pin,*pins)
+    current=b.fingerprint(cluster,"fixture_source")
+    expected={"scope":r.SCOPE,"incident_sha256":r.digest(incident),"historical_checkpoint_sha256":historical_pin["object_sha256"],
+        "current_state_sha256":r.digest(current),"repair":"fixture_add_missing_index","confirmed":True}
+    require(approved==expected,"rehearsal_approval_mismatch")
+    # Fresh backup of CURRENT state, not just pre-release state.
+    current_pin=b.encrypted_checkpoint(cluster,directory,key,key_id,*pins)
+    manifest,dump=vault.unseal(directory,key,key_id,current_pin,*pins)
+    require(manifest["fingerprint"]==current,"source_changed_after_approval")
+    # Old checkpoint may contain fewer rows. It is restored only into a reference clone.
+    cluster.restore(old_dump,"fixture_restore")
+    require(b.fingerprint(cluster,"fixture_restore")==historical["fingerprint"],"historical_restore_mismatch")
+    cluster.restore(dump,"fixture_recovery")
+    require(b.fingerprint(cluster,"fixture_recovery")==current,"current_restore_mismatch")
+    # Synthetic repair is deliberately additive, has no row-changing SQL, and is confined to clone.
+    require(cluster.sql("fixture_recovery","SELECT to_regclass('public.fixture_added');").strip()==b"fixture_added","unexpected_repair_schema")
+    cluster.sql("fixture_recovery","BEGIN; CREATE INDEX fixture_repair_idx ON public.fixture_added(id); COMMIT;")
+    repaired=b.fingerprint(cluster,"fixture_recovery")
+    require(repaired["tables"]==current["tables"] and repaired["sequences"]==current["sequences"],"repair_data_changed")
+    require(repaired["schema_sha256"]!=current["schema_sha256"],"repair_schema_unchanged")
+    require(cluster.sql("fixture_recovery","SELECT to_regclass('public.fixture_repair_idx');").strip()==b"fixture_repair_idx","repair_index_missing")
+    require(b.fingerprint(cluster,"fixture_source")==current,"source_changed_during_rehearsal")
+    require(inspect(ledger,job)==incident,"incident_changed_during_rehearsal")
+    # No unlock, restore to source, retry or finalization. Repair approval is fixture-only.
+    report={"scope":r.SCOPE,"incident_sha256":r.digest(incident),"approval_sha256":r.digest(approved),
+        "historical_checkpoint_sha256":historical_pin["object_sha256"],"current_checkpoint_sha256":current_pin["object_sha256"],
+        "source_state_sha256":r.digest(current),"repaired_state_sha256":r.digest(repaired),
+        "preserved_tables":len(current["tables"]),"preserved_sequences":len(current["sequences"]),
+        "historical_verified":True,"current_restore_verified":True,"data_preserved":True,
+        "source_unchanged":True,"job_remains_blocked":True,"execution_enabled":False}
+    b.private_write(pathlib.Path(directory)/(incident["incident_id"]+".rehearsal.json"),canonical(report))
+    return report

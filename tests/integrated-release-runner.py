@@ -334,4 +334,49 @@ class Runner(unittest.TestCase):
             # Old job never reopens; a new candidate would require a separate approval.
             self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
 
+    def test_forward_repair_rehearsal_preserves_post_incident_data(self):
+        with b.FixtureCluster() as cluster:
+            cluster.sql("fixture_source","CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS; CREATE TABLE public.existing(id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY, note text); INSERT INTO public.existing(note) VALUES ('before'),('updated later'),('deleted later');")
+            server.install(cluster,ROOT,self.base,self.candidate)
+            ledger=server.PostgresLedger(cluster)
+            job=ledger.create(self.verified,self.registry,self.approval)
+            directory=pathlib.Path(self.tmp.name)/"rehearsal";directory.mkdir(mode=0o700)
+            key=os.urandom(32)
+            pins=[self.verified[k] for k in ("plan_sha256","base_sha","candidate_sha")]
+            claim=ledger.claim(job,self.verified,self.registry,self.base)
+            old=b.encrypted_checkpoint(cluster,directory,key,"fixture-recovery",*pins)
+            ledger.finish(job,claim,"a"*64)
+            claim=ledger.claim(job,self.verified,self.registry,self.base)
+            # Partially applied release + new writes, update, deletion, and sequence advance.
+            cluster.sql("fixture_source","CREATE TABLE public.fixture_added(id integer PRIMARY KEY); INSERT INTO public.fixture_added VALUES(1); UPDATE public.existing SET note='changed' WHERE id=2; DELETE FROM public.existing WHERE id=3; INSERT INTO public.existing(note) VALUES ('after incident');")
+            ledger.finish(job,claim)
+            obs,owner=Ed25519PrivateKey.generate(),Ed25519PrivateKey.generate()
+            def pub(k):return k.public_key().public_bytes(serialization.Encoding.Raw,serialization.PublicFormat.Raw)
+            def sign(k,p):return {"payload":p,"signature":base64.b64encode(k.sign(recovery.canonical(p))).decode()}
+            incident=recovery.inspect(ledger,job)
+            o=sign(obs,{"kind":"recovery_observation","incident":incident,"worker_retired":True,"no_effect_verified":False,"current_state_sha256":r.digest(b.fingerprint(cluster,"fixture_source"))})
+            a=sign(owner,{"kind":"recovery_approval","incident_sha256":r.digest(incident),"observation_sha256":r.digest(o),"decision":"hold","confirmed":True})
+            recovery.decide(ledger,job,o,a,pub(obs),pub(owner),directory)
+            incident=recovery.inspect(ledger,job)
+            before=b.fingerprint(cluster,"fixture_source")
+            approved={"scope":r.SCOPE,"incident_sha256":r.digest(incident),"historical_checkpoint_sha256":old["object_sha256"],"current_state_sha256":r.digest(before),"repair":"fixture_add_missing_index","confirmed":True}
+            with self.assertRaisesRegex(ValueError,"rehearsal_approval_mismatch"):
+                recovery.rehearse_forward_repair(cluster,ledger,job,directory,key,"fixture-recovery",old,{**approved,"current_state_sha256":"0"*64})
+            report=recovery.rehearse_forward_repair(cluster,ledger,job,directory,key,"fixture-recovery",old,approved)
+            self.assertTrue(report["data_preserved"] and report["source_unchanged"] and report["job_remains_blocked"])
+            self.assertFalse(report["execution_enabled"])
+            self.assertNotEqual(report["historical_checkpoint_sha256"],report["current_checkpoint_sha256"])
+            query="SELECT id::text||':'||note FROM public.existing ORDER BY id;"
+            self.assertEqual(cluster.sql("fixture_restore",query).splitlines(),[b"1:before",b"2:updated later",b"3:deleted later"])
+            self.assertEqual(cluster.sql("fixture_recovery",query).splitlines(),[b"1:before",b"2:changed",b"4:after incident"])
+            self.assertEqual(cluster.sql("fixture_source",query),cluster.sql("fixture_recovery",query))
+            self.assertEqual(cluster.sql("fixture_source","SELECT to_regclass('public.fixture_repair_idx');").strip(),b"")
+            self.assertEqual(b.fingerprint(cluster,"fixture_source"),before)
+            self.assertEqual(ledger.snapshot(job)["status"],"blocked")
+            with self.assertRaisesRegex(ValueError,"release_blocked"):
+                ledger.claim(job,self.verified,self.registry,self.base)
+            with self.assertRaisesRegex(ValueError,"not_restore_destination"):
+                cluster.restore(b"invalid","fixture_source")
+            self.assertEqual(server.execute(cluster,b"SELECT production_sha FROM public.beagu_site_release_state_v1 WHERE id=1;").decode().strip(),self.base)
+
 if __name__=="__main__":unittest.main()
