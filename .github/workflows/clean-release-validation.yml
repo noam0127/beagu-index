@@ -141,3 +141,13 @@ jobs:
             raise notice 'PASS: RPC grants, stale SHA, duplicate enqueue, dispatch throttling, atomic completion and version reuse';
           end $$;
           SQL
+          psql_local < tests/referral-quality-postgres.sql
+          psql_local < supabase/migrations/20261121010500_beagu_referral_quality_risk_gate.sql
+          psql_local < supabase/migrations/20261121020000_referral_single_quality_gate_restore.sql
+          psql_local <<'SQL'
+          create schema extensions;
+          create extension pgcrypto with schema extensions;
+          create table beagu_private.challenge_identity_codes(campaign text, visitor_id uuid, identity_code text);
+          SQL
+          psql_local < supabase/migrations/20261121_earned_challenge_participation_auth.sql
+          psql_local < tests/referral-quality-postgres-assertions.sql
