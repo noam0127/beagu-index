@@ -544,7 +544,7 @@ function beagu26RowReviewSignals(values,c,schools) {
     const core=c.q.map(j=>String(r[j]||'').trim());
     if(core.some(v=>!v))add(i,'MANDATORY_MISSING');
     const stamp=String(r[0]||'').trim();
-    if(core.some(v=>!v)||! /\\d{1,2}:\\d{2}:\\d{2}(?:\\s|$)/.test(stamp))continue;
+    if(core.some(v=>!v)||! /\d{1,2}:\d{2}:\d{2}(?:\s|$)/.test(stamp))continue;
     const key=JSON.stringify([String(match.school.school_id),stamp,...core]);
     if(seen.has(key)){add(seen.get(key),'DUPLICATE_SUSPECT');add(i,'DUPLICATE_SUSPECT');}
     else seen.set(key,i);
