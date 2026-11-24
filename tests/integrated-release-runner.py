@@ -617,4 +617,36 @@ class InheritedWaterwayBaseline(unittest.TestCase):
         text=(ROOT/"scripts/release-manager/integrated_production_entry.py").read_text()
         self.assertLess(text.index("backup_source.verify_inherited_baseline(job,verified)"),text.index("prod.ProductionRunner(ledger,root,envelope,registry,wrapped).once(job)"))
 
+
+class PrivateCheckpointReadback(unittest.TestCase):
+    def test_external_private_volume_readback(self):
+        import hashlib
+        import integrated_private_store as store
+        with tempfile.TemporaryDirectory() as parent:
+            root=pathlib.Path(parent)
+            repo=root/"repo";repo.mkdir()
+            vault=root/"vault";vault.mkdir(mode=0o700)
+            data=b"synthetic opaque bytes, not a production backup"
+            pin=hashlib.sha256(data).hexdigest()
+            obj=vault/(pin+".ciphertext")
+            b.private_write(obj,data)
+            proof=store.observe_checkpoint(vault,repo,pin,len(data))
+            self.assertTrue(proof["readback_verified"])
+            self.assertFalse(proof["encryption_verified"])
+            self.assertFalse(proof["durable_storage_verified"])
+            self.assertFalse(proof["restore_verified"])
+            self.assertFalse(proof["execution_enabled"])
+            with self.assertRaisesRegex(ValueError,"checkpoint_inside_checkout_or_link"):
+                store.observe_checkpoint(repo,repo,pin,len(data))
+            obj.chmod(0o644)
+            with self.assertRaisesRegex(ValueError,"unsafe_checkpoint_object"):
+                store.observe_checkpoint(vault,repo,pin,len(data))
+            obj.chmod(0o600)
+            obj.write_bytes(b"x"*len(data))
+            with self.assertRaisesRegex(ValueError,"checkpoint_digest_mismatch"):
+                store.observe_checkpoint(vault,repo,pin,len(data))
+            obj.unlink()
+            obj.symlink_to(repo/"missing")
+            with self.assertRaises(OSError):store.observe_checkpoint(vault,repo,pin,len(data))
+
 if __name__=="__main__":unittest.main()

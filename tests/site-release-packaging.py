@@ -22,3 +22,23 @@ with tempfile.TemporaryDirectory() as temp:
     assert not (worker.OUTPUT / "_preview").exists()
     assert (worker.OUTPUT / "CNAME").read_text().strip()=="baeguindex.com"
 print("PASS: immutable production snapshot, no preview")
+
+# The only publisher never accepts a contradictory integrated claim or reuses a hold.
+for plan in ({"has_job":True,"integrated_release_active":True},{"has_job":"true"},{"has_job":True,"target":"staging"},{"has_job":False,"integrated_release_active":"false"}):
+    try:
+        worker.accept_worker_plan(plan)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("Unsafe worker claim accepted")
+assert worker.accept_worker_plan({"has_job":False,"integrated_release_active":True})["has_job"] is False
+with tempfile.TemporaryDirectory() as temp:
+    worker.PLAN=pathlib.Path(temp)/"plan.json"
+    worker.PLAN.write_text(json.dumps({"has_job":True,"integrated_release_active":True}))
+    try:
+        worker.read_plan()
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("Integrated hold reused as legacy job")
+print("PASS: single publisher claim separation")

@@ -57,12 +57,25 @@ def output(name, value):
     print(name + ": " + str(value))
 
 
+def accept_worker_plan(plan):
+    if not isinstance(plan,dict) or type(plan.get("has_job")) is not bool:
+        raise RuntimeError("Invalid release claim response")
+    if "integrated_release_active" in plan and type(plan["integrated_release_active"]) is not bool:
+        raise RuntimeError("Invalid integrated release status")
+    if plan.get("integrated_release_active") and plan["has_job"]:
+        raise RuntimeError("Conflicting legacy and integrated release claim")
+    if plan["has_job"]:
+        if plan.get("target")!="production" or plan.get("staging_sha") is not None or not SHA.fullmatch(str(plan.get("production_sha",""))) or not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",str(plan.get("job_id",""))):
+            raise RuntimeError("Invalid legacy release claim")
+    return plan
+
+
 def read_plan():
     if not PLAN.is_file():
         raise RuntimeError("Release job was not claimed")
     plan = json.loads(PLAN.read_text(encoding="utf8"))
-    if not plan.get("has_job"):
-        raise RuntimeError("No active release job")
+    if not isinstance(plan,dict) or plan.get("has_job") is not True or plan.get("integrated_release_active",False) is not False:
+        raise RuntimeError("No active legacy release job")
     return plan
 
 
@@ -130,7 +143,11 @@ def main():
             cwd=ROOT, text=True).strip()
         if not SHA.fullmatch(data_blob):
             raise RuntimeError("Approved public directory is missing")
+        # An integrated hold is a no-job result, never a Pages build request.
+        # Remove any stale local claim before asking the signed server.
+        PLAN.unlink(missing_ok=True)
         plan = api("worker_next", head_sha=sha, data_blob_sha=data_blob)
+        accept_worker_plan(plan)
         PLAN.write_text(json.dumps(plan), encoding="utf8")
         output("has_job", "true" if plan.get("has_job") else "false")
         if plan.get("has_job"):
