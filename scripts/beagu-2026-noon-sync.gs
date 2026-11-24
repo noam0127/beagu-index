@@ -240,6 +240,36 @@ function sendBeagu2026PrivateQaChecks(groups){
  * project with the owner's OAuth approval. GitHub commits do not install it.
  * Never print or transmit the secret values in the log.
  */
+// Owner preview only: read original source and official school directory.
+// No sheet writes, ingest calls, trigger changes or release approval.
+// Alternative Q45 catalogue is transient, never used for production payloads.
+function beagu26WaterwayPreview(values,schools,catalog){
+  const describe=result=>{
+    const review=new Set(result.reviewRows.map(r=>r[0]));
+    const schema=new Set(result.reviewRows.filter(r=>r[4]==="SCHEMA_LABEL_REVIEW").map(r=>r[0]));
+    return {totals:result.totals,schools:result.schools.length,
+      matched_rows:result.schools.reduce((n,s)=>n+s.school_response_rows,0),
+      review_rows:review.size,schema_review_rows:schema.size,
+      technical_candidates:result.schools.filter(s=>s.school_match_status==="EXACT_REGION_OFFICE_NAME"&&s.questions.every(q=>q.invalid===0)).length};
+  };
+  const current=describe(beagu26BuildResults(values,schools,catalog));
+  const alternative=JSON.parse(JSON.stringify(catalog));
+  const q=alternative.Q45;
+  if(!q||q.rows[10]!=="교사용 와이파이(안정적으로 연결되는 공간)"||
+    q.rows[11]!=="교사용 와이파이(연결이 자주 끊기거나 불안정한 공간)")throw Error("Q45 preview catalogue mismatch");
+  q.rows[10]="와이파이(안정적으로 연결되는 공간)";
+  q.rows[11]="와이파이(연결이 자주 끊기거나 불안정한 공간)";
+  const proposed=describe(beagu26BuildResults(values,schools,alternative));
+  return {mode:"READ_ONLY_NOT_AUTHORIZATION",current,proposed,
+    requires_owner_source_history_confirmation:true};
+}
+function previewBeagu2026Waterway(){
+  const snapshot=readBeagu2026SourceSnapshot();
+  const result=beagu26WaterwayPreview(snapshot.values,snapshot.schools,BEAGU26_QUESTION_CATALOG);
+  Logger.log(JSON.stringify(result));
+  return result;
+}
+
 function installBeagu2026Sync() {
   const props=PropertiesService.getScriptProperties();
   const key=String(props.getProperty("SUPABASE_PUBLISHABLE_KEY")||"").trim();

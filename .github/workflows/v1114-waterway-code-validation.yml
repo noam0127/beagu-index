@@ -49,3 +49,16 @@ jobs:
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8124/challenge.html >/dev/null && break; sleep 1; done
           node tests/v1112-together-offline-browser.cjs
+      - name: Verify actual telemetry and admin SQL in disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          c="waterway-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          psql_local() { docker exec -i "$c" psql -X -v ON_ERROR_STOP=1 -U postgres; }
+          psql_local < tests/v1114-waterway-postgres-fixture.sql
+          psql_local < supabase/migrations/20261123180000_2026_level_final_release_controls.sql
+          psql_local < supabase/2026-waterway-run-telemetry-v1.sql
+          psql_local < supabase/2026-waterway-admin-status-v1.sql
+          psql_local < tests/v1114-waterway-postgres-assertions.sql
