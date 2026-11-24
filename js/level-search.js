@@ -13,6 +13,8 @@
   const arcadeTargetValid = typeof arcadeTargetId==='string'&&/^[A-Z0-9]{7}$/.test(arcadeTargetId);
   let arcadeTargetOpened = false;
   let session = sessionStorage.getItem(key) || '';
+  let authGeneration = 0;
+  function invalidateSearch(){ ++serial; ++officeLoadSerial; clearTimeout(timer); current2026.clear(); visiblePageSchools=[]; }
   let viewerTier=1;
   function showUpgrade(){
     const isLv2=viewerTier>=2;
@@ -130,7 +132,11 @@
   }
 
   function loggedOut(message = '') {
+    ++authGeneration;
+    invalidateSearch();
     session = '';
+    arcadeTargetOpened=false;
+    $('results').replaceChildren(); $('resultCount').textContent=''; $('pager').hidden=true;
     geographyComparisons.clear();
     visiblePageSchools=[];
     sessionStorage.removeItem(key);
@@ -206,6 +212,7 @@
         $('loginMessage').textContent = '이 등급에서 사용할 수 없는 참여코드입니다.';
         return;
       }
+      ++authGeneration; invalidateSearch();
       session = data.token;
       viewerTier=Number(data.level)>=2?2:1;
       geographyComparisons.clear();
@@ -224,6 +231,7 @@
   window.addEventListener('beagu:participation-authenticated',event=>{
     const next=event.detail;
     if(!next||Number(next.level)<level||typeof next.token!=='string')return;
+    if(session!==next.token){++authGeneration;invalidateSearch();}
     session=next.token;
     viewerTier=Number(next.level)>=2?2:1;
     geographyComparisons.clear();
@@ -251,6 +259,7 @@
         message.textContent='아직 Lv.2 권한이 없습니다. 기존 Lv.1 인증은 유지됩니다.';return;
       }
       sessionStorage.setItem(key,result.token);
+      ++authGeneration;invalidateSearch();
       session=result.token;viewerTier=2;showUpgrade();
       window.dispatchEvent(new CustomEvent('beagu:participation-authenticated',
         {detail:{token:result.token,level:2,provisional:checked.provisional===true}}));
@@ -263,7 +272,7 @@
     mode = nextMode;
     $('schoolPanel').hidden = mode !== 'school';
     $('regionPanel').hidden = mode !== 'region';
-    $('beaguInterest').hidden = mode !== 'school';
+    // The interest list is independent of the selected search mode.
     $('schoolTab').setAttribute('aria-selected', String(mode === 'school'));
     $('regionTab').setAttribute('aria-selected', String(mode === 'region'));
     search(true);
@@ -910,7 +919,7 @@
   function render(list, total, sortValue='school_name_asc') {
     current2026=new Map();
     visiblePageSchools=Array.isArray(list)?list:[];
-    const host = $('results'); host.replaceChildren();
+    const host = $('results'); host.dataset.searchMode=mode; host.replaceChildren();
     const pages = Math.ceil(total / LIMIT);
     $('resultCount').textContent = `검색 결과 ${total.toLocaleString()}개${pages > 1 ? ` · ${page * LIMIT + 1}~${page * LIMIT + list.length}번째` : ''}`;
     $('pager').hidden = pages <= 1;
@@ -922,8 +931,9 @@
       const {card,open:button,detail}=BeaguSchoolSearchCard.createCard(school,{
         level:viewerTier,
         percentile:percentilePanel(school),
-        sortBy:sortValue
+        sortBy:mode==='region'&&sortValue.startsWith('housing_price_won_')?'school_name_asc':sortValue
       });
+      if(mode!=='region'){
       const housing=make('section','beagu-housing-preview');
       housing.append(make('strong','beagu-housing-label','공동주택 평균 공시가격'));
       const amount=make('div','beagu-housing-amount');
@@ -940,6 +950,7 @@
         housing.append(unlock);
       }
       card.insertBefore(housing,card.querySelector('.percentile-panel'));
+      }
       // Preserve Lv.0's exact four-year vertical percentile chart. Each
       // year is an independent marker, never a connecting trend line.
       // Only the heading becomes the detail disclosure control.
@@ -1006,6 +1017,7 @@
   }
   async function search(reset,explicitEnter=false) {
     if (reset) page = 0;
+    if(!session || $('searchPanel').hidden)return;
     const q = mode === 'school' ? $('searchInput').value.trim() : '';
     const region = mode === 'region' ? $('regionSelect').value : '';
     const office = mode === 'region' ? $('officeSelect').value : '';
@@ -1110,10 +1122,12 @@
   });
   (async () => {
     if (!session) { loggedOut(); return; }
+    const generation=authGeneration, verifyingToken=session;
     try {
       const state = await api('verify');
+      if(generation!==authGeneration||session!==verifyingToken)return;
       if (state.level >= level) {viewerTier=Number(state.level)>=2?2:1;loggedIn();}
       else loggedOut('현재 코드가 이 등급에 미달합니다.');
-    } catch (_) { loggedOut('인증을 다시 진행해주세요.'); }
+    } catch (_) { if(generation===authGeneration&&session===verifyingToken)loggedOut('인증을 다시 진행해주세요.'); }
   })();
 })();
