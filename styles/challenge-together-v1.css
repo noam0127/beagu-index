@@ -1,0 +1,8 @@
+/* Presentation only: preserve server-authoritative levels and capture scope. */
+body.beagu-page-challenge .challenge-account-details{max-width:620px;margin:18px auto 26px;border:1px solid #d5e3f3;border-radius:14px;background:#f9fbff;box-sizing:border-box;overflow:hidden}
+body.beagu-page-challenge .challenge-account-details>summary{padding:15px 16px;cursor:pointer;font-size:14px;font-weight:750;color:#27476f;min-height:44px;box-sizing:border-box}
+body.beagu-page-challenge .challenge-account-details>summary:focus-visible{outline:2px solid #386cc3;outline-offset:-3px}
+body.beagu-page-challenge .challenge-account-details #challengeIdentityPanel{margin:0;width:100%;box-sizing:border-box;border-radius:0 0 14px 14px;box-shadow:none}
+body.beagu-page-challenge #certificate[data-level="2"] .certificate-level-banner{background:linear-gradient(120deg,#6231a4,#8953cb);box-shadow:0 4px 12px #6d38ac35}
+body.beagu-page-challenge #challengeReferralPanel{max-width:760px;box-sizing:border-box;margin-left:auto;margin-right:auto}
+body.beagu-page-challenge .challenge-share-step{margin-top:12px}
