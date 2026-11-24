@@ -145,7 +145,7 @@ jobs:
           # An independently retained current manifest is mandatory. If it is unavailable or
           # only a stale backup exists, abort; never accept rollback of credentials/referrals.
           docker stop "$edge" >/dev/null
-          pg -c "UPDATE cron.job SET active=false WHERE jobname IN ('beagu-account-nickname-weekly-v1','beagu-account-nickname-prune-v1');" >/dev/null
+          pg -c "SELECT cron.unschedule('beagu-account-nickname-weekly-v1'); SELECT cron.unschedule('beagu-account-nickname-prune-v1');" >/dev/null
           pg -c "SELECT pg_advisory_lock(2026,1110); SELECT pg_advisory_unlock(2026,1110);" >/dev/null
           backup > "$work/current.dump"
           (cd "$work"; sha256sum current.dump > current.manifest)
@@ -164,7 +164,7 @@ jobs:
             echo 'BEGIN;'
             echo 'DELETE FROM public.beagu_level_sessions l WHERE EXISTS (SELECT 1 FROM beagu_private.beagu_account_sessions_v1 s WHERE s.token_sha256=l.token_sha256);'
             echo "TRUNCATE beagu_private.beagu_account_sessions_v1,beagu_private.beagu_account_login_budget_v1,$table_csv RESTART IDENTITY;"
-            docker exec -i "$db" pg_restore --data-only --disable-triggers --file=- < "$work/current.dump"
+            docker exec -i "$db" pg_restore --data-only --file=- < "$work/current.dump"
             echo 'COMMIT;'
           } > "$work/restore.sql"
           pg < "$work/restore.sql" > "$work/restore.log" 2>&1 || { echo 'Fixture restore failed; no secrets exported'; exit 1; }
@@ -172,7 +172,7 @@ jobs:
           cmp "$work/pre-restore.sha" "$work/post-restore.sha"
           test "$(pg -Atc "SELECT count(*) FROM beagu_private.beagu_account_sessions_v1")" = 0
           test "$(pg -Atc "SELECT count(*) FROM public.beagu_postit_member_accounts")" = 0
-          pg -c "UPDATE cron.job SET active=true WHERE jobname IN ('beagu-account-nickname-weekly-v1','beagu-account-nickname-prune-v1');" >/dev/null
+          pg < "$repo/supabase/account-nickname-cron-v1.sql" >/dev/null
           docker start "$edge" >/dev/null
           for i in $(seq 1 60); do
             code=$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS -H 'Origin: https://baeguindex.com' http://127.0.0.1:54321/functions/v1/beagu-account-v1 || true)
