@@ -163,3 +163,26 @@ REVOKE ALL ON FUNCTION public.beagu_2026_set_level_final_approval(integer,uuid,u
  FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.beagu_2026_set_level_final_approval(integer,uuid,uuid,text)
  TO service_role;
+
+
+-- The existing anonymous SELECT policy retains its independent review and cooldown.
+-- This restrictive policy adds the missing Lv0 final decision to every SELECT path.
+-- The narrow boolean helper lives in a non-exposed schema; no private schema usage
+-- or direct access to the internal tier RPC is granted.
+CREATE OR REPLACE FUNCTION beagu_private.beagu_2026_lv0_read_gate(p_school_id text)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
+ SELECT coalesce(p_school_id ~ '^[A-Z0-9]{7}$' AND
+ public.beagu_2026_level_school_published(p_school_id,0),false)
+$$;
+REVOKE ALL ON FUNCTION beagu_private.beagu_2026_lv0_read_gate(text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION beagu_private.beagu_2026_lv0_read_gate(text) TO anon,authenticated;
+ALTER TABLE public.beagu_school_report_yearly ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS beagu_2026_lv0_final_tier_gate ON public.beagu_school_report_yearly;
+CREATE POLICY beagu_2026_lv0_final_tier_gate ON public.beagu_school_report_yearly
+ AS RESTRICTIVE FOR SELECT TO anon,authenticated
+ USING (survey_year<>2026 OR beagu_private.beagu_2026_lv0_read_gate(school_id));
+-- The browser only needs these four fields (including filtering on status).
+-- Counts, reviewer metadata, evidence and all other internal columns stay private.
+REVOKE SELECT ON public.beagu_school_report_yearly FROM PUBLIC,anon,authenticated;
+GRANT SELECT(school_id,survey_year,percentile,publication_status)
+ ON public.beagu_school_report_yearly TO anon,authenticated;
