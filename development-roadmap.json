@@ -13,7 +13,7 @@
       "version": "v1.2.0",
       "name": "정돈",
       "scope": "공통 메뉴·검색 비교 UI·참여코드·레벨 색상·버전 표시",
-      "status": "REGISTERED_OWNER_APPROVED_QUEUED",
+      "status": "DEPLOYED",
       "branch": "release/v1.2.0-clean-ready",
       "pr": 282,
       "commit": "01a3dcd4319d29f78222f12f942162e541a371fe",
@@ -69,6 +69,11 @@
         {
           "name": "Final rebase CI",
           "result": "PENDING"
+        },
+        {
+          "name": "Final rebase CI",
+          "result": "PASS",
+          "run": 45288982910
         }
       ],
       "changed_files": [
@@ -92,8 +97,8 @@
       ],
       "dependencies": [],
       "admin_registration": "VERIFIED",
-      "production": "QUEUED_NOT_DEPLOYED",
-      "deployment_date": null,
+      "production": "DEPLOYED",
+      "deployment_date": "2026-11-24T00:53:12.329829Z",
       "rollback_sha": "09dbb7aaa62db9a6ee898b349a99aaa57a944e42",
       "prerequisite": {
         "branch": "infra/pages-direct-release-v1",
@@ -114,17 +119,27 @@
       "version": "v1.3.0",
       "name": "놀이터",
       "scope": "게임 허브·기존 진입 유지",
-      "status": "CANDIDATE_CI_PENDING",
+      "status": "CANDIDATE_BROWSER_CI_PENDING",
       "branch": "release/v1.3.0-playground",
-      "pr": null,
+      "pr": 283,
       "commit": null,
       "tests": [
         {
-          "name": "Playground source and navigation contract",
-          "result": "PENDING"
+          "name": "Previous exact candidate source assertions",
+          "result": "PASS",
+          "count": 52,
+          "commit": "aef484c6c582e5384c286fc8fea39b821aacd9eb"
         },
         {
-          "name": "Existing game engines and access policy unchanged",
+          "name": "Previous candidate code-only CI and arcade smoke",
+          "result": "PASS",
+          "runs": [
+            45300582866,
+            45300582893
+          ]
+        },
+        {
+          "name": "Chromium 4 viewports x 3 levels",
           "result": "PENDING"
         }
       ],
@@ -132,7 +147,7 @@
       "dependencies": [
         "v1.2.0 production applied before registration"
       ],
-      "admin_registration": "BLOCKED_PREVIOUS_RELEASE_QUEUED",
+      "admin_registration": "PENDING_FINAL_CI",
       "production": "NOT_APPROVED",
       "deployment_date": null,
       "rollback_sha": "01a3dcd4319d29f78222f12f942162e541a371fe"
