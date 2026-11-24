@@ -28,7 +28,9 @@ assert.match(capture,/root\.querySelector\('#identityCode,#challengeReferralLink
 assert.match(capture,/root\.textContent\.includes\(personalCode\)/);
 assert.match(ref,/Math\.floor\(count\/10\)\*10/);
 assert.match(ref,/referral-status-changed/);
-assert.match(api,/validReferrals: Number\.isSafeInteger\(Number\(enrollment\?\.validReferrals\)\)/);
+assert.match(api,/typeof raw === 'number' && Number\.isSafeInteger\(raw\) && raw >= 0/);
+assert.match(api,/validReferrals: credit\.count/);
+assert.match(api,/profile\?\.level === 2 && count >= 1/);
 assert.doesNotMatch(api,/validReferrals: Number\(enrollment\?\.validReferrals\) === 1/);
 console.log('PASS: private codes excluded from certificate and cumulative verified referrals survive');
 
