@@ -163,7 +163,7 @@ def fingerprint(cluster,db,snapshot=None):
         require(typ in ("r","S"),"unsupported_fixture_relation")
         if typ=="r":
             # COPY escapes embedded newline/tab/backslash; row order and duplicates preserved.
-            data=q("COPY (SELECT to_jsonb(t)::text AS row FROM "+name+" t ORDER BY 1 COLLATE \"C\") TO STDOUT;")
+            data=q("COPY (SELECT to_jsonb(t)::text AS row FROM "+name+" t ORDER BY to_jsonb(t)::text COLLATE \"C\") TO STDOUT;")
             rows[schema+"."+table]={"count":data.count(b"\n"),"sha256":hash_bytes(data)}
         else:
             # Sequence state is non-MVCC. Recheck before/after checkpoint; production writer freeze is separate.
