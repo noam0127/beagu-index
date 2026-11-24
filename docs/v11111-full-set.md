@@ -60,3 +60,5 @@ b16c07b: all 16 CI checks succeeded, including five-second deterministic replay.
 Added review-only replay-worker and actual-engine boundary integration test (fixture-only auth and in-memory store); no mock result used on this path. Worker validates input, limits concurrency/time and disposes its page. Production infrastructure and repository adapter still blocked pending verification and authorization. Full replay/actual UI results pending latest CI.
 
 36ed8cf: all 15 ancillary checks passed; official #45474225598 failed during full recording at update line 1204. Support pickup calls clearNearby during item iteration, invalidating indexes. Iterate original object snapshot and resolve current index; added extracted collision regression. Added explicitly labeled 4.0 recording preview entry alongside preserved 3.0 game and official leaderboard, not a production promotion. Full replay/server integration still pending.
+
+Prepared transactional ranking storage adapter and isolated SQL checks. Production DB untouched; SQL stays in review-only docs. The 4.0 preview link remains explicitly personal, not an official leaderboard activation.
