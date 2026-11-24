@@ -1,0 +1,52 @@
+name: Run4 end-to-end disposable replay and storage
+on:
+  push:
+    branches: ['validation/run4-persistent-replay']
+permissions:
+  contents: read
+jobs:
+  replay-to-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install pinned fixture dependencies
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1 html2canvas@1.4.1 pg@8.16.3
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then
+            echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"
+          else
+            timeout 120s npx playwright install chromium --only-shell
+          fi
+      - name: Replay through actual server boundary and disposable PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          container="run4-persistent-${GITHUB_RUN_ID}"
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          docker run --rm -d --name "$container" -p 127.0.0.1:54329:5432 -e POSTGRES_DB=run4_fixture -e POSTGRES_PASSWORD=fixture_only postgres:16
+          for i in {1..45}; do
+            if docker exec "$container" pg_isready -U postgres -d run4_fixture; then break; fi
+            sleep 1
+          done
+          psql_fixture() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres -d run4_fixture; }
+          psql_fixture <<'SQL'
+          create role anon nologin;
+          create role authenticated nologin;
+          create role service_role login bypassrls password 'run4_fixture_only';
+          create table public.arcade_game_scores(id integer primary key,score integer not null);
+          insert into public.arcade_game_scores values (1,42);
+          SQL
+          psql_fixture < docs/run4-ranking-preflight/schema-draft.sql
+          psql_fixture < docs/run4-ranking-preflight/store-draft.sql
+          RUN4_DISPOSABLE_POSTGRES=1 node tests/v1111-light-touch-browser.cjs
+          psql_fixture <<'SQL'
+          do $$ begin
+           if (select count(*) from public.arcade_game_scores where id=1 and score=42)<>1 or (select count(*) from public.arcade_game_scores)<>1 then raise exception 'legacy fixture changed'; end if;
+           if (select count(*) from public.arcade_run4_records_candidate where verification_status='verified')<>1 then raise exception 'incorrect verified count';end if;
+           raise notice 'PASS final legacy preservation and exactly one persisted replay';
+          end $$;
+          SQL
