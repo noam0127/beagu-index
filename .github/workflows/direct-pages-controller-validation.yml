@@ -39,6 +39,7 @@ jobs:
           /usr/bin/python3 tests/integrated-release-fixture-observer-cli.py
           /usr/bin/python3 tests/integrated-release-stream-fixture.py
           /usr/bin/python3 tests/integrated-release-stream-pg-drive.py
+          /usr/bin/python3 tests/integrated-release-stream-live-transport.py
           /usr/bin/python3 tests/integrated-release-backup.py
           /usr/bin/python3 tests/integrated-release-runner.py
           /usr/bin/python3 tests/integrated-release-remote.py

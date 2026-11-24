@@ -47,7 +47,7 @@ def dump_private(cluster,root,snapshot):
         b.require(proc.returncode==0,"stream_pg_dump_failed")
     return name
 
-def rehearsal(parent,transport_factory):
+def rehearsal(parent,transport_factory=None,*,transfer_generated=None):
     parent=s.root_check(parent)
     with tempfile.TemporaryDirectory(prefix="pg-stream-",dir=parent) as tmp,b.FixtureCluster(17) as cluster:
         root=pathlib.Path(tmp)
@@ -66,8 +66,11 @@ def rehearsal(parent,transport_factory):
             b.require(fingerprint(cluster,"fixture_source",snapshot)==source,"stream_pg_snapshot_drift")
         (dirs["plain"]/name).unlink()
         b.require(fingerprint(cluster,"fixture_source")==source,"stream_pg_source_changed")
-        transport=transport_factory(dirs["remote"])
-        receipt=remote.transfer(dirs["send"],dirs["receive"],pin,transport)
+        if transfer_generated is None:
+            transport=transport_factory(dirs["remote"])
+            receipt=remote.transfer(dirs["send"],dirs["receive"],pin,transport)
+        else:
+            receipt=transfer_generated(dirs["send"],dirs["receive"],pin)
         # Only independently read-back ciphertext is eligible for restore.
         verified=s.restore(dirs["receive"],dirs["restore"],key,KEY_ID,pin,*PINS)
         cluster.exec("createdb","-U","postgres","-T","template0","fixture_restore")
@@ -75,4 +78,4 @@ def rehearsal(parent,transport_factory):
             proc=subprocess.run(b.DOCKER+["exec","-i",cluster.container,"pg_restore","-U","postgres","-d","fixture_restore","--single-transaction","--exit-on-error"],stdin=f,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=240)
             b.require(proc.returncode==0,"stream_pg_restore_failed")
         b.require(source==fingerprint(cluster,"fixture_restore")==fingerprint(cluster,"fixture_source"),"stream_pg_fingerprint_mismatch")
-        return {"scope":"synthetic_pg17_stream_simulated_remote_only","dump_bytes":size,"fixture_rows":ROWS,"stream_restore_verified":verified["restore_verified"],"remote_readback_verified":receipt["readback_verified"],"schema_rows_sequences_rls_verified":True,"actual_drive_transfer_verified":False,"production_backup_proof":False,"execution_enabled":False}
+        return {"scope":"synthetic_pg17_stream_simulated_remote_only", "fixture_object_sha256":pin["object_sha256"],"dump_bytes":size,"fixture_rows":ROWS,"stream_restore_verified":verified["restore_verified"],"remote_readback_verified":receipt["readback_verified"],"schema_rows_sequences_rls_verified":True,"actual_drive_transfer_verified":False,"production_backup_proof":False,"execution_enabled":False}
