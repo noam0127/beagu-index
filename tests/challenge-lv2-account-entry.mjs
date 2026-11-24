@@ -19,5 +19,5 @@ assert.match(ui,/const stateText=level===1\?text\+[^;]+:text;/,'Lv1 upgrade hint
 assert.match(ui,/href="account\.html"/,'Account entry is a separate page, not an inline challenge signup');
 assert.match(ui,/heading\.textContent=level>=2\?'Lv2 참여 인증 완료':'참여코드 입력'/);
 assert.match(ui,/const status=button\('', 'beagu-participation-inline-status',open\);/,'Lv2 status opens participation details instead of member login');
-assert.match(html,/js\/beagu-participation-auth-v2\.js\?v=20261124-v111-entry/,'Updated account entry asset cache-bust required');
-assert.match(html,/id="challengeAccountJoin"/);assert.match(html,/나의 고유번호가 로그인 아이디입니다/);assert.match(ui,/beaguEntryConfirm/);assert.match(ui,/verifyLogin\(id,password\)/);assert.match(ui,/beaguEntryLegacy/);assert.match(ui,/beagu:challenge-device-verified/);console.log('PASS: unified account entry, legacy transition and challenge signup hook');
+assert.match(html,/js\/beagu-participation-auth-v2\.js\?v=20261124-v111-dual-entry/,'Updated account entry asset cache-bust required');
+assert.match(html,/id="challengeAccountJoin"/);assert.match(html,/나의 고유번호가 로그인 아이디입니다/);assert.match(ui,/beaguEntryConfirm/);assert.match(ui,/verifyLogin\(id,password\)/);assert.match(ui,/beaguEntryLegacy/);assert.match(ui,/beagu:challenge-device-verified/);assert.match(ui,/owner':'legacy'/);assert.match(ui,/Lv\.1 참여코드 인증 \(회원가입 없이\)/);assert.match(ui,/기존 Lv\.2 고유번호 \(전환용\)/);console.log('PASS: independent Lv1 code entry and account login, legacy transition and challenge signup hook');
