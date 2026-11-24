@@ -19,7 +19,7 @@ const server=http.createServer(async(req,res)=>{const p=new URL(req.url,origin).
   await noPage.goto(origin+'/account.html');
   await noPage.locator('#accountLogin [name="account_id"]').fill(account);
   await noPage.locator('#accountLogin [name="password"]').fill(password);
-  await noPage.locator('#accountLogin button').click();
+  await noPage.locator('#accountLogin button').click({noWaitAfter:true});
   await noPage.waitForTimeout(250);
   assert.equal(noPage.url(),origin+'/account.html');assert.equal(submissions,0);
   await noJS.close();console.log('PASS script-disabled credential submission blocked by CSP');
