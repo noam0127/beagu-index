@@ -5,10 +5,10 @@ for(const id of ["adminMemberManagement","adminMembersTotal","adminMembersLv2","
 for(const id of ["adminMembersSearch","adminMembersRows","adminMemberDetailPanel","adminMemberSuspend24"])assert.ok(!html.includes('id="'+id+'"'));
 assert.match(access,/BeaguMembersAdmin\?\.mount\(proof\.role\)/);assert.match(access,/BeaguMembersAdmin\?\.reset\(\)/);
 assert.match(backend,/beagu_admin_active_mfa_session/);assert.match(backend,/db\.auth\.getUser\(token\)/);assert.match(backend,/claims.aal !== "aal2"/);
-assert.match(backend,/action === "summary" \? await summary\(\) : null/);
+assert.match(backend,/action === "summary" \? await summary\(\)/);assert.match(backend,/action === "report_decide" \? await decide\(input,actor\)/);assert.match(backend,/actor.role!=="owner"/);assert.match(backend,/p_admin:actor.id/);
 assert.match(backend,/const result=\{members:Number\(data.members\),lv2:Number\(data.lv2\),suspended:Number\(data.suspended\)\}/);
 assert.doesNotMatch(backend,/auth\.admin\.|member_sms|beagu_postit_member_accounts|listMembers|target_user_id/);
 assert.doesNotMatch(browser,/member\.email|member\.id|user_id:|action:"list"|action:"detail"|action:"moderate"/);
-assert.match(browser,/action:"summary"/);
+assert.match(browser,/request\("summary"\)/);assert.match(browser,/request\("report_decide"/);assert.doesNotMatch(browser,/innerHTML/);
 assert.match(sql,/REVOKE ALL ON FUNCTION public\.beagu_account_admin_counts_v1\(\) FROM PUBLIC,anon,authenticated/);
 console.log("PASS admin MFA and aggregate-only anonymous member directory; old personal lookup retired");
