@@ -9,7 +9,7 @@
   const referralCount = get('challengeReferralCount');
   const retry = get('challengeReferralRetry');
   const share = get('shareChallengeReferral'), countHint=get('challengeReferralCountHint'), meter=get('challengeMilestoneProgress');
-  const heading=get('challenge-levelup-title');
+  const fallback=get('togetherCopyFallback'),stateLabel=get('togetherReferralState'),benefitsState=get('togetherBenefitsState');
   const title = get('challengeReferralTitle');
   const tag = get('challengeReferralTag');
   const identityPanel = get('challengeIdentityPanel');
@@ -43,7 +43,7 @@
     upgraded = earned === true;
     // Verified Lv.2 login can show its visual tier, but cannot activate a
     // separate personal code without a server-confirmed referral.
-    const verifiedLoginLevel=Number(get('challengeAccessPanel')?.getAttribute?.('data-auth-level') || 0);
+    const verifiedLoginLevel=Number(get('challengeAccessPanel')?.getAttribute?.('data-challenge-verified-level') || get('challengeAccessPanel')?.getAttribute?.('data-auth-level') || 0);
     const premiumVisual=upgraded || verifiedLoginLevel>=2;
     identityPanel.classList.toggle('is-lv2', premiumVisual);
     identityPanel.dataset.referralState = upgraded ? 'earned' : 'pending';
@@ -53,7 +53,9 @@
       premiumVisual ? '✓ Lv.2 로그인 완료' : '승급 대기';
     if(certificateLevelBanner)certificateLevelBanner.textContent = premiumVisual ? 'Lv.2 챌린지 달성' : 'Lv.1 챌린지 달성';
     if(certificate)certificate.dataset.level = premiumVisual ? '2' : '1';
-    if(heading)heading.textContent=upgraded?'Lv.2 달성 · 추천 이어가기':'Lv.2로 레벨업하기';
+    if(stateLabel)stateLabel.textContent=verifiedLoginLevel>=2?'Lv.2 인증 완료':upgraded?'Lv.2 참여코드 활성화 · 인증정보에서 확인':!currentLink?'추천 확인 중':count>=1?'권한 활성화 확인 중':'유효 추천 0 / 1건';
+    if(benefitsState)benefitsState.textContent=verifiedLoginLevel>=2?'Lv.2 이용 가능':upgraded?'Lv.2 참여코드로 인증하면 이용 가능':'Lv.2 인증 후 이용';
+    if(meter)meter.hidden=premiumVisual;
     copyIdentityCode.hidden = !upgraded;
     copyIdentityCode.disabled = !upgraded || !lastIdentity;
     if(vipMedal)vipMedal.hidden=!upgraded;
@@ -84,7 +86,7 @@
     linkField.value = currentLink;
     linkField.setAttribute('aria-label', '내 전용 조사 링크');
     copyButton.textContent = '링크 복사';
-    renderMeter(count);
+    renderMeter(count,Boolean(currentLink));
     if(share){share.hidden=!currentLink;share.disabled=!currentLink;}
   }
   function reset() {
@@ -95,6 +97,7 @@
     copyButton.hidden = true;
     copyButton.disabled = true;
     progress.textContent = '';progress.hidden=true;
+    if(fallback){fallback.hidden=true;fallback.value='';}
     lastReferrals=0;lastSnapshot='';
     if(retry)retry.hidden=true;
     renderState(false,0);
@@ -159,7 +162,7 @@
       lastReferrals=count;
       renderState(promoted,count);
       if (newlyPromoted) window.dispatchEvent(new Event('beagu:level-state-change'));
-      progress.hidden=false;
+      progress.hidden=true;
       progress.textContent = promoted?'Lv.2 달성 · 누적 유효 추천 '+count.toLocaleString('ko-KR')+'건':'유효한 추천 '+count.toLocaleString('ko-KR')+' / 1건 · '+(count>=1?'활성화 확인 중':'1건부터 Lv.2 활성화');
       const snapshot=(promoted?'2':'1')+':'+count;
       if(snapshot!==lastSnapshot){
@@ -171,7 +174,7 @@
       status.textContent = promoted
         ? '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.'
         : loginLevel >= 2
-          ? 'Lv.2 로그인은 확인됐습니다. 개인 참여코드는 추천 1건 확인 후 별도로 활성화됩니다.'
+          ? '동료의 설문 참여가 확인되면 추천이 누적됩니다.'
           : '동료에게 링크를 보내세요. 설문 참여가 확인되면 추천이 누적됩니다.';
     } catch (error) {
       if (!active || seq !== generation || sessionStorage.getItem(sessionKey)!==token) return;
@@ -197,12 +200,22 @@
   });
   share?.addEventListener('click',async()=>{
     if(!active||!currentLink||sessionStorage.getItem(sessionKey)!==activeToken)return;
-    const url=currentLink;
-    try{if(typeof navigator.share==='function'){await navigator.share({title:'2026 배구지수 챌린지',text:'선생님들의 교직문화 조사에 함께해 주세요.',url});status.textContent='공유 요청을 전달했습니다.';}
-      else{await navigator.clipboard.writeText(url);status.textContent='전용 조사 링크를 복사했습니다.';}}
-    catch(error){if(error?.name==='AbortError')return;linkField.focus();linkField.select();status.textContent='링크를 선택했습니다. 직접 복사해 주세요.';}
+    const url=currentLink,token=activeToken;
+    const stillCurrent=()=>active&&currentLink===url&&activeToken===token&&sessionStorage.getItem(sessionKey)===token;
+    const text='2026 배구지수 조사에 함께해 주세요!\n\n선생님들의 참여로 전국 초등학교의 근무환경을 함께 기록하고 있습니다.\n\n아래 링크를 통해 조사에 참여하실 수 있습니다.\n\n'+url;
+    try{
+      if(!navigator.clipboard?.writeText)throw Error('UNAVAILABLE');
+      await navigator.clipboard.writeText(text);
+      if(!stillCurrent())return;
+      status.textContent='공유 문구를 복사했습니다.';
+      if(fallback){fallback.value='';fallback.hidden=true;}
+    }catch(_){
+      if(!stillCurrent())return;
+      if(fallback){fallback.value=text;fallback.hidden=false;fallback.focus();fallback.select();}
+      status.textContent='공유 문구를 선택했습니다. 직접 복사해 주세요.';
+    }
   });
-  window.addEventListener('beagu:challenge-access-granted', () => {const token=sessionStorage.getItem(sessionKey)||'';if(token!==activeToken){lastIdentity=null;activeToken=token;reset();}active=true;});
+  window.addEventListener('beagu:challenge-access-granted', () => {const token=sessionStorage.getItem(sessionKey)||'';if(token!==activeToken){lastIdentity=null;activeToken=token;reset();}active=true;renderState(upgraded,lastReferrals);});
   window.addEventListener('beagu:challenge-access-revoked', () => {
     active = false; activeToken=''; lastIdentity = null; reset();
   });

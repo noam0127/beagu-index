@@ -32,9 +32,12 @@
   }
   function authState(level){
     const verified=Number(level)>=1;
-    badge.textContent=level==='checking'?'확인 중':verified?'Lv.'+level+' 인증 완료':'미인증';
+    badge.textContent=level==='checking'?'확인 중':verified?'Lv.'+level+' 인증 완료':'Lv.0 · 미인증';
+    const accountStatus=document.getElementById('togetherCurrentAuth');
+    if(accountStatus)accountStatus.textContent=level==='checking'?'인증 상태 확인 중':verified?'현재 인증: Lv.'+level:'현재 인증: Lv.0';
     badge.classList.toggle('is-authenticated',verified);
     panel.setAttribute('data-auth-level',verified?String(level):'0');
+    panel.setAttribute('data-challenge-verified-level',verified?String(level):'0');
   }
   toggle.addEventListener('click',()=>{
     const reveal=input.type==='password';

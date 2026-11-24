@@ -1,14 +1,14 @@
 {
   "schema": 1,
-  "version": "v1.11.1",
-  "name": "가벼운 터치",
+  "version": "v1.11.2",
+  "name": "함께하기",
   "environment": "candidate",
   "commit": null,
   "builtAt": null,
   "deployedAt": null,
   "changes": [
-    "학교검색 인증 경합 방지 및 지역별 카드 개선",
-    "홈 게임 영역 분리 및 학교체험 메뉴",
-    "공통 하단 간소화 및 공개 학교 관심도"
+    "챌린지 참여 인증과 공유 화면 정리",
+    "유효 추천 및 Lv.2 달성 현황",
+    "개인 인증정보 접기, 기존 운영 권한 보존"
   ]
 }

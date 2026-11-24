@@ -18,7 +18,7 @@
     byId("certificate")?.classList.toggle("has-milestone",special);
   }
   function invalidateImage(){certificateRevision++;capture.disabled=true;if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=null;}
-  function resetIdentity(){participant=null;personalCode=null;participantNo.textContent="순번 확인 중";identityCode.textContent="고유번호 확인 중";copyIdentityCode.disabled=true;identityCopyFeedback.textContent="";renderMilestone(null);invalidateImage();}
+  function resetIdentity(){if(byId("togetherIdentityDetails"))byId("togetherIdentityDetails").open=false;participant=null;personalCode=null;participantNo.textContent="순번 확인 중";identityCode.textContent="고유번호 확인 중";copyIdentityCode.disabled=true;identityCopyFeedback.textContent="";renderMilestone(null);invalidateImage();}
   const deadline = (promise, ms, message) => {
     let timer;
     return Promise.race([Promise.resolve(promise), new Promise((_, reject) => {

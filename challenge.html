@@ -191,6 +191,7 @@
 <script defer src="js/beagu-release-info-v1.js?v=120"></script>
 <link rel="stylesheet" href="styles/beagu-communication-v1.css?v=160b">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1111">
+<link rel="stylesheet" href="styles/challenge-together-v1.css?v=1112">
 </head>
 <body class="beagu-ui-page beagu-page-challenge">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -216,7 +217,7 @@
       <button id="challengeAccessSubmit" type="submit" class="challenge-access-submit beagu-auth-submit">참여코드 확인</button>
     </form>
     <p id="challengeAccessFeedback" class="challenge-access-feedback beagu-auth-message" role="status" aria-live="polite">인증 상태 확인 중…</p>
-    <p class="challenge-access-help beagu-auth-help">참여코드는 <a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 조사 참여</a> 시 발급됩니다.</p>
+    <p class="challenge-access-help beagu-auth-help"><a class="together-survey" href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 배구지수 조사 참여하기</a><span>기존 참여코드로도 인증할 수 있습니다.</span></p>
   </section>
   <div id="challengeProtected" hidden>
   
@@ -240,12 +241,52 @@
       <div class="beagu-xp-footer"><span class="beagu-sr-only" data-xp-state>챌린지 집계 확인 중</span><strong data-xp-remainder>확인 중</strong></div>
       
     </section></div><aside id="certificateThanks" class="certificate-gratitude" role="status" aria-live="polite" hidden></aside></section>
-  <section class="challenge-levelup-heading" aria-labelledby="challenge-levelup-title">
-    <span class="challenge-levelup-kicker">LEVEL UP</span>
-    <h2 id="challenge-levelup-title">Lv.2로 레벨업하기</h2>
-    <p>전용 조사 링크를 공유해 동료의 유효한 설문 응답을 받으면 Lv.2가 활성화됩니다. 이후에도 추천 인원이 계속 누적됩니다.</p>
+  <section class="together-save" aria-label="인증 이미지 저장">
+      <button class="action" id="capture" type="button" disabled>↓ 인증 이미지 저장하기</button>
+      <p id="status" role="status" aria-live="polite">참여 순번을 확인하고 있습니다.</p>
+      <button class="action secondary" id="retry" type="button" hidden>다시 시도하기</button>
   </section>
   <!-- 아래 링크와 참여코드는 인증샷에서 제외 -->
+    <section class="challenge-identity" id="challengeReferralPanel"
+    data-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeReferralTitle">
+    <div class="challenge-identity-head">
+      <h2 id="challengeReferralTitle">나의 전용 조사 링크</h2>
+      <span class="challenge-identity-tag" id="challengeReferralTag">링크 공유하기</span>
+    </div>
+    <div class="challenge-referral-grid">
+      <div class="challenge-referral-link-card">
+        <p id="challengeReferralStatus" class="challenge-identity-feedback" role="status" aria-live="polite">
+          전용 조사 링크를 불러오고 있어요.
+        </p>
+        <div class="challenge-identity-row challenge-referral-link-row">
+          <input id="challengeReferralLink" type="text" aria-label="내 전용 조사 링크"
+            readonly hidden spellcheck="false" autocomplete="off">
+          <button class="challenge-identity-copy" id="copyChallengeReferral" type="button"
+            disabled hidden>링크 복사</button>
+        </div>
+        <div class="together-share-actions"><button id="shareChallengeReferral" class="challenge-identity-copy" type="button" disabled hidden>공유 문구 복사</button><a class="action secondary" id="loungeLink" href="https://indischool.com/tweets/channels/lounge" target="_blank" rel="noopener noreferrer">인디스쿨 라운지 ↗</a></div>
+        <textarea id="togetherCopyFallback" aria-label="복사할 공유 문구" readonly hidden></textarea>
+        <p id="challengeReferralProgress" class="challenge-identity-feedback" hidden></p>
+        <button id="challengeReferralRetry" type="button" class="challenge-identity-copy" hidden>링크 다시 확인</button>
+      </div>
+      <aside class="challenge-referral-count-card" aria-label="유효 추천 횟수">
+        <h3>유효 추천 횟수</h3>
+        <strong id="challengeReferralCount" aria-live="polite">확인 중</strong>
+        <div id="challengeMilestoneProgress" role="progressbar" aria-label="유효 추천 1건 목표" aria-valuemin="0" aria-valuemax="1"><span></span></div>
+        <span id="challengeReferralCountHint">서버 확인 완료 기준</span><p id="togetherReferralState" aria-live="polite">추천 확인 중</p>
+      </aside>
+    </div>
+  </section>
+  <section class="together-benefits" aria-labelledby="togetherBenefitsTitle">
+    <h2 id="togetherBenefitsTitle">Lv.2 전용 혜택</h2>
+    <p id="togetherBenefitsState">Lv.2 인증 후 이용</p>
+    <ul><li>승인된 확장 학교 상세자료 열람</li><li>승인된 최신 조사자료 열람</li><li>포스트잇 열람 (게시 권한은 별도)</li></ul>
+    <a href="levels.html">레벨별 혜택 자세히 보기</a>
+  </section>
+  <details id="togetherIdentityDetails" class="challenge-account-details" data-html2canvas-ignore="true">
+    <summary>나의 인증정보 관리</summary>
+    <p id="togetherCurrentAuth" class="together-private-note" role="status">인증 상태 확인 중</p>
+    <p class="together-private-note">개인 인증정보입니다. 다른 사람에게 공유하지 마세요.</p>
   <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
     <div class="challenge-premium-emblem" aria-hidden="true"><span class="challenge-premium-crown">♛</span><strong>Lv.2</strong></div>
     <div class="challenge-vip-crown" id="challengeVipMedal" hidden aria-label="Lv.2 인증 완료 VIP 회원">
@@ -267,48 +308,8 @@
     <p class="challenge-identity-feedback" id="identityCopyFeedback" role="status" aria-live="polite"></p>
     <p class="challenge-identity-feedback" id="challengeIdentityReward" role="status" aria-live="polite" hidden></p>
   </section>
-    <section class="challenge-identity" id="challengeReferralPanel"
-    data-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeReferralTitle">
-    <div class="challenge-identity-head">
-      <h2 id="challengeReferralTitle">나의 전용 조사 링크</h2>
-      <span class="challenge-identity-tag" id="challengeReferralTag">링크 공유하기</span>
-    </div>
-    <div class="challenge-referral-grid">
-      <div class="challenge-referral-link-card">
-        <p id="challengeReferralStatus" class="challenge-identity-feedback" role="status" aria-live="polite">
-          전용 조사 링크를 불러오고 있어요.
-        </p>
-        <div class="challenge-identity-row challenge-referral-link-row">
-          <input id="challengeReferralLink" type="text" aria-label="내 전용 조사 링크"
-            readonly hidden spellcheck="false" autocomplete="off">
-          <button class="challenge-identity-copy" id="copyChallengeReferral" type="button"
-            disabled hidden>링크 복사</button>
-        </div>
-        <p id="challengeReferralProgress" class="challenge-identity-feedback" hidden></p>
-        <div class="challenge-referral-actions"><button id="shareChallengeReferral" type="button" class="challenge-identity-copy" hidden disabled>전용 링크 공유</button><button id="challengeReferralRetry" type="button" class="challenge-identity-copy" hidden>다시 확인</button></div>
-      </div>
-      <aside class="challenge-referral-count-card" aria-label="유효 추천 횟수">
-        <h3>유효 추천 횟수</h3>
-        <strong id="challengeReferralCount" aria-live="polite">확인 중</strong><span id="challengeReferralCountHint">서버 확인 완료 기준</span><div class="challenge-milestone-track" role="progressbar" id="challengeMilestoneProgress" aria-label="추천 1건 목표" aria-valuemin="0" aria-valuemax="1"><span></span></div>
-      </aside>
-    </div>
-  </section>
-  <section class="steps" aria-labelledby="steps-title">
-    <h2 class="section-title" id="steps-title">참여 인증</h2>
 
-    <section class="step-card" aria-labelledby="step-1">
-      <div class="step-heading"><span class="step-number" aria-hidden="true">1</span><h3 id="step-1">인증 이미지 저장</h3></div>
-      <button class="action" id="capture" type="button" disabled>↓ 인증 이미지 저장하기</button>
-      <p id="status" role="status" aria-live="polite">참여 순번을 확인하고 있습니다.</p>
-      <button class="action secondary" id="retry" type="button" hidden>다시 시도하기</button>
-    </section>
-
-    <section class="step-card" aria-labelledby="step-2">
-      <div class="step-heading"><span class="step-number" aria-hidden="true">2</span><h3 id="step-2">쫑알쫑알 인증</h3></div>
-      <a class="action secondary" id="loungeLink" href="https://indischool.com/tweets/channels/lounge" target="_blank" rel="noopener noreferrer">인디스쿨 쫑알쫑알에서 인증하기 ↗</a>
-    </section>
-
-  </section>
+  </details>
   </div>
 
 <section class="beagu-home-notice" data-notice-state="loading" hidden aria-labelledby="challenge-notice-title">
@@ -325,9 +326,9 @@
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="js/challenge.js?v=150a"></script>
-<script src="js/challenge-referral-v1.js?v=150a"></script>
-<script src="js/challenge-access-v1.js?v=20261120-unified-auth1"></script>
+<script src="js/challenge.js?v=1112"></script>
+<script src="js/challenge-referral-v1.js?v=1112"></script>
+<script src="js/challenge-access-v1.js?v=1112"></script>
 </body>
 </html>
 
