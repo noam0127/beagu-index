@@ -43,6 +43,7 @@
   <nav class="beagu-participation-links" aria-label="참여 및 승급">
    <a href="${survey}" target="_blank" rel="noopener noreferrer">참여코드 받기 — 2026 본조사</a>
    <a href="challenge.html">Lv2 달성하기 — 챌린지</a>
+   <a href="account.html">나의 계정 — 가입·로그인</a>
   </nav>
  </section>`;
  document.body.append(modal);
