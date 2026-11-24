@@ -82,6 +82,36 @@ assert.deepEqual(audit([row],directory),{candidates:1,reusable:0,held:1});
 assert.deepEqual(audit([auditRow],[{...auditSchool,status:'폐교'}]),{candidates:1,reusable:0,held:1});
 assert.deepEqual(audit([auditRow],directory,prior,[]),{candidates:1,reusable:0,held:1});
 
+// Suspected duplicates stay in private aggregates but are flagged, never silently removed.
+const validRow=auditRow.slice();
+for(let j=0;j<13;j++)validRow[cols.q[j]]='④ 그렇다';
+const sameRow=validRow.slice();
+const missingRow=validRow.slice();missingRow[0]='2026. 11. 24 오후 1:00:01';missingRow[cols.q[0]]='';
+const typeRow=validRow.slice();typeRow[0]='2026. 11. 24 오후 1:00:02';typeRow[22]='③ 국립초등학교';
+const nextRow=validRow.slice();nextRow[0]='2026. 11. 24 오후 1:00:03';
+scope.beagu26PrepareSchoolIndex(directory);
+const signalRows=[header,validRow,sameRow,missingRow,typeRow,nextRow];
+const signals=scope.beagu26RowReviewSignals(signalRows,cols,directory);
+assert.equal(signals.get(1).has('DUPLICATE_SUSPECT'),true);
+assert.equal(signals.get(2).has('DUPLICATE_SUSPECT'),true);
+assert.equal(signals.get(3).has('MANDATORY_MISSING'),true);
+assert.equal(signals.get(4).has('SCHOOL_TYPE_REVIEW'),true);
+assert.equal(signals.has(5),false);
+const yearAfter=validRow.slice();yearAfter[0]='2027. 1. 1 오후 1:00:00';
+assert.equal(scope.beagu26RowReviewSignals([header,yearAfter,yearAfter],cols,directory).size,0);
+const dateOnly=validRow.slice();dateOnly[0]='2026. 11. 24';
+assert.equal(scope.beagu26RowReviewSignals([header,dateOnly,dateOnly],cols,directory).size,0);
+const rowFixtureCatalog={};
+for(let j=1;j<=13;j++)rowFixtureCatalog['Q'+String(j).padStart(2,'0')]={kind:'choice',options:['그렇다'],rows:[],columns:[]};
+const rowResult=scope.beagu26BuildResults(signalRows,directory,rowFixtureCatalog);
+assert.equal(rowResult.totals.official_rows,5);
+assert.equal(rowResult.schools[0].school_response_rows,5);
+assert.equal(rowResult.schools[0].school_match_status,'NEEDS_REVIEW');
+assert.equal(rowResult.reviewRows.filter(r=>r[4]==='DUPLICATE_SUSPECT').length,2);
+assert.equal(rowResult.reviewRows.filter(r=>r[4]==='MANDATORY_MISSING').length,1);
+assert.equal(rowResult.reviewRows.filter(r=>r[4]==='SCHOOL_TYPE_REVIEW').length,1);
+assert.equal(JSON.stringify(rowResult.reviewRows).includes(validRow[0]),false);
+
 const invoked=[];
 const snapshot={values:[],schools:[]};
 let locked=false;
