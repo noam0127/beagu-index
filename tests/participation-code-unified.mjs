@@ -80,7 +80,7 @@ function fakeElement(name='div'){
   setAttribute(k,v){attrs[k]=String(v)},getAttribute(k){return attrs[k]},
   addEventListener(k,f){(handlers[k]??=[]).push(f)},
   dispatch(k,event){return Promise.all((handlers[k]||[]).map(f=>f(event)))},
-  focus(){},getClientRects(){return [1]},append(){},before(){},
+  focus(){},getClientRects(){return [1]},append(){},before(){},replaceChildren(...children){this.children=children},
   querySelector(){return null}
  };
 }
@@ -97,7 +97,7 @@ async function exercise(level){
  const modal=fakeElement('div');modal.querySelector=id=>nodes.get(id)||null;
  let appended=null;const body=fakeElement('body');
  body.append=el=>{appended=el};
- const doc={body,createElement:tag=>tag==='div'?modal:fakeElement(tag),
+ const doc={body,createElement:tag=>tag==='div'?modal:fakeElement(tag),createTextNode:text=>({textContent:text}),
   getElementById:id=>id==='beaguLevelState'?badge:null,
   querySelectorAll:()=>[],addEventListener(){}};
  const token='b'.repeat(64);
