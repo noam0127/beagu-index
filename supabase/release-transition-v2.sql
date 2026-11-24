@@ -1,3 +1,5 @@
+-- Server-side dispatch throttling; no credential is stored in the database.
+alter table public.beagu_site_release_jobs_v1 add column if not exists dispatch_requested_at timestamptz;
 -- Atomic release control-plane transitions. Existing survey and published notice tables untouched.
 create or replace function public.beagu_release_transition_v2(p_action text,p_payload jsonb)
 returns jsonb language plpgsql security invoker set search_path=pg_catalog,public as $$
@@ -25,6 +27,12 @@ begin
   if dest is null or dest !~ '^[0-9a-f]{40}$' then return jsonb_build_object('error','invalid_direct_sha'); end if;
   insert into public.beagu_site_release_jobs_v1(action,target,from_sha,to_sha,version,summary,created_by) values(p_payload->>'action','production',s.production_sha,dest,ver,sm,(p_payload->>'created_by')::uuid) returning id into jid;
   return jsonb_build_object('id',jid);
+ elsif p_action='reserve_dispatch' then
+  select * into j from public.beagu_site_release_jobs_v1 where id=(p_payload->>'job_id')::uuid for update;
+  if not found or j.status<>'queued' or j.target<>'production' or j.action not in ('prod_apply','prod_rollback') or j.from_sha is distinct from s.production_sha or j.to_sha is distinct from p_payload->>'candidate_sha' then return jsonb_build_object('error','direct_confirmation_required'); end if;
+  if j.dispatch_requested_at is not null and j.dispatch_requested_at>now()-interval '60 seconds' then return jsonb_build_object('error','dispatch_rate_limited'); end if;
+  update public.beagu_site_release_jobs_v1 set dispatch_requested_at=now() where id=j.id;
+  return jsonb_build_object('ok',true);
  elsif p_action='complete' then
   select * into j from public.beagu_site_release_jobs_v1 where id=(p_payload->>'job_id')::uuid for update;
   if not found then return jsonb_build_object('error','job_not_found'); end if;

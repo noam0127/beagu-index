@@ -7,7 +7,7 @@
  const auth=supabaseClient.auth;
  const api=SUPABASE_URL+"/functions/v1/beagu-release-manager-v1";
  const gate=SUPABASE_URL+"/functions/v1/beagu-admin-access";
- let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,readyKey=null,lastKey=null,refreshSeq=0,liveSeq=0,liveSHA=null,liveVersion=null,liveCheckedAt=0,lastDispatch=null,wakeAt=0;
+ let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,readyKey=null,lastKey=null,refreshSeq=0,liveSeq=0,liveSHA=null,liveVersion=null,liveCheckedAt=0,lastDispatch=null,wakeAt=0,refreshInFlight=false,refreshRequested=false;
  const SHA=/^[0-9a-f]{40}$/;
  const seconds=(a,b)=>{const x=Date.parse(a),y=b?Date.parse(b):Date.now();return Number.isFinite(x)&&Number.isFinite(y)?Math.max(0,Math.floor((y-x)/1000)):null;};
  const elapsed=n=>n===null?'—':Math.floor(n/60)+'분 '+n%60+'초';
@@ -84,9 +84,9 @@
   const stages={approved:!!job,running:!!job?.started_at,deployed:published,verified:targetVerified};
   for(const node of el("releaseJobProgress").querySelectorAll("[data-phase]"))node.dataset.done=String(!!stages[node.dataset.phase]);
   const dispatch=data.dispatch_configured===true;
-  write("releaseDispatchStatus",dispatch?(lastDispatch==="dispatch_unavailable"?"즉시 실행 요청 실패 · 예약 실행 유지":lastDispatch==="dispatched"?"GitHub 즉시 실행 요청 전달 · 시작 대기":"즉시 실행 연결 사용 가능"):"즉시 실행용 서버 인증 미설정 · 예약 실행 또는 GitHub 수동 실행");
+  write("releaseDispatchStatus",dispatch?(lastDispatch==="dispatch_rate_limited"?"재실행 요청 간격 제한 · 기존 요청 유지":lastDispatch==="dispatch_unavailable"?"즉시 실행 요청 실패 · 예약 실행 유지":lastDispatch==="dispatched"?"GitHub 즉시 실행 요청 전달 · 시작 대기":"즉시 실행 연결 사용 가능"):"즉시 실행용 서버 인증 미설정 · 예약 실행 또는 GitHub 수동 실행");
   const eligible=waiting&&["prod_apply","prod_rollback"].includes(job.action)&&job.from_sha===s.production_sha;
-  el("releaseWake").hidden=!eligible||!dispatch;el("releaseWake").disabled=busy||!eligible||!dispatch||now-wakeAt<30000;
+  el("releaseWake").hidden=!eligible||!dispatch;el("releaseWake").disabled=busy||!eligible||!dispatch||now-wakeAt<60000;
   el("releaseManualDispatch").hidden=!eligible;
   const reason=job?.error_code||"";
   write("releaseJobWarning",failed?"최근 작업 실패: "+reason+" · 다시 적용하기 전에 운영 코드 확인":waiting&&seconds(job.created_at)>=60?"승인 완료 · GitHub 실행 대기 중":running&&seconds(job.started_at)>=840?"실행 지연 · 중복 배포를 시작하지 마세요.":liveSHA&&liveSHA!==s.production_sha&&!current?"서버 기록과 실제 웹 코드가 다릅니다. 캐시 전파 또는 기록 오류 확인 필요":"");
@@ -140,6 +140,8 @@
  }
  async function refresh(quiet=false){
   if(busy)return;
+  if(refreshInFlight){if(!quiet)refreshRequested=true;return;}
+  refreshInFlight=true;
   const seq=++refreshSeq;
   try{
    const data=await request("status",{check_latest:!quiet});
@@ -153,7 +155,7 @@
    if(err.status===401||err.status===403){denied("관리자 인증 필요: "+err.message);return;}
    readyKey=null;if(model)render(model);
    if(!quiet)message("배포 상태 조회 실패: "+(err.message||String(err)),true);
-  }
+  }finally{refreshInFlight=false;if(refreshRequested&&!busy){refreshRequested=false;void refresh(false);}}
  }
  async function command(action){
   if(busy)return;

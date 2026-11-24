@@ -9,8 +9,10 @@ const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SE
 const repo="noam0127/beagu-index";
 const mainApi="https://api.github.com/repos/"+repo;
 const dispatchToken=Deno.env.get("BEAGU_RELEASE_DISPATCH_TOKEN")||"";
-async function wakeDispatcher(){
+async function wakeDispatcher(jobId:string,candidateSha:string){
  if(!dispatchToken)return "scheduled_only";
+ const permit=await transition("reserve_dispatch",{job_id:jobId,candidate_sha:candidateSha});
+ if(permit.error)return permit.error==="dispatch_rate_limited"?"dispatch_rate_limited":"dispatch_unavailable";
  try{
   const response=await fetch(mainApi+"/actions/workflows/beagu-release-controller.yml/dispatches",{method:"POST",headers:{"Authorization":"Bearer "+dispatchToken,"Accept":"application/vnd.github+json","Content-Type":"application/json","X-GitHub-Api-Version":"2022-11-28","User-Agent":"beaguindex-release-v2"},body:JSON.stringify({ref:"main"}),signal:AbortSignal.timeout(8000)});
   return response.status===204?"dispatched":"dispatch_unavailable";
@@ -155,7 +157,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  }
  if(action==="wake_approved_job"){
   if(!current||current.id!==input.job_id||current.status!=="queued"||current.target!=="production"||current.from_sha!==s.production_sha||current.to_sha!==input.candidate_sha||!["prod_apply","prod_rollback"].includes(current.action))return error("direct_confirmation_required",409,origin);
-  return respond({job_id:current.id,dispatch:await wakeDispatcher()},200,origin);
+  return respond({job_id:current.id,dispatch:await wakeDispatcher(current.id,current.to_sha)},200,origin);
  }
  if(current)return error("release_in_progress",409,origin);
  if(["register","stage_apply","stage_rollback","prod_apply"].includes(action))return error("direct_route_required",409,origin);
@@ -204,19 +206,15 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   actor_user_id:userId,event_type:"site_release_"+action,outcome:"success",
   details:{job_id:queued.id,target:job.target,from_sha:job.from_sha,to_sha:job.to_sha,version:job.version}
  });
- const dispatch=await wakeDispatcher();
+ const dispatch=await wakeDispatcher(queued.id,job.to_sha||'').catch(()=>"dispatch_unavailable");
  return respond({queued:true,job_id:queued.id,action,dispatch,service:"GitHub Actions"},202,origin);
 }
 async function workerAction(input:Record<string,unknown>,origin:string):Promise<Response>{
  const action=String(input.action||"");
  if(action==="worker_next"){
   const s=await state();
-  // Prevent a cancelled worker from blocking releases forever.
-  const {data:stale}=await db.from("beagu_site_release_jobs_v1").select("id,started_at")
-   .eq("status","running").lt("started_at",new Date(Date.now()-55*60000).toISOString());
-  for(const row of stale||[]) await db.from("beagu_site_release_jobs_v1")
-   .update({status:"failed",error_code:"worker_timeout",finished_at:new Date().toISOString()})
-   .eq("id",row.id).eq("status","running");
+  // A timed-out worker might already have published Pages. Never automatically
+  // clear a running job or claim a replacement; the owner must reconcile it.
   let job=await activeJob();
   const publicDataBlob=String(input.data_blob_sha||"");
   if(!SHA.test(publicDataBlob))return error("invalid_public_data_blob",400,origin);
