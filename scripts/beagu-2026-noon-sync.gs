@@ -167,7 +167,7 @@ function sendBeagu2026PrivateQaChecks(groups){
   const schools=[...groups.values()].map(g=>({
     school_id:String(g.school.school_id),
     school_response_rows:g.rows,
-    school_match_status:g.typeConflict?"NEEDS_REVIEW":"EXACT_REGION_OFFICE_NAME",
+    school_match_status:(g.typeConflict||g.rowReview)?"NEEDS_REVIEW":"EXACT_REGION_OFFICE_NAME",
     core_valid_counts:Object.fromEntries(g.counts.map((n,i)=>[
       "Q"+String(i+1).padStart(2,"0"),n
     ]))
@@ -416,6 +416,7 @@ function refreshBeagu2026Stats(snapshot) {
     destination=SpreadsheetApp.openById(BEAGU26.destinationId);
     const {values,schools}=snapshot||readBeagu2026SourceSnapshot();
     const columns=questionColumns(values[0]);
+    const signals=beagu26RowReviewSignals(values,columns,schools);
     const groups=new Map(),holds=[],reviewRows=[];
     for(let i=1;i<values.length;i++){
       const r=values[i];
@@ -424,7 +425,7 @@ function refreshBeagu2026Stats(snapshot) {
       const submittedDay=getSubmittedDay(r[0]);
       // Never mix pilot/prelaunch and official 2026 survey responses.
       if(submittedDay && submittedDay<BEAGU26.firstOfficialResponseDay){prelaunch++;continue;}
-      if(!submittedDay){undated++;unmatched++;holds.push([i+1,"","","","응답 시각 확인 불가","NEEDS_REVIEW"]);continue;}
+      if(!submittedDay||submittedDay>"2026-12-31"){undated++;unmatched++;holds.push([i+1,"","","","응답 시각 확인 불가","NEEDS_REVIEW"]);continue;}
       const m=resolveSchool(r,columns,schools);
       if(!m.school){
         holds.push([i+1,String(r[columns.region]||""),columns.office.map(k=>r[k]).filter(Boolean).join("/"),String(r[columns.school]||""),m.error,"NEEDS_REVIEW"]);
@@ -439,7 +440,12 @@ function refreshBeagu2026Stats(snapshot) {
       for(let j=0;j<13;j++)scores.push(beagu26ScoreOrReview(j+1,r[columns.q[j]],i+1,key,reviewRows));
       let g=groups.get(key);
       if(!g){g={school:m.school,counts:Array(13).fill(0),sums:Array(13).fill(0),rows:0,viScores:[],typeConflict:false};groups.set(key,g)}
+      const rowSignals=signals.get(i)||new Set();
       g.typeConflict = g.typeConflict || m.typeConflict;
+      g.rowReview = g.rowReview || rowSignals.has("DUPLICATE_SUSPECT") || rowSignals.has("MANDATORY_MISSING");
+      for(const reason of rowSignals){
+        if(reason!=="SCHOOL_TYPE_REVIEW")reviewRows.push([i+1,key,"ROW",reason,"원본 응답 검수 · 자동 삭제 금지","PENDING_REVIEW"]);
+      }
       g.rows++;
       scores.forEach((v,j)=>{if(typeof v==="number"){g.counts[j]++;g.sums[j]+=v}});
       const v=scores.filter(x=>typeof x==="number");
@@ -450,7 +456,7 @@ function refreshBeagu2026Stats(snapshot) {
       const s=g.school;
       const avg=g.sums.map((sum,j)=>g.counts[j]?Math.round(sum/g.counts[j]*10)/10:"");
       const vi=g.viScores.length?Math.round(g.viScores.reduce((a,b)=>a+b,0)/g.viScores.length*10)/10:"";
-      return [String(s.school_id),s.sido_standard,s.support_office,s.school_name,g.rows,...avg,vi,"",g.typeConflict?"NEEDS_TYPE_REVIEW":"PENDING_VERIFICATION",now,g.typeConflict?"설립유형 응답과 공시정보 불일치 · 내부 참고값만 보관 · 학교유형·공개동의 검수 대기":"원자료 재집계(비공개) · 공식 2026 백분위 산식/공개 검수 대기"];
+      return [String(s.school_id),s.sido_standard,s.support_office,s.school_name,g.rows,...avg,vi,"",g.typeConflict?"NEEDS_TYPE_REVIEW":g.rowReview?"NEEDS_RESPONSE_REVIEW":"PENDING_VERIFICATION",now,g.typeConflict?"설립유형 응답과 공시정보 불일치 · 내부 참고값만 보관 · 학교유형·공개동의 검수 대기":"원자료 재집계(비공개) · 공식 2026 백분위 산식/공개 검수 대기"];
     });
     // 원본 데이터와 학교 매칭 오류 검사를 모두 마친 뒤에만 결과 시트를 갱신한다.
     replaceBody(destination.getSheetByName(BEAGU26.summaryTab),output,23);
@@ -518,6 +524,33 @@ function beagu26Selections(value, options, multiple) {
   }
   return found.sort((a,b)=>a-b);
 }
+// Private row-level triage, not proof of distinct respondents or consent.
+// Only identical second-level timestamps and all 13 identical mandatory
+// selections at the same uniquely matched school are duplicate suspects.
+// Never remove rows on suspicion, persist fingerprints or export them.
+function beagu26RowReviewSignals(values,c,schools) {
+  const signals=new Map(),seen=new Map();
+  if(!Array.isArray(c.q)||c.q.length!==13)return signals;
+  const add=(i,reason)=>{
+    if(!signals.has(i))signals.set(i,new Set());
+    signals.get(i).add(reason);
+  };
+  for(let i=1;i<values.length;i++){
+    const r=values[i],day=getSubmittedDay(r[0]);
+    if(!day||day<'2026-11-01'||day>'2026-12-31')continue;
+    const match=resolveSchool(r,c,schools);
+    if(!match.school)continue;
+    if(match.typeConflict)add(i,'SCHOOL_TYPE_REVIEW');
+    const core=c.q.map(j=>String(r[j]||'').trim());
+    if(core.some(v=>!v))add(i,'MANDATORY_MISSING');
+    const stamp=String(r[0]||'').trim();
+    if(core.some(v=>!v)||! /\\d{1,2}:\\d{2}:\\d{2}(?:\\s|$)/.test(stamp))continue;
+    const key=JSON.stringify([String(match.school.school_id),stamp,...core]);
+    if(seen.has(key)){add(seen.get(key),'DUPLICATE_SUSPECT');add(i,'DUPLICATE_SUSPECT');}
+    else seen.set(key,i);
+  }
+  return signals;
+}
 function beagu26BuildResults(values, schools, catalog) {
   const headers=values[0], c=questionColumns(headers), specs=[];
   for(const id of Object.keys(catalog)){
@@ -535,6 +568,7 @@ function beagu26BuildResults(values, schools, catalog) {
         multiple:meta.kind==='multi'||id==='Q45',time:meta.kind==='time'});
     });
   }
+  const signals=beagu26RowReviewSignals(values,c,schools);
   const groups=new Map(), reviewRows=[], totals={source_rows:0,official_rows:0,prelaunch_rows:0,unmatched_rows:0,undated_rows:0};
   for(let sourceIndex=1;sourceIndex<values.length;sourceIndex++){
     const r=values[sourceIndex];
@@ -551,7 +585,9 @@ function beagu26BuildResults(values, schools, catalog) {
     if(!groups.has(id))groups.set(id,{school_id:id,school_response_rows:0,school_match_status:'EXACT_REGION_OFFICE_NAME',
       questions:specs.map(s=>({id:s.id,row:s.row,valid:0,invalid:0,counts:s.options.map(()=>0),minutes_sum:0}))});
     const g=groups.get(id);g.school_response_rows++;
-    if(match.typeConflict)g.school_match_status='NEEDS_REVIEW';
+    const rowSignals=signals.get(sourceIndex)||new Set();
+    if(match.typeConflict||rowSignals.has('DUPLICATE_SUSPECT')||rowSignals.has('MANDATORY_MISSING'))g.school_match_status='NEEDS_REVIEW';
+    for(const reason of rowSignals)reviewRows.push([sourceIndex+1,id,'ROW',-1,reason,'PENDING_REVIEW']);
     specs.forEach((s,index)=>{
       const q=g.questions[index], raw=String(r[s.col]||'').trim();
       if(!raw)return;
