@@ -27,6 +27,8 @@ jobs:
           node scripts/test-challenge-lv2-card.cjs
           node tests/milestone-contract.cjs
           node tests/communication-contract.cjs
+          node tests/beagu-notice-pages-v1.mjs
+          node tests/notice-audience-server.mjs
           python3 -m py_compile scripts/release-manager/stamp_release_info.py
       - name: Install pinned Chromium browser test tooling
         run: |
