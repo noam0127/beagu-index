@@ -93,6 +93,16 @@ async function call(action,fields={},token=jwt){const headers={'Content-Type':'a
  ]){inventoryOverride=bad;assert.equal((await inspect()).body.error,'integrated_inventory_invalid');}
  inventoryOverride=Array.from({length:300},(_,i)=>({filename:'test/'+i,status:'added',sha:BLOB}));
  assert.equal((await inspect()).body.error,'direct_candidate_stale');
+ // An Apps Script-only update must not pass as a web-only release.
+ for(const file of ['scripts/beagu-2026-noon-sync.gs','scripts/beagu-2026-results-core.js','scripts/beagu-2026-results-runtime.js','scripts/build-2026-results.mjs']){
+  inventoryOverride=[{filename:file,status:'modified',sha:BLOB}];
+  const external=(await inspect()).body.plan;
+  assert.equal(external.backend_required,true);
+  assert.equal(external.requires_manual_review,true);
+  assert.equal(external.inventory[0].review_kinds[0],'manual_review');
+  assert.equal((await call('prod_direct_apply',{candidate_sha:DRAFT,expected_production_sha:BASE,confirmed_direct:true})).body.error,'backend_integrated_required');
+  assert.equal(jobs.length,0);
+ }
  inventoryOverride=null;
  backend=true;
  assert.equal((await call('status',{check_latest:true})).body.direct_candidate_reason,'backend_integrated_required');

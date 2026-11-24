@@ -296,6 +296,7 @@ async function changedFiles(from:string,to:string){
 function backendPaths(files:any[]):string[]{
  return [...new Set(files.flatMap(f=>[String(f.filename||""),String(f.previous_filename||"")])
   .filter(p=>/^supabase\//.test(p)||/^scripts\/release-manager\//.test(p)||
+    /^scripts\/(?:beagu-2026-[^/]+\.(?:gs|js)|build-2026-results\.mjs)$/.test(p)||
     /^\.github\/workflows\/(beagu-release-controller|deploy-github-pages-direct)\.ya?ml$/.test(p)))].sort();
 }
 async function backendChangeBetween(base:string,sha:string){
@@ -317,6 +318,8 @@ function reviewKind(path:string){
  if(/^supabase\/functions\/[a-z0-9][a-z0-9-]*\/.+/.test(path))return "edge_review";
  if(/^supabase\/config\.toml$/.test(path))return "server_config_review";
  if(/^scripts\/release-manager\//.test(path)||/^\.github\/workflows\/(?:beagu-release-controller|deploy-github-pages-direct)\.ya?ml$/.test(path))return "controller_review";
+ // Apps Script must be installed and verified separately by its authorized owner.
+ if(/^scripts\/(?:beagu-2026-[^/]+\.(?:gs|js)|build-2026-results\.mjs)$/.test(path))return "manual_review";
  if(/^supabase\//.test(path))return "manual_review";
  if(/^\.github\/workflows\//.test(path))return "ci_review";
  return "web_review";

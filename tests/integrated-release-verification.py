@@ -51,6 +51,23 @@ class Verify(unittest.TestCase):
     def verify(self,p=None):
         return v.verify_manifest(self.root,env(self.plan if p is None else p))
 
+    def test_apps_script_is_external_manual_review(self):
+        for path in ("scripts/beagu-2026-noon-sync.gs","scripts/beagu-2026-results-core.js","scripts/beagu-2026-results-runtime.js","scripts/build-2026-results.mjs"):
+            self.assertEqual(v.kind(path),"manual_review")
+        self.assertEqual(v.kind("js/beagu-2026-admin-review.js"),"web_review")
+        path="scripts/beagu-2026-noon-sync.gs"
+        write(self.root,path,b"// fixture external Apps Script\n")
+        target=commit(self.root)
+        p=copy.deepcopy(self.plan)
+        p.update(candidate_sha=target,requires_manual_review=True)
+        p["inventory"].append({"path":path,"status":"added","blob_sha":run(self.root,"rev-parse",target+":"+path),"blob_ref":"candidate","previous_path":None,"review_kinds":["manual_review"],"backend":True,"manual_review_required":True})
+        p["inventory"].sort(key=lambda f:f["path"])
+        verified=self.verify(p)
+        self.assertTrue(next(f for f in verified["files"] if f["path"]==path)["manual"])
+        altered=copy.deepcopy(p)
+        next(f for f in altered["inventory"] if f["path"]==path).update(backend=False,manual_review_required=False,review_kinds=["web_review"])
+        with self.assertRaises(ValueError):self.verify(altered)
+
     def test_actual_blobs_and_worktree_independence(self):
         a=self.verify()
         write(self.root,"supabase/account.sql",b"tampered worktree")

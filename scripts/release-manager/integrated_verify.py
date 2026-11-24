@@ -57,6 +57,9 @@ def kind(path):
         return "server_config_review"
     if path.startswith("scripts/release-manager/") or re.fullmatch(r"\.github/workflows/(?:beagu-release-controller|deploy-github-pages-direct)\.ya?ml", path):
         return "controller_review"
+    # External Apps Script changes are not deployable by the Pages or Edge worker.
+    if re.fullmatch(r"scripts/(?:beagu-2026-[^/]+\.(?:gs|js)|build-2026-results\.mjs)", path):
+        return "manual_review"
     if path.startswith("supabase/"):
         return "manual_review"
     return "ci_review" if path.startswith(".github/workflows/") else "web_review"
