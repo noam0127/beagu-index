@@ -60,6 +60,7 @@ class Vault(unittest.TestCase):
         # Old object cannot satisfy the independently retained newest pin.
         self.file.rename(self.root/"historical.vault")
         (self.root/("e"*32+".vault")).write_bytes((self.root/"historical.vault").read_bytes())
+        (self.root/("e"*32+".vault")).chmod(0o600)
         with self.assertRaisesRegex(ValueError,"stale_or_tampered_vault"):
             v.unseal(self.root,key2,"fixture-key-2",latest,*PINS)
     def test_permissions_symlink_and_key_fd(self):
