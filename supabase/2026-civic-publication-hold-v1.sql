@@ -248,3 +248,24 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.beagu_2026_civic_resume_school(uuid,uuid,uuid,text,text) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.beagu_2026_civic_resume_school(uuid,uuid,uuid,text,text) TO service_role;
+
+-- Owner-only audit and current snapshot hash; the UI never guesses a target.
+CREATE OR REPLACE FUNCTION public.beagu_2026_civic_hold_context(p_actor uuid,p_session uuid,p_feedback uuid)
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
+DECLARE result jsonb;
+BEGIN
+ IF p_actor IS NULL OR p_session IS NULL OR NOT EXISTS(SELECT 1 FROM public.beagu_admin_accounts WHERE user_id=p_actor AND role='owner' AND enabled)
+ OR public.beagu_admin_active_mfa_session(p_actor,p_session) IS DISTINCT FROM true THEN RAISE EXCEPTION 'owner MFA required'; END IF;
+ SELECT jsonb_build_object('snapshot_sha',r.payload_sha256,'school_approval',r.approval_status,
+ 'held',coalesce(h.active,false),'hold_feedback',h.feedback_id,'history',
+ (SELECT coalesce(jsonb_agg(to_jsonb(a) ORDER BY a.created_at DESC),'[]'::jsonb) FROM
+ (SELECT action,reason,created_at FROM beagu_private.beagu_2026_civic_feedback_audit WHERE feedback_id=f.id ORDER BY created_at DESC LIMIT 50) a))
+ INTO result FROM beagu_private.beagu_2026_civic_feedback f
+ LEFT JOIN public.beagu_2026_results_snapshot r ON r.school_id=f.school_id
+ LEFT JOIN beagu_private.beagu_2026_civic_publication_hold h ON h.school_id=f.school_id
+ WHERE f.id=p_feedback;
+ IF result IS NULL THEN RAISE EXCEPTION 'feedback not found'; END IF;
+ RETURN result;
+END $$;
+REVOKE ALL ON FUNCTION public.beagu_2026_civic_hold_context(uuid,uuid,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.beagu_2026_civic_hold_context(uuid,uuid,uuid) TO service_role;
