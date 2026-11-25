@@ -15,7 +15,7 @@ const send=(origin:string,status:number,body:unknown)=>new Response(JSON.stringi
 async function actorHash(req:Request){
  const ip=(req.headers.get("cf-connecting-ip")||"unknown").slice(0,100);
  const device=(req.headers.get("x-beagu-client")||"").slice(0,40);
- const key=await crypto.subtle.importKey("raw",enc.encode(secret),"HMAC",false,["sign"]);
+ const key=await crypto.subtle.importKey("raw",enc.encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
  return hex(new Uint8Array(await crypto.subtle.sign("HMAC",key,
  enc.encode("CIVIC_2026|"+ip+"|"+device+"|"+(req.headers.get("user-agent")||"").slice(0,90)))));
 }
