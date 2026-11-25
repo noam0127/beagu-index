@@ -38,8 +38,10 @@ const read=p=>fs.readFileSync(p,'utf8');
  const end=await page.evaluate(n=>fixture.hit(n),hp);assert.equal(end.hp,0);assert.equal(end.defeated,1);assert.equal(end.score,500);
  assert.equal((await page.evaluate(()=>fixture.hit(999))).score,500);
  }
- await page.evaluate(()=>{for(const viewerTier of [0,1,2]){const c=BeaguSchoolSearchCard.percentiles({viewerTier,publicValues:[17,null,0],value2026:72,status2026:'published'});document.querySelector('#graphs').append(c);}});
- assert.deepEqual(await page.locator('#graphs .percentile-panel').evaluateAll(els=>els.map(e=>e.dataset.displayYear)),['2025','2025','2026']);
+ await page.evaluate(()=>{for(const viewerTier of [0,1,2]){const c=BeaguSchoolSearchCard.percentiles({viewerTier,publicValues:[17,null,0],value2026:72,common2026:72,status2026:'published'});document.querySelector('#graphs').append(c);}});
+ assert.deepEqual(await page.locator('#graphs .percentile-panel').evaluateAll(els=>els.map(e=>e.dataset.displayYear)),['2025','average','average']);
+ assert.deepEqual(await page.locator('#graphs .percentile-panel .glory-score').allTextContents(),['0.0%','29.7%','29.7%']);
+ assert.deepEqual(await page.evaluate(()=>[BeaguSchoolSearchCard.historicalMean([null,0,100],null),BeaguSchoolSearchCard.historicalMean([null,null,null],null),BeaguSchoolSearchCard.historicalMean([0,null,null],null)]),[50,null,0]);
  assert.deepEqual(await page.locator('#graphs .glory-year-row').evaluateAll(els=>els.map(e=>e.dataset.year)),['2026','2025','2024','2023']);
  assert.deepEqual(await page.locator('#graphs .glory-year-value').allTextContents(),['72.0%','0.0%','자료 없음','17.0%']);
  console.log('PASS Chromium '+(mobile?'touch':'keyboard')+' inventory, Korean physical key, boss HP/defeat and four-year cards (isolated components)');

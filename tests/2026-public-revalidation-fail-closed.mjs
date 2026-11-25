@@ -28,7 +28,7 @@ assert.match(compare,/cached\.items\[2026\]=\{\}/);
 assert.match(compare,/cached\.summaries\[2026\]=\[\]/);
 assert.match(compare,/if\(epoch!==state\.authEpoch\|\|token!==state\.sessionToken\)return/);
 assert.match(report,/if\(latestOnly\)\{\s*\/\/ A withdrawn 2026 publication[\s\S]*?state\.years\['2026'\]\.percentile=null/);
-assert.match(report,/state\.years\['2026'\]\.items=\{\};\s*state\.years\['2026'\]\.percentile=null;\s*state\.years\['2026'\]\.approved=false;\s*state\.approvedSummary\['2026'\]=\[\];\s*render\(\)/);
+assert.match(report,/state\.years\['2026'\]\.items=\{\};\s*state\.years\['2026'\]\.percentile=null;state\.years\['2026'\]\.commonPercentile=null;\s*state\.years\['2026'\]\.approved=false;\s*state\.approvedSummary\['2026'\]=\[\];\s*render\(\)/);
 assert.match(read('search-lv1.html'),/js\/level-search\.js\?v=[A-Za-z0-9-]+/);
 assert.match(read('statistics.html'),/js\/statistics-compare\.js\?v=11117-edited-excel1/);
 for(const publicSource of [search,compare,report,view])

@@ -20,6 +20,8 @@ export function projectOfficialProfiles2026(rows,ids,tier){
   const verified=t!==null&&t===count(row.teacher_total)&&m!==null&&f!==null&&m+f===t;
   for(const k of COUNT_KEYS)safe[k]=verified?count(p[k]):null;
   safe.teacher_source_status=verified?'MATCHED':'MISSING';
+  safe.student_count=Number.isSafeInteger(p.student_count)&&p.student_count>=0&&p.student_count<=100000&&p.student_reference_year===2026?p.student_count:null;
+  safe.ratio_basis=verified&&p.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'?'ELEMENTARY_TEACHER_CERTIFIED':null;
   if(verified&&t>0){
    safe.male_teacher_ratio=Math.round(m*10000/t)/100;
    const second=safe.second_grade_teachers;

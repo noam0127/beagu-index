@@ -765,6 +765,7 @@
       statuses:index?.statuses || [],
       publicError:publicLoadError,
       value2026:current?.value ?? null,
+      common2026:current?.common ?? null,
       status2026:current?.status || 'loading',
       locked:false,viewerTier
     });
@@ -798,7 +799,7 @@
       item.querySelector('.glory-fact-value').textContent=value===null?'자료 없음':value.toLocaleString('ko-KR',{maximumFractionDigits:1})+unit;
       let source=item.querySelector('.glory-fact-year');
       if(!source){source=make('span','glory-fact-year');item.append(source);}
-      source.textContent=value===null?'':known?year+'년 기준':'기준연도 미확인';
+      source.textContent=value===null?'공식 자료 미확인':known?year+'년 기준':'기준연도 미확인';
     }
     let heading=card.querySelector('.official-school-basics-2026');
     if(!heading){heading=make('h3','official-school-basics-2026');facts.before(heading);}
@@ -830,7 +831,7 @@
       for(const id of ids){
         const n=result.values?.[id];
         current2026.set(id,[1,2].includes(viewerTier)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100
-          ?{status:'published',value:n}:{status:'unpublished'});
+          ?{status:'published',value:n,common:typeof result.common2026?.[id]==='number'&&result.common2026[id]===n?n:null}:{status:'unpublished'});
       }
       refresh();
       if([1,2].includes(viewerTier)){

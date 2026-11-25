@@ -69,10 +69,24 @@
    [STATES.LOADING]:'확인 중'
   })[state]||'자료 없음';
  }
- function percentiles({publicValues=[],statuses=[],publicError=false,value2026=null,
+ function historicalMean(publicValues=[],common2026=null){
+  const values=[...publicValues.slice(0,3),common2026].filter(valid);
+  return values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
+ }
+ function meanPanel(section,publicValues,common2026,publicError){
+  const value=historicalMean(publicValues,common2026),row=el('div','glory-score-row');
+  section.dataset.displayYear='average';section.setAttribute('aria-label','역대 배구지수 평균');
+  section.append(el('h3','percentile-heading','역대 배구지수 평균'));
+  row.append(el('strong','glory-score',value===null?(publicError?'불러오기 실패':'자료 없음'):value.toFixed(1)+'%'));
+  if(value!==null){const track=el('div','glory-track'),fill=el('span','glory-fill');track.setAttribute('role','progressbar');track.setAttribute('aria-label','역대 배구지수 평균');track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100');track.setAttribute('aria-valuenow',String(value));fill.style.width=value+'%';track.append(fill);row.append(track);}
+  section.append(row);
+  return section;
+ }
+ function percentiles({publicValues=[],statuses=[],publicError=false,value2026=null,common2026=null,
    status2026='unpublished',locked=false,viewerTier=null}={}){
   const section=el('section','percentile-panel glory-percentile');
-  // Lv0/Lv1 keep the 2025 card. Lv2 displays all four years, without inventing zeros.
+  // Identical representative mean for authenticated tiers; Lv2 retains the four-year breakdown.
+  if(viewerTier===1){section.dataset.publishedYears=[2023,2024,2025].filter((y,i)=>valid(publicValues[i])).concat(!locked&&valid(value2026)?[2026]:[]).join(',');return meanPanel(section,publicValues,locked?null:common2026,publicError);}
   if(viewerTier===2){
    const current=!locked&&valid(value2026)?value2026:null;
    const values=[current,...[2,1,0].map(i=>valid(publicValues[i])?publicValues[i]:null)];
@@ -81,7 +95,7 @@
    section.dataset.displayYear=String(years[latest]);
    section.dataset.publishedYears=years.filter((_,i)=>values[i]!==null).slice().reverse().join(',');
    section.setAttribute('aria-label','2026~2023 배구지수 백분위');
-   section.append(el('h3','percentile-heading',years[latest]+' 배구지수'));
+   meanPanel(section,publicValues,locked?null:common2026,publicError);
    const group=el('div','glory-four-year');
    years.forEach((year,i)=>{
     const value=values[i],row=el('div','glory-year-row');
@@ -96,7 +110,7 @@
      track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100');track.setAttribute('aria-valuenow',String(value));
      track.append(fill);
     }else{track.classList.add('glory-track-missing');track.setAttribute('aria-hidden','true');}
-    row.append(track,el('strong',i===latest?'glory-year-value glory-score':'glory-year-value',value===null?labelFor(i===0?(locked?STATES.LOCKED:status2026):publicState(statuses[3-i],publicError)):value.toFixed(1)+'%'));
+    row.append(track,el('strong','glory-year-value',value===null?labelFor(i===0?(locked?STATES.LOCKED:status2026):publicState(statuses[3-i],publicError)):value.toFixed(1)+'%'));
     group.append(row);
    });
    section.append(group);
@@ -149,7 +163,7 @@
  // Authorization is server-side; this presentation also denies cross-tier fields.
  function addSortPrimary(card,school,sortBy,level){
   const key=String(sortBy||'school_name').replace(/_(?:asc|desc)$/,'');
-  if(key==='school_name'||['student_count','male_teacher_ratio','junior_teacher_ratio'].includes(key)||(level===0&&key!=='address')||
+  if(key==='school_name'||(level>=1&&key==='beagu_percentile_2025')||['student_count','male_teacher_ratio','junior_teacher_ratio'].includes(key)||(level===0&&key!=='address')||
      (level<1&&key==='housing_price_won'))return;
   const numeric=(value,suffix,options={})=>{
    if(value===null||value===undefined||value===''||
@@ -229,5 +243,5 @@
   if(detail)card.append(detail);
   return {card,open,detail,experience};
  }
- window.BeaguSchoolSearchCard=Object.freeze({addHeader,createReportFlag,percentiles,createCard,updateRecordedYears,STATES});
+ window.BeaguSchoolSearchCard=Object.freeze({addHeader,createReportFlag,percentiles,historicalMean,createCard,updateRecordedYears,STATES});
 })();

@@ -117,22 +117,26 @@ Deno.serve(async(req:Request)=>{
    const tier=body.viewLevel===undefined?verifiedTier:body.viewLevel;
    if(typeof tier!=='number'||tier>verifiedTier)return send({error:'ACCESS_DENIED'},403,origin);
    if(![1,2].includes(tier))return send({error:'ACCESS_DENIED'},403,origin);
-   const sendSchoolProfiles=async(values:Record<string,number>)=>{
+   const sendSchoolProfiles=async(values:Record<string,number>,common2026:Record<string,number>={})=>{
      const {data:profiles,error:profileError}=await admin.from('beagu_2026_official_school_profiles')
        .select('school_id,disclosure_code,source_year,teacher_total,profile')
        .in('school_id',ids).eq('source_year',2026).limit(20);
      if(profileError){
        console.error('official_school_profiles_2026_unavailable',profileError.code||'unknown');
-       return send({values,official2026_status:'UNAVAILABLE'},200,origin);
+       return send({values,common2026,official2026_status:'UNAVAILABLE'},200,origin);
      }
-     return send({values,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
+     return send({values,common2026,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
    };
    const edited=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:ids,p_level:tier});
    if(edited.error||!edited.data)return send({error:'EDITED_DATA_UNAVAILABLE'},503,origin);
    if(edited.data.active===true){
     const values:Record<string,number>={};
     for(const id of ids){const p=edited.data.schools?.[id]?.percentile;if(typeof p==='number'&&p>=0&&p<=100)values[id]=p;}
-    return await sendSchoolProfiles(values);
+    // Only include a 2026 value in the shared mean if the same value is permitted at both tiers.
+    const other=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:ids,p_level:tier===1?2:1});
+    const common2026:Record<string,number>={};
+    if(!other.error&&other.data?.active===true)for(const id of ids){const p=other.data.schools?.[id]?.percentile;if(Object.hasOwn(values,id)&&p===values[id])common2026[id]=p;}
+    return await sendSchoolProfiles(values,common2026);
    }
    const [metrics,catalog]=await Promise.all([
     admin.from('beagu_release_metrics_v2')

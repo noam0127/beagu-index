@@ -300,7 +300,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
 <script src="js/search-telemetry-v1.js?v=11117-combined1"></script>
 <link rel="stylesheet" href="styles/school-likes-v1.css?v=11117-horizontal3">
 <script src="js/school-likes-v1.js?v=11117"></script>
-<script src="js/school-search-card-v1.js?v=11117-horizontal3"></script>
+<script src="js/school-search-card-v1.js?v=11117-mean1"></script>
 <script src="js/school-view-counts-v1.js?v=11117-combined1"></script>
 <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
 <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
@@ -1398,7 +1398,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       const result=state.tier===0||latestOnly?{data:[],error:null}:await request.in('survey_year',[2023,2024,2025]);
       if(result.error)throw result.error;
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id)return;
-      if(state.tier===0){state.years['2026'].percentile=null;state.years['2026'].approved=false;}
+      if(state.tier===0){state.years['2026'].percentile=null;state.years['2026'].commonPercentile=null;state.years['2026'].approved=false;}
       for(const row of result.data||[]){
         const y=Number(row.survey_year),p=num(row.percentile);
         if([2023,2024,2026].includes(y)&&p!==null&&p>=0&&p<=100){state.years[String(y)].percentile=p;if(y===2026)state.years[String(y)].approved=true;}
@@ -1419,7 +1419,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       if(latestOnly){
         // A withdrawn 2026 publication must not remain on screen because
         // the public approval source became temporarily unavailable.
-        state.years['2026'].percentile=null;
+        state.years['2026'].percentile=null;state.years['2026'].commonPercentile=null;
         state.years['2026'].approved=false;
       }
       console.warn('공개 DB 미응답 · 2026 최신 상태 확인 실패',e);
@@ -1492,6 +1492,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       const p=await tierCall('percentiles',{schoolIds:[id],viewLevel:requested});
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id||state.tier!==requested)return;
       const latest=p.values?.[id];state.years['2026'].percentile=typeof latest==='number'&&latest>=0&&latest<=100?latest:null;state.years['2026'].approved=state.years['2026'].percentile!==null;
+      state.years['2026'].commonPercentile=typeof p.common2026?.[id]==='number'&&p.common2026[id]===latest?latest:null;
       if(!latestOnly)state.participationYears=Array.isArray(r.participationYears)?r.participationYears.filter(y=>y===2025):[];
       state.years['2026'].items={};
       state.approvedSummary['2026']=[];
@@ -1588,7 +1589,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
         // Fail closed: the old school-level answers might have been revoked
         // since they were first displayed. Leave older verified years intact.
         state.years['2026'].items={};
-        state.years['2026'].percentile=null;state.years['2026'].approved=false;
+        state.years['2026'].percentile=null;state.years['2026'].commonPercentile=null;state.years['2026'].approved=false;
         state.approvedSummary['2026']=[];
         render();
         console.warn('인증된 집계 DB 조회 실패 · 2026 결과 숨김',error);
@@ -1798,8 +1799,8 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     overview.hidden=anonymous;latest.hidden=anonymous;body.hidden=anonymous;
     // hidden must win against legacy page display rules.
     for(const node of [overview,latest,body])node.style.display=anonymous?'none':'';
-    const basicYear=state.tier<2?2025:([2026,2025,2024,2023].find(y=>{const p=num(yearData(y).percentile);return p!==null&&p>=0&&p<=100;})||2025);
-    renderSchoolSurveySnapshot($('reportBasicCard'),basicYear);
+    if(state.tier===0)renderSchoolSurveySnapshot($('reportBasicCard'),2025);
+    else{const host=$('reportBasicCard');host.replaceChildren(window.BeaguSchoolSearchCard.percentiles({viewerTier:1,publicValues:[2023,2024,2025].map(y=>num(yearData(y).percentile)),common2026:yearData(2026).commonPercentile??null}));}
     if(anonymous){
       $('yearGrid').replaceChildren();$('beaguYearGraph').replaceChildren();$('sections').replaceChildren();$('categoryNav').replaceChildren();$('approvedSummary').replaceChildren();$('schoolSurveySnapshot').replaceChildren();$('metricRow').replaceChildren();
       return;
