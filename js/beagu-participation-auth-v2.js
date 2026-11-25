@@ -41,8 +41,8 @@
   </form>
   <p id="beaguParticipationMessage" role="status" aria-live="polite"></p>
   <nav class="beagu-participation-links" aria-label="참여 및 승급">
-   <a href="${survey}" target="_blank" rel="noopener noreferrer">참여코드 받기 — 2026 본조사</a>
-   <a href="challenge.html">Lv2 달성하기 — 챌린지</a>
+   <a href="${survey}" target="_blank" rel="noopener noreferrer">Lv.1 참여코드 받기</a>
+   <a href="challenge.html">Lv.2 참여코드 받기</a>
   </nav>
  </section>`;
  document.body.append(modal);
@@ -60,6 +60,7 @@
  const closeButton=modal.querySelector('[data-beagu-close]');
  const logout=modal.querySelector('#beaguParticipationLogout');
  const hosts=[...document.querySelectorAll('#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel')];
+ const playHost=document.getElementById('playLv2Upgrade');let playUI=null;
  const gameForms=[...document.querySelectorAll('[data-game-lv1-form],#tierCodeForm')];
  const labelFor=n=>n>=2?'♛ Lv2 · 챌린지 달성':n>=1?'✓ Lv1 · 설문 참여 완료':'참여코드 입력';
  function stored(){try{return sessionStorage.getItem(KEY)||''}catch(_){return ''}}
@@ -89,13 +90,15 @@
     if(heading)heading.textContent=level>=2?'Lv2 참여 인증 완료':'참여코드 입력';
    }
   }
+  if(playUI){playHost.hidden=level!==1;if(level!==1){playUI.input.value='';playUI.feedback.textContent='';}}
   for(const item of document.querySelectorAll('[data-beagu-participation-game-trigger]'))
    item.hidden=level>=1;
   detail.hidden=level<1;
   // Lv.1 must retain a code field so an earned Lv.2 code can upgrade in place.
   form.hidden=level>=2;
   heading.textContent=level===1?'레벨2에 도전하세요!':level>=2?'참여 인증 정보':'참여코드 입력';
-  description.textContent=level===1?'Lv.2 참여코드를 입력하면 공시가격 등 더 많은 학교정보를 확인할 수 있습니다. 기존 Lv.1 인증은 유지됩니다.':
+  description.hidden=level===1;
+  description.textContent=level===1?'':
    level>=2?'Lv.2 인증이 완료되었습니다.':'발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.';
   label.textContent=level===1?'Lv.2 참여코드':'참여코드';
   code.placeholder=level===1?'Lv.2 참여코드를 입력하세요':'참여코드를 입력하세요';
@@ -149,6 +152,17 @@
   status.dataset.beaguParticipationStatus='';
   status.hidden=true;
   (legacy||host).before(intro,trigger,status);
+ }
+ if(playHost){
+ const title=el('strong','beagu-minimal-upgrade-title','🔒 레벨2에 도전하세요!');
+ const inline=el('form','beagu-minimal-upgrade');inline.autocomplete='off';
+ const label=el('label','','Lv.2 참여코드');label.htmlFor='playLv2Code';
+ const row=el('div','beagu-minimal-upgrade-row');
+ const input=el('input');input.id='playLv2Code';input.type='password';input.minLength=8;input.maxLength=120;input.required=true;input.autocomplete='off';input.spellcheck=false;input.placeholder='Lv.2 참여코드를 입력하세요';
+ const action=el('button','','Lv.2 인증');action.type='submit';
+ const feedback=el('p','beagu-minimal-upgrade-feedback');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+ row.append(input,action);inline.append(label,row,feedback);playHost.append(title,inline);playUI={input,feedback};
+ inline.addEventListener('submit',async e=>{e.preventDefault();if(lastLevel!==1)return;await authenticate(input,action,feedback);});
  }
  for(const legacy of gameForms){
   legacy.classList.add('beagu-participation-legacy');
@@ -215,8 +229,7 @@
   toggle.textContent=visible?'숨기기':'표시';
   toggle.setAttribute('aria-pressed',String(visible));
  });
- form.addEventListener('submit',async e=>{
-  e.preventDefault();
+ async function authenticate(code,submit,message){
   if(busy)return;
   const value=code.value.trim();
   if(!/^[A-Za-z0-9-]{8,120}$/.test(value)){
@@ -238,7 +251,7 @@
    if(stored()!==result.token)throw Error('STORAGE_UNAVAILABLE');
    expiresAt=checked.expires_at||'';
    paint(level);
-   close();
+   if(!modal.hidden)close();
    window.dispatchEvent(new CustomEvent('beagu:participation-authenticated',{
     detail:{token:result.token,level,provisional:checked.provisional===true}
    }));
@@ -251,7 +264,8 @@
     err.message==='STORAGE_UNAVAILABLE'?'브라우저의 저장 기능을 허용해 주세요.':
     '인증할 수 없습니다. 연결 상태를 확인하고 다시 시도해 주세요.';
   }finally{busy=false;submit.disabled=false;code.value=''}
- });
+ }
+ form.addEventListener('submit',e=>{e.preventDefault();void authenticate(code,submit,message);});
  logout.addEventListener('click',async()=>{
   const token=stored();
   try{sessionStorage.removeItem(KEY)}catch(_){}
