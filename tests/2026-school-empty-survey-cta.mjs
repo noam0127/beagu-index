@@ -85,3 +85,11 @@ assert.equal(find(questionOnly,'beagu-question-block').length,1);
 const locked=new Node('div');
 draw(locked,2026,[{year:2026,access_level:1,summary:{metrics:[{key:'percentile',label:'2026 배구지수',value:54,unit:'%'}]}}],null,'ABC1234',[],null,null,'ready',[],[{questionId:'Q01',row:-1,values:['보통이다']}],0);
 assert.equal(find(locked,'beagu-approved-section').length,0);assert.equal(find(locked,'beagu-question-block').length,0);assert.equal(find(locked,'beagu-year-release-note').length,1);
+
+// Lv1 can see approved ordinary choices, but neither sensitive answers nor Lv2-only metrics.
+const approvedLv1=new Node('div');
+draw(approvedLv1,2026,[{year:2026,access_level:1,summary:{metrics:[{key:'percentile',label:'2026 배구지수',value:54,unit:'%'}]}},{year:2026,access_level:2,summary:{metrics:[{key:'Q20',label:'LV2_ONLY_FIXTURE',value:44}]}}],null,'ABC1234',[],null,null,'ready',[],[{questionId:'Q01',row:-1,values:['보통이다']},{questionId:'Q31',row:-1,values:['PRIVATE_FIXTURE']},{questionId:'Q51',row:-1,values:['PRIVATE_FIXTURE']}],1);
+assert.equal(find(approvedLv1,'beagu-question-block').length,1);
+assert.ok(JSON.stringify(approvedLv1).includes('2026 배구지수'));
+assert.doesNotMatch(JSON.stringify(approvedLv1),/LV2_ONLY_FIXTURE|PRIVATE_FIXTURE/);
+assert.equal(find(approvedLv1,'beagu-year-survey-link').length,0);
