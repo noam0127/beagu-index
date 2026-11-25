@@ -41,3 +41,28 @@ jobs:
           node tests/run4-hazard-replay-browser.cjs
           node tests/playback-browser.cjs
           node tests/v1114-school-glory-browser.cjs
+
+  archive-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Disposable PostgreSQL archive and verified 4.0 adapter
+        run: |
+          set -euo pipefail
+          c="fire-archive-$GITHUB_RUN_ID"
+          docker run -d --rm --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          psql_local() { docker exec -i "$c" psql -X -v ON_ERROR_STOP=1 -U postgres; }
+          psql_local < tests/v1114-school-points-fixture.sql
+          psql_local < tests/v11115-archive-fixture.sql
+          psql_local < scripts/sql/v1.11.14-school-game-points-candidate.sql
+          psql_local < scripts/sql/v1.11.15-arcade-archive-candidate.sql
+          psql_local < tests/v11115-archive-assertions.sql
+          psql_local < scripts/sql/v1.11.15-arcade-archive-candidate.sql
+          psql_local < docs/run4-ranking-preflight/schema-draft.sql
+          psql_local < docs/run4-ranking-preflight/store-draft.sql
+          psql_local < scripts/sql/v1.11.15-run4-archive-adapter-candidate.sql

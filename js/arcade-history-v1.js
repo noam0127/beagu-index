@@ -2,12 +2,12 @@
 (function(){
  "use strict";
  const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard";
- const GAMES={volleyball_25:"🏐 선생님배구 역대 기록",teacher_run_retirement:"🎒 험난한 교직생활 3.0 역대 기록"};
+ const GAMES={volleyball_25:"🏐 선생님배구 역대 기록",teacher_run_retirement:"🎒 험난한 교직생활 역대 기록"};
  const DIFFICULTIES={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
  const params=new URLSearchParams(window.location.search);
  const game=Object.prototype.hasOwnProperty.call(GAMES,params.get("game"))?params.get("game"):"volleyball_25";
  let difficulty=Object.prototype.hasOwnProperty.call(DIFFICULTIES,params.get("difficulty"))?params.get("difficulty"):"";
- let page=1,hasMore=false,requestId=0;
+ let page=1,hasMore=false,requestId=0,archive=false;
  const $=id=>document.getElementById(id);
  const list=$("recordList"),selector=$("difficulty"),prev=$("older"),next=$("newer");
  $("historyTitle").textContent=GAMES[game];
@@ -66,7 +66,7 @@
   const card=el("article","history-record");
   const head=el("div","history-record-head"),about=el("div"),score=el("div","history-score",number(row.score)+"점");
   about.append(el("span","history-status","공개 점수 기록 "+rank+"위"),schoolHeading(row),
-    el("div","history-meta",date(row.createdAt)+" · "+(DIFFICULTIES[row.difficulty]||"난이도 미확인")));
+    el("div","history-meta",date(row.createdAt)+" · "+(DIFFICULTIES[row.difficulty]||"난이도 미확인")+(game==="teacher_run_retirement"?" · v"+(row.version||"3.0"):"")));
   const [label,kind]=titleFor(row);
   const visibleScore=game==="volleyball_25"&&["victory","defeat","stopped"].includes(result.outcome)&&Number.isSafeInteger(result.playerPoints)&&result.playerPoints>=0&&Number.isSafeInteger(result.cpuPoints)&&result.cpuPoints>=0?" "+result.playerPoints+":"+result.cpuPoints:"";
   about.append(el("span","history-status "+kind,label+visibleScore));
@@ -119,12 +119,13 @@
    const data=await response.json();
    if(token!==requestId)return;
    if(!Array.isArray(data.records)||typeof data.hasMore!=="boolean")throw new Error("invalid_history");
-   hasMore=data.hasMore;
+   hasMore=data.hasMore;archive=data.archive===true;
+   $("historyScope").textContent=archive?"보존 경기 · 점수순 · 30개씩":"기존 상위 100위 · 30개씩";
    list.replaceChildren();
    if(!data.records.length)list.append(el("div","history-empty",
     page===1?"아직 상위 100위 기록이 없습니다.":"이 페이지에는 기록이 없습니다."));
    else for(const [i,row] of data.records.entries())list.append(renderRecord(row,(page-1)*30+i+1));
-   prev.disabled=page<=1;next.disabled=!hasMore||page>=4;
+   prev.disabled=page<=1;next.disabled=!hasMore||page>=(archive?10000:4);
   }catch(err){
    if(token!==requestId)return;
    list.replaceChildren(el("div","history-empty","기록을 불러오지 못했습니다. 네트워크를 확인하고 새로고침해 주세요."));
@@ -133,8 +134,21 @@
  }
  selector.addEventListener("change",()=>{difficulty=selector.value;page=1;load();});
  prev.addEventListener("click",()=>{if(page<=1)return;page--;load();window.scrollTo({top:0,behavior:"smooth"});});
- next.addEventListener("click",()=>{if(!hasMore||page>=4)return;page++;load();window.scrollTo({top:0,behavior:"smooth"});});
+ next.addEventListener("click",()=>{if(!hasMore||page>=(archive?10000:4))return;page++;load();window.scrollTo({top:0,behavior:"smooth"});});
  const requestedPage=Number(params.get("page"));
- if(Number.isSafeInteger(requestedPage)&&requestedPage>=1&&requestedPage<=4)page=requestedPage;
+ if(Number.isSafeInteger(requestedPage)&&requestedPage>=1&&requestedPage<=10000)page=requestedPage;
+ async function schoolRank(){
+  const host=$("schoolRankList");try{
+   const res=await fetch(API+"?game="+encodeURIComponent(game)+"&school_rank=1",{cache:"no-store"});
+   if(!res.ok)throw Error("unavailable");const data=await res.json();
+   if(!Array.isArray(data.schoolTop10))throw Error("invalid");host.replaceChildren();
+   for(const [i,r] of data.schoolTop10.entries()){
+    const line=el("div","history-school-rank");line.append(el("strong","",String(i+1)+". "+(r.school_name||"학교 미등록")),el("span","",number(r.points)+" P"));
+    if(game==="volleyball_25"){const w=Number(r.wins)||0,l=Number(r.losses)||0;line.append(el("small","",w+"승 "+l+"패 · "+(w+l?(w/(w+l)*100).toFixed(1)+"%":"승률 —")+" · 중도 "+number(r.stopped)+" · 미확인 "+number(r.unknown)));}
+    host.append(line);
+   }if(!data.schoolTop10.length)host.textContent="보존된 학교 기록이 없습니다.";
+  }catch(_){host.textContent="학교별 누적 랭킹은 기록 보존 기능 활성화 후 제공됩니다.";}
+ }
+ $("schoolRankPanel").addEventListener("toggle",()=>{if($("schoolRankPanel").open)void schoolRank();});
  load();
 })();

@@ -332,7 +332,9 @@ function publicGameResult(game:Game,result:any):Record<string,unknown>{
   ...(result.healthPercent===undefined?{}:{healthPercent:result.healthPercent})
  };
 }
+const ARCHIVE_ENABLED=Deno.env.get("BEAGU_ARCADE_ARCHIVE_ENABLED")==="true";
 async function gameHistory(game:Game,tier:string|null,page:number){
+ if(ARCHIVE_ENABLED){const rows=await db("rpc/beagu_arcade_history_v11115","POST",{p_game:game,p_tier:tier,p_page:page});if(!Array.isArray(rows))throw Error("invalid_archive");return {game,page,pageSize:30,sort:"score_desc",archive:true,hasMore:rows.length>30,records:rows.slice(0,30)};}
  const pageSize=30,offset=(page-1)*pageSize;
  const q=new URLSearchParams({
   select:"id,score,created_at,school_id,school_name,difficulty,win_time_tenths,public_result",
@@ -398,9 +400,10 @@ Deno.serve(async (req:Request)=>{
       if(!isGame(game))return error("invalid_game",400,origin);
       const tier=params.has("difficulty")?rankTier(params.get("difficulty")):null;
       if(params.has("difficulty")&&!tier)return error("invalid_difficulty",400,origin);
+      if(params.get("school_rank")==="1"){if(!ARCHIVE_ENABLED)return error("archive_unavailable",503,origin);return json({game,schoolTop10:await db("rpc/beagu_arcade_school_rank_v11115","POST",{p_game:game})},200,origin);}
       if(params.get("history")==="1"){
         const rawPage=params.get("page")??"1";
-        if(!/^[1-4]$/.test(rawPage))return error("invalid_page",400,origin);
+        if(!/^[1-9][0-9]{0,4}$/.test(rawPage)||Number(rawPage)>(ARCHIVE_ENABLED?10000:4))return error("invalid_page",400,origin);
         return json(await gameHistory(game,tier,Number(rawPage)),200,origin);
       }
       if(params.has("history"))return error("invalid_history",400,origin);
