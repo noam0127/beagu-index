@@ -11,5 +11,7 @@ assert.match(api,/p_digest:digest/);
 assert.match(src,/g!==epoch\|\|t!==token\(\)/);
 for(const p of ['search.html','search-lv1.html','school-report.html'])assert.match(read(p),/js\/school-likes-v1.js/);
 for(const p of ['search.html','search-lv1.html'])assert.match(read(p),/value="like_count">좋아요순/);
-assert.match(read('js/school-search-card-v1.js'),/nameHeading.append\(el\('span','school-name-text',name\)\);if\(heart\)nameHeading.append\(heart\);nameHeading.append\(right\)/);
+assert.match(read('js/school-search-card-v1.js'),/if\(heart\)right.append\(heart\);right.append\(views\)/);
+assert.match(read('school-report.html'),/class="school-count-pair"><span id="reportSchoolLikes"[^>]*><\/span><span id="reportSchoolViews"/);
+assert.match(read('styles/school-likes-v1.css'),/flex-direction:row;flex-wrap:nowrap/);
 console.log('PASS school-like contract');

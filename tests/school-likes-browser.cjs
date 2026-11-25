@@ -24,13 +24,16 @@ async function open(t,mobile=false){
  const ctx=await browser.newContext({viewport:{width:mobile?390:1100,height:800},hasTouch:mobile,isMobile:mobile});await ctx.route('**/*',route);
  const p=await ctx.newPage();await p.goto(origin);await p.evaluate(({t,key})=>{if(t)sessionStorage.setItem(key,t)},{t,key});
  for(const path of ['js/school-likes-v1.js','js/school-search-card-v1.js'])await p.addScriptTag({content:read(path)});
- await p.addStyleTag({content:read('styles/school-likes-v1.css')});
+ for(const path of ['styles/school-search-card-v1.css','styles/school-view-counts-v1.css','styles/school-glory-v1.css','styles/school-likes-v1.css'])await p.addStyleTag({content:read(path)});
  await p.evaluate(s=>{for(const item of [s,s]){const card=document.createElement('article');document.querySelector('#cards').append(card);BeaguSchoolSearchCard.addHeader(card,item);}return BeaguSchoolLikes.refreshCards()},schools[24]);
  assert.equal(await p.locator('.school-name .school-data-report').count(),0);
  await p.evaluate(s=>{const footer=document.createElement('div');footer.className='school-report-footer';footer.append(BeaguSchoolSearchCard.createReportFlag(s));document.querySelector('#cards').append(footer)},schools[24]);
  assert.equal(await p.locator('.school-report-footer button').innerText(),'🚩 자료신고');
  const hearts=p.locator('[data-school-like-id]');assert.equal(await hearts.count(),2);
- assert.deepEqual(await p.locator('.school-name').first().evaluate(n=>[...n.children].slice(1).map(x=>x.className)),['school-like-button','glory-header-meta']);
+ assert.deepEqual(await p.locator('.school-name .school-count-pair').first().evaluate(n=>[...n.children].map(x=>x.className)),['school-like-button','school-view-count']);
+ // Actual CSS geometry at narrow and wide sizes, including long school name and six-digit counters.
+ await p.evaluate(()=>{for(const card of document.querySelectorAll('#cards article')){card.className='school-card school-glory-card';card.style.width='min(100%, 220px)';card.querySelector('.school-name-text').textContent='아주긴검증용초등학교이름';card.querySelector('.school-view-number').textContent='123,456';}});
+ const geometry=await p.locator('.school-count-pair').first().evaluate(n=>{const h=n.querySelector('.school-like-button').getBoundingClientRect(),v=n.querySelector('.school-view-count').getBoundingClientRect();return {sameLine:Math.abs((h.top+h.bottom)/2-(v.top+v.bottom)/2)<2,ordered:h.right<=v.left+1,wrap:getComputedStyle(n).flexWrap,direction:getComputedStyle(n).flexDirection}});assert.deepEqual(geometry,{sameLine:true,ordered:true,wrap:'nowrap',direction:'row'});
  return {ctx,p,hearts};
 }
 const first=await open('',true);assert.equal(await first.hearts.first().isDisabled(),true);assert.equal(await first.p.locator('.school-like-count').first().innerText(),'0');

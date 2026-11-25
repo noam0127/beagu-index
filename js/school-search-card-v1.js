@@ -41,10 +41,10 @@
   const eye=el('span','school-view-eye');
   eye.setAttribute('aria-hidden','true');
   views.append(eye,el('strong','school-view-number','—'));
-  const right=el('div','glory-header-meta');
-  right.append(views);
+  const right=el('div','glory-header-meta school-count-pair');
   const heart=window.BeaguSchoolLikes?.create(String(school.school_id));
-  nameHeading.append(el('span','school-name-text',name));if(heart)nameHeading.append(heart);nameHeading.append(right);
+  if(heart)right.append(heart);right.append(views);
+  nameHeading.append(el('span','school-name-text',name),right);
   card.append(nameHeading,meta);
   return card;
  }
