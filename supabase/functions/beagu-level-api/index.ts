@@ -101,8 +101,7 @@ Deno.serve(async(req:Request)=>{
      }
      return send({values,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
    };
-   // Lv.1 gets official school facts only; never query or return 2026 survey percentiles.
-   if(tier===1)return await sendSchoolProfiles({});
+   // Lv1 uses its own existing publication gate; its basic card stays 2025.
    const [metrics,catalog]=await Promise.all([
     admin.from('beagu_release_metrics_v2')
      .select('school_id,survey_year,question_id,access_level,value,release_version,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence')
@@ -238,11 +237,12 @@ Deno.serve(async(req:Request)=>{
 
   const id=String(body.schoolId||'');
   if(!/^[A-Z0-9]{7}$/.test(id))return send({error:'INVALID_SCHOOL'},400,origin);
-  const level=Number(session.access_level);
-  if(level<1)return send({error:'ACCESS_DENIED'},403,origin);
+  const verifiedLevel=Number(session.access_level);
+  const level=body.viewLevel===undefined?verifiedLevel:body.viewLevel;
+  if(typeof level!=='number'||![1,2].includes(level)||level>verifiedLevel)return send({error:'ACCESS_DENIED'},403,origin);
   // Tier approval and school snapshot approval must both hold for 2026 outputs.
   let tierPublished2026=false;
-  if(level===2){
+  if([1,2].includes(level)){
     const {data:schoolReleased,error:schoolReleasedError}=await admin.rpc(
       'beagu_2026_level_school_published',{p_school_id:id,p_level:level});
     if(schoolReleasedError||typeof schoolReleased!=='boolean')
@@ -259,6 +259,12 @@ Deno.serve(async(req:Request)=>{
     if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
     if(Array.isArray(data))lv2Approved2026=data;
   }
+  let lv1Approved2026:null|unknown[]=null;
+  if(level===1&&tierPublished2026){
+    const {data,error}=await admin.rpc('beagu_2026_released_question_results',{p_school_id:id});
+    if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
+    if(Array.isArray(data))lv1Approved2026=data;
+  }
   const [legacy,metrics,catalog,curated2025]=await Promise.all([
    level===2?admin.from('beagu_level_data').select('survey_year,access_level,summary,release_status').eq('school_id',id).eq('release_status','approved').lt('survey_year',2026).order('survey_year').limit(20):Promise.resolve({data:[],error:null}),
    admin.from('beagu_release_metrics_v2').select('survey_year,question_id,access_level,value,release_version,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence').eq('school_id',id).eq('approval_status','APPROVED').lte('access_level',level).order('release_version',{ascending:false}).limit(1000),
@@ -270,8 +276,8 @@ Deno.serve(async(req:Request)=>{
   if(legacy.error||metrics.error||catalog.error||curated2025.error)return send({error:'DATA_UNAVAILABLE'},503,origin);
   const rows=legacyRows(legacy.data||[],level);
   const safe=releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)
-    .filter((m:any)=>(m.year!==2026||(level===2&&tierPublished2026))&&
-      !(level===1&&m.year!==2025&&m.key==='percentile'));
+    .filter((m:any)=>(m.year!==2026||([1,2].includes(level)&&tierPublished2026))&&
+      !(level===1&&m.year<2025&&m.key==='percentile'));
   // School facts are independently reviewed, not teacher survey observations.
   // Return only per-tier, per-year allowlisted facts from the server after validating session.
   const [officialNumbers, officialCategories]=await Promise.all([
@@ -538,7 +544,7 @@ Deno.serve(async(req:Request)=>{
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
-  const schoolQuestionResults2026=level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):[];
+  const schoolQuestionResults2026=level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[];
   return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });

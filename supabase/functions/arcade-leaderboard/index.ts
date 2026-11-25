@@ -138,35 +138,57 @@ async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
 
 // Sample only approved yearly records, then apply the identical eligibility/difficulty
 // resolver used by game start. A candidate's single-year value is never the returned tier.
-const recommendationCache=new Map<string,{until:number,schools:SchoolChoice[]}>();
-const recommendationPending=new Map<string,Promise<SchoolChoice[]>>();
+// Coalesce bounded public-candidate scans. Cache IDs only; the selected school is
+// revalidated at response time (including the 2026 level-0 publication gate).
+const recommendationCache=new Map<string,{until:number,ids:string[]}>();
+const recommendationPending=new Map<string,Promise<string[]>>();
 async function recommendSchool(tier:Difficulty):Promise<SchoolChoice|null>{
  const cached=recommendationCache.get(tier);
- let pool=cached&&cached.until>Date.now()?cached.schools:null;
+ let pool=cached&&cached.until>Date.now()?cached.ids:null;
  if(!pool){
   let task=recommendationPending.get(tier);
   if(!task){
    task=(async()=>{
     const lower=({easy:0,normal:20,hard:40,very_hard:60,extreme:80})[tier];
-    const q=new URLSearchParams({select:"school_id",survey_year:"in.(2023,2024,2025,2026)",publication_status:"eq.PUBLISHED",privacy_reviewed:"eq.true",percentile:"gte."+lower,order:"school_id.asc",limit:"120",offset:String(Math.floor(Math.random()*3)*120)});
+    const q=new URLSearchParams({select:"school_id",survey_year:"in.(2023,2024,2025,2026)",publication_status:"eq.PUBLISHED",privacy_reviewed:"eq.true",percentile:"gte."+lower,order:"school_id.asc",limit:"120"});
     q.append("percentile",tier==="extreme"?"lte.100":"lt."+(lower+20));
-    let rows=await db("beagu_school_report_yearly?"+q) as Array<{school_id:string}>;
-    if(!rows.length&&q.get("offset")!=="0"){q.set("offset","0");rows=await db("beagu_school_report_yearly?"+q);}
-    const ids=[...new Set(rows.map(r=>r.school_id).filter(id=>typeof id==="string"))];
-    for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];}
-    const found:SchoolChoice[]=[];
-    for(let i=0;i<Math.min(ids.length,9)&&found.length<3;i+=3){
-     const checked=await Promise.all(ids.slice(i,i+3).map(id=>resolveSchool(id).catch(()=>null)));
-     for(const school of checked)if(school?.eligible&&school.difficulty===tier)found.push(school);
+    // An average may belong to a tier even when no individual year does.
+    // Prefer likely yearly matches, then try a bounded broad public scan.
+    const offsets=[Math.floor(Math.random()*3)*120,0,120,240];
+    const scans=[...new Set(offsets)].map(offset=>({offset,broad:false}));
+    scans.push({offset:0,broad:true});
+    const seen=new Set<string>(),found:string[]=[];
+    let checkedCount=0;
+    for(const {offset,broad} of scans){
+     q.set("offset",String(offset));
+     if(broad)q.delete("percentile");
+     const rows=await db("beagu_school_report_yearly?"+q) as Array<{school_id:string}>;
+     const ids=[...new Set(rows.map(r=>r.school_id).filter(id=>typeof id==="string"&&!seen.has(id)))];
+     for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];}
+     const sample=ids.slice(0,12);
+     for(let i=0;i<sample.length&&checkedCount<48&&found.length<3;i+=3){
+      const group=sample.slice(i,i+3);group.forEach(id=>seen.add(id));checkedCount+=group.length;
+      const checked=await Promise.all(group.map(id=>resolveSchool(id)));
+      for(const school of checked)if(school?.eligible&&school.difficulty===tier)found.push(school.school_id);
+     }
+     if(found.length>=3||checkedCount>=48)break;
     }
-    recommendationCache.set(tier,{until:Date.now()+(found.length?45000:10000),schools:found});
+    recommendationCache.set(tier,{until:Date.now()+(found.length?45000:3000),ids:found});
     return found;
    })().finally(()=>recommendationPending.delete(tier));
    recommendationPending.set(tier,task);
   }
   pool=await task;
  }
- return pool.length?pool[Math.floor(Math.random()*pool.length)]:null;
+ // No stale school eligibility, raw percentile, fabricated name or private data.
+ const candidates=[...pool];
+ while(candidates.length){
+  const id=candidates.splice(Math.floor(Math.random()*candidates.length),1)[0];
+  const school=await resolveSchool(id);
+  if(school?.eligible&&school.difficulty===tier)return school;
+ }
+ if(pool.length)recommendationCache.delete(tier);
+ return null;
 }
 
 // Admin identity is derived exclusively from a Supabase Auth bearer JWT.
