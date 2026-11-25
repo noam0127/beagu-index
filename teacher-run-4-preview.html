@@ -1417,8 +1417,9 @@ function drawPatternHazards(){
 // Draw full-size Korean text with line wrapping (never maxWidth compression).
 function drawReadableNotice(content,y,background,color){
  // Situational subtitles must not obscure falling objects or the teacher.
- const width=Math.min(W-18,Math.max(145,W*.72)),inside=width-18;
- const fontSize=Math.min(18,Math.max(14,Math.round(W*.032)));
+ const maxWidth=Math.max(40,Math.min(W-24,Math.max(170,W*.74)));
+ const inside=Math.max(16,maxWidth-28);
+ const fontSize=Math.min(18,Math.max(13,Math.round(W*.032)));
  ctx.save();ctx.font='750 '+fontSize+'px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
  const pieces=String(content).split(/\s+/).filter(Boolean),lines=[];
  let line='';
@@ -1433,16 +1434,21 @@ function drawReadableNotice(content,y,background,color){
  }
  if(line)lines.push(line);
  const shown=lines.slice(0,2);
- if(lines.length>2)shown[1]=shown[1].slice(0,-1)+'…';
- const lineHeight=fontSize+5,h=12+shown.length*lineHeight;
- ctx.globalAlpha=.84;roundRect((W-width)/2,y,width,h,9,background);
- ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
- ctx.lineJoin="round";ctx.lineWidth=2;ctx.strokeStyle="rgba(4,14,27,.83)";
+ if(!shown.length){ctx.restore();return 0;}
+ if(lines.length>2){
+  while(shown[1]&&ctx.measureText(shown[1]+'…').width>inside)shown[1]=Array.from(shown[1]).slice(0,-1).join('');
+  shown[1]+='…';
+ }
+ const lineHeight=Math.ceil(fontSize*1.45),padY=8;
+ const width=Math.min(maxWidth,Math.ceil(Math.max(...shown.map(line=>ctx.measureText(line).width)))+28);
+ const h=padY*2+shown.length*lineHeight;
+ const top=Math.max(4,Math.min(H-h-4,y-h/2));
+ roundRect((W-width)/2,top,width,h,10,background);
+ ctx.textAlign="center";ctx.textBaseline="middle";
  ctx.fillStyle=color;
  for(let i=0;i<shown.length;i++){
-  const lineY=y+10+i*lineHeight;
-  ctx.strokeText(shown[i],W/2,lineY,inside);
-  ctx.fillText(shown[i],W/2,lineY,inside);
+  const lineY=top+padY+(i+.5)*lineHeight;
+  ctx.fillText(shown[i],W/2,lineY);
  }
  ctx.restore();return h;
 }
@@ -1490,7 +1496,7 @@ function draw(){
  const statusCycle=clock%5<1.65;
  const progressLabel=getAge()+"세 · "+Math.floor(clock/5)+"년차 · "+Math.floor(score).toLocaleString("ko-KR")+"점 · 남은 목숨 "+livesLeft;
  const central=noticeTime>0?notice:eventLabel||((state==="playing"&&statusCycle)?progressLabel:"");
- if(central)drawReadableNotice(central,Math.max(110,H*.48-25),"rgba(17,54,70,.94)","#fff");
+ if(central)drawReadableNotice(central,Math.max(110,H*.48),"rgba(17,54,70,.91)","#fff");
  if(stage===3){
   const leftSafe=Math.floor(clock/5)%2===0;
   const x=leftSafe?0:W*.55,w=W*.45;
