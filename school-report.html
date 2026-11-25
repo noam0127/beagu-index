@@ -1490,9 +1490,9 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
         if(![2023,2024,2025,2026].includes(year)||level>requested||(latestOnly&&year!==2026))continue;
         const metrics=Array.isArray(row.summary?.metrics)?row.summary.metrics:[];
         for(const metric of metrics){
-          if(!metric||typeof metric!=='object')continue;
+          if(!metric||typeof metric!=='object'||(year===2026&&/^Q(?:31|51)(?:$|[._-])/.test(String(metric.key||''))))continue;
           if(typeof metric.key==='string'&&/^Q\d{2}$/.test(metric.key)&&
-             !(year===2026&&metric.key==='Q51')&&
+             !(year===2026&&['Q31','Q51'].includes(metric.key))&&
              typeof metric.value==='number'&&Number.isFinite(metric.value)){
             const label=typeof metric.unit==='string'&&metric.unit.length<=20?metric.unit:'';
             state.years[String(year)].items[metric.key]={display:String(metric.value)+label,serverApproved:true};
