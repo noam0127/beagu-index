@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const identity=readFileSync('supabase/functions/beagu-challenge-identity/index.ts','utf8');
+const referral=readFileSync('supabase/functions/beagu-referral-link-v1/index.ts','utf8');
+const client=readFileSync('js/challenge.js','utf8');
+const start=referral.indexOf('    if (session.identity_visitor_id) {');
+const end=referral.indexOf('    // A verified challenge code + a local',start);
+assert.ok(start>=0&&end>start);
+const run=new Function('session','db','identityCode','visitor','referralToken','digest','verifiedReferralCredit','json','origin','return (async()=>{'+referral.slice(start,end)+';return {unbound:true}})()');
+const a='aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',b='bbbbbbbb-cccc-dddd-eeee-ffffffffffff';
+const profile={level:2,validReferrals:7,shortCode:'abcdefgh'};
+async function fixture(session,owner,existing){
+ const calls=[];
+ const out=await run(session,{rpc:async(name,args)=>{calls.push([name,args]);return {data:name==='beagu_earned_challenge_visitor'?owner:existing,error:null}}},'ABCDEFGHJK',a,async()=> 'c'.repeat(64),async()=> 'hash',p=>({earned:p?.level===2&&p.validReferrals>=1,count:p?.validReferrals||0}),(_o,status,data)=>({status,data}),'');
+ return {out,calls};
+}
+let x=await fixture({identity_visitor_id:a,identity_campaign:'2026',access_level:2},a,profile);
+assert.equal(x.out.status,200);assert.equal(x.out.data.validReferrals,7);
+assert.deepEqual(x.calls.map(c=>c[0]),['beagu_earned_challenge_visitor','beagu_referral_existing_link_v1']);
+x=await fixture({identity_visitor_id:a,identity_campaign:'2026',access_level:2},b,profile);
+assert.equal(x.out.status,403);assert.equal(x.calls.length,1);
+x=await fixture({identity_visitor_id:a,identity_campaign:'2026',access_level:2},a,{...profile,validReferrals:0});
+assert.equal(x.out.status,403);
+x=await fixture({identity_visitor_id:a,identity_campaign:'2026',access_level:1},a,profile);
+assert.equal(x.out.status,403);assert.equal(x.calls.length,0);
+x=await fixture({identity_visitor_id:null,access_level:1},a,profile);
+assert.equal(x.out.unbound,true);assert.equal(x.calls.length,0);
+assert.match(identity,/const visitor = boundVisitor \|\| input\.visitor\.toLowerCase\(\)/);
+assert.match(identity,/p_visitor: visitor/);assert.match(identity,/visitorId: visitor/);
+assert.match(client,/const visitor = data\.visitorId/);assert.match(client,/detail: \{ visitor, code: personalCode \}/);
+assert.doesNotMatch(client,/detail: \{ visitor: window\.beaguVisitor/);
+console.log('PASS: bound participant referral is read-only, wrong code and revoked credit denied; server visitor propagated');

@@ -440,12 +440,12 @@
     return candidates[0]?.fact||null;
   }
   function basicFactCell(school,selectedYear,key){
-    // Never receive or display a protected numeric housing price at Lv.0/Lv.1.
-    if(key==='district_housing_price_mean' && state.authLevel<2) {
+    // Never display a protected numeric housing price at Lv.0.
+    if(key==='district_housing_price_mean' && (!state.sessionToken || state.authLevel<1)) {
       const blurred=make('span','₩ •••,•••,•••','compare-price-masked');
-      blurred.setAttribute('aria-label','Lv.2 전용 · 실제 공시가격 미공개');
+      blurred.setAttribute('aria-label','Lv.1 이상 · 실제 공시가격 미공개');
       const container=make('div',null,'compare-price-locked');
-      container.append(blurred,make('small','🔒 Lv.2 잠금 · 레벨2에 도전하세요!','compare-price-callout'));
+      container.append(blurred,make('small','🔒 Lv.1 인증 후 확인','compare-price-callout'));
       return container;
     }
     if(!state.sessionToken || state.authLevel<1)
@@ -633,7 +633,7 @@
                   value:String(metric.value),referenceYear
                 };
             }else{
-              if(state.authLevel<2 && factKey==='district_housing_price_mean')continue;
+              if(state.authLevel<1 && factKey==='district_housing_price_mean')continue;
               approved.summaries[year].push({
                 group:official?'편집본 공식 학교정보':'승인된 설문 영역 요약',
                 label:String(metric.label),value:String(metric.value)

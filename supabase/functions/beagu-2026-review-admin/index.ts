@@ -1,6 +1,7 @@
 // Private reviewer endpoint. No authentication by participation code.
 // Reads are allowed only for allowlisted Supabase Auth AAL2 sessions.
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.58.0";
+import {parseFinalMasterFile} from "../_shared/manual-master-2026.mjs";
 const url=Deno.env.get("SUPABASE_URL")||"";
 const secret=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const db=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -25,7 +26,7 @@ Deno.serve(async(request:Request)=>{
  if(request.method==="OPTIONS")return new Response(null,{status:204,headers:headers(origin)});
  if(request.method!=="POST")return send(origin,405,{error:"method_not_allowed"});
  if(origin&&!origins.has(origin))return send(origin,403,{error:"origin_not_allowed"});
- if(Number(request.headers.get("content-length")||0)>4096)return send(origin,413,{error:"request_too_large"});
+ if(Number(request.headers.get("content-length")||0)>2000000)return send(origin,413,{error:"request_too_large"});
  const match=/^Bearer ([A-Za-z0-9._-]+)$/.exec(request.headers.get("authorization")||"");
  if(!match)return send(origin,401,{error:"authentication_required"});
  const jwt=match[1];
@@ -36,11 +37,11 @@ Deno.serve(async(request:Request)=>{
   return send(origin,401,{error:"authentication_required"});
  let input:Record<string,unknown>;
  try{
-  const text=await request.text();if(text.length>4096)throw Error();
-  input=JSON.parse(text);
+  const text=await request.text();if(text.length>2000000)throw Error();
+  input=JSON.parse(text);if(input?.action!=="manual_master_publish"&&text.length>4096)throw Error();
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve","percentile_v13_scope","percentile_v13_review","percentile_v13_preview","percentile_v13_decide","percentile_v13_candidates","percentile_v13_bulk","auto_status","auto_action"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
+ if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve","percentile_v13_scope","percentile_v13_review","percentile_v13_preview","percentile_v13_decide","percentile_v13_candidates","percentile_v13_bulk","auto_status","auto_action","manual_master_publish","manual_master_restore"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -88,6 +89,17 @@ Deno.serve(async(request:Request)=>{
   }
   // Review decisions may only be made by the owner, never a viewer or editor.
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
+  if(input.action==="manual_master_publish"){
+   if(input.confirmation!=="FINAL_MASTER_PUBLISH"||typeof input.source_version!=="string"||typeof input.csv!=="string")return send(origin,400,{error:"invalid_master"});
+   let file;try{file=parseFinalMasterFile(input.csv);}catch{return send(origin,400,{error:"invalid_master_file"});}
+   const {data,error}=await db.rpc("beagu_2026_master_publish_v1",{p_actor:actor,p_session:claims.session_id,p_version:input.source_version,p_rows:file.rows,p_question_refs:file.questionRefs});
+   return error||!data?send(origin,409,{error:"master_snapshot_or_evidence_mismatch"}):send(origin,200,data);
+  }
+  if(input.action==="manual_master_restore"){
+   if(input.confirmation!=="RESTORE_MASTER"||!Number.isSafeInteger(input.expected_batch)||!(input.batch_id===null||Number.isSafeInteger(input.batch_id)))return send(origin,400,{error:"invalid_restore"});
+   const {data,error}=await db.rpc("beagu_2026_master_restore_v1",{p_actor:actor,p_session:claims.session_id,p_batch:input.batch_id,p_expected:input.expected_batch});
+   return error||!data?send(origin,409,{error:"restore_failed"}):send(origin,200,data);
+  }
   if(input.action==="auto_status"||input.action==="auto_action"){
    const args:Record<string,unknown>={p_actor:actor,p_session:claims.session_id};
    let rpc="beagu_2026_auto_admin_status";

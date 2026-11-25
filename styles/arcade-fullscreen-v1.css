@@ -289,8 +289,7 @@ html body .stage:-webkit-full-screen #game{
  margin:auto!important;justify-self:center!important;align-self:center!important
 }
 
-/* v1.11.12: full court, scores only. Landscape scales both axes without cropping;
-   portrait preserves the court aspect to avoid distorting characters. */
+/* v1.11.12: full court, scores only. Both orientations preserve the original court proportions. */
 html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen){
  padding:0!important;display:grid!important;grid-template: minmax(0,1fr) / minmax(0,1fr)!important;place-items:center!important;
 }
@@ -308,6 +307,6 @@ html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen
  top:auto!important;bottom:max(8px,env(safe-area-inset-bottom))!important;right:max(8px,env(safe-area-inset-right))!important;left:auto!important;opacity:.8;
 }
 @media(orientation:landscape){
- html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>#game{object-fit:fill!important}
+ html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>#game{object-fit:contain!important}
  html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen) .arcade-volley-fullscreen-hud{top:max(8px,env(safe-area-inset-top))!important}
 }
