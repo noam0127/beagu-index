@@ -259,7 +259,7 @@ assert.ok(hub.indexOf('data-game="volleyball"')<hub.indexOf('data-game="survival
 assert.match(volley,/SPEED_MULTIPLIER=2/);
 assert.match(volley,/AUTO_SPIKE_SPEED=8/,"automatic spike requires fast movement");
 assert.match(volley,/impactSpeed >= AUTO_SPIKE_SPEED/,"contact fires automatic spike");
-assert.doesNotMatch(volley,/id="volley-attack"/,"separate attack button removed");assert.match(volley,/attackPointer=event.pointerId;requestSpike\(\)/);
+assert.doesNotMatch(volley,/id="volley-attack"/,"separate attack button removed");assert.match(volley,/attackPointer=event.pointerId;[\s\S]*?distance\/dt>=\.65/);
 assert.match(volley,/state.spikeBufferFrames=SPIKE_BUFFER/,"manual spike buffer is implemented");
 
 assert.match(volley,/R = 48;/,"volleyball radius enlarged 1.5x from 32 to 48");
