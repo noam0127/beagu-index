@@ -16,6 +16,7 @@ assert.equal(releaseMetrics([row],catalog,1,true).length,0,'Lv1 cannot see Lv2 m
 assert.equal(releaseMetrics([{...row,privacy_status:'REVIEW_PENDING'}],catalog,2,true).length,0,'privacy gate unchanged');
 assert.equal(releaseMetrics([{...row,approval_status:'WITHHELD'}],catalog,2,true).length,0,'approval gate unchanged');
 assert.equal(releaseMetrics([{...row,identity_reviewed:false}],catalog,2,true).length,0,'identity gate unchanged');
+assert.equal(releaseMetrics([{...row,question_id:'Q31'}],[{...catalog[0],question_id:'Q31'}],2,true).length,0,'Q31 stays private');
 assert.equal(releaseMetrics([{...row,question_id:'Q51'}],[{...catalog[0],question_id:'Q51'}],2,true).length,0,'Q51 stays private');
 const sql=read('supabase/migrations/20261121100000_beagu_2026_lv2_immediate_approved.sql');
 for(const guard of ["approved_payload_sha256=r.payload_sha256","review_status='VERIFIED'","b.small_sample_reviewed","b.reidentification_reviewed","b.prior_data_combination_reviewed","r.approved_at >= r.updated_at","q.value->>'id' not in ('Q31','Q51')"])
@@ -25,7 +26,7 @@ assert.ok(sql.includes("revoke all on function public.beagu_2026_lv2_released_qu
 assert.ok(sql.includes("grant execute on function public.beagu_2026_lv2_released_question_results(text) to service_role;"));
 const api=read('supabase/functions/beagu-level-api/index.ts');
 assert.ok(api.includes("if(level>=2&&tierPublished2026){")&&api.includes("beagu_2026_lv2_released_question_results"));
-assert.ok(api.includes("if(level<2){")&&api.includes("beagu_2026_released_question_results")); 
+assert.ok(api.includes("if(level===1&&tierPublished2026){")&&api.includes("beagu_2026_released_question_results")); 
 assert.ok(api.includes("beagu_2026_level_school_published"),"tier gate mandatory");
 assert.ok(api.includes("releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)"));
 assert.ok(api.includes("if(Number(session.access_level)>=2)"));
