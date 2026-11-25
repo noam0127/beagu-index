@@ -136,6 +136,12 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 <link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=2">
 <link rel="stylesheet" href="styles/arcade-fire-court-v1.css?v=11115-1">
+<style>
+.run-history-disclosure{width:100%;box-sizing:border-box;margin:8px 0;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;color:#243f58;overflow:hidden}
+.run-history-disclosure>summary{cursor:pointer;padding:12px;font-weight:800;font-size:14px;min-height:44px;box-sizing:border-box}
+.run-history-disclosure>summary:focus-visible{outline:2px solid #2563eb;outline-offset:-3px}
+.run-history-content>iframe{display:block;width:100%;height:clamp(300px,65vh,720px);border:0;background:#f6f8fb}
+</style>
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game beagu-minimal-run">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html" aria-current="page">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
@@ -202,7 +208,7 @@ canvas{height:400px;cursor:default}
    <div class="run4-board-filters"><label>난이도 <select id="run4-official-tier"><option value="all">전체</option><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option><option value="very_hard">VERY HARD</option><option value="extreme">EXTREME</option></select></label><label>기록 <select id="run4-official-outcome"><option value="all">전체</option><option value="retired">정년 달성</option><option value="all_bosses">보스 5종 처치</option></select></label><button id="run4-official-refresh" type="button">조회</button></div>
    <ol id="run4-official-list" aria-live="polite"></ol>
   </div></section>
-  <a class="original" href="arcade-history.html?game=teacher_run_retirement" target="_top">🏆 험난한 교직생활 기록</a>
+  <details id="run-history-disclosure" class="run-history-disclosure"><summary>🏆 험난한 교직생활 기록</summary><div class="run-history-content"></div></details>
   <p role="status" id="run4-preview-notice">4.0 개인 기록은 이 기기에 저장됩니다. 기존 공식 기록은 명예의 전당에서 확인할 수 있습니다. 휴가권은 게임 설정이며 실제 교원 복무제도를 의미하지 않습니다.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -1675,5 +1681,11 @@ resize();intro();requestAnimationFrame(tick);postHeight();
 <script src="js/arcade-fullscreen-v1.js?v=140"></script>
 <script defer src="js/beagu-game-lv1-gate-v1.js?v=20261123-priority2"></script>
 <script defer src="js/postit-entry-links-v1.js?v=20261120-2"></script>
+<script>
+(()=>{const panel=document.getElementById('run-history-disclosure');if(!panel)return;
+panel.addEventListener('toggle',()=>{if(!panel.open||panel.querySelector('iframe'))return;
+const frame=document.createElement('iframe');frame.title='험난한 교직생활 기록';frame.src='arcade-history.html?game=teacher_run_retirement&embed=1';panel.querySelector('.run-history-content').append(frame);
+});})();
+</script>
 </body>
 </html>
