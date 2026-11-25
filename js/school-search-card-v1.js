@@ -35,7 +35,7 @@
    const detail=window.prompt('자료 신고 사유 (12~500자, 개인정보·실명 제외)');
    if(detail===null)return;const reason=detail.trim();if(reason.length<12||reason.length>500){window.alert('신고 사유를 12~500자로 입력해 주세요.');return;}
    flag.disabled=true;
-   try{let nonce;try{nonce=sessionStorage.getItem('beagu-civic-device-v1');if(!nonce){nonce=crypto.randomUUID();sessionStorage.setItem('beagu-civic-device-v1',nonce);}}catch{nonce=crypto.randomUUID();}
+   try{let nonce;try{nonce=sessionStorage.getItem('beagu-civic-device-v1');if(!nonce){nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');sessionStorage.setItem('beagu-civic-device-v1',nonce);}}catch{nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');}
     const res=await fetch('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-civic',{method:'POST',cache:'no-store',headers:{'content-type':'application/json','x-beagu-client':nonce},body:JSON.stringify({action:'simple_report',school_id:String(school.school_id),detail:reason})});
     if(!res.ok)throw Error('report');window.alert('신고가 접수되었습니다.');
    }catch{window.alert('신고 접수 실패. 잠시 후 다시 시도해 주세요.');}finally{flag.disabled=false;}
