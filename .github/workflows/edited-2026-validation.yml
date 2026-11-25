@@ -1,4 +1,4 @@
-name: Final edited workbook isolated validation
+name: Final edited sheet isolated validation
 on:
   pull_request:
     branches: ['fix/v11117-opening-prep']
@@ -32,11 +32,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - name: Prepare actual workbook and Chromium
+      - name: Prepare Chromium
         run: |
-          python3 tests/edited-2026-workbook.py /tmp/edited-fixture.xlsx
           npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
           browser=$(command -v google-chrome || command -v chromium || true)
           if [ -n "$browser" ]; then echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"; else timeout 120s npx playwright install chromium --only-shell; fi
-      - name: Upload final XLSX in Chromium against mock API
-        run: node tests/edited-2026-browser.cjs /tmp/edited-fixture.xlsx
+      - name: Read native Google Sheets in Chromium against mock APIs
+        run: node tests/edited-2026-browser.cjs
