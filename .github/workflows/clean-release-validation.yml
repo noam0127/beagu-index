@@ -68,6 +68,7 @@ jobs:
           node tests/communication-browser.cjs
           node tests/control-tower-browser.cjs
           node tests/admin-2026-compact-browser.cjs
+          node tests/admin-release-draft-browser.cjs
       - name: Verify Together actual Chromium downloads and search regression
         run: |
           set -euo pipefail
