@@ -119,7 +119,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <link rel="stylesheet" href="styles/beagu-communication-v1.css?v=160b">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=11113-minimal">
 <link rel="stylesheet" href="styles/beagu-fullset-school-v11111.css?v=11111-1">
-<link rel="stylesheet" href="styles/school-glory-v1.css?v=111151-compact2">
+<link rel="stylesheet" href="styles/school-glory-v1.css?v=11117-prep1">
 </head>
 <body class="beagu-ui-page beagu-page-search">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -183,6 +183,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
        <select id="publicSort" aria-describedby="publicSortLevelHelp">
          <option value="school_name">학교명</option>
          <option value="address">주소</option>
+         <option value="like_count">좋아요순</option>
          <optgroup label="🔒 Lv.1 전용 정렬">
            <option value="student_count" disabled>🔒 학생수</option>
            <option value="beagu_percentile_2025" disabled>🔒 배구지수</option>
@@ -221,9 +222,12 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
 <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
-  <script src="js/school-search-card-v1.js?v=111151-compact2"></script>
+  <script src="js/school-search-card-v1.js?v=11117-mean1"></script>
+  <script src="js/public-school-basics-2026-v1.js?v=11117"></script>
   <script src="js/school-game-points-v1.js?v=1114"></script>
-  <script src="js/school-view-counts-v1.js?v=20261120-selection-record2"></script>
+  <link rel="stylesheet" href="styles/school-likes-v1.css?v=11117-horizontal3">
+<script src="js/school-likes-v1.js?v=11117"></script>
+<script src="js/school-view-counts-v1.js?v=11117-combined1"></script>
 <script>
   const searchInput = document.getElementById('searchInput');
   const regionSelect = document.getElementById('regionSelect');
@@ -383,16 +387,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
   }
 
   let visibleSchools=[], public2026=new Map(), refreshing2026=false;
-  async function readPublic2026(schools){
-    const ids=[...new Set(schools.map(s=>String(s.school_id)).filter(id=>/^[A-Z0-9]{7}$/.test(id)))];
-    if(!ids.length)return new Map();
-    const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
-      .select('school_id,percentile').in('school_id',ids).eq('survey_year',2026).eq('publication_status','PUBLISHED');
-    if(error)throw error;
-    return new Map((data||[]).filter(row=>ids.includes(String(row.school_id))&&
-      typeof row.percentile==='number'&&Number.isFinite(row.percentile)&&row.percentile>=0&&row.percentile<=100)
-      .map(row=>[String(row.school_id),row.percentile]));
-  }
+  async function readPublic2026(){return new Map();} // Lv0 must not request 2026 survey results.
   function renderPercentiles(school) {
     const row=percentileIndex.get(String(school.school_id));
     const value2026=public2026.get(String(school.school_id))??null;
@@ -401,7 +396,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
       statuses:row?.statuses || [],
       publicError:percentileLoadError,
       value2026,
-      locked:value2026===null
+      locked:true,viewerTier:0
     });
   }
   async function refreshVisible2026(){
@@ -457,6 +452,14 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
       });
       results.appendChild(card);
     });
+    const generation=searchSerial;
+    const basicsCards=[...results.querySelectorAll('.school-card')];
+    for(const c of basicsCards){const old=c.querySelector('.glory-facts');if(old){const host=document.createElement('section');host.className='public-official-basics';old.replaceWith(host);window.BeaguPublicSchoolBasics2026.render(host,null);}}
+    void window.BeaguPublicSchoolBasics2026.load(schools.map(s=>String(s.school_id))).then(data=>{
+      if(generation!==searchSerial)return;
+      for(const c of basicsCards)if(c.isConnected)window.BeaguPublicSchoolBasics2026.render(c.querySelector('.public-official-basics'),data[c.dataset.schoolId]);
+    }).catch(()=>{if(generation===searchSerial)for(const c of basicsCards)if(c.isConnected)window.BeaguPublicSchoolBasics2026.render(c.querySelector('.public-official-basics'),null,true);});
+    void window.BeaguSchoolLikes?.refreshCards(results);
     void window.BeaguSchoolViewCounts?.refreshCards(results);
     void window.BeaguSchoolGamePoints?.refreshCards(results);
   }
@@ -486,7 +489,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
       const sortKey=mode==='region'?`${publicSort.value}_${sortDirection}`:'school_name_asc';
       const sortColumn=sortKey.startsWith('address')?'address':'school_name';
       const ascending=sortKey.endsWith('_asc');
-      const {data,count,error}=await query
+      const {data,count,error}=mode==='region'&&publicSort.value==='like_count'?await window.BeaguSchoolLikes.search({searchText:keyword,region,office,direction:sortDirection,page}).then(x=>({data:x.schools,count:x.total,error:null})):await query
         .order(sortColumn,{ascending,nullsFirst:false})
         .order('school_name',{ascending:true,nullsFirst:false})
         .order('school_id',{ascending:true})
@@ -533,7 +536,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
   regionTab.addEventListener('click',()=>selectMode('region'));
   regionSelect.addEventListener('change',()=>{populateOffices(regionSelect.value);loadSchools(true);});
   officeSelect.addEventListener('change',()=>loadSchools(true));
-  publicSort.addEventListener('change',()=>loadSchools(true));
+  publicSort.addEventListener('change',()=>{if(publicSort.value==='like_count'){sortDirection='desc';syncSortDirection();}loadSchools(true);});
   publicSortDirection.addEventListener('click',()=>{
     sortDirection=sortDirection==='asc'?'desc':'asc';
     syncSortDirection();
@@ -633,7 +636,7 @@ body.beagu-page-search .beagu-public-sort-help a:focus-visible{
   })();
 </script>
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
-<script src="js/search-telemetry-v1.js?v=20261120-selection-record2"></script>
+<script src="js/search-telemetry-v1.js?v=11117-combined1"></script>
 <script>(()=>{const ref=new URLSearchParams(location.search).get('ref');if(/^(?:[a-f0-9]{64}|[A-Za-z0-9_-]{8})$/.test(ref||''))document.getElementById('lightTouchSurveyLink').href='survey.html?ref='+encodeURIComponent(ref);})();</script>
 
 <script defer src="js/beagu-school-interest-v1.js?v=1111"></script>

@@ -7,6 +7,15 @@ function button(label,fn){const b=el("button",label);b.type="button";b.className
 const message=el("p","관리자 인증 후 확인합니다.");message.setAttribute("role","status");
 async function refresh(){if(!owner)return;const g=generation;const d=await call({action:"auto_status",offset});if(!owner||g!==generation)return;root.replaceChildren();
  const stats=el("p","전체 "+d.total+"개교 · 기술검사 "+d.structural_pass+"개교 · 자동 공개 적격 "+d.auto_ready+"개교 · 공개범위 확인 대기 "+d.scope_pending+"개교 · 검토 필요 "+d.review_required+"개교");root.append(el("h4","자동 공개 현황"),stats,el("p","자동 경로 공개 · Lv.1 2026 설문 비공개 · Lv.2 "+(d.auto_lv2??"—")+"개교"),button("새로고침",refresh),message);
+ const master=el("section");master.append(el("h4","최종 마스터 즉시 반영"),el("p","검토 완료한 VI13 CSV 또는 최종 마스터 JSON을 업로드하면 백분위가 즉시 반영됩니다. JSON은 정확한 기존 문항 스냅샷 참조도 연결합니다. 공개중단·철회 및 검증 근거 미확인 자료는 제외합니다."));
+ const source=el("select");source.setAttribute("aria-label","마스터 원본 버전");for(const v of d.source_versions||[]){const opt=el("option",v);opt.value=v;source.append(opt);}
+ const file=el("input");file.type="file";file.accept=".csv,.json,text/csv,application/json";file.setAttribute("aria-label","검토 완료 최종 마스터 파일");
+ const result=el("p");result.setAttribute("role","status");
+ const upload=button("검토 완료 마스터 업로드 · 즉시 반영",async()=>{const f=file.files?.[0];if(!f||f.size>1500000||!source.value){result.textContent="CSV 또는 JSON 파일과 원본 버전을 선택하세요.";return;}const g=generation;const csv=await f.text();if(!owner||g!==generation)return;
+ const res=await call({action:"manual_master_publish",source_version:source.value,csv,confirmation:"FINAL_MASTER_PUBLISH"});if(!owner||g!==generation)return;
+ result.textContent="반영 적격 학교 "+res.eligible+"개교 · 기존 보호조건에 따른 제외 "+res.blocked+"개교 · 문항 반영 적격 "+(res.question_eligible??0)+"개교 · 문항 제외 "+(res.question_blocked??0)+"개교 · 배치 "+res.batch_id;
+ if(Number.isSafeInteger(res.batch_id)&&Object.hasOwn(res,"previous_batch"))master.append(button("직전 마스터 복원",async()=>{if(!window.confirm("직전 마스터를 복원하시겠습니까? 공개중단 조건은 계속 적용됩니다."))return;await call({action:"manual_master_restore",batch_id:res.previous_batch,expected_batch:res.batch_id,confirmation:"RESTORE_MASTER"});result.textContent="이전 마스터 복원 완료";}));
+ });master.append(source,file,upload,result);root.append(master);
  root.append(el("p","기존 기술검사 관측수 일치 "+(d.qa_count_match??"—")+"개교 · 재집계 대기 "+(d.reaggregation_pending??"—")+"개교 · 비공개 계산 완료 "+(d.reaggregation_staged??"—")+"개교 · 결과 매칭 없음 "+(d.reaggregation_no_match??"—")+"개교"));
  const run=d.reaggregation;root.append(el("p",run?"최근 비공개 전국 재집계 "+run.started_at+" · "+run.schools+"개교 · 운영 후보 교체 전":"전국 재집계 실행 기록 없음"));
  const scope=el("details");scope.append(el("summary","공통 공개범위 확인"));const ver=el("select");for(const v of d.source_versions||[]){const opt=el("option",v);opt.value=v;ver.append(opt);}

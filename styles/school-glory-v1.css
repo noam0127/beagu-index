@@ -37,3 +37,6 @@ body:is(.beagu-page-search,.beagu-page-lv1) #results .school-glory-card .glory-a
 
 /* Compact, always visible basic facts; no disclosure triangle or second grid. */
 .school-glory-card>.official-school-basics-2026{font-size:12px;font-weight:750;margin:4px 0 7px;padding:0;line-height:1.4;background:none;border:0}.school-glory-card>.glory-facts{grid-template-columns:repeat(3,minmax(0,1fr))}.glory-fact-year{font-size:10px;color:#64748b;line-height:1.25}.glory-fact-year:empty{display:none}
+
+/* v1.11.17: compact four-year search card; missing data are not zero. */
+.glory-four-year{display:grid;gap:6px}.glory-year-row{display:grid;grid-template-columns:34px minmax(24px,1fr) minmax(48px,auto);align-items:center;gap:8px;min-width:0;font-size:11px}.glory-year-row .glory-track{min-width:0;height:7px}.glory-year-row .glory-track-missing{background:transparent;border-bottom:1px dashed #94a3b84d;border-radius:0}.glory-year-label{font-variant-numeric:tabular-nums}.glory-year-row .glory-year-value{font-size:11px;font-weight:700;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.glory-year-row[data-year="2026"] .glory-fill{background:#9333ea}

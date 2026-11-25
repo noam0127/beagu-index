@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
-import {projectOfficialProfiles2026} from '../_shared/official-school-profile-2026.mjs';
+import {projectOfficialProfiles2026,projectPublicSchoolBasics2026} from '../_shared/official-school-profile-2026.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -38,6 +38,30 @@ Deno.serve(async(req:Request)=>{
  try{const reader=req.body?.getReader();if(!reader)throw Error();let size=0,raw='';const decoder=new TextDecoder();while(true){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>1024){await reader.cancel();return send({error:'TOO_LARGE'},413,origin);}raw+=decoder.decode(part.value,{stream:true});}body=JSON.parse(raw+decoder.decode());}catch{return send({error:'INVALID_JSON'},400,origin);}
  if(!body||typeof body!=='object'||Array.isArray(body))return send({error:'INVALID_BODY'},400,origin);
  try{
+  if(body.action==='school_like_state'||body.action==='school_like_add'){
+   const ids=body.action==='school_like_add'?[body.schoolId]:body.schoolIds;
+   if(!Array.isArray(ids)||ids.length<1||ids.length>20||ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
+   const raw=(req.headers.get('X-Beagu-Session')||'').trim();
+   const digest=/^[a-f0-9]{64}$/.test(raw)?await hash(raw):'';
+   const {data,error}=body.action==='school_like_add'?await admin.rpc('beagu_school_like_add_v1',{p_school_id:ids[0],p_digest:digest}):await admin.rpc('beagu_school_like_state_v1',{p_school_ids:ids,p_digest:digest});
+   if(error)return send({error:'SCHOOL_LIKES_UNAVAILABLE'},503,origin);
+   if(data?.error)return send({error:data.error},data.error==='INVALID_SCHOOL'?400:403,origin);
+   return send(data,200,origin);
+  }
+  if(body.action==='public_school_like_search'){
+   const q=typeof body.searchText==='string'?body.searchText.trim():'',region=typeof body.region==='string'?body.region.trim():'',office=typeof body.office==='string'?body.office.trim():'',direction=body.direction,page=body.page;
+   if(q.length>80||region.length>24||office.length>100||/[\x00-\x1f]/.test(q+region+office)||(!q&&!region)||(!region&&office)||!['asc','desc'].includes(String(direction))||typeof page!=='number'||!Number.isInteger(page)||page<0||page>500)return send({error:'INVALID_SEARCH_FILTER'},400,origin);
+   const {data,error}=await admin.rpc('beagu_school_like_search_v1',{p_keyword:q,p_region:region,p_office:office,p_direction:direction,p_page:page});
+   return error?send({error:'SCHOOL_LIKES_UNAVAILABLE'},503,origin):send(data,200,origin);
+  }
+  // No survey fields or protected prices are available through this public action.
+  if(body.action==='public_school_basics_2026'){
+   const ids=body.schoolIds;
+   if(!Array.isArray(ids)||ids.length<1||ids.length>20||ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
+   const {data:profiles,error}=await admin.from('beagu_2026_official_school_profiles').select('school_id,disclosure_code,source_year,teacher_total,profile').in('school_id',ids).eq('source_year',2026).limit(20);
+   if(error)return send({error:'OFFICIAL_BASICS_UNAVAILABLE'},503,origin);
+   return send({official2026:projectPublicSchoolBasics2026(profiles,ids)},200,origin);
+  }
   if(body.action==='login'){
    // Database-backed global limiter cannot be evaded with forged IP headers.
    const {data:permitted,error:limitError}=await admin.rpc('beagu_consume_login_budget');
@@ -89,20 +113,31 @@ Deno.serve(async(req:Request)=>{
    if(!Array.isArray(ids)||ids.length<1||ids.length>20||
      ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||
      new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
-   const tier=Number(session.access_level);
+   const verifiedTier=Number(session.access_level);
+   const tier=body.viewLevel===undefined?verifiedTier:body.viewLevel;
+   if(typeof tier!=='number'||tier>verifiedTier)return send({error:'ACCESS_DENIED'},403,origin);
    if(![1,2].includes(tier))return send({error:'ACCESS_DENIED'},403,origin);
-   const sendSchoolProfiles=async(values:Record<string,number>)=>{
+   const sendSchoolProfiles=async(values:Record<string,number>,common2026:Record<string,number>={})=>{
      const {data:profiles,error:profileError}=await admin.from('beagu_2026_official_school_profiles')
        .select('school_id,disclosure_code,source_year,teacher_total,profile')
        .in('school_id',ids).eq('source_year',2026).limit(20);
      if(profileError){
        console.error('official_school_profiles_2026_unavailable',profileError.code||'unknown');
-       return send({values,official2026_status:'UNAVAILABLE'},200,origin);
+       return send({values,common2026,official2026_status:'UNAVAILABLE'},200,origin);
      }
-     return send({values,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
+     return send({values,common2026,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
    };
-   // Lv.1 gets official school facts only; never query or return 2026 survey percentiles.
-   if(tier===1)return await sendSchoolProfiles({});
+   const edited=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:ids,p_level:tier});
+   if(edited.error||!edited.data)return send({error:'EDITED_DATA_UNAVAILABLE'},503,origin);
+   if(edited.data.active===true){
+    const values:Record<string,number>={};
+    for(const id of ids){const p=edited.data.schools?.[id]?.percentile;if(typeof p==='number'&&p>=0&&p<=100)values[id]=p;}
+    // Only include a 2026 value in the shared mean if the same value is permitted at both tiers.
+    const other=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:ids,p_level:tier===1?2:1});
+    const common2026:Record<string,number>={};
+    if(!other.error&&other.data?.active===true)for(const id of ids){const p=other.data.schools?.[id]?.percentile;if(Object.hasOwn(values,id)&&p===values[id])common2026[id]=p;}
+    return await sendSchoolProfiles(values,common2026);
+   }
    const [metrics,catalog]=await Promise.all([
     admin.from('beagu_release_metrics_v2')
      .select('school_id,survey_year,question_id,access_level,value,release_version,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence')
@@ -115,7 +150,7 @@ Deno.serve(async(req:Request)=>{
    // Only recently approved Lv2 percentiles need the independent snapshot gate.
    // Avoid extra RPC calls for the normal 24-hour release path.
    const recentIds=new Set<string>();
-   if(Number(session.access_level)>=2){
+   if(tier>=2){
      const pendingIds=[...new Set((metrics.data||[]).filter((m:any)=>
        m.approved_at&&Date.parse(m.approved_at)>Date.now()-24*60*60*1000)
        .map((m:any)=>String(m.school_id)))];
@@ -127,7 +162,7 @@ Deno.serve(async(req:Request)=>{
    }
    const {data:publishedIds,error:publishedError}=await admin.rpc(
     'beagu_2026_level_released_school_ids',
-    {p_ids:ids,p_level:Number(session.access_level)});
+    {p_ids:ids,p_level:tier});
    if(publishedError||!Array.isArray(publishedIds))
      return send({error:'PUBLICATION_GATE_UNAVAILABLE'},503,origin);
    const publishedSet=new Set(publishedIds);
@@ -140,19 +175,13 @@ Deno.serve(async(req:Request)=>{
    }
    // Separate exact percentile-only approval; never relax the legacy question gate.
    // Staggered rollout: absent/unavailable new RPC returns no new percentiles.
-   const narrow=await admin.rpc('beagu_2026_percentile_v13_values',{p_ids:ids,p_level:Number(session.access_level)});
+   const narrow=await admin.rpc('beagu_2026_percentile_v13_values',{p_ids:ids,p_level:tier});
    if(!narrow.error&&narrow.data&&typeof narrow.data==='object'&&!Array.isArray(narrow.data)){
      for(const id of ids){
        const n=narrow.data[id];
        if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;
      }
    }
-   // Automatic exception-managed percentiles, independently authorized by the server.
-   const [auto,hidden]=await Promise.all([admin.rpc('beagu_2026_auto_percentiles',{p_ids:ids,p_level:Number(session.access_level)}),admin.rpc('beagu_2026_auto_hidden_ids',{p_ids:ids})]);
-   // Once the new endpoint is deployed, a missing hold RPC fails closed for all 2026 values.
-   if(hidden.error||!Array.isArray(hidden.data))return send({error:'AUTO_HOLD_GATE_UNAVAILABLE'},503,origin);
-   if(!auto.error&&auto.data&&typeof auto.data==='object'&&!Array.isArray(auto.data))for(const id of ids){const n=auto.data[id];if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;}
-   for(const id of hidden.data)delete out[id];
    return await sendSchoolProfiles(out);
 
   }
@@ -204,21 +233,33 @@ Deno.serve(async(req:Request)=>{
    const sort=typeof body.sort==='string'?body.sort:'school_name';
    const direction=typeof body.direction==='string'?body.direction:(sort==='school_name'||sort==='address'?'asc':'desc');
    const pagination=Number(body.page);
-   const sorts=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count']);
+   const sorts=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count','like_count']);
    if(!sorts.has(sort)||!['asc','desc'].includes(direction)||!Number.isSafeInteger(pagination)||pagination<0||pagination>500||
       searchText.length>80||region.length>24||office.length>100||
       !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
       (!searchText&&!region)||(!region&&office))
       return send({error:'INVALID_SEARCH_FILTER'},400,origin);
-   // Do not permit Lv.1 price sorting. The API must enforce this, not just the browser.
-   if(sort==='housing_price_won'&&Number(session.access_level)<2)
-     return send({error:'LEVEL2_REQUIRED'},403,origin);
+   // Property price metadata is available only to verified Lv1+ sessions.
+   if(sort==='housing_price_won'&&Number(session.access_level)<1)
+     return send({error:'AUTH_REQUIRED'},403,origin);
    // Level access is checked above, before any cached school record is fetched.
    // The RLS-protected cache contains only fields from the approved public sort view.
    // On cache read errors, preserve the original verified query as the fallback.
+   if(sort==='like_count'){
+    const {data:ranked,error:rankError}=await admin.rpc('beagu_school_like_search_v1',{p_keyword:searchText,p_region:region,p_office:office,p_direction:direction,p_page:pagination});
+    if(rankError||!Array.isArray(ranked?.schools))return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
+    const ids=ranked.schools.map((r:any)=>r.school_id);
+    if(!ids.length)return send({schools:[],total:ranked.total,page:pagination,sort,direction},200,origin);
+    const hydrate=(table:string)=>admin.from(table).select('school_id,school_kind,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count,housing_price_won').in('school_id',ids);
+    let result=await hydrate('beagu_lv1_school_sort_cache_v1');
+    if(result.error)result=await hydrate('beagu_lv1_school_sort_index');
+    if(result.error)return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
+    const map=new Map((result.data||[]).map((r:any)=>[r.school_id,r]));
+    return send({schools:ranked.schools.map((r:any)=>({...r,...(map.get(r.school_id)||{})})),total:ranked.total,page:pagination,sort,direction},200,origin);
+   }
    const rankedQuery=(table:string)=>{
      let query=admin.from(table)
-       .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count'+(Number(session.access_level)>=2?',housing_price_won':''),{count:'exact'});
+       .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count'+(Number(session.access_level)>=1?',housing_price_won':''),{count:'exact'});
      if(searchText)query=query.ilike('school_name','%'+searchText.replace(/[%_\\]/g,'')+'%');
      if(region)query=query.eq('sido_standard',region);
      if(office)query=query.eq('support_office',office);
@@ -238,18 +279,19 @@ Deno.serve(async(req:Request)=>{
 
   const id=String(body.schoolId||'');
   if(!/^[A-Z0-9]{7}$/.test(id))return send({error:'INVALID_SCHOOL'},400,origin);
-  const level=Number(session.access_level);
-  if(level<1)return send({error:'ACCESS_DENIED'},403,origin);
-  // Tier approval and school snapshot approval must both hold for 2026 outputs.
+  const verifiedLevel=Number(session.access_level);
+  const level=body.viewLevel===undefined?verifiedLevel:body.viewLevel;
+  if(typeof level!=='number'||![1,2].includes(level)||level>verifiedLevel)return send({error:'ACCESS_DENIED'},403,origin);
+  const edited=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:[id],p_level:level});
+  if(edited.error||!edited.data)return send({error:'EDITED_DATA_UNAVAILABLE'},503,origin);
+  // Before the first edited file, preserve legacy publication rules.
   let tierPublished2026=false;
-  if(level===2){
+  if([1,2].includes(level)&&edited.data.active!==true){
     const {data:schoolReleased,error:schoolReleasedError}=await admin.rpc(
       'beagu_2026_level_school_published',{p_school_id:id,p_level:level});
     if(schoolReleasedError||typeof schoolReleased!=='boolean')
       return send({error:'PUBLICATION_GATE_UNAVAILABLE'},503,origin);
-    const {data:hiddenIds,error:hiddenError}=await admin.rpc('beagu_2026_auto_hidden_ids',{p_ids:[id]});
-    if(hiddenError||!Array.isArray(hiddenIds))return send({error:'AUTO_HOLD_GATE_UNAVAILABLE'},503,origin);
-    tierPublished2026=schoolReleased===true&&!hiddenIds.includes(id);
+    tierPublished2026=schoolReleased===true;
   }
   // Separate Lv2 access from the existing public/Lv1 24-hour release path.
   // A null result means the exact snapshot failed independent publication review.
@@ -258,6 +300,12 @@ Deno.serve(async(req:Request)=>{
     const {data,error}=await admin.rpc('beagu_2026_lv2_released_question_results',{p_school_id:id});
     if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
     if(Array.isArray(data))lv2Approved2026=data;
+  }
+  let lv1Approved2026:null|unknown[]=null;
+  if(level===1&&tierPublished2026){
+    const {data,error}=await admin.rpc('beagu_2026_released_question_results',{p_school_id:id});
+    if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
+    if(Array.isArray(data))lv1Approved2026=data;
   }
   const [legacy,metrics,catalog,curated2025]=await Promise.all([
    level===2?admin.from('beagu_level_data').select('survey_year,access_level,summary,release_status').eq('school_id',id).eq('release_status','approved').lt('survey_year',2026).order('survey_year').limit(20):Promise.resolve({data:[],error:null}),
@@ -270,8 +318,8 @@ Deno.serve(async(req:Request)=>{
   if(legacy.error||metrics.error||catalog.error||curated2025.error)return send({error:'DATA_UNAVAILABLE'},503,origin);
   const rows=legacyRows(legacy.data||[],level);
   const safe=releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)
-    .filter((m:any)=>(m.year!==2026||(level===2&&tierPublished2026))&&
-      !(level===1&&m.year!==2025&&m.key==='percentile'));
+    .filter((m:any)=>(m.year!==2026||([1,2].includes(level)&&tierPublished2026))&&
+      !(level===1&&m.year<2025&&m.key==='percentile'));
   // School facts are independently reviewed, not teacher survey observations.
   // Return only per-tier, per-year allowlisted facts from the server after validating session.
   const [officialNumbers, officialCategories]=await Promise.all([
@@ -353,7 +401,7 @@ Deno.serve(async(req:Request)=>{
   const addFact=(year:number,fact_key:string,label:string,value:string,sourceYear:number,unit:string,category:boolean)=>{
     if(![2024,2025].includes(year)||!/^.{1,60}$/.test(label)||!/^.{1,60}$/.test(value)||/[<>\r\n]/.test(label+value))return;
     // Unified Lv.1: approved official school facts only, never raw teacher surveys.
-    const required=fact_key==='district_housing_price_mean'?2:(basicKeys.has(fact_key)||detailedKeys.has(fact_key))?1:99;
+    const required=fact_key==='district_housing_price_mean'?1:(basicKeys.has(fact_key)||detailedKeys.has(fact_key))?1:99;
     if(required>level)return;
     let bucket=facts.find(x=>x.year===year&&x.access_level===required);
     if(!bucket){bucket={year,access_level:required,summary:{metrics:[]}};facts.push(bucket)}
@@ -538,8 +586,9 @@ Deno.serve(async(req:Request)=>{
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
-  const schoolQuestionResults2026=level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):[];
-  return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears},200,origin);
+  const finalRow=edited.data.active===true?edited.data.schools?.[id]:null;
+  const schoolQuestionResults2026=edited.data.active===true?(Array.isArray(finalRow?.questions)?finalRow.questions.filter((q:any)=>q.questionId!=='Q31'&&q.questionId!=='Q51'):[]):level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[];
+  return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears,edited2026:edited.data.active===true,editedPercentile:finalRow?.percentile??null},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
 

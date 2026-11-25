@@ -68,6 +68,7 @@
     state.authProvisional=false;
     state.approvedBySchool.clear();
     state.approvedLoading.clear();
+    state.public2026.clear();state.public2026Checked.clear();state.public2026Loading.clear();state.public2026Error.clear();
     elements.lv2Code.value='';
     elements.lv2Message.textContent='';
     if(removeStored){try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}}
@@ -95,6 +96,8 @@
     for(const id of new Set(state.selected.map(x=>x.id)))loadApprovedSchool(id);
   }
   function activateAuth(token,level,provisional=false) {
+    state.authEpoch++;
+    state.public2026.clear();state.public2026Checked.clear();state.public2026Loading.clear();state.public2026Error.clear();
     state.sessionToken=token;
     state.authLevel=level;
     state.authProvisional=level>=2&&provisional===true;
@@ -106,6 +109,7 @@
     authMessage('');
     renderTable();
     refreshApprovedSelections();
+    void loadPublic2026(state.selected.map(x=>x.id),true);
   }
   async function verifyStoredSession() {
     let token='';
@@ -246,6 +250,7 @@
       /^[A-Z0-9]{7}$/.test(id) &&
       (refresh || !state.public2026Checked.has(id)) && !state.public2026Loading.has(id));
     if(!requested.length || typeof supabaseClient==='undefined')return;
+    if(!state.sessionToken||state.authLevel<1)return;
     requested.forEach(id=>{
       state.public2026.delete(id);
       state.public2026Checked.delete(id);
@@ -254,26 +259,10 @@
     });
     renderTable();
     try{
-      const {data,error}=await supabaseClient.from('beagu_school_report_yearly')
-        .select('school_id,survey_year,percentile')
-        .in('school_id',requested)
-        .eq('survey_year',2026)
-        .eq('publication_status','PUBLISHED')
-        .limit(requested.length);
-      if(error)throw error;
-      requested.forEach(id=>{
-        state.public2026.delete(id);
-        state.public2026Error.delete(id);
-      });
-      for(const row of Array.isArray(data)?data:[]){
-        const id=String(row?.school_id||'');
-        const raw=row?.percentile;
-        if(raw===null||raw===undefined||raw==='')continue;
-        const value=Number(raw);
-        if(!requested.includes(id)||Number(row?.survey_year)!==2026||
-           !Number.isFinite(value)||value<0||value>100)continue;
-        state.public2026.set(id,value);
-      }
+      const token=state.sessionToken,epoch=state.authEpoch;
+      const result=state.authLevel>=1&&token?await authRequest('percentiles',{schoolIds:requested},token):{values:{}};
+      if(epoch!==state.authEpoch||token!==state.sessionToken)return;
+      for(const id of requested){state.public2026.delete(id);state.public2026Error.delete(id);const v=result.values?.[id];if(typeof v==='number'&&v>=0&&v<=100)state.public2026.set(id,v);}
       requested.forEach(id=>state.public2026Checked.add(id));
     }catch(error){
       console.warn('2026년 공개 승인 기록 조회 실패',error);
@@ -440,12 +429,12 @@
     return candidates[0]?.fact||null;
   }
   function basicFactCell(school,selectedYear,key){
-    // Never receive or display a protected numeric housing price at Lv.0/Lv.1.
-    if(key==='district_housing_price_mean' && state.authLevel<2) {
+    // Never display a protected numeric housing price at Lv.0.
+    if(key==='district_housing_price_mean' && (!state.sessionToken || state.authLevel<1)) {
       const blurred=make('span','₩ •••,•••,•••','compare-price-masked');
-      blurred.setAttribute('aria-label','Lv.2 전용 · 실제 공시가격 미공개');
+      blurred.setAttribute('aria-label','Lv.1 이상 · 실제 공시가격 미공개');
       const container=make('div',null,'compare-price-locked');
-      container.append(blurred,make('small','🔒 Lv.2 잠금 · 레벨2에 도전하세요!','compare-price-callout'));
+      container.append(blurred,make('small','🔒 Lv.1 인증 후 확인','compare-price-callout'));
       return container;
     }
     if(!state.sessionToken || state.authLevel<1)
@@ -633,7 +622,7 @@
                   value:String(metric.value),referenceYear
                 };
             }else{
-              if(state.authLevel<2 && factKey==='district_housing_price_mean')continue;
+              if(state.authLevel<1 && factKey==='district_housing_price_mean')continue;
               approved.summaries[year].push({
                 group:official?'편집본 공식 학교정보':'승인된 설문 영역 요약',
                 label:String(metric.label),value:String(metric.value)

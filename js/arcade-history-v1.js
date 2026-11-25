@@ -2,7 +2,7 @@
 (function(){
  "use strict";
  const API="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/arcade-leaderboard";
- const GAMES={volleyball_25:"🏐 선생님배구 역대 기록",teacher_run_retirement:"🎒 험난한 교직생활 역대 기록"};
+ const GAMES={volleyball_25:"🏐 선생님배구 역대 기록",teacher_run_retirement:"🎒 험난한 교직생활 기록"};
  const DIFFICULTIES={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
  const params=new URLSearchParams(window.location.search);
  const game=Object.prototype.hasOwnProperty.call(GAMES,params.get("game"))?params.get("game"):"volleyball_25";
@@ -56,6 +56,7 @@
   if(typeof id==="string"&&/^[A-Z0-9]{7}$/.test(id)){
    const link=el("a","history-school-link",name);
    link.href="school-link.html?school_id="+encodeURIComponent(id);
+   if(params.get("embed")==="1"&&window.parent!==window)link.target="_top";
    link.setAttribute("aria-label",name+" 학교 상세조회");
    title.append(link);
   }else title.textContent=name;

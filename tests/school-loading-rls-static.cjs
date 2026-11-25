@@ -25,12 +25,12 @@ assert.match(comparison,/detail.snapshotOnly===true/);
 assert.match(comparison,/!detail.snapshotPending/);
 assert.match(publicSearch,/renderSchools\(list,count\|\|0\);\s*(?:perfSucceeded=true;\s*)?void \(async\(\)=>/);
 assert.match(lv1,/render\(data,count,sortValue\);\s*(?:perfSucceeded=true;\s*)?void \(async\(\)=>/);
-assert.match(lv1,/\.lv1-history-trigger\[aria-expanded="true"\]/);
+assert.match(lv1,/\.glory-detail-trigger\[aria-expanded="true"\]/);
 assert.match(backend,/const \[rows,annualRows\]=await Promise.all\(\[/);
 assert.match(picker,/const requestCache=new Map\(\)/);
 assert.match(picker,/if\(cached\)return cached/);
 for(const p of ['teacher-run.html','teacher-volleyball.html']){
-  assert.match(read(p),/js\/arcade-school-picker-v1\.js\?v=1110-court/);
+  assert.match(read(p),/js\/arcade-school-picker-v1\.js\?v=11116-recommend-fix/);
 }
 // Inline script syntax checks for the modified public search page.
 const block=/<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
