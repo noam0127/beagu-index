@@ -218,7 +218,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-fire-court-bgm-v1.js?v=11115-boss"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11113-save"></script>
-<script src="js/teacher-run-4-rules.js?v=11115-bossfit"></script>
+<script src="js/teacher-run-4-rules.js?v=11115-support"></script>
 <script src="js/teacher-run-4-records-v1.js?v=11111-local2"></script>
 <script src="js/run4-official-client-v1.js?v=11111"></script>
 <script>
@@ -325,10 +325,38 @@ const chalkProfile=()=>{
  if(!extras&&!base)return null;
  return {interval:(isMysteryBuff("bullet")?.24:extras?Math.min(base?.interval||1,.85):base.interval)/(effects.rate*effects.community*windowRunEffects().helperRate*bossRate),range:extras?490:base.range,maxShots:Math.min(6,(base?.maxShots||0)+extras)};
 };
-function helperPosition(helper){
- // Fixed corner positions are based on canvas size, never on the moving player.
- return {x:helper.role==="관리자"?W-38:38,y:H-52};
+// Preserve the existing ally membership/skills. Track physical NPCs separately.
+const supportUnits=new Map();
+function supportRoster(){
+ const helpers=chalkProfile()?chalkHelpers.map(a=>({id:a.id,name:a.role,manager:a.role==="관리자"})):[];
+ const team=allies.list().map(a=>({id:"ally-"+a.id,name:a.name,manager:false}));
+ return [...helpers,...team];
 }
+function updateSupport(dt){
+ const roster=supportRoster(),ids=new Set(roster.map(a=>a.id));
+ for(const id of supportUnits.keys())if(!ids.has(id))supportUnits.delete(id);
+ const incoming=[...paperBullets,...bossProjectiles];
+ const target=rules.supportThreat(incoming,player);
+ const tier=schoolPicker.get()?.difficulty;
+ for(const [i,a] of roster.entries()){
+  const config=rules.supportConfig(tier,a.manager);
+  let u=supportUnits.get(a.id);
+  if(!u){const angle=i*Math.PI*2/Math.max(1,roster.length);u={...a,x:Math.max(20,Math.min(W-20,player.x+Math.cos(angle)*65)),y:Math.max(76,Math.min(H-32,player.y+Math.sin(angle)*38-12)),readyAt:clock,flashUntil:0};supportUnits.set(a.id,u);}
+  u.config=config;
+  // One available NPC intercepts; remaining companions patrol around the teacher.
+  const closest=target&&clock>=u.readyAt&&!roster.slice(0,i).some(q=>clock>=(supportUnits.get(q.id)?.readyAt??Infinity));
+  rules.moveSupport(u,player,closest?target:null,config,i,roster.length,clock,dt,W,H);
+ }
+}
+function blockIncoming(p){
+ const u=rules.blockSupport(supportUnits.values(),p,clock);if(!u)return false;
+ burst(p.x,p.y,"#b8f4ff",8);float(p.x,p.y-14,"🛡 "+u.name,"#e5fbff");playTone(600,.07,"triangle",.025);return true;
+}
+function drawSupportShield(u){
+ if(!u)return;
+ if(clock<u.flashUntil){ctx.save();ctx.strokeStyle="#a7f7ff";ctx.lineWidth=3;ctx.beginPath();ctx.arc(u.x,u.y,u.config.radius+5,0,Math.PI*2);ctx.stroke();ctx.restore();}
+}
+function helperPosition(helper){return supportUnits.get(helper.id)||{x:helper.role==="관리자"?W-38:38,y:H-52};}
 function resetChalkHelpers(){
  const count=chalkProfile()?.maxShots||0;
  chalkHelpers=Array.from({length:count},(_,i)=>({
@@ -413,7 +441,7 @@ function resize(){
  ctx.setTransform(dpr,0,0,dpr,0,0);
  if(oldW>0){
   const sx=W/oldW;
-  player.x*=sx;shackle.x*=sx;bossX*=sx;bossProjectiles.forEach(a=>{a.x*=sx;if(Number.isFinite(a.vx))a.vx*=sx;});if(bossWarn)bossWarn.shots.forEach(a=>{a.x*=sx;a.vx*=sx;});
+  player.x*=sx;supportUnits.forEach(u=>u.x*=sx);shackle.x*=sx;bossX*=sx;bossProjectiles.forEach(a=>{a.x*=sx;if(Number.isFinite(a.vx))a.vx*=sx;});if(bossWarn)bossWarn.shots.forEach(a=>{a.x*=sx;a.vx*=sx;});
   items.forEach(a=>a.x*=sx);
   chalkShots.forEach(b=>{b.x*=sx;if(Number.isFinite(b.missX))b.missX*=sx;});
   sideStudents.forEach(a=>{a.x*=sx;a.vx*=sx;});
@@ -427,7 +455,7 @@ function resize(){
  }
  if(oldH>0){
   const sy=H/oldH;
-  player.y*=sy;bossY*=sy;bossProjectiles.forEach(a=>{a.y*=sy;if(Number.isFinite(a.vy))a.vy*=sy;});if(bossWarn)bossWarn.shots.forEach(a=>{a.y*=sy;a.vy*=sy;});
+  player.y*=sy;supportUnits.forEach(u=>u.y*=sy);bossY*=sy;bossProjectiles.forEach(a=>{a.y*=sy;if(Number.isFinite(a.vy))a.vy*=sy;});if(bossWarn)bossWarn.shots.forEach(a=>{a.y*=sy;a.vy*=sy;});
   items.forEach(a=>a.y*=sy);
   chalkShots.forEach(a=>{a.y*=sy;if(Number.isFinite(a.missY))a.missY*=sy;});
   sideStudents.forEach(a=>{a.y*=sy;a.vy*=sy;});
@@ -471,7 +499,7 @@ async function start(){
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
  state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossY=0;bossWaveIndex=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";solidarityUntil=0;retirementScene=false;combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossY=0;bossWaveIndex=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";supportUnits.clear();solidarityUntil=0;retirementScene=false;combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;resetChalkHelpers();
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=Math.max(profile.inv,3);
  resetPatternHazards();resetMystery();
@@ -486,7 +514,7 @@ function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;resetPatternHazards();resetMystery();
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossY=0;bossWaveIndex=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";solidarityUntil=0;retirementScene=false;score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossY=0;bossWaveIndex=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";supportUnits.clear();solidarityUntil=0;retirementScene=false;score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -871,14 +899,14 @@ function help(){
  ],"❔");
 }
 function fireChalk(dt){
- // Each fixed shadow companion targets hazards independently, with a 50% hit roll.
+ // Each moving companion targets hazards independently, preserving the original 50% hit roll.
  const config=chalkProfile();
  if(!config||state!=="playing")return;
  for(const helper of chalkHelpers){
   helper.cooldown=Math.max(0,helper.cooldown-dt);
   if(helper.cooldown>0||chalkShots.some(shot=>shot.helperId===helper.id))continue;
   const origin=helperPosition(helper);
-  const target=items.filter(a=>!a.good&&a.y>32&&a.y<origin.y-35&&
+  const target=items.filter(a=>!a.good&&a.y>32&&Math.hypot(a.x-origin.x,a.y-origin.y)>35&&
    Math.hypot(a.x-origin.x,a.y-origin.y)<config.range&&
    !chalkShots.some(shot=>shot.target===a)
   ).sort((a,b)=>Math.hypot(a.x-origin.x,a.y-origin.y)-Math.hypot(b.x-origin.x,b.y-origin.y))[0];
@@ -886,7 +914,7 @@ function fireChalk(dt){
   const willHit=isMysteryBuff("bullet")||gameRandom()<.5;
   const missOffset=(gameRandom()<.5?-1:1)*(target.r+65);
   chalkShots.push({
-   role:helper.role,helperId:helper.id,x:origin.x,y:origin.y-34,target,willHit,life:1.6,
+   role:helper.role,helperId:helper.id,x:origin.x,y:origin.y-18,target,willHit,life:1.6,
    missX:Math.max(12,Math.min(W-12,target.x+missOffset)),
    missY:Math.max(30,target.y-45)
   });
@@ -931,6 +959,7 @@ function drawChalkHelpers(){
  if(isMysteryBuff("conflict"))return;
  for(const helper of chalkHelpers){
   const {x,y}=helperPosition(helper);
+  drawSupportShield(supportUnits.get(helper.id));
   ctx.save();ctx.translate(Math.round(x),Math.round(y));
   ctx.globalAlpha=.64;
   const jacket=helper.role==="관리자"?"#9c91cf":"#49b3b1";
@@ -1023,6 +1052,7 @@ function updatePatternHazards(dt){
  for(let i=paperBullets.length-1;i>=0;i--){
   const a=paperBullets[i];rules.steerPaper(a,player.x,player.y,dt);a.x+=a.vx*dt;a.y+=a.vy*dt;a.angle+=a.spin*dt;a.ttl-=dt;
   if(a.ttl<=0||a.y>H+42||a.y<-42||a.x<-42||a.x>W+42){paperBullets.splice(i,1);continue;}
+  if(blockIncoming(a)){paperBullets.splice(i,1);continue;}
   if(Math.hypot(a.x-player.x,a.y-player.y)<a.r+player.r*.77*profile.heroSize){
    paperBullets.splice(i,1);hit({good:false,damage:6,x:a.x,y:a.y});if(state!=="playing")return;
   }
@@ -1118,9 +1148,9 @@ function joinAlly(){
  const a=allies.join(clock,gameRandom);if(!a)return;
  alliesPeak=Math.max(alliesPeak,allies.count());setNotice("🤝 "+a.name+" 합류!",2);syncLeave();
 }
-function allyPosition(i,count){const angle=clock*.5+i*Math.PI*2/Math.max(1,count);return {x:Math.max(20,Math.min(W-20,player.x+Math.cos(angle)*52)),y:Math.max(76,Math.min(H-32,player.y+Math.sin(angle)*32-15))};}
+function allyPosition(a){return supportUnits.get("ally-"+a.id)||{x:player.x,y:Math.max(76,player.y-20)};}
 function updateAllies(){
- const rate=growth.effects().community*windowRunEffects().helperRate*(isMysteryBuff("conflict")?.65:1);
+ const rate=growth.effects().community*windowRunEffects().helperRate*(isMysteryBuff("conflict")?.65:1)*rules.supportConfig(schoolPicker.get()?.difficulty).rate;
  for(const a of allies.tick(clock,rate)){
   if(a.id==="lesson"){if(bosses.active())damageBoss(7*growth.effects().power);else clearNearby(1);}
   if(a.id==="guidance")effects.addShield();
@@ -1140,7 +1170,7 @@ function cooperate(){
  setNotice("🤝 선생님들의 연대!",2.5);burst(player.x,player.y,"#fff0a0",30);playTone(950,.22);updateLabels();
 }
 function drawAllies(){
- const team=allies.list();team.forEach((a,i)=>{const p=allyPosition(i,team.length);ctx.save();ctx.fillStyle=a.color;ctx.beginPath();ctx.arc(p.x,p.y,13,0,Math.PI*2);ctx.fill();ctx.font="15px sans-serif";ctx.textAlign="center";ctx.fillText(a.icon,p.x,p.y+5);ctx.restore();});
+ const team=allies.list();team.forEach((a,i)=>{const p=allyPosition(a);drawSupportShield(supportUnits.get("ally-"+a.id));ctx.save();ctx.fillStyle=a.color;ctx.beginPath();ctx.arc(p.x,p.y,13,0,Math.PI*2);ctx.fill();ctx.font="15px sans-serif";ctx.textAlign="center";ctx.fillText(a.icon,p.x,p.y+5);ctx.restore();});
 }
 function updateBoss(dt){
  const change=bosses.advance(clock);
@@ -1170,6 +1200,7 @@ function updateBoss(dt){
   }else{
    rules.steerPaper(p,player.x,player.y,dt);p.x+=p.vx*dt;p.y+=p.vy*dt;p.ttl-=dt;
    if(p.ttl<=0||p.y>H+42||p.y< -42||p.x< -42||p.x>W+42){bossProjectiles.splice(i,1);continue;}
+   if(blockIncoming(p)){bossProjectiles.splice(i,1);continue;}
    if(Math.hypot(p.x-player.x,p.y-player.y)<p.r+player.r*.7*profile.heroSize){
     bossProjectiles.splice(i,1);
     hit({good:false,damage:p.damage,x:p.x,y:p.y,feature:p.mode==="burnout"?{good:false,emoji:"🌘",name:"피로",buff:"insomnia",duration:2}:null});
@@ -1253,6 +1284,7 @@ function update(dt){
   const targetX=Math.max(21,Math.min(W-21,player.x+shackle.dir*55));
   shackle.x+=Math.max(-180*dt,Math.min(180*dt,(targetX-shackle.x)*dt*7));
  }
+ updateSupport(dt);
  updateBoss(dt);if(state!=="playing")return;
  fireChalk(dt);
  updateAllies();alliesPeak=Math.max(alliesPeak,allies.count());if(state!=="playing")return;

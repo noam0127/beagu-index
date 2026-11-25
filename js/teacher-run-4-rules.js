@@ -200,6 +200,38 @@
   {id:"veteran",name:"베테랑 교사",icon:"🌟",color:"#8271bd",interval:9},
   {id:"research",name:"연구하는 교사",icon:"🔬",color:"#4a9e9c",interval:6}
  ].map(Object.freeze));
+ // Mobile support is deterministic; neither drawing nor audio consumes game RNG.
+ const supportTiers=Object.freeze({easy:[165,2.6,21,1.15],normal:[145,3.5,19,1],hard:[125,4.6,17,.9],very_hard:[110,5.8,15,.8],extreme:[95,7.2,13,.7]});
+ function supportConfig(tier="hard",manager=false){
+  const [speed,cooldown,radius,rate]=supportTiers[tier]||supportTiers.hard;
+  return {speed:speed*(manager?.92:1),cooldown:cooldown*(manager?.8:1),radius:radius+(manager?3:0),rate};
+ }
+ function supportThreat(threats,player){
+  let best=null,eta=Infinity;
+  for(const p of threats){if(p.friendly||!Number.isFinite(p.vx)||!Number.isFinite(p.vy))continue;
+   const dx=player.x-p.x,dy=player.y-p.y,v2=p.vx*p.vx+p.vy*p.vy;if(v2<1)continue;
+   const t=(dx*p.vx+dy*p.vy)/v2;
+   if(t<0||t>1.6||t>=eta||Math.hypot(dx-p.vx*t,dy-p.vy*t)>player.r+18)continue;
+   eta=t;best=p;
+  }return best;
+ }
+ function moveSupport(unit,player,threat,config,index,total,clock,dt,w,h){
+  const angle=clock*.8+index*Math.PI*2/Math.max(1,total);
+  let tx=player.x+Math.cos(angle)*67,ty=player.y+Math.sin(angle)*45-15;
+  if(threat&&clock>=unit.readyAt){const dx=threat.x-player.x,dy=threat.y-player.y,d=Math.max(1,Math.hypot(dx,dy));tx=player.x+dx/d*53;ty=player.y+dy/d*53;}
+  tx=Math.max(20,Math.min(w-20,tx));ty=Math.max(76,Math.min(h-32,ty));
+  const dx=tx-unit.x,dy=ty-unit.y,d=Math.hypot(dx,dy),step=Math.min(d,config.speed*Math.max(0,dt));
+  unit.x=Math.max(20,Math.min(w-20,unit.x+(d?dx/d*step:0)));
+  unit.y=Math.max(76,Math.min(h-32,unit.y+(d?dy/d*step:0)));
+  return unit;
+ }
+ function blockSupport(units,p,clock){
+  if(p.friendly)return null;
+  for(const u of units){
+   if(clock<u.readyAt||Math.hypot(p.x-u.x,p.y-u.y)>u.config.radius+(p.r||0))continue;
+   u.readyAt=clock+u.config.cooldown;u.flashUntil=clock+.35;return u;
+  }return null;
+ }
  function createAllies(){
   const members=new Map();let readyAt=0,joined=0;
   return {
@@ -244,5 +276,5 @@
    stats(){return {combo,maxCombo,near,hits,crises:paid.size,lastHit};}
   };
  }
- root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending,careerHazards,healthHazards,edgePoint,steerPaper,bossCombat,bossRadius,bossMotion,bossWave});
+ root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending,careerHazards,healthHazards,edgePoint,steerPaper,bossCombat,bossRadius,bossMotion,bossWave,supportConfig,supportThreat,moveSupport,blockSupport});
 })(typeof window!=="undefined"?window:globalThis);
