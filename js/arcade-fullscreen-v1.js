@@ -4,7 +4,7 @@
  const area=document.querySelector('[data-arcade-fullscreen]');
  const button=area?.querySelector('[data-arcade-fullscreen-button]');
  if(!area||!button)return;
- let fallback=false;
+ let fallback=false,autoLandscape=false;
  const nativeActive=()=>document.fullscreenElement===area||document.webkitFullscreenElement===area;
  const active=()=>fallback||nativeActive();
  const isEmbedded=()=>window.parent!==window;
@@ -39,7 +39,7 @@
    window.parent.postMessage({type:'arcade:fullscreen-request',active:!fallback},window.location.origin);
    return;
   }
-  if(fallback){setFallback(false);return;}
+  if(fallback){autoLandscape=false;setFallback(false);return;}
   if(nativeActive()){
    try{
     if(document.exitFullscreen)await document.exitFullscreen();
@@ -63,13 +63,17 @@
      event.origin!==window.location.origin||event.data?.type!=='arcade:fullscreen-state')return;
   setFallback(event.data.active===true);
  });
+ if(area.classList.contains('court'))window.addEventListener('beagu:volley-landscape',event=>{
+  if(event.detail===true&&!active()){autoLandscape=true;setFallback(true);}
+  else if(event.detail===false&&autoLandscape){autoLandscape=false;setFallback(false);}
+ });
  document.addEventListener('fullscreenchange',sync);
  document.addEventListener('webkitfullscreenchange',sync);
  document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&fallback&&!event.repeat){
    event.preventDefault();
    if(sameOriginParent())window.parent.postMessage({type:'arcade:fullscreen-request',active:false},window.location.origin);
-   else setFallback(false);
+   else {autoLandscape=false;setFallback(false);}
   }
  });
  window.addEventListener('pagehide',()=>{

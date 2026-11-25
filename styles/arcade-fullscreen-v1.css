@@ -288,3 +288,26 @@ html body .stage:-webkit-full-screen #game{
  aspect-ratio:auto!important;object-fit:contain!important;
  margin:auto!important;justify-self:center!important;align-self:center!important
 }
+
+/* v1.11.12: full court, scores only. Landscape scales both axes without cropping;
+   portrait preserves the court aspect to avoid distorting characters. */
+html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen){
+ padding:0!important;display:grid!important;grid-template: minmax(0,1fr) / minmax(0,1fr)!important;place-items:center!important;
+}
+html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>#game{
+ grid-area:1/1;display:block!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:100%!important;max-height:100%!important;aspect-ratio:auto!important;object-fit:contain!important;flex:none!important;
+}
+html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen) .arcade-volley-fullscreen-hud{
+ display:flex!important;position:absolute!important;left:max(12px,env(safe-area-inset-left))!important;right:max(12px,env(safe-area-inset-right))!important;top:max(8px,calc((100dvh - 100vw * 5 / 9)/2 + 8px),env(safe-area-inset-top))!important;
+ height:auto!important;padding:0 clamp(8px,4vw,56px)!important;justify-content:space-between!important;flex-wrap:nowrap!important;background:none!important;border:0!important;box-shadow:none!important;pointer-events:none;
+}
+html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen) .arcade-volley-fullscreen-hud strong{
+ color:#fff7d5!important;font:900 clamp(30px,9vh,68px)/1 system-ui,sans-serif!important; font-variant-numeric:tabular-nums;text-shadow:0 2px 4px #152944,0 0 3px #152944,-1px -1px 1px #152944,1px 1px 1px #152944;
+}
+html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>.arcade-fullscreen-toggle{
+ top:auto!important;bottom:max(8px,env(safe-area-inset-bottom))!important;right:max(8px,env(safe-area-inset-right))!important;left:auto!important;opacity:.8;
+}
+@media(orientation:landscape){
+ html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>#game{object-fit:fill!important}
+ html body .court:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen) .arcade-volley-fullscreen-hud{top:max(8px,env(safe-area-inset-top))!important}
+}

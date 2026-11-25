@@ -7,3 +7,5 @@ Base: 8bc306ae6f4633937a84af6b56f0f000c286fa02
 - 챌린지 추천 문구 정리·Lv.2 혜택 카드 및 레벨별 안내 버튼
 - 기존 3.0 공식 기록 보존·4.0 개인 기록 유지
 4.0 score rules differ from 3.0; the existing official history remains readable, but do not write unverified 4.0 scores to legacy API. No production DB change. Candidate requires browser regression and signed admin release.
+
+Mobile landscape automatically expands the active standalone court; rotation back restores normal layout unless fullscreen was explicitly selected. Scores only at top; exit control at bottom right. Landscape fills both axes with mapped input; portrait maintains aspect ratio (no clipping). Historical 3.0 preservation tested against exact predecessor, 4.0 canonical tested separately.

@@ -25,6 +25,13 @@ for(const width of [320,390,768,1440])for(const mode of ['normal','arcade-fullsc
  }
  }finally{await page.close()}
 }
+// New expanded court: exact production fullscreen CSS and auto-rotation event.
+const wide=await browser.newPage({viewport:{width:844,height:390},hasTouch:true,isMobile:true});try{
+ await wide.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><div class="game-shell"><div class="court arcade-game-viewport" data-arcade-fullscreen><button data-arcade-fullscreen-button class="arcade-fullscreen-toggle"></button><div class="arcade-fullscreen-hud arcade-volley-fullscreen-hud"><strong>8</strong><strong>12</strong></div><canvas id="game" width="900" height="500"></canvas></div></div>');
+ await wide.addStyleTag({content:fullscreenCss});await wide.addScriptTag({content:await fs.readFile('js/arcade-fullscreen-v1.js','utf8')});await wide.evaluate(()=>window.dispatchEvent(new CustomEvent('beagu:volley-landscape',{detail:true})));
+ const bounds=await wide.locator('#game').boundingBox();assert(bounds&&Math.abs(bounds.width-844)<2&&Math.abs(bounds.height-390)<2);assert.equal(await wide.locator('.arcade-volley-fullscreen-hud').innerText(),'8\n12');assert.equal(await wide.locator('#game').evaluate(e=>getComputedStyle(e).objectFit),'fill');
+ await wide.evaluate(()=>window.dispatchEvent(new CustomEvent('beagu:volley-landscape',{detail:false})));assert.equal(await wide.locator('.arcade-fullscreen-fallback').count(),0);
+}finally{await wide.close();}
 // Browser integration: actual canvas pixels, both result layouts, PNG and clipboard fallback.
 const share=await fs.readFile('js/arcade-result-share-v1.js','utf8'),shareCss=await fs.readFile('styles/arcade-result-share-v1.css','utf8');
 for(const compact of [false,true]){

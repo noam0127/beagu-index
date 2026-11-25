@@ -142,7 +142,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/beagu-loading-v1.css?v=20261118-rolling1">
 <script src="js/beagu-loading-v1.js?v=20261118-koreanbrand1"></script>
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261123-cc0-bgm2">
-<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261120-mystery-hud2">
+<link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=11112-wide">
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
 <link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
@@ -179,10 +179,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   <div class="court arcade-game-viewport" data-arcade-fullscreen>
       <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="전체화면으로 확대" title="전체화면으로"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 3h6v6M21 3l-7 7M3 21l7-7M9 21H3v-6"/></svg></button>
       <div class="arcade-fullscreen-hud arcade-volley-fullscreen-hud" aria-label="전체화면 배구 점수판">
-        <span>나 <strong id="volley-fullscreen-my-score">0</strong></span>
-        <span class="arcade-volley-fullscreen-versus">25점 경기</span>
-        <span>상대 <strong id="volley-fullscreen-cpu-score">0</strong></span>
-        <small id="volley-fullscreen-situation" class="arcade-fullscreen-subline">EASY · 0:00</small>
+        <strong id="volley-fullscreen-my-score" aria-label="내 점수">0</strong>
+        <strong id="volley-fullscreen-cpu-score" aria-label="상대 점수">0</strong>
       </div>
       <button type="button" id="pause" class="arcade-playback" disabled hidden aria-label="일시정지" title="일시정지">⏸ 일시정지</button>
       <canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas>
@@ -219,7 +217,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script defer src="js/beagu-presence-games-v1.js?v=20261120-gateway2"></script>
 <script src="js/arcade-leaderboard-v1.js?v=1119"></script>
 <script src="js/arcade-school-picker-v1.js?v=1110-court"></script>
-<script src="js/arcade-fullscreen-v1.js?v=140"></script>
+<script src="js/arcade-fullscreen-v1.js?v=11112-wide"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
@@ -655,7 +653,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     scoreC.textContent = state.rightScore+" / "+MATCH_TARGET;
     document.getElementById("volley-fullscreen-my-score").textContent=String(state.leftScore);
     document.getElementById("volley-fullscreen-cpu-score").textContent=String(state.rightScore);
-    document.getElementById("volley-fullscreen-situation").textContent=mysteryBrief();
+
     updateScoreProgress();
     startButton.textContent = state.phase === "starting" ? "⏳ 학교 확인 중" : state.phase === "finished" ? "↻ 다시 하기" : state.phase === "ready" ? "▶ 시작" : "⏹ 여기까지 기록";
     startButton.disabled = state.phase === "starting" ||
@@ -828,9 +826,11 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   function courtPoint(event){
     const rect=canvas.getBoundingClientRect();
     if(!rect.width||!rect.height)return null;
+    const fit=getComputedStyle(canvas).objectFit;
     const scale=Math.min(rect.width/W,rect.height/H);
-    const x=(event.clientX-rect.left-(rect.width-W*scale)/2)/scale;
-    const y=(event.clientY-rect.top-(rect.height-H*scale)/2)/scale;
+    const sx=fit==="fill"?rect.width/W:scale,sy=fit==="fill"?rect.height/H:scale;
+    const x=(event.clientX-rect.left-(rect.width-W*sx)/2)/sx;
+    const y=(event.clientY-rect.top-(rect.height-H*sy)/2)/sy;
     return {x:clamp(x,35,NET_X-NET_W/2-36),y:clamp(y,playerCeiling(),FLOOR-31)};
   }
   function capturePointer(node,id){try{node.setPointerCapture?.(id);}catch(_){}}
@@ -1593,6 +1593,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     // Finished games use a scrollable HTML result panel, not painted text.
     ctx.restore();
   }
+  const mobileLandscape=window.matchMedia("(orientation: landscape) and (pointer: coarse)");
+  let landscapeWanted=false;
+  function syncLandscapeCourt(){
+    const wanted=mobileLandscape.matches&&["playing","point","paused","finished"].includes(state.phase);
+    if(wanted===landscapeWanted)return;
+    landscapeWanted=wanted;
+    if(window.parent===window)window.dispatchEvent(new CustomEvent("beagu:volley-landscape",{detail:wanted}));
+  }
   let last = 0, accumulator = 0;
   function frame(time) {
     window.ArcadePlayLock?.sync(state.phase==="playing"||state.phase==="point");
@@ -1601,6 +1609,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if(courtElement.classList.contains("volleyball-playing")!==isPlaying)
       courtElement.classList.toggle("volleyball-playing",isPlaying);
     courtElement.classList.remove("volleyball-controls-active");
+    syncLandscapeCourt();
     if (!last) last = time;
     accumulator += Math.min((time - last) / 1000, .06);
     last = time;
