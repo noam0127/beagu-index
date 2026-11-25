@@ -2,6 +2,8 @@
 // All submitted records are anonymous; no nickname or other name is accepted from clients.
 const SUPA_URL = Deno.env.get("SUPABASE_URL") || "";
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+// Opt-in only: rally history is consistency evidence, not authoritative physics replay.
+const MATCH_BONUS_ENABLED=Deno.env.get("BEAGU_VOLLEY_MATCH_BONUS_ENABLED")==="true";
 const BASE = SUPA_URL + "/rest/v1/";
 const ALLOWED_ORIGINS = new Set(["https://baeguindex.com","https://www.baeguindex.com","https://noam0127.github.io"]);
 const VALID_GAMES = new Set(["volleyball_25","teacher_run_retirement"]);
@@ -175,6 +177,25 @@ function scoreFromVolleyball(result: any,elapsed:number,difficulty:any): number 
   return p*120+Math.min(60,spikes)*25+
     (!knockout&&p>c?600+Math.max(0,7-c)*30:0)+Math.min(900,seconds*4);
 }
+function matchBonusFromRallies(rallies:any,player:number,cpu:number,ordinary:number){
+ if(typeof rallies!=="string"||rallies.length>49||!/^[PC]*$/.test(rallies)||rallies.length!==player+cpu)throw Error("invalid_rally_history");
+ let p=0,c=0,deficit=0,streak=0,longest=0,opponentFirst24=false;
+ for(const side of rallies){
+  if(p===25||c===25)throw Error("invalid_rally_history");
+  if(side==="P"){p++;streak++;longest=Math.max(longest,streak);}
+  else{c++;streak=0;if(c===24&&p<24)opponentFirst24=true;}
+  deficit=Math.max(deficit,c-p);
+ }
+ if(p!==player||c!==cpu)throw Error("invalid_rally_history");
+ let kind="none",rate=0;
+ if(p===25&&c<25){
+  const award=(condition:any,name:any,pct:number)=>{if(condition&&pct>rate){kind=name;rate=pct;}};
+  award(c===0,"sweep",50);award(deficit>=10,"great_comeback",50);
+  award(opponentFirst24,"dramatic",40);award(c<=5,"dominant",30);
+  award(deficit>=5,"comeback",25);award(c>=23,"close",20);award(longest>=10,"streak",15);
+ }
+ return {kind,rate,points:Math.floor(Math.max(0,ordinary)*rate/100)};
+}
 // Recompute item effects; do not trust client-supplied adjustment totals.
 function verifiedVolleyballItemScore(result:any,tenths:number,player:number,cpu:number):number {
  const events=result?.itemScoreEvents??[];
@@ -219,8 +240,17 @@ function scoreFromVolleyball25(result:any,elapsed:number):number {
  const expectedBonus=Math.min(900,Math.floor(tenths/10))*4;
  const expectedMultiplier=victory?1+Math.floor((25-cpu)/5):1;
  const itemScore=verifiedVolleyballItemScore(result,tenths,player,cpu);
+ const ordinary=Math.max(0,expectedBase*expectedMultiplier+expectedBonus+itemScore);
+ let extra=0;
+ if(result.bonusRule!==undefined||result.rallyHistory!==undefined||result.matchBonus!==undefined||result.matchBonusKind!==undefined){
+  if(result.bonusRule!=="fire_court_v1")throw Error("invalid_bonus_rule");
+  const computed=matchBonusFromRallies(result.rallyHistory,player,cpu,ordinary);
+  if(result.matchBonus!==computed.points||result.matchBonusKind!==computed.kind)throw Error("invalid_match_bonus");
+  for(const e of result.itemScoreEvents??[]){const prefix=result.rallyHistory.slice(0,e.player+e.cpu);if(prefix.split("P").length-1!==e.player)throw Error("invalid_rally_history");}
+  extra=computed.points;
+ }
  if(base!==expectedBase||bonus!==expectedBonus||multiplier!==expectedMultiplier||
-    final!==Math.max(0,expectedBase*expectedMultiplier+expectedBonus+itemScore))
+    final!==ordinary+extra)
   throw new Error("invalid_score");
  return final;
 }
@@ -233,7 +263,8 @@ function publicGameResult(game:Game,result:any):Record<string,unknown>{
    playerPoints:result.player,cpuPoints:result.cpu,
    baseScore:result.baseScore,playBonus:result.survivalBonus,
    itemScore:result.itemScoreDelta??0,
-   winMultiplier:result.multiplier,playedTenths:result.activeTenths
+   winMultiplier:result.multiplier,playedTenths:result.activeTenths,
+   ...(result.bonusRule==="fire_court_v1"?{bonusRule:result.bonusRule,matchBonus:result.matchBonus,matchBonusKind:result.matchBonusKind}:{})
   };
  }
  return {
@@ -362,7 +393,7 @@ Deno.serve(async (req:Request)=>{
       const recent=await db("arcade_game_sessions?"+q);
       if(recent.length>=40)return error("too_many_plays",429,origin);
       const rows=await db("arcade_game_sessions","POST",{game,ip_hash:hash,school_id:selected.school_id,school_name:selected.school_name,difficulty:selected.difficulty,percentile_source_year:selected.source_year},"return=representation");
-      return json({session:rows[0].id,school:selected},200,origin);
+      return json({session:rows[0].id,school:selected,...(game==="volleyball_25"&&MATCH_BONUS_ENABLED?{matchBonusRule:"fire_court_v1"}:{})},200,origin);
     }
     if(payload.action!=="submit")return error("unknown_action",400,origin);
     const sessionId=payload.session;
@@ -378,6 +409,7 @@ Deno.serve(async (req:Request)=>{
       return error("school_ineligible",409,origin);
     const elapsed=(Date.now()-Date.parse(session.started_at))/1000;
     if(elapsed<(game==="teacher_run_retirement"?1:4)||elapsed>3600)return error("invalid_duration",400,origin);
+    if(game==="volleyball_25"&&payload.stats?.bonusRule!==undefined&&!MATCH_BONUS_ENABLED)return error("bonus_rule_disabled",409,origin);
     let score:number;
     try {
       score=game==="volleyball"?scoreFromVolleyball(payload.stats,elapsed,session.difficulty):

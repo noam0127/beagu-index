@@ -28,8 +28,11 @@ function create(kind){
   const legacy=root.BeaguArcadeBgm.create(kind);
   return Object.freeze({sync:legacy.sync,setStage(){},dispose:legacy.dispose});
  }
- let ctx=null,master=null,timer=null,phase=0,step=0,wanted=false,disposed=false,opening=false;
- const voices=new Set();
+ let ctx=null,master=null,bus=null,timer=null,phase=0,step=0,wanted=false,disposed=false,opening=false;
+ const voices=new Set(),buses=new Set();
+ function releaseBus(node){if(node&&node!==bus&&node.count===0){node.gain.disconnect();buses.delete(node);}}
+ function newBus(){const t=ctx.currentTime,gain=ctx.createGain();gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(1,t+.24);gain.connect(master);bus={gain,count:0};buses.add(bus);}
+ function fadeBus(){const old=bus;if(!old)return;bus=null;const t=ctx.currentTime;old.gain.gain.cancelScheduledValues(t);old.gain.gain.setValueAtTime(old.gain.gain.value,t);old.gain.gain.linearRampToValueAtTime(0,t+.24);releaseBus(old);}
  function silence(){
   if(timer!==null){clearInterval(timer);timer=null;}
   if(!ctx)return;
@@ -37,14 +40,15 @@ function create(kind){
   if(master){master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(0,t);}
   for(const osc of voices){try{osc.stop(t);}catch(_){}}
   voices.clear();
+  bus=null;for(const node of buses){node.gain.disconnect();}buses.clear();
  }
  function note(m,length,volume,type){
   const t=ctx.currentTime,osc=ctx.createOscillator(),gain=ctx.createGain();
   osc.type=type;osc.frequency.setValueAtTime(hz(m),t);
   gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(volume,t+.015);
   gain.gain.exponentialRampToValueAtTime(.0001,t+length);
-  osc.connect(gain);gain.connect(master);voices.add(osc);
-  osc.onended=()=>{voices.delete(osc);osc.disconnect();gain.disconnect();};
+  const node=bus;node.count++;osc.connect(gain);gain.connect(node.gain);voices.add(osc);
+  osc.onended=()=>{voices.delete(osc);osc.disconnect();gain.disconnect();node.count--;if(buses.has(node))releaseBus(node);};
   osc.start(t);osc.stop(t+length+.02);
  }
  function beat(){
@@ -55,8 +59,8 @@ function create(kind){
  }
  function play(){
   if(disposed||!wanted||document.hidden||!ctx||ctx.state!=='running'||timer!==null)return;
-  const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(0,t);
-  master.gain.linearRampToValueAtTime(.7,t+.18);beat();
+  const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(.7,t);
+  if(!bus)newBus();beat();
   timer=setInterval(beat,Math.round(30000/tracks[phase].tempo));
  }
  function sync(on){
@@ -71,8 +75,9 @@ function create(kind){
  }
  function setStage(n){
   n=clampStage(n);if(n===phase||disposed)return;
-  // Let note envelopes finish at stage transitions; restart the new phrase once.
+  // Fade the old note bus out while the new phrase fades in; only one beat timer.
   if(timer!==null){clearInterval(timer);timer=null;}
+  if(ctx)fadeBus();
   phase=n;step=0;if(wanted&&!document.hidden)play();
  }
  const visibility=()=>sync(wanted);

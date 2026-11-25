@@ -76,6 +76,7 @@
    statistic(stats,"기본 득점",result.baseScore===undefined?null:number(result.baseScore)+"점");
    statistic(stats,"플레이 보너스",result.playBonus===undefined?null:"+"+number(result.playBonus)+"점");
    statistic(stats,"승리 배수",result.winMultiplier===undefined?null:"×"+number(result.winMultiplier));
+   if(result.bonusRule==="fire_court_v1"&&Number.isSafeInteger(result.matchBonus)&&result.matchBonus>0)statistic(stats,"명경기 보너스","+"+number(result.matchBonus)+"점");
    statistic(stats,"플레이 시간",result.playedTenths===undefined?null:time(result.playedTenths));
    statistic(stats,"25점 승리 시간",row.winTimeTenths===null||row.winTimeTenths===undefined?null:time(row.winTimeTenths));
   }else{

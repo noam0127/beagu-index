@@ -107,6 +107,7 @@ class ArcadeLeaderboard{
     if(generation!==this.playGeneration)return null;
     if(data.school?.eligible!==true||typeof data.session!=="string")throw new Error("school_ineligible");
     this.session=data.session;
+    this.matchBonusRule=this.game==="volleyball_25"&&data.matchBonusRule==="fire_court_v1"?"fire_court_v1":null;
     this.school={school_id:data.school.school_id,school_name:data.school.school_name,difficulty:data.school.difficulty};
     return this.session;
    }catch(e){
@@ -120,7 +121,7 @@ class ArcadeLeaderboard{
  }
  cancel(){
   // Any delayed start/record result belongs to the previous match.
-  this.playGeneration++;this.session=null;this.pendingStart=null;this.school=null;
+  this.playGeneration++;this.matchBonusRule=null;this.session=null;this.pendingStart=null;this.school=null;
   this.score=0;this.stats=null;this.notice="";this.isSubmitting=false;this.shareResult=null;
   this.draw();
  }

@@ -18,6 +18,7 @@ jobs:
           node tests/playback-contract.cjs
           node tests/arcade-bgm-v1.mjs
           node tests/arcade-fire-court-v11115.mjs
+          node tests/volley-match-bonus-v11115.mjs
       - name: Install pinned browser
         run: |
           npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1
