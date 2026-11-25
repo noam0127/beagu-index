@@ -5,7 +5,7 @@ on:
       - 'release/base-pages-*'
   workflow_dispatch:
   push:
-    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court, release/v1.11.14-school-glory, release/v1.11.15-fire-court]
+    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court, release/v1.11.14-school-glory, release/v1.11.15-fire-court, fix/v1.11.13-admin-2026-compact]
 permissions:
   contents: read
 jobs:
@@ -67,6 +67,7 @@ jobs:
           node tests/milestone-browser.cjs
           node tests/communication-browser.cjs
           node tests/control-tower-browser.cjs
+          node tests/admin-2026-compact-browser.cjs
       - name: Verify Together actual Chromium downloads and search regression
         run: |
           set -euo pipefail

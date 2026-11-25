@@ -7,7 +7,7 @@ def stamp(root, sha, environment):
     file=pathlib.Path(root)/"release-info.json"
     if not file.is_file(): return False
     meta=json.loads(file.read_text(encoding="utf8"))
-    if meta.get("schema")!=1 or not re.fullmatch(r"v\d+\.\d+\.\d+",meta.get("version","")):
+    if meta.get("schema")!=1 or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?",meta.get("version","")):
         raise ValueError("invalid release metadata")
     meta.update(environment=environment,commit=sha,builtAt=datetime.datetime.now(datetime.timezone.utc).isoformat(),deployedAt=None)
     file.write_text(json.dumps(meta,ensure_ascii=False,indent=2)+"\n",encoding="utf8")
