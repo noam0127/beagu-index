@@ -45,7 +45,7 @@ returns jsonb language plpgsql security invoker set search_path='' as $$
 begin
  if p_actor is null or p_session is null or not exists(
  select 1 from public.beagu_admin_accounts a where a.user_id=p_actor and a.role='owner' and a.enabled)
- or not public.beagu_admin_active_mfa_session(p_actor,p_session)
+ or not coalesce(public.beagu_admin_active_mfa_session(p_actor,p_session),false)
  then raise exception 'owner MFA required'; end if;
  if p_decision not in ('PENDING','INCOMPATIBLE','COMPATIBLE') or p_decision is null
  or p_note is null or length(trim(p_note)) not between 12 and 500 or p_note ~ '[<>]'
@@ -71,7 +71,7 @@ declare a public.beagu_school_report_yearly; p public.beagu_2026_official_school
 begin
  if p_actor is null or p_session is null or not exists(
  select 1 from public.beagu_admin_accounts x where x.user_id=p_actor and x.role='owner' and x.enabled)
- or not public.beagu_admin_active_mfa_session(p_actor,p_session)
+ or not coalesce(public.beagu_admin_active_mfa_session(p_actor,p_session),false)
  then raise exception 'owner MFA required'; end if;
  if p_school is null or p_school !~ '^[A-Z0-9]{7}$' or jsonb_typeof(p_checks) is distinct from 'object'
  or p_note is null or length(trim(p_note)) not between 12 and 500 or p_note ~ '[<>]'
@@ -119,7 +119,7 @@ returns jsonb language sql stable security invoker set search_path='' as $$
  and r.technical_reviewed and r.school_identity_reviewed and r.unique_respondents_reviewed
  and r.personal_data_reviewed and r.small_sample_reviewed and r.reidentification_reviewed
  and r.prior_data_combination_reviewed,false) school_ok,
- not exists(select 1 from beagu_private.beagu_2026_civic_publication_hold h where h.school_id=a.school_id and h.active) no_hold
+ not exists(select 1 from beagu_private.beagu_2026_civic_publication_hold h where h.school_id=a.school_id and (h.active or h.updated_at>r.reviewed_at)) no_hold
  from public.beagu_school_report_yearly a
  left join beagu_private.beagu_2026_percentile_scope_v13 c on c.source_version=a.source_version
  left join beagu_private.beagu_2026_percentile_school_review_v13 r on r.school_id=a.school_id and r.source_version=a.source_version
