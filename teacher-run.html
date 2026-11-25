@@ -191,8 +191,6 @@ canvas{height:400px;cursor:default}
     <button id="how" class="help" type="button" aria-label="게임 방법" title="게임 방법">?</button><a class="original" href="https://ilovebaegu.itch.io/teacherrun09" target="_blank" rel="noopener noreferrer" aria-label="원작 게임">↗ 원작</a>
   </div>
   <p class="arcade-bgm-credit">🎵 BGM: 불꽃코트 오리지널 5단계 음악 · 호환용 CC0: <a href="https://opengameart.org/content/8-bit-jester-theme" target="_blank" rel="noopener noreferrer">8-bit Jester Theme · HydroGene (CC0)</a></p>
-  
-  <details id="run4-local-board" class="run4-local-board"><summary>4.0 기기 기록 · 최대 50개</summary><p>이 기기에 저장한 개인 기록입니다. 공식 명예의 전당과 별개입니다.</p><div class="run4-board-filters"><label>난이도 <select id="run4-record-tier"><option value="all">전체</option><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option><option value="very_hard">VERY HARD</option><option value="extreme">EXTREME</option></select></label><label>기록 <select id="run4-record-outcome"><option value="all">전체</option><option value="retired">정년 달성</option><option value="all_bosses">보스 5종 처치</option></select></label></div><ol id="run4-record-list" aria-live="polite"></ol></details>
   <div id="run4-trace-panel" hidden><p id="run4-trace-status" role="status">개인 경기 재현 검수 모드 · 공식 랭킹 미제출</p><button type="button" id="run4-trace-download" disabled>조작 기록 저장 (JSON)</button></div>
   <section class="run4-local-board" id="run4-official-panel" hidden>
   <h3>4.0 공식 명예의 전당</h3>
@@ -204,7 +202,7 @@ canvas{height:400px;cursor:default}
    <div class="run4-board-filters"><label>난이도 <select id="run4-official-tier"><option value="all">전체</option><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option><option value="very_hard">VERY HARD</option><option value="extreme">EXTREME</option></select></label><label>기록 <select id="run4-official-outcome"><option value="all">전체</option><option value="retired">정년 달성</option><option value="all_bosses">보스 5종 처치</option></select></label><button id="run4-official-refresh" type="button">조회</button></div>
    <ol id="run4-official-list" aria-live="polite"></ol>
   </div></section>
-  <a class="original" href="arcade-history.html?game=teacher_run_retirement" target="_top">🏆 교직생활 3.0·4.0 통합 기록</a>
+  <a class="original" href="arcade-history.html?game=teacher_run_retirement" target="_top">🏆 험난한 교직생활 기록</a>
   <p role="status" id="run4-preview-notice">4.0 개인 기록은 이 기기에 저장됩니다. 기존 공식 기록은 명예의 전당에서 확인할 수 있습니다. 휴가권은 게임 설정이며 실제 교원 복무제도를 의미하지 않습니다.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -812,20 +810,11 @@ function retirementCongratulations(difficulty,hitCount,nearMisses,remainingLives
  ];
  return cheers[(nearMisses+hitCount+earned)%cheers.length];
 }
-function paintLocalRecords(){
- const host=$("run4-record-list");host.replaceChildren();
- let rows=[];try{rows=recordPolicy.list(localStorage,{difficulty:$("run4-record-tier").value,outcome:$("run4-record-outcome").value,limit:50});}catch(_){}
- if(!rows.length){const li=document.createElement("li");li.textContent="표시할 개인 기록이 없습니다.";host.append(li);return;}
- for(const r of rows){const li=document.createElement("li");li.textContent=(difficultyName[r.difficulty]||r.difficulty)+" · "+r.score.toLocaleString("ko-KR")+"점 · "+r.age+"세 · 보스 "+r.bossIds.length+"/5"+(r.victory?" · 정년 달성":"");host.append(li);}
-}
 function saveLocalResult(baseScore,finalScore,win){
  let result=null;
  try{const stats=run4.stats();result=recordPolicy.localRecord({version:"4.0",game:recordPolicy.game,difficulty:schoolPicker.get()?.difficulty||"hard",baseScore,score:finalScore,survivalSeconds:Math.floor(clock),age:getAge(),victory:win,bossIds:bosses.defeated(),maxCombo:stats.maxCombo,hits:misses,crises:stats.crises,leaveDays:leave.state().usedDays,allies:alliesPeak});try{recordPolicy.save(localStorage,result);}catch(_){}}catch(_){}
- paintLocalRecords();return result;
+ return result;
 }
-$("run4-record-tier").addEventListener("change",paintLocalRecords);
-$("run4-record-outcome").addEventListener("change",paintLocalRecords);
-$("run4-local-board").addEventListener("toggle",paintLocalRecords);
 function finish(win){
  if(state==="over")return;
  state="over";pressed.clear();pointerId=null;pointerX=null;pointerY=null;
