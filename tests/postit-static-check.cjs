@@ -24,7 +24,7 @@ assert.match(compare,/id="copyCompareLink"[\s\S]{0,250}id="comparePostit"/,'comp
 assert.ok(core.includes("postitUrl.searchParams.set('compare',comparison)"),'comparison state transferred');
 assert.ok(core.includes('navigator.clipboard'),'comparison copied');
 const cards=read('js/school-search-card-v1.js');
-assert.ok(cards.includes('postit.html?school_id='),'search cards link');
+assert.ok(cards.includes('school-report.html?school_id='),'search cards retain school detail route for contextual Post-it');
 // v1.11.10: the locker room is intentionally absent from navigation.
 // Contextual links and the server-side Lv.2 gate remain intact.
 assert.match(read('school-report.html'),/id="reportPostitLink" href="postit.html"/);
