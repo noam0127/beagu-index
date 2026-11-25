@@ -145,4 +145,6 @@ BEGIN
 END $function$;
 revoke all on function public.beagu_2026_simple_report(text,text,text) from public,anon,authenticated;
 grant execute on function public.beagu_2026_simple_report(text,text,text) to service_role;
+revoke all on function public.beagu_2026_civic_hold_context(uuid,uuid,uuid),public.beagu_2026_civic_hold_school(uuid,uuid,uuid,text,text),public.beagu_2026_civic_resume_school(uuid,uuid,uuid,text,text) from public,anon,authenticated;
+grant execute on function public.beagu_2026_civic_hold_context(uuid,uuid,uuid),public.beagu_2026_civic_hold_school(uuid,uuid,uuid,text,text),public.beagu_2026_civic_resume_school(uuid,uuid,uuid,text,text) to service_role;
 commit;

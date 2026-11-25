@@ -1,0 +1,25 @@
+name: Final edited workbook isolated validation
+on:
+  pull_request:
+    branches: ['fix/v11117-opening-prep']
+permissions:
+  contents: read
+jobs:
+  fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Check final file values
+        run: node tests/edited-2026.mjs
+      - name: Test existing edited rows in disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          c="edited-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          for f in tests/edited-2026-fixture.sql supabase/2026-edited-upload-v1.sql tests/edited-2026-assertions.sql; do docker exec -i "$c" psql -X -v ON_ERROR_STOP=1 -U postgres < "$f"; done
