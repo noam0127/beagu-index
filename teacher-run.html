@@ -218,7 +218,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-fire-court-bgm-v1.js?v=11115-boss"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11113-save"></script>
-<script src="js/teacher-run-4-rules.js?v=11115-boss"></script>
+<script src="js/teacher-run-4-rules.js?v=11115-bossfit"></script>
 <script src="js/teacher-run-4-records-v1.js?v=11111-local2"></script>
 <script src="js/run4-official-client-v1.js?v=11111"></script>
 <script>
@@ -1180,7 +1180,7 @@ function updateBoss(dt){
 }
 function drawBoss(){
  const b=bosses.active();if(!b)return;
- const c=rules.bossCombat(b.id,schoolPicker.get()?.difficulty),r=Math.min(c.radius,W*.16,H*.19);
+ const c=rules.bossCombat(b.id,schoolPicker.get()?.difficulty),r=rules.bossRadius(c,W,H);
  ctx.save();
  if(bossWarn){ctx.strokeStyle="rgba(220,45,65,.65)";ctx.lineWidth=2;ctx.setLineDash([5,7]);for(const p of bossWarn.shots){const x=Math.max(5,Math.min(W-5,p.x)),y=Math.max(45,Math.min(H-5,p.y)),d=Math.max(1,Math.hypot(p.vx,p.vy));ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+p.vx/d*65,y+p.vy/d*65);ctx.stroke();ctx.fillStyle="#e14b50";ctx.font="bold 16px sans-serif";ctx.textAlign="center";ctx.fillText("!",x,y);}ctx.setLineDash([]);}
  ctx.save();ctx.translate(bossX,bossY);

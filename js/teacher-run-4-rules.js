@@ -157,8 +157,10 @@
   const [glyph,radius,n,velocity,move,chase,spread]=bossThemes[id]||bossThemes.confusion;
   return {glyph,radius:radius*size,count:Math.min(18,Math.max(edges,Math.round(n*count))),speed:velocity*speed,move:move*motion,chase,spread,homing,edges};
  }
+ // Fit every tier by a common scale, rather than clipping larger tiers to the same size.
+ function bossRadius(c,w,h){return c.radius*Math.min(1,w*.16/77.4,h*.19/77.4);}
  function bossMotion(pos,player,c,t,dt,w,h){
-  const r=Math.min(c.radius,w*.16,h*.19),mx=Math.min(w*.45,r*1.55+10),lo=Math.min(h*.48,r+40),hi=Math.max(lo,h*.53-r*.2);
+  const r=bossRadius(c,w,h),mx=Math.min(w*.45,r*1.55+10),lo=Math.min(h*.48,r+40),hi=Math.max(lo,h*.53-r*.2);
   const tx=Math.max(mx,Math.min(w-mx,(w*.5+Math.sin(t*1.23)*w*.29)*(1-c.chase)+player.x*c.chase));
   const ty=Math.max(lo,Math.min(hi,(lo+(hi-lo)*(.5+.5*Math.sin(t*.91+1)))*(1-c.chase)+player.y*c.chase));
   const dx=tx-pos.x,dy=ty-pos.y,d=Math.hypot(dx,dy),step=Math.min(d,c.move*dt);
@@ -242,5 +244,5 @@
    stats(){return {combo,maxCombo,near,hits,crises:paid.size,lastHit};}
   };
  }
- root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending,careerHazards,healthHazards,edgePoint,steerPaper,bossCombat,bossMotion,bossWave});
+ root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending,careerHazards,healthHazards,edgePoint,steerPaper,bossCombat,bossRadius,bossMotion,bossWave});
 })(typeof window!=="undefined"?window:globalThis);
