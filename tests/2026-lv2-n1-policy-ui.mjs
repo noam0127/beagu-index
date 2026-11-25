@@ -9,7 +9,7 @@ const lv2=read('supabase/migrations/20261121100000_beagu_2026_lv2_immediate_appr
 assert.doesNotThrow(()=>new Script(js));
 // Search-page disclosure removed by v1.11.10; all detailed policy and server checks below remain mandatory.
 assert.doesNotMatch(html,/2026 자료 공개 기준|레벨2 학교검색에서 2026년 최신 조사 탭/);
-assert.match(html,/js\/level-search\.js\?v=1110-experience/);
+assert.match(html,/js\/level-search\.js\?v=[A-Za-z0-9-]+/);
 assert.match(js,/유효 응답이 1건인 학교도 최종 공개 승인 대상/);
 assert.match(js,/공개 근거·소표본 재식별 검토가 완료된 학교별 결과만 표시/);
 assert.match(js,/아직 공개 근거·재식별 검토 및 최종 승인이 완료되지 않아/);

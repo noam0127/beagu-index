@@ -145,6 +145,8 @@
     $('searchPanel').hidden = true;
     viewerTier=1;
     $('loginMessage').textContent = message;
+    // Auth is now in the shared header; never strand logged-out visitors on a blank protected page.
+    window.location.replace('search.html');
   }
   function loggedIn() {
     window.dispatchEvent(new Event('beagu:level-state-change'));
@@ -980,10 +982,11 @@
       trigger.setAttribute('aria-expanded','false');
       trigger.setAttribute('aria-label',String(school.school_name||'학교')+
         (Number(viewerTier)>=2?' 2026 최신 조사 결과 및 연도별 기록 펼치기':' 역대 조사결과 펼치기'));
-      heading.replaceWith(trigger);
+      const historyHeader=make('div','minimal-history-header');
+      historyHeader.append(trigger,experience);heading.replaceWith(historyHeader);
       historyPanel.append(detail);
       card.querySelector('.school-actions')?.remove();
-      card.append(experience);
+
       async function toggleHistory(event){
         const opening=detail.hidden;
         detail.hidden=!opening;

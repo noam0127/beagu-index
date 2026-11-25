@@ -49,6 +49,12 @@
   function options(random=Math.random){const list=available().slice();for(let i=list.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}return list.slice(0,3).map(p=>({...p,level:level(p.id)}));}
   return {
    next(t,random=Math.random){if(waiting!==null)return null;for(const year of [5,10,15,20,25,30,35]){if(t>=year*5&&!seen.has(year)){seen.add(year);waiting=year;offered=options(random);return {year,choices:offered.slice()};}}return null;},
+   afterBoss(id,random=Math.random){
+    if(waiting!==null||seen.has("boss:"+id))return null;
+    const index=bossPlan.findIndex(p=>p.id===id);if(index<0)return null;
+    seen.add("boss:"+id);offered=options(random);if(!offered.length)return null;
+    waiting="boss:"+id;return {year:Math.floor(bossPlan[index].end/secondsPerYear),phase:rounds[index].name,boss:bossPlan[index].name,choices:offered.slice()};
+   },
    choose(id){if(waiting===null||!offered.some(p=>p.id===id))return false;levels[id]=level(id)+1;if(id==="shield")shields++;waiting=null;offered=[];return true;},
    grant(id){const p=available().find(p=>p.id===id);if(!p)return false;levels[id]=level(id)+1;if(id==="shield")shields++;return true;},
    absorb(){if(shields<=0)return false;shields--;return true;},level,shields:()=>shields,

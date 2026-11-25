@@ -16,11 +16,12 @@ for(const page of pages){
 const ui=read('js/beagu-participation-auth-v2.js');
 assert.doesNotThrow(()=>new Script(ui),'Shared auth module parses');
 for(const phrase of ['참여코드 입력','레벨1 인증',
- '발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.',
- '참여코드를 입력하세요','Lv2 달성하기 — 챌린지',
+ '참여코드를 입력하세요','Lv.2 참여코드 받기',
  '✓ Lv1 · 설문 참여 완료','♛ Lv2 · 챌린지 달성']){
  assert.ok(ui.includes(phrase),'Shared copy: '+phrase);
 }
+assert.doesNotMatch(ui,/발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다\./);
+assert.match(ui,/headerUI\.inline\.hidden=!known\|\|level>=2/);
 assert.ok(ui.includes('beagu:participation-authenticated'));
 assert.ok(ui.includes('beagu:participation-logged-out'));
 assert.ok(ui.includes("action,payload={},token=''"));
@@ -36,7 +37,7 @@ assert.match(css,/#beaguParticipationToggle\s*\{[^}]*width:58px!important/s);
 assert.match(css,/#beaguParticipationCode\s*\{[^}]*padding-right:78px/s);
 
 assert.match(ui,/form\.hidden=level>=2/,'Lv1 keeps the upgrade code field visible');
-assert.match(ui,/lastLevel===1&&level<2/,'Lv1 preserved on unearned code');
+assert.match(ui,/minimum===1&&level<2/,'Lv1 preserved on unearned code');
 assert.match(css,/\.beagu-participation-host \.beagu-participation-legacy/);
 assert.ok(!css.includes('display:contents'));
 assert.ok(css.includes('#tierCodeForm.beagu-participation-legacy'), 'School report legacy form hidden behind the shared dialog');
@@ -65,7 +66,7 @@ assert.ok(migration.includes('p.valid_referrals>=1')&&migration.includes('p.upgr
 assert.ok(migration.includes('to service_role'),'RPCs are service-role only');
 assert.ok(server.includes("beagu_2026_lv2_released_question_results"),
  'Preserve newer immediate reviewed-release feature');
-assert.ok(read('levels.html').includes('서버에서 유효한 추천 참여가 확인된 코드'));
+assert.match(read('levels.html'),/유효 추천 설문 1건/);
 assert.doesNotMatch(read('levels.html'),/정식 계정 준비중|Lv\.2\(임시\)|Lv\.2\(진\)/);
 
 function fakeElement(name='div'){
@@ -81,7 +82,7 @@ function fakeElement(name='div'){
   addEventListener(k,f){(handlers[k]??=[]).push(f)},
   dispatch(k,event){return Promise.all((handlers[k]||[]).map(f=>f(event)))},
   focus(){},getClientRects(){return [1]},append(){},before(){},
-  querySelector(){return null}
+  querySelector(){return null},closest(){return null},matches(){return false}
  };
 }
 async function exercise(level){
@@ -91,7 +92,7 @@ async function exercise(level){
  '#beaguParticipationSubmit','#beaguParticipationMessage','#beaguParticipationDetail',
  '#beaguParticipationCodeLabel',
  '#beaguParticipationTier','#beaguParticipationExpiry','#beaguParticipationToggle',
- '[data-beagu-close]','#beaguParticipationLogout'];
+ '[data-beagu-close]','#beaguParticipationLogout','[role="dialog"]'];
  for(const id of selectors)nodes.set(id,fakeElement());
  const badge=fakeElement('a');badge.dataset.level='0';
  const modal=fakeElement('div');modal.querySelector=id=>nodes.get(id)||null;

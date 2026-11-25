@@ -46,7 +46,7 @@
     anchor.setAttribute('aria-label',school.name+' 학교 상세페이지 보기');
     const header=el('div','beagu-home-school-top');
     const value=el('span','beagu-home-school-value');
-    value.append(el('span','beagu-home-percentile-label','공개 백분위'),
+    value.append(el('span','beagu-home-percentile-label','공개'),
       el('strong','beagu-home-percentile-number',school.percentile.toLocaleString('ko-KR',{maximumFractionDigits:2})+'%'));
     header.append(el('span','beagu-home-school-tier',label),value);
     const identity=el('div','beagu-home-school-identity');

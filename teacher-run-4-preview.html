@@ -123,13 +123,13 @@ canvas{height:400px;cursor:default}
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261123-priority2">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
-<script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
+<script defer src="js/beagu-level-state-v1.js?v=11113-header2"></script>
 <link rel="stylesheet" href="styles/postit-entry-links-v1.css?v=20261120-2">
-<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-gamecodefix1">
-<script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=11113-header2">
+<script defer src="js/beagu-participation-auth-v2.js?v=11113-header2"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
-<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11112">
+<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11113-save">
 <link rel="stylesheet" href="styles/teacher-run-4-leave.css?v=11112">
 <link rel="stylesheet" href="styles/run4-local-board-v1.css?v=11111">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
@@ -214,8 +214,8 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
-<script src="js/arcade-result-share-v1.js?v=11112"></script>
-<script src="js/teacher-run-4-rules.js?v=11111-6"></script>
+<script src="js/arcade-result-share-v1.js?v=11113-save"></script>
+<script src="js/teacher-run-4-rules.js?v=11113-boss"></script>
 <script src="js/teacher-run-4-records-v1.js?v=11111-local2"></script>
 <script src="js/run4-official-client-v1.js?v=11111"></script>
 <script>
@@ -708,7 +708,7 @@ function applyGrowth(id,manual=true){
 }
 function openGrowth(pick){
  state="between";pressed.clear();pointerId=null;pointerX=null;pointerY=null;tapGesture.cancel();
- message("재직 "+pick.year+"년 · 능력 성장","능력 하나를 선택하세요. 선택 중 교직시간과 휴가 효과는 정지합니다.",
+ message(pick.phase+" · 능력 성장",pick.boss+" 퇴치! 능력 하나를 선택하세요.",
   pick.choices.map(u=>({label:u.name,detail:u.detail+" · "+u.level+" → "+(u.level+1)+"/"+u.max,action:()=>{
     if(state!=="between"||!applyGrowth(u.id))return;recordInput("growth",{choice:u.id});state="playing";updateLabels();closeMessage();playTone(610,.16);
   }})),"🎖️");
@@ -1090,6 +1090,7 @@ function damageBoss(amount){
  if(clutch)crisisAwards(run4.bossClutch());
  if(defeated.id==="responsibility"||defeated.id==="burnout")joinAlly();
  setNotice("🏆 "+defeated.name+" 처치 · "+defeated.reward,3);playTone(990,.24);
+ const growthPick=growth.afterBoss(defeated.id,gameRandom);if(growthPick&&state==="playing")openGrowth(growthPick);
 }
 function joinAlly(){
  const a=allies.join(clock,gameRandom);if(!a)return;
@@ -1205,7 +1206,7 @@ function update(dt){
  }
  if(getCareerStage()>stage)nextCareerStage();
  tenureEvents();
- const growthPick=growth.next(clock,gameRandom);if(growthPick){openGrowth(growthPick);return;}
+ // Growth selection is granted only after the corresponding boss is defeated.
  if(eventSeconds>0){eventSeconds=Math.max(0,eventSeconds-dt);if(eventSeconds===0)activeEvent=null;}
  const cycle=Math.floor((stageElapsed()-5)/14);
  if(cycle>=0&&cycle!==lastEventCycle){
@@ -1245,7 +1246,7 @@ function update(dt){
  }
  updateBoss(dt);if(state!=="playing")return;
  fireChalk(dt);
- updateAllies();alliesPeak=Math.max(alliesPeak,allies.count());
+ updateAllies();alliesPeak=Math.max(alliesPeak,allies.count());if(state!=="playing")return;
  spawnClock-=dt;
  if(spawnClock<=0){spawn();spawnClock=Math.max(.23,(.86-stage*.085-(getAge()>=60?.2:0))/(profile.spawnPressure*growth.effects().spawn*windowRunEffects().spawn*bossSpawn))*(.48+gameRandom()*1.55)/(activeEvent?.id==="rush"?1.30:1);}
  // A collected support item can remove other hazards or append new ones.
@@ -1417,8 +1418,9 @@ function drawPatternHazards(){
 // Draw full-size Korean text with line wrapping (never maxWidth compression).
 function drawReadableNotice(content,y,background,color){
  // Situational subtitles must not obscure falling objects or the teacher.
- const width=Math.min(W-18,Math.max(145,W*.72)),inside=width-18;
- const fontSize=Math.min(18,Math.max(14,Math.round(W*.032)));
+ const maxWidth=Math.max(40,Math.min(W-24,Math.max(170,W*.74)));
+ const inside=Math.max(16,maxWidth-28);
+ const fontSize=Math.min(18,Math.max(13,Math.round(W*.032)));
  ctx.save();ctx.font='750 '+fontSize+'px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
  const pieces=String(content).split(/\s+/).filter(Boolean),lines=[];
  let line='';
@@ -1433,16 +1435,21 @@ function drawReadableNotice(content,y,background,color){
  }
  if(line)lines.push(line);
  const shown=lines.slice(0,2);
- if(lines.length>2)shown[1]=shown[1].slice(0,-1)+'…';
- const lineHeight=fontSize+5,h=12+shown.length*lineHeight;
- ctx.globalAlpha=.84;roundRect((W-width)/2,y,width,h,9,background);
- ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
- ctx.lineJoin="round";ctx.lineWidth=2;ctx.strokeStyle="rgba(4,14,27,.83)";
+ if(!shown.length){ctx.restore();return 0;}
+ if(lines.length>2){
+  while(shown[1]&&ctx.measureText(shown[1]+'…').width>inside)shown[1]=Array.from(shown[1]).slice(0,-1).join('');
+  shown[1]+='…';
+ }
+ const lineHeight=Math.ceil(fontSize*1.45),padY=8;
+ const width=Math.min(maxWidth,Math.ceil(Math.max(...shown.map(line=>ctx.measureText(line).width)))+28);
+ const h=padY*2+shown.length*lineHeight;
+ const top=Math.max(4,Math.min(H-h-4,y-h/2));
+ roundRect((W-width)/2,top,width,h,10,background);
+ ctx.textAlign="center";ctx.textBaseline="middle";
  ctx.fillStyle=color;
  for(let i=0;i<shown.length;i++){
-  const lineY=y+10+i*lineHeight;
-  ctx.strokeText(shown[i],W/2,lineY,inside);
-  ctx.fillText(shown[i],W/2,lineY,inside);
+  const lineY=top+padY+(i+.5)*lineHeight;
+  ctx.fillText(shown[i],W/2,lineY);
  }
  ctx.restore();return h;
 }
@@ -1490,7 +1497,7 @@ function draw(){
  const statusCycle=clock%5<1.65;
  const progressLabel=getAge()+"세 · "+Math.floor(clock/5)+"년차 · "+Math.floor(score).toLocaleString("ko-KR")+"점 · 남은 목숨 "+livesLeft;
  const central=noticeTime>0?notice:eventLabel||((state==="playing"&&statusCycle)?progressLabel:"");
- if(central)drawReadableNotice(central,Math.max(110,H*.48-25),"rgba(17,54,70,.94)","#fff");
+ if(central)drawReadableNotice(central,Math.max(110,H*.48),"rgba(17,54,70,.91)","#fff");
  if(stage===3){
   const leftSafe=Math.floor(clock/5)%2===0;
   const x=leftSafe?0:W*.55,w=W*.45;

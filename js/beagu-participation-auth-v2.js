@@ -9,7 +9,7 @@
  const survey='https://forms.gle/TPyCakK6Sj2zchRy7';
  const badge=document.getElementById('beaguLevelState');
  if(!badge)return;
- let busy=false,expiresAt='',lastFocus=null,lastLevel=0;
+ let busy=false,expiresAt='',lastFocus=null,lastLevel=0,verifiedToken='',verifiedLevel=null;
  const el=(tag,cls,text)=>{
   const x=document.createElement(tag);if(cls)x.className=cls;if(text!==undefined)x.textContent=text;return x;
  };
@@ -19,11 +19,11 @@
  modal.setAttribute('role','presentation');
  modal.innerHTML=`
  <section class="beagu-participation-dialog" role="dialog" aria-modal="true"
-   aria-labelledby="beaguParticipationTitle" aria-describedby="beaguParticipationDescription">
+   aria-labelledby="beaguParticipationTitle">
   <button class="beagu-participation-close" type="button" data-beagu-close aria-label="닫기">×</button>
   <div class="beagu-participation-eyebrow">BAEGU INDEX · PARTICIPATION</div>
   <h2 id="beaguParticipationTitle">참여코드 입력</h2>
-  <p id="beaguParticipationDescription">발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.</p>
+  <p id="beaguParticipationDescription" hidden></p>
   <div id="beaguParticipationDetail" class="beagu-participation-detail" hidden>
    <strong id="beaguParticipationTier"></strong>
    <span id="beaguParticipationExpiry"></span>
@@ -41,8 +41,8 @@
   </form>
   <p id="beaguParticipationMessage" role="status" aria-live="polite"></p>
   <nav class="beagu-participation-links" aria-label="참여 및 승급">
-   <a href="${survey}" target="_blank" rel="noopener noreferrer">참여코드 받기 — 2026 본조사</a>
-   <a href="challenge.html">Lv2 달성하기 — 챌린지</a>
+   <a href="${survey}" target="_blank" rel="noopener noreferrer">Lv.1 참여코드 받기</a>
+   <a href="challenge.html">Lv.2 참여코드 받기</a>
   </nav>
  </section>`;
  document.body.append(modal);
@@ -60,43 +60,46 @@
  const closeButton=modal.querySelector('[data-beagu-close]');
  const logout=modal.querySelector('#beaguParticipationLogout');
  const hosts=[...document.querySelectorAll('#lv1QuickAuth,#loginPanel,#compareLv1AuthPanel,#challengeAccessPanel')];
+ const header=badge.closest('.beagu-level-state-container');
+ const core=document.body.matches('.beagu-page-home,.beagu-page-search,.beagu-page-lv1,.beagu-page-compare,.beagu-page-playground,.beagu-page-challenge');
+ let headerUI=null;
+ if(header&&document.querySelector('.beagu-unified-header')){
+  const inline=el('form','beagu-header-code');inline.autocomplete='off';inline.hidden=true;
+  const input=el('input');input.type='password';input.name='participation-code';input.minLength=8;input.maxLength=120;input.required=true;input.autocomplete='off';input.spellcheck=false;input.autocapitalize='off';input.placeholder='참여코드';input.setAttribute('aria-label','참여코드');
+  const action=el('button','','→');action.type='submit';action.setAttribute('aria-label','참여코드 인증');
+  const feedback=el('span','beagu-header-code-feedback');feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+  inline.append(input,action,feedback);header.insertBefore(inline,badge);header.classList.add('beagu-header-auth');header.removeAttribute('aria-live');badge.setAttribute('aria-live','polite');headerUI={inline,input,action,feedback};
+  if(core)document.body.classList.add('beagu-header-auth-only');
+  inline.addEventListener('submit',e=>{e.preventDefault();if(!inline.hidden)return authenticate(input,action,feedback);});
+ }
  const gameForms=[...document.querySelectorAll('[data-game-lv1-form],#tierCodeForm')];
  const labelFor=n=>n>=2?'♛ Lv2 · 챌린지 달성':n>=1?'✓ Lv1 · 설문 참여 완료':'참여코드 입력';
  function stored(){try{return sessionStorage.getItem(KEY)||''}catch(_){return ''}}
  function paint(level){
   lastLevel=level;
   const text=labelFor(level);
-  badge.textContent='Lv.'+level;
+  badge.dataset.level=String(level);badge.textContent='Lv.'+level;
   badge.setAttribute('aria-label',level===1?'Lv.1 인증 완료 · Lv.2 참여코드 입력':level?'인증 정보 및 해제 · '+text:'참여코드 입력');
   badge.title=level===1?'Lv.2 참여코드 입력 또는 인증 해제':level?'인증 정보 확인 및 인증 해제':'참여코드 입력';
   badge.classList.toggle('beagu-participation-earned',level>=2);
-  for(const host of hosts){
-   host.dataset.beaguParticipationLevel=String(level);
-   const action=host.querySelector('[data-beagu-participation-trigger]');
-   const state=host.querySelector('[data-beagu-participation-status]');
-   const description=host.querySelector('[data-beagu-participation-description]');
-   if(action)action.hidden=level>=1;
-   if(description)description.hidden=level>=1;
-   if(state){
-    const stateText=level===1?text+' · Lv.2 참여코드 입력':text;
-    state.textContent=stateText;
-    state.setAttribute('aria-label',stateText);
-    state.hidden=level<1;
-   }
-   // Keep the challenge screen participation-code-only at all levels.
-   if(host.id==='challengeAccessPanel'){
-    const heading=host.querySelector('h1,h2');
-    if(heading)heading.textContent=level>=2?'Lv2 참여 인증 완료':'참여코드 입력';
-   }
+  if(headerUI){
+   const known=verifiedLevel!==null&&verifiedToken===stored();
+   headerUI.inline.hidden=!known||level>=2;
+   headerUI.input.placeholder=level===1?'Lv.2 코드':'참여코드';
+   headerUI.input.setAttribute('aria-label',level===1?'Lv.2 참여코드':'Lv.1 참여코드');
+   if(level>=2){headerUI.input.value='';headerUI.feedback.textContent='';}
+   header.classList.toggle('beagu-header-code-visible',!headerUI.inline.hidden);
   }
+  for(const host of hosts)host.dataset.beaguParticipationLevel=String(level);
   for(const item of document.querySelectorAll('[data-beagu-participation-game-trigger]'))
    item.hidden=level>=1;
   detail.hidden=level<1;
   // Lv.1 must retain a code field so an earned Lv.2 code can upgrade in place.
   form.hidden=level>=2;
   heading.textContent=level===1?'레벨2에 도전하세요!':level>=2?'참여 인증 정보':'참여코드 입력';
-  description.textContent=level===1?'Lv.2 참여코드를 입력하면 공시가격 등 더 많은 학교정보를 확인할 수 있습니다. 기존 Lv.1 인증은 유지됩니다.':
-   level>=2?'Lv.2 인증이 완료되었습니다.':'발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.';
+  description.hidden=level<2;
+  description.textContent=level>=2?'Lv.2 인증이 완료되었습니다.':'';
+  modal.querySelector('[role="dialog"]').dataset.level=String(level);
   label.textContent=level===1?'Lv.2 참여코드':'참여코드';
   code.placeholder=level===1?'Lv.2 참여코드를 입력하세요':'참여코드를 입력하세요';
   submit.textContent=level===1?'Lv.2 인증하기':'레벨1 인증';
@@ -115,15 +118,14 @@
  }
  function open(){
   lastFocus=document.activeElement;
-  const n=Number(badge.dataset.level);
-  paint(Number.isInteger(n)&&n>=1?n:0);
+  paint(verifiedLevel??lastLevel);
   modal.hidden=false;
   document.body.classList.add('beagu-participation-open');
-  if(lastLevel>=1){
+  if(stored()){
    // Revalidate expiry on opening details without exposing a code.
    void verifyCurrent();
-   if(lastLevel===1)code.focus();
-   else logout.focus();
+   if(lastLevel>=2)logout.focus();
+   else code.focus();
   }else code.focus();
  }
  const button=(label,className,action=open)=>{
@@ -139,16 +141,7 @@
    legacy.setAttribute('aria-hidden','true');
    legacy.inert=true;
   }
-  const heading=host.querySelector('h1,h2');
-  if(heading)heading.textContent='참여코드 입력';
-  const intro=el('p','beagu-participation-intro','발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.');
-  intro.dataset.beaguParticipationDescription='';
-  const trigger=button('참여코드 입력','beagu-participation-inline-trigger');
-  trigger.dataset.beaguParticipationTrigger='';
-  const status=button('', 'beagu-participation-inline-status',open);
-  status.dataset.beaguParticipationStatus='';
-  status.hidden=true;
-  (legacy||host).before(intro,trigger,status);
+  if(core&&headerUI)host.classList.add('beagu-retired-auth-card');
  }
  for(const legacy of gameForms){
   legacy.classList.add('beagu-participation-legacy');
@@ -176,12 +169,14 @@
    const result=await request('verify',{},token);
    if(stored()!==token)return;
    if(Number(result.level)<1||Number(result.level)>2)throw Error('INVALID_LEVEL');
-   expiresAt=result.expires_at||'';
+   expiresAt=result.expires_at||'';verifiedToken=token;verifiedLevel=Number(result.level);
    // The level-state module also rechecks on every route/focus.
    if(!modal.hidden)paint(Number(result.level));
   }catch(e){
    if(e.status===401||e.status===403){
-    if(stored()===token){try{sessionStorage.removeItem(KEY)}catch(_){}}
+    if(stored()!==token)return;
+    try{sessionStorage.removeItem(KEY)}catch(_){}
+    verifiedToken='';verifiedLevel=0;
     window.dispatchEvent(new Event('beagu:level-state-change'));
    }
    if(!modal.hidden){
@@ -215,9 +210,12 @@
   toggle.textContent=visible?'숨기기':'표시';
   toggle.setAttribute('aria-pressed',String(visible));
  });
- form.addEventListener('submit',async e=>{
-  e.preventDefault();
+ async function authenticate(code,submit,message){
   if(busy)return;
+  const startToken=stored();
+  if(startToken&&(verifiedToken!==startToken||verifiedLevel===null)){message.textContent='인증 확인 후 다시 시도하세요.';window.dispatchEvent(new Event('beagu:level-state-change'));return;}
+  const minimum=verifiedLevel??0;
+  if(minimum>=2)return;
   const value=code.value.trim();
   if(!/^[A-Za-z0-9-]{8,120}$/.test(value)){
    message.textContent='참여코드 형식을 확인해 주세요.';return;
@@ -230,15 +228,16 @@
    const checked=await request('verify',{},result.token);
    const level=Number(checked.level);
    if(!Number.isInteger(level)||level<1||level>2)throw Error('INVALID_LEVEL');
-   if(lastLevel===1&&level<2){
+   if(stored()!==startToken)return;
+   if(minimum===1&&level<2){
     message.textContent='Lv.2 권한이 확인되지 않았습니다. 기존 Lv.1 인증은 유지됩니다.';
     return;
    }
    try{sessionStorage.setItem(KEY,result.token)}catch(_){throw Error('STORAGE_UNAVAILABLE')}
    if(stored()!==result.token)throw Error('STORAGE_UNAVAILABLE');
-   expiresAt=checked.expires_at||'';
-   paint(level);
-   close();
+   expiresAt=checked.expires_at||'';verifiedToken=result.token;verifiedLevel=level;
+   message.textContent='';paint(level);
+   if(!modal.hidden)close();
    window.dispatchEvent(new CustomEvent('beagu:participation-authenticated',{
     detail:{token:result.token,level,provisional:checked.provisional===true}
    }));
@@ -251,22 +250,23 @@
     err.message==='STORAGE_UNAVAILABLE'?'브라우저의 저장 기능을 허용해 주세요.':
     '인증할 수 없습니다. 연결 상태를 확인하고 다시 시도해 주세요.';
   }finally{busy=false;submit.disabled=false;code.value=''}
- });
+ }
+ form.addEventListener('submit',e=>{e.preventDefault();return authenticate(code,submit,message);});
  logout.addEventListener('click',async()=>{
   const token=stored();
   try{sessionStorage.removeItem(KEY)}catch(_){}
-  expiresAt='';paint(0);close();
+  expiresAt='';verifiedToken='';verifiedLevel=0;paint(0);close();
   window.dispatchEvent(new Event('beagu:participation-logged-out'));
   window.dispatchEvent(new Event('beagu:level-state-change'));
   if(token)try{await request('logout',{},token)}catch(_){}
  });
  window.addEventListener('beagu:level-state-updated',event=>{
   const n=event.detail?.level;
-  if(Number.isInteger(n)&&n>=0&&n<=2)paint(n);
-  else if(event.detail?.status==='checking')badge.textContent='인증 확인 중';
-  else if(event.detail?.status==='error')badge.textContent='참여코드 확인';
+  if(Number.isInteger(n)&&n>=0&&n<=2){verifiedToken=stored();verifiedLevel=n;paint(n);}
+  else {if(verifiedToken!==stored()){verifiedLevel=null;verifiedToken='';}if(headerUI){headerUI.inline.hidden=true;header.classList.remove('beagu-header-code-visible');}badge.textContent=event.detail?.status==='checking'?'확인 중':'확인 불가';}
  });
  window.addEventListener('beagu:participation-open',open);
  const level=Number(badge.dataset.level);
- paint(Number.isInteger(level)&&level>=1&&level<=2?level:0);
+ if(Number.isInteger(level)&&level>=0&&level<=2){verifiedToken=stored();verifiedLevel=level;paint(level);}
+ else if(!stored()){verifiedLevel=0;paint(0);}
 })();

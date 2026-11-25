@@ -96,3 +96,53 @@ body.beagu-page-home .court-notice-open :is(.beagu-notice-common,.beagu-tier-not
 #beaguTodaySchools a:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
 @media(max-width:640px){#beaguTodaySchools .beagu-home-school-grid{grid-template-columns:1fr;gap:10px}#beaguTodaySchools .beagu-home-school{padding:13px;gap:11px}}
 @media(max-width:360px){#beaguTodaySchools .beagu-home-school-actions>a{padding:6px 8px;font-size:11px}#beaguTodaySchools .beagu-home-school-footer{gap:5px}}
+
+/* v1.11.13 minimal court */
+body.beagu-page-home main.container>.beagu-xp{grid-column:1/-1;width:100%;max-width:none;min-width:0;box-sizing:border-box;margin-inline:0;justify-self:stretch}
+body.beagu-page-home main.container>.light-touch-visit{padding:12px 8px;border:1px solid #dce6f2;border-radius:13px;background:#fff;box-shadow:none}
+body.beagu-page-home .light-touch-visit>div>div{display:grid;gap:3px;color:#64748b;font-size:12px;justify-content:center;min-width:0}
+body.beagu-page-home .light-touch-visit>div>div+div{border-left:1px solid #e2e8f0}
+body.beagu-page-home .light-touch-visit br{display:none}
+body.beagu-page-home .light-touch-visit strong{color:#173858;font-size:clamp(13px,3.5vw,19px);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+body.beagu-ui-page main>.minimal-notice{grid-column:1/-1;display:flex;flex-wrap:nowrap;align-items:center;gap:8px;box-sizing:border-box;width:100%;min-width:0;margin:12px 0 0!important;padding:8px 12px!important;border:0;border-top:1px solid #dce6f2;background:transparent;border-radius:0;box-shadow:none;cursor:pointer;color:#334155;font-size:12px}
+body.beagu-ui-page main>.minimal-notice[hidden],.minimal-notice [hidden]{display:none!important}
+body.beagu-ui-page main>.minimal-notice h2{flex:0 0 auto;margin:0!important;font-size:12px;white-space:nowrap}
+.minimal-notice-toggle{width:auto!important;min-height:32px;padding:0 4px;border:0;background:transparent;color:#2458b9;font:inherit;font-weight:750;cursor:pointer}
+.minimal-notice-toggle:focus-visible{outline:2px solid #2458b9;outline-offset:2px}
+body.beagu-ui-page main>.minimal-notice:not(.court-notice-open) :is(.beagu-notice-common,.beagu-tier-notice,#beaguNoticeError){flex:1 1 0;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:12px}
+body.beagu-ui-page main>.minimal-notice:not(.court-notice-open) .beagu-tier-notice{padding:0;margin:0;border:0;background:none}
+body.beagu-ui-page main>.minimal-notice:not(.court-notice-open) .beagu-tier-notice p{display:inline;margin:0 0 0 4px;white-space:nowrap;font-size:12px}
+body.beagu-ui-page main>.minimal-notice.court-notice-open{flex-wrap:wrap;align-items:flex-start}
+body.beagu-ui-page main>.minimal-notice.court-notice-open :is(.beagu-notice-common,.beagu-tier-notice,#beaguNoticeError){flex:1 0 100%;min-width:0;box-sizing:border-box;white-space:pre-wrap;overflow-wrap:anywhere}
+body.beagu-page-lv1 .school-card .minimal-history-header{display:flex;align-items:center;gap:6px;min-width:0}
+body.beagu-page-lv1 .school-card .minimal-history-header .lv1-history-trigger{flex:1 1 auto;width:auto!important;min-width:0}
+body.beagu-page-lv1 .school-card .minimal-history-header .court-school-experience{flex:none;margin:0;min-height:40px}
+body.beagu-page-challenge #challengeReferralPanel .challenge-referral-count-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0;box-sizing:border-box}
+body.beagu-page-challenge #challengeReferralPanel :is(#challengeMilestoneProgress,#togetherReferralState,#challengeReferralCountHint){grid-column:1/-1;min-width:0;width:100%;box-sizing:border-box}
+body.beagu-page-challenge #challengeReferralCount{max-width:100%;overflow-wrap:anywhere;white-space:normal;text-align:right}
+body.beagu-page-challenge .challenge-account-details>summary{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.together-auth-level{flex:none;color:#2458b9;font-size:12px;font-weight:800}
+#beaguParticipationDescription[hidden],#playLv2Upgrade[hidden]{display:none!important}
+.beagu-participation-dialog .beagu-participation-detail{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 9px;align-items:center;margin-bottom:10px;min-width:0;padding:10px}
+.beagu-participation-dialog #beaguParticipationTier{grid-column:1;grid-row:1;min-width:0;overflow-wrap:anywhere}
+.beagu-participation-dialog #beaguParticipationExpiry{grid-column:1;grid-row:2;min-width:0;overflow-wrap:anywhere}
+.beagu-participation-dialog #beaguParticipationLogout{grid-column:2;grid-row:1/3;width:auto!important;white-space:nowrap;padding:8px 10px}
+.beagu-participation-dialog #beaguParticipationMessage:empty{display:none}
+.beagu-minimal-play-upgrade{box-sizing:border-box;min-width:0;width:100%;padding:16px;margin:0 0 14px;border:1px solid #b9ccec;border-radius:15px;background:linear-gradient(120deg,#f1f6ff,#fff);color:#1e4987}
+.beagu-minimal-upgrade{display:grid;gap:7px;margin-top:9px}
+.beagu-minimal-upgrade label{font-size:12px;font-weight:800}
+.beagu-minimal-upgrade-row{display:flex;gap:8px;align-items:stretch}
+.beagu-minimal-upgrade-row input{flex:1;min-width:0;min-height:44px;box-sizing:border-box;border:1px solid #bdcee5;border-radius:10px;padding:10px 12px;font-size:15px}
+.beagu-minimal-upgrade-row button{flex:none;width:auto!important;min-height:44px;border:0;border-radius:10px;background:#265dd0;color:#fff;padding:8px 14px;font-weight:800;cursor:pointer}
+.beagu-minimal-upgrade-feedback{margin:0;font-size:12px}
+.beagu-minimal-upgrade-feedback:empty{display:none}
+@media(max-width:380px){.beagu-minimal-upgrade-row{flex-direction:column}.beagu-minimal-upgrade-row button{width:100%!important}}
+
+body.beagu-page-lv1 .school-card .minimal-history-header .lv1-history-trigger::after{content:"자세히 ▾"}
+body.beagu-page-lv1 .school-card .minimal-history-header .lv1-history-trigger[aria-expanded="true"]::after{content:"접기 ▴"}
+body.beagu-page-lv1 .beagu-lv2-upgrade{box-sizing:border-box;padding:16px;margin:0 0 14px;border:1px solid #b9ccec;border-radius:15px;background:linear-gradient(120deg,#f1f6ff,#fff)}
+body.beagu-page-lv1 .beagu-lv2-upgrade-row{display:flex;align-items:stretch;gap:8px}
+body.beagu-page-lv1 .beagu-lv2-upgrade-row input{flex:1;min-width:0}
+body.beagu-page-lv1 .beagu-lv2-upgrade-row button{width:auto!important;flex:none}
+@media(max-width:600px){body.beagu-page-lv1 .beagu-lv2-upgrade-row{flex-direction:column}body.beagu-page-lv1 .beagu-lv2-upgrade-row button{width:100%!important}}
+@media(max-width:360px){body.beagu-page-lv1 .school-card .minimal-history-header .lv1-history-trigger{font-size:12px!important;padding-inline:3px}body.beagu-page-lv1 .school-card .minimal-history-header .court-school-experience{font-size:11px;padding-inline:6px}}

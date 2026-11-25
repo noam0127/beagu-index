@@ -148,3 +148,32 @@ width:100%;max-width:560px;min-height:52px;margin:0 auto!important;
 border-radius:12px;text-align:center}}
 
 #beaguParticipationForm[hidden]{display:none!important}
+
+
+/* v1.11.13: one header authentication input; retain legacy elements for page scripts only. */
+body.beagu-header-auth-only :is(.beagu-retired-auth-card,#lv2UpgradeCard,#compareLv2Upgrade,#playLv2Upgrade,.beagu-levelup-status){display:none!important}
+.beagu-header-auth.beagu-level-state-container{display:flex;align-items:center;justify-content:flex-end;gap:6px;max-width:100%;min-width:0}
+.beagu-header-auth .beagu-header-code[hidden]{display:none!important}
+.beagu-header-auth .beagu-header-code{position:relative;display:flex;align-items:center;gap:0;margin:0;padding:0;min-width:0;width:clamp(105px,15vw,170px);border:1px solid #cbd8e9;border-radius:10px;background:white;box-sizing:border-box}
+.beagu-header-code input{min-width:0;width:100%;height:36px;box-sizing:border-box;border:0;background:transparent;padding:5px 7px;color:#193b68;font-size:16px;outline:0}
+.beagu-header-code input::placeholder{font-size:12px;color:#64748b}
+.beagu-header-code button{flex:0 0 34px;width:34px!important;min-width:34px;min-height:36px;margin:0;padding:0;border:0;border-radius:0 9px 9px 0;background:#2458b9;color:#fff;font-size:18px;font-weight:800;cursor:pointer}
+.beagu-header-code button:disabled{opacity:.6}
+.beagu-header-code:focus-within{outline:2px solid #7aa6ea;outline-offset:1px}
+.beagu-header-code-feedback{position:absolute;right:0;top:calc(100% + 5px);z-index:25;width:max-content;max-width:min(260px,85vw);padding:7px 10px;border:1px solid #d6e1f0;border-radius:8px;background:#fff;color:#334155;font-size:12px;line-height:1.4;box-shadow:0 4px 14px #203b6320;white-space:normal;overflow-wrap:anywhere}
+.beagu-header-code-feedback:empty{display:none}
+body.beagu-header-auth-only>.beagu-unified-header{position:sticky;top:0;z-index:50}
+.beagu-header-auth #beaguLevelState{position:static;min-width:0;min-height:38px;padding:7px 9px;white-space:nowrap}
+#beaguParticipationDescription[hidden],.beagu-participation-host[hidden]{display:none!important}
+.beagu-participation-dialog #beaguParticipationMessage:empty{display:none}
+.beagu-header-auth-only #challengePublicSurvey{display:none}
+.beagu-header-auth-only:has(#beaguLevelState[data-level="0"]) #challengePublicSurvey{display:block;text-align:center;margin:14px auto}
+#challengePublicSurvey a{font-size:13px;color:#2458b9;font-weight:750}
+@media(max-width:1180px){.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-inner{grid-template-columns:minmax(0,1fr) max-content;grid-template-rows:auto auto;row-gap:8px;column-gap:6px}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-brand{grid-column:1;grid-row:1}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-header-auth{grid-column:2;grid-row:1}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-nav{grid-column:1/-1;grid-row:2;width:100%;justify-self:stretch}}
+@media(max-width:480px){.beagu-header-auth .beagu-header-code{width:112px}.beagu-header-code button{min-width:30px;width:30px!important;flex-basis:30px;min-height:36px}.beagu-header-auth #beaguLevelState{font-size:11px;min-height:36px;padding:6px 7px}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-brand{gap:5px;font-size:13px}}
+@media(max-width:390px){.beagu-header-auth .beagu-header-code{width:108px}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-brand{font-size:12px}.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-mark{flex-basis:30px;width:30px;height:30px}}
+@media(max-width:340px){.beagu-unified-header:has(.beagu-header-code-visible) .beagu-unified-name{display:none}}
+
+.beagu-header-auth-only #beaguParticipationDetail{margin-bottom:10px}
+.beagu-participation-dialog #beaguParticipationMessage:empty{display:none!important}
+.beagu-header-auth .beagu-header-code button:focus-visible{outline:2px solid #93baf7;outline-offset:2px}

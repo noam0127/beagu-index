@@ -28,14 +28,14 @@
   c.fillStyle="#071b2e";c.fillRect(40,top,920,h);c.drawImage(canvas,(w-imgW)/2,top,imgW,h);
   metrics.forEach((value,i)=>{const x=40+(i%2)*466,y=gridY+Math.floor(i/2)*84;c.fillStyle="#ffffff18";c.fillRect(x,y,454,70);c.fillStyle="#fff";c.font="800 28px sans-serif";c.fillText(value,x+18,y+45,418);});
   c.fillStyle="#bcd2e7";c.font="600 19px sans-serif";c.fillText(data.note||"개인 게임 결과 · 공식 인증서 아님",40,image.height-54,920);
-  c.fillStyle="#e4c990";c.fillText("baeguindex.com  |  플레이코트",40,image.height-29,920);
+  c.fillStyle="#e4c990";c.fillText("baeguindex.com  |  플레이",40,image.height-29,920);
   return image;
  }
  function create(parent,canvas,{compact=false}={}){
   const section=text("section",compact?"arcade-result-share arcade-result-compact":"arcade-result-share arcade-result-full");
   section.hidden=true;parent.append(section);
-  let snapshot=null,blob=null,serial=0,copying=false;
-  const clear=()=>{serial++;snapshot=null;blob=null;copying=false;section.hidden=true;section.replaceChildren();};
+  let snapshot=null,blob=null,serial=0;
+  const clear=()=>{serial++;snapshot=null;blob=null;section.hidden=true;section.replaceChildren();};
   function show(data,actions=[]){
    clear();const ticket=serial;
    if(!compact){
@@ -49,22 +49,22 @@
    }
    if(compact){const stats=text("div","arcade-result-metrics");for(const value of data.metrics.slice(0,4))stats.append(text("span","",value));section.append(stats);}
    const buttons=text("div","arcade-result-actions");
-   const copy=text("button","arcade-result-copy","게임화면을 복사하기");copy.type="button";copy.disabled=true;
+   const save=text("button","arcade-result-save","💾 게임결과 저장");save.type="button";save.disabled=true;
    const brag=text("a","arcade-result-brag","자랑하기 ↗");brag.href=LOUNGE;brag.target="_blank";brag.rel="noopener noreferrer";
-   const download=text("button","arcade-result-download","이미지 저장");download.type="button";download.hidden=true;download.disabled=true;
-   const msg=text("p","arcade-result-status","결과 이미지를 준비하고 있습니다.");msg.setAttribute("role","status");msg.setAttribute("aria-live","polite");
-   buttons.append(copy,brag);section.append(buttons,download,msg);
+   const msg=text("p","arcade-result-status","");msg.setAttribute("role","status");msg.setAttribute("aria-live","polite");
+   buttons.append(save,brag);section.append(buttons,msg);
    section.hidden=false;section.scrollTop=0;
-   const prepared=()=>{if(ticket!==serial)return;copy.disabled=!blob;download.disabled=!blob;download.hidden=!blob;msg.textContent=blob?"이미지를 복사한 뒤 인디스쿨 라운지에 붙여넣어 주세요.":"이미지를 만들 수 없습니다."};
+   const prepared=()=>{if(ticket!==serial)return;save.disabled=!blob;msg.textContent=blob?"":"이미지를 만들 수 없습니다.";};
    try{snapshot=makeSnapshot(canvas,data);snapshot.toBlob(b=>{if(ticket!==serial)return;blob=b;prepared();},"image/png");}catch(_){prepared();}
-   download.addEventListener("click",()=>{if(ticket!==serial||!blob)return;const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="baegu-game-result.png";a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);msg.textContent="저장한 이미지를 인디스쿨 라운지에 첨부해 주세요.";});
-   copy.addEventListener("click",async()=>{
-    if(ticket!==serial||!blob||copying)return;
-    if(!navigator.clipboard?.write||typeof ClipboardItem==="undefined"){download.hidden=false;msg.textContent="이 브라우저에서는 이미지 복사를 지원하지 않습니다. 이미지 저장을 이용해 주세요.";return;}
-    copying=true;copy.disabled=true;
-    try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);if(ticket===serial)msg.textContent="게임 결과 이미지를 복사했습니다. 자랑하기를 눌러 붙여넣어 주세요.";}
-    catch(_){if(ticket===serial){download.hidden=false;msg.textContent="이미지 복사 권한이 없습니다. 이미지 저장을 이용해 주세요.";}}
-    finally{if(ticket===serial){copying=false;copy.disabled=false;}}
+   save.addEventListener("click",()=>{
+    if(ticket!==serial||!blob)return;
+    let url;
+    try{
+     url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;
+     a.download="baegu-game-result.png";document.body.append(a);a.click();a.remove();
+     msg.textContent="";
+    }catch(_){msg.textContent="이미지를 저장할 수 없습니다. 다시 시도해 주세요.";}
+    finally{if(url)setTimeout(()=>URL.revokeObjectURL(url),30000);}
    });
   }
   return {show,clear,setVisible:value=>{section.hidden=!value||!section.childNodes.length;}};

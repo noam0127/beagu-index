@@ -127,7 +127,8 @@ assert.match(read('js/visit-stats.js'),/sessionStorage/,'Browser session fallbac
 assert.match(read('js/visit-stats.js'),/body:\{action:'visit',visitor,event,page\}/,'Reuse one event for retries');
 assert.match(read('js/visit-stats.js'),/Number.isSafeInteger/,'Do not invent visit totals');
 assert.match(read('js/challenge.js'),/participantNo\.textContent = '순번 조회 실패'/,'Show a retryable ordinal error');
-assert.match(read('index.html'),/방문한 선생님/);
+assert.doesNotMatch(home,/방문한 선생님/);
+for(const period of ['today','month','total'])assert.ok(home.includes('data-stat="'+period+'"'),'Preserve real visitor counter '+period);
 assert.doesNotMatch(read('index.html'),/자료 공개 기준/);
 assert.doesNotMatch(read('index.html'),/class="data-access-link" href="challenge\.html"/,'No standalone home challenge CTA');
 

@@ -180,22 +180,22 @@
 <link rel="stylesheet" href="styles/beagu-clarity-v1.css?v=20261118-simplify1">
 <link rel="stylesheet" href="styles/beagu-auth-unified-v1.css?v=20261119-auth1">
 <link rel="stylesheet" href="styles/beagu-level-state-v1.css?v=20261121-logo-grid2">
-<script defer src="js/beagu-level-state-v1.js?v=20261121-logo-grid2"></script>
+<script defer src="js/beagu-level-state-v1.js?v=11113-header2"></script>
 <link rel="stylesheet" href="styles/beagu-auth-journey-v1.css?v=20261120-compact-card1">
 <link rel="stylesheet" href="styles/challenge-access-v1.css?v=20261120-heading-gap12">
-<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=20261123-priority2">
-<script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
+<link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=11113-header2">
+<script defer src="js/beagu-participation-auth-v2.js?v=11113-header2"></script>
 <link rel="stylesheet" href="styles/challenge-premium-grid-v1.css?v=20261123-layout1">
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/challenge-milestone-v1.css?v=150">
 <script defer src="js/beagu-release-info-v1.js?v=120"></script>
 <link rel="stylesheet" href="styles/beagu-communication-v1.css?v=160b">
-<link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
+<link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=11113-minimal">
 <link rel="stylesheet" href="styles/challenge-together-v1.css?v=11112">
 </head>
 <body class="beagu-ui-page beagu-page-challenge">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
-<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html">플레이코트</a><a href="challenge.html" aria-current="page">챌린지</a></nav></div></header>
+<header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈</a><a href="search.html">검색</a><a href="statistics.html">비교</a><a href="games.html">플레이</a><a href="challenge.html" aria-current="page">챌린지</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 <main id="main-content">
   <section id="challengeAccessPanel" class="challenge-access-panel beagu-auth-card beagu-levelup-card" aria-labelledby="challengeAccessTitle">
@@ -219,6 +219,7 @@
     <p id="challengeAccessFeedback" class="challenge-access-feedback beagu-auth-message" role="status" aria-live="polite">인증 상태 확인 중…</p>
     <p class="challenge-access-help beagu-auth-help"><a class="together-survey" href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">2026 배구지수 조사 참여하기</a><span>기존 참여코드로도 인증할 수 있습니다.</span></p>
   </section>
+  <p id="challengePublicSurvey"><a href="https://forms.gle/TPyCakK6Sj2zchRy7" target="_blank" rel="noopener noreferrer">조사 참여</a></p>
   <div id="challengeProtected" hidden>
   
 
@@ -279,14 +280,12 @@
   </section>
   <section class="together-benefits" aria-labelledby="togetherBenefitsTitle">
     <h2 id="togetherBenefitsTitle">Lv.2 전용 혜택</h2>
-    <p id="togetherBenefitsState">Lv.2 인증 후 이용</p>
-    <ul><li>승인된 확장 학교 상세자료 열람</li><li>승인된 최신 조사자료 열람</li><li>행정동 공동주택 평균 공시가격 열람</li><li>포스트잇 열람 (게시 권한은 별도)</li></ul>
+    <ul><li>확장 학교 상세자료 열람</li><li>최신 조사자료 열람</li><li>행정동 공동주택 평균 공시가격 열람</li></ul>
     <a class="together-level-guide" href="levels.html">레벨별 안내 →</a>
   </section>
   <details id="togetherIdentityDetails" class="challenge-account-details" data-html2canvas-ignore="true">
-    <summary>나의 인증정보 관리</summary>
-    <p id="togetherCurrentAuth" class="together-private-note" role="status">인증 상태 확인 중</p>
-    <p class="together-private-note">개인 인증정보입니다. 다른 사람에게 공유하지 마세요.</p>
+    <summary><span>나의 인증정보 관리</span><span id="togetherCurrentAuth" class="together-auth-level" role="status">확인 중</span></summary>
+    
   <section class="challenge-identity challenge-code-card" id="challengeIdentityPanel" data-referral-state="pending" data-html2canvas-ignore="true" aria-labelledby="challengeIdentityTitle">
     <div class="challenge-premium-emblem" aria-hidden="true"><span class="challenge-premium-crown">♛</span><strong>Lv.2</strong></div>
     <div class="challenge-vip-crown" id="challengeVipMedal" hidden aria-label="Lv.2 인증 완료 VIP 회원">
@@ -317,18 +316,18 @@
 <div id="beaguHomeNoticeBody" class="beagu-notice-common" hidden></div>
 <div id="beaguTierNotice" class="beagu-tier-notice" hidden><strong id="beaguTierNoticeLabel"></strong><p id="beaguTierNoticeBody"></p></div>
 <p id="beaguNoticeError" role="status" hidden></p>
-</section><details class="light-touch-opinion"><summary aria-label="의견 보내기" title="의견 보내기">?</summary><div class="light-touch-opinion-panel"><strong>의견 보내기</strong><p>실명·참여코드·설문 원문 등 개인정보는 제외해 주세요.</p><a href="mailto:manatee09@kakao.com?subject=2026%20%EB%B0%B0%EA%B5%AC%EC%A7%80%EC%88%98%20%EC%9D%98%EA%B2%AC">이메일 작성</a></div></details>
+</section><details class="light-touch-opinion"><summary aria-label="의견 보내기" title="의견 보내기">?</summary><div class="light-touch-opinion-panel"><strong>의견 보내기</strong><a href="mailto:manatee09@kakao.com?subject=2026%20%EB%B0%B0%EA%B5%AC%EC%A7%80%EC%88%98%20%EC%9D%98%EA%B2%AC">이메일 작성</a></div></details>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
-<script defer src="js/beagu-home-notice-public-v1.js?v=160b"></script>
+<script defer src="js/beagu-home-notice-public-v1.js?v=11113-minimal"></script>
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script src="js/visit-stats.js?v=20261120-gateway2"></script>
 <script src="js/challenge-progress-v1.js?v=20261117-no-release-promise"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/challenge.js?v=1112"></script>
-<script src="js/challenge-referral-v1.js?v=11112"></script>
-<script src="js/challenge-access-v1.js?v=1112"></script>
+<script src="js/challenge-referral-v1.js?v=11113-header"></script>
+<script src="js/challenge-access-v1.js?v=11113-minimal"></script>
 </body>
 </html>
 

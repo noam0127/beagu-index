@@ -1,6 +1,12 @@
 /* Never infer the audience from a page or UI badge. The endpoint derives it from the session. */
 (()=>{"use strict";
 const by=id=>document.getElementById(id),common=by("beaguHomeNoticeBody"),tier=by("beaguTierNotice"),label=by("beaguTierNoticeLabel"),body=by("beaguTierNoticeBody"),error=by("beaguNoticeError"),section=common?.closest("[data-notice-state]");if(!section||!tier||!label||!body||!error)return;
+const heading=section.querySelector("h2");
+if(heading){
+ const control=document.createElement("button");control.type="button";control.className="minimal-notice-toggle";control.textContent="공지사항";control.setAttribute("aria-expanded","false");control.setAttribute("aria-controls","beaguHomeNoticeBody beaguTierNotice beaguNoticeError");
+ heading.replaceChildren(control);section.classList.add("minimal-notice");
+ section.addEventListener("click",()=>{const open=section.classList.toggle("court-notice-open");control.setAttribute("aria-expanded",String(open));});
+}
 const endpoint=SUPABASE_URL+"/functions/v1/beagu-notice-audience-v1",key="beagu-level-session-v1";let generation=0,controller;
 const token=()=>{try{return sessionStorage.getItem(key)||""}catch{return ""}};
 function clear(){common.textContent="";body.textContent="";label.textContent="";common.hidden=tier.hidden=error.hidden=true;section.hidden=true;section.dataset.noticeState="loading";}
