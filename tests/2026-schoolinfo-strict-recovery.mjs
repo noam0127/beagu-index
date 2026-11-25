@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { normalizeDisclosureRegion,strictOfficialProfileMatch } from '../scripts/2026-schoolinfo-strict-recovery.mjs';
+const s={school_name:'가상초등학교',sido_standard:'광주',support_office:'광주광역시동부교육지원청',establishment:'공립',address:'광주광역시 북구 가상로 1'};
+const p={school_name:s.school_name,education_office:'전남광주통합특별시교육청(광주)',support_office:'전남광주통합특별시광주동부교육지원청',establishment:'공립',road_address:'전남광주통합특별시 북구 가상로 1',closed:'N',suspended:'N',disclosure_code:'S000000001'};
+assert.equal(normalizeDisclosureRegion('전남광주통합특별시교육청(전남)'),'전남');
+assert.equal(normalizeDisclosureRegion('전남광주통합특별시교육청'),'');
+assert.equal(strictOfficialProfileMatch(s,[p]),p);
+for(const patch of [{education_office:'전남광주통합특별시교육청(전남)'},{education_office:'전남광주통합특별시교육청'},{road_address:'전남광주통합특별시 북구 가상로 2'},{support_office:'광주서부교육지원청'},{establishment:'사립'},{closed:'Y'},{suspended:'Y'},{disclosure_code:'invalid'}]) assert.equal(strictOfficialProfileMatch(s,[{...p,...patch}]),null);
+assert.equal(strictOfficialProfileMatch(s,[p,{...p,disclosure_code:'S000000002'}]),null);
+console.log('strict Schoolinfo reconciliation fixture passed');
