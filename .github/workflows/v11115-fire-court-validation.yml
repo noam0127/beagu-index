@@ -34,6 +34,7 @@ jobs:
         run: |
           node tests/arcade-fire-court-browser.cjs
           node tests/volley-outcome-browser.cjs
+          node tests/arcade-school-recommend-browser.cjs
           node tests/run4-inventory-browser.cjs
           node tests/run4-boss-render-browser.cjs
           node tests/run4-hazard-replay-browser.cjs

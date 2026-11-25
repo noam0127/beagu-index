@@ -135,6 +135,39 @@ async function resolveSchool(rawId:unknown):Promise<SchoolChoice|null>{
    difficulty,eligible,missing_years,available_years,source_year:eligible?Math.max(...available_years):null,has_index:eligible};
 }
 
+// Sample only approved yearly records, then apply the identical eligibility/difficulty
+// resolver used by game start. A candidate's single-year value is never the returned tier.
+const recommendationCache=new Map<string,{until:number,schools:SchoolChoice[]}>();
+const recommendationPending=new Map<string,Promise<SchoolChoice[]>>();
+async function recommendSchool(tier:Difficulty):Promise<SchoolChoice|null>{
+ const cached=recommendationCache.get(tier);
+ let pool=cached&&cached.until>Date.now()?cached.schools:null;
+ if(!pool){
+  let task=recommendationPending.get(tier);
+  if(!task){
+   task=(async()=>{
+    const lower=({easy:0,normal:20,hard:40,very_hard:60,extreme:80})[tier];
+    const q=new URLSearchParams({select:"school_id",survey_year:"in.(2023,2024,2025,2026)",publication_status:"eq.PUBLISHED",privacy_reviewed:"eq.true",percentile:"gte."+lower,order:"school_id.asc",limit:"120",offset:String(Math.floor(Math.random()*3)*120)});
+    q.append("percentile",tier==="extreme"?"lte.100":"lt."+(lower+20));
+    let rows=await db("beagu_school_report_yearly?"+q) as Array<{school_id:string}>;
+    if(!rows.length&&q.get("offset")!=="0"){q.set("offset","0");rows=await db("beagu_school_report_yearly?"+q);}
+    const ids=[...new Set(rows.map(r=>r.school_id).filter(id=>typeof id==="string"))];
+    for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]];}
+    const found:SchoolChoice[]=[];
+    for(let i=0;i<Math.min(ids.length,9)&&found.length<3;i+=3){
+     const checked=await Promise.all(ids.slice(i,i+3).map(id=>resolveSchool(id).catch(()=>null)));
+     for(const school of checked)if(school?.eligible&&school.difficulty===tier)found.push(school);
+    }
+    recommendationCache.set(tier,{until:Date.now()+(found.length?45000:10000),schools:found});
+    return found;
+   })().finally(()=>recommendationPending.delete(tier));
+   recommendationPending.set(tier,task);
+  }
+  pool=await task;
+ }
+ return pool.length?pool[Math.floor(Math.random()*pool.length)]:null;
+}
+
 // Admin identity is derived exclusively from a Supabase Auth bearer JWT.
  // The service role never trusts any 'admin' flag in a request body.
 async function authenticatedAdmin(req: Request): Promise<{admin:boolean;invalid:boolean}> {
@@ -358,6 +391,7 @@ Deno.serve(async (req:Request)=>{
   try{
     if(req.method==="GET"){
       const params=new URL(req.url).searchParams;
+      if(params.has("recommend")){const tier=rankTier(params.get("recommend"));if(!tier)return error("invalid_difficulty",400,origin);return json({school:await recommendSchool(tier)},200,origin);}
       if(params.has("schools"))return json({schools:await searchSchools(params.get("schools")||"")},200,origin);
       if(params.has("school_id")){const school=await resolveSchool(params.get("school_id"));return school?json({school},200,origin):error("school_not_found",404,origin);}
       const game=params.get("game");

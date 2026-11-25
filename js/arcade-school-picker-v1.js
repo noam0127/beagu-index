@@ -17,7 +17,7 @@ class ArcadeSchoolPicker{
  constructor(mount){
   this.mount=typeof mount==="string"?document.querySelector(mount):mount;
   if(!this.mount)throw new Error("school picker mount unavailable");
-  this.selected=null;this.locked=false;this.onChange=null;this.onRequestChange=null;this.serial=0;this.timer=null;
+  this.selected=null;this.locked=false;this.recommendBusy=false;this.recommendControls=new Set();this.onChange=null;this.onRequestChange=null;this.serial=0;this.timer=null;
   const heading=make("div","arcade-school-heading","🏫 학교 선택");
   // 2023~2026년 자료 기준은 서버에서 검증합니다.
   this.input=make("input","arcade-school-input");
@@ -46,7 +46,7 @@ class ArcadeSchoolPicker{
   if(/^[A-Z0-9]{7}$/.test(target||""))setTimeout(()=>{if(this.serial===0&&!this.locked)void this.select({school_id:target});},0);
  }
  clear(){
-  this.serial++;this.selected=null;delete this.mount.dataset.schoolId;this.changeButton.hidden=true;this.surveyLink.hidden=true;this.results.replaceChildren();this.status.textContent="";
+  this.serial++;this.recommendBusy=false;this.syncRecommendControls();this.selected=null;delete this.mount.dataset.schoolId;this.changeButton.hidden=true;this.surveyLink.hidden=true;this.results.replaceChildren();this.status.textContent="";
   if(typeof this.onChange==="function")this.onChange(null);
  }
  focus(){this.input.focus();}
@@ -56,7 +56,7 @@ class ArcadeSchoolPicker{
   this.status.textContent="";
   this.focus();
  }
- setLocked(value){this.locked=Boolean(value);this.input.disabled=this.locked;this.results.hidden=this.locked;this.changeButton.textContent=this.locked?"⏹ 학교 변경":"🏫 학교 변경";}
+ setLocked(value){this.locked=Boolean(value);if(this.locked){this.serial++;this.recommendBusy=false;}this.syncRecommendControls();this.input.disabled=this.locked;this.results.hidden=this.locked;this.changeButton.textContent=this.locked?"⏹ 학교 변경":"🏫 학교 변경";}
  async request(path){
   const cached=cachedRequest(path);
   if(cached)return cached;
@@ -114,7 +114,7 @@ class ArcadeSchoolPicker{
  }
  async select(record){
   if(this.locked)return;
-  const ticket=++this.serial;
+  const ticket=++this.serial;this.recommendBusy=false;this.syncRecommendControls();
   this.status.textContent="학교의 게임 난이도 확인 중…";
   const perfStarted=performance.now();let perfSucceeded=false;
   try{
@@ -123,22 +123,58 @@ class ArcadeSchoolPicker{
    const school=data.school;
    if(!school||String(school.school_id)!==String(record.school_id)||!isSafe(school.school_name)||typeof school.eligible!=="boolean"||
       (school.eligible&&!["easy","normal","hard","very_hard","extreme"].includes(school.difficulty)))throw new Error("invalid_school");
-   this.selected=school;
-   this.mount.dataset.schoolId=String(school.school_id);
-   this.changeButton.hidden=false;
-   this.surveyLink.hidden=school.eligible===true;
-   this.input.value=school.school_name+" · "+(school.region||"");
-   this.results.replaceChildren();
-   if(school.eligible){
-    this.status.textContent="✅ "+school.school_name+" · "+difficultyLabels[school.difficulty];
-   }else{
-    this.status.textContent="🔒 조사 자료 없음 · 2026 조사 참여";
-   }
-   if(typeof this.onChange==="function")this.onChange(school);
+   this.applySchool(school);
    perfSucceeded=true;
   }catch(e){if(ticket===this.serial)this.status.textContent="학교 확인 실패. 다시 선택해 주세요.";}
   finally{if(ticket===this.serial&&!this.locked)
    window.BeaguPerf?.record('school_selection',performance.now()-perfStarted,perfSucceeded);}
+ }
+ applySchool(school){
+  this.selected=school;
+  this.mount.dataset.schoolId=String(school.school_id);
+  this.changeButton.hidden=false;
+  this.surveyLink.hidden=school.eligible===true;
+  this.input.value=school.school_name+" · "+(school.region||"");
+  this.results.replaceChildren();
+  if(school.eligible){
+   this.status.textContent="✅ "+school.school_name+" · "+difficultyLabels[school.difficulty];
+  }else{
+   this.status.textContent="🔒 조사 자료 없음 · 2026 조사 참여";
+  }
+  if(typeof this.onChange==="function")this.onChange(school);
+
+ }
+ syncRecommendControls(){
+  for(const control of this.recommendControls){
+   if(!control.isConnected){this.recommendControls.delete(control);continue;}
+   control.disabled=this.locked||this.recommendBusy;
+  }
+ }
+ attachRecommendation(row){
+  row.classList.add("arcade-school-action-row");
+  const select=make("select","arcade-school-recommend");select.setAttribute("aria-label","난이도별 학교 자동 추천");
+  const first=make("option","","🎲 학교 추천");first.value="";select.append(first);
+  for(const [value,label] of Object.entries(difficultyLabels)){const option=make("option","",label);option.value=value;select.append(option);}
+  const note=make("span","arcade-school-recommend-status","");note.setAttribute("role","status");note.hidden=true;
+  row.append(select,note);this.recommendControls.add(select);select.disabled=this.locked||this.recommendBusy;
+  select.addEventListener("change",async()=>{const tier=select.value;if(!Object.hasOwn(difficultyLabels,tier))return;select.value="";await this.recommend(tier,note);});
+  return select;
+ }
+ async recommend(tier,note){
+  if(this.locked||this.recommendBusy||!Object.hasOwn(difficultyLabels,tier))return;
+  clearTimeout(this.timer);const ticket=++this.serial;this.recommendBusy=true;this.syncRecommendControls();
+  const status=value=>{if(note){note.textContent=value;note.hidden=!value;}this.status.textContent=value;};
+  status(difficultyLabels[tier]+" 학교 찾는 중…");
+  try{
+   const response=await fetch(API+"?recommend="+encodeURIComponent(tier),{cache:"no-store",headers:{"Accept":"application/json"}});
+   if(!response.ok)throw Error("recommend_failed");
+   const data=await response.json();if(ticket!==this.serial||this.locked)return;
+   const school=data.school;
+   if(!school){status("추천 학교를 찾지 못했습니다. 다시 시도해 주세요.");return;}
+   if(!isSafe(school.school_id)||!isSafe(school.school_name)||school.eligible!==true||school.difficulty!==tier)throw Error("invalid_recommendation");
+   this.applySchool(school);if(note){note.textContent="";note.hidden=true;}
+  }catch(_){if(ticket===this.serial&&!this.locked)status("학교 추천 실패 · 다시 시도해 주세요.");}
+  finally{if(ticket===this.serial){this.recommendBusy=false;this.syncRecommendControls();}}
  }
  get(){return this.selected;}
 }

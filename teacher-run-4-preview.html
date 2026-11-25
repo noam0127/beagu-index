@@ -118,7 +118,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=20261123-cc0-bgm2">
 <link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=20261123-survival-contain1">
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
-<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=11115-recommend">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261123-priority2">
@@ -210,7 +210,7 @@ canvas{height:400px;cursor:default}
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script defer src="js/beagu-presence-games-v1.js?v=20261120-gateway2"></script>
 <script src="js/arcade-leaderboard-v1.js?v=1119"></script>
-<script src="js/arcade-school-picker-v1.js?v=1110-court"></script>
+<script src="js/arcade-school-picker-v1.js?v=11115-recommend"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
@@ -472,7 +472,7 @@ function resize(){
 }
 if(typeof ResizeObserver!=="undefined"){new ResizeObserver(resize).observe(canvas);}else{window.addEventListener("resize",resize);}
 function message(title,desc,choices,symbol="🎒"){
- resultView.clear();$("choices").classList.remove("arcade-result-replay-row");
+ resultView.clear();$("choices").classList.remove("arcade-result-replay-row","arcade-school-action-row");
  $("overlayTitle").textContent=title;$("overlayDesc").textContent=desc;$("overlaySymbol").textContent=symbol;
  const root=$("choices");root.replaceChildren();
  choices.forEach((c,i)=>{const b=document.createElement("button");b.type="button";b.textContent=c.label;b.className=i?"secondary":"";if(c.detail){const small=document.createElement("small");small.textContent=c.detail;b.append(small);}b.addEventListener("click",c.action);root.append(b);});
@@ -486,7 +486,7 @@ async function start(){
  if(state==="starting")return;
  const ticket=++startTicket;
  bgm.setStage(0);if(soundOn)bgm.sync(true); // Start inside user interaction; keep playing when session is approved.
- state="starting";
+ state="starting";schoolPicker.setLocked(true);
  message("학교 확인 중","",[],"🏫");
  const session=ranking?await ranking.start(selected):null;
  if(ticket!==startTicket)return;
@@ -535,6 +535,7 @@ function intro(){
   {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
    action:()=>ready?start():schoolPicker.focus()}
  ],"🏫");
+ schoolPicker.attachRecommendation($("choices"));
 }
 
 // The four existing reusable/held actions retain their original replay events.

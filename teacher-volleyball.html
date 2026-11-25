@@ -144,7 +144,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/arcade-cabinet-v1.css?v=11115-outcome">
 <link rel="stylesheet" href="styles/arcade-fullscreen-v1.css?v=11112-wide">
 <link rel="stylesheet" href="styles/arcade-scroll-rail-v1.css?v=20261120-rightscroll1">
-<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=20261119-picker-top1">
+<link rel="stylesheet" href="styles/arcade-school-picker-v1.css?v=11115-recommend">
 <link rel="stylesheet" href="styles/beagu-ui-refresh-v2.css?v=20261118-compare5">
 <script>if(window.self!==window.top)document.documentElement.classList.add("beagu-embedded");</script>
 <link rel="stylesheet" href="styles/beagu-site-header-v1.css?v=20261120-marker-nav2">
@@ -192,7 +192,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
           <div class="volley-ready-icon" aria-hidden="true">🏐</div>
           <h2 id="volley-ready-title">선생님배구 1.0</h2>
           <p id="volley-ready-detail" hidden></p>
-          <button type="button" id="volley-school-choose" class="volley-school-choose" aria-controls="arcade-school-picker">🏫 학교 선택하기</button>
+          <div id="volley-school-actions"><button type="button" id="volley-school-choose" class="volley-school-choose" aria-controls="arcade-school-picker">🏫 학교 선택하기</button></div>
         </div>
       </div>
       <div class="volley-pause-overlay" id="volley-pause-overlay" role="dialog" aria-labelledby="volley-pause-title" aria-modal="false" hidden>
@@ -220,7 +220,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script defer src="js/beagu-presence-games-v1.js?v=20261120-gateway2"></script>
 <script src="js/arcade-leaderboard-v1.js?v=11115-outcome"></script>
 <script src="js/volley-match-bonus-v1.js?v=11115-deuce"></script>
-<script src="js/arcade-school-picker-v1.js?v=1110-court"></script>
+<script src="js/arcade-school-picker-v1.js?v=11115-recommend"></script>
 <script src="js/arcade-fullscreen-v1.js?v=11112-wide"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
@@ -253,6 +253,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   let pauseExitBusy=false;
   const ranking=window.ArcadeLeaderboard ? new window.ArcadeLeaderboard("volleyball_25","#arcade-top10") : null;
   const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
+  schoolPicker.attachRecommendation(document.getElementById("volley-school-actions"));
   const battleProfiles={
     easy:{allySpeed:1.38,allyJump:1.20,allyReach:1.22,allyAttack:1.24,enemySpeed:4.7,enemyReaction:17,enemyLead:1,enemyError:82,enemyDeadzone:25,enemyJumpChance:.10,enemyJumpReach:105,enemyJumpForce:10.5,enemyReach:.82,enemyAttack:.68,enemySmashChance:.02,label:"아군 강화 · 상대 점프 드묾"},
     normal:{allySpeed:1.20,allyJump:1.10,allyReach:1.12,allyAttack:1.12,enemySpeed:6.0,enemyReaction:12,enemyLead:3,enemyError:58,enemyDeadzone:17,enemyJumpChance:.27,enemyJumpReach:125,enemyJumpForce:11.5,enemyReach:.91,enemyAttack:.83,enemySmashChance:.08,label:"아군 우세 · 상대 수비 보통"},
@@ -714,7 +715,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     bgm.setStage(0);if(soundOn)bgm.sync(true); // Start audio inside the initiating click (mobile gesture policy).
     const previousPhase=state.phase;
     const ticket=++startTicket;
-    state.phase="starting";syncUI();setStatus("조사 백분위와 참가 자격 확인 중…");
+    state.phase="starting";schoolPicker.setLocked(true);syncUI();setStatus("조사 백분위와 참가 자격 확인 중…");
     const session=ranking?await ranking.start(school):null;
     if(ticket!==startTicket)return;
     if(!session){
