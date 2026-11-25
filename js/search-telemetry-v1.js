@@ -30,11 +30,11 @@
    }).then(({data,error})=>{
      if(error){console.warn('학교 이용 이벤트 기록 비활성화');return;}
      if(data!==true)return;
-     // Record a verified school selection independently of optional UI counters.
+     // Count confirmed searches and actual detail renders independently; the server deduplicates each kind.
      // A missing/late-loading school-view widget must not silently discard the write.
-     if(type==='school_selected'){
-       void supabaseClient.rpc('beagu_record_school_view',{
-         p_school_id:schoolId,p_action_id:actionId,p_visitor:visitor
+     if(type==='detail_viewed'||type==='search_confirmed'||(type==='school_selected'&&page!=='school-report')){
+       void supabaseClient.rpc('beagu_record_school_view_v2',{
+         p_school_id:schoolId,p_action_id:actionId,p_visitor:visitor,p_event_type:type
        }).then(({data:view,error:viewError})=>{
          if(viewError){
            console.warn('학교 조회수 기록 비활성화');

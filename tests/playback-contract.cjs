@@ -22,14 +22,14 @@ assert.equal(t.limitX(12,295),5);t.up(1,false);assert.equal(t.axes(295,420,false
 t.down(3,{x:100,y:100},420);assert.equal(t.axes(210,420,true).y,-1);t.up(3,true);assert.equal(t.axes(210,420,true),null);
 t.down(4,{x:100,y:100},420);t.cancel(4);assert.equal(t.axes(210,420,false),null);assert.equal(t.takeJump(),false);
 assert.match(v,/if\(!canPlayerJump\(\)\)\{left.y=FLOOR-31;left.vy=0;\}/);assert.match(v,/canPlayerJump\(\)&&\(keys.jump\|\|keys.up\|\|touchJump\)/);
-assert.match(v,/if\(attackPointer!==null\)\{[\s\S]*?aimDash\(inputX,inputY\);else state.dashFrames=0;\s*state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;/);
+assert.match(v,/if\(attackPointer!==null\)\{\s*state.dashFrames=0;\s*state.spikeBufferFrames=SPIKE_BUFFER;/);
 assert.match(v,/p.contactFrames=spike\|\|cpuSmash\?12:9/);
 console.log('PASS target touch jump, flight exception, pointer cancel, unlimited held attack and contact debounce');
 
 // Desktop keyboard keeps its original direction, jump and cooldown. Mobile only has unlimited attack.
 assert.match(v,/if\(e.code==="KeyJ"\)\{e.preventDefault\(\);if\(!e.repeat\)requestSpike\(\);return;\}/);
 assert.match(v,/if\(!e.repeat\)requestDash\(\);return;/);
-assert.match(v,/\(!mobile&&state.dashCooldownFrames>0\)/);assert.match(v,/state.dashCooldownFrames=mobile\?0:DASH_COOLDOWN/);
+assert.match(v,/matchMedia\("\(pointer: coarse\)"\).matches\|\|state.phase!=="playing"\|\|state.dashCooldownFrames>0/);assert.match(v,/state.dashCooldownFrames=DASH_COOLDOWN/);
 assert.match(v,/event.pointerType==="mouse"\|\|state.phase!=="playing"/);
 assert.match(v,/const inputX=axes\?axes.x:keyboardDirection/);
 assert.match(v,/const inputY=axes\?axes.y:keyboardVertical/);

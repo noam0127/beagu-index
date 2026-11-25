@@ -1,0 +1,8 @@
+.school-like-button{display:inline-flex;align-items:center;gap:3px;border:0;background:transparent;padding:4px;color:inherit;font:inherit;cursor:pointer;white-space:nowrap;min-height:26px}.school-like-glyph{font-size:19px;line-height:1;color:#c94768}.school-like-button[aria-pressed=true] .school-like-glyph{color:#c94768}.school-like-button:disabled{cursor:default;opacity:1}.school-like-count{font-size:11px;font-variant-numeric:tabular-nums}.school-report-actions{display:inline-flex;align-items:center;gap:4px;flex-wrap:wrap}
+.school-report-footer{display:flex;justify-content:flex-end;align-items:center;margin-top:12px}.school-report-footer[hidden]{display:none}.school-report-footer .school-data-report{white-space:nowrap;font-weight:600}
+
+/* Keep heart and eye together as one non-wrapping horizontal unit, even in narrow cards. */
+.school-count-pair,.glory-header-meta.school-count-pair{display:inline-flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto;white-space:nowrap;min-width:max-content}
+.school-count-pair>.school-like-button,.school-count-pair>.school-view-count,.school-count-pair>.school-report-actions{flex:0 0 auto;white-space:nowrap;min-width:0;margin:0}
+.school-count-pair>.school-report-actions{flex-wrap:nowrap}.school-card .school-name>.school-name-text{min-width:0;overflow-wrap:anywhere}
+@media(max-width:420px){.school-count-pair,.glory-header-meta.school-count-pair{gap:5px}}

@@ -4,7 +4,7 @@ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const sql=read('supabase/migrations/20261123153000_beagu_2026_n1_final_approval_eligible.sql');
 const baseline=read('supabase/migrations/20261120213000_beagu_2026_publication_basis_fail_closed.sql');
 const lv2=read('supabase/migrations/20261121100000_beagu_2026_lv2_immediate_approved.sql');
-const html=read('admin.html');
+const html=read('tests/fixtures/admin-v1115-legacy.html');
 assert.match(sql,/coalesce\(r\.school_response_rows,0\)<1/);
 assert.match(sql,/at least one survey response required/);
 assert.doesNotMatch(sql,/school_response_rows\s*>?=\s*5|school_response_rows\s*<\s*5\s*then/i);

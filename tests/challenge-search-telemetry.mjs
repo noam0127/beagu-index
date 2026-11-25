@@ -134,7 +134,7 @@ assert.doesNotMatch(read('index.html'),/class="data-access-link" href="challenge
 
 for(const page of ['search.html','search-lv1.html','school-report.html']){
  const html=read(page);
- assert.match(html,/js\/search-telemetry-v1\.js\?v=20261120-[a-z0-9-]+/);
+ assert.match(html,/js\/search-telemetry-v1\.js\?v=11117-combined1/);
 }
 const publicSearch=read('search.html');
 const lv1=read('js/level-search.js'),lv2=read('js/lv2-edited-search.js');

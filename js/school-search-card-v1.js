@@ -11,6 +11,20 @@
   if(value!==undefined)n.textContent=String(value);
   return n;
  }
+ function createReportFlag(school){
+  const name=school.school_name||'학교명 없음';
+  const flag=el('button','school-data-report','🚩 자료신고');flag.type='button';flag.title='2026 자료 신고';flag.setAttribute('aria-label',name+' 자료 신고');flag.style.cssText='border:0;background:transparent;padding:6px;cursor:pointer;font-size:12px;line-height:1.4;color:inherit';
+  flag.addEventListener('click',async event=>{event.preventDefault();event.stopPropagation();
+   const detail=window.prompt('자료 신고 사유 (12~500자, 개인정보·실명 제외)');
+   if(detail===null)return;const reason=detail.trim();if(reason.length<12||reason.length>500){window.alert('신고 사유를 12~500자로 입력해 주세요.');return;}
+   flag.disabled=true;
+   try{let nonce;try{nonce=sessionStorage.getItem('beagu-civic-device-v1');if(!nonce){nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');sessionStorage.setItem('beagu-civic-device-v1',nonce);}}catch{nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');}
+    const res=await fetch('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-civic',{method:'POST',cache:'no-store',headers:{'content-type':'application/json','x-beagu-client':nonce},body:JSON.stringify({action:'simple_report',school_id:String(school.school_id),detail:reason})});
+    if(!res.ok)throw Error('report');window.alert('신고가 접수되었습니다.');
+   }catch{window.alert('신고 접수 실패. 잠시 후 다시 시도해 주세요.');}finally{flag.disabled=false;}
+  });
+  return flag;
+ }
  function addHeader(card,school){
   const name=school.school_name||'학교명 없음';
   const meta=el('div','school-meta');
@@ -22,24 +36,15 @@
   const views=el('span','school-view-count');
   views.dataset.schoolViewCount='';
   views.dataset.schoolId=String(school.school_id);
-  views.title='학교 상세 열람 조회수 · 하루 중복 제외';
-  views.setAttribute('aria-label','학교 상세 조회수 확인 중');
+  views.title='검색 + 상세조회 · 각각 하루 1회';
+  views.setAttribute('aria-label','검색 및 상세조회 합계 확인 중');
   const eye=el('span','school-view-eye');
   eye.setAttribute('aria-hidden','true');
   views.append(eye,el('strong','school-view-number','—'));
-  const right=el('div','glory-header-meta');
-  right.append(views);
-  const flag=el('button','school-data-report','🚩');flag.type='button';flag.title='2026 자료 신고';flag.setAttribute('aria-label',name+' 자료 신고');flag.style.cssText='border:0;background:transparent;padding:4px;cursor:pointer;font-size:16px;line-height:1';
-  flag.addEventListener('click',async event=>{event.preventDefault();event.stopPropagation();
-   const detail=window.prompt('자료 신고 사유 (12~500자, 개인정보·실명 제외)');
-   if(detail===null)return;const reason=detail.trim();if(reason.length<12||reason.length>500){window.alert('신고 사유를 12~500자로 입력해 주세요.');return;}
-   flag.disabled=true;
-   try{let nonce;try{nonce=sessionStorage.getItem('beagu-civic-device-v1');if(!nonce){nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');sessionStorage.setItem('beagu-civic-device-v1',nonce);}}catch{nonce=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');}
-    const res=await fetch('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-civic',{method:'POST',cache:'no-store',headers:{'content-type':'application/json','x-beagu-client':nonce},body:JSON.stringify({action:'simple_report',school_id:String(school.school_id),detail:reason})});
-    if(!res.ok)throw Error('report');window.alert('신고가 접수되었습니다.');
-   }catch{window.alert('신고 접수 실패. 잠시 후 다시 시도해 주세요.');}finally{flag.disabled=false;}
-  });
-  nameHeading.append(el('span','school-name-text',name),flag,right);
+  const right=el('div','glory-header-meta school-count-pair');
+  const heart=window.BeaguSchoolLikes?.create(String(school.school_id));
+  if(heart)right.append(heart);right.append(views);
+  nameHeading.append(el('span','school-name-text',name),right);
   card.append(nameHeading,meta);
   return card;
  }
@@ -67,16 +72,47 @@
  function percentiles({publicValues=[],statuses=[],publicError=false,value2026=null,
    status2026='unpublished',locked=false,viewerTier=null}={}){
   const section=el('section','percentile-panel glory-percentile');
-  const current=!locked&&viewerTier!==1&&valid(value2026)?value2026:null;
-  const historical=viewerTier===1||(viewerTier===2&&current===null);
-  const year=historical?2025:2026;
-  const value=historical?(valid(publicValues[2])?publicValues[2]:null):current;
+  // Lv0/Lv1 keep the 2025 card. Lv2 displays all four years, without inventing zeros.
+  if(viewerTier===2){
+   const current=!locked&&valid(value2026)?value2026:null;
+   const values=[current,...[2,1,0].map(i=>valid(publicValues[i])?publicValues[i]:null)];
+   const years=[2026,2025,2024,2023];
+   const first=values.findIndex(v=>v!==null),latest=first<0?0:first;
+   section.dataset.displayYear=String(years[latest]);
+   section.dataset.publishedYears=years.filter((_,i)=>values[i]!==null).slice().reverse().join(',');
+   section.setAttribute('aria-label','2026~2023 배구지수 백분위');
+   section.append(el('h3','percentile-heading',years[latest]+' 배구지수'));
+   const group=el('div','glory-four-year');
+   years.forEach((year,i)=>{
+    const value=values[i],row=el('div','glory-year-row');
+    row.dataset.year=String(year);
+    row.append(el('span','glory-year-label',year));
+    const track=el('div','glory-track');
+    if(value!==null){
+     const fill=el('span','glory-fill');
+     fill.style.width=value+'%';
+     track.setAttribute('role','progressbar');
+     track.setAttribute('aria-label',year+'년 배구지수 백분위');
+     track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100');track.setAttribute('aria-valuenow',String(value));
+     track.append(fill);
+    }else{track.classList.add('glory-track-missing');track.setAttribute('aria-hidden','true');}
+    row.append(track,el('strong',i===latest?'glory-year-value glory-score':'glory-year-value',value===null?labelFor(i===0?(locked?STATES.LOCKED:status2026):publicState(statuses[3-i],publicError)):value.toFixed(1)+'%'));
+    group.append(row);
+   });
+   section.append(group);
+   return section;
+  }
+  const current=!locked&&viewerTier!==0&&viewerTier!==1&&valid(value2026)?value2026:null;
+  const historical=viewerTier===0||viewerTier===1;
+  const fallback=viewerTier===2?[2,1,0].find(i=>valid(publicValues[i])):2;
+  const year=historical?2023+(fallback??2):2026;
+  const value=historical?(valid(publicValues[fallback])?publicValues[fallback]:null):current;
   section.dataset.displayYear=String(year);
   section.setAttribute('aria-label',year+' 배구지수 백분위');
   section.dataset.publishedYears=[2023,2024,2025].filter((y,i)=>valid(publicValues[i])).concat(current!==null?[2026]:[]).join(',');
   section.append(el('h3','percentile-heading',year+' 배구지수'));
   const row=el('div','glory-score-row');
-  row.append(el('strong','glory-score',value===null?labelFor(historical?publicState(statuses[2],publicError):(locked?STATES.LOCKED:status2026)):value.toFixed(1)+'%'));
+  row.append(el('strong','glory-score',value===null?labelFor(historical?publicState(statuses[fallback??2],publicError):(locked?STATES.LOCKED:status2026)):value.toFixed(1)+'%'));
   if(value!==null){
    const track=el('div','glory-track'),fill=el('span','glory-fill');
    track.setAttribute('role','progressbar');track.setAttribute('aria-label','배구지수 백분위');
@@ -114,7 +150,7 @@
  function addSortPrimary(card,school,sortBy,level){
   const key=String(sortBy||'school_name').replace(/_(?:asc|desc)$/,'');
   if(key==='school_name'||['student_count','male_teacher_ratio','junior_teacher_ratio'].includes(key)||(level===0&&key!=='address')||
-     (level<2&&key==='housing_price_won'))return;
+     (level<1&&key==='housing_price_won'))return;
   const numeric=(value,suffix,options={})=>{
    if(value===null||value===undefined||value===''||
       !Number.isFinite(Number(value))||Number(value)<0)return '자료 없음';
@@ -193,5 +229,5 @@
   if(detail)card.append(detail);
   return {card,open,detail,experience};
  }
- window.BeaguSchoolSearchCard=Object.freeze({addHeader,percentiles,createCard,updateRecordedYears,STATES});
+ window.BeaguSchoolSearchCard=Object.freeze({addHeader,createReportFlag,percentiles,createCard,updateRecordedYears,STATES});
 })();
