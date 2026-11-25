@@ -145,6 +145,8 @@
     $('searchPanel').hidden = true;
     viewerTier=1;
     $('loginMessage').textContent = message;
+    // Auth is now in the shared header; never strand logged-out visitors on a blank protected page.
+    window.location.replace('search.html');
   }
   function loggedIn() {
     window.dispatchEvent(new Event('beagu:level-state-change'));
