@@ -1,7 +1,7 @@
 name: Fire Court isolated validation
 on:
   push:
-    branches: [release/v1.11.15-fire-court, fix/v1115-school-glory-after-fire-court]
+    branches: [release/v1.11.15-fire-court, fix/v1115-school-glory-after-fire-court, fix/v11116-court-renewal-ui-only]
   workflow_dispatch:
 permissions:
   contents: read
