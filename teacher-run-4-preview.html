@@ -130,7 +130,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
 <link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11113-save">
-<link rel="stylesheet" href="styles/teacher-run-4-leave.css?v=11112">
+<link rel="stylesheet" href="styles/teacher-run-4-leave.css?v=11115-items">
 <link rel="stylesheet" href="styles/run4-local-board-v1.css?v=11111">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 <link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=2">
@@ -178,6 +178,7 @@ canvas{height:400px;cursor:default}
     </div>
     <div id="run4-leave-inventory" class="run4-leave" aria-label="사용 가능한 휴가권 및 연대"></div>
     <div id="run4-leave-fullscreen" class="run4-leave" aria-label="게임 중 사용 가능한 휴가권 및 연대"></div>
+    <div id="run4-active-effects" class="run4-active-effects" aria-label="현재 적용 중인 효과" hidden></div>
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 4.0 — 정년까지 살아남아라 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
       <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 4.0 — 정년까지 살아남아라</h2><p id="overlayDesc">24세 임용, 62세 정년까지! 5초마다 한 살 · 정년 달성 시 점수 2배</p><div class="choices" id="choices"></div></div>
@@ -477,7 +478,7 @@ async function start(){
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
  state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";retirementScene=false;combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";solidarityUntil=0;retirementScene=false;combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;resetChalkHelpers();
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=Math.max(profile.inv,3);
  resetPatternHazards();resetMystery();
@@ -492,7 +493,7 @@ function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;resetPatternHazards();resetMystery();
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";retirementScene=false;score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";solidarityUntil=0;retirementScene=false;score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -515,33 +516,74 @@ function intro(){
  ],"🏫");
 }
 
+// The four existing reusable/held actions retain their original replay events.
+// Stable slot mapping avoids moving hotkeys when a ticket is acquired or spent.
+const inventoryKeys=["z","x","c","v"],inventoryYears=[5,10,20];
+let solidarityUntil=0;
+function inventorySlots(info,playing,remaining){
+ const slots=inventoryYears.map((years,i)=>{
+  const plan=rules.leavePlan.find(p=>p.years===years),pending=info.pending.some(p=>p.years===years),held=info.held.some(p=>p.years===years);
+  return {key:inventoryKeys[i],years,icon:"🌴",name:years+"년 장기재직휴가 "+plan.days+"일",status:pending?"pending":held?"held":"empty",enabled:playing&&(pending||(held&&remaining<=0)),days:plan.days};
+ });
+ const available=allies.count()>=2,ready=available&&allies.canCooperate(clock);
+ slots.push({key:"v",icon:"🤝",name:"선생님들의 연대",status:ready?"held":available?"cooldown":"empty",enabled:playing&&ready});
+ return slots;
+}
+function useInventorySlot(index){
+ if(state!=="playing"||!Number.isInteger(index)||index<0||index>3)return false;
+ const slot=inventorySlots(leave.state(),true,leave.remaining(clock))[index];
+ if(!slot.enabled)return false;
+ if(index===3){cooperate();return true;}
+ if(slot.status==="pending"){
+  if(!leave.collect(slot.years))return false;
+  recordInput("collect",{choice:slot.years});setNotice("🌿 "+slot.days+"일 휴가권을 보관했습니다.",2);playTone(760,.15);syncLeave();return true;
+ }
+ const benefit=leave.use(slot.years,clock,life,maxLife,bosses.tier.leave);
+ if(!benefit)return false;
+ recordInput("leave",{choice:slot.years});life=benefit.hp;
+ setNotice("☀ "+slot.days+"일 재충전",2.5);burst(player.x,player.y,"#ffdf80",22);playTone(880,.2);updateLabels();return true;
+}
+function activeItemIcons(){
+ const result=[];
+ const push=(id,icon,name,remaining,bad=false)=>{if(remaining>0)result.push({id,icon,name,ending:remaining<=2,bad});};
+ push("leave","🌴","장기재직휴가",leave.remaining(clock));
+ push("solidarity","🤝","선생님들의 연대",solidarityUntil-clock);
+ for(const [id,until] of Object.entries(mysteryBuffs)){
+  const item=[...mystery.good,...mystery.bad].find(p=>p.id===id);
+  if(item)push("mystery-"+id,item.icon,item.name,until-clock,!item.good);
+ }
+ for(const item of effects.labels(clock)){
+  const p=rules.items.find(p=>p.buff===item.id);
+  if(p)push("effect-"+item.id,p.emoji,p.name,item.remaining,!p.good);
+ }
+ if(effects.values(clock).shield||growth.shields()>0)push("shield","🛡️","교권 보호막",Infinity);
+ if(player.inv>0&&!leave.active(clock)&&solidarityUntil<=clock)push("inv","✨","일시 보호",player.inv);
+ return result;
+}
 function syncLeave(){
- const info=leave.state(),remaining=Math.ceil(leave.remaining(clock)),playing=state==="playing";
- const coopRemaining=Math.ceil(allies.cooldown(clock));
- const key=JSON.stringify([info.pending.map(p=>p.years),info.held.map(p=>p.years),remaining,playing,allies.count(),coopRemaining]);
+ const info=leave.state(),playing=state==="playing",visible=playing||state==="paused"||state==="between";
+ const slots=inventorySlots(info,playing,leave.remaining(clock));
+ const icons=visible?activeItemIcons():[];
+ const key=JSON.stringify([visible,state,slots,icons]);
  if(key===leaveUiKey)return;
  leaveUiKey=key;
  for(const id of ["run4-leave-inventory","run4-leave-fullscreen"]){
-  const host=$(id);host.replaceChildren();
-  const label=document.createElement("span");label.className="run4-leave-label";
-  label.textContent=remaining>0?(remaining<=1?"☀ 휴가 종료 임박":"☀ 휴가 중 "+remaining+"초"):"🌿 장기재직휴가";
-  host.hidden=!info.pending.length&&!info.held.length&&!remaining&&allies.count()<2;
-  if(info.pending.length||info.held.length||remaining)host.append(label);
-  for(const p of info.pending){
-   const b=document.createElement("button");b.type="button";b.className="run4-leave-pick";b.textContent="🎁 "+p.days+"일 받기";b.disabled=!playing;
-   b.setAttribute("aria-label",p.years+"년 장기재직휴가 "+p.days+"일 획득");
-   b.onclick=()=>{if(state!=="playing"||!leave.collect(p.years))return;recordInput("collect",{choice:p.years});setNotice("🌿 "+p.days+"일 휴가권을 보관했습니다.",2);playTone(760,.15);syncLeave();};
-   host.append(b);
+  const host=$(id);host.hidden=!visible;host.replaceChildren();
+  if(!visible)continue;
+  for(const [i,p] of slots.entries()){
+   const b=document.createElement("button");b.type="button";b.className="run4-slot "+p.status;b.disabled=!p.enabled;
+   b.setAttribute("aria-label",p.name+(p.status==="pending"?" 획득":p.status==="held"?" 사용":" 사용 불가")+" ("+p.key.toUpperCase()+")");
+   b.title=p.name+(p.status==="pending"?" 획득":p.status==="held"?" 사용":"");
+   const glyph=document.createElement("span");glyph.className="run4-slot-icon";glyph.textContent=p.icon;glyph.setAttribute("aria-hidden","true");
+   const key=document.createElement("kbd");key.textContent=p.key.toUpperCase();key.className="run4-slot-key";key.setAttribute("aria-hidden","true");
+   b.append(glyph,key);
+   if(p.status==="pending"){const gift=document.createElement("span");gift.className="run4-slot-gift";gift.textContent="🎁";b.append(gift);}
+   if(p.days){const days=document.createElement("span");days.className="run4-slot-days";days.textContent=String(p.days);b.append(days);}
+   b.onclick=()=>useInventorySlot(i);host.append(b);
   }
-  for(const p of info.held){
-   const b=document.createElement("button");b.type="button";b.textContent=p.days+"일 사용";b.disabled=!playing||remaining>0;
-   b.setAttribute("aria-label",p.years+"년 휴가권 "+p.days+"일 사용");
-   b.onclick=()=>{if(state!=="playing")return;const benefit=leave.use(p.years,clock,life,maxLife,bosses.tier.leave);if(!benefit)return;recordInput("leave",{choice:p.years});life=benefit.hp;setNotice("☀ "+p.days+"일 재충전 · "+p.seconds+"초 보호",2.5);burst(player.x,player.y,"#ffdf80",22);playTone(880,.2);updateLabels();};
-   host.append(b);
-  }
-  if(allies.count()>=2){const b=document.createElement("button");b.type="button";b.textContent=coopRemaining?"연대 "+coopRemaining+"초":"🤝 선생님들의 연대";b.disabled=!playing||!allies.canCooperate(clock);b.onclick=cooperate;host.append(b);}
-
  }
+ const active=$("run4-active-effects");active.hidden=!visible||!icons.length;active.replaceChildren();
+ for(const p of icons){const item=document.createElement("span");item.className="run4-effect-icon"+(p.ending?" ending":"")+(p.bad?" bad":"");item.textContent=p.icon;item.title=p.name;item.setAttribute("aria-label",p.name+(p.ending?" 종료 임박":""));item.setAttribute("role","img");active.append(item);}
 }
 function updateLabels(){
  syncLeave();
@@ -1069,13 +1111,7 @@ function drawMystery(){
  }
 }
 function mysterySituation(){
- const buffs=Object.entries(mysteryBuffs).filter(([,t])=>t>clock)
-  .map(([k,t])=>{
-   const found=[...mystery.good,...mystery.bad].find(item=>item.id===k);
-   return (found?.name||k)+" "+Math.ceil(t-clock)+"초";
-  }).slice(0,2);
- return getAge()+"세 · "+Math.floor(score).toLocaleString("ko-KR")+"점 · "+
-  Math.floor(clock)+"초 · "+(bosses.active()?"보스 · ":"")+"R"+(stage+1)+" · "+Math.floor(clock/5)+"년 · 콤보 "+combo+(buffs.length?" · "+buffs.join(" / "):"")+(effects.labels(clock).length?" · "+effects.labels(clock).map(b=>(rules.items.find(p=>p.buff===b.id)?.name||b.id)+" "+b.remaining+"초").join(" / "):"");
+ return getAge()+"세 · "+Math.floor(score).toLocaleString("ko-KR")+"점 · "+Math.floor(clock)+"초 · "+(bosses.active()?"보스 · ":"")+"R"+(stage+1)+" · "+Math.floor(clock/5)+"년 · 콤보 "+combo;
 }
 function resetBossThreats(){bossWarn=null;bossProjectiles=[];bossShot=0;}
 function damageBoss(amount){
@@ -1112,7 +1148,7 @@ function updateAllies(){
 }
 function cooperate(){
  if(state!=="playing"||!allies.cooperate(clock))return;
- recordInput("cooperate");
+ recordInput("cooperate");solidarityUntil=clock+2;
  clearNearby(100);sideStudents=[];paperBullets=[];paperTarget=null;
  bossProjectiles=bossProjectiles.filter(p=>p.friendly);
  if(bosses.active())damageBoss(35*growth.effects().power);
@@ -1543,6 +1579,8 @@ window.addEventListener("keydown",e=>{
   return;
  }
  if(state!=="playing")return;
+ const itemIndex=inventoryKeys.indexOf(key);
+ if(itemIndex>=0){if(!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();if(!e.repeat)useInventorySlot(itemIndex);}return;}
  if(!["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(key))return;
  e.preventDefault(); // Arrow keys and WASD move the teacher, not the page.
  const beforeMask=keyMask();
