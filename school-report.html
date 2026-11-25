@@ -270,6 +270,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
   <div class="main-content" id="mainContent" hidden>
     <section class="school-hero" aria-label="학교 기본정보"><div class="hero-top"><div><p class="region" id="regionText">—</p><h2 id="schoolName">—</h2><p id="schoolAddress" class="address">—</p></div><span class="access-tag" id="accessTag">Lv.0 공개 정보</span></div><div class="hero-foot"><span class="icon-fact" id="schoolOffice">교육지원청 확인 중</span><span class="icon-fact" id="schoolType">학교정보</span><span id="reportSchoolViews" class="school-view-count" data-school-view-count aria-label="학교 선택 횟수 확인 중"><span class="school-view-eye" aria-hidden="true"></span><strong class="school-view-number">—</strong></span><a id="reportPostitLink" href="postit.html" class="postit-quick-link postit-lv2-link">▤ 포스트잇</a><a id="reportExperienceLink" href="teacher-volleyball.html" class="court-experience-link" hidden>학교체험</a><a href="#schoolInput" class="change-school">다른 학교 검색 ↗</a></div></section>
     <section class="tier-panel court-compact-access" id="tierPanel" aria-label="등급별 열람"><div class="tier-selector" id="tierSelector"><button class="tier-button" id="tier0" type="button" aria-pressed="true"><strong>Lv.0 공개</strong></button><button class="tier-button" id="tier1" type="button" aria-pressed="false"><strong>Lv.1 참여자</strong></button></div><div class="tier-code-panel" id="tierCodePanel" hidden><form id="tierCodeForm"><label for="tierCode">해당 등급의 참여코드 또는 교사 인증코드를 입력하세요.</label><div style="display:flex;gap:8px"><input id="tierCode" type="password" autocomplete="off" autocapitalize="off" minlength="8" maxlength="120" placeholder="인증코드" required><button id="tierSubmit" type="submit">레벨1 인증</button></div></form><p class="tier-error" id="tierError" aria-live="polite"></p></div></section>
+    <section id="reportPublicBasics2026" class="approved-summary" aria-live="polite"></section>
     <section id="reportBasicCard" class="school-survey-snapshot" aria-live="polite" aria-label="기본 배구지수"></section>
     <section class="year-overview" aria-label="연도별 조사 기록"><div class="section-top"><div><h3>연도별 기록</h3></div><button class="outline-btn" id="comparisonHelp" type="button">비교 시 유의사항 <span aria-hidden="true">ⓘ</span></button></div><div class="year-grid" id="yearGrid" role="tablist" aria-label="연도 선택"></div><div id="beaguYearGraph" style="width:100%;max-width:480px;margin:0 auto"></div></section>
     <section class="latest-year-status" aria-label="2026년 최신 조사 공개 상태">
@@ -1216,6 +1217,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
 <script src="js/historical-original-questions.js?v=20261117-source-headers"></script>
 <script src="js/historical-questionnaire-choices.js?v=20261117-verified-v1"></script>
 <script src="js/2025-observed-choices.js?v=20261117-observed30"></script>
+<script src="js/public-school-basics-2026-v1.js?v=11117"></script>
 <script>
 /* 학교별 조사기록 UI v1.0. 공개 자료만 사용합니다.
  * Lv.1/Lv.2의 실제 접근 권한은 기존 Supabase 서버 검증 로직에서 처리해야 합니다.
@@ -1764,6 +1766,8 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     }
   }
   function showSchool(school,years){
+    const factsHost=$('reportPublicBasics2026');factsHost.hidden=!!state.demo;window.BeaguPublicSchoolBasics2026.render(factsHost,null);
+    if(!state.demo){const id=String(school.school_id);void window.BeaguPublicSchoolBasics2026.load([id]).then(data=>{if(!state.demo&&String(state.school?.school_id)===id)window.BeaguPublicSchoolBasics2026.render(factsHost,data[id]);}).catch(()=>{if(!state.demo&&String(state.school?.school_id)===id)window.BeaguPublicSchoolBasics2026.render(factsHost,null,true);});}
     const postit=document.getElementById('reportPostitLink');
     if(postit)postit.href='postit.html?school_id='+encodeURIComponent(String(school.school_id));
     const experience=document.getElementById('reportExperienceLink');

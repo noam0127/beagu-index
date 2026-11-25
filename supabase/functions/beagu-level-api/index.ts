@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {publicQuestionResults} from '../_shared/results-2026.mjs';
 import { releaseMetrics, legacyRows } from '../_shared/release-policy.mjs';
-import {projectOfficialProfiles2026} from '../_shared/official-school-profile-2026.mjs';
+import {projectOfficialProfiles2026,projectPublicSchoolBasics2026} from '../_shared/official-school-profile-2026.mjs';
 const url=Deno.env.get('SUPABASE_URL')!;
 const key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -38,6 +38,14 @@ Deno.serve(async(req:Request)=>{
  try{const reader=req.body?.getReader();if(!reader)throw Error();let size=0,raw='';const decoder=new TextDecoder();while(true){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;if(size>1024){await reader.cancel();return send({error:'TOO_LARGE'},413,origin);}raw+=decoder.decode(part.value,{stream:true});}body=JSON.parse(raw+decoder.decode());}catch{return send({error:'INVALID_JSON'},400,origin);}
  if(!body||typeof body!=='object'||Array.isArray(body))return send({error:'INVALID_BODY'},400,origin);
  try{
+  // No survey fields or protected prices are available through this public action.
+  if(body.action==='public_school_basics_2026'){
+   const ids=body.schoolIds;
+   if(!Array.isArray(ids)||ids.length<1||ids.length>20||ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
+   const {data:profiles,error}=await admin.from('beagu_2026_official_school_profiles').select('school_id,disclosure_code,source_year,teacher_total,profile').in('school_id',ids).eq('source_year',2026).limit(20);
+   if(error)return send({error:'OFFICIAL_BASICS_UNAVAILABLE'},503,origin);
+   return send({official2026:projectPublicSchoolBasics2026(profiles,ids)},200,origin);
+  }
   if(body.action==='login'){
    // Database-backed global limiter cannot be evaded with forged IP headers.
    const {data:permitted,error:limitError}=await admin.rpc('beagu_consume_login_budget');

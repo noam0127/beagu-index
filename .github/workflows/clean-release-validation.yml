@@ -48,6 +48,7 @@ jobs:
           node tests/referral-promotion-v1.cjs
           node tests/v11117-bound-participant.mjs
           node tests/v11117-game-inventory.mjs
+          node tests/v11117-public-school-basics.mjs
           node tests/2026-public-projection-integrity.mjs
           node tests/2026-question-results-pipeline.mjs
           node tests/2026-release-consent-gate.mjs

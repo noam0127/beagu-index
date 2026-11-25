@@ -15,7 +15,7 @@ assert.match(js,/elements\.lv2Upgrade\.hidden=!\(authenticated && state\.authLev
 assert.match(js,/if\(Number\(verified\?\.level\)<2\)/);
 assert.match(js,/Lv\.1 인증은 그대로 유지됩니다/);
 assert.match(js,/district_housing_price_mean/);
-assert.match(js,/state\.authLevel<2/);
+assert.match(js,/state\.authLevel<1/);
 assert.match(js,/₩ •••,•••,•••/);
 assert.match(server,/fact_key==='district_housing_price_mean'\?1/);
 assert.match(js,/key==='district_housing_price_mean' && \(!state\.sessionToken \|\| state\.authLevel<1\)/);

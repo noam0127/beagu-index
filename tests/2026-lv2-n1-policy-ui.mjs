@@ -13,7 +13,7 @@ assert.match(html,/js\/level-search\.js\?v=[A-Za-z0-9-]+/);
 assert.match(js,/유효 응답이 1건인 학교도 최종 공개 승인 대상/);
 assert.match(js,/공개 근거·소표본 재식별 검토가 완료된 학교별 결과만 표시/);
 assert.match(js,/아직 공개 근거·재식별 검토 및 최종 승인이 완료되지 않아/);
-assert.match(js,/const allowedYears=\[1,2\]\.includes\(viewerTier\)\?YEARS:YEARS\.filter\(year=>year!==2026\)/);
+assert.match(js,/const allowedYears=\[1,2\]\.includes\(viewerTier\)\?YEARS:\[\]/);
 assert.match(js,/if\(!allowedYears\.includes\(year\)\)return/);
 assert.match(js,/choose\(\[1,2\]\.includes\(viewerTier\)&&\(current2026\.get\(String\(school\.school_id\)\)\?\.status==='published'\|\|firstAvailable===2026\)\?2026:2025\)/);
 assert.match(js,/window\.Beagu2026ApprovedResults\?\.render\(host,results2026,\{level:viewerTier\}\)/);
