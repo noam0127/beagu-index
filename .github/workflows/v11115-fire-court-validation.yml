@@ -1,0 +1,30 @@
+name: Fire Court isolated validation
+on:
+  push:
+    branches: [release/v1.11.15-fire-court]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Existing offline contracts and new music
+        run: |
+          node tests/playback-contract.cjs
+          node tests/arcade-bgm-v1.mjs
+          node tests/arcade-fire-court-v11115.mjs
+      - name: Install pinned browser
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"; else npx playwright install chromium --only-shell; fi
+      - name: Offline Chromium layouts
+        run: |
+          node tests/arcade-fire-court-browser.cjs
+          node tests/playback-browser.cjs
+          node tests/v1114-school-glory-browser.cjs
