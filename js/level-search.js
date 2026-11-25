@@ -615,6 +615,9 @@
     heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
     heading.append(make('span','beagu-year-caption',year===2026?'승인된 최신 자료':'문항·학교정보 비교'));
     host.append(heading);
+    if(year===2026&&Number(viewerTier)===1){
+      host.append(make('p','beagu-year-release-note','Lv.1 · 공개 승인된 2026 조사자료'));
+    }
     if(year===2026&&Number(viewerTier)>=2){
       host.append(make('p','beagu-year-release-note',
         'Lv.2 · 2026년 최신 조사: 유효 응답이 1건인 학교도 최종 공개 승인 대상입니다. 다만 공개 근거·소표본 재식별 검토가 완료된 학교별 결과만 표시합니다.'));
@@ -744,7 +747,7 @@
   function metrics2026(rows,viewerTier=1) {
     return (Array.isArray(rows) ? rows : []).filter(r => Number(r.year) === 2026 && Number(r.access_level)>=1 && Number(r.access_level)<=Number(viewerTier))
       .flatMap(r => Array.isArray(r.summary?.metrics) ? r.summary.metrics : [])
-      .filter(m => typeof m?.label === 'string' && (typeof m.value === 'number' || typeof m.value === 'string') && !/응답|관측|표본|횟수|회수/i.test(m.label));
+      .filter(m => !/^Q(?:31|51)(?:$|[._-])/.test(String(m?.key||'')) && typeof m?.label === 'string' && (typeof m.value === 'number' || typeof m.value === 'string') && !/응답|관측|표본|횟수|회수/i.test(m.label));
   }
   function percentile2026(rows) {
     for (const m of metrics2026(rows)) {
