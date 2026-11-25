@@ -34,7 +34,7 @@ assert.match(read('statistics.html'),/js\/statistics-compare\.js\?v=20261124-wat
 for(const publicSource of [search,compare,report,view])
   assert.doesNotMatch(publicSource,/응답 1건 학교|1건이라도 공개/);
 assert.match(api,/'Cache-Control':'no-store'/);
-assert.match(api,/admin\.rpc\('beagu_2026_released_question_results'/);
+assert.match(api,/level===2&&Array.isArray\(lv2Approved2026\)/);
 assert.match(api,/admin\.rpc\('beagu_2026_lv2_released_question_results'/);
 for(const release of [lv1Release,lv2Release]){
   assert.match(release,/r\.approval_status='APPROVED'/);
@@ -79,7 +79,7 @@ draw(host,2026,[{year:2026,access_level:1,summary:{metrics:[{
   key:'Q01',label:'stale secret',value:100,unit:'점'
 }]}}],null,'ABC1234',[],null,null,'error',[],[{
   questionId:'Q01',row:-1,values:[q01.options[0]]
-}],1);
+}],2);
 const all=[host,...host.children.flatMap(x=>[x,...x.children])];
 assert.equal(all.some(x=>x.className==='beagu-approved-section'),false);
 assert.equal(all.some(x=>x.className==='beagu-question-block'),false);
@@ -87,4 +87,5 @@ assert.ok(all.some(x=>x.className==='beagu-year-error'));
 assert.ok(all.some(x=>x.className==='year-2026-button'));
 assert.ok(!JSON.stringify(host).includes('stale secret'));
 assert.ok(!JSON.stringify(host).includes(q01.options[0]));
-console.log('PASS: 2026 school answer and percentile caches fail closed when a release recheck is unavailable');
+const lv1=new Node('div');draw(lv1,2026,[],null,'ABC1234',[],null,null,'ready',[],[],1);assert.ok(JSON.stringify(lv1).includes('Lv.2'));assert.ok(!JSON.stringify(lv1).includes('year-2026-button'));
+console.log('PASS: Lv1 2026 blocked and Lv2 2026 caches fail closed');

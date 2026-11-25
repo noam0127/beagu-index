@@ -610,6 +610,7 @@
 
   function renderYear(host, year, rows, publicValue, schoolId, modes=[], school=null,comparison=null,loadStatus='loading',selections=[],results2026=[],viewerTier=1) {
     host.replaceChildren();
+    if(year===2026&&Number(viewerTier)!==2){host.append(make('p','beagu-year-release-note','2026 배구지수는 Lv.2 승인 자료만 공개합니다.'));return;}
     const heading=make('div','beagu-year-header');
     heading.append(make('h3','beagu-year-title',year+'년 조사 결과'));
     heading.append(make('span','beagu-year-caption',year===2026?'승인된 최신 자료':'문항·학교정보 비교'));
@@ -702,6 +703,7 @@
       // Only display sanitized summary.metrics released by the signed API.
       for(const metric of Array.isArray(row.summary?.metrics)?row.summary.metrics:[]){
         if(typeof metric?.label!=='string'||typeof metric?.value!=='string')continue;
+        if(Number(viewerTier)===1&&year!==2025&&(metric.key==='percentile'||/백분위/.test(metric.label)))continue;
         if(isDuplicatePublicPercentile(metric,year,publicValue))continue;
         if(metric.label.includes(String(year))&&metric.label.includes('백분위')&&publicValue!==null)
           hadMismatch=true;
@@ -762,10 +764,10 @@
       publicError:publicLoadError,
       value2026:current?.value ?? null,
       status2026:current?.status || 'loading',
-      locked:false
+      locked:false,viewerTier
     });
   }
-  // Independent official-source facts are shown only for Lv.2. The existing
+  // Independently public official-source facts are shown to verified Lv.1 and Lv.2. The existing
   // card and survey disclosure remain unchanged; no survey approvals are implied.
   const official2026Fields=[
     ['school_name','학교명'],['education_office','시도교육청'],['support_office','교육지원청'],
@@ -785,7 +787,7 @@
     ['second_grade_teacher_ratio','2급 정교사 비율(전체 교원 대비)','%']
   ];
   function renderOfficial2026(card,profile,status){
-    if(viewerTier!==2||Number(card.dataset.accessLevel)!==2)return;
+    if(![1,2].includes(viewerTier)||Number(card.dataset.accessLevel)!==viewerTier)return;
     let box=card.querySelector('.official-school-basics-2026');
     if(!box){
       box=make('details','beagu-school-basics official-school-basics-2026');
@@ -834,6 +836,8 @@
             old.replaceWith(percentilePanel(school));
             BeaguSchoolSearchCard.updateRecordedYears(card);
           }
+          const history=card.querySelector('.beagu-yearly-percentiles');
+          if(history)history.replaceWith(yearlyPercentileHistory(school,viewerTier));
           break;
         }
       }
@@ -842,11 +846,11 @@
       if(serial!==requestId)return;
       for(const id of ids){
         const n=result.values?.[id];
-        current2026.set(id,typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100
+        current2026.set(id,viewerTier===2&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100
           ?{status:'published',value:n}:{status:'unpublished'});
       }
       refresh();
-      if(viewerTier===2){
+      if([1,2].includes(viewerTier)){
         for(const card of $('results').querySelectorAll('.school-card')){
           const id=card.dataset.schoolId;
           if(ids.includes(id))renderOfficial2026(card,result.official2026?.[id]||null,
@@ -858,24 +862,38 @@
       if(err.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인하세요.');return;}
       for(const id of ids)current2026.set(id,{status:'error'});
       refresh();
-      if(viewerTier===2)for(const card of $('results').querySelectorAll('.school-card'))
+      if([1,2].includes(viewerTier))for(const card of $('results').querySelectorAll('.school-card'))
         if(ids.includes(card.dataset.schoolId))renderOfficial2026(card,null,'UNAVAILABLE');
     });
   }
-  function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
-    host.replaceChildren();
-    const basic=make('section','beagu-school-basics');
-    basic.append(make('h3','','학교 기본정보'));
-    const grid=make('dl','beagu-school-basics-grid');
-    for(const [label,value] of [
-      ['학교명',school.school_name],['시도',school.sido_standard||school.sido],
-      ['교육지원청',school.support_office],['주소',school.address],
-      ['설립구분',school.establishment],['학교급',school.school_kind]]){
-      const row=make('div','beagu-school-basic-row');
-      row.append(make('dt','',label),make('dd','',value||'정보 없음'));grid.append(row);
+  function yearlyPercentileHistory(school,tier){
+    const section=make('section','beagu-yearly-percentiles');
+    section.append(make('h3','school-history-heading','연도별 배구지수 백분위'));
+    const historical=asPublicPercentiles(school),current=current2026.get(String(school.school_id));
+    const valid=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100;
+    const values=[...historical,tier===2&&valid(current?.value)?current.value:null];
+    const years=tier===2?YEARS:[2025];
+    const grid=make('div','percentile-grid');
+    for(const year of years){
+      const cell=make('div','percentile-cell');cell.dataset.year=String(year);
+      const value=values[year-2023];
+      const label=valid(value)?value.toFixed(1)+'%':year===2026?
+        (current?.status==='error'?'불러오기 실패':current?.status==='unpublished'?'미공개':'확인 중'):'자료 없음';
+      cell.append(make('span','',year+'년'),make('strong','',label));grid.append(cell);
     }
-    basic.append(grid,make('p','beagu-school-basic-note','학생 수 등 공식 기본현황은 승인 자료가 있는 학교에서 추가 표시됩니다.'));
-    if(Number(viewerTier)!==2)host.append(basic);
+    section.append(grid);
+    if(tier===2&&typeof percentileChart==='function'){
+      const chart=make('div','percentile-graph');
+      // Generated only from validated numeric values and fixed year labels.
+      chart.innerHTML=percentileChart(values,{blank2026:!valid(values[3])});
+      section.append(chart);
+    }
+    if(tier===2)section.append(make('p','beagu-school-basic-note','연도마다 조사 문항과 비교 기준이 다르므로 백분위를 직접적인 추세로 해석하지 않습니다.'));
+    return section;
+  }
+  function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
+    host.replaceChildren(yearlyPercentileHistory(school,viewerTier));
+    const allowedYears=viewerTier===2?YEARS:YEARS.filter(year=>year!==2026);
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
     const prefix='beagu-history-'+String(school.school_id);
@@ -896,6 +914,7 @@
         cell.classList.toggle('is-current-year',Number(cell.dataset.year)===year));
     }
     function choose(year){
+      if(!allowedYears.includes(year))return;
       currentYear=year;
       for(const button of tabs.children){
         const selected=Number(button.dataset.year)===year;
@@ -906,7 +925,7 @@
       markSelectedYear(year);
       const draw=(data,status)=>{
         content.removeAttribute('aria-busy');
-        renderYear(content,year,rows,vals[year-2023]??null,
+        renderYear(content,year,rows,viewerTier===1&&year!==2025?null:vals[year-2023]??null,
           school.school_id,modes,school,data,status,selections,results2026,viewerTier);
       };
       if(year===2026){draw(null,latest2026Status);return;}
@@ -925,7 +944,7 @@
         if(currentYear===year&&content.isConnected&&!host.hidden)draw(null,'error');
       });
     }
-    for(const [index,year] of YEARS.entries()){
+    for(const [index,year] of allowedYears.entries()){
       const button=make('button','',year===2026&&Number(viewerTier)>=2?'2026년 · 최신':year+'년');
       button.id=prefix+'-tab-'+year;
       button.type='button';
@@ -937,10 +956,10 @@
       button.addEventListener('click',()=>choose(year));
       button.addEventListener('keydown',event=>{
         let next=null;
-        if(event.key==='ArrowRight')next=YEARS[(index+1)%YEARS.length];
-        else if(event.key==='ArrowLeft')next=YEARS[(index+YEARS.length-1)%YEARS.length];
-        else if(event.key==='Home')next=YEARS[0];
-        else if(event.key==='End')next=YEARS[YEARS.length-1];
+        if(event.key==='ArrowRight')next=allowedYears[(index+1)%allowedYears.length];
+        else if(event.key==='ArrowLeft')next=allowedYears[(index+allowedYears.length-1)%allowedYears.length];
+        else if(event.key==='Home')next=allowedYears[0];
+        else if(event.key==='End')next=allowedYears[allowedYears.length-1];
         if(next===null)return;
         event.preventDefault();
         choose(next);
@@ -979,7 +998,7 @@
         Number(row.year)===year&&Number(row.access_level)<=level&&
         (Array.isArray(row.summary?.metrics)?row.summary.metrics:[]).length>0));
     // Lv.2 opens newest reviewed data. Never bypass the signed publication gate.
-    choose(Number(viewerTier)>=2?2026:(firstAvailable||2025));
+    choose(viewerTier===2&&(current2026.get(String(school.school_id))?.status==='published'||firstAvailable===2026)?2026:2025);
   }
 
   function render(list, total, sortValue='school_name_asc') {
@@ -999,7 +1018,7 @@
         percentile:percentilePanel(school),
         sortBy:mode==='region'&&sortValue.startsWith('housing_price_won_')?'school_name_asc':sortValue
       });
-      if(viewerTier===2)renderOfficial2026(card,null,'LOADING');
+      if([1,2].includes(viewerTier))renderOfficial2026(card,null,'LOADING');
       let housing=null;
       if(mode!=='region'){
       housing=make('section','beagu-housing-preview');
@@ -1098,7 +1117,9 @@
         }
         if(request!==serial)return;
         // Never close a detail the teacher already expanded while auxiliary data loaded.
-        if($('results').querySelector('.lv1-history-trigger[aria-expanded="true"]'))return;
+        if($('results').querySelector('.glory-detail-trigger[aria-expanded="true"]')){
+          loadPagePercentiles(data,request);return;
+        }
         render(data,count,sortValue);
       })().catch(error=>console.warn('레벨1 공개 보조자료 표시 실패',error));
     } catch (error) {
@@ -1117,7 +1138,7 @@
   // itself a release; server review and the 2026 24-hour cooldown still apply.
   // Never poll private Google Sheets or expose school-specific response counts.
   async function refreshApproved2026OnScreen(){
-    if(refreshingReleased2026||!session||$('searchPanel').hidden||
+    if(viewerTier!==2||refreshingReleased2026||!session||$('searchPanel').hidden||
        document.visibilityState!=='visible'||!visiblePageSchools.length)return;
     refreshingReleased2026=true;
     const requestId=serial;

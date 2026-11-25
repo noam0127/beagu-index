@@ -89,6 +89,20 @@ Deno.serve(async(req:Request)=>{
    if(!Array.isArray(ids)||ids.length<1||ids.length>20||
      ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||
      new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
+   const tier=Number(session.access_level);
+   if(![1,2].includes(tier))return send({error:'ACCESS_DENIED'},403,origin);
+   const sendSchoolProfiles=async(values:Record<string,number>)=>{
+     const {data:profiles,error:profileError}=await admin.from('beagu_2026_official_school_profiles')
+       .select('school_id,disclosure_code,source_year,teacher_total,profile')
+       .in('school_id',ids).eq('source_year',2026).limit(20);
+     if(profileError){
+       console.error('official_school_profiles_2026_unavailable',profileError.code||'unknown');
+       return send({values,official2026_status:'UNAVAILABLE'},200,origin);
+     }
+     return send({values,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
+   };
+   // Lv.1 gets official school facts only; never query or return 2026 survey percentiles.
+   if(tier===1)return await sendSchoolProfiles({});
    const [metrics,catalog]=await Promise.all([
     admin.from('beagu_release_metrics_v2')
      .select('school_id,survey_year,question_id,access_level,value,release_version,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence')
@@ -133,20 +147,8 @@ Deno.serve(async(req:Request)=>{
        if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;
      }
    }
-   // The 2026 Schoolinfo profile is independent of teacher-survey consent.
-   // Do not load it at Lv.1, and never include unpublished survey values.
-   if(Number(session.access_level)===2){
-     const {data:profiles,error:profileError}=await admin.from('beagu_2026_official_school_profiles')
-       .select('school_id,disclosure_code,source_year,teacher_total,profile')
-       .in('school_id',ids).eq('source_year',2026).limit(20);
-     if(profileError){
-       console.error('official_school_profiles_2026_unavailable',profileError.code||'unknown');
-       return send({values:out,official2026_status:'UNAVAILABLE'},200,origin);
-     }
-     return send({values:out,official2026:projectOfficialProfiles2026(profiles,ids,2),
-       official2026_status:'OK'},200,origin);
-   }
-   return send({values:out},200,origin);
+   return await sendSchoolProfiles(out);
+
   }
 
 
@@ -233,11 +235,14 @@ Deno.serve(async(req:Request)=>{
   const level=Number(session.access_level);
   if(level<1)return send({error:'ACCESS_DENIED'},403,origin);
   // Tier approval and school snapshot approval must both hold for 2026 outputs.
-  const {data:schoolReleased,error:schoolReleasedError}=await admin.rpc(
-    'beagu_2026_level_school_published',{p_school_id:id,p_level:level});
-  if(schoolReleasedError||typeof schoolReleased!=='boolean')
-    return send({error:'PUBLICATION_GATE_UNAVAILABLE'},503,origin);
-  const tierPublished2026=schoolReleased===true;
+  let tierPublished2026=false;
+  if(level===2){
+    const {data:schoolReleased,error:schoolReleasedError}=await admin.rpc(
+      'beagu_2026_level_school_published',{p_school_id:id,p_level:level});
+    if(schoolReleasedError||typeof schoolReleased!=='boolean')
+      return send({error:'PUBLICATION_GATE_UNAVAILABLE'},503,origin);
+    tierPublished2026=schoolReleased===true;
+  }
   // Separate Lv2 access from the existing public/Lv1 24-hour release path.
   // A null result means the exact snapshot failed independent publication review.
   let lv2Approved2026:null|unknown[]=null;
@@ -257,7 +262,8 @@ Deno.serve(async(req:Request)=>{
   if(legacy.error||metrics.error||catalog.error||curated2025.error)return send({error:'DATA_UNAVAILABLE'},503,origin);
   const rows=legacyRows(legacy.data||[],level);
   const safe=releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)
-    .filter((m:any)=>m.year!==2026||tierPublished2026);
+    .filter((m:any)=>(m.year!==2026||(level===2&&tierPublished2026))&&
+      !(level===1&&m.year!==2025&&m.key==='percentile'));
   // School facts are independently reviewed, not teacher survey observations.
   // Return only per-tier, per-year allowlisted facts from the server after validating session.
   const [officialNumbers, officialCategories]=await Promise.all([
@@ -524,13 +530,7 @@ Deno.serve(async(req:Request)=>{
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
-  let released2026:unknown=lv2Approved2026;
-  if(level<2){
-    const {data,error}=await admin.rpc('beagu_2026_released_question_results',{p_school_id:id});
-    if(error)return send({error:'APPROVED_RESULTS_UNAVAILABLE'},503,origin);
-    released2026=data;
-  }
-  const schoolQuestionResults2026=Array.isArray(released2026)?publicQuestionResults(released2026):[];
+  const schoolQuestionResults2026=level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):[];
   return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });

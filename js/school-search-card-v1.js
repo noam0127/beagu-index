@@ -56,14 +56,18 @@
   })[state]||'자료 없음';
  }
  function percentiles({publicValues=[],statuses=[],publicError=false,value2026=null,
-   status2026='unpublished',locked=false}={}){
+   status2026='unpublished',locked=false,viewerTier=null}={}){
   const section=el('section','percentile-panel glory-percentile');
-  section.setAttribute('aria-label','2026 배구지수 백분위');
-  const value=!locked&&valid(value2026)?value2026:null;
-  section.dataset.publishedYears=[2023,2024,2025].filter((y,i)=>valid(publicValues[i])).concat(value!==null?[2026]:[]).join(',');
-  section.append(el('h3','percentile-heading','2026 배구지수'));
+  const current=!locked&&viewerTier!==1&&valid(value2026)?value2026:null;
+  const historical=viewerTier===1||(viewerTier===2&&current===null);
+  const year=historical?2025:2026;
+  const value=historical?(valid(publicValues[2])?publicValues[2]:null):current;
+  section.dataset.displayYear=String(year);
+  section.setAttribute('aria-label',year+' 배구지수 백분위');
+  section.dataset.publishedYears=[2023,2024,2025].filter((y,i)=>valid(publicValues[i])).concat(current!==null?[2026]:[]).join(',');
+  section.append(el('h3','percentile-heading',year+' 배구지수'));
   const row=el('div','glory-score-row');
-  row.append(el('strong','glory-score',value===null?labelFor(locked?STATES.LOCKED:status2026):value.toFixed(1)+'%'));
+  row.append(el('strong','glory-score',value===null?labelFor(historical?publicState(statuses[2],publicError):(locked?STATES.LOCKED:status2026)):value.toFixed(1)+'%'));
   if(value!==null){
    const track=el('div','glory-track'),fill=el('span','glory-fill');
    track.setAttribute('role','progressbar');track.setAttribute('aria-label','배구지수 백분위');
@@ -72,6 +76,7 @@
    track.append(fill);row.append(track);
   }
   section.append(row);
+  if(viewerTier===2&&historical)section.append(el('p','glory-fallback-note','2026 배구지수 · '+labelFor(status2026)));
   return section;
  }
  function updateRecordedYears(card,years){

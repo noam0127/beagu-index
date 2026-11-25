@@ -5,7 +5,7 @@ on:
       - 'release/base-pages-*'
   workflow_dispatch:
   push:
-    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court, release/v1.11.14-school-glory, release/v1.11.15-fire-court, fix/v1.11.13-admin-2026-compact, fix/v1.11.13.2-admin-draft-input, fix/v1115-school-glory-after-fire-court]
+    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court, release/v1.11.14-school-glory, release/v1.11.15-fire-court, fix/v1.11.13-admin-2026-compact, fix/v1.11.13.2-admin-draft-input, fix/v1115-school-glory-after-fire-court, fix/v11115-school-visibility]
 permissions:
   contents: read
 jobs:
