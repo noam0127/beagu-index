@@ -136,7 +136,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 <link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=2">
 <link rel="stylesheet" href="styles/arcade-fire-court-v1.css?v=11115-1">
-<style>.run-court-age{position:absolute;z-index:33;top:max(10px,env(safe-area-inset-top));right:max(64px,calc(env(safe-area-inset-right) + 55px));display:flex;gap:3px;flex-direction:column;align-items:flex-end;padding:5px 9px;border-radius:9px;background:rgba(10,28,48,.92);color:#fff;pointer-events:none;line-height:1.15;font-size:12px}.run-court-age strong{font-size:16px;color:#fff5b9}.run-court-age span{font-size:11px;color:#dceaff}</style>
+<style>.run-court-age{position:absolute;z-index:33;top:max(24px,calc(env(safe-area-inset-top) + 16px));right:max(10px,env(safe-area-inset-right));display:flex;gap:3px;flex-direction:column;align-items:flex-end;padding:5px 9px;border-radius:9px;background:rgba(10,28,48,.92);color:#fff;pointer-events:none;line-height:1.15;font-size:12px}.run-court-age strong{font-size:16px;color:#fff5b9}.run-court-age span{font-size:11px;color:#dceaff}</style>
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game beagu-minimal-run">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html" aria-current="page">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
@@ -214,7 +214,7 @@ canvas{height:400px;cursor:default}
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
 <script defer src="js/beagu-presence-games-v1.js?v=20261120-gateway2"></script>
 <script src="js/arcade-leaderboard-v1.js?v=1119"></script>
-<script src="js/arcade-school-picker-v1.js?v=11115-recommend"></script>
+<script src="js/arcade-school-picker-v1.js?v=11116-recommend"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=11116"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
@@ -1574,8 +1574,8 @@ function tick(t){
  // Apply the viewport-sized playing canvas before notifying a parent frame
  // to center and freeze scrolling; do not refocus the page every frame.
  document.body.classList.toggle("arcade-run-game-playing",state==="playing"||state==="paused");
- window.ArcadePlayLock?.sync(state==="playing");
  syncFullscreenPause();
+ window.ArcadePlayLock?.sync(state==="playing");
  const dt=Math.min(.04,(t-last)/1000||0);last=t;
  if(state==="playing"&&!document.hidden&&!$("teacher-run-protected").hidden){if(recordingMode){recordAccumulator+=dt;while(recordAccumulator>=1/60&&state==="playing"){recordAccumulator-=1/60;stepRecording();}}else update(dt);}else if(recordingMode)recordAccumulator=0;
  syncLeave();
