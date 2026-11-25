@@ -2,7 +2,7 @@
 const host=document.getElementById("adminReview2026");if(!host)return;
 const panel=document.createElement("section");panel.className="ranking-card";panel.hidden=true;
 panel.innerHTML='<div class="section-title"><h4>2026 학교별 의심 데이터 신고 · Lv.2 정정 요청 재검증</h4><select id="civicAdminFilter" aria-label="접수 상태"><option value="PENDING">검토 대기</option><option value="REVIEWING">검토 중</option><option value="ALL">전체</option><option value="RESOLVED">처리 완료</option><option value="NO_CHANGE">이상 없음</option><option value="REJECTED">반려</option></select><button type="button" id="civicAdminRefresh">새로고침</button></div><p id="civicAdminMessage" role="status" aria-live="polite"></p><div id="civicAdminList" class="audit-list"></div>';
-host.append(panel);
+(document.getElementById("admin2026Reports")||host).append(panel);
 const $=x=>panel.querySelector("#"+x);
 const endpoint="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-civic";
 let owner=false;
