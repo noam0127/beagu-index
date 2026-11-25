@@ -18,7 +18,7 @@ assert.match(run,/function drawReadableNotice\(/);
 assert.match(run,/ctx\.measureText/);
 assert.doesNotMatch(run,/ctx\.fillText\(notice,W\/2,111,126\)/);
 assert.match(run,/mysteryBuffs\.bullet=t\+5/);
-assert.match(run,/isMysteryBuff\("bullet"\)\|\|gameRandom\(\)<\.5/);assert.match(run,/function gameRandom\(/);
+assert.match(run,/isMysteryBuff\("bullet"\)\|\|gameRandom\(\)<\.5/);assert.match(run,/const gameRandom=\(\)=>/);
 assert.match(run,/Math\.ceil\(score\*\.10\)/);
 assert.match(run,/Math\.ceil\(score\*\.25\)/);
 assert.match(shared,/{id:"rapid_smash"/);
