@@ -5,8 +5,7 @@
 .arcade-mobile-scroll-rail{display:none!important}
 @media(max-width:360px){.arcade-game-viewport>.arcade-playback{font-size:12px;min-height:44px;max-width:calc(100% - 122px)}}
 
-/* Keep pause reachable when the mobile page is locked to the top of a tall court. */
+/* Fit the whole in-page court inside the locked mobile viewport, including the existing 60px control strip. Keep controls outside the canvas. */
 @media (pointer:coarse) and (hover:none){
- html body .arcade-game-viewport>.arcade-playback:not([hidden]){top:max(8px,env(safe-area-inset-top))!important;bottom:auto!important;left:max(8px,env(safe-area-inset-left))!important;right:auto!important;transform:none!important;min-height:44px;width:auto!important;max-width:45%!important;z-index:110!important}
- html body .arcade-game-viewport:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>.arcade-playback:not([hidden]){top:max(58px,calc(env(safe-area-inset-top) + 50px))!important}
+ html.arcade-play-locked body .fire-court-controls:has(> .arcade-playback:not([hidden])):not(.arcade-fullscreen-fallback):not(:fullscreen):not(:-webkit-full-screen)>#game{max-height:calc(var(--arcade-mobile-visible-height,100dvh) - 84px)!important;min-height:0!important;object-fit:contain!important}
 }
