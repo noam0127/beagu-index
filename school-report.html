@@ -1480,8 +1480,9 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
     if(!/^[A-Z0-9]{7}$/.test(id)||state.tier===0||!state.authToken)return;
     const serial=state.reportSerial,requested=state.tier;
     try{
-      const r=await tierCall('school',{schoolId:id});
+      const r=await tierCall('school',{schoolId:id,viewLevel:requested});
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id||state.tier!==requested)return;
+      if(Number(r.level)!==requested)throw Error('REPORT_TIER_MISMATCH');
       if(!latestOnly)state.participationYears=Array.isArray(r.participationYears)?r.participationYears.filter(y=>y===2025):[];
       state.years['2026'].items={};
       state.approvedSummary['2026']=[];
