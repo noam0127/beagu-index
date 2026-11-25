@@ -215,10 +215,10 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
-<script src="js/arcade-fire-court-bgm-v1.js?v=11115-2"></script>
+<script src="js/arcade-fire-court-bgm-v1.js?v=11115-boss"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11113-save"></script>
-<script src="js/teacher-run-4-rules.js?v=11115-hazards"></script>
+<script src="js/teacher-run-4-rules.js?v=11115-boss"></script>
 <script src="js/teacher-run-4-records-v1.js?v=11111-local2"></script>
 <script src="js/run4-official-client-v1.js?v=11111"></script>
 <script>
@@ -299,7 +299,7 @@ if(recordingMode&&official.enabled){$("run4-official-panel").hidden=false;$("run
 
 const recordPolicy=window.BeaguRun4Records;
 const rules=window.BeaguRun4Rules;let run4=rules.create(),leave=rules.createLeave(),growth=rules.createGrowth(),effects=rules.createEffects(),bosses=rules.createBosses(),allies=rules.createAllies();
-let bossX=0,bossWarn=null,bossNext=0,bossShot=0,bossProjectiles=[],bossRate=1,bossGuard=0,bossSpawn=1,alliesPeak=0;
+let bossX=0,bossY=0,bossWaveIndex=0,bossWarn=null,bossNext=0,bossShot=0,bossProjectiles=[],bossRate=1,bossGuard=0,bossSpawn=1,alliesPeak=0;
 let tenureSeen=new Set(),tenureAttack=1,tenureDamage=1;
 let leaveUiKey="";
 let retirementScene=false;
@@ -413,7 +413,7 @@ function resize(){
  ctx.setTransform(dpr,0,0,dpr,0,0);
  if(oldW>0){
   const sx=W/oldW;
-  player.x*=sx;shackle.x*=sx;
+  player.x*=sx;shackle.x*=sx;bossX*=sx;bossProjectiles.forEach(a=>{a.x*=sx;if(Number.isFinite(a.vx))a.vx*=sx;});if(bossWarn)bossWarn.shots.forEach(a=>{a.x*=sx;a.vx*=sx;});
   items.forEach(a=>a.x*=sx);
   chalkShots.forEach(b=>{b.x*=sx;if(Number.isFinite(b.missX))b.missX*=sx;});
   sideStudents.forEach(a=>{a.x*=sx;a.vx*=sx;});
@@ -427,7 +427,7 @@ function resize(){
  }
  if(oldH>0){
   const sy=H/oldH;
-  player.y*=sy;
+  player.y*=sy;bossY*=sy;bossProjectiles.forEach(a=>{a.y*=sy;if(Number.isFinite(a.vy))a.vy*=sy;});if(bossWarn)bossWarn.shots.forEach(a=>{a.y*=sy;a.vy*=sy;});
   items.forEach(a=>a.y*=sy);
   chalkShots.forEach(a=>{a.y*=sy;if(Number.isFinite(a.missY))a.missY*=sy;});
   sideStudents.forEach(a=>{a.y*=sy;a.vy*=sy;});
@@ -471,7 +471,7 @@ async function start(){
  profile=difficultyProfiles[selected.difficulty]||difficultyProfiles.hard;
  schoolPicker.setLocked(true);
  state="playing";stage=0;clock=0;score=0;maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;specialCooldown=0;specialFlash=0;lastTapAt=0;
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";solidarityUntil=0;retirementScene=false;combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossY=0;bossWaveIndex=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";solidarityUntil=0;retirementScene=false;combo=0;nearCount=0;misses=0;skill={speed:1,guard:0,heal:1};activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=.35;resetChalkHelpers();
  spawnClock=.5;player.x=W/2;player.y=H-52;player.inv=Math.max(profile.inv,3);
  resetPatternHazards();resetMystery();
@@ -486,7 +486,7 @@ function stopToIntro(){
  ++startTicket;ranking?.cancel();state="ready";
  pressed.clear();pointerId=null;pointerX=null;pointerY=null;
  items=[];sparks=[];floats=[];chalkShots=[];chalkCooldown=0;resetPatternHazards();resetMystery();
- run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";solidarityUntil=0;retirementScene=false;score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
+ run4=rules.create();leave=rules.createLeave();growth=rules.createGrowth();effects=rules.createEffects();bosses=rules.createBosses(schoolPicker.get()?.difficulty);allies=rules.createAllies();bossX=0;bossY=0;bossWaveIndex=0;bossWarn=null;bossNext=0;bossShot=0;bossProjectiles=[];bossRate=1;bossGuard=0;bossSpawn=1;alliesPeak=0;tenureSeen=new Set();tenureAttack=1;tenureDamage=1;leaveUiKey="";solidarityUntil=0;retirementScene=false;score=0;stage=0;clock=0;combo=0;nearCount=0;misses=0;activeEvent=null;eventSeconds=0;lastEventCycle=-1;retirementRushAnnounced=false;earlyMilestones=new Set();lastSafeLane=-1;
  maxLife=profile.startingLife;life=maxLife;maxLives=profile.lives;livesLeft=maxLives;player.inv=0;specialCooldown=0;specialFlash=0;lastTapAt=0;
  schoolPicker.setLocked(false);
  updateLabels();intro();
@@ -1146,12 +1146,12 @@ function updateBoss(dt){
  const change=bosses.advance(clock);
  if(change.expired)resetBossThreats();
  if(change.started){
-  resetBossThreats();bossNext=clock+.75;bossX=W*.5;activeEvent=null;eventSeconds=0;
+  resetBossThreats();bossNext=clock+.75;bossX=W*.5;bossY=H*.26;bossWaveIndex=0;activeEvent=null;eventSeconds=0;
   setNotice("⚠ 보스 등장 — "+change.started.name,2.3);playTone(220,.25,"sawtooth",.035);
  }
  const b=bosses.active();if(!b)return;
- const elapsed=clock-b.start;
- bossX=W*.5+Math.sin(elapsed*(b.id==="final"?2.4:1.4))*W*.25;
+ const combat=rules.bossCombat(b.id,schoolPicker.get()?.difficulty);
+ const pos=rules.bossMotion({x:bossX,y:bossY},player,combat,clock-b.start,dt,W,H);bossX=pos.x;bossY=pos.y;
  const attack=9*growth.effects().power*tenureAttack*windowRunEffects().power;
  // Visible aimed chalk shots; all difficulty levels can attack without allies.
  bossShot-=dt;
@@ -1159,30 +1159,17 @@ function updateBoss(dt){
   bossShot=.44/(growth.effects().rate*bossRate);
   bossProjectiles.push({friendly:true,x:player.x,y:player.y-20,speed:620,damage:attack,r:4});
  }
- if(clock>=bossNext&&!bossWarn){
-  const pattern=bosses.tier.pattern;
-  const count=b.id==="confusion"?pattern===1?2:3:b.id==="final"?pattern===1?2:4:pattern===1?3:pattern===2?4:5;
-  const laneWidth=W/(count+1);
-  const target=Math.max(25,Math.min(W-25,player.x));
-  const lanes=Array.from({length:count},(_,i)=>Math.max(18,Math.min(W-18,(i+1)*laneWidth+(b.id==="demands"||b.id==="burnout"?(target-W*.5)*.45:0))));
-  bossWarn={lanes,at:clock+.65,mode:b.id,damage:b.damage};bossNext=clock+b.interval;
- }
- if(bossWarn&&clock>=bossWarn.at){
-  const warn=bossWarn;bossWarn=null;
-  for(let i=0;i<warn.lanes.length;i++){
-   const x=warn.lanes[i];bossProjectiles.push({friendly:false,x,y:(recordingMode?92:76)+i*-9,vx:warn.mode==="demands"?(player.x-x)*.16:0,vy:125+bosses.tier.pattern*20,r:warn.mode==="responsibility"?16:10,mode:warn.mode,damage:warn.damage,split:warn.mode==="responsibility"||warn.mode==="demands"});
-  }
- }
+ if(clock>=bossNext&&!bossWarn){bossWarn={shots:rules.bossWave(combat,player,W,H,bossWaveIndex++),at:clock+.85,mode:b.id,damage:b.damage};bossNext=clock+b.interval;}
+ if(bossWarn&&clock>=bossWarn.at){const warn=bossWarn;bossWarn=null;for(const shot of warn.shots){if(bossProjectiles.length>=72)break;bossProjectiles.push({...shot,friendly:false,r:warn.mode==="responsibility"?13:9,mode:warn.mode,damage:warn.damage});}}
  for(let i=bossProjectiles.length-1;i>=0;i--){
   const p=bossProjectiles[i];
   if(p.friendly){
-   const dx=bossX-p.x,dy=(recordingMode?102:70)-p.y,d=Math.max(1,Math.hypot(dx,dy)),move=p.speed*dt;
-   if(d<=move+18){bossProjectiles.splice(i,1);damageBoss(p.damage);if(!bosses.active())return;continue;}
+   const dx=bossX-p.x,dy=bossY-p.y,d=Math.max(1,Math.hypot(dx,dy)),move=p.speed*dt;
+   if(d<=move+pos.r){bossProjectiles.splice(i,1);damageBoss(p.damage);if(!bosses.active())return;continue;}
    p.x+=dx/d*move;p.y+=dy/d*move;
   }else{
-   p.x+=p.vx*dt;p.y+=p.vy*dt;
-   if(p.split&&p.y>H*.47){p.split=false;for(const sign of [-1,1])if(bossProjectiles.length<55)bossProjectiles.push({...p,r:7,vx:sign*70,vy:p.vy*.9,split:false});}
-   if(p.y>H+25||p.x< -25||p.x>W+25){bossProjectiles.splice(i,1);continue;}
+   rules.steerPaper(p,player.x,player.y,dt);p.x+=p.vx*dt;p.y+=p.vy*dt;p.ttl-=dt;
+   if(p.ttl<=0||p.y>H+42||p.y< -42||p.x< -42||p.x>W+42){bossProjectiles.splice(i,1);continue;}
    if(Math.hypot(p.x-player.x,p.y-player.y)<p.r+player.r*.7*profile.heroSize){
     bossProjectiles.splice(i,1);
     hit({good:false,damage:p.damage,x:p.x,y:p.y,feature:p.mode==="burnout"?{good:false,emoji:"🌘",name:"피로",buff:"insomnia",duration:2}:null});
@@ -1193,16 +1180,16 @@ function updateBoss(dt){
 }
 function drawBoss(){
  const b=bosses.active();if(!b)return;
+ const c=rules.bossCombat(b.id,schoolPicker.get()?.difficulty),r=Math.min(c.radius,W*.16,H*.19);
  ctx.save();
- if(bossWarn){ctx.fillStyle="rgba(220,60,70,.15)";for(const x of bossWarn.lanes)ctx.fillRect(x-12,95,24,H-95);}
- if(b.id==="burnout"){ctx.fillStyle="rgba(33,25,65,.14)";ctx.fillRect(bossX-W*.25,95,W*.5,H-95);}
- ctx.fillStyle=b.color;ctx.beginPath();ctx.arc(bossX,recordingMode?102:70,28,0,Math.PI*2);ctx.fill();
- ctx.font="28px sans-serif";ctx.textAlign="center";ctx.fillText(b.icon,bossX,recordingMode?113:81);
- const width=Math.min(W*.54,260),x=(W-width)/2;
- const barY=recordingMode?129:103;
- roundRect(x,barY,width,7,4,"#27334f");roundRect(x,barY,Math.max(0,width*b.hp/b.maxHP),7,4,"#ed9b78");
- ctx.fillStyle="#21314c";ctx.font="bold 12px sans-serif";ctx.fillText(b.name+" · "+Math.ceil(b.hp)+"/"+b.maxHP,W/2,barY+20,width);
- for(const p of bossProjectiles){ctx.fillStyle=p.friendly?"#fff4b0":"#c25d65";ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}
+ if(bossWarn){ctx.strokeStyle="rgba(220,45,65,.65)";ctx.lineWidth=2;ctx.setLineDash([5,7]);for(const p of bossWarn.shots){const x=Math.max(5,Math.min(W-5,p.x)),y=Math.max(45,Math.min(H-5,p.y)),d=Math.max(1,Math.hypot(p.vx,p.vy));ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+p.vx/d*65,y+p.vy/d*65);ctx.stroke();ctx.fillStyle="#e14b50";ctx.font="bold 16px sans-serif";ctx.textAlign="center";ctx.fillText("!",x,y);}ctx.setLineDash([]);}
+ ctx.save();ctx.translate(bossX,bossY);
+ const swing=Math.sin(clock*4)*r*.14;
+ for(const sign of [-1,1]){ctx.strokeStyle="#26334c";ctx.lineWidth=Math.max(6,r*.32);ctx.lineCap="round";ctx.beginPath();ctx.moveTo(sign*r*.62,-r*.15);ctx.quadraticCurveTo(sign*r*1.04,r*.1+swing,sign*r*1.32,-r*.12+swing);ctx.stroke();ctx.strokeStyle=b.color;ctx.lineWidth=Math.max(4,r*.23);ctx.stroke();ctx.fillStyle=b.color;ctx.beginPath();ctx.arc(sign*r*1.32,-r*.12+swing,r*.21,0,Math.PI*2);ctx.fill();}
+ ctx.fillStyle=b.color;ctx.strokeStyle="#26334c";ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,0,r,r*.9,0,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.font=Math.round(r*1.1)+"px sans-serif";ctx.textAlign="center";ctx.fillText(b.icon,0,r*.37);ctx.restore();
+ const width=Math.min(W*.56,260),x=(W-width)/2,barY=48;
+ roundRect(x,barY,width,7,4,"#27334f");roundRect(x,barY,Math.max(0,width*b.hp/b.maxHP),7,4,"#ed9b78");ctx.fillStyle="#21314c";ctx.font="bold 12px sans-serif";ctx.textAlign="center";ctx.fillText(b.name+" · "+Math.ceil(b.hp)+"/"+b.maxHP,W/2,barY+19,width);
+ for(const p of bossProjectiles){if(p.friendly){ctx.fillStyle="#fff4b0";ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();}else{ctx.font=Math.round(p.r*2.1)+"px sans-serif";ctx.textAlign="center";ctx.fillText(p.glyph,p.x,p.y+p.r*.6);}}
  ctx.restore();
 }
 function update(dt){
@@ -1543,6 +1530,7 @@ function syncFullscreenPause(){
 }
 function tick(t){
  bgm.setStage(state==="starting"||state==="ready"?0:stage);
+ bgm.setBoss(state==="playing"||state==="paused"?bosses.active()?.id:null);
  bgm.sync(soundOn&&(state==="playing"||state==="starting"));
  // Apply the viewport-sized playing canvas before notifying a parent frame
  // to center and freeze scrolling; do not refocus the page every frame.

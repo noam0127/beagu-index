@@ -28,6 +28,10 @@ for(const kind of ['volleyball','teacher_run']){
  bgm.dispose();assert.equal(events.size,0);
 }
 assert.equal(closed,2);
+const bossBgm=api.create('teacher_run');bossBgm.sync(true);
+assert.equal(Object.keys(api.bossTracks).length,5);
+for(const [id,t] of Object.entries(api.bossTracks)){bossBgm.setBoss(id);assert.equal(bossBgm.boss,id);assert.equal(timers.size,1);assert.equal([...timers.values()][0].ms,Math.round(30000/t.tempo));bossBgm.setStage(3);}
+bossBgm.setBoss(null);assert.equal([...timers.values()][0].ms,Math.round(30000/api.playlists.teacher_run[3].tempo));bossBgm.dispose();
 assert.ok(api.playlists.volleyball.every(t=>!api.playlists.teacher_run.some(u=>String(t.lead)===String(u.lead))));
 for(const p of ['teacher-volleyball.html','teacher-run.html','teacher-run-4-preview.html']){
  const s=read(p);

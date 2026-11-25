@@ -18,6 +18,7 @@ const playlists=Object.freeze({
  {tempo:144,lead:[69,72,76,81,79,76,74,72],bass:[45,48,41,43]}
  ]
 });
+const bossTracks=Object.freeze({confusion:{tempo:132,lead:[60,63,67,66,60,58,63,55],bass:[36,43,38,43]},demands:{tempo:148,lead:[65,68,64,71,65,68,72,64],bass:[41,44,39,43]},responsibility:{tempo:116,lead:[55,58,62,61,55,53,58,50],bass:[31,38,34,36]},burnout:{tempo:144,lead:[61,65,68,64,61,69,66,57],bass:[37,33,40,35]},final:{tempo:178,lead:[72,75,79,81,78,75,82,84],bass:[48,51,55,47]}});
 const clampStage=n=>Math.max(0,Math.min(4,Math.floor(Number(n)||0)));
 const volleyballStage=(mine,theirs)=>clampStage(Math.max(Number(mine)||0,Number(theirs)||0)/5);
 const hz=m=>440*Math.pow(2,(m-69)/12);
@@ -26,10 +27,11 @@ function create(kind){
  const tracks=playlists[kind],Context=root.AudioContext||root.webkitAudioContext;
  if(!Context){
   const legacy=root.BeaguArcadeBgm.create(kind);
-  return Object.freeze({sync:legacy.sync,setStage(){},dispose:legacy.dispose});
+  return Object.freeze({sync:legacy.sync,setStage(){},setBoss(){},dispose:legacy.dispose});
  }
- let ctx=null,master=null,bus=null,timer=null,phase=0,step=0,wanted=false,disposed=false,opening=false;
+ let ctx=null,master=null,bus=null,timer=null,phase=0,boss=null,step=0,wanted=false,disposed=false,opening=false;
  const voices=new Set(),buses=new Set();
+ const track=()=>boss?bossTracks[boss]:tracks[phase];
  function releaseBus(node){if(node&&node!==bus&&node.count===0){node.gain.disconnect();buses.delete(node);}}
  function newBus(){const t=ctx.currentTime,gain=ctx.createGain();gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(1,t+.24);gain.connect(master);bus={gain,count:0};buses.add(bus);}
  function fadeBus(){const old=bus;if(!old)return;bus=null;const t=ctx.currentTime;old.gain.gain.cancelScheduledValues(t);old.gain.gain.setValueAtTime(old.gain.gain.value,t);old.gain.gain.linearRampToValueAtTime(0,t+.24);releaseBus(old);}
@@ -53,15 +55,15 @@ function create(kind){
  }
  function beat(){
   if(!wanted||disposed||document.hidden||ctx?.state!=='running')return;
-  const p=tracks[phase],i=step++%p.lead.length,unit=30/p.tempo;
-  note(p.lead[i],unit*.85,.045,kind==='volleyball'?'square':'triangle');
+  const p=track(),i=step++%p.lead.length,unit=30/p.tempo;
+  note(p.lead[i],unit*.85,.045,kind==='volleyball'||boss?'square':'triangle');
   if(i%2===0)note(p.bass[Math.floor(i/2)],unit*1.7,.035,'sine');
  }
  function play(){
   if(disposed||!wanted||document.hidden||!ctx||ctx.state!=='running'||timer!==null)return;
   const t=ctx.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(.7,t);
   if(!bus)newBus();beat();
-  timer=setInterval(beat,Math.round(30000/tracks[phase].tempo));
+  timer=setInterval(beat,Math.round(30000/track().tempo));
  }
  function sync(on){
   wanted=Boolean(on);if(disposed)return;
@@ -74,18 +76,19 @@ function create(kind){
   }catch(_){opening=false;}
  }
  function setStage(n){
-  n=clampStage(n);if(n===phase||disposed)return;
+  n=clampStage(n);if(n===phase||disposed)return;phase=n;if(boss)return;
   // Fade the old note bus out while the new phrase fades in; only one beat timer.
   if(timer!==null){clearInterval(timer);timer=null;}
   if(ctx)fadeBus();
-  phase=n;step=0;if(wanted&&!document.hidden)play();
+  step=0;if(wanted&&!document.hidden)play();
  }
+ function setBoss(id){const next=kind==='teacher_run'&&Object.hasOwn(bossTracks,id)?id:null;if(next===boss||disposed)return;if(timer!==null){clearInterval(timer);timer=null;}if(ctx)fadeBus();boss=next;step=0;if(wanted&&!document.hidden)play();}
  const visibility=()=>sync(wanted);
  document.addEventListener('visibilitychange',visibility);
- return Object.freeze({sync,setStage,get stage(){return phase;},dispose(){
+ return Object.freeze({sync,setStage,setBoss,get boss(){return boss;},get stage(){return phase;},dispose(){
   disposed=true;wanted=false;silence();document.removeEventListener('visibilitychange',visibility);
   if(ctx)void ctx.close().catch(()=>{});
  }});
 }
-root.BeaguFireCourtBgm=Object.freeze({create,volleyballStage,clampStage,playlists});
+root.BeaguFireCourtBgm=Object.freeze({create,volleyballStage,clampStage,playlists,bossTracks});
 })(window);

@@ -150,6 +150,30 @@
   {id:"final",name:"마지막 공문",icon:"📄",color:"#b48b35",start:185,end:190,hp:42,interval:1.55,damage:7,reward:"황금 분필"}
  ].map(Object.freeze));
  const difficulty=Object.freeze({easy:{hp:.6,score:1,pattern:1,leave:1.2},normal:{hp:1,score:1.5,pattern:2,leave:1},hard:{hp:1.5,score:2,pattern:3,leave:1},very_hard:{hp:1.65,score:2.2,pattern:3,leave:1},extreme:{hp:1.8,score:2.4,pattern:3,leave:1}});
+ const bossCombatTiers=Object.freeze({easy:[1,.7,.5,.75,0,1],normal:[1.2,1,1,1,0,2],hard:[1.4,1.2,1.5,1.15,.12,3],very_hard:[1.6,1.4,2,1.3,.25,4],extreme:[1.8,1.6,2.5,1.45,.42,4]});
+ const bossThemes=Object.freeze({confusion:["📚",33,4,95,32,.25,.8],demands:["💬",35,5,105,40,.6,.55],responsibility:["🗂️",38,6,88,28,.35,1],burnout:["🌘",40,6,100,44,.8,.65],final:["📄",43,7,112,48,.9,.6]});
+ function bossCombat(id,tier="hard"){
+  const [size,motion,count,speed,homing,edges]=bossCombatTiers[tier]||bossCombatTiers.hard;
+  const [glyph,radius,n,velocity,move,chase,spread]=bossThemes[id]||bossThemes.confusion;
+  return {glyph,radius:radius*size,count:Math.min(18,Math.max(edges,Math.round(n*count))),speed:velocity*speed,move:move*motion,chase,spread,homing,edges};
+ }
+ function bossMotion(pos,player,c,t,dt,w,h){
+  const r=Math.min(c.radius,w*.16,h*.19),mx=Math.min(w*.45,r*1.55+10),lo=Math.min(h*.48,r+40),hi=Math.max(lo,h*.53-r*.2);
+  const tx=Math.max(mx,Math.min(w-mx,(w*.5+Math.sin(t*1.23)*w*.29)*(1-c.chase)+player.x*c.chase));
+  const ty=Math.max(lo,Math.min(hi,(lo+(hi-lo)*(.5+.5*Math.sin(t*.91+1)))*(1-c.chase)+player.y*c.chase));
+  const dx=tx-pos.x,dy=ty-pos.y,d=Math.hypot(dx,dy),step=Math.min(d,c.move*dt);
+  return {x:Math.max(mx,Math.min(w-mx,pos.x+(d?dx/d*step:0))),y:Math.max(lo,Math.min(hi,pos.y+(d?dy/d*step:0))),r};
+ }
+ function bossWave(c,target,w,h,sequence){
+  const shots=[];
+  for(let i=0;i<c.count;i++){
+   const side=(sequence+i%c.edges)%4,f=(Math.floor(i/c.edges)+1)/(Math.ceil(c.count/c.edges)+1),p=edgePoint(side,f,w,h,18);
+   const offset=(f-.5)*Math.min(w,h)*c.spread;
+   const tx=Math.max(15,Math.min(w-15,target.x+(side%2===0?offset:0))),ty=Math.max(55,Math.min(h-25,target.y+(side%2===1?offset:0)));
+   const dx=tx-p.x,dy=ty-p.y,d=Math.max(1,Math.hypot(dx,dy));
+   shots.push({x:p.x,y:p.y,vx:dx/d*c.speed,vy:dy/d*c.speed,side,glyph:c.glyph,homing:c.homing,homingLeft:1.4,ttl:10});
+  }return shots;
+ }
  function createBosses(tier="hard"){
   const cfg=difficulty[tier]||difficulty.hard,seen=new Set(),defeated=[];
   let current=null;
@@ -218,5 +242,5 @@
    stats(){return {combo,maxCombo,near,hits,crises:paid.size,lastHit};}
   };
  }
- root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending,careerHazards,healthHazards,edgePoint,steerPaper});
+ root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending,careerHazards,healthHazards,edgePoint,steerPaper,bossCombat,bossMotion,bossWave});
 })(typeof window!=="undefined"?window:globalThis);
