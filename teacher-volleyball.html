@@ -220,7 +220,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script defer src="js/beagu-presence-games-v1.js?v=20261120-gateway2"></script>
 <script src="js/arcade-leaderboard-v1.js?v=11115-outcome"></script>
 <script src="js/volley-match-bonus-v1.js?v=11115-deuce"></script>
-<script src="js/arcade-school-picker-v1.js?v=11115-recommend"></script>
+<script src="js/arcade-school-picker-v1.js?v=11116-recommend"></script>
 <script src="js/arcade-fullscreen-v1.js?v=11112-wide"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
 <script src="js/arcade-play-lock-v1.js?v=11116"></script>
@@ -298,7 +298,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   };
   const SPEED_MULTIPLIER=2; // horizontal player and AI reaction (5->10, 3.65->7.3)
   const DASH_DURATION=8,DASH_COOLDOWN=102,SPIKE_BUFFER=19;
-  const AUTO_SPIKE_SPEED=8; // player-driven displacement per simulation frame
   const MATCH_TARGET=25;
   // Opponent score reduces earned points; victory adds a lead-dependent multiplier.
   // Win by 1-4: ×1, 5-9: ×2, 10-14: ×3, 15-19: ×4, 20-24: ×5, 25-0: ×6.
@@ -1066,7 +1065,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       state.impactX=ball.x;state.impactY=ball.y;
       tone(920,.085,"triangle",.04);
     }
-    const spike = p.side === "left" && (p.impactSpeed >= AUTO_SPIKE_SPEED||state.spikeBufferFrames>0||charged);
+    const spike = p.side === "left" && (state.spikeBufferFrames>0||charged);
     if(p.side==="left"&&spike)state.spikeBufferFrames=0;
     const bossStrike=p.side==="right"&&state.bossWarnFrames>0&&
       (currentDifficulty==="very_hard"||currentDifficulty==="extreme");
@@ -1268,8 +1267,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if(flightAllowed){
       // EASY/wings: direct two-axis steering, release to hover.
       const flightStep=10*SPEED_MULTIPLIER*battle.allySpeed*itemSpeed*(dashing?1.75:1);
-      left.x=clamp(left.x+(axes?touchControl.limitX(moveX*flightStep,left.x):moveX*flightStep),35,NET_X-NET_W/2-36);
-      left.y=clamp(left.y+(axes?touchControl.limitY(moveY*flightStep,left.y):moveY*flightStep),playerCeiling(),FLOOR-31);
+      left.x=clamp(left.x+(axes&&!dashing?touchControl.limitX(moveX*flightStep,left.x):moveX*flightStep),35,NET_X-NET_W/2-36);
+      left.y=clamp(left.y+(axes&&!dashing?touchControl.limitY(moveY*flightStep,left.y):moveY*flightStep),playerCeiling(),FLOOR-31);
       left.vx=left.x-beforeMoveX;left.vy=left.y-beforeMoveY;
       left.jumpLock=false;
     }else{
@@ -1290,7 +1289,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       const trailing=clamp(left.x+volleyShackle.dir*58,24,NET_X-50);
       volleyShackle.x+=clamp((trailing-volleyShackle.x)*.19,-8,8);
     }
-    // Intentional movement or dash powers automatic contacts; explicit attack also arms a spike.
+    // Ordinary movement remains a normal contact; an explicit attack arms a spike.
     const activeMove=dashing||Math.abs(inputX)>.01||(flightAllowed&&Math.abs(inputY)>.01)||(canPlayerJump()&&(keys.jump||keys.up||touchJump));
     left.impactSpeed=activeMove?Math.hypot(left.x-beforeMoveX,left.y-beforeMoveY):0;
     moveAI();moveClones();moveEnemyMinion();
