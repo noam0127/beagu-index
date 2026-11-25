@@ -13,7 +13,7 @@ assert.match(css,/font-size:clamp\(13px,1\.55vw,17px\)!important/);
 assert.match(css,/font-size:clamp\(12px,3\.4vw,14px\)!important/);
 assert.match(css,/overflow-y:auto!important/,'long dialogue remains accessible');
 assert.doesNotMatch(volley,/id="volley-joystick"|id="volley-spike"|id="volley-dash"|id="volley-mobile-jump"/);
-assert.doesNotMatch(volley,/id="volley-attack"/);assert.match(volley,/attackPointer=event.pointerId;requestSpike\(\)/);
+assert.doesNotMatch(volley,/id="volley-attack"/);assert.match(volley,/attackPointer=event.pointerId;[\s\S]*?distance\/dt>=\.65/);
 assert.match(volley,/@media\(pointer:coarse\)\{[\s\S]*?\.court\.volleyball-controls-active \.volleyball-touch-controls\{display:flex/);
 assert.match(volley,/canvas\.addEventListener\("pointerdown"/);
 assert.match(volley,/canvas\.addEventListener\("pointermove"/);
