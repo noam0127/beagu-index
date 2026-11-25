@@ -61,6 +61,44 @@
    effects(){return {damage:Math.pow(.8,level("guidance")),speed:Math.pow(1.15,level("speed")),power:Math.pow(1.2,level("power")),rate:Math.pow(1.15,level("rate")),allies:level("ally"),maxHP:Math.pow(1.15,level("vital")),heal:Math.pow(1.2,level("heal")),spawn:Math.pow(.88,level("workload")),community:Math.pow(1.15,level("community"))};}
   };
  }
+// Fire Court career balance: game fiction, not empirical teacher health statistics.
+ const hazardTiers=Object.freeze({
+  easy:{students:1,rushEvery:23,papers:2,paperEvery:31,paperSpeed:.72,homing:0},
+  normal:{students:1,rushEvery:20,papers:4,paperEvery:26,paperSpeed:.86,homing:0},
+  hard:{students:2,rushEvery:16,papers:7,paperEvery:21,paperSpeed:1,homing:.18},
+  very_hard:{students:3,rushEvery:12,papers:10,paperEvery:16,paperSpeed:1.18,homing:.36},
+  extreme:{students:5,rushEvery:9,papers:14,paperEvery:12,paperSpeed:1.38,homing:.58}
+ });
+ const hazardRounds=Object.freeze([
+  {students:1,rushInterval:1,papers:.4,paperInterval:1.4,sides:1,health:0},
+  {students:.75,rushInterval:1.3,papers:.65,paperInterval:1.2,sides:2,health:.02},
+  {students:.45,rushInterval:1.8,papers:1,paperInterval:1,sides:3,health:.06},
+  {students:.2,rushInterval:2.5,papers:1.3,paperInterval:.85,sides:4,health:.12},
+  {students:0,rushInterval:Infinity,papers:1.55,paperInterval:.72,sides:4,health:.2}
+ ]);
+ const healthHazards=Object.freeze([
+  Object.freeze({id:"hospital",name:"병원비",emoji:"🏥",good:false,damage:12,cost:180}),
+  Object.freeze({id:"injury",name:"부상",emoji:"🩹",good:false,damage:16,cost:100,buff:"injury",duration:6})
+ ]);
+ function careerHazards(stage,tier="hard"){
+  const r=hazardRounds[Math.max(0,Math.min(4,Math.floor(stage)||0))],t=hazardTiers[tier]||hazardTiers.hard;
+  return {students:r.students===0?0:Math.max(1,Math.round(t.students*r.students)),rushEvery:t.rushEvery*r.rushInterval,papers:Math.min(24,Math.max(1,Math.round(t.papers*r.papers))),paperEvery:t.paperEvery*r.paperInterval,paperSpeed:t.paperSpeed,homing:t.homing,sides:r.sides,health:r.health};
+ }
+ // All entry edges use the same world geometry in the player and replay worker.
+ function edgePoint(side,f,w,h,margin=22){
+  f=Math.max(.08,Math.min(.92,f));
+  return side===0?{x:w*f,y:-margin}:side===1?{x:w+margin,y:h*f}:side===2?{x:w*f,y:h+margin}:{x:-margin,y:h*f};
+ }
+ function steerPaper(a,x,y,dt){
+  if(!a.homing||a.homingLeft<=0)return;
+  a.homingLeft=Math.max(0,a.homingLeft-dt);
+  const speed=Math.hypot(a.vx,a.vy),dx=x-a.x,dy=y-a.y,dist=Math.hypot(dx,dy);
+  if(speed<=0||dist<1)return;
+  const current=Math.atan2(a.vy,a.vx),desired=Math.atan2(dy,dx);
+  const delta=Math.atan2(Math.sin(desired-current),Math.cos(desired-current));
+  const angle=current+Math.max(-a.homing*dt,Math.min(a.homing*dt,delta));
+  a.vx=Math.cos(angle)*speed;a.vy=Math.sin(angle)*speed;
+ }
  const items=Object.freeze([
   {id:"coffee",name:"따뜻한 커피",emoji:"☕",good:true,heal:17,buff:"coffee",duration:6},
   {id:"snack",name:"동료의 간식",emoji:"🍪",good:true,heal:25},
@@ -95,7 +133,7 @@
    set(id,t,seconds){expires[id]=Math.max(expires[id]||0,t+seconds);},
    active,addShield(){shield=true;},consumeShield(){if(!shield)return false;shield=false;return true;},
    values(t){return {
-    speed:Math.max(.65,Math.min(1.35,(active("coffee",t)?1.25:1)*(active("insomnia",t)?.7:1))),
+    speed:Math.max(.65,Math.min(1.35,(active("coffee",t)?1.25:1)*(active("insomnia",t)?.7:1)*(active("injury",t)?.85:1))),
     spawn:Math.max(.65,Math.min(1.5,(active("assignment",t)?1.35:1)*(active("relief",t)?.72:1))),
     power:Math.max(.6,Math.min(1.3,(active("training",t)?1.2:1)*(active("printer",t)?.65:1))),
     damage:active("training",t)?.8:1,helperRate:active("conflict",t)?.65:1,
@@ -180,5 +218,5 @@
    stats(){return {combo,maxCombo,near,hits,crises:paid.size,lastHit};}
   };
  }
- root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending});
+ root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending,careerHazards,healthHazards,edgePoint,steerPaper});
 })(typeof window!=="undefined"?window:globalThis);

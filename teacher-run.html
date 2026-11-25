@@ -218,7 +218,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-fire-court-bgm-v1.js?v=11115-2"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11113-save"></script>
-<script src="js/teacher-run-4-rules.js?v=11113-boss"></script>
+<script src="js/teacher-run-4-rules.js?v=11115-hazards"></script>
 <script src="js/teacher-run-4-records-v1.js?v=11111-local2"></script>
 <script src="js/run4-official-client-v1.js?v=11111"></script>
 <script>
@@ -314,14 +314,7 @@ const difficultyProfiles={
 };
 const difficultyName={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
 const canPlayerRise=()=>!isMysteryBuff("shackle")&&(profile.jumpEnabled!==false||isMysteryBuff("wings"));
-const chaosProfiles={
- easy:{students:0,rushEvery:999,papers:0,paperEvery:999},
- normal:{students:1,rushEvery:24,papers:4,paperEvery:26},
- hard:{students:2,rushEvery:17,papers:7,paperEvery:19},
- very_hard:{students:3,rushEvery:12,papers:12,paperEvery:14},
- extreme:{students:5,rushEvery:9,papers:17,paperEvery:10}
-};
-const chaosProfile=()=>chaosProfiles[schoolPicker.get()?.difficulty]||chaosProfiles.hard;
+const chaosProfile=()=>rules.careerHazards(stage,schoolPicker.get()?.difficulty);
 const windowRunEffects=()=>effects.values(clock);
 const chalkProfiles={easy:{interval:1.1,maxShots:2,range:470},normal:{interval:1.4,maxShots:1,range:410}};
 const chalkProfile=()=>{
@@ -423,7 +416,7 @@ function resize(){
   player.x*=sx;shackle.x*=sx;
   items.forEach(a=>a.x*=sx);
   chalkShots.forEach(b=>{b.x*=sx;if(Number.isFinite(b.missX))b.missX*=sx;});
-  sideStudents.forEach(a=>{a.x*=sx;a.stopX*=sx;});
+  sideStudents.forEach(a=>{a.x*=sx;a.vx*=sx;});
   paperBullets.forEach(a=>{a.x*=sx;a.vx*=sx;});
   mysteryDrops.forEach(a=>a.x*=sx);
   mysteryReveals.forEach(a=>a.x*=sx);
@@ -437,7 +430,7 @@ function resize(){
   player.y*=sy;
   items.forEach(a=>a.y*=sy);
   chalkShots.forEach(a=>{a.y*=sy;if(Number.isFinite(a.missY))a.missY*=sy;});
-  sideStudents.forEach(a=>a.y*=sy);
+  sideStudents.forEach(a=>{a.y*=sy;a.vy*=sy;});
   paperBullets.forEach(a=>{a.y*=sy;a.vy*=sy;});
   mysteryDrops.forEach(a=>{a.y*=sy;a.startY*=sy;a.targetY*=sy;});
   mysteryReveals.forEach(a=>a.y*=sy);
@@ -553,7 +546,7 @@ function activeItemIcons(){
   if(item)push("mystery-"+id,item.icon,item.name,until-clock,!item.good);
  }
  for(const item of effects.labels(clock)){
-  const p=rules.items.find(p=>p.buff===item.id);
+  const p=[...rules.items,...rules.healthHazards].find(p=>p.buff===item.id);
   if(p)push("effect-"+item.id,p.emoji,p.name,item.remaining,!p.good);
  }
  if(effects.values(clock).shield||growth.shields()>0)push("shield","🛡️","교권 보호막",Infinity);
@@ -688,6 +681,7 @@ function spawnFeature(p,x=30+gameRandom()*Math.max(1,W-60),y=-35){
 }
 function applyFeature(p){
  if(p.buff)effects.set(p.buff,clock,p.duration);
+ if(p.cost){const paid=Math.min(score,p.cost);score=Math.max(0,score-paid);float(player.x,player.y-35,"-"+paid+"점","#b32738");}
  if(p.heal||p.healRatio){const amount=Math.round(((p.heal||0)+(p.healRatio||0)*maxLife)*profile.heal*growth.effects().heal);life=Math.min(maxLife,life+amount);}
  if(p.inv)player.inv=Math.max(player.inv,p.inv);
  if(p.shield)effects.addShield();
@@ -710,6 +704,8 @@ function triggerCareerEvent(){
 function spawn(){
  if(windowRunEffects().noSpawn)return;
  if(bosses.active()&&gameRandom()<.65)return;
+ const healthChance=chaosProfile().health;
+ if(healthChance>0&&gameRandom()<healthChance){spawnFeature(rules.healthHazards[Math.floor(gameRandom()*rules.healthHazards.length)]);return;}
  if(gameRandom()<.24){
   const goodPick=gameRandom()<Math.max(.3,profile.goodChance);
   const candidates=rules.items.filter(p=>p.good===goodPick);
@@ -741,6 +737,9 @@ function nextCareerStage(){
  const next=getCareerStage();
  if(next<=stage)return;
  stage=next;activeEvent=null;eventSeconds=0;lastEventCycle=-1;
+ const cfg=chaosProfile();sideRushClock=cfg.students?Math.max(sideRushClock,cfg.rushEvery*.5):Infinity;
+ if(!cfg.students)sideStudents=[];
+ paperStormClock=Math.min(paperStormClock,cfg.paperEvery*.65);
  setNotice("ROUND "+(stage+1)+" — "+careerStages[stage].name,2.4);playTone(900,.3);
 }
 function applyGrowth(id,manual=true){
@@ -966,41 +965,38 @@ function drawShackle(){
  ctx.fillStyle="#aeb8c3";ctx.fillRect(ankleX-10,ankleY-4,18,3);
  ctx.restore();
 }
-// Miniature side-rushers attack the edges, leaving a central dodge lane.
+// Early-career student rushes arrive from multiple edges; retire from this pattern at 60.
 function beginSideRush(){
  const cfg=chaosProfile();if(!cfg.students)return;
- const count=cfg.students+Math.min(1,Math.floor(stage/3));
- const firstSide=gameRandom()<.5?"left":"right";
+ const count=Math.min(cfg.students,12-sideStudents.length),firstSide=Math.floor(gameRandom()*4);
+ if(count<=0)return;
  for(let i=0;i<count;i++){
-  const side=i%3===2?(firstSide==="left"?"right":"left"):firstSide;
-  sideStudents.push({
-   x:side==="left"?-28:W+28,
-   y:Math.max(105,Math.min(H-52,player.y+(i-(count-1)/2)*25)),
-   vx:side==="left"?1:-1,phase:"warn",wait:.58+i*.22,r:13,
-   stopX:side==="left"?W*.38:W*.62
-  });
+  const side=(firstSide+i)%4,offset=(i-(count-1)/2)*26;
+  const aimX=Math.max(50,Math.min(W-50,player.x+offset)),aimY=Math.max(95,Math.min(H-52,player.y+offset));
+  const origin=rules.edgePoint(side,side%2===0?aimX/W:aimY/H,W,H,28);
+  const dx=aimX-origin.x,dy=aimY-origin.y,dist=Math.max(1,Math.hypot(dx,dy));
+  const speed=175*profile.enemySpeed;
+  sideStudents.push({x:origin.x,y:origin.y,vx:dx/dist*speed,vy:dy/dist*speed,side,phase:"warn",wait:.75+i*.18,r:13,remaining:dist/speed+.25});
  }
- setNotice("⚠ 돌진 학생 "+count+"명 등장! 중앙에 피할 공간이 있어요",1.7);
+ setNotice("⚠ 돌진 학생 "+count+"명 · 사방을 살펴요",1.7);
 }
-// Snapshot player position at warning time: no unfair homing afterward.
 function beginPaperStorm(){
- const cfg=chaosProfile();if(!cfg.papers)return;
- paperTarget={x:player.x,y:player.y,wait:.85,count:cfg.papers+Math.min(stage*2,6)};
- setNotice("🎯 공문 표적 지정! 느린 탄막이 다가옵니다",1.7);
+ const cfg=chaosProfile();
+ paperTarget={x:player.x,y:player.y,wait:.95,count:cfg.papers,sides:cfg.sides,speed:cfg.paperSpeed,homing:cfg.homing,firstSide:Math.floor(gameRandom()*4)};
+ setNotice("🎯 공문 폭탄 · "+cfg.sides+"방향",1.7);
 }
 function firePaperStorm(target){
- const count=Math.min(24,target.count);
- const startCenter=Math.max(30,Math.min(W-30,target.x));
- const spread=Math.min(W*.86,Math.max(160,W*.75));
- const aimY=Math.max(H*.6,target.y);
+ const count=Math.min(24,target.count,72-paperBullets.length);
  for(let i=0;i<count;i++){
-  const frac=count===1?.5:i/(count-1);
-  const aimX=Math.max(12,Math.min(W-12,target.x+(frac-.5)*spread));
-  const x=Math.max(12,Math.min(W-12,startCenter+(frac-.5)*Math.min(W*.3,105)));
-  const dx=aimX-x,dy=aimY+15;
-  const dist=Math.max(1,Math.hypot(dx,dy));
-  const speed=90+gameRandom()*20+stage*2.5;
-  paperBullets.push({x,y:-14-(i%5)*12,vx:dx/dist*speed,vy:dy/dist*speed,
+  // First round: top only; then add alternating edges, eventually all four.
+  const side=target.sides===1?0:(target.firstSide+i%target.sides)%4;
+  const f=.15+gameRandom()*.7,origin=rules.edgePoint(side,f,W,H,18);
+  const spread=(gameRandom()-.5)*Math.min(W,H)*.62;
+  const aimX=Math.max(15,Math.min(W-15,target.x+(side%2===0?spread:0)));
+  const aimY=Math.max(65,Math.min(H-35,target.y+(side%2===1?spread:0)));
+  const dx=aimX-origin.x,dy=aimY-origin.y,dist=Math.max(1,Math.hypot(dx,dy));
+  const speed=(90+gameRandom()*20+stage*2.5)*target.speed;
+  paperBullets.push({x:origin.x,y:origin.y,vx:dx/dist*speed,vy:dy/dist*speed,side,homing:target.homing,homingLeft:1.8,ttl:10,
    r:8,angle:(i%2?1:-1)*.12,spin:(i%2?1:-1)*.45});
  }
 }
@@ -1008,39 +1004,27 @@ function updatePatternHazards(dt){
  const cfg=chaosProfile();
  if(!windowRunEffects().noSpawn&&!bosses.active()){sideRushClock-=dt;paperStormClock-=dt;}
  if(!windowRunEffects().noSpawn&&!bosses.active()&&sideRushClock<=0){
-  beginSideRush();sideRushClock=cfg.rushEvery*(.9+gameRandom()*.25)*(1-stage*.035);
+  beginSideRush();sideRushClock=cfg.rushEvery*(.9+gameRandom()*.25);
  }
  if(!windowRunEffects().noSpawn&&!bosses.active()&&paperStormClock<=0){
   if(!paperTarget)beginPaperStorm();
-  paperStormClock=cfg.paperEvery*(.9+gameRandom()*.25)*(1-stage*.035);
+  paperStormClock=cfg.paperEvery*(.9+gameRandom()*.25);
  }
- if(paperTarget){
-  paperTarget.wait-=dt;
-  if(paperTarget.wait<=0){firePaperStorm(paperTarget);paperTarget=null;}
- }
+ if(paperTarget){paperTarget.wait-=dt;if(paperTarget.wait<=0){firePaperStorm(paperTarget);paperTarget=null;}}
  for(let i=sideStudents.length-1;i>=0;i--){
   const a=sideStudents[i];
-  if(a.phase==="warn"){
-   a.wait-=dt;if(a.wait>0)continue;
-   a.phase="rush";
-  }
-  a.x+=a.vx*(175+stage*10)*dt;
-  if((a.vx>0&&a.x>=a.stopX)||(a.vx<0&&a.x<=a.stopX)){
-   sideStudents.splice(i,1);continue;
-  }
+  if(a.phase==="warn"){a.wait-=dt;if(a.wait>0)continue;a.phase="rush";}
+  a.x+=a.vx*dt;a.y+=a.vy*dt;a.remaining-=dt;
+  if(a.remaining<=0){sideStudents.splice(i,1);continue;}
   if(Math.hypot(a.x-player.x,(a.y-10)-player.y)<a.r+player.r*.77*profile.heroSize){
-   sideStudents.splice(i,1);
-   hit({good:false,damage:11,x:a.x,y:a.y});
-   if(state!=="playing")return;
+   sideStudents.splice(i,1);hit({good:false,damage:11,x:a.x,y:a.y});if(state!=="playing")return;
   }
  }
  for(let i=paperBullets.length-1;i>=0;i--){
-  const a=paperBullets[i];a.x+=a.vx*dt;a.y+=a.vy*dt;a.angle+=a.spin*dt;
-  if(a.y>H+25||a.x<-25||a.x>W+25){paperBullets.splice(i,1);continue;}
+  const a=paperBullets[i];rules.steerPaper(a,player.x,player.y,dt);a.x+=a.vx*dt;a.y+=a.vy*dt;a.angle+=a.spin*dt;a.ttl-=dt;
+  if(a.ttl<=0||a.y>H+42||a.y<-42||a.x<-42||a.x>W+42){paperBullets.splice(i,1);continue;}
   if(Math.hypot(a.x-player.x,a.y-player.y)<a.r+player.r*.77*profile.heroSize){
-   paperBullets.splice(i,1);
-   hit({good:false,damage:6,x:a.x,y:a.y});
-   if(state!=="playing")return;
+   paperBullets.splice(i,1);hit({good:false,damage:6,x:a.x,y:a.y});if(state!=="playing")return;
   }
  }
 }
@@ -1423,7 +1407,7 @@ function drawPatternHazards(){
   ctx.fillStyle="#d82941";ctx.fillText("공문 표적",x,Math.max(56,y-43));ctx.restore();
  }
  for(const a of sideStudents){
-  ctx.save();ctx.translate(a.phase==="warn"?(a.vx>0?14:W-14):a.x,a.y);
+  ctx.save();ctx.translate(a.phase==="warn"?Math.max(14,Math.min(W-14,a.x)):a.x,a.phase==="warn"?Math.max(84,Math.min(H-25,a.y)):a.y);
   if(a.phase==="warn"){
    ctx.globalAlpha=.65+Math.sin(clock*22)*.3;
    ctx.fillStyle="#e53f53";ctx.font="bold 23px sans-serif";
@@ -1439,7 +1423,7 @@ function drawPatternHazards(){
    ctx.fillStyle="#fff";ctx.font="bold 9px sans-serif";
    ctx.textAlign="center";ctx.fillText("학생",0,13);
    ctx.strokeStyle="#e76050";ctx.lineWidth=2.5;ctx.beginPath();
-   ctx.moveTo(-a.vx*17,4);ctx.lineTo(-a.vx*29,4);ctx.stroke();
+   const d=Math.max(1,Math.hypot(a.vx,a.vy));ctx.moveTo(-a.vx/d*17,4-a.vy/d*17);ctx.lineTo(-a.vx/d*29,4-a.vy/d*29);ctx.stroke();
   }
   ctx.restore();
  }

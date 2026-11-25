@@ -18,7 +18,7 @@ async function createFactory(){
  let browser=null,launching=null;
  async function getBrowser(){
   if(browser?.isConnected())return browser;
-  if(!launching)launching=chromium.launch({headless:true,args:["--no-sandbox","--disable-dev-shm-usage","--disable-background-networking"]}).then(b=>browser=b).finally(()=>launching=null);
+  if(!launching)launching=chromium.launch({headless:true,...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{}),args:["--no-sandbox","--disable-dev-shm-usage","--disable-background-networking"]}).then(b=>browser=b).finally(()=>launching=null);
   return launching;
  }
  async function openTrustedPage(difficulty){

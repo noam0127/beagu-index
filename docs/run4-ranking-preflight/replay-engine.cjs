@@ -28,7 +28,7 @@ function instrumentTrustedSource(source){
    while(state==="playing"&&recordTick<11400){
     if(clock>=aimAt){
      aimAt=clock+.18;
-     const threats=[...items.filter(a=>!a.good).map(a=>({x:a.x,y:a.y,vx:0,vy:a.speed,r:a.r})),...paperBullets.map(a=>({x:a.x,y:a.y,vx:a.vx,vy:a.vy,r:a.r})),...bossProjectiles.filter(a=>!a.friendly).map(a=>({x:a.x,y:a.y,vx:a.vx,vy:a.vy,r:a.r})),...sideStudents.map(a=>({x:a.x,y:a.y-10,vx:a.vx*(175+stage*10),vy:0,r:a.r}))];
+     const threats=[...items.filter(a=>!a.good).map(a=>({x:a.x,y:a.y,vx:0,vy:a.speed,r:a.r})),...paperBullets.map(a=>({x:a.x,y:a.y,vx:a.vx,vy:a.vy,r:a.r})),...bossProjectiles.filter(a=>!a.friendly).map(a=>({x:a.x,y:a.y,vx:a.vx,vy:a.vy,r:a.r})),...sideStudents.map(a=>({x:a.x,y:a.y-10,vx:a.vx,vy:a.vy,r:a.r}))];
      const xs=Array.from({length:11},(_,n)=>27+(W-54)*n/10),ys=canPlayerRise()?[Math.max(76,H*.35),H*.60,H-52]:[H-52];
      let bestAim={x:player.x,y:player.y},bestUtility=-Infinity,minGap=Infinity;
      for(const a of threats)minGap=Math.min(minGap,Math.hypot(player.x-a.x,player.y-a.y)-a.r-player.r);
