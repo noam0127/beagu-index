@@ -11,3 +11,5 @@ Frozen candidate 2ae1f907a576be5cdac922449c38ee9af7397e52 (31/31 CI); live regis
  
 ## Rehearsal limits
 Existing 31 candidate workflows passed in separate synthetic fixtures, including likes/combined views/master/browser. This additional test executes real predecessor SQL and master migration on synthetic PostgreSQL, archives and restores pre/post state and checks privileges/old rows. No production data and no full production backup. Test branch does not supersede frozen candidate. 
+
+Read-only Edge source comparison: identity v11 and referral v15 match the old website baseline entrypoint exactly. Level API v55, school-interest v14, review-admin v17 and arcade-leaderboard v29 differ from both the baseline and candidate entrypoints. These four require explicit source/dependency reconciliation and a staged compatibility review before replacement, not a blind overwrite. Registry shows production and draft still v1.11.16; no queued/running jobs observed. Actual backup and runtime staging remain unperformed.
