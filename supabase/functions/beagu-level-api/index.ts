@@ -113,7 +113,9 @@ Deno.serve(async(req:Request)=>{
    if(!Array.isArray(ids)||ids.length<1||ids.length>20||
      ids.some(id=>typeof id!=='string'||!/^[A-Z0-9]{7}$/.test(id))||
      new Set(ids).size!==ids.length)return send({error:'INVALID_SCHOOLS'},400,origin);
-   const tier=Number(session.access_level);
+   const verifiedTier=Number(session.access_level);
+   const tier=body.viewLevel===undefined?verifiedTier:body.viewLevel;
+   if(typeof tier!=='number'||tier>verifiedTier)return send({error:'ACCESS_DENIED'},403,origin);
    if(![1,2].includes(tier))return send({error:'ACCESS_DENIED'},403,origin);
    const sendSchoolProfiles=async(values:Record<string,number>)=>{
      const {data:profiles,error:profileError}=await admin.from('beagu_2026_official_school_profiles')
@@ -144,7 +146,7 @@ Deno.serve(async(req:Request)=>{
    // Only recently approved Lv2 percentiles need the independent snapshot gate.
    // Avoid extra RPC calls for the normal 24-hour release path.
    const recentIds=new Set<string>();
-   if(Number(session.access_level)>=2){
+   if(tier>=2){
      const pendingIds=[...new Set((metrics.data||[]).filter((m:any)=>
        m.approved_at&&Date.parse(m.approved_at)>Date.now()-24*60*60*1000)
        .map((m:any)=>String(m.school_id)))];
@@ -156,7 +158,7 @@ Deno.serve(async(req:Request)=>{
    }
    const {data:publishedIds,error:publishedError}=await admin.rpc(
     'beagu_2026_level_released_school_ids',
-    {p_ids:ids,p_level:Number(session.access_level)});
+    {p_ids:ids,p_level:tier});
    if(publishedError||!Array.isArray(publishedIds))
      return send({error:'PUBLICATION_GATE_UNAVAILABLE'},503,origin);
    const publishedSet=new Set(publishedIds);
@@ -169,7 +171,7 @@ Deno.serve(async(req:Request)=>{
    }
    // Separate exact percentile-only approval; never relax the legacy question gate.
    // Staggered rollout: absent/unavailable new RPC returns no new percentiles.
-   const narrow=await admin.rpc('beagu_2026_percentile_v13_values',{p_ids:ids,p_level:Number(session.access_level)});
+   const narrow=await admin.rpc('beagu_2026_percentile_v13_values',{p_ids:ids,p_level:tier});
    if(!narrow.error&&narrow.data&&typeof narrow.data==='object'&&!Array.isArray(narrow.data)){
      for(const id of ids){
        const n=narrow.data[id];

@@ -1489,7 +1489,7 @@ body.beagu-page-report .year-card .metric-caption{font-size:10px}
       const r=await tierCall('school',{schoolId:id,viewLevel:requested});
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id||state.tier!==requested)return;
       if(Number(r.level)!==requested)throw Error('REPORT_TIER_MISMATCH');
-      const p=await tierCall('percentiles',{schoolIds:[id]});
+      const p=await tierCall('percentiles',{schoolIds:[id],viewLevel:requested});
       if(serial!==state.reportSerial||String(state.school?.school_id)!==id||state.tier!==requested)return;
       const latest=p.values?.[id];state.years['2026'].percentile=typeof latest==='number'&&latest>=0&&latest<=100?latest:null;state.years['2026'].approved=state.years['2026'].percentile!==null;
       if(!latestOnly)state.participationYears=Array.isArray(r.participationYears)?r.participationYears.filter(y=>y===2025):[];

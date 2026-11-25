@@ -68,6 +68,7 @@
     state.authProvisional=false;
     state.approvedBySchool.clear();
     state.approvedLoading.clear();
+    state.public2026.clear();state.public2026Checked.clear();state.public2026Loading.clear();state.public2026Error.clear();
     elements.lv2Code.value='';
     elements.lv2Message.textContent='';
     if(removeStored){try{sessionStorage.removeItem(SESSION_KEY)}catch(_){}}
@@ -106,6 +107,7 @@
     authMessage('');
     renderTable();
     refreshApprovedSelections();
+    void loadPublic2026(state.selected.map(x=>x.id),true);
   }
   async function verifyStoredSession() {
     let token='';

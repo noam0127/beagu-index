@@ -26,7 +26,7 @@ Deno.serve(async(request:Request)=>{
  if(request.method==="OPTIONS")return new Response(null,{status:204,headers:headers(origin)});
  if(request.method!=="POST")return send(origin,405,{error:"method_not_allowed"});
  if(origin&&!origins.has(origin))return send(origin,403,{error:"origin_not_allowed"});
- if(Number(request.headers.get("content-length")||0)>2000000)return send(origin,413,{error:"request_too_large"});
+ if(Number(request.headers.get("content-length")||0)>8000000)return send(origin,413,{error:"request_too_large"});
  const match=/^Bearer ([A-Za-z0-9._-]+)$/.exec(request.headers.get("authorization")||"");
  if(!match)return send(origin,401,{error:"authentication_required"});
  const jwt=match[1];
@@ -37,7 +37,7 @@ Deno.serve(async(request:Request)=>{
   return send(origin,401,{error:"authentication_required"});
  let input:Record<string,unknown>;
  try{
-  const text=await request.text();if(text.length>2000000)throw Error();
+  const text=await request.text();if(text.length>8000000)throw Error();
   input=JSON.parse(text);if(input?.action!=="edited_2026_publish"&&text.length>4096)throw Error();
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});

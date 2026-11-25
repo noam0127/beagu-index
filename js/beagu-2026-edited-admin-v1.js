@@ -20,7 +20,7 @@ function mount(role){
    const filtered=table.map(row=>keep.map(i=>row[i]??''));
    const {data}=await supabaseClient.auth.getSession();const token=data?.session?.access_token;if(!token||!owner||g!==generation)throw Error("관리자 인증 필요");
    const body=JSON.stringify({action:"edited_2026_publish",confirmation:"FINAL_EDITED_FILE",table:filtered});
-   if(new TextEncoder().encode(body).length>1900000)throw Error("공개 집계 파일이 너무 큽니다.");
+   if(new TextEncoder().encode(body).length>7900000)throw Error("공개 집계 파일이 너무 큽니다.");
    const r=await fetch(SUPABASE_URL+"/functions/v1/beagu-2026-review-admin",{method:"POST",cache:"no-store",headers:{"content-type":"application/json","authorization":"Bearer "+token,"apikey":typeof SUPABASE_PUBLISHABLE_KEY==="string"?SUPABASE_PUBLISHABLE_KEY:""},body});
    const result=await r.json().catch(()=>({}));if(!r.ok||result.ok!==true)throw Error("파일 검사 또는 저장 실패: "+String(result.error||r.status));
    if(owner&&g===generation)status.textContent=result.schools+"개교 편집본 반영 완료 · 기존 공개중단은 유지됩니다.";
