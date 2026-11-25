@@ -761,6 +761,7 @@
     const id=String(school.school_id);
     const index=publicIndex.get(id),current=current2026.get(id);
     return BeaguSchoolSearchCard.percentiles({
+      historicalMeanOverride:Object.hasOwn(school,'historical_mean')?school.historical_mean:undefined,
       publicValues:asPublicPercentiles(school),
       statuses:index?.statuses || [],
       publicError:publicLoadError,

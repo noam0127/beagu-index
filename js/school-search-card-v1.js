@@ -73,8 +73,8 @@
   const values=[...publicValues.slice(0,3),common2026].filter(valid);
   return values.length?values.reduce((a,b)=>a+b,0)/values.length:null;
  }
- function meanPanel(section,publicValues,common2026,publicError){
-  const value=historicalMean(publicValues,common2026),row=el('div','glory-score-row');
+ function meanPanel(section,publicValues,common2026,publicError,historicalMeanOverride){
+  const value=historicalMeanOverride===undefined?historicalMean(publicValues,common2026):valid(historicalMeanOverride)?historicalMeanOverride:null,row=el('div','glory-score-row');
   section.dataset.displayYear='average';section.setAttribute('aria-label','역대 배구지수 평균');
   section.append(el('h3','percentile-heading','역대 배구지수 평균'));
   row.append(el('strong','glory-score',value===null?(publicError?'불러오기 실패':'자료 없음'):value.toFixed(1)+'%'));
@@ -83,10 +83,10 @@
   return section;
  }
  function percentiles({publicValues=[],statuses=[],publicError=false,value2026=null,common2026=null,
-   status2026='unpublished',locked=false,viewerTier=null}={}){
+   status2026='unpublished',locked=false,viewerTier=null,historicalMeanOverride}={}){
   const section=el('section','percentile-panel glory-percentile');
   // Identical representative mean for authenticated tiers; Lv2 retains the four-year breakdown.
-  if(viewerTier===1){section.dataset.publishedYears=[2023,2024,2025].filter((y,i)=>valid(publicValues[i])).concat(!locked&&valid(value2026)?[2026]:[]).join(',');return meanPanel(section,publicValues,locked?null:common2026,publicError);}
+  if(viewerTier===1){section.dataset.publishedYears=[2023,2024,2025].filter((y,i)=>valid(publicValues[i])).concat(!locked&&valid(value2026)?[2026]:[]).join(',');return meanPanel(section,publicValues,locked?null:common2026,publicError,historicalMeanOverride);}
   if(viewerTier===2){
    const current=!locked&&valid(value2026)?value2026:null;
    const values=[current,...[2,1,0].map(i=>valid(publicValues[i])?publicValues[i]:null)];
@@ -95,7 +95,7 @@
    section.dataset.displayYear=String(years[latest]);
    section.dataset.publishedYears=years.filter((_,i)=>values[i]!==null).slice().reverse().join(',');
    section.setAttribute('aria-label','2026~2023 배구지수 백분위');
-   meanPanel(section,publicValues,locked?null:common2026,publicError);
+   meanPanel(section,publicValues,locked?null:common2026,publicError,historicalMeanOverride);
    const group=el('div','glory-four-year');
    years.forEach((year,i)=>{
     const value=values[i],row=el('div','glory-year-row');

@@ -242,6 +242,12 @@ Deno.serve(async(req:Request)=>{
    // Property price metadata is available only to verified Lv1+ sessions.
    if(sort==='housing_price_won'&&Number(session.access_level)<1)
      return send({error:'AUTH_REQUIRED'},403,origin);
+   // Preserve the legacy sort key for older clients; its meaning is now the shared historical mean.
+   if(sort==='beagu_percentile_2025'){
+     const {data:ranked,error:rankError}=await admin.rpc('beagu_historical_mean_ranked_schools_v1',{p_keyword:searchText,p_region:region,p_office:office,p_direction:direction,p_page:pagination});
+     if(rankError||!Array.isArray(ranked?.schools)||!Number.isSafeInteger(ranked.total))return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
+     return send({schools:ranked.schools,total:ranked.total,page:pagination,sort,direction,nulls:'last'},200,origin);
+   }
    // Level access is checked above, before any cached school record is fetched.
    // The RLS-protected cache contains only fields from the approved public sort view.
    // On cache read errors, preserve the original verified query as the fallback.
