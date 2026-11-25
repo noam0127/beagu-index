@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
     if (!/^[a-f0-9]{64}$/.test(sessionToken)) return respond({ error: 'AUTH_REQUIRED' }, 401, origin);
     const sessionDigest = await sha256(sessionToken);
     const { data: session, error: sessionError } = await admin.from('beagu_level_sessions')
-      .select('access_level,expires_at').eq('token_sha256', sessionDigest).maybeSingle();
+      .select('access_level,expires_at,identity_visitor_id,identity_campaign').eq('token_sha256', sessionDigest).maybeSingle();
     if (sessionError) return respond({ error: 'SESSION_UNAVAILABLE' }, 503, origin);
     if (!session || Number(session.access_level) < 1 ||
       !Number.isFinite(Date.parse(session.expires_at)) ||
@@ -54,7 +54,19 @@ Deno.serve(async (req: Request) => {
     if (input.action !== 'issue' || typeof input.visitor !== 'string' || !uuid.test(input.visitor)) {
       return respond({ error: 'INVALID_REQUEST' }, 400, origin);
     }
-    const { data, error } = await admin.rpc('beagu_issue_challenge_identity', { p_visitor: input.visitor });
+    // An authenticated personal session identifies the participant, never the device.
+    const boundVisitor = session.identity_campaign === '2026' && typeof session.identity_visitor_id === 'string'
+      ? session.identity_visitor_id.toLowerCase() : null;
+    if (session.identity_visitor_id && (!boundVisitor || !uuid.test(boundVisitor)))
+      return respond({ error: 'AUTH_REQUIRED' }, 401, origin);
+    if (boundVisitor) {
+      const { data: earned, error: earnedError } = await admin.rpc('beagu_has_earned_challenge_visitor', { p_visitor: boundVisitor });
+      if (earnedError) return respond({ error: 'SESSION_UNAVAILABLE' }, 503, origin);
+      if (Number(session.access_level) !== 2 || earned !== true)
+        return respond({ error: 'AUTH_REQUIRED' }, 401, origin);
+    }
+    const visitor = boundVisitor || input.visitor.toLowerCase();
+    const { data, error } = await admin.rpc('beagu_issue_challenge_identity', { p_visitor: visitor });
     if (error) {
       console.error('challenge code issuance error', error.code || 'UNKNOWN');
       return respond({ error: 'ISSUE_UNAVAILABLE' }, 503, origin);
@@ -65,7 +77,11 @@ Deno.serve(async (req: Request) => {
       typeof code !== 'string' || !/^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}|[A-HJ-NP-Z2-9]{10})$/.test(code)) {
       return respond({ error: 'INVALID_ISSUED_DATA' }, 503, origin);
     }
-    return respond({ participantNo: number, identityCode: code, lv1Code: false, lv2Access: false }, 200, origin);
+    if (boundVisitor) {
+      const { data: owner, error: ownerError } = await admin.rpc('beagu_earned_challenge_visitor', { p_code: code });
+      if (ownerError || owner !== boundVisitor) return respond({ error: 'OWNERSHIP_VERIFICATION_FAILED' }, 403, origin);
+    }
+    return respond({ participantNo: number, identityCode: code, visitorId: visitor, lv1Code: false, lv2Access: Boolean(boundVisitor) }, 200, origin);
   } catch (error) {
     console.error('challenge identity unexpected error', error instanceof Error ? error.name : 'Error');
     return respond({ error: 'INTERNAL_ERROR' }, 500, origin);
