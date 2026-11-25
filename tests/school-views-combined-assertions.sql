@@ -22,3 +22,19 @@ do $$begin
  if has_table_privilege('anon','beagu_private.school_search_view_daily_v2','SELECT') then raise exception 'private table exposed';end if;
  raise notice 'PASS legacy totals, independent daily categories, duplicate and forged-event denial, administrator exclusion';
 end$$;
+
+do $$begin
+ if (select count(*) from beagu_private.school_combined_view_activity_v2)<>2 then raise exception 'ranking activity diverged from accepted increments';end if;
+ if has_function_privilege('anon','public.beagu_school_interest_rankings_v2()','EXECUTE') then raise exception 'rank permission';end if;
+end$$;
+insert into beagu_private.school_combined_view_activity_v2(school_id,action_id,view_kind,counted_at) values
+ ('1234567','00000000-0000-4000-8000-000000000010','search',now()-interval '73 hours'),
+ ('7654321','00000000-0000-4000-8000-000000000011','detail',now()-interval '145 hours'),
+ ('7654321','00000000-0000-4000-8000-000000000012','search',now()-interval '1 hour');
+set role service_role;
+do $$declare r jsonb;begin
+ r:=public.beagu_school_interest_rankings_v2();
+ if r#>>'{rising,0,school_id}'<>'1234567' or r#>>'{rising,0,visitors}'<>'2' or r#>>'{rising,0,growth}'<>'1' or r#>>'{rising,1,visitors}'<>'1' then raise exception 'combined growth calculation %',r;end if;
+ raise notice 'PASS rising ranking uses same accepted increments, 72h windows, deterministic ties, no old-window activity';
+end$$;
+reset role;

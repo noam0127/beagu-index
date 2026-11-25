@@ -33,7 +33,7 @@ Deno.serve(async (req: Request) => {
         !Number.isFinite(Date.parse(session.expires_at)) ||
         Date.parse(session.expires_at)<=Date.now())
       return send({error:'LEVEL1_REQUIRED'},403,origin);
-    const {data,error} = await admin.rpc('beagu_school_interest_rankings');
+    const {data,error} = await admin.rpc('beagu_school_interest_rankings_v2');
     if (error) {
       console.error('school-interest ranking RPC error',error.code||'unknown');
       return send({error:'RANKING_UNAVAILABLE'},503,origin);

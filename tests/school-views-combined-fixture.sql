@@ -7,7 +7,9 @@ create schema extensions;
 create extension pgcrypto schema extensions;
 create schema auth;
 create function auth.uid() returns uuid language sql stable as $$select null::uuid$$;
-create table public.schools(school_id text primary key,status text);
+create table public.schools(school_id text primary key,status text,school_name text,sido_standard text,sido text);
+grant usage on schema beagu_private to service_role;
+grant select on public.schools to service_role;
 create table public.school_search_events(action_id uuid,school_id text,event_type text,source_page text,searched_at timestamptz default now(),primary key(action_id,event_type));
 create table public.beagu_admin_accounts(user_id uuid,enabled boolean);
 create table public.beagu_school_view_totals(school_id text primary key,views bigint,updated_at timestamptz default now());
@@ -15,7 +17,7 @@ create table beagu_private.school_search_settings(name text primary key,salt tex
 create table beagu_private.school_view_admin_exclusions(visitor_digest text primary key);
 create table beagu_private.school_view_claims(action_id uuid primary key,school_id text,visitor_digest text);
 create table beagu_private.school_view_daily(school_id text,visitor_digest text,view_day date,primary key(school_id,visitor_digest,view_day));
-insert into public.schools values('1234567','운영'),('7654321','운영');
+insert into public.schools values('1234567','운영','검증초','부산','부산'),('7654321','운영','시험초','부산','부산');
 insert into public.beagu_school_view_totals(school_id,views) values('1234567',41);
 insert into beagu_private.school_search_settings values('salt','fixture-only');
 insert into public.school_search_events(action_id,school_id,event_type,source_page) values
