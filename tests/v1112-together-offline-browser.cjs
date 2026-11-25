@@ -56,7 +56,7 @@ async function routes(page,tracker){
   }
   if(name==='beagu-challenge-identity'){
    if(!tier)return respond(401,{error:'AUTH_REQUIRED'});
-   tracker.identityRequests++;return respond(200,{participantNo:777,identityCode:code});
+   tracker.identityRequests++;return respond(200,{participantNo:777,identityCode:code,visitorId:body.visitor});
   }
   if(name==='beagu-referral-link-v1'){
    if(!tier)return respond(401,{error:'AUTH_REQUIRED'});

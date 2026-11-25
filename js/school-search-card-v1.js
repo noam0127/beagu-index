@@ -67,8 +67,38 @@
  function percentiles({publicValues=[],statuses=[],publicError=false,value2026=null,
    status2026='unpublished',locked=false,viewerTier=null}={}){
   const section=el('section','percentile-panel glory-percentile');
-  const current=!locked&&viewerTier!==1&&valid(value2026)?value2026:null;
-  const historical=viewerTier===1||(viewerTier===2&&current===null);
+  // Lv0/Lv1 keep the 2025 card. Lv2 displays all four years, without inventing zeros.
+  if(viewerTier===2){
+   const current=!locked&&valid(value2026)?value2026:null;
+   const values=[current,...[2,1,0].map(i=>valid(publicValues[i])?publicValues[i]:null)];
+   const years=[2026,2025,2024,2023];
+   const first=values.findIndex(v=>v!==null),latest=first<0?0:first;
+   section.dataset.displayYear=String(years[latest]);
+   section.dataset.publishedYears=years.filter((_,i)=>values[i]!==null).slice().reverse().join(',');
+   section.setAttribute('aria-label','2026~2023 배구지수 백분위');
+   section.append(el('h3','percentile-heading',years[latest]+' 배구지수'));
+   const group=el('div','glory-four-year');
+   years.forEach((year,i)=>{
+    const value=values[i],row=el('div','glory-year-row');
+    row.dataset.year=String(year);
+    row.append(el('span','glory-year-label',year));
+    const track=el('div','glory-track');
+    if(value!==null){
+     const fill=el('span','glory-fill');
+     fill.style.width=value+'%';
+     track.setAttribute('role','progressbar');
+     track.setAttribute('aria-label',year+'년 배구지수 백분위');
+     track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax','100');track.setAttribute('aria-valuenow',String(value));
+     track.append(fill);
+    }else{track.classList.add('glory-track-missing');track.setAttribute('aria-hidden','true');}
+    row.append(track,el('strong',i===latest?'glory-year-value glory-score':'glory-year-value',value===null?labelFor(i===0?(locked?STATES.LOCKED:status2026):publicState(statuses[3-i],publicError)):value.toFixed(1)+'%'));
+    group.append(row);
+   });
+   section.append(group);
+   return section;
+  }
+  const current=!locked&&viewerTier!==0&&viewerTier!==1&&valid(value2026)?value2026:null;
+  const historical=viewerTier===0||viewerTier===1;
   const fallback=viewerTier===2?[2,1,0].find(i=>valid(publicValues[i])):2;
   const year=historical?2023+(fallback??2):2026;
   const value=historical?(valid(publicValues[fallback])?publicValues[fallback]:null):current;
