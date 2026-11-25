@@ -58,6 +58,12 @@ button:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{
 <script defer src="js/beagu-participation-auth-v2.js?v=11113-header2"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
+<script>if(window.parent!==window&&new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('arcade-history-embedded');</script>
+<style>
+html.arcade-history-embedded :is(.beagu-unified-header,.beagu-level-state-container,.history-back,.history-head,.history-tabs){display:none!important}
+html.arcade-history-embedded .history-shell{padding:10px;max-width:none}
+html.arcade-history-embedded .history-toolbar{margin-bottom:10px}
+</style>
 </head>
 <body class="beagu-ui-page">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html" aria-current="page">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
@@ -75,6 +81,6 @@ button:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible{
 <nav class="history-pages" aria-label="기록 페이지 이동"><button type="button" id="older" disabled>이전</button><span id="pageInfo">1 페이지</span><button type="button" id="newer" disabled>다음</button></nav>
 <p class="history-privacy">기록 보존 기능 활성화 이후 검증된 경기는 별도 보존됩니다. 이전에 삭제된 기록은 복구하지 않습니다. 배구의 승리 최단시간 TOP 10은 별도 보존합니다. 닉네임·방문자 및 세션 식별정보는 공개하지 않습니다. 이전 버전의 세부 정보는 제공되지 않을 수 있습니다.</p>
 </main>
-<script src="js/arcade-history-v1.js?v=11116-record-title"></script>
+<script src="js/arcade-history-v1.js?v=11116-disclosure"></script>
 </body>
 </html>
