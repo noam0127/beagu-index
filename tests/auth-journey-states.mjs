@@ -19,10 +19,10 @@ for(const path of ['js/beagu-level-state-v1.js','js/beagu-participation-auth-v2.
   'js/statistics-compare.js','js/challenge-access-v1.js'])
  assert.doesNotThrow(()=>new Script(read(path),{filename:path}));
 for(const s of [
- '참여코드 입력','발급받은 참여코드를 입력하면 이용 가능한 학교정보가 열립니다.',
+ '참여코드 입력',
  '참여코드를 입력하세요','레벨1 인증',
  '✓ Lv1 · 설문 참여 완료','♛ Lv2 · 챌린지 달성',
- '참여코드 받기 — 2026 본조사','Lv2 달성하기 — 챌린지'
+ 'Lv.1 참여코드 받기','Lv.2 참여코드 받기'
 ])assert.ok(unified.includes(s),'Shared UI copy: '+s);
 assert.ok(unified.includes("request('login',{code:value})"),'Login is verified server-side');
 assert.ok(unified.includes("request('verify',{},result.token)"),'Login session independently verified');
