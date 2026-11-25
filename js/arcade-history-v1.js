@@ -42,12 +42,12 @@
   if(game==="volleyball_25"){
    if(result.outcome==="victory")return [result.matchRule==="deuce_v1"&&result.cpuPoints>=24?"듀스 승리":"경기 승리","win"];
    if(result.outcome==="defeat")return ["경기 패배","loss"];
-   if(result.outcome==="stopped")return ["중간 종료","loss"];
+   if(result.outcome==="stopped")return ["중도 종료","neutral"];
   }else{
    if(result.outcome==="retired")return ["62세 정년 달성","win"];
    if(result.outcome==="retired_early")return ["정년 도전 종료","loss"];
   }
-  return ["이전 기록","loss"];
+  return ["결과 미확인","neutral"];
  }
  function schoolHeading(row){
   const title=el("h2","history-school");
@@ -68,7 +68,8 @@
   about.append(el("span","history-status","공개 점수 기록 "+rank+"위"),schoolHeading(row),
     el("div","history-meta",date(row.createdAt)+" · "+(DIFFICULTIES[row.difficulty]||"난이도 미확인")));
   const [label,kind]=titleFor(row);
-  about.append(el("span","history-status"+(kind==="loss"?" loss":""),label));
+  const visibleScore=game==="volleyball_25"&&["victory","defeat","stopped"].includes(result.outcome)&&Number.isSafeInteger(result.playerPoints)&&result.playerPoints>=0&&Number.isSafeInteger(result.cpuPoints)&&result.cpuPoints>=0?" "+result.playerPoints+":"+result.cpuPoints:"";
+  about.append(el("span","history-status "+kind,label+visibleScore));
   head.append(about,score);card.append(head);
   const details=el("details"),summary=el("summary","","경기 상세 보기"),stats=el("div","history-details");
   if(game==="volleyball_25"){

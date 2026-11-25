@@ -6,9 +6,20 @@ const games=new Set(["volleyball_25","teacher_run_retirement"]);
 const fmt=n=>Math.max(0,Math.floor(Number(n)||0)).toLocaleString("ko-KR");
 const displayScore=score=>fmt(score)+"점";
 const fmtTime=n=>{const t=Math.max(0,Math.floor(Number(n)||0));return Math.floor(t/600)+":"+String(Math.floor((t%600)/10)).padStart(2,"0")+"."+(t%10);};
+function outcomeInfo(x,fastest=false){
+ const known=["victory","defeat","stopped"].includes(x.outcome);
+ const outcome=fastest?"victory":known?x.outcome:"unknown";
+ const valid=Number.isSafeInteger(x.playerPoints)&&x.playerPoints>=0&&x.playerPoints<=3601&&Number.isSafeInteger(x.cpuPoints)&&x.cpuPoints>=0&&x.cpuPoints<=3601;
+ return {outcome,playerPoints:known&&valid?x.playerPoints:null,cpuPoints:known&&valid?x.cpuPoints:null,deuce:outcome==="victory"&&x.deuce===true};
+}
+function outcomeLabel(entry){
+ const label=entry.outcome==="victory"?(entry.deuce?"듀스 승리":"승리"):entry.outcome==="defeat"?"패배":entry.outcome==="stopped"?"중도 종료":"결과 미확인";
+ const score=entry.playerPoints!==null&&entry.playerPoints!==undefined&&entry.cpuPoints!==null&&entry.cpuPoints!==undefined?" "+entry.playerPoints+":"+entry.cpuPoints:"";
+ return el("span","arcade-rank-outcome "+entry.outcome,label+score);
+}
 function orderFast(rows){
  return rows.filter(x=>x&&Number.isSafeInteger(x.timeTenths)&&x.timeTenths>0)
-  .map(x=>({timeTenths:x.timeTenths,created_at:String(x.created_at||""),school_id:typeof x.school_id==="string"?x.school_id:null,school_name:String(x.school_name||"학교 미등록"),difficulty:x.difficulty||null}))
+  .map(x=>({timeTenths:x.timeTenths,created_at:String(x.created_at||""),school_id:typeof x.school_id==="string"?x.school_id:null,school_name:String(x.school_name||"학교 미등록"),difficulty:x.difficulty||null,...outcomeInfo(x,true)}))
   .sort((a,b)=>a.timeTenths-b.timeTenths||a.created_at.localeCompare(b.created_at)).slice(0,10);
 }
 const levelNames={easy:"EASY",normal:"NORMAL",hard:"HARD",very_hard:"VERY HARD",extreme:"EXTREME"};
@@ -31,7 +42,7 @@ function schoolLink(entry){
 function order(rows,game){
  return rows.filter(x=>x&&Number.isSafeInteger(x.score)&&x.score>=0)
   .map(x=>({score:x.score,created_at:String(x.created_at||""),
-    school_id:typeof x.school_id==="string"?x.school_id:null,school_name:String(x.school_name||"학교 미등록"),difficulty:x.difficulty||null}))
+    school_id:typeof x.school_id==="string"?x.school_id:null,school_name:String(x.school_name||"학교 미등록"),difficulty:x.difficulty||null,...(game==="volleyball_25"?outcomeInfo(x):{})}))
   .sort((a,b)=>b.score-a.score||a.created_at.localeCompare(b.created_at))
   .slice(0,10);
 }
@@ -244,12 +255,13 @@ class ArcadeLeaderboard{
   content.append(filter);
 
   const labels=el("div","arcade-rank-grid arcade-rank-label");
-  ["순위","학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));content.append(labels);
+  ["순위",this.game==="volleyball_25"?"학교 · 난이도 · 결과":"학교 · 난이도","점수"].forEach(x=>labels.append(el("span","",x)));content.append(labels);
   if(!this.board.length)content.append(el("div","arcade-rank-empty",
     this.remote?"아직 등록된 점수 기록이 없습니다":"기록을 불러올 수 없습니다"));
   else for(const [i,entry] of this.board.entries()){
    const row=el("div","arcade-rank-grid arcade-rank-row"),school=el("div","arcade-rank-person");
    school.append(schoolLink(entry),el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
+   if(this.game==="volleyball_25")school.append(outcomeLabel(entry));
    row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmt(entry.score)));content.append(row);
   }
   if(this.game==="volleyball_25"){
@@ -264,7 +276,7 @@ class ArcadeLeaderboard{
    else for(const [i,entry] of this.fastestBoard.entries()){
     const row=el("div","arcade-rank-grid arcade-rank-row"),school=el("div","arcade-rank-person");
     school.append(schoolLink(entry),
-      el("span","arcade-rank-level",levelNames[entry.difficulty]||""));
+      el("span","arcade-rank-level",levelNames[entry.difficulty]||""),outcomeLabel(entry));
     row.append(el("span","",String(i+1).padStart(2,"0")),school,el("span","",fmtTime(entry.timeTenths)));content.append(row);
    }
   }

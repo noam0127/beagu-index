@@ -76,3 +76,8 @@ body.arcade-body {
 .arcade-bgm-credit{margin:6px 0 10px;text-align:center;font-size:11px;line-height:1.55;color:#b7cee0}
 .arcade-bgm-credit a{color:#d5f3eb;text-underline-offset:3px}
 .arcade-bgm-credit a:focus-visible{outline:2px solid #ffe39a;outline-offset:3px}
+
+/* v1.11.15 compact outcome on the second line, without widening the rank grid. */
+.arcade-rank-person .arcade-rank-outcome{display:block;width:fit-content;max-width:100%;font-size:11px;line-height:1.35;letter-spacing:0;color:#bfcddd;white-space:normal;overflow-wrap:anywhere;text-align:left}
+.arcade-rank-person .arcade-rank-outcome.victory{color:#a6f3c5}
+.arcade-rank-person .arcade-rank-outcome.defeat{color:#ffb9b9}

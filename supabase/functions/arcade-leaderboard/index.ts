@@ -10,7 +10,7 @@ const VALID_GAMES = new Set(["volleyball_25","teacher_run_retirement"]);
 const encoder = new TextEncoder();
 const CACHE = "no-store";
 type Game = "volleyball" | "teacher_run" | "volleyball_25" | "teacher_run_retirement";
-type Entry = { score: number; created_at: string; school_id?: string | null; school_name?: string | null; difficulty?: string | null };
+type Entry = { score: number; created_at: string; school_id?: string | null; school_name?: string | null; difficulty?: string | null; public_result?: any };
 type FastEntry = { session_id?: string | null; win_time_tenths: number; created_at: string; school_name?: string | null; difficulty?: string | null };
 type Session = { id: string; game: Game; ip_hash: string; started_at: string; submitted_at: string | null; school_id?:string; school_name?:string; difficulty?:string };
 
@@ -45,14 +45,23 @@ async function db(path: string, method = "GET", body?: unknown, prefer?: string)
   if(response.status===204)return null;
   const raw=await response.text();return raw?JSON.parse(raw):null;
 }
+function volleyballOutcome(result:any){
+ const raw=result&&typeof result==="object"?result:{};
+ const p=raw.playerPoints,c=raw.cpuPoints;
+ const points=Number.isSafeInteger(p)&&p>=0&&p<=3601&&Number.isSafeInteger(c)&&c>=0&&c<=3601;
+ const deuce=raw.matchRule==="deuce_v1";
+ const valid=points&&(deuce?Math.max(p,c)>=25&&Math.abs(p-c)>=2:(p===25||c===25)&&p!==c);
+ const outcome=raw.outcome==="victory"&&valid&&p>c?"victory":raw.outcome==="defeat"&&valid&&c>p?"defeat":raw.outcome==="stopped"&&points&&!valid?"stopped":"unknown";
+ return {outcome,playerPoints:outcome!=="unknown"?p:null,cpuPoints:outcome!=="unknown"?c:null,deuce:outcome==="victory"&&deuce&&c>=24};
+}
 async function top(game: Game,tier:string|null=null): Promise<Entry[]> {
-  const q = new URLSearchParams({select:"score,created_at,school_id,school_name,difficulty",game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
+  const q = new URLSearchParams({select:"score,created_at,school_id,school_name,difficulty"+(game==="volleyball_25"?",public_result":""),game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
   if(tier)q.set("difficulty","eq."+tier);
   const list = await db("arcade_game_scores?" + q);
-  return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_id:e.school_id??null,school_name:e.school_name??null,difficulty:e.difficulty??null}));
+  return list.map((e:Entry)=>({score:e.score,created_at:e.created_at,school_id:e.school_id??null,school_name:e.school_name??null,difficulty:e.difficulty??null,...(game==="volleyball_25"?volleyballOutcome(e.public_result):{})}));
 }
 
-async function fastest25(tier:string|null=null):Promise<Array<{timeTenths:number;created_at:string;school_id:string|null;school_name:string|null;difficulty:string|null}>>{
+async function fastest25(tier:string|null=null):Promise<Array<{timeTenths:number;created_at:string;school_id:string|null;school_name:string|null;difficulty:string|null;outcome:string;playerPoints:number|null;cpuPoints:number|null;deuce:boolean}>>{
  const q=new URLSearchParams({
   select:"session_id,win_time_tenths,created_at,school_name,difficulty",
   order:"win_time_tenths.asc,created_at.asc",limit:"10"
@@ -63,12 +72,14 @@ async function fastest25(tier:string|null=null):Promise<Array<{timeTenths:number
  const sessions=[...new Set(rows.map(r=>r.session_id).filter((id):id is string=>
   typeof id==="string"&&/^[0-9a-f-]{36}$/i.test(id)))];
  const related=sessions.length?await db("arcade_game_scores?"+new URLSearchParams({
-  select:"session_id,school_id",session_id:"in.("+sessions.join(",")+")",limit:"100"
- })) as Array<{session_id:string;school_id:string|null}>:[];
+  select:"session_id,school_id,public_result",session_id:"in.("+sessions.join(",")+")",limit:"100"
+ })) as Array<{session_id:string;school_id:string|null;public_result:any}>:[];
  const schoolIds=new Map(related.map(row=>[row.session_id,row.school_id]));
+ const results=new Map(related.map(row=>[row.session_id,volleyballOutcome(row.public_result)]));
  return rows.map(e=>({timeTenths:e.win_time_tenths,created_at:e.created_at,
   school_id:e.session_id?schoolIds.get(e.session_id)??null:null,
-  school_name:e.school_name??null,difficulty:e.difficulty??null}));
+  school_name:e.school_name??null,difficulty:e.difficulty??null,
+  ...(e.session_id&&results.get(e.session_id)?.outcome==="victory"?results.get(e.session_id):{playerPoints:null,cpuPoints:null,deuce:false}),outcome:"victory"}));
 }
 
 type School = { school_id:string; school_name:string; sido_standard:string };
