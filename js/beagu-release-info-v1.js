@@ -10,7 +10,7 @@
  const line=(label,value)=>{const p=document.createElement('p');p.textContent=label+': '+value;panel.append(p)};
  const validDate=v=>typeof v==='string'&&Number.isFinite(Date.parse(v));
  fetch(source,{cache:'no-store',credentials:'same-origin'}).then(r=>{if(!r.ok)throw Error('metadata');return r.json()}).then(m=>{
-  if(m.schema!==1||!/^v\d+\.\d+\.\d+$/.test(m.version)||typeof m.name!=='string'||m.name.length>40)throw Error('invalid');
+  if(m.schema!==1||!/^v\d+\.\d+\.\d+(?:\.\d+)?$/.test(m.version)||typeof m.name!=='string'||m.name.length>40)throw Error('invalid');
   const verified=typeof m.commit==='string'&&/^[a-f0-9]{40}$/.test(m.commit);
   const live=(location.hostname==='baeguindex.com'||location.hostname==='www.baeguindex.com')&&!location.pathname.startsWith('/_preview/')&&m.environment==='production'&&verified;
   summary.textContent=(live?'':'미배포 · ')+m.version+' · '+m.name;

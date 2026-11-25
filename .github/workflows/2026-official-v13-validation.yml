@@ -1,0 +1,51 @@
+name: 2026 official school profiles and percentile v1.3 isolated validation
+on:
+  push:
+    branches: [fix/2026-official-basics-v13, fix/v1114-school-glory-v13-integration]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fixture-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Source syntax, projection and existing publication gate regressions
+        run: |
+          node --check js/level-search.js
+          node tests/2026-official-school-profiles.mjs
+          node tests/2026-schoolinfo-strict-recovery.mjs
+          node tests/2026-release-consent-gate.mjs
+          node tests/2026-public-revalidation-fail-closed.mjs
+          node tests/2026-public-projection-integrity.mjs
+      - name: Verify schema and policy in disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          container="beagu-official-v13-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do
+            if docker exec "$container" pg_isready -U postgres >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          run_sql() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres; }
+          run_sql < tests/2026-percentile-v13-fixture.sql
+          run_sql < supabase/2026-official-school-profiles-v1.sql
+          run_sql < supabase/2026-percentile-only-review-v13.sql
+          run_sql < tests/2026-percentile-v13-assertions.sql
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install pinned Chromium runner
+        run: |
+          npm install --no-save --no-package-lock playwright@1.58.2
+          npx playwright install --with-deps chromium
+      - name: Run offline search cards and tier checks
+        run: node tests/2026-schoolinfo-browser.cjs

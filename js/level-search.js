@@ -765,6 +765,61 @@
       locked:false
     });
   }
+  // Independent official-source facts are shown only for Lv.2. The existing
+  // card and survey disclosure remain unchanged; no survey approvals are implied.
+  const official2026Fields=[
+    ['school_name','학교명'],['education_office','시도교육청'],['support_office','교육지원청'],
+    ['region','지역'],['establishment','설립구분'],['establishment_type','설립유형'],
+    ['school_characteristic','학교특성'],['branch_school','분교 여부'],
+    ['closed','폐교 여부'],['suspended','휴교 여부'],['coeducation','남녀공학 구분'],
+    ['road_address','도로명주소'],['address_detail','상세주소'],['school_phone','학교 전화'],
+    ['school_fax','학교 팩스'],['homepage','학교 홈페이지'],['opening_anniversary','개교기념일'],
+    ['established_date','설립일'],['legal_dong_code','법정동코드'],['latitude','위도'],
+    ['longitude','경도'],['disclosure_code','학교알리미 코드'],
+    ['teacher_total','총교원 수','명'],['male_teachers','남교원 수','명'],
+    ['female_teachers','여교원 수','명'],['teachers_on_leave','휴직교원 수','명'],
+    ['principals','교장 수','명'],['vice_principals','교감 수','명'],
+    ['lead_teachers','보직교사 수','명'],['general_teachers','일반교사 수','명'],
+    ['fixed_term_teachers','기간제교사 수','명'],['first_grade_teachers','1급 정교사 수','명'],
+    ['second_grade_teachers','2급 정교사 수','명'],['male_teacher_ratio','남교원 비율','%'],
+    ['second_grade_teacher_ratio','2급 정교사 비율(전체 교원 대비)','%']
+  ];
+  function renderOfficial2026(card,profile,status){
+    if(viewerTier!==2||Number(card.dataset.accessLevel)!==2)return;
+    let box=card.querySelector('.official-school-basics-2026');
+    if(!box){
+      box=make('details','beagu-school-basics official-school-basics-2026');
+      card.insertBefore(box,card.querySelector('.percentile-panel'));
+    }
+    const wasOpen=box.open;
+    box.replaceChildren();
+    const ready=profile&&profile.source_year===2026&&typeof profile.school_name==='string';
+    const heading=make('summary','',ready?'2026 학교 기본정보':'2026 학교 기본정보 · '+
+      (status==='UNAVAILABLE'?'조회 실패':status==='LOADING'?'확인 중':'자료 없음'));
+    box.append(heading);
+    if(ready){
+      const counts=[];
+      if(Number.isInteger(profile.teacher_total))counts.push('교원 '+profile.teacher_total.toLocaleString('ko-KR')+'명');
+      if(typeof profile.male_teacher_ratio==='number')counts.push('남교원 '+profile.male_teacher_ratio+'%');
+      if(typeof profile.second_grade_teacher_ratio==='number')counts.push('2정 '+profile.second_grade_teacher_ratio+'%');
+      if(counts.length)heading.append(make('span','beagu-school-basic-note',' · '+counts.join(' · ')));
+      const grid=make('dl','beagu-school-basics-grid');
+      for(const [key,label,unit] of official2026Fields){
+        const raw=profile[key];
+        const value=raw===null||raw===undefined||raw===''?'자료 없음':
+          (typeof raw==='number'?raw.toLocaleString('ko-KR')+(unit||''):String(raw));
+        const row=make('div','beagu-school-basic-row');
+        row.append(make('dt','',label),make('dd','',value));
+        grid.append(row);
+      }
+      box.append(grid,make('p','beagu-school-basic-note','2026 제공 학교알리미 공식자료 · 설문 백분위와 별개'));
+    }else{
+      box.append(make('p','beagu-school-basic-note',status==='UNAVAILABLE'?
+        '공식자료 조회에 실패했습니다. 다시 검색해 주세요.':status==='LOADING'?
+        '2026년 공식자료를 확인 중입니다.':'확인된 2026년 공식자료가 없습니다. 이전 자료를 최신값으로 대체하지 않습니다.'));
+    }
+    box.open=wasOpen;
+  }
   function loadPagePercentiles(list,requestId){
     const ids=[...new Set(list.map(s=>String(s.school_id)).filter(id=>/^[A-Z0-9]{7}$/.test(id)))];
     if(!ids.length)return;
@@ -791,11 +846,20 @@
           ?{status:'published',value:n}:{status:'unpublished'});
       }
       refresh();
+      if(viewerTier===2){
+        for(const card of $('results').querySelectorAll('.school-card')){
+          const id=card.dataset.schoolId;
+          if(ids.includes(id))renderOfficial2026(card,result.official2026?.[id]||null,
+            result.official2026_status==='UNAVAILABLE'?'UNAVAILABLE':'OK');
+        }
+      }
     }).catch(err=>{
       if(serial!==requestId)return;
       if(err.unauthorized){loggedOut('인증이 만료되었습니다. 다시 로그인하세요.');return;}
       for(const id of ids)current2026.set(id,{status:'error'});
       refresh();
+      if(viewerTier===2)for(const card of $('results').querySelectorAll('.school-card'))
+        if(ids.includes(card.dataset.schoolId))renderOfficial2026(card,null,'UNAVAILABLE');
     });
   }
   function showDetails(host,rows,school,modes=[],selections=[],results2026=[],viewerTier=1) {
@@ -811,7 +875,7 @@
       row.append(make('dt','',label),make('dd','',value||'정보 없음'));grid.append(row);
     }
     basic.append(grid,make('p','beagu-school-basic-note','학생 수 등 공식 기본현황은 승인 자료가 있는 학교에서 추가 표시됩니다.'));
-    host.append(basic);
+    if(Number(viewerTier)!==2)host.append(basic);
     const section=make('section','detail beagu-history-detail');
     const vals=asPublicPercentiles(school);
     const prefix='beagu-history-'+String(school.school_id);
@@ -935,6 +999,7 @@
         percentile:percentilePanel(school),
         sortBy:mode==='region'&&sortValue.startsWith('housing_price_won_')?'school_name_asc':sortValue
       });
+      if(viewerTier===2)renderOfficial2026(card,null,'LOADING');
       let housing=null;
       if(mode!=='region'){
       housing=make('section','beagu-housing-preview');

@@ -1,7 +1,7 @@
 name: v1.11.14 isolated school glory validation
 on:
   push:
-    branches: [release/v1.11.14-school-glory]
+    branches: [release/v1.11.14-school-glory, fix/v1114-school-glory-v13-integration]
   workflow_dispatch:
 permissions:
   contents: read
