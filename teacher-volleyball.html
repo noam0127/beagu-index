@@ -154,7 +154,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/beagu-participation-auth-v2.css?v=11113-header2">
 <script defer src="js/beagu-participation-auth-v2.js?v=11113-header2"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
-<link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
+<link rel="stylesheet" href="styles/arcade-playback-v1.css?v=11116">
 <link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11113-save">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 <link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=1">
@@ -210,7 +210,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     </div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="auxiliary" id="help" aria-label="게임 방법" title="게임 방법">?</button></div>
   <p class="arcade-bgm-credit">🎵 BGM: 불꽃의 코트 오리지널 5단계 음악 · 호환용 CC0: <a href="https://opengameart.org/content/keep-your-dream-alive-seamless-loop" target="_blank" rel="noopener noreferrer">Keep your dream alive! · congusbongus (CC0)</a></p>
-  <div class="mini-help" id="help-panel" hidden>🏁 25점 이상에서 2점 차로 승리(듀스 지원 서버 기준) · 24:24부터 듀스 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 경기 승리 최단 시간은 별도 기록 · 🏐 화면 터치·드래그 이동 · 위쪽 터치 시 점프 · 화면을 누른 채 이동하면 대시·스파이크 자동 발동 · EASY/날개 아이템에서만 비행 · 화면을 빠르게 두 번 터치하면 필살기 · PC J 스파이크, K/Shift 대시 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
+  <div class="mini-help" id="help-panel" hidden>🏁 25점 이상에서 2점 차로 승리(듀스 지원 서버 기준) · 24:24부터 듀스 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 경기 승리 최단 시간은 별도 기록 · 🏐 화면 터치·드래그 이동 · 위쪽 터치 시 점프 · 손가락을 순간적으로 빠르게 움직이면 대시·스파이크 자동 발동 · EASY/날개 아이템에서만 비행 · 화면을 빠르게 두 번 터치하면 필살기 · PC 스페이스바 대시·스파이크, W/↑ 점프 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
   
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 경기 승리 최단 시간 순위"></div>
 </main>
@@ -223,7 +223,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-school-picker-v1.js?v=11115-recommend"></script>
 <script src="js/arcade-fullscreen-v1.js?v=11112-wide"></script>
 <script src="js/arcade-scroll-rail-v1.js?v=140"></script>
-<script src="js/arcade-play-lock-v1.js?v=140"></script>
+<script src="js/arcade-play-lock-v1.js?v=11116"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/arcade-fire-court-bgm-v1.js?v=11115-2"></script>
@@ -335,7 +335,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   const W = 900, H = 500, FLOOR = 451, NET_X = 450, NET_TOP = 342, NET_W = 14, R = 48; // ball 1.5x; net height ~2/3
   const keys = { left: false, right: false, up: false, down: false, jump: false };
   const touchControl=window.BeaguVolleyTouch.create();
-  let attackPointer=null;
+  let attackPointer=null,swipeSample=null,lastSwipeAt=-Infinity;
   const state = { phase:"ready",leftScore:0,rightScore:0,serveLeft:true,pointTicks:0,flash:0,winner:"",
     message:"경기 시작을 눌러주세요!",spikes:0,aiRecalc:0,aiTargetX:688,aiJump:false,
     specialCooldownFrames:0,specialChargeFrames:0,spikeBufferFrames:0,dashFrames:0,dashCooldownFrames:0,dashX:1,dashY:0,uiTick:0,playFrames:0,activeFrames:0,
@@ -814,13 +814,14 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     lastTapAt=0;
     if(!preserveMomentum){state.dashFrames=0;state.spikeBufferFrames=0;left.vy=0;left.impactSpeed=0;}
   }
-  // Desktop: WASD/arrows move, W/Space jump, J spikes, Shift/K dashes.
+  // Desktop: WASD/arrows move, W/Up jump, Space spikes and dashes (J/K/Shift also supported).
   const codes = { KeyA:"left",ArrowLeft:"left",KeyD:"right",ArrowRight:"right",
-    KeyW:"up",ArrowUp:"up",KeyS:"down",ArrowDown:"down",Space:"jump" };
+    KeyW:"up",ArrowUp:"up",KeyS:"down",ArrowDown:"down" };
   document.addEventListener("keydown",e=>{
     if(e.target?.closest?.("input,textarea,select,[contenteditable]"))return;
     if(e.key==="Escape"&&["playing","point","paused"].includes(state.phase)&&!document.fullscreenElement&&!document.webkitFullscreenElement&&!document.querySelector(".arcade-fullscreen-fallback")){e.preventDefault();if(!e.repeat)pause();return;}
     if(!["playing","point"].includes(state.phase))return;
+    if(e.code==="Space"){e.preventDefault();if(!e.repeat){clearMobileInput();requestSpike();requestDash();}return;}
     if(e.code==="KeyJ"){e.preventDefault();if(!e.repeat)requestSpike();return;}
     if(e.code==="ShiftLeft"||e.code==="ShiftRight"||e.code==="KeyK"){
       e.preventDefault();if(!e.repeat)requestDash();return;
@@ -849,14 +850,22 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   canvas.addEventListener("pointerdown",event=>{
     if(event.pointerType==="mouse"||state.phase!=="playing")return;
     const point=courtPoint(event);if(!point||!touchControl.down(event.pointerId,point,left.y))return;
-    event.preventDefault();capturePointer(canvas,event.pointerId);attackPointer=event.pointerId;requestSpike();
+    event.preventDefault();capturePointer(canvas,event.pointerId);attackPointer=event.pointerId;
+    swipeSample={x:event.clientX,y:event.clientY,t:event.timeStamp};lastSwipeAt=-Infinity;
+    const now=Date.now();if(lastTapAt&&now-lastTapAt<=320){activateSuperSpike();lastTapAt=0;}else lastTapAt=now;
   });
   canvas.addEventListener("pointermove",event=>{
     if(touchControl.pointerId!==event.pointerId)return;
     const point=courtPoint(event);if(!point)return;
     event.preventDefault();touchControl.move(event.pointerId,point,left.y,left.y>=FLOOR-31-.1);
+    const sample=swipeSample, now=event.timeStamp;
+    if(sample){const dt=now-sample.t,dx=event.clientX-sample.x,dy=event.clientY-sample.y,distance=Math.hypot(dx,dy);
+      if(dt>0&&dt<=160&&distance>=12&&distance/dt>=.65&&now-lastSwipeAt>=90){
+        aimDash(Math.sign(dx),Math.sign(dy));state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;lastSwipeAt=now;swipeSample={x:event.clientX,y:event.clientY,t:now};
+      }else if(dt>100||distance>=12)swipeSample={x:event.clientX,y:event.clientY,t:now};
+    }else swipeSample={x:event.clientX,y:event.clientY,t:now};
   });
-  canvas.addEventListener("pointerup",event=>{touchControl.up(event.pointerId,hasPlayerWings()&&canPlayerJump());endAttack(event);});
+  canvas.addEventListener("pointerup",event=>{touchControl.up(event.pointerId,hasPlayerWings()&&canPlayerJump());endAttack(event,true);});
   for(const type of ["pointercancel","lostpointercapture"])canvas.addEventListener(type,event=>{touchControl.cancel(event.pointerId);endAttack(event);});
   function requestSpike(){
     if(state.phase!=="playing")return false;
@@ -883,9 +892,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     tone(280,.09,"sawtooth",.035,0,780);
     return true;
   }
-  function endAttack(event){
+  function endAttack(event,preserve=false){
     if(attackPointer===null||(event&&event.pointerId!==attackPointer))return;
-    attackPointer=null;state.dashFrames=0;state.spikeBufferFrames=0;
+    attackPointer=null;swipeSample=null;lastSwipeAt=-Infinity;if(!preserve){state.dashFrames=0;state.spikeBufferFrames=0;}
   }
   startButton.addEventListener("click",()=>{unlockSound();if(["playing","point","paused"].includes(state.phase))finishMatch(true);else startMatch();});
   pauseButton.addEventListener("click", pause);
@@ -1253,10 +1262,6 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const inputY=axes?axes.y:keyboardVertical;
     const touchJump=touchControl.takeJump();
     if(Math.abs(inputX)>.2)lastMoveDirection=Math.sign(inputX);
-    if(attackPointer!==null){
-      if(Math.abs(inputX)>.2||(flightAllowed&&Math.abs(inputY)>.2))aimDash(inputX,inputY);else state.dashFrames=0;
-      state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;
-    }
     const dashing=state.dashFrames>0;
     const moveX=dashing?state.dashX:inputX;
     const moveY=dashing?state.dashY:inputY;
