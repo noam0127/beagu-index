@@ -14,23 +14,21 @@
       // Center either game in the visible phone area before the page locks.
       // In a very short survival viewport, prioritize the bottom character.
       const canvas=document.querySelector(".arcade-game-viewport canvas");
-      const mobile=window.matchMedia?.("(max-width: 768px)").matches;
       const survival=Boolean(canvas?.closest?.(".stage"));
       const fullscreen=Boolean(document.fullscreenElement||document.webkitFullscreenElement||
         document.querySelector(".arcade-fullscreen-fallback"));
       if(canvas&&mobileInput()&&!fullscreen){
         const viewport=window.visualViewport;
         const height=viewport?.height||window.innerHeight;
-        if(survival&&height>0)
-          document.documentElement.style.setProperty("--arcade-run-parent-visible-height",height+"px");
+        if(height>0){
+          document.documentElement.style.setProperty("--arcade-mobile-visible-height",height+"px");
+          if(survival)document.documentElement.style.setProperty("--arcade-run-parent-visible-height",height+"px");
+        }
         const rect=(canvas.closest(".arcade-game-viewport")||canvas).getBoundingClientRect();
         if(height>0&&rect.height>0){
           const visibleCenter=(viewport?.offsetTop||0)+height/2;
           let target=scrollY+rect.top+rect.height/2-visibleCenter;
           if(rect.height>height-24)target=scrollY+rect.top-8;
-          // Retain the existing vertical priority for volleyball on very
-          // short phones; survival instead fits the whole canvas above.
-          
           const pageHeight=Math.max(document.documentElement.scrollHeight,
             document.body.scrollHeight);
           scrollY=Math.max(0,Math.min(Math.max(0,pageHeight-height),target));
@@ -52,6 +50,8 @@
       window.ArcadeScrollRail?.hide();
       Object.assign(body.style,previous);
       previous=null;
+      document.documentElement.style.removeProperty("--arcade-mobile-visible-height");
+      document.documentElement.style.removeProperty("--arcade-run-parent-visible-height");
       window.scrollTo(0,scrollY);
     }
   }
