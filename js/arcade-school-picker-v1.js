@@ -76,6 +76,7 @@ class ArcadeSchoolPicker{
  async search(){
   if(this.locked)return;
   const q=this.input.value.trim();const ticket=++this.serial;
+  this.recommendBusy=false;this.syncRecommendControls();
   if(q.length<2){this.results.replaceChildren();return;}
   this.status.textContent="학교 검색 중…";
   const perfStarted=performance.now();let perfSucceeded=false;
@@ -167,13 +168,15 @@ class ArcadeSchoolPicker{
   status(difficultyLabels[tier]+" 학교 찾는 중…");
   try{
    const response=await fetch(API+"?recommend="+encodeURIComponent(tier),{cache:"no-store",headers:{"Accept":"application/json"}});
+   if(response.status===400||response.status===404)throw Error("recommend_endpoint_unavailable");
    if(!response.ok)throw Error("recommend_failed");
    const data=await response.json();if(ticket!==this.serial||this.locked)return;
+   if(!data||!Object.hasOwn(data,"school"))throw Error("recommend_endpoint_unavailable");
    const school=data.school;
    if(!school){status("추천 학교를 찾지 못했습니다. 다시 시도해 주세요.");return;}
    if(!isSafe(school.school_id)||!isSafe(school.school_name)||school.eligible!==true||school.difficulty!==tier)throw Error("invalid_recommendation");
    this.applySchool(school);if(note){note.textContent="";note.hidden=true;}
-  }catch(_){if(ticket===this.serial&&!this.locked)status("학교 추천 실패 · 다시 시도해 주세요.");}
+  }catch(error){if(ticket===this.serial&&!this.locked)status(error.message==="recommend_endpoint_unavailable"?"학교 추천 서버 준비 중 · 학교명으로 직접 검색해 주세요.":"학교 추천 연결 실패 · 다시 시도해 주세요.");}
   finally{if(ticket===this.serial){this.recommendBusy=false;this.syncRecommendControls();}}
  }
  get(){return this.selected;}
