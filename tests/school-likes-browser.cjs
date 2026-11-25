@@ -26,8 +26,11 @@ async function open(t,mobile=false){
  for(const path of ['js/school-likes-v1.js','js/school-search-card-v1.js'])await p.addScriptTag({content:read(path)});
  await p.addStyleTag({content:read('styles/school-likes-v1.css')});
  await p.evaluate(s=>{for(const item of [s,s]){const card=document.createElement('article');document.querySelector('#cards').append(card);BeaguSchoolSearchCard.addHeader(card,item);}return BeaguSchoolLikes.refreshCards()},schools[24]);
+ assert.equal(await p.locator('.school-name .school-data-report').count(),0);
+ await p.evaluate(s=>{const footer=document.createElement('div');footer.className='school-report-footer';footer.append(BeaguSchoolSearchCard.createReportFlag(s));document.querySelector('#cards').append(footer)},schools[24]);
+ assert.equal(await p.locator('.school-report-footer button').innerText(),'🚩 자료신고');
  const hearts=p.locator('[data-school-like-id]');assert.equal(await hearts.count(),2);
- assert.deepEqual(await p.locator('.school-name').first().evaluate(n=>[...n.children].slice(1).map(x=>x.className)),['school-data-report','school-like-button','glory-header-meta']);
+ assert.deepEqual(await p.locator('.school-name').first().evaluate(n=>[...n.children].slice(1).map(x=>x.className)),['school-like-button','glory-header-meta']);
  return {ctx,p,hearts};
 }
 const first=await open('',true);assert.equal(await first.hearts.first().isDisabled(),true);assert.equal(await first.p.locator('.school-like-count').first().innerText(),'0');

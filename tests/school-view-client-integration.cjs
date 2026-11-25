@@ -7,10 +7,10 @@ new vm.Script(telemetry);
 new vm.Script(widget);
 for(const path of ['search.html','search-lv1.html','school-report.html']){
   const html=fs.readFileSync(path,'utf8');
-  assert.ok(html.includes('js/search-telemetry-v1.js?v=20261120-selection-record2'),'Search telemetry must be cache-busted on '+path);
-  assert.ok(html.includes('js/school-view-counts-v1.js?v=20261120-selection-record2'),'Counter widget must be cache-busted on '+path);
+  assert.ok(html.includes('js/search-telemetry-v1.js?v=11117-combined1'),'Search telemetry must be cache-busted on '+path);
+  assert.ok(html.includes('js/school-view-counts-v1.js?v=11117-combined1'),'Counter widget must be cache-busted on '+path);
 }
-assert.ok(telemetry.includes("supabaseClient.rpc('beagu_record_school_view'"));
+assert.ok(telemetry.includes("supabaseClient.rpc('beagu_record_school_view_v2'"));
 assert.ok(widget.includes('applyConfirmedCount:paint'));
 const visitor='123e4567-e89b-42d3-a456-426614174000';
 async function scenario(withWidget){
@@ -21,7 +21,7 @@ async function scenario(withWidget){
   const rpc=(name,args)=>{
     calls.push({name,args});
     if(name==='beagu_log_school_search')return Promise.resolve({data:true,error:null});
-    if(name==='beagu_record_school_view')return Promise.resolve({
+    if(name==='beagu_record_school_view_v2')return Promise.resolve({
       data:{school_id:args.p_school_id,views:1,counted:true},error:null
     });
     return Promise.resolve({data:true,error:null});
@@ -37,9 +37,9 @@ async function scenario(withWidget){
   assert.ok(action,'Trusted selection emits an action ID');
   await new Promise(resolve=>setImmediate(resolve));
   assert.deepEqual(calls.map(c=>c.name),[
-    'beagu_log_school_search','beagu_record_school_view','beagu_record_school_interest'
+    'beagu_log_school_search','beagu_record_school_view_v2','beagu_record_school_interest'
   ]);
-  const view=calls.find(c=>c.name==='beagu_record_school_view');
+  const view=calls.find(c=>c.name==='beagu_record_school_view_v2');
   assert.equal(view.args.p_school_id,'1234567');
   assert.equal(view.args.p_action_id,action);
   assert.equal(view.args.p_visitor,visitor);
@@ -49,11 +49,17 @@ async function scenario(withWidget){
   assert.equal(calls.length,3,'Repeated client click within five seconds is ignored');
   win.BeaguSearchTelemetry.searchConfirmed('7654321',0,'search');
   await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(calls.filter(c=>c.name==='beagu_record_school_view').length,1,
-    'Text search must not increment school-selection views');
+  assert.equal(calls.filter(c=>c.name==='beagu_record_school_view_v2').length,2,'Confirmed search increments the search category');
+  win.BeaguSearchTelemetry.detailViewed('1234567',0,'search',action);
+  await new Promise(resolve=>setImmediate(resolve));
+  const records=calls.filter(c=>c.name==='beagu_record_school_view_v2');
+  assert.deepEqual(records.map(c=>c.args.p_event_type),['school_selected','search_confirmed','detail_viewed']);
+  win.BeaguSearchTelemetry.selectedFromReport('7654321');
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(calls.filter(c=>c.name==='beagu_record_school_view_v2').length,3,'Direct report navigation is not a search');
 }
 (async()=>{
  await scenario(false);
  await scenario(true);
- console.log('PASS: verified selections record server-side views with/without the optional UI widget; no synthetic click or text-search increments');
+ console.log('PASS: verified selections record server-side views with/without the optional UI widget; no synthetic clicks, confirmed searches and detail events counted separately');
 })().catch(e=>{console.error(e);process.exitCode=1;});

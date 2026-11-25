@@ -1036,6 +1036,7 @@
           if(!detail.isConnected)return;
           showDetails(detail,data.rows,school,data.schoolQuestionModes,data.schoolQuestionSelections,data.schoolQuestionResults2026,Number(data.level));
           if(housing)detail.prepend(housing);
+          const reportFooter=make('div','school-report-footer');reportFooter.append(BeaguSchoolSearchCard.createReportFlag(school));detail.append(reportFooter);
           detail.dataset.loaded='1';
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         }catch(error){

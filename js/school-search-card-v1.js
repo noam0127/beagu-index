@@ -13,7 +13,7 @@
  }
  function createReportFlag(school){
   const name=school.school_name||'학교명 없음';
-  const flag=el('button','school-data-report','🚩');flag.type='button';flag.title='2026 자료 신고';flag.setAttribute('aria-label',name+' 자료 신고');flag.style.cssText='border:0;background:transparent;padding:4px;cursor:pointer;font-size:16px;line-height:1';
+  const flag=el('button','school-data-report','🚩 자료신고');flag.type='button';flag.title='2026 자료 신고';flag.setAttribute('aria-label',name+' 자료 신고');flag.style.cssText='border:0;background:transparent;padding:6px;cursor:pointer;font-size:12px;line-height:1.4;color:inherit';
   flag.addEventListener('click',async event=>{event.preventDefault();event.stopPropagation();
    const detail=window.prompt('자료 신고 사유 (12~500자, 개인정보·실명 제외)');
    if(detail===null)return;const reason=detail.trim();if(reason.length<12||reason.length>500){window.alert('신고 사유를 12~500자로 입력해 주세요.');return;}
@@ -36,16 +36,15 @@
   const views=el('span','school-view-count');
   views.dataset.schoolViewCount='';
   views.dataset.schoolId=String(school.school_id);
-  views.title='학교 상세 열람 조회수 · 하루 중복 제외';
-  views.setAttribute('aria-label','학교 상세 조회수 확인 중');
+  views.title='검색 + 상세조회 · 각각 하루 1회';
+  views.setAttribute('aria-label','검색 및 상세조회 합계 확인 중');
   const eye=el('span','school-view-eye');
   eye.setAttribute('aria-hidden','true');
   views.append(eye,el('strong','school-view-number','—'));
   const right=el('div','glory-header-meta');
   right.append(views);
-  const flag=createReportFlag(school);
   const heart=window.BeaguSchoolLikes?.create(String(school.school_id));
-  nameHeading.append(el('span','school-name-text',name),flag);if(heart)nameHeading.append(heart);nameHeading.append(right);
+  nameHeading.append(el('span','school-name-text',name));if(heart)nameHeading.append(heart);nameHeading.append(right);
   card.append(nameHeading,meta);
   return card;
  }
