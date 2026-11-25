@@ -12,7 +12,7 @@ assert.match(css,/--arcade-run-parent-visible-height,100svh/);
 assert.match(css,/height:100%!important;[\s\S]{0,120}max-width:100%!important;max-height:100%!important/);
 assert.match(css,/aspect-ratio:auto!important;object-fit:contain!important/);
 assert.match(hostLock,/const survival=Boolean\(canvas\?\.closest\?\.\("\.stage"\)\)/);
-assert.match(hostLock,/if\(canvas&&\(mobile\|\|survival\)&&!fullscreen\)/);
+assert.match(hostLock,/if\(canvas&&mobileInput\(\)&&!fullscreen\)/);
 assert.doesNotMatch(home,/id="teacher-run-frame"|id="teacher-game-frame"/,"The current Playcourt opens standalone pages");
 assert.doesNotMatch(home,/const bottom=frameRect\.top\+canvasRect\.bottom/);
 
@@ -22,18 +22,19 @@ function check(viewportHeight,isMobile,survival=true){
  const canvas={closest(sel){return survival&&sel===".stage"?{}:null},getBoundingClientRect(){return {top:800,height:playHeight,bottom:800+playHeight};}};
  const window={scrollY:200,pageYOffset:200,innerHeight:viewportHeight,visualViewport:{height:viewportHeight,offsetTop:0},matchMedia(){return {matches:isMobile}},scrollTo(_x,y){scrolled=y},addEventListener(){}};
  window.parent=window;
- const document={documentElement:{scrollHeight:4000,classList:{toggle(_c,v){locked=v}},style:{setProperty(name,value){assert.equal(name,"--arcade-run-parent-visible-height");setHeight=Number.parseFloat(value);playHeight=Math.min(400,Math.max(205,setHeight-32));}}},
+ const document={documentElement:{scrollHeight:4000,classList:{toggle(_c,v){locked=v}},style:{setProperty(name,value){if(name==="--arcade-run-parent-visible-height"){setHeight=Number.parseFloat(value);playHeight=Math.min(400,Math.max(205,setHeight-32));}}}},
  body:{scrollHeight:4000,style:{position:"",top:"",left:"",right:"",width:"",overflow:""}},querySelector(sel){return sel===".arcade-game-viewport canvas"?canvas:null},addEventListener(){}};
  new Function("window","document",hostLock)(window,document);
  window.ArcadePlayLock.sync(true);
- assert.equal(locked,true);assert.equal(document.body.style.position,"fixed");
+ assert.equal(locked,isMobile);assert.equal(document.body.style.position,isMobile?"fixed":"");
  const center=scrolled===null?null:200+800+playHeight/2-scrolled;
  window.ArcadePlayLock.sync(false);assert.equal(locked,false);assert.equal(document.body.style.position,"");
  return {setHeight,playHeight,center};
 }
-for(const h of [375,568,844,1080]){
- const found=check(h,h<768);assert.equal(found.setHeight,h);assert(found.playHeight<=h-24);assert(Math.abs(found.center-h/2)<1);
+for(const h of [375,568,844]){
+ const found=check(h,true);assert.equal(found.setHeight,h);assert(found.playHeight<=h-24);assert(Math.abs(found.center-h/2)<1);
 }
+assert.equal(check(1080,false).center,null,"desktop survival never locks");
 assert.equal(check(1080,false,false).center,null,"desktop volleyball scroll behavior remains unchanged");
 
 // Simulate the survival movement segment directly extracted from the game.
