@@ -179,7 +179,10 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  await page.locator('.glory-detail-trigger').first().click();await page.waitForFunction(()=>document.querySelector('.glory-detail-trigger[aria-expanded="true"]'));await page.waitForFunction(()=>!!document.querySelector('#results .school-detail[data-loaded="1"]'));assert.equal(detailRequested,true);
  if(tier===1){await page.waitForFunction(()=>!document.querySelector('#results .school-year-details[aria-busy="true"]'));assert.equal(comparisonRequested,true);assert.equal(await page.locator('#searchPanel').isVisible(),true);}
  await page.locator('#regionTab').click();await page.locator('#regionSelect').selectOption('부산');await page.locator('#results[data-search-mode="region"] .school-card').first().waitFor();assert.equal(await page.locator('#results .beagu-housing-preview').count(),0);
- assert.equal(await page.locator('#regionSort option[value="housing_price_won"]').isDisabled(),false);
+ assert.equal(await page.locator('#regionSort option[value="housing_price_won"]').isDisabled(),tier<2);
+ assert.equal(await page.locator('#regionSort option[value="game_points"]').isDisabled(),false);
+ assert.equal(await page.locator('#results .glory-fact[data-fact-key="housing_price_won"]').count(),tier===2?7:0);
+ if(tier===2)assert.equal(await page.locator('#results .glory-fact[data-fact-key="housing_price_won"] .glory-fact-value').first().innerText(),'1억23백만원');
  await page.locator('#officeSelect').selectOption('동래교육지원청');await page.waitForTimeout(350);assert.equal(await page.locator('#searchPanel').isVisible(),true);
  if(tier===2){await page.locator('#regionSort').selectOption('housing_price_won');await page.waitForTimeout(600);assert.equal(sorted,true);assert.equal(await page.locator('#results [data-sort-key="housing_price_won"]').count(),0);}
  }

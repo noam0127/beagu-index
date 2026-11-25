@@ -145,6 +145,13 @@
   const merged=[...new Set(((footer.dataset.knownYears||'')+','+(card.querySelector('.percentile-panel')?.dataset.publishedYears||'')).split(',').filter(y=>/^(2023|2024|2025|2026)$/.test(y)))].sort();
   footer.textContent='조사기록 '+(merged.length?merged.join(' · '):'확인된 기록 없음');
  }
+ function formatHousingPrice(value){
+  if(value===null||value===undefined||value==='')return '자료 없음';
+  const raw=typeof value==='number'?value:Number(String(value).replace(/[,\s]/g,'').replace(/원$/,''));
+  if(!Number.isFinite(raw)||raw<=0)return '자료 없음';
+  const rounded=Math.round(raw/1000000),eok=Math.floor(rounded/100),million=rounded%100;
+  return eok?(million?eok+'억'+million+'백만원':eok+'억원'):million+'백만원';
+ }
  function addFacts(card,school,level){
   const facts=el('div','glory-facts');
   for(const [label,key,suffix] of [['학생 수','student_count','명'],['남교원 비율','male_teacher_ratio','%'],['2급 정교사 비율','junior_teacher_ratio','%']]){
@@ -153,6 +160,11 @@
    const allowed=level>=1&&n!==null&&n!==undefined&&n!==''&&Number.isFinite(Number(n))&&Number(n)>=0&&(suffix!=='%'||Number(n)<=100);
    item.dataset.factKey=key;
    item.append(el('span','glory-fact-label',label),el('strong','glory-fact-value',allowed?Number(n).toLocaleString('ko-KR',{maximumFractionDigits:1})+suffix:level===0?'Lv.1+':'자료 없음'));
+   facts.append(item);
+  }
+  if(level>=2){
+   const item=el('div','glory-fact');item.dataset.factKey='housing_price_won';
+   item.append(el('span','glory-fact-label','공시가격'),el('strong','glory-fact-value',formatHousingPrice(school.housing_price_won)));
    facts.append(item);
   }
   card.append(facts);
@@ -164,7 +176,7 @@
  function addSortPrimary(card,school,sortBy,level){
   const key=String(sortBy||'school_name').replace(/_(?:asc|desc)$/,'');
   if(key==='school_name'||(level>=1&&key==='beagu_percentile_2025')||['student_count','male_teacher_ratio','junior_teacher_ratio'].includes(key)||(level===0&&key!=='address')||
-     (level<1&&key==='housing_price_won'))return;
+     (['housing_price_won','game_points'].includes(key)))return;
   const numeric=(value,suffix,options={})=>{
    if(value===null||value===undefined||value===''||
       !Number.isFinite(Number(value))||Number(value)<0)return '자료 없음';
@@ -186,7 +198,7 @@
    case 'male_teacher_ratio':
     label='남교사 비율';value=numeric(school.male_teacher_ratio,'%',{maximumFractionDigits:2});break;
    case 'housing_price_won':
-    label='행정동 공동주택 평균 공시가격';value=numeric(school.housing_price_won,'원');break;
+    label='행정동 공동주택 평균 공시가격';value=formatHousingPrice(school.housing_price_won);break;
    default:return;
   }
   const primary=el('div','school-sort-primary');
@@ -235,13 +247,15 @@
   actions.append(mbti,open,experience);
   card.append(actions);
   const points=el('div','glory-points');
-  const amount=el('strong','glory-points-value','—');
-  amount.dataset.schoolGamePoints=String(school.school_id);
+  const ranked=Object.prototype.hasOwnProperty.call(school,'game_points');
+  const known=Number.isSafeInteger(school.game_points)&&school.game_points>=0;
+  const amount=el('strong','glory-points-value',level<1?'Lv.1+':known?school.game_points.toLocaleString('ko-KR')+' P':ranked?'자료 없음':'—');
+  if(level>=1&&!ranked)amount.dataset.schoolGamePoints=String(school.school_id);
   points.append(el('span','glory-points-label','🏆 학교 누적 게임포인트'),amount);
   card.append(points,el('div','glory-record-years'));
   updateRecordedYears(card,[]);
   if(detail)card.append(detail);
   return {card,open,detail,experience};
  }
- window.BeaguSchoolSearchCard=Object.freeze({addHeader,createReportFlag,percentiles,historicalMean,createCard,updateRecordedYears,STATES});
+ window.BeaguSchoolSearchCard=Object.freeze({addHeader,createReportFlag,percentiles,historicalMean,createCard,updateRecordedYears,formatHousingPrice,STATES});
 })();

@@ -20,7 +20,8 @@
     const isLv2=viewerTier>=2;
     $('lv2UpgradeCard').hidden=isLv2;
     const option=$('regionSort').querySelector('option[value="housing_price_won"]');
-    if(option){option.disabled=false;option.textContent='공동주택 평균 공시가격';}
+    if(option){option.disabled=!isLv2;option.textContent=isLv2?'공동주택 평균 공시가격':'🔒 공시가격 (Lv.2)';}
+    if(!isLv2&&$('regionSort').value==='housing_price_won')$('regionSort').value='school_name';
   }
   let mode = 'school', page = 0, timer, serial = 0;
   const LIMIT = 20;
@@ -31,7 +32,7 @@
   ).trim();
   // Exact education office names come from the verified schools table.
   let officeLoadSerial=0;
-  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count','like_count']);
+  const SORTS=new Set(['school_name','address','beagu_percentile_2025','student_count','junior_teacher_ratio','male_teacher_ratio','housing_price_won','view_count','like_count','game_points']);
   let sortDirection='asc';
   const updateSortDirection=()=>{
     const button=$('regionSortDirection');
@@ -323,9 +324,9 @@
   $('officeSelect').addEventListener('change', () => search(true));
   // 지역 찾기만 선택형 정렬을 사용합니다. 서버는 페이지 나누기 전에 정렬합니다.
   $('regionSort').addEventListener('change',()=>{
-    if(!SORTS.has($('regionSort').value))return;
+    if(!SORTS.has($('regionSort').value)||($('regionSort').value==='housing_price_won'&&viewerTier<2)){showUpgrade();return;}
     // "조회수" defaults to most viewed first; the arrow still toggles either direction.
-    if(['view_count','like_count'].includes($('regionSort').value)){
+    if(['view_count','like_count','game_points'].includes($('regionSort').value)){
       sortDirection='desc';
       updateSortDirection();
     }
@@ -707,13 +708,14 @@
       // Only display sanitized summary.metrics released by the signed API.
       for(const metric of Array.isArray(row.summary?.metrics)?row.summary.metrics:[]){
         if(typeof metric?.label!=='string'||typeof metric?.value!=='string')continue;
+        if(metric.factKey==='district_housing_price_mean'&&Number(viewerTier)<2)continue;
         if(Number(viewerTier)===1&&year!==2025&&(metric.key==='percentile'||/백분위/.test(metric.label)))continue;
         if(isDuplicatePublicPercentile(metric,year,publicValue))continue;
         if(metric.label.includes(String(year))&&metric.label.includes('백분위')&&publicValue!==null)
           hadMismatch=true;
         releasedMetrics.push({
-          label:metric.label,value:metric.value,group:metric.group,
-          nationalAverage:metric.nationalAverage,regionalAverage:metric.regionalAverage,
+          label:metric.label,value:metric.factKey==='district_housing_price_mean'?BeaguSchoolSearchCard.formatHousingPrice(metric.value):metric.value,group:metric.group,
+          nationalAverage:metric.factKey==='district_housing_price_mean'&&metric.nationalAverage!=null?BeaguSchoolSearchCard.formatHousingPrice(metric.nationalAverage):metric.nationalAverage,regionalAverage:metric.factKey==='district_housing_price_mean'&&metric.regionalAverage!=null?BeaguSchoolSearchCard.formatHousingPrice(metric.regionalAverage):metric.regionalAverage,
           comparisonKind:metric.comparisonKind,referenceYear:metric.referenceYear,
           factKey:metric.factKey,schoolOnly:metric.schoolOnly
         });
@@ -1015,12 +1017,11 @@
       });
       if([1,2].includes(viewerTier))renderOfficial2026(card,null,'LOADING',school);
       let housing=null;
-      if(mode!=='region'){
+      if(mode!=='region'&&viewerTier>=2){
       housing=make('section','beagu-housing-preview');
       housing.append(make('strong','beagu-housing-label','공동주택 평균 공시가격'));
       const amount=make('div','beagu-housing-amount');
-      const available=viewerTier>=1&&school.housing_price_won!=null&&Number(school.housing_price_won)>0&&Number.isFinite(Number(school.housing_price_won));
-      amount.textContent=available?Number(school.housing_price_won).toLocaleString('ko-KR')+'원':'공개할 공시가격 자료 없음';
+      amount.textContent=BeaguSchoolSearchCard.formatHousingPrice(school.housing_price_won);
       housing.append(amount,make('p','beagu-housing-note',
         '해당 학교가 위치한 행정동의 공동주택 평균 공시가격입니다. 학교 자체나 개별 주택의 가격이 아닙니다.'));
       // Existing level-specific housing information belongs in detailed view.
@@ -1077,7 +1078,7 @@
     await Promise.all([loaded,basicsReady]);
     if(request!==serial){const e=Error('STALE_SEARCH');e.stale=true;throw e;}
     if(sort==='beagu_percentile_2025'&&!publicStaticAvailable)throw Error('PUBLIC_DATA_UNAVAILABLE');
-    if(sort!=='beagu_percentile_2025'&&!officialBasicsAvailable)throw Error('OFFICIAL_BASICS_UNAVAILABLE');
+    if(!['beagu_percentile_2025','game_points'].includes(sort)&&!officialBasicsAvailable)throw Error('OFFICIAL_BASICS_UNAVAILABLE');
     const rows=[],seen=new Set(),size=500;
     let total=null;
     for(let from=0;from===0||from<total;from+=size){
@@ -1094,8 +1095,32 @@
       for(const school of result.data){const id=String(school.school_id);if(!/^[A-Z0-9]{7}$/.test(id)||seen.has(id))throw Error('DIRECTORY_CHANGED');seen.add(id);rows.push(school);}
     }
     if(rows.length!==total)throw Error('INCOMPLETE_DIRECTORY');
-    const ordered=window.BeaguPublicSchoolBasics2026.rank(rows,sort,direction,officialBasicsIndex,publicIndex);
+    const ordered=sort==='game_points'
+      ?window.BeaguSchoolGamePoints.rank(rows,await window.BeaguSchoolGamePoints.readTotals(rows.map(s=>s.school_id)),direction)
+      :window.BeaguPublicSchoolBasics2026.rank(rows,sort,direction,officialBasicsIndex,publicIndex);
+    if(request!==serial){const e=Error('STALE_SEARCH');e.stale=true;throw e;}
     return {schools:ordered.slice(page*LIMIT,(page+1)*LIMIT),total};
+  }
+  // Public-directory sorts contain no protected prices. Hydrate only the visible
+  // Lv.2 page through the existing signed search API; match by exact school ID.
+  async function hydrateHousing(list,request){
+    if(viewerTier<2)return;
+    const pending=list.filter(s=>!Object.prototype.hasOwnProperty.call(s,'housing_price_won'));
+    for(let i=0;i<pending.length;i+=4){
+      if(request!==serial||viewerTier<2)return;
+      await Promise.all(pending.slice(i,i+4).map(async school=>{
+        try{
+          const region=String(school.sido_standard||school.sido||'');
+          for(let p=0;p<10;p++){
+            const result=await api('ranked_schools',{searchText:school.school_name,region,office:String(school.support_office||''),sort:'school_name',direction:'asc',page:p});
+            if(request!==serial||viewerTier<2)return;
+            const match=(result.schools||[]).find(r=>String(r.school_id)===String(school.school_id));
+            if(match){school.housing_price_won=match.housing_price_won??null;return;}
+            if((p+1)*LIMIT>=Number(result.total||0))return;
+          }
+        }catch(err){if(err.unauthorized||err.stale)throw err;/* no fabricated price */}
+      }));
+    }
   }
   async function search(reset,explicitEnter=false) {
     if (reset) page = 0;
@@ -1112,13 +1137,14 @@
     const searchTask=window.BeaguLoading?.start('학교 검색 결과를 불러오는 중…');
     const perfStarted=performance.now();let perfSucceeded=false;
     try {
-      const sortValue=mode==='region'&&SORTS.has($('regionSort').value)?`${$('regionSort').value}_${sortDirection}`:'school_name_asc';
+      const sortValue=mode==='region'&&SORTS.has($('regionSort').value)&&(viewerTier>=2||$('regionSort').value!=='housing_price_won')?`${$('regionSort').value}_${sortDirection}`:'school_name_asc';
       const sort=sortValue.replace(/_(?:asc|desc)$/,'');
       const direction=sortValue.endsWith('_desc')?'desc':'asc';
-      const response=window.BeaguPublicSchoolBasics2026.metricKeys.has(sort)?await localPublicRank(q,region,office,sort,direction,request):await api('ranked_schools',{searchText:q,region,office,sort,direction,page});
+      const response=(sort==='game_points'||window.BeaguPublicSchoolBasics2026.metricKeys.has(sort))?await localPublicRank(q,region,office,sort,direction,request):await api('ranked_schools',{searchText:q,region,office,sort,direction,page});
       await basicsReady;
       const data=Array.isArray(response.schools)?response.schools:[];
       const count=Number(response.total)||0;
+      if(viewerTier>=2)await hydrateHousing(data,request);
       if (request !== serial) return;
       if(explicitEnter&&q&&count===1&&data.length===1)
         window.BeaguSearchTelemetry?.searchConfirmed(String(data[0].school_id),1,'search-lv1');

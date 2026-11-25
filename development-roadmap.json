@@ -883,6 +883,26 @@
     },
     {
       "order": 35,
+      "version": "v1.11.18.1",
+      "name": "코트 보완",
+      "scope": "기존 학교 누적 게임포인트 연결·Lv.1 정렬, 공시가격 Lv.2 및 표시 단위, 2026 백분위 공개 변경 제외",
+      "status": "PENDING",
+      "branch": "fix/v111181-court-completion",
+      "pr": 315,
+      "commit": null,
+      "tests": [
+        "clean-release-validation.yml"
+      ],
+      "dependencies": [
+        "v1.11.18"
+      ],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": null
+    },
+    {
+      "order": 36,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -902,7 +922,7 @@
       "rollback_sha": null
     },
     {
-      "order": 36,
+      "order": 37,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -921,7 +941,7 @@
       "rollback_sha": null
     },
     {
-      "order": 37,
+      "order": 38,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -938,7 +958,7 @@
       "rollback_sha": null
     },
     {
-      "order": 38,
+      "order": 39,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

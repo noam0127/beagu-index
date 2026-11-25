@@ -1,0 +1,26 @@
+name: Court completion offline validation
+on:
+  push:
+    branches: [fix/v111181-court-completion]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Check JavaScript syntax and offline regressions
+        run: |
+          node --check js/school-game-points-v1.js
+          node --check js/school-search-card-v1.js
+          node --check js/level-search.js
+          node --check js/statistics-compare.js
+          node tests/v111181-court-completion.mjs
+          node tests/v11118-static-basics.mjs
+          node tests/v11117-public-school-basics.mjs
+          node tests/2026-public-projection-integrity.mjs
+          node tests/2026-question-results-pipeline.mjs

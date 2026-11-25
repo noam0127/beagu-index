@@ -239,9 +239,9 @@ Deno.serve(async(req:Request)=>{
       !/^[가-힣A-Za-z·\s]*$/.test(region)||/[\x00-\x1f]/.test(searchText+office)||
       (!searchText&&!region)||(!region&&office))
       return send({error:'INVALID_SEARCH_FILTER'},400,origin);
-   // Property price metadata is available only to verified Lv1+ sessions.
-   if(sort==='housing_price_won'&&Number(session.access_level)<1)
-     return send({error:'AUTH_REQUIRED'},403,origin);
+   // Property price metadata is available only to verified Lv2 sessions.
+   if(sort==='housing_price_won'&&Number(session.access_level)<2)
+     return send({error:'LEVEL2_REQUIRED'},403,origin);
    // Level access is checked above, before any cached school record is fetched.
    // The RLS-protected cache contains only fields from the approved public sort view.
    // On cache read errors, preserve the original verified query as the fallback.
@@ -250,7 +250,7 @@ Deno.serve(async(req:Request)=>{
     if(rankError||!Array.isArray(ranked?.schools))return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
     const ids=ranked.schools.map((r:any)=>r.school_id);
     if(!ids.length)return send({schools:[],total:ranked.total,page:pagination,sort,direction},200,origin);
-    const hydrate=(table:string)=>admin.from(table).select('school_id,school_kind,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count,housing_price_won').in('school_id',ids);
+    const hydrate=(table:string)=>admin.from(table).select('school_id,school_kind,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count'+(Number(session.access_level)>=2?',housing_price_won':'')).in('school_id',ids);
     let result=await hydrate('beagu_lv1_school_sort_cache_v1');
     if(result.error)result=await hydrate('beagu_lv1_school_sort_index');
     if(result.error)return send({error:'RANKED_SEARCH_UNAVAILABLE'},503,origin);
@@ -259,7 +259,7 @@ Deno.serve(async(req:Request)=>{
    }
    const rankedQuery=(table:string)=>{
      let query=admin.from(table)
-       .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count'+(Number(session.access_level)>=1?',housing_price_won':''),{count:'exact'});
+       .select('school_id,school_name,sido,sido_standard,support_office,address,establishment,school_kind,status,beagu_percentile_2025,student_count,student_reference_year,junior_teacher_ratio,male_teacher_ratio,view_count'+(Number(session.access_level)>=2?',housing_price_won':''),{count:'exact'});
      if(searchText)query=query.ilike('school_name','%'+searchText.replace(/[%_\\]/g,'')+'%');
      if(region)query=query.eq('sido_standard',region);
      if(office)query=query.eq('support_office',office);
@@ -401,7 +401,7 @@ Deno.serve(async(req:Request)=>{
   const addFact=(year:number,fact_key:string,label:string,value:string,sourceYear:number,unit:string,category:boolean)=>{
     if(![2024,2025].includes(year)||!/^.{1,60}$/.test(label)||!/^.{1,60}$/.test(value)||/[<>\r\n]/.test(label+value))return;
     // Unified Lv.1: approved official school facts only, never raw teacher surveys.
-    const required=fact_key==='district_housing_price_mean'?1:(basicKeys.has(fact_key)||detailedKeys.has(fact_key))?1:99;
+    const required=fact_key==='district_housing_price_mean'?2:(basicKeys.has(fact_key)||detailedKeys.has(fact_key))?1:99;
     if(required>level)return;
     let bucket=facts.find(x=>x.year===year&&x.access_level===required);
     if(!bucket){bucket={year,access_level:required,summary:{metrics:[]}};facts.push(bucket)}
