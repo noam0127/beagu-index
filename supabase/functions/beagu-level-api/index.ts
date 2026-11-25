@@ -588,7 +588,8 @@ Deno.serve(async(req:Request)=>{
    for(const row of rows as any[])if(Number(row.year)===2026&&Array.isArray(row.summary?.metrics))row.summary.metrics=row.summary.metrics.filter((m:any)=>m.key!=='percentile');
    rows.push({year:2026,access_level:level,summary:{metrics:[{key:'percentile',label:'배구지수 백분위',value:manualValue,unit:'%'}]}});
   }
-  const schoolQuestionResults2026=level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[];
+  const manualQuestions=await admin.rpc('beagu_2026_master_questions_v1',{p_school_id:id,p_level:level});
+  const schoolQuestionResults2026=!manualQuestions.error&&Array.isArray(manualQuestions.data)?publicQuestionResults(manualQuestions.data):level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[];
   return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });

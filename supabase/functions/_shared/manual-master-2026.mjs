@@ -41,3 +41,19 @@ export function parseMasterCSV(text){
   return {school_id:r[0],observations:number(r[1],/^\d+$/),sum_units:number(r[2],/^\d+$/),percentile:number(r[4],/^\d+(?:\.\d)?$/)};
  }));
 }
+
+/* Final package contains CSV and exact references to the already reviewed stored
+ * aggregate snapshots. No raw answers, question distributions or evidence text. */
+export function parseFinalMasterFile(text){
+ if(typeof text!=='string'||text.length>1500000)throw Error('FILE_SIZE');
+ if(!text.replace(/^\uFEFF/,'').trimStart().startsWith('{'))return {rows:parseMasterCSV(text),questionRefs:[]};
+ const p=JSON.parse(text.replace(/^\uFEFF/,''));
+ if(!p||Object.keys(p).sort().join(',')!=='kind,percentile_csv,question_refs'||p.kind!=='BEAGU_FINAL_MASTER_2026_V1'||typeof p.percentile_csv!=='string'||!Array.isArray(p.question_refs))throw Error('INVALID_PACKAGE');
+ const rows=parseMasterCSV(p.percentile_csv),ids=new Set(rows.map(r=>r.school_id)),seen=new Set();
+ if(p.question_refs.length>rows.length)throw Error('INVALID_REFERENCES');
+ const questionRefs=p.question_refs.map(r=>{
+  if(!r||Object.keys(r).sort().join(',')!=='payload_sha256,school_id'||!ids.has(r.school_id)||seen.has(r.school_id)||typeof r.payload_sha256!=='string'||!/^[a-f0-9]{64}$/.test(r.payload_sha256))throw Error('INVALID_REFERENCE');
+  seen.add(r.school_id);return {school_id:r.school_id,payload_sha256:r.payload_sha256};
+ });
+ return {rows,questionRefs:questionRefs.sort((a,b)=>a.school_id.localeCompare(b.school_id))};
+}

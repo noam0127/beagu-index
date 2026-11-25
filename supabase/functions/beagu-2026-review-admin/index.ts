@@ -1,7 +1,7 @@
 // Private reviewer endpoint. No authentication by participation code.
 // Reads are allowed only for allowlisted Supabase Auth AAL2 sessions.
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.58.0";
-import {parseMasterCSV} from "../_shared/manual-master-2026.mjs";
+import {parseFinalMasterFile} from "../_shared/manual-master-2026.mjs";
 const url=Deno.env.get("SUPABASE_URL")||"";
 const secret=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
 const db=createClient(url,secret,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -91,8 +91,8 @@ Deno.serve(async(request:Request)=>{
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
   if(input.action==="manual_master_publish"){
    if(input.confirmation!=="FINAL_MASTER_PUBLISH"||typeof input.source_version!=="string"||typeof input.csv!=="string")return send(origin,400,{error:"invalid_master"});
-   let rows;try{rows=parseMasterCSV(input.csv);}catch{return send(origin,400,{error:"invalid_master_file"});}
-   const {data,error}=await db.rpc("beagu_2026_master_publish_v1",{p_actor:actor,p_session:claims.session_id,p_version:input.source_version,p_rows:rows});
+   let file;try{file=parseFinalMasterFile(input.csv);}catch{return send(origin,400,{error:"invalid_master_file"});}
+   const {data,error}=await db.rpc("beagu_2026_master_publish_v1",{p_actor:actor,p_session:claims.session_id,p_version:input.source_version,p_rows:file.rows,p_question_refs:file.questionRefs});
    return error||!data?send(origin,409,{error:"master_snapshot_or_evidence_mismatch"}):send(origin,200,data);
   }
   if(input.action==="manual_master_restore"){
