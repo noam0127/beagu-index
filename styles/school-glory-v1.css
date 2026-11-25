@@ -1,0 +1,26 @@
+/* v1.11.14 school-glory summary; scoped to search cards only. */
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) .school-glory-card{gap:0;min-width:0;display:flex;flex-direction:column;padding:16px!important;border-radius:16px}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) .school-glory-card .school-name{display:flex;align-items:flex-start;gap:8px;margin:0 0 8px}
+.glory-header-meta{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;text-align:right;font-size:11px;color:inherit;font-weight:500}
+.glory-region{opacity:.8}.glory-header-meta .school-view-count{font-size:11px}
+body.beagu-ui-page .school-glory-card .school-meta{font-size:11px;line-height:1.4;margin:0 0 8px}
+body.beagu-ui-page .school-glory-card .glory-percentile{padding:0;border:0;background:none;margin:10px 0 12px}
+.glory-score-row{display:flex;align-items:center;gap:14px;min-width:0}
+.glory-score{font-size:clamp(17px,3vw,26px);font-weight:800;color:#168447;font-variant-numeric:tabular-nums;white-space:nowrap}
+.glory-track{height:9px;background:#dce4e9;flex:1;min-width:30px;border-radius:999px;overflow:hidden}
+.glory-fill{display:block;height:100%;background:#49aa86;border-radius:999px}
+.glory-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:2px 0 12px}
+.glory-fact{display:grid;gap:3px;min-width:0}.glory-fact-label{font-size:11px;opacity:.8;word-break:keep-all}.glory-fact-value{font-size:14px;font-weight:750;overflow-wrap:anywhere}
+body.beagu-ui-page:is(.beagu-page-search,.beagu-page-lv1) .school-glory-card .glory-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:0;padding:10px 0;border-top:1px solid #94a3b84d;grid-template-columns:none}
+.glory-mbti-slot{flex:1 1 100px;min-width:0}
+body.beagu-ui-page .school-glory-card .glory-actions .beagu-mbti-badge{margin:0;padding:0;border:0;background:none;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.glory-mbti-slot .beagu-mbti-label{font-size:11px;opacity:.8}.glory-mbti-slot .beagu-mbti-text{font-size:12px;font-weight:800;overflow-wrap:anywhere}
+body.beagu-ui-page .school-glory-card .glory-actions :is(.view-button,.court-school-experience){display:inline-flex;align-items:center;justify-content:center;flex:0 1 auto;width:auto;min-height:38px;padding:6px 10px;margin:0;border:1px solid #93a4b9;border-radius:8px;background:transparent;color:inherit;font-size:12px;font-weight:750;white-space:nowrap;text-decoration:none}
+body.beagu-ui-page .school-glory-card .glory-actions .court-school-experience{background:#dff5e9;color:#12613c;border-color:#67ad88}
+.glory-points{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid #94a3b84d;padding:11px 0;min-width:0}
+.glory-points-label{font-size:12px;font-weight:650}.glory-points-value{font-size:16px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.glory-record-years{font-size:11px;opacity:.75;border-top:1px solid #94a3b84d;padding:8px 0 0;line-height:1.5}
+.school-glory-card .school-detail[hidden]{display:none!important}
+@media (min-width:960px){body:is(.beagu-page-search,.beagu-page-lv1) .results{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(min(100%,350px),1fr));gap:14px;align-items:start}}
+@media (max-width:420px){.glory-header-meta{gap:4px}.glory-score-row{gap:10px}.glory-facts{gap:5px}.glory-fact-label{font-size:10px}.glory-fact-value{font-size:12px}.glory-mbti-slot{flex-basis:90px}.glory-points-label{font-size:11px}}
+@media(prefers-color-scheme:dark){.glory-score{color:#168447}}
