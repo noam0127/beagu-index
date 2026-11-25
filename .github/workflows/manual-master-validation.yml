@@ -26,3 +26,19 @@ jobs:
           psql_local < tests/manual-master-fixture.sql
           psql_local < supabase/2026-manual-master-v1.sql
           psql_local < tests/manual-master-assertions.sql
+
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Install pinned Chromium tooling
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"; else timeout 120s npx playwright install chromium --only-shell; fi
+      - name: Validate owner upload and rollback UI in Chromium
+        run: node tests/manual-master-browser.cjs

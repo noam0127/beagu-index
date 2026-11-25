@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {MASTER_HEADER,parseMasterCSV,validateMasterRows} from '../supabase/functions/_shared/manual-master-2026.mjs';
+import {MASTER_HEADER,parseMasterCSV,validateMasterRows,parseFinalMasterFile} from '../supabase/functions/_shared/manual-master-2026.mjs';
 const rows=[['1000001',1,360360,360360,0,0,'WITHHELD','FALSE','VI13-v1.2-review+공식명칭정규화'],['1000002',2,720720,360360,0,4,'WITHHELD','FALSE','VI13-v1.2-review+공식명칭정규화'],['1000003',1,720720,360360,100,0,'WITHHELD','FALSE','VI13-v1.2-review+공식명칭정규화']];
 const csv='\uFEFF'+[MASTER_HEADER,...rows].map(r=>r.join(',')).join('\r\n');
 const parsed=parseMasterCSV(csv);
@@ -13,3 +13,9 @@ assert.throws(()=>parseMasterCSV(csv.replace('학교ID','학교명')));
 assert.throws(()=>parseMasterCSV(csv+'\n"unterminated'));
 assert.deepEqual(validateMasterRows([{school_id:'1000001',observations:1,sum_units:360360,percentile:0}]).length,1);
 console.log('PASS final master CSV schema, exact rational ranking, ties, duplicate and protected-field rejection');
+
+const packageFile={kind:'BEAGU_FINAL_MASTER_2026_V1',percentile_csv:csv,question_refs:[{school_id:'1000001',payload_sha256:'a'.repeat(64)}]};
+assert.equal(parseFinalMasterFile(JSON.stringify(packageFile)).questionRefs.length,1);
+assert.equal(parseFinalMasterFile(csv).questionRefs.length,0);
+for(const ref of [{school_id:'1000004',payload_sha256:'a'.repeat(64)},{school_id:'1000001',payload_sha256:'no'},{school_id:'1000001',payload_sha256:'a'.repeat(64),Q31:'private'}])assert.throws(()=>parseFinalMasterFile(JSON.stringify({...packageFile,question_refs:[ref]})));
+console.log('PASS final package strict question-reference schema');
