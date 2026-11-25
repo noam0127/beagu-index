@@ -705,34 +705,42 @@
     },
     {
       "order": 26,
-      "version": "v1.11.14",
-      "name": "학교의 영광",
-      "scope": "Lv.0·1·2 검색 카드 통일 및 조회수 표시 / 2026 배구지수 백분위 막대·조사기록 연도 / 상세조회 분리 및 레벨별 학교체험 자동 선택 / 검증 점수 학교별 누적 집계 후보 및 기존 공개권한 보존",
-      "status": "CANDIDATE_CI_PENDING",
-      "branch": "release/v1.11.14-school-glory",
+      "version": "v1.11.13.3",
+      "name": "챌린지 입장",
+      "scope": "Lv.0 챌린지 진입 시 참여코드 입력창 자동 표시, 기존 인증 유지",
+      "status": "DEPLOYED",
+      "branch": "hotfix/v1.11.13.3-challenge-lv0",
       "dependencies": [
         "v1.11.13.2"
       ],
-      "admin_registration": "NOT_REGISTERED",
-      "production": "NOT_APPROVED",
-      "rollback_sha": "ae0f76259001bd168394a49bc1b1112efbbad0a0",
-      "tests": []
+      "admin_registration": "REGISTERED",
+      "production": "DEPLOYED",
+      "rollback_sha": "b5d6873efe86dcc3c640ac87a344d7617f0cd048",
+      "tests": [
+        {
+          "name": "Official clean release and desktop/mobile Chromium entry regression",
+          "result": "SUCCESS"
+        }
+      ],
+      "commit": "bb814939a06892fdc08ae468ce0b055dba8d8668"
     },
     {
       "order": 27,
-      "version": "v1.11.15",
+      "version": "v1.11.14",
       "name": "불꽃코트",
-      "scope": "두 게임 난이도별 학교 추천·듀스·승패·생애주기·보스·아이템·1급 정교사 자격·기록 보존 후보",
+      "scope": "Lv.0·1·2 검색 카드 통일 및 조회수 표시 / 2026 배구지수 백분위 막대·조사기록 연도 / 상세조회 분리 및 레벨별 학교체험 자동 선택 / 검증 점수 학교별 누적 집계 후보 및 기존 공개권한 보존 / 두 게임 난이도별 학교 추천·듀스·승패·생애주기·보스·아이템·1급 정교사 자격·기록 보존 후보",
       "status": "CANDIDATE_CI_PENDING",
       "branch": "release/v1.11.15-fire-court",
       "dependencies": [
-        "v1.11.14",
-        "v1.11.13.2"
+        "v1.11.13.3"
       ],
       "admin_registration": "NOT_REGISTERED",
       "production": "NOT_APPROVED",
-      "rollback_sha": "b5d6873efe86dcc3c640ac87a344d7617f0cd048",
-      "tests": []
+      "rollback_sha": "bb814939a06892fdc08ae468ce0b055dba8d8668",
+      "tests": [],
+      "includes": [
+        "학교의 영광"
+      ]
     },
     {
       "order": 28,
