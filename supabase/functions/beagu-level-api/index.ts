@@ -125,7 +125,13 @@ Deno.serve(async(req:Request)=>{
      }
      return send({values,official2026:projectOfficialProfiles2026(profiles,ids,tier),official2026_status:'OK'},200,origin);
    };
-   // Lv1 uses its own existing publication gate; its basic card stays 2025.
+   const edited=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:ids,p_level:tier});
+   if(edited.error||!edited.data)return send({error:'EDITED_DATA_UNAVAILABLE'},503,origin);
+   if(edited.data.active===true){
+    const values:Record<string,number>={};
+    for(const id of ids){const p=edited.data.schools?.[id]?.percentile;if(typeof p==='number'&&p>=0&&p<=100)values[id]=p;}
+    return await sendSchoolProfiles(values);
+   }
    const [metrics,catalog]=await Promise.all([
     admin.from('beagu_release_metrics_v2')
      .select('school_id,survey_year,question_id,access_level,value,release_version,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence')
@@ -170,14 +176,6 @@ Deno.serve(async(req:Request)=>{
        if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;
      }
    }
-   // Automatic exception-managed percentiles, independently authorized by the server.
-   const [auto,hidden]=await Promise.all([admin.rpc('beagu_2026_auto_percentiles',{p_ids:ids,p_level:Number(session.access_level)}),admin.rpc('beagu_2026_auto_hidden_ids',{p_ids:ids})]);
-   // Once the new endpoint is deployed, a missing hold RPC fails closed for all 2026 values.
-   if(hidden.error||!Array.isArray(hidden.data))return send({error:'AUTO_HOLD_GATE_UNAVAILABLE'},503,origin);
-   if(!auto.error&&auto.data&&typeof auto.data==='object'&&!Array.isArray(auto.data))for(const id of ids){const n=auto.data[id];if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;}
-   const manual=await admin.rpc('beagu_2026_master_values_v1',{p_ids:ids,p_level:Number(session.access_level)});
-   if(!manual.error&&manual.data&&typeof manual.data==='object'&&!Array.isArray(manual.data))for(const id of ids){const n=manual.data[id];if(typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;}
-   for(const id of hidden.data)delete out[id];
    return await sendSchoolProfiles(out);
 
   }
@@ -278,16 +276,16 @@ Deno.serve(async(req:Request)=>{
   const verifiedLevel=Number(session.access_level);
   const level=body.viewLevel===undefined?verifiedLevel:body.viewLevel;
   if(typeof level!=='number'||![1,2].includes(level)||level>verifiedLevel)return send({error:'ACCESS_DENIED'},403,origin);
-  // Tier approval and school snapshot approval must both hold for 2026 outputs.
+  const edited=await admin.rpc('beagu_2026_edited_read_v1',{p_ids:[id],p_level:level});
+  if(edited.error||!edited.data)return send({error:'EDITED_DATA_UNAVAILABLE'},503,origin);
+  // Before the first edited file, preserve legacy publication rules.
   let tierPublished2026=false;
-  if([1,2].includes(level)){
+  if([1,2].includes(level)&&edited.data.active!==true){
     const {data:schoolReleased,error:schoolReleasedError}=await admin.rpc(
       'beagu_2026_level_school_published',{p_school_id:id,p_level:level});
     if(schoolReleasedError||typeof schoolReleased!=='boolean')
       return send({error:'PUBLICATION_GATE_UNAVAILABLE'},503,origin);
-    const {data:hiddenIds,error:hiddenError}=await admin.rpc('beagu_2026_auto_hidden_ids',{p_ids:[id]});
-    if(hiddenError||!Array.isArray(hiddenIds))return send({error:'AUTO_HOLD_GATE_UNAVAILABLE'},503,origin);
-    tierPublished2026=schoolReleased===true&&!hiddenIds.includes(id);
+    tierPublished2026=schoolReleased===true;
   }
   // Separate Lv2 access from the existing public/Lv1 24-hour release path.
   // A null result means the exact snapshot failed independent publication review.
@@ -582,15 +580,9 @@ Deno.serve(async(req:Request)=>{
   for(const year of [...new Set(safe.map((m:any)=>m.year))]){
    rows.push({year,access_level:year===2026?1:2,summary:{metrics:safe.filter((m:any)=>m.year===year)}});
   }
-  const manual=await admin.rpc('beagu_2026_master_values_v1',{p_ids:[id],p_level:level});
-  const manualValue=manual.error?null:manual.data?.[id];
-  if(typeof manualValue==='number'&&Number.isFinite(manualValue)&&manualValue>=0&&manualValue<=100){
-   for(const row of rows as any[])if(Number(row.year)===2026&&Array.isArray(row.summary?.metrics))row.summary.metrics=row.summary.metrics.filter((m:any)=>m.key!=='percentile');
-   rows.push({year:2026,access_level:level,summary:{metrics:[{key:'percentile',label:'배구지수 백분위',value:manualValue,unit:'%'}]}});
-  }
-  const manualQuestions=await admin.rpc('beagu_2026_master_questions_v1',{p_school_id:id,p_level:level});
-  const schoolQuestionResults2026=!manualQuestions.error&&Array.isArray(manualQuestions.data)?publicQuestionResults(manualQuestions.data):level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[];
-  return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears},200,origin);
+  const finalRow=edited.data.active===true?edited.data.schools?.[id]:null;
+  const schoolQuestionResults2026=edited.data.active===true?(Array.isArray(finalRow?.questions)?finalRow.questions.filter((q:any)=>q.questionId!=='Q31'&&q.questionId!=='Q51'):[]):level===2&&Array.isArray(lv2Approved2026)?publicQuestionResults(lv2Approved2026):level===1&&Array.isArray(lv1Approved2026)?publicQuestionResults(lv1Approved2026):[];
+  return send({school_id:id,level,rows,schoolQuestionModes,schoolQuestionSelections,schoolQuestionResults2026,participationYears,edited2026:edited.data.active===true,editedPercentile:finalRow?.percentile??null},200,origin);
  }catch(err){console.error('beagu-level-api error',err instanceof Error?err.name:'Error');return send({error:'INTERNAL_ERROR'},500,origin);}
 });
 
