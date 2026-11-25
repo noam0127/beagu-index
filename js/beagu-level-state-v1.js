@@ -112,4 +112,4 @@
 })();
 
 /* Homecourt vocabulary: presentation only, original routes and auth unchanged. */
-(()=>{const rename=()=>{document.querySelectorAll('.beagu-unified-nav a').forEach(a=>{const route=(a.getAttribute('href')||'').split('?')[0];if(route==='index.html'&&a.textContent.trim()==='홈')a.textContent='홈코트';if(route==='postit.html'&&a.textContent.trim()==='포스트잇')a.textContent='라커룸';});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',rename,{once:true});else rename();})();
+(()=>{const rename=()=>{document.querySelectorAll('.beagu-unified-nav a').forEach(a=>{const route=(a.getAttribute('href')||'').split('?')[0];const labels={'index.html':'홈','search.html':'검색','search-lv1.html':'검색','statistics.html':'비교','games.html':'플레이','challenge.html':'챌린지'};if(labels[route])a.textContent=labels[route];if(route==='postit.html'&&a.textContent.trim()==='포스트잇')a.textContent='라커룸';});};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',rename,{once:true});else rename();})();
