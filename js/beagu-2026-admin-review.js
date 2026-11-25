@@ -492,9 +492,33 @@
    }
    prev.disabled=off===0;next.disabled=off+20>=Number(data.total||0);
   }
+  // A batch preview never marks manual evidence as verified.
+  const batchLevel=build("select","");
+  for(const [value,labelText] of [["1,2","Lv.1 및 Lv.2"],["2","Lv.2만"],["1","Lv.1만"]]){const option=build("option","",labelText);option.value=value;batchLevel.append(option);}
+  const batchStatus=build("p","subtle","일괄 사전검사 후 개별 심사 완료 학교만 승인할 수 있습니다.");
+  batchStatus.setAttribute("role","status");let batch=null;
+  const invalidateBatch=()=>{batch=null;batchApply.disabled=true;};
+  const batchPreview=button("일괄 사전검사",async()=>{
+   invalidateBatch();const v=ver(),levels=batchLevel.value.split(",").map(Number);
+   const data=await call({action:"percentile_v13_bulk",source_version:v,levels,preview:true});
+   if(!current()||ver()!==v||batchLevel.value!==levels.join(","))return;
+   if(data.ok!==true||data.preview!==true||!/^[a-f0-9]{64}$/.test(data.token)||!Number.isSafeInteger(data.eligible_pairs))throw Error("batch preview");
+   batch={v,levels,data};batchStatus.textContent="전체 "+data.candidate_schools+"개교 · 구조 검사 통과 "+data.structure_ok+"개교 · 수동 심사 필요 "+data.manual_review_required+"개교 · 단일 응답 "+data.single_response+"개교 · 소규모 "+data.small_school+"개교 · 신규 승인 가능 "+data.eligible_schools+"개교 (Lv.1 "+data.lv1_pairs+", Lv.2 "+data.lv2_pairs+") · 기존 결정 제외 "+data.previous_decision_pairs+"건";
+   batchApply.disabled=data.eligible_pairs<=0;
+  });
+  const batchApply=button("심사 완료 학교 백분위 일괄 승인",async()=>{
+   const snapshot=batch;if(!snapshot||ver()!==snapshot.v||batchLevel.value!==snapshot.levels.join(","))throw Error("stale batch");
+   if(!window.confirm(snapshot.data.eligible_schools+"개교 / "+snapshot.data.eligible_pairs+"건의 레벨별 백분위만 일괄 승인하시겠습니까? Lv.1은 24시간 후, Lv.2는 즉시 공개됩니다. 문항 및 미심사 학교는 공개하지 않습니다."))return;
+   invalidateBatch();
+   const result=await call({action:"percentile_v13_bulk",source_version:snapshot.v,levels:snapshot.levels,preview:false,token:snapshot.data.token,confirmation:"APPROVE_REVIEWED_PERCENTILES_ONLY"});
+   if(result.ok!==true||result.preview!==false)throw Error("batch rejected");
+   if(current()){batchStatus.textContent="백분위 일괄 승인 완료 · "+result.approved_schools+"개교 / "+result.approved_pairs+"건";await load(snapshot.v,0);}
+  });batchApply.disabled=true;
+  version.addEventListener("input",invalidateBatch);batchLevel.addEventListener("change",invalidateBatch);
+  const batchPanel=build("div","ranking-card");batchPanel.append(build("strong","","백분위 전용 일괄 심사·승인"),build("p","subtle","자동 검사는 구조·공식자료·위험 분류만 확인합니다. 기존 안내, 중복, 개인정보, 재식별 등 실제 심사 기록은 별도로 필요합니다. 기존 승인·철회는 일괄 대상에서 제외합니다."),label("승인 범위",batchLevel),batchPreview,batchApply,batchStatus);
   const reload=button("후보 및 심사 상태 조회",()=>load(ver(),0));
   const prev=button("이전",()=>load(ver(),Math.max(0,offset-20))),next=button("다음",()=>load(ver(),offset+20));prev.disabled=next.disabled=true;
-  root.append(build("p","subtle","백분위 전용 승인입니다. Lv.1은 24시간 경과 후, Lv.2는 승인 후 표시됩니다. Lv.0과 설문 문항은 변경하지 않습니다."),label("자료 버전",version),label("기존 응답 안내와 호환됨",noticeCheck),label("익명 공개범위를 확인함",anonCheck),note,scope,reject,reload,status,list,prev,next);
+  root.append(build("p","subtle","백분위 전용 승인입니다. Lv.1은 24시간 경과 후, Lv.2는 승인 후 표시됩니다. Lv.0과 설문 문항은 변경하지 않습니다."),label("자료 버전",version),label("기존 응답 안내와 호환됨",noticeCheck),label("익명 공개범위를 확인함",anonCheck),note,scope,reject,batchPanel,reload,status,list,prev,next);
  }
 
  function mount(adminRole){

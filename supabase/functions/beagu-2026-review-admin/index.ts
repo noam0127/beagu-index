@@ -40,7 +40,7 @@ Deno.serve(async(request:Request)=>{
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve","percentile_v13_scope","percentile_v13_review","percentile_v13_preview","percentile_v13_decide","percentile_v13_candidates"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
+ if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve","percentile_v13_scope","percentile_v13_review","percentile_v13_preview","percentile_v13_decide","percentile_v13_candidates","percentile_v13_bulk"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -95,6 +95,13 @@ Deno.serve(async(request:Request)=>{
    let rpc="",args:Record<string,unknown>={p_version:version};
    const note=typeof input.note==="string"?input.note.trim():"";
    if(input.action==="percentile_v13_preview"){rpc="beagu_2026_percentile_v13_preview";}
+   else if(input.action==="percentile_v13_bulk"){
+    const levels=input.levels;
+    if(!Array.isArray(levels)||!["[1]","[2]","[1,2]"].includes(JSON.stringify(levels))||typeof input.preview!=="boolean")return send(origin,400,{error:"invalid_batch"});
+    if(!input.preview&&(input.confirmation!=="APPROVE_REVIEWED_PERCENTILES_ONLY"||typeof input.token!=="string"||!/^[a-f0-9]{64}$/.test(input.token)))return send(origin,400,{error:"explicit_batch_confirmation_required"});
+    rpc="beagu_2026_percentile_v13_bulk";
+    Object.assign(args,{p_levels:levels,p_actor:actor,p_session:claims.session_id,p_preview:input.preview,p_token:input.preview?null:input.token,p_confirmation:input.preview?null:input.confirmation});
+   }
    else if(input.action==="percentile_v13_candidates"){
     const offset=input.offset??0;
     if(typeof offset!=="number"||!Number.isInteger(offset)||offset<0||offset>20000)return send(origin,400,{error:"invalid_page"});

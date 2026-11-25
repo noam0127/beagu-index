@@ -1,7 +1,7 @@
 name: 2026 official school profiles and percentile v1.3 isolated validation
 on:
   push:
-    branches: [fix/2026-official-basics-v13, fix/v1114-school-glory-v13-integration, fix/v1115-school-glory-after-fire-court]
+    branches: [fix/2026-official-basics-v13, fix/v1114-school-glory-v13-integration, fix/v1115-school-glory-after-fire-court, fix/v1115-bulk-percentile-review]
   workflow_dispatch:
 permissions:
   contents: read
@@ -40,6 +40,8 @@ jobs:
           run_sql < tests/2026-percentile-v13-assertions.sql
           run_sql < supabase/2026-percentile-only-final-v13.sql
           run_sql < tests/2026-percentile-v13-final-assertions.sql
+          run_sql < supabase/2026-percentile-only-bulk-v13.sql
+          run_sql < tests/2026-percentile-v13-bulk-assertions.sql
   browser:
     runs-on: ubuntu-24.04
     timeout-minutes: 10

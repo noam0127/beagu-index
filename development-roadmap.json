@@ -767,6 +767,24 @@
     },
     {
       "order": 29,
+      "version": "v1.11.15.1",
+      "name": "일괄심사",
+      "scope": "일괄심사 · 2026 백분위 전용 일괄 사전검사 · 구조 검사 및 위험 분류 · 실제 수동 심사 유지 · 심사 완료 학교만 정확한 미리보기와 관리자 MFA 확인으로 일괄 승인 · 기존 결정 및 문항 공개 보존",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v1115-bulk-percentile-review",
+      "dependencies": [
+        "v1.11.15"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "1c649951f6e68d8cb282865c99a18f3827711e63",
+      "tests": [
+        "2026-percentile-v13-bulk-assertions.sql",
+        "2026-percentile-v13-admin-browser.cjs"
+      ]
+    },
+    {
+      "order": 30,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -786,7 +804,7 @@
       "rollback_sha": null
     },
     {
-      "order": 30,
+      "order": 31,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -805,7 +823,7 @@
       "rollback_sha": null
     },
     {
-      "order": 31,
+      "order": 32,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -822,7 +840,7 @@
       "rollback_sha": null
     },
     {
-      "order": 32,
+      "order": 33,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",
