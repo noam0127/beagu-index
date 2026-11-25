@@ -64,10 +64,10 @@ create or replace function public.beagu_2026_auto_percentiles(p_ids text[],p_lev
 returns jsonb language sql stable security invoker set search_path='' as $$
 select coalesce(jsonb_object_agg(a.school_id,a.percentile),'{}'::jsonb)
 from beagu_private.beagu_2026_auto_preflight a
-where p_level in (1,2) and cardinality(p_ids) between 1 and 20
+where p_level=2 and cardinality(p_ids) between 1 and 20
 and not exists(select 1 from unnest(p_ids) i where i is null or i !~ '^[A-Z0-9]{7}$')
 and a.school_id=any(p_ids) and a.scope_ok and a.structure_ok and a.exact_evidence_ok and not a.held
-and a.eligible_since<=now() and (p_level=2 or a.eligible_since<=now()-interval '24 hours')
+and a.eligible_since<=now()
 -- Never resurrect explicit withdrawal, and never supersede existing per-tier decisions.
 and not exists(select 1 from beagu_private.beagu_2026_percentile_v13_decisions d where d.school_id=a.school_id and d.access_level=p_level)
 and not exists(select 1 from beagu_private.beagu_2026_level_release_approvals l where l.access_level=p_level and (not coalesce(l.approved,false) or l.updated_at>=a.eligible_since))
@@ -126,7 +126,7 @@ begin
  'scope_pending',(select count(*) from beagu_private.beagu_2026_auto_preflight where not scope_ok),
  'auto_ready',(select count(*) from beagu_private.beagu_2026_auto_preflight where scope_ok and structure_ok and exact_evidence_ok and not held),
  'review_required',(select count(*) from beagu_private.beagu_2026_auto_preflight where not structure_ok or not exact_evidence_ok or held),
- 'auto_lv1',(select count(*) from beagu_private.beagu_2026_auto_preflight a where a.scope_ok and a.structure_ok and a.exact_evidence_ok and not a.held and a.eligible_since<=now()-interval '24 hours' and not exists(select 1 from beagu_private.beagu_2026_percentile_v13_decisions d where d.school_id=a.school_id and d.access_level=1) and not exists(select 1 from beagu_private.beagu_2026_level_release_approvals l where l.access_level=1 and (not coalesce(l.approved,false) or l.updated_at>=a.eligible_since))),
+ 'auto_lv1',0, -- Lv.1 2026 survey publication is disabled, including aged candidates.
  'auto_lv2',(select count(*) from beagu_private.beagu_2026_auto_preflight a where a.scope_ok and a.structure_ok and a.exact_evidence_ok and not a.held and a.eligible_since<=now() and not exists(select 1 from beagu_private.beagu_2026_percentile_v13_decisions d where d.school_id=a.school_id and d.access_level=2) and not exists(select 1 from beagu_private.beagu_2026_level_release_approvals l where l.access_level=2 and (not coalesce(l.approved,false) or l.updated_at>=a.eligible_since))),
  'source_versions',(select coalesce(jsonb_agg(distinct source_version),'[]'::jsonb) from beagu_private.beagu_2026_auto_preflight),
  'reports',(select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) from (select f.id,f.school_id,s.school_name,f.kind,f.detail,f.status,a.source_version,a.updated_at from beagu_private.beagu_2026_civic_feedback f join public.schools s using(school_id) left join beagu_private.beagu_2026_auto_preflight a using(school_id) where f.status in ('PENDING','REVIEWING') order by f.created_at desc limit 50) t),

@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import { approved2026ReleaseIsOldEnough } from '../_shared/release-policy.mjs';
-// Read-only, approval-gated 2026 school-culture classification for Lv.1 and Lv.2.
+// Read-only, approval-gated 2026 school-culture classification for Lv.2 only.
 // Never returns raw survey rows, submission counts, or unapproved observations.
 const admin=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false}});
 const origins=new Set(['https://baeguindex.com','https://www.baeguindex.com','https://noam0127.github.io','http://localhost:8000','http://127.0.0.1:8000']);
@@ -76,12 +76,15 @@ Deno.serve(async(req:Request)=>{
      body.schoolIds.some((id:any)=>typeof id!=='string'||!/^\d{7}$/.test(id))||
      new Set(body.schoolIds).size!==body.schoolIds.length)
    return send(origin,{error:'INVALID_SCOPE'},400);
+  if(Number(session.access_level)!==2)return send(origin,{values:Object.fromEntries(body.schoolIds.map((id:string)=>[id,{status:'not_published'}]))});
   const {data:releasedIds,error:releaseGateError}=await admin.rpc(
     'beagu_2026_level_released_school_ids',
     {p_ids:body.schoolIds,p_level:Number(session.access_level)});
   if(releaseGateError||!Array.isArray(releasedIds))
     return send(origin,{error:'PUBLICATION_GATE_UNAVAILABLE'},503);
-  const releasedSet=new Set(releasedIds);
+  const {data:hiddenIds,error:hiddenError}=await admin.rpc('beagu_2026_auto_hidden_ids',{p_ids:body.schoolIds});
+  if(hiddenError||!Array.isArray(hiddenIds))return send(origin,{error:'AUTO_HOLD_GATE_UNAVAILABLE'},503);
+  const releasedSet=new Set(releasedIds.filter((id:string)=>!hiddenIds.includes(id)));
   const {data,error}=await admin.from('beagu_release_metrics_v2')
    .select('school_id,question_id,value,release_version,access_level,n_valid,teacher_count,approval_status,privacy_status,identity_reviewed,question_reviewed,small_cell_reviewed,differencing_reviewed,approved_at,approved_by,approval_evidence')
    .in('school_id',body.schoolIds).eq('survey_year',2026).eq('access_level',1)

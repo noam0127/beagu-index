@@ -1,5 +1,5 @@
-# v1.11.15.2 automatic opening candidate
-- Install the SQL before the three Edge functions; no production fixture or release approval.
+# v1.11.15.3 automatic opening candidate
+- Install the SQL before the affected Edge functions; no production fixture or release approval.
 - The dashboard shows aggregates and exceptions only. Existing legacy review UI is retained only as regression fixture; not loaded in production.
 - Auto-percentile publication reuses exact existing v1.3 evidence or a trusted verifier's exact snapshot-bound record in the private auto_evidence table. Common scope compatibility is required. No browser writer and no automatic creation of privacy or uniqueness evidence.
 - Current live cohort has zero such verified school records. The source evidence producer still needs verified inputs; do not fabricate records or assume that a low flag count proves anonymity. A single observation can pass only with complete verified evidence.
@@ -12,3 +12,6 @@ The existing source ingestion token now accepts a distinct VI13_REAGGREGATE_V1 p
 
 ## Revised owner requirement: no individual identity or school-by-school PII attestations
 The automatic percentile route does not require a distinct-respondent attestation or a personal-data-reviewed flag. They are not set to true by the application. Common notice/anonymous scope compatibility, exact technical and school mapping evidence, small-sample and reidentification/combination safeguards, explicit holds, existing tier access, and numeric percentile-only output remain required. Duplicate suspicion is a quality signal rather than proof of identity. Do not collect additional respondent identities. Existing historical review and correction routes retain their prior rules.
+
+## Sequential school visibility policy
+Lv.1 2026 survey percentiles and derived culture results remain blocked, regardless of candidate age. Official school facts are independent. Auto publication is Lv.2 percentile-only; the dashboard reports zero Lv.1 automatic publications. New holds suppress 2026 survey outputs in the level detail, percentile batch and school-culture APIs. Reaggregation requests are holds pending the separate private source sync; do not represent them as completed recalculation. Deploy SQL and all affected APIs in an approved coordinated release before the web snapshot; verify existing public routes separately.

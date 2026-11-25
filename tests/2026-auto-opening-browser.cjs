@@ -9,6 +9,9 @@ await page.locator('#admin2026Box > summary').click();await page.evaluate(()=>wi
 await page.getByText('신고초등학교',{exact:true}).waitFor();assert.equal(await page.getByText('의심초등학교',{exact:true}).count(),1);assert.equal(await page.getByText('학교별 검수 및 승인',{exact:true}).count(),0);assert.equal(await page.getByText('일괄 승인',{exact:true}).count(),0);
 page.on('dialog',d=>d.type()==='prompt'?d.accept('실제 검토 근거를 기록하는 예시'):d.accept());
 await page.getByRole('button',{name:'정상처리'}).click();await page.waitForFunction(()=>window.__calls.some(x=>x.action==='auto_action'&&x.decision==='NORMAL'));
+assert.match(await page.locator('#adminAuto2026').innerText(),/Lv.1 2026 설문 비공개/);
+await page.getByRole('button',{name:'공개중단'}).first().click();await page.waitForFunction(()=>window.__calls.some(x=>x.action==='auto_action'&&x.decision==='HOLD'));
+await page.getByRole('button',{name:'재집계 요청'}).first().click();await page.waitForFunction(()=>window.__calls.some(x=>x.action==='auto_action'&&x.decision==='REAGGREGATE'));
 await page.evaluate(()=>window.Beagu2026ReviewAdmin.reset());assert.equal(await page.locator('#adminAuto2026 article').count(),0);
 await page.setContent('<div id="host"></div>');await page.evaluate(()=>{window.__calls=[];window.fetch=async(url,opts)=>{window.__calls.push(JSON.parse(opts.body));return {ok:true}}});
 await page.addScriptTag({content:fs.readFileSync('js/school-search-card-v1.js','utf8')});await page.evaluate(()=>{const school={school_id:'1000001',school_name:'신고학교'};document.querySelector('#host').append(BeaguSchoolSearchCard.createCard(school,{percentile:BeaguSchoolSearchCard.percentiles()}).card)});

@@ -6,7 +6,7 @@ async function call(body){const {data}=await supabaseClient.auth.getSession();co
 function button(label,fn){const b=el("button",label);b.type="button";b.className="secondary";b.onclick=async()=>{if(!owner||b.disabled)return;b.disabled=true;try{await fn();}catch{if(owner)message.textContent="처리 실패 · 최신 자료 및 MFA를 확인하세요.";}finally{b.disabled=false;}};return b;}
 const message=el("p","관리자 인증 후 확인합니다.");message.setAttribute("role","status");
 async function refresh(){if(!owner)return;const g=generation;const d=await call({action:"auto_status",offset});if(!owner||g!==generation)return;root.replaceChildren();
- const stats=el("p","전체 "+d.total+"개교 · 기술검사 "+d.structural_pass+"개교 · 자동 공개 적격 "+d.auto_ready+"개교 · 공개범위 확인 대기 "+d.scope_pending+"개교 · 검토 필요 "+d.review_required+"개교");root.append(el("h4","자동 공개 현황"),stats,el("p","자동 경로 공개 · Lv.1 "+(d.auto_lv1??"—")+"개교 · Lv.2 "+(d.auto_lv2??"—")+"개교"),button("새로고침",refresh),message);
+ const stats=el("p","전체 "+d.total+"개교 · 기술검사 "+d.structural_pass+"개교 · 자동 공개 적격 "+d.auto_ready+"개교 · 공개범위 확인 대기 "+d.scope_pending+"개교 · 검토 필요 "+d.review_required+"개교");root.append(el("h4","자동 공개 현황"),stats,el("p","자동 경로 공개 · Lv.1 2026 설문 비공개 · Lv.2 "+(d.auto_lv2??"—")+"개교"),button("새로고침",refresh),message);
  root.append(el("p","기존 기술검사 관측수 일치 "+(d.qa_count_match??"—")+"개교 · 재집계 요청 "+(d.reaggregation_pending??"—")+"개교"));
  const run=d.reaggregation;root.append(el("p",run?"최근 비공개 전국 재집계 "+run.started_at+" · "+run.schools+"개교 · 운영 후보 교체 전":"전국 재집계 실행 기록 없음"));
  const scope=el("details");scope.append(el("summary","공통 공개범위 확인"));const ver=el("select");for(const v of d.source_versions||[]){const opt=el("option",v);opt.value=v;ver.append(opt);}

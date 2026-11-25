@@ -89,3 +89,13 @@ assert.ok(!JSON.stringify(host).includes('stale secret'));
 assert.ok(!JSON.stringify(host).includes(q01.options[0]));
 const lv1=new Node('div');draw(lv1,2026,[],null,'ABC1234',[],null,null,'ready',[],[],1);assert.ok(JSON.stringify(lv1).includes('Lv.2'));assert.ok(!JSON.stringify(lv1).includes('year-2026-button'));
 console.log('PASS: Lv1 2026 blocked and Lv2 2026 caches fail closed');
+
+// Automatic opening must not bypass the school visibility tier or exception hold.
+const autoSql=read('supabase/2026-auto-opening-v1.sql');
+const cultureApi=read('supabase/functions/beagu-school-culture-v1/index.ts');
+assert.match(autoSql,/where p_level=2 and cardinality/);
+assert.match(autoSql,/'auto_lv1',0/);
+assert.ok(api.indexOf('if(tier===1)return await sendSchoolProfiles({})')<api.indexOf("admin.rpc('beagu_2026_auto_percentiles'"));
+assert.match(api,/tierPublished2026=schoolReleased===true&&!hiddenIds.includes\(id\)/);
+assert.match(cultureApi,/if\(Number\(session.access_level\)!==2\)return send/);
+assert.match(cultureApi,/releasedIds.filter\(\(id:string\)=>!hiddenIds.includes\(id\)\)/);

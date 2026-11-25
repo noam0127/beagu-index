@@ -247,7 +247,9 @@ Deno.serve(async(req:Request)=>{
       'beagu_2026_level_school_published',{p_school_id:id,p_level:level});
     if(schoolReleasedError||typeof schoolReleased!=='boolean')
       return send({error:'PUBLICATION_GATE_UNAVAILABLE'},503,origin);
-    tierPublished2026=schoolReleased===true;
+    const {data:hiddenIds,error:hiddenError}=await admin.rpc('beagu_2026_auto_hidden_ids',{p_ids:[id]});
+    if(hiddenError||!Array.isArray(hiddenIds))return send({error:'AUTO_HOLD_GATE_UNAVAILABLE'},503,origin);
+    tierPublished2026=schoolReleased===true&&!hiddenIds.includes(id);
   }
   // Separate Lv2 access from the existing public/Lv1 24-hour release path.
   // A null result means the exact snapshot failed independent publication review.
