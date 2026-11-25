@@ -4,7 +4,7 @@ import {Script} from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const source=read('js/level-search.js'),html=read('search-lv1.html'),backend=read('supabase/functions/beagu-level-api/index.ts');
 assert.doesNotThrow(()=>new Script(source));
-assert.match(source,/const allowedYears=\[1,2\]\.includes\(viewerTier\)\?YEARS:YEARS\.filter\(year=>year!==2026\)/);
+assert.match(source,/const allowedYears=\[1,2\]\.includes\(viewerTier\)\?YEARS:\[\]/);
 assert.match(source,/if\(!allowedYears\.includes\(year\)\)return/);
 const selection=source.split('\n').find(line=>line.trim().startsWith('choose([1,2].includes(viewerTier)&&'));
 assert.ok(selection,'detail year selection must remain tier and publication aware');

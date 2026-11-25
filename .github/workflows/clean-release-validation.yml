@@ -72,6 +72,7 @@ jobs:
           node tests/playground-browser.cjs
           node tests/v1111-light-touch-browser.cjs
           node tests/playback-browser.cjs
+          node tests/v11117-small-features-browser.cjs
           node tests/milestone-browser.cjs
           node tests/communication-browser.cjs
           node tests/control-tower-browser.cjs

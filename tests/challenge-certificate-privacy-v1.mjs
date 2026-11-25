@@ -40,7 +40,7 @@ assert.match(html,/class="challenge-referral-grid"/);
 assert.match(html,/class="challenge-premium-emblem"/);
 assert.match(html,/id="beaguHomeNoticeBody"/);
 assert.match(read("supabase/notice-audience-v1.sql"),/2026 조사데이터 업로드 시작\./);
-assert.match(ref,/referralCount\.textContent = count\.toLocaleString/);
+assert.match(ref,/referralCount\.textContent = currentLink \? count\.toLocaleString\('ko-KR'\) \+ '건' : '확인 중'/);
 assert.match(read('styles/challenge-premium-grid-v1.css'),/grid-template-columns:minmax\(0,2fr\) minmax\(0,1fr\)/);
 assert.doesNotMatch(ref,/유효한 추천 1건이 확인되면 \(비활성\)이 사라지고/);
 assert.match(html,/BAEGU INDEX · VERIFIED MEMBER/);
