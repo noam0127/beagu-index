@@ -3,13 +3,13 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const source=readFileSync('teacher-volleyball.html','utf8');
 assert.doesNotMatch(source,/id="volley-joystick"|id="volley-spike"|id="volley-dash"|id="volley-mobile-jump"/);
-assert.doesNotMatch(source,/id="volley-attack"/);assert.match(source,/attackPointer=event.pointerId;requestSpike\(\)/);
+assert.doesNotMatch(source,/id="volley-attack"/);assert.match(source,/attackPointer=event.pointerId;[\s\S]*?distance\/dt>=\.65/);
 assert.match(source,/canvas\.addEventListener\("pointerdown"/);
-assert.match(source,/\["pointercancel","lostpointercapture"\]/);assert.match(source,/touchControl.up\(event.pointerId,[^;]+;endAttack\(event\)/);
+assert.match(source,/\["pointercancel","lostpointercapture"\]/);assert.match(source,/touchControl.up\(event.pointerId,[^;]+;endAttack\(event,true\)/);
 assert.match(source,/state\.spikeBufferFrames=SPIKE_BUFFER/);
 assert.match(source,/state\.dashCooldownFrames=mobile\?0:DASH_COOLDOWN/);
 assert.match(source,/const vertical=hasPlayerWings\(\)&&canPlayerJump\(\)\?inputY:0/);
-assert.match(source,/impactSpeed >= AUTO_SPIKE_SPEED\|\|state\.spikeBufferFrames>0\|\|charged/);
+assert.match(source,/state\.spikeBufferFrames>0\|\|charged/);
 const w={};vm.runInNewContext(readFileSync('js/volley-touch-v1.js','utf8'),{window:w,Math});
 const start=source.indexOf('  function controlPlayer(p, direction, jump, speed, jumpStrength=12.8) {'),end=source.indexOf('  function moveClones()',start);
 const ms=source.indexOf('    const flightAllowed=hasPlayerWings()&&canPlayerJump();'),me=source.indexOf('    if(currentDifficulty==="extreme"){',ms);
@@ -36,6 +36,6 @@ const easy=make('easy'),wings=make('normal',true);for(const game of [easy,wings]
 const altitude=wings.left.y;wings.wingActive=false;frame(wings);assert(wings.left.y>=altitude);for(let i=0;i<125;i++)frame(wings);assert.equal(wings.left.y,420);
 const chained=make('extreme',false,true);chained.touchControl.down(1,{x:180,y:100},420);frame(chained);assert.equal(chained.left.y,420);
 const dash=make('normal'),plain=make('normal');dash.state.dashFrames=8;plain.keys.right=true;frame(plain);frame(dash);assert(dash.left.x-180>plain.left.x-180);assert.equal(dash.state.dashFrames,7);for(let i=0;i<7;i++)frame(dash);assert.equal(dash.state.dashFrames,0);
-const held=make('normal');held.attackPointer=1;held.keys.right=true;for(let i=0;i<20;i++){frame(held);assert.equal(held.state.dashFrames,7);assert.equal(held.state.dashCooldownFrames,0);assert.equal(held.state.spikeBufferFrames,19);}
+const held=make('normal');held.attackPointer=1;held.keys.right=true;for(let i=0;i<20;i++){frame(held);assert.equal(held.state.dashFrames,0);assert.equal(held.state.spikeBufferFrames,undefined);}
 const pc=make('normal');pc.keys.right=true;pc.keys.jump=true;frame(pc);assert(pc.left.x>180&&pc.left.y<420);
-console.log('PASS direct touch target, jump/gravity, flight hover and expiry, shackles, mobile held attack and desktop keyboard');
+console.log('PASS direct touch target, jump/gravity, flight hover and expiry, shackles, ordinary touch does not arm an attack and desktop keyboard');
