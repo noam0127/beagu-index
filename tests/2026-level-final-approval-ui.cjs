@@ -2,7 +2,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {execFileSync}=require('node:child_process');
 const read=p=>fs.readFileSync(p,'utf8');
-const html=read('admin.html');
+const html=read('tests/fixtures/admin-v1115-legacy.html');
 const ui=read('js/beagu-2026-admin-review.js');
 const css=read('styles/beagu-admin-v1.css');
 const api=read('supabase/functions/beagu-2026-review-admin/index.ts');

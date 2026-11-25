@@ -2,7 +2,7 @@
 const root=document.getElementById("adminAuto2026");if(!root)return;
 let generation=0,owner=false,offset=0;
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=String(text);return n;};
-async function call(body){const {data}=await window.supabaseClient.auth.getSession();const token=data?.session?.access_token;if(!token)throw Error("MFA");const res=await fetch("https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-review-admin",{method:"POST",cache:"no-store",headers:{"content-type":"application/json","Authorization":"Bearer "+token,"apikey":window.SUPABASE_PUBLISHABLE_KEY||""},body:JSON.stringify(body)});if(!res.ok)throw Error("DENIED");return res.json();}
+async function call(body){const {data}=await supabaseClient.auth.getSession();const token=data?.session?.access_token;if(!token)throw Error("MFA");const res=await fetch("https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-review-admin",{method:"POST",cache:"no-store",headers:{"content-type":"application/json","Authorization":"Bearer "+token,"apikey":typeof SUPABASE_PUBLISHABLE_KEY==="string"?SUPABASE_PUBLISHABLE_KEY:""},body:JSON.stringify(body)});if(!res.ok)throw Error("DENIED");return res.json();}
 function button(label,fn){const b=el("button",label);b.type="button";b.className="secondary";b.onclick=async()=>{if(!owner||b.disabled)return;b.disabled=true;try{await fn();}catch{if(owner)message.textContent="처리 실패 · 최신 자료 및 MFA를 확인하세요.";}finally{b.disabled=false;}};return b;}
 const message=el("p","관리자 인증 후 확인합니다.");message.setAttribute("role","status");
 async function refresh(){if(!owner)return;const g=generation;const d=await call({action:"auto_status",offset});if(!owner||g!==generation)return;root.replaceChildren();

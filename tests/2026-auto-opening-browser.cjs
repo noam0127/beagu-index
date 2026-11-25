@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=require('playwright');
+(async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox']});try{for(const width of [390,1440]){const page=await browser.newPage({viewport:{width,height:900}});try{
+await page.route('**/*',r=>r.abort());
+await page.setContent(fs.readFileSync('admin.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<link\b[^>]*>/gi,''));
+await page.evaluate(()=>{const box=document.querySelector('#admin2026Box');document.body.replaceChildren(box);window.supabaseClient={auth:{getSession:async()=>({data:{session:{access_token:'fixture'}}})}};window.__calls=[];window.fetch=async(url,opts)=>{const b=JSON.parse(opts.body);window.__calls.push(b);return {ok:true,json:async()=>b.action==='auto_status'?{total:572,structural_pass:572,auto_ready:510,scope_pending:0,review_required:62,source_versions:['fixture-auto-version'],reports:[{id:'fixture',school_id:'1000001',school_name:'신고초등학교',detail:'신고 사유 예시',source_version:'fixture-auto-version',updated_at:'2026-11-25T00:00:00Z'}],suspects:[{school_id:'1000002',school_name:'의심초등학교',reasons:['STRUCTURE'],source_version:'fixture-auto-version',updated_at:'2026-11-25T00:00:00Z'}]}:{ok:true}}};});
+await page.addScriptTag({content:fs.readFileSync('js/beagu-2026-auto-admin-v1.js','utf8')});
+await page.evaluate(()=>window.Beagu2026ReviewAdmin.mount('viewer'));assert.equal(await page.locator('#adminAuto2026').isVisible(),false);
+await page.locator('#admin2026Box > summary').click();await page.evaluate(()=>window.Beagu2026ReviewAdmin.mount('owner'));
+await page.getByText('신고초등학교',{exact:true}).waitFor();assert.equal(await page.getByText('의심초등학교',{exact:true}).count(),1);assert.equal(await page.getByText('학교별 검수 및 승인',{exact:true}).count(),0);assert.equal(await page.getByText('일괄 승인',{exact:true}).count(),0);
+page.on('dialog',d=>d.type()==='prompt'?d.accept('실제 검토 근거를 기록하는 예시'):d.accept());
+await page.getByRole('button',{name:'정상처리'}).click();await page.waitForFunction(()=>window.__calls.some(x=>x.action==='auto_action'&&x.decision==='NORMAL'));
+await page.evaluate(()=>window.Beagu2026ReviewAdmin.reset());assert.equal(await page.locator('#adminAuto2026 article').count(),0);
+await page.setContent('<div id="host"></div>');await page.evaluate(()=>{window.__calls=[];window.fetch=async(url,opts)=>{window.__calls.push(JSON.parse(opts.body));return {ok:true}}});
+await page.addScriptTag({content:fs.readFileSync('js/school-search-card-v1.js','utf8')});await page.evaluate(()=>{const school={school_id:'1000001',school_name:'신고학교'};document.querySelector('#host').append(BeaguSchoolSearchCard.createCard(school,{percentile:BeaguSchoolSearchCard.percentiles()}).card)});
+await page.getByRole('button',{name:'신고학교 자료 신고'}).click();await page.waitForFunction(()=>window.__calls.some(x=>x.action==='simple_report'));
+const payload=await page.evaluate(()=>window.__calls.find(x=>x.action==='simple_report'));assert.deepEqual(Object.keys(payload).sort(),['action','detail','school_id']);assert.equal(payload.school_id,'1000001');
+console.log('PASS auto admin and one-field report',width);
+}finally{await page.close()}}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});

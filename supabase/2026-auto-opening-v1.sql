@@ -1,5 +1,5 @@
 -- Automatic percentile-only publication. No survey rows or historical decisions are changed.
--- Existing exact school review OR independently verified annual evidence is required.
+-- Existing exact school review OR independently verified, snapshot-bound pipeline evidence is required.
 -- Neither an unverified notice nor structural correctness establishes privacy.
 create table if not exists beagu_private.beagu_2026_auto_exception(
  school_id text primary key references public.schools(school_id),
@@ -19,20 +19,40 @@ revoke all on beagu_private.beagu_2026_auto_exception,beagu_private.beagu_2026_a
 grant select,insert,update on beagu_private.beagu_2026_auto_exception to service_role;
 grant select,insert on beagu_private.beagu_2026_auto_exception_audit to service_role;
 grant usage,select on sequence beagu_private.beagu_2026_auto_exception_audit_id_seq to service_role;
+-- A trusted verifier may supply this exact evidence. No public/admin-browser write route.
+-- Do not create evidence merely from an observation count or a successful numeric calculation.
+create table if not exists beagu_private.beagu_2026_auto_evidence(
+ school_id text references public.schools(school_id) on delete restrict,source_version text not null,
+ percentile numeric not null check(percentile between 0 and 100),
+ valid_observations integer not null check(valid_observations>=1),percentile_method text not null,
+ candidate_updated_at timestamptz not null,teacher_total integer not null check(teacher_total>0),
+ teacher_source_sha256 text not null check(teacher_source_sha256 ~ '^[a-f0-9]{64}$'),
+ evidence_sha256 text not null check(evidence_sha256 ~ '^[a-f0-9]{64}$'),
+ technical_verified boolean not null default false,school_identity_verified boolean not null default false,
+ distinct_respondents_verified boolean not null default false,personal_data_verified boolean not null default false,
+ small_sample_verified boolean not null default false,reidentification_verified boolean not null default false,
+ prior_combination_verified boolean not null default false,verified_at timestamptz not null default clock_timestamp(),
+ primary key(school_id,source_version)
+);
+alter table beagu_private.beagu_2026_auto_evidence enable row level security;
+revoke all on beagu_private.beagu_2026_auto_evidence from public,anon,authenticated;
+grant select,insert,update on beagu_private.beagu_2026_auto_evidence to service_role;
 create or replace view beagu_private.beagu_2026_auto_preflight with(security_invoker=true) as
 select a.school_id,a.source_version,a.percentile,a.valid_observation_count,a.updated_at,
  p.teacher_total,
  coalesce(c.decision='COMPATIBLE' and c.notice_compatible and c.anonymous_scope_reviewed,false) as scope_ok,
  coalesce(a.percentile between 0 and 100 and a.valid_observation_count>=1 and a.percentile_method='PERCENT_RANK_ASC_EXACT_MEAN_VI13_MIN9_A4_P2_R1' and p.teacher_total>0 and p.source_sha256 ~ '^[a-f0-9]{64}$' and a.valid_observation_count<=p.teacher_total,false) as structure_ok,
  -- Legacy exact reviews are reusable, never manufacture privacy/identity assertions.
- (r.school_id is not null) as exact_evidence_ok,
- greatest(a.updated_at,c.reviewed_at,r.school_reviewed_at) as eligible_since,
+ (r.school_id is not null or e.school_id is not null) as exact_evidence_ok,
+ greatest(a.updated_at,c.reviewed_at,r.school_reviewed_at,e.verified_at) as eligible_since,
  (h.school_id is not null or x.school_id is not null) as held,
  x.action as exception_action
 from public.beagu_school_report_yearly a
 left join public.beagu_2026_official_school_profiles p using(school_id)
 left join beagu_private.beagu_2026_percentile_scope_v13 c on c.source_version=a.source_version
 left join beagu_private.beagu_2026_percentile_v13_current r on r.school_id=a.school_id and r.source_version=a.source_version
+left join beagu_private.beagu_2026_auto_evidence e on e.school_id=a.school_id and e.source_version=a.source_version and e.percentile=a.percentile and e.valid_observations=a.valid_observation_count and e.percentile_method=a.percentile_method and e.candidate_updated_at=a.updated_at and e.teacher_total=p.teacher_total and e.teacher_source_sha256=p.source_sha256 and e.verified_at>=a.updated_at and e.technical_verified and e.school_identity_verified and e.distinct_respondents_verified and e.personal_data_verified and e.small_sample_verified and e.reidentification_verified and e.prior_combination_verified
+and not exists(select 1 from beagu_private.beagu_2026_civic_publication_hold old where old.school_id=a.school_id and old.updated_at>=e.verified_at)
 left join beagu_private.beagu_2026_civic_publication_hold h on h.school_id=a.school_id and h.active
 left join beagu_private.beagu_2026_auto_exception x on x.school_id=a.school_id
 where a.survey_year=2026 and a.publication_status='WITHHELD';
@@ -49,7 +69,7 @@ and a.school_id=any(p_ids) and a.scope_ok and a.structure_ok and a.exact_evidenc
 and a.eligible_since<=now() and (p_level=2 or a.eligible_since<=now()-interval '24 hours')
 -- Never resurrect explicit withdrawal, and never supersede existing per-tier decisions.
 and not exists(select 1 from beagu_private.beagu_2026_percentile_v13_decisions d where d.school_id=a.school_id and d.access_level=p_level)
-and not exists(select 1 from beagu_private.beagu_2026_level_release_approvals l where l.access_level=p_level and l.updated_at>=a.eligible_since)
+and not exists(select 1 from beagu_private.beagu_2026_level_release_approvals l where l.access_level=p_level and (not coalesce(l.approved,false) or l.updated_at>=a.eligible_since))
 $$;
 create or replace function public.beagu_2026_auto_hidden_ids(p_ids text[])
 returns text[] language sql stable security invoker set search_path='' as $$

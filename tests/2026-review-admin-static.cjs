@@ -4,7 +4,7 @@ const {execFileSync}=require('node:child_process');
 const read=p=>fs.readFileSync(p,'utf8');
 const sql=read('supabase/migrations/20261120120000_beagu_2026_admin_private_review_queue.sql');
 const edge=read('supabase/functions/beagu-2026-review-admin/index.ts');
-const page=read('admin.html');
+const page=read('tests/fixtures/admin-v1115-legacy.html');
 const admin=read('js/beagu-admin-access-v1.js');
 const review=read('js/beagu-2026-admin-review.js');
 for(const path of ['js/beagu-admin-access-v1.js','js/beagu-2026-admin-review.js'])

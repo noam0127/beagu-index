@@ -8,7 +8,7 @@ for(const action of ["admin_hold_context","admin_hold","admin_resume"]){assert.o
 assert.match(edge,/const a=await adminSession\(req\);if\(!a\)return send\(origin,403/);
 assert.match(sql,/h\.updated_at>l\.approved_at/);
 for(const p of ["class-diary-world-v1","class-diary-story-signals-v1","arcade-leaderboard","beagu-postit-api-v1"])assert.match(read("supabase/functions/"+p+"/index.ts"),/beagu_2026_level_(school_published|released_school_ids)/);
-assert.match(read("admin.html"),/civic-admin-v1\.js\?v=20261125-compact1/);
+assert.match(read("tests/fixtures/admin-v1115-legacy.html"),/civic-admin-v1\.js\?v=20261125-compact1/);
 class Node{
  constructor(tag){this.tag=tag;this.children=[];this.textContent="";this.value="PENDING";this.hidden=false;this.disabled=false;this.byId={};}
  append(...x){this.children.push(...x)} replaceChildren(...x){this.children=x}

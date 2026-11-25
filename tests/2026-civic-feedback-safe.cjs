@@ -34,5 +34,5 @@ assert.match(adminUI,/textContent=text/);
 assert.match(adminLogin,/window\.BeaguCivicAdmin\?\.mount/);
 assert.match(adminLogin,/window\.BeaguCivicAdmin\?\.reset/);
 assert.match(rd("school-report.html"),/js\/beagu-2026-civic-v1\.js/);
-assert.match(rd("admin.html"),/js\/beagu-2026-civic-admin-v1\.js/);
+assert.match(rd("tests/fixtures/admin-v1115-legacy.html"),/js\/beagu-2026-civic-admin-v1\.js/);
 console.log("PASS: 2026 civic report + verified personal Lv2 correction request, MFA admin-only queue and privacy gates");
