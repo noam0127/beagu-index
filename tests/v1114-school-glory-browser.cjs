@@ -17,7 +17,7 @@ const css=['styles/school-search-card-v1.css','styles/school-view-counts-v1.css'
     const id=String(1234567+i),p=api.percentiles({publicValues:[15,null,40],value2026:i===0?42.8:i===1?0:100});
     const {card,open,detail}=api.createCard({...school,school_id:id},{level:tier,percentile:p});
     api.updateRecordedYears(card,['2023','2024']);host.append(card);
-    if(detail){open.addEventListener('click',()=>{detail.hidden=!detail.hidden;open.setAttribute('aria-expanded',String(!detail.hidden))});}
+    if(detail){open.addEventListener('click',()=>{detail.hidden=!detail.hidden;if(!detail.hidden)detail.textContent='격리 환경 상세 기록';open.setAttribute('aria-expanded',String(!detail.hidden))});}
    }
    window.supabaseClient={rpc:async(name,args)=>({data:args.p_school_ids.map((id,i)=>name==='beagu_school_game_points'?{school_id:id,points:i===0?'128450':0}:{school_id:id,views:3218+i}),error:null})};
    await window.BeaguSchoolGamePoints.refreshCards(host);
