@@ -447,16 +447,69 @@
     $("adminReferralRiskStatus").textContent="추천 의심 응답 목록을 불러오지 못했습니다.";
   }
  }
+
+ // Separate owner-only workflow; the existing full question and tier decisions remain unchanged.
+ let narrowGeneration=0;
+ function mountNarrow(){
+  const panel=$("adminPercentileV13"),root=$("adminPercentileV13Body");
+  if(!panel||!root)return;
+  const generation=++narrowGeneration;
+  panel.hidden=role!=="owner";
+  root.replaceChildren();if(panel.hidden)return;
+  const fields=[["technical_reviewed","산식·집계 검증"],["school_identity_reviewed","학교 식별 검증"],["unique_respondents_reviewed","중복 응답 검토"],["personal_data_reviewed","개인정보 검토"],["small_sample_reviewed","소표본 위험 검토"],["reidentification_reviewed","재식별 위험 검토"],["prior_data_combination_reviewed","기존 자료 결합 위험 검토"]];
+  const version=build("input","");version.type="text";version.placeholder="자료 버전 (source_version)";version.maxLength=160;
+  const note=build("textarea","");note.placeholder="검토 판단 근거 (12~500자, 원문·개인정보 금지)";note.maxLength=500;
+  const status=build("p","subtle","실제 확인한 항목만 선택하세요. 이 화면은 백분위만 대상으로 합니다.");status.setAttribute("role","status");
+  const list=build("div","audit-list");let offset=0,busy=false,activeVersion="";
+  const current=()=>ready&&role==="owner"&&generation===narrowGeneration;
+  const label=(text,input)=>{const l=build("label","");l.append(input,document.createTextNode(" "+text));return l;};
+  const checkbox=()=>{const el=build("input","");el.type="checkbox";return el;};
+  const button=(text,fn)=>{const el=build("button","secondary",text);el.type="button";el.addEventListener("click",()=>void execute(fn));return el;};
+  async function execute(fn){if(busy||!current())return;busy=true;try{await fn();}catch{if(current())status.textContent="실패: 서버 설치, 관리자 MFA, 자료 버전 또는 개별 심사 상태를 확인하세요.";}finally{busy=false;}}
+  const ver=()=>{const x=version.value.trim();if(x.length<8||x.length>160)throw Error("version");return x;};
+  const reason=el=>{const x=el.value.trim();if(x.length<12||x.length>500||/[<>]/.test(x))throw Error("note");return x;};
+  const noticeCheck=checkbox(),anonCheck=checkbox();
+  const scope=button("공통 공개범위 검토 저장",async()=>{const v=ver();if(!noticeCheck.checked||!anonCheck.checked)throw Error("scope");if(!window.confirm("기존 응답 안내와 익명 공개범위의 호환성을 실제 확인하셨습니까? 공개 승인은 실행하지 않습니다."))return;await call({action:"percentile_v13_scope",source_version:v,decision:"COMPATIBLE",notice_compatible:true,anonymous_scope_reviewed:true,note:reason(note)});if(current())status.textContent="공통 검토 저장 완료 · 공개 승인 아님";});
+  const reject=button("공통 공개범위 반려",async()=>{const v=ver();if(!window.confirm("이 자료 버전의 백분위 공개범위를 반려하시겠습니까?"))return;await call({action:"percentile_v13_scope",source_version:v,decision:"INCOMPATIBLE",notice_compatible:false,anonymous_scope_reviewed:false,note:reason(note)});if(current())await load(v,0);});
+  async function load(v,off){
+   const [data,preview]=await Promise.all([call({action:"percentile_v13_candidates",source_version:v,offset:off}),call({action:"percentile_v13_preview",source_version:v})]);
+   if(!current()||ver()!==v)return;
+   activeVersion=v;offset=off;list.replaceChildren();
+   status.textContent="전체 "+String(data.total??"미확인")+"개교 · 개별 심사 통과 "+String(preview.eligible_for_percentile_only_approval??"미확인")+"개교 · 승인과 별개";
+   for(const row of data.items||[]){
+    const card=build("article","ranking-card");card.append(build("strong","",row.school_name||row.school_id),build("p","subtle",row.school_id+" · 백분위 "+row.percentile+" · 유효 응답 "+row.valid_observations+"건 · 교원 "+(row.teacher_total??"미확인")+"명 (관리자 전용)"),build("p","subtle",row.review_complete?"개별 심사 통과":"심사 미완료"));
+    const checks=fields.map(([key,text])=>[key,checkbox(),text]);
+    for(const [key,el,text] of checks)card.append(label(text,el));
+    const memo=build("textarea","");memo.placeholder="실제 판단 근거 (12~500자, 개인정보 금지)";memo.maxLength=500;card.append(memo);
+    const exact=()=>({source_version:v,school_id:row.school_id,percentile:Number(row.percentile),valid_observations:Number(row.valid_observations)});
+    const review=button("개별 검토 저장",async()=>{if(ver()!==v)throw Error("stale");await call({action:"percentile_v13_review",...exact(),checks:Object.fromEntries(checks.map(([key,el])=>[key,el.checked])),note:reason(memo)});if(current())await load(v,off);});card.append(review);
+    for(const level of [1,2]){
+     const decision=row["decision_lv"+level];
+     const decide=(action)=>button("Lv."+level+" 백분위 "+(action==="APPROVE"?"승인":"철회"),async()=>{if(ver()!==v)throw Error("stale");if(!window.confirm((row.school_name||row.school_id)+" Lv."+level+" 백분위만 "+(action==="APPROVE"?"공개 승인":"공개 철회")+"하시겠습니까? 문항 공개 권한은 변경하지 않습니다."))return;await call({action:"percentile_v13_decide",...exact(),level,decision:action,confirmation:action+"_PERCENTILE_ONLY"});if(current())await load(v,off);});
+     const approve=decide("APPROVE");approve.disabled=!row.review_complete;card.append(approve);if(decision==="APPROVE")card.append(decide("REVOKE"));
+    }
+    list.append(card);
+   }
+   prev.disabled=off===0;next.disabled=off+20>=Number(data.total||0);
+  }
+  const reload=button("후보 및 심사 상태 조회",()=>load(ver(),0));
+  const prev=button("이전",()=>load(ver(),Math.max(0,offset-20))),next=button("다음",()=>load(ver(),offset+20));prev.disabled=next.disabled=true;
+  root.append(build("p","subtle","백분위 전용 승인입니다. Lv.1은 24시간 경과 후, Lv.2는 승인 후 표시됩니다. Lv.0과 설문 문항은 변경하지 않습니다."),label("자료 버전",version),label("기존 응답 안내와 호환됨",noticeCheck),label("익명 공개범위를 확인함",anonCheck),note,scope,reject,reload,status,list,prev,next);
+ }
+
  function mount(adminRole){
   role=adminRole==="owner"?"owner":"viewer";
   ready=true;page=0;filter="quality";
+  mountNarrow();
   $("adminReview2026Filter").value=filter;
   void refresh();
   void refreshPipeline();
   if(role==="owner"){void refreshReferralRisks();void previewBulk();}
  }
  function reset(){
-  ready=false;role="";seq++;page=0;pipelineSeq++;
+  ready=false;role="";seq++;page=0;pipelineSeq++;narrowGeneration++;
+  if($("adminPercentileV13"))$("adminPercentileV13").hidden=true;
+  $("adminPercentileV13Body")?.replaceChildren();
   renderWaterway(null);
   renderLevelApprovals([]);
   bulkCandidates=0;

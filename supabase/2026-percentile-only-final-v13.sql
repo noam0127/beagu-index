@@ -39,7 +39,7 @@ create or replace view beagu_private.beagu_2026_percentile_v13_current
  and r.teacher_source_sha256=p.source_sha256 and r.reviewed_at>=a.updated_at
  and r.technical_reviewed and r.school_identity_reviewed and r.unique_respondents_reviewed
  and r.personal_data_reviewed and r.small_sample_reviewed and r.reidentification_reviewed and r.prior_data_combination_reviewed
- and not exists(select 1 from beagu_private.beagu_2026_civic_publication_hold h where h.school_id=a.school_id and h.active);
+ and not exists(select 1 from beagu_private.beagu_2026_civic_publication_hold h where h.school_id=a.school_id and (h.active or h.updated_at>r.reviewed_at));
 revoke all on beagu_private.beagu_2026_percentile_v13_current from public,anon,authenticated;
 grant select on beagu_private.beagu_2026_percentile_v13_current to service_role;
 create or replace function public.beagu_2026_percentile_v13_decide(
@@ -89,3 +89,25 @@ returns jsonb language sql stable security invoker set search_path='' as $$
 $$;
 revoke all on function public.beagu_2026_percentile_v13_decide(text,text,numeric,integer,integer,uuid,uuid,text,text),public.beagu_2026_percentile_v13_values(text[],integer) from public,anon,authenticated;
 grant execute on function public.beagu_2026_percentile_v13_decide(text,text,numeric,integer,integer,uuid,uuid,text,text),public.beagu_2026_percentile_v13_values(text[],integer) to service_role;
+
+-- Bounded owner-only private queue. No raw answer or free text returned.
+create or replace function public.beagu_2026_percentile_v13_candidates(p_version text,p_offset integer,p_actor uuid,p_session uuid)
+returns jsonb language plpgsql stable security invoker set search_path='' as $$
+begin
+ if p_actor is null or p_session is null or not exists(select 1 from public.beagu_admin_accounts a where a.user_id=p_actor and a.role='owner' and a.enabled)
+ or not coalesce(public.beagu_admin_active_mfa_session(p_actor,p_session),false) then raise exception 'owner MFA required'; end if;
+ if p_version is null or length(p_version) not between 8 and 160 or p_offset is null or p_offset not between 0 and 20000 then raise exception 'invalid page'; end if;
+ return (select jsonb_build_object('total',(select count(*) from public.beagu_school_report_yearly where survey_year=2026 and source_version=p_version and publication_status='WITHHELD'),
+ 'items',coalesce(jsonb_agg(to_jsonb(x)),'[]'::jsonb)) from (
+ select a.school_id,s.school_name,a.percentile,a.valid_observation_count as valid_observations,p.teacher_total,
+ exists(select 1 from beagu_private.beagu_2026_percentile_v13_current c where c.school_id=a.school_id and c.source_version=a.source_version) as review_complete,
+ (select d.decision from beagu_private.beagu_2026_percentile_v13_decisions d where d.school_id=a.school_id and d.access_level=1 and d.source_version=a.source_version order by d.id desc limit 1) as decision_lv1,
+ (select d.decision from beagu_private.beagu_2026_percentile_v13_decisions d where d.school_id=a.school_id and d.access_level=2 and d.source_version=a.source_version order by d.id desc limit 1) as decision_lv2
+ from public.beagu_school_report_yearly a join public.schools s on s.school_id=a.school_id
+ left join public.beagu_2026_official_school_profiles p on p.school_id=a.school_id
+ where a.survey_year=2026 and a.source_version=p_version and a.publication_status='WITHHELD'
+ order by a.school_id offset p_offset limit 20
+ ) x);
+end $$;
+revoke all on function public.beagu_2026_percentile_v13_candidates(text,integer,uuid,uuid) from public,anon,authenticated;
+grant execute on function public.beagu_2026_percentile_v13_candidates(text,integer,uuid,uuid) to service_role;

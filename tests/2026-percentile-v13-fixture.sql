@@ -4,7 +4,7 @@ create role authenticated;
 create role service_role bypassrls;
 create schema beagu_private;
 grant usage on schema beagu_private to service_role;
-create table public.schools(school_id text primary key);
+create table public.schools(school_id text primary key,school_name text);
 create table public.beagu_school_report_yearly(
  school_id text references public.schools(school_id),survey_year smallint,source_version text,
  percentile numeric,valid_observation_count integer,percentile_method text,
@@ -18,7 +18,7 @@ create table beagu_private.beagu_2026_level_release_approvals(access_level integ
 grant select on beagu_private.beagu_2026_level_release_approvals to service_role;
 grant select on public.schools,public.beagu_school_report_yearly,public.beagu_admin_accounts,
  beagu_private.beagu_2026_civic_publication_hold to service_role;
-insert into public.schools values('1000001'),('1000002'),('1000003');
+insert into public.schools(school_id,school_name) values('1000001','fixture one'),('1000002','fixture two'),('1000003','fixture three');
 insert into public.beagu_school_report_yearly(school_id,survey_year,source_version,percentile,valid_observation_count,percentile_method,publication_status)
  values ('1000001',2026,'fixture-version',70,1,'fixture-method','WITHHELD'),
  ('1000002',2026,'fixture-version',20,1,'fixture-method','WITHHELD'),

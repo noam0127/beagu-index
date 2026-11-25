@@ -40,7 +40,7 @@ Deno.serve(async(request:Request)=>{
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve","percentile_v13_scope","percentile_v13_review","percentile_v13_preview","percentile_v13_decide"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
+ if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve","percentile_v13_scope","percentile_v13_review","percentile_v13_preview","percentile_v13_decide","percentile_v13_candidates"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -95,6 +95,12 @@ Deno.serve(async(request:Request)=>{
    let rpc="",args:Record<string,unknown>={p_version:version};
    const note=typeof input.note==="string"?input.note.trim():"";
    if(input.action==="percentile_v13_preview"){rpc="beagu_2026_percentile_v13_preview";}
+   else if(input.action==="percentile_v13_candidates"){
+    const offset=input.offset??0;
+    if(typeof offset!=="number"||!Number.isInteger(offset)||offset<0||offset>20000)return send(origin,400,{error:"invalid_page"});
+    rpc="beagu_2026_percentile_v13_candidates";
+    Object.assign(args,{p_offset:offset,p_actor:actor,p_session:claims.session_id});
+   }
    else if(input.action==="percentile_v13_scope"){
     if(!["PENDING","INCOMPATIBLE","COMPATIBLE"].includes(String(input.decision))||typeof input.notice_compatible!=="boolean"||typeof input.anonymous_scope_reviewed!=="boolean"||note.length<12||note.length>500||/[<>]/.test(note))
       return send(origin,400,{error:"invalid_scope_review"});

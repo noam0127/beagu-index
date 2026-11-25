@@ -16,6 +16,8 @@ jobs:
       - name: Source syntax, projection and existing publication gate regressions
         run: |
           node --check js/level-search.js
+          node --check js/beagu-2026-admin-review.js
+          node tests/2026-percentile-v13-final-contract.mjs
           node tests/2026-official-school-profiles.mjs
           node tests/2026-schoolinfo-strict-recovery.mjs
           node tests/2026-release-consent-gate.mjs

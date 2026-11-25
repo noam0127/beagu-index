@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(p,'utf8');
+const admin=read('supabase/functions/beagu-2026-review-admin/index.ts'),api=read('supabase/functions/beagu-level-api/index.ts'),ui=read('js/beagu-2026-admin-review.js'),sql=read('supabase/2026-percentile-only-final-v13.sql');
+assert.ok(admin.indexOf('if(account.role!=="owner")')<admin.indexOf('if(String(input.action).startsWith("percentile_v13_"))'));
+assert.ok(admin.includes('claims.aal!=="aal2"'));assert.ok(admin.includes('p_actor:actor,p_session:claims.session_id'));
+assert.ok(api.includes('!Object.hasOwn(out,id)'));assert.ok(api.includes("beagu_2026_percentile_v13_values"));
+assert.ok(ui.includes('action+"_PERCENTILE_ONLY"'));assert.ok(ui.includes('window.confirm'));assert.ok(ui.includes('approve.disabled=!row.review_complete'));
+assert.ok(sql.includes("p_level in (1,2)"));assert.ok(sql.includes("security_invoker=true"));assert.ok(!/update public\.beagu_school_report_yearly/i.test(sql));
+console.log('PASS percentile-only API, admin MFA, UI confirmation and narrow scope contracts');

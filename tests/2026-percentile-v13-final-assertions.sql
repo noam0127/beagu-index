@@ -42,6 +42,7 @@ reset role;
 update beagu_private.beagu_2026_civic_publication_hold set active=false,updated_at=clock_timestamp();
 set role service_role;
 do $$ begin if public.beagu_2026_percentile_v13_values(array['1000002'],2)<>'{}'::jsonb then raise exception 'hold release resurrected approval';end if;end $$;
+select public.beagu_2026_percentile_v13_school_review('1000002','fixture-version',20,1,'11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222','{"technical_reviewed":true,"school_identity_reviewed":true,"unique_respondents_reviewed":true,"personal_data_reviewed":true,"small_sample_reviewed":true,"reidentification_reviewed":true,"prior_data_combination_reviewed":true}'::jsonb,'synthetic renewed review after hold');
 select public.beagu_2026_percentile_v13_decide('1000002','fixture-version',20,1,2,'11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222','APPROVE','APPROVE_PERCENTILE_ONLY');
 select public.beagu_2026_percentile_v13_decide('1000002','fixture-version',20,1,2,'11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222','REVOKE','REVOKE_PERCENTILE_ONLY');
 do $$ begin
@@ -50,4 +51,8 @@ do $$ begin
  if not exists(select 1 from public.beagu_school_report_yearly where survey_year=2025 and publication_status='PUBLISHED') then raise exception 'legacy altered';end if;
  raise notice 'PASS exact narrow decisions, owner MFA, tier boundaries, delay, holds, revoke, legacy isolation';
 end $$;
+reset role;
+
+set role service_role;
+do $$ declare j jsonb; begin j:=public.beagu_2026_percentile_v13_candidates('fixture-version',0,'11111111-1111-1111-1111-111111111111','22222222-2222-2222-2222-222222222222'); if (j->>'total')::int<>3 or jsonb_array_length(j->'items')<>3 then raise exception 'owner queue incorrect';end if;end $$;
 reset role;
