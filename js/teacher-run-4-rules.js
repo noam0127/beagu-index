@@ -276,5 +276,7 @@
    stats(){return {combo,maxCombo,near,hits,crises:paid.size,lastHit};}
   };
  }
- root.BeaguRun4Rules=Object.freeze({duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending,careerHazards,healthHazards,edgePoint,steerPaper,bossCombat,bossRadius,bossMotion,bossWave,supportConfig,supportThreat,moveSupport,blockSupport});
+ // Qualification after three completed game years (15 seconds), one time per match.
+ function qualificationHealth(hp,max){const gain=Math.max(1,Math.round(max*.2));return {gain,max:max+gain,hp:Math.min(max+gain,Math.max(0,hp)+gain)};}
+ root.BeaguRun4Rules=Object.freeze({qualificationHealth,duration,secondsPerYear,rounds,age,roundAt,multiplier,create,leavePlan,createLeave,growthPlan,createGrowth,items,events,createEffects,pickEvent,bossPlan,difficulty,createBosses,allyPlan,createAllies,ending,careerHazards,healthHazards,edgePoint,steerPaper,bossCombat,bossRadius,bossMotion,bossWave,supportConfig,supportThreat,moveSupport,blockSupport});
 })(typeof window!=="undefined"?window:globalThis);

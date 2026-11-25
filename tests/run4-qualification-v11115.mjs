@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';import vm from 'node:vm';import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(p,'utf8'),window={};vm.runInNewContext(read('js/teacher-run-4-rules.js'),{window,Math});const rules=window.BeaguRun4Rules;
+const html=read('teacher-run.html');assert.equal(html,read('teacher-run-4-preview.html'));const code=html.slice(html.indexOf('function tenureEvents(){'),html.indexOf('function retirementCongratulations('));
+const fixture=new Function('rules',`let clock=0,tenureSeen=new Set(),skill={speed:1},life=70,maxLife=100,player={x:100,y:100},tenureAttack=1,tenureDamage=1;const notices=[];const burst=()=>{},float=()=>{},playTone=()=>{},updateLabels=()=>{},setNotice=t=>notices.push(t);`+code+`return {step(t){clock=t;tenureEvents();return {life,maxLife,speed:skill.speed,notices: notices.slice()};}};`)(rules);
+assert.equal(fixture.step(14.99).maxLife,100);const promoted=fixture.step(15);assert.equal(promoted.maxLife,120);assert.equal(promoted.life,90);assert.equal(promoted.speed,1.05);assert.match(promoted.notices[0],/1급 정교사 자격 취득/);assert.equal(fixture.step(15.1).maxLife,120);assert.equal(fixture.step(15.1).notices.length,1);
+for(const max of [50,80,100,120,160]){const p=rules.qualificationHealth(max,max);assert.equal(p.hp,p.max);assert.equal(p.gain,Math.round(max*.2));}
+assert.match(html,/bar.style.width=qualified\?"100%":"83.333%"/);assert.match(html,/tenureSeen=new Set\(\)/);console.log('PASS 3-year qualification, one-time 20% maximum HP, current HP increment and both HUD routes');

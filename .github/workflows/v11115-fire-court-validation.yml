@@ -25,6 +25,7 @@ jobs:
           node tests/run4-career-hazards-v11115.mjs
           node tests/run4-boss-combat-v11115.mjs
           node tests/run4-support-v11115.mjs
+          node tests/run4-qualification-v11115.mjs
           node tests/arcade-school-recommend-server.mjs
       - name: Install pinned browser
         run: |

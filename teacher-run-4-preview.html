@@ -107,6 +107,7 @@ canvas{height:400px;cursor:default}
 .arcade-survival-life-badges{display:flex;align-items:center;gap:8px;flex-wrap:wrap;white-space:nowrap}
 #run-lives{color:#ff9eaf;letter-spacing:3px;font-size:17px}
 #run-life-tier{font-size:11px;font-weight:900;color:#9ff9dd}
+.run4-qualified-health{border-color:#e6bf6e!important}.arcade-survival-health-track,.arcade-run-fullscreen-track{box-sizing:border-box;max-width:100%;transition:width .35s ease}
 .arcade-survival-health-track{position:relative;overflow:hidden;height:16px;border:1px solid #5b7187;border-radius:7px;background:#35495e;box-shadow:inset 0 2px 5px rgba(0,0,0,.26)}
 .arcade-survival-health-fill{width:100%;height:100%;border-radius:5px;background:linear-gradient(90deg,#2ab79a,#85f2bd);transition:width .17s linear,background-color .17s}
 .arcade-survival-health-fill.is-low{background:linear-gradient(90deg,#d24654,#ff9e73)}
@@ -219,7 +220,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-fire-court-bgm-v1.js?v=11115-boss"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11113-save"></script>
-<script src="js/teacher-run-4-rules.js?v=11115-support"></script>
+<script src="js/teacher-run-4-rules.js?v=11115-qualification"></script>
 <script src="js/teacher-run-4-records-v1.js?v=11111-local2"></script>
 <script src="js/run4-official-client-v1.js?v=11111"></script>
 <script>
@@ -614,6 +615,7 @@ function updateLabels(){
  $("scoreLabel").textContent=Math.floor(score).toLocaleString("ko-KR");
  const hp=Math.max(0,Math.min(maxLife,life));
  const fraction=maxLife>0?hp/maxLife:0;
+ const qualified=tenureSeen.has(3);for(const id of ["run-health-progress","run-fullscreen-health-progress"]){const bar=$(id);bar.style.width=qualified?"100%":"83.333%";bar.classList.toggle("run4-qualified-health",qualified);}
  $("run-health-numbers").textContent=Math.ceil(hp)+" / "+maxLife;
  $("run-time-label").textContent="⏱ "+Math.floor(clock)+"초 · ROUND "+(stage+1)+" · "+Math.floor(clock/5)+"년 · 콤보 "+combo;
  $("run-health-fill").style.width=(fraction*100).toFixed(1)+"%";
@@ -787,9 +789,9 @@ function openGrowth(pick){
   }})),"🎖️");
 }
 function tenureEvents(){
- for(const [year,id,label] of [[3,"adapt","교직 적응"],[10,"growth","중견교사 성장"],[20,"power","베테랑 교사"],[30,"defense","오랜 교직 경험"]]){
+ for(const [year,id,label] of [[3,"adapt","1급 정교사 자격 취득"],[10,"growth","중견교사 성장"],[20,"power","베테랑 교사"],[30,"defense","오랜 교직 경험"]]){
   if(clock<year*5||tenureSeen.has(year))continue;tenureSeen.add(year);
-  if(id==="adapt")skill.speed*=1.05;
+  if(id==="adapt"){skill.speed*=1.05;const promoted=rules.qualificationHealth(life,maxLife);life=promoted.hp;maxLife=promoted.max;burst(player.x,player.y,"#ffe38a",20);float(player.x,player.y-30,"최대 체력 +"+promoted.gain,"#ffe38a");setNotice("🎓 1급 정교사 자격 취득! 최대 체력 +"+promoted.gain,4);playTone(880,.25);updateLabels();continue;}
   if(id==="growth"){const p=rules.growthPlan.filter(p=>growth.level(p.id)<p.max);if(p.length)applyGrowth(p[Math.floor(gameRandom()*p.length)].id,false);}
   if(id==="power")tenureAttack=1.15;
   if(id==="defense")tenureDamage=.9;
