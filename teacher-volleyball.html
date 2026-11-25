@@ -155,7 +155,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script defer src="js/beagu-participation-auth-v2.js?v=20261121-compact-badge1"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
-<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11111">
+<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11112">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game">
@@ -186,7 +186,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       </div>
       <button type="button" id="pause" class="arcade-playback" disabled hidden aria-label="일시정지" title="일시정지">⏸ 일시정지</button>
       <canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas>
-      <div class="volleyball-touch-controls" aria-label="모바일 배구 조작">
+      <div class="volleyball-touch-controls" hidden aria-hidden="true">
         <button type="button" id="volley-attack" class="volley-touch-action" aria-label="대시 + 스파이크" title="대시 + 스파이크" aria-pressed="false" disabled>대시 + 스파이크</button>
       </div>
       <div class="volley-ready-overlay" id="volley-ready-overlay" aria-labelledby="volley-ready-title">
@@ -212,7 +212,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     </div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="auxiliary" id="help" aria-label="게임 방법" title="게임 방법">?</button></div>
   <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/keep-your-dream-alive-seamless-loop" target="_blank" rel="noopener noreferrer">Keep your dream alive! · congusbongus (CC0)</a></p>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 화면 터치·드래그 이동 · 위쪽 터치 시 점프 · 대시 + 스파이크 버튼을 누르는 동안 연속 발동 · EASY/날개 아이템에서만 비행 · 공격 버튼 연속 두 번 필살기 · PC J 스파이크, K/Shift 대시 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
+  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 화면 터치·드래그 이동 · 위쪽 터치 시 점프 · 화면을 누른 채 이동하면 대시·스파이크 자동 발동 · EASY/날개 아이템에서만 비행 · 화면을 빠르게 두 번 터치하면 필살기 · PC J 스파이크, K/Shift 대시 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
   
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
@@ -228,7 +228,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/volley-touch-v1.js?v=11111"></script>
-<script src="js/arcade-result-share-v1.js?v=11111"></script>
+<script src="js/arcade-result-share-v1.js?v=11112"></script>
 <script>
 (function () {
   "use strict";
@@ -841,15 +841,15 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   canvas.addEventListener("pointerdown",event=>{
     if(event.pointerType==="mouse"||state.phase!=="playing")return;
     const point=courtPoint(event);if(!point||!touchControl.down(event.pointerId,point,left.y))return;
-    event.preventDefault();capturePointer(canvas,event.pointerId);
+    event.preventDefault();capturePointer(canvas,event.pointerId);attackPointer=event.pointerId;requestSpike();
   });
   canvas.addEventListener("pointermove",event=>{
     if(touchControl.pointerId!==event.pointerId)return;
     const point=courtPoint(event);if(!point)return;
     event.preventDefault();touchControl.move(event.pointerId,point,left.y,left.y>=FLOOR-31-.1);
   });
-  canvas.addEventListener("pointerup",event=>touchControl.up(event.pointerId,hasPlayerWings()&&canPlayerJump()));
-  for(const type of ["pointercancel","lostpointercapture"])canvas.addEventListener(type,event=>touchControl.cancel(event.pointerId));
+  canvas.addEventListener("pointerup",event=>{touchControl.up(event.pointerId,hasPlayerWings()&&canPlayerJump());endAttack(event);});
+  for(const type of ["pointercancel","lostpointercapture"])canvas.addEventListener(type,event=>{touchControl.cancel(event.pointerId);endAttack(event);});
   function requestSpike(){
     if(state.phase!=="playing")return false;
     const now=Date.now();
@@ -1176,7 +1176,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     state.winner=result.title;state.winCheer=result.detail;
     render();
     resultView.show({game:"선생님배구",title:result.title,detail:result.detail,
-      metrics:[state.leftScore+" : "+state.rightScore,finalScore.toLocaleString("ko-KR")+"점",fmtTime(elapsedTenths),diffName[currentDifficulty]||currentDifficulty,...(state.recordBroken?["기기 최고점 신기록"]:[]),...(state.timeRecordBroken?["기기 최단시간 신기록"]:[])]},
+      metrics:["경기 스코어 "+state.leftScore+" : "+state.rightScore,"최종 "+finalScore.toLocaleString("ko-KR")+"점","경기 시간 "+fmtTime(elapsedTenths),"난이도 "+(diffName[currentDifficulty]||currentDifficulty),"최대 연속 득점 "+state.bestStreak+"점","최대 열세 "+state.maxDeficit+"점",...(state.recordBroken?["기기 최고점 신기록"]:[]),...(state.timeRecordBroken?["기기 최단시간 신기록"]:[])]},
       [{label:"↻ 다시 하기",action:()=>void startMatch()},{label:"🏫 다른 학교",action:()=>stopForSchoolChange()}]);
     syncUI();
     return saveResult;
@@ -1255,7 +1255,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const touchJump=touchControl.takeJump();
     if(Math.abs(inputX)>.2)lastMoveDirection=Math.sign(inputX);
     if(attackPointer!==null){
-      aimDash(inputX,inputY);state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;
+      if(Math.abs(inputX)>.2||Math.abs(inputY)>.2)aimDash(inputX,inputY);state.dashCooldownFrames=0;state.spikeBufferFrames=SPIKE_BUFFER;
     }
     const dashing=state.dashFrames>0;
     const moveX=dashing?state.dashX:inputX;
@@ -1619,7 +1619,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     const isPlaying=state.phase==="playing";
     if(courtElement.classList.contains("volleyball-playing")!==isPlaying)
       courtElement.classList.toggle("volleyball-playing",isPlaying);
-    courtElement.classList.toggle("volleyball-controls-active",["playing","point","paused"].includes(state.phase));
+    courtElement.classList.remove("volleyball-controls-active");
     if (!last) last = time;
     accumulator += Math.min((time - last) / 1000, .06);
     last = time;

@@ -82,7 +82,7 @@ canvas{height:400px;cursor:default}
 /* Mobile portrait: keep the entire playfield visible instead of filling
    the whole Safari viewport. resize() synchronizes the canvas hitbox/world. */
 @media(max-width:600px) and (orientation:portrait){
- #game{height:clamp(380px,54vh,485px);height:clamp(380px,54svh,485px)}
+ #game{height:clamp(450px,66vh,570px);height:clamp(450px,66svh,570px)}
  /* Fullscreen on iOS previously stretched the stage canvas to 100dvh.
     Keep fullscreen access but letterbox the actual playfield. */
  .stage.arcade-fullscreen-fallback #game,
@@ -90,8 +90,8 @@ canvas{height:400px;cursor:default}
  .stage:-webkit-full-screen #game{
    width:min(94vw,420px)!important;
    max-width:94vw!important;
-   height:clamp(380px,63svh,535px)!important;
-   max-height:72svh!important;
+   height:clamp(420px,74svh,620px)!important;
+   max-height:78svh!important;
    flex:0 0 auto!important;
    object-fit:contain!important;
  }
@@ -129,8 +129,8 @@ canvas{height:400px;cursor:default}
 <script defer src="js/beagu-participation-auth-v2.js?v=20261123-lv2upgrade2"></script>
 <link rel="stylesheet" href="styles/beagu-clean-v1.css?v=130">
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
-<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11111-replay">
-<link rel="stylesheet" href="styles/teacher-run-4-leave.css?v=11111">
+<link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11112">
+<link rel="stylesheet" href="styles/teacher-run-4-leave.css?v=11112">
 <link rel="stylesheet" href="styles/run4-local-board-v1.css?v=11111">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 </head>
@@ -161,7 +161,6 @@ canvas{height:400px;cursor:default}
     </div>
     <div class="arcade-survival-health-track" id="run-health-progress" role="progressbar" aria-label="교사 체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="arcade-survival-health-fill" id="run-health-fill"></div></div>
   </section>
-  <div id="run4-leave-inventory" class="run4-leave" aria-label="장기재직휴가 보관함"></div>
   <div class="stage arcade-game-viewport" data-arcade-fullscreen>
     <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="전체화면으로 확대" title="전체화면으로"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 3h6v6M21 3l-7 7M3 21l7-7M9 21H3v-6"/></svg></button>
     <button type="button" id="pause" class="arcade-playback" hidden disabled aria-label="일시정지" title="일시정지">⏸ 일시정지</button>
@@ -174,13 +173,14 @@ canvas{height:400px;cursor:default}
         <div class="arcade-run-fullscreen-fill" id="run-fullscreen-health-fill"></div>
       </div>
       <div class="arcade-fullscreen-subline" id="run-fullscreen-situation">24세 · 0점 · 0초</div>
-      <div id="run4-leave-fullscreen" class="run4-leave" aria-label="전체화면 장기재직휴가 보관함"></div>
     </div>
+    <div id="run4-leave-fullscreen" class="run4-leave" aria-label="게임 중 사용 가능한 휴가권 및 연대"></div>
     <canvas id="game" tabindex="0" aria-label="험난한 교직생활 4.0 — 정년까지 살아남아라 게임 영역. 화면을 터치·드래그해 비행하거나 키보드 방향키로 이동합니다."></canvas>
     <div class="overlay" id="overlay" role="dialog" aria-modal="false" aria-labelledby="overlayTitle">
       <div class="panel"><div class="symbol" id="overlaySymbol">🎒</div><h2 id="overlayTitle">험난한 교직생활 4.0 — 정년까지 살아남아라</h2><p id="overlayDesc">24세 임용, 62세 정년까지! 5초마다 한 살 · 정년 달성 시 점수 2배</p><div class="choices" id="choices"></div></div>
     </div>
   </div>
+  <div id="run4-leave-inventory" class="run4-leave" aria-label="사용 가능한 휴가권 및 연대"></div>
   <div class="toolbar">
     
     <button id="sound" type="button" aria-pressed="false" aria-label="소리 켜기" title="효과음 및 배경음악">🔇</button>
@@ -190,7 +190,7 @@ canvas{height:400px;cursor:default}
   
   <details id="run4-local-board" class="run4-local-board"><summary>4.0 기기 기록 · 최대 50개</summary><p>이 기기에 저장한 개인 기록입니다. 공식 명예의 전당과 별개입니다.</p><div class="run4-board-filters"><label>난이도 <select id="run4-record-tier"><option value="all">전체</option><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option><option value="very_hard">VERY HARD</option><option value="extreme">EXTREME</option></select></label><label>기록 <select id="run4-record-outcome"><option value="all">전체</option><option value="retired">정년 달성</option><option value="all_bosses">보스 5종 처치</option></select></label></div><ol id="run4-record-list" aria-live="polite"></ol></details>
   <div id="run4-trace-panel" hidden><p id="run4-trace-status" role="status">개인 경기 재현 검수 모드 · 공식 랭킹 미제출</p><button type="button" id="run4-trace-download" disabled>조작 기록 저장 (JSON)</button></div>
-  <section class="run4-local-board" id="run4-official-panel">
+  <section class="run4-local-board" id="run4-official-panel" hidden>
   <h3>4.0 공식 명예의 전당</h3>
   <p id="run4-official-status" role="status">공식 기록 준비 중 · 개인 기록은 이용할 수 있습니다.</p>
   <div id="run4-official-controls" hidden>
@@ -200,7 +200,7 @@ canvas{height:400px;cursor:default}
    <div class="run4-board-filters"><label>난이도 <select id="run4-official-tier"><option value="all">전체</option><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option><option value="very_hard">VERY HARD</option><option value="extreme">EXTREME</option></select></label><label>기록 <select id="run4-official-outcome"><option value="all">전체</option><option value="retired">정년 달성</option><option value="all_bosses">보스 5종 처치</option></select></label><button id="run4-official-refresh" type="button">조회</button></div>
    <ol id="run4-official-list" aria-live="polite"></ol>
   </div></section>
-  <p role="status" id="run4-preview-notice">4.0 개발 검수판 · 이 기기의 기록만 저장합니다. 공식 3.0 랭킹에는 반영되지 않습니다. 휴가권은 게임 설정이며 실제 교원 복무제도를 의미하지 않습니다.</p>
+  <p role="status" id="run4-preview-notice">4.0 개인 기록은 이 기기에 저장됩니다. 기존 공식 기록은 명예의 전당에서 확인할 수 있습니다. 휴가권은 게임 설정이며 실제 교원 복무제도를 의미하지 않습니다.</p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 <script src="js/supabase-config.js"></script>
@@ -213,7 +213,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
-<script src="js/arcade-result-share-v1.js?v=11111"></script>
+<script src="js/arcade-result-share-v1.js?v=11112"></script>
 <script src="js/teacher-run-4-rules.js?v=11111-6"></script>
 <script src="js/teacher-run-4-records-v1.js?v=11111-local2"></script>
 <script src="js/run4-official-client-v1.js?v=11111"></script>
@@ -506,7 +506,7 @@ function intro(){
  const ready=selected?.eligible===true;
  const desc=ready?selected.school_name+" · "+difficultyName[selected.difficulty]:
    selected?"2026년 조사 참여 후 시작 가능":"";
- message("험난한 교직생활 4.0 — 정년까지 살아남아라",desc+"\n개발 검수판 · 공식 랭킹 미제출",[
+ message("험난한 교직생활 4.0 — 정년까지 살아남아라",desc,[
   {label:ready?"▶ 이 학교로 시작":selected?"🏫 다른 학교 검색":"🏫 학교 선택하기",
    action:()=>ready?start():schoolPicker.focus()}
  ],"🏫");
@@ -522,7 +522,8 @@ function syncLeave(){
   const host=$(id);host.replaceChildren();
   const label=document.createElement("span");label.className="run4-leave-label";
   label.textContent=remaining>0?(remaining<=1?"☀ 휴가 종료 임박":"☀ 휴가 중 "+remaining+"초"):"🌿 장기재직휴가";
-  host.append(label);
+  host.hidden=!info.pending.length&&!info.held.length&&!remaining&&allies.count()<2;
+  if(info.pending.length||info.held.length||remaining)host.append(label);
   for(const p of info.pending){
    const b=document.createElement("button");b.type="button";b.className="run4-leave-pick";b.textContent="🎁 "+p.days+"일 받기";b.disabled=!playing;
    b.setAttribute("aria-label",p.years+"년 장기재직휴가 "+p.days+"일 획득");
@@ -536,7 +537,7 @@ function syncLeave(){
    host.append(b);
   }
   if(allies.count()>=2){const b=document.createElement("button");b.type="button";b.textContent=coopRemaining?"연대 "+coopRemaining+"초":"🤝 선생님들의 연대";b.disabled=!playing||!allies.canCooperate(clock);b.onclick=cooperate;host.append(b);}
-  if(!info.pending.length&&!info.held.length&&!remaining){const hint=document.createElement("span");hint.textContent="보유 없음";host.append(hint);}
+
  }
 }
 function updateLabels(){
@@ -778,11 +779,11 @@ function finish(win){
   "사용한 휴가 "+leave.state().usedDays+"일 · 동료 "+alliesPeak+"명","성장: "+(abilityNames.join(", ")||"없음"),"칭호: "+ending.titles.join(" · "),"4.0 검수판 · 기기 기록만 저장"];
  resetBossThreats();
  if(win){retirementScene=true;items=[];mysteryDrops=[];mysteryReveals=[];chalkShots=[];sideStudents=[];paperBullets=[];paperTarget=null;activeEvent=null;eventSeconds=0;specialFlash=0;noticeTime=0;bosses.advance(190);burst(player.x,player.y,"#ffdf80",40);}
- message((win?"🎓 ":"🌿 ")+ending.primary,report.join("\n"),[
+ message((win?"🎓 ":"🌿 ")+ending.primary,(win?"62세 정년 달성!":getAge()+"세까지 생존")+" · "+(difficultyName[schoolPicker.get()?.difficulty]||""),[
   {label:"↻ 다시 하기",action:()=>start()},{label:"🏫 다른 학교",action:stopAndChangeSchool}],win?"🎓":"🌿");
  $("choices").classList.add("arcade-result-replay-row");
  draw();
- resultView.show({game:"험난한 교직생활 4.0 검수판",title:ending.primary,detail:win?"62세 정년 달성!":getAge()+"세까지 생존",metrics:[Math.floor(score).toLocaleString("ko-KR")+"점",Math.floor(clock/5)+"년","보스 "+beaten.length+"/5",difficultyName[schoolPicker.get()?.difficulty]||""],certificateLines:["버전 4.0 · "+(win?"정년퇴직 성공":"새로운 인생의 시작"),"대표 칭호: "+ending.primary,"재직 "+Math.floor(clock/5)+"년 · "+getAge()+"세 · 처치 보스 "+beaten.length+"/5"],note:"4.0 개발 검수판 · 개인 기록 · 공식 랭킹 미제출"});
+ resultView.show({game:"험난한 교직생활 4.0",title:ending.primary,detail:win?"62세 정년 달성!":getAge()+"세까지 생존",metrics:["최종 "+Math.floor(score).toLocaleString("ko-KR")+"점","재직 "+Math.floor(clock/5)+"년","보스 "+beaten.length+"/5","동료 "+alliesPeak+"명"],note:"개인 게임 기록 · 공식 랭킹 미제출"});
  if(win)playRetirementMusic();else playTone(280,.32);
 }
 let savingPausedRun=false;
@@ -1145,13 +1146,13 @@ function updateBoss(dt){
  if(bossWarn&&clock>=bossWarn.at){
   const warn=bossWarn;bossWarn=null;
   for(let i=0;i<warn.lanes.length;i++){
-   const x=warn.lanes[i];bossProjectiles.push({friendly:false,x,y:92+i*-9,vx:warn.mode==="demands"?(player.x-x)*.16:0,vy:125+bosses.tier.pattern*20,r:warn.mode==="responsibility"?16:10,mode:warn.mode,damage:warn.damage,split:warn.mode==="responsibility"||warn.mode==="demands"});
+   const x=warn.lanes[i];bossProjectiles.push({friendly:false,x,y:(recordingMode?92:76)+i*-9,vx:warn.mode==="demands"?(player.x-x)*.16:0,vy:125+bosses.tier.pattern*20,r:warn.mode==="responsibility"?16:10,mode:warn.mode,damage:warn.damage,split:warn.mode==="responsibility"||warn.mode==="demands"});
   }
  }
  for(let i=bossProjectiles.length-1;i>=0;i--){
   const p=bossProjectiles[i];
   if(p.friendly){
-   const dx=bossX-p.x,dy=102-p.y,d=Math.max(1,Math.hypot(dx,dy)),move=p.speed*dt;
+   const dx=bossX-p.x,dy=(recordingMode?102:70)-p.y,d=Math.max(1,Math.hypot(dx,dy)),move=p.speed*dt;
    if(d<=move+18){bossProjectiles.splice(i,1);damageBoss(p.damage);if(!bosses.active())return;continue;}
    p.x+=dx/d*move;p.y+=dy/d*move;
   }else{
@@ -1171,8 +1172,8 @@ function drawBoss(){
  ctx.save();
  if(bossWarn){ctx.fillStyle="rgba(220,60,70,.15)";for(const x of bossWarn.lanes)ctx.fillRect(x-12,95,24,H-95);}
  if(b.id==="burnout"){ctx.fillStyle="rgba(33,25,65,.14)";ctx.fillRect(bossX-W*.25,95,W*.5,H-95);}
- ctx.fillStyle=b.color;ctx.beginPath();ctx.arc(bossX,102,28,0,Math.PI*2);ctx.fill();
- ctx.font="28px sans-serif";ctx.textAlign="center";ctx.fillText(b.icon,bossX,113);
+ ctx.fillStyle=b.color;ctx.beginPath();ctx.arc(bossX,recordingMode?102:70,28,0,Math.PI*2);ctx.fill();
+ ctx.font="28px sans-serif";ctx.textAlign="center";ctx.fillText(b.icon,bossX,recordingMode?113:81);
  const width=Math.min(W*.54,260),x=(W-width)/2;
  roundRect(x,8,width,16,8,"#27334f");roundRect(x,8,Math.max(0,width*b.hp/b.maxHP),16,8,"#ed9b78");
  ctx.fillStyle="#21314c";ctx.font="bold 12px sans-serif";ctx.fillText(b.name+" · "+Math.ceil(b.hp)+"/"+b.maxHP,W/2,41,width);
@@ -1415,7 +1416,7 @@ function drawPatternHazards(){
 function drawReadableNotice(content,y,background,color){
  // Situational subtitles must not obscure falling objects or the teacher.
  const width=Math.min(W-18,Math.max(145,W*.72)),inside=width-18;
- const fontSize=Math.min(13,Math.max(11,Math.round(W*.020)));
+ const fontSize=Math.min(18,Math.max(14,Math.round(W*.032)));
  ctx.save();ctx.font='750 '+fontSize+'px "Apple SD Gothic Neo","Noto Sans KR",sans-serif';
  const pieces=String(content).split(/\s+/).filter(Boolean),lines=[];
  let line='';
@@ -1431,8 +1432,8 @@ function drawReadableNotice(content,y,background,color){
  if(line)lines.push(line);
  const shown=lines.slice(0,2);
  if(lines.length>2)shown[1]=shown[1].slice(0,-1)+'…';
- const lineHeight=15,h=6+shown.length*lineHeight;
- ctx.globalAlpha=.07;roundRect((W-width)/2,y,width,h,9,background);
+ const lineHeight=fontSize+5,h=12+shown.length*lineHeight;
+ ctx.globalAlpha=.84;roundRect((W-width)/2,y,width,h,9,background);
  ctx.globalAlpha=1;ctx.textAlign="center";ctx.textBaseline="middle";
  ctx.lineJoin="round";ctx.lineWidth=2;ctx.strokeStyle="rgba(4,14,27,.83)";
  ctx.fillStyle=color;
@@ -1494,7 +1495,7 @@ function draw(){
  }
  roundRect(12,H-7,W-24,3,2,"rgba(24,62,83,.15)");
  if(clock>0)roundRect(12,H-7,(W-24)*Math.min(1,clock/RETIREMENT_SECONDS),3,2,"#2b9c8b");
- let bannerY=98;
+ let bannerY=bosses.active()?Math.max(125,H*.35):Math.max(98,H*.32);
  if(noticeTime>0)bannerY+=drawReadableNotice(notice,bannerY,"rgba(17,54,70,.94)","#fff")+8;
  if(activeEvent&&eventSeconds>0){
   const label=activeEvent.icon+" "+activeEvent.title+" · "+Math.ceil(eventSeconds)+"초";
