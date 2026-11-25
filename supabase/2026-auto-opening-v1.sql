@@ -75,6 +75,42 @@ create or replace function public.beagu_2026_auto_hidden_ids(p_ids text[])
 returns text[] language sql stable security invoker set search_path='' as $$
 select coalesce(array_agg(school_id),'{}'::text[]) from beagu_private.beagu_2026_auto_exception where cardinality(p_ids) between 1 and 20 and school_id=any(p_ids)
 $$;
+-- Independent, private reaggregation run history. Never replaces annual candidates.
+create table if not exists beagu_private.beagu_2026_vi13_runs(
+ id bigint generated always as identity primary key, source_started_at timestamptz not null unique,
+ received_at timestamptz not null default clock_timestamp(), school_count integer not null,
+ observations integer not null, unmatched integer not null, invalid integer not null,
+ excluded integer not null, suspect integer not null, payload_sha256 text not null,
+ candidates jsonb not null
+);
+alter table beagu_private.beagu_2026_vi13_runs enable row level security;
+revoke all on beagu_private.beagu_2026_vi13_runs from public,anon,authenticated;
+grant select,insert on beagu_private.beagu_2026_vi13_runs to service_role;
+grant usage,select on sequence beagu_private.beagu_2026_vi13_runs_id_seq to service_role;
+create or replace function public.beagu_2026_vi13_stage(p_payload jsonb)
+returns jsonb language plpgsql security invoker set search_path='' as $$
+declare rows jsonb; started timestamptz; n int; obs int; rid bigint; ranked jsonb; fingerprint text;
+begin
+ if jsonb_typeof(p_payload) is distinct from 'object' or p_payload->>'kind' is distinct from 'VI13_REAGGREGATE_V1' or p_payload->>'source_spreadsheet_id' is distinct from '1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4' then raise exception 'source invalid';end if;
+ rows:=p_payload->'schools';started:=(p_payload->>'started_at')::timestamptz;
+ if jsonb_typeof(rows) is distinct from 'array' or started is null or started>now()+interval '1 minute' or started<now()-interval '1 day' then raise exception 'invalid snapshot';end if;
+ n:=jsonb_array_length(rows);
+ if n<1 or n>10000 or exists(select 1 from jsonb_array_elements(rows) e where jsonb_typeof(e) is distinct from 'object' or not (e ?& array['school_id','observations','sum_units','flags']) or (select count(*) from jsonb_object_keys(e))<>4 or e->>'school_id' !~ '^[A-Z0-9]{7}$' or e->>'observations' !~ '^[1-9][0-9]{0,4}$' or e->>'sum_units' !~ '^[0-9]{1,13}$' or e->>'flags' !~ '^[0-9]{1,5}$') then raise exception 'invalid aggregate';end if;
+ if exists(select 1 from jsonb_to_recordset(rows) x(school_id text,observations int,sum_units numeric,flags int) where x.sum_units>36036000::numeric*x.observations or x.flags>x.observations or not exists(select 1 from public.schools s where s.school_id=x.school_id)) or (select count(distinct e->>'school_id') from jsonb_array_elements(rows) e)<>n then raise exception 'invalid cohort';end if;
+ if exists(select 1 from unnest(array['unmatched','invalid','excluded','suspect']) k where coalesce(p_payload->>k,'') !~ '^[0-9]{1,5}$') then raise exception 'invalid diagnostics';end if;
+ select sum(x.observations),jsonb_agg(jsonb_build_object('school_id',x.school_id,'observations',x.observations,'sum_units',x.sum_units,'flags',x.flags,'percentile',case when n=1 then 0 else 100::numeric*(select count(*) from jsonb_to_recordset(rows) y(school_id text,observations int,sum_units numeric,flags int) where y.sum_units*x.observations<x.sum_units*y.observations)/(n-1) end) order by x.school_id)
+ into obs,ranked from jsonb_to_recordset(rows) x(school_id text,observations int,sum_units numeric,flags int);
+ if obs>50000 then raise exception 'observation limit';end if;
+ fingerprint:=encode(sha256(convert_to(p_payload::text,'UTF8')),'hex');
+ perform pg_advisory_xact_lock(2026,26013);
+ if exists(select 1 from beagu_private.beagu_2026_vi13_runs where source_started_at=started and payload_sha256<>fingerprint) then raise exception 'snapshot conflict';end if;
+ insert into beagu_private.beagu_2026_vi13_runs(source_started_at,school_count,observations,unmatched,invalid,excluded,suspect,payload_sha256,candidates)
+ values(started,n,obs,(p_payload->>'unmatched')::int,(p_payload->>'invalid')::int,(p_payload->>'excluded')::int,(p_payload->>'suspect')::int,fingerprint,ranked) on conflict(source_started_at) do nothing returning id into rid;
+ return jsonb_build_object('ok',true,'schools',n,'observations',obs,'staged',true,'publication_changed',false);
+end $$;
+revoke all on function public.beagu_2026_vi13_stage(jsonb) from public,anon,authenticated;
+grant execute on function public.beagu_2026_vi13_stage(jsonb) to service_role;
+
 create or replace function public.beagu_2026_auto_admin_status(p_actor uuid,p_session uuid,p_offset integer)
 returns jsonb language plpgsql stable security invoker set search_path='' as $$
 begin
@@ -82,6 +118,9 @@ begin
  if p_offset is null or p_offset not between 0 and 20000 then raise exception 'invalid offset';end if;
  return jsonb_build_object(
  'total',(select count(*) from beagu_private.beagu_2026_auto_preflight),
+ 'qa_count_match',(select count(*) from beagu_private.beagu_2026_auto_preflight a where exists(select 1 from beagu_private.beagu_2026_auto_review_status t where t.school_id=a.school_id and t.source_spreadsheet_id='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4' and t.survey_year=2026 and t.technical_status='TECHNICAL_CHECK_PASSED' and t.source_response_rows=a.valid_observation_count)),
+ 'reaggregation',(select jsonb_build_object('started_at',source_started_at,'schools',school_count,'observations',observations,'unmatched',unmatched,'invalid',invalid,'suspect',suspect) from beagu_private.beagu_2026_vi13_runs order by source_started_at desc limit 1),
+ 'reaggregation_pending',(select count(*) from beagu_private.beagu_2026_auto_exception where action='REAGGREGATE'),
  'structural_pass',(select count(*) from beagu_private.beagu_2026_auto_preflight where structure_ok),
  'scope_pending',(select count(*) from beagu_private.beagu_2026_auto_preflight where not scope_ok),
  'auto_ready',(select count(*) from beagu_private.beagu_2026_auto_preflight where scope_ok and structure_ok and exact_evidence_ok and not held),

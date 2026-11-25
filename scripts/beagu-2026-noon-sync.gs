@@ -108,6 +108,7 @@ function refreshBeagu2026AllPrivateStats() {
       });
       runStage(2,()=>{
         const result=refreshBeagu2026Stats(snapshot);
+        refreshBeagu2026VI13Private();
         if(result&&(result.privateQaStatus==="PRIVATE_QA_ERROR"||result.publishStatus==="PUBLIC_ERROR"))throw Error("CORE_AND_QA partial sync failed");
       });
       if(typeof refreshBeagu2026SchoolCulture==="function"){
@@ -559,6 +560,40 @@ function refreshBeagu2026Stats(snapshot) {
     if(destination)destination.getSheetByName(BEAGU26.logTab).appendRow([stamp,scanned,matched,unmatched,"ERROR",("사전응답 제외 "+prelaunch+"건; "+String(e.message||e)).slice(0,300)]);
     throw e;
   }finally{if(lock)lock.releaseLock();}
+}
+
+// VI13 private nationwide reaggregation. Only Q01-Q13 are used.
+function beagu26BuildVI13(values,schools){
+ const c=questionColumns(values[0]);beagu26PrepareSchoolIndex(schools);
+ const signals=beagu26RowReviewSignals(values,c,schools),groups=new Map();
+ let unmatched=0,invalid=0,excluded=0,suspect=0;
+ const domains=[[0,1,2,3,4,11,12],[5,6,7,8],[9,10]];
+ for(let i=1;i<values.length;i++){
+  const row=values[i];if(!row[0]&&!row[c.school])continue;
+  const day=getSubmittedDay(row[0]);if(!day){invalid++;continue;}if(day<BEAGU26.firstOfficialResponseDay||day>'2026-12-31'){excluded++;continue;}
+  const m=resolveSchool(row,c,schools);if(!m.school||m.school.status!=='운영'){unmatched++;continue;}
+  let unknown=false;const scores=c.q.map((col,j)=>{try{return questionScore(j+1,row[col]);}catch{unknown=true;return null;}});
+  const n=scores.filter(v=>v!==null).length;
+  if(n<9||domains.some((d,j)=>d.filter(k=>scores[k]!==null).length<[4,2,1][j])){invalid++;continue;}
+  const id=String(m.school.school_id),g=groups.get(id)||{school_id:id,observations:0,sum_units:0,flags:0};
+  g.observations++;g.sum_units+=scores.reduce((a,v)=>a+(v??0),0)*(360360/n);
+  if(unknown||m.typeConflict||signals.has(i)){g.flags++;suspect++;}groups.set(id,g);
+ }
+ return {kind:'VI13_REAGGREGATE_V1',source_spreadsheet_id:BEAGU26.sourceId,schools:[...groups.values()].sort((a,b)=>a.school_id.localeCompare(b.school_id)),unmatched,invalid,excluded,suspect};
+}
+function refreshBeagu2026VI13Private(){
+ const startedAt=new Date().toISOString();
+ const source=SpreadsheetApp.openById(BEAGU26.sourceId).getSheetByName(BEAGU26.sourceTab);
+ const headers=source.getRange(1,1,1,source.getLastColumn()).getDisplayValues()[0],c=questionColumns(headers);
+ const last=Math.max(...c.q,c.school,c.schoolType,c.region,...c.office);
+ if(source.getLastRow()>BEAGU26.maxResponses+1||headers.slice(0,last+1).some(h=>/^Q(?:1[4-9]|[2-9][0-9])\./.test(String(h))))throw Error('VI13 source boundary');
+ const values=source.getRange(1,1,Math.max(1,source.getLastRow()),last+1).getDisplayValues(),schools=fetchSchools();
+ const payload=beagu26BuildVI13(values,schools);payload.started_at=startedAt;
+ const token=PropertiesService.getScriptProperties().getProperty('BEAGU_2026_INGEST_TOKEN')||'';
+ if(token.length<32)throw Error('VI13 token required');
+ const r=UrlFetchApp.fetch(BEAGU26.supabaseUrl+'/functions/v1/beagu-2026-results-ingest',{method:'post',contentType:'application/json',headers:{'X-Beagu-Ingest-Token':token},payload:JSON.stringify(payload),muteHttpExceptions:true});
+ if(r.getResponseCode()!==200)throw Error('VI13 private stage HTTP '+r.getResponseCode());
+ return JSON.parse(r.getContentText());
 }
 
 // BEGIN GENERATED 2026 QUESTION RESULTS

@@ -26,6 +26,10 @@ Deno.serve(async(req:Request)=>{
       if(error)return send(503,{error:'HEARTBEAT_NOT_ACCEPTED'});
       return send(200,{ok:true,kind:'WATERWAY_RUN_V1'});
     }
+    if(parsed?.kind==='VI13_REAGGREGATE_V1'){
+      const {data,error}=await admin.rpc('beagu_2026_vi13_stage',{p_payload:parsed});
+      return error?send(409,{error:'VI13_STAGE_REJECTED'}):send(200,data);
+    }
     const data=validateSnapshot(parsed);
     const {data:result,error}=await admin.rpc('beagu_2026_replace_results_snapshot',{p_snapshot:data});
     if(error)return send(409,{error:'SNAPSHOT_NOT_ACCEPTED'});

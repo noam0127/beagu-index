@@ -45,6 +45,7 @@ jobs:
           run_sql < tests/2026-auto-opening-fixture.sql
           run_sql < supabase/2026-auto-opening-v1.sql
           run_sql < tests/2026-auto-opening-assertions.sql
+          run_sql < tests/2026-vi13-reaggregation-assertions.sql
   browser:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
