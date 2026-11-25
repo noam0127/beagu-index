@@ -55,6 +55,7 @@ function volleyballOutcome(result:any){
  return {outcome,playerPoints:outcome!=="unknown"?p:null,cpuPoints:outcome!=="unknown"?c:null,deuce:outcome==="victory"&&deuce&&c>=24};
 }
 async function top(game: Game,tier:string|null=null): Promise<Entry[]> {
+  if(ARCHIVE_ENABLED){const rows=await db("rpc/beagu_arcade_history_v11115","POST",{p_game:game,p_tier:tier,p_page:1});if(!Array.isArray(rows))throw Error("invalid_archive");return rows.slice(0,10).map((r:any)=>({score:r.score,created_at:r.createdAt,school_id:r.schoolId,school_name:r.schoolName,difficulty:r.difficulty,version:r.version,...(game==="volleyball_25"?volleyballOutcome(r.details):{})}));}
   const q = new URLSearchParams({select:"score,created_at,school_id,school_name,difficulty"+(game==="volleyball_25"?",public_result":""),game:"eq."+game,order:"score.desc,created_at.asc",limit:"10"});
   if(tier)q.set("difficulty","eq."+tier);
   const list = await db("arcade_game_scores?" + q);

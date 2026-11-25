@@ -66,3 +66,6 @@ jobs:
           psql_local < docs/run4-ranking-preflight/schema-draft.sql
           psql_local < docs/run4-ranking-preflight/store-draft.sql
           psql_local < scripts/sql/v1.11.15-run4-archive-adapter-candidate.sql
+          psql_local < tests/v11115-run4-archive-assertions.sql
+          psql_local < scripts/sql/v1.11.15-run4-archive-adapter-candidate.sql
+          printf '%s\n' "select 1/(case when (select count(*) from public.beagu_arcade_archive_v11115 where game='teacher_run_retirement_v4')=2 then 1 else 0 end);" | psql_local
