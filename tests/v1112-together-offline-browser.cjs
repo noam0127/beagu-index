@@ -6,6 +6,7 @@ const {chromium}=require('playwright');
 const origin='http://127.0.0.1:8124';
 const publicLink='https://baeguindex.com/r/#AbCd1234';
 const fullLink='https://baeguindex.com/survey.html?ref='+'c'.repeat(64);
+const ownerVisitor='aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', otherVisitor='bbbbbbbb-cccc-dddd-eeee-ffffffffffff';
 const code='K7M9Q2X4T8', common='FIXTURE01', token1='a'.repeat(64),token2='b'.repeat(64);
 const school={school_id:'1234567',school_name:'검증초등학교',sido:'부산',sido_standard:'부산',support_office:'동래',address:'검증 주소',establishment:'공립',status:'운영',housing_price_won:123456789,student_count:123};
 const renderer=require.resolve('html2canvas/dist/html2canvas.min.js');
@@ -50,16 +51,27 @@ async function routes(page,tracker){
    if(body.action==='verify')return tier?respond(200,{level:tier,provisional:tier===2}):respond(401,{error:'AUTH_REQUIRED'});
    if(body.action==='logout'){tracker.sessionPromoted=false;return respond(200,{ok:true});}
    if(!tier)return respond(401,{error:'AUTH_REQUIRED'});
-   if(body.action==='ranked_schools'){tracker.searchTiers.push(tier);return respond(200,{schools:[{...school,housing_price_won:tier===2?school.housing_price_won:null}],total:1});}
+   if(body.action==='ranked_schools'){tracker.searchTiers.push(tier);return respond(200,{schools:[{...school,housing_price_won:tier>=1?school.housing_price_won:null}],total:1});}
    if(body.action==='school')return respond(200,{rows:[],schoolQuestionModes:[],questionResults2026:[]});
    return respond(200,{rows:[],schools:[]});
   }
   if(name==='beagu-challenge-identity'){
    if(!tier)return respond(401,{error:'AUTH_REQUIRED'});
-   tracker.identityRequests++;return respond(200,{participantNo:777,identityCode:code});
+   tracker.identityRequests++;
+   if(tracker.crossDevice&&token===token1)return respond(200,{participantNo:888,identityCode:'B2C3D4E5F6',visitorId:otherVisitor});
+   if(tracker.crossDevice&&token===token2)return respond(200,{participantNo:777,identityCode:code,visitorId:ownerVisitor});
+   return respond(200,{participantNo:777,identityCode:code,visitorId:body.visitor});
   }
   if(name==='beagu-referral-link-v1'){
    if(!tier)return respond(401,{error:'AUTH_REQUIRED'});
+   if(tracker.crossDevice&&token===token1){
+     assert.equal(body.visitor,otherVisitor);assert.equal(body.identityCode,'B2C3D4E5F6');
+     return respond(200,{link:'https://baeguindex.com/survey.html?ref='+'d'.repeat(64),shortLink:'https://baeguindex.com/r/#Other123',validReferrals:0,level:1,provisional:false});
+   }
+   if(tracker.crossDevice&&token===token2){
+     assert.equal(body.visitor,ownerVisitor);assert.equal(body.identityCode,code);
+     return respond(200,{link:fullLink,shortLink:publicLink,validReferrals:3,level:2,provisional:true});
+   }
    assert.equal(body.identityCode,code);tracker.referralRequests++;if(tracker.promoted&&tracker.count>=1&&token===token1)tracker.sessionPromoted=true;
    return respond(200,{link:fullLink,shortLink:publicLink,validReferrals:tracker.count,level:tracker.promoted?2:1,provisional:tracker.promoted});
   }
@@ -187,6 +199,24 @@ async function search(page,level){
   await waitText(page,'#togetherReferralState','Lv.2 인증 완료');
   assert.equal(await page.locator('#certificate').getAttribute('data-level'),'2');
   await fit(page);
+  // Separate browser context with unrelated, unearned device identity. After
+  // authenticating the owner's personal code, all visible values must switch.
+  const other=await browser.newContext({viewport:{width:cfg.width,height:cfg.height}});
+  try{
+    const second=await other.newPage();const cross={count:0,promoted:false,allowLv2:true,identityRequests:0,referralRequests:0,searchTiers:[],crossDevice:true};
+    await routes(second,cross);await goto(second,'challenge.html');await login(second,common,1);
+    await waitText(second,'#participantNo','888번째');await waitText(second,'#challengeReferralCount','0건');
+    assert.equal(await second.locator('#challengeReferralLink').inputValue(),'https://baeguindex.com/r/#Other123');
+    await login(second,code,2);
+    await waitText(second,'#participantNo','777번째');await waitText(second,'#challengeReferralCount','3건');
+    assert.equal(await second.locator('#challengeReferralLink').inputValue(),publicLink);
+    await second.locator('#togetherIdentityDetails summary').click();
+    assert.equal(await second.locator('#identityCode').innerText(),code);
+    assert.equal(await second.locator('#challengeIdentityPanel').getAttribute('data-referral-state'),'earned');
+    await second.locator('#beaguLevelState').click();await second.locator('#beaguParticipationLogout').click();
+    await second.waitForFunction(()=>document.querySelector('#beaguLevelState')?.dataset.level==='0');
+    assert.equal(await second.locator('#challengeReferralLink').inputValue(),'');
+  }finally{await other.close();}
   assert.deepEqual(errors,[],'Unhandled page exceptions');
   console.log('PASS '+cfg.name+': Lv0/1/2, referral 0/1/3, legacy Lv2, actual PNG downloads, clipboard, special ordinal 777, search and compare; all external requests blocked.');
   await ctx.close();

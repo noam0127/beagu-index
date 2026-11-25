@@ -4,7 +4,7 @@ const load=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 const run=load("teacher-run.html"),volley=load("teacher-volleyball.html");
 const home=load("index.html"),hostLock=load("js/arcade-play-lock-v1.js");
 const css=load("styles/arcade-fullscreen-v1.css");
-assert.match(run,/styles\/arcade-fullscreen-v1\.css\?v=20261123-survival-contain1/);
+assert.match(run,/styles\/arcade-fullscreen-v1\.css\?v=11116-contain/);
 assert.match(home,/href="games\.html/);assert.match(load("games.html"),/href="teacher-run\.html"/);
 assert.match(run,/document\.body\.classList\.toggle\("arcade-run-game-playing",state==="playing"\|\|state==="paused"\)/);
 assert.match(css,/body\.arcade-run-game-playing \.stage:not\(\.arcade-fullscreen-fallback\)/);

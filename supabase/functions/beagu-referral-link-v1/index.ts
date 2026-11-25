@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       return json(origin, 401, { error: 'AUTH_REQUIRED' });
     const { data: session, error: sessionError } = await db
       .from('beagu_level_sessions')
-      .select('access_level,expires_at,identity_visitor_id')
+      .select('access_level,expires_at,identity_visitor_id,identity_campaign')
       .eq('token_sha256', await digest(sessionToken))
       .maybeSingle();
     if (sessionError) return json(origin, 503, { error: 'SESSION_UNAVAILABLE' });
@@ -98,6 +98,30 @@ Deno.serve(async (req) => {
     const identityCode = body.identityCode;
     if (session.identity_visitor_id && session.identity_visitor_id !== visitor)
       return json(origin, 403, { error: 'VISITOR_MISMATCH' });
+
+    // Personal Lv2 sessions are already authenticated to the participant.
+    // Retrieve the existing link read-only; do not bind the new device or enroll again.
+    if (session.identity_visitor_id) {
+      if (session.identity_campaign !== '2026' || Number(session.access_level) !== 2)
+        return json(origin, 403, { error: 'OWNERSHIP_VERIFICATION_FAILED' });
+      const { data: owner, error: ownerError } = await db.rpc('beagu_earned_challenge_visitor', { p_code: identityCode });
+      if (ownerError) return json(origin, 503, { error: 'SESSION_UNAVAILABLE' });
+      if (owner !== session.identity_visitor_id)
+        return json(origin, 403, { error: 'OWNERSHIP_VERIFICATION_FAILED' });
+      const proofToken = await referralToken(visitor, identityCode);
+      const { data: existing, error: proofError } = await db.rpc('beagu_referral_existing_link_v1', {
+        p_visitor: visitor, p_identity_code: identityCode, p_referral_hash: await digest(proofToken),
+      });
+      if (proofError) return json(origin, 503, { error: 'REFERRAL_UNAVAILABLE' });
+      const credit = verifiedReferralCredit(existing);
+      if (!credit.earned || typeof existing?.shortCode !== 'string' || !/^[A-Za-z0-9_-]{8}$/.test(existing.shortCode))
+        return json(origin, 403, { error: 'OWNERSHIP_VERIFICATION_FAILED' });
+      return json(origin, 200, {
+        shortLink: 'https://baeguindex.com/r/#' + existing.shortCode,
+        link: 'https://baeguindex.com/survey.html?ref=' + proofToken,
+        level: 2, validReferrals: credit.count, provisional: true,
+      });
+    }
 
     // A verified challenge code + a local, per-device random secret is required.
     // Bound claims reject attempts from another device that knows the UUID alone.

@@ -1,7 +1,9 @@
 name: Fire Court isolated validation
 on:
+  pull_request:
+    branches: [release/base-pages-v11116-validation]
   push:
-    branches: [release/v1.11.15-fire-court, fix/v1115-school-glory-after-fire-court]
+    branches: [release/v1.11.15-fire-court, fix/v1115-school-glory-after-fire-court, fix/v11116-court-renewal-ui-only]
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Existing offline contracts and new music
         run: |
@@ -27,6 +30,8 @@ jobs:
           node tests/run4-support-v11115.mjs
           node tests/run4-qualification-v11115.mjs
           node tests/arcade-school-recommend-server.mjs
+          node tests/arcade-volleyball-touch-jump.mjs
+          node tests/arcade-survival-screen-fit.mjs
       - name: Install pinned browser
         run: |
           npm install --no-save --ignore-scripts --no-audit --no-fund --fetch-retries=1 --fetch-timeout=30000 playwright@1.56.1
@@ -49,6 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Disposable PostgreSQL archive and verified 4.0 adapter
         run: |

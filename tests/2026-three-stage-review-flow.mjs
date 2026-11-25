@@ -4,7 +4,7 @@ import vm from 'node:vm';
 const read=path=>fs.readFileSync(path,'utf8');
 const sql=read('supabase/migrations/20261122002000_beagu_2026_admin_three_stage_pipeline.sql');
 const api=read('supabase/functions/beagu-2026-review-admin/index.ts');
-const html=read('admin.html');
+const html=read('tests/fixtures/admin-v1115-legacy.html');
 const js=read('js/beagu-2026-admin-review.js');
 const css=read('styles/beagu-admin-v1.css');
 // The three stages explicitly identify the scope of evidence.
@@ -16,7 +16,7 @@ assert.match(html,/id="adminPipelineBasis"/);
 assert.match(html,/id="adminPipelineStatus"/);
 assert.match(html,/추천 연결 응답만 부분 검증합니다/);
 assert.match(html,/기술검사 합격은 자료의 진실성이나 공개 허가가 아닙니다/);
-assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261124-waterway2/);
+assert.match(html,/js\/beagu-2026-admin-review\.js\?v=20261125-percentile-v13/);
 assert.match(css,/\.admin-pipeline-stages/);
 assert.match(css,/@media\(max-width:950px\)/);
 assert.doesNotThrow(()=>new vm.Script(js,{filename:'beagu-2026-admin-review.js'}));

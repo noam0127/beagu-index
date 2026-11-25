@@ -1,0 +1,36 @@
+name: Regional interest isolated validation
+on:
+  pull_request:
+    branches: ['fix/v11117-common-average']
+permissions:
+  contents: read
+jobs:
+  postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Disposable SQL tests
+        run: |
+          set -euo pipefail
+          c="region-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$c" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          for f in tests/region-interest-fixture.sql supabase/region-interest-v1.sql tests/region-interest-assertions.sql; do docker exec -i "$c" psql -X -v ON_ERROR_STOP=1 -U postgres < "$f"; done
+  chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"; else timeout 120s npx playwright install chromium --only-shell; fi
+      - run: node tests/region-interest-browser.cjs

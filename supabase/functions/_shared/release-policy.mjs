@@ -14,7 +14,7 @@ export function releaseMetrics(rows,catalog,level,approvedLv2Instant2026=false){
   if(![1,2].includes(level))return [];
   const definitions=new Map(catalog.filter(c=>c.verified===true).map(c=>[`${c.survey_year}:${c.question_id}`,c]));
   const candidates=rows.flatMap(r=>{
-    if(r.survey_year===2026&&/^Q51(?:$|[._-])/.test(r.question_id))return [];
+    if(r.survey_year===2026&&/^Q(?:31|51)(?:$|[._-])/.test(r.question_id))return [];
     // Only the Lv2 server route may pass true, after a separate approved exact-snapshot
     // RPC has confirmed the independent legal/privacy review. Default stays 24h.
     if(r.survey_year===2026&&!approvedLv2Instant2026&&!approved2026ReleaseIsOldEnough(r.approved_at))return [];
