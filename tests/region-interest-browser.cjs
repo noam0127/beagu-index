@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=require('playwright');
+(async()=>{const b=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});try{const p=await b.newPage({viewport:{width:390,height:844}});
+await p.setContent('<section id="beaguInterest">학교</section><section id="regionPanel" hidden><select id="regionSelect"><option value="">선택</option><option>부산</option></select><select id="officeSelect"><option value="">선택</option><option value="부산광역시북부교육지원청">북부</option></select></section><section id="beaguRegionInterest" hidden><ol data-region-interest-list></ol><p data-region-interest-status></p></section>');
+await p.evaluate(()=>{window.beaguVisitor='11111111-1111-1111-1111-111111111111';window.calls=[];window.supabaseClient={rpc:(name,args)=>{calls.push({name,args});return {then(resolve){resolve({data:name.includes('top5')?[{region:'부산',office:'부산광역시북부교육지원청'},{region:'경기',office:'경기도광명교육지원청'}]:true,error:null});}}}}});
+await p.addScriptTag({content:fs.readFileSync('js/beagu-region-interest-v1.js','utf8')});
+assert.equal(await p.locator('#beaguRegionInterest').isVisible(),false);assert.equal(await p.locator('#beaguInterest').isVisible(),true);
+await p.evaluate(()=>document.getElementById('regionPanel').hidden=false);
+await p.getByText('부산 북부',{exact:true}).waitFor();assert.equal(await p.locator('#beaguInterest').isVisible(),false);
+await p.locator('#regionSelect').focus();await p.keyboard.press('ArrowDown');await p.keyboard.press('Enter');
+assert.equal(await p.evaluate(()=>calls.filter(x=>x.name.includes('record')).length),0);
+await p.locator('#officeSelect').focus();await p.keyboard.press('ArrowDown');await p.keyboard.press('Enter');
+await p.waitForFunction(()=>calls.some(x=>x.name.includes('record')));const events=await p.evaluate(()=>calls.filter(x=>x.name.includes('record')));
+assert.equal(events.length,1);assert.equal(events[0].args.p_region,'부산');assert.equal(events[0].args.p_office,'부산광역시북부교육지원청');
+await p.evaluate(()=>document.querySelector('#officeSelect').dispatchEvent(new Event('change',{bubbles:true})));
+assert.equal(await p.evaluate(()=>calls.filter(x=>x.name.includes('record')).length),1);
+await p.evaluate(()=>document.getElementById('regionPanel').hidden=true);await p.locator('#beaguInterest').waitFor({state:'visible'});assert.equal(await p.locator('#beaguRegionInterest').isVisible(),false);
+console.log('PASS dropdown pair only, programmatic event ignored, short region labels and mode-specific ranking');
+}finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});
