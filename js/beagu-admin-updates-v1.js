@@ -10,7 +10,14 @@
  let busy=false,model=null,timer=null,cachedHead=null,cachedProposal=null,readyKey=null,lastKey=null,refreshSeq=0,liveSeq=0,liveSHA=null,liveVersion=null,liveCheckedAt=0,lastDispatch=null,wakeAt=0,refreshInFlight=false,refreshRequested=false;
  const SHA=/^[0-9a-f]{40}$/;
  const draftFields=["releaseCandidateSha","releaseVersionInput","releaseSummaryInput"];
- let draftEditing=false;
+ let draftEditing=false,proofAt=0,verificationReason=null,lastFullCheck=0;
+ const PROOF_TTL=120000;
+ const transientReasons=new Set(["github_unavailable","github_rate_limited","release_service_unavailable","status_unavailable"]);
+ const verificationMessages={github_unavailable:"GitHub 일시적 조회 오류",github_rate_limited:"GitHub API 호출 제한 · 제한 해제 후 재검증",github_access_denied:"GitHub 조회 권한 또는 인증 설정 확인 필요",direct_ci_required:"공식 CI 성공 기록 없음",direct_candidate_stale:"현재 운영 SHA를 포함하지 않는 후보",direct_version_mismatch:"등록 버전 또는 변경내용 불일치",invalid_direct_manifest:"후보 버전 정보 오류",invalid_direct_sha:"후보 SHA 오류",status_unavailable:"상태 조회 일시적 오류",release_service_unavailable:"검증 서버 일시적 오류"};
+ const verificationKey=s=>JSON.stringify([s.production_sha||"",s.draft_sha||"",s.draft_version||"",s.draft_summary||""]);
+ function syncVerificationKey(s){const key=verificationKey(s);if(key!==lastKey){readyKey=null;proofAt=0;verificationReason=null;lastKey=key;}return key;}
+ function acceptVerification(data){const key=syncVerificationKey(data.state||{});if(data.direct_candidate_ready===true){const stamp=data.direct_candidate_checked_at;readyKey=key;proofAt=typeof stamp==="number"&&Number.isFinite(stamp)?Math.min(Date.now(),stamp):Date.now();verificationReason=null;}else if(data.direct_candidate_ready===false){verificationReason=data.direct_candidate_reason||"direct_candidate_invalid";if(!transientReasons.has(verificationReason)){readyKey=null;proofAt=0;}}}
+
  function syncDraftForm(state){
   if(!draftEditing){
    el("releaseCandidateSha").value=state.draft_sha&&state.draft_sha!==state.production_sha?state.draft_sha:"";
@@ -33,7 +40,7 @@
   p.classList.toggle("release-status-error",isError);
  }
  function denied(text){
-  ++refreshSeq;++liveSeq;model=null;readyKey=null;liveSHA=null;draftEditing=false;for(const id of draftFields)el(id).value="";el("releaseLogin").hidden=false;el("releaseDashboard").hidden=true;
+  ++refreshSeq;++liveSeq;model=null;readyKey=null;proofAt=0;verificationReason=null;lastKey=null;liveSHA=null;draftEditing=false;for(const id of draftFields)el(id).value="";el("releaseLogin").hidden=false;el("releaseDashboard").hidden=true;
   message(text,true);
  }
  async function request(action,payload={},endpoint=api){
@@ -66,6 +73,8 @@
     no_production_rollback:"되돌릴 수 있는 이전 운영 버전이 없습니다.",
     admin_mfa_required:"관리자 2단계 인증이 필요합니다. 다시 로그인하세요.",
     github_unavailable:"GitHub 버전을 확인할 수 없습니다. 잠시 후 다시 시도하세요.",
+    github_rate_limited:"GitHub API 호출 제한입니다. 제한 해제 후 재검증하세요.",
+    github_access_denied:"GitHub 조회 권한 또는 인증 설정을 확인하세요.",
     release_service_unavailable:"배포 서버가 응답하지 않습니다. 잠시 후 다시 확인하세요."
    };
    const error=Error(messages[result.error]||"요청 실패 ("+(result.error||response.status)+")");error.status=response.status;throw error;
@@ -121,14 +130,12 @@
   write("releaseStageSha",s.staging_sha?"종료된 경로 · 과거 코드 "+short(s.staging_sha):"종료된 경로");
   write("releaseProdSha",s.production_sha?"코드 "+short(s.production_sha):"초기 배포 후 표시됩니다");
   write("releaseHead",cachedHead?"GitHub 최신 코드: "+short(cachedHead):"새로고침하면 GitHub 최신 코드를 확인합니다.");
-  const key=String(s.production_sha||"")+":"+String(s.draft_sha||"");
-  if(key!==lastKey){readyKey=null;lastKey=key;}
-  if(data.direct_candidate_ready===true)readyKey=key;
-  else if(data.direct_candidate_ready===false)readyKey=null;
-  const candidate=data.direct_release_v1===true&&s.draft_sha?{sha:s.draft_sha,version:s.draft_version}:null;
-  const ready=!!candidate&&readyKey===key;
+  const key=syncVerificationKey(s);
+  const candidate=data.direct_release_v1===true&&s.draft_sha&&s.draft_sha!==s.production_sha?{sha:s.draft_sha,version:s.draft_version}:null;
+  const ready=!!candidate&&readyKey===key&&Date.now()-proofAt<PROOF_TTL;
+  const detail=verificationReason?(verificationMessages[verificationReason]||"후보 검증 실패 · 서버 확인 필요"):null;
   write("releaseDraftInfo",candidate?
-    (ready?"검증 완료 · ":"검증 미확인 · ")+candidate.version+" · "+short(candidate.sha)+(ready?" · 실제 웹 적용 가능":" · 직접 적용 전 검증 필요"):
+    (ready?"검증 완료 · ":"검증 미확인 · ")+candidate.version+" · "+short(candidate.sha)+(ready?(detail?" · "+detail+" · 적용 직전 서버 재검증":" · 실제 웹 적용 가능"):" · "+(detail||"상태 새로고침으로 재검증")):
     s.draft_sha?"등록된 업데이트: "+s.draft_version+" ("+short(s.draft_sha)+")":"새 버전을 등록하세요.");
   syncDraftForm(s);
   const active=!!job;
@@ -155,23 +162,24 @@
   refreshInFlight=true;
   const seq=++refreshSeq;
   try{
+   if(!quiet)lastFullCheck=Date.now();
    const data=await request("status",{check_latest:!quiet});
    if(seq!==refreshSeq||busy)return;
    el("releaseDashboard").hidden=false;el("releaseLogin").hidden=true;
-   render(data);
+   acceptVerification(data);render(data);
    if(!quiet||!liveSHA||liveSHA!==data.state?.production_sha||Date.now()-liveCheckedAt>45000)void verifyLive();
-   if(!quiet)message("업데이트 관리 연결 완료 · 서버 확인 상태");
+   if(!quiet)message(verificationReason?(verificationMessages[verificationReason]||"후보 검증 실패 · 서버 확인 필요"):"업데이트 관리 연결 완료 · 서버 확인 상태",!!verificationReason);
   }catch(err){
    if(seq!==refreshSeq)return;
    if(err.status===401||err.status===403){denied("관리자 인증 필요: "+err.message);return;}
-   readyKey=null;if(model)render(model);
+   verificationReason="status_unavailable";if(model)render(model);
    if(!quiet)message("배포 상태 조회 실패: "+(err.message||String(err)),true);
   }finally{refreshInFlight=false;if(refreshRequested&&!busy){refreshRequested=false;void refresh(false);}}
  }
  async function command(action){
   if(busy)return;
   if(action==="stage_apply"||action==="stage_rollback")return;
-  if(action==="prod_apply"&&(el("releaseProdApply").disabled||!model?.state?.draft_sha))return;
+  if(action==="prod_apply"&&(el("releaseProdApply").disabled||!model?.state?.draft_sha||Date.now()-proofAt>=PROOF_TTL))return;
   if(action==="prod_rollback"&&el("releaseProdRollback").disabled)return;
   const snapshot=model?.state?{...model.state}:null,rollback=model?.production_history?.find(h=>h.action!=="data_refresh")?.from_sha;
   if(!snapshot)return;
@@ -188,8 +196,8 @@
    const result=action==="prod_apply"?await request("prod_direct_apply",{candidate_sha:snapshot.draft_sha,expected_production_sha:snapshot.production_sha,confirmed_direct:true}):await request(action,{expected_production_sha:snapshot.production_sha,expected_rollback_sha:rollback,confirmed_direct:true});
    lastDispatch=result.dispatch||null;
    message("배포 승인 등록 완료 ("+result.job_id.slice(0,8)+"). "+(lastDispatch==="dispatched"?"GitHub 실행 요청을 전달했습니다.":"예약 실행 대기 중입니다. 필요하면 GitHub에서 실행하세요."));
-  }catch(err){message(err.message,true)}
-  finally{busy=false;await refresh(true);}
+  }catch(err){if(action==="prod_apply"){readyKey=null;proofAt=0;verificationReason="direct_candidate_invalid";}message(err.message,true)}
+  finally{busy=false;await refresh(action!=="prod_apply");}
  }
  async function register(event){
   event.preventDefault();if(busy)return;
@@ -231,9 +239,9 @@
    if(!proof.permitted||!proof.mfa_verified||proof.role!=="owner")
     throw Error("최고 관리자 권한과 2단계 인증이 필요합니다.");
    await refresh();
-   timer=setInterval(()=>{if(!document.hidden&&!busy)void refresh(true)},10000);
+   timer=setInterval(()=>{if(!document.hidden&&!busy){const s=model?.state;const needs=!!s?.draft_sha&&s.draft_sha!==s.production_sha&&(!proofAt||Date.now()-proofAt>=60000);const canCheck=Date.now()-lastFullCheck>=60000&&(!verificationReason||transientReasons.has(verificationReason));void refresh(!(needs&&canCheck));}},10000);
   }catch(err){denied("관리자 인증 필요: "+err.message);}
  })();
  window.addEventListener("pagehide",()=>{++refreshSeq;++liveSeq;if(timer)clearInterval(timer)});
- window.addEventListener("pageshow",event=>{if(event.persisted){void refresh(false);if(timer)clearInterval(timer);timer=setInterval(()=>{if(!document.hidden&&!busy)void refresh(true)},10000);}});
+ window.addEventListener("pageshow",event=>{if(event.persisted){void refresh(false);if(timer)clearInterval(timer);timer=setInterval(()=>{if(!document.hidden&&!busy){const s=model?.state;const needs=!!s?.draft_sha&&s.draft_sha!==s.production_sha&&(!proofAt||Date.now()-proofAt>=60000);const canCheck=Date.now()-lastFullCheck>=60000&&(!verificationReason||transientReasons.has(verificationReason));void refresh(!(needs&&canCheck));}},10000);}});
 })();

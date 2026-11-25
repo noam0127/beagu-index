@@ -2,6 +2,7 @@
 // GitHub Actions worker operations require a signed GitHub OIDC token restricted to this repo/workflow.
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.58.0";
 import {createRemoteJWKSet,jwtVerify} from "https://esm.sh/jose@5.10.0";
+import {createGitHubReader,createStatusVerifier,githubReason} from "./verification.mjs";
 
 const db=createClient(Deno.env.get("SUPABASE_URL")||"",Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"",{
   auth:{persistSession:false,autoRefreshToken:false}
@@ -68,13 +69,8 @@ async function githubWorker(token:string):Promise<boolean>{
    ["schedule","push","workflow_dispatch"].includes(String(payload.event_name||""));
  }catch{return false;}
 }
-async function github(path:string){
- const response=await fetch(mainApi+path,{headers:{
-  "Accept":"application/vnd.github+json","User-Agent":"beaguindex-release-v1",...(dispatchToken?{"Authorization":"Bearer "+dispatchToken}:{})
- },signal:AbortSignal.timeout(11000)});
- if(!response.ok)throw Error("github_unavailable");
- return response.json();
-}
+// A separately scoped read credential is optional; dispatch authorization is unchanged.
+const github=createGitHubReader({baseUrl:mainApi,token:Deno.env.get("BEAGU_RELEASE_READ_TOKEN")||dispatchToken});
 async function latestManifest(){
  try{
   const doc=await github("/contents/release-candidate.json?ref=main");
@@ -110,6 +106,7 @@ async function directCandidate(base:string,sha:string){
  if(!proof)return {error:"direct_ci_required",status:409};
  return {version,summary,files:delta.files.map((f:any)=>String(f.filename||"")).filter(Boolean)};
 }
+const verification=createStatusVerifier({verify:directCandidate});
 async function state(){
  const {data,error}=await db.from("beagu_site_release_state_v1").select("*").eq("id",1).single();
  if(error||!data)throw Error("state_unavailable");return data;
@@ -140,19 +137,8 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
  if(action==="status"){
   const [stageHistory,prodHistory,recent]=await Promise.all([history("staging"),history("production"),db.from("beagu_site_release_jobs_v1").select("id,version,action,status,to_sha,from_sha,created_at,started_at,finished_at,error_code").eq("target","production").order("created_at",{ascending:false}).limit(8)]);
   if(recent.error)throw Error("job_unavailable");
-  let ready:null|boolean=null, reason:string|null=null;
-  if(input.check_latest===true){
-   ready=false;
-   if(s.draft_sha&&s.production_sha&&s.draft_sha!==s.production_sha){
-    try{
-     const candidate=await directCandidate(s.production_sha,s.draft_sha);
-     if("error" in candidate)reason=candidate.error||"direct_candidate_invalid";
-     else if(candidate.version===s.draft_version&&candidate.summary===s.draft_summary)ready=true;
-     else reason="direct_version_mismatch";
-    }catch{reason="github_unavailable";}
-   }
-  }
-  return respond({direct_release_v1:true,control_tower_v2:true,dispatch_configured:!!dispatchToken,recent_jobs:recent.data||[],direct_candidate_ready:ready,direct_candidate_reason:reason,state:s,job:current,head_sha:null,suggested_draft:null,staging_history:stageHistory,
+  const {ready,reason,checkedAt}=await verification.check(s,input.check_latest===true);
+  return respond({direct_release_v1:true,control_tower_v2:true,dispatch_configured:!!dispatchToken,recent_jobs:recent.data||[],direct_candidate_ready:ready,direct_candidate_reason:reason,direct_candidate_checked_at:checkedAt,state:s,job:current,head_sha:null,suggested_draft:null,staging_history:stageHistory,
     production_history:prodHistory,staging_url:null,production_url:"https://baeguindex.com/"},200,origin);
  }
  if(action==="wake_approved_job"){
@@ -173,6 +159,7 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   const result=await transition("register",{base:s.production_sha,expected_draft:s.draft_sha,sha,version:candidate.version,summary:candidate.summary});
   if(result.error)return error(result.error,409,origin);
   if(result.draft_sha!==sha)return error("direct_draft_conflict",409,origin);
+  verification.remember({...s,draft_sha:sha,draft_version:candidate.version,draft_summary:candidate.summary},candidate);
   await db.from("beagu_admin_audit_events").insert({actor_user_id:userId,event_type:"site_release_register_direct",outcome:"success",details:{sha,version:candidate.version,base:s.production_sha}});
   return respond({draft_sha:sha,version:candidate.version,summary:candidate.summary,changed_count:candidate.files.length,changed_files:candidate.files.slice(0,25)},200,origin);
  }
@@ -181,6 +168,8 @@ async function adminAction(input:Record<string,unknown>,userId:string,origin:str
   const sha=String(input.candidate_sha||"");
   if(input.confirmed_direct!==true||!s.draft_sha||sha!==s.draft_sha||input.expected_production_sha!==s.production_sha)
    return error("direct_confirmation_required",409,origin);
+  // Publication always checks live GitHub, even if display verification is cached.
+  verification.invalidate(s);
   const candidate=await directCandidate(s.production_sha,sha);
   if("error" in candidate)return error(candidate.error!,candidate.status!,origin);
   if(candidate.version!==s.draft_version||candidate.summary!==s.draft_summary)return error("direct_version_mismatch",409,origin);
@@ -303,7 +292,9 @@ Deno.serve(async(req:Request)=>{
   if(!userId)return error("admin_mfa_required",403,origin);
   return await adminAction(input,userId,origin);
  }catch(e){
-  console.error("site_release_failure",e instanceof Error?e.message:"unknown");
+  const reason=e instanceof Error?e.message:"unknown";
+  console.error("site_release_failure",reason);
+  if(["github_unavailable","github_rate_limited","github_access_denied"].includes(reason))return error(githubReason(e),503,origin);
   return error("release_service_unavailable",503,origin);
  }
 });
