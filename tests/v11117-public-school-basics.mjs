@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';
+import {projectPublicSchoolBasics2026 as project} from '../supabase/functions/_shared/official-school-profile-2026.mjs';
+const row={school_id:'1234567',source_year:2026,disclosure_code:'S000000001',teacher_total:20,profile:{school_name:'fixture',closed:'N',suspended:'N',teacher_total:20,male_teachers:5,female_teachers:15,second_grade_teachers:4,student_count:200,student_reference_year:2026,ratio_basis:'ELEMENTARY_TEACHER_CERTIFIED',housing_price_won:123,question_results:'PRIVATE'}};
+const p=project([row],['1234567'])['1234567'];assert.deepEqual(p,{source_year:2026,student_count:200,teacher_total:20,male_teacher_ratio:25,second_grade_teacher_ratio:20});
+const q=project([{...row,profile:{...row.profile,ratio_basis:undefined,student_reference_year:2025}}],['1234567'])['1234567'];assert.deepEqual(q,{source_year:2026,student_count:null,teacher_total:null,male_teacher_ratio:null,second_grade_teacher_ratio:null});
+assert.equal(Object.keys(project([row],['7654321'])).length,0);assert.equal(Object.keys(project([{...row,source_year:2025}],['1234567'])).length,0);
+console.log('PASS public official-only projection, certified denominator and no protected fields');

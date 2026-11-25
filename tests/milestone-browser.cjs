@@ -13,7 +13,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),{chrom
     document.querySelector('#challengeAccessPanel').setAttribute('data-auth-level',String(s.level));document.querySelector('#challengeProtected').hidden=false;
     window._captures=[];window._shares=[];window._count=s.count;window._promoted=s.promoted;
     Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async data=>{window._shares.push(data)}}});
-    window.fetch=async(url)=>({ok:true,status:200,json:async()=>String(url).includes('identity')?{participantNo:s.ordinal,identityCode:'ABCDEFGHJK'}:{link:'https://baeguindex.com/survey.html?ref='+'a'.repeat(64),level:window._promoted?2:1,validReferrals:window._count,provisional:window._promoted}});
+    window.fetch=async(url)=>({ok:true,status:200,json:async()=>String(url).includes('identity')?{participantNo:s.ordinal,identityCode:'ABCDEFGHJK',visitorId:window.beaguVisitor}:{link:'https://baeguindex.com/survey.html?ref='+'a'.repeat(64),level:window._promoted?2:1,validReferrals:window._count,provisional:window._promoted}});
     window.html2canvas=async(root)=>{window._captures.push({text:root.textContent,level:root.dataset.level,private:!!root.querySelector('#identityCode,#challengeReferralLink')});const canvas=document.createElement('canvas');canvas.width=2;canvas.height=2;return canvas;};
    },scenario);
    await page.addScriptTag({content:js});await page.addScriptTag({content:ref});await page.evaluate(()=>window.dispatchEvent(new Event('beagu:challenge-access-granted')));

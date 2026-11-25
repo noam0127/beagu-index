@@ -7,7 +7,7 @@ assert.doesNotMatch(source,/id="volley-attack"/);assert.match(source,/attackPoin
 assert.match(source,/canvas\.addEventListener\("pointerdown"/);
 assert.match(source,/\["pointercancel","lostpointercapture"\]/);assert.match(source,/touchControl.up\(event.pointerId,[^;]+;endAttack\(event\)/);
 assert.match(source,/state\.spikeBufferFrames=SPIKE_BUFFER/);
-assert.match(source,/state\.dashCooldownFrames=mobile\?0:DASH_COOLDOWN/);
+assert.match(source,/state\.dashCooldownFrames=DASH_COOLDOWN/);
 assert.match(source,/const vertical=hasPlayerWings\(\)&&canPlayerJump\(\)\?inputY:0/);
 assert.match(source,/impactSpeed >= AUTO_SPIKE_SPEED\|\|state\.spikeBufferFrames>0\|\|charged/);
 const w={};vm.runInNewContext(readFileSync('js/volley-touch-v1.js','utf8'),{window:w,Math});
@@ -24,7 +24,7 @@ const frame=new Function('env',[
  "const canPlayerJump=()=>!isMysteryBuff('left','shackle')&&(currentDifficulty!=='extreme'||hasPlayerWings());",
  'const playerCeiling=()=>hasPlayerWings()?86:NET_TOP-78;',
  'const keyboardDirection=(keys.right?1:0)-(keys.left?1:0);const keyboardVertical=(keys.down?1:0)-(keys.up?1:0);',
- 'const beforeMoveX=left.x,beforeMoveY=left.y,itemSpeed=1;let lastMoveDirection=1;',
+ 'const beforeMoveX=left.x,beforeMoveY=left.y,itemSpeed=1;let lastMoveDirection=1;const window={matchMedia:()=>({matches:!!env.mobile})};',
  'function aimDash(x,y){state.dashFrames=8;state.dashX=x||1;state.dashY=hasPlayerWings()&&canPlayerJump()?y:0;}',
  control,movement,'return {x:left.x,y:left.y,vy:left.vy,flightAllowed};'
 ].join('\n'));
@@ -36,6 +36,7 @@ const easy=make('easy'),wings=make('normal',true);for(const game of [easy,wings]
 const altitude=wings.left.y;wings.wingActive=false;frame(wings);assert(wings.left.y>=altitude);for(let i=0;i<125;i++)frame(wings);assert.equal(wings.left.y,420);
 const chained=make('extreme',false,true);chained.touchControl.down(1,{x:180,y:100},420);frame(chained);assert.equal(chained.left.y,420);
 const dash=make('normal'),plain=make('normal');dash.state.dashFrames=8;plain.keys.right=true;frame(plain);frame(dash);assert(dash.left.x-180>plain.left.x-180);assert.equal(dash.state.dashFrames,7);for(let i=0;i<7;i++)frame(dash);assert.equal(dash.state.dashFrames,0);
-const held=make('normal');held.attackPointer=1;held.keys.right=true;for(let i=0;i<20;i++){frame(held);assert.equal(held.state.dashFrames,7);assert.equal(held.state.dashCooldownFrames,0);assert.equal(held.state.spikeBufferFrames,19);}
+const held=make('normal');held.attackPointer=1;held.keys.right=true;for(let i=0;i<20;i++){frame(held);assert.equal(held.state.dashFrames,0);assert.equal(held.state.spikeBufferFrames,19);}
+const mobile=make('normal');mobile.mobile=true;mobile.state.dashFrames=8;mobile.keys.right=true;frame(mobile);assert.equal(mobile.state.dashFrames,0);
 const pc=make('normal');pc.keys.right=true;pc.keys.jump=true;frame(pc);assert(pc.left.x>180&&pc.left.y<420);
 console.log('PASS direct touch target, jump/gravity, flight hover and expiry, shackles, mobile held attack and desktop keyboard');

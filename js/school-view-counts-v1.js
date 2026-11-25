@@ -1,5 +1,5 @@
 /* Verified, anonymous per-school selection totals.
- * Counts are saved on the server after a logged school_selected action only.
+ * Counts combine confirmed search and actual detail events; each kind is daily-deduplicated.
  */
 (() => {
   'use strict';
@@ -16,7 +16,7 @@
       if(node.dataset.schoolId!==id)return;
       const number=node.querySelector('.school-view-number');
       if(number)number.textContent=total.toLocaleString('ko-KR');
-      node.setAttribute('aria-label','학교 선택 횟수 '+total.toLocaleString('ko-KR')+'회 · 하루 중복 제외');
+      node.setAttribute('aria-label','검색 및 상세조회 합계 '+total.toLocaleString('ko-KR')+'회 · 유형별 하루 중복 제외');
     });
   }
   async function fetchCounts(ids){

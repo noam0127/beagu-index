@@ -1,0 +1,21 @@
+\set ON_ERROR_STOP on
+create role anon;create role authenticated;create role service_role bypassrls;
+create schema beagu_private;create schema extensions;create extension pgcrypto schema extensions;
+grant usage on schema beagu_private,extensions to service_role;
+create table public.schools(school_id text primary key,school_name text,sido_standard text,support_office text,school_kind text,status text);
+insert into public.schools values('1000001','학교1','부산','동래','초등학교','운영'),('1000002','학교2','부산','동래','초등학교','운영');
+create table public.beagu_admin_accounts(user_id uuid primary key,enabled boolean,role text);
+insert into public.beagu_admin_accounts values('11111111-1111-1111-1111-111111111111',true,'owner');
+create function public.beagu_admin_active_mfa_session(uuid,uuid) returns boolean language sql as $f$ select $1='11111111-1111-1111-1111-111111111111'::uuid and $2='22222222-2222-2222-2222-222222222222'::uuid $f$;
+create table public.beagu_edited_school_rows(survey_year smallint constraint beagu_edited_school_rows_survey_year_check check(survey_year in (2023,2024,2025)),source_row int,school_id text references public.schools,original_school_name text,original_sido text,original_support_office text,source_tab text,display_values jsonb,release_status text,reviewed_by text,reviewed_at timestamptz,imported_at timestamptz default now(),primary key(survey_year,source_row));
+alter table public.beagu_edited_school_rows enable row level security;
+insert into public.beagu_edited_school_rows values(2025,2,'1000001','학교1','부산','동래','기존','{"old":12}','PENDING',null,null,now());
+create table beagu_private.beagu_2026_civic_feedback(id uuid primary key default gen_random_uuid(),school_id text,kind text,category text,question_id text,detail text,actor_hash text,verified_visitor uuid,status text default 'PENDING',created_at timestamptz default now());
+create table beagu_private.beagu_2026_civic_feedback_audit(feedback_id uuid,actor_id uuid,action text,reason text,created_at timestamptz default now());
+create table beagu_private.beagu_2026_civic_publication_hold(school_id text primary key,feedback_id uuid,snapshot_sha256 text,active boolean default true,decision_by uuid,reason text,updated_at timestamptz default clock_timestamp());
+create table beagu_private.beagu_2026_level_release_approvals(access_level int,approved bool);
+create table beagu_private.beagu_2026_percentile_v13_decisions(id bigint,school_id text,access_level int,decision text,decided_at timestamptz);
+create table public.beagu_2026_results_snapshot(school_id text primary key,payload_sha256 text,approval_status text,approved_by text,approved_at timestamptz,approved_payload_sha256 text,approval_evidence text,source_snapshot_at timestamptz,updated_at timestamptz,school_match_status text,questions jsonb,school_response_rows int);
+create table beagu_private.beagu_2026_auto_review_status(school_id text,survey_year int,source_spreadsheet_id text,technical_status text,matching_core_questions int,verified_catalog_questions int,source_response_rows int,checked_at timestamptz);
+create table beagu_private.beagu_2026_publication_basis_review(school_id text,payload_sha256 text,review_status text,reviewer_user_id uuid,reviewed_at timestamptz,notice_effective_at timestamptz,distinct_respondents_reviewed bool,personal_data_reviewed bool,small_sample_reviewed bool,reidentification_reviewed bool,prior_data_combination_reviewed bool);
+grant select on public.schools to service_role;grant select,insert on beagu_private.beagu_2026_civic_feedback to service_role;

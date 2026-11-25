@@ -32,3 +32,17 @@ export function projectOfficialProfiles2026(rows,ids,tier){
  }
  return output;
 }
+
+// Anonymous projection: only four independently public, verified school facts.
+export function projectPublicSchoolBasics2026(rows,ids){
+ const base=projectOfficialProfiles2026(rows,ids,1);
+ const out=Object.create(null);
+ for(const row of Array.isArray(rows)?rows:[]){
+  if(!base[row.school_id])continue;
+  const p=row.profile;
+  const students=Number.isSafeInteger(p.student_count)&&p.student_count>=0&&p.student_count<=100000&&p.student_reference_year===2026?p.student_count:null;
+  const certified=p.ratio_basis==='ELEMENTARY_TEACHER_CERTIFIED'&&base[row.school_id].teacher_source_status==='MATCHED';
+  out[row.school_id]={source_year:2026,student_count:students,teacher_total:certified?base[row.school_id].teacher_total:null,male_teacher_ratio:certified?base[row.school_id].male_teacher_ratio:null,second_grade_teacher_ratio:certified?base[row.school_id].second_grade_teacher_ratio:null};
+ }
+ return out;
+}

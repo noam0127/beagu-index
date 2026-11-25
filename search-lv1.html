@@ -261,7 +261,7 @@ body.beagu-page-lv1 .school-card .school-participation{
 <link rel="stylesheet" href="styles/beagu-communication-v1.css?v=160b">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=11113-minimal">
 <link rel="stylesheet" href="styles/beagu-fullset-school-v11111.css?v=11111-1">
-<link rel="stylesheet" href="styles/school-glory-v1.css?v=111151-compact2">
+<link rel="stylesheet" href="styles/school-glory-v1.css?v=11117-prep1">
 </head>
 <body class="beagu-ui-page beagu-page-lv1">
 <a class="beagu-skip-link" href="#main-content">본문으로 건너뛰기</a>
@@ -335,7 +335,7 @@ body.beagu-page-lv1 .school-card .school-participation{
           <select id="officeSelect" class="region-select" disabled><option value="">시도를 먼저 선택하세요</option></select>
         </div>
         
-        <div class="beagu-search-sort"><label for="regionSort">정렬 기준</label><div class="beagu-sort-controls"><select id="regionSort"><option value="school_name">학교명</option><option value="address">주소</option><option value="student_count">학생수</option><option value="beagu_percentile_2025">배구지수</option><option value="view_count" title="학교 상세조회수 · 같은 방문자는 하루 1회 집계">조회수</option><option value="junior_teacher_ratio">2정교사비</option><option value="male_teacher_ratio">남교사비</option><option value="housing_price_won" title="행정동 공동주택 평균 공시가격 · Lv.2 전용" disabled>🔒 공시가격 (Lv.2)</option></select><button id="regionSortDirection" class="beagu-sort-direction" type="button" aria-label="현재 오름차순, 내림차순으로 전환" title="현재 오름차순 · 클릭하면 내림차순">↑</button></div></div>
+        <div class="beagu-search-sort"><label for="regionSort">정렬 기준</label><div class="beagu-sort-controls"><select id="regionSort"><option value="school_name">학교명</option><option value="address">주소</option><option value="like_count">좋아요순</option><option value="student_count">학생수</option><option value="beagu_percentile_2025">배구지수</option><option value="view_count" title="검색 + 상세조회 · 같은 방문자는 유형별 하루 1회">조회수</option><option value="junior_teacher_ratio">2정교사비</option><option value="male_teacher_ratio">남교사비</option><option value="housing_price_won" title="행정동 공동주택 평균 공시가격 · Lv.1 이상">공시가격</option></select><button id="regionSortDirection" class="beagu-sort-direction" type="button" aria-label="현재 오름차순, 내림차순으로 전환" title="현재 오름차순 · 클릭하면 내림차순">↑</button></div></div>
       </section>
       <div id="resultCount" class="result-count" aria-live="polite"></div>
       <div id="results" class="results"></div>
@@ -364,9 +364,11 @@ body.beagu-page-lv1 .school-card .school-participation{
 <script src="js/beagu-page-performance-v1.js?v=20261120-rum1"></script>
   <script src="js/master-percentiles-v1.2.js?v=20261120-all-regions-parser1"></script>
   <script src="js/percentile-chart.js?v=20261031-independent5b"></script>
-    <script src="js/school-search-card-v1.js?v=111151-compact2"></script>
+    <script src="js/school-search-card-v1.js?v=11117-horizontal3"></script>
   <script src="js/school-game-points-v1.js?v=1114"></script>
-  <script src="js/school-view-counts-v1.js?v=20261120-selection-record2"></script>
+  <link rel="stylesheet" href="styles/school-likes-v1.css?v=11117-horizontal3">
+<script src="js/school-likes-v1.js?v=11117"></script>
+<script src="js/school-view-counts-v1.js?v=11117-combined1"></script>
   <script src="js/school-detail-groups-v1.js?v=20261119-teacher-groups2"></script>
   <script src="js/school-mbti-v1.js?v=20261118-approved-auto60-v1"></script>
   <script src="js/historical-original-questions.js?v=20261117-source-headers"></script>
@@ -375,9 +377,9 @@ body.beagu-page-lv1 .school-card .school-participation{
   <script src="js/2026-questionnaire-options-v1.2.js?v=20261124-q45-wording1"></script>
 <script src="js/2026-approved-question-results.js?v=20261121-lv2-bars1"></script>
   <script src="js/2026-lv2-horizontal-bars-v1.js?v=20261121-bars1"></script>
-  <script src="js/level-search.js?v=111151-compact2"></script>
+  <script src="js/level-search.js?v=11117-likes1"></script>
   <script src="js/visit-stats.js?v=20261120-gateway2"></script>
-<script src="js/search-telemetry-v1.js?v=20261120-selection-record2"></script>
+<script src="js/search-telemetry-v1.js?v=11117-combined1"></script>
   <script>
   (() => {
     const button=document.getElementById('toggleCode');

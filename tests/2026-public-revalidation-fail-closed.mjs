@@ -87,15 +87,32 @@ assert.ok(all.some(x=>x.className==='beagu-year-error'));
 assert.ok(all.some(x=>x.className==='year-2026-button'));
 assert.ok(!JSON.stringify(host).includes('stale secret'));
 assert.ok(!JSON.stringify(host).includes(q01.options[0]));
-const lv1=new Node('div');draw(lv1,2026,[],null,'ABC1234',[],null,null,'ready',[],[],1);assert.ok(JSON.stringify(lv1).includes('Lv.2'));assert.ok(!JSON.stringify(lv1).includes('year-2026-button'));
-console.log('PASS: Lv1 2026 blocked and Lv2 2026 caches fail closed');
+const lv1=new Node('div');draw(lv1,2026,[],null,'ABC1234',[],null,null,'error',[],[],1);assert.ok(JSON.stringify(lv1).includes('beagu-year-error'));assert.ok(JSON.stringify(lv1).includes('year-2026-button'));
+console.log('PASS: Lv1 and Lv2 2026 caches fail closed');
 
 // Automatic opening must not bypass the school visibility tier or exception hold.
 const autoSql=read('supabase/2026-auto-opening-v1.sql');
 const cultureApi=read('supabase/functions/beagu-school-culture-v1/index.ts');
 assert.match(autoSql,/where p_level=2 and cardinality/);
 assert.match(autoSql,/'auto_lv1',0/);
-assert.ok(api.indexOf('if(tier===1)return await sendSchoolProfiles({})')<api.indexOf("admin.rpc('beagu_2026_auto_percentiles'"));
+assert.match(api,/p_level:Number\(session\.access_level\)/);
+assert.match(api,/if\(level===1&&tierPublished2026\)/);
+assert.match(api,/admin\.rpc\('beagu_2026_released_question_results'/);
 assert.match(api,/tierPublished2026=schoolReleased===true&&!hiddenIds.includes\(id\)/);
 assert.match(cultureApi,/if\(Number\(session.access_level\)!==2\)return send/);
 assert.match(cultureApi,/releasedIds.filter\(\(id:string\)=>!hiddenIds.includes\(id\)\)/);
+
+// Execute the real server school authorization block (type annotations removed for Node fixture).
+const begin=api.indexOf('  const verifiedLevel=Number(session.access_level);'),end=api.indexOf('  const [legacy,metrics,catalog,curated2025]',begin);
+assert.ok(begin>0&&end>begin);
+const gate=api.slice(begin,end).replaceAll(':null|unknown[]','');
+const runGate=new Function('session','body','admin','send','origin','id','return (async()=>{'+gate+';return {level,tierPublished2026,lv1Approved2026,lv2Approved2026};})()');
+for(const scenario of [{verified:1,view:1,published:true,hold:false,expected:'lv1'},{verified:2,view:1,published:true,hold:false,expected:'lv1'},{verified:2,view:2,published:true,hold:false,expected:'lv2'},{verified:1,view:2,expected:'denied'},{verified:0,view:1,expected:'denied'},{verified:1,view:1,published:true,hold:true,expected:'none'},{verified:1,view:1,published:false,hold:false,expected:'none'}]){
+ const calls=[];const admin={rpc:async(name,params)=>{calls.push([name,params]);if(name==='beagu_2026_level_school_published')return {data:scenario.published,error:null};if(name==='beagu_2026_auto_hidden_ids')return {data:scenario.hold?['ABC1234']:[],error:null};return {data:[single],error:null};}};
+ const result=await runGate({access_level:scenario.verified},{viewLevel:scenario.view},admin,(body,status)=>({body,status}),'fixture','ABC1234');
+ if(scenario.expected==='denied'){assert.equal(result.status,403);assert.equal(calls.length,0);continue;}
+ assert.equal(calls[0][1].p_level,scenario.view);
+ assert.equal(Array.isArray(result.lv1Approved2026),scenario.expected==='lv1');assert.equal(Array.isArray(result.lv2Approved2026),scenario.expected==='lv2');
+ if(scenario.expected==='none')assert.equal(calls.length,2);
+}
+console.log('PASS server verified Lv1/Lv2 scopes, downward view only, hold and denied release');

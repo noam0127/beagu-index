@@ -824,6 +824,65 @@
     },
     {
       "order": 32,
+      "version": "v1.11.16",
+      "name": "코트리뉴얼",
+      "scope": "학교 검색·상세 UI, 랭킹 준비 영역, 게임 오류 및 기록 UI 정돈",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v11116-court-renewal-ui-only",
+      "pr": 304,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [
+        "v1.11.15.3"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "77cb6938f9ac70282474f7bd783219f186f0c397"
+    },
+    {
+      "order": 33,
+      "version": "v1.11.17",
+      "name": "개막 준비",
+      "scope": "참여자 인증, 학교 공개 권한, 게임 조작 및 데이터 검증",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v11117-opening-prep",
+      "pr": 305,
+      "commit": null,
+      "tests": [
+        "v11117-bound-participant.mjs",
+        "v11117-game-inventory.mjs"
+      ],
+      "changed_files": [],
+      "dependencies": [
+        "v1.11.16"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "deployment_date": null,
+      "rollback_sha": "47d4ca656e81498ed963dc561259e80ef31b90df"
+    },
+    {
+      "order": 34,
+      "version": "v1.11.18",
+      "name": "개막전",
+      "scope": "후속 개발 준비",
+      "status": "PENDING",
+      "branch": null,
+      "pr": null,
+      "commit": null,
+      "tests": [],
+      "changed_files": [],
+      "dependencies": [
+        "v1.11.17"
+      ],
+      "admin_registration": "PENDING",
+      "production": "NOT_APPROVED",
+      "deployment_date": null
+    },
+    {
+      "order": 35,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -843,7 +902,7 @@
       "rollback_sha": null
     },
     {
-      "order": 33,
+      "order": 36,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -862,7 +921,7 @@
       "rollback_sha": null
     },
     {
-      "order": 34,
+      "order": 37,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -879,7 +938,7 @@
       "rollback_sha": null
     },
     {
-      "order": 35,
+      "order": 38,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

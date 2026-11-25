@@ -11,6 +11,7 @@ try{
    await page.setContent('<meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}'+inline+'\n'+css+'</style><body class="beagu-minimal-'+kind+(kind==='run'?' arcade-run-game-playing':'')+'"><div class="'+(kind==='volley'?'court':'stage')+' arcade-game-viewport fire-court-controls '+(full?'arcade-fullscreen-fallback':'')+'"><canvas id="game" width="900" height="500"></canvas><button class="arcade-fullscreen-toggle">+</button><button id="pause" class="arcade-playback">⏸ 일시정지</button></div></body>');
    const p=await page.locator('#pause').boundingBox(),c=await page.locator('#game').boundingBox(),v=await page.locator('.fire-court-controls').boundingBox(),f=await page.locator('.arcade-fullscreen-toggle').boundingBox();
    assert(p&&c&&v&&f);assert(c.height>0&&p.height>=44);
+   if(kind==='volley'&&full)assert.equal(await page.locator('#game').evaluate(e=>getComputedStyle(e).objectFit),'contain','Never stretch the fixed 900×500 court');
    assert(p.y>=c.y+c.height-1,JSON.stringify({kind,w,h,full,p,c,v}));
    assert(p.y+p.height<=v.y+v.height+1);assert(Math.abs(p.x+p.width/2-(v.x+v.width/2))<2);
    assert(p.x+p.width<=f.x+1||f.x+f.width<=p.x+1||p.y+p.height<=f.y+1||f.y+f.height<=p.y+1);

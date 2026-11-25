@@ -54,6 +54,8 @@
         if (!valid()) return;
         const n = Number(data.participantNo);
         const code = data.identityCode;
+        const visitor = data.visitorId;
+        if (typeof visitor !== 'string' || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(visitor)) throw new Error('참여자 확인에 실패했습니다. 다시 인증해 주세요.');
         if (!Number.isSafeInteger(n) || n < 1 ||
             typeof code !== 'string' || !/^(?:BG26-(?:[A-F0-9]{4}-){4}[A-F0-9]{4}|BG26-[A-HJ-NP-Z2-9]{6}-[A-HJ-NP-Z2-9]{6}|[A-HJ-NP-Z2-9]{10})$/.test(code)) {
           throw new Error('발급 결과를 확인하지 못했습니다. 다시 시도해주세요.');
@@ -67,7 +69,7 @@
         identityCopyFeedback.textContent = '';
         // Referral display is separate from the certificate PNG and requires a validated session.
         window.dispatchEvent(new CustomEvent('beagu:identity-ready', {
-          detail: { visitor: window.beaguVisitor, code: personalCode }
+          detail: { visitor, code: personalCode }
         }));
         if (window.BeaguChallengeProgress) await window.BeaguChallengeProgress.refresh();
       }
