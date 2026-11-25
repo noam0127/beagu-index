@@ -105,7 +105,7 @@ const rows=[
 ];
 const lv1=new Node('div');draw(lv1,2026,rows,null,'ABC1234',[],null,null,'ready',[],[],1);
 assert.equal(byClass(lv1,'beagu-lv2-score-card').length,0);
-assert.equal(byClass(lv1,'metric-text').length,0,'Lv1 must not receive 2026 metrics');
+assert.equal(byClass(lv1,'metric-text').length,1,'Lv1 sees only approved Lv1 metrics as text');
 assert.equal(byClass(lv1,'beagu-year-release-note').length,1);
 const lv2=new Node('div');draw(lv2,2026,rows,null,'ABC1234',[],null,null,'ready',[],[],2);
 assert.equal(byClass(lv2,'beagu-lv2-score-card').length,1);
