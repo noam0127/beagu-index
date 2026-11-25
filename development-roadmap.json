@@ -653,6 +653,21 @@
     },
     {
       "order": 23,
+      "version": "v1.11.13",
+      "name": "미니멀 코트",
+      "scope": "상단 공통 인증·본문 카드 제거·공지 및 화면 간소화·생애주기 보스 성장·게임결과 저장",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "release/v1.11.13-minimal-court",
+      "dependencies": [
+        "v1.11.12"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "09676bb1785a03528ec9a0c0dd7881de4ff69f28",
+      "tests": []
+    },
+    {
+      "order": 24,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -672,7 +687,7 @@
       "rollback_sha": null
     },
     {
-      "order": 24,
+      "order": 25,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -691,7 +706,7 @@
       "rollback_sha": null
     },
     {
-      "order": 25,
+      "order": 26,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -708,7 +723,7 @@
       "rollback_sha": null
     },
     {
-      "order": 26,
+      "order": 27,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

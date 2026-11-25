@@ -111,7 +111,7 @@ async function search(page,level){
   const tracker={count:0,promoted:false,allowLv2:false,identityRequests:0,referralRequests:0,searchTiers:[]};
   await routes(page,tracker);
   await goto(page,'challenge.html');
-  await page.locator('.together-survey').waitFor({state:'visible'});
+  await page.locator('#challengePublicSurvey a').waitFor({state:'visible'});
   assert.equal(await page.locator('#challengeProtected').isHidden(),true);
   assert.equal(tracker.identityRequests,0);
   await fit(page);
@@ -148,7 +148,7 @@ async function search(page,level){
   tracker.count=3;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
   await waitText(page,'#challengeReferralCount','3건');
   assert.equal(await page.locator('#participantNo').innerText(),'777번째');
-  await waitText(page,'#togetherBenefitsState','Lv.2 이용 가능');
+  assert.equal(await page.locator('#togetherBenefitsState').count(),0);
   await fit(page);
   await page.screenshot({path:path.join(out,cfg.name+'-challenge-lv2.png'),fullPage:true});
   await search(page,2);
