@@ -1,0 +1,28 @@
+name: Manual master isolated validation
+on:
+  pull_request:
+    branches: ['release/base-pages-*']
+permissions:
+  contents: read
+jobs:
+  fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Validate final-master CSV and exact ranks
+        run: node tests/manual-master-2026.mjs
+      - name: Validate atomic master publication and restore in disposable PostgreSQL
+        run: |
+          set -euo pipefail
+          container="master-fixture-${GITHUB_RUN_ID}"
+          docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=fixture-only postgres:16
+          trap 'docker rm -f "$container" >/dev/null 2>&1 || true' EXIT
+          for i in $(seq 1 40); do docker exec "$container" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+          psql_local() { docker exec -i "$container" psql -X -v ON_ERROR_STOP=1 -U postgres; }
+          psql_local < tests/manual-master-fixture.sql
+          psql_local < supabase/2026-manual-master-v1.sql
+          psql_local < tests/manual-master-assertions.sql
