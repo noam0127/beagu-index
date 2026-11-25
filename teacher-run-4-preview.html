@@ -134,6 +134,7 @@ canvas{height:400px;cursor:default}
 <link rel="stylesheet" href="styles/run4-local-board-v1.css?v=11111">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
 <link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=2">
+<link rel="stylesheet" href="styles/arcade-fire-court-v1.css?v=11115-1">
 </head>
 <body class="arcade-body beagu-ui-page beagu-page-game beagu-minimal-run">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html" aria-current="page">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
@@ -162,7 +163,7 @@ canvas{height:400px;cursor:default}
     </div>
     <div class="arcade-survival-health-track" id="run-health-progress" role="progressbar" aria-label="교사 체력" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="arcade-survival-health-fill" id="run-health-fill"></div></div>
   </section>
-  <div class="stage arcade-game-viewport" data-arcade-fullscreen>
+  <div class="stage arcade-game-viewport fire-court-controls" data-arcade-fullscreen>
     <button type="button" class="arcade-fullscreen-toggle" data-arcade-fullscreen-button aria-label="전체화면으로 확대" title="전체화면으로"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 3h6v6M21 3l-7 7M3 21l7-7M9 21H3v-6"/></svg></button>
     <button type="button" id="pause" class="arcade-playback" hidden disabled aria-label="일시정지" title="일시정지">⏸ 일시정지</button>
     <div class="arcade-fullscreen-hud arcade-run-fullscreen-hud" aria-label="전체화면 교사 체력 및 게임 현황">
@@ -187,7 +188,7 @@ canvas{height:400px;cursor:default}
     <button id="sound" type="button" aria-pressed="false" aria-label="소리 켜기" title="효과음 및 배경음악">🔇</button>
     <button id="how" class="help" type="button" aria-label="게임 방법" title="게임 방법">?</button><a class="original" href="https://ilovebaegu.itch.io/teacherrun09" target="_blank" rel="noopener noreferrer" aria-label="원작 게임">↗ 원작</a>
   </div>
-  <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/8-bit-jester-theme" target="_blank" rel="noopener noreferrer">8-bit Jester Theme · HydroGene (CC0)</a></p>
+  <p class="arcade-bgm-credit">🎵 BGM: 불꽃의 코트 오리지널 5단계 음악 · 호환용 CC0: <a href="https://opengameart.org/content/8-bit-jester-theme" target="_blank" rel="noopener noreferrer">8-bit Jester Theme · HydroGene (CC0)</a></p>
   
   <details id="run4-local-board" class="run4-local-board"><summary>4.0 기기 기록 · 최대 50개</summary><p>이 기기에 저장한 개인 기록입니다. 공식 명예의 전당과 별개입니다.</p><div class="run4-board-filters"><label>난이도 <select id="run4-record-tier"><option value="all">전체</option><option value="easy">EASY</option><option value="normal">NORMAL</option><option value="hard">HARD</option><option value="very_hard">VERY HARD</option><option value="extreme">EXTREME</option></select></label><label>기록 <select id="run4-record-outcome"><option value="all">전체</option><option value="retired">정년 달성</option><option value="all_bosses">보스 5종 처치</option></select></label></div><ol id="run4-record-list" aria-live="polite"></ol></details>
   <div id="run4-trace-panel" hidden><p id="run4-trace-status" role="status">개인 경기 재현 검수 모드 · 공식 랭킹 미제출</p><button type="button" id="run4-trace-download" disabled>조작 기록 저장 (JSON)</button></div>
@@ -213,6 +214,7 @@ canvas{height:400px;cursor:default}
 <script src="js/arcade-play-lock-v1.js?v=140"></script>
 <script src="js/arcade-mystery-items-v1.js?v=1116"></script>
 <script src="js/arcade-bgm-v1.js?v=20261123-cc0-v1"></script>
+<script src="js/arcade-fire-court-bgm-v1.js?v=11115-1"></script>
 <script src="js/arcade-gestures-v1.js?v=140"></script>
 <script src="js/arcade-result-share-v1.js?v=11113-save"></script>
 <script src="js/teacher-run-4-rules.js?v=11113-boss"></script>
@@ -301,7 +303,7 @@ let tenureSeen=new Set(),tenureAttack=1,tenureDamage=1;
 let leaveUiKey="";
 let retirementScene=false;
 const schoolPicker=new window.ArcadeSchoolPicker("#arcade-school-picker");
-const bgm=window.BeaguArcadeBgm.create("teacher_run");
+const bgm=window.BeaguFireCourtBgm.create("teacher_run");
 const difficultyProfiles={
  easy:{specialCooldown:10,specialShield:3.0,specialRadius:230,lives:3,heroSpeed:1.34,heroSize:0.72,startingLife:150,damage:.54,enemySpeed:.72,spawnPressure:.62,enemySize:0.66,goodChance:.34,heal:1.48,inv:1.95,homing:0,zigzag:.65,label:"교사 강화 · 위협 느림 · 회복 풍부"},
  normal:{specialCooldown:14,specialShield:2.7,specialRadius:205,lives:2,heroSpeed:1.18,heroSize:0.74,startingLife:125,damage:.76,enemySpeed:.86,spawnPressure:.82,enemySize:0.69,goodChance:.28,heal:1.22,inv:1.6,homing:9,zigzag:.85,label:"돌진 학생 1명 · 공문 소규모"},
@@ -461,7 +463,7 @@ async function start(){
  if(!selected?.eligible){intro();schoolPicker.focus();return;}
  if(state==="starting")return;
  const ticket=++startTicket;
- if(soundOn)bgm.sync(true); // Start inside user interaction; keep playing when session is approved.
+ bgm.setStage(0);if(soundOn)bgm.sync(true); // Start inside user interaction; keep playing when session is approved.
  state="starting";
  message("학교 확인 중","",[],"🏫");
  const session=ranking?await ranking.start(selected):null;
@@ -1520,6 +1522,7 @@ function syncFullscreenPause(){
  control.title=paused?"게임 계속하기":"일시정지";
 }
 function tick(t){
+ bgm.setStage(state==="starting"||state==="ready"?0:stage);
  bgm.sync(soundOn&&(state==="playing"||state==="starting"));
  // Apply the viewport-sized playing canvas before notifying a parent frame
  // to center and freeze scrolling; do not refocus the page every frame.

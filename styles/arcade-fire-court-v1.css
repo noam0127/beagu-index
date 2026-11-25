@@ -1,0 +1,27 @@
+/* Fire Court: reserve a real control strip below the canvas, never over gameplay. */
+html body .fire-court-controls:has(> .arcade-playback:not([hidden])){
+ --fire-court-strip:calc(60px + env(safe-area-inset-bottom,0px));
+ box-sizing:border-box!important;padding-bottom:var(--fire-court-strip)!important;
+}
+html body .fire-court-controls:has(> .arcade-playback:not([hidden]))>.arcade-playback{
+ bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;
+ z-index:34;box-sizing:border-box;max-width:calc(100% - 110px);min-height:44px;
+}
+html body .fire-court-controls:has(> .arcade-playback:not([hidden])):is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen){
+ padding-bottom:var(--fire-court-strip)!important;
+ grid-template-rows:minmax(0,1fr)!important;
+}
+html body .fire-court-controls:has(> .arcade-playback:not([hidden])):is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>#game{
+ grid-row:1!important;min-height:0!important;max-height:100%!important;
+}
+html body .fire-court-controls:has(> .arcade-playback:not([hidden]))> :is(.volley-ready-overlay,.volley-pause-overlay,.overlay){
+ bottom:var(--fire-court-strip)!important;
+}
+html body .fire-court-controls:has(> .arcade-playback:not([hidden]))>.arcade-fullscreen-toggle{
+ top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;right:8px!important;
+}
+@media (max-width:600px) and (orientation:portrait){
+ html body.beagu-minimal-run.arcade-run-game-playing .fire-court-controls:has(> .arcade-playback:not([hidden])):not(.arcade-fullscreen-fallback):not(:fullscreen):not(:-webkit-full-screen)>#game{
+ height:min(570px,max(150px,calc(var(--arcade-run-parent-visible-height,100svh) - 32px - var(--fire-court-strip))),max(420px,65svh))!important;
+ }
+}
