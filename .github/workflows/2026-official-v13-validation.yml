@@ -17,6 +17,7 @@ jobs:
         run: |
           node --check js/level-search.js
           node tests/2026-official-school-profiles.mjs
+          node tests/2026-schoolinfo-strict-recovery.mjs
           node tests/2026-release-consent-gate.mjs
           node tests/2026-public-revalidation-fail-closed.mjs
           node tests/2026-public-projection-integrity.mjs
