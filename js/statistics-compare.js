@@ -418,6 +418,13 @@
     ['district_housing_price_mean','공동주택 평균 공시가격 (학교 소재 행정동)']
   ];
   const basicFactKeys=new Set(basicFactLabels.map(([key])=>key));
+  function formatHousingPrice(value){
+    if(value==null||value==='')return '자료 없음';
+    const n=Number(String(value).replace(/[,\s]/g,'').replace(/원$/,''));
+    if(!Number.isFinite(n)||n<=0)return '자료 없음';
+    const m=Math.round(n/1000000),e=Math.floor(m/100),r=m%100;
+    return e?(r?e+'억'+r+'백만원':e+'억원'):r+'백만원';
+  }
   function basicFactFor(school,selectedYear,key){
     const approved=state.approvedBySchool.get(String(school.school_id));
     const candidates=[2024,2025]
@@ -430,11 +437,11 @@
   }
   function basicFactCell(school,selectedYear,key){
     // Never display a protected numeric housing price at Lv.0.
-    if(key==='district_housing_price_mean' && (!state.sessionToken || state.authLevel<1)) {
+    if(key==='district_housing_price_mean' && (!state.sessionToken || state.authLevel<2)) {
       const blurred=make('span','₩ •••,•••,•••','compare-price-masked');
-      blurred.setAttribute('aria-label','Lv.1 이상 · 실제 공시가격 미공개');
+      blurred.setAttribute('aria-label','Lv.2 전용 · 실제 공시가격 미공개');
       const container=make('div',null,'compare-price-locked');
-      container.append(blurred,make('small','🔒 Lv.1 인증 후 확인','compare-price-callout'));
+      container.append(blurred,make('small','🔒 Lv.2 인증 후 확인','compare-price-callout'));
       return container;
     }
     if(!state.sessionToken || state.authLevel<1)
@@ -446,7 +453,7 @@
       return make('span','자료 없음','compare-unavailable');
     }
     const wrap=make('div',null,'compare-basic-value');
-    wrap.append(make('strong',fact.value,'compare-approved-value'),
+    wrap.append(make('strong',key==='district_housing_price_mean'?formatHousingPrice(fact.value):fact.value,'compare-approved-value'),
       make('small',fact.referenceYear+'년 기준','compare-basic-reference'));
     return wrap;
   }
@@ -613,6 +620,7 @@
           }else if(validServerText(metric.label,80)&&validServerText(metric.value,100)){
             const official=metric.group==='편집본 공식 학교정보';
             const factKey=String(metric.factKey||'');
+            if(state.authLevel<2&&factKey==='district_housing_price_mean')continue;
             const referenceYear=Number(metric.referenceYear);
             // Promote four official facts without duplicating them in the
             // original generic "additional school information" table.
@@ -622,7 +630,7 @@
                   value:String(metric.value),referenceYear
                 };
             }else{
-              if(state.authLevel<1 && factKey==='district_housing_price_mean')continue;
+              if(state.authLevel<2 && factKey==='district_housing_price_mean')continue;
               approved.summaries[year].push({
                 group:official?'편집본 공식 학교정보':'승인된 설문 영역 요약',
                 label:String(metric.label),value:String(metric.value)
