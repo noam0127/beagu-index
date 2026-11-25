@@ -1,5 +1,7 @@
 name: 2026 official school profiles and percentile v1.3 isolated validation
 on:
+  pull_request:
+    branches: [release/base-pages-v11116-validation]
   push:
     branches: [fix/2026-official-basics-v13, fix/v1114-school-glory-v13-integration, fix/v1115-school-glory-after-fire-court, fix/v1115-bulk-percentile-review, fix/v1115-auto-opening, fix/v111152-school-visibility-integrated, fix/v111153-auto-opening-integrated, fix/v11116-court-renewal-ui-only]
   workflow_dispatch:
@@ -12,6 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Source syntax, projection and existing publication gate regressions
         run: |
@@ -54,6 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - name: Install pinned Chromium runner
         run: |
