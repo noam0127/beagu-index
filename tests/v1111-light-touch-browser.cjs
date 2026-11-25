@@ -5,7 +5,7 @@ const fixture=Array.from({length:7},(_,i)=>({school_id:String(7003915+i),school_
 (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});
 try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  const context=await browser.newContext({viewport:{width,height:900},...(tier===0?{hasTouch:true,isMobile:true}:{})});
- try{await context.addInitScript(({origin,tier})=>{if(location.origin===origin&&tier)sessionStorage.setItem('beagu-level-session-v1','a'.repeat(64))},{origin,tier});
+ try{await context.addInitScript(({origin,tier})=>{if(location.origin===origin&&!sessionStorage.getItem('light-touch-fixture-initialized')){sessionStorage.setItem('light-touch-fixture-initialized','1');if(tier)sessionStorage.setItem('beagu-level-session-v1','a'.repeat(64));}},{origin,tier});
  let sorted=false, detailRequested=false,comparisonRequested=false;let selectedSchool=null,startedSchool=null,officialFixture=false;const officialCalls=[];
  await context.route('**/*',async route=>{const u=new URL(route.request().url());const cors={'access-control-allow-origin':origin,'access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS','content-type':'application/json'};
  if(u.hostname==='cdn.jsdelivr.net'&&u.pathname.includes('supabase-js'))return route.fulfill({contentType:'application/javascript',body:"window.supabase={createClient:()=>({from:()=>{const p={then:(a,b)=>Promise.resolve({data:[],count:0,error:null}).then(a,b)};for(const m of ['select','eq','in','limit','range','order','ilike','or','maybeSingle','single','gte','lte','not'])p[m]=()=>p;return p},rpc:async()=>({data:[],error:null})})};"});
