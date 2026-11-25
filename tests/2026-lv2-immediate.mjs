@@ -29,5 +29,7 @@ assert.ok(api.includes("if(level>=2&&tierPublished2026){")&&api.includes("beagu_
 assert.ok(api.includes("if(level===1&&tierPublished2026){")&&api.includes("beagu_2026_released_question_results")); 
 assert.ok(api.includes("beagu_2026_level_school_published"),"tier gate mandatory");
 assert.ok(api.includes("releaseMetrics(metrics.data||[],catalog.data||[],level,level>=2&&lv2Approved2026!==null)"));
-assert.ok(api.includes("if(Number(session.access_level)>=2)"));
+assert.ok(api.includes("if(tier>=2)"));
+assert.ok(api.includes("tier>verifiedTier"));
+assert.ok(api.includes("beagu_2026_edited_read_v1"));
 console.log('PASS 2026 Lv2 immediate approval / Lv1 cooldown / privacy regression');

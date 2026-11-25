@@ -23,3 +23,20 @@ jobs:
           trap 'docker rm -f "$c" >/dev/null 2>&1 || true' EXIT
           for i in $(seq 1 40); do docker exec "$c" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
           for f in tests/edited-2026-fixture.sql supabase/2026-edited-upload-v1.sql tests/edited-2026-assertions.sql; do docker exec -i "$c" psql -X -v ON_ERROR_STOP=1 -U postgres < "$f"; done
+
+  chromium:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Prepare actual workbook and Chromium
+        run: |
+          python3 tests/edited-2026-workbook.py /tmp/edited-fixture.xlsx
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          browser=$(command -v google-chrome || command -v chromium || true)
+          if [ -n "$browser" ]; then echo "BEAGU_CHROMIUM_PATH=$browser" >> "$GITHUB_ENV"; else timeout 120s npx playwright install chromium --only-shell; fi
+      - name: Upload final XLSX in Chromium against mock API
+        run: node tests/edited-2026-browser.cjs /tmp/edited-fixture.xlsx

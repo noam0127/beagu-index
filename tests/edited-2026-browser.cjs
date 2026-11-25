@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),{chromium}=require('playwright');
+(async()=>{const b=await chromium.launch({headless:true,args:['--no-sandbox'],...(process.env.BEAGU_CHROMIUM_PATH?{executablePath:process.env.BEAGU_CHROMIUM_PATH}:{})});try{const p=await b.newPage({viewport:{width:390,height:844}});
+await p.route('**/*',r=>r.abort());await p.setContent('<div id="adminAuto2026" hidden></div>');
+await p.evaluate(()=>{window.SUPABASE_URL='https://fixture.invalid';window.supabaseClient={auth:{getSession:async()=>({data:{session:{access_token:'fixture'}}})}};window.sent=null;window.fetch=async(_url,opts)=>{window.sent=JSON.parse(opts.body);return {ok:true,json:async()=>({ok:true,schools:1})}};});
+for(const f of ['js/beagu-edited-workbook-v1.js','js/beagu-2026-edited-admin-v1.js'])await p.addScriptTag({content:fs.readFileSync(f,'utf8')});
+await p.evaluate(()=>Beagu2026ReviewAdmin.mount('viewer'));assert.equal(await p.locator('#adminAuto2026').isVisible(),false);
+await p.evaluate(()=>Beagu2026ReviewAdmin.mount('owner'));await p.getByLabel('2026 최종 엑셀 편집본').setInputFiles(process.argv[2]);await p.getByRole('button',{name:'최종 편집본 업로드 · 즉시 반영'}).click();
+await p.getByText('1개교 편집본 반영 완료 · 기존 공개중단은 유지됩니다.').waitFor();
+const sent=await p.evaluate(()=>window.sent);assert.equal(sent.action,'edited_2026_publish');assert.deepEqual(sent.table,[['학교ID','백분위','Q01','Q22.1'],['1000001','82.34%','보통이다','그렇다']]);assert(!JSON.stringify(sent).includes('PRIVATE'));
+await p.evaluate(()=>Beagu2026ReviewAdmin.reset());assert.equal(await p.locator('#adminAuto2026').isVisible(),false);
+console.log('PASS actual XLSX file upload in Chromium, Excel percent value preserved and Q31 omitted before request');
+}finally{await b.close()}})().catch(e=>{console.error(e);process.exitCode=1});

@@ -22,8 +22,10 @@ const zero=projectOfficialProfiles2026([{...row,teacher_total:0,profile:{...row.
 assert.equal(zero.teacher_total,0);assert.equal(zero.male_teacher_ratio,null);
 const api=readFileSync('supabase/functions/beagu-level-api/index.ts','utf8');
 assert.match(api,/if\(!\[1,2\]\.includes\(tier\)\)return send\(\{error:'ACCESS_DENIED'\},403,origin\)/);
-assert.match(api,/p_level:Number\(session\.access_level\)/);
-assert.match(api,/for\(const id of hidden\.data\)delete out\[id\]/);
+assert.match(api,/p_level:tier/);
+assert.match(api,/tier>verifiedTier/);
+assert.match(api,/beagu_2026_edited_read_v1/);
+assert.match(readFileSync("supabase/2026-edited-upload-v1.sql","utf8"),/beagu_2026_civic_publication_hold h where h.school_id=r.school_id and h.active/);
 assert.match(api,/level===1&&Array\.isArray\(lv1Approved2026\)/);
 const cards=readFileSync('js/school-search-card-v1.js','utf8');
 assert.match(cards,/const historical=viewerTier===0\|\|viewerTier===1/);

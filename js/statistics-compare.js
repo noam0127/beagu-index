@@ -96,6 +96,8 @@
     for(const id of new Set(state.selected.map(x=>x.id)))loadApprovedSchool(id);
   }
   function activateAuth(token,level,provisional=false) {
+    state.authEpoch++;
+    state.public2026.clear();state.public2026Checked.clear();state.public2026Loading.clear();state.public2026Error.clear();
     state.sessionToken=token;
     state.authLevel=level;
     state.authProvisional=level>=2&&provisional===true;
