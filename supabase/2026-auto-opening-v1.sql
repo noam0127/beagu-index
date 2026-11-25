@@ -29,6 +29,7 @@ create table if not exists beagu_private.beagu_2026_auto_evidence(
  teacher_source_sha256 text not null check(teacher_source_sha256 ~ '^[a-f0-9]{64}$'),
  evidence_sha256 text not null check(evidence_sha256 ~ '^[a-f0-9]{64}$'),
  technical_verified boolean not null default false,school_identity_verified boolean not null default false,
+ -- Historical evidence fields retained for compatibility; not publication gates.
  distinct_respondents_verified boolean not null default false,personal_data_verified boolean not null default false,
  small_sample_verified boolean not null default false,reidentification_verified boolean not null default false,
  prior_combination_verified boolean not null default false,verified_at timestamptz not null default clock_timestamp(),
@@ -51,7 +52,7 @@ from public.beagu_school_report_yearly a
 left join public.beagu_2026_official_school_profiles p using(school_id)
 left join beagu_private.beagu_2026_percentile_scope_v13 c on c.source_version=a.source_version
 left join beagu_private.beagu_2026_percentile_v13_current r on r.school_id=a.school_id and r.source_version=a.source_version
-left join beagu_private.beagu_2026_auto_evidence e on e.school_id=a.school_id and e.source_version=a.source_version and e.percentile=a.percentile and e.valid_observations=a.valid_observation_count and e.percentile_method=a.percentile_method and e.candidate_updated_at=a.updated_at and e.teacher_total=p.teacher_total and e.teacher_source_sha256=p.source_sha256 and e.verified_at>=a.updated_at and e.technical_verified and e.school_identity_verified and e.distinct_respondents_verified and e.personal_data_verified and e.small_sample_verified and e.reidentification_verified and e.prior_combination_verified
+left join beagu_private.beagu_2026_auto_evidence e on e.school_id=a.school_id and e.source_version=a.source_version and e.percentile=a.percentile and e.valid_observations=a.valid_observation_count and e.percentile_method=a.percentile_method and e.candidate_updated_at=a.updated_at and e.teacher_total=p.teacher_total and e.teacher_source_sha256=p.source_sha256 and e.verified_at>=a.updated_at and e.technical_verified and e.school_identity_verified and e.small_sample_verified and e.reidentification_verified and e.prior_combination_verified
 and not exists(select 1 from beagu_private.beagu_2026_civic_publication_hold old where old.school_id=a.school_id and old.updated_at>=e.verified_at)
 left join beagu_private.beagu_2026_civic_publication_hold h on h.school_id=a.school_id and h.active
 left join beagu_private.beagu_2026_auto_exception x on x.school_id=a.school_id

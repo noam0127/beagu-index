@@ -7,7 +7,7 @@ begin
  if public.beagu_2026_auto_percentiles(array['1000004'],2)<>'{}'::jsonb then raise exception 'unverified notice/evidence';end if;
  perform public.beagu_2026_percentile_v13_scope_review('fixture-auto-version',a,s,'COMPATIBLE',true,true,'synthetic verified common notice');
  select updated_at into ts from public.beagu_school_report_yearly where school_id='1000004' and survey_year=2026;
- insert into beagu_private.beagu_2026_auto_evidence values('1000004','fixture-auto-version',40,1,'PERCENT_RANK_ASC_EXACT_MEAN_VI13_MIN9_A4_P2_R1',ts,7,repeat('c',64),repeat('a',64),true,true,true,true,true,true,true,clock_timestamp());
+ insert into beagu_private.beagu_2026_auto_evidence values('1000004','fixture-auto-version',40,1,'PERCENT_RANK_ASC_EXACT_MEAN_VI13_MIN9_A4_P2_R1',ts,7,repeat('c',64),repeat('a',64),true,true,false,false,true,true,true,clock_timestamp());
 end $$;
 do $$ declare a uuid:='11111111-1111-1111-1111-111111111111';s uuid:='22222222-2222-2222-2222-222222222222';r uuid;j jsonb;ts timestamptz;bad boolean;
 begin
@@ -23,6 +23,6 @@ begin
  if public.beagu_2026_auto_percentiles(array['1000004'],2)<>'{}'::jsonb or not ('1000004'=any(public.beagu_2026_auto_hidden_ids(array['1000004']))) then raise exception 'hold bypass';end if;
  if not exists(select 1 from beagu_private.beagu_2026_auto_exception where school_id='1000004' and action='REAGGREGATE') then raise exception 'request missing';end if;
  if not exists(select 1 from public.beagu_school_report_yearly where school_id='1000004' and percentile=40 and publication_status='WITHHELD') then raise exception 'candidate mutated';end if;
- raise notice 'PASS auto verified evidence, n=1, scope, tier delay, reports, exception queue, MFA, original preservation';
+ raise notice 'PASS auto verified evidence without individual identity/PII attestations, n=1, scope, tier delay, reports, exception queue, MFA, original preservation';
 end $$;
 reset role;
