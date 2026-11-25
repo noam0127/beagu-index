@@ -551,7 +551,7 @@ let solidarityUntil=0;
 function inventorySlots(info,playing,remaining){
  const slots=inventoryYears.map((years,i)=>{
   const plan=rules.leavePlan.find(p=>p.years===years),pending=info.pending.some(p=>p.years===years),held=info.held.some(p=>p.years===years);
-  return {key:inventoryKeys[i],years,icon:"🌴",name:years+"년 장기재직휴가 "+plan.days+"일",status:pending?"pending":held?"held":"empty",enabled:playing&&(pending||(held&&remaining<=0)),days:plan.days};
+  return {key:inventoryKeys[i],years,icon:"🌴",name:years+"년 장기재직휴가 "+plan.days+"일",status:pending?"pending":held?"held":"empty",enabled:playing&&(pending||held)&&remaining<=0,days:plan.days};
  });
  const available=allies.count()>=2,ready=available&&allies.canCooperate(clock);
  slots.push({key:"v",icon:"🤝",name:"선생님들의 연대",status:ready?"held":available?"cooldown":"empty",enabled:playing&&ready});
@@ -564,7 +564,8 @@ function useInventorySlot(index){
  if(index===3){cooperate();return true;}
  if(slot.status==="pending"){
   if(!leave.collect(slot.years))return false;
-  recordInput("collect",{choice:slot.years});setNotice("🌿 "+slot.days+"일 휴가권을 보관했습니다.",2);playTone(760,.15);syncLeave();return true;
+  recordInput("collect",{choice:slot.years});
+  // Same user action consumes the acquired ticket; replay keeps both existing event types.
  }
  const benefit=leave.use(slot.years,clock,life,maxLife,bosses.tier.leave);
  if(!benefit)return false;
@@ -600,8 +601,8 @@ function syncLeave(){
   if(!visible)continue;
   for(const [i,p] of slots.entries()){
    const b=document.createElement("button");b.type="button";b.className="run4-slot "+p.status;b.disabled=!p.enabled;
-   b.setAttribute("aria-label",p.name+(p.status==="pending"?" 획득":p.status==="held"?" 사용":" 사용 불가")+" ("+p.key.toUpperCase()+")");
-   b.title=p.name+(p.status==="pending"?" 획득":p.status==="held"?" 사용":"");
+   b.setAttribute("aria-label",p.name+(p.status==="pending"||p.status==="held"?" 즉시 사용":" 사용 불가")+" ("+p.key.toUpperCase()+")");
+   b.title=p.name+(p.status==="pending"||p.status==="held"?" 즉시 사용":"");
    const glyph=document.createElement("span");glyph.className="run4-slot-icon";glyph.textContent=p.icon;glyph.setAttribute("aria-hidden","true");
    const key=document.createElement("kbd");key.textContent=p.key.toUpperCase();key.className="run4-slot-key";key.setAttribute("aria-hidden","true");
    b.append(glyph,key);
@@ -1130,6 +1131,9 @@ function resetBossThreats(){bossWarn=null;bossProjectiles=[];bossShot=0;}
 function damageBoss(amount){
  const active=bosses.active();if(!active)return;
  const defeated=bosses.damage(amount,clock);
+ const after=bosses.active();
+ const lost=active.hp-(after?.hp??0);
+ if(lost>0){float(bossX,bossY-22,"-"+Math.ceil(lost),"#ffdf80");burst(bossX,bossY,"#ffdf80",5);}
  if(!defeated)return;
  const clutch=life<=maxLife*.1;
  resetBossThreats();clearNearby(8);life=Math.min(maxLife,life+Math.round(maxLife*.12));player.inv=Math.max(player.inv,1.2);
@@ -1582,7 +1586,8 @@ window.addEventListener("keydown",e=>{
   return;
  }
  if(state!=="playing")return;
- const itemIndex=inventoryKeys.indexOf(key);
+ const physical=["KeyZ","KeyX","KeyC","KeyV"].indexOf(e.code);
+ const itemIndex=physical>=0?physical:inventoryKeys.indexOf(key);
  if(itemIndex>=0){if(!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();if(!e.repeat)useInventorySlot(itemIndex);}return;}
  if(!["arrowleft","arrowright","arrowup","arrowdown","a","d","w","s"].includes(key))return;
  e.preventDefault(); // Arrow keys and WASD move the teacher, not the page.

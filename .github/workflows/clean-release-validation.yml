@@ -46,6 +46,8 @@ jobs:
           node tests/notice-audience-server.mjs
           node tests/control-tower-contract.cjs
           node tests/referral-promotion-v1.cjs
+          node tests/v11117-bound-participant.mjs
+          node tests/v11117-game-inventory.mjs
           node tests/2026-public-projection-integrity.mjs
           node tests/2026-question-results-pipeline.mjs
           node tests/2026-release-consent-gate.mjs
