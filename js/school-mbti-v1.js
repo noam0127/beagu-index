@@ -83,7 +83,7 @@
         else if (meta) meta.insertAdjacentElement('afterend',badge);
         else card.prepend(badge);
       }
-      badge.replaceChildren(e('span','beagu-mbti-label','2026 학교 MBTI'),e('strong','beagu-mbti-text','승인 결과 확인 중…'));
+      badge.replaceChildren(e('span','beagu-mbti-label',card.classList.contains('school-glory-card')?'학교 MBTI':'2026 학교 MBTI'),e('strong','beagu-mbti-text','확인 중'));
       badge.classList.remove('is-ready');
     }
     try {
@@ -95,7 +95,7 @@
         const badge=card.querySelector('.beagu-mbti-badge');
         if (!badge) continue;
         const out=badge.querySelector('.beagu-mbti-text');
-        if (out) out.textContent=badgeText(result);
+        if (out) out.textContent=card.classList.contains('school-glory-card')?(result.status==='published'?result.type:result.status==='mixed'?'판정 보류':'미공개'):badgeText(result);
         badge.classList.toggle('is-ready',result.status==='published');
         badge.classList.toggle('is-mixed',result.status==='mixed');
       }

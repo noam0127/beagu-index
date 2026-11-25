@@ -5,7 +5,7 @@ on:
       - 'release/base-pages-*'
   workflow_dispatch:
   push:
-    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court]
+    branches: [fix/v1.11.1-light-touch-production-base, fix/v1.11.2-together-production-base, release/v1.11.4-waterway, release/v1.11.3-homecourt-independent, release/v1.11.9-medals, release/v1.11.13-minimal-court, release/v1.11.14-school-glory]
 permissions:
   contents: read
 jobs:
@@ -24,6 +24,8 @@ jobs:
           node tests/homecourt-position-v1.mjs
           node tests/clean-release-contract.cjs
           node tests/v1111-light-touch-contract.cjs
+          node --check js/school-search-card-v1.js
+          node --check js/school-game-points-v1.js
           node tests/clean-release-info-runtime.cjs
           node tests/playground-contract.cjs
           node tests/playback-contract.cjs

@@ -180,7 +180,7 @@
       if(!selected)throw Error('SCHOOL_NOT_IN_RESULTS');
       ++serial;page=0;
       render([selected],1,'school_name_asc');
-      const trigger=$('results').querySelector('.lv1-history-trigger');
+      const trigger=$('results').querySelector('.glory-detail-trigger');
       if(trigger)trigger.click();
       const card=$('results').querySelector('.school-card');
       if(card?.scrollIntoView)card.scrollIntoView({block:'start'});
@@ -935,8 +935,9 @@
         percentile:percentilePanel(school),
         sortBy:mode==='region'&&sortValue.startsWith('housing_price_won_')?'school_name_asc':sortValue
       });
+      let housing=null;
       if(mode!=='region'){
-      const housing=make('section','beagu-housing-preview');
+      housing=make('section','beagu-housing-preview');
       housing.append(make('strong','beagu-housing-label','공동주택 평균 공시가격'));
       const amount=make('div','beagu-housing-amount');
       const available=viewerTier>=2&&school.housing_price_won!=null&&Number(school.housing_price_won)>0&&Number.isFinite(Number(school.housing_price_won));
@@ -951,7 +952,7 @@
         unlock.setAttribute('aria-label','Lv.2 잠금 해제 안내 · 챌린지로 이동');
         housing.append(unlock);
       }
-      card.insertBefore(housing,card.querySelector('.percentile-panel'));
+      // Existing level-specific housing information belongs in detailed view.
       }
       const trigger=button;
       if(!trigger||!detail)throw Error('LV1_HISTORY_PANEL_MISSING');
@@ -959,6 +960,7 @@
         const opening=detail.hidden;
         detail.hidden=!opening;
         trigger.setAttribute('aria-expanded',String(opening));
+        trigger.textContent=opening?'접기':'상세조회';
         trigger.setAttribute('aria-label',String(school.school_name||'학교')+' 역대 조사결과 '+(opening?'접기':'펼치기'));
         if(!opening||detail.dataset.loaded||detail.dataset.loading==='1')return;
         const action=window.BeaguSearchTelemetry?.selected(String(school.school_id),1,'search-lv1',event);
@@ -972,6 +974,7 @@
           // The signed-session API enforces access rights and release status.
           if(!detail.isConnected)return;
           showDetails(detail,data.rows,school,data.schoolQuestionModes,data.schoolQuestionSelections,data.schoolQuestionResults2026,Number(data.level));
+          if(housing)detail.prepend(housing);
           detail.dataset.loaded='1';
           if(action)window.BeaguSearchTelemetry?.detailViewed(String(school.school_id),1,'search-lv1',action);
         }catch(error){

@@ -173,8 +173,8 @@ try{for(const [width,tier] of [[390,0],[768,1],[1440,2]]){
  }
  await page.setViewportSize({width,height:900});
  assert.equal(await page.locator('#results .school-card .court-school-experience').count(),7);
- assert.equal(await page.locator('#results .school-card .court-school-experience').first().getAttribute('href'),'teacher-volleyball.html?school_id='+fixture[0].school_id);
- await page.locator('.lv1-history-trigger').first().click();await page.waitForFunction(()=>document.querySelector('.lv1-history-trigger[aria-expanded="true"]'));await page.waitForFunction(()=>!!document.querySelector('#results .school-detail[data-loaded="1"]'));assert.equal(detailRequested,true);
+ assert.equal(await page.locator('#results .school-card .court-school-experience').first().getAttribute('href'),'teacher-run.html?school_id='+fixture[0].school_id);
+ await page.locator('.glory-detail-trigger').first().click();await page.waitForFunction(()=>document.querySelector('.glory-detail-trigger[aria-expanded="true"]'));await page.waitForFunction(()=>!!document.querySelector('#results .school-detail[data-loaded="1"]'));assert.equal(detailRequested,true);
  if(tier===1){await page.waitForFunction(()=>!document.querySelector('#results .school-year-details[aria-busy="true"]'));assert.equal(comparisonRequested,true);assert.equal(await page.locator('#searchPanel').isVisible(),true);}
  await page.locator('#regionTab').click();await page.locator('#regionSelect').selectOption('부산');await page.locator('#results[data-search-mode="region"] .school-card').first().waitFor();assert.equal(await page.locator('#results .beagu-housing-preview').count(),0);
  assert.equal(await page.locator('#regionSort option[value="housing_price_won"]').isDisabled(),tier===1);

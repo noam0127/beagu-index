@@ -154,6 +154,7 @@
    open.setAttribute('aria-label',String(school.school_name||'학교')+' 연도별 상세 기록 보기');
   }else{
    open.type='button';
+   open.classList.add('glory-detail-trigger');
    open.setAttribute('aria-expanded','false');
    open.setAttribute('aria-label','Lv.'+level+' 연도별 상세 기록 보기');
    detail=el('section','school-detail');
