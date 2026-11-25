@@ -34,14 +34,17 @@ try{for(const tier of [1,2])for(const width of [390,1440]){
  assert.equal(await cards.nth(0).locator('.glory-score').textContent(),tier===2?'0.0%':'35.0%');
  assert.equal(await cards.nth(1).locator('.percentile-heading').textContent(),'2025 배구지수');
  assert.equal(await cards.nth(1).locator('.glory-score').textContent(),'36.0%');
- assert.equal(await cards.nth(2).locator('.glory-score').textContent(),'자료 없음');
+ assert.equal(await cards.nth(2).locator('.glory-score').textContent(),tier===2?'20.0%':'자료 없음');
+ assert.equal(await cards.nth(2).locator('.percentile-heading').textContent(),tier===2?'2024 배구지수':'2025 배구지수');
+ assert.equal(await cards.locator('.percentile-graph').count(),0);
  await cards.nth(0).locator('.glory-detail-trigger').click();
  const detail=cards.nth(0).locator('.school-detail');
  await detail.locator('.beagu-yearly-percentiles').waitFor();
  assert.equal(await detail.locator('.beagu-school-basics').count(),0);
- assert.equal(await detail.locator('.beagu-yearly-percentiles .percentile-cell').count(),tier===2?4:1);
+ assert.equal(await detail.locator('.beagu-yearly-percentiles .percentile-cell').count(),tier===2?4:3);
  assert.equal(await detail.locator('.year-tabs button[data-year="2026"]').count(),tier===2?1:0);
- if(tier===1)assert.doesNotMatch(await detail.locator('.beagu-yearly-percentiles').innerText(),/2026|2023|2024/);
+ assert.equal(await detail.locator('.percentile-graph svg').count(),1);
+ if(tier===1){assert.doesNotMatch(await detail.locator('.beagu-yearly-percentiles').innerText(),/2026/);assert.match(await detail.locator('.beagu-yearly-percentiles').innerText(),/2023/);}
 
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));console.log('PASS Chromium school profile',tier,width);
  }finally{await context.close()}}
