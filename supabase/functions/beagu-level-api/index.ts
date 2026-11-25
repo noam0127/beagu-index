@@ -133,6 +133,12 @@ Deno.serve(async(req:Request)=>{
        if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;
      }
    }
+   // Automatic exception-managed percentiles, independently authorized by the server.
+   const [auto,hidden]=await Promise.all([admin.rpc('beagu_2026_auto_percentiles',{p_ids:ids,p_level:Number(session.access_level)}),admin.rpc('beagu_2026_auto_hidden_ids',{p_ids:ids})]);
+   // Once the new endpoint is deployed, a missing hold RPC fails closed for all 2026 values.
+   if(hidden.error||!Array.isArray(hidden.data))return send({error:'AUTO_HOLD_GATE_UNAVAILABLE'},503,origin);
+   if(!auto.error&&auto.data&&typeof auto.data==='object'&&!Array.isArray(auto.data))for(const id of ids){const n=auto.data[id];if(!Object.hasOwn(out,id)&&typeof n==='number'&&Number.isFinite(n)&&n>=0&&n<=100)out[id]=n;}
+   for(const id of hidden.data)delete out[id];
    // The 2026 Schoolinfo profile is independent of teacher-survey consent.
    // Do not load it at Lv.1, and never include unpublished survey values.
    if(Number(session.access_level)===2){

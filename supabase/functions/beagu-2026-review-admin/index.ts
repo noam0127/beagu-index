@@ -40,7 +40,7 @@ Deno.serve(async(request:Request)=>{
   input=JSON.parse(text);
  }catch{return send(origin,400,{error:"invalid_request"});}
  if(!input||typeof input!=="object"||Array.isArray(input))return send(origin,400,{error:"invalid_request"});
- if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve","percentile_v13_scope","percentile_v13_review","percentile_v13_preview","percentile_v13_decide","percentile_v13_candidates","percentile_v13_bulk"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
+ if(!["queue","pipeline","level_decision","bulk_verified","hold","basis_review","finalize","referral_quality_queue","referral_quality_resolve","percentile_v13_scope","percentile_v13_review","percentile_v13_preview","percentile_v13_decide","percentile_v13_candidates","percentile_v13_bulk","auto_status","auto_action"].includes(String(input.action||"")))return send(origin,400,{error:"invalid_action"});
  try{
   const {data:account,error:accountError}=await db.from("beagu_admin_accounts")
    .select("role,enabled").eq("user_id",actor).maybeSingle();
@@ -88,6 +88,13 @@ Deno.serve(async(request:Request)=>{
   }
   // Review decisions may only be made by the owner, never a viewer or editor.
   if(account.role!=="owner")return send(origin,403,{error:"owner_required"});
+  if(input.action==="auto_status"||input.action==="auto_action"){
+   const args:Record<string,unknown>={p_actor:actor,p_session:claims.session_id};
+   let rpc="beagu_2026_auto_admin_status";
+   if(input.action==="auto_status"){const offset=input.offset??0;if(typeof offset!=="number"||!Number.isInteger(offset)||offset<0||offset>20000)return send(origin,400,{error:"invalid_page"});args.p_offset=offset;}
+   else{rpc="beagu_2026_auto_admin_action";Object.assign(args,{p_school:input.school_id,p_version:input.source_version??null,p_updated:input.updated_at??null,p_feedback:input.feedback_id??null,p_action:input.decision,p_reason:input.reason});}
+   const {data,error}=await db.rpc(rpc,args);return error||!data?send(origin,409,{error:"auto_checks_failed"}):send(origin,200,data);
+  }
   // Percentile-only review and decision routes use the existing verified owner MFA.
   if(String(input.action).startsWith("percentile_v13_")){
    const version=typeof input.source_version==="string"?input.source_version:"";

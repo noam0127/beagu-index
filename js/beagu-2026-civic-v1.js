@@ -8,7 +8,7 @@ anchor.after(panel);
 const $=x=>panel.querySelector("#"+x),url="https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-civic";
 for(let i=1;i<=51;i++){const opt=document.createElement("option");opt.value="Q"+String(i).padStart(2,"0");opt.textContent=opt.value;$("civicQuestion").append(opt);}
 let kind="report";
-$("civicReport").onclick=()=>{kind="report";$("civicForm").hidden=false;$("civicTypeLabel").hidden=false;$("civicMessage").textContent="신고 내용은 관리자만 열람합니다. 신고만으로 자료가 삭제되거나 부정행위가 확정되지는 않습니다.";};
+$("civicReport").onclick=async()=>{const school=id();if(!school)return;const detail=window.prompt("자료 신고 사유 (12~500자, 개인정보 금지)");if(detail===null)return;try{await post({action:"simple_report",school_id:school,detail:detail.trim()});$("civicMessage").textContent="신고가 접수됐습니다.";}catch{$("civicMessage").textContent="신고 접수 실패 · 사유 또는 요청 횟수를 확인하세요.";}};
 $("civicCorrect").onclick=()=>{kind="correct";$("civicForm").hidden=false;$("civicTypeLabel").hidden=true;$("civicQuestion").value="Q01";$("civicMessage").textContent="Lv.2 개인 참여코드 인증이 필요합니다. 본인 원본 응답 연결 전에는 기존 구글 설문 답변이 자동 수정되지 않습니다.";};
 const nonce=()=>{let v;try{v=sessionStorage.getItem("beagu-civic-device-v1");if(!v){v=crypto.randomUUID();sessionStorage.setItem("beagu-civic-device-v1",v);}}catch{v=crypto.randomUUID();}return v;};
 async function post(body,withCode=false){

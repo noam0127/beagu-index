@@ -785,6 +785,21 @@
     },
     {
       "order": 30,
+      "version": "v1.11.15.2",
+      "name": "자동개방",
+      "scope": "2026 자료검수 자동 공개 통계 및 신고·의심 데이터 중심 UI · 학교명 옆 🚩 신고 사유 단일 입력 · 정상처리·공개중단·재집계 요청 · 원본 및 검증 근거 보존",
+      "status": "CANDIDATE_CI_PENDING",
+      "branch": "fix/v1115-auto-opening",
+      "dependencies": [
+        "v1.11.15.1"
+      ],
+      "admin_registration": "NOT_REGISTERED",
+      "production": "NOT_APPROVED",
+      "rollback_sha": "ecbb441b3f356ea457497b1ae26c71cc4c56d651",
+      "tests": []
+    },
+    {
+      "order": 31,
       "version": "v1.12.0",
       "name": "다시 쓰기",
       "scope": "본인 응답 수정·이력·집계",
@@ -804,7 +819,7 @@
       "rollback_sha": null
     },
     {
-      "order": 31,
+      "order": 32,
       "version": "v1.13.0",
       "name": "바코드 공동체",
       "scope": "바코드닉·프로필·게임 기록",
@@ -823,7 +838,7 @@
       "rollback_sha": null
     },
     {
-      "order": 32,
+      "order": 33,
       "version": "v1.14.0",
       "name": "이야기와 음악",
       "scope": "학급일지·스쿨밴드",
@@ -840,7 +855,7 @@
       "rollback_sha": null
     },
     {
-      "order": 33,
+      "order": 34,
       "version": "v2.0.0",
       "name": "새로운 배구지수",
       "scope": "소셜 계정·Lv3·관리자 MFA",

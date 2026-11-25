@@ -30,7 +30,17 @@
   views.append(eye,el('strong','school-view-number','—'));
   const right=el('div','glory-header-meta');
   right.append(el('span','glory-region',[region,String(school.support_office||'')].filter(Boolean).join(' · ')),views);
-  nameHeading.append(el('span','school-name-text',name),right);
+  const flag=el('button','school-data-report','🚩');flag.type='button';flag.title='2026 자료 신고';flag.setAttribute('aria-label',name+' 자료 신고');flag.style.cssText='border:0;background:transparent;padding:4px;cursor:pointer;font-size:16px;line-height:1';
+  flag.addEventListener('click',async event=>{event.preventDefault();event.stopPropagation();
+   const detail=window.prompt('자료 신고 사유 (12~500자, 개인정보·실명 제외)');
+   if(detail===null)return;const reason=detail.trim();if(reason.length<12||reason.length>500){window.alert('신고 사유를 12~500자로 입력해 주세요.');return;}
+   flag.disabled=true;
+   try{let nonce;try{nonce=sessionStorage.getItem('beagu-civic-device-v1');if(!nonce){nonce=crypto.randomUUID();sessionStorage.setItem('beagu-civic-device-v1',nonce);}}catch{nonce=crypto.randomUUID();}
+    const res=await fetch('https://snvzwrexuqavnfvzgxqj.supabase.co/functions/v1/beagu-2026-civic',{method:'POST',cache:'no-store',headers:{'content-type':'application/json','x-beagu-client':nonce},body:JSON.stringify({action:'simple_report',school_id:String(school.school_id),detail:reason})});
+    if(!res.ok)throw Error('report');window.alert('신고가 접수되었습니다.');
+   }catch{window.alert('신고 접수 실패. 잠시 후 다시 시도해 주세요.');}finally{flag.disabled=false;}
+  });
+  nameHeading.append(el('span','school-name-text',name),flag,right);
   card.append(nameHeading,meta);
   return card;
  }
