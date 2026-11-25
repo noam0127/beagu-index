@@ -90,6 +90,7 @@
         setState(String(tier),label,'현재 '+label+' · 레벨 안내 보기',provisional);
       }else{
         lastValidatedToken='';
+        try{if(getToken()===token)sessionStorage.removeItem(KEY);}catch(_){}
         setState('0','Lv.0','현재 Lv.0 · 레벨 안내 보기');
       }
     }catch(_){
