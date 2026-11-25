@@ -56,6 +56,7 @@
   if(typeof id==="string"&&/^[A-Z0-9]{7}$/.test(id)){
    const link=el("a","history-school-link",name);
    link.href="school-link.html?school_id="+encodeURIComponent(id);
+   if(params.get("embed")==="1"&&window.parent!==window)link.target="_top";
    link.setAttribute("aria-label",name+" 학교 상세조회");
    title.append(link);
   }else title.textContent=name;
