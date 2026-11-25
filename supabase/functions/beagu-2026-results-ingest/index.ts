@@ -26,6 +26,12 @@ Deno.serve(async(req:Request)=>{
       if(error)return send(503,{error:'HEARTBEAT_NOT_ACCEPTED'});
       return send(200,{ok:true,kind:'WATERWAY_RUN_V1'});
     }
+    if(parsed?.kind==='VI13_PENDING_V1'){
+      if(bytes>256||Object.keys(parsed).length!==1)return send(400,{error:'INVALID_PENDING_REQUEST'});
+      const {data,error}=await admin.rpc('beagu_2026_vi13_pending');
+      if(error||!Number.isInteger(data)||data<0)return send(503,{error:'VI13_PENDING_UNAVAILABLE'});
+      return send(200,{pending:data});
+    }
     if(parsed?.kind==='VI13_REAGGREGATE_V1'){
       const {data,error}=await admin.rpc('beagu_2026_vi13_stage',{p_payload:parsed});
       return error?send(409,{error:'VI13_STAGE_REJECTED'}):send(200,data);

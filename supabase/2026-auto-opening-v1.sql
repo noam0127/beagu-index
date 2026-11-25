@@ -45,13 +45,19 @@ select a.school_id,a.source_version,a.percentile,a.valid_observation_count,a.upd
  coalesce(a.percentile between 0 and 100 and a.valid_observation_count>=1 and a.percentile_method='PERCENT_RANK_ASC_EXACT_MEAN_VI13_MIN9_A4_P2_R1' and p.teacher_total>0 and p.source_sha256 ~ '^[a-f0-9]{64}$' and a.valid_observation_count<=p.teacher_total,false) as structure_ok,
  -- Legacy exact reviews are reusable, never manufacture privacy/identity assertions.
  (r.school_id is not null or e.school_id is not null) as exact_evidence_ok,
- greatest(a.updated_at,c.reviewed_at,r.school_reviewed_at,e.verified_at) as eligible_since,
+ greatest(a.updated_at,c.reviewed_at,r.reviewed_at,e.verified_at) as eligible_since,
  (h.school_id is not null or x.school_id is not null) as held,
  x.action as exception_action
 from public.beagu_school_report_yearly a
 left join public.beagu_2026_official_school_profiles p using(school_id)
 left join beagu_private.beagu_2026_percentile_scope_v13 c on c.source_version=a.source_version
-left join beagu_private.beagu_2026_percentile_v13_current r on r.school_id=a.school_id and r.source_version=a.source_version
+-- Reuse real prior technical/mapping and anonymity-risk evidence without requiring individual identity/PII attestations.
+left join beagu_private.beagu_2026_percentile_school_review_v13 r on r.school_id=a.school_id and r.source_version=a.source_version
+ and r.percentile=a.percentile and r.valid_observations=a.valid_observation_count
+ and r.percentile_method=a.percentile_method and r.teacher_total=p.teacher_total and r.teacher_source_sha256=p.source_sha256
+ and r.reviewed_at>=a.updated_at and r.technical_reviewed and r.school_identity_reviewed
+ and r.small_sample_reviewed and r.reidentification_reviewed and r.prior_data_combination_reviewed
+ and not exists(select 1 from beagu_private.beagu_2026_civic_publication_hold old where old.school_id=a.school_id and (old.active or old.updated_at>=r.reviewed_at))
 left join beagu_private.beagu_2026_auto_evidence e on e.school_id=a.school_id and e.source_version=a.source_version and e.percentile=a.percentile and e.valid_observations=a.valid_observation_count and e.percentile_method=a.percentile_method and e.candidate_updated_at=a.updated_at and e.teacher_total=p.teacher_total and e.teacher_source_sha256=p.source_sha256 and e.verified_at>=a.updated_at and e.technical_verified and e.school_identity_verified and e.small_sample_verified and e.reidentification_verified and e.prior_combination_verified
 and not exists(select 1 from beagu_private.beagu_2026_civic_publication_hold old where old.school_id=a.school_id and old.updated_at>=e.verified_at)
 left join beagu_private.beagu_2026_civic_publication_hold h on h.school_id=a.school_id and h.active
@@ -112,6 +118,25 @@ end $$;
 revoke all on function public.beagu_2026_vi13_stage(jsonb) from public,anon,authenticated;
 grant execute on function public.beagu_2026_vi13_stage(jsonb) to service_role;
 
+-- A completed private computation is not a publication decision. Keep holds until independently resolved.
+create or replace view beagu_private.beagu_2026_vi13_request_state with(security_invoker=true) as
+select x.school_id,x.updated_at as requested_at,r.id as run_id,r.source_started_at,
+ case when r.id is null then 'PENDING'
+ when exists(select 1 from jsonb_array_elements(r.candidates) j where j->>'school_id'=x.school_id) then 'STAGED'
+ else 'NO_MATCH' end as state
+from beagu_private.beagu_2026_auto_exception x
+left join lateral (select id,source_started_at,candidates from beagu_private.beagu_2026_vi13_runs
+ where source_started_at>=x.updated_at order by source_started_at desc limit 1) r on true
+where x.action='REAGGREGATE';
+revoke all on beagu_private.beagu_2026_vi13_request_state from public,anon,authenticated;
+grant select on beagu_private.beagu_2026_vi13_request_state to service_role;
+create or replace function public.beagu_2026_vi13_pending()
+returns integer language sql stable security invoker set search_path='' as $
+select count(*)::integer from beagu_private.beagu_2026_vi13_request_state where state='PENDING'
+$;
+revoke all on function public.beagu_2026_vi13_pending() from public,anon,authenticated;
+grant execute on function public.beagu_2026_vi13_pending() to service_role;
+
 create or replace function public.beagu_2026_auto_admin_status(p_actor uuid,p_session uuid,p_offset integer)
 returns jsonb language plpgsql stable security invoker set search_path='' as $$
 begin
@@ -121,7 +146,9 @@ begin
  'total',(select count(*) from beagu_private.beagu_2026_auto_preflight),
  'qa_count_match',(select count(*) from beagu_private.beagu_2026_auto_preflight a where exists(select 1 from beagu_private.beagu_2026_auto_review_status t where t.school_id=a.school_id and t.source_spreadsheet_id='1T_rEz1LqX97pC9gOv33SRmspK2IizTU3wFtxA8P1pC4' and t.survey_year=2026 and t.technical_status='TECHNICAL_CHECK_PASSED' and t.source_response_rows=a.valid_observation_count)),
  'reaggregation',(select jsonb_build_object('started_at',source_started_at,'schools',school_count,'observations',observations,'unmatched',unmatched,'invalid',invalid,'suspect',suspect) from beagu_private.beagu_2026_vi13_runs order by source_started_at desc limit 1),
- 'reaggregation_pending',(select count(*) from beagu_private.beagu_2026_auto_exception where action='REAGGREGATE'),
+ 'reaggregation_pending',public.beagu_2026_vi13_pending(),
+ 'reaggregation_staged',(select count(*) from beagu_private.beagu_2026_vi13_request_state where state='STAGED'),
+ 'reaggregation_no_match',(select count(*) from beagu_private.beagu_2026_vi13_request_state where state='NO_MATCH'),
  'structural_pass',(select count(*) from beagu_private.beagu_2026_auto_preflight where structure_ok),
  'scope_pending',(select count(*) from beagu_private.beagu_2026_auto_preflight where not scope_ok),
  'auto_ready',(select count(*) from beagu_private.beagu_2026_auto_preflight where scope_ok and structure_ok and exact_evidence_ok and not held),
@@ -130,7 +157,7 @@ begin
  'auto_lv2',(select count(*) from beagu_private.beagu_2026_auto_preflight a where a.scope_ok and a.structure_ok and a.exact_evidence_ok and not a.held and a.eligible_since<=now() and not exists(select 1 from beagu_private.beagu_2026_percentile_v13_decisions d where d.school_id=a.school_id and d.access_level=2) and not exists(select 1 from beagu_private.beagu_2026_level_release_approvals l where l.access_level=2 and (not coalesce(l.approved,false) or l.updated_at>=a.eligible_since))),
  'source_versions',(select coalesce(jsonb_agg(distinct source_version),'[]'::jsonb) from beagu_private.beagu_2026_auto_preflight),
  'reports',(select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) from (select f.id,f.school_id,s.school_name,f.kind,f.detail,f.status,a.source_version,a.updated_at from beagu_private.beagu_2026_civic_feedback f join public.schools s using(school_id) left join beagu_private.beagu_2026_auto_preflight a using(school_id) where f.status in ('PENDING','REVIEWING') order by f.created_at desc limit 50) t),
- 'suspects',(select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) from (select a.school_id,s.school_name,a.source_version,a.updated_at,a.exception_action,array_remove(array[case when not a.structure_ok then 'STRUCTURE' end,case when not a.exact_evidence_ok then 'EVIDENCE_UNVERIFIED' end,case when a.held then 'HELD' end],null) reasons from beagu_private.beagu_2026_auto_preflight a join public.schools s using(school_id) where not a.structure_ok or not a.exact_evidence_ok or a.held order by a.held desc,a.structure_ok,a.school_id offset p_offset limit 50) t));
+ 'suspects',(select coalesce(jsonb_agg(to_jsonb(t)),'[]'::jsonb) from (select a.school_id,s.school_name,a.source_version,a.updated_at,a.exception_action,(select rs.state from beagu_private.beagu_2026_vi13_request_state rs where rs.school_id=a.school_id) as reaggregation_state,array_remove(array[case when not a.structure_ok then 'STRUCTURE' end,case when not a.exact_evidence_ok then 'EVIDENCE_UNVERIFIED' end,case when a.held then 'HELD' end],null) reasons from beagu_private.beagu_2026_auto_preflight a join public.schools s using(school_id) where not a.structure_ok or not a.exact_evidence_ok or a.held order by a.held desc,a.structure_ok,a.school_id offset p_offset limit 50) t));
 end $$;
 -- New reports may be sent for any catalogued school. No participation existence leak.
 create or replace function public.beagu_2026_simple_report(p_school text,p_detail text,p_actor_hash text)

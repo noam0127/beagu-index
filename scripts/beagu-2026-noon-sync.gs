@@ -271,6 +271,7 @@ function installBeagu2026Sync() {
   if(token.length<32)throw Error("설치 중단: BEAGU_2026_INGEST_TOKEN은 32자 이상의 비밀 값이어야 합니다.");
   setupBeagu2026FormSubmitTrigger();
   setupDailyNoonTrigger();
+  setupBeagu2026VI13RequestTrigger();
   const active=ScriptApp.getProjectTriggers().map(t=>t.getHandlerFunction());
   if(!active.includes("onBeagu2026FormSubmitted")||!active.includes("refreshBeagu2026AllPrivateStats"))
     throw Error("자동 집계 트리거 설치를 확인하지 못했습니다.");
@@ -580,6 +581,25 @@ function beagu26BuildVI13(values,schools){
   if(unknown||m.typeConflict||signals.has(i)){g.flags++;suspect++;}groups.set(id,g);
  }
  return {kind:'VI13_REAGGREGATE_V1',source_spreadsheet_id:BEAGU26.sourceId,schools:[...groups.values()].sort((a,b)=>a.school_id.localeCompare(b.school_id)),unmatched,invalid,excluded,suspect};
+}
+// Install once by source owner; source-only poll, no browser token and no duplicate handler.
+function setupBeagu2026VI13RequestTrigger(){
+ const name='pollBeagu2026VI13Requests';
+ const active=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()===name);
+ if(active.length){active.slice(1).forEach(t=>ScriptApp.deleteTrigger(t));return;}
+ ScriptApp.newTrigger(name).timeBased().everyMinutes(15).create();
+}
+function pollBeagu2026VI13Requests(){
+ const lock=LockService.getScriptLock();if(!lock.tryLock(1000))return;
+ try{
+  const token=PropertiesService.getScriptProperties().getProperty('BEAGU_2026_INGEST_TOKEN')||'';
+  if(token.length<32)throw Error('VI13 token required');
+  const res=UrlFetchApp.fetch(BEAGU26.supabaseUrl+'/functions/v1/beagu-2026-results-ingest',{method:'post',contentType:'application/json',headers:{'X-Beagu-Ingest-Token':token},payload:JSON.stringify({kind:'VI13_PENDING_V1'}),muteHttpExceptions:true});
+  if(res.getResponseCode()!==200)throw Error('VI13 pending unavailable');
+  const count=JSON.parse(res.getContentText()).pending;
+  if(!Number.isInteger(count)||count<0)throw Error('VI13 invalid pending count');
+  if(count>0)refreshBeagu2026VI13Private();
+ }finally{lock.releaseLock();}
 }
 function refreshBeagu2026VI13Private(){
  const startedAt=new Date().toISOString();

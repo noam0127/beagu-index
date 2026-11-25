@@ -31,3 +31,19 @@ begin
  raise notice 'PASS auto verified evidence without individual identity/PII attestations, n=1, scope, Lv2-only, reports, exception queue, MFA, original preservation';
 end $$;
 reset role;
+
+-- Real prior review evidence can be reused without separate identity/PII fields.
+set role service_role;
+do $$ declare a uuid:='11111111-1111-1111-1111-111111111111'; begin
+ insert into beagu_private.beagu_2026_percentile_school_review_v13(school_id,source_version,percentile,valid_observations,percentile_method,teacher_total,teacher_source_sha256,technical_reviewed,school_identity_reviewed,small_sample_reviewed,reidentification_reviewed,prior_data_combination_reviewed,reviewer_user_id,reviewed_at,review_note)
+ values('1000005','fixture-auto-version',50,1,'PERCENT_RANK_ASC_EXACT_MEAN_VI13_MIN9_A4_P2_R1',20,repeat('d',64),true,true,true,true,true,a,clock_timestamp(),'synthetic prior risk evidence');
+ if public.beagu_2026_auto_percentiles(array['1000005'],2)<>'{"1000005":50}'::jsonb then raise exception 'verified prior evidence not reused';end if;
+ if public.beagu_2026_auto_percentiles(array['1000005'],1)<>'{}'::jsonb then raise exception 'Lv1 bypass';end if;
+ update beagu_private.beagu_2026_percentile_school_review_v13 set reidentification_reviewed=false where school_id='1000005';
+ if public.beagu_2026_auto_percentiles(array['1000005'],2)<>'{}'::jsonb then raise exception 'missing risk review accepted';end if;
+ if public.beagu_2026_vi13_pending()<>1 then raise exception 'request not available to source poll';end if;
+end $$;
+reset role;
+do $$ begin
+ if has_function_privilege('anon','public.beagu_2026_vi13_pending()','EXECUTE') or has_function_privilege('authenticated','public.beagu_2026_vi13_pending()','EXECUTE') then raise exception 'poll access bypass';end if;
+end $$;
