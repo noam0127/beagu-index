@@ -87,10 +87,14 @@ Deno.serve(async(req:Request)=>{
  return error?send(origin,409,{error:"NOT_ELIGIBLE_OR_RATE_LIMITED"}):send(origin,202,{ok:true,request_id:data});
  }
  if(action==="status"){
- const {data,error}=await db.from("beagu_2026_results_snapshot").select("school_response_rows,school_match_status")
- .eq("school_id",school).maybeSingle();
- return error?send(origin,503,{error:"UNAVAILABLE"}):
- send(origin,200,{participation_confirmed:!!data&&Number(data.school_response_rows)>=1&&data.school_match_status==="EXACT_REGION_OFFICE_NAME"});
+ // Publication approval—not merely the existence of one response—controls
+ // what the public may learn about a particular school's 2026 survey.
+ // This existing RPC enforces school approval, tier-0 release delay,
+ // source-hash revalidation and the owner's final publication decision.
+ const {data,error}=await db.rpc("beagu_2026_level_released_school_ids",
+  {p_ids:[school],p_level:0});
+ return error||!Array.isArray(data)?send(origin,503,{error:"PUBLICATION_GATE_UNAVAILABLE"}):
+  send(origin,200,{participation_confirmed:data.includes(school)});
  }
  if(action!=="report"&&action!=="correct")return send(origin,400,{error:"INVALID_ACTION"});
  const category=action==="correct"?"CORRECTION":String(body.category||"");
