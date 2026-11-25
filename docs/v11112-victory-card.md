@@ -9,3 +9,5 @@ Base: 8bc306ae6f4633937a84af6b56f0f000c286fa02
 4.0 score rules differ from 3.0; the existing official history remains readable, but do not write unverified 4.0 scores to legacy API. No production DB change. Candidate requires browser regression and signed admin release.
 
 Mobile landscape automatically expands the active standalone court; rotation back restores normal layout unless fullscreen was explicitly selected. Scores only at top; exit control at bottom right. Landscape fills both axes with mapped input; portrait maintains aspect ratio (no clipping). Historical 3.0 preservation tested against exact predecessor, 4.0 canonical tested separately.
+
+Minimal game UI: hide old external HUD (kept for existing internal state updates), show only scores or HP within court, central temporary information, preserve school picker and controls.

@@ -157,19 +157,20 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
 <link rel="stylesheet" href="styles/arcade-playback-v1.css?v=140">
 <link rel="stylesheet" href="styles/arcade-result-share-v1.css?v=11112">
 <link rel="stylesheet" href="styles/beagu-light-touch-v1111.css?v=1110-court">
+<link rel="stylesheet" href="styles/arcade-minimal-v11112.css?v=1">
 </head>
-<body class="arcade-body beagu-ui-page beagu-page-game">
+<body class="arcade-body beagu-ui-page beagu-page-game beagu-minimal-volley">
 <header class="beagu-unified-header"><div class="beagu-unified-inner"><a class="beagu-unified-brand" href="index.html" aria-label="BAEGUINDEX 홈으로 이동"><span class="beagu-unified-mark" aria-hidden="true">B</span><span class="beagu-unified-name">BAEGU<span class="beagu-unified-name-accent">INDEX</span></span></a><nav class="beagu-unified-nav beagu-core-nav" aria-label="주요 메뉴"><a href="index.html">홈코트</a><a href="search.html">학교검색</a><a href="statistics.html">학교비교</a><a href="games.html" aria-current="page">플레이코트</a><a href="challenge.html">챌린지</a></nav></div></header>
 <div class="beagu-level-state-container" aria-live="polite"><a id="beaguLevelState" class="beagu-level-state" data-level="checking" href="levels.html" aria-label="인증 상태 확인 중">확인 중</a></div>
 <main class="game-shell">
   <section id="arcade-school-picker" aria-label="게임 시작 전 학교 선택"></section>
-  <div class="scoreboard" aria-label="25점 선착순 경기와 점수 기록">
+  <div class="scoreboard" hidden aria-label="25점 선착순 경기와 점수 기록">
     <div class="volley-best-row"><span class="volley-target-chip">🏁 25점</span><span class="volley-best-chip" aria-label="이 기기의 최고 점수 신기록">신기록 <strong id="volley-best-label">0점</strong></span><span class="volley-best-chip" aria-label="내 25점 승리 최단 시간">25점 최단 <strong id="volley-fastest-label">—</strong></span></div>
     <div class="team"><span class="volley-team-name">나</span><strong id="player-score">0 / 25</strong></div>
     <div class="center-label">VS<small id="volley-score-label">0점</small><small id="volley-bonus-label">플레이 +0점</small><small id="volley-item-score-label">아이템 +0점</small></div>
     <div class="team right"><span>컴퓨터</span><strong id="cpu-score">0 / 25</strong></div>
   </div>
-  <div class="volley-progress" aria-label="25점 달성 진행 상황">
+  <div class="volley-progress" hidden aria-label="25점 달성 진행 상황">
    <div><div class="volley-progress-label"><span>나의 25점</span><span id="volley-my-remain">25점 남음</span></div>
     <div class="volley-progress-track" id="volley-my-progress" role="progressbar" aria-label="내 점수 진행" aria-valuemin="0" aria-valuemax="25" aria-valuenow="0"><div class="volley-progress-fill" id="volley-my-fill"></div></div></div>
    <div><div class="volley-progress-label"><span>컴퓨터</span><span id="volley-cpu-remain">25점 남음</span></div>
@@ -184,6 +185,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       </div>
       <button type="button" id="pause" class="arcade-playback" disabled hidden aria-label="일시정지" title="일시정지">⏸ 일시정지</button>
       <canvas tabindex="0" id="game" width="900" height="500" role="img" aria-label="파란 선생님과 분홍 선생님이 네트를 사이에 두고 배구하는 게임 화면"></canvas>
+      <div class="status arcade-center-notice" id="status" role="status" aria-live="polite" hidden></div>
       <div class="volley-ready-overlay" id="volley-ready-overlay" aria-labelledby="volley-ready-title">
         <div class="volley-ready-panel">
           <div class="volley-ready-icon" aria-hidden="true">🏐</div>
@@ -207,7 +209,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     </div>
   <div class="actions"><button type="button" id="sound" class="sound-toggle" aria-label="소리 켜기" aria-pressed="false" title="효과음 및 배경음악">🔇</button><button type="button" id="start">▶ 시작</button><button type="button" class="auxiliary" id="help" aria-label="게임 방법" title="게임 방법">?</button></div>
   <p class="arcade-bgm-credit">🎵 BGM: <a href="https://opengameart.org/content/keep-your-dream-alive-seamless-loop" target="_blank" rel="noopener noreferrer">Keep your dream alive! · congusbongus (CC0)</a></p>
-  <div class="status" id="status" aria-live="polite"></div><div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 화면 터치·드래그 이동 · 위쪽 터치 시 점프 · 화면을 누른 채 이동하면 대시·스파이크 자동 발동 · EASY/날개 아이템에서만 비행 · 화면을 빠르게 두 번 터치하면 필살기 · PC J 스파이크, K/Shift 대시 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
+  <div class="mini-help" id="help-panel" hidden>🏁 먼저 25점을 따면 승리 · 득점 +100점 · 실점 −50점 · 플레이 1초마다 +4점(최대 15분) · 승리 시 점수 차 ×1~×6 · 중간 종료해도 점수 기록 · 25점 승리 최단 시간은 별도 기록 · 🏐 화면 터치·드래그 이동 · 위쪽 터치 시 점프 · 화면을 누른 채 이동하면 대시·스파이크 자동 발동 · EASY/날개 아이템에서만 비행 · 화면을 빠르게 두 번 터치하면 필살기 · PC J 스파이크, K/Shift 대시 · EASY 날개·동료·관리자 · NORMAL 동료 · VERY HARD 적 부하 가끔 등장 · EXTREME 공 2개·족쇄·적 부하 · 빨강/파랑 물음표 랜덤 아이템 · EASY 자유비행 · 기타 난이도 네트 높이 점프 제한(날개 획득 시 비행) · 공 추가/삭제(최소 1개·최대 5개)</div>
   
   <div id="arcade-top10" aria-label="선생님배구 최고 점수 및 25점 승리 최단 시간 순위"></div>
 </main>
@@ -495,7 +497,8 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
   }
   const volleyShackle={x:156,dir:-1};
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-  const setStatus = text => { status.textContent = text; };
+  let statusUntil=0;
+  const setStatus = text => { status.textContent = text;status.hidden=!text;statusUntil=performance.now()+2600; };
   const BEST_SCORE_KEY="teacherVolleyballScore25BestV1";
   // This score-based season starts fresh, separate from the retired time records.
   try{
@@ -1586,9 +1589,9 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
     if (state.phase === "paused") overlay("PAUSE", "");
     else if(state.phase==="point"){
       // Non-blocking feedback: keep the court and ball visible between serves.
-      ctx.save();ctx.fillStyle="rgba(12,42,68,.83)";ctx.fillRect(210,22,480,74);
-      textLabel(state.message,450,55,28,"#fff6d8","center",465);
-      textLabel(state.pointCheer,450,82,15,"#d7f8ff","center",470);ctx.restore();
+      ctx.save();ctx.fillStyle="rgba(12,42,68,.83)";ctx.fillRect(170,H*.43,560,82);
+      textLabel(state.message,450,H*.43+34,31,"#fff6d8","center",540);
+      textLabel(state.pointCheer,450,H*.43+64,22,"#d7f8ff","center",540);ctx.restore();
     }
     // Finished games use a scrollable HTML result panel, not painted text.
     ctx.restore();
@@ -1610,6 +1613,7 @@ canvas{aspect-ratio:9/5;width:100%;max-width:100%;background:#bfe6f8;cursor:defa
       courtElement.classList.toggle("volleyball-playing",isPlaying);
     courtElement.classList.remove("volleyball-controls-active");
     syncLandscapeCourt();
+    status.hidden=!status.textContent||state.phase==="paused"||state.phase==="finished"||state.phase==="point"||(state.phase==="playing"&&time>statusUntil);
     if (!last) last = time;
     accumulator += Math.min((time - last) / 1000, .06);
     last = time;

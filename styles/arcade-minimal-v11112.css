@@ -1,0 +1,14 @@
+/* v1.11.12: school selection is the only visible area above either court. */
+body.beagu-minimal-volley :is(.scoreboard,.volley-progress)[hidden],body.beagu-minimal-run :is(.hud,.arcade-survival-health)[hidden],body.beagu-minimal-run .arcade-run-fullscreen-hud [hidden],body.beagu-minimal-volley #status[hidden]{display:none!important}
+body.beagu-minimal-volley .court,body.beagu-minimal-run .stage{border-radius:10px;border-top:1px solid #547ca0}
+body.beagu-minimal-volley .court>.arcade-volley-fullscreen-hud{display:flex!important;position:absolute;top:10px;left:10px;right:10px;justify-content:space-between;align-items:center;height:auto;padding:0 5%;background:none;border:0;z-index:3;pointer-events:none}
+body.beagu-minimal-volley .arcade-volley-fullscreen-hud strong{color:#fff7d5;font:900 clamp(23px,7vw,42px)/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;text-shadow:0 2px 3px #142944,1px 1px #142944,-1px -1px #142944}
+body.beagu-minimal-volley .court:not(.arcade-fullscreen-fallback):not(:fullscreen):not(:-webkit-full-screen)>.arcade-fullscreen-toggle{top:auto!important;bottom:8px!important}
+body.beagu-minimal-volley .court>.arcade-center-notice{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:max-content;max-width:80%;box-sizing:border-box;z-index:4;margin:0;padding:9px 13px;border-radius:10px;background:rgba(10,29,49,.88);color:#fff;font:800 clamp(13px,3.8vw,20px)/1.4 system-ui,sans-serif;text-align:center;pointer-events:none;overflow-wrap:anywhere}
+body.beagu-minimal-volley .court:has(.volley-ready-overlay:not([hidden]))>.arcade-center-notice{top:15%;z-index:6}
+html body.beagu-minimal-run .stage>.arcade-run-fullscreen-hud{display:block!important;position:absolute!important;top:max(8px,env(safe-area-inset-top))!important;left:12px!important;right:60px!important;width:auto!important;height:auto!important;padding:0!important;border:0!important;background:none!important;z-index:3;pointer-events:none}
+html body.beagu-minimal-run .arcade-run-fullscreen-track{height:11px!important;margin:0!important;box-shadow:0 1px 3px #14283b;border:1px solid #d9e6df}
+html body.beagu-minimal-run .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen){--arcade-run-hud-height:0px;grid-template-rows:minmax(0,1fr)!important;padding:0!important}
+html body.beagu-minimal-run .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>#game{grid-row:1!important}
+html body.beagu-minimal-run .stage:is(.arcade-fullscreen-fallback,:fullscreen,:-webkit-full-screen)>.overlay{top:0!important}
+@media(max-width:600px) and (orientation:portrait){html body.beagu-minimal-run .stage:not(.arcade-fullscreen-fallback):not(:fullscreen):not(:-webkit-full-screen)>#game{height:clamp(420px,65svh,570px)!important}}
