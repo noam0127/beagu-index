@@ -4,12 +4,12 @@ import {Script} from 'node:vm';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const source=read('js/level-search.js'),html=read('search-lv1.html'),backend=read('supabase/functions/beagu-level-api/index.ts');
 assert.doesNotThrow(()=>new Script(source));
-assert.match(source,/const allowedYears=viewerTier===2\?YEARS:YEARS\.filter\(year=>year!==2026\)/);
+assert.match(source,/const allowedYears=\[1,2\]\.includes\(viewerTier\)\?YEARS:YEARS\.filter\(year=>year!==2026\)/);
 assert.match(source,/if\(!allowedYears\.includes\(year\)\)return/);
-const selection=source.split('\n').find(line=>line.trim().startsWith('choose(viewerTier===2&&'));
+const selection=source.split('\n').find(line=>line.trim().startsWith('choose([1,2].includes(viewerTier)&&'));
 assert.ok(selection,'detail year selection must remain tier and publication aware');
 const chooseYear=new Function('viewerTier','current2026','school','firstAvailable','choose',selection);
-for(const [tier,status,available,expected] of [[1,'published',2026,2025],[2,'published',2025,2026],[2,'unpublished',2026,2026],[2,'unpublished',2024,2025],[2,'error',undefined,2025]]){
+for(const [tier,status,available,expected] of [[0,'published',2026,2025],[1,'published',2026,2026],[1,'unpublished',2025,2025],[2,'published',2025,2026],[2,'unpublished',2026,2026],[2,'unpublished',2024,2025],[2,'error',undefined,2025]]){
  let actual;chooseYear(tier,new Map([['fixture',{status}]]),{school_id:'fixture'},available,y=>{actual=y});assert.equal(actual,expected);
 }
 assert.match(source,/연도별 상세자료/);
