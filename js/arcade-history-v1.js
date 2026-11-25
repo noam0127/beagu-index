@@ -123,7 +123,7 @@
    $("historyScope").textContent=archive?"보존 경기 · 점수순 · 30개씩":"기존 상위 100위 · 30개씩";
    list.replaceChildren();
    if(!data.records.length)list.append(el("div","history-empty",
-    page===1?"아직 상위 100위 기록이 없습니다.":"이 페이지에는 기록이 없습니다."));
+    page===1?(archive?"아직 보존된 경기 기록이 없습니다.":"아직 상위 100위 기록이 없습니다."):"이 페이지에는 기록이 없습니다."));
    else for(const [i,row] of data.records.entries())list.append(renderRecord(row,(page-1)*30+i+1));
    prev.disabled=page<=1;next.disabled=!hasMore||page>=(archive?10000:4);
   }catch(err){
